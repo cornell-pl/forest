@@ -425,17 +425,21 @@ expression fails.
 }
 \]
 
-\section{Assorted Functions}
+\section{Helper Functions}
 \label{app:asst-functions}
 
+\trversion{
 %% Maps pads base types to implementation language base types
 \begin{description}
-\item[Misc.:]
 \item $\Ikind : {Const} \rightarrow {Kind}$.
 \item $\Irty : {Const} \rightarrow {Type}$.
 % \item $\Ipdty : {Const} \rightarrow {Type}$.
 \item $\Iimp : {Const} \rightarrow {Expression}$.
+\end{description}
+}
 
+In defining the parsing functions, we use the following helper functions:
+\begin{description}
 \item $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
 
 \item $\codefont{scanMax} : \iintty$
@@ -452,6 +456,133 @@ expression fails.
     \ielse \iok
    \end{array}$
 \end{description}
+
+We define for each \ddc{} type a pair of constructor functions, one to build a representation and another to build a parse descriptor.
+The type of PD headers is $\iintty
+  \iprodi \iecty \iprodi \ispty$. We refer to the projections using
+  dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
+  $\codefont{sp}$, respectively. A span is a pair of offsets, referred
+  to as $\codefont{begin}$ and $\codefont{end}$, respectively. Array
+  bodies have type $\iintty \iprodi \iintty \iprodi (\iseq \ity)$ (for
+  element type $\ity$). We refer to the projections as
+  $\codefont{neerr}$, $\codefont{length}$ and $\codefont{elts}$,
+  respectively.  
+
+\small
+\begin{itemize}
+\renewcommand{\labelitemi}{}
+
+\item %[Unit:]
+\item $\ifun {R_{unit}} \iuval \iuval$
+\item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+
+\item %[Bottom:]
+\item $\ifun {R_{bottom}} \iuval \ierr$
+\item $\ifun {P_{bottom}} \off ((1,\iecpc,\ipair \off \off),())$
+
+\item %[Pair:]
+\item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
+\item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
+  $\begin{array}{l}
+    \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+    \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
+    \quad \ictup {nerr,ec,sp}
+  \end{array}$
+
+\item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
+
+\item %[Sum:]
+\item $\ifun {R_{+left}} r {\iinl {\codefont r}}$
+\item $\ifun {R_{+right}} r {\iinr {\codefont r}}$
+
+\item $\ifun {H_+} h {\ictup{pos(h.nerr),h.ec,h.sp}}$
+\item $\ifun {P_{+left}} p {\ictup{\codefont{H_+} \iappi p.h, \iinl p}}$
+\item $\ifun {P_{+right}} p {\ictup{\codefont{H_+} \iappi p.h, 
+      \iinr  p}}$
+
+\item %[Intersection:]
+\item $\ifun {R_{\&}} {\ictup {r,r'}} {\ictup {r,r'}}$
+\item $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
+    $\begin{array}{l}
+      \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+      \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+      \quad \ielse{\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+      \ilet {sp} {\ictup{h_1.sp.begin, max \itup{h_1.sp.end, h_2.sp.end}}} \\
+      \quad \ictup {nerr,ec,sp}
+    \end{array}$
+
+\item $\ifun {P_{\&}} {\ictup {p_1,p_2}} {\ictup{H_{\&} \iappi 
+      \itup{p_1.h, p_2.h},\itup{p_1,p_2}}}$
+
+\item %[Set:]
+\item $\ifun {R_{set}} {\ictup{c,r}} {
+    \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\codefont r}}
+  }$ 
+\item $\ifun {P_{set}} {\ictup {c, p}} {}$ \\
+    $\begin{array}{l}
+      \iif {\codefont c} \; \ithen {\ictup{(pos(p.h.nerr),p.h.ec,p.h.sp),p}} \\
+      \ielse {\ictup {(1 + pos(p.h.nerr),\maxec \iecerr {p.h.ec},p.h.sp),p}}
+    \end{array}$
+ \end{itemize}
+
+ \begin{itemize}
+ \renewcommand{\labelitemi}{}
+
+\item %[Array:] 
+\item $\ifun {R_{seq\_init}} {\iuval} {\ictup{0,\ieseq}}$   
+\item $\ifun {P_{seq\_init}} \off {\ictup{(0,\iok,\ipair \off
+      \off),(0,0,\ieseq)}}$
+
+\item $\ifun {R_{seq}} {\ictup{r, r_e}} 
+  {\ictup{r.len+1,\iappend{r.elts} {\iarr{r_e}}}}$
+\item $\ifun {H_{seq}} {\ictup{h, h_s, h_e}} {}$ \\
+  $\begin{array}{l}
+      \ilet {eerr} {
+        \codefont{\iif {h.neerr = 0 \mathrel{and} h_e.nerr > 0}}\\
+        \codefont{\quad \ithen 1 \;  \ielse 0}
+      }\\
+      \ilet {nerr} {\codefont{h.nerr + pos(h_s.nerr) + eerr}}\\
+      \ilet {ec} {\iif{\codefont{h_e.ec} = \iecpc}\; \ithen {\iecpc}\\
+      \quad \ielse{\maxec {\codefont{h.ec}} {\codefont{h_e.ec}}
+          }} \\
+      \ilet {sp} {\ictup{h.sp.begin,h_e.sp.end}} \\
+      \quad \ictup {nerr,ec,sp}
+    \end{array}$
+
+\item $\ifun{P_{seq}} {\ictup{p, p_s, p_e}}{}$ \\ 
+  $\begin{array}{l}
+    \codefont{(H_{seq} \iappi \itup{p.h,p_s.h,p_e.h},}\\ 
+    \codefont{\itup{p.neerr + pos(p_e.h.nerr), p.len + 1,\iappend {p.elts}
+        {\iarr{p_e}}})}
+  \end{array}$
+
+\item %[Compute:]
+\item $\ifun{R_{compute}} r {\codefont r}$
+\item $\ifun{P_{compute}} \off {\ictup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+
+\item %[Absorb:]
+\item $\ifun {R_{absorb}} p {\iif {\pdok p}\; 
+    \ithen {\iinl \iuval}\; \ielse {\iinr \ierr}}$
+\item $\ifun {P_{absorb}} p {\ictup{p.h,\iuval}}$
+
+\item %[Scan:]
+\item $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
+\item $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
+$\begin{array}{l}
+\ilet {nerr} {\codefont{pos(i) + pos(p'.h.nerr)}}\\
+\ilet {ec} {\iif {\codefont{nerr = 0}}\; \ithen \iok\; \ielse \iecerr} \\
+\ilet {hdr} {\ictup{nerr,ec,(p.sp.begin - i,p.sp.end)}} \\
+\quad \ictup{hdr,\iinl {\ictup{i,p}}}
+\end{array}$
+
+\item $\ifun {R_{scan\_err}} {()} {\iinr \ierr}$
+\item $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,\iecpc,(\off,\off)}}}$\\
+  \verb+ +$\ictup{hdr,\iinr \iuval}$
+%% \item[Transform:]
+%% \item \fnm{P_T} (h,b) = (h,(???,b))
+\end{itemize}
 
 \trversion{
 \begin{lemma}[Function Types]
