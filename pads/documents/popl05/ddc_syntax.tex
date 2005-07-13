@@ -129,18 +129,17 @@ $\ty$ is successfully parsed.
 \begin{figure}[tp]
 \small
 \begin{bnf}
-  \name{Variables} \meta{f,x,y} \\
-
-  \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
-  \name{Bits}  \meta{B}   \::= \vec{b} \\ 
+%   \name{Variables} \meta{f,x,y} \\
+%   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
+  \name{Bits}  \meta{B}   \::= \cdot \| 0\,B \| 1\,B \\ 
   \name{Constants} \meta{c} \::=
       () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
       \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
 
-  \name{Values} \meta{v,r,p} \::= 
+  \name{Values} \meta{v} \::= 
       \const \| % \ilam{\nrm \var}{\ity}{e} \| 
-      \ifun {\nrm f} {\nrm x} e \nlalt
-      \ipair v v \| \iinld{\ity}{v} \| \iinrd{\ity}{v} \nlalt
+      \ifun {\nrm f} {\nrm x} e \| \ipair v v \nlalt
+      \iinld{\ity}{v} \| \iinrd{\ity}{v} \|
       \iarr{\vec{v}} \\
 
   \name{Operators} \meta{op} \::= 
@@ -182,8 +181,8 @@ We use this host language both to encode the parsing semantics of \ddc{}
 and to write the expressions that can appear within \ddc{} itself.
 
 As the calculus is largely standard, we highlight only its
-unusual features. The constants include bitstreams $\data$; offsets $\off$,
-representing locations in bitstreams; and error codes $\iok$,
+unusual features. The constants include bitstrings $\data$; offsets $\off$,
+representing locations in bitstrings; and error codes $\iok$,
 $\iecerr$, and $\iecpc$, indicating success, success with errors and
 failure, respectively. The constant $\ierr$ is used to indicate a
 failed parse.  Because of its specific meaning, it cannot be introduced in
@@ -195,7 +194,7 @@ sequences $\iarr{\vec e}$, sequence append $\iappend e
 {e'}$, and sequence indexing $\isub e {\nrm i}$.
 
 The type $\invty$ is the singleton type of the constant $\ierr$.
-Types $\iecty$ and $\ioffty$ are for error codes and bit-stream
+Types $\iecty$ and $\ioffty$ are for error codes and bitstring
 offsets, respectively. The remaining types have their standard
 meaning: function types, product types, sum types, sequence types
 $\iseqty \ty$; polymorphic types $\forall \ityvar.\ity$ and type
