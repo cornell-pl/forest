@@ -91,7 +91,7 @@ defined in this section and a brief description of each.
     \ddck[\pbase{e},\rctxt;\ctxt,\kty,\con]
   }{
     \begin{semcond}
-      \stsem[e,\cdot;\ctxt,\ity] &
+      \stsem[e,\ctxt,\ity] &
       (\vlet {\ity \iarrowi \kty} {\Ikind(C)})
     \end{semcond}
   }
@@ -109,7 +109,7 @@ defined in this section and a brief description of each.
   \ddck[\papp{\ty}{e},\rctxt;\ctxt,\gk,\mcon]
 }{
   \ddck[\ty,\rctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
-  \stsem[e,\cdot;\ctxt,\ity]
+  \stsem[e,\ctxt,\ity]
 }
 \quad
 \infer[\text{Prod}]{
@@ -140,7 +140,7 @@ defined in this section and a brief description of each.
     \ddck[\pset x \ty e,\rctxt;\ctxt,\kty,\con]
   }{ 
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & 
-    \stsem[e,\cdot;
+    \stsem[e,
     \ectxt{x{:}\iprod{\itsem[\asub \rctxt \ty]} 
       {\itpdsem[\asub \rctxt \ty]}},\iboolty]
   }
@@ -153,7 +153,7 @@ defined in this section and a brief description of each.
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] \qquad
     \ddck[{\ty_s},\rctxt;\ctxt,\kty,\mcon_s] \qquad
     \ddck[{\ty_t},\rctxt;\ctxt,\kty,\mcon_t] \\
-    \stsem[e,\cdot;\ctxt,
+    \stsem[e,\ctxt,
     \iprod {\itsem[{\ty_m}]}      
     {\itpdsem[{\ty_m}]}
     \iarrowi \iboolty]
@@ -176,7 +176,7 @@ defined in this section and a brief description of each.
   \infer[\text{Compute}]{       
     \ddck[\pcompute{e}{\ity},\rctxt;\ctxt,\kty,\con]
   }{
-    \stsem[e,\cdot;\ctxt,\ity]
+    \stsem[e,\ctxt,\ity]
   }      
 \quad
 \infer[\text{Absorb}]{
