@@ -4,9 +4,8 @@
 We can better understand the data description languages described
 earlier by translating their constructs into the types of \ddc{}. We
 start with the translation of \ipads{}, which captures many of the
-common features of DDLs. We then discuss some features not found in
-\ipads{}, giving them semantics in \ddc{} as well. Next, we list features
-of \datascript{} and \packettypes{} that we can encode in \ddc{}.
+common features of DDLs. We then discuss features of \pads{},
+\datascript{}, and \packettypes{} that are not found in \ipads{}.
 Finally, we briefly discuss some limitations of \ddc{}.
 
 \subsection{\ipads{} Translation}
@@ -41,7 +40,7 @@ Finally, we briefly discuss some limitations of \ddc{}.
 
 \[
   \infer[\text{Base}]{ 
-    \ctxt \turn \Pbase e \cipads \pbase e : \kty
+    \ctxt \turn \pbase e \cipads \pbase e : \kty
   }{
     \ctxt \turn e : \ity & (\Ikind(C) = \ity \to \kty)
   }
@@ -158,15 +157,13 @@ Finally, we briefly discuss some limitations of \ddc{}.
   }
 \]
 }
-  \caption{Encoding \ipads{} in \ddc{}}
-  \label{fig:encode-ipads}
+  \caption{Encoding \ipads{} in \ddc{} with type checking}
+  \label{fig:encode-ipads-with-tc}
 \end{figure*}
 
  \reminder{Add poly. context to all typing judgments that appear in
    premises. See email (subject:Prec) for details on how to fix translation}
-}
 
-\poplversion{
 \begin{figure*}
 {\small
 \fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
@@ -177,13 +174,13 @@ Finally, we briefly discuss some limitations of \ddc{}.
   }{
      \itmv \cipads \ty
   }
-\quad
+\qquad
   \infer[\text{Prog-Def}]{ 
      \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
   }{
      \mathit{prog}[\itmv/\ga] \cipads \ty \; \text{prog}
   }
-\quad
+\qquad
   \infer[\text{Prog-RecDef}]{ 
       \Prec{}\; \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
   }{
@@ -195,22 +192,22 @@ Finally, we briefly discuss some limitations of \ddc{}.
 
 \[
   \infer[\text{Base}]{ 
-     \Pbase e \cipads \pbase e
+     \pbase e \cipads \pbase e
   }{}
-\quad
+\qquad
   \infer[\text{Pfun}]{ 
      \Pfun (x:\ity) = \itmv \cipads \plam x
     \ity \ty
   }{
     \itmv \cipads \ty
   }
-\quad
+\qquad
   \infer[\text{App}]{ 
      \itmv \; e \cipads \ty \; e
   }{
      \itmv \cipads \ty
   }
-\quad
+\qquad
   \infer[\text{Pstruct}]{
     \begin{array}{l}
      \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
@@ -232,14 +229,14 @@ Finally, we briefly discuss some limitations of \ddc{}.
   }{ 
      \itmv_i \cipads \ty_i
   }
-\quad
+\qquad
   \infer[\text{Palt}]{
      \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
     \ty_1 \& \dots \& \ty_n
   }{ 
      \itmv_i \cipads \ty_i
   }
-\quad
+\qquad
   \infer[\text{Popt}]{
      \Popt \; \itmv \cipads
      \psum \ty {} \ptrue
@@ -253,13 +250,13 @@ Finally, we briefly discuss some limitations of \ddc{}.
     \begin{array}{l}
        \itmv \; \Pwhere \, x.e \cipads  \\
       \qquad
-      \pset x \ty {\iif {\pdok {x.\codefont{pd}}} \; \ithen e \; \ielse
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
         \itrue}
     \end{array}
   }{ 
     \itmv \cipads \ty
   }
-\quad
+\qquad\qquad
   \infer[\text{Parray}]{
      \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
     \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
@@ -275,18 +272,18 @@ Finally, we briefly discuss some limitations of \ddc{}.
   \infer[\text{Pcompute}]{ 
      \Pcompute{} \; e{:}\ity \cipads \pcompute e \ity
   }{}
-\quad
+\qquad
   \infer[\text{Plit}]{ 
      \Plit \const \cipads 
-    \pscan {\pabsorb {\pset \var \ty {\ivar = \iconst}}}
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
   }{
     \defty \const \ty
   }
-\quad
+\qquad
   \infer[\text{Var}]{ 
      \ga \cipads \ga
   }{}    
-\quad
+\qquad
   \infer[\text{Prec}]{ 
      \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
   }{
@@ -297,6 +294,95 @@ Finally, we briefly discuss some limitations of \ddc{}.
   \caption{Encoding \ipads{} in \ddc{}}
   \label{fig:encode-ipads}
 \end{figure*}
+}
+
+\poplversion{
+\begin{figure}
+{\small
+\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer{ 
+     \itmv \cipads \ty \; \text{prog}
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+  \infer{ 
+     \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+     \mathit{prog}[\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\qquad
+  \infer{ 
+      \Prec{}\; \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+     \mathit{prog}[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$ \itmv  \cipads \ty$}
+
+\[
+  \infer{
+%    \begin{array}{l}
+       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads %\\
+      %\qquad 
+      \ty_1 + \dots + \ty_n + \pfalse
+%    \end{array}
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\]
+
+\[
+%\quad
+  \infer{
+%    \begin{array}{l}
+       \itmv \; \Pwhere \, x.e \cipads  %\\
+      %\qquad
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+%    \end{array}
+  }{ 
+    \itmv \cipads \ty
+  }
+\]
+
+\[
+%\qquad\qquad
+  \infer{
+     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+  }{ 
+    \itmv \cipads \ty & 
+    \itmv_{sep} \cipads \ty_s &
+    \itmv_{term} \cipads \ty_t &
+    (f = \ilam x{}\ifalse)
+  }
+\]
+
+\[
+%\qquad\qquad
+  \infer{
+     \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+\infer{ 
+     \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+  }{
+    \defty \const \ty
+  }
+\]
+}
+\caption{Selected Rules for Encoding \ipads{} in \ddc{}}
+  \label{fig:encode-ipads}
+\end{figure}
 }
 
 In Section~\ref{sec:ddc-example}, we gave an example of how an
@@ -382,7 +468,8 @@ the parser to use $\ty_2$. To address this problem, we use products:
 Exactly one element of the pair will be the $\iunitty$ value,
 while the other will be the result of the parse. With this definition,
 we encode the \Pswitch{} as a syntactic sugar for a series of
-cascading conditional types.
+cascading conditional types~\footnote{We can safely replicate $e$ as the
+host language is side-effect free.}
 
 \[
 \begin{array}{l}
@@ -407,13 +494,16 @@ the packet body is represented as a simple byte-array.
 \begin{code}
 FPPacket = \Pstruct \{
   header : FPHeader;
-  body   : \Pbyte \Parray{}(\Peof,\Peof);
+  body   : \Pbyte \Parray{}(\Pnosep,\Peof);
 \}\linebreak
 
 IPinFP = \Poverlay FPPacket.body \Pwith IPPacket
 \end{code}
-The overlay creates a new type \cd{IPinFP} where the body field is
-an \cd{IPPacket} rather than a simple byte array.
+Type \Pnosep{} indicates that there are no separators between elements
+of the byte array. It can be encoded as \cd{\Pcompute{}(():unit)}, as
+this type consumes no data and produces a unit value without errors.
+The overlay creates a new type \cd{IPinFP} where the body field is an
+\cd{IPPacket} rather than a simple byte array.
 
 We've developed a translation of the overlay syntax into \ddc{}. Although
 overlays are conceptually intuitive,
@@ -441,18 +531,17 @@ sequences:
 \[
   \infer{
     \itmv \; [\mathit{length}] \cipads 
-    \pseq \ty {\ptrue{}} {\pterm {\mathtt{f}} {\pfalse{}}} : \kty
+    \pseq \ty {\ptrue{}} {\pterm {f} {\pfalse{}}} : \kty
   }{ 
     \itmv \cipads \ty & 
-    (\mathtt{f} = \codefont{isLength}\; \mathit{length})
+    (f = \ilam {((len,elts),p)} {} {\codefont{len} = \mathit{length}})
   }
 \]
-As binary data has no separators, we use $\ptrue$. The function {\tt
-  isLength} is a curried function taking a length and a pair of representation
-and PD arrays and returning a boolean indicating whether both arrays
-have the specified length. As there is no lookahead-terminator, we use
-$\pfalse$ (thereby guaranteeing that the array will not be terminated
-because of lookahead).
+As binary data has no separators, we use $\ptrue$. The function $f$
+takes a pair of representation and PD arrays and compares the sequence
+length recorded in the representation to $\mathit{length}$. As there
+is no lookahead-terminator, we use $\pfalse$ (thereby guaranteeing
+that the array will not be terminated because of lookahead).
 
 For the second case, we need a way to terminate if the next element
 will not parse correctly without consuming it. We cannot use the
@@ -478,10 +567,10 @@ With $\pnotn$, we can encode the unbounded \datascript{} array as
 follows:
 \[
   \infer{
-    \ctxt \turn {dty} \; [{length}] \cipads 
-    \pseq \ty {\ptrue{}} {\pterm {\ilam x {} \ifalse} {\pnot \ty}} : \kty
+    \itmv \; [{length}] \cipads 
+    \pseq \ty {\ptrue{}} {\pterm {\ilam x {} \ifalse} {\pnot \ty}}
   }{ 
-    \ctxt \turn {dty} \cipads \ty : \kty 
+    \itmv \cipads \ty
   }
 \]
 Note that the termination predicate is trivially false, as we use the
