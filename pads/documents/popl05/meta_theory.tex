@@ -275,27 +275,30 @@ is well formed in $\ctxt$.
   $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
 \end{corollary}
 
-To formalize the error-correlation property, we start by
-defining what it means for a representation and PD to be correlated.
-Informally, it means that the number of errors recorded in the PD is
-at least as many as the number of errors that appear in the representation. It
-also means that semantic errors, \ie{}, constraint violations,
-are properly reported. Formally, we define two mutually recursive
-relations $\corrkl \ty r p$ and $\corr \tyval r p$ that check whether
-a representation and PD are correlated at a given type. The first relation is
-a ``helper function'' that normalizes types before checking for
-correlation. We define {\it type normalization} in
-\figref{fig:revised-ddc-syntax}, with a revised syntax chart of the
-\ddc{} and the reduction rules used to normalize types.
+We start our formalization of the error-correlation property by
+defining the concept of representation and PD correlation.
+Informally, a representation and a PD are correlated when the number
+of errors recorded in the PD is at least as many as the number of
+errors that appear in the representation and semantic errors, \ie{},
+constraint violations, are properly reported.  Formally, we define
+correlation with the relation $\corr \tyval r p$. As the encoding of
+errors in the representation and the meaning of error counts in the PD
+are dependent on the \ddc{} type that produced them, correlation is
+type directed.  However, some types, such as type application, are not
+immediately useful in determining correlation, and must be normalized
+before use. {\it Type normalization} is defined
+\figref{fig:revised-ddc-syntax}, with a refactored syntax chart of the
+\ddc{} and normalization rules.  For clarity, we define $\corrkl \ty r
+p$ as a ``helper'' relation that normalizes types before checking for
+correlation.
 
 \begin{figure}
 \small
 \begin{bnf}
-  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
-                               \pext{\| \gk \-> \gk} \\
+%   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+%                                \pext{\| \gk \-> \gk} \\
   \mname{Normalized\\ Types}{2} \meta{\tyval} \::= 
-    \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} 
-  \nlalt
+    \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} \|
 %  \nlnalt{Types}
 %%        \|
 %%       \pext{\plam{\ptyvar}{\gk}{\ty} \| \papp{\ty}{\ty} \nlalt}
@@ -303,35 +306,33 @@ correlation. We define {\it type normalization} in
 %%       \pext{\nlalt
 %%         \ptransform{e}{e}{\ty} \| 
 %%       }
-    \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \nlalt 
+    \psig x \ty \ty \| \psum \ty e \ty \nlalt
+    \pand \ty \ty \|
     \pset x \ty e \|
     \pseq \ty \ty {\pterm e \ty} \nlalt
-    \pcompute e \ity \| \pabsorb \ty \nlalt
-    \pscan{\ty} 
+    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
     \\
   \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
     \ptyvar \| \pmu{\ptyvar}{\ty} 
 \end{bnf}  
-
 \[
-  \infer[App1]{
+  \infer{
     \papp {\ty} {e} \stepsto \papp {\ty'} {e}
   }{
     \ty \stepsto \ty'
   }
 \quad
-  \infer[App2]{
+  \infer{
     \papp {\tyval} {e} \stepsto \papp {\tyval} {e'}
   }{
     e \stepsto e'
   }
-\]
-\[%\quad
-  \infer[AppAbs]{
+\quad
+  \infer{
     \papp {(\plam x {} \ty)} {v} \stepsto \ty[v/x]
   }{}
 \quad
-  \infer[Unroll]{
+  \infer{
     \pmu \ptyvar \ty \stepsto \ty[\pmu \ptyvar \ty/\ptyvar]
   }{}
 \]

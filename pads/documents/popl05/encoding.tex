@@ -308,7 +308,7 @@ as \ddc{} type $\ty$, while $\itmv \cipads \ty$ does the same
 for \ipads{} types $\itmv$.
 
 As much of the translation is straightforward, we mention only a few
-important points. We translate base type by punning the \ipads{} name
+important points. We translate base types by punning the \ipads{} name
 to produce a \ddc base type. We add $\pbot$ as the last branch of the
 \ddc{} sum when translating \Punion{} so that the parse will fail in
 the event that none of the branches match, rather than simply
