@@ -28,7 +28,7 @@ including that each subcomponent adds 1 to the error count of its
 parent if and only if it had errors. However, when we got to arrays,
 we noticed a deviation from this methodology. Further examination
 revealed that the deviation was in fact a subtle bug. We were only
-able to find it due to the conciseness provided by the semantics.
+able to find it becuase of the conciseness provided by the semantics.
 
 %   Arbitrary behaviour of error accounting for arrays with regard
 %   to element errors. The implementation only counts an element error
@@ -37,7 +37,7 @@ able to find it due to the conciseness provided by the semantics.
 %   The semantics highlighted this error as it was inconsistent with the
 %   error accounting of other types. Counting it exactly once would
 %   parallel the other types, if we consider the array data-structure
-%   (in the array rep) as one subelement of the rep.
+%   (in the array representation) as one subelement of the representation.
 Secondly, the semantics help us avoid potential non-termination of
 array parsers. In the original implementation of \pads{} arrays,
 arrays were not guaranteed to terminate, a bug that was only uncovered
@@ -58,26 +58,26 @@ error-free values.  A second example are the semantics of \Pomit{}
 with respect to field scope. Currently, we allow omitted fields to be
 accessed just as other fields during parsing, by saving their values
 in temporary variables.  They are not available otherwise, however, as
-they are not saved in the output rep. While this semantics can be very
-useful, it discourages any simple understanding of \Pomit{}. Instead,
-the \ddc{} makes the value unavailable anywhere, returning the
-$\iunitty$ value for the $\pabsorbn$ type. A final example is the
-semantics of constrained types (\Pwhere{} clauses and field
-constraints).
+they are not saved in the output representation. While this semantics
+can be very useful, it discourages any simple understanding of
+\Pomit{}. Instead, the \ddc{} makes the value unavailable anywhere,
+returning the $\iunitty$ value for the $\pabsorbn$ type.
 
-In \pads{}/C, if a field's constraint is violated its rep is still
-valid. This design required a lot of consideration in formalizing the
-semantics, due to the potential safety problem of providing the
-semantically invalid value to the user.  The dilemma is that the user
-should be able to get at the erroneous value somehow, if only for
-debugging purposes. In the semantics, we choose to inject the value
-into a sum, to force the user check the valeus tag before using it.
-different choice. However, in \C{}, there is no way to force such a
-check. Therefore, we left the value alone. The semantics highlights
-that in a different language binding, we might make a different
-decision.  Again, in the words of Landin ``we must systematize their
-design so that a new language is a point chosen from a well-mapped
-space, rather than a laboriously devised construction.''
+A final example is the semantics of constrained types (\Pwhere{}
+clauses and field constraints).  In \pads{}/C, if a field's constraint
+is violated its representation is still valid. This design required a lot of
+consideration in formalizing the semantics, because of the potential
+safety problem of providing the semantically invalid value to the
+user.  The dilemma is that the user should be able to get at the
+erroneous value somehow, if only for debugging purposes. In the
+semantics, we choose to inject the value into a sum, to force the user
+check the valeus tag before using it.  different choice. However, in
+\C{}, there is no way to force such a check. Therefore, we left the
+value alone. The semantics highlights that in a different language
+binding, we might make a different decision.  Again, in the words of
+Landin ``we must systematize their design so that a new language is a
+point chosen from a well-mapped space, rather than a laboriously
+devised construction.''
 
 \subsection{Distinguishing the Essential from the Accidental}
 
@@ -88,13 +88,13 @@ background that may be obscuring fruitful developments?''  The
 semantics helped us answer this question with regard to the \Pomit{}
 and \Pcompute{} qualifiers of \pads{}.  Originally, they were only
 intended for use within \Pstruct{}s, as type qualifiers for fields.
-Quite by accident, they soon appeared in \Punion{}s as well, but
-spread no further. Yet, for simplicity, we chose to encode \Pomit{}
-and \Pcompute{} in \ddc{} with their own, first class types
-($\pabsorbn$ and $\pcomputen$, respectively). Due to this choice, we
-discovered that both can encode more \pads{} features than just the
-qualifiers for which we had originally intended them. In this case,
-then, the \ddc{} highlighed that the restriction of \Pomit{} and
+By an accident of the implementation, they soon appeared in \Punion{}s
+as well, but spread no further. Yet, for simplicity, we chose to
+encode \Pomit{} and \Pcompute{} in \ddc{} with their own, first class
+types ($\pabsorbn$ and $\pcomputen$, respectively). Because of this
+choice, we discovered that both can encode more \pads{} features than
+just the qualifiers for which we had originally intended them. In this
+case, then, the \ddc{} highlighed that the restriction of \Pomit{} and
 \Pcompute{} to mere type qualifers for \Punion{} and \Pstruct{} fields
 was an ``accident of history,'' rather than a ``basic logical
 property'' of data description.
@@ -116,20 +116,30 @@ improvement.
 
 \subsection{Principled Language Extension: Adding Recursion to \pads{}}
 
-From the theory we learned:
+Unlike the rest of \ipads{}, the semantics of recursive types actually
+preceded the implementation. Therefore, we used the semantics to guide
+our design decions in the implementation, particularly in the
+following three areas:
 \begin{itemize}
-\item Type checking: types should be contractive (not yet implemented)
-\item Compilation: insert forward declaration and use function name for
-  references to types.
-\item rep and PD type: need indirection, but don't need special reps
-  and pds for recursive types. So, recursion works as modifier of
-  other types.
+\item Static semantics. It is impossible for the user to write down a
+  non-contractive type. The recursion always passes through another
+  type constructor.
+\item Parser generation. We implement the parsers with recursive
+  functions, using the name of the type to determine the name of the
+  function.
+\item Representation and parse descriptor type. We don't need
+  special representation and PD types for recursive types. However, we
+  need to interpret the names of recursive types as references
+  (i.e. pointers) and as the underlying type itself. While this is
+  implicit in the semantics, it must be done explicitly by the
+  compiler in the implementation.
 \end{itemize}
 
-We add the construct \cd{Precur id} to \pads{}. It inserts all
-necessary forward declarations and ensures that data from the type is
-referenced through pointers. Here is the Newick format in the extended
-version of \pads{}:
+We now briefly describe the actual implementation. We add the
+construct \cd{Precur id} to \pads{}. It inserts all necessary forward
+declarations and ensures that representation and PD of the recursive
+type is referenced through pointers. Here is the Newick format in the
+extended version of \pads{}:
 
 \begin{code}
 Popt Pstruct node\{
@@ -150,6 +160,11 @@ Pstruct itree\{
   ")";
 \};
 \end{code}
+
+We note that the \cd{Precur} keyword need not appear before the actual
+definition of \cd{itree} as the compiler can automatically make the
+necessary modifications to all types that are declared recursive
+with\cd{Precur}.
 
 %%% Local Variables: 
 %%% mode: latex
