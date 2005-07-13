@@ -579,11 +579,15 @@ type was matched along with the type's corresponding parse descriptor.
 The parsing semantics of a type $\tau$ is a function that transforms some amount of input into a pair of a representation and a parse descriptor, the types of which are determined by $\tau$.
 \figref{fig:parser-types} specifies the \implang{} language types of the parsers generated from well-kinded \ddc{} types.  Note that parameterized \ddc{} types require their arguments before they can parse any input.
 
-\figref{fig:ddc-sem} shows the parsing semantics function.
-For each type,
-the input to the corresponding parser is a bit string and an offset which indicates the point in the bit string at which parsing should commence.  The output
-is a new offset, a representation of the parsed data, and a parse descriptor.
-In addition to specifying how to handle correct data, each function describes how to transform corrupted bit strings and to mark the detected errors in a parse descriptor. The semantics function is partial, applying only
+\figref{fig:ddc-sem} shows the parsing semantics function.  For each
+type, the input to the corresponding parser is a bit string and an
+offset which indicates the point in the bit string at which parsing
+should commence.  The output is a new offset, a representation of the
+parsed data, and a parse descriptor. Note that the bit string input is
+never modified, and therefore not returned as an output.  In addition
+to specifying how to handle correct data, each function describes how
+to transform corrupted bit strings and to mark the detected errors in
+a parse descriptor. The semantics function is partial, applying only
 to well-formed \ddc{} types.
 
 For any type, there are three steps to parsing: parsing the
