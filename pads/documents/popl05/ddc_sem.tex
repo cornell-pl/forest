@@ -660,7 +660,7 @@ satisfied.
 }
 Sequences have the most complicated semantics because the number of subcomponents depends upon a combination of the data, the termination predicate, and the terminator type. Consequently, the sequence parser uses mutually
 recursive functions $\codefont{isDone}$ and $\codefont{continue}$ to implement this open-ended semantics. 
-Function $\codefont{isDone}$ determines whether the parser
+Function $\codefont{isDone}$ determines if the parser
 should terminate by checking whether the end of the source has been
 reached, the termination condition $e$ has been satisfied, or the
 terminator type can be read from the stream without errors at
@@ -671,7 +671,7 @@ offsets are the starting and ending offset of the previous round of
 parsing. They are compared to determine whether the parser is
 progressing in the source, a check that is critical to ensuring that
 the parser terminates. Next, the parser checks whether the sequence is
-finished, and, if so, terminates. Otherwise, it attempts to read a
+finished, and if so, terminates. Otherwise, it attempts to read a
 separator followed by an element and then continues parsing the
 sequence with a call to $\codefont{continue}$.
 
