@@ -597,20 +597,18 @@ $\begin{array}{l}
 \end{lemma}
 }
 
-\section{Meta-theory}
+\section{Conditions on Base Types}
 \label{app:meta-theory}
 \begin{condition}[Conditions on Base-type Interfaces]
 \label{cond:base-types}
   \begin{enumerate}
   \item $\dom {\Ikind} = \dom {\Iimp}$.
   \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
-    \ioparrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$).
-  \item If $\stsem[v,,\ity]$ and $\Iopty(C) = \ioparrow \ity
-    {\kTrans[\kty,\pbase e]}$ then
-    $\stsem[\Iimp(C)(v),,{\kTrans[\kty,\pbase e]}]$.
+    \iarrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$ of type $\ity$).
+  \item $\stsem[\Iimp(C),,\Iopty(C)]$.
     \label{cond:closed-op}
   \item If $\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and
-    $\Iimp(C)(v) \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$
+    $\Iimp(C) \sapp v \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$
     then $\corr {\pbase v} r p $.
   \end{enumerate}
 \end{condition}

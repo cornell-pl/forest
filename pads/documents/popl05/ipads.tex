@@ -258,14 +258,15 @@ abbreviate this syntax in places.  For instance, in general, we omit
 (singleton) types in our examples.  In addition, formally, every field
 of a structure is labeled.  However, rather than write ``$x :
 \Plit{c};$'' we write ``$c;$'' instead.  In addition, formally, all
-base types \Pbase{} have a single parameter whereas we have omitted
+base types $C$ have a single parameter whereas we have omitted
 parameters for base types such as \Puint.  Also, expressions $e$ and
 types $\sigma$ are taken from the host language, which is detailed in
-Section~\ref{sec:host-lang}. Notice, however, that we use
-$x$ for host language expression variables and $\alpha$ for \ipads{}
-type variables. \reminder{Should we add Palt to syntax chart and
-  mention it here?}
-
+Section~\ref{sec:host-lang}. Notice, however, that we use $x$ for host
+language expression variables and $\alpha$ for \ipads{} type
+variables. 
+\trversion{Finally, the type $\Palt{}$, which did not appear in the
+  examples, describes data that is described by all the branches
+  simultaneously and produces a set of values - one from each type.}
 
 \begin{figure}
 \begin{bnf}
@@ -277,6 +278,7 @@ type variables. \reminder{Should we add Palt to syntax chart and
     \Pfun{} (\var:\ity) = \itmv \| \itmv\; e \nlalt
     \Pstruct{} \{\overrightarrow {\nont {field}}\} \| 
     \Punion{} \{\overrightarrow {\nont {field}}\} \nlalt
+    \trversion{\Palt{} \{\overrightarrow {\nont {field}}\}}
     \itmv \; \Pwhere{} \, x.e \| 
 % \Palt{} \{\vec {\nont{field}}\} \|
     \Popt{}\; \itmv \nlalt 
