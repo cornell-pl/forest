@@ -35,7 +35,7 @@ description language.
   
 \item {\bf Parser Error Correlation}: For any representation and PD output by a
   parsing function, the errors reported in the PD
-  will be correllated with the errors present in the representation.
+  will be correlated with the errors present in the representation.
 \end{itemize}
 
 \trversion{
@@ -492,15 +492,12 @@ If $\ddck[\ty,,\kind,\con]$ then $\ecpred \ty \kind$.
   use Lemma~\ref{lem:err-corr-at-T}.
 \end{proof}
 
-\reminder{This property isn't terribly useful given its limitation to
-  syntactic errors. We really want to state that there are no errors,
-  but there's no simple way to do that.}
-
-We conclude this section with a useful property of correllated Reps
+We conclude this section with a useful property of correlated representations
 and PDs. If the PD reports no errors, then there are no syntactic
-errors in the rep datastructure {\it at any level}. We formally define
+errors in the representation data structure {\it at any level}. 
+\trversion{We formally define
 {\it clean} (error-free) values next, followed by the statement of the
-property itself.
+property itself.}
 
 \begin{definition}[Clean Value]
 $\noerr v$ iff exactly one of the following is true:
