@@ -262,7 +262,7 @@ is well formed in $\ctxt$.
 \label{thm:type-correctness}
   If  $\wfd \ctxt \rctxt$ and
    $\ddck[\ty,{\rctxt;\ctxt},\gk,\mcon]$ then
-  $\stsem[{\trans[\ty,,]},\cdot;{\ctxt,\ptyc \rctxt},
+  $\stsem[{\trans[\ty,,]},{\ctxt,\ptyc \rctxt},
             {\kTrans[\kind,\asub \rctxt \ty]}]$.
 \end{theorem}
 
@@ -281,16 +281,18 @@ Informally, a representation and a PD are correlated when the number
 of errors recorded in the PD is at least as many as the number of
 errors that appear in the representation and semantic errors, \ie{},
 constraint violations, are properly reported.  Formally, we define
-correlation with the relation $\corr \tyval r p$. As the encoding of
+correlation with the relation $\corr \ty r p$. As the encoding of
 errors in the representation and the meaning of error counts in the PD
 are dependent on the \ddc{} type that produced them, correlation is
 type directed.  However, some types, such as type application, are not
 immediately useful in determining correlation, and must be normalized
-before use. {\it Type normalization} is defined
-\figref{fig:revised-ddc-syntax}, with a refactored syntax chart of the
-\ddc{} and normalization rules.  For clarity, we define $\corrkl \ty r
-p$ as a ``helper'' relation that normalizes types before checking for
-correlation.
+before use. In \figref{fig:revised-ddc-syntax}, we define a set of
+normalized types $\tyval$ and rules for normalizing the remaining
+types. For clarity, we define $\corrkl \ty r p$ as a ``helper''
+relation that normalizes types $\ty$ before checking for correlation.
+The main correlation relation ($\corr \ty r p$), then, is defined only
+for normalized types of base kind. Type abstractions are excluded as
+they cannot directly produce representations and PDs.
 
 \begin{figure}
 \small
@@ -336,7 +338,7 @@ correlation.
     \pmu \ptyvar \ty \stepsto \ty[\pmu \ptyvar \ty/\ptyvar]
   }{}
 \]
-  \caption{\ddc{} Normalized Syntax and Reduction Rules}
+  \caption{\ddc{} Normalized Syntax and Normalization Rules}
   \label{fig:ddc-reduction-rules}
   \label{fig:revised-ddc-syntax}
 \end{figure}
@@ -345,9 +347,9 @@ correlation.
 $\corrkl \ty r p$ iff if $\ty \kstepsto \tyval$ then $\corr \tyval r p$.
 \end{definition}
 
-In the following definition,
-we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
-and use $\mathtt{pos}$ to denote the function which returns zero when passed zero and one otherwise.
+In the following definition, we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
+and use $\mathtt{pos}$ to denote the function which returns zero when
+passed zero and one otherwise.
 
 
 \begin{definition}[Representation and PD Correlation Relation]
@@ -493,6 +495,7 @@ If $\ddck[\ty,,\kind,\con]$ then $\ecpred \ty \kind$.
   use Lemma~\ref{lem:err-corr-at-T}.
 \end{proof}
 
+\trversion{
 We conclude this section with a useful property of correlated representations
 and PDs. If the PD reports no errors, then there are no syntactic
 errors in the representation data structure {\it at any level}. 
@@ -519,7 +522,12 @@ $\noerr v$ iff exactly one of the following is true:
 \begin{proof}
   By induction on the structure of r.
 \end{proof}
+}
 
+\begin{corollary}
+  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then there are no syntactic
+  or semantic errors in the representation data structure $r$.
+\end{corollary}
 
 %%% Local Variables: 
 %%% mode: latex
