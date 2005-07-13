@@ -576,59 +576,57 @@ type was matched along with the type's corresponding parse descriptor.
 \end{figure}
 
 
-The parsing semantics of a type is a function that takes a bit string
-as input and produces a representation and parse descriptor as ouptut. 
-\figref{fig:parser-types} specifies the \implang{} language types of the parsers generated from well-kinded \ddc{} types.  Parameterized \ddc{} types require their arguments before they can parse the input.
+The parsing semantics of a type $\tau$ is a function that transforms some amount of input into a pair of a representation and a parse descriptor, the types of which are determined by $\tau$.
+\figref{fig:parser-types} specifies the \implang{} language types of the parsers generated from well-kinded \ddc{} types.  Note that parameterized \ddc{} types require their arguments before they can parse any input.
 
-The semantics
-of each type is shown in \figref{fig:ddc-sem}.  Each parsing function
-takes a bit string and an offset into the string and returns a new
-offset, a representation of the parsed data, and a parse descriptor.
-An essential feature of each function is its description of how
-corrupted bit strings are transformed and their errors marked in a
-parse descriptor. Note that the semantics function is partial and only
-guaranteed to translate well-formed \pads{} types.
+\figref{fig:ddc-sem} shows the parsing semantics function.
+For each type,
+the input to the corresponding parser is a bit string and an offset which indicates the point in the bit string at which parsing should commence.  The output
+is a new offset, a representation of the parsed data, and a parse descriptor.
+In addition to specifying how to handle correct data, each function describes how to transform corrupted bit strings and to mark the detected errors in a parse descriptor. The semantics function is partial, applying only
+to well-formed \ddc{} types.
 
-For any type, there are three aspects to parsing: parsing the
-subcomponents of the type (if any), assembling the resultant data, and
-calculating and assembling meta-data based on subcomponent meta-data
+For any type, there are three steps to parsing: parsing the
+subcomponents of the type (if any), assembling the resultant representation, and
+tabulating meta-data based on subcomponent meta-data
 (if any). For the sake of clarity, we have factored the latter two
 aspects into separate representation and PD constructor functions which we define for
 each type. For some types, we additionally factor the PD header
 construction into a separate function. For example, the representation 
 and PD constructors for $\ptrue$ are $\newrepf {unit}$ and $\newpdf
-{unit}$, respectively and the header constructor for products is
-${\codefont{H_{\gS}}}$. The constructors are shown in
+{unit}$, respectively, and the header constructor for products is
+${\codefont{H_{\gS}}}$. Selected constructors are shown in
 \figref{fig:cons-funs}. We have also factored out some commonly
 occuring code into ``built-in'' functions, explained as needed and
 defined formally in \appref{app:asst-functions}.
 
-A key role of a PD constructor is to determine the error code and
-calculate the error count of its output. The error code is based on
-the result of the parse, for which there are three possibilities: it
-can succeed, parsing the data fully without errors; it can succeed,
+The PD constructors determine the error code and
+calculate the error count.  There are three possible error codes:
+$\iok$, $\iecerr$, and $\iecpc$, corresponding to the three possible results of a parse: 
+it can succeed, parsing the data without errors; it can succeed,
 but encounter errors in the process; or, it can encounter an
-unrecoverable error and fail. The error code indicates which occured
-with the error codes $\iok$, $\iecerr$, and $\iecpc$, respectively.
+unrecoverable error and fail.
+\trversion{
 Note that the the purpose of the $\iecpc$ code is to indicate to any
 higher level elements that some form of error recovery is required.
 Hence, the whole parse is marked as failed exactly when the parse ends
-in failure.
-
-In general, the error count is determined based on the error counts of
+in failure.}
+The error count is determined by the error counts of
 the subcomponents and any errors associated directly with the type
-itself.  If a subcomponent has errors then the error count is
+itself.  
+\trversion{
+If a subcomponent has errors then the error count is
 increased by one; otherwise its not increased at all. We use the
 function $\codefont {pos}$, which maps all positive numbers to 1
 (leaving zero as is), to assist in calculating the contribution of
 subcomponents to the total error count.  Errors at the level of the
 element itself - such as constraint violation in set types - are
-generally counted individually.
+generally counted individually.}
 
-With this general understanding of the constructors, we can now
-understand the semantics. The semantics of $\ptrue$ and $\pfalse$ show
-that they do not parse any data - that is, they do not advance the
-input stream. A look at their constructors shows that the parse
+With this background, we can now discuss selected portions of the semantics.
+%With this background, we can now understand the semantics. 
+The semantics of $\ptrue$ and $\pfalse$ show that they do not consume any input, \ie{}, they do not change the offset. 
+A look at their constructors shows that the parse
 descriptor for $\ptrue$ always indicates no errors and a corresponding
 $\iok$ code, while that of $\pfalse$ always indicates failure with an
 error count of one and the $\iecpc$ error code. The semantics of base
@@ -638,12 +636,15 @@ and application are defined directly in terms of \implang language
 abstraction and application.  Dependent pairs read the first element
 at $\off$ and then the second at $\off'$, the offset returned from
 parsing the first element.  Notice that we bind the pair of the
-returned representation and parse descriptor to the variable $x$
-before parsing the second element. Finally, we combine the results
+returned representation and parse descriptor to the variable $\codefont{x}$
+before parsing the second element, implicitly mapping the 
+\ddc{} variable $x$ to the \implang{} language variable $\codefont{x}$ in the process.
+Finally, we combine the results
 using the constructor functions, returning $\off''$ as the final
 offset of the parse.
 
-Sums first attempt to parse according to the left type, returning its
+\trversion{
+Sums first attempt to parse according to the left type, returning the resulting
 value if it parses without errors. Otherwise, it parses according to
 the right type. Intersections read both types starting at the same
 point. They advance the stream to the maximum of the two offsets
@@ -652,26 +653,20 @@ descriptor is similar to that of products. For set types, we call the
 parser for the underlying type $\ty$, bind $\var$ to the resulting rep
 and PD, and check whether constraint is satisfied. The result
 indicates whether the data has a semantic error and is used in
-constructing the rep and PD. For example, the PD constructor will add
+constructing the representation and PD. For example, the PD constructor will add
 one to the error count if the constraint is not satisfied. Notice that
 we advance the stream independent of whether the constraint was
 satisfied.
-
-Sequences have the most complicated semantics. Unlike other types,
-sequences do not contain a predefined number of subcomponents. Rather,
-that number depends on a combination of the data, the termination
-predicate and terminator type. Therefore, the sequence parser uses
-recursive functions to implement this open-ended semantics. 
-
-The parser consists of two nested functions followed by the parser
-body. Function $\codefont{isDone}$ determines whether the parser
-should terminate, by checking whether the end of the source has been
+}
+Sequences have the most complicated semantics because the number of subcomponents depends upon a combination of the data, the termination predicate, and the terminator type. Consequently, the sequence parser uses mutually
+recursive functions $\codefont{isDone}$ and $\codefont{continue}$ to implement this open-ended semantics. 
+Function $\codefont{isDone}$ determines whether the parser
+should terminate by checking whether the end of the source has been
 reached, the termination condition $e$ has been satisfied, or the
-terminator type can be read from the stream, without errors, at
+terminator type can be read from the stream without errors at
 $\off$.
-
-The core function of the parser -- $\codefont{continue}$ -- takes four
-arguments: two offsets, a sequence rep and a sequence PD.  The two
+Function $\codefont{continue}$ takes four
+arguments: two offsets, a sequence representation, and a sequence PD.  The two
 offsets are the starting and ending offset of the previous round of
 parsing. They are compared to determine whether the parser is
 progressing in the source, a check that is critical to ensuring that
@@ -680,25 +675,25 @@ finished, and, if so, terminates. Otherwise, it attempts to read a
 separator followed by an element and then continues parsing the
 sequence with a call to $\codefont{continue}$.
 
-Finally, the body of the parser creates an initial sequence rep and PD
+\trversion{
+Finally, the body of the parser creates an initial sequence representation and PD and
 then checks whether the sequence described is empty. If not, it reads
 an element and creates a new rep and PD for the sequence.  Note that
 it passes the PD for $\ptrue$ in place of a separator PD, as no
 separator is read before the first element.  Finally, it continues
 reading the sequence with a call to $\codefont{continue}$.
 
-Due to the iterative nature of sequence parsing, the rep and PD are
-constructed incrementally. The parser first creates an empty rep and PD
+Because of  the iterative nature of sequence parsing, the representation and PD are constructed incrementally. The parser first creates an empty representation and PD
 and then adds elements to them with each call to
 $\codefont{continue}$. The error count for an array is the sum of the
-number of separators with errors plus 1 if there were any element
+number of separators with errors plus one if there were any element
 errors. Therefore, in function ${\codefont{H_{seq}}}$ we first check
 if the element is the first with an error, setting $\codefont{eerr}$
 to one if so. Then, the new error count is a sum of the old,
 potentially one for a separator error, and $\codefont{eerr}$. In
 $\newpdf{seq}$ we calculate the element error count by unconditionally
 adding one if the element had an error.
-
+}
 Recursive types are translated into recursive functions with a special
 function name corresponding to the name of the bound type variable. A
 recursive type variable is translated directly into this special name.
@@ -707,8 +702,9 @@ recursive type variable is translated directly into this special name.
   {\itup{\data,\off}} {\trans[\ty,,] \; \itup{\data,\off}}$ would have
   complicated the meta-theory.}
 
+\trversion{
 The definition of $\pcomputen$ just calls the compute constructors.
-The rep constructor returns the value computed by $e$, while the PD
+The representation constructor returns the value computed by $e$, while the PD
 records no errors and reports a span of length 0, as no data is
 consumed by the computation. The $\pabsorbn$ parser first parses the
 underlying type and then calls the absorb constructors, passing only
@@ -716,6 +712,7 @@ the PD, which is needed by the rep constructor to determine whether an
 error occured while parsing the underlying type. If so, the value
 returned is a $\ierr$. Otherwise, it is $\iunitty$.  The absorb parse
 descriptor duplicates the error information of its underlying type.
+
 
 The semantics of the $\pscann$ type is to attempt to parse the underlying
 type from the stream at an increasing scan-offset, $i$, from the original
@@ -726,7 +723,7 @@ which both records it in the PD and sets the error code based on
 it. It is considered a semantic error for the value to be found at a
 positive $i$, whereas it is a syntactic error for it not to be found at
 all.
-
+}
 %\clearpage
 
 %%% Local Variables: 
