@@ -604,15 +604,14 @@ The PD constructors determine the error code and
 calculate the error count.  There are three possible error codes:
 $\iok$, $\iecerr$, and $\iecpc$, corresponding to the three possible results of a parse: 
 it can succeed, parsing the data without errors; it can succeed,
-but encounter errors in the process; or, it can encounter an
+but discover errors in the process; or, it can find an
 unrecoverable error and fail.
 \trversion{
 Note that the the purpose of the $\iecpc$ code is to indicate to any
 higher level elements that some form of error recovery is required.
 Hence, the whole parse is marked as failed exactly when the parse ends
 in failure.}
-The error count is determined by the error counts of
-the subcomponents and any errors associated directly with the type
+The error count is determined by subcomponent error counts and any errors associated directly with the type
 itself.  
 \trversion{
 If a subcomponent has errors then the error count is
