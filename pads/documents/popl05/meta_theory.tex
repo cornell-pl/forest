@@ -14,64 +14,50 @@ with respect to user-defined variable names.}
 
 One of the most difficult, and perhaps most interesting, challenges of our
 work on \ddc{} was determining what
-properties we wanted to guarantee. What are the ``correct''
+properties we wanted to hold. What are the ``correct''
 invariants of data description languages? While there are many
 well-known desirable invariants for programming languages, the
-meta-theory of data description language has been, until now,
+meta-theory of data description languages has been
 uncharted.
 
-We present the following three properties as critical invariants of
+We present the following two properties as critical invariants of
 our theory. We feel that they should hold, in some form, for any data
 description language.
 \begin{itemize}
+\trversion{
 \item {\bf Translation Completeness}: The semantic function
   $\trans[\cdot,,]$ is a total function of well-formed \ddc{} types.
-
+}
 \item {\bf Parser Type Correctness}: For a \ddc{}-type $\ty$, the
-  Rep and PD output by the parsing function of $\ty$ will
-  have exactly the types specified by $\itsem[\ty]$ and
+  representation and PD output by the parsing function of $\ty$ will
+  have the types specified by $\itsem[\ty]$ and
   $\itpdsem[\ty]$, respectively.
   
-\item {\bf Parser Error Correlation}: For any Rep and PD output by a
-  parsing function of the semantics, the errors reported in the PD
-  will be correllated with the errors present in the Rep.
+\item {\bf Parser Error Correlation}: For any representation and PD output by a
+  parsing function, the errors reported in the PD
+  will be correllated with the errors present in the representation.
 \end{itemize}
 
-Before we present the formal statement of these properties, we specify
+\trversion{
+Before presenting the formal statement of these properties, we specify
 some assumptions that we make about \ddc{} base types, their kinds,
-types and implementations, that are necessary for the satisfaction of
-the properties. In essence, we assume that the properties we desire of
+types, and implementations, that are necessary for the satisfaction of
+these properties. In essence, we assume that the properties we desire of
 the rest of the calculus hold for the base types.
+}
+In the following formalization of these properties, we assume that \ddc{} base types, their kinds, representation and parse descriptor types, and parsers satisfy the properties we desire to hold of the rest of the calculus.  A formal statement of these assumptions appears in \appref{app:meta-theory}.
 
-\begin{condition}[Conditions on Base-type Interfaces]
-\label{cond:base-types}
-  \begin{enumerate}
-  \item $\dom {\Ikind} = \dom {\Iimp}$.
-  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
-    \ioparrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$).
-  \item If $\stsem[v,,\ity]$ and $\Iopty(C) = \ioparrow \ity
-    {\kTrans[\kty,\pbase e]}$ then
-    $\stsem[\Iimp(C)(v),,{\kTrans[\kty,\pbase e]}]$.
-    \label{cond:closed-op}
-  \item If $\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and
-    $\Iimp(C)(v) \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$
-    then $\corr {\pbase v} r p $.
-  \end{enumerate}
-\end{condition}
-
-Note that by condition~\ref{cond:closed-op}, the base type parser must
-be closed.
-
+\trversion{
 \begin{theorem}[Translation Completeness]
 \label{thm:translation-completeness}
-  If $\ddck[\ty,,\kind,\mcon]$ then $\trans[\ty,,] = e$.
+  If \ $\ddck[\ty,,\kind,\mcon]$ then $\trans[\ty,,] = e$.
 \end{theorem}
 
 \begin{proof}
   By induction on kinding derivations. For constant case, use the
   first item of Condition~\ref{cond:base-types}.
 \end{proof}
-
+}
 \trversion{
 We continue by stating and proving that parsers are type correct.
 However, to do so, we must first establish some typing properties of the Rep
@@ -258,17 +244,19 @@ $
   \label{fig:rec-parser-types}
 \end{figure}
 
-Next we present the type correctness theorem, followed by a simpler
-statement for closed types. In the conclusion of the former, as any
-free recursive variables in $\ty$ will become free function variables
-in $\trans[\ty,,]$, we need to extend $\ctxt$ with the types of those
-variables. We do so using the function $\ptyc \rctxt$, defined in
-\figref{fig:rec-parser-types}, which maps recursive variable contexts
+To prove our type correctness theorem by induction, we must account
+for the fact that any free recursive type variables in
+a \ddc{} type $\ty$ will become free function variables
+in $\trans[\ty,,]$.  To that end, we define in \figref{fig:rec-parser-types}
+the function $\ptyc \rctxt$, 
+which maps recursive variable contexts
 $\rctxt$ to typing contexts $\ctxt$. We also apply $\rctxt$ to $\ty$
-in order to close any open references to recursive types before
-determining its parser type.  We don't explicitly require that $\ctxt$
+to close any open references to recursive types before
+determining the corresponding parser type. 
+\trversion{  We don't explicitly require that $\ctxt$
 be well formed in the premises, as it follows from the fact that $\ty$
 is well formed in $\ctxt$.
+}
 
 \begin{theorem}[Type Correctness]
 \label{thm:type-correctness}
@@ -287,16 +275,16 @@ is well formed in $\ctxt$.
   $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
 \end{corollary}
 
-We now turn to the final property, that of parser error-correllation.
-We begin by defining what it means for a Rep and PD to be correllated.
+To formalize the error-correlation property, we start by
+defining what it means for a representation and PD to be correlated.
 Informally, it means that the number of errors recorded in the PD is
-at least as many as the number of errors that appear in the Rep. It
-also ensures that semantic errors - that is, constraint violations -
+at least as many as the number of errors that appear in the representation. It
+also means that semantic errors, \ie{}, constraint violations,
 are properly reported. Formally, we define two mutually recursive
 relations $\corrkl \ty r p$ and $\corr \tyval r p$ that check whether
-a Rep and PD are correllated at a given type. The first relation is
-just a ``helper function'' that normalizes types before checking for
-Rep and PD correllation. We define {\it type normalization} in
+a representation and PD are correlated at a given type. The first relation is
+a ``helper function'' that normalizes types before checking for
+correlation. We define {\it type normalization} in
 \figref{fig:revised-ddc-syntax}, with a revised syntax chart of the
 \ddc{} and the reduction rules used to normalize types.
 
@@ -356,9 +344,12 @@ Rep and PD correllation. We define {\it type normalization} in
 $\corrkl \ty r p$ iff if $\ty \kstepsto \tyval$ then $\corr \tyval r p$.
 \end{definition}
 
-In the following definition, we abbreviate $p.h.{nerr}$ as $p.{nerr}$,
-for readability.
-\begin{definition}[Rep and PD Corellation Relation]
+In the following definition,
+we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
+and use $\mathtt{pos}$ to denote the function which returns zero when passed zero and one otherwise.
+
+
+\begin{definition}[Representation and PD Correlation Relation]
 $\corr \ty r p$ iff exactly one of the following is true:
   \begin{itemize}
   \item $\ty = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
@@ -463,12 +454,12 @@ the Rep and PD constructors, as expressed in the following lemma.
 }
 
 Definition~\ref{def:err-corr} specifies the exact property we require
-of parsing functions. At base kind, we require that any Rep and PD
-returned by the parser must be correllated. At higher kind, we require
-that the function preserve the property of error correllation. Hence,
+of parsing functions. At base kind, we require that any representation and PD
+returned by the parser must be correlated. At higher kind, we require
+that the function preserve the property of error correlation. Hence,
 the definition is a simple form of logical relation.
 Lemma~\ref{lem:err-corr-at-T} states that any well-formed type of base
-kind is error-correllated.
+kind is error-correlated.
 
 \begin{definition}[Error Correlation Relation]
 \label{def:err-corr}
