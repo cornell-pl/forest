@@ -311,18 +311,18 @@ As much of the translation is straightforward, we mention only a few
 important points. We translate base type by punning the \ipads{} name
 to produce a \ddc base type. We add $\pbot$ as the last branch of the
 \ddc{} sum when translating \Punion{} so that the parse will fail in
-the event that none of the branches match, rather than simply returning
-the result of the last branch. This behaviour is based directly on the
-actual \pads{} language. In the translation of \Pwhere{}, we add host
-language code that only checks the constraint if the underlying value
-parsed with no errors. For \Parray{}s, we add simple error recovery by
-scanning for the separator type.  This behaviour allows us to
-skip erroneous elements easily. We use the $\pscann$ type in the same way for
-\Plit, as literals often appear as field separators in \Pstruct{}s.
-We also absorb the literal as its value is known statically.  We use the
-function ${\rm Ty}(c)$ to determine the correct parser for the particular
-literal. For example, a string literal would require a \Pstring{}
-parser.
+the event that none of the branches match, rather than simply
+returning the result of the last branch. This behaviour is based
+directly on the actual \pads{} language. In the translation of
+\Pwhere{}, we add host language code that only checks the constraint
+if the underlying value parsed with no errors. For \Parray{}s, we add
+simple error recovery by scanning for the separator type.  This
+behaviour allows us to skip erroneous elements easily. We use the
+$\pscann$ type in the same way for \padskw{Plit}, as literals often
+appear as field separators in \Pstruct{}s.  We also absorb the literal
+as its value is known statically.  We use the function ${\rm Ty}(c)$
+to determine the correct parser for the particular literal. For
+example, a string literal would require a \Pstring{} parser.
 
 \subsection{Beyond \ipads{}}
 
