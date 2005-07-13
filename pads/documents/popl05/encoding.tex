@@ -309,15 +309,15 @@ Finally, we briefly discuss some limitations of \ddc{}.
   }
 \qquad
   \infer{ 
-     \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+     \ga = \itmv; \; p \cipads \ty \; \text{prog}
   }{
-     \mathit{prog}[\itmv/\ga] \cipads \ty \; \text{prog}
+     p[\itmv/\ga] \cipads \ty \; \text{prog}
   }
 \qquad
   \infer{ 
-      \Prec{}\; \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+      \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
   }{
-     \mathit{prog}[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+     p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
   }
 \]
 
