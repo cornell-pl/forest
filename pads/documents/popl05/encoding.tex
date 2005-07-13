@@ -3,13 +3,13 @@
 
 We can better understand the data description languages described
 earlier by translating their constructs into the types of \ddc{}. We
-begin with the translation of \ipads{}, which captures many of the
-common features of DDLs. Then, we discuss some features not found in
-\ipads{} and give their semantics with \ddc{}. Finally, we list features
-of \datascript{} and \packettypes{} which we can encode in \ddc{},
-and briefly discuss the limitations of \ddc{}.
+start with the translation of \ipads{}, which captures many of the
+common features of DDLs. We then discuss some features not found in
+\ipads{}, giving them semantics in \ddc{} as well. Next, we list features
+of \datascript{} and \packettypes{} that we can encode in \ddc{}.
+Finally, we briefly discuss some limitations of \ddc{}.
 
-\subsection{IPADS Translation}
+\subsection{\ipads{} Translation}
 \label{sec:trans-sl}
 
 \trversion{
@@ -191,7 +191,7 @@ and briefly discuss the limitations of \ddc{}.
   }
 \]
 
-\fbox{$ \itmv  \cipads \ty : \kind$}
+\fbox{$ \itmv  \cipads \ty$}
 
 \[
   \infer[\text{Base}]{ 
@@ -307,41 +307,44 @@ formalize this translation. The judgment ${prog} \cipads \ty\;
 as \ddc{} type $\ty$, while $\itmv \cipads \ty$ does the same
 for \ipads{} types $\itmv$.
 
-As much of the translation is straightforward, we only mention a few
-important point. We translate base type by punning the \ipads{} name
+As much of the translation is straightforward, we mention only a few
+important points. We translate base type by punning the \ipads{} name
 to produce a \ddc base type. We add $\pbot$ as the last branch of the
 \ddc{} sum when translating \Punion{} so that the parse will fail in
-the even that none of the branches match, rather than simply returning
+the event that none of the branches match, rather than simply returning
 the result of the last branch. This behaviour is based directly on the
 actual \pads{} language. In the translation of \Pwhere{}, we add host
 language code that only checks the constraint if the underlying value
 parsed with no errors. For \Parray{}s, we add simple error recovery by
-scanning for the separator type.  This behaviour allows us to easily
-skip erroneous elements. We use the $\pscann$ type in the same way for
-\Plit{}, as literals often appear as field separators in \Pstruct{}s.
-We also absorb the literal its value is known statically.  We use the
+scanning for the separator type.  This behaviour allows us to
+skip erroneous elements easily. We use the $\pscann$ type in the same way for
+\Plit, as literals often appear as field separators in \Pstruct{}s.
+We also absorb the literal as its value is known statically.  We use the
 function ${\rm Ty}(c)$ to determine the correct parser for the particular
-literal. For example, a string literal would requrie a \Pstring{}
+literal. For example, a string literal would require a \Pstring{}
 parser.
 
 \subsection{Beyond \ipads{}}
 
 We now give semantics to three features not found in \ipads{}:
-switched unions, overlays and \datascript{} arrays.
+\pads{} switched unions, \packettypes{} overlays, and \datascript{} arrays.
 
 A switched union, like a \Punion, indicates variability in the data
 format with a set of alternative formats (branches). However, instead
-of trying each branch in turn, the switched union takes a tag that
-determines which branch to use. Each branch is preceded by its own tag
-and the first branch whose tag matches the one provided is selected.
+of trying each branch in turn, the switched union takes an expression that
+determines which branch to use. Typically, this expression depends upon data read earlier in the parse. Each branch is preceded by a tag,
+and the first branch whose tag matches the expression is selected.
 If none match then the default branch $\itmv_{\text{def}}$ is chosen.
 The syntax of a switched union is $\Pswitch{}\;e\;\{\overrightarrow{e
   \Rightarrow x{:}\itmv}\; \itmv_{\text{def}}\}$.
 
-To aid in our translation of \Pswitch{}, we first define a simpler
-construct that allows us to conditionally choose between two types:
-$\iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2}$. Our first attempt to
-translate it relies on \ddc{} sums:
+To aid in our translation of \Pswitch{}, we define a simpler
+construct that allows us to choose between two types conditionally:
+$\iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2}$. 
+
+\trversion{
+Our first attempt to
+translate the conditional relies on \ddc{} sums:
 \[
 \infer{
   \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
@@ -364,6 +367,7 @@ Unfortunately. while this seems to work, it will fail if there is an
 error in $\ty_1$ when $e$ is true. The error will cause errors in the
 set type despite the satisfaction of its constraint, thereby causing
 the parser to use $\ty_2$. To address this problem, we use products:
+}
 \[
 \infer{
   \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
@@ -375,8 +379,8 @@ the parser to use $\ty_2$. To address this problem, we use products:
   \itmv_2 \cipads \ty_2
 }
 \]
-Now, exactly one element of the pair will be the $\iunitty$ value,
-while the other will be the result of a parse. With this definition,
+Exactly one element of the pair will be the $\iunitty$ value,
+while the other will be the result of the parse. With this definition,
 we encode the \Pswitch{} as a syntactic sugar for a series of
 cascading conditional types.
 
@@ -408,30 +412,31 @@ FPPacket = \Pstruct \{
 
 IPinFP = \Poverlay FPPacket.body \Pwith IPPacket
 \end{code}
-The overlay creates a new type \cd{FPPacket} where the body field is
+The overlay creates a new type \cd{IPinFP} where the body field is
 an \cd{IPPacket} rather than a simple byte array.
 
-We've developed a translation of the overlay syntax into \ddc{}. While
-overlays are conceptually intuitive, when formalizing their semantics
-we discovered a critical subtlety. Any expressions in the original
-type which refer to the overlayed field, may no longer be well typed
+We've developed a translation of the overlay syntax into \ddc{}. Although
+overlays are conceptually intuitive,
+we discovered a critical subtlety when formalizing their semantics. 
+Any expressions in the original
+type that refer to the overlayed field may no longer be well typed
 in the new type. We thought to disallow such expressions in the
 overlayed type. However, we found this to be a difficult, if not
 impossible task. More importantly, such a restriction is unnecessary.
-Instead, we have designed the translation so that the new type is
-checked for well formedness after the overlay process, which is easy
-to do in the \ddc{} framework.
+Instead, we designed the translation so that the new type is
+checked for well formedness after the overlay process, an easy task
+in the \ddc{} framework.
 
-Finally, we introduce \datascript{}-style arrays, which are
+Finally, we introduce \datascript{}-style arrays for binary data, which are
 parameterized by an optional length field, instead of a separator and
 terminator. The syntax of an array named $\mathit{id}$ with elements
 of type $\itmv$ is $\itmv\; \mathit{id}[\mathit{length}]$. If the user
-supplies the length of the sequence then the array parser reads
+supplies the length of the sequence, the array parser reads
 exactly that number of elements.  Otherwise, the parser continues
 until an element constraint is violated or the input is completely
 consumed.
 
-The first case be encoded in a straightforward manner with \ddc{}
+The first case can be encoded in a straightforward manner with \ddc{}
 sequences: 
 \[
   \infer{
@@ -443,11 +448,11 @@ sequences:
   }
 \]
 As binary data has no separators, we use $\ptrue$. The function {\tt
-  isLength} is a curried function taking a length and a pair of rep
+  isLength} is a curried function taking a length and a pair of representation
 and PD arrays and returning a boolean indicating whether both arrays
 have the specified length. As there is no lookahead-terminator, we use
 $\pfalse$ (thereby guaranteeing that the array will not be terminated
-due to lookahead).
+because of lookahead).
 
 For the second case, we need a way to terminate if the next element
 will not parse correctly without consuming it. We cannot use the
@@ -455,13 +460,14 @@ termination predicate as it can only look at elements that have
 already been parsed and hence consumed from the input. Therefore, we
 need a way to encode the notion of a failed element parse in the
 terminator type. To do so, we define $\pnot \ty$ to be:
+
  {\small
 \[
 \pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
   {\ifalse} {\_} {\itrue}}
-\]}
+\]}%
 \noindent
-This type attempts to parse a $\ty$. On success, the rep will be a left
+This type attempts to parse a $\ty$. On success, the representation will be a left
 injection. The constraint in the set type will therefore fail. If a
 $\ty$ cannot be parsed, the sum will default to $\ptrue$, the rep will
 be a right injection, and the constraint will succeed. The use of the
@@ -481,10 +487,10 @@ follows:
 Note that the termination predicate is trivially false, as we use the
 lookahead-terminator exclusively to terminate the array.
 
-While there are many more features that we can encode, we will not
-detail them here. However, to give a sense of what is possible, we
+While there are many more features that we can encode, space prevents us from
+detailing them here. To give a sense of what is possible, we
 briefly list those features of \datascript{} and \packettypes{} for
-which we have found and encoding in \ddc{}:
+which we have found encodings in \ddc{}:
 \begin{itemize}
 \item \packettypes{}: arrays, where clauses, structures, overlays,
   and alternation.
@@ -494,7 +500,7 @@ which we have found and encoding in \ddc{}:
 \end{itemize}
 
 There are features from these and other data description languages
-that we cannot implement. However, we do not view these limitations of
+that we cannot implement in \ddc{} as it stands.  An example is a label construct that permits the user to rewind the input. However, we do not view these limitations of
 \ddc{} as problematic. Like the simple-typed lambda calculus, \ddc{}
 is intended to capture many common language features, while providing
 a convenient and effective basis for extension with new features.
