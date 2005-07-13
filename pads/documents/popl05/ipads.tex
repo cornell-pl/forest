@@ -148,7 +148,7 @@ is an arbitrary host language expression with boolean type.
 % Note that $\itmv \; \Pwhere{} \, x.e$ binds $x$ in $e$. 
 
 \begin{figure}
-
+{\small
 \begin{code}
 response\_t =
   \Pfun(x:int) =
@@ -176,20 +176,22 @@ entry\_t \Parray{}(\Peor, \Peof)
 
 \caption{\ipads{} Common Web Log Format Description}
 \label{fig:ipads-clf}
-
+}
 \end{figure}
 
-\begin{figure*}
+\begin{figure}
+{\small
 \begin{code}
- 207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
- tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /scpt/confirm HTTP/1.0" 200 941
+{}207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] 
+"GET /tk/p.txt HTTP/1.0" 200 30
+tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] 
+"POST /scpt/confirm HTTP/1.0" 200 941
 \end{code}
-\caption{Sample Common Web Log Data}
+\caption{Sample Common Web Log Data. Each record is broken with a
+  newline for formatting purposes.}
 \label{fig:ipads-clf-data}
-
-\end{figure*}
-
-
+}
+\end{figure}
 
 \paragraph*{A Recursive \ipads{} Example.}
 Figure~\ref{fig:ipads-newick} presents a second \ipads{} example.
@@ -217,21 +219,17 @@ The rest of the format description uses types we have seen before such as
 
 
 \begin{figure}
-
+{\small
 \begin{code}
 node\_t = \Popt \Pstruct \{
                 name : \Pstring(":"); ":";
                 dist : \Puint;  
               \};
 \(\qquad\)
-\Prec tree\_t =
-  \Punion \{
-    internal : 
-      \Pstruct \{
-        "(";
-        branches : tree\_t \Parray(",",")");
-        "):";
-        dist : \Puint;
+\Prec tree\_t = \Punion \{
+    internal : \Pstruct \{
+        "(";  branches : tree\_t \Parray(",",")");
+        "):"; dist : \Puint;
       \};
     leaf : node\_t;
   \};
@@ -240,14 +238,11 @@ node\_t = \Popt \Pstruct \{
   body : tree\_t; ";";
 \}
 \(\qquad\)
-(* Example data:
-   (B:3,(A:5,C:10,E:2):12,D:0):32;
-*)
-
+(* Example: (B:3,(A:5,C:10,E:2):12,D:0):32; *)
 \end{code}
 \caption{\ipads{} Newick Format Description}
 \label{fig:ipads-newick}
-
+}
 \end{figure}
 
 \paragraph*{Formal Syntax.}
@@ -269,30 +264,30 @@ variables.
   simultaneously and produces a set of values - one from each type.}
 
 \begin{figure}
+{\small
 \begin{bnf}
-  \name{Programs} \meta{prog} \::= \itmv \| \nont {spec}; \; \nont {prog}\\
-  \mname{Type Definitions}{2} \meta{spec} \::= \alpha = \itmv
-  \|  \Prec{} \; \alpha = \itmv \\ \\
+%   \mname{Type Definitions}{2} \meta{d} \::= \alpha = \itmv
+%   \|  \Prec{} \; \alpha = \itmv \\ \\
   \name{Types} \meta{\itmv} \::= 
     \pbase{e} \| \Plit{\const} \nlalt
     \Pfun{} (\var:\ity) = \itmv \| \itmv\; e \nlalt
-    \Pstruct{} \{\overrightarrow {\nont {field}}\} \| 
-    \Punion{} \{\overrightarrow {\nont {field}}\} \nlalt
-    \trversion{\Palt{} \{\overrightarrow {\nont {field}}\}}
+    \Pstruct{} \{\overrightarrow {\var{:}\itmv}\} \| 
+    \Punion{} \{\overrightarrow {\var{:}\itmv}\} \nlalt
+    \trversion{\Palt{} \{\overrightarrow {\var{:}\itmv}\}}
     \itmv \; \Pwhere{} \, x.e \| 
-% \Palt{} \{\vec {\nont{field}}\} \|
-    \Popt{}\; \itmv \nlalt 
-    \iParray{\itmv}{\itmv}{\itmv}{} \| 
-    \Pcompute{} \; e{:}\ity \nlalt
+    \Popt{}\; \itmv \|
+    \iParray{\itmv}{\itmv}{\itmv}{} \nlalt 
+    \Pcompute{} \; e{:}\ity \|
      \alpha \| \Prec{} \; \alpha . \itmv
-    \\
-  \name{Fields} \meta{field}  \::= \var : \itmv
-%     \\
+     \\
 %   \mname{Host Lang. Expressions}{2} \meta{e}  \::= ... \\ \\
 %   \mname{Host Lang. Types}{2} \meta{\sigma}  \::= ...
+  \name{Programs} \meta{p} \::= \itmv \| \alpha = \itmv;\,\nont{p} \|
+  \Prec{} \; \alpha = \itmv;\,\nont {p}
 \end{bnf}
 \caption{\ipads{} Syntax}
 \label{fig:ipads-syntax}
+}
 \end{figure}
 
 
