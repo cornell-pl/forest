@@ -427,7 +427,6 @@ The syntax of a switched union is $\Pswitch{}\;e\;\{\overrightarrow{e
 To aid in our translation of \Pswitch{}, we define a simpler
 construct that allows us to choose between two types conditionally:
 $\iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2}$. 
-
 \trversion{
 Our first attempt to
 translate the conditional relies on \ddc{} sums:
@@ -471,6 +470,7 @@ we encode the \Pswitch{} as a syntactic sugar for a series of
 cascading conditional types~\footnote{We can safely replicate $e$ as the
 host language is side-effect free.}
 
+{\small
 \[
 \begin{array}{l}
 \Pswitch{}\;e\;\{e_1 \Rightarrow x_1{:}\itmv_1 \dots 
@@ -482,7 +482,7 @@ host language is side-effect free.}
 \quad    \iif {e = e_n}\; \ithen {\itmv_1}\; \ielse{}\\
 \quad    \itmv_{\text{def}}
 \end{array}
-\]
+\]}
 
 Next, we consider the {\it overlay} construct found in \packettypes{}.
 An overlay allows us ``to merge two type specifications by embedding
@@ -549,12 +549,11 @@ termination predicate as it can only look at elements that have
 already been parsed and hence consumed from the input. Therefore, we
 need a way to encode the notion of a failed element parse in the
 terminator type. To do so, we define $\pnot \ty$ to be:
-
  {\small
 \[
 \pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
   {\ifalse} {\_} {\itrue}}
-\]}%
+\]}
 \noindent
 This type attempts to parse a $\ty$. On success, the representation will be a left
 injection. The constraint in the set type will therefore fail. If a
