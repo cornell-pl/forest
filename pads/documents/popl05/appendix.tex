@@ -125,20 +125,20 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 % \texttt{let} expression.
 
 \[
-  \infer[Const]{
+  \infer[\text{Const}]{
     \stsem[\const,\pctxt;\ctxt,\Icty(\const)]
   }{
     \wfd \pctxt \ctxt
   }
 \quad
-  \infer[Var]{
+  \infer[\text{Var}]{
     \stsem[\var,\pctxt;\ctxt,\ity]
   }{
     \wfd \pctxt \ctxt & \ctxt(\var) = \ity
   }
 \]
 \[%\quad
-  \infer[Op]{
+  \infer[\text{Op}]{
     \stsem[\iop e,\pctxt;\ctxt,\ity]
   }{
     \Iopty({op}) = \ioparrow {\ity'} \ity &
@@ -147,7 +147,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[%\qquad
-%   \infer[Abs]{
+%   \infer[\text{Abs}]{
 %     \stsem[\ilam{\nrm \var}{\ity'}{e},
 %     \ctxt,\ity' \iarrowi \ity]
 %   }{
@@ -155,23 +155,25 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 %     {\rm FTV}(\ity') \in \pctxt
 %   }
 % \quad
-  \infer[Fun]{
+  \infer[\text{Fun}]{
     \stsem[\ifun {\nrm f} {\nrm x} e,
            \pctxt;\ctxt,\ity' \iarrowi \ity]
   }{
     \stsem[e,\pctxt;\ectxt{f{:}\ity' \iarrowi \ity,x{:}\ity'},\ity]
   }  
 \quad
-  \infer[App]{
+  \infer[\text{App}]{
     \stsem[\iapp{e}{e'},\pctxt;\ctxt,\ity]
   }{
-    \stsem[e,\pctxt;\ctxt,\ity' \iarrowi \ity] &
-    \stsem[e',\pctxt;\ctxt,\ity']
+    \begin{array}{l}
+    \stsem[e,\pctxt;\ctxt,\ity' \iarrowi \ity]\\
+    \stsem[e',\pctxt;\ctxt,\ity']      
+    \end{array}
   }
 \]
 
 \[%\qquad
-  \infer[Let]{
+  \infer[\text{Let}]{
     \stsem[{\ilet {\nrm x} {e'} \; e},
            \pctxt;\ctxt,\ity]
   }{
@@ -181,7 +183,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 %    \end{array}
   }  
 % \quad
-%   \infer[LetRec]{
+%   \infer[\text{LetRec}]{
 %     \stsem[{\iletfun {\nrm f} {\nrm x} e \; \iin \; e'},
 %            \ctxt,\ity]
 %   }{
@@ -191,7 +193,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[%\qquad
-  \infer[Cond]{
+  \infer[\text{Cond}]{
     \stsem[\iif e \; \ithen {e_1} \; \ielse {e_2},\pctxt;\ctxt,\ity]
   }{       
     \stsem[e,\pctxt;\ctxt,\iboolty] &
@@ -200,14 +202,14 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
   }
 \]
 \[%\quad
-  \infer[Pair]{
+  \infer[\text{Pair}]{
     \stsem[\ipair {e_1}{e_2},\pctxt;\ctxt,\iprodty {\ity_1} {\ity_2}]
   }{       
     \stsem[e_1,\pctxt;\ctxt,\ity_1] &
     \stsem[e_2,\pctxt;\ctxt,\ity_2]
   }
 \quad
-  \infer[Proj]{
+  \infer[\text{Proj}]{
     \stsem[\ipi{\nrm i}{e},\pctxt;\ctxt,\ity_i]
   }{
     \stsem[e,\pctxt;\ctxt,\ity_1 \iprodi \ity_2] 
@@ -215,14 +217,14 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[%\quad
-  \infer[InL]{
+  \infer[\text{InL}]{
     \stsem[\iinl e,\pctxt;\ctxt,\isum \ity {\ity'}]
   }{
     \stsem[e,\pctxt;\ctxt,\ity] &
     \wfd \pctxt {\ity'}
   }
 \quad
-  \infer[InR]{
+  \infer[\text{InR}]{
     \stsem[\iinr e,\pctxt;\ctxt,\isum \ity {\ity'}]
   }{
     \stsem[e,\pctxt;\ctxt,\ity'] &
@@ -231,7 +233,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[%\qquad
-  \infer[Case]{
+  \infer[\text{Case}]{
     \stsem[\icaseg{e}{\nrm x}{e_l}{\nrm y}{e_r}
     ,\pctxt;\ctxt,\ity]
   }{
@@ -242,14 +244,14 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[
-  \infer[Empty]{
+  \infer[\text{Empty}]{
     \stsem[\ieseq,\pctxt;\ctxt,\iseqty \ity]
   }{
     \wfd \pctxt \ctxt & \wfd \pctxt \ity
   }
 \]
 \[%\quad
-  \infer[Seq]{
+  \infer[\text{Seq}]{
     \stsem[\iarr{e_1 \cdots e_n},\pctxt;\ctxt,\iseqty \ity]
   }{
     \wfd \pctxt \ctxt & \stsem[e_i,\pctxt;\ctxt,\ity] \quad 
@@ -258,7 +260,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[
-  \infer[Append]{
+  \infer[\text{Append}]{
     \stsem[\iappend e {e'},\pctxt;\ctxt,\iseqty \ity]
   }{
     \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
@@ -266,7 +268,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
   }
 \]
 \[%\quad
-  \infer[Sub]{
+  \infer[\text{Sub}]{
     \stsem[\isub e {\nrm {e'}},\pctxt;\ctxt,\isum \ity \iunitty]
   }{
     \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
@@ -275,13 +277,13 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[
-  \infer[Roll]{
+  \infer[\text{Roll}]{
     \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
   }{
     \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
   }
   \quad
-  \infer[Unroll]{
+  \infer[\text{Unroll}]{
     \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
   }{
     \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
@@ -289,7 +291,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \]
 
 \[%\qquad
-  \infer[Generalize]{
+  \infer[\text{Generalize}]{
     \stsem[v,\pctxt;\ctxt,\forall \ityvar.\ity]
   }{
     \stsem[v,{\pctxt,\ityvar;\ctxt},\ity] & 
@@ -297,7 +299,7 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
   }
 \]
 \[%\quad
-  \infer[Instantiate]{
+  \infer[\text{Instantiate}]{
     \stsem[\expr,{\pctxt;\ctxt},{\ity[\ity'/\ityvar]}]
   }{
     \stsem[\expr,\pctxt;\ctxt,\forall \ityvar.\ity]
@@ -329,93 +331,93 @@ index i, if i is within the bounds of the array. If not, the
 expression fails.
 
 \[
-\infer[Op]{
+\infer[\text{Op}]{
   \iop v \stepsto v'
 }{
   \mathcal{O}({op},v) = v'
 }
 % \quad
-% \infer[App]{
+% \infer[\text{App}]{
 %   \iapp v {v'} \stepsto e[v'/x]
 % }{
 %   (v = \ilam {\nrm x} {} e)
 % }
 \quad
-\infer[App]{
+\infer[\text{App}]{
   \iapp v {v'} \stepsto e[v/f][v'/x]
 }{
   (v = \ifun {\nrm f}{\nrm x} e)
 }
 \]
 \[%\quad
-\infer[Let]{
+\infer[\text{Let}]{
   \ilet {\nrm x} v \; e
   \stepsto e[v/x]
 }{}
 % \quad
-% \infer[LetRec]{
+% \infer[\text{LetRec}]{
 %   \iletfun {\nrm f} {\nrm x} e \; \iin \; e'
 %   \stepsto e'[{\ifun {\nrm f} {\nrm x} e}/f]
 % }{}
 \]
 
 \[
-\infer[{IfTrue}]{
+\infer[\text{{IfTrue}}]{
   \iif \itrue \; \ithen e \; \ielse {e'} \stepsto
   e
 }{}
 \]
 \[%\quad
-\infer[{IfFalse}]{
+\infer[\text{{IfFalse}}]{
   \iif \ifalse \; \ithen e \; \ielse {e'} \stepsto
   e'
 }{}
 \]
 
 \[
-\infer[Proj1]{
+\infer[\text{Proj1}]{
   \ipi 1 {\ipair v {v'}} \stepsto v
 }{}
 \quad
-\infer[Proj2]{
+\infer[\text{Proj2}]{
   \ipi 2 {\ipair v {v'}} \stepsto v'
 }{}
 \]
 
 \[
-\infer[CaseL]{
+\infer[\text{CaseL}]{
   \icaseg{\iinl v}{\nrm x}{e_l}{\nrm y}{e_r}
   \stepsto {e_l}[v/x]
 }{}
 \]
 
 \[%\quad
-\infer[CaseR]{
+\infer[\text{CaseR}]{
   \icaseg{\iinr v}{\nrm x}{e_l}{\nrm y}{e_r}
   \stepsto {e_r}[v/y]
 }{}
 \]
 
 \[
-\infer[Append]{
+\infer[\text{Append}]{
   \iappend {\iarr{\vec v_1}} {\iarr{\vec v_2}} \stepsto
   {\iarr{\vec v_1 \, \vec v_2}}
 }{}
 \quad
-\infer[EmptySub]{
+\infer[\text{EmptySub}]{
   \isub \ieseq {\nrm i} \stepsto \iinr{\iuval}
 }{}
 \]
 
 \[
-\infer[SubIn]{
+\infer[\text{SubIn}]{
   \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
   \stepsto \iinl {v_{i}}
 }{
   0 \leq i < n
 }
 \quad
-\infer[SubOut]{
+\infer[\text{SubOut}]{
   \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
   \stepsto \iinr{\iuval}
 }{
@@ -424,7 +426,7 @@ expression fails.
 \]
 
 \[
-\infer[Step]{
+\infer[\text{Step}]{
   E[e] \stepsto E[e']
 }{
   e \stepsto e'
@@ -616,6 +618,144 @@ $\begin{array}{l}
 \noindent
 Note that by condition~\ref{cond:closed-op}, base type parsers must
 be closed.
+
+\section{Complete \ipads{} Encoding in \ddc{}}
+\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer{ 
+     \itmv \cipads \ty \; \text{prog}
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+\infer{ 
+  \ga = \itmv; \; p \cipads \ty \; \text{prog}
+}{
+  p[\itmv/\ga] \cipads \ty \; \text{prog}
+}
+\qquad
+  \infer{ 
+      \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
+  }{
+     p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$ \itmv  \cipads \ty$}
+
+\[
+  \infer{ 
+     \pbase e \cipads \pbase e
+  }{}
+\qquad
+  \infer{ 
+     \Pfun (x:\ity) = \itmv \cipads \plam x
+    \ity \ty
+  }{
+    \itmv \cipads \ty
+  }
+\qquad
+  \infer{ 
+     \itmv \; e \cipads \ty \; e
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
+\[
+%\qquad
+  \infer{
+    \begin{array}{l}
+     \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+    \cipads \\
+    \quad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n
+   \end{array}
+  }{ 
+    \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer{
+    \begin{array}{l}
+       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads \\
+      \quad \ty_1 + \dots + \ty_n + \pfalse
+    \end{array}
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\]
+
+\[
+%\qquad
+  \infer{
+     \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
+    \ty_1 \& \dots \& \ty_n
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer{
+     \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
+\[
+  \infer{
+    \begin{array}{l}
+       \itmv \; \Pwhere \, x.e \cipads  \\
+      \quad
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+    \end{array}
+  }{ 
+    \itmv \cipads \ty
+  }
+\]
+
+\[
+  \infer{
+     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+  }{ 
+    \itmv \cipads \ty & 
+    \itmv_{sep} \cipads \ty_s &
+    \itmv_{term} \cipads \ty_t &
+    (f = \ilam x{}\ifalse)
+  }
+\]
+
+\[
+  \infer{ 
+    \begin{array}{l}
+      \Pcompute{} \; e{:}\ity \cipads \\
+      \quad \pcompute e \ity      
+    \end{array}     
+  }{}
+\qquad
+  \infer{ 
+     \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+  }{
+    \defty \const \ty
+  }
+\]
+
+\[
+  \infer{ 
+     \ga \cipads \ga
+  }{}    
+\qquad\qquad
+  \infer{ 
+     \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
 
 %%% Local Variables: 
 %%% mode: latex
