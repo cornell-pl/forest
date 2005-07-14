@@ -469,8 +469,7 @@ the parser to use $\ty_2$. To address this problem, we use products:
 Exactly one element of the pair will be the $\iunitty$ value,
 while the other will be the result of the parse. With this definition,
 we encode the \Pswitch{} as a syntactic sugar for a series of
-cascading conditional types~\footnote{We can safely replicate $e$ as the
-host language is side-effect free.}
+cascading conditional types.
 
 {\small
 \[
@@ -484,7 +483,10 @@ host language is side-effect free.}
 \quad    \iif {e = e_n}\; \ithen {\itmv_1}\; \ielse{}\\
 \quad    \itmv_{\text{def}}
 \end{array}
-\]}
+\]}%
+\noindent
+Note that we can safely replicate $e$ as the
+host language is pure.
 
 Next, we consider the {\it overlay} construct found in \packettypes{}.
 An overlay allows us ``to merge two type specifications by embedding

@@ -97,9 +97,12 @@ in which the array parser reads nothing.}
 
 \subsection{Principled Implementation Extension: Recursion}
 
-Unlike the rest of \pads{}, the semantics of recursive types actually
-preceded the implementation. Therefore, we used the semantics to guide
-our design decions in the implementation, particularly in the
+Unlike the rest of \pads{}, the semantics of recursive types
+preceded the implementation. We used the semantics to guide
+our design decisions in the implementation, particularly in 
+preventing the user from writing down non-contractive types and in implementing the parsers with recursive functions.
+\trversion{
+the
 following two respects:
 \begin{itemize}
 \item Static semantics. The user is not allowed to write down a
@@ -107,6 +110,7 @@ following two respects:
   type constructor.
 \item Parser generation. We implement the parsers with recursive
   functions.
+  
 % \item Representation and parse descriptor type. We don't need
 %   special representation and PD types for recursive types. However, we
 %   need to interpret the names of recursive types as 
@@ -114,11 +118,11 @@ following two respects:
 %   implicit in the semantics, it must be done explicitly by the
 %   compiler in the implementation.
 \end{itemize}
-
+}
 
 \subsection{Distinguishing the Essential from the Accidental}
 
-In in his 1965 paper, P.J. Landin asks ``Do the idiosyncracies [of a
+In his 1965 paper, P.J. Landin asks ``Do the idiosyncracies [of a
 language] reflect basic logical properties of the situations that are
 being catered for?  Or are they accidents of history and personal
 background that may be obscuring fruitful developments?''  
@@ -126,19 +130,19 @@ background that may be obscuring fruitful developments?''
 The semantics helped us answer this question with regard to the \Pomit{}
 and \Pcompute{} qualifiers of \pads{}.  Originally, these qualifiers
 were only intended to be used on fields within \Pstruct{}s.
-By an accident of the implementation, they soon appeared in \Punion{}s
+By an accident of the implementation, they appeared in \Punion{}s
 as well, but spread no further. However, when designing \ddc{},
-we carefully followed the {\em principle of orthogonality},
-which suggests that every new linguistic concept
+we followed the {\em principle of orthogonality},
+which suggests that every linguistic concept
 be defined independently of every other.  In particular, we observed that
 ``omitting'' data from, or including (``computing'') data in,
-the internal representation is not necessarily dependent upon 
+the internal representation is not dependent upon 
 the idea of structures or unions.  Furthermore, we found that
-developing these concepts as the first-class constructors
-$\pabsorbn$ and $\pcomputen$ in the \ddc{} allowed us to encode
+developing these concepts as first-class constructors
+$\pabsorbn$ and $\pcomputen$ in \ddc{} allowed us to encode
 the semantics of other \pads{} features (\eg, literals) elegantly.
-Consequently, we encourage future language designers to think of and
-implement these ideas as first-class constructors.
+%Consequently, we encourage future language designers to think of and
+%implement these ideas as first-class constructors.
 
 % Yet, for simplicity, we chose to
 % encode \Pomit{} and \Pcompute{} in \ddc{} with their own, first class
@@ -150,20 +154,20 @@ implement these ideas as first-class constructors.
 % was an ``accident of history,'' rather than a ``basic logical
 % property'' of data description.
 
-Another sort of accident that arose in the
+Another accident in the
 \pads{} implementation is that there is no guarantee that
 certain features are ``safe.''  This is due in part to the fact that
 the \pads{} host language is \C{} and in part to the desire to implement
-certain optimizations.  To take just one example, when a 
+certain optimizations.  As an example, when a 
 semantic error in a \Pwhere{} clause is detected, the parser sets a flag.  
-However, the \C{} programmer is never forced to check this flag before using 
+However, the \C{} programmer is not forced to check this flag before using 
 the value in question and therefore can unknowingly process invalid data.  The 
 semantics of \ddc{} deviates from the \C{} implementation here as it suggests
 constrained types be implemented as values with a sum type.  A lambda
 calculus programmer is required to perform a case on the sum and
 hence will always be informed of an error.
-For the sake of safety, we believe the \C{} interface should be reworked 
-here to match the semantics.  
+%For the sake of safety, we believe the \C{} interface should be reworked 
+%here to match the semantics.  
 Perhaps more importantly, the \C{} implementation does not serve as a
 proper guide for the integration of \pads{} ideas with a safe language like ML.
 For this purpose, the \ddc{} is much more appropriate.
@@ -200,11 +204,10 @@ For this purpose, the \ddc{} is much more appropriate.
 
 
 We conclude with an example of another feature to which Landin's
-question applies, but for which we do not yet know the answer and must
-leave for future work. The \Punion{}
+question applies, but for which we do not yet know the answer. The \Punion{}
 construct chooses between branches by searching for the first one
 without errors. However, this semantics ignores situations in which
-the correct branch in fact has errors. Often, this behaviour will lead
+the correct branch in fact has errors. Often, this behavior will lead
 to parsing nothing and flagging a panic, rather than parsing the
 correct branch to the best of its ability.  The process of
 developing a semantics brought this fact to our attention and
