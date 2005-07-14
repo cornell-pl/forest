@@ -572,17 +572,17 @@ $\mathit{length}$.
 
 Unbounded arrays are more difficult to encode as they must check the
 next element for parse errors without consuming it from the data
-stream. A termination predicate cannot encode this check as
-they \trversion{are limited to the in-memory representation and PD
-  and} cannot perform lookahead. Therefore, we must use the terminator
-type to look ahead for an element parse error. For this purpose, we
-design a type which succeeds where $\ty$ fails and fails where $\ty$
-succeeds:
-{\small
+stream. A termination predicate cannot encode this check as they
+\trversion{are limited to the in-memory representation and PD and}
+cannot perform lookahead. Therefore, we must use the terminator type
+to look ahead for an element parse error. For this purpose, we
+construct a type (abbreviated $\pnot \ty$) which succeeds where $\ty$
+fails and fails where $\ty$ succeeds: 
+\trversion{
 \[
 \pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
   {\ifalse} {\_} {\itrue}}
-\]}
+\]
 \noindent
 Abbreviated $\pnot \ty$, this type attempts to parse a $\ty$. On
 success, the representation will be a left injection. The constraint
@@ -603,7 +603,15 @@ follows:
   }
 \]
 Note that the termination predicate is trivially false, as we use the
-lookahead-terminator exclusively to terminate the array.
+lookahead-terminator exclusively to terminate the array.  }
+\poplversion{ 
+\[
+\pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
+  {\ifalse} {\_} {\itrue}}
+\]
+\noindent
+Unbounded arrays with element type $\ty$ can now be encoded as
+sequences with terminator $\pnot \ty$.  }
 
 While there are many more features that we can encode, space prevents us from
 detailing them here. To give a sense of what is possible, we
