@@ -381,35 +381,36 @@ type was matched along with the type's corresponding parse descriptor.
 \subsection{Parsing Semantics of the \ddc{}}
 \label{sec:parse-sem}
 
-\begin{figure}
+\begin{figure*}
 \small
 \fbox{$\trans[\ty,\ctxt,\gk] = e$} 
 
-\begin{itemize}
-\renewcommand{\labelitemi}{}
-%% None 
-\item $\trans[\ptrue,\ctxt,\kty] =
-  \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}$
-
+\[
+\begin{array}{l}
+  %% None 
+\trans[\ptrue,\ctxt,\kty] =
+  \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}
+\\[3pt] %\\
 %% False 
-\item $\trans[\pfalse,,] =
-  \lampair{\spair<\off,\newrep {bottom}{},\newpd {bottom}{\off}>}$
-
+\trans[\pfalse,,] =
+  \lampair{\spair<\off,\newrep {bottom}{},\newpd {bottom}{\off}>}
+\\[3pt] %\\ 
 %% Const 
-\item $\trans[\pbase{e},\ctxt,\kty] =
-  \lampair{\iapp {\iapp {\Iimp(C)} (e)} {\itup {\idata,\off}}}$
-
+\trans[\pbase{e},\ctxt,\kty] =
+  \lampair{\iapp {\iapp {\Iimp(C)} (e)} {\itup {\idata,\off}}}
+\\[3pt] %\\
 %% Abs 
-\item $\trans[\plam{\var}{\ity}{\ty},,] =
-   \sfn{\nrm\var}{\ity}{\trans[\ty,\ectxt{\var{:}\ity},\kind]}$
-
+\trans[\plam{\var}{\ity}{\ty},,] =
+   \sfn{\nrm\var}{\ity}{\trans[\ty,\ectxt{\var{:}\ity},\kind]}
+\\[3pt] %\\
 %% App 
-\item $\trans[\papp{\ty}{e},\ctxt,\gk] =
-  \trans[\ty,,] \sapp e$
-
+\trans[\papp{\ty}{e},\ctxt,\gk] =
+  \trans[\ty,,] \sapp e  
+\\[3pt]
 %% Prod 
-\item $\trans[\psig{x}{\ty}{\ty'},\ctxt,\kty] =$ \\
-  $\begin{array}{l}  
+%\begin{array}{l}
+\trans[\psig{x}{\ty}{\ty'},\ctxt,\kty] = \\
+  \begin{array}{l}  
     \lampair{} \\
     \quad  \ilet {\spair<\off',r,p>} 
     {{\trans[\ty,,]} \sapp \spair<\idata,\off>} \\
@@ -417,11 +418,13 @@ type was matched along with the type's corresponding parse descriptor.
     \quad  \ilet {\spair<\off'',r',p'>} 
     {{\trans[\ty',,]} \sapp \spair<\idata,\off'>} \\
     \quad \spair<\off'',\newrep {\gS}{r,r'},\newpd {\gS}{p,p'}>
-  \end{array}$
-
+  \end{array}  
+%\end{array}
+\\
 %% Sum 
-\item $\trans[\psum{\ty}{e}{\ty'},,] =$ \\
-  $\begin{array}{l}  
+%\begin{array}{l}
+  \trans[\psum{\ty}{e}{\ty'},,] = \\
+  \begin{array}{l}  
   \lampair{} \\
   \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
   \quad \iif {\pdok p} \; \ithen {
@@ -436,37 +439,32 @@ type was matched along with the type's corresponding parse descriptor.
     %% 
     \spair<\off',\r,\p>
   }\\ % end scope
-  \end{array}$
-
+  \end{array}
+\\
 %% Intersection 
-\item $\trans[\pand{\ty}{\ty'},,] =$ \\
-  $\begin{array}{l}  
+  \trans[\pand{\ty}{\ty'},,] = \\
+  \begin{array}{l}  
      \lampair{} \\
      \quad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>} \\
      \quad \ilet {\itup{\off'',r',p'}} {\trans[\ty',,] \sapp \spair<\idata,\off>} \\
      \quad {\spair<\codefont{max}(\off',\off''),\newrep {\&}{r,r'},\newpd {\&}{p,p'}>}
-   \end{array}$
-
+   \end{array}
+\end{array}
+%\quad
+\begin{array}{l}
 %% Set 
-\item $\trans[\pset{x}{\ty}{e},\ctxt,\kty] =$ \\
-  $\begin{array}{l}  
+  \trans[\pset{x}{\ty}{e},\ctxt,\kty] = \\
+  \begin{array}{l}  
     \lampair{} \\
     \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
     \quad \ilet x {\ictup{r,p}}\\
     \quad \ilet c e \\
     \quad \spair<\off',\newrep {set} {c,r},\newpd {set} {c,p}>
-  \end{array}$
-% \end{itemize}
-% \caption{\ddc{} Semantics}
-% \label{fig:ddc-sem}
-% \end{figure}
-% \begin{figure}
-% \small
-% \begin{itemize}
-% \renewcommand{\labelitemi}{}
+  \end{array}
+\\
 %% Array 
-\item $\trans[\pseq{\ty}{\ty_s}{\pterm e {\ty_t}},,] =$ \\
-  $\begin{array}{l}  
+\trans[\pseq{\ty}{\ty_s}{\pterm e {\ty_t}},,] = \\
+  \begin{array}{l}  
     \lampair{}\\
       \quad \iletfun {isDone}{\itup{\off,r,p}}{\\
         \qquad \ior {\eofpred {\idata,\off}} {e\codefont {\sapp
@@ -484,8 +482,8 @@ type was matched along with the type's corresponding parse descriptor.
             \off,\off_e,\newrep {seq} {r,r_e}, \newpd {seq} {p, p_s, p_e}
         }}\\
       \quad \iin
-   \end{array}$\\
-  $\begin{array}{l}  
+   \end{array}\\
+  \begin{array}{l}  
       \quad \ilet {\mathtt{r}} {\newrep {seq\_init}{}}\\
       \quad \ilet {\mathtt{p}} {\newpd {seq\_init}{\off}}\\
       \quad \iif {\isdone{\off,r,p}} \; \ithen {\itup{\off,\codefont{r,p}}}\\
@@ -493,51 +491,57 @@ type was matched along with the type's corresponding parse descriptor.
           \spair<\idata,\off>}} \\
       \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
         \newrep {seq} {r,r_e}, \newpd {seq} {p, \newpd {unit} \off, p_e}}      
-  \end{array}$
-
+  \end{array}  
+\end{array}
+%\quad
+\begin{array}{l}
 %% Var
-\item $\trans[\ptyvar,,] = \codefont{f_\ptyvar}$
-
+\trans[\ptyvar,,] = \codefont{f_\ptyvar}
+\\[3pt]
 %% Mu
-\item $\trans[\pmu \ptyvar \ty,,] =$ \\
-  $\begin{array}{l}
+\trans[\pmu \ptyvar \ty,,] = \\
+  \begin{array}{l}
   \ifun {f_\ptyvar} {\itup{\data,\off}} {}\\
   \quad \ilet {\itup{\off',r,p}} 
-  {\trans[\ty,,] \iappi \ictup{\data,\off}} \sapp \ictup{\off',r,p} \\
-  \end{array}$
-
+  {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
+  \qquad \ictup{\off',r,p}
+  \end{array}  
+\\[3pt]
 %% Compute
-\item $\trans[\pcompute e \ity,,] =$ \\
-  $\lampair{\itup{\off,\newrep {compute} {\nrm e},\newpd {compute} \off}}$
-
+\trans[\pcompute e \ity,,] = \\
+  \quad \lampair{\itup{\off,\newrep {compute} {\nrm e},\newpd {compute} \off}}
+\\[3pt]
 %% Absorb
-\item $\trans[\pabsorb \ty,,] =$ \\
-  $\begin{array}{l}  
+\trans[\pabsorb \ty,,] = \\
+  \begin{array}{l}  
     \lampair{}\\
     \quad \ilet {\itup {\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>}\\
     \quad \itup{\off',\newrep {absorb} p,\newpd {absorb} p}   
-  \end{array}$
-
+  \end{array}  
+\\
 %% Scan
-\item $\trans[\pscan \ty,,] =$ \\
-  $\begin{array}{l}  
+\trans[\pscan \ty,,] = \\
+  \begin{array}{l}  
     \lampair{}\\
     \quad \iletfun {try} {i} {\\
       \qquad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp
         \codefont{\spair<\data,\off + i>}} \\
-      \qquad \iif {\pdok p}\; \ithen {\ictup{\off',\newrep {scan} r,
+      \qquad \iif {\pdok p}\; \ithen \\
+      \qquad {\ictup{\off',\newrep {scan} r,
         \newpd {scan} {i,p}}}\; \ielse {}\\
-      \qquad \iif {\codefont{i = scanMax}}\; \ithen {\ictup{\off,\newrep {scan\_err} {},
+      \qquad \iif {\codefont{i = scanMax}}\; \ithen \\
+      \qquad {\ictup{\off,\newrep {scan\_err} {},
         \newpd {scan\_err} {\off}}}\; \ielse {}\\
       \qquad \codefont {try \sapp (i+1)}
    }\\
    \quad \iin \sapp \codefont{try \sapp 0} \\
-  \end{array}$
-\end{itemize}
+  \end{array}  
+\end{array}
+\]
 %\caption{\ddc{} Semantics (cont.)}
 \caption{\ddc{} Semantics}
 \label{fig:ddc-sem}
-\end{figure}
+\end{figure*}
 
 \begin{figure}
 \small
