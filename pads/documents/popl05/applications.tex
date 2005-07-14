@@ -158,14 +158,14 @@ certain optimizations.  To take just one example, when a
 semantic error in a \Pwhere{} clause is detected, the parser sets a flag.  
 However, the \C{} programmer is never forced to check this flag before using 
 the value in question and therefore can unknowingly process invalid data.  The 
-semantics of \ddc deviates from the \C{} implementation here as it suggests
+semantics of \ddc{} deviates from the \C{} implementation here as it suggests
 constrained types be implemented as values with a sum type.  A lambda
-calculus programmer is required to perform a case on the sum 
+calculus programmer is required to perform a case on the sum and
 hence will always be informed of an error.
 For the sake of safety, we believe the \C{} interface should be reworked 
 here to match the semantics.  
 Perhaps more importantly, the \C{} implementation does not serve as a
-proper guide for integration of \pads{} ideas with a safe language like ML.
+proper guide for the integration of \pads{} ideas with a safe language like ML.
 For this purpose, the \ddc{} is much more appropriate.
 
 % As an aside, we are currently designing an ML binding for 
