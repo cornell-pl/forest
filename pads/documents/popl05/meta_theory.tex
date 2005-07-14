@@ -19,7 +19,7 @@ invariants of data description languages? While there are many
 well-known desirable invariants for programming languages, the
 meta-theory of data description languages has been
 uncharted.
-
+%
 We present the following two properties as critical invariants of
 our theory. We feel that they should hold, in some form, for any data
 description language.
@@ -37,7 +37,7 @@ description language.
   parsing function, the errors reported in the PD
   will be correlated with the errors present in the representation.
 \end{itemize}
-
+%
 \trversion{
 Before presenting the formal statement of these properties, we specify
 some assumptions that we make about \ddc{} base types, their kinds,
@@ -45,7 +45,8 @@ types, and implementations, that are necessary for the satisfaction of
 these properties. In essence, we assume that the properties we desire of
 the rest of the calculus hold for the base types.
 }
-In the following formalization of these properties, we assume that \ddc{} base types, their kinds, representation and parse descriptor types, and parsers satisfy the properties we desire to hold of the rest of the calculus.  A formal statement of these assumptions appears in \appref{app:meta-theory}.
+In formalizing these properties, we assume that \ddc{} base types, their kinds, representation and parse descriptor types, and parsers satisfy the properties we desire to hold of the rest of the calculus.  
+\appref{app:meta-theory} contains a formal statement of these assumptions.
 
 \trversion{
 \begin{theorem}[Translation Completeness]
@@ -257,19 +258,20 @@ which maps recursive variable contexts
 $\rctxt$ to typing contexts $\ctxt$. 
 }
 \poplversion{
-To that end, we now define the function $\ptyc \rctxt$, 
+To that end, we define the function $\ptyc \rctxt$, 
 which maps recursive variable contexts
 $\rctxt$ to typing contexts $\ctxt$:
+\vskip -1.5ex
 {\small
 \[
 \begin{array}{l}
-  \ptyc{\cdot} = \cdot \\
+  \ptyc{\cdot} = \cdot \\[1ex]
   \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
   \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
 \end{array}
-\]
-}
-}
+\]%
+}%
+}%
 \noindent
 We also apply $\rctxt$ to $\ty$
 to close any open references to recursive types before
@@ -297,22 +299,20 @@ is well formed in $\ctxt$.
 \end{corollary}
 
 We start our formalization of the error-correlation property by
-defining the concept of representation and PD correlation.
+defining representation and PD correlation.
 Informally, a representation and a PD are correlated when the number
 of errors recorded in the PD is at least as many as the number of
-errors that appear in the representation and semantic errors, \ie{},
+errors in the representation and semantic errors, \ie{},
 constraint violations, are properly reported.  Formally, we define
 correlation with the relation $\corr \ty r p$. As the encoding of
 errors in the representation and the meaning of error counts in the PD
 are dependent on the \ddc{} type that produced them, correlation is
 type directed.  However, some types, such as type application, are not
-immediately useful in determining correlation, and must be normalized
-before use. In \figref{fig:revised-ddc-syntax}, we define a set of
-normalized types $\tyval$ and rules for normalizing the remaining
-types. For clarity, we define $\corrkl \ty r p$ as a ``helper''
+immediately useful in determining correlation, and must be normalized. In \figref{fig:revised-ddc-syntax}, we define the set of
+normalized types $\tyval$ and give normalization rules. For clarity, we define $\corrkl \ty r p$ as a ``helper''
 relation that normalizes types $\ty$ before checking for correlation.
-The main correlation relation ($\corr \ty r p$), then, is defined only
-for normalized types of base kind. Type abstractions are excluded as
+The main correlation relation ($\corr \ty r p$) is defined only
+for normalized types of kind $\kty$. Type abstractions are excluded as
 they cannot directly produce representations and PDs.
 
 \begin{figure}
@@ -329,8 +329,8 @@ they cannot directly produce representations and PDs.
 %%       \pext{\nlalt
 %%         \ptransform{e}{e}{\ty} \| 
 %%       }
-    \psig x \ty \ty \| \psum \ty e \ty \nlalt
-    \pand \ty \ty \|
+    \psig x \ty \ty  \nlalt
+    \psum \ty e \ty  \| \pand \ty \ty \|
     \pset x \ty e \|
     \pseq \ty \ty {\pterm e \ty} \nlalt
     \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
@@ -502,9 +502,9 @@ If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
   \spair<\off',r,p>$ then $\corrkl \ty r p$.
 \end{lemma}
 
-\begin{proofsketch}
+\begin{proof}
   By induction on the height of the second derivation.
-\end{proofsketch}
+\end{proof}
 
 \begin{theorem}[Error Correlation]
 \label{thm:err-corr}

@@ -5,14 +5,19 @@ serve as the semantic foundation for a family of languages called
 programming with \textit{ad hoc data}, \ie{}, data not in well-behaved
 relational or \xml{} formats. In the calculus, each type describes the
 physical layout and semantic properties of a data source. In the
-semantics, we interpret the types simultaneously as the in-memory
-representation for the data described and as parsing functions for the
+semantics, we interpret types simultaneously as the in-memory
+representation of the data described and as parsers for the
 data source. The parsing functions are robust, automatically detecting
-and recording errors in the data stream without halting parsing.  We
+and recording errors in the data stream without halting parsing.  
+We show the parsers are type-correct, returning data whose type matches the simple-type interpretation of the specification. We also prove the parsers
+are ``error-correct,'' accurately reporting the number of physical and
+semantic errors that occur in the returned data.  We use the calculus
+to describe the features of various data description languages, and we
+discuss how we have used the calculus to improve \pads{}.
+
+\cut{
+We
 prove two correctness properties of the parsers.  First, we show they
 are type-correct, outputing data whose type matches the simple-type
 interpretation of the specification, and second, we show they are
-``error-correct,'' accurately reporting the number of physical and
-semantic errors that occur in the returned data.  We use the calculus
-to describe the features of various data description languages, and we
-discuss how we have used the calculus to improve the \pads{} language.
+}

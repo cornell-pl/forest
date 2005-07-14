@@ -1,7 +1,7 @@
 \section{A Data Description Calculus}
 \label{sec:ddc}
 
-At the heart of our work is a calculus of data descriptions (\ddc{}),
+At the heart of our work is a data description calculus(\ddc{}),
 designed to capture the core features of data description languages.
 Consequently, the syntax of \ddc{} is at a significantly lower level
 of abstraction than that of \ipads{}.  Like \ipads{}, however, \ddc{}
@@ -14,9 +14,9 @@ during parsing. Syntactically, the primitives of the calculus are
 similar to the types found in many dependent type systems, with a
 number of additions specific to the domain of data description.
 %We define each data description primitive orthogonally from the others, using composition to describe richer structures.
-We base our calculus on a \textit{dependent} type theory because it is
-common in data description languages for expressions to appear within
-the types, for example, as constraints.
+We base our calculus on a dependent type theory because as we have seen,
+it is common in data description languages for expressions to appear within
+types.
 
 \cut{
 Our choice to base our calculus on a specifically
@@ -55,17 +55,16 @@ meaning.
 \caption{\ddc{} Syntax}
 \label{fig:ddc-syntax}
 \end{figure}
-
-The syntax of \ddc{} is shown in \figref{fig:ddc-syntax}. As with
-\ipads{}, the expressions $e$ and types $\ity$ belong to the host
-language, which is defined in Section~\ref{sec:host-lang}.
+\figref{fig:ddc-syntax} shows the syntax of \ddc{}. As with
+\ipads{}, expressions $e$ and types $\ity$ belong to the host
+language, defined in \secref{sec:host-lang}.
 The most basic types are $\ptrue$ and $\pfalse$, both of which consume
-no input and return unit as the value portion of the internal
-representation.  The difference between $\ptrue$ and $\pfalse$ is that
+no input and return unit as their
+representation.  The difference between them is that
 the former always succeeds, while the latter always fails, a
 distinction recorded in the associated parse descriptors.
-The syntax $\pbase e$ denotes a base type $C$ parameterized by a
-host-language expression $e$, and $\ptyvar$ denotes a type variable
+The syntax $\pbase e$ denotes a base type $C$ parameterized by 
+expression $e$. The syntax $\ptyvar$ denotes a type variable
 introduced in a recursive type.
 % An instance of the \ddc{} will provide a set of base types $C$.
 % Base types recognize and transform atomic values within the data
@@ -74,55 +73,53 @@ introduced in a recursive type.
 % \eg{}, specifying digit lengths for integers or terminating
 % conditions for strings.
 
-We provide type constructors $\plam x {} \ty$ and type applications
-$\papp \ty e$, so that we may parameterize types by expressions.
+We provide abstraction $\plam x {} \ty$ and application
+$\papp \ty e$ so that we may parameterize types by expressions.
 Dependent product types $\psig x {\ty_1} {\ty_2}$ describe a sequence
-of values. The second type in the product can refer to the value of
-the first with the name $x$. Sum types $\psum {\ty_1} {} {\ty_2}$
-express flexibility in the data format, as they successfully parse
-data matching either $\ty_1$ or $\ty_2$. Note that sum-type parsers
+of values in which the second type may refer to the value of the first.
+Sum types $\psum {\ty_1} {} {\ty_2}$
+express flexibility in the data format, as they parse
+data matching either $\ty_1$ or $\ty_2$. Sum-type parsers
 are deterministic, always transforming the data according to $\ty_1$
-in the case that both types parse the data without errors, and
-according to $\ty_2$ in the case that neither do. Intersection types,
-$\pand {\ty_1} {\ty_2}$, describe data that matches both $\ty_1$ and
-$\ty_2$ and transform a single set of bits with both types to produce
-a pair of values - one from each type. Set types $\pset x \ty e$
-transform the data according to the underlying type $\ty$ and
-additionally check that the constraint $e$ is met.  The value returned
-by $\ty$ is bound as $x$ when checking $e$.
+if both types parse without errors, and
+according to $\ty_2$ if neither do. Intersection types
+$\pand {\ty_1} {\ty_2}$ describe data that matches both $\ty_1$ and
+$\ty_2$. They transform a single set of bits to produce
+a pair of values, one from each type. Set types $\pset x \ty e$
+transform data according to the underlying type $\ty$ and
+then check that the constraint $e$ holds when $x$ is bound to the parsed value.
+
 
 The type $\pseq \ty {\ty_s} {\pterm e {\ty_t}}$ represents a sequence
 of values of type $\ty$. The type $\ty_s$ specifies the type of
 the separator found between elements of the sequence. For sequences
-without separators, we can use $\ptrue$ as the separator type.  The
-expression $e$ is a boolean-valued function that examines the parsed
-contents of the sequence after each element is read to determine
-whether the sequence has completed. For example, a function that
-checks whether the sequence has $100$ elements could be used to
-terminate the sequence when it reaches length $100$.  The type 
-$\ty_t$ denotes the type of the terminator expected after the last
-element of the sequence. For sequences without terminators, we can use
-$\pfalse$ for this type.
+without separators, we use $\ptrue$ as the separator type. 
+Expression $e$ is a boolean-valued function that examines the parsed
+sequence after each element is read to determine
+if the sequence has completed. For example, a function that
+checks if the sequence has $100$ elements would
+terminate a sequence when it reaches length $100$.  The type 
+$\ty_t$ denotes the type of the terminator expected after the last sequence
+element. For sequences without terminators, we use
+$\pfalse$ for $\ty_t$.
 
 Recursive types $\pmu \ptyvar \ty$ describe recursive data formats.
 The name $\ptyvar$ can be used in $\ty$ to refer to the recursive type
 and causes a recursive call to $\ty$'s parser wherever it appears.
 
-In addition to the above types, we add a number of ``active'' types.
-These types describe actions to be taken during the parsing process
-rather than strictly describing the data format. The $\pcompute e
-\ity$ type allows us to include an element in the parsed output that
+\ddc{} also has a number of ``active'' types.
+These types describe actions to be taken during parsing
+rather than strictly describing the data format. Type $\pcompute e
+\ity$ allows us to include an element in the parsed output that
 does not appear in the data stream (although it is likely dependent on
-elements that do), based on evaluation of an expression $e$.  In
-contrast, the $\pabsorb \ty$ type parses data based on the type $\ty$,
-but does not return its result. This behaviour can be useful for data
-which might be important for parsing, such as a separator, yet
-uninteresting to users of the parsed data. The last of the ``active''
-types is $\pscan \ty$ which scans the input stream for a portion of
-data that can be successfully transformed according to $\ty$. This
-behaviour can be useful, for example, as a simple form of error
-recovery, by discarding unrecognized data until the ``recovery'' type
-$\ty$ is successfully parsed.
+elements that do), based on the value of expression $e$.  In
+contrast, type $\pabsorb \ty$ parses data according to type $\ty$
+but does not return its result. This behavior is useful for data
+which is important for parsing, but
+uninteresting to users of the parsed data, such as a separator. The last of the ``active''
+types is $\pscan \ty$, which scans the input for 
+data that can be successfully transformed according to $\ty$. This type provides a form of error recovery
+as it allows us to discard unrecognized data until the ``recovery'' type $\ty$ is found.
 
 \subsection{\Implang{} Language}
 \label{sec:host-lang}
@@ -184,9 +181,10 @@ As the calculus is largely standard, we highlight only its
 unusual features. The constants include bitstrings $\data$; offsets $\off$,
 representing locations in bitstrings; and error codes $\iok$,
 $\iecerr$, and $\iecpc$, indicating success, success with errors and
-failure, respectively. The constant $\ierr$ is used to indicate a
-failed parse.  Because of its specific meaning, it cannot be introduced in
-any user-supplied expressions appearing in \ddc{} types. 
+failure, respectively. We use the constant $\ierr$ to indicate a
+failed parse.  
+Because of its specific meaning, we forbid its use in user-supplied expressions
+appearing in \ddc{} types. 
 %We include a special $\isizeofop$ operator, which returns the size in the data
 %source of its input. 
 Our expressions include arbitrary length
@@ -194,28 +192,29 @@ sequences $\iarr{\vec e}$, sequence append $\iappend e
 {e'}$, and sequence indexing $\isub e {\nrm i}$.
 
 The type $\invty$ is the singleton type of the constant $\ierr$.
-Types $\iecty$ and $\ioffty$ are for error codes and bitstring
-offsets, respectively. The remaining types have their standard
-meaning: function types, product types, sum types, sequence types
+Types $\iecty$ and $\ioffty$ classify error codes and bit string
+offsets, respectively. The remaining types have standard
+meanings: function types, product types, sum types, sequence types
 $\iseqty \ty$; polymorphic types $\forall \ityvar.\ity$ and type
 variables $\ityvar$; and recursive types $\imu \ityvar \ity$.
 
-We extend the formal syntax with some syntactic sugar and
-abbreviations for use in the rest of the paper: anonymous functions
+We extend the formal syntax with some syntactic sugar 
+for use in the rest of the paper: anonymous functions
 $\ilam {\nrm x} \ity e$ for $\ifun {\nrm f} {\nrm x} e$, with $f
 \not\in {\rm FV}(e)$; function bindings $\iletfun {\nrm f} {\nrm x} e
 \; \iin \; e'$ for $\ilet {\nrm f} {\ifun {\nrm f} {\nrm x} e} \; e'$;
-$\ispty$ for $\iprod \ioffty \ioffty$.  We will often use
+$\ispty$ for $\iprod \ioffty \ioffty$.  We often use
 pattern-matching syntax for pairs in place of explicit projections, as
 in $\lampair{\codefont e}$ and $\ilet {\itup{\off,r,p}} e\; e'$.  Although
 we have no formal records with named fields, we use a dot notation for
 commonly occuring projections. For example, for a pair $\mathtt x$ of
 rep and PD, we use $\codefont{x.rep}$ and $\codefont{x.pd}$ for the
-left and right projections of $\codefont{x}$, respectively. Generally,
+left and right projections of $\codefont{x}$, respectively. \cut{Generally,
 the particular projection intended should be apparent from context,
-and will be specified when it is not. Also, sums and products are
-right-associative. Hence, for example, $a \iprodi b \iprodi c$ is
-shorthand for $a \iprodi (b \iprodi c)$.
+and will be specified when it is not.} Also, sums and products are
+right-associative. 
+\trversion{Hence, for example, $a \iprodi b \iprodi c$ is
+shorthand for $a \iprodi (b \iprodi c)$.}
 
 We use standard judgments for the static semantics
 ($\stsem[e,{\ctxt},\ity]$) and operational semantics ($e
@@ -231,6 +230,7 @@ this description does not fully capture the semantics of the
 use the standard abbreviation $\ty * \ty'$ for non-dependent products and introduce a number of type abbreviations
 in the form $\mathtt{name} = \ty$ before giving the type that describes the data source.
 
+{\small
 \[
 \begin{array}{l}
 \mathtt{S} = \plam {\mathtt{ch}} {} {\pset {\mathtt{c}}
@@ -260,14 +260,13 @@ in the form $\mathtt{name} = \ty$ before giving the type that describes the data
   \pterm {\ilam {\mathtt x} {} \ifalse} {\pfalse}
 }
 \end{array}
-\]
-
-Note that we define a type constructor $\mathtt{S}$ to encode literals
-with a singleton set-type. Furthermore, we user the following,
-informal translations:\Pwhere{} becomes a set-type, \Pstruct{} a
+\]}%
+\noindent
+In the example, we define type constructor $\mathtt{S}$ to encode literals
+with a set-type. We also use the following
+informal translations: \Pwhere{} becomes a set-type, \Pstruct{} a
 series of dependent products, \Punion{} a series of sums, and
-\Parray{} a sequence. For this example, we assume that \Peor{} - the
-end or record -- is a newline, and therefore specify the sequence
+\Parray{} a sequence. For this example, we assume that \Peor{} is a newline, and therefore specify the sequence
 separator as such. As the array terminates at the end of the file, we
 use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
 absence of termination condition and terminator, respectively.

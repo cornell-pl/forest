@@ -1,13 +1,14 @@
-\section{Encoding DDLs in the DDC}
+\section{Encoding DDLs in \ddc{}}
 \label{sec:encodings}
 
-We can better understand the data description languages described
+We can better understand the data description languages mentioned
 earlier by translating their constructs into the types of \ddc{}. We
 start with the translation of \ipads{}, which captures many of the
 common features of DDLs. We then discuss features of \pads{},
 \datascript{}, and \packettypes{} that are not found in \ipads{}.
+\trversion{
 Finally, we briefly discuss some limitations of \ddc{}.
-
+}
 \subsection{\ipads{} Translation}
 \label{sec:trans-sl}
 
@@ -385,7 +386,7 @@ Finally, we briefly discuss some limitations of \ddc{}.
 \end{figure}
 }
 
-In Section~\ref{sec:ddc-example}, we gave an example of how an
+In \secref{sec:ddc-example}, we showed how an
 \ipads{} description would appear in \ddc{} and informally described
 how \ipads{} is encoded in \ddc{}. In \figref{fig:encode-ipads}, we
 formalize this translation. The judgment ${prog} \cipads \ty\;
@@ -395,12 +396,13 @@ for \ipads{} types $\itmv$.
 
 As much of the translation is straightforward, we mention only a few
 important points. We translate base types by punning the \ipads{} name
-to produce a \ddc base type. We add $\pbot$ as the last branch of the
-\ddc{} sum when translating \Punion{} so that the parse will fail in
-the event that none of the branches match, rather than simply
-returning the result of the last branch. This behaviour is based
-directly on the actual \pads{} language. In the translation of
-\Pwhere{}, we add host language code that only checks the constraint
+to produce a \ddc{} base type. We add $\pbot$ as the last branch of the
+\ddc{} sum when translating \Punion{} so that the parse will fail if none of the branches match rather than
+returning the result of the last branch. 
+\trversion{We based this behaviour 
+directly on the actual \pads{} language.}
+ In the translation of
+\Pwhere{}, we only check the constraint
 if the underlying value parsed with no errors. For \Parray{}s, we add
 simple error recovery by scanning for the separator type.  This
 behaviour allows us to skip erroneous elements easily. We use the

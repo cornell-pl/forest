@@ -45,16 +45,18 @@ convenient tools for processing data in these formats are
 readily available.  For instance, your favorite programming language
 undoubtedly has libraries for parsing XML and HTML as well as
 reading and transforming images in JPEG or movies in MPEG.  Query engines
-are available for asking questions about XML documents.
+are available for querying XML documents.
 Widely-used applications like Microsoft Word and Excel automatically
-translate documents back and forth between HTML and other
+translate documents between HTML and other
 standard formats.  In short, life is good when working with standard data formats. In an ideal world, all data would be in such formats. In reality, however, we are not nearly so fortunate.
 
 An {\em ad hoc data format} is any non-standard data format.  
 Typically, such formats do not have parsing,
 querying, analysis, or transformation tools readily available.
 Every day, network administrators, financial analysts, computer
-scientists, biologists, corporate IT professionals, chemists, astronomers, and
+scientists, biologists, 
+%corporate IT professionals, 
+chemists, astronomers, and
 physicists deal with ad hoc data in a myriad of complex formats.
 Figure~\ref{figure:data-sources} gives a partial sense of the range
 and pervasiveness of such data.  Since off-the-shelf
@@ -62,14 +64,14 @@ tools for processing these ad hoc data formats do not exist
 or are not readily available, talented scientists, data analysts, and
 programmers must waste their time 
 on low-level chores like parsing and format translation
-to extract the valuable information they need from their data.
+to extract the valuable information they need from their data.\trversion{\footnote{%
 Though the syntax of everyday programming languages
 might be considered ``ad hoc,'' we explicitly exclude
-programming language syntax from our domain of interest.
+programming language syntax from our domain of interest.}}
 
 In addition to the inconvenience of having to build custom
 processing tools from scratch, the nonstandard nature of ad hoc data
-frequently leads to a number of other difficulties for its users.
+frequently leads to other difficulties for its users.
 First, documentation for the format may not exist, or it may be out of
 date.  For example, a common phenomenon is for a field in a data source to fall
 into disuse.  After a while, a new piece of information becomes
@@ -201,22 +203,21 @@ binary data from network applications, and mixed encodings as well.
 \figHeight{revised-architecture}{Architecture of \pads{}  system.}{fig:architecture}{2.25in}
 
 While differing in many details, 
-these languages derive their power and utility from 
-a remarkable insight: Types can simultaneously
-serve as declarative specifications for ad hoc data formats 
-{\em and} as classifiers for internal data representations 
-that result from parsing these formats.
+these languages derive their power from 
+a remarkable insight: 
+Types can describe data in both its external (on-disk) and internal
+(programmatic) forms.
 \figref{fig:architecture} illustrates how systems such as
-\pads{}, \datascript, \packettypes{} and others exploit this
+\pads{}, \datascript, and \packettypes{} exploit this
 dual interpretation of types.  In the diagram,
 the data consumer constructs a type {\tt T}
-that describes the syntax and semantic properties of the format 
+to describe the syntax and semantic properties of the format 
 in question.  A compiler converts this
 description into parsing code, which maps raw data into a canonical
 in-memory {\em representation}.  
 %\pads{} uses C as the host language, but in principle,
 %any host language will do.  
-The canonical in-memory representation is guaranteed to be a data structure
+This canonical representation is guaranteed to be a data structure
 that has itself type {\tt T}, or perhaps {\tt T'}, the closest relative of
 {\tt T} available in the host programming language
 being used.
@@ -277,7 +278,7 @@ programmers to keep documentation up-to-date.
 
 Fourth, these data description languages 
 facilitate insertion of error handling code. 
-The generated parsing code checks all possible
+The generated parsers check all possible
 error cases: system errors related to the input file, buffer, or
 socket; syntax errors related to deviations in the physical format;
 and semantic errors in which the data violates user
@@ -370,7 +371,7 @@ that data consumers can rely on the integrity of data marked as error-free.
 
 To study and compare \pads{}, \datascript{}, and/or
 some other data description language, we advocate translating
-the language into \ddc{}.  The translation breaks down
+the language into \ddc{}.  The translation decomposes
 the relatively complex, high-level descriptions of the language 
 in question into a series of lower-level
 \ddc{} descriptions, which have all been formally defined.  
@@ -391,16 +392,13 @@ ill-defined in the documentation we had available to us.
 % ``\Palternate{}s,'' \pads{} own form of intersection type.
 
 To our delight, the process of giving \pads{} 
-a semantics in this framework has had several additional benefits.  
+a semantics in this framework has had additional benefits.  
 In particular, since we defined the
-semantics by carefully reviewing the code base for the 
-implementation, we found a couple of subtle bugs that we 
-have fixed.  The semantics also raised several
-design questions that we are continuing to study and understand. 
-In addition to using the semantic specification to help us improve the
-existing implementation, we also used it to explore important extensions.
-In particular, driven by examples found in biological data 
-sources~\cite{geneontology,newick}, we decided to add recursion to \pads{}.
+semantics by reviewing the existing 
+implementation, we found (and fixed!) a couple of subtle bugs.  The semantics has also raised several
+design questions that we are continuing to study. 
+It has also helped explore important extensions.
+In particular, driven by examples found in biological data~\cite{geneontology,newick}, we decided to add recursion to \pads{}.
 We used our semantic framework to study the ramifications of this addition.
 
 In summary, this paper makes the following theoretical and practical
@@ -414,15 +412,14 @@ languages.
 
 \item At the center of the framework is \ddc{},
 a calculus of data descriptions based on dependent type theory.
-We show how to give a denotational semantics
+We give a denotational semantics
 to \ddc{} by interpreting
 types both as parsers and, more conventionally, 
 as classifiers for parsed data. 
 
-\item We define an important correctness criterion for our language
+\item We define an important correctness criterion for our language,
 stating that all errors in the parsed data are reported in the parse 
-descriptor.  We prove our \ddc{} parsers maintain this and several
-other meta-theoretic properties.
+descriptor.  We prove \ddc{} parsers maintain this properties.
 
 \item We define \ipads{}, an idealized
 version of the \pads{} programming language
@@ -435,18 +432,18 @@ discovery of several bugs in the actual implemention.
 
 \item We have given semantics to features from several other data description
 languages including \packettypes{} and \datascript.  As Landin asserts, 
-this helps us understand the family of languages in this domain
-and the totality of their features so we may engage in principled
+this process helps us understand the family of languages in this domain
+and the totality of their features, so that we may engage in principled
 language design
 as opposed to falling prey to ``accidents of history and personal background.''
 
 \item We use \ipads{} and \ddc{} to experiment with 
 a definition and implementation strategy for recursive data types,
-a feature not found in existing ad hoc data description language that
+a feature not found in any existing ad hoc data description language that
 we are aware of.  Recursive types are essential for representing 
 tree-shaped hierarchical
-data used by biologists~\cite{geneontology,newick}.  
-We have integrated recursion into the \pads{} implementation,
+data~\cite{geneontology,newick}.  
+We have integrated recursion into \pads{},
 using our theory as a guide. 
 \end{itemize}
 
