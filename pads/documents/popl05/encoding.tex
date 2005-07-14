@@ -386,31 +386,39 @@ Finally, we briefly discuss some limitations of \ddc{}.
 \end{figure}
 }
 
+\trversion{
 In \secref{sec:ddc-example}, we showed how an
 \ipads{} description would appear in \ddc{} and informally described
 how \ipads{} is encoded in \ddc{}. In \figref{fig:encode-ipads}, we
-formalize this translation. The judgment ${prog} \cipads \ty\;
-\text{prog}$ indicates that the \ipads{} program ${prog}$ is encoded
+formalize this translation. The judgment $p \cipads \ty\;
+\text{prog}$ indicates that the \ipads{} program $p$ is encoded
 as \ddc{} type $\ty$, while $\itmv \cipads \ty$ does the same
 for \ipads{} types $\itmv$.
 
 As much of the translation is straightforward, we mention only a few
-important points. We translate base types by punning the \ipads{} name
-to produce a \ddc{} base type. We add $\pbot$ as the last branch of the
-\ddc{} sum when translating \Punion{} so that the parse will fail if none of the branches match rather than
-returning the result of the last branch. 
-\trversion{We based this behaviour 
-directly on the actual \pads{} language.}
- In the translation of
-\Pwhere{}, we only check the constraint
-if the underlying value parsed with no errors. For \Parray{}s, we add
-simple error recovery by scanning for the separator type.  This
-behaviour allows us to skip erroneous elements easily. We use the
-$\pscann$ type in the same way for \padskw{Plit}, as literals often
-appear as field separators in \Pstruct{}s.  We also absorb the literal
-as its value is known statically.  We use the function ${\rm Ty}(c)$
-to determine the correct parser for the particular literal. For
-example, a string literal would require a \Pstring{} parser.
+important points.}
+\poplversion{
+We formalize the translation from \ipads{} to \ddc{}, described
+informally in \secref{sec:ddc-example}, with two judgments:
+ $p \cipads \ty\; \text{prog}$ indicates that the \ipads{} program
+$p$ is encoded as \ddc{} type $\ty$, while $\itmv \cipads \ty$
+does the same for \ipads{} types $\itmv$.
+
+As much of the translation is straightforward, we present only
+selected rules in \figref{fig:encode-ipads}. }  We add $\pbot$ as the
+last branch of the \ddc{} sum when translating \Punion{} so that the
+parse will fail if none of the branches match rather than returning
+the result of the last branch.  \trversion{We based this behaviour
+  directly on the actual \pads{} language.}  In the translation of
+\Pwhere{}, we only check the constraint if the underlying value parsed
+with no errors. For \Parray{}s, we add simple error recovery by
+scanning for the separator type.  This behaviour allows us to easily
+skip erroneous elements. We use the $\pscann$ type in the same way for
+\padskw{Plit}, as literals often appear as field separators in
+\Pstruct{}s.  We also absorb the literal as its value is known
+statically.  We use the function ${\rm Ty}(c)$ to determine the
+correct parser for the particular literal. For example, a string
+literal would require a \Pstring{} parser.
 
 \subsection{Beyond \ipads{}}
 
@@ -455,17 +463,19 @@ error in $\ty_1$ when $e$ is true. The error will cause errors in the
 set type despite the satisfaction of its constraint, thereby causing
 the parser to use $\ty_2$. To address this problem, we use products:
 }
+{\small
 \[
 \infer{
-  \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
-  \cipads 
-  ({\psum {\pset x \ptrue {!e}} {} {\ty_1}}) \iprodi
-  ({\psum {\pset x \ptrue {e}} {} {\ty_2}})
+    \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
+    \cipads
+    ({\psum {\pset x \ptrue {!e}} {} {\ty_1}}) \iprodi
+    ({\psum {\pset x \ptrue {e}} {} {\ty_2}})
 }{
   \itmv_1 \cipads \ty_1 &
   \itmv_2 \cipads \ty_2
 }
 \]
+}
 Exactly one element of the pair will be the $\iunitty$ value,
 while the other will be the result of the parse. With this definition,
 we encode the \Pswitch{} as a syntactic sugar for a series of
@@ -474,14 +484,21 @@ cascading conditional types.
 {\small
 \[
 \begin{array}{l}
-\Pswitch{}\;e\;\{e_1 \Rightarrow x_1{:}\itmv_1 \dots 
-    e_n \Rightarrow x_n{:}\itmv_n\; \itmv_{\text{def}}\} 
-    = \\
-\quad    \iif {e = e_1}\; \ithen {\itmv_1}\; \ielse{}\\
-\quad    \iif {e = e_2}\; \ithen {\itmv_2}\; \ielse{}\\
-\quad    \dots\\
-\quad    \iif {e = e_n}\; \ithen {\itmv_1}\; \ielse{}\\
-\quad    \itmv_{\text{def}}
+\Pswitch{}\;e\;\{\\
+\quad e_1 \Rightarrow x_1{:}\itmv_1\\ 
+\quad \dots \\
+\quad e_n \Rightarrow x_n{:}\itmv_n\\
+\quad \itmv_{\text{def}} \}
+\end{array}
+\quad
+ \mathbf{=}
+\quad
+\begin{array}{l} 
+    \iif {e = e_1}\; \ithen {\itmv_1}\; \ielse{}\\
+%    \iif {e = e_2}\; \ithen {\itmv_2}\; \ielse{}\\
+    \dots\\
+    \iif {e = e_n}\; \ithen {\itmv_1}\; \ielse{}\\
+    \itmv_{\text{def}}
 \end{array}
 \]}%
 \noindent
@@ -509,29 +526,34 @@ this type consumes no data and produces a unit value without errors.
 The overlay creates a new type \cd{IPinFP} where the body field is an
 \cd{IPPacket} rather than a simple byte array.
 
-We've developed a translation of the overlay syntax into \ddc{}. Although
-overlays are conceptually intuitive,
-we discovered a critical subtlety when formalizing their semantics. 
-Any expressions in the original
-type that refer to the overlayed field may no longer be well typed
-in the new type. We thought to disallow such expressions in the
-overlayed type. However, we found this to be a difficult, if not
+We've developed a translation of the overlay syntax into \ddc{}.
+Although overlays are conceptually intuitive, we discovered a critical
+subtlety when formalizing their semantics.  Any expressions in the
+original type that refer to the overlayed field may no longer be well
+typed after applying the overlay.
+\trversion{
+We thought to disallow such expressions in the
+overlayed type.However, we found this to be a difficult, if not
 impossible task. More importantly, such a restriction is unnecessary.
 Instead, we designed the translation so that the new type is
 checked for well formedness after the overlay process, an easy task
 in the \ddc{} framework.
+}
+\poplversion{
+It is therefore necessary for the translation to check the new type 
+for well formedness after the overlay process, which is an easy task
+in the \ddc{} framework.
+}
 
-Finally, we introduce \datascript{}-style arrays for binary data, which are
-parameterized by an optional length field, instead of a separator and
-terminator. The syntax of an array named $\mathit{id}$ with elements
-of type $\itmv$ is $\itmv\; \mathit{id}[\mathit{length}]$. If the user
-supplies the length of the sequence, the array parser reads
-exactly that number of elements.  Otherwise, the parser continues
-until an element constraint is violated or the input is completely
-consumed.
+Finally, we introduce \datascript{}-style arrays for binary data,
+$\itmv\;[\mathit{length}]$. They are parameterized by an optional
+length field, instead of a separator and terminator. If the user
+supplies the length of the sequence, the array parser reads exactly
+that number of elements.  Otherwise, the parser continues until an
+element constraint is violated or the input is completely consumed.
 
-The first case can be encoded in a straightforward manner with \ddc{}
-sequences: 
+Fixed-length arrays can be encoded in a straightforward manner with
+\ddc{} sequences:
 \[
   \infer{
     \itmv \; [\mathit{length}] \cipads 
@@ -541,30 +563,34 @@ sequences:
     (f = \ilam {((len,elts),p)} {} {\codefont{len} = \mathit{length}})
   }
 \]
-As binary data has no separators, we use $\ptrue$. The function $f$
-takes a pair of representation and PD arrays and compares the sequence
-length recorded in the representation to $\mathit{length}$. As there
-is no lookahead-terminator, we use $\pfalse$ (thereby guaranteeing
-that the array will not be terminated because of lookahead).
+As these arrays have neither separators nor terminators, we use
+$\ptrue$ and $\pfalse$, respectively, for separator and terminator, so
+that the former will always be found and the latter will never be. The
+function $f$ takes a pair of array representation and PD and compares
+the sequence length recorded in the representation to
+$\mathit{length}$.
 
-For the second case, we need a way to terminate if the next element
-will not parse correctly without consuming it. We cannot use the
-termination predicate as it can only look at elements that have
-already been parsed and hence consumed from the input. Therefore, we
-need a way to encode the notion of a failed element parse in the
-terminator type. To do so, we define $\pnot \ty$ to be:
- {\small
+Unbounded arrays are more difficult to encode as they must check the
+next element for parse errors without consuming it from the data
+stream. A termination predicate cannot encode this check as
+they \trversion{are limited to the in-memory representation and PD
+  and} cannot perform lookahead. Therefore, we must use the terminator
+type to look ahead for an element parse error. For this purpose, we
+design a type which succeeds where $\ty$ fails and fails where $\ty$
+succeeds:
+{\small
 \[
 \pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
   {\ifalse} {\_} {\itrue}}
 \]}
 \noindent
-This type attempts to parse a $\ty$. On success, the representation will be a left
-injection. The constraint in the set type will therefore fail. If a
-$\ty$ cannot be parsed, the sum will default to $\ptrue$, the rep will
-be a right injection, and the constraint will succeed. The use of the
-sum in the underlying type is critical as it allows the set-type to be
-error free even if parsing a $\ty$ fails.
+Abbreviated $\pnot \ty$, this type attempts to parse a $\ty$. On
+success, the representation will be a left injection. The constraint
+in the set type will therefore fail. If a $\ty$ cannot be parsed, the
+sum will default to $\ptrue$, the rep will be a right injection, and
+the constraint will succeed. The use of the sum in the underlying type
+is critical as it allows the set-type to be error free even if parsing
+a $\ty$ fails.
 
 With $\pnotn$, we can encode the unbounded \datascript{} array as
 follows:
