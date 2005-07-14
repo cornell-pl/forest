@@ -587,8 +587,8 @@ The parsing semantics of a type $\tau$ is a function that transforms some amount
 type, the input to the corresponding parser is a bit string and an
 offset which indicates the point in the bit string at which parsing
 should commence.  The output is a new offset, a representation of the
-parsed data, and a parse descriptor. Note that the bit string is
-never modified, and therefore is not returned as an output.  In addition
+parsed data, and a parse descriptor. As the bit string input is
+never modified, it is not returned as an output.  In addition
 to specifying how to handle correct data, each function describes how
 to transform corrupted bit strings, marking detected errors in
 a parse descriptor. The semantics function is partial, applying only

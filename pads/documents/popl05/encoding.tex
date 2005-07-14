@@ -381,7 +381,8 @@ Finally, we briefly discuss some limitations of \ddc{}.
   }
 \]
 }
-\caption{Selected Rules for Encoding \ipads{} in \ddc{}}
+\caption{Selected Rules for Encoding \ipads{} in \ddc{}. The full
+  collection of rules appears in \appref{app:ipads-to-ddc}.}
   \label{fig:encode-ipads}
 \end{figure}
 }
@@ -405,7 +406,7 @@ $p$ is encoded as \ddc{} type $\ty$, while $\itmv \cipads \ty$
 does the same for \ipads{} types $\itmv$.
 
 As much of the translation is straightforward, we present only
-selected rules in \figref{fig:encode-ipads}. }  We add $\pbot$ as the
+selected rules in \figref{fig:encode-ipads}.}  We add $\pbot$ as the
 last branch of the \ddc{} sum when translating \Punion{} so that the
 parse will fail if none of the branches match rather than returning
 the result of the last branch.  \trversion{We based this behaviour
