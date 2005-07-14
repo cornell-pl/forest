@@ -6,9 +6,10 @@
 
 To our knowledge, we are the first to attempt to specify a semantics for
 data description languages based on types such as \packettypes,
-\datascript{} or \pads.  Prior to our work, this family of languages 
-was described informally and by example.  There was no precise
-connection to formal dependent type theory.
+\datascript{} or \pads.  
+%Prior to our work, this family of languages 
+%was described informally and by example.  There was no precise
+%connection to formal dependent type theory.
 
 Of course, there are other formalisms for
 defining parsers, most famously, regular expressions and
@@ -26,11 +27,13 @@ define {\em both} external data formats {\em and}
 rich invariants on %(\ie{} types for)
 the internal parsed data structures.  This dual interpretation
 of types lies at the heart of tools such as \pads, \datascript{} and
-\packettypes.  \pads{} programmers, for instance, demand that
-representations produced by their \pads{} parsers have the expected type and 
-count on the fact that the associated PD is accurately correlated
-with the representation.  Existing formalisms simply did not address
-these elements of data description languages.
+\packettypes.  
+%\pads{} programmers, for instance, demand that
+%representations produced by their \pads{} parsers have the expected type and 
+%count on the fact that the associated PD is accurately correlated
+%with the representation.  
+%Existing formalisms simply do not address
+%this elements of data description languages.
 
 {\em Parsing Expression Grammars} (PEGs),
 studied in the early 70s~\cite{birman+:parsing} and revitalized more 
@@ -43,7 +46,7 @@ they may be parsed in linear time through the use of
 Once again, the dual interpretation of types in \ddc{} both as
 data descriptions and as classifiers for internal representations
 make our theory substantially different from the theory of PEGs.
-In practice, PEGs has not been used to parse ad hoc data.
+%In practice, PEGs has not been used to parse ad hoc data.
 
 {\sc antlr}~\cite{antlr}, a popular programming language parsing tool, 
 uses top-down recursive descent
