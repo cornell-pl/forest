@@ -231,26 +231,47 @@ $
 \end{proofsketch}
 }
 
+\trversion{
 \begin{figure}
-\small
+{\small
 \fbox{$\ptyc{\rctxt} = \ctxt$} 
     
 \[
   \ptyc{\cdot} = \cdot \qquad\qquad
   \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
   \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
-\]
+\]}
   \caption{Recursive Parser \Implang{} Types}
   \label{fig:rec-parser-types}
 \end{figure}
+}
 
 To prove our type correctness theorem by induction, we must account
 for the fact that any free recursive type variables in
 a \ddc{} type $\ty$ will become free function variables
-in $\trans[\ty,,]$.  To that end, we define in \figref{fig:rec-parser-types}
+in $\trans[\ty,,]$.  
+\trversion{
+To that end, we define in \figref{fig:rec-parser-types}
 the function $\ptyc \rctxt$, 
 which maps recursive variable contexts
-$\rctxt$ to typing contexts $\ctxt$. We also apply $\rctxt$ to $\ty$
+$\rctxt$ to typing contexts $\ctxt$. 
+}
+\poplversion{
+To that end, we now define the function $\ptyc \rctxt$, 
+which maps recursive variable contexts
+$\rctxt$ to typing contexts $\ctxt$:
+{\small
+\[
+\begin{array}{l}
+  \ptyc{\cdot} = \cdot \\
+  \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
+  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
+\end{array}
+\]
+}
+}
+\noindent
+We also apply $\rctxt$ to $\ty$
 to close any open references to recursive types before
 determining the corresponding parser type. 
 \trversion{  We don't explicitly require that $\ctxt$
