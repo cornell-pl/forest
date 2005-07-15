@@ -208,7 +208,7 @@ a remarkable insight:
 Types can describe data in both its external (on-disk) and internal
 (programmatic) forms.
 \figref{fig:architecture} illustrates how systems such as
-\pads{}, \datascript, and \packettypes{} exploit this
+\pads{}, \datascript{}, and \packettypes{} exploit this
 dual interpretation of types.  In the diagram,
 the data consumer constructs a type {\tt T}
 to describe the syntax and semantic properties of the format 
@@ -218,7 +218,7 @@ in-memory {\em representation}.
 %\pads{} uses C as the host language, but in principle,
 %any host language will do.  
 This canonical representation is guaranteed to be a data structure
-that has itself type {\tt T}, or perhaps {\tt T'}, the closest relative of
+that itself has type {\tt T}, or perhaps {\tt T'}, the closest relative of
 {\tt T} available in the host programming language
 being used.
 In the case of \pads{}, the parser also generates a {\em parse 
@@ -232,7 +232,7 @@ challenges of ad hoc data in multiple ways.
 First, format specifications in these languages serve as high-level
 documentation that is more easily read and
 maintained than the equivalent low-level \perl{} script or C parser.
-Importantly, \datascript{}, \packettypes, and \pads{} all
+Importantly, \datascript{}, \packettypes{}, and \pads{} all
 allow programmers to describe both the physical layout of data
 as well as its deeper semantic properties such as equality and range 
 constraints on values, sortedness, and other forms of dependency.
@@ -249,7 +249,7 @@ have been able to exploit these intuitions to make the syntax and
 semantics of descriptions
 particularly easy to understand, even for beginners.  For instance,
 an array type is naturally used to describe sequences of data objects.
-And really, what else could an array type describe?  Similarly,
+And, really, what else could an array type describe?  Similarly,
 union types are used to describe alternatives.
 
 Third, programmers can write generic, type-directed programs that 
@@ -337,11 +337,11 @@ in our domain.  This semantic framework revolves around the
 definition of a data description calculus (\ddc{}).  
 This calculus uses types from a dependent type theory to describe
 various forms of ad hoc data:
-base types describe atomic pieces of data and
+base types to describe atomic pieces of data and
 type constructors to describe richer structures.
 We show how to give a denotational semantics
 to \ddc{} by interpreting
-types as parser functions that map external representations (bits)
+types as parsing functions that map external representations (bits)
 to data structures in a typed lambda calculus.  More precisely,
 these parsers produce both 
 internal representations of the external data and
@@ -397,7 +397,7 @@ In particular, since we defined the
 semantics by reviewing the existing 
 implementation, we found (and fixed!) a couple of subtle bugs.  The semantics has also raised several
 design questions that we are continuing to study. 
-It has also helped explore important extensions.
+It has also helped us explore important extensions.
 In particular, driven by examples found in biological data~\cite{geneontology,newick}, we decided to add recursion to \pads{}.
 We used our semantic framework to study the ramifications of this addition.
 
@@ -407,7 +407,7 @@ contributions:
 \begin{itemize}
 \item We define a semantic framework for understanding and comparing data description languages such as \pads{},
 \packettypes{}, \datascript{}, and \blt{}.
-No one had previously given a formal semantics to any of these 
+No one has previously given a formal semantics to any of these 
 languages.
 
 \item At the center of the framework is \ddc{},
@@ -419,7 +419,7 @@ as classifiers for parsed data.
 
 \item We define an important correctness criterion for our language,
 stating that all errors in the parsed data are reported in the parse 
-descriptor.  We prove \ddc{} parsers maintain this properties.
+descriptor.  We prove \ddc{} parsers maintain this property.
 
 \item We define \ipads{}, an idealized
 version of the \pads{} programming language
@@ -431,8 +431,8 @@ discovery of several bugs in the actual implemention.
 %infrastructure.  
 
 \item We have given semantics to features from several other data description
-languages including \packettypes{} and \datascript.  As Landin asserts, 
-this process helps us understand the family of languages in this domain
+languages including \packettypes{} and \datascript{}.  As Landin asserts, 
+this process helps us understand the families of languages in this domain
 and the totality of their features, so that we may engage in principled
 language design
 as opposed to falling prey to ``accidents of history and personal background.''
@@ -449,9 +449,14 @@ using our theory as a guide.
 
 Section~\ref{sec:ipads} gives a gentle introduction to data description
 languages by introducing \ipads.  Sections~\ref{sec:ddc}, \ref{sec:ddc-sem} and \ref{sec:meta-theory}
-explain the syntax and semantics and metatheory of \ddc{}.
-Section~\ref{sec:encodings}  discuss encodings of \ipads{}, \packettypes
-and \datascript{} in \ddc{} and Sections \ref{sec:applications}
+explain the syntax, semantics and metatheory of \ddc{}.
+Section~\ref{sec:encodings} discusses encodings of \ipads{}, \packettypes{}
+and \datascript{} in \ddc{} and \secref{sec:applications}
 explains how we have already made use of our semantics in practice.  
 Sections~\ref{sec:related} and 
 \ref{sec:conclusion} discuss related work and conclude.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
