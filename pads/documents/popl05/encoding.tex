@@ -4,7 +4,7 @@
 We can better understand the data description languages mentioned
 earlier by translating their constructs into the types of \ddc{}. We
 start with the translation of \ipads{}, which captures many of the
-common features of DDLs. We then discuss features of \pads{},
+common features of \ddl{}s. We then discuss features of \pads{},
 \datascript{}, and \packettypes{} that are not found in \ipads{}.
 \trversion{
 Finally, we briefly discuss some limitations of \ddc{}.
@@ -406,7 +406,7 @@ $p$ is encoded as \ddc{} type $\ty$, while $\itmv \cipads \ty$
 does the same for \ipads{} types $\itmv$.
 
 As much of the translation is straightforward, we present only
-selected rules in \figref{fig:encode-ipads}.}  We add $\pbot$ as the
+selected rules in \figref{fig:encode-ipads}.}  Notice we add $\pbot$ as the
 last branch of the \ddc{} sum when translating \Punion{} so that the
 parse will fail if none of the branches match rather than returning
 the result of the last branch.  \trversion{We based this behaviour
@@ -418,8 +418,8 @@ skip erroneous elements. We use the $\pscann$ type in the same way for
 \padskw{Plit}, as literals often appear as field separators in
 \Pstruct{}s.  We also absorb the literal as its value is known
 statically.  We use the function ${\rm Ty}(c)$ to determine the
-correct parser for the particular literal. For example, a string
-literal would require a \Pstring{} parser.
+correct type for the particular literal. For example, a string
+literal would require a \Pstring{} type.
 
 \subsection{Beyond \ipads{}}
 
@@ -475,8 +475,8 @@ the parser to use $\ty_2$. To address this problem, we use products:
   \itmv_1 \cipads \ty_1 &
   \itmv_2 \cipads \ty_2
 }
-\]
-}
+\]}%
+\noindent
 Exactly one element of the pair will be the $\iunitty$ value,
 while the other will be the result of the parse. With this definition,
 we encode the \Pswitch{} as a syntactic sugar for a series of
@@ -527,9 +527,11 @@ this type consumes no data and produces a unit value without errors.
 The overlay creates a new type \cd{IPinFP} where the body field is an
 \cd{IPPacket} rather than a simple byte array.
 
-We've developed a translation of the overlay syntax into \ddc{}.
+We have developed a translation of the overlay syntax into \ddc{} (not
+shown due to space constraints).
 Although overlays are conceptually intuitive, we discovered a critical
-subtlety when formalizing their semantics.  Any expressions in the
+subtlety, not mentioned by the authors, when formalizing their 
+semantics.  Any expressions in the
 original type that refer to the overlayed field may no longer be well
 typed after applying the overlay.
 \trversion{
@@ -565,8 +567,9 @@ Fixed-length arrays can be encoded in a straightforward manner with
   }
 \]
 As these arrays have neither separators nor terminators, we use
-$\ptrue$ and $\pfalse$, respectively, for separator and terminator, so
-that the former will always be found and the latter will never be. The
+$\ptrue$ (always succeeds, parsing nothing)
+and $\pfalse$ (always fails, parsing nothing), 
+respectively, for separator and terminator. The
 function $f$ takes a pair of array representation and PD and compares
 the sequence length recorded in the representation to
 $\mathit{length}$.
@@ -626,10 +629,11 @@ which we have found encodings in \ddc{}:
   as ``type parameters''), and (monotonically increasing) labels.
 \end{itemize}
 
-There are features from these and other data description languages
-that we cannot implement in \ddc{} as it stands.  An example is a label construct that permits the user to rewind the input. However, we do not view these limitations of
-\ddc{} as problematic. Like the simple-typed lambda calculus, \ddc{}
-is intended to capture many common language features, while providing
+We know of a couple of features from data description languages
+that we cannot implement in \ddc{} as it stands.  An example is a label construct that permits the user to rewind the input. However, we do not view 
+such limitations as particularly troublesome. Like the lambda 
+calculus or pi calculus,
+\ddc{} is intended to capture many common language features, while providing
 a convenient and effective basis for extension with new features.
 
 % Indeed, the two main features of \datascript{} that cannot currently

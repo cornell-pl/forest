@@ -156,21 +156,22 @@ the semantics of other \pads{} features (\eg, literals) elegantly.
 
 Another accident in the
 \pads{} implementation is that there is no guarantee that
-certain features are ``safe.''  This is due in part to the fact that
-the \pads{} host language is \C{} and in part to the desire to implement
+certain features are ``safe.''  This is due on occasion to the fact that
+the \pads{} host language is \C{} and on occasion to the desire to implement
 certain optimizations.  As an example, when a 
 semantic error in a \Pwhere{} clause is detected, the parser sets a flag.  
 However, the \C{} programmer is not forced to check this flag before using 
 the value in question and therefore can unknowingly process invalid data.  The 
 semantics of \ddc{} deviates from the \C{} implementation here as it suggests
-constrained types be implemented as values with a sum type.  A lambda
+constrained types be implemented as values with a sum type.  A typed lambda
 calculus programmer is required to perform a case on the sum and
 hence will always be informed of an error.
 %For the sake of safety, we believe the \C{} interface should be reworked 
 %here to match the semantics.  
-Perhaps more importantly, the \C{} implementation does not serve as a
-proper guide for the integration of \pads{} ideas with a safe language like ML.
-For this purpose, the \ddc{} is much more appropriate.
+In such cases, the \C{} implementation does not serve as a
+proper guide for the integration of \pads{} ideas with a safe 
+language like ML.
+For this purpose, the \ddc{} is a much more appropriate starting point.
 
 % As an aside, we are currently designing an ML binding for 
 % pads~\cite{fernandez+:padst}
