@@ -80,9 +80,9 @@ of values in which the second type may refer to the value of the first.
 Sum types $\psum {\ty_1} {} {\ty_2}$
 express flexibility in the data format, as they parse
 data matching either $\ty_1$ or $\ty_2$. Sum-type parsers
-are deterministic, always transforming the data according to $\ty_1$
-if both types parse without errors, and
-according to $\ty_2$ if neither do. Intersection types
+are deterministic, transforming the data according to $\ty_1$
+when possible and only attempting to
+use $\ty_2$ if there is an error in $\ty_1$. Intersection types
 $\pand {\ty_1} {\ty_2}$ describe data that match both $\ty_1$ and
 $\ty_2$. They transform a single set of bits to produce
 a pair of values, one from each type. Set types $\pset x \ty e$
