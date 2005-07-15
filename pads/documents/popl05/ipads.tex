@@ -24,12 +24,12 @@ A complete \ipads{} description is a sequence of type definitions
 terminated by a single type.  This terminal type describes the
 entirety of a data source, making use of the previous 
 type definitions to do so.  \ipads{} type definitions can have one of
-two forms.  The form ($\alpha = pty$) introduces the type identifier
-$\alpha$ and binds it to \ipads{} type $pty$.
+two forms.  The form ($\alpha = \itmv$) introduces the type identifier
+$\alpha$ and binds it to \ipads{} type $\itmv$.
 The type identifier may be used in
-subsequent types.  The second form  ($\Prec{}\; \alpha = pty$) introduces
+subsequent types.  The second form  ($\Prec{}\; \alpha = \itmv$) introduces
 a recursive type definition.  In this case, $\alpha$ may appear in 
-$pty$.\trversion{~\footnote{For technical reasons, 
+$\itmv$.\trversion{~\footnote{For technical reasons, 
 we require that recursive definitions be {\it contractive}:
 $\alpha$ can only appear inside another type constructor such as a
 record or union.  See Section~\ref{sec:ddc-kinding} for further details.}}
@@ -38,10 +38,10 @@ Complex \ipads{} descriptions are built by using type constructors to glue toget
 assume \ipads{} contains a wide variety of base types including
 integers (\Puint{} is an ASCII representation of an unsigned
 32-bit integer), characters (\Pchar), strings (\Pstring), dates
-(\Pdate), ip addresses (\Pip), and others.  In general, these base
+(\Pdate), IP addresses (\Pip), and others.  In general, these base
 types may parameterized.  For instance, we will assume \Pstring{} is
 parameterized by an argument that signals termination of the
-string.  For instance, \Pstring({\tt " "}) describes any sequence of
+string.  For example, \Pstring({\tt " "}) describes any sequence of
 characters terminated by a space. 
 (Note that we do not consider the space to be part of the parsed string; 
 it will be part of the next object.)
@@ -59,7 +59,7 @@ For instance, \Puint{} reads a series of digits and generates an unsigned 32-bit
 internal representation.  \Pstring{} generates a 
 host language string.  
 \Pdate{} might read dates in a multitude of
-different formats, but always generates a record
+different formats, but always generates a tuple
 with time, day, month, and year fields as its internal 
 representation.  Whenever an \ipads{} parser encounters
 an unexpected character or bit-sequence, it sets the internal representation to
@@ -98,7 +98,7 @@ an array is a sequence of elements. We do not represent separators or terminator
 We use a \Pstruct{} to describe the contents of each line in a web log.
 Like an array, a \Pstruct{} describes a sequence of 
 objects in a data source.  We represent the result of parsing a \Pstruct{} 
-as a record in the host language.  The elements
+as a tuple in the host language.  The elements
 of a \Pstruct{} are either named fields (\eg{} {\tt client : \Pip{}}) or
 anonymous fields (\eg{} {\tt " "}).  The \Pstruct{} {\tt
 entry$\_$t} declares that the first thing on the line
@@ -246,7 +246,7 @@ described in \secref{sec:host-lang}.
 \trversion{Notice, however, that we use $x$ for host
 language expression variables and $\alpha$ for \ipads{} type
 variables. }
-In the examples, we have abbreviated this syntax in places.  
+In the examples, we have abbreviated the syntax in places.  
 For instance, we omit the operator ``\padskw{Plit}'' and formal label 
 $x$ when specifying constant types in \Pstruct{}s, writing
 ``$c;$'' instead of ``$x :
@@ -298,3 +298,4 @@ parameters for base types such as \Puint.
 %%% mode: latex
 %%% TeX-master: "semantics"
 %%% End: 
+
