@@ -146,14 +146,14 @@ is an arbitrary host language expression with boolean type.
 \begin{figure}
 {\small
 \begin{code}
-response\_t =
-  \Pfun(x:int) =
-   \padskw{Puint16\_FW}(x) \Pwhere{} y.100 <= y and y < 600;
-\(\qquad\)
 authid\_t = \Punion{} \{
   unauthorized : "-";
   id           : \Pstring (" ");
 \};
+\(\qquad\)
+response\_t =
+  \Pfun(x:int) =
+   \padskw{Puint16\_FW}(x) \Pwhere{} y.100 <= y and y < 600;
 \(\qquad\)
 entry\_t = \Pstruct{} \{
   client   : \Pip{};             " ";

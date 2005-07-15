@@ -233,16 +233,16 @@ in the form $\mathtt{name} = \ty$ before giving the type that describes the data
 {\small
 \[
 \begin{array}{l}
-\mathtt{S} = \plam {\mathtt{ch}} {} {\pset {\mathtt{c}}
-  {\mathtt{Pchar}} {\mathtt{c = ch}}}\\
+\mathtt{S} = \plam {\mathtt{str}} {} {\pset {\mathtt{s}}
+  {\mathtt{Pstring\_FW(1)}} {\mathtt{s = str}}}\\
+\\
+\mathtt{authid\_t} = 
+\psum {\mathtt{S(``-")}} {} {\mathtt{Pstring(``\;")}}\\
 \\
 \mathtt{response\_t} = \plam {\mathtt x} {} {
       \pset {\mathtt y} {\mathtt{Puint16\_FW(x)}} 
       {\codefont{100 \leq y \iandi y < 600}}
     }\\
-\\
-\mathtt{authid\_t} = 
-\psum {\mathtt{S(``-")}} {} {\mathtt{Pstring(``\;")}}\\
 \\
 \mathtt{entry\_t} = \\ \;
 \begin{array}{lll}
