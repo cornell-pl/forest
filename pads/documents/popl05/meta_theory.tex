@@ -28,7 +28,7 @@ description language.
 \item {\bf Translation Completeness}: The semantic function
   $\trans[\cdot,,]$ is a total function of well-formed \ddc{} types.
 }
-\item {\bf Parser Type Correctness}: For a \ddc{}-type $\ty$, the
+\item {\bf Parser Type Correctness}: For a \ddc{} type $\ty$, the
   representation and PD output by the parsing function of $\ty$ will
   have the types specified by $\itsem[\ty]$ and
   $\itpdsem[\ty]$, respectively.
@@ -276,7 +276,7 @@ $\rctxt$ to typing contexts $\ctxt$:
 We also apply $\rctxt$ to $\ty$
 to close any open references to recursive types before
 determining the corresponding parser type. 
-\trversion{  We don't explicitly require that $\ctxt$
+\trversion{  We do not explicitly require that $\ctxt$
 be well formed in the premises, as it follows from the fact that $\ty$
 is well formed in $\ctxt$.
 }
@@ -311,7 +311,7 @@ type directed.  However, some types, such as type application, are not
 immediately useful in determining correlation, and must be normalized. In \figref{fig:revised-ddc-syntax}, we define the set of
 normalized types $\tyval$ and give normalization rules. For clarity, we define $\corrkl \ty r p$ as a ``helper''
 relation that normalizes types $\ty$ before checking for correlation.
-The main correlation relation ($\corr \ty r p$) is defined only
+The relation $\corr \ty r p$, then, is defined only
 for normalized types of kind $\kty$. Type abstractions are excluded as
 they cannot directly produce representations and PDs.
 
