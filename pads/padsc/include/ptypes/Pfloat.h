@@ -275,6 +275,12 @@ ssize_t Pfloat64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_
                     );
 
 /*@END Pfloat_app_9.tex*/
+
+#endif
+#endif
+
+#if P_CONFIG_A_FLOAT > 0 || P_CONFIG_E_FLOAT > 0
+
 /*@BEGIN Pfloat_app_10.tex*/
 
 ssize_t Pfloat32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
@@ -307,7 +313,6 @@ ssize_t Pfloat64_fmt2io(P_t *pads, Sfio_t *io, int *requested_out, const char *d
 
 /*@END Pfloat_app_10.tex*/
 
-#endif
 #endif
 
 #endif  /*  P_CONFIG_WRITE_FUNCTIONS > 0  */
