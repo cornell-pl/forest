@@ -580,7 +580,7 @@ endif
 
 ifndef BuildAST4PADSLib
 INCLUDES += -I$(PADS_HOME)/padsc/include
-INCLUDE_DEPS = $(PADS_HOME)/padsc/include/*.h $(PADS_HOME)/padsc/include/template/*.h
+INCLUDE_DEPS = $(PADS_HOME)/padsc/include/*.h $(PADS_HOME)/padsc/include/ptypes/*.h $(PADS_HOME)/padsc/include/template/*.h
 else
 INCLUDE_DEPS =
 endif
