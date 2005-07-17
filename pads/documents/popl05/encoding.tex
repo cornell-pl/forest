@@ -435,9 +435,9 @@ If none match then the default branch $\itmv_{\text{def}}$ is chosen.
 The syntax of a switched union is $\Pswitch{}\;e\;\{\overrightarrow{e
   \Rightarrow x{:}\itmv}\; \itmv_{\text{def}}\}$.
 
-To aid in our translation of \Pswitch{}, we define a simpler
-construct that allows us to choose between two types conditionally:
-$\iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2}$. 
+To aid in our translation of \Pswitch{}, we define a type $\iif e\;
+\ithen {\itmv_1}\; \ielse {\itmv_2}$ that allows us to choose
+between two types conditionally: 
 \trversion{
 Our first attempt to
 translate the conditional relies on \ddc{} sums:
@@ -462,26 +462,35 @@ causing us to parse the data with $\ty_2$.
 Unfortunately. while this seems to work, it will fail if there is an
 error in $\ty_1$ when $e$ is true. The error will cause errors in the
 set type despite the satisfaction of its constraint, thereby causing
-the parser to use $\ty_2$. To address this problem, we use products:
+the parser to use $\ty_2$. To address this problem, we use 
+intersections:
 }
 {\small
 \[
 \infer{
     \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
     \cipads
-    ({\psum {\pset x \ptrue {!e}} {} {\ty_1}}) \iprodi
-    ({\psum {\pset x \ptrue {e}} {} {\ty_2}})
+%    \begin{array}{l}
+    c \iprodi \pand {({\psum {\pset x \ptrue {!e}} {} {\ty_1}})}
+    {({\psum {\pset x \ptrue {e}} {} {\ty_2}})}
+%    \end{array}
 }{
   \itmv_1 \cipads \ty_1 &
-  \itmv_2 \cipads \ty_2
+  \itmv_2 \cipads \ty_2 &
+  (c  = \pcompute {\codefont{if}
+          \;e\;\codefont{then\;1\;else\;2\;}}{\codefont{Pint}})
 }
 \]}%
 \noindent
-Exactly one element of the pair will be the $\iunitty$ value,
-while the other will be the result of the parse. With this definition,
-we encode the \Pswitch{} as a syntactic sugar for a series of
-cascading conditional types.
+The computed value $c$ indicates which branch is to be taken and the
+intersection parses exactly that branch of the conditional-type.  We
+use a combination of set and sum type to guard each branch with a
+condition such that the branch is only parsed if the condition is
+false. We guarantee that exactly one branch is parsed by guarding the
+two branches with mutually exclusive conditions. 
 
+Now, we can encode \Pswitch{} as syntactic sugar for a series of cascading
+conditional types.
 {\small
 \[
 \begin{array}{l}
@@ -557,6 +566,7 @@ element constraint is violated or the input is completely consumed.
 
 Fixed-length arrays can be encoded in a straightforward manner with
 \ddc{} sequences:
+{\small
 \[
   \infer{
     \itmv \; [\mathit{length}] \cipads 
@@ -565,7 +575,7 @@ Fixed-length arrays can be encoded in a straightforward manner with
     \itmv \cipads \ty & 
     (f = \ilam {((len,elts),p)} {} {\codefont{len} = \mathit{length}})
   }
-\]
+\]}
 As these arrays have neither separators nor terminators, we use
 $\ptrue$ (always succeeds, parsing nothing)
 and $\pfalse$ (always fails, parsing nothing), 
