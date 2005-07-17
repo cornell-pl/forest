@@ -437,7 +437,7 @@ The syntax of a switched union is $\Pswitch{}\;e\;\{\overrightarrow{e
 
 To aid in our translation of \Pswitch{}, we define a type $\iif e\;
 \ithen {\itmv_1}\; \ielse {\itmv_2}$ that allows us to choose
-between two types conditionally: 
+between two types conditionally : 
 \trversion{
 Our first attempt to
 translate the conditional relies on \ddc{} sums:
@@ -445,7 +445,7 @@ translate the conditional relies on \ddc{} sums:
 \infer{
   \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
   \cipads \psum
-  {\pset y {\psum {\pset x \ptrue {!e}} {} {\ty_1}} e}
+  {\pset y {\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}} e}
   {} {\ty_2}
 }{
   \itmv_1 \cipads \ty_1 &
@@ -468,12 +468,12 @@ intersections:
 {\small
 \[
 \infer{
+    \begin{array}{l}
     \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
-    \cipads
-%    \begin{array}{l}
-    c \iprodi \pand {({\psum {\pset x \ptrue {!e}} {} {\ty_1}})}
+    \cipads \\
+    \qquad \qquad c \iprodi \pand {({\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}})}
     {({\psum {\pset x \ptrue {e}} {} {\ty_2}})}
-%    \end{array}
+    \end{array}
 }{
   \itmv_1 \cipads \ty_1 &
   \itmv_2 \cipads \ty_2 &
@@ -482,12 +482,17 @@ intersections:
 }
 \]}%
 \noindent
-The computed value $c$ indicates which branch is to be taken and the
-intersection parses exactly that branch of the conditional-type.  We
-use a combination of set and sum type to guard each branch with a
-condition such that the branch is only parsed if the condition is
-false. We guarantee that exactly one branch is parsed by guarding the
-two branches with mutually exclusive conditions. 
+The computed value $c$ records which branch of the conditional is
+selected.  If the condition $e$ is true, $c$ will be 1, the left-hand
+side of the intesection will parse $\ty_1$ and the right will parse nothing.
+Otherwise, $c$ will be 2, the left-hand side will parse nothing and the
+right $\ty_2$.
+% The computed value $c$ indicates which branch is to be taken and the
+% intersection parses exactly that branch of the conditional-type.  We
+% use a combination of set and sum type to guard each branch with a
+% condition such that the branch is only parsed if the condition is
+% false. We guarantee that exactly one branch is parsed by guarding the
+% two branches with mutually exclusive conditions. 
 
 Now, we can encode \Pswitch{} as syntactic sugar for a series of cascading
 conditional types.
