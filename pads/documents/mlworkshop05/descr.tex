@@ -164,10 +164,10 @@ fails will it attempt to parse the second branch.
 Notice how this semantics differs from similar constructs in
 regular expressions and context-free grammars, which
 non-deterministically choose between alternatives.
-By making alternatives deterministic, we avoid
-the need to implement general backtracking search.  
+% By making alternatives deterministic, we avoid
+% the need to implement general backtracking search.  
 Fortunately, we have yet to come across an ad hoc data source
-where we wish we had nondeterminisc choice.\footnote{\pads{}
+where we wish we had nondeterministic choice.\footnote{\pads{}
 can recognize string data based on regular expressions.
 Non-determinism here has been useful, but as it
 has been confined to parsing elements of the \cd{Pstring} 
@@ -188,7 +188,7 @@ datatype tree =
     Tree of LPAREN ** tree Parray(COMMA,RPAREN) ** "):" ** Puint32
   | Tip of entry
 \mbox{}
-type source = (tree ** SEMI) Parray(NL,EOF)
+type source = (tree ** SEMI) Parray(Peor,Peof)
 \mbox{}
 {\rm Tiny fragment of Newick data:} 
 \mbox{}
@@ -333,7 +333,7 @@ advantage of both the type and value parameterization of types to
 encode all the different 
 variations.\footnote{This fragment of code contains both
 types \cd{Pstring} and \cd{string}.  These types are subtly different
-as the first is the type of an \pvalue{} containing both a string 
+as the first is the type of a \pvalue{} containing both a string 
 representation and a parse descriptor whereas the second is an 
 ordinary string.  The reader can safely ignore the distinction for now.}    
 The type parameters

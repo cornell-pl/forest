@@ -77,8 +77,7 @@
      {%% local command definitions:
         %% BNF definition symbol
       \def\->{\rightarrow}
-%%      \def\::={{::=} &}
-      \def\::={\bnfdef &}
+      \def\::={\mathrel{::=} &}
       \def\|{\bnfalt}
       \newcommand{\name}[1]{\text{##1}}
         %% non-terminal

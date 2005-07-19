@@ -1,3 +1,36 @@
+Post-submission:
+
+document:
+- make email addresses consistent.
+
+intro.tex:
+- last par. before sec. 1.1 is repetative.
+x erroneous -> erroneous records
+- where do we mention "work in progress"?
+
+descr.tex:
+- are anonymous fields really "a second form of singleton type"?
+x remove: backtracking, nondetermisic -> nondeterministic
+x NL -> Peor, EOF -> Peof
+x footnote 6: "an fused value"
+
+trans.tex:
+x "To preserve soundness, we do not permit programmers to construct
+  descriptors". remove, no longer true.
+x regulus transformation example: "date_time" -> "timestamp"
+(- change "{" to "{{" where necessary (and "}" as well).)
+x 3.3 par 3: "function checks *is* argument" (should be "its")
+x par3, last sentence: "... is a pattern the entire fused value": add
+  "for".
+x 3.5, par 3: after Pbase(M) missing ')'. 
+
+syntax chart:
+x in syntax chart, cast term comment: remove '?'
+- dd syntax chart is missing enumerations
+- Syntax chart does not include use of patterns in "let".
+
+Pre-submission:
+
 x Add U to pd values.
 x Change list to stream.
 x Add base patterns.
@@ -9,4 +42,6 @@ x add pd constructors
 x add singleton constructors?
 x make sure syntax charts are all in same order
 x finish related work
-- change "set type" to "type constraint" or "constrained type"
+x change "set type" to "type constraint" or "constrained type"
+
+
