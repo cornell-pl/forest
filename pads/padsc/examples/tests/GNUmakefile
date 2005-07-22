@@ -60,6 +60,7 @@ MISC_TESTS_O = test_ios
 MISC_TESTS_D = $(MISC_TESTS_O:%=%_d)
 MISC_TESTS = $(MISC_TESTS_O) $(MISC_TESTS_D)
 CLEANUP_TESTS = $(ALL_TESTS) $(MISC_TESTS)
+TIMING_TEST = timing_ai
 
 # XXX removed these 2 for now (compilation very slow?)
 #           regress_test_dns_o \
@@ -391,6 +392,30 @@ veryclean: clean
 # This works for some but not all test cases
 
 # These cases do not fit the usual pattern
+
+time_read_%: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+# The following time command is correct for bash.
+# It is likely different for other shells.
+TIME=TIMEFORMAT='%3R %3U %3S';time
+TIMING_DIR=../../timing
+
+$(TIMING_DIR)/timing_results_%.txt:
+time_%: time_read_%
+	rm -f $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big 2>&1) 2> $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
+	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
+	cat $(TIMING_DIR)/timing_results_$*.txt | awk '{ real += $$3; user += $$1; sys += $$2; ct += 1; } END { print user/ct, sys/ct, real/ct; }'
+
+process_%: $(TIMING_DIR)/timing_results_%.txt
+	@cat $(TIMING_DIR)/timing_results_$*.txt | awk '{ user += $$1; sys += $$2; real += $$3; ct += 1; } END { print user/ct, sys/ct, real/ct; }'
 
 test_copy_format5: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
