@@ -403,19 +403,23 @@ TIMING_DIR=../../timing
 
 $(TIMING_DIR)/timing_results_%.txt:
 time_%: time_read_%
-	rm -f $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big 2>&1) 2> $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
-	($(TIME) ./$< ../../data/$*.big  2>&1) 2>> $(TIMING_DIR)/timing_results_$*.txt
-	cat $(TIMING_DIR)/timing_results_$*.txt | awk '{ real += $$3; user += $$1; sys += $$2; ct += 1; } END { print user/ct, sys/ct, real/ct; }'
+	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
+	./$< $* big
 
 process_%: $(TIMING_DIR)/timing_results_%.txt
-	@cat $(TIMING_DIR)/timing_results_$*.txt | awk '{ user += $$1; sys += $$2; real += $$3; ct += 1; } END { print user/ct, sys/ct, real/ct; }'
+	@export PROCESS_ONLY=1;\
+	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
+	./$< $* big
+
+DATA_DIR = ../../data
+
+$(DATA_DIR)/dibbler_new.big:$(DATA_DIR)/dibbler.10001
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler_new big
+
+$(DATA_DIR)/dns.big: $(DATA_DIR)/dns
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dns big
+
+gendata: $(DATA_DIR)/dibbler_new.big $(DATA_DIR)/dns.big
 
 test_copy_format5: $(GEN_DIR)/format5.c test_copy_format5.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
