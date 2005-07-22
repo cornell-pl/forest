@@ -15,6 +15,8 @@ x NL -> Peor, EOF -> Peof
 x footnote 6: "an fused value"
 
 trans.tex:
+- Figure: Error filter for \dibbler{} data
+  Type entry not defined anywhere in paper.
 x "To preserve soundness, we do not permit programmers to construct
   descriptors". remove, no longer true.
 x regulus transformation example: "date_time" -> "timestamp"

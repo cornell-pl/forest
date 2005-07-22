@@ -12,16 +12,19 @@ Performance Numbers:
 1. Galax Query Plan
 2. Galax Datamodel
 3. PADX Node Reads Bulk/Smart/Linear
-4. PADS Record Reads Mask[on/off] No Masks.]
+4. PADS Record Reads: Mask[on/off] [No Masks.]
 	(consequence of error-aware computing).
 
 Examples:
-Newick
-Phone numbers
-DNS
-Dibbler Data
-Web Server (cheap mask)
+Newick?
+Phone numbers : call_detail.p ?
+DNS : dns.p
+Dibbler Data : dibbler.p
+Web Server (cheap mask) ai.p
  (note: masks set choose to set in-mem rep; check constraints)
 
 Timing:
 run 7 times. drop hi and low. take mean, median std. dev.
+
+
+$PADS/padsc/examples/xml/tests:
