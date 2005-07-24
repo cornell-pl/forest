@@ -16,11 +16,13 @@ else
 
  # The following rules are run from the arch directory
 
+TIMING_DIR=../../timing
 GEN_DIR = ../../gen
 GEN_WRITE = 1
 
-# the following indicates that generated .c files should not be removed
-.PRECIOUS: $(GEN_DIR)/%.c  $(GEN_DIR)/%_expanded.c %_expanded.c
+# the following indicates that generated files should not be removed
+.PRECIOUS: $(GEN_DIR)/%.c  $(GEN_DIR)/%_expanded.c %_expanded.c \
+	$(TIMING_DIR)/results_std_%.txt $(TIMING_DIR)/results_fast_%.txt read_fast_% read_%
 
 # need to set this before including rules.mk
 REGRESS_TESTS = 1
@@ -393,23 +395,39 @@ veryclean: clean
 
 # These cases do not fit the usual pattern
 
-time_read_%: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+.PHONY: time_% process_%
+
+read_fast_%: COPTFLAGS += -DFAST_MASK
+read_fast_%: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-# The following time command is correct for bash.
-# It is likely different for other shells.
-TIME=TIMEFORMAT='%3R %3U %3S';time
-TIMING_DIR=../../timing
+read_%: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
 
-$(TIMING_DIR)/timing_results_%.txt:
-time_%: time_read_%
+
+$(TIMING_DIR)/results_fast_%.txt \
+time_fast_%: read_fast_%
 	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
-	./$< $* big
+	./$< $* big fast
 
-process_%: $(TIMING_DIR)/timing_results_%.txt
+process_fast_%: $(TIMING_DIR)/results_fast_%.txt
 	@export PROCESS_ONLY=1;\
 	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
-	./$< $* big
+	$< $* big fast
+
+$(TIMING_DIR)/results_std_%.txt \
+time_%: read_%
+	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
+	./$< $* big std
+
+process_%: $(TIMING_DIR)/results_std_%.txt
+	@export PROCESS_ONLY=1;\
+	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
+	$< $* big std
+
+time_all: time_fast_dns time_dns time_fast_ai time_ai time_fast_dibbler_new time_dibbler_new
+
+process_all:process_fast_dns process_dns process_fast_ai process_ai process_fast_dibbler_new process_dibbler_new
 
 DATA_DIR = ../../data
 

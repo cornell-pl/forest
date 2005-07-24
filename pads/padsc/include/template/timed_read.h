@@ -5,7 +5,11 @@
 /* Define DEBUG_TEMPL to turn on testing code. */
 
 #ifndef READ_MASK
+#ifdef FAST_MASK
+#define READ_MASK P_Ignore
+#else
 #define READ_MASK P_CheckAndSet
+#endif
 #endif
 
 #ifndef EXTRA_READ_ARGS
