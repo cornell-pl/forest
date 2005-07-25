@@ -397,6 +397,10 @@ veryclean: clean
 
 .PHONY: time_% process_%
 
+read_fast_%_d: CDBGFLAGS += -DFAST_MASK
+read_fast_%_d: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
 read_fast_%: COPTFLAGS += -DFAST_MASK
 read_fast_%: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)

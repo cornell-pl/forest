@@ -6,7 +6,7 @@
 
 #ifndef READ_MASK
 #ifdef FAST_MASK
-#define READ_MASK P_Ignore
+#define READ_MASK P_CheckAndSet
 #else
 #define READ_MASK P_CheckAndSet
 #endif
@@ -124,8 +124,13 @@ int main(int argc, char** argv) {
   if (P_ERR == PADS_TY(_pd_init)(pads, &pd)) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
+
   /* initialize mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);
+#ifdef FAST_MASK
+  m.ts = P_Ignore;
+#endif
+
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
     error(ERROR_FATAL, "*** header representation initialization failed ***");
@@ -171,9 +176,9 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
-    if (my_disc.e_rep > PerrorRep_Min) {
-      error(2, "read returned error");
-    }
+      if (my_disc.e_rep > PerrorRep_Min) {
+        error(2, "read returned error");
+      }
 #endif
     }
 #ifdef EXTRA_GOOD_READ_CODE
