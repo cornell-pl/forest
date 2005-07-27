@@ -1,3 +1,10 @@
+6/26:
+allow to turn off smart_node meta-data caching.
+use walk_chilren in pglx.c. Turn off printing. Just want to time
+walking.
+create new template to time walking.
+
+
 PADS/X Story
 ----------------
 Semantics : XQuery over non-XML (ad hoc, semi-structured, , large) data sources.

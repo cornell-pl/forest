@@ -6,7 +6,7 @@
 
 #ifndef READ_MASK
 #ifdef FAST_MASK
-#define READ_MASK P_CheckAndSet
+#define READ_MASK (P_SynCheck | P_Set)
 #else
 #define READ_MASK P_CheckAndSet
 #endif
@@ -128,7 +128,8 @@ int main(int argc, char** argv) {
   /* initialize mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);
 #ifdef FAST_MASK
-  m.ts = P_Ignore;
+  //http_request_t_m_init(pads,&(m.request),P_Ignore);
+  //  m.ts = P_Ignore;
 #endif
 
 #ifdef PADS_HDR_TY
