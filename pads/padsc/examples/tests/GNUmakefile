@@ -444,10 +444,10 @@ time_all: time_fast_dns time_dns time_fast_ai time_ai time_fast_dibbler_new time
 process_all:process_fast_dns process_dns process_fast_ai process_ai process_fast_dibbler_new process_dibbler_new
 
 $(DATA_DIR)/dibbler_new.big:$(DATA_DIR)/dibbler.10001
-	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler 5000000
 
 $(DATA_DIR)/dns.big: $(DATA_DIR)/dns
-	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dns
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dns 5000000
 
 gendata: $(DATA_DIR)/dibbler_new.big $(DATA_DIR)/dns.big
 

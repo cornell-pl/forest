@@ -7,7 +7,7 @@ fmt=$2
 targetSize=$3
 
 # file name for generated data. outname must be one word.
-targetName=$4
+targetFile=$4
 
 function getFifth { echo $5; }
 function genList { 
@@ -20,16 +20,16 @@ function getCount {
 }
 
 cd $dataDir
-rm -f $targetName
+rm -f $targetFile
 if [ $fmt = dibbler ]; then
     (read line; cat > dibbler.body) < dibbler.10001
-    head -n 1 dibbler.10001 > $targetName 
+    head -n 1 dibbler.10001 > $targetFile 
     count=$(getCount dibbler.body)  
     if [ $count = 0 ]; then 
 	echo "error target size $targetSize is smaller than file size."
 	exit 1
     fi
-    cat $(genList $count dibbler.body) >> $targetName
+    cat $(genList $count dibbler.body) >> $targetFile
     rm -f dibbler.body
 elif [ -e $fmt ]; then
     count=$(getCount $fmt)  
@@ -37,7 +37,7 @@ elif [ -e $fmt ]; then
 	echo "error: target size $targetSize is smaller than size of file $fmt."
 	exit 1
     fi
-    cat $(genList $count $fmt) > $targetName
+    cat $(genList $count $fmt) > $targetFile
 else
     echo "error: unknown format $fmt"
 fi
