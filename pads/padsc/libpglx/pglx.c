@@ -771,9 +771,9 @@ PDCI_DEF_BASE_VAL_VT(ty)
  * XXX TEMPORARY:
  */
 
-static const char *walk_children_spaces = "                                                                                                                        ";
+static const char *print_children_spaces = "                                                                                                                        ";
 
-void walk_children(void *n, int indent) {
+void print_children(void *n, int indent) {
   void       *child = NULL;
   int         iter;
   
@@ -784,18 +784,36 @@ void walk_children(void *n, int indent) {
   if (strcmp(PGLX_generic_kind(n), "element") == 0 || strcmp(PGLX_generic_kind(n), "document") == 0) {
     const char *n_name = PGLX_generic_name(n);
     error(0, "%.*s<%s>",
-	  indent, walk_children_spaces, n_name);
+	  indent, print_children_spaces, n_name);
     child = PGLX_generic_kth_child(n,0);
     for (iter = 1; child; iter++) {
-      walk_children(child, indent+4);
+      print_children(child, indent+4);
       PGLX_node_free(child); 
       child = PGLX_generic_kth_child(n,iter);
     }
     error(0, "%.*s</%s>",
-	  indent, walk_children_spaces, n_name);
+	  indent, print_children_spaces, n_name);
   } else {
     error(0, "%.*s%s",
-	  indent, walk_children_spaces, PGLX_generic_string_value(n));
+	  indent, print_children_spaces, PGLX_generic_string_value(n));
+  }
+}
+
+void walk_children(void *n) {
+  void       *child = NULL;
+  int         iter;
+  const char *kind = PGLX_generic_kind(n);
+
+  if (strcmp(PGLX_generic_name(n), "pd") == 0)
+    return;
+
+  if (strcmp(kind, "element") == 0 || strcmp(kind, "document") == 0) {
+    child = PGLX_generic_kth_child(n,0);
+    for (iter = 1; child; iter++) {
+      walk_children(child);
+      PGLX_node_free(child); 
+      child = PGLX_generic_kth_child(n,iter);
+    }
   }
 }
 

@@ -1,4 +1,6 @@
 6/26:
+Generalize gendata.sh to take target file size.
+
 allow to turn off smart_node meta-data caching.
 use walk_chilren in pglx.c. Turn off printing. Just want to time
 walking.

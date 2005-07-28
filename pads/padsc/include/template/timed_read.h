@@ -48,6 +48,11 @@ int main(int argc, char** argv) {
 #endif /* PADS_HDR_TY */
   char             *fileName = 0;
 
+#ifdef TIME_PGLX
+  PDCI_node_t   *doc_node;
+#endif
+
+
 #ifdef E_REP_LEV
   my_disc.e_rep = E_REP_LEV;
 #endif
@@ -118,6 +123,12 @@ int main(int argc, char** argv) {
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
+
+#ifdef TIME_PGLX
+  /* Initialize NodeMM. */
+  NodeMM_initMM(pads,50);  
+#endif
+
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
   }

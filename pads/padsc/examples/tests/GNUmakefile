@@ -21,8 +21,9 @@ GEN_DIR = ../../gen
 GEN_WRITE = 1
 
 # the following indicates that generated files should not be removed
-.PRECIOUS: $(GEN_DIR)/%.c  $(GEN_DIR)/%_expanded.c %_expanded.c \
-	$(TIMING_DIR)/results_std_%.txt $(TIMING_DIR)/results_fast_%.txt read_fast_% read_%
+.PRECIOUS: %.o $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c %_expanded.c \
+	$(TIMING_DIR)/results_std_%.txt $(TIMING_DIR)/results_fast_%.txt \
+	read_fast_% read_%
 
 # need to set this before including rules.mk
 REGRESS_TESTS = 1
@@ -397,15 +398,20 @@ veryclean: clean
 
 .PHONY: time_% process_%
 
+DATA_DIR = ../../data
+
 read_fast_%_d: CDBGFLAGS += -DFAST_MASK
-read_fast_%_d: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+read_fast_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 read_fast_%: COPTFLAGS += -DFAST_MASK
-read_fast_%: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+read_fast_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-read_%: $(GEN_DIR)/%.c time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+read_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+pglx_%: $(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 
@@ -418,6 +424,10 @@ process_fast_%: $(TIMING_DIR)/results_fast_%.txt
 	@export PROCESS_ONLY=1;\
 	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
 	$< $* big fast
+
+$(TIMING_DIR)/results_pglx_%.txt \
+time_pglx_%: pglx_%
+	 ./$< $(DATA_DIR)/$*.big > $(TIMING_DIR)/results_pglx_$*.txt 
 
 $(TIMING_DIR)/results_std_%.txt \
 time_%: read_%
@@ -433,13 +443,11 @@ time_all: time_fast_dns time_dns time_fast_ai time_ai time_fast_dibbler_new time
 
 process_all:process_fast_dns process_dns process_fast_ai process_ai process_fast_dibbler_new process_dibbler_new
 
-DATA_DIR = ../../data
-
 $(DATA_DIR)/dibbler_new.big:$(DATA_DIR)/dibbler.10001
-	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler_new big
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler
 
 $(DATA_DIR)/dns.big: $(DATA_DIR)/dns
-	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dns big
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dns
 
 gendata: $(DATA_DIR)/dibbler_new.big $(DATA_DIR)/dns.big
 

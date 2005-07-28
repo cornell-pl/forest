@@ -15,7 +15,8 @@
 /*
  * XXX TEMPORARY:
  */
-void walk_children(void *n, int indent);
+void walk_children(void *n);
+void print_children(void *n, int indent);
 
 nodeRep      PGLX_generic_kth_child         (nodeRep ocaml_n, childIndex idx);
 nodeRep      PGLX_generic_kth_child_named   (nodeRep ocaml_n, childIndex idx, const char *name);
