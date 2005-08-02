@@ -1,10 +1,37 @@
 6/26:
-Generalize gendata.sh to take target file size.
+x Generalize gendata.sh to take target file size.
 
-allow to turn off smart_node meta-data caching.
-use walk_chilren in pglx.c. Turn off printing. Just want to time
-walking.
-create new template to time walking.
+- Allow to turn off smart_node meta-data caching.
+  Do we need to cache even the data itself? Here's the algorithm:
+
+  getKthChild node k =
+     if data_terminated or k < next_elt_to_read then
+        return 0
+
+     do
+        res = elt_read(&m,&pd&rep)
+	if (res = PANIC) then return 0
+        next_elt_to_read++
+     while data_not_terminated and k >= next_elt_to_read
+
+     if k = next_elt_to_read - 1 then
+        return newNode(m,pd,rep)
+ 
+     return 0     
+
+     We could also consider buffering a few elements to increase
+     locality. i.e. the same code invoked repeatedly in sequence,
+     rather than once at a time, with totally different code (up the
+     call stack) in between.
+     
+
+- In terms of testing, I think we need to distinguish between creating a
+  new streaming-read feature and timing it. What exactly do we hope to
+  accomplish with the timing?
+
+x Use walk_chilren in pglx.c. Turn off printing. Just want to time
+  walking.
+  create new template to time walking.
 
 
 PADS/X Story
