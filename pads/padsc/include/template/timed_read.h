@@ -5,11 +5,7 @@
 /* Define DEBUG_TEMPL to turn on testing code. */
 
 #ifndef READ_MASK
-#ifdef FAST_MASK
-#define READ_MASK (P_SynCheck | P_Set)
-#else
 #define READ_MASK P_CheckAndSet
-#endif
 #endif
 
 #ifndef EXTRA_READ_ARGS
@@ -138,10 +134,6 @@ int main(int argc, char** argv) {
 
   /* initialize mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);
-#ifdef FAST_MASK
-  //http_request_t_m_init(pads,&(m.request),P_Ignore);
-  //  m.ts = P_Ignore;
-#endif
 
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
@@ -188,7 +180,7 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
-      if (my_disc.e_rep > PerrorRep_Min) {
+      if (my_disc.e_rep < PerrorRep_Min) {
         error(2, "read returned error");
       }
 #endif

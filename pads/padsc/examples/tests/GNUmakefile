@@ -16,14 +16,19 @@ else
 
  # The following rules are run from the arch directory
 
-TIMING_DIR=../../timing
 GEN_DIR = ../../gen
 GEN_WRITE = 1
 
+# Variables used for timing tests
+DATA_DIR = ../../data
+TIMING_DIR=../../timing
+TIMING_SCR=$(PADS_HOME)/scripts/timing.sh
+TFORMATS=dns ai dibbler_new
+RMASKS=SyS CaS #Ig
+
 # the following indicates that generated files should not be removed
 .PRECIOUS: %.o $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c %_expanded.c \
-	$(TIMING_DIR)/results_std_%.txt $(TIMING_DIR)/results_fast_%.txt \
-	read_fast_% read_%
+	$(foreach mask,$(RMASKS),time_read_$(mask)_%)
 
 # need to set this before including rules.mk
 REGRESS_TESTS = 1
@@ -398,50 +403,69 @@ veryclean: clean
 
 .PHONY: time_% process_%
 
-DATA_DIR = ../../data
-
-read_fast_%_d: CDBGFLAGS += -DFAST_MASK
-read_fast_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+time_read_SyS_%_d: CDBGFLAGS += -D 'READ_MASK=(P_SynCheck|P_Set)' -D 'E_REP_LEV=PerrorRep_None'
+time_read_SyS_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-read_fast_%: COPTFLAGS += -DFAST_MASK
-read_fast_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+time_read_SyS_%: COPTFLAGS += -D 'READ_MASK=(P_SynCheck|P_Set)' -D 'E_REP_LEV=PerrorRep_None'
+time_read_SyS_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-read_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+time_read_Ig_%_d: CDBGFLAGS += -D 'READ_MASK=(P_Ignore)' -D 'E_REP_LEV=PerrorRep_None'
+time_read_Ig_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+time_read_Ig_%: COPTFLAGS += -D 'READ_MASK=(P_Ignore)' -D "E_REP_LEV=PerrorRep_None"
+time_read_Ig_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-pglx_%: $(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+time_read_CaS_%_d: CDBGFLAGS += -D 'READ_MASK=(P_CheckAndSet)' -D 'E_REP_LEV=PerrorRep_None'
+time_read_CaS_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+time_read_CaS_%: COPTFLAGS += -D 'READ_MASK=(P_CheckAndSet)' -DE_REP_LEV=PerrorRep_None
+time_read_CaS_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
+time_pglx_%: $(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
 
-$(TIMING_DIR)/results_fast_%.txt \
-time_fast_%: read_fast_%
-	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
-	./$< $* big fast
+time_Ig_%: time_read_Ig_%
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big Ig_$*.time
 
-process_fast_%: $(TIMING_DIR)/results_fast_%.txt
+time_SyS_%: time_read_SyS_%
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big SyS_$*.time
+
+time_CaS_%: time_read_CaS_%
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big CaS_$*.time
+
+process_Ig_%: $(TIMING_DIR)/Ig_%.time
 	@export PROCESS_ONLY=1;\
-	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
-	$< $* big fast
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big Ig_$*.time
 
-$(TIMING_DIR)/results_pglx_%.txt \
+process_SyS_%: $(TIMING_DIR)/SyS_%.time
+	@export PROCESS_ONLY=1;\
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big SyS_$*.time
+
+process_CaS_%: $(TIMING_DIR)/CaS_%.time
+	@export PROCESS_ONLY=1;\
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big CaS_$*.time
+
 time_pglx_%: pglx_%
 	 ./$< $(DATA_DIR)/$*.big > $(TIMING_DIR)/results_pglx_$*.txt 
 
-$(TIMING_DIR)/results_std_%.txt \
-time_%: read_%
-	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
-	./$< $* big std
+TIME_ALL_MASKS=$(foreach mask,$(RMASKS),time_all_$(mask))
+TIME_ALL_FORMATS=$(foreach fmt,$(TFORMATS),time_all_$(fmt))
+PROCESS_ALL_MASKS=$(foreach mask,$(RMASKS),process_all_$(mask))
+PROCESS_ALL_FORMATS=$(foreach fmt,$(TFORMATS),process_all_$(fmt))
 
-process_%: $(TIMING_DIR)/results_std_%.txt
-	@export PROCESS_ONLY=1;\
-	$(PADS_HOME)/scripts/timing.sh $(TIMING_DIR) ../../data \
-	$< $* big std
+$(TIME_ALL_FORMATS):time_all_%:$(foreach mask,$(RMASKS),time_$(mask)_%)
+$(TIME_ALL_MASKS): time_all_%:$(foreach fmt,$(TFORMATS),time_%_$(fmt))
+time_all: $(foreach fmt,$(TFORMATS),time_all_$(fmt))
 
-time_all: time_fast_dns time_dns time_fast_ai time_ai time_fast_dibbler_new time_dibbler_new
-
-process_all:process_fast_dns process_dns process_fast_ai process_ai process_fast_dibbler_new process_dibbler_new
+$(PROCESS_ALL_FORMATS):process_all_%:$(foreach mask,$(RMASKS),process_$(mask)_%)
+$(PROCESS_ALL_MASKS): process_all_%:$(foreach fmt,$(TFORMATS),process_%_$(fmt))
+process_all: $(foreach fmt,$(TFORMATS),process_all_$(fmt))
 
 $(DATA_DIR)/dibbler_new.big:$(DATA_DIR)/dibbler.10001
 	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler 5000000 dibbler_new.big
