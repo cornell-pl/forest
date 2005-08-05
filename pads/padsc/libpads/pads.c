@@ -34,30 +34,32 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PDCI_FINISH_DATE_TIME_READ(format_IN, tzone_IN, errcode_IN, just_time_IN)
+#define PDCI_FINISH_DATE_TIME_READ(m_IN, format_IN, tzone_IN, errcode_IN, just_time_IN)
 do {
-  time_t       tm;
-  Pbyte       *tmp;
-  char        *tmp_t;
-  time_t       now;
+  if (P_Test_Set(*(m_IN))) {
+    time_t       tm;
+    Pbyte       *tmp;
+    char        *tmp_t;
+    time_t       now;
 
-  PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
-  now = (just_time_IN) ? 0 : time(NiL);
-  /* tm = tmdate(s->str, (char**)&tmp, NiL); */
-  tmset(tzone_IN);
-  tm = tmscan(s->str, (char**)&tmp, format_IN, &tmp_t, &now, 0L);
-  if (!tmp_t || *tmp_t || !tmp || *tmp) {
-    PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, s->len);
-    PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, errcode_IN);
+    PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
+    now = (just_time_IN) ? 0 : time(NiL);
+    /* tm = tmdate(s->str, (char**)&tmp, NiL); */
+    tmset(tzone_IN);
+    tm = tmscan(s->str, (char**)&tmp, format_IN, &tmp_t, &now, 0L);
+    if (!tmp_t || *tmp_t || !tmp || *tmp) {
+      PDCI_READFN_BEGINLOC_MINUSK(pads, pd->loc, s->len);
+      PDCI_READFN_ENDLOC_MINUS1(pads, pd->loc);
+      PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, errcode_IN);
+    }
+    (*res_out) = tm;
+    /* normally we do a tmset(pads->out_zone) before using fmttime, */
+    /* but here for debugging purposes we output using tzone_IN */ 
+    P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
+	   whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
   }
-  (*res_out) = tm;
-  /* normally we do a tmset(pads->out_zone) before using fmttime, */
-  /* but here for debugging purposes we output using tzone_IN */ 
-  P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
-	 whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
   return P_OK;
-} while (0);
+ } while (0);
  fatal_alloc_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR)
 /* END_MACRO */
@@ -6912,7 +6914,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.191 2005-05-16 18:39:10 joel Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.192 2005-08-05 19:37:47 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -10724,7 +10726,7 @@ PDCI_date_time_FW_read(P_t *pads,
   if (P_ERR == PDCI_string_FW_read(pads, m, pd, s, char_set, whatfn, width)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
+  PDCI_FINISH_DATE_TIME_READ(m, format, tzone, errCode, just_time);
 }
 
 Perror_t
@@ -10753,7 +10755,7 @@ PDCI_date_time_read(P_t *pads,
   if (P_ERR == PDCI_string_read(pads, m, pd, s, char_set, whatfn, stopChar)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
+  PDCI_FINISH_DATE_TIME_READ(m, format, tzone, errCode, just_time);
 }
 
 Perror_t
@@ -10782,7 +10784,7 @@ PDCI_date_time_ME_read(P_t *pads,
   if (P_ERR == PDCI_string_ME_read(pads, m, pd, s, char_set, whatfn, matchRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
+  PDCI_FINISH_DATE_TIME_READ(m, format, tzone, errCode, just_time);
 }
 
 Perror_t
@@ -10811,7 +10813,7 @@ PDCI_date_time_CME_read(P_t *pads,
   if (P_ERR == PDCI_string_CME_read(pads, m, pd, s, char_set, whatfn, matchRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
+  PDCI_FINISH_DATE_TIME_READ(m, format, tzone, errCode, just_time);
 }
 
 Perror_t
@@ -10840,7 +10842,7 @@ PDCI_date_time_SE_read(P_t *pads,
   if (P_ERR == PDCI_string_SE_read(pads, m, pd, s, char_set, whatfn, stopRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
+  PDCI_FINISH_DATE_TIME_READ(m, format, tzone, errCode, just_time);
 }
 
 Perror_t
@@ -10869,7 +10871,7 @@ PDCI_date_time_CSE_read(P_t *pads,
   if (P_ERR == PDCI_string_CSE_read(pads, m, pd, s, char_set, whatfn, stopRegexp)) {
     return P_ERR;
   }
-  PDCI_FINISH_DATE_TIME_READ(format, tzone, errCode, just_time);
+  PDCI_FINISH_DATE_TIME_READ(m, format, tzone, errCode, just_time);
 }
 
 Perror_t
