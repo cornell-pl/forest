@@ -763,10 +763,15 @@ At the moment, it is possible to use the resulting system to query ad hoc data s
 How best to optimize Xqueries over ad hoc data sources is an open research area.
 
 \section{Implementation}
-From a \pads{} description, the \pads{} compiler generates \texttt{.h} and
-\texttt{.c} files that together implement the data structures and operations 
-necessary for manipulating the types declared in the source file.  The
-\pads{} run-time library implements all shared functionality, including file operations, regular expression manipulation, memory management, the provided base types, and the generic portions of the Galax data API.  \pads{} generates a recursive descent parser that makes it easy to provide multiple entry points.
+
+From a \pads{} description, the \pads{} compiler generates \texttt{.h}
+and \texttt{.c} files that together implement the data structures and
+operations necessary for manipulating the types declared in the source
+file.  The \pads{} run-time library implements all shared
+functionality, including file operations, regular expression
+manipulation, memory management, the provided base types, and the
+generic portions of the Galax data API.  \pads{} generates a recursive
+descent parser that makes it easy to provide multiple entry points.
 
 We used the CKIT library~\cite{ckit} to implement the \pads{} compiler.
 This library greatly facilitated the construction of the compiler as it

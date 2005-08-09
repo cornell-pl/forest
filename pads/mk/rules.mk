@@ -792,6 +792,12 @@ ifdef DEBUG_RULES_MK
 endif
 	@$(CCExec_DYNAMIC_D)
 
+filter_%_d: $(GEN_DIR)/%.c filter_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule FILTER_D"
+endif
+	@$(CCExec_DYNAMIC_D)
+
 rw_%_d: $(GEN_DIR)/%.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RW_D"
@@ -813,6 +819,12 @@ endif
 fmt_%_dd: $(GEN_DIR)/%_expanded.c fmt_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule FMT_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+
+filter_%_dd: $(GEN_DIR)/%_expanded.c filter_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule FILTER_DD"
 endif
 	@$(CCExec_DYNAMIC_D)
 
@@ -875,6 +887,12 @@ endif
 fmt_%: $(GEN_DIR)/%.c fmt_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule FMT_O"
+endif
+	@$(CCExec_DYNAMIC_O)
+
+filter_%: $(GEN_DIR)/%.c filter_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule FILTER_O"
 endif
 	@$(CCExec_DYNAMIC_O)
 
