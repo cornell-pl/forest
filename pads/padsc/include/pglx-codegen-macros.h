@@ -1032,12 +1032,12 @@ eltTy ## _node_pathWalk((padsIN),c_m,c_pd,c_rep,(pathIN),(m_outIN),(pd_outIN),(r
  */
 #define SN_NO_OP_INIT(a)
 
-#define SN_ARRAY_INFO_INIT_BODY(ty,padsIN,max_eltsIN, C_PARAMS)
+#define SN_ARRAY_INFO_INIT_BODY(ty,padsIN,max_eltsIN, INIT_C_PARAMS)
   PDCI_smart_array_info_t   *arrayInfo =
     PDCI_makeSmartArrayInfo((padsIN),(max_eltsIN),sizeof(ty ## _array_info_t));
   ty ## _ro_params_t *ro_params = &((ty ## _array_info_t *)arrayInfo)->params;
 
-  ty ## _ro_params_init(ro_params SN_INS_PARAMS C_PARAMS);
+  ty ## _ro_params_init(ro_params SN_INS_PARAMS INIT_C_PARAMS);
 /* END_MACRO */
 
 #define SN_ARRAY_INFO_INIT_RET() arrayInfo
@@ -1229,6 +1229,137 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
 /* END_MACRO */
 
 #define SN_KTH_CHILD_NAMED_RET() result
+
+/******* Linear-node macros ******/
+
+#define LN_INIT_BODY(ty,elRepTy,elPdTy,selfIN, INIT_C_PARAMS, ST_PARAMS,C_PARAMS)
+  P_t               *pads = (selfIN)->pads;
+  ty              *rep = (ty  *)(selfIN)->rep;
+  ty ## _pd       *pd  = (ty ## _pd *)(selfIN)->pd;
+  ty ## _m        *m   = (ty ## _m *) (selfIN)->m;
+  
+  ty ## _ro_params_t       *ro_params;
+
+  /*  Setup the virtual table */
+  (selfIN)->vt  = & ty ## _linearNode_vtable;
+
+  /* Allocate read_one parameter struct. */
+  ro_params = (ty ## _ro_params_t *) calloc(1,sizeof(ty ## _ro_params_t));
+  ty ## _ro_params_init(ro_params SN_INS_PARAMS INIT_C_PARAMS);
+
+  ty ## _read_one_init(pads, m 
+                       SN_INS_PARAMS C_PARAMS,
+		       pd, rep, &SN_RO_PARAM(beginLoc)
+		       SN_INS_PARAMS ST_PARAMS);
+
+  /* Reserve space for one element*/
+  PCGEN_ARRAY_RESERVE_SPACE (ty,elRepTy,elPdTy,0);
+  PDCI_MK_LINEAR_NODE((selfIN)->lnExt,pads,
+                      &(m->element),&(pd->elts[0]),&(rep->elts[0]),
+		      ro_params,
+		      #ty "_linearNode_init");    
+/* END_MACRO */
+
+#define LN_INIT_RET(selfIN) (selfIN)
+
+#define LN_KTH_CHILD_BODY(ty,eltTy,selfIN,idxIN, ST_PARAMS,C_PARAMS)
+  P_t               *pads = (selfIN)->pads;
+  ty        *rep=(ty *) ((selfIN)->rep);
+  ty ## _pd *pd=(ty ## _pd *) ((selfIN)->pd);
+  ty ## _m *m=(ty ## _m *) ((selfIN)->m);  
+  PDCI_node_t *result = 0;
+  Pread_res_t res = P_READ_ERR;
+  PDCI_linear_node_t *ln = (selfIN)->lnExt;  
+  ty ## _ro_params_t *ro_params = (ty ## _ro_params_t *)ln->ro_params;  
+
+/*   printf("In ln_kthChild: idxIN = %ld  next_idx_read = %ld\n",(unsigned long)(idxIN), (unsigned long)ln->next_idx_read); */
+
+  /* length field */
+  if (!P_PS_isPartial(pd) && (idxIN) == ln->next_idx_read){
+    return Puint32_val_node_new((selfIN),"length",pd,&ln->next_idx_read,
+				  PDCI_LENGTH_OFF,
+				    #ty "_linearNode_kthChild");
+  }
+  /*  parse descriptor child */
+  if (!P_PS_isPartial(pd) && (idxIN) == ln->next_idx_read + 1){
+    if (pd->nerr > 0) 
+      return PDCI_sequenced_pd_node_new((selfIN),"pd",pd,#ty "_linearNode_kthChild");
+    else 
+      return 0;
+  }
+
+  if (!P_PS_isPartial(pd) && (idxIN) >= ln->next_idx_read + 2){
+   return 0;
+  }
+
+  /* Is the index before the current element? If so, report error.
+     Note: if current element is zero, then idxIN cannot be less as
+     both are unsigned values. */
+  if (ln->next_idx_read > 0 && (idxIN) < ln-> next_idx_read - 1){
+    PGLX_report_err(pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,#ty "_linearNode_kthChildNamed",
+		    "Attempt to reverse in linear stream.");
+    return 0;
+  }
+
+  /* 
+   * check whether idxIN has been read.If not, read it.
+   */
+  if ((idxIN) >= ln->next_idx_read){
+    /* Read until we find the desired element, hit an error, or finish the array. */
+    do { 
+       /* Read until we find an element, hit an error, or finish the array */
+       do{
+	 res = ty ## _read_one(pads,m
+			       SN_INS_PARAMS C_PARAMS,
+			       pd,rep,
+			       &SN_RO_PARAM(beginLoc),
+			       ln->elt_pd,ln->elt_rep
+			       SN_INS_PARAMS ST_PARAMS);
+       }while(res == P_READ_OK_NO_DATA && P_PS_isPartial(pd));
+       
+       /* Hit an error or finished array. */
+       if (P_READ_OK_DATA != res){
+	 break;
+       }
+       
+       ln->next_idx_read++;       
+
+       PDCI_ID_RESET(pads,0);
+     }while (P_PS_isPartial(pd) && (idxIN) >= ln->next_idx_read);
+     
+    /* Was there an error? */
+    if (P_READ_OK_DATA != res && P_READ_OK_NO_DATA != res){
+      PGLX_report_err(pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,#ty "_linearNode_kthChildNamed",
+			"Element read failure due to error.");
+      return 0; 
+    }
+
+    /* Did the array terminate without reading the desired element
+       (yet without an error)? */
+    if (!P_PS_isPartial(pd) && (idxIN) >= ln->next_idx_read){
+      PDCI_childIndex_t i = (idxIN) - ln->next_idx_read;
+      switch(i){
+      case 0:    /* length field */
+	return Puint32_val_node_new((selfIN),"length",pd,&rep->length,
+				    PDCI_LENGTH_OFF, #ty "_linearNode_kthChild");
+      case 1:    /*  parse descriptor child */
+	if (pd->nerr > 0)
+	  return PDCI_sequenced_pd_node_new((selfIN),"pd",pd,#ty "_linearNode_kthChild");
+	else 
+	  return 0;
+      default:
+	return 0;
+      }
+    }
+
+    /* Otherwise, we successfully read the element */
+  }
+  result = eltTy ## _node_new((selfIN),"elt",&(m->element),
+			      ln->elt_pd,ln->elt_rep,
+			      "element",#ty "_linearNode_kthChild")
+/* END_MACRO */
+
+#define LN_KTH_CHILD_RET() result
 
 
 /* ********************************* BEGIN_TRAILER ******************************** */

@@ -102,7 +102,10 @@ struct PDCI_smart_node_s {
   PDCI_path_walk_fn          elt_path_walk;
   /* Deprecated: */
   PDCI_smart_failure_fn      handle_failure;
-  void                      *elt_state;  // for arrays, this is PDCI_smart_array_t 
+
+  // For arrays, elt_state is a <ty>_array_info_t, which will always include
+  // an instance of PDCI_smart_array_t
+  void                      *elt_state;  
 };
 
 

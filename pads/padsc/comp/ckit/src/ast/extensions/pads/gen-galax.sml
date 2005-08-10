@@ -728,10 +728,19 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	PT.Call(PL.SN_ELT_ALLOC_RET,[])     
     fun macroRoParam p =
 	PT.Call(PL.SN_RO_PARAM,[PT.Id p])     
-    fun macroWrapParams(params) =
-	PT.Call(PL.SN_WRAP_PARAMS, P.zero :: List.map macroRoParam params) 	    
+
+    (* Wrap parameters used in initialization. *)
     fun macroWrapParams'(params) =
+	(* The first argument passed, P.zero, is thrown away by the macro. *)
+	(* See pglx-codegen-macros.h for explanation. *)
 	PT.Call(PL.SN_WRAP_PARAMS, P.zero :: List.map PT.Id params) 	    
+
+    (* Wrap parameters already in the ro_params structure. *)
+    fun macroWrapParams(params) =
+	(* The first argument passed, P.zero, is thrown away by the macro. *)
+	(* See pglx-codegen-macros.h for explanation. *)
+	PT.Call(PL.SN_WRAP_PARAMS, P.zero :: List.map macroRoParam params) 	    
+
     fun macroEltReadBody(ty,eltTy,eltPdTy,smartNode,pads,info,wrapcX,wrapstX) = 
 	PT.Expr(PT.Call(PL.SN_ELT_READ_BODY, map PT.Id [ty,eltTy,eltPdTy]
 						 @ map PT.Id [smartNode,pads,info]

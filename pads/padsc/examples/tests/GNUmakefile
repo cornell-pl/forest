@@ -430,6 +430,9 @@ time_read_CaS_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 time_pglx_%: $(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
+pglx_linear_%: $(GEN_DIR)/%.o linear_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
 time_Ig_%: time_read_Ig_%
 	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big Ig_$*.time
 
@@ -451,8 +454,11 @@ process_CaS_%: $(TIMING_DIR)/CaS_%.time
 	@export PROCESS_ONLY=1;\
 	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big CaS_$*.time
 
-time_pglx_%: pglx_%
-	 ./$< $(DATA_DIR)/$*.big > $(TIMING_DIR)/results_pglx_$*.txt 
+do_time_pglx_%: time_pglx_%
+	 ./$< $(DATA_DIR)/$*.big > $(TIMING_DIR)/pglx_$*.txt 
+
+do_time_pglx_linear_%: pglx_linear_%
+	 ./$< $(DATA_DIR)/$*.big > $(TIMING_DIR)/pglx_linear_$*.txt 
 
 TIME_ALL_MASKS=$(foreach mask,$(RMASKS),time_all_$(mask))
 TIME_ALL_FORMATS=$(foreach fmt,$(TFORMATS),time_all_$(fmt))

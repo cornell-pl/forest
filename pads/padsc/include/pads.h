@@ -1148,7 +1148,7 @@ void    P_Dont_WriteMeta(Puint32 m);
 #endif  /*  FOR_CKIT  */
 
 /* type PerrorRep: */
-enum PerrorRep_e { PerrorRep_Max, PerrorRep_Med, PerrorRep_Min, PerrorRep_None };
+enum PerrorRep_e { PerrorRep_None, PerrorRep_Min, PerrorRep_Med, PerrorRep_Max };
 
 /* type Pendian_t: */
 enum Pendian_e { PbigEndian, PlittleEndian };

@@ -30,6 +30,7 @@ typedef struct PDCI_pglx_id_s       PDCI_pglx_id_t;
 #include "node_mm.h"
 #include "path_walk.h"
 #include "smart.h"
+#include "linear.h"
 
 /* ================================================================================
  * HELPER MACROS */
@@ -329,6 +330,9 @@ struct PDCI_node_s {
   union{
     // Used by smart nodes:
     PDCI_smart_node_t       *snExt;
+
+    /// Used by linear nodes:
+    PDCI_linear_node_t      *lnExt;
 
     // Used by other nodes:
     unsigned int id_offset;

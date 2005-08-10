@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
-      if (my_disc.e_rep < PerrorRep_Min) {
+      if (my_disc.e_rep > PerrorRep_Min) {
         error(2, "read returned error");
       }
 #endif
