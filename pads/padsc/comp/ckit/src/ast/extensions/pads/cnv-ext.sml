@@ -2334,7 +2334,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Generate read function *)
                       (* -- Some helper functions *)
 		      val readName = readSuf name
-                      val baseReadFun = lookupTy(baseTy, readSuf, #readname)
+                      val baseReadFun = BU.lookupTy(baseTy, readSuf, #readname)
 		      fun chk () = checkParamTys(name, baseReadFun, args, 4, 0)
 
                       fun genReadBody () = 
@@ -2357,7 +2357,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						      [PT.String(readName), readBaseX]))
 
 			  in [allocS,
-			      callMacroS, genReturnChk (P.arrowX(P.starX(PT.Id pd), PT.Id nerr))]
+			      callMacroS, BU.genReturnChk (P.arrowX(P.starX(PT.Id pd), PT.Id nerr))]
 			  end
 
                       (* -- Assemble read function recursive case *)
