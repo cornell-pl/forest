@@ -22,6 +22,10 @@ struct
     fun mkParam(ct,s) = (pctToPDT ct, PT.VarDecr s)
 
 
+    fun makeStructTagPCT (isStruct,name) = 
+	makePCT [PT.StructTag{isStruct=isStruct,
+			      name=name}]
+
     fun makeStructPCT (fields : (string * PT.ctype * string option) list, tag : string option) =
 	let fun genField (id,ct,sOpt) = 
 	    (ct,[ (PT.VarDecr id, PT.EmptyExpr) ],sOpt)

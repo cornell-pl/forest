@@ -98,6 +98,8 @@ struct
                ("Pswitch", Tokens.PSWITCH),
                ("Pterm", Tokens.PTERM),
                ("Ptypedef", Tokens.PTYPEDEF),
+               ("Precur", Tokens.PRECURSIVE),
+               ("Pdyn", Tokens.PDYNAMIC),
                ("Punion", Tokens.PUNION),
                ("Pwhere", Tokens.PWHERE)
               ])

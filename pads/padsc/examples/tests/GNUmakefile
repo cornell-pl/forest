@@ -24,7 +24,7 @@ DATA_DIR = ../../data
 TIMING_DIR=../../timing
 TIMING_SCR=$(PADS_HOME)/scripts/timing.sh
 TFORMATS=dns ai dibbler_new
-RMASKS=SyS CaS #Ig
+RMASKS=CaS SyS Ig
 
 # the following indicates that generated files should not be removed
 .PRECIOUS: %.o $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c %_expanded.c \
@@ -401,7 +401,7 @@ veryclean: clean
 
 # These cases do not fit the usual pattern
 
-.PHONY: time_% process_%
+.PHONY: time_% process_% do_time_pglx
 
 time_read_SyS_%_d: CDBGFLAGS += -D 'READ_MASK=(P_SynCheck|P_Set)' -D 'E_REP_LEV=PerrorRep_None'
 time_read_SyS_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
@@ -427,10 +427,18 @@ time_read_CaS_%: COPTFLAGS += -D 'READ_MASK=(P_CheckAndSet)' -DE_REP_LEV=PerrorR
 time_read_CaS_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-time_pglx_%: $(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
-	@$(CCExec_DYNAMIC_O)
+ifeq ($(PGLX_KIND),bulk)
+COPTFLAGS += -D PGLX_BULK -DE_REP_LEV=PerrorRep_None
+endif
+ifeq ($(PGLX_KIND),linear)
+COPTFLAGS += -D PGLX_LINEAR -DE_REP_LEV=PerrorRep_None
+endif
+ifeq ($(PGLX_KIND),smart)
+COPTFLAGS += -D PGLX_SMART -DE_REP_LEV=PerrorRep_None
+endif
 
-pglx_linear_%: $(GEN_DIR)/%.o linear_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+pglx_bulk_% pglx_linear_% pglx_smart_%: \
+$(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 time_Ig_%: time_read_Ig_%
@@ -454,11 +462,8 @@ process_CaS_%: $(TIMING_DIR)/CaS_%.time
 	@export PROCESS_ONLY=1;\
 	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big CaS_$*.time
 
-do_time_pglx_%: time_pglx_%
-	 ./$< $(DATA_DIR)/$*.big > $(TIMING_DIR)/pglx_$*.txt 
-
-do_time_pglx_linear_%: pglx_linear_%
-	 ./$< $(DATA_DIR)/$*.big > $(TIMING_DIR)/pglx_linear_$*.txt 
+do_time_pglx: pglx_$(PGLX_KIND)_$(PGLX_FORMAT)
+	 ./$< $(DATA_DIR)/$(PGLX_FORMAT).big >| $(TIMING_DIR)/$<.time
 
 TIME_ALL_MASKS=$(foreach mask,$(RMASKS),time_all_$(mask))
 TIME_ALL_FORMATS=$(foreach fmt,$(TFORMATS),time_all_$(fmt))

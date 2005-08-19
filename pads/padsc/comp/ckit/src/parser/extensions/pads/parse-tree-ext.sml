@@ -77,6 +77,20 @@ structure ParseTreeExt =
                         baseTy: Pty,
 			args   : 'exp list, 
 			pred : ('exp PPredicate) option}
+         | PRecursive of {name : string,
+			params: ('ct * 'decr) list, 
+			isRecord : bool, 
+                        containsRecord : bool, 
+			isSource : bool,
+                        baseTy: Pty,
+			args   : 'exp list}
+         | PDynamic of {name : string,
+			params: ('ct * 'decr) list, 
+			isRecord : bool, 
+                        containsRecord : bool, 
+			isSource : bool,
+                        baseTy: Pty,
+			args   : 'exp list}
          | Popt of     {name : string,
 			params: ('ct * 'decr) list, 
 			args   : 'exp list,

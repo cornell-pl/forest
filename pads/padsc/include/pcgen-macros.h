@@ -213,6 +213,11 @@ typedef int type_t;
 typedef int field_t;
 typedef int var_t;
 
+void PCGEN_DYNAMIC_ALLOC(char *fnName, type_t baseTy);
+void PCGEN_DYNAMIC_REP_CLEANUP(type_t baseTy);
+void PCGEN_DYNAMIC_PD_CLEANUP(type_t baseTy);
+void PCGEN_DYNAMIC_MASK_INIT(type_t baseTy,Pbase_m baseMask);
+
 void PCGEN_ARRAY_TEST_MIN_GT_MAX(type_t ty);
 void PCGEN_ARRAY_TEST_NEW_RBUF_ZERO(type_t ty,void *vIN);
 void PCGEN_ARRAY_TEST_NEW_RBUF_NOZERO(type_t ty,void *vIN);
@@ -371,6 +376,52 @@ do {
   }
   PCGEN_FIND_EOR(fn_nm);
 } while (0)
+/* END_MACRO */
+
+#define PCGEN_DYNAMIC_ALLOC(fn_nm, ty)
+do{
+  if (*rep == NULL && *pd == NULL){ 
+    *rep = (ty*) malloc (sizeof(ty));
+    if (*rep == NULL)
+      {
+	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,fn_nm,"");
+      }
+    ty ## _init(pads,*rep);
+
+    *pd = (ty ## _pd*) malloc (sizeof(ty ## _pd));    
+    if (*pd == NULL)
+      {
+	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,fn_nm,"");
+      }    
+    ty ## _pd_init(pads,*pd);
+  }
+}while(0)
+/* END_MACRO */
+
+#define PCGEN_DYNAMIC_REP_CLEANUP(baseTy)
+do{
+  if (*rep != NULL){
+    baseTy ## _cleanup(pads,*rep);
+    free(*rep);
+    *rep = 0;
+  }
+}while(0)
+/* END_MACRO */
+
+#define PCGEN_DYNAMIC_PD_CLEANUP(baseTy)
+do{
+  if (*pd != NULL){ 
+    baseTy ## _pd_cleanup(pads,*pd);
+    free(*pd);
+    *pd = 0;
+  }
+}while(0)
+/* END_MACRO */
+
+#define PCGEN_DYNAMIC_MASK_INIT(baseTy,baseMask)
+do{
+  baseTy ## _m_init(pads,*mask,baseMask);
+}while(0)
 /* END_MACRO */
 
 #define PCGEN_STRUCT_READ_PRE(fn_nm, the_field)

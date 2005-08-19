@@ -13,6 +13,12 @@ struct
 	             implicits: Tables.aidtab,
                      env: State.symtab}}
 
+  (* Use this function to convert "sugared" PADS descriptions to
+    canonical ones. In particular, expand recursive type declarations
+    here. 
+  *)
+  fun desugarize p = p
+
   fun progToState ({tidtab, auxiliaryInfo={aidtab, paidtab,implicits, env}, ...} : astBundle) =
       State.STATE({ttab=tidtab,atab=aidtab,ptab = paidtab, implicits=implicits},env)
 
@@ -26,6 +32,7 @@ struct
 		 PPLib.suppressTidUnderscores := true)
 	val errState = Error.mkErrState errStrm
 	val p = Parser.parseFile errState inFile
+	val p' = desugarize p
 	val result = BuildAst.makeAst (sizes,stateInfo,errState) p
       in
 	PPLib.suppressPidUnderscores := suppressPidUnderscores;

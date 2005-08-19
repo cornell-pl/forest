@@ -15,9 +15,9 @@ size=$(getFifth $(ls -l $dataDir/$data))
 
 if [ -z $PROCESS_ONLY ]; then
     rm -f $timingDir/$results
-    (time $prog $dataDir/$data 2>&1) 2> $timingDir/$results
-    (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results
-    (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results
+    (time $prog $dataDir/$data 2>&1) 2> /dev/null # drop the first run
+    (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results 
+    (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results 
     (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results
 fi
 #     (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results
