@@ -36,7 +36,7 @@
  * AT&T Labs Research
  */
 
-#include "pads-internal.h" /* XXX for debugging, should be pads.h XXX */
+#include "pads-internal.h"
 #include "pads-macros-gen.h"
 #include "out_macros.h"
 #include <stdio.h>
@@ -191,10 +191,10 @@ PDCI_iodisc_report_partial(P_t *pads, Pio_elt_t *elt, int missing_term, size_t r
   loc.e.num   = elt->num;
   loc.e.byte  = readlen;
 
-  sfstrseek(pads->tmp2, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp2);
   sfprintf(pads->tmp2, "[in %s]", whatfn);
-  infn = sfstruse(pads->tmp2);
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  infn = PDCI_sfstr_use(pads->tmp2);
+  PDCI_sfstr_seek2zero(pads->tmp1);
 
   if (pads->disc->e_rep == PerrorRep_Min) {
     pads->disc->error_fn(NiL, P_LEV_WARN, "%s %s: %s %d byte %d: errCode %d",
@@ -230,7 +230,7 @@ PDCI_iodisc_report_partial(P_t *pads, Pio_elt_t *elt, int missing_term, size_t r
       sfprintf(pads->tmp1, ">>>%s<<<", tmpstr1);
     }
   }
-  pads->disc->error_fn(NiL, P_LEV_WARN, "%s", sfstruse(pads->tmp1));
+  pads->disc->error_fn(NiL, P_LEV_WARN, "%s", PDCI_sfstr_use(pads->tmp1));
 }
 
 /* ================================================================================ */

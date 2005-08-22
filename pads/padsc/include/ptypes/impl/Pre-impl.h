@@ -18,20 +18,20 @@
   Pregexp_t my_regexp = { 0 }
 
 #define P_RE_STRING_FROM_CHAR(pads, char_expr) \
-  ( sfstrseek((pads)->tmp2, 0, SEEK_SET),	   \
+  ( PDCI_sfstr_seek2zero((pads)->tmp2),	   \
     sfprintf((pads)->tmp2, "/[%c]/", (char_expr)), \
-    sfstruse((pads)->tmp2) )
+    PDCI_sfstr_use((pads)->tmp2) )
 
 #define P_RE_STRING_FROM_STR(pads, str_expr) \
   ( (pads)->tmp2_pstr = (str_expr), 		\
-    sfstrseek((pads)->tmp2, 0, SEEK_SET),	\
+    PDCI_sfstr_seek2zero((pads)->tmp2),	\
     sfprintf((pads)->tmp2, "/%.*s/l", (pads)->tmp2_pstr->len, (pads)->tmp2_pstr->str), \
-    sfstruse((pads)->tmp2) )
+    PDCI_sfstr_use((pads)->tmp2) )
 
 #define P_RE_STRING_FROM_CSTR(pads, str_expr) \
-  ( sfstrseek((pads)->tmp2, 0, SEEK_SET),	 \
+  ( PDCI_sfstr_seek2zero((pads)->tmp2),	 \
     sfprintf((pads)->tmp2, "/%s/l", (str_expr)), \
-    sfstruse((pads)->tmp2) )
+    PDCI_sfstr_use((pads)->tmp2) )
 
 #define PDCI_REGEXP_FROM_CHAR(pads, my_regexp, char_expr, err_prefix, whatfn) \
   PDCI_regexp_compile_cstr(pads, P_RE_STRING_FROM_CHAR(pads, char_expr), &(my_regexp), err_prefix, whatfn)

@@ -86,7 +86,7 @@ do {
     if (RBuf_RESERVE_HINT((sIN)->rbuf, (sIN)->str, char, wdth_PDCI_STR_CPY+1, PDCI_STRING_HINT)) {
       goto fatal_alloc_err;
     }
-    memcpy((sIN)->str, (char*)(bIN), wdth_PDCI_STR_CPY);
+    memcpy((sIN)->str, bIN, wdth_PDCI_STR_CPY);
     (sIN)->str[wdth_PDCI_STR_CPY] = 0;
     (sIN)->len = wdth_PDCI_STR_CPY;
     /* if ((sIN)->sharing) { P_WARN1(pads->disc, "XXX_REMOVE copy: string %p is no longer sharing", (void*)(sIN)); } */
@@ -682,7 +682,7 @@ do {
 /* assumes variables writelen, buf, buf_full, buf_len, pads, tag, indent are in scope */
 #define PDCI_BASELIT_XML_OUT2BUF(def_tag, outfmt, outval)
   do {
-    sfstrseek(pads->tmp3, 0, SEEK_SET);
+    PDCI_sfstr_seek2zero(pads->tmp3);
     PDCI_BASELIT_XML_OUT(writelen = , pads->tmp3, tag, def_tag, indent, outfmt, outval);
     if (writelen <= 0) {
       return -1;
@@ -691,7 +691,7 @@ do {
       (*buf_full) = 1;
       return -1;
     }
-    memcpy(buf, sfstruse(pads->tmp3), writelen);
+    memcpy(buf, PDCI_sfstr_use(pads->tmp3), writelen);
     return writelen;
   } while (0)
 /* END_MACRO */
@@ -729,7 +729,7 @@ do {
 /* assumes variables writelen, buf, buf_full, buf_len, pads, tag, indent, pd are in scope */
 #define PDCI_BASEVAL_XML_OUT2BUF(def_tag, outfmt, outval)
   do {
-    sfstrseek(pads->tmp3, 0, SEEK_SET);
+    PDCI_sfstr_seek2zero(pads->tmp3);
     PDCI_BASEVAL_XML_OUT(writelen = , pads->tmp3, tag, def_tag, indent, pd, outfmt, outval);
     if (writelen <= 0) {
       return -1;
@@ -738,7 +738,7 @@ do {
       (*buf_full) = 1;
       return -1;
     }
-    memcpy(buf, sfstruse(pads->tmp3), writelen);
+    memcpy(buf, PDCI_sfstr_use(pads->tmp3), writelen);
     return writelen;
   } while (0)
 /* END_MACRO */
@@ -1590,12 +1590,12 @@ fn_pref ## _write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
   }
-  memcpy(buf, sfstruse(pads->tmp1), writelen);
+  memcpy(buf, PDCI_sfstr_use(pads->tmp1), writelen);
   return writelen;
 }
 
@@ -1613,12 +1613,12 @@ fn_pref ## _write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, targ_type *val, size_t
       (*val) = inv_val;
     }
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
   }
-  return sfwrite(io, sfstruse(pads->tmp1), writelen);
+  return sfwrite(io, PDCI_sfstr_use(pads->tmp1), writelen);
 }
 
 ssize_t
@@ -1636,12 +1636,12 @@ fn_pref ## _write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
   }
-  PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%s", sfstruse(pads->tmp1));
+  PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%s", PDCI_sfstr_use(pads->tmp1));
 }
 
 ssize_t
@@ -1658,12 +1658,12 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, targ_type *val, c
       (*val) = inv_val;
     }
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, *val);
   if (writelen != width) {
     return -1;
   }
-  PDCI_BASEVAL_XML_OUT2IO(inv_type, "%s", sfstruse(pads->tmp1));
+  PDCI_BASEVAL_XML_OUT2IO(inv_type, "%s", PDCI_sfstr_use(pads->tmp1));
 }
 /* END_MACRO */
 
@@ -1684,7 +1684,7 @@ fn_pref ## _write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro(writelen, pads->tmp1, fmt, *val);
   if (writelen <= 0) {
     return -1;
@@ -1693,7 +1693,7 @@ fn_pref ## _write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
     (*buf_full) = 1;
     return -1;
   }
-  memcpy(buf, sfstruse(pads->tmp1), writelen);
+  memcpy(buf, PDCI_sfstr_use(pads->tmp1), writelen);
   return writelen;
 }
 
@@ -1730,12 +1730,12 @@ fn_pref ## _write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
       (*val) = inv_val;
     }
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro(writelen, pads->tmp1, fmt, *val);
   if (writelen <= 0) {
     return -1;
   }
-  PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%s", sfstruse(pads->tmp1));
+  PDCI_BASEVAL_XML_OUT2BUF(inv_type, "%s", PDCI_sfstr_use(pads->tmp1));
 }
 
 ssize_t
@@ -1752,12 +1752,12 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, targ_type *val, c
       (*val) = inv_val;
     }
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro(writelen, pads->tmp1, fmt, *val);
   if (writelen <= 0) {
     return -1;
   }
-  PDCI_BASEVAL_XML_OUT2IO(inv_type, "%s", sfstruse(pads->tmp1));
+  PDCI_BASEVAL_XML_OUT2IO(inv_type, "%s", PDCI_sfstr_use(pads->tmp1));
 }
 /* END_MACRO */
 
@@ -2514,7 +2514,7 @@ int_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int nst
   }
   res = int_type ## _acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -2649,7 +2649,7 @@ int_type ## _acc_map_report(P_t *pads, const char *prefix, const char *what, int
   }
   res = int_type ## _acc_map_report2io(pads, tmpstr, prefix, what, nst, fn, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -2959,7 +2959,7 @@ fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int 
   }
   res = fpoint_type ## _acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -3269,7 +3269,7 @@ float_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int n
   }
   res = float_type ## _acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -3593,7 +3593,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   ssize_t writelen;
 
   errno = 0;
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro(writelen, pads->tmp1, fmt, i);
   if (writelen <= 0) {
     return -1;
@@ -3602,7 +3602,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
     if (outbuf_full) { (*outbuf_full) = 1; }
     return -1;
   }
-  memcpy(outbuf, sfstruse(pads->tmp1), writelen);
+  memcpy(outbuf, PDCI_sfstr_use(pads->tmp1), writelen);
   return writelen;
 }
 
@@ -3616,12 +3616,12 @@ rev_fn_name ## _FW_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf
     if (outbuf_full) { (*outbuf_full) = 1; }
     return -1;
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
   }
-  memcpy(outbuf, sfstruse(pads->tmp1), writelen);
+  memcpy(outbuf, PDCI_sfstr_use(pads->tmp1), writelen);
   return writelen;
 }
 
@@ -3641,12 +3641,12 @@ rev_fn_name ## _FW_io(P_t *pads, Sfio_t *io, targ_type i, size_t width)
   ssize_t writelen;
 
   errno = 0;
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
   }
-  return sfwrite(io, sfstruse(pads->tmp1), writelen);
+  return sfwrite(io, PDCI_sfstr_use(pads->tmp1), writelen);
 }
 /* END_MACRO */
 
@@ -3802,7 +3802,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   char    *buf;
 
   errno = 0;
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro(writelen, pads->tmp1, fmt, i);
   if (writelen <= 0) {
     return -1;
@@ -3811,7 +3811,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
     if (outbuf_full) { (*outbuf_full) = 1; }
     return -1;
   }
-  buf = sfstruse(pads->tmp1);
+  buf = PDCI_sfstr_use(pads->tmp1);
   for (j = 0; j < writelen; j++) {
     outbuf[j] = P_mod_ae_tab[(int)(buf[j])];
   }
@@ -3829,12 +3829,12 @@ rev_fn_name ## _FW_buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf
     if (outbuf_full) { (*outbuf_full) = 1; }
     return -1;
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
   }
-  buf = sfstruse(pads->tmp1);
+  buf = PDCI_sfstr_use(pads->tmp1);
   for (j = 0; j < writelen; j++) {
     outbuf[j] = P_mod_ae_tab[(int)(buf[j])];
   }
@@ -3848,10 +3848,10 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i)
   char    *buf;
 
   errno = 0;
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro(writelen, pads->tmp1, fmt, i);
   if (-1 == writelen) return -1;
-  buf = sfstruse(pads->tmp1);
+  buf = PDCI_sfstr_use(pads->tmp1);
   for (j = 0; j < writelen; j++) {
     buf[j] = P_mod_ae_tab[(int)(buf[j])];
   }
@@ -3865,12 +3865,12 @@ rev_fn_name ## _FW_io (P_t *pads, Sfio_t *io, targ_type i, size_t width)
   char    *buf;
 
   errno = 0;
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   sfpr_macro_w(writelen, pads->tmp1, wfmt, width, i);
   if (writelen != width) {
     return -1;
   }
-  buf = sfstruse(pads->tmp1);
+  buf = PDCI_sfstr_use(pads->tmp1);
   for (j = 0; j < writelen; j++) {
     buf[j] = P_mod_ae_tab[(int)(buf[j])];
   }
@@ -4841,7 +4841,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
     sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
     bytes++;
   }
-  ascii_bytes = sfstruse(tmpstr);
+  ascii_bytes = PDCI_sfstr_use(tmpstr);
   errno = 0;
   d = strtold((const char *)bytes, &ascii_ptr);
   if (ascii_ptr) {
@@ -4874,7 +4874,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
     sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
     bytes++;
   }
-  ascii_bytes = sfstruse(tmpstr);
+  ascii_bytes = PDCI_sfstr_use(tmpstr);
   errno = 0;
   d = strtold((const char *)bytes, &ascii_ptr);
   if (ascii_ptr) {
@@ -4905,7 +4905,7 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
     sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
     bytes++;
   }
-  ascii_bytes = sfstruse(tmpstr);
+  ascii_bytes = PDCI_sfstr_use(tmpstr);
   errno = 0;
   d = strntold((const char *)bytes, max_bytes, &ascii_ptr);
   if (ascii_ptr) {
@@ -6159,7 +6159,7 @@ Pstring_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Pst
   }
   res = Pstring_acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -6276,7 +6276,7 @@ Perror_t Pip_acc_report(P_t *pads, const char *prefix, const char *what,
   }
   res = Pip_acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -6415,7 +6415,7 @@ PDCI_date_time_acc_report(P_t *pads, const char *prefix, const char *what, int n
 				     format, format_descr,
 				     tzone, tzone_descr);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -6551,7 +6551,7 @@ Pchar_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
   }
   res = Pchar_acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -6662,7 +6662,7 @@ P_nerr_acc_report(P_t *pads, const char *prefix, const char *what, int nst,
   }
   res = P_nerr_acc_report2io(pads, tmpstr, prefix, what, nst, a);
   if (res == P_OK) {
-    pads->disc->error_fn(NiL, 0, "%s", sfstruse(tmpstr));
+    pads->disc->error_fn(NiL, 0, "%s", PDCI_sfstr_use(tmpstr));
   }
   sfstrclose (tmpstr);
   return res;
@@ -6914,7 +6914,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.192 2005-08-05 19:37:47 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.193 2005-08-22 16:07:22 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8869,9 +8869,9 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   if (!whatfn) {
     infn = "";
   } else {
-    sfstrseek(pads->tmp2, 0, SEEK_SET);
+    PDCI_sfstr_seek2zero(pads->tmp2);
     sfprintf(pads->tmp2, "[in %s]", whatfn);
-    infn = sfstruse(pads->tmp2);
+    infn = PDCI_sfstr_use(pads->tmp2);
   }
   pdc_errorf = pads->disc->error_fn;
   if (P_GET_LEV(level) == P_LEV_FATAL) {
@@ -8892,7 +8892,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   if (!(unit = P_io_read_unit(pads))) {
     unit = "";
   }
-  sfstrseek(pads->tmp1, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp1);
   if (pads->disc->e_rep == PerrorRep_Min) {
     if (loc) {
       pdc_errorf(NiL, level, "%s %s: %s %d byte %d: errCode %d",
@@ -9147,7 +9147,7 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
       }
     }
   }
-  pdc_errorf(NiL, level, "%s", sfstruse(pads->tmp1));
+  pdc_errorf(NiL, level, "%s", PDCI_sfstr_use(pads->tmp1));
   return P_OK;
 }
 
@@ -12746,6 +12746,22 @@ PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_fu
 /* ================================================================================ */
 /* INTERNAL MISC ROUTINES */
 
+#if defined(__GNUC__) && (__GNUC__ == 4)
+/*
+ * sfstruse and sfstrseek both use '?' conditional exprs that can
+ * return NULL.  The newest gcc does not like such exprs appearing in
+ * argument positions that expect const void*, even if casting is
+ * used.  As a workaround, we provide the following wrappers.
+ */ 
+char* PDCI_sfstr_use(Sfio_t* io) {
+  return sfstruse(io);
+}
+
+char* PDCI_sfstr_seek2zero(Sfio_t* f) {
+  return sfstrseek(f, 0, SEEK_SET);
+}
+#endif
+
 Perror_t
 PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
 			 const char *err_prefix, const char *whatfn)
@@ -12890,9 +12906,9 @@ PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *regexp,
 		    const char *err_prefix, const char *whatfn)
 {
   PDCI_DISC_2P_CHECKS(whatfn, regexp_str, regexp);
-  sfstrseek((pads)->tmp2, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero((pads)->tmp2);
   sfprintf((pads)->tmp2, "%.*s", regexp_str->len, regexp_str->str);
-  return PDCI_regexp_compile_cstr(pads, sfstruse(pads->tmp2), regexp, err_prefix, whatfn);
+  return PDCI_regexp_compile_cstr(pads, PDCI_sfstr_use(pads->tmp2), regexp, err_prefix, whatfn);
 }
 
 Perror_t

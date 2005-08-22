@@ -187,6 +187,9 @@ structure Main : sig
             val command = (cc  (* invoke c compiler *)
                           ^ " -E "  (* preprocessor only *)
 			  ^ "-DFOR_CKIT" (* tell include files to include prototypes for macros *)
+                          ^ " -U__ppc__ "
+                          ^ " -D__ppc64__ "
+                          ^ " -U__APPLE_CC__ "
                           ^ (!defines)  (* symbols defined by user *)
                           ^ (!undefines)  (* symbols undefined by user *)
                           ^ (!includes)  (* augment include path *)

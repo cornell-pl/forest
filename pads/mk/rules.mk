@@ -304,7 +304,7 @@ endif
 
 # XXX Nothing for these in rules.arch.<ARCH>.mk ???
 CARCHFLAGS =
-STATIC_LIBTOOL = ar r
+STATIC_LIBTOOL = ar cr
 STATIC_LIBTOOL_OPTS =
 
 SHARED_LIBTOOL = $(CC) $(mam_cc_SHARED) $(mam_cc_SHARED_REGISTRY)
@@ -348,6 +348,9 @@ endif
 
 # iffy generated mam_cc_SHARED=-G is incorrect
 ifeq ($(ARCH_N_OPSYS),ppc-darwin)
+# XXX why doesn't mamake figure this out ???
+#OS_SPEC_XTRA_LIBS += -liconv
+OS_SPEC_XTRA_LIBS += /usr/lib/libiconv.dylib
 mam_cc_SHARED=
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE :=-dynamiclib -flat_namespace -undefined suppress -read_only_relocs suppress
@@ -369,6 +372,18 @@ endef
 else
 define FixStaticLib
 endef
+endif
+
+# We need to learn more about symbol visibility for the
+# new gcc compiler.  This is a temporary fix which folds
+# the static libast into shared libraries.
+# Right now the problem is showing up
+# for darwin, but it might be a general gcc 4 problem.
+LINK_INTO_SHARED_O =
+LINK_INTO_SHARED_D =
+ifeq ($(OPSYS),darwin)
+LINK_INTO_SHARED_O = $(STATIC_ASTLIB_O)
+LINK_INTO_SHARED_D = $(STATIC_ASTLIB_D)
 endif
 
 ifeq ($(ARCH_N_OPSYS),x86-freebsd)
@@ -443,6 +458,7 @@ STATIC_LIBS_O += $(STATIC_GALAXLIB_O) $(STATIC_OCAMLLIB_O)
 endif
 LIB_DEPS_O = $(STATIC_LIBS_O)
 
+
 STATIC_PADSLIB_D = $(INSTALL_LIBDIR)/$(STATIC_PADSLIB_NM_D)
 STATIC_PGLXLIB_D = $(INSTALL_LIBDIR)/$(STATIC_PGLXLIB_NM_D)
 STATIC_PZLIB_D = $(INSTALL_LIBDIR)/$(STATIC_PZLIB_NM_D)
@@ -503,13 +519,13 @@ endif
 ifdef USE_GALAX
 # Note: PCRE_LIB_DIR needs to be defined in any makefile using Galax.
 DYNAMIC_LIBS_O += \
-  -lpads-galax $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS) \
+  -lpads-galax $(SHARED_ASTLIB_O)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 else 
-DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) $(OS_SPEC_XTRA_LIBS)
+DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) 
 endif
 SHARED_PADSLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_O)
@@ -536,13 +552,13 @@ DYNAMIC_LIBS_D += -lm
 endif
 ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
-  -lpads-galax-g $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS) \
+  -lpads-galax-g $(SHARED_ASTLIB_D)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 else
-DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) $(OS_SPEC_XTRA_LIBS)
+DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) 
 endif
 SHARED_PADSLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_D)
 SHARED_PGLXLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_D)
@@ -568,6 +584,11 @@ TRIV_LIBS = -L$(INSTALL_LIBDIR) $(SHARED_ASTLIB_D)
 ################################################################################
 endif # FORCE_STATIC
 ################################################################################
+
+STATIC_LIBS_XTRA_O = $(STATIC_LIBS_O) $(OS_SPEC_XTRA_LIBS)
+STATIC_LIBS_XTRA_D = $(STATIC_LIBS_D) $(OS_SPEC_XTRA_LIBS)
+DYNAMIC_LIBS_XTRA_O = $(DYNAMIC_LIBS_O) $(OS_SPEC_XTRA_LIBS)
+DYNAMIC_LIBS_XTRA_D = $(DYNAMIC_LIBS_D) $(OS_SPEC_XTRA_LIBS)
 
 INCLUDES =  -I. -I.. -I$(AST_HOME)/include/ast
 ifdef GEN_DIR
@@ -654,28 +675,28 @@ endef
 define CCExec_DYNAMIC_D
 (set -x; \
  $(RM) $@; \
- $(COMPILE_D) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(DYNAMIC_LIBS_D) -o $@; \
+ $(COMPILE_D) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(DYNAMIC_LIBS_XTRA_D) -o $@; \
 )
 endef
 
 define CCExec_DYNAMIC_O
 (set -x; \
  $(RM) $@; \
- $(COMPILE_O) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(DYNAMIC_LIBS_O) -o $@; \
+ $(COMPILE_O) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(DYNAMIC_LIBS_XTRA_O) -o $@; \
 )
 endef
 
 define CCExec_STATIC_D
 (set -x; \
  $(RM) $@; \
- $(COMPILE_D) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(STATIC_LIBS_D) -o $@; \
+ $(COMPILE_D) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(STATIC_LIBS_XTRA_D) -o $@; \
 )
 endef
 
 define CCExec_STATIC_O
 (set -x; \
  $(RM) $@; \
- $(COMPILE_O) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(STATIC_LIBS_O) -o $@; \
+ $(COMPILE_O) $(patsubst $(LIB_DEP_PATTERN),,$(patsubst %.h,,$^)) $(STATIC_LIBS_XTRA_O) -o $@; \
 )
 endef
 
@@ -857,7 +878,7 @@ else
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule J_D"
 endif
-	$(LINK_D) $< $(DYNAMIC_LIBS_D) -o $@
+	$(LINK_D) $< $(DYNAMIC_LIBS_XTRA_D) -o $@
 
 %_d.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
@@ -870,7 +891,7 @@ ifndef REGRESS_TESTS
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule L_D"
 endif
-	$(COMPILE_D) $< $(DYNAMIC_LIBS_D) -o $@
+	$(COMPILE_D) $< $(DYNAMIC_LIBS_XTRA_D) -o $@
 endif # !REGRESS_TESTS
 
 endif # BuildPADSLib / _d rules
@@ -925,7 +946,7 @@ else
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule J_O"
 endif
-	$(LINK_O) $< $(DYNAMIC_LIBS_O) -o $@
+	$(LINK_O) $< $(DYNAMIC_LIBS_XTRA_O) -o $@
 
 %.o: %.c $(INCLUDE_DEPS_ADD) $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK
@@ -937,7 +958,7 @@ endif
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule L_O"
 endif
-	$(COMPILE_O) $< $(DYNAMIC_LIBS_O) -o $@
+	$(COMPILE_O) $< $(DYNAMIC_LIBS_XTRA_O) -o $@
 
 endif # BuildPadsLib / non _d rules
 

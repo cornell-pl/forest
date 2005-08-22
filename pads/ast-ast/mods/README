@@ -4,5 +4,7 @@ under ast-ast/lib/package/tgz).
 
 Current source mods:
 
-There are no current changes.
+To allow compilation under gcc 4.0, we delete the _sfdscan prototype
+from ast-ast/src/lib/libast/sfiosfhdr.h
+
 

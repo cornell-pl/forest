@@ -1888,10 +1888,10 @@ do {
   }
   if (!what) {
     sfprintf (tmpstr_PCGEN_, "%s [--> %s]", default_what, basety_nm);
-    what = sfstruse(tmpstr_PCGEN_);
+    what = PDCI_sfstr_use(tmpstr_PCGEN_);
   } else {
     sfprintf (tmpstr_PCGEN_, "%s [%s --> %s]", what, default_what, basety_nm);
-    what = sfstruse(tmpstr_PCGEN_);
+    what = PDCI_sfstr_use(tmpstr_PCGEN_);
   }
   res_PCGEN_ = base_acc_call;
   sfstrclose(tmpstr_PCGEN_);
@@ -1958,7 +1958,7 @@ do {
     (*buf_full) = 1;
     return -1;
   }
-  memcpy(buf_cursor_PCGEN_, sfstruse(pads->tmp4), tlen_PCGEN_);
+  memcpy(buf_cursor_PCGEN_, PDCI_sfstr_use(pads->tmp4), tlen_PCGEN_);
   length_PCGEN_     += tlen_PCGEN_;
   buf_cursor_PCGEN_ += tlen_PCGEN_;
   buf_len    -= tlen_PCGEN_;
@@ -1974,7 +1974,7 @@ do {
     (*buf_full) = 1;
     return -1;
   }
-  memcpy(buf_cursor_PCGEN_, sfstruse(pads->tmp4), tlen_PCGEN_);
+  memcpy(buf_cursor_PCGEN_, PDCI_sfstr_use(pads->tmp4), tlen_PCGEN_);
   length_PCGEN_ += tlen_PCGEN_;
 } while (0)
 /* END_MACRO */
@@ -1983,7 +1983,7 @@ do {
 do {
   indent = (indent > 128) ? 128 : indent;
   if (!tag) { tag = def_tag; }
-  sfstrseek(pads->tmp4, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp4);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>\n", indent, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
@@ -1991,7 +1991,7 @@ do {
 
 #define PCGEN_TAG_CLOSE_XML_OUT()
 do {
-  sfstrseek(pads->tmp4, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp4);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
@@ -2000,20 +2000,20 @@ do {
 
 #define PCGEN_ARRAY_OPEN_XML_OUT()
 do {
-  sfstrseek(pads->tmp4, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp4);
 } while (0)
 /* END_MACRO */
 
 #define PCGEN_ARRAY_CLOSE_XML_OUT()
 do {
-  sfstrseek(pads->tmp4, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp4);
 } while (0)
 /* END_MACRO */
 
 #define PCGEN_XML_VALUE_OUT(ltag, val)
 do{
     indent = (indent > 126) ? 128 : indent + 2;
-    sfstrseek(pads->tmp4, 0, SEEK_SET);
+    PDCI_sfstr_seek2zero(pads->tmp4);
     tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>%d</%s>\n", indent, PDCI_spaces, ltag, val, ltag);
     PDCI_TMP4_TLEN_UPDATES();
 } while (0)
@@ -2022,7 +2022,7 @@ do{
 #define PDCI_UNION_TAG_XML_OUT(tag)
 do {
   int tag_indent_PCGEN_ = (indent > 126) ? 128 : indent+2;
-  sfstrseek(pads->tmp4, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp4);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<tag>%s</tag>\n", tag_indent_PCGEN_, PDCI_spaces, tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
@@ -2032,7 +2032,7 @@ do {
 do {
   if (!tag) { tag = def_tag; }
   indent = ((indent) > 128) ? 128 : indent;
-  sfstrseek(pads->tmp4, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp4);
   if ((pd)->errCode == P_NO_ERR) { /* no error */
     tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><val>%s</val></%s>\n", indent, PDCI_spaces, tag, rep2str_fn(*rep), tag);
   } else if ((pd)->errCode < 100) { /* error, no location */
@@ -2053,7 +2053,7 @@ do {
 do {
   if ((pd)->errCode != P_NO_ERR) {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
-    sfstrseek(pads->tmp4, 0, SEEK_SET);
+    PDCI_sfstr_seek2zero(pads->tmp4);
     if ((pd)->errCode < 100) { /* no location */
       tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd>\n",
 		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode));
@@ -2075,7 +2075,7 @@ do {
 do {
   if ((pd)->errCode != P_NO_ERR) {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
-    sfstrseek(pads->tmp4, 0, SEEK_SET);
+    PDCI_sfstr_seek2zero(pads->tmp4);
     if ((pd)->errCode < 100) { /* no location */
       tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
 		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), (pd)->neerr, (pd)->firstError);
@@ -2093,7 +2093,7 @@ do {
 
 #define PCGEN_SOURCE_XML_OUT_BEGIN(schema_name)
 do {
-  sfstrseek(pads->tmp4, 0, SEEK_SET);
+  PDCI_sfstr_seek2zero(pads->tmp4);
     tlen_PCGEN_ = sfprintf(pads->tmp4, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<padsns:PSource xmlns:padsns=\"file:%s\">\n",
 			   schema_name);
     indent += 2;
@@ -2103,7 +2103,7 @@ do {
 
 #define PCGEN_SOURCE_XML_OUT_END()
 do {
-  sfstrseek(pads->tmp4, 0, SEEK_SET); 
+  PDCI_sfstr_seek2zero(pads->tmp4); 
     tlen_PCGEN_ = sfprintf(pads->tmp4, "</padsns:PSource>\n");
     PDCI_FINAL_TMP4_TLEN_UPDATES();
 } while (0)
