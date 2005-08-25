@@ -370,6 +370,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pTyParamList of (ctype * declarator)  list
         | pTyParams of (ctype * declarator) list
         | pOptActParams of expression list
+        | pOptType of {name:string, args:expression list} option
         | pActParamList of expression list
         | pName of string
         | pIsRecord of bool
@@ -1199,13 +1200,14 @@ pTypedef:
 				containsRecord = false,
 				largeHeuristic = false,
 				pred = pTypedefPredOpt}) )
+pOptType:(NONE)
+ | LPAREN pName pOptActParams RPAREN (SOME {name=pName,args=pOptActParams})
 
 pRecursive:
-  pIsSource pIsRecord PRECURSIVE pName pOptActParams pName pushScope pTyParams
- ( makeTypeName pName2;
-   ExternalDeclExt(PX.PRecursive {baseTy = PX.Name pName1, 
-                                args   = pOptActParams,
-                                name   = pName2, 
+  pIsSource pIsRecord PRECURSIVE pOptType pName pushScope pTyParams
+ ( makeTypeName pName;
+   ExternalDeclExt(PX.PRecursive {base = pOptType,
+                                name   = pName, 
 				params = pTyParams,
 				isRecord = pIsRecord,
 				isSource = pIsSource,

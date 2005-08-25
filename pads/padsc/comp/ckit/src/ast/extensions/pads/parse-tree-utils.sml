@@ -281,6 +281,13 @@ struct
               pctToPTyDefDT(oldpct),
               [(PT.VarDecr newName, PT.EmptyExpr)]))
 
+    (* Makes only the declaration, without definition. *)
+    fun mkFunEDeclNoDef(funName, paramList, retTy) =
+	PT.ExternalDecl 
+	    (PT.Declaration
+		 (pctToPDT retTy,
+		  [(PT.FuncDecr (PT.VarDecr funName, paramList),PT.EmptyExpr)]))
+	    
     fun mkFunctionEDecl(funName, paramList, bodyS, retTy:PT.ctype) =
            PT.FunctionDef
               {body = bodyS,

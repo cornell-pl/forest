@@ -154,6 +154,29 @@ do { \
 #define Pbase_pd_init_no_err(pd) PD_COMMON_INIT_NO_ERR(pd)
 
 /* ================================================================================
+ * DYNAMIC MASK MACROS
+ */
+
+#define PDCI_DynamicMaskInit(m,maskTy,baseMaskTy,maskVal,PATH_TO_MASK)\
+do{\
+  m = (maskTy)malloc(sizeof(baseMaskTy));\
+  if (!m){\
+    error(ERROR_FATAL, "*** malloc of mask failed ***");\
+  }\
+\
+  maskTy ## _init(pads, &m, maskVal);\
+\
+  /* Create cycle in mask */\
+  PATH_TO_MASK = m;\
+}while(0)
+/* END_MACRO */
+
+/* Use nested macro call to ensure that type arguments are fully expanded
+   before calls to PDCI_DynamicMaskInit */
+#define P_DynamicMaskInit(m,maskTy,baseMaskTy,maskVal,PATH_TO_MASK)\
+  PDCI_DynamicMaskInit(m,maskTy,baseMaskTy,maskVal,PATH_TO_MASK)
+
+/* ================================================================================
  * POS MACROS
  */
 

@@ -55,6 +55,7 @@ structure Main : sig
     val outputDir = ref ""
     val outputDirFlag = ref false
 
+    val xschemaNoneFlag = ref false
     val writeNoneFlag = ref false
     val readNoneFlag = ref false
     val accumNoneFlag = ref false
@@ -88,6 +89,7 @@ structure Main : sig
 
     val flags_release = [
 	 ("wnone", "suppress write function generation", PCL.BoolSet writeNoneFlag),
+	 ("xsnone", "suppress XSchema generation", PCL.BoolSet xschemaNoneFlag),
 	 ("anone", "suppress accumulator generation", PCL.BoolSet accumNoneFlag),
          ("x", "output Galax Data API",   PCL.BoolSet xmlFlag),
          ("hist", "output histogram functions",   PCL.BoolSet histFlag),
@@ -107,6 +109,7 @@ structure Main : sig
          ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),	 
          ("parse", "generate parsetree only", PCL.BoolSet parseTreeOnlyFlag),
 	 ("ast",   "generate ast only", PCL.BoolSet astOnlyFlag),
+	 ("xsnone", "suppress XSchema generation", PCL.BoolSet xschemaNoneFlag),
          ("experimental", "generate experimental features", PCL.BoolSet experimentFlag),
          ("T", "transform specification",      PCL.String (addTranslate, true))
         ]
@@ -308,7 +311,7 @@ structure Main : sig
 	end
 
     fun generateXschema(padsDir, fileName, ast, tidtab,paidtab) =
-	if (!xmlFlag) orelse not (!writeNoneFlag) then  
+	if ((!xmlFlag) orelse not (!writeNoneFlag)) andalso not (!xschemaNoneFlag) then  
 	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "xsd")		(* This name computation is repeated in cnv-ext.sml*)
 		val srcPath = OS.FileSys.fullPath(fileName)
 	    in
@@ -389,7 +392,7 @@ structure Main : sig
     fun checkFlags _ = (* Check that the user didn't supply bogus flag combinations. *)
 	if !readNoneFlag then
             (if !xmlFlag then err "-x flag illegal with -rnone flag" else ();
-             xmlFlag := false; accumNoneFlag := true; writeNoneFlag := true)
+             xmlFlag := false; accumNoneFlag := true; writeNoneFlag := true; xschemaNoneFlag := true)
 	else ()
         
     fun initState() = (* more customization in the future *)
@@ -398,7 +401,8 @@ structure Main : sig
 	  if !experimentFlag then PInput.emitExperiment true else();
 	  if !histFlag       then PInput.emitHist true else();
 	  if !clusterFlag    then PInput.emitCluster true else();
-          if !xmlFlag        then PInput.emitXML true else ())
+          if !xmlFlag        then PInput.emitXML true else ();
+          if !xschemaNoneFlag     then PInput.emitXSchema false else ())
 
     fun main release (cmd, args) = 
       (stage := "Command-line processing";

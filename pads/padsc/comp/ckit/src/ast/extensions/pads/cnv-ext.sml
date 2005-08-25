@@ -1284,6 +1284,79 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      ([writeBufFunED, writeIOFunED, writeXMLBufFunED, writeXMLIOFunED], [fmtBufFinalFunED, fmtBufFunED, fmtIOFunED])
 		  end
 
+	      (* Generate just the declarations of the functions, without the definitions. *)
+	      fun genWriteFunDecls (name, standardOrEnum, writeName, writeXMLName, fmtName, isRecord, isSource, cParams:(string * pcty)list, 
+		 		mPCT, pdPCT, canonicalPCT) = 
+		  let val writeIOName = ioSuf writeName
+		      val writeBufName = bufSuf writeName
+		      val writeXMLIOName = ioSuf writeXMLName
+		      val writeXMLBufName = bufSuf writeXMLName
+                      val fmtIOName  = ioSuf fmtName			
+		      val fmtBufName = bufSuf fmtName
+		      val fmtBufFinalName = bufFinalSuf fmtName
+		      val (cNames, cTys) = ListPair.unzip cParams
+		      val cNamesAsIds = List.map PT.Id cNames
+		      val commonTys =   [P.ptrPCT pdPCT, P.ptrPCT canonicalPCT]
+		      val commonNames = [pd, rep]
+		      val IOcommonTys = [P.ptrPCT PL.toolStatePCT, PL.sfioPCT]
+		      val IOcommonNames = [pads, io]
+		      val BufcommonTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT PL.bytePCT, PL.sizePCT, P.intPtr]
+		      val BufcommonNames =[pads, buf, bufLen, bufFull] 
+		      val FmtcommonTys = [P.intPtr, P.ccharPtr,  P.ptrPCT mPCT]
+		      val FmtcommonNames = [requestedOut, delims, m]
+
+                      val IOparamTys =   IOcommonTys @ commonTys @ cTys 
+                      val IOparamNames = IOcommonNames @ commonNames @ cNames 
+                      val IOformalParams = List.map P.mkParam (ListPair.zip (IOparamTys, IOparamNames))
+
+		      val BufParamTys =   BufcommonTys @ commonTys @ cTys 
+		      val BufParamNames =  BufcommonNames @ commonNames @ cNames 
+		      val BufFormalParams = List.map P.mkParam (ListPair.zip (BufParamTys, BufParamNames))
+			  
+		      val FmtIOParamTys =   IOcommonTys @ FmtcommonTys @ commonTys @ cTys 
+		      val FmtIOParamNames = IOcommonNames @ FmtcommonNames @ commonNames @ cNames
+		      val FmtIOformalParams = List.map P.mkParam (ListPair.zip (FmtIOParamTys, FmtIOParamNames))
+
+		      val FmtBufParamTys = BufcommonTys @ FmtcommonTys @ commonTys @ cTys 
+		      val FmtBufParamNames = BufcommonNames @ FmtcommonNames @ commonNames @ cNames 
+		      val FmtBufFormalParams = List.map P.mkParam (ListPair.zip (FmtBufParamTys, FmtBufParamNames))
+
+                      val IOXMLparamTys = IOcommonTys @ commonTys @ [P.ccharPtr, P.int] @ cTys
+                      val IOXMLparamNames = IOcommonNames @ commonNames @ [tag, indent] @ cNames
+		      val BufXMLParamTys =    BufcommonTys   @ commonTys   @ [P.ccharPtr, P.int] @ cTys 
+		      val BufXMLParamNames =  BufcommonNames @ commonNames @ [tag, indent]       @ cNames 
+                      val IOXMLformalParams = List.map P.mkParam (ListPair.zip (IOXMLparamTys, IOXMLparamNames))
+		      val BufXMLFormalParams = List.map P.mkParam (ListPair.zip (BufXMLParamTys, BufXMLParamNames))
+
+		      val returnTy =  PL.ssizePCT
+                      
+                      (* -- write2buf *)
+		      val writeBufFunED = 
+			  P.mkFunEDeclNoDef(writeBufName, BufFormalParams, returnTy)
+
+                      (* -- fmt2buf *)
+		      val fmtBufFinalFunED = 
+			  P.mkFunEDeclNoDef(fmtBufFinalName, FmtBufFormalParams, returnTy)
+
+		      (* fmt2buf body is standard for all types *)
+		      val fmtBufFunED =
+			  P.mkFunEDeclNoDef(fmtBufName, FmtBufFormalParams, returnTy)
+
+                      (* -- write_xml_2buf *)
+		      val writeXMLBufFunED = 
+			  P.mkFunEDeclNoDef(writeXMLBufName, BufXMLFormalParams, returnTy)
+
+                      (* -- write2io  and  write_xml_2io *)
+		      fun mkWriteFunED (wIOName, fParams) =
+			  P.mkFunEDeclNoDef(wIOName, fParams,returnTy)
+
+		      val writeIOFunED    = mkWriteFunED(writeIOName,    IOformalParams)
+		      val fmtIOFunED      = mkWriteFunED(fmtIOName,      FmtIOformalParams)
+		      val writeXMLIOFunED = mkWriteFunED(writeXMLIOName, IOXMLformalParams)
+		  in
+		      ([writeBufFunED, writeIOFunED, writeXMLBufFunED, writeXMLIOFunED], [fmtBufFinalFunED, fmtBufFunED, fmtIOFunED])
+		  end
+
 
               (* Perror_t foo_init/foo_clear(P_t* pads, foo *r) *)
               fun genInitFun(funName, argName, argPCT, bodySs, noParamChecks) = 
@@ -2158,10 +2231,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
               (*  Recursive case *)
 	      fun cnvPRecursive ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
-			        isSource : bool, baseTy: PX.Pty, args: pcexp list})=
-		  let val base = "base"
+			        isSource : bool, base:{name:string, args: pcexp list} option})=
+		  let 
 		      (* Assume that base type is a Pstruct, so don't need lookupTy *)
-		      val baseTypeName = let val PX.Name n = baseTy in repSuf n end
+		      val (baseName,args) = case base of 
+						SOME {name=bname,args} => (bname,args) 
+					      | NONE => (recPre name,[])
+		      val baseTy = PX.Name baseName
+		      val baseTypeName = repSuf baseName
 		      val cParams : (string * pcty) list = List.map mungeParam params
 		      val paramNames = #1(ListPair.unzip cParams)
 
@@ -2179,7 +2256,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
 
 		      (* Generate accumulator type *)
-		      val PX.Name baseName = baseTy
 		      val baseAccPCT = P.makeStructTagPCT(true, (accSuf baseTypeName)^"_s")
 		      val accED     = P.makeTyDefEDecl (P.ptrPCT baseAccPCT, accSuf name)
 		      val accPCT    = P.makeTypedefPCT (accSuf name)		
@@ -2248,8 +2324,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						 ]),
 				   genIFunDecl(name ^"_verify",[(name,true,"rep")])
 				   ]
-		      val fwDecls = List.concat (map cnvExternalDecl fwEDs)
+                      (* Generate Write function declarations, PRecursive case *)
+		      val writeName = writeSuf name
+		      val fmtName = fmtSuf name
+		      val writeXMLName = writeXMLSuf name
+		      val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy) 
+		      val fmtBaseName = (bufSuf o fmtSuf) (lookupWrite baseTy) 
+		      val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy) 
+		      val fmtNameFinalBuf = bufFinalSuf fmtName
+                      val (writeFunEDs, fmtFunEDs)  = genWriteFunDecls(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, 
+								   cParams, mPCT, pdPCT, canonicalPCT)
 
+		      val fwDecls = (List.concat (map cnvExternalDecl fwEDs))
+				    @ (emitWrite writeFunEDs)
+				    @ (emitWrite fmtFunEDs)
 		  in
 		        canonicalDecls
                       @ mDecls

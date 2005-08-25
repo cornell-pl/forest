@@ -82,8 +82,7 @@ structure ParseTreeExt =
 			isRecord : bool, 
                         containsRecord : bool, 
 			isSource : bool,
-                        baseTy: Pty,
-			args   : 'exp list}
+                        base: {name:string,args:'exp list} option}
          | PDynamic of {name : string,
 			params: ('ct * 'decr) list, 
 			isRecord : bool, 
