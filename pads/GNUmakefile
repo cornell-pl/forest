@@ -40,7 +40,7 @@ regress_pglx:
 	@(cd padsc; $(MAKE) regress_pglx)
 
 usecases:
-	@(cd padsc; $(MAKE) usecases)
+	@(cd padsc; $(MAKE) usecases_set)
 
 test_xml:
 	@(cd padsc; $(MAKE) test_xml)
