@@ -35,6 +35,9 @@ regress:
 regress_pglx:
 	@(cd examples/xml/tests_pglx; $(MAKE) regress) 
 
+usecases_set:
+	@(cd usecases/tests; $(MAKE) usecases)
+
 test_xml:
 	@(cd examples/xml/tests; $(MAKE) regress) 
 
