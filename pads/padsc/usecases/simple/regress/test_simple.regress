@@ -1,10 +1,12 @@
 Data file = ../../data/simple
-warning: Error [in Pa_int32_read]: at record 3 at byte 28 : Invalid ASCII character encoding of a number 
-[record 3]6:32 9/11/99|06:32|9/11/99|>>>n<<<one|Bob Jones
+
+warning: Error [in Pa_int32_read]: at record 3 at byte 8 : Invalid ASCII character encoding of a number 
+[record 3]091199|>>>n<<<one|Bob Jones
 read returned error
-warning: Error [in simple_types_read]: record 5 byte 42 : Extra data before char separator '|'
-[record 5]midnight sep 11, 1980|midnight|09111980|4>>>.2<<<|Whyia C. Nott
+warning: Error [in simple_types_read]: record 5 byte 11 : Extra data before char separator '|'
+[record 5]09111980|4>>>.3<<<|Whyia C. Nott
 read returned error
+
 *****************************************************************************************************
 <top> : struct simple_types
 *****************************************************************************************************
@@ -16,35 +18,9 @@ good vals:          3    bad vals:          2    pcnt-bad:   40.000
         val:          2 count:          1 pcnt-of-total-vals:   20.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          5 pcnt-of-total-vals:  100.000
+
 [Describing each field of <top>]
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.birthtimestamp : timestamp
-    ** N.B. timestamps are reported in # of seconds since midnight 1-jan-1970, and also as formatted strings (using the default timestamp output format)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-good vals:          5    bad vals:          0    pcnt-bad:    0.000
-  Characterizing timestamp values:  min 184075200 (1975-11-01+12:00:00) max 1137075240 (2006-01-12+14:14:00) avg rounded down to nearest Puint32: 689630232 (1991-11-08+19:57:12)
-    => distribution of top 5 values out of 5 distinct values:
-        val:  184075200 (1975-11-01+12:00:00) count:          1  pcnt-of-good-vals:   20.000
-        val:  337478400 (1980-09-11+00:00:00) count:          1  pcnt-of-good-vals:   20.000
-        val:  852490800 (1997-01-05+19:00:00) count:          1  pcnt-of-good-vals:   20.000
-        val:  937031520 (1999-09-11+06:32:00) count:          1  pcnt-of-good-vals:   20.000
-        val: 1137075240 (2006-01-12+14:14:00) count:          1  pcnt-of-good-vals:   20.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          5  pcnt-of-good-vals:  100.000
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.birthtime : time
-    ** N.B. times are reported in # of seconds, and also as formatted strings (using the default time output format)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-good vals:          5    bad vals:          0    pcnt-bad:    0.000
-  Characterizing time values:  min 0 (00:00:00) max 68400 (19:00:00) avg rounded down to nearest Puint32: 37272 (10:21:12)
-    => distribution of top 5 values out of 5 distinct values:
-        val:          0 (00:00:00) count:          1  pcnt-of-good-vals:   20.000
-        val:      23520 (06:32:00) count:          1  pcnt-of-good-vals:   20.000
-        val:      43200 (12:00:00) count:          1  pcnt-of-good-vals:   20.000
-        val:      51240 (14:14:00) count:          1  pcnt-of-good-vals:   20.000
-        val:      68400 (19:00:00) count:          1  pcnt-of-good-vals:   20.000
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:          5  pcnt-of-good-vals:  100.000
+
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.birthdate : date
     ** N.B. dates are reported in # of seconds since midnight 1-jan-1970, and also as formatted strings (using the default date output format)
@@ -59,6 +35,7 @@ good vals:          5    bad vals:          0    pcnt-bad:    0.000
         val: 1137024000 (2006-01-12) count:          1  pcnt-of-good-vals:   20.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          5  pcnt-of-good-vals:  100.000
+
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.num_accts : int32
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -71,6 +48,7 @@ good vals:          4    bad vals:          1    pcnt-bad:   20.000
         val:          8 count:          1  pcnt-of-good-vals:   25.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          4  pcnt-of-good-vals:  100.000
+
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 <top>.name : string
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -83,6 +61,7 @@ String lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.
         val:         17 count:          1  pcnt-of-good-vals:   20.000
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING         count:          5  pcnt-of-good-vals:  100.000
+
   Characterizing string values:
     => distribution of top 5 strings out of 5 distinct strings:
         val: "Bob Jones"         count:          1  pcnt-of-good-vals:   20.000
@@ -92,3 +71,4 @@ String lengths: good vals:          5    bad vals:          0    pcnt-bad:    0.
         val: "Whyia C. Nott"     count:          1  pcnt-of-good-vals:   20.000
 . . . . . . . . . . . . . . . .  . . . . . . . . . . . . . . . . . . . . . . .
         SUMMING                  count:          5  pcnt-of-good-vals:  100.000
+
