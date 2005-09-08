@@ -35,8 +35,8 @@ regress:
 regress_pglx:
 	@(cd examples/xml/tests_pglx; $(MAKE) regress) 
 
-usecases_set:
-	@(cd usecases; $(MAKE) usecases_set)
+usecase_regress:
+	@(cd usecases; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_xml:
 	@(cd examples/xml/tests; $(MAKE) regress) 
@@ -50,6 +50,7 @@ test_comp:
 clean:
 	@(cd comp; $(MAKE) clean)
 	@(cd libpads; $(MAKE) clean)
+	@(cd usecases; $(MAKE) clean)
 ifdef USE_GALAX
 	@(cd pads-glx; $(MAKE) clean)
 	@(cd libpglx; $(MAKE) clean)
@@ -58,6 +59,7 @@ endif
 veryclean:
 	@(cd comp; $(MAKE) veryclean)
 	@(cd libpads; $(MAKE) veryclean)
+	@(cd usecases; $(MAKE) veryclean)
 ifdef USE_GALAX
 	@(cd pads-glx; $(MAKE) veryclean)
 	@(cd libpglx; $(MAKE) veryclean)
