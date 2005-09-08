@@ -1,7 +1,5 @@
 Precord Pstruct simple_types {
-  Ptimestamp(:'|':) birthtimestamp; '|';
-  Ptime(:'|':) birthtime; '|';
-  Pdate(:'|':) birthdate : birthtime + birthdate == birthtimestamp; '|';
+  Pdate(:'|':) birthdate; '|';
   Pint32 num_accts; '|';
   Pstring_SE(:"/$/":) name;
 };
