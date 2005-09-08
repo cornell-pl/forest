@@ -1,6 +1,5 @@
 Input file = ../../data/wsl
 Output file = /dev/stdout
-<note>read returned OK</note>
 <entry_t>
   <client>
     <ip><val>207.136.97.49</val></ip>
@@ -25,7 +24,6 @@ Output file = /dev/stdout
     <len><val>30</val></len>
   </length>
 </entry_t>
-<note>read returned OK</note>
 <entry_t>
   <client>
       <elt><val>tj62</val></elt>
