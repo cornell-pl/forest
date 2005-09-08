@@ -16,7 +16,7 @@
 
 #if P_CONFIG_READ_FUNCTIONS > 0
 
-Perror_t PDCI_date_time_FW_read(P_t *pads,
+Perror_t PDCI_timestamp_FW_read(P_t *pads,
 				const Pbase_m *m,
 				Pbase_pd *pd,
 				Puint32 *d_out,
@@ -30,7 +30,7 @@ Perror_t PDCI_date_time_FW_read(P_t *pads,
 				Tm_zone_t *tzone,
 				size_t width);
 
-Perror_t PDCI_date_time_read(P_t *pads,
+Perror_t PDCI_timestamp_read(P_t *pads,
 			     const Pbase_m *m,
 			     Pbase_pd *pd,
 			     Puint32 *d_out,
@@ -44,7 +44,7 @@ Perror_t PDCI_date_time_read(P_t *pads,
 			     Tm_zone_t *tzone,
 			     Pchar stopChar);
 
-Perror_t PDCI_date_time_ME_read(P_t *pads,
+Perror_t PDCI_timestamp_ME_read(P_t *pads,
 				const Pbase_m *m,
 				Pbase_pd *pd,
 				Puint32 *d_out,
@@ -58,7 +58,7 @@ Perror_t PDCI_date_time_ME_read(P_t *pads,
 				Tm_zone_t *tzone,
 				const char *matchRegexp);
 
-Perror_t PDCI_date_time_CME_read(P_t *pads,
+Perror_t PDCI_timestamp_CME_read(P_t *pads,
 				 const Pbase_m *m,
 				 Pbase_pd *pd,
 				 Puint32 *d_out,
@@ -72,7 +72,7 @@ Perror_t PDCI_date_time_CME_read(P_t *pads,
 				 Tm_zone_t *tzone,
 				 Pregexp_t *matchRegexp);
 
-Perror_t PDCI_date_time_SE_read(P_t *pads,
+Perror_t PDCI_timestamp_SE_read(P_t *pads,
 				const Pbase_m *m,
 				Pbase_pd *pd,
 				Puint32 *d_out,
@@ -86,7 +86,7 @@ Perror_t PDCI_date_time_SE_read(P_t *pads,
 				Tm_zone_t *tzone,
 				const char *stopRegexp);
 
-Perror_t PDCI_date_time_CSE_read(P_t *pads,
+Perror_t PDCI_timestamp_CSE_read(P_t *pads,
 				 const Pbase_m *m,
 				 Pbase_pd *pd,
 				 Puint32 *d_out,
@@ -100,10 +100,178 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 				 Tm_zone_t *tzone,
 				 Pregexp_t *stopRegexp);
 
+Perror_t PDCI_date_FW_read(P_t *pads,
+			   const Pbase_m *m,
+			   Pbase_pd *pd,
+			   Puint32 *d_out,
+			   Pcharset char_set,
+			   const char *whatfn,
+			   const char *format_descr,
+			   const char *tzone_descr,
+			   PerrCode_t errCode,
+			   int just_time,
+			   const char *format,
+			   Tm_zone_t *tzone,
+			   size_t width);
+
+Perror_t PDCI_date_read(P_t *pads,
+			const Pbase_m *m,
+			Pbase_pd *pd,
+			Puint32 *d_out,
+			Pcharset char_set, 
+			const char *whatfn,
+			const char *format_descr,
+			const char *tzone_descr,
+			PerrCode_t errCode,
+			int just_time,
+			const char *format,
+			Tm_zone_t *tzone,
+			Pchar stopChar);
+
+Perror_t PDCI_date_ME_read(P_t *pads,
+			   const Pbase_m *m,
+			   Pbase_pd *pd,
+			   Puint32 *d_out,
+			   Pcharset char_set,
+			   const char *whatfn,
+			   const char *format_descr,
+			   const char *tzone_descr,
+			   PerrCode_t errCode,
+			   int just_time,
+			   const char *format,
+			   Tm_zone_t *tzone,
+			   const char *matchRegexp);
+
+Perror_t PDCI_date_CME_read(P_t *pads,
+			    const Pbase_m *m,
+			    Pbase_pd *pd,
+			    Puint32 *d_out,
+			    Pcharset char_set,
+			    const char *whatfn,
+			    const char *format_descr,
+			    const char *tzone_descr,
+			    PerrCode_t errCode,
+			    int just_time,
+			    const char *format,
+			    Tm_zone_t *tzone,
+			    Pregexp_t *matchRegexp);
+
+Perror_t PDCI_date_SE_read(P_t *pads,
+			   const Pbase_m *m,
+			   Pbase_pd *pd,
+			   Puint32 *d_out,
+			   Pcharset char_set,
+			   const char *whatfn,
+			   const char *format_descr,
+			   const char *tzone_descr,
+			   PerrCode_t errCode,
+			   int just_time,
+			   const char *format,
+			   Tm_zone_t *tzone,
+			   const char *stopRegexp);
+
+Perror_t PDCI_date_CSE_read(P_t *pads,
+			    const Pbase_m *m,
+			    Pbase_pd *pd,
+			    Puint32 *d_out,
+			    Pcharset char_set,
+			    const char *whatfn,
+			    const char *format_descr,
+			    const char *tzone_descr,
+			    PerrCode_t errCode,
+			    int just_time,
+			    const char *format,
+			    Tm_zone_t *tzone,
+			    Pregexp_t *stopRegexp);
+
+Perror_t PDCI_time_FW_read(P_t *pads,
+			   const Pbase_m *m,
+			   Pbase_pd *pd,
+			   Puint32 *d_out,
+			   Pcharset char_set,
+			   const char *whatfn,
+			   const char *format_descr,
+			   const char *tzone_descr,
+			   PerrCode_t errCode,
+			   int just_time,
+			   const char *format,
+			   Tm_zone_t *tzone,
+			   size_t width);
+
+Perror_t PDCI_time_read(P_t *pads,
+			const Pbase_m *m,
+			Pbase_pd *pd,
+			Puint32 *d_out,
+			Pcharset char_set, 
+			const char *whatfn,
+			const char *format_descr,
+			const char *tzone_descr,
+			PerrCode_t errCode,
+			int just_time,
+			const char *format,
+			Tm_zone_t *tzone,
+			Pchar stopChar);
+
+Perror_t PDCI_time_ME_read(P_t *pads,
+			   const Pbase_m *m,
+			   Pbase_pd *pd,
+			   Puint32 *d_out,
+			   Pcharset char_set,
+			   const char *whatfn,
+			   const char *format_descr,
+			   const char *tzone_descr,
+			   PerrCode_t errCode,
+			   int just_time,
+			   const char *format,
+			   Tm_zone_t *tzone,
+			   const char *matchRegexp);
+
+Perror_t PDCI_time_CME_read(P_t *pads,
+			    const Pbase_m *m,
+			    Pbase_pd *pd,
+			    Puint32 *d_out,
+			    Pcharset char_set,
+			    const char *whatfn,
+			    const char *format_descr,
+			    const char *tzone_descr,
+			    PerrCode_t errCode,
+			    int just_time,
+			    const char *format,
+			    Tm_zone_t *tzone,
+			    Pregexp_t *matchRegexp);
+
+Perror_t PDCI_time_SE_read(P_t *pads,
+			   const Pbase_m *m,
+			   Pbase_pd *pd,
+			   Puint32 *d_out,
+			   Pcharset char_set,
+			   const char *whatfn,
+			   const char *format_descr,
+			   const char *tzone_descr,
+			   PerrCode_t errCode,
+			   int just_time,
+			   const char *format,
+			   Tm_zone_t *tzone,
+			   const char *stopRegexp);
+
+Perror_t PDCI_time_CSE_read(P_t *pads,
+			    const Pbase_m *m,
+			    Pbase_pd *pd,
+			    Puint32 *d_out,
+			    Pcharset char_set,
+			    const char *whatfn,
+			    const char *format_descr,
+			    const char *tzone_descr,
+			    PerrCode_t errCode,
+			    int just_time,
+			    const char *format,
+			    Tm_zone_t *tzone,
+			    Pregexp_t *stopRegexp);
+
 /* Ptimestamp_explicit */
 
 #define Ptimestamp_explicit_FW_read(pads, m, pd, d_out, width, format, tzone)	\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_FW_read", \
+  PDCI_timestamp_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_FW_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -111,7 +279,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
                          format, tzone, width)
 
 #define Pa_timestamp_explicit_FW_read(pads, m, pd, d_out, width, format, tzone) \
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_FW_read", \
+  PDCI_timestamp_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_FW_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -119,7 +287,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, width)
 
 #define Pe_timestamp_explicit_FW_read(pads, m, pd, d_out, width, format, tzone) \
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_FW_read", \
+  PDCI_timestamp_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_FW_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -127,7 +295,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, width)
 
 #define Ptimestamp_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_read", \
+  PDCI_timestamp_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_read", \
 		      "format param", \
 		      "tzone param", \
 		      P_INVALID_TIMESTAMP, \
@@ -135,7 +303,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 		      format, tzone, stopChar)
 
 #define Pa_timestamp_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_read", \
+  PDCI_timestamp_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_read", \
 		      "format param", \
 		      "tzone param", \
 		      P_INVALID_TIMESTAMP, \
@@ -143,7 +311,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 		      format, tzone, stopChar)
 
 #define Pe_timestamp_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_read", \
+  PDCI_timestamp_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_read", \
 		      "format param", \
 		      "tzone param", \
 		      P_INVALID_TIMESTAMP, \
@@ -151,7 +319,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 		      format, tzone, stopChar)
 
 #define Ptimestamp_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_ME_read", \
+  PDCI_timestamp_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_ME_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -159,7 +327,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, matchRegexp)
 
 #define Pa_timestamp_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_ME_read", \
+  PDCI_timestamp_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_ME_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -167,7 +335,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, matchRegexp)
 
 #define Pe_timestamp_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_ME_read", \
+  PDCI_timestamp_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_ME_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -175,7 +343,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, matchRegexp)
 
 #define Ptimestamp_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_CME_read", \
+  PDCI_timestamp_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_CME_read", \
 			  "format param", \
 			  "tzone param", \
 			  P_INVALID_TIMESTAMP, \
@@ -183,7 +351,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  format, tzone, matchRegexp)
 
 #define Pa_timestamp_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_CME_read", \
+  PDCI_timestamp_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_CME_read", \
 			  "format param", \
 			  "tzone param", \
 			  P_INVALID_TIMESTAMP, \
@@ -191,7 +359,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  format, tzone, matchRegexp)
 
 #define Pe_timestamp_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_CME_read", \
+  PDCI_timestamp_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_CME_read", \
 			  "format param", \
 			  "tzone param", \
 			  P_INVALID_TIMESTAMP, \
@@ -199,7 +367,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  format, tzone, matchRegexp)
 
 #define Ptimestamp_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_SE_read", \
+  PDCI_timestamp_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_SE_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -207,7 +375,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, stopRegexp)
 
 #define Pa_timestamp_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_SE_read", \
+  PDCI_timestamp_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_SE_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -215,7 +383,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, stopRegexp)
 
 #define Pe_timestamp_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_SE_read", \
+  PDCI_timestamp_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_SE_read", \
 			 "format param", \
 			 "tzone param", \
 			 P_INVALID_TIMESTAMP, \
@@ -223,7 +391,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 format, tzone, stopRegexp)
 
 #define Ptimestamp_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_CSE_read", \
+  PDCI_timestamp_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_explicit_CSE_read", \
 			  "format param", \
 			  "tzone param", \
 			  P_INVALID_TIMESTAMP, \
@@ -231,7 +399,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  format, tzone, stopRegexp)
 
 #define Pa_timestamp_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_CSE_read", \
+  PDCI_timestamp_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_explicit_CSE_read", \
 			  "format param", \
 			  "tzone param",	\
 			  P_INVALID_TIMESTAMP, \
@@ -239,7 +407,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  format, tzone, stopRegexp)
 
 #define Pe_timestamp_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_CSE_read", \
+  PDCI_timestamp_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_timestamp_explicit_CSE_read", \
 			  "format param", \
 			  "tzone param",	\
 			  P_INVALID_TIMESTAMP, \
@@ -249,299 +417,299 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 /* Pdate_explicit */
 
 #define Pdate_explicit_FW_read(pads, m, pd, d_out, width, format, tzone)	\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_FW_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-			 0, \
-                         format, tzone, width)
+  PDCI_date_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_FW_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, width)
 
 #define Pa_date_explicit_FW_read(pads, m, pd, d_out, width, format, tzone) \
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_FW_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-			 0, \
-			 format, tzone, width)
+  PDCI_date_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_FW_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, width)
 
 #define Pe_date_explicit_FW_read(pads, m, pd, d_out, width, format, tzone) \
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_FW_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-			 0, \
-			 format, tzone, width)
+  PDCI_date_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_FW_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, width)
 
 #define Pdate_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_read", \
-		      "format param", \
-		      "tzone param", \
-		      P_INVALID_DATE, \
-		      0, \
-		      format, tzone, stopChar)
+  PDCI_date_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_read", \
+		 "format param",					\
+		 "tzone param",						\
+		 P_INVALID_DATE,					\
+		 0,							\
+		 format, tzone, stopChar)
 
 #define Pa_date_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_read", \
-		      "format param", \
-		      "tzone param", \
-		      P_INVALID_DATE, \
-		      0, \
-		      format, tzone, stopChar)
+  PDCI_date_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_read", \
+		 "format param",					\
+		 "tzone param",						\
+		 P_INVALID_DATE,					\
+		 0,							\
+		 format, tzone, stopChar)
 
 #define Pe_date_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_read", \
-		      "format param", \
-		      "tzone param", \
-		      P_INVALID_DATE, \
-		      0, \
-		      format, tzone, stopChar)
+  PDCI_date_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_read", \
+		 "format param",					\
+		 "tzone param",						\
+		 P_INVALID_DATE,					\
+		 0,							\
+		 format, tzone, stopChar)
 
 #define Pdate_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_ME_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-		         0, \
-			 format, tzone, matchRegexp)
+  PDCI_date_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_ME_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, matchRegexp)
 
 #define Pa_date_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_ME_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-		         0, \
-			 format, tzone, matchRegexp)
+  PDCI_date_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_ME_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, matchRegexp)
 
 #define Pe_date_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_ME_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-		         0, \
-			 format, tzone, matchRegexp)
+  PDCI_date_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_ME_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, matchRegexp)
 
 #define Pdate_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_CME_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_DATE, \
-		          0, \
-			  format, tzone, matchRegexp)
+  PDCI_date_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_CME_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     format, tzone, matchRegexp)
 
 #define Pa_date_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_CME_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_DATE, \
-		          0, \
-			  format, tzone, matchRegexp)
+  PDCI_date_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_CME_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     format, tzone, matchRegexp)
 
 #define Pe_date_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_CME_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_DATE, \
-		          0, \
-			  format, tzone, matchRegexp)
+  PDCI_date_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_CME_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     format, tzone, matchRegexp)
 
 #define Pdate_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_SE_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-		         0, \
-			 format, tzone, stopRegexp)
+  PDCI_date_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_SE_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, stopRegexp)
 
 #define Pa_date_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_SE_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-		         0, \
-			 format, tzone, stopRegexp)
+  PDCI_date_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_SE_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, stopRegexp)
 
 #define Pe_date_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_SE_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_DATE, \
-		         0, \
-			 format, tzone, stopRegexp)
+  PDCI_date_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_explicit_SE_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    format, tzone, stopRegexp)
 
 #define Pdate_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_CSE_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_DATE, \
-		          0, \
-			  format, tzone, stopRegexp)
+  PDCI_date_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_explicit_CSE_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     format, tzone, stopRegexp)
 
 #define Pa_date_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_CSE_read", \
-			  "format param", \
-			  "tzone param",	\
-			  P_INVALID_DATE, \
-		          0, \
-			  format, tzone, stopRegexp)
+  PDCI_date_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_explicit_CSE_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     format, tzone, stopRegexp)
 
 #define Pe_date_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_date_explicit_CSE_read", \
-			  "format param", \
-			  "tzone param",	\
-			  P_INVALID_DATE, \
-		          0, \
-			  format, tzone, stopRegexp)
+  PDCI_date_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_date_explicit_CSE_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     format, tzone, stopRegexp)
 
 /* Ptime_explicit */
 
 #define Ptime_explicit_FW_read(pads, m, pd, d_out, width, format, tzone)	\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_FW_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-			 0, \
-                         format, tzone, width)
+  PDCI_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_FW_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, width)
 
 #define Pa_time_explicit_FW_read(pads, m, pd, d_out, width, format, tzone) \
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_FW_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-			 0, \
-			 format, tzone, width)
+  PDCI_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_FW_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, width)
 
 #define Pe_time_explicit_FW_read(pads, m, pd, d_out, width, format, tzone) \
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_FW_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-			 0, \
-			 format, tzone, width)
+  PDCI_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_FW_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, width)
 
 #define Ptime_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_read", \
-		      "format param", \
-		      "tzone param", \
-		      P_INVALID_TIME, \
-		      0, \
-		      format, tzone, stopChar)
+  PDCI_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_read", \
+		 "format param",					\
+		 "tzone param",						\
+		 P_INVALID_TIME,					\
+		 0,							\
+		 format, tzone, stopChar)
 
 #define Pa_time_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_read", \
-		      "format param", \
-		      "tzone param", \
-		      P_INVALID_TIME, \
-		      0, \
-		      format, tzone, stopChar)
+  PDCI_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_read", \
+		 "format param",					\
+		 "tzone param",						\
+		 P_INVALID_TIME,					\
+		 0,							\
+		 format, tzone, stopChar)
 
 #define Pe_time_explicit_read(pads, m, pd, d_out, stopChar, format, tzone) \
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_read", \
-		      "format param", \
-		      "tzone param", \
-		      P_INVALID_TIME, \
-		      0, \
-		      format, tzone, stopChar)
+  PDCI_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_read", \
+		 "format param",					\
+		 "tzone param",						\
+		 P_INVALID_TIME,					\
+		 0,							\
+		 format, tzone, stopChar)
 
 #define Ptime_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_ME_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-		         0, \
-			 format, tzone, matchRegexp)
+  PDCI_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_ME_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, matchRegexp)
 
 #define Pa_time_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_ME_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-		         0, \
-			 format, tzone, matchRegexp)
+  PDCI_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_ME_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, matchRegexp)
 
 #define Pe_time_explicit_ME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_ME_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-		         0, \
-			 format, tzone, matchRegexp)
+  PDCI_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_ME_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, matchRegexp)
 
 #define Ptime_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_CME_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_TIME, \
-		          0, \
-			  format, tzone, matchRegexp)
+  PDCI_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_CME_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_TIME,					\
+		     0,							\
+		     format, tzone, matchRegexp)
 
 #define Pa_time_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_CME_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_TIME, \
-		          0, \
-			  format, tzone, matchRegexp)
+  PDCI_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_CME_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_TIME,					\
+		     0,							\
+		     format, tzone, matchRegexp)
 
 #define Pe_time_explicit_CME_read(pads, m, pd, d_out, matchRegexp, format, tzone) \
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_CME_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_TIME, \
-		          0, \
-			  format, tzone, matchRegexp)
+  PDCI_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_CME_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_TIME,					\
+		     0,							\
+		     format, tzone, matchRegexp)
 
 #define Ptime_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_SE_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-		         0, \
-			 format, tzone, stopRegexp)
+  PDCI_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_SE_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, stopRegexp)
 
 #define Pa_time_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_SE_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-		         0, \
-			 format, tzone, stopRegexp)
+  PDCI_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_SE_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, stopRegexp)
 
 #define Pe_time_explicit_SE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_SE_read", \
-			 "format param", \
-			 "tzone param", \
-			 P_INVALID_TIME, \
-		         0, \
-			 format, tzone, stopRegexp)
+  PDCI_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_explicit_SE_read", \
+		    "format param",					\
+		    "tzone param",					\
+		    P_INVALID_TIME,					\
+		    0,							\
+		    format, tzone, stopRegexp)
 
 #define Ptime_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_CSE_read", \
-			  "format param", \
-			  "tzone param", \
-			  P_INVALID_TIME, \
-		          0, \
-			  format, tzone, stopRegexp)
+  PDCI_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_explicit_CSE_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_TIME,					\
+		     0,							\
+		     format, tzone, stopRegexp)
 
 #define Pa_time_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_CSE_read", \
-			  "format param", \
-			  "tzone param",	\
-			  P_INVALID_TIME, \
-		          0, \
-			  format, tzone, stopRegexp)
+  PDCI_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_explicit_CSE_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_TIME,					\
+		     0,							\
+		     format, tzone, stopRegexp)
 
 #define Pe_time_explicit_CSE_read(pads, m, pd, d_out, stopRegexp, format, tzone) \
-  PDCI_date_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_time_explicit_CSE_read", \
-			  "format param", \
-			  "tzone param",	\
-			  P_INVALID_TIME, \
-		          0, \
-			  format, tzone, stopRegexp)
+  PDCI_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_time_explicit_CSE_read", \
+		     "format param",					\
+		     "tzone param",					\
+		     P_INVALID_TIME,					\
+		     0,							\
+		     format, tzone, stopRegexp)
 
 /* Ptimestamp */
 
 #define Ptimestamp_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_FW_read", \
+  PDCI_timestamp_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_FW_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -549,7 +717,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, width)
 
 #define Pa_timestamp_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_FW_read", \
+  PDCI_timestamp_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_FW_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -557,7 +725,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, width)
 
 #define Pe_timestamp_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_FW_read", \
+  PDCI_timestamp_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_FW_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -565,7 +733,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, width)
 
 #define Ptimestamp_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_read", \
+  PDCI_timestamp_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_read", \
 		      "pads->disc->in_formats.timestamp",		\
 		      "default input time zone",			\
 		      P_INVALID_TIMESTAMP,				\
@@ -573,7 +741,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 		      pads->disc->in_formats.timestamp, pads->in_zone, stopChar)
 
 #define Pa_timestamp_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_read", \
+  PDCI_timestamp_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_read", \
 		      "pads->disc->in_formats.timestamp",		\
 		      "default input time zone",			\
 		      P_INVALID_TIMESTAMP,				\
@@ -581,7 +749,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 		      pads->disc->in_formats.timestamp, pads->in_zone, stopChar)
 
 #define Pe_timestamp_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_read", \
+  PDCI_timestamp_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_read", \
 		      "pads->disc->in_formats.timestamp",		\
 		      "default input time zone",			\
 		      P_INVALID_TIMESTAMP,				\
@@ -589,7 +757,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 		      pads->disc->in_formats.timestamp, pads->in_zone, stopChar)
 
 #define Ptimestamp_ME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_ME_read", \
+  PDCI_timestamp_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_ME_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -597,7 +765,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, matchRegexp)
 
 #define Pa_timestamp_ME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_ME_read", \
+  PDCI_timestamp_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_ME_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -605,7 +773,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, matchRegexp)
 
 #define Pe_timestamp_ME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_ME_read", \
+  PDCI_timestamp_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_ME_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -613,7 +781,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, matchRegexp)
 
 #define Ptimestamp_CME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_CME_read", \
+  PDCI_timestamp_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_CME_read", \
 			  "pads->disc->in_formats.timestamp",		\
 			  "default input time zone",			\
 			  P_INVALID_TIMESTAMP,				\
@@ -621,7 +789,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  pads->disc->in_formats.timestamp, pads->in_zone, matchRegexp)
 
 #define Pa_timestamp_CME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_CME_read", \
+  PDCI_timestamp_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_CME_read", \
 			  "pads->disc->in_formats.timestamp",		\
 			  "default input time zone",			\
 			  P_INVALID_TIMESTAMP,				\
@@ -629,7 +797,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  pads->disc->in_formats.timestamp, pads->in_zone, matchRegexp)
 
 #define Pe_timestamp_CME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_CME_read", \
+  PDCI_timestamp_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_CME_read", \
 			  "pads->disc->in_formats.timestamp",		\
 			  "default input time zone",			\
 			  P_INVALID_TIMESTAMP,				\
@@ -637,7 +805,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  pads->disc->in_formats.timestamp, pads->in_zone, matchRegexp)
 
 #define Ptimestamp_SE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_SE_read", \
+  PDCI_timestamp_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_SE_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -645,7 +813,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, stopRegexp)
 
 #define Pa_timestamp_SE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_SE_read", \
+  PDCI_timestamp_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_SE_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -653,7 +821,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, stopRegexp)
 
 #define Pe_timestamp_SE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_SE_read", \
+  PDCI_timestamp_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_timestamp_SE_read", \
 			 "pads->disc->in_formats.timestamp",		\
 			 "default input time zone",			\
 			 P_INVALID_TIMESTAMP,				\
@@ -661,7 +829,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			 pads->disc->in_formats.timestamp, pads->in_zone, stopRegexp)
 
 #define Ptimestamp_CSE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_CSE_read", \
+  PDCI_timestamp_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptimestamp_CSE_read", \
 			  "pads->disc->in_formats.timestamp",		\
 			  "default input time zone",			\
 			  P_INVALID_TIMESTAMP,				\
@@ -669,7 +837,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  pads->disc->in_formats.timestamp, pads->in_zone, stopRegexp)
 
 #define Pa_timestamp_CSE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_CSE_read", \
+  PDCI_timestamp_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_timestamp_CSE_read", \
 			  "pads->disc->in_formats.timestamp",		\
 			  "default input time zone",			\
 			  P_INVALID_TIMESTAMP,				\
@@ -677,7 +845,7 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 			  pads->disc->in_formats.timestamp, pads->in_zone, stopRegexp)
 
 #define Pe_timestamp_CSE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_timestamp_CSE_read", \
+  PDCI_timestamp_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_timestamp_CSE_read", \
 			  "pads->disc->in_formats.timestamp",		\
 			  "default input time zone",			\
 			  P_INVALID_TIMESTAMP,				\
@@ -687,294 +855,294 @@ Perror_t PDCI_date_time_CSE_read(P_t *pads,
 /* Pdate */
 
 #define Pdate_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_FW_read", width, \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, width)
+  PDCI_date_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_FW_read", width, \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, width)
 
 #define Pa_date_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_FW_read", width, \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, width)
+  PDCI_date_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_FW_read", width, \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, width)
 
 #define Pe_date_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_FW_read", width, \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, width)
+  PDCI_date_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_FW_read", width, \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, width)
 
 #define Pdate_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_read", \
-		      "pads->disc->in_formats.date",			\
-		      "default input time zone",			\
-		      P_INVALID_DATE,					\
-		      0, \
-		      pads->disc->in_formats.date, pads->in_zone, stopChar)
+  PDCI_date_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_read", \
+		 "pads->disc->in_formats.date",				\
+		 "default input time zone",				\
+		 P_INVALID_DATE,					\
+		 0,							\
+		 pads->disc->in_formats.date, pads->in_zone, stopChar)
 
 #define Pa_date_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_read", \
-		      "pads->disc->in_formats.date",			\
-		      "default input time zone",			\
-		      P_INVALID_DATE,					\
-		      0, \
-		      pads->disc->in_formats.date, pads->in_zone, stopChar)
+  PDCI_date_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_read", \
+		 "pads->disc->in_formats.date",				\
+		 "default input time zone",				\
+		 P_INVALID_DATE,					\
+		 0,							\
+		 pads->disc->in_formats.date, pads->in_zone, stopChar)
 
 #define Pe_date_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_read", \
-		      "pads->disc->in_formats.date",			\
-		      "default input time zone",			\
-		      P_INVALID_DATE,					\
-		      0, \
-		      pads->disc->in_formats.date, pads->in_zone, stopChar)
+  PDCI_date_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_read", \
+		 "pads->disc->in_formats.date",				\
+		 "default input time zone",				\
+		 P_INVALID_DATE,					\
+		 0,							\
+		 pads->disc->in_formats.date, pads->in_zone, stopChar)
 
 #define Pdate_ME_read(pads, m, pd, d_out, matchRegexp)			\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_ME_read", \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, matchRegexp)
+  PDCI_date_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_ME_read", \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, matchRegexp)
 
 #define Pa_date_ME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_ME_read", \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, matchRegexp)
+  PDCI_date_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_ME_read", \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, matchRegexp)
 
 #define Pe_date_ME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_ME_read", \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, matchRegexp)
+  PDCI_date_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_ME_read", \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, matchRegexp)
 
 #define Pdate_CME_read(pads, m, pd, d_out, matchRegexp)			\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_CME_read", \
-			  "pads->disc->in_formats.date",		\
-			  "default input time zone",			\
-			  P_INVALID_DATE,				\
-		          0, \
-			  pads->disc->in_formats.date, pads->in_zone, matchRegexp)
+  PDCI_date_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_CME_read", \
+		     "pads->disc->in_formats.date",			\
+		     "default input time zone",				\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     pads->disc->in_formats.date, pads->in_zone, matchRegexp)
 
 #define Pa_date_CME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_CME_read", \
-			  "pads->disc->in_formats.date",		\
-			  "default input time zone",			\
-			  P_INVALID_DATE,				\
-		          0, \
-			  pads->disc->in_formats.date, pads->in_zone, matchRegexp)
+  PDCI_date_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_CME_read", \
+		     "pads->disc->in_formats.date",			\
+		     "default input time zone",				\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     pads->disc->in_formats.date, pads->in_zone, matchRegexp)
 
 #define Pe_date_CME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_CME_read", \
-			  "pads->disc->in_formats.date",		\
-			  "default input time zone",			\
-			  P_INVALID_DATE,				\
-		          0, \
-			  pads->disc->in_formats.date, pads->in_zone, matchRegexp)
+  PDCI_date_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_CME_read", \
+		     "pads->disc->in_formats.date",			\
+		     "default input time zone",				\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     pads->disc->in_formats.date, pads->in_zone, matchRegexp)
 
 #define Pdate_SE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_SE_read", \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, stopRegexp)
+  PDCI_date_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_SE_read", \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, stopRegexp)
 
 #define Pa_date_SE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_SE_read", \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, stopRegexp)
+  PDCI_date_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_SE_read", \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, stopRegexp)
 
 #define Pe_date_SE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_SE_read", \
-			 "pads->disc->in_formats.date",			\
-			 "default input time zone",			\
-			 P_INVALID_DATE,				\
-		         0, \
-			 pads->disc->in_formats.date, pads->in_zone, stopRegexp)
+  PDCI_date_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_date_SE_read", \
+		    "pads->disc->in_formats.date",			\
+		    "default input time zone",				\
+		    P_INVALID_DATE,					\
+		    0,							\
+		    pads->disc->in_formats.date, pads->in_zone, stopRegexp)
 
 #define Pdate_CSE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_CSE_read", \
-			  "pads->disc->in_formats.date",		\
-			  "default input time zone",			\
-			  P_INVALID_DATE,				\
-		          0, \
-			  pads->disc->in_formats.date, pads->in_zone, stopRegexp)
+  PDCI_date_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Pdate_CSE_read", \
+		     "pads->disc->in_formats.date",			\
+		     "default input time zone",				\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     pads->disc->in_formats.date, pads->in_zone, stopRegexp)
 
 #define Pa_date_CSE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_CSE_read", \
-			  "pads->disc->in_formats.date",		\
-			  "default input time zone",			\
-			  P_INVALID_DATE,				\
-		          0, \
-			  pads->disc->in_formats.date, pads->in_zone, stopRegexp)
+  PDCI_date_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_date_CSE_read", \
+		     "pads->disc->in_formats.date",			\
+		     "default input time zone",				\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     pads->disc->in_formats.date, pads->in_zone, stopRegexp)
 
 #define Pe_date_CSE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_date_CSE_read", \
-			  "pads->disc->in_formats.date",		\
-			  "default input time zone",			\
-			  P_INVALID_DATE,				\
-		          0, \
-			  pads->disc->in_formats.date, pads->in_zone, stopRegexp)
+  PDCI_date_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_date_CSE_read", \
+		     "pads->disc->in_formats.date",			\
+		     "default input time zone",				\
+		     P_INVALID_DATE,					\
+		     0,							\
+		     pads->disc->in_formats.date, pads->in_zone, stopRegexp)
 
 /* Ptime */
 
 #define Ptime_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_FW_read", width, \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, width)
+  PDCI_time_FW_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_FW_read", width, \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, width)
 
 #define Pa_time_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_FW_read", width, \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, width)
+  PDCI_time_FW_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_FW_read", width, \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, width)
 
 #define Pe_time_FW_read(pads, m, pd, d_out, width)			\
-  PDCI_date_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_FW_read", width, \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, width)
+  PDCI_time_FW_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_FW_read", width, \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, width)
 
 #define Ptime_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_read", \
-		      "pads->disc->in_formats.time",			\
-		      "default input time zone",			\
-		      P_INVALID_TIME,					\
-		      1, \
-		      pads->disc->in_formats.time, pads->in_zone, stopChar)
+  PDCI_time_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_read", \
+		 "pads->disc->in_formats.time",				\
+		 "default input time zone",				\
+		 P_INVALID_TIME,					\
+		 1,							\
+		 pads->disc->in_formats.time, pads->in_zone, stopChar)
 
 #define Pa_time_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_read", \
-		      "pads->disc->in_formats.time",			\
-		      "default input time zone",			\
-		      P_INVALID_TIME,					\
-		      1, \
-		      pads->disc->in_formats.time, pads->in_zone, stopChar)
+  PDCI_time_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_read", \
+		 "pads->disc->in_formats.time",				\
+		 "default input time zone",				\
+		 P_INVALID_TIME,					\
+		 1,							\
+		 pads->disc->in_formats.time, pads->in_zone, stopChar)
 
 #define Pe_time_read(pads, m, pd, d_out, stopChar)			\
-  PDCI_date_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_read", \
-		      "pads->disc->in_formats.time",			\
-		      "default input time zone",			\
-		      P_INVALID_TIME,					\
-		      1, \
-		      pads->disc->in_formats.time, pads->in_zone, stopChar)
+  PDCI_time_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_read", \
+		 "pads->disc->in_formats.time",				\
+		 "default input time zone",				\
+		 P_INVALID_TIME,					\
+		 1,							\
+		 pads->disc->in_formats.time, pads->in_zone, stopChar)
 
 #define Ptime_ME_read(pads, m, pd, d_out, matchRegexp)			\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_ME_read", \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, matchRegexp)
+  PDCI_time_ME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_ME_read", \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, matchRegexp)
 
 #define Pa_time_ME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_ME_read", \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, matchRegexp)
+  PDCI_time_ME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_ME_read", \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, matchRegexp)
 
 #define Pe_time_ME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_ME_read", \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, matchRegexp)
+  PDCI_time_ME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_ME_read", \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, matchRegexp)
 
 #define Ptime_CME_read(pads, m, pd, d_out, matchRegexp)			\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_CME_read", \
-			  "pads->disc->in_formats.time",		\
-			  "default input time zone",			\
-			  P_INVALID_TIME,				\
-		          1, \
-			  pads->disc->in_formats.time, pads->in_zone, matchRegexp)
+  PDCI_time_CME_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_CME_read", \
+		     "pads->disc->in_formats.time",			\
+		     "default input time zone",				\
+		     P_INVALID_TIME,					\
+		     1,							\
+		     pads->disc->in_formats.time, pads->in_zone, matchRegexp)
 
 #define Pa_time_CME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_CME_read", \
-			  "pads->disc->in_formats.time",		\
-			  "default input time zone",			\
-			  P_INVALID_TIME,				\
-		          1, \
-			  pads->disc->in_formats.time, pads->in_zone, matchRegexp)
+  PDCI_time_CME_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_CME_read", \
+		     "pads->disc->in_formats.time",			\
+		     "default input time zone",				\
+		     P_INVALID_TIME,					\
+		     1,							\
+		     pads->disc->in_formats.time, pads->in_zone, matchRegexp)
 
 #define Pe_time_CME_read(pads, m, pd, d_out, matchRegexp)		\
-  PDCI_date_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_CME_read", \
-			  "pads->disc->in_formats.time",		\
-			  "default input time zone",			\
-			  P_INVALID_TIME,				\
-		          1, \
-			  pads->disc->in_formats.time, pads->in_zone, matchRegexp)
+  PDCI_time_CME_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_CME_read", \
+		     "pads->disc->in_formats.time",			\
+		     "default input time zone",				\
+		     P_INVALID_TIME,					\
+		     1,							\
+		     pads->disc->in_formats.time, pads->in_zone, matchRegexp)
 
 #define Ptime_SE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_SE_read", \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, stopRegexp)
+  PDCI_time_SE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_SE_read", \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, stopRegexp)
 
 #define Pa_time_SE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_SE_read", \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, stopRegexp)
+  PDCI_time_SE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_SE_read", \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, stopRegexp)
 
 #define Pe_time_SE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_SE_read", \
-			 "pads->disc->in_formats.time",			\
-			 "default input time zone",			\
-			 P_INVALID_TIME,				\
-		         1, \
-			 pads->disc->in_formats.time, pads->in_zone, stopRegexp)
+  PDCI_time_SE_read(pads, m, pd, d_out, Pcharset_EBCDIC, "Pe_time_SE_read", \
+		    "pads->disc->in_formats.time",			\
+		    "default input time zone",				\
+		    P_INVALID_TIME,					\
+		    1,							\
+		    pads->disc->in_formats.time, pads->in_zone, stopRegexp)
 
 #define Ptime_CSE_read(pads, m, pd, d_out, stopRegexp)			\
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_CSE_read", \
-			  "pads->disc->in_formats.time",		\
-			  "default input time zone",			\
-			  P_INVALID_TIME,				\
-		          1, \
-			  pads->disc->in_formats.time, pads->in_zone, stopRegexp)
+  PDCI_time_CSE_read(pads, m, pd, d_out, PDCI_DEF_CHARSET(pads), "Ptime_CSE_read", \
+		     "pads->disc->in_formats.time",			\
+		     "default input time zone",				\
+		     P_INVALID_TIME,					\
+		     1,							\
+		     pads->disc->in_formats.time, pads->in_zone, stopRegexp)
 
 #define Pa_time_CSE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_CSE_read", \
-			  "pads->disc->in_formats.time",		\
-			  "default input time zone",			\
-			  P_INVALID_TIME,				\
-		          1, \
-			  pads->disc->in_formats.time, pads->in_zone, stopRegexp)
+  PDCI_time_CSE_read(pads, m, pd, d_out, Pcharset_ASCII, "Pa_time_CSE_read", \
+		     "pads->disc->in_formats.time",			\
+		     "default input time zone",				\
+		     P_INVALID_TIME,					\
+		     1,							\
+		     pads->disc->in_formats.time, pads->in_zone, stopRegexp)
 
 #define Pe_time_CSE_read(pads, m, pd, d_out, stopRegexp)		\
-  PDCI_date_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_time_CSE_read", \
-			  "pads->disc->in_formats.time",		\
-			  "default input time zone",			\
-			  P_INVALID_TIME,				\
-		          1, \
-			  pads->disc->in_formats.time, pads->in_zone, stopRegexp)
+  PDCI_time_CSE_read(pads, m, pd, s_out, Pcharset_EBCDIC, "Pe_time_CSE_read", \
+		     "pads->disc->in_formats.time",			\
+		     "default input time zone",				\
+		     P_INVALID_TIME,					\
+		     1,							\
+		     pads->disc->in_formats.time, pads->in_zone, stopRegexp)
 
 #endif  /* P_CONFIG_READ_FUNCTIONS */
 

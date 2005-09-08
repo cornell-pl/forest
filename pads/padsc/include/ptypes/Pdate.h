@@ -79,15 +79,19 @@
  *
  *    Like Ptimestamp_explicit, with explicit format and time zone
  *    argument.  INTENDED to be used for just date, but format
- *    determines actual use.  Default output format is set via
- *    disc->out_formats.date_explicit
+ *    determines which strings are accepted. If treated as a full timestamp
+ *    (time in seconds since Midnight Jan 1, 1970), the result has a
+ *    'time of day' component of 0 hours, 0 minutes, 0 seconds.
+ *    Default output format is set via disc->out_formats.date_explicit
  *
  * Ptime_explicit variants:
  *
  *    Like Ptimestamp_explicit, with explicit format and time zone
  *    argument.  INTENDED to be used for just time, but format
- *    determines actual use.  Default output format is set via
- *    disc->out_formats.time_explicit
+ *    determines which strings are accepted.  The resulting
+ *    time in seconds is just the contribution of the specified time of day,
+ *    thus if treated as a full timestamp, the time would fall on Jan 1, 1970.
+ *    Default output format is set via disc->out_formats.time_explicit
  */
 /*@END Pdate_app_3.tex*/
 /*@BEGIN Pdate_app_4.tex*/
@@ -104,15 +108,21 @@
  *
  *    Like Pdate_explicit, but input format and input time zone are
  *    taken from disc->in_formats.date and disc->in_time_zone.
- *    INTENDED to be used for just date, but format determines actual
- *    use.  Default output format is set via disc->out_formats.date
+ *    INTENDED to be used for just date, but format determines which
+ *    strings are accepted. If treated as a full timestamp (time in seconds
+ *    since Midnight Jan 1, 1970), the result has a 'time of day' component
+ *    of 0 hours, 0 minutes, 0 seconds.  Default output format is set
+ *    via disc->out_formats.date
  *
  * Ptime variants:
  *
  *    Like Ptime_explicit, but input format and input time zone are
  *    taken from disc->in_formats.time and disc->in_time_zone.
- *    INTENDED to be used for just time, but format determines actual
- *    use.  Default output format is set via disc->out_formats.time
+ *    INTENDED to be used for just time, but format determines which
+ *    strings are accepted.  The resulting time in seconds is just the
+ *    contribution of the specified time of day, thus if treated as a
+ *    full timestamp, the time would fall on Jan 1, 1970.
+ *    Default output format is set via disc->out_formats.time
  *
  * Each of the types above corresponds to one of the Pstring variants.
  * In each case one specifies the extent of a 'string' in the input
