@@ -1,12 +1,12 @@
-Data file = ../../data/simple
+Data file = ../../data/simple2
 warning: Error [in Pa_int32_read]: at record 3 at byte 28 : Invalid ASCII character encoding of a number 
 [record 3]6:32 9/11/99|06:32|9/11/99|>>>n<<<one|Bob Jones
 read returned error
-warning: Error [in simple_types_read]: record 5 byte 42 : Extra data before char separator '|'
+warning: Error [in simple2_types_read]: record 5 byte 42 : Extra data before char separator '|'
 [record 5]midnight sep 11, 1980|midnight|09111980|4>>>.2<<<|Whyia C. Nott
 read returned error
 *****************************************************************************************************
-<top> : struct simple_types
+<top> : struct simple2_types
 *****************************************************************************************************
 good vals:          3    bad vals:          2    pcnt-bad:   40.000
   Characterizing number of errors PER READ CALL (nerr-per-read) : min 0 max 2 avg 0.600
