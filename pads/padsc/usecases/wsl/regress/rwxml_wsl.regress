@@ -1,7 +1,5 @@
 Input file = ../../data/wsl
-
 Output file = /dev/stdout
-
 <note>read returned OK</note>
 <entry_t>
   <client>
