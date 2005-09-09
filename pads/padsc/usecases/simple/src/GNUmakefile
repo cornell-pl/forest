@@ -35,7 +35,10 @@ GALAX_NONE = 1
 endif
 endif
 
-ALL_TESTS = test_simple rwxml_simple fmt_simple
+TEMPL_DIR=$(PADS_HOME)/padsc/include/template
+INCLUDES += -I$(TEMPL_DIR)
+
+ALL_TESTS = test_simple rwxml_simple fmt_simple test_bulk_simple
 REGRESS_TESTS = $(ALL_TESTS:%=regress_%)
 
 all: regress
@@ -54,6 +57,12 @@ regress_fmt_simple: fmt_simple
 
 regress_rwxml_simple: rwxml_simple
 	@(args=""; suf=""; $(RegressDef))
+
+regress_test_bulk_simple: test_bulk_simple
+	@(args=""; suf=""; $(RegressDef))
+
+test_bulk_simple: test_bulk_simple.c test_simple.h $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_O)
 
 clean:
 	$(RM) -f *~ *.o $(ALL_TESTS)
