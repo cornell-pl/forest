@@ -61,7 +61,7 @@ regress_rwxml_simple: rwxml_simple
 regress_test_bulk_simple: test_bulk_simple
 	@(args=""; suf=""; $(RegressDef))
 
-test_bulk_simple: test_bulk_simple.c test_simple.h $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)
+test_bulk_simple: $(GEN_DIR)/simple.c test_bulk_simple.c test_simple.h $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_O)
 
 clean:
