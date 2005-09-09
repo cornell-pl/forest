@@ -1,8 +1,5 @@
 Input file = ../../data/syslog
-
 Output file = /dev/stdout
-
-<note>read returned OK</note>
 <?xml version="1.0" encoding="UTF-8"?>
 <padsns:PSource xmlns:padsns="file:syslog.p">
     <elt>
