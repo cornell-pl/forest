@@ -1,0 +1,397 @@
+\documentclass{sigplanconf}
+
+\usepackage{stmaryrd}
+\usepackage{bcprules}
+\usepackage{epsfig}
+\usepackage{alltt}
+\usepackage{xspace}
+\usepackage{times}
+\usepackage{code}
+
+\include{defs}
+\newcommand{\dibbler}{Sirius}
+\newcommand{\ningaui}{Altair}
+\newcommand{\darkstar}{Regulus}
+
+\title{PADX\footnote{Pronounced ``paddocks'' : a usually enclosed area
+for exercising race horses.} : Querying Large-scale, Ad Hoc Data Sources with XQuery}
+%\title{PADX : An XQuery Interface to Ad Hoc Data Sources}
+%\title{PADX : A System for Querying Ad Hoc Data Sources with XQuery}
+
+\author{
+\alignauthor Mary Fern\'andez\\
+       \affaddr{AT\&T Labs Research}\\
+       \email{kfisher@research.att.com}
+
+\alignauthor Kathleen Fisher\\
+       \affaddr{AT\&T Labs Research}\\
+       \email{kfisher@research.att.com}
+
+\alignauthor Robert Gruber\titlenote{Work carried out while at AT\&T
+                                     Labs Research.}\\
+       \affaddr{Google}\\
+%       \affaddr{1600 Amphitheatre Pkwy}\\
+%       \affaddr{Mountain View, CA}\\
+       \email{gruber@google.com}
+
+\alignauthor Yitzhak Mandelbaum\\
+       \affaddr{Princeton University}\\
+       \email{yitzhakm@cs.princeton.edu}
+}
+
+\newcommand{\Galax}{Galax\xspace}
+%\newcommand\scream}{1}{\textbf{#1}}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+\end{abstract}
+
+\section{Introduction}
+
+Story: Start with data analyst perspective.  Has ad hoc data source
+and a set of questions that he'd like to ask about it.  But the
+structure of the data source can change over time and he does not want
+his questions to be brittle.  E.g., if using Perl, you don't want to
+have to change the Perl program each time a small change occurs in the
+structure of the data.  Data sources can be large.  Format conversion
+from ad hoc to standard format.  
+
+We had/have solutions to each of these problems in isolation: PADS and
+Galax.  Story of this paper is the interaction of these systems to
+solve all the data analyst's problems simultaneously. 
+1. Need to describe it (PADS)
+2. Query it and convert to XML (XQuery) 
+3. Deal with scale.
+Problem focussed, not tool focussed. 
+
+Systems were developed in parallel.  Solving the above problem
+required some additional engineering: implementation of Galax's
+abstract data model on top of PADS parsing-read functions.  
+Hence, we are going to talk about both systems followed by their
+synthesis. 
+
+Architecture of PADX.  Supports both non-materialized and virtual
+querying of PADS data.  Example: dot query.  User gets to choose
+whether to query materialized or virtual XML data.  Appropriate model
+depends on query work load and other processes in work flow.  We
+support both (!)
+
+Potential benefits: leverage speed of
+XQuery processor over native XML document.  Potential costs: same as
+having using a materialized view of a database.  ``Staleness'' of XML,
+multiple copies, extra time to convert to XML.  Work-load/cost-based
+optimization problem.  Tradeoffs between materializing XML document
+and querying it multiple times.  Our architecture appropriate for
+certain problems.  Data gets regenerated every week or so.  Already
+Gigabytes of data.  Could use PADS and Galax separately to same
+effect.
+ 
+\cut{
+Don't want to explain each system as isolated entities, but show their
+interaction---symbiotic relationship that enhances the functionality
+of each system.  Explain an interaction between the systems.
+
+Data management standpoint: Vast amounts of data sources that are not
+in XML.  Even if you want to view/materialize them in XML, you still
+have to get a handle on the data.  Thus, the necessity for PADS. 
+
+Programming language spin: a declarative data description, run
+compiler, and get parser and related tools. 
+
+XML standpoint: 
+XQuery intended to 
+PADS is an ideal target for Galax as we get a statically typed view of the
+non-XML data, and therefore we can statically type check any queries
+over the PADS data.
+
+There are a couple of stories here.  One is a semantic story: XQuery
+is a reasonable query language for PADS.  Both represent
+semi-structured data.  Error-aware computing by revealing PD in 
+XML virtual view.  Question: XML Schema can describe PADS types, 
+but what about vice versa? Embedding of PADS types in XML Schema. 
+
+
+
+The other story is about laziness : in Galax's
+algebraic query plans, in its tree data model, and in PADX's
+implementation of Galax's tree data model.  Laziness supports
+scalability of data (and queries?).  Last (small) story is about
+PADX's compiled data model---(almost) constant time access to named
+fields.
+
+How to support semantic story?  Show mapping from PADS types to XML
+Schema.  Show realization of pd info.  Show semantics/expressiveness
+of queries. 
+
+How to support the importance of laziness? (Or is this too obvious?)
+Show scalability of smart loading over bulk loading.  Show improvement
+of compiled name access over interpreted name access. 
+}
+
+\subsection{Motivating Example}
+
+Sirius provisioning data. 
+\begin{figure*}
+\begin{small}
+\begin{center}
+\begin{verbatim}
+0|1005022800
+9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+\end{verbatim}
+\caption{Tiny example of \dibbler{} provisioning data.}
+\label{figure:dibbler-records}
+\end{center}
+\end{small}
+\end{figure*}
+
+Description in PADS. 
+\begin{figure}
+\input{../pldi/dibbler_new}
+\caption{\pads{} description for \dibbler{} provisioning data.}
+\label{figure:dibbler}
+\end{figure}
+
+Example queries. 
+For example, the XQuery
+\begin{code}
+\begin{small}
+{ $sirius/sirius/order[event[1]
+    [timeStamp >= xs:date("2002-04-14") and 
+     timeStamp <= xs:date("2002-05-25") ]] }
+\end{small}
+\end{code}
+asks for all orders starting within the given time window.  
+
+\section{Using PADS to Access Ad Hoc Data}
+
+Focus on expressiveness of data description language.
+
+Generated library : rep, pd, and per-type parsing functions and other
+type specific tools (but we're talking about those here). 
+
+Error-aware data processing.  
+
+Many of PADS features are not described here b/c they are not germane
+to understand this work.  See PLDI and POPL papers. 
+
+\section{Using Galax to Query XML}
+
+XML is blah. One paragraph on XQuery and where to learn about it.
+
+Establish why XQuery was a reasonable query language for PADS.
+Standard.  Statically typed and PADS descriptions are types.  
+
+XML is obvious target for all data sources.  Cite numerous
+tools for converting to XML and commercial DB support for non-XML
+sources.  Do not re-invent the wheel.
+
+\subsection{Abstract Data Model}
+
+Abstract object-oriented data model that permits querying of virtual
+XML sources.  
+
+Tree data model.  Data model accessors (axis::node-tests) that can/should be implemented
+efficiently by the underlying source are pushed into the OO tree data
+model.  Default implementations for sources that don't do anything
+clever.   
+
+Motivation for abstract data model: Supporting PADS and secondary
+storage system occurred at same time.  Data and information
+integration.  
+
+Implementations provided: Main-memory DOM-like rep; Main-memory
+shredded (HashTable) rep; Secondary-storage shredded rep; PADS.
+
+Part of PADX implementation are generic functions that implement data
+model accessors.  PADS compiler generates type-specific functions for
+walking virtual XML tree.  Relate back to type-specific library
+functions mentioned in last section.
+
+\section{Using PADX to Query Ad Hoc Data}
+
+Put the pieces all together.  Sythesis of the two systems here. 
+(Symbiotic)
+
+\subsection{Virtual XML view of PADS data}
+
+Embedding of PADS types in XML Schema.  One-to-one mapping from
+PADS compound types to XML Schema complex types.  One-to-one mapping
+from PADS base types to XML Schema simple types.  Field in compound
+types are realized as local elements in XML Schema. 
+
+All the compound types are annotated with an optional parse-descriptor
+(absent if no errors occured).  Allows users to query error
+structures, which may be most important data.  Other types annotated
+with corresponding fields from PADS rep, e.g., arrays have a length. 
+
+Extra level of indirection in representation of arrays---wrap each
+item in an element. 
+
+Extra level of indirection for base types: must contain the value of
+the base type and an optional parse-descriptor, if an error has
+occurred. 
+
+We don't take complete advantage of XML Schema, e.g., Penum types
+could be modeled by XML Schema enumeration simple types, but currently
+unsupported.
+
+Generated XML Schema.
+\begin{small}
+\begin{verbatim}
+
+\scream{Mary: ...Add mapping for event\_t in sirius.p example...}
+
+<xs:complexType name="eventSeq_pd">
+<xs:sequence>
+<xs:element name="pstate" type="Pflags_t"/>
+<xs:element name="nerr" type="Puint32"/>
+<xs:element name="errCode" type="PerrCode_t"/>
+<xs:element name="loc" type="Ploc_t"/>
+<xs:element name="neerr" type="Puint32"/>
+<xs:element name="firstError" type="Puint32"/>
+<xs:element name="elt" type="Puint32" 
+    minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="eventSeq">
+<xs:sequence>
+<xs:element name="elt" type="event" 
+    minOccurs="0" maxOccurs="unbounded"/>
+<xs:element name="length" type="Puint32"/>
+<xs:element name="pd" type="eventSeq_pd" 
+    minOccurs="0" maxOccurs="1"/>
+</xs:sequence>
+</xs:complexType>
+\end{verbatim} 
+\end{small}
+
+``Error-aware'' mapping from PADS type system to isomorphic XML
+Schema. 
+
+Example of query that uses generated schema.
+
+\subsection{Physical Data Model}
+
+Implementation of Galax's Abstract Tree Model.
+
+Minimum necessary to implement Galax DM:
+
+1. Generic implementations of the DM accessors: axis::node-test(), children(),
+   attributes(), name(), etc. 
+
+2. On PADX-side, we have a virtual handle for each node in the XML
+   tree--we call that a node rep.  Node rep contains pads handle
+   (maintains state for PADS parser); type-specific vtable of DM
+   accessors; other stuff...
+
+   Give example of vtable for event\_t and possibly code for
+   kthChildByName. 
+
+When to actually read from PADS data?
+
+Options: 
+
+1. Bulk read: Materialize entire PADS representation, populate all of the PADS
+reps.  Then PADX DM lazily invoked the DM accessors over this data.
+Problem: if data is big, it's all sitting in memory, even if the query
+only touches a fragment of the virtual XML tree.
+
+2. Smart read: 
+
+Many common queries permit sequential, streamed access to underlying
+XML source.  Give an example.  
+
+Smart node rep, preserves meta-data about previously read records, but
+re-uses memory for reading next item.  This rep permits multiple scans
+of input (semantic problem is that DM must preserve node identity),
+but slowly. 
+
+Heuristic: records are a good level of granularity to read.   Each
+smart node corresponds to one record.  When next smart node is
+accessed, a little meta-data is preserved: the node rep and the
+records location in the file (so we can re-read it if necessary).
+
+3. Linear read: same as smart but does not preserve meta-data.
+   Does not permit multiple scans of data source. 
+
+Put in PADX signatures for constructing a new node and accessing
+kthChild. 
+
+\section{Performance}
+
+\subsection{Materialization and Loading}
+
+Hypothesis: bulk loading should not scale for increasing document size
+(limits of main memory).  Show that smart/linear does scale.
+
+\subsection{Querying}
+
+Give examples of queries that analyst cares about. 
+
+Example of query that can be evaluated in single scan over data
+source, but is currently not 
+
+Database person would balk at this point!  Why aren't you just loading
+this data into a real database, building indices and getting good
+query performance?  B/c data is ephmeral, queries are ephmeral, but
+analyst/programmer should profit from disciplined access/querying of
+their data.  Don't abandon them to Perl. 
+
+\section{Related Work}
+
+DFDL. Contivo. 
+
+\section{Future Work and Discussion}
+Open problem: give result of XQuery and its corresponding type,
+serialize result back into PADS rep.  How are the syntactic
+constraints for the new values expressed?  Tool could pick default
+delimiters automatically. 
+
+Open problem: given an arbitrary PADS type, permit skipping and
+reading at arbitrary positions within the data source. 
+
+Big open problem: Given arbitrary XQuery expression, determine whether
+it can be evaluated in single scan over data.  
+
+\end{document}
+
+\subsubsection{XML Generation}
+\pads{} also supports converting ad hoc data into XML by providing a canonical mapping from \pads{} descriptions into XML.  This mapping is quite natural, as both \pads{} and XML are languages for describing semi-structured data.
+One interesting aspect of the mapping is that we embed not just the in-memory representation of \pads{} values, but also the parse descriptors in cases where the data was buggy.  This choice allows users to explore the error portions
+of their data sources, which can be the most interesting parts of the data.
+Given a \pads{} specification, the \pads{} compiler generates an XML Schema describing the canonical embedding for that data source.  As an example, 
+the following is the portion of the generated XML Schema for the \cd{eventSeq} type in the \dibbler{} data description.
+
+The \pads{} compiler generates a \cd{write_xml_2io} function for each type, an example of which is shown in \figref{figure:library}.  Given a specification of the top level type, \pads{} can also automatically generate a conversion program, the output of which conforms to the generated XML Schema.
+
+\subsection{Queries}
+Our final use-scenario is querying data.
+Given a data source, a natural desire is to ask questions about the data, a desire which led to SQL and its many variants for relational data and XQuery for XML data~\cite{boag03XQueryDraft}.  Analysts working with ad hoc data would also like to query their
+data, but the lack of tools generally means they code their queries in an imperative fashion in languages such as \textsc{awk}, \perl{}, or \C{}.
+Indeed, the analyst working with the \dibbler{} data took this approach.
+He coded queries such as ``Select all orders starting within a certain time window," ``Count the number of orders going through a particular state," and ``What is the average time required to go from a particular state to another
+particular state" in a mixture of \textsc{awk} and \textsc{perl}.  He was
+able to get the answers to his questions, but he had to code the queries explicitly, and the query-related code ended up embedded in his already-brittle parsing code.
+
+We wanted to support declarative querying over ad hoc sources, but we didn't want to invent an entirely new query language, which led us to examine existing languages.  Because XQuery is designed to manipulate semi-structured data, its expressiveness matched our data sources well.  We were able to code all the \dibbler{}-related queries in XQuery.  For example, the XQuery
+\begin{code}
+\begin{small}
+{ $sirius/sirius/order[event[1]
+    [timeStamp >= xs:date("2002-04-14") and 
+     timeStamp <= xs:date("2002-05-25") ]] }
+\end{small}
+\end{code}
+asks for all orders starting within the given time window.  
+
+Happy with XQuery's expressiveness, we worked with the designers of the Galax~\cite{galax} open-source implementation of XQuery to define a data API~\cite{galaxmanual}. 
+This API presents the source as a tree to Galax. With this architecture, Galax can incorporate any data source accessible through an instance of the data API.  We then extended the \pads{} system to produce such instances.  We were able to define the bulk of the API generically, having to generate on a per type basis only a handful of functions. 
+\figref{figure:library} contains the key generated functions for the \cd{entry_t} type from the \dibbler{} data.    The  \cd{node_new} function creates a node in the tree representation of the data, storing the supplied name, mask, parse descriptor, and in-memory representation.  It makes the argument node the parent of the newly created node.
+The \cd{node_kthChild} function takes a tree
+corresponding to an \cd{entry_t} node and a child index and returns the appropriate child.  For the \cd{entry_t} type, possible children are the header, the event sequence, or a parse descriptor. 
+At the moment, it is possible to use the resulting system to query ad hoc data sources that can be loaded entirely into memory, and a version that allows the data to be read lazily is well underway.
+How best to optimize Xqueries over ad hoc data sources is an open research area.
+
