@@ -1,0 +1,262 @@
+\section{Introduction}
+\label{section:intro}
+Story: Start with data analyst perspective.  Has ad hoc data source
+and a set of questions that he'd like to ask about it.  But the
+structure of the data source can change over time and he does not want
+his questions to be brittle.  E.g., if using Perl, you don't want to
+have to change the Perl program each time a small change occurs in the
+structure of the data.  Data sources can be large.  Format conversion
+from ad hoc to standard format.  
+
+We had/have solutions to each of these problems in isolation: PADS and
+Galax.  Story of this paper is the interaction of these systems to
+solve all the data analyst's problems simultaneously. 
+1. Need to describe it (PADS)
+2. Query it and convert to XML (XQuery) 
+3. Deal with scale.
+Problem focussed, not tool focussed. 
+
+Systems were developed in parallel.  Solving the above problem
+required some additional engineering: implementation of Galax's
+abstract data model on top of PADS parsing-read functions.  
+Hence, we are going to talk about both systems followed by their
+synthesis. 
+
+Architecture of PADX.  Supports both non-materialized and virtual
+querying of PADS data.  Example: dot query.  User gets to choose
+whether to query materialized or virtual XML data.  Appropriate model
+depends on query work load and other processes in work flow.  We
+support both (!)
+
+Potential benefits: leverage speed of
+XQuery processor over native XML document.  Potential costs: same as
+having using a materialized view of a database.  ``Staleness'' of XML,
+multiple copies, extra time to convert to XML.  Work-load/cost-based
+optimization problem.  Tradeoffs between materializing XML document
+and querying it multiple times.  Our architecture appropriate for
+certain problems.  Data gets regenerated every week or so.  Already
+Gigabytes of data.  Could use PADS and Galax separately to same
+effect.
+ 
+\cut{
+Don't want to explain each system as isolated entities, but show their
+interaction---symbiotic relationship that enhances the functionality
+of each system.  Explain an interaction between the systems.
+
+Data management standpoint: Vast amounts of data sources that are not
+in XML.  Even if you want to view/materialize them in XML, you still
+have to get a handle on the data.  Thus, the necessity for PADS. 
+
+Programming language spin: a declarative data description, run
+compiler, and get parser and related tools. 
+
+XML standpoint: 
+XQuery intended to 
+PADS is an ideal target for Galax as we get a statically typed view of the
+non-XML data, and therefore we can statically type check any queries
+over the PADS data.
+
+There are a couple of stories here.  One is a semantic story: XQuery
+is a reasonable query language for PADS.  Both represent
+semi-structured data.  Error-aware computing by revealing PD in 
+XML virtual view.  Question: XML Schema can describe PADS types, 
+but what about vice versa? Embedding of PADS types in XML Schema. 
+
+
+
+The other story is about laziness : in Galax's
+algebraic query plans, in its tree data model, and in PADX's
+implementation of Galax's tree data model.  Laziness supports
+scalability of data (and queries?).  Last (small) story is about
+PADX's compiled data model---(almost) constant time access to named
+fields.
+
+How to support semantic story?  Show mapping from PADS types to XML
+Schema.  Show realization of pd info.  Show semantics/expressiveness
+of queries. 
+
+How to support the importance of laziness? (Or is this too obvious?)
+Show scalability of smart loading over bulk loading.  Show improvement
+of compiled name access over interpreted name access. 
+}
+
+\subsection{Example Scenario}
+
+The following scenario illustrates the variety of data-management
+tasks faced by an AT\&T data analyst who analyzes
+{provisioning} processes.  \figref{figure:dibbler-records}
+contains a tiny fragment of the data produced by AT\&T system that
+summarizes provisioning data,
+which can yield as much as 2.2GB of data per week. 
+
+In the telecommunications industry, the term \textit{provisioning} refers to
+the steps necessary to convert an order for phone service into the
+actual service.  To track AT\&T's provisioning process, the \dibbler{}
+project compiles weekly summaries of the state of certain types of
+phone service orders.  These ASCII summaries store the summary date
+and one record per order.  Each order record contains a header
+followed by a nested sequence of events.  The header has 13 pipe
+separated fields: the order number, AT\&T's internal order number, the
+order version, four different telephone numbers associated with the
+order, the zip code of the order, a billing identifier, the order
+type, a measure of the complexity of the order, an unused field, and
+the source of the order data.  Many of these fields are optional, in
+which case nothing appears between the pipe characters.  The billing
+identifier may not be available at the time of processing, in which
+case the system generates a unique identifier, and prefixes this value
+with the string ``no\_ii'' to indicate the number was generated. The
+event sequence represents the various states a service order goes
+through; it is represented as a new-line terminated, pipe separated
+list of state, timestamp pairs.  There are over 400 distinct states
+that an order may go through during provisioning.  It may be apparent from
+this description that English is a poor language for describing data
+formats!
+
+\begin{figure*}
+\begin{small}
+\begin{center}
+\begin{verbatim}
+0|15/Oct/2004:18:46:51
+9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|16/Oct/2004:10:02:10
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|17/Oct/2004:08:14:21
+\end{verbatim}
+\caption{Tiny example of \dibbler{} provisioning data.}
+\label{figure:dibbler-records}
+\end{center}
+\end{small}
+\end{figure*}
+
+The data analyst's first task is to write a parser for the
+\dibbler{} data  format.  Like many ad hoc data sources, \dibbler{} data
+often contains unexpected values or corrupted data feeds, so the
+parser must handle errors robustly to avoid corrupting the results of
+analyses.  Today, parsers for ad hoc formats are often hand-crafted in 
+\perl{} or \C{}.  Unfortunately, writing parsers this way is tedious and
+error prone, complicated by the lack of documentation, convoluted
+encodings designed to save space, and the need to produce efficient
+code.  Moreover, the analyst's hard-won understanding of the data ends
+up embedded in parsing code, making long-term maintenance difficult
+for the original writers and sharing the knowledge with others nearly
+impossible.
+
+With \pads{}, the analyst writes a declarative data description of the
+physical layout of their data.  The language also permits analysts to
+describe expected semantic properties of their data so that deviations
+can be flagged as errors. The intent is to allow analysts to capture
+in a \pads{} description all that they know about a given data source.
+
+\figref{figure:dibbler} gives the \pads{} description for the
+\dibbler{} data format.  In \pads{} descriptions, types are declared
+before they are used, so the type that describes the entire data
+source, \cd{summary}, appears at the bottom of the description.  In
+the next section, we use this example to describe several features of
+the \pads{} language.  Here, we simply note that the data analyst
+writes this description, and the \pads{} compiler produces
+customizable \C{} libraries and tools for parsing, manipulating, and
+summarizing the data.  The fact that useful software artifacts are
+generated from \pads{} descriptions provides strong incentive for
+keeping the descriptions current, allowing them to serve as living
+documentation.
+
+\begin{figure}
+\begin{small}
+\begin{code}
+\kw{Precord} \kw{Pstruct} summary\_header\_t \{
+  "0|";
+  Punixtime tstamp;
+\};
+\mbox{}
+\kw{Pstruct} no\_ramp\_t \{
+  "no\_ii";
+  Puint64 id;
+\};
+\mbox{}
+\kw{Punion} dib\_ramp\_t \{
+  Pint64     ramp;
+  no\_ramp\_t  genRamp;
+\};
+\mbox{}
+\kw{Pstruct} order\_header\_t \{
+       Puint32             order\_num;
+ '|';  Puint32             att\_order\_num;
+ '|';  Puint32             ord\_version;
+ '|';  \kw{Popt} pn\_t           service\_tn;
+ '|';  \kw{Popt} pn\_t           billing\_tn;
+ '|';  \kw{Popt} pn\_t           nlp\_service\_tn;
+ '|';  \kw{Popt} pn\_t           nlp\_billing\_tn;
+ '|';  \kw{Popt} Pzip           zip\_code;
+ '|';  dib\_ramp\_t          ramp;
+ '|';  Pstring(:'|':)      order\_type;
+ '|';  Puint32             order\_details;
+ '|';  Pstring(:'|':)      unused;
+ '|';  Pstring(:'|':)      stream;
+ '|';
+\};
+\mbox{}
+\kw{Pstruct} event\_t \{
+  Pstring(:'|':)    state;   
+  Punixtime         tstamp;
+\};
+\mbox{}
+\kw{Parray} event\_seq\_t \{
+  event\_t[] : \kw{Psep}('|') && \kw{Pterm}(\kw{Peor});
+\};
+\mbox{}
+\kw{Precord} \kw{Pstruct} order\_t \{
+  order\_header\_t  order\_header;
+  event\_seq\_t     events;
+\};
+\mbox{}
+\kw{Parray} orders\_t \{
+  order\_t[];
+\};
+\mbox{}
+\kw{Psource} \kw{Pstruct} summary\{
+  summary\_header\_t  summary\_header;
+  orders\_t          orders;
+\};
+\end{code}
+\end{small}
+\caption{\pads{} description for \dibbler{} provisioning data.}
+\label{figure:dibbler}
+\end{figure}
+
+Analysts working with ad hoc data also like to query their data.  
+Questions posed by the \dibbler{} analyst include ``Select all
+orders starting within a certain time window,'' ``Count the number of
+orders going through a particular state,'' and ``What is the average
+time required to go from a particular event state to another
+particular event state''.  Such queries are useful for rapid
+information discovery and for vetting errors and anomolies in data
+before it proceeds to a down-stream process or is loaded into a 
+database system. 
+
+\begin{figure}
+\begin{small}
+\begin{code}
+\kw{(: Return orders started in October 2004 :)}
+$pads/Psource/orders/elt[events/elt[1]
+  [tstamp {>=} {xs:dateTime}("2004-10-01:00:00:00")
+{and} tstamp {<} {xs:dateTime}("2004-11-01:00:00:00")]]
+\end{code}
+\end{small}
+\caption{Query applied to \dibbler{} provisioning data.}
+\label{figure:dibbler-query}
+\end{figure}
+
+With \padx{}, the synthesis of \pads{} and \Galax{}, the analyst
+writes declarative XQuery expressions to query his ad hoc data source.
+Because XQuery is designed to manipulate semi-structured data, its
+expressiveness matches \pads{} data sources well.  XQuery is a
+Turing-complete language and therefore powerful
+enough to express all the questions above.  For example,
+Figure~\ref{figure:dibbler-query} contains an XQuery expression that
+produces all orders that started in October, 2004.  In
+Section~\ref{section:padx}, we use this example to describe several
+features of XQuery and to illustrate why XQuery is an appropriate
+query language for ad hoc data.  In particular, XQuery queries may be
+statically typed, which helps detects common errors at compile time.
+For example, static typing would raise an error if the path expression
+in Figure~\ref{figure:dibbler-query} referred to \cd{ordesr} instead
+of \cd{orders} or if the analyst erroneoulsy compared the timestamp
+\cd{tstamp} to a string.
