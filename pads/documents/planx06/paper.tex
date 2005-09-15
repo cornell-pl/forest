@@ -1,10 +1,8 @@
 \documentclass{sigplanconf}
 
 \usepackage{stmaryrd}
-\usepackage{bcprules}
 \usepackage{epsfig}
 \usepackage{alltt}
-\usepackage{xspace}
 \usepackage{times}
 \usepackage{code}
 
@@ -209,7 +207,7 @@ documentation.
 \begin{code}
 \kw{Precord} \kw{Pstruct} summary\_header\_t \{
   "0|";
-  Ptimestamp(:'|':)  tstamp;
+  Punixtime tstamp;
 \};
 \mbox{}
 \kw{Pstruct} no\_ramp\_t \{
@@ -241,7 +239,7 @@ documentation.
 \mbox{}
 \kw{Pstruct} event\_t \{
   Pstring(:'|':)    state;   
-  Ptimestamp(:'|':) tstamp;
+  Punixtime         tstamp;
 \};
 \mbox{}
 \kw{Parray} event\_seq\_t \{
@@ -281,7 +279,7 @@ database system.
 \begin{small}
 \begin{code}
 \kw{(: Return orders started in October 2004 :)}
-$pads/p:Psource/orders/p:elt[events/p:elt[1]
+$pads/Psource/orders/elt[events/elt[1]
   [tstamp {>=} {xs:dateTime}("2004-10-01:00:00:00")
 {and} tstamp {<} {xs:dateTime}("2004-11-01:00:00:00")]]
 \end{code}
@@ -364,6 +362,15 @@ functions mentioned in last section.
 
 \section{Using \padx{} to Query Ad Hoc Data}
 \label{section:padx}
+
+\begin{figure}
+\begin{center}
+\epsfig{file=padx-arch.ps,width=0.47\textwidth}
+\end{center}
+\caption{\padx{} Architecture}
+\label{figure:padx-arch}
+\end{figure}
+
 Put the pieces all together.  Sythesis of the two systems here. 
 (Symbiotic)
 
@@ -391,46 +398,69 @@ could be modeled by XML Schema enumeration simple types, but currently
 unsupported.
 
 Generated XML Schema.
+
+\begin{figure*}
 \begin{small}
-\begin{verbatim}
-
-\scream{Mary: ...Add mapping for event\_t in sirius.p example...}
-
-<xs:complexType name="eventSeq_pd">
-<xs:sequence>
-<xs:element name="pstate" type="Pflags_t"/>
-<xs:element name="nerr" type="Puint32"/>
-<xs:element name="errCode" type="PerrCode_t"/>
-<xs:element name="loc" type="Ploc_t"/>
-<xs:element name="neerr" type="Puint32"/>
-<xs:element name="firstError" type="Puint32"/>
-<xs:element name="elt" type="Puint32" 
-    minOccurs="0" maxOccurs="unbounded"/>
-</xs:sequence>
+\begin{code}
+<xs:schema targetNamespace="file:sirius.p"
+           xmlns="file:sirius.p"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:p="http://www.padsproj.org/pads.xsd">
+<xs:import namespace = "http://www.padsproj.org/pads.xsd".../>
+...
+<xs:complexType name="\kw{order_header_t}">
+ <xs:sequence>
+  <xs:element name="order_num" type="p:val_Puint32"/>
+  <xs:element name="att_order_num" type="p:val_Puint32"/>
+  <xs:element name="ord_version" type="p:val_Puint32"/>
+  <!-- More local element declarations -->
+  <xs:element name="pd" type="\kw{p:PStruct_pd}" minOccurs="0"/>
+ </xs:sequence>
 </xs:complexType>
-
-<xs:complexType name="eventSeq">
-<xs:sequence>
-<xs:element name="elt" type="event" 
-    minOccurs="0" maxOccurs="unbounded"/>
-<xs:element name="length" type="Puint32"/>
-<xs:element name="pd" type="eventSeq_pd" 
-    minOccurs="0" maxOccurs="1"/>
-</xs:sequence>
+<!-- More complex type declarations -->
+<xs:complexType name="\kw{orders_t}">
+ <xs:sequence>
+  <xs:element name="\kw{elt}" type="order_t" maxOccurs="unbounded"/>
+  <xs:element name="\kw{length}" type="p:Puint32"/>
+  <xs:element name="\kw{pd}" type="\kw{p:Parray_pd}" minOccurs="0"/>
+ </xs:sequence>
 </xs:complexType>
-\end{verbatim} 
+...
+</xs:schema>
+\end{code}
 \end{small}
+\caption{Fragment of XML Schema for \dibbler{} \pads{} description.}
+\label{figure:dibbler-schema}
+\end{figure*}
 
 ``Error-aware'' mapping from PADS type system to isomorphic XML
 Schema. 
+\begin{small}
+\begin{code}
+<xs:complexType name="\kw{val_Puint32}">
+  <xs:choice>
+   <xs:element name="val" type="p:Puint32"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+<xs:complexType name="\kw{Pbase_pd}">
+ <xs:sequence>
+   <xs:element name="\kw{pstate}"  type="p:Pflags_t"/>
+   <xs:element name="\kw{errCode}" type="p:PerrCode_t"/>
+   <xs:element name="\kw{loc}"     type="p:Ploc_t"/>
+ </xs:sequence>
+</xs:complexType>
+\end{code}
+\end{small}
 
 Example of query that uses generated schema.
-
 \begin{small}
 \begin{code}
 declare namespace p = "http://www.padsproj.org/pads.xsd";
-import schema default element namespace "sirius.xsd";
-$pads/p:Psource/orders/p:elt[events/p:elt[1]
+import schema default element namespace "file:sirius.p"
+  schemaLocation "file:/somewhere/sirius.xsd";
+
+$pads/p:Psource/orders/elt[events/elt[1]
   [tstamp >= xs:dateTime("2004-10-01:00:00:00") and 
    tstamp < xs:date("2004-11-01:00:00:00") ]]
 \end{code}
@@ -564,3 +594,43 @@ corresponding to an \cd{entry_t} node and a child index and returns the appropri
 At the moment, it is possible to use the resulting system to query ad hoc data sources that can be loaded entirely into memory, and a version that allows the data to be read lazily is well underway.
 How best to optimize Xqueries over ad hoc data sources is an open research area.
 
+
+\begin{figure}
+\begin{small}
+\begin{code}
+<xs:schema targetNamespace="http://www.padsproj.org/pads.xsd"
+           xmlns:p="http://www.padsproj.org/pads.xsd"
+	   xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:complexType name="\kw{val_Puint32}">
+  <xs:choice>
+   <xs:element name="val" type="p:Puint32"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+...
+<xs:complexType name="\kw{Pstruct_pd}">
+<xs:sequence>
+<xs:element name="\kw{pstate}"  type="p:Pflags_t"/>
+<xs:element name="\kw{nerr}"    type="p:Puint32"/>
+<xs:element name="\kw{errCode}" type="p:PerrCode_t"/>
+<xs:element name="\kw{loc}"     type="p:Ploc_t"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="\kw{Parray_pd}">
+<xs:sequence>
+<xs:element name="{pstate}"   type="p:Pflags_t"/>
+<xs:element name="nerr"       type="p:Puint32"/>
+<xs:element name="errCode"    type="p:PerrCode_t"/>
+<xs:element name="loc"        type="p:Ploc_t"/>
+<xs:element name="\kw{neerr}" type="p:Puint32"/>
+<xs:element name="\kw{firstError}" type="p:Puint32"/>
+</xs:sequence>
+</xs:complexType>
+...
+</xs:schema>
+\end{code}
+\end{small}
+\caption{Fragment of XML Schema for \dibbler{} \pads{} description.}
+\label{figure:dibbler-schema}
+\end{figure}
