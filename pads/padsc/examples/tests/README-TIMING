@@ -1,3 +1,20 @@
+Contents:
+  A. Data generation
+  B. Timing
+
+A. Data Generation
+
+To facilitate timing tests, we have added a script for generating data files from existing
+ones. The script is called gendata.sh. It is invoked as:
+
+  $PADS_HOME/scripts/gendata.sh <data_dir> <format> <target_size> <output_file>
+
+Note, for the dibbler data just specify the format as "dibbler".
+
+In addition, there are special targets in the makefile for particular file sizes. 
+For example, ../data/dibbler_new.10Mb and similarly for 50MB and 100MB.
+
+B. Timing
 There are two levels of timing supported: base PADS functions and 
 PADS + the PADX node interface. While the timing functionality is currently in the 
 makefile, we provide shell scripts as an convinient interface.

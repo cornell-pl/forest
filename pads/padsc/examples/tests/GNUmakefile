@@ -508,6 +508,15 @@ $(PROCESS_ALL_FORMATS):process_all_%:$(foreach mask,$(RMASKS),process_$(mask)_%)
 $(PROCESS_ALL_MASKS): process_all_%:$(foreach fmt,$(TFORMATS),process_%_$(fmt))
 process_all: $(foreach fmt,$(TFORMATS),process_all_$(fmt))
 
+$(DATA_DIR)/dibbler_new.10MB:$(DATA_DIR)/dibbler.10001
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler 10000000 dibbler_new.10MB
+
+$(DATA_DIR)/dibbler_new.50MB:$(DATA_DIR)/dibbler.10001
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler 50000000 dibbler_new.50MB
+
+$(DATA_DIR)/dibbler_new.100MB:$(DATA_DIR)/dibbler.10001
+	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler 100000000 dibbler_new.100MB
+
 $(DATA_DIR)/dibbler_new.big:$(DATA_DIR)/dibbler.10001
 	$(PADS_HOME)/scripts/gendata.sh $(DATA_DIR) dibbler 5000000 dibbler_new.big
 
