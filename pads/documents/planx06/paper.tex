@@ -14,7 +14,7 @@
 \newcommand{\darkstar}{Regulus}
 
 \title{PADX\footnote{Pronounced ``paddocks'' : a usually enclosed area
-for exercising race horses.} : Querying Large-scale Ad Hoc Data Sources with XQuery}
+for exercising race horses.} : Querying Large-scale Ad Hoc Data with XQuery}
 %\title{PADX : An XQuery Interface to Ad Hoc Data Sources}
 %\title{PADX : A System for Querying Ad Hoc Data Sources with XQuery}
 
@@ -38,7 +38,7 @@ for exercising race horses.} : Querying Large-scale Ad Hoc Data Sources with XQu
 \date{\today}
 
 \newcommand{\Galax}{Galax}
-%\newcommand\scream}{1}{\textbf{#1}}
+\newcommand\scream}{1}{\textbf{#1}}
 
 \begin{document}
 
@@ -164,9 +164,9 @@ formats!
 \begin{small}
 \begin{center}
 \begin{verbatim}
-0|1005022800
-9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
-9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+0|15/Oct/2004:18:46:51
+9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|16/Oct/2004:10:02:10
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|17/Oct/2004:08:14:21
 \end{verbatim}
 \caption{Tiny example of \dibbler{} provisioning data.}
 \label{figure:dibbler-records}
@@ -178,9 +178,9 @@ The data analyst's first task is to write a parser for the
 provisioning format.  Like many ad hoc data sources, \dibbler{} data
 often contains unexpected values or corrupted data feeds, so the
 parser must handle errors robustly to avoid corrupting the results of
-analyses.  Today, people craft hand-written parsers in \C{} or
+analyses.  Today, people often hand craft parsers in \C{} or
 \perl{}.  Unfortunately, writing parsers this way is tedious and
-error-prone, complicated by the lack of documentation, convoluted
+error prone, complicated by the lack of documentation, convoluted
 encodings designed to save space, and the need to produce efficient
 code.  Moreover, the analyst's hard-won understanding of the data ends
 up embedded in parsing code, making long-term maintenance difficult
@@ -194,21 +194,24 @@ can be flagged as errors. The intent is to allow analysts to capture
 in a \pads{} description all that they know about a given data source.
 
 \figref{figure:dibbler} gives the \pads{} description for the
-\dibbler{} provisioning data.  In \pads{} descriptions, types are
-declared before they are used, so the type that describes the entire
-data source, \cd{out\_sum}, appears at the bottom of the description.
-In the next section, we use this example to describe several features
-of the \pads{} language.  Here, we simply note that the data analyst
-writes this description, and from this description, the \pads{}
-compiler produces customizable \C{} libraries and tools for parsing,
-manipulating, and summarizing the data.
+provisioning data format.  In \pads{} descriptions, types are declared
+before they are used, so the type that describes the entire data
+source, \cd{summary}, appears at the bottom of the description.  In
+the next section, we use this example to describe several features of
+the \pads{} language.  Here, we simply note that the data analyst
+writes this description, and the \pads{} compiler produces
+customizable \C{} libraries and tools for parsing, manipulating, and
+summarizing the data.  The fact that useful software artifacts are
+generated from \pads{} descriptions provides strong incentive for
+keeping the descriptions current, allowing them to serve as living
+documentation.
 
 \begin{figure}
 \begin{small}
 \begin{code}
 \kw{Precord} \kw{Pstruct} summary\_header\_t \{
   "0|";
-  Puint32       tstamp;
+  Ptimestamp   tstamp;
 \};
 \mbox{}
 \kw{Pstruct} no\_ramp\_t \{
@@ -240,28 +243,25 @@ manipulating, and summarizing the data.
 \mbox{}
 \kw{Pstruct} event\_t \{
   Pstring(:'|':) state;   '|';
-  Puint32        tstamp;
+  Ptimestamp     tstamp;
 \};
 \mbox{}
-\kw{Parray} eventSeq \{
+\kw{Parray} event\_seq\_t \{
   event\_t[] : \kw{Psep}('|') && \kw{Pterm}(\kw{Peor});
-\} \kw{Pwhere} \{
-  \kw{Pforall} (i \kw{Pin} [0..length-2] :
-           (elts[i].tstamp <= elts[i+1].tstamp));
 \};
 \mbox{}
-\kw{Precord} \kw{Pstruct} entry\_t \{
-  order\_header\_t  header;
-  eventSeq        events;
+\kw{Precord} \kw{Pstruct} order\_t \{
+  order\_header\_t  order\_header;
+  event\_seq\_t     events;
 \};
 \mbox{}
-\kw{Parray} entries\_t \{
-  entry\_t[];
+\kw{Parray} orders\_t \{
+  order\_t[];
 \};
 \mbox{}
-\kw{Psource} \kw{Pstruct} out\_sum\{
-  summary\_header\_t  h;
-  entries\_t         es;
+\kw{Psource} \kw{Pstruct} summary\{
+  summary\_header\_t  summary\_header;
+  orders\_t          orders;
 \};
 \end{code}
 \end{small}
@@ -269,21 +269,33 @@ manipulating, and summarizing the data.
 \label{figure:dibbler}
 \end{figure}
 
-\pads{} descriptions are concise enough to serve as documentation and
-flexible enough to describe most of the data formats we have seen in
-practice, including ASCII, binary, Cobol, and mixed data formats.  The
-fact that useful software artifacts are generated from the
-descriptions provides strong incentive for keeping the descriptions
-current, allowing them to serve as living documentation.
+Analysts working with ad hoc data also like to query their data.  The
+\dibbler{} analyst wanted to answer questions such as ``Select all
+orders starting within a certain time window,'' ``Count the number of
+orders going through a particular state,'' and ``What is the average
+time required to go from a particular state to another particular
+state''.
 
+\scream{Mary: left off here}
+
+The \pads{} libraries and tools greatly simplify many common tasks
+such as parsing, detecting errors, and summarizing data.  \pads{}
+however 
+
+We wanted to support declarative querying over ad hoc sources, but we
+didn't want to invent an entirely new query language, which led us to
+examine existing languages.  Because XQuery is designed to manipulate
+semi-structured data, its expressiveness matched our data sources
+well.  We were able to code all the \dibbler{}-related queries in
+XQuery.  For example, the XQuery
 \begin{small}
 \begin{code}
-{ $sirius/sirius/order[event[1]
-    [timeStamp >= xs:date("2002-04-14") and 
-     timeStamp <= xs:date("2002-05-25") ]] }
+{ $pads/pads:Psource/orders/pads:elt[events/pads:elt[1]
+    [tstamp >= xs:dateTime("2004-10-01:00:00:00") and 
+     tstamp < xs:date("2004-11-01:00:00:00") ]] }
 \end{code}
 \end{small}
-asks for all orders starting within the given time window.  
+asks for all orders that started in October, 2004. 
 
 \section{Using \pads{} to Access Ad Hoc Data [Kathleen]}
 \label{section:pads}
