@@ -169,6 +169,7 @@ int main(int argc, char** argv) {
   }
 #endif /* PADS_HDR_TY */
 
+#ifdef PADS_LINEAR
   /*
    * Try to read each line of data
    */
@@ -200,6 +201,20 @@ int main(int argc, char** argv) {
     }
 #endif
   }
+#elif defined PADS_BULK 
+    if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
+#  ifdef EXTRA_BAD_READ_CODE
+      EXTRA_BAD_READ_CODE;
+#  else
+      if (my_disc.e_rep > PerrorRep_Min) {
+        error(2, "read returned error");
+      }
+#  endif
+    }
+#else
+#  error "Must set either PADS_BULK or PADS_LINEAR."
+#endif /* PADS_LINEAR */
+
   if (P_ERR == P_io_close(pads)) {
     error(ERROR_FATAL, "*** P_io_close failed ***");
   }

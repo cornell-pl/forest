@@ -28,12 +28,15 @@ RMASKS=CaS SyS Ig
 
 # the following indicates that generated files should not be removed
 .PRECIOUS: %.o $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c %_expanded.c \
-	$(foreach mask,$(RMASKS),time_read_$(mask)_%)
+	$(foreach mask,$(RMASKS),time_read_$(mask)_%_bulk)\
+	$(foreach mask,$(RMASKS),time_read_$(mask)_%_linear)
 
 # need to set this before including rules.mk
 REGRESS_TESTS = 1
 
 include $(PADS_HOME)/mk/rules.mk
+
+PADSC_EXTRA +=-D__ppc__
 
 VPATH =  .. ../../p
 
@@ -401,14 +404,26 @@ veryclean: clean
 
 # These cases do not fit the usual pattern
 
-.PHONY: time_% process_% do_time_pglx
+.PHONY: time_% process_% do_time_pads do_time_pglx
+
+ifeq ($(PADS_KIND),bulk)
+COPTFLAGS += -D PADS_BULK
+endif
+ifeq ($(PADS_KIND),linear)
+COPTFLAGS += -D PADS_LINEAR
+endif
+
+ifndef PADS_SIZE
+PADS_SIZE=big
+endif
 
 time_read_SyS_%_d: CDBGFLAGS += -D 'READ_MASK=(P_SynCheck|P_Set)' -D 'E_REP_LEV=PerrorRep_None'
 time_read_SyS_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 time_read_SyS_%: COPTFLAGS += -D 'READ_MASK=(P_SynCheck|P_Set)' -D 'E_REP_LEV=PerrorRep_None'
-time_read_SyS_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+time_read_SyS_%_bulk\
+time_read_SyS_%_linear: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 time_read_Ig_%_d: CDBGFLAGS += -D 'READ_MASK=(P_Ignore)' -D 'E_REP_LEV=PerrorRep_None'
@@ -416,15 +431,17 @@ time_read_Ig_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 time_read_Ig_%: COPTFLAGS += -D 'READ_MASK=(P_Ignore)' -D "E_REP_LEV=PerrorRep_None"
-time_read_Ig_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+time_read_Ig_%_bulk\
+time_read_Ig_%_linear: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 time_read_CaS_%_d: CDBGFLAGS += -D 'READ_MASK=(P_CheckAndSet)' -D 'E_REP_LEV=PerrorRep_None'
 time_read_CaS_%_d: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-time_read_CaS_%: COPTFLAGS += -D 'READ_MASK=(P_CheckAndSet)' -DE_REP_LEV=PerrorRep_None
-time_read_CaS_%: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+time_read_CaS_% : COPTFLAGS += -D 'READ_MASK=(P_CheckAndSet)' -DE_REP_LEV=PerrorRep_None
+time_read_CaS_%_bulk\
+time_read_CaS_%_linear: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 ifeq ($(PGLX_KIND),bulk)
@@ -437,33 +454,46 @@ ifeq ($(PGLX_KIND),smart)
 COPTFLAGS += -D PGLX_SMART -DE_REP_LEV=PerrorRep_None
 endif
 
+pglx_bulk_%_d pglx_linear_%_d pglx_smart_%_d: \
+$(GEN_DIR)/%.c time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
 pglx_bulk_% pglx_linear_% pglx_smart_%: \
 $(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-time_Ig_%: time_read_Ig_%
-	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big Ig_$*.time
+time_Ig_%: time_read_Ig_%_$(PADS_KIND)
+	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) \
+	Ig_$*_$(PADS_KIND).time
 
-time_SyS_%: time_read_SyS_%
-	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big SyS_$*.time
+time_SyS_%: time_read_SyS_%_$(PADS_KIND)
+	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) \
+	SyS_$*_$(PADS_KIND).time
 
-time_CaS_%: time_read_CaS_%
-	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big CaS_$*.time
+time_CaS_%: time_read_CaS_%_$(PADS_KIND)
+	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) \
+	CaS_$*_$(PADS_KIND).time
 
-process_Ig_%: $(TIMING_DIR)/Ig_%.time
+process_Ig_%: $(TIMING_DIR)/Ig_%_$(PADS_KIND).time
 	@export PROCESS_ONLY=1;\
-	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big Ig_$*.time
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) Ig_$*_$(PADS_KIND).time
 
-process_SyS_%: $(TIMING_DIR)/SyS_%.time
+process_SyS_%: $(TIMING_DIR)/SyS_%_$(PADS_KIND).time
 	@export PROCESS_ONLY=1;\
-	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big SyS_$*.time
+	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) SyS_$*_$(PADS_KIND).time
 
-process_CaS_%: $(TIMING_DIR)/CaS_%.time
+process_CaS_%: $(TIMING_DIR)/CaS_%_$(PADS_KIND).time
 	@export PROCESS_ONLY=1;\
-	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.big CaS_$*.time
+	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) CaS_$*_$(PADS_KIND).time
+
+
+do_time_pads: time_CaS_$(PADS_FORMAT)
+# do_time_pglx: pglx_$(PGLX_KIND)_$(PGLX_FORMAT)
+# 	 ./$< $(DATA_DIR)/$(PGLX_FORMAT).$(PGLX_SIZE) >| $(TIMING_DIR)/$<_$(PGLX_SIZE).time
 
 do_time_pglx: pglx_$(PGLX_KIND)_$(PGLX_FORMAT)
-	 ./$< $(DATA_DIR)/$(PGLX_FORMAT).big >| $(TIMING_DIR)/$<.time
+	 $(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $(PGLX_FORMAT).$(PGLX_SIZE) \
+	$(PGLX_FORMAT)_$(PGLX_SIZE)_$(PGLX_KIND).time
 
 TIME_ALL_MASKS=$(foreach mask,$(RMASKS),time_all_$(mask))
 TIME_ALL_FORMATS=$(foreach fmt,$(TFORMATS),time_all_$(fmt))

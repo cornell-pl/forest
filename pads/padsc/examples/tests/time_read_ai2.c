@@ -3,7 +3,7 @@
 // means timestamp output will be consistent with the timestamps in the data.
 
 #define OUT_TIME_ZONE "-0700"
-#define DEF_INPUT_FILE "../../data/ai"
+#define DEF_INPUT_FILE "../../data/ai2"
 
 #ifdef PADS_BULK
 #  define PADS_TY(suf) log_t ## suf
@@ -13,5 +13,5 @@
 #  error "Must set either PADS_BULK or PADS_LINEAR."
 #endif
 
-#include "ai.h"
+#include "ai2.h"
 #include "template/timed_read.h"

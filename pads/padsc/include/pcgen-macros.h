@@ -198,6 +198,7 @@ void PCGEN_ENUM_FMT2BUF_FINAL_INIT(char * fnName);
 void PCGEN_TYPEDEF_FMT2BUF_FINAL_INIT(char * fnName);
 void PCGEN_STRUCT_FMT2BUF_FINAL_INIT(char * fnName);
 
+void PCGEN_POINTER_FMT2BUF_INIT(char * fnName, Pfmt_fn fnLookupAssign, ssize_t fnInvoke);
 void PCGEN_ENUM_FMT2BUF_INIT(char * fnName, Pfmt_fn fnLookupAssign, ssize_t fnInvoke);
 void PCGEN_STANDARD_FMT2BUF_INIT(char * fnName, Pfmt_fn fnLookupAssign, ssize_t fnInvoke);
 
@@ -2153,6 +2154,17 @@ do {
 do {
   PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
   PDCI_STANDARD_FMT2BUF_INIT(*m, requestedOut);
+  if ((fnLookupAssign)) {
+    return fnInvoke;
+  }
+ } while (0)
+/* END_MACRO */
+
+#define PCGEN_POINTER_FMT2BUF_INIT(fnName, fnLookupAssign, fnInvoke)
+do {
+  PDCI_IODISC_6P_CHECKS_RET_SSIZE(fnName, buf, buf_full, delims, m, pd, rep);
+  PDCI_IODISC_1P_CHECKS_RET_SSIZE(fnName,*m);
+  PDCI_STANDARD_FMT2BUF_INIT((*m)->compoundLevel, requestedOut);
   if ((fnLookupAssign)) {
     return fnInvoke;
   }

@@ -1121,6 +1121,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      fun writeAdjustLenSs shouldAdjustBuffer = 
 		[PT.Expr(PT.Call(PT.Id(if shouldAdjustBuffer then "PCGEN_TLEN_UPDATES" else "PCGEN_FINAL_TLEN_UPDATES"), []))]
 
+	      (*
+	       * Construct a statement that writes a field with
+	       * function fname. The field rep,pd,etc. are supplied in
+	       * the argXs parameter. 
+	       *)
 	      fun writeFieldSs (fname, argXs, adjustLengths) = 
 		  [P.assignS(PT.Id tlen, 
 			     PT.Call(PT.Id fname,
@@ -2362,7 +2367,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Generate parse description: typedef to ptr to base pd *)
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
 
-		      (* Insert type properties into type table *)
                       val ds = TyProps.Variable
                       val mc = TyProps.Dynamic
                       val endian = false
@@ -2464,14 +2468,30 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val readEDs = phantomEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
-                      (* -- generate is function (recursive case) *)
+                      (* -- generate is function (dynamic case) *)
 		      val isName = isPref name
 		      val bodySs = [PT.Return P.trueX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
+                      (* Generate Write function dynamic case *)
+		      val writeName = writeSuf name
+		      val fmtName = fmtSuf name
+		      val writeXMLName = writeXMLSuf name
+		      val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy)
+		      val fmtBaseName = (bufSuf o fmtSuf) (lookupWrite baseTy)
+		      val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy)
+		      val bodySs = writeFieldSs(writeBaseName, [P.starX (PT.Id pd), P.starX(PT.Id rep)] @ args, isRecord)
+		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, [P.starX (PT.Id pd), P.starX(PT.Id rep)], PT.Id tag, false, false, args)
+		      val fmtNameFinalBuf = bufFinalSuf fmtName
+		      val bodyFmtFinalSs = (PL.fmtFinalInitTypedef (PT.String fmtNameFinalBuf)) ::(fmtTypedefSs(fmtBaseName, [P.starX(PT.Id m),
+															      P.starX (PT.Id pd), P.starX(PT.Id rep)]@args))
+                      val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, "POINTER", writeName, writeXMLName, fmtName, isRecord, isSource,
+								   cParams, mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtFinalSs)
 		  in
 		        (emitRead readEDs)
 		      @ (emitPred isFunEDs)
+                      @ (emitWrite writeFunEDs)
+                      @ (emitWrite fmtFunEDs)
 		  end
 
 

@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
   Sfio_t       *io;
   char         *inName  = 0;
 
-  clock_t start, finish, duration;
+/*   clock_t start, finish, duration; */
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -204,30 +204,23 @@ int main(int argc, char** argv) {
   }
 #endif /* PADS_HDR_TY */
 
+/*   error(2,"Make top level node"); */
   /* make the top-level node */
   PDCI_MK_TOP_NODE_NORET (node, &PADS_TY(_node_vtable), pads, "padsns:PSource", &m, &pd, &rep, "main");
  {
 #ifdef PGLX_BULK
-   const char* kind = "Bulk";
+/*    error(2,"Read data"); */
+   PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS);
 #endif
 #ifdef PGLX_LINEAR
-   const char* kind = "Linear";
    PADS_TY(_linearNode_init)(node  EXTRA_ARGS);
 #endif
 #ifdef PGLX_SMART
-   const char* kind = "Smart";
    PADS_TY(_smartNode_init)(node, MAX_ELTS  EXTRA_ARGS);
 #endif
-   start = clock();
-   /*print_children(doc_node, 0);*/
-#ifdef PGLX_BULK
-   PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS);
-#endif
+/*    error(2,"begin children walk"); */
    walk_children(node);
-   finish = clock();
-   duration = finish-start;
-   printf("%s node walk took %f seconds to execute.\n",
-	  kind,((double)duration)/CLOCKS_PER_SEC);
+/*    error(2,"end chilren walk"); */
  }
   /* 
    * The linear and code doesn't use rep->elts, pd->elts, 

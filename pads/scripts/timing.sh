@@ -24,5 +24,5 @@ fi
 #     (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results
 #     (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results
 #     (time $prog $dataDir/$data  2>&1) 2>> $timingDir/$results
-echo -n "$results (us/byte): " $'\t'
+echo -n "$results: Average (us/byte): " $'\t'
 cat $timingDir/$results | awk -v size=$size '{ real += $1; user += $2; sys += $3; ct += 1; } END { print real/ct * (1000000/size), user/ct * (1000000/size), sys/ct * (1000000/size); }'
