@@ -14,32 +14,30 @@
 \newcommand{\darkstar}{Regulus}
 
 \title{PADX\footnote{Pronounced ``paddocks'' : a usually enclosed area
-for exercising race horses.} : Querying Large-scale, Ad Hoc Data Sources with XQuery}
+for exercising race horses.} : Querying Large-scale Ad Hoc Data Sources with XQuery}
 %\title{PADX : An XQuery Interface to Ad Hoc Data Sources}
 %\title{PADX : A System for Querying Ad Hoc Data Sources with XQuery}
 
-\author{
-\alignauthor Mary Fern\'andez\\
-       \affaddr{AT\&T Labs Research}\\
-       \email{kfisher@research.att.com}
+\authorinfo{Mary Fern\'andez}
+       {AT\& Labs Research}
+       {\mono{mff@research.att.com}}
 
-\alignauthor Kathleen Fisher\\
-       \affaddr{AT\&T Labs Research}\\
-       \email{kfisher@research.att.com}
+\authorinfo{Kathleen Fisher}
+       {AT\& Labs Research}
+       {\mono{kfisher@research.att.com}}
 
-\alignauthor Robert Gruber\titlenote{Work carried out while at AT\&T
-                                     Labs Research.}\\
-       \affaddr{Google}\\
-%       \affaddr{1600 Amphitheatre Pkwy}\\
-%       \affaddr{Mountain View, CA}\\
-       \email{gruber@google.com}
+\authorinfo{ Robert Gruber\titlenote{Work carried out while at AT\&T
+                                     Labs Research.}}
+       {Google}
+       {\mono{gruber@google.com}}
 
-\alignauthor Yitzhak Mandelbaum\\
-       \affaddr{Princeton University}\\
-       \email{yitzhakm@cs.princeton.edu}
-}
+\authorinfo{Yitzhak Mandelbaum}
+       {Princeton University}
+       {\mono{yitzhakm@cs.princeton.edu}}
 
-\newcommand{\Galax}{Galax\xspace}
+\date{\today}
+
+\newcommand{\Galax}{Galax}
 %\newcommand\scream}{1}{\textbf{#1}}
 
 \begin{document}
@@ -49,7 +47,7 @@ for exercising race horses.} : Querying Large-scale, Ad Hoc Data Sources with XQ
 \end{abstract}
 
 \section{Introduction}
-
+\label{section:intro}
 Story: Start with data analyst perspective.  Has ad hoc data source
 and a set of questions that he'd like to ask about it.  But the
 structure of the data source can change over time and he does not want
@@ -130,9 +128,38 @@ Show scalability of smart loading over bulk loading.  Show improvement
 of compiled name access over interpreted name access. 
 }
 
-\subsection{Motivating Example}
+\subsection{Example Scenario}
 
-Sirius provisioning data. 
+The following scenario illustrates the variety of data-management
+tasks faced by an AT\&T data analyst who analyzes
+\textit{provisioning} processes.  \figref{figure:dibbler-records}
+contains a tiny fragment of the data produced by AT\&T provisioning systems,
+which can yield as much as 2.2GB of data per week. 
+
+In the telecommunications industry, the term {provisioning} refers to
+the steps necessary to convert an order for phone service into the
+actual service.  To track AT\&T's provisioning process, the \dibbler{}
+project compiles weekly summaries of the state of certain types of
+phone service orders.  These ASCII summaries store the summary date
+and one record per order.  Each order record contains a header
+followed by a nested sequence of events.  The header has 13 pipe
+separated fields: the order number, AT\&T's internal order number, the
+order version, four different telephone numbers associated with the
+order, the zip code of the order, a billing identifier, the order
+type, a measure of the complexity of the order, an unused field, and
+the source of the order data.  Many of these fields are optional, in
+which case nothing appears between the pipe characters.  The billing
+identifier may not be available at the time of processing, in which
+case the system generates a unique identifier, and prefixes this value
+with the string ``no\_ii'' to indicate the number was generated. The
+event sequence represents the various states a service order goes
+through; it is represented as a new-line terminated, pipe separated
+list of state, timestamp pairs.  There are over 400 distinct states
+that an order may go through during provisioning.  The sequence is
+sorted in order of increasing timestamps.  It may be apparent from
+this description that English is a poor language for describing data
+formats!
+
 \begin{figure*}
 \begin{small}
 \begin{center}
@@ -147,25 +174,119 @@ Sirius provisioning data.
 \end{small}
 \end{figure*}
 
-Description in PADS. 
+The data analyst's first task is to write a parser for the
+provisioning format.  Like many ad hoc data sources, \dibbler{} data
+often contains unexpected values or corrupted data feeds, so the
+parser must handle errors robustly to avoid corrupting the results of
+analyses.  Today, people craft hand-written parsers in \C{} or
+\perl{}.  Unfortunately, writing parsers this way is tedious and
+error-prone, complicated by the lack of documentation, convoluted
+encodings designed to save space, and the need to produce efficient
+code.  Moreover, the analyst's hard-won understanding of the data ends
+up embedded in parsing code, making long-term maintenance difficult
+for the original writers and sharing the knowledge with others nearly
+impossible.
+
+With \pads{}, the analyst writes a declarative data description of the
+physical layout of their data.  The language also permits analysts to
+describe expected semantic properties of their data so that deviations
+can be flagged as errors. The intent is to allow analysts to capture
+in a \pads{} description all that they know about a given data source.
+
+\figref{figure:dibbler} gives the \pads{} description for the
+\dibbler{} provisioning data.  In \pads{} descriptions, types are
+declared before they are used, so the type that describes the entire
+data source, \cd{out\_sum}, appears at the bottom of the description.
+In the next section, we use this example to describe several features
+of the \pads{} language.  Here, we simply note that the data analyst
+writes this description, and from this description, the \pads{}
+compiler produces customizable \C{} libraries and tools for parsing,
+manipulating, and summarizing the data.
+
 \begin{figure}
-\input{../pldi/dibbler_new}
+\begin{small}
+\begin{code}
+\kw{Precord} \kw{Pstruct} summary\_header\_t \{
+  "0|";
+  Puint32       tstamp;
+\};
+\mbox{}
+\kw{Pstruct} no\_ramp\_t \{
+  "no\_ii";
+  Puint64 id;
+\};
+\mbox{}
+\kw{Punion} dib\_ramp\_t \{
+  Pint64     ramp;
+  no\_ramp\_t  genRamp;
+\};
+\mbox{}
+\kw{Pstruct} order\_header\_t \{
+       Puint32             order\_num;
+ '|';  Puint32             att\_order\_num;
+ '|';  Puint32             ord\_version;
+ '|';  \kw{Popt} pn\_t           service\_tn;
+ '|';  \kw{Popt} pn\_t           billing\_tn;
+ '|';  \kw{Popt} pn\_t           nlp\_service\_tn;
+ '|';  \kw{Popt} pn\_t           nlp\_billing\_tn;
+ '|';  \kw{Popt} Pzip           zip\_code;
+ '|';  dib\_ramp\_t          ramp;
+ '|';  Pstring(:'|':)      order\_type;
+ '|';  Puint32             order\_details;
+ '|';  Pstring(:'|':)      unused;
+ '|';  Pstring(:'|':)      stream;
+ '|';
+\};
+\mbox{}
+\kw{Pstruct} event\_t \{
+  Pstring(:'|':) state;   '|';
+  Puint32        tstamp;
+\};
+\mbox{}
+\kw{Parray} eventSeq \{
+  event\_t[] : \kw{Psep}('|') && \kw{Pterm}(\kw{Peor});
+\} \kw{Pwhere} \{
+  \kw{Pforall} (i \kw{Pin} [0..length-2] :
+           (elts[i].tstamp <= elts[i+1].tstamp));
+\};
+\mbox{}
+\kw{Precord} \kw{Pstruct} entry\_t \{
+  order\_header\_t  header;
+  eventSeq        events;
+\};
+\mbox{}
+\kw{Parray} entries\_t \{
+  entry\_t[];
+\};
+\mbox{}
+\kw{Psource} \kw{Pstruct} out\_sum\{
+  summary\_header\_t  h;
+  entries\_t         es;
+\};
+\end{code}
+\end{small}
 \caption{\pads{} description for \dibbler{} provisioning data.}
 \label{figure:dibbler}
 \end{figure}
 
-Example queries. 
-For example, the XQuery
-\begin{code}
+\pads{} descriptions are concise enough to serve as documentation and
+flexible enough to describe most of the data formats we have seen in
+practice, including ASCII, binary, Cobol, and mixed data formats.  The
+fact that useful software artifacts are generated from the
+descriptions provides strong incentive for keeping the descriptions
+current, allowing them to serve as living documentation.
+
 \begin{small}
+\begin{code}
 { $sirius/sirius/order[event[1]
     [timeStamp >= xs:date("2002-04-14") and 
      timeStamp <= xs:date("2002-05-25") ]] }
-\end{small}
 \end{code}
+\end{small}
 asks for all orders starting within the given time window.  
 
-\section{Using PADS to Access Ad Hoc Data}
+\section{Using \pads{} to Access Ad Hoc Data [Kathleen]}
+\label{section:pads}
 
 Focus on expressiveness of data description language.
 
@@ -177,7 +298,8 @@ Error-aware data processing.
 Many of PADS features are not described here b/c they are not germane
 to understand this work.  See PLDI and POPL papers. 
 
-\section{Using Galax to Query XML}
+\section{Using XQuery and \Galax{}[Mary]}
+\label{section:intro}
 
 XML is blah. One paragraph on XQuery and where to learn about it.
 
@@ -188,7 +310,7 @@ XML is obvious target for all data sources.  Cite numerous
 tools for converting to XML and commercial DB support for non-XML
 sources.  Do not re-invent the wheel.
 
-\subsection{Abstract Data Model}
+\subsection{Galax's Abstract Data Model}
 
 Abstract object-oriented data model that permits querying of virtual
 XML sources.  
@@ -356,6 +478,10 @@ reading at arbitrary positions within the data source.
 
 Big open problem: Given arbitrary XQuery expression, determine whether
 it can be evaluated in single scan over data.  
+
+\bibliographystyle{abbrv}
+\small
+\bibliography{../pldi/pads} 
 
 \end{document}
 
