@@ -92,6 +92,13 @@ have to change the Perl program each time a small change occurs in the
 structure of the data.  Data sources can be large.  Format conversion
 from ad hoc to standard format.  }
 
+We had tools designed to address aspects of the analyst's problem in
+isolation: PADS~\cite{pldi05} and Galax~\cite{galax}.  PADS allows
+users to describe ad hoc data sources declaratively and then generates
+error-aware parsers and tools for manipulating the sources, including
+statistical profiling tools.  Galax supports declarative querying of
+semi-structured data sources via XQuery.
+
 We had/have solutions to each of these problems in isolation: PADS and
 Galax.  Story of this paper is the interaction of these systems to
 solve all the data analyst's problems simultaneously. 
