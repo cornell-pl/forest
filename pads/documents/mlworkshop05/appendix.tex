@@ -35,10 +35,10 @@
 \\
 \name{} \meta{b} \::= \nont{cs} \| \mcd{case}\; M\; \mcd{of}\; \nont{ccs}
 \\
-\name{} \meta{cs} \::= c\;\mcd{of}\;T \| c\;\mcd{of}\;T \cvb \nont{cs}
+\name{} \meta{cs} \::= c \| c\;\mcd{of}\;T \cvb \nont{cs}
 \\
 \name{} \meta{ccs} \::= 
-  \nont{pat} \Rightarrow c\;\mcd{of}\;T \nlalt
+  \nont{pat} \Rightarrow c \nlalt
   \nont{pat} \Rightarrow c\;\mcd{of}\;T \cvb \nont{ccs}
 \\
 \name{\Core{} Field Types} \meta{ffts} \::= \nont{fft} \| \nont{fft};\;\nont{ffts}
@@ -93,7 +93,7 @@
 \nlalt \mcd{case}\;M\;\mcd{of}\;\nont{ms} \descr{deconstructors}
 \nlalt M_1\;(M_2)               \descr{function application}
 \nlalt \mcd{op}\;M                     \descr{additional uninteresting operations}
-\nlalt \mcd{let}\;x = M_1\;\mcd{in}\;M_2           \descr{computation in host language}
+\nlalt \mcd{let}\;pat = M_1\;\mcd{in}\;M_2           \descr{computation in host language}
 \nlalt \mcd{cast}\;(M : T)             \descr{type annot/dependent cast}
 \\
 \name{Fields} \meta{fs} \::= x = M \| x = M; \nont{fs}
@@ -122,6 +122,7 @@ x \| \nont{Pbase}(\nont{pat})
 \nlalt \langle \nont{pat} \rangle             \descr{singleton}
 \nlalt (\nont{fpat} \mathrel{**} \nont{fpat})   \descr{\core{} pair}
 \nlalt \precord{ \nont{ffps} }                  \descr{\core{} record}
+\nlalt c                                       \descr{const constructor}
 \nlalt c(\nont{fpat})                          \descr{constructor}
 \nlalt \{\nont{fpat} \cvb \nont{cpat}\}        \descr{type constaint}
 \nlalt \mcd{Parray}(\nont{pat}, x_{sep}, x_{term}) \descr{array with stream, sep and term.}
