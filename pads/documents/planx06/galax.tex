@@ -1,24 +1,68 @@
-\section{Using XQuery and \Galax{}[Mary]}
+\section{Using XQuery and \Galax{}}
 \label{section:galax}
 
-XML is blah. One paragraph on XQuery and where to learn about it.
+XML~\cite{xml} is a flexible format that can represent many classes of
+data: structured documents with large fragments of marked-up text;
+homogeneous records such as those in relational databases; and
+heterogeneous records with varied structure and content such as those
+in ad hoc data sources.  XML makes it possible for applications to
+handle all these classes of data simultaneously and to exchange such
+data in a simple, extensible, and standard format.  This flexibility
+has made XML the ``lingua franca'' of data
+interoperability. \cut{making it possible for data to be exchanged
+regardless of where it is stored or how it is processed.}
 
-XQuery is a typed, functional language that supports user-defined
-functions and modules for structuring large queries.  It contains
+XQuery~\cite{xquery} is a typed, functional query language for XML
+that supports user-defined functions and modules for structuring large
+queries.  Its type system is based on XML Schema.  XQuery contains
 XPath 2.0~\cite{xpath} as a proper sublanguage, which supports
 navigation, selection, and extraction of fragments of XML documents.
 XQuery also includes expressions to construct new XML values, and to
-integrate or join values from multiple documents.  XQuery's type
-system is based on XML Schema. 
+integrate or join values from multiple documents.  Unique among
+industry standards, XQuery also has a formal semantics, which makes it
+particularly interesting to database researchers. 
 
-Establish why XQuery was a reasonable query language for PADS.
-Standard.  Statically typed and PADS descriptions are types.  
+As XQuery was designed for querying semi-structured XML data, it is a
+natural choice for querying semi-structured ad hoc data.  XQuery's
+user syntax easily handles irregularly sturctured data.  For example,
+the path expressions in Figure~\ref{figure:dibbler-query} are
+well-defined for orders with zero or more events, and the predicates
+are well-defined for events with zero or more timestamps.  As noted in
+Section~\ref{subsec:example}, XQuery's static type system can detect
+common errors at compile time.  Such type safety is particularly
+valuable for long-running queries on large ad hoc sources and for data
+sources whose schemata evolve.  XQuery is also ideal for specifying
+integrated views of multiple sources.  Although here we focus on
+querying one ad hoc source at a time, XQuery supports our goal of
+simultaneously querying multiple \pads{} and other XML
+sources. Lastly, XQuery is practical: Numerous language manuals
+already exist; it is widely implemented in commercial databases; and
+it will be coming an enduring standard.
 
-XML is obvious target for all data sources.  Cite numerous
-tools for converting to XML and commercial DB support for non-XML
-sources.  Do not re-invent the wheel.
+\Galax{} is a complete, extensible, and efficient implementation of
+XQuery~1.0.  It includes support for all of XML 1.0, for most of XML
+Schema 1.0, which is the foundation of the XQuery type system, and for
+all of XQuery 1.0.  \Galax{} was designed with research in mind: Its
+architecture is modular and documented~\cite{edbt2004}; its query
+compiler produces evaluation plans in the first complete algebra for
+XQuery~\cite{icde2006}; and its optimizer detects joins and grouping
+constructs in algebraic plans and produces efficient physical plans
+that employ traditional and novel join algorithms~\cite{icde2006}.
+
+\Galax{} provides an abstract data model.  which makes it possible for
+\Galax{} to evaluate queries simultaneously over native and virtual
+XML sources that implement the data model.   
+
+Algebraic operators
+``bottom out'' by invoking methods in the abstract 
+
+\cut{One requirement that we did not anticipate but that has become central
+to \Galax{} is extensibility, in particular, support for querying virtual
+XML data sources.}
 
 \subsection{Galax's Abstract Data Model}
+
+~\cite{xquerydm}
 
 Abstract object-oriented data model that permits querying of virtual
 XML sources.  
@@ -27,7 +71,7 @@ Tree data model.  Data model accessors (axis::node-tests) that can/should be imp
 efficiently by the underlying source are pushed into the OO tree data
 model.  Default implementations for sources that don't do anything
 clever.   
-\begin{figure}
+\begin{figure*}
 \begin{small}
 \begin{code}
   method virtual node_name  : unit -> atomicQName option
@@ -37,7 +81,7 @@ clever.
 \end{code}
 \end{small}
 \caption{Signatures for methods in Galax's abstract data model}
-\end{figure}
+\end{figure*}
 
 Motivation for abstract data model: Supporting PADS and secondary
 storage system occurred at same time.  Data and information

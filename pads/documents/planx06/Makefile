@@ -5,7 +5,7 @@ TEXSRC=paper.tex defs.tex
 
 all: paper.pdf
 
-paper.bbl: intro.tex paper.tex ../pldi/pads.bib
+paper.bbl: intro.tex pads.tex galax.tex padx.tex evaluation.tex paper.tex ../pldi/pads.bib
 	latex paper.tex
 	bibtex paper
 
