@@ -407,7 +407,7 @@ veryclean: clean
 .PHONY: time_% process_% do_time_pads do_time_pglx
 
 ifeq ($(PADS_KIND),bulk)
-COPTFLAGS += -D PADS_BULK
+COPTFLAGS += -D PADS_BULK -D PADS_ALLOC_HINT=$(PADS_ALLOC_HINT)
 endif
 ifeq ($(PADS_KIND),linear)
 COPTFLAGS += -D PADS_LINEAR
@@ -445,7 +445,7 @@ time_read_CaS_%_linear: $(GEN_DIR)/%.o time_read_%.c $(INCLUDE_DEPS) $(LIB_DEPS_
 	@$(CCExec_DYNAMIC_O)
 
 ifeq ($(PGLX_KIND),bulk)
-COPTFLAGS += -D PGLX_BULK -DE_REP_LEV=PerrorRep_None
+COPTFLAGS += -D PGLX_BULK -DE_REP_LEV=PerrorRep_None -D PADS_ALLOC_HINT=$(PGLX_ALLOC_HINT)
 endif
 ifeq ($(PGLX_KIND),linear)
 COPTFLAGS += -D PGLX_LINEAR -DE_REP_LEV=PerrorRep_None

@@ -6474,7 +6474,7 @@ Perror_t entries_t_read (P_t *pads,entries_t_m *m,entries_t_pd *pd,entries_t *re
 /*       { */
 /* 	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,"entries_t_read",0); */
 /*       } */
-    PCGEN_ARRAY_READ_ALL (PCGEN_ARRAY_RESERVE_SPACE(entries_t,entry_t,entry_t_pd,22000),entries_t_read_one (pads,m,pd,rep,loc_ptr,&(pd->elts)[i],&(rep->elts)[i]),i = (rep->length),"entries_t_read");
+    PCGEN_ARRAY_READ_ALL (PCGEN_ARRAY_RESERVE_SPACE(entries_t,entry_t,entry_t_pd,PADS_ALLOC_HINT),entries_t_read_one (pads,m,pd,rep,loc_ptr,&(pd->elts)[i],&(rep->elts)[i]),i = (rep->length),"entries_t_read");
     return PCGEN_ARRAY_STD_RETURN ();
   }
 }

@@ -5,5 +5,12 @@ format=$1
 kind=$2
 size=$3
 # timing_dir=../timing
-make PADS_FORMAT=$format PADS_KIND=$kind PADS_SIZE=$size do_time_pads
+if [[ $format = dibbler_new && $kind = bulk ]]; then
+    case $size in
+	10MB) alloc_hint=50000;;
+	50MB) alloc_hint=250000;;
+	100MB) alloc_hint=500000;;
+    esac
+fi
+make PADS_FORMAT=$format PADS_KIND=$kind PADS_SIZE=$size PADS_ALLOC_HINT=$alloc_hint do_time_pads
 #cat $timing_dir/"$format"_"$size"_"$kind".time
