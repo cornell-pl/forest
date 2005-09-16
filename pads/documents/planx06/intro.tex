@@ -1,5 +1,76 @@
 \section{Introduction}
 \label{section:intro}
+Although there is a lot of data in ``well-behaved'' formats such
+as XML or relational databases, enormous amounts of data exist in
+non-standard or \textit{ad hoc} data formats as well. \figref{figure:data-sources}
+gives some sense of the range and pervasiveness of such data.
+\begin{figure}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Name \& Use   &  Representation               \\ \hline\hline
+Web server logs (CLF):  &  Fixed-column ASCII records \\ 
+Measure web workloads &                             \\ \hline
+AT\&T provisioning data: & Variable-width ASCII records  \\ 
+Monitor service activation &                              \\ \hline
+Call detail: Fraud detection  &  Fixed-width binary records \\  \hline 
+AT\&T billing data: & Various Cobol data formats  \\ 
+Monitor billing process   &                             \\ \hline
+%IP backbone data:  & ASCII   \\
+%Monitor network performance  &        \\ \hline
+Netflow:                        & Data-dependent number of     \\ 
+Monitor network performance  & fixed-width binary records  \\ \hline
+Newick:   Immune                 & Fixed-width ASCII records \\ 
+system response simulation & in tree-shaped hierachy\\ \hline                                
+Gene Ontology:             & Variable-width ASCII records \\
+Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
+%HL7:             & Variable-width ASCII records \\
+%Medical lab results     &  \\ \hline
+CPT codes: Medical diagnoses & Floating point numbers \\ \hline
+SnowMed: Medical clinic notes & keyword tags  \\ \hline
+\end{tabular}
+
+\caption{Selected ad hoc data sources.}
+\label{figure:data-sources}
+\end{center}
+\end{figure}
+The lack of standard tools for processing such data forces
+analysts to roll their own tools, leading to scenarios such as the
+following.  An analyst receives a new ad hoc data source containing
+potentially interesting information and a list of pressing questions
+about that data.  Could she please provide the answers to the
+questions as quickly as possible?  As is typical, the accompanying
+documentation is incomplete and out of date, so developing a parser is
+a non-trivial task, requiring a lot of preliminary data exploration
+with additional hand-written programs. Eventually, she hand-codes a
+parser that reflects her hard-won understanding of the data, usually
+in \C{} or \perl{}.  Pressed for time, she interleaves code to compute
+the answers to the supplied questions with the parser.  As soon as the
+answers are computed, she gets a new data source or a new set of
+questions to answer.
+
+Through her heroic efforts, the data analyst was able to answer
+the necessary questions, but the approach is deficient in many
+respects.  The analyst's hard-won understanding of the data ended up
+embedded in a hand-written parser, where it is unlikely anyone else
+will be able to benefit from her understanding.  The parser is likely
+brittle with respect to changes in the input sources.  Figuring out
+which \$4's should be \$5's, for example, in a \perl{} program when a
+new column is added to the data can be quite tricky.  Ad hoc data
+sources tend to have errors in them, and hand-written parser likely to
+either ignore errors entirely (which can lead to errors corrupting
+down-stream data) or be swamped with error checking code.  In
+addition, during both data exploration and to answer the specified
+questions, the analyst had to code how to compute the queries rather
+than being able to express the queries in a declarative fashion.
+
+Of course, many of these pitfalls can be avoided with careful design
+and extra time, but this takes time, which the analyst does not have.  
+However, with the appropriate tool support, many aspects of this
+process can be greatly simplified.
+
+
+
 Story: Start with data analyst perspective.  Has ad hoc data source
 and a set of questions that he'd like to ask about it.  But the
 structure of the data source can change over time and he does not want
@@ -37,6 +108,10 @@ and querying it multiple times.  Our architecture appropriate for
 certain problems.  Data gets regenerated every week or so.  Already
 Gigabytes of data.  Could use PADS and Galax separately to same
 effect.
+
+In the rest of this section, we discuss an example scenario in detail
+to illustrate the variety of data management tasks faced by AT\&T data
+analysts. 
  
 \cut{
 Don't want to explain each system as isolated entities, but show their
@@ -82,18 +157,17 @@ of compiled name access over interpreted name access.
 
 \subsection{Example Scenario}
 
-The following scenario illustrates the variety of data-management
-tasks faced by an AT\&T data analyst who analyzes
-{provisioning} processes.  \figref{figure:dibbler-records}
-contains a tiny fragment of the data produced by AT\&T system that
-summarizes provisioning data,
-which can yield as much as 2.2GB of data per week. 
-
+\figref{figure:dibbler-records}
 In the telecommunications industry, the term \textit{provisioning} refers to
-the steps necessary to convert an order for phone service into the
-actual service.  To track AT\&T's provisioning process, the \dibbler{}
-project compiles weekly summaries of the state of certain types of
-phone service orders.  These ASCII summaries store the summary date
+the process of converting an order for phone service into the
+actual service.  This process is complex, involving many interactions
+with other companies.  To discover potential problems proactively, the \dibbler{}
+project tracks AT\&T's provisioning process by compiling weekly
+summaries of the state of certain types of phone service orders.
+These summaries, which are stored in flat ASCII text files, can
+contain more than 2.2GB of data per week.
+
+These ASCII summaries store the summary date
 and one record per order.  Each order record contains a header
 followed by a nested sequence of events.  The header has 13 pipe
 separated fields: the order number, AT\&T's internal order number, the
