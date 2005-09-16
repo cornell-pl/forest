@@ -1,6 +1,6 @@
 \section{Introduction}
 \label{section:intro}
-Although there is a lot of data in ``well-behaved'' formats such
+Although massive amounts of data exist in ``well-behaved'' formats such
 as XML or relational databases, enormous amounts of data exist in
 non-standard or \textit{ad hoc} data formats as well. \figref{figure:data-sources}
 gives some sense of the range and pervasiveness of such data.
@@ -34,50 +34,63 @@ SnowMed: Medical clinic notes & keyword tags  \\ \hline
 \label{figure:data-sources}
 \end{center}
 \end{figure}
-The lack of standard tools for processing such data forces
+Ad hoc data comes in many forms: ASCII, binary, EBCDIC, and mixed
+formats.  It can be fixed-width, fixed-column, variable-width, or even
+tree-structured. It is often quite large, including some data sources
+that generate over a gigabit per second~\cite{gigascope}. It often
+comes with incomplete and/or out-of-date documentation, and there are
+often errors in the data.  Indeed, sometimes the errors are the most
+intersting parts, because such errors can indicate where something is
+going wrong in a monitored system.
+
+The lack of standard tools for processing ad hoc data forces
 analysts to roll their own tools, leading to scenarios such as the
 following.  An analyst receives a new ad hoc data source containing
 potentially interesting information and a list of pressing questions
 about that data.  Could she please provide the answers to the
-questions as quickly as possible?  As is typical, the accompanying
-documentation is incomplete and out of date, so developing a parser is
-a non-trivial task, requiring a lot of preliminary data exploration
-with additional hand-written programs. Eventually, she hand-codes a
-parser that reflects her hard-won understanding of the data, usually
-in \C{} or \perl{}.  Pressed for time, she interleaves code to compute
-the answers to the supplied questions with the parser.  As soon as the
-answers are computed, she gets a new data source or a new set of
-questions to answer.
+questions as quickly as possible, preferably last week?  The
+accompanying documentation is incomplete and out of date, so she first
+has to experiment with the data to discover its structure.  
+Eventually, she understands the data well enough to hand-code a
+parser, usually in \C{} or \perl{}.  Pressed for time, she interleaves
+code to compute the answers to the supplied questions with the parser.
+As soon as the answers are computed, she gets a new data source or a
+new set of questions to answer.
 
-Through her heroic efforts, the data analyst was able to answer
+Through her heroic efforts, the data analyst answered
 the necessary questions, but the approach is deficient in many
-respects.  The analyst's hard-won understanding of the data ended up
-embedded in a hand-written parser, where it is unlikely anyone else
-will be able to benefit from her understanding.  The parser is likely
-brittle with respect to changes in the input sources.  Figuring out
-which \$4's should be \$5's, for example, in a \perl{} program when a
-new column is added to the data can be quite tricky.  Ad hoc data
-sources tend to have errors in them, and hand-written parser likely to
-either ignore errors entirely (which can lead to errors corrupting
-down-stream data) or be swamped with error checking code.  In
-addition, during both data exploration and to answer the specified
-questions, the analyst had to code how to compute the queries rather
-than being able to express the queries in a declarative fashion.
-
+respects.  
+The analyst's hard-won understanding of the data ended up embedded in
+a hand-written parser, where it is difficult for others to benefit
+from her understanding.
+The parser is likely to be brittle with respect to changes in the
+input sources.  Consider, for example, how tricky it might be to
+figure out which \$3's should be \$4's in a \perl{} parser when a new
+column is added to the data.
+Errors in the data also pose a significant challenge for hand-coded
+parsers.  If the data analyst is thorough in checking for errors, then
+the error checking code dominates the parser, making it even more
+difficult to understand the semantics of the data.  If she is not,
+then erroneous data can escape undetected, potentially (silently!)
+corrupting down-stream processing.
+Finally, during the initial data exploration and in answering the
+specified questions, the analyst had to code \textit{how to compute}
+the questions rather than being able to express the queries in a
+declarative fashion. 
 Of course, many of these pitfalls can be avoided with careful design
-and extra time, but this takes time, which the analyst does not have.  
+and sufficient time, but such luxuries might not be available to the analyst.
 However, with the appropriate tool support, many aspects of this
 process can be greatly simplified.
 
 
-
+\cut{
 Story: Start with data analyst perspective.  Has ad hoc data source
 and a set of questions that he'd like to ask about it.  But the
 structure of the data source can change over time and he does not want
 his questions to be brittle.  E.g., if using Perl, you don't want to
 have to change the Perl program each time a small change occurs in the
 structure of the data.  Data sources can be large.  Format conversion
-from ad hoc to standard format.  
+from ad hoc to standard format.  }
 
 We had/have solutions to each of these problems in isolation: PADS and
 Galax.  Story of this paper is the interaction of these systems to
