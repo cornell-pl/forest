@@ -1,0 +1,53 @@
+\section{Using XQuery and \Galax{}[Mary]}
+\label{section:galax}
+
+XML is blah. One paragraph on XQuery and where to learn about it.
+
+XQuery is a typed, functional language that supports user-defined
+functions and modules for structuring large queries.  It contains
+XPath 2.0~\cite{xpath} as a proper sublanguage, which supports
+navigation, selection, and extraction of fragments of XML documents.
+XQuery also includes expressions to construct new XML values, and to
+integrate or join values from multiple documents.  XQuery's type
+system is based on XML Schema. 
+
+Establish why XQuery was a reasonable query language for PADS.
+Standard.  Statically typed and PADS descriptions are types.  
+
+XML is obvious target for all data sources.  Cite numerous
+tools for converting to XML and commercial DB support for non-XML
+sources.  Do not re-invent the wheel.
+
+\subsection{Galax's Abstract Data Model}
+
+Abstract object-oriented data model that permits querying of virtual
+XML sources.  
+
+Tree data model.  Data model accessors (axis::node-tests) that can/should be implemented
+efficiently by the underlying source are pushed into the OO tree data
+model.  Default implementations for sources that don't do anything
+clever.   
+\begin{figure}
+\begin{small}
+\begin{code}
+  method virtual node_name  : unit -> atomicQName option
+  method virtual parent     : node_test option -> node option
+  method virtual children   : node_test option -> node cursor
+  method descendant_or_self : node_test option -> node cursor
+\end{code}
+\end{small}
+\caption{Signatures for methods in Galax's abstract data model}
+\end{figure}
+
+Motivation for abstract data model: Supporting PADS and secondary
+storage system occurred at same time.  Data and information
+integration.  
+
+Implementations provided: Main-memory DOM-like rep; Main-memory
+shredded (HashTable) rep; Secondary-storage shredded rep; PADS.
+
+Part of PADX implementation are generic functions that implement data
+model accessors.  PADS compiler generates type-specific functions for
+walking virtual XML tree.  Relate back to type-specific library
+functions mentioned in last section.
+

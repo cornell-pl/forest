@@ -1,0 +1,21 @@
+\section{Performance}
+\label{section:performance}
+
+\subsection{Materialization and Loading}
+
+Hypothesis: bulk loading should not scale for increasing document size
+(limits of main memory).  Show that smart/linear does scale.
+
+\subsection{Querying}
+
+Give examples of queries that analyst cares about. 
+
+Example of query that can be evaluated in single scan over data
+source, but is currently not 
+
+Database person would balk at this point!  Why aren't you just loading
+this data into a real database, building indices and getting good
+query performance?  B/c data is ephmeral, queries are ephmeral, but
+analyst/programmer should profit from disciplined access/querying of
+their data.  Don't abandon them to Perl. 
+
