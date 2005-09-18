@@ -464,15 +464,15 @@ $(GEN_DIR)/%.o time_pglx_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 
 time_Ig_%: time_read_Ig_%_$(PADS_KIND)
 	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) \
-	Ig_$*_$(PADS_KIND).time
+	Ig_$*_$(PADS_SIZE)_$(PADS_KIND).time
 
 time_SyS_%: time_read_SyS_%_$(PADS_KIND)
 	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) \
-	SyS_$*_$(PADS_KIND).time
+	SyS_$*_$(PADS_SIZE)_$(PADS_KIND).time
 
 time_CaS_%: time_read_CaS_%_$(PADS_KIND)
 	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) \
-	CaS_$*_$(PADS_KIND).time
+	CaS_$*_$(PADS_SIZE)_$(PADS_KIND).time
 
 process_Ig_%: $(TIMING_DIR)/Ig_%_$(PADS_KIND).time
 	@export PROCESS_ONLY=1;\
@@ -487,7 +487,7 @@ process_CaS_%: $(TIMING_DIR)/CaS_%_$(PADS_KIND).time
 	$(TIMING_SCR) ./$<  $(DATA_DIR) $(TIMING_DIR) $*.$(PADS_SIZE) CaS_$*_$(PADS_KIND).time
 
 
-do_time_pads: time_CaS_$(PADS_FORMAT)
+# do_time_pads: time_CaS_$(PADS_FORMAT)
 # do_time_pglx: pglx_$(PGLX_KIND)_$(PGLX_FORMAT)
 # 	 ./$< $(DATA_DIR)/$(PGLX_FORMAT).$(PGLX_SIZE) >| $(TIMING_DIR)/$<_$(PGLX_SIZE).time
 

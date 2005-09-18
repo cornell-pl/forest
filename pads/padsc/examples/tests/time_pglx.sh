@@ -8,6 +8,7 @@ size=$3
 if [[ $format = dibbler_new && $kind = bulk ]]; then
     case $size in
 	10MB) alloc_hint=50000;;
+	20MB) alloc_hint=100000;;
 	50MB) alloc_hint=250000;;
 	100MB) alloc_hint=500000;;
     esac
