@@ -90,14 +90,7 @@ structure of the data source can change over time and he does not want
 his questions to be brittle.  E.g., if using Perl, you don't want to
 have to change the Perl program each time a small change occurs in the
 structure of the data.  Data sources can be large.  Format conversion
-from ad hoc to standard format.  }
-
-We had tools designed to address aspects of the analyst's problem in
-isolation: PADS~\cite{pldi05} and Galax~\cite{galax}.  PADS allows
-users to describe ad hoc data sources declaratively and then generates
-error-aware parsers and tools for manipulating the sources, including
-statistical profiling tools.  Galax supports declarative querying of
-semi-structured data sources via XQuery.
+from ad hoc to standard format.  
 
 We had/have solutions to each of these problems in isolation: PADS and
 Galax.  Story of this paper is the interaction of these systems to
@@ -106,6 +99,29 @@ solve all the data analyst's problems simultaneously.
 2. Query it and convert to XML (XQuery) 
 3. Deal with scale.
 Problem focussed, not tool focussed. 
+
+}
+
+We had tools designed to address aspects of the analyst's problem in
+isolation: PADS~\cite{pldi05} and Galax~\cite{galax}.  PADS allows
+users to describe ad hoc data sources declaratively and then generates
+error-aware parsers and tools for manipulating the sources, including
+statistical profiling tools.  Galax supports declarative querying of
+semi-structured data sources via XQuery.  Such querying would allow
+the analyst to explore the data in the first place, produce the
+answers to her questions in the second, and potentially convert the
+data into XML format to faciliate further downstream processing with
+the vast array of XML-based tools.  The challenge we faced was to
+integrate these tools in a way that could scale to the large ad hoc
+data sources we have seen in practice.  
+
+\scream{Rest of this section still in outline form.}
+To achieve this integration, we had to evolve PADS and Galax in
+parallel, modifying the implementation of Galax to support an abstract
+data model and then augmenting PADS with the ability to generate
+instances of this data model.  
+
+
 
 Systems were developed in parallel.  Solving the above problem
 required some additional engineering: implementation of Galax's
@@ -178,7 +194,7 @@ of compiled name access over interpreted name access.
 \subsection{Example Scenario}
 \label{subsec:example}
 
-\figref{figure:dibbler-records}
+%\figref{figure:dibbler-records}
 In the telecommunications industry, the term \textit{provisioning} refers to
 the process of converting an order for phone service into the
 actual service.  This process is complex, involving many interactions
@@ -193,7 +209,7 @@ and one record per order.  Each order record contains a header
 followed by a nested sequence of events.  The header has 13 pipe
 separated fields: the order number, AT\&T's internal order number, the
 order version, four different telephone numbers associated with the
-order, the zip code of the order, a billing identifier, the order
+order, the zip code, a billing identifier, the order
 type, a measure of the complexity of the order, an unused field, and
 the source of the order data.  Many of these fields are optional, in
 which case nothing appears between the pipe characters.  The billing
@@ -223,7 +239,7 @@ formats!
 
 The data analyst's first task is to write a parser for the
 \dibbler{} data  format.  Like many ad hoc data sources, \dibbler{} data
-often contains unexpected values or corrupted data feeds, so the
+can contain unexpected or corrupted values, so the
 parser must handle errors robustly to avoid corrupting the results of
 analyses.  Today, parsers for ad hoc formats are often hand-crafted in 
 \perl{} or \C{}.  Unfortunately, writing parsers this way is tedious and
@@ -316,13 +332,13 @@ documentation.
 \label{figure:dibbler}
 \end{figure}
 
-Analysts working with ad hoc data also like to query their data.  
+Analysts working with ad hoc data also often query their data.  
 Questions posed by the \dibbler{} analyst include ``Select all
 orders starting within a certain time window,'' ``Count the number of
 orders going through a particular state,'' and ``What is the average
 time required to go from a particular event state to another
 particular event state''.  Such queries are useful for rapid
-information discovery and for vetting errors and anomolies in data
+information discovery and for vetting errors and anomalies in data
 before it proceeds to a down-stream process or is loaded into a 
 database system. 
 
