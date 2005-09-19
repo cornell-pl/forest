@@ -320,9 +320,6 @@ RBuf_reserve(RBuf_t *rbuf, void **buf_out, size_t eltSize,
       new_size = (new_size >> 3) << 3;
     }
   } else { /* hint helps, so use it */
-    if (maxEltHint > 128 * numElts) {
-      maxEltHint = 128 * numElts; /* don't get too carried away */
-    }
     /* round eltSize * maxEltHint up to nearest multiple of 8 */
     new_size = eltSize * maxEltHint + 7;
     new_size = (new_size >> 3) << 3;
@@ -423,9 +420,6 @@ RBuf_reserve_dbg(RBuf_t *rbuf, void **buf_out, size_t eltSize,
       new_size = (new_size >> 3) << 3;
     }
   } else { /* hint helps, so use it */
-    if (maxEltHint > 128 * numElts) {
-      maxEltHint = 128 * numElts; /* don't get too carried away */
-    }
     /* round eltSize * maxEltHint up to nearest multiple of 8 */
     new_size = eltSize * maxEltHint + 7;
     new_size = (new_size >> 3) << 3;
