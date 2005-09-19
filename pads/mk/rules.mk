@@ -156,8 +156,19 @@ STATIC_ZLIB_NM_D = $(mam_cc_PREFIX_ARCHIVE)z$(mam_cc_SUFFIX_ARCHIVE)
 STATIC_DLL_LIB_NM_O = $(mam_cc_PREFIX_ARCHIVE)dll$(mam_cc_SUFFIX_ARCHIVE)
 STATIC_DLL_LIB_NM_D = $(mam_cc_PREFIX_ARCHIVE)dll$(mam_cc_SUFFIX_ARCHIVE)
 
+ifndef USE_GALAX
 PADS_NAME = pads
-PADSGALAX_NAME = $(PADS_NAME)-galax
+PADS_LIBOPT_O = -lpads
+PADS_LIBOPT_D = -lpads-g
+else
+PADS_NAME = pads-for-galax
+PADS_LIBOPT_O = -lpads-for-galax
+PADS_LIBOPT_D = -lpads-for-galax-g
+endif
+
+PADSGALAX_NAME = pads-galax
+PADSGALAX_LIBOPT_O = -lpads-galax
+PADSGALAX_LIBOPT_D = -lpads-galax-g
 
 NORMAL_STATIC_PADSLIB_NM_O = $(mam_cc_PREFIX_ARCHIVE)$(PADS_NAME)$(mam_cc_SUFFIX_ARCHIVE)
 NORMAL_STATIC_PADSLIB_NM_D = $(mam_cc_PREFIX_ARCHIVE)$(PADS_NAME)-g$(mam_cc_SUFFIX_ARCHIVE)
@@ -519,13 +530,13 @@ endif
 ifdef USE_GALAX
 # Note: PCRE_LIB_DIR needs to be defined in any makefile using Galax.
 DYNAMIC_LIBS_O += \
-  -lpads-galax $(SHARED_ASTLIB_O)  \
+  $(PADSGALAX_LIBOPT_O) $(SHARED_ASTLIB_O)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 else 
-DYNAMIC_LIBS_O += -lpads $(SHARED_ASTLIB_O) 
+DYNAMIC_LIBS_O += $(PADS_LIBOPT_O) $(SHARED_ASTLIB_O) 
 endif
 SHARED_PADSLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_O)
 SHARED_PGLXLIB_DEP_O = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_O)
@@ -552,13 +563,13 @@ DYNAMIC_LIBS_D += -lm
 endif
 ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
-  -lpads-galax-g $(SHARED_ASTLIB_D)  \
+  $(PADSGALAX_LIBOPT_D) $(SHARED_ASTLIB_D)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
   -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 else
-DYNAMIC_LIBS_D += -lpads-g  $(SHARED_ASTLIB_D) 
+DYNAMIC_LIBS_D += $(PADS_LIBOPT_D) $(SHARED_ASTLIB_D) 
 endif
 SHARED_PADSLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PADSLIB_NM_D)
 SHARED_PGLXLIB_DEP_D = $(INSTALL_LIBDIR)/$(SHARED_PGLXLIB_NM_D)
