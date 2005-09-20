@@ -45,70 +45,96 @@ all of XML 1.0, most of XML Schema 1.0, which is the foundation of the
 XQuery type system, and all of XQuery 1.0.  \Galax{} was designed with
 database systems research in mind.  Its architecture is modular and
 documented~\cite{galax-edbt2004}, which makes it possible for others
-to use and extend a complete XQuery implementation.  
-\Galax{}'s extensibility is provided by its abstract data model.
-Its query
+to use and extend a complete XQuery implementation.  \Galax{}'s
+extensibility is provided by its abstract data model.  Its query
 compiler produces evaluation plans in the first complete algebra for
-XQuery~\cite{galax-icde2006}, and its optimizer detects joins and
-grouping constructs in algebraic plans and produces efficient physical
-plans that employ traditional and novel join
+XQuery~\cite{galax-icde2006}.  Algebraic operators access documents
+via the abstract data model.  Lastly, \Galax{}'s optimizer detects
+joins and grouping constructs in algebraic plans and produces
+efficient physical plans that employ traditional and novel join
 algorithms~\cite{galax-icde2006}.
 
 \subsection{Galax's Abstract Data Model}
 
-~\cite{xquerydm}
+\Galax{} abstract data model is an object-oriented instance of the
+XQuery Data Model~\cite{xquerydm}, which contains tree nodes, atomic
+values and sequences of nodes and atomic values.  A tree node
+corresponds to an entire XML document or to an individual element,
+attribute, comment, or processing-instruction.
 
-Algebraic operators ``bottom out'' by invoking methods in 
-\Galax{}'s abstract data model 
+Figure~\ref{figure:galax-dm} contains part
+of Galax's data model interface~\footnote{Galax is implemented in
+O'Caml, so these signatures are in O'Caml syntax.} for a node in the
+XQuery Data Model.  Node accessors return information such as a node's
+name, the XML Schema type against which the node was validated, and
+the node's atomic-valued data if it was validated against a XML
+Schema simple type.  The \kw{parent}, \kw{child}, and \kw{attribute}
+accessors permit navigation through a document.  When no node-test
+argument is provided, these axis accessors return a sequence of nodes
+in document order.  We will explain the node-test argument shortly. 
+\begin{figure*}
+\begin{small}
+\begin{code}
+type sequence = cursor
+class virtual node : 
+object
+  (* XQuery Data Model accessors *)
+  method virtual node_name   : unit -> atomicQName option
+  method virtual type        : unit -> (schema * atomicQName)
+  method virtual typed_value : unit -> atomicValue sequence
 
+  (* Required axes *)
+  method virtual parent      : node_test option -> node option
+  method virtual child       : node_test option -> node sequence
+  method virtual attribute   : node_test option -> node sequence
 
-\Galax{}  an abstract data model.  which makes it possible for
-\Galax{} to evaluate queries simultaneously over native and virtual
-XML sources that implement the data model.   
+  (* Galax's extensions *)
+  method descendant_or_self  : node_test option -> node sequence
+  method descendant          : node_test option -> node sequence
+  method ancestor_or_self    : node_test option -> node sequence
+  method ancestor            : node_test option -> node sequence
 
-\cut{One requirement that we did not anticipate but that has become central
-to \Galax{} is extensibility, in particular, support for querying virtual
-XML data sources.}
+  ... Other accessors in XQuery Data Model ...
+\end{code}
+\end{small}
+\caption{Signatures for methods in Galax's abstract node interface}
+\label{figure :galax-dm}
+\end{figure*}
 
-Abstract object-oriented data model that permits querying of virtual
-XML sources.  
+The first six methods in Figure~\ref{figure:galax-dm} typically access
+the physical representation of a document.  For this reason, they are
+\kw{virtual}, meaning that a particular data-model instance must
+provide their concrete implementations.  In addition to the \padx{}
+data-model implementation, \Galax{} has three other implementations: a
+DOM-like representation in main memory, and two ``shredded''
+representations in main memory and in secondary
+storage~\cite{galax-ximep2004}.  The shredded data model partitions a
+document into tables of elements, attributes, and values that can
+be indexed on node names and values.
+
+\textit{Axis}::\textit{NodeTest} \kw{descendant::order}
 
 Tree data model.  Data model accessors (axis::node-tests) that can/should be implemented
 efficiently by the underlying source are pushed into the OO tree data
 model.  Default implementations for sources that don't do anything
 clever.   
-\begin{figure*}
-\begin{small}
-\begin{code}
-class virtual node : 
-object
-  (* Implementation that provides this node *)
-  method virtual implementation : unit -> string
 
-  (* XQuery Data Model accessors *)
-  method virtual node_name  : unit -> atomicQName option
 
-  (* Axes *)
-  method virtual parent     : node_test option -> node option
-  method virtual children   : node_test option -> node cursor
-  method descendant_or_self : node_test option -> node cursor
+The second sub-group contains operators for tree navigation and
+projection (in the style of~\cite{projection}). The TreeJoinOp is a
+set-at-a-time operator for navigation, which takes a set of nodes in
+document order and returns a set of nodes in document order after
+applying the given step. It can be implemented either as a combination
+of iteration with navigational access on the data model or as an
+advanced kind of XPath join, such as that proposed
+in~\cite{grust03staircase}.
 
-  ... Other methods of XQuery Data Model ...
-
-\end{code}
-\end{small}
-\caption{Signatures for methods in Galax's abstract data model}
-\end{figure*}
+.  which makes it possible for
+\Galax{} to evaluate queries simultaneously over native and virtual
+XML sources that implement the data model.   
 
 Motivation for abstract data model: Supporting PADS and secondary
 storage system occurred at same time.  Data and information
 integration.  
 
-Implementations provided: Main-memory DOM-like rep; Main-memory
-shredded (HashTable) rep; Secondary-storage shredded rep; PADS.
-
-Part of PADX implementation are generic functions that implement data
-model accessors.  PADS compiler generates type-specific functions for
-walking virtual XML tree.  Relate back to type-specific library
-functions mentioned in last section.
 

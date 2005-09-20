@@ -40,8 +40,8 @@ Generated XML Schema.
 \begin{figure*}
 \begin{small}
 \begin{code}
-<xs:schema targetNamespace="file:sirius.p"
-           xmlns="file:sirius.p"
+<xs:schema targetNamespace="\kw{file:/example/sirius.p}"
+           xmlns="file:/example/sirius.p"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:p="http://www.padsproj.org/pads.xsd">
 <xs:import namespace = "http://www.padsproj.org/pads.xsd".../>
@@ -93,24 +93,28 @@ Schema.
 \end{small}
 
 Example of query that uses generated schema.
+\begin{figure*}
 \begin{small}
 \begin{code}
-declare namespace p = "http://www.padsproj.org/pads.xsd";
-
-import schema default element namespace "file:/example/sirius.p"
-  schemaLocation "file:/example/sirius.xsd";
-
-declare variable $pads as document-node(PSource) external; 
+import schema default element namespace "\kw{file:/example/sirius.p}";
+declare variable \kw{$pads} as \kw{document-node(PSource)} external; 
 
 $pads/Psource/orders/elt[events/elt[1]
-  [tstamp >= xs:dateTime("2004-10-01:00:00:00") and 
-   tstamp < xs:date("2004-11-01:00:00:00") ]]
+  [tstamp >= xs:dateTime("2004-10-01:00:00:00") and tstamp < xs:date("2004-11-01:00:00:00") ]]
 \end{code}
 \end{small}
+\caption{\padx{} query with schema import}
+\label{figure:padx-query}
+\end{figure*}
 
 How to access data files:  fn:doc("pads:/example/sirius.data");
 
 \subsection{Physical Data Model}
+
+Part of PADX implementation are generic functions that implement data
+model accessors.  PADS compiler generates type-specific functions for
+walking virtual XML tree.  Relate back to type-specific library
+functions mentioned in last section.
 
 Implementation of Galax's Abstract Tree Model.
 
