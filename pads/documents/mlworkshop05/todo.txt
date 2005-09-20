@@ -1,21 +1,21 @@
 Post-submission:
 
 document:
-- make email addresses consistent.
+x make email addresses consistent.
 
 intro.tex:
 - last par. before sec. 1.1 is repetative.
 x erroneous -> erroneous records
-- where do we mention "work in progress"?
+x where do we mention "work in progress"?
 
 descr.tex:
-- are anonymous fields really "a second form of singleton type"?
+x are anonymous fields really "a second form of singleton type"?
 x remove: backtracking, nondetermisic -> nondeterministic
 x NL -> Peor, EOF -> Peof
 x footnote 6: "an fused value"
 
 trans.tex:
-- Figure: Error filter for \dibbler{} data
+x Figure: Error filter for \dibbler{} data
   Type entry not defined anywhere in paper.
 x "To preserve soundness, we do not permit programmers to construct
   descriptors". remove, no longer true.

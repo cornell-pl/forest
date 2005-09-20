@@ -200,6 +200,7 @@ programmers might want to clean their data, \ie{}, filter out data containing er
 
 \begin{figure}
 \begin{code}
+type entry = order\_header ** events
 type streams = entry stream * entry stream
 type entry\_array = entry Parray(Peor,Peof)
 \mbox{}

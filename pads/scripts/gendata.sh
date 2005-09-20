@@ -6,7 +6,7 @@ fmt=$2
 # target file size for generated data
 targetSize=$3
 
-# file name for generated data. outname must be one word.
+# file name for generated data. Must be one word.
 targetFile=$4
 
 function getFifth { echo $5; }
