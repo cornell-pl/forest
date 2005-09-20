@@ -1,5 +1,68 @@
 \section{Using \pads{} to Access Ad Hoc Data [Kathleen]}
 \label{section:pads}
+In this section, we give a brief overview of \pads{}.  More
+information may be found in~\cite{pldi05,padsmanual}.
+A \pads{} specification describes the physical layout and 
+semantic properties of an ad hoc data source. 
+The language provides a type-based model:
+basic types specify atomic data such as integers, strings, dates, \etc{}, while
+structured types describe compound data built from simpler pieces.
+The \pads{} library provides a collection of useful base types.
+Examples include
+8-bit signed integers (\cd{Pint8}),
+32-bit unsigned integers (\cd{Puint32}),
+IP addresses (\cd{Pip}), 
+dates (\cd{Pdate}), and strings (\cd{Pstring}).
+By themselves, these base types do not provide sufficient information for parsing
+because they do not indicate how the data is coded, \ie{}, in ASCII, EBCDIC, or binary.  
+To resolve this ambiguity, \pads{} uses the \textit{ambient} coding.
+By default, the ambient coding is ASCII, but programmers can customize
+it as appropriate.
+
+To describe more complex data, \pads{} provides a collection of 
+structured types loosely based on \C{}'s type structure.
+In particular, \pads{} has 
+\kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s to describe
+record-like structures, alternatives, and sequences, respectively.
+\kw{Penum}s describe a fixed collection of literals, while \kw{Popt}s 
+provide convenient syntax for optional data.
+Each of these
+types can have an associated predicate that indicates whether a
+value calculated from the physical specification is indeed a legal
+value for the type.  For example, a predicate might require that two
+fields of a \kw{Pstruct} are related or that the elements
+of a sequence are in increasing order.  Programmers can specify such
+predicates using \pads{} expressions and functions, 
+written using a \C{}-like syntax.
+Finally, \pads{} \kw{Ptypedef}s can be used
+to define new types that add further constraints to existing types.
+
+\pads{} types can be parameterized by values.
+This mechanism serves both to reduce the number of base types and to permit the
+format and properties of later portions of the data to depend upon earlier portions.
+For example, 
+the base type \cd{Puint16_FW(:3:)} specifies an unsigned two byte integer
+physically represented by exactly three characters, while the type
+\cd{Pstring(:' ':)} 
+describes a string terminated by a space.  Parameters can be 
+used with compound types to specify the size of an array or which
+branch of a union should be taken.
+
+
+We will use the example in \figref{figure:dibbler} to illustrate
+various features of the \pads{} language.  In \pads{} descriptions,
+types are declared before they are used, so the type that describes
+the totality of the data source appears at the bottom of the description.
+
+\kw{Pstruct}s describe fixed sequences of data with unrelated types.
+In the \dibbler{} example, the type declaration for \cd{order\__t}
+illustrates a simple \kw{Pstruct}.  It starts with an
+\cd{order\_header} followed by a timestamp \cd{tstamp}, separated by
+the literal character \kw{'|'}.
+\pads{} supports character, string, and regular expression literals,
+which are interpreted with the ambient character  encoding.
+
+\subsection{outline}
 
 Focus on expressiveness of data description language.
 

@@ -301,12 +301,11 @@ documentation.
  '|';  Puint32             order\_details;
  '|';  Pstring(:'|':)      unused;
  '|';  Pstring(:'|':)      stream;
- '|';
 \};
 \mbox{}
 \kw{Pstruct} event\_t \{
-  Pstring(:'|':)    state;   
-  Punixtime         tstamp;
+       Pstring(:'|':)    state;   
+  '|'; Punixtime         tstamp;
 \};
 \mbox{}
 \kw{Parray} event\_seq\_t \{
@@ -314,8 +313,8 @@ documentation.
 \};
 \mbox{}
 \kw{Precord} \kw{Pstruct} order\_t \{
-  order\_header\_t  order\_header;
-  event\_seq\_t     events;
+       order\_header\_t  order\_header;
+  '|'; event\_seq\_t     events;
 \};
 \mbox{}
 \kw{Parray} orders\_t \{
