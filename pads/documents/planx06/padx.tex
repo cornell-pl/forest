@@ -48,22 +48,23 @@ Generated XML Schema.
 ...
 <xs:complexType name="\kw{order_header_t}">
  <xs:sequence>
-  <xs:element name="order_num" type="p:val_Puint32"/>
-  <xs:element name="att_order_num" type="p:val_Puint32"/>
-  <xs:element name="ord_version" type="p:val_Puint32"/>
+  <xs:element name="\kw{order_num}"     type="\kw{p:val_Puint32}"/>
+  <xs:element name="\kw{att_order_num}" type="\kw{p:val_Puint32}"/>
+  <xs:element name="\kw{ord_version}"   type="\kw{p:val_Puint32}"/>
   <!-- More local element declarations -->
-  <xs:element name="pd" type="\kw{p:PStruct_pd}" minOccurs="0"/>
+  <xs:element name="\kw{pd}"            type="\kw{p:PStruct_pd}" minOccurs="0"/>
  </xs:sequence>
 </xs:complexType>
 <!-- More complex type declarations -->
 <xs:complexType name="\kw{orders_t}">
  <xs:sequence>
-  <xs:element name="\kw{elt}" type="order_t" maxOccurs="unbounded"/>
-  <xs:element name="\kw{length}" type="p:Puint32"/>
-  <xs:element name="\kw{pd}" type="\kw{p:Parray_pd}" minOccurs="0"/>
+  <xs:element name="\kw{elt}"    type="\kw{order_t}" maxOccurs="unbounded"/>
+  <xs:element name="\kw{length}" type="\kw{p:Puint32}"/>
+  <xs:element name="\kw{pd}"     type="\kw{p:Parray_pd}" minOccurs="0"/>
  </xs:sequence>
 </xs:complexType>
 ...
+<xs:element name="PSource" type="summary"/>
 </xs:schema>
 \end{code}
 \end{small}
@@ -76,16 +77,16 @@ Schema.
 \begin{small}
 \begin{code}
 <xs:complexType name="\kw{val_Puint32}">
-  <xs:choice>
-   <xs:element name="val" type="p:Puint32"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:\kw{choice}>
+   <xs:element name="\kw{val}" type="\kw{p:Puint32}"/>
+   <xs:element name="\kw{pd}"  type="\kw{p:Pbase_pd}"/>
+  </xs:\kw{choice}>
 </xs:complexType>
 <xs:complexType name="\kw{Pbase_pd}">
  <xs:sequence>
-   <xs:element name="\kw{pstate}"  type="p:Pflags_t"/>
-   <xs:element name="\kw{errCode}" type="p:PerrCode_t"/>
-   <xs:element name="\kw{loc}"     type="p:Ploc_t"/>
+   <xs:element name="\kw{pstate}"  type="\kw{p:Pflags_t}"/>
+   <xs:element name="\kw{errCode}" type="\kw{p:PerrCode_t}"/>
+   <xs:element name="\kw{loc}"     type="\kw{p:Ploc_t}"/>
  </xs:sequence>
 </xs:complexType>
 \end{code}
@@ -95,14 +96,19 @@ Example of query that uses generated schema.
 \begin{small}
 \begin{code}
 declare namespace p = "http://www.padsproj.org/pads.xsd";
-import schema default element namespace "file:sirius.p"
-  schemaLocation "file:/somewhere/sirius.xsd";
 
-$pads/p:Psource/orders/elt[events/elt[1]
+import schema default element namespace "file:/example/sirius.p"
+  schemaLocation "file:/example/sirius.xsd";
+
+declare variable $pads as document-node(PSource) external; 
+
+$pads/Psource/orders/elt[events/elt[1]
   [tstamp >= xs:dateTime("2004-10-01:00:00:00") and 
    tstamp < xs:date("2004-11-01:00:00:00") ]]
 \end{code}
 \end{small}
+
+How to access data files:  fn:doc("pads:/example/sirius.data");
 
 \subsection{Physical Data Model}
 
@@ -151,3 +157,7 @@ records location in the file (so we can re-read it if necessary).
 Put in PADX signatures for constructing a new node and accessing
 kthChild. 
 
+Something about query evaluation:
+Although we have not explored custom evaluation plans 
+Galax's algebra or optimizer are particularly interesting in the 
+\padx{}, we expect to do so 

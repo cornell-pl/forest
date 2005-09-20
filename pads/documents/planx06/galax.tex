@@ -39,30 +39,36 @@ sources. Lastly, XQuery is practical: Numerous language manuals
 already exist; it is widely implemented in commercial databases; and
 it will be coming an enduring standard.
 
-\Galax{} is a complete, extensible, and efficient implementation of
-XQuery~1.0.  It includes support for all of XML 1.0, for most of XML
-Schema 1.0, which is the foundation of the XQuery type system, and for
-all of XQuery 1.0.  \Galax{} was designed with research in mind: Its
-architecture is modular and documented~\cite{edbt2004}; its query
+\Galax{}~\footnote{\texttt{http://www.galaxquery.org}} is a complete,
+extensible, and efficient implementation of XQuery~1.0.  It supports
+all of XML 1.0, most of XML Schema 1.0, which is the foundation of the
+XQuery type system, and all of XQuery 1.0.  \Galax{} was designed with
+database systems research in mind.  Its architecture is modular and
+documented~\cite{galax-edbt2004}, which makes it possible for others
+to use and extend a complete XQuery implementation.  
+\Galax{}'s extensibility is provided by its abstract data model.
+Its query
 compiler produces evaluation plans in the first complete algebra for
-XQuery~\cite{icde2006}; and its optimizer detects joins and grouping
-constructs in algebraic plans and produces efficient physical plans
-that employ traditional and novel join algorithms~\cite{icde2006}.
-
-\Galax{} provides an abstract data model.  which makes it possible for
-\Galax{} to evaluate queries simultaneously over native and virtual
-XML sources that implement the data model.   
-
-Algebraic operators
-``bottom out'' by invoking methods in the abstract 
-
-\cut{One requirement that we did not anticipate but that has become central
-to \Galax{} is extensibility, in particular, support for querying virtual
-XML data sources.}
+XQuery~\cite{galax-icde2006}, and its optimizer detects joins and
+grouping constructs in algebraic plans and produces efficient physical
+plans that employ traditional and novel join
+algorithms~\cite{galax-icde2006}.
 
 \subsection{Galax's Abstract Data Model}
 
 ~\cite{xquerydm}
+
+Algebraic operators ``bottom out'' by invoking methods in 
+\Galax{}'s abstract data model 
+
+
+\Galax{}  an abstract data model.  which makes it possible for
+\Galax{} to evaluate queries simultaneously over native and virtual
+XML sources that implement the data model.   
+
+\cut{One requirement that we did not anticipate but that has become central
+to \Galax{} is extensibility, in particular, support for querying virtual
+XML data sources.}
 
 Abstract object-oriented data model that permits querying of virtual
 XML sources.  
@@ -74,10 +80,21 @@ clever.
 \begin{figure*}
 \begin{small}
 \begin{code}
+class virtual node : 
+object
+  (* Implementation that provides this node *)
+  method virtual implementation : unit -> string
+
+  (* XQuery Data Model accessors *)
   method virtual node_name  : unit -> atomicQName option
+
+  (* Axes *)
   method virtual parent     : node_test option -> node option
   method virtual children   : node_test option -> node cursor
   method descendant_or_self : node_test option -> node cursor
+
+  ... Other methods of XQuery Data Model ...
+
 \end{code}
 \end{small}
 \caption{Signatures for methods in Galax's abstract data model}
