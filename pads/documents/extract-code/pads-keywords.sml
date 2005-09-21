@@ -75,6 +75,7 @@ structure PadsKeywords : sig
               ("Pprefix", T.Keyword),
               ("Ppre", T.Keyword),
               ("Precord", T.Keyword),
+              ("Precur", T.Keyword),
               ("Pselect", T.Keyword),
               ("Psep", T.Keyword),
               ("Psource", T.Keyword),
