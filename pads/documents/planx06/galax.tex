@@ -1,16 +1,14 @@
 \section{Using XQuery and \Galax{}}
 \label{section:galax}
 
-XML~\cite{xml10} is a flexible format that can represent many classes of
-data: structured documents with large fragments of marked-up text;
+XML~\cite{xml10} is a flexible format that can represent many classes
+of data: structured documents with large fragments of marked-up text;
 homogeneous records such as those in relational databases; and
 heterogeneous records with varied structure and content such as those
 in ad hoc data sources.  XML makes it possible for applications to
 handle all these classes of data simultaneously and to exchange such
-data in a simple, extensible, and standard format.  This flexibility
-has made XML the ``lingua franca'' of data
-interoperability. \cut{making it possible for data to be exchanged
-regardless of where it is stored or how it is processed.}
+data in a standard format.  This flexibility has made XML the ``lingua
+franca'' of data integration and exchange.
 
 XQuery~\cite{xquery10} is a typed, functional query language for XML
 that supports user-defined functions and modules for structuring large
@@ -18,68 +16,68 @@ queries.  Its type system is based on XML Schema.  XQuery contains
 XPath 2.0~\cite{xpath} as a proper sub-language, which supports
 navigation, selection, and extraction of fragments of XML documents.
 XQuery also includes expressions to construct new XML values and to
-integrate or join values from multiple documents.  Unusual among
+integrate or join values from multiple documents.  \cut{Unusual among
 industry standards, XQuery also has a formal semantics, which makes it
-particularly interesting to database researchers. 
+particularly interesting to database researchers.}
 
-As XQuery was designed for querying semi-structured XML data, it is a
-natural choice for querying semi-structured ad hoc data.  It naturally
-handles irregularly structured data.  For example, the expressions in
+XQuery is a natural choice for querying ad hoc data.  Like XML data,
+ad hoc data is semi-structured, and XQuery is tailored to 
+such data.  \cut{For example, the expressions in
 Figure~\ref{figure:dibbler-query} are well-defined for order records
 containing any number of events and for event records containing any
-number of timestamps.  As noted in Section~\ref{subsec:example},
-XQuery's static type system can detect common errors at compile time.
-Such type safety is particularly valuable for long-running queries on
-large ad hoc sources and for data sources whose schemata evolve.
+number of timestamps. As noted in Section~\ref{subsec:example},}
+XQuery's static type system detects type errors at compile time, which
+is valuable when querying ad hoc sources: Long-running queries on
+large ad hoc sources do not raise dynamic type errors, and queries
+made obsolete by schema evolution are identified at compile time.
 XQuery is also ideal for specifying integrated views of multiple
 sources.  Although here we focus on querying one ad hoc source at a
-time, XQuery supports our goal of simultaneously querying multiple
-\pads{} and other XML sources. Lastly, XQuery is practical: It will
-become a standard; numerous language manuals already exist; and it is
-widely implemented in commercial databases.
+time, XQuery supports simultaneously querying of multiple \pads{} and
+other XML sources. Lastly, XQuery is practical: It will soon be a
+standard; numerous manuals already exist; and it is widely implemented
+in commercial databases.
 
-\Galax{}~\footnote{\texttt{http://www.galaxquery.org}} is a complete,
-extensible, and efficient implementation of XQuery~1.0 and was
-designed with database systems research in mind.  It supports all of
-XML 1.0, most of XML Schema 1.0, which is the foundation of the XQuery
-type system, and all of XQuery 1.0.  Its architecture is modular and
-documented~\cite{galax:edbt2004}, which makes it possible for other
-researchers to experiment with a complete XQuery implementation.  Its
-abstract data model permits experimenting with various physical
-representations of XML and non-XML data sources.  Its query compiler
-produces evaluation plans in the first complete algebra for
-XQuery~\cite{galax:icde2006}, which permits experimental comparison of
-query-compilation techniques. 
-Lastly, \Galax{}'s optimizer detects
-joins and grouping constructs in algebraic plans and produces
-efficient physical plans that employ traditional and novel join
-algorithms~\cite{galax:icde2006}.
+\Galax{}\footnote{\texttt{http://www.galaxquery.org}} is a complete,
+extensible, and efficient implementation of XQuery~1.0, designed with
+database systems research in mind.  It supports all of XML 1.0, most
+of XML Schema 1.0, and all of XQuery 1.0.  Its architecture is modular
+and documented~\cite{galax:edbt2004}, which makes it possible for
+other researchers to experiment with a complete XQuery implementation.
+Its query compiler produces evaluation plans in the first complete
+algebra for XQuery~\cite{galax:icde2006}, which permits experimental
+comparison of query-compilation techniques.  Lastly, its query
+optimizer produces efficient physical plans that employ traditional
+and novel join algorithms~\cite{galax:icde2006}, which makes it
+possible to apply non-trivial queries to large XML sources.  Lastly,
+its abstract data model permits experimenting with various physical
+representations of XML and non-XML data sources.  The abstract data
+model is the focus of the the rest of this section.
 
 \subsection{Galax's Abstract Data Model}
 
-The XQuery Data Model~\cite{XPath:DataModel} contains tree nodes,
-atomic values and sequences of nodes and atomic values.  A tree node
-corresponds to an entire XML document or to an individual element,
-attribute, comment, or processing-instruction.  \Galax{}'s abstract
-data model is an object-oriented realization of the XQuery Data Model.
-Algebraic operators in a query-evaluation plan access documents via
-this object-oriented interface.
+\Galax{}'s abstract data model is an object-oriented realization of
+the XQuery Data Model.  The XQuery Data Model~\cite{XPath:DataModel}
+contains tree nodes, atomic values, and sequences of nodes and atomic
+values.  A tree node corresponds to an entire XML document or to an
+individual element, attribute, comment, or processing-instruction.
+Algebraic operators in a query-evaluation plan access documents by
+applying methods in the data model's object-oriented interface.
 
 Figure~\ref{figure:galax-dm} contains part of Galax's data model
-interface~\footnote{Galax is implemented in O'Caml, so these
-signatures are in O'Caml syntax.} for a node in the XQuery Data Model.
-Node accessors return information such as a node's name
-(\kw{node\_name}), the XML Schema type against which the node was
-validated (\kw{type}), and the node's atomic-valued data if it was
-validated against a XML Schema simple type (\kw{typed\_value}).  The
-\kw{parent}, \kw{child}, and \kw{attribute} methods navigate the
-document and return a node sequence containing the respective parent,
-child, or attribute nodes of the given node.
+interface\footnote{Galax is implemented in O'Caml, so these signatures
+are in O'Caml.} for a node in the XQuery Data Model.  Node
+accessors return information such as a node's name (\cd{node\_name}),
+the XML Schema type against which the node was validated (\cd{type}),
+and the node's atomic-valued data if it was validated against a XML
+Schema simple type (\cd{typed\_value}).  The \cd{parent}, \cd{child},
+and \cd{attribute} methods navigate the document and return a node
+sequence containing the respective parent, child, or attribute nodes
+of the given node.
 
 \begin{figure*}
 \begin{small}
 \begin{code}
-type sequence = cursor
+type \kw{sequence} = \kw{cursor}
 class virtual \kw{node} : 
 object
   (* Selected XQuery Data Model accessors *)
@@ -105,33 +103,41 @@ object
 \label{figure :galax-dm}
 \end{figure*}
 
-The first six methods in Figure~\ref{figure:galax-dm} are virtual,
-because they access the physical representation of a document, and
-therefore a particular data model must provide their concrete
-implementations.  \Galax{} provides default implementations for the
-four {descendant} and ancestor axes, which are defined recursively in
-terms of the {child} and {parent} methods.  These defaults are
-overridden by implementations that can provide more efficient
-implementations.  For example, some physical document representations
-permit axes to be implemented by range queries over relational
+The first six methods in Figure~\ref{figure:galax-dm} access the
+physical representation of a document, therefore a particular data
+model must provide their concrete implementations.  \Galax{} provides
+default implementations for the four {descendant} and ancestor axes,
+which are defined recursively in terms of the {child} and {parent}
+methods.  These defaults are overridden by implementations that can
+provide implementations more efficient than the defaults.  For
+example, some physical document representations permit axes to be
+implemented by range queries over relational
 tables~\cite{grust03staircase}.
 
 All the axis methods take an optional node-test argument, which is a
 boolean predicate on the names or types of nodes in the given axis.
-For example, the \textit{Axis}:\textit{NodeTest} expression
-\kw{descendant::order} returns nodes in the descendant axis with name
-\kw{order}.  \Galax{} implements \textit{Axis}:\textit{NodeTest}
-expressions by invoking the corresponding methods in the data model
-and delegating evaluation of node tests to the underlying
-implementation.  Some data-model implementations, like \padx{}, can
-provide fast access to nodes by their name.
+For example, the XQuery expression \cd{descendant::order} returns
+nodes in the descendant axis with name \cd{order}.  \Galax{} compiles
+this expression into a single axis/node-test operator that invokes the
+corresponding methods in the data model, delegating evaluation of node
+tests to the underlying implementation.  Some implementations, like
+\padx{}, can provide fast access to nodes by their name.  We describe
+\padx{}'s physical data model in the next section.
 
-In addition to the \padx{} data-model implementation, \Galax{} has
-three other data-model implementations: a DOM-like representation in
-main memory and two ``shredded'' representations, one in main memory
-and one in secondary storage for very large documents (e.g., $>$
-100MB).  The shredded data model partitions a document into tables of
-elements, attributes, and values that can be indexed on node names and
+One other important feature of \Galax{}'s data model is that sequences
+are represented by \emph{cursors} (a.k.a. streams), non-functional
+lists that yield items lazily.  \Galax{}'s algebraic operators produce
+and consume cursors of values, which permits pipelined and
+short-circuited evaluation of query plans, because accessing the first
+item of a sequence does not require that the entire sequence be
+materialized, i.e., evaluated eagerly.
+
+In addition to \padx{}'s physical data model, \Galax{} has three other
+physical implementations: a DOM-like representation in main memory and
+two ``shredded'' representations, one in main memory and one in
+secondary storage for very large documents (e.g., $>$ 100MB).  The
+shredded data model partitions a document into tables of elements,
+attributes, and values that can be indexed on node names and
 values~\cite{galax:ximep2004}.
 
 \cut{Tree data model.  Data model accessors (axis::node-tests) that can/should be implemented
