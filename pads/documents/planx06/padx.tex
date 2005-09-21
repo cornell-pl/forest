@@ -142,37 +142,163 @@ How to access data files:  fn:doc("pads:/example/sirius.data");
 
 \subsection{Physical Data Model}
 
-Part of PADX implementation are generic functions that implement data
-model accessors.  PADS compiler generates type-specific functions for
-walking virtual XML tree.  Relate back to type-specific library
-functions mentioned in last section.
+% Part of PADX implementation are generic functions that implement data
+% model accessors.  PADS compiler generates type-specific functions for
+% walking virtual XML tree.  Relate back to type-specific library
+% functions mentioned in last section.
 
-Implementation of Galax's Abstract Tree Model.
+% Implementation of Galax's Abstract Tree Model.
 
-Minimum necessary to implement Galax DM:
+% Minimum necessary to implement Galax DM:
 
-1. Generic implementations of the DM accessors: axis::node-test(), children(),
-   attributes(), name(), etc. 
+% 1. Generic implementations of the DM accessors: axis::node-test(), children(),
+%    attributes(), name(), etc. 
 
-2. On PADX-side, we have a virtual handle for each node in the XML
-   tree--we call that a node rep.  Node rep contains pads handle
-   (maintains state for PADS parser); type-specific vtable of DM
-   accessors; other stuff...
+% 2. On PADX-side, we have a virtual handle for each node in the XML
+%    tree--we call that a node rep.  Node rep contains pads handle
+%    (maintains state for PADS parser); type-specific vtable of DM
+%    accessors; other stuff...
 
-   Give example of vtable for event\_t and possibly code for
-   kthChildByName. 
+%    Give example of vtable for event\_t and possibly code for
+%    kthChildByName. 
 
-When to actually read from PADS data?
+In order to export \pads data as XML, we wrap data in {\em node}
+datastructures containing all the information relevant to XML. Handles
+to these nodes are then passed to \galax which can invoke very simple
+queries on the node, such as ``what is your name? give me a list of
+your children, etc.''  Within \galax, the interface with pads is
+wrapped in a module that exports the \galax Data Model interface to
+the \galax query engine.
 
-Options: 
+The physical data model provides the means to query \pads data by
+walking a virtual XML tree.  At the core of the physical data model
+are the \cd{node} data structure and the generic node interface.
+Together, these play the same role as an abstract class in C++ and
+Java. They specify only common fields used by all nodes, and the
+required accessor methods. They do not, however, provide any method
+implementations. They are fixed elements of the system, independant of
+any particular \pads{} types.
 
-1. Bulk read: Materialize entire PADS representation, populate all of the PADS
+\begin{figure*}
+{\small
+\begin{verbatim}
+nodeRep      PADX_generic_parent      (nodeRep n)
+
+const char*  PADX_generic_name        (nodeRep n)
+const char*  PADX_generic_kind        (nodeRep n)
+item         PADX_generic_typed_value (nodeRep n)
+const char*  PADX_generic_string_value(nodeRep n)
+
+nodeRep      PADX_generic_kth_child         (nodeRep n, childIndex idx)
+nodeRep      PADX_generic_kth_child_named   (nodeRep n, childIndex idx, 
+                                             const char *name)
+\end{verbatim}
+}
+\caption{The generic node interface}
+\label{fig:generic-node-interface}
+\end{figure*}
+
+The generic node interface defines the functions that are available to the
+\pads{} data model implementation for use on nodes. The relevant portions of
+this interface are shown in \figref{fig:generic-node-interface}.
+
+The {\tt kth-child} function returns the kth child of the node
+starting from zero. The {\tt kth-child-named} function returns the node's kth
+child with the specified name. This function is most relevant to
+arrays, where all of the elements are given the same name ``elt.''
+For both functions, {\tt NULL} is a valid result, indicating that the
+requested child does not exist.
+
+\begin{figure}
+{\small
+\begin{verbatim}
+struct PDCI_node_s {
+  const char              *name;
+  const char              *kind;
+  PDCI_node_t             *parent;
+
+  void                    *m;
+  void                    *pd;
+  void                    *rep;
+
+  const PDCI_vtable_t     *vt;
+  P_t                     *pads;
+  ...
+}
+\end{verbatim}
+}
+\caption{The node structure}
+\label{fig:node-struct}
+\end{figure}
+
+The basic contents of the \cd{node} data structure are shown in
+\figref{fig:node-struct}. All nodes have a name and a kind, stored as
+C-strings. Additionally, all nodes but the document node have a parent
+in the document, hence the parent field that points to another node.
+Next we have the mask, representation and parse-descriptor fields. As
+these elements of the node are type-specific, they are all typed as
+\vptr.
+
+Next we have the pointer to the node's virtual table, {\tt vt}. The
+virtual functions will often need a valid \pads handle to execute
+correctly. Therefore, we also include a pads handle field in each
+node.
+
+\subsubsection{Node implementations}
+The PADS compiler generates the type-specific implementations of the
+node functions, along with the other type-specific tools.  The
+type-specific knowledge available at compile time is used not only to
+manipulate the node's data appropriately but also to select the (type)
+correct implementations of children nodes, when necessary.  For
+example, for structures, the children are the parse-descriptor and the
+fields of the structure, each with their own type and corresponding
+node implementation.  For arrays, the children are the
+parse-descriptor, the array length, and a list of nodes with name
+``elt,'' corresponding to the elements of the array. The
+parse-descriptor is accessed through an implementation for array pds,
+the length field through an implementation for 32-bit integers, and
+each of the elements with the implementation appropriate to the
+particular element type of the array. Other datatypes are analagous.
+
+It is important to note that the XML representations of \pads data
+integrate each datastructure's parse-descriptor with the data,
+exporting it as a child of the datastructure itself. This design
+allows queries to select (or ignore) nodes based on the contents of
+their parse-descriptors in an easy and efficient manner. It also means
+that their are a fixed number of pd node implementations (approx. one for
+each type constructor), as opposed to the unlimited number of data
+node implementations, generated fresh for each new \pads{} type.
+
+In order to support the full range of \pads datatypes,
+the node data structure is designed using ``{\tt void *}
+polymorphism.'' That is, anywhere that the node architecture is not
+specific to a particular type, we use a {\tt void *} type. In this
+way, we can write type-neutral code to manipulate data nodes. For
+example, the rep and pd pointers in each node are typed as {\tt void
+  *}. 
+
+Each type-specific implementation will (down)cast such pointers to the
+appropriate type before use, relying on the (assumed) invariant that
+no only code specific to that type has manipulated those pointers.
+
+\subsubsection{Data input strategies: when to actually read from PADS data?}
+
+The flexibility of the node interface goes beyond support for
+arbitrary \pads{} types. It also allows us, for each type, to support
+alternative implementations of the interface. We take advantage of
+this flexibility to support multiple data input strategies: bulk-read
+and two forms of on-demand read.
+
+\begin{enumerate}
+\item Bulk read: Materialize entire PADS representation, populate all of the PADS
 reps.  Then PADX DM lazily invoked the DM accessors over this data.
 Problem: if data is big, it's all sitting in memory, even if the query
 only touches a fragment of the virtual XML tree.
 
-2. Smart read: 
+\item On-demand, sequential read: same as smart but does not preserve meta-data.
+   Does not permit multiple scans of data source. 
 
+\item On-demand, random access read: 
 Many common queries permit sequential, streamed access to underlying
 XML source.  Give an example.  
 
@@ -185,9 +311,7 @@ Heuristic: records are a good level of granularity to read.   Each
 smart node corresponds to one record.  When next smart node is
 accessed, a little meta-data is preserved: the node rep and the
 records location in the file (so we can re-read it if necessary).
-
-3. Linear read: same as smart but does not preserve meta-data.
-   Does not permit multiple scans of data source. 
+\end{enumerate}
 
 Put in PADX signatures for constructing a new node and accessing
 kthChild. 
@@ -196,3 +320,8 @@ Something about query evaluation:
 Although we have not explored custom evaluation plans 
 Galax's algebra or optimizer are particularly interesting in the 
 \padx{}, we expect to do so 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
