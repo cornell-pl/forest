@@ -9,34 +9,39 @@
 \label{figure:padx-arch}
 \end{figure}
 
-Put the pieces all together.  Sythesis of the two systems here. 
-(Symbiotic)
+Figure~\ref{figure:padx-arch} depicts the \padx{} architecture.  From
+a \pads{} description, the compiler generates an XML Schema
+description that specifies the virtual XML view of the corresponding
+\pads{} data; an XQuery prolog that imports the corresponding schema
+and that associates the input data with the correct schema type; and a
+type-specific library that maintains the information necessary to
+support the \padx{} data model.
+
+An instance of the \padx{} runtime system, called the ``query
+corral'', consists of the \Galax{} query engine, a type-specific query
+prolog, the \padx{} implementation of the \Galax{} data model, a
+type-specific \padx{} library, and the \pads{} runtime system.  Note
+that the resulting query corral is \emph{specialized} for a particular
+\pads{} description.  From the query prolog, it imports the XML Schema
+that corresponds to the underlying type-specific library, i.e., it
+does permit the query writer to import an arbitrary schema.  This
+restriction guarantees that the XQuery program is typed with respect
+to the correct XML Schema and that the underlying data model is an
+instance of the specified XML Schema.  At runtime, the query corral
+takes an XQuery program and a \pads{} data source and produces the
+query result in XML.  We discuss the problem of producing native
+\pads{} values in Section~\ref{section:future}. 
+
+Section~\ref{section:pads} describes the output of the \pads{}
+compiler.  Here, we focus on the mapping from a description to XML
+Schema and on the features of the type-specific data model.
 
 \subsection{Virtual XML view of PADS data}
 
-Embedding of PADS types in XML Schema.  One-to-one mapping from
-PADS compound types to XML Schema complex types.  One-to-one mapping
-from PADS base types to XML Schema simple types.  Field in compound
-types are realized as local elements in XML Schema. 
-
-All the compound types are annotated with an optional parse-descriptor
-(absent if no errors occured).  Allows users to query error
-structures, which may be most important data.  Other types annotated
-with corresponding fields from PADS rep, e.g., arrays have a length. 
-
-Extra level of indirection in representation of arrays---wrap each
-item in an element. 
-
-Extra level of indirection for base types: must contain the value of
-the base type and an optional parse-descriptor, if an error has
-occurred. 
-
-We don't take complete advantage of XML Schema, e.g., Penum types
-could be modeled by XML Schema enumeration simple types, but currently
-unsupported.
-
-Generated XML Schema.
-
+We use the fragment of the XML Schema in
+Figure~\ref{figure:dibbler-schema}, which corresponds to the
+description in Figure~\ref{figure:dibbler}, to illustrate the mapping
+of a \pads{} description to XML Schema.
 \begin{figure*}
 \begin{small}
 \begin{code}
@@ -76,6 +81,9 @@ Generated XML Schema.
 Schema. 
 \begin{small}
 \begin{code}
+<xs:simpleType name="Puint32">
+  <xs:restriction base="xs:unsignedInt"/>
+</xs:simpleType>
 <xs:complexType name="\kw{val_Puint32}">
   <xs:\kw{choice}>
    <xs:element name="\kw{val}" type="\kw{p:Puint32}"/>
@@ -92,19 +100,42 @@ Schema.
 \end{code}
 \end{small}
 
-Example of query that uses generated schema.
+Each compound type is mapped to an XML Schema complex type.
+
+Each base type is mapped to an XML Schema simple type.  Since the base
+types do not change, the corresponding XML Schema types are defined
+once in \cd{pads.xsd}, which is imported into all generated schemata. 
+
+  One-to-one mapping
+from PADS base types to XML Schema simple types.  Field in compound
+types are realized as local elements in XML Schema. 
+
+All the compound types are annotated with an optional parse-descriptor
+(absent if no errors occured).  Allows users to query error
+structures, which may be most important data.  Other types annotated
+with corresponding fields from PADS rep, e.g., arrays have a length. 
+
+Extra level of indirection in representation of arrays---wrap each
+item in an element. 
+
+Extra level of indirection for base types: must contain the value of
+the base type and an optional parse-descriptor, if an error has
+occurred. 
+
+We don't take complete advantage of XML Schema, e.g., Penum types
+could be modeled by XML Schema enumeration simple types, but currently
+unsupported.
+
+Example of query prolog. 
 \begin{figure*}
 \begin{small}
 \begin{code}
 import schema default element namespace "\kw{file:/example/sirius.p}";
 declare variable \kw{$pads} as \kw{document-node(PSource)} external; 
-
-$pads/Psource/orders/elt[events/elt[1]
-  [tstamp >= xs:dateTime("2004-10-01:00:00:00") and tstamp < xs:date("2004-11-01:00:00:00") ]]
 \end{code}
 \end{small}
-\caption{\padx{} query with schema import}
-\label{figure:padx-query}
+\caption{\padx{} generated query prolog}
+\label{figure:padx-query-prolog}
 \end{figure*}
 
 How to access data files:  fn:doc("pads:/example/sirius.data");

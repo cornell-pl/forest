@@ -90,7 +90,7 @@ object
   method virtual \kw{child}       : node_test option -> node sequence
   method virtual \kw{attribute}   : node_test option -> node sequence
 
-  (* Galax's extensions *)
+  (* Other axes *)
   method \kw{descendant_or_self}  : node_test option -> node sequence
   method \kw{descendant}          : node_test option -> node sequence
   method \kw{ancestor_or_self}    : node_test option -> node sequence
@@ -140,11 +140,6 @@ shredded data model partitions a document into tables of elements,
 attributes, and values that can be indexed on node names and
 values~\cite{galax:ximep2004}.
 
-\cut{Tree data model.  Data model accessors (axis::node-tests) that can/should be implemented
-efficiently by the underlying source are pushed into the OO tree data
-model.  Default implementations for sources that don't do anything
-clever. }
-
 \cut{The second sub-group contains operators for tree navigation and
 projection (in the style of~\cite{projection}). The TreeJoinOp is a
 set-at-a-time operator for navigation, which takes a set of nodes in
@@ -152,14 +147,4 @@ document order and returns a set of nodes in document order after
 applying the given step. It can be implemented either as a combination
 of iteration with navigational access on the data model or as an
 advanced kind of XPath join, such as that proposed}
-
-\cut{
-.  which makes it possible for
-\Galax{} to evaluate queries simultaneously over native and virtual
-XML sources that implement the data model.   
-
-Motivation for abstract data model: Supporting PADS and secondary
-storage system occurred at same time.  Data and information
-integration.  }
-
 

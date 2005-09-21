@@ -9,10 +9,10 @@ paper.bbl: intro.tex pads.tex galax.tex padx.tex evaluation.tex paper.tex ../pld
 	latex paper.tex
 	bibtex paper
 
-paper.pdf: paper.ps
+paper.pdf: paper.ps 
 	ps2pdf paper.ps
 
-paper.ps: paper.bbl $(PDFSRC) $(TEXSRC)
+paper.ps: paper.bbl $(PDFSRC) $(TEXSRC) padx-arch.ps
 	latex paper.tex
 	latex paper.tex
 	dvips -t letter paper.dvi -o
