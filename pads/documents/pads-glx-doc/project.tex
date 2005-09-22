@@ -561,7 +561,7 @@ The {\tt kth\_child, kth\_child\_named, typed\_value}, and {\tt
 corresponding names in the \pglx interface. The others will be
 discussed later.
 
-While the virtual-table approach complicates using new type-specific
+While the virtual-table approach complicates adding new type-specific
 functions, it makes using them quite simple.  The type-neutral code
 merely looks up the desired function in the virtual table and calls
 it. As long as the node was initialized correctly, the appropriate
@@ -653,7 +653,7 @@ list.
 \subsection{Extensions}
 \label{sec:node-ext}
 
-We can the basic nodes described above extend in an object-oriented
+We can extend the basic nodes described above in an object-oriented
 manner to create new node types.  First, we extend the node datatype
 itself, adding new fields as appropriate.  Then, we override old
 virtual table functions with new ones, as necessary. In our current
@@ -962,7 +962,7 @@ uniquely determines a child of that element.
 that the data of the node's ancestor element is available in memory. 
 Then, we retrieve the node's path, and, using it and the pointers to the 
 element data, we locate the node's data in memory. In the current 
-system, node revalidation occurs in the PDCI_sndNode_make_valid 
+system, node revalidation occurs in the \verb+PDCI_sndNode_make_valid+
 function, located in libpglx/smart.c. In order to better understand node 
 revalidation, we walk through the function, below:
 
@@ -1039,7 +1039,7 @@ find element in path walk");
 \end{verbatim}
 
 Now, everything should be ok and the node has been successfully 
-revalidated. As a final step, we update the node's ptr_gen indicating 
+revalidated. As a final step, we update the node's \verb+ptr_gen+ indicating 
 that its data pointers are in sync with its ancestors data pointers.
 
 \begin{verbatim}
@@ -1049,22 +1049,22 @@ that its data pointers are in sync with its ancestors data pointers.
 }
 \end{verbatim}
 
-  In order to better understand the make_valid function, we'll now 
-discuss a few of the functions that it depends on. First, though, we'll 
-describe the current implementation of paths. As we said above, a path 
-needs to be a set of directions that uniquely identify a node within an 
-element. Our solution records a list of the child indexes that, passed 
-in succession to get_kth_child - starting with the element node - would 
-return the desired node. Since, for a given node, a single index 
-uniquely determines a child of that node, a list of such indexes 
-uniquely determines a descendant of that node.
+In order to better understand the \verb+make_valid+ function, we'll now
+discuss a few of the functions that it depends on. First, though,
+we'll describe the current implementation of paths. As we said above,
+a path needs to be a set of directions that uniquely identify a node
+within an element. Our solution records a list of the child indexes
+that, passed in succession to \verb+get_kth_child+ - starting with the
+element node - would return the desired node. Since, for a given node,
+a single index uniquely determines a child of that node, a list of
+such indexes uniquely determines a descendant of that node.
 
-  The PDCI_node_getPath function, therefore, constructs (a copy of) a 
+  The \verb+PDCI_node_getPath+ function, therefore, constructs (a copy of) a 
 given node's path. Once again, for efficiency, the path is not stored 
 directly in the node and hence the function call is needed to recreate 
 the path. Once constructed, the path contains a reverse-ordered list of 
 the sequence of indexes from the element to the node and a value 
-indicating the length of the path. See include/path_walk.h for details 
+indicating the length of the path. See include/path\_walk.h for details 
 of the data structure implementing a path.
 
   With this list, we call the smart-node path walk function. Here is the 
@@ -1084,17 +1084,17 @@ _node_pathWalk((padsIN),c_m,c_pd,c_rep,(pathIN),(m_outIN),(pd_outIN),(rep_outIN)
 /* END_MACRO */
 \end{verbatim}
 
-This function simply calls the path_walk function specific to the type 
+This function simply calls the \verb+path_walk+ function specific to the type 
 of the smart node's element, inserting the appropriate casts. This 
 simplicity is due to the fact that for smart arrays, all elements have a 
 common type, and, hence, a common path walk function.
 
-  While the exact implemention of the path_walk function depends on the 
+  While the exact implemention of the \verb+path_walk+ function depends on the 
 type for which it is generated, its basic structure depends on the pads 
 type (e.g. struct, array, union, etc.). The differences in structure 
-reflect the structural differences of the kth_child functions, so 
-discussing the path_walk function for one pads type should be enough to 
-explain it for all pads types. Below we show the Pstruct path_walk 
+reflect the structural differences of the \verb+kth_child+ functions, so 
+discussing the \verb+path_walk+ function for one pads type should be enough to 
+explain it for all pads types. Below we show the Pstruct \verb+path_walk+ 
 macro, from pglx-codegen-macros.h:
 
 \begin{verbatim}
@@ -1107,7 +1107,7 @@ macro, from pglx-codegen-macros.h:
 
 If the path length is non-zero then we have not yet arrived at the 
 destination node.  Therefore, this branch will require that we 
-(recursively) call another path_walk function.
+(recursively) call another \verb+path_walk+ function.
 First, we remove the first index from the path's index list.
 
 \begin{verbatim}
@@ -1123,7 +1123,7 @@ Now, we use the index to determine which child to visit next.
 \end{verbatim}
 
 If we're visiting the pd, then we know that there is no mask. So, we can 
-already set *m_out to NULL.
+already set \verb+*m_out+ to NULL.
 
 \begin{verbatim}
       *m_out = NULL;
@@ -1131,7 +1131,7 @@ already set *m_out to NULL.
 
 As we're in the Pstruct macro, the pd is a structure pd. For an array, 
 it would be a sequenced pd. Etc. Notice that as the path variable was 
-already modified, we pass it directly to the child path_walk call - no 
+already modified, we pass it directly to the child \verb+path_walk+ call - no 
 further modification is required.
 
 \begin{verbatim}
@@ -1167,8 +1167,8 @@ Then, we indicate that the walk was successful, and we're done.
 \end{verbatim}
 
   An additional note: for each child other than the pd, a corresponding 
-case statement is inserted into the path_walk function, via a call to 
-the NODE_PW_CASE macro, in the switch statement of the if-branch:
+case statement is inserted into the \verb+path_walk+ function, via a call to 
+the \verb+NODE_PW_CASE+ macro, in the switch statement of the if-branch:
 
 \begin{verbatim}
 #define NODE_PW_CASE(fieldNumIN,fieldTy,fieldNameIN)
@@ -1181,23 +1181,27 @@ _node_pathWalk(pads,&(m->fieldNameIN),&(pd->fieldNameIN),&(rep->fieldNameIN),pat
 \end{verbatim}
 
 The field cases are quite similar to the pd case. The only thing to note 
-is that a field (may) have a mask, and so the m_out variable is passed 
-on to the field's path_walk function.
+is that a field (may) have a mask, and so the \verb+m_out+ variable is passed 
+on to the field's \verb+path_walk+ function.
 
-  In addition to the path walk macros, there are concrete path_walk 
-functions in libpglx/path_walk.c for all base types, pd types, Ploc, 
-Ppos, and PDCI_cstr. Their structure is essentially the same, so I will 
-not discuss them in detail. The only thing to note is that some of them 
-contain only terminating cases, with no recursive call to child 
-path_walk functions. This structure occurs in node types that cannot 
-contain children.
+In addition to the path walk macros, there are concrete
+\verb+path_walk+ functions in libpglx/path\_walk.c for all base types,
+pd types, \verb+Ploc+, \verb+Ppos+, and \verb+PDCI_cstr+. Their
+structure is essentially the same, so I will not discuss them in
+detail. The only thing to note is that some of them contain only
+terminating cases, with no recursive call to child \verb+path_walk+
+functions. This structure occurs in node types that cannot contain
+children.
 
-  The final function of interest is PDCI_node_getPath(PDCI_node_t *node, 
-int curLength). While a path could be stored in its entirety for each 
+The final function of interest is 
+\begin{verbatim}
+PDCI_node_getPath(PDCI_node_t *node, int curLength). 
+\end{verbatim}
+While a path could be stored in its entirety for each 
 node, doing so can consume a fair amount of space. As the only 
 difference between a node's path and its parent's path is the node's 
 index with respect to its parent, that index is the only thing we store 
-in each node. Then, when we need the path, the PDCI_node_getPath 
+in each node. Then, when we need the path, the \verb+PDCI_node_getPath+
 function recursively climbs up from the node to its ancestor, recording 
 the length of the path as it climbs. Upon reaching the ancestor it 
 allocates a path of the correct length, and then returns down the path 
