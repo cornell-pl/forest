@@ -5,7 +5,7 @@
 \begin{center}
 \epsfig{file=padx-arch.ps,width=0.47\textwidth}
 \end{center}
-\caption{\padx{} Architecture}
+\caption{Internal view of \padx{} Architecture}
 \label{figure:padx-arch}
 \end{figure}
 
@@ -36,7 +36,7 @@ Section~\ref{section:pads} describes the output of the \pads{}
 compiler.  Here, we focus on the mapping from a description to XML
 Schema and on the features of the type-specific data model.
 
-\subsection{Virtual XML view of PADS data}
+\subsection{Viewing \pads{} data as XML}	
 
 The fragment of the XML Schema in Figure~\ref{figure:dibbler-schema}
 corresponds to the description in Figure~\ref{figure:dibbler}.  We use
@@ -98,7 +98,7 @@ corresponding to one field in the \kw{Punion}.
  </xs:sequence>
 </xs:complexType>
 ...
-<xs:element name="PSource" type="summary"/>
+<xs:element name="PSource" type="summary_t"/>
 </xs:schema>
 \end{code}
 \end{small}

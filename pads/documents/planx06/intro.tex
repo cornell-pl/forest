@@ -283,19 +283,18 @@ formats!
 \end{small}
 \end{figure*}
 
-The data analyst's first task is to write a parser for the
+The analyst's first task is to write a parser for the
 \dibbler{} data  format.  Like many ad hoc data sources, \dibbler{} data
 can contain unexpected or corrupted values, so the
 parser must handle errors robustly to avoid corrupting the results of
-analyses.  Today, parsers for ad hoc formats are often hand-crafted in 
+analyses.  \cut{Today, parsers for ad hoc formats are often hand-crafted in 
 \perl{} or \C{}.  Unfortunately, writing parsers this way is tedious and
 error prone, complicated by the lack of documentation, convoluted
 encodings designed to save space, and the need to produce efficient
 code.  Moreover, the analyst's hard-won understanding of the data ends
 up embedded in parsing code, making long-term maintenance difficult
 for the original writers and sharing the knowledge with others nearly
-impossible.
-
+impossible.}
 With \pads{}, the analyst writes a declarative data description of the
 physical layout of their data.  The language also permits analysts to
 describe expected semantic properties of their data so that deviations
@@ -305,7 +304,7 @@ in a \pads{} description all that they know about a given data source.
 \figref{figure:dibbler} gives the \pads{} description for the
 \dibbler{} data format.  In \pads{} descriptions, types are declared
 before they are used, so the type that describes the entire data
-source, \cd{summary}, appears at the bottom of the description.  In
+source, \cd{summary\_t}, appears at the bottom of the description.  In
 the next section, we use this example to describe several features of
 the \pads{} language.  Here, we simply note that the data analyst
 writes this description, and the \pads{} compiler produces
@@ -367,7 +366,7 @@ documentation.
   order\_t[];
 \};
 \mbox{}
-\kw{Psource} \kw{Pstruct} summary\{
+\kw{Psource} \kw{Pstruct} summary\_t\{
   summary\_header\_t  summary\_header;
   orders\_t          orders;
 \};
@@ -377,7 +376,7 @@ documentation.
 \label{figure:dibbler}
 \end{figure}
 
-Analysts working with ad hoc data also often query their data.  
+Analysts working with ad hoc data often want to query their data.  
 Questions posed by the \dibbler{} analyst include ``Select all
 orders starting within a certain time window,'' ``Count the number of
 orders going through a particular state,'' and ``What is the average
@@ -403,7 +402,7 @@ $pads/Psource/orders/elt[events/elt[1]
 With \padx{}, the synthesis of \pads{} and \Galax{}, the analyst
 writes declarative XQuery expressions to query his ad hoc data source.
 Because XQuery is designed to manipulate semi-structured data, its
-expressiveness matches \pads{} data sources well.  XQuery is a
+expressiveness matches ad hoc data sources well.  XQuery is a
 Turing-complete language and therefore powerful
 enough to express all the questions above.  For example,
 Figure~\ref{figure:dibbler-query} contains an XQuery expression that
@@ -414,5 +413,5 @@ query language for ad hoc data.  In particular, XQuery queries may be
 statically typed, which helps detects common errors at compile time.
 For example, static typing would raise an error if the path expression
 in Figure~\ref{figure:dibbler-query} referred to \cd{ordesr} instead
-of \cd{orders} or if the analyst erroneoulsy compared the timestamp
-\cd{tstamp} to a string.
+of \cd{orders} or if the analyst erroneously compared the timestamp
+value in \cd{tstamp} to a string.

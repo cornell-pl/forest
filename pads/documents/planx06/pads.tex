@@ -2,7 +2,7 @@
 \label{section:pads}
 In this section, we give a brief overview of \pads{}, focusing on its
 data description language and the portions of the libraries it generates
-that are relevant to PADX. More information about \pads{} is
+that are relevant to \padx{}. More information about \pads{} is
 available~\cite{pldi05,padsmanual}.   
 
 
@@ -32,18 +32,18 @@ In particular, \pads{} has
 record-like structures, alternatives, and sequences, respectively.
 \kw{Penum}s describe a fixed collection of literals, while \kw{Popt}s 
 provide convenient syntax for optional data.
-Each of these types can have an associated predicate that determines
+A type may have an associated predicate that determines
 whether a parsed value is indeed a legal
 value for the type.  For example, a predicate might require that one
 field of a \kw{Pstruct} is bigger than another or that the elements
 of a sequence are sorted.  Programmers can specify such
 predicates using \pads{} expressions and functions, 
-written using a \C{}-like syntax.
+written in a \C{}-like syntax.
 Finally, \pads{} \kw{Ptypedef}s allow programmers
 to define new types that add further constraints to existing types.
 
 \pads{} types can be parameterized by values.
-This mechanism serves both to reduce the number of base types and to permit the
+This mechanism reduces the number of base types and  permits the
 format and properties of later portions of the data to depend upon earlier portions.
 For example, 
 the base type \cd{Puint16_FW(:3:)} specifies an unsigned two byte integer
@@ -53,27 +53,28 @@ describes a string terminated by a vertical bar.  Parameters can be
 used with compound types to specify the size of an array or the
 appropriate branch of a union.
 
-We will use the example in \figref{figure:dibbler} to illustrate
+\cut{We will use the example in \figref{figure:dibbler} to illustrate
 various features of the \pads{} language.  In \pads{} descriptions,
 types are declared before they are used, so the type that describes
-the totality of the data source appears at the bottom of the description.
+the totality of the data source appears at the bottom of the description.}
 
 \kw{Pstruct}s describe fixed sequences of data with unrelated types.
-In the \dibbler{} example, the type declaration for \cd{order\_t}
+In the \dibbler{} example in \figref{figure:dibbler}, the type declaration for \cd{order\_t}
 illustrates a simple \kw{Pstruct}.  It starts with an
 \cd{order\_header} followed by a timestamp \cd{tstamp}, separated by
 the literal character \kw{'|'}.
 \pads{} supports character, string, and regular expression literals,
 which are interpreted with the ambient character  encoding.
 
-\kw{Punion}s describe alternatives in the data format.  For example, the
-\cd{dib\_ramp\_t} type in the \dibbler{} description indicates that the \cd{ramp} field 
-in a \dibbler{} record can be either the string \cd{"no\_id"} or a \cd{Puint64}.  During parsing, 
-the branches of a \kw{Punion} are tried in order; the first branch that 
-parses without error is taken.  \pads{} also supports a
-\textit{switched} union that uses a selection expression to determine
-the branch to parse.  In this case, the expression typically depends upon
-already-parsed portions of the data source. 
+\kw{Punion}s describe alternatives in the data format.  For example,
+the \cd{dib\_ramp\_t} type in the \dibbler{} description indicates
+that the \cd{ramp} field in a \dibbler{} record can be is either a
+\cd{Puint\_64} or a string \cd{"no\_ii"} followed by a \cd{Puint\_64}.
+During parsing, the branches of a \kw{Punion} are tried in order; the
+first branch that parses without error is taken.  \cut{\pads{} also
+supports a \textit{switched} union that uses a selection expression to
+determine the branch to parse.  In this case, the expression typically
+depends upon already-parsed portions of the data source.}
 
 The \cd{order_header_t} type in the \dibbler{} data description
 contains several anonymous uses of the \kw{Popt} type.  This type is
@@ -82,7 +83,7 @@ the first with the indicated type, and the second with the ``void''
 type, which always matches but never consumes any input.
 
 \pads{} provides \kw{Parray}s to describe varying-length sequences of data all 
-with the same type.  The \cd{eventSeq_t} declaration in the \dibbler{} data description
+with the same type.  The \cd{event_seq_t} declaration in the \dibbler{} data description
 uses a \kw{Parray} to characterize the sequence of events an
 order goes through during processing.  This declaration indicates that the elements
 in the sequence have type \cd{event_t}.  It also specifies that the elements will
@@ -101,9 +102,9 @@ ASCII data typically uses new-line characters to delimit
 records, binary sources tend to have fixed-width records, while 
 COBOL sources usually store the length of each record before the actual data.
 \pads{} supports each of these encodings of records and allows users to define
-their own encodings.  By default, \pads{} assumes records are new-line terminated.
+their own encodings.  \cut{By default, \pads{} assumes records are new-line terminated.
 Before parsing, however, the user can direct \pads{} to use a different record
-definition.
+definition.}
 
 \subsection{\pads{}: The generated library}
 From a description, the \pads{} compiler generates a \C{} library
@@ -112,10 +113,9 @@ From each type in a \pads{} description, the compiler generates
 \begin{itemize}
 \setlength{\itemsep}{0ex plus0.2ex}
 \item an in-memory representation, 
-\item a mask, which allows users to customize generated functions,
-\item a parse descriptor, which describes syntactic and
-semantic errors detected during parsing, 
-\item parsing and printing functions, and 
+\item a parse descriptor, which describes syntactic and semantic errors detected during parsing, 
+\item parsing and printing functions, 
+\item a mask, which allows users to customize generated functions, and
 \item a collection of utility functions.
 \end{itemize}
 %
