@@ -103,19 +103,23 @@ Problem focussed, not tool focussed.
 }
 
 We had tools designed to address aspects of the analyst's problem in
-isolation: \pads{}~\cite{pldi05} and Galax~\cite{galax}.  \pads{} allows
-users to describe ad hoc data sources declaratively and then generates
-error-aware parsers and tools for manipulating the sources, including
-statistical profiling tools.  Such support would allow the analyst 
-to produce a robust, error-aware parser quickly.
-Galax supports declarative querying of
-semi-structured data sources via XQuery.  Such querying would allow
-the analyst to explore the data in the first place and produce the
-answers to her questions in the second.  It would also support
-converting the data into XML to faciliate further downstream
-processing with the vast array of XML-based tools if she so desired.
-The challenge we faced was to integrate these tools in a way that
-could scale to the large ad hoc data sources we have seen in practice.  
+isolation: \pads{}~\cite{pldi05} and Galax~\cite{galax}.  \pads{}
+allows users to describe ad hoc data sources declaratively and then
+generates error-aware parsers and tools for manipulating the sources,
+including statistical profiling tools.  Such support would allow the
+analyst to produce a robust, error-aware parser quickly.  Galax
+supports declarative querying of semi-structured data sources via
+XQuery.  Such querying would allow the analyst to explore the data in
+the first place and produce the answers to her questions in the
+second.  It would also support converting the data into XML to
+faciliate further downstream processing with the vast array of
+XML-based tools if she so desired.  The challenge we faced was to
+integrate these tools in a way that could scale to the large ad hoc
+data sources we have seen in practice.  \scream{We need to be more
+specific here: Practical problem (demonstrated by example).  Semantic
+Problem (We solved this one). Systems Engineering Problem (We solved
+this one too).  Performance and Scalability Problem. (We're still
+working on this one).  Have this lead into a paper outline.}
 
 To achieve this integration, we had to evolve \pads{} and Galax in
 parallel, modifying the implementation of Galax to support an abstract
@@ -125,7 +129,9 @@ Galax PADX. \scream{describe architecture of PADX here?}
 
 \scream{Do we want to explain that \padx{} is an example of a
 (semi)-compiled query architecture and what that means?  Say something
-about soundness of schema, data, and queries}
+about soundness of schema, data, and queries.  And point out that some
+of these problems were solved in the implementations of object-oriented
+databases (25 years ago!)}
 
 In the rest of this section, we discuss an example scenario in detail
 to illustrate the variety of data management tasks faced by AT\&T data
@@ -133,8 +139,6 @@ analysts. We then briefly review \pads{} and Galax in isolation.  We then
 describe the architecture of PADX, focusing on issues of scale, and
 study the peformance of the resulting system.  We conclude with an
 overview of related work and a discussion of future directions.
-
-
 
 \cut{
 

@@ -38,10 +38,39 @@ Schema and on the features of the type-specific data model.
 
 \subsection{Virtual XML view of PADS data}
 
-We use the fragment of the XML Schema in
-Figure~\ref{figure:dibbler-schema}, which corresponds to the
-description in Figure~\ref{figure:dibbler}, to illustrate the mapping
-of a \pads{} description to XML Schema.
+The fragment of the XML Schema in Figure~\ref{figure:dibbler-schema}
+corresponds to the description in Figure~\ref{figure:dibbler}.  We use
+this example to illustrate the mapping of a \pads{} description to XML
+Schema.
+
+Each compound type is mapped to a complex schema type with a
+particular content model.  A \kw{Pstruct} is mapped to a complex type
+that contains a sequence of local elements, each of which corresponds
+to one field in the \kw{Pstruct}.  For example, the \kw{Pstruct}
+\cd{order\_header\_t} is mapped to the complex type
+\cd{order\_header\_t}, which contains an element declaration for the
+field \cd{order\_num}, among others.  Each complex type also includes
+an optional \cd{pd} element that corresponds to the type's parse
+descriptor.  The \cd{pd} element is absent if no errors occurred
+during parsing, but if present, permits an analyst to easily identify
+the kind and location of errors in the source data.  For example, this
+expression returns the locations of all orders that contain
+at least one error: \cd{$pads/Psource/orders/elt/pd/loc}. 
+
+\cut{``Error-aware'' mapping from PADS type system to isomorphic XML}
+Schema. 
+
+The XML Schema types for other compound types annotated
+with corresponding fields from PADS rep, e.g., arrays have a length. 
+
+
+Extra level of indirection in representation of arrays---wrap each
+item in an element. 
+
+A \kw{Punion} is mapped to a choice of elements, each of which
+corresponding to one field in the \kw{Punion}. 
+
+
 \begin{figure*}
 \begin{small}
 \begin{code}
@@ -77,8 +106,9 @@ of a \pads{} description to XML Schema.
 \label{figure:dibbler-schema}
 \end{figure*}
 
-``Error-aware'' mapping from PADS type system to isomorphic XML
-Schema. 
+Each base type is mapped to an XML Schema simple type.  Since the base
+types do not change, the corresponding XML Schema types are defined
+once in \cd{pads.xsd}, which is imported into all generated schemata. 
 \begin{small}
 \begin{code}
 <xs:simpleType name="Puint32">
@@ -100,23 +130,7 @@ Schema.
 \end{code}
 \end{small}
 
-Each compound type is mapped to an XML Schema complex type.
 
-Each base type is mapped to an XML Schema simple type.  Since the base
-types do not change, the corresponding XML Schema types are defined
-once in \cd{pads.xsd}, which is imported into all generated schemata. 
-
-  One-to-one mapping
-from PADS base types to XML Schema simple types.  Field in compound
-types are realized as local elements in XML Schema. 
-
-All the compound types are annotated with an optional parse-descriptor
-(absent if no errors occured).  Allows users to query error
-structures, which may be most important data.  Other types annotated
-with corresponding fields from PADS rep, e.g., arrays have a length. 
-
-Extra level of indirection in representation of arrays---wrap each
-item in an element. 
 
 Extra level of indirection for base types: must contain the value of
 the base type and an optional parse-descriptor, if an error has
