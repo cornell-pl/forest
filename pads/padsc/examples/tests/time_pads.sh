@@ -7,6 +7,7 @@ size=$3
 # timing_dir=../timing
 if [[ $format = dibbler_new && $kind = bulk ]]; then
     case $size in
+        10001) alloc_hint=11000;;
 	10MB) alloc_hint=50000;;
 	20MB) alloc_hint=100000;;
 	50MB) alloc_hint=250000;;
