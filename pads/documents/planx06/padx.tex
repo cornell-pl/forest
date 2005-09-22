@@ -154,7 +154,7 @@ declare variable \kw{$pads} as \kw{document-node(PSource)} external;
 
 How to access data files:  fn:doc("pads:/example/sirius.data");
 
-\subsection{Physical Data Model}
+\subsection{PADX Data Model}
 
 % Part of PADX implementation are generic functions that implement data
 % model accessors.  PADS compiler generates type-specific functions for
@@ -176,26 +176,57 @@ How to access data files:  fn:doc("pads:/example/sirius.data");
 %    Give example of vtable for event\_t and possibly code for
 %    kthChildByName. 
 
-In order to export \pads data as XML, we wrap data in {\em node}
-datastructures containing all the information relevant to XML. Handles
-to these nodes are then passed to \galax which can invoke very simple
-queries on the node, such as ``what is your name? give me a list of
-your children, etc.''  Within \galax, the interface with pads is
-wrapped in a module that exports the \galax Data Model interface to
-the \galax query engine.
 
-The physical data model provides the means to query \pads data by
-walking a virtual XML tree.  At the core of the physical data model
-are the \cd{node} data structure and the generic node interface.
-Together, these play the same role as an abstract class in C++ and
-Java. They specify only common fields used by all nodes, and the
-required accessor methods. They do not, however, provide any method
-implementations. They are fixed elements of the system, independant of
-any particular \pads{} types.
+\begin{itemize}
+\item High-level: where does padx data model fit in? Describe division
+  into interface and implementation.
+\item what is interface? mention relationship between kthChild
+  functions and lazy lists/cursors. that is relationship between Galax
+  DM and PADX DM.
+  why the second interface? Why isn't Galax abstract data model enough?
+\item how do we implement? type-specific. Mention that node creation
+  is type specific. ONly access is generic. Again like OO model.
+\end{itemize}
+
+Beneath the \galax{} abstract data model sits the \padx{} data model.
+While similar to the \galax{} data model, it has a number of
+differences, most notably in its approach to access to children.
+Queries to the \galax data model sequences of children, some based on
+full traversals of the tree rooted at the queried node. In contrast,
+the \padx{} data model provides indexed access to individual,
+immediate children of the queried node. In this way, we divide the
+labor between \galax{} and \pads{} -- on the \galax{} side we manage
+the tree traversal while on the \pads{} side we manage access to the
+raw data.
+
+As we mentioned in \secref{sec:foo}, the \padx{} data model is
+specialized to the type of the data to be processed. However, the
+\galax{} driver for the data model is not specialized. Therefore, we
+provide an abstract interface to the data model that is then
+implemented in a type specific manner. While \padx{} is implemented in
+\C{}, the design is techinically quite close to the notions of abstract classes
+and method overiding from OO-languages such as \C++{}.
 
 \begin{figure*}
 {\small
 \begin{verbatim}
+typedef struct PDCI_node_s *nodeRep;
+typedef ...  childIndex;
+typedef ...  PDCI_vtable_t;
+
+struct PDCI_node_s {
+  const char              *name;
+  const char              *kind;
+  nodeRep                  parent;
+
+  void                    *mask;
+  void                    *pd;
+  void                    *rep;
+
+  const PDCI_vtable_t     *vt;
+  ...
+}
+
 nodeRep      PADX_generic_parent      (nodeRep n)
 
 const char*  PADX_generic_name        (nodeRep n)
@@ -208,9 +239,50 @@ nodeRep      PADX_generic_kth_child_named   (nodeRep n, childIndex idx,
                                              const char *name)
 \end{verbatim}
 }
-\caption{The generic node interface}
+\caption{The \padx{} data model.}
 \label{fig:generic-node-interface}
 \end{figure*}
+
+In \figref{fig:generic-node-interface} we present the \padx{} data
+model. It is a structure named \cd{node} and a list of \C{}-language
+functions that operate on this structure. The structure and the
+functions declarations can collectively be thought of as an abstract
+class.
+
+The \cd{node} structure maintains \Xml{} relevant meta data, the
+rep,pd and mask. In addition, it carries with it the virtual table
+with the implementations of all the functions required by the \padx{}
+data model. The rep, pd and mask are all given a \cd{void *} type as
+nodes representing different types of data will use pointers with
+different types. This is an unfortunate artifact of being limited to
+the C language. {\em Why no C++? Also, notice that this is not like
+  abstract class. Can we elide all this an present it as an abstract
+  C++ class, or would that be too far from the reality?}.
+
+{\em describe interface between generic functions and glue code. Glue
+  code just does dispatch. Do we want to include defintion of vtable type?}
+
+{\em Description of interface.}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In order to export \pads{} data as XML, we wrap data in {\em node}
+datastructures containing all the information relevant to XML. Handles
+to these nodes are then passed to \galax which can invoke very simple
+queries on the node, such as ``what is your name? give me a list of
+your children, etc.''  Within \galax, the interface with pads is
+wrapped in a module that exports the \galax Data Model interface to
+the \galax query engine.
+
+The physical data model provides the means to query \pads{} data by
+walking a virtual XML tree.  At the core of the physical data model
+are the \cd{node} data structure and the generic node interface.
+Together, these play the same role as an abstract class in C++ and
+Java. They specify only common fields used by all nodes, and the
+required accessor methods. They do not, however, provide any method
+implementations. They are fixed elements of the system, independant of
+any particular \pads{} types.
 
 The generic node interface defines the functions that are available to the
 \pads{} data model implementation for use on nodes. The relevant portions of
@@ -254,7 +326,7 @@ these elements of the node are type-specific, they are all typed as
 \vptr.
 
 Next we have the pointer to the node's virtual table, {\tt vt}. The
-virtual functions will often need a valid \pads handle to execute
+virtual functions will often need a valid \pads{} handle to execute
 correctly. Therefore, we also include a pads handle field in each
 node.
 
@@ -274,7 +346,7 @@ the length field through an implementation for 32-bit integers, and
 each of the elements with the implementation appropriate to the
 particular element type of the array. Other datatypes are analagous.
 
-It is important to note that the XML representations of \pads data
+It is important to note that the XML representations of \pads{} data
 integrate each datastructure's parse-descriptor with the data,
 exporting it as a child of the datastructure itself. This design
 allows queries to select (or ignore) nodes based on the contents of
@@ -283,7 +355,7 @@ that their are a fixed number of pd node implementations (approx. one for
 each type constructor), as opposed to the unlimited number of data
 node implementations, generated fresh for each new \pads{} type.
 
-In order to support the full range of \pads datatypes,
+In order to support the full range of \pads{} datatypes,
 the node data structure is designed using ``{\tt void *}
 polymorphism.'' That is, anywhere that the node architecture is not
 specific to a particular type, we use a {\tt void *} type. In this
