@@ -12,7 +12,7 @@ paper.bbl: intro.tex pads.tex galax.tex padx.tex evaluation.tex paper.tex ../pld
 paper.pdf: paper.ps 
 	ps2pdf paper.ps
 
-paper.ps: paper.bbl $(PDFSRC) $(TEXSRC) padx-arch.ps
+paper.ps: paper.bbl $(PDFSRC) $(TEXSRC) padx-arch.ps padx-arch1.ps
 	latex paper.tex
 	latex paper.tex
 	dvips -t letter paper.dvi -o
