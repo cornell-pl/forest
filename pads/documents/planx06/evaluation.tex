@@ -6,6 +6,44 @@
 Hypothesis: bulk loading should not scale for increasing document size
 (limits of main memory).  Show that smart/linear does scale.
 
+The flexibility of the node interface goes beyond support for
+arbitrary \pads{} types. It also allows us, for each type, to support
+alternative implementations of the interface. We take advantage of
+this flexibility to support multiple data input strategies: bulk-read
+and two forms of on-demand read.
+
+\begin{enumerate}
+\item Bulk read: Materialize entire PADS representation, populate all of the PADS
+reps.  Then PADX DM lazily invoked the DM accessors over this data.
+Problem: if data is big, it's all sitting in memory, even if the query
+only touches a fragment of the virtual XML tree.
+
+\item On-demand, sequential read: same as smart but does not preserve meta-data.
+   Does not permit multiple scans of data source. 
+
+\item On-demand, random access read: 
+Many common queries permit sequential, streamed access to underlying
+XML source.  Give an example.  
+
+Smart node rep, preserves meta-data about previously read records, but
+re-uses memory for reading next item.  This rep permits multiple scans
+of input (semantic problem is that DM must preserve node identity),
+but slowly. 
+
+Heuristic: records are a good level of granularity to read.   Each
+smart node corresponds to one record.  When next smart node is
+accessed, a little meta-data is preserved: the node rep and the
+records location in the file (so we can re-read it if necessary).
+\end{enumerate}
+
+Put in PADX signatures for constructing a new node and accessing
+kthChild. 
+
+Something about query evaluation:
+Although we have not explored custom evaluation plans 
+Galax's algebra or optimizer are particularly interesting in the 
+\padx{}, we expect to do so 
+
 \subsection{Querying}
 
 Give examples of queries that analyst cares about. 
