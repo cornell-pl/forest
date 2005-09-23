@@ -102,19 +102,19 @@ Problem focussed, not tool focussed.
 
 }
 
-We have two tools that each address aspects of the analyst's problem
-in isolation. \pads{} allows users to describe ad hoc data sources
-declaratively and then generates error-aware parsers and tools for
-manipulating the sources, including statistical profiling tools.  Such
-support would allow the analyst to produce a robust, error-aware
-parser quickly.  \Galax{} supports declarative querying of
+We have two tools, each of which addresses aspects of the analyst's
+problem.  The \pads{} system allows users to describe ad hoc data
+sources declaratively and then generates error-aware parsers and tools
+for manipulating the sources, including statistical profiling tools.
+Such support would allow the analyst to produce a robust, error-aware
+parser quickly.  The \Galax{} system supports declarative querying of
 semi-structured data sources via XQuery.  Such querying would allow
 the analyst first to explore the data and then produce answers to her
 questions.  It would also support converting the data into XML to
 faciliate downstream processing with XML-based tools if she so
-desired.  Our challenge was to integrate \pads{} and \Galax{} so that
-the resulting tool could handle the large ad hoc data sources we have
-seen in practice.  
+desired.  Our goal was to integrate \pads{} and \Galax{} to solve the
+analyst's data-management problems for the large ad hoc data sources
+that we have seen in practice.
 
 This paper describes our experience designing and implementing
 \padx{}~\footnote{Pronounced ``paddocks'' : an enclosed area for
@@ -138,24 +138,23 @@ written in XQuery, and \padx{} produces the query's results.
 \end{figure}
 
 Building \padx{} presented several problems. The first was semantic:
-To query ad hoc data using XQuery, we had to decide how best to view
-ad hoc data as XML and how to express this view as a mapping from the
-\pads{} type system to XML Schema, the basis of XQuery's type system.
-A second problem involved systems design and engineering.  Building
-\padx{} required evolving \pads{} and \Galax{} in parallel, modifying
-the implementation of \Galax{} to support an abstract data model, so
-that \Galax{} could view non-XML sources as XML, and augmenting
-\pads{} with the ability to generate concrete instances of this data
-model.  Solutions to these problems were necessary to build a working
-system.  Our solutions are described in Sections~\ref{section:galax}
-and~\ref{section:padx}.  A third problem involves scale of both data
-and queries, including how to access large ad hoc data sources and how
-to evaluate complex queries over large sources.
-Section~\ref{section:performance} describes how \padx{} currently
-handles large sources and the open problems that we face with respect
-to scale and performance.
+We had to decide how to view ad hoc data as XML and how to express
+this view as a mapping from the \pads{} type system to XML Schema, the
+basis of XQuery's type system.  A second problem involved systems
+design and engineering.  Building \padx{} required evolving \pads{}
+and \Galax{} in parallel, modifying the implementation of \Galax{} to
+support an abstract data model, so that \Galax{} could view non-XML
+sources as XML, and augmenting \pads{} with the ability to generate
+concrete instances of this data model.  Solutions to these problems
+were necessary to build a working system.  Our solutions are described
+in Sections~\ref{section:galax} and~\ref{section:padx}.  A third
+problem involves the scale of data and of queries, in particular, how
+to access large ad hoc data sources and how to evaluate complex
+queries over large sources.  Section~\ref{section:performance}
+describes how \padx{} currently handles large sources and the open
+problems that we face with respect to scale and performance.
 
-We begin by presenting a scenario that illustrates the data management
+We begin with a scenario that illustrates the data management
 tasks faced by AT\&T data analysts and how \padx{} simplifies these
 tasks.  We then crack open the \padx{} architecture, first describing
 \pads{} and \Galax{} in isolation, and then describing our solutions
@@ -237,7 +236,7 @@ Show scalability of smart loading over bulk loading.  Show improvement
 of compiled name access over interpreted name access. 
 }
 
-\subsection{Data-management Scenario}
+\subsection{Data-management scenario}
 \label{subsec:example}
 
 %\figref{figure:dibbler-records}

@@ -1,6 +1,10 @@
 \section{Using XQuery and \Galax{}}
 \label{section:galax}
 
+In this section, we give a brief overview of \Xml{}, XQuery, and
+\Galax{}, focussing on \Galax{}'s data-model support for viewing
+non-XML data as XML.
+
 XML~\cite{xml10} is a flexible format that can represent many classes
 of data: structured documents with large fragments of marked-up text;
 homogeneous records such as those in relational databases; and
@@ -34,7 +38,7 @@ XQuery is also ideal for specifying integrated views of multiple
 sources.  Although here we focus on querying one ad hoc source at a
 time, XQuery supports simultaneously querying of multiple \pads{} and
 other XML sources. Lastly, XQuery is practical: It will soon be a
-standard; numerous manuals already exist; and it is widely implemented
+standard; numerous manuals already exist~\cite{brundage2004}; and it is widely implemented
 in commercial databases.
 
 \Galax{}\footnote{\texttt{http://www.galaxquery.org}} is a complete,
@@ -50,7 +54,7 @@ optimizer produces efficient physical plans that employ traditional
 and novel join algorithms~\cite{galax:icde2006}, which makes it
 possible to apply non-trivial queries to large XML sources.  Lastly,
 its abstract data model permits experimenting with various physical
-representations of XML and non-XML data sources.  The abstract data
+representations of XML and non-XML data sources.  \Galax{}'s abstract data
 model is the focus of the the rest of this section.
 
 \subsection{Galax's Abstract Data Model}
@@ -100,18 +104,18 @@ object
 \end{code}
 \end{small}
 \caption{Signatures for methods in Galax's abstract node interface}
-\label{figure :galax-dm}
+\label{figure:galax-dm}
 \end{figure*}
 
 The first six methods in Figure~\ref{figure:galax-dm} access the
-physical representation of a document, therefore a particular data
-model must provide their concrete implementations.  \Galax{} provides
-default implementations for the four {descendant} and ancestor axes,
-which are defined recursively in terms of the {child} and {parent}
-methods.  These defaults are overridden by implementations that can
-provide implementations more efficient than the defaults.  For
-example, some physical document representations permit axes to be
-implemented by range queries over relational
+physical representation of a document, therefore a concrete instance
+of the data model must provide their implementations.  \Galax{}
+provides default implementations for the four {descendant} and
+ancestor axes, which are defined recursively in terms of the {child}
+and {parent} methods.  These defaults are overridden in concrete data
+models that can provide more efficient implementations than the
+defaults.  For example, some physical document representations permit
+axes to be implemented by range queries over relational
 tables~\cite{grust03staircase}.
 
 All the axis methods take an optional node-test argument, which is a
@@ -119,25 +123,26 @@ boolean predicate on the names or types of nodes in the given axis.
 For example, the XQuery expression \cd{descendant::order} returns
 nodes in the descendant axis with name \cd{order}.  \Galax{} compiles
 this expression into a single axis/node-test operator that invokes the
-corresponding methods in the data model, delegating evaluation of node
-tests to the underlying implementation.  Some implementations, like
-\padx{}, can provide fast access to nodes by their name.  We describe
-\padx{}'s physical data model in the next section.
+corresponding methods in the abstract data model, delegating
+evaluation of node tests to the concrete data model.  Some
+implementations, like \padx{}, can provide fast access to nodes by
+their name.  We describe \padx{}'s concrete data model in the next
+section.
 
-One other important feature of \Galax{}'s data model is that sequences
-are represented by \emph{cursors} (a.k.a. streams), non-functional
-lists that yield items lazily.  \Galax{}'s algebraic operators produce
-and consume cursors of values, which permits pipelined and
-short-circuited evaluation of query plans, because accessing the first
-item of a sequence does not require that the entire sequence be
-materialized, i.e., evaluated eagerly.
+One other important feature of \Galax{}'s abstract data model is that
+sequences are represented by \emph{cursors} (a.k.a. streams),
+non-functional lists that yield items lazily.  \Galax{}'s algebraic
+operators produce and consume cursors of values, which permits
+pipelined and short-circuited evaluation of query plans, because
+accessing the first item of a sequence does not require that the
+entire sequence be materialized, \ie{}, evaluated eagerly.
 
-In addition to \padx{}'s physical data model, \Galax{} has three other
-physical implementations: a DOM-like representation in main memory and
-two ``shredded'' representations, one in main memory and one in
-secondary storage for very large documents (e.g., $>$ 100MB).  The
-shredded data model partitions a document into tables of elements,
-attributes, and values that can be indexed on node names and
+In addition to \padx{}'s concrete data model, \Galax{} has three other
+concrete data models: a DOM-like representation in main memory and two
+``shredded'' representations, one in main memory and one in secondary
+storage for very large documents (e.g., $>$ 100MB).  The shredded data
+model partitions a document into tables of elements, attributes, and
+values that can be indexed on node names and
 values~\cite{galax:ximep2004}.
 
 \cut{The second sub-group contains operators for tree navigation and
