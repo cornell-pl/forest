@@ -26,35 +26,36 @@ Note that a query corral is \emph{customized} for a particular \pads{}
 description, in particular, its concrete data model only supports
 views of data sources that match the \pads{} description.  To maintain
 the correct correspondence between a description, XML Schema, queries,
-and data, the query corral explictly contains the generated query
+and data, the query corral explicitly contains the generated query
 prolog, which imports the XML Schema that corresponds to the
-underlying type-specific library.  This guarantees that the XQuery
-program is statically typed, compiled, and optimized with respect to
-the correct XML Schema and that the underlying data model is an
-instance of the specified XML Schema.  At runtime, the query corral
-takes an XQuery program and a \pads{} data source and produces the
-query result in XML.  We discuss the problem of producing native
-\pads{} values in Section~\ref{section:future}.
+underlying type-specific library.  This guarantees that the user's
+XQuery program is statically typed, compiled, and optimized with
+respect to the correct XML Schema and that the underlying data model
+is an instance of this XML Schema.  At runtime, the query corral takes
+an XQuery program and a \pads{} data source and produces the query
+result in XML.  We discuss the problem of producing native \pads{}
+values in Section~\ref{section:future}.
 
 \subsection{Viewing \pads{} data as XML}	
 
 The mapping from a \pads{} description to an XML Schema is 
 straight-forward.  The interesting aspect of this mapping is that
-\pads{} values that are error-free and those containing errors are
+\pads{} values that are error free and those containing errors are
 accessible in the XML view.  We begin with the mapping of \pads{} base
 types. 
 
 A default XML Schema, \cd{pads.xsd}, contains the schema types that
 represent the \pads{} base types shared by all \pads{} descriptions.
 Figure~\ref{figure:pads.xsd} contains a fragment of this schema.
-Every \pads{} base type is mapped to a schema simple type that best
-subsumes the value space of the given \pads{} base type.  For example,
+Every \pads{} base type is mapped to a schema simple type that most
+closely subsumes the value space of the given \pads{} base type.  For example,
 the \cd{Puint32} base type maps to the schema type \cd{xs:unsignedInt}
 (Lines~1--3).  Recall that all parsed \pads{} values have an in-memory
 representation and a parse descriptor, which records the state of the
 parse, the error code of a detected error, and the location of that
 error.  The XML view of a parsed value is a choice of the in-memory
-representation, if no error occurred, or of the parse descriptor, if
+representation (\cd{rep}), if no error occurred, or of the parse
+descriptor (\cd{pd}), if
 an error occurred (Lines~4--8).  This light-weight view exposes the
 parse descriptor only when an error occurs.  The parse-descriptor type
 for all base types is the same and is represented by the schema type
@@ -104,7 +105,7 @@ elements, each of which corresponds to one field in the \kw{Punion}.
 { 2}.            xmlns="file:/example/sirius.p"
 { 3}.            xmlns:xs="http://www.w3.org/2001/XMLSchema"
 { 4}.            xmlns:p="http://www.padsproj.org/pads.xsd">
-{ 5}. <xs:import namespace = "http://www.padsproj.org/pads.xsd".../>
+{ 5}. <xs:import namespace = "\kw{http://www.padsproj.org/pads.xsd}".../>
 { 6}. ...
 { 7}. <xs:complexType name="\kw{order_header_t}">
 { 8}.  <xs:sequence>
@@ -124,7 +125,7 @@ elements, each of which corresponds to one field in the \kw{Punion}.
 {22}.  </xs:sequence>
 {23}. </xs:complexType>
      ...
-{24}. <xs:element name="Psource" type="summary_t"/>
+{24}. <xs:element name="\kw{Psource}" type="\kw{summary_t}"/>
 {25}. </xs:schema>
 \end{code}
 \end{small}
@@ -151,83 +152,74 @@ from the \pads{} in-memory representation, \eg{} arrays have a length
 each individual array item, so in the corresponding schema type, the
 default element \cd{elt} is used to encapsulate each array item.
 
-The \pads{} compiler generates a query prolog that imports the
-generated schema and specifies the type of the input variable that
-contains the pads data.  Figure~\ref{figure:padx-query-prolog}
-contains the query prolog for the schema in
-Figure~\ref{figure:dibbler-schema}.  At run time, the user can specify
+The \pads{} compiler generates a query prolog that specifies the
+environment in which all XQuery programs are typed and evaluated.
+Figure~\ref{figure:padx-query-prolog} contains the query prolog for
+the schema in Figure~\ref{figure:dibbler-schema}.  The import schema
+declaration on Line~1 imports the schema in
+Figure~\ref{figure:dibbler-schema}.  This declaration puts all global
+element and type declarations in scope for the query.  The variable
+declaration on Line~2 specifies that the value of the variable
+\cd{\$pads} is provided externally and that its type is a document
+whose top-level element is of type \cd{Psource}, defined on Line~24 in
+Figure~\ref{figure:dibbler-schema}.
+
+At run time, the user can specify
 the input data as a command-line argument or by calling the
-\cd{fn:doc} function, \eg{} fn:doc("pads:/example/sirius.data").
+\cd{fn:doc} function, \eg{} \cd{fn:doc("pads:/example/sirius.data")}.
 \begin{figure*}
 \begin{small}
 \begin{code}
-import schema default element namespace "\kw{file:/example/sirius.p}";
-declare variable \kw{$pads} as \kw{document-node(Psource)} external; 
+ 1. import schema default element namespace "\kw{file:/example/sirius.p}";
+ 2. declare variable \kw{$pads} as \kw{document-node(Psource)} external; 
 \end{code}
 \end{small}
 \caption{\padx{} generated query prolog}
 \label{figure:padx-query-prolog}
 \end{figure*}
 
-\subsection{PADX Data Model}
+\subsection{\padx{} Concrete Data Model}
 
-% Part of PADX implementation are generic functions that implement data
-% model accessors.  PADS compiler generates type-specific functions for
-% walking virtual XML tree.  Relate back to type-specific library
-% functions mentioned in last section.
-
-% Implementation of Galax's Abstract Tree Model.
-
-% Minimum necessary to implement Galax DM:
-
-% 1. Generic implementations of the DM accessors: axis::node-test(), children(),
-%    attributes(), name(), etc. 
-
-% 2. On PADX-side, we have a virtual handle for each node in the XML
-%    tree--we call that a node rep.  Node rep contains pads handle
-%    (maintains state for PADS parser); type-specific vtable of DM
-%    accessors; other stuff...
-
-%    Give example of vtable for event\_t and possibly code for
-%    kthChildByName. 
-
-
-% \begin{itemize}
-% \item High-level: where does padx data model fit in? Describe division
-%   into interface and implementation.
-% \item what is interface? mention relationship between kthChild
-%   functions and lazy lists/cursors. that is relationship between Galax
-%   DM and PADX DM.
-%   why the second interface? Why isn't Galax abstract data model enough?
-% \item how do we implement? type-specific. Mention that node creation
-%   is type specific. ONly access is generic. Again like OO model.
-% \end{itemize}
-
+In Figure~\ref{figure:padx-arch}, the \pads{} data model consists of
+two modules: a generic module that implements the \Galax{} abstract
+data model and a compiler-generated module, in which each \pads{} type
+has a corresponding, type-specific node representation.
+Figure~{fig:padx-element-node} contains a fragment of the \padx{}
+concrete data model for a node.  For most method calls (e.g.,
+\cd{node\_name}, \cd{typed\_value}), this module delegates to the
+corresponding type-specific methods.  One exception is the \cd{child}
+axis method
 \begin{figure*}
-{\small
-\begin{verbatim}
-type childIndex
-type PDCI_vtable_t
-type item
-
-class virtual nodeRep = 
-  object 
-    method get_parent : unit -> nodeRep
-
-    method get_name   : unit -> string
-    method get_kind   : unit -> string
-    method get_typed_value : unit -> item
-    method get_string_value : unit  -> string
-
-    method get_kth_child  : childIndex -> nodeRep option
-    method get_kth_child_named : string -> childIndex -> nodeRep option
-  end
-\end{verbatim}
-}
-\caption{The \padx{} \absdm.}
-\label{fig:padx-absdm}
+\begin{small}
+\begin{code}
+{ 1}. class pads\_node (nr : padx\_node\_rep) =  
+{ 2}. object (self)
+{ 3}.   inherit Galax.node
+{ 4}.   method node\_name   () = nr#name()
+{ 5}.   method typed\_value () = nr#typed_value() 
+{ 6}.   (* ... Other data model accessors ... *)
+\mbox{}
+{ 7}.   method child name\_test =  
+{ 8}.     let k = ref 0 in
+{ 9}.     let lazy\_child child\_fn = 
+{10}.      incr k;
+{11}.       match (child\_fn !k) with
+{12}.       | Some cnr ->  Some(new pads\_node cnr)
+{13}.       | None -> None
+{14}.       in Cursor.cursor\_of\_function lazy\_child
+{15}.     match name\_test with 
+{16}.     | None ->  lazy\_child (nr#kth\_child)
+{17}.     | Some (NameTest name) -> lazy\_child (nr#kth\_child\_named name)
+\mbox{}
+{18}.   (* ... Other axes ... *)
+{19}. end
+\end{code}
+\end{small}
+\caption{Fragment of the \padx{} concrete data model}
+\label{fig:padx-element-node}
 \end{figure*}
 
+\cut{
 Beneath the \galax \absdm lies the \padx{} \condm, a \padx{}-specific
 implementation of the \galax \absdm. This implementation is broken
 into two pieces - one generic, for all \pads types, and one
@@ -241,29 +233,35 @@ provides indexed access to individual, immediate children of the
 queried node. In this way, we divide the labor between generic and
 type-specific portions by assigning tree traversal to the former and
 raw data access to the latter.
+Figure~\ref{fig:padx-element-node}.}
 
-% As we mentioned in \secref{sec:foo}, the \padx{} data model is
-% specialized to the type of the data to be processed. However, the
-% \galax{} driver for the data model is not specialized. Therefore, we
-% provide an abstract interface to the data model that is then
-% implemented in a type specific manner. While \padx{} is implemented in
-% \C{}, the design is techinically quite close to the notions of abstract classes
-% and method overiding from OO-languages such as \C++{}.
 
-In \figref{fig:padx-absdm} we present the \padx{} \absdm.  The most
-interesting methods are the child accessor methods. Method {\tt
-  get\_kth\_child} returns the \nth{k} child of the node starting from
-zero. The {\tt get\_kth\_child\_named} function returns the node's
-\nth{k} child with the specified name. This function is most relevant
-to arrays, where all of the elements are given the same name ``elt.''
-For both functions, an option is returned in case the requested child
-does not exist.
-
-The PADS compiler generates the type-specific implementations of the
-\padx \absdm, along with the other type-specific tools.  Each
+Figure~\ref{fig:padx-node-rep}.
+The \pads{} compiler generates the type-specific implementations of the
+\padx \absdm.  Each
 implementation of the nodeRep virtual class maintains \xml{}-relevant
 meta-data, including the node's name, kind and parent as well as
-references to the nodes representation, parse-descriptor and mask.  In
+references to the nodes representation, parse-descriptor and mask.  
+\begin{figure*}
+\begin{small}
+\begin{code}
+class virtual padx\_node\_rep :
+  object 
+    (* Private data includes type's rep, mask \& pd *)
+    method name        : unit -> string
+    method typed_value : unit -> item
+    method parent      : unit -> padx\_node\_rep option
+    method kth_child   : int -> padx\_node\_rep option
+    method kth_child_named : int -> string -> padx\_node\_rep option
+  end
+\end{code}
+\end{small}
+\caption{The \padx{} abstract node representation}
+\label{fig:padx-node-rep}
+\end{figure*}
+
+Figure~\ref{fig:order-node-rep}.
+In
 addition, the type-specific knowledge available at compile time is
 used to generate calls to the correct nodeRep constructors in children
 accessor methods.  For example, for a structure with an integer and
@@ -273,103 +271,177 @@ respectively, when these children are requested. Similarly for an
 array with a particular element type, all requests for an ``elt''
 child will return a nodeRep with the element-type specific
 implementation. Other datatypes are analagous.
+\begin{figure*}
+\begin{small}
+\begin{code}
+class order\_header\_t\_node\_rep 
+  fun (field\_name : string) * 
+      (par : padx\_node\_rep option) * 
+      (rep : order\_header\_t) * 
+      (msk : order\_header\_t\_m) * 
+      (pd : order\_header\_t\_pd) = 
+  object (self) 
+    inherit padx\_node\_rep
+    (* Private data includes type's rep, mask \& pd *)
+    method name        () = field\_name
+    method typed_value () = Cursor.empty_cursor()
+    method parent      () = par 
+    method kth_child   idx = 
+      match idx with 
+      | 1 -> new val\_Puint32\_node\_rep "order\_num" self (pd.order\_num) (mask.order\_num) (pd.order\_pd) 
+      | 2 -> new val\_Puint32\_node\_rep "att\_order\_num" self (pd.att\_order\_num) (mask.att\_order\_num) (pd.att\_order\_pd) 
+      | ...
+      | 14 -> new Pstruct\_pd\_node\_rep "pd" self pd
+    (* Chidren's name map *)
+    HashTable name_map = [ ("order\_num", 1); ("att\_order\_num", 1);... ]
+    method kth_child_named name =
+      match HashTable.lookup name\_map name with
+      | None -> Cursor.empty_cursor()
+      | Some idx -> kth_child idx 
+  end
+\end{code}
+\end{small}
+\caption{Fragment of compiler-generated node representation for order\_header\_t}
+\label{fig:order-node-rep}
+\end{figure*}
 
+In \figref{fig:padx-absdm} we present the \padx{} \absdm.  The most
+interesting methods are the child accessor methods. Method {\tt
+kth\_child} returns the \nth{k} child of the node starting from
+zero. The {\tt kth\_child\_named} function returns the node's \nth{k}
+child with the specified name. This function is most relevant to
+arrays, where all array items have the element name \cd{elt}.  For
+both functions, an option is returned in case the requested child does
+not exist.
+
+\cut{
+Part of PADX implementation are generic functions that implement data
+model accessors.  PADS compiler generates type-specific functions for
+walking virtual XML tree.  Relate back to type-specific library
+functions mentioned in last section.
+
+Implementation of Galax's Abstract Tree Model.
+
+Minimum necessary to implement Galax DM:
+
+1. Generic implementations of the DM accessors: axis::node-test(), children(),
+   attributes(), name(), etc. 
+
+2. On PADX-side, we have a virtual handle for each node in the XML
+   tree--we call that a node rep.  Node rep contains pads handle
+   (maintains state for PADS parser); type-specific vtable of DM
+   accessors; other stuff...
+
+   Give example of vtable for event\_t and possibly code for
+   kthChildByName. 
+
+
+\begin{itemize}
+\item High-level: where does padx data model fit in? Describe division
+  into interface and implementation.
+\item what is interface? mention relationship between kthChild
+  functions and lazy lists/cursors. that is relationship between Galax
+  DM and PADX DM.
+  why the second interface? Why isn't Galax abstract data model enough?
+\item how do we implement? type-specific. Mention that node creation
+  is type specific. ONly access is generic. Again like OO model.
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% In order to export \pads{} data as XML, we wrap data in {\em node}
-% datastructures containing all the information relevant to XML. Handles
-% to these nodes are then passed to \galax which can invoke very simple
-% queries on the node, such as ``what is your name? give me a list of
-% your children, etc.''  Within \galax, the interface with pads is
-% wrapped in a module that exports the \galax Data Model interface to
-% the \galax query engine.
+In order to export \pads{} data as XML, we wrap data in {\em node}
+datastructures containing all the information relevant to XML. Handles
+to these nodes are then passed to \galax which can invoke very simple
+queries on the node, such as ``what is your name? give me a list of
+your children, etc.''  Within \galax, the interface with pads is
+wrapped in a module that exports the \galax Data Model interface to
+the \galax query engine.
 
-% The physical data model provides the means to query \pads{} data by
-% walking a virtual XML tree.  At the core of the physical data model
-% are the \cd{node} data structure and the generic node interface.
-% Together, these play the same role as an abstract class in C++ and
-% Java. They specify only common fields used by all nodes, and the
-% required accessor methods. They do not, however, provide any method
-% implementations. They are fixed elements of the system, independant of
-% any particular \pads{} types.
+The physical data model provides the means to query \pads{} data by
+walking a virtual XML tree.  At the core of the physical data model
+are the \cd{node} data structure and the generic node interface.
+Together, these play the same role as an abstract class in C++ and
+Java. They specify only common fields used by all nodes, and the
+required accessor methods. They do not, however, provide any method
+implementations. They are fixed elements of the system, independant of
+any particular \pads{} types.
 
-% The generic node interface defines the functions that are available to the
-% \pads{} data model implementation for use on nodes. The relevant portions of
-% this interface are shown in \figref{fig:generic-node-interface}.
+The generic node interface defines the functions that are available to the
+\pads{} data model implementation for use on nodes. The relevant portions of
+this interface are shown in \figref{fig:generic-node-interface}.
 
-% \begin{figure}
-% {\small
-% \begin{verbatim}
-% struct PDCI_node_s {
-%   const char              *name;
-%   const char              *kind;
-%   PDCI_node_t             *parent;
+\begin{figure}
+{\small
+\begin{verbatim}
+struct PDCI_node_s {
+  const char              *name;
+  const char              *kind;
+  PDCI_node_t             *parent;
 
-%   void                    *m;
-%   void                    *pd;
-%   void                    *rep;
+  void                    *m;
+  void                    *pd;
+  void                    *rep;
 
-%   const PDCI_vtable_t     *vt;
-%   P_t                     *pads;
-%   ...
-% }
-% \end{verbatim}
-% }
-% \caption{The node structure}
-% \label{fig:node-struct}
-% \end{figure}
+  const PDCI_vtable_t     *vt;
+  P_t                     *pads;
+  ...
+}
+\end{verbatim}
+}
+\caption{The node structure}
+\label{fig:node-struct}
+\end{figure}
 
-% The basic contents of the \cd{node} data structure are shown in
-% \figref{fig:node-struct}. All nodes have a name and a kind, stored as
-% C-strings. Additionally, all nodes but the document node have a parent
-% in the document, hence the parent field that points to another node.
-% Next we have the mask, representation and parse-descriptor fields. As
-% these elements of the node are type-specific, they are all typed as
-% \vptr.
+The basic contents of the \cd{node} data structure are shown in
+\figref{fig:node-struct}. All nodes have a name and a kind, stored as
+C-strings. Additionally, all nodes but the document node have a parent
+in the document, hence the parent field that points to another node.
+Next we have the mask, representation and parse-descriptor fields. As
+these elements of the node are type-specific, they are all typed as
+\vptr.
 
-% Next we have the pointer to the node's virtual table, {\tt vt}. The
-% virtual functions will often need a valid \pads{} handle to execute
-% correctly. Therefore, we also include a pads handle field in each
-% node.
+Next we have the pointer to the node's virtual table, {\tt vt}. The
+virtual functions will often need a valid \pads{} handle to execute
+correctly. Therefore, we also include a pads handle field in each
+node.
 
-% \subsubsection{Node implementations}
-% The PADS compiler generates the type-specific implementations of the
-% node functions, along with the other type-specific tools.  The
-% type-specific knowledge available at compile time is used not only to
-% manipulate the node's data appropriately but also to select the (type)
-% correct implementations of children nodes, when necessary.  For
-% example, for structures, the children are the parse-descriptor and the
-% fields of the structure, each with their own type and corresponding
-% node implementation.  For arrays, the children are the
-% parse-descriptor, the array length, and a list of nodes with name
-% ``elt,'' corresponding to the elements of the array. The
-% parse-descriptor is accessed through an implementation for array pds,
-% the length field through an implementation for 32-bit integers, and
-% each of the elements with the implementation appropriate to the
-% particular element type of the array. Other datatypes are analagous.
+\subsubsection{Node implementations}
+The PADS compiler generates the type-specific implementations of the
+node functions, along with the other type-specific tools.  The
+type-specific knowledge available at compile time is used not only to
+manipulate the node's data appropriately but also to select the (type)
+correct implementations of children nodes, when necessary.  For
+example, for structures, the children are the parse-descriptor and the
+fields of the structure, each with their own type and corresponding
+node implementation.  For arrays, the children are the
+parse-descriptor, the array length, and a list of nodes with name
+``elt,'' corresponding to the elements of the array. The
+parse-descriptor is accessed through an implementation for array pds,
+the length field through an implementation for 32-bit integers, and
+each of the elements with the implementation appropriate to the
+particular element type of the array. Other datatypes are analagous.
 
-% It is important to note that the XML representations of \pads{} data
-% integrate each datastructure's parse-descriptor with the data,
-% exporting it as a child of the datastructure itself. This design
-% allows queries to select (or ignore) nodes based on the contents of
-% their parse-descriptors in an easy and efficient manner. It also means
-% that their are a fixed number of pd node implementations (approx. one for
-% each type constructor), as opposed to the unlimited number of data
-% node implementations, generated fresh for each new \pads{} type.
+It is important to note that the XML representations of \pads{} data
+integrate each datastructure's parse-descriptor with the data,
+exporting it as a child of the datastructure itself. This design
+allows queries to select (or ignore) nodes based on the contents of
+their parse-descriptors in an easy and efficient manner. It also means
+that their are a fixed number of pd node implementations (approx. one for
+each type constructor), as opposed to the unlimited number of data
+node implementations, generated fresh for each new \pads{} type.
 
-% In order to support the full range of \pads{} datatypes,
-% the node data structure is designed using ``{\tt void *}
-% polymorphism.'' That is, anywhere that the node architecture is not
-% specific to a particular type, we use a {\tt void *} type. In this
-% way, we can write type-neutral code to manipulate data nodes. For
-% example, the rep and pd pointers in each node are typed as {\tt void
-%   *}. 
+In order to support the full range of \pads{} datatypes,
+the node data structure is designed using ``{\tt void *}
+polymorphism.'' That is, anywhere that the node architecture is not
+specific to a particular type, we use a {\tt void *} type. In this
+way, we can write type-neutral code to manipulate data nodes. For
+example, the rep and pd pointers in each node are typed as {\tt void
+  *}. 
 
-% Each type-specific implementation will (down)cast such pointers to the
-% appropriate type before use, relying on the (assumed) invariant that
-% no only code specific to that type has manipulated those pointers.
-
+Each type-specific implementation will (down)cast such pointers to the
+appropriate type before use, relying on the (assumed) invariant that
+no only code specific to that type has manipulated those pointers.
+}
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "paper"

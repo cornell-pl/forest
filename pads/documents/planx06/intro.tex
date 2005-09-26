@@ -391,8 +391,8 @@ database.
 \begin{code}
 \kw{(: Return orders started in October 2004 :)}
 $pads/Psource/orders/elt[events/elt[1]
-  [tstamp {>=} {xs:dateTime}("2004-10-01:00:00:00")
-{and} tstamp {<} {xs:dateTime}("2004-11-01:00:00:00")]]
+  [tstamp/rep {>=} {xs:dateTime}("2004-10-01:00:00:00")
+{and} tstamp/rep {<} {xs:dateTime}("2004-11-01:00:00:00")]]
 \end{code}
 \end{small}
 \caption{Query applied to \dibbler{} provisioning data.}
