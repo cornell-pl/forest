@@ -162,11 +162,12 @@ element and type declarations in scope for the query.  The variable
 declaration on Line~2 specifies that the value of the variable
 \cd{\$pads} is provided externally and that its type is a document
 whose top-level element is of type \cd{Psource}, defined on Line~24 in
-Figure~\ref{figure:dibbler-schema}.
+Figure~\ref{figure:dibbler-schema}.  This declarations guarantee
+that the query is statically typed with respect to the correct input type.
 
 At run time, the user can specify
 the input data as a command-line argument or by calling the
-\cd{fn:doc} function, \eg{} \cd{fn:doc("pads:/example/sirius.data")}.
+\cd{fn:doc} function on a \pads{} source, \eg{} \cd{pads:/example/sirius.data}.
 \begin{figure*}
 \begin{small}
 \begin{code}
@@ -183,12 +184,27 @@ the input data as a command-line argument or by calling the
 In Figure~\ref{figure:padx-arch}, the \pads{} data model consists of
 two modules: a generic module that implements the \Galax{} abstract
 data model and a compiler-generated module, in which each \pads{} type
-has a corresponding, type-specific node representation.
-Figure~{fig:padx-element-node} contains a fragment of the \padx{}
+has a corresponding, type-specific node representation that provides
+the XML view of values of the given type.
+
+Figure~\ref{fig:padx-element-node} contains a fragment of the \padx{}
 concrete data model for a node.  For most method calls (e.g.,
-\cd{node\_name}, \cd{typed\_value}), this module delegates to the
-corresponding type-specific methods.  One exception is the \cd{child}
-axis method
+\cd{node\_name}, \cd{typed\_value}), this module directly invokes 
+the corresponding type-specific methods.  One exception is the
+\cd{child} axis method.  In the \padx{} data model, 
+
+In the \Galax{} data model, the child axis yields a
+sequence of nodes, which logically can be accessed randomly.  
+
+ of differences, most notably in its approach
+to access to children.  Queries to the \galax data model return
+sequences of children, some based on full traversals of the tree
+rooted at the queried node. In contrast, the \padx{} data model
+provides indexed access to individual, immediate children of the
+queried node. In this way, we divide the labor between generic and
+type-specific portions by assigning tree traversal to the former and
+raw data access to the latter.
+
 \begin{figure*}
 \begin{small}
 \begin{code}
@@ -232,16 +248,16 @@ rooted at the queried node. In contrast, the \padx{} data model
 provides indexed access to individual, immediate children of the
 queried node. In this way, we divide the labor between generic and
 type-specific portions by assigning tree traversal to the former and
-raw data access to the latter.
-Figure~\ref{fig:padx-element-node}.}
+raw data access to the latter.}
 
-
-Figure~\ref{fig:padx-node-rep}.
-The \pads{} compiler generates the type-specific implementations of the
-\padx \absdm.  Each
-implementation of the nodeRep virtual class maintains \xml{}-relevant
-meta-data, including the node's name, kind and parent as well as
-references to the nodes representation, parse-descriptor and mask.  
+The compiler-generated module contains type-specific instances of the
+node representation class in Figure~\ref{fig:padx-node-rep}.  The node
+representation is as a thin wrapper around a \pads{} value and
+contains references to a parsed value's underlying representation,
+mask, and parse descriptor.  The node representation interface returns
+the \Xml{} view of the parsed, including the node's name in the \Xml{}
+view, typed value, and parent.  The \cd{kth\_child} method returns
+the node's \nth{k} child of the node. 
 \begin{figure*}
 \begin{small}
 \begin{code}
@@ -261,16 +277,6 @@ class virtual padx\_node\_rep :
 \end{figure*}
 
 Figure~\ref{fig:order-node-rep}.
-In
-addition, the type-specific knowledge available at compile time is
-used to generate calls to the correct nodeRep constructors in children
-accessor methods.  For example, for a structure with an integer and
-string field, compile-time knowledge of these types allows the
-compiler to call the integer and string nodeRep implementations,
-respectively, when these children are requested. Similarly for an
-array with a particular element type, all requests for an ``elt''
-child will return a nodeRep with the element-type specific
-implementation. Other datatypes are analagous.
 \begin{figure*}
 \begin{small}
 \begin{code}
@@ -278,7 +284,7 @@ class order\_header\_t\_node\_rep
   fun (field\_name : string) * 
       (par : padx\_node\_rep option) * 
       (rep : order\_header\_t) * 
-      (msk : order\_header\_t\_m) * 
+%      (msk : order\_header\_t\_m) * 
       (pd : order\_header\_t\_pd) = 
   object (self) 
     inherit padx\_node\_rep
@@ -288,12 +294,12 @@ class order\_header\_t\_node\_rep
     method parent      () = par 
     method kth_child   idx = 
       match idx with 
-      | 1 -> new val\_Puint32\_node\_rep "order\_num" self (pd.order\_num) (mask.order\_num) (pd.order\_pd) 
-      | 2 -> new val\_Puint32\_node\_rep "att\_order\_num" self (pd.att\_order\_num) (mask.att\_order\_num) (pd.att\_order\_pd) 
+      | 1 -> new val\_Puint32\_node\_rep "order\_num" self pd.order\_num pd.order\_pd %(mask.order\_num) 
+      | 2 -> new val\_Puint32\_node\_rep "att\_order\_num" self pd.att\_order\_num pd.att\_order\_pd %(mask.att\_order\_num) 
       | ...
       | 14 -> new Pstruct\_pd\_node\_rep "pd" self pd
     (* Chidren's name map *)
-    HashTable name_map = [ ("order\_num", 1); ("att\_order\_num", 1);... ]
+    HashTable name_map = [ ("order\_num", 1); ("att\_order\_num", 2); ... ]
     method kth_child_named name =
       match HashTable.lookup name\_map name with
       | None -> Cursor.empty_cursor()
@@ -304,6 +310,18 @@ class order\_header\_t\_node\_rep
 \caption{Fragment of compiler-generated node representation for order\_header\_t}
 \label{fig:order-node-rep}
 \end{figure*}
+
+\cut{In
+addition, the type-specific knowledge available at compile time is
+used to generate calls to the correct nodeRep constructors in children
+accessor methods.  For example, for a structure with an integer and
+string field, compile-time knowledge of these types allows the
+compiler to call the integer and string nodeRep implementations,
+respectively, when these children are requested. Similarly for an
+array with a particular element type, all requests for an ``elt''
+child will return a nodeRep with the element-type specific
+implementation. Other datatypes are analagous.
+}
 
 In \figref{fig:padx-absdm} we present the \padx{} \absdm.  The most
 interesting methods are the child accessor methods. Method {\tt
