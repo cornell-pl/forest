@@ -3,48 +3,81 @@
 
 \subsection{Materialization and Loading}
 
-Hypothesis: bulk loading should not scale for increasing document size
-(limits of main memory).  Show that smart/linear does scale.
+Connect scalability to the "multiple entry point parsing routines" in
+Sec 2.
+\begin{itemize}
+\item galax has a "virtual random-access view" of the XML
+  source. Interface to PADX does not reveal details of how and when
+  data is loaded. The interface puts no restrictions on access.
+\item Indeed, \padx{} can supply a real random-access view of the data but at a
+  high cost. Can prefetch entire data source into memory, but then
+  depend on VM system to manage any overflows. Call this prefetch {\em
+    bulk load}.
+\item Problems crop up early due to quantity of data generated (on
+  average) per byte.
+\item Therefore, bulk reading will only work for the smallest of
+  data sets.
+\item This drawback is not a flaw in the system, but an intentionally
+  chosen point in the design space. The parsing libraries were never
+  intended to be used that way. Instead, \pads model is for programmer
+  to use multiple entry points to control the parsing to produce
+  manageable quantities of data. \pads generates a lot of meta data
+  and lets programmer filter as desired.
+\item Unfortunately, requires much programmer involvement. We want to
+  capitilize on this behaviour, but automatically, without requiring
+  any more involvement by Galax than what is already provided in
+  interface. so we use the libraries as intended by reading
+  sequentially and maintaining just enough state to satisfy
+  Galax. That is, we take advantage of multiple entry points provided,
+  but in an automatic way.
+% \item In fact, the automatic nature of the \padx memory management,
+%   offers a value-added tool to even the ``pure'' \pads
+%   programmer. However, the memory management layer is not free, as we
+%   now examine in more detail.
+\end{itemize}
 
-The flexibility of the node interface goes beyond support for
-arbitrary \pads{} types. It also allows us, for each type, to support
-alternative implementations of the interface. We take advantage of
-this flexibility to support multiple data input strategies: bulk-read
-and two forms of on-demand read.
+Description of three loading schemes:
+
+% The flexibility of the node interface goes beyond support for
+% arbitrary \pads{} types. It also allows us, for each type, to support
+% alternative implementations of the interface. We take advantage of
+% this flexibility to support multiple data input strategies: bulk-read
+% and two forms of on-demand read.
 
 \begin{enumerate}
-\item Bulk read: Materialize entire PADS representation, populate all of the PADS
-reps.  Then PADX DM lazily invoked the DM accessors over this data.
-Problem: if data is big, it's all sitting in memory, even if the query
-only touches a fragment of the virtual XML tree.
+\item Bulk read: Materialize entire PADS representation, populate all
+  of the PADS reps.  Then PADX DM lazily invokes the DM accessors over
+  this data.
 
-\item On-demand, sequential read: same as smart but does not preserve meta-data.
-   Does not permit multiple scans of data source. 
+\item On-demand sequential read: Keep storage for one record. Read
+  records on demand into single memory slot. Does not permit multiple
+  scans of data source.  Many common queries permit sequential,
+  streamed access to underlying XML source.  Give an example.
 
-\item On-demand, random access read: 
-Many common queries permit sequential, streamed access to underlying
-XML source.  Give an example.  
-
-Smart node rep, preserves meta-data about previously read records, but
-re-uses memory for reading next item.  This rep permits multiple scans
-of input (semantic problem is that DM must preserve node identity),
-but slowly. 
-
-Heuristic: records are a good level of granularity to read.   Each
-smart node corresponds to one record.  When next smart node is
-accessed, a little meta-data is preserved: the node rep and the
-records location in the file (so we can re-read it if necessary).
+\item On-demand, random access read: Store fixed number of records in
+  memory at any one time. System preserves
+  meta-data about previously read records, but re-uses memory for
+  reading next item.  This rep permits multiple scans of input
+  (semantic problem is that DM must preserve node identity), but
+  slowly. Does not work for read once data that can't be ``rewound''
+  such as live streams.
 \end{enumerate}
 
-Put in PADX signatures for constructing a new node and accessing
-kthChild. 
+Lasagna performance issues (i.e. big picture, not just the one layer):
+
+\begin{itemize}
+\item Each level
+in the data model adds a small constant cost to touching
+the data.
+\item The linear reading is indeed linear.
+\end{itemize}
+
+\subsection{Querying}
 
 Something about query evaluation:
 Although we have not explored custom evaluation plans 
 Galax's algebra or optimizer are particularly interesting in the 
 \padx{}, we expect to do so 
-
-\subsection{Querying}
 
 Give examples of queries that analyst cares about. 
 
