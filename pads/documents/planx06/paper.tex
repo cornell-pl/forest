@@ -57,10 +57,20 @@
 
 DFDL. Contivo.  
 
-Compiled-query architectures~\cite{daytona}. 
+Compiled-query architectures~\cite{daytona}.  \padx{} has customized
+data model: between points on continuum from fully interpreted query
+plan applied to generic data model to fully compiled query plan
+applied to customized data model.
 
 \section{Discussion}
 \label{section:future}
+
+TODO LIST: Better use of XML Schema simple types.
+We don't take complete advantage of XML Schema, e.g., Penum types
+could be modeled by XML Schema enumeration simple types, but currently
+unsupported.
+
+
 Open problem: give result of XQuery and its corresponding type,
 serialize result back into PADS rep.  How are the syntactic
 constraints for the new values expressed?  Tool could pick default
@@ -79,45 +89,6 @@ evaluation of queries over XML token streams.
 \bibliography{../pads,../galax} 
 
 \end{document}
-
-\subsubsection{XML Generation}
-
-\pads{} also supports converting ad hoc data into XML by providing a
-canonical mapping from \pads{} descriptions into XML.  This mapping is
-quite natural, as both \pads{} and XML are languages for describing
-semi-structured data.  One interesting aspect of the mapping is that
-we embed not just the in-memory representation of \pads{} values, but
-also the parse descriptors in cases where the data was buggy.  This
-choice allows users to explore the error portions of their data
-sources, which can be the most interesting parts of the data.  Given a
-\pads{} specification, the \pads{} compiler generates an XML Schema
-describing the canonical embedding for that data source.  As an
-example, the following is the portion of the generated XML Schema for
-the \cd{eventSeq} type in the \dibbler{} data description.
-
-The \pads{} compiler generates a \cd{write_xml_2io} function for each
-type, an example of which is shown in \figref{figure:library}.  Given
-a specification of the top level type, \pads{} can also automatically
-generate a conversion program, the output of which conforms to the
-generated XML Schema.
-
-\subsection{Queries}
-
-Our final use-scenario is querying data.  Given a data source, a
-natural desire is to ask questions about the data, a desire which led
-to SQL and its many variants for relational data and XQuery for XML
-data~\cite{boag03XQueryDraft}.  Analysts working with ad hoc data
-would also like to query their data, but the lack of tools generally
-means they code their queries in an imperative fashion in languages
-such as \textsc{awk}, \perl{}, or \C{}.  Indeed, the analyst working
-with the \dibbler{} data took this approach.  He coded queries such as
-``Select all orders starting within a certain time window," ``Count
-the number of orders going through a particular state," and ``What is
-the average time required to go from a particular state to another
-particular state" in a mixture of \textsc{awk} and \textsc{perl}.  He
-was able to get the answers to his questions, but he had to code the
-queries explicitly, and the query-related code ended up embedded in
-his already-brittle parsing code.
 
 Happy with XQuery's expressiveness, we worked with the designers of
 the Galax~\cite{galax} open-source implementation of XQuery to define

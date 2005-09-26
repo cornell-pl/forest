@@ -1,8 +1,8 @@
 \section{Introduction}
 \label{section:intro}
 Although enormous amounts of data exist in ``well-behaved'' formats such
-as XML and relational databases, massive amounts exist in
-non-standard or \textit{ad hoc} data formats as well. \figref{figure:data-sources}
+as XML and relational databases, massive amounts also exist in
+non-standard or \textit{ad hoc} data formats. \figref{figure:data-sources}
 gives some sense of the range and pervasiveness of such data.
 \begin{figure}
 \begin{center}
@@ -21,7 +21,7 @@ Monitor billing process   &                             \\ \hline
 Netflow:                        & Data-dependent number of     \\ 
 Monitor network performance  & fixed-width binary records  \\ \hline
 Newick:   Immune                 & Fixed-width ASCII records \\ 
-system response simulation & in tree-shaped hierachy\\ \hline                                
+system response simulation & in tree-shaped hierarchy\\ \hline                                
 Gene Ontology:             & Variable-width ASCII records \\
 Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
 %HL7:             & Variable-width ASCII records \\
@@ -40,7 +40,7 @@ tree-structured. It is often quite large, including some data sources
 that generate over a gigabit per second~\cite{gigascope}. It frequently
 comes with incomplete and/or out-of-date documentation, and there are
 almost always errors in the data.  Sometimes these errors are the most
-intersting aspect of the data, because they can indicate where
+interesting aspect of the data, because they can indicate where
 something is going wrong in a monitored system.
 
 The lack of standard tools for processing ad hoc data forces
@@ -68,7 +68,7 @@ input sources.  Consider, for example, how tricky it is to
 figure out which \$3's should be \$4's in a \perl{} parser when a new
 column appears in the data.
 Errors in data also pose a significant challenge in hand-coded
-parsers.  If the data analyst thoroughly checks for them, then
+parsers.  If the data analyst thoroughly checks for errors, then
 the error checking code dominates the parser, making it even more
 difficult to understand the semantics of the data.  If she is not thorough,
 then erroneous data can escape undetected, potentially (silently!)
@@ -98,12 +98,12 @@ solve all the data analyst's problems simultaneously.
 1. Need to describe it (PADS)
 2. Query it and convert to XML (XQuery) 
 3. Deal with scale.
-Problem focussed, not tool focussed. 
+Problem focused, not tool focused. 
 
 }
 
-We have two tools, each of which addresses aspects of the analyst's
-problem.  The \pads{} system allows users to describe ad hoc data
+We have two tools, \pads{} and \Galax{}, each of which addresses aspects of the analyst's
+problem in isolation.  The \pads{} system allows users to describe ad hoc data
 sources declaratively and then generates error-aware parsers and tools
 for manipulating the sources, including statistical profiling tools.
 Such support would allow the analyst to produce a robust, error-aware
@@ -111,13 +111,13 @@ parser quickly.  The \Galax{} system supports declarative querying of
 semi-structured data sources via XQuery.  Such querying would allow
 the analyst first to explore the data and then produce answers to her
 questions.  It would also support converting the data into XML to
-faciliate downstream processing with XML-based tools if she so
+facilitate downstream processing with XML-based tools if she so
 desired.  Our goal was to integrate \pads{} and \Galax{} to solve the
 analyst's data-management problems for the large ad hoc data sources
 that we have seen in practice.
 
 This paper describes our experience designing and implementing
-\padx{}~\footnote{Pronounced ``paddocks'' : an enclosed area for
+\padx{}~\footnote{Pronounced ``paddocks'', an enclosed area for
 exercising race horses.}, a synthesis and extension of \pads{} and
 \Galax{}.  Figure~\ref{figure:padx-arch1} depicts \padx{} from the
 analyst's perspective.  The analyst provides a \pads{} description of
@@ -145,20 +145,21 @@ design and engineering.  Building \padx{} required evolving \pads{}
 and \Galax{} in parallel, modifying the implementation of \Galax{} to
 support an abstract data model, so that \Galax{} could view non-XML
 sources as XML, and augmenting \pads{} with the ability to generate
-concrete instances of this data model.  Solutions to these problems
-were necessary to build a working system.  Our solutions are described
-in Sections~\ref{section:galax} and~\ref{section:padx}.  A third
-problem involves the scale of data and of queries, in particular, how
-to access large ad hoc data sources and how to evaluate complex
-queries over large sources.  Section~\ref{section:performance}
-describes how \padx{} currently handles large sources and the open
-problems that we face with respect to scale and performance.
+concrete instances of this data model.  Our solutions to these
+problems, which were necessary to build a working system, are
+described in Sections~\ref{section:galax} and~\ref{section:padx}.  A
+third problem involves the scale of data and efficiency of queries, in
+particular, how to efficiently evaluate complex queries over large
+sources.  Section~\ref{section:performance} describes how \padx{}
+currently handles large sources and the open problems that we face
+with respect to data scale and query performance.
 
 We begin with a scenario that illustrates the data management
 tasks faced by AT\&T data analysts and how \padx{} simplifies these
 tasks.  We then crack open the \padx{} architecture, first describing
 \pads{} and \Galax{} in isolation, and then describing our solutions
-to the problems described above.  We conclude with an overview of
+to the problems described above.  
+We conclude with an overview of
 related work and a discussion of open problems.
 
 \cut{
@@ -243,7 +244,7 @@ of compiled name access over interpreted name access.
 In the telecommunications industry, the term \textit{provisioning} refers to
 the process of converting an order for phone service into the
 actual service.  This process is complex, involving many interactions
-with other companies.  To discover potential problems proactively, the \dibbler{}
+with other companies.  To discover potential problems pro-actively, the \dibbler{}
 project tracks AT\&T's provisioning process by compiling weekly
 summaries of the state of certain types of phone service orders.
 These summaries, which are stored in flat ASCII text files, can
@@ -303,7 +304,7 @@ in a \pads{} description all that they know about a given data source.
 \figref{figure:dibbler} gives the \pads{} description for the
 \dibbler{} data format.  In \pads{} descriptions, types are declared
 before they are used, so the type that describes the entire data
-source, \cd{summary\_t}, appears at the bottom of the description.  In
+source, \cd{summary\_t}, appears at the bottom of the description (Line~42).  In
 the next section, we use this example to describe several features of
 the \pads{} language.  Here, we simply note that the data analyst
 writes this description, and the \pads{} compiler produces
@@ -316,59 +317,59 @@ documentation.
 \begin{figure}
 \begin{small}
 \begin{code}
-\kw{Precord} \kw{Pstruct} summary\_header\_t \{
-  "0|";
-  Punixtime tstamp;
-\};
+{ 1}. \kw{Precord} \kw{Pstruct} summary\_header\_t \{
+{ 2}.  "0|";
+{ 3}.  Punixtime tstamp;
+{ 4}. \};
 \mbox{}
-\kw{Pstruct} no\_ramp\_t \{
-  "no\_ii";
-  Puint64 id;
-\};
+{ 5}. \kw{Pstruct} no\_ramp\_t \{
+{ 6}.  "no\_ii";
+{ 7}.  Puint64 id;
+{ 8}. \};
 \mbox{}
-\kw{Punion} dib\_ramp\_t \{
-  Pint64     ramp;
-  no\_ramp\_t  genRamp;
-\};
+{ 9}. \kw{Punion} dib\_ramp\_t \{
+{10}.   Pint64     ramp;
+{11}.   no\_ramp\_t  genRamp;
+{12}. \};
 \mbox{}
-\kw{Pstruct} order\_header\_t \{
-       Puint32             order\_num;
- '|';  Puint32             att\_order\_num;
- '|';  Puint32             ord\_version;
- '|';  \kw{Popt} pn\_t           service\_tn;
- '|';  \kw{Popt} pn\_t           billing\_tn;
- '|';  \kw{Popt} pn\_t           nlp\_service\_tn;
- '|';  \kw{Popt} pn\_t           nlp\_billing\_tn;
- '|';  \kw{Popt} Pzip           zip\_code;
- '|';  dib\_ramp\_t          ramp;
- '|';  Pstring(:'|':)      order\_type;
- '|';  Puint32             order\_details;
- '|';  Pstring(:'|':)      unused;
- '|';  Pstring(:'|':)      stream;
-\};
+{13}. \kw{Pstruct} order\_header\_t \{
+{14}.        Puint32             order\_num;
+{15}.  '|';  Puint32             att\_order\_num;
+{16}.  '|';  Puint32             ord\_version;
+{17}.  '|';  \kw{Popt} pn\_t           service\_tn;
+{18}.  '|';  \kw{Popt} pn\_t           billing\_tn;
+{19}.  '|';  \kw{Popt} pn\_t           nlp\_service\_tn;
+{20}.  '|';  \kw{Popt} pn\_t           nlp\_billing\_tn;
+{21}.  '|';  \kw{Popt} Pzip           zip\_code;
+{22}.  '|';  dib\_ramp\_t          ramp;
+{23}.  '|';  Pstring(:'|':)      order\_type;
+{24}.  '|';  Puint32             order\_details;
+{25}.  '|';  Pstring(:'|':)      unused;
+{26}.  '|';  Pstring(:'|':)      stream;
+{27}. \};
 \mbox{}
-\kw{Pstruct} event\_t \{
-       Pstring(:'|':)    state;   
-  '|'; Punixtime         tstamp;
-\};
+{28}. \kw{Pstruct} event\_t \{
+{29}.        Pstring(:'|':)    state;   
+{30}.   '|'; Punixtime         tstamp;
+{31}. \};
 \mbox{}
-\kw{Parray} event\_seq\_t \{
-  event\_t[] : \kw{Psep}('|') && \kw{Pterm}(\kw{Peor});
-\};
+{32}. \kw{Parray} event\_seq\_t \{
+{33}.   event\_t[] : \kw{Psep}('|') && \kw{Pterm}(\kw{Peor});
+{34}. \};
 \mbox{}
-\kw{Precord} \kw{Pstruct} order\_t \{
-       order\_header\_t  order\_header;
-  '|'; event\_seq\_t     events;
-\};
+{35}. \kw{Precord} \kw{Pstruct} order\_t \{
+{36}.        order\_header\_t  order\_header;
+{37}.   '|'; event\_seq\_t     events;
+{38}. \};
 \mbox{}
-\kw{Parray} orders\_t \{
-  order\_t[];
-\};
+{39}. \kw{Parray} orders\_t \{
+{40}.   order\_t[];
+{41}. \};
 \mbox{}
-\kw{Psource} \kw{Pstruct} summary\_t\{
-  summary\_header\_t  summary\_header;
-  orders\_t          orders;
-\};
+{42}. \kw{Psource} \kw{Pstruct} summary\_t\{
+{43}.   summary\_header\_t  summary\_header;
+{44}.   orders\_t          orders;
+{45}. \};
 \end{code}
 \end{small}
 \caption{\pads{} description for \dibbler{} provisioning data.}
@@ -383,7 +384,7 @@ time required to go from a particular event state to another
 particular event state''.  Such queries are useful for rapid
 information discovery and for vetting errors and anomalies in data
 before it proceeds to a down-stream process or is loaded into a 
-database system. 
+database.
 
 \begin{figure}
 \begin{small}
@@ -406,8 +407,7 @@ Turing-complete language and therefore powerful
 enough to express all the questions above.  For example,
 Figure~\ref{figure:dibbler-query} contains an XQuery expression that
 produces all orders that started in October, 2004.  In
-Section~\ref{section:padx}, we use this example to describe several
-features of XQuery and to illustrate why XQuery is an appropriate
+Section~\ref{section:padx}, we discuss in more detail why XQuery is an appropriate
 query language for ad hoc data.  In particular, XQuery queries may be
 statically typed, which helps detects common errors at compile time.
 For example, static typing would raise an error if the path expression

@@ -9,150 +9,165 @@
 \label{figure:padx-arch}
 \end{figure}
 
-Figure~\ref{figure:padx-arch} depicts the \padx{} architecture.  From
-a \pads{} description, the compiler generates an XML Schema
+Figure~\ref{figure:padx-arch} depicts an internal view of the \padx{}
+architecture first shown in Figure~\ref{figure:padx-arch1}.
+Pre-existing components (in grey boxes) include the \pads{} compiler,
+the \Galax{} query engine, and the \pads{} runtime system.  In this
+section, we focus on the new components (in white boxes) and describe
+the compiler and run-time support for viewing \pads{} data as XML.
+From a \pads{} description, the compiler generates an XML Schema
 description that specifies the virtual XML view of the corresponding
-\pads{} data; an XQuery prolog that imports the corresponding schema
-and that associates the input data with the correct schema type; and a
+\pads{} data; an XQuery prolog that imports the generated schema and
+that associates the input data with the correct schema type; and a
 type-specific library that maintains the information necessary to
-support the \padx{} data model.
+support \padx{}'s concrete data model.  
 
-An instance of the \padx{} runtime system, called the ``query
-corral'', consists of the \Galax{} query engine, a type-specific query
-prolog, the \padx{} implementation of the \Galax{} data model, a
-type-specific \padx{} library, and the \pads{} runtime system.  Note
-that the resulting query corral is \emph{specialized} for a particular
-\pads{} description.  From the query prolog, it imports the XML Schema
-that corresponds to the underlying type-specific library, i.e., it
-does permit the query writer to import an arbitrary schema.  This
-restriction guarantees that the XQuery program is typed with respect
-to the correct XML Schema and that the underlying data model is an
+Note that a query corral is \emph{customized} for a particular \pads{}
+description, in particular, its concrete data model only supports
+views of data sources that match the \pads{} description.  To maintain
+the correct correspondence between a description, XML Schema, queries,
+and data, the query corral explictly contains the generated query
+prolog, which imports the XML Schema that corresponds to the
+underlying type-specific library.  This guarantees that the XQuery
+program is statically typed, compiled, and optimized with respect to
+the correct XML Schema and that the underlying data model is an
 instance of the specified XML Schema.  At runtime, the query corral
 takes an XQuery program and a \pads{} data source and produces the
 query result in XML.  We discuss the problem of producing native
-\pads{} values in Section~\ref{section:future}. 
-
-Section~\ref{section:pads} describes the output of the \pads{}
-compiler.  Here, we focus on the mapping from a description to XML
-Schema and on the features of the type-specific data model.
+\pads{} values in Section~\ref{section:future}.
 
 \subsection{Viewing \pads{} data as XML}	
 
-The fragment of the XML Schema in Figure~\ref{figure:dibbler-schema}
-corresponds to the description in Figure~\ref{figure:dibbler}.  We use
-this example to illustrate the mapping of a \pads{} description to XML
-Schema.
+The mapping from a \pads{} description to an XML Schema is 
+straight-forward.  The interesting aspect of this mapping is that
+\pads{} values that are error-free and those containing errors are
+accessible in the XML view.  We begin with the mapping of \pads{} base
+types. 
 
+A default XML Schema, \cd{pads.xsd}, contains the schema types that
+represent the \pads{} base types shared by all \pads{} descriptions.
+Figure~\ref{figure:pads.xsd} contains a fragment of this schema.
+Every \pads{} base type is mapped to a schema simple type that best
+subsumes the value space of the given \pads{} base type.  For example,
+the \cd{Puint32} base type maps to the schema type \cd{xs:unsignedInt}
+(Lines~1--3).  Recall that all parsed \pads{} values have an in-memory
+representation and a parse descriptor, which records the state of the
+parse, the error code of a detected error, and the location of that
+error.  The XML view of a parsed value is a choice of the in-memory
+representation, if no error occurred, or of the parse descriptor, if
+an error occurred (Lines~4--8).  This light-weight view exposes the
+parse descriptor only when an error occurs.  The parse-descriptor type
+for all base types is the same and is represented by the schema type
+\cd{Pbase\_pd} (Line~10--14).
+
+\begin{figure}
+\begin{small}
+\begin{code}
+ 1. <xs:simpleType name="\kw{base\_Puint32}">
+ 2.  <xs:restriction base="\kw{xs:unsignedInt}"/>
+ 3. </xs:simpleType>
+ 4. <xs:complexType name="\kw{val_Puint32}">
+ 5.  <xs:\kw{choice}>
+ 6.   <xs:element name="\kw{rep}" type="\kw{p:base\_Puint32}"/>
+ 7.   <xs:element name="\kw{pd}"  type="\kw{p:Pbase_pd}"/>
+ 8.  </xs:\kw{choice}>
+ 9. </xs:complexType>
+{10}. <xs:complexType name="\kw{Pbase_pd}">
+{11}.  <xs:sequence>
+{12}.   <xs:element name="\kw{pstate}"  type="\kw{p:Pflags_t}"/>
+{13}.   <xs:element name="\kw{errCode}" type="\kw{p:PerrCode_t}"/>
+{14}.   <xs:element name="\kw{loc}"     type="\kw{p:Ploc_t}"/>
+{15}.  </xs:sequence>
+{16}. </xs:complexType>
+\end{code}
+\end{small}
+\caption{Fragment of XML Schema for \pads{} base types.}
+\label{figure:pads.xsd}
+\end{figure}
+
+The fragment of the XML Schema in Figure~\ref{figure:dibbler-schema}
+corresponds to the description in Figure~\ref{figure:dibbler}.  Note
+that the schema imports the schema for \pads{} base types (Line~5).
 Each compound type is mapped to a complex schema type with a
 particular content model.  A \kw{Pstruct} is mapped to a complex type
 that contains a sequence of local elements, each of which corresponds
 to one field in the \kw{Pstruct}.  For example, the \kw{Pstruct}
 \cd{order\_header\_t} is mapped to the complex type
-\cd{order\_header\_t}, which contains an element declaration for the
-field \cd{order\_num}, among others.  Each complex type also includes
-an optional \cd{pd} element that corresponds to the type's parse
-descriptor.  The \cd{pd} element is absent if no errors occurred
-during parsing, but if present, permits an analyst to easily identify
-the kind and location of errors in the source data.  For example, this
-expression returns the locations of all orders that contain
-at least one error: \cd{$pads/Psource/orders/elt/pd/loc}. 
-
-\cut{``Error-aware'' mapping from PADS type system to isomorphic XML}
-Schema. 
-
-The XML Schema types for other compound types annotated
-with corresponding fields from PADS rep, e.g., arrays have a length. 
-
-
-Extra level of indirection in representation of arrays---wrap each
-item in an element. 
-
-A \kw{Punion} is mapped to a choice of elements, each of which
-corresponding to one field in the \kw{Punion}. 
-
-
+\cd{order\_header\_t} (Lines~7--15), which contains an element
+declaration for the field \cd{order\_num}, among others.  A
+\kw{Punion} is mapped to a complex type that contains a choice of
+elements, each of which corresponds to one field in the \kw{Punion}.
 \begin{figure*}
 \begin{small}
 \begin{code}
-<xs:schema targetNamespace="\kw{file:/example/sirius.p}"
-           xmlns="file:/example/sirius.p"
-           xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:p="http://www.padsproj.org/pads.xsd">
-<xs:import namespace = "http://www.padsproj.org/pads.xsd".../>
-...
-<xs:complexType name="\kw{order_header_t}">
- <xs:sequence>
-  <xs:element name="\kw{order_num}"     type="\kw{p:val_Puint32}"/>
-  <xs:element name="\kw{att_order_num}" type="\kw{p:val_Puint32}"/>
-  <xs:element name="\kw{ord_version}"   type="\kw{p:val_Puint32}"/>
-  <!-- More local element declarations -->
-  <xs:element name="\kw{pd}"            type="\kw{p:PStruct_pd}" minOccurs="0"/>
- </xs:sequence>
-</xs:complexType>
-<!-- More complex type declarations -->
-<xs:complexType name="\kw{orders_t}">
- <xs:sequence>
-  <xs:element name="\kw{elt}"    type="\kw{order_t}" maxOccurs="unbounded"/>
-  <xs:element name="\kw{length}" type="\kw{p:Puint32}"/>
-  <xs:element name="\kw{pd}"     type="\kw{p:Parray_pd}" minOccurs="0"/>
- </xs:sequence>
-</xs:complexType>
-...
-<xs:element name="PSource" type="summary_t"/>
-</xs:schema>
+{ 1}. <xs:schema targetNamespace="\kw{file:/example/sirius.p}"
+{ 2}.            xmlns="file:/example/sirius.p"
+{ 3}.            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+{ 4}.            xmlns:p="http://www.padsproj.org/pads.xsd">
+{ 5}. <xs:import namespace = "http://www.padsproj.org/pads.xsd".../>
+{ 6}. ...
+{ 7}. <xs:complexType name="\kw{order_header_t}">
+{ 8}.  <xs:sequence>
+{ 9}.   <xs:element name="\kw{order_num}"     type="\kw{p:val_Puint32}"/>
+{10}.   <xs:element name="\kw{att_order_num}" type="\kw{p:val_Puint32}"/>
+{11}.   <xs:element name="\kw{ord_version}"   type="\kw{p:val_Puint32}"/>
+{12}.   <!-- More local element declarations -->
+{13}.   <xs:element name="\kw{pd}"            type="\kw{p:PStruct_pd}" minOccurs="0"/>
+{14}.  </xs:sequence>
+{15}. </xs:complexType>
+{16}. <!-- More complex type declarations -->
+{17}. <xs:complexType name="\kw{orders_t}">
+{18}.  <xs:sequence>
+{19}.   <xs:element name="\kw{elt}"    type="\kw{order_t}" maxOccurs="unbounded"/>
+{20}.   <xs:element name="\kw{length}" type="\kw{p:Puint32}"/>
+{21}.   <xs:element name="\kw{pd}"     type="\kw{p:Parray_pd}" minOccurs="0"/>
+{22}.  </xs:sequence>
+{23}. </xs:complexType>
+     ...
+{24}. <xs:element name="Psource" type="summary_t"/>
+{25}. </xs:schema>
 \end{code}
 \end{small}
 \caption{Fragment of XML Schema for \dibbler{} \pads{} description.}
 \label{figure:dibbler-schema}
 \end{figure*}
 
-Each base type is mapped to an XML Schema simple type.  Since the base
-types do not change, the corresponding XML Schema types are defined
-once in \cd{pads.xsd}, which is imported into all generated schemata. 
-\begin{small}
-\begin{code}
-<xs:simpleType name="Puint32">
-  <xs:restriction base="xs:unsignedInt"/>
-</xs:simpleType>
-<xs:complexType name="\kw{val_Puint32}">
-  <xs:\kw{choice}>
-   <xs:element name="\kw{val}" type="\kw{p:Puint32}"/>
-   <xs:element name="\kw{pd}"  type="\kw{p:Pbase_pd}"/>
-  </xs:\kw{choice}>
-</xs:complexType>
-<xs:complexType name="\kw{Pbase_pd}">
- <xs:sequence>
-   <xs:element name="\kw{pstate}"  type="\kw{p:Pflags_t}"/>
-   <xs:element name="\kw{errCode}" type="\kw{p:PerrCode_t}"/>
-   <xs:element name="\kw{loc}"     type="\kw{p:Ploc_t}"/>
- </xs:sequence>
-</xs:complexType>
-\end{code}
-\end{small}
+Each complex type also includes an optional \cd{pd} element that
+corresponds to the type's parse descriptor (Lines~13 and~21).  All
+parse-descriptor types contain the parse state, error code, and
+location.  The parse-descriptor for compound types contain additional
+information, \eg{}, \cd{Pstruct\_pd} contains the number of nested
+errors and \cd{Parray\_pd} contains the index of the array item in
+which the first error occurred.  The \cd{pd} element is absent if no
+errors occurred during parsing, but if present, permits an analyst to
+easily identify the kind and location of errors in the source data.
+For example, this XQuery expression returns the locations of all
+orders that contain at least one error:
+\cd{$pads/Psource/orders/elt/pd/loc}.
 
+The schema types for some compound types contain additional fields
+from the \pads{} in-memory representation, \eg{} arrays have a length
+(Line~20).  Note that \cd{Parray} types do not associate a name with
+each individual array item, so in the corresponding schema type, the
+default element \cd{elt} is used to encapsulate each array item.
 
-
-Extra level of indirection for base types: must contain the value of
-the base type and an optional parse-descriptor, if an error has
-occurred. 
-
-We don't take complete advantage of XML Schema, e.g., Penum types
-could be modeled by XML Schema enumeration simple types, but currently
-unsupported.
-
-Example of query prolog. 
+The \pads{} compiler generates a query prolog that imports the
+generated schema and specifies the type of the input variable that
+contains the pads data.  Figure~\ref{figure:padx-query-prolog}
+contains the query prolog for the schema in
+Figure~\ref{figure:dibbler-schema}.  At run time, the user can specify
+the input data as a command-line argument or by calling the
+\cd{fn:doc} function, \eg{} fn:doc("pads:/example/sirius.data").
 \begin{figure*}
 \begin{small}
 \begin{code}
 import schema default element namespace "\kw{file:/example/sirius.p}";
-declare variable \kw{$pads} as \kw{document-node(PSource)} external; 
+declare variable \kw{$pads} as \kw{document-node(Psource)} external; 
 \end{code}
 \end{small}
 \caption{\padx{} generated query prolog}
 \label{figure:padx-query-prolog}
 \end{figure*}
-
-How to access data files:  fn:doc("pads:/example/sirius.data");
 
 \subsection{PADX Data Model}
 
