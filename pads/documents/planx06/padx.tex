@@ -19,8 +19,8 @@ From a \pads{} description, the compiler generates an XML Schema
 description that specifies the virtual XML view of the corresponding
 \pads{} data; an XQuery prolog that imports the generated schema and
 that associates the input data with the correct schema type; and a
-type-specific library that maintains the information necessary to
-support \padx{}'s concrete data model.  
+type-specific library that provides the virtual XML view of \pads{}
+values necessary to implement \padx{}'s concrete data model.  
 
 Note that a query corral is \emph{customized} for a particular \pads{}
 description, in particular, its concrete data model only supports
@@ -58,7 +58,7 @@ representation (\cd{rep}), if no error occurred, or of the parse
 descriptor (\cd{pd}), if
 an error occurred (Lines~4--8).  This light-weight view exposes the
 parse descriptor only when an error occurs.  The parse-descriptor type
-for all base types is the same and is represented by the schema type
+for all base types is represented by the schema type
 \cd{Pbase\_pd} (Line~10--14).
 
 \begin{figure}
@@ -150,7 +150,7 @@ The schema types for some compound types contain additional fields
 from the \pads{} in-memory representation, \eg{} arrays have a length
 (Line~20).  Note that \cd{Parray} types do not associate a name with
 each individual array item, so in the corresponding schema type, the
-default element \cd{elt} is used to encapsulate each array item.
+default element \cd{elt} encapsulates each array item.
 
 The \pads{} compiler generates a query prolog that specifies the
 environment in which all XQuery programs are typed and evaluated.
@@ -166,7 +166,7 @@ Figure~\ref{figure:dibbler-schema}.  This declarations guarantee
 that the query is statically typed with respect to the correct input type.
 
 At run time, the user can specify
-the input data as a command-line argument or by calling the
+the input data as a command-line argument or by calling the XQuery
 \cd{fn:doc} function on a \pads{} source, \eg{} \cd{pads:/example/sirius.data}.
 \begin{figure*}
 \begin{small}
@@ -181,53 +181,84 @@ the input data as a command-line argument or by calling the
 
 \subsection{\padx{} Concrete Data Model}
 
-\scream{Mary working here...}
-In Figure~\ref{figure:padx-arch}, the \pads{} data model consists of
-two modules: a generic module that implements the \Galax{} abstract
-data model and a compiler-generated module, in which each \pads{} type
-has a corresponding, type-specific node representation that provides
-the XML view of values of the given type.
+In Figure~\ref{figure:padx-arch}, the interface between \Galax{} and
+\pads{} consists of two modules: the \padx{} concrete data model,
+which implements the \Galax{} abstract data model, and a
+compiler-generated module, in which each \pads{} type has a
+corresponding, type-specific node representation that provides the XML
+view of values of that type.
 
 Figure~\ref{fig:padx-element-node} contains a fragment of the \padx{}
-concrete data model for a node.  For most method calls (e.g.,
-\cd{node\_name}, \cd{typed\_value}), this module directly invokes 
-the corresponding type-specific methods.  One exception is the
-\cd{child} axis method.  In the \padx{} data model, 
-
-In the \Galax{} data model, the child axis yields a
-sequence of nodes, which logically can be accessed randomly.  
-
- of differences, most notably in its approach
-to access to children.  Queries to the \galax data model return
-sequences of children, some based on full traversals of the tree
-rooted at the queried node. In contrast, the \padx{} data model
-provides indexed access to individual, immediate children of the
-queried node. In this way, we divide the labor between generic and
-type-specific portions by assigning tree traversal to the former and
-raw data access to the latter.
-
+concrete data model for a node.  This object provides a thin wrapper
+around the type-specific node representation, \cd{padx\_node\_rep},
+whose interface is in Figure~\ref{fig:padx-node-rep}.  A node
+representation contains references to a \pads{} value's in-memory
+representation and parse descriptor.  The node representation
+interface returns the \Xml{} view of the \pads{} value, including the
+value's element name, its typed value, and parent.
+The \cd{kth\_child} and \cd{kth\_child\_by\_name} methods 
+return all of the \pads{} value's children in order and those with a
+given name in order, respectively.
 \begin{figure*}
 \begin{small}
 \begin{code}
-{ 1}. class pads\_node (nr : padx\_node\_rep) =  
-{ 2}. object (self)
+class virtual padx\_node\_rep :
+  object 
+    (* Private data includes parsed value's rep \& pd *)
+    method name        : unit -> string
+    method typed_value : unit -> item
+    method parent      : unit -> padx\_node\_rep option
+    method kth\_child   : int -> padx\_node\_rep option
+    method kth\_child\_by\_name : int -> string -> padx\_node\_rep option
+  end
+\end{code}
+\end{small}
+\caption{The \padx{} node representation}
+\label{fig:padx-node-rep}
+\end{figure*}
+
+For some methods in Figure~\ref{fig:padx-element-node} (Lines~4--5),
+the concrete data model simply invokes the corresponding type-specific
+methods.  One exception is the \cd{child} axis method (Lines~7--17),
+which we describe in detail as it illustrates how the \Xml{} view of a
+\pads{} source is materialized lazily.
+The \cd{child} method takes an optional name-test argument.  We
+describe the case when the name-test is absent, which corresponds to
+the common expression \cd{child::*}.  The \cd{child} method creates a
+mutable counter \cd{k} (Line~8), which contains the index of the
+last child accessed, and a function \cd{lazy\_child} (Lines~11--16),
+which is invoked each time the \cd{child} cursor is poked.  On each
+invocation, \cd{lazy\_child} increments the counter and delegates to
+the \cd{kth\_child} method of the type-specific node representation.
+For some \pads{} types, accessing the virtual \nth{k} child does not
+require reading or parsing data, \eg{} if the virtual child is part of
+a complete \pads{} record.  For other \pads{} types, \eg{} \kw{Parray}s that
+contain file records, accessing the virtual \nth{k} child may require
+reading and parsing data.  The \cd{kth\_child} method provides a
+uniform interface to all types and delegates the problem of when to
+read and parse data to the underlying type-specific node
+representation.
+\begin{figure*}
+\begin{small}
+\begin{code}
+{ 1}. class \kw{pads\_node} (\kw{nr} : \kw{padx\_node\_rep}) =  
+{ 2}. object 
 { 3}.   inherit Galax.node
 { 4}.   method node\_name   () = nr#name()
 { 5}.   method typed\_value () = nr#typed_value() 
 { 6}.   (* ... Other data model accessors ... *)
-\mbox{}
-{ 7}.   method child name\_test =  
-{ 8}.     let k = ref 0 in
-{ 9}.     let lazy\_child child\_fn = 
-{10}.      incr k;
-{11}.       match (child\_fn !k) with
-{12}.       | Some cnr ->  Some(new pads\_node cnr)
-{13}.       | None -> None
-{14}.       in Cursor.cursor\_of\_function lazy\_child
-{15}.     match name\_test with 
-{16}.     | None ->  lazy\_child (nr#kth\_child)
-{17}.     | Some (NameTest name) -> lazy\_child (nr#kth\_child\_named name)
-\mbox{}
+{ 7}.   method \kw{child} name\_test =  
+{ 8}.     let \kw{k} = ref 0 in
+{ 9}.     match name\_test with 
+{10}.     | None ->  
+{11}.       let \kw{lazy\_child} () = 
+{12}.        (incr k;
+{13}.         match \kw{nr#kth\_child} \kw{!k} with
+{14}.         | Some cnr ->  Some(new pads\_node(cnr))
+{15}.         | None -> None)
+{16}.       in Cursor.cursor\_of\_function lazy\_child
+{17}.     | Some (NameTest name) -> 
+            (* Same as above, but call nr#kth\_child\_named *)
 {18}.   (* ... Other axes ... *)
 {19}. end
 \end{code}
@@ -236,79 +267,50 @@ raw data access to the latter.
 \label{fig:padx-element-node}
 \end{figure*}
 
-\cut{
-Beneath the \galax \absdm lies the \padx{} \condm, a \padx{}-specific
-implementation of the \galax \absdm. This implementation is broken
-into two pieces - one generic, for all \pads types, and one
-type-specific. The generic portion interfaces with the type-specific
-portion through the \padx \absdm.  While similar to the \galax{}
-\absdm, it has a number of differences, most notably in its approach
-to access to children.  Queries to the \galax data model return
-sequences of children, some based on full traversals of the tree
-rooted at the queried node. In contrast, the \padx{} data model
-provides indexed access to individual, immediate children of the
-queried node. In this way, we divide the labor between generic and
-type-specific portions by assigning tree traversal to the former and
-raw data access to the latter.}
-
-The compiler-generated module contains type-specific instances of the
-node representation class in Figure~\ref{fig:padx-node-rep}.  The node
-representation is as a thin wrapper around a \pads{} value and
-contains references to a parsed value's underlying representation,
-mask, and parse descriptor.  The node representation interface returns
-the \Xml{} view of the parsed, including the node's name in the \Xml{}
-view, typed value, and parent.  The \cd{kth\_child} method returns
-the node's \nth{k} child of the node. 
+We use the node representation of a \cd{order\_header\_t}
+value in Figure~\ref{fig:order-node-rep} to illustrate type-specific
+compilation.  The object takes the name of the field that contains the
+\cd{order\_header\_t} value, which corresponds to the \Xml{} node
+name, and the in-memory representation and parse descriptor of the
+value.  The \cd{kth\_child} method (Lines~9--15) takes an index and
+returns the node representation of the field at that index.  For
+example, the first child (Line~11) corresponds to the field
+\cd{order\_num}, which contains a \kw{Puint32} value.  The
+\cd{kth\_child\_by\_name} method (Lines~16--21) provides constant-time
+lookup of a child with a particular name: It looks up the index of the
+name in the associative map \cd{name\_map} and then delegates
+to \cd{kth\_child}.  Note that this \Xml{} view of an
+\cd{order\_header\_t} value corresponds to the schema type
+\cd{order\_header\_t} in Figure~\ref{figure:dibbler-schema}.
 \begin{figure*}
 \begin{small}
 \begin{code}
-class virtual padx\_node\_rep :
-  object 
-    (* Private data includes type's rep, mask \& pd *)
-    method name        : unit -> string
-    method typed_value : unit -> item
-    method parent      : unit -> padx\_node\_rep option
-    method kth_child   : int -> padx\_node\_rep option
-    method kth_child_named : int -> string -> padx\_node\_rep option
-  end
+{ 1}. class \kw{order\_header\_t\_node\_rep}
+{ 2}.       (field\_name : string)
+{ 3}.       (rep : order\_header\_t)
+{ 4}.       (pd  : order\_header\_t\_pd) = 
+{ 5}. object 
+{ 6}.   inherit padx\_node\_rep
+{ 7}.   method name() = field\_name
+{ 8}.   ... 
+{ 9}.   method \kw{kth\_child} idx = 
+{10}.     match idx with 
+{11}.     |  1 -> Some(new val\_Puint32\_node\_rep("order\_num", rep.order\_num, pd.order\_num\_pd))
+{12}.     |  2 -> Some(new val\_Puint32\_node\_rep("att\_order\_num", rep.att\_order\_num, pd.att\_order\_num\_pd))
+{13}.     | ...
+{14}.     | 14 -> Some(new Pstruct\_pd\_node\_rep("pd", pd))
+{15}.     | _  -> None
+\mbox{}
+{16}.   (* Chidren's name map *)
+{17}.   let \kw{name_map} = Associative\_array.create [("order\_num", 1); ("att\_order\_num", 2); ...; ("pd", 14)] 
+{18}.   method \kw{kth\_child\_by\_name} child\_name =
+{19}.     match Associative\_array.lookup name\_map child\_name with
+{20}.     | None -> Cursor.empty_cursor()
+{21}.     | Some idx -> kth_child idx 
+{22}. end
 \end{code}
 \end{small}
-\caption{The \padx{} abstract node representation}
-\label{fig:padx-node-rep}
-\end{figure*}
-
-Figure~\ref{fig:order-node-rep}.
-\begin{figure*}
-\begin{small}
-\begin{code}
-class order\_header\_t\_node\_rep 
-  fun (field\_name : string) * 
-      (par : padx\_node\_rep option) * 
-      (rep : order\_header\_t) * 
-%      (msk : order\_header\_t\_m) * 
-      (pd : order\_header\_t\_pd) = 
-  object (self) 
-    inherit padx\_node\_rep
-    (* Private data includes type's rep, mask \& pd *)
-    method name        () = field\_name
-    method typed_value () = Cursor.empty_cursor()
-    method parent      () = par 
-    method kth_child   idx = 
-      match idx with 
-      | 1 -> new val\_Puint32\_node\_rep "order\_num" self pd.order\_num pd.order\_pd %(mask.order\_num) 
-      | 2 -> new val\_Puint32\_node\_rep "att\_order\_num" self pd.att\_order\_num pd.att\_order\_pd %(mask.att\_order\_num) 
-      | ...
-      | 14 -> new Pstruct\_pd\_node\_rep "pd" self pd
-    (* Chidren's name map *)
-    HashTable name_map = [ ("order\_num", 1); ("att\_order\_num", 2); ... ]
-    method kth_child_named name =
-      match HashTable.lookup name\_map name with
-      | None -> Cursor.empty_cursor()
-      | Some idx -> kth_child idx 
-  end
-\end{code}
-\end{small}
-\caption{Fragment of compiler-generated node representation for order\_header\_t}
+\caption{Fragment of compiler-generated node representation for \texttt{order\_header\_t}}
 \label{fig:order-node-rep}
 \end{figure*}
 
@@ -322,18 +324,16 @@ respectively, when these children are requested. Similarly for an
 array with a particular element type, all requests for an ``elt''
 child will return a nodeRep with the element-type specific
 implementation. Other datatypes are analagous.
-}
 
 In \figref{fig:padx-absdm} we present the \padx{} \absdm.  The most
 interesting methods are the child accessor methods. Method {\tt
 kth\_child} returns the \nth{k} child of the node starting from
-zero. The {\tt kth\_child\_named} function returns the node's \nth{k}
+zero. The {\tt kth\_child\_by\_name} method returns the node's \nth{k}
 child with the specified name. This function is most relevant to
 arrays, where all array items have the element name \cd{elt}.  For
 both functions, an option is returned in case the requested child does
 not exist.
 
-\cut{
 Part of PADX implementation are generic functions that implement data
 model accessors.  PADS compiler generates type-specific functions for
 walking virtual XML tree.  Relate back to type-specific library
@@ -461,6 +461,21 @@ Each type-specific implementation will (down)cast such pointers to the
 appropriate type before use, relying on the (assumed) invariant that
 no only code specific to that type has manipulated those pointers.
 }
+
+\cut{
+Beneath the \galax \absdm lies the \padx{} \condm, a \padx{}-specific
+implementation of the \galax \absdm. This implementation is broken
+into two pieces - one generic, for all \pads types, and one
+type-specific. The generic portion interfaces with the type-specific
+portion through the \padx \absdm.  While similar to the \galax{}
+\absdm, it has a number of differences, most notably in its approach
+to access to children.  Queries to the \galax data model return
+sequences of children, some based on full traversals of the tree
+rooted at the queried node. In contrast, the \padx{} data model
+provides indexed access to individual, immediate children of the
+queried node. In this way, we divide the labor between generic and
+type-specific portions by assigning tree traversal to the former and
+raw data access to the latter.}
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "paper"
