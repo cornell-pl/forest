@@ -40,8 +40,9 @@ tree-structured. It is often quite large, including some data sources
 that generate over a gigabit per second~\cite{gigascope}. It frequently
 comes with incomplete and/or out-of-date documentation, and there are
 almost always errors in the data.  Sometimes these errors are the most
-interesting aspect of the data, because they can indicate where
-something is going wrong in a monitored system.
+interesting aspect of the data, \eg{}, in log files where
+errors indicate that something is going wrong in the associated system.
+
 
 The lack of standard tools for processing ad hoc data forces
 analysts to roll their own tools, leading to scenarios such as the
@@ -67,7 +68,7 @@ The parser is likely to be brittle with respect to changes in the
 input sources.  Consider, for example, how tricky it is to
 figure out which \$3's should be \$4's in a \perl{} parser when a new
 column appears in the data.
-Errors in data also pose a significant challenge in hand-coded
+Errors in the data also pose a significant challenge in hand-coded
 parsers.  If the data analyst thoroughly checks for errors, then
 the error checking code dominates the parser, making it even more
 difficult to understand the semantics of the data.  If she is not thorough,
@@ -106,28 +107,32 @@ We have two tools, \pads{} and \Galax{}, each of which addresses aspects of the 
 problem in isolation.  The \pads{} system allows users to describe ad hoc data
 sources declaratively and then generates error-aware parsers and tools
 for manipulating the sources, including statistical profiling tools.
-Such support would allow the analyst to produce a robust, error-aware
+Such support allows the analyst to produce a robust, error-aware
 parser quickly.  The \Galax{} system supports declarative querying of
-semi-structured data sources via XQuery.  Such querying would allow
-the analyst first to explore the data and then produce answers to her
-questions.  It would also support converting the data into XML to
+semi-structured data sources via XQuery.  If it could be applied to ad
+hoc data, such querying would allow the analyst first to explore the
+data and then to produce answers to her questions.  It would also support
+converting the data into XML to 
 facilitate downstream processing with XML-based tools if she so
-desired.  Our goal was to integrate \pads{} and \Galax{} to solve the
-analyst's data-management problems for the large ad hoc data sources
-that we have seen in practice.
+desired.  In this work, our goal was to integrate \pads{} and \Galax{}
+to solve the analyst's data-management problems for the large ad hoc
+data sources that we have seen in practice.
 
 This paper describes our experience designing and implementing
-\padx{}~\footnote{Pronounced ``paddocks'', an enclosed area for
-exercising race horses.}, a synthesis and extension of \pads{} and
+\padx{}~\footnote{%
+  Pronounced ``paddocks'', an enclosed area for exercising race
+  horses.},
+a synthesis and extension of \pads{} and 
 \Galax{}.  Figure~\ref{figure:padx-arch1} depicts \padx{} from the
 analyst's perspective.  The analyst provides a \pads{} description of
 her ad hoc source, which is compiled into a library of components for
 parsing her data and for viewing and querying it as XML.  The
 resulting libraries are linked together with the \pads{} and \Galax{}
 runtime systems into one \padx{} query executable, called a ``query
-corral''\footnote{The equestrian metaphor is intentional: Getting
-these systems to work together is like corralling racehorses!}.  At
-query time, the analyst provides her ad hoc data sources and her query
+corral.''\footnote{%
+   The equestrian metaphor is intentional: Getting these systems to
+   work together is like corralling racehorses!}   
+At query time, the analyst provides her ad hoc data sources and her query
 written in XQuery, and \padx{} produces the query's results.
 \begin{figure}
 \begin{center}
@@ -143,7 +148,7 @@ this view as a mapping from the \pads{} type system to XML Schema, the
 basis of XQuery's type system.  A second problem involved systems
 design and engineering.  Building \padx{} required evolving \pads{}
 and \Galax{} in parallel, modifying the implementation of \Galax{} to
-support an abstract data model, so that \Galax{} could view non-XML
+support an abstract data model so that \Galax{} could view non-XML
 sources as XML, and augmenting \pads{} with the ability to generate
 concrete instances of this data model.  Our solutions to these
 problems, which were necessary to build a working system, are
@@ -154,8 +159,9 @@ sources.  Section~\ref{section:performance} describes how \padx{}
 currently handles large sources and the open problems that we face
 with respect to data scale and query performance.
 
-We begin with a scenario that illustrates the data management
-tasks faced by AT\&T data analysts and how \padx{} simplifies these
+We begin with a more detailed account of a scenario that illustrates
+the data management tasks faced by AT\&T data analysts and how \padx{}
+simplifies these 
 tasks.  We then crack open the \padx{} architecture, first describing
 \pads{} and \Galax{} in isolation, and then describing our solutions
 to the problems described above.  
@@ -244,13 +250,13 @@ of compiled name access over interpreted name access.
 In the telecommunications industry, the term \textit{provisioning} refers to
 the process of converting an order for phone service into the
 actual service.  This process is complex, involving many interactions
-with other companies.  To discover potential problems pro-actively, the \dibbler{}
+with other companies.  To discover potential problems proactively, the \dibbler{}
 project tracks AT\&T's provisioning process by compiling weekly
 summaries of the state of certain types of phone service orders.
 These summaries, which are stored in flat ASCII text files, can
 contain more than 2.2GB of data per week.
 
-These ASCII summaries store the summary date
+The summaries store the processing date
 and one record per order.  Each order record contains a header
 followed by a nested sequence of events.  The header has 13 pipe
 separated fields: the order number, AT\&T's internal order number, the
@@ -296,16 +302,16 @@ up embedded in parsing code, making long-term maintenance difficult
 for the original writers and sharing the knowledge with others nearly
 impossible.}
 With \pads{}, the analyst writes a declarative data description of the
-physical layout of their data.  The language also permits analysts to
-describe expected semantic properties of their data so that deviations
-can be flagged as errors. The intent is to allow analysts to capture
-in a \pads{} description all that they know about a given data source.
+physical layout of her data.  The language also permits the analyst to
+describe expected semantic properties of her data so that deviations
+can be flagged as errors. The intent is to allow an analyst to capture
+in a \pads{} description all that she knows about a given data source.
 
 \figref{figure:dibbler} gives the \pads{} description for the
 \dibbler{} data format.  In \pads{} descriptions, types are declared
 before they are used, so the type that describes the entire data
 source, \cd{summary\_t}, appears at the bottom of the description (Line~42).  In
-the next section, we use this example to describe several features of
+the next section, we use this example to give an overview of
 the \pads{} language.  Here, we simply note that the data analyst
 writes this description, and the \pads{} compiler produces
 customizable \C{} libraries and tools for parsing, manipulating, and
@@ -399,8 +405,8 @@ $pads/Psource/orders/elt[events/elt[1]
 \label{figure:dibbler-query}
 \end{figure}
 
-With \padx{}, the synthesis of \pads{} and \Galax{}, the analyst
-writes declarative XQuery expressions to query his ad hoc data source.
+With \padx{}, the analyst
+writes declarative XQuery expressions to query her ad hoc data source.
 Because XQuery is designed to manipulate semi-structured data, its
 expressiveness matches ad hoc data sources well.  XQuery is a
 Turing-complete language and therefore powerful

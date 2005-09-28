@@ -69,7 +69,7 @@ interpreted with the ambient character encoding.
 
 \kw{Punion}s describe alternatives in the data format.  For example,
 the \cd{dib\_ramp\_t} type (Lines~9--12) indicates
-that the \cd{ramp} field in a \dibbler{} record can be is either a
+that the \cd{ramp} field in a \dibbler{} record can be either a
 \cd{Puint\_64} or a string \cd{"no\_ii"} followed by a \cd{Puint\_64}.
 During parsing, the branches of a \kw{Punion} are tried in order; the
 first branch that parses without error is taken.  \cut{\pads{} also
