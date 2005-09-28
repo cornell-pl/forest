@@ -38,7 +38,7 @@ made obsolete by schema evolution are identified at compile time.
 XQuery is also ideal for specifying integrated views of multiple
 sources.  Although here we focus on querying one ad hoc source at a
 time, XQuery supports simultaneous querying of multiple 
-XML sources. Lastly, XQuery is practical: It will soon be a
+sources. Lastly, XQuery is practical: It will soon be a
 standard; numerous manuals already exist~\cite{brundage2004}; and it is widely implemented
 in commercial databases.
 
@@ -74,7 +74,7 @@ interface\footnote{\Galax{} is implemented in O'Caml, so these signatures
 are in O'Caml.} for a node in the XQuery Data Model.  Node
 accessors return information such as a node's name (\cd{node\_name}),
 the XML Schema type against which the node was validated (\cd{type}),
-and the node's atomic-valued data if it was validated against a XML
+and the node's atomic-valued data if it was validated against an XML
 Schema simple type (\cd{typed\_value}).  The \cd{parent}, \cd{child},
 and \cd{attribute} methods navigate the document and return a node
 sequence containing the respective parent, child, or attribute nodes
@@ -110,7 +110,7 @@ of the given node.
 \end{figure*}
 
 The first six methods in Figure~\ref{figure:galax-dm} (Lines~5--11) access the
-physical representation of a document, therefore a concrete instance
+physical representation of a document; therefore a concrete instance
 of the data model must provide their implementations.  \Galax{}
 provides default implementations for the four {descendant} and
 ancestor axes (Lines~13--16), which are defined recursively in terms of the {child}
@@ -139,7 +139,8 @@ materialized, \ie{}, evaluated eagerly.  \Galax{}'s algebraic
 operators produce and consume cursors of values, which permits
 pipelined and short-circuited evaluation of query plans.
 
-In addition to \padx{}'s concrete data model, \Galax{} has three other
+In addition to the concrete data model for \padx{},which we describe in the next
+section, \Galax{} has three other 
 concrete data models: a DOM-like representation in main memory and two
 ``shredded'' representations, one in main memory and one in secondary
 storage for very large documents (\eg{} $>$ 100MB).  The shredded data

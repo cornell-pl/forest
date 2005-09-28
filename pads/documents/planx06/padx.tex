@@ -39,7 +39,7 @@ values in Section~\ref{section:future}.
 \subsection{Viewing \pads{} data as XML}	
 
 The mapping from a \pads{} description to an XML Schema is 
-straight-forward.  The interesting aspect of this mapping is that
+straight-forward.  The interesting aspect of this mapping is that both
 \pads{} values that are error free and those containing errors are
 accessible in the XML view.  We begin with the mapping of \pads{} base
 types. 
@@ -47,13 +47,13 @@ types.
 A default XML Schema, \cd{pads.xsd}, contains the schema types that
 represent the \pads{} base types shared by all \pads{} descriptions.
 Figure~\ref{figure:pads.xsd} contains a fragment of this schema.
-Every \pads{} base type is mapped to a schema simple type that most
+Every \pads{} base type is mapped to the schema simple type that most
 closely subsumes the value space of the given \pads{} base type.  For example,
 the \cd{Puint32} base type maps to the schema type \cd{xs:unsignedInt}
 (Lines~1--3).  Recall that all parsed \pads{} values have an in-memory
 representation and a parse descriptor, which records the state of the
-parse, the error code of a detected error, and the location of that
-error.  The XML view of a parsed value is a choice of the in-memory
+parse, the error code for detected errors, and the location of those
+errors.  The XML view of a parsed value is a choice of the in-memory
 representation (\cd{rep}), if no error occurred, or of the parse
 descriptor (\cd{pd}), if
 an error occurred (Lines~4--8).  This light-weight view exposes the
@@ -142,7 +142,7 @@ errors and \cd{Parray\_pd} contains the index of the array item in
 which the first error occurred.  The \cd{pd} element is absent if no
 errors occurred during parsing, but if present, permits an analyst to
 easily identify the kind and location of errors in the source data.
-For example, this XQuery expression returns the locations of all
+For example, the following XQuery expression returns the locations of all
 orders that contain at least one error:
 \cd{$pads/Psource/orders/elt/pd/loc}.
 
@@ -153,7 +153,8 @@ each individual array item, so in the corresponding schema type, the
 default element \cd{elt} encapsulates each array item.
 
 The \pads{} compiler generates a query prolog that specifies the
-environment in which all XQuery programs are typed and evaluated.
+environment in which all XQuery programs over the corresponding data
+are typed and evaluated. 
 Figure~\ref{figure:padx-query-prolog} contains the query prolog for
 the schema in Figure~\ref{figure:dibbler-schema}.  The import schema
 declaration on Line~1 imports the schema in
@@ -182,10 +183,10 @@ the input data as a command-line argument or by calling the XQuery
 \subsection{\padx{} Concrete Data Model}
 
 In Figure~\ref{figure:padx-arch}, the interface between \Galax{} and
-\pads{} consists of two modules: the \padx{} concrete data model,
+\pads{} consists of two modules: the generic \padx{} concrete data model,
 which implements the \Galax{} abstract data model, and a
 compiler-generated module, in which each \pads{} type has a
-corresponding, type-specific node representation that provides the XML
+corresponding, type-specific node representation providing the XML
 view of values of that type.
 
 Figure~\ref{fig:padx-element-node} contains a fragment of the \padx{}
@@ -267,7 +268,7 @@ representation.
 \label{fig:padx-element-node}
 \end{figure*}
 
-We use the node representation of a \cd{order\_header\_t}
+We use the node representation of an \cd{order\_header\_t}
 value in Figure~\ref{fig:order-node-rep} to illustrate type-specific
 compilation.  The object takes the name of the field that contains the
 \cd{order\_header\_t} value, which corresponds to the \Xml{} node
