@@ -20,9 +20,30 @@ for files as small as 20MB, as the system's physical memory was no
 longer sufficient to hold all of the data structures. However, our
 findings based on the on-demand strategies were more encouraging. At
 each stage, we found a linear curve for time vs. file size. For the
-system as a whole, we found a constant ratio between stages across
-file sizes. The measurements for the two formats differed only in the
-location of the curve and the magnitude of the inter-stage ratio.
+first format, we measured $0.13$ {\mu}s per byte, $0.30$ {\mu}s per
+byte, and ??? and for the second format, $0.90$ {\mu}s, $1.12$ {\mu}s,
+and ???, for the three stages, respectively. For the system as a
+whole, we found a constant ratio between stages across file sizes. The
+measurements for the two formats differed only in the location of the
+curve and the magnitude of the inter-stage ratio.
+
+\begin{verbatim}
+dibbler_new:
+
+  |  pads  | node rep | padx concrete ...
+--------------------------------------
+ 5|  .15   | .33      |  
+10|  .13   | .31      |
+50|  .11   | .29      |
+
+ai:
+  | pads  | node rep | padx concrete ...
+-------------------------------------
+ 5|  .91  | 1.24     |  
+10|  .90  | 1.13     |
+50|  .87  | 1.10     |
+\end{verbatim}
+
 
 \subsection{Querying}
 
