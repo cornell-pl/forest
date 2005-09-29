@@ -1,12 +1,13 @@
 \section{Performance}
 \label{section:performance}
 
+\subsection{Concrete Data Model} 
 In order to understand the interaction between the layers of our
 system as well as the peformance of the system as a whole, we ran
 performance measurements at each layer of the corral. All tests were
 run on a 1.67 GHz, G4 PowerPC processor, with 500 MB memory, running
 Mac OS X 10.3. We performed the tests for two formats, three file
-sizes -- 5,10 and 50 megabytes -- and multiple loading strategies
+sizes -- 5, 10, and 50 megabytes -- and multiple loading strategies
 (where appropriate). We started at the bottom of the stack, with the
 raw, type-specific parsing functions and measured the time to parse an
 entire file. Next, we added a recursive, depth-first walk of the data
@@ -103,7 +104,7 @@ ai:
 % 55.175
 
 
-\subsection{Querying}
+\subsection{Materialization and Querying}
 
 Something about query evaluation:
 Although we have not explored custom evaluation plans 
