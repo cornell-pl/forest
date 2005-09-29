@@ -1,17 +1,28 @@
 \section{Performance}
 \label{section:performance}
 
+In order to understand the interaction between the layers of our
+system as well as the peformance of the system as a whole, we ran
+performance measurements at each layer of the corral. All tests were
+run on a 1.67 GHz, G4 PowerPC processor, with 500 MB memory, running
+Mac OS X 10.3. We performed the tests for two formats, three file
+sizes -- 5,10 and 50 megabytes -- and multiple loading strategies
+(where appropriate). We started at the bottom of the stack, with the
+raw, type-specific parsing functions and measured the time to parse an
+entire file. Next, we added a recursive, depth-first walk of the data
+through the \padx node representation API (loading the data on demand,
+sequentially). In this way, we timed the performance of the
+type-specific portion of the \xml interface.  Finally, we used the
+\padx concrete data model to traverse the data source.
 
-
-\subsection{Materialization and Loading}
-
-Lasagna performance issues (i.e. big picture, not just the one layer):
-
-\begin{itemize}
-\item Each level in the data model adds a small constant cost to
-  touching the data.
-\item The linear reading is indeed linear.
-\end{itemize}
+For the bulk-loading strategy, we found that performance deteriated
+for files as small as 20MB, as the system's physical memory was no
+longer sufficient to hold all of the data structures. However, our
+findings based on the on-demand strategies were more encouraging. At
+each stage, we found a linear curve for time vs. file size. For the
+system as a whole, we found a constant ratio between stages across
+file sizes. The measurements for the two formats differed only in the
+location of the curve and the magnitude of the inter-stage ratio.
 
 \subsection{Querying}
 
@@ -30,4 +41,3 @@ this data into a real database, building indices and getting good
 query performance?  B/c data is ephmeral, queries are ephmeral, but
 analyst/programmer should profit from disciplined access/querying of
 their data.  Don't abandon them to Perl. 
-
