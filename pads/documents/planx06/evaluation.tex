@@ -44,6 +44,64 @@ ai:
 50|  .87  | 1.10     |
 \end{verbatim}
 
+% File sizes:
+% -rw-r--r--  1 yitzhakm  yitzhakm   4999890 29 Sep 13:41 ai.5MB
+% -rw-r--r--  1 yitzhakm  yitzhakm   9999780 28 Sep 20:57 ai.10MB
+% -rw-r--r--  1 yitzhakm  yitzhakm  49999915 28 Sep 20:58 ai.50MB
+
+% -rw-r--r--  1 yitzhakm  yitzhakm   4090277 29 Sep 13:34 dibbler_new.5MB
+% -rw-r--r--  1 yitzhakm  yitzhakm   8180541 29 Sep 13:34 dibbler_new.10MB
+% -rw-r--r--  1 yitzhakm  yitzhakm  49083181 15 Sep 10:07 dibbler_new.50MB
+
+% Total times:
+% dibbler: pads:
+% timing$ cat CaS_dibbler_new_5MB_linear.time  CaS_dibbler_new_10MB_linear.time  CaS_dibbler_new_50MB_linear.time 
+% 0.617 
+% 0.618 
+% 0.617 
+% 1.031 
+% 1.047 
+% 1.056 
+% 5.330 
+% 5.542 
+% 5.302 
+
+% dibbler_noderep:
+% timing$ cat dibbler_new_5MB_linear.time  dibbler_new_10MB_linear.time dibbler_new_50MB_linear.time 
+% 1.341 
+% 1.364 
+% 1.342 
+% 2.505 
+% 2.498 
+% 2.503 
+% 14.106
+% 14.144
+% 14.361
+
+% ai: pads:
+% timing$ cat CaS_ai_5MB_linear.time  CaS_ai_10MB_linear.time  CaS_ai_50MB_linear.time 
+% 4.527 
+% 4.535 
+% 4.542 
+% 9.134 
+% 8.834 
+% 8.883 
+% 43.451
+% 43.350
+% 43.355
+
+% ai: noderep:
+% timing$ cat ai_5MB_linear.time  ai_10MB_linear.time ai_50MB_linear.time 
+% 6.033 
+% 5.686 
+% 6.904 
+% 11.233
+% 11.363
+% 11.200
+% 55.172
+% 55.256
+% 55.175
+
 
 \subsection{Querying}
 
@@ -62,3 +120,4 @@ this data into a real database, building indices and getting good
 query performance?  B/c data is ephmeral, queries are ephmeral, but
 analyst/programmer should profit from disciplined access/querying of
 their data.  Don't abandon them to Perl. 
+
