@@ -3,8 +3,7 @@
 In this section, we give a brief overview of \pads{}, focusing on its
 data description language and the portions of the libraries it generates
 that are relevant to \padx{}. More information about \pads{} is
-available~\cite{pldi05,padsmanual}.   
-
+available~\cite{padsmanual,pldi05}.   
 
 \subsection{\pads{}: The language}
 \label{subsection:pads-language}
@@ -48,7 +47,7 @@ format and properties of later portions of the data to depend upon earlier porti
 For example, 
 the base type \cd{Puint16_FW(:3:)} specifies an unsigned two byte integer
 physically represented by exactly three characters, while the type
-\cd{Pstring(:'|':)} 
+\cd{Pstring(:'|':)}  (\eg{}, Line~29)
 describes a string terminated by a vertical bar.  Parameters can be 
 used with compound types to specify the size of an array or the
 appropriate branch of a union.
@@ -177,7 +176,7 @@ type, and parse descriptors include extra fields to record the
 state of the parse, the number of detected errors, 
 the error code of the first detected error, and the location of that error.
 
-The parsing functions, \eg{} \cd{event\_t\_read} on Line~8, take a mask as an argument and returns an
+The parsing functions, \eg{} \cd{event\_t\_read} on Line~19, take a mask as an argument and returns an
 in-memory representation and a parse descriptor.  
 The mask allows the user to specify 
 which constraints the parser should check and which portions of the
@@ -203,7 +202,7 @@ call the parsing function for the \pads{} type that describes the
 entire file ( \eg{} \cd{summary\_t\_read}) to read the whole file with
 one call.  For larger-scale data, programmers can sequence calls to
 parsing functions that read manageable portions of the file, \eg{},
-reading a record at a time in a loop.  The parsing code generated for
+reading one record at a time in a loop.  The parsing code generated for
 \kw{Parray}s allows users to choose between reading the entire array
 at once or reading it one element at a time, again to support parsing
 and processing very large data sources.  We return to the use of

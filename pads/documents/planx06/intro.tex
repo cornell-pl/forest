@@ -8,26 +8,26 @@ gives some sense of the range and pervasiveness of such data.
 \begin{center}
 \begin{tabular}{l|l}
 \hline
-Name \& Use   &  Representation               \\ \hline
-Web server logs (CLF):  &  Fixed-column ASCII records \\ 
+Name : Use   &  Representation               \\ \hline
+\textbf{Web server logs (CLF)}:  &  Fixed-column ASCII records \\ 
 Measure web workloads &                             \\ \hline
-AT\&T provisioning data: & Variable-width ASCII records  \\ 
+\textbf{AT\&T provisioning data}: & Variable-width ASCII records  \\ 
 Monitor service activation &                              \\ \hline
-Call detail: Fraud detection  &  Fixed-width binary records \\  \hline 
-AT\&T billing data: & Various Cobol data formats  \\ 
+\textbf{Call detail}: Fraud detection  &  Fixed-width binary records \\  \hline 
+\textbf{AT\&T billing data}: & Various Cobol data formats  \\ 
 Monitor billing process   &                             \\ \hline
 %IP backbone data:  & ASCII   \\
 %Monitor network performance  &        \\ \hline
-Netflow:                        & Data-dependent number of     \\ 
+\textbf{Netflow}:                        & Data-dependent number of     \\ 
 Monitor network performance  & fixed-width binary records  \\ \hline
-Newick:   Immune                 & Fixed-width ASCII records \\ 
+\textbf{Newick}:   Immune                 & Fixed-width ASCII records \\ 
 system response simulation & in tree-shaped hierarchy\\ \hline                                
-Gene Ontology:             & Variable-width ASCII records \\
+\textbf{Gene Ontology}:             & Variable-width ASCII records \\
 Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
 %HL7:             & Variable-width ASCII records \\
 %Medical lab results     &  \\ \hline
-CPT codes: Medical diagnoses & Floating point numbers \\ \hline
-SnowMed: Medical clinic notes & keyword tags  \\ 
+\textbf{CPT codes}: Medical diagnoses & Floating point numbers \\ \hline
+\textbf{SnowMed}: Medical clinic notes & keyword tags  \\ 
 \end{tabular}
 
 \caption{Selected ad hoc data sources.}
@@ -104,7 +104,7 @@ Problem focused, not tool focused.
 }
 
 We have two tools, \pads{} and \Galax{}, each of which addresses aspects of the analyst's
-problem in isolation.  The \pads{} system allows users to describe ad hoc data
+problem in isolation.  The \pads{} system allows analysts to describe ad hoc data
 sources declaratively and then generates error-aware parsers and tools
 for manipulating the sources, including statistical profiling tools.
 Such support allows the analyst to produce a robust, error-aware
@@ -119,7 +119,7 @@ to solve the analyst's data-management problems for the large ad hoc
 data sources that we have seen in practice.
 
 This paper describes our experience designing and implementing
-\padx{}~\footnote{%
+\padx{}\footnote{%
   Pronounced ``paddocks'', an enclosed area for exercising race
   horses.},
 a synthesis and extension of \pads{} and 
@@ -129,9 +129,9 @@ her ad hoc source, which is compiled into a library of components for
 parsing her data and for viewing and querying it as XML.  The
 resulting libraries are linked together with the \pads{} and \Galax{}
 runtime systems into one \padx{} query executable, called a ``query
-corral.''\footnote{%
+corral.\footnote{%
    The equestrian metaphor is intentional: Getting these systems to
-   work together is like corralling racehorses!}   
+   work together is like corralling race horses!}''
 At query time, the analyst provides her ad hoc data sources and her query
 written in XQuery, and \padx{} produces the query's results.
 \begin{figure}

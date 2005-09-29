@@ -75,12 +75,20 @@ her ad hoc data sources using XQuery.
 \label{section:relatedwork}
 \label{section:future}
 
-DFDL. Contivo.  
+DFDL~\cite{dfdl}. Contivo.  
 
 Compiled-query architectures~\cite{daytona}.  \padx{} has customized
 data model: between points on continuum from fully interpreted query
 plan applied to generic data model to fully compiled query plan
 applied to customized data model.
+
+Streamable query plans. 
+BEA~\cite{DBLP:journals/vldb/FlorescuHKLRWCS04}
+Phantom XML~\cite{rose:villard:2005}
+Big open problem: Given arbitrary XQuery expression, determine whether
+it can be evaluated in single scan over data.  Point out that this
+problem is of interest for a different reason: fully pipeline
+evaluation of queries over XML token streams.
 
 TODO LIST: Better use of XML Schema simple types.
 We don't take complete advantage of XML Schema, e.g., Penum types
@@ -95,94 +103,8 @@ delimiters automatically.
 Open problem: given an arbitrary PADS type, permit skipping and
 reading at arbitrary positions within the data source. 
 
-Big open problem: Given arbitrary XQuery expression, determine whether
-it can be evaluated in single scan over data.  Point out that this
-problem is of interest for a different reason: fully pipeline
-evaluation of queries over XML token streams.
-
 \bibliographystyle{abbrv}
 \small
 \bibliography{../pads,../galax} 
-
 \end{document}
 
-Happy with XQuery's expressiveness, we worked with the designers of
-the Galax~\cite{galax} open-source implementation of XQuery to define
-a data API~\cite{galaxmanual}.  This API presents the source as a tree
-to Galax. With this architecture, Galax can incorporate any data
-source accessible through an instance of the data API.  We then
-extended the \pads{} system to produce such instances.  We were able
-to define the bulk of the API generically, having to generate on a per
-type basis only a handful of functions.  \figref{figure:library}
-contains the key generated functions for the \cd{entry_t} type from
-the \dibbler{} data.  The \cd{node_new} function creates a node in the
-tree representation of the data, storing the supplied name, mask,
-parse descriptor, and in-memory representation.  It makes the argument
-node the parent of the newly created node.  The \cd{node_kthChild}
-function takes a tree corresponding to an \cd{entry_t} node and a
-child index and returns the appropriate child.  For the \cd{entry_t}
-type, possible children are the header, the event sequence, or a parse
-descriptor.  At the moment, it is possible to use the resulting system
-to query ad hoc data sources that can be loaded entirely into memory,
-and a version that allows the data to be read lazily is well underway.
-How best to optimize Xqueries over ad hoc data sources is an open
-research area.
-
-PDCI_node_t *order_header_t_node_kthChild (PDCI_node_t *self,PDCI_childIndex_t idx)
-{
-  PDCI_node_t *result = 0;
- order_header_t *rep=(order_header_t *) (self->rep);
- order_header_t_pd *pd=(order_header_t_pd *) (self->pd);
- order_header_t_m *m=(order_header_t_m *) (self->m);
- switch(idx){
-;
-  case 0: result = Puint32_node_new(self,"order_num", &(m->order_num), &(pd->order_num), &(rep->order_num), "element", "order_header_t" "_node_kthChild");
- break;
-  case 1: result = Puint32_node_new(self,"att_order_num", &(m->att_order_num), &(pd->att_order_num), &(rep->att_order_num), "element", "order_header_t" "_node_kthChild");
- break;
-  case 2: result = Puint32_node_new(self,"ord_version", &(m->ord_version), &(pd->ord_version), &(rep->ord_version), "element", "order_header_t" "_node_kthChild");
- break;
-  case 3: result = service_tn_t_node_new(self,"service_tn", &(m->service_tn), &(pd->service_tn), &(rep->service_tn), "element", "order_header_t" "_node_kthChild");
- break;
-  case 4: result = billing_tn_t_node_new(self,"billing_tn", &(m->billing_tn), &(pd->billing_tn), &(rep->billing_tn), "element", "order_header_t" "_node_kthChild");
- break;
-  case 5: result = nlp_service_tn_t_node_new(self,"nlp_service_tn", &(m->nlp_service_tn), &(pd->nlp_service_tn), &(rep->nlp_service_tn), "element", "order_header_t" "_node_kthChild");
- break;
-  case 6: result = nlp_billing_tn_t_node_new(self,"nlp_billing_tn", &(m->nlp_billing_tn), &(pd->nlp_billing_tn), &(rep->nlp_billing_tn), "element", "order_header_t" "_node_kthChild");
- break;
-  case 7: result = zip_code_t_node_new(self,"zip_code", &(m->zip_code), &(pd->zip_code), &(rep->zip_code), "element", "order_header_t" "_node_kthChild");
- break;
-  case 8: result = dib_ramp_t_node_new(self,"ramp", &(m->ramp), &(pd->ramp), &(rep->ramp), "element", "order_header_t" "_node_kthChild");
- break;
-  case 9: result = Pstring_node_new(self,"order_type", &(m->order_type), &(pd->order_type), &(rep->order_type), "element", "order_header_t" "_node_kthChild");
- break;
-  case 10: result = Puint32_node_new(self,"order_details", &(m->order_details), &(pd->order_details), &(rep->order_details), "element", "order_header_t" "_node_kthChild");
- break;
-  case 11: result = Pstring_node_new(self,"unused", &(m->unused), &(pd->unused), &(rep->unused), "element", "order_header_t" "_node_kthChild");
- break;
-  case 12: result = Pstring_node_new(self,"stream", &(m->stream), &(pd->stream), &(rep->stream), "element", "order_header_t" "_node_kthChild");
- break;
-  case 13: if (pd->nerr > 0) result = PDCI_structured_pd_node_new(self,"pd",pd,"ty" "_node_kthChild");
- break;
- };
-  return result;
-}
-PDCI_node_t *order_header_t_node_kthChildNamed (PDCI_node_t *self,PDCI_childIndex_t idx,char const *name)
-{
-  PDCI_node_t *result = 0;
- PDCI_childIndex_t i;
- const char *fieldNames[] = {
- "order_num","att_order_num","ord_version","service_tn","billing_tn","nlp_service_tn","nlp_billing_tn","zip_code","ramp","order_type","order_details","unused","stream" , "pd",0};
- if (idx != 0) return result;
- for (i = 0;
- 1;
- i++) {
- if (fieldNames[i] == 0) {
- return result;
- }
- if ((strcmp((name),(fieldNames[i])) == 0)) {
- break;
- }
- };
-  return (self->vt->kth_child)(self,i);
-}
