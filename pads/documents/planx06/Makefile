@@ -27,8 +27,14 @@ clean:
 	rm -f *.log
 	rm -f *~
 
-.SUFFIXES: .ps .pdf
+.SUFFIXES: .ps .pdf .jgr .eps 
 
 .ps.pdf:
 	epstopdf $<
+
+.eps.pdf:
+	ps2pdf -dEPSCrop $< 
+
+.jgr.eps:
+	jgraph $< > $@
 

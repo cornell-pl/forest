@@ -1,0 +1,20 @@
+
+What we learned by writing this paper: 
+
+1. Idealized version of PADX 
+
+   a. Prolog not generated or linked automatically 
+   b. Queries not statically typed
+
+2. Additional features 
+
+   a. XML Schema (subset + annotations) for describing PADS types
+   b. XQuery constructors implemented in PADS
+
+3. Code review of memory management modules
+
+   Expansion of RBufs is very slow.  
+
+   Hints to RBuf allocation functions are critical to performance.  We
+   need to understand this better. 
+
