@@ -13,16 +13,16 @@ raw, type-specific parsing functions and measured the time to parse an
 entire file. Next, we added a recursive, depth-first walk of the data
 through the \padx node representation API (loading the data on demand,
 sequentially). In this way, we timed the performance of the
-type-specific portion of the \xml interface.  Finally, we used the
-\padx concrete data model to traverse the data source.
+type-specific portion of the \xml{} interface.  Finally, we used the
+\padx{} concrete data model to traverse the data source.
 
 For the bulk-loading strategy, we found that performance deteriated
 for files as small as 20MB, as the system's physical memory was no
 longer sufficient to hold all of the data structures. However, our
 findings based on the on-demand strategies were more encouraging. At
 each stage, we found a linear curve for time vs. file size. For the
-first format, we measured $0.13$ {\mu}s per byte, $0.30$ {\mu}s per
-byte, and ??? and for the second format, $0.90$ {\mu}s, $1.12$ {\mu}s,
+first format, we measured $0.13$ {$\mu$}s per byte, $0.30$ {$\mu$}s per
+byte, and ??? and for the second format, $0.90$ {$\mu$}s, $1.12$ {$\mu$}s,
 and ???, for the three stages, respectively. For the system as a
 whole, we found a constant ratio between stages across file sizes. The
 measurements for the two formats differed only in the location of the

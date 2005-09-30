@@ -379,7 +379,7 @@ The \emph{bulk} strategy loads a complete \pads{} source before query
 evaluation begins, populating all the in-memory representations and
 parse descriptors.  With all data pre-fetched, bulk loading is the
 simplest strategy to implement genuine random access.  However,
-because each pads value has quite a bit of associated meta-data, bulk
+because each \pads{} value has quite a bit of associated meta-data, bulk
 loading incurs a high memory cost and is only feasible for smaller
 data sources.
 
@@ -407,7 +407,7 @@ it has the smallest memory footprint of all three and, therefore,
 could scale to very large sources.  It turns out that many common
 XQuery queries can be evaluated in \emph{one} sequential scan over the
 input document, and in these cases, the sequential strategy is
-semantically corrent and also time and space efficient.  We give
+semantically correct and also time and space efficient.  We give
 examples of ``one-scan'' queries and their performance in the next
 section.
 
@@ -424,7 +424,7 @@ scans of input, but slowly. Does not work for read once data that can't be
 In sum, the following three data loading schemes are supported by \padx:
 
 \begin{enumerate}
-\item Bulk loading: Materialize entire PADS representation, populate all
+\item Bulk loading: Materialize entire \pads{} representation, populate all
   of the \pads reps. Build \padx \condm upon memory-resident data.
 
 \item On-demand sequential loading: Keep storage for one record. Read
@@ -487,7 +487,7 @@ rewinding is allowed. {\em should note here that this last option is
 In sum, the following three data loading schemes are supported by \padx:
 
 \begin{enumerate}
-\item Bulk loading: Materialize entire PADS representation, populate all
+\item Bulk loading: Materialize entire \pads{} representation, populate all
   of the \pads reps. Build \padx \condm upon memory-resident data.
 
 \item On-demand sequential loading: Keep storage for one record. Read
