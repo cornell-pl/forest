@@ -83,6 +83,30 @@ padsDocument(processing_context pc, char *uri, char *psource_file, nodeRep nr, i
   }
 }
 
+galax_err
+walkPadsDocument(item doc)
+{
+  CAMLparam0();
+  CAMLlocal1(caml_result);
+
+  static value * walk_pads_document_closure = NULL;
+
+  if (walk_pads_document_closure == NULL) {
+    walk_pads_document_closure = caml_named_value("walk_pads_document");
+  }
+
+  caml_result = callback_exn(*walk_pads_document_closure, *doc);
+
+  if (Is_exception_result(caml_result)) {
+    pads_error_string = galax_exception_string(Extract_exception(caml_result)); 
+    CAMLreturn(-1);
+  }
+  else { 
+    pads_error_string = (char *)NULL;
+    CAMLreturn(0); 
+  }
+}
+
 void ml2c_nodeRepOpt(value input, nodeRepOpt * output)
 {
 value in2;

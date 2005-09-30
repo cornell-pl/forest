@@ -386,9 +386,22 @@ let pads_document proc_ctxt uriopt psource_file nr =
       (docid, nr)
   in end_monitor_call proc_ctxt; 
   pdn
+
+let rec tree_walk nodes  = 
+  match Cursor.cursor_peek nodes with
+  | None -> ()
+  | Some _ -> 
+      let n = Cursor.cursor_next nodes in
+      tree_walk (n#children ());
+      tree_walk nodes
+
+let walk_pads_document docitem = 
+  tree_walk (Cursor.cursor_of_singleton (Dm_functions.get_node docitem))
   
 let _ =
   begin
     (* Some default Galax options *)
-    Callback.register "pads_document" pads_document
+    Callback.register "pads_document" pads_document;
+    Callback.register "walk_pads_document" walk_pads_document
   end
+

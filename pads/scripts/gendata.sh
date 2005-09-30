@@ -1,4 +1,5 @@
 #! /bin/bash
+# gendata.sh data_dir fmt_name target_size target_filename 
 
 dataDir=$1
 fmt=$2

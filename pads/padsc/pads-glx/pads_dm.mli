@@ -129,4 +129,7 @@ class padsTextNode :
   end
 
 (* This is the "callback" function that is called from the PADS mainline *)
-val pads_document : Processing_context.processing_context -> Dm.atomicString option -> string -> nodeRep -> padsDocumentNode
+val pads_document : Processing_context.processing_context -> Dm.atomicString option -> 
+  string -> nodeRep -> padsDocumentNode
+
+val walk_pads_document : item -> unit
