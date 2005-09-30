@@ -1,7 +1,34 @@
 \section{Performance}
 \label{section:performance}
 
+Query performance in \padx{}, as in all query processors, depends on
+the efficiency of the underlying \condm{}.  Its performance must be
+well understood before it is possible to understand the performance of
+particular query plans. We focus on the performance of the \condm{}
+and measure the cost of accessing data via the \pads{} type-specific parsing
+functions, the \padx{} type-specific node representations, and the
+generic \padx{} \condm{}.  At the end of this section, we give preliminary
+measurements on query performance.  We measured data model and query
+performance for two \pads{} sources: \dibbler{} and the Web server
+logs noted in Figure~\ref{figure:data-sources} on data sources of
+5-50MB in size.  Our measurements were taken on the
+two platforms in Table~\ref{tab:config}. 
+\begin{table}
+\begin{center}
+\begin{tabular}{rl}
+% \multicolumn{2}{l}{Platform Configuration} \\ \hline
+I:  & G4 PowerPC, 1.67GHz, 500MB memory, Mac OS/X 10.3 \\ 
+\\
+II: & Intel Pentium M, 1.67GHz, 500MB memory, Linux RH 9.0 \\ 
+\end{tabular}
+\end{center}
+\caption{System configurations}
+\label{tab:config}
+\end{table}
+
 \subsection{Concrete Data Model} 
+
+\cut{
 In order to understand the interaction between the layers of our
 system as well as the peformance of the system as a whole, we ran
 performance measurements at each layer of the corral. All tests were
@@ -14,9 +41,33 @@ entire file. Next, we added a recursive, depth-first walk of the data
 through the \padx node representation API (loading the data on demand,
 sequentially). In this way, we timed the performance of the
 type-specific portion of the \xml{} interface.  Finally, we used the
-\padx{} concrete data model to traverse the data source.
+\padx{} concrete data model to traverse the data source.}
 
-For the bulk-loading strategy, we found that performance deteriated
+
+We first measured the time to bulk load data sources of 5, 10, and
+20MB in size by calling the \pads{} parsing functions directly, \ie{}
+the lowest level in the \padx{} data model.  Table~\ref{tab:bulk}
+gives the load time per byte in microseconds ($\mu$s).  Note that the
+load time is not linear.... why?
+\begin{table}
+\begin{center}
+\begin{tabular}{c|r|r}
+           & \multicolumn{1}{c|}{Data}  & \multicolumn{1}{c}{\pads{}} \\
+Source     & \multicolumn{1}{c|}{size}  & \multicolumn{1}{c}{read} \\ \hline
+           &  5MB  &      \\
+\dibbler{} & 10MB  &      \\
+           & 20MB  &      \\ \hline
+
+           &  5MB  &      \\
+Web server & 10MB  &      \\
+           & 20MB  &      \\
+\end{tabular}
+\end{center}
+\caption{Bulk strategy: load time per byte in $\mu$s}
+\label{tab:bulk}
+\end{table}
+
+\cut{For the bulk-loading strategy, we found that performance deteriated
 for files as small as 20MB, as the system's physical memory was no
 longer sufficient to hold all of the data structures. However, our
 findings based on the on-demand strategies were more encouraging. At
@@ -26,25 +77,53 @@ byte, and ??? and for the second format, $0.90$ {$\mu$}s, $1.12$ {$\mu$}s,
 and ???, for the three stages, respectively. For the system as a
 whole, we found a constant ratio between stages across file sizes. The
 measurements for the two formats differed only in the location of the
-curve and the magnitude of the inter-stage ratio.
+curve and the magnitude of the inter-stage ratio.}
 
-\begin{verbatim}
-dibbler_new:
+Next, we measured the time to load using the sequential stategy on sources of 5, 10, and
+50MB in size.  We want to know the cost
 
-  |  pads  | node rep | padx concrete ...
---------------------------------------
- 5|  .15   | .33      |  3.87
-10|  .13   | .31      |  3.82
-50|  .11   | .29      |  3.90
+ by calling the \pads{} parsing functions directly, \ie{}
+the lowest level in the \padx{} data model.  Table~\ref{tab:bulk}
+gives the load time per byte in microseconds ($\mu$s).  Note that the
+load time is not linear.... why?
+\begin{table}
+\begin{center}
+\begin{tabular}{c|r|r|r|r}
+           &                            &                      &  \multicolumn{1}{c|}{\padx{}}   &  \multicolumn{1}{c}{\padx{}} \\
+           & \multicolumn{1}{c|}{Data}  & \multicolumn{1}{c|}{\pads{}} & \multicolumn{1}{c|}{node}&  \multicolumn{1}{c}{concrete} \\
+Source     & \multicolumn{1}{c|}{size}  &  \multicolumn{1}{c|}{read}   & \multicolumn{1}{c|}{rep} &  \multicolumn{1}{c}{DM}  \\ \hline
+           &  5MB  &  0.15   & 0.33    & 3.87 \\
+\dibbler{} & 10MB  &  0.13   & 0.31    & 3.82 \\
+           & 50MB  &  0.11   & 0.29    & 3.90\\ \hline
+           &  5MB  &  0.91   & 1.24    & 5.33 \\
+Web server & 10MB  &  0.90   & 1.13    & 5.11 \\
+           & 50MB  &  0.87   & 1.10    & 5.07 \\
+\end{tabular}
+\end{center}
+\caption{Sequential strategy: load time per byte in $\mu$s}
+\label{tab:linear}
+\end{table}
 
-ai:
-  | pads  | node rep | padx concrete ...
--------------------------------------
- 5|  .91  | 1.24     |  5.33
-10|  .90  | 1.13     |  5.11
-50|  .87  | 1.10     |  5.07
-\end{verbatim}
+\subsection{Materialization and Querying}
 
+Something about query evaluation:
+Although we have not explored custom evaluation plans 
+Galax's algebra or optimizer are particularly interesting in the 
+\padx{}, we expect to do so 
+
+Give examples of queries that analyst cares about. 
+
+Example of query that can be evaluated in single scan over data
+source, but is currently not 
+
+Database person would balk at this point!  Why aren't you just loading
+this data into a real database, building indices and getting good
+query performance?  B/c data is ephmeral, queries are ephmeral, but
+analyst/programmer should profit from disciplined access/querying of
+their data.  Don't abandon them to Perl. 
+
+
+\cut{
 % File sizes:
 % -rw-r--r--  1 yitzhakm  yitzhakm   4999890 29 Sep 13:41 ai.5MB
 % -rw-r--r--  1 yitzhakm  yitzhakm   9999780 28 Sep 20:57 ai.10MB
@@ -127,21 +206,4 @@ ai:
 % 254.043 238.870 1.590
 % 253.771 234.570 2.210
 
-\subsection{Materialization and Querying}
-
-Something about query evaluation:
-Although we have not explored custom evaluation plans 
-Galax's algebra or optimizer are particularly interesting in the 
-\padx{}, we expect to do so 
-
-Give examples of queries that analyst cares about. 
-
-Example of query that can be evaluated in single scan over data
-source, but is currently not 
-
-Database person would balk at this point!  Why aren't you just loading
-this data into a real database, building indices and getting good
-query performance?  B/c data is ephmeral, queries are ephmeral, but
-analyst/programmer should profit from disciplined access/querying of
-their data.  Don't abandon them to Perl. 
-
+}
