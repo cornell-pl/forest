@@ -6878,9 +6878,8 @@ PDCI_node_t *entries_t_linearNode_kthChild (PDCI_node_t *self,PDCI_childIndex_t 
 PDCI_node_t *entries_t_linearNode_kthChildNamed (PDCI_node_t *self,PDCI_childIndex_t idx,
 						 char const *name)
 {
-  return 0;
-/*   LN_KTH_CHILD_NAMED_BODY (entries_t,self,idx,name); */
-/*   return LN_KTH_CHILD_NAMED_RET (); */
+  LN_KTH_CHILD_NAMED_BODY (entries_t,self,idx,name);
+  return LN_KTH_CHILD_NAMED_RET ();
 }
 
 /*

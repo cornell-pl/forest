@@ -1618,21 +1618,6 @@ struct entries_t_array_info_t_s {
   entries_t_ro_params_t params;		/* Type-specific parameters to read related funcitons. */
 };
 
-/*
- **************************** HAND-CODED : BEGIN ****************************
- */
-
-PDCI_node_t *entries_t_linearNode_init (PDCI_node_t *self);
-
-PDCI_node_t *entries_t_linearNode_kthChild (PDCI_node_t *self,PDCI_childIndex_t idx);
-
-PDCI_node_t *entries_t_linearNode_kthChildNamed (PDCI_node_t *self,PDCI_childIndex_t idx,
-						 char const *name);
-extern PDCI_vtable_t const entries_t_linearNode_vtable;
-/*
- **************************** HAND-CODED : END ****************************
- */
-
 Perror_t entries_t_init (P_t *pads,entries_t *rep);
 
 Perror_t entries_t_pd_init (P_t *pads,entries_t_pd *pd);
@@ -1728,6 +1713,21 @@ PDCI_node_t *entries_t_smartNode_kthChild (PDCI_node_t *self,PDCI_childIndex_t i
 
 PDCI_node_t *entries_t_smartNode_kthChildNamed (PDCI_node_t *self,PDCI_childIndex_t idx,char const *name);
 extern PDCI_vtable_t const entries_t_smartNode_vtable;
+
+/*
+ **************************** HAND-CODED : BEGIN ****************************
+ */
+
+PDCI_node_t *entries_t_linearNode_init (PDCI_node_t *self);
+
+PDCI_node_t *entries_t_linearNode_kthChild (PDCI_node_t *self,PDCI_childIndex_t idx);
+
+PDCI_node_t *entries_t_linearNode_kthChildNamed (PDCI_node_t *self,PDCI_childIndex_t idx,
+						 char const *name);
+extern PDCI_vtable_t const entries_t_linearNode_vtable;
+/*
+ **************************** HAND-CODED : END ****************************
+ */
 
 
 

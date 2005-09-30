@@ -448,10 +448,10 @@ ifeq ($(PGLX_KIND),bulk)
 COPTFLAGS += -D PGLX_BULK -DE_REP_LEV=PerrorRep_None -D PADS_ALLOC_HINT=$(PGLX_ALLOC_HINT)
 endif
 ifeq ($(PGLX_KIND),linear)
-COPTFLAGS += -D PGLX_LINEAR -DE_REP_LEV=PerrorRep_None
+COPTFLAGS += -D PGLX_LINEAR -DE_REP_LEV=PerrorRep_None -D PADS_ALLOC_HINT=0
 endif
 ifeq ($(PGLX_KIND),smart)
-COPTFLAGS += -D PGLX_SMART -DE_REP_LEV=PerrorRep_None
+COPTFLAGS += -D PGLX_SMART -DE_REP_LEV=PerrorRep_None -D PADS_ALLOC_HINT=0
 endif
 
 pglx_bulk_%_d pglx_linear_%_d pglx_smart_%_d: \
