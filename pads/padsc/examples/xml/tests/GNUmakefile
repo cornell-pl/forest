@@ -128,6 +128,25 @@ schema_%: load_%
 
 #	$(MAKE) -f ../GNUmakefile -k -s N=schema_$* S=schema_$*.xml T=../../regress/schema_$*.xml compare_files
 
+ifeq ($(PGLX_KIND),bulk)
+COPTFLAGS += -D PGLX_BULK -DE_REP_LEV=PerrorRep_None -D PADS_ALLOC_HINT=$(PGLX_ALLOC_HINT)
+endif
+ifeq ($(PGLX_KIND),linear)
+COPTFLAGS += -D PGLX_LINEAR -DE_REP_LEV=PerrorRep_None -D PADS_ALLOC_HINT=$(PGLX_ALLOC_HINT)
+endif
+ifeq ($(PGLX_KIND),smart)
+COPTFLAGS += -D PGLX_SMART -DE_REP_LEV=PerrorRep_None -D PADS_ALLOC_HINT=$(PGLX_ALLOC_HINT)
+endif
+
+# Test O'Caml tree walk
+walk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/walk_%.c \
+$(TEMPL_DIR)/pglx_walk_tree.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
+	@$(CCExec_DYNAMIC_D)
+
+walk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/walk_%.c \
+$(TEMPL_DIR)/pglx_walk_tree.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
+
 #regress: regress_ai
 
 clean:
