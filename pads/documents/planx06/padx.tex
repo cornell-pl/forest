@@ -182,11 +182,14 @@ the input data as a command-line argument or by calling the XQuery
 \subsection{\padx{} Concrete Data Model}
 
 In Figure~\ref{figure:padx-arch}, the interface between \Galax{} and
-\pads{} consists of two modules: the generic \padx{} concrete data model,
+\pads{} consists of two modules: the generic \padx{} \condm{},
 which implements the \Galax{} abstract data model, and a
 compiler-generated module, in which each \pads{} type has a
 corresponding, type-specific node representation providing the XML
-view of values of that type.
+view of values of that type.  We note that the generic \condm{} is
+implemented in O'Caml and the compiler-generated module is implemented
+in C, but to simplify exposition, we present the compiler-generated
+module in O'Caml syntax. 
 
 Figure~\ref{fig:padx-element-node} contains a fragment of the \padx{}
 concrete data model for a node.  This object provides a thin wrapper
@@ -406,8 +409,8 @@ access, it is not obvious when this strategy can be used, even though
 it has the smallest memory footprint of all three and, therefore,
 could scale to very large sources.  It turns out that many common
 XQuery queries can be evaluated in \emph{one} sequential scan over the
-input document, and in these cases, the sequential strategy is
-semantically correct and also time and space efficient.  We give
+input document, and in these cases, the sequential strategy is both
+semantically correct and time and space efficient.  We give
 examples of ``one-scan'' queries and their performance in the next
 section.
 

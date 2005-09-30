@@ -5,21 +5,22 @@ Query performance in \padx{}, as in all query processors, depends on
 the efficiency of the underlying \condm{}.  Its performance must be
 well understood before it is possible to understand the performance of
 particular query plans. We focus on the performance of the \condm{}
-and measure the cost of accessing data via the \pads{} type-specific parsing
-functions, the \padx{} type-specific node representations, and the
-generic \padx{} \condm{}.  At the end of this section, we give preliminary
-measurements on query performance.  We measured data model and query
-performance for two \pads{} sources: \dibbler{} and the Web server
-logs noted in Figure~\ref{figure:data-sources} on data sources of
-5-50MB in size.  Our measurements were taken on the
-two platforms in Table~\ref{tab:config}. 
+and measure the cost of accessing data via the \pads{} type-specific
+parsing functions, the \padx{} type-specific node representations, and
+the generic \padx{} \condm{}.  At the end of this section, we give
+preliminary measurements on query performance.  We measured data model
+and query performance for two \pads{} sources: \dibbler{} and the Web
+server logs noted in Figure~\ref{figure:data-sources} on data sources
+of 5-50MB in size.  Our measurements were taken on the two platforms
+in Table~\ref{tab:config}.  Each test was run five times, the high and
+low times were dropped, and the mean of the remaining three times is
+the reported time.
 \begin{table}
 \begin{center}
 \begin{tabular}{rl}
 % \multicolumn{2}{l}{Platform Configuration} \\ \hline
-I:  & G4 PowerPC, 1.67GHz, 500MB memory, Mac OS/X 10.3 \\ 
-\\
-II: & Intel Pentium M, 1.67GHz, 500MB memory, Linux RH 9.0 \\ 
+I: & Intel Pentium M, 1.67GHz, 500MB memory, Linux RH 9.0 \\ 
+II:  & G4 PowerPC, 1.67GHz, 500MB memory, Mac OS/X 10.3 \\ 
 \end{tabular}
 \end{center}
 \caption{System configurations}
@@ -43,29 +44,57 @@ sequentially). In this way, we timed the performance of the
 type-specific portion of the \xml{} interface.  Finally, we used the
 \padx{} concrete data model to traverse the data source.}
 
-
-We first measured the time to bulk load data sources of 5, 10, and
-20MB in size by calling the \pads{} parsing functions directly, \ie{}
-the lowest level in the \padx{} data model.  Table~\ref{tab:bulk}
-gives the load time per byte in microseconds ($\mu$s).  Note that the
-load time is not linear.... why?
+We first measured the time to bulk load data sources of 5, 10, 20, and
+50MB on Platform~I by calling the \pads{} parsing functions directly,
+\ie{} the lowest level in the \padx{} data model.
+Table~\ref{tab:bulk} gives the load time per byte.  For smaller
+sources, load time is constant, but eventually increases non-linearly.
+For \dibbler{}, the increasing load time is observed at 50MB and for
+the Web server data at 20MB.  We note that for a \pads{} source, the
+memory overhead of a \pads{} parsed value can be four to sixteen times
+the size of the raw data, depending on the value's type.  In the cases
+where non-linear load time occurs, the process' physical memory usage
+is close to or exceeds the physical memory of the platform, CPU
+utilization plummets, and the process begins to thrash.
 \begin{table}
 \begin{center}
 \begin{tabular}{c|r|r}
            & \multicolumn{1}{c|}{Data}  & \multicolumn{1}{c}{\pads{}} \\
 Source     & \multicolumn{1}{c|}{size}  & \multicolumn{1}{c}{read} \\ \hline
-           &  5MB  &      \\
-\dibbler{} & 10MB  &      \\
-           & 20MB  &      \\ \hline
 
-           &  5MB  &      \\
-Web server & 10MB  &      \\
-           & 20MB  &      \\
+           &  1MB  & 0.25\\
+           &  5MB  & 0.23\\
+\dibbler{} & 10MB  & 0.23\\
+           & 20MB  & 0.22\\
+           & 50MB  & 10.6368  \\ \hline 
+           &  1MB  & 0.70\\
+           &  5MB  & 0.67\\
+Web server & 10MB  & 0.67\\
+           & 20MB  & 1.18\\ % 420MB 
+           & 50MB  &     \\ 
+
 \end{tabular}
 \end{center}
 \caption{Bulk strategy: load time per byte in $\mu$s}
 \label{tab:bulk}
 \end{table}
+
+\cut{   Yitzie's results, which I can't explain
+           &  5MB  & 1.76 \\
+\dibbler{} & 10MB  & 6.66 \\
+           & 20MB  & 8.86 \\ \hline
+
+           &  5MB  & 1.61  \\
+Web server & 10MB  & 1.70  \\
+           & 20MB  & 3.31  \\}
+\cut{We do not yet have a complete explanation for the severity of
+this non-linear growth, but }
+\cut{So a 20MB source
+could expand to 80 to 320 MB in main memory.  Until bulk loading can
+be improved, we note that the bulk strategy is only feasible for
+sources 10MB or smaller.}
+
+\cut{Here are the numbers for bulk loading (5,10,20): dibbler_new: 1.76,6.66,8.86. ai: 1.61, 1.70, 3.31}
 
 \cut{For the bulk-loading strategy, we found that performance deteriated
 for files as small as 20MB, as the system's physical memory was no
@@ -79,30 +108,69 @@ whole, we found a constant ratio between stages across file sizes. The
 measurements for the two formats differed only in the location of the
 curve and the magnitude of the inter-stage ratio.}
 
-Next, we measured the time to load using the sequential stategy on sources of 5, 10, and
-50MB in size.  We want to know the cost
-
- by calling the \pads{} parsing functions directly, \ie{}
-the lowest level in the \padx{} data model.  Table~\ref{tab:bulk}
-gives the load time per byte in microseconds ($\mu$s).  Note that the
-load time is not linear.... why?
+Next, we measured load time using the on-demand sequential stategy on
+sources of 5, 10, and 50 MB.  We are particularly interested in the
+overhead introduced at each level in the \condm{}.
+Table~\ref{tab:linear} gives the load time per byte in microseconds
+($\mu$s) for three levels: reading the source by calling the \pads{}
+parsing functions directly; a depth-first walk of the virtual \Xml{}
+document by calling the \padx{} node-representation functions; a
+depth-first walk of the virtual \Xml{} document by calling the \padx{}
+generic data model.  Recall that the node-rep functions are in C and
+the generic data model is in O'Caml.
 \begin{table}
 \begin{center}
 \begin{tabular}{c|r|r|r|r}
-           &                            &                      &  \multicolumn{1}{c|}{\padx{}}   &  \multicolumn{1}{c}{\padx{}} \\
-           & \multicolumn{1}{c|}{Data}  & \multicolumn{1}{c|}{\pads{}} & \multicolumn{1}{c|}{node}&  \multicolumn{1}{c}{concrete} \\
+           &         &           &  \multicolumn{1}{c|}{\padx{}}   &  \multicolumn{1}{c}{\padx{}} \\
+           & \multicolumn{1}{c|}{Data}  & \multicolumn{1}{c|}{\pads{}} & \multicolumn{1}{c|}{node}&  \multicolumn{1}{c}{generic} \\
 Source     & \multicolumn{1}{c|}{size}  &  \multicolumn{1}{c|}{read}   & \multicolumn{1}{c|}{rep} &  \multicolumn{1}{c}{DM}  \\ \hline
+           &  5MB  & 0.07    &  0.27  & 0.61 \\ % 4 times, 2 times
+\dibbler{} & 10MB  & 0.06    &  0.26  & 0.56 \\
+           & 50MB  & 0.06    &  0.25  & 0.56 \\
+           &  5MB  & 0.54    &  0.78  & 1.63 \\ % 44 percent, 2 times
+Web server & 10MB  & 0.53    &  0.74  & 1.61 \\
+           & 50MB  & 0.53    &  0.74  & 1.58 \\ \hline
+\end{tabular}
+\end{center}
+\caption{Sequential strategy: load time per byte in $\mu$s}
+\label{tab:linear}
+\end{table}
+
+We note that the load time per byte at each level is near constant for
+increasing source size, but that each level of abstraction incurs a
+constant factor time cost.  For the \dibbler{} source, the \padx{}
+node-representation is four times slower than the native \pads{}
+parsing functions, but for the Web-server source, the \padx{} node
+representation is only 44\% slower.  Understanding the source of this
+difference requires further experiments with other sources.
+
+For both sources, the generic \condm{} (in O'Caml) is twice as slow as
+the node representation (in C).  The interface from the generic data
+model to the node representation crosses the O'Caml-C boundary and
+uses data marshalling functions generated by the O'Caml IDL tool.  We
+have noticed similar per-byte read costs in the \Galax{} secondary
+storage system~\cite{galax:ximep2004}, whose architecture is
+isomorphic to \padx{}.  
+
+We also measured the time to load using the on-demand, random-access
+strategy.  In general, it was 10--15\% slower than the on-demand,
+sequential strategy. 
+
+These measurements indicate that the on-demand, sequential strategy
+scales with increasing data size, and that there is a constant
+overhead incurred at each level in the data model.  Ideally, we would
+like the cost of accessing data via the generic \condm{} to be close
+to the \pads{} load cost, but that will require substantial
+engineering effort.
+
+\cut{ Yitzie's results
            &  5MB  &  0.15   & 0.33    & 3.87 \\
 \dibbler{} & 10MB  &  0.13   & 0.31    & 3.82 \\
            & 50MB  &  0.11   & 0.29    & 3.90\\ \hline
            &  5MB  &  0.91   & 1.24    & 5.33 \\
 Web server & 10MB  &  0.90   & 1.13    & 5.11 \\
            & 50MB  &  0.87   & 1.10    & 5.07 \\
-\end{tabular}
-\end{center}
-\caption{Sequential strategy: load time per byte in $\mu$s}
-\label{tab:linear}
-\end{table}
+}
 
 \subsection{Materialization and Querying}
 
@@ -121,7 +189,6 @@ this data into a real database, building indices and getting good
 query performance?  B/c data is ephmeral, queries are ephmeral, but
 analyst/programmer should profit from disciplined access/querying of
 their data.  Don't abandon them to Perl. 
-
 
 \cut{
 % File sizes:
