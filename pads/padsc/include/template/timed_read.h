@@ -169,6 +169,9 @@ int main(int argc, char** argv) {
   }
 #endif /* PADS_HDR_TY */
 
+/*   puts("Initialized.Waiting..."); */
+/*   getchar(); */
+
 #ifdef PADS_LINEAR
   /*
    * Try to read each line of data
@@ -222,6 +225,10 @@ int main(int argc, char** argv) {
   if (argv_idx && ++argv_idx < argc) {
     goto next_file;
   }
+
+/*   puts("Done.Waiting..."); */
+/*   getchar(); */
+
 
   if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
     error(ERROR_FATAL, "** representation cleanup failed **");

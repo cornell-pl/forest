@@ -1361,6 +1361,56 @@ SN_GENERIC_INIT_BODY(seqSmartNode,ty,selfIN,max_eltsIN, INIT_C_PARAMS, ST_PARAMS
 
 #define LN_KTH_CHILD_RET() result
 
+#define LN_KTH_CHILD_NAMED_BODY(ty,selfIN,kthIN,nameIN)
+  ty *rep=(ty *) ((selfIN)->rep);
+  ty ## _pd *pd=(ty ## _pd *) ((selfIN)->pd);
+  PDCI_node_t *result = 0;
+  PDCI_linear_node_t *ln = (selfIN)->lnExt;  
+
+  if (GLX_STR_MATCH((nameIN),"pd") ||
+      GLX_STR_MATCH((nameIN),"length"))
+  {
+    /* There's only one pd/length field, so k must be zero*/
+    if((kthIN) != 0)      
+      return 0;
+
+    if (P_PS_isPartial(pd)){
+      /* 
+       * Force the entire array to be read. 
+       *
+       * **Very inefficient**. This functionality 
+       * should be pushed into kthChild or eltRead.
+       */
+      do{
+	result = ((selfIN)->vt->kth_child)((selfIN),ln->next_idx_read);
+      } while(result != 0 && P_PS_isPartial(pd));
+
+      /* The array should no longer be partial.
+       * If it is, then either the array is absurdly
+       * large, or something is wrong.
+       */
+      if (P_PS_isPartial(pd)){
+	PGLX_report_err((selfIN)->pads,P_LEV_FATAL,0,P_SMART_NODE_ERR,#ty "_linearNode_kthChildNamed",
+			"Array size meets or exceeds PDCI_MAX_CHILD_INDEX.");
+	return 0;
+      }
+    }
+
+    switch((nameIN)[0]){
+    case 'l':
+      result = ((selfIN)->vt->kth_child)((selfIN),rep->length);
+      break;
+    case 'p':
+      result = ((selfIN)->vt->kth_child)((selfIN),rep->length + 1);
+      break;
+    }
+  }else if(GLX_STR_MATCH((nameIN),"elt"))  
+    result = ((selfIN)->vt->kth_child)((selfIN),(kthIN));
+  else result = 0;
+
+/* END_MACRO */
+
+#define LN_KTH_CHILD_NAMED_RET() result
 
 /* ********************************* BEGIN_TRAILER ******************************** */
 /* ********************************** END_MACROS ********************************** */

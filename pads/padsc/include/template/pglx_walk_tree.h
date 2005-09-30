@@ -1,21 +1,17 @@
 /*
- * Template: time_pglx_all.h 
- *
- * bulk: Load entire source using PADS function and then walk over
- * result.
- *
- * linear: Walk over all children in source, incrementally load PADS
- * source using linear-streaming arrays.
- *
- * smart: Walk over all children in source, selectively load PADS
- * source using smart arrays.
+ * Template: pglx_load.h 
+ * Bulk load PADS source, pass to Galax, and serialize in XML.
  */
-
 #include "pads.h"
 #include "pglx.h"
 
 #ifndef PDCI_MacroArg2String
 #define PDCI_MacroArg2String(s) #s
+#endif
+
+
+#if !(defined(PGLX_BULK) || defined(PGLX_LINEAR) || defined(PGLX_SMART))
+#  error "Data loading scheme undefined! Choose PGLX_BULK, PGLX_LINEAR, or PGLX_SMART."
 #endif
 
 #ifndef READ_MASK
@@ -24,7 +20,7 @@
 
 #ifndef COPY_STRINGS
 #  define COPY_STRINGS 1
-#endif 
+#endif
 
 #ifndef EXTRA_READ_ARGS
 #  define EXTRA_READ_ARGS
@@ -50,17 +46,7 @@
 #  define MAX_RECS 0
 #endif
 
-#define exit_on_error(_Expr, _Msg) {err = _Expr; if (err != 0) {error(2, "%s: %s\n", _Msg, galax_error_string); exit(-1); }}
-
-#define MAX_NODES 100000
-
-#ifndef MAX_ELTS
-#  define MAX_ELTS 1
-#endif
-
-#ifndef EXTRA_ARGS
-#  define EXTRA_ARGS
-#endif
+#define exit_on_error(_Expr,_Msg) {err = (_Expr); if (err != 0) {error(2, "%s: %s\n", _Msg,galax_error_string); }}
 
 int main(int argc, char** argv) {
   P_t*          pads;
@@ -69,10 +55,7 @@ int main(int argc, char** argv) {
   PADS_TY( )    rep;
   PADS_TY(_pd)  pd ;
   PADS_TY(_m)   m;
-  PDCI_node_t   *node;
-
-  my_disc.out_formats.timestamp = "%Y-%m-%dT%H:%M:%S"; 
-  my_disc.out_formats.timestamp_explicit = "%Y-%m-%dT%H:%M:%S"; 
+  PDCI_node_t   *doc_node;
 
 #ifdef PADS_HDR_TY
   PADS_HDR_TY( )    hdr_rep;
@@ -82,7 +65,21 @@ int main(int argc, char** argv) {
   Sfio_t       *io;
   char         *inName  = 0;
 
-/*   clock_t start, finish, duration; */
+  galax_err err;
+  item doc;
+  processing_context pc; 
+  itemlist docitems, monitems;
+
+  /* Galax configuration options */
+  int monitor_flag = 0; 
+  char *monitor_out;
+/*   char *file_out; */
+/*   FILE *file_fp; */
+
+  monitor_out = malloc(strlen(argv[0]) + strlen(".out"));
+  strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
+/*   file_out = malloc(strlen(argv[0]) + strlen(".xml")); */
+/*   strcpy(file_out,argv[0]); strcat(file_out,".xml"); */
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -132,6 +129,12 @@ int main(int argc, char** argv) {
   error(0, "Note: set my_disc.out_time_zone to \"%s\"\n", OUT_TIME_ZONE);
 #endif
 
+  /* When linking with the Galax library, which contains a custom O'Caml runtime system, 
+     it is necessary to call galax_init first, so the runtime is initialized and then 
+     can delegate control back to the C program 
+  */
+  galax_init();
+
 #ifdef IO_DISC_MK
   if (!(io_disc = IO_DISC_MK)) {
     error(ERROR_FATAL, "IO discipline make call [ " PDCI_MacroArg2String(IO_DISC_MK) " ] failed");
@@ -148,6 +151,36 @@ int main(int argc, char** argv) {
   } else {
     inName = DEF_INPUT_FILE;
   }
+
+  /* The remaining flags are for galax */
+  {
+    int i;
+    for (i = 3; i < argc; i++) { 
+      if (strcmp(argv[i], "-output-monitor") == 0) {
+	monitor_flag = 1;
+	i++;
+	if (i < argc) {
+	  monitor_out = argv[i];
+	} else error(2, "Usage: -output-monitor <filename>");
+      }
+/*       else if (strcmp(argv[i], "-output-xml") == 0) { */
+/* 	i++; */
+/* 	if (i < argc) { */
+/* 	  file_out = argv[i]; */
+/* 	} else error(2, "Usage: -output-xml <filename>"); */
+/*       } */
+    }
+  }
+  /* Open files */	
+/*   if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); } */
+
+  /* Initialize Galax flags */
+  exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
+  if (monitor_flag) {
+    exit_on_error(galax_set_monitor_mem(pc, 1), "galax_set_monitor_mem");
+    exit_on_error(galax_set_monitor_time(pc, 1), "galax_set_monitor_time");
+  }
+  exit_on_error(galax_set_serialization_kind(pc, Serialize_As_Well_Formed), "galax_set_serialization_kind");
 
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(2, "*** P_open failed ***");
@@ -166,10 +199,9 @@ int main(int argc, char** argv) {
   /* Initialize nodeid generator */
   PDCI_ID_RESET(pads,0);
 
-  NodeMM_initMM(pads, MAX_NODES);  
+  /* Initialize NodeMM. */
+  NodeMM_initMM(pads,50);  
   
-  /* End initialize pads-galax */
-
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
   }
@@ -178,7 +210,7 @@ int main(int argc, char** argv) {
   }
   /* init mask -- must do this! */
   PADS_TY(_m_init)(pads, &m, READ_MASK);
-
+  
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
     error(ERROR_FATAL, "*** header representation initialization failed ***");
@@ -187,7 +219,9 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** header parse description initialization failed ***");
   }
   /* init mask -- must do this! */
+  exit_on_error(galax_start_monitor_call(pc, "pads_init"), "galax_start_monitor_call");
   PADS_HDR_TY(_m_init)(pads, &hdr_m, P_CheckAndSet);
+  exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
 #endif /* PADS_HDR_TY */
 
 #ifdef PADS_HDR_TY
@@ -195,32 +229,56 @@ int main(int argc, char** argv) {
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
+    exit_on_error(galax_start_monitor_call(pc, "pads_header_read"), "galax_start_monitor_call");
     if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
       error(2, "<note>header read returned error</note>");
     } else {
-      error(2, "<note>header read returned OK</note>");
+      exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
+      error(2, "<note>header read returned OK</note>"); 
     }
   }
 #endif /* PADS_HDR_TY */
 
-/*   error(2,"Make top level node"); */
+  /* For now, we hardwire the padsns namespace into the template file */
+  char *pdci_uri = strcat(strcpy(malloc(strlen("file:") + strlen(PDCI_source)), "file:"), 
+			  PDCI_source);
+
   /* make the top-level node */
-  PDCI_MK_TOP_NODE_NORET (node, &PADS_TY(_node_vtable), pads, "padsns:PSource", &m, &pd, &rep, "main");
- {
+  PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", 
+			  &m, &pd, &rep, "main");
+
 #ifdef PGLX_BULK
-/*    error(2,"Read data"); */
-   PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS);
-#endif
+  /* Try to read entire file */
+  exit_on_error(galax_start_monitor_call(pc, "pads_read"), "galax_start_monitor_call");
+  if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS)) {
+      error(2, "read returned error");
+  }
+  exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
+#endif 
 #ifdef PGLX_LINEAR
-   PADS_TY(_linearNode_init)(node  EXTRA_ARGS);
+   PADS_TY(_linearNode_init)(doc_node  EXTRA_READ_ARGS);
 #endif
 #ifdef PGLX_SMART
-   PADS_TY(_smartNode_init)(node, MAX_ELTS  EXTRA_ARGS);
+   PADS_TY(_smartNode_init)(doc_node, MAX_ELTS  EXTRA_READ_ARGS);
 #endif
-/*    error(2,"begin children walk"); */
-   walk_children(node);
-/*    error(2,"end chilren walk"); */
- }
+
+  exit_on_error((padsDocument(pc, inName, pdci_uri, (nodeRep)doc_node, &doc)), "padsDocument");
+  docitems = itemlist_cons(doc, itemlist_empty()); 
+
+  if (is_empty(docitems)) error(2, "*** Result is empty") ;
+  else {
+/*     char *result; */
+    walkPadsDocument(doc);
+    /*	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string"); */
+    /* fprintf(file_fp,"%s",result); */
+/*     fflush(file_fp); */
+/*     fclose(file_fp); */
+  }
+  if (monitor_flag) {
+    exit_on_error(galax_monitor_of_all_calls(pc, &monitems), "galax_monitor_of_all_calls");
+    exit_on_error(galax_serialize_to_file(pc,"load-monitor.out", monitems), "galax_serialize_to_file");
+  }
+
   /* 
    * The linear and code doesn't use rep->elts, pd->elts, 
    * but it does use the length variables. Therefore,
@@ -243,6 +301,5 @@ int main(int argc, char** argv) {
   sfclose(io);
 
   NodeMM_freeMM(pads);
-
   return 0;
 }
