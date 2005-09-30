@@ -33,16 +33,16 @@ dibbler_new:
 
   |  pads  | node rep | padx concrete ...
 --------------------------------------
- 5|  .15   | .33      |  
-10|  .13   | .31      |
-50|  .11   | .29      |
+ 5|  .15   | .33      |  3.87
+10|  .13   | .31      |  3.82
+50|  .11   | .29      |  3.90
 
 ai:
   | pads  | node rep | padx concrete ...
 -------------------------------------
- 5|  .91  | 1.24     |  
-10|  .90  | 1.13     |
-50|  .87  | 1.10     |
+ 5|  .91  | 1.24     |  5.33
+10|  .90  | 1.13     |  5.11
+50|  .87  | 1.10     |  5.07
 \end{verbatim}
 
 % File sizes:
@@ -67,7 +67,7 @@ ai:
 % 5.542 
 % 5.302 
 
-% dibbler_noderep:
+% dibbler: noderep:
 % timing$ cat dibbler_new_5MB_linear.time  dibbler_new_10MB_linear.time dibbler_new_50MB_linear.time 
 % 1.341 
 % 1.364 
@@ -78,6 +78,18 @@ ai:
 % 14.106
 % 14.144
 % 14.361
+
+% dibbler: ocaml walk doc:
+% timing$ cat glxwalk_dibbler_new_5MB_linear.time  glxwalk_dibbler_new_10MB_linear.time  glxwalk_dibbler_new_50MB_linear.time 
+% 16.014 15.060 0.140
+% 15.780 14.820 0.180
+% 15.755 14.590 0.240
+% 31.463 29.400 0.270
+% 31.058 28.940 0.340
+% 31.220 28.970 0.380
+% 191.903 169.750 1.630
+% 191.396 176.160 1.380
+% 190.717 174.180 1.510
 
 % ai: pads:
 % timing$ cat CaS_ai_5MB_linear.time  CaS_ai_10MB_linear.time  CaS_ai_50MB_linear.time 
@@ -103,6 +115,17 @@ ai:
 % 55.256
 % 55.175
 
+% ai: ocaml walk doc:
+% timing$ cat glxwalk_ai_5MB_linear.time  glxwalk_ai_10MB_linear.time  glxwalk_ai_50MB_linear.time 
+% 27.580 24.430 0.310
+% 26.241 24.060 0.270
+% 26.187 23.910 0.410
+% 50.917 47.440 0.580
+% 50.973 47.890 0.520
+% 51.511 48.140 0.430
+% 252.543 237.150 1.860
+% 254.043 238.870 1.590
+% 253.771 234.570 2.210
 
 \subsection{Materialization and Querying}
 
