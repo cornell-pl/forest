@@ -4491,7 +4491,7 @@ Perror_t log_t_read (P_t *pads,log_t_m *m,log_t_pd *pd,log_t *rep)
     int i=0;
     int result;
     log_t_read_one_init (pads,m,pd,rep,loc_ptr);
-    PCGEN_ARRAY_READ_ALL (PCGEN_ARRAY_RESERVE_SPACE (log_t,http_clf_t,http_clf_t_pd,0),log_t_read_one (pads,m,pd,rep,loc_ptr,&(pd->elts)[i],&(rep->elts)[i]),i = (rep->length),"log_t_read");
+    PCGEN_ARRAY_READ_ALL (PCGEN_ARRAY_RESERVE_SPACE (log_t,http_clf_t,http_clf_t_pd,PADS_ALLOC_HINT),log_t_read_one (pads,m,pd,rep,loc_ptr,&(pd->elts)[i],&(rep->elts)[i]),i = (rep->length),"log_t_read");
     return PCGEN_ARRAY_STD_RETURN ();
   }
 }

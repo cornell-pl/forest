@@ -1396,13 +1396,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      [maskInitFunED]
 		  end
 
+	      (* Generate mask init function for dynamically allocated mask (uses a pointer). *)
 	      fun genMaskPtrInitFun(funName, maskPCT, baseType) = 
 		  let val mask = "mask"
 		      val baseMask = "baseMask"
 		      val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT maskPCT, PL.base_mPCT]
 		      val paramNames = [pads, mask, baseMask]  
 		      val formalParams = List.map P.mkParam (ListPair.zip(paramTys, paramNames))
-		      val bodySs = [PT.Expr(PT.Call(PT.Id "PDCI_DISC_1P_CHECKS",
+		      val bodySs = [PT.Expr(PT.Call(PT.Id "PDCI_DISC_1P_CHECKS_RET_VOID",
 							  [PT.String funName, PT.Id mask])),
 				    PT.Expr(PT.Call(PT.Id "PCGEN_DYNAMIC_MASK_INIT",
 						    [PT.Id baseType, PT.Id baseMask]))]
@@ -2261,9 +2262,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
 
 		      (* Generate accumulator type *)
-		      val baseAccPCT = P.makeStructTagPCT(true, (accSuf baseTypeName)^"_s")
-		      val accED     = P.makeTyDefEDecl (P.ptrPCT baseAccPCT, accSuf name)
-		      val accPCT    = P.makeTypedefPCT (accSuf name)		
+
+                      (* For now, just use dummy accumulator *)
+		      val baseAccPCT = P.voidPtr   (* accumulation not defined for this type *)
+		      val accED     = P.makeTyDefEDecl (baseAccPCT, accSuf name)
+		      val accPCT    = P.makeTypedefPCT (accSuf name)
+		      val accumEDs = [accED]
 
 		      (* Insert type properties into type table *)
                       val ds = TyProps.Variable
@@ -2282,53 +2286,97 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
                       val canonicalPCT = P.makeTypedefPCT (repSuf name)
 
-		      fun genFunDecl (returnTy,funName,params) =
+		      (* Generate function declaration. *)
+		      fun genFunDecl (returnTy,funName,paramDecls) =
+			  PT.ExternalDecl 
+			      (PT.Declaration
+				   (P.makePDT([returnTy]),
+				    [(PT.FuncDecr (PT.VarDecr funName, paramDecls),PT.EmptyExpr)]))
+
+		      (* Generate function decl where param tys are just specifiers. *)
+		      fun genFunDeclS (returnTy,funName,params) =
 			  let 
 			      fun makeParamDecl (ty,isptr,name) = 
 				  if isptr then
-				      (P.makePDT [PT.TypedefName ty],PT.PointerDecr (PT.VarDecr name))
+				      (P.makePDT [ty],PT.PointerDecr (PT.VarDecr name))
 				  else
-				      (P.makePDT [PT.TypedefName ty],PT.VarDecr name)
+				      (P.makePDT [ty],PT.VarDecr name)
 
 			      val paramDecls = map makeParamDecl params
 			  in
-			      PT.ExternalDecl 
-				  (PT.Declaration
-				       (P.makePDT([returnTy]),
-					[(PT.FuncDecr (PT.VarDecr funName, paramDecls),PT.EmptyExpr)]))
+			      genFunDecl (returnTy,funName,paramDecls)
 			  end
 
-		      fun genTDFunDecl (returnType,funName,params) = 
-			  genFunDecl(PT.TypedefName returnType,funName,params)
+		      (* A more general version of genFunDeclS. The parameter types are PDTs*)
+		      fun genFunDeclPDT (returnTy,funName,params) =
+			  let 
+			      fun makeParamDecl (pdt,isptr,name) = 
+				  if isptr then
+				      (pdt,PT.PointerDecr (PT.VarDecr name))
+				  else
+				      (pdt,PT.VarDecr name)
 
+			      val paramDecls = map makeParamDecl params
+			  in
+			      genFunDecl (returnTy,funName,paramDecls)
+			  end
+
+		      (* Generate a function declaration with a TypedefName return type *)
+		      fun genTDFunDecl (returnType,funName,params) = 
+			  genFunDeclS(PT.TypedefName returnType,funName,params)
+
+		      (* Generate a function declaration with a Void return type *)
 		      fun genVFunDecl (funName,params) =
-			  genFunDecl(PT.Void,funName,params)
+			  genFunDeclS(PT.Void,funName,params)
 			      
+		      (* Generate a function declaration with an Int return type *)
 		      fun genIFunDecl (funName,params) =
-			  genFunDecl(PT.Int,funName,params)
+			  genFunDeclS(PT.Int,funName,params)
 			      
 		      val fwEDs = [genTDFunDecl("Perror_t",name ^"_init",
-						[("P_t",true,"pads"),(name,true,"rep")]),
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName name,true,"rep")]),
 				   genTDFunDecl("Perror_t",name ^"_pd_init",
-						[("P_t",true,"pads"),(name ^ "_pd",true,"pd")]),
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_pd"),true,"pd")]),
 				   genTDFunDecl("Perror_t",name ^"_cleanup",
-						[("P_t",true,"pads"),(name,true,"rep")]),
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName name,true,"rep")]),
 				   genTDFunDecl("Perror_t",name ^"_pd_cleanup",
-						[("P_t",true,"pads"),(name ^ "_pd",true,"pd")]),
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_pd"),true,"pd")]),
 				   genTDFunDecl("Perror_t",name ^"_copy",
-						[("P_t",true,"pads"),(name,true,"rep_dst"),(name,true,"rep_src")]),
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName name,true,"rep_dst"),(PT.TypedefName name,true,"rep_src")]),
 				   genTDFunDecl("Perror_t",name ^"_pd_copy",
-						[("P_t",true,"pads"),(name ^ "_pd",true,"pd_dst"),(name ^ "_pd",true,"pd_src")]),
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_pd"),true,"pd_dst"),(PT.TypedefName (name ^ "_pd"),true,"pd_src")]),
 				   genVFunDecl(name^ "_m_init",
-					       [("P_t",true,"pads"),(name^"_m",true,"mask"),("Pbase_m",false,"baseMask")]),
+					       [(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name^"_m"),true,"mask"),(PT.TypedefName "Pbase_m",false,"baseMask")]),
 				   genTDFunDecl("Perror_t",name ^"_read",
-						[("P_t",true,"pads"),
-						 (name ^ "_m",true,"m"),
-						 (name ^ "_pd",true,"pd"),
-						 (name,true,"rep")
+						[(PT.TypedefName "P_t",true,"pads"),
+						 (PT.TypedefName (name ^ "_m"),true,"m"),
+						 (PT.TypedefName (name ^ "_pd"),true,"pd"),
+						 (PT.TypedefName name,true,"rep")
 						 ]),
-				   genIFunDecl(name ^"_verify",[(name,true,"rep")])
-				   ]
+				   genIFunDecl(name ^"_verify",[(PT.TypedefName name,true,"rep")]),
+				   genTDFunDecl("Perror_t",name ^"_acc_init",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
+				   genTDFunDecl("Perror_t",name ^"_acc_reset",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
+				   genTDFunDecl("Perror_t",name ^"_acc_cleanup",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
+				   genTDFunDecl("Perror_t",name ^"_acc_add",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc),
+						 (PT.TypedefName (name ^ "_pd"),true,"pd"),
+						 (PT.TypedefName name,true,"rep")]),
+				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report2io",
+						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
+						 (P.makePDT [PT.TypedefName "Sfio_t"],true,"outstr"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"prefix"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"what"),
+						 (P.makePDT [PT.Int],false,"nst"),
+						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)]),
+				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report",
+						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"prefix"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"what"),
+						 (P.makePDT [PT.Int],false,"nst"),
+						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)])]
                       (* Generate Write function declarations, PRecursive case *)
 		      val writeName = writeSuf name
 		      val fmtName = fmtSuf name
@@ -2340,14 +2388,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val (writeFunEDs, fmtFunEDs)  = genWriteFunDecls(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, 
 								   cParams, mPCT, pdPCT, canonicalPCT)
 
-		      val fwDecls = (List.concat (map cnvExternalDecl fwEDs))
+		      fun fwDecls () = (List.concat (map cnvExternalDecl fwEDs))
 				    @ (emitWrite writeFunEDs)
 				    @ (emitWrite fmtFunEDs)
 		  in
 		        canonicalDecls
                       @ mDecls
                       @ pdDecls
-		      @ fwDecls
+                      @ (emitAccum accumEDs)
+		      @ (fwDecls ())
 		  end
 
               (*  Dynamic case *)
@@ -2366,6 +2415,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                       (* Generate parse description: typedef to ptr to base pd *)
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
+
+                      (* For now, just use dummy accumulator *)
+		      val baseAccPCT = P.voidPtr   (* accumulation not defined for this type *)
+		      val accED     = P.makeTyDefEDecl (baseAccPCT, accSuf name)
+		      val accPCT    = P.makeTypedefPCT (accSuf name)
 
                       val ds = TyProps.Variable
                       val mc = TyProps.Dynamic
@@ -2473,6 +2527,33 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodySs = [PT.Return P.trueX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
+                      (* -- generate accumulator init, reset, and cleanup functions (precur case) *)
+		      fun genResetInitCleanup theSuf = 
+			  let val theFun = (theSuf o accSuf) name
+			  in BU.gen3PFun(theFun, [accPCT], [acc],
+					 [P.mkCommentS ("Accumulation not defined for recursive types"),
+					  PT.Return PL.P_OK])
+			  end
+		      val initFunED = genResetInitCleanup initSuf
+		      val resetFunED = genResetInitCleanup resetSuf
+                      val cleanupFunED = genResetInitCleanup cleanupSuf
+
+                      (* -- generate accumulator function *)
+                      (*  Perror_t T_acc_add (P_t* , T_acc* , T_pd*, T* ) *)
+		      val addFun = (addSuf o accSuf) name
+                      val addFunED = BU.genAddFun(addFun, acc, accPCT, pdPCT, canonicalPCT, 
+						  [P.mkCommentS ("Accumulation not defined for recursive types"),
+						   PT.Return PL.P_OK])
+
+                      (* -- generate acc. report function precur *)
+                      (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix) *)
+		      val reportFun = (reportSuf o accSuf) name
+		      val repioCallX = PL.P_OK
+                      val reportFunEDs = genTrivReportFuns(reportFun, "recur "^name, NONE, accPCT, repioCallX)
+
+		      (* Generate only the acc. functions. The acc. types have already been generated by Precur. *)
+		      val accumEDs = initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
+
                       (* Generate Write function dynamic case *)
 		      val writeName = writeSuf name
 		      val fmtName = fmtSuf name
@@ -2490,6 +2571,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  in
 		        (emitRead readEDs)
 		      @ (emitPred isFunEDs)
+                      @ (emitAccum accumEDs)
                       @ (emitWrite writeFunEDs)
                       @ (emitWrite fmtFunEDs)
 		  end

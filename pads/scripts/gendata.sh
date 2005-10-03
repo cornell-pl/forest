@@ -23,7 +23,7 @@ function getCount {
 cd $dataDir
 rm -f $targetFile
 if [ $fmt = dibbler ]; then
-    (read line; cat > dibbler.body) < dibbler.10001
+    (read line; cat > dibbler.body) < dibbler.120
     head -n 1 dibbler.10001 > $targetFile 
     count=$(getCount dibbler.body)  
     if [ $count = 0 ]; then 
