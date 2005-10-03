@@ -90,7 +90,11 @@ it can be evaluated in single scan over data.  Point out that this
 problem is of interest for a different reason: fully pipeline
 evaluation of queries over XML token streams.
 
-TODO LIST: Better use of XML Schema simple types.
+We are currently working on improving \Galax{}'s ability to detect
+streamable queries, to produce query plans that indeed use constant
+memory space, and to 
+
+ODO LIST: Better use of XML Schema simple types.
 We don't take complete advantage of XML Schema, e.g., Penum types
 could be modeled by XML Schema enumeration simple types, but currently
 unsupported.

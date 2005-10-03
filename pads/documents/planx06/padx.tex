@@ -14,37 +14,38 @@ architecture first shown in Figure~\ref{figure:padx-arch1}.
 Pre-existing components (in grey boxes) include the \pads{} compiler,
 the \Galax{} query engine, and the \pads{} runtime system.  In this
 section, we focus on the new components (in white boxes) and describe
-the compiler and run-time support for viewing \pads{} data as XML.
-From a \pads{} description, the compiler generates an XML Schema
-description that specifies the virtual XML view of the corresponding
+the compiler and run-time support for viewing \pads{} data as \Xml{}.
+From a \pads{} description, the compiler generates an \Xml{} Schema
+description that specifies the virtual \Xml{} view of the corresponding
 \pads{} data; an XQuery prolog that imports the generated schema and
 that associates the input data with the correct schema type; and a
-type-specific library that provides the virtual XML view of \pads{}
+type-specific library that provides the virtual \Xml{} view of \pads{}
 values necessary to implement \padx{}'s concrete data model.  
 
 Note that a query corral is \emph{customized} for a particular \pads{}
 description, in particular, its concrete data model only supports
 views of data sources that match the \pads{} description.  To maintain
-the correct correspondence between a description, XML Schema, queries,
+the correct correspondence between a description, \Xml{} Schema, queries,
 and data, the query corral explicitly contains the generated query
-prolog, which imports the XML Schema that corresponds to the
+prolog, which imports the \Xml{} Schema that corresponds to the
 underlying type-specific library.  This guarantees that the user's
 XQuery program is statically typed, compiled, and optimized with
-respect to the correct XML Schema and that the underlying data model
-is an instance of this XML Schema.  At runtime, the query corral takes
+respect to the correct \Xml{} Schema and that the underlying data model
+is an instance of this \Xml{} Schema.  At runtime, the query corral takes
 an XQuery program and a \pads{} data source and produces the query
-result in XML.  We discuss the problem of producing native \pads{}
+result in \Xml{}.  We discuss the problem of producing native \pads{}
 values in Section~\ref{section:future}.
 
-\subsection{Viewing \pads{} data as XML}	
+\subsection{Viewing \pads{} data as \Xml{}}	
+\label{subsec:xmlview}
 
-The mapping from a \pads{} description to an XML Schema is 
+The mapping from a \pads{} description to an \Xml{} Schema is 
 straight-forward.  The interesting aspect of this mapping is that both
 \pads{} values that are error free and those containing errors are
-accessible in the XML view.  We begin with the mapping of \pads{} base
+accessible in the \Xml{} view.  We begin with the mapping of \pads{} base
 types. 
 
-A default XML Schema, \cd{pads.xsd}, contains the schema types that
+A default \Xml{} Schema, \cd{pads.xsd}, contains the schema types that
 represent the \pads{} base types shared by all \pads{} descriptions.
 Figure~\ref{figure:pads.xsd} contains a fragment of this schema.
 Every \pads{} base type is mapped to the schema simple type that most
@@ -53,7 +54,7 @@ the \cd{Puint32} base type maps to the schema type \cd{xs:unsignedInt}
 (Lines~1--3).  Recall that all parsed \pads{} values have an in-memory
 representation and a parse descriptor, which records the state of the
 parse, the error code for detected errors, and the location of those
-errors.  The XML view of a parsed value is a choice of the in-memory
+errors.  The \Xml{} view of a parsed value is a choice of the in-memory
 representation (\cd{rep}), if no error occurred, or of the parse
 descriptor (\cd{pd}), if
 an error occurred (Lines~4--8).  This light-weight view exposes the
@@ -82,11 +83,11 @@ for all base types is represented by the schema type
 {16}. </xs:complexType>
 \end{code}
 \end{small}
-\caption{Fragment of XML Schema for \pads{} base types.}
+\caption{Fragment of \Xml{} Schema for \pads{} base types.}
 \label{figure:pads.xsd}
 \end{figure}
 
-The fragment of the XML Schema in Figure~\ref{figure:dibbler-schema}
+The fragment of the \Xml{} Schema in Figure~\ref{figure:dibbler-schema}
 corresponds to the description in Figure~\ref{figure:dibbler}.  Note
 that the schema imports the schema for \pads{} base types (Line~5).
 Each compound type is mapped to a complex schema type with a
@@ -129,7 +130,7 @@ elements, each of which corresponds to one field in the \kw{Punion}.
 {25}. </xs:schema>
 \end{code}
 \end{small}
-\caption{Fragment of XML Schema for \dibbler{} \pads{} description.}
+\caption{Fragment of \Xml{} Schema for \dibbler{} \pads{} description.}
 \label{figure:dibbler-schema}
 \end{figure*}
 
@@ -185,7 +186,7 @@ In Figure~\ref{figure:padx-arch}, the interface between \Galax{} and
 \pads{} consists of two modules: the generic \padx{} \condm{},
 which implements the \Galax{} abstract data model, and a
 compiler-generated module, in which each \pads{} type has a
-corresponding, type-specific node representation providing the XML
+corresponding, type-specific node representation providing the \Xml{}
 view of values of that type.  We note that the generic \condm{} is
 implemented in O'Caml and the compiler-generated module is implemented
 in C, but to simplify exposition, we present the compiler-generated
@@ -414,11 +415,43 @@ semantically correct and time and space efficient.  We give
 examples of ``one-scan'' queries and their performance in the next
 section.
 
+\subsection{Ways to use \padx{}} 
+
+Our focus so far has been on describing \padx{}'s internal
+architecture to demonstrate that it is possible to view and query ad
+hoc data sources as though they were \Xml{}.  We expect this use of \padx{} to be convenient,
+because it supports rapid querying of transient data and does not
+require an analyst to convert the data into another format or load it
+into a database before being able to ask simple queries.  \padx{} can
+be used in other ways, however.  For example, an analyst might prefer
+to materialize a \pads{} source in \Xml{} and query her data using a
+high-performance, commercial \Xml{} query engine.  To do this, the
+analyst simply runs the query ``\cd{\$pads}'', which returns the
+entire source materialized in \Xml{}, and then provides the resulting
+\Xml{} document to the alternate query engine.  Another use
+is to transform the \padx{} view of a \pads{} source into the \Xml{}
+view required by a query engine or by some down-stream application.
+Such transformations can be easily expressed in XQuery and can be
+statically type checked against the \padx{} and target \Xml{}
+schemata.
+
+We note, however, that the size of an ad hoc data source is significantly
+smaller than its representation in \Xml{}.  For our two example
+\pads{} sources, the ratio of the size of the original \pads{} data to
+its size in \Xml{} using the mapping described in
+Section~\ref{subsec:xmlview} ranges from 1:7 to 1:8.  Of course, this
+size increase depends on the \pads{} types and field names in the
+\pads{} description, but even a reasonable choice of names like those
+in Figure~\ref{figure:dibbler} results in a significant size increase.
+We mention this size increase to give the reader some sense of the
+relative scale of data sources that \padx{} can query compared to those
+supported by native \Xml{} query engines.
+
 \cut{It too maintains
 a fixed amount of storage space (one record) and loads on demand. However, it
 supports strictly sequential access -- neither skipping ahead, nor
 rewinding is allowed.  Many common queries permit sequential,
-  streamed access to underlying XML source.  Give an example.}
+  streamed access to underlying \Xml{} source.  Give an example.}
 
 \cut{This rep permits multiple
 scans of input, but slowly. Does not work for read once data that can't be
@@ -485,7 +518,7 @@ supports strictly sequential access -- neither skipping ahead, nor
 rewinding is allowed. {\em should note here that this last option is
   not fully implemented. macros exist, but compiler doesn't spit out
   function definitions.}   Many common queries permit sequential,
-  streamed access to underlying XML source.  Give an example.
+  streamed access to underlying \Xml{} source.  Give an example.
 
 In sum, the following three data loading schemes are supported by \padx:
 
