@@ -1,8 +1,8 @@
 \section{Performance}
 \label{section:performance}
 
-Query performance in \padx{}, as in all query processors, depends on
-the efficiency of the underlying \condm{}.  Its performance must be
+Query performance in \padx{} depends on
+the efficiency of the underlying \condm{}, therefore its performance must be
 well understood before it is possible to understand the performance of
 particular query plans. We focus on the performance of the \condm{}
 and measure the cost of accessing data via the \pads{} type-specific
@@ -10,9 +10,9 @@ parsing functions, the \padx{} type-specific node representations, and
 the generic \padx{} \condm{}.  At the end of this section, we give
 preliminary measurements on query performance.  
 
-We measured data model and query performance for two \pads{} sources:
-\dibbler{} and the Web server logs in Figure~\ref{figure:data-sources}
-on data sources of 5-50MB in size.  Our measurements were taken on an
+We measured data model and query performance for two \pads{} sources,
+\dibbler{} and the Web server logs in Figure~\ref{figure:data-sources},
+on data sources of 1-50MB in size.  Our measurements were taken on an
 1.67GHz Intel Pentium M with 500MB real memory running Linux Redhat
 9.0.  Each test was run five times, the high and low times were
 dropped, and the mean of the remaining three times is the reported
@@ -56,21 +56,21 @@ type-specific portion of the \xml{} interface.  Finally, we used the
 \padx{} concrete data model to traverse the data source.}
 
 We first measured the time to bulk load data sources of 5, 10, 20, and
-50MB by calling the \pads{} parsing functions directly,
-\ie{} the lowest level in the \padx{} data model.
-Table~\ref{tab:bulk} gives the load time per byte.  For smaller
-sources, load time is constant, but eventually increases.
-For \dibbler{}, the increasing load time is observed at 50MB and for
-the Web server data at 20MB.  We note that for a \pads{} source, the
-memory overhead of a \pads{} parsed value can be four to sixteen times
-the size of the raw data, depending on the value's type.  In the cases
-where non-linear load time occurs, the processes' physical memory usage
-is close to or exceeds the physical memory of the platform, CPU
-utilization plummets, and the process begins to thrash.  These
+50MB by calling the \pads{} parsing functions, \ie{}, the lowest level
+in the \padx{} data model.  Table~\ref{tab:bulk} gives the load time
+per byte in microseconds.  For smaller sources, load time is constant,
+but eventually increases.  For \dibbler{}, the increasing load time is
+observed at 50MB and for the Web server data at 20MB.  We note that
+for a \pads{} source, the memory overhead of a \pads{} parsed value
+can be four to sixteen times the size of the raw data, depending on
+the value's type.  In the cases where non-linear load time occurs, the
+processes' physical memory usage is close to or exceeds real memory,
+CPU utilization plummets, and the process begins to thrash.  These
 measurements indicate that the bulk strategy is only feasible for
 smaller data sources.
 \begin{table}
 \begin{center}
+\cut{
 \begin{tabular}{c|r|r}
            & \multicolumn{1}{c|}{Data}  & \multicolumn{1}{c}{\pads{}} \\
 Source     & \multicolumn{1}{c|}{size}  & \multicolumn{1}{c}{read} \\ \hline
@@ -79,14 +79,22 @@ Source     & \multicolumn{1}{c|}{size}  & \multicolumn{1}{c}{read} \\ \hline
            &  5MB  & 0.23\\
 \dibbler{} & 10MB  & 0.23\\
            & 20MB  & 0.22\\
-           & 50MB  & 10.6368  \\ \hline 
+           & 50MB  & 10.64  \\ \hline 
            &  1MB  & 0.70\\
            &  5MB  & 0.67\\
 Web server & 10MB  & 0.67\\
            & 20MB  & 1.18\\ % 420MB 
-           & 50MB  &     \\ 
-
+           & 50MB  & 6.14 \\ 
 \end{tabular}
+}
+
+\begin{tabular}{c|r|r|r|r|r}
+           & \multicolumn{5}{c}{Data size (MB)} \\
+Source     & 1  & 5 & 10 & 20 & 50  \\ \hline
+\dibbler{} &  0.25& 0.23&  0.23& 0.22&  10.64 \\ \hline
+Web server &  0.70& 0.67&  0.67& 1.18&  6.14 
+\end{tabular}
+
 \end{center}
 \caption{Bulk strategy: load time per byte in $\mu$s}
 \label{tab:bulk}
@@ -126,8 +134,8 @@ sources of 5, 10, and 50 MB.  We were particularly interested in the
 overhead introduced at each level in the \condm{}.
 Table~\ref{tab:linear} gives the load time per byte in microseconds
 ($\mu$s) for three levels: reading the source by calling the \pads{}
-parsing functions directly; a depth-first walk of the virtual \Xml{}
-document by calling the \padx{} node-representation functions; a
+parsing functions directly, a depth-first walk of the virtual \Xml{}
+document by calling the \padx{} node-representation functions, and a
 depth-first walk of the virtual \Xml{} document by calling the \padx{}
 generic data model.  Recall that the node-rep functions are in C and
 the generic data model is in O'Caml.
@@ -202,7 +210,8 @@ in one scan:
   $pads/Psource/orders/elt/pd/loc
 \end{verbatim}
 
-Detecting and evaluating one-scan a.k.a. ``streamable'' queries is
+Detecting and evaluating one-scan queries (also known as streamable
+queries) is
 necessary in \Xml{} environments in which the \Xml{} data is an
 infinite or bursty stream.  Several query processors already exist in
 which streamable queries are evaluated directly over a stream of
@@ -217,9 +226,10 @@ sources into which we injected errors randomly in the file
 (12 errors per 1MB).  The query plan produced
 by \Galax{} is not perfectly pipelined, thus the execution time is super
 linear.  
+
 \begin{table}
 \begin{center}
-\begin{tabular}{r|r}
+\cut{\begin{tabular}{r|r}
 \multicolumn{1}{c|}{Data}  & \multicolumn{1}{c}{Query}   \\
 \multicolumn{1}{c|}{size}  & \multicolumn{1}{c}{time} \\ \hline
   1MB                      &  1.0s                        \\
@@ -227,6 +237,10 @@ linear.
  10MB                      & 10.7s                        \\
  20MB                      & 24.0s                        \\
  50MB                      & 90.0s                        \\
+\end{tabular}}
+\begin{tabular}{c|r|r|r|r|r}
+Data size (MB) & 1  & 5 & 10 & 20 & 50  \\ \hline
+Time (seconds) & 1.0 & 4.8 & 10.7 & 24.0 & 90.0 \\
 \end{tabular}
 \end{center}
 \caption{\padx{} query evaluation time in seconds}

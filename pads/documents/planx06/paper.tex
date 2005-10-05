@@ -44,7 +44,7 @@
 
 \maketitle
 \begin{abstract}
-Enormous amounts of data exist in ``well-behaved'' formats
+\cut{Enormous amounts of data exist in ``well-behaved'' formats
 such as XML and relational databases, which come equipped with
 extensive tool support.  However,  vast amounts of data also exist
 in non-standard or \textit{ad hoc} data formats, which lack standard
@@ -52,7 +52,7 @@ tools. This deficiency forces data analysts to implement their own tools for
 parsing, querying, and analyzing their ad hoc data.  The 
 resulting tools typically interleave parsing, querying, and analysis,
 obscuring the semantics of the data format and making it nearly
-impossible for others to resuse the tools.
+impossible for others to resuse the tools.}
 
 This paper describes our experience designing and implementing
 \padx{}, a system for querying large-scale ad hoc data sources with
@@ -75,8 +75,12 @@ her ad hoc data sources using XQuery.
 \label{section:relatedwork}
 \label{section:future}
 
+% Related work
 DFDL~\cite{dfdl}. Contivo.  
 
+% Architecture style and strategy
+
+% Open problems
 Compiled-query architectures~\cite{daytona}.  \padx{} has customized
 data model: between points on continuum from fully interpreted query
 plan applied to generic data model to fully compiled query plan
@@ -106,6 +110,18 @@ delimiters automatically.
 
 Open problem: given an arbitrary PADS type, permit skipping and
 reading at arbitrary positions within the data source. 
+
+These results are very preliminary, but we expect that further
+work on producing one-scan query plans and on reducing the overhead in
+the \padx{} data model 
+
+indicate that
+\padx{} can provide analysts 
+Database person would balk at this point!  Why aren't you just loading
+this data into a real database, building indices and getting good
+query performance?  B/c data is ephmeral, queries are ephmeral, but
+analyst/programmer should profit from disciplined access/querying of
+their data.  Don't abandon them to Perl. 
 
 \bibliographystyle{abbrv}
 \small

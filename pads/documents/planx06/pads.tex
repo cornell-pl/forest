@@ -63,8 +63,8 @@ In \figref{figure:dibbler}, the type declaration for the \kw{Pstruct}
 contains an order header
 (\cd{order\_header\_t}) followed by the literal character \kw{'|'},
 followed by an event sequence (\cd{event\_seq\_t}).  \pads{} supports
-character, string, and regular expression literals, which are
-interpreted with the ambient character encoding.
+character, string, and regular expression literals.
+\cut{, which are interpreted with the ambient character encoding.}
 
 \kw{Punion}s describe alternatives in the data format.  For example,
 the \cd{dib\_ramp\_t} type (Lines~9--12) indicates
@@ -157,13 +157,14 @@ From each type in a \pads{} description, the compiler generates
 \label{figure:library}
 \end{tiny}
 \end{figure*}
+\noindent
 To give a feeling for the library that \pads{} generates, 
 \figref{figure:library} includes a fragment of the generated 
 library for the \dibbler{} \cd{event_t} declaration.
 
-The \C{} declarations for the in-memory representation (Line~1), the
-mask (Line~5), 
-and the parse descriptor (Line~10) all share the structure of the \pads{}
+The \C{} declarations for the in-memory representation (Line~1--4), the
+mask (Line~5--9), 
+and the parse descriptor (Line~10--17) all share the structure of the \pads{}
 type declaration.  The mapping to \C{} for each is straightforward: 
 \kw{Pstruct}s map to \C{} structs with appropriately mapped fields, 
 \kw{Punion}s map to tagged unions coded as \C{} structs with a tag field 
@@ -172,7 +173,7 @@ union, \kw{Parray}s map to a \C{} struct with a length field and a
 dynamically allocated sequence, \kw{Penum}s map to \C{} enumerations, \kw{Popt}s 
 to tagged unions, and \kw{Ptypedef}s to \C{} typedefs.  Masks include
 auxiliary fields to control behavior at the level of a structured
-type, and parse descriptors include extra fields to record the 
+type, and parse descriptors include fields to record the 
 state of the parse, the number of detected errors, 
 the error code of the first detected error, and the location of that error.
 
@@ -199,7 +200,7 @@ Because we generate a parsing function for each type in a \pads{}
 description, we support multiple-entry point parsing, which
 accommodates larger-scale data.  For a small file, a programmer can
 call the parsing function for the \pads{} type that describes the
-entire file ( \eg{} \cd{summary\_t\_read}) to read the whole file with
+entire file (\eg{} \cd{summary\_t\_read}) to read the whole file with
 one call.  For larger-scale data, programmers can sequence calls to
 parsing functions that read manageable portions of the file, \eg{},
 reading one record at a time in a loop.  The parsing code generated for

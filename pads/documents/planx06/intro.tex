@@ -18,7 +18,7 @@ system.
 \begin{center}
 \begin{tabular}{l|l}
 \hline
-Name : Use   &  Representation               \\ \hline
+\textbf{Name} : Use   &  Representation               \\ \hline
 \textbf{Web server logs (CLF)}:  &  Fixed-column ASCII records \\ 
 Measure web workloads &                             \\ \hline
 \textbf{AT\&T provisioning data}: & Variable-width ASCII records  \\ 
@@ -74,7 +74,7 @@ column appears in the data.
 Errors in the data also pose a significant challenge in hand-coded
 parsers.  If the data analyst thoroughly checks for errors, then
 the error checking code dominates the parser, making it even more
-difficult to understand the semantics of the data.  If she is not thorough,
+difficult to understand the semantics of the data format.  If she is not thorough,
 then erroneous data can escape undetected, potentially (silently!)
 corrupting down-stream processing.
 Finally, during the initial data exploration and in answering the
@@ -106,15 +106,15 @@ Problem focused, not tool focused.
 
 }
 
-We have two tools, \pads{}~\cite{pldi05,padsmanual} and
-\Galax{}~\cite{galax,galaxmanual}, each of which addresses aspects of
+We have two tools, \pads{}~\cite{padsmanual,pldi05} and
+\Galax{}~\cite{galaxmanual,galax}, each of which addresses aspects of
 the analyst's problem in isolation.  The \pads{} system allows
 analysts to describe ad hoc data sources declaratively and then
 generates error-aware parsers and tools for manipulating the sources,
 including statistical profiling tools.  Such support allows the
 analyst to produce a robust, error-aware parser quickly.  The \Galax{}
-system supports declarative querying of semi-structured data sources
-via XQuery.  If Galax could be applied to ad hoc data, its querying
+system supports declarative querying of XML
+via XQuery.  If Galax could be applied to ad hoc data, it 
 would allow the analyst first to explore the data and then to produce
 answers to her questions.  It would also support converting the data
 into XML to facilitate downstream processing with XML-based tools if
@@ -161,7 +161,7 @@ described in Sections~\ref{section:galax} and~\ref{section:padx}.  A
 third problem involves the scale of data and efficiency of queries, in
 particular, how to efficiently evaluate complex queries over large
 sources.  Section~\ref{section:performance} describes how \padx{}
-currently handles large sources and the open problems that we face
+currently handles large sources and the problems that we face
 with respect to data scale and query performance.
 
 We begin with a more detailed account of a scenario that illustrates
@@ -170,8 +170,7 @@ simplifies these
 tasks.  We then crack open the \padx{} architecture, first describing
 \pads{} and \Galax{} in isolation, and then describing our solutions
 to the problems described above.  
-We conclude with an overview of
-related work and a discussion of open problems.
+We conclude with related work and a discussion of open problems.
 
 \cut{
 In Section~\ref{section:padx}, we describe the embedding of the \pads{}

@@ -17,7 +17,7 @@ franca'' of data integration and exchange.
 
 XQuery~\cite{xquery10} is a typed, functional query language for XML
 that supports user-defined functions and modules for structuring large
-queries.  Its type system is based on XML Schema.  XQuery contains
+queries.  Its type system is based on XML Schema~\cite{xmlschema-1}.  XQuery contains
 XPath 2.0~\cite{xpath20} as a proper sub-language, which supports
 navigation, selection, and extraction of fragments of XML documents.
 XQuery also includes expressions to construct new XML values and to
@@ -42,13 +42,13 @@ sources. Lastly, XQuery is practical: It will soon be a
 standard; numerous manuals already exist~\cite{brundage2004}; and it is widely implemented
 in commercial databases.
 
-\Galax{}\footnote{\texttt{http://www.galaxquery.org}} is a complete,
+\Galax{} is a complete,
 extensible, and efficient implementation of XQuery~1.0 that supports
 XML~1.0 and XML Schema~1.0 and that was designed with database systems
 research in mind.  Its architecture is modular and
 documented~\cite{galax:edbt2004}, which makes it possible for other
 researchers to experiment with a complete XQuery implementation.  Its
-query compiler produces evaluation plans in the first complete algebra
+compiler produces evaluation plans in the first complete algebra
 for XQuery~\cite{galax:icde2006}, which permits experimental
 comparison of query-compilation techniques.  Lastly, its query
 optimizer produces efficient physical plans that employ traditional
@@ -57,6 +57,7 @@ possible to apply non-trivial queries to large XML sources.  Lastly,
 its abstract data model permits experimenting with various physical
 representations of XML and non-XML data sources.  \Galax{}'s abstract
 data model is the focus of the the rest of this section.
+\cut{\footnote{\texttt{http://www.galaxquery.org}}}
 
 \subsection{\Galax{}'s Abstract Data Model}
 
@@ -116,7 +117,7 @@ provides default implementations for the four {descendant} and
 ancestor axes (Lines~13--16), which are defined recursively in terms of the {child}
 and {parent} methods.  These defaults may be overridden in concrete data
 models that can provide more efficient implementations than the
-defaults.  For example, some physical document representations permit
+defaults.  For example, some representations permit
 axes to be implemented by range queries over relational
 tables~\cite{grust03staircase}.
 
@@ -128,8 +129,7 @@ this expression into a single axis/node-test operator that invokes the
 corresponding methods in the abstract data model, delegating
 evaluation of node tests to the concrete data model.  Some
 implementations, like \padx{}, can provide fast access to nodes by
-their name.  We describe \padx{}'s concrete data model in the next
-section.
+their name.  We describe \padx{}'s concrete data model in Section~\ref{section:padx}.
 
 One other important feature of \Galax{}'s abstract data model is that
 sequences are represented by \emph{cursors} (also known as streams),
