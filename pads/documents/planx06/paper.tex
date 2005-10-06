@@ -70,58 +70,7 @@ her ad hoc data sources using XQuery.
 \input{galax}
 \input{padx}
 \input{evaluation}
-
-\section{Related Work and Discussion}
-\label{section:relatedwork}
-\label{section:future}
-
-% Related work
-DFDL~\cite{dfdl}. Contivo.  
-
-% Architecture style and strategy
-
-% Open problems
-Compiled-query architectures~\cite{daytona}.  \padx{} has customized
-data model: between points on continuum from fully interpreted query
-plan applied to generic data model to fully compiled query plan
-applied to customized data model.
-
-Streamable query plans. 
-BEA~\cite{DBLP:journals/vldb/FlorescuHKLRWCS04}
-Phantom XML~\cite{rose:villard:2005}
-Big open problem: Given arbitrary XQuery expression, determine whether
-it can be evaluated in single scan over data.  Point out that this
-problem is of interest for a different reason: fully pipeline
-evaluation of queries over XML token streams.
-
-We are currently working on improving \Galax{}'s ability to detect
-streamable queries, to produce query plans that indeed use constant
-memory space, and to 
-
-ODO LIST: Better use of XML Schema simple types.
-We don't take complete advantage of XML Schema, e.g., Penum types
-could be modeled by XML Schema enumeration simple types, but currently
-unsupported.
-
-Open problem: give result of XQuery and its corresponding type,
-serialize result back into PADS rep.  How are the syntactic
-constraints for the new values expressed?  Tool could pick default
-delimiters automatically. 
-
-Open problem: given an arbitrary PADS type, permit skipping and
-reading at arbitrary positions within the data source. 
-
-These results are very preliminary, but we expect that further
-work on producing one-scan query plans and on reducing the overhead in
-the \padx{} data model 
-
-indicate that
-\padx{} can provide analysts 
-Database person would balk at this point!  Why aren't you just loading
-this data into a real database, building indices and getting good
-query performance?  B/c data is ephmeral, queries are ephmeral, but
-analyst/programmer should profit from disciplined access/querying of
-their data.  Don't abandon them to Perl. 
+\input{discussion}
 
 \bibliographystyle{abbrv}
 \small

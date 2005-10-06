@@ -254,16 +254,19 @@ execute the above query, using the same query execution plan, and
 applied it to the 7.4MB \Xml{} document loaded into the main-memory
 data model.  The execution time was 13.1s of which 12.9 was spent in
 document parsing.  To amortize the cost of document parsing time, we
-often store documents in \Galax{}'s secondary storage system.  As a
-third alternative, we stored the 7.4MB \Xml{} document in \Galax{}'s
-secondary storage system, which required 166MB of disk space.  We then
-ran the above query on the stored document.  The execution time was
-2.9s, almost three times slower than \padx{} applied to the \pads{}
-data directly.  For a fourth alternative, Saxon~\cite{saxon}, a
-popular XSLT and XQuery engine, applied to the 7.4MB document required
-6.3s.  In summary, our initial impressions are that evaluating
-streamable XQuery expressions directly on a \pads{} source appears to
-be feasible and efficient.
+often store documents in \Galax{}'s secondary storage system.  To
+compare with this strategy, we stored the 7.4MB \Xml{} document in
+\Galax{}'s secondary storage system, which required 166MB of disk
+space.  We then ran the above query on the stored document.  The
+execution time was 2.9s, almost three times slower than \padx{}
+applied to the \pads{} data directly.  For comparison with an
+independent query processor, we evaluated the above query using
+Saxon~\cite{saxon}, a popular XSLT and XQuery engine, applied to the
+7.4MB document and it executed in 6.3s.
+
+In summary, our initial impressions are that evaluating
+streamable XQuery expressions directly on a \pads{} source is 
+feasible, efficient, and convenient. 
 
 \cut{
 NOTE: After running for some time, I oculd not reproduce these
