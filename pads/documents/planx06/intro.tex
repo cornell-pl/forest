@@ -113,14 +113,18 @@ analyst to produce a robust, error-aware parser quickly.  The \Galax{}
 system supports declarative querying of XML
 via XQuery.  If Galax could be applied to ad hoc data, it 
 would allow the analyst first to explore the data and then to produce
-answers to her questions.  It would also support converting the data
-into XML to facilitate downstream processing with XML-based tools if
-she so desired.
+answers to her questions.  
 
-In this work, we strove to integrate \pads{} and \Galax{}
+
+In this work, we strive to integrate \pads{} and \Galax{}
 to solve the analyst's data-management problems for the large ad hoc
 data sources that we have seen in practice.
-We describe our experience designing and implementing
+One approach would be to have \pads{}
+produce a tool for converting ad hoc data to XML and then apply Galax
+to the resulting document.  (In fact, \pads{} provides this ability.)
+However, the typical factor of eight space blow up in this conversion
+yields an unacceptable slowdown in performance.
+Consequently, we chose to design and implement
 \padx{}\footnote{%
   Pronounced ``paddocks'', an enclosed area for exercising race
   horses.},
