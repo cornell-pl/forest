@@ -2,8 +2,8 @@
 \label{section:performance}
 
 Query performance in \padx{} depends on
-the efficiency of the underlying \condm{}, therefore its performance must be
-well understood before it is possible to understand the performance of
+the efficiency of the underlying \condm{}; therefore its performance must be
+well understood before we can understand the performance of
 particular query plans. We focus on the performance of the \condm{}
 and measure the cost of accessing data via the \pads{} type-specific
 parsing functions, the \padx{} type-specific node representations, and
@@ -12,7 +12,7 @@ preliminary measurements on query performance.
 
 We measured data model and query performance for two \pads{} sources,
 \dibbler{} and the Web server logs in Figure~\ref{figure:data-sources},
-on data sources of 1-50MB in size.  Our measurements were taken on an
+on data sources of 1 to 50MB in size.  Our measurements were taken on an
 1.67GHz Intel Pentium M with 500MB real memory running Linux Redhat
 9.0.  Each test was run five times, the high and low times were
 dropped, and the mean of the remaining three times is the reported
@@ -220,7 +220,7 @@ parsers~\cite{DBLP:journals/vldb/FlorescuHKLRWCS04,rose:villard:2005}.
 
 Streamable queries are important for \padx{}, because the resulting
 plans can be evaluated on large \pads{} sources that are loaded
-on-demand and sequentially.  Table~\ref{tab:linear} contains the time
+on-demand and sequentially.  Table~\ref{tab:linear2} contains the time
 in seconds to evaluate the query above when applied to \pads{} data
 sources into which we injected errors randomly in the file
 (12 errors per 1MB).  The query plan produced
@@ -244,11 +244,11 @@ Time (seconds) & 1.0 & 4.8 & 10.7 & 24.0 & 90.0 \\
 \end{tabular}
 \end{center}
 \caption{\padx{} query evaluation time in seconds}
-\label{tab:linear}
+\label{tab:linear2}
 \end{table}
 
 To understand the costs and benefits of other evaluation strategies,
-we materialized the 1MB \pads{} source in Table~\ref{tab:linear},
+we materialized the 1MB \pads{} source in Table~\ref{tab:linear2},
 which yielded a 7.4MB \Xml{} document.  We then used \Galax{} to
 execute the above query, using the same query execution plan, and
 applied it to the 7.4MB \Xml{} document loaded into the main-memory
