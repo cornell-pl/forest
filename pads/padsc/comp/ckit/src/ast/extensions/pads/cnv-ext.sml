@@ -4537,6 +4537,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  P.postIncX (PT.Id "i"),
 						  PT.Compound (writeXMLBaseSs))])]
 		 val writeTermSs = writeLitSs termXOpt
+		 val writeTermSs = []  (* terminator not read, so should not be written. *)
 		 val bodySs = writeArraySs @ writeTermSs
 		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_OPEN_XML_OUT", []))]
 				 @ writeXMLArraySs
