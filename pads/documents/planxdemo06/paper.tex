@@ -1,27 +1,47 @@
 \documentclass[nocopyrightspace]{sigplanconf}
-\usepackage{url}
-\usepackage{epsfig}
-\usepackage{alltt}
-\usepackage{times}
 
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,times,
+            verbatim,multicol,url}
+
+\usepackage{graphicx}
+
+\usepackage{code} 
+%\usepackage{epsfig}
+
+\newcommand{\kw}[1]{\tt{#1}}
 \renewcommand{\floatpagefraction}{0.9}
 
-\include{defs}
+%\include{defs}
 
-\title{LaunchPads: A System for Manipulating Ad Hoc Data}
+\title{\textsc{LaunchPads}: A System for Processing Ad Hoc Data}
 
-\authorinfo{Mary Fern\'andez\\Kathleen Fisher}
-       {AT\& Labs Research}
-       {\mono{\{mff,kfisher\}@research.att.com}}
+\authorinfo{Mark Daly}{
+	   Princeton University}
+       {\mono{mdaly@Princeton.EDU}}
 
-\authorinfo{ Robert Gruber\titlenote{Work carried out while at AT\&T
-                                     Labs Research.}}
-       {Google}
-       {\mono{gruber@google.com}}
+\authorinfo{Mary Fern\'andez \\
+            Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{mff,kfisher@research.att.com}}
 
-\authorinfo{Yitzhak Mandelbaum}
-       {Princeton University}
-       {\mono{yitzhakm@cs.princeton.edu}}
+\authorinfo{Yitzhak Mandelbaum \\  
+            David Walker}{
+	   Princeton University}
+       {\mono{yitzhakm,dpw@CS.Princeton.EDU}}
+
+% \authorinfo{}
+%        {AT\& Labs Research}
+%        {\mono{\{mff,kfisher\}@research.att.com}}
+
+% \authorinfo{ Robert Gruber\titlenote{Work carried out while at AT\&T
+%                                      Labs Research.}}
+%        {Google}
+%        {\mono{gruber@google.com}}
+
+% \authorinfo{Yitzhak Mandelbaum}
+%        {Princeton University}
+%        {\mono{yitzhakm@cs.princeton.edu}}
 
 \date{\today}
 
@@ -29,14 +49,302 @@
 \begin{document}
 
 \maketitle
-\begin{abstract}
-....
-\end{abstract}
+%\begin{abstract}
+%....
+%\end{abstract}
 
-write me! \cite{padsmanual}
+
+\paragraph*{An Introduction to PADS.}
+Ideally, any data we ever encounter will be presented to us
+in standardized formats, such as \textsc{XML}.  Why?  Because
+for formats like \textsc{XML}, there are a whole host of software libraries,
+query engines, visualization tools and even programming languages
+specially designed to help users process their data.
+However, we do not live in an ideal world, and in reality, 
+vast amounts of data is produced and communicated 
+in \textit{ad hoc formats}, those formats for which
+no data processing tools are readily available.  Figure~\ref{figure:data-sources} presents a small selection of ad hoc data sources.
+As one can see, ad hoc data exists in a very wide variety of fields
+and the users range from network administrators to computational 
+biologists and genomics researchers to physicists, financial 
+analysts and everyday programmers.
+
+Programmers often deal with this data by whipping up one-time Perl scripts
+or C programs.  Unfortunately, this
+task is slow, tedious, and often produces code that is insufficiently robust,
+lacks error-checking, is
+difficult to understand, and is hard to evolve over time as formats change.  
+To expedite and improve this process, we developed
+the \textsc{PADS} data description language and system~\cite{fisher+:pldi05,fisher+:popl06}.  Using the
+\textsc{PADS} language, one may write a declarative
+description of the structure of almost any ad hoc data source.  
+The descriptions take the form of types,
+drawn from a dependent type theory.  For instance, \textsc{PADS} 
+base types describe simple objects including
+strings, integers, floating-point numbers, dates, times, and ip addresses.
+Records and arrays specify sequences of elements in a data source, 
+and unions, switched unions and enums specify
+alternatives.  Any of these structured types may be 
+parameterized and
+users may write arbitrary semantic constraints over their data
+as well.
+% Figure~\ref{figure:wsl} presents part of a description
+% of a web server log to give the reader a feel for the kind of
+% code one finds in a PADS description.  Readers curious about the details
+% may download and examine the \textsc{PADS} manual~\cite{padsmanual} for
+% more information.
+
+
+Once a programmer has written a description in the \textsc{PADS} language,
+the \textsc{PADS} compiler can generate a collection of format-specific
+libraries in C, including a parser, printer, and verifier.
+In addition, the compiler can compose these libraries with
+generic templates to create value-added tools such as an 
+ad hoc-to-\textsc{XML} format conversion tool, a histogram generator, and
+a statistical analysis and error summary tool.  Finally, \textsc{PADS}
+has been composed with the \textsc{Galax} query engine~\cite{galax:edbt2004,galaxmanual,galax:icde2006} 
+for \text{XQuery} to create \textsc{PADX}~\cite{fernandez+:padx}, a new system
+that allows users to query and transform any ad hoc data source as if it 
+was \textsc{XML}, without incurring the performance penalty that usually
+results when one converts ad hoc data into a much more verbose
+\textsc{XML} representation.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Name} : Use   &  Representation               \\ \hline
+\textbf{Web server logs (CLF)}:  &  Fixed-column ASCII records \\ 
+Measure web workloads &                             \\ \hline
+\textbf{CoMon data}: & ASCII records  \\ 
+Monitor PlanetLab Machines &                              \\ \hline
+\textbf{Call detail}: Fraud detection  &  Fixed-width binary records \\  \hline 
+\textbf{AT\&T billing data}: & Various Cobol data formats  \\ 
+Monitor billing process   &                             \\ \hline
+%IP backbone data:  & ASCII   \\
+%Monitor network performance  &        \\ \hline
+\textbf{Netflow}:                        & Data-dependent number of     \\ 
+Monitor network performance  & fixed-width binary records  \\ \hline
+\textbf{Newick}:   Immune                 & Fixed-width ASCII records \\ 
+system response simulation & in tree-shaped hierarchy\\ \hline                                
+\textbf{Gene Ontology}:             & Variable-width ASCII records \\
+Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
+\textbf{CPT codes}:  & Floating point numbers \\ 
+Medical diagnoses & \\ \hline
+\end{tabular}
+
+\caption{Selected ad hoc data sources.}
+\label{figure:data-sources}
+\end{center}
+\end{figure}
+
+
+% \begin{figure}
+% \begin{code}
+% \kw{Punion} client\_t \{
+%   Pip       ip;      /- 135.207.23.32
+%   Phostname host;    /- www.research.att.com
+% \};
+% \mbox{}
+% \kw{Punion} auth\_id\_t \{
+%   '-';
+%   Pstring(:' ':) id;
+% \};
+% \mbox{}
+% ...
+% \mbox{}
+% \kw{Ptypedef} Puint16\_FW(:3:) response\_t :
+%          response\_t x => \{ 100 <= x && x < 600\};
+% \mbox{}
+% \kw{Precord} \kw{Pstruct} entry\_t \{
+%          client\_t       client;
+%    ' ';  auth\_id\_t      remoteID;
+%    ' ';  auth\_id\_t      auth;
+%    " ["; Pdate(:']':)   date;
+%    "] "; request\_t      request;
+%    ' ';  response\_t     response;
+%    ' ';  Puint32        length;
+% \};
+% \mbox{}
+% \kw{Psource} \kw{Parray} clt\_t \{
+%   entry\_t [];
+% \}
+% \end{code}
+% \caption{Part of the description of a web server log format.
+% Types are written in a C syntax. Records and arrays indicate sequences
+% of elements in a format.  Literal characters such as {\tt ' '} 
+% indicate the occurrence of that character at that point in the format.
+% Typedefs may be used to add user-defined constraints to a type.}
+% \label{figure:wsl}
+% \end{figure}
+
+
+\begin{figure*}
+  \begin{center}
+    \includegraphics*{launch.pdf}
+  \end{center}
+
+  \caption{\small LaunchPads Interface.}
+  \label{figure:launchpads}
+\end{figure*}
+
+While the \textsc{PADS} language provides an extremely versatile means
+of creating tools for processing ad hoc data, it is nevertheless a
+\textit{new} language and learning a new language is time-consuming
+for anyone, especially for computational biologists or 
+other scientists for whom programming is not their primary
+area of expertise.  To ease the way for novice 
+\textsc{PADS} users, we developed have \textsc{LaunchPADS},
+a new tool that provides access to the PADS system
+without requiring foreknowledge of the \textsc{PADS} language itself.
+Hence, \textsc{LaunchPADS} graphic interface will also help more
+experienced \textsc{PADS} users to shorten their development cycle
+and provides a convenient way for experts to quickly create
+any of the data processing tools they need.
+
+\paragraph*{LaunchPads.}  \textsc{LaunchPADS} combines mechanisms 
+for graphically defining structure and semantic properties of ad hoc data,
+for translation of this definition into
+\textsc{PADS} code, and for compilation/execution of the generic tools
+that operate over ad hoc data.  
+More specifically, \textsc{LaunchPADS} breaks definition of an 
+ad hoc data format and generation of data processing tools
+into the following parts.  Figure~\ref{figure:launchpads}
+presents a screenshot of \textsc{LaunchPADS} being used to construct
+a data description for a web server log format.
+
+\begin{enumerate}
+\item {\bf Selection of sample data from which to build the description.} 
+Creation of a definition within \textsc{LaunchPADS} begins
+when a user loads sample data into the graphical interface.
+In Figure~\ref{figure:launchpads}, web log data (beginning with
+the IP address {\tt 207.136.97.49 ...}) appears
+in the top right hand corner of the picture.  A user then
+selects a row of data to work on in the \textsc{LaunchPADS} {\it gridview}
+immediately below.
+
+\item {\bf Iterative refinement in the gridview.}
+Once in the gridview, users may specify descriptions 
+for regions of text using a highlighting scheme.  The 
+color assigned to a region
+represents the description class (base or composite) and region boundaries.  
+Structure within a definition is represented through a series of
+refinement steps: composite regions are broken down and level after 
+level, thereby allowing for nested elements (Figure~\ref{figure:launchpads}
+shows four nesting levels).  The refinement process bottoms out
+when one reaches an atomic description such as a character string,
+IP address or date.  Once all regions have
+been given a base type in the gridview,  \textsc{LaunchPADS} will generate a
+{\it treeview} of the definition for further processing.
+
+\item {\bf Customization in the treeview.}  The treeview is
+a graphical representation of the abstract syntax of a PADS description.
+In this view, programmers can manipulate definitions with a high degree
+of precision: definition elements may be created, destroyed, and
+renamed; type associations for existing elements may be changed
+(within limitations); element ordering may be altered; user defined
+types may be added to the definition and applied to elements;
+content-aware error constraints may be imposed.  Indeed, from within
+the tree view it is possible to access the ``expert'' functions of
+\textsc{PADS} directly if one so chooses, or to completely avoid them
+in lieu of a simpler definition and/or faster development time.
+
+\item {\bf \textsc{PADS} code generation, tool compilation and use.}  When 
+the user is satisfied with their \textsc{PADS} definition in the treeview,
+they may generate \textsc{PADS} code.  Any such generated code is guaranteed 
+to be syntactically correct so the user need not worry about fussing with
+concrete \textsc{PADS} syntax if they do not want to. 
+Figure~\ref{figure:launchpads}
+shows the generated code in the window at the bottom of the
+interface.  By using the pulldown menus at the top and a set of
+``wizards,'' the user may now
+issue commands to compile the generated code and create data processing
+tools including the XML converter and statistical analyzer.  
+As development of \textsc{LaunchPADS} continues, we will add further
+tools and corresponding wizards to the interface.
+\end{enumerate}.
+
+% Creation of a definition within \textsc{LaunchPADS} begins with the
+% selection of a prototype key, ideally a single record in a particular
+% format containing as many full data fields as possible, and loading of
+% that key into the \textsc{LaunchPADS} grid layout control.  Once in
+% the grid, users may specify types for regions within the prototype key
+% using a ``highlighting'' scheme, where the color assigned to a region
+% represents the type class (base or composite) and region boundaries
+% (so as to distinguish between consecutive elements of similar type) of
+% what will eventually become a variable in the definition.  Structure
+% within a definition is represented through a series of
+% ``fragmentation'' steps: regions to which irreducible base types are
+% applied are bound to their particular type, while composite regions
+% continue on to the next level of region isolation, thereby allowing
+% for nested elements.  Once all regions within the prototype key have
+% been given a base type at their final ``depth'' of fragmentation, a
+% tree representation of the definition can be generated and the
+% definition can be further refined.
+
+% The tree view component of \textsc{LaunchPADS} is without doubt its
+% most complex component.  Using the tree, it is possible to extend a
+% rapidly created (and perhaps overly general) proto-definition into one
+% that employs the full specificity of \textsc{PADS}.  The tree
+% representation of a definition can be manipulated with a high degree
+% of precision: definition elements may be created, destroyed, and
+% renamed; type associations for existing elements may be changed
+% (within limitations); element ordering may be altered; user defined
+% types may be added to the definition and applied to elements;
+% content-aware error constraints may be imposed.  Indeed, from within
+% the tree view it is possible to access the ``expert'' functions of
+% \textsc{PADS} directly if one so chooses, or to completely avoid them
+% in lieu of a simpler definition and/or faster development time.
+
+% Once the definition has been suitable refined, users may generate from
+% it \textsc{PADS} code.  This can be immediately compiled from within
+% the GUI without need for user input (save for the specification of
+% certain necessary files).  It is also possible to use
+% \textsc{LaunchPADS} to compile preexisting \textsc{PADS} definitions,
+% though currently no facility exists for importing existing definitions
+% into the \textsc{LaunchPADS} development environment (this feature is
+% planned for a future version).
+ 
+% Additional features enclude:
+% \begin{itemize}
+% \item Graphical delineation of type and structure of portions 
+% of prototypical data keys
+% \item Tree-based visualization of definitions created within 
+% \textsc{LaunchPADS}
+% \item Automated conversion of graph into \textsc{PADS} description 
+% language code
+% \item Integrated \textsc{PADS} compiler, generic tool compilation, 
+% and execution functionality (build robust format-to-XML converters 
+% in C without ever having to touch a piece of code)
+% \item Cross platform compatibility
+% \item Built entirely using open source libraries
+% \end{itemize}
+
+
+\paragraph*{Conclusions} 
+In summary, in this demonstration, we will explain the many challenges
+that ad hoc data pose and how the \textsc{PADS} language is
+structured to meet these challenges.  In addition, we will explain how
+\textsc{LaunchPADS} provides further support for processing ad hoc
+data by demonstrating both features for helping users construct data
+descriptions and features for creating and invoking tools that operate
+over data.  We believe that both expert programmers and novices alike
+can benefit from this simple system for manipulating ad hoc data.
+
+% by creating software which distills the full (and ever growing)
+% functionality of \textsc{PADS} into a purely graphical environment, we
+% hope to make the power of \textsc{PADS} available to all who wrestle
+% with ad hoc data.  commonly found in data mining, but may be too esoteric
+% or unfamiliar for many of those facing such problems.
+% \textsc{LaunchPADS} seeks to make employing \textsc{PADS} intuitive
+% and convenient, and thus accessible to non-programmers.  While it
+% currently faces certain limitations and assumes some knowledge of the
+% \textsc{PADS} description language (the type system in particular),
+% future versions will incorporate even more automation, shortening
+% further the path from data to definition to conversion and analysis.
 
 \bibliographystyle{abbrv}
 \small
-\bibliography{../pads,../galax} 
+\bibliography{pads,galax} 
 \end{document}
 

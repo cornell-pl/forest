@@ -3,19 +3,11 @@ PSSRC=
 PDFSRC=$(PSSRC:.ps=.pdf)
 TEXSRC=paper.tex defs.tex 
 
-all: paper.pdf
-
-paper.bbl: paper.tex ../pads.bib
-	latex paper.tex
+all: paper.tex pads.bib galax.bib 
+	pdflatex paper.tex
 	bibtex paper
-
-paper.pdf: paper.ps 
-	ps2pdf paper.ps
-
-paper.ps: paper.bbl $(PDFSRC) $(TEXSRC)
-	latex paper.tex
-	latex paper.tex
-	dvips -t letter paper.dvi -o
+	pdflatex paper.tex
+	pdflatex paper.tex
 
 clean:
 	rm -f paper.pdf
