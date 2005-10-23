@@ -215,22 +215,23 @@ presents a screenshot of \textsc{LaunchPADS} being used to construct
 a data description for a web-server log format.
 
 \begin{enumerate}
-\item {\bf Selection of sample data from which to build the description.} 
+\item {\bf Selection of sample data.} 
 Creation of a definition within \textsc{LaunchPADS} begins
 when a user loads sample data into the graphical interface.
 In Figure~\ref{figure:launchpads}, web log data (beginning with
 the IP address {\tt 207.136.97.49 ...}) appears
 in the top right hand corner of the picture.  A user then
-selects a row of data to work on in the \textsc{LaunchPADS} {\it gridview}
-immediately below.
+selects a row of data to work on in the \textsc{LaunchPADS} {\it gridview}.
 
 \item {\bf Iterative refinement in the gridview.}
-Once in the gridview, users may specify descriptions 
+Once in the gridview, which appears just below
+the data selection window in Figure~\ref{figure:launchpads}, 
+users may specify descriptions 
 for regions of text using a highlighting scheme.  The 
 color assigned to a region
 represents the description class (base or composite) and region boundaries.  
 Structure within a definition is represented through a series of
-refinement steps: composite regions are broken down and level after 
+refinement steps: composite regions are broken down level after 
 level, thereby allowing for nested elements (Figure~\ref{figure:launchpads}
 shows four nesting levels).  The refinement process bottoms out
 when one reaches an atomic description such as a character string,
@@ -238,7 +239,8 @@ IP address or date.  Once all regions have
 been given a base type in the gridview,  \textsc{LaunchPADS} will generate a
 {\it treeview} of the definition for further processing.
 
-\item {\bf Customization in the treeview.}  The treeview is
+\item {\bf Customization in the treeview.}  The treeview,
+which appears on the left-hand side of Figure~\ref{figure:launchpads}, is
 a graphical representation of the abstract syntax of a PADS description.
 In this view, programmers can manipulate definitions with a high degree
 of precision: definition elements may be created, destroyed, and
@@ -257,8 +259,8 @@ to be syntactically correct so the user need not worry about fussing with
 concrete \textsc{PADS} syntax if they do not want to. 
 Figure~\ref{figure:launchpads}
 shows the generated code in the window at the bottom of the
-interface.  By using the pulldown menus at the top and a set of
-``wizards,'' the user may now
+interface.  By using the pulldown menus at the top and a set of ``wizards'' 
+(not shown), the user may now
 issue commands to compile the generated code and create data processing
 tools including the XML converter and statistical analyzer.  
 As development of \textsc{LaunchPADS} continues, we will add further
