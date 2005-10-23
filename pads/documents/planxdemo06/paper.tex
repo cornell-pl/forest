@@ -70,10 +70,11 @@ biologists and genomics researchers to physicists, financial
 analysts and everyday programmers.
 
 Programmers often deal with this data by whipping up one-time Perl scripts
-or C programs.  Unfortunately, this
-task is slow, tedious, and often produces code that is insufficiently robust,
-lacks error-checking, is
-difficult to understand, and is hard to evolve over time as formats change.  
+or C programs to parse and analyze their data.  Unfortunately, this
+strategy is slow and tedious, and often produces code that is 
+difficult to understand, 
+lacks adequate error checking, and 
+is brittle to format change over time.
 To expedite and improve this process, we developed
 the \textsc{PADS} data description language and system~\cite{fisher+:pldi05,fisher+:popl06}.  Using the
 \textsc{PADS} language, one may write a declarative
@@ -194,7 +195,7 @@ of creating tools for processing ad hoc data, it is nevertheless a
 for anyone, especially for computational biologists or 
 other scientists for whom programming is not their primary
 area of expertise.  To ease the way for novice 
-\textsc{PADS} users, we developed have \textsc{LaunchPADS},
+\textsc{PADS} users, we developed \textsc{LaunchPADS},
 a new tool that provides access to the PADS system
 without requiring foreknowledge of the \textsc{PADS} language itself.
 Hence, \textsc{LaunchPADS} graphic interface will also help more
@@ -209,9 +210,9 @@ for translation of this definition into
 that operate over ad hoc data.  
 More specifically, \textsc{LaunchPADS} breaks definition of an 
 ad hoc data format and generation of data processing tools
-into the following parts.  Figure~\ref{figure:launchpads}
+into the following steps.  Figure~\ref{figure:launchpads}
 presents a screenshot of \textsc{LaunchPADS} being used to construct
-a data description for a web server log format.
+a data description for a web-server log format.
 
 \begin{enumerate}
 \item {\bf Selection of sample data from which to build the description.} 
