@@ -64,10 +64,10 @@ tools for processing these ad hoc data formats do not exist
 or are not readily available, talented scientists, data analysts, and
 programmers must waste their time 
 on low-level chores like parsing and format translation
-to extract the valuable information they need from their data.\trversion{\footnote{%
+to extract the valuable information they need from their data.
 Though the syntax of everyday programming languages
 might be considered ``ad hoc,'' we explicitly exclude
-programming language syntax from our domain of interest.}}
+programming language syntax from our domain of interest.
 
 In addition to the inconvenience of having to build custom
 processing tools from scratch, the nonstandard nature of ad hoc data
@@ -122,7 +122,7 @@ Monitor billing process   &                             \\ \hline
 Netflow:                        & Data-dependent number of     \\ 
 Monitor network performance  & fixed-width binary records  \\ \hline
 Newick:   Immune                 & Fixed-width ASCII records \\ 
-system response simulation & in tree-shaped hierachy\\ \hline                                
+system response simulation & in tree-shaped hierarchy\\ \hline                                
 Gene Ontology:             & Variable-width ASCII records \\
 Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
 %HL7:             & Variable-width ASCII records \\
@@ -156,7 +156,7 @@ they refer to as {\em binaries}~\cite{erlang-bits,gustafsson+:binaries}
 to aid in packet
 processing and protocol programming.  At CMU, Eger is in the process
 of developing a
-language of Bit-Level Types~\cite{eger:blt} for specifying file
+language of Bit-Level Types (BLT)~\cite{eger:blt} for specifying file
 formats such as ELF, JPEG, and MIDI as well as packet layouts.
 Finally, we are part of a group developing
 \pads{}~\cite{fisher+:pads}, another system for specifying ad hoc data.
@@ -317,7 +317,8 @@ systematize their design so that a new language is a point
 chosen from a well-mapped space, rather than a laboriously
 devised construction.
 
-$\qquad$ --- J. P. Landin, {\em The Next 700 Programming Languages}, 1965.
+$\qquad$ --- P. J. Landin, {\em The Next 700 Programming Languages}, 
+1966~\cite{landin:700}.
 \end{quote}
 
 
@@ -347,23 +348,26 @@ internal representations of the external data and
 parse descriptors that pinpoint errors in the original source.
 
 For many domains, researchers have a solid understanding of
-what makes a ``good'' or ``bad'' language.  For instance,
-a good typed language is one in which values of a given type
+what makes a ``reasonable'' or ``unreasonable'' language.  For instance,
+a reasonable typed language is one in which values of a given type
 have a well-defined canonical form and ``programs don't go wrong.''
 On the other hand, when we began this research, it
 was not at all clear
 how to decide whether our data description language and
-its interpretation were ``good'' or ``bad.''  A conventional sort
+its interpretation were ``reasonable'' or ``unreasonable.''  
+A conventional sort
 of canonical forms property, for instance, 
 is not relevant as the input data source
 is not under system control, and, as
 mentioned above, is frequently buggy.  Consequently,
-we have had to define and formalize a new correctness criterion for the language. 
+we have had to define and formalize a new correctness criterion 
+for the language. 
 In a nutshell, rather than requiring input data be error-free, we require
-that all errors in the parsed data be accurately recorded
-in the parse descriptor.  We adopted this criterion because it ensures
-that data consumers can rely on the integrity of data marked as error-free.
-
+that the internal data structures produced by parsing 
+satisfy their specification whereever the parse descriptor says they
+will.  Our invariant allows
+data consumers to rely on the integrity of the internal data structures
+marked as error-free. 
 %There are other possible correctness criteria
 %as well, but this is a solid starting point.
 % eg: the existence of inverse mappings?
@@ -407,7 +411,12 @@ contributions:
 \item We define a semantic framework for understanding and comparing data description languages such as \pads{},
 \packettypes{}, \datascript{}, and \blt{}.
 No one has previously given a formal semantics to any of these 
-languages.
+languages.  In fact, as far as we are aware, no one has developed 
+a general and complete ``theory of front-ends'' 
+that encompasses 
+both a semantics for recognition of concrete, external syntax and 
+a semantics for internal representation of this data within a
+rich, strongly-typed programming language.
 
 \item At the center of the framework is \ddc{},
 a calculus of data descriptions based on dependent type theory.

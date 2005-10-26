@@ -135,7 +135,7 @@ defined in this section and a brief description of each.
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\rctxt;\ctxt,\kty,\mcon'] 
   }
 \quad
-  \infer[\text{Set}]{
+  \infer[\text{Con}]{
     \ddck[\pset x \ty e,\rctxt;\ctxt,\kty,\con]
   }{ 
     \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & 
@@ -213,9 +213,10 @@ This second purpose leads us to consider a context $\rctxt$ to be a
 substitution from type variables to types. Application of such a
 substitution has the form $\asub \rctxt \ty$.
 
-To ensure that recursive types are well-formed, 
-we cannot allow types such as $\pmu \ptyvar
-\ptyvar$. More generally, we need to ensure that
+To ensure that recursive types have properly-shaped parse descriptors
+with a valid PD header (a condition necessary for the type safety of
+generated parsers), we disallow types such as $\pmu \ptyvar
+\ptyvar$. More generally, we ensure that
 recursive type variables are separated from their binder by at least
 one basic primitive, such as a product or sum, a condition called {\it contractiveness}. To this end, we annotate every judgment with a contractiveness
 indicator, one of $\con$, $\ncon$, or $\mcon$. A
@@ -274,7 +275,7 @@ of each \ddc{} primitive. While the primitives are
 dependent types, the mapping to the \implang{} language erases the dependency because the \implang{} language does not have dependent types. For \ddc{} types in which expressions appear,
 the translation drops the expressions to remove the dependency.
 With these expressions gone, variables become useless, so we drop 
-variable bindings as well, as in product and set types.
+variable bindings as well, as in product and constrained types.
 Similarly, as type abstraction and application are only relevant for
 dependency, we translate them according to their underlying types.
 
@@ -289,7 +290,7 @@ with $\invty$ to produce the actual representation type.
 Intersection types produce a pair of values, one for each sub-type,
 because the representations of the subtypes need not be identical nor
 even compatible. 
-Set types produce sums, where a left branch indicates the data
+Constrained types produce sums, where a left branch indicates the data
 satisfies the constraint and the right indicates it does not. In
 the latter case, the parser returns the offending data rather than
 $\ierr$ because the error is semantic rather than syntactic.
@@ -459,7 +460,7 @@ type was matched along with the type's corresponding parse descriptor.
     \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
     \quad \ilet x {\ictup{r,p}}\\
     \quad \ilet c e \\
-    \quad \spair<\off',\newrep {set} {c,r},\newpd {set} {c,p}>
+    \quad \spair<\off',\newrep {con} {c,r},\newpd {con} {c,p}>
   \end{array}
 \\
 %% Array 
@@ -629,7 +630,7 @@ increased by one; otherwise its not increased at all. We use the
 function $\codefont {pos}$, which maps all positive numbers to 1
 (leaving zero as is), to assist in calculating the contribution of
 subcomponents to the total error count.  Errors at the level of the
-element itself - such as constraint violation in set types - are
+element itself - such as constraint violation in constrained types - are
 generally counted individually.}
 
 With this background, we can now discuss selected portions of the semantics.
@@ -658,7 +659,7 @@ value if it parses without errors. Otherwise, it parses according to
 the right type. Intersections read both types starting at the same
 point. They advance the stream to the maximum of the two offsets
 returned by the component parsers. The construction of the parse
-descriptor is similar to that of products. For set types, we call the
+descriptor is similar to that of products. For constrained types, we call the
 parser for the underlying type $\ty$, bind $\var$ to the resulting rep
 and PD, and check whether constraint is satisfied. The result
 indicates whether the data has a semantic error and is used in
@@ -712,6 +713,13 @@ Recursive type variables translate to these special names.
   redundant. However, the simpler encoding of $\ifun {f_\ptyvar}
   {\itup{\data,\off}} {\trans[\ty,,] \; \itup{\data,\off}}$ would have
   complicated the meta-theory.}
+
+The $\pscann$ type attempts to parse the underlying type from the
+stream at an increasing scan-offset, $i$, from the original offset
+$\off$, until success is achieved or a predefined maximum scan-offset
+(\cd{scanMax}) is reached.  In the semantics we give here, offsets are
+incremented one bit at a time --- a practical implementation would choose
+some larger increment ({\it e.g.,} 32 bits at a time).
 
 \trversion{
 The definition of $\pcomputen$ just calls the compute constructors.

@@ -1,4 +1,4 @@
-\newpage
+%\newpage
 \appendix
 
 \section{Host Language}
@@ -6,6 +6,8 @@
 
 \subsection{Well-Formedness Rules}
 \label{app:well-form}
+
+\small
 
 \fbox{$\wfd \pctxt \ity$}
 
@@ -110,19 +112,20 @@ with $\Iopty$. Some example constants and their types are show below.
 \end{array}
 \]
 
-We use contexts $\pctxt$ to record the names of open type variables
-and contexts $\ctxt$ to record the types of expression variables. The syntax of
-$\pctxt$ and $\ctxt$ is as follows:
-\begin{bnf}
-\pctxt & \::= . \| \ctxt,\ityvar \\
-\ctxt  & \::= . \| \ctxt,x{:}\ity
-\end{bnf}
 
-The typing judgment has the form $\stsem[e, \pctxt;\ctxt, \ity]$. When
-the type-variable context $\pctxt$ is empty, we write $\stsem[e,
-\ctxt, \ity]$ as an abbreviation.
-% Note that \textit{T-Generalize} can only be used in the premise of a
-% \texttt{let} expression.
+% We use contexts $\pctxt$ to record the names of open type variables
+% and contexts $\ctxt$ to record the types of expression variables. The syntax of
+% $\pctxt$ and $\ctxt$ is as follows:
+% \begin{bnf}
+% \pctxt & \::= . \| \ctxt,\ityvar \\
+% \ctxt  & \::= . \| \ctxt,x{:}\ity
+% \end{bnf}
+
+% The typing judgment has the form $\stsem[e, \pctxt;\ctxt, \ity]$. When
+% the type-variable context $\pctxt$ is empty, we write $\stsem[e,
+% \ctxt, \ity]$ as an abbreviation.
+% % Note that \textit{T-Generalize} can only be used in the premise of a
+% % \texttt{let} expression.
 
 \[
   \infer[\text{Const}]{
@@ -324,11 +327,12 @@ the type-variable context $\pctxt$ is empty, we write $\stsem[e,
 \end{bnf}
 
 We specify the implementation of an operator with
-$\mathcal{O}({op},v)$. Most of the rules are standard, although the
-sequence rules are new. Append appends the contents of the second
-array to that of the first array, while Sub extracts the element at
-index i, if i is within the bounds of the array. If not, the
-expression fails.
+$\mathcal{O}({op},v)$. 
+% Most of the rules are standard, although the
+% sequence rules are new. Append appends the contents of the second
+% array to that of the first array, while Sub extracts the element at
+% index i, if i is within the bounds of the array. If not, the
+% expression fails.
 
 \[
 \infer[\text{Op}]{
@@ -446,8 +450,14 @@ expression fails.
 \end{description}
 }
 
-In defining the parsing functions, we use the following helper functions:
-\begin{description}
+% In defining the parsing functions, we use the following helper functions:
+
+Generic Helpers:
+
+{\small
+\begin{itemize}
+\renewcommand{\labelitemi}{}
+%\begin{description}
 \item $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
 
 \item $\codefont{scanMax} : \iintty$
@@ -463,20 +473,25 @@ In defining the parsing functions, we use the following helper functions:
     \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
     \ielse \iok
    \end{array}$
-\end{description}
+\end{itemize}
+%\end{description}
+}
 
-We define for each \ddc{} type a pair of constructor functions, one to build a representation and another to build a parse descriptor.
-The type of PD headers is $\iintty
-  \iprodi \iecty \iprodi \ispty$. We refer to the projections using
-  dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
-  $\codefont{sp}$, respectively. A span is a pair of offsets, referred
-  to as $\codefont{begin}$ and $\codefont{end}$, respectively. Array
-  bodies have type $\iintty \iprodi \iintty \iprodi (\iseq \ity)$ (for
-  element type $\ity$). We refer to the projections as
-  $\codefont{neerr}$, $\codefont{length}$ and $\codefont{elts}$,
-  respectively.  
+% We define for each \ddc{} type a pair of constructor functions, one to build a representation and another to build a parse descriptor.
+% The type of PD headers is $\iintty
+%   \iprodi \iecty \iprodi \ispty$. We refer to the projections using
+%   dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
+%   $\codefont{sp}$, respectively. A span is a pair of offsets, referred
+%   to as $\codefont{begin}$ and $\codefont{end}$, respectively. Array
+%   bodies have type $\iintty \iprodi \iintty \iprodi (\iseq \ity)$ (for
+%   element type $\ity$). We refer to the projections as
+%   $\codefont{neerr}$, $\codefont{length}$ and $\codefont{elts}$,
+%   respectively.  
 
-\small
+\noindent
+Type-Specific Helpers:
+
+{\small
 \begin{itemize}
 \renewcommand{\labelitemi}{}
 
@@ -525,10 +540,10 @@ The type of PD headers is $\iintty
       \itup{p_1.h, p_2.h},\itup{p_1,p_2}}}$
 
 \item %[Set:]
-\item $\ifun {R_{set}} {\ictup{c,r}} {
+\item $\ifun {R_{con}} {\ictup{c,r}} {
     \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\codefont r}}
   }$ 
-\item $\ifun {P_{set}} {\ictup {c, p}} {}$ \\
+\item $\ifun {P_{con}} {\ictup {c, p}} {}$ \\
     $\begin{array}{l}
       \iif {\codefont c} \; \ithen {\ictup{(pos(p.h.nerr),p.h.ec,p.h.sp),p}} \\
       \ielse {\ictup {(1 + pos(p.h.nerr),\maxec \iecerr {p.h.ec},p.h.sp),p}}
@@ -591,7 +606,7 @@ $\begin{array}{l}
 %% \item[Transform:]
 %% \item \fnm{P_T} (h,b) = (h,(???,b))
 \end{itemize}
-
+}
 \trversion{
 \begin{lemma}[Function Types]
   $\stsem[\codefont{isOk},
@@ -600,6 +615,7 @@ $\begin{array}{l}
 \end{lemma}
 }
 
+\trversion{
 \section{Conditions on Base Types}
 \label{app:meta-theory}
 \begin{condition}[Conditions on Base-type Interfaces]
@@ -618,6 +634,7 @@ $\begin{array}{l}
 \noindent
 Note that by condition~\ref{cond:closed-op}, base type parsers must
 be closed.
+}
 
 \section{Complete \ipads{} Encoding in \ddc{}}
 \label{app:ipads-to-ddc}

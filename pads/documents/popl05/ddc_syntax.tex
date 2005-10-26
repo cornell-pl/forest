@@ -79,13 +79,15 @@ Dependent product types $\psig x {\ty_1} {\ty_2}$ describe a sequence
 of values in which the second type may refer to the value of the first.
 Sum types $\psum {\ty_1} {} {\ty_2}$
 express flexibility in the data format, as they parse
-data matching either $\ty_1$ or $\ty_2$. Sum-type parsers
+data matching either $\ty_1$ or $\ty_2$. Unlike regular expressions or
+context-free grammars, which allow nondeterministic choice,
+sum-type parsers
 are deterministic, transforming the data according to $\ty_1$
-when possible and only attempting to
+when possible and {\it only} attempting to
 use $\ty_2$ if there is an error in $\ty_1$. Intersection types
 $\pand {\ty_1} {\ty_2}$ describe data that match both $\ty_1$ and
 $\ty_2$. They transform a single set of bits to produce
-a pair of values, one from each type. Set types $\pset x \ty e$
+a pair of values, one from each type. Constrained types $\pset x \ty e$
 transform data according to the underlying type $\ty$ and
 then check that the constraint $e$ holds when $x$ is bound to the parsed value.
 
@@ -99,9 +101,11 @@ sequence after each element is read to determine
 if the sequence has completed. For example, a function that
 checks if the sequence has $100$ elements would
 terminate a sequence when it reaches length $100$.  The type 
-$\ty_t$ denotes the type of the terminator expected after the last sequence
-element. For sequences without terminators, we use
-$\pfalse$ for $\ty_t$.
+$\ty_t$ is used when characters following the array will signal termination.
+For example, if a semi-colon signals the end of the array, then $\ty_t$ 
+should be $\pset{x}{\Pchar}{x = ';'}$. If no particular character or 
+string of characters
+signals the end of the array, $\ty_t$ can always be $\pfalse$.
 
 Recursive types $\pmu \ptyvar \ty$ describe recursive data formats.
 The name $\ptyvar$ can be used in $\ty$ to refer to the recursive type
@@ -263,11 +267,10 @@ in the form $\mathtt{name} = \ty$ before giving the type that describes the data
 \]}%
 \noindent
 In the example, we define type constructor $\mathtt{S}$ to encode literals
-with a set-type. We also use the following
+with a constrained type. We also use the following
 informal translations: \Pwhere{} becomes a set-type, \Pstruct{} a
 series of dependent products, \Punion{} a series of sums, and
-\Parray{} a sequence. For this example, we assume that \Peor{} is a newline, and therefore specify the sequence
-separator as such. As the array terminates at the end of the file, we
+\Parray{} a sequence. As the array terminates at the end of the file, we
 use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
 absence of termination condition and terminator, respectively.
 

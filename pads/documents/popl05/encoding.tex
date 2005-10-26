@@ -461,7 +461,7 @@ causing us to parse the data with $\ty_2$.
 
 Unfortunately. while this seems to work, it will fail if there is an
 error in $\ty_1$ when $e$ is true. The error will cause errors in the
-set type despite the satisfaction of its constraint, thereby causing
+constrained type despite the satisfaction of its constraint, thereby causing
 the parser to use $\ty_2$. To address this problem, we use 
 intersections:
 }
@@ -489,7 +489,7 @@ Otherwise, $c$ will be 2, the left-hand side will parse nothing and the
 right $\ty_2$.
 % The computed value $c$ indicates which branch is to be taken and the
 % intersection parses exactly that branch of the conditional-type.  We
-% use a combination of set and sum type to guard each branch with a
+% use a combination of constrained and sum type to guard each branch with a
 % condition such that the branch is only parsed if the condition is
 % false. We guarantee that exactly one branch is parsed by guarding the
 % two branches with mutually exclusive conditions. 
@@ -605,10 +605,10 @@ fails and fails where $\ty$ succeeds:
 \noindent
 Abbreviated $\pnot \ty$, this type attempts to parse a $\ty$. On
 success, the representation will be a left injection. The constraint
-in the set type will therefore fail. If a $\ty$ cannot be parsed, the
+in the constrained type will therefore fail. If a $\ty$ cannot be parsed, the
 sum will default to $\ptrue$, the rep will be a right injection, and
 the constraint will succeed. The use of the sum in the underlying type
-is critical as it allows the set-type to be error free even if parsing
+is critical as it allows the constrained type to be error free even if parsing
 a $\ty$ fails.
 
 With $\pnotn$, we can encode the unbounded \datascript{} array as
@@ -639,7 +639,7 @@ which we have found encodings in \ddc{}:
 \begin{itemize}
 \item \packettypes{}: arrays, where clauses, structures, overlays,
   and alternation.
-\item \datascript{}: set types (enumerations and bitmask sets),
+\item \datascript{}: constrained types (enumerations and bitmask sets),
   arrays, constraints, value-parameterized types (which they refer to
   as ``type parameters''), and (monotonically increasing) labels.
 \end{itemize}
