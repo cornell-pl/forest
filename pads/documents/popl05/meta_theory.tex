@@ -304,16 +304,22 @@ Informally, a representation and a PD are correlated when the number
 of errors recorded in the PD is at least as many as the number of
 errors in the representation and semantic errors, \ie{},
 constraint violations, are properly reported.  Formally, we define
-correlation with the relation $\corr \ty r p$. As the encoding of
-errors in the representation and the meaning of error counts in the PD
-are dependent on the \ddc{} type that produced them, correlation is
-type directed.  However, some types, such as type application, are not
-immediately useful in determining correlation, and must be normalized. In \figref{fig:revised-ddc-syntax}, we define the set of
-normalized types $\tyval$ and give normalization rules. For clarity, we define $\corrkl \ty r p$ as a ``helper''
-relation that normalizes types $\ty$ before checking for correlation.
-The relation $\corr \ty r p$, then, is defined only
-for normalized types of kind $\kty$. Type abstractions are excluded as
-they cannot directly produce representations and PDs.
+correlation using two mutually recursive definitions.  The first,
+$\corrkl \ty r p$, defines error correlation between a representation
+$r$ and a parse descriptor $p$ at type $\ty$.  It does so by
+computing a weak-head normal form $\tyval$ for $\ty$ and then
+using the subsidiary relation $\corr \tyval r p$, which is defined for
+all weak-head normal types $\tyval$ with base kind $\kty$.
+Types with higher kind such as abstractions are excluded from this definition
+as they cannot directly produce representations and PDs.
+\figref{fig:revised-ddc-syntax} defines the weak-head
+normal types $\tyval$ and give normalization rules while the
+following definitions specify error correlation.   
+Below, we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
+and use $\mathtt{pos}$ to denote the function which returns zero when
+passed zero and one otherwise.
+
+
 
 \begin{figure}
 \small
@@ -359,7 +365,7 @@ they cannot directly produce representations and PDs.
     \pmu \ptyvar \ty \stepsto \ty[\pmu \ptyvar \ty/\ptyvar]
   }{}
 \]
-  \caption{\ddc{} Normalized Syntax and Normalization Rules}
+  \caption{\ddc{} Weak-Head Normal Types and Normalization}
   \label{fig:ddc-reduction-rules}
   \label{fig:revised-ddc-syntax}
 \end{figure}
@@ -368,58 +374,53 @@ they cannot directly produce representations and PDs.
 $\corrkl \ty r p$ iff if $\ty \kstepsto \tyval$ then $\corr \tyval r p$.
 \end{definition}
 
-In the following definition, we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
-and use $\mathtt{pos}$ to denote the function which returns zero when
-passed zero and one otherwise.
-
-
 \begin{definition}[Representation and PD Correlation Relation]
-$\corr \ty r p$ iff exactly one of the following is true:
+$\corr \tyval r p$ iff exactly one of the following is true:
   \begin{itemize}
-  \item $\ty = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
-  \item $\ty = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
-  \item $\ty = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
-  \item $\ty = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
-  \item $\ty = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
+  \item $\tyval = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
+  \item $\tyval = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
+  \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1} {p_2}}$ 
     and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
     {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
-  \item $\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
     and $p = \ipair h {\iinld {\ity}{p'}}$
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
     {\ty_1} {r'} {p'}$.
-  \item $\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
     and $p = \ipair h {\iinr {p'}}$
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
     {\ty_2} {r'} {p'}$.
-  \item $\ty = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
+  \item $\tyval = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1}{p_2}}$, 
     and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
     $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
-  \item $\ty = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
     \ipair h {p'}$, 
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
     and $e[(r',p')/x] \kstepsto\itrue$.
-  \item $\ty = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
     and $p = \ipair h {p'}$,
     and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
     $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
-  \item $\ty = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
+  \item $\tyval = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
     $r = \ipair {len} {\iarr{\vec {r_i}}}$, $p = \itup{h,\itup{{neerr},{len}',\iarr {\vec {p_i}}}}$,
     ${len} = {len}'$, ${neerr} = \sum_{i=1}^{len}
     \mathtt{pos}(p_i.{nerr})$, $\corrkl {\ty_e}
     {r_i} {p_i}$, (for $i=1 \ldots {len}$), and
     $h.{nerr} \geq \mathtt{pos}({neerr})$.
-%   \item $\ty = \pmu \ptyvar {\ty'}$ and 
+%   \item $\tyval = \pmu \ptyvar {\ty'}$ and 
 %     $\corrkl {\ty'[\pmu \ptyvar {\ty'}/\ptyvar]} r p$.
-  \item $\ty = \pcompute e \ity$ and $p.{nerr} = 0$.
-  \item $\ty = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
-  \item $\ty = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
-  \item $\ty = \pscan {\ty'}$, $r =\iinl {r'}$,
+  \item $\tyval = \pcompute e \ity$ and $p.{nerr} = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
+  \item $\tyval = \pscan {\ty'}$, $r =\iinl {r'}$,
       $p = \ipair h {\iinl {\ipair i {p'}}}$,
       $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and
       $\corrkl {\ty'}{r'}{p'}$.
-  \item $\ty = \pscan {\ty'}$,
+  \item $\tyval = \pscan {\ty'}$,
       $r =\iinr \ierr$,
       $p = \ipair h {\iinr \iuval}$, and
       $h.{nerr} = 1$.
