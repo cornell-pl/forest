@@ -1,0 +1,4347 @@
+%\documentclass[fleqn]{article}
+%\documentclass[nocopyrightspace]{sigplanconf}
+\documentclass{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+
+
+
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\conferenceinfo{POPL'06}{January 11--13,2006,Charleston,South Carolina,USA.}
+
+\CopyrightYear{2006}
+
+\copyrightdata{1-59593-027-2/06/0001}
+
+%\title{A Calculus for Describing Ad Hoc Data Formats}
+\title{The Next 700 Data Description Languages}
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@research.att.com}}
+
+\authorinfo{Yitzhak Mandelbaum}{
+	   Princeton University}
+       {\mono{yitzhakm@CS.Princeton.EDU}}
+\authorinfo{David Walker}{
+	   Princeton University}
+       {\mono{dpw@CS.Princeton.EDU}}
+
+\newcommand{\cut}[1]{}
+\newcommand{\reminder}[1]{{\it #1 }}
+\newcommand{\poplversion}[1]{#1}
+\newcommand{\trversion}[1]{}
+
+\newcommand{\appref}[1]{Appendix~\ref{#1}}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\tblref}[1]{Table~\ref{#1}}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\listingref}[1]{Listing~\ref{#1}}
+%\newcommand{\pref}[1]{{page~\pageref{#1}}}
+
+\newcommand{\eg}{{\em e.g.}}
+\newcommand{\cf}{{\em cf.}}
+\newcommand{\ie}{{\em i.e.}}
+\newcommand{\etc}{{\em etc.\/}}
+\newcommand{\naive}{na\"{\i}ve}
+\newcommand{\role}{r\^{o}le}
+\newcommand{\forte}{{fort\'{e}\/}}
+\newcommand{\appr}{\~{}}
+
+%\newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
+\newcommand{\kw}[1]{\bftt{#1}}
+\newcommand{\pads}{\textsc{pads}}
+\newcommand{\ipads}{\textsc{ipads}}
+\newcommand{\padsl}{\textsc{padsl}}
+\newcommand{\blt}{\textsc{blt}}
+\newcommand{\ddc}{\textsc{ddc}}
+\newcommand{\ddl}{\textsc{ddl}}
+\newcommand{\C}{\textsc{C}}
+\newcommand{\perl}{\textsc{Perl}}
+\newcommand{\ml}{\textsc{ml}}
+\newcommand{\smlnj}{\textsc{sml/nj}}
+\newcommand{\java}{\textsc{java}}
+\newcommand{\xml}{\textsc{xml}}
+\newcommand{\xquery}{\textsc{xquery}}
+\newcommand{\datascript}{\textsc{datascript}}
+\newcommand{\packettypes}{\textsc{packettypes}}
+\newcommand{\erlang}{\textsc{Erlang}}
+
+\newcommand{\dibbler}{Sirius}
+\newcommand{\ningaui}{Altair}
+\newcommand{\darkstar}{Regulus}
+
+%% \newcommand{\IParray}[4]{{\tt Parray} \; #1 \; \[#2, #3, #4\]}
+
+\newcommand{\figHeight}[4]{\begin{figure}[tb]
+	\centerline{
+	            \epsfig{file=#1,height=#4}}
+	\caption{#2}
+	\label{#3}
+	\end{figure}}
+
+
+\maketitle{}
+
+\begin{abstract}  
+In the spirit of Landin, we present a calculus of dependent types to
+serve as the semantic foundation for a family of languages called
+\textit{data description languages}.  Such languages, which include
+\pads{}, \datascript{}, and \packettypes{}, are designed to facilitate
+programming with \textit{ad hoc data}, \ie{}, data not in well-behaved
+relational or \xml{} formats. In the calculus, each type describes the
+physical layout and semantic properties of a data source. In the
+semantics, we interpret types simultaneously as the in-memory
+representation of the data described and as parsers for the
+data source. The parsing functions are robust, automatically detecting
+and recording errors in the data stream without halting parsing.  
+We show the parsers are type-correct, returning data whose type matches the simple-type interpretation of the specification. We also prove the parsers
+are ``error-correct,'' accurately reporting the number of physical and
+semantic errors that occur in the returned data.  We use the calculus
+to describe the features of various data description languages, and we
+discuss how we have used the calculus to improve \pads{}.
+\end{abstract}
+
+
+\section{The Challenge of Ad Hoc Data Formats}
+\label{sec:intro}
+XML. HTML. CSV. JPEG. MPEG.  These data formats
+represent vast quantities of industrial, governmental,
+scientific, and private data.  Because they have been standardized
+and are widely used, many reliable, efficient, and
+convenient tools for processing data in these formats are
+readily available.  For instance, your favorite programming language
+undoubtedly has libraries for parsing XML and HTML as well as
+reading and transforming images in JPEG or movies in MPEG.  Query engines
+are available for querying XML documents.
+Widely-used applications like Microsoft Word and Excel automatically
+translate documents between HTML and other
+standard formats.  In short, life is good when working with standard data formats. In an ideal world, all data would be in such formats. In reality, however, we are not nearly so fortunate.
+
+An {\em ad hoc data format} is any non-standard data format.  
+Typically, such formats do not have parsing,
+querying, analysis, or transformation tools readily available.
+Every day, network administrators, financial analysts, computer
+scientists, biologists, 
+%corporate IT professionals, 
+chemists, astronomers, and
+physicists deal with ad hoc data in a myriad of complex formats.
+Figure~\ref{figure:data-sources} gives a partial sense of the range
+and pervasiveness of such data.  Since off-the-shelf
+tools for processing these ad hoc data formats do not exist
+or are not readily available, talented scientists, data analysts, and
+programmers must waste their time 
+on low-level chores like parsing and format translation
+to extract the valuable information they need from their data.
+Though the syntax of everyday programming languages
+might be considered ``ad hoc,'' we explicitly exclude
+programming language syntax from our domain of interest.
+
+In addition to the inconvenience of having to build custom
+processing tools from scratch, the nonstandard nature of ad hoc data
+frequently leads to other difficulties for its users.
+First, documentation for the format may not exist, or it may be out of
+date.  For example, a common phenomenon is for a field in a data source to fall
+into disuse.  After a while, a new piece of information becomes
+interesting, but compatibility issues prevent data suppliers from
+modifying the shape of their data, so instead they hijack the unused
+field, often failing to update the documentation in the process.
+
+Second, such data frequently contain errors, for a variety of reasons:
+malfunctioning equipment, programming errors, non-standard values to
+indicate ``no data available,'' human error in entering data, and
+unexpected data values caused by the lack of good documentation.
+Detecting errors is important, because otherwise they can corrupt
+``good'' data.  The appropriate response to such errors depends on the
+application. Some applications require the data to be error free: if
+an error is detected, processing needs to stop immediately and a human
+must be alerted.  Other applications can repair the data, while still
+others can simply discard erroneous or unexpected values.  For some
+applications, errors in the data can be the most interesting part
+because they can signal where a monitored system is failing.
+
+Today, many programmers tackle the challenge of ad hoc data by writing
+scripts in a language like \perl{}.  Unfortunately, this process is slow,
+tedious, and unreliable.  Error checking and recovery in these scripts
+is often minimal or nonexistent because when present, such error code
+swamps the main-line computation.  The program itself is often
+unreadable by anyone other than the original authors (and usually not
+even them in a month or two) and consequently cannot stand as
+documentation for the format.  Processing code often ends up
+intertwined with parsing code, making it difficult to reuse the
+parsing code for different analyses. Hence, in general, software
+produced in this way is not the high-quality, reliable, efficient and
+maintainable code one should demand.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Name \& Use   &  Representation               \\ \hline\hline
+Web server logs (CLF):  &  Fixed-column ASCII records \\ 
+Measure web workloads &                             \\ \hline
+AT\&T provisioning data: & Variable-width ASCII records  \\ 
+Monitor service activation &                              \\ \hline
+Call detail: Fraud detection  &  Fixed-width binary records \\  \hline 
+AT\&T billing data: & Various Cobol data formats  \\ 
+Monitor billing process   &                             \\ \hline
+%IP backbone data:  & ASCII   \\
+%Monitor network performance  &        \\ \hline
+Netflow:                        & Data-dependent number of     \\ 
+Monitor network performance  & fixed-width binary records  \\ \hline
+Newick:   Immune                 & Fixed-width ASCII records \\ 
+system response simulation & in tree-shaped hierarchy\\ \hline                                
+Gene Ontology:             & Variable-width ASCII records \\
+Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
+%HL7:             & Variable-width ASCII records \\
+%Medical lab results     &  \\ \hline
+CPT codes: Medical diagnoses & Floating point numbers \\ \hline
+SnowMed: Medical clinic notes & keyword tags  \\ \hline
+
+
+\end{tabular}
+
+
+\caption{Selected ad hoc data sources.}
+\label{figure:data-sources}
+\end{center}
+\end{figure}
+ 
+\subsection{Promising Solutions}
+
+To address these challenges, 
+researchers have begun to develop high-level languages 
+for describing and processing ad hoc data.  For instance,
+McCann and Chandra introduced
+\packettypes{}~\cite{sigcomm00}, a specification language designed to help 
+systems programmers process the binary data associated
+with networking protocols.  Godmar Back developed
+\datascript{}~\cite{gpce02}, a scripting language with explicit
+support for specifying and parsing binary data formats. \datascript{}
+has been used to manipulate Java jar files and ELF object files.  The
+developers of Erlang have also introduced language extensions that
+they refer to as {\em binaries}~\cite{erlang-bits,gustafsson+:binaries} 
+to aid in packet
+processing and protocol programming.  At CMU, Eger is in the process
+of developing a
+language of Bit-Level Types (BLT)~\cite{eger:blt} for specifying file
+formats such as ELF, JPEG, and MIDI as well as packet layouts.
+Finally, we are part of a group developing
+\pads{}~\cite{fisher+:pads}, another system for specifying ad hoc data.
+\pads{} focuses on robust error handling and tool generation.
+It is also unusual in that it supports a variety of data encodings:
+ASCII formats used by financial analysts, medical professionals and scientists,
+EBCDIC formats used in Cobol-based legacy business systems,
+binary data from network applications, and mixed encodings as well.
+
+% Consequently, \pads{} can be used in applications 
+% ranging from network packet processing to financial data analysis to
+% medical record processing to web server log parsing and others.
+
+% Here are several examples;
+% there are likely more we are not familiar with.
+
+% \begin{itemize}
+% \item At SIGCOM,
+% McCann and Chandra~\cite{sigcomm00} introduced
+% \packettypes{}, a specification language aimed at helping systems
+% researchers and developers parse and process binary data 
+% associated with all different kinds of networking protocols.  
+% \item The developers of Erlang,
+% a widely used functional programming language in the 
+% telecommunications industry, introduced 
+% language extensions they refer to as {\em binaries}~\cite{erlang-bits}
+% to aid in packet processing and protocol programming.
+% \item Godmar Back~\cite{gpce02}
+% developed \datascript{}, a scripting language with explicit support for 
+% specifying and parsing binary data formats. \datascript has been 
+% used to process Java jar files and ELF object files.  
+% \item At CMU, Eger~\cite{eger:blt} has developed a language of Bit-Level Types
+% once again for specifying file formats such as ELF, JPEG and
+% MIDI as well as packet layouts.
+% \item We ourselves are part of a group developing
+% \pads{}~\cite{fisher+:pldi05}, yet another system for specifying ad hoc data.  Unlike the other systems mentioned above,
+% \pads{} allows users to write specifications of both ASCII and
+% binary data.  Consequently, \pads{} can be used in applications 
+% ranging from network packet processing to financial data analysis to
+% medical record processing to web server log parsing and others.
+% \end{itemize}
+
+
+\figHeight{revised-architecture}{Architecture of \pads{}  system.}{fig:architecture}{2.25in}
+
+While differing in many details, 
+these languages derive their power from 
+a remarkable insight: 
+Types can describe data in both its external (on-disk) and internal
+(programmatic) forms.
+\figref{fig:architecture} illustrates how systems such as
+\pads{}, \datascript{}, and \packettypes{} exploit this
+dual interpretation of types.  In the diagram,
+the data consumer constructs a type {\tt T}
+to describe the syntax and semantic properties of the format 
+in question.  A compiler converts this
+description into parsing code, which maps raw data into a canonical
+in-memory {\em representation}.  
+%\pads{} uses C as the host language, but in principle,
+%any host language will do.  
+This canonical representation is guaranteed to be a data structure
+that itself has type {\tt T}, or perhaps {\tt T'}, the closest relative of
+{\tt T} available in the host programming language
+being used.
+In the case of \pads{}, the parser also generates a {\em parse 
+descriptor} (PD), which
+describes the errors detected in the data.  
+A host language program can then analyze, transform or
+otherwise process the data representation and PD. 
+
+This architecture helps programmers take on the
+challenges of ad hoc data in multiple ways.
+First, format specifications in these languages serve as high-level
+documentation that is more easily read and
+maintained than the equivalent low-level \perl{} script or C parser.
+Importantly, \datascript{}, \packettypes{}, and \pads{} all
+allow programmers to describe the physical layout of data
+as well as its deeper semantic properties such as equality and range 
+constraints on values, sortedness, and other forms of dependency.
+The intent is to allow analysts to capture all they know about
+a data source in a data description.  If a data source changes,
+as they frequently do, by extending a record with an additional field or new
+variant, one often only needs to make a single local change to
+the declarative description to keep it up to date.  
+
+Second, basing the description language on type theory is especially helpful as
+ordinary programmers have built up strong intuitions about types.  
+The designers of data description languages
+have been able to exploit these intuitions to make the syntax and
+semantics of descriptions
+particularly easy to understand, even for beginners.  For instance,
+an array type is naturally used to describe sequences of data objects.
+And, really, what else could an array type describe?  Similarly,
+union types are used to describe alternatives.
+
+Third, programmers can write generic, type-directed programs that
+produce tools for purposes other than just parsing.  For instance,
+McCann and Chandra suggest using \packettypes{} specifications to
+generate packet filters and network monitors automatically.  Back used
+\datascript{} to generate infrastructure for visitor patterns over
+parsed data. \pads{} generates a statistical data analyzer, a pretty
+printer, an \xml{} translator and an auxiliary library that enables
+XQueries using the Galax query engine\cite{galax}.  It is the
+declarative, domain-specific nature of these data description
+languages that makes it possible to generate all these value-added
+tools for programmers.  The suite of tools, all of which can be
+generated from a single description, provides additional incentive for
+programmers to keep documentation up-to-date.
+
+% For instance, since the type-based data descriptions this documentation is ``living'' in that the various systems
+% convert the descriptions into parsing libraries (and in the case of
+% \pads{}, a myriad of additional tools including an \xml{} translator,
+% a statistical profiler, a pretty printer, and an auxiliary library
+% that enables XQueries using the Galax query engine\cite{galax}).  
+% If
+% the format changes, analysts have strong incentive to update the
+% documentation to generate a new parser and tool suite.
+
+Fourth, these data description languages 
+facilitate insertion of error handling code. 
+The generated parsers check all possible
+error cases: system errors related to the input file, buffer, or
+socket; syntax errors related to deviations in the physical format;
+and semantic errors in which the data violates user
+constraints. Because these checks appear only in generated code, they
+do not clutter the high-level declarative description of the data
+source. Moreover, since tools are generated automatically by a
+compiler rather than written by hand, they are far more likely to be
+robust and far less likely to have dangerous vulnerabilities such as
+buffer overflows. 
+% Moreover, as formats evolve, one can
+% make a small change in the high-level description and the compiler
+% manages the rest. Consequently, it is unlikely that new
+% vulnerabilities or buffer overflows will be added to the code base.
+
+In summary, data description languages such as \datascript{},
+\packettypes{}, Erlang, \blt{}, and \pads{} meet the challenge of
+processing ad hoc data by providing a concise and precise form of
+``living'' data documentation and producing reliable tools that handle
+errors robustly.
+
+
+\subsection{The Next 700 Data Description Languages}
+
+\begin {quote}
+The languages people use to communicate with computers differ in their intended aptitudes, towards either a
+particular application area, or a particular phase of computer use (high level programming, program assembly,
+job scheduling, etc). They also differ in physical appearance, and more important, in logical structure. The question arises, do the idiosyncrasies reflect basic logical
+properties of the situations that are being catered for?
+Or are they accidents of history and personal background
+that may be obscuring fruitful developments? This
+question is clearly important if we are trying to predict or
+influence language evolution.
+
+To answer it we must think in terms, not of languages,
+but of families of languages. That is to say we must
+systematize their design so that a new language is a point
+chosen from a well-mapped space, rather than a laboriously
+devised construction.
+
+$\qquad$ --- P. J. Landin, {\em The Next 700 Programming Languages}, 
+1966~\cite{landin:700}.
+\end{quote}
+
+
+Landin asserts that principled programming language design
+involves thinking in terms of ``families of languages'' and
+choosing from a ``well-mapped space.''  However, so far,
+when it comes to the domain of processing ad hoc data, 
+there is no well-mapped space and no systematic understanding
+of the family of languages one might be dealing with.
+
+The primary goal of this paper is to begin to understand the
+family of ad hoc data processing languages.  We do so,
+as Landin did, by developing a semantic
+framework for defining, comparing, and contrasting languages
+in our domain.  This semantic framework revolves around the
+definition of a data description calculus (\ddc{}).  
+This calculus uses types from a dependent type theory to describe
+various forms of ad hoc data:
+base types to describe atomic pieces of data and
+type constructors to describe richer structures.
+We show how to give a denotational semantics
+to \ddc{} by interpreting
+types as parsing functions that map external representations (bits)
+to data structures in a typed lambda calculus.  More precisely,
+these parsers produce both 
+internal representations of the external data and
+parse descriptors that pinpoint errors in the original source.
+
+For many domains, researchers have a solid understanding of
+what makes a ``reasonable'' or ``unreasonable'' language.  For instance,
+a reasonable typed language is one in which values of a given type
+have a well-defined canonical form and ``programs don't go wrong.''
+On the other hand, when we began this research, it
+was not at all clear
+how to decide whether our data description language and
+its interpretation were ``reasonable'' or ``unreasonable.''  
+A conventional sort
+of canonical forms property, for instance, 
+is not relevant as the input data source
+is not under system control, and, as
+mentioned above, is frequently buggy.  Consequently,
+we have had to define and formalize a new correctness criterion 
+for the language. 
+In a nutshell, rather than requiring input data to be error-free, we require
+that the internal data structures produced by parsing 
+satisfy their specification whereever the parse descriptor says they
+will.  Our invariant allows
+data consumers to rely on the integrity of the internal data structures
+marked as error-free. 
+%There are other possible correctness criteria
+%as well, but this is a solid starting point.
+% eg: the existence of inverse mappings?
+
+To study and compare \pads{}, \datascript{}, and/or
+some other data description language, we advocate translating
+the language into \ddc{}.  The translation decomposes
+the relatively complex, high-level descriptions of the language 
+in question into a series of lower-level
+\ddc{} descriptions, which have all been formally defined.  
+We have done this decomposition for \ipads{}, an idealized version of the
+\pads{} language that captures the essence of the actual 
+implementation.  We have also analyzed many of the features of
+\packettypes{} and \datascript{} using our model.  The process of
+giving semantics to these languages
+highlighted features that were ambiguous or 
+ill-defined in the documentation we had available to us.
+% given a semantics to one of the features
+% of \packettypes{}, its {\em overlays}, not found in \pads{}.
+% Our semantic investigation of overlays uncovered the fact that
+% they can be viewed as an syntactically 
+% unorthodcx (but very useful) form of intersection type.
+% Moreover, though we have not done so yet, it should be straightforward to
+% add them to the \pads{} implementation by encoding them as
+% ``\Palternate{}s,'' \pads{} own form of intersection type.
+
+To our delight, the process of giving \pads{} 
+a semantics in this framework has had additional benefits.  
+In particular, since we defined the
+semantics by reviewing the existing 
+implementation, we found (and fixed!) a couple of subtle bugs.  The semantics has also raised several
+design questions that we are continuing to study. 
+It has also helped us explore important extensions.
+In particular, driven by examples found in biological data~\cite{geneontology,newick}, we decided to add recursion to \pads{}.
+We used our semantic framework to study the ramifications of this addition.
+
+In summary, this paper makes the following theoretical and practical
+contributions:
+%
+\begin{itemize}
+\item We define a semantic framework for understanding and comparing data description languages such as \pads{},
+\packettypes{}, \datascript{}, and \blt{}.
+No one has previously given a formal semantics to any of these 
+languages.  In fact, as far as we are aware, no one has developed 
+a general and complete ``theory of front-ends'' 
+that encompasses 
+both a semantics for recognition of concrete, external syntax and 
+a semantics for internal representation of this data within a
+rich, strongly-typed programming language.
+
+\item At the center of the framework is \ddc{},
+a calculus of data descriptions based on dependent type theory.
+We give a denotational semantics
+to \ddc{} by interpreting
+types both as parsers and, more conventionally, 
+as classifiers for parsed data. 
+
+\item We define an important correctness criterion for our language,
+stating that all errors in the parsed data are reported in the parse 
+descriptor.  We prove \ddc{} parsers maintain this property.
+
+\item We define \ipads{}, an idealized
+version of the \pads{} programming language
+that captures its essential features,
+and show how to give it a semantics by translating it into \ddc{}.  
+The process of defining the semantics led to the
+discovery of several bugs in the actual implemention.
+%\ipads{} can also be used to explore extensions to the existing \pads
+%infrastructure.  
+
+\item We have given semantics to features from several other data description
+languages including \packettypes{} and \datascript{}.  As Landin asserts, 
+this process helps us understand the families of languages in this domain
+and the totality of their features, so that we may engage in principled
+language design
+as opposed to falling prey to ``accidents of history and personal background.''
+
+\item We use \ipads{} and \ddc{} to experiment with 
+a definition and implementation strategy for recursive data types,
+a feature not found in any existing ad hoc data description language that
+we are aware of.  Recursive types are essential for representing 
+tree-shaped hierarchical
+data~\cite{geneontology,newick}.  
+We have integrated recursion into \pads{},
+using our theory as a guide. 
+\end{itemize}
+
+Section~\ref{sec:ipads} gives a gentle introduction to data description
+languages by introducing \ipads.  Sections~\ref{sec:ddc}, \ref{sec:ddc-sem} and \ref{sec:meta-theory}
+explain the syntax, semantics and metatheory of \ddc{}.
+Section~\ref{sec:encodings} discusses encodings of \ipads{}, \packettypes{}
+and \datascript{} in \ddc{} and \secref{sec:applications}
+explains how we have already made use of our semantics in practice.  
+Sections~\ref{sec:related} and 
+\ref{sec:conclusion} discuss related work and conclude.
+
+
+\section{\ipads{}:  An Idealized DDL}
+\label{sec:ipads}
+In this section, we define \ipads{}, an idealized data description
+language.  \ipads{} captures the essence of \pads{} in a fashion
+similar to the way that MinML~\cite{harper:plbook} captures the
+essence of ML or Featherweight Java~\cite{igarasi+:featherweight}
+captures the essence of Java.  The main goal of this section is to
+introduce the reader to the form and function of \ipads{} by giving
+its syntax and walking through a couple of examples.  Though the
+syntax differs, the structure of \pads{}' relatives \blt{},
+\packettypes{}, and \datascript{} are similar.  Later sections will
+show how to give a formal semantics to \ipads.
+
+\paragraph*{Preliminary Concepts.}
+Like \pads{}, \packettypes{}, \datascript{}, and \blt{}, \ipads{} data
+descriptions are types.  These types specify both the external data
+format (a sequence of bits or characters) and a mapping into a
+data structure in the host programming language.  In \pads,
+the host language is C; in \ipads, the host language is an extension
+of the polymorphic lambda calculus.  For the most part, however, the
+specifics of the host language are unimportant.
+
+A complete \ipads{} description is a sequence of type definitions
+terminated by a single type.  This terminal type describes the
+entirety of a data source, making use of the previous 
+type definitions to do so.  \ipads{} type definitions can have one of
+two forms.  The form ($\alpha = \itmv$) introduces the type identifier
+$\alpha$ and binds it to \ipads{} type $\itmv$.
+The type identifier may be used in
+subsequent types.  The second form  ($\Prec{}\; \alpha = \itmv$) introduces
+a recursive type definition.  In this case, $\alpha$ may appear in 
+$\itmv$.\trversion{~\footnote{For technical reasons, 
+we require that recursive definitions be {\it contractive}:
+$\alpha$ can only appear inside another type constructor such as a
+record or union.  See Section~\ref{sec:ddc-kinding} for further details.}}
+
+Complex \ipads{} descriptions are built by using type constructors to glue together a collection of simpler types. In our examples, we
+assume \ipads{} contains a wide variety of base types including
+integers (\Puint{} is an ASCII representation of an unsigned
+integer that may be represented internally in 32 bits), 
+characters (\Pchar), strings (\Pstring), dates
+(\Pdate), IP addresses (\Pip), and others.  In general, these base
+types may parameterized.  For instance, we will assume \Pstring{} is
+parameterized by an argument that signals termination of the
+string.  For example, \Pstring({\tt " "}) describes any sequence of
+characters terminated by a space. 
+(Note that we do not consider the space to be part of the parsed string; 
+it will be part of the next object.)
+Similarly, \padskw{Puint16$\_$FW}{\tt (3)} is an unsigned 16-bit
+integer described in exactly {\tt 3} characters in the data source.
+In general, we write $\pbase{e}$ for a base type parameterized by a
+(host language) expression $e$.
+
+When interpreted as a parser, each of these base types reads
+the external data source and generates a pair of data structures
+in the host language.  The first data structure is the
+{\em internal representation}  and
+the second is the {\em parse descriptor}, which contains meta-data collected during parsing.
+For instance, \Puint{} reads a series of digits and generates an unsigned 32-bit integer as its
+internal representation.  \Pstring{} generates a 
+host language string.  
+\Pdate{} might read dates in a multitude of
+different formats, but always generates a tuple
+with time, day, month, and year fields as its internal 
+representation.  Whenever an \ipads{} parser encounters
+an unexpected character or bit-sequence, it sets the internal representation to
+$\ierr$ (\ie{} null) and notes the error in the
+parse descriptor.
+
+\paragraph*{An \ipads{} Example.}
+\ipads{} contains a rich collection of type constructors for creating
+sophisticated descriptions of ad hoc data.  We present these
+constructors through a series of examples.  The first example, shown
+in \figref{fig:ipads-clf}, describes the Common Web
+Log Format~\cite{wpp}, which web servers use to log the requests they
+receive.  \figref{fig:ipads-clf-data} shows two sample
+records.  Briefly, each line in a log file represents one request;
+a complete log may contain any number of requests.  A request begins
+with an IP address followed by two optional ids.  In the
+example, the ids are missing and dashes stand in for them.  Next is a date,
+surrounded by square brackets.  A string in
+quotation marks follows, describing the request.  Finally,
+a pair of integers denotes the response code and the
+number of bytes returned to the client.
+
+The \ipads{} description of web logs is most easily read from bottom to top.
+The terminal type, which describes an entire web log, is an array type.
+Arrays in \ipads{} take three arguments: a description
+of the array elements (in this case, {\tt entry$\_$t}),
+a description of the separator that appears between elements
+(in this case, a newline marker \Peor{}), and 
+a description of the terminator (in this case, the end-of-file marker).
+\pads{} itself provides a much wider selection of separators and
+termination conditions, but these additional variations are of little semantic 
+interest so we omit them from \ipads.  
+The host language representation for 
+an array is a sequence of elements. We do not represent separators or terminators internally.
+
+We use a \Pstruct{} to describe the contents of each line in a web log.
+Like an array, a \Pstruct{} describes a sequence of 
+objects in a data source.  We represent the result of parsing a \Pstruct{} 
+as a tuple in the host language.  The elements
+of a \Pstruct{} are either named fields (\eg{} {\tt client : \Pip{}}) or
+anonymous fields (\eg{} {\tt "~["}).  The \Pstruct{} {\tt
+entry$\_$t} declares that the first thing on the line
+is an IP address (\Pip) followed by a space
+character ({\tt " "}).  Next, the data should contain an {\tt
+authid$\_$t} followed by another space, \etc{}
+
+The last field of {\tt entry$\_$t} is quite different from the others.
+It has a \Pcompute{} type, meaning it does not match any characters in
+the data source, but it does form a part of the internal representation
+used by host programs.  The argument of a \Pcompute{}
+field is an arbitrary host language expression (and its
+type) that determines the value of the associated field.  In the example, the
+field {\tt academic} computes a boolean that indicates whether 
+the web request came from an academic site. Notice that the computation
+depends upon a host language value constructed earlier --- the value
+stored in the {\tt client} field.  \ipads{} structs are a form
+of dependent record and, in general, later fields may
+refer to the values contained in earlier ones.
+
+The {\tt entry$\_$t} description uses the type {\tt authid$\_$t} to
+describe the two fields {\tt remoteid} and {\tt localid}.  The {\tt
+authid$\_$t} type is a \Punion{} with two branches.  Unions are
+represented internally as sum types.  If the data source can be
+described by the first branch (a dash), then the internal
+representation is the first injection into the sum.  If the data
+source cannot be described by the first branch, but can be described
+by the second branch then the internal representation is the second
+injection.  Otherwise, there is an error.
+
+Finally, the {\tt response$\_$t} type is a \Pfun, a user-defined
+parameterized type.  The parameter of {\tt response$\_$t} is a host
+language integer.  The body of the \Pfun{} is a \padskw{Puint16$\_$FW}
+where \cd{x}, the fixed width, is the argument of the function.  In
+addition, the value of the fixed-width integer is constrained by the
+\Pwhere{} clause.  In this case, the \Pwhere{} clause demands that
+the fixed-width integer {\tt y} that is read from the source lie 
+between 100 and 599.
+Any value outside this range will be considered a semantic error.
+In general, a \Pwhere{} clause may be attached to 
+any type specification.  It closely resembles the 
+semantic constraints found in practical parser generators such as
+{\sc antlr}~\cite{antlr}.
+
+% Note that $\itmv \; \Pwhere{} \, x.e$ binds $x$ in $e$. 
+
+\begin{figure}
+{\small
+\begin{code}
+authid\_t = \Punion{} \{
+  unauthorized : "-";
+  id           : \Pstring (" ");
+\};
+\(\qquad\)
+response\_t =
+  \Pfun(x:int) =
+   \padskw{Puint16\_FW}(x) \Pwhere{} y.100 <= y and y < 600;
+\(\qquad\)
+entry\_t = \Pstruct{} \{
+  client   : \Pip{};             " ";
+  remoteid : authid\_t;        " ";
+  localid  : authid\_t;        " [";
+  date     : \Pdate("]");      "] \(\backslash\)"";
+  request  : \Pstring("\(\backslash\)"");   "\(\backslash\)" ";
+  response : response\_t 3;    " "; 
+  length   : \Puint{};
+  academic : \Pcompute 
+             (getdomain client) == "edu" : bool;
+\};
+\(\qquad\)
+entry\_t \Parray{}(\Peor, \Peof)
+\end{code}
+
+\caption{\ipads{} Common Web Log Format Description}
+\label{fig:ipads-clf}
+}
+\end{figure}
+
+\begin{figure}
+{\small
+\begin{code}
+{}207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] 
+"GET /tk/p.txt HTTP/1.0" 200 30
+tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] 
+"POST /scpt/confirm HTTP/1.0" 200 941
+\end{code}
+\caption{Sample Common Web Log Data. Each record is broken with a
+  newline to format it on this page.}
+\label{fig:ipads-clf-data}
+}
+\end{figure}
+
+\paragraph*{A Recursive \ipads{} Example.}
+Figure~\ref{fig:ipads-newick} presents a second \ipads{} example.
+In this example, \ipads{} describes the Newick format, a flat
+representation of tree-structured data.  The leaves of the trees
+are names that describe an ``entity''.   In our variant of Newick, 
+leaf names may be omitted.  If the leaf name does appear,
+it is followed by a colon and a number.  The number describes the ``distance''
+from the parent node.  Microbiologists often use
+distances to describe the
+number of genetic mutations that have to occur to move from the parent 
+to the child.  An internal tree node may have any number of (comma-separated)
+children within parentheses.  Distances follow the closed-paren
+of the internal tree node.
+
+The Newick format and other formats that describe tree-shaped 
+hierarchies~\cite{geneontology,newick}
+provide strong motivation for including recursion in \ipads.  
+We have not been able to find any useable description of Newick data as
+simple sequences (structs and arrays) and alternatives (unions); some
+kind of recursive description appears essential.
+The definition of the type {\tt tree\_t} introduces recursion.
+It also uses the type \Popt\ $t$, a trivial union that 
+either parses $t$ or nothing at all.
+
+
+\begin{figure}
+{\small
+\begin{code}
+node\_t = \Popt \Pstruct \{
+                name : \Pstring(":"); ":";
+                dist : \Puint;  
+              \};
+\(\qquad\)
+\Prec tree\_t = \Punion \{
+    internal : \Pstruct \{
+        "(";  branches : tree\_t \Parray(",",")");
+        "):"; dist : \Puint;
+      \};
+    leaf : node\_t;
+  \};
+\(\qquad\)
+\Pstruct \{ body : tree\_t; ";"; \}
+\(\qquad\)
+(* Example: (B:3,(A:5,C:10,E:2):12,D:0):32; *)
+\end{code}
+\caption{\ipads{} Newick Format Description}
+\label{fig:ipads-newick}
+}
+\end{figure}
+
+\paragraph*{Formal Syntax.}
+\figref{fig:ipads-syntax} summarizes the formal syntax of \ipads.
+Expressions $e$ and types $\sigma$ are taken from the host language,  
+described in \secref{sec:host-lang}. 
+\trversion{Notice, however, that we use $x$ for host
+language expression variables and $\alpha$ for \ipads{} type
+variables. }
+In the examples, we have abbreviated the syntax in places.  
+For instance, we omit the operator ``\padskw{Plit}'' and formal label 
+$x$ when specifying constant types in \Pstruct{}s, writing
+``$c;$'' instead of ``$x :
+\Plit{c};$''. In addition, all
+base types $C$ formally have a single parameter, but we have omitted
+parameters for base types such as \Puint.  
+
+\trversion{Finally, the type $\Palt{}$, which did not appear in the
+  examples, describes data that is described by all the branches
+  simultaneously and produces a set of values - one from each type.}
+
+\begin{figure}
+{\small
+\begin{bnf}
+%   \mname{Type Definitions}{2} \meta{d} \::= \alpha = \itmv
+%   \|  \Prec{} \; \alpha = \itmv \\ \\
+  \name{Types} \meta{\itmv} \::= 
+    \pbase{e} \| \Plit{\const} \nlalt
+    \Pfun{} (\var:\ity) = \itmv \| \itmv\; e \nlalt
+    \Pstruct{} \{\overrightarrow {\var{:}\itmv}\} \| 
+    \Punion{} \{\overrightarrow {\var{:}\itmv}\} \nlalt
+    \trversion{\Palt{} \{\overrightarrow {\var{:}\itmv}\}}
+    \itmv \; \Pwhere{} \, x.e \| 
+    \Popt{}\; \itmv \|
+    \iParray{\itmv}{\itmv}{\itmv}{} \nlalt 
+    \Pcompute{} \; e{:}\ity \|
+     \alpha \| \Prec{} \; \alpha . \itmv
+     \\
+%   \mname{Host Lang. Expressions}{2} \meta{e}  \::= ... \\ \\
+%   \mname{Host Lang. Types}{2} \meta{\sigma}  \::= ...
+  \name{Programs} \meta{p} \::= \itmv \| \alpha = \itmv;\,\nont{p} \|
+  \Prec{} \; \alpha = \itmv;\,\nont {p}
+\end{bnf}
+\caption{\ipads{} Syntax}
+\label{fig:ipads-syntax}
+}
+\end{figure}
+
+
+% \subsection{Example}
+% \begin{itemize}
+% \item Use two data sources, one buggy one not.
+% \item explain data.
+% \item show IPADS desc. of data source.
+% \item explain remaining features.
+% \end{itemize}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
+
+
+\section{A Data Description Calculus}
+\label{sec:ddc}
+
+At the heart of our work is a data description calculus (\ddc{}),
+designed to capture the core features of data description languages.
+Consequently, the syntax of \ddc{} is at a significantly lower level
+of abstraction than that of \ipads{}.  Like \ipads{}, however, \ddc{}
+presents a type-based model.  Each \ddc{} type describes the external
+representation of a piece of data and implicitly specifies how to
+transform that external representation into an internal one.  The
+internal representation includes both the transformed value and a
+\textit{parse descriptor} that characterizes the errors that occurred
+during parsing. Syntactically, the primitives of the calculus are
+similar to the types found in many dependent type systems, with a
+number of additions specific to the domain of data description.
+%We define each data description primitive orthogonally from the others, using composition to describe richer structures.
+We base our calculus on a dependent type theory because as we have seen,
+it is common in data description languages for expressions to appear within
+types.
+
+\cut{
+Our choice to base our calculus on a specifically
+\textit{dependent} type theory is due to the appearance in the data
+descriptions of expressions $e$ taken from an abstract expression
+language \footnote{In the next section we will specify one possible such
+expression language}.
+
+In order to understand the calculus, the types should be thought of
+not merely as classifying values, but as transforming them from an
+external representation to an internal one. Our description of the
+individual primitives will be based on just such a conception of their
+meaning.
+}
+
+\subsection{\ddc{} Syntax}
+\begin{figure}
+{\small
+\begin{bnf}
+  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+                               \pext{\| \gk \-> \gk} \\
+  \name{Types} \meta{\ty} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| 
+    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
+%%        \|
+%%       \pext{\plam{\ptyvar}{\gk}{\ty} \| \papp{\ty}{\ty} \nlalt}
+%%       \pxpd{\ty}{e}
+%%       \pext{\nlalt
+%%         \ptransform{e}{e}{\ty} \| 
+%%       }
+    \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \|
+    \pset x \ty e \| \pseq \ty \ty {\pterm e \ty} \nlalt
+    \ptyvar       \| \pmu{\ptyvar}{\ty} \| \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
+\end{bnf}
+}
+\caption{\ddc{} Syntax}
+\label{fig:ddc-syntax}
+\end{figure}
+\figref{fig:ddc-syntax} shows the syntax of \ddc{}. As with
+\ipads{}, expressions $e$ and types $\ity$ belong to the host
+language, defined in \secref{sec:host-lang}.
+The most basic types are $\ptrue$ and $\pfalse$, both of which consume
+no input and return unit as their
+representation.  The difference between them is that
+the former always succeeds, while the latter always fails, a
+distinction recorded in the associated parse descriptors.
+The syntax $\pbase e$ denotes a base type $C$ parameterized by 
+expression $e$. The syntax $\ptyvar$ denotes a type variable
+introduced in a recursive type.
+% An instance of the \ddc{} will provide a set of base types $C$.
+% Base types recognize and transform atomic values within the data
+% source; typical examples include various kinds of integers and
+% strings.  The parameter expression plays a type-dependent role,
+% \eg{}, specifying digit lengths for integers or terminating
+% conditions for strings.
+
+We provide abstraction $\plam x {} \ty$ and application
+$\papp \ty e$ so that we may parameterize types by expressions.
+Dependent product types $\psig x {\ty_1} {\ty_2}$ describe a sequence
+of values in which the second type may refer to the value of the first.
+Sum types $\psum {\ty_1} {} {\ty_2}$
+express flexibility in the data format, as they parse
+data matching either $\ty_1$ or $\ty_2$. Unlike regular expressions or
+context-free grammars, which allow nondeterministic choice,
+sum-type parsers
+are deterministic, transforming the data according to $\ty_1$
+when possible and {\it only} attempting to
+use $\ty_2$ if there is an error in $\ty_1$. Intersection types
+$\pand {\ty_1} {\ty_2}$ describe data that match both $\ty_1$ and
+$\ty_2$. They transform a single set of bits to produce
+a pair of values, one from each type. Constrained types $\pset x \ty e$
+transform data according to the underlying type $\ty$ and
+then check that the constraint $e$ holds when $x$ is bound to the parsed value.
+
+
+The type $\pseq \ty {\ty_s} {\pterm e {\ty_t}}$ represents a sequence
+of values of type $\ty$. The type $\ty_s$ specifies the type of
+the separator found between elements of the sequence. For sequences
+without separators, we use $\ptrue$ as the separator type. 
+Expression $e$ is a boolean-valued function that examines the parsed
+sequence after each element is read to determine
+if the sequence has completed. For example, a function that
+checks if the sequence has $100$ elements would
+terminate a sequence when it reaches length $100$.  The type 
+$\ty_t$ is used when characters following the array will signal termination.
+For example, if a semi-colon signals the end of the array, then $\ty_t$ 
+should be $\pset{x}{\Pchar}{x = ';'}$. If no particular character or 
+string of characters
+signals the end of the array, $\ty_t$ can always be $\pfalse$.
+
+Recursive types $\pmu \ptyvar \ty$ describe recursive data formats.
+The name $\ptyvar$ can be used in $\ty$ to refer to the recursive type
+and causes a recursive call to $\ty$'s parser wherever it appears.
+
+\ddc{} also has a number of ``active'' types.
+These types describe actions to be taken during parsing
+rather than strictly describing the data format. Type $\pcompute e
+\ity$ allows us to include an element in the parsed output that
+does not appear in the data stream (although it is likely dependent on
+elements that do), based on the value of expression $e$.  In
+contrast, type $\pabsorb \ty$ parses data according to type $\ty$
+but does not return its result. This behavior is useful for data
+that is important for parsing, but
+uninteresting to users of the parsed data, such as a separator. The last of the ``active''
+types is $\pscan \ty$, which scans the input for 
+data that can be successfully transformed according to $\ty$. This type provides a form of error recovery
+as it allows us to discard unrecognized data until the ``recovery'' type $\ty$ is found.
+
+\subsection{\Implang{} Language}
+\label{sec:host-lang}
+\begin{figure}[tp]
+\small
+\begin{bnf}
+%   \name{Variables} \meta{f,x,y} \\
+%   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
+  \name{Bits}  \meta{B}   \::= \cdot \| 0\,B \| 1\,B \\ 
+  \name{Constants} \meta{c} \::=
+      () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
+      \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
+
+  \name{Values} \meta{v} \::= 
+      \const \| % \ilam{\nrm \var}{\ity}{e} \| 
+      \ifun {\nrm f} {\nrm x} e \| \ipair v v \nlalt
+      \iinld{\ity}{v} \| \iinrd{\ity}{v} \|
+      \iarr{\vec{v}} \\
+
+  \name{Operators} \meta{op} \::= 
+      = \; \| \; < \; \| \inotop % \| \isizeofop
+      \| \ldots \\
+
+  \name{Expressions} \meta{e} \::= 
+      \const \| \var \| \iop{e} \|
+%      \ilam {\nrm \var} \ity e \| 
+      \ifun {\nrm f} {\nrm x} e \| 
+      \iapp e e \nlalt
+%      \iletfun {\nrm f} {\nrm x} e \; \iin \; e' \| 
+      \ilet {\nrm x} e \; e \|
+      \iif e \; \ithen e \; \ielse e \nlalt
+      \ipair{e}{e} \| \ipi {\nrm i}{e} \|
+      \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
+      \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
+      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e}
+      \\
+      
+  \name{Base Types} \meta{a} \::= 
+      \iunitty \| \iboolty \| \iintty  \| 
+      \invty \nlalt  \ibitsty \| \ioffty \| \iecty
+  \\
+  \name{Types} \meta{\ity} \::= 
+      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
+      \isum \ity \ity \nlalt
+      \iseq \ity \| \forall \ityvar.\ity  \|
+      \imu \ityvar \ity   
+  
+\end{bnf}
+\caption{\Implang{} Language}
+\label{fig:implang-syntax}
+\end{figure}
+
+In \figref{fig:implang-syntax}, we present the host language of \ddc{}, an
+extension of the simple-typed polymorphic lambda calculus. 
+We use this host language both to encode the parsing semantics of \ddc{} 
+and to write the expressions that can appear within \ddc{} itself.
+
+As the calculus is largely standard, we highlight only its
+unusual features. The constants include bitstrings $\data$; offsets $\off$,
+representing locations in bitstrings; and error codes $\iok$,
+$\iecerr$, and $\iecpc$, indicating success, success with errors and
+failure, respectively. We use the constant $\ierr$ to indicate a
+failed parse.  
+Because of its specific meaning, we forbid its use in user-supplied expressions
+appearing in \ddc{} types. 
+%We include a special $\isizeofop$ operator, which returns the size in the data
+%source of its input. 
+Our expressions include arbitrary length
+sequences $\iarr{\vec e}$, sequence append $\iappend e
+{e'}$, and sequence indexing $\isub e {\nrm i}$.
+
+The type $\invty$ is the singleton type of the constant $\ierr$.
+Types $\iecty$ and $\ioffty$ classify error codes and bit string
+offsets, respectively. The remaining types have standard
+meanings: function types, product types, sum types, sequence types
+$\iseqty \ty$; polymorphic types $\forall \ityvar.\ity$ and type
+variables $\ityvar$; and recursive types $\imu \ityvar \ity$.
+
+We extend the formal syntax with some syntactic sugar 
+for use in the rest of the paper: anonymous functions
+$\ilam {\nrm x} \ity e$ for $\ifun {\nrm f} {\nrm x} e$, with $f
+\not\in {\rm FV}(e)$; function bindings $\iletfun {\nrm f} {\nrm x} e
+\; \iin \; e'$ for $\ilet {\nrm f} {\ifun {\nrm f} {\nrm x} e} \; e'$;
+$\ispty$ for $\iprod \ioffty \ioffty$.  We often use
+pattern-matching syntax for pairs in place of explicit projections, as
+in $\lampair{\codefont e}$ and $\ilet {\itup{\off,r,p}} e\; e'$.  Although
+we have no formal records with named fields, we use a dot notation for
+commonly occuring projections. For example, for a pair $\mathtt x$ of
+rep and PD, we use $\codefont{x.rep}$ and $\codefont{x.pd}$ for the
+left and right projections of $\codefont{x}$, respectively. \cut{Generally,
+the particular projection intended should be apparent from context,
+and will be specified when it is not.} Also, sums and products are
+right-associative. 
+\trversion{Hence, for example, $a \iprodi b \iprodi c$ is
+shorthand for $a \iprodi (b \iprodi c)$.}
+
+We use standard judgments for the static semantics
+($\stsem[e,{\ctxt},\ity]$) and operational semantics ($e
+\stepsto e'$) of the \implang{} language. Details appear in \appref{app:host-lang}.
+
+\subsection{Example}
+\label{sec:ddc-example}
+
+As an example, we present an abbreviated description of the common log
+format as it might appear in \ddc{}. For brevity,
+this description does not fully capture the semantics of the
+\ipads{} description from \secref{sec:ipads}. Additionally, we
+use the standard abbreviation $\ty * \ty'$ for non-dependent products and introduce a number of type abbreviations
+in the form $\mathtt{name} = \ty$ before giving the type that describes the data source.
+
+{\small
+\[
+\begin{array}{l}
+\mathtt{S} = \plam {\mathtt{str}} {} {\pset {\mathtt{s}}
+  {\mathtt{Pstring\_FW(1)}} {\mathtt{s = str}}}\\
+\\
+\mathtt{authid\_t} = 
+\psum {\mathtt{S(``-")}} {} {\mathtt{Pstring(``\;")}}\\
+\\
+\mathtt{response\_t} = \plam {\mathtt x} {} {
+      \pset {\mathtt y} {\mathtt{Puint16\_FW(x)}} 
+      {\codefont{100 \leq y \iandi y < 600}}
+    }\\
+\\
+\mathtt{entry\_t} = \\ \;
+\begin{array}{lll}
+\psig {\mathtt{client}} {\mathtt{Pip}} {&\mathtt{S(``\;")}} &* \\
+\psig {\mathtt{remoteid}} {\mathtt{authid\_t}} {&\mathtt{S(``\;")}} &* \\
+\psig {\mathtt{response}} {
+  \papp
+    {\mathtt{response\_t}} 3
+}{} \\
+\multicolumn{3}{c}{
+\quad \pcompute {\codefont{getdomain\;client = ``edu"}} \iboolty}
+\end{array}\\
+\\
+\pseq {\mathtt{entry\_t}} {\mathtt{S(``\backslash n")}}{
+  \pterm {\ilam {\mathtt x} {} \ifalse} {\pfalse}
+}
+\end{array}
+\]}%
+\noindent
+In the example, we define type constructor $\mathtt{S}$ to encode literals
+with a constrained type. We also use the following
+informal translations: \Pwhere{} becomes a set-type, \Pstruct{} a
+series of dependent products, \Punion{} a series of sums, and
+\Parray{} a sequence. As the array terminates at the end of the file, we
+use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
+absence of termination condition and terminator, respectively.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
+
+\section{\ddc{} Semantics}
+\label{sec:ddc-sem}
+
+The primitives of \ddc{} are deceptively simple.  Each captures a
+simple concept, often familiar from type theory. However, in reality,
+each primitive is multi-faceted. Each simultaneously describes a
+collection of valid bit strings, two datatypes in the host language --
+one for the data representation itself and one for its parse
+descriptor -- and a transformation from bit strings, including
+invalid ones, into data and corresponding meta-data.
+%
+\cut{
+With the \ddc{} semantics, we seek to explain to data description
+language users the process by which a bit stream is converted into an
+in-memory representation. For the analyst, the data format already
+existed, with a specific meaning. We precisely specify the transform
+so the analyst knows how that meaning is mapped into the host
+language. Also, it is critical that \ddc{} include error reporting and
+error handling mechanisms because errors are an intrinsic
+characteristic of ad hoc data.
+}
+%
+We give semantics to \ddc{} types using three semantic functions, each
+of which precisely conveys a particular facet of a type's meaning.
+The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$ describe the {\it
+  representation semantics} of \ddc{}, detailing the types of the
+data's in-memory representation and parse descriptor. The function
+$\trans[\cdot,,]$ describes the {\it parsing semantics} of \ddc{},
+defining a \implang{} language function for each type that parses bit
+strings to produce a representation and parse descriptor. We define
+the set of valid bit strings for each type to be those strings for
+which the PD indicates no errors when parsed.
+
+We begin with a kinding judgment that checks if
+a type is well formed. We then formalize
+the three-fold semantics of \ddc{} types.
+
+\cut{
+\begin{table}
+  \begin{center}
+    \renewcommand{\arraystretch}{1.35}
+    \begin{tabular}{l l}
+      $\ddck[\ty,{\rctxt;\ctxt},\kind,\mcon]$ & {\it \ddc{}-type
+        kinding}\\
+      $\itsem[\ty] = \ity$ & {\it representation types of \ddc{} types}\\
+      $\itpdsem[\ty] = \ity$ & {\it pd types of \ddc{} types}\\
+      $\trans[\ty,\ctxt,\gk] = e$   & {\it \ddc{}-type semantics} \\
+      $\kTrans[\gk,\ty] = \ity$     & {\it parser type} \\
+      $\ptyc \rctxt = \ctxt$     & {\it context parser type}\\
+      $\stsem[e,{\pctxt;\ctxt},\ity]$ & {\it \implang expression typing} \\
+      $e \stepsto e'$ & {\it \implang expression evaluation}
+    \end{tabular}
+    \caption{Translations and Judgments}
+    \label{tab:judg-list}
+  \end{center}
+\end{table}
+For reference, we provide in
+\tblref{tab:judg-list} a listing of all the functions and judgments
+defined in this section and a brief description of each.  
+}
+
+\subsection{\ddc{} Kinding}
+\label{sec:ddc-kinding}
+
+% In essence, we
+% need this well-formedness judgment to ensure two things: first, that
+% type abstractions are applied to expressions of the correct type, and
+% second, that higher-order primitives do not appear as direct subcomponents
+% of basic primitives.
+
+% The essential difference between type abstractions and basic types
+% is that type constructors cannot directly describe a data source.
+% They must always be fully applied first.  Therefore, we use the
+% kinding system to differentiate between type constructors and ???
+% types.  
+
+\begin{figure*}[t]
+\small
+\fbox{$\ddck[\ty,\rctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
+\[
+\infer[\text{Unit}]{
+    \ddck[\ptrue,\rctxt;\ctxt,\kty,\con]
+  }{\wfd {} \ctxt}
+\quad 
+\infer[\text{Bottom}]{
+    \ddck[\pfalse,\rctxt;\ctxt,\kty,\con]
+  }{\wfd {} \ctxt}
+\quad 
+\infer[\text{Const}]{
+    \ddck[\pbase{e},\rctxt;\ctxt,\kty,\con]
+  }{
+    \begin{semcond}
+      \stsem[e,\ctxt,\ity] &
+      (\vlet {\ity \iarrowi \kty} {\Ikind(C)})
+    \end{semcond}
+  }
+\]
+
+\[
+\infer[\text{Abs}]{
+    \ddck[\plam{\var}{\ity}{\ty},
+         \rctxt;\ctxt,\ity \iarrowi \kind,\mcon]
+  }{
+    \ddck[\ty,\rctxt;\ectxt{\var{:}\ity},\kind,\mcon]
+  }
+\quad
+\infer[\text{App}]{
+  \ddck[\papp{\ty}{e},\rctxt;\ctxt,\gk,\mcon]
+}{
+  \ddck[\ty,\rctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
+  \stsem[e,\ctxt,\ity]
+}
+\quad
+\infer[\text{Prod}]{
+    \ddck[\psig{x}{\ty}{\ty'},\rctxt;\ctxt,\kty,\con]
+  }{       
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] &
+    \ddck[\ty',\rctxt;
+          \ectxt {x{:}\iprod {\itsem[\asub \rctxt \ty]} 
+              {\itpdsem[\asub \rctxt \ty]}},
+          \kty,\mcon']
+  }
+\]
+
+\[
+\infer[\text{Sum}]{
+    \ddck[\psum{\ty}{e}{\ty'},\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\rctxt;\ctxt,\kty,\mcon'] 
+  }
+\quad
+  \infer[\text{Intersection}]{
+    \ddck[\pand \ty {\ty'},\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\rctxt;\ctxt,\kty,\mcon'] 
+  }
+\quad
+  \infer[\text{Con}]{
+    \ddck[\pset x \ty e,\rctxt;\ctxt,\kty,\con]
+  }{ 
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] & 
+    \stsem[e,
+    \ectxt{x{:}\iprod{\itsem[\asub \rctxt \ty]} 
+      {\itpdsem[\asub \rctxt \ty]}},\iboolty]
+  }
+\]
+
+\[\infer[\text{Seq}]{
+    \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\rctxt;\ctxt,\kty,\con]
+  }{
+    \begin{array}{c}
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon] \qquad
+    \ddck[{\ty_s},\rctxt;\ctxt,\kty,\mcon_s] \qquad
+    \ddck[{\ty_t},\rctxt;\ctxt,\kty,\mcon_t] \\
+    \stsem[e,\ctxt,
+    \iprod {\itsem[{\ty_m}]}      
+    {\itpdsem[{\ty_m}]}
+    \iarrowi \iboolty]
+    \quad (\ty_m = \asub \rctxt {\pseq \ty {\ty_s} {\pterm e {\ty_t}}})
+    \end{array}
+  }
+\quad
+  \infer[\text{Var}]{
+    \ddck[\ptyvar,{\rctxt;\ctxt},\kty,\ncon]
+  }{\wfd {} \ctxt \quad \ptyvar \in \dom \rctxt}
+\quad
+  \infer[\text{Rec}]{
+    \ddck[\pmu \ptyvar \ty,\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,{\rctxt,\ptyvar {=} \pmu \ptyvar \ty;\ctxt},\kty,\con]
+  }
+\]
+
+\[
+  \infer[\text{Compute}]{       
+    \ddck[\pcompute{e}{\ity},\rctxt;\ctxt,\kty,\con]
+  }{
+    \stsem[e,\ctxt,\ity]
+  }      
+\quad
+\infer[\text{Absorb}]{
+    \ddck[\pabsorb{\ty},\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon]
+  }
+\quad
+  \infer[\text{Scan}]{
+    \ddck[\pscan{\ty},\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\rctxt;\ctxt,\kty,\mcon]
+  }
+\]
+\caption{\ddc{} Kinding Rules}
+\label{fig:ddc-kinding}
+\end{figure*}
+
+The kinding judgment defined in \figref{fig:ddc-kinding} determines
+well-formed \ddc{} types, assigning kind $\kty$ to basic types and
+kind $\ity \iarrowi \kind$ to type abstractions.  We use two contexts to express our kinding judgment:
+\[
+\begin{array}{ll}
+\ctxt  & \mathrel{::=} \cdot \bnfalt \ctxt,{\var{:}\ity}\\
+\rctxt & \mathrel{::=} \cdot \bnfalt \rctxt,\ptyvar{=}\pmu \ptyvar \ty
+\end{array}
+\]
+Context $\Gamma$ is a finite partial map that binds expression
+variables to their types.
+Context $\rctxt$ is an ordered list of mappings between type variables and recursive types.
+This context serves two purposes: first, to ensure the well-formedness
+of types with free type variables; and second, to provide mappings
+between recursive type variables and their associated types. 
+This second purpose leads us to consider a context $\rctxt$ to be a
+substitution from type variables to types. Application of such a
+substitution has the form $\asub \rctxt \ty$.
+
+To ensure that recursive types have properly-shaped parse descriptors
+with a valid PD header (a condition necessary for the type safety of
+generated parsers), we disallow types such as $\pmu \ptyvar
+\ptyvar$. More generally, we ensure that
+recursive type variables are separated from their binder by at least
+one basic primitive, such as a product or sum, a condition called {\it contractiveness}. To this end, we annotate every judgment with a contractiveness
+indicator, one of $\con$, $\ncon$, or $\mcon$. A
+$\con$ indicates the type is contractive, an $\ncon$
+indicates it is not, and a $\mcon$ indicates it may be either. 
+We consider $\ncon < \con$. 
+
+As the rules are otherwise mostly straightforward, we highlight
+just two of them. We use the function $\Ikind$ to assign kinds to base types.
+While their kind does not differentiate them from type
+abstractions, base types are not well formed when not applied.  
+Once applied, all base types have kind $\kty$. The product rule
+shows that the name of the first component is bound to a pair of a representation and corresponding PD.
+The semantic functions defined in the next section determine the type of this pair.
+Note that we apply $\rctxt$ to the type of the first component before
+translation, thereby closing it,
+ as open \ddc{}
+types do not translate into well-formed \implang{} types.
+
+\subsection{Representation Semantics}
+\label{sec:intty-sem}
+
+\begin{figure}
+\fbox{$\itsem[\ty] = \ity$}
+\[
+\begin{array}{lcl} 
+\itsem[\ptrue] & = & \iunitty \\
+\itsem[\pfalse] & = & \invty \\
+\itsem[\pbase{e}] & = & \isum {\Irty(C)} \invty   \\
+\itsem[\plam{\var}{\ity}{\ty}] & = & \itsem[\ty] \\
+\itsem[\papp \ty e] & = & \itsem[\ty] \\
+\itsem[\psig \var {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]} {\itsem[\ty_2]}    \\
+\itsem[\psum {\ty_1} e {\ty_2}]     & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]} \\
+\itsem[\pand {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]}{\itsem[\ty_2]}\\
+\itsem[\pset x \ty e] & = & \isum {\itsem[\ty]}{\itsem[\ty]}\\
+% field names: length, elts
+\itsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
+    \iprod \iintty {(\iseq{\itsem[\ty]})}             \\
+%% \itsem[\pcase e c {\ty_1} {\ty_2}]       & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]}\\
+\itsem[\ptyvar] & = & \ptyvar \\
+\itsem[\pmu \ptyvar \ty] & = & \imu{\ptyvar}{\itsem[\ty]} \\
+\itsem[\pcompute e \ity]                 & = & \ity \\
+\itsem[\pabsorb \ty]                     & = & \isum \iunitty \invty \\
+\itsem[\pscan \ty] & = & \isum {\itsem[\ty]} \invty 
+%% \pext{
+%% \itsem[\ptransform e e \ty]              & = & \itsem[\ty]\\
+%% }
+\end{array}
+\]
+\caption{Representation Types}
+\label{fig:rep-tys}
+\end{figure}
+
+In Figure~\ref{fig:rep-tys}, we present the representation type
+of each \ddc{} primitive. While the primitives are
+dependent types, the mapping to the \implang{} language erases the dependency because the \implang{} language does not have dependent types. For \ddc{} types in which expressions appear,
+the translation drops the expressions to remove the dependency.
+With these expressions gone, variables become useless, so we drop 
+variable bindings as well, as in product and constrained types.
+Similarly, as type abstraction and application are only relevant for
+dependency, we translate them according to their underlying types.
+
+In more detail,
+the \ddc{} type $\ptrue$ consumes no input and produces only
+the $\iunitty$ value.  Correspondingly, $\pfalse$ consumes no input,
+but uniformly fails, producing the value $\invty$. The
+function $\Irty$ maps each base type to a representation for
+successfully parsed data. Note that this representation does not depend
+on the argument expression. As base type parsers can fail, we sum this type
+with $\invty$ to produce the actual representation type.
+Intersection types produce a pair of values, one for each sub-type,
+because the representations of the subtypes need not be identical nor
+even compatible. 
+Constrained types produce sums, where a left branch indicates the data
+satisfies the constraint and the right indicates it does not. In
+the latter case, the parser returns the offending data rather than
+$\ierr$ because the error is semantic rather than syntactic.
+Sequences produce a \implang{} language sequence paired with its
+length.  Recursive types generate recursive representations. Note that the \implang{} type uses the same variable name
+as the \ddc{} type, and so the type corresponding to the type variable
+$\ptyvar$ is exactly $\ityvar$.
+The output of a $\pcomputen$ is exactly the computed value, and
+therefore shares its type.  The output of $\pabsorbn$ is a sum
+indicating whether parsing the underlying type succeeded or failed.
+The type of $\pscann$ is similar, but also returns an element of the
+underlying type in case of success.
+
+\begin{figure}
+\fbox{$\itpdsem[\ty] = \ity$}
+\[ 
+\begin{array}{lcl} 
+%% %% example: \ua.(int * a) + None
+%% %%          pd = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * [a]_pd)) + [None]_pd)
+%% %%             = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * a)) + [None]_pd)
+\itpdsem[\ptrue] & = & \ipty \iunitty \\                                                  
+\itpdsem[\pfalse] & = & \ipty \iunitty \\                                                  
+\itpdsem[\pbase{e}] & = & \ipty \iunitty\\
+\itpdsem[\plam \var \ity \ty] & = & \itpdsem[\ty] \\
+\itpdsem[\papp \ty e] & = & \itpdsem[\ty] \\
+\itpdsem[\psig \var {\ty_1} {\ty_2}] & = & 
+               \ipty {\iprod {\itpdsem[\ty_1]} {\itpdsem[\ty_2]}} \\
+\itpdsem[\psum {\ty_1} e {\ty_2}] & = & 
+               \ipty {(\isum {\itpdsem[\ty_1]} {\itpdsem[\ty_2]})} \\
+\itpdsem[\pand {\ty_1} {\ty_2}] & = & \ipty {\iprod {\itpdsem[\ty_1]} {\itpdsem[\ty_2]}}    \\
+\itpdsem[\pset x \ty e] & = & \ipty {\itpdsem[\ty]} \\
+\itpdsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
+  \iapty {\itpdsem[\ty]} \\
+\itpdsem[\ptyvar] & = & \ptyvar \\
+\itpdsem[\pmu \ptyvar \ty] & = & \imu \ptyvar {\itpdsem[\ty]} \\
+\itpdsem[\pcompute e \ity]            & = & \ipty \iunitty \\
+\itpdsem[\pabsorb \ty]                & = & \ipty \iunitty \\
+\itpdsem[\pscan{\ty}] & = & \ipty {(\isum {(\iprod \iintty
+    {\itpdsem[\ty]})} \iunitty)}
+\end{array}
+\]
+\caption{Parse Descriptor Types}
+\label{fig:pd-tys}
+\end{figure}
+
+In \figref{fig:pd-tys}, we give the parse descriptor
+type for each \ddc{} type. Each PD type has a header and body.
+This common shape allows us to define functions that polymorphically
+process PDs based on their headers. Each header stores the number of
+errors encountered during parsing, an error code indicating the degree
+of success of the parse -- success, success with errors, or failure --
+and the span of data described by the descriptor.  Formally, the type
+of the header  ($\tyface{pd\_hdr}$) is $\iintty \iprodi \iecty \iprodi
+\ispty$.  Each body consists of subdescriptors corresponding to the
+subcomponents of the representation and any type-specific meta-data. For types with neither subcomponents nor special meta-data, we
+use $\iunitty$ as the body type.
+
+We discuss a few of the more complicated parse descriptors in detail.
+The parse descriptor body for sequences contains the parse descriptors of its elements,
+the number of element errors, and the sequence length. Note that the
+number of element errors is distinct from the number of sequence
+errors, as sequences can have errors that are not related to their
+elements (such as errors reading separators).  We introduce an
+abbreviation for array PD body types, $\iaptyname \; \ity =
+\iintty \iprodi \iintty \iprodi (\iseq \ity)$.
+\trversion{The $\pcomputen$ parse descriptors have no subelements because the
+data they describe is not parsed from the data source.}
+The $\pabsorbn$ PD
+type is $\iunitty$ as with its representation. We assume that just as
+the user does not want the represenation to be kept, so too the parse
+descriptor.  The $\pscann{}$ parse descriptor is either $\iunitty$, in case
+no match was found, or records the number of bits skipped before the
+type was matched along with the type's corresponding parse descriptor.
+
+
+\begin{figure}
+\small
+\fbox{$\kTrans[\gk,\ty] = \ity$} 
+    
+\begin{align*}
+  &\kTrans[\kty,\ty] = \extdom * \offdom \iarrowi \offdom * \itsem[\ty] * \itpdsem[\ty]
+   \\
+   &\kTrans[\ity \iarrowi \gk,\ty] = \ity \iarrowi \kTrans[\gk,\ty]
+\end{align*}  
+  \caption{\Implang{} Language Types for Parsing Functions}
+  \label{fig:parser-types}
+\end{figure}
+
+\subsection{Parsing Semantics of the \ddc{}}
+\label{sec:parse-sem}
+
+\begin{figure*}
+\small
+\fbox{$\trans[\ty,\ctxt,\gk] = e$} 
+
+\[
+\begin{array}{l}
+  %% None 
+\trans[\ptrue,\ctxt,\kty] =
+  \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}
+\\[3pt] %\\
+%% False 
+\trans[\pfalse,,] =
+  \lampair{\spair<\off,\newrep {bottom}{},\newpd {bottom}{\off}>}
+\\[3pt] %\\ 
+%% Const 
+\trans[\pbase{e},\ctxt,\kty] =
+  \lampair{\iapp {\iapp {\Iimp(C)} (e)} {\itup {\idata,\off}}}
+\\[3pt] %\\
+%% Abs 
+\trans[\plam{\var}{\ity}{\ty},,] =
+   \sfn{\nrm\var}{\ity}{\trans[\ty,\ectxt{\var{:}\ity},\kind]}
+\\[3pt] %\\
+%% App 
+\trans[\papp{\ty}{e},\ctxt,\gk] =
+  \trans[\ty,,] \sapp e  
+\\[3pt]
+%% Prod 
+%\begin{array}{l}
+\trans[\psig{x}{\ty}{\ty'},\ctxt,\kty] = \\
+  \begin{array}{l}  
+    \lampair{} \\
+    \quad  \ilet {\spair<\off',r,p>} 
+    {{\trans[\ty,,]} \sapp \spair<\idata,\off>} \\
+    \quad  \ilet x {\ictup{r,p}}\\
+    \quad  \ilet {\spair<\off'',r',p'>} 
+    {{\trans[\ty',,]} \sapp \spair<\idata,\off'>} \\
+    \quad \spair<\off'',\newrep {\gS}{r,r'},\newpd {\gS}{p,p'}>
+  \end{array}  
+%\end{array}
+\\
+%% Sum 
+%\begin{array}{l}
+  \trans[\psum{\ty}{e}{\ty'},,] = \\
+  \begin{array}{l}  
+  \lampair{} \\
+  \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+  \quad \iif {\pdok p} \; \ithen {
+    \def \r {\newrep {+left}{r}}
+    \def \p {\newpd {+left}{p}}
+    \spair<\off',\r,\p>} \\
+  \quad \ielse {\ilet {\itup{\off',r,p}}{\trans[\ty',,] \sapp \spair<\idata,\off>}} \\
+  \quad 
+  {  % begin scope
+    \def \r {\newrep {+right}{r}}
+    \def \p {\newpd {+right}{p}}
+    %% 
+    \spair<\off',\r,\p>
+  }\\ % end scope
+  \end{array}
+\\
+%% Intersection 
+  \trans[\pand{\ty}{\ty'},,] = \\
+  \begin{array}{l}  
+     \lampair{} \\
+     \quad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+     \quad \ilet {\itup{\off'',r',p'}} {\trans[\ty',,] \sapp \spair<\idata,\off>} \\
+     \quad {\spair<\codefont{max}(\off',\off''),\newrep {\&}{r,r'},\newpd {\&}{p,p'}>}
+   \end{array}
+\end{array}
+%\quad
+\begin{array}{l}
+%% Set 
+  \trans[\pset{x}{\ty}{e},\ctxt,\kty] = \\
+  \begin{array}{l}  
+    \lampair{} \\
+    \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+    \quad \ilet x {\ictup{r,p}}\\
+    \quad \ilet c e \\
+    \quad \spair<\off',\newrep {con} {c,r},\newpd {con} {c,p}>
+  \end{array}
+\\
+%% Array 
+\trans[\pseq{\ty}{\ty_s}{\pterm e {\ty_t}},,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+      \quad \iletfun {isDone}{\itup{\off,r,p}}{\\
+        \qquad \ior {\eofpred {\idata,\off}} {e\codefont {\sapp
+          \spair<r,p>}} \iori \\
+        \qquad \ilet {\itup{\off',r',p'}}{\trans[\ty_t,,] \spair<\idata,\off>}\\
+        \qquad \pdok{p'}
+      }\\
+      \quad \iin \\
+      \quad \iletfun {continue} {\itup{\off,\off',r,p}} {\\
+        \qquad \iif  {\off = \off' \iori \isdone {\off',r,p}} \; \ithen {\itup{\off',\codefont{r,p}}} \\
+        \qquad \ielse {
+          \ilet {\itup{\off_s,r_s,p_s}}{\trans[\ty_s,,] \sapp \spair<\idata,\off'>}}\\
+        \qquad \ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp \ictup{\idata,\off_s}}\\
+        \qquad \mathtt{continue} \sapp \ictup{
+            \off,\off_e,\newrep {seq} {r,r_e}, \newpd {seq} {p, p_s, p_e}
+        }}\\
+      \quad \iin
+   \end{array}\\
+  \begin{array}{l}  
+      \quad \ilet {\mathtt{r}} {\newrep {seq\_init}{}}\\
+      \quad \ilet {\mathtt{p}} {\newpd {seq\_init}{\off}}\\
+      \quad \iif {\isdone{\off,r,p}} \; \ithen {\itup{\off,\codefont{r,p}}}\\
+      \quad \ielse {\ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp
+          \spair<\idata,\off>}} \\
+      \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
+        \newrep {seq} {r,r_e}, \newpd {seq} {p, \newpd {unit} \off, p_e}}      
+  \end{array}  
+\end{array}
+%\quad
+\begin{array}{l}
+%% Var
+\trans[\ptyvar,,] = \codefont{f_\ptyvar}
+\\[3pt]
+%% Mu
+\trans[\pmu \ptyvar \ty,,] = \\
+  \begin{array}{l}
+  \ifun {f_\ptyvar} {\itup{\data,\off}} {}\\
+  \quad \ilet {\itup{\off',r,p}} 
+  {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
+  \qquad \ictup{\off',r,p}
+  \end{array}  
+\\[3pt]
+%% Compute
+\trans[\pcompute e \ity,,] = \\
+  \quad \lampair{\itup{\off,\newrep {compute} {\nrm e},\newpd {compute} \off}}
+\\[3pt]
+%% Absorb
+\trans[\pabsorb \ty,,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \ilet {\itup {\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>}\\
+    \quad \itup{\off',\newrep {absorb} p,\newpd {absorb} p}   
+  \end{array}  
+\\
+%% Scan
+\trans[\pscan \ty,,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \iletfun {try} {i} {\\
+      \qquad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp
+        \codefont{\spair<\data,\off + i>}} \\
+      \qquad \iif {\pdok p}\; \ithen \\
+      \qquad {\ictup{\off',\newrep {scan} r,
+        \newpd {scan} {i,p}}}\; \ielse {}\\
+      \qquad \iif {\codefont{i = scanMax}}\; \ithen \\
+      \qquad {\ictup{\off,\newrep {scan\_err} {},
+        \newpd {scan\_err} {\off}}}\; \ielse {}\\
+      \qquad \codefont {try \sapp (i+1)}
+   }\\
+   \quad \iin \sapp \codefont{try \sapp 0} \\
+  \end{array}  
+\end{array}
+\]
+%\caption{\ddc{} Semantics (cont.)}
+\caption{\ddc{} Semantics}
+\label{fig:ddc-sem}
+\end{figure*}
+
+\begin{figure}
+\small
+\begin{itemize}
+\renewcommand{\labelitemi}{}
+
+%\item %[Unit:]
+\item $\ifun {R_{unit}} \iuval \iuval$
+\item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+
+%\item %[Bottom:]
+\item $\ifun {R_{bottom}} \iuval \ierr$
+\item $\ifun {P_{bottom}} \off ((1,\iecpc,\ipair \off \off),())$
+
+\item %[Pair:]
+\item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
+\item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
+  $\begin{array}{l}
+    \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+    \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
+    \quad \ictup {nerr,ec,sp}
+  \end{array}$
+
+\item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
+
+\end{itemize}
+\caption{Selected Constructor Functions. 
+The type of PD headers is $\iintty
+  \iprodi \iecty \iprodi \ispty$. 
+  We refer to the projections using
+  dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
+  $\codefont{sp}$, respectively. A span is a pair of offsets, referred
+  to as $\codefont{begin}$ and $\codefont{end}$, respectively.  The full collection of such constructor functions appears in \appref{app:asst-functions}.}
+\label{fig:cons-funs}
+%\caption{Constructor Functions (cont.)}
+\end{figure}
+
+
+The parsing semantics of a type $\tau$ is a function that transforms some amount of input into a pair of a representation and a parse descriptor, the types of which are determined by $\tau$.
+\figref{fig:parser-types} specifies the \implang{} language types of the parsers generated from well-kinded \ddc{} types.  Note that parameterized \ddc{} types require their arguments before they can parse any input.
+
+\figref{fig:ddc-sem} shows the parsing semantics function.  For each
+type, the input to the corresponding parser is a bit string and an
+offset which indicates the point in the bit string at which parsing
+should commence.  The output is a new offset, a representation of the
+parsed data, and a parse descriptor. As the bit string input is
+never modified, it is not returned as an output.  In addition
+to specifying how to handle correct data, each function describes how
+to transform corrupted bit strings, marking detected errors in
+a parse descriptor. The semantics function is partial, applying only
+to well-formed \ddc{} types.
+
+For any type, there are three steps to parsing: parse the
+subcomponents of the type (if any), assemble the resultant representation, and
+tabulate meta-data based on subcomponent meta-data
+(if any). For the sake of clarity, we have factored the latter two
+steps into separate representation and PD constructor functions which we define for
+each type. For some types, we additionally factor the PD header
+construction into a separate function. For example, the representation 
+and PD constructors for $\ptrue$ are $\newrepf {unit}$ and $\newpdf
+{unit}$, respectively, and the header constructor for products is
+${\codefont{H_{\gS}}}$. Selected constructors are shown in
+\figref{fig:cons-funs}. We have also factored out some commonly
+occuring code into ``built-in'' functions, explained as needed and
+defined formally in \appref{app:asst-functions}.
+
+The PD constructors determine the error code and
+calculate the error count.  There are three possible error codes:
+$\iok$, $\iecerr$, and $\iecpc$, corresponding to the three possible results of a parse: 
+it can succeed, parsing the data without errors; it can succeed,
+but discover errors in the process; or, it can find an
+unrecoverable error and fail.
+\trversion{
+Note that the the purpose of the $\iecpc$ code is to indicate to any
+higher level elements that some form of error recovery is required.
+Hence, the whole parse is marked as failed exactly when the parse ends
+in failure.}
+The error count is determined by subcomponent error counts and any errors associated directly with the type
+itself.  
+\trversion{
+If a subcomponent has errors then the error count is
+increased by one; otherwise its not increased at all. We use the
+function $\codefont {pos}$, which maps all positive numbers to 1
+(leaving zero as is), to assist in calculating the contribution of
+subcomponents to the total error count.  Errors at the level of the
+element itself - such as constraint violation in constrained types - are
+generally counted individually.}
+
+With this background, we can now discuss selected portions of the semantics.
+%With this background, we can now understand the semantics. 
+The semantics of $\ptrue$ and $\pfalse$ show that they do not consume any input, \ie{}, they do not change the offset. 
+A look at their constructors shows that the parse
+descriptor for $\ptrue$ always indicates no errors and a corresponding
+$\iok$ code, while that of $\pfalse$ always indicates failure with an
+error count of one and the $\iecpc$ error code. The semantics of base
+types applies the implementation of the base type's parser, provided
+by the function $\Iimp$, to the appropriate arguments.  Abstraction
+and application are defined directly in terms of \implang language
+abstraction and application.  Dependent pairs read the first element
+at $\off$ and then the second at $\off'$, the offset returned from
+parsing the first element.  Notice that we bind the pair of the
+returned representation and parse descriptor to the variable $\codefont{x}$
+before parsing the second element, implicitly mapping the 
+\ddc{} variable $x$ to the \implang{} language variable $\codefont{x}$ in the process.
+Finally, we combine the results
+using the constructor functions, returning $\off''$ as the final
+offset of the parse.
+
+\trversion{
+Sums first attempt to parse according to the left type, returning the resulting
+value if it parses without errors. Otherwise, it parses according to
+the right type. Intersections read both types starting at the same
+point. They advance the stream to the maximum of the two offsets
+returned by the component parsers. The construction of the parse
+descriptor is similar to that of products. For constrained types, we call the
+parser for the underlying type $\ty$, bind $\var$ to the resulting rep
+and PD, and check whether constraint is satisfied. The result
+indicates whether the data has a semantic error and is used in
+constructing the representation and PD. For example, the PD constructor will add
+one to the error count if the constraint is not satisfied. Notice that
+we advance the stream independent of whether the constraint was
+satisfied.
+}
+Sequences have the most complicated semantics because the number of subcomponents depends upon a combination of the data, the termination predicate, and the terminator type. Consequently, the sequence parser uses mutually
+recursive functions $\codefont{isDone}$ and $\codefont{continue}$ to implement this open-ended semantics. 
+Function $\codefont{isDone}$ determines if the parser
+should terminate by checking whether the end of the source has been
+reached, the termination condition $e$ has been satisfied, or the
+terminator type can be read from the stream without errors at
+$\off$.
+Function $\codefont{continue}$ takes four
+arguments: two offsets, a sequence representation, and a sequence PD.  The two
+offsets are the starting and ending offset of the previous round of
+parsing. They are compared to determine whether the parser is
+progressing in the source, a check that is critical to ensuring that
+the parser terminates. Next, the parser checks whether the sequence is
+finished, and if so, terminates. Otherwise, it attempts to read a
+separator followed by an element and then continues parsing the
+sequence with a call to $\codefont{continue}$.
+
+\trversion{
+Finally, the body of the parser creates an initial sequence representation and PD and
+then checks whether the sequence described is empty. If not, it reads
+an element and creates a new rep and PD for the sequence.  Note that
+it passes the PD for $\ptrue$ in place of a separator PD, as no
+separator is read before the first element.  Finally, it continues
+reading the sequence with a call to $\codefont{continue}$.
+
+Because of  the iterative nature of sequence parsing, the representation and PD are constructed incrementally. The parser first creates an empty representation and PD
+and then adds elements to them with each call to
+$\codefont{continue}$. The error count for an array is the sum of the
+number of separators with errors plus one if there were any element
+errors. Therefore, in function ${\codefont{H_{seq}}}$ we first check
+if the element is the first with an error, setting $\codefont{eerr}$
+to one if so. Then, the new error count is a sum of the old,
+potentially one for a separator error, and $\codefont{eerr}$. In
+$\newpdf{seq}$ we calculate the element error count by unconditionally
+adding one if the element had an error.
+}
+We translate recursive types into
+recursive functions with a special
+function name corresponding to the name of the 
+bound type   variable.
+Recursive type variables translate to these special names.
+\trversion{We note that the body of the recursive function is somewhat
+  redundant. However, the simpler encoding of $\ifun {f_\ptyvar}
+  {\itup{\data,\off}} {\trans[\ty,,] \; \itup{\data,\off}}$ would have
+  complicated the meta-theory.}
+
+The $\pscann$ type attempts to parse the underlying type from the
+stream at an increasing scan-offset, $i$, from the original offset
+$\off$, until success is achieved or a predefined maximum scan-offset
+(\cd{scanMax}) is reached.  In the semantics we give here, offsets are
+incremented one bit at a time --- a practical implementation would choose
+some larger increment ({\it e.g.,} 32 bits at a time).
+
+\trversion{
+The definition of $\pcomputen$ just calls the compute constructors.
+The representation constructor returns the value computed by $e$, while the PD
+records no errors and reports a span of length 0, as no data is
+consumed by the computation. The $\pabsorbn$ parser first parses the
+underlying type and then calls the absorb constructors, passing only
+the PD, which is needed by the rep constructor to determine whether an
+error occured while parsing the underlying type. If so, the value
+returned is a $\ierr$. Otherwise, it is $\iunitty$.  The absorb parse
+descriptor duplicates the error information of its underlying type.
+
+
+The $\pscann$ type attempts to parse the underlying type from the
+stream at an increasing scan-offset, $i$, from the original offset
+$\off$, until success is achieved or a predefined maximum scan-offset
+(\cd{scanMax}) is reached. Note that, upon success, $i$ is passed to
+the PD constructor function, which both records it in the PD and sets
+the error code based on it. It is considered a semantic error for the
+value to be found at a positive $i$, whereas it is a syntactic error
+for it not to be found at all.  }
+%\clearpage
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
+
+\section{Meta-theory}
+\label{sec:meta-theory}
+
+\cut{This paragraph belongs somewhere in the TR:
+A few things to note regarding variable names. First, all variable
+names introduced in translation are by definition not equal to the
+target of the substitution, nor present in the free variables of the
+term being substituted. Second, for those types with bound variables,
+we note that the potential alpha-conversion when performing a
+substitution on the type exactly parallels any alpha-conversion of the
+same variable where it appears in the translation of the type. Last,
+all constructors, support functions and base-type parsers are closed
+with respect to user-defined variable names.}
+
+One of the most difficult, and perhaps most interesting, challenges of our
+work on \ddc{} was determining what
+properties we wanted to hold. What are the ``correct''
+invariants of data description languages? While there are many
+well-known desirable invariants for programming languages, the
+meta-theory of data description languages has been
+uncharted.
+%
+We present the following two properties as critical invariants of
+our theory. We feel that they should hold, in some form, for any data
+description language.
+\begin{itemize}
+\trversion{
+\item {\bf Translation Completeness}: The semantic function
+  $\trans[\cdot,,]$ is a total function of well-formed \ddc{} types.
+}
+\item {\bf Parser Type Correctness}: For a \ddc{} type $\ty$, the
+  representation and PD output by the parsing function of $\ty$ will
+  have the types specified by $\itsem[\ty]$ and
+  $\itpdsem[\ty]$, respectively.
+  
+\item {\bf Parser Error Correlation}: For any representation and PD output by a
+  parsing function, the errors reported in the PD
+  will be correlated with the errors present in the representation.
+\end{itemize}
+%
+\trversion{
+Before presenting the formal statement of these properties, we specify
+some assumptions that we make about \ddc{} base types, their kinds,
+types, and implementations, that are necessary for the satisfaction of
+these properties. In essence, we assume that the properties we desire of
+the rest of the calculus hold for the base types.
+}
+% In formalizing these properties, we assume that \ddc{} base types, their kinds, representation and parse descriptor types, and parsers satisfy the properties we desire to hold of the rest of the calculus.  
+% \appref{app:meta-theory} contains a formal statement of these assumptions.
+
+\trversion{
+\begin{theorem}[Translation Completeness]
+\label{thm:translation-completeness}
+  If \ $\ddck[\ty,,\kind,\mcon]$ then $\trans[\ty,,] = e$.
+\end{theorem}
+
+\begin{proof}
+  By induction on kinding derivations. For constant case, use the
+  first item of Condition~\ref{cond:base-types}.
+\end{proof}
+}
+\trversion{
+We continue by stating and proving that parsers are type correct.
+However, to do so, we must first establish some typing properties of the Rep
+and PD constructors, as at least one of them appears in most
+parsing functions. 
+
+% Many of the constructor functions are polymorphic. However, those
+% that take one or more parse descriptors often need to examine the
+% headers of those PDs. Therefore, they are restricted to operate on
+% value with a header. Such values most have a type that satisfies the
+% ``has header''predicate defined below.
+
+% \begin{definition}[Has PD Header Predicate]
+%   \label{def:ispd}
+%   $\ispdty  \ity$ iff $\ity = \ipty {\ity'}$ or $\ity = \imu \ityvar
+%   {\ity'}$ and $\ispdty {\ity'}$.
+% \end{definition}
+
+% With this definitione we now state and prove that each constructor
+% produces a value whose type corresponds to its namesake \ddc{} type.
+
+% \begin{lemma}[Types of Constructors]
+% \label{lem:types-of-constructors}
+% \begin{itemize}
+% \item $\newrepf {true} : \iarrow \iunitty \iunitty$
+% \item $\newpdf  {true} : \iarrow \ioffty {\ipty \iunitty}$
+% \item $\newrepf {false} : \iarrow \iunitty \invty$
+% \item $\newpdf  {false} : \iarrow \ioffty {\ipty \iunitty}$
+% \item $\newrepf {\gS} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
+% \item $\forall \pdtyvars \ga \gb.\newpdf {\gS} : 
+%   \iarrow {\iprod \ga \gb}
+%   {\ipty {(\ga \iprodi \gb)}}
+% $
+% \item $\newrepf {+left} : \forall \ga,\gb.\iarrow \ga 
+%                             {\isum \ga \gb}$
+% \item $\newrepf {+right} : \forall \ga,\gb.\iarrow \gb {\isum \ga \gb}$
+% \item $\forall \pdtyvars \ga \gb.\newpdf {+left} : \iarrow \ga 
+%                             {\ipty {(\isum \ga\gb)}}$
+% \item $\forall \pdtyvars \ga \gb.\newpdf {+right} : \iarrow \gb 
+%                             {\ipty {(\isum \ga \gb)}}$
+% \item $\newrepf {\&} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
+% \item $\forall \pdtyvars \ga \gb.\newpdf {\&} : 
+%    \ga \iprodi
+%    \gb \iarrowi 
+%          {\ipty {( \ga \iprodi  \gb)}}
+% $.
+% \item $\newrepf {set} : \forall \ga.\iprod \iboolty \ga 
+%   \iarrowi {\isum \ga {\ierrty \ga}}$
+% \item $\forall \pdtyvar \ga.\newpdf {set} : \iprod \iboolty \iarrow \ga {\ipty \ga}$
+% \item $\newrepf {seq\_init} : \forall \ga.\iarrow \iunitty {\iintty \iprodi \iseq \ga}$
+% \item $\forall \pdtyvar \ga.\newpdf {seq\_init} : \iarrow \ioffty {\iapty {\ga}}$
+% \item $\newrepf {seq} : \forall \ga.\iarrow
+%   {(\iintty \iprodi \iseq \ga) \iprodi \ga}
+%   {\iintty \iprodi \iseq \ga}$
+% \item $\forall \pdtyvars {\ga_{elt}} {\ga_{sep}}.\newpdf {seq} : 
+%   (\iapty { {\ga_{elt}}}) \iprodi
+%    {\ga_{sep}} \iprodi 
+%    {\ga_{elt}} \iarrowi \\
+%   \iapty { {\ga_{elt}}}$
+% \item $\newrepf {compute} : \forall \ga.\iarrow \ga \ga$
+% \item $\newpdf {compute} : \iarrow \ioffty {\ipty \iunitty}$
+% \item $\newrepf {absorb} : \forall \pdtyvar \ga.\iarrow \ga {\isum
+%     \iunitty \invty}$
+% \item $\forall \pdtyvar \ga.\newpdf {absorb} : \iarrow \ga {\ipty
+%     \iunitty}$
+% \item $\newrepf {scan} : \forall \ga.\iarrow \ga {\isum \ga \invty}$
+% \item $\forall \pdtyvar \ga.\newpdf {scan} : \iarrow {\iprod \iintty \ga}
+%   {\ipty {(\isum {\iprod \iintty \ga} \iunitty)}}$
+% \item $\newrepf {scan\_err} : \forall \ga.\iarrow \iunitty {\isum \ga \invty}$
+% \item $\newpdf {scan\_err} : \forall \ga.\iarrow \ioffty
+%   {\ipty {(\isum {\iprod \iintty \ga} \iunitty)}}$
+% \end{itemize}  
+% \end{lemma}
+
+% \begin{proofsketch}
+%   By inspection of code.
+% \end{proofsketch}
+
+With this lemma we now formally state that each constructor
+produces a value whose type corresponds to its namesake \ddc{} type.
+Note that all universally quantified \ddc{} types $\ty$ are assumed
+to be well formed.
+
+\begin{lemma}[Types of Constructors]
+\label{lem:nice-types-of-constructors}
+\begin{itemize}
+\item $\newrepf {true} : \iarrow \iunitty \itsem[\ptrue]$
+\item $\newpdf  {true} : \iarrow \ioffty {\itpdsem[\ptrue]}$
+\item $\newrepf {false} : \iarrow \iunitty {\itsem[\pfalse]} $
+\item $\newpdf  {false} : \iarrow \ioffty {\itpdsem[\pfalse]}$
+\item $\forall \ty_1,\ty_2,x.\newrepf {\gS} : \iarrow {\iprod
+    {\itsem[\ty_1]}{\itsem[\ty_2]}} {\itsem[\psig x {\ty_1}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2,x.\newpdf {\gS} : 
+  \iarrow {\iprod {\itpdsem[\ty_1]}{\itpdsem[\ty_2]}}
+  {\itpdsem[\psig x {\ty_1}{\ty_2}]}
+$
+\item $\forall \ty_1,\ty_2.\newrepf {+left} : \iarrow {\itsem[\ty_1]} 
+                            {\itsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newrepf {+right} : \iarrow {\itsem[\ty_2]} 
+                            {\itsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newpdf {+left} : \iarrow {\itpdsem[\ty_1]} 
+                            {\itpdsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newpdf {+right} : \iarrow {\itpdsem[\ty_2]} 
+                            {\itpdsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newrepf {\&} : \iarrow {\iprod
+    {\itsem[\ty_1]}{\itsem[\ty_2]}} {\itsem[\pand {\ty_1}{\ty_2}]}$
+\item $\forall \hdtvs {\ty_1}{\ty_2}.\newpdf {\&} : 
+  \iarrow {\iprod {\itpdsem[\ty_1]}{\itpdsem[\ty_2]}}
+  {\itpdsem[\pand {\ty_1}{\ty_2}]}$.
+\item $\forall \ty,x,e.\newrepf {set} : \iprod \iboolty {\itsem[\ty]} 
+  \iarrowi \itsem[\pset x \ty e]$
+\item $\forall \ty,x,e.\newpdf {set} : \iprod \iboolty {\itpdsem[\ty]} 
+  \iarrowi \itpdsem[\pset x \ty e]$
+\item $\forall \ty,\ty_1.
+  \newrepf {seq\_init} : \iarrow \iunitty {\itsem[\pseq \ty
+      {\ty_1} {\_}]}$
+\item $\forall \ty,\ty_1.
+  \newpdf {seq\_init} : \iarrow \ioffty {\itpdsem[\pseq \ty
+      {\ty_1} {\_}]}$
+\item $\forall \ty,\ty_1.
+  \newrepf {seq} : \iarrow {\itsem[\pseq \ty
+      {\ty_1} {\_}] \iprodi \itsem[\ty]} 
+  {\itsem[\pseq \ty
+      {\ty_1} {\_}]}$
+\item $\forall \ty,\ty_1.
+  \newpdf {seq} : 
+  \itpdsem[\pseq \ty {\ty_1} {\_}] \iprodi
+   \itpdsem[\ty_1] \iprodi \itpdsem[\ty] \iarrowi \\
+  \itpdsem[\pseq \ty {\ty_1} {\_}]$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newrepf {seq\_init} : \iarrow \iunitty {\itsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}]}$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newpdf {seq\_init} : \iarrow \ioffty {\itpdsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}]}$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newrepf {seq} : \iarrow {\itsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}] \iprodi \itsem[\ty]} 
+%   {\itsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}]}$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newpdf {seq} : 
+%   \itpdsem[\pseq \ty {\ty_1} {\pterm e {\ty_2}}] \iprodi
+%    \itpdsem[\ty_1] \iprodi \itpdsem[\ty] \iarrowi \\
+%   \itpdsem[\pseq \ty {\ty_1} {\pterm e {\ty_2}}]$
+\item $\forall e.\newrepf {compute} : \forall \ga.\iarrow \ga {\itsem[\pcompute
+    e \ga]}$
+\item $\forall e.\newpdf {compute} : \forall \ga.\iarrow \ioffty
+  {\itpdsem[\pcompute e \ga]}$
+\item $\forall \ty.\newrepf {absorb} : \iarrow {\itpdsem[\ty]}
+  {\itsem[\pabsorb \ty]}$
+\item $\forall \ty.\newpdf {absorb} : \iarrow {\itpdsem[\ty]}
+  {\itpdsem[\pabsorb \ty]}$
+\item $\forall \ty.\newrepf {scan} : \itsem[\ty] \iarrowi
+  \itsem[\pscan \ty]$
+\item $\forall \ty.\newpdf {scan} : \iintty \iprodi \itpdsem[\ty] \iarrowi
+  \itpdsem[\pscan \ty]$
+\item $\forall \ty.\newpdf {scan} : \iintty \iprodi \itpdsem[\ty] \iarrowi
+  \itpdsem[\pscan \ty]$
+\item $\forall \ty.\newrepf {scan\_err} : \iunitty \iarrowi
+  \itsem[\pscan \ty]$
+\item $\forall \ty.\newpdf {scan\_err} : \ioffty \iarrowi
+  \itpdsem[\pscan \ty]$
+\end{itemize}  
+\end{lemma}
+
+\begin{proofsketch}
+  By inspection of code. First we infer (by hand) the (polymorphic)
+  type of each function. Then we verify that it matches the types
+  specified above.
+\end{proofsketch}
+}
+
+\trversion{
+\begin{figure}
+{\small
+\fbox{$\ptyc{\rctxt} = \ctxt$} 
+    
+\[
+  \ptyc{\cdot} = \cdot \qquad\qquad
+  \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
+  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
+\]}
+  \caption{Recursive Parser \Implang{} Types}
+  \label{fig:rec-parser-types}
+\end{figure}
+}
+
+To prove our type correctness theorem by induction, we must account
+for the fact that any free recursive type variables in
+a \ddc{} type $\ty$ will become free function variables
+in $\trans[\ty,,]$.  
+\trversion{
+To that end, we define in \figref{fig:rec-parser-types}
+the function $\ptyc \rctxt$, 
+which maps recursive variable contexts
+$\rctxt$ to typing contexts $\ctxt$. 
+}
+\poplversion{
+To that end, we define the function $\ptyc \rctxt$, 
+which maps recursive variable contexts
+$\rctxt$ to typing contexts $\ctxt$:
+\vskip -1.5ex
+{\small
+\[
+\begin{array}{l}
+  \ptyc{\cdot} = \cdot \\[1ex]
+  \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
+  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
+\end{array}
+\]%
+}%
+}%
+\noindent
+We also apply $\rctxt$ to $\ty$
+to close any open references to recursive types before
+determining the corresponding parser type. 
+\trversion{  We do not explicitly require that $\ctxt$
+be well formed in the premises, as it follows from the fact that $\ty$
+is well formed in $\ctxt$.
+}
+
+\begin{theorem}[Type Correctness]
+\label{thm:type-correctness}
+  If  $\wfd \ctxt \rctxt$ and
+   $\ddck[\ty,{\rctxt;\ctxt},\gk,\mcon]$ then
+  $\stsem[{\trans[\ty,,]},{\ctxt,\ptyc \rctxt},
+            {\kTrans[\kind,\asub \rctxt \ty]}]$.
+\end{theorem}
+
+\begin{proof}
+  By induction on the height of the second derivation.
+\end{proof}
+
+\begin{corollary}[Type Correctness of Closed Types]
+  If $\ddck[\ty,,\gk,\con]$ then
+  $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
+\end{corollary}
+
+We start our formalization of the error-correlation property by
+defining representation and PD correlation.
+Informally, a representation and a PD are correlated when the number
+of errors recorded in the PD is at least as many as the number of
+errors in the representation and semantic errors, \ie{},
+constraint violations, are properly reported.  Formally, we define
+correlation using two mutually recursive definitions.  The first,
+$\corrkl \ty r p$, defines error correlation between a representation
+$r$ and a parse descriptor $p$ at type $\ty$.  It does so by
+computing a weak-head normal form $\tyval$ for $\ty$ and then
+using the subsidiary relation $\corr \tyval r p$, which is defined for
+all weak-head normal types $\tyval$ with base kind $\kty$.
+Types with higher kind such as abstractions are excluded from this definition
+as they cannot directly produce representations and PDs.
+\figref{fig:revised-ddc-syntax} defines the weak-head
+normal types $\tyval$ and give normalization rules while the
+following definitions specify error correlation.   
+Below, we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
+and use $\mathtt{pos}$ to denote the function which returns zero when
+passed zero and one otherwise.
+
+
+
+\begin{figure}
+\small
+\begin{bnf}
+%   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+%                                \pext{\| \gk \-> \gk} \\
+  \mname{Normalized\\ Types}{2} \meta{\tyval} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} \|
+%  \nlnalt{Types}
+%%        \|
+%%       \pext{\plam{\ptyvar}{\gk}{\ty} \| \papp{\ty}{\ty} \nlalt}
+%%       \pxpd{\ty}{e}
+%%       \pext{\nlalt
+%%         \ptransform{e}{e}{\ty} \| 
+%%       }
+    \psig x \ty \ty  \nlalt
+    \psum \ty e \ty  \| \pand \ty \ty \|
+    \pset x \ty e \|
+    \pseq \ty \ty {\pterm e \ty} \nlalt
+    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
+    \\
+  \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
+    \ptyvar \| \pmu{\ptyvar}{\ty} 
+\end{bnf}  
+\[
+  \infer{
+    \papp {\ty} {e} \stepsto \papp {\ty'} {e}
+  }{
+    \ty \stepsto \ty'
+  }
+\quad
+  \infer{
+    \papp {\tyval} {e} \stepsto \papp {\tyval} {e'}
+  }{
+    e \stepsto e'
+  }
+\quad
+  \infer{
+    \papp {(\plam x {} \ty)} {v} \stepsto \ty[v/x]
+  }{}
+\quad
+  \infer{
+    \pmu \ptyvar \ty \stepsto \ty[\pmu \ptyvar \ty/\ptyvar]
+  }{}
+\]
+  \caption{\ddc{} Weak-Head Normal Types and Normalization}
+  \label{fig:ddc-reduction-rules}
+  \label{fig:revised-ddc-syntax}
+\end{figure}
+
+\begin{definition}
+$\corrkl \ty r p$ iff if $\ty \kstepsto \tyval$ then $\corr \tyval r p$.
+\end{definition}
+
+\begin{definition}[Representation and PD Correlation Relation]
+$\corr \tyval r p$ iff exactly one of the following is true:
+  \begin{itemize}
+  \item $\tyval = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
+  \item $\tyval = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
+  \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1} {p_2}}$ 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
+    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
+    and $p = \ipair h {\iinld {\ity}{p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_1} {r'} {p'}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
+    and $p = \ipair h {\iinr {p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_2} {r'} {p'}$.
+  \item $\tyval = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1}{p_2}}$, 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
+    $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
+    \ipair h {p'}$, 
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
+    and $e[(r',p')/x] \kstepsto\itrue$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
+    and $p = \ipair h {p'}$,
+    and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
+    $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
+  \item $\tyval = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
+    $r = \ipair {len} {\iarr{\vec {r_i}}}$, $p = \itup{h,\itup{{neerr},{len}',\iarr {\vec {p_i}}}}$,
+    ${len} = {len}'$, ${neerr} = \sum_{i=1}^{len}
+    \mathtt{pos}(p_i.{nerr})$, $\corrkl {\ty_e}
+    {r_i} {p_i}$, (for $i=1 \ldots {len}$), and
+    $h.{nerr} \geq \mathtt{pos}({neerr})$.
+%   \item $\tyval = \pmu \ptyvar {\ty'}$ and 
+%     $\corrkl {\ty'[\pmu \ptyvar {\ty'}/\ptyvar]} r p$.
+  \item $\tyval = \pcompute e \ity$ and $p.{nerr} = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
+  \item $\tyval = \pscan {\ty'}$, $r =\iinl {r'}$,
+      $p = \ipair h {\iinl {\ipair i {p'}}}$,
+      $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and
+      $\corrkl {\ty'}{r'}{p'}$.
+  \item $\tyval = \pscan {\ty'}$,
+      $r =\iinr \ierr$,
+      $p = \ipair h {\iinr \iuval}$, and
+      $h.{nerr} = 1$.
+  \end{itemize}
+\end{definition}
+
+\trversion{
+Once again, we first need to prove error correlation properties of
+the Rep and PD constructors, as expressed in the following lemma.
+
+\begin{lemma}[Correlation Properties of Constructors]
+  \label{lem:cons-props}
+  \begin{itemize}
+  \item $\corr \ptrue {\newrep {true} {}} {\newpd {true} \off}$.
+  \item $\corr \pfalse {\newrep {false} {}} {\newpd {false} \off}$.
+  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$
+    then\\ $\corr {\psig x {\ty_1} {\ty_2}}
+    {\newrep {\gS} {r_1,r_2}}{\newpd {\gS} {p_1,p_2}}$.
+  \item If $\corrkl \ty r p$ then $\corr {\psum \ty e {\ty'}} 
+      {\newrep {+left} r} {\newpd {+left} p}$.
+  \item If $\corrkl \ty r p$ then $\corr {\psum {\ty'} e \ty} 
+      {\newrep {+right} r} {\newpd {+right} p}$.
+  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$
+    then\\ $\corr {\pand {\ty_1} {\ty_2}}
+    {\newrep {\&} {r_1,r_2}}{\newpd {\&} {p_1,p_2}}$.
+  \item If $\corrkl \ty r p$ and $e[(r,p)/x] \kstepsto c$ then\\ $\corr {\pset x \ty e} 
+    {\newrep {set} {c,r}} {\newpd {set} {c,p}}$
+  \item $\corr {\pseq \ty {\ty_s}{\pterm e {\ty_t}}} 
+    {\newrep {seq\_init} {}} {\newpd {seq\_init} \off}$.
+  \item If $\corr {\pseq \ty {\ty_s} {\pterm e {\ty_t}}} r p$ and
+    $\corrkl \ty {r'} {p'}$ then for any $p''$, $\corr {\pseq \ty {\ty_s}{\pterm e {\ty_t}}}
+    {\newrep {seq} {r,r'}} {\newpd {seq} {p,p'',p'}}$.    
+  \item $\corr {\pcompute e \ity} {\newrep {compute} {e}} {\newpd {compute} \off}$.
+  \item $\corr {\pabsorb \ty} {\newrep {absorb} p} {\newpd {absorb} p}$.
+  \item If $\corrkl {\ty} r p$ then $\corr {\pscan \ty} 
+      {\newrep {scan} r} {\newpd {scan} {i,p}}$.
+  \item $\corr {\pscan \ty} 
+      {\newrep {scan\_err} {}} {\newpd {scan\_err} \off}$.
+  \end{itemize}
+\end{lemma}
+
+\begin{proof}
+  By inspection of code. 
+\cut{
+  \reminder{Fix the following or drop it: }
+  Array case is most complicated, in particular proving the clause
+  $h.{nerr} \geq \mathtt{pos}({neerr})$. To do so, you must prove that
+  $H_{seq}$ maintains this invariant. The first case of the match is the
+  hard one, as ${nerr}$ is 0 (if its $1$, then it must be greater than
+  or equal to $\mathtt{pos}(n)$, for any $n$).  First, as $h.{nerr} =
+  0$, so too must $neerr$. Next, note that in this first case,
+  $h1.{nerr} = 0$. Now, the new value of ${neerr}$ is just the sum of
+  the original ${neerr}$ and $\mathtt{pos}(h1.{nerr})$, that is, $0 +
+  0$.}
+\end{proof}
+}
+
+Definition~\ref{def:err-corr} specifies the exact property we require
+of parsing functions. At base kind, we require that any representation and PD
+returned by the parser must be correlated. At higher kind, we require
+that the function preserve the property of error correlation. Hence,
+the definition is a simple form of logical relation.
+Lemma~\ref{lem:err-corr-at-T} states that any well-formed type of base
+kind is error-correlated.
+
+\begin{definition}[Error Correlation Relation]
+\label{def:err-corr}
+$\ecpred \ty \kind$ iff exactly one of the following is true:
+  \begin{itemize}
+  \item $\kind = \kty$ and if $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
+  \spair<\off',r,p>$ then $\corrkl \ty r p$
+  \item $\kind = \ity \iarrowi \kind'$ and if $\stsem[v,,\ity]$
+    then $\ecpred {\ty \sapp v} {\kind'}$
+  \end{itemize}
+\end{definition}
+
+\begin{lemma}[Error Correlation at Base Kind]
+\label{lem:err-corr-at-T}
+If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
+  \spair<\off',r,p>$ then $\corrkl \ty r p$.
+\end{lemma}
+
+\begin{proof}
+  By induction on the height of the second derivation.
+\end{proof}
+
+\begin{theorem}[Error Correlation]
+\label{thm:err-corr}
+If $\ddck[\ty,,\kind,\con]$ then $\ecpred \ty \kind$.
+\end{theorem}
+
+\begin{proof}
+  By induction on the size of the kind $\kind$. For $\kind = \kty$, we
+  use Lemma~\ref{lem:err-corr-at-T}.
+\end{proof}
+
+\trversion{
+We conclude this section with a useful property of correlated representations
+and PDs. If the PD reports no errors, then there are no syntactic
+errors in the representation data structure {\it at any level}. 
+We formally define
+{\it clean} (error-free) values next, followed by the statement of the
+property itself.
+
+\begin{definition}[Clean Value]
+$\noerr v$ iff exactly one of the following is true:
+\begin{itemize}
+\item $v = c$ and $c \neq \ierr$.
+\item $v = \ifun f x e$.
+\item $v = \ipair {v_1} {v_2}$ and $\noerr {v_1}$ and $\noerr {v_2}$.
+\item $v = \iinl {v'}$ and $\noerr {v'}$.
+\item $v = \iinr {v'}$ and $\noerr {v'}$.
+\item $v = \iarr{v_1 \cdots v_n}$ and $\noerr {v_i}$ for $i=1\ldots n$.
+\end{itemize}
+\end{definition}
+
+\begin{lemma}
+  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then $\noerr r$.
+\end{lemma}
+
+\begin{proof}
+  By induction on the structure of r.
+\end{proof}
+}
+
+\begin{corollary}
+  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then there are no syntactic
+  or semantic errors in the representation data structure $r$.
+\end{corollary}
+
+
+\section{Encoding \ddl{}s in \ddc{}}
+\label{sec:encodings}
+
+We can better understand the data description languages mentioned
+earlier by translating their constructs into the types of \ddc{}. We
+start with the translation of \ipads{}, which captures many of the
+common features of \ddl{}s. We then discuss features of \pads{},
+\datascript{}, and \packettypes{} that are not found in \ipads{}.
+\trversion{
+Finally, we briefly discuss some limitations of \ddc{}.
+}
+\subsection{\ipads{} Translation}
+\label{sec:trans-sl}
+
+\trversion{
+\begin{figure*}
+{\small
+\fbox{$\ctxt \turn \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer[\text{Prog-One}]{ 
+    \ctxt \turn \itmv \cipads \ty \; \text{prog}
+  }{
+    \ctxt \turn \itmv \cipads \ty : \kty
+  }
+\quad
+  \infer[\text{Prog-Def}]{ 
+    \ctxt \turn \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+    \ctxt \turn \mathit{prog}[\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\quad
+  \infer[\text{Prog-RecDef}]{ 
+    \ctxt \turn  \Prec{}\; \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+    \ctxt \turn \mathit{prog}[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$\ctxt \turn \itmv  \cipads \ty : \kind$}
+
+\[
+  \infer[\text{Base}]{ 
+    \ctxt \turn \pbase e \cipads \pbase e : \kty
+  }{
+    \ctxt \turn e : \ity & (\Ikind(C) = \ity \to \kty)
+  }
+\quad
+  \infer[\text{Pfun}]{ 
+    \ctxt \turn \Pfun (x:\ity) = \itmv \cipads \plam x
+    \ity \ty : \ity \to \kind
+  }{
+    \ectxt{x{:}\ity} \turn \itmv \cipads \ty : \kind
+  }
+\quad
+  \infer[\text{App}]{ 
+    \ctxt \turn \itmv \; e \cipads \ty \; e : \kind
+  }{
+    \ctxt \turn \itmv \cipads \ty : \ity \to \kind & \ctxt \turn e : \ity
+  }
+\]
+
+\[
+  \infer[\text{Pstruct}]{
+    \begin{array}{l}
+    \ctxt \turn \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+    \cipads \\
+    \qquad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n : \kty      
+    \end{array}
+  }{ 
+    \begin{array}{c}
+%       \ctxt_1 = \ctxt \quad \ity_{i-1} = \iprod{\itsem[\ty_{i-1}]} {\itpdsem[\ty_{i-1}]}\\
+%       \ctxt_i = \ctxt_{i-1},x_{i-1}{:} \ity_{i-1} \quad 
+%       (\text{for} \; i = 2 \ldots n) \\
+%       \ctxt_i \turn \itmv_i \cipads \ty_i : \kty \quad
+%       (\text{for} \; i = 1 \ldots n)
+      \ctxt_i = \ctxt,x_1{:}\ity_1, \dots, x_{i-1}{:} \ity_{i-1} \\
+      \ity_{i} = \iprod{\itsem[\ty_{i}]} {\itpdsem[\ty_{i}]} \quad
+      \ctxt_i \turn \itmv_i \cipads \ty_i : \kty
+    \end{array}
+  }
+\quad
+  \infer[\text{Punion}]{
+    \begin{array}{l}
+      \ctxt \turn \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads \\
+      \ty_1 + \dots + \ty_n + \pfalse : \kty
+    \end{array}
+  }{ 
+    \ctxt \turn \itmv_i \cipads \ty_i : \kty
+  }
+\]
+
+\[
+  \infer[\text{Palt}]{
+    \ctxt \turn \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
+    \ty_1 \& \dots \& \ty_n: \kty
+  }{ 
+    \ctxt \turn \itmv_i \cipads \ty_i : \kty
+  }
+\quad
+  \infer[\text{Popt}]{
+    \ctxt \turn \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue : \kty
+  }{
+    \ctxt \turn \itmv \cipads \ty : \kty
+  }
+\quad
+  \infer[\text{Pwhere}]{
+    \begin{array}{l}
+      \ctxt \turn \itmv \; \Pwhere \, x.e \cipads  \\
+      \qquad
+      \pset x \ty {\iif {\pdok {x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+    \end{array}
+  }{ 
+     \ctxt \turn \itmv \cipads \ty : \kty & 
+     \stsem[e,\ectxt{x{:}\iprod{\itsem[\ty]} {\itpdsem[\ty]}},\iboolty]
+  }
+\]
+
+\[
+  \infer[\text{Parray}]{
+    \ctxt \turn \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}} : \kty
+  }{ 
+       \begin{array}{lr}
+         \ctxt \turn \itmv \cipads \ty : \kty & 
+         \ctxt \turn \itmv_{sep} \cipads \ty_s : \kty \\ 
+         \ctxt \turn \itmv_{term} \cipads \ty_t : \kty &
+         (f = \ilam x{}\ifalse)\\
+       \end{array}
+  }
+\quad
+  \infer[\text{Pcompute}]{ 
+    \ctxt \turn \Pcompute{} \; e \cipads \pcompute e \ity : \kty
+  }{
+    \stsem[e,\ctxt,\ity]
+  }
+\]
+
+\[
+  \infer[\text{Plit}]{ 
+    \ctxt \turn \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\ivar = \iconst}}} : \kty
+  }{
+    \stsem[\const,\ctxt,\ity] & \defty \ity \ty
+  }
+\quad
+  \infer[\text{Var}]{ 
+    \ctxt \turn \ga \cipads \ga
+  }{}    
+\quad
+  \infer[\text{Prec}]{ 
+    \ctxt \turn \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
+  }{
+    \ctxt \turn \itmv \cipads \ty
+  }
+\]
+}
+  \caption{Encoding \ipads{} in \ddc{} with type checking}
+  \label{fig:encode-ipads-with-tc}
+\end{figure*}
+
+ \reminder{Add poly. context to all typing judgments that appear in
+   premises. See email (subject:Prec) for details on how to fix translation}
+
+\begin{figure*}
+{\small
+\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer[\text{Prog-One}]{ 
+     \itmv \cipads \ty \; \text{prog}
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+  \infer[\text{Prog-Def}]{ 
+     \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+     \mathit{prog}[\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\qquad
+  \infer[\text{Prog-RecDef}]{ 
+      \Prec{}\; \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+     \mathit{prog}[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$ \itmv  \cipads \ty$}
+
+\[
+  \infer[\text{Base}]{ 
+     \pbase e \cipads \pbase e
+  }{}
+\qquad
+  \infer[\text{Pfun}]{ 
+     \Pfun (x:\ity) = \itmv \cipads \plam x
+    \ity \ty
+  }{
+    \itmv \cipads \ty
+  }
+\qquad
+  \infer[\text{App}]{ 
+     \itmv \; e \cipads \ty \; e
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+  \infer[\text{Pstruct}]{
+    \begin{array}{l}
+     \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+    \cipads \\
+    \qquad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n
+   \end{array}
+  }{ 
+    \itmv_i \cipads \ty_i
+  }
+\]
+
+\[
+  \infer[\text{Punion}]{
+    \begin{array}{l}
+       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads \\
+      \qquad \ty_1 + \dots + \ty_n + \pfalse
+    \end{array}
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer[\text{Palt}]{
+     \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
+    \ty_1 \& \dots \& \ty_n
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer[\text{Popt}]{
+     \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
+\[
+  \infer[\text{Pwhere}]{
+    \begin{array}{l}
+       \itmv \; \Pwhere \, x.e \cipads  \\
+      \qquad
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+    \end{array}
+  }{ 
+    \itmv \cipads \ty
+  }
+\qquad\qquad
+  \infer[\text{Parray}]{
+     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+  }{ 
+    \itmv \cipads \ty & 
+    \itmv_{sep} \cipads \ty_s &
+    \itmv_{term} \cipads \ty_t &
+    (f = \ilam x{}\ifalse)
+  }
+\]
+
+\[
+  \infer[\text{Pcompute}]{ 
+     \Pcompute{} \; e{:}\ity \cipads \pcompute e \ity
+  }{}
+\qquad
+  \infer[\text{Plit}]{ 
+     \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+  }{
+    \defty \const \ty
+  }
+\qquad
+  \infer[\text{Var}]{ 
+     \ga \cipads \ga
+  }{}    
+\qquad
+  \infer[\text{Prec}]{ 
+     \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
+  }{
+     \itmv \cipads \ty
+  }
+\]
+}
+  \caption{Encoding \ipads{} in \ddc{}}
+  \label{fig:encode-ipads}
+\end{figure*}
+}
+
+\poplversion{
+\begin{figure}
+{\small
+\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer{ 
+     \itmv \cipads \ty \; \text{prog}
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+  \infer{ 
+     \ga = \itmv; \; p \cipads \ty \; \text{prog}
+  }{
+     p[\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\qquad
+  \infer{ 
+      \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
+  }{
+     p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$ \itmv  \cipads \ty$}
+
+\[
+  \infer{
+%    \begin{array}{l}
+       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads %\\
+      %\qquad 
+      \ty_1 + \dots + \ty_n + \pfalse
+%    \end{array}
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\]
+
+\[
+%\quad
+  \infer{
+%    \begin{array}{l}
+       \itmv \; \Pwhere \, x.e \cipads  %\\
+      %\qquad
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+%    \end{array}
+  }{ 
+    \itmv \cipads \ty
+  }
+\]
+
+\[
+%\qquad\qquad
+  \infer{
+     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+  }{ 
+    \itmv \cipads \ty & 
+    \itmv_{sep} \cipads \ty_s &
+    \itmv_{term} \cipads \ty_t &
+    (f = \ilam x{}\ifalse)
+  }
+\]
+
+\[
+%\qquad\qquad
+  \infer{
+     \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+\infer{ 
+     \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+  }{
+    \defty \const \ty
+  }
+\]
+}
+\caption{Selected Rules for Encoding \ipads{} in \ddc{}. The full
+  collection of rules appears in \appref{app:ipads-to-ddc}.}
+  \label{fig:encode-ipads}
+\end{figure}
+}
+
+\trversion{
+In \secref{sec:ddc-example}, we showed how an
+\ipads{} description would appear in \ddc{} and informally described
+how \ipads{} is encoded in \ddc{}. In \figref{fig:encode-ipads}, we
+formalize this translation. The judgment $p \cipads \ty\;
+\text{prog}$ indicates that the \ipads{} program $p$ is encoded
+as \ddc{} type $\ty$, while $\itmv \cipads \ty$ does the same
+for \ipads{} types $\itmv$.
+
+As much of the translation is straightforward, we mention only a few
+important points.}
+\poplversion{
+We formalize the translation from \ipads{} to \ddc{}, described
+informally in \secref{sec:ddc-example}, with two judgments:
+ $p \cipads \ty\; \text{prog}$ indicates that the \ipads{} program
+$p$ is encoded as \ddc{} type $\ty$, while $\itmv \cipads \ty$
+does the same for \ipads{} types $\itmv$.
+
+As much of the translation is straightforward, we present only
+selected rules in \figref{fig:encode-ipads}.}  Notice we add $\pbot$ as the
+last branch of the \ddc{} sum when translating \Punion{} so that the
+parse will fail if none of the branches match rather than returning
+the result of the last branch.  \trversion{We based this behaviour
+  directly on the actual \pads{} language.}  In the translation of
+\Pwhere{}, we only check the constraint if the underlying value parsed
+with no errors. For \Parray{}s, we add simple error recovery by
+scanning for the separator type.  This behaviour allows us to easily
+skip erroneous elements. We use the $\pscann$ type in the same way for
+\padskw{Plit}, as literals often appear as field separators in
+\Pstruct{}s.  We also absorb the literal as its value is known
+statically.  We use the function ${\rm Ty}(c)$ to determine the
+correct type for the particular literal. For example, a string
+literal would require a \Pstring{} type.
+
+\subsection{Beyond \ipads{}}
+
+We now give semantics to three features not found in \ipads{}:
+\pads{} switched unions, \packettypes{} overlays, and \datascript{} arrays.
+
+A switched union, like a \Punion, indicates variability in the data
+format with a set of alternative formats (branches). However, instead
+of trying each branch in turn, the switched union takes an expression that
+determines which branch to use. Typically, this expression depends upon data read earlier in the parse. Each branch is preceded by a tag,
+and the first branch whose tag matches the expression is selected.
+If none match then the default branch $\itmv_{\text{def}}$ is chosen.
+The syntax of a switched union is $\Pswitch{}\;e\;\{\overrightarrow{e
+  \Rightarrow x{:}\itmv}\; \itmv_{\text{def}}\}$.
+
+To aid in our translation of \Pswitch{}, we define a type $\iif e\;
+\ithen {\itmv_1}\; \ielse {\itmv_2}$ that allows us to choose
+between two types conditionally : 
+\trversion{
+Our first attempt to
+translate the conditional relies on \ddc{} sums:
+\[
+\infer{
+  \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
+  \cipads \psum
+  {\pset y {\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}} e}
+  {} {\ty_2}
+}{
+  \itmv_1 \cipads \ty_1 &
+  \itmv_2 \cipads \ty_2
+}
+\]
+If $e$ is true, then the nested constraint will fail causing the left
+branch of the nested sum to fail and $\ty_1$ will be used to parse
+the data. As $e$ is true, the second constraint will succeed, leaving
+us with the left branch of the root sum. Conversely, if $e$ is false,
+the first constraint will be satisfied, but the second will not,
+causing us to parse the data with $\ty_2$. 
+
+Unfortunately. while this seems to work, it will fail if there is an
+error in $\ty_1$ when $e$ is true. The error will cause errors in the
+constrained type despite the satisfaction of its constraint, thereby causing
+the parser to use $\ty_2$. To address this problem, we use 
+intersections:
+}
+{\small
+\[
+\infer{
+    \begin{array}{l}
+    \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
+    \cipads \\
+    \qquad \qquad \quad c \iprodi \pand {({\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}})}
+    {({\psum {\pset x \ptrue {e}} {} {\ty_2}})}
+    \end{array}
+}{
+  \itmv_1 \cipads \ty_1 &
+  \itmv_2 \cipads \ty_2 &
+  (c  = \pcompute {\codefont{if}
+          \;e\;\codefont{then\;1\;else\;2\;}}{\codefont{Pint}})
+}
+\]}%
+\noindent
+The computed value $c$ records which branch of the conditional is
+selected.  If the condition $e$ is true, $c$ will be 1, the left-hand
+side of the intesection will parse $\ty_1$ and the right will parse nothing.
+Otherwise, $c$ will be 2, the left-hand side will parse nothing and the
+right $\ty_2$.
+% The computed value $c$ indicates which branch is to be taken and the
+% intersection parses exactly that branch of the conditional-type.  We
+% use a combination of constrained and sum type to guard each branch with a
+% condition such that the branch is only parsed if the condition is
+% false. We guarantee that exactly one branch is parsed by guarding the
+% two branches with mutually exclusive conditions. 
+
+Now, we can encode \Pswitch{} as syntactic sugar for a series of cascading
+conditional types.
+{\small
+\[
+\begin{array}{l}
+\Pswitch{}\;e\;\{\\
+\quad e_1 \Rightarrow x_1{:}\itmv_1\\ 
+\quad \dots \\
+\quad e_n \Rightarrow x_n{:}\itmv_n\\
+\quad \itmv_{\text{def}} \}
+\end{array}
+\quad
+ \mathbf{=}
+\quad
+\begin{array}{l} 
+    \iif {e = e_1}\; \ithen {\itmv_1}\; \ielse{}\\
+%    \iif {e = e_2}\; \ithen {\itmv_2}\; \ielse{}\\
+    \dots\\
+    \iif {e = e_n}\; \ithen {\itmv_1}\; \ielse{}\\
+    \itmv_{\text{def}}
+\end{array}
+\]}%
+\noindent
+Note that we can safely replicate $e$ as the
+host language is pure.
+
+Next, we consider the {\it overlay} construct found in \packettypes{}.
+An overlay allows us ``to merge two type specifications by embedding
+one within the other, as is done when one protocol is {\it
+  encapsulated} within another. Overlay[s] introduce additional
+substructure to an already existing field.''~\cite{sigcomm00}.  For
+example, consider a network packet from a fictional protocol FP, where
+the packet body is represented as a simple byte-array. 
+\begin{code}
+FPPacket = \Pstruct \{
+  header : FPHeader;
+  body   : \Pbyte \Parray{}(\Pnosep,\Peof);
+\}\linebreak
+
+IPinFP = \Poverlay FPPacket.body \Pwith IPPacket
+\end{code}
+Type \Pnosep{} indicates that there are no separators between elements
+of the byte array. It can be encoded as \cd{\Pcompute{}(():unit)}, as
+this type consumes no data and produces a unit value without errors.
+The overlay creates a new type \cd{IPinFP} where the body field is an
+\cd{IPPacket} rather than a simple byte array.
+
+We have developed a translation of the overlay syntax into \ddc{} (not
+shown due to space constraints).
+Although overlays are conceptually intuitive, we discovered a critical
+subtlety, not mentioned by the authors, when formalizing their 
+semantics.  Any expressions in the
+original type that refer to the overlayed field may no longer be well
+typed after applying the overlay.
+\trversion{
+We thought to disallow such expressions in the
+overlayed type.However, we found this to be a difficult, if not
+impossible task. More importantly, such a restriction is unnecessary.
+Instead, we designed the translation so that the new type is
+checked for well formedness after the overlay process, an easy task
+in the \ddc{} framework.
+}
+\poplversion{
+It is therefore necessary for the translation to check the new type 
+for well formedness after the overlay process, which is an easy task
+in the \ddc{} framework.
+}
+
+Finally, we introduce \datascript{}-style arrays for binary data,
+$\itmv\;[\mathit{length}]$. They are parameterized by an optional
+length field, instead of a separator and terminator. If the user
+supplies the length of the sequence, the array parser reads exactly
+that number of elements.  Otherwise, the parser continues until an
+element constraint is violated or the input is completely consumed.
+
+Fixed-length arrays can be encoded in a straightforward manner with
+\ddc{} sequences:
+{\small
+\[
+  \infer{
+    \itmv \; [\mathit{length}] \cipads 
+    \pseq \ty {\ptrue{}} {\pterm {f} {\pfalse{}}}
+  }{ 
+    \itmv \cipads \ty & 
+    (f = \ilam {((len,elts),p)} {} {\codefont{len} = \mathit{length}})
+  }
+\]}
+As these arrays have neither separators nor terminators, we use
+$\ptrue$ (always succeeds, parsing nothing)
+and $\pfalse$ (always fails, parsing nothing), 
+respectively, for separator and terminator. The
+function $f$ takes a pair of array representation and PD and compares
+the sequence length recorded in the representation to
+$\mathit{length}$.
+
+Unbounded arrays are more difficult to encode as they must check the
+next element for parse errors without consuming it from the data
+stream. A termination predicate cannot encode this check as they
+\trversion{are limited to the in-memory representation and PD and}
+cannot perform lookahead. Therefore, we must use the terminator type
+to look ahead for an element parse error. For this purpose, we
+construct a type (abbreviated $\pnot \ty$) which succeeds where $\ty$
+fails and fails where $\ty$ succeeds: 
+\trversion{
+\[
+\pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
+  {\ifalse} {\_} {\itrue}}
+\]
+\noindent
+Abbreviated $\pnot \ty$, this type attempts to parse a $\ty$. On
+success, the representation will be a left injection. The constraint
+in the constrained type will therefore fail. If a $\ty$ cannot be parsed, the
+sum will default to $\ptrue$, the rep will be a right injection, and
+the constraint will succeed. The use of the sum in the underlying type
+is critical as it allows the constrained type to be error free even if parsing
+a $\ty$ fails.
+
+With $\pnotn$, we can encode the unbounded \datascript{} array as
+follows:
+\[
+  \infer{
+    \itmv \; [{length}] \cipads 
+    \pseq \ty {\ptrue{}} {\pterm {\ilam x {} \ifalse} {\pnot \ty}}
+  }{ 
+    \itmv \cipads \ty
+  }
+\]
+Note that the termination predicate is trivially false, as we use the
+lookahead-terminator exclusively to terminate the array.  }
+\poplversion{ 
+\[
+\pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
+  {\ifalse} {\_} {\itrue}}
+\]
+\noindent
+Unbounded arrays with element type $\ty$ can now be encoded as
+sequences with terminator $\pnot \ty$.  }
+
+While there are many more features that we can encode, space prevents us from
+detailing them here. To give a sense of what is possible, we
+briefly list those features of \datascript{} and \packettypes{} for
+which we have found encodings in \ddc{}:
+\begin{itemize}
+\item \packettypes{}: arrays, where clauses, structures, overlays,
+  and alternation.
+\item \datascript{}: constrained types (enumerations and bitmask sets),
+  arrays, constraints, value-parameterized types (which they refer to
+  as ``type parameters''), and (monotonically increasing) labels.
+\end{itemize}
+
+We know of a couple of features from data description languages
+that we cannot implement in \ddc{} as it stands.  An example is a label construct that permits the user to rewind the input. However, we do not view 
+such limitations as particularly troublesome. Like the lambda 
+calculus or pi calculus,
+\ddc{} is intended to capture many common language features, while providing
+a convenient and effective basis for extension with new features.
+
+% Indeed, the two main features of \datascript{} that cannot currently
+% be encoded in \ddc{}, require only straightforward modifications or
+% additions.
+
+
+
+\section{Applications of the Semantics}
+\label{sec:applications}
+
+The development of \ddc{} and defining a semantics for \ipads{}
+has had a substantial impact on the real \pads{} implementation.
+
+% In the previous section, we described a number of ways in which our
+% semantics helps us understand what the each DDL is. In this section,
+% we will provide examples of how the \ddc{} taught us about what
+% shouldn't be and questions about what \pads{} should be. In addition,
+% our work on recursive typs in \ddc{} helped guide us in adding
+% recursive types to the actual \pads{} implementation. We describe the
+% implementation in \pads{} and the contributions of \ddc{} in the
+% second part of this section.
+
+% The semantics of \ddc{} was based upon the implementation of \pads{}.
+% In the course of defining the semantics, the high-level view afforded
+% us by the semantics highlighted a number of bugs and potential
+% improvements in the \pads{} implementation. We briefly discuss them
+% below.
+
+\subsection{Bug Hunting}
+
+We developed our semantics in part by going line-by-line through
+key parts of the \pads{} implementation to uncover implicit invariants in the
+code.  In the process of trying to understand and formalize these
+invariants we realized that our error accounting methodology was
+inconsistent, particularly in the case of arrays.   When we realized
+the problem, we were able to formulate a clear rule to apply universally:
+each subcomponent adds 1 to the error count of its
+parent if and only if it has errors.  If we had not tried to 
+formalize our semantics, it is unlikely we would have made the
+error accounting rule precise, leaving our implementation buggy 
+and inconsistent.
+
+The semantics also helped us avoid potential non-termination of array
+parsers. In the original implementation of \pads{} arrays, it was
+possible to write non-terminating arrays, a bug that was only
+uncovered when it hung a real program.  We have fixed the bug and used
+the semantics to verify our fix.~\footnote{The type {\tt nothing
+    array(nothing,eof)} where type {\tt nothing} consumes no input,
+  would not terminate in the orignal system.  A careful read of the
+  \ddc{} semantics of arrays, which has now been implemented in
+  \pads{}, shows that array parsing terminates after an iteration in
+  which the array parser reads nothing.}
+%With the formal semantics we can prove
+%that the parsers generated by the compiler always terminate, ensuring
+%that this bug does not resurface.
+
+
+
+% We begin with two examples of how the semantics helped keep \pads{}
+% from what it shouldn't be. First, we present an example of bug that we
+% noticed. In our semantics, the error accounting for each type is done
+% inside of the PD constructor functions. We defined the logic inside
+% these functions based on the actual implementation in \pads{}. In the
+% process, the methodology behind the error accounting became clear,
+% including that each subcomponent adds 1 to the error count of its
+% parent if and only if it had errors. However, when we got to arrays,
+% we noticed a deviation from this methodology. Further examination
+% revealed that the deviation was in fact a subtle bug. We were only
+% able to find it becuase of the conciseness provided by the semantics.
+
+%   Arbitrary behaviour of error accounting for arrays with regard
+%   to element errors. The implementation only counts an element error
+%   if it is the first error to occur. Therefore, whether or not element
+%   errors affect the overall count depends on arbitrary other errors.
+%   The semantics highlighted this error as it was inconsistent with the
+%   error accounting of other types. Counting it exactly once would
+%   parallel the other types, if we consider the array data-structure
+%   (in the array representation) as one subelement of the representation.
+% Secondly, the semantics help us avoid potential non-termination of
+% array parsers. In the original implementation of \pads{} arrays,
+% arrays were not guaranteed to terminate, a bug that was only uncovered
+% when it hung a real program. With the formal semantics we can prove
+% that the parsers generated by the compiler always terminate, ensuring
+% that this bug does not resurface.
+
+
+% \subsection{Challenging Assumptions}
+
+% Next, we present a number of design choices that the semantics
+% challenges us to defend. The \pads{}/C implementation includes a
+% number of optimization that are potentially unsafe or undesirable.
+% For example, \pads{}/C does not record an ending offset in a PD unless
+% the parse contained an error. Yet, from the semantics we see that
+% recording the entire span of an element is desirable even for
+% error-free values.  A second example are the semantics of \Pomit{}
+% with respect to field scope. Currently, we allow omitted fields to be
+% accessed just as other fields during parsing, by saving their values
+% in temporary variables.  They are not available otherwise, however, as
+% they are not saved in the output representation. While this semantics
+% can be very useful, it discourages any simple understanding of
+% \Pomit{}. Instead, the \ddc{} makes the value unavailable anywhere,
+% returning the $\iunitty$ value for the $\pabsorbn$ type.
+
+
+\subsection{Principled Implementation Extension: Recursion}
+
+Unlike the rest of \pads{}, the semantics of recursive types
+preceded the implementation. We used the semantics to guide
+our design decisions in the implementation, particularly in 
+preventing the user from writing down non-contractive types and in implementing the parsers with recursive functions.
+\trversion{
+the
+following two respects:
+\begin{itemize}
+\item Static semantics. The user is not allowed to write down a
+  non-contractive type. The recursion always passes through another
+  type constructor.
+\item Parser generation. We implement the parsers with recursive
+  functions.
+  
+% \item Representation and parse descriptor type. We don't need
+%   special representation and PD types for recursive types. However, we
+%   need to interpret the names of recursive types as 
+%   pointers and as the underlying type itself. While this is
+%   implicit in the semantics, it must be done explicitly by the
+%   compiler in the implementation.
+\end{itemize}
+}
+
+\subsection{Distinguishing the Essential from the Accidental}
+
+In his 1965 paper, P.J. Landin asks ``Do the idiosyncracies [of a
+language] reflect basic logical properties of the situations that are
+being catered for?  Or are they accidents of history and personal
+background that may be obscuring fruitful developments?''  
+
+The semantics helped us answer this question with regard to the \Pomit{}
+and \Pcompute{} qualifiers of \pads{}.  Originally, these qualifiers
+were only intended to be used on fields within \Pstruct{}s.
+By an accident of the implementation, they appeared in \Punion{}s
+as well, but spread no further. However, when designing \ddc{},
+we followed the {\em principle of orthogonality},
+which suggests that every linguistic concept
+be defined independently of every other.  In particular, we observed that
+``omitting'' data from, or including (``computing'') data in,
+the internal representation is not dependent upon 
+the idea of structures or unions.  Furthermore, we found that
+developing these concepts as first-class constructors
+$\pabsorbn$ and $\pcomputen$ in \ddc{} allowed us to encode
+the semantics of other \pads{} features (\eg, literals) elegantly.
+%Consequently, we encourage future language designers to think of and
+%implement these ideas as first-class constructors.
+
+% Yet, for simplicity, we chose to
+% encode \Pomit{} and \Pcompute{} in \ddc{} with their own, first class
+% types ($\pabsorbn$ and $\pcomputen$, respectively). Because of this
+% choice, we discovered that both can encode more \pads{} features than
+% just the qualifiers for which we had originally intended them. In this
+% case, then, the \ddc{} highlighed that the restriction of \Pomit{} and
+% \Pcompute{} to mere type qualifers for \Punion{} and \Pstruct{} fields
+% was an ``accident of history,'' rather than a ``basic logical
+% property'' of data description.
+
+Another accident in the
+\pads{} implementation is that there is no guarantee that
+certain features are ``safe.''  This is due on occasion to the fact that
+the \pads{} host language is \C{} and on occasion to the desire to implement
+certain optimizations.  As an example, when a 
+semantic error in a \Pwhere{} clause is detected, the parser sets a flag.  
+However, the \C{} programmer is not forced to check this flag before using 
+the value in question and therefore can unknowingly process invalid data.  The 
+semantics of \ddc{} deviates from the \C{} implementation here as it suggests
+constrained types be implemented as values with a sum type.  A typed lambda
+calculus programmer is required to perform a case on the sum and
+hence will always be informed of an error.
+%For the sake of safety, we believe the \C{} interface should be reworked 
+%here to match the semantics.  
+In such cases, the \C{} implementation does not serve as a
+proper guide for the integration of \pads{} ideas with a safe 
+language like ML.
+For this purpose, the \ddc{} is a much more appropriate starting point.
+
+% As an aside, we are currently designing an ML binding for 
+% pads~\cite{fernandez+:padst}
+% and in this and other places, the \ddc{} is a
+% superior guide than the implementation.
+
+% This and several other deviations
+% Hence, in this respect,
+% the current \pads{} integration with \C{} is a 
+% poor model from which to design
+
+% can easily forget to check , involves
+% constrained types (\Pwhere{} clauses).  In \pads{}/C, 
+% it is easy for programmer to forget to check to check a
+% parse descriptor to determine whether or not aif a field's constraint
+% is violated, its representation is still valid. 
+
+% This design required a lot of
+% consideration in formalizing the semantics, because of the potential
+% safety problem of providing the semantically invalid value to the
+% user.  The dilemma is that the user should be able to get at the
+% erroneous value somehow, if only for debugging purposes. In the
+% semantics, we choose to inject the value into a sum, to force the user
+% check the valeus tag before using it.  different choice. However, in
+% \C{}, there is no way to force such a check. Therefore, we left the
+% value alone. The semantics highlights that in a different language
+% binding, we might make a different decision.  Again, in the words of
+% Landin ``we must systematize their design so that a new language is a
+% point chosen from a well-mapped space, rather than a laboriously
+% devised construction.''
+
+
+We conclude with an example of another feature to which Landin's
+question applies, but for which we do not yet know the answer. The \Punion{}
+construct chooses between branches by searching for the first one
+without errors. However, this semantics ignores situations in which
+the correct branch in fact has errors. Often, this behavior will lead
+to parsing nothing and flagging a panic, rather than parsing the
+correct branch to the best of its ability.  The process of
+developing a semantics brought this fact to our attention and
+it now seems clear we would like a more robust
+\Punion, but we are not currently sure how to design one. 
+% would be desireable. Unfortunately, the design of such a
+% \Punion{} is far from obvious. Once we leave a black-and-white model,
+% there is a lot of gray from which to choose. The question, then, is
+% whether the current semantics is an essential feature of such a union
+% construct, or whether its an accident of history that leaves room for
+% improvement.
+
+% We now briefly describe the actual implementation. We add the
+% construct \cd{Precur id} to \pads{}. It inserts all necessary forward
+% declarations and ensures that representation and PD of the recursive
+% type is referenced through pointers. Here is the Newick format in the
+% extended version of \pads{}:
+
+% \begin{code}
+% Popt Pstruct node\{
+%   Pstring(:":":) name; ":";
+%   Puint32 dist;
+% \};\linebreak
+
+% Precur itree;\linebreak
+
+% Punion tree \{
+%   itree internal;
+%   node leaf;
+% \};\linebreak
+
+% Pstruct itree\{
+%   "(";
+%   tree[] branches: Psep(",") && Pterm(")");
+%   ")";
+% \};
+% \end{code}
+
+% We note that the \cd{Precur} keyword need not appear before the actual
+% definition of \cd{itree} as the compiler can automatically make the
+% necessary modifications to all types that are declared recursive
+% with\cd{Precur}.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
+
+\section{Related Work}
+\label{sec:related}
+
+% {\em PEG difference: not just dependency, but error handling?}
+
+
+To our knowledge, we are the first to attempt to specify a semantics for
+data description languages based on types such as \packettypes{},
+\datascript{} or \pads.  
+%Prior to our work, this family of languages 
+%was described informally and by example.  There was no precise
+%connection to formal dependent type theory.
+
+Of course, there are other formalisms for
+defining parsers, most famously, regular expressions and
+contex-free grammars.  In terms of recognition power,
+these formalisms differ from our type theory
+in that they have nondeterministic choice, but do not have
+dependency or constraints.  We have found that 
+dependency and constraints are absolutely essential for
+describing most of the ad hoc data sources we have studied.
+Perhaps more importantly though, unlike standard theories of
+context-free grammars,
+we do not treat our type theory merely as a recognizer for
+a collection of strings.  Our type-based descriptions 
+define {\em both} external data formats {\em and} 
+rich invariants on %(\ie{} types for)
+the internal parsed data structures.  This dual interpretation
+of types lies at the heart of tools such as \pads, \datascript{} and
+\packettypes{}.  
+%\pads{} programmers, for instance, demand that
+%representations produced by their \pads{} parsers have the expected type and 
+%count on the fact that the associated PD is accurately correlated
+%with the representation.  
+%Existing formalisms simply do not address
+%this elements of data description languages.
+
+{\em Parsing Expression Grammars} (PEGs),
+studied in the early 70s~\cite{birman+:parsing} and revitalized more 
+recently by Ford~\cite{ford:pegs}, 
+evolved from context-free grammars but
+have deterministic, prioritized choice like \ddc{} as opposed to
+nondeterministic choice.  Though PEGs have syntactic lookahead operators,
+they may be parsed in linear time through the use of
+``packrat parsing'' techniques~\cite{ford:packrat,grimm:packrat}.
+Once again, the dual interpretation of types in \ddc{} both as
+data descriptions and as classifiers for internal representations
+make our theory substantially different from the theory of PEGs.
+%In practice, PEGs has not been used to parse ad hoc data.
+
+{\sc antlr}~\cite{antlr}, a popular programming language parsing tool, 
+uses top-down recursive descent
+parsing and appears roughly similar in recognition power to PEGs and \ddc.
+{\sc antlr} also allows programmers to place annotations
+in the grammar definitions to guide construction of an abstract syntax
+tree. However, all nodes in the abstract syntax tree have a 
+single type, hence the guidance is rather crude when compared with
+the richly-typed structures that can be constructed using
+\ddc.
+
+
+% Practical experience indicates that
+% tools based on these formalisms, such as the many variations of
+% Lex and Yacc, are highly effective for processing
+% programming language syntax.  However, there is also ample evidence
+% that these tools are a poor fit for processing
+% ad hoc data --- simply put, {\em no one ever uses Lex or Yacc for 
+% these tasks}.
+% Unfortunately, the nondeterminism and lack of
+% dependency in these formalisms limit their suitability to formalizing
+% data description languages. While the parsing expression grammars
+% (PEG) formalism~\cite{ford:parsing-expression-grammars} is
+% significantly closer to the \ddc{}, it too lacks the necessary
+% dependency.
+
+% Less related, but still relevant, are Haskell's parsing
+% combinators. While these are not a formalism, they do provide an
+% elegant manner in which to express parsers. Hence, while we chose to
+% define our parsing semantics in the polymorphic lambda calculus,they
+% potentialy provide a more elegant alternative.
+
+% % {\em Mention dependent type theory work?}
+
+
+\section{Conclusion} 
+\label{sec:conclusion}
+Ad hoc data is pervasive and valuable: in industry, in medicine, and in scientific research.  Such data tends to have poor documentation, to contain various kinds of errors, and to be voluminous.  Unlike well-behaved data in standardized relational or \xml{} formats, such data has little or no tool support, forcing data analysts and scientists to waste valuable time writing brittle custom code, even if all they want to do is convert their data into a well-behaved format.  To improve the situation, various researchers have developed data description languages such as \pads{}, \datascript{}, and \packettypes{}.  Such languages allow analysts to write terse, declarative descriptions of ad hoc data.  A compiler then generates a parser and customized tools.  Because these languages are tailored to their domain, they can provide useful services automatically while a more general purpose tool, such as lex/yacc or \perl{}, cannot.
+
+In the spirit of Landin, we have taken the first steps toward specifying a semantics for this class of languages by defining the data description calculus \ddc{}.  This calculus, which is a dependent type theory with a simple set of orthogonal primitives, is expressive enough to describe the features of \pads{}, \datascript{}, and \packettypes{}.  In keeping with the spirit of the data description languages, our semantics is transformational: instead of simply recognizing a collection of input strings, we specify how to transform those strings into canonical in-memory representations annotated with error information.  Furthermore, we prove that the error information is meaningful, allowing analysts to rely on the error summaries rather than having to re-vet the data by-hand. 
+
+We have already used the semantics to identify bugs in the implementation of \pads{} and to highlight areas where \pads{} sacrifices safety for speed. In addition, when various biological data sources motivated adding recursion to \pads{}, we used \ddc{} for design guidance.  After adding recursion, \pads
+{} can now describe the biological data sources. Finally \ddc{} has provided insight into how to design a safe overlay concept. 
+
+\section*{Acknowledgments}
+
+Thanks to Andrew Appel for
+suggesting we refer to Landin's seminal paper on
+the next 700 programming languages.  We also appreciate
+the insights and thoughtful reviews of the POPL program 
+committee.
+
+\bibliographystyle{abbrv}
+\begin{thebibliography}{10}
+
+\bibitem{gpce02}
+G.~Back.
+\newblock {D}ata{S}cript - {A} specification and scripting language for binary
+  data.
+\newblock In {\em Generative Programming and Component Engineering}, volume
+  2487, pages 66--77. Lecture Notes in Computer Science, 2002.
+
+\bibitem{birman+:parsing}
+A.~Birman and J.~D. Ullman.
+\newblock Parsing algorithms with backtrack.
+\newblock {\em Information and Control}, 23(1), Aug. 1973.
+
+\bibitem{geneontology}
+G.~O. Consortium.
+\newblock Gene ontology project.
+\newblock http://www.geneontology.org/.
+
+\bibitem{eger:blt}
+D.~Eger.
+\newblock Bit level types.
+\newblock \url{http://www-2.cs.cmu.edu/~eger/}.
+
+\bibitem{galax}
+M.~F. Fern\'andez, J.~Sim\'eon, B.~Choi, A.~Marian, and G.~Sur.
+\newblock Implementing {XQ}uery 1.0: {T}he {G}alax experience.
+\newblock In {\em VLDB}, pages 1077--1080. {ACM} Press, 2003.
+
+\bibitem{fisher+:pads}
+K.~Fisher and R.~Gruber.
+\newblock Pads: A domain specific language for processing ad hoc data.
+\newblock In {\em PLDI}, pages 295--304. {ACM} Press, June 2005.
+
+\bibitem{ford:packrat}
+B.~Ford.
+\newblock Packrat parsing:: simple, powerful, lazy, linear time.
+\newblock In {\em {ACM} International Conference on Functional Programming},
+  pages 36--47. {ACM} Press, Oct. 2002.
+
+\bibitem{ford:pegs}
+B.~Ford.
+\newblock Parsing expression grammars: a recognition-based syntactic
+  foundation.
+\newblock In {\em {ACM} Symposium on Principles of Programming Languages},
+  pages 111--122. {ACM} Press, Jan. 2004.
+
+\bibitem{grimm:packrat}
+R.~Grimm.
+\newblock Practical packrat parsing.
+\newblock Technical Report TR2004-854, New York University, Mar. 2004.
+
+\bibitem{gustafsson+:binaries}
+P.~Gustafsson and K.~Sagonas.
+\newblock Adaptive pattern matching on binary data.
+\newblock In {\em European Symposium on Programming}, pages 124--139. Springer,
+  Mar. 2004.
+
+\bibitem{harper:plbook}
+R.~Harper.
+\newblock {\em Programming Languages: Theory and Practice.}
+\newblock Unpublished, 2005.
+\newblock Available at \url{http://www-2.cs.cmu.edu/~rwh/}.
+
+\bibitem{igarasi+:featherweight}
+A.~Igarashi, B.~Pierce, and P.~Wadler.
+\newblock {Featherwieght Java}: a minimal core calculus for {Java} and {GJ}.
+\newblock In {\em {ACM} Conference on Object-oriented Programming, Systems,
+  Languages, and Applications}, pages 132--146. {ACM} Press, 1999.
+
+\bibitem{wpp}
+B.~Krishnamurthy and J.~Rexford.
+\newblock {\em Web Protocols and Practice}.
+\newblock Addison Wesley, 2001.
+
+\bibitem{landin:700}
+P.~J. Landin.
+\newblock The next 700 programming languages.
+\newblock {\em Communications of the {ACM}}, 9(3):157 -- 166, Mar. 1966.
+
+\bibitem{sigcomm00}
+P.~Mc{C}ann and S.~Chandra.
+\newblock Packet{T}ypes: {A}bstract specificationa of network protocol
+  messages.
+\newblock In {\em {ACM} Conference of Special Interest Group on Data
+  Communications}, pages 321--333. {ACM} Press, August 2000.
+
+\bibitem{newick}
+Tree formats. {Workshop} on molecular evolution.
+\newblock
+  \url{http://workshop.molecularevolution.org/resources/fileformats/tree_forma%
+ts.php}.
+
+\bibitem{antlr}
+T.~J. Parr and R.~W. Quong.
+\newblock {ANTLR}: A predicated- {\it ll(k)} parser generator.
+\newblock {\em Software -- practice and experience}, 25(7):789--810, July 1995.
+
+\bibitem{erlang-bits}
+C.~Wikstr\"{o}m and T.~Rogvall.
+\newblock Protocol programming in {Erlang} using binaries.
+\newblock In {\em Fifth International {Erlang/OTP} User Conference}, Oct. 1999.
+
+\end{thebibliography}
+
+%\bibliography{pads}
+
+%\newpage
+\appendix
+
+\section{Host Language}
+\label{app:host-lang}
+
+\subsection{Well-Formedness Rules}
+\label{app:well-form}
+
+\small
+
+\fbox{$\wfd \pctxt \ity$}
+
+\[
+\infer{\wfd \pctxt a}{}
+\quad
+\infer{
+  \wfd \pctxt {\ity \iarrowi \ity'}
+}{
+  \wfd \pctxt \ity &
+  \wfd \pctxt {\ity'}
+}
+\quad
+\infer{
+  \wfd \pctxt {\ity \iprodi \ity'}
+}{
+  \wfd \pctxt \ity &
+  \wfd \pctxt {\ity'}
+}
+\]
+
+\[%\quad
+\infer{
+  \wfd \pctxt {\isum \ity {\ity'}}
+}{
+  \wfd \pctxt \ity &
+  \wfd \pctxt {\ity'}
+}
+\quad
+\infer{
+  \wfd \pctxt {\iseqty \ity}
+}{
+  \wfd \pctxt \ity
+}
+\quad
+\infer{
+  \wfd \pctxt {\ierrty \ity}
+}{
+  \wfd \pctxt \ity
+}
+\]
+
+\[%\quad
+\infer{
+  \wfd \pctxt {\forall \ityvar.\ity}
+}{
+  \wfd {\pctxt,\ityvar} \ity
+}
+\quad
+\infer{
+  \wfd \pctxt  \ityvar
+}{
+  \ityvar \in \pctxt
+}
+\quad
+\infer{
+  \wfd \pctxt {\imu \ityvar \ity}
+}{
+  \wfd {\pctxt,\ityvar} \ity
+}
+\]
+
+\fbox{$\wfd \pctxt \ctxt$}
+
+\[
+\infer{
+  \wfd \pctxt \cdot
+}{}
+\quad
+\infer{
+  \wfd \pctxt {\ctxt,x:\ity}
+}{
+  \wfd \pctxt \ctxt & x \not\in \dom \ctxt & \wfd \pctxt \ity
+}
+\]
+
+\fbox{$\wfd \ctxt \rctxt$}
+
+\[
+\infer{\wfd \ctxt \cdot}{}
+\quad
+\infer{
+  \wfd \ctxt {\rctxt,\ptyvar=\pmu \ptyvar \ty}
+}{
+  \wfd \ctxt \rctxt \quad \ptyvar \not\in \dom \rctxt &
+  \ddck[\pmu \ptyvar \ty, \rctxt;\ctxt,\kty,\con]
+}
+\]
+
+\subsection{Typing Rules}
+\label{app:hl-typing}
+
+Constants are assigned types with the interface $\Icty$ and operators
+with $\Iopty$. Some example constants and their types are show below.
+\[
+\begin{array}{ll}
+ \Icty(\itrue) = \iboolty &
+ \Icty(\ifalse) = \iboolty \\
+ \Icty(\ierr) = \invty &
+ \Icty(\data) = \ibitsty \\
+ \Icty(\off) = \ioffty
+\end{array}
+\]
+
+
+% We use contexts $\pctxt$ to record the names of open type variables
+% and contexts $\ctxt$ to record the types of expression variables. The syntax of
+% $\pctxt$ and $\ctxt$ is as follows:
+% \begin{bnf}
+% \pctxt & \::= . \| \ctxt,\ityvar \\
+% \ctxt  & \::= . \| \ctxt,x{:}\ity
+% \end{bnf}
+
+% The typing judgment has the form $\stsem[e, \pctxt;\ctxt, \ity]$. When
+% the type-variable context $\pctxt$ is empty, we write $\stsem[e,
+% \ctxt, \ity]$ as an abbreviation.
+% % Note that \textit{T-Generalize} can only be used in the premise of a
+% % \texttt{let} expression.
+
+\[
+  \infer[\text{Const}]{
+    \stsem[\const,\pctxt;\ctxt,\Icty(\const)]
+  }{
+    \wfd \pctxt \ctxt
+  }
+\quad
+  \infer[\text{Var}]{
+    \stsem[\var,\pctxt;\ctxt,\ity]
+  }{
+    \wfd \pctxt \ctxt & \ctxt(\var) = \ity
+  }
+\]
+\[%\quad
+  \infer[\text{Op}]{
+    \stsem[\iop e,\pctxt;\ctxt,\ity]
+  }{
+    \Iopty({op}) = \ioparrow {\ity'} \ity &
+    \stsem[e,\pctxt;\ctxt,\ity']
+  }
+\]
+
+\[%\qquad
+%   \infer[\text{Abs}]{
+%     \stsem[\ilam{\nrm \var}{\ity'}{e},
+%     \ctxt,\ity' \iarrowi \ity]
+%   }{
+%     \stsem[e,\pctxt;\ectxt{\var{:}\ity'},\ity] &
+%     {\rm FTV}(\ity') \in \pctxt
+%   }
+% \quad
+  \infer[\text{Fun}]{
+    \stsem[\ifun {\nrm f} {\nrm x} e,
+           \pctxt;\ctxt,\ity' \iarrowi \ity]
+  }{
+    \stsem[e,\pctxt;\ectxt{f{:}\ity' \iarrowi \ity,x{:}\ity'},\ity]
+  }  
+\quad
+  \infer[\text{App}]{
+    \stsem[\iapp{e}{e'},\pctxt;\ctxt,\ity]
+  }{
+    \begin{array}{l}
+    \stsem[e,\pctxt;\ctxt,\ity' \iarrowi \ity]\\
+    \stsem[e',\pctxt;\ctxt,\ity']      
+    \end{array}
+  }
+\]
+
+\[%\qquad
+  \infer[\text{Let}]{
+    \stsem[{\ilet {\nrm x} {e'} \; e},
+           \pctxt;\ctxt,\ity]
+  }{
+%    \begin{array}{c}
+      \stsem[e',\pctxt;\ctxt,\ity'] &
+      \stsem[e,\pctxt;\ectxt{x{:}\ity'},\ity]
+%    \end{array}
+  }  
+% \quad
+%   \infer[\text{LetRec}]{
+%     \stsem[{\iletfun {\nrm f} {\nrm x} e \; \iin \; e'},
+%            \ctxt,\ity]
+%   }{
+%     \stsem[e,\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2,x{:}\ity_1},\ity_2] &
+%     \stsem[e',\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2},\ity] 
+%   }
+\]
+
+\[%\qquad
+  \infer[\text{Cond}]{
+    \stsem[\iif e \; \ithen {e_1} \; \ielse {e_2},\pctxt;\ctxt,\ity]
+  }{       
+    \stsem[e,\pctxt;\ctxt,\iboolty] &
+    \stsem[e_1,\pctxt;\ctxt,\ity] &
+    \stsem[e_2,\pctxt;\ctxt,\ity]
+  }
+\]
+\[%\quad
+  \infer[\text{Pair}]{
+    \stsem[\ipair {e_1}{e_2},\pctxt;\ctxt,\iprodty {\ity_1} {\ity_2}]
+  }{       
+    \stsem[e_1,\pctxt;\ctxt,\ity_1] &
+    \stsem[e_2,\pctxt;\ctxt,\ity_2]
+  }
+\quad
+  \infer[\text{Proj}]{
+    \stsem[\ipi{\nrm i}{e},\pctxt;\ctxt,\ity_i]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity_1 \iprodi \ity_2] 
+  }
+\]
+
+\[%\quad
+  \infer[\text{InL}]{
+    \stsem[\iinl e,\pctxt;\ctxt,\isum \ity {\ity'}]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity] &
+    \wfd \pctxt {\ity'}
+  }
+\quad
+  \infer[\text{InR}]{
+    \stsem[\iinr e,\pctxt;\ctxt,\isum \ity {\ity'}]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity'] &
+    \wfd \pctxt {\ity}
+  }
+\]
+
+\[%\qquad
+  \infer[\text{Case}]{
+    \stsem[\icaseg{e}{\nrm x}{e_l}{\nrm y}{e_r}
+    ,\pctxt;\ctxt,\ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\isum {\ity_l} {\ity_r}] &
+    \stsem[e_l,\pctxt;\ectxt{x{:}\ity_l},\ity] &
+    \stsem[e_r,\pctxt;\ectxt{y{:}\ity_r},\ity]
+  }
+\]
+
+\[
+  \infer[\text{Empty}]{
+    \stsem[\ieseq,\pctxt;\ctxt,\iseqty \ity]
+  }{
+    \wfd \pctxt \ctxt & \wfd \pctxt \ity
+  }
+\]
+\[%\quad
+  \infer[\text{Seq}]{
+    \stsem[\iarr{e_1 \cdots e_n},\pctxt;\ctxt,\iseqty \ity]
+  }{
+    \wfd \pctxt \ctxt & \stsem[e_i,\pctxt;\ctxt,\ity] \quad 
+    \mbox{(for $i=1 \ldots n$)}
+  }
+\]
+
+\[
+  \infer[\text{Append}]{
+    \stsem[\iappend e {e'},\pctxt;\ctxt,\iseqty \ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
+    \stsem[e',\pctxt;\ctxt,\iseqty \ity]
+  }
+\]
+\[%\quad
+  \infer[\text{Sub}]{
+    \stsem[\isub e {\nrm {e'}},\pctxt;\ctxt,\isum \ity \iunitty]
+  }{
+    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
+    \stsem[e',\pctxt;\ctxt,\iintty]    
+  }
+\]
+
+\[
+  \infer[\text{Roll}]{
+    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
+  }{
+    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
+  }
+  \quad
+  \infer[\text{Unroll}]{
+    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
+  }{
+    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
+  }
+\]
+
+\[%\qquad
+  \infer[\text{Generalize}]{
+    \stsem[v,\pctxt;\ctxt,\forall \ityvar.\ity]
+  }{
+    \stsem[v,{\pctxt,\ityvar;\ctxt},\ity] & 
+    (\ityvar \not\in {\rm FTV}(\ctxt))
+  }
+\]
+\[%\quad
+  \infer[\text{Instantiate}]{
+    \stsem[\expr,{\pctxt;\ctxt},{\ity[\ity'/\ityvar]}]
+  }{
+    \stsem[\expr,\pctxt;\ctxt,\forall \ityvar.\ity]
+  }
+\]
+
+\subsection{Evaluation Rules}
+\label{app:hl-evaluation}
+
+\begin{bnf}
+\name{Evaluation} \meta{E} \::= 
+  [] \| \iop{E} \| \iapp E e \| \iapp v E \\
+\name{Contexts} \meta{} \| &
+  \ilet {\nrm x} E \; e \nlalt
+  \iif E \; \ithen {e_1} \; \ielse {e_2} \nlalt
+  \ipair E e \| \ipair v E \| \ipi{\nrm i}{E} \nlalt
+  \iinld \ity E \| \iinrd \ity E \nlalt
+  \icaseg E {\nrm x} e {\nrm x} {e'} \nlalt
+  \iarr{\vec v \, E \, \vec{e}} \| 
+  \iappend E e \| \iappend v E \nlalt
+  \isub e E \| \isub v E \\
+\end{bnf}
+
+We specify the implementation of an operator with
+$\mathcal{O}({op},v)$. 
+% Most of the rules are standard, although the
+% sequence rules are new. Append appends the contents of the second
+% array to that of the first array, while Sub extracts the element at
+% index i, if i is within the bounds of the array. If not, the
+% expression fails.
+
+\[
+\infer[\text{Op}]{
+  \iop v \stepsto v'
+}{
+  \mathcal{O}({op},v) = v'
+}
+% \quad
+% \infer[\text{App}]{
+%   \iapp v {v'} \stepsto e[v'/x]
+% }{
+%   (v = \ilam {\nrm x} {} e)
+% }
+\quad
+\infer[\text{App}]{
+  \iapp v {v'} \stepsto e[v/f][v'/x]
+}{
+  (v = \ifun {\nrm f}{\nrm x} e)
+}
+\]
+\[%\quad
+\infer[\text{Let}]{
+  \ilet {\nrm x} v \; e
+  \stepsto e[v/x]
+}{}
+% \quad
+% \infer[\text{LetRec}]{
+%   \iletfun {\nrm f} {\nrm x} e \; \iin \; e'
+%   \stepsto e'[{\ifun {\nrm f} {\nrm x} e}/f]
+% }{}
+\]
+
+\[
+\infer[\text{{IfTrue}}]{
+  \iif \itrue \; \ithen e \; \ielse {e'} \stepsto
+  e
+}{}
+\]
+\[%\quad
+\infer[\text{{IfFalse}}]{
+  \iif \ifalse \; \ithen e \; \ielse {e'} \stepsto
+  e'
+}{}
+\]
+
+\[
+\infer[\text{Proj1}]{
+  \ipi 1 {\ipair v {v'}} \stepsto v
+}{}
+\quad
+\infer[\text{Proj2}]{
+  \ipi 2 {\ipair v {v'}} \stepsto v'
+}{}
+\]
+
+\[
+\infer[\text{CaseL}]{
+  \icaseg{\iinl v}{\nrm x}{e_l}{\nrm y}{e_r}
+  \stepsto {e_l}[v/x]
+}{}
+\]
+
+\[%\quad
+\infer[\text{CaseR}]{
+  \icaseg{\iinr v}{\nrm x}{e_l}{\nrm y}{e_r}
+  \stepsto {e_r}[v/y]
+}{}
+\]
+
+\[
+\infer[\text{Append}]{
+  \iappend {\iarr{\vec v_1}} {\iarr{\vec v_2}} \stepsto
+  {\iarr{\vec v_1 \, \vec v_2}}
+}{}
+\quad
+\infer[\text{EmptySub}]{
+  \isub \ieseq {\nrm i} \stepsto \iinr{\iuval}
+}{}
+\]
+
+\[
+\infer[\text{SubIn}]{
+  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
+  \stepsto \iinl {v_{i}}
+}{
+  0 \leq i < n
+}
+\quad
+\infer[\text{SubOut}]{
+  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
+  \stepsto \iinr{\iuval}
+}{
+  i \geq n
+}
+\]
+
+\[
+\infer[\text{Step}]{
+  E[e] \stepsto E[e']
+}{
+  e \stepsto e'
+}
+\]
+
+\section{Helper Functions}
+\label{app:asst-functions}
+
+\trversion{
+%% Maps pads base types to implementation language base types
+\begin{description}
+\item $\Ikind : {Const} \rightarrow {Kind}$.
+\item $\Irty : {Const} \rightarrow {Type}$.
+% \item $\Ipdty : {Const} \rightarrow {Type}$.
+\item $\Iimp : {Const} \rightarrow {Expression}$.
+\end{description}
+}
+
+% In defining the parsing functions, we use the following helper functions:
+
+Generic Helpers:
+
+{\small
+\begin{itemize}
+\renewcommand{\labelitemi}{}
+%\begin{description}
+\item $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
+
+\item $\codefont{scanMax} : \iintty$
+
+\item $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
+\item $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
+\item $\ifun {isOk} p {\codefont{pos(p.h.nerr) = 0}}$
+\item $\ifun {isErr} p {\codefont{pos(p.h.nerr) = 1}}$
+
+\item $\ifun {max\_ec} {\ictup{ec_1, ec_2}} {}$ \\
+  $\begin{array}{l}
+    \iif {\codefont{ec_1} = \iecpc \iori \codefont{ec_2} = \iecpc}\; \ithen \iecpc \\
+    \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
+    \ielse \iok
+   \end{array}$
+\end{itemize}
+%\end{description}
+}
+
+% We define for each \ddc{} type a pair of constructor functions, one to build a representation and another to build a parse descriptor.
+% The type of PD headers is $\iintty
+%   \iprodi \iecty \iprodi \ispty$. We refer to the projections using
+%   dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
+%   $\codefont{sp}$, respectively. A span is a pair of offsets, referred
+%   to as $\codefont{begin}$ and $\codefont{end}$, respectively. Array
+%   bodies have type $\iintty \iprodi \iintty \iprodi (\iseq \ity)$ (for
+%   element type $\ity$). We refer to the projections as
+%   $\codefont{neerr}$, $\codefont{length}$ and $\codefont{elts}$,
+%   respectively.  
+
+\noindent
+Type-Specific Helpers:
+
+{\small
+\begin{itemize}
+\renewcommand{\labelitemi}{}
+
+\item %[Unit:]
+\item $\ifun {R_{unit}} \iuval \iuval$
+\item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+
+\item %[Bottom:]
+\item $\ifun {R_{bottom}} \iuval \ierr$
+\item $\ifun {P_{bottom}} \off ((1,\iecpc,\ipair \off \off),())$
+
+\item %[Pair:]
+\item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
+\item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
+  $\begin{array}{l}
+    \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+    \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
+    \quad \ictup {nerr,ec,sp}
+  \end{array}$
+
+\item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
+
+\item %[Sum:]
+\item $\ifun {R_{+left}} r {\iinl {\codefont r}}$
+\item $\ifun {R_{+right}} r {\iinr {\codefont r}}$
+
+\item $\ifun {H_+} h {\ictup{pos(h.nerr),h.ec,h.sp}}$
+\item $\ifun {P_{+left}} p {\ictup{\codefont{H_+} \iappi p.h, \iinl p}}$
+\item $\ifun {P_{+right}} p {\ictup{\codefont{H_+} \iappi p.h, 
+      \iinr  p}}$
+
+\item %[Intersection:]
+\item $\ifun {R_{\&}} {\ictup {r,r'}} {\ictup {r,r'}}$
+\item $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
+    $\begin{array}{l}
+      \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+      \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+      \quad \ielse{\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+      \ilet {sp} {\ictup{h_1.sp.begin, max \itup{h_1.sp.end, h_2.sp.end}}} \\
+      \quad \ictup {nerr,ec,sp}
+    \end{array}$
+
+\item $\ifun {P_{\&}} {\ictup {p_1,p_2}} {\ictup{H_{\&} \iappi 
+      \itup{p_1.h, p_2.h},\itup{p_1,p_2}}}$
+
+\item %[Set:]
+\item $\ifun {R_{con}} {\ictup{c,r}} {
+    \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\codefont r}}
+  }$ 
+\item $\ifun {P_{con}} {\ictup {c, p}} {}$ \\
+    $\begin{array}{l}
+      \iif {\codefont c} \; \ithen {\ictup{(pos(p.h.nerr),p.h.ec,p.h.sp),p}} \\
+      \ielse {\ictup {(1 + pos(p.h.nerr),\maxec \iecerr {p.h.ec},p.h.sp),p}}
+    \end{array}$
+ \end{itemize}
+
+ \begin{itemize}
+ \renewcommand{\labelitemi}{}
+
+\item %[Array:] 
+\item $\ifun {R_{seq\_init}} {\iuval} {\ictup{0,\ieseq}}$   
+\item $\ifun {P_{seq\_init}} \off {\ictup{(0,\iok,\ipair \off
+      \off),(0,0,\ieseq)}}$
+
+\item $\ifun {R_{seq}} {\ictup{r, r_e}} 
+  {\ictup{r.len+1,\iappend{r.elts} {\iarr{r_e}}}}$
+\item $\ifun {H_{seq}} {\ictup{h, h_s, h_e}} {}$ \\
+  $\begin{array}{l}
+      \ilet {eerr} {
+        \codefont{\iif {h.neerr = 0 \mathrel{and} h_e.nerr > 0}}\\
+        \codefont{\quad \ithen 1 \;  \ielse 0}
+      }\\
+      \ilet {nerr} {\codefont{h.nerr + pos(h_s.nerr) + eerr}}\\
+      \ilet {ec} {\iif{\codefont{h_e.ec} = \iecpc}\; \ithen {\iecpc}\\
+      \quad \ielse{\maxec {\codefont{h.ec}} {\codefont{h_e.ec}}
+          }} \\
+      \ilet {sp} {\ictup{h.sp.begin,h_e.sp.end}} \\
+      \quad \ictup {nerr,ec,sp}
+    \end{array}$
+
+\item $\ifun{P_{seq}} {\ictup{p, p_s, p_e}}{}$ \\ 
+  $\begin{array}{l}
+    \codefont{(H_{seq} \iappi \itup{p.h,p_s.h,p_e.h},}\\ 
+    \codefont{\itup{p.neerr + pos(p_e.h.nerr), p.len + 1,\iappend {p.elts}
+        {\iarr{p_e}}})}
+  \end{array}$
+
+\item %[Compute:]
+\item $\ifun{R_{compute}} r {\codefont r}$
+\item $\ifun{P_{compute}} \off {\ictup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+
+\item %[Absorb:]
+\item $\ifun {R_{absorb}} p {\iif {\pdok p}\; 
+    \ithen {\iinl \iuval}\; \ielse {\iinr \ierr}}$
+\item $\ifun {P_{absorb}} p {\ictup{p.h,\iuval}}$
+
+\item %[Scan:]
+\item $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
+\item $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
+$\begin{array}{l}
+\ilet {nerr} {\codefont{pos(i) + pos(p'.h.nerr)}}\\
+\ilet {ec} {\iif {\codefont{nerr = 0}}\; \ithen \iok\; \ielse \iecerr} \\
+\ilet {hdr} {\ictup{nerr,ec,(p.sp.begin - i,p.sp.end)}} \\
+\quad \ictup{hdr,\iinl {\ictup{i,p}}}
+\end{array}$
+
+\item $\ifun {R_{scan\_err}} {()} {\iinr \ierr}$
+\item $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,\iecpc,(\off,\off)}}}$\\
+  \verb+ +$\ictup{hdr,\iinr \iuval}$
+%% \item[Transform:]
+%% \item \fnm{P_T} (h,b) = (h,(???,b))
+\end{itemize}
+}
+\trversion{
+\begin{lemma}[Function Types]
+  $\stsem[\codefont{isOk},
+  \codefont{pos}{:}\iintty \iarrowi \iintty,
+  \forall \ga.\ipty \ga \iarrowi \iboolty]$.
+\end{lemma}
+}
+
+\trversion{
+\section{Conditions on Base Types}
+\label{app:meta-theory}
+\begin{condition}[Conditions on Base-type Interfaces]
+\label{cond:base-types}
+  \begin{enumerate}
+  \item $\dom {\Ikind} = \dom {\Iimp}$.
+  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
+    \iarrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$ of type $\ity$).
+  \item $\stsem[\Iimp(C),,\Iopty(C)]$.
+    \label{cond:closed-op}
+  \item If $\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and
+    $\Iimp(C) \sapp v \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$
+    then $\corr {\pbase v} r p $.
+  \end{enumerate}
+\end{condition}
+\noindent
+Note that by condition~\ref{cond:closed-op}, base type parsers must
+be closed.
+}
+
+\section{Complete \ipads{} Encoding in \ddc{}}
+\label{app:ipads-to-ddc}
+
+\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer{ 
+     \itmv \cipads \ty \; \text{prog}
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+\infer{ 
+  \ga = \itmv; \; p \cipads \ty \; \text{prog}
+}{
+  p[\itmv/\ga] \cipads \ty \; \text{prog}
+}
+\qquad
+  \infer{ 
+      \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
+  }{
+     p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$ \itmv  \cipads \ty$}
+
+\[
+  \infer{ 
+     \pbase e \cipads \pbase e
+  }{}
+\qquad
+  \infer{ 
+     \Pfun (x:\ity) = \itmv \cipads \plam x
+    \ity \ty
+  }{
+    \itmv \cipads \ty
+  }
+\qquad
+  \infer{ 
+     \itmv \; e \cipads \ty \; e
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
+\[
+%\qquad
+  \infer{
+    \begin{array}{l}
+     \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+    \cipads \\
+    \quad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n
+   \end{array}
+  }{ 
+    \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer{
+    \begin{array}{l}
+       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads \\
+      \quad \ty_1 + \dots + \ty_n + \pfalse
+    \end{array}
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\]
+
+\[
+%\qquad
+  \infer{
+     \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
+    \ty_1 \& \dots \& \ty_n
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer{
+     \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
+\[
+  \infer{
+    \begin{array}{l}
+       \itmv \; \Pwhere \, x.e \cipads  \\
+      \quad
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+    \end{array}
+  }{ 
+    \itmv \cipads \ty
+  }
+\]
+
+\[
+  \infer{
+     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+  }{ 
+    \itmv \cipads \ty & 
+    \itmv_{sep} \cipads \ty_s &
+    \itmv_{term} \cipads \ty_t &
+    (f = \ilam x{}\ifalse)
+  }
+\]
+
+\[
+  \infer{ 
+    \begin{array}{l}
+      \Pcompute{} \; e{:}\ity \cipads \\
+      \quad \pcompute e \ity      
+    \end{array}     
+  }{}
+\qquad
+  \infer{ 
+     \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+  }{
+    \defty \const \ty
+  }
+\]
+
+\[
+  \infer{ 
+     \ga \cipads \ga
+  }{}    
+\qquad\qquad
+  \infer{ 
+     \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
+
+
+
+
+\end{document}
+
+
