@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
       error(2, "<note>read call did not advance IO cursor, stopping read loop</note>");
       break;
     }
-    if (P_ERR == PADS_TY(_write_xml_2io)(pads, io, &pd, &rep, (const char*)0, 0) EXTRA_READ_ARGS ) {
+    if (P_ERR == PADS_TY(_write_xml_2io)(pads, io, &pd, &rep, (const char*)0, 0 EXTRA_READ_ARGS) ) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
 #ifdef POST_SKIP_BYTES
