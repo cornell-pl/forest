@@ -109,6 +109,9 @@ PDCI_DEF_BASE_PATH_WALK(Puint16);
 PDCI_DEF_BASE_PATH_WALK(Puint32);
 PDCI_DEF_BASE_PATH_WALK(Puint64);
 
+PDCI_DEF_BASE_PATH_WALK(Pfloat32);
+PDCI_DEF_BASE_PATH_WALK(Pfloat64);
+
 Perror_t Ppos_t_node_pathWalk(P_t *pads, Pbase_pd *pd, Ppos_t *pos, PDCI_path_t path, void **pd_out, void **rep_out)
 {
   PDCI_childIndex_t idx;

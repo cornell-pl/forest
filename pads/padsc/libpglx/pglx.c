@@ -338,6 +338,32 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
   return res; \
 }
 
+#define PDCI_IMPL_TYPED_VALUE_FLOAT(ty) \
+item ty ## _typed_value (PDCI_node_t *node) \
+{ \
+  item       res = 0; \
+  double     d   = (double)*((ty*)node->rep); \
+  if (galax_atomicFloat(d, &res)) { \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+  } \
+  return res; \
+}\
+\
+item ty ## _sndNode_typed_value (PDCI_node_t *node) \
+{ \
+  item       res = 0; \
+  double     d;\
+\
+  /* Make sure that the node is valid before attempting to access its contents. */ \
+  PDCI_sndNode_validate(node);\
+  d = (double)*((ty*)node->rep); \
+\
+  if (galax_atomicFloat(d, &res)) { \
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
+  } \
+  return res; \
+}
+
 #define PDCI_IMPL_TYPED_VALUE_INT(ty) \
 item ty ## _typed_value (PDCI_node_t *node) \
 { \
@@ -377,12 +403,6 @@ item ty ## _typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
   int          r   = *((ty*)node->rep); \
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd; \
-  Pbase_pd   tpd; \
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
   if (galax_atomicInteger(r, &res)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
@@ -2200,6 +2220,17 @@ PDCI_cstr_val_sndNode_vtable = {PDCI_error_cachedNode_init,
 
 /* Impl some base type children and typed_value functions and
    associated vtable/val_vtable pairs */
+
+PDCI_IMPL_BASE_VT(Pip);
+PDCI_IMPL_BASE_VAL_VT(Pip);
+
+PDCI_IMPL_BASE_VT(Pfloat32);
+PDCI_IMPL_TYPED_VALUE_FLOAT(Pfloat32)
+PDCI_IMPL_BASE_VAL_VT(Pfloat32);
+
+PDCI_IMPL_BASE_VT(Pfloat64);
+PDCI_IMPL_TYPED_VALUE(Pfloat64);
+PDCI_IMPL_BASE_VAL_VT(Pfloat64);
 
 PDCI_IMPL_BASE_VT(Pip);
 PDCI_IMPL_BASE_VAL_VT(Pip);

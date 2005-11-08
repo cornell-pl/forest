@@ -559,6 +559,9 @@ PDCI_DECL_NEW_VT(Puint16);
 PDCI_DECL_NEW_VT(Puint32);
 PDCI_DECL_NEW_VT(Puint64);
 
+PDCI_DECL_NEW_VT(Pfloat32);
+PDCI_DECL_NEW_VT(Pfloat64);
+
 /* We need one _val_vtable for each in-memory format.
    All of the PADS types that share an in-memory format 
    can share a vtable */
@@ -580,6 +583,9 @@ PDCI_DECL_VAL_VT(Puint8);
 PDCI_DECL_VAL_VT(Puint16);
 PDCI_DECL_VAL_VT(Puint32);
 PDCI_DECL_VAL_VT(Puint64);
+
+PDCI_DECL_VAL_VT(Pfloat32);
+PDCI_DECL_VAL_VT(Pfloat64);
 
 /* The cases where we can use vtable sharing */
 #ifdef FOR_CKIT

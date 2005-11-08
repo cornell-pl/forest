@@ -23,6 +23,7 @@ Perror_t ty ## _text_node_pathWalk(P_t *pads, ty *rep, PDCI_path_t path,void **r
 
 PDCI_DECL_BASE_PATH_WALK(Pchar);
 PDCI_DECL_BASE_PATH_WALK(Pstring);
+/* Is this #ifndef still necessary? --YHM */
 #ifndef FOR_CKIT
 PDCI_DECL_BASE_PATH_WALK(Pip);
 PDCI_DECL_BASE_PATH_WALK(Pdate);
@@ -37,6 +38,9 @@ PDCI_DECL_BASE_PATH_WALK(Puint8);
 PDCI_DECL_BASE_PATH_WALK(Puint16);
 PDCI_DECL_BASE_PATH_WALK(Puint32);
 PDCI_DECL_BASE_PATH_WALK(Puint64);
+
+PDCI_DECL_BASE_PATH_WALK(Pfloat32);
+PDCI_DECL_BASE_PATH_WALK(Pfloat64);
 
 extern const unsigned char Ppos_t_pathWidth;
 extern const unsigned char Ppos_t_pathMask;
