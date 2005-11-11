@@ -106,12 +106,21 @@ semantics, we interpret types simultaneously as the in-memory
 representation of the data described and as parsers for the
 data source. The parsing functions are robust, automatically detecting
 and recording errors in the data stream without halting parsing.  
-We show the parsers are type-correct, returning data whose type matches the simple-type interpretation of the specification. We also prove the parsers
+We show the parsers are type-correct, returning data whose type
+matches the simple-type interpretation of the specification. We also
+prove the parsers 
 are ``error-correct,'' accurately reporting the number of physical and
 semantic errors that occur in the returned data.  We use the calculus
 to describe the features of various data description languages, and we
 discuss how we have used the calculus to improve \pads{}.
 \end{abstract}
+\category{D.3.1}{Programming languages}{Formal Definitions and Theory---Semantics}
+
+\terms
+Languages Theory
+
+\keywords
+Data description language, domain-specific languages, dependent types
 
 
 \section{The Challenge of Ad Hoc Data Formats}
@@ -443,7 +452,7 @@ we have had to define and formalize a new correctness criterion
 for the language. 
 In a nutshell, rather than requiring input data to be error-free, we require
 that the internal data structures produced by parsing 
-satisfy their specification whereever the parse descriptor says they
+satisfy their specification wherever the parse descriptor says they
 will.  Our invariant allows
 data consumers to rely on the integrity of the internal data structures
 marked as error-free. 
@@ -468,7 +477,7 @@ ill-defined in the documentation we had available to us.
 % of \packettypes{}, its {\em overlays}, not found in \pads{}.
 % Our semantic investigation of overlays uncovered the fact that
 % they can be viewed as an syntactically 
-% unorthodcx (but very useful) form of intersection type.
+% unorthodox (but very useful) form of intersection type.
 % Moreover, though we have not done so yet, it should be straightforward to
 % add them to the \pads{} implementation by encoding them as
 % ``\Palternate{}s,'' \pads{} own form of intersection type.
@@ -506,14 +515,14 @@ as classifiers for parsed data.
 
 \item We define an important correctness criterion for our language,
 stating that all errors in the parsed data are reported in the parse 
-descriptor.  We prove \ddc{} parsers maintain this property.
+descriptor.  We prove \ddc{} parsers establish this property.
 
 \item We define \ipads{}, an idealized
 version of the \pads{} programming language
 that captures its essential features,
 and show how to give it a semantics by translating it into \ddc{}.  
 The process of defining the semantics led to the
-discovery of several bugs in the actual implemention.
+discovery of several bugs in the actual implementation.
 %\ipads{} can also be used to explore extensions to the existing \pads
 %infrastructure.  
 
@@ -534,10 +543,11 @@ We have integrated recursion into \pads{},
 using our theory as a guide. 
 \end{itemize}
 
-Section~\ref{sec:ipads} gives a gentle introduction to data description
-languages by introducing \ipads.  Sections~\ref{sec:ddc}, \ref{sec:ddc-sem} and \ref{sec:meta-theory}
-explain the syntax, semantics and metatheory of \ddc{}.
-Section~\ref{sec:encodings} discusses encodings of \ipads{}, \packettypes{}
+Section~\ref{sec:ipads} uses \ipads{} to gently introduce
+data description 
+languages.  Sections~\ref{sec:ddc}, \ref{sec:ddc-sem}, and \ref{sec:meta-theory}
+explain the syntax, semantics, and metatheory of \ddc{}.
+Section~\ref{sec:encodings} discusses encodings of \ipads{}, \packettypes{},
 and \datascript{} in \ddc{} and \secref{sec:applications}
 explains how we have already made use of our semantics in practice.  
 Sections~\ref{sec:related} and 
@@ -662,7 +672,7 @@ type) that determines the value of the associated field.  In the example, the
 field {\tt academic} computes a boolean that indicates whether 
 the web request came from an academic site. Notice that the computation
 depends upon a host language value constructed earlier --- the value
-stored in the {\tt client} field.  \ipads{} structs are a form
+stored in the {\tt client} field.  \ipads{} \Pstruct{}s are a form
 of dependent record and, in general, later fields may
 refer to the values contained in earlier ones.
 
@@ -687,7 +697,7 @@ between 100 and 599.
 Any value outside this range will be considered a semantic error.
 In general, a \Pwhere{} clause may be attached to 
 any type specification.  It closely resembles the 
-semantic constraints found in practical parser generators such as
+semantic constraints found in parser generators such as
 {\sc antlr}~\cite{antlr}.
 
 % Note that $\itmv \; \Pwhere{} \, x.e$ binds $x$ in $e$. 
@@ -732,31 +742,30 @@ entry\_t \Parray{}(\Peor, \Peof)
 tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] 
 "POST /scpt/confirm HTTP/1.0" 200 941
 \end{code}
-\caption{Sample Common Web Log Data. Each record is broken with a
-  newline to format it on this page.}
+\caption{Sample Common Web Log Data. We inserted a newline into each
+ record to fit the data in a column on this page.}
 \label{fig:ipads-clf-data}
 }
 \end{figure}
 
 \paragraph*{A Recursive \ipads{} Example.}
 Figure~\ref{fig:ipads-newick} presents a second \ipads{} example.
-In this example, \ipads{} describes the Newick format, a flat
+In this case, \ipads{} describes the Newick format, a flat
 representation of tree-structured data.  The leaves of the trees
-are names that describe an ``entity''.   In our variant of Newick, 
+are names that describe an ``entity.''   In our variant of Newick, 
 leaf names may be omitted.  If the leaf name does appear,
 it is followed by a colon and a number.  The number describes the ``distance''
-from the parent node.  Microbiologists often use
-distances to describe the
-number of genetic mutations that have to occur to move from the parent 
+from the parent node.  Microbiologists use distances to describe the
+number of genetic mutations that must occur to move from the parent 
 to the child.  An internal tree node may have any number of (comma-separated)
-children within parentheses.  Distances follow the closed-paren
+children within parentheses.  Distances follow the close-paren
 of the internal tree node.
 
 The Newick format and other formats that describe tree-shaped 
 hierarchies~\cite{geneontology,newick}
 provide strong motivation for including recursion in \ipads.  
 We have not been able to find any useable description of Newick data as
-simple sequences (structs and arrays) and alternatives (unions); some
+simple sequences (\Pstruct{}s and \Parray{}s) and alternatives (\Punion{}s); some
 kind of recursive description appears essential.
 The definition of the type {\tt tree\_t} introduces recursion.
 It also uses the type \Popt\ $t$, a trivial union that 
@@ -910,8 +919,7 @@ meaning.
 \ipads{}, expressions $e$ and types $\ity$ belong to the host
 language, defined in \secref{sec:host-lang}.
 The most basic types are $\ptrue$ and $\pfalse$, both of which consume
-no input and return unit as their
-representation.  The difference between them is that
+no input.  The difference between them is that
 the former always succeeds, while the latter always fails, a
 distinction recorded in the associated parse descriptors.
 The syntax $\pbase e$ denotes a base type $C$ parameterized by 
@@ -926,7 +934,7 @@ introduced in a recursive type.
 
 We provide abstraction $\plam x {} \ty$ and application
 $\papp \ty e$ so that we may parameterize types by expressions.
-Dependent product types $\psig x {\ty_1} {\ty_2}$ describe a sequence
+Dependent sum types $\psig x {\ty_1} {\ty_2}$ describe a sequence
 of values in which the second type may refer to the value of the first.
 Sum types $\psum {\ty_1} {} {\ty_2}$
 express flexibility in the data format, as they parse
@@ -954,9 +962,9 @@ checks if the sequence has $100$ elements would
 terminate a sequence when it reaches length $100$.  The type 
 $\ty_t$ is used when characters following the array will signal termination.
 For example, if a semi-colon signals the end of the array, then $\ty_t$ 
-should be $\pset{x}{\Pchar}{x = ';'}$. If no particular character or 
+should be $\pset{x}{\Pchar}{x = ';'}$. If no character or 
 string of characters
-signals the end of the array, $\ty_t$ can always be $\pfalse$.
+signals the end of the array, we use $\pfalse$ for $\ty_t$.
 
 Recursive types $\pmu \ptyvar \ty$ describe recursive data formats.
 The name $\ptyvar$ can be used in $\ty$ to refer to the recursive type
@@ -965,16 +973,16 @@ and causes a recursive call to $\ty$'s parser wherever it appears.
 \ddc{} also has a number of ``active'' types.
 These types describe actions to be taken during parsing
 rather than strictly describing the data format. Type $\pcompute e
-\ity$ allows us to include an element in the parsed output that
+\ity$ allows us to include a value in the output that
 does not appear in the data stream (although it is likely dependent on
-elements that do), based on the value of expression $e$.  In
-contrast, type $\pabsorb \ty$ parses data according to type $\ty$
+values that do), based on the expression $e$.  
+Conversely, type $\pabsorb \ty$ parses data according to type $\ty$
 but does not return its result. This behavior is useful for data
 that is important for parsing, but
-uninteresting to users of the parsed data, such as a separator. The last of the ``active''
+uninteresting to users of the data, such as a separator. The last of the ``active''
 types is $\pscan \ty$, which scans the input for 
 data that can be successfully transformed according to $\ty$. This type provides a form of error recovery
-as it allows us to discard unrecognized data until the ``recovery'' type $\ty$ is found.
+as it allows us to discard unrecognized data until we find the ``recovery'' type $\ty$.
 
 \subsection{\Implang{} Language}
 \label{sec:host-lang}
@@ -1033,9 +1041,9 @@ We use this host language both to encode the parsing semantics of \ddc{}
 and to write the expressions that can appear within \ddc{} itself.
 
 As the calculus is largely standard, we highlight only its
-unusual features. The constants include bitstrings $\data$; offsets $\off$,
-representing locations in bitstrings; and error codes $\iok$,
-$\iecerr$, and $\iecpc$, indicating success, success with errors and
+unusual features. The constants include bit strings $\data$; offsets $\off$,
+representing locations in bit strings; and error codes $\iok$,
+$\iecerr$, and $\iecpc$, indicating success, success with errors, and
 failure, respectively. We use the constant $\ierr$ to indicate a
 failed parse.  
 Because of its specific meaning, we forbid its use in user-supplied expressions
@@ -1044,7 +1052,7 @@ appearing in \ddc{} types.
 %source of its input. 
 Our expressions include arbitrary length
 sequences $\iarr{\vec e}$, sequence append $\iappend e
-{e'}$, and sequence indexing $\isub e {\nrm i}$.
+{e'}$, and sequence indexing $\isub e {\nrm e}$.
 
 The type $\invty$ is the singleton type of the constant $\ierr$.
 Types $\iecty$ and $\ioffty$ classify error codes and bit string
@@ -1062,8 +1070,8 @@ $\ispty$ for $\iprod \ioffty \ioffty$.  We often use
 pattern-matching syntax for pairs in place of explicit projections, as
 in $\lampair{\codefont e}$ and $\ilet {\itup{\off,r,p}} e\; e'$.  Although
 we have no formal records with named fields, we use a dot notation for
-commonly occuring projections. For example, for a pair $\mathtt x$ of
-rep and PD, we use $\codefont{x.rep}$ and $\codefont{x.pd}$ for the
+commonly occurring projections. For example, for a pair $\mathtt x$ of
+a representation and a PD, we use $\codefont{x.rep}$ and $\codefont{x.pd}$ for the
 left and right projections of $\codefont{x}$, respectively. \cut{Generally,
 the particular projection intended should be apparent from context,
 and will be specified when it is not.} Also, sums and products are
@@ -1078,13 +1086,16 @@ We use standard judgments for the static semantics
 \subsection{Example}
 \label{sec:ddc-example}
 
-As an example, we present an abbreviated description of the common log
+As an example, we present in \figref{fig:ddc-example} an abbreviated
+description of the common log 
 format as it might appear in \ddc{}. For brevity,
 this description does not fully capture the semantics of the
 \ipads{} description from \secref{sec:ipads}. Additionally, we
-use the standard abbreviation $\ty * \ty'$ for non-dependent products and introduce a number of type abbreviations
-in the form $\mathtt{name} = \ty$ before giving the type that describes the data source.
-
+use the standard abbreviation $\ty * \ty'$ for non-dependent products
+and introduce a number of type abbreviations 
+in the form $\mathtt{name} = \ty$ before giving the type that
+describes the data source. 
+\begin{figure}[tp]
 {\small
 \[
 \begin{array}{l}
@@ -1116,11 +1127,14 @@ in the form $\mathtt{name} = \ty$ before giving the type that describes the data
 }
 \end{array}
 \]}%
-\noindent
+\caption{Example Description in \ddc{}}
+\label{fig:ddc-example}
+\end{figure}
+
 In the example, we define type constructor $\mathtt{S}$ to encode literals
 with a constrained type. We also use the following
-informal translations: \Pwhere{} becomes a set-type, \Pstruct{} a
-series of dependent products, \Punion{} a series of sums, and
+informal translations: \Pwhere{} becomes a constrained type, \Pstruct{} a
+series of dependent sums, \Punion{} a series of sums, and
 \Parray{} a sequence. As the array terminates at the end of the file, we
 use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
 absence of termination condition and terminator, respectively.
@@ -1163,7 +1177,7 @@ strings to produce a representation and parse descriptor. We define
 the set of valid bit strings for each type to be those strings for
 which the PD indicates no errors when parsed.
 
-We begin with a kinding judgment that checks if
+We first define a kinding judgment that checks if
 a type is well formed. We then formalize
 the three-fold semantics of \ddc{} types.
 
@@ -1341,9 +1355,9 @@ Context $\rctxt$ is an ordered list of mappings between type variables and recur
 This context serves two purposes: first, to ensure the well-formedness
 of types with free type variables; and second, to provide mappings
 between recursive type variables and their associated types. 
-This second purpose leads us to consider a context $\rctxt$ to be a
-substitution from type variables to types. Application of such a
-substitution has the form $\asub \rctxt \ty$.
+This second purpose leads us to treat  a context $\rctxt$ as a
+substitution from type variables to types. 
+We use the notation $\asub \rctxt \ty$ to denote applying such a substitution.
 
 To ensure that recursive types have properly-shaped parse descriptors
 with a valid PD header (a condition necessary for the type safety of
@@ -1360,7 +1374,7 @@ As the rules are otherwise mostly straightforward, we highlight
 just two of them. We use the function $\Ikind$ to assign kinds to base types.
 While their kind does not differentiate them from type
 abstractions, base types are not well formed when not applied.  
-Once applied, all base types have kind $\kty$. The product rule
+Once applied, all base types have kind $\kty$. The dependent sum rule
 shows that the name of the first component is bound to a pair of a representation and corresponding PD.
 The semantic functions defined in the next section determine the type of this pair.
 Note that we apply $\rctxt$ to the type of the first component before
@@ -1492,7 +1506,7 @@ abbreviation for array PD body types, $\iaptyname \; \ity =
 data they describe is not parsed from the data source.}
 The $\pabsorbn$ PD
 type is $\iunitty$ as with its representation. We assume that just as
-the user does not want the represenation to be kept, so too the parse
+the user does not want the representation to be kept, so too the parse
 descriptor.  The $\pscann{}$ parse descriptor is either $\iunitty$, in case
 no match was found, or records the number of bits skipped before the
 type was matched along with the type's corresponding parse descriptor.
@@ -1694,8 +1708,7 @@ type was matched along with the type's corresponding parse descriptor.
 \item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
   $\begin{array}{l}
     \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
-    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+    \ilet {ec}  {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}} \\
     \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
     \quad \ictup {nerr,ec,sp}
   \end{array}$
@@ -1775,7 +1788,7 @@ error count of one and the $\iecpc$ error code. The semantics of base
 types applies the implementation of the base type's parser, provided
 by the function $\Iimp$, to the appropriate arguments.  Abstraction
 and application are defined directly in terms of \implang language
-abstraction and application.  Dependent pairs read the first element
+abstraction and application.  Dependent sums read the first element
 at $\off$ and then the second at $\off'$, the offset returned from
 parsing the first element.  Notice that we bind the pair of the
 returned representation and parse descriptor to the variable $\codefont{x}$
@@ -1860,7 +1873,7 @@ records no errors and reports a span of length 0, as no data is
 consumed by the computation. The $\pabsorbn$ parser first parses the
 underlying type and then calls the absorb constructors, passing only
 the PD, which is needed by the rep constructor to determine whether an
-error occured while parsing the underlying type. If so, the value
+error occurred while parsing the underlying type. If so, the value
 returned is a $\ierr$. Otherwise, it is $\iunitty$.  The absorb parse
 descriptor duplicates the error information of its underlying type.
 
@@ -2303,7 +2316,7 @@ $\corr \tyval r p$ iff exactly one of the following is true:
       $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and
       $\corrkl {\ty'}{r'}{p'}$.
   \item $\tyval = \pscan {\ty'}$,
-      $r =\iinr \ierr$,
+      $r = \iinr \ierr$,
       $p = \ipair h {\iinr \iuval}$, and
       $h.{nerr} = 1$.
   \end{itemize}
@@ -2360,10 +2373,10 @@ the Rep and PD constructors, as expressed in the following lemma.
 \end{proof}
 }
 
-Definition~\ref{def:err-corr} specifies the exact property we require
-of parsing functions. At base kind, we require that any representation and PD
-returned by the parser must be correlated. At higher kind, we require
-that the function preserve the property of error correlation. Hence,
+Definition~\ref{def:err-corr} specifies the property we require
+of parsing functions. At base kind, any representation and PD
+returned by a parser must be correlated. At higher kind, 
+the function must preserve error correlation. Hence,
 the definition is a simple form of logical relation.
 Lemma~\ref{lem:err-corr-at-T} states that any well-formed type of base
 kind is error-correlated.
@@ -2395,8 +2408,8 @@ If $\ddck[\ty,,\kind,\con]$ then $\ecpred \ty \kind$.
 \end{theorem}
 
 \begin{proof}
-  By induction on the size of the kind $\kind$. For $\kind = \kty$, we
-  use Lemma~\ref{lem:err-corr-at-T}.
+  By induction on the size of the kind $\kind$. 
+  \trversion{For $\kind = \kty$, we use Lemma~\ref{lem:err-corr-at-T}.}
 \end{proof}
 
 \trversion{
@@ -2818,7 +2831,7 @@ Finally, we briefly discuss some limitations of \ddc{}.
 \]
 }
 \caption{Selected Rules for Encoding \ipads{} in \ddc{}. The full
-  collection of rules appears in \appref{app:ipads-to-ddc}.}
+  collection appears in \appref{app:ipads-to-ddc}.}
   \label{fig:encode-ipads}
 \end{figure}
 }
@@ -2832,7 +2845,7 @@ formalize this translation. The judgment $p \cipads \ty\;
 as \ddc{} type $\ty$, while $\itmv \cipads \ty$ does the same
 for \ipads{} types $\itmv$.
 
-As much of the translation is straightforward, we mention only a few
+Much of the translation is straightforward, so we mention only a few
 important points.}
 \poplversion{
 We formalize the translation from \ipads{} to \ddc{}, described
@@ -2841,21 +2854,22 @@ informally in \secref{sec:ddc-example}, with two judgments:
 $p$ is encoded as \ddc{} type $\ty$, while $\itmv \cipads \ty$
 does the same for \ipads{} types $\itmv$.
 
-As much of the translation is straightforward, we present only
-selected rules in \figref{fig:encode-ipads}.}  Notice we add $\pbot$ as the
+Much of the translation is straightforward, so we present only
+selected rules in \figref{fig:encode-ipads}.}  We add $\pbot$ as the
 last branch of the \ddc{} sum when translating \Punion{} so that the
-parse will fail if none of the branches match rather than returning
-the result of the last branch.  \trversion{We based this behaviour
+parse will fail if none of the branches match.
+%rather than returning the result of the last branch.  
+\trversion{We based this behavior
   directly on the actual \pads{} language.}  In the translation of
 \Pwhere{}, we only check the constraint if the underlying value parsed
 with no errors. For \Parray{}s, we add simple error recovery by
-scanning for the separator type.  This behaviour allows us to easily
+scanning for the separator type.  This behavior allows us to 
 skip erroneous elements. We use the $\pscann$ type in the same way for
 \padskw{Plit}, as literals often appear as field separators in
-\Pstruct{}s.  We also absorb the literal as its value is known
-statically.  We use the function ${\rm Ty}(c)$ to determine the
-correct type for the particular literal. For example, a string
-literal would require a \Pstring{} type.
+\Pstruct{}s.  We absorb the literal as its value is known
+statically, using the function ${\rm Ty}(c)$ to determine the
+type of the particular literal. 
+% For example, a string literal would require a \Pstring{} type.
 
 \subsection{Beyond \ipads{}}
 
@@ -2865,15 +2879,16 @@ We now give semantics to three features not found in \ipads{}:
 A switched union, like a \Punion, indicates variability in the data
 format with a set of alternative formats (branches). However, instead
 of trying each branch in turn, the switched union takes an expression that
-determines which branch to use. Typically, this expression depends upon data read earlier in the parse. Each branch is preceded by a tag,
+determines which branch to use. Typically, this expression depends
+upon data read earlier in the parse. Each branch is preceded by a tag, 
 and the first branch whose tag matches the expression is selected.
-If none match then the default branch $\itmv_{\text{def}}$ is chosen.
+If no branch matches then the default branch $\itmv_{\text{def}}$ is chosen.
 The syntax of a switched union is $\Pswitch{}\;e\;\{\overrightarrow{e
   \Rightarrow x{:}\itmv}\; \itmv_{\text{def}}\}$.
 
 To aid in our translation of \Pswitch{}, we define a type $\iif e\;
 \ithen {\itmv_1}\; \ielse {\itmv_2}$ that allows us to choose
-between two types conditionally : 
+between two types conditionally: 
 \trversion{
 Our first attempt to
 translate the conditional relies on \ddc{} sums:
@@ -2907,8 +2922,8 @@ intersections:
     \begin{array}{l}
     \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
     \cipads \\
-    \qquad \qquad \quad c \iprodi \pand {({\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}})}
-    {({\psum {\pset x \ptrue {e}} {} {\ty_2}})}
+    \qquad \qquad \quad c \iprodi (\pand {({\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}})}
+    {({\psum {\pset x \ptrue {e}} {} {\ty_2}})})
     \end{array}
 }{
   \itmv_1 \cipads \ty_1 &
@@ -2920,9 +2935,9 @@ intersections:
 \noindent
 The computed value $c$ records which branch of the conditional is
 selected.  If the condition $e$ is true, $c$ will be 1, the left-hand
-side of the intesection will parse $\ty_1$ and the right will parse nothing.
-Otherwise, $c$ will be 2, the left-hand side will parse nothing and the
-right $\ty_2$.
+side of the intersection will parse $\ty_1$, and the right side will
+parse nothing. Otherwise, $c$ will be 2, the left-hand side will parse
+nothing, and the right $\ty_2$.
 % The computed value $c$ indicates which branch is to be taken and the
 % intersection parses exactly that branch of the conditional-type.  We
 % use a combination of constrained and sum type to guard each branch with a
@@ -2930,8 +2945,7 @@ right $\ty_2$.
 % false. We guarantee that exactly one branch is parsed by guarding the
 % two branches with mutually exclusive conditions. 
 
-Now, we can encode \Pswitch{} as syntactic sugar for a series of cascading
-conditional types.
+We can encode \Pswitch{} as a cascade of conditional types:
 {\small
 \[
 \begin{array}{l}
@@ -2962,51 +2976,54 @@ one within the other, as is done when one protocol is {\it
   encapsulated} within another. Overlay[s] introduce additional
 substructure to an already existing field.''~\cite{sigcomm00}.  For
 example, consider a network packet from a fictional protocol FP, where
-the packet body is represented as a simple byte-array. 
+the packet body is represented as a simple byte array. 
+
 \begin{code}
+\mbox{}
 FPPacket = \Pstruct \{
   header : FPHeader;
   body   : \Pbyte \Parray{}(\Pnosep,\Peof);
-\}\linebreak
-
+\}
+\mbox{}
 IPinFP = \Poverlay FPPacket.body \Pwith IPPacket
 \end{code}
+
+\noindent
 Type \Pnosep{} indicates that there are no separators between elements
-of the byte array. It can be encoded as \cd{\Pcompute{}(():unit)}, as
+of the array. It can be encoded as \cd{\Pcompute{}(():unit)}, as
 this type consumes no data and produces a unit value without errors.
 The overlay creates a new type \cd{IPinFP} where the body field is an
 \cd{IPPacket} rather than a simple byte array.
 
-We have developed a translation of the overlay syntax into \ddc{} (not
-shown due to space constraints).
+We have defined a translation of overlays into \ddc{} (omitted
+because of space constraints).
 Although overlays are conceptually intuitive, we discovered a critical
 subtlety, not mentioned by the authors, when formalizing their 
 semantics.  Any expressions in the
-original type that refer to the overlayed field may no longer be well
+original type that refer to the overlaid field may no longer be well
 typed after applying the overlay.
 \trversion{
 We thought to disallow such expressions in the
-overlayed type.However, we found this to be a difficult, if not
+overlaid type. However, we found this to be a difficult, if not
 impossible task. More importantly, such a restriction is unnecessary.
 Instead, we designed the translation so that the new type is
 checked for well formedness after the overlay process, an easy task
 in the \ddc{} framework.
 }
 \poplversion{
-It is therefore necessary for the translation to check the new type 
-for well formedness after the overlay process, which is an easy task
-in the \ddc{} framework.
+Thus the translation must check the new type 
+for well formedness after the overlay process.
+%, an easy task in the \ddc{} framework.
 }
 
 Finally, we introduce \datascript{}-style arrays for binary data,
-$\itmv\;[\mathit{length}]$. They are parameterized by an optional
+$\itmv\;[\mathit{length}]$. Such arrays are parameterized by an optional
 length field, instead of a separator and terminator. If the user
 supplies the length of the sequence, the array parser reads exactly
 that number of elements.  Otherwise, the parser continues until an
 element constraint is violated or the input is completely consumed.
 
-Fixed-length arrays can be encoded in a straightforward manner with
-\ddc{} sequences:
+We can encode fixed-length arrays with \ddc{} sequences:
 {\small
 \[
   \infer{
@@ -3016,7 +3033,8 @@ Fixed-length arrays can be encoded in a straightforward manner with
     \itmv \cipads \ty & 
     (f = \ilam {((len,elts),p)} {} {\codefont{len} = \mathit{length}})
   }
-\]}
+\]}%
+\noindent
 As these arrays have neither separators nor terminators, we use
 $\ptrue$ (always succeeds, parsing nothing)
 and $\pfalse$ (always fails, parsing nothing), 
@@ -3027,7 +3045,7 @@ $\mathit{length}$.
 
 Unbounded arrays are more difficult to encode as they must check the
 next element for parse errors without consuming it from the data
-stream. A termination predicate cannot encode this check as they
+stream. A termination predicate cannot encode this check as it%
 \trversion{are limited to the in-memory representation and PD and}
 cannot perform lookahead. Therefore, we must use the terminator type
 to look ahead for an element parse error. For this purpose, we
@@ -3065,8 +3083,8 @@ lookahead-terminator exclusively to terminate the array.  }
   {\ifalse} {\_} {\itrue}}
 \]
 \noindent
-Unbounded arrays with element type $\ty$ can now be encoded as
-sequences with terminator $\pnot \ty$.  }
+We can now encode unbounded arrays with element type $\ty$
+as sequences with terminator $\pnot \ty$.}
 
 While there are many more features that we can encode, space prevents us from
 detailing them here. To give a sense of what is possible, we
@@ -3075,17 +3093,18 @@ which we have found encodings in \ddc{}:
 \begin{itemize}
 \item \packettypes{}: arrays, where clauses, structures, overlays,
   and alternation.
-\item \datascript{}: constrained types (enumerations and bitmask sets),
-  arrays, constraints, value-parameterized types (which they refer to
-  as ``type parameters''), and (monotonically increasing) labels.
+\item \datascript{}: constrained types (enumerations and bitmasks),
+  arrays, constraints, value-parameterized types (which they call
+  ``type parameters''), and (monotonically increasing) labels.
 \end{itemize}
 
-We know of a couple of features from data description languages
-that we cannot implement in \ddc{} as it stands.  An example is a label construct that permits the user to rewind the input. However, we do not view 
-such limitations as particularly troublesome. Like the lambda 
-calculus or pi calculus,
-\ddc{} is intended to capture many common language features, while providing
-a convenient and effective basis for extension with new features.
+We know of some features of data description languages
+that we cannot currently implement in \ddc{}.  An example is a
+label construct that permits the user to rewind the input. We
+do not view such limitations as troublesome. Like the
+lambda or the pi calculus, we intend \ddc{} to capture
+common language features and to provide a convenient
+basis for extension with new features. 
 
 % Indeed, the two main features of \datascript{} that cannot currently
 % be encoded in \ddc{}, require only straightforward modifications or
@@ -3097,13 +3116,13 @@ a convenient and effective basis for extension with new features.
 \label{sec:applications}
 
 The development of \ddc{} and defining a semantics for \ipads{}
-has had a substantial impact on the real \pads{} implementation.
+has had a substantial impact on the \pads{} implementation.
 
 % In the previous section, we described a number of ways in which our
 % semantics helps us understand what the each DDL is. In this section,
 % we will provide examples of how the \ddc{} taught us about what
 % shouldn't be and questions about what \pads{} should be. In addition,
-% our work on recursive typs in \ddc{} helped guide us in adding
+% our work on recursive types in \ddc{} helped guide us in adding
 % recursive types to the actual \pads{} implementation. We describe the
 % implementation in \pads{} and the contributions of \ddc{} in the
 % second part of this section.
@@ -3116,15 +3135,16 @@ has had a substantial impact on the real \pads{} implementation.
 
 \subsection{Bug Hunting}
 
-We developed our semantics in part by going line-by-line through
-key parts of the \pads{} implementation to uncover implicit invariants in the
-code.  In the process of trying to understand and formalize these
-invariants we realized that our error accounting methodology was
-inconsistent, particularly in the case of arrays.   When we realized
+We developed our semantics in part by thoroughly reviewing
+key parts of the \pads{} implementation to uncover implicit
+invariants. 
+ In the process of formalizing these
+invariants, we realized that our error accounting methodology was
+inconsistent, particularly in the case of arrays.   When we identified
 the problem, we were able to formulate a clear rule to apply universally:
-each subcomponent adds 1 to the error count of its
-parent if and only if it has errors.  If we had not tried to 
-formalize our semantics, it is unlikely we would have made the
+each subcomponent adds one to the error count of its
+parent if and only if the subcomponent has errors.  If we had not  
+formalized our semantics, we most likely would not have made the
 error accounting rule precise, leaving our implementation buggy 
 and inconsistent.
 
@@ -3132,10 +3152,9 @@ The semantics also helped us avoid potential non-termination of array
 parsers. In the original implementation of \pads{} arrays, it was
 possible to write non-terminating arrays, a bug that was only
 uncovered when it hung a real program.  We have fixed the bug and used
-the semantics to verify our fix.~\footnote{The type {\tt nothing
-    array(nothing,eof)} where type {\tt nothing} consumes no input,
-  would not terminate in the orignal system.  A careful read of the
-  \ddc{} semantics of arrays, which has now been implemented in
+the semantics to verify our fix.~\footnote{The type {\tt unit
+    array(unit,eof)} would not terminate in the original system.  A careful reading of the
+  \ddc{} semantics of arrays, which we have now implemented in
   \pads{}, shows that array parsing terminates after an iteration in
   which the array parser reads nothing.}
 %With the formal semantics we can prove
@@ -3154,9 +3173,9 @@ the semantics to verify our fix.~\footnote{The type {\tt nothing
 % parent if and only if it had errors. However, when we got to arrays,
 % we noticed a deviation from this methodology. Further examination
 % revealed that the deviation was in fact a subtle bug. We were only
-% able to find it becuase of the conciseness provided by the semantics.
+% able to find it because of the conciseness provided by the semantics.
 
-%   Arbitrary behaviour of error accounting for arrays with regard
+%   Arbitrary behavior of error accounting for arrays with regard
 %   to element errors. The implementation only counts an element error
 %   if it is the first error to occur. Therefore, whether or not element
 %   errors affect the overall count depends on arbitrary other errors.
@@ -3217,7 +3236,7 @@ following two respects:
 
 \subsection{Distinguishing the Essential from the Accidental}
 
-In his 1965 paper, P.J. Landin asks ``Do the idiosyncracies [of a
+In his 1965 paper, P.~J.~Landin asks ``Do the idiosyncrasies [of a
 language] reflect basic logical properties of the situations that are
 being catered for?  Or are they accidents of history and personal
 background that may be obscuring fruitful developments?''  
@@ -3244,15 +3263,16 @@ the semantics of other \pads{} features (\eg, literals) elegantly.
 % types ($\pabsorbn$ and $\pcomputen$, respectively). Because of this
 % choice, we discovered that both can encode more \pads{} features than
 % just the qualifiers for which we had originally intended them. In this
-% case, then, the \ddc{} highlighed that the restriction of \Pomit{} and
-% \Pcompute{} to mere type qualifers for \Punion{} and \Pstruct{} fields
+% case, then, the \ddc{} highlighted that the restriction of \Pomit{} and
+% \Pcompute{} to mere type qualifiers for \Punion{} and \Pstruct{} fields
 % was an ``accident of history,'' rather than a ``basic logical
 % property'' of data description.
 
-Another accident in the
-\pads{} implementation is that there is no guarantee that
-certain features are ``safe.''  This is due on occasion to the fact that
-the \pads{} host language is \C{} and on occasion to the desire to implement
+Another accident in the \pads{} implementation is that it does not
+guarantee that certain features are ``safe.'' 
+In part, this omission arises from the fact that
+the \pads{} host language is \C{} and in part from 
+the desire to implement
 certain optimizations.  As an example, when a 
 semantic error in a \Pwhere{} clause is detected, the parser sets a flag.  
 However, the \C{} programmer is not forced to check this flag before using 
@@ -3290,7 +3310,7 @@ For this purpose, the \ddc{} is a much more appropriate starting point.
 % user.  The dilemma is that the user should be able to get at the
 % erroneous value somehow, if only for debugging purposes. In the
 % semantics, we choose to inject the value into a sum, to force the user
-% check the valeus tag before using it.  different choice. However, in
+% check the values tag before using it.  different choice. However, in
 % \C{}, there is no way to force such a check. Therefore, we left the
 % value alone. The semantics highlights that in a different language
 % binding, we might make a different decision.  Again, in the words of
@@ -3303,13 +3323,13 @@ We conclude with an example of another feature to which Landin's
 question applies, but for which we do not yet know the answer. The \Punion{}
 construct chooses between branches by searching for the first one
 without errors. However, this semantics ignores situations in which
-the correct branch in fact has errors. Often, this behavior will lead
-to parsing nothing and flagging a panic, rather than parsing the
-correct branch to the best of its ability.  The process of
-developing a semantics brought this fact to our attention and
-it now seems clear we would like a more robust
-\Punion, but we are not currently sure how to design one. 
-% would be desireable. Unfortunately, the design of such a
+the correct branch in fact has errors. Often, this behavior leads
+to parsing nothing and  panicking, rather than parsing the
+correct branch to the extent possible.  The process of
+developing a semantics brought this fact to our attention.
+It now seems clear that we should provide a more robust
+\Punion, but we are not yet sure how best to do so.
+% would be desirable. Unfortunately, the design of such a
 % \Punion{} is far from obvious. Once we leave a black-and-white model,
 % there is a lot of gray from which to choose. The question, then, is
 % whether the current semantics is an essential feature of such a union
@@ -3359,28 +3379,28 @@ it now seems clear we would like a more robust
 
 
 To our knowledge, we are the first to attempt to specify a semantics for
-data description languages based on types such as \packettypes{},
-\datascript{} or \pads.  
+type-based data description languages such as \packettypes{},
+\datascript{}, or \pads.  
 %Prior to our work, this family of languages 
 %was described informally and by example.  There was no precise
 %connection to formal dependent type theory.
 
 Of course, there are other formalisms for
 defining parsers, most famously, regular expressions and
-contex-free grammars.  In terms of recognition power,
+context-free grammars.  In terms of recognition power,
 these formalisms differ from our type theory
 in that they have nondeterministic choice, but do not have
 dependency or constraints.  We have found that 
-dependency and constraints are absolutely essential for
-describing most of the ad hoc data sources we have studied.
-Perhaps more importantly though, unlike standard theories of
+dependency and constraints are essential for
+describing the ad hoc data sources we have studied.
+Perhaps more importantly, unlike standard theories of
 context-free grammars,
 we do not treat our type theory merely as a recognizer for
 a collection of strings.  Our type-based descriptions 
 define {\em both} external data formats {\em and} 
 rich invariants on %(\ie{} types for)
 the internal parsed data structures.  This dual interpretation
-of types lies at the heart of tools such as \pads, \datascript{} and
+of types lies at the heart of tools such as \pads, \datascript{}, and
 \packettypes{}.  
 %\pads{} programmers, for instance, demand that
 %representations produced by their \pads{} parsers have the expected type and 
@@ -3390,15 +3410,15 @@ of types lies at the heart of tools such as \pads, \datascript{} and
 %this elements of data description languages.
 
 {\em Parsing Expression Grammars} (PEGs),
-studied in the early 70s~\cite{birman+:parsing} and revitalized more 
+studied in the early seventies~\cite{birman+:parsing} and revitalized more 
 recently by Ford~\cite{ford:pegs}, 
 evolved from context-free grammars but
 have deterministic, prioritized choice like \ddc{} as opposed to
 nondeterministic choice.  Though PEGs have syntactic lookahead operators,
 they may be parsed in linear time through the use of
 ``packrat parsing'' techniques~\cite{ford:packrat,grimm:packrat}.
-Once again, the dual interpretation of types in \ddc{} both as
-data descriptions and as classifiers for internal representations
+Once again, the dual interpretation of types in \ddc{} as both
+data descriptions and classifiers for internal representations
 make our theory substantially different from the theory of PEGs.
 %In practice, PEGs has not been used to parse ad hoc data.
 
@@ -3408,7 +3428,7 @@ parsing and appears roughly similar in recognition power to PEGs and \ddc.
 {\sc antlr} also allows programmers to place annotations
 in the grammar definitions to guide construction of an abstract syntax
 tree. However, all nodes in the abstract syntax tree have a 
-single type, hence the guidance is rather crude when compared with
+single type, hence the guidance is coarse when compared with
 the richly-typed structures that can be constructed using
 \ddc.
 
@@ -3433,50 +3453,106 @@ the richly-typed structures that can be constructed using
 % define our parsing semantics in the polymorphic lambda calculus,they
 % potentialy provide a more elegant alternative.
 
+There are many parallels between \ddc{} and {\it parser
+combinators}~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
+In particular, \ddc{}'s dependent sum construct is 
+reminiscent of the bind operator in the monadic formulation of parser
+combinators.  Indeed, we can model dependent sums in Haskell as:
+\begin{code}
+\mbox{}
+sigma :: P s -> (s->P t) -> P (s,t)
+sigma m q = do \{x <- m; y <- q x; return (x,y)\}
+\mbox{}
+\end{code}%
+\noindent
+Parser combinators, however, are a general approach to specifying
+recursive descent parsing, whereas we have targeted \ddc{}
+to the domain of parsing ad hoc data. This focus leads to 
+many features not found in parser combinators, including the implicit
+type/value correspondence, the error response mechanism, and 
+arrays. Each of these features is as fundamental to \ddc{} as 
+dependent sums. These two approaches
+demonstrate the idea of a spectrum of domain-specificity in
+languages. The relationship between parser combinators and \ddc{} is
+like the relationship between a general purpose language and parser
+combinators themselves. That is, while parser combinators form an
+(embedded) domain-specific language, \ddc{} constructs form a language 
+that is even more domain-specific. 
+
+
+
 % % {\em Mention dependent type theory work?}
 
 
 \section{Conclusion} 
 \label{sec:conclusion}
-Ad hoc data is pervasive and valuable: in industry, in medicine, and in scientific research.  Such data tends to have poor documentation, to contain various kinds of errors, and to be voluminous.  Unlike well-behaved data in standardized relational or \xml{} formats, such data has little or no tool support, forcing data analysts and scientists to waste valuable time writing brittle custom code, even if all they want to do is convert their data into a well-behaved format.  To improve the situation, various researchers have developed data description languages such as \pads{}, \datascript{}, and \packettypes{}.  Such languages allow analysts to write terse, declarative descriptions of ad hoc data.  A compiler then generates a parser and customized tools.  Because these languages are tailored to their domain, they can provide useful services automatically while a more general purpose tool, such as lex/yacc or \perl{}, cannot.
+Ad hoc data is pervasive and valuable: in industry, in medicine, and
+in scientific research.  Such data tends to have poor documentation,
+to contain various kinds of errors, and to be voluminous.  Unlike
+well-behaved data in standardized relational or \xml{} formats, such
+data has little or no tool support, forcing data analysts and
+scientists to waste valuable time writing brittle custom code, even if
+all they want to do is convert their data into a well-behaved format.
+To improve the situation, various researchers have developed data
+description languages such as \pads{}, \datascript{}, and
+\packettypes{}.  Such languages allow analysts to write terse,
+declarative descriptions of ad hoc data.  A compiler then generates a
+parser and customized tools.  Because these languages are tailored to
+their domain, they can provide useful services automatically while a
+more general purpose tool, such as lex/yacc or \perl{}, cannot. 
 
-In the spirit of Landin, we have taken the first steps toward specifying a semantics for this class of languages by defining the data description calculus \ddc{}.  This calculus, which is a dependent type theory with a simple set of orthogonal primitives, is expressive enough to describe the features of \pads{}, \datascript{}, and \packettypes{}.  In keeping with the spirit of the data description languages, our semantics is transformational: instead of simply recognizing a collection of input strings, we specify how to transform those strings into canonical in-memory representations annotated with error information.  Furthermore, we prove that the error information is meaningful, allowing analysts to rely on the error summaries rather than having to re-vet the data by-hand. 
+In the spirit of Landin, we have taken the first steps toward
+specifying a semantics for this class of languages by defining the
+data description calculus \ddc{}.  This calculus, which is a dependent
+type theory with a simple set of orthogonal primitives, is expressive
+enough to describe the features of \pads{}, \datascript{}, and
+\packettypes{}.  In keeping with the spirit of the data description
+languages, our semantics is transformational: instead of simply
+recognizing a collection of input strings, we specify how to transform
+those strings into canonical in-memory representations annotated with
+error information.  Furthermore, we prove that the error information
+is meaningful, allowing analysts to rely on the error summaries rather
+than having to re-vet the data by hand.  
 
-We have already used the semantics to identify bugs in the implementation of \pads{} and to highlight areas where \pads{} sacrifices safety for speed. In addition, when various biological data sources motivated adding recursion to \pads{}, we used \ddc{} for design guidance.  After adding recursion, \pads
+We have already used the semantics to identify bugs in the
+implementation of \pads{} and to highlight areas where \pads{}
+sacrifices safety for speed. In addition, when various biological data
+sources motivated adding recursion to \pads{}, we used \ddc{} for
+design guidance.  After adding recursion, \pads 
 {} can now describe the biological data sources. Finally \ddc{} has provided insight into how to design a safe overlay concept. 
 
 \section*{Acknowledgments}
 
-Thanks to Andrew Appel for
-suggesting we refer to Landin's seminal paper on
-the next 700 programming languages.  We also appreciate
-the insights and thoughtful reviews of the POPL program 
+Thanks to Andrew Appel for suggesting we refer to Landin's seminal
+paper on the next 700 programming languages and to John Launchbury for
+useful discussions about parser combinators.
+We also appreciate the thoughtful reviews of the POPL program 
 committee.
 
 \bibliographystyle{abbrv}
+%\bibliography{pads-short,pads}
 \begin{thebibliography}{10}
 
 \bibitem{gpce02}
 G.~Back.
-\newblock {D}ata{S}cript - {A} specification and scripting language for binary
+\newblock {D}ata{S}cript: {A} specification and scripting language for binary
   data.
-\newblock In {\em Generative Programming and Component Engineering}, volume
-  2487, pages 66--77. Lecture Notes in Computer Science, 2002.
+\newblock In {\em {GPCE}}, volume 2487, pages 66--77. {LNCS}, 2002.
 
 \bibitem{birman+:parsing}
 A.~Birman and J.~D. Ullman.
 \newblock Parsing algorithms with backtrack.
 \newblock {\em Information and Control}, 23(1), Aug. 1973.
 
-\bibitem{geneontology}
-G.~O. Consortium.
-\newblock Gene ontology project.
-\newblock http://www.geneontology.org/.
+\bibitem{burge:parser-combinators}
+W.~Burge.
+\newblock {\em Recursive Programming Techniques}.
+\newblock Addison Wesley, 1975.
 
 \bibitem{eger:blt}
 D.~Eger.
 \newblock Bit level types.
-\newblock \url{http://www-2.cs.cmu.edu/~eger/}.
+\newblock \url{www-2.cs.cmu.edu/~eger/}.
 
 \bibitem{galax}
 M.~F. Fern\'andez, J.~Sim\'eon, B.~Choi, A.~Marian, and G.~Sur.
@@ -3485,21 +3561,23 @@ M.~F. Fern\'andez, J.~Sim\'eon, B.~Choi, A.~Marian, and G.~Sur.
 
 \bibitem{fisher+:pads}
 K.~Fisher and R.~Gruber.
-\newblock Pads: A domain specific language for processing ad hoc data.
-\newblock In {\em PLDI}, pages 295--304. {ACM} Press, June 2005.
+\newblock {PADS}: {A} domain specific language for processing ad hoc data.
+\newblock In {\em PLDI}, pages 295--304. {ACM} Press, 2005.
 
 \bibitem{ford:packrat}
 B.~Ford.
-\newblock Packrat parsing:: simple, powerful, lazy, linear time.
-\newblock In {\em {ACM} International Conference on Functional Programming},
-  pages 36--47. {ACM} Press, Oct. 2002.
+\newblock Packrat parsing: {S}imple, powerful, lazy, linear time.
+\newblock In {\em {ICFP}}, pages 36--47. {ACM} Press, Oct. 2002.
 
 \bibitem{ford:pegs}
 B.~Ford.
-\newblock Parsing expression grammars: a recognition-based syntactic
+\newblock Parsing expression grammars: {A} recognition-based syntactic
   foundation.
-\newblock In {\em {ACM} Symposium on Principles of Programming Languages},
-  pages 111--122. {ACM} Press, Jan. 2004.
+\newblock In {\em {POPL}}, pages 111--122. {ACM} Press, Jan. 2004.
+
+\bibitem{geneontology}
+{Gene} {Ontology} {Project}.
+\newblock \url{www.geneontology.org}.
 
 \bibitem{grimm:packrat}
 R.~Grimm.
@@ -3509,20 +3587,23 @@ R.~Grimm.
 \bibitem{gustafsson+:binaries}
 P.~Gustafsson and K.~Sagonas.
 \newblock Adaptive pattern matching on binary data.
-\newblock In {\em European Symposium on Programming}, pages 124--139. Springer,
-  Mar. 2004.
+\newblock In {\em {ESOP}}, pages 124--139. Springer, Mar. 2004.
 
 \bibitem{harper:plbook}
 R.~Harper.
 \newblock {\em Programming Languages: Theory and Practice.}
 \newblock Unpublished, 2005.
-\newblock Available at \url{http://www-2.cs.cmu.edu/~rwh/}.
+\newblock \url{www-2.cs.cmu.edu/~rwh/}.
+
+\bibitem{hutton+:parser-combinators}
+G.~Hutton and E.~Meijer.
+\newblock Monadic parsing in {Haskell}.
+\newblock {\em {JFP}}, 8(4):437--444, July 1998.
 
 \bibitem{igarasi+:featherweight}
 A.~Igarashi, B.~Pierce, and P.~Wadler.
-\newblock {Featherwieght Java}: a minimal core calculus for {Java} and {GJ}.
-\newblock In {\em {ACM} Conference on Object-oriented Programming, Systems,
-  Languages, and Applications}, pages 132--146. {ACM} Press, 1999.
+\newblock {Featherwieght Java}: {A} minimal core calculus for {Java} and {GJ}.
+\newblock In {\em {OOPSLA}}, pages 132--146. {ACM} Press, 1999.
 
 \bibitem{wpp}
 B.~Krishnamurthy and J.~Rexford.
@@ -3532,34 +3613,30 @@ B.~Krishnamurthy and J.~Rexford.
 \bibitem{landin:700}
 P.~J. Landin.
 \newblock The next 700 programming languages.
-\newblock {\em Communications of the {ACM}}, 9(3):157 -- 166, Mar. 1966.
+\newblock {\em {CACM}}, 9(3):157 -- 166, Mar. 1966.
 
 \bibitem{sigcomm00}
 P.~Mc{C}ann and S.~Chandra.
-\newblock Packet{T}ypes: {A}bstract specificationa of network protocol
-  messages.
-\newblock In {\em {ACM} Conference of Special Interest Group on Data
-  Communications}, pages 321--333. {ACM} Press, August 2000.
+\newblock Packet{T}ypes: {A}bstract specification of network protocol messages.
+\newblock In {\em {SIGCOMM}}, pages 321--333. {ACM} Press, August 2000.
 
 \bibitem{newick}
 Tree formats. {Workshop} on molecular evolution.
 \newblock
-  \url{http://workshop.molecularevolution.org/resources/fileformats/tree_forma%
-ts.php}.
+  \url{workshop.molecularevolution.org/resources/fileformats/tree_formats.php}.
 
 \bibitem{antlr}
 T.~J. Parr and R.~W. Quong.
-\newblock {ANTLR}: A predicated- {\it ll(k)} parser generator.
-\newblock {\em Software -- practice and experience}, 25(7):789--810, July 1995.
+\newblock {ANTLR}: A predicated- {\it {ll}(k)} parser generator.
+\newblock {\em Software Practice and Experience}, 25(7):789--810, July 1995.
 
 \bibitem{erlang-bits}
 C.~Wikstr\"{o}m and T.~Rogvall.
 \newblock Protocol programming in {Erlang} using binaries.
-\newblock In {\em Fifth International {Erlang/OTP} User Conference}, Oct. 1999.
+\newblock In {\em {Erlang/OTP} User Conference}, Oct. 1999.
 
 \end{thebibliography}
 
-%\bibliography{pads}
 
 %\newpage
 \appendix
@@ -4071,8 +4148,7 @@ Type-Specific Helpers:
 \item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
   $\begin{array}{l}
     \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
-    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+    \ilet {ec} {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}} \\
     \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
     \quad \ictup {nerr,ec,sp}
   \end{array}$
@@ -4093,8 +4169,7 @@ Type-Specific Helpers:
 \item $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
     $\begin{array}{l}
       \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
-      \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-      \quad \ielse{\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+      \ilet {ec} {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}} \\
       \ilet {sp} {\ictup{h_1.sp.begin, max \itup{h_1.sp.end, h_2.sp.end}}} \\
       \quad \ictup {nerr,ec,sp}
     \end{array}$
@@ -4157,7 +4232,7 @@ Type-Specific Helpers:
 \item $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
 \item $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
 $\begin{array}{l}
-\ilet {nerr} {\codefont{pos(i) + pos(p'.h.nerr)}}\\
+\ilet {nerr} {\codefont{pos(i) + pos(p.h.nerr)}}\\
 \ilet {ec} {\iif {\codefont{nerr = 0}}\; \ithen \iok\; \ielse \iecerr} \\
 \ilet {hdr} {\ictup{nerr,ec,(p.sp.begin - i,p.sp.end)}} \\
 \quad \ictup{hdr,\iinl {\ictup{i,p}}}
