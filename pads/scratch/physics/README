@@ -1,0 +1,23 @@
+From: Rachel Mandelbaum (rmandelb@princeton.edu)
+Type: Physics,Cosmology data
+
+This is one very small chunk of a catalog I am using that is derived
+from publicly-available SDSS data.  The file format is as follows:
+
+On top there is a line that says how many galaxies are described in
+the file.  Below that, each line contains data for a single galaxy.
+The columns (name and type) are:
+
+1-3) position information: RA, dec, phi_offset (doubles)
+4-10) identifying information: run, rerun, camcol, field, id, x, y (ints)
+11-12) PHOTO flags1 and 2 (long hex)
+13) flag3 (long hex)
+14-23) extinction-corrected model magnitudes and errors in magnitudes (floats)
+24-27) star, exp, and dev likelihoods (ints), size (float)
+28-33) r-band shape measurement info directly from raw-bgCat (4 floats, 2 ints)
+34-39) i-band shape measurement info directly from raw-bgCat (4 floats, 2 ints)
+40-42) e1, e2, and sigma_e averaged over the two bands (floats)
+43) r-band extinction (floats)
+44) photoz from Blanton's program kphotoz, or -1 if the galaxy is too
+faint for reliable photoz measurement (floats)
+45) LRG photoz (floats)
