@@ -89,5 +89,5 @@ Pstruct OBO_stanza{
 
 Psource Pstruct OBO_file{
   OBO_header hdr;
-  OBO_stanza[] stanzas : Plongest;
+  OBO_stanza[] stanzas;
 };
