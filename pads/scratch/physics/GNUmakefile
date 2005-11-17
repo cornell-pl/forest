@@ -25,6 +25,9 @@ endif
 catalog.c: catalog.p
 	$(PADSC) $(PADSOPTIONS) $<
 
+catalog2.c: catalog2.p
+	$(PADSC) $(PADSOPTIONS) $<
+
 include $(PADS_HOME)/mk/rules.mk
 
 # Rules to make catalog programs
@@ -36,6 +39,12 @@ catalog-query: catalog-query.c catalog.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 
 catalog-accum: catalog-accum.c catalog.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
+
+catalog2-xml: catalog2-xml.c catalog2.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+catalog2-xml-g: catalog2-xml.c catalog2.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
 
 
 
