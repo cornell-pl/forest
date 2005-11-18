@@ -3068,7 +3068,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    let val (declSs, params, initSs, expr, closeS) = compRegExp("terminator", endLabel, e)
 					val wCloseFun = makeCloseFun closeS
 				    in
-					(SOME(expr, expr, v, PRegExp, match, scan, write), termXOpt, declSs, params, 
+					(NONE, SOME(expr, expr, v, PRegExp, match, scan, write), declSs, params, 
 					 initSs, wCloseFun, NONE)
 				    end
                               | (NONE, SOME t) => (sepXOpt, termXOpt, [], [], [], emptyFun, NONE) 
@@ -3215,6 +3215,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					       arrayMemChar, false, isRecord, contR, lH, isSource, pdTid, numArgs)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
+
 		 (* array: Generate canonical representation *)
 		 val canonicalFields = [(length, PL.uint32PCT, NONE), 
 				        (elts, P.ptrPCT elemRepPCT, NONE),
@@ -3230,6 +3231,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val lastXOpt  = case lastXOpt  of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Plast",  r))
                  val endedXOpt = case endedXOpt of NONE => NONE | SOME r => SOME (chkPredConstraint  ("Pended",  r))
 		 val _ = popLocalEnv()
+
 
 		 (* Generate init function, array case *)
 		 fun genInitEDs(suf, base, aPCT) = 
@@ -3555,7 +3557,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   PL.scan1FunX(scan, PT.Id pads, forX, eatForX,
 							        P.trueX, (* panic=1 *) P.addrX (PT.Id "offset"))),
                                     PT.Compound[
-				     P.mkCommentS("We recovered; restored invariant")],
+				     P.mkCommentS("We recovered ; restored invariant")],
 				    PT.Compound(recoveryFailedSs)
                                  )]
 			 fun scan2ToRecoverSs (which, forX, stopX, eatForX, eatStopX) = [
@@ -3583,6 +3585,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 PT.Compound(scan1ToRecoverSs ("separator", sepScan1, sepX, P.trueX)))]
                          |  (NONE, SOME(termX, _, _, _, _, termScan1, _), _ ) => 
 				scan1ToRecoverSs ("terminator", termScan1, termX, P.trueX)
+
                          |  (SOME (_, scan2SepX, _, _, _, _,  _), SOME(_, scan2TermX, _, _, _, _, _), _ ) =>
  			        scan2ToRecoverSs("separator and/or terminator", scan2SepX, scan2TermX, P.trueX, P.falseX)
 		     in
@@ -3902,7 +3905,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val readFunEDs = genReadFun(readName ^ "_old", cParams, mPCT, pdPCT, canonicalPCT, 
 					     NONE, true, bodySs)
 				  
-
 		 (************* read_one functions *****************)
 
 

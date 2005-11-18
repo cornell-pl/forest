@@ -1983,9 +1983,9 @@ do {
 #define PCGEN_TAG_OPEN_XML_OUT(def_tag)
 do {
   indent = (indent > 128) ? 128 : indent;
-  if (!tag) { tag = def_tag; }
+  if (!_tag) { _tag = def_tag; }
   PDCI_sfstr_seek2zero(pads->tmp4);
-  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>\n", indent, PDCI_spaces, tag);
+  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>\n", indent, PDCI_spaces, _tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
 /* END_MACRO */
@@ -1993,7 +1993,7 @@ do {
 #define PCGEN_TAG_CLOSE_XML_OUT()
 do {
   PDCI_sfstr_seek2zero(pads->tmp4);
-  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, tag);
+  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, _tag);
   PDCI_TMP4_TLEN_UPDATES();
 } while (0)
 /* END_MACRO */
@@ -2031,20 +2031,20 @@ do {
 
 #define PCGEN_ENUM_XML_OUT(def_tag, rep2str_fn)
 do {
-  if (!tag) { tag = def_tag; }
+  if (!_tag) { _tag = def_tag; }
   indent = ((indent) > 128) ? 128 : indent;
   PDCI_sfstr_seek2zero(pads->tmp4);
   if ((pd)->errCode == P_NO_ERR) { /* no error */
-    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><val>%s</val></%s>\n", indent, PDCI_spaces, tag, rep2str_fn(*rep), tag);
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><val>%s</val></%s>\n", indent, PDCI_spaces, _tag, rep2str_fn(*rep), _tag);
   } else if ((pd)->errCode < 100) { /* error, no location */
     tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd></%s>\n",
-		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), tag);
+		    indent, PDCI_spaces, _tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), _tag);
   } else { /* error, location */
     tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc></pd></%s>\n",
-		    indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
+		    indent, PDCI_spaces, _tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
 		    (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
 		    (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
-		    tag);
+		    _tag);
   }
   PDCI_FINAL_TMP4_TLEN_UPDATES();
 } while (0)
