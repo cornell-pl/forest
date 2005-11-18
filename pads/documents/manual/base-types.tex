@@ -85,11 +85,11 @@ The following list describes the behaviors of these functions.
 \item[\cd{Pstring\_cstr\_copy(pads, targ, src, len)}] 
  Copy \cd{len} characters from C-string \cd{src} into \cd{targ}; sharing is not used.
 \item[\cd{Pstring\_eq(str1, str2)}] 
- Returns \cd{0} if \cd{str1} equals \cd{str2}, a negative number if \cd{str1 < str2},
- and a positive number if \cd{str1 > str2}.
-\item[\cd{Pstring\_eq(str, cstr)}]
- Returns \cd{0} if \cd{str} equals \cd{cstr}, a negative number if \cd{str < cstr},
- and a positive number if \cd{str > cstr}.
+ Returns \cd{1} if \cd{str1} and \cd{str2} are of equal length and
+ \cd{str1} equals \cd{str2} (based on strncmp). Otherwise, returns \cd{0}.
+\item[\cd{Pstring\_eq\_cstr(str, cstr)}]
+ Returns \cd{1} if \cd{str1} and \cd{str2} are of equal length and
+ \cd{str1} equals \cd{str2} (based on strncmp). Otherwise, returns \cd{0}.
 \end{description}
 
 Although not strictly necessary, both \Pd{string\_copy} and
