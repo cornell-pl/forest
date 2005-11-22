@@ -1,0 +1,150 @@
+\section{Language and Architecture}
+\label{section:pads}
+
+A \pads{} specification describes the physical layout and 
+semantic properties of an ad hoc data source. 
+The language provides a type-based model:
+basic types specify atomic data such as integers, strings, dates, \etc{}, while
+structured types describe compound data built from simpler pieces.
+The \pads{} library provides a collection of useful base types.
+Examples include
+8-bit signed integers (\cd{Pint8}),
+32-bit unsigned integers (\cd{Puint32}),
+IP addresses (\cd{Pip}), 
+dates (\cd{Pdate}), and strings (\cd{Pstring}).
+By themselves, these base types do not provide sufficient information for parsing
+because they do not indicate how the data is coded, \ie{}, in ASCII, EBCDIC, or binary.  
+To resolve this ambiguity, \pads{} uses the \textit{ambient} coding.
+By default, the ambient coding is ASCII, but programmers can customize
+it as appropriate.
+
+To describe more complex data, \pads{} provides a collection of 
+structured types loosely based on \C{}'s type structure.
+In particular, \pads{} has 
+\kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s to describe
+record-like structures, alternatives, and sequences, respectively.
+\kw{Penum}s describe a fixed collection of literals, while \kw{Popt}s 
+provide convenient syntax for optional data.
+A type may have an associated predicate that determines
+whether a parsed value is indeed a legal
+value for the type.  For example, a predicate might require that one
+field of a \kw{Pstruct} is bigger than another or that the elements
+of a sequence are sorted.  Programmers can specify such
+predicates using \pads{} expressions and functions, 
+written in a \C{}-like syntax.
+Finally, \pads{} \kw{Ptypedef}s allow programmers
+to define new types that add further constraints to existing types.
+
+\pads{} types can be parameterized by values.
+This mechanism reduces the number of base types and  permits the
+format and properties of later portions of the data to depend upon earlier portions.
+For example, 
+the base type \cd{Puint16_FW(:3:)} specifies an unsigned two byte integer
+physically represented by exactly three characters, while the type
+\cd{Pstring(:'|':)}  (\eg{}, Line~29)
+describes a string terminated by a vertical bar.  Parameters can be 
+used with compound types to specify the size of an array or the
+appropriate branch of a union.
+
+\kw{Pstruct}s describe ordered sequences of data with unrelated types.
+In \figref{figure:dibbler}, the type declaration for the \kw{Pstruct}
+\cd{order\_t} (Lines~35--38)
+contains an order header
+(\cd{order\_header\_t}) followed by the literal character \kw{'|'},
+followed by an event sequence (\cd{event\_seq\_t}).  \pads{} supports
+character, string, and regular expression literals.
+\cut{, which are interpreted with the ambient character encoding.}
+
+\kw{Punion}s describe alternatives in the data format.  For example,
+the \cd{dib\_ramp\_t} type (Lines~9--12) indicates
+that the \cd{ramp} field in a \dibbler{} record can be either a
+\cd{Puint\_64} or a string \cd{"no\_ii"} followed by a \cd{Puint\_64}.
+During parsing, the branches of a \kw{Punion} are tried in order; the
+first branch that parses without error is taken.  \cut{\pads{} also
+supports a \textit{switched} union that uses a selection expression to
+determine the branch to parse.  In this case, the expression typically
+depends upon already-parsed portions of the data source.}
+
+The \cd{order_header_t} type (Lines~13--27) contains several anonymous uses of the
+\kw{Popt} type.  This type is syntactic sugar for a stylized use of a
+\kw{Punion} with two branches: the first with the indicated type, and
+the second with the ``void'' type, which always matches but never
+consumes any input.
+
+\pads{} provides \kw{Parray}s to describe varying-length sequences of
+data all with the same type.  The \cd{event\_seq\_t} type (Lines~32--34) uses a
+\kw{Parray} to characterize the sequence of events an order goes
+through during processing.  This declaration indicates that each
+element in the sequence has type \cd{event_t}.  It also specifies
+that the elements will be separated by vertical bars, and that the
+sequence will be terminated by an end-of-record marker (\kw{Peor}).
+In general, \pads{} provides a rich collection of array-termination
+conditions: reaching a maximum size, finding a terminating literal
+(including end-of-record and end-of-source), or satisfying a
+user-supplied predicate over the already-parsed portion of the
+\kw{Parray}.
+
+Finally, the \kw{Precord} (Line~35) and \kw{Psource} (Line~42) annotations deserve comment.  The first
+indicates that the annotated type constitutes a record,
+while the second means that the type constitutes the totality of a data source.  
+The notion of a record varies depending upon the data encoding.  
+ASCII data typically uses new-line characters to delimit 
+records, binary sources tend to have fixed-width records, while 
+COBOL sources usually store the length of each record before the actual data.
+\pads{} supports each of these encodings of records and allows users to define
+their own encodings.  \cut{By default, \pads{} assumes records are new-line terminated.
+Before parsing, however, the user can direct \pads{} to use a different record
+definition.}
+
+From a description, the \pads{} compiler generates a \C{} library
+for parsing and manipulating the associated data source.  
+From each type in a \pads{} description, the compiler generates
+\begin{itemize}
+\setlength{\itemsep}{0ex plus0.2ex}
+\item an in-memory representation, 
+\item parsing and printing functions, 
+\item a mask, which allows customization of generated functions, and
+\item a parse descriptor, which describes syntactic and semantic errors detected during parsing.
+\end{itemize}
+
+The mapping to \C{} for each is straightforward: \kw{Pstruct}s map to
+\C{} structs with appropriately mapped fields, \kw{Punion}s map to
+tagged unions coded as \C{} structs with a tag field and an embedded
+union, \kw{Parray}s map to a \C{} struct with a length field and a
+dynamically allocated sequence, \kw{Penum}s map to \C{} enumerations,
+\kw{Popt}s to tagged unions, and \kw{Ptypedef}s to \C{} typedefs.
+Masks include auxiliary fields to control behavior at the level of a
+structured type, and parse descriptors include fields to record the
+state of the parse, the number of detected errors, the error code of
+the first detected error, and the location of that error.
+
+The parsing functions take a mask as an argument and returns an
+in-memory representation and a parse descriptor.  
+The mask allows the user to specify 
+which constraints the parser should check and which portions of the
+in-memory representation it should fill in.  This control allows the
+description-writer to specify all known constraints about the data
+without worrying about the run-time cost of verifying potentially
+expensive constraints for time-critical applications.
+
+Appropriate error-handling is as important as processing error-free
+data.  The parse descriptor marks which portions of the data contain
+errors and specifies the detected errors.  Depending upon the nature
+of the errors and the desired application, programmers can take the
+appropriate action: halt the program, discard parts of the data, or
+repair the errors.  If the mask requests that a data item be verified
+and set, and if the parse descriptor indicates no error, then the
+in-memory representation satisfies the semantic constraints on the
+data.
+
+Because we generate a parsing function for each type in a \pads{}
+description, we support multiple-entry point parsing, which
+accommodates larger-scale data.  For a small file, a programmer can
+call the parsing function for the \pads{} type that describes the
+entire file (\eg{} \cd{summary\_t\_read}) to read the whole file with
+one call.  For larger-scale data, programmers can sequence calls to
+parsing functions that read manageable portions of the file, \eg{},
+reading one record at a time in a loop.  The parsing code generated for
+\kw{Parray}s allows users to choose between reading the entire array
+at once or reading it one element at a time, again to support parsing
+and processing very large data sources.  
