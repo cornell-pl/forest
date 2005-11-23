@@ -84,8 +84,8 @@ simplified.
 
 The \pads{} system~\cite{fisher+:pldi05} allows analysts to describe
 ad hoc data sources declaratively.  The descriptions take the form of
-types, drawn from a dependent type theory~\cite{fisher+:popl06}.
-\pads{} base types describe simple objects including strings,
+types, based on a dependent type theory~\cite{fisher+:popl06}.
+\pads{} base types describe simple objects such as strings,
 integers, floating-point numbers, dates, times, and IP addresses.
 Records and arrays specify sequences of elements in a data source, and
 unions, switched unions, and enums specify alternatives.  Any of these
@@ -95,7 +95,7 @@ and concise.  \pads{} descriptions exist for all the data sources in
 \tblref{figure:data-sources}, and 92 pages of the OPRA standard is
 captured by a 450-line \pads{} description.
 
-The \pads{} compiler produces a customizable, error-aware library for
+The \pads{} compiler produces a customizable library for
 parsing a given ad hoc data source.  A suite of tools built around
 this library include statistical data-profiling tools, such as
 histograms, accummulators and clustering algorithms; a query engine
@@ -107,13 +107,11 @@ learn nitty-gritty details of the \pads{} language or tool interfaces.
 \section{Using PADS}
 \label{subsec:example}
 
-In our demonstration, we will present a scenario similar to the
-following, in which an AT\&T data analyst interactively creates a
+In our demonstration, we will present the following scenario,
+in which an AT\&T data analyst interactively creates a
 \pads{} description for a new data source, uses \pads{} tools to learn
 about the distribution of values and errors in her data, and writes
-and executes simple queries to perform basic analysis tasks.  A
-shorter version of this demonstration proposal was accepted to the PLAN-X
-2006 workshop~\cite{daly+:launchpads}.
+and executes simple queries to perform basic analysis tasks.  
 
 Our analyst's task is to process \textit{provisioning} data.  In the
 telecommunications industry, the term {provisioning} refers to
@@ -123,7 +121,7 @@ project discovers provisioning problems proactively by compiling
 weekly summaries of the state of phone service
 orders.  These summaries, which are stored in flat ASCII text files,
 can contain more than 2.2GB of data per
-week. \figref{figure:dibbler-records} contains sample \dibbler{} data
+week. \figref{figure:dibbler-records} contains sample data
 provided to our analyst.
 \begin{figure*}
 \begin{small}
@@ -139,8 +137,8 @@ provided to our analyst.
 \end{small}
 \end{figure*}
 
-Provisioning summaries store the processing date and one record
-per order.  Each order record contains a header followed by a nested
+Provisioning summaries store the processing date and one record per
+order.  Each order record contains a header followed by a nested
 sequence of events.  The header has 13 pipe separated fields: the
 order number, AT\&T's internal order number, the order version, four
 different telephone numbers associated with the order, the zip code, a
@@ -149,16 +147,15 @@ order, an unused field, and the source of the order data.  Many of
 these fields are optional, in which case nothing appears between the
 pipe characters.  The billing identifier may not be available at the
 time of processing, in which case the system generates a unique
-identifier, and prefixes this value with the string ``no\_ii'' to
-indicate the number was generated. The event sequence represents the
-various states a service order goes through; it is represented as a
+identifier prefixed with the string ``no\_ii'' to indicate the number
+was generated. The event sequence represents the subset of 400
+possible states a service order goes through; it is represented as a
 new-line terminated, pipe separated list of state, timestamp pairs.
-There are over 400 distinct states that an order may go through during
-provisioning.  It may be apparent from this description that English
-is a poor language for describing data formats!  If lucky, our analyst
-might be provided with a formal specification of this format, but
-often such specifications are incomplete or outdated.  If unlucky, she
-might have only an informal description such as the above.
+It may be apparent from this description that English is a poor
+language for describing data formats!  If lucky, our analyst might be
+provided with a formal specification of this format, but often such
+specifications are incomplete or outdated.  If unlucky, she might have
+only an informal description such as the above.
 
 The analyst's first task is to write a parser for the \dibbler{} data
 format.  Like many ad hoc data sources, \dibbler{} data can contain
@@ -179,108 +176,50 @@ gridview, the analyst iteratively refines the description of the
 selected data.  In this example, she has selected the \scream{XXX}
 part of an order record and is defining its composite structure, which
 includes \scream{YYY}.  This refinement step terminates when the
-analyst has associated an atomic type, such as character string, phone
+analyst has associated a base type, such as character string, phone
 number, or date, with every value in the sample data.  Once all
-selected values have an associated base type, \textsc{LaunchPADS}
+selected values have an associated base type, \textsc{\launchpads{}}
 generates the {\it treeview} (left-hand frame).  The treeview depicts
 the abstract syntax of a \pads{} description.  In this view, the
 analyst can refine the description by creating, removing,
 reordering, or renaming the generated types.
-
-When the analyst is satisfied with the definition in the
-treeview, they may generate \pads{} code.  Any such generated code is
-guaranteed to be syntactically correct so the user need not worry
-about fussing with concrete \pads{} syntax.
-Figure~\ref{figure:launchpads} shows the generated code in bottom-most
-frame.
-
-By using the pulldown menus at the top and a set of
-``wizards,'' the user may now
-issue commands to compile the generated code and create data processing
-tools including the XML converter and statistical analyzer.  
-
 \begin{figure*}
   \begin{center}
     \scalebox{.75}{\includegraphics{launch.pdf}}
   \end{center}
-  \caption{LaunchPADS Interactive User Interface.}
+  \caption{\launchpads{} Interactive User Interface.}
   \label{figure:launchpads}
 \end{figure*}
 
-\figref{figure:dibbler} gives the \pads{} description for the
-\dibbler{} data format.  In \pads{} descriptions, types are declared
-before they are used, so the type that describes the entire data
-source, \cd{summary\_t}, appears at the bottom of the description (Line~42).  In
-the next section, we use this example to give an overview of
-the \pads{} language.  Here, we simply note that the data analyst
-writes this description, and the \pads{} compiler produces
-customizable \C{} libraries and tools for parsing, manipulating, and
-summarizing the data.  The fact that useful software artifacts are
-generated from \pads{} descriptions provides strong incentive for
-keeping the descriptions current, allowing them to serve as living
-documentation.
+When the analyst is satisfied with the description in the treeview,
+she can test her description on a larger fragment of sample data.  To
+do this, \launchpads{} generates syntactically correct \pads{} code,
+which is shown in bottom-most frame of Figure~\ref{figure:launchpads},
+and invokes the \pads{} compiler to produce a parsing library from the
+generated description.  Description-independent tools are linked with
+the description-dependent library and made available to the analyst
+through menus in the \launchpads{} interface.  
 
-\begin{figure}
-\begin{small}
-\begin{code}
-{ 1}. \kw{Precord} \kw{Pstruct} summary\_header\_t \{
-{ 2}.  "0|";
-{ 3}.  Punixtime tstamp;
-{ 4}. \};
-\mbox{}
-{ 5}. \kw{Pstruct} no\_ramp\_t \{
-{ 6}.  "no\_ii";
-{ 7}.  Puint64 id;
-{ 8}. \};
-\mbox{}
-{ 9}. \kw{Punion} dib\_ramp\_t \{
-{10}.   Pint64     ramp;
-{11}.   no\_ramp\_t  genRamp;
-{12}. \};
-\mbox{}
-{13}. \kw{Pstruct} order\_header\_t \{
-{14}.        Puint32             order\_num;
-{15}.  '|';  Puint32             att\_order\_num;
-{16}.  '|';  Puint32             ord\_version;
-{17}.  '|';  \kw{Popt} pn\_t           service\_tn;
-{18}.  '|';  \kw{Popt} pn\_t           billing\_tn;
-{19}.  '|';  \kw{Popt} pn\_t           nlp\_service\_tn;
-{20}.  '|';  \kw{Popt} pn\_t           nlp\_billing\_tn;
-{21}.  '|';  \kw{Popt} Pzip           zip\_code;
-{22}.  '|';  dib\_ramp\_t          ramp;
-{23}.  '|';  Pstring(:'|':)      order\_type;
-{24}.  '|';  Puint32             order\_details;
-{25}.  '|';  Pstring(:'|':)      unused;
-{26}.  '|';  Pstring(:'|':)      stream;
-{27}. \};
-\mbox{}
-{28}. \kw{Pstruct} event\_t \{
-{29}.        Pstring(:'|':)    state;   
-{30}.   '|'; Punixtime         tstamp;
-{31}. \};
-\mbox{}
-{32}. \kw{Parray} event\_seq\_t \{
-{33}.   event\_t[] : \kw{Psep}('|') && \kw{Pterm}(\kw{Peor});
-{34}. \};
-\mbox{}
-{35}. \kw{Precord} \kw{Pstruct} order\_t \{
-{36}.        order\_header\_t  order\_header;
-{37}.   '|'; event\_seq\_t     events;
-{38}. \};
-\mbox{}
-{39}. \kw{Parray} orders\_t \{
-{40}.   order\_t[];
-{41}. \};
-\mbox{}
-{42}. \kw{Psource} \kw{Pstruct} summary\_t\{
-{43}.   summary\_header\_t  summary\_header;
-{44}.   orders\_t          orders;
-{45}. \};
-\end{code}
-\end{small}
-\caption{\pads{} description for \dibbler{} provisioning data.}
-\label{figure:dibbler}
-\end{figure}
+The analyst can test her description by applying the accummulator tool
+to a larger sample of data.  For each type in a \pads{} description,
+accumulators report the number of good values, the number of bad
+values, and the distribution of legal values.  In the \launchpads{}
+interface, records identified by the accumulator as containing errors
+are displayed in the data view.  The analyst can then determine
+whether the errors are due to hre incomplete or out-of-date
+documentation or understanding of the format, in which case she can
+refine the description, or due to genuine errors in the data.  
+
+This phase helps the analyst learn the layout and the meaning of the
+data, determine how complete is her documentation of the data source,
+identify different representations for ``data not available'', and
+learn the distribution of values for particular fields, \etc{}.
+When finished with this phase, the analyst is ready to write her own
+applications that use the generated parsing libraries plus 
+she has a reusable description that can shared with other analysts.
+
+\eat{
+% \Galax{}~\cite{galaxmanual}
 
 Analysts working with ad hoc data often want to query their data.  
 Questions posed by the \dibbler{} analyst include ``Select all
@@ -292,45 +231,15 @@ information discovery and for vetting errors and anomalies in data
 before that data proceeds to a down-stream process or is loaded into a 
 database.
 
-\begin{figure}
-\begin{small}
+With \pads{}, the analyst writes declarative XQuery expressions to
+query her ad hoc data source.  Because XQuery is designed to
+manipulate semi-structured data, its expressiveness matches ad hoc
+data sources well.  For example, the XQuery expression below produces
+all orders that started in October, 2004.
 \begin{code}
 \kw{(: Return orders started in October 2004 :)}
 $pads/Psource/orders/elt[events/elt[1]
   [tstamp/rep {>=} {xs:dateTime}("2004-10-01:00:00:00")
 {and} tstamp/rep {<} {xs:dateTime}("2004-11-01:00:00:00")]]
 \end{code}
-\end{small}
-\caption{Query applied to \dibbler{} provisioning data.}
-\label{figure:dibbler-query}
-\end{figure}
-
-With \pads{}, the analyst writes declarative XQuery expressions to
-query her ad hoc data source.  Because XQuery is designed to
-manipulate semi-structured data, its expressiveness matches ad hoc
-data sources well.  As a Turing-complete language, XQuery is powerful
-enough to express all the questions above.  For example,
-Figure~\ref{figure:dibbler-query} contains an XQuery expression that
-produces all orders that started in October, 2004.
-
-\eat{One benefit is that XQuery queries may be
-statically typed, which helps detect common errors at compile time.
-For example, static typing would raise an error if the path expression
-in Figure~\ref{figure:dibbler-query} referred to \cd{ordesr} instead
-of \cd{orders}, or if the analyst erroneously compared the timestamp
-value in \cd{tstamp} to a string.}
-
-\eat{\begin{verbatim}
-[Term]
-id: GO:0000001
-name: mitochondrion inheritance
-namespace: biological\_process
-def: "The distribution of mitochondria, including the mitochondrial
-genome, into daughter cells after mitosis or meiosis, mediated by
-interactions between mitochondria and the cytoskeleton."
-[PMID:10873824, PMID:11389764, SGD:mcc]
-is_a: GO:0048308 ! organelle inheritance
-is_a: GO:0048311 ! mitochondrion distribution
-\end{verbatim}
-\caption{Tiny example of Gene Ontology (go) data.}
-\label{figure:go-data}}
+}

@@ -1,8 +1,74 @@
 \section{Language and Architecture}
 \label{section:pads}
 
-A \pads{} specification describes the physical layout and 
-semantic properties of an ad hoc data source. 
+A \pads{} specification describes the physical layout and semantic
+properties of an ad hoc data source.  \figref{figure:dibbler} gives
+the \pads{} description for the \dibbler{} data format.  In \pads{}
+descriptions, types are declared before they are used, so the type
+that describes the entire data source, \cd{summary\_t}, appears at the
+bottom of the description (Line~42).
+\begin{figure}
+\begin{scriptsize}
+\begin{code}
+{ 1}. \kw{Precord} \kw{Pstruct} summary\_header\_t \{
+{ 2}.  "0|";
+{ 3}.  Punixtime tstamp;
+{ 4}. \};
+\mbox{}
+{ 5}. \kw{Pstruct} no\_ramp\_t \{
+{ 6}.  "no\_ii";
+{ 7}.  Puint64 id;
+{ 8}. \};
+\mbox{}
+{ 9}. \kw{Punion} dib\_ramp\_t \{
+{10}.   Pint64     ramp;
+{11}.   no\_ramp\_t  genRamp;
+{12}. \};
+\mbox{}
+{13}. \kw{Pstruct} order\_header\_t \{
+{14}.        Puint32             order\_num;
+{15}.  '|';  Puint32             att\_order\_num;
+{16}.  '|';  Puint32             ord\_version;
+{17}.  '|';  \kw{Popt} pn\_t           service\_tn;
+{18}.  '|';  \kw{Popt} pn\_t           billing\_tn;
+{19}.  '|';  \kw{Popt} pn\_t           nlp\_service\_tn;
+{20}.  '|';  \kw{Popt} pn\_t           nlp\_billing\_tn;
+{21}.  '|';  \kw{Popt} Pzip           zip\_code;
+{22}.  '|';  dib\_ramp\_t          ramp;
+{23}.  '|';  Pstring(:'|':)      order\_type;
+{24}.  '|';  Puint32             order\_details;
+{25}.  '|';  Pstring(:'|':)      unused;
+{26}.  '|';  Pstring(:'|':)      stream;
+{27}. \};
+\mbox{}
+{28}. \kw{Pstruct} event\_t \{
+{29}.        Pstring(:'|':)    state;   
+{30}.   '|'; Punixtime         tstamp;
+{31}. \};
+\mbox{}
+{32}. \kw{Parray} event\_seq\_t \{
+{33}.   event\_t[] : \kw{Psep}('|') && \kw{Pterm}(\kw{Peor});
+{34}. \};
+\mbox{}
+{35}. \kw{Precord} \kw{Pstruct} order\_t \{
+{36}.        order\_header\_t  order\_header;
+{37}.   '|'; event\_seq\_t     events;
+{38}. \};
+\mbox{}
+{39}. \kw{Parray} orders\_t \{
+{40}.   order\_t[];
+{41}. \};
+\mbox{}
+{42}. \kw{Psource} \kw{Pstruct} summary\_t\{
+{43}.   summary\_header\_t  summary\_header;
+{44}.   orders\_t          orders;
+{45}. \};
+\end{code}
+\end{scriptsize}
+\caption{\pads{} description for \dibbler{} provisioning data.}
+\label{figure:dibbler}
+\end{figure}
+
 The language provides a type-based model:
 basic types specify atomic data such as integers, strings, dates, \etc{}, while
 structured types describe compound data built from simpler pieces.
@@ -148,3 +214,6 @@ reading one record at a time in a loop.  The parsing code generated for
 \kw{Parray}s allows users to choose between reading the entire array
 at once or reading it one element at a time, again to support parsing
 and processing very large data sources.  
+
+
+ 
