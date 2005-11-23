@@ -62,7 +62,7 @@ new set of questions to answer.
 
 Through her heroic efforts, the data analyst answered the necessary
 questions, but the approach is deficient in many respects.  The
-analyst's hard-won understanding of the data ended up embedded in a
+analyst's hard-won understanding of the data is embedded in a
 hand-written parser, where it is difficult for others to benefit from
 her understanding.  The parser is likely to be brittle with respect to
 changes in the input sources.  Consider, for example, how tricky it is
@@ -73,7 +73,7 @@ thoroughly checks for errors, then the error checking code dominates
 the parser, making it even more difficult to understand the semantics
 of the data format.  If she is not thorough, then erroneous data can
 escape undetected, potentially (silently!)  corrupting down-stream
-data processing.  Finally, during the initial data exploration and in
+data processing.  Finally, in
 answering the specified questions, the analyst had to code \textit{how
 to compute} the questions rather than being able to express the
 queries in a declarative fashion.  Of course, many of these pitfalls
@@ -95,11 +95,12 @@ and concise.  \pads{} descriptions exist for all the data sources in
 \tblref{figure:data-sources}, and 92 pages of the OPRA standard is
 captured by a 450-line \pads{} description.
 
-The \pads{} compiler produces a customizable library for
-parsing a given ad hoc data source.  A suite of tools built around
-this library include statistical data-profiling tools, such as
-histograms, accummulators and clustering algorithms; a query engine
-that permits viewing ad hoc sources as XML and for querying them with
+The \pads{} compiler produces a customizable library for parsing a
+given ad hoc data source.  A suite of tools built around this library
+include statistical data-profiling tools, such as histograms~\cite{xx},
+accummulators and clustering algorithms~\cite{yy}; an instance of the Galax
+query engine~\cite{galaxmanual} that permits ad hoc sources described
+in \pads{} to be viewed as XML and to be queried with
 XQuery~\cite{fernandez+:padx}; and an interactive front-end that helps
 users produce \pads{} descriptions and invoke tools without having to
 learn nitty-gritty details of the \pads{} language or tool interfaces.
@@ -107,11 +108,12 @@ learn nitty-gritty details of the \pads{} language or tool interfaces.
 \section{Using PADS}
 \label{subsec:example}
 
-In our demonstration, we will present the following scenario,
-in which an AT\&T data analyst interactively creates a
-\pads{} description for a new data source, uses \pads{} tools to learn
-about the distribution of values and errors in her data, and writes
-and executes simple queries to perform basic analysis tasks.  
+In our demonstration, we will present the following scenario, in which
+an AT\&T data analyst interactively creates a \pads{} description for
+a new data source, uses \pads{} tools to learn about the distribution
+of values and errors in her data, and writes and executes simple
+queries to perform basic analysis tasks.  We will also have other
+\pads{} applications using the formats in \tblref{figure:data-sources}.
 
 Our analyst's task is to process \textit{provisioning} data.  In the
 telecommunications industry, the term {provisioning} refers to
@@ -121,8 +123,7 @@ project discovers provisioning problems proactively by compiling
 weekly summaries of the state of phone service
 orders.  These summaries, which are stored in flat ASCII text files,
 can contain more than 2.2GB of data per
-week. \figref{figure:dibbler-records} contains sample data
-provided to our analyst.
+week. \figref{figure:dibbler-records} contains sample \dibbler{} data.
 \begin{figure*}
 \begin{small}
 \begin{center}
@@ -153,23 +154,23 @@ possible states a service order goes through; it is represented as a
 new-line terminated, pipe separated list of state, timestamp pairs.
 It may be apparent from this description that English is a poor
 language for describing data formats!  If lucky, our analyst might be
-provided with a formal specification of this format, but often such
-specifications are incomplete or outdated.  If unlucky, she might have
+provided with a formal specification of this format.  If unlucky, she might have
 only an informal description such as the above.
+
+\eat{, but often such specifications are incomplete or outdated.}
 
 The analyst's first task is to write a parser for the \dibbler{} data
 format.  Like many ad hoc data sources, \dibbler{} data can contain
 unexpected or corrupted values, so the parser must handle errors
 robustly to avoid corrupting the results of analyses.  With \pads{},
 the analyst writes a declarative data description of the physical
-layout of her data.  The language also permits the analyst to describe
+layout of her data.  \eat{The language also permits the analyst to describe
 expected semantic properties of her data so that deviations can be
 flagged as errors. The intent is to allow an analyst to capture in a
-\pads{} description all that she knows about a given data source.
-
-If the analyst is new to \pads{}, she can use the interactive user
+\pads{} description all that she knows about a given data source.}
+If the analyst is new to \pads{}, she can use the \launchpads{} interactive 
 interface shown in \figref{figure:launchpads} to help create a \pads{}
-description.  She begins by loading her sample \dibbler{} data into
+description.  She begins by loading her sample data into
 the {\it dataview} (top-right frame) and then selects a fragment of
 data to describe in the {\it gridview} (middle frame).  In the
 gridview, the analyst iteratively refines the description of the
@@ -206,40 +207,42 @@ accumulators report the number of good values, the number of bad
 values, and the distribution of legal values.  In the \launchpads{}
 interface, records identified by the accumulator as containing errors
 are displayed in the data view.  The analyst can then determine
-whether the errors are due to hre incomplete or out-of-date
-documentation or understanding of the format, in which case she can
-refine the description, or due to genuine errors in the data.  
+whether the errors are due to genuine errors in the data or due to
+incomplete or out-of-date documentation, in which case she can refine
+the description.
 
 This phase helps the analyst learn the layout and the meaning of the
-data, determine how complete is her documentation of the data source,
+data, determine the completeness of the format's documentation,
 identify different representations for ``data not available'', and
-learn the distribution of values for particular fields, \etc{}.
-When finished with this phase, the analyst is ready to write her own
-applications that use the generated parsing libraries plus 
-she has a reusable description that can shared with other analysts.
+learn the distribution of values for particular fields, \etc{}.  When
+finished with this phase, the analyst may be ready to ask some basic
+queries such as ``Select all orders starting within a certain time
+window,'' ``Count the number of orders going through a particular
+state,'' and ``What is the average time required to go from a
+particular event state to another particular event state''.  Such
+queries are useful for rapid information discovery and for vetting
+errors and anomalies in data before the data proceeds to a
+down-stream process or is loaded into a database.
 
-\eat{
-% \Galax{}~\cite{galaxmanual}
-
-Analysts working with ad hoc data often want to query their data.  
-Questions posed by the \dibbler{} analyst include ``Select all
-orders starting within a certain time window,'' ``Count the number of
-orders going through a particular state,'' and ``What is the average
-time required to go from a particular event state to another
-particular event state''.  Such queries are useful for rapid
-information discovery and for vetting errors and anomalies in data
-before that data proceeds to a down-stream process or is loaded into a 
-database.
-
-With \pads{}, the analyst writes declarative XQuery expressions to
-query her ad hoc data source.  Because XQuery is designed to
-manipulate semi-structured data, its expressiveness matches ad hoc
-data sources well.  For example, the XQuery expression below produces
-all orders that started in October, 2004.
+With \pads{}, the analyst uses XQuery to query her ad hoc data source.
+Because XQuery is designed for semi-structured data, its
+expressiveness matches ad hoc data sources well.  For example, the
+analyst can write the expression below to produce all orders
+that started in October, 2004.
 \begin{code}
-\kw{(: Return orders started in October 2004 :)}
 $pads/Psource/orders/elt[events/elt[1]
   [tstamp/rep {>=} {xs:dateTime}("2004-10-01:00:00:00")
 {and} tstamp/rep {<} {xs:dateTime}("2004-11-01:00:00:00")]]
 \end{code}
-}
+
+Existing \pads{} tools may not be solve all the analysts problems,
+in which case, she may write her own \pads{} applications that call
+the \pads{}-generated parsing or tool libraries directly.  Most
+importantly, her effort has produced a reusable description that she
+can share with other analysts.  The fact that useful software
+artifacts are generated from the descriptions provides strong
+incentive for keeping the descriptions current, allowing them to serve
+as living documentation.
+
+% \Galax{}~\cite{galaxmanual}
+
