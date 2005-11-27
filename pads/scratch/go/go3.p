@@ -9,7 +9,7 @@ Precord Pstruct OBO_tag_value_pair{
 
 int hasTag(OBO_tag_value_pair p,char *tag){
   return 1;
-/*   return Pstring_eq_cstr(&p.tag,tag) == 0; */
+/*   return Pstring_eq_cstr(&p.tag,tag); */
 };
 
 
