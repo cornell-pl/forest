@@ -52,8 +52,7 @@ following.  An analyst receives a new ad hoc data source containing
 potentially interesting information and a list of pressing questions
 about that data.  Could she please provide the answers to the
 questions as quickly as possible, preferably last week?  The
-accompanying documentation is outdated and missing important
-information, so she first has to experiment with the data to discover
+accompanying documentation is outdated and incomplete, so she first has to experiment with the data to discover
 its structure.   Eventually, she understands the data well enough to hand-code a
 parser, usually in \C{} or \perl{}.  Pressed for time, she interleaves
 code to compute the answers to the supplied questions with the parser.
@@ -76,7 +75,7 @@ escape undetected, potentially (silently!)  corrupting down-stream
 data processing.  Finally, in
 answering the specified questions, the analyst had to code \textit{how
 to compute} the questions rather than being able to express the
-queries in a declarative fashion.  Of course, many of these pitfalls
+queries in a declarative fashion.  Many of these pitfalls
 can be avoided with careful design and sufficient time, but such
 luxuries are not available to the analyst.  However, with the
 appropriate tool support, many aspects of this process can be greatly
@@ -97,14 +96,20 @@ captured by a 450-line \pads{} description.
 
 The \pads{} compiler produces a customizable library for parsing a
 given ad hoc data source.  A suite of tools built around this library
-include statistical data-profiling tools, such as histograms~\cite{xx},
-accummulators and clustering algorithms~\cite{yy}; an instance of the Galax
-query engine~\cite{galaxmanual} that permits ad hoc sources described
-in \pads{} to be viewed as XML and to be queried with
-XQuery~\cite{fernandez+:padx}; and an interactive front-end that helps
+includes statistical data-profiling tools, such as
+histograms~\cite{histograms}, accummulators and clustering
+algorithms~\cite{quantiles}.  Also included is an instance of the
+Galax query engine~\cite{galaxmanual} that permits ad hoc sources
+described in \pads{} to be viewed as XML and to be queried with
+XQuery~\cite{fernandez+:padx}.  Lastly, an interactive front-end helps
 users produce \pads{} descriptions and invoke tools without having to
-learn nitty-gritty details of the \pads{} language or tool interfaces.
+learn the details of the \pads{} language or tool interfaces.
 
+Details about the \pads{} system are reported in technical
+papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}.  A
+shorter version of this proposal was accepted to the PLAN-X 2006
+workshop~\cite{daly+:launchpads}.  An open-source implementation of
+\pads{} is available for download~\cite{padsmanual}.
 \section{Using PADS}
 \label{subsec:example}
 
@@ -112,11 +117,11 @@ In our demonstration, we will present the following scenario, in which
 an AT\&T data analyst interactively creates a \pads{} description for
 a new data source, uses \pads{} tools to learn about the distribution
 of values and errors in her data, and writes and executes simple
-queries to perform basic analysis tasks.  We will also have other
+queries to perform basic analysis tasks.  We will also have available other
 \pads{} applications using the formats in \tblref{figure:data-sources}.
 
 Our analyst's task is to process \textit{provisioning} data.  In the
-telecommunications industry, the term {provisioning} refers to
+telecommunications industry, {provisioning} refers to
 the complex, inter-company process of converting an order for phone
 service into the actual service.  In practice, AT\&T's \dibbler{}
 project discovers provisioning problems proactively by compiling
@@ -169,7 +174,7 @@ expected semantic properties of her data so that deviations can be
 flagged as errors. The intent is to allow an analyst to capture in a
 \pads{} description all that she knows about a given data source.}
 If the analyst is new to \pads{}, she can use the \launchpads{} interactive 
-interface shown in \figref{figure:launchpads} to help create a \pads{}
+interface shown in \figref{figure:launchpads} to help her create a \pads{}
 description.  She begins by loading her sample data into
 the {\it dataview} (top-right frame) and then selects a fragment of
 data to describe in the {\it gridview} (middle frame).  In the
@@ -177,8 +182,8 @@ gridview, the analyst iteratively refines the description of the
 selected data.  In this example, she has selected the \scream{XXX}
 part of an order record and is defining its composite structure, which
 includes \scream{YYY}.  This refinement step terminates when the
-analyst has associated a base type, such as character string, phone
-number, or date, with every value in the sample data.  Once all
+analyst has associated a base type, such as string, phone
+number, date, \etc{}, with every value in the sample data.  Once all
 selected values have an associated base type, \textsc{\launchpads{}}
 generates the {\it treeview} (left-hand frame).  The treeview depicts
 the abstract syntax of a \pads{} description.  In this view, the
@@ -209,12 +214,12 @@ interface, records identified by the accumulator as containing errors
 are displayed in the data view.  The analyst can then determine
 whether the errors are due to genuine errors in the data or due to
 incomplete or out-of-date documentation, in which case she can refine
-the description.
+the description to improve its coverage.
 
 This phase helps the analyst learn the layout and the meaning of the
 data, determine the completeness of the format's documentation,
 identify different representations for ``data not available'', and
-learn the distribution of values for particular fields, \etc{}.  When
+learn the distribution of values for particular fields, \etc{}  When
 finished with this phase, the analyst may be ready to ask some basic
 queries such as ``Select all orders starting within a certain time
 window,'' ``Count the number of orders going through a particular
@@ -231,17 +236,17 @@ analyst can write the expression below to produce all orders
 that started in October, 2004.
 \begin{code}
 $pads/Psource/orders/elt[events/elt[1]
-  [tstamp/rep {>=} {xs:dateTime}("2004-10-01:00:00:00")
-{and} tstamp/rep {<} {xs:dateTime}("2004-11-01:00:00:00")]]
+  [tstamp/rep {>=} {xs:date}("2004-10-01")
+{and} tstamp/rep {<} {xs:date}("2004-11-01")]]
 \end{code}
 
 Existing \pads{} tools may not be solve all the analysts problems,
-in which case, she may write her own \pads{} applications that call
-the \pads{}-generated parsing or tool libraries directly.  Most
+in which case, she may write her own \pads{} applications that call  directly
+the \pads{}-generated parsing or tool libraries.  Most
 importantly, her effort has produced a reusable description that she
 can share with other analysts.  The fact that useful software
 artifacts are generated from the descriptions provides strong
-incentive for keeping the descriptions current, allowing them to serve
+incentive for keeping the descriptions current, allowing the descriptions to serve
 as living documentation.
 
 % \Galax{}~\cite{galaxmanual}

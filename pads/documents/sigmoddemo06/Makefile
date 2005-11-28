@@ -4,11 +4,11 @@ PDFSRC=$(PSSRC:.ps=.pdf)
 TEXSRC=paper.tex 
 all: paper.pdf
 
-paper.bbl: intro.tex pads.tex discussion.tex paper.tex ../pads.bib ../galax.bib
+paper.bbl: intro.tex pads.tex discussion.tex paper.tex ../pads.bib ../galax.bib 
 	pdflatex paper.tex
 	bibtex paper
 
-paper.pdf: paper.bbl $(PDFSRC) $(TEXSRC) launch.pdf
+paper.pdf: paper.bbl $(PDFSRC) $(TEXSRC) launch.pdf arch2.pdf
 	pdflatex paper.tex
 	pdflatex paper.tex
 

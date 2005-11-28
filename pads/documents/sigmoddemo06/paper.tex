@@ -23,16 +23,22 @@
 \newcommand{\typeddm}{type-specialized concrete data model}
 
 \title{PADS: An End-to-end System for Processing Ad Hoc Data}
-\author{Mark Daly\\Yitzhak Mandelbaum\\David Walker\\
+\author{
+Mark Daly\\Yitzhak Mandelbaum\\David Walker\\
        {Princeton University}\\
-       {\mono{mdaly@princeton.edu}}\\{\mono{\{yitzhakm,dpw\}@cs.princeton.edu}}
+       {\mono{mdaly@princeton.edu}}\\
+       {\mono{\{yitzhakm,dpw\}@cs.princeton.edu}}
 \and Mary Fern\'andez\\Kathleen Fisher\\
        {AT\& Labs Research}\\
        {\mono{\{mff,kfisher\}@research.att.com}}
 \and   {Robert Gruber\titlenote{Work conducted while at AT\&T
                                      Labs Research.}}\\
        {Google}\\
-       {\mono{gruber@google.com}}}
+       {\mono{gruber@google.com}}\\
+       {Xuan Zheng}\titlenote{Work conducted while summer intern at AT\&T Labs Research.}\\
+       {University of Michigan}\\
+      {\mono{xuanzh@eecs.umich.edu}}}
+
 
 \date{\today}
 
@@ -40,6 +46,7 @@
 \begin{document}
 
 \maketitle
+\eat{
 \begin{abstract}
 Enormous amounts of data exist in ``well-behaved'' formats such as
 relational tables and XML, which come equipped with extensive tool
@@ -65,7 +72,7 @@ papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}.  A
 shorter version of this proposal was accepted to the PLAN-X 2006
 workshop~\cite{daly+:launchpads}.  An open-source implementation of
 \pads{} is available for download~\cite{padsmanual}.
-\end{abstract}
+\end{abstract}}
 
 \input{intro}
 \input{pads}

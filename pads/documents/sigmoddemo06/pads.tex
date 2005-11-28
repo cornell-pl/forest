@@ -29,8 +29,18 @@ wavelet~\cite{histograms-wavelets}, and quantile
 summaries\cite{quantiles}.  The XML tool produces a canonical XML view
 of a \pads{} source~\cite{fernandez+:padx} and implements the data
 model required by the Galax XQuery engine (not shown here).
-\scream{Format template?}  Lastly, a user may write a custom
-application in \C{} to implement their own analysis.
+The format template allows the user to pretty print the data into a  
+delimited format suitable for loading in the a relational database.   
+The user can supply a sequence of delimiters.  Items at the top level  
+in the description are separated by the first delimiter in the  
+sequence.  At each nesting level, the tail of the delimiter sequence  
+is used.  If the pretty printer reaches a level where the delimiter  
+sequence has only one element, that element is used to separate all  
+remaining items.  The format program allows users to override how  
+elements of each type are displayed and to omit certain fields  
+entirely from the data source.
+Lastly, a user may write a custom
+application in \C{} to implement their own analyses.
 
 We describe a few key language features to illustrate the language's
 expressiveness and completeness.  A \pads{} specification describes
@@ -115,7 +125,7 @@ followed by the literal character \kw{'|'}, followed by an event
 sequence. \pads{} supports character, string, and regular expression
 literals.  A \kw{Punion} describes alternatives in the data format
 (Lines~9--12), and a \kw{Popt} type specifies optional data
-(Lines~13--27).  A \kw{Parray} describes varying-length sequences of
+(Lines~17--21).  A \kw{Parray} describes varying-length sequences of
 data all with the same type.  The \kw{Parray} type on Lines~32--34
 contains the sequence of events an order goes through during
 processing.  This declaration indicates that each element in the
@@ -133,11 +143,9 @@ that one field of a \kw{Pstruct} is greater than another.  Types also
 may be \emph{parameterized by values}, which permits the format and
 properties of later portions of the data to depend upon earlier
 portions.  For example, a type parameter can be used to specify the
-(dynamic) size of an array or the branch of a union.  The
-parameterized base type \cd{Puint16_FW(:3:)} specifies an unsigned,
-two-byte integer represented by exactly three characters, while the
-type \cd{Pstring(:'|':)} (\eg{}, Line~29) describes a string
-terminated by a vertical bar.
+(dynamic) size of an array, the appropriate branch of a union, and the
+terminating character of a string, \eg{} \cd{Pstring(:'|':)}, among
+others.
 
 \eat{Finally, \pads{} \kw{Ptypedef}s allow users to define new types
 that add further constraints to existing types.}
@@ -163,29 +171,39 @@ parse descriptor, which records the state of the parse, the number of
 detected errors, and the code and location of the first error detected
 in a value of that type.
 
+Parsing functions take a mask and return an in-memory representation
+and a parse descriptor.  The mask allows the user to specify which
+constraints the parser should check and which portions of the
+in-memory representation it should fill in.  This control allows the
+description-writer to specify all known constraints about the data
+without worrying about the run-time cost of verifying potentially
+expensive constraints for time-critical applications.
+
 Because a distinct parsing function is generated for each type in a
 \pads{} description, \pads{} supports multiple-entry point parsing,
-which accommodates efficient processing of large-scale data (\eg{},
-gigabytes~\cite{fisher+:pldi05}).  For a small file, the parsing
-function for the \pads{} type that describes the entire file can be
-called.  For larger-scale data, sequence of calls to parsing functions
-that read manageable portions of the file, \eg{}, reading one record
-at a time in a loop, is possible.  Currently, the user must specify
+which accommodates efficient processing of very large-scale
+data~\cite{fisher+:pldi05}.  For a small file, the parsing function
+for the \pads{} type that describes the entire file can be called.
+For larger-scale data, sequence of calls to parsing functions that
+read manageable portions of the file, \eg{}, reading one record at a
+time in a loop, is possible.  Currently, the user must specify
 explicitly the unit of parsing.
-
-\eat{The parsing code generated for
-\kw{Parray}s allows users to choose between reading the entire array
-at once or reading it one element at a time, again to support parsing
-and processing very large data sources.}
 
 Parse descriptors enable \emph{error-aware} processing of a data
 source.  Depending upon the nature of the errors and the desired
 application, users can take the appropriate action: halt the program,
 discard parts of the data, or repair the errors.  This flexibility
-makes it possible to continue processing of large-scale sources even
+makes it possible to continue processing of very large sources even
 when errors are encountered.
 
-\scream{Mary ran out of steam...}
+The \pads{} system solves important data-management tasks: it supports
+declarative description of ad hoc data formats, its descriptions serve
+as living documentation, and it permits exploration of ad hoc data and
+vetting of erroneous data using a standard query language.  The
+resulting \pads{} descriptions and queries are robust to changes that
+may occur in the data format, making it possible for more than one
+person to profitably use and understand a \pads{} description and
+related queries.
 
 \eat{The mapping to \C{} for each is straightforward: \kw{Pstruct}s map to
 \C{} structs with appropriately mapped fields, \kw{Punion}s map to
@@ -196,17 +214,27 @@ dynamically allocated sequence, \kw{Penum}s map to \C{} enumerations,
 Masks include auxiliary fields to control behavior at the level of a
 structured type, and}
 
-\eat{The parsing functions take a mask as an argument and returns an
-in-memory representation and a parse descriptor.  
-The mask allows the user to specify 
-which constraints the parser should check and which portions of the
-in-memory representation it should fill in.  This control allows the
-description-writer to specify all known constraints about the data
-without worrying about the run-time cost of verifying potentially
-expensive constraints for time-critical applications.}
-
 \eat{If the mask requests that a data item be verified
 and set, and if the parse descriptor indicates no error, then the
 in-memory representation satisfies the semantic constraints on the
 data.}
 
+\eat{
+\paragraph{Related Work.}
+More closely related work includes \erlang{}'s bit syntax~\cite{erlang} and
+the \packettypes{}~\cite{sigcomm00} and
+\datascript{} languages~\cite{gpce02}, 
+all of which allow declarative descriptions of physical data.  These projects were motivated by parsing protocols,
+\textsc{TCP/IP} packets, and \java{} jar-files, respectively.  Like
+\pads{}, these languages have a type-directed approach to
+describing ad hoc data and permit the user to define semantic constraints.
+In contrast to \pads{},
+these systems handle only binary data and assume the data is
+error-free or halt parsing if an error is detected. 
+Parsing non-binary data poses additional challenges because of the need
+to handle delimiter values and to express richer termination conditions
+on sequences of data. These systems also
+focus exclusively on the parsing/printing problem, whereas we have 
+leveraged the declarative nature of
+our data descriptions to build additional useful tools.
+}
