@@ -30,26 +30,35 @@ summaries\cite{quantiles}.  The XML tool produces a canonical XML view
 of a \pads{} source~\cite{fernandez+:padx} and implements the data
 model required by the Galax XQuery engine (not shown here).
 The format template allows the user to pretty print the data into a  
-delimited format suitable for loading in the a relational database.   
-The user can supply a sequence of delimiters.  Items at the top level  
+delimited format suitable for loading in a relational database.   
+\eat{The user can supply a sequence of delimiters.  Items at the top level  
 in the description are separated by the first delimiter in the  
 sequence.  At each nesting level, the tail of the delimiter sequence  
 is used.  If the pretty printer reaches a level where the delimiter  
 sequence has only one element, that element is used to separate all  
-remaining items.  The format program allows users to override how  
+remaining items.}  The format program allows users to override how  
 elements of each type are displayed and to omit certain fields  
 entirely from the data source.
 Lastly, a user may write a custom
 application in \C{} to implement their own analyses.
 
 We describe a few key language features to illustrate the language's
-expressiveness and completeness.  A \pads{} specification describes
-the physical layout and semantic properties of an ad hoc data source.
-\figref{figure:dibbler} gives the \pads{} description for the
-\dibbler{} data format, which may be generated interactively as
-previously described or written by an expert user.  Types are declared
+expressiveness and completeness.  The language provides a type-based
+model: basic types specify atomic data, while structured types
+describe compound data built from simpler pieces.
+\figref{figure:dibbler} contains the \pads{} description for the
+\dibbler{} data format\eat{, which may be generated interactively as
+previously described or written by an expert user}.  Types are declared
 before they are used, so the type that describes the entire data
-source (\cd{summary\_t}) appears last in the description (Line~42).
+source (\cd{summary\_t}) appears last in the description.
+
+The \pads{} library provides a large collection of useful
+base types such as 8-bit signed integers, 32-bit unsigned integers, IP
+addresses, dates , and strings, \etc{}.  Base types do not specify how
+the data is physically coded, \ie{}, in ASCII, EBCDIC, or binary.  \pads{} uses
+the \textit{ambient} coding, the default of which is ASCII, but users
+can customize it as appropriate.
+
 \begin{figure}
 \begin{scriptsize}
 \begin{code}
@@ -103,15 +112,6 @@ source (\cd{summary\_t}) appears last in the description (Line~42).
 \caption{\pads{} description for \dibbler{} provisioning data.}
 \label{figure:dibbler}
 \end{figure}
-
-The language provides a type-based model: basic types specify atomic
-data, while structured types describe compound data built from simpler
-pieces.  The \pads{} library provides a large collection of useful
-base types such as 8-bit signed integers, 32-bit unsigned integers, IP
-addresses, dates , and strings, \etc{}.  Base types do not specify how
-the data is physically coded, \ie{}, in ASCII, EBCDIC, or binary.  \pads{} uses
-the \textit{ambient} coding, the default of which is ASCII, but users
-can customize it as appropriate.
 
 \eat{A \kw{Penum} type specifies a fixed collection of
 literals.}

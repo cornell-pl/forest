@@ -23,7 +23,7 @@ system.
 Measure web workloads &                             \\ \hline
 \textbf{AT\&T provisioning data}: & Variable-width ASCII records  \\ 
 Monitor service activation &                              \\ \hline
-\textbf{Call detail}: Fraud detection  &  Fixed-width binary records \\  \hline 
+\eat{\textbf{Call detail}: Fraud detection  &  Fixed-width binary records \\  \hline }
 \textbf{AT\&T billing data}: & Various Cobol data formats  \\ 
 Monitor billing process   &                             \\ \hline
 \textbf{Netflow}:            & Data-dependent number of     \\ 
@@ -34,6 +34,8 @@ system response simulation & in tree-shaped hierarchy\\ \hline
 Gene-gene correlations     & in DAG-shaped hierarchy \\ \hline
 \textbf{OPRA}:              & Mixed binary \& ASCII records \\
 Options-market transactions & with data-dependent unions \\ \hline
+\textbf{Palm PDA}:          & Mixed binary \& character \\
+Device synchronization  & with data-dependent constraints \\ \hline
 %IP backbone data:  & ASCII   \\
 %Monitor network performance  &        \\ \hline
 %HL7:             & Variable-width ASCII records \\
@@ -108,7 +110,7 @@ learn the details of the \pads{} language or tool interfaces.
 Details about the \pads{} system are reported in technical
 papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}.  A
 shorter version of this proposal was accepted to the PLAN-X 2006
-workshop~\cite{daly+:launchpads}.  An open-source implementation of
+workshop~\cite{daly+:launchpads}, which has no formal proceedings.  An open-source implementation of
 \pads{} is available for download~\cite{padsmanual}.
 \section{Using PADS}
 \label{subsec:example}
@@ -169,29 +171,33 @@ format.  Like many ad hoc data sources, \dibbler{} data can contain
 unexpected or corrupted values, so the parser must handle errors
 robustly to avoid corrupting the results of analyses.  With \pads{},
 the analyst writes a declarative data description of the physical
-layout of her data.  \eat{The language also permits the analyst to describe
-expected semantic properties of her data so that deviations can be
-flagged as errors. The intent is to allow an analyst to capture in a
-\pads{} description all that she knows about a given data source.}
-If the analyst is new to \pads{}, she can use the \launchpads{} interactive 
-interface shown in \figref{figure:launchpads} to help her create a \pads{}
-description.  She begins by loading her sample data into
-the {\it dataview} (top-right frame) and then selects a fragment of
-data to describe in the {\it gridview} (middle frame).  In the
-gridview, the analyst iteratively refines the description of the
-selected data.  In this example, she has selected the \scream{XXX}
-part of an order record and is defining its composite structure, which
-includes \scream{YYY}.  This refinement step terminates when the
-analyst has associated a base type, such as string, phone
-number, date, \etc{}, with every value in the sample data.  Once all
-selected values have an associated base type, \textsc{\launchpads{}}
-generates the {\it treeview} (left-hand frame).  The treeview depicts
-the abstract syntax of a \pads{} description.  In this view, the
-analyst can refine the description by creating, removing,
-reordering, or renaming the generated types.
+layout of her data.  \eat{The language also permits the analyst to
+describe expected semantic properties of her data so that deviations
+can be flagged as errors. The intent is to allow an analyst to capture
+in a \pads{} description all that she knows about a given data
+source.}  If the analyst is new to \pads{}, she can use the
+\launchpads{} interactive interface shown in
+\figref{figure:launchpads} to help her create a \pads{} description.
+She begins by loading her sample data into the {\it dataview}
+(top-right frame) and then selects a fragment of data to describe in
+the {\it gridview} (middle frame).  In the gridview, the analyst
+iteratively refines the description of the selected data.  In this
+example, she has selected the header part of an order record and
+is defining its composite structure, which includes three phone-number fields.
+This refinement step terminates when the analyst has associated a base
+type, such as string, phone number, date, \etc{}, with every value in
+the sample data.  Once all selected values have an associated base
+type, \textsc{\launchpads{}} generates the {\it treeview} (left-hand
+frame).  The treeview depicts the abstract syntax of a \pads{}
+description.  In this view, the analyst can refine the description by
+creating, removing, and renaming the generated types.  She may also
+add semantic constraints that specify relations between one part of
+the data and another, for example that one field in a type is some
+function of another field in a different type.
 \begin{figure*}
   \begin{center}
-    \scalebox{.75}{\includegraphics{launch.pdf}}
+%    \scalebox{.75}{\includegraphics{launch.pdf}}
+    \scalebox{.4}{\includegraphics{sirius_screenshot1.png}}
   \end{center}
   \caption{\launchpads{} Interactive User Interface.}
   \label{figure:launchpads}
