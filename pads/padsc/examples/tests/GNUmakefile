@@ -409,8 +409,15 @@ veryclean: clean
 ifeq ($(PADS_KIND),bulk)
 COPTFLAGS += -D PADS_BULK -D PADS_ALLOC_HINT=$(PADS_ALLOC_HINT)
 endif
+#ifeq ($(PADS_KIND),linear)
+#COPTFLAGS += -D PADS_LINEAR
+#endif
+
+# Mary: I'm not sure which are the right switches to use here...
+#COPTFLAGS += -D PADS_LINEAR -D PADS_ALLOC_HINT=0
+
 ifeq ($(PADS_KIND),linear)
-COPTFLAGS += -D PADS_LINEAR -D PADS_ALLOC_HINT=0
+COPTFLAGS += -D PADS_SMART -D MAX_ELTS=1
 endif
 
 ifndef PADS_SIZE
