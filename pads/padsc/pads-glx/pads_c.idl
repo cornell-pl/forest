@@ -8,7 +8,8 @@ interface Test {
   typedef unsigned long childIndex; 
   typedef [abstract,finalize(free_node)] void * nodeRep; 
   typedef [mltype("nodeRep option"), c2ml(c2ml_nodeRepOpt), ml2c(ml2c_nodeRepOpt)] nodeRep nodeRepOpt;
-  typedef [mltype("Dm.atomicValue"), c2ml(c2ml_atomicValue), ml2c(ml2c_atomicValue)] long *cAtomicValue; 
+  typedef [mltype("Dm.item"), c2ml(c2ml_atomicValue), ml2c(ml2c_atomicValue)] long *cAtomicValue; 
+  /*  typedef [mltype("Datatypes_atomic.atomicValue"), c2ml(c2ml_atomicValue), ml2c(ml2c_atomicValue)] long *cAtomicValue;  */
   typedef [null_terminated] nodeRep nodeRepArray[]; 
 
   /* Need finalize(final_fn) attribute; final_fn is called when

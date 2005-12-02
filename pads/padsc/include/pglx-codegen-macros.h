@@ -119,12 +119,17 @@ result
   if (idx != 0)
     return result;
   for (i = 0; 1; i++) {
-    if (fieldNames[i] == 0)
-      return 0;
-    if (GLX_STR_MATCH(name, fieldNames[i]))
+    if (fieldNames[i] == 0) {
+      /* error(2, "fieldNames[i] == 0\n"); */
+      return result;
+    }
+    /* error(2, "name = %s fieldNames[%d] = %s\n", name, i, fieldNames[i]);  */
+    if (GLX_STR_MATCH(name, fieldNames[i])) {
+      /* error(2, "%s matches %s at %d\n", name, fieldNames[i], i);  */
       break;
+    }
   } 
-  i -= 1;
+/* error(2, "... %d\n", i);  */
   /* fall through if i set correctly */
 /* END_MACRO */
 
@@ -755,16 +760,16 @@ res
   ty          *rep  = (ty *)(smartNodeIN)->rep;
   ty ## _pd   *pd  = (ty ## _pd *)(smartNodeIN)->pd;
 
-  if (0 != RBuf_RESERVE_HINT(rep->_internal, rep->elts, eltTy, arrayInfo->live_count+1, 0)) 
+  if (0 != RBuf_RESERVE_HINT(rep->_internal, rep->elts, eltTy, arrayInfo->live_count+1, arrayInfo->max_elts)) 
     {
-      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_allocElement",0);
+      PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
-  if (0 != RBuf_RESERVE_HINT(pd->_internal, pd->elts, eltPdTy, arrayInfo->live_count+1, 0)) 
+  if (0 != RBuf_RESERVE_HINT(pd->_internal, pd->elts, eltPdTy, arrayInfo->live_count+1,  arrayInfo->max_elts)) 
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }
   if (0 != RBuf_RESERVE_HINT(arrayInfo->_internal_live,arrayInfo->liveList,
-			     PDCI_childIndex_t, arrayInfo->live_count+1, 0)) 
+			     PDCI_childIndex_t, arrayInfo->live_count+1, arrayInfo->max_elts)) 
     {
       PGLX_report_err ((padsIN),P_LEV_FATAL,0,P_ALLOC_ERR,#ty "_smartNode_allocElement",0);
     }

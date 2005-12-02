@@ -84,19 +84,16 @@ padsDocument(processing_context pc, char *uri, char *psource_file, nodeRep nr, i
 }
 
 galax_err
-walkPadsDocument(item doc)
+walkPadsDocument(item i)
 {
   CAMLparam0();
   CAMLlocal1(caml_result);
 
   static value * walk_pads_document_closure = NULL;
-
   if (walk_pads_document_closure == NULL) {
     walk_pads_document_closure = caml_named_value("walk_pads_document");
   }
-
-  caml_result = callback_exn(*walk_pads_document_closure, *doc);
-
+  caml_result = callback_exn(*walk_pads_document_closure, *i); 
   if (Is_exception_result(caml_result)) {
     pads_error_string = galax_exception_string(Extract_exception(caml_result)); 
     CAMLreturn(-1);

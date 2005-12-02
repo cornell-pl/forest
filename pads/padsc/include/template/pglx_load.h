@@ -168,6 +168,7 @@ int main(int argc, char** argv) {
   }
   /* Open files */	
   if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); }
+  fclose(file_fp);
 
   /* Initialize Galax flags */
   exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
@@ -245,21 +246,20 @@ int main(int argc, char** argv) {
   { 
     exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
     if (!P_PS_isPanic(&pd)) { 
+      /* For now, we hardwire the padsns namespace into the template file */
+      char *pdci_uri = strcat(strcpy(malloc(strlen("file:") + strlen(PDCI_source)), "file:"), PDCI_source);
+
       /* make the top-level node */
-      PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "padsns:PSource", &m, &pd, &rep, "main");
+      PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
 
       /*      walk_children(doc_node,0);  */
 
-      exit_on_error((padsDocument(pc, inName, PDCI_source, (nodeRep)doc_node, &doc)), "padsDocument");
+      exit_on_error((padsDocument(pc, inName, pdci_uri, (nodeRep)doc_node, &doc)), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
 
       if (is_empty(docitems)) error(2, "*** Result is empty") ;
       else {
-	char *result;
-	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
-	fprintf(file_fp,"%s",result);
-	fflush(file_fp);
-	fclose(file_fp);
+	exit_on_error(galax_serialize_to_file(pc,file_out,docitems), "galax_serialize_to_file");
       }
       if (monitor_flag) {
 	exit_on_error(galax_monitor_of_all_calls(pc, &monitems), "galax_monitor_of_all_calls");

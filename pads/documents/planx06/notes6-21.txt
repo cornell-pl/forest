@@ -35,7 +35,7 @@ x Use walk_chilren in pglx.c. Turn off printing. Just want to time
 
 
 PADS/X Story
-----------------
+------------
 Semantics : XQuery over non-XML (ad hoc, semi-structured, , large) data sources.
 Streaming: access records in sequential/linear order
                      evaluate queries over seq. stream
@@ -46,11 +46,29 @@ Error-awareness: conditionally ignore unimportant data
 Performance Numbers:
 
 1. Galax Query Plan
+
 2. Galax Datamodel
+
 3. PADX Node Reads Bulk/Smart/Linear
+<<<<<<< notes6-21.txt
+
+4. PADS Record Reads Mask[on/off] No Masks.]
+   (consequence of error-aware computing).
+=======
 4. PADS Record Reads: Mask[on/off] [No Masks.]
 	(consequence of error-aware computing).
+>>>>>>> 1.2
 
+<<<<<<< notes6-21.txt
+Examples: 
+  Newick  (Recursive -- experimental)
+  Phone numbers : format4 semantic constraints, format5 (Puint32)
+  DNS           : dns.p
+  Dibbler Data  : dibbler_notrailer.p
+  Web Server (cheap mask) : ai.p 
+  Call detail : call_detail.p
+   (note: masks set choose to set in-mem rep; check constraints)
+=======
 Examples:
 Newick?
 Phone numbers : call_detail.p ?
@@ -58,6 +76,7 @@ DNS : dns.p
 Dibbler Data : dibbler.p
 Web Server (cheap mask) ai.p
  (note: masks set choose to set in-mem rep; check constraints)
+>>>>>>> 1.2
 
 Timing:
 run 7 times. drop hi and low. take mean, median std. dev.

@@ -327,7 +327,7 @@ LINKER = $(mam_cc_LD)
 LINKOPTS_D = $(CDBGFLAGS) $(mam_cc_LD_ORIGIN)
 LINKOPTS_O = $(COPTFLAGS) $(mam_cc_LD_ORIGIN)
 
-OS_SPEC_XTRA_LIBS =
+OS_SPEC_XTRA_LIBS = -lm
 
 empty:=
 space:=$(empty) $(empty)
@@ -532,7 +532,7 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_O += \
   $(PADSGALAX_LIBOPT_O) $(SHARED_ASTLIB_O)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
-  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
+  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 else 
@@ -565,7 +565,7 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
   $(PADSGALAX_LIBOPT_D) $(SHARED_ASTLIB_D)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
-  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr \
+  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
 else

@@ -45,12 +45,27 @@
 
 #define exit_on_error(_Expr, _Msg) {err = _Expr; if (err != 0) {error(2, "%s: %s\n", _Msg, galax_error_string); exit(-1); }}
 
-#define MAX_NODES 100000
-#define MAX_ELTS 100000
+#ifndef MAX_NODES
+#  define MAX_NODES 100000
+#endif 
+
+#ifndef MAX_ELTS
+#  define MAX_ELTS 100000
+#endif
 
 #ifndef EXTRA_ARGS
 #  define EXTRA_ARGS
 #endif
+
+int
+P_fatal_error(const char *libnm, int level, ...)
+{
+  va_list ap;
+  va_start(ap, level);
+  if (level == P_LEV_FATAL) errorv(libnm, (libnm ? level|ERROR_LIBRARY : level), ap);
+  va_end(ap);
+  return 0;
+}
 
 int main(int argc, char** argv) {
   P_t*          pads;
@@ -60,9 +75,6 @@ int main(int argc, char** argv) {
   PADS_TY(_pd)  pd ;
   PADS_TY(_m)   m;
   PDCI_node_t   *smart_node;
-
-  my_disc.out_formats.timestamp = "%Y-%m-%dT%H:%M:%S"; 
-  my_disc.out_formats.timestamp_explicit = "%Y-%m-%dT%H:%M:%S"; 
 
 #ifdef PADS_HDR_TY
   PADS_HDR_TY( )    hdr_rep;
@@ -94,6 +106,9 @@ int main(int argc, char** argv) {
   file_out = malloc(strlen(argv[0]) + strlen(".xml"));
   strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
   strcpy(file_out,argv[0]); strcat(file_out,".xml");
+
+  /* Report fatal errors only */
+  my_disc.error_fn = P_fatal_error;
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -205,6 +220,7 @@ int main(int argc, char** argv) {
   }
   /* Open files */	
   if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); }
+  fclose(file_fp);
 
   /* Initialize Galax flags */
   exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
@@ -212,7 +228,7 @@ int main(int argc, char** argv) {
   if (sbdo_flag)
     exit_on_error(galax_set_sbdo_kind(pc, sbdo_kind), "galax_set_sbdo_kind");
   if (monitor_flag) {
-    exit_on_error(galax_set_monitor_mem(pc, 1), "galax_set_monitor_mem");
+    exit_on_error(galax_set_monitor_mem(pc, 1), "galax_set_monitor_mem"); 
     exit_on_error(galax_set_monitor_time(pc, 1), "galax_set_monitor_time");
   }
 
@@ -275,30 +291,40 @@ int main(int argc, char** argv) {
  {
       char *vars[0];
       itemlist vals[0]; 
-      char *input = "";
+
+      /* For now, we hardwire the padsns namespace into the template file */
+      char *pdci_uri = strcat(strcpy(malloc(strlen("file:") + strlen(PDCI_source)), "file:"), PDCI_source);
+      
+      char *ns_decl_head = "declare namespace padsns = \""; 
+      char *ns_decl_tail = "\";\n";
+      char *input = malloc(strlen(ns_decl_head) + strlen(pdci_uri) + strlen(ns_decl_tail) + 1);
+      
+      input = strcpy(input, ns_decl_head);       
+      input = strcat(strcat(input, pdci_uri), ns_decl_tail); 
 
       // Create the new smart node.
       exit_on_error(galax_start_monitor_call(pc, "pads_mk_top_node"), "galax_start_monitor_call");
-      PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "padsns:PSource", &m, &pd, &rep, "main");
+      PDCI_MK_TOP_NODE_NORET (smart_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
       PADS_TY(_smartNode_init)(smart_node, MAX_ELTS  EXTRA_ARGS);
       exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor_call");
 
-      exit_on_error(galax_load_standard_library(pc, &cp), "galax_load_standard_library");
-      exit_on_error(padsDocument(pc, inName, PDCI_source, (nodeRep)smart_node, &doc), "padsDocument");
+      exit_on_error(padsDocument(pc, inName, pdci_uri, (nodeRep)smart_node, &doc), "padsDocument");
       docitems = itemlist_cons(doc, itemlist_empty()); 
+
+      exit_on_error(galax_load_standard_library(pc, &cp), "galax_load_standard_library");
       exit_on_error(galax_import_main_module(cp, ExternalContextItem, Buffer_Input, input, &cm), "galax_import_main_module");
-      exit_on_error(galax_build_external_context(pc, docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");
+      exit_on_error(galax_build_external_context(pc, docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");      
       exit_on_error(galax_eval_prolog(cm->compiled_prolog, exc, &pp), "galax_eval_prolog");
+
       exit_on_error(galax_eval_statement(pp, File_Input, queryName, &docitems), "galax_eval_statement"); 
       
-      /*      if (is_empty(docitems)) error(2, "*** Result is empty") ;
-	      else  */
       {
-	char *result;
-	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
-	fprintf(file_fp,"%s",result);
-	fflush(file_fp);
-	fclose(file_fp);
+	exit_on_error(galax_serialize_to_file(pc,file_out,docitems), "galax_serialize_to_file");
+      }
+
+      if (monitor_flag) {
+	exit_on_error(galax_monitor_of_all_calls(pc, &monitems), "galax_monitor_of_all_calls");
+	exit_on_error(galax_serialize_to_file(pc, monitor_out, monitems), "galax_serialize_to_file");
       }
  }
   /* 
@@ -323,34 +349,5 @@ int main(int argc, char** argv) {
   sfclose(io);
 
   NodeMM_freeMM(pads);
-
-  /*
-  result_node = Puint32_node_new(smart_node,"result",NULL,NULL,NULL,"element","main");
-  (result_node->vt->cachedNode_init)(result_node);
-  result_node->child_cache[0]= PGLX_generic_kth_child_named((nodeRep)smart_node,0,argv[3]);
-  result_node->child_cache[1]= result_node->child_cache[0];
-
-  printf("Forming document ....\n");
-  err = padsDocument("pd.xml", (nodeRep)result_node, &doc2);
-  exit_on_error(err); 
-  docitems = itemlist_cons(doc2, itemlist_empty()); 
-  err = galax_serialize_to_stdout(docitems);
-  exit_on_error(err);
-  */
-
-  /*
-  printf("2nd Traversal.\n");
-
-  // create a second cursor over the data:
-  err = padsDocument(argv[1], (nodeRep)smart_node, &doc2);
-  exit_on_error(err); 
-
-  docitems = itemlist_cons(doc2, itemlist_empty()); 
-  err = galax_serialize_to_stdout(docitems);
-  exit_on_error(err);
-  */
-
-  //  printf("\nFinished Traversals.\n");
-
   return 0;
 }

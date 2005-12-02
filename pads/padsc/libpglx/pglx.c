@@ -36,6 +36,7 @@ nodeRep PGLX_generic_kth_child (nodeRep ocaml_n, childIndex idx)
 nodeRep PGLX_generic_kth_child_named (nodeRep ocaml_n, childIndex idx, const char *name)
 {
   PDCI_node_t *n = (PDCI_node_t *) ocaml_n; 
+  /*  error(2, "In PGLX_generic_kth_child_named %d %s\n", idx, name);  */
   if (!n)
     PGLX_report_err(n->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"PGLX_generic_kth_child_named","PADS/Galax INVALID_PARAM: n null");
   if (!n->vt)
@@ -295,49 +296,6 @@ const PDCI_vtable_t ty ## _sndNode_vtable = {PDCI_error_cachedNode_init, \
 					    PDCI_error_typed_value, \
 					    PDCI_not_impl_yet_string_value}
 
-#define PDCI_IMPL_TYPED_VALUE(ty) \
-item ty ## _typed_value (PDCI_node_t *node) \
-{ \
-  item         res = 0; \
-  ty           *r   = (ty*)node->rep; \
-  Pbase_pd   tpd; \
-  tpd.errCode = P_NO_ERR; \
-  PDCI_sfstr_seek2zero(node->pads->tmp2); \
-  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
-     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
-     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
-  } \
-  if (galax_atomicUntyped(PDCI_sfstr_use(node->pads->tmp2), &res)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
-  } \
-  return res; \
-}\
-\
-item ty ## _sndNode_typed_value (PDCI_node_t *node) \
-{ \
-  item         res = 0; \
-  ty           *r;\
-  Pbase_pd   tpd; \
-\
-  /* Make sure that the node is valid before attempting to access its contents. */ \
-  PDCI_sndNode_validate(node);\
-  r   = (ty*)node->rep; \
-  tpd.errCode = P_NO_ERR; \
-  PDCI_sfstr_seek2zero(node->pads->tmp2); \
-  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
-     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
-     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
-  } \
-  if (galax_atomicUntyped(PDCI_sfstr_use(node->pads->tmp2), &res)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
-  } \
-  return res; \
-}
-
 #define PDCI_IMPL_TYPED_VALUE_FLOAT(ty) \
 item ty ## _typed_value (PDCI_node_t *node) \
 { \
@@ -356,13 +314,33 @@ item ty ## _sndNode_typed_value (PDCI_node_t *node) \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
-  d = (double)*((ty*)node->rep); \
-\
-  if (galax_atomicFloat(d, &res)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
-  } \
-  return res; \
+  return ty ## _typed_value(node); \
 }
+
+item Pfloat64_typed_value (PDCI_node_t *node)
+{
+  item      res = 0;
+  Pfloat64  flt = *(Pfloat64*)node->rep;
+  Pbase_pd  *pd = (Pbase_pd*)node->pd;
+  Pbase_pd   tpd;
+
+  if (!pd) {
+    pd = &tpd;
+    pd->errCode = P_NO_ERR;
+  }
+  PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,
+		  "Pfloat64_typed_value",
+		  "PADS/Galax Pfloat64_typed_value unimplemented");
+  return res;
+}
+
+item Pfloat64_sndNode_typed_value (PDCI_node_t *node)
+{
+  /* Make sure that the node is valid before attempting to access its contents. */
+  PDCI_sndNode_validate(node);
+  return Pfloat64_typed_value(node); 
+}
+
 
 #define PDCI_IMPL_TYPED_VALUE_INT(ty) \
 item ty ## _typed_value (PDCI_node_t *node) \
@@ -377,24 +355,9 @@ item ty ## _typed_value (PDCI_node_t *node) \
 \
 item ty ## _sndNode_typed_value (PDCI_node_t *node) \
 { \
-  item       res = 0; \
-  int        r;\
-  Pbase_pd  *pd;\
-  Pbase_pd   tpd; \
-\
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
-  r = *((ty*)node->rep); \
-  pd  = (Pbase_pd*)node->pd; \
-\
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
-  if (galax_atomicInt(r, &res)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
-  } \
-  return res; \
+  return ty ## _typed_value(node); \
 }
 
 /* XXX should use long long */
@@ -411,24 +374,9 @@ item ty ## _typed_value (PDCI_node_t *node) \
 \
 item ty ## _sndNode_typed_value (PDCI_node_t *node) \
 { \
-  item         res = 0; \
-  int          r;\
-  Pbase_pd  *pd;\
-  Pbase_pd   tpd; \
-\
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
-  r = *((ty*)node->rep); \
-  pd  = (Pbase_pd*)node->pd; \
-\
-  if (!pd) { \
-    pd = &tpd; \
-    pd->errCode = P_NO_ERR; \
-  } \
-  if (galax_atomicInteger(r, &res)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
-  } \
-  return res; \
+  return ty ## _typed_value(node); \
 }
 
 /* For the case where a base type requires an arg, such as stop char for Pstring */
@@ -455,25 +403,9 @@ item ty ## _typed_value (PDCI_node_t *node) \
 \
 item ty ## _sndNode_typed_value (PDCI_node_t *node) \
 { \
-  item         res = 0; \
-  ty           *r;\
-  Pbase_pd   tpd; \
-\
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
-  r   = (ty*)node->rep; \
-  tpd.errCode = P_NO_ERR; \
-  PDCI_sfstr_seek2zero(node->pads->tmp2); \
-  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
-     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
-     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
-  } \
-  if (galax_atomicUntyped(PDCI_sfstr_use(node->pads->tmp2), &res)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
-  } \
-  return res; \
+  return ty ## _typed_node (node); \
 }
 
 #define PDCI_NO_CHILD_CN_INIT_DEF(ty)\
@@ -691,6 +623,7 @@ item ty ## _text_sndNode_typed_value (PDCI_node_t *node) \
 \
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
+  return ty ## _text_typed_value(node); \
   r   = (ty*)node->rep; \
   tpd.errCode = P_NO_ERR; \
   PDCI_sfstr_seek2zero(node->pads->tmp2); \
@@ -724,65 +657,26 @@ const char * ty ## _string_value (PDCI_node_t *node) \
   } \
   return (PDCI_sfstr_use(node->pads->tmp2)); \
 } \
+const char * ty ## _sndNode_string_value (PDCI_node_t *node) \
+{ \
+  /* Make sure that the node is valid before attempting to access its contents. */ \
+  PDCI_sndNode_validate(node);\
+  return ty ## _string_value(node); \
+} \
  \
 item ty ## _text_typed_value (PDCI_node_t *node) \
 { \
   item         res = 0; \
-  ty           *r   = (ty*)node->rep; \
-  Pbase_pd   tpd; \
-  tpd.errCode = P_NO_ERR; \
-  PDCI_sfstr_seek2zero(node->pads->tmp2); \
-  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
-     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
-     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
-  } \
-  if (galax_atomicUntyped(PDCI_sfstr_use(node->pads->tmp2), &res)) { \
+  if (galax_atomicUntyped(ty ## _string_value(node), &res)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
 } \
-const char * ty ## _sndNode_string_value (PDCI_node_t *node) \
-{ \
-  ty           *r;\
-  Pbase_pd   tpd; \
-\
-  /* Make sure that the node is valid before attempting to access its contents. */ \
-  PDCI_sndNode_validate(node);\
-  r   = (ty*)node->rep; \
-  tpd.errCode = P_NO_ERR; \
-  PDCI_sfstr_seek2zero(node->pads->tmp2); \
-  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
-     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
-     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_sndNode_string_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
-  } \
-  return (PDCI_sfstr_use(node->pads->tmp2)); \
-} \
- \
 item ty ## _text_sndNode_typed_value (PDCI_node_t *node) \
 { \
-  item         res = 0; \
-  ty           *r;\
-  Pbase_pd   tpd; \
-\
   /* Make sure that the node is valid before attempting to access its contents. */ \
   PDCI_sndNode_validate(node);\
-  r   = (ty*)node->rep; \
-  tpd.errCode = P_NO_ERR; \
-  PDCI_sfstr_seek2zero(node->pads->tmp2); \
-  /* Mary: The _write2io functions have the side effect of changing the rep when errCode != P_NO_ERR,  \
-     but we only call these functions for sub-elements/structures whose values are known and error-free,  \
-     so we explicitly call them with tpd.errCode = P_NO_ERR. */ \
-  if (-1 == ty ## _write2io(node->pads, node->pads->tmp2, &tpd, r, ty_arg1)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_IO_FAILURE"); \
-  } \
-  if (galax_atomicUntyped(PDCI_sfstr_use(node->pads->tmp2), &res)) { \
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_text_sndNode_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
-  } \
-  return res; \
+  return ty ## _text_typed_value(node); \
 } \
  \
 PDCI_DEF_BASE_VAL_VT(ty)
@@ -1914,7 +1808,6 @@ item PDCI_cstr_typed_value(PDCI_node_t *node)
   item        res = 0;
   char        *s   = (char *)node->rep;
 
-  //  printf("cstr val: %s.\n",s);
   if (galax_atomicUntyped(s, &res)) {
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pcstr_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
   }
@@ -1923,17 +1816,9 @@ item PDCI_cstr_typed_value(PDCI_node_t *node)
 
 item PDCI_cstr_sndNode_typed_value(PDCI_node_t *node)
 {
-  item        res = 0;
-  char        *s;
-
   /* Make sure that the node is valid before attempting to access its contents. */
   PDCI_sndNode_validate(node);
-  s   = (char *)node->rep;
-
-  if (galax_atomicUntyped(s, &res)) {
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pcstr_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
-  }
-  return res;
+  return PDCI_cstr_typed_value(node);
 }
 
 /* Misc. XXX_value functions. */
@@ -1957,26 +1842,9 @@ item Pchar_typed_value (PDCI_node_t *node)
 
 item Pchar_sndNode_typed_value (PDCI_node_t *node)
 {
-  item         res = 0;
-  Pchar        c;
-  Pbase_pd  *pd;
-  Pbase_pd   tpd;
-
   /* Make sure that the node is valid before attempting to access its contents. */
   PDCI_sndNode_validate(node);
-  c   = *((char*)node->rep);
-  pd  = (Pbase_pd*)node->pd;
-
-  if (!pd) {
-    pd = &tpd;
-    pd->errCode = P_NO_ERR;
-  }
-  PDCI_sfstr_seek2zero(node->pads->tmp2);
-  sfprintf(node->pads->tmp2, "%c", c);
-  if (galax_atomicString(PDCI_sfstr_use(node->pads->tmp2), &res)) {
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pchar_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
-  }
-  return res;
+  return Pchar_typed_value(node);
 }
 
 item Pstring_typed_value (PDCI_node_t *node)
@@ -1999,92 +1867,48 @@ item Pstring_typed_value (PDCI_node_t *node)
 
 item Pstring_sndNode_typed_value (PDCI_node_t *node)
 {
-  item         res = 0;
-  Pstring *ps;
-  Pbase_pd  *pd;
-  Pbase_pd   tpd;
-
   /* Make sure that the node is valid before attempting to access its contents. */
   PDCI_sndNode_validate(node);
-  ps = (Pstring*)node->rep;
-  pd  = (Pbase_pd*)node->pd;
-
-  if (!pd) {
-    pd = &tpd;
-    pd->errCode = P_NO_ERR;
-  }
-  PDCI_sfstr_seek2zero(node->pads->tmp2);
-  sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str);
-  if (galax_atomicString(PDCI_sfstr_use(node->pads->tmp2), &res)) {
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pstring_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
-  }
-  return res;
+  return Pstring_typed_value(node); 
 }
 
 item Pdate_typed_value (PDCI_node_t *node){
-  item         res = 0;
-/*   Pstring *ps = (Pstring*)node->rep; */
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
-  Pbase_pd   tpd;
-  if (!pd) {
-    pd = &tpd;
-    pd->errCode = P_NO_ERR;
-  }
-/*   PDCI_sfstr_seek2zero(node->pads->tmp2); */
-/*   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str); */
-/*   if (galax_atomicString(PDCI_sfstr_use(node->pads->tmp2), &res)) { */
-  if (galax_atomicString("TESTING", &res)) {
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pdate_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
-  }
+  item       res = 0;
+  if (galax_atomicDate(Pdate_string_value(node), &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pdate_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");  }
   return res;
 }
 
 item Pdate_sndNode_typed_value (PDCI_node_t *node){
-  return 0;
+  /* Make sure that the node is valid before attempting to access its contents. */
+  PDCI_sndNode_validate(node);
+  return Pdate_typed_value(node);
 }
 
 item Ptime_typed_value (PDCI_node_t *node){
   item         res = 0;
-/*   Pstring *ps = (Pstring*)node->rep; */
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
-  Pbase_pd   tpd;
-  if (!pd) {
-    pd = &tpd;
-    pd->errCode = P_NO_ERR;
-  }
-/*   PDCI_sfstr_seek2zero(node->pads->tmp2); */
-/*   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str); */
-/*   if (galax_atomicString(PDCI_sfstr_use(node->pads->tmp2), &res)) { */
-  if (galax_atomicString("TESTING", &res)) {
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pdate_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
-  }
+  if (galax_atomicTime(Ptime_string_value(node), &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Ptime_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");  }
   return res;
 }
 
 item Ptime_sndNode_typed_value (PDCI_node_t *node){
-  return 0;
+  /* Make sure that the node is valid before attempting to access its contents. */
+  PDCI_sndNode_validate(node);
+  return Ptime_typed_value(node);
 }
 
 item Ptimestamp_typed_value (PDCI_node_t *node){
   item         res = 0;
-/*   Pstring *ps = (Pstring*)node->rep; */
-  Pbase_pd  *pd  = (Pbase_pd*)node->pd;
-  Pbase_pd   tpd;
-  if (!pd) {
-    pd = &tpd;
-    pd->errCode = P_NO_ERR;
-  }
-/*   PDCI_sfstr_seek2zero(node->pads->tmp2); */
-/*   sfprintf(node->pads->tmp2, "%.*s", ps->len, ps->str); */
-/*   if (galax_atomicString(PDCI_sfstr_use(node->pads->tmp2), &res)) { */
-  if (galax_atomicString("TESTING", &res)) {
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Pdate_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
-  }
+  if (galax_atomicDateTime(Ptimestamp_string_value(node), &res)) {
+    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,"Ptimestamp_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");  }
   return res;
 }
 
 item Ptimestamp_sndNode_typed_value (PDCI_node_t *node){
-  return 0;
+  /* Make sure that the node is valid before attempting to access its contents. */
+  PDCI_sndNode_validate(node);
+  return Ptimestamp_typed_value(node); 
 }
 
 item Pip_typed_value (PDCI_node_t *node)
@@ -2114,35 +1938,10 @@ item Pip_typed_value (PDCI_node_t *node)
 
 item Pip_sndNode_typed_value (PDCI_node_t *node)
 {
-  item         res = 0;
-  Pip pip;
-  Pbase_pd  *pd;
-  Pbase_pd   tpd;
-
   /* Make sure that the node is valid before attempting to access its contents. */
   PDCI_sndNode_validate(node);
-  pip = *(Pip*)node->rep;
-  pd  = (Pbase_pd*)node->pd; 
-
-  if (!pd) {
-    pd = &tpd;
-    pd->errCode = P_NO_ERR;
-  }
-  PDCI_sfstr_seek2zero(node->pads->tmp2);
-  sfprintf(node->pads->tmp2, "%u.%u.%u.%u", 
-	   (pip >> 24) & 0xFF, 
-	   (pip >> 16) & 0xFF,
-	   (pip >>  8) & 0xFF,
-	    pip        & 0xFF);
-  if (galax_atomicString(PDCI_sfstr_use(node->pads->tmp2), &res)) {
-    PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR,
-		    "Pip_typed_value",
-		    "PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE");
-  }
-  return res;
+  return Pip_typed_value(node); 
 }
-
-
 
 /* ---------------------------
  * Some string_value functions
@@ -2224,17 +2023,6 @@ PDCI_cstr_val_sndNode_vtable = {PDCI_error_cachedNode_init,
 PDCI_IMPL_BASE_VT(Pip);
 PDCI_IMPL_BASE_VAL_VT(Pip);
 
-PDCI_IMPL_BASE_VT(Pfloat32);
-PDCI_IMPL_TYPED_VALUE_FLOAT(Pfloat32)
-PDCI_IMPL_BASE_VAL_VT(Pfloat32);
-
-PDCI_IMPL_BASE_VT(Pfloat64);
-PDCI_IMPL_TYPED_VALUE(Pfloat64);
-PDCI_IMPL_BASE_VAL_VT(Pfloat64);
-
-PDCI_IMPL_BASE_VT(Pip);
-PDCI_IMPL_BASE_VAL_VT(Pip);
-
 PDCI_IMPL_BASE_VT(Pdate);
 /* The second parameter is copied from Pstring below. 
    I don't know that it is the correct choice. YHM.*/
@@ -2287,6 +2075,13 @@ PDCI_IMPL_BASE_VAL_VT(Puint32);
 PDCI_IMPL_BASE_VT(Puint64);
 PDCI_IMPL_TYPED_VALUE_INTEGER(Puint64);
 PDCI_IMPL_BASE_VAL_VT(Puint64);
+
+PDCI_IMPL_BASE_VT(Pfloat32);
+PDCI_IMPL_TYPED_VALUE_FLOAT(Pfloat32)
+PDCI_IMPL_BASE_VAL_VT(Pfloat32);
+
+PDCI_IMPL_BASE_VT(Pfloat64);
+PDCI_IMPL_BASE_VAL_VT(Pfloat64);
 
 /*
 

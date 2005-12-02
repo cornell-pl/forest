@@ -33,6 +33,7 @@ nodeRepOpt kth_child(nodeRep x, childIndex idx){
 }
 
 nodeRepOpt kth_child_named(nodeRep x, childIndex idx, const char *name){
+  /*  error(2, "In kth_child_named %d %s\n", idx, name);  */
   return PGLX_generic_kth_child_named(x,idx,name);
 }
 

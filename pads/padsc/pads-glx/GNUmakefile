@@ -57,7 +57,7 @@ pads_c.h : pads_c.idl
 	$(OCAML_BIN_DIR)/camlidl -header $<
 	cp $(VPATH)/pads_c.h  $(VPATH)/pads_c.ml  $(VPATH)/pads_c.mli $(VPATH)/pads_c_stubs.c .
 
-pads_c.mli     : pads_c.h
+$(VPATH)/pads_c.mli     : pads_c.h
 pads_c.ml      : pads_c.h
 pads_c_stubs.c : pads_c.h
 
@@ -66,11 +66,12 @@ pads_c_stubs.c : pads_c.h
 CAMLLIBPCRE=$(OCAML_LIB_DIR)/site-lib/pcre
 CAMLLIBNETSTRING=$(OCAML_LIB_DIR)/site-lib/netstring
 CAMLLIBPXP=$(OCAML_LIB_DIR)/site-lib/pxp-engine
-CAML_LIBS=nums.cmxa unix.cmxa str.cmxa pcre.cmxa netstring.cmxa pxp_engine.cmxa
-DEFAULT_CLIBS=-lnums -lunix -lstr -lpcre -lpcre_stubs -L$(PCRE_LIB_DIR) -L$(CAMLLIBPCRE)
-CAML_DEFAULT_CLIBS=-cclib -lnums -cclib -lunix -cclib -lstr -cclib -lpcre_stubs -cclib -lpcre -ccopt -L$(PCRE_LIB_DIR) -ccopt -L$(CAMLLIBPCRE) -ccopt -L$(CAMLLIBPXP)
+CAMLLIBCAMOMILE=$(OCAML_LIB_DIR)/site-lib/camomile
+CAML_LIBS=nums.cmxa unix.cmxa str.cmxa pcre.cmxa netstring.cmxa pxp_engine.cmxa bigarray.cmxa camomileunpack.cmxa
+DEFAULT_CLIBS=-lnums -lunix -lstr -lbigarray -lpcre -lpcre_stubs -L$(OCAML_LIB_DIR) -L$(PCRE_LIB_DIR) -L$(CAMLLIBPCRE)
+CAML_DEFAULT_CLIBS=-cclib -lnums -cclib -lunix -cclib -lstr -cclib -lbigarray -cclib -lpcre_stubs -cclib -lpcre -ccopt -L$(PCRE_LIB_DIR) -ccopt -L$(CAMLLIBPCRE) -ccopt -L$(CAMLLIBPXP) -ccopt -L$(CAMLLIBCAMOMILE) -ccopt -L$(OCAML_LIB_DIR) 
 
-ALL_CAML_LIBS=-I $(CAMLLIBPCRE) -I $(CAMLLIBNETSTRING) -I $(CAMLLIBPXP) $(CAML_LIBS) $(CAML_DEFAULT_CLIBS) 
+ALL_CAML_LIBS=-I $(CAMLLIBPCRE) -I $(CAMLLIBNETSTRING) -I $(CAMLLIBPXP)  -I $(CAMLLIBCAMOMILE) $(CAML_LIBS) $(CAML_DEFAULT_CLIBS) 
 
 API_ALL_CAML_LIBS=-linkall $(ALL_CAML_LIBS) $(GALAX_HOME)/lib/caml/galax.cmxa
 
@@ -114,7 +115,7 @@ install : all
 	done;)
 
 depend: pads_c.h
-	$(OCAML_BIN_DIR)/ocamldep $(OCAML_FLAGS) -I $(VPATH) $(VPATH)/*.mli $(VPATH)/*.ml >.depend
+	$(OCAML_BIN_DIR)/ocamldep $(OCAML_FLAGS) -I $(VPATH) $(VPATH)/*.mli $(VPATH)/*.ml >$(VPATH)/.depend
 
 clean : 
 	$(RM) $(STATIC_GALAXLIB_O) $(STATIC_GALAXLIB_D) $(SHARED_GALAXLIB_O)  *~ *.o *.cm* ../*~ \
@@ -128,24 +129,26 @@ endif
 .SUFFIXES: .ml .mli .mll .cmo .cmi .cmx
 
 pads_dm.cmi: ../pads_dm.mli pads_c.cmi
-	$(OCAML_BIN_DIR)/ocamlc  -o $*.cmi $(OCAML_FLAGS) -c ../pads_dm.mli
+	$(OCAML_BIN_DIR)/ocamlc  -o $*.cmi $(OCAML_FLAGS) -c $(VPATH)/pads_dm.mli
 
-pads_dm.cmo: pads_dm.cmi ../pads_dm.ml
-	$(OCAML_BIN_DIR)/ocamlc  -o $*.cmo $(OCAML_FLAGS) -c ../pads_dm.ml
+pads_dm.cmo: pads_dm.cmi $(VPATH)/pads_dm.ml
+	$(OCAML_BIN_DIR)/ocamlc  -o $*.cmo $(OCAML_FLAGS) -c $(VPATH)/pads_dm.ml
 
-pads_dm.cmx: pads_dm.cmi ../pads_dm.ml
-	$(OCAML_BIN_DIR)/ocamlopt  -o $*.cmx $(OCAML_FLAGS) -c ../pads_dm.ml
+pads_dm.cmx: pads_dm.cmi $(VPATH)/pads_dm.ml
+	$(OCAML_BIN_DIR)/ocamlopt  -o $*.cmx $(OCAML_FLAGS) -c $(VPATH)/pads_dm.ml
 
-pads_c.cmi: pads_c.mli 
-	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c pads_c.mli
+pads_c.cmi: $(VPATH)/pads_c.mli pads_c.mli
+	$(OCAML_BIN_DIR)/ocamlc  -o pads_c.cmi $(OCAML_FLAGS) -c $(VPATH)/pads_c.mli
 
 pads_c.cmx: pads_c.cmi pads_c.ml 
-	$(OCAML_BIN_DIR)/ocamlopt $(OCAML_FLAGS) -c pads_c.ml
+	$(OCAML_BIN_DIR)/ocamlopt  -o pads_c.cmx $(OCAML_FLAGS) -c $(VPATH)/pads_c.ml
 
 pads_c.cmo: pads_c.cmi pads_c.ml 
-	$(OCAML_BIN_DIR)/ocamlc $(OCAML_FLAGS) -c pads_c.ml
+	$(OCAML_BIN_DIR)/ocamlc  -o pads_c.cmo $(OCAML_FLAGS) -c $(VPATH)/pads_c.ml
 
 .c.o: $(CHEADERS)
 	$(CC) -fno-common $(CFLAGS) -I . -I$(GALAX_HOME)/lib/c -c $(VPATH)/$<
 	cp $*.o .
 
+# Dependencies
+#include $(VPATH)/.depend

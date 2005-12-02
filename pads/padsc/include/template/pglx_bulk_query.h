@@ -44,6 +44,16 @@
 
 #define exit_on_error(_Expr, _Msg) {err = _Expr; if (err != 0) {error(2, "%s: %s\n", _Msg, galax_error_string); exit(-1); }}
 
+int
+P_fatal_error(const char *libnm, int level, ...)
+{
+  va_list ap;
+  va_start(ap, level);
+  if (level == P_LEV_FATAL) errorv(libnm, (libnm ? level|ERROR_LIBRARY : level), ap);
+  va_end(ap);
+  return 0;
+}
+
 int main(int argc, char** argv) {
   P_t*          pads;
   Pdisc_t       my_disc = Pdefault_disc;
@@ -82,6 +92,9 @@ int main(int argc, char** argv) {
   file_out = malloc(strlen(argv[0]) + strlen(".xml"));
   strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
   strcpy(file_out,argv[0]); strcat(file_out,".xml");
+
+  /* Report fatal errors only */
+  my_disc.error_fn = P_fatal_error;
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -196,6 +209,7 @@ int main(int argc, char** argv) {
   }
   /* Open files */	
   if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); }
+  fclose(file_fp);
 
   /* Initialize Galax flags */
   exit_on_error(galax_default_processing_context(&pc), "galax_default_processing_context");
@@ -278,12 +292,21 @@ int main(int argc, char** argv) {
     if (!P_PS_isPanic(&pd)) {
       char *vars[0];
       itemlist vals[0]; 
-      char *input = "";
 
-      PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "padsns:PSource", &m, &pd, &rep, "main");
+      /* For now, we hardwire the padsns namespace into the template file */
+      char *pdci_uri = strcat(strcpy(malloc(strlen("file:") + strlen(PDCI_source)), "file:"), PDCI_source);
+      
+      char *ns_decl_head = "declare namespace padsns = \""; 
+      char *ns_decl_tail = "\";\n";
+      char *input = malloc(strlen(ns_decl_head) + strlen(pdci_uri) + strlen(ns_decl_tail) + 1);
+      
+      input = strcpy(input, ns_decl_head);       
+      input = strcat(strcat(input, pdci_uri), ns_decl_tail); 
 
-      exit_on_error(padsDocument(pc, inName, PDCI_source, (nodeRep)doc_node, &doc), "padsDocument");
-      docitems = itemlist_cons(doc, itemlist_empty()); 
+      PDCI_MK_TOP_NODE_NORET (doc_node, &PADS_TY(_node_vtable), pads, "PSource", &m, &pd, &rep, "main");
+
+      exit_on_error(padsDocument(pc, inName, pdci_uri, (nodeRep)doc_node, &doc), "padsDocument");
+      docitems = itemlist_cons(doc, itemlist_empty());
 
       exit_on_error(galax_load_standard_library(pc, &cp), "galax_load_standard_library");
       exit_on_error(galax_import_main_module(cp, ExternalContextItem, Buffer_Input, input, &cm), "galax_import_main_module");
@@ -296,14 +319,8 @@ int main(int argc, char** argv) {
       exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor"); 
       time(&timer);  fprintf(stderr, "After eval %s\n", ctime(&timer)); 
 
-      /*      if (is_empty(docitems)) error(2, "*** Result is empty") ;
-	      else  */
       { 
-	char *result;
-	exit_on_error(galax_serialize_to_string(pc,docitems,&result), "galax_serialize_to_string");
-	fprintf(file_fp,"%s",result);
-	fflush(file_fp);
-	fclose(file_fp);
+	exit_on_error(galax_serialize_to_file(pc,file_out,docitems), "galax_serialize_to_file");
       }
       /*      else exit_on_error(galax_serialize_to_stdout(pc,docitems), "galax_serialize_to_stdout"); */
       time(&timer);  fprintf(stderr, "After serialize %s\n", ctime(&timer)); 

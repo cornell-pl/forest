@@ -10,11 +10,9 @@
         <length>4</length>
       </symbolic>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876974569</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T04:02:49</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
@@ -36,11 +34,9 @@
         <length>4</length>
       </resolved>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876966411</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T01:46:51</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/turkey/amnty1.gif</val></req_uri>
@@ -62,11 +58,9 @@
         <length>4</length>
       </resolved>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876966411</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T01:46:51</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/turkey/amnty1.gif</val></req_uri>
@@ -88,11 +82,9 @@
         <length>4</length>
       </resolved>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876966411</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T01:46:51</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/turkey/amnty1.gif</val></req_uri>
@@ -114,11 +106,9 @@
         <length>4</length>
       </resolved>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876966411</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T01:46:51</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/turkey/clear.gif</val></req_uri>
@@ -140,11 +130,9 @@
         <length>4</length>
       </symbolic>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876974569</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T04:02:49</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
@@ -166,11 +154,9 @@
         <length>4</length>
       </symbolic>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876974569</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T04:02:49</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
@@ -192,11 +178,9 @@
         <length>4</length>
       </symbolic>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876974569</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T04:02:49</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
@@ -218,11 +202,9 @@
         <length>4</length>
       </symbolic>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876974569</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T04:02:49</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
@@ -244,11 +226,9 @@
         <length>4</length>
       </symbolic>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876974569</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T04:02:49</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>
@@ -270,11 +250,9 @@
         <length>4</length>
       </symbolic>
     </host>
-    <remoteID>
-      <unauthorized><base><val>-</val></base></unauthorized>
-    </remoteID>
-    <auth><unauthorized><base><val>-</val></base></unauthorized></auth>
-    <ts><val>876974569</val></ts>
+    <remoteID><unauthorized><val>-</val></unauthorized></remoteID>
+    <auth><unauthorized><val>-</val></unauthorized></auth>
+    <ts><val>1997-10-16T04:02:49</val></ts>
     <request>
       <meth><val>0</val></meth>
       <req_uri><val>/amnesty/urgact/urgact.html</val></req_uri>

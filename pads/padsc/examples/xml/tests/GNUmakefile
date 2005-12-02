@@ -44,6 +44,30 @@ CDBGFLAGS += -DGALAXCOMPILE
 COPTFLAGS += -DGALAXCOMPILE
 endif
 
+ifeq ($(PADS_KIND),bulk)
+COPTFLAGS += -D PADS_BULK
+endif 
+
+ifeq ($(PADS_KIND),smart)
+COPTFLAGS += -D PADS_SMART
+endif
+
+ifeq ($(PADS_KIND),linear)
+CDBGFLAGS += -D MAX_ELTS=1
+COPTFLAGS += -D MAX_ELTS=1
+COPTFLAGS += -D PADS_SMART
+endif
+
+ifdef MAX_ELTS
+CDBGFLAGS += -D MAX_ELTS=$(MAX_ELTS)
+COPTFLAGS += -D MAX_ELTS=$(MAX_ELTS)
+endif
+
+ifdef MAX_NODES
+CDBGFLAGS += -D MAX_NODES=$(MAX_NODES)
+COPTFLAGS += -D MAX_NODES=$(MAX_NODES)
+endif
+
 # DEP_myenum =
 
 LOAD_TESTS=load_format7 load_ai load_dns load_dibbler_notrailer
@@ -56,6 +80,13 @@ ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
 .PHONY: pglx_lib clean
+
+# Test O'Caml tree walk
+walk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/walk_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
+	@$(CCExec_DYNAMIC_D)
+
+walk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/walk_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
 
 load_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/load_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
 	@$(CCExec_DYNAMIC_D)
@@ -70,12 +101,24 @@ bulk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/bulk_%.c $(TEMPL_DIR)
 bulk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
+bulk_%_dd: $(GEN_DIR)/%_expanded.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/bulk_%.c $(TEMPL_DIR)/pglx_bulk_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+# Test linear load & query
+linear_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
+	@$(CCExec_DYNAMIC_D)
+
+linear_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
 
 # Test smart load & query
 smart_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_D)  
 	@$(CCExec_DYNAMIC_D)
 
 smart_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
+	@$(CCExec_DYNAMIC_O)
+
+smart_%_dd: $(GEN_DIR)/%_expanded.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/smart_%.c $(TEMPL_DIR)/pglx_smart_query.h $(INCLUDE_DEPS) $(LIB_DEPS_O)  
 	@$(CCExec_DYNAMIC_O)
 
 # Miscellaneous tests

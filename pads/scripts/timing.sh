@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# run as <prog_name> <test_prog> <inputDir> <outputDir> <input> <output>
+# run as <prog_name> <dataDir> <timingDir> <data> <results>
 prog=$1
 dataDir=$2
 timingDir=$3

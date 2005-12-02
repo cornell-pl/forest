@@ -1,3 +1,132 @@
+
+November 30, 2005 - Mary
+
+  o Merged with branch galax-0-6-0 to align Galax 0.6.0
+    (See notes labeled BRANCH-galax-0-6-0 below)
+
+  o Removed pads/padsc/examples/tests/ai.[ch], which were breaking
+    regression tests.  They should only occur in gen/ directory. 
+
+August 17, 2005 - Mary
+
+  ** BRANCH-galax-0-6-0
+
+  o PADX Alignment with Galax 0.6.0 development version
+    ===================================================
+
+    - Pads_dm :
+
+      Added support for axis::node-test functions, which call 
+      kth_named_child instead of kth_child + name functions.
+
+      NB: Pads_dm is incomplete: It does not handle all of the XQuery
+      node-tests; only name-test and the element() kind test, but
+      that's OK for now.
+
+    - Templates pglx_load/bulk/smart
+
+      Added hard-wired initialization of query context to include:
+        declare namespace padsns = "file:" ^ name-of-p-file 
+
+      TODO: Pads compiler should generate the context file to be loaded by
+      pglx_bulk/smart. 
+
+    - examples/xml/regress
+
+      Updated files to align w/ new base types
+      Pip,Pdate*,Ptimestamp*,Ptime* types.
+
+    - pglx.c
+     
+      Factorized GADS of replicated code in 
+      #ty _ sndNode_typed_value,  _typed_value, _string_value
+
+      Could use further improvement.
+
+=======BEGIN BRANCH-galax-0-6-0=======
+November 30, 2005 Mary
+
+  o PADX Alignment with Galax 0.6.0 development version
+    ===================================================
+
+    - Added support for Camomile UTF library used by Galax:
+
+      mk/rules.mk
+      padsc/pads-glx/GNUmakefile
+
+  o Experimental results for PLAN-X 2006 PADX paper
+    ==============================================
+
+    - padsc/examples/tests/GNUmakefile
+      padsc/examples/xml/tests/GNUmakefile
+
+      Added smart-node allocation hints as compile-time arguments and
+      "linear" targets, which do not 
+
+    - padsc/examples/tests/time_pads.sh
+      padsc/include/template/timed_read.h
+
+      Added alloc hints for dibbler and ai
+
+    - padsc/pads-glx/pads_dm.h
+      padsc/pads-glx/pads_dm.ml
+      padsc/pads-glx/pads_dm.mli
+      padsc/pads-glx/pads_dm_stub.c
+  
+      Added walkPadsDocument(item i) on O'Caml side that calls
+      data-model tree-walking functions to measure cross-language API costs 
+
+    - scripts/timing.sh
+
+   o Smart node allocation hint : fixed bug in which allocation hint
+     was not passed to allocator. 
+
+     padsc/include/pglx-codegen-macros.h
+
+   o Changed serialization to send to file, not a string, which did
+     not scale!
+
+     padsc/include/template/pglx_bulk_query.h
+     padsc/include/template/pglx_load.h
+     padsc/include/template/pglx_smart_query.h
+
+August 17, 2005 - Mary
+
+  ** BRANCH galax-0-6-0
+
+  o PADX Alignment with Galax 0.6.0 development version
+    ===================================================
+
+    - Pads_dm :
+
+      Added support for axis::node-test functions, which call 
+      kth_named_child instead of kth_child + name functions.
+
+      NB: Pads_dm is incomplete: It does not handle all of the XQuery
+      node-tests; only name-test and the element() kind test, but
+      that's OK for now.
+
+    - Templates pglx_load/bulk/smart
+
+      Added hard-wired initialization of query context to include:
+        declare namespace padsns = "file:" ^ name-of-p-file 
+
+      TODO: Pads compiler should generate the context file to be loaded by
+      pglx_bulk/smart. 
+
+    - examples/xml/regress
+
+      Updated files to align w/ new base types
+      Pip,Pdate*,Ptimestamp*,Ptime* types.
+
+    - pglx.c
+     
+      Factorized GADS of replicated code in 
+      #ty _ sndNode_typed_value,  _typed_value, _string_value
+
+      Could use further improvement.
+
+=======END BRANCH-galax-0-6-0=======
 July 11, 2005 - Mary
 
   o PADS to XML Schema Mapping 
