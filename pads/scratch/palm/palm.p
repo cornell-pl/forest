@@ -14,7 +14,8 @@ Pstruct skipto(:Pbl_offset target:){
 /* from start until, not including, end. */
 Punion string_FP(:Pbl_offset start, Pbl_offset end:){
   Pswitch(end){
-    Pcase Pbl_eof_offset : Pchar[] s1; /* Terminates at EOF. */
+/*     Pcase Pbl_eof_offset : Pchar[] s1; /\* Terminates at EOF. *\/ */
+    Pcase Pbl_eof_offset : Pstring_ME(:"/.*/":) s1; /* Terminates at EOF. */
     Pdefault : Pstring_FW(:end - start:) s2;
   }
 };
@@ -84,27 +85,21 @@ Pstruct pointer_list{
   pointer[count] pointers;
 };
 
-Pstruct record(:int i, Pbl_offset end, int attrs, int uid:){
+Pbl_offset getEndOffset(int i, int n, pointer* ptrs){
+  return i < n - 1 ? ptrs[i+1].rec_pos : Pbl_eof_offset;
+}
+
+Pstruct record(:int i, int nrec, pointer* ptrs:){
   Pcompute Pint32 index = i;
-  string_until(:end:) contents;
-  Pcompute Pint32 attributes = attrs  & 0xF0;
-  Pcompute Pint32 category = attrs & 0xF;
-  Pcompute Pint32 unique_id = uid;
+  string_until(:getEndOffset(index,nrec,ptrs):) contents;
+  Pcompute Pint32 attributes = ptrs[index].rec_attrs & 0xF0;
+  Pcompute Pint32 category = ptrs[index].rec_attrs & 0xF;
+  Pcompute Pint32 unique_id = ptrs[index].rec_uid;
 };
 
-Parray records_t(:int* index, int nrec, pointer* ptrs:){
-  record(:*index, 
-	 *index < nrec - 1 ? ptrs[*index+1].rec_pos : Pbl_eof_offset,
-	 ptrs[*index].rec_attrs,
-	 ptrs[*index < nrec - 1 ? (*index)++ : (*index = 0, nrec -1)].rec_uid:) [nrec];
+Parray records_t(:int nrec, pointer* ptrs:){
+  record(:current,nrec,ptrs:)[nrec];
 };
-
-/* Parray records(:int i, int nrec, pointer* ptrs:){ */
-/*   record(:current,  */
-/* 	 current < nrec - 1 ? ptrs[current+1].rec_pos : Pbl_eof_offset, */
-/* 	 ptrs[current].rec_attrs, */
-/* 	 ptrs[current].rec_uid:) [nrec]; */
-/* }; */
 
 Psource Pstruct PalmDB{
   header hdr;
@@ -115,6 +110,29 @@ Psource Pstruct PalmDB{
     hdr.sort_info_pos == Pbl_null_offset ? sort_info_end : hdr.sort_info_pos;
   string_at_opt(:hdr.app_info_pos,  app_info_end:) app_info;
   string_at_opt(:hdr.sort_info_pos, sort_info_end:) sort_info;
-  Pcompute int index_state = 0;
-  records_t(:&index_state,rec_pointers.count,rec_pointers.pointers.elts:) records;
+  records_t(:rec_pointers.count,rec_pointers.pointers.elts:) records;
 };
+
+
+/* Pstruct record(:int i, Pbl_offset end, int attrs, int uid:){ */
+/*   Pcompute Pint32 index = i; */
+/*   /\* XXX: Temporary fix. Use computed value to break dependency of */
+/*      contents on parse-dependent value end.*\/ */
+/*   Pcompute Pint32 c_end = end; */
+/*   string_until(:c_end:) contents; */
+/*   Pcompute Pint32 attributes = attrs  & 0xF0; */
+/*   Pcompute Pint32 category = attrs & 0xF; */
+/*   Pcompute Pint32 unique_id = uid; */
+/* }; */
+
+/* Pbl_offset getEndOffset(int i, int n, pointer* ptrs){ */
+/*   return i < n - 1 ? ptrs[i+1].rec_pos : Pbl_eof_offset; */
+/* } */
+
+/* Parray records_t(:int nrec, pointer* ptrs:){ */
+/*   record(:current,  */
+/* 	 getEndOffset(current,nrec,ptrs), */
+/* 	 ptrs[current].rec_attrs, */
+/* 	 ptrs[current].rec_uid:) [nrec]; */
+/* }; */
+
