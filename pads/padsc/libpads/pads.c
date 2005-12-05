@@ -4676,7 +4676,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_bytes, Pbyte **ptr_out)
   }
   if (pads->m_endian == sb_endian) {
     /* on-disk order same as in-memory rep */
-    memcpy(resbytes, bytes, n);
+    memcpy(resbytes , bytes, n);
   } else {
     /* must reverse the order */
     while (--n >= 0) {
@@ -4684,6 +4684,12 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_bytes, Pbyte **ptr_out)
     }
   }
   errno = 0;
+  if (sb_endian == PbigEndian){
+    /* High-order byte of value from bytes is aligned with high-order byte of res.
+       Shift res so that value and res are aligned at on low-order byte.
+       nb_max - n is number of bytes. Multiply x 8 = # bits. */
+    res = res >> ((nb_max - n) * 8);
+  }
   return res;
 }
 
@@ -4706,8 +4712,13 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
     errno = ERANGE;
     return -1;
   }
+  if (sb_endian == PbigEndian){
+    /* Shift i so that the high-order byte of the value it contains is aligned with i's high-order byte.
+       nb_max - n is number of bytes. Multiply x 8 = # bits. */
+    i <<= ((nb_max - n) * 8);
+  }
   if (pads->m_endian == sb_endian) {
-    /* on-disk order same as in-memory rep */
+    /* on-disk order same as in-memory rep. */
     memcpy(outbuf, ibytes, num_bytes);
   } else {
     /* must reverse the order */
@@ -4732,6 +4743,11 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i, Puint32 num_bytes)
   if (i > P_MAX_FOR_NB[n] || i < P_MIN_FOR_NB[n]) {
     errno = ERANGE;
     return -1;
+  }
+  if (sb_endian == PbigEndian){
+    /* Shift i so that the high-order byte of the value it contains is aligned with i's high-order byte.
+       nb_max - n is number of bytes. Multiply x 8 = # bits. */
+    i <<= ((nb_max - n) * 8);
   }
   errno = 0;
   if (pads->m_endian == sb_endian) {
@@ -4772,6 +4788,12 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_bytes, Pbyte **ptr_out)
     }
   }
   errno = 0;
+  if (sb_endian == PbigEndian){
+    /* High-order byte of value from bytes is aligned with high-order byte of res.
+       Shift res so that value and res are aligned at on low-order byte.
+       nb_max - n is number of bytes. Multiply x 8 = # bits. */
+    res = res >> ((nb_max - n) * 8);
+  }
   return res;
 }
 
@@ -4793,6 +4815,11 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
   if (u > P_UMAX_FOR_NB[n]) {
     errno = ERANGE;
     return -1;
+  }
+  if (sb_endian == PbigEndian){
+    /* Shift u so that the high-order byte of the value it contains is aligned with u's high-order byte.
+       nb_max - n is number of bytes. Multiply x 8 = # bits. */
+    u <<= ((nb_max - n) * 8);
   }
   if (pads->m_endian == sb_endian) {
     /* on-disk order same as in-memory rep */
@@ -4820,6 +4847,11 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
   if (u > P_UMAX_FOR_NB[n]) {
     errno = ERANGE;
     return -1;
+  }
+  if (sb_endian == PbigEndian){
+    /* Shift u so that the high-order byte of the value it contains is aligned with u's high-order byte.
+       nb_max - n is number of bytes. Multiply x 8 = # bits. */
+    u <<= ((nb_max - n) * 8);
   }
   errno = 0;
   if (pads->m_endian == sb_endian) {
@@ -6990,7 +7022,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.194 2005-09-08 07:52:35 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.195 2005-12-05 16:28:50 yitzhakm Exp $\0\n";
 
 static const char lib[] = "padsc";
 
