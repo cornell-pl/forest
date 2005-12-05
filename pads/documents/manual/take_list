@@ -2,11 +2,13 @@ accumulators.html
 arrays.html
 base.html
 base_types_appendix.html
+cluster.html
 common.html
 contents_motif.gif
 enums.html
 error_codes.html
 formatting.html
+histogram.html
 index.html
 introduction.html
 library_customization.html
@@ -20,6 +22,7 @@ options.html
 pictures
 preface.html
 previous_motif.gif
+recursion.html
 structs.html
 tutorial.html
 typedefs.html
