@@ -18,13 +18,19 @@ INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
 # Rule to run the pads compiler on go.p
 go.c: go.p
-	$(PADSC) -x -D__ppc__ $<
+	$(PADSC) -D__ppc__ $<
 
 include $(PADS_HOME)/mk/rules.mk
 
 # Rules to make go programs
 go-xml: go-xml.c go.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
+
+go3-xml: go3-xml.c go3.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+go3-xml-g: go3-xml.c go3.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
 
 go-query: go-query.c go.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)

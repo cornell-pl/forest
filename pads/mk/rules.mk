@@ -343,6 +343,17 @@ endif
 # OS specific rules
 # (may override some of the above)
 
+# compiler-specific rules
+
+#if using gcc and -Wno-long-double is supported, use it
+ifeq ($(PADS_CC_IS_GNU),1)
+NOLONGDOUBLE_TEST = $(shell $(CC) -Wno-long-double $(PADS_HOME)/scripts/dummy.c 2>&1)
+ifeq ($(NOLONGDOUBLE_TEST_),)
+CDBGFLAGS += -Wno-long-double
+COPTFLAGS += -Wno-long-double
+endif
+endif
+
 ifeq ($(OPSYS),irix)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 ifeq ($(PADS_CC_IS_GNU),1)
