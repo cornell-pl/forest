@@ -40,7 +40,7 @@ HACHA = 	$(HEVEA_PATH)/hacha
 HACHA_FLAGS =	
 
 
-all:	docode manual
+all:	docode manual-all manual-html
 
 all_check:	clean code
 
@@ -56,13 +56,14 @@ extract: ../extract-code/pads-keywords.sml
 	(cd ../extract-code; $(MAKE))
 
 manual:
-	pdflatex manual.tex
-
-manual-all: docode
 	pdflatex manual.tex; bibtex manual
 	pdflatex manual.tex; pdflatex manual.tex
 
-manual_html:
-	(cd code; $(MAKE))
+manual-all: manual
+
+manual-html:
 	$(HEVEA) $(HEVEA_FLAGS) $(HEVEA_FILES) manual.tex
 	$(HACHA) manual.html
+
+manual_html: docode manual-html
+
