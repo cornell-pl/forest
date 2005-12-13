@@ -73,9 +73,10 @@ my $archmk = "$pads_home/mk/rules.arch.$ast_arch.mk";
 $lua = "-U__GNUC__";
 
 my $cc = "";
+my $gnutst = "";
 if (-e $archmk) {
-  my $gnutst = `grep -l GNU $archmk`;
-  $gnutst = &cleanupStr($gnutst); 
+  $gnutst = `grep -l GNU $archmk`;
+  $gnutst = &cleanupStr($gnutst);
   if ($gnutst ne "") {
     $lda = "-D__LINUX_PREPROCESSOR_FIXES";
   }
@@ -107,6 +108,30 @@ if (length($cc) == 0) {
 if (length($cc) == 0) {
   print "\n** No environment variable CC, and no gcc or cc in your path.\n";
   exit -1;
+}
+
+my @std_incs = ();
+if ( $gnutst ne "" ) {
+  open(PIPE, "$cc -v -E $pads_home/scripts/dummy.c 2>&1 |")
+    or die ("Strange, cannot exec $cc\n");
+  my $looking = 0;
+  while ( <PIPE> ) {
+    chomp (my $line = $_);
+    if ($line =~ /search starts here/) {
+      $looking = 1 ;
+      next;
+    }
+    last if ($line =~ /End of search/);
+    next if ($looking == 0);
+    $line =~ s/^\s+//;  # strip leading spaces
+    $line =~ s/\s+$//;  # strip trailing spaces
+    if ($line =~ /^\S+$/) {
+      push(@std_incs, $line);
+    }
+  }
+  close(PIPE);
+} else {
+  push(@std_incs, "/usr/include");
 }
 
 my $sml;
@@ -143,11 +168,12 @@ if ($smltest !~ /^sml [\d.]+$/) {
 }
 
 my $opts = "";      # all options other than pfiles
-my $pfiles = "";    # all pfiles
+my @pfiles = ();    # all pfiles
 my $retarg = "";    # detected gen dir, if found
 my $retarg_OK = 1;  # OK to use retarg
 my $help = 0;       # -h/--help option used
 my $optx = 0;       # -x option used
+my $nocheck = 0;    # -nocheck/--nocheck option used
 
 my $full_args = join(" ", @ARGV);
 foreach $x (@ARGV) {
@@ -156,12 +182,14 @@ foreach $x (@ARGV) {
     $opts = "$opts $x";
   } elsif  ($x eq "-h" || $x eq "--help") {
     $help = 1;
+  } elsif  ($x eq "-nocheck" || $x eq "--nocheck") {
+    $nocheck = 1;
   } elsif ($x eq "-x") {
     $optx = 1;
     $opts = "$opts $x";
   } elsif ($x !~ /^-/ && $x =~ /[.]p$/) {
     # not an option of some kind, ends in .p, ergo a .p file
-    $pfiles = "$pfiles $x";
+    push(@pfiles, $x);
     if ($retarg_OK) {
       my $trydir = "../gen";
       if ($x =~ m|^(.*)/[^/]+$|) {
@@ -186,9 +214,10 @@ foreach $x (@ARGV) {
   }
 }
 
+my $pfiles_str = join(" ", @pfiles);
 if ($dbg) {
   print "full_args = $full_args\n";
-  print "pfiles    = $pfiles\n";
+  print "pfiles    = $pfiles_str\n";
   print "opts      = $opts\n";
   print "retarg_OK = $retarg_OK\n";
   print "retarg    = $retarg\n";
@@ -198,16 +227,18 @@ my $cmd = "$sml \@SMLload=$image $pads_home $cc";
 if ($help) {
   $cmd .= " -help";
 } else {
-  if ($pfiles eq "") {
+  if ($pfiles_str eq "") {
     print "\nNo .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n\n";
     exit -1;
   }
   my $args = $full_args;
   if ($retarg_OK) {
-    $args = "-r $retarg $opts $pfiles";
+    $args = "-r $retarg $opts $pfiles_str";
     print "\nAuto-selecting target dir $retarg\n\n";
   }
   my @incs = ();
+  push(@incs, "$pads_home/padsc/include");
+  push(@incs, "$pads_home/ast-ast/arch/$ast_arch/include/ast");
   if ($optx) {
     my $ocaml_lib_dir = $ENV{"OCAML_LIB_DIR"};
     if ($ocaml_lib_dir eq "") {
@@ -215,7 +246,7 @@ if ($help) {
     }
     $ocaml_lib_dir =~ s|/$||;
     if (-d $ocaml_lib_dir) {
-      push(@incs, "-I $ocaml_lib_dir");
+      push(@incs, "$ocaml_lib_dir");
     } else {
       print "\nWarning: expected dir $ocaml_lib_dir not found, check your OCAML_LIB_DIR env var setting\n";
       print "   (you are likely to get errors due to missing .h files below)\n\n";
@@ -232,15 +263,41 @@ if ($help) {
       my $galax_lib_dir = $galax_home . "lib/c";
       $galax_lib_dir =~ s|/$||;
       if (-d $galax_lib_dir) {
-	push(@incs, "-I $galax_lib_dir");
+	push(@incs, "$galax_lib_dir");
       } else {
 	print "\nWarning: expected dir $galax_lib_dir not found, check your GALAX_HOME env var setting\n";
 	print "   (you are likely to get errors due to missing .h files below)\n\n";
       }
     }
   }
-  my $add_incs = join(" ", @incs);
-  $cmd .= " $args $lua $lda -I $pads_home/padsc/include -I $pads_home/ast-ast/arch/$ast_arch/include/ast $add_incs";
+  push(@std_incs, @incs);
+  my $pfile_errors = 0;
+  PFILE: foreach my $p ( @pfiles ) {
+      $p =~ s|.*[/]||;  # remove any path component
+      my $h_file = $p;
+      $h_file =~ s/[.]p$/.h/;
+      foreach my $i ( @std_incs ) {
+	if ( -e "$i/$h_file") {
+	  if ( $nocheck ) {
+	    print STDERR "*** WARNING: we suggest not using $p: standard include $i/$h_file is in the way\n";
+	  } else {
+	    print STDERR "*** Do not use name $p: standard include $i/$h_file is in the way\n";
+	    $pfile_errors++;
+	    next PFILE;
+	  }
+	}
+      }
+    }
+  if ( $pfile_errors > 0 ) {
+    print STDERR "*** (You can force padsc to compile your .p files using the --nocheck option)\n\n";
+    exit -1;
+  }
+
+  my $add_incs = "";
+  foreach my $i ( @incs ) {
+    $add_incs .= "-I $i ";
+  }
+  $cmd .= " $args $lua $lda $add_incs";
 }
 
 while ($cmd =~ /\s\s/) {
