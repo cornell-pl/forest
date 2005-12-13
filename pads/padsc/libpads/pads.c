@@ -4684,7 +4684,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_bytes, Pbyte **ptr_out)
     }
   }
   errno = 0;
-  if (sb_endian == PbigEndian){
+  if (pads->m_endian == PbigEndian){
     /* High-order byte of value from bytes is aligned with high-order byte of res.
        Shift res so that value and res are aligned at on low-order byte.
        nb_max - n is number of bytes. Multiply x 8 = # bits. */
@@ -4712,7 +4712,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
     errno = ERANGE;
     return -1;
   }
-  if (sb_endian == PbigEndian){
+  if (pads->m_endian == PbigEndian){
     /* Shift i so that the high-order byte of the value it contains is aligned with i's high-order byte.
        nb_max - n is number of bytes. Multiply x 8 = # bits. */
     i <<= ((nb_max - n) * 8);
@@ -4744,7 +4744,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type i, Puint32 num_bytes)
     errno = ERANGE;
     return -1;
   }
-  if (sb_endian == PbigEndian){
+  if (pads->m_endian == PbigEndian){
     /* Shift i so that the high-order byte of the value it contains is aligned with i's high-order byte.
        nb_max - n is number of bytes. Multiply x 8 = # bits. */
     i <<= ((nb_max - n) * 8);
@@ -4788,7 +4788,7 @@ fn_name(P_t *pads, const Pbyte *bytes, Puint32 num_bytes, Pbyte **ptr_out)
     }
   }
   errno = 0;
-  if (sb_endian == PbigEndian){
+  if (pads->m_endian == PbigEndian){
     /* High-order byte of value from bytes is aligned with high-order byte of res.
        Shift res so that value and res are aligned at on low-order byte.
        nb_max - n is number of bytes. Multiply x 8 = # bits. */
@@ -4816,7 +4816,7 @@ rev_fn_name ## _buf (P_t *pads, Pbyte *outbuf, size_t outbuf_len, int *outbuf_fu
     errno = ERANGE;
     return -1;
   }
-  if (sb_endian == PbigEndian){
+  if (pads->m_endian == PbigEndian){
     /* Shift u so that the high-order byte of the value it contains is aligned with u's high-order byte.
        nb_max - n is number of bytes. Multiply x 8 = # bits. */
     u <<= ((nb_max - n) * 8);
@@ -4848,7 +4848,7 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
     errno = ERANGE;
     return -1;
   }
-  if (sb_endian == PbigEndian){
+  if (pads->m_endian == PbigEndian){
     /* Shift u so that the high-order byte of the value it contains is aligned with u's high-order byte.
        nb_max - n is number of bytes. Multiply x 8 = # bits. */
     u <<= ((nb_max - n) * 8);
@@ -7022,7 +7022,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.195 2005-12-05 16:28:50 yitzhakm Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.196 2005-12-13 16:59:30 yitzhakm Exp $\0\n";
 
 static const char lib[] = "padsc";
 
