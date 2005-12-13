@@ -1,0 +1,36 @@
+\begin{code}
+/* www.geneontology.org OBO flat file format. */
+\mbox{}
+#define COLON ':'
+\mbox{}
+Precord Pstruct OBO\_tag\_value\_pair\{
+  Pstring(:COLON:) tag;  
+  Pre "/: */"; 
+  Pstring\_ME(:Peor:) val;
+\};
+\mbox{}
+int hasTag(OBO\_tag\_value\_pair p,char *tag)\{
+  return Pstring\_eq\_cstr(&p.tag,tag); 
+\};
+\mbox{}
+Precord Pstruct OBO\_header\{
+  ...
+\};
+\mbox{}
+Penum OBO\_stanza\_type\{ Term, Typeref \};
+\mbox{}
+Precord Pstruct OBO\_stanza\_tag \{
+    '['; OBO\_stanza\_type s\_type; ']';
+\};
+\mbox{}
+Precord Pstruct OBO\_stanza\{
+  OBO\_stanza\_tag       tag;
+  OBO\_tag\_value\_pair   id      : hasTag(id,"id");
+  OBO\_tag\_value\_pair[] tvpairs : Pterm(Peor);
+\};
+\mbox{}
+Psource Pstruct OBO\_file\{
+  OBO\_header hdr;
+  OBO\_stanza[] stanzas;
+\};
+\end{code}
