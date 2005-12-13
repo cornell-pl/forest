@@ -348,7 +348,7 @@ endif
 #if using gcc and -Wno-long-double is supported, use it
 ifeq ($(PADS_CC_IS_GNU),1)
 NOLONGDOUBLE_TEST = $(shell $(CC) -Wno-long-double $(PADS_HOME)/scripts/dummy.c 2>&1)
-ifeq ($(NOLONGDOUBLE_TEST_),)
+ifeq ($(NOLONGDOUBLE_TEST),)
 CDBGFLAGS += -Wno-long-double
 COPTFLAGS += -Wno-long-double
 endif
