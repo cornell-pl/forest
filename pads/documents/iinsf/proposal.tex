@@ -413,7 +413,7 @@ date: 11:11:2005 14:24
 saved-by: midori
 auto-generated-by: DAG-Edit 1.419 rev 3
 default-namespace: gene_ontology
-remark: cvs version: $Revision: 1.3 $
+remark: cvs version: $Revision: 1.4 $
 subsetdef: goslim_goa "GOA and proteome slim"
 subsetdef: goslim_yeast "Yeast GO slim"
 subsetdef: goslim_plant "Plant GO slim"
@@ -628,20 +628,25 @@ found at \url{www.padsproj.org}.
 Our central research agenda is divided into three broad subsections,
 which we will discuss here; our broader impacts will be discussed in the next 
 section.  First, our experience with real-world data has revealed that
-the current \pads{}\ system is unable to process many common
-data formats.  We propose a number of extensions to \pads{} 
+the current \pads{}\ system unable to process certain kinds of
+data sources, several of which are quite prevalent.  We 
+propose a number of extensions to \pads{} 
 that will greatly improve its expressive power and enable
 us to handle many more important ad hoc formats.  Second,
 while \pads{}\ can automatically generate tools for providing
 statistical data summaries, querying ad hoc data and generating
-\xml, the tool generation process is extremely brittle, inflexible
-and results in low-performance software.  We propose to redesign
+\xml, the tool generation process is brittle and inflexible.  We 
+propose to redesign
 the automatic tool generation process using a principled methodology
-based upon a novel \pads{}-attribute system that can communicate
-semantic information across tools.  Third, there is no formal
-basis for the \pads{} description language and compiler.  We propose to
-formalize the language and prove critical \pads{} correctness
-properties.  Overall, our research combines novel language
+based upon type-directed programming paradigms and
+a novel \pads{}-attribute system that can communicate
+semantic information across tools.  Third, while we have already begun a
+semantic analysis of \pads{} that has turned to be extremely useful in 
+practice, we only analyzed a small portion of the PADS system.  
+We propose to formalize further elements language, particularly
+output processors (printers) and prove critical \pads{} correctness
+properties including the coherence of parsing and printing.  
+Overall, our research combines novel language
 design, high-performance systems engineering and theoretical analysis,
 all aimed at solving crucial data processing problems.
 
