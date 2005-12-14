@@ -163,17 +163,17 @@ Reglens Data~\cite{??}:                & Floating point numbers, & Repeated mult
 Weak gravitational lensing analysis   & among others & \\ \hline
 Web server logs (CLF):                & Fixed-column      & Race conditions on log entry\\ 
 Measuring web workloads               & ASCII records     & Unexpected values\\ \hline
-Call detail: Fraud detection          & Fixed-width       & Undocumented data\\
-                                      & binary records  & \\ \hline 
-AT\&T billing data:      & Cobol  &  Unexpected values\\ 
-Monitoring billing process   & & Corrupted data feeds \\ \hline
-Newick:   Immune  & Fixed-width ASCII records & None \\ 
-system response simulation & in tree-shaped hierarchy &\\ \hline                                
-OPRA:              & Mixed binary \& ASCII records 
-      & 100-page informal \\
-Options-market transactions & with data-dependent unions & documentation \\ \hline
-Palm PDA:          & Mixed binary \& character & No high-level  \\
-Device synchronization  & with data-dependent constraints & documentation available\\ \hline
+AT\&T Call detail data:                          & Fixed-width       & Undocumented data\\
+Phone call fraud detection            & binary records  & \\ \hline 
+AT\&T billing data:                 & Cobol             &  Unexpected values\\ 
+Monitoring billing process          &                   & Corrupted data feeds \\ \hline
+Newick:   Immune                    & Fixed-width ASCII records & None \\ 
+system response simulation          & in tree-shaped hierarchy &\\ \hline                                
+OPRA:                               & Mixed binary \& ASCII records 
+                                                       & 100-page informal \\
+Options-market transactions         & with data-dependent unions & documentation \\ \hline
+Palm PDA:                           & Mixed binary \& character & No high-level  \\
+Device synchronization              & with data-dependent constraints & documentation available\\ \hline
 \end{tabular}
 \caption{Selected ad hoc data sources.}
 \label{figure:data-sources}
@@ -413,7 +413,7 @@ date: 11:11:2005 14:24
 saved-by: midori
 auto-generated-by: DAG-Edit 1.419 rev 3
 default-namespace: gene_ontology
-remark: cvs version: $Revision: 1.2 $
+remark: cvs version: $Revision: 1.3 $
 subsetdef: goslim_goa "GOA and proteome slim"
 subsetdef: goslim_yeast "Yeast GO slim"
 subsetdef: goslim_plant "Plant GO slim"
@@ -725,17 +725,17 @@ transformation specification with the following general form:
 
 \begin{code}
 Ptransform \{
-  i,o :  Tphys <-> Tlog
+  i,o :  Tcon <-> Tabs
 \}
 \end{code}
 
-Here, {\tt Tphys} is the PADS type of the external or {\tt phys}ical
-representation and {\tt Tlog} is the PADS type of the internal or 
-{\tt log}ical representation.  The internal representation of the current
+Here, {\tt Tphys} is the PADS type of the external or {\tt con}crete
+representation and {\tt Tabs} is the PADS type of the internal or 
+{\tt abs}tract representation.  The internal representation of the current
 phase may in turn serve as the external representation for the next
 phase of the transformation.  The functions {\tt i} and {\tt o} are
-user-defined functions that transform data from {\tt Tphys} to 
-{\tt Tlog} and vice versa.  For example, {\tt i} may implement
+user-defined functions that transform data from {\tt Tcon} to 
+{\tt Tabs} and vice versa.  For example, {\tt i} may implement
 decompression and {\tt o} may implement compression.
 
 We intend to add these transformations as first-class
@@ -762,122 +762,129 @@ proper inverses of the inputs.  In particular, inspired by recent work
 by Foster et al.~\cite{foster+:lens}, we will explore how to develop a
 library of {\em combinators}, simple composable functions, that can be
 combined in a myriad of ways to produce the transforms {\em and their
-inverses} at the same time.  Foster et al. used such transforms to
-solve the view-update problem on error-free tree-shaped data.  The
-view-update problem arises when one attempts to synchronize two
-different data sources.  While we will exploit some of the
-ideas behind their bi-directional transformations, our application and
+inverses} at the same time.  Foster et al. used such bi-directional transforms to
+solve a synchronization problem on error-free tree-shaped data. 
+While we will exploit some of their
+ideas, our application and
 context are different: we are parsing, transforming and printing ad
 hoc data.  As we do so, we are specifically interested in uncovering,
 representing and handling error-filled data.  One of the critical
 challenges for us will be to design the combinators so that they deal
-with \pads{} internal error representations effectively.
+with \pads{} parse descriptors and error representations correctly
+and conveniently.
 
 
-\paragraph*{Integrating Multiple Data Repositories}
-Sometimes, a single logical data source is represented
+\paragraph*{Multi-source Data Processing}
+Often, a single logical data source is represented
 as several distinct, concrete repositories.   This is the case
-in the GO data source, where data is split into four disjoint
+in the GO data source we have examined, where data is split into four disjoint
 files: a molecular function file, a biological process file,
 a cellular component file and a term definitions file.
-The current \pads{} implementation is unable to process
-these distinct repositories as a single, coherent data source.
+However the size and number of repositories that make up a single source,
+may vary widely.  At the other end of the spectrum are systems involving
+continuous monitoring of widescale phenomena that automatically
+produce new data at phenominal rates.  For example, in order to monitor
+the health of PlanetLab, a distributed network of several hundred machines
+spread across the world, the CoMon monitoring system~\cite{comon} attempts to 
+drag a small data file from each of the machine to a centralized repository once every
+five minutes and presumably will continue to do so for eternity.  In the
+centralized repository, the data is split into two new formats, each designed to accumulate
+information about a certain aspect of the system.
 
-% begin BS
+The current \pads{} implementation is limited to processing a single data source.
+We propose to extend our specification language to enable automatic generation of tools
+that process multiple data sources, either on one local machine or distributed across
+a wide area network.  Doing so will require investigation of the following features.
 
-We believe that the right way to describe such data sources
-is to introduce a notion of {\em data module} into \pads{}.
-In this case, a data source as a whole may link
-a series of data modules together.  One of the goals
-of this design would be to allow enough flexibility that
-the whole data source could be processed together or a single module
-(such as for molecular function module) could be processed on its own.
-However, it remains unclear if this is indeed the right processing model;
-more research and experimentation is necessary to determine the
-pros and cons of such a set up.
+\begin{enumerate}
+\item {\bf Multi-source Specifications}  
+We propose to extend the PADS specification language with a new first-class
+type constructor, which may appear anywhere within a specification.  As a first cut,
+the type constructor will have the form \texttt{Pget \{T;e\}} where \texttt{e} specifies
+a protocol for locating and accessing a data source, and \texttt{T} is a PADS type specifying the
+structure of its contents.  The specification language for protocols should be completely flexible
+so it can handle the largest possible collection of applications.  For instance,
+CoMon accesses data via telnet and authentication; other data is available over the web
+through FTP and HTTP.  And of course, the most common application will be to assemble
+multiple sources through the local file system.  Though the construct \texttt{Pget \{T;e\}},
+is simple (which, incidentally, is an explicit design choice)
+we believe that when it interacts with the rest of the PADS specification language
+it will provide powerful access possibilities.  In particular, due to the dependency 
+already present in PADS, it will possible to begin reading the local file that contains information
+concerning where and how to acquire further data.  Then that new information may be later used
+in a \texttt{Pget} directive to locate distributed data.  For instance, to implement
+a CoMon-like monitoring service, a local machine might contain a list of all currently active
+PlanetLab nodes.  A PADS specification might read that list and use the information processed to
+acquire information from all machines on the list.  This way, machines may be added or removed
+from the network and the PADS specification remains unchanged.
 
-% end BS
+\item {\bf Concurrent Execution}  
+In order to support access to many sources, possibly distributed across a wide area, it will be necessary
+to process multiple repositories concurrently.  As data from each new source is requested
+through the \texttt{Pget} command, we plan on launching a new thread to read the source.
+However, the dependency in the language may require synchronization between threads.
+More research is required to understand the optimal implication strategy.
+However, the fact that PADS is a pure, declarative language should simplify
+dependency analysis greatly and improve opportunities to hide latency through concurrency.
 
-\paragraph*{Recursive Data}
-At its core, PADS currently defines three main different sorts of type 
-constructors: 
-records, unions and arrays.  However, many data sources have a recursive
-structure that cannot be captured with these basic types.  We are
-particularly familiar with Gene Ontology (GO) Project~\cite{geneontology},
-which is a data repository used by Olga Troyanskaya
-(Princeton Lewis-Sigler Institute for Integrative Genomics) 
-and other biologists who study protein-protein
-interactions.  One component of the GO data repository classifies reactions by placing them
-in a tree-structured hierarchy.   We believe that part of the solution
-to describing GO's ad hoc data format is to describe the hierarchy
-using recursive types.
+\item {\bf Temporal Specifications}
+In order to support applications that monitor ongoing phenomena, we plan to investigate how to add
+temporal specifications to PADS.  These temporal specifications might indicate periodic arrival of
+new data (once every five minutes), arrival of data at some specific time in the future (next Tuesday)
+or upon receiving an explicit signal from some external source.  As is the case with our 
+spatial specifications \texttt{Pget}, we will strive for design which combines simplicity with
+generality.  It is too early in our research to know exactly what form these temporal specifications 
+will take.  However, we plan to pursue the design space diligently.
 
-There are several challenges involved with adding recursive types to the 
-PADS infrastructure.  First, we need to analyze recursive type definitions
-to ensure they
-have the appropriate {\em contractiveness} property so that we can
-generate well-formed internal data structures to represent the result of
-a parse.  Second,
-we need to transform the current ``descent'' parser into
-a ``recursive descent'' parser.  Third, the PADS parser is 
-parameterized by user-supplied {\em masks} that tell the parser
-to turn off or on certain semantic checks.  We believe that
-masks for recursive data must themselves be recursive or cyclic
-data structures, though we must do more research to determine the
-optimal solution.  Finally, PADS parsers output parse descriptors
-that track data errors and statistical summaries of the data values
-parsed.  We need to investigate the form these auxiliary
-data structures should take when the data parsed is recursive. 
-It is necessary balance system performance with accuracy
-and consequently, the choice of parse descriptor and summary 
-format is far from obvious.
+% BS alert!!
 
-\paragraph*{Data with Pointers}
-Some data formats contain explicit embedded pointers 
-from one part of the data source to another.
-For example, part of the DNS packet format compresses
-host names by using pointers to point back to common
-hostname suffixes.  The GO data source
-mentioned above also contains pointers as the
-hierarchy that describes gene product interactions
-is not a tree, but rather a DAG.  
+\item {\bf Modular Specifications}
+As specifications begin to get larger and encompass multiple different data repositories,
+possibly with different data formats, standard software engineering practice suggests
+introduction of features to enable modular development of specifications and to allow multiple
+programmers to collaborate on specifications.  The first necessary addition to PADS along these 
+lines is a namespace mechanism to allow programmers to control their type names in a disciplined fashion.
+A second extension we will explore is introduction of more general interfaces that allow programmers
+to make type definitions abstract.  This feature should make it easier to evolve large specifications as
+formats change.
 
-PADS currently provides no support for processing these pointers.
-Ideally, PADS should generate internal
-data structures with pointers that point from one part
-of the internal structure to another.  This way the backend application
-will be able to manipulate the data in a much more convenient fashion.
-We plan to explore the language design space here and to determine
-the most effective way to specify and automatically process data
-with pointers.  
-
-\paragraph*{Specification Reuse}
-Many specifications contain numerous repeated subcomponents.  For
-example, in the common format for web server logs~\cite{wpp}, optional
-values are represented as either a single dash (if the item does not
-appear) or the item itself (if it does appear).  Currently, for every
-different sort of optional value (\ie ``dash or integer'' vs. ``dash
-or string''), one must write down a separate specification.  It should
-be possible to eliminate this sort of redundancy and reduce the size
-of format specifications using polymorphic types (types parameterized
-by other types).  We plan to investigate how to integrate
-polymorphism into PADS specifications and our implementation.
-As is the case with recursive types, there are bound to be
-a number of language design and implementation issues to deal with.
-
+\end{enumerate}
 
 \subsubsection{Automatic Tool Generation}
 
 The current \pads{}\ system can automatically generate tools for
 creating statistical summaries of data sources, querying
 data sources and outputting data in ``hoc'' formats such as
-\xml.  Unfortunately, the tool generation process is quite brittle and the
-performance of the generated artifacts can be substantially improved.  
+\xml.  Unfortunately, it is not easy to extend the system with new generic tools,
+nor does the current tool generation process allow all tools to be generated for all formats.
 In this section, we propose several innovative ways of improving our
 automatic tool generation infrastructure.
 
+\paragraph*{Generic Interface Generation}
+Currently, in order to generate any tool, the \pads{} compiler will 
+produce a new version of a parser (or printer) that reads (or writes)
+data the format in question.  As control traverses the ad hoc data,
+parts of the data are passed to explicit processing functions that 
+convert to XML, gather statistical data, generate histogram buckets, etc.
+As it stands, there is different traversal code for each different tool.
+In order to add a new tool to the PADS tool suite, it is necessary to modify the compiler
+to generate a new sort of traversal.  Hence, the barrier to adding new tools
+is very high.  Unfortunately, this prevents independent researchers from adding more and more
+useful tools to the suite of tools that apply to any PADS description.
+
+We plan to study software architectures that will allow the compiler to generate
+flexible and highly efficient, but tool-independent traversals for a particular data format.  
+These tool-independent traversals will match a generic tool interface.  If designed correctly, 
+in order to create a new tool, tool implementers will merely need to link their tool-specific
+code against a given tool-independent traversal.  Our revised design will take advantage of
+recent research in the functional programming languages community on type-directed 
+programming~\cite{crary+:intensional-types,LPJ03,syb2,SYB3}
+as we have observed that each of our tools is actually an example 
+of a type-directed program -- in other words, the structure of the PADS type directs run-time 
+execution of the tool.
+
 \paragraph*{Attribute-based Tool Generation}
-The primary reason that automatic tool generation is brittle
+One important reason that automatic tool generation is brittle
 is that the tools assume that the data passed to them fits a generic
 shape: it must be an optional {\em header} followed by
 a {\em body} that consists of a sequence of records 
@@ -941,60 +948,6 @@ an efficient and robust means of communicating information between
 tools.  However, once again, we must do much more research to develop
 the right language design and effective tool interfaces.
 
-% mention FAX here?
-
-\paragraph*{Application-specific, Compile-time Specialization}
-For any ad hoc data format, there should be a single \pads{} description
-to describe the data format including all appropriate
-semantic constraints.  However, different applications
-may use the data in entirely different ways.  Consequently,
-it can be extremely advantageous to specialize the basic
-parser to an individual application.  We have discovered
-four important ways to specialize generated \pads{} parsers
-and hence the generated tools as well.
-
-\begin{enumerate}
-\item Some data sources are quite irregular and have much redundancy.
-It is common to want to ``clean up'' a data source by
-normalizing it in some way or another.  For instance,
-IP backbone data from the Regulus project at AT\&T has
-multiple different formats that represent  ``missing values.''
-For statistical summaries and querying,
-it is highly desirable to take the multiple missing value representations
-and convert them all to a single representation.
-\item For performance reasons, when processing high-volume data,
-it is sometimes necessary to turn off semantic checks.  
-Currently, this is possible with \pads{} masks, but the masks
-are checked over and over again at run time.  We believe it is
-possible to partially evaluate the masks at compile time
-and achieve performance improvements.
-\item Different applications deal with errors in different ways. 
-Sometimes a single error in a data fragment is sufficient
-reason to skip to the end of the fragment; other times,
-the parser can attempt to recover.  Sometimes, there are
-application-specific ways to fix errors as they are recognized.
-Allowing the user to control when and how to perform
-error recovery can result in both
-higher performance and better parsing.
-\item Some applications only need a small fragment of the information
-available in the totality of a data source.  These applications can
-skip large portions of the data source and we conjecture specializing
-our tools for these applications will allow us to achieve substantial
-performance improvements.
-\end{enumerate}
-
-We propose to investigate how we might develop an effective mechanism
-that will allow us to specialize the \pads-generated parsers 
-with this sort of application-specific behavior.  In some cases,
-we believe that it may be possible to use some ideas from the 
-literature on partial 
-evaluation to accomplish our goal, but we must do much more
-research to determine the best way to solve these problems.
-We also believe that there is a further role for research
-in language design here as we would like to develop
-a clear, concise and general notation for specifying
-how and where to specialize a \pads-generated parser
-and tool suite. 
 
 %\label{subsec:general}
 
