@@ -1,60 +1,4 @@
-@Article{LPJ03,
-  author    = "Ralf L{\"a}mmel and Simon {Peyton Jones}",
-  title     = "Scrap your boilerplate:
-               a practical design pattern for generic programming",
-  journal   = "ACM SIG{\-}PLAN Notices",
-  publisher = "ACM Press",
-  volume    = "38",
-  number    = "3",
-  pages     = "26--37",
-  month     = mar,
-  year      = "2003",
-  note      = "Proceedings of the ACM SIGPLAN Workshop
-               on Types in Language Design and Implementation (TLDI~2003)"
-}
 
-@inproceedings{syb2,
- author    = {Ralf L{\"a}mmel and Simon {Peyton Jones}},
- title     = "{Scrap more boilerplate:
-               reflection, zips, and generalised casts}",
- booktitle = "{Proceedings of the ACM SIGPLAN International Conference
-               on Functional Programming (ICFP 2004)}",
- year      = {2004},
- pages     = {244--255},
- location  = {Snow Bird, UT, USA},
- publisher = {ACM Press},
-}
-
-@inproceedings{SYB3,
- author = "Ralf L{\"a}mmel and Simon {Peyton Jones}",
- title = "{Scrap your boilerplate with class: extensible generic functions}",
- booktitle = "{Proceedings of the ACM SIGPLAN International Conference
-               on Functional Programming (ICFP 2005)}",
- year      = {2005},
- pages     = {204--215},
- location  = {Tallinn, Estonia},
- publisher = {ACM Press},
- month = sep,
-}
-
-@Article{crary+:intensional-types,
-  author = 	 {Karl Crary and Stephanie Weirich and Greg Morrisett},
-  title = 	 {Intensional Polymorphism in Type Erasure Semantics},
-  journal = 	 {Journal of Functional Programming},
-  year = 	 {2002},
-  volume = 	 {12},
-  number = 	 {6},
-  pages = 	 {567-600},
-  month = 	 {nov},
-}
-
-@InProceedings{foster+:lens,
-  author = 	 {J. Nathan Foster and Michael B. Greenwald and Christian Kirkegaard and Benjamin C. Pierce and Alan Schmitt},
-  title = 	 {Combinators for Bi-Directional Tree Transformations: A Linguistic Approach to the View Update Problem},
-  booktitle = 	 {{ACM SIGPLAN-SIGACT} Symposium on Principles of Programming Languages},
-  year = 	 2005,
-  month = 	 jan,
-}
 
 @inproceedings{chilimbi,
  author = {Trishul M. Chilimbi},
@@ -64,14 +8,54 @@
  isbn = {1-58113-414-2},
  pages = {191--202},
  location = {Snowbird, Utah, United States},
- doi = {http://doi.acm.org/10.1145/378795.378840},
- publisher = {ACM Press},
+ doi = {doi.acm.org/10.1145/378795.378840},
+ publisher = acmpress,
  }
 
 
+
+@InProceedings{zhao+:sigmod05,
+  author = 	 {Yong Zhao and Jed Dobson and Ian Foster and Luc Moreau and Micael Wilde},
+  title = 	 {A notation and system for expressing and executing cleanly typed workflows on messy scientific data},
+  booktitle = 	 {{ACM SIGMOD Record}},
+  pages = 	 {37-43},
+  year = 	 {2005},
+  volume = 	 {34},
+  number = 	 {3},
+}
+
+@InProceedings{xdtm,
+  author = 	 {Luc Moreau and Yong Zhao and Ian Foster and Jens Voeckler and Micael Wilde},
+  title = 	 {XDTM: The XML Data Type and Mapping for Specifying Datasets},
+  booktitle = 	 {European Grid Conference},
+  year = 	 {2005},
+}
+
+@Misc{hdf5,
+  key = 	 {Hierarchical Data Format 5},
+  title = 	 {Hierarchical Data Format 5},
+  howpublished = {National Center for Supercomputing Applications (NCSA) at the University of Illinois at Urbana-Champaign (UIUC). \url{http://hdf.ncsa.uiuc.edu/HDF5/}},
+}
+
+@Misc{bfd,
+  key = 	 "Binary format definition",
+  author = 	 {J. Myers and A. Chappell},
+  title = 	 {Binary format definition ({BFD})},
+  howpublished = {\url{http://collaboratory.emsl.pnl.gov/sam/bfd/}},
+  year = 	 {2000},
+}
+
+@Misc{mets,
+  key = 	 "METS",
+  title = 	 {{METS}: An overview and tutorial.},
+  howpublished = {\url{http://www.loc.gov/standards/mets/METSOverview.v2.html}},
+  year = 	 {2003},
+}
+
 @Misc{asdl,
+  key="Abstract Syntax Description Language",
   title="Abstract Syntax Description Language",
-  howpublished="\url{http://sourceforge.net/projects/asdl}",
+  howpublished="\url{sourceforge.net/projects/asdl}",
 }
 
 @Book{asn,
@@ -82,31 +66,156 @@
 
 
 @Misc{erlang,
+  key="Erlang",
   title="Erlang bit syntax",
-  howpublished="\url{http://www.erlang.se/euc/99/binaries.ps}",
+  howpublished="\url{www.erlang.se/euc/99/binaries.ps}",
+}
+
+@inproceedings{igarasi+:featherweight,
+ author = {Atshushi Igarashi and Benjamin Pierce and Philip Wadler},
+ title = {{Featherwieght Java}: {A} minimal core calculus for {Java} and {GJ}},
+ booktitle = oopsla,
+ year = {1999},
+ pages = {132--146},
+ publisher = acmpress,
+ comment-location = {Denver, Colorado, United States},
+ comment-doi = {doi.acm.org/10.1145/320384.320395},
+ comment-isbn = {1-58113-238-7},
+ comment-address = {New York, NY, USA},
+ }
+
+@Misc{geneontology,
+  organization = 	 {{Gene} {Ontology} Consortium},
+  key =           {{Gene} {Ontology} Consortium},
+  title = 	 {{Gene} {Ontology} {Project}},
+  howpublished = {\url{www.geneontology.org}}
+}
+
+@Unpublished{fisher+:pads-semantics-ext,
+  author = 	 {Kathleen Fisher and Yitzhak Mandelbaum and David Walker},
+  title = 	 {A Calculus for Describing Ad Hoc Data},
+  note = 	 {Technical Report.},
+  month = 	 jun,
+  year = 	 {2005},
+}
+
+@Misc{newick,
+  title = "Tree Formats. {Workshop} on Molecular Evolution.",
+  howpublished="\url{workshop.molecularevolution.org/resources/fileformats/tree_formats.php}",
+  key = "Newick"
 }
 
 @InProceedings{gpce02, 
        author="Godmar Back",
-       title="{D}ata{S}cript - {A} Specification and Scripting 
+       title="{D}ata{S}cript: {A} Specification and Scripting 
               Language for Binary Data",
-       booktitle="Proceedings of Generative Programming and Component 
-                  Engineering",
+       booktitle = gpce,
        year="2002",
        pages="66-77",
-       publisher = "LNCS",
+       publisher = lncs,
        volume = "2487"}
 
 @InProceedings{sigcomm00,
   author=         "Peter Mc{C}ann and Satish Chandra",
-  title=          "Packet{T}ypes: {A}bstract Specification of Network Protocol Messages",
-  booktitle=      "{ACM} Conference of Special Interest Group on Data 
-                   Communications (SIGCOMM)",
+  title=          "Packet{T}ypes: {A}bstract specification of network protocol messages",
+  booktitle=      sigcomm,
   month=          "August",
-  year=           "1998",
-  pages=          "321-333"
+  year=           "2000",
+  pages=          "321-333",
+  publisher =     acmpress
 }
 
+
+@ARTICLE{hosoya+:xduce-journal,
+  AUTHOR = {Haruo Hosoya and Benjamin C. Pierce},
+  TITLE = {{XDuce}: A Statically Typed {XML} Processing Language},
+  JOURNAL = {ACM Transactions on Internet Technology},
+  YEAR = {2003},
+  VOLUME = 3,
+  NUMBER = 2,
+  MONTH = MAY,
+  PAGES = {117--148},
+  CHECKED = {Yes},
+  OFFICIAL = {http://doi.acm.org/10.1145/767193.767195},
+  PLCLUB = {Yes},
+  BCP = {Yes},
+  KEYS = {xduce}
+}
+
+@Inproceedings{benzaken+:cduce,
+  author = {V. Benzaken and G. Castagna and A. Frisch},
+  title = {{CDuce}: An {XML}-Centric General-Purpose Language},
+  booktitle = {{ACM SIGPLAN} {ICFP}},
+  year = 	 {2003},
+  month = aug, 
+}
+
+@INPROCEEDINGS{gapeyev+:XtaticRuntime,
+  TITLE = {{XML} Goes Native: {R}un-time Representations for {Xtatic}},
+  AUTHOR = {Vladimir Gapeyev and Michael Y. Levin
+                  and Benjamin C. Pierce and Alan Schmitt},
+  YEAR = 2005,
+  MONTH = APR,
+  BOOKTITLE = {14th International Conference on Compiler Construction},
+  CONF = {http://www.cis.upenn.edu/~bcpierce/papers/xtatic-runtime-CC.pdf},
+  TR = {http://www.cis.upenn.edu/~bcpierce/papers/xtatic-runtime-TR.pdf},
+  PLCLUB = {Yes},
+  BCP = {Yes},
+  KEYS = {xtatic}
+}
+
+@INPROCEEDINGS{foster+:lenses-full,
+  AUTHOR = {J. Nathan Foster and Michael B. Greenwald and Jonathan T. Moore 
+                  and Benjamin C. Pierce and Alan Schmitt},
+  TITLE = {Combinators for Bi-Directional Tree Transformations: 
+                  {A} Linguistic Approach to the View Update Problem},
+  BOOKTITLE = {{ACM} {SIGPLAN--SIGACT} {S}ymposium on {P}rinciples of {P}rogramming
+                     {L}anguages ({POPL}), Long Beach, California},
+  YEAR = {2005},
+  CONF = {http://www.cis.upenn.edu/~bcpierce/papers/newlenses-popl.pdf},
+  SLIDES = {http://www.cis.upenn.edu/~bcpierce/papers/newlenses-popl-slides.pdf},
+  TR = {http://www.cis.upenn.edu/~bcpierce/papers/newlenses-full.pdf},
+  NOTE = {Extended version available as University of Pennsylvania 
+                  technical report MS-CIS-03-08.  Earlier version presented at 
+                  the {\em Workshop on Programming Language Technologies for 
+                  XML (PLAN-X)}, 2004},
+  PLCLUB = {Yes},
+  BCP = {Yes},
+  KEYS = {harmony}
+}
+
+@INPROCEEDINGS{foster+:lenses,
+  AUTHOR = {J. Nathan Foster and Michael B. Greenwald and Jonathan T. Moore 
+                  and Benjamin C. Pierce and Alan Schmitt},
+  TITLE = {Combinators for Bi-Directional Tree Transformations: 
+                  {A} Linguistic Approach to the View Update Problem},
+  BOOKTITLE = {{POPL}},
+  YEAR = {2005},
+  CONF = {http://www.cis.upenn.edu/~bcpierce/papers/newlenses-popl.pdf},
+  SLIDES = {http://www.cis.upenn.edu/~bcpierce/papers/newlenses-popl-slides.pdf},
+  TR = {http://www.cis.upenn.edu/~bcpierce/papers/newlenses-full.pdf},
+  PLCLUB = {Yes},
+  BCP = {Yes},
+  KEYS = {harmony}
+}
+
+@misc{dfdl-primer,
+title="{GGF} {DFDL} Primer", 
+author="Mike Beckerle and Martin Westhead", 
+howpublished="\url{http://www.ggf.org/Meetings/GGF11/Documents/DFDL_Primer_v2.pdf}",
+note="Global Grid Forum",
+year="2004",
+month="May"
+}
+
+@misc{dfdl-proposal,
+key="Data Format Description Language",
+title="Data Format Description Language ({DFDL}) A {Proposal}, {Working Draft}, {Global} {Grid} {Forum}", 
+year="2005",
+month="Aug",
+howpublished="\url{https://forge.gridforum.org/projects/dfdl-wg/document/DFDL_Proposal/en/2}",
+note="Global Grid Forum"
+}
 
 @InProceedings{kdd98,
   author=         "Corinna Cortes and Daryl Pregibon",
@@ -139,14 +248,24 @@
  year = {2004},
  issn = {0164-0925},
  pages = {301--338},
- doi = {http://doi.acm.org/10.1145/973097.973100},
- publisher = {ACM Press},
+ doi = {\url{doi.acm.org/10.1145/973097.973100}},
+ publisher = acmpress,
  }
 
 
+
+@InProceedings{fisher+:pads,
+  author = 	 {Kathleen Fisher and Robert Gruber},
+  title = 	 {{PADS}: {A} domain specific language for processing ad hoc data},
+  booktitle = 	 {PLDI},
+  pages = 	 {295-304},
+  year = 	 2005,
+  publisher =   acmpress
+}
+
 @Misc{netflow,
   title="Cisco NetFlow.",
-  howpublished="\url{http://www.cisco.com/warp/public/732/Tech/nmp/netflow/index.shtml}",
+  howpublished="\url{www.cisco.com/warp/public/732/Tech/nmp/netflow/index.shtml}",
 }
 
 @InProceedings{gigascope, 
@@ -154,7 +273,7 @@
        title="Gigascope: {H}igh Performance Network Monitoring with an {SQL} Interface",
        booktitle="SIGMOD",
        year="2002",
-       publisher = "ACM"}
+       publisher = acmpress}
 
 
 @InProceedings{ast,
@@ -176,7 +295,7 @@
        title="On Network-aware clustering of web clients",
        booktitle="Proceedings of SIGCOMM 2000",
        year="2000",
-       publisher = "ACM"}
+       publisher = acmpress}
 
 @InProceedings{clf-adaptation, 
        author="Balachander Krishnamurthy and Craig Wills",
@@ -192,23 +311,16 @@
   publisher="Addison Wesley", 
   year="2004"}
   
-  @InProceedings{galax, 
-       author="Mary F. Fern\'andez and J\'r\^ome Sim\'eon and Byron Choi and Am\'elie Marian and Gargi Sur",
-       title="Implementing {XQ}uery 1.0: {T}he {G}alax Experience.",
-       booktitle="VLDB",
-       year="2003",
-        pages="1077-1080",
-       publisher = "ACM"}
-
-
 @Misc{dfdl,
+  key = {DFDL},
   title="{DFDL} Project",
-  howpublished="\url{http://forge.gridforum.org/projects/dfdl-wg}",
+  howpublished="\url{forge.gridforum.org/projects/dfdl-wg}",
 }
 
 @Misc{galaxmanual,
+  key="Galax User Manual",
   title="{G}alax User Manual",
-  howpublished="\url{http://www.galaxquery.org/doc.html#manual}",
+  howpublished="\url{www.galaxquery.org/doc.html#manual}",
 }
 
 @misc{boag03XQueryDraft,
@@ -217,28 +329,28 @@
 Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
     year   = "2004",
     month = "Aug",
-    note = "\url{http://www.w3.org/TR/xquery}" }
+    note = "\url{www.w3.org/TR/xquery}" }
 
 
 @Misc{padsmanual,
   title="{PADS} User Manual",
-  howpublished="\url{http://www.research.att.com/projects/pads/index.html}",
+  howpublished="\url{www.research.att.com/projects/pads/index.html}",
   note="To appear."
 }
 
 @Misc{erlang-bit-syntax,
   title="Proposals for and Experiments with an {E}rlang Bit Syntax",
-  howpublished="http://lambda.weblogs.com/discuss/msgReader\$5185",
+  howpublished="\url{lambda.weblogs.com/discuss/msgReader\$5185}",
 }
 
 @Misc{http,
   title="Hypertext Transfer Protocol -- {HTTP}/1.1",
-  howpublished="\url{http://www.w3.org/Protocols/rfc2616/rfc2616.html}",
+  howpublished="\url{www.w3.org/Protocols/rfc2616/rfc2616.html}",
 }
 
 @Misc{unicode,
   title="Unicode Home Page",
-  howpublished="\url{http://www.unicode.org/}",
+  howpublished="\url{www.unicode.org/}",
 }
 
 @Unpublished{ckit,
@@ -258,24 +370,6 @@ Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
   publisher=      "USENIX",
   pages =         "235-256",
   year =          1991
-}
-
-@InProceedings{korn+:data-format,
-  author =        "David G.~  Korn and Kiem-Phong Vo",
-  title =         "Engineering a Differencing and Compression Data Format",
-  booktitle =     "Proc. of the 2002 Usenix Conference",
-  publisher=      "USENIX",
-  pages =         "235-256",
-  year =          2002
-}
-
-@article{korn+:delta,
-  author =        "James J. Hunt and David G.~  Korn and Kiem-Phong Vo",
-  title =         "Delta Algorithms: An Empirical Analysis",
-  journal =     "{ACM} Transactions on Software Engineering and Methodology",
-  volume=     7,
-  pages =         "192-214",
-  year =          1998
 }
 
 @InProceedings{histograms,
@@ -301,379 +395,141 @@ Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
 	year="2002",
 	pages="454465"
 	}
-	
-@Article{bind,
-  author = 	 {G. D. Bader and D. Betel and C. W. Hogue},
-  title = 	 {{BIND}: the Biomolecular Interaction Network Database},
-  journal = 	 {Nucleic Acids Res.},
-  year = 	 {2003},
-  volume = 	 {31},
-  number = 	 {1},
-  pages = 	 {248--250},
+      
+@InProceedings{erlang-bits,
+  author = 	 {Claes Wikstr\"{o}m and Tony Rogvall},
+  title = 	 {Protocol programming in {Erlang} using binaries.},
+  booktitle = 	 euc5,
+  year = 	 {1999},
+  month = 	 oct,
 }
 
-@Misc{geneontology,
-  author = 	 {Gene Ontology Consortium},
-  title = 	 {Gene Ontology Project},
-  howpublished = {http://www.geneontology.org/},
+@Misc{eger:blt,
+  author = 	 {David Eger},
+  title = 	 {Bit Level Types},
+  howpublished="\url{www-2.cs.cmu.edu/~eger/}"
 }
 
-@Misc{genericbiodata,
-  title = 	 {Generic Model Organism Database Construction Set},
-  howpublished = {http://www.gmod.org/},
-}
-
-
-
-@Article{grid,
-  author = 	 {B. J. Breitkreutz and C. Stark and M. Tyers},
-  title = 	 {The GRID: the General Repository for Interaction Datasets},
-  journal = 	 {Genome Biology},
-  year = 	 {2003},
-  volume = 	 {4},
-  number = 	 {3},
-}
-
-%%% Dave
-
-%% Dave's bib stuff:
-
-@InProceedings{bauer+:non-interfering-monitors,
-  author = 	 {Lujo Bauer and Jarred Ligatti and David Walker},
-  title = 	 {Types and Effects for Non-interfering program monitors},
-  booktitle = 	 {International Symposium on Software Security},
-  year = 	 {2002},
-  month = 	 nov,
-  address =      {Tokyo, Japan},
-}
-
-
-
-@Article{ligatti+:edit-automata,
-  author = 	 {Jarred Ligatti and Lujo Bauer and  David Walker},
-  title = 	 {Edit Automata: enforcement mechanisms for Run-time Security Policies},
-  journal = 	 {International journal of information security},
-  year = 	 {2004},
-}
-
-@inproceedings{morrisett+:tal-popl,
-  author = "Greg Morrisett and David Walker and Karl Crary and Neal Glew",
-  title = "From {S}ystem {F} to {T}yped {A}ssembly {L}anguage",
-  booktitle = POPL98,
-  month = jan,
-  year = 1998,
-  address = "San Diego",
-  pages = "85--97"
-}
-
-@inproceedings{crary+:capabilities,
-  author = "Karl Crary and David Walker and Greg Morrisett",
-  title = "Typed Memory Management in a Calculus of Capabilities",
-  booktitle = POPL99,
-  year = 1999,
-  month = jan,
-  address = "San Antonio",
-  pages = "262--275"
-}
-
-@inproceedings{smith+:alias-types,
-title="Alias Types",
-author = "Frederick Smith and David Walker and Greg Morrisett",
-booktitle = "In \emph{Proceedings of the 9th European Symposium on
-             Programming Languages and Systems}",
-year=2000,
-month = mar,
-address = "Berlin",
-pages = "366-381"
-}
-
-@inproceedings{walker+:alias-recursive,
-  author = "David Walker and Greg Morrisett",
-  title = "Alias Types for Recursive Data Structures",
-  booktitle = "Workshop on Types in Compilation",
-  year = 2000,
-  month = sep,
-  address = "Montreal",
-}
-
-@phdthesis{walker:thesis,  
-  title = "Typed Memory Management",
-  author = "David Walker",
-  school = "Cornell University",
-  year = 2001,
-  month = jan
-}
-
-@Inproceedings{mandelbaum+:refinements,
-  author = 	 {Yitzhak Mandelbaum and David Walker and Robert Harper},
-  title = 	 {An Effective Theory of Type Refinements},
-  booktitle = {{ACM SIGPLAN} International Conference on Functional Programming},
-  year = 	 {2003},
-  month = aug, 
-}
-
-
-@InBook{walker:attapl,
-  author = 	 {David Walker},
-  title = 	 {Substructural type systems},
-  booktitle =    {Advanced topics in types and programming languages},
-  chapter = 	 {1},
-  publisher = 	 {MIT Press},
+@Book{harper:plbook,
+  author = 	 {Robert Harper},
+  title = 	 {Programming Languages: Theory and Practice.},
+  publisher = 	 {Unpublished},
   year = 	 {2005},
-  month =        jan,
-  note = 	 {In \emph{Advanced topics in types and programming languages}, Benjamin Pierce, ed.},
+  note = 	 {\url{www-2.cs.cmu.edu/~rwh/}},
 }
 
-@article{morrisett+:tal,
-  author = "Greg Morrisett and David Walker and Karl Crary and Neal Glew",
-  title = "From {S}ystem {F} to {T}yped {A}ssembly {L}anguage",
-  journal = "{ACM} Transactions on Programming Languages and Systems",
-  month = may,
-  volume = 3,
-  number = 21,
-  year = 1999,
-  pages = "528-569",
-}
-
-@article{walker+:capabilities,
-  author = "David Walker and Karl Crary and Greg Morrisett",
-  title = "Typed Memory Management in a Calculus of Capabilities",
-  journal = "{ACM} Transactions on Programming Languages and Systems",
-  year = 2000,
-  month = may,
-  volume = 22,
-  number =4,
-  pages = "701--771"
-}
-
-
-@InProceedings{ahmed+:stack,
-  author = 	 {Amal Ahmed and David Walker},
-  title = 	 {The Logical Approach to Stack Typing},
-  booktitle = 	 {{ACM SIGPLAN} Workshop on Types in Language Design and Implementation},
-  year = 	 {2003},
-  month = 	 jan,
-  address = "New Orleans",
-}
-
-
-@InProceedings{ahmed+:hierarchical-storage,
-  author = 	 {Amal Ahmed and Limin Jia and David Walker},
-  title = 	 {Reasoning about Hierarchical Storage},
-  booktitle = 	 {{IEEE} Symposium on Logic in Computer Science},
-  year = 	 {2003},
-  month = 	 jun,
-  address = "Ottawa, Canada",
-  pages = "33--44"
-}
-
-@article{morrisett+:journal-stal,
-  author = "Greg Morrisett and Karl Crary and Neal Glew and David Walker",
-  title = "Stack-Based {T}yped {A}ssembly {L}anguage",
-  journal = "Journal of Functional Programming",
-  year = 2002,
-  month = jan,
-  volume = 12,
-  number =1,
-  pages = "43--88"
-} 
-
-@inproceedings{tofte+:regions,
-  title="Implementation of the Typed Call-By-Value $\lambda$-Calculus using a Stack of Regions",
-  author="Mads Tofte and Jean-Pierre Talpin",
-  booktitle=twentyfirst # popl,
-  year=1994,
-  month=jan,
-  pages="188--201",
-  address="Portland, Oregon"
-}
-
-@inproceedings{walker:security,
-  title = "A Type System for Expressive Security Policies",
-  author = "David Walker",
-  booktitle = POPL00,
-  year = 2000,
-  month= jan,
-  address= "Boston",
-  pages = "254--267"
-} 
-
-@ARTICLE{lieberherr+:aspectual-collaborations,
-AUTHOR = "Karl J. Lieberherr and David Lorenz and Johan Ovlinger",
-TITLE = "Aspectual Collaborations -- Combining Modules and Aspects",
-JOURNAL = "The Computer Journal" ,
-YEAR = "2003",
-MONTH        = "September",
-VOLUME = 46,
-NUMBER = 5,
-PAGES = "542-565",
-PUBLISHER = "Oxford University Press",
-}
-
-@InProceedings{masuhara+:compilation-semantics-aspects,
-  author = 	 {Hidehiko Masuhara and Gregor Kiczales and Chris Dutchyn},
-  title = 	 {Compilation Semantics of Aspect-Oriented Programs},
-  booktitle = {Foundations of Aspect-Oriented Languages Workshop},
-  pages = 	 {17--25},
-  year = 	 {2002},
-  month =        apr,
-  editor = 	 {Gary T. Leavens and Ron Cytron},
-}
-
-
-@InProceedings{walker+:aspects,
-  author = 	 {David Walker and Steve Zdancewic and Jay Ligatti},
-  title = 	 {A Theory of Aspects},
-  booktitle =    {{ACM SIGPLAN} International Conference on Functional Programming Languages},
-  year = 	 2003,
-  address = 	 {Uppsala, Sweden},
-  month = 	 aug,
-}
-
-
-@InProceedings{douence+:composition,
-  author = 	 {Remi Douence and Olivier Motelet and Mario S\"{u}dholt},
-  title = 	 {Composition, reuse and interaction analysis of stateful aspects},
-  booktitle = {Conference on Aspect-Oriented Software Development},
-  pages = 	 {141--150},
-  year = 	 2004,
-  month = 	 mar,
-}
-
-
-@InProceedings{douence+:aspects,
-  author = 	 {Remi Douence and Olivier Motelet and Mario S\"{u}dholt},
-  title = 	 {A formal definition of crosscuts},
-  booktitle = {Third International Conference on Metalevel architectures and separation of crosscutting concerns},
-  pages = 	 "170--186",
-  year = 	 2001,
-  volume = 	 {2192},
-  series = 	 lncs,
-  address = 	 {Berlin},
-  month = 	 sep,
-  publisher = springer,
-}
-
-
-@inproceedings{erlingsson+:irm,
- author = "{\'{U}lfar} Erlingsson and Fred B. Schneider",
- title = "{IRM} Enforcement of {J}ava Stack Inspection",
- booktitle = "{IEEE} Symposium on Security and Privacy",
- address = "Oakland, California",
- month = may,
- year = 2000,
- pages = "246--255",
-}
-
-
-@InProceedings{jagadeesen+:untyped-aspects,
-  author = 	 {Radha Jagadeesan  and Alan Jeffrey and James Riely},
-  title = 	 {A Calculus of Untyped Aspect-Oriented Programs},
-  booktitle = {European Conference on Object-Oriented Programming},
-  year = 	 {2003},
-  address = 	 {Darmstadt, Germany},
+@Article{antlr,
+  author = 	 {T. J. Parr and R. W. Quong},
+  title = 	 {{ANTLR}: A Predicated- {\it {LL}(k)} Parser Generator.},
+  journal = 	 spe,
+  volume = 	 {25},
+  number = 	 {7},
+  pages = 	 {789-810},
+  year = 	 {1995},
   month = 	 jul,
 }
 
 
-@InProceedings{clifton+:assistants-observers,
-  author = 	 {C. Clifton and G. T. Leavens},
-  title = 	 {Assistants and Observers:  A Proposal for Modular Aspect-Oriented Reasoning}, 
-  booktitle = {Foundations of Aspect Languages},
-  year = 	 2002,
-  month = 	 apr,
+@InProceedings{ford:packrat,
+  author =        {Bryan Ford},
+  title =         {Packrat parsing: {S}imple, powerful, lazy, linear time.},
+  booktitle =     icfp,
+  year =          2002,
+  pages =         {36-47},
+  month = oct,
+  publisher = acmpress,
 }
 
 
-@inproceedings{evans+:naccio,
-  author = "David Evans and Andrew Twyman",
-  title = "Flexible Policy-Directed Code Safety",
-  booktitle = "{IEEE} Security and Privacy",
-  address = "Oakland, CA", 
-  month = may,
-  year = 1999  
+@InProceedings{ford:pegs,
+  author =        {Bryan Ford},
+  title =         {Parsing expression grammars: {A} recognition-based syntactic foundation.},
+  booktitle =     popl,
+  pages =         {111-122},
+  year =          2004,
+  month = jan,
+  publisher = acmpress,
 }
 
-
-@Article{myers+:overview,
-  author = 	 {Andrei Sabelfeld and Andrew C. Myers},
-  title = 	 {Language-Based Information-Flow Security},
-  journal = 	 {{IEEE} Journal on Selected Areas in Communications},
-  year = 	 {2003},
-  volume = 	 {21},
-  number = 	 {1},
-  pages = 	 {5--19},
-  month = 	 jan,
-}
-
-@InProceedings{wand+:aspect-semantics,
-  author =    {Mitchell Wand and Gregor Kiczales and Christopher Dutchyn},
-  title =     {A Semantics for Advice and Dynamic Join Points in Aspect-Oriented Programming},
-  booktitle = {Foundations of Aspect-Oriented Languages Workshop},
-  pages = 	 {17--25},
-  year = 	 {2002},
-  month =        apr,
-  editor = 	 {Gary T. Leavens and Ron Cytron},
-  note = "Iowa State University University technical report 02-06",
-}
-
-@InProceedings{dantas+:harmless-advice,
-  author = 	 {Daniel S. Dantas and David Walker},
-  title = 	 {Harmless Advice},
-  booktitle = 	 {Workshop on Foundations of Object-oriented Languages},
-  year = 	 2005,
-  month = 	 jan,
-}
-
-
-
-
-@Misc{summerschool04,
-  title = 	 {Summer School On Software Security: Theory to Practice},
-  key =   	 {Summer School On Software Security: Theory to Practice},
-  howpublished = {http://www.cs.uoregon.edu/activities/summerschool/summer04/},
-  month = 	 jun,
+@TechReport{grimm:packrat,
+  author = 	 {Robert Grimm},
+  title = 	 {Practical Packrat Parsing},
+  institution =  {New York University},
   year = 	 {2004},
+  number = 	 {TR2004-854},
+  month = 	 mar,
 }
 
-@unpublished{ligatti+:renewal,
-  author = 	 {Jarred Ligatti and Lujo Bauer and David Walker},
-  title = 	 {Enforcing Non-Safety Security Policies with Program Monitors},
-  booktitle = 	 {Computer Security Foundations Workshop},
-  year = 	 2005,
-  month = 	 jan,
-  note = 	 {Submitted for publication.  Available at \url{http://www.cs.princeton.edu/~jligatti/papers/NonSafetyTR.pdf}},
+@Article{birman+:parsing,
+  author = 	 {Alexander Birman and Jeffrey D. Ullman},
+  title = 	 {Parsing algorithms with backtrack},
+  journal = 	 {Information and Control},
+  year = 	 {1973},
+  volume = 	 {23},
+  number = 	 {1},
+  month = 	 aug,
 }
 
-@InProceedings{bauer+:polymer,
-  author = 	 {Lujo Bauer and Jarred Ligatti and David Walker},
-  title = 	 {Composing Security Policies with Polymer},
-  booktitle = 	 {Proceedings of the {ACM SIGPLAN} 2005 Conference on Programming language design and implementation},
-  year = 	 {2005},
-  month = 	 jun,
-  note = 	 {To appear.},
+@Book{burge:parser-combinators,
+  author = 	 {William Burge},
+  title = 	 {Recursive Programming Techniques},
+  publisher = 	 {Addison Wesley},
+  year = 	 {1975}
+}
+
+@Article{hutton+:parser-combinators,
+  author = 	 {G.~Hutton and E.~Meijer},
+  title = 	 {Monadic Parsing in {Haskell}},
+  journal = 	 jfp,
+  publisher =    {Cambridge University Press},
+  volume =       8,
+  number =       4,
+  month =        jul,
+  year = 	 {1998},
+  pages = "437--444"
 }
 
 
-@InProceedings{fisher+:pads,
-  author = 	 {Kathleen Fisher and Robert Gruber},
-  title = 	 {{PADS}:  A Domain-Specific Language for Processing Ad Hoc Data Sources},
-  booktitle = 	 {Proceedings of the {ACM SIGPLAN} 2005 Conference on Programming language design and implementation},
-  year = 	 {2005},
-  month = 	 jun,
-  note = 	 {To appear.},
+
+@InProceedings{sfio,
+  author =        "David G.~  Korn and Kiem-Phong Vo",
+  title =         "{SFIO}: {S}afe/Fast String/File {IO}",
+  booktitle =     "Proc. of the Summer '91 Usenix Conference",
+  publisher=      "USENIX",
+  pages =         {235-256},
+  year =          1991
 }
 
-
-@Misc{ethereal,
-  key = 	 {Ethereal},
-  title = 	 {Ethereal},
-  howpublished = {\url{www.ethereal.com}},
+@InProceedings{gustafsson+:binaries,
+  author = 	 {Per Gustafsson and Konstantinos Sagonas},
+  title = 	 {Adaptive Pattern Matching on Binary Data.},
+  booktitle = 	 esop,
+  year = 	 2004,
+  pages =        {124-139},
+  publisher =    springer,
+  month = 	 mar,
 }
 
-@Misc{etherealvulnerabilities,
-  key = 	 {Ethereal},
-  title = 	 {Multiple (13) Ethereal remote overflows},
-  howpublished = {\url{http://security.e-matters.de/advisories/032004.html}},
+@Article{landin:700,
+  author = 	 {P. J. Landin},
+  title = 	 {The next 700 programming languages},
+  journal = 	 cacm,
+  year = 	 {1966},
+  volume = 	 {9},
+  number = 	 {3},
+  pages = 	 {157 - 166},
+  month = 	 mar,
+}
+
+@InProceedings{brabrand+:xsugar2005,
+  author =       {Claus Brabrand and Anders M\o{}ller and Michael I. Schwartzbach},
+  title =        {Dual Syntax for {XML} Languages},
+  booktitle =    dbpl10,
+  volume =       {3774},
+  year =         {2005},
+  month =        {August},
+  series =       lncs,
+  publisher =    springerver,
+  pages =        {27--41},
 }
 

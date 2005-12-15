@@ -23,41 +23,35 @@ filled with errors, high volume and unwieldy,
 poses tremendous challenges to its users and the software
 that manipulates it.  We cannot maximize the productivity of top 
 computational scientists unless we can maximize the efficiency and 
-accuracy with which they deal with this data.
-
-Our overall goal is to alleviate the burden, risk and confusion
+accuracy with which they deal with this data.  Hence, the overall goal of
+our research is to alleviate the burden, risk and confusion
 associated with ad hoc data.  Our overall strategy is (1) to develop a
 specification language capable of precisely describing any ad hoc data
 format at an easy-to-understand, high level of abstraction and (2) to
 automatically generate useful data processing tools including
 programming libraries, a query engine, format converters, a
 statistical summarizer, a histogram generator and others.
- 
 We will accomplish our task by building upon our preliminary data
 description and processing system, \pads{}, created by the PI and his
-collaborators.  This preliminary system demonstrates the basic
-feasibility of the \pads{} approach, but there is much research to do.
-While the work to date demonstrates the feasibility of the \pads{}
-approach, the \pads{} design and implementation are still in their
-infancy: We have discovered many common, real-world data formats that
-the current PADS infrastructure is incapable of describing, parsing or
-analyzing.  To address these deficiencies, we propose to explore
-innovative ways of extending the basic \pads{} specification language
-and related infrastructure.  The second thrust of our research
-involves improving the automatic tool generation infrastructure in the
-\pads{} system.  The current tool generation system is brittle,
-inflexible and suffers from subpar performance.  We will develop a
-novel extension to \pads{} that allows users to augment \pads{}
-descriptions with application-specific attributes and customizations.
-The attributes convey semantic information to the tool generators and
-the customizations improve error-handling and performance.  Our new
-architecture has the promise of being substantially more robust,
-flexible and efficient.  Finally, in order to improve the reliability
-of the infrastructure, we will formalize \pads{} and prove important
-correctness properties of our formal model.  Overall, this proposal
-involves challenging research in language design, efficient systems
-implementation and semantic analysis, all aimed at solving real-world
-data processing problems.
+collaborators.  This preliminary system has demonstrated
+there is much research to do in this area.  In particular, if funded we 
+will to pursue research on three fronts:
+
+\begin{enumerate}
+\item Extend the preliminary system with new features we have discovered are indispensible to
+scientists who work with ad hoc data.  In particular, the preliminary system only operates
+on single files.  We will extend it so it may operate over and integrate collections of files,
+either local or distributed across a network.  We will also augment PADS so that
+programmers may write simple, high level and easy-to-understand PADS transforms that can fix data errors
+and filter, standardize, coerce, compress, or santize data fields.
+\item  Improve automatic tool generation.  We will research new tool-generation architectures
+that allow anyone to add new tools to the tool-set, which is currently is currently fixed.
+We will also provide mechanisms that allow data descriptions to communicate useful semantic information
+to downstream tools.
+\item Develop the semantic theory of PADS.  We have a partial PADS parsing semantics based on dependent type
+theory but we will extend this semantics to cover our new features and generalize it so it may
+describe other components of the systems including printers and other tools.
+\end{enumerate}
 
 \paragraph*{Broader Impacts:}  We are collaborating with Kathleen Fisher
 and Mary Fernandez at
@@ -72,13 +66,10 @@ Integrative Genomics on pathway modeling and analysis of
 protein-protein interactions, and with Rachel Mandelbaum, Ph.D. candidate
 in physics who analyzes cosmology data.  Many of our proposed extensions to
 \pads{} were inspired directly by their data processing needs.  
-
 The collaboration between Computer Science and Genomics will also be an
 excellent platform for developing interdisciplinary undergraduate
 research projects.  The PI has a proven track-record 
 for following through with undergraduate and graduate
-educational plans:  Last year, his undergraduate student advisee, Rob Simmons,
-won the Princeton Computer Science Senior Thesis Award;
-last year and the year before he organized two NSF-sponsored summer schools
-on secure and reliable computing.
+educational plans.  Last year, for instance, his undergraduate student advisee, Rob Simmons,
+won the Princeton Computer Science Senior Thesis Award.
 

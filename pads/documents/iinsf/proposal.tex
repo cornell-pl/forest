@@ -157,7 +157,7 @@ representations.
 \begin{tabular}{@{}|l|l|l|l|l|}
 \hline
 Name: Use                           & Representation    & Processing Problems \\ \hline\hline
-Gene Ontology (GO)~\cite{??}:                  & Variable-width    & White-space ambiguities \\
+Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
 Gene Product Information 	      & ASCII records & Unused field options \\ \hline
 Reglens Data~\cite{??}:                & Floating point numbers, & Repeated multiplicative error \\
 Weak gravitational lensing analysis   & among others & \\ \hline
@@ -379,7 +379,7 @@ description to pay the run-time cost of checking them.
 
 In order to understand further how \pads{} can be used,
 will take a look at an example of ad hoc data:
-a tiny fragment of data from the Gene Ontology Project~\cite{go}.  
+a tiny fragment of data from the Gene Ontology Project~\cite{geneontology}.  
 Data in this format is widely used by molecular biologists to
 analyze gene products produced by various organisms.
 \figref{figure:dibbler-records} shows a tiny sample of
@@ -413,7 +413,7 @@ date: 11:11:2005 14:24
 saved-by: midori
 auto-generated-by: DAG-Edit 1.419 rev 3
 default-namespace: gene_ontology
-remark: cvs version: $Revision: 1.4 $
+remark: cvs version: $Revision: 1.5 $
 subsetdef: goslim_goa "GOA and proteome slim"
 subsetdef: goslim_yeast "Yeast GO slim"
 subsetdef: goslim_plant "Plant GO slim"
@@ -1086,29 +1086,29 @@ in the data, or standardize representations of dates, times or other
 ad hoc values, for instance.  Hence, we are currently considering
 defining coherence between input and output
 by requiring that parsers and printers form
-a {\em Gallois connection}.  This would allow parsers and printers to
+a {\em Galois connection}.  This would allow parsers and printers to
 ``improve'' data as they work.  The properties of {\em Gallois connections}
 also tell us that parsing followed by printing followed by parsing is
 equal to parsing.  Hence, while parsers and printers may improve data,
 they reach a stable (or fixed) point after one iteration.
 
-\item {\bf Set-theoretic semantics} The semantics of classic parsing
-formalisms is normally given in terms of sets of strings.  For example,
-regular expressions, general context free grammars, 
-LL(k) and LR(k) grammars are all usually discussed in terms of
-the set of strings they recognize.  The semantics we have developed so far
-for out dependent type theory is different -- it is given in terms of 
-parsing functions from external data
-into internal data.  One reason we chose to develop our semantics differently
-is that, the dependency in our type theory, which is not present
-in these other formalisms appears to necessitate some degree of translation.
-However, we propose to explore techniques for providing a set-theoretic
-semantics to our language in addition.  Once again, the goal is to better 
-understand the relationship between our language and these traditional
-compiler techniques and view all such languages as a coherent family,
-in Landin's sense.  In doing so we hope to improve
-the effectiveness of data description languages for specific tasks
-such as ad hoc scientific data or, alternatively, program language parsing.
+% \item {\bf Set-theoretic semantics} The semantics of classic parsing
+% formalisms is normally given in terms of sets of strings.  For example,
+% regular expressions, general context free grammars, 
+% LL(k) and LR(k) grammars are all usually discussed in terms of
+% the set of strings they recognize.  The semantics we have developed so far
+% for out dependent type theory is different -- it is given in terms of 
+% parsing functions from external data
+% into internal data.  One reason we chose to develop our semantics differently
+% is that, the dependency in our type theory, which is not present
+% in these other formalisms appears to necessitate some degree of translation.
+% However, we propose to explore techniques for providing a set-theoretic
+% semantics to our language in addition.  Once again, the goal is to better 
+% understand the relationship between our language and these traditional
+% compiler techniques and view all such languages as a coherent family,
+% in Landin's sense.  In doing so we hope to improve
+% the effectiveness of data description languages for specific tasks
+% such as ad hoc scientific data or, alternatively, program language parsing.
 
 \item {\bf Semantics for tools}  \pads{} does not merely give programmers
 a parser and a printer.  It also automatically
@@ -1169,8 +1169,8 @@ she is a world expert.
 Troyanskaya has pointed us to several data
 repositories~\cite{grid,bind,geneontology} that she and her colleagues
 commonly use in their scientific investigations.  
-In fact, many of our proposed extensions to \pads{}\ are motivated directly by
-our investigation of these data sources.
+In fact, several of \pads{}\ features have been motivated directly by
+our investigation of Troyanskaya's data sources.
 If this research is
 funded, we will be able to provide a suite of tools that Troyanskaya
 and her colleagues at Princeton's Genomics Institute and the wider
@@ -1191,9 +1191,10 @@ Many students also do a year-long
 Junior and Senior Theses.  We believe that PADS is an excellent
 platform for undergraduate independent work and we plan to link
 undergraduate independent work with our interdisciplinary effort to
-produce tools for biologists.
-More specifically, we will recruit undergraduates to help us
-build our PADS visualization tool and to build
+produce tools for biologists.  We have already recruited Mark Daly,
+a Princeton Senior who is doing his undergraduate senior thesis
+on a PADS user interface and automatic format inference.
+We hope encourage other undergraduates to help us build
 specific data processing tools for the biological data formats
 used in Princeton's Genomics Institute.
 This will introduce students both to interesting and novel
@@ -1203,43 +1204,130 @@ tools for biological applications.
 \subsection{Comparison with Other Research}
 \label{ssec:related}
 
-There are many tools for describing data formats. For example,
-\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl} are both
-systems for declaratively describing data and then generating
-libraries for manipulating that data.  In contrast to \pads{},
-however, both of these systems specify the {\em logical\/} representation
-and automatically generate a {\em physical\/} representation.
-Although useful for many purposes, this technology does not help
-process data that arrives in predetermined, ad hoc formats.
-
-Lex and yacc-based tools generate parsers from declarative
-descriptions, but they require users to write both a lexer and a
-grammar and to construct the in-memory representations by hand.  In
+The oldest tools for describing data formats are parser generators such as
+Lex and Yacc.  While excellent for parsing programming languages, Lex and Yacc
+are too heavyweight for parsing the simpler ad hoc data formats one
+runs into in the sciences.   No one we have talked to uses these tools for
+ad hoc scientific data.
+Unlike PADS, whose syntax is based on types from the well-known C language,
+the syntax of Lex and Yacc is somewhat foreign.  Perhaps more importantly,
+users must write a lexer, write a
+grammar, and construct the in-memory representations by hand.  In
 addition, they only work for ASCII data, they do not easily
 accommodate data-dependent parsing, and they do not provide auxiliary
-services.
+services such as automatic XML conversion, stastical analysis and
+others.  Some more modern parser generators such as ANTLR~\cite{antlr} alleviate
+a few of these problems, but they still do not automatically generate auxiliary tools
+useful in processing ad hoc data nor do they good support for generating
+rich, well-typed in-memory representations (ANTLR's in-memory representations
+are very limited when compared with PADS and the extensions we propose).
 
-More closely related work includes \erlang{}'s bit syntax~\cite{erlang} and
-the \packettypes{}~\cite{sigcomm00} and
-\datascript{} languages~\cite{gpce02}, 
-all of which allow declarative descriptions of physical data.  These projects were motivated by parsing protocols,
-\textsc{TCP/IP} packets, and \java{} jar-files, respectively.  Like
-\pads{}, these languages have a type-directed approach to
-describing ad hoc data and permit the user to define semantic constraints.
-In contrast to our
-work, these systems handle only binary data and assume the data is
-error-free or halt parsing if an error is detected. 
-Parsing non-binary data poses additional challenges because of the need
-to handle delimiter values and to express richer termination conditions
-on sequences of data. These systems also
-focus exclusively on the parsing/printing problem, whereas we have 
-leveraged the declarative nature of
-our data descriptions to build additional useful tools.
+There are parallels between PADS types and some of the elements of parser
+combinator libraries found in languages like
+Haskell~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
+However, as with most other general-purpose parsing tools, one cannot
+simply put together a collection of Haskell's parser combinators and
+automatically generate an XML converter, a query engine and a
+histogram generator, for instance.  The fact that all of these tools, and in
+the future more, can be generated automatically from PADS descriptions provides
+scientists with great added value over more general libraries.
 
+A somewhat different class of languages includes
+\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}. 
+Both of these systems specify the {\em logical\/} in-memory representation of data
+and then automatically generate a {\em physical\/} on-disk representation.
+Although useful for many purposes, this technology does not help
+process data that arrives in predetermined, ad hoc formats.
+Another language in this category is the Hierarchical Data Format 5 
+(HDF5)~\cite{hdf5}.  This file format allows users to store scientific
+data, but it does not help users deal with legacy ad hoc formats like PADS does.
 
-Recently, a standardization effort has been started whose stated goals are quite similar to those of the \pads{} project~\cite{dfdl}. The description
-language seems to be \xml{} based, but at the moment, more details are 
-not available.
+The networking community has developed a number of domain-specific
+languages~\cite{sigcomm00,bfd,gpce02} for parsing and printing binary data, particularly packets
+from common networking protocols such as \textsc{TCP/IP} and also
+\java{} jar-files.  Like \pads{}, these languages have a type-directed
+approach to describing ad hoc data and permit the user to define
+semantic constraints.  In contrast to our work, these systems handle
+only binary data and assume the data is error-free or halt parsing if
+an error is detected.  Parsing non-binary data poses additional
+challenges because of the need to handle delimiter values and to
+express richer termination conditions on sequences of data. These
+systems also focus exclusively on the parsing/printing problem,
+whereas we have leveraged the declarative nature of our data
+descriptions to build additional useful tools.  These languages have
+no formal semantics.
+
+Currently, the Global Grid Forum is working on a standard
+data-format description language for describing ad hoc data formats,
+called DFDL~\cite{dfdl-proposal,dfdl-primer}.  Like \pads{},
+DFDL{} has a rich collection of base types and supports a variety of
+ambient codings.  Unlike \pads{}, DFDL{} does not support semantic
+constraints on types nor dependent types, \eg{}, it is not possible to
+specify that the length of an array is determined by some field in the
+data.  Our practical experience indicates that many ad hoc formats,
+particularly binary formats, absolutely require dependent types in their
+specifications.  DFDL{} is an annotated subset of XML{} Schema, which means
+that the XML{} view of the ad hoc data is implicit in a DFDL{}
+description.  DFDL{} is still being specified, so no DFDL-aware
+parsers or data analyzers exist yet.  
+
+% There are probably hundreds of tools that one might use if their data were
+% in \xml.  However, the point of PADS is to allow scientists whose data is {\em not}
+% already in \xml to get work done, particularly when that data contains errors,
+% as ad hoc data often does.  Since many processes, machines, programs and other devices
+% currently output data and a whole most of
+
+XSugar~\cite{brabrand+:xsugar2005} allows user to specify an alternative non-\xml
+syntax for \xml languages using a context-free grammar.  This tool
+automatically generates conversion between \xml and non-\xml 
+syntax. It also guarantees that
+conversion will be invertable.  However, it does not use theory of Galois
+connections, but instead introduces a notion of ``ignorable'' grammar
+components (inferred based on properties of grammar) and proves
+bijection modulo these ignorable elements.  More importantly,
+since the basis of interconversion is a context free grammar, unlike PADS,
+formats that required dependency may not be expressed.
+
+XDTM~\cite{zhao+:sigmod,xdtm} uses XML Schema to describe the locations of a collection
+of sources spread across a local file system or distributed
+across a network of computers.
+However, neither METS nor XDTM has no means of specifying the contents of files,
+so XDTM and PADS solve complementary problems.  Nevertheless, the XDTM design 
+may provide ideas to us as we extend PADS from a single-source system to a
+multi-source system. The METS schema~\cite{mets} is similar to XDTM as it describes 
+metadata for objects in a digital library,
+including the hierarchy such objects. 
+
+Commercial database products do provide support for
+parsing data in external formats so the data can be imported into
+their database systems, but they typically support a limited number of
+formats, \eg{}, COBOL copybooks.  Also, no declarative description of the
+original format is exposed to the user for their own use, and they
+have fixed methods for coping with erroneous data.  For these reasons,
+PADS is complementary to database systems.  We strongly believe that
+in the future, commercial database systems could and should support a 
+PADS-like description language that allows users to import information from
+almost any format.  We hope that our research on PADS will make a broad
+impact in this area.
+
+On the theoretical front, the scientific community's understanding of type-based languages for data description
+is much less mature.  To the best of our knowledge, our work on
+the DDC is the first to provide a formal interpretation of dependent 
+types as parsers and to study the properties of these parsers including error correctness and
+type safety.  Regular expressions and context-free grammars, the basis for Lex and Yacc
+have been well-studied, but they do not have dependency, a key feature necessary for expressing
+constraints and parsing ad hoc scientific data.
+{\em Parsing Expression Grammars} (PEGs),
+studied in the early seventies~\cite{birman+:parsing}, revitalized more 
+recently by Ford~\cite{ford:pegs} and implemented using
+``packrat parsing'' techniques~\cite{ford:packrat,grimm:packrat}, 
+are somewhat more similar to PADS recursive descent parsers. However, PADS does
+not use packrat parsing techniques as the space overhead is too high for
+large scientific data sets.  Moreover, our multiple interpretations of types in the DDC
+makes our theory substantially different from the theory of PEGs.
+
+%\subsection{Old Related}
+%\input{related_work}
 
 \subsection{Results from Prior NSF Support}
 \label{ssec:results}
@@ -1303,9 +1391,14 @@ chapter of a new textbook on type systems~\cite{walker:attapl}.
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{References Cited}
+
 {\bibliographystyle{abbrv}
- \small\bibliography{pads}
-} \newpage
+\bibliography{pads-long,pads,galax,padsdave}
+}
+%{\bibliographystyle{abbrv}
+% \small\bibliography{pads}
+%} 
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Biographical Sketch}
 %\input{dpw-bio}
