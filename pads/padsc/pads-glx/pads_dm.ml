@@ -11,7 +11,7 @@ open Namespace_context
 open Namespace_names
 
 open Datatypes
-open Datatypes_atomic
+open Dm_atomic
 
 (* Generic data model *)
 
@@ -157,7 +157,7 @@ and padsElementNode docid (nr' : Pads_c.nodeRep) rqname (pnr' : Pads_c.nodeRep o
 
 (*    val rqname = (NSDefaultElementPrefix, NSUri "", Pads_c.name(nr')) *)
 
-    val mutable typed_content : Datatypes_atomic.atomicValue option = None
+    val mutable typed_content : Dm_atomic.atomicValue option = None
 
     method children nto =  
       let k = ref (-1) in
@@ -238,7 +238,7 @@ and padsTextNode docid nr' pnr' =
     inherit text
     inherit padsNode docid nr' pnr'
 
-    val mutable typed_content : Datatypes_atomic.atomicValue option = None
+    val mutable typed_content : Dm_atomic.atomicValue option = None
     method string_value () = 
       begin
 	let tv = 

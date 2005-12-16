@@ -40,7 +40,7 @@ class virtual padsNode :
     method detach     	 : Dm.node -> unit
     method insert     	 : Dm.node Cursor.cursor -> Dm.node option -> unit
     method replace    	 : Dm.node Cursor.cursor -> Dm.node -> unit
-    method replace_value : Datatypes_atomic.atomicValue Cursor.cursor -> unit
+    method replace_value : Dm_atomic.atomicValue Cursor.cursor -> unit
 
   end
 
@@ -48,7 +48,7 @@ class virtual padsNode :
 (* PADS Document Nodes *)
 
 class padsDocumentNode :
-    Datatypes_atomic.atomicString option ->  (* optional base URI *)
+    Dm_atomic.atomicString option ->  (* optional base URI *)
     Nodeid.docid ->  
     string ->                  (* required .p file name *)
     nodeRep -> 
@@ -57,7 +57,7 @@ class padsDocumentNode :
     inherit padsNode
 
     method children 	: (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
-    method document_uri : unit -> Datatypes_atomic.atomicString option
+    method document_uri : unit -> Dm_atomic.atomicString option
 
     method descendant_or_self   : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
     method descendant           : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
@@ -80,17 +80,17 @@ class padsElementNode :
     inherit padsNode
 
     method children    : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
-    method node_name   : unit -> Datatypes_atomic.atomicQName option
+    method node_name   : unit -> Dm_atomic.atomicQName option
 
     method node_type   : unit -> Namespace_symbols.rtype_symbol 
 
     method attributes  : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.attribute Cursor.cursor
     method namespace_environment : unit -> Namespace_context.nsenv
     method elemName    : unit -> Namespace_symbols.relem_symbol
-    method typed_value : unit -> Datatypes_atomic.atomicValue Cursor.cursor
+    method typed_value : unit -> Dm_atomic.atomicValue Cursor.cursor
 
     method export_typed_value : 
-	unit -> Datatypes_atomic.atomicValue list
+	unit -> Dm_atomic.atomicValue list
 
     method descendant_or_self   : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
     method descendant           : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
@@ -113,10 +113,10 @@ class padsTextNode :
     inherit padsNode
 
     method string_value : unit -> Datatypes.xs_string
-    method typed_value : unit -> Datatypes_atomic.atomicValue Cursor.cursor
+    method typed_value : unit -> Dm_atomic.atomicValue Cursor.cursor
 
     method export_typed_value : 
-	unit -> Datatypes_atomic.atomicValue list
+	unit -> Dm_atomic.atomicValue list
 
     method descendant_or_self   : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
     method descendant           : (Xquery_type_core_ast.cxschema option * Xquery_algebra_ast.anode_test) option -> Dm.node Cursor.cursor
@@ -126,5 +126,5 @@ class padsTextNode :
   end
 
 (* This is the "callback" function that is called from the PADS mainline *)
-val pads_document : Processing_context.processing_context -> Datatypes_atomic.atomicString option -> string -> nodeRep -> item
-val walk_pads_document : item -> unit
+val pads_document : Processing_context.processing_context -> Dm_atomic.atomicString option -> string -> nodeRep -> Physical_item.item
+val walk_pads_document : Physical_item.item -> unit
