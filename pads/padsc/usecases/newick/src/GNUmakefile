@@ -2,17 +2,12 @@
  # This is a GNU makefile.
 
 FORMAT=newick
-ifdef USE_GALAX
-%: forceabort2
-	@echo "ERROR: Newick format does not currently support XML or PADX extensions. Unset variable USE_GALAX."
-	@exit 1
-forceabort2: ;
-endif
-
-# Hack for MacOS X Panther
-ifeq ($(AST_ARCH),darwin.ppc)
-  PADSC_EXTRA +=-D__ppc__
-endif
+# ifdef USE_GALAX
+# %: forceabort2
+# 	@echo "ERROR: Newick format does not currently support XML or PADX extensions. Unset variable USE_GALAX."
+# 	@exit 1
+# forceabort2: ;
+# endif
 
 ifndef PADS_HOME
   export PADS_HOME=$(shell cd ../../../..; pwd)
@@ -39,6 +34,11 @@ GEN_WRITE = 1
 REGRESS_TESTS = 1
 
 include $(PADS_HOME)/mk/rules.mk
+
+# Hack for MacOS X Panther
+ifeq ($(AST_ARCH),darwin.ppc)
+  PADSC_EXTRA +=-D__ppc__
+endif
 
 VPATH =  .. ../../p
 
@@ -70,7 +70,13 @@ regress_test_$(FORMAT): test_$(FORMAT)
 
 
 # disable generation of xschema, as it does not yet support recursive types.
-$(GEN_DIR)/newick.c $(GEN_DIR)/newick.h: PADSC_EXTRA+=-xsnone
+$(GEN_DIR)/$(FORMAT).c $(GEN_DIR)/$(FORMAT).h: PADSC_EXTRA+=-xsnone
+
+$(FORMAT)-query: $(FORMAT)-query.c $(GEN_DIR)/$(FORMAT).c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+$(FORMAT)-query_d: $(FORMAT)-query.c $(GEN_DIR)/$(FORMAT).c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
 
 clean:
 	$(RM) -f *~ *.o $(ALL_TESTS)
