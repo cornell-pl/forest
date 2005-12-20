@@ -32,6 +32,7 @@ struct
 
   val unionVal    = "val"
   val unionTag    = "tag"
+  val recVal      = "val"
   val arrayLen    = "length"
   val numRead     = "numRead"
   val arrayElts   = "elts"

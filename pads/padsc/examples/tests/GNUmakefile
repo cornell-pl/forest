@@ -36,7 +36,10 @@ REGRESS_TESTS = 1
 
 include $(PADS_HOME)/mk/rules.mk
 
-PADSC_EXTRA +=-D__ppc__
+# Hack for MacOS X Panther
+ifeq ($(AST_ARCH),"darwin.ppc")
+  PADSC_EXTRA +=-D__ppc__
+endif
 
 VPATH =  .. ../../p
 
@@ -602,6 +605,8 @@ test_cluster: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_clu
 	@$(CCExec_DYNAMIC_O)
 test_cluster_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_cluster.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
+
+$(GEN_DIR)/newick.c $(GEN_DIR)/newick.h: PADSC_EXTRA+=-xsnone
 
 ifdef GALAX_NONE
 test_children: var_error

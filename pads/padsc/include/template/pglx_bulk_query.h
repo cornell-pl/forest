@@ -82,16 +82,11 @@ int main(int argc, char** argv) {
   prepared_prolog pp;
   external_context exc;
   int monitor_flag = 0; 
-  char *monitor_out;
-  char *file_out;
+  char *monitor_out = NULL;
+  char *file_out = NULL;
   FILE *file_fp;
   int sbdo_flag = 0;
   int sbdo_kind = SBDO_AdHoc;; 
-
-  monitor_out = malloc(strlen(argv[0]) + strlen(".out"));
-  file_out = malloc(strlen(argv[0]) + strlen(".xml"));
-  strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
-  strcpy(file_out,argv[0]); strcat(file_out,".xml");
 
   /* Report fatal errors only */
   my_disc.error_fn = P_fatal_error;
@@ -207,6 +202,20 @@ int main(int argc, char** argv) {
       }
     }
   }
+
+  /* Use default monitor_out and file_out settings, as necessary. */
+  if (1 == monitor_flag && NULL == monitor_out){
+    monitor_out = malloc(strlen(argv[0]) + strlen(".out"));
+    strcpy(monitor_out,argv[0]); strcat(monitor_out,".out");
+    fprintf(stderr,"Output to be sent to default monitor file: %s.\n\n",monitor_out);
+  }
+
+  if (file_out == NULL){
+    file_out = malloc(strlen(argv[0]) + strlen(".xml"));
+    strcpy(file_out,argv[0]); strcat(file_out,".xml");
+    fprintf(stderr,"Output to be sent to default xml file: %s.\n\n",file_out);
+  }
+
   /* Open files */	
   if (!(file_fp = fopen(file_out, "w"))) { error(2, "Cannot open %s\n", file_out); exit(-1); }
   fclose(file_fp);
@@ -248,7 +257,11 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
   /* init mask -- must do this! */
+#ifdef CUSTOM_MASK_CODE
+  CUSTOM_MASK_CODE;
+#else
   PADS_TY(_m_init)(pads, &m, READ_MASK);
+#endif
 
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
@@ -313,7 +326,7 @@ int main(int argc, char** argv) {
       exit_on_error(galax_build_external_context(pc,docitems, itemlist_empty(), vars, vals, 0, &exc), "galax_build_external_context");
       exit_on_error(galax_eval_prolog(cm->compiled_prolog, exc, &pp), "galax_eval_prolog");
 
-      time(&timer);  fprintf(stderr, "Before %s\n", ctime(&timer)); 
+      time(&timer);  fprintf(stderr, "Before eval %s\n", ctime(&timer)); 
       exit_on_error(galax_start_monitor_call(pc, "galax_eval_statement"), "galax_start_monitor"); 
       exit_on_error(galax_eval_statement(pp, File_Input, queryName, &docitems), "galax_eval_statement"); 
       exit_on_error(galax_end_monitor_call(pc), "galax_end_monitor"); 

@@ -88,8 +88,7 @@ structure ParseTreeExt =
 			isRecord : bool, 
                         containsRecord : bool, 
 			isSource : bool,
-                        baseTy: Pty,
-			args   : 'exp list}
+                        baseTy: Pty}
          | Popt of     {name : string,
 			params: ('ct * 'decr) list, 
 			args   : 'exp list,

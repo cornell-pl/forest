@@ -291,7 +291,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT | PCHARCLASS (* PADS *)
-        | PTYPEDEF | PRECURSIVE | PDYNAMIC | PSTRUCT | PALTERNATES | PUNION  | PARRAY | PENUM (* PADS *)
+        | PTYPEDEF | PRECURSIVE | PSTRUCT | PALTERNATES | PUNION  | PARRAY | PENUM (* | PDYNAMIC*) (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  | PSOME | PNONE (*PADS*)
@@ -379,7 +379,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
         | pRecursive of externalDecl
-        | pDynamic of externalDecl
+(*         | pDynamic of externalDecl *)
 	| pOptNone of expression PX.PPostCond list option
 	| pOptSome of (string * expression PX.PPostCond list) option
         | pOptDecon of expression PX.OptPredicate
@@ -525,7 +525,7 @@ externalDeclaration:
 (* PADS: start external declarations *)
         | pTypedef                      (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,pTypedefright)))
         | pRecursive                    (SOME(markExternalDecl srcMap (pRecursive,pRecursiveleft,pRecursiveright)))
-        | pDynamic                      (SOME(markExternalDecl srcMap (pDynamic,pDynamicleft,pDynamicright)))
+(*         | pDynamic                      (SOME(markExternalDecl srcMap (pDynamic,pDynamicleft,pDynamicright))) *)
         | pOpt                          (SOME(markExternalDecl srcMap (pOpt,pOptleft,pOptright)))
         | pStruct RCURLY pPostCondOpt   (let val augPStruct = addStructPostCond(pStruct, pPostCondOpt)
                                              val structDecl = ExternalDeclExt augPStruct
@@ -1200,29 +1200,33 @@ pTypedef:
 				containsRecord = false,
 				largeHeuristic = false,
 				pred = pTypedefPredOpt}) )
-pOptType:(NONE)
- | LPAREN pName pOptActParams RPAREN (SOME {name=pName,args=pOptActParams})
+
+(* Support for specifying underlying type for recursive type, 
+   instead of relying on the compiler. This feature has been 
+   deprecated for now.*)
+(* pOptType:(NONE) *)
+(*  | LPAREN pName pOptActParams RPAREN (SOME {name=pName,args=pOptActParams}) *)
 
 pRecursive:
-  pIsSource pIsRecord PRECURSIVE pOptType pName pushScope pTyParams
+  pIsSource pIsRecord PRECURSIVE pName pushScope pTyParams popScope
  ( makeTypeName pName;
-   ExternalDeclExt(PX.PRecursive {base = pOptType,
+   ExternalDeclExt(PX.PRecursive {base = NONE,
                                 name   = pName, 
 				params = pTyParams,
 				isRecord = pIsRecord,
 				isSource = pIsSource,
 				containsRecord = false}) )
 
-pDynamic:
-  pIsSource pIsRecord PDYNAMIC pName pOptActParams pName pushScope pTyParams
- ( makeTypeName pName2;
-   ExternalDeclExt(PX.PDynamic {baseTy = PX.Name pName1, 
-                                args   = pOptActParams,
-                                name   = pName2, 
-				params = pTyParams,
-				isRecord = pIsRecord,
-				isSource = pIsSource,
-				containsRecord = false}) )
+(* pDynamic: *)
+(*   pIsSource pIsRecord PDYNAMIC pName pOptActParams pName pushScope pTyParams *)
+(*  ( makeTypeName pName2; *)
+(*    ExternalDeclExt(PX.PDynamic {baseTy = PX.Name pName1,  *)
+(*                                 args   = pOptActParams, *)
+(*                                 name   = pName2,  *)
+(* 				params = pTyParams, *)
+(* 				isRecord = pIsRecord, *)
+(* 				isSource = pIsSource, *)
+(* 				containsRecord = false}) ) *)
 
 pOptNone : 
  PNONE EQGT LCURLY pConstraintsWComma RCURLY (SOME pConstraintsWComma)

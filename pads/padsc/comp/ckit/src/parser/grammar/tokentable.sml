@@ -99,7 +99,7 @@ struct
                ("Pterm", Tokens.PTERM),
                ("Ptypedef", Tokens.PTYPEDEF),
                ("Precur", Tokens.PRECURSIVE),
-               ("Pdyn", Tokens.PDYNAMIC),
+(*                ("Pdyn", Tokens.PDYNAMIC), *)
                ("Punion", Tokens.PUNION),
                ("Pwhere", Tokens.PWHERE)
               ])

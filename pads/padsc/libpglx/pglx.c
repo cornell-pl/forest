@@ -2023,6 +2023,14 @@ PDCI_cstr_val_sndNode_vtable = {PDCI_error_cachedNode_init,
 PDCI_IMPL_BASE_VT(Pip);
 PDCI_IMPL_BASE_VAL_VT(Pip);
 
+PDCI_IMPL_BASE_VT(Pfloat32);
+PDCI_IMPL_TYPED_VALUE_FLOAT(Pfloat32);
+PDCI_IMPL_BASE_VAL_VT(Pfloat32);
+
+PDCI_IMPL_BASE_VT(Pfloat64);
+PDCI_IMPL_TYPED_VALUE(Pfloat64);
+PDCI_IMPL_BASE_VAL_VT(Pfloat64);
+
 PDCI_IMPL_BASE_VT(Pdate);
 /* The second parameter is copied from Pstring below. 
    I don't know that it is the correct choice. YHM.*/

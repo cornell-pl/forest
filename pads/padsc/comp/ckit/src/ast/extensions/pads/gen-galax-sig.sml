@@ -26,6 +26,11 @@ signature GENGALAX = sig
   val makeArrSNDKthChildFun : string * string -> ParseTree.externalDecl
   val makeArrPathWalkFun : string * string -> ParseTree.externalDecl
 
+  val makeRecNodeNewFun : string * string -> ParseTree.externalDecl
+  val makeRecSNDInitFun : string  * string -> ParseTree.externalDecl
+  val makeRecSNDKthChildFun : string * string -> ParseTree.externalDecl
+  val makeRecPathWalkFun : string * string -> ParseTree.externalDecl
+
   val makeTypedefSNDKthChildFun : string * string -> ParseTree.externalDecl
   val makeTypedefPathWalkFun : string * string -> ParseTree.externalDecl
 
@@ -101,6 +106,11 @@ signature GENGALAX = sig
   val macroTNodeGeneral : ParseTree.expression * string * string
                           * ParseTree.expression * string
                           -> ParseTree.statement list
+
+  val macroRecKC : string * string -> ParseTree.statement
+  val macroRecKCN : unit -> ParseTree.statement
+  val macroRecKCNRet : unit -> ParseTree.expression
+  val macroRecKCRet : unit -> ParseTree.expression
 
   val macroTypKC : string * string -> ParseTree.statement
   val macroTypKCN : unit -> ParseTree.statement

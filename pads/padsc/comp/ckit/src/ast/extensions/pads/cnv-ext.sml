@@ -533,8 +533,9 @@ structure CnvExt : CNVEXT = struct
 	    else PE.error (genErrMsg (CTtoString expTy)) 
 	end
 
-    fun CTcnvType (ct : PT.ctype) : (acty * Ast.storageClass) 
-	= cnvType(false, P.pctToPDT ct)
+(*     Exact repetition of earlier function: *)
+(*     fun CTcnvType (ct : PT.ctype) : (acty * Ast.storageClass)  *)
+(* 	= cnvType(false, P.pctToPDT ct) *)
 
     fun CTcnvDecr(ct, d) : Ast.ctype * string option = 
 	let val (ct', sc) = CTcnvType ct  	(* check storage class okay*)
@@ -1505,7 +1506,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 
-	      fun checkParamTys (fieldName, functionName, extraargs, numBefore, numAfter) = 
+	      (* Like checkParamTys below, but uses specified error message. *)
+	      fun checkParamTysWithErr (fieldName, functionName, extraargs, numBefore, numAfter, errMsg) = 
 		  let val (eaty, _) = cnvExpression (PT.Id functionName)
 		      val fargtysOpt = case eaty
 			  of Ast.Pointer(Ast.Function (retTy, argTys)) => (
@@ -1519,8 +1521,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  isAssignable(fty, aty, NONE) andalso
 			  match(ftys, atys)
 			| match _ = false
-		      val errMsg = "Actual argument(s) for field "^
-			  fieldName ^" did not have expected type(s)"
 		  in
 		      case fargtysOpt
 			  of NONE => (PE.error errMsg)
@@ -1531,6 +1531,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  (* end case *))
 		  end
                                       
+	      fun checkParamTys (fieldName, functionName, extraargs, numBefore, numAfter) = 
+		  checkParamTysWithErr(fieldName, functionName, extraargs, 
+				       numBefore, numAfter,
+				       "Actual argument(s) for field "^
+				       fieldName ^" did not have expected type(s)")
+		  
 
 
               (* handles problem if first element of an initializer is an enumerated type *)
@@ -2239,28 +2245,41 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      fun cnvPRecursive ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
 			        isSource : bool, base:{name:string, args: pcexp list} option})=
 		  let 
-		      (* Assume that base type is a Pstruct, so don't need lookupTy *)
+		      (* Assume that base type is a Pstruct, Punion, Popt or Parray. 
+			 So don't need lookupTy, which checks to see if its a base type. 
+		         INV: There is an assumed invariant here that all of the above 
+		         constructs produce C structs. 
+			 INV: in case of SOME, we assume that bname is one of Pstruct,
+                         Punion, Popt or Parray.  *)
 		      val (baseName,args) = case base of 
 						SOME {name=bname,args} => (bname,args) 
 					      | NONE => (recPre name,[])
 		      val baseTy = PX.Name baseName
 		      val baseTypeName = repSuf baseName
 		      val cParams : (string * pcty) list = List.map mungeParam params
-		      val paramNames = #1(ListPair.unzip cParams)
-
-                      (* Generate CheckSet mask recursive case*)
+		      val (cNames,cTys) = ListPair.unzip cParams
+                      val value = PNames.recVal
+				  
+                      (* Generate mask recursive case*)
 		      val baseMPCT = P.makeStructTagPCT(true, (mSuf baseTypeName)^"_s")
 		      val baseMPtrPCT  = P.ptrPCT baseMPCT
 		      val mED      = P.makeTyDefEDecl (baseMPtrPCT, mSuf name)
 		      val mDecls   = cnvExternalDecl mED
                       val mPCT     = P.makeTypedefPCT (mSuf name)		
-
-                      (* Generate parse description: typedef to ptr to base pd *)
-		      val pdEDPCT = P.makeStructTagPCT(true, (pdSuf baseTypeName)^"_s")
-		      val pdED = P.makeTyDefEDecl (P.ptrPCT pdEDPCT, pdSuf name)
-		      val (pdDecls, pdTid)  = cnvCTy pdED
-                      val pdPCT = P.makeTypedefPCT (pdSuf name)
-
+				     
+                      (* Generate parse descriptor: value field is ptr to base pd *)
+		      (* Can't use standard makeTypedefPCT, because pd has not been typedef'd yet *)
+		      (* Instead, we reference struct foo, as that is always legal. *)
+		      (* Assumes INV: underlying pd is a struct.*)
+		      val basePDPCT = P.makeStructTagPCT(true, (pdSuf baseTypeName)^"_s")
+		      val structEDFields = [(pstate, PL.flags_t, NONE), (nerr, PL.uint32PCT, NONE),
+				  	    (errCode, PL.errCodePCT, NONE), (loc, PL.locPCT, NONE)]
+                                           @ (if isGalax() then [(identifier, PL.idPCT, SOME "Identifier tag for Galax")] else [])
+					   @[(value, P.ptrPCT basePDPCT, NONE)]
+		      val pdStructED = P.makeTyDefStructEDecl (structEDFields, pdSuf name)
+		      val (pdDecls, pdTid) = cnvCTy pdStructED
+		      val pdPCT = P.makeTypedefPCT (pdSuf name)			  
+				  
 		      (* Generate accumulator type *)
 
                       (* For now, just use dummy accumulator *)
@@ -2276,11 +2295,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val contR = false
  		      val lH = false
 		      val numArgs = List.length params
-		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
+		      val recProps = buildTyProps(name, PTys.Typedef, ds, TyProps.Typedef (ds, baseName, (cNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
-                      val () = PTys.insert(Atom.atom name, typedefProps)
+                      val () = PTys.insert(Atom.atom name, recProps)
 
 		      (* Generate canonical representation: typedef to ptr to base representation *)
+
+		      (* Can't use standard makeTypedefPCT, because rep has not been typedef'd yet *)
+		      (* Instead, we reference struct foo, as that is always legal. *)
+		      (* Assumes INV: underlying rep is a struct.*)
 		      val baseTyPCT = P.makeStructTagPCT(true, (repSuf baseTypeName)^"_s")
 		      val canonicalED = P.makeTyDefEDecl (P.ptrPCT baseTyPCT, repSuf name)
 		      val (canonicalDecls, canonicalTid) = cnvRep(canonicalED, valOf (PTys.find (Atom.atom name)))
@@ -2321,6 +2344,28 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      genFunDecl (returnTy,funName,paramDecls)
 			  end
 
+		      (* A more general version of genFunDeclS and genFunDeclPDT. *)
+		      (* Takes list of specifier tuples followed by list of PDT tuples. *)
+		      fun genFunDeclBoth (returnTy,funName,paramsS,paramsPDT) =
+			  let 
+			      fun makeParamDeclS (ty,isptr,name) = 
+				  if isptr then
+				      (P.makePDT [ty],PT.PointerDecr (PT.VarDecr name))
+				  else
+				      (P.makePDT [ty],PT.VarDecr name)
+
+			      fun makeParamDeclPDT (pdt,isptr,name) = 
+				  if isptr then
+				      (pdt,PT.PointerDecr (PT.VarDecr name))
+				  else
+				      (pdt,PT.VarDecr name)
+
+			      val paramDecls = (map makeParamDeclS paramsS)
+					       @ (map makeParamDeclPDT paramsPDT)
+			  in
+			      genFunDecl (returnTy,funName,paramDecls)
+			  end
+
 		      (* Generate a function declaration with a TypedefName return type *)
 		      fun genTDFunDecl (returnType,funName,params) = 
 			  genFunDeclS(PT.TypedefName returnType,funName,params)
@@ -2332,7 +2377,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      (* Generate a function declaration with an Int return type *)
 		      fun genIFunDecl (funName,params) =
 			  genFunDeclS(PT.Int,funName,params)
-			      
+
+		      (* convert cParams for use in functions below. *)
+		      val cParamTuples = map (fn (n,cty) => (P.pctToPDT cty,false,n)) cParams
+
 		      val fwEDs = [genTDFunDecl("Perror_t",name ^"_init",
 						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName name,true,"rep")]),
 				   genTDFunDecl("Perror_t",name ^"_pd_init",
@@ -2347,13 +2395,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_pd"),true,"pd_dst"),(PT.TypedefName (name ^ "_pd"),true,"pd_src")]),
 				   genVFunDecl(name^ "_m_init",
 					       [(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name^"_m"),true,"mask"),(PT.TypedefName "Pbase_m",false,"baseMask")]),
-				   genTDFunDecl("Perror_t",name ^"_read",
-						[(PT.TypedefName "P_t",true,"pads"),
-						 (PT.TypedefName (name ^ "_m"),true,"m"),
-						 (PT.TypedefName (name ^ "_pd"),true,"pd"),
-						 (PT.TypedefName name,true,"rep")
-						 ]),
-				   genIFunDecl(name ^"_verify",[(PT.TypedefName name,true,"rep")]),
+				   genFunDeclBoth(PT.TypedefName "Perror_t",name ^"_read",
+						 [(PT.TypedefName "P_t",true,"pads"),
+						  (PT.TypedefName (name ^ "_m"),true,"m"),
+						  (PT.TypedefName (name ^ "_pd"),true,"pd"),
+						  (PT.TypedefName name,true,"rep")],
+						 cParamTuples),
+				   genFunDeclBoth(PT.Int,name ^"_verify",[(PT.TypedefName name,true,"rep")],cParamTuples),
 				   genTDFunDecl("Perror_t",name ^"_acc_init",
 						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
 				   genTDFunDecl("Perror_t",name ^"_acc_reset",
@@ -2391,6 +2439,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      fun fwDecls () = (List.concat (map cnvExternalDecl fwEDs))
 				    @ (emitWrite writeFunEDs)
 				    @ (emitWrite fmtFunEDs)
+
 		  in
 		        canonicalDecls
                       @ mDecls
@@ -2401,41 +2450,43 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
               (*  Dynamic case *)
 	      fun cnvPDynamic ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
-			        isSource : bool, baseTy: PX.Pty, args: pcexp list})=
+			        isSource : bool, baseTy: PX.Pty})=
 		  let val base = "base"
-		      (* Assume that base type is a Pstruct, so don't need lookupTy *)
+		      (* Assume that base type is a compound type (i.e. not a base type), 
+			so don't need lookupTy *)
 		      val baseTypeName = let val PX.Name n = baseTy in repSuf n end
 		      val baseTypePCT = P.makeTypedefPCT (repSuf baseTypeName)
 		      val baseTypePdPCT = P.makeTypedefPCT (pdSuf baseTypeName)
 		      val cParams : (string * pcty) list = List.map mungeParam params
 		      val paramNames = #1(ListPair.unzip cParams)
+		      (* Create arguments to underlying type based on parameters. *)
+		      (* In this way, parameters to recursive type are passed directly to underlying type. *)
+ 		      val args = List.map PT.Id paramNames
+                      val value = PNames.recVal
 
-                      (* Generate CheckSet mask recursive case*)
+                      (*  mask *)
                       val mPCT     = P.makeTypedefPCT (mSuf name)		
 
-                      (* Generate parse description: typedef to ptr to base pd *)
+                      (* parse descriptor *)
                       val pdPCT = P.makeTypedefPCT (pdSuf name)
+
+		      (* canonical representation *)
+                      val canonicalPCT = P.makeTypedefPCT (repSuf name)
 
                       (* For now, just use dummy accumulator *)
 		      val baseAccPCT = P.voidPtr   (* accumulation not defined for this type *)
 		      val accED     = P.makeTyDefEDecl (baseAccPCT, accSuf name)
 		      val accPCT    = P.makeTypedefPCT (accSuf name)
 
-                      val ds = TyProps.Variable
-                      val mc = TyProps.Dynamic
-                      val endian = false
-                      val contR = false
- 		      val lH = false
-		      val numArgs = List.length params
-		      val SOME typedefProps = PTys.find(Atom.atom name)
-
-		      (* Generate canonical representation: typedef to ptr to base representation *)
-                      val canonicalPCT = P.makeTypedefPCT (repSuf name)
+                      (* INV: this PDynamic must have been preceded by a
+			 PRec of the same name that inserted the ty props 
+		         into the table.*)
+		      val SOME dynProps = PTys.find(Atom.atom name)
 
                       (* Generate Init function (recursive case) *)
 		      val baseFunName = baseTypeName
 		      val initFunName = name
-                      fun genInitEDs (suf, argName, aPCT) = case #memChar typedefProps
+                      fun genInitEDs (suf, argName, aPCT) = case #memChar dynProps
                           of TyProps.Static => 
 				  [genInitFun(suf initFunName, argName, aPCT, [PT.Return PL.P_OK], true)]
                            | TyProps.Dynamic =>
@@ -2458,22 +2509,28 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val cleanupRepEDs = genCleanupEDs (cleanupSuf, rep, canonicalPCT, true)
                       val cleanupPDEDs  = genCleanupEDs ((cleanupSuf o pdSuf), pd, pdPCT, false)
 
-                      (* Generate Copy Function typedef case *)
-                      fun genCopyEDs(suf, which, aPCT) = 
+                      (* Generate Copy Function rec. case *)
+                      fun genCopyEDs(suf, which, isRep, aPCT) = 
 			  let val copyFunName = suf initFunName
 			      val dst = dstSuf which
 			      val src = srcSuf which
+			      val baseName = if isRep then repSuf baseTypeName else pdSuf baseTypeName
+			      val cleanupName = cleanupSuf (if isRep then repSuf initFunName else pdSuf initFunName)
+			      val macroName = if isRep then "PCGEN_DYNAMIC_COPY" else "PCGEN_DYNAMIC_PD_COPY"
 			      val nestedCopyFunName = suf baseFunName
-			      val bodySs = 
-				  [P.assignS(P.starX(PT.Id dst), P.starX(PT.Id src)),
-				   PT.Return PL.P_OK]
+			      val macroCallS = PT.Expr(PT.Call(PT.Id macroName,
+							       [PT.String copyFunName, PT.Id baseName,
+								PT.Id src, PT.Id dst, PT.Id nestedCopyFunName,
+								PT.Id cleanupName]))
+			      val bodySs = G.makeInvisibleDecls([baseName],nil) @
+					   [macroCallS, PT.Return PL.P_OK]
 			  in
-			      [genCopyFun(copyFunName, dst, src, aPCT, bodySs, false)]
+			      [genCopyFun(copyFunName, dst, src, aPCT, [PT.Compound bodySs], false)]
 			  end
-		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
-		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
+		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, true, canonicalPCT)
+		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  false, pdPCT)
 
-                      (* Generate m_init function typedef case *)
+                      (* Generate m_init function rec. case *)
                       val maskInitName = maskInitSuf name 
                       val maskFunEDs = genMaskPtrInitFun(maskInitName, mPCT, baseTypeName)
 
@@ -2481,7 +2538,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* -- Some helper functions *)
 		      val readName = readSuf name
                       val baseReadFun = BU.lookupTy(baseTy, readSuf, #readname)
-		      fun chk () = checkParamTys(name, baseReadFun, args, 4, 0)
+		      fun chk () = checkParamTysWithErr(name, baseReadFun, args, 4, 0, 
+							"Parameters declared for recursive type " ^ name ^ 
+							" do not match those of implementation type.")
 
                       fun genReadBody () = 
 			  let val allocS =
@@ -2492,18 +2551,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					      PT.Id pads, 
 					      P.starX(PT.Id m),
 					      args,
-					      P.starX(PT.Id pd),
+					      P.fieldX(pd, value),
 					      P.starX(PT.Id rep))
 			      val callMacroS =
-				  if isRecord then 
-				      PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_READ_REC", 
-						      [PT.String(readName), readBaseX]))
-				  else
-				      PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_READ", 
-						      [PT.String(readName), readBaseX]))
+				  PT.Expr(PT.Call(PT.Id "PCGEN_DYNAMIC_READ", [readBaseX]))
 
 			  in [allocS,
-			      callMacroS, BU.genReturnChk (P.arrowX(P.starX(PT.Id pd), PT.Id nerr))]
+			      callMacroS, BU.genReturnChk (P.fieldX(pd, nerr))]
 			  end
 
                       (* -- Assemble read function recursive case *)
@@ -2522,12 +2576,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val readEDs = phantomEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
-                      (* -- generate is function (dynamic case) *)
+                      (* -- generate "is" function (rec. case) *)
 		      val isName = isPref name
 		      val bodySs = [PT.Return P.trueX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
-                      (* -- generate accumulator init, reset, and cleanup functions (precur case) *)
+                      (* -- generate accumulator init, reset, and cleanup functions (rec. case) *)
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
 			  in BU.gen3PFun(theFun, [accPCT], [acc],
@@ -2561,19 +2615,67 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val writeBaseName = (bufSuf o writeSuf) (lookupWrite baseTy)
 		      val fmtBaseName = (bufSuf o fmtSuf) (lookupWrite baseTy)
 		      val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy)
-		      val bodySs = writeFieldSs(writeBaseName, [P.starX (PT.Id pd), P.starX(PT.Id rep)] @ args, isRecord)
-		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, [P.starX (PT.Id pd), P.starX(PT.Id rep)], PT.Id tag, false, false, args)
+		      val bodySs = writeFieldSs(writeBaseName, [P.fieldX(pd,value), P.starX(PT.Id rep)] @ args, isRecord)
+		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, [P.fieldX (pd,value), P.starX(PT.Id rep)], PT.Id tag, false, false, args)
 		      val fmtNameFinalBuf = bufFinalSuf fmtName
 		      val bodyFmtFinalSs = (PL.fmtFinalInitTypedef (PT.String fmtNameFinalBuf)) ::(fmtTypedefSs(fmtBaseName, [P.starX(PT.Id m),
-															      P.starX (PT.Id pd), P.starX(PT.Id rep)]@args))
+															      P.fieldX (pd,value), P.starX(PT.Id rep)]@args))
                       val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, "POINTER", writeName, writeXMLName, fmtName, isRecord, isSource,
 								   cParams, mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtFinalSs)
+
+	              (***** PADX for Prec *****)
+
+		      val basePXTypeName = lookupPadsx(baseTy)
+											 
+		      fun genGalaxRecKthChildFun(name,baseTypeName) =		
+			  let val nodeRepTy = PL.nodeT
+			      val returnTy = P.ptrPCT nodeRepTy
+                              val cnvName = PNames.nodeKCSuf name 
+			      val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
+                              val paramNames = [G.self,G.idx]
+                              val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+		              val bodySs = G.makeInvisibleDecls([name,baseTypeName],nil)
+					   @ [G.macroRecKC(name,baseTypeName),
+					      P.returnS (G.macroRecKCRet())]
+			  in   
+                              P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+			  end
+
+
+		      fun genGalaxRecKthChildNamedFun(name) =		
+			  let val nodeRepTy = PL.nodeT
+			      val returnTy = P.ptrPCT nodeRepTy
+                              val cnvName = PNames.nodeKCNSuf name 
+			      val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT, P.ccharPtr]
+                              val paramNames = [G.self,G.idx,G.childName]
+                              val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+						  
+		              val bodySs = [G.macroRecKCN()] 
+					   @ [P.returnS (G.macroRecKCNRet())] 
+			  in   
+                              P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+			  end
+			 
+	              val galaxEDs = 
+			  [G.makeRecNodeNewFun(name,basePXTypeName),
+			   G.makeCNInitFun(name,P.intX 2),
+			   genGalaxRecKthChildFun(name,basePXTypeName),
+			   genGalaxRecKthChildNamedFun(name),
+			   G.makeCNKCFun(name,P.intX 2),
+			   G.makeRecSNDInitFun(name,basePXTypeName), 
+			   G.makeRecSNDKthChildFun(name,basePXTypeName), 
+			   G.makeRecPathWalkFun(name,basePXTypeName), 
+			   G.makeNodeVtable(name),
+			   G.makeCachedNodeVtable(name),
+			   G.makeSNDNodeVtable(name)]
+
 		  in
 		        (emitRead readEDs)
 		      @ (emitPred isFunEDs)
                       @ (emitAccum accumEDs)
                       @ (emitWrite writeFunEDs)
                       @ (emitWrite fmtFunEDs)
+		      @ (emitXML galaxEDs )
 		  end
 
 
@@ -2779,7 +2881,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val mStructDecls = cnvExternalDecl mStructED 
 		 val mPCT = P.makeTypedefPCT (mSuf name)			  
 
-	         (* Generate parse description *)
+	         (* Generate parse descriptor *)
                  val pdFields = [(pstate, PL.flags_t, NONE), 
 				 (nerr, PL.uint32PCT,    SOME "Number of array errors"),
 				 (errCode, PL.errCodePCT, NONE),
@@ -2922,7 +3024,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 augTyEnv genVars;
 				 expEqualTy(exp, CTintTys, errMsg);
 				 popLocalEnv();
-				 (false, modExpX, SOME exp)  (* general expressions don't have location references *)
+				 (false, (* general expressions don't have location references *)
+				  modExpX, SOME exp)  
 			     end
                            | checkConstraint (PX.ParseCheck exp) = 
                              let val needEndLoc = PTSub.isFreeInExp([PNames.elemEnd], exp)
@@ -2932,9 +3035,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				 augTyEnv allVars;
 				 expEqualTy(exp, CTintTys, errMsg);
 				 popLocalEnv();
-				 (needEndLoc, modExpX, NONE)    (* parse expressions aren't included in is predicates *)
+				 (needEndLoc, modExpX, 
+				  (* parse expressions aren't included in is predicates *)
+				  NONE)    
 			     end
 			 val modConstraints = List.map checkConstraint constraints
+			 (* Merge list of constraint info into single one. i.e. list of bools are or'ed into one bool,
+			    constraint expressions and'ed into one expression, is expressions and'ed into one expression. *)
                          fun merge ((b,cX,iXs: pcexp option), (ba, cXa, iXa:pcexp option)) = (b orelse ba, P.andX(cX,cXa), 
 			       case (iXs, iXa) 
 				 of (NONE,NONE)   => NONE
@@ -2948,6 +3055,28 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                              |  (x::xs) => foldr merge x xs
 		     in
 			 result
+		     end
+
+		 (* Check arguments to base type in extended environment *)
+                 fun chkParamTys (functionName, params : pcexp list) = 
+		     let val curX = P.fieldX(rep, length) (* Note that we don't subtract one from length as we have not yet read a new element. *)
+			 val genVars = [(PNames.arrayLen,   PL.uint32PCT,        P.fieldX(rep, length)), 
+					(name,              P.ptrPCT elemRepPCT, P.fieldX(rep, elts)),
+					(PNames.arrayElts,  P.ptrPCT elemRepPCT, P.fieldX(rep, elts)),
+					(PNames.arrayCur,   PL.uint32PCT,        curX), 
+					(PNames.curElt,     elemRepPCT,          P.subX(P.fieldX(rep, elts), curX))]
+			 val genSubList   = getBindings genVars
+			 fun checkParam (exp) = 
+                             let val modExpX = PTSub.substExps genSubList exp
+			     in
+				 pushLocalEnv();
+				 augTyEnv genVars;
+				 checkParamTys(name, functionName, params,4,0);
+				 popLocalEnv();				 
+				 modExpX
+			     end
+		     in
+			 List.map checkParam params
 		     end
 
                  (* new scope needed for analysis of array constraints*)
@@ -3312,7 +3441,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val notFirstElt  = "notFirstElt"				    
 
                  (* -- Check parameters to base type read function *)
-		 val () = checkParamTys(name, elemReadName, args, 4, 0)
+(* 		 val () = checkParamTys(name, elemReadName, args, 4, 0) *)
+		 val args = chkParamTys(elemReadName, args)
+
                  (* -- Declare top-level variables and initialize them *)
                  val initDecSs =   stdeclSs
 			      @ [P.varDeclS'(PL.locPCT, tloc),
@@ -4552,7 +4683,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val (writeFunEDs, fmtFunEDs) = genWriteFuns(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, cParams, 
 								  mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtFinalSs)
 
-                 (* Generate is function array case *)
+                 (* Generate "is" function - array case *)
                  val isName = PNames.isPref name
                  fun genElemChecks () = 
 		     let val index = "i"

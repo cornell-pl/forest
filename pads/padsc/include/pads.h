@@ -556,6 +556,7 @@ typedef enum PerrCode_t_e {
   P_OPTION_MATCH_ERR              =  130,
   P_ENUM_MATCH_ERR                =  140,
   P_TYPEDEF_CONSTRAINT_ERR        =  150,
+  P_RECUR_VAL_ERR                 =  155,
 
   P_AT_EOF                        =  160,
   P_AT_EOR                        =  161,
@@ -823,12 +824,12 @@ struct Pstring_s {
  * String comparison:
  *
  *    Pstring_eq        : compares two Pstring, str1 and str2.
- *                            returns 0 if str1 equals str2, a negative # if str1 < str2,
- *                            and a positive # if str1 > str2.
+ *                            returns 1 if str1 and str2 are of equal length and str1 equals 
+ *                            str2 (based on strncmp). Otherwise, returns 0.
  *
  *    Pstring_eq_cstr   : compare Pstring str to a C-style string cstr.
- *                            returns 0 if str equals cstr, a negative # if str < cstr,
- *                            and a positive # if str > cstr.
+ *                            returns 1 if str1 and str2 are of equal length and str1 equals 
+ *                            str2 (based on strncmp). Otherwise, returns 0.
  *
  * ----------------------------
  * HELPER MACROS for Pstring

@@ -1,3 +1,21 @@
+December 20, 2005 -Yitzhak
+  Recursive types:
+  o Added support for type parameters.
+  o Added PADX support.
+  o Modified copy to be deep copy. Was a pointer copy.
+  o Added header info to recursive parse descriptors. 
+    Pointer is now just a field of the pd.
+  o Extended set of allowed recursive types to include Pstruct, 
+    Punion, Popt, and Parray.
+  o Removed syntactic support for Pdyn. Now it is only an internal 
+    construct, used in implementation of Precur.
+  Arrays:
+  o Added support for special variable "current" in scope of element type
+    of arrays. Therefore, an array element type can be parameterized by 
+    the index of the current element.
+  List description:
+  o Added description of simple list to scratch. I plan to turn it into 
+    another example usecase for recursive types.
 
 December 15, 2005 - Mary
   o More alignment with Galax 0.6.0

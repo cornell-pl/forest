@@ -142,7 +142,6 @@ structure GenGalax = struct
   fun macroNodeNew(ty) =
 		    PT.Expr(PT.Call(PL.NODE_NEW_BODY,
 				    [PT.Id ty]))
-
   (* calls NODE_NEW_RET macro*)
   fun macroNodeNewRet() = PT.Call(PL.NODE_NEW_RET,nil)
 
@@ -253,6 +252,35 @@ structure GenGalax = struct
   fun macroArrPWRet() = 
       PT.Call(PL.ARR_NODE_PATH_WALK_RET,nil)
 
+
+  (****  Rec. macros ****)
+  (* calls REC_NODE_NEW_BODY macro*)
+  fun macroRecNodeNew(ty,baseTy) =
+		    PT.Expr(PT.Call(PL.REC_NODE_NEW_BODY,
+				    [PT.Id ty, PT.Id baseTy]))
+
+  fun macroRecKC(ty,childTy) = 
+      PT.Expr(PT.Call(PL.REC_NODE_KTH_CHILD_BODY,
+		      [PT.Id ty,PT.Id childTy]))
+
+  fun macroRecKCRet() = PT.Call(PL.REC_NODE_KTH_CHILD_RET,nil)
+
+  fun macroRecKCN() =
+	  PT.Expr(PT.Call(PL.REC_NODE_KTH_CHILD_NAMED_BODY,
+			  nil))
+  fun macroRecKCNRet() =
+		    PT.Call(PL.REC_NODE_KTH_CHILD_NAMED_RET,nil)
+  fun macroRecSNDKCBody(ty,childTy) =
+      PT.Expr(PT.Call(PL.REC_SND_NODE_KTH_CHILD_BODY,[PT.Id ty, PT.Id childTy]))
+
+  fun macroRecSNDKCRet() = 
+      PT.Call(PL.REC_SND_NODE_KTH_CHILD_RET,nil)
+
+  fun macroRecPWBody(childTy) =
+      PT.Expr(PT.Call(PL.REC_NODE_PATH_WALK_BODY,[PT.Id childTy]))
+
+  fun macroRecPWRet() = 
+      PT.Call(PL.REC_NODE_PATH_WALK_RET,nil)
 
   (****  Typedef macros ****)
   fun macroTypKC(ty,childTy) = 
@@ -576,6 +604,80 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val bodySs = makeInvisibleDecls([childName], nil)
 		       @ [macroArrPWBody(childName)] 
 		       @ [P.returnS (macroArrPWRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+
+  (* Rec. type masquerades as underlying type, so need underlying type name as well. *)
+  fun makeRecNodeNewFun(name,baseName) =		
+      let val nodeRepTy = PL.nodeT
+	  val returnTy = P.ptrPCT nodeRepTy
+	  val cnvName = PN.nodeNewSuf name
+	  val paramTys = [returnTy, P.ccharPtr, 
+			  P.voidPtr,P.voidPtr,P.voidPtr,
+			  P.ccharPtr,P.ccharPtr]
+	  val paramNames = [parent,nameStr,
+			    PN.m,PN.pd,PN.rep,
+			    kind,whatfn]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val bodySs = makeInvisibleDecls([name,baseName],nil)
+		       @ [macroRecNodeNew(name,baseName)]
+		       @ [P.returnS (macroNodeNewRet())]
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+			      
+  (* Rec. type masquerades as underlying type, so need underlying type name as well. *)
+  fun makeRecSNDInitFun(name,baseName) =		
+      let val nodeRepTy = PL.nodeT
+	  val managerTy = P.ptrPCT PL.managerT   
+	  val genTy = PL.genT                     
+	  val childTy = PL.childIndexT                   
+	  val returnTy = P.ptrPCT nodeRepTy
+	  val cnvName = PN.sndInitSuf name
+	  val paramTys = [returnTy, managerTy, childTy, genTy, childTy]
+	  val paramNames = [self,manager,ancIdx,gen,idx]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val bodySs = makeInvisibleDecls([baseName],nil)
+		       @ [macroSNDInit(baseName)]     
+		       @ [P.returnS (macroSNDInitRet())]
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+			      
+  fun makeRecSNDKthChildFun(name,baseName) =		
+      let val nodeRepTy = PL.nodeT
+	  val returnTy = P.ptrPCT nodeRepTy
+	  val cnvName = PN.sndKCSuf name
+	  val paramTys = [P.ptrPCT nodeRepTy, PL.childIndexT]
+	  val paramNames = [self,idx]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val bodySs = makeInvisibleDecls([name,baseName], nil)
+		       @ [macroRecSNDKCBody(name,baseName)] 
+		       @ [P.returnS (macroRecSNDKCRet())] 
+      in   
+	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
+      end
+
+  fun makeRecPathWalkFun(name,baseName) =		
+      let val padsTy = P.ptrPCT PL.toolStatePCT
+	  val returnTy = PL.toolErrPCT
+	  val cnvName = PN.nodePWSuf name
+	  val maskTy = P.ptrPCT (P.makeTypedefPCT (PN.mSuf name))
+	  val pdTy  = P.ptrPCT (P.makeTypedefPCT (PN.pdSuf name))
+	  val repTy  = P.ptrPCT (P.makeTypedefPCT (PN.repSuf name))
+	  val pathTy = PL.pathT
+	  val vppT = P.voidPtrPtr
+	  val paramTys = [padsTy,maskTy,pdTy,repTy,pathTy,vppT,vppT,vppT]
+	  val paramNames = [pads,PN.m,PN.pd,PN.rep,path,"m_out","pd_out","rep_out"]
+	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
+
+	  val bodySs = makeInvisibleDecls([baseName], nil)
+		       @ [macroRecPWBody(baseName)] 
+		       @ [P.returnS (macroRecPWRet())] 
       in   
 	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
       end

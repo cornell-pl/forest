@@ -31,42 +31,83 @@ struct
 	      in rmv (ctxt,key,nil) end
 
 	  fun dsugPads (ctxt,ede) = 
-	      case ede of 
-		  PX.PRecursive {base=SOME{name=bname,...},name,...} 
-		  => ((bname,TRANSPARENT(name))::ctxt,[ede])
-		| PX.PRecursive {base=NONE,name,...} 
-		  => ((name, OPAQUE)::ctxt,[ede])
-		| PX.PStruct {name,
-			   isAlt,params,isRecord,containsRecord,
-			   largeHeuristic,isSource,fields,postCond} => 
-		  let val (ctxt',elt) = remove(ctxt, name)
-		      val eds = case elt of
-			  NONE => [ede]
-			| SOME (_, OPAQUE) =>
-			  let val recname = PNames.recPre name in
-			   [PX.PStruct {name=recname,
-				     isAlt=isAlt,params=params,
-				     isRecord=isRecord,
-				     containsRecord=containsRecord,
-				     largeHeuristic=largeHeuristic,
-				     isSource=isSource,fields=fields,
-				     postCond=postCond},
-			    PX.PDynamic {name=name,params=[],
-				      args=[],baseTy=PX.Name recname,
-				      isSource=isSource,isRecord=isRecord,
-				      containsRecord=containsRecord}]
-			  end
-			| SOME (_,TRANSPARENT dname) =>
-			  [ede,
-			   PX.PDynamic {name=dname,params=[],
-				     args=[],baseTy=PX.Name name,
-				     isSource=isSource,isRecord=isRecord,
-				     containsRecord=containsRecord}
-			   ]
-		  in
-		      (ctxt',eds)
-		  end
-		| _ => (ctxt,[ede])
+	      let fun checkAndReplace name isSource isRecord 
+				      containsRecord reconstruct =
+		      let val (ctxt,elt) = remove(ctxt, name)
+			  val eds = 
+			      case elt of
+				  NONE => [ede]
+				| SOME (_, rparams) =>
+				  let val recname = PNames.recPre name
+				  in
+				      [reconstruct recname,
+				       PX.PDynamic {name=name,params=rparams,
+						    baseTy=PX.Name recname,
+						    isSource=isSource,isRecord=isRecord,
+						    containsRecord=containsRecord}]
+				  end
+(* 				| SOME (_,TRANSPARENT dname) => *)
+(* 				  [ede, *)
+(* 				   PX.PDynamic {name=dname,params=[], *)
+(* 						args=[],baseTy=PX.Name name, *)
+(* 						isSource=isSource,isRecord=isRecord, *)
+(* 						containsRecord=containsRecord}] *)
+		      in
+			  (ctxt,eds)
+		      end
+	      in   
+		  case ede of 
+		      (* Support for this feature has been removed. *)
+(* 		      PX.PRecursive {base=SOME{name=bname,...},name,...} *)
+(* 		      => ((bname,TRANSPARENT(name))::ctxt,[ede]) *)
+		      PX.PRecursive {base=NONE,name,params,...} 
+		      => ((name, params)::ctxt,[ede])
+		    | PX.PStruct {name, isAlt,params,isRecord,containsRecord,
+				  largeHeuristic,isSource,fields,postCond} => 
+		      let fun reconstruct newname =
+			      PX.PStruct 
+				  {name=newname, isAlt=isAlt,params=params,
+				   isRecord=isRecord, containsRecord=containsRecord,
+				   largeHeuristic=largeHeuristic, isSource=isSource,
+				   fields=fields, postCond=postCond}
+		      in checkAndReplace name isSource isRecord containsRecord reconstruct end
+		    | PX.PUnion {name, params,isLongestMatch,isRecord,isSource,
+				 containsRecord,largeHeuristic,variants,postCond,
+				 fromOpt} =>
+		      let fun reconstruct newname =
+			      PX.PUnion
+				  {name=newname, params=params, isLongestMatch=isLongestMatch, 
+				   isRecord=isRecord,isSource=isSource, containsRecord=containsRecord,
+				   largeHeuristic=largeHeuristic,variants=variants,
+				   postCond=postCond,fromOpt=fromOpt}
+		      in checkAndReplace name isSource isRecord containsRecord reconstruct end
+		    | PX.PArray {name,baseTy,params,isRecord,containsRecord,largeHeuristic, 
+				 isSource,args,sizeSpec,constraints,postCond} =>
+		      let fun reconstruct newname =
+			      PX.PArray
+				  {name=newname, baseTy=baseTy, params=params, 
+				   isRecord=isRecord, containsRecord=containsRecord, 
+				   largeHeuristic=largeHeuristic, isSource=isSource, 
+				   args=args, sizeSpec=sizeSpec, constraints=constraints, 
+				   postCond=postCond}
+		      in checkAndReplace name isSource isRecord containsRecord reconstruct end
+(* 		    | PX.PTypedef {name, params, isRecord, containsRecord, largeHeuristic,  *)
+(* 				isSource, baseTy, args, pred} => *)
+(* 		      let fun reconstruct newname = *)
+(* 			      PX.PTypedef  *)
+(* 				  {name=newname, params=params, isRecord=isRecord,  *)
+(* 				   containsRecord=containsRecord,  *)
+(* 				   largeHeuristic=largeHeuristic, isSource=isSource,  *)
+(* 				   baseTy=baseTy, args=args, pred=pred}		       *)
+(* 		      in checkAndReplace name isSource isRecord containsRecord reconstruct end *)
+		    | PX.Popt {name, params, args, isRecord, isSource, pred, baseTy} =>
+		      let fun reconstruct newname =
+			      PX.Popt 
+				  {name=newname, params=params, args=args, isRecord=isRecord,
+				   isSource=isSource, pred=pred, baseTy=baseTy}
+		      in checkAndReplace name isSource isRecord false reconstruct end
+		    | _ => (ctxt,[ede])
+	      end
 
 	  fun dsug (ctxt, PT.ExternalDeclExt ede) = 
 	      let val (c,edes) = dsugPads (ctxt,ede) in
@@ -82,7 +123,8 @@ struct
 	      let val (ctxt', eds) = dsug (ctxt,ed)
 	      in (ctxt',eds::allEds) end
 
-	  val (_,allEds) = foldl desugar (nil,nil)  ps
+	  val (ctxt,allEds) = foldl desugar (nil,nil)  ps
+      (* Should we check here that the ctxt is empty? *)
       in
 	  foldl (op @) nil allEds
       end

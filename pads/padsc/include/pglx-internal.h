@@ -134,6 +134,22 @@ void ARR_NODE_PATH_WALK_BODY(type_t childTy);
 Perror_t
      ARR_NODE_PATH_WALK_RET();
 
+void REC_NODE_NEW_BODY(type_t ty, type_t baseTy);
+void REC_NODE_KTH_CHILD_BODY(type_t ty, type_t childTy);
+PDCI_node_t 
+    *REC_NODE_KTH_CHILD_RET();
+
+void REC_NODE_KTH_CHILD_NAMED_BODY();
+PDCI_node_t
+    *REC_NODE_KTH_CHILD_NAMED_RET();
+void REC_SND_NODE_KTH_CHILD_BODY(type_t ty, type_t childTy);
+PDCI_node_t *
+     REC_SND_NODE_KTH_CHILD_RET();
+
+void REC_NODE_PATH_WALK_BODY(type_t childTy);
+Perror_t
+     REC_NODE_PATH_WALK_RET();
+
 void TYP_NODE_KTH_CHILD_BODY(type_t ty, type_t childTy);
 PDCI_node_t 
     *TYP_NODE_KTH_CHILD_RET();

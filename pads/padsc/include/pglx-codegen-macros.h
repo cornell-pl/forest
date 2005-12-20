@@ -345,6 +345,97 @@ result
 res
 /* END_MACRO */
 
+/******* Recursive-type macros ******/
+
+#define REC_NODE_NEW_BODY(ty,baseTy)
+  PDCI_node_t *result = baseTy ## _node_new(parent,name,*(ty ## _m *)m,((ty ## _pd *)pd)->val,*(ty *)rep,kind,PDCI_MacroArg2String(ty) "_node_new");
+/* END_MACRO */
+
+/* Rec. node kthChild function */
+#define REC_NODE_KTH_CHILD_BODY(ty,baseTy)
+  PDCI_node_t *result = 0;
+  ty *rep=(ty *) (self->rep);
+  ty ## _pd *pd=(ty ## _pd *) (self->pd);
+  ty ## _m *m=(ty ## _m *) (self->m);
+
+  if (idx == 0){
+    result = baseTy ## _node_new(self,"impl",
+				  *m,
+				  pd->val,
+				  *rep,
+				  "element", PDCI_MacroArg2String(ty) "_node_kthChild");
+  }
+/* END_MACRO */
+
+#define REC_NODE_KTH_CHILD_RET()
+result
+/* END_MACRO */
+
+#define REC_NODE_KTH_CHILD_NAMED_BODY()
+  PDCI_childIndex_t k = 0;
+  
+  /* The index must be 0 as all field names are unique.*/
+  if (idx != 0)
+    return 0;
+  
+  if (GLX_STR_MATCH(name,"impl")) {k = 0;}
+  else return 0;
+/* END_MACRO */
+
+#define REC_NODE_KTH_CHILD_NAMED_RET()
+(self->vt->kth_child)(self,k);
+/* END_MACRO */
+
+/* Rec. snd node kthChild function */
+#define REC_SND_NODE_KTH_CHILD_BODY(ty,baseTy)
+  PDCI_node_t *result = 0;
+  ty *rep;
+  ty ## _pd *pd;
+  ty ## _m *m;
+
+  /* Make sure that the node is valid before attempting to access its contents. */ 
+  PDCI_sndNode_validate(self);
+  rep = (ty *) (self->rep);
+  pd = (ty ## _pd *) (self->pd);
+  m=(ty ## _m *) (self->m);
+
+  if (idx == 0){
+    result = baseTy ## _node_new(self,"impl",
+				  *m,
+				  pd->val,
+				  *rep,
+				  "element", PDCI_MacroArg2String(ty) "_node_kthChild");
+    baseTy ## _sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+  }
+/* END_MACRO */
+
+#define REC_SND_NODE_KTH_CHILD_RET()
+result
+/* END_MACRO */
+
+#define REC_NODE_PATH_WALK_BODY(baseTy)
+  Perror_t res = P_ERR;
+  PDCI_childIndex_t idx;
+  
+  if (path.length > 0){
+    /* modifies path */
+    idx = PDCI_PATH_GET(path);
+
+    if (idx == 0){
+      res = baseTy ## _node_pathWalk(pads,*m,pd->val,*rep,path,m_out,pd_out,rep_out);
+    }
+  }else{
+    *rep_out = rep;
+    *pd_out = pd;
+    *m_out = m;
+
+    res = P_OK;
+  }
+/* END MACRO */
+
+#define REC_NODE_PATH_WALK_RET()
+res
+/* END_MACRO */
 
 /******* Typedef macros ******/
 

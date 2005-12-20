@@ -23,6 +23,11 @@ wsl.c: wsl.p
 sirius.c: sirius.p
 	$(PADSC) $<
 
+go.c: go.p
+	$(PADSC) -x -D__ppc__ $<
+
+include $(PADS_HOME)/mk/rules.mk
+
 # Rule to make wsl-xml program
 wsl-xml: wsl-xml.c wsl.c 
 	$(CC) $(INCLUDES) wsl-xml.c wsl.c $(LIBS) -o wsl-xml
@@ -50,8 +55,20 @@ sirius-fmt: sirius-fmt.c sirius.c
 sirius-filter: sirius-filter.c sirius.c 
 	$(CC) $(INCLUDES) sirius-filter.c sirius.c $(LIBS) -o sirius-filter
 
+# Rules to make go programs
+go-xml: go-xml.c go.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+go-query: go-query.c go.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+go-accum: go-accum.c go.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+
 
 
 clean:
 	$(RM) wsl.[ch] wsl.xsd wsl-xml wsl-accum wsl-fmt wsl-sum
 	$(RM) sirius.[ch] sirius.xsd sirius-xml sirius-accum sirius-fmt sirius-filter sirius_clean sirius_errors
+	$(RM) go.[ch] go.xsd go-xml go-query

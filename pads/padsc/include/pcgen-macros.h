@@ -214,6 +214,12 @@ typedef int type_t;
 typedef int field_t;
 typedef int var_t;
 
+/* DYNAMIC macros are used in implementation of recursive
+   types. -YHM */
+void PCGEN_DYNAMIC_READ(Perror_t read_call);
+void PCGEN_DYNAMIC_COPY(const char *fn_nm, type_t baseTy, void *src, void *dst, void *elt_copy_fn, void *elt_cleanup_fn);
+void PCGEN_DYNAMIC_PD_COPY(const char *fn_nm, type_t baseTy, void *src, void *dst, void *elt_copy_fn, void *elt_cleanup_fn);
+
 void PCGEN_DYNAMIC_ALLOC(char *fnName, type_t baseTy);
 void PCGEN_DYNAMIC_REP_CLEANUP(type_t baseTy);
 void PCGEN_DYNAMIC_PD_CLEANUP(type_t baseTy);
@@ -379,23 +385,41 @@ do {
 } while (0)
 /* END_MACRO */
 
+#define PCGEN_DYNAMIC_READ(read_call)
+  Perror_t res;
+  PDCI_READFN_BEGINLOC(pads, pd->val->loc);
+  res = read_call;
+  PDCI_READFN_ENDLOC_NOOP(pd->val->loc);
+  if (P_ERR == res) {
+    if (P_PS_isPanic(pd->val)) {
+      P_PS_setPanic(pd);
+    }
+    (pd->nerr)++;
+    if (pd->nerr == 1) {
+      pd->errCode = P_RECUR_VAL_ERR;
+      pd->loc = pd->val->loc;
+      if (P_spec_level(pads)) return P_ERR;
+    }
+  }
+/* END_MACRO */
+
+#define PCGEN_DYNAMIC_ANY_ALLOC(fn_nm, ty, dst)
+do{
+  if (dst == NULL){ 
+    dst = (ty*) malloc (sizeof(ty));
+    if (dst == NULL)
+      {
+	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,fn_nm,0);
+      }
+    ty ## _init(pads,dst);
+  }
+}while(0)
+/* END_MACRO */
+
 #define PCGEN_DYNAMIC_ALLOC(fn_nm, ty)
 do{
-  if (*rep == NULL && *pd == NULL){ 
-    *rep = (ty*) malloc (sizeof(ty));
-    if (*rep == NULL)
-      {
-	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,fn_nm,"");
-      }
-    ty ## _init(pads,*rep);
-
-    *pd = (ty ## _pd*) malloc (sizeof(ty ## _pd));    
-    if (*pd == NULL)
-      {
-	PDCI_report_err (pads,P_LEV_FATAL,0,P_ALLOC_ERR,fn_nm,"");
-      }    
-    ty ## _pd_init(pads,*pd);
-  }
+  PCGEN_DYNAMIC_ANY_ALLOC(fn_nm,ty,*rep);
+  PCGEN_DYNAMIC_ANY_ALLOC(fn_nm,ty ## _pd,pd->val);  
 }while(0)
 /* END_MACRO */
 
@@ -411,10 +435,10 @@ do{
 
 #define PCGEN_DYNAMIC_PD_CLEANUP(baseTy)
 do{
-  if (*pd != NULL){ 
-    baseTy ## _pd_cleanup(pads,*pd);
-    free(*pd);
-    *pd = 0;
+  if (pd->val != NULL){ 
+    baseTy ## _pd_cleanup(pads,pd->val);
+    free(pd->val);
+    pd->val = 0;
   }
 }while(0)
 /* END_MACRO */
@@ -423,6 +447,42 @@ do{
 do{
   baseTy ## _m_init(pads,*mask,baseMask);
 }while(0)
+/* END_MACRO */
+
+#define PCGEN_DYNAMIC_COPY(fn_nm, baseTy, src, dst, val_copy_fn, cleanup_fn)
+do {
+  /* if source is empty, try to clean up destination. */
+  if (*src == NULL) {
+    cleanup_fn(pads, dst);
+    return P_OK;
+  }
+
+  /* Ensure dst buffer is allocated */
+  if (*dst == NULL){
+    PCGEN_DYNAMIC_ANY_ALLOC(fn_nm, baseTy,*dst);
+  }
+
+  /* Copy underlying value */
+  return val_copy_fn(pads, *dst, *src);
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_DYNAMIC_PD_COPY(fn_nm, baseTy, src, dst, val_copy_fn, cleanup_fn)
+do {
+  /* if source is empty, try to clean up destination. */
+  if (src->val == NULL) {
+    cleanup_fn(pads, dst);
+    return P_OK;
+  }
+
+  /* Ensure dst buffer is allocated */
+  if (dst->val == NULL){
+    PCGEN_DYNAMIC_ANY_ALLOC(fn_nm, baseTy,dst->val);
+  }
+
+  /* Copy underlying value */
+  return val_copy_fn(pads, dst->val, src->val);
+} while (0)
 /* END_MACRO */
 
 #define PCGEN_STRUCT_READ_PRE(fn_nm, the_field)
@@ -1760,18 +1820,27 @@ do {
 #define PCGEN_ARRAY_COPY_AR_DYN_ELT_DYN(fn_nm, src, dst, elt_copy_fn, elt_cleanup_fn)
 do {
   Puint32 i_PCGEN_;
+  /* if source is empty, try to clean up destination. */
   if (src->length == 0) {
     if (dst->length) {
       for (i_PCGEN_ = 0; i_PCGEN_ < dst->length; i_PCGEN_++) {
 	elt_cleanup_fn(pads, &(dst->elts[i_PCGEN_]));
       }
     }
+    /* XXX: What is this code doing? -YHM 
+       It seems to be copying the src array rep. struct to dst, 
+       minus the last two fields, pointers "elts" and "_internal".  
+       However, given the fixed structure of array reps, why not just
+       do dst->length = src->length?
+    */
     memcpy((void*)dst, (void*)src, sizeof(*dst) - (2*sizeof(void*)));
     return P_OK;
   }
+  /* Ensure dst buffer is allocated */
   if (!(dst->_internal) && !(dst->_internal = RMM_new_rbuf(P_rmm_zero(pads)))) {
     PDCI_report_err(pads, P_LEV_FATAL, 0 ,P_ALLOC_ERR, fn_nm, 0);
   }
+  /* Ensure dst buffer has enough room. */
   if (src->length > dst->length) {
     if (0 != RBuf_RESERVE(dst->_internal, dst->elts, dst->elts[0], src->length)) {
       PDCI_report_err(pads, P_LEV_FATAL, 0, P_ALLOC_ERR, fn_nm, 0);
@@ -1785,7 +1854,8 @@ do {
       }
   } */
   for (i_PCGEN_ = 0; i_PCGEN_ < src->length; i_PCGEN_++) {
-    if (P_ERR == elt_copy_fn(pads, &(dst->elts[i_PCGEN_]), &(src->elts[i_PCGEN_]))) nerr_PCGEN_++;
+    if (P_ERR == elt_copy_fn(pads, &(dst->elts[i_PCGEN_]), &(src->elts[i_PCGEN_]))) 
+      nerr_PCGEN_++;
   }
   memcpy((void*)dst, (void*)src, sizeof(*dst) - (2*sizeof(void*)));
 } while (0)
