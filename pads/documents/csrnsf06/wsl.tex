@@ -1,0 +1,53 @@
+\begin{code}
+\kw{Punion} client\_t \{
+  Pip       ip;      /- 135.207.23.32
+  Phostname host;    /- www.research.att.com
+\};
+\mbox{}
+\kw{Punion} auth\_id\_t \{
+  Pchar unauthorized : unauthorized == '-';
+  Pstring(:' ':) id;
+\};
+\mbox{}
+\kw{Pstruct} version\_t \{
+  "HTTP/";
+  Puint8 major; '.';
+  Puint8 minor;
+\};
+\mbox{}
+\kw{Penum} method\_t \{
+    GET,    PUT,  POST,  HEAD,
+    DELETE, LINK, UNLINK
+\};
+\mbox{}
+bool chkVersion(version\_t v, method\_t m) \{
+  \kw{if} ((v.major == 1) && (v.minor == 1)) \kw{return} true;
+  \kw{if} ((m == LINK) || (m == UNLINK)) \kw{return} false;
+  \kw{return} true;
+\};
+\mbox{}
+\kw{Pstruct} request\_t \{
+  '\\"';   method\_t       meth;
+  ' ';    Pstring(:' ':) req\_uri;
+  ' ';    version\_t      version :
+                  chkVersion(version, meth);
+  '\\"';
+\};
+\mbox{}
+\kw{Ptypedef} Puint16\_FW(:3:) response\_t :
+         response\_t x => \{ 100 <= x && x < 600\};
+\mbox{}
+\kw{Precord} \kw{Pstruct} entry\_t \{
+         client\_t       client;
+   ' ';  auth\_id\_t      remoteID;
+   ' ';  auth\_id\_t      auth;
+   " ["; Pdate(:']':)   date;
+   "] "; request\_t      request;
+   ' ';  response\_t     response;
+   ' ';  Puint32        length;
+\};
+\mbox{}
+\kw{Psource} \kw{Parray} clt\_t \{
+  entry\_t [];
+\}
+\end{code}
