@@ -1,0 +1,55 @@
+%\documentclass[fleqn]{article}
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{PADS/ML}
+\authorinfo{Mary Fernandez \ \ \ \  Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher,mff@research.att.com}}
+\authorinfo{Yitzhak Mandelbaum  \ \ \ \ David Walker}{
+	   Princeton University}
+       {\mono{yitzhakm,dpw@CS.Princeton.EDU}}
+
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+
+In this paper we describe the theory and implementation of
+a data description language for O'Caml.
+
+\end{abstract}
+
+\input{ddcpoly}
+
+\input{related_work}
+
+
+\section*{Acknowledgments}
+
+
+\bibliographystyle{abbrv}
+\bibliography{pads}
+
+\input{appendix}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+
