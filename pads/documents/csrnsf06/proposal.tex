@@ -379,77 +379,52 @@ to choose how to respond to errors in application-specific ways.
 % shows a couple of typical records.
 
 
-In order to understand further how \pads{} can be used,
-will take a look at an example of ad hoc data:
-a tiny fragment of data from the Gene Ontology Project~\cite{geneontology}.  
-Data in this format is widely used by molecular biologists to
-analyze gene products produced by various organisms.
-\figref{figure:dibbler-records} shows a tiny sample of
-the format.  Cursory examination of the example data reveals
-first of all that this is an ASCII format with two 
-logical parts, a header portion (that portion beginning with
-\texttt{format-version} and ending with the first blank line)
-and a main portion, which includes a sequence of 
-information blocks separated by blank lines (only one such block 
-is shown in the example).  The format
-designers call these information blocks {\em stanzas}.
-Each stanza begins with a stanza tag, which may be either
-\texttt{[Term]}, as shown in the example data, or
-\texttt{[Typeref]}.  On the following line,
-the first element of each stanza, is
-the string \texttt{id}, followed by a colon, followed by a
-GO identifier.  A GO identifier is the word GO, followed
-by another colon, followed by a string.  
-After the first mandatory id field, the rest of the stanza includes
-any number of identifier, colon, field entries.
-% While this format is actually remarkably simple, and
-% we have left out several details in this coarse description,
-% it should be apparent that English is a poor
-% language for describing data formats!
+To understand further how \pads{} can be used,
+let us look at an example of ad hoc data:
+a tiny fragment of data in the Common Log Format (CLF) that web
+servers use to log client requests~\cite{wpp}.  
+Systems researchers use such logs to measure
+properties of web workloads and to evaluate protocol changes
+by ``replaying'' the user activity recorded in the log.
+This ASCII format consists of a sequence of
+records, each of which has seven fields: the host name or IP address
+of the client making the request, the account associated with the
+request on the client side, the name the user provided for
+authentication, the time of the request, the actual request, the
+\textsc{http} response code, and the number of bytes returned as a
+result of the request.  The actual request has three parts: the
+request method (\eg, \texttt{GET}, \texttt{PUT}), the requested
+\textsc{uri}, and the protocol version.  In addition, the second and
+third fields are often recorded only as a '-' character to indicate
+the server did not record the actual data.  \figref{figure:clf-records}
+shows a couple of typical records.
+
+
 
 \begin{figure*}
-\begin{small}
+\begin{footnotesize}
 %\begin{center}
 \begin{verbatim}
-format-version: 1.0
-date: 11:11:2005 14:24
-saved-by: midori
-auto-generated-by: DAG-Edit 1.419 rev 3
-default-namespace: gene_ontology
-remark: cvs version: $Revision: 1.2 $
-subsetdef: goslim_goa "GOA and proteome slim"
-subsetdef: goslim_yeast "Yeast GO slim"
-subsetdef: goslim_plant "Plant GO slim"
-subsetdef: goslim_generic "Generic GO slim"
-subsetdef: gosubset_prok "Prokaryotic GO subset"
-
-[Term]
-id: GO:0000001
-name: mitochondrion inheritance
-namespace: biological_process
-def: "The distribution of mitochondria\, including the mitochondrial 
-genome\, into daughter cells after mitosis or meiosis\, mediated by 
-interactions between mitochondria and the cytoskeleton." [PMID:10873824, 
-PMID:11389764, SGD:mcc]
-is_a: GO:0048308 ! organelle inheritance
-is_a: GO:0048311 ! mitochondrion distribution
-
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
+234.200.68.71 - - [15/Oct/1997:18:53:33 -0700] "GET /tr/img/gift.gif HTTP/1.0" 200 409
+240.142.174.15 - - [15/Oct/1997:18:39:25 -0700] "GET /tr/img/wool.gif HTTP/1.0" 404 178
+188.168.121.58 - - [16/Oct/1997:12:59:35 -0700] "GET / HTTP/1.0" 200 3082
+tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /spt/dd@grp.org/cfm HTTP/1.0" 200 941
+214.201.210.19 ekf - [17/Oct/1997:10:08:23 -0700] "GET /img/new.gif HTTP/1.0" 304 -
 \end{verbatim}
-\caption{Tiny example of Gene Ontology data. (Some lines broken to
-present data on this page.)}
-\label{figure:dibbler-records}
+\caption{Tiny example of Common Log Format records. }
+\label{figure:clf-records}
 %\end{center}
-\end{small}
+\end{footnotesize}
 \end{figure*}
 
-Now, we can examine how to use \pads{} to describe 
+With this example, we can examine how to use \pads{} to describe 
 the {\em physical layout} and 
 {\em semantic properties} of our ad hoc data source. 
 The language provides a type-based model:
 basic types describe atomic data such as integers, characters, 
 strings, dates, urls, \etc, while
 structured types describe compound data built from simpler pieces.
-\suppressfloats
 
 In a bit more detail,
 the \pads{} library provides a collection of broadly useful base
@@ -491,102 +466,150 @@ properties of later portions of the data to depend upon earlier
 portions.  For example, the base type \cd{Puint_FW(:x:)} specifies
 an unsigned integer physically represented by exactly \cd{x}
 characters, where \cd{x} is a value that has been read earlier in the
-parse.  The type \cd{Pstring(:COLON:)} describes a string
-terminated by a colon (when \texttt{COLON} is defined to be \texttt{':'}).  
+parse.  The type \cd{Pstring(:SPACE:)} describes a string
+terminated by a space (when \texttt{SPACE} is defined to be \texttt{' '}).  
 Parameters can be used with compound types like arrays and unions to
 specify the size of an array or which branch of a union should be
 taken.  This parameterization is what makes PADS a {\em dependently-typed}
 language and substantially different from languages based on
 context-free grammars or regular expressions.
 
-\figref{figure:dibbler} gives an abbreviated \pads{} description 
-for the Gene Ontology
+\figref{figure:clf} gives a \pads{} description for the Common Log Format
 data.  
 We will use this example to illustrate some of the basic
 features of the current \pads{} language.  
 In \pads{} descriptions, types are declared before they are used, 
 so the type that describes the totality of the data source appears 
-at the bottom of the description.  In this case,
-the type \texttt{OBO\_file} describes the the entirety of the
-GO data source (the \texttt{Psource} type qualifier indicates
-this fact explicitly).  \texttt{OBO\_file} is a \kw{Pstruct} type with
-two fields, a \texttt{hdr} field, with type  \texttt{OBO\_header}
-and a \texttt{stanzas} field with type \texttt{OBO\_stanza[]},
-an array of \texttt{OBO\_stanza}s of arbitrary length.
-In general, \kw{Pstruct}s describe fixed sequences of data with 
-unrelated types.  A little further up the description, there is
-a slightly more complex \kw{Pstruct}:  \texttt{OBO\_stanza\_tag}.
-This struct contains two kinds of fields, named fields, like
-before, and unnamed fields \texttt{'['} and \texttt{']'}.
-These unnamed fields match literal characters in the data, in this
-case square brackets.  In 
-\texttt{OBO\_tag\_value\_pair}, another unnamed field involving 
-a regular expression (introduced by \texttt{Pre}) matches a colon
-followed by any number of spaces.  Named fields are included in
-the internal representation of the data, while unnamed fields are
-not.  
+at the bottom of the description.  
+In this case,
+the type \texttt{clf\_t}  describes the entirety of the
+CLF data source (the \texttt{Psource} type qualifier indicates
+this fact explicitly).  
 
-Both \texttt{OBO\_tag\_value\_pair} and
-\texttt{OBO\_stanza\_tag} mentioned above are preceded by the
-\texttt{Precord} type qualifier.  
+\kw{Pstruct}s describe fixed sequences of data with unrelated types.
+In the CLF description, the type declaration for
+\cd{version_t} illustrates a simple \kw{Pstruct}. It starts with a 
+string literal that matches the constant \cd{HTTP/} in the data source.  It 
+then has two unsigned integers recording the major and minor version numbers
+separated by the literal character \kw{'.'}.  \pads{} supports character, string,
+and regular expression literals, which are interpreted with the ambient character 
+encoding. The type \cd{request_t} 
+similarly describes the request portion of a CLF record.  In addition
+to physical format information, this \kw{Pstruct} includes a semantic constraint
+on the \cd{version} field.  Specifically, it requires that obsolete methods
+\cd{LINK} and \cd{UNLINK} occur only under HTTP/1.1.  This constraint illustrates
+the use of predicate functions and the fact 
+that earlier fields are in scope during the processing of later fields, as the 
+constraint
+refers to both the \cd{meth} and \cd{version} fields in the \kw{Pstruct}.
+
+\kw{Punion}s describe variation in the data format.  For example, the
+\cd{client_t} type in the CLF description indicates that the first
+field in a CLF record can be either an IP address or a hostname.
+During parsing, the branches of a \kw{Punion} are tried in order; the
+first branch that parses without error is taken.  The \cd{auth_id_t}
+type illustrates the use of a constraint: the branch \cd{unauthorized}
+is chosen only if the parsed character is a dash.  \pads{} also
+supports a \textit{switched} union that uses a selection expression to
+determine the branch to parse.  Typically, this expression depends
+upon already-parsed portions of the data source.
+
+\pads{} provides \kw{Parray}s to describe varying-length sequences of
+data all with the same type.  The \cd{clf_t} declaration  uses a
+\kw{Parray} to indicate that a CLF file is a sequence of \cd{entry\_t}
+records.  This particular array terminates when the data source is
+exhausted. In general, \pads{} provides a rich
+collection of array-termination conditions: reaching a maximum size,
+finding a terminating literal (including end-of-record), or satisfying a
+user-supplied predicate over the already-parsed portion of the \kw{Parray}. 
+\pads{} also has convenient syntax for 
+specifying separators that appear between elements of an array and
+declaring inter-element constraints including sorting.
+
+The
+\kw{Penum} type \cd{method_t} describes a collection of data literals.
+During parsing, \pads{} interprets these constants using the ambient
+character encoding.  The \kw{Ptypedef} \cd{response_t} describes
+possible server response codes in CLF data by adding the constraint
+that the three-digit integer must be between 100 and 600.
+
+Finally, the \kw{Precord} annotations deserve comment. It
+indicates that the annotated type constitutes a record.  
 The notion of a record varies depending upon the data encoding.  
 ASCII data typically uses new-line characters to delimit 
 records, binary sources tend to have fixed-width records, while 
 COBOL sources usually store the length of each record before the actual data.
 \pads{} supports each of these encodings of records and allows users to define
-their own encodings.  By default, \pads{} assumes records are new-line terminated.  The constant \texttt{Peor} is also set to this
-\texttt{e}nd-\texttt{o}f-\texttt{r}ecord marker, and may be used anywhere in a
-description, as we did in the
-type \texttt{OBO\_tag\_value\_pair}.
+their own encodings.  By default, \pads{} assumes records are new-line terminated.
+Before parsing, however, the user can direct \pads{} to use a different record
+definition.
 \texttt{Precords} have error-recovery semantics -- if errors 
 in the data cause the parser to become seriously confused,
 it will attempt to recover to a record boundary.
 In practice, we have found this to be a very robust recovery mechanism
 for ad hoc data.  
 
-The \texttt{OBO\_stanza} structure 
-illustrates the use of some simple semantic constraints.
-For instance, following the \texttt{id} field is the constraint
-\texttt{hastag(id,"id")}, which is defined earlier in the file
-as a function in defined in C.  In general, such constraints should
-be pure (have no externally visible effects), but otherwise may be
-arbitrary C expressions.  Notice also that the first argument to the constraint
-is \texttt{id}, the name of the current field.  More generally,
-constraints may refer to any type parameters in scope and any previous field.
-The type parameters in particular, allow information concerning data
-just parsed to be passed arbitrarily far forward in a description.
-The second semantic constraint in \texttt{OBO\_stanza} is
-\texttt{Pterm(Peor)}, which is a built-in constraint for 
-controlling array termination.  In this case, it states that
-the array terminates when it sees an end-of-record marker 
-\texttt{Peor} following any array element.  
-In general, \pads{} provides a rich collection
-of array-termination conditions: reaching a maximum size, finding 
-a terminating literal 
-or satisfying a user-supplied predicate over the already-parsed portion of 
-the \kw{Parray}.  \pads{} also has convenient syntax for 
-specifying separator symbols that
-appear between elements of an array and declaring inter-element
-constraints including sorting.
-
-One last feature of note in this description is the \texttt{Penum}
-\texttt{OBO\_stanza\_type}.  \texttt{Penum}s specify that
-the data must be one of several fixed strings, in this case, 
-either \texttt{Term} or \texttt{Typeref}.  \pads{} also admits
-\texttt{Punion}s of several forms for more general sorts of alternatives
-in data formats.
-
 Other examples of \pads{} descriptions and an online demo may be
 found at \url{www.padsproj.org}.
 
-\begin{figure}[t]
-
-%\input{go3}
-
-Insert weblog description here.
-
-\caption{Abbreviated \pads{} description for Web Log data.}
-\label{figure:dibbler}
+\begin{figure}
+\begin{small}
+\begin{code}
+\kw{Punion} client\_t \{
+  Pip       ip;      /- 135.207.23.32
+  Phostname host;    /- www.research.att.com
+\};
+\mbox{}
+\kw{Punion} auth\_id\_t \{
+  Pchar unauthorized : unauthorized == '-';
+  Pstring(:' ':) id;
+\};
+\mbox{}
+\kw{Pstruct} version\_t \{
+  "HTTP/";
+  Puint8 major; '.';
+  Puint8 minor;
+\};
+\mbox{}
+\kw{Penum} method\_t \{
+    GET,    PUT,  POST,  HEAD,
+    DELETE, LINK, UNLINK
+\};
+\mbox{}
+bool chkVersion(version\_t v, method\_t m) \{
+  \kw{if} ((v.major == 1) && (v.minor == 1)) \kw{return} true;
+  \kw{if} ((m == LINK) || (m == UNLINK)) \kw{return} false;
+  \kw{return} true;
+\};
+\mbox{}
+\kw{Pstruct} request\_t \{
+  '\\"';   method\_t       meth;
+  ' ';    Pstring(:' ':) req\_uri;
+  ' ';    version\_t      version :
+                  chkVersion(version, meth);
+  '\\"';
+\};
+\mbox{}
+\kw{Ptypedef} Puint16\_FW(:3:) response\_t :
+         response\_t x => \{ 100 <= x && x < 600\};
+\mbox{}
+\kw{Precord} \kw{Pstruct} entry\_t \{
+         client\_t       client;
+   ' ';  auth\_id\_t      remoteID;
+   ' ';  auth\_id\_t      auth;
+   " ["; Pdate(:']':)   date;
+   "] "; request\_t      request;
+   ' ';  response\_t     response;
+   ' ';  Puint32        length;
+\};
+\mbox{}
+\kw{Psource} \kw{Parray} clf\_t \{
+  entry\_t [];
+\}
+\end{code}
+\end{small}
+\caption{\pads{} description for Web Log data.}
+\label{figure:clf}
 \end{figure}
 
 
@@ -771,7 +794,8 @@ and conveniently.
 \paragraph*{Multi-source Data Processing}
 Often, a single logical data source is represented
 as several distinct, concrete repositories.   This is the case
-in the GO data source we have examined, where data is split into four disjoint
+in the Gene Ontology~\cite{geneontology} data source we have examined,
+where data is split into four disjoint 
 files: a molecular function file, a biological process file,
 a cellular component file and a term definitions file.
 However, the size and number of repositories that make up a single source
@@ -1047,7 +1071,7 @@ from internal data to external format.  In fact, we have recently
 uncovered practical problems with output processors that have pushed us in 
 this direction. For example, \pads{} descriptions may use regular expressions
 to match portions of data and, rather than include that data in the
-internal representation, the data is thrown away (\figref{figure:dibbler}
+internal representation, the data is thrown away (\figref{figure:clf}
 includes an example of this feature).  On output, since the matched
 data has been thrown away, what do we put in its place?  The 
 current implementation is broken in this respect and must be fixed.
