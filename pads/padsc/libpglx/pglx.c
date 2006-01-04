@@ -347,7 +347,7 @@ item ty ## _typed_value (PDCI_node_t *node) \
 { \
   item       res = 0; \
   int        r   = *((ty*)node->rep); \
-  if (galax_atomicInt(r, &res)) { \
+  if (galax_atomicInteger(r, &res)) { \
     PGLX_report_err(node->pads,P_LEV_FATAL,0,P_FAILWITH_ERR, PDCI_MacroArg2String(ty) "_typed_value","PADS/Galax UNEXPECTED_GALAX_VALUE_WRAP_FAILURE"); \
   } \
   return res; \
