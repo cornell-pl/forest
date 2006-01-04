@@ -126,5 +126,5 @@ class padsTextNode :
   end
 
 (* This is the "callback" function that is called from the PADS mainline *)
-val pads_document : Processing_context.processing_context -> Dm_atomic.atomicString option -> string -> nodeRep -> Physical_item.item
-val walk_pads_document : Physical_item.item -> unit
+val pads_document : Processing_context.processing_context -> Dm_atomic.atomicString option -> string -> nodeRep -> Physical_types.item
+val walk_pads_document : Physical_types.item -> unit
