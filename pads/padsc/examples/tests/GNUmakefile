@@ -121,7 +121,10 @@ regress_o:  sanity_check \
           regress_rw_pendian_o \
           regress_rwxml_struct1_o \
           regress_rwxml_alt1_o \
-          regress_rwxml_2ips_o
+          regress_rwxml_2ips_o \
+          regress_rwxml_pfloat_o \
+          regress_rwxml_ptime_o \
+          regress_rwxml_ptime_explicit_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -161,7 +164,13 @@ regress_d:  sanity_check \
           regress_rw_pendian_d \
           regress_rwxml_struct1_d \
           regress_rwxml_alt1_d \
-          regress_rwxml_2ips_d
+          regress_rwxml_2ips_d \
+          regress_rwxml_pfloat_d \
+          regress_rwxml_ptime_d \
+          regress_rwxml_ptime_explicit_d \
+          regress_rwxml_ptimestamp_d \
+          regress_rwxml_ptimestamp_explicit_d
+
 	@echo " "; echo "DONE"; echo " "
 
 dib_tests: sanity_check $(DIB_TESTS)
@@ -383,6 +392,36 @@ regress_rwxml_2ips_o: rwxml_2ips
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_2ips_d: rwxml_2ips_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_pfloat_o: rwxml_pfloat
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_pfloat_d: rwxml_pfloat_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptime_o: rwxml_ptime
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptime_d: rwxml_ptime_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptime_explicit_o: rwxml_ptime_explicit
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptime_explicit_d: rwxml_ptime_explicit_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptimestamp_o: rwxml_ptimestamp
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptimestamp_d: rwxml_ptimestamp_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptimestamp_explicit_o: rwxml_ptimestamp_explicit
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_ptimestamp_explicit_d: rwxml_ptimestamp_explicit_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o
