@@ -127,7 +127,8 @@ regress_o:  sanity_check \
           regress_rwxml_ptime_explicit_o \
           regress_rwxml_pdate_o \
           regress_rwxml_pdate_explicit_o \
-          regress_rwxml_pdate_explicit_me_o
+          regress_rwxml_pdate_explicit_me_o \
+          regress_rwxml_enum_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -175,7 +176,8 @@ regress_d:  sanity_check \
           regress_rwxml_ptimestamp_explicit_d \
           regress_rwxml_pdate_d \
           regress_rwxml_pdate_explicit_d \
-          regress_rwxml_pdate_explicit_me_d
+          regress_rwxml_pdate_explicit_me_d \
+          regress_rwxml_enum_d
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -446,6 +448,12 @@ regress_rwxml_pdate_explicit_me_o: rwxml_pdate_explicit_me
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_pdate_explicit_me_d: rwxml_pdate_explicit_me_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_enum_o: rwxml_enum
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_enum_d: rwxml_enum_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o
