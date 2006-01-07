@@ -1237,37 +1237,36 @@ useful in processing ad hoc data nor do they provide good support for generating
 rich, well-typed in-memory representations (ANTLR's in-memory representations
 are very limited when compared with PADS and the extensions we propose).
 
-There are parallels between PADS types and some of the elements of parser
-combinator libraries found in languages like
-Haskell~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
-However, as with most other general-purpose parsing tools, one cannot
-simply put together a collection of Haskell's parser combinators and
-automatically generate domain-specific programs such as 
-an XML converter or a histogram generator, for instance.  
-
-A somewhat different class of languages includes
-\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}. 
-Both of these systems specify the {\em logical\/} in-memory representation of data
-and then automatically generate a {\em physical\/} on-disk representation.
-Although useful for many purposes, this technology does not help
-process data that arrives in predetermined, ad hoc formats.
-Another language in this category is the Hierarchical Data Format 5 
-(HDF5)~\cite{hdf5}.  This file format allows users to store scientific
-data, but it does not help users deal with legacy ad hoc formats like PADS does.
-
-The networking community has developed a number of domain-specific
-languages~\cite{sigcomm00,bfd,gpce02} for parsing and printing binary data, particularly packets
+The closest related work includes domain-specific
+languages such as PacketTypes~\cite{sigcomm00} and DataScript~\cite{gpce02} 
+for parsing and printing binary data, particularly packets
 from common networking protocols such as \textsc{TCP/IP} and also
 \java{} jar-files.  Like \pads{}, these languages have a type-directed
 approach to describing ad hoc data and permit the user to define
 semantic constraints.  In contrast to our work, these systems handle
 only binary data and assume the data is error-free or halt parsing if
-an error is detected.  Parsing non-binary data poses additional
+an error is detected.  Not only are ASCII formats a common part of
+many software monitoring systems, parsing non-binary data poses additional
 challenges because of the need to handle delimiter values and to
-express richer termination conditions on sequences of data. These
-systems also focus exclusively on the parsing/printing problem,
-whereas we have leveraged the declarative nature of our data
-descriptions to build additional useful tools.  
+express richer termination conditions on sequences of data. 
+PacketTypes and DataScript also focus exclusively on the 
+parsing/printing problem,
+whereas our research will exploit the declarative nature of our data
+descriptions to automatically generate additional useful tools and
+programming libraries.  \pads{} substantial 
+collection of value-added tools and libraries is 
+one of the key incentives that will make it
+worth a programmer's while to learn \pads{}
+and develop and maintain data descriptions for their applications.
+
+The Binary Format Description language (BFD)~\cite{bfd} is a fragment of
+XML that allows programmers to specify binary and ASCII formats.  BFD
+is able to convert the raw data into XML-tagged data where it can then be
+processed using XML-processing tools.  While this is useful for many
+tasks, conversion to XML can be prohibitively expensive:  such conversion
+often results in an 8-10 times blowup in data size over the native form.
+\pads{}, on the other hand, avoids this blowup by processing data in its 
+native form.
 
 Currently, the Global Grid Forum is working on a standard
 data-format description language for describing ad hoc data formats,
@@ -1283,32 +1282,51 @@ that the XML{} view of the ad hoc data is implicit in a DFDL{}
 description.  DFDL{} is still being specified, so no DFDL-aware
 parsers or data analyzers exist yet.  
 
+There are parallels between PADS types and some of the elements of parser
+combinator libraries found in languages like
+Haskell~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
+However, as with most other general-purpose parsing tools, one cannot
+simply put together a collection of Haskell's parser combinators and
+automatically generate domain-specific programs such as 
+an XML converter or a histogram generator, for instance.  
+
+A somewhat different class of languages includes
+\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}.  Both of
+these systems specify the {\em logical\/} in-memory representation of
+data and then automatically generate a {\em physical\/} on-disk
+representation.  Although useful for many purposes, this technology
+does not help process data that arrives in predetermined, ad hoc
+formats.  Another language in this category is the Hierarchical Data
+Format 5 (HDF5)~\cite{hdf5}.  This file format allows users to store
+scientific data, but it does not help users deal with legacy ad hoc
+formats like PADS does.
+
 % There are probably hundreds of tools that one might use if their data were
 % in \xml.  However, the point of PADS is to allow scientists whose data is {\em not}
 % already in \xml to get work done, particularly when that data contains errors,
 % as ad hoc data often does.  Since many processes, machines, programs and other devices
 % currently output data and a whole most of
 
-XSugar~\cite{brabrand+:xsugar2005} allows user to specify an alternative non-XML
-syntax for XML languages using a context-free grammar.  This tool
-automatically generates conversion between XML and non-XML 
-syntax. It also guarantees that
-conversion will be invertable.  However, it does not use theory of Galois
-connections, but instead introduces a notion of ``ignorable'' grammar
-components (inferred based on properties of grammar) and proves
-bijection modulo these ignorable elements.  More importantly,
-since the basis of interconversion is a context free grammar, unlike PADS,
-formats that required dependency may not be expressed.
+XSugar~\cite{brabrand+:xsugar2005} allows user to specify an
+alternative non-XML syntax for XML languages using a context-free
+grammar.  This tool automatically generates conversion between XML and
+non-XML syntax. It also guarantees that conversion will be invertable.
+However, it does not use theory of Galois connections, but instead
+introduces a notion of ``ignorable'' grammar components (inferred
+based on properties of grammar) and proves bijection modulo these
+ignorable elements.  More importantly, since the basis of
+interconversion is a context free grammar, unlike PADS, formats that
+required dependency may not be expressed.
 
-XDTM~\cite{zhao+:sigmod05,xdtm} uses XML Schema to describe the locations of a collection
-of sources spread across a local file system or distributed
-across a network of computers.
-However, XDTM has no means of specifying the contents of files,
-so XDTM and PADS solve complementary problems.  Nevertheless, the XDTM design 
-may provide ideas to us as we extend PADS from a single-source system to a
-multi-source system. The METS schema~\cite{mets} is similar to XDTM as it describes 
-metadata for objects in a digital library,
-including a hierarchy such objects. 
+XDTM~\cite{zhao+:sigmod05,xdtm} uses XML Schema to describe the
+locations of a collection of sources spread across a local file system
+or distributed across a network of computers.  However, XDTM has no
+means of specifying the contents of files, so XDTM and PADS solve
+complementary problems.  Nevertheless, the XDTM design may provide
+ideas to us as we extend PADS from a single-source system to a
+multi-source system. The METS schema~\cite{mets} is similar to XDTM as
+it describes metadata for objects in a digital library, including a
+hierarchy such objects.
 
 Commercial database products provide support for
 parsing data in external formats so the data can be imported into
@@ -1322,21 +1340,23 @@ PADS-like description language that allows users to import information from
 almost any format.  We hope that our research on PADS will make a broad
 impact in this area.
 
-On the theoretical front, the scientific community's understanding of type-based languages for data description
-is much less mature.  To the best of our knowledge, our work on
-the DDC is the first to provide a formal interpretation of dependent 
-types as parsers and to study the properties of these parsers including error correctness and
-type safety.  Regular expressions and context-free grammars, the basis for Lex and Yacc
-have been well-studied, but they do not have dependency, a key feature necessary for expressing
-constraints and parsing ad hoc scientific data.
-{\em Parsing Expression Grammars} (PEGs),
-studied in the early seventies~\cite{birman+:parsing}, revitalized more 
-recently by Ford~\cite{ford:pegs} and implemented using
-``packrat parsing'' techniques~\cite{ford:packrat,grimm:packrat}, 
-are somewhat more similar to PADS recursive descent parsers. However, PADS does
-not use packrat parsing techniques as the space overhead is too high for
-large scientific data sets.  Moreover, our multiple interpretations of types in the DDC
-makes our theory substantially different from the theory of PEGs.
+On the theoretical front, the scientific community's understanding of
+type-based languages for data description is much less mature.  To the
+best of our knowledge, our work on the DDC is the first to provide a
+formal interpretation of dependent types as parsers and to study the
+properties of these parsers including error correctness and type
+safety.  Regular expressions and context-free grammars, the basis for
+Lex and Yacc have been well-studied, but they do not have dependency,
+a key feature necessary for expressing constraints and parsing ad hoc
+scientific data.  {\em Parsing Expression Grammars} (PEGs), studied in
+the early seventies~\cite{birman+:parsing}, revitalized more recently
+by Ford~\cite{ford:pegs} and implemented using ``packrat parsing''
+techniques~\cite{ford:packrat,grimm:packrat}, are somewhat more
+similar to PADS recursive descent parsers. However, PADS does not use
+packrat parsing techniques as the space overhead is too high for large
+data sets.  Moreover, our multiple interpretations of types
+in the DDC makes our theory substantially different from the theory of
+PEGs.
 
 \subsection{Results from Prior NSF Support}
 \label{ssec:results}
