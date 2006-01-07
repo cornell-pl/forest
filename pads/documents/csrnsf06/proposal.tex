@@ -142,6 +142,8 @@ traditional computer science and on interdisciplinary education.
 
 \subsubsection{The Challenges of Ad Hoc Data}
 
+The systems software that monitor ....
+
 There are vast amounts of useful data stored in
 traditional databases and \xml{} formats, but there is just as much in
 ad hoc formats.  \figref{figure:data-sources} provides some information
@@ -157,31 +159,61 @@ representations.
 
 \begin{figure*}
 \begin{center}
-\begin{tabular}{@{}|l|l|l|l|l|}
+\begin{tabular}{|l|l|l|l|l|}
 \hline
-Name: Use                           & Representation    & Processing Problems \\ \hline\hline
-Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
-Gene Product Information 	      & ASCII records &  \\ \hline
-SDSS/Reglens Data~\cite{mandelbaum+:reglens}:                & Floating point numbers, & Repeated multiplicative error \\
-Weak gravitational lensing analysis   & among others & \\ \hline
-Web server logs (CLF):                & Fixed-column      & Race conditions on log entry\\ 
-Measuring web workloads               & ASCII records     & Unexpected values\\ \hline
-AT\&T Call detail data:                          & Fixed-width       & Undocumented data\\
-Phone call fraud detection            & binary records  & \\ \hline 
-AT\&T billing data:                 & Cobol             &  Unexpected values\\ 
-Monitoring billing process          &                   & Corrupted data feeds \\ \hline
-Newick:   Immune                    & Fixed-width ASCII records & None \\ 
-system response simulation          & in tree-shaped hierarchy &\\ \hline                                
-OPRA:                               & Mixed binary \& ASCII records 
-                                                       & 100-page informal \\
-Options-market transactions         & with data-dependent unions & documentation \\ \hline
-Palm PDA:                           & Mixed binary \& character & No high-level  \\
-Device synchronization              & with data-dependent constraints & documentation available\\ \hline
+Name \& Use   &  Representation              &Size           & Common Errors \\ \hline\hline
+Web server logs (CLF): &  Fixed-column  & $\leq$12GB/week & Race conditions \\ 
+Measuring web workloads         &  ASCII records &                 & on log entry \\
+                                &                &                 & Unexpected values\\ \hline
+CoMon data:              &  Geographically & 600 MB/day & Race conditions on\\ 
+Monitor \& troubleshoot  &  distributed    & collected from           & log entry \\
+PlanetLab infrastructure &  ASCII records  & \appr{}400-450 machines           & \\\hline
+AT\&T provisioning data (\dibbler{}): & Variable-width  & 2.2GB/week & Unexpected values \\ 
+Monitoring service activation & ASCII records  &            & Corrupted data feeds \\ \hline
+Phone call detail:   &  Fixed-width   &\appr{}7GB/day &  Undocumented data\\ 
+Fraud detection & binary records & & \\  \hline 
+AT\&T billing data (\ningaui{}): & Various Cobol  & \appr{}4000 files/day, & Unexpected values\\ 
+Monitoring billing process   & data formats            & 250-300GB/day    & Corrupted data feeds \\ \hline
+IP backbone data (\darkstar{})  & ASCII  & $\ge$ 15 sources  & Multiple missing-value \\
+Monitoring network performance  &        & \appr{}15 GB/day              & representations  \\ 
+                                &        &                               & Undocumented data \\\hline
+Netflow       & Data-dependent \# of     & $\ge$1Gigabit/second  & Missed packets\\ 
+Monitoring network performance              &  fixed-width    &                       & \\ 
+               & binary records & & \\ \hline
 \end{tabular}
-\caption{Selected ad hoc data sources.}
+\caption{Selected ad hoc data sources for system monitoring. }
 \label{figure:data-sources}
 \end{center}
 \end{figure*}
+
+
+% \begin{figure*}
+% \begin{center}
+% \begin{tabular}{@{}|l|l|l|l|l|}
+% \hline
+% Name: Use                           & Representation    & Processing Problems \\ \hline\hline
+% Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
+% Gene Product Information 	      & ASCII records &  \\ \hline
+% SDSS/Reglens Data~\cite{mandelbaum+:reglens}:                & Floating point numbers, & Repeated multiplicative error \\
+% Weak gravitational lensing analysis   & among others & \\ \hline
+% Web server logs (CLF):                & Fixed-column      & Race conditions on log entry\\ 
+% Measuring web workloads               & ASCII records     & Unexpected values\\ \hline
+% AT\&T Call detail data:                          & Fixed-width       & Undocumented data\\
+% Phone call fraud detection            & binary records  & \\ \hline 
+% AT\&T billing data:                 & Cobol             &  Unexpected values\\ 
+% Monitoring billing process          &                   & Corrupted data feeds \\ \hline
+% Newick:   Immune                    & Fixed-width ASCII records & None \\ 
+% system response simulation          & in tree-shaped hierarchy &\\ \hline                                
+% OPRA:                               & Mixed binary \& ASCII records 
+%                                                        & 100-page informal \\
+% Options-market transactions         & with data-dependent unions & documentation \\ \hline
+% Palm PDA:                           & Mixed binary \& character & No high-level  \\
+% Device synchronization              & with data-dependent constraints & documentation available\\ \hline
+% \end{tabular}
+% \caption{Selected ad hoc data sources.}
+% \label{figure:data-sources}
+% \end{center}
+% \end{figure*}
 
 
 Processing ad hoc data is challenging for a variety of further reasons. 
@@ -207,16 +239,31 @@ or unexpected values.  For some applications, errors in the data can
 be the most interesting part because they can signal where two systems
 are failing to communicate.
 
-% A fourth challenge is that ad hoc data sources can be high volume:
-% AT\&T's call-detail stream contains roughly 300~million calls per day
-% requiring approximately 7GBs of storage space. Although this data is
-% eventually archived in a database, analysts mine it profitably before
-% such archiving~\cite{kdd98,kdd99}. More challenging, the \ningaui{}
-% project at AT\&T accumulates billing data at a rate of 250-300GB/day,
-% with occasional spurts of 750GBs/day. Netflow data arrives from Cisco
-% routers at rates over a gigabyte per second~\cite{gigascope}! Such
-% volumes mean it must be possible to process the data without loading
-% it all into memory at once.
+Fourth, online systems that process ad hoc data
+are highly susceptible to attack from malicious outsiders.
+For example, intrusion detection systems
+and performance evaluation systems that monitor network activity 
+may be sent erroneous packets or other data that cause buffer overflows
+and allow attackers to take control of, evade, dismantle or corrupt these
+systems.  A cautionary example of the dangers of online ad hoc data
+processors is the Ethereal system~\cite{ethereal}. Ethereal is used by network administrators for monitoring, analyzing
+and troubleshooting networks. Unfortunately, like most network software, users have found a number of
+vulnerabilities in the software, and moreover many of these vulnerabilities are directly related to the mundane
+components of the system that parse ad hoc data as opposed to the parts of the system that perform
+higher-level tasks. For instance, in March 2004, Stefan Esser posted an advisory on 13 different buffer over-
+flow attacks on Ethereal~\cite{etherealvulnerabilities}. Of the 13, 9 attacks occurred during parsing.
+
+Fifth, ad hoc data sources can be high volume:
+AT\&T's call-detail stream contains roughly 300~million calls per day
+requiring approximately 7GBs of storage space. Although this data is
+eventually archived in a database, analysts mine it profitably before
+such archiving~\cite{kdd98,kdd99}. More challenging, the \ningaui{}
+project at AT\&T accumulates billing data at a rate of 250-300GB/day,
+with occasional spurts of 750GBs/day. Netflow data arrives from Cisco
+routers at rates over a gigabyte per second~\cite{gigascope}! Such
+volumes mean performance is critical and it certainly
+must be possible to process the data without loading
+it all into memory at once.
 
 Finally, before anything can be done with an ad hoc data source,
 someone has to produce a suitable parser for it.  Today, people tend
