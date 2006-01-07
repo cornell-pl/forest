@@ -1204,10 +1204,41 @@ that currently make it effective.
 
 If funded, this project will have two major broad impacts.
 
-\paragraph*{Supporting Research in the Natural Sciences}
-In order to have a broad impact across research in the sciences,
-we will develop descriptions and tools for researchers in
-physics, biology and chemistry.
+\paragraph*{Supporting Research across the Social and Natural Sciences}
+While ad hoc data is prevalent in systems research and network monitoring
+infrastructure, it also appears in many other disciplines
+across the natural and social sciences. In finance and economics,
+data analysts process information about stocks, bonds, options and derivatives,
+in cosmology, telescopes and other tools output data about stars, planets and
+galaxies, in microbiology and genomics, vast amounts of data concerning
+genes and gene products is being accumulated using modern computational techniques.
+Figure~\ref{figure:scientific-data-sources} lists a few of the scientific data sources
+we have begun to investigate.
+
+\begin{figure*}
+\begin{center}
+\begin{tabular}{@{}|l|l|l|l|l|}
+\hline
+Name: Use                           & Representation    & Processing Problems \\ \hline\hline
+Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
+Gene Product Information 	      & ASCII records &  \\ \hline
+SDSS/Reglens Data~\cite{mandelbaum+:reglens}:                & Floating point numbers, & Repeated multiplicative error \\
+Weak gravitational lensing analysis   & among others & \\ \hline
+Newick:   Immune                    & Fixed-width ASCII records & None \\ 
+system response simulation          & in tree-shaped hierarchy &\\ \hline                                
+OPRA:                               & Mixed binary \& ASCII records 
+                                                       & 100-page informal \\
+Options-market transactions         & with data-dependent unions & documentation \\ \hline
+\end{tabular}
+\caption{Selected ad hoc scientific data sources.}
+\label{figure:scientific-data-sources}
+\end{center}
+\end{figure*}
+
+
+In order to have a broad impact across the sciences and social sciences,
+we will develop descriptions and tools for researchers in diverse fields ranging from
+physics to biology to chemistry and economics.
 More specifically, we have already developed a partnership with
 Olga Troyanskaya in Princeton's Lewis-Sigler Institute for 
 Integrative Genomics.  Her Magic database system~\cite{magic}
@@ -1227,19 +1258,20 @@ system by allowing Magic to import any data source.  To add new sources,
 all a user will have to do is write a simple, high-level PADS description.
 By adding data sources to the collection Magic
 currently analyses, Magic will be able to make additional and possibly more
-accurate predictions.
-
-More generally, part of our mission will be
-to provide support for the data processing needs of biologists,
-chemists and physicists at Princeton University and 
-the broader natural sciences community.  
-Part of our contribution will be a series of PADS
-descriptions for these formats and the analysis and querying tools we
-can generate automatically from PADS.  A second important contribution
-will be a visual interface built on top of PADS that allows scientists
-to browse data represented in ad hoc data formats without having to
-know anything about programming or parsing.  All of our software will
+accurate predictions.  All of our software will
 be freely available to academics via the Web.
+
+
+% More generally, part of our mission will be
+% to provide support for the data processing needs of biologists,
+% chemists and physicists at Princeton University and 
+% the broader natural sciences community.  
+% Part of our contribution will be a series of PADS
+% descriptions for these formats and the analysis and querying tools we
+% can generate automatically from PADS.  A second important contribution
+% will be a visual interface built on top of PADS that allows scientists
+% to browse data represented in ad hoc data formats without having to
+% know anything about programming or parsing.  
 
 \paragraph*{Undergraduate Research}
 Princeton University has a very active undergraduate research program.
@@ -1252,7 +1284,7 @@ undergraduate independent work with our interdisciplinary effort to
 produce tools for biologists.  We have already recruited Mark Daly,
 a Princeton Senior who is doing his undergraduate senior thesis
 on a PADS user interface and automatic format inference.
-We hope encourage other undergraduates to help us build
+In the future, we will recruit other undergraduates to help us build
 specific data processing tools for the biological data formats
 used in Princeton's Genomics Institute.
 This will introduce students both to interesting and novel
