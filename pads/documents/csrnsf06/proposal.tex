@@ -51,18 +51,35 @@ Language Support for Generation of Systems Monitoring Tools}
 \subsection{Introduction}
 \label{ssec:intro}
 
-Some form of monitoring is now commonly used across a wide range of
-systems, from embedded sensors that monitor physical processes to
+Complex systems must be {\em monitored} to proactively find problems,
+record/archive system health, oversee system operation, detect
+malicious processes or security violations and perform a myriad of other tasks.
+The {\em monitoring subsystems} 
+that perform these tasks take a wide range of forms, 
+from embedded sensors that monitor physical processes to
 intrusion detection systems that monitor flows to a single
 organization to large-scale application/machine monitoring systems
 that monitor the health and performance of Grid and distributed
 systems spanning hundreds to thousands of nodes and tens to hundreds
-of sites. Monitoring can be used to find problems, record/archive
-system health, oversee system operation, and other tasks, but rarely
-is it the focus of an entire system. Even in the case of sensor
+of sites.  However, the construction and maintenance of monitoring systems
+is not normally the top priority for systems implementers.  Even in the 
+case of sensor
 networks, where the primary function of the sensor is to monitor some
 aspect of its environment, the data from the sensor is fed to a much
 larger system solving an overall problem.
+
+% Some form of monitoring is now commonly used across a wide range of
+% systems, from embedded sensors that monitor physical processes to
+% intrusion detection systems that monitor flows to a single
+% organization to large-scale application/machine monitoring systems
+% that monitor the health and performance of Grid and distributed
+% systems spanning hundreds to thousands of nodes and tens to hundreds
+% of sites. Monitoring can be used to find problems, record/archive
+% system health, oversee system operation, and other tasks, but rarely
+% is it the focus of an entire system. Even in the case of sensor
+% networks, where the primary function of the sensor is to monitor some
+% aspect of its environment, the data from the sensor is fed to a much
+% larger system solving an overall problem.
 
 Understandably, with monitoring at the periphery of most system, or
 added after the initial system design, it suffers in many respects --
@@ -75,17 +92,69 @@ lead to monitoring being less useful than it could otherwise be, and
 in the case where the monitoring code itself is incorrect, it can be
 the cause of security problems.
 
-Part of the problem with building monitoring systems is the diversity
-of the data. For any number of reasons, it may be impractical or
-unreasonable to use formats that have their own parsers and associated
-support tools. For example, some systems may be too small or have too
-limited bandwidth to natively use XML, while others may have such high
-data rates that conversion to/from other formats exceeds the
-processing capability of the system. Others may use more compact
-representations, or have so much archived data that conversion to
-other formats may exceed the storage space available to them.
+Part of the problem with building reliable, secure and extensible
+monitoring systems is the diversity
+of the data.  Since construction of monitoring subsystems is often
+somewhat of an afterthought, the monitoring software usually
+must deal with a plethora of preexisting data formats.  
+Moreover, since monitoring is not initially a system architect's
+top priority, these formats are often poorly documented and
+rarely adhere to any sort of standard structure.  After
+initial design of formats, some parts evolve and other parts decay
+--- some data fields are added and others fall into disuse or
+are hijacked for completely different purposes.  When formats are
+optimized for space considerations, their structure and evolution
+becomes even more complex.  
+Even if the current system designer puts great thought 
+into the monitoring subsystem, they often cannot avoid the fact that
+some of the data come from poorly structured legacy systems and devices.
 
-We refer to this kind of data as having an {\em ad hoc data format},
+
+% Part of the problem with building monitoring systems is the diversity
+% of the data. For any number of reasons, it may be impractical or
+% unreasonable to use formats that have their own parsers and associated
+% support tools. For example, some systems may be too small or have too
+% limited bandwidth to natively use XML, while others may have such high
+% data rates that conversion to/from other formats exceeds the
+% processing capability of the system. Others may use more compact
+% representations, or have so much archived data that conversion to
+% other formats may exceed the storage space available to them.
+
+
+% In order to do anything with such data, system implementers typically
+% build ``one-off'' tools for parsing, printing, transforming and
+% visualizing it.  Because of it's nonstandard form, there are no
+% preexisting tools to perform these tasks.  Building these tools takes
+% time and effort and as with any quick hack or ``one-off'' tool, they
+% tend to be unreliable, insecure, hard to maintain and difficult to
+% evolve.
+
+One might suggest we should simply teach system implementers a standard
+format for communicating systems information and produce a collection of 
+reliable, reusable tools for processing that sort of data -- a sort of
+XML for systems implementers.  While this might 
+sound attractive in theory, it will never happen in practice.  We 
+will always be constrained by 
+the formats processed by pre-existing software tools and devices.
+In addition, somebody, somewhere will
+introduce that new data format that they simply intended for themselves, but
+that escapes into the wild and becomes widely used.  There is as much
+chance of moving to a single standard data format
+as there is of moving to a single standard programming language.
+
+
+% Even if system architects showed more foresight when it comes
+% to the design of data formats, For any number of reasons, it may be impractical or
+% unreasonable to use formats that have their own parsers and associated
+% support tools. For example, some systems may be too small or have too
+% limited bandwidth to natively use XML, while others may have such high
+% data rates that conversion to/from other formats exceeds the
+% processing capability of the system. Others may use more compact
+% representations, or have so much archived data that conversion to
+% other formats may exceed the storage space available to them.
+
+We refer to the kind of data often seen in monitoring systems 
+as having an {\em ad hoc data format},
 by which we mean that it is a nonstandard data format for which
 parsing, querying, analysis or transformation tools are not readily
 available.  \xml{} is not an ad hoc data format --- there are hundreds
