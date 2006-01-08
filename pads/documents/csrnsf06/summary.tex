@@ -10,66 +10,79 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \paragraph*{Intellectual Merits:} 
-In every scientific discipline, researchers are digitizing their knowledge and
-beginning to use computational methods to categorize,
-query, filter, search, diagnose, and visualize their data.  
-While this effort is leading to remarkable advances,
-it is also generating enormous amounts of {\em ad hoc data}.
-Ad hoc data is any data for which standard data processing tools
-such as query engines, statistical packages, graphing tools, parsers, printers,
-transformers or programming libraries are not readily available.
-This data, which is often unpredictable, poorly documented,
-filled with errors, high volume and unwieldy,
-poses tremendous challenges to its users and the software
-that manipulates it.  We cannot maximize the productivity of top 
-computational scientists unless we can maximize the efficiency and 
-accuracy with which they deal with this data.  Hence, the overall goal of
-our research is to alleviate the burden, risk and confusion
-associated with ad hoc data.  Our overall strategy is (1) to develop a
-specification language capable of precisely describing any ad hoc data
-format at an easy-to-understand, high level of abstraction and (2) to
-automatically generate useful data processing tools including
-programming libraries, a query engine, format converters, a
-statistical summarizer, a histogram generator and others.
-We will accomplish our task by building upon our preliminary data
-description and processing system, \pads{}, created by the PI and his
-collaborators.  This preliminary system has demonstrated
-there is much research to do in this area.  In particular, if funded we 
-will pursue research on three fronts:
+Complex systems must be {\em monitored} to proactively find problems,
+record/archive system health, oversee system operation, detect
+malicious processes or security violations and perform a myriad of other tasks.
+The {\em monitoring subsystems} 
+that perform these tasks take a wide range of forms, 
+from embedded sensors that monitor physical processes to
+intrusion detection systems that monitor flows to a single
+organization to large-scale systems
+that monitor the health and performance of hundreds to thousands of nodes
+on the Grid.  
+The goal of our research is to improve the reliability, security,
+performance, ease-of-construction and maintaince of system monitors, 
+whether they
+be for monitoring small-scale single-node processes or wide-area, 
+distributed systems.  We will achieve our goal by developing a 
+high-level language, called PADS, capable of specifying
+the data that monitoring systems accumulate, 
+archive and present to users.  Given a high-level specification,
+the PADS compiler will automatically generate a collection of
+reliable, secure and high-performance libraries as well as stand-alone
+tools that perform all of the basic functions of a monitoring system
+including concurrently {\em fetching} data from any number of distributed
+sources, {\em archiving} (self-describing) data for later analysis,
+{\em querying} data to trouble shoot problems, and {\em displaying}
+statistical data summaries so users can monitor system health in real time.
+Moreover, as system requirements change and evolve, implementers may make
+simple changes to the high-level specifications and recompile to 
+automatically obtain an improved monitoring system.  In addition,
+since code is automatically generated, as opposed to hand-written, 
+it will not contain vulnerabilities
+that make other systems susceptible to buffer overflows and related attacks.  
+Finally, since
+PADS will have the ability to describe the format of 
+any data source, users will be able
+to automatically generate monitoring tools that interoperate with
+legacy software, legacy data and legacy devices.  
+Hence, our
+research has the potential to have an immediate impact on the productivity of
+systems implementers and to produce the next generation of monitoring systems.
+Overall, our research will combine principled and innovative language design 
+with high-performance systems engineering, all aimed at solving
+pervasive systems monitoring and measurement problems.
 
-\begin{enumerate}
-\item Extend the preliminary system with new features we have discovered are indispensible to
-scientists who work with ad hoc data.  In particular, the preliminary system only operates
-on single files.  We will extend it so it may operate over and integrate collections of files,
-either local or distributed across a network.  We will also augment PADS so that
-programmers may write simple, high level and easy-to-understand PADS transforms that can fix data errors
-and filter, standardize, coerce, compress, or santize data fields.
-\item  Improve automatic tool generation.  We will research new tool-generation architectures
-that allow anyone to add new tools to the tool-set, which is currently is currently fixed.
-We will also provide mechanisms that allow data descriptions to communicate useful semantic information
-to downstream tools.
-\item Develop the semantic theory of PADS.  We have a partial PADS parsing semantics based on dependent type
-theory but we will extend this semantics to cover our new features and generalize it so it may
-describe other components of the systems including printers and other tools.
-\end{enumerate}
+\paragraph*{Broader Impacts:}  Kathleen Fisher, senior personel, 
+will work with other researchers at AT\&T to transfer our monitoring technology
+to industry.  In addition, we will develop tools 
+for monitoring the health of PlanetLab, a global network
+research testbed with 400-450 nodes and 200-250 network
+experiments running at any given time.  Our troubleshooting and 
+diagnostic tools will provide feedback to PlanetLab users and administrators, 
+thereby improving PlanetLab as a research facility
+for the entire networking community. 
 
-\paragraph*{Broader Impacts:}  We are collaborating with Kathleen Fisher
-and Mary Fernandez at
-AT\&T who will be able to use our tools to address real problems such
-as telephone fraud detection.  In addition, our tools will be freely
-available to researchers and scientists over the web.  Moreover, part
-of our mission will be to work with specific biologists and
-physicists at Princeton and the broader community to help them with
-their data processing needs.  We have already been meeting with Olga
-Troyanskaya, who works in Princeton's Lewis-Sigler Institute for
-Integrative Genomics on pathway modeling and analysis of
-protein-protein interactions, and with Rachel Mandelbaum, Ph.D. candidate
-in physics who analyzes cosmology data.  Many of our proposed extensions to
-\pads{} were inspired directly by their data processing needs.  
-The collaboration between Computer Science and Genomics will also be an
-excellent platform for developing interdisciplinary undergraduate
-research projects.  The PI has a proven track-record 
-for following through with undergraduate and graduate
-educational plans.  Last year, for instance, his undergraduate student advisee, Rob Simmons,
-won the Princeton Computer Science Senior Thesis Award.
+PADS will also make a broad impact outside the networking community.
+The kind of {\em ad hoc data} found in monitoring systems also appears
+across the natural and social sciences, including biology, chemistry,
+physics and economics.  The PADS specification language will be used to
+specify the formats of these other data sources and to generate the
+querying and visualization tools that help improve
+the productivity of computational scientists.  To jumpstart this
+research, we have already been meeting with Olga Troyanskaya,
+professor in Princeton's Lewis-Sigler Institute for Integrative
+Genomics, who does computational analysis of protein-protein
+interactions, and with Rachel Mandelbaum, Ph.D. candidate in physics
+who analyzes cosmology data.  It is clear that if funded, the PADS system
+will make a broad impact on their research --- PADS will free them to use
+their world-class skills on their {\em science} 
+as opposed to labouring over generation of data processing tools.
+The collaboration between computer science, genomics and physics will
+also be an excellent platform for developing interdisciplinary
+undergraduate research projects.  The PI has a proven track-record for
+following through with undergraduate and graduate educational plans.
+In 2004 and 2005, he organized NSF-sponsored summer schools on secure
+and reliable computing.  Last year, his undergraduate student advisee,
+Rob Simmons, won the Princeton Computer Science Senior Thesis Award.
 
