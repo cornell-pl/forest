@@ -1,0 +1,125 @@
+
+\subsubsection{Automatic Tool Generation}
+
+The current \pads{}\ system can automatically generate tools for
+creating statistical summaries of data sources, querying
+data sources and outputting data in standard formats such as
+\xml.  Unfortunately, it is not easy to extend the system with new generic tools,
+nor does the current tool generation process allow all tools to be generated for all formats.
+In this section, we propose several innovative ways of improving our
+automatic tool generation infrastructure.
+
+\paragraph*{Generic Interface Generation}
+Currently, in order to generate any tool, the \pads{} compiler will 
+produce a new version of a parser (or printer) that reads (or writes)
+data in the format in question.  As control traverses the ad hoc data, within the parser (printer) code,
+parts of the data are passed to explicit processing functions that 
+convert to XML, gather statistical data, generate histogram buckets, etc.
+As it stands, there is different traversal code for each different tool.
+In order to add a new tool to the PADS tool suite, it is necessary to modify the compiler
+to generate a new sort of traversal.  Hence, the barrier to adding new tools
+is very high.  Unfortunately, this prevents independent researchers from adding more and more
+useful tools to the suite of tools that apply to any PADS description.
+
+We plan to study software architectures that will allow the compiler to generate
+flexible and highly efficient, but tool-independent traversals for a particular data format.  
+These tool-independent traversals will match a generic tool interface.  If designed correctly, 
+tool implementers will be able to write separate tool-specific code and then link that code
+against a given tool-independent traversal.  Our revised design will take advantage of
+recent research in the functional programming languages community on type-directed 
+programming~\cite{crary+:intensional-types,LPJ03,syb2,SYB3}
+as we have observed that each of our tools is actually an example 
+of a type-directed program -- in other words, the structure of the PADS type directs run-time 
+execution of the tool.
+
+\paragraph*{Attribute-based Tool Generation}
+One important reason that automatic tool generation is brittle
+is that many of the tools must assume that the data passed to them fits a generic
+shape: it must be an optional {\em header} followed by
+a {\em body} that consists of a sequence of records 
+terminated by the end of source.  
+When the data does not fit the assumed shape, automatic
+tool generation cannot be used.  Moreover, in order to specify 
+the header and body sections, a programmer must write a complicated series of
+C macros that specialize the tool.  This process is obviously highly 
+error-prone and extremely inflexible.  We need a more flexible 
+tool generation paradigm that allows data analysts to manipulate
+any data format they might come across, and also to
+analyze any subparts of a data set they deem important.
+
+We propose to develop a more principled and substantially more robust
+approach to automatic tool generation by extending \pads{}\ with a
+high-level attribute system.  {\em Attributes} are tokens that may be
+attached to \pads{}\ specifications and that communicate semantic
+information to tools such as the statistical analyzer and the XML generator.  
+For example, if a data analyst wanted to use the statistical
+summary tool, he or she might attach the {\cd{summary}} attribute to
+the specific parts of a PADS description that describe data that must
+be summarized.  Likewise, to generate \xml{}\ from a portion of the
+data, the analyst might attach the {\cd{xml}} attribute to the
+appropriate component of the \pads{} description.  In addition to
+enabling more robust tool generation, attributes will make our
+generated tools much more flexible.  Analysts will be able to use
+attributes to select portions of the data that they wish to analyze or
+manipulate.
+
+In order to make this new attribute-based tool generation system work,
+we must do considerable research in language design and we must
+re-architect some of the current tool base.  The language design is
+nontrivial because attribute specifications must be separated from the
+basic data format description.  The attributes need to the separated
+because they change frequently and depend upon the current needs of
+the data analyst, whereas the basic data format description is
+independent of any given tool or any given analyst, and ideally
+persists indefinitely.
+
+
+% \paragraph*{Exploiting Semantic Constraints}
+% In addition to being brittle, the current \pads{}\ tools suffer from
+% performance penalties because there is no automatic way to communicate
+% semantic information from the data source to the tool.  The query
+% engine tool, in particular, could benefit tremendously from semantic
+% information such as the property that a given field acts as a {\em
+% key} for a certain record (\ie\  each record of this type in the data
+% source has a unique key field) or the property that an array of
+% records is {\em sorted}.
+
+% We plan to extend the basic attribute system described above with
+% user-defined attributes that are associated with semantic constraints
+% such as the \cd{key} attribute or the \cd{sorted} attribute.  When we
+% generate tools from a \pads{} description and associated attributes,
+% the generated parser will check the semantic constraints as it reads
+% new data.  On the other hand, a downstream tool such as the query
+% engine will be able to assume that the semantic constraints hold
+% (provided the parse descriptor indicates the data is error-free) and
+% it will be able to exploit this knowledge to optimize its query plan.
+% Overall, we believe attributes with semantic constraints will provide
+% an efficient and robust means of communicating information between
+% tools.  However, once again, we must do much more research to develop
+% the right language design and effective tool interfaces.
+
+
+%\label{subsec:general}
+
+% We start by showing in \figref{figure:dibbler-filter} a simple use of 
+% the core library to clean and normalize \dibbler{} data. After initializing
+% the \pads{} library handle and opening the data source, the code sets
+% the mask to check all conditions in the \dibbler{} description except the
+% sorting of the timestamps.  We have omitted from the figure the code to read and write the header. 
+% The code then echoes error records to one file and cleaned ones to another.
+% The raw data has two different representations of unavailable phone numbers:
+% simply omitting the number altogether, which corresponds to the \cd{NONE}
+% branch of the \kw{Popt}, or having the value \cd{0} in the data.  
+% The function \cd{cnvPhoneNumbers} unifies these two representations 
+% by converting the zeroes into \cd{NONE}s.  The function \cd{entry_t_verify}
+% ensures that our computation hasn't broken any of the semantic properties
+% of the in-memory representation of the data.
+% \begin{figure}[t]
+% \begin{small}
+% \begin{center}
+% \input{dibbler_filter}
+% \caption{Code fragment to filter and normalize \dibbler{} data.}
+% \label{figure:dibbler-filter}
+% \end{center}
+% \end{small}
+% \end{figure}

@@ -1,0 +1,194 @@
+
+In this
+section, we discuss a number of the limitations of the current \pads{}\ 
+system and suggest extensions that we believe will be able to rectify
+these deficiencies.  
+
+\paragraph*{Data Transformation, Abstraction and Error-correction}
+Many data sources require simple transformations of various kinds
+immediately before or after parsing.  On output from a system,
+inverse transformations are applied after or before printing.  
+Examples of pre-parsing routines include decryption for
+security-sensitive data and decompression for high-volume scientific data.  
+The natural inverses for printing routines are encryption and compression.
+After parsing, many data sources require, or at least benefit from,
+a variety of simple data transformations.  For example,
+sometimes ad hoc data will have multiple different representations
+of the same concept -- dates in different formats, several different strings
+to represent ``no value'' etc.  Simple transforms can be used to convert
+these representations into a canonical form that facilitates down-stream
+processing.  As another example, many data sources have privacy-sensitive parts
+that should be ``sanitized'' in some way or another, possibly by scrubbing or
+filtering data fields before passing them to down-stream applications.
+Ironically, in October 2005, we asked the Princeton Computer Science
+Department Technical Staff for access to web logs for some experiments
+with \pads, but they refused until they had written scripts to
+sanitize the data for us.  Medical data is another example of highly
+privacy-sensitive data.
+Lastly, almost all ad hoc data may contain errors, but sometimes there will be simple data-specific heuristics such as substitution of default values
+that can be used to fix the most common problems.
+
+It is currently impossible to code multi-stage processing and transformation
+directly in PADS.  One solution
+to this problem might be to let auxiliary passes through the data
+remain outside the PADS system as prepasses or postpasses.  
+Unfortunately, this solution is completely unsatisfactory for a
+number of reasons.  First, doing so
+will often leave us in a situation in which the \pads{} description 
+is not a self-contained
+definition of the data format in question.  Consequently some of the value
+of \pads{} as documentation is lost.  
+Second, programmers must do
+more work themselves to produce PADS applications.  They cannot
+simply run our automatic generators and receive a well-packaged 
+query engine or statistical analyzer for the raw data.
+Moreover, when coding transformation directly in C, the host language
+for \pads{}, they must program at a much lower level of abstraction
+than we might provide by supplying specialized domain-specific
+transformers directly in \pads.
+Since our goal is to maximize the productivity of scientists 
+who use ad hoc data, ease-of-use is a key constraint.
+Finally, some data formats and
+tasks are not well-suited for implementation as a separate pre- or post-pass.
+For example, some formats use non-uniform compression or encryption 
+schemes~\cite{korn+:delta,korn+:data-format}.
+Moreover, tasks such as data sanitization and error correction may be
+data-dependent and directed by the structure of the data.  In other words,
+they may involve just the sort of data analysis that PADS was built for
+and should be integrated directly into the specification mechanism.
+
+To address these difficulties,
+we plan to research mechanisms that facilitate multi-stage data processing 
+directly in PADS.  Since any PADS description must be able to generate 
+both data
+input tools {\em and} data output tools, we currently believe that each
+data processing stage, or layer, should be specified as a pair of
+transformations.  For instance, if data is decompressed on the way in,
+it must be compressed on the way out.  If a field of the data is ``sanitized''
+or filtered on the way in, perhaps a default value of the correct form must
+be written back out to preserve the syntactic structure of the data format.
+
+To achieve this functionality, we will begin by considering a
+transformation specification with the general form 
+\texttt{Ptransform \{ i,o :  Tcon <-> Tabs \}}.
+Here, {\tt Tcon} is the PADS type of the external or {\tt con}crete
+representation and {\tt Tabs} is the PADS type of the internal or 
+{\tt abs}tract representation.  The internal representation of the current
+phase may in turn serve as the external representation for the next
+phase of the transformation.  The functions {\tt i} and {\tt o} are
+user-defined functions that transform data from {\tt Tcon} to 
+{\tt Tabs} and vice versa.  For example, {\tt i} may implement
+decompression and {\tt o} may implement compression.
+
+We intend to add these transformations as first-class
+descriptions/types to the system.  In other words, these
+transformation may be nested inside or otherwise composed with any
+other form of PADS description.  When so nested, the transformation
+will only apply to the appropriate specific subcomponent of the
+format.  Therefore, transformations will be useful for simple
+subcomponent error correction or representation casting as well as
+full data source transformations such as decompression.  In addition,
+transformations with compatible types will be composable.  For
+example, if a data format is compressed and potentially contains
+errors, a decompression transform may be composed with an
+error-correction transform.
+
+The meat of certain transformations such as compression and encryption
+are probably best written as ordinary program code that is
+subsequently included in the PADS description.  However, for smaller
+scale, local transformations, we will investigate adding domain-specific
+programming support.  This support would allow programmers to write
+transforms quickly at an easy-to-understand and high level
+abstraction.  It would also ensure that the output transformations are
+proper inverses of the inputs.  In particular, inspired by recent work
+by Foster et al.~\cite{foster+:lens}, we will explore how to develop a
+library of {\em combinators}, simple composable functions, that can be
+combined in a myriad of ways to produce the transforms {\em and their
+inverses} at the same time.  Foster et al. used such bi-directional transforms to
+solve a synchronization problem on error-free tree-shaped data. 
+While we will exploit some of their
+ideas, our application and
+context are different: we are parsing, transforming and printing ad
+hoc data.  As we do so, we are specifically interested in uncovering,
+representing and handling error-filled data.  One of the critical
+challenges for us will be to design the combinators so that they deal
+with \pads{} parse descriptors correctly
+and conveniently.
+
+
+\paragraph*{Multi-source Data Processing}
+Often, a single logical data source is represented
+as several distinct, concrete repositories.   This is the case
+in the Gene Ontology~\cite{geneontology} data source we have examined,
+where data is split into four disjoint 
+files: a molecular function file, a biological process file,
+a cellular component file and a term definitions file.
+However, the size and number of repositories that make up a single source
+may vary widely.  At the other end of the spectrum are systems involving
+continuous monitoring of widescale phenomena that automatically
+produce new data at phenominal rates.  For example, in order to monitor
+the health of PlanetLab, a distributed network of several hundred machines
+spread across the world, the CoMon monitoring system~\cite{comon} attempts to 
+drag a small data file from each of the machines to a centralized repository once every
+five minutes.  In the
+centralized repository, the data is split into two new formats, each designed to accumulate
+information about a certain aspect of the system.  In all, CoMon produces
+approximately 22,000 files/day.  Unfortunately, the current \pads{} 
+implementation is limited to processing a single data source.
+We propose to extend our specification language to enable 
+automatic generation of tools
+that process multiple data sources, either on one local machine or distributed across a wide area network.  Doing so will require investigation of the 
+following features.
+
+\begin{enumerate}
+\item {\bf Multi-source Specifications}  
+We propose to extend the PADS specification language with a new first-class
+type constructor, \texttt{Pget\{T;e\}}.  Here \texttt{e} specifies
+a protocol for locating and accessing a data source, and \texttt{T} is a PADS type specifying the
+structure of its contents.  The specification language for protocols should be completely flexible
+so it can handle the largest possible collection of applications.  For instance,
+CoMon accesses data via telnet and authentication; other data is available over the web
+through FTP and HTTP.  And of course, the most common application will be to assemble
+multiple sources through the local file system.  Though the construct \texttt{Pget \{T;e\}},
+is simple (which, incidentally, is an explicit design choice)
+we believe that when it interacts with the rest of the PADS specification language
+it will provide powerful access possibilities.  In particular, due to the dependency 
+already present in PADS, it will possible to begin reading the local file that contains information
+concerning where and how to acquire further data.  Then that new information may be later used
+in a \texttt{Pget} directive to locate distributed data.  For instance, to implement
+a CoMon-like monitoring service, a local machine might contain a list of all currently active
+PlanetLab nodes.  A PADS specification might read that list and use the information processed to
+acquire information from all machines on the list.  This way, machines may be added or removed
+from the network and the PADS specification remains unchanged.
+
+% \item {\bf Concurrent Execution}  
+% In order to support access to many sources, possibly distributed across a wide area, it will be necessary
+% to process multiple repositories concurrently.  As data from each new source is requested
+% through the \texttt{Pget} command, we plan on launching a new thread to read the source.
+% However, the dependency in the language may require synchronization between threads.
+% More research is required to understand the optimal implication strategy.
+% However, the fact that PADS is a pure, declarative language should simplify
+% dependency analysis greatly and improve opportunities to hide latency through concurrency.
+
+\item {\bf Temporal Specifications}
+In order to support applications that monitor ongoing phenomena, we plan to investigate how to add
+temporal specifications to PADS.  These temporal specifications might indicate periodic arrival of
+new data (once every five minutes), arrival of data at some specific time in the future (next Tuesday)
+or upon receiving an explicit signal from some external source.  As is the case with our 
+spatial specifications \texttt{Pget}, we will strive for a design that combines simplicity with
+generality.  It is too early in our research to know exactly what form these temporal specifications 
+will take.  However, we plan to pursue the design space diligently.
+
+% BS alert!!
+
+\item {\bf Modular Specifications}
+As specifications begin to get larger and encompass multiple different data repositories,
+possibly with different data formats, standard software engineering practice suggests
+introduction of features to enable modular development of specifications and to allow multiple
+programmers to collaborate on specifications.  The first necessary addition to PADS along these 
+lines is a namespace mechanism to allow programmers to control their type names in a disciplined fashion.
+A second extension we will explore is introduction of more general interfaces that allow programmers
+to make type definitions abstract.  This feature should make it easier to evolve large specifications as
+formats change.
+
+\end{enumerate}
