@@ -128,7 +128,9 @@ regress_o:  sanity_check \
           regress_rwxml_pdate_o \
           regress_rwxml_pdate_explicit_o \
           regress_rwxml_pdate_explicit_me_o \
-          regress_rwxml_enum_o
+          regress_rwxml_enum_o \
+	  regress_rwxml_array_advance_o \
+	  regress_rwxml_message_header_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -177,7 +179,9 @@ regress_d:  sanity_check \
           regress_rwxml_pdate_d \
           regress_rwxml_pdate_explicit_d \
           regress_rwxml_pdate_explicit_me_d \
-          regress_rwxml_enum_d
+          regress_rwxml_enum_d \
+          regress_rwxml_array_advance_d \
+          regress_rwxml_message_header_d
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -454,6 +458,18 @@ regress_rwxml_enum_o: rwxml_enum
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_enum_d: rwxml_enum_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_array_advance_o: rwxml_array_advance
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_array_advance_d: rwxml_array_advance_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_message_header_o: rwxml_message_header
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_message_header_d: rwxml_message_header_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o
