@@ -60,245 +60,45 @@ The {\em monitoring subsystems}
 that perform these tasks take a wide range of forms, 
 from embedded sensors that monitor physical processes to
 intrusion detection systems that monitor flows to a single
-organization to large-scale application/machine monitoring systems
-that monitor the health and performance of Grid and distributed
-systems spanning hundreds to thousands of nodes and tens to hundreds
-of sites.  However, the construction and maintenance of monitoring systems
-is not normally the top priority for systems implementers.  Even in the 
-case of sensor
-networks, where the primary function of the sensor is to monitor some
-aspect of its environment, the data from the sensor is fed to a much
-larger system solving an overall problem.
+organization  
+to large-scale systems
+that monitor the health and performance of hundreds to thousands of nodes
+on the Grid.
 
-% Some form of monitoring is now commonly used across a wide range of
-% systems, from embedded sensors that monitor physical processes to
-% intrusion detection systems that monitor flows to a single
-% organization to large-scale application/machine monitoring systems
-% that monitor the health and performance of Grid and distributed
-% systems spanning hundreds to thousands of nodes and tens to hundreds
-% of sites. Monitoring can be used to find problems, record/archive
-% system health, oversee system operation, and other tasks, but rarely
-% is it the focus of an entire system. Even in the case of sensor
-% networks, where the primary function of the sensor is to monitor some
-% aspect of its environment, the data from the sensor is fed to a much
-% larger system solving an overall problem.
-
-Understandably, with monitoring at the periphery of most system, or
-added after the initial system design, it suffers in many respects --
-its code may not be as well-tested as the core code of the system, it
-may not be regularly updated/maintained as necessary, the formats it
-uses may not have been designed for longevity and evolvability, and
-the data produced by the monitoring system may not have any associated
-pre-existing tools for its manipulation. All of these problems can
-lead to monitoring being less useful than it could otherwise be, and
-in the case where the monitoring code itself is incorrect, it can be
-the cause of security problems.
-
-Part of the problem with building reliable, secure and extensible
-monitoring systems is the diversity
-of the data.  Since construction of monitoring subsystems is often
-somewhat of an afterthought, the monitoring software usually
-must deal with a plethora of preexisting data formats.  
-Moreover, since monitoring is not initially a system architect's
-top priority, these formats are often poorly documented and
-rarely adhere to any sort of standard structure.  After
-initial design of formats, some parts evolve and other parts decay
---- some data fields are added and others fall into disuse or
-are hijacked for completely different purposes.  When formats are
-optimized for space considerations, their structure and evolution
-becomes even more complex.  
-Even if the current system designer puts great thought 
-into the monitoring subsystem, they often cannot avoid the fact that
-some of the data come from poorly structured legacy systems and devices.
-
-
-% Part of the problem with building monitoring systems is the diversity
-% of the data. For any number of reasons, it may be impractical or
-% unreasonable to use formats that have their own parsers and associated
-% support tools. For example, some systems may be too small or have too
-% limited bandwidth to natively use XML, while others may have such high
-% data rates that conversion to/from other formats exceeds the
-% processing capability of the system. Others may use more compact
-% representations, or have so much archived data that conversion to
-% other formats may exceed the storage space available to them.
-
-
-% In order to do anything with such data, system implementers typically
-% build ``one-off'' tools for parsing, printing, transforming and
-% visualizing it.  Because of it's nonstandard form, there are no
-% preexisting tools to perform these tasks.  Building these tools takes
-% time and effort and as with any quick hack or ``one-off'' tool, they
-% tend to be unreliable, insecure, hard to maintain and difficult to
-% evolve.
-
-One might suggest we should simply teach system implementers a standard
-format for communicating systems information and produce a collection of 
-reliable, reusable tools for processing that sort of data -- a sort of
-XML for systems implementers.  While this might 
-sound attractive in theory, it will never happen in practice.  We 
-will always be constrained by 
-the formats processed by pre-existing software tools and devices.
-In addition, somebody, somewhere will
-introduce that new data format that they simply intended for themselves, but
-that escapes into the wild and becomes widely used.  There is as much
-chance of moving to a single standard data format
-as there is of moving to a single standard programming language.
-
-
-% Even if system architects showed more foresight when it comes
-% to the design of data formats, For any number of reasons, it may be impractical or
-% unreasonable to use formats that have their own parsers and associated
-% support tools. For example, some systems may be too small or have too
-% limited bandwidth to natively use XML, while others may have such high
-% data rates that conversion to/from other formats exceeds the
-% processing capability of the system. Others may use more compact
-% representations, or have so much archived data that conversion to
-% other formats may exceed the storage space available to them.
-
-We refer to the kind of data often seen in monitoring systems 
-as having an {\em ad hoc data format},
-by which we mean that it is a nonstandard data format for which
-parsing, querying, analysis or transformation tools are not readily
-available.  \xml{} is not an ad hoc data format --- there are hundreds
-of tools for reading, querying, and transforming \xml{}.  However,
-network administrators, data analysts, computer scientists,
-biologists, chemists, and physicists deal with ad hoc data in a myriad
-of complex formats on a daily basis.  This data, which is often
-unpredictable, poorly documented, and filled with errors poses
-tremendous challenges to its users and the software that manipulates
-it.  
-
-Our goal is to improve the monitoring process and alleviate the
-burden, risk and confusion associated with ad hoc data by developing a
-universal data processing system capable of
-
+At the heart of such monitoring systems is a complex, multifaceted
+data processing problem that involves, at a minimum, the following components.
 \begin{enumerate}
-
-\item concisely and accurately describing any ad hoc data source at an
-easy-to-understand, high-level of abstraction, and
-
-\item automatically generating a suite of highly reliable and
-efficient data processing tools that make understanding, manipulating
-and transforming ad hoc data an effortless task.
-
-\item using this support for ad hoc data processing to build
-general-purpose monitoring tools that can be easily configured to
-display, archive, and query ad hoc data
-
-\item providing automatic and efficient distributed data gathering, so
-that Grid and distributed systems monitoring can be provided in the
-same framework
-
+\item collection and aggregation of information 
+distributed across the monitored system.
+\item data archiving for later querying, measurement, security auditing and 
+post-mortem defect detection
+\item querying and information extraction from archived or current, online data
+\item presentation and graphical display to administrators and users.
 \end{enumerate}
 
-\subsection{Introduction}
-\label{ssec:intro}
+A substantial part of the difficulty of building secure, reliable, efficient
+and evolving monitoring systems is the diversity, quality and volume of data
+these systems must often deal with.  Oftentimes, new monitoring
+subsystems face the problem of having to interact with legacy devices,
+legacy software and legacy data, leaving implementers in a situation
+where they cannot use robust off-the-shelf data management tools built for
+standard formats like XML.  As a result, implementers simply
+hack ``one-off'' monitoring tools of their own, which are invariably
+less reliable, unoptimized, insecure and difficult to impossible to evolve
+when new requirements become known.
 
-An {\em ad hoc data format} is any nonstandard data format for which
-parsing, querying, analysis or transformation tools are not readily
-available.  \xml{} is not an ad hoc data format --- there are hundreds
-of tools for reading, querying, and transforming \xml{}.  However,
-network administrators,
-data analysts, computer scientists,
-biologists, chemists, and physicists deal with ad hoc
-data in a myriad of complex formats on a daily basis.
-This data, which is often unpredictable, poorly documented,
-and filled with errors
-poses tremendous challenges to its users and the software
-that manipulates it.  
-Our goal is to alleviate the burden, risk and confusion associated
-with ad hoc data by developing a universal data processing system
-capable of 
-
-\begin{enumerate}
-\item concisely and accurately describing any ad hoc data source at an 
-easy-to-understand, high-level of abstraction, and
-\item automatically generating a suite of highly reliable and
-efficient data processing tools that make understanding, manipulating 
-and transforming ad hoc data an effortless task.
-\end{enumerate}
-
-Together with his collaborators, the PI has already 
-begun to develop a system called \pads{} (Processing
-Ad hoc Data Sources)~\cite{padsproj,fisher+:700,launchpads} that 
-helps to address some of these concerns.
-It includes a high-level, declarative language for describing
-ad hoc data formats and it is possible to generate tools for
-parsing, printing, querying, generating histograms and 
-statistical summaries of data, and transforming 
-data into \xml.  An online demo~\cite{padsproj} illustrates
-our progress to date.
-Our preliminary work has demonstrated
-there is much research to do in this area.  In particular, if funded we 
-will pursue research on three fronts:
-
-\begin{enumerate}
-\item Extend the preliminary system with new features we have discovered are indispensible to
-scientists who work with ad hoc data.  In particular, the preliminary system only operates
-on single files.  We will extend it so it may operate over and integrate collections of files,
-either local or distributed across a network.  We will also augment PADS so that
-programmers may write simple, high level and easy-to-understand PADS transforms that can fix data errors
-and filter, standardize, coerce, compress, or santize data fields.
-\item  Improve automatic tool generation.  We will research new tool-generation architectures
-that allow anyone to add new tools to the tool-set, which is currently is currently fixed.
-We will also provide mechanisms that allow data descriptions to communicate useful semantic information
-to downstream tools.
-\item Develop the semantic theory of PADS.  We have a partial PADS parsing semantics based on dependent type
-theory but we will extend this semantics to cover our new features and generalize it so it may
-describe other components of the systems including printers and other tools.
-\item In order to have a broad impact across research in the sciences,
-we will develop descriptions and tools for researchers in
-physics, biology and chemistry.
-More specifically, we have already developed a partnership with
-Olga Troyanskaya in Princeton's Lewis-Sigler Institute for 
-Integrative Genomics.  Her Magic database system~\cite{magic}
-reads several data sources
-and applies a Baysian analysis in order to discover gene function.
-Through the use of PADS, we will transform Magic into a truly generic
-system by allowing Magic to import any data source -- to add new sources,
-all a user will have to do is write a simple, high-level PADS description.
-\item To extend and support our relationship with the Genomics Institute,
-and to have a broad impact on interdisciplinary education,
-we plan to develop undergraduate research projects in which
-computer science majors use \pads{} to help biologists 
-with their data processing problems.  
-\end{enumerate}
-
-
-Overall, our research combines novel language design, high-performance
-systems engineering and theoretical analysis.  It will substantially
-increase the overall productivity of data analysts, researchers and
-software architects who deal with ad hoc data regularly, and it will
-improve the security and reliability of the software they produce.
-Finally, our research will also have a broad impact on research in the
-natural sciences, where ad hoc data is pervasive, and on
-interdisciplinary computer science.
-
-In the rest of this introduction, we will explain the immense
-challenges and risks posed by ad hoc data in more detail.  We will
-explain how our proposed system as a whole can deal with them.  We
-will then describe some of the features of \pads{} we have already
-implemented.  After this introductory section, we will describe the
-key components of our new research agenda and explain how our research
-will make a broad impact on disciplines well outside the bounds of
-traditional computer science and on interdisciplinary education.
-
-\subsubsection{The Challenges of Ad Hoc Data}
-
-The systems software that monitor ....
-
-There are vast amounts of useful data stored in
-traditional databases and \xml{} formats, but there is just as much in
-ad hoc formats.  \figref{figure:data-sources} provides some information
-on ad hoc data formats from several different domains ranging from genomics
-to cosmology to networking to finance to internal corporate billing information.  
+We call the nonstandard data formats that monitoring systems must
+collect, aggregate, parse, print, archive, query, and present to 
+users {\em ad hoc data formats}.   These formats, by definition,
+have no standard data processing tools associated with them.
+\figref{figure:data-sources} presents a selection of such formats
+used in a variety of different monitoring systems.
 They include ASCII, binary, and Cobol data formats, with
 both fixed and variable-width records, ranging in size from
 relatively small files through network applications which process over
-a gigabyte per second.  Common errors include undocumented data,
+a gigabyte per second.  Common errors in the data include undocumented data,
 corrupted data, missing data, and multiple missing-value
 representations.
-
 
 \begin{figure*}
 \begin{center}
@@ -329,38 +129,10 @@ Monitoring network performance              &  fixed-width    &                 
 \end{center}
 \end{figure*}
 
-
-% \begin{figure*}
-% \begin{center}
-% \begin{tabular}{@{}|l|l|l|l|l|}
-% \hline
-% Name: Use                           & Representation    & Processing Problems \\ \hline\hline
-% Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
-% Gene Product Information 	      & ASCII records &  \\ \hline
-% SDSS/Reglens Data~\cite{mandelbaum+:reglens}:                & Floating point numbers, & Repeated multiplicative error \\
-% Weak gravitational lensing analysis   & among others & \\ \hline
-% Web server logs (CLF):                & Fixed-column      & Race conditions on log entry\\ 
-% Measuring web workloads               & ASCII records     & Unexpected values\\ \hline
-% AT\&T Call detail data:                          & Fixed-width       & Undocumented data\\
-% Phone call fraud detection            & binary records  & \\ \hline 
-% AT\&T billing data:                 & Cobol             &  Unexpected values\\ 
-% Monitoring billing process          &                   & Corrupted data feeds \\ \hline
-% Newick:   Immune                    & Fixed-width ASCII records & None \\ 
-% system response simulation          & in tree-shaped hierarchy &\\ \hline                                
-% OPRA:                               & Mixed binary \& ASCII records 
-%                                                        & 100-page informal \\
-% Options-market transactions         & with data-dependent unions & documentation \\ \hline
-% Palm PDA:                           & Mixed binary \& character & No high-level  \\
-% Device synchronization              & with data-dependent constraints & documentation available\\ \hline
-% \end{tabular}
-% \caption{Selected ad hoc data sources.}
-% \label{figure:data-sources}
-% \end{center}
-% \end{figure*}
-
-
-Processing ad hoc data is challenging for a variety of further reasons. 
-First, ad hoc data typically arrives ``as is'': the analysts
+Processing this sort of 
+ad hoc data is challenging for a variety of further reasons. 
+First, when the data comes from legacy software, sources or devices, it 
+typically just arrives ``as is'': the analysts
 who receive it can only say ``thank you,'' not request a more
 convenient format.  Second, documentation for the format may not exist
 at all, or it may be out of date.  A common phenomenon is for a field
@@ -380,13 +152,14 @@ to stop immediately and a human must be alerted.  Other applications
 can repair the data, while still others can simply discard erroneous
 or unexpected values.  For some applications, errors in the data can
 be the most interesting part because they can signal where two systems
-are failing to communicate.
+are failing to communicate.  Monitoring systems may need to respond to such
+errors immediately and effectively.
 
-Fourth, online systems that process ad hoc data
+Fourth, online monitoring systems
 are highly susceptible to attack from malicious outsiders.
 For example, intrusion detection systems
 and performance evaluation systems that monitor network activity 
-may be sent erroneous packets or other data that cause buffer overflows
+may be sent malicious packets or other data that cause buffer overflows
 and allow attackers to take control of, evade, dismantle or corrupt these
 systems.  A cautionary example of the dangers of online ad hoc data
 processors is the Ethereal system~\cite{ethereal}. Ethereal is used by network administrators for monitoring, analyzing
@@ -419,7 +192,62 @@ hard-won understanding of the data ends up embedded in parsing code,
 making long-term maintenance difficult for the original writers and
 sharing the knowledge with others nearly impossible.
 
-\subsubsection{\pads{}:  Taking on the Challenge of Ad Hoc Data}
+\paragraph*{Data-centric Monitor Generation}
+We propose {\em data-centric monitor generation}, a new paradigm
+for construction system monitors, in which programmers
+specify the shape and properties of data manipulated by
+the monitoring system and a compiler automatically
+generates efficient, reliable and secure
+monitoring tools from that specification.
+More specifically, the system will consist of the 
+following components:
+
+\begin{enumerate}
+
+\item A high-level specification language to describe a monitor's
+data sources.  The specification language will be able to
+concisely and accurately describing any ad hoc data source,
+including its format, semantic properties, location, and
+temporal attributes in an easy-to-understand, easy-to-modify syntax.
+
+\item A compiler that takes data specifications as inputs and
+automatically generates a suite of highly reliable and
+efficient data processing libraries for parsing, printing, error detection
+and correction, distributed data gathering, compression and 
+reformatting of ad hoc data.
+
+\item A fully automatic tool generator that links the compiler-generated 
+libraries to format-independent tool stubs to produce easy-to-use 
+tools for high-level tasks including data display and querying.
+
+\end{enumerate}
+
+Together, the PI, David Walker (Princeton), Co-PI Vivek Pai
+(Princeton) and Senior Personnel Kathleen Fisher (AT\&T Research) are
+uniquely qualified to carry out this research as they bring the
+necessary combination of skills in language design, compilers,
+distributed systems, large-scale data processing and practical system
+monitoring as well as both academic and industrial perspectives to the
+task.  In addition, they have already built a partial prototype system
+(called PADS) to investigate the feasibility of the proposed ideas.
+The prototype includes preliminary design of a high-level, declarative
+language for describing ad hoc data formats and a compiler capable of
+generating parsing, printing, and reformatting libraries.
+
+In the rest of this introduction, we will explain 
+how our prototype system is designed --- we will attempt to
+scale this prototype design up to the point where it can be used
+as a robust and complete data-centric monitor generator.
+After this introductory section, we will highlight some of the main
+research challenges we face in building a complete system.
+In Section~\ref{ssec:impact} we will explain how our research
+on automatic generation of data processing tools
+will make a broad impact on data processing that must be done
+in disciplines well outside the bounds of
+traditional computer science ranging from microbiology to physics to
+economics.  We will also explain our education plan.
+
+\subsubsection{PADS:  A First Step Towards Data-Centric Monitor Generation}
 
 The \pads{} system makes life easier for data analysts by addressing
 each of the concerns outlined in the previous section.
