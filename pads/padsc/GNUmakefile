@@ -38,6 +38,9 @@ regress_pglx:
 usecase_regress:
 	@(cd usecases; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
 
+perf_regress:
+	@(cd perf; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
+
 test_xml:
 	@(cd examples/xml/tests; $(MAKE) regress) 
 

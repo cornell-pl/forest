@@ -42,6 +42,9 @@ regress_pglx:
 usecase_regress:
 	@(cd padsc; $(MAKE) usecase_regress)
 
+perf_regress:
+	@(cd padsc; $(MAKE) perf_regress)
+
 test_xml:
 	@(cd padsc; $(MAKE) test_xml)
 
