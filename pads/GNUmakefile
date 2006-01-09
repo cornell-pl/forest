@@ -36,8 +36,8 @@ padsc_comp:
 regress:
 	@(cd padsc; $(MAKE) regress)
 
-regress_pglx:
-	@(cd padsc; $(MAKE) regress_pglx)
+pglx_regress:
+	@(cd padsc; $(MAKE) pglx_regress)
 
 usecase_regress:
 	@(cd padsc; $(MAKE) usecase_regress)
