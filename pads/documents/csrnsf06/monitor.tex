@@ -17,9 +17,9 @@ framework capable of scaling from monitoring single feeds at a single
 location to monitoring data on thousands of machines in distributed
 environments. This framework will consist of the following components:
 
-\begin{itemize}
+\begin{enumerate}
 
-\item Fetch -- grab the data from one or more sources, in parallel if
+\item {\bf Fetch} grab the data from one or more sources, in parallel if
 needed, and perform whatever aggregation is necessary to begin parsing
 the data. While this step may be application-specific, many
 applications will use either TCP or UDP combined with a
@@ -30,7 +30,7 @@ While basic parameterization support will be included, this portion
 will obviously be extensible, so that developers can customize it if
 needed.
 
-\item Display -- once we have the raw data for one or more systems, we
+\item {\bf Display} once we have the raw data for one or more systems, we
 can use the PADS descriptions to extract and appropriately format the
 data for display. We will use HTML tables so that the data can be
 viewed and manipulated interactively in Web browsers, but will also
@@ -46,7 +46,7 @@ statistical information about the data it gathers, cell values can be
 color-coded automatically, if no additional input is provided by the
 developers.
 
-\item Query -- using the type information from the PADS description,
+\item {\bf Query} using the type information from the PADS description,
 provide a mechanism where rows can be selected from the table based on
 their contents. Users would be able to provide logical and arithmetic
 expressions that could be evaluated using the per-row data, with the
@@ -57,7 +57,7 @@ attention, or have situations of interest. For example, in a Grid
 environment, when deploying a new experiment, it may be useful to
 select the nodes with lower-than-average utilization.
 
-\item Archive -- the data fetched from the machines can be archived
+\item {\bf Archive} the data fetched from the machines can be archived
 along the with the description to process it. In this way, the data is
 self-documenting, and can be accessed in the future using the same
 tools as current data. The same support for viewing, querying, etc.,
@@ -69,7 +69,7 @@ data is processed and cached in a post-processed, indexed form, even
 if all of the data is stored in a raw format. This optimization can be
 transparent to the developer and the users of the tools.
 
-\end{itemize}
+\end{enumerate}
 
 What makes these tasks especially attractive in our context is that
 they can be almost entirely automated given a well-formed data

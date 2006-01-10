@@ -311,13 +311,29 @@ of any format.  In order to implement format-specific behavior, they
 are linked with the core libraries, which will be carefully designed to
 satisfy a generic, format-independent interface.  Examples of
 format-independent tools include a generic query engine that
-allows users to extract information from the data without the
-expense of exploding it into a standard generic format such as XML
-(which can cause an unacceptable 8-10 times blow-up 
-in space requirements), a visualization tool that produces
-web page summaries of data statistics, a reformatter to convert data
-to a new format required by an off-the-shelf tool, or
-some custom stub built for this particular application.  
+allows users to extract information from the data, 
+a visualization tool that produces
+web page summaries of data statistics or a reformatter to convert data
+to a new format required by an off-the-shelf tool.  In addition,
+a programmer may simply use the generated format-specific libraries directly 
+within their own application program, custom built for some unique task. 
+Of course whenever a programmer builds a new tool for their application, 
+they may do so using the format-independent interface to the generated
+libraries.  If they do so, their new tool may be reused by others
+who have different data, but require a similar functionality.
+
+At this point, the astute reader may ask why not simply generate
+exactly one tool -- a translator that maps the ad hoc data into
+XML, a standard format with hundreds of available tools and
+rich programming support and all modern, widely used languages.
+The problem with such an architecture is that ad hoc formats
+are usually quite compact and exploding them into XML representations
+can easily result in a blowup of 8-10 times.  Consequently, tiny
+sensors in a sensor network cannot afford the expense of managing
+XML data.  More generally, when the data sets get large, and we 
+have seen they do in monitoring systems, 
+ranging from 100s of MB/week to 100GB/day,
+the extra overhead of a 10 times blowup is simply unaffordable.
 
 \paragraph*{The Prototype Description Language}
 To understand further how the \pads{} will be used,
@@ -547,66 +563,6 @@ bool chkVersion(version\_t v, method\_t m) \{
 \caption{\pads{} description for Web Log data.}
 \label{figure:clf}
 \end{figure}
-
-
-% Returning to the CLF description in \figref{figure:wsl}, the \kw{Penum} type \cd{method_t} describes
-% a collection of data literals.  During parsing, \pads{} interprets these
-% constants using the ambient character encoding.  The \kw{Ptypedef} 
-% \cd{response_t} describes possible server response codes in CLF data by adding
-% the constraint that the three-digit integer must be between 100 and 600.
-
-% \setlength{\floatsep}{0pt}
-% \setlength{\dblfloatsep}{0pt}
-% \setcounter{totalnumber}{4}
-% \setcounter{dbltopnumber}{2}
-% \begin{figure*}[t!]
-% \begin{small}
-% \begin{center}
-% \begin{code}
-% \input{ai.paper}
-% \end{code}
-% \vskip -2ex
-% \caption{Tiny example of web server log data.}
-% \label{figure:clf-records}
-% \end{center}
-% \end{small}
-% \end{figure*}
-
-
-% \begin{figure}
-% \input{wsl}
-% \caption{\pads{} description for web server log data.}
-% \label{figure:wsl}
-% \end{figure}
-
-% \subsection{Overview of Planned Research}
-% \label{ssec:sow}
-
-% Our central research agenda is divided into three broad subsections,
-% which we will discuss here; our broader impacts will be discussed in the next 
-% section.  First, our experience with real-world data has revealed that
-% the current \pads{}\ system is unable to process certain kinds of
-% data sources, several of which are quite prevalent.  We 
-% propose a number of extensions to \pads{} 
-% that will greatly improve its expressive power and enable
-% us to handle many more important ad hoc formats.  Second,
-% while \pads{}\ can automatically generate tools for providing
-% statistical data summaries, querying ad hoc data and generating
-% \xml, the tool generation process is brittle and inflexible.  We 
-% propose to redesign
-% the automatic tool generation process using a principled methodology
-% based upon type-directed programming paradigms and
-% a novel \pads{}-attribute system that can communicate
-% semantic information from descriptions to tools.  
-% Third, while we have already begun a
-% semantic analysis of \pads{} that has turned to be extremely useful in 
-% practice, we only analyzed a small portion of the PADS system.  
-% We propose to formalize further elements language, particularly
-% output processors (printers) and prove critical \pads{} correctness
-% properties including the coherence of parsing and printing.  
-% Overall, our research combines novel language
-% design, high-performance systems engineering and theoretical analysis,
-% all aimed at solving crucial data processing problems.
 
 \subsection{Monitoring Framework}
 \input{monitor}
