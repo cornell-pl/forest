@@ -211,7 +211,7 @@ including its format, semantic properties, location, and
 temporal attributes in an easy-to-understand, easy-to-modify syntax.
 
 \item A compiler that takes data specifications as inputs and
-automatically generates a suite of highly reliable and
+automatically generates a suite of 
 efficient data processing libraries for parsing, printing, error detection
 and correction, distributed data gathering, compression and 
 reformatting of ad hoc data.
@@ -234,55 +234,52 @@ The prototype includes preliminary design of a high-level, declarative
 language for describing ad hoc data formats and a compiler capable of
 generating parsing, printing, and reformatting libraries.
 
-In the rest of this introduction, we will explain 
-how our prototype system is designed --- we will attempt to
-scale this prototype design up to the point where it can be used
-as a robust and complete data-centric monitor generator.
-After this introductory section, we will highlight some of the main
-research challenges we face in building a complete system.
-In Section~\ref{ssec:impact} we will explain how our research
+In the follow section, we will explain 
+the architecture of a data-centric monitor generation system
+and our prototype language design in more detail.  
+Next, we will explain more of the specifics concerning
+the generated tool suite for system monitoring.
+In Section~\ref{sec:features}, we will highlight some of the most
+important language design challenges we face and
+in Secution~\ref{sec:semantics}, we will propose a
+formal system analysis to identify implementation errors
+and improve system reliability.
+In Section~\ref{ssec:impact}, we will explain how our research
 on automatic generation of data processing tools
 will make a broad impact on data processing that must be done
 in disciplines well outside the bounds of
 traditional computer science ranging from microbiology to physics to
 economics.  We will also explain our education plan.
 
-\subsubsection{PADS:  A First Step Towards Data-Centric Monitor Generation}
+\subsection{A Data-Centric Monitor Generation System}
 
-The \pads{} system makes life easier for data analysts by addressing
-each of the concerns outlined in the previous section.
-It provides a declarative data description
-language that permits analysts to describe the physical layout of
-their data, \textit{as it is}.  The language also permits analysts to
-describe expected semantic properties of their data so that deviations can
-be flagged as errors. The intent is to allow analysts to capture in a
-\pads{} description all that they know about a given data source
-and to provide the analysts with a library of useful routines in exchange. 
+\paragraph*{Basic Architecture}
+Figure~\ref{fig:arch} presents the architecture of our proposed
+system.  At the top of the picture is the declarative description of all
+data that will be used by the monitoring system.  It is here that
+programmers encode all their knowledge about their data sources,
+including the physical layout of data, its semantic properties
+(including constraints on data fields and expected relations
+with other fields) so deviations can be flagged as errors, 
+its location, access protocol, when the data
+will be ready for fetching and how often, etc.
 
+In exchange for the work the programmer puts in describing their
+data sources, the compiler system will generate
+a robust and efficient library of {\em format-specific routines} (the center
+square in the picture).
+The core format-specific 
+library includes parser, printer, error detection and data traversal
+routines.  The core libraries will also be reponsible for controlling
+access to and aggregation of any data distributed across wide area
+networks and archiving local data along with its description.  
 
-\pads{} descriptions are intended to be concise enough to serve as
-documentation and flexible enough to describe many ASCII, binary,
-Cobol, and mixed data formats.  In addition, useful software tools
-can be generated from the descriptions and this feature provides
-strong incentive for keeping the descriptions current, allowing them
-to serve as living documentation.  
-
-Given a \pads{} description, the \pads{} compiler produces
-customizable \C{} libraries and tools for parsing, manipulating, and
-summarizing the data.  The core \C{} library includes functions for
-reading the data, writing it back out in its original form, writing it
-into a canonical \xml{} form, pretty printing it in forms suitable for
-loading into a relational database, and accumulating statistical
-properties.  An auxiliary library provides an instance of the data API
-for Galax~\cite{galax,galaxmanual}, an implementation of XQuery.  This
-library allows users to query data with a \pads{} description as if
-the data were in \xml{} without having to convert to \xml, which often
-can avoid an 8-10 times blow-up in space requirements.  
-
-The declarative nature of \pads{} descriptions facilitates the
-insertion of error handling code.  The generated parsing code checks
+Since these core libraries are compiler-generated from a
+high-level data specification, they have many advantages over
+hand-written code.  First, the generated code checks
 all possible error cases: system errors related to the input file,
-buffer, or socket; syntax errors related to deviations in the physical
+buffer, socket or remote data provider; 
+syntax errors related to deviations in the physical
 format; and semantic errors in which the data violates user
 constraints.  Because these checks appear only in generated code, they
 do not clutter the high-level declarative description of the data
@@ -294,116 +291,39 @@ buffer overflows.  Moreover, as formats change and are updated,
 one can make a small change in the high-level description
 and the compiler will takes care of the rest.  It is extremely unlikely
 new vulnerabilities or buffer overflows will be added to the code
-base over time as formats change.
+base over time as formats change.  Finally, all routines will
+be highly optimized for processing the massive
+data sets one sees in practice.
 
-The result of a parse is a pair consisting of a canonical
-in-memory {\em representation} of the data and a {\em parse descriptor}. 
-The parse
-descriptor precisely characterizes both the syntactic and the semantic
-errors that occurred during parsing.  This structure allows analysts
-to choose how to respond to errors in application-specific ways.
+\begin{figure}[t]
+\begin{center}
+\centerline{\psfig{file=arch-crop.ps,width=6.01in}}
+\end{center}
+\caption{\label{fig:arch} Architecture of Data-centric Monitor Generator.
+}
+\end{figure}
 
-% With such huge datasets, performance is critical. The \pads{} system
-% addresses performance in a number of ways.  First, we compile the
-% \pads{} description rather than simply interpret it to reduce run-time
-% overhead.  Second, the generated parser provides multiple entry
-% points, so the data consumer can choose the appropriate level of
-% granularity for reading the data into memory to accommodate very large
-% data sources.  Finally, we parameterize library functions by
-% \textit{masks}, which allow data analysts to choose which semantic
-% conditions to check at run-time, permitting them to specify all known
-% properties in the source description without forcing all users of that
-% description to pay the run-time cost of checking them.
+In addition to the compiler, which generates the core, format-specific
+libraries, the system includes a number of {\em format-independent stubs}
+that make use of the generated libraries and implement higher-level
+functionality.  Each of these stubs are programmed once, independent
+of any format.  In order to implement format-specific behavior, they
+are linked with the core libraries, which will be carefully designed to
+satisfy a generic, format-independent interface.  Examples of
+format-independent tools include a generic query engine that
+allows users to extract information from the data without the
+expense of exploding it into a standard generic format such as XML
+(which can cause an unacceptable 8-10 times blow-up 
+in space requirements), a visualization tool that produces
+web page summaries of data statistics, a reformatter to convert data
+to a new format required by an off-the-shelf tool, or
+some custom stub built for this particular application.  
 
-% Given the importance of the problem, it is perhaps surprising that
-% more tools do not exist to solve it.  \xml{} and relational databases
-% only help with data already in well-behaved formats.  Lex and Yacc are
-% both over- and under- kill.  Overkill because the division into a
-% lexer and a context free grammar is not necessary for many ad hoc data
-% sources, and under-kill in that such systems require the user to build
-% in-memory representations manually, support only ASCII sources, and
-% don't provide extra tools.  ASN.1~\cite{asn} and related
-% systems~\cite{asdl} allow the user to specify an in-memory
-% representation and generate an on-disk format, but this doesn't help
-% when given a particular on-disk format.  Existing ad hoc description
-% languages~\cite{gpce02,sigcomm00,erlang} are steps in the right
-% direction, but they focus on binary, error-free data and they do not
-% provide auxiliary tools.
-
-% We propose to extend and improve the current \pads{}\ prototype by engaging
-% in three intertwined research efforts:
-
-% \begin{enumerate}
-% \item Our experience with real-world data has revealed that
-% the current \pads{}\ system is unable to process many common
-% data formats.  We propose a number of extensions to \pads{} 
-% that will greatly improve its expressive power and enable
-% us to handle many more important ad hoc formats.
-% \item While \pads{}\ can automatically generate tools for providing
-% statistical data summaries, querying ad hoc data and generating
-% \xml, the tool generation process is extremely brittle, inflexible
-% and results in low-performance software.  We propose to redesign
-% the automatic tool generation process using a principled methodology
-% based upon a novel \pads{}-attribute system that can communicate
-% semantic information across tools.  Our new methodology will
-% improve the flexibility and reliability of the \pads{} system.
-% \item There is no formal description of the \pads{} language
-% and no semantics for the compiler or tools.  We propose to
-% formalize the language and analyze the semantics of the
-% compiler.  Our formal analysis may find bugs or flaws in the
-% \pads{} system and will improve our confidence in the implementation.
-% \end{enumerate}
-
-% \noindent
-% In addition, part of our mission will be to use \pads{} to provide
-% data processing tools for researchers in the natural sciences including
-% biology, chemistry and physics.  
-
-% In building the \pads{} system, we faced challenges on two fronts:
-% designing the data description language and
-% crafting the generated libraries and tools.
-% In the rest of the paper, 
-% we describe each of these designs.
-% We also give examples to show how useful they have been at AT\&T.
-
-
-\subsubsection{The Current \pads{} Language Infrastructure}
-
-% \figref{figure:data-sources} summarizes some of the sources we have
-% worked with.  They include ASCII, binary, and Cobol data formats, with
-% both fixed and variable-width records, ranging in size from
-% relatively small files through network applications which process over
-% a gigabyte per second.  Common errors include undocumented data,
-% corrupted data, missing data, and multiple missing-value
-% representations.
-
-
-% \subsection{Common Log Format}
-% Web servers use the Common Log Format (CLF) to log client
-% requests~\cite{wpp}.  Researchers use such logs to measure
-% properties of web workloads and to evaluate protocol changes
-% by "replaying" the user activity recorded in the log.
-% This ASCII format consists of a sequence of
-% records, each of which has seven fields: the host name or IP address
-% of the client making the request, the account associated with the
-% request on the client side, the name the user provided for
-% authentication, the time of the request, the actual request, the
-% \textsc{http} response code, and the number of bytes returned as a
-% result of the request.  The actual request has three parts: the
-% request method (\eg, \texttt{GET}, \texttt{PUT}), the requested
-% \textsc{uri}, and the protocol version.  In addition, the second and
-% third fields are often recorded only as a '-' character to indicate
-% the server did not record the actual data.  \figref{figure:clf-records}
-% shows a couple of typical records.
-
-
-To understand further how \pads{} can be used,
-let us look at an example of ad hoc data:
+\paragraph*{The Prototype Description Language}
+To understand further how the \pads{} will be used,
+let us look at an example of a simple ad hoc data source:
 a tiny fragment of data in the Common Log Format (CLF) that web
 servers use to log client requests~\cite{wpp}.  
-Systems researchers use such logs to measure
-properties of web workloads and to evaluate protocol changes
-by ``replaying'' the user activity recorded in the log.
 This ASCII format consists of a sequence of
 records, each of which has seven fields: the host name or IP address
 of the client making the request, the account associated with the
@@ -436,7 +356,8 @@ tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /spt/dd@grp.org/cfm HTTP/1.0
 \end{footnotesize}
 \end{figure*}
 
-With this example, we can examine how to use \pads{} to describe 
+With this example, we can examine how to use the prototype 
+\pads{} language to describe 
 the {\em physical layout} and 
 {\em semantic properties} of our ad hoc data source. 
 The language provides a type-based model:
@@ -445,7 +366,7 @@ strings, dates, urls, \etc, while
 structured types describe compound data built from simpler pieces.
 
 In a bit more detail,
-the \pads{} library provides a collection of broadly useful base
+\pads{} prototype provides a collection of broadly useful base
 types.  Examples include 8-bit unsigned integers (\cd{Puint8}), 32-bit
 integers (\cd{Pint32}), dates (\cd{Pdate}), strings (\cd{Pstring}),
 and IP addresses (\cd{Pip}).  Semantic conditions for such base types
@@ -463,9 +384,9 @@ which the programmer can set.  By default, \pads{} uses ASCII.
 % these types, users can define their own base types to specify more
 % specialized forms of atomic data.
 
-To describe more complex data, \pads{} provides a collection of
+To describe more complex data, the prototype provides a collection of
 structured types loosely based on \C{}'s type structure.  In
-particular, \pads{} has \kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s
+particular, the prototype has \kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s
 to describe record-like structures, alternatives, and sequences,
 respectively.  \kw{Penum}s describe a fixed collection of literals,
 while \kw{Popt}s provide convenient syntax for optional data.  Each of
@@ -567,9 +488,6 @@ it will attempt to recover to a record boundary.
 In practice, we have found this to be a very robust recovery mechanism
 for ad hoc data.  
 
-Other examples of \pads{} descriptions and an online demo may be
-found at \url{www.padsproj.org}.
-
 \begin{figure}
 \begin{small}
 \begin{code}
@@ -661,34 +579,34 @@ bool chkVersion(version\_t v, method\_t m) \{
 % \label{figure:wsl}
 % \end{figure}
 
-\subsection{Overview of Planned Research}
-\label{ssec:sow}
+% \subsection{Overview of Planned Research}
+% \label{ssec:sow}
 
-Our central research agenda is divided into three broad subsections,
-which we will discuss here; our broader impacts will be discussed in the next 
-section.  First, our experience with real-world data has revealed that
-the current \pads{}\ system is unable to process certain kinds of
-data sources, several of which are quite prevalent.  We 
-propose a number of extensions to \pads{} 
-that will greatly improve its expressive power and enable
-us to handle many more important ad hoc formats.  Second,
-while \pads{}\ can automatically generate tools for providing
-statistical data summaries, querying ad hoc data and generating
-\xml, the tool generation process is brittle and inflexible.  We 
-propose to redesign
-the automatic tool generation process using a principled methodology
-based upon type-directed programming paradigms and
-a novel \pads{}-attribute system that can communicate
-semantic information from descriptions to tools.  
-Third, while we have already begun a
-semantic analysis of \pads{} that has turned to be extremely useful in 
-practice, we only analyzed a small portion of the PADS system.  
-We propose to formalize further elements language, particularly
-output processors (printers) and prove critical \pads{} correctness
-properties including the coherence of parsing and printing.  
-Overall, our research combines novel language
-design, high-performance systems engineering and theoretical analysis,
-all aimed at solving crucial data processing problems.
+% Our central research agenda is divided into three broad subsections,
+% which we will discuss here; our broader impacts will be discussed in the next 
+% section.  First, our experience with real-world data has revealed that
+% the current \pads{}\ system is unable to process certain kinds of
+% data sources, several of which are quite prevalent.  We 
+% propose a number of extensions to \pads{} 
+% that will greatly improve its expressive power and enable
+% us to handle many more important ad hoc formats.  Second,
+% while \pads{}\ can automatically generate tools for providing
+% statistical data summaries, querying ad hoc data and generating
+% \xml, the tool generation process is brittle and inflexible.  We 
+% propose to redesign
+% the automatic tool generation process using a principled methodology
+% based upon type-directed programming paradigms and
+% a novel \pads{}-attribute system that can communicate
+% semantic information from descriptions to tools.  
+% Third, while we have already begun a
+% semantic analysis of \pads{} that has turned to be extremely useful in 
+% practice, we only analyzed a small portion of the PADS system.  
+% We propose to formalize further elements language, particularly
+% output processors (printers) and prove critical \pads{} correctness
+% properties including the coherence of parsing and printing.  
+% Overall, our research combines novel language
+% design, high-performance systems engineering and theoretical analysis,
+% all aimed at solving crucial data processing problems.
 
 \subsection{Monitoring Framework}
 \input{monitor}
@@ -877,10 +795,9 @@ parsing/printing problem,
 whereas our research will exploit the declarative nature of our data
 descriptions to automatically generate additional useful tools and
 programming libraries.  \pads{} substantial 
-collection of value-added tools and libraries is 
+collection of automatically-generated tools and libraries is 
 one of the key incentives that will make it
-worth a programmer's while to learn \pads{}
-and develop and maintain data descriptions for their applications.
+worth a programmer's while to use \pads to generate monitoring infrastructure.
 
 The Binary Format Description language (BFD)~\cite{bfd} is a fragment of
 XML that allows programmers to specify binary and ASCII formats.  BFD
@@ -905,13 +822,13 @@ that the XML{} view of the ad hoc data is implicit in a DFDL{}
 description.  DFDL{} is still being specified, so no DFDL-aware
 parsers or data analyzers exist yet.  
 
-There are parallels between PADS types and some of the elements of parser
-combinator libraries found in languages like
-Haskell~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
-However, as with most other general-purpose parsing tools, one cannot
-simply put together a collection of Haskell's parser combinators and
-automatically generate domain-specific programs such as 
-an XML converter or a histogram generator, for instance.  
+% There are parallels between PADS types and some of the elements of parser
+% combinator libraries found in languages like
+% Haskell~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
+% However, as with most other general-purpose parsing tools, one cannot
+% simply put together a collection of Haskell's parser combinators and
+% automatically generate domain-specific programs such as 
+% an XML converter or a histogram generator, for instance.  
 
 A somewhat different class of languages includes
 \textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}.  Both of
@@ -937,9 +854,10 @@ non-XML syntax. It also guarantees that conversion will be invertable.
 However, it does not use theory of Galois connections, but instead
 introduces a notion of ``ignorable'' grammar components (inferred
 based on properties of grammar) and proves bijection modulo these
-ignorable elements.  More importantly, since the basis of
-interconversion is a context free grammar, unlike PADS, formats that
-required dependency may not be expressed.
+ignorable elements.  However, conversion from native format to
+XML causes an 8-10 times space blowup or more so it cannot be
+used in resource constrained situations such as on tiny sensors
+or in general when data volumes get large.
 
 XDTM~\cite{zhao+:sigmod05,xdtm} uses XML Schema to describe the
 locations of a collection of sources spread across a local file system
