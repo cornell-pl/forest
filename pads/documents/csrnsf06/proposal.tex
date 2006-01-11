@@ -741,12 +741,10 @@ users must write a lexer, write a
 grammar, and construct the in-memory representations by hand.  In
 addition, they only work for ASCII data, they do not easily
 accommodate data-dependent parsing, and they do not provide auxiliary
-services such as automatic XML conversion, statistical analysis and
-others.  Some more modern parser generators such as ANTLR~\cite{antlr} alleviate
+services such as an archiver, a query engine or a display tool.
+Some more modern parser generators such as ANTLR~\cite{antlr} alleviate
 a few of these problems, but they still do not automatically generate auxiliary tools
-useful in processing ad hoc data nor do they provide good support for generating
-rich, well-typed in-memory representations (ANTLR's in-memory representations
-are very limited when compared with PADS and the extensions we propose).
+useful that help systems implementers solve the monitoring problem. 
 
 The closest related work includes domain-specific
 languages such as PacketTypes~\cite{sigcomm00} and DataScript~\cite{gpce02} 
@@ -824,10 +822,8 @@ non-XML syntax. It also guarantees that conversion will be invertible.
 However, it does not use theory of Galois connections, but instead
 introduces a notion of ``ignorable'' grammar components (inferred
 based on properties of grammar) and proves bijection modulo these
-ignorable elements.  However, conversion from native format to
-XML causes an 8-10 times space blowup or more so it cannot be
-used in resource constrained situations such as on tiny sensors
-or in general when data volumes get large.
+ignorable elements.  Once again, we remark that XML conversion is
+too expensive for many applications.
 
 XDTM~\cite{zhao+:sigmod05,xdtm} uses XML Schema to describe the
 locations of a collection of sources spread across a local file system
