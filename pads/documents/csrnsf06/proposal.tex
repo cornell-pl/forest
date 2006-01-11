@@ -57,7 +57,7 @@ CSR-SMA: Language support for data-centric systems monitoring
 
 Complex systems must be {\em monitored} to proactively find problems,
 record/archive system health, oversee system operation, detect
-malicious processes or security violations and perform a myriad of other tasks.
+malicious processes or security violations, and perform a myriad of other tasks.
 The {\em monitoring subsystems} 
 that perform these tasks take a wide range of forms, 
 from embedded sensors that monitor physical processes to
@@ -78,15 +78,15 @@ post-mortem defect detection
 \item presentation and graphical display to administrators and users.
 \end{enumerate}
 
-A substantial part of the difficulty of building secure, reliable, efficient
-and evolving monitoring systems is the diversity, quality and volume of data
-these systems must often deal with.  Oftentimes, new monitoring
-subsystems face the problem of having to interact with legacy devices,
+A substantial part of the difficulty of building secure, reliable, efficient,
+and evolving monitoring systems is the diversity, quality, and volume of data
+these systems must often handle.  Often, new monitoring
+systems face the problem of having to interact with legacy devices,
 legacy software and legacy data, leaving implementers in a situation
 where they cannot use robust off-the-shelf data management tools built for
 standard formats like XML.  As a result, implementers simply
 hack ``one-off'' monitoring tools of their own, which are invariably
-less reliable, unoptimized, insecure and difficult to impossible to evolve
+less reliable, unoptimized, insecure, and difficult or impossible to evolve
 when new requirements become known.
 
 We call the nonstandard data formats that monitoring systems must
@@ -132,7 +132,7 @@ Monitoring network performance              &  fixed-width    &                 
 \end{figure*}
 
 Processing this sort of 
-ad hoc data is challenging for a variety of further reasons. 
+ad hoc data is challenging for a variety of other reasons. 
 First, when the data comes from legacy software, sources or devices, it 
 typically just arrives ``as is'': the analysts
 who receive it can only say ``thank you,'' not request a more
@@ -169,7 +169,9 @@ and troubleshooting networks. Unfortunately, like most network software, users h
 vulnerabilities in the software, and moreover many of these vulnerabilities are directly related to the mundane
 components of the system that parse ad hoc data as opposed to the parts of the system that perform
 higher-level tasks. For instance, in March 2004, Stefan Esser posted an advisory on 13 different buffer over-
-flow attacks on Ethereal~\cite{etherealvulnerabilities}. Of the 13, 9 attacks occurred during parsing.
+flow attacks on Ethereal~\cite{etherealvulnerabilities}. Of the 13, 9 attacks occurred during parsing. These problems are not merely theoretical -- it was
+a buffer overflow in a security monitoring system that was exploited by the
+Witty Worm~\cite{witty}.
 
 Fifth, ad hoc data sources can be high volume:
 AT\&T's call-detail stream contains roughly 300~million calls per day
@@ -189,7 +191,7 @@ to use \C{} or \perl{} for this task.  Unfortunately, writing parsers
 this way is tedious and error-prone, complicated by the lack of
 documentation, convoluted encodings designed to save space, the need
 to produce efficient code, and the need to handle errors robustly to
-avoid corrupting down-stream data.  Moreover, the parser writers'
+avoid corrupting downstream data.  Moreover, the parser writers'
 hard-won understanding of the data ends up embedded in parsing code,
 making long-term maintenance difficult for the original writers and
 sharing the knowledge with others nearly impossible.
@@ -199,7 +201,7 @@ We propose {\em data-centric monitor generation}, a new paradigm
 for construction system monitors, in which programmers
 specify the shape and properties of data manipulated by
 the monitoring system and a compiler automatically
-generates efficient, reliable and secure
+generates efficient, reliable, and secure
 monitoring tools from that specification.
 More specifically, the system will consist of the 
 following components:
@@ -215,7 +217,7 @@ temporal attributes in an easy-to-understand, easy-to-modify syntax.
 \item A compiler that takes data specifications as inputs and
 automatically generates a suite of 
 efficient data processing libraries for parsing, printing, error detection
-and correction, distributed data gathering, compression and 
+and correction, distributed data gathering, compression, and 
 reformatting of ad hoc data.
 
 \item A fully automatic tool generator that links the compiler-generated 
@@ -224,15 +226,23 @@ tools for high-level tasks including data display and querying.
 
 \end{enumerate}
 
+\begin{figure}[t]
+\begin{center}
+\centerline{\psfig{file=arch_idraw_edit.ps,height=2.5in}}
+\end{center}
+\caption{\label{fig:arch} Architecture of Data-centric Monitor Generator.
+}
+\end{figure}
+
 Together, the PI, David Walker (Princeton), Co-PI Vivek Pai
 (Princeton) and Senior Personnel Kathleen Fisher (AT\&T Research) are
 uniquely qualified to carry out this research as they bring the
 necessary combination of skills in language design, compilers,
-distributed systems, large-scale data processing and practical system
+distributed systems, large-scale data processing, and practical system
 monitoring as well as both academic and industrial perspectives to the
 task.  In addition, they have already built a partial prototype system
 (called PADS) to investigate the feasibility of the proposed ideas.
-The prototype includes preliminary design of a high-level, declarative
+The prototype includes the preliminary design of a high-level, declarative
 language for describing ad hoc data formats and a compiler capable of
 generating parsing, printing, and reformatting libraries.
 
@@ -243,7 +253,7 @@ Next, we will explain more of the specifics concerning
 the generated tool suite for system monitoring.
 In Section~\ref{ssec:features}, we will highlight some of the most
 important language design challenges we face and
-in Secution~\ref{ssec:semantics}, we will propose a
+in Section~\ref{ssec:semantics}, we will propose a
 formal system analysis to identify implementation errors
 and improve system reliability.
 In Section~\ref{ssec:impact}, we will explain how our research
@@ -266,13 +276,13 @@ with other fields) so deviations can be flagged as errors,
 its location, access protocol, when the data
 will be ready for fetching and how often, etc.
 
-In exchange for the work the programmer puts in describing their
+In exchange for the programmer's work in describing their
 data sources, the compiler system will generate
 a robust and efficient library of {\em format-specific routines} (the center
 square in the picture).
 The core format-specific 
 library includes parser, printer, error detection and data traversal
-routines.  The core libraries will also be reponsible for controlling
+routines.  The core libraries will also be responsible for controlling
 access to and aggregation of any data distributed across wide area
 networks and archiving local data along with its description.  
 
@@ -280,7 +290,7 @@ Since these core libraries are compiler-generated from a
 high-level data specification, they have many advantages over
 hand-written code.  First, the generated code checks
 all possible error cases: system errors related to the input file,
-buffer, socket or remote data provider; 
+buffer, socket, or remote data provider; 
 syntax errors related to deviations in the physical
 format; and semantic errors in which the data violates user
 constraints.  Because these checks appear only in generated code, they
@@ -291,19 +301,11 @@ they are far more likely to be robust
 and far less likely to have dangerous vulnerabilities such as
 buffer overflows.  Moreover, as formats change and are updated,
 one can make a small change in the high-level description
-and the compiler will takes care of the rest.  It is extremely unlikely
+and the compiler takes care of the rest.  It is extremely unlikely
 new vulnerabilities or buffer overflows will be added to the code
 base over time as formats change.  Finally, all routines will
 be highly optimized for processing the massive
 data sets one sees in practice.
-
-\begin{figure}[t]
-\begin{center}
-\centerline{\psfig{file=arch_idraw_edit.ps,height=3in}}
-\end{center}
-\caption{\label{fig:arch} Architecture of Data-centric Monitor Generator.
-}
-\end{figure}
 
 In addition to the compiler, which generates the core, format-specific
 libraries, the system includes a number of {\em format-independent stubs}
@@ -327,15 +329,23 @@ who have different data, but require a similar functionality.
 At this point, the astute reader may ask why not simply generate
 exactly one tool -- a translator that maps the ad hoc data into
 XML, a standard format with hundreds of available tools and
-rich programming support and all modern, widely used languages.
+rich programming support in all modern, widely used languages.
 The problem with such an architecture is that ad hoc formats
 are usually quite compact and exploding them into XML representations
-can easily result in a blowup of 8-10 times.  Consequently, tiny
-sensors in a sensor network cannot afford the expense of managing
+can easily result in a space blowup of 8-10 times and an increase
+in processing overhead.  Consequently, tiny
+sensors in a sensor network cannot afford the expense (processor,
+network bandwidth, battery life) of managing
 XML data.  More generally, when the data sets get large, and we 
 have seen they do in monitoring systems, 
 ranging from 100s of MB/week to 100GB/day,
 the extra overhead of a 10 times blowup is simply unaffordable.
+While compression can reduce this impact, the decompression overheads
+of most modern compressors can overwhelm the data processing overhead
+of the underlying data.
+In an environment where the data is being used and updated
+by more than just the monitoring systems, maintaining a parallel
+representation in XML is even more painful and impractical.
 
 \paragraph*{The Prototype Description Language}
 To understand further how the \pads{} will be used,
@@ -384,7 +394,7 @@ strings, dates, urls, \etc, while
 structured types describe compound data built from simpler pieces.
 
 In a bit more detail,
-\pads{} prototype provides a collection of broadly useful base
+the \pads{} prototype provides a collection of broadly useful base
 types.  Examples include 8-bit unsigned integers (\cd{Puint8}), 32-bit
 integers (\cd{Pint32}), dates (\cd{Pdate}), strings (\cd{Pstring}),
 and IP addresses (\cd{Pip}).  Semantic conditions for such base types
@@ -580,7 +590,7 @@ bool chkVersion(version\_t v, method\_t m) \{
 \subsection{Broader Impacts}
 \label{ssec:impact}
 
-If funded, this project will have two major broad impacts.
+% If funded, this project will have two major broad impacts.
 
 \paragraph*{Supporting Research across the Social and Natural Sciences}
 While ad hoc data is prevalent in systems research and network monitoring
@@ -621,7 +631,7 @@ More specifically, we have already developed a partnership with
 Olga Troyanskaya in Princeton's Lewis-Sigler Institute for 
 Integrative Genomics.  Her Magic database system~\cite{magic}
 reads several data sources
-and applies a Baysian analysis in order to discover gene function.
+and applies a Bayesian analysis in order to discover gene function.
 The end goal of Magic is to provide critical information about how
 our genes work that may be used in the treatment of widespread diseases,
 including cancer.
@@ -715,7 +725,7 @@ its design is completely decentralized, and all information is pushed
 to all participating nodes via a publish/subscribe mechanism in the
 Jabber protocol~\cite{jabber}. While this approach can be more
 scalable in theory, it currently appears to be hitting the limits of
-Jabber messenging servers. In the event that we decide to support
+Jabber messaging servers. In the event that we decide to support
 fully distributed monitoring (as opposed to replicated monitoring at
 several sites), we will examine the lessons of PsEPR when deciding how
 to proceed.
@@ -731,7 +741,7 @@ users must write a lexer, write a
 grammar, and construct the in-memory representations by hand.  In
 addition, they only work for ASCII data, they do not easily
 accommodate data-dependent parsing, and they do not provide auxiliary
-services such as automatic XML conversion, stastical analysis and
+services such as automatic XML conversion, statistical analysis and
 others.  Some more modern parser generators such as ANTLR~\cite{antlr} alleviate
 a few of these problems, but they still do not automatically generate auxiliary tools
 useful in processing ad hoc data nor do they provide good support for generating
@@ -810,7 +820,7 @@ formats like PADS does.
 XSugar~\cite{brabrand+:xsugar2005} allows user to specify an
 alternative non-XML syntax for XML languages using a context-free
 grammar.  This tool automatically generates conversion between XML and
-non-XML syntax. It also guarantees that conversion will be invertable.
+non-XML syntax. It also guarantees that conversion will be invertible.
 However, it does not use theory of Galois connections, but instead
 introduces a notion of ``ignorable'' grammar components (inferred
 based on properties of grammar) and proves bijection modulo these
@@ -838,7 +848,7 @@ have fixed methods for coping with erroneous data.  For these reasons,
 PADS is complementary to database systems.  We strongly believe that
 in the future, commercial database systems could and should support a 
 PADS-like description language that allows users to import information from
-almost any format.  We hope that our research on PADS will make a broad
+almost any format.  We hope that our research will make a broad
 impact in this area.
 
 On the theoretical front, the scientific community's understanding of
@@ -864,14 +874,14 @@ PEGs.
 
 \paragraph*{Kathleen Fisher, Senior Personnel} 
 Kathleen Fisher is a senior researcher at AT\&T Labs,
-where she has spent the past nine years working on projects
+where she has spent the past nine years on projects
 related to managing massive amounts of ad hoc network monitoring data.
 In the Hancock project~\cite{kdd00,hancock-toplas}, she helped 
 design and implement a C-based
 domain-specific programming language for processing massive  
 transaction streams.  Hancock programs make it easy to build
 and maintain profiles of the entities described in such streams. 
-AT\&T uses these profiles monitor networks for fraud 
+AT\&T uses these profiles to monitor networks for fraud 
 and to better understand user characteristics.
 As the primary architect of the PADS project~\cite{fisher+:pads}, 
 Fisher has helped design and implement the prototype PADS

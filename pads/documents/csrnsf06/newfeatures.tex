@@ -1,7 +1,7 @@
 
-In this section, we discuss the principal limitations of the \pads{}\ 
-infrastructure we have built to date and explain extensions
-necessary to build data-centric system monitors. 
+In this section, we discuss what is needed in  \pads{}\ 
+to handle the data-centric systems monitoring tasks we have
+described.
 
 \paragraph*{Multi-source Monitoring}
 The current \pads{} specification language can only describe
@@ -41,7 +41,7 @@ specifies a protocol for locating and accessing a data source, and
 \texttt{T} is a PADS type specifying the structure of its contents.
 The specification language for protocols should be completely flexible
 so it can handle the largest possible collection of applications.  For
-instance, CoMon accesses data via telnet and authentication; other
+instance, CoMon~\cite{comon}, a monitoring system on PlanetLab, accesses data via telnet and authentication; other
 data is available over the web through FTP and HTTP.  
 Though the construct \texttt{Pget \{T;e\}}, 
 is simple (an explicit design choice) we believe that 
@@ -73,7 +73,7 @@ domain-specific temporal language for specifying times.  However,
 it will take substantial research
 to work out the details of a sufficiently flexible, yet concise
 and easy-to-understand temporal specification language. 
-We plan to investigate all corners of the design space.
+We plan to investigate all dimensions of the design space.
 
 \item {\bf Concurrent Execution}  
 PADS is currently a single-threaded application.  However,
@@ -108,7 +108,7 @@ monitoring requirements change.
 \end{enumerate}
 
 
-\paragraph*{Data Transformation, Compression, Encryption and Error-correction}
+\paragraph*{Data Transformation, Compression, Encryption, and Error-correction}
 The data used by monitoring systems may require simple transformations 
 of various kinds
 immediately before parsing or after parsing and before
@@ -140,7 +140,7 @@ or discarding of corrupted segments
 that can be used to fix the most common problems.
 
 It is currently impossible to code multi-stage processing and transformation
-directly in PADS.  One solution
+directly in our PADS prototype.  One solution
 to this problem might be to let auxiliary passes through the data
 remain outside the PADS system as prepasses or postpasses.  
 Unfortunately, this solution is completely unsatisfactory for a
@@ -222,7 +222,7 @@ ideas, our application and
 context are different: we are parsing, transforming, querying, archiving
 and presenting system monitoring data.
 As we do so, we are specifically interested in uncovering,
-representing and handling error-filled data.  One of the critical
+representing, and handling error-filled data.  One of the critical
 challenges for us will be to design the combinators so that they deal
 with \pads{} parse descriptors correctly
 and conveniently.
