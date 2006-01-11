@@ -241,9 +241,9 @@ the architecture of a data-centric monitor generation system
 and our prototype language design in more detail.  
 Next, we will explain more of the specifics concerning
 the generated tool suite for system monitoring.
-In Section~\ref{sec:features}, we will highlight some of the most
+In Section~\ref{ssec:features}, we will highlight some of the most
 important language design challenges we face and
-in Secution~\ref{sec:semantics}, we will propose a
+in Secution~\ref{ssec:semantics}, we will propose a
 formal system analysis to identify implementation errors
 and improve system reliability.
 In Section~\ref{ssec:impact}, we will explain how our research
@@ -570,9 +570,11 @@ bool chkVersion(version\_t v, method\_t m) \{
 \input{monitor}
 
 \subsection{Towards a Universal Data Description System}
+\label{ssec:features}
 \input{newfeatures}
 
-\subsubsection{Formalization and Semantic Analysis}
+\subsection{Formalization and Semantic Analysis}
+\label{ssec:semantics}
 \input{semantics}
 
 \subsection{Broader Impacts}
@@ -678,7 +680,7 @@ Senior Thesis Award.
 One of the oldest and most widely-used protocols for general monitoring
 is SNMP, the simple network management protocol~\cite{snmprfc1157},
 which is supported by commercial tools such as HP's
-OpenView~\cite{openview} and free tools such as MRTG~\cite{x}. It
+OpenView~\cite{openview} and free tools such as MRTG~\cite{mrtg}. It
 provides an open protocol format that can be used to monitor a variety
 of different types of equipment, using a vendor-supplied management
 information base (MIB) that provides the specifics of the kinds of
@@ -985,7 +987,7 @@ languages~\cite{walker:attapl}.
 \section{References Cited}
 
 {\bibliographystyle{abbrv}
-\bibliography{pads-long,pads,galax,padsdave}
+\bibliography{pads-long,pads,galax,padsdave,vivek}
 }
 %{\bibliographystyle{abbrv}
 % \small\bibliography{pads}
