@@ -2,6 +2,11 @@
 #include <caml/alloc.h>
 #include <caml/camlidlruntime.h>
 
+/* 
+  Hand-written stub code used by pads_c.idl.
+  -- YHM.
+ */
+
 char *pads_error_string; 
 
 

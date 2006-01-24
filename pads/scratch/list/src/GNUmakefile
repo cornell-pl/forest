@@ -1,7 +1,7 @@
 
  # This is a GNU makefile.
 
-FORMAT=list
+FORMAT=list_inplace
 # FORMAT=newick
 # ifdef USE_GALAX
 # %: forceabort2

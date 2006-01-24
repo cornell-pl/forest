@@ -1,4 +1,7 @@
 /* Notes:
+  
+   All page numbers mentioned might be off due to changes in the documentation. --YHM.
+
    I did not distinguish alpha and alpha numeric types.
 
    This encoding captures the names associated with individual characters
@@ -331,7 +334,7 @@ Pstruct QuoteM_t{
   ExpDate_t       expirationDate;
   ExpYear_t       year;
   Pchar           strikePriceCode;
-  Pchar           strikePriceDenominatorCode;
+  Pchar           strikePriceDenominatorCode; /* 'A'-'F' */
   Puint32_FW(:7:) explicitStrikePrice;
   Pchar           premiumPriceDenominatorCode;
   Puint32_FW(:8:) bidPrice;
