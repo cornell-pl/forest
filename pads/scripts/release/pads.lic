@@ -18,7 +18,7 @@ contributor=(
 )
 
 license=(
-	type=cpl-1.0
+	type=cpl
 	package=pads
 	since=2005
 	author=kfisher+gruber+yitzhak+mff
