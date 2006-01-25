@@ -14,7 +14,7 @@ contributor=(
 	[gsf]="Glenn Fowler <gsf@research.att.com>"
 	[dgk]="David Korn <dgk@research.att.com>"
 	[kpv]="Phong Vo <kpv@research.att.com>"
-        [xuan] ="Xuan Zheng <xuanzh@eecs.umich.edu>"
+        [xuan]="Xuan Zheng <xuanzh@eecs.umich.edu>"
 )
 
 license=(
