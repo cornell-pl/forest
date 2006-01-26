@@ -35,5 +35,6 @@ struct_good
 endian.delenn
 endian.raptor
 struct1
-
+pfloat
+ptime
 
