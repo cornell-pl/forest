@@ -46,6 +46,13 @@ pswitch2.p
 pswitch3.p 
 pswitch4.p 
 pswitch_tricky.p 
+ptime.p
+ptimestamp.p
+ptime_explicit.p
+pdate
+pdate_explicit.p
+pdate_explicit_me.p
+enum.p
 punion.p 
 punion2.p 
 punion4.p 

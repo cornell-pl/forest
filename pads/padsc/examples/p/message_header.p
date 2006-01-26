@@ -40,8 +40,7 @@ Pcharclass SP {is_SP};
 Ptypedef Pstring_ME(:"/" RE_LWS "/":) LWS_t;
 int is_TEXT(Pchar x) { return
   ((x >= 32) && (x <= 126))
-  || ((x >= 128) && (x <= 255))
-  ;
+  || (x >= 128);
 };
 Ptypedef Pchar TEXT_t : TEXT_t x => { is_TEXT(x) };
 Pcharclass TEXT {is_TEXT};
@@ -63,7 +62,7 @@ Ptypedef Pstring_ME(:"/" RE_FWS "/":) FWS_t;
 #define RE_CFWS "((" RE_FWS "?" RE_comment_mailbox ")*((" RE_FWS "?" RE_comment_mailbox ")|" RE_FWS "))"
 Ptypedef Pstring_ME(:"/" RE_CFWS "/":) CFWS_t;
 int is_obs_char(Pchar x) { return
-  ((x >= 0) && (x <= 9))
+     (x <= 9)
   || (x == 11)
   || (x == 12)
   || ((x >= 14) && (x <= 127))

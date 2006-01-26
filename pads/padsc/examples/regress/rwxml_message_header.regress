@@ -1,4 +1,4 @@
-Input file = ../../data/http/message-header-01
+Input file = ../../data/message-header-01
 Output file = /dev/stdout
 <message_header_t>
   <field_name><val>Connection</val></field_name>

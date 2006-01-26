@@ -5,7 +5,16 @@ rwxml_alt1.c
 rwxml_2ips.c
 rwxml_punion_literal2.c
 rwxml_pfloat.c 
+rwxml_ptime.c 
+rwxml_ptime_explicit.c 
+rwxml_pdate.c 
+rwxml_pdate_explicit.c 
+rwxml_pdate_explicit_me.c 
+rwxml_enum.c
 rwxml_struct1.c
+rwxml_array_advance.c
+rwxml_message_header.c
+rwxml_ptimestamp.c
 test_ai.c
 test_array_ended.c
 test_array_ended2.c
