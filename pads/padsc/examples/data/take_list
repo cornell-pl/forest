@@ -37,4 +37,9 @@ endian.raptor
 struct1
 pfloat
 ptime
-
+ptime_explicit
+pdate
+pdate_explicit
+pdate_explicit_me
+enum
+array_advance
