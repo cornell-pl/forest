@@ -15,6 +15,7 @@ rwxml_struct1.c
 rwxml_array_advance.c
 rwxml_message_header.c
 rwxml_ptimestamp.c
+rwxml_ptimestamp_explicit.c
 test_ai.c
 test_array_ended.c
 test_array_ended2.c

@@ -47,8 +47,9 @@ pswitch3.p
 pswitch4.p 
 pswitch_tricky.p 
 ptime.p
-ptimestamp.p
 ptime_explicit.p
+ptimestamp.p
+ptimestamp_explicit.p
 pdate.p
 pdate_explicit.p
 pdate_explicit_me.p
