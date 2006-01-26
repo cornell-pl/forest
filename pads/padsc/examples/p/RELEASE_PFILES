@@ -49,7 +49,7 @@ pswitch_tricky.p
 ptime.p
 ptimestamp.p
 ptime_explicit.p
-pdate
+pdate.p
 pdate_explicit.p
 pdate_explicit_me.p
 enum.p
