@@ -4,8 +4,7 @@ cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -D today pads
 
 # build documentation
 cd pads/documents/manual
-make manual-all
-make manual_html
+make 
 
 # install documentation
 mkdir ../../temp_docs
