@@ -1,11 +1,7 @@
 This directory contains sample pads descriptions, data, user programs,
 sample outputs, and sample makefiles.
 
-GNUmakefile	Simple makefile to make statically linked versions 
-		of programs in directory.  This makefile is very
-		simple, but may not work on all platforms.
-
-GNUmakefile.adv	This makefile uses information calculated during PADS
+GNUmakefile	This makefile uses information calculated during PADS
 		installation to produce platform-robust make rules for
 		making static, dynamic, and debugging versions of the
 		programs in this directory.
