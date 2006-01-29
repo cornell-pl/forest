@@ -1,5 +1,5 @@
-go.p: preliminary Pads description of GO OBO format.
-go1.p, go2.p: earlier versions of go.p
+go.p: preliminary Pads description of GO OBO format. Uses records correctly.
+go1.p, go2.p, go3.p: earlier versions of go.p
 go_record_version.p: version based on using Precord. Never worked. I'd like to find out why.
 
 data/

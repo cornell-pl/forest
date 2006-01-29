@@ -1,24 +1,15 @@
 /* www.geneontology.org OBO flat file format. */
+#define COLON ':'
 
-const char COLON = ':';
-
-/* Punion OBO_tag_value_pair(:char *the_tag:){ */
-/*   Pswitch(:the_tag:){ */
-/*     NULL => Pstring(:COLON:) tag; */
-/*     default => Pstring(:COLON:)  */
-/*   } */
-/* }; */
-
-Pstruct OBO_tag_value_pair(:char term:){
+Precord Pstruct OBO_tag_value_pair{
   Pstring(:COLON:) tag; 
-  Pre "/: */"; /* Skip optional spaces */
-  Pstring(:term:) val;
-  Pomit Pchar t : t == term;
+  Pre "/: */"; 
+  Pstring_SE(:Peor:) val;
 };
 
 int hasTag(OBO_tag_value_pair p,char *tag){
   return 1;
-/*   return Pstring_eq_cstr(&p.tag,tag) == 0; */
+/*   return Pstring_eq_cstr(&p.tag,tag); */
 };
 
 
@@ -46,10 +37,9 @@ int containsTagOne(OBO_tag_value_pair *pairs, int numPairs, char *tag){
 /*   return found; */
 };
 
-Pstruct OBO_header{
-  OBO_tag_value_pair(:'\n':)   format_version : hasTag(format_version,"format-version");
-  OBO_tag_value_pair(:'\n':)[] tvpairs  : Pterm('\n');
-  '\n';
+Precord Pstruct OBO_header{
+  OBO_tag_value_pair   format_version : hasTag(format_version,"format-version");
+  OBO_tag_value_pair[] tvpairs  : Pterm(Peor);
 } Pwhere {
   containsTag(tvpairs.elts, tvpairs.length, "typeref");
 };
@@ -59,35 +49,21 @@ Penum OBO_stanza_type{
   Typeref
 };
 
-Pstruct OBO_stanza{
-  '['; OBO_stanza_type s_type; "]\n";
-  OBO_tag_value_pair(:'\n':)   id     : hasTag(id,"id");
-  OBO_tag_value_pair(:'\n':)[] tvpairs : Pterm('\n');
-  '\n';
+
+Precord Pstruct OBO_stanza_tag {
+    '['; OBO_stanza_type s_type; ']';
+};
+
+Precord Pstruct OBO_stanza{
+  OBO_stanza_tag       tag;
+  OBO_tag_value_pair   id      : hasTag(id,"id");
+  OBO_tag_value_pair[] tvpairs : Pterm(Peor);
 } Pwhere {
   containsTagOne(tvpairs.elts, tvpairs.length, "name");
 };
-
-/* Pstruct OBO_term_stanza{ */
-/*   "[Term]\n"; */
-/*   OBO_tag_value_pair(:'\n':)   id     : hasTag(id,"id"); */
-/*   OBO_tag_value_pair(:'\n':)[] tvpairs : Pterm('\n'); */
-/*   '\n'; */
-/* } Pwhere { */
-/*   containsTagOne(tvpairs.elts, tvpairs.length, "name"); */
-/* }; */
-
-/* Pstruct OBO_typeref_stanza{ */
-/*   "[Typeref]\n"; */
-/*   OBO_tag_value_pair(:'\n':)[] pairs : Pterm('\n'); */
-/* }; */
-
-/* Punion OBO_stanza{ */
-/*   OBO_term_stanza term; */
-/*   OBO_typeref_stanza typeref; */
-/* }; */
 
 Psource Pstruct OBO_file{
   OBO_header hdr;
   OBO_stanza[] stanzas;
 };
+
