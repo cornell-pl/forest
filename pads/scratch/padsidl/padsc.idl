@@ -1,0 +1,234 @@
+/* Less than ideal definition of size_t. 
+   Need to find out what the correct definition of size_t is.
+*/
+typedef long size_t;
+
+typedef enum Perror_t_e {
+  P_OK                            =    0,
+  P_ERR                           =   -1
+} Perror_t;
+
+typedef int PerrCode_t;
+
+/* typedef enum PerrCode_t_e { */
+/*   /\* First set of errors have no corresponding location  *\/ */
+/*   P_NOT_PARSED                    =    0, */
+/*   P_NO_ERR                        =    1, */
+/*   P_SKIPPED                       =    2, */
+
+/*   P_UNEXPECTED_ERR                =    3, */
+
+/*   P_BAD_PARAM                     =    4, */
+/*   P_SYS_ERR                       =    5, */
+/*   P_IO_ERR                        =    6, */
+
+/*   P_CHKPOINT_ERR                  =   11, */
+/*   P_COMMIT_ERR                    =   12, */
+/*   P_RESTORE_ERR                   =   13, */
+/*   P_ALLOC_ERR                     =   14, */
+/*   P_FORWARD_ERR                   =   15, */
+/*   P_PANIC_SKIPPED                 =   20, */
+
+/*   P_FMT_EMPTY_DELIM_ERR           =   30, */
+
+/*   P_INVALID_FUNCTION_CALL         =   50, */
+
+/*   /\* A general error relating to smart nodes*\/ */
+/*   P_SMART_NODE_ERR                =   60, */
+
+/*   /\* */
+/*    * A general error that requires that an ocaml */
+/*    * ocaml exception be thrown. */
+/*    *\/ */
+/*   P_FAILWITH_ERR                  =   61, */
+
+/*   /\* The following errors (code >= 100) DO have a corresponding location  *\/ */
+/*   P_USER_CONSTRAINT_VIOLATION     =  100, */
+/*   P_MISSING_LITERAL               =  101, */
+/*   P_ARRAY_ELEM_ERR                =  110, */
+/*   P_ARRAY_SEP_ERR                 =  111, */
+/*   P_ARRAY_TERM_ERR                =  112, */
+/*   P_ARRAY_SIZE_ERR                =  113, */
+/*   P_ARRAY_SEP_TERM_SAME_ERR       =  114, */
+/*   P_ARRAY_USER_CONSTRAINT_ERR     =  115, */
+/*   P_ARRAY_MIN_BIGGER_THAN_MAX_ERR =  116, */
+/*   P_ARRAY_MIN_NEGATIVE            =  117, */
+/*   P_ARRAY_MAX_NEGATIVE            =  118, */
+/*   P_ARRAY_EXTRA_BEFORE_SEP        =  119, */
+/*   P_ARRAY_EXTRA_BEFORE_TERM       =  120, */
+
+/*   P_STRUCT_FIELD_ERR              =  125, */
+/*   P_STRUCT_EXTRA_BEFORE_SEP       =  126, */
+/*   P_UNION_MATCH_ERR               =  130, */
+/*   P_OPTION_MATCH_ERR              =  130, */
+/*   P_ENUM_MATCH_ERR                =  140, */
+/*   P_TYPEDEF_CONSTRAINT_ERR        =  150, */
+/*   P_RECUR_VAL_ERR                 =  155, */
+
+/*   P_AT_EOF                        =  160, */
+/*   P_AT_EOR                        =  161, */
+/*   P_EXTRA_BEFORE_EOR              =  162, */
+/*   P_EOF_BEFORE_EOR                =  163, */
+/*   P_COUNT_MAX_LIMIT               =  164, */
+/*   P_RANGE                         =  170, */
+
+/*   P_INVALID_A_NUM                 =  180, */
+/*   P_INVALID_E_NUM                 =  181, */
+/*   P_INVALID_EBC_NUM               =  182, */
+/*   P_INVALID_BCD_NUM               =  183, */
+
+/*   P_INVALID_CHARSET               =  190, */
+/*   P_INVALID_WIDTH                 =  191, */
+
+/*   P_CHAR_LIT_NOT_FOUND            =  200, */
+/*   P_STR_LIT_NOT_FOUND             =  210, */
+/*   P_REGEXP_NOT_FOUND              =  220, */
+/*   P_INVALID_REGEXP                =  230, */
+/*   P_WIDTH_NOT_AVAILABLE           =  240, */
+/*   P_INVALID_TIMESTAMP             =  250, */
+/*   P_INVALID_DATE                  =  251, */
+/*   P_INVALID_TIME                  =  252, */
+/*   P_INVALID_IP                    =  260, */
+/*   P_INVALID_IP_RANGE              =  261, */
+/* } PerrCode_t; */
+
+/* ================================================================================
+ * BASIC LIBRARY TYPES
+ */
+
+typedef unsigned int   Pbyte;
+
+typedef signed int     Pint8;
+typedef signed int     Pint16;
+typedef signed int     Pint32; 
+typedef signed int     Pint64; 
+
+typedef unsigned int   Puint8;
+typedef unsigned int   Puint16;
+typedef unsigned int   Puint32; 
+typedef unsigned int   Puint64; 
+
+typedef unsigned char Pchar;
+
+/* Approximation of real Pstring from pads.h */
+typedef struct Pstring_s Pstring;
+
+struct Pstring_s{
+  [string] char *str;
+};
+
+typedef [abstract] struct Pdisc_s        Pdisc_t;
+typedef [abstract] struct Pio_disc_s        Pio_disc_t;
+
+typedef struct Pbase_pd_s Pbase_pd;
+typedef struct Ppos_s           Ppos_t;
+typedef struct Ploc_s           Ploc_t;
+typedef [int64] int Sfoff_t;
+typedef Puint32 Pflags_t;
+
+/* Abstract definition for P_t. Ensures that the file typechecks. 
+   We don't need to specify the actual P_t.
+*/
+typedef [abstract] struct P_s  P_t;
+
+
+/* Hack: IDL defines "byte" as a type, making it illegal as a field
+   identifier.  Unfortunately, the first field of the Ppos_s structure
+   is named byte.  So, we fake out the IDL compile with FIELD_BYTE and
+   fix it in the generated C code with the #define.
+*/
+quote(c,"#define FIELD_BYTE byte");
+
+struct Ppos_s {
+  size_t       FIELD_BYTE;
+  size_t       num;
+  Sfoff_t      offset;
+};
+
+struct Ploc_s {
+  Ppos_t b;
+  Ppos_t e;
+};
+
+struct Pbase_pd_s {
+  Pflags_t    pstate; /* parse state */
+  Puint32     nerr;
+  PerrCode_t  errCode;
+  Ploc_t      loc;
+};
+
+/* ================================================================================
+ * LIBRARY HANDLE OPEN/CLOSE FUNCTIONS
+ *
+ */
+
+[pointer_default(unique)] 
+interface LibraryHandle {
+  Perror_t  P_open  ([out,*ptr] P_t **pads_out, [in] Pdisc_t *disc, [in] Pio_disc_t *io_disc);
+  Perror_t  P_close ([in,ptr] P_t *pads); 
+}
+
+/* ================================================================================
+ * TOP-LEVEL IO FUNCTIONS
+ */
+
+/* Perror_t  P_io_set       (P_t *pads, Sfio_t *io); */
+/* Perror_t  P_io_next_rec  (P_t *pads, size_t *skipped_bytes_out); */
+/* Perror_t  P_io_skip_bytes(P_t *pads, size_t width, size_t *skipped_bytes_out); */
+
+/* int       P_io_at_eor        (P_t *pads); */
+/* int       P_io_at_eof        (P_t *pads); */
+/* int       P_io_at_eor_or_eof (P_t *pads); */
+
+/* Perror_t  P_io_getPos   (P_t *pads, Ppos_t *pos, int offset);  */
+/* Perror_t  P_io_getLocB  (P_t *pads, Ploc_t *loc, int offset);  */
+/* Perror_t  P_io_getLocE  (P_t *pads, Ploc_t *loc, int offset);  */
+/* Perror_t  P_io_getLoc   (P_t *pads, Ploc_t *loc, int offset);  */
+
+interface IO{
+  Perror_t  P_io_fopen     ([in,ptr] P_t *pads, [string] const char *path);
+  Perror_t  P_io_close     ([in,ptr] P_t *pads);
+}
+
+/* ================================================================================
+ * SCAN FUNCTIONS
+ *
+ */
+
+interface Scan{
+  Perror_t Pchar_lit_scan1   ([in,ptr] P_t *pads, [in] Pchar f,
+			      [in] int eat_f, [in] int panic, [out] size_t *offset_out);
+/*   Perror_t Pstr_lit_scan1    ([in,ptr] P_t *pads, [in,ref] const Pstring *f,  */
+/* 			      [in] int eat_f, [in] int panic, [out] size_t *offset_out); */
+  Perror_t Pcstr_lit_scan1   ([in,ptr] P_t *pads, [in,string] const char *f,
+			      [in] int eat_f, [in] int panic, [out] size_t *offset_out);
+  /* Perror_t Pre_scan1         ([in,ptr] P_t *pads, Pregexp_t *f,     int eat_f, int panic, size_t *offset_out); */
+
+  Perror_t Pchar_lit_scan2   ([in,ptr] P_t *pads, [in] Pchar f, [in] Pchar s,
+			      [in] int eat_f, [in] int eat_s, [in] int panic,
+			      [out] int *f_found_out, [out] size_t *offset_out);
+/*   Perror_t Pstr_lit_scan2    ([in,ptr] P_t *pads, [in,ref] const Pstring *f, [in,ref] const Pstring *s, */
+/* 			      [in] int eat_f, [in] int eat_s, [in] int panic, */
+/* 			      [out] int *f_found_out, [out] size_t *offset_out); */
+  Perror_t Pcstr_lit_scan2   ([in,ptr] P_t *pads, [in,string] const char *f, [in,string] const char *s,
+			      [in] int eat_f, [in] int eat_s, [in] int panic,
+			      [out] int *f_found_out, [out] size_t *offset_out);
+/* Perror_t Pre_scan2         (P_t *pads, Pregexp_t *f, Pregexp_t *s, */
+/* 			    int eat_f, int eat_s, int panic, */
+/* 			    int *f_found_out, size_t *offset_out); */
+}
+
+/* ================================================================================
+ * IO CHECKPOINT API
+ *
+ */
+
+interface Checkpoint{
+  Perror_t  P_io_checkpoint  ([in,ptr] P_t *pads, int speculative);
+  Perror_t  P_io_commit      ([in,ptr] P_t *pads);
+  /* Perror_t  P_io_commit_pos  (P_t *pads, Ppos_t pos); */
+  /*           /\* commit at pos rather than using the current IO cursor position *\/ */
+  /*           /\* pos should be >= the checkpoint position and <= the current IO cursor position *\/ */
+  Perror_t  P_io_restore     ([in,ptr] P_t *pads);
+  unsigned int P_spec_level  ([in,ptr] P_t *pads);
+}

@@ -3,6 +3,7 @@
 
 Precord Pstruct OBO_tag_value_pair{
   Pstring(:COLON:) tag; 
+  Pcompute Pchar x = 'c';
   Pre "/: */"; 
   Pstring_SE(:Peor:) val;
 };

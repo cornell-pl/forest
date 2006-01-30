@@ -1,0 +1,8 @@
+import "padsc.idl";
+
+Perror_t Pint_read    ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pint32 *res_out);
+Perror_t Puint_read   ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Puint32 *res_out);
+
+Perror_t Pint_FW_read ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pint32 *res_out, [in] size_t width);
+Perror_t Puint_FW_read ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Puint32 *res_out, [in] size_t width);
+
