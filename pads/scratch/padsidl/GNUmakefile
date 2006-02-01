@@ -30,24 +30,32 @@ padsc.mli padsc.ml padsc_stubs.c:padsc.idl
 pint_c.mli pint_c.ml pint_c_stubs.c:padsc.idl pint_c.idl 
 	camlidl -no-include -header pint_c.idl
 
-padsc_stubs_w.o: padsc_stubs.c
+padsc_stubs_w.c: padsc_stubs.c
 
-pint_c_stubs_w.o: pint_c_stubs.c
+pint_c_stubs_w.c: pint_c_stubs.c
+
+padsc_stubs_w.o: padsc_stubs_w.c
+
+pint_c_stubs_w.o: pint_c_stubs_w.c
 
 %.cmo: %.mli %.ml 
-	ocamlc -c $?
+	ocamlc -c $^
 
-.PHONY: clean padsc pint_c
-
-padsc: padsc_stubs_w.o
-pint_c: pint_c_stubs_w.o
-padsclib: padsc pint_c padsc.cmo pint_c.cmo pint_c.o
+$(PADSIDL)/padsc.cma padsc.cma: padsc_stubs_w.o pint_c_stubs_w.o padsc.cmo pint_c.cmo pint_c.o
 	ocamlc -a -o padsc.cma -custom padsc.cmo pint_c.cmo \
 	$(PADSIDL)/padsc_stubs_w.o $(PADSIDL)/pint_c_stubs_w.o $(PADSIDL)/pint_c.o \
         $(INSTALLROOT)/lib/libpads.a $(INSTALLROOT)/lib/libast.a $(OCAML_LIB_DIR)/libcamlidl.a
 
 client: padsclib client.ml
 	ocamlc client.ml  padsc.cma  -o client
+
+.PHONY: clean padsc pint_c padsclib
+
+padsc: padsc_stubs_w.o
+
+pint_c: pint_c_stubs_w.o
+
+padsclib: padsc.cma
 
 clean:
 	$(RM) padsc.ml padsc.mli pint_c.ml pint_c.mli pint_c.h
