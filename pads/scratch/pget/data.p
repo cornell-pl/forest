@@ -1,22 +1,34 @@
-#define Pget_extern(T) extern T get_##T(char *uri)
-#define Pget(T,URI) get_##T(URI) 
-
+#define PgetLocal_extern(T) extern T getLocal_##T(char *uri)
+#define PgetLocal(T,URI) getLocal_##T(URI) 
 Ptypedef Pfloat32 type1;
 Ptypedef Pint32 type2;
 
 /* declare functions for getting data */
-Pget_extern(type1);
-Pget_extern(type2);
+PgetLocal_extern(type1);
+PgetLocal_extern(type2);
 
-Precord Pstruct node_info_t {
-  "NumNodes: ";  Pint32 numNodes;
+Ptypedef Pstring_SE(:Peor:) node_name_t;
+
+/* ickiness to build file location */
+char temp[100];
+char *concat(char *s1, char *s2, char *s3) {
+  strcpy(temp, s1);
+  strcat(temp,s2);
+  strcat(temp,s3);
+  return temp;
 };
 
 
+Precord Pstruct node_info_t {
+  node_name_t nodeName;
+  Pcompute type1 data1 = PgetLocal(type1, concat("data/",nodeName.str,"/data1.txt"));
+  Pcompute type2 data2 = PgetLocal(type2, concat("data/",nodeName.str,"/data2.txt"));
+}
+
+Parray node_list_t {
+  node_info_t[]; 
+};
+
 Psource Pstruct source {
-  node_info_t nodeInfo;
-  Pcompute type1 data11 = Pget(type1,"data/n1t1.data");
-  Pcompute type1 data21 = Pget(type1,"data/n2t1.data");
-  Pcompute type2 data12 = Pget(type2,"data/n1t2.data");
-  Pcompute type2 data22 = Pget(type2,"data/n2t2.data");
+  node_list_t nodes;
 }
