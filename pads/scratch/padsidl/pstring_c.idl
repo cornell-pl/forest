@@ -1,0 +1,22 @@
+import "padsc.idl";
+
+/* Prefix function name with i (for idl) b/c Pstring_read is an existing macro. 
+   Same for other functions.
+*/
+Perror_t iPstring_FW_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in] size_t width
+                    );
+
+Perror_t iPstring_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in] Pchar stopChar
+                    );
+
+Perror_t iPstring_ME_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in,string] const char *matchRegexp
+                    );
+
+Perror_t iPstring_SE_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in,string] const char *stopRegexp
+                    );
+
+
