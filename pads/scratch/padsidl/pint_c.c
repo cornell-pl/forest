@@ -1,8 +1,6 @@
 #include "pads.h"
 #include "pint_c.h"
 
-P_NOGEN;
-
 /* Perror_t Pint_read (P_t *pads, Pbase_pd *pd, Pint32 *res_out){ */
 /*   return P_OK; */
 /* } */

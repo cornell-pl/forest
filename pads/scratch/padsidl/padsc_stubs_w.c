@@ -3,3 +3,9 @@
 
 #include "pads.h"
 #include "padsc_stubs.c"
+
+/* Add dummy defintion of P_lib_init as there is no generated code to define this function.
+   For more information, see pads.h. 
+ */
+P_NOGEN;
+
