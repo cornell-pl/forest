@@ -24,13 +24,25 @@ GENERATED_STUBS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs.c)
 BT_GEN=$(GENERATED_INTS) $(GENERATED_IMPLS) $(GENERATED_STUBS)
 WRAPPERS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.c)
 BT_CAML_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.cmo)
-# Need fully qualifed file names so that these files can be found by OCaml programs linking to the library.
-# The key point is that only their names are included in the OCaml lib, not the actual object files.
-BT_OBJS=$(BT_CAML_OBJS) $(foreach base_type,$(BASE_TYPES),$(PADSIDL)/$(base_type)_c_stubs_w.o $(PADSIDL)/$(base_type)_c.o)
+BT_C_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.o $(base_type)_c.o)
+BT_OBJS=$(BT_CAML_OBJS) $(BT_C_OBJS)
 
-PADSC_OBJS=$(PADSIDL)/padsc.cmo $(PADSIDL)/padsc_stubs_w.o
+PADSC_CAML_OBJS=padsc.cmo
+PADSC_C_OBJS=padsc_stubs_w.o
+PADSC_OBJS=$(PADSC_CAML_OBJS) $(PADSC_C_OBJS)
 
+CAML_OBJS=$(PADSC_CAML_OBJS) $(BT_CAML_OBJS)
+C_OBJS=$(PADSC_C_OBJS) $(BT_C_OBJS)
 OBJS=$(PADSC_OBJS) $(BT_OBJS)
+
+# Name of padsidl library
+PADSIDL_NAME=padsidl
+PADSIDL_LIB_NM=$(mam_cc_PREFIX_ARCHIVE)$(PADSIDL_NAME)$(mam_cc_SUFFIX_ARCHIVE)
+# Fully qualified names of object files.  Need fully qualifed file
+# names for C object files so that they can be found by OCaml programs linking to
+# the library.  The key point is that only their names are included in
+# the OCaml lib, not the actual object files.
+Q_OBJS=$(foreach obj,$(OBJS),$(PADSIDL)/$(obj))
 
 include $(PADS_HOME)/mk/rules.mk
 
@@ -54,19 +66,23 @@ padsc_stubs_w.c: padsc_stubs.c
 
 $(WRAPPERS):%_stubs_w.c: %_stubs.c
 
-$(BT_CAML_OBJS): %.cmo: %.mli %.ml 
+$(CAML_OBJS): %.cmo: %.mli %.ml 
 	ocamlc -c $^
 
 %.cmo: %.mli %.ml 
 	ocamlc -c $^
 
-$(PADSIDL)/padsc.cma padsc.cma: $(OBJS)
-	ocamlc -a -o padsc.cma -custom $(OBJS)\
-        $(INSTALLROOT)/lib/libpads.a $(INSTALLROOT)/lib/libast.a $(OCAML_LIB_DIR)/libcamlidl.a
+$(PADSIDL_LIB_NM) : $(C_OBJS)
+	$(STATIC_LIBTOOL) $(PADSIDL_LIB_NM) $(STATIC_LIBTOOL_OPTS) $^
+	(lib=$@; $(FixStaticLib))
 
-# 	$(PADSIDL)/padsc_stubs_w.o \
-# 	pint_c.cmo $(PADSIDL)/pint_c_stubs_w.o $(PADSIDL)/pint_c.o \
-# 	pchar_c.cmo $(PADSIDL)/pchar_c_stubs_w.o $(PADSIDL)/pchar_c.o 
+$(PADSIDL)/padsc.cma padsc.cma: $(CAML_OBJS) $(PADSIDL_LIB_NM)
+	ocamlc -a -o padsc.cma -custom \
+	-ccopt -L$(PADSIDL) -cclib -l$(PADSIDL_NAME) \
+        -ccopt -L$(INSTALLROOT)/lib -cclib -lpads -cclib -last -ccopt -L$(OCAML_LIB_DIR) \
+	-cclib -lcamlidl
+# 	ocamlc -a -o padsc.cma -custom $(Q_OBJS)\
+#         $(INSTALLROOT)/lib/libpads.a $(INSTALLROOT)/lib/libast.a $(OCAML_LIB_DIR)/libcamlidl.a
 
 client: padsclib client.ml
 	ocamlc client.ml  padsc.cma  -o client
