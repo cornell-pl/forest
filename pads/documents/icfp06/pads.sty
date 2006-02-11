@@ -54,7 +54,8 @@
 \def\tTrans[#1]{\lsem#1\rsem}
 %\def\pdtTrans[#1]{\lsem#1\rsem_{pd}}
 \def\stsem[#1,#2,#3]{#2 \turn #1 : #3}
-\def\ddck[#1,#2,#3,#4]{#2 \turn_{#4} #1 : #3}
+%% \def\ddck[#1,#2,#3,#4]{#2 \turn_{#4} #1 : #3}
+\def\ddck[#1,#2,#3,#4]{#2 \turn #1 : #3}
 %% \def\trans[#1,#2,#3]{\lsem#1\rsem^{#2}_{#3}}
 \def\trans[#1,#2,#3]{\lsem#1\rsem}
 \def\arrTrans[#1,#2]{\lsem#1\rsem^{#2}_{array}}
@@ -254,7 +255,7 @@
 %%\newcommand{\isub}[2]{\codefont{sub_{#1}} \; #2}
 \newcommand{\isub}[2]{#1\,\codefont{[{#2}]}}
 \newcommand{\ifoldr}[3]{\codefont{foldr} \; #1 \, #2 \, #3}
-\newcommand{\iroll}[2]{\codefont{roll}(#1,#2)}
+\newcommand{\iroll}[2]{\codefont{roll}_{#2} (#1)}
 \newcommand{\iunroll}[1]{\codefont{unroll}(#1)}
 \newcommand{\iapp}[2]{#1 \; #2}
 \newcommand{\iappi}{\;}

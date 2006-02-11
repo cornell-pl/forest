@@ -52,13 +52,15 @@ designed to capture the core features of \padsml.
 %      \ilam {\nrm \var} \ity e \| 
       \ifun {\nrm f} {\nrm x} e \| 
       \iapp e e \nlalt
+    \Lambda \alpha{:}\gk.e \| e \; [\ty] \nlalt
 %      \iletfun {\nrm f} {\nrm x} e \; \iin \; e' \| 
       \ilet {\nrm x} e \; e \|
       \iif e \; \ithen e \; \ielse e \nlalt
       \ipair{e}{e} \| \ipi {\nrm i}{e} \|
       \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
       \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
-      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e}
+      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e} \nlalt
+      \iroll{e}{\mu\alpha.\tau} \| \iunroll{e}
       \\
       
   \name{Base Types} \meta{a} \::= 
@@ -654,10 +656,13 @@ type was matched along with the type's corresponding parse descriptor.
 %% Mu
 \trans[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {f_\ptyvar} {\itup{\data,\off}} {}\\
+  \ifun {f_\ptyvar} {\itup{\data{:}\ibitsty,\off{:}\ioffty}  
+           : \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
+                    * (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}) } {}\\
   \quad \ilet {\itup{\off',r,p}} 
   {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
-  \qquad \ictup{\off',r,\newpd{mu}{p}}
+  \qquad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},(p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
+%}}
   \end{array}  
 \\[3pt]
 %% Compute
