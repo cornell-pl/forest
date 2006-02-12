@@ -48,6 +48,13 @@ include $(PADS_HOME)/mk/rules.mk
 
 INCLUDES += -I$(OCAML_LIB_DIR)
 
+# Set the location of the camlidl library if it is different than the
+# location of the other ocaml libs.
+ifndef CAMLIDL_LIB_DIR
+CAMLIDL_LIB_DIR = $(OCAML_LIB_DIR)
+export CAMLIDL_LIB_DIR
+endif
+
 # Rule to make programs
 
 padsc.mli padsc.ml padsc_stubs.c:padsc.idl
@@ -79,10 +86,8 @@ $(PADSIDL_LIB_NM) : $(C_OBJS)
 $(PADSIDL)/padsc.cma padsc.cma: $(CAML_OBJS) $(PADSIDL_LIB_NM)
 	ocamlc -a -o padsc.cma -custom \
 	-ccopt -L$(PADSIDL) -cclib -l$(PADSIDL_NAME) \
-        -ccopt -L$(INSTALLROOT)/lib -cclib -lpads -cclib -last -ccopt -L$(OCAML_LIB_DIR) \
+        -ccopt -L$(INSTALLROOT)/lib -cclib -lpads -cclib -last -ccopt -L$(CAMLIDL_LIB_DIR) \
 	-cclib -lcamlidl
-# 	ocamlc -a -o padsc.cma -custom $(Q_OBJS)\
-#         $(INSTALLROOT)/lib/libpads.a $(INSTALLROOT)/lib/libast.a $(OCAML_LIB_DIR)/libcamlidl.a
 
 client: padsclib client.ml
 	ocamlc client.ml  padsc.cma  -o client
