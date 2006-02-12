@@ -1179,12 +1179,12 @@ passed zero and one otherwise.
 %%       }
     \psig x \ty \ty  \nlalt
     \psum \ty e \ty  \| \pand \ty \ty \|
-    \pset x \ty e \|
-    \pseq \ty \ty {\pterm e \ty} \nlalt
+    \pset x \ty e  \|
+    \pseq \ty \ty {\pterm e \ty} \| \pmu{\ptyvar}{\ty} \nlalt
     \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
     \\
   \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
-    \ptyvar \| \pmu{\ptyvar}{\ty} 
+    \ptyvar 
 \end{bnf}  
 \[
   \infer{
@@ -1201,10 +1201,6 @@ passed zero and one otherwise.
 \quad
   \infer{
     \papp {(\plam x {} \ty)} {v} \stepsto \ty[v/x]
-  }{}
-\quad
-  \infer{
-    \pmu \ptyvar \ty \stepsto \ty[\pmu \ptyvar \ty/\ptyvar]
   }{}
 \]
   \caption{\ddc{} Weak-Head Normal Types and Normalization}
@@ -1255,6 +1251,10 @@ $\corr \tyval r p$ iff exactly one of the following is true:
     $h.{nerr} \geq \mathtt{pos}({neerr})$.
 %   \item $\tyval = \pmu \ptyvar {\ty'}$ and 
 %     $\corrkl {\ty'[\pmu \ptyvar {\ty'}/\ptyvar]} r p$.
+  \item $\tyval = \mu \alpha.\tau$, 
+        and $r = \iroll{r'}{\pmu \ptyvar \gk \itsem[\ty]}$, \\
+        and $p = (h,\iroll{h,p'}{\pmu \ptyvar \gk \itpdsem[\ty]})$ \\
+        and  $\corrkl {\tau[\mu \alpha.\tau/\alpha]} {r'} {(h,p')}$
   \item $\tyval = \pcompute e \ity$ and $p.{nerr} = 0$.
   \item $\tyval = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
   \item $\tyval = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
