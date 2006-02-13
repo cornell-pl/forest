@@ -130,7 +130,8 @@ regress_o:  sanity_check \
           regress_rwxml_pdate_explicit_me_o \
           regress_rwxml_enum_o \
 	  regress_rwxml_array_advance_o \
-	  regress_rwxml_message_header_o
+	  regress_rwxml_message_header_o \
+          regress_rwxml_pads-comp_o
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -181,7 +182,8 @@ regress_d:  sanity_check \
           regress_rwxml_pdate_explicit_me_d \
           regress_rwxml_enum_d \
           regress_rwxml_array_advance_d \
-          regress_rwxml_message_header_d
+          regress_rwxml_message_header_d \
+          regress_rwxml_pads-comp_d
 
 	@echo " "; echo "DONE"; echo " "
 
@@ -470,6 +472,12 @@ regress_rwxml_message_header_o: rwxml_message_header
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_message_header_d: rwxml_message_header_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_pads-comp_o: rwxml_pads-comp
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_pads-comp_d: rwxml_pads-comp_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o

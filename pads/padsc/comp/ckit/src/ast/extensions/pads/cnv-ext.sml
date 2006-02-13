@@ -1961,7 +1961,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			         (P.makeTypedefPCT(BU.lookupTy(pty, pdSuf, #pdname)),
 				  if memChar = TyProps.Static 
 				  then P.assignS 
-				  else fn(dst,src) =>  PT.Expr(PT.Call(PT.Id (copySuf pname), [PT.Id pads, P.addrX dst, P.addrX src])))
+				  else fn(dst,src) =>  
+				      PT.Compound[P.varDeclS(tyname, name, src),
+						  PT.Expr(PT.Call(PT.Id (copySuf pname), [PT.Id pads, P.addrX dst, P.addrX (PT.Id name)]))])
 				 end
 		      fun assignS exp = 
 		      case exp 
