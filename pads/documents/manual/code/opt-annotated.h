@@ -127,6 +127,8 @@ ssize_t OptTy_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,
 ssize_t OptTy_write2io (P_t *pads,Sfio_t *io,OptTy_pd *pd,OptTy *rep);
 
 int OptTy_verify (OptTy *rep);
+
+int OptTy_genPD (P_t *pads, OptTy *rep, OptTy_pd *pd);
 /*@END opt.TyOptOps.tex */
 ssize_t OptTy_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,OptTy_pd *pd,OptTy *rep,char const *tag,int indent);
 

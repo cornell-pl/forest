@@ -1,4 +1,4 @@
-/*@FILE init.tex init-mask.tex utility.tex verify.tex read.tex write.tex*/
+/*@FILE init.tex init-mask.tex utility.tex verify.tex genPD.tex read.tex write.tex*/
 /*@BEGIN init.tex*/
 Perror_t foo_init (P_t *pads, foo *rep);
 
@@ -20,8 +20,12 @@ Perror_t foo_pd_copy (P_t *pads, foo_pd *pd_dst, foo_pd *pd_src);
 /*@END utility.tex*/
 
 /*@BEGIN verify.tex*/
-int foo_verify(foo *rep_dst);
+int foo_verify(foo *rep);
 /*@END verify.tex*/
+
+/*@BEGIN genPD.tex*/
+int foo_genPD (P_t *pads, foo *rep, foo_pd *pd);
+/*@END genPD.tex*/
 
 
 /*@BEGIN read.tex*/

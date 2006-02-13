@@ -631,7 +631,26 @@ non-\pparsecheck{} constraints.
 
 \inputCode{code/verify}
 
+\noindent
+In addition, each structured type \cd{foo} has a function \cd{foo_genPD} that
+takes as an argument an in-memory representation and calculates a
+corresponding parse descriptor.  
 
+\inputCode{code/genPD}
+
+\noindent
+The function assumes that the out parameter \cd{pd} has already been
+allocated and initialized to zero.  It sets the error codes and counts
+based on the semantic predicates found in the description of \cd{foo}.
+The location information in the argument \cd{pd} will not be
+touched. Future versions of the parse descriptor generation function
+may compute on-disk sizes. The function returns true if the
+representation contains no errors and false otherwise. The function
+takes the \cd{pads} handle as an argument because it must allocate
+space for array parse descriptors. 
+
+
+ 
 \subsection{Read function}
 \label{sec:common-features-read-function}
 The read function for a \pads{} type \cd{foo} takes as an input parameter a
@@ -756,6 +775,10 @@ chapters.
 \begin{tabular}{lp{4in}}
 Accumulators (\chapref{chap:accumulators})  & Provide structures and
 functions for automatically summarizing data.\\
+Histograms (\chapref{chap:histogram})  & Provide structures and
+functions for computing histograms.\\
+Clustering (\chapref{chap:cluster})  & Provide structures and
+functions for clustering data.\\
 Formatting (\chapref{chap:formatting}) & Provide functions for
                formatting data in forms suitable for inclusion in relational
                databases.\\

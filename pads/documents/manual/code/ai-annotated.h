@@ -59,6 +59,8 @@ void nIP_m_init (P_t *pads,nIP_m *mask,Pbase_m baseMask);
 Perror_t nIP_read (P_t *pads,nIP_m *m,nIP_pd *pd,nIP *rep);
 
 int nIP_verify (nIP *rep);
+
+int nIP_genPD (P_t *pads, nIP *rep, nIP_pd *pd);
 /*@END ai.arrayOps.tex */
 
 typedef struct nIP_acc_s nIP_acc;
@@ -630,6 +632,9 @@ ssize_t http_request_t_write2io (P_t *pads,Sfio_t *io,
 				 http_request_t_pd *pd,http_request_t *rep);
 
 int http_request_t_verify (http_request_t *rep);
+
+int http_request_t_genPD (P_t *pads, http_request_t *rep, 
+			  http_request_t_pd *pd);
 /*@END ai.httpRequestOps.tex*/
 
 typedef struct http_request_t_acc_s http_request_t_acc;

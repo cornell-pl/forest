@@ -37,6 +37,8 @@ void bid_t_m_init (P_t *pads,bid_t_m *mask,Pbase_m baseMask);
 Perror_t bid_t_read (P_t *pads,bid_t_m *m,bid_t_pd *pd,bid_t *rep);
 
 int bid_t_verify (bid_t *rep);
+
+int bid_t_genPD (P_t *pads, bid_t *rep, bid_t_pd *pd);
 /*@END typedef.TypedefOps.tex */
 
 typedef Puint32_acc bid_t_acc;

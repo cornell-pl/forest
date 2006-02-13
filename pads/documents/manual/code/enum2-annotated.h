@@ -44,6 +44,8 @@ Perror_t orderStates_read (P_t *pads,orderStates_m *m,
 			   orderStates_pd *pd,orderStates *rep);
 
 int orderStates_verify (orderStates *rep);
+
+int orderStates_genPD (P_t *pads, orderStates *rep, orderStates_pd *pd);
 /*@END enumOps.tex*/
 
 typedef Pint32_acc orderStates_acc;

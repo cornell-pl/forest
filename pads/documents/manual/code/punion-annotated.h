@@ -93,6 +93,8 @@ ssize_t branches_write2io (P_t *pads,Sfio_t *io,Puint32 which,
 			   branches_pd *pd,branches *rep);
 
 int branches_verify (branches *rep,Puint32 which);
+
+int branches_genPD (P_t *pads,branches *rep, branches_pd *pd, Puint32 which);
 /*@END union-impl-branches-ops.tex*/
 
 typedef struct branches_acc_s branches_acc;
