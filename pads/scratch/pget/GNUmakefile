@@ -13,7 +13,7 @@ PADSC=$(PADS_HOME)/scripts/padsc
 AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
 INSTALLROOT=$(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
 LIBDIR=$(INSTALLROOT)/lib
-LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a
+LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a $(OS_SPEC_XTRA_LIBS)
 INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
 # Rule to run the pads compiler on data-acc.p

@@ -11,9 +11,9 @@ Ptypedef Pstring_SE(:Peor:) node_name_t;
 
 /* ickiness to build file location */
 char temp[100];
-char *concat(char *s1, char *s2, char *s3) {
+char *concat(char *s1, Pstring *p2, char *s3) {
   strcpy(temp, s1);
-  strcat(temp,s2);
+  strncat(temp,p2->str, p2->len);
   strcat(temp,s3);
   return temp;
 };
@@ -21,8 +21,8 @@ char *concat(char *s1, char *s2, char *s3) {
 
 Precord Pstruct node_info_t {
   node_name_t nodeName;
-  Pcompute type1 data1 = PgetLocal(type1, concat("data/",nodeName.str,"/data1.txt"));
-  Pcompute type2 data2 = PgetLocal(type2, concat("data/",nodeName.str,"/data2.txt"));
+  Pcompute type1 data1 = PgetLocal(type1, concat("data/",&nodeName,"/data1.txt"));
+  Pcompute type2 data2 = PgetLocal(type2, concat("data/",&nodeName,"/data2.txt"));
 }
 
 Parray node_list_t {
