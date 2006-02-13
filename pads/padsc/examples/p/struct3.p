@@ -19,9 +19,10 @@ int check(Pint32 t, auth_id_t user){
 };
 Ptypedef Pstring(:c:) foo(:Pchar c:) : foo x => { x.len  > 10};
 
+
 Precord Pstruct line {
          intList    f;
-Pcompute Ppos_t p = position;
+ Pcompute Ppos_t p = position; 
   '.';   Pa_int32   a : a == f.length;
   ' ';   auth_id_t  user;
   ' ';   Pa_int32   t : check(t, user);
@@ -29,5 +30,6 @@ Pcompute Ppos_t p = position;
 } Pwhere {
   s == t + f.length;
 };
+
 
 

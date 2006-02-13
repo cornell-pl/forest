@@ -98,7 +98,7 @@ Perror_t Pchar_read(P_t *pads,const Pbase_m *m,Pbase_pd *pd,Pchar *c_out);
 
 ssize_t Pa_char_write2io(P_t *pads,Sfio_t *io,Pbase_pd *pd,Pchar *c);
 
-ssize_t Pa_char_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, ssize_t *buf_full,
+ssize_t Pa_char_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
                     Pbase_pd *pd, Pchar *c
                     );
 
@@ -107,7 +107,7 @@ ssize_t Pa_char_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pchar *c,
                     );
 
 ssize_t Pa_char_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
-                    ssize_t *buf_full, Pbase_pd *pd, Pchar *c, const char *tag,
+                    int *buf_full, Pbase_pd *pd, Pchar *c, const char *tag,
                     int indent
                     );
 
