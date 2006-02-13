@@ -1,4 +1,4 @@
-Group(../main.cm) is
+Group is
 
 #if defined(NEW_CM)
   $/basis.cm
