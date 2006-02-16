@@ -1706,10 +1706,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       | _        => 
 				 let val tyName = BU.lookupTy ((getPadsName tyname), repSuf, #padsxname)
 				     val ty = P.makeTypedefPCT(tyName)
-				     val () = ( CTcnvType ty  (* ensure that the type has been defined *) ;
-						if lookupContainsRecord(getPadsName tyname)
+				     val () = ( CTcnvType ty; ()  (* ensure that the type has been defined *) 
+(*	;					if lookupContainsRecord(getPadsName tyname)
 						then PE.error ("Pcomputed field "^name^" has a PADS type that contains a record")
-						else () )
+						else () *) )
 				 in
 				     if isVirtual
 				     then [( [name], [name], [(tmpName(name),ty)], tmpMapping(name),  [],             tmpMapping(name),      [ty], [tyName] )]
