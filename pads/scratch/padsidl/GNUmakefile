@@ -75,10 +75,10 @@ padsc_stubs_w.c: padsc_stubs.c
 $(WRAPPERS):%_stubs_w.c: %_stubs.c
 
 $(CAML_OBJS): %.cmo: %.mli %.ml 
-	ocamlc -c $^
+	ocamlc $(OC_INCLUDES) -c $^
 
 %.cmo: %.mli %.ml 
-	ocamlc -c $^
+	ocamlc $(OC_INCLUDES) -c $^
 
 $(PADSIDL_LIB_NM) : $(C_OBJS)
 	$(STATIC_LIBTOOL) $(PADSIDL_LIB_NM) $(STATIC_LIBTOOL_OPTS) $^
