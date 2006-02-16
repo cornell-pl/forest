@@ -54,6 +54,7 @@ ifndef CAMLIDL_LIB_DIR
 CAMLIDL_LIB_DIR = $(OCAML_LIB_DIR)
 export CAMLIDL_LIB_DIR
 endif
+OC_INCLUDES = -I$(CAMLIDL_LIB_DIR)
 
 # Rule to make programs
 
