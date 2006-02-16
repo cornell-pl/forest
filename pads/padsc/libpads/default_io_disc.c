@@ -1251,11 +1251,11 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
     if (elt->len == 0) { /* trivial EOF record */
       elt->unit = "(EOF)";
     } else { /* partial-read EOF record */
-      char* missing = (data->cterm == '\n') ? "newline" : "terminating char";
+      //      char* missing = (data->cterm == '\n') ? "newline" : "terminating char";
       elt->unit = "record";
-      PDCI_iodisc_report_partial(pads, elt, 1, elt->len, elt->begin,
-				 "P_ctrec_noseek_read", "Final record not terminated properly, missing %s",
-				 missing);
+      //      PDCI_iodisc_report_partial(pads, elt, 1, elt->len, elt->begin,
+      //			 "P_ctrec_noseek_read", "Final record not terminated properly, missing %s",
+      //			 missing);
     }
     elt->begin[elt->len] = 0; /* null-terminate the record */
     P_APPEND_ELT(data->head, elt);

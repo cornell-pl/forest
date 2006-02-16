@@ -1,7 +1,5 @@
 Using PADSC IO discipline nlrec
 Try using scan1
-warning: Error [in P_ctrec_noseek_read]: at record 6 from byte 1 to byte 13: Final record not terminated properly, missing newline
-[record 6]foo6||bar6|||>>><<<
 line 0: scan1 found vbars at offset 4
 line 0: scan1 found vbars at offset 4
 line 0: scan1 found term at offset 4
@@ -26,8 +24,6 @@ line 5: scan1 found vbars at offset 4
 line 5: UNEXPECTED, scan1 did not find term
 Could not find EOR (newline), ending program
 Try using scan2
-warning: Error [in P_ctrec_noseek_read]: at record 6 from byte 1 to byte 13: Final record not terminated properly, missing newline
-[record 6]foo6||bar6|||>>><<<
 line 0: scan2 found vbars at offset 4
 line 0: scan2 found vbars at offset 4
 line 0: scan2 found term at offset 4

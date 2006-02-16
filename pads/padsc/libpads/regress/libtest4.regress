@@ -1,6 +1,4 @@
 Using PADSC IO discipline nlrec
-warning: Error [in P_ctrec_noseek_read]: at record 5 from byte 1 to byte 10: Final record not terminated properly, missing newline
-[record 5]foo5|bar5|>>><<<
 Read string term by vbar: foo1 (length 4)
 Read string term by vbar: bar1 (length 4)
 Read string term by EOR or X : zot1 (length 4)

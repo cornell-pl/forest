@@ -1,7 +1,5 @@
 warning: P_open: Installing default IO discipline : newline-terminated records
 Data file = ../../data/write_struct_strings
-warning: Error [in P_ctrec_noseek_read]: at record 5 at byte 1 : Final record not terminated properly, missing newline
-[record 5] >>><<<
 calling testtwo_read
 test_read returned: s1 xabcdefghi  s2 abcdefg
 xabcdefghi|abcdefg|

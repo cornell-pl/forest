@@ -1,6 +1,4 @@
 Using PADSC IO discipline ctrec with cterm P_EBCDIC_NEWLINE
-warning: Error [in P_ctrec_noseek_read]: at record 5 from byte 1 to byte 10: Final record not terminated properly, missing terminating char
-[record 5]\206\226\226\365j\202\201\231\365j>>><<<
 Read string term by vbar: foo1 (length 4)
 Read string term by vbar: bar1 (length 4)
 Read string term by EOR or X : zot1 (length 4)
