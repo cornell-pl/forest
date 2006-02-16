@@ -17,24 +17,40 @@ LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a $(OS_SPEC_XTRA_LIBS)
 INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
 # Rule to run the pads compiler on data-acc.p
+
+
 data.c: data.p
+	$(PADSC) $<
+
+foo.c: foo.p
 	$(PADSC) $<
 
 include $(PADS_HOME)/mk/rules.mk
 
+
+# foo (test program)
+
+foo-xml: foo-xml.c foo.c 
+	$(CC) $(INCLUDES) foo-xml.c foo.c $(LIBS) -o foo-xml
+
+
+
+
+
 # Rule to make data-xml program
 
 data-xml: data-xml.c data.c 
-	$(CC) $(INCLUDES) data-xml.c data.c pget.c $(LIBS) -o data-xml
+	$(CC) $(INCLUDES) data-xml.c data.c $(LIBS) -o data-xml
 
 data-fmt: data-fmt.c data.c 
-	$(CC) $(INCLUDES) data-fmt.c data.c pget.c $(LIBS) -o data-fmt
+	$(CC) $(INCLUDES) data-fmt.c data.c $(LIBS) -o data-fmt
 
 data-acc: data-acc.c data.c 
-	$(CC) $(INCLUDES) data-acc.c data.c pget.c $(LIBS) -o data-acc
+	$(CC) $(INCLUDES) data-acc.c data.c $(LIBS) -o data-acc
 
 
 
 
 clean:
 	$(RM) data.[ch] data.xsd data-xml data-accum data-fmt data-acc
+	$(RM) foo.[ch] foo.xsd foo-xml
