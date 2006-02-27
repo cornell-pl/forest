@@ -114,11 +114,9 @@ typedef unsigned char Pchar;
 typedef struct Pstring_s Pstring;
 
 struct Pstring_s{
+  size_t         len;
   [string] char *str;
 };
-
-typedef [abstract] struct Pdisc_s        Pdisc_t;
-typedef [abstract] struct Pio_disc_s        Pio_disc_t;
 
 typedef struct Pbase_pd_s Pbase_pd;
 typedef struct Ppos_s           Ppos_t;
@@ -126,11 +124,13 @@ typedef struct Ploc_s           Ploc_t;
 typedef [int64] int Sfoff_t;
 typedef Puint32 Pflags_t;
 
-/* Abstract definition for P_t. Ensures that the file typechecks. 
+/* Abstract definition for P_t and other types. Ensures that the file typechecks. 
    We don't need to specify the actual P_t.
 */
-typedef [abstract] struct P_s  P_t;
-
+typedef [abstract] struct P_s         P_t;
+typedef [abstract] struct Pdisc_s     Pdisc_t;
+typedef [abstract] struct Pio_disc_s  Pio_disc_t;
+typedef [abstract] struct Tm_zone_s   Tm_zone_t;
 
 /* Hack: IDL defines "byte" as a type, making it illegal as a field
    identifier.  Unfortunately, the first field of the Ppos_s structure
@@ -164,8 +164,18 @@ struct Pbase_pd_s {
 
 [pointer_default(unique)] 
 interface LibraryHandle {
-  Perror_t  P_open  ([out,*ptr] P_t **pads_out, [in] Pdisc_t *disc, [in] Pio_disc_t *io_disc);
+  Perror_t  P_open  ([out,*ptr] P_t **pads_out, [in] Pdisc_t *disc, [in,ptr] Pio_disc_t *io_disc);
   Perror_t  P_close ([in,ptr] P_t *pads); 
+}
+
+
+/* ================================================================================
+ * MISCELLANY
+ *
+ */
+
+interface Misc {
+  Tm_zone_t *P_cstr2timezone([in,string] const char *tzone_str);
 }
 
 /* ================================================================================
@@ -176,18 +186,20 @@ interface LibraryHandle {
 /* Perror_t  P_io_next_rec  (P_t *pads, size_t *skipped_bytes_out); */
 /* Perror_t  P_io_skip_bytes(P_t *pads, size_t width, size_t *skipped_bytes_out); */
 
-/* int       P_io_at_eor        (P_t *pads); */
-/* int       P_io_at_eof        (P_t *pads); */
-/* int       P_io_at_eor_or_eof (P_t *pads); */
-
-/* Perror_t  P_io_getPos   (P_t *pads, Ppos_t *pos, int offset);  */
-/* Perror_t  P_io_getLocB  (P_t *pads, Ploc_t *loc, int offset);  */
-/* Perror_t  P_io_getLocE  (P_t *pads, Ploc_t *loc, int offset);  */
-/* Perror_t  P_io_getLoc   (P_t *pads, Ploc_t *loc, int offset);  */
 
 interface IO{
   Perror_t  P_io_fopen     ([in,ptr] P_t *pads, [string] const char *path);
   Perror_t  P_io_close     ([in,ptr] P_t *pads);
+
+  Perror_t  P_io_getPos   ([in,ptr] P_t *pads, [out] Ppos_t *pos, [in] int offset);
+  Perror_t  P_io_getLocB  ([in,ptr] P_t *pads, [out] Ploc_t *loc, [in] int offset);
+  Perror_t  P_io_getLocE  ([in,ptr] P_t *pads, [out] Ploc_t *loc, [in] int offset);
+  Perror_t  P_io_getLoc   ([in,ptr] P_t *pads, [out] Ploc_t *loc, [in] int offset);
+
+  int       P_io_at_eor        ([in,ptr] P_t *pads);
+  int       P_io_at_eof        ([in,ptr] P_t *pads);
+  /* eor_or_eof causing linking problems. removed for now.*/
+/*   int       P_io_at_eor_or_eof ([in,ptr] P_t *pads);  */
 }
 
 /* ================================================================================
@@ -231,4 +243,33 @@ interface Checkpoint{
   /*           /\* pos should be >= the checkpoint position and <= the current IO cursor position *\/ */
   Perror_t  P_io_restore     ([in,ptr] P_t *pads);
   unsigned int P_spec_level  ([in,ptr] P_t *pads);
+}
+
+/* ================================================================================
+ * IO Descriptor API
+ *
+ */
+
+interface IO_Disc{
+
+  [ptr] Pio_disc_t * P_ctrec_make([in] Pbyte termChar, [in] size_t block_size_hint);
+  /* Instantiates an instance of ctrec, a discipline for
+   * character-terminated variable-width records. termChar is the
+   * character that marks the end of a record. block_size_hint is a
+   * hint as to what block size to use, if the discipline chooses to do
+   * fixed block-sized reads 'under the covers'.  It may be ignored by
+   * the discipline.
+   * 
+   * For ASCII newline-terminated records use, '\n' or P_ASCII_NEWLINE
+   * as the term character.  For EBCDIC newline-terminated records, use
+   * P_EBCDIC_NEWLINE as the term character.
+   */
+
+  [ptr] Pio_disc_t * P_norec_make([in] size_t block_size_hint);
+  /* Instantiates an instance of norec, a raw bytes discipline that
+   * does not use records.  block_size_hint is a hint as to what block size
+   * to use, if the discipline chooses to do fixed block-sized reads
+   * 'under the covers'.  It may be ignored by the discipline.
+   */
+
 }

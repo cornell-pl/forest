@@ -1,6 +1,8 @@
  # This makefile uses gmake extensions
  # such as $(shell ...) to execute a command
 
+OCAMLDEP=ocamldep
+
 .PRECIOUS: %.c
 
 # These variables need to be set
@@ -17,10 +19,11 @@ LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a
 INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 PADSIDL=$(PADS_HOME)/scratch/padsidl
 
-BASE_TYPES=pint pchar pstring
+BASE_TYPES=pint pchar pstring ptimestamp
 GENERATED_INTS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.mli)
 GENERATED_IMPLS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.ml)
 GENERATED_STUBS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs.c)
+GENERATED_OC_SOURCES= $(GENERATED_INTS) $(GENERATED_IMPLS)
 BT_GEN=$(GENERATED_INTS) $(GENERATED_IMPLS) $(GENERATED_STUBS)
 WRAPPERS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.c)
 BT_CAML_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.cmo)
@@ -46,15 +49,15 @@ Q_OBJS=$(foreach obj,$(OBJS),$(PADSIDL)/$(obj))
 
 include $(PADS_HOME)/mk/rules.mk
 
-INCLUDES += -I$(OCAML_LIB_DIR)
-
 # Set the location of the camlidl library if it is different than the
 # location of the other ocaml libs.
 ifndef CAMLIDL_LIB_DIR
 CAMLIDL_LIB_DIR = $(OCAML_LIB_DIR)
 export CAMLIDL_LIB_DIR
 endif
-OC_INCLUDES = -I$(CAMLIDL_LIB_DIR)
+
+INCLUDES += -I$(OCAML_LIB_DIR) -I$(CAMLIDL_LIB_DIR)
+OC_INCLUDES = -I $(CAMLIDL_LIB_DIR)
 
 # Rule to make programs
 
@@ -75,10 +78,10 @@ padsc_stubs_w.c: padsc_stubs.c
 $(WRAPPERS):%_stubs_w.c: %_stubs.c
 
 $(CAML_OBJS): %.cmo: %.mli %.ml 
-	ocamlc $(OC_INCLUDES) -c $^
+	ocamlc $(OC_INCLUDES) -c $*.mli $*.ml
 
 %.cmo: %.mli %.ml 
-	ocamlc $(OC_INCLUDES) -c $^
+	ocamlc $(OC_INCLUDES) -c $*.mli $*.ml
 
 $(PADSIDL_LIB_NM) : $(C_OBJS)
 	$(STATIC_LIBTOOL) $(PADSIDL_LIB_NM) $(STATIC_LIBTOOL_OPTS) $^
@@ -93,12 +96,19 @@ $(PADSIDL)/padsc.cma padsc.cma: $(CAML_OBJS) $(PADSIDL_LIB_NM)
 client: padsclib client.ml
 	ocamlc client.ml  padsc.cma  -o client
 
-.PHONY: clean padsc padsclib
+.PHONY: clean padsc padsclib depend
 
 padsc: padsc_stubs_w.o
 
 padsclib: padsc.cma
 
+# OCaml dependencies management
+ifeq (.depend,$(strip $(shell ls .depend)))
+  include .depend
+endif
+
+depend:	
+	$(OCAMLDEP) $(OC_INCLUDES) $(GENERATED_OC_SOURCES) > .depend
 clean:
 	$(RM) padsc.ml padsc.mli 
 	$(RM) $(BT_GEN)
