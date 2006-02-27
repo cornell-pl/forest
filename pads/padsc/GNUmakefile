@@ -53,7 +53,7 @@ test_comp:
 clean:
 	@(cd comp; $(MAKE) clean)
 	@(cd libpads; $(MAKE) clean)
-	@(cd usecases; $(MAKE) clean)
+	@(if [ -d usecases ]; then cd usecases; $(MAKE) clean; fi)
 ifdef USE_GALAX
 	@(cd pads-glx; $(MAKE) clean)
 	@(cd libpglx; $(MAKE) clean)
@@ -62,7 +62,7 @@ endif
 veryclean:
 	@(cd comp; $(MAKE) veryclean)
 	@(cd libpads; $(MAKE) veryclean)
-	@(cd usecases; $(MAKE) veryclean)
+	@(if [ -d usecases ]; then cd usecases; $(MAKE) veryclean; fi)
 ifdef USE_GALAX
 	@(cd pads-glx; $(MAKE) veryclean)
 	@(cd libpglx; $(MAKE) veryclean)
