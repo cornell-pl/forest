@@ -882,18 +882,23 @@ Perror_t Pstring_copy(P_t *pads, Pstring *targ, const Pstring *src);
 Perror_t Pstring_cstr_copy(P_t *pads, Pstring *targ, const char *src, size_t len);
 Perror_t Pstring_preserve(P_t *pads, Pstring *s);
 
-Pint8    Pstring2int8  (const Pstring *str);  /* returns P_MIN_INT8 on error */ 
-Pint16   Pstring2int16 (const Pstring *str);  /* returns P_MIN_INT16 on error */ 
-Pint32   Pstring2int32 (const Pstring *str);  /* returns P_MIN_INT32 on error */ 
-Pint64   Pstring2int64 (const Pstring *str);  /* returns P_MIN_INT64 on error */ 
+/* The following conversion functions set errno to EINVAL if the
+ * Pstring does not contain an appropriately formatted number,
+ * or to ERANGE if the number does not fit in the target type.
+ * When errno is non-zero, the return value should be ignored.
+ */
+Pint8    Pstring2int8  (const Pstring *str);
+Pint16   Pstring2int16 (const Pstring *str);
+Pint32   Pstring2int32 (const Pstring *str);
+Pint64   Pstring2int64 (const Pstring *str);
 
-Puint8   Pstring2uint8 (const Pstring *str);  /* returns P_MAX_UINT8 on error */ 
-Puint16  Pstring2uint16(const Pstring *str);  /* returns P_MAX_UINT16 on error */ 
-Puint32  Pstring2uint32(const Pstring *str);  /* returns P_MAX_UINT32 on error */ 
-Puint64  Pstring2uint64(const Pstring *str);  /* returns P_MAX_UINT64 on error */ 
+Puint8   Pstring2uint8 (const Pstring *str);
+Puint16  Pstring2uint16(const Pstring *str);
+Puint32  Pstring2uint32(const Pstring *str);
+Puint64  Pstring2uint64(const Pstring *str);
 
-Pfloat32 Pstring2float32(const Pstring *str); /* returns P_MIN_FLOAT32 on error */
-Pfloat64 Pstring2float64(const Pstring *str); /* returns P_MIN_FLOAT64 on error */
+Pfloat32 Pstring2float32(const Pstring *str);
+Pfloat64 Pstring2float64(const Pstring *str);
 
 #ifdef FOR_CKIT
 int Pstring_eq(const Pstring *str1, const Pstring *str2);

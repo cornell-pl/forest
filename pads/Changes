@@ -1,3 +1,12 @@
+March 2, 2006 - Bob
+  o Fixed some bugs in the low-level numeric parsing routines.
+    For example, float parsing was producing 0.0 for empty string (oops).
+    Updated documentation for these routines in pads_internal.h
+  o Changed documentation for Pstring2<number> -- no longer promises
+      to return a particular min or max value on error, instead
+      it promises to set errno as appropriate, which is what the
+      the underlying numeric parsing functions do.
+
 December 20, 2005 -Yitzhak
   Recursive types:
   o Added support for type parameters.

@@ -3404,7 +3404,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_a_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_min;
+    return 0;
   }
   while ((digit = PDCI_ascii_digit[*bytes]) != -1) {
     if (res < int_min ## _DIV10) {
@@ -3432,26 +3432,33 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
   int digit;
   int  neg = 0, range_err = 0;
   targ_type res = 0;
-  size_t ctr = 0;
 
-  while (PDCI_is_a_space(*bytes)) {
+  while (max_bytes > 0 && PDCI_is_a_space(*bytes)) {
     bytes++;
-    if (++ctr > max_bytes) { errno = EINVAL; return int_min; }
+    max_bytes--;
+  }
+  if (max_bytes == 0) {
+    errno = EINVAL;
+    return 0;
   }
   if (*bytes == '+') {
     bytes++;
-    if (++ctr > max_bytes) { errno = EINVAL; return int_min; }
+    max_bytes--;
   } else if (*bytes == '-') {
     bytes++;
-    if (++ctr > max_bytes) { errno = EINVAL; return int_min; }
+    max_bytes--;
     neg = 1;
+  }
+  if (max_bytes == 0) {
+    errno = EINVAL;
+    return 0;
   }
   if (!PDCI_is_a_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_min;
+    return 0;
   }
-  while (ctr++ <= max_bytes && ((digit = PDCI_ascii_digit[*bytes]) != -1)) {
+  while (max_bytes > 0 && ((digit = PDCI_ascii_digit[*bytes]) != -1)) {
     if (res < int_min ## _DIV10) {
       range_err = 1;
     }
@@ -3461,6 +3468,7 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
     }
     res -= digit;
     bytes++;
+    max_bytes--;
   }
   (*ptr_out) = (Pbyte*)bytes;
   if (range_err) {
@@ -3478,7 +3486,10 @@ Pstring2int_fn(const Pstring *s)
   size_t max_bytes;
   targ_type res;
 
-  if (!s) return int_min;
+  if (!s) {
+    errno = EINVAL;
+    return 0;
+  }
   ptr = bytes = (Pbyte*)s->str;
   max_bytes = s->len;
   res = fn_name ## _max_bytes(bytes, max_bytes, &ptr);
@@ -3488,7 +3499,7 @@ Pstring2int_fn(const Pstring *s)
   }
   if (ptr - bytes != max_bytes) {
     errno = EINVAL;
-    return int_min;
+    return 0;
   }
   return res;
 }
@@ -3512,7 +3523,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_a_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_min;
+    return 0;
   }
   while ((digit = PDCI_ascii_digit[*bytes]) != -1) {
     res = (res << 3) + (res << 1); /* res *= 10 */
@@ -3545,7 +3556,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_a_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_max;
+    return 0;
   }
   while ((digit = PDCI_ascii_digit[*bytes]) != -1) {
     if (res > int_max ## _DIV10) {
@@ -3573,26 +3584,33 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
   int digit;
   int  range_err = 0;
   targ_type res = 0;
-  size_t ctr = 0;
 
-  while (PDCI_is_a_space(*bytes)) {
+  while (max_bytes > 0 && PDCI_is_a_space(*bytes)) {
     bytes++;
-    if (++ctr > max_bytes) { errno = EINVAL; return int_max; }
+    max_bytes--;
+  }
+  if (max_bytes == 0) {
+    errno = EINVAL;
+    return 0;
   }
   if (*bytes == '+') {
     bytes++;
-    if (++ctr > max_bytes) { errno = EINVAL; return int_max; }
+    max_bytes--;
   } else if (*bytes == '-') {
     bytes++;
-    if (++ctr > max_bytes) { errno = EINVAL; return int_max; }
+    max_bytes--;
     range_err = 1;
+  }
+  if (max_bytes == 0) {
+    errno = EINVAL;
+    return 0;
   }
   if (!PDCI_is_a_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_max;
+    return 0;
   }
-  while (ctr++ <= max_bytes && ((digit = PDCI_ascii_digit[*bytes]) != -1)) {
+  while (max_bytes > 0 && ((digit = PDCI_ascii_digit[*bytes]) != -1)) {
     if (res > int_max ## _DIV10) {
       range_err = 1;
     }
@@ -3602,6 +3620,7 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
     }
     res += digit;
     bytes++;
+    max_bytes--;
   }
   (*ptr_out) = (Pbyte*)bytes;
   if (range_err) {
@@ -3619,7 +3638,10 @@ Pstring2int_fn(const Pstring *s)
   size_t max_bytes;
   targ_type res;
 
-  if (!s) return int_max;
+  if (!s) {
+    errno = EINVAL;
+    return 0;
+  }
   ptr = bytes = (Pbyte*)s->str;
   max_bytes = s->len;
   res = fn_name ## _max_bytes(bytes, max_bytes, &ptr);
@@ -3629,7 +3651,7 @@ Pstring2int_fn(const Pstring *s)
   }
   if (ptr - bytes != max_bytes) {
     errno = EINVAL;
-    return int_max;
+    return 0;
   }
   return res;
 }
@@ -3649,7 +3671,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_a_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_max;
+    return 0;
   }
   while ((digit = PDCI_ascii_digit[*bytes]) != -1) {
     res = (res << 3) + (res << 1); /* res *= 10 */
@@ -3746,7 +3768,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_e_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_min;
+    return 0;
   }
   while ((digit = PDCI_ebcdic_digit[*bytes]) != -1) {
     if (res < int_min ## _DIV10) {
@@ -3787,7 +3809,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_e_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_min;
+    return 0;
   }
   while ((digit = PDCI_ebcdic_digit[*bytes]) != -1) {
     res = (res << 3) + (res << 1); /* res *= 10 */
@@ -3820,7 +3842,7 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_e_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_max;
+    return 0;
   }
   while ((digit = PDCI_ebcdic_digit[*bytes]) != -1) {
     if (res > int_max ## _DIV10) {
@@ -3857,7 +3879,7 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
   if (!PDCI_is_e_digit(*bytes)) {
     (*ptr_out) = (Pbyte*)bytes;
     errno = EINVAL;
-    return int_max;
+    return 0;
   }
   while ((digit = PDCI_ebcdic_digit[*bytes]) != -1) {
     res = (res << 3) + (res << 1); /* res *= 10 */
@@ -4043,7 +4065,7 @@ fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   while (--n >= 0) {
     if ((digit = (0xF & *bytes)) > 9) {
       errno = EINVAL;
-      return int_min;
+      return 0;
     }
     if (res < int_min ## _DIV10) {
       goto range_err;
@@ -4078,7 +4100,7 @@ fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   while (--n >= 0) {
     if ((digit = (0xF & *bytes)) > 9) {
       errno = EINVAL;
-      return int_min;
+      return 0;
     }
     res = (res << 3) + (res << 1); /* res *= 10 */
     res -= digit;
@@ -4186,7 +4208,7 @@ fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   while (--n >= 0) {
     if ((digit = (0xF & *bytes)) > 9) {
       errno = EINVAL;
-      return int_max;
+      return 0;
     }
     if (res > int_max ## _DIV10) {
       goto range_err;
@@ -4220,7 +4242,7 @@ fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   while (--n >= 0) {
     if ((digit = (0xF & *bytes)) > 9) {
       errno = EINVAL;
-      return int_max;
+      return 0;
     }
     res = (res << 3) + (res << 1); /* res *= 10 */
     res += digit;
@@ -4308,7 +4330,7 @@ fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
     if (-1 == (two_digits = PDCI_bcd_hilo_digits[*bytes])) {
       (*ptr_out) = (Pbyte*)bytes;
       errno = EINVAL;
-      return int_min;
+      return 0;
     }
     if (res < int_min ## _DIV100) {
       goto range_err;
@@ -4324,7 +4346,7 @@ fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   if (num_digits) {
     if (-1 == (digit = PDCI_bcd_hi_digit[*bytes])) {
       errno = EINVAL;
-      return int_min;
+      return 0;
     }
     if (res < int_min ## _DIV10) {
       goto range_err;
@@ -4361,7 +4383,7 @@ fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
     if (-1 == (two_digits = PDCI_bcd_hilo_digits[*bytes])) {
       (*ptr_out) = (Pbyte*)bytes;
       errno = EINVAL;
-      return int_min;
+      return 0;
     }
     res *= 100;
     res -= two_digits;
@@ -4371,7 +4393,7 @@ fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   if (num_digits) {
     if (-1 == (digit = PDCI_bcd_hi_digit[*bytes])) {
       errno = EINVAL;
-      return int_min;
+      return 0;
     }
     res = (res << 3) + (res << 1); /* res *= 10 */
     res -= digit;
@@ -4511,7 +4533,7 @@ fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
     if (-1 == (two_digits = PDCI_bcd_hilo_digits[*bytes])) {
       (*ptr_out) = (Pbyte*)bytes;
       errno = EINVAL;
-      return int_max;
+      return 0;
     }
     if (res > int_max ## _DIV100) {
       goto range_err;
@@ -4527,7 +4549,7 @@ fn_name(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   if (num_digits) {
     if (-1 == (digit = PDCI_bcd_hi_digit[*bytes])) {
       errno = EINVAL;
-      return int_max;
+      return 0;
     }
     if (res > int_max ## _DIV10) {
       goto range_err;
@@ -4562,7 +4584,7 @@ fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
     if (-1 == (two_digits = PDCI_bcd_hilo_digits[*bytes])) {
       (*ptr_out) = (Pbyte*)bytes;
       errno = EINVAL;
-      return int_max;
+      return 0;
     }
     res *= 100;
     res += two_digits;
@@ -4572,7 +4594,7 @@ fn_name ## _norange(const Pbyte *bytes, Puint32 num_digits, Pbyte **ptr_out)
   if (num_digits) {
     if (-1 == (digit = PDCI_bcd_hi_digit[*bytes])) {
       errno = EINVAL;
-      return int_max;
+      return 0;
     }
     res = (res << 3) + (res << 1); /* res *= 10 */
     res += digit;
@@ -4873,38 +4895,96 @@ rev_fn_name ## _io (P_t *pads, Sfio_t *io, targ_type u, Puint32 num_bytes)
 targ_type
 fn_name(const Pbyte *bytes, Pbyte **ptr_out)
 {
+  Pbyte* ptr;
   _ast_fltmax_t d;
 
+  /* skip spaces so that ptr == bytes means failed conversion */
+  while (PDCI_is_a_space(*bytes)) {
+    bytes++;
+  }
   errno = 0;
-  d = strtold((const char *)bytes, (char**)ptr_out);
-  if (d == LDBL_MAX || d > float_max) return float_max;
-  if (d == LDBL_MIN || d < float_min) return float_min;
+  d = strtold((const char *)bytes, (char**)&ptr);
+  if (ptr >= bytes) {
+    (*ptr_out) = ptr;
+  } else {
+    (*ptr_out) = (Pbyte*)bytes;
+  }
+  if (ptr == bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  if ((errno == ERANGE && d < 0) || (d < float_min)) {
+    errno = ERANGE;
+    return float_min;
+  }
+  if ((errno == ERANGE) || (d > float_max)) {
+    errno = ERANGE;
+    return float_max;
+  }
   return (targ_type)d;
 }
 
-/* there is no way to tell strtold to not do range checking, and 
-   at least for now we decided not to implement our own routine */
 targ_type
 fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
+  Pbyte* ptr;
   _ast_fltmax_t d;
 
+  /* skip spaces so that ptr == bytes means failed conversion */
+  while (PDCI_is_a_space(*bytes)) {
+    bytes++;
+  }
   errno = 0;
-  d = strtold((const char *)bytes, (char**)ptr_out);
-  if (d == LDBL_MAX || d > float_max) return float_max;
-  if (d == LDBL_MIN || d < float_min) return float_min;
+  d = strtold((const char *)bytes, (char**)&ptr);
+  if (ptr >= bytes) {
+    (*ptr_out) = ptr;
+  } else {
+    (*ptr_out) = (Pbyte*)bytes;
+  }
+  if (ptr == bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  /* ignore all range errors, return potentially bogus wrapped/cast value */
+  errno = 0; 
   return (targ_type)d;
 }
 
 targ_type
 fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
 {
+
+  Pbyte* ptr;
   _ast_fltmax_t d;
 
+  /* skip spaces so that ptr == bytes means failed conversion */
+  while (max_bytes > 0 && PDCI_is_a_space(*bytes)) {
+    bytes++;
+    max_bytes--;
+  }
+  if (max_bytes == 0) {
+    errno = EINVAL;
+    return 0;
+  }
   errno = 0;
-  d = strntold((const char *)bytes, max_bytes, (char**)ptr_out);
-  if (d == LDBL_MAX || d > float_max) return float_max;
-  if (d == LDBL_MIN || d < float_min) return float_min;
+  d = strntold((const char *)bytes, max_bytes, (char**)&ptr);
+  if (ptr >= bytes) {
+    (*ptr_out) = ptr;
+  } else {
+    (*ptr_out) = (Pbyte*)bytes;
+  }
+  if (ptr == bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  if ((errno == ERANGE && d < 0) || (d < float_min)) {
+    errno = ERANGE;
+    return float_min;
+  }
+  if ((errno == ERANGE) || (d > float_max)) {
+    errno = ERANGE;
+    return float_max;
+  }
   return (targ_type)d;
 }
 
@@ -4915,17 +4995,22 @@ Pstring2float_fn(const Pstring *s)
   size_t max_bytes;
   targ_type res;
 
-  if (!s) return float_min;
+  if (!s) {
+    errno = EINVAL;
+    return 0;
+  }
   ptr = bytes = (Pbyte*)s->str;
   max_bytes = s->len;
   res = fn_name ## _max_bytes(bytes, max_bytes, &ptr);
-  if (errno) return res;
+  if (errno) {
+    return res;
+  }
   while (ptr - bytes < max_bytes && PDCI_is_a_space(*ptr)) {
     ptr++;
   }
   if (ptr - bytes != max_bytes) {
     errno = EINVAL;
-    return float_min;
+    return 0;
   }
   return res;
 }
@@ -4939,32 +5024,42 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
   char          *ascii_bytes, *ascii_ptr;
   _ast_fltmax_t  d;
 
-  if (!(tmpstr = sfstropen ())) { 
-    return float_min;
+  if (!(tmpstr = sfstropen())) { 
+    P_FATAL(&Pdefault_disc, "sfstropen failed in " PDCI_MacroArg2String(fn_name));
   }
+
   while (PDCI_is_e_space(*bytes)) {
     bytes++;
   }
+  /* XXX_TODO should either add enough chars here to support e notation plus INF/INFINITY and (NAN) or disallow those forms for ASCII above */
   while ((*bytes) == P_EBCDIC_PLUS || (*bytes) == P_EBCDIC_MINUS || (*bytes) == P_EBCDIC_DOT || PDCI_is_e_digit(*bytes)) {
     sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
     bytes++;
   }
   ascii_bytes = PDCI_sfstr_use(tmpstr);
   errno = 0;
-  d = strtold((const char *)bytes, &ascii_ptr);
-  if (ascii_ptr) {
+  d = strtold((const char *)ascii_bytes, &ascii_ptr);
+  if (ascii_ptr >= ascii_bytes) {
     (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
   } else {
-    (*ptr_out) = 0;
+    (*ptr_out) = (Pbyte*)bytes;
   }
   sfstrclose(tmpstr);
-  if (d == LDBL_MAX || d > float_max) return float_max;
-  if (d == LDBL_MIN || d < float_min) return float_min;
+  if (ascii_ptr == ascii_bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  if ((errno == ERANGE && d < 0) || (d < float_min)) {
+    errno = ERANGE;
+    return float_min;
+  }
+  if ((errno == ERANGE) || (d > float_max)) {
+    errno = ERANGE;
+    return float_max;
+  }
   return (targ_type)d;
 }
 
-/* there is no way to tell strtold to not do range checking, and 
-   at least for now we decided not to implement our own routine */
 targ_type
 fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
 {
@@ -4972,27 +5067,33 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
   char          *ascii_bytes, *ascii_ptr;
   _ast_fltmax_t  d;
 
-  if (!(tmpstr = sfstropen ())) { 
-    return float_min;
+  if (!(tmpstr = sfstropen())) { 
+    P_FATAL(&Pdefault_disc, "sfstropen failed in " PDCI_MacroArg2String(fn_name));
   }
+
   while (PDCI_is_e_space(*bytes)) {
     bytes++;
   }
+  /* XXX_TODO should either add enough chars here to support e notation plus INF/INFINITY and (NAN) or disallow those forms for ASCII above */
   while ((*bytes) == P_EBCDIC_PLUS || (*bytes) == P_EBCDIC_MINUS || (*bytes) == P_EBCDIC_DOT || PDCI_is_e_digit(*bytes)) {
     sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
     bytes++;
   }
   ascii_bytes = PDCI_sfstr_use(tmpstr);
   errno = 0;
-  d = strtold((const char *)bytes, &ascii_ptr);
-  if (ascii_ptr) {
+  d = strtold((const char *)ascii_bytes, &ascii_ptr);
+  if (ascii_ptr >= ascii_bytes) {
     (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
   } else {
-    (*ptr_out) = 0;
+    (*ptr_out) = (Pbyte*)bytes;
   }
   sfstrclose(tmpstr);
-  if (d == LDBL_MAX || d > float_max) return float_max;
-  if (d == LDBL_MIN || d < float_min) return float_min;
+  if (ascii_ptr == ascii_bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  /* ignore all range errors, return potentially bogus wrapped/cast value */
+  errno = 0; 
   return (targ_type)d;
 }
 
@@ -5003,27 +5104,44 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
   char          *ascii_bytes, *ascii_ptr;
   _ast_fltmax_t  d;
 
-  if (!(tmpstr = sfstropen ())) { 
-    return float_min;
+  if (!(tmpstr = sfstropen())) { 
+    P_FATAL(&Pdefault_disc, "sfstropen failed in " PDCI_MacroArg2String(fn_name));
   }
-  while (PDCI_is_e_space(*bytes)) {
+
+  while (max_bytes > 0 && PDCI_is_e_space(*bytes)) {
     bytes++;
+    max_bytes--;
   }
+  if (max_bytes == 0) {
+    errno = EINVAL;
+    return 0;
+  }
+  /* XXX_TODO should either add enough chars here to support e notation plus INF/INFINITY and (NAN) or disallow those forms for ASCII above */
   while ((*bytes) == P_EBCDIC_PLUS || (*bytes) == P_EBCDIC_MINUS || (*bytes) == P_EBCDIC_DOT || PDCI_is_e_digit(*bytes)) {
     sfputc(tmpstr, P_mod_ea_tab[(int)(*bytes)]);
     bytes++;
   }
   ascii_bytes = PDCI_sfstr_use(tmpstr);
   errno = 0;
-  d = strntold((const char *)bytes, max_bytes, &ascii_ptr);
-  if (ascii_ptr) {
+  d = strntold((const char *)ascii_bytes, max_bytes, &ascii_ptr);
+  if (ascii_ptr >= ascii_bytes) {
     (*ptr_out) = (Pbyte*)bytes + (ascii_ptr - ascii_bytes);
   } else {
-    (*ptr_out) = 0;
+    (*ptr_out) = (Pbyte*)bytes;
   }
   sfstrclose(tmpstr);
-  if (d == LDBL_MAX || d > float_max) return float_max;
-  if (d == LDBL_MIN || d < float_min) return float_min;
+  if (ascii_ptr == ascii_bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  if ((errno == ERANGE && d < 0) || (d < float_min)) {
+    errno = ERANGE;
+    return float_min;
+  }
+  if ((errno == ERANGE) || (d > float_max)) {
+    errno = ERANGE;
+    return float_max;
+  }
   return (targ_type)d;
 }
 /* END_MACRO */
@@ -7022,7 +7140,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.197 2005-12-18 14:31:55 yitzhakm Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.198 2006-03-02 09:07:40 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 

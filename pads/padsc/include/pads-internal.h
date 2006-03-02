@@ -1401,6 +1401,32 @@ Perror_t PDCI_io_getElt(P_t *pads, size_t num, Pio_elt_t **elt_out);
 /* ================================================================================ */
 /* INTERNAL CONVERSION ROUTINES */
 
+/*
+ * NOTES ON CONVERSION ROUTINES THAT PARSE NUMBERS AND SET errno / ptr_out
+ *
+ *     (1) ptr_out is assumed valid -- this is unlike standard unix routines
+ *         such as "strtold"
+ *
+ *     (2) after the call, (*ptr_out) should point to the first char not
+ *         part of the number, or to the first invalid char when errno = EINVAL.
+ *         (*ptr_out) should never be 0/NULL.  Note that it is not required
+ *         (or even desirable) to always have (*ptr_out) point to the
+ *         first character of the input string when errno = EINVAL.
+ *
+ *     (3) errno = EINVAL should be set if no number is found, and
+ *         zero should be returned.  The caller should be careful
+ *         not to simply use 0 as the result... errno must be checked!
+ *
+ *     (4) errno = ERANGE should be set if the number is successfully parsed
+ *         but is out of range, unless a _norange form is used,
+ *         in which case ERANGE should be cleared from errno if a lower-level
+ *         call happens to set it.  When errno == ERANGE, try to
+ *         return an appropriate min or max based on the target data type.
+ *
+ *     (5) There is also an errno = EDOM (bad param) case for invalid SB2UINT
+ *         arguments.  TODO: Document better.
+ */
+
 /* Various tables */
 extern int PDCI_identity_charmap[];
 extern int PDCI_ascii_digit[];
