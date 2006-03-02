@@ -14,6 +14,7 @@ AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
 INSTALLROOT=$(PADS_HOME)/ast-ast/arch/$(AST_ARCH)
 LIBDIR=$(INSTALLROOT)/lib
 LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a $(OS_SPEC_XTRA_LIBS)
+LIBS_D = $(LIBDIR)/libpads-g.a $(LIBDIR)/libast.a $(OS_SPEC_XTRA_LIBS)
 INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
 # Rule to run the pads compiler on data-acc.p
@@ -32,6 +33,9 @@ include $(PADS_HOME)/mk/rules.mk
 
 foo-xml: foo-xml.c foo.c 
 	$(CC) $(INCLUDES) foo-xml.c foo.c $(LIBS) -o foo-xml
+
+foo-xml_d: foo-xml.c foo.c 
+	$(CC) -g $(INCLUDES) foo-xml.c foo.c $(LIBS_D) -o foo-xml_d
 
 
 
