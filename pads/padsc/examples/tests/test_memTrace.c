@@ -11,10 +11,10 @@
 } while (0)
 
 #define EXTRA_GOOD_READ_CODE do { \
-  if (rep.old_address.tag == nil) {allocated += rep.numAlloced;} \
-  else if (rep.new_address.tag == nil) {deallocated += rep.numAlloced;}\
-  else {moved += rep.numAlloced;}\
-    error(2, "current alloc counts: allocated= %d  deallocated= %d, moved = %d, number = %d", allocated, deallocated, moved, rep.numAlloced); \
+  if (rep->old_address.tag == nil) {allocated += rep->numAlloced;} \
+  else if (rep->new_address.tag == nil) {deallocated += rep->numAlloced;}\
+  else {moved += rep->numAlloced;}\
+    error(2, "current alloc counts: allocated= %d  deallocated= %d, moved = %d, number = %d", allocated, deallocated, moved, rep->numAlloced); \
 } while (0)
 
 #define EXTRA_DONE_CODE do { \

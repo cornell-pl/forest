@@ -9,40 +9,40 @@
 #if 0
 #define EXTRA_GOOD_READ_CODE \
 do { \
-      if (rep.host.tag == resolved) { \
+      if (rep->host.tag == resolved) { \
 	error(0, "host: %u.%u.%u.%u", \
-	      rep.host.val.resolved.elts[0],  \
-	      rep.host.val.resolved.elts[1],  \
-	      rep.host.val.resolved.elts[2],  \
-	      rep.host.val.resolved.elts[3]); \
+	      rep->host.val.resolved.elts[0],  \
+	      rep->host.val.resolved.elts[1],  \
+	      rep->host.val.resolved.elts[2],  \
+	      rep->host.val.resolved.elts[3]); \
       } else { \
 	int i; \
 	error(0|ERROR_PROMPT, "host: "); \
-	for (i = 0; i < rep.host.val.symbolic.length; i++) { \
-	  if (i <  rep.host.val.symbolic.length-1) { \
-	    error(0|ERROR_PROMPT, "%-.*s.", rep.host.val.symbolic.elts[i].len, rep.host.val.symbolic.elts[i].str); \
+	for (i = 0; i < rep->host.val.symbolic.length; i++) { \
+	  if (i <  rep->host.val.symbolic.length-1) { \
+	    error(0|ERROR_PROMPT, "%-.*s.", rep->host.val.symbolic.elts[i].len, rep->host.val.symbolic.elts[i].str); \
 	  } else { \
-	    error(0, "%-.*s", rep.host.val.symbolic.elts[i].len, rep.host.val.symbolic.elts[i].str); \
+	    error(0, "%-.*s", rep->host.val.symbolic.elts[i].len, rep->host.val.symbolic.elts[i].str); \
 	  } \
 	} \
       } \
-      if (rep.remoteID.tag == unauthorized) { \
+      if (rep->remoteID.tag == unauthorized) { \
 	error(0, "remoteID: **unauthorized**"); \
       } else { \
-	error(0, "remoteID: %-.*s", rep.remoteID.val.id.len, rep.remoteID.val.id.str); \
+	error(0, "remoteID: %-.*s", rep->remoteID.val.id.len, rep->remoteID.val.id.str); \
       } \
-      if (rep.auth.tag == unauthorized) { \
+      if (rep->auth.tag == unauthorized) { \
 	error(0, "authid: **unauthorized**"); \
       } else { \
-	error(0, "authid: %-.*s", rep.auth.val.id.len, rep.auth.val.id.str); \
+	error(0, "authid: %-.*s", rep->auth.val.id.len, rep->auth.val.id.str); \
       } \
-      error(0, "date: %s", fmttime("%K", (time_t)rep.ts)); \
+      error(0, "date: %s", fmttime("%K", (time_t)rep->ts)); \
       error(0, "request meth: %s  req_uri: %-.*s  version: %u.%u", \
-	    http_method_t2str(rep.request.meth), \
-	    rep.request.req_uri.len, rep.request.req_uri.str, \
-	    rep.request.version.major, \
-	    rep.request.version.minor); \
-      error(0, "response: %u   contentLength: %u", rep.response, rep.contentLength); \
+	    http_method_t2str(rep->request.meth), \
+	    rep->request.req_uri.len, rep->request.req_uri.str, \
+	    rep->request.version.major, \
+	    rep->request.version.minor); \
+      error(0, "response: %u   contentLength: %u", rep->response, rep->contentLength); \
       error(0, ""); \
 } while (0)
 

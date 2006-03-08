@@ -28,14 +28,15 @@ Puint64 num_recs = 0;
 
 
 int main(int argc, char** argv) {
+  RMM_t            *rmm_zero;
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
   Ppos_t            bpos, epos;
-  PADS_TY( )        rep;
-  PADS_TY(_pd)      pd;
-  PADS_TY(_m)       m;
-  PADS_TY(_acc)     acc;
+  PADS_TY( )       *rep;
+  PADS_TY(_pd)     *pd;
+  PADS_TY(_m)      *m;
+  PADS_TY(_acc)    *acc;
 #ifdef PADS_HDR_TY
   PADS_HDR_TY( )    hdr_rep;
   PADS_HDR_TY(_pd)  hdr_pd;
@@ -117,17 +118,25 @@ int main(int argc, char** argv) {
   if (P_ERR == P_io_fopen(pads, fileName)) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
-  if (P_ERR == PADS_TY(_init)(pads, &rep)) {
+
+  /* allocate the main rep, pd, m, and acc in the heap */
+  rmm_zero = P_rmm_zero(pads);
+  rep  = (PADS_TY( )*)   RMM_alloc_unmanaged_buf(rmm_zero, sizeof(PADS_TY( )));
+  pd   = (PADS_TY(_pd)*) RMM_alloc_unmanaged_buf(rmm_zero, sizeof(PADS_TY(_pd)));
+  m    = (PADS_TY(_m)*)  RMM_alloc_unmanaged_buf(rmm_zero, sizeof(PADS_TY(_m)));
+  acc  = (PADS_TY(_acc)*)RMM_alloc_unmanaged_buf(rmm_zero, sizeof(PADS_TY(_acc)));
+
+  if (P_ERR == PADS_TY(_init)(pads, rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
   }
-  if (P_ERR == PADS_TY(_pd_init)(pads, &pd)) {
+  if (P_ERR == PADS_TY(_pd_init)(pads, pd)) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
-  if (P_ERR == PADS_TY(_acc_init)(pads, &acc)) {
+  if (P_ERR == PADS_TY(_acc_init)(pads, acc)) {
     error(ERROR_FATAL, "*** accumulator initialization failed ***");
   }
   /* init mask -- must do this! */
-  PADS_TY(_m_init)(pads, &m, READ_MASK);
+  PADS_TY(_m_init)(pads, m, READ_MASK);
 #ifdef EXTRA_BEGIN_CODE
   EXTRA_BEGIN_CODE;
 #endif
@@ -162,7 +171,7 @@ int main(int argc, char** argv) {
 
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
-    if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
+    if (P_OK != PADS_TY(_read)(pads, m, pd, rep EXTRA_READ_ARGS )) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
@@ -171,7 +180,7 @@ int main(int argc, char** argv) {
     }
 #ifdef EXTRA_GOOD_READ_CODE
     else {
-      if (PADS_TY(_verify)(&(rep) EXTRA_READ_ARGS ) ) {  
+      if (PADS_TY(_verify)(rep EXTRA_READ_ARGS ) ) {  
 	error(2, "read reported no errors and passed predicate test.");  
       } else {  error(2, "read reported no errors but failed predicate test.");  } 
       EXTRA_GOOD_READ_CODE;
@@ -182,12 +191,12 @@ int main(int argc, char** argv) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
     /* accum both good and bad vals */
-       if (P_ERR == PADS_TY(_acc_add)(pads, &acc, &pd, &rep)) {
+    if (P_ERR == PADS_TY(_acc_add)(pads, acc, pd, rep)) {
       error(ERROR_FATAL, "*** accumulator add failed ***");
       }
   }
 
-  if (P_ERR == PADS_TY(_acc_report)(pads, "", 0, 0, &acc)) {
+  if (P_ERR == PADS_TY(_acc_report)(pads, "", 0, 0, acc)) {
     error(ERROR_FATAL, "** accum_report failed **");
   }
 
@@ -197,15 +206,22 @@ int main(int argc, char** argv) {
   if (P_ERR == P_io_close(pads)) {
     error(ERROR_FATAL, "*** P_io_close failed ***");
   }
-  if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
+  if (P_ERR == PADS_TY(_cleanup)(pads, rep)) {
     error(ERROR_FATAL, "** representation cleanup failed **");
   }
-  if (P_ERR == PADS_TY(_pd_cleanup)(pads, &pd)) {
+  if (P_ERR == PADS_TY(_pd_cleanup)(pads, pd)) {
     error(ERROR_FATAL, "** parse descriptor cleanup failed **");
   }
-  if (P_ERR == PADS_TY(_acc_cleanup)(pads, &acc)) {
+  if (P_ERR == PADS_TY(_acc_cleanup)(pads, acc)) {
     error(ERROR_FATAL, "** accumulator cleanup failed **");
   }
+
+  /* free the heap-allocated rep, pd, m, acc */
+  RMM_free_buf(rmm_zero, (void*)rep);
+  RMM_free_buf(rmm_zero, (void*)pd);
+  RMM_free_buf(rmm_zero, (void*)m);
+  RMM_free_buf(rmm_zero, (void*)acc);
+
   if (P_ERR == P_close(pads)) {
     error(ERROR_FATAL, "*** P_close failed ***");
   }

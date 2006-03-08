@@ -1,7 +1,7 @@
 #define DEF_INPUT_FILE "../../data/array_skip2"
 
 #define EXTRA_GOOD_READ_CODE do { \
-      error(2, "entry_read returned array of length: %d", rep.seq.length); \
+      error(2, "entry_read returned array of length: %d", rep->seq.length); \
 } while (0)
 
 #define EXTRA_BAD_READ_CODE do { \
