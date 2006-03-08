@@ -18,7 +18,9 @@ INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
 # Rule to run the pads compiler on go.p
 adderley.c: adderley.p
-	$(PADSC) -wnone -D__ppc__ $<
+	$(PADSC) -D__ppc__ $<
+
+#	$(PADSC) -wnone -D__ppc__ $<
 
 include $(PADS_HOME)/mk/rules.mk
 
@@ -34,6 +36,10 @@ test_adderley_dd: adderley_expanded.c test_adderley.c $(INCLUDE_DEPS) $(LIB_DEPS
 
 adderley_expanded.c: adderley.c
 	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl | $(PADS_HOME)/scripts/fix_FILE_LINE.pl $< > $@
+
+# strange core dump case
+test_core_d: test_core.c adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
 
 clean:
 	$(RM) adderley.[ch] adderley.xsd test_adderley test_adderley_d test_adderley_dd adderley_expanded.c
