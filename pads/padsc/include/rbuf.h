@@ -140,15 +140,27 @@ int RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out);
    -2 => other error
 
 ================================================================================
+void* RMM_alloc_unmanaged_buf(RMM_t* mgr, size_t size);
+================================================================================
+  Allocate an unmanged buffer associated with mgr that has nothing
+  to do with rbufs.  This is equivalent to using an rbuf, reserving
+  bufsize bytes for a buffer, and then immediately using
+  RMM_free_rbuf_keep_buf to discard the rbuf and keep the new buffer,
+  but it saves the steps of creating and discarding an rbuf.
+
+ Returns: 0 on failure, valid pointer on success
+
+================================================================================
 int RMM_free_buf(RMM_t* mgr, void* buf);
 ================================================================================
-  Frees a buffer that *used to be* associated with an rbuf.  Should not
-  be used unless the rbuf has already been freed using RMM_free_rbuf_keep_buf.
+  Frees a buffer that *used to be* associated with an rbuf
+    (see RMM_free_rbuf_keep_buf)
+  or that was *never* associated with an rbuf
+    (see RMM_alloc_unmanaged_buf)
 
  Return codes:
     0 => success
    -1 => error
-
 
 ================================================================================
 int RBuf_reserve(Rbuf_t* rbuf, void** buf_out, size_t eltSize,
@@ -261,6 +273,7 @@ int       RMM_close(RMM_t* mgr);
 #ifndef RBUF_DEBUG
 // The standard functions
 RBuf_t*   RMM_new_rbuf (RMM_t* mgr);
+void*     RMM_alloc_unmanaged_buf(RMM_t* mgr, size_t size);
 
 int       RMM_free_rbuf(RBuf_t* rbuf);
 int       RMM_free_rbuf_keep_buf(RBuf_t* rbuf, void** buf_out, RMM_t** mgr_out);
