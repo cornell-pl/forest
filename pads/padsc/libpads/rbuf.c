@@ -253,8 +253,6 @@ RMM_free_rbuf_keep_buf_dbg(RBuf_t *rbuf, void **buf_out, RMM_t **mgr_out,
 void*
 RMM_alloc_unmanaged_buf(RMM_t* mgr, size_t size)
 {
-  void *res;
-
   if (!mgr || !mgr->vm || !mgr->fn) {
     return 0; /* failure */
   }
