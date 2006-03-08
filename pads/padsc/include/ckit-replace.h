@@ -79,5 +79,6 @@ int isdigit(int C);
 void *memcpy(void *out, const void *in, size_t n);
 void *memset(const void *dst, int c, size_t length);
 int sfprintf (Sfio_t*, const char*, ...);
+size_t strlen (const char*);
 
 #endif  /*  __CKIT_REPLACE_H__  */
