@@ -29,5 +29,11 @@ test_adderley: test_adderley.c adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 test_adderley_d: test_adderley.c adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+test_adderley_dd: adderley_expanded.c test_adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+adderley_expanded.c: adderley.c
+	$(MKSRC_D) $< | $(PADS_HOME)/scripts/addnl.pl | $(PADS_HOME)/scripts/fix_FILE_LINE.pl $< > $@
+
 clean:
-	$(RM) adderley.[ch] adderley.xsd test_adderley test_adderley_d 
+	$(RM) adderley.[ch] adderley.xsd test_adderley test_adderley_d test_adderley_dd adderley_expanded.c
