@@ -5,7 +5,7 @@
            attributeFormDefault="qualified">
 
 <xs:import namespace = "http://www.padsproj.org/pads.xsd"
-           schemaLocation="file:/home/mff/pads/padsc/libpglx/pads.xsd"/>
+           schemaLocation="file:/home/mff/pads/padsc/schemata/pads.xsd"/>
 
   <!-- Names, variables, and identifiers -->
   <xs:element name="name" type="xs:string"/>

@@ -1208,7 +1208,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       let val fileName = case srcFile of NONE => "" | SOME name => OS.Path.file name
 	  val endS = "\"\n"
 	  val begS = "           "
-	  val padsloc = padsDir ^ "/padsc/libpglx/pads.xsd"
+	  val padsloc = padsDir ^ "/padsc/schemata/pads.xsd"
 	  fun wrapLine s = begS ^ s ^ endS
 	  val targetNamespace = "<xs:schema targetNamespace=\"file:" ^ fileName ^ endS
 	  val xmlns   = wrapLine ("xmlns=\"file:" ^ fileName) 

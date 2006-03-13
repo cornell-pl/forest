@@ -120,6 +120,32 @@
   </xs:choice>
 </xs:complexType>
 
+<xs:simpleType name="Pfloat32">
+  <xs:restriction base="xs:float">
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfloat32">
+  <xs:choice>
+   <xs:element name="val" type="p:Pfloat32"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfloat64">
+  <xs:restriction base="xs:double">
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfloat64">
+  <xs:choice>
+   <xs:element name="val" type="p:Pfloat64"/>
+   <xs:element name="pd" type="p:Pbase_pd"/>
+  </xs:choice>
+</xs:complexType>
+
+
 <xs:simpleType name="Pfpoint8">
   <xs:restriction base="xs:float">
     <xs:minInclusive value="-128"/>
@@ -223,7 +249,6 @@
    <xs:element name="pd" type="p:Pbase_pd"/>
   </xs:choice>
 </xs:complexType>
-
 
 <xs:simpleType name="Pufpoint64">
   <xs:restriction base="xs:float">
