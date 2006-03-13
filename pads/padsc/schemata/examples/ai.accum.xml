@@ -1,0 +1,66 @@
+<PadsAccum xmlns="http://www.padsproj.org/pads-accum.xsd">
+  <array>
+    <name>log_t</name>
+    <compoundLevel>
+      <struct>
+        <name>http_clf_t</name>
+        <field>
+          <name>host</name>
+          <field_acc>
+            <union>
+              <name>clihost_t</name>
+              <field>
+                <name>sIP</name>
+                <field_acc> 
+                  <string>
+                   <length>
+                    <good>28</good>
+                    <bad>0</bad>
+                    <avg>1.5</avg>
+                    <min>1</min>
+                    <max>3</max>
+                <!-- Does the distribution go here? -->
+                   </length>
+                  </string>
+                </field_acc>
+              </field>
+            </union>
+          </field_acc>
+        </field>
+        <field>
+          <name>contentLength</name>
+          <field_acc>
+            <union>
+              <name>contentOpt_t</name>
+              <field>
+                <name>len</name>
+                <field_acc>
+                  <uint>
+                    <good>11</good>
+                    <bad>0</bad>
+                    <avg>942.545</avg>
+                    <min>76</min>
+                    <max>3013</max>
+                  </uint>
+                </field_acc>
+              </field>
+              <field>
+                <name>unavailable</name>
+              </field>
+            </union>
+          </field_acc>
+        </field>
+      </struct>
+    </compoundLevel>
+  </array>
+</PadsAccum>
+
+      <!--  I don't know where these values are stored internally...
+           => distribution of top 3 values out of 3 distinct values:
+              val:        179 count:          7  pcnt-of-good-vals:   63.636
+              val:       3013 count:          3  pcnt-of-good-vals:   27.273
+              val:         76 count:          1  pcnt-of-good-vals:    9.091
+      . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+              SUMMING         count:         11  pcnt-of-good-vals:  100.000
+      -->
+<!-- Should absence of accumulator info mean that no values were seen? -->

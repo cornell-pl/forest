@@ -1,0 +1,225 @@
+<xs:schema targetNamespace="http://www.padsproj.org/pads-accum.xsd"
+	   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:a="http://www.padsproj.org/pads-accum.xsd"
+           xmlns:x="http://www.padsproj.org/pads-xml.xsd"
+           xmlns:p="http://www.padsproj.org/pads.xsd"
+           elementFormDefault="qualified"
+           attributeFormDefault="qualified">
+
+<xs:import namespace = "http://www.padsproj.org/pads.xsd"
+           schemaLocation="file:/home/mff/pads/padsc/libpglx/pads.xsd"/>
+
+<xs:import namespace = "http://www.padsproj.org/pads-xml.xsd"
+           schemaLocation="file:/home/mff/pads/padsc/schemata/pads-xml.xsd"/>
+
+  <xs:element name="name" type="xs:string"/>
+
+  <!-- As in pads-xml-c.xsd, there should be a global description of the tool discipline. -->
+ 
+  <!-- For now, we assume that the INPUT variables to the accumulator
+       are global and are shared. -->
+
+  <xs:element name="max2track" type="p:Puint64"/>  <!-- IN: Total # buckets -->
+  <xs:element name="max2rep"   type="p:Puint64"/>  <!-- IN: # of buckets to report -->
+  <xs:element name="pcnt2rep"  type="p:Pfloat64"/> <!-- IN: Report buckets that only exceed this percentage. -->
+  <xs:element name="tracked"   type="p:Puint64"/>  <!-- IN: Percentage of total values tracked -->
+
+  <xs:element name="inputs">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element ref="a:max2track"/>
+     <xs:element ref="a:max2rep"/>
+     <xs:element ref="a:pcnt2rep"/>
+     <xs:element ref="a:tracked"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+
+  <!-- Common for all base-type accumulators: -->
+  <xs:element name="good"      type="p:Puint64"/>  <!-- OUT: Good count -->
+  <xs:element name="bad"       type="p:Puint64"/>  <!-- OUT: Bad count -->
+  <xs:element name="avg"       type="p:Pfloat64"/> <!-- OUT: -->
+
+ <!-- Base type accumulators -->
+  <xs:complexType name="Pint_acc">
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element ref="a:avg"/>
+    <xs:element name="min"       type="p:Pint64"/>   <!-- OUT: -->
+    <xs:element name="max"       type="p:Pint64"/>   <!-- OUT: -->
+    <!-- Distribution -->
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="int" type="a:Pint_acc"/>
+
+  <xs:complexType name="Puint_acc">
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element ref="a:avg"/>
+      <xs:element name="min"    type="p:Puint64"/>
+      <xs:element name="max"    type="p:Puint64"/>
+    <!-- Distribution -->
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="uint" type="a:Puint_acc"/>
+
+  <xs:complexType name="Pfloat_acc">
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element ref="a:avg"/>
+    <xs:element name="min" type="p:Pfloat64"/>
+    <xs:element name="max" type="p:Pfloat64"/>
+    <!-- Distribution -->
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="fpoint" type="a:Pfloat_acc"/>
+ 
+  <xs:complexType name="Pstring_acc">
+    <xs:sequence>
+    <xs:element name="max2track" type="p:Puint64" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="max2rep"   type="p:Puint64" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="pcnt2rep"  type="p:Pfloat64" minOccurs="0" maxOccurs="1"/>
+    <!-- length distrib & good/bad accounting -->
+    <xs:element name="length"    type="a:Puint_acc"/>
+    <!-- Distribution -->
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="string" type="a:Pstring_acc"/>
+
+  <!-- Other abstract base-type accumulators -->
+  <xs:complexType name="Ptimestamp_acc">
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element name="avg" type="p:Ptimestamp"/>
+      <xs:element name="min" type="p:Ptimestamp"/>
+      <xs:element name="max" type="p:Ptimestamp"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="timestamp" type="a:Ptimestamp_acc"/>
+
+  <xs:complexType name="Pdate_acc">
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element name="avg" type="p:Pdate"/>
+      <xs:element name="min" type="p:Pdate"/>
+      <xs:element name="max" type="p:Pdate"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="date" type="a:Pdate_acc"/>
+
+  <xs:complexType name="Ptime_acc">
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element name="avg" type="p:Ptime"/>
+      <xs:element name="min" type="p:Ptime"/>
+      <xs:element name="max" type="p:Ptime"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="time" type="a:Ptime_acc"/>
+
+  <xs:complexType name="Pip_acc">
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element name="avg" type="p:Pip"/>
+      <xs:element name="min" type="p:Pip"/>
+      <xs:element name="max" type="p:Pip"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ip" type="a:Pip_acc"/>
+
+  <!-- 
+     We want base types to have their own notion of accum types.
+     We actually accumulate using the Internal rep, but when we report, we want to use the Abstract type. 
+  -->   
+
+  <xs:complexType name="type">
+    <xs:choice>
+      <!-- Accumulators for the abstract base types -->
+      <xs:element ref="a:int"/> 
+      <xs:element ref="a:uint"/> 
+      <xs:element ref="a:fpoint"/> 
+      <xs:element ref="a:string"/> 
+      <xs:element ref="a:timestamp"/> 
+      <xs:element ref="a:date"/> 
+      <xs:element ref="a:time"/> 
+      <xs:element ref="a:ip"/> 
+      <!-- Accumulators for the composite types -->
+      <xs:element ref="a:union"/> 
+      <xs:element ref="a:struct"/> 
+      <xs:element ref="a:array"/> 
+      <xs:element ref="a:enum"/>
+    <!--  What do we do with typedefs? 
+      <xs:element ref="a:typedef"/> 
+    -->
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:element name="nerr" type="a:Puint_acc"/>  
+
+  <!-- Array accumulator -->
+  <xs:element name="array">
+   <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="a:name"/>
+
+    <!-- This is optional until we get something to validate -->
+      <xs:element ref="a:nerr" minOccurs="0" maxOccurs="1"/>  
+      <xs:element name="length"    type="a:Puint_acc" minOccurs="0" maxOccurs="1"/>
+
+    <!-- Aggregates over all elements in the array -->
+      <xs:element name="compoundLevel" type="a:type" minOccurs="0" maxOccurs="1"/>  
+
+    <!-- Keeps separate buckets for first N elements, then uses N+1st
+       bucket for the rest (maybe) -->  
+      <xs:element name="elt"    type="a:type"  minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+
+  <!-- Enum acuumulator -->
+  <xs:element name="enum" type="a:Puint_acc"/>
+
+  <!-- Union or struct field accumulator -->
+  <xs:element name="field">
+   <xs:complexType>
+    <xs:sequence>
+    <xs:element ref="a:name"/>
+    <xs:element name="field_acc" type="a:type" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+  
+  <!-- Struct accumulator -->
+  <xs:element name="struct">
+   <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="a:name"/>
+      <xs:element ref="a:nerr" minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="a:field" maxOccurs="unbounded"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+  
+  <!-- Union accumulator -->
+  <xs:element name="union">
+   <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="a:name"/>
+      <xs:element ref="a:nerr" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="tag"  type="a:Pint_acc"  minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="a:field" maxOccurs="unbounded"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PadsAccum" type="a:type"/>
+</xs:schema>
