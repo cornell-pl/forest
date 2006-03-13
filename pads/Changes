@@ -1,3 +1,23 @@
+March 13, 2006 - Mary
+
+  o Moved pads.xsd from libpglx/ to schemata/
+    
+    - Updated pp-ast-xschema-fn.sml to refer to new schemaLocation 
+
+  o Added pads/padsc/schemata directory, contains:
+
+    pads-xml.xsd : XML Schema for PADS-XML grammar (C dialect)
+    pads-xml.xsd : XML Schema for PADS accumulator tool
+
+  o Added pads/padsc/schemata/examples/, contains:
+
+    {ai,sirius}.p.xml: complete translations of {ai,sirius}.p into XML
+    dialect 
+
+    ai.accum.xml: fragment of accumulator output in XML dialect
+
+    GNUmakefile:  validates example files against schemata. 
+
 March 2, 2006 - Bob
   o Fixed some bugs in the low-level numeric parsing routines.
     For example, float parsing was producing 0.0 for empty string (oops).
