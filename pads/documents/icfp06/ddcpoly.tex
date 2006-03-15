@@ -157,15 +157,17 @@ the three-fold semantics of \ddc{} types.
   \begin{center}
     \renewcommand{\arraystretch}{1.35}
     \begin{tabular}{l l}
-      $\ddck[\ty,{\pctxt;\rctxt;\ctxt},\kind,\mcon]$ & {\it \ddc{}-type
+      $\ddck[\ty,{\pctxt;\ctxt},\kind,\mcon]$ & {\it \ddc{}-type
         kinding}\\
       $\itsem[\ty] = \ity$ & {\it representation types of \ddc{} types}\\
       $\itpdsem[\ty] = \ity$ & {\it pd types of \ddc{} types}\\
       $\trans[\ty,\ctxt,\gk] = e$   & {\it \ddc{}-type semantics} \\
       $\kTrans[\gk,\ty] = \ity$     & {\it parser type} \\
-      $\ptyc \rctxt = \ctxt$     & {\it context parser type}\\
-      $\stsem[e,{\pctxt;\ctxt},\ity]$ & {\it \implang expression typing} \\
-      $e \stepsto e'$ & {\it \implang expression evaluation}
+      $\ptyc \pctxt = \ctxt$     & {\it parser-type context }\\
+      $\fotyc \pctxt = \ctxt$     & {\it $\fomega$ version of poly. context }\\
+      $\fortyc \pctxt = \ctxt$     & {\it Rep. type variables in $\fotyc \pctxt$ }\\
+      $\fopdtyc \pctxt = \ctxt$     & {\it PD type variables in $\fotyc \pctxt$ }\\
+      $\stsem[e,\ctxt,\ity]$ & {\it $\fomega$ expression typing} \\
     \end{tabular}
     \caption{Translations and Judgments}
     \label{tab:judg-list}
@@ -181,22 +183,23 @@ defined in this section and a brief description of each.
 
 \begin{figure*}[t]
 \small
-\fbox{$\ddck[\ty,\pctxt;\rctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
+\fbox{$\ddck[\ty,\pctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
 \[
 \infer[\text{Unit}]{
-    \ddck[\ptrue,\pctxt;\rctxt;\ctxt,\kty,\con]
-  }{\wfd {} \ctxt}
+    \ddck[\ptrue,\pctxt;\ctxt,\kty,\con]
+  }{\wfd {} {\fotyc \pctxt,\ctxt}}
 \quad 
 \infer[\text{Bottom}]{
-    \ddck[\pfalse,\pctxt;\rctxt;\ctxt,\kty,\con]
-  }{\wfd {} \ctxt}
+    \ddck[\pfalse,\pctxt;\ctxt,\kty,\con]
+  }{\wfd {} {\fotyc \pctxt, \ctxt}}
 \quad 
 \infer[\text{Const}]{
-    \ddck[\pbase{e},\pctxt;\rctxt;\ctxt,\kty,\con]
+    \ddck[\pbase{e},\pctxt;\ctxt,\kty,\con]
   }{
     \begin{semcond}
-      \stsem[e,\ctxt,\ity] &
-      (\vlet {\ity \iarrowi \kty} {\Ikind(C)})
+      \wfd {} {\fotyc \pctxt,\ctxt} &
+      \stsem[e,{\fotyc \pctxt,\ctxt},\ity] \\
+      \vlet {\ity \iarrowi \kty} {\Ikind(C)}
     \end{semcond}
   }
 \]
@@ -204,124 +207,122 @@ defined in this section and a brief description of each.
 \[
 \infer[\text{Abs}]{
     \ddck[\plam{\var}{\ity}{\ty},
-         \pctxt;\rctxt;\ctxt,\ity \iarrowi \kind,\mcon]
+         \pctxt;\ctxt,\ity \iarrowi \kind,\mcon]
   }{
-    \ddck[\ty,\pctxt;\rctxt;\ectxt{\var{:}\ity},\kind,\mcon]
+    \ddck[\ty,\pctxt;\ectxt{\var{:}\ity},\kind,\mcon]
   }
 \quad
 \infer[\text{App}]{
-  \ddck[\papp{\ty}{e},\pctxt;\rctxt;\ctxt,\gk,\mcon]
+  \ddck[\papp{\ty}{e},\pctxt;\ctxt,\gk,\mcon]
 }{
-  \ddck[\ty,\pctxt;\rctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
-  \stsem[e,\ctxt,\ity]
+  \ddck[\ty,\pctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
+  \stsem[e,{\fotyc \pctxt,\ctxt},\ity]
 }
 \]
 
 \[
 \infer[\text{Prod}]{
-    \ddck[\psig{x}{\ty}{\ty'},\pctxt;\rctxt;\ctxt,\kty,\con]
+    \ddck[\psig{x}{\ty}{\ty'},\pctxt;\ctxt,\kty,\con]
   }{       
-    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] &
-    \ddck[\ty',\pctxt;\rctxt;
-          \ectxt {x{:}\iprod {\itsem[\asub \rctxt \ty]} 
-              {\itpdsem[\asub \rctxt \ty]}},
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] &
+    \ddck[\ty',\pctxt;
+          \ectxt {x{:}\iprod {\itsem[\ty]} 
+              {\itpdsem[\ty]}},
           \kty,\mcon']
   }
 \]
 
 \[
 \infer[\text{Sum}]{
-    \ddck[\psum{\ty}{e}{\ty'},\pctxt;\rctxt;\ctxt,\kty,\con]
+    \ddck[\psum{\ty}{e}{\ty'},\pctxt;\ctxt,\kty,\con]
   }{
-    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\rctxt;\ctxt,\kty,\mcon'] 
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\ctxt,\kty,\mcon'] 
   }
 \quad
   \infer[\text{Intersection}]{
-    \ddck[\pand \ty {\ty'},\pctxt;\rctxt;\ctxt,\kty,\con]
+    \ddck[\pand \ty {\ty'},\pctxt;\ctxt,\kty,\con]
   }{
-    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\rctxt;\ctxt,\kty,\mcon'] 
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\ctxt,\kty,\mcon'] 
   }
 \]
 
 \[
   \infer[\text{Con}]{
-    \ddck[\pset x \ty e,\pctxt;\rctxt;\ctxt,\kty,\con]
+    \ddck[\pset x \ty e,\pctxt;\ctxt,\kty,\con]
   }{ 
-    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] & 
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & 
     \stsem[e,
-    \ectxt{x{:}\iprod{\itsem[\asub \rctxt \ty]} 
-      {\itpdsem[\asub \rctxt \ty]}},\iboolty]
+     {\fotyc \pctxt,
+    \ectxt{x{:}\iprod{\itsem[\ty]} 
+      {\itpdsem[\ty]}}},\iboolty]
   }
 \]
 
 \[\infer[\text{Seq}]{
-    \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\pctxt;\rctxt;\ctxt,\kty,\con]
+    \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\pctxt;\ctxt,\kty,\con]
   }{
     \begin{array}{c}
-    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] \qquad
-    \ddck[{\ty_s},\pctxt;\rctxt;\ctxt,\kty,\mcon_s] \qquad
-    \ddck[{\ty_t},\pctxt;\rctxt;\ctxt,\kty,\mcon_t] \\
-    \stsem[e,\ctxt,
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] \qquad
+    \ddck[{\ty_s},\pctxt;\ctxt,\kty,\mcon_s] \qquad
+    \ddck[{\ty_t},\pctxt;\ctxt,\kty,\mcon_t] \\
+    \stsem[e,{\fotyc \pctxt,\ctxt},
     \iprod {\itsem[{\ty_m}]}      
     {\itpdsem[{\ty_m}]}
     \iarrowi \iboolty]
-    \quad (\ty_m = \asub \rctxt {\pseq \ty {\ty_s} {\pterm e {\ty_t}}})
+    \quad (\ty_m = \pseq \ty {\ty_s} {\pterm e {\ty_t}})
     \end{array}
   }
 \]
 
 \[
-  \infer[\text{RecVar}]{
-    \ddck[\ptyvar,{\pctxt;\rctxt;\ctxt},\kty,\ncon]
-  }{\wfd {} \ctxt \quad \ptyvar {=} \pmu \ptyvar \kty \ty \in \dom \rctxt}
+  \infer[\text{TyVar}]{
+    \ddck[\ptyvar,{\pctxt;\ctxt},\kty,\ncon]
+  }{\wfd {}{\fotyc \pctxt, \ctxt} \quad \tyvar \in \dom \pctxt}
 \quad
   \infer[\text{Rec}]{
-    \ddck[\pmu \ptyvar \kty \ty,\pctxt;\rctxt;\ctxt,\kty,\con]
+    \ddck[\pmu \ptyvar \kty \ty,\pctxt;\ctxt,\kty,\con]
   }{
-    \ddck[\ty,{\rctxt,\ptyvar {=} \pmu \ptyvar \kty \ty;\ctxt},\kty,\con]
+    \ddck[\ty,{\pctxt,\ptyvar{:}\kty;\ctxt},\kty,\con]
   }
-\]
-
-\[
-  \infer[\text{Compute}]{       
-    \ddck[\pcompute{e}{\ity},\pctxt;\rctxt;\ctxt,\kty,\con]
-  }{
-    \stsem[e,\ctxt,\ity]
-  }      
-\quad
-\infer[\text{Absorb}]{
-    \ddck[\pabsorb{\ty},\pctxt;\rctxt;\ctxt,\kty,\con]
-  }{
-    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon]
-  }
-\quad
-  \infer[\text{Scan}]{
-    \ddck[\pscan{\ty},\pctxt;\rctxt;\ctxt,\kty,\con]
-  }{
-    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon]
-  }
-\]
-
-\[
-  \infer[\text{TyVar}]{
-    \ddck[\ptyvar,{\pctxt;\rctxt;\ctxt},\kty,\ncon]
-  }{\wfd {} \ctxt \quad \tyvar{:}\kty \in \pctxt}
 \quad
 \infer[\text{TyAbs}]{
     \ddck[\ptylam{\tyvar}{\kty}{\ty},
-         \pctxt;\rctxt;\ctxt,\kty \iarrowi \kind,\mcon]
+         \pctxt;\ctxt,\kty \iarrowi \kind,\mcon]
   }{
-    \ddck[\ty,{\pctxt,\tyvar{:}\kty;\rctxt;\ectxt},\kind,\mcon]
+    \ddck[\ty,{\pctxt,\tyvar{:}\kty;\ctxt},\kind,\mcon]
   }
 \quad
 \infer[\text{TyApp}]{
-  \ddck[\ptyapp{\ty_1}{\ty_2},\pctxt;\rctxt;\ctxt,\gk,\mcon]
+  \ddck[\ptyapp{\ty_1}{\ty_2},\pctxt;\ctxt,\gk,\mcon]
 }{
-  \ddck[\ty_1,\pctxt;\rctxt;\ctxt,\kty \iarrowi \gk,\mcon] &
-  \ddck[\ty_2,\pctxt;\rctxt;\ctxt,\kty,\mcon]
+  \ddck[\ty_1,\pctxt;\ctxt,\kty \iarrowi \gk,\mcon] &
+  \ddck[\ty_2,\pctxt;\ctxt,\kty,\mcon]
 }
 \]
 
+
+
+\[
+  \infer[\text{Compute}]{       
+    \ddck[\pcompute{e}{\ity},\pctxt;\ctxt,\kty,\con]
+  }{
+    \wfd {}{\fotyc \pctxt, \ctxt} &
+    \stsem[e,{\fotyc \pctxt,\ctxt},\ity] & 
+    \fomegak{\fortyc \pctxt}{\ity}{\kty}
+  }      
+\quad
+\infer[\text{Absorb}]{
+    \ddck[\pabsorb{\ty},\pctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon]
+  }
+\quad
+  \infer[\text{Scan}]{
+    \ddck[\pscan{\ty},\pctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon]
+  }
+\]
 \caption{\ddc{} Kinding Rules}
 \label{fig:ddc-kinding}
 \end{figure*}
@@ -332,20 +333,27 @@ kind $\ity \iarrowi \kind$ to type abstractions.  We use two contexts to express
 \[
 \begin{array}{ll}
 \ctxt  & \mathrel{::=} \cdot \bnfalt \ctxt,{\var{:}\ity}\\
-\rctxt & \mathrel{::=} \cdot \bnfalt \rctxt,\ptyvar{=}\pmu \ptyvar \gk \ty\\
 \pctxt  & \mathrel{::=} \cdot \bnfalt \pctxt,\tyvar{:}\kty
 \end{array}
 \]
+
 Context $\Gamma$ is a finite partial map that binds expression
 variables to their types.
-Context $\rctxt$ is an ordered list of mappings between type variables and recursive types.
-This context serves two purposes: first, to ensure the well-formedness
-of types with free type variables; and second, to provide mappings
-between recursive type variables and their associated types. 
-This second purpose leads us to consider a context $\rctxt$ to be a
-substitution from type variables to types. Application of such a
-substitution has the form $\asub \rctxt \ty$.
-Context $\rctxt$ is a list of type variables with kind $\kty$.
+Context $\pctxt$ is a finite partial map that binds type
+variables to their kinds. We provide the following translations from
+$\pctxt$ to $\fomega$.
+
+\[
+\begin{array}{ll}
+\fortyc \cdot &= \cdot \\
+\fortyc {(\pctxt,\ptyvar{:}\kty)} &= \fortyc \pctxt, \ptyvar_\repname
+{\mathrel{::}} \kty \\
+\fopdtyc \cdot &= \cdot \\
+\fopdtyc {(\pctxt,\ptyvar{:}\kty)} &= \fopdtyc \pctxt, \ptyvar_\pdbname
+{\mathrel{::}} \kty \\
+\fotyc \pctxt &= \fortyc \pctxt, \fopdtyc \pctxt
+\end{array}
+\]
 
 To ensure that recursive types have properly-shaped parse descriptors
 with a valid PD header (a condition necessary for the type safety of
@@ -392,14 +400,14 @@ types do not translate into well-formed \implang{} types.
 %% \itsem[\pcase e c {\ty_1} {\ty_2}]       & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]}\\
 \itsem[\ptyvar] & = & \ptyvar_\repname \\
 \itsem[\pmu{\ptyvar}{\gk}{\ty}] & = & \imu{\ptyvar_\repname}{\itsem[\ty]} \\
+\itsem[\lambda \ptyvar.\ty]       & = & \lambda \ptyvar_\repname.\itsem[\ty] \\
+\itsem[\ty_1 \ty_2]              & = & \itsem[\ty_1] \itsem[\ty_2] \\
 \itsem[\pcompute e \ity]                 & = & \ity \\
 \itsem[\pabsorb \ty]                     & = & \isum \iunitty \invty \\
-\itsem[\pscan \ty] & = & \isum {\itsem[\ty]} \invty \\
+\itsem[\pscan \ty] & = & \isum {\itsem[\ty]} \invty
 %% \pext{
 %% \itsem[\ptransform e e \ty]              & = & \itsem[\ty]\\
 %% }
-\itsem[\lambda \ptyvar.\ty]       & = & \lambda \ptyvar_\repname.\itsem[\ty] \\
-\itsem[\ty_1 \ty_2]              & = & \itsem[\ty_1] \itsem[\ty_2] \\
 \end{array}
 \]
 \caption{Representation Types}
@@ -440,6 +448,23 @@ indicating whether parsing the underlying type succeeded or failed.
 The type of $\pscann$ is similar, but also returns an element of the
 underlying type in case of success.
 
+{\em Modify a\_pd to a\_pd\_body, everywhere. This name is more
+  appropriate.  Note that the new scheme for translating type
+  variables will affect WF rules. a will be in D but a\_rep and
+  a\_pd\_body could appear in a sigma
+
+  Consider a new convention: for compute type, any references to type
+  interepretations should be done with the type interpretation
+  functions rather than being hard coded. Otherwise, type substitution gets
+  messed up,e.g., when unfolding a recursive type. 
+  For example, should be compute(e:[a]\_rep) instead of
+  compute(e:a\_rep). Then, substitution on DDC types will burrow into
+  the type annotation $\gs$ of compute types. To support, need new
+  syntax for type annotations $\gs$ and need to explicitly translate
+  annotation types into F-omega types.
+  
+}
+
 \begin{figure}
 \fbox{$\itpdsem[\ty] = \ity$}
 \[ 
@@ -460,16 +485,16 @@ underlying type in case of success.
 \itpdsem[\pset x \ty e] & = & \ipty {\itpdsem[\ty]} \\
 \itpdsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
   \iapty {\itpdsem[\ty]} \\
-\itpdsem[\ptyvar] & = & \ipty{\ptyvar_\pdname} \\
+\itpdsem[\ptyvar] & = & \ipty{\ptyvar_\pdbname} \\
 \itpdsem[\pmu \ptyvar \kty \ty] & = & 
-  \ipty{\imu{\ptyvar_\pdname}{\itpdsem[\ty]}} \\
+  \ipty{\imu{\ptyvar_\pdbname}{\itpdsem[\ty]}} \\
+\itpdsem[\lambda \ptyvar.\ty]      
+     & = & \lambda \ptyvar_\pdbname.\itpdsem[\ty] \\
+\itpdsem[\ty_1 \ty_2]            & = & \itpdsem[\ty_1] \itpdsemstrip[\ty_2] \\
 \itpdsem[\pcompute e \ity]            & = & \ipty \iunitty \\
 \itpdsem[\pabsorb \ty]                & = & \ipty \iunitty \\
 \itpdsem[\pscan{\ty}] & = & \ipty {(\isum {(\iprod \iintty
-    {\itpdsem[\ty]})} \iunitty)} \\
-\itpdsem[\lambda \ptyvar.\ty]      
-     & = & \lambda \ptyvar_\pdname.\itpdsem[\ty] \\
-\itpdsem[\ty_1 \ty_2]            & = & \itpdsem[\ty_1] \itpdsemstrip[\ty_2] \\
+    {\itpdsem[\ty]})} \iunitty)}
 \end{array}
 \]
 
@@ -521,11 +546,14 @@ type was matched along with the type's corresponding parse descriptor.
 \begin{align*}
   &\kTrans[\kty,\ty] = \extdom * \offdom \iarrowi \offdom * \itsem[\ty] * \itpdsem[\ty]
    \\
-   &\kTrans[\ity \iarrowi \gk,\ty] = \ity \iarrowi \kTrans[\gk,\ty]
+   &\kTrans[\ity \iarrowi \gk,\ty] = \ity \iarrowi \kTrans[\gk,\ty e],
+   \; \mbox{for any e}.
    \\
    &\kTrans[\kty \iarrowi \gk,\ty] = 
-      \forall\tyvar_\repname.\forall\tyvar_\pdname.
-         \kTrans[\kty,\tyvar] \iarrowi \kTrans[\gk,\ty \tyvar] 
+      \forall\tyvar_\repname.\forall\tyvar_\pdbname.
+         \kTrans[\kty,\tyvar] \iarrowi \kTrans[\gk,\ty \tyvar]\; 
+         (\ptyvar_\repname.\ptyvar_\pdbname \not \in \ftv \kind \cup
+         \ftv \ty)
 \end{align*}  
   \caption{\Implang{} Language Types for Parsing Functions}
   \label{fig:parser-types}
@@ -660,11 +688,23 @@ type was matched along with the type's corresponding parse descriptor.
            : \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
                     * (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}) } {}\\
   \quad \ilet {\itup{\off',r,p}} 
-  {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
-  \qquad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},(p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
+   {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
+  \qquad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
+     (p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
 %}}
   \end{array}  
 \\[3pt]
+%% lambda \alpha
+\trans[\lambda\tyvar . \ty,,] = %\\
+%  \begin{array}{l}
+    \Lambda \tyvar_\repname. 
+    \Lambda \tyvar_\pdbname. \lambda \codefont{f_\ptyvar}. \trans[\ty,,]
+%  \end{array}  
+\\
+%% t1 t2
+\trans[\ty_1 \ty_2,,] = 
+    \trans[\ty_1,,]\; [\itsem[\ty_2]]\; [\itpdsemstrip[\ty_2]]\; \trans[\ty_2,,]
+\\
 %% Compute
 \trans[\pcompute e \ity,,] = \\
   \quad \lampair{\itup{\off,\newrep {compute} {\nrm e},\newpd {compute} \off}}
@@ -694,18 +734,6 @@ type was matched along with the type's corresponding parse descriptor.
    }\\
    \quad \iin \sapp \codefont{try \sapp 0} \\
   \end{array}  
-\\
-%% lambda \alpha
-\trans[\lambda\tyvar . \ty,,] = %\\
-%  \begin{array}{l}
-    \Lambda \tyvar_\repname. 
-    \Lambda \tyvar_\pdname. \lambda \codefont{f_\ptyvar}. \trans[\ty,,]
-%  \end{array}  
-\\
-%% t1 t2
-\trans[\ty_1 \ty_2,,] = 
-    \trans[\ty_1,,]\; [\itsem[\ty_2]]\; [\itpdsemstrip[\ty_2]]\; \trans[\ty_2,,]
-
 \\
 \end{array}
 \]
@@ -1090,7 +1118,7 @@ $
 }
 
 To prove our type correctness theorem by induction, we must account
-for the fact that any free recursive type variables in
+for the fact that any free type variables in
 a \ddc{} type $\ty$ will become free function variables
 in $\trans[\ty,,]$.  
 \trversion{
@@ -1100,24 +1128,20 @@ which maps recursive variable contexts
 $\rctxt$ to typing contexts $\ctxt$. 
 }
 \poplversion{
-To that end, we define the function $\ptyc \rctxt$, 
-which maps recursive variable contexts
-$\rctxt$ to typing contexts $\ctxt$:
+To that end, we define the function $\ptyc \pctxt$, 
+which maps type-variable contexts
+$\pctxt$ to typing contexts $\ctxt$:
 \vskip -1.5ex
 {\small
 \[
 \begin{array}{l}
   \ptyc{\cdot} = \cdot \\[1ex]
-  \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
-  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
+  \ptyc{\pctxt,\ptyvar{:}\kty} = \ptyc \pctxt,\codefont{f_\ptyvar}{:}\kTrans[\kty,\ptyvar]
 \end{array}
-\]%
-}%
-}%
+\]
+}
+}
 \noindent
-We also apply $\rctxt$ to $\ty$
-to close any open references to recursive types before
-determining the corresponding parser type. 
 \trversion{  We do not explicitly require that $\ctxt$
 be well formed in the premises, as it follows from the fact that $\ty$
 is well formed in $\ctxt$.
@@ -1125,14 +1149,13 @@ is well formed in $\ctxt$.
 
 \begin{theorem}[Type Correctness]
 \label{thm:type-correctness}
-  If  $\wfd \ctxt \rctxt$ and
-   $\ddck[\ty,{\pctxt;\rctxt;\ctxt},\gk,\mcon]$ then
-  $\stsem[{\trans[\ty,,]},{\ctxt,\ptyc \rctxt},
-            {\kTrans[\kind,\asub \rctxt \ty]}]$.
+  If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
+  $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
+            {\kTrans[\kind,\ty]}]$.
 \end{theorem}
 
 \begin{proof}
-  By induction on the height of the second derivation.
+  By induction on the height of the kinding derivation.
 \end{proof}
 
 \begin{corollary}[Type Correctness of Closed Types]
@@ -1140,261 +1163,105 @@ is well formed in $\ctxt$.
   $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
 \end{corollary}
 
-We start our formalization of the error-correlation property by
-defining representation and PD correlation.
-Informally, a representation and a PD are correlated when the number
-of errors recorded in the PD is at least as many as the number of
-errors in the representation and semantic errors, \ie{},
-constraint violations, are properly reported.  Formally, we define
-correlation using two mutually recursive definitions.  The first,
-$\corrkl \ty r p$, defines error correlation between a representation
-$r$ and a parse descriptor $p$ at type $\ty$.  It does so by
-computing a weak-head normal form $\tyval$ for $\ty$ and then
-using the subsidiary relation $\corr \tyval r p$, which is defined for
-all weak-head normal types $\tyval$ with base kind $\kty$.
-Types with higher kind such as abstractions are excluded from this definition
-as they cannot directly produce representations and PDs.
-\figref{fig:revised-ddc-syntax} defines the weak-head
-normal types $\tyval$ and give normalization rules while the
-following definitions specify error correlation.   
-Below, we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
-and use $\mathtt{pos}$ to denote the function which returns zero when
-passed zero and one otherwise.
+
+\section{Meta-theory Detail}
+\label{sec:meta-theory-detail}
 
 
-
-\begin{figure}
-\small
-\begin{bnf}
-%   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
-%                                \pext{\| \gk \-> \gk} \\
-  \mname{Normalized\\ Types}{2} \meta{\tyval} \::= 
-    \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} \|
-%  \nlnalt{Types}
-%%        \|
-%%       \pext{\plam{\ptyvar}{\gk}{\ty} \| \papp{\ty}{\ty} \nlalt}
-%%       \pxpd{\ty}{e}
-%%       \pext{\nlalt
-%%         \ptransform{e}{e}{\ty} \| 
-%%       }
-    \psig x \ty \ty  \nlalt
-    \psum \ty e \ty  \| \pand \ty \ty \|
-    \pset x \ty e  \|
-    \pseq \ty \ty {\pterm e \ty} \| \pmu{\ptyvar}{\ty} \nlalt
-    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
-    \\
-  \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
-    \ptyvar 
-\end{bnf}  
-\[
-  \infer{
-    \papp {\ty} {e} \stepsto \papp {\ty'} {e}
-  }{
-    \ty \stepsto \ty'
-  }
-\quad
-  \infer{
-    \papp {\tyval} {e} \stepsto \papp {\tyval} {e'}
-  }{
-    e \stepsto e'
-  }
-\quad
-  \infer{
-    \papp {(\plam x {} \ty)} {v} \stepsto \ty[v/x]
-  }{}
-\]
-  \caption{\ddc{} Weak-Head Normal Types and Normalization}
-  \label{fig:ddc-reduction-rules}
-  \label{fig:revised-ddc-syntax}
-\end{figure}
-
-\begin{definition}
-$\corrkl \ty r p$ iff if $\ty \kstepsto \tyval$ then $\corr \tyval r p$.
-\end{definition}
-
-\begin{definition}[Representation and PD Correlation Relation]
-$\corr \tyval r p$ iff exactly one of the following is true:
-  \begin{itemize}
-  \item $\tyval = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
-  \item $\tyval = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
-  \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
-  \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
-  \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
-    \ipair h {\ipair {p_1} {p_2}}$ 
-    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
-    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
-  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
-    and $p = \ipair h {\iinld {\ity}{p'}}$
-    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
-    {\ty_1} {r'} {p'}$.
-  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
-    and $p = \ipair h {\iinr {p'}}$
-    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
-    {\ty_2} {r'} {p'}$.
-  \item $\tyval = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
-    \ipair h {\ipair {p_1}{p_2}}$, 
-    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
-    $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
-  \item $\tyval = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
-    \ipair h {p'}$, 
-    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
-    and $e[(r',p')/x] \kstepsto\itrue$.
-  \item $\tyval = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
-    and $p = \ipair h {p'}$,
-    and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
-    $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
-  \item $\tyval = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
-    $r = \ipair {len} {\iarr{\vec {r_i}}}$, $p = \itup{h,\itup{{neerr},{len}',\iarr {\vec {p_i}}}}$,
-    ${len} = {len}'$, ${neerr} = \sum_{i=1}^{len}
-    \mathtt{pos}(p_i.{nerr})$, $\corrkl {\ty_e}
-    {r_i} {p_i}$, (for $i=1 \ldots {len}$), and
-    $h.{nerr} \geq \mathtt{pos}({neerr})$.
-%   \item $\tyval = \pmu \ptyvar {\ty'}$ and 
-%     $\corrkl {\ty'[\pmu \ptyvar {\ty'}/\ptyvar]} r p$.
-  \item $\tyval = \mu \alpha.\tau$, 
-        and $r = \iroll{r'}{\pmu \ptyvar \gk \itsem[\ty]}$, \\
-        and $p = (h,\iroll{h,p'}{\pmu \ptyvar \gk \itpdsem[\ty]})$ \\
-        and  $\corrkl {\tau[\mu \alpha.\tau/\alpha]} {r'} {(h,p')}$
-  \item $\tyval = \pcompute e \ity$ and $p.{nerr} = 0$.
-  \item $\tyval = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
-  \item $\tyval = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
-  \item $\tyval = \pscan {\ty'}$, $r =\iinl {r'}$,
-      $p = \ipair h {\iinl {\ipair i {p'}}}$,
-      $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and
-      $\corrkl {\ty'}{r'}{p'}$.
-  \item $\tyval = \pscan {\ty'}$,
-      $r =\iinr \ierr$,
-      $p = \ipair h {\iinr \iuval}$, and
-      $h.{nerr} = 1$.
-  \end{itemize}
-\end{definition}
-
-\trversion{
-Once again, we first need to prove error correlation properties of
-the Rep and PD constructors, as expressed in the following lemma.
-
-\begin{lemma}[Correlation Properties of Constructors]
-  \label{lem:cons-props}
-  \begin{itemize}
-  \item $\corr \ptrue {\newrep {true} {}} {\newpd {true} \off}$.
-  \item $\corr \pfalse {\newrep {false} {}} {\newpd {false} \off}$.
-  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$
-    then\\ $\corr {\psig x {\ty_1} {\ty_2}}
-    {\newrep {\gS} {r_1,r_2}}{\newpd {\gS} {p_1,p_2}}$.
-  \item If $\corrkl \ty r p$ then $\corr {\psum \ty e {\ty'}} 
-      {\newrep {+left} r} {\newpd {+left} p}$.
-  \item If $\corrkl \ty r p$ then $\corr {\psum {\ty'} e \ty} 
-      {\newrep {+right} r} {\newpd {+right} p}$.
-  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$
-    then\\ $\corr {\pand {\ty_1} {\ty_2}}
-    {\newrep {\&} {r_1,r_2}}{\newpd {\&} {p_1,p_2}}$.
-  \item If $\corrkl \ty r p$ and $e[(r,p)/x] \kstepsto c$ then\\ $\corr {\pset x \ty e} 
-    {\newrep {set} {c,r}} {\newpd {set} {c,p}}$
-  \item $\corr {\pseq \ty {\ty_s}{\pterm e {\ty_t}}} 
-    {\newrep {seq\_init} {}} {\newpd {seq\_init} \off}$.
-  \item If $\corr {\pseq \ty {\ty_s} {\pterm e {\ty_t}}} r p$ and
-    $\corrkl \ty {r'} {p'}$ then for any $p''$, $\corr {\pseq \ty {\ty_s}{\pterm e {\ty_t}}}
-    {\newrep {seq} {r,r'}} {\newpd {seq} {p,p'',p'}}$.    
-  \item $\corr {\pcompute e \ity} {\newrep {compute} {e}} {\newpd {compute} \off}$.
-  \item $\corr {\pabsorb \ty} {\newrep {absorb} p} {\newpd {absorb} p}$.
-  \item If $\corrkl {\ty} r p$ then $\corr {\pscan \ty} 
-      {\newrep {scan} r} {\newpd {scan} {i,p}}$.
-  \item $\corr {\pscan \ty} 
-      {\newrep {scan\_err} {}} {\newpd {scan\_err} \off}$.
-  \end{itemize}
-\end{lemma}
-
-\begin{proof}
-  By inspection of code. 
-\cut{
-  \reminder{Fix the following or drop it: }
-  Array case is most complicated, in particular proving the clause
-  $h.{nerr} \geq \mathtt{pos}({neerr})$. To do so, you must prove that
-  $H_{seq}$ maintains this invariant. The first case of the match is the
-  hard one, as ${nerr}$ is 0 (if its $1$, then it must be greater than
-  or equal to $\mathtt{pos}(n)$, for any $n$).  First, as $h.{nerr} =
-  0$, so too must $neerr$. Next, note that in this first case,
-  $h1.{nerr} = 0$. Now, the new value of ${neerr}$ is just the sum of
-  the original ${neerr}$ and $\mathtt{pos}(h1.{nerr})$, that is, $0 +
-  0$.}
-\end{proof}
-}
-
-Definition~\ref{def:err-corr} specifies the exact property we require
-of parsing functions. At base kind, we require that any representation and PD
-returned by the parser must be correlated. At higher kind, we require
-that the function preserve the property of error correlation. Hence,
-the definition is a simple form of logical relation.
-Lemma~\ref{lem:err-corr-at-T} states that any well-formed type of base
-kind is error-correlated.
-
-\begin{definition}[Error Correlation Relation]
-\label{def:err-corr}
-$\ecpred \ty \kind$ iff exactly one of the following is true:
-  \begin{itemize}
-  \item $\kind = \kty$ and if $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
-  \spair<\off',r,p>$ then $\corrkl \ty r p$
-  \item $\kind = \ity \iarrowi \kind'$ and if $\stsem[v,,\ity]$
-    then $\ecpred {\ty \sapp v} {\kind'}$
-  \end{itemize}
-\end{definition}
-
-\begin{lemma}[Error Correlation at Base Kind]
-\label{lem:err-corr-at-T}
-If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
-  \spair<\off',r,p>$ then $\corrkl \ty r p$.
-\end{lemma}
-
-\begin{proof}
-  By induction on the height of the second derivation.
-\end{proof}
-
-\begin{theorem}[Error Correlation]
-\label{thm:err-corr}
-If $\ddck[\ty,,\kind,\con]$ then $\ecpred \ty \kind$.
-\end{theorem}
-
-\begin{proof}
-  By induction on the size of the kind $\kind$. For $\kind = \kty$, we
-  use Lemma~\ref{lem:err-corr-at-T}.
-\end{proof}
-
-\trversion{
-We conclude this section with a useful property of correlated representations
-and PDs. If the PD reports no errors, then there are no syntactic
-errors in the representation data structure {\it at any level}. 
-We formally define
-{\it clean} (error-free) values next, followed by the statement of the
-property itself.
-
-\begin{definition}[Clean Value]
-$\noerr v$ iff exactly one of the following is true:
-\begin{itemize}
-\item $v = c$ and $c \neq \ierr$.
-\item $v = \ifun f x e$.
-\item $v = \ipair {v_1} {v_2}$ and $\noerr {v_1}$ and $\noerr {v_2}$.
-\item $v = \iinl {v'}$ and $\noerr {v'}$.
-\item $v = \iinr {v'}$ and $\noerr {v'}$.
-\item $v = \iarr{v_1 \cdots v_n}$ and $\noerr {v_i}$ for $i=1\ldots n$.
-\end{itemize}
-\end{definition}
+Next we present some theorems about the translation and the parsers
+produced by the translation.
 
 \begin{lemma}
-  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then $\noerr r$.
+\label{lem:con-closed-exp}
+  If $\stsem[e,\pctxt;\ctxt,\ity]$ then $\fv e \subseteq \dom \ctxt$
+  and $\ftv \ctxt \cup \ftv \ity \subseteq \pctxt$.
+\end{lemma}
+
+\begin{lemma}
+  Support functions are closed with respect to user-defined variables.
 \end{lemma}
 
 \begin{proof}
-  By induction on the structure of r.
+  By inspection of code.
 \end{proof}
-}
 
-\begin{corollary}
-  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then there are no syntactic
-  or semantic errors in the representation data structure $r$.
-\end{corollary}
+{\em I think that condition one should be elsewhere.It relates to the
+contents of the base type implementation, rather than any deep
+properties of the contents.}
 
+\begin{condition}[Conditions on Base-type Interfaces]
+  \begin{enumerate}
+  \item $\dom {\Ikind} = \dom {\Iimp}$.
+  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
+    \ioparrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$).
+  \item $\fomegak{}{\Irty(C)}{\kty}$.
+    \label{cond:closed-op}
+  \end{enumerate}
+\end{condition}
+
+\begin{definition}
+$\pda \ptyvar = \ipty \ptyvar$
+\end{definition}
+
+\begin{lemma}[Types of Constructors]
+\label{lem:types-of-constructors}
+\begin{itemize}
+\item $\newrepf {unit} : \iarrow \iunitty \iunitty$
+\item $\newpdf  {unit} : \iarrow \ioffty {\ipty \iunitty}$
+\item $\newrepf {bottom} : \iarrow \iunitty \invty$
+\item $\newpdf  {bottom} : \iarrow \ioffty {\ipty \iunitty}$
+\item $\newrepf {\gS} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
+\item $\newpdf {\gS} : \forall \ga,\gb. 
+  \iarrow {\iprod {\pda \ga} {\pda \gb}}
+  {\pda {(\pda \ga \iprodi \pda \gb)}}
+$
+\item $\newrepf {+left} : \forall \ga.\forall \gb.\iarrow \ga 
+                            {\isum \ga \gb}$
+\item $\newrepf {+right} : \forall \ga.\forall \gb.\iarrow \gb {\isum \ga \gb}$
+\item $\newpdf {+left} : \forall \ga, \gb.\iarrow {\pda \ga} 
+  {\ipty {(\isum {\pda \ga}{\pda \gb})}}$
+\item $\newpdf {+right} :\forall  \ga, \gb. \iarrow {\pda \gb} 
+                            {\ipty {(\isum {\pda \ga} {\pda \gb})}}$
+\item $\newrepf {\&} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
+\item $\newpdf {\&} : 
+\forall \ga,\gb.
+  \pda \ga \iprodi
+  \pda \gb \iarrowi 
+         {\ipty {(\pda \ga \iprodi \pda \gb)}}
+$.
+\item $\newrepf {con} : \forall \ga.\iprod \iboolty \ga 
+  \iarrowi {\isum \ga \ga}$
+\item $\newpdf {con} :\forall  \ga. \iprod \iboolty \iarrow {\pda \ga} {\ipty {\pda \ga}}$
+\item $\newrepf {seq\_init} : \forall \ga.\iarrow \iunitty {\iintty \iprodi \iseq \ga}$
+\item $\newpdf {seq\_init} : \forall \ga. \iarrow \ioffty {\iapty {\pda\ga}}$
+\item $\newrepf {seq} : \forall \ga.\iarrow
+  {(\iintty \iprodi \iseq \ga) \iprodi \ga}
+  {\iintty \iprodi \iseq \ga}$
+\item $\newpdf {seq} :\forall  {\ga_{elt}},{\ga_{sep}}. 
+  (\iapty {\pda {\ga_{elt}}}) \iprodi
+  \pda {\ga_{sep}} \iprodi 
+  \pda {\ga_{elt}} \iarrowi \\
+  \iapty {\pda {\ga_{elt}}}$
+\item $\newrepf {compute} : \forall \ga.\iarrow \ga \ga$
+\item $\newpdf {compute} : \iarrow \ioffty {\ipty \iunitty}$
+\item $\newrepf {absorb} : \forall \ga.\iarrow {\pda \ga} {\isum
+    \iunitty \invty}$
+\item $\newpdf {absorb} :\forall  \ga. \iarrow {\pda \ga} {\ipty
+    \iunitty}$
+\item $\newrepf {scan} : \forall \ga.\iarrow \ga {\isum \ga \invty}$
+\item $\newpdf {scan} :\forall  \ga. \iarrow {\iprod \iintty {\pda \ga}}
+  {\ipty {(\isum {\iprod \iintty {\pda \ga}} \iunitty)}}$
+\item $\newrepf {scan\_err} : \forall \ga.\iarrow \iunitty {\isum \ga \invty}$
+\item $\newpdf {scan\_err} :\forall  \ga. \iarrow \ioffty
+  {\ipty {(\isum {\iprod \iintty \ga} \iunitty)}}$
+\end{itemize}  
+\end{lemma}
+
+\begin{proof}
+  By typing rules of $\fomega$.
+\end{proof}
 
 %%% Local Variables: 
 %%% mode: latex
-%%% TeX-master: "semantics"
+%%% TeX-master: "paper"
 %%% End: 

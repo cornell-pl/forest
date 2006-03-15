@@ -46,9 +46,19 @@
 
   %% parser type of a context
 \newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
+  %% Fomega context version of Poly-context.
+\newcommand{\fotyc}[1]{{#1}_{\ctxt}}
+  %% Rep-related subset of context.
+\newcommand{\fortyc}[1]{{#1}_{\repname}}
+  %% PD-related subset of context.
+\newcommand{\fopdtyc}[1]{{#1}_{\pdbname}}
+  %% Close type with respect to context by substituting defintions of
+  %% variables for the variables themselves.
+\newcommand{\closec}[2]{\mathsf{Close}({#1},{#2})}
+
 \def\itsem[#1]{\lsem#1\rsem_{\text{rep}}}
 \def\itpdsem[#1]{\lsem#1\rsem_{\text{PD}}}
-\def\itpdsemstrip[#1]{\lsem#1\rsem_{\text{noPD}}}
+\def\itpdsemstrip[#1]{\lsem#1\rsem_{\text{PDb}}}
 \def\itbdsem[#1]{\lsem#1\rsem_{\text{body}}}
 \def\kTrans[#1,#2]{\ptyc {#2{:}#1}}
 \def\tTrans[#1]{\lsem#1\rsem}
@@ -56,6 +66,7 @@
 \def\stsem[#1,#2,#3]{#2 \turn #1 : #3}
 %% \def\ddck[#1,#2,#3,#4]{#2 \turn_{#4} #1 : #3}
 \def\ddck[#1,#2,#3,#4]{#2 \turn #1 : #3}
+\newcommand{\fomegak}[3]{#1 \turn #2 \mathrel{::} #3}
 %% \def\trans[#1,#2,#3]{\lsem#1\rsem^{#2}_{#3}}
 \def\trans[#1,#2,#3]{\lsem#1\rsem}
 \def\arrTrans[#1,#2]{\lsem#1\rsem^{#2}_{array}}
@@ -95,6 +106,8 @@
 % \newcommand{\pterm}{\kwd{term}} 
   %% The kind of types, *.
 \newcommand{\kty}{\mathsf{T}}
+  %% Singleton kinds
+\newcommand{\ksingle}[1]{\mathsf{S}({#1})}
   %% contractive
 \newcommand{\con}{y}
   %% non-contractive
@@ -135,7 +148,9 @@
 %% \newcommand{\p}[]{}
 
 \newcommand{\repname}{\kwd{rep}}
-\newcommand{\pdname}{\kwd{pd}}
+\newcommand{\pdname}{\kwd{PD}}
+  % pd body name.
+\newcommand{\pdbname}{\kwd{PDb}}
 
   %% generic base-type interface macro
 \newcommand{\Igen}[1]{\mathcal{B}_{\text{#1}}}
@@ -168,6 +183,8 @@
 \newcommand{\implang}{host\xspace}
  %% capitalized version
 \newcommand{\Implang}{Host\xspace}
+  %% Fomega
+\newcommand{\fomega}{F_{\go}}
 
 % Internal language types syntax
 \newcommand{\tyface}[1]{\mathtt{#1}}
@@ -202,13 +219,16 @@
 \newcommand{\ierrty}[1]{#1 \; \tyface{error}}
   % standard pd type
 \newcommand{\ipty}[1]{\iprod {\tyface{pd\_hdr}}{#1}}
+  % abbrev. of standard pd type.
+\newcommand{\pda}[1]{{#1}\,\tyface{pd}}
+
 \newcommand{\pdtyvar}[1]{{#1}\, \mbox{s.t.}\, \ispdty {#1}}
 \newcommand{\pdtyvars}[2]{#1,#2\; \mbox{s.t.}\; \ispdty {#1},\ispdty {#2}}
 % has header ddc ty vars
 %\newcommand{\hdtvs}[2]{#1,#2\; \mbox{s.t.}\; \ispdty {\itpdsem[{#1}]},\ispdty {\itpdsem[{#2}]}}
 \newcommand{\hdtvs}[2]{#1,#2}
 \newcommand{\iaptyname}{\tyface{arr\_pd}}
-\newcommand{\iapty}[1]{\ipty {(\iaptyname \; #1)}}
+\newcommand{\iapty}[1]{\ipty {({#1} \; \iaptyname)}}
 \newcommand{\ityvar}{\ga}
 
 %% Internal language term syntax
@@ -255,8 +275,8 @@
 %%\newcommand{\isub}[2]{\codefont{sub_{#1}} \; #2}
 \newcommand{\isub}[2]{#1\,\codefont{[{#2}]}}
 \newcommand{\ifoldr}[3]{\codefont{foldr} \; #1 \, #2 \, #3}
-\newcommand{\iroll}[2]{\codefont{roll}_{#2} (#1)}
-\newcommand{\iunroll}[1]{\codefont{unroll}(#1)}
+\newcommand{\iroll}[2]{\codefont{fold}[{#2}] (#1)}
+\newcommand{\iunroll}[1]{\codefont{unfold}(#1)}
 \newcommand{\iapp}[2]{#1 \; #2}
 \newcommand{\iappi}{\;}
   %% Exception

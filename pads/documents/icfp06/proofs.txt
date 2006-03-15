@@ -1,0 +1,399 @@
+ToDo:
+- verify that types of constructors lemma is correct.
+x Ensure that all figures have consistent ordering.
+x Fix substitution lemmas, and proof cases for rec. and tyApp correspondingly.
+x Define D_G, D_rep and D_PD in paper.
+x Add condition to compute kinding rule to prevent a_Pb escape.
+Check that s (in compute(e:s)) is well formed in rep_var context:  D_rep |- s :: T.
+x Prove Rep. Type Well-Formedness lemma.
+x Add condition on base types. |- B_type(C) :: T
+
+Note: PT(s) = [s]_PT, for any string s.
+
+
+Definition: Kind interpretation in F-omega.
+K(T)      = T
+K(s -> k) = K(k)
+K(T -> k) = T -> K(k)
+
+Lemma: Rep. Type Well-Formedness
+If D;G |- t : k then 
+  D_rep |- [t]_rep :: K(k)
+  D_PD |- [t]_PD  :: K(k)
+  D_PD |- [t]_Pb  :: K(k)
+pf:  by induction.
+
+Lemma: If D;G |- t : k then |- D_G,G ok
+pf: by induction
+           
+Lemma: If |- G ok and x:s in G, then G |-  s :: T 
+pf: by induction.
+
+Lemma: If [t]_rep == [t']_rep and [t]_PD == [t']_PD,
+       then PT(t:k) == PT(t':k).
+pf: by induction on kinds.
+   case T: 
+      to prove: 
+        PT(t:T) == PT(t':T).
+        b*o->o * [t]_rep * [t]_PD == b*o->o * [t']_rep * [t']_PD
+      need to prove:
+        [t]_rep == [t']_rep and [t]_PD == [t']_PD
+      both are given.
+   case s -> k:
+        PT(t:s->k) == PT(t':s->k)      
+        s -> PT(t e:k) == s -> PT(t' e:k)      
+   need to prove,
+        PT(t e:k) == PT(t' e:k)    
+   as k is smaller, follows by induction.  
+
+   case T -> k:
+        PT(t:T->k) == PT(t':T->k)      
+        Aa'_rep.Aa'_Pb.PT(a':T) -> PT(t a':k) == 
+          Aa'_rep.Aa'_Pb.PT(a':T) -> PT(t' a':k)    
+   need to prove,
+        PT(t' a':k) == PT(t' a':k)    
+   as k is smaller, follows by induction.  
+
+Substitution Lemmas:
+
+Definition: simultanueaous substitution:
+[a/b,c/d,...] denotes a simultaneous substitution.
+
+Defintion: substitution abbreviations:
+X(t,a) = [t]_rep/a_rep, [t]_Pb/a_Pb
+Y(t,a) = t/a, [t]_rep/a_rep, [t]_Pb/a_Pb
+
+Lemma:
+1. [t]_rep [X(t',a)] = [t[Y(t',a)]]_rep
+2. [t]_PD [X(t',a)]  = [t[Y(t',a)]]_PD
+
+pf: by induction on structure of types.
+Two interesting cases: compute(e:s) b/c must take s into account, 
+and t1 t2.
+
+case [t1 t2]_PD:
+     [t1 t2]_PD [X(t',a)]
+   = ([t1]_PD [t2]_Pb) [X(t',a)]
+   = [t1]_PD [X(t',a)] [t2]_Pb [X(t',a)]
+By IH,
+   = [t1 [Y(t',a)]]_PD [t2]_Pb [X(t',a)]   (A)
+
+Now, by IH,
+   [t2]_PD [X(t',a)] = [t2[Y(t',a)]]_PD
+So,
+   (pd_hdr * [t2]_Pb) [X(t',a)] = pd_hdr * [t2[Y(t',a)]]_Pb
+   pd_hdr * ([t2]_Pb [X(t',a)]) = pd_hdr * [t2[Y(t',a)]]_Pb
+So,
+   [t2]_Pb [X(t',a)] = [t2[Y(t',a)]]_Pb
+
+From this, we have:
+   (A) = [t1 [Y(t',a)]]_PD [t2[Y(t',a)]]_Pb
+   = [(t1 t2) [Y(t',a)]]_PD
+
+Lemma: PT(t:k)[X(t',a)] = PT(t[Y(t',a)]:k[Y(t',a)])
+pf: by induction on size of kind.
+case T:
+  PT(t:T) = b * o -> o * [t]_rep * [t]PD 
+So,
+  PT(t:T)[X(t',a)] =
+    b * o -> o * [t]_rep[X(t',a)] * [t]_PD[X(t',a)]
+  By lemma, 
+    = b * o -> o * [t[Y(t',a)]]_rep * 
+		   [t[Y(t',a)]]_PD
+    = PT(t[Y(t',a)]:T)
+    = PT(t[Y(t',a)]:T[Y(t',a)])
+
+case s -> k:
+  PT(t:s->k) = s -> PT(t e:k)
+  PT(t:s->k)[X(t',a)] = (s -> PT(t e:k))[X(t',a)]
+  = s[X(t',a)] -> PT(t e:k)[X(t',a)] 
+Now, a not in FTV(s) so 
+  s[X(t',a)] = s[Y(t',a)]
+By IH, 
+   PT(t e:k)[X(t',a)] = PT((t e)[Y(t',a)]:k[Y(t',a)])
+   = PT(t[Y(t',a)] e : k[Y(t',a)])
+From above
+  s[X(t',a)] -> PT(t e:k)[X(t',a)] = s[Y(t',a)] -> PT(t[Y(t',a)] e : k[Y(t',a)])
+   = PT(t[Y(t',a)] : (s->k)[Y(t',a)])
+
+case T -> k:
+  PT(t:T->k) = Aa'_rep.Aa'_pd_body.PT(a':T) -> PT(t a':k)
+
+By IH,
+  PT(a':T)[X(t',a)] = PT(a'[Y(t',a)]:T)
+and
+  PT(t a':k)[X(t',a)] = PT((t a')[Y(t',a)]:k[Y(t',a)])
+As a' != a,
+  PT(a'[Y(t',a)]:T) = PT(a':T)
+and
+  PT((t a')[Y(t',a)]:k[Y(t',a)]) = PT(t[Y(t',a)] a':k[Y(t',a)])
+
+Now,
+  PT(t:T->k)[X(t',a)]
+  = (Aa'_rep.Aa'_pd_body.PT(a':T) -> PT(t a':k))[X(t',a)]
+  = Aa'_rep.Aa'_pd_body.PT(a':T)[X(t',a)] -> PT(t a':k)[X(t',a)]
+  = Aa'_rep.Aa'_pd_body.PT(a':T) -> PT(t[Y(t',a)] a':k[Y(t',a)])
+  = PT(t[Y(t',a)] : T -> k [Y(t',a)])
+  = PT(t[Y(t',a)] : (T -> k) [Y(t',a)])
+
+Corrollary:
+ If a_rep,a_Pb not in FTV(k), 
+ then PT(t:k)[X(t',a)] = PT(t[Y(t',a)]:k)
+
+Type Correctness theorem:
+
+If D;G |- t : k then D_G,G,[D]_PT |- [t] : [t:k]_PT
+
+proof:
+By induction on kinding derivations.
+
+
+case Unit:
+case Bottom:
+  by code inspection and lemma on types of constructors.
+
+case Const:
+  by code inspection and condition on base types.
+
+case Abs:
+
+			   D;G,x:s |- t : k
+			 -------------------- 
+			 D;G |- \x.t : s -> k
+
+
+By IH, D_G,G,x:s,[D]_PT |- [t] : [t:k]_PT.
+By F_omega typing, D_G,G,[D]_PT |- \x.[t] : s -> [t:k]_PT.
+
+case App:
+
+		  D;G |- t : s -> k   D_G,G |- e : s
+		  ---------------------------------- 
+			    D;G |- t e : k
+
+By IH, D_G,G,[D]_PT |- [t] : [t:s -> k]_PT
+So,    D_G,G,[D]_PT |- [t] : s -> [t e:k]_PT
+By typing, [t] e: [t e:k]_PT
+
+case DepSum:
+
+	   D;G |- t : T   D;G,x:[t]_rep * [t]_PD |- t' : T
+	   ----------------------------------------------- 
+			 D;G |- E x:t.t' : T
+
+
+By IH, D_G,G,[D]_PT |- [t] : [t:T]_PT
+By IH, D_G,G,x:[t]_rep * [t]_PD,[D]_PT |- [t'] : [t':T]_PT
+
+To prove:
+  D_G,G,[D]_PT |- [E x:t.t'] : [E x:t.t':T]_PT.
+
+We have,
+   D_G,G,[D]_PT |- [t] : b * o -> o * [t]_rep * [t]_PD
+So,
+   D_G,G,[D]_PT,B:b,w:o |- [t](B,w) : o * [t]_rep * [t]_PD
+and,
+   D_G,G,[D]_PT,B:b,w:o,w':o,r:[t]_rep,p:[t]_PD |- (r,p) : [t]_rep * [t]_PD
+From IH,
+   D_G,G,x:[t]_rep * [t]_PD,[D]_PT |- [t'] : b * o -> o * [t']_rep * [t']_PD
+So,
+   D_G,G,x:[t]_rep * [t]_PD,[D]_PT |- [t'](B,w') : o * [t']_rep * [t']_PD
+And we then have the following context in which to type the final expression:
+   D_G,G,[D]_PT,B:b,w:o,w':o,,w'':o,
+   x:[t]_rep * [t]_PD,
+   r:[t]_rep,p:[t]_PD,r':[t']_rep,p':[t']_PD
+Instantiating R_E at [t]_rep and [t']_rep and P_E at [t]_Pb and 
+[t']_Pb,
+   (big context) |- (w'',R_E(r,r'),P_E(p,p')) :   o * [E x:t.t']_rep * [E x:t.t']_PD 
+
+
+case Sum:
+
+		   D;G |- t : T   D;G |- t' : T
+		   ------------------------------- 
+			  D;G |- t + t' : T
+
+to prove:
+  D_G,G,[D]_PT |- [t+t'] : PT(t+t':T)
+
+As PT(t+t': T) = b*o -> o * [t+t']_rep * [t+t']pd
+	       = b*o -> o * ([t]_rep + [t']_rep) * (pd_hdr * [t]pd + [t']pd),
+we need to prove:
+  D_G,G,PT(D) |- [t+t'] : b*o -> o * ([t]_rep + [t']_rep) * (pd_hdr * [t]pd + [t']pd)
+
+
+By IH, D_G,G,PT(D) |- [t] : PT(t:T)
+PT(t:T) = b*o -> o * [t]_rep * [t]pd
+[t](B,w): o * [t]_rep * [t]pd
+so, r : [t]_rep and p : [t]pd
+instantiate R_+left with [t]_rep and [t']_rep,
+instantiate P_+left with [t]_Pb and [t']_Pb,
+and, by "Types of Constructors" lemma,
+then-branch of line 2 has type 
+o * ([t]_rep + [t']_rep) * 
+  (pd_hdr * ([t]pd + [t')]pd))
+
+By IH, D_G,G,PT(D) |- [t'] : PT(t':T)
+  PT(t':T) = b*o -> o * [t']_rep * [t']pd
+Using parallel argument to the above, obtain that else branch has type:
+o * ([t]_rep + [t']_rep) * 
+  (pd_hdr * ([t]pd + [t']pd)).
+
+Therefore, the function has the correct type.
+
+case Intersection: same method as sum.
+
+case Set: same methods as product.
+
+case Seq:
+start by giving types to isDone and continue:
+
+t_m = t seq(t_s,e,t_t)
+isDone:o * [t_m]_rep * [t_m]pd -> bool
+  use IH to show that p' has type [t_t]_PD and therefore valid argument
+  to isOk.
+
+continue: o * o * [t_m]_rep * [t_m]pd 
+          ->  o * [t_m]_rep * [t_m]pd
+
+next, we type the body:
+r: int * [t]_rep seq
+p: pd_hdr * (arr_pd [t]pd)
+then-branch: o * (int * [t]_rep seq) * (pd_hdr * (arr_pd [t]pd))
+else-branch:
+  r_e : [t]_rep
+  p_e : [t]pd
+  continue (...) : o * [t seq{t_s,e,t_t)]_rep * 
+  [t seq{t_s,e,t_t)]pd
+
+as branches have same type, body has that type and the function has
+the correct type.
+
+case Var:
+
+		       |- D_G,G ok  a in dom(D)
+		       ------------------------ 
+			     D;G |- a : T
+
+
+To prove:
+    D_G,G,[D]_PT |- [a] : [a:T]_PT
+As a in dom(D), D = D',a:T and PT(D) = PT(D'),f_a:PT(a:T)
+By var typing, 
+    D_G,G,PT(D'),f_a:PT(a:T) |- f_a : PT(a:T)
+
+case Rec:
+
+Given
+
+			   D,a:T;G |- t : T
+			   ---------------- 
+			   D;G |- ua.t : T
+
+To prove,
+   D_G,G,PT(D) |- [ua.t] : PT(ua.t : T)
+
+By IH, 
+   D_G,a_rep::T,a_Pb::T,G,PT(D),f_a:PT(a:T) |- [t] : PT(t:T)
+
+From derivation and lemma, 
+   D_G,G,PT(D) |- [ua.t]_rep :: T
+   D_G,G,PT(D) |- [ua.t]_PD  :: T
+   D_G,G,PT(D) |- [ua.t]_Pb :: T
+
+Let S = X(ua.t,a).
+By Type Substitution, TAPL Lemma 30.3.4, part 3:
+   D_G,G[S],PT(D)[S],f_a:PT(a:T)[S] |- [t][S] : PT(t:T)[S]
+By PT substitution Lemma,
+   PT(a:T)[S] = PT(a[Y(ua.t,a)]:T) = PT(ua.t:T)
+So,
+   D_G,G[S],PT(D)[S],f_a:PT(ua.t:T) |- [t][S] : PT(t:T)[S]
+As there are no typing annotations in [t],
+   [t][S] = [t]
+As a not in FTV(D;G), (can always a-vary to ensure this)
+   D_G,G,PT(D),f_a:PT(ua.t:T) |- [t] : PT(t:T)[S]
+which is equivalent to:
+   D_G,G,PT(D) |- [t]: b*o-> o * [t]_rep [S] * [t]_PD[S]
+
+By typing (and expanding out S),
+   D_G,G,PT(D) |- w : o
+   D_G,G,PT(D) |- r : [t]_rep [[ua.t]_rep/a_rep, [ua.t]_Pb/a_Pb]
+   D_G,G,PT(D) |- p : [t]_PD [[ua.t]_rep/a_rep, [ua.t]_Pb/a_Pb]
+
+By Rep. Type Well-Formedness Lemma,
+  D_rep,G |- [t]_rep :: T
+  D_PD,G |- [t]_PD :: T
+
+So, a_Pb not in FTV([t]_rep) and a_rep not in FTV([t]_PD), so
+   D_G,G,PT(D) |- r : [t]_rep [[ua.t]_rep/a_rep]
+   D_G,G,PT(D) |- p : [t]_PD [[ua.t]_Pb/a_Pb]
+
+As [ua.t]_rep = ua_rep.[t]_rep,
+   D_G,G,PT(D) |- fold[[ua.t]_rep] r : u a_rep.[t]_rep (= [ua.t]_rep) 
+As [ua.t]_Pb = u a_Pb.[t]_PD,
+   D_G,G,PT(D) |- fold[[ua.t]_Pb] p : u a_Pb.[t]_PD (= [ua.t]_Pb)
+
+case TyAbs:
+
+			   D,a:T;G |- t : k
+			 -------------------- 
+			 D;G |- \a.t : T -> k
+
+To prove:
+   D_G,G,PT(D) |- [\a.t] : PT(\a.t : T -> k)
+=
+   D_G,G,PT(D) |- [\a.t] : A a_rep. A a_Pb. PT(a:T) -> PT(\a.t a: k)
+
+[\a.t] = A a_rep. A a_Pb. \f_a.[t], so need to prove:
+   D_G,G,PT(D),a_rep::T,a_Pb::T, f_a:PT(a:T) |- [t] : PT(\a.t a: k)
+
+By IH,
+   D_G,a_rep::T,a_Pb::T,G,PT(D),f_a:PT(a:T) |- [t] : PT(t:k)
+Need to prove (with == as F-omega type equivalence),
+   PT(\a.t a: k) == PT(t:k)
+From lemma, need to prove:
+  [\a.t a]_rep == [t]_rep and [\a.t a]_PD == [t]_PD.
+  [\a.t a]_rep = (\a_rep.[t]_rep) a_rep == [t]_rep
+  [\a.t a]_PD = (\a_Pb.[t]_PD) a_Pb == [t]_PD.
+  
+case TyApp:
+
+		  D;G |- t1 : T -> k   D;G |- t2 : T
+		  ---------------------------------- 
+			   D;G |- t1 t2 : k
+
+To prove:
+   D_G,G,PT(D) |- [t1 t2] : PT(t1 t2: k)
+
+[t1 t2] = [t1] [[t2]_rep] [[t2]_Pb] [t2]
+
+By IH,
+   D_G,G,PT(D) |- [t1] : PT(t1: T -> k)
+By def. of PT,
+   PT(t1: T -> k) = A a_rep. A a_Pb. PT(a:T) -> PT(t1 a: k), 
+   with a fresh w.r.t. k and t1.
+So,
+   D_G,G,PT(D) |- [t1] : A a_rep. A a_Pb. PT(a:T) -> PT(t1 a: k)
+By Rep. Type Well-Formedness lemma,
+   D_rep |- [t2] :: T
+   D_PD |- [t2]_Pb :: T
+By typing,
+   D_G,G,PT(D) |- [t1] [[t2]_rep]: (A a_Pb. PT(a:T) -> PT(t1 a: k))[[t2]_rep/a_rep]
+   D_G,G,PT(D) |- [t1] [[t2]_rep] [[t2]_Pb]: 
+      (PT(a:T) -> PT(t1 a: k))[[t2]_rep/a_rep][[t2]_Pb/a_Pb]
+As a_Pb not free in [t2]_rep (by rep-type well formedness),
+   [[t2]_rep/a_rep][[t2]_Pb/a_Pb] = [[t2]_rep/a_rep, [t2]_Pb/a_Pb] = X(t2,a)
+   D_G,G,PT(D) |- [t1] [[t2]_rep] [[t2]_Pb]: (PT(a:T) -> PT(t1 a: k))[X(t2,a)]
+By lemma and "a" fresh (if not, just a-vary it),
+   D_G,G,PT(D) |- [t1] [[t2]_rep] [[t2]_Pb]: PT(t2:T) -> PT(t1 t2: k)
+
+By induction,
+   D_G,G,PT(D) |- [t2] : PT(t2 : T)
+
+By typing,
+   D_G,G,PT(D) |- ([t1] [[t2]_rep] [[t2]_Pb]) [t2]: PT(t1 t2: k)
+
+   
+case compute: trivial
+case absorb: by induction
+case scan: by induction.
