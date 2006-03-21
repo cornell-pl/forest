@@ -1,0 +1,30 @@
+
+\section{From \padsmlbig{} to \ocaml{}}
+\label{sec:padsml-impl}
+
+\begin{itemize}
+\item Compiler generates module for each description.
+\item Example: Transforming data with \padsml{} and \ocaml{}.
+\item Example: querying data.
+\item Example: processing data (take average).
+\end{itemize}
+
+
+\section{A Generic Tool Framework}
+\label{sec:gen-tool}
+
+\begin{itemize}
+\item Tools are essential benefit of PADS.
+\item Tool generator development is difficult. How can we separate
+  from compiler? Want to give developer clean interface for writing
+  generic tools.
+\item Many tools share same characteristic: traversal and processing.
+\item Traversal is description specific while processing is tool specific.
+\item Split into generic tool and generic traversal.
+\item Implementation with modules and functors.
+\item Example tools, w/ programs using tools and their outputs.
+\end{itemize}
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 

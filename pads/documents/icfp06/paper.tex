@@ -15,7 +15,7 @@
 %\setlength{\textheight}{8.5in}
 
 \begin{document}
-\title{PADS/ML}
+\title{PADS/ML: A Functional Data Description Language}
 \authorinfo{Mary Fernandez \ \ \ \  Kathleen Fisher}{
 	   AT\&T Labs Research}
        {\mono{kfisher,mff@research.att.com}}
@@ -29,10 +29,39 @@
 
 \begin{abstract}  
 
-In this paper we describe the theory and implementation of
-a data description language for O'Caml.
+  Massive amounts of useful data are stored and processed in
+  non-standard or ad hoc formats, for which critical tools like
+  parsers and formatters do not exist. Traditional databases and XML
+  systems provide rich infrastructure for processing well-behaved
+  data, but are of little help when dealing with data in ad hoc
+  formats.
+ 
+  To address the challenges of ad hoc data, we have designed PADS/ML -
+  a declarative data description language for the ML family of
+  languages. PADS/ML is based on the ML type structure and features
+  polymorphic, recursive datatypes as central elements of data
+  descriptions. In addition, PADS/ML leverages the ML module system to
+  support an entirely new tool generation architecture designed to
+  simplify the task of developing tool generators that work for any
+  PADS/ML description.
+
+  We have formalized the semantics of PADS/ML's recursive, polymorphic
+  datatypes by extending DDC with type-paramterized types and proven
+  the resulting system ``type-correct.'' That is, generated parsers
+  return data of the expected type.
+
+  Finally, we have implemented a version of PADS/ML for the O'Caml
+  language.  From a description, the O'Caml PADS/ML compiler generates
+  an O'Caml module containing the relevant type declarations, a parser
+  for the description, and other tools.
 
 \end{abstract}
+
+\input{intro}
+
+\input{pml_overview}
+
+\input{impl}
 
 \input{ddcpoly}
 
@@ -43,7 +72,7 @@ a data description language for O'Caml.
 
 
 \bibliographystyle{abbrv}
-\bibliography{pads}
+\bibliography{../common/pads-long,../common/pads}
 
 \input{appendix}
 

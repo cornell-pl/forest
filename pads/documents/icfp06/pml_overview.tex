@@ -1,0 +1,362 @@
+\newcommand{\pvalue}{???}
+\section{Describing Data in \padsmlbig{}}
+\label{sec:padsml-overview}
+
+\begin{itemize}
+\item x base types
+\item x tuples,records
+\item x constraints
+\item x recursive,polymorphic, datatypes
+\item x value parameters.
+\item x switched datatypes
+\item x omitted values
+\item compare w/ pads/c
+\end{itemize}
+
+A \padsml{} description specifies the physical layout and semantic
+properties of an ad hoc data source.  
+These descriptions are composed of types: 
+base types describe atomic data, while structured
+types describe compound data built from simpler pieces.  Examples of
+base types include 8-bit unsigned integers (\cd{Puint8}), 32-bit
+integers (\cd{Pint32}), binary 32-bit integers (\cd{Pbint32}), dates
+(\cd{Pdate}), strings (\cd{Pstring}), and IP addresses (\cd{Pip}).
+Semantic conditions for such base types include checking that the
+resulting number fits in the indicated space, \ie, 16-bits for
+\cd{Pint16}.
+
+Base types (and other types) may be parameterized by values.  This
+mechanism serves both to reduce the number of base types and to permit
+the format and properties of later portions of the data to depend upon
+earlier portions.  For example, the base type \cd{Puint16_FW(3)}
+specifies an unsigned two byte integer physically represented by
+exactly three characters. The base type \cd{Pstring} takes 
+a character indicating the \textit{terminator character} -- the character in the
+source that immediately follows the string. 
+
+To describe more complex data, \padsml{} provides a collection of
+type constructors derived from the type structure of functional
+programming languages such as Haskell and ML.  The following
+subsections will explain these structured types through a series 
+of real-world examples.  Readers eager to see the complete syntax
+of types should flip forward to Appendix~\ref{app:syntax-dd}.
+
+\subsection{Simple Structured Descriptions}
+
+The bread and butter of any \padsml{} description are the simple
+structured types: tuple, record and array types for expressing
+sequences of data; sum types, realized here as datatypes, for
+expressing alternatives; and singleton types for expressing the
+placement of particular characters in the data.  In this section, we
+explain each of these items by building a description of the
+\dibbler{} data presented in \figref{figure:dibblerml}.
+
+The \dibbler{} data source is used to record summaries of phone orders
+produced at AT\&T.  Each summary involves a date and one record per
+order.  Each order record contains a header followed by a sequence of
+events.  The header has 13 pipe separated fields: the order number,
+AT\&T's internal order number, the order version, four different
+telephone numbers associated with the order, the zip code of the
+order, a billing identifier, the order type, a measure of the
+complexity of the order, an unused field, and the source of the order
+data.  Many of these fields are optional, in which case nothing
+appears between the pipe characters.  The billing identifier may not
+be available at the time of processing, in which case the system
+generates a unique identifier, and prefixes this value with the string
+``no\_ii'' to indicate the number was generated. The event sequence
+represents the various states a service order goes through; it is
+represented as a new-line terminated, pipe separated list of state,
+timestamp pairs.  There are over 400 distinct states that an order may
+go through during provisioning.  The sequence is sorted in order of
+increasing timestamps.
+% \figref{figure:dibbler-records} shows a small example of this
+% format.  156 different states for one order -rw-r--r-- 1 angusm
+% dibbler 2187472314 Jun 9 2003 /fs/dibblerd/tlf/data/out_sum.stream
+% 2171.364u 31.379s 40:41.54 90.2% 0+0k 2+0io 2pf+0w
+% 53 had trailing t or } after zip code It may be apparent from this
+% paragraph that English is a poor language for describing data
+% formats!
+
+
+\begin{figure*}
+  \begin{small}
+    % \begin{center}
+\begin{verbatim}
+0|1005022800
+9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|
+\end{verbatim}
+    \caption{Miniscule example of \dibbler{} data.}
+    \label{figure:dibbler-records}
+    % \end{center}
+  \end{small}
+\end{figure*}
+
+\suppressfloats
+
+\begin{figure}
+  \begin{code}
+    \input{sirius_pml}
+  \end{code}
+  \caption{\padsml{} description for \dibbler{} provisioning data.}
+  \label{figure:sirius_pml}
+\end{figure}
+
+
+\figref{figure:sirius_pml} gives a \padsml{} description for the
+\dibbler{} phone order summaries in our syntax.  Overall, the
+description is a sequence of type definitions. It is probably easiest
+to understand the data source by reading these definitions bottom up.
+
+The last type definition \cd{Source} is intended to be a definition of
+an entire \dibbler{} data source.  It states that a \cd{Source} is a
+\cd{Summary\_header} followed by a sequence of objects made up of an
+\cd{Order\_header} followed by \cd{Events}.  The tuple type
+constructor \cd{T1 * T2} and the list type constructor
+(\cd{(Telt,Tsep,Tterm) Plist}) both specify sequences of objects in a
+data source.  The \cd{Plist} type -- defined in \padsml{} itself --
+depends upon three parameters, (\cd{Telt},\cd{Tsep} and \cd{Tterm}).
+The first parameter describes the element type of the list. The second
+parameter describes the syntactic separators -- described with a type
+-- that may be found between elements of the list.  In this case
+\cd{Peor}, the {\em end-of-record} type, may be found between each
+element of the array.  In this case, the end-of-record marker should
+be set to a newline character as there is one record per line in the
+file. Howeve, this marker is not set in the description itself.
+Rather, the end-of-record is left abstract, and set later by the
+client program that uses the generated libraries. The third parameter
+is the terminator for the list.  In this case, the terminator is
+\cd{Peof}, a type that describes the special end-of-file marker.  It
+is often necessary to have additional termination conditions for
+lists, such as termination dependent on the number of elements read so
+far, but we omitted this additional option for expository purposes.
+
+The definition of \cd{Events} indicates that this part of the
+\dibbler{} data will contain a sequence of \cd{Event}s separated by
+vertical bars and terminated by an end-of-recorde marker.  Each
+\cd{Event} is a string terminated by a vertical bar, followed by a
+vertical bar and ending with an unsigned 32-bit integer.  The
+interesting part of this sequence is the presence of the type
+\cd{'|'}.  In type-theoretic terms, this is a {\em singleton type}.
+It states that one should expect exactly the character \cd{'|'} in the
+input stream at this point.  Other singletons appear in the summary
+header type as \cd{"0|"} and \cd{Peor}.  Any expression that appears
+embedded in a type as a singleton must be effect-free.
+
+The type \cd{Order\_header} is a record type that indicates the data
+format involves the sequence of items described by the fields of the
+record.  Notice that there are two different sorts of fields:
+anonymous fields (a second form of singleton type) containing
+directives to parse a particular character (\cd{'|'}) or string
+(\cd{"0|"}) and fields with names.
+
+The second named field, \cd{att\_order\_num}, reveals two other
+proposed features of \padsml: dependency and constraints.  Here,
+\cd{att\_order\_num} is constrained to be less than \cd{order\_num},
+the value parsed in an earlier field.  This is a relatively simple
+constraint on the correctness of the ad hoc data format.  In practice,
+constraints can become very rich involving properties such as
+sortedness of records in an array, definitions of expected characters,
+restrictions on date and time ranges, constraints on IP address
+domains, restrictions on phone number area codes and virtually
+infinite variety of other possibilities.
+
+The last interesting feature in the \dibbler{} example is the datatype
+definition of \cd{Dib\_ramp}.  It describes two alternatives for a
+portion of data, either an integer alone or the fixed string
+\cd{"no\_ii"} followed by an integer.  To parse data in this format,
+the parser will attempt to parse the first branch and only if it fails
+will it attempt to parse the second branch.  Notice how this semantics
+differs from similar constructs in regular expressions and
+context-free grammars, which non-deterministically choose between
+alternatives.  Fortunately, we have yet to come across an ad hoc data
+source where we wish we had nondeterministic choice.\footnote{\pads{}
+  can recognize string data based on regular expressions.
+  Non-determinism here has been useful, but as it has been confined to
+  parsing elements of the \cd{Pstring} base type, it has had no impact
+  on the overall parsing algorithm.}
+
+\begin{figure}
+  \begin{code}
+\input{newick_pml}
+\mbox{}
+{\rm Tiny fragment of Newick data:} 
+\mbox{}
+(((erHomoC:0.28006,erCaelC:0.22089):0.40998,(erHomoA:0.32304,
+(erpCaelC:0.58815,((erHomoB:0.5807,erCaelB:0.23569):0.03586,
+erCaelA:0.38272):0.06516):0.03492):0.14265):0.63594,(TRXHomo:0.65866,
+TRXSacch:0.38791):0.32147,TRXEcoli:0.57336)
+  \end{code}
+  \caption{Simplified tree-shaped Newick data}
+  \label{fig:newick}
+\end{figure}
+
+\subsection{Recursive Descriptions}
+
+The original \pads{} design contained analogues of all the simple type
+constructors described in the previous section.  Hence, although the
+syntax of types we just saw is more compact and more elegant than the
+C-style syntax of \pads, we have yet to add any expressive power.  The
+first real step forward for \padsml{} is the introduction of recursion
+through the datatype mechanism.  While recursion never appeared in the
+telecommunications and networking data sources \pads{} was initially
+designed for, it appears essential for describing a number of
+biological data sources we have encountered. Perhaps more
+fundamentally, homogenous, arbitrary-length sequences (described with
+the \kw{Parray} type constructor in \pads{}), which are critical in
+describing the telecommunications and networking data sources, can be
+written directly in \padsml{} using recursion. Building such a
+construct into the language, then, becomes a matter of efficiency, not
+expressive power.
+  
+A representative example of recursive, biological data comes courtesy
+of Steven Kleinstein, program coordinator of Princeton's Picasso
+project for interdisciplinary research in computational sciences.
+Kleinstein is in the process of building a simulator to study the
+proliferation of B lymphocytes during an immune response.  Data needed
+for his simulations is represented in a variant of the Newick format,
+which is a flat representation of trees used by many
+biologists~\cite{newick}.  In Newick, leaves of the tree are string
+labels followed by a colon and a number.  A parent node in the tree
+introduces a collection of children by placing a sequence of trees
+within parens.  Following the parens is a colon and a number, as is
+the case for the leaf node.  The numbers represent the ``distance''
+that separates the child from the parent.  In Kleinstein's case, the
+distance is the number of mutations that occur in the antibody
+receptor genes of B lymphocytes.  Each line of a file may contain a
+different tree, terminated by a semi-colon.
+
+\figref{fig:newick} gives a description of Newick and a short fragment 
+of example data.  Despite the relative complexity of the structure of the data,
+the description is remarkably concise and elegant.  Notice that the data type
+definition of \cd{tree} is recursive --- we have not been able to find any
+effective description of this data source without it.
+
+\begin{figure*}
+  \centering
+  \small
+\begin{verbatim}
+ 2:3004092508||5001|dns1=abc.com;dns2=xyz.com|c=slow link;w=lost packets|INTERNATIONAL
+ 3:|3004097201|5074|dns1=bob.com;dns2=alice.com|src_addr=192.168.0.10;
+ dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;cycle_time=17412|SPECIAL
+\end{verbatim}  
+  \caption{Simplified network monitoring data.  This 
+data containts two alarm records.  Extra newlines 
+were inserted mid-record so the data would fit on a page.}
+  \label{fig:darkstar-records}
+\end{figure*}
+
+\subsection{Parameterized Descriptions}
+
+The second major innovation, and last key feature, of \padsml{} is the
+ability to define parameterized descriptions.  In \pads, description
+parameters were limited to values.  In \padsml, descriptions maybe
+parameterized by both values and types.  Type parameterization allows
+descriptions to be reused at a variety of different types.  This
+feature helps make data descriptions more concise and allows
+programmers to define convenient libraries of reusable description
+components. For example, the \cd{Plist} type that appears in both the
+\dibbler{} and Newick formats, is such a reuseable component.
+
+Our final example, shown in Figure~\ref{fig:darkstar-records}, will
+illustrate the usefulness of descriptions parameterized by both types
+and values and introduce a couple of other useful features as well.
+This example displays alarm data recorded by a network link monitor
+used by the \darkstar{} project at AT\&T.  Each alarm signals some
+problem with a network link.
+
+Now, at this point, we could write out an English description
+of the \darkstar{} data, and indeed, in an earlier version of this paper
+we did so.  However, English is a terrible specification language
+for ad hoc data, and every description we have attempted to give has not 
+only been imprecise, it has also made for some very 
+boring reading.  Hence, we dispense with the informal
+English and head straight for the \padsml{} description,
+which is shown in \figref{fig:darkstar-ml}.
+
+\begin{figure}
+  \centering
+  \small
+  \begin{code}
+    \input{darkstar_pml}
+  \end{code}
+  \caption{Description of \darkstar{} data.}
+  \label{fig:darkstar-ml}
+\end{figure}
+
+One of the interesting facets of this data source is the fact that it
+contains multiple different types of name-value pairs.  In the second
+definition from the top, \cd{Pnvp}, we take advantage of both the type
+and value parameterization of types to encode all the different
+variations.\footnote{This fragment of code contains both types
+  \cd{Pstring} and \cd{string}.  These types are subtly different as
+  the first is the type of a ??? containing both a string
+  representation and a parse descriptor whereas the second is an
+  ordinary string.  The reader can safely ignore the distinction for
+  now.}  The type parameters are specified to the left of the type
+name, as is customary in ML.  To the right of the type name in
+parentheses, we give the value parameter and its type.  In the case of
+\cd{Pnvp}, there is a type parameter name \cd{Alpha} and a value
+parameter named \cd{p}.  Informally, \cd{Alpha pnvp(p)} is a
+name-value pair where the value is described by \cd{Alpha} and the
+name must satisfy the predicate \cd{p}.  More precisely, \cd{Pnvp} is
+defined to be a record with three fields.  The first field of the
+record has been given a constrained type.  In general, constrained
+types have the form \cd{[x:T | e]} where \cd{e} is an arbitrary pure
+boolean expression.  Data \cd{d} satisfies this description if it
+satisfies \cd{T} and boolean \cd{e} evaluates to true when the parsed
+representation of \cd{d} is substituted for \cd{x}.  If the boolean
+evaluates to false, the data contains a semantic error.
+
+The \cd{Pnvp} type is used in both of the following type definitions.
+In the case of the \cd{Nvp} definition, the predicate is instantiated
+with a test for a specific string but the type parameter remains 
+abstract.  In the \cd{Nvp\_a} 
+definition, the name can be arbitrary, but the value must have 
+type string. Later in the description, \cd{Nvp}'s
+are used with ip addresses, timestamps and integers. 
+
+% The source type is an array of \cd{alarm}s, where each alarm is a
+% \cd{raw\_alarm}, constrained to ensure that the alarm number is
+% properly correlated with the timestamps.  We check this correlation
+% with the function \cd{checkCorr}.  The type \cd{raw\_alarm} closely
+% follows the description above. We highlight a few important features.
+% First, we note that the type of the field \cd{info} depends on the
+% alarm code, reflecting the text above. More interestingly, the type
+% \cd{info} is implemented with a switched datatype, deciding how to
+% parse based on the parameter \cd{alarm\_code}.  Next, we note that the
+% description includes five different types of name-value pairs. We take
+% advantage of both the type and value parameterization of types to
+% encode all of these pair types based on one common description,
+% \cd{pnvp}. This type is polymorphic in the type of the value and takes
+% an arbitrary constraint \cd{c} as an argument. The type \cd{nvp} is
+% polymorphic in the type of the value, but takes the expected name of
+% the string as an argument. 
+
+The \darkstar{} description also introduces a new form of datatypes,
+appearin in the \cd{Info} type.  This datatype is parameterized by an
+\cd{alarm\_code}.  Rather than determine the branch of the datatype to
+choose based on the data about to be parsed, the decision is made
+based on the \cd{alarm\_code}, data which has likely been extracted
+from some previous point in the source.  More specifically, if the
+alarm code is \cd{5074}, the format specification given by the
+\cd{Details} constructor will be used to parse the current data.
+Otherwise, the format given by the \cd{Generic} constructor will be
+used to parse the current data. Such descriptions are called
+\textit{switched} datatypes.
+
+Another construct new to the \darkstar{} description is the type qualifier
+\cd{omit}. We use \cd{omit} in the \cd{Service} datatype to specify
+that the parsed string literal should be omitted from the parsed
+data. We can do this because we can discern from the datatype constructor
+which string was found in the data source.
+
+\subsection{Complete Syntax}
+
+Appendix~\ref{app:syntax-dd} presents the complete syntax of
+\padsml{} data descriptions.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
