@@ -159,7 +159,9 @@ constraints can become very rich involving properties such as
 sortedness of records in an array, definitions of expected characters,
 restrictions on date and time ranges, constraints on IP address
 domains, restrictions on phone number area codes and virtually
-infinite variety of other possibilities.
+infinite variety of other possibilities. In general, constrained
+types have the form \cd{[x:T | e]} where \cd{e} is an arbitrary pure
+boolean expression.  
 
 The last interesting feature in the \dibbler{} example is the datatype
 definition of \cd{Dib\_ramp}.  It describes two alternatives for a
@@ -301,9 +303,7 @@ parameter named \cd{p}.  Informally, \cd{Alpha pnvp(p)} is a
 name-value pair where the value is described by \cd{Alpha} and the
 name must satisfy the predicate \cd{p}.  More precisely, \cd{Pnvp} is
 defined to be a record with three fields.  The first field of the
-record has been given a constrained type.  In general, constrained
-types have the form \cd{[x:T | e]} where \cd{e} is an arbitrary pure
-boolean expression.  Data \cd{d} satisfies this description if it
+record has been given a constrained type. Data \cd{d} satisfies this description if it
 satisfies \cd{T} and boolean \cd{e} evaluates to true when the parsed
 representation of \cd{d} is substituted for \cd{x}.  If the boolean
 evaluates to false, the data contains a semantic error.
