@@ -2,18 +2,21 @@
 \label{section:intro}
 Although enormous amounts of data exist in ``well-behaved'' formats such
 as relational tables and XML, massive amounts also exist in
-non-standard or \textit{ad hoc} data formats. \tblref{figure:data-sources}
-gives some sense of the range and pervasiveness of such data.
+non-standard or \textit{ad hoc} data formats. \eat{\tblref{figure:data-sources}
+gives some sense of the range and pervasiveness of such data.}
+Ad hoc formats arise in diverse domains such as
+telecommunications, bioinformations, and finance.
 Ad hoc data comes in many forms: ASCII, binary, EBCDIC, and mixed
 formats.  It can be fixed-width, fixed-column, variable-width, or even
 tree-structured.  It is often quite large, including some data sources
 that generate over a gigabit per second~\cite{gigascope}. It frequently
-comes with incomplete and/or out-of-date documentation, and there are
+comes with incomplete or out-of-date documentation, and there are
 almost always errors in the data.  Sometimes these errors are the most
 interesting aspect of the data, \eg{}, in log files where
 errors indicate that something is going wrong in the associated
 system.
 
+\eat{
 \begin{table}
 \begin{center}
 \begin{tabular}{l|l}
@@ -46,14 +49,14 @@ Device synchronization  & with data-dependent constraints \\ \hline
 \caption{Selected ad hoc data sources.}
 \label{figure:data-sources}
 \end{center}
-\end{table}
+\end{table}}
 
 The lack of standard tools for processing ad hoc data forces
 analysts to roll their own tools, leading to scenarios such as the
 following.  An analyst receives a new ad hoc data source containing
 potentially interesting information and a list of pressing questions
 about that data.  Could she please provide the answers to the
-questions as quickly as possible, preferably last week?  The
+questions as quickly as possible?  The
 accompanying documentation is outdated and incomplete, so she first has to experiment with the data to discover
 its structure.   Eventually, she understands the data well enough to hand-code a
 parser, usually in \C{} or \perl{}.  Pressed for time, she interleaves
@@ -73,28 +76,34 @@ significant challenge in hand-coded parsers.  If the data analyst
 thoroughly checks for errors, then the error checking code dominates
 the parser, making it even more difficult to understand the semantics
 of the data format.  If she is not thorough, then erroneous data can
-escape undetected, potentially (silently!)  corrupting down-stream
+escape undetected, potentially corrupting down-stream
 data processing.  Finally, in
 answering the specified questions, the analyst had to code \textit{how
-to compute} the questions rather than being able to express the
+to compute} the questions rather than expressing the
 queries in a declarative fashion.  Many of these pitfalls
-can be avoided with careful design and sufficient time, but such
-luxuries are not available to the analyst.  However, with the
+can be avoided with careful design and sufficient time, but an analyst
+rarely has such
+luxuries.  However, with the
 appropriate tool support, many aspects of this process can be greatly
 simplified.
 
 The \pads{} system~\cite{fisher+:pldi05} allows analysts to describe
 ad hoc data sources declaratively.  The descriptions take the form of
 types, based on a dependent type theory~\cite{fisher+:popl06}.
-\pads{} base types describe simple objects such as strings,
-integers, floating-point numbers, dates, times, and IP addresses.
-Records and arrays specify sequences of elements in a data source, and
-unions, switched unions, and enums specify alternatives.  Any of these
-structured types may be parameterized, and users may write arbitrary
-semantic constraints as well.  The \pads{} language is both expressive
-and concise.  \pads{} descriptions exist for all the data sources in
+\pads{} base types describe simple objects such as strings, numbers,
+dates, and IP addresses.  Records and arrays specify sequences
+of elements in a data source, and unions and enums %, switched unions,
+specify alternatives.  Any of these structured types may be
+parameterized, and users may write arbitrary semantic constraints as
+well.  The \pads{} language is both expressive and concise.  For
+example, 92 pages of the OPRA standard for options-market transactions
+is captured by a 450-line \pads{} description.
+
+\eat{times,  integers, floating-point}
+
+\eat{\pads{} descriptions exist for all the data sources in
 \tblref{figure:data-sources}, and 92 pages of the OPRA standard is
-captured by a 450-line \pads{} description.
+captured by a 450-line \pads{} description.}
 
 The \pads{} compiler produces a customizable library for parsing a
 given ad hoc data source.  A suite of tools built around this library
@@ -106,11 +115,10 @@ described in \pads{} to be viewed as XML and to be queried with
 XQuery~\cite{fernandez+:padx}.  Lastly, an interactive front-end helps
 users produce \pads{} descriptions and invoke tools without having to
 learn the details of the \pads{} language or tool interfaces.
-
-Details about the \pads{} system are reported in technical
-papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}.  A
+\eat{Details about the \pads{} system are reported in technical
+papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}. A
 shorter version of this proposal was accepted to the PLAN-X 2006
-workshop~\cite{daly+:launchpads}, which has no formal proceedings.  An open-source implementation of
+workshop~\cite{daly+:launchpads}, which has no formal proceedings.}  An open-source implementation of
 \pads{} is available for download~\cite{padsmanual}.
 \section{Using PADS}
 \label{subsec:example}
@@ -120,11 +128,11 @@ an AT\&T data analyst interactively creates a \pads{} description for
 a new data source, uses \pads{} tools to learn about the distribution
 of values and errors in her data, and writes and executes simple
 queries to perform basic analysis tasks.  We will also have available other
-\pads{} applications using the formats in \tblref{figure:data-sources}.
+\pads{} applications from other application domains.\eat{using the formats in \tblref{figure:data-sources}.}
 
 Our analyst's task is to process \textit{provisioning} data.  In the
 telecommunications industry, {provisioning} refers to
-the complex, inter-company process of converting an order for phone
+the complex process of converting an order for phone
 service into the actual service.  In practice, AT\&T's \dibbler{}
 project discovers provisioning problems proactively by compiling
 weekly summaries of the state of phone service
@@ -139,8 +147,7 @@ week. \figref{figure:dibbler-records} contains sample \dibbler{} data.
 9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|16/Oct/2004:10:02:10
 9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|17/Oct/2004:08:14:21
 \end{verbatim}
-\caption{Tiny example of \dibbler{} provisioning data.}
-\label{figure:dibbler-records}
+\caption{\label{figure:dibbler-records}Tiny example of \dibbler{} provisioning data.\vspace{-1cm}}
 \end{center}
 \end{small}
 \end{figure*}
@@ -160,18 +167,18 @@ was generated. The event sequence represents the subset of 400
 possible states a service order goes through; it is represented as a
 new-line terminated, pipe separated list of state, timestamp pairs.
 It may be apparent from this description that English is a poor
-language for describing data formats!  If lucky, our analyst might be
+language for describing data formats!  \eat{If lucky, our analyst might be
 provided with a formal specification of this format.  If unlucky, she might have
-only an informal description such as the above.
+only an informal description such as the above.}
 
 \eat{, but often such specifications are incomplete or outdated.}
 
 The analyst's first task is to write a parser for the \dibbler{} data
-format.  Like many ad hoc data sources, \dibbler{} data can contain
+format.  Like many ad hoc data sources, \dibbler{} data may contain
 unexpected or corrupted values, so the parser must handle errors
 robustly to avoid corrupting the results of analyses.  With \pads{},
 the analyst writes a declarative data description of the physical
-layout of her data.  \eat{The language also permits the analyst to
+layout of her data.\eat{The language also permits the analyst to
 describe expected semantic properties of her data so that deviations
 can be flagged as errors. The intent is to allow an analyst to capture
 in a \pads{} description all that she knows about a given data
@@ -194,19 +201,18 @@ creating, removing, and renaming the generated types.  She may also
 add semantic constraints that specify relations between one part of
 the data and another, for example that one field in a type is some
 function of another field in a different type.
-\begin{figure*}
+\begin{figure}
   \begin{center}
 %    \scalebox{.75}{\includegraphics{launch.pdf}}
-    \scalebox{.4}{\includegraphics{sirius_screenshot1.png}}
+    \scalebox{.2}{\includegraphics{sirius_screenshot1.png}}
   \end{center}
-  \caption{\launchpads{} Interactive User Interface.}
-  \label{figure:launchpads}
-\end{figure*}
+\caption{\label{figure:launchpads}\launchpads{} Interactive User Interface.\vspace{-1cm}}
+\end{figure}
 
 When the analyst is satisfied with the description in the treeview,
 she can test her description on a larger fragment of sample data.  To
 do this, \launchpads{} generates syntactically correct \pads{} code,
-which is shown in bottom-most frame of Figure~\ref{figure:launchpads},
+which is shown in Figure~\ref{figure:dibbler}\eat{bottom-most frame of Figure~\ref{figure:launchpads},}
 and invokes the \pads{} compiler to produce a parsing library from the
 generated description.  Description-independent tools are linked with
 the description-dependent library and made available to the analyst
@@ -228,8 +234,8 @@ identify different representations for ``data not available'', and
 learn the distribution of values for particular fields, \etc{}  When
 finished with this phase, the analyst may be ready to ask some basic
 queries such as ``Select all orders starting within a certain time
-window,'' ``Count the number of orders going through a particular
-state,'' and ``What is the average time required to go from a
+window,''\eat{``Count the number of orders going through a particular
+state,''} and ``What is the average time required to go from a
 particular event state to another particular event state''.  Such
 queries are useful for rapid information discovery and for vetting
 errors and anomalies in data before the data proceeds to a
@@ -246,14 +252,13 @@ $pads/Psource/orders/elt[events/elt[1]
 {and} tstamp/rep {<} {xs:date}("2004-11-01")]]
 \end{code}
 
-Existing \pads{} tools may not be solve all the analysts problems,
+Existing \pads{} tools may not solve all the analysts problems,
 in which case, she may write her own \pads{} applications that call  directly
 the \pads{}-generated parsing or tool libraries.  Most
 importantly, her effort has produced a reusable description that she
 can share with other analysts.  The fact that useful software
 artifacts are generated from the descriptions provides strong
-incentive for keeping the descriptions current, allowing the descriptions to serve
-as living documentation.
+incentive for keeping the descriptions current.\eat{, allowing the descriptions to serve
+as living documentation.}
 
-% \Galax{}~\cite{galaxmanual}
 

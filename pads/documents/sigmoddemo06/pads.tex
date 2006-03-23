@@ -11,10 +11,9 @@
 
 \begin{figure}
   \begin{center}
-    \scalebox{.5}{\includegraphics{arch2.pdf}}
+    \scalebox{.4}{\includegraphics{arch2.pdf}}
   \end{center}
-  \caption{\pads{} Architecture}
-  \label{figure:arch}
+\caption{\label{figure:arch}\pads{} Architecture}
 \end{figure}
 
 The \pads{} system, depicted in \figref{figure:arch}, consists of its
@@ -25,8 +24,8 @@ linked with a core run-time library and description-independent tool
 programs.  Currently, the statistical profiling tool provides
 accumulator functions and functions that employ randomized and
 approximate techniques to create histogram~\cite{histograms},
-wavelet~\cite{histograms-wavelets}, and quantile
-summaries\cite{quantiles}.  The XML tool produces a canonical XML view
+wavelet~\cite{histograms-wavelets}, and quantile~\cite{quantiles}
+summaries.  The XML tool produces a canonical XML view
 of a \pads{} source~\cite{fernandez+:padx} and implements the data
 model required by the Galax XQuery engine (not shown here).
 The format template allows the user to pretty print the data into a  
@@ -54,14 +53,33 @@ source (\cd{summary\_t}) appears last in the description.
 
 The \pads{} library provides a large collection of useful
 base types such as 8-bit signed integers, 32-bit unsigned integers, IP
-addresses, dates , and strings, \etc{}.  Base types do not specify how
-the data is physically coded, \ie{}, in ASCII, EBCDIC, or binary.  \pads{} uses
+addresses, dates, and strings, which may be
+physically coded in \eg{} ASCII, EBCDIC, or binary.\eat{\pads{} uses
 the \textit{ambient} coding, the default of which is ASCII, but users
-can customize it as appropriate.
+can customize it as appropriate.}
+To describe more complex data, \pads{} provides a collection of
+structured types loosely based on \C{}'s type structure.  A
+\kw{Pstruct} describes an ordered sequence of data with unrelated
+types.  In \figref{figure:dibbler}, the type declaration for the
+\kw{Pstruct} \cd{order\_t} (Lines~35--38) contains an order header
+followed by the literal character \kw{'|'}, followed by an event
+sequence. \pads{} supports character, string, and regular expression
+literals.  A \kw{Punion} describes alternatives in the data format
+(Lines~9--12), and a \kw{Popt} type specifies optional data
+(Lines~17--21).  A \kw{Parray} describes varying-length sequences of
+data all with the same type.  The type on Lines~32--34
+contains the sequence of order events and indicates that each element in the
+sequence has type \cd{event_t}.  It also specifies that the elements
+are separated by vertical bars, and that the sequence is terminated by
+an end-of-record marker.  \pads{} provides a rich collection of
+array-termination conditions: reaching a maximum size, finding a
+terminating literal, or satisfying a predicate. \eat{ user-supplied
+  predicate over the
+already-parsed portion of the \kw{Parray}.}
 
 \begin{figure}
-\begin{scriptsize}
 \begin{code}
+\begin{scriptsize}
 { 1}. \kw{Precord} \kw{Pstruct} summary\_header\_t \{
 { 2}.  "0|";
 { 3}.  Punixtime tstamp;
@@ -107,36 +125,15 @@ can customize it as appropriate.
 {43}.   summary\_header\_t  summary\_header;
 {44}.   orders\_t          orders;
 {45}. \};
-\end{code}
 \end{scriptsize}
-\caption{\pads{} description for \dibbler{} provisioning data.}
-\label{figure:dibbler}
+\end{code}
+\caption{\label{figure:dibbler}\pads{} description for \dibbler{} provisioning data.\vspace{-1cm}}
 \end{figure}
 
 \eat{A \kw{Penum} type specifies a fixed collection of
 literals.}
 
-To describe more complex data, \pads{} provides a collection of
-structured types loosely based on \C{}'s type structure.  A
-\kw{Pstruct} describes an ordered sequence of data with unrelated
-types.  In \figref{figure:dibbler}, the type declaration for the
-\kw{Pstruct} \cd{order\_t} (Lines~35--38) contains an order header
-followed by the literal character \kw{'|'}, followed by an event
-sequence. \pads{} supports character, string, and regular expression
-literals.  A \kw{Punion} describes alternatives in the data format
-(Lines~9--12), and a \kw{Popt} type specifies optional data
-(Lines~17--21).  A \kw{Parray} describes varying-length sequences of
-data all with the same type.  The \kw{Parray} type on Lines~32--34
-contains the sequence of events an order goes through during
-processing.  This declaration indicates that each element in the
-sequence has type \cd{event_t}.  It also specifies that the elements
-are separated by vertical bars, and that the sequence is terminated by
-an end-of-record marker.  \pads{} provides a rich collection of
-array-termination conditions: reaching a maximum size, finding a
-terminating literal, or satisfying a user-supplied predicate over the
-already-parsed portion of the \kw{Parray}.
-
-\pads{} types have two other important features.  A type may have an
+\eat{\pads{} types have two other important features.  A type may have an
 associated \emph{predicate} that determines whether a parsed value is
 a legal value for the type.  For example, a predicate might require
 that one field of a \kw{Pstruct} is greater than another.  Types also
@@ -145,7 +142,7 @@ properties of later portions of the data to depend upon earlier
 portions.  For example, a type parameter can be used to specify the
 (dynamic) size of an array, the appropriate branch of a union, and the
 terminating character of a string, \eg{} \cd{Pstring(:'|':)}, among
-others.
+others.}
 
 \eat{Finally, \pads{} \kw{Ptypedef}s allow users to define new types
 that add further constraints to existing types.}
@@ -161,34 +158,34 @@ COBOL sources usually store the length of each record before the actual data.
 their own encodings.  \cut{By default, \pads{} assumes records are new-line terminated.
 Before parsing, however, the user can direct \pads{} to use a different record
 definition.}}
-
+%
 From a description, the \pads{} compiler generates a \C{} library for
 parsing and manipulating the associated data source.  From each type
 in a \pads{} description, the compiler generates (1) an in-memory
-representation of the type, (2) parsing and printing functions, (3) a
-mask, which allows customization of generated functions, and (4) a
+representation of the type, (2) parsing and printing functions,\eat{(3) a
+mask, which allows customization of generated functions,} and (3) a
 parse descriptor, which records the state of the parse, the number of
 detected errors, and the code and location of the first error detected
 in a value of that type.
-
-Parsing functions take a mask and return an in-memory representation
+%
+\eat{Parsing functions take a mask and return an in-memory representation
 and a parse descriptor.  The mask allows the user to specify which
 constraints the parser should check and which portions of the
 in-memory representation it should fill in.  This control allows the
 description-writer to specify all known constraints about the data
 without worrying about the run-time cost of verifying potentially
-expensive constraints for time-critical applications.
-
+expensive constraints for time-critical applications.}
+%
 Because a distinct parsing function is generated for each type in a
 \pads{} description, \pads{} supports multiple-entry point parsing,
 which accommodates efficient processing of very large-scale
-data~\cite{fisher+:pldi05}.  For a small file, the parsing function
+data~\cite{fisher+:pldi05}.\eat{For a small file, the parsing function
 for the \pads{} type that describes the entire file can be called.
 For larger-scale data, sequence of calls to parsing functions that
 read manageable portions of the file, \eg{}, reading one record at a
-time in a loop, is possible.  Currently, the user must specify
-explicitly the unit of parsing.
-
+time in a loop, is possible. Currently, the user must specify
+explicitly the unit of parsing.}
+%
 Parse descriptors enable \emph{error-aware} processing of a data
 source.  Depending upon the nature of the errors and the desired
 application, users can take the appropriate action: halt the program,

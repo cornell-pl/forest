@@ -1,5 +1,5 @@
 %\documentclass{acm_proc_article-sp-sigmod06}
-\documentclass{sig-alternate-sigmod06}
+\documentclass{sig-alternate}
 \usepackage{url}
 \usepackage{stmaryrd}
 \usepackage{epsfig}
@@ -11,6 +11,8 @@
 \renewcommand{\floatpagefraction}{0.9}
 \renewcommand{\dbltopfraction}{0.9}
 \renewcommand{\dblfloatpagefraction}{0.9}
+\addtolength{\textfloatsep}{-8pt}
+\addtolength{\dbltextfloatsep}{-8pt}
 
 \include{defs}
 \newcommand{\mono}[1]{\texttt{#1}}
@@ -77,11 +79,9 @@ workshop~\cite{daly+:launchpads}.  An open-source implementation of
 
 \input{intro}
 \input{pads}
-% \input{discussion}
 
 \bibliographystyle{abbrv}
+\bibliography{../pads,../galax}
 
-{\small
-\bibliography{../pads,../galax}}
 \end{document}
 
