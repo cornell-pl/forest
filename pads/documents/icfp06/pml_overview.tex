@@ -2,6 +2,7 @@
 \section{Describing Data in \padsmlbig{}}
 \label{sec:padsml-overview}
 
+To do:
 \begin{itemize}
 \item x base types
 \item x tuples,records
@@ -79,25 +80,21 @@ increasing timestamps.
 
 
 \begin{figure*}
-  \begin{small}
-    % \begin{center}
+{\scriptsize
 \begin{verbatim}
 0|1005022800
 9152|9152|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|
 9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|
 \end{verbatim}
-    \caption{Miniscule example of \dibbler{} data.}
-    \label{figure:dibbler-records}
-    % \end{center}
-  \end{small}
+}
+  \caption{Miniscule example of \dibbler{} data.}
+  \label{figure:dibbler-records}
 \end{figure*}
 
 \suppressfloats
 
 \begin{figure}
-  \begin{code}
-    \input{sirius_pml}
-  \end{code}
+  \input{sirius_pml}
   \caption{\padsml{} description for \dibbler{} provisioning data.}
   \label{figure:sirius_pml}
 \end{figure}
@@ -179,16 +176,17 @@ source where we wish we had nondeterministic choice.\footnote{\pads{}
   on the overall parsing algorithm.}
 
 \begin{figure}
-  \begin{code}
 \input{newick_pml}
-\mbox{}
-{\rm Tiny fragment of Newick data:} 
-\mbox{}
+Tiny fragment of Newick data:
+
+{\scriptsize
+\begin{verbatim}
 (((erHomoC:0.28006,erCaelC:0.22089):0.40998,(erHomoA:0.32304,
 (erpCaelC:0.58815,((erHomoB:0.5807,erCaelB:0.23569):0.03586,
-erCaelA:0.38272):0.06516):0.03492):0.14265):0.63594,(TRXHomo:0.65866,
-TRXSacch:0.38791):0.32147,TRXEcoli:0.57336)
-  \end{code}
+erCaelA:0.38272):0.06516):0.03492):0.14265):0.63594,
+(TRXHomo:0.65866,TRXSacch:0.38791):0.32147,TRXEcoli:0.57336)
+\end{verbatim}
+}
   \caption{Simplified tree-shaped Newick data}
   \label{fig:newick}
 \end{figure}
@@ -236,12 +234,11 @@ effective description of this data source without it.
 
 \begin{figure*}
   \centering
-  \small
-\begin{verbatim}
+\begin{code}\scriptsize
  2:3004092508||5001|dns1=abc.com;dns2=xyz.com|c=slow link;w=lost packets|INTERNATIONAL
  3:|3004097201|5074|dns1=bob.com;dns2=alice.com|src_addr=192.168.0.10;
  dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;cycle_time=17412|SPECIAL
-\end{verbatim}  
+\end{code}  
   \caption{Simplified network monitoring data.  This 
 data containts two alarm records.  Extra newlines 
 were inserted mid-record so the data would fit on a page.}
@@ -278,10 +275,7 @@ which is shown in \figref{fig:darkstar-ml}.
 
 \begin{figure}
   \centering
-  \small
-  \begin{code}
-    \input{darkstar_pml}
-  \end{code}
+  \input{darkstar_pml}
   \caption{Description of \darkstar{} data.}
   \label{fig:darkstar-ml}
 \end{figure}

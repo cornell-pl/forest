@@ -1,3 +1,4 @@
+\begin{code}\scriptsize
 \kw{ptype} Semicolon = Pcharlit(';')
 \kw{ptype} Rparen= Pcharlit(')')
 \mbox{}
@@ -8,5 +9,5 @@
 }
 \mbox{}
 \kw{pdatatype} Tree =
-     Interior of '(' * (Tree, Semicolon, Rparen) Plist * ')'
-   | Leaf of Entry
+  Interior of '(' * (Tree, Semicolon, Rparen) Plist * ')'
+| Leaf of Entry\end{code}

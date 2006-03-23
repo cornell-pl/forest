@@ -1,19 +1,24 @@
+\begin{code}\scriptsize
 \kw{let} gmt = Pads.timezone\_of\_string "GMT"
 \mbox{}
-\kw{ptype} Timestamp = Ptimestamp\_explicit\_FW(8, "%H:%M:%S", gmt)
-\kw{ptype} Pip = Puint8 * '.' * Puint8 * '.' * Puint8 * '.' * Puint8
+\kw{ptype} Timestamp = 
+   Ptimestamp\_explicit\_FW(8, "%H:%M:%S", gmt)
+\kw{ptype} Pip = Puint8 * '.' * Puint8 * '.' * 
+   Puint8 * '.' * Puint8
 \mbox{}
-(* Generic name value pair. Accepts predicate over name as argument. *)
+(* Generic name value pair. Accepts predicate 
+   over name as argument.  *)
 \kw{ptype} (Alpha) Pnvp(p : string -> bool) =
       \{ name : [name : Pstring('=') | p name]; 
         '='; 
         value : Alpha \}
 \mbox{}
 (* Name value pair with name specified. *)
-\kw{ptype} (Alpha) Nvp(name:string) = Alpha Pnvp(fun s -> s = name)
+\kw{ptype} (Alpha) Nvp(name:string) = 
+   Alpha Pnvp(fun s -> s = name)
 \mbox{}
 (* Pstring terminated by semicolon or vertical bar. *)
-\kw{ptype} SVString = Pstring\_SE("/;|\cdbackslash\cdbackslash|/")
+\kw{ptype} SVString = Pstring\_SE("/;|\\\\|/")
 \mbox{}
 (* Name value pair with any name. *)
 \kw{ptype} Nvp\_a = SVString Pnvp(fun \_ -> true)
@@ -40,7 +45,7 @@
   | SPECIAL       of omit "SPECIAL"
 \mbox{}
 \kw{ptype} Raw\_alarm = \{
-       alarm     : [ alarm : Puint32 | alarm = 2 or alarm = 3];
+       alarm     : [ i : Puint32 | i = 2 or i = 3];
  ':';  start     : Timestamp Popt;
  '|';  clear     : Timestamp Popt;
  '|';  code      : Puint32;
@@ -50,8 +55,8 @@
  '|';  service   : Service
 \}
 \mbox{}
-let checkCorr ra = ...
+\kw{let} checkCorr ra = ...
 \mbox{}
 \kw{ptype} Alarm = [x:Raw\_alarm | checkCorr x]
 \mbox{}
-\kw{ptype} Source = (Alarm,Peor,Peof) Plist
+\kw{ptype} Source = (Alarm,Peor,Peof) Plist\end{code}

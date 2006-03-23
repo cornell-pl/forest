@@ -2,13 +2,6 @@
 \section{From \padsmlbig{} to \ocaml{}}
 \label{sec:padsml-impl}
 
-\begin{itemize}
-\item x Compiler generates module for each description.
-\item Example: Transforming data with \padsml{} and \ocaml{}.
-\item Example: querying data.
-\item Example: processing data (take average).
-\end{itemize}
-
 We have implemented \padsml{} for use with \ocaml{}. The \padsml{}
 compiler generates \ocaml{} source code that can then be used by any
 \ocaml{} program. We will next describe exactly what is generated from
@@ -41,24 +34,29 @@ recursive modules in order to take this approach.
 To give the reader a better understanding of the contents of the
 generated modules, we show here a simple \padsml{} type along with the
 signature of the module generated based on that type.
-\begin{code}
+To give the reader a better understanding of the contents of the
+generated modules, we show here a simple \padsml{} type along with the
+signature of the module generated based on that type.
+To give the reader a better understanding of the contents of the
+generated modules, we show here a simple \padsml{} type along with the
+signature of the module generated based on that type.
+\begin{code}\scriptsize
 \kw{ptype} Pair = Pchar * '|' * Pint
-\mbox{}
+
 -------------------------------
-\mbox{}
+
 type rep = Pchar.rep * Pint.rep
-type pd_body = Pchar.pd_body Pads.pd * Pint.pd_body Pads.pd
+type pd_body = Pchar.pd_body Pads.pd * 
+                  Pint.pd_body Pads.pd
 type pd = pd_body Pads.pd
 
 val parse : Pads.handle -> rep * pd
 
 module Traverse (Tool : Generic_tool.S) :
-  sig
-    val init : unit -> Tool.state
-    val traverse : rep -> pd -> Tool.state -> Tool.state
-  end
-\end{code}
-
+sig
+  val init : unit -> Tool.state
+  val traverse : rep -> pd -> Tool.state -> Tool.state
+end\end{code}
 There is one new element to the signature that has not previously been
 discussed - the functor \cd{Traversal}. This functor is essential to
 the new generic tool framework and will be discussed in greater detail
@@ -66,7 +64,7 @@ in \secref{sec:gen-tool}.
 
 In general, all types with base kind match the following signature
 (later referenced as \cd{Type.S}):
-\begin{code}
+\begin{code}\scriptsize
 type rep
 type pd\_body
 type pd = Pads.pd_header * pd_body
@@ -77,12 +75,10 @@ module Traverse (Tool : Generic\_tool.S) :
 sig
   val init : unit -> Tool.state
   val traverse : rep -> pd -> Tool.state -> Tool.state
-end  
-\end{code}
-
+end\end{code}
 With this signature for types at base kind, we can now show an example
 signature for a polymorphic type.
-\begin{code}
+\begin{code}\scriptsize
 \kw{ptype} (Alpha,Beta) ABPair = Alpha * '|' * Beta
 \mbox{}
 -------------------------------------------------
@@ -90,30 +86,54 @@ signature for a polymorphic type.
 module ABPair (Alpha : Type.S) (Beta : Type.S) :
 sig
   type rep = Alpha.rep * Beta.rep
-  type pd\_body = Alpha.pd\_body Pads.pd * Beta.pd\_body Pads.pd
+  type pd\_body = Alpha.pd\_body Pads.pd * 
+                     Beta.pd\_body Pads.pd
   type pd = pd\_body Pads.pd
 
   val parse : Pads.handle -> rep * pd
 
   module Traverse (Tool : Generic\_tool.S) :
-    sig
-      val init : unit -> Tool.state
-      val traverse : rep -> pd -> Tool.state -> Tool.state
-    end
-end
-\end{code}
+  sig
+    val init : unit -> Tool.state
+    val traverse : rep -> pd -> Tool.state -> Tool.state
+  end
+end\end{code}
 
 Once a description has been compiled into an \ocaml{} module, that
 module can be used like any other. There are many possible ways to use
 the generated moduel. Next, we will show to example usecases,
 highlighting data transformation, filtering, and processing.
 
+\subsection{Example: Data Processing}
+\label{sec:ex-process}
+
+We begin with a simple example in which we process a list of
+integers. Below, we show the description of that data source:
+\begin{code}\scriptsize
+ptype Source = (Pint32,Semicolon, Peof) Plist\end{code}
+Next, we show a complete \ocaml program that finds the average of a
+data source matching the given description. (Note that we assume the
+name of the description file is ``intList.pml.'')
+\begin{code}\scriptsize
+open Pads
+module S = IntList.Source
+
+let get_sum sum len = function
+  S.Term _ -> sum,len
+| S.DtDefault (_,i,is) -> sum (sum + i) (len + 1) is
+  
+let (rep,pd) = Tester.parse_with_from_file S.parse ``input.txt''
+
+let sum = match get_pd_hdr pd with
+            {error_code = Good} -> get_sum 0 0 rep
+          | _ -> 0\end{code}
+
 \subsection{Example: Transformation}
 \label{sec:ex-trans}
 
 \begin{figure}
   \centering
-  \begin{code}
+  \begin{code}\scriptsize
 ptype Header = \{
        alarm : [ alarm : Puint32 | alarm = 2 
                                     orelse alarm = 3];
@@ -133,15 +153,13 @@ ptype D\_alarm = \{
 ptype G\_alarm = \{
        header   : header;
  '|';  generic  : (Nvp\_a,Semicolon,Vbar) Plist
-\}
-\end{code}
+\}\end{code}
 \caption{Normalized format for \darkstar{} data}
 \label{fig:normal-darkstar}
 \end{figure}
 
 \begin{figure}
-\begin{code}
-\mbox{}
+\begin{code}\scriptsize
 open Darkstar
 open DarkstarNormal
 module RA = Raw\_alarm
@@ -193,7 +211,7 @@ into the common \texttt{header}).
 
 \begin{figure}
   \centering
-  \begin{code}
+  \begin{code}\scriptsize
 ptype Time = 
   \{time: Timestamp;
    ':'; timezone: Pstring_FW(3)\}
@@ -204,8 +222,7 @@ let normalizeTimeToGMT t =
       \{time=t;timezone="GMT"\} => t
     | \{time=t;timezone="EST"\} => t + (5 * 60 * 60)
     | \{time=t;timezone="PST"\} => t + (8 * 60 * 60)
-    | ...    
-  \end{code}
+    | ... \end{code}
   \caption{Normalizing timestamps}
   \label{fig:ex-normalize}
 \end{figure}
@@ -225,13 +242,14 @@ containing errors. In this case, they can access parse descriptors to
 facilitate this task.
 
 \begin{figure}
-\begin{code}
+\begin{code}\scriptsize
+open Pads
+   ...
 let splitEntry (good,bad) entry =
-  let(\_,(pd\_hdr,\_) = entry in
-    match pd\_hdr with
-      {Pads.error_code = Pads.Good} -> (entry::good * bad)
-    | _ => (good * (entry::bad))
-\end{code}
+  let(\_,pd) = entry in
+    match get\_pd\_hdr pd with
+      {error_code = Good} -> (entry::good * bad)
+    | _ => (good * (entry::bad))\end{code}
 \caption{Error filter for \dibbler{} data}
 \label{fig:ex-data-clean}
 \end{figure}
@@ -252,11 +270,6 @@ entry.  The \cd{splitEntry} could then be used in some other function
 to split a standard \dibbler{} source into two separate sources, one
 with clean records and the other (potentially) invalid records.
 
-
-\subsection{Example: Data Processing}
-\label{sec:ex-process}
-
-Simple integer list. Find average.
 
 %%% Local Variables: 
 %%% mode: latex

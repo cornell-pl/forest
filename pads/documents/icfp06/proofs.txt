@@ -4,7 +4,7 @@ x Ensure that all figures have consistent ordering.
 x Fix substitution lemmas, and proof cases for rec. and tyApp correspondingly.
 x Define D_G, D_rep and D_PD in paper.
 x Add condition to compute kinding rule to prevent a_Pb escape.
-Check that s (in compute(e:s)) is well formed in rep_var context:  D_rep |- s :: T.
+x Check that s (in compute(e:s)) is well formed in rep_var context:  D_rep |- s :: T.
 x Prove Rep. Type Well-Formedness lemma.
 x Add condition on base types. |- B_type(C) :: T
 
@@ -140,7 +140,71 @@ Corrollary:
  If a_rep,a_Pb not in FTV(k), 
  then PT(t:k)[X(t',a)] = PT(t[Y(t',a)]:k)
 
+Definition: hasHeader(s::k)
+  H(s :: k) iff
+   1) k = T and exists s' s.t. s == pd_hdr * s.
+   2) or, k = T -> k' and for all s' s.t. H(s':T), H(s s':k').
+
+Lemma: [t]_PDb is well-defined for closed, well-formed types t at base kind.
+  If G |- t : k then H([t]_PD :: K(k)).
+
+ If a1:T,...,an:T;G |- t : k and G |- ti : T then hasHeader(t[t1/a1,...,tn/an]:k).
+
+
+
+
+
+
+
+
+
+
+
+
+Definition: hasHeader(t:k)
+  hasHeader(t : k) iff
+   1) k = T and exists s s.t. [t]_PD == pd_hdr * s.
+   2) or, k = s -> k' and for all e, hasHeader(t e : k')
+   3) or, k = T -> k' and for all t' s.t. hasHeader(t':T), hasHeader(t t':k').
+
+Lemma: If G |- t : k, G |- t' : k and [t]_PD == [t']_PD then
+  hasHeader(t:k) iff hasHeader(t' : k) 
+
+pf: induction on type equivalence derivations.
+
+case Q-Refl:
+
+  ------
+  T == T
+
+  trivial.
+
+case Q-Symm:
+
+  T == S
+  ------
+  S == T
+
+  ind.
+
+case Q-Trans:
+
+   S == U   U == T
+   ---------------
+        S == T
+
+
+Lemma: [t]_PDb is well-defined for well formed types t.
+ If a1:T,...,an:T;G |- t : k and G |- ti : T then hasHeader(t[t1/a1,...,tn/an]:k).
+
+pf: by induction on kinding derivations.
+case Abs: given: hasHeader(t:k)
+          to prove: for all e, hasHeader((\x.t) e : k)
+          to prove: for all e, hasHeader(t[e/x] : k)
+
+**************************
 Type Correctness theorem:
+**************************
 
 If D;G |- t : k then D_G,G,[D]_PT |- [t] : [t:k]_PT
 
@@ -162,8 +226,8 @@ case Abs:
 			 D;G |- \x.t : s -> k
 
 
-By IH, D_G,G,x:s,[D]_PT |- [t] : [t:k]_PT.
-By F_omega typing, D_G,G,[D]_PT |- \x.[t] : s -> [t:k]_PT.
+By IH, D_G,G,x:s,[D]_PT |- [t] : PT(t:k)
+By F_omega typing, D_G,G,[D]_PT |- \x.[t] : s -> PT(t:k)
 
 case App:
 

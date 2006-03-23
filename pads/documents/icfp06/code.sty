@@ -109,9 +109,9 @@
 % If the "\leavevmode" is included, the blank lines are not compressed out
 % but you will end up with extra space at the bottom of your code if you
 % put the "\end{code}" on a new line.
-%\def\cd@cr{\par\penalty10000\leavevmode} 	% TeX magicness
-%\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
-%\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
+\def\cd@cr{\par\penalty10000\leavevmode} 	% TeX magicness
+\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
+\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
 
 
 % \codeallowbreaks
