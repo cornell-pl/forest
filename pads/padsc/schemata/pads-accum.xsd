@@ -1,3 +1,15 @@
+<!-- Problems/Questions:
+
+     Union tag field is an int-accumulator (its physical type),
+     but should be its abstract type.
+
+     Same issue for enums.
+
+     Should absence of accumulator info mean that no values were seen?
+
+     nerr field accumulator is missing in generated PADS types for
+     union and struct accumulators
+-->
 <xs:schema targetNamespace="http://www.padsproj.org/pads-accum.xsd"
 	   xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:a="http://www.padsproj.org/pads-accum.xsd"
@@ -14,44 +26,46 @@
 
   <xs:element name="name" type="xs:string"/>
 
-  <!-- As in pads-xml-c.xsd, there should be a global description of the tool discipline. -->
- 
-  <!-- For now, we assume that the INPUT variables to the accumulator
-       are global and are shared. -->
+  <!-- Common to to all accumulators: -->
+  <xs:element name="good"      type="p:Puint64"/>  
+  <xs:element name="bad"       type="p:Puint64"/>  
+  <xs:element name="avg"       type="p:Pfloat64"/> 
+  <xs:element name="count"     type="p:Pint32"/>
+  <xs:element name="top"       type="p:Puint32"/>
+  <xs:element name="distinct"  type="p:Puint32"/>
+  <xs:element name="nerr"      type="p:Puint32"/>
 
-  <xs:element name="max2track" type="p:Puint64"/>  <!-- IN: Total # buckets -->
-  <xs:element name="max2rep"   type="p:Puint64"/>  <!-- IN: # of buckets to report -->
-  <xs:element name="pcnt2rep"  type="p:Pfloat64"/> <!-- IN: Report buckets that only exceed this percentage. -->
-  <xs:element name="tracked"   type="p:Puint64"/>  <!-- IN: Percentage of total values tracked -->
+  <!-- Base type accumulators 
 
-  <xs:element name="inputs">
-   <xs:complexType>
-    <xs:sequence>
-     <xs:element ref="a:max2track"/>
-     <xs:element ref="a:max2rep"/>
-     <xs:element ref="a:pcnt2rep"/>
-     <xs:element ref="a:tracked"/>
-    </xs:sequence>
-   </xs:complexType>
-  </xs:element>
+     We want base types to have their own notion of accum types.
+     We actually accumulate using the Internal rep, but when we report, we want to use the Abstract type. 
+  -->   
 
-  <!-- Common for all base-type accumulators: -->
-  <xs:element name="good"      type="p:Puint64"/>  <!-- OUT: Good count -->
-  <xs:element name="bad"       type="p:Puint64"/>  <!-- OUT: Bad count -->
-  <xs:element name="avg"       type="p:Pfloat64"/> <!-- OUT: -->
-
- <!-- Base type accumulators -->
   <xs:complexType name="Pint_acc">
     <xs:sequence>
     <xs:element ref="a:good"/>
     <xs:element ref="a:bad"/>
     <xs:element ref="a:avg"/>
-    <xs:element name="min"       type="p:Pint64"/>   <!-- OUT: -->
-    <xs:element name="max"       type="p:Pint64"/>   <!-- OUT: -->
-    <!-- Distribution -->
+    <xs:element name="min"       type="p:Pint64"/> 
+    <xs:element name="max"       type="p:Pint64"/> 
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pint64"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
     </xs:sequence>
   </xs:complexType>
-
   <xs:element name="int" type="a:Pint_acc"/>
 
   <xs:complexType name="Puint_acc">
@@ -61,10 +75,24 @@
       <xs:element ref="a:avg"/>
       <xs:element name="min"    type="p:Puint64"/>
       <xs:element name="max"    type="p:Puint64"/>
-    <!-- Distribution -->
+      <xs:element name="distribution" minOccurs="0">
+       <xs:complexType>
+        <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+          <xs:element name="item" maxOccurs="unbounded">
+           <xs:complexType>
+            <xs:sequence>
+             <xs:element name="val" type="p:Puint64"/>
+             <xs:element ref="a:count"/>
+            </xs:sequence>
+           </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+       </xs:complexType>
+      </xs:element> 
     </xs:sequence>
   </xs:complexType>
-
   <xs:element name="uint" type="a:Puint_acc"/>
 
   <xs:complexType name="Pfloat_acc">
@@ -74,24 +102,73 @@
     <xs:element ref="a:avg"/>
     <xs:element name="min" type="p:Pfloat64"/>
     <xs:element name="max" type="p:Pfloat64"/>
-    <!-- Distribution -->
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pfloat64"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
     </xs:sequence>
   </xs:complexType>
   <xs:element name="fpoint" type="a:Pfloat_acc"/>
  
   <xs:complexType name="Pstring_acc">
     <xs:sequence>
-    <xs:element name="max2track" type="p:Puint64" minOccurs="0" maxOccurs="1"/>
-    <xs:element name="max2rep"   type="p:Puint64" minOccurs="0" maxOccurs="1"/>
-    <xs:element name="pcnt2rep"  type="p:Pfloat64" minOccurs="0" maxOccurs="1"/>
-    <!-- length distrib & good/bad accounting -->
-    <xs:element name="length"    type="a:Puint_acc"/>
-    <!-- Distribution -->
+    <xs:element name="length"    type="a:Puint_acc" minOccurs="0"/>
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pstring"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
     </xs:sequence>
   </xs:complexType>
   <xs:element name="string" type="a:Pstring_acc"/>
 
-  <!-- Other abstract base-type accumulators -->
+  <xs:complexType name="Pchar_acc">
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pchar"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="char" type="a:Pchar_acc"/>
+
   <xs:complexType name="Ptimestamp_acc">
     <xs:sequence>
       <xs:element ref="a:good"/>
@@ -99,8 +176,24 @@
       <xs:element name="avg" type="p:Ptimestamp"/>
       <xs:element name="min" type="p:Ptimestamp"/>
       <xs:element name="max" type="p:Ptimestamp"/>
-    </xs:sequence>
-  </xs:complexType>
+      <xs:element name="distribution" minOccurs="0">
+       <xs:complexType>
+        <xs:sequence>
+          <xs:element ref="a:top"/>
+          <xs:element ref="a:distinct"/>
+          <xs:element name="item" maxOccurs="unbounded">
+           <xs:complexType>
+            <xs:sequence>
+             <xs:element name="val" type="p:Ptimestamp"/>
+             <xs:element ref="a:count"/>
+            </xs:sequence>
+           </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+       </xs:complexType>
+      </xs:element> 
+     </xs:sequence>
+    </xs:complexType>
   <xs:element name="timestamp" type="a:Ptimestamp_acc"/>
 
   <xs:complexType name="Pdate_acc">
@@ -110,6 +203,22 @@
       <xs:element name="avg" type="p:Pdate"/>
       <xs:element name="min" type="p:Pdate"/>
       <xs:element name="max" type="p:Pdate"/>
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pdate"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
     </xs:sequence>
   </xs:complexType>
   <xs:element name="date" type="a:Pdate_acc"/>
@@ -121,6 +230,22 @@
       <xs:element name="avg" type="p:Ptime"/>
       <xs:element name="min" type="p:Ptime"/>
       <xs:element name="max" type="p:Ptime"/>
+      <xs:element name="distribution" minOccurs="0">
+       <xs:complexType>
+        <xs:sequence>
+          <xs:element ref="a:top"/>
+          <xs:element ref="a:distinct"/>
+          <xs:element name="item" maxOccurs="unbounded">
+           <xs:complexType>
+            <xs:sequence>
+             <xs:element name="val" type="p:Ptime"/>
+             <xs:element ref="a:count"/>
+            </xs:sequence>
+           </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+       </xs:complexType>
+      </xs:element> 
     </xs:sequence>
   </xs:complexType>
   <xs:element name="time" type="a:Ptime_acc"/>
@@ -132,18 +257,30 @@
       <xs:element name="avg" type="p:Pip"/>
       <xs:element name="min" type="p:Pip"/>
       <xs:element name="max" type="p:Pip"/>
+      <xs:element name="distribution" minOccurs="0">
+       <xs:complexType>
+        <xs:sequence>
+          <xs:element ref="a:top"/>
+          <xs:element ref="a:distinct"/>
+          <xs:element name="item" maxOccurs="unbounded">
+           <xs:complexType>
+            <xs:sequence>
+             <xs:element name="val" type="p:Pip"/>
+             <xs:element ref="a:count"/>
+            </xs:sequence>
+           </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+       </xs:complexType>
+      </xs:element> 
     </xs:sequence>
   </xs:complexType>
   <xs:element name="ip" type="a:Pip_acc"/>
 
-  <!-- 
-     We want base types to have their own notion of accum types.
-     We actually accumulate using the Internal rep, but when we report, we want to use the Abstract type. 
-  -->   
-
   <xs:complexType name="type">
     <xs:choice>
       <!-- Accumulators for the abstract base types -->
+      <xs:element ref="a:char"/> 
       <xs:element ref="a:int"/> 
       <xs:element ref="a:uint"/> 
       <xs:element ref="a:fpoint"/> 
@@ -157,43 +294,54 @@
       <xs:element ref="a:struct"/> 
       <xs:element ref="a:array"/> 
       <xs:element ref="a:enum"/>
-    <!--  What do we do with typedefs? 
       <xs:element ref="a:typedef"/> 
-    -->
     </xs:choice>
   </xs:complexType>
-
-  <xs:element name="nerr" type="a:Puint_acc"/>  
 
   <!-- Array accumulator -->
   <xs:element name="array">
    <xs:complexType>
     <xs:sequence>
       <xs:element ref="a:name"/>
+      <xs:element name="length"  type="a:Puint_acc"/>
 
-    <!-- This is optional until we get something to validate -->
-      <xs:element ref="a:nerr" minOccurs="0" maxOccurs="1"/>  
-      <xs:element name="length"    type="a:Puint_acc" minOccurs="0" maxOccurs="1"/>
+      <!-- Summary of all elements in the array -->
+      <xs:element name="compoundLevel" type="a:type"/>  
 
-    <!-- Aggregates over all elements in the array -->
-      <xs:element name="compoundLevel" type="a:type" minOccurs="0" maxOccurs="1"/>  
-
-    <!-- Keeps separate buckets for first N elements, then uses N+1st
-       bucket for the rest (maybe) -->  
-      <xs:element name="elt"    type="a:type"  minOccurs="0" maxOccurs="unbounded"/>
+      <!-- Keeps separate buckets for first N elements in histrogram
+          then uses N+1st bucket for the rest (we think).
+          See input parameters at bottom of schema.
+      -->
+      <xs:element name="arrayDetail" type="a:type"  minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
    </xs:complexType>
   </xs:element>
 
   <!-- Enum acuumulator -->
-  <xs:element name="enum" type="a:Puint_acc"/>
+  <!-- Internally, enums are unsigned ints, but externally, 
+       they should be represented by strings.
+  -->
+  <xs:element name="enum" type="a:Pstring_acc"/>
+
+  <!-- Typedef accumulator
+       Error counts are tailored to typedefs. 
+  -->
+  <xs:element name="typedef">
+   <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="a:name"/>
+      <xs:element name="type_acc" type="a:type"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
 
   <!-- Union or struct field accumulator -->
   <xs:element name="field">
    <xs:complexType>
     <xs:sequence>
     <xs:element ref="a:name"/>
-    <xs:element name="field_acc" type="a:type" minOccurs="0" maxOccurs="1"/>
+    <!-- type_acc absent ==> no values of field -->
+    <xs:element name="type_acc" type="a:type" minOccurs="0" maxOccurs="1"/>
     </xs:sequence>
    </xs:complexType>
   </xs:element>
@@ -221,5 +369,31 @@
    </xs:complexType>
   </xs:element>
 
-  <xs:element name="PadsAccum" type="a:type"/>
+  <!-- As in pads-xml-c.xsd, there should be a global description of the tool discipline.
+ 
+       For now, we assume that the INPUT variables to the accumulator
+       are global and are shared. 
+  -->
+  <xs:element name="max2track" type="p:Puint64"/>  <!-- IN: Total # buckets -->
+  <xs:element name="max2rep"   type="p:Puint64"/>  <!-- IN: # of buckets to report -->
+  <xs:element name="pcnt2rep"  type="p:Pfloat64"/> <!-- IN: Report buckets that only exceed this percentage. -->
+  <xs:element name="tracked"   type="p:Puint64"/>  <!-- IN: Percentage of total values tracked -->
+
+  <xs:element name="PadsAccum">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element name="inputs" minOccurs="0">
+      <xs:complexType>
+       <xs:sequence>
+        <xs:element ref="a:max2track"/>
+        <xs:element ref="a:max2rep"/>
+        <xs:element ref="a:pcnt2rep"/>
+        <xs:element ref="a:tracked"/>
+       </xs:sequence>
+      </xs:complexType>
+     </xs:element>
+     <xs:element name="PSource" type="a:type"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
 </xs:schema>
