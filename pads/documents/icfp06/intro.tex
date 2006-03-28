@@ -184,37 +184,93 @@ sharing the knowledge with others nearly impossible.
 %% OUR SOLUTION & CONTRIBUTIONS
 \subsection{\padsmlbig{}}
 
-Our solution to the challenges of ad hoc data processing is
-\padsml{}. 
+% What is PADS/ML?
+% \begin{itemize}
+% \item \padsml{} is a declarative data description language.
+% \item user describes physical format and semantic constraints.
+% \item based on ML type structure. closely corresponds to rep and pd
+%   type. Expression are from ML.
+% \item descriptions serve as formal, precise, concise documentation
+%   (compare to English).
+% \item Descriptions compiled to robust parsers. talk about rep and pd
+%   types here.
+% \item Can leverage descriptions to generate arbitrary data analysis tools.
+% \end{itemize}
+Our solution to the challenges of ad hoc data processing is \padsml{},
+a declarative language for describing data sources.  With \padsml{}, a
+data analyst can describe both the physical format of the data and any
+of its relevant semantics constraints. Such descriptions provide two
+benefits to the data analyst: first, a description in \padsml{} serves
+as a precise, formal, and concise documentation for the data source.
+Any reader who has encountered data format descriptions written in
+English (or other spoken langauges) will quickly appreciate this
+benefit. The second, perhaps more widely appreciable, benefit is that,
+from a description, the \padsml{} compiler can generates a large
+selection of robust data processing tools.
 
-What is PADS/ML?
-\begin{itemize}
-\item \padsml{} is a declarative data description language.
-\item user describes physical format and semantic constraints.
-\item supports multiple encodings.
-\item based on ML type structure. closely corresponds to rep and pd
-  type. Expression are from ML.
-\item descriptions serve as formal, precise, concise documentation
-  (compare to English).
-\item Descriptions compiled to robust parsers. talk about rep and pd
-  types here.
-\item Can leverage descriptions to generate arbitrary data analysis tools.
-\end{itemize}
+One particularly essential tool generated from a description is robust
+parser for the data source, written in the functional programming
+langauage \ocaml{}.  The parser maps raw data from the data source
+into two in-memory data structures: a canonical representation of the
+parsed data, and a \textit{parse descriptor} (PD), a meta-data object
+detailing properties of the parsing process for the paired
+representation. The structure of the parse descsriptor mimics that of
+the representation, with a given portion of the parse descriptor
+reporting on the corresponding portion of the data representation. A
+particular role of the PD is to report errors encountered in parsing a
+peice of data.  This approach allows the parsers to provide the user
+with a detailed profile of the errors perceived in the data source as
+a first-class value, rather than as error messages printed on
+\textit{stderr}.
 
-Beyond PADS/C:
-\begin{itemize}
-\item PADS/ML is based on experience in designing and implemented
-  PADS/C as well as semantics.
-\item Differs in two key respects.
-\item Supports concise and elegant descriptions via parameterized,
-  recursive datatypes.
-\item PADS/C generates tools directly (from within compiler).
-\item PADS/ML has infrastructure for tool development.
-\item Developer writes generic tool. Compiler generates description
-  specific ``specializer'' which takes generic tool and specializes it
-  to the description.
-\item 
-\end{itemize}
+Like the parser, the types of the representation and parse descriptor
+produced by the parser are derived automatically from the data description. The
+constructs of \padsml{} are based on the type structure of the ML
+family of languages. Therefore, the compiler can map the description
+into type declarations in ML, with little change.
+
+% \begin{itemize}
+% \item PADS/ML is based on experience in designing and implemented
+%   PADS/C as well as semantics.
+% \item Differs in two key respects.
+% \item Supports concise and elegant descriptions via parameterized,
+%   recursive datatypes.
+% \item PADS/C generates tools directly (from within compiler).
+% \item PADS/ML has infrastructure for tool development.
+% \item Developer writes generic tool. Compiler generates description
+%   specific ``specializer'' which takes generic tool and specializes it
+%   to the description.
+% \item 
+% \end{itemize}
+
+\padsml{} is closely related to previous work on
+\pads{}~\cite{pads-pldi}, and can be seen as a natural evolution of
+that work. \padsml{} is different than \pads{} in three key respects.
+First, it is targeted at the ML family of languages. Second, \pads{}
+types can be parameterized by expressions. \padsml{} adds the ability
+to parameterize types by other types, thereby support more concise and
+elegant descriptions along with code reuse.
+
+Third, with \padsml{}, we have taken a substantially different
+approach to generating tools beyond the parser. An essential benefit
+of the \pads{} approach to processing is the high return-on-investment
+that a user derives from writing a description of their data. To this
+end, we aim to generate a broad suite of data analysis and processing
+tools from a single specification. To achieve this goal, it is
+critical that outside developers be able to easily add their own tools
+- based on their unique expertise - to our tool suite. However, in
+\pads{}, all tools are generated directly from within the compiler.
+Therefore, developing a new tool generator for \pads{} is a complex
+and difficult process requiring a deep understanding of the core
+compiler code base.
+
+With \padsml{}, we have created a new framework for tool generation
+whereby a large class of tool generators can be developed external to
+the compiler.  New tools need only match a well-specified, generic
+tool interface, specified as an ML signature. Correspondingly, the
+compiler generates, for each description, a tool that can take any
+such generic tool and specialize it for use with the particular
+description.
 
 Contributions
 \begin{itemize}

@@ -1,4 +1,5 @@
 ToDo:
+-  Check that well-formedness lemma can go after well-defined lemma.
 - verify that types of constructors lemma is correct.
 x Ensure that all figures have consistent ordering.
 x Fix substitution lemmas, and proof cases for rec. and tyApp correspondingly.
@@ -140,67 +141,201 @@ Corrollary:
  If a_rep,a_Pb not in FTV(k), 
  then PT(t:k)[X(t',a)] = PT(t[Y(t',a)]:k)
 
-Definition: hasHeader(s::k)
-  H(s :: k) iff
-   1) k = T and exists s' s.t. s == pd_hdr * s.
-   2) or, k = T -> k' and for all s' s.t. H(s':T), H(s s':k').
+**********
 
-Lemma: [t]_PDb is well-defined for closed, well-formed types t at base kind.
-  If G |- t : k then H([t]_PD :: K(k)).
+Has-header theorem.
 
- If a1:T,...,an:T;G |- t : k and G |- ti : T then hasHeader(t[t1/a1,...,tn/an]:k).
+**********
 
+Goal: To prove that [t]_PD is well-defined for all well-formed types t.
 
+Is [t]_PD well defined on all t, or just |- t:k? If the latter, then
+the definitions are mutually recursive, which we have to be careful about.
 
+% Note that by this definition, we not only get that [t]_PD type has the
+% structure pd_hdr * ..., but that the [t]_PD is well-defined.
+% Note: I don't think that first part of second condition is necessary
+% as functions can only have parameters at kind T, so that part isn't
+% used. Still, it "feels" right.
 
-
-
-
-
-
-
-
-
-Definition: hasHeader(t:k)
-  hasHeader(t : k) iff
+Definition: H(t:k), 
+  H(t : k) iff FTV(s) = {} and
    1) k = T and exists s s.t. [t]_PD == pd_hdr * s.
-   2) or, k = s -> k' and for all e, hasHeader(t e : k')
-   3) or, k = T -> k' and for all t' s.t. hasHeader(t':T), hasHeader(t t':k').
+   2) or, k = T -> k', exists s s.t. [t]_PD == s and for all t' s.t. H(t': T), H(t t' : k').
+   3) or, k = s -> k', exists s' s.t. [t]_PD == s' and for all e, H(t e : k').
 
-Lemma: If G |- t : k, G |- t' : k and [t]_PD == [t']_PD then
-  hasHeader(t:k) iff hasHeader(t' : k) 
+Lemma:
+  If H(t : k) then exists s s.t. [t]_PD = s.
+pf: follows immediately from definition of H.
 
-pf: induction on type equivalence derivations.
+% Note that we implicitly demand that [t]_PD is well defined in the
+% hypothesis of the lemma. Cannot assume that [t]_PD is well-defined,
+% even for well-formed t, as that is what we are trying to prove.
 
-case Q-Refl:
+Lemma: If [t]_PD == [t']_PD, then H(t:k) iff H(t':k)
+pf: by induction on structure of kind:
+case k = T:
+  ("only if" direction):
+  Then, H(t : T), which means that there exists s' s.t. [t]_PD == pd_hdr * s'.
+  Since [t]_PD == [t']_PD, by symm. and trans.,
+    exists s' s.t. [t']_PD == pd_hdr * s'.
+  i.e. H(t' : T).
 
-  ------
-  T == T
+  ("if" direction):
+  Given H(t : T), that is: exists s' s.t. [t']_PD == pd_hdr * s'.
+  By trans, exists s' s.t. [t]_PD == pd_hdr * s'.
+  i.e. H(t : T).
+    
+case k = T -> k'
+  ("only if"):
+  H(t : T -> k'), that is: 
+    exists s s.t. [t]_PD = s and for all t'' s.t. H(t'':T), H(t t'' : k').
+  Assume  H(t'' : T) for arbitrary t''.
+     By above, (instantiating forall at t''):
+       H(t t'' : k')
+     By H(t'':T), 
+       exists s s.t. [t'']_PD == pd_hdr * s,
+     So, [t'']_Pb is well-defined:
+       [t'']_Pb = s.
+     By Q-App, [t]_PD == [t']_PD, and [t'']_Pb == [t'']_Pb:
+       [t]_PD [t'']_Pb == [t']_PD [t'']_Pb
+       [t t'']_PD == [t' t'']_PD
+     By IH (and above),
+       H(t' t'': k')
+  So,
+    H(t' : T -> k')
 
-  trivial.
+  ("if" direction):
+  H(t' : T -> k'), that is: 
+    exists s s.t. [t']_PD = s and for all t'' s.t. H(t'':T), H(t' t'' : k').
+  Assume  H(t'' : T) for arbitrary t''.
+      By above, (instantiating forall at t''):
+	H(t' t'' : k')
+      By H(t'':T), 
+	exists s s.t. [t'']_PD == pd_hdr * s,
+      So, [t'']_Pb is well-defined:
+	[t'']_Pb = s.
+      By Q-App, [t]_PD == [t']_PD, and [t'']_Pb == [t'']_Pb,
+	[t]_PD [t'']_Pb == [t']_PD [t'']_Pb
+	[t t'']_PD == [t' t'']_PD
+      By IH (and above),
+	H(t t'': k') iff  H(t' t'': k')
+      As we have H(t' t'': k'), we now know:
+       H(t t'': k') 
+  So,
+    H(t : T -> k')
 
-case Q-Symm:
+case k = s -> k'
+  ("only if"):
+  H(t : s -> k'), that is: 
+    exists s' s.t. [t]_PD = s' and for all e, H(t e : k').
+  Assume arbitrary e
+     By above, (instantiating forall at e):
+       H(t e : k')
+     From [t]_PD == [t']_PD we get:
+       [t e]_PD == [t' e]_PD
+     By IH (and above),
+       H(t' e: k')
+  So,
+    H(t' : s -> k')
 
-  T == S
-  ------
-  S == T
+  "if" direction is analogous
 
-  ind.
+Abbrev: U = X(t1,a1),...,X(tn,an)
+        W = Y(t1,a1),...,Y(tn,an)
 
-case Q-Trans:
+Lemma: 
+ If D,a1:T,...,an:T;G |- t : k and H(ti:T) then H(t[W] : k).
 
-   S == U   U == T
-   ---------------
-        S == T
+pf: by induction on first kinding derivation.
 
+case unit, bottom, constant, compute, absorb: immediate (no open variables).
 
-Lemma: [t]_PDb is well-defined for well formed types t.
- If a1:T,...,an:T;G |- t : k and G |- ti : T then hasHeader(t[t1/a1,...,tn/an]:k).
+case DepSum: 
 
-pf: by induction on kinding derivations.
-case Abs: given: hasHeader(t:k)
-          to prove: for all e, hasHeader((\x.t) e : k)
-          to prove: for all e, hasHeader(t[e/x] : k)
+	   D;G |- t : T   D;G,x:[t]_rep * [t]_PD |- t' : T
+	   ----------------------------------------------- 
+			 D;G |- E x:t.t' : T
+
+To prove:
+  H(E x:t.t'[W] : T), that is exists s s.t. [E x:t.t'[W]]_PD == pd_hdr * s.
+As [E x:t.t']_PD = pd_hdr * ([t]_PD * [t']_PD), need to prove only
+  exists s1,s2 s.t. [t[W]]_PD == s1 and [t'[W]]_PD == s2  
+and then set s = s1 * s2
+By IH,
+  H(t[W]:T) and H(t'[W]:T)
+So, exists s1,s2 s.t. [t[W]]_PD == s1 and [t'[W]]_PD == s2.
+
+case Sum, Intersection, Constraint, seq, scan: analogous to DepSum.
+
+case Abs:
+  To prove: H((\x.t)[W]:s -> k).
+  By IH, H(t[W]:k), so [t[W]]_PD exists, by which we know [\x.t[W]]_PD
+  exists.
+
+  Next, consider arbitrary e:
+    Need to prove H((\x.t)[W] e: k). 
+    Now, [(\x.t)[W] e]_PD = [(\x.t)[W]]_PD =[\x.t[W]]_PD = [t[W]]_PD.
+    So, [(\x.t)[W] e]_PD == [t[W]]_PD.
+    By lemma, and IH, H((\x.t)[W] e:k).
+    
+case App:
+  To prove: H((t e)[W]:k).
+  By IH, H(t[W]:s->k), i.e. forall e, H(t[W] e: k).
+  Instantiate with e[W],
+    H(t[W] e[W]:k), i.e. H((t e)[W]:k).
+
+case TyVar: 
+  To prove: H(a[W]:T)
+  If a = ai (for some i) then a[W] = ti and from premise, H(ti:T) so H(a[W]:T).
+  If a != ai, then a[W] = a and [a]_PD = pd_hdr * a_Pb, so H(a[W]:T).
+
+case Rec:
+  To prove: H(ua.t[W]:T), that is exists s s.t. [ua.t[W]]_PD == pd_hdr * s.
+  As (ua.t)[W] = ua.(t[W]), need to prove:
+    exists s s.t. pd_hdr * ua_Pb.[t[W]]_PD == pd_hdr * s.
+  From equality rules, we need exists s' s.t. [t[W]]_PD == s'.
+  Then, s = ua_Pb.s' would give us our result. If we can prove the
+  stronger result H(t[W]:T), then we are done.
+
+  From derivation, D,a1:T,...,an:T,a:T;G |- t : T, which, by reordering gives
+  us D,a:T,a1:T,...,an:T;G |- t : T. By IH, H(t[W]:T) and we're done.
+
+case TyAbs:
+  To prove: H((\a.t)[W]:T -> k), that is
+    exists s s.t. [(\a.t)[W]]_PD == s and for all t' s.t. H(t': T), H((\a.t)[W] t' : k).
+  
+  First, lets prove that exists s s.t. [(\a.t)[W]]_PD == s.
+  From derivation, D,a1:T,...,an:T,a:T;G |- t : k, which, by reordering gives
+  us D,a:T,a1:T,...,an:T;G |- t : k. By IH, H(t[W]:k), so exists s' s.t. [t[W]]_PD == s'.
+  As [(\a.t)[W]]_PD = \a_Pb.[t[W]]_PD, we have our s = \a_Pb.s'.
+
+  Next, let's prove that for all t' s.t. H(t': T), H((\a.t)[W] t' : k).
+  Assume H(t':T) for some arbitrary t'.    
+    From derivation, D,a1:T,...,an:T,a:T;G |- t : k. By IH, H(t[W,Y(t',a)]:k).
+    First, t[W,Y(t',a)] = t[W][Y(t'a,)] (i.e. change from simultaneous
+    subst. to sequential subst.), because, if "a" free in any of
+    ti, just alpha-vary "a" in "t". Next, by subst. lemma,
+    [t[W][Y(t',a)]]_PD = [t[W]]_PD[X(t',a)]. As a_rep not in
+    FTV(t[W]), = [t[W]]_PD[[t']_Pb/a_Pb].
+    By equivalence rules, [t[W]]_PD[[t']_Pb/a_Pb] == (\a_Pb.[t[W]]_PD) [t']_Pb.
+    So, [t[W,Y(t',a)]]_PD == (\a_Pb.[t[W]]_PD) [t']_Pb.
+    That is, [t[W,Y(t',a)]]_PD == [(\a.t)[W]]_PD [t']_Pb.
+    That is, [t[W,Y(t',a)]]_PD == [(\a.t)[W] t']_PD.
+    By lemma and H(t[W,Y(t',a)]:k), we have H((\a.t)[W] t':k).
+
+case TyApp:
+  To prove: H((t1 t2)[W]: k). 
+  By IH, H(t1[W]:T -> k) and H(t2[W] : T).
+  So, forall t' s.t. H(t':T), H(t1[W] t':k).
+  So, H(t1[W] t2[W]:k), i.e. H((t1 t2)[W]:k).
+
+Corrollary 1:
+ If D;G |- t : k then H(t : k).
+  
+Corrollary 2:
+ If |- t : k then H(t : k).
+  
 
 **************************
 Type Correctness theorem:
