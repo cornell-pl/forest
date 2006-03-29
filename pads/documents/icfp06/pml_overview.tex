@@ -12,68 +12,35 @@ To do:
 }
 
 A \padsml{} description specifies the physical layout and semantic
-properties of an ad hoc data source.  
-These descriptions are composed of types: 
-base types describe atomic data, while structured
-types describe compound data built from simpler pieces.  Examples of
-base types include 8-bit unsigned integers (\cd{Puint8}), 32-bit
-integers (\cd{Pint32}), binary 32-bit integers (\cd{Pbint32}), dates
-(\cd{Pdate}), strings (\cd{Pstring}), and IP addresses (\cd{Pip}).
-Semantic conditions for such base types include checking that the
-resulting number fits in the indicated space, \ie, 16-bits for
-\cd{Pint16}.
+properties of an ad hoc data source.  These descriptions are composed
+of types: base types describe atomic data, while structured types
+describe compound data built from simpler pieces.  Examples of base
+types include ASCII-encoded, 8-bit unsigned integers (\cd{Puint8}) and
+32-bit signed integers (\cd{Pint32}), binary 32-bit integers (\cd{Pbint32}),
+dates (\cd{Pdate}), strings (\cd{Pstring}), and IP addresses
+(\cd{Pip}).  Semantic conditions for such base types include checking
+that the resulting number fits in the indicated space, \ie, 16-bits
+for \cd{Pint16}.
 
-Base types (and other types) may be parameterized by values.  This
-mechanism serves both to reduce the number of base types and to permit
-the format and properties of later portions of the data to depend upon
-earlier portions.  For example, the base type \cd{Puint16_FW(3)}
-specifies an unsigned two byte integer physically represented by
-exactly three characters. The base type \cd{Pstring} takes 
-a character indicating the \textit{terminator character} -- the character in the
-source that immediately follows the string. 
+Base types (and other types) may be parameterized by values taken from
+\ml{}.  This mechanism serves both to reduce the number of base types
+and to permit the format and properties of later portions of the data
+to depend upon earlier portions.  For example, the base type
+\cd{Puint16_FW(3)} specifies an unsigned two byte integer physically
+represented by exactly three characters. The base type \cd{Pstring}
+takes a character indicating the \textit{terminator character} -- the
+character in the source that immediately follows the string.
 
 To describe more complex data, \padsml{} provides a collection of
 type constructors derived from the type structure of functional
 programming languages such as Haskell and ML.  The following
 subsections will explain these structured types through a series 
-of real-world examples.  Readers eager to see the complete syntax
-of types should flip forward to Appendix~\ref{app:syntax-dd}.
+of real-world examples.  
+
+% Readers eager to see the complete syntax
+% of types should flip forward to Appendix~\ref{app:syntax-dd}.
 
 \subsection{Simple Structured Descriptions}
-
-The bread and butter of any \padsml{} description are the simple
-structured types: tuple, record and array types for expressing
-sequences of data; sum types, realized here as datatypes, for
-expressing alternatives; and singleton types for expressing the
-placement of particular characters in the data.  In this section, we
-explain each of these items by building a description of the
-\dibbler{} data presented in \figref{figure:dibblerml}.
-
-The \dibbler{} data source is used to record summaries of phone orders
-produced at AT\&T.  Each summary involves a date and one record per
-order.  Each order record contains a header followed by a sequence of
-events.  The header has 13 pipe separated fields: the order number,
-AT\&T's internal order number, the order version, four different
-telephone numbers associated with the order, the zip code of the
-order, a billing identifier, the order type, a measure of the
-complexity of the order, an unused field, and the source of the order
-data.  Many of these fields are optional, in which case nothing
-appears between the pipe characters.  The billing identifier may not
-be available at the time of processing, in which case the system
-generates a unique identifier, and prefixes this value with the string
-``no\_ii'' to indicate the number was generated. The event sequence
-represents the various states a service order goes through; it is
-represented as a new-line terminated, pipe separated list of state,
-timestamp pairs.  There are over 400 distinct states that an order may
-go through during provisioning.  The sequence is sorted in order of
-increasing timestamps.
-% \figref{figure:dibbler-records} shows a small example of this
-% format.  156 different states for one order -rw-r--r-- 1 angusm
-% dibbler 2187472314 Jun 9 2003 /fs/dibblerd/tlf/data/out_sum.stream
-% 2171.364u 31.379s 40:41.54 90.2% 0+0k 2+0io 2pf+0w
-% 53 had trailing t or } after zip code It may be apparent from this
-% paragraph that English is a poor language for describing data
-% formats!
 
 
 \begin{figure*}
@@ -88,7 +55,32 @@ increasing timestamps.
   \label{figure:dibbler-records}
 \end{figure*}
 
-\suppressfloats
+The bread and butter of any \padsml{} description are the simple
+structured types: tuple and record for expressing sequences of data;
+sum types, realized here as datatypes, for expressing alternatives;
+and singleton types for expressing the placement of particular
+characters in the data.  In this section, we explain each of these
+items by building a description of the \dibbler{} data presented in
+\figref{figure:dibbler-records}.
+
+The \dibbler{} data source is used to record summaries of phone orders
+produced at AT\&T.  Each summary involves a date and one record per
+order.  Each order record contains a header followed by a sequence of
+events.  The header has 13 pipe separated fields: the order number,
+AT\&T's internal order number, the order version, four different
+telephone numbers associated with the order, the zip code of the
+order, a billing identifier, the order type, a measure of the
+complexity of the order, an unused field, and the source of the order
+data.  Many of these fields are optional, in which case nothing
+appears between the pipe characters.  The billing identifier may not
+be available at the time of processing, in which case the system
+generates a unique identifier, and prefixes this value with the string
+``no\_ii'' to indicate that the number was generated. The event sequence
+represents the various states a service order goes through; it is
+represented as a new-line terminated, pipe separated list of state,
+timestamp pairs.  There are over 400 distinct states that an order may
+go through during provisioning.  The sequence is sorted in order of
+increasing timestamps.
 
 \begin{figure}
   \input{sirius_pml}
@@ -96,66 +88,72 @@ increasing timestamps.
   \label{figure:sirius_pml}
 \end{figure}
 
-
 \figref{figure:sirius_pml} gives a \padsml{} description for the
-\dibbler{} phone order summaries in our syntax.  Overall, the
-description is a sequence of type definitions. It is probably easiest
-to understand the data source by reading these definitions bottom up.
+\dibbler{} phone order summaries. Overall, the description is a
+sequence of type definitions. It is probably easiest to understand the
+data source by reading these definitions bottom up.
 
-The last type definition \cd{Source} is intended to be a definition of
-an entire \dibbler{} data source.  It states that a \cd{Source} is a
-\cd{Summary\_header} followed by a sequence of objects made up of an
-\cd{Order\_header} followed by \cd{Events}.  The tuple type
-constructor \cd{T1 * T2} and the list type constructor
-(\cd{(Telt,Tsep,Tterm) Plist}) both specify sequences of objects in a
-data source.  The \cd{Plist} type -- defined in \padsml{} itself --
-depends upon three parameters, (\cd{Telt},\cd{Tsep} and \cd{Tterm}).
-The first parameter describes the element type of the list. The second
-parameter describes the syntactic separators -- described with a type
--- that may be found between elements of the list.  In this case
-\cd{Peor}, the {\em end-of-record} type, may be found between each
-element of the array.  In this case, the end-of-record marker should
-be set to a newline character as there is one record per line in the
-file. Howeve, this marker is not set in the description itself.
-Rather, the end-of-record is left abstract, and set later by the
-client program that uses the generated libraries. The third parameter
-is the terminator for the list.  In this case, the terminator is
-\cd{Peof}, a type that describes the special end-of-file marker.  It
-is often necessary to have additional termination conditions for
-lists, such as termination dependent on the number of elements read so
-far, but we omitted this additional option for expository purposes.
+The last type definition, \cd{Source}, is intended to be a definition
+of an entire \dibbler{} data source.  It uses the tuple type
+constructor \cd{*}, which describes a possibly-heterogenous,
+fixed-length sequence of objects in the data source. \cd{Source},
+therefore, is defined as a \cd{Summary\_header} followed by
+\cd{Orders}. The definition of \cd{Orders} is based on the list type
+constructor, \cd{Plist}, which specifies a homogenous sequence of
+objects in a data source.  \cd{Plist} -- defined in \padsml{} itself
+-- depends upon three parameters, \cd{Telt}, \cd{Tsep} and \cd{Tterm}.
+The first parameter describes the element type of the list, which, in
+our example, is the type \cd{Order}, described below. The second
+parameter describes the syntactic separators that may be found between
+elements of the list.  In this case \cd{Peor}, the
+\emph{end-of-record} type, may be found between each element of the
+array~\footnote{In our example, the end-of-record marker is a newline
+  character as there is one record per line in the file.  However,
+  this marker is not set in the description itself.  Rather, the
+  end-of-record is left abstract, and set later by the client program
+  that uses the generated libraries}. The third parameter is the
+terminator for the list.  In this case, the terminator is \cd{Peof}, a
+type that describes the special \emph{end-of-file marker}.  It is
+often necessary to have additional termination conditions for lists,
+like termination dependent on the number of elements read so far, but
+we omitted this additional option for expository purposes.
 
-The definition of \cd{Events} indicates that this part of the
-\dibbler{} data will contain a sequence of \cd{Event}s separated by
-vertical bars and terminated by an end-of-recorde marker.  Each
-\cd{Event} is a string terminated by a vertical bar, followed by a
-vertical bar and ending with an unsigned 32-bit integer.  The
-interesting part of this sequence is the presence of the type
-\cd{'|'}.  In type-theoretic terms, this is a {\em singleton type}.
+An \cd{Order} is a sequence of objects made up of an
+\cd{Order\_header} followed by \cd{Events}.  The definition of
+\cd{Events} indicates that this part of the \dibbler{} data will
+contain a sequence of \cd{Event}s separated by vertical bars and
+terminated by an end-of-record marker.  Each \cd{Event} is a string
+terminated by a vertical bar, followed by a vertical bar and ending
+with an unsigned 32-bit integer.  The interesting part of this
+sequence is the presence of the literal character \cd{'|'}.  In
+type-theoretic terms, this literal represents a {\em singleton type}.
 It states that one should expect exactly the character \cd{'|'} in the
-input stream at this point.  Other singletons appear in the summary
-header type as \cd{"0|"} and \cd{Peor}.  Any expression that appears
-embedded in a type as a singleton must be effect-free.
+input stream at this point.  In general, string, character, and
+integer literals can be embedded in a description to be interpreted as
+a singleton-type. For example, the string literal \cd{"0|"} appears in
+the summary header type.
 
-The type \cd{Order\_header} is a record type that indicates the data
+The type \cd{Order\_header} is a record type, which indicates the data
 format involves the sequence of items described by the fields of the
 record.  Notice that there are two different sorts of fields:
 anonymous fields (a second form of singleton type) containing
-directives to parse a particular character (\cd{'|'}) or string
-(\cd{"0|"}) and fields with names.
+directives to parse a particular literal, and fields with names.
 
 The second named field, \cd{att\_order\_num}, reveals two other
 features of \padsml: dependency and constraints.  Here,
-\cd{att\_order\_num} is constrained to be less than \cd{order\_num},
-the value parsed in an earlier field.  This is a relatively simple
+\cd{att\_or}-\cd{der\_num} is constrained to be less than \cd{order\_num},
+the value parsed in the previous field.  This is a relatively simple
 constraint on the correctness of the ad hoc data format.  In practice,
-constraints can become very rich involving properties such as
+constraints can become very rich, involving properties like
 sortedness of records in an array, definitions of expected characters,
 restrictions on date and time ranges, constraints on IP address
 domains, restrictions on phone number area codes and virtually
 infinite variety of other possibilities. In general, constrained
 types have the form \cd{[x:T | e]} where \cd{e} is an arbitrary pure
-boolean expression.  
+boolean expression.  Data satisfies this description if it
+satisfies \cd{T} and boolean \cd{e} evaluates to true when the parsed
+representation of the data is substituted for \cd{x}.  If the boolean
+evaluates to false, the data contains a semantic error.
 
 The last interesting feature in the \dibbler{} example is the datatype
 definition of \cd{Dib\_ramp}.  It describes two alternatives for a
@@ -166,7 +164,7 @@ will it attempt to parse the second branch.  Notice how this semantics
 differs from similar constructs in regular expressions and
 context-free grammars, which non-deterministically choose between
 alternatives.  Fortunately, we have yet to come across an ad hoc data
-source where we wish we had nondeterministic choice.\footnote{\padsc{}
+source where we wish we had nondeterministic choice.\footnote{\padsml{}
   can recognize string data based on regular expressions.
   Non-determinism here has been useful, but as it has been confined to
   parsing elements of the \cd{Pstring} base type, it has had no impact
@@ -194,7 +192,8 @@ Another powerful feature of \padsml{} is the ability to describe data
 sources with recursive structure.  A representative example of
 recursive, biological data comes courtesy of Steven Kleinstein,
 program coordinator of Princeton's Picasso project for
-interdisciplinary research in computational sciences.  Kleinstein is
+interdisciplinary research in computational sciences.  
+\emph{We need to check that the following is still true.} Kleinstein is
 in the process of building a simulator to study the proliferation of B
 lymphocytes during an immune response.  Data needed for his
 simulations is represented in a variant of the Newick format, which is
@@ -205,8 +204,7 @@ children by placing a sequence of trees within parens.  Following the
 parens is a colon and a number, as is the case for the leaf node.  The
 numbers represent the ``distance'' that separates the child from the
 parent.  In Kleinstein's case, the distance is the number of mutations
-that occur in the antibody receptor genes of B lymphocytes.  Each line
-of a file may contain a different tree, terminated by a semi-colon.
+that occur in the antibody receptor genes of B lymphocytes.
 
 \figref{fig:newick} gives a description of Newick and a short fragment 
 of example data.  Despite the relative complexity of the structure of the data,
@@ -226,14 +224,6 @@ data containts two alarm records.  Extra newlines
 were inserted mid-record so the data would fit on a page.}
   \label{fig:darkstar-records}
 \end{figure*}
-
-Another use of recursion is to define homogenous, arbitrary-length
-sequences. Such sequences can be described in \padsc{}with the
-built-in\kw{Parray} type constructor. In \padsml{}, building such a
-construct into the language, then, becomes a matter of efficiency, not
-expressive power. The only thing lacking, then, is the ability to
-define a list construct for any element. We meet this need with the
-polymorphic descriptions, which we describe next.
   
 \subsection{Polymorphic Descriptions}
 
@@ -241,11 +231,11 @@ The last key feature of \padsml{} is the ability to define
 parameterized descriptions.  In \padsc, description parameters were
 limited to values.  In \padsml, descriptions maybe parameterized by
 both values and types.  Type parameterization allows descriptions to
-be reused at a variety of different types.  This feature helps make
+be reused with a variety of different types.  This feature helps make
 data descriptions more concise and allows programmers to define
 convenient libraries of reusable description components. For example,
 the \cd{Plist} type that appears in both the \dibbler{} and Newick
-formats, is such a reuseable component.
+formats is such a reuseable component.
 
 Our final example, shown in Figure~\ref{fig:darkstar-records}, will
 illustrate the usefulness of descriptions parameterized by both types
@@ -254,7 +244,7 @@ This example displays alarm data recorded by a network link monitor
 used by the \darkstar{} project at AT\&T.  Each alarm signals some
 problem with a network link.
 
-Now, at this point, we could write out an English description
+Now, at this point, we could write an English description
 of the \darkstar{} data, and indeed, in an earlier version of this paper
 we did so.  However, English is a terrible specification language
 for ad hoc data, and every description we have attempted to give has not 
@@ -271,34 +261,24 @@ which is shown in \figref{fig:darkstar-ml}.
 \end{figure}
 
 One of the interesting facets of this data source is the fact that it
-contains multiple different types of name-value pairs.  In the second
+contains multiple different kinds of name-value pairs.  In the fifth
 definition from the top, \cd{Pnvp}, we take advantage of both the type
 and value parameterization of types to encode all the different
-variations.\footnote{This fragment of code contains both types
-  \cd{Pstring} and \cd{string}.  These types are subtly different as
-  the first is the type of a ??? containing both a string
-  representation and a parse descriptor whereas the second is an
-  ordinary string.  The reader can safely ignore the distinction for
-  now.}  The type parameters are specified to the left of the type
-name, as is customary in ML.  To the right of the type name in
-parentheses, we give the value parameter and its type.  In the case of
-\cd{Pnvp}, there is a type parameter name \cd{Alpha} and a value
-parameter named \cd{p}.  Informally, \cd{Alpha pnvp(p)} is a
+variations. The type parameters are specified to the left of the type
+name, as is customary in \ml{}.  To the right of the type name, in
+parentheses, we give the value parameter and its (\ml{}) type.  In
+the case of \cd{Pnvp}, there is a type parameter named \cd{Alpha} and
+a value parameter named \cd{p}.  Informally, \cd{Alpha Pnvp(p)} is a
 name-value pair where the value is described by \cd{Alpha} and the
-name must satisfy the predicate \cd{p}.  More precisely, \cd{Pnvp} is
-defined to be a record with three fields.  The first field of the
-record has been given a constrained type. Data \cd{d} satisfies this description if it
-satisfies \cd{T} and boolean \cd{e} evaluates to true when the parsed
-representation of \cd{d} is substituted for \cd{x}.  If the boolean
-evaluates to false, the data contains a semantic error.
+name must satisfy the predicate \cd{p}.
 
 The \cd{Pnvp} type is used in both of the following type definitions.
 In the case of the \cd{Nvp} definition, the predicate is instantiated
-with a test for a specific string but the type parameter remains 
-abstract.  In the \cd{Nvp\_a} 
-definition, the name can be arbitrary, but the value must have 
-type string. Later in the description, \cd{Nvp}'s
-are used with ip addresses, timestamps and integers. 
+with a test for a specific string but the type parameter remains
+abstract.  In the \cd{Nvp\_a} definition, the name can be arbitrary,
+but the value must be a string terminated by a semicolon or vertical
+bar. Later in the description, \cd{Nvp}'s are used with ip addresses,
+timestamps and integers.
 
 % The source type is an array of \cd{alarm}s, where each alarm is a
 % \cd{raw\_alarm}, constrained to ensure that the alarm number is
@@ -318,16 +298,17 @@ are used with ip addresses, timestamps and integers.
 % the string as an argument. 
 
 The \darkstar{} description also introduces a new form of datatypes,
-appearin in the \cd{Info} type.  This datatype is parameterized by an
-\cd{alarm\_code}.  Rather than determine the branch of the datatype to
-choose based on the data about to be parsed, the decision is made
-based on the \cd{alarm\_code}, data which has likely been extracted
-from some previous point in the source.  More specifically, if the
-alarm code is \cd{5074}, the format specification given by the
-\cd{Details} constructor will be used to parse the current data.
-Otherwise, the format given by the \cd{Generic} constructor will be
-used to parse the current data. Such descriptions are called
-\textit{switched} datatypes.
+called \textit{switched} datatypes. Rather than determine which branch
+of the datatype to choose based on the data about to be parsed, a
+switched datatype makes the decision based on the value of a
+user-specified \ocaml{} expression, which likely references parsed
+data from earlier in the data source. The \cd{Info} type is a switched
+datatype, choosing the appropriate variant based on its
+\cd{alarm\_code} parameter.  More specifically, if the alarm code is
+\cd{5074}, the format specification given by the \cd{Details}
+constructor will be used to parse the current data.  Otherwise, the
+format given by the \cd{Generic} constructor will be used to parse the
+current data.
 
 Another construct new to the \darkstar{} description is the type qualifier
 \cd{omit}. We use \cd{omit} in the \cd{Service} datatype to specify

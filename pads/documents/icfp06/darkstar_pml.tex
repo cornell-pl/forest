@@ -1,10 +1,11 @@
 \begin{code}\scriptsize
 \kw{let} gmt = Pads.timezone\_of\_string "GMT"
-\mbox{}
 \kw{ptype} Timestamp = 
    Ptimestamp\_explicit\_FW(8, "%H:%M:%S", gmt)
 \kw{ptype} Pip = Puint8 * '.' * Puint8 * '.' * 
    Puint8 * '.' * Puint8
+(* Pstring terminated by semicolon or vertical bar. *)
+\kw{ptype} SVString = Pstring\_SE("/;|\\\\|/")
 \mbox{}
 (* Generic name value pair. Accepts predicate 
    over name as argument.  *)
@@ -16,9 +17,6 @@
 (* Name value pair with name specified. *)
 \kw{ptype} (Alpha) Nvp(name:string) = 
    Alpha Pnvp(fun s -> s = name)
-\mbox{}
-(* Pstring terminated by semicolon or vertical bar. *)
-\kw{ptype} SVString = Pstring\_SE("/;|\\\\|/")
 \mbox{}
 (* Name value pair with any name. *)
 \kw{ptype} Nvp\_a = SVString Pnvp(fun \_ -> true)

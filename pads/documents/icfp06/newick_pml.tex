@@ -2,12 +2,15 @@
 \kw{ptype} Semicolon = Pcharlit(';')
 \kw{ptype} Rparen= Pcharlit(')')
 \mbox{}
-\kw{ptype} Entry = {
-  name : Pstring(':');
-  ':';
-  dist : Pfloat32
-}
+\kw{ptype} Entry = \{
+  name : Pstring(':'); ':'; dist : Pfloat32
+\}
 \mbox{}
 \kw{pdatatype} Tree =
   Interior of '(' * (Tree, Semicolon, Rparen) Plist * ')'
 | Leaf of Entry\end{code}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
