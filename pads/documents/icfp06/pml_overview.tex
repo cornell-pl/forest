@@ -2,17 +2,14 @@
 \section{Describing Data in \padsmlbig{}}
 \label{sec:padsml-overview}
 
+{\em
 To do:
 \begin{itemize}
-\item x base types
-\item x tuples,records
-\item x constraints
-\item x recursive,polymorphic, datatypes
-\item x value parameters.
-\item x switched datatypes
-\item x omitted values
-\item compare w/ pads/c
+\item compare w/ pads/c: key thing is to find compelling
+  comparisons. I think Newick is one (short and sweet). I suspect that
+  Darkstar/Regulus, which uses polymorphism heavily, should be the other.
 \end{itemize}
+}
 
 A \padsml{} description specifies the physical layout and semantic
 properties of an ad hoc data source.  
@@ -148,7 +145,7 @@ directives to parse a particular character (\cd{'|'}) or string
 (\cd{"0|"}) and fields with names.
 
 The second named field, \cd{att\_order\_num}, reveals two other
-proposed features of \padsml: dependency and constraints.  Here,
+features of \padsml: dependency and constraints.  Here,
 \cd{att\_order\_num} is constrained to be less than \cd{order\_num},
 the value parsed in an earlier field.  This is a relatively simple
 constraint on the correctness of the ad hoc data format.  In practice,
@@ -169,7 +166,7 @@ will it attempt to parse the second branch.  Notice how this semantics
 differs from similar constructs in regular expressions and
 context-free grammars, which non-deterministically choose between
 alternatives.  Fortunately, we have yet to come across an ad hoc data
-source where we wish we had nondeterministic choice.\footnote{\pads{}
+source where we wish we had nondeterministic choice.\footnote{\padsc{}
   can recognize string data based on regular expressions.
   Non-determinism here has been useful, but as it has been confined to
   parsing elements of the \cd{Pstring} base type, it has had no impact
@@ -193,38 +190,23 @@ erCaelA:0.38272):0.06516):0.03492):0.14265):0.63594,
 
 \subsection{Recursive Descriptions}
 
-The original \pads{} design contained analogues of all the simple type
-constructors described in the previous section.  Hence, although the
-syntax of types we just saw is more compact and more elegant than the
-C-style syntax of \pads, we have yet to add any expressive power.  The
-first real step forward for \padsml{} is the introduction of recursion
-through the datatype mechanism.  While recursion never appeared in the
-telecommunications and networking data sources \pads{} was initially
-designed for, it appears essential for describing a number of
-biological data sources we have encountered. Perhaps more
-fundamentally, homogenous, arbitrary-length sequences (described with
-the \kw{Parray} type constructor in \pads{}), which are critical in
-describing the telecommunications and networking data sources, can be
-written directly in \padsml{} using recursion. Building such a
-construct into the language, then, becomes a matter of efficiency, not
-expressive power.
-  
-A representative example of recursive, biological data comes courtesy
-of Steven Kleinstein, program coordinator of Princeton's Picasso
-project for interdisciplinary research in computational sciences.
-Kleinstein is in the process of building a simulator to study the
-proliferation of B lymphocytes during an immune response.  Data needed
-for his simulations is represented in a variant of the Newick format,
-which is a flat representation of trees used by many
-biologists~\cite{newick}.  In Newick, leaves of the tree are string
-labels followed by a colon and a number.  A parent node in the tree
-introduces a collection of children by placing a sequence of trees
-within parens.  Following the parens is a colon and a number, as is
-the case for the leaf node.  The numbers represent the ``distance''
-that separates the child from the parent.  In Kleinstein's case, the
-distance is the number of mutations that occur in the antibody
-receptor genes of B lymphocytes.  Each line of a file may contain a
-different tree, terminated by a semi-colon.
+Another powerful feature of \padsml{} is the ability to describe data
+sources with recursive structure.  A representative example of
+recursive, biological data comes courtesy of Steven Kleinstein,
+program coordinator of Princeton's Picasso project for
+interdisciplinary research in computational sciences.  Kleinstein is
+in the process of building a simulator to study the proliferation of B
+lymphocytes during an immune response.  Data needed for his
+simulations is represented in a variant of the Newick format, which is
+a flat representation of trees used by many biologists~\cite{newick}.
+In Newick, leaves of the tree are string labels followed by a colon
+and a number.  A parent node in the tree introduces a collection of
+children by placing a sequence of trees within parens.  Following the
+parens is a colon and a number, as is the case for the leaf node.  The
+numbers represent the ``distance'' that separates the child from the
+parent.  In Kleinstein's case, the distance is the number of mutations
+that occur in the antibody receptor genes of B lymphocytes.  Each line
+of a file may contain a different tree, terminated by a semi-colon.
 
 \figref{fig:newick} gives a description of Newick and a short fragment 
 of example data.  Despite the relative complexity of the structure of the data,
@@ -245,17 +227,25 @@ were inserted mid-record so the data would fit on a page.}
   \label{fig:darkstar-records}
 \end{figure*}
 
-\subsection{Parameterized Descriptions}
+Another use of recursion is to define homogenous, arbitrary-length
+sequences. Such sequences can be described in \padsc{}with the
+built-in\kw{Parray} type constructor. In \padsml{}, building such a
+construct into the language, then, becomes a matter of efficiency, not
+expressive power. The only thing lacking, then, is the ability to
+define a list construct for any element. We meet this need with the
+polymorphic descriptions, which we describe next.
+  
+\subsection{Polymorphic Descriptions}
 
-The second major innovation, and last key feature, of \padsml{} is the
-ability to define parameterized descriptions.  In \pads, description
-parameters were limited to values.  In \padsml, descriptions maybe
-parameterized by both values and types.  Type parameterization allows
-descriptions to be reused at a variety of different types.  This
-feature helps make data descriptions more concise and allows
-programmers to define convenient libraries of reusable description
-components. For example, the \cd{Plist} type that appears in both the
-\dibbler{} and Newick formats, is such a reuseable component.
+The last key feature of \padsml{} is the ability to define
+parameterized descriptions.  In \padsc, description parameters were
+limited to values.  In \padsml, descriptions maybe parameterized by
+both values and types.  Type parameterization allows descriptions to
+be reused at a variety of different types.  This feature helps make
+data descriptions more concise and allows programmers to define
+convenient libraries of reusable description components. For example,
+the \cd{Plist} type that appears in both the \dibbler{} and Newick
+formats, is such a reuseable component.
 
 Our final example, shown in Figure~\ref{fig:darkstar-records}, will
 illustrate the usefulness of descriptions parameterized by both types
@@ -344,11 +334,6 @@ Another construct new to the \darkstar{} description is the type qualifier
 that the parsed string literal should be omitted from the parsed
 data. We can do this because we can discern from the datatype constructor
 which string was found in the data source.
-
-\subsection{Complete Syntax}
-
-Appendix~\ref{app:syntax-dd} presents the complete syntax of
-\padsml{} data descriptions.
 
 %%% Local Variables: 
 %%% mode: latex

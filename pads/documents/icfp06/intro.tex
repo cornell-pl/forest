@@ -1,12 +1,12 @@
 \section{Introduction}
 \label{sec:intro}
 
+{\em
 To do:
 \begin{itemize}
 \item Update chart of data sources.
-\item Convert outlines to text.
 \end{itemize}
-
+}
 %% WHAT IS AD HOC DATA?
 
 An {\em ad hoc data format} is any non-standard data format for which
@@ -41,7 +41,7 @@ several ad hoc sources from the networking and telecommunication
 domains at AT\&T and from computational biology applications at
 Princeton.  Formats include ASCII, binary, and Cobol, with both fixed
 and variable-width records arranged in linear sequences and in
-tree-shaped or DAG-shaped hierarchies.  Even within one format, there
+tree-shaped hierarchies.  Even within one format, there
 can be a great deal of syntactic variability.  For example,
 \figref{fig:darkstar-records1} contains two records from the
 network-monitoring application.  Note that each record has different
@@ -71,37 +71,65 @@ parser's reuse in other applications.
 \begin{figure*}
 \begin{center}
 \scriptsize
-\begin{tabular}{@{}|l|l|l|}
+\begin{tabular}{@{}|l|l|l|l|l|}
 \hline
-\textbf{Name:} Use & Record Format (Size) 
-%& Size
-           & Common Errors \\ \hline\hline
-\textbf{Web server logs (CLF):}           & Fixed-column ASCII & Race conditions on log entry\\ 
-Measuring Web workloads  & ($\leq$12GB/week)  & Unexpected values\\ \hline
-\textbf{AT\&T provisioning data (\dibbler{}):} & Variable-width ASCII & Unexpected values \\ 
-Monitoring service activation  & (2.2GB/week) & Corrupted data feeds \\ \hline
-\textbf{Call detail:}                   & Fixed-width binary &  Undocumented data\\
-Fraud detection                         &   (\appr{}7GB/day) & \\ \hline 
-\textbf{AT\&T billing data (\ningaui{}):}      & Cobol      & Unexpected values\\ 
-Monitoring billing process  &  ($>$250GB/day) & Corrupted data feeds \\ \hline
-\textbf{IP backbone data (\darkstar{}):}  & ASCII & Multiple representations \\
-{Network Monitoring}       &  ($\ge$ 15 sources,\appr{}15 GB/day)  & of missing values \\
-          & & Undocumented data \\ \hline
-\textbf{Netflow:}               & Data-dependent number of & Missed packets\\ 
-{Network Monitoring}  & fixed-width binary records & \\ 
-                      & ($\ge$1Gigabit/second) & \\ \hline
-\textbf{Gene Ontology data:}    & Variable-width ASCII & \\
-Gene-gene correlations in Magic & in DAG-shaped hiearchy & \\\hline
-\textbf{Newick data}              & Fixed-width ASCII & Manual entry errors \\
-Immune system response simulation & in tree-shaped hierarchy 
-& \\
-\hline
+Name: Use                           & Representation    & Processing Problems \\ \hline\hline
+Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
+Gene Product Information 	      & ASCII records &  \\ \hline
+SDSS/Reglens Data~\cite{mandelbaum+:reglens}:                & Floating point numbers, & Repeated multiplicative error \\
+Weak gravitational lensing analysis   & among others & \\ \hline
+Web server logs (CLF):                & Fixed-column      & Race conditions on log entry\\ 
+Measuring web workloads               & ASCII records     & Unexpected values\\ \hline
+AT\&T Call detail data:                          & Fixed-width       & Undocumented data\\
+Phone call fraud detection            & binary records  & \\ \hline 
+AT\&T billing data:                 & Cobol             &  Unexpected values\\ 
+Monitoring billing process          &                   & Corrupted data feeds \\ \hline
+Newick:   Immune                    & Fixed-width ASCII records & None \\ 
+system response simulation          & in tree-shaped hierarchy &\\ \hline                                
+OPRA:                               & Mixed binary \& ASCII records 
+                                                       & 100-page informal \\
+Options-market transactions         & with data-dependent unions & documentation \\ \hline
+Palm PDA:                           & Mixed binary \& character & No high-level  \\
+Device synchronization              & with data-dependent constraints & documentation available\\ \hline
 \end{tabular}
-\normalsize
 \caption{Selected ad hoc data sources.}
 \label{figure:data-sources}
 \end{center}
 \end{figure*}
+
+% \begin{figure*}
+% \begin{center}
+% \begin{tabular}{@{}|l|l|l|}
+% \hline
+% \textbf{Name:} Use & Record Format (Size) 
+% %& Size
+%            & Common Errors \\ \hline\hline
+% \textbf{Web server logs (CLF):}           & Fixed-column ASCII & Race conditions on log entry\\ 
+% Measuring Web workloads  & ($\leq$12GB/week)  & Unexpected values\\ \hline
+% \textbf{AT\&T provisioning data (\dibbler{}):} & Variable-width ASCII & Unexpected values \\ 
+% Monitoring service activation  & (2.2GB/week) & Corrupted data feeds \\ \hline
+% \textbf{Call detail:}                   & Fixed-width binary &  Undocumented data\\
+% Fraud detection                         &   (\appr{}7GB/day) & \\ \hline 
+% \textbf{AT\&T billing data (\ningaui{}):}      & Cobol      & Unexpected values\\ 
+% Monitoring billing process  &  ($>$250GB/day) & Corrupted data feeds \\ \hline
+% \textbf{IP backbone data (\darkstar{}):}  & ASCII & Multiple representations \\
+% {Network Monitoring}       &  ($\ge$ 15 sources,\appr{}15 GB/day)  & of missing values \\
+%           & & Undocumented data \\ \hline
+% \textbf{Netflow:}               & Data-dependent number of & Missed packets\\ 
+% {Network Monitoring}  & fixed-width binary records & \\ 
+%                       & ($\ge$1Gigabit/second) & \\ \hline
+% \textbf{Gene Ontology data:}    & Variable-width  & \\
+% Gene product information & ASCII records & White-space ambiguities\\\hline
+% \textbf{Newick data}              & Fixed-width ASCII & Manual entry errors \\
+% Immune system response simulation & in tree-shaped hierarchy 
+% & \\
+% \hline
+% \end{tabular}
+% \normalsize
+% \caption{Selected ad hoc data sources.}
+% \label{figure:data-sources}
+% \end{center}
+% \end{figure*}
 
 \begin{figure}
   \centering
@@ -144,8 +172,8 @@ records for examination off-line, to simply discarding erroneous or
 unexpected values.  One of the most challenging aspects of processing
 ad hoc data is that erroneous data is often more important than
 error-free data, because it may indicate, for example, that two
-systems are failing to communicate.  Writing code that is reliably
-\emph{error aware}, however, is difficult and tedious.
+systems are failing to communicate.  Writing code that reliably
+handles erros, however, is difficult and tedious.
 
 %% High-volume
 The high volume of ad hoc data sources is another challenge.
@@ -167,13 +195,14 @@ halt or delay normal processing.
 
 % Contivo, Pervasive, SAS ... We need to say something for real in the
 % final paper. 
-Commercial data-management products for ad hoc data address 
-some of these problems, but to our knowledge, none can handle all the variability
-in formats that we have encountered, nor do they support error-aware
-processing of high volume sources.  Without tools adequate to the
-task, analysts often write custom programs in \C{} or \perl{}.
-Unfortunately, writing parsers, transformers, and printers by hand is
-tedious and error-prone.  These tasks are complicated by lack of
+{\em Need to rewrite the next sentence, I'm just not quite sure what
+  needs to be said here, if anything.}  Commercial data-management
+products for ad hoc data address some of these problems, but to our
+knowledge, none can handle all the variability in formats that we have
+encountered, nor do they support error-aware processing of high volume
+sources.  Without tools adequate to the task, analysts often write
+custom programs in \C{} or \perl{}.  Unfortunately, writing parsers
+this way is tedious and error-prone, complicated by the lack of
 documentation, convoluted encodings designed to save space, the need
 to produce efficient code, and the need to handle errors robustly to
 avoid corrupting down-stream data.  Moreover, the parser writers'
@@ -184,109 +213,112 @@ sharing the knowledge with others nearly impossible.
 %% OUR SOLUTION & CONTRIBUTIONS
 \subsection{\padsmlbig{}}
 
-% What is PADS/ML?
-% \begin{itemize}
-% \item \padsml{} is a declarative data description language.
-% \item user describes physical format and semantic constraints.
-% \item based on ML type structure. closely corresponds to rep and pd
-%   type. Expression are from ML.
-% \item descriptions serve as formal, precise, concise documentation
-%   (compare to English).
-% \item Descriptions compiled to robust parsers. talk about rep and pd
-%   types here.
-% \item Can leverage descriptions to generate arbitrary data analysis tools.
-% \end{itemize}
 Our solution to the challenges of ad hoc data processing is \padsml{},
-a declarative language for describing data sources.  With \padsml{}, a
+a declarative language for describing data sources. With \padsml{}, a
 data analyst can describe both the physical format of the data and any
-of its relevant semantics constraints. Such descriptions provide two
-benefits to the data analyst: first, a description in \padsml{} serves
-as a precise, formal, and concise documentation for the data source.
-Any reader who has encountered data format descriptions written in
-English (or other spoken langauges) will quickly appreciate this
-benefit. The second, perhaps more widely appreciable, benefit is that,
-from a description, the \padsml{} compiler can generates a large
-selection of robust data processing tools.
+of its relevant semantics constraints. From a description, the
+\padsml{} compiler can then generate a large selection of robust data
+processing tools specific to that description. In addition, a
+description in \padsml{} serves as precise, formal, and concise
+documentation for the data source.  Any reader who has encountered
+data format descriptions written in English (or other spoken
+languages) will quickly appreciate this benefit. Furthermore, as
+modifying a description is sufficient to modify the behaviour of the
+generated tools, the descriptions consistently remain up-to-date with
+respect to the data processing tools.
 
-One particularly essential tool generated from a description is robust
-parser for the data source, written in the functional programming
-langauage \ocaml{}.  The parser maps raw data from the data source
-into two in-memory data structures: a canonical representation of the
-parsed data, and a \textit{parse descriptor} (PD), a meta-data object
-detailing properties of the parsing process for the paired
-representation. The structure of the parse descsriptor mimics that of
-the representation, with a given portion of the parse descriptor
-reporting on the corresponding portion of the data representation. A
-particular role of the PD is to report errors encountered in parsing a
-peice of data.  This approach allows the parsers to provide the user
-with a detailed profile of the errors perceived in the data source as
-a first-class value, rather than as error messages printed on
-\textit{stderr}.
+One particularly essential tool that \padsml{} generates from a
+description is a robust parser for the data source, expressed in the
+functional programming language \ocaml{}.  The parser maps raw data
+from the data source into two data structures in memory: a canonical
+representation of the parsed data, and a \textit{parse descriptor}
+(PD), a meta-data object detailing properties of the parsing process
+for the corresponding representation. The structure of the parse
+descsriptor mimics that of the representation, with a given element of
+the parse descriptor precisely reporting on the corresponding portion
+of the data representation. A particular role of the PD is to report
+errors encountered in parsing the data.  This approach provides the
+user with programmatic access to a detailed profile of the parsing
+errors for the data source.
 
-Like the parser, the types of the representation and parse descriptor
-produced by the parser are derived automatically from the data description. The
-constructs of \padsml{} are based on the type structure of the ML
-family of languages. Therefore, the compiler can map the description
-into type declarations in ML, with little change.
+% Like the parser, the types of the representation and parse descriptor
+% produced by the parser are derived automatically from the data
+% description. The constructs of \padsml{} are based on the type
+% structure of the ML family of languages. Therefore, the compiler can
+% map the description into type declarations in ML with little change.
 
-% \begin{itemize}
-% \item PADS/ML is based on experience in designing and implemented
-%   PADS/C as well as semantics.
-% \item Differs in two key respects.
-% \item Supports concise and elegant descriptions via parameterized,
-%   recursive datatypes.
-% \item PADS/C generates tools directly (from within compiler).
-% \item PADS/ML has infrastructure for tool development.
-% \item Developer writes generic tool. Compiler generates description
-%   specific ``specializer'' which takes generic tool and specializes it
-%   to the description.
-% \item 
-% \end{itemize}
+
+An essential benefit of the \pads{} approach to data processing is the
+high return-on-investment that a user derives from writing a
+description of their data. To this end, we aim to generate a broad
+suite of data analysis and processing tools from a single
+specification. To achieve this goal, it is critical that outside
+developers be able to easily add their own tools - based on their
+unique expertise - to our tool suite.  For \padsml{}, we have created
+a new framework for tool generation whereby a large class of tool
+generators can be developed external to the compiler.  New tools need
+only match a clearly-specified, generic interface, specified as an ML
+signature. Correspondingly, the compiler generates, for each
+description, a tool that can take any tool that implements the
+interface and specialize it for use with the particular description.
+\emph{Could use last sentence here.}
 
 \padsml{} is closely related to previous work on
-\pads{}~\cite{pads-pldi}, and can be seen as a natural evolution of
-that work. \padsml{} is different than \pads{} in three key respects.
-First, it is targeted at the ML family of languages. Second, \pads{}
-types can be parameterized by expressions. \padsml{} adds the ability
-to parameterize types by other types, thereby support more concise and
-elegant descriptions along with code reuse.
+\padsc{}~\cite{pads-pldi}~\footnote{We refer to the original \pads{}
+  language as \padsc{} to help the reader distinguish between \padsc{}
+  and \padsml{}.}, and can be seen as a natural evolution of that
+work.  \padsml{} is different than \padsc{} in three key respects.
+First, it is targeted at the ML family of languages. Second, \padsml{}
+adds the ability to parameterize types by other types, resulting in
+more concise and elegant descriptions though code reuse. Third, with
+\padsml{}, we have taken a substantially different approach to
+generating tools that process the data after parsing. In \padsc{}, all
+tools are generated directly from within the compiler.  Therefore,
+developing a new tool generator for \padsc{} is a complex and
+difficult process requiring a deep understanding of the core compiler
+code base.
 
-Third, with \padsml{}, we have taken a substantially different
-approach to generating tools beyond the parser. An essential benefit
-of the \pads{} approach to processing is the high return-on-investment
-that a user derives from writing a description of their data. To this
-end, we aim to generate a broad suite of data analysis and processing
-tools from a single specification. To achieve this goal, it is
-critical that outside developers be able to easily add their own tools
-- based on their unique expertise - to our tool suite. However, in
-\pads{}, all tools are generated directly from within the compiler.
-Therefore, developing a new tool generator for \pads{} is a complex
-and difficult process requiring a deep understanding of the core
-compiler code base.
+\emph{brief overview of other related work here?}
 
-With \padsml{}, we have created a new framework for tool generation
-whereby a large class of tool generators can be developed external to
-the compiler.  New tools need only match a well-specified, generic
-tool interface, specified as an ML signature. Correspondingly, the
-compiler generates, for each description, a tool that can take any
-such generic tool and specialize it for use with the particular
-description.
-
-Contributions
+In summary, this work makes the following contributions:
 \begin{itemize}
-\item design of a data description language for functional programmers.
-\item as well as pleasing the ICFP crowd, functional programming
-  supports data processing and transformation much better than C -- it
-  lifts the level of abstraction substantially.
-\item better tool support than PADS/C: generic interfaces for external
-  tool development and example tools
-\item new features: datatypes, polymorphism
-\item theory to support polymorphism. Substantially simplified theory and
-meta-theory of recursive types.
-\item implementation:
-\item "types as modules" implementation stratgy -- exploits the strengths of FP
-\item a natural, well-motivated challenge example for FP researchers
-  in type-directed programming and advanced module design
+\item We have designed a data description language for use with
+  functional programming languages. In addition to providing
+  functional programmers with a data description language, we
+  feel that functional programming provides better support for data
+  processing and transformation compared with conventional imperative
+  languages like \C{} and \java{}. Therefore, the combination of
+  \padsml{} and \ocaml{} is a significant step towards a unified
+  language for data description, transformation and analysis.
+\item \padsml{} adds the ability to parameterize types by other types
+  and supports descriptions of variance and recursion in a data source
+  in a single construct (closely related to ML's algebraic datatypes).
+  Together, these features allow for more concise and elegant
+  descriptions than other data description languages, including
+  \padsc{}.
+\item We have implemented \padsml{} by translating descriptions into
+  \ocaml{} modules that can be used by any \ocaml{} program. We use an
+  innovative ``types as modules'' implementation strategy, in which
+  \padsml{} types become modules and \padsml{} type constructors
+  become functors. This design exploits the strengths of the ML module
+  system to provide the user with an intuitive and convenient
+  interface to the generated libraries.
+\item Our ``types as modules'' implementation strategy encountered the
+  limits of the \ocaml{} module system in multiple ways. It therefore
+  provides a natural, well-motivated challenge example for
+  functional-programming researchers in type-directed programming and
+  advanced module design.
+\item \padsml{} provides better support than \padsc{} for development of tool
+  generators by external parties. We present a generic interface
+  against which tool generators can be written and a number of
+  examples generators that match the interface.
+\item We extend our earlier work on the Data Description Calculus
+  (\ddcold{}) to include support for type-parameterized types. We also
+  substantially simplify the theory of recursive types, resulting in
+  an overall simplification in the meta-theory of the extended DDC.
+  Finally, we have proven, for the extended calculus, that generated
+  parsers produce data representations and parse descriptors of the
+  correct type.
 \end{itemize}
 
 % \subsection{\padsmlbig{} Architecture}
