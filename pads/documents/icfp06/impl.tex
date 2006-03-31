@@ -127,31 +127,34 @@ three submodules, each corresponding to one named type.
 \subsection{Example: Data Processing}
 \label{sec:ex-process}
 
-We begin with a simple example in which we process a list of
-integers. Below, we show a description of a data source that contains
-a list of ASCII-encoded integers, separated by a semicolon and
-terminated by the end of the file.
+We begin with a simple example in which we process a triple of
+integers. Below is their description:
 \begin{code}\scriptsize
-ptype Source = (Pint32,Semicolon, Peof) Plist\end{code}
+ptype Source = Pint * '|' * Pint * '|' * Pint\end{code}
 Next, we show a complete \ocaml{} program that finds the average of
 the integers in the list. (Note that we assume that the
-name of the description file is ``intList.pml,'' resulting in an
-\ocaml{} module \cd{IntList}.)
+name of the description file is ``intTriple.pml,'' resulting in an
+\ocaml{} module \cd{IntTriple}.)
 \begin{code}\scriptsize
 \kw{open} Pads
-\kw{module} S = IntList.Source
+\kw{let} ((i1,i2,i3),pd) = parse_source IntTriple.Source.parse  ``input.dat''
+\kw{let} avg = match get_pd_hdr pd with
+    \{error_code = Good\} -> (i1 + i2 + i3)/3
+  | _ -> 0\end{code}
 
-\kw{let} get_sum sum len = function
-  S.Nil -> sum,len
-| S.Cons(_,i,is) -> sum (sum + i) (len + 1) is
-  
-\kw{let} (rep,pd) = Tester.parse_with_from_file S.parse ``input.txt''
+In this program, we parse the data, check that it is valid and then
+average the values. The function \cd{parse_source} takes a parsing
+function for a data source and a file name in which the data is
+stored, and parses the source. It is a covenience function that
+simplifies the \padsml{} interface by using standard, default settings
+for the runtime parameters. We use this function (or a variant) for
+all of our test cases. 
 
-\kw{let} sum = match get_pd_hdr pd with
-            \{error_code = Good\} -> get_sum 0 0 rep
-          | _ -> 0\end{code}
-
-
+In order to ensure that the data is valid, the program projects the
+parse descriptor header from the parse descriptor \cd{pd} and checks
+that the error code is set to \cd{Good}.  This error code is defined
+in the \cd{Pads} module, and indicates that the data is syntactically
+and semantically valid.
 
 \subsection{Example: Transformation}
 \label{sec:ex-trans}
@@ -193,10 +196,11 @@ name of the description file is ``intList.pml,'' resulting in an
 
 (* splitAlarm: RA.rep -> DA.rep option * GA.rep option *)
 \kw{let} splitAlarm ra =
-    \kw{let} h = \{H.alarm=ra.RA.alarm; H.start=ra.RA.start; 
-              H.clear=ra.RA.clear; H.code=ra.RA.code;
-              H.src\_dns=ra.RA.src\_dns; H.dest\_dns=ra.RA.dest\_dns;
-              H.service=ra.RA.service\};
+    let h = 
+       \{H.alarm=ra.RA.alarm; H.start=ra.RA.start; 
+         H.clear=ra.RA.clear; H.code=ra.RA.code;
+         H.src\_dns=ra.RA.src\_dns; H.dest\_dns=ra.RA.dest\_dns;
+         H.service=ra.RA.service\};
     in match ra with
         \{info=Details(d)\} -> 
         (Some \{DA.header = h; DA.details = d\}, None)
@@ -275,7 +279,16 @@ facilitate this task.
 \label{fig:ex-data-clean}
 \end{figure}
 
-\figref{fig:ex-data-clean} gives such an example.  It examines all
+\figref{fig:ex-data-clean} gives such an example. The \cd{splitEntry}
+function checks its argument \cd{entry} to determine whether it is
+\cd{Good}. Because the function needs to access \cd{e}'s descriptor
+for filtering, it first projects the parse descriptor header from the
+entry.  The \cd{splitEntry} could then be used in some other function
+to split a standard \dibbler{} source into two separate sources, one
+with clean records and the other (potentially) invalid records.
+
+
+It examines all
 entries in a \dibbler{} data source, placing good entries into one
 output list and bad entries into another.  The good entries may then
 be further processed or loaded into a database without corrupting the
@@ -283,13 +296,6 @@ valuable data therein.  A human might examine the bad entries off-line
 to determine the cause of errors or to figure out how to fix the
 corrupted entries.
 
-The \cd{splitEntry} function checks its argument \cd{entry} to
-determine whether it is \cd{Good} (syntactically and semantically
-valid).  Because the function needs to access \cd{e}'s descriptor for
-filtering, it first projects the parse descriptor header from the
-entry.  The \cd{splitEntry} could then be used in some other function
-to split a standard \dibbler{} source into two separate sources, one
-with clean records and the other (potentially) invalid records.
 
 
 %%% Local Variables: 
