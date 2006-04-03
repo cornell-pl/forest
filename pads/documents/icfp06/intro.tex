@@ -4,8 +4,7 @@
 {\em
 To do:
 \begin{itemize}
-\item Update chart of data sources to include citations to available
-  data sources: opra, web server logs, newick, palm?
+\item update text to include description of tools generated using the framework.
 \end{itemize}
 }
 %% WHAT IS AD HOC DATA?
@@ -18,7 +17,7 @@ arising in industries as diverse as finance, health care,
 transportation, and telecommunications as well as in scientific
 domains, such as computational biology and physics.
 \figref{figure:data-sources} summarizes a variety of such formats,
-which include ASCII, binary, and Cobol encodings, with both fixed and
+including ASCII, binary, and Cobol encodings, with both fixed and
 variable-width records arranged in linear sequences and in tree-shaped
 hierarchies.  Even a single format can exhibit a great deal of
 syntactic variability.  For example, \figref{fig:darkstar-records1}
@@ -31,16 +30,17 @@ Common characteristics of ad hoc data make it difficult to
 perform even basic data-processing tasks.  To start, data analysts
 typically have little control over the format of the data they are
 given;  the data arrives ``as is,'' and the analysts
-who receive it can only thank the supplier, not request a more
+can only thank the suppliers, not request a more
 convenient format.  Hence even if all they want to do is use 
 relational or XML tools, they must first convert the data into the
 necessary format, which requires a parser.  
 The documentation accompanying ad hoc data is often incomplete,
-inaccurate, or missing entirely, which makes writing such a parser
-more difficult.  
+inaccurate, or missing entirely, which makes understanding the data
+source more difficult.
+
 
 Another challenge is the range of errors that occur in ad hoc data and
-the variety of application-dependent strategies for coping with them.
+the variety of application-dependent strategies for coping with those errors.
 Some common errors, listed in \figref{figure:data-sources}, include
 undocumented aspects of the data, corrupted data, missing data, and
 multiple representations for missing values.  Sources of errors
@@ -129,8 +129,8 @@ Device synchronization              & with data-dependent constraints & document
  3:|3004097201|5074|dns1=bob.com;dns2=alice.com|src_addr=192.168.0.10;
  dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;cycle_time=17412|SPECIAL
 \end{verbatim}  
-  \caption{Simplified network-monitoring data. Newlines 
-inserted for legibility.}
+  \caption{Simplified network-monitoring data. We inserted the newline
+    after the ';' to improve legibility.}
   \label{fig:darkstar-records1}
 \end{figure*}
 
@@ -164,19 +164,16 @@ halt or delay normal processing.
 
 %% EXISTING SOLUTIONS
 
-% Contivo, Pervasive, SAS ... We need to say something for real in the
-% final paper. 
-{\em Need to rewrite the next sentence, I'm just not quite sure what
-  needs to be said here, if anything.}  Commercial data-management
-systems provide some support for loading ad hoc sources, but to our
-knowledge, none can handle all the variability in formats that we have
-encountered, nor do they support error-aware processing of high volume
-sources.  Without tools adequate to the task, analysts often write
-custom programs in \C{} or \perl{}.  Unfortunately, writing parsers
-this way is tedious and error-prone, complicated by the lack of
-documentation, convoluted encodings designed to save space, the need
-to produce efficient code, and the need to handle errors robustly to
-avoid corrupting down-stream data.  Moreover, the parser writers'
+To manage ad hoc data, analysts typically write custom programs in
+\C{} or \perl{} to parse and otherwise manipulate the data. 
+Unfortunately, writing such parsers is tedious and error-prone,
+complicated by the lack of documentation, convoluted encodings
+designed to save space, and the need to produce efficient code.
+Handling errors is a no-win situation.  If analysts insert code
+to detect all possible errors, then the error-related code dominates
+the rest of the program. If they don't, they run the risk of
+failing to detect a critical error and possibly corrupting valuable
+down-stream data.  Moreover, the parser writers'
 hard-won understanding of the data ends up embedded in parsing code,
 making long-term maintenance difficult for the original writers and
 sharing the knowledge with others nearly impossible.
@@ -198,7 +195,7 @@ Our solution to the challenges posed by ad hoc data is \padsml{},
 a declarative language for describing data sources. With \padsml{}, a
 data analyst can describe both the physical format of the data and any
 expected semantic properties. From such a description, the
-\padsml{} compiler can generate robust data
+\padsml{} compiler generates robust data
 processing tools specific to the description. As an additional benefit, 
 \padsml{} descriptions can serve as precise, formal, and concise
 documentation for the associated data sources.  Any reader who has encountered
@@ -250,7 +247,7 @@ description.  Examples of such tools include {\em add examples}.
   and \padsml{}.}, and can be seen as a natural evolution of that
 work.  \padsml{} is different than \padsc{} in three key respects.
 First, it is targeted at the ML family of languages. 
-This change facilates post-parsing processing, particularly data
+This change facilitates post-parsing processing, particularly data
 transformations, which benefit enormously from ML's pattern matching
 and generally high level of abstraction. 
 Second, \padsml{}
