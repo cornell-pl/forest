@@ -1,24 +1,18 @@
 \begin{code}\scriptsize
-\kw{ptype} Semicolon = Pcharlit(';')
-\kw{ptype} Vbar = Pcharlit('|')
-\mbox{}
-\kw{ptype} Pn\_t = Puint64
-\kw{ptype} Pzip = Puint32
-\mbox{}
-\kw{ptype} Summary\_header = "0|" * Puint32 * Peor
+\kw{ptype} Summary\_header = "0|" * Ptimestamp * Peor
 \mbox{}
 \kw{pdatatype} Dib\_ramp = 
   Ramp of Pint 
 | GenRamp of "no\_ii" * Pint
 \mbox{}
 \kw{ptype} Order\_header = \{ 
-    order\_num : Pint;  
+     order\_num : Pint;  
 '|'; att\_order\_num : [i:Pint | i < order\_num];  
 '|'; ord\_version : Pint;  
-'|'; service\_tn : Pn\_t Popt;
-'|'; billing\_tn : Pn\_t Popt;  
-'|'; nlp\_service\_tn : Pn\_t Popt;  
-'|'; nlp\_billing\_tn : Pn\_t Popt;  
+'|'; service\_tn : Pphone Popt;
+'|'; billing\_tn : Pphone Popt;  
+'|'; nlp\_service\_tn : Pphone Popt;  
+'|'; nlp\_billing\_tn : Pphone Popt;  
 '|'; zip\_code : Pzip Popt;  
 '|'; ramp : Dib\_ramp;  
 '|'; order\_sort : Pstring('|');  
@@ -28,10 +22,13 @@
 '|'
 \} 
 \mbox{}
-\kw{ptype} Event  = Pstring('|') * '|' * Puint32
-\kw{ptype} Events = (Event,Vbar,Peor) Plist
+\kw{ptype} Vbar = Pcharlit('|')
+\mbox{}
+\kw{ptype} Event  = Pstring('|') * '|' * Ptimestamp
+\kw{ptype} Events = (Event, Vbar, Peor) Plist
 \mbox{}
 \kw{ptype} Order  = Order\_header * Events
 \kw{ptype} Orders = (Order, Peor, Peof) Plist
 \mbox{}
-\kw{ptype} Source = Summary\_header * Orders\end{code}
+\kw{ptype} Source = Summary\_header * Orders
+\end{code}

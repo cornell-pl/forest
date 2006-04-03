@@ -17,18 +17,19 @@ of types: base types describe atomic data, while structured types
 describe compound data built from simpler pieces.  Examples of base
 types include ASCII-encoded, 8-bit unsigned integers (\cd{Puint8}) and
 32-bit signed integers (\cd{Pint32}), binary 32-bit integers (\cd{Pbint32}),
-dates (\cd{Pdate}), strings (\cd{Pstring}), and IP addresses
-(\cd{Pip}).  Semantic conditions for such base types include checking
+dates (\cd{Pdate}), strings (\cd{Pstring}), zip codes (\cd{Pzip}),
+phone numbers (\cd{Pphone}), and IP addresses (\cd{Pip}).  Semantic
+conditions for such base types include checking 
 that the resulting number fits in the indicated space, \ie, 16-bits
 for \cd{Pint16}.
 
-Base types (and other types) may be parameterized by values taken from
-\ml{}.  This mechanism serves both to reduce the number of base types
+Base types (and other types) may be parameterized by \ml{} values. 
+This mechanism serves both to reduce the number of base types
 and to permit the format and properties of later portions of the data
 to depend upon earlier portions.  For example, the base type
 \cd{Puint16_FW(3)} specifies an unsigned two byte integer physically
 represented by exactly three characters. The base type \cd{Pstring}
-takes a character indicating the \textit{terminator character}, \ie{},
+takes an argument indicating the \textit{terminator character}, \ie{},
 the character in the source that immediately follows the string.
 
 To describe more complex data, \padsml{} provides a collection of
@@ -56,15 +57,15 @@ from data sources we have encountered in practice.
 \end{figure*}
 
 The bread and butter of any \padsml{} description are the simple
-structured types: tuple and record for expressing sequences of data;
+structured types: tuples and records for expressing sequences of data;
 sum types, realized here as datatypes, for expressing alternatives;
-and singleton types for expressing the placement of particular
+and singletons for expressing the placement of particular
 characters in the data.  In this section, we explain each of these
 items by building a description of the \dibbler{} data presented in
 \figref{figure:dibbler-records}.
 
 \dibbler{} data summarizes orders for phone service placed with AT\&T.
-Each \dibbler{} data file starts with a date and then contains one
+Each \dibbler{} data file starts with a timestamp and then contains one
 record per phone service order.
 Each such record consists of a header and a sequence of
 events.  The header has 13 pipe separated fields: the order number,
@@ -92,45 +93,45 @@ increasing timestamps.
 \figref{figure:sirius_pml} gives a \padsml{} description for the
 \dibbler{} phone order summaries. The description is a
 sequence of type definitions. Because each type must be declared
-before it is used, it is probably easiest to understand the
-data source by reading these definitions bottom up.
+before it is used, it is probably easiest to read the definitions
+bottom up. 
 
-The last type definition, \cd{Source}, is intended to be a definition
-of an entire \dibbler{} data source.  It uses the tuple type
-constructor \cd{*}, which describes a possibly-heterogenous,
-fixed-length sequence of objects in the data source. \cd{Source},
-therefore, is defined as a \cd{Summary\_header} followed by
-\cd{Orders}. The definition of \cd{Orders} is based on the list type
+The last type definition, \cd{Source}, describes the entirety
+of a \dibbler{} data file.  It uses the tuple type
+constructor \cd{*} to define \cd{Source} as a a \cd{Summary\_header}
+followed by \cd{Orders}. 
+The definition of \cd{Orders} uses the list type
 constructor, \cd{Plist}, which specifies a homogenous sequence of
-objects in a data source.  \cd{Plist} -- defined in \padsml{} itself
--- depends upon three parameters, \cd{Telt}, \cd{Tsep} and \cd{Tterm}.
-The first parameter describes the element type of the list, which, in
-our example, is the type \cd{Order}, described below. The second
-parameter describes the syntactic separators that may be found between
-elements of the list.  In this case \cd{Peor}, the
-\emph{end-of-record} type, may be found between each element of the
-array~\footnote{In our example, the end-of-record marker is a newline
+objects in a data source.  \cd{Plist}, which we can define in \padsml{} itself,
+depends upon three parameters.  The first (\cd{Order}) specifies the
+type of the elements in the list.  The second (\cd{Peor}) describes
+the syntactic separators that may be found between list elements.
+In the example, the type \cd{Peor} indicates that an end-of-record marker
+may be found between each element of the list~\footnote{%
+  In our example, the end-of-record marker is a newline 
   character as there is one record per line in the file.  However,
   this marker is not set in the description itself.  Rather, the
   end-of-record is left abstract, and set later by the client program
-  that uses the generated libraries}. The third parameter is the
-terminator for the list.  In this case, the terminator is \cd{Peof}, a
-type that describes the special \emph{end-of-file marker}.  It is
-often necessary to have additional termination conditions for lists,
-like termination dependent on the number of elements read so far, but
-we omitted this additional option for expository purposes.
+  that uses the generated libraries}. 
+The third parameter indicates the terminator for the list.  In this
+case, the terminator is \cd{Peof}, a 
+type that describes the special \emph{end-of-file marker}.  
+We can also express more complex termination
+conditions for sequences in \padsml{}, such as conditions involving
+the number of characteristics of elements read so far.
 
 An \cd{Order} is a sequence of objects made up of an
 \cd{Order\_header} followed by \cd{Events}.  The definition of
 \cd{Events} indicates that this part of the \dibbler{} data will
 contain a sequence of \cd{Event}s separated by vertical bars and
 terminated by an end-of-record marker.  Each \cd{Event} is a string
-terminated by a vertical bar, followed by a vertical bar and ending
-with an unsigned 32-bit integer.  The interesting part of this
+terminated by a vertical bar, followed by a vertical bar, and ending
+with a timestamp.  The interesting part of this
 sequence is the presence of the literal character \cd{'|'}.  In
-type-theoretic terms, this literal represents a {\em singleton type}.
-It states that one should expect exactly the character \cd{'|'} in the
-input stream at this point.  In general, string, character, and
+type-theoretic terms, this literal represents a {\em singleton type},
+meaning that the data source should contain exactly the character
+\cd{'|'} in the input stream at this point.  In general, string,
+character, and 
 integer literals can be embedded in a description to be interpreted as
 a singleton-type. For example, the string literal \cd{"0|"} appears in
 the summary header type.
