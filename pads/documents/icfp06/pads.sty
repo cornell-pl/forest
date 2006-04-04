@@ -44,18 +44,6 @@
 % code-font equals
 \newcommand{\ceq}{\mathrel{\mbox{\tt =}}}
 
-  %% parser type of a context
-\newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
-  %% Fomega context version of Poly-context.
-\newcommand{\fotyc}[1]{{#1}_{\ctxt}}
-  %% Rep-related subset of context.
-\newcommand{\fortyc}[1]{{#1}_{\repname}}
-  %% PD-related subset of context.
-\newcommand{\fopdtyc}[1]{{#1}_{\pdbname}}
-  %% Close type with respect to context by substituting defintions of
-  %% variables for the variables themselves.
-\newcommand{\closec}[2]{\mathsf{Close}({#1},{#2})}
-
 \def\itsem[#1]{\lsem#1\rsem_{\text{rep}}}
 \def\itpdsem[#1]{\lsem#1\rsem_{\text{PD}}}
 \def\itpdsemstrip[#1]{\lsem#1\rsem_{\text{PDb}}}
@@ -78,6 +66,18 @@
 \newcommand{\kwd}[1]{\mathtt{#1}} %% keyword
 \newcommand{\codefont}[1]{\mathtt{#1}} %% a piece of code
 \newcommand{\nrm}[1]{\mathnormal {#1}} %% normal math
+
+  %% parser type of a context
+\newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
+  %% Fomega context version of Poly-context.
+\newcommand{\fotyc}[1]{{#1}_{\ctxt}}
+  %% Rep-related subset of context.
+\newcommand{\fortyc}[1]{\itsem[#1]}
+  %% PD-related subset of context.
+\newcommand{\fopdtyc}[1]{\itpdsem[#1]}
+  %% Close type with respect to context by substituting defintions of
+  %% variables for the variables themselves.
+\newcommand{\closec}[2]{\mathsf{Close}({#1},{#2})}
 
 %% Meta-variables
   %% contractiveness

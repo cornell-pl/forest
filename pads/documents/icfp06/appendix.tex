@@ -1,6 +1,109 @@
 %\newpage
 \appendix
 
+\begin{figure}
+{\small
+\begin{bnf}
+  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+                               \| \kty \-> \gk \\
+  \name{Types} \meta{\ty} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| 
+    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
+    \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \|
+    \pset x \ty e \| \pseq \ty \ty {\pterm e \ty} \nlalt
+    \ptyvar       \| \pmu{\ptyvar}{\gk}{\ty} \| \ptylam{\ptyvar}{\kty}{\ty} \| \ptyapp{\ty}{\ty}
+    \nlalt \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty}  
+\end{bnf}
+}
+\caption{\ddc{} Syntax}
+\label{fig:complete-ddc-syntax}
+\end{figure}
+
+\emph{Explain next sentence better.}
+Finally, with the introduction of potentially open \implang types, we
+now check that $\ity$ in rule Compute is closed with respect to any
+types but the representation type variables corresponding to $\pctxt$.
+
+\begin{figure}
+\fbox{$\itsem[\ty] = \ity$}
+\[
+\begin{array}{lcl} 
+\itsem[\ptrue] & = & \iunitty \\
+\itsem[\pfalse] & = & \invty \\
+\itsem[\pbase{e}] & = & \isum {\Irty(C)} \invty   \\
+\itsem[\plam{\var}{\ity}{\ty}] & = & \itsem[\ty] \\
+\itsem[\papp \ty e] & = & \itsem[\ty] \\
+\itsem[\psig \var {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]} {\itsem[\ty_2]}    \\
+\itsem[\psum {\ty_1} e {\ty_2}]     & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]} \\
+\itsem[\pand {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]}{\itsem[\ty_2]}\\
+\itsem[\pset x \ty e] & = & \isum {\itsem[\ty]}{\itsem[\ty]}\\
+% field names: length, elts
+\itsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
+    \iprod \iintty {(\iseq{\itsem[\ty]})}             \\
+%% \itsem[\pcase e c {\ty_1} {\ty_2}]       & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]}\\
+\itsem[\ptyvar] & = & \ptyvar_\repname \\
+\itsem[\pmu{\ptyvar}{\gk}{\ty}] & = & \imu{\ptyvar_\repname}{\itsem[\ty]} \\
+\itsem[\lambda \ptyvar.\ty]       & = & \lambda \ptyvar_\repname.\itsem[\ty] \\
+\itsem[\ty_1 \ty_2]              & = & \itsem[\ty_1] \itsem[\ty_2] \\
+\itsem[\pcompute e \ity]                 & = & \ity \\
+\itsem[\pabsorb \ty]                     & = & \isum \iunitty \invty \\
+\itsem[\pscan \ty] & = & \isum {\itsem[\ty]} \invty
+%% \pext{
+%% \itsem[\ptransform e e \ty]              & = & \itsem[\ty]\\
+%% }
+\end{array}
+\]
+\caption{Representation Types}
+\label{fig:complete-rep-tys}
+\end{figure}
+
+
+\begin{figure}
+\fbox{$\itpdsem[\ty] = \ity$}
+\[ 
+\begin{array}{lcl} 
+%% %% example: \ua.(int * a) + None
+%% %%          pd = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * [a]_pd)) + [None]_pd)
+%% %%             = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * a)) + [None]_pd)
+\itpdsem[\ptrue] & = & \ipty \iunitty \\                                                  
+\itpdsem[\pfalse] & = & \ipty \iunitty \\                                                  
+\itpdsem[\pbase{e}] & = & \ipty \iunitty\\
+\itpdsem[\plam \var \ity \ty] & = & \itpdsem[\ty] \\
+\itpdsem[\papp \ty e] & = & \itpdsem[\ty] \\
+\itpdsem[\psig \var {\ty_1} {\ty_2}] & = & 
+               \ipty {\iprod {\itpdsem[\ty_1]} {\itpdsem[\ty_2]}} \\
+\itpdsem[\psum {\ty_1} e {\ty_2}] & = & 
+               \ipty {(\isum {\itpdsem[\ty_1]} {\itpdsem[\ty_2]})} \\
+\itpdsem[\pand {\ty_1} {\ty_2}] & = & \ipty {\iprod {\itpdsem[\ty_1]} {\itpdsem[\ty_2]}}    \\
+\itpdsem[\pset x \ty e] & = & \ipty {\itpdsem[\ty]} \\
+\itpdsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
+  \iapty {\itpdsem[\ty]} \\
+\itpdsem[\ptyvar] & = & \ipty{\ptyvar_\pdbname} \\
+\itpdsem[\pmu \ptyvar \kty \ty] & = & 
+  \ipty{\imu{\ptyvar_\pdbname}{\itpdsem[\ty]}} \\
+\itpdsem[\lambda \ptyvar.\ty]      
+     & = & \lambda \ptyvar_\pdbname.\itpdsem[\ty] \\
+\itpdsem[\ty_1 \ty_2]            & = & \itpdsem[\ty_1] \itpdsemstrip[\ty_2] \\
+\itpdsem[\pcompute e \ity]            & = & \ipty \iunitty \\
+\itpdsem[\pabsorb \ty]                & = & \ipty \iunitty \\
+\itpdsem[\pscan{\ty}] & = & \ipty {(\isum {(\iprod \iintty
+    {\itpdsem[\ty]})} \iunitty)}
+\end{array}
+\]
+
+\fbox{$\itpdsemstrip[\ty] = \ity$}
+
+\[
+\begin{array}{lcl} 
+\itpdsemstrip[\ty] & = & \ity \ \ \mbox{where}\ \itpdsem[\ty] \equiv \ipty{\ity}
+\end{array}
+\]
+\caption{Parse-Descriptor Types}
+\label{fig:complete-pd-tys}
+\end{figure}
+
+
+
 \section{Host Language}
 \label{app:host-lang}
 
