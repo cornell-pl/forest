@@ -26,12 +26,24 @@ Thus, it is evident that the traversal mechanism is common for all generic tools
 \label{sec:gen-tool-traversal}
 As described above, all generic tools share a common type-specific data source traversal algorithm, differing only in how they treat individual data items. This traversal mechanism views a data source as a tree structure whose leaves are elements of the PADS base types and whose internal nodes represent compound types: structures, data types (i.e., unions), and constrained types. The root of this tree is taken to be the element of the type declared as a \kw{Psource}.
 
+Traversal proceeds by processing the root of the tree and recursing on subcomponents. To be expanded:
 \begin{itemize}
-\item 
+\item Traversing a base type involves calling a user-defined processing routine.
+\item Traversing a compound type consists of performing user-defined initialization, processing each subcomponent, and doing user-defined post-processing.
+\item The user-defined processing routines can accumulate information via the notion of a \emph{state} that is the only means of communication between the processing tasks of different data items in the tree.
 \end{itemize}
 
 \subsubsection{User-Defined Processing and the Notion of State in Traversal}
 \label{sec:gen-tool-traversal-state}
+\begin{itemize}
+\item Table describing the precise order of steps for each of the different PADS types (structures, datatypes, constraints).
+\item A user provides one custom processing routine for base types, structures, datatypes, and constrained types.
+\item Besides side effects, each processing routine takes as input and returns as output a state object that is updated by the routine; this state object's type is tool-specific and is defined by the tool developer.
+\item A separate state object is accumulated for each PADS type defined in the specification. In other words, two different Pstructs will each have their own associated state objects. Each base type has one global state object associated with it.
+\item User-defined routines are also provided to initialize these state objects for each PADS type.
+\item From the tool invoker's point of view, a traversal of a data source can be thought of as a procedure that takes an initial state object and a data source (including a representation and a parse descriptor) and returns an updated state that is the result of the processing.
+\item Error handling: tools can abort processing in exceptional conditions while providing a snapshot of the state at the time of the error as a debugging tool.
+\end{itemize}
 
 \subsubsection{Example: Traversing the Movie Director Bowling Score Format}
 \label{sec:gen-tool-traversal-mbs}
