@@ -1,6 +1,5 @@
 \section{A Generic Tool Framework}
 \label{sec:gen-tool}
-
 An important feature of PADS/ML is the generic tool framework, which leverages the power of the existing PADS system to allow users to rapidly develop data-processing tools. This framework is motivated by the fact that PADS type specifications are useful for many tasks beyond data parsing, and it strikes a balance between providing common functionality for such tools and enabling users to flexibly specify the concrete behavior of different tools.
 
 The main design principle for this framework, as detailed below, is that generic tools are defined by their behavior on the various components of PADS types, while the framework provides a uniform mechanism for traversing data satisfying any PADS description and applying the customized tool behavior at each node of the data tree. We have implemented two such data processing tools, the accumulator (for generating brief summaries of the value distributions for each type) and the XML formatter (for outputting data elements in using XML structure), as a proof-of-concept of the generic tool framework.
@@ -9,7 +8,7 @@ The main design principle for this framework, as detailed below, is that generic
 \label{sec:gen-tool-motivation}
 A system such as PADS that provides a concise, declarative language for specifying data formats lends itself naturally to many applications beyond the construction of parsers. Because parsers are generated from PADS specifications with a dedicated compiler, it would appear, at first glance, that each tool would need to be developed as a separate compiler that would take PADS specifications and output type-specific code. Such an architecture would require tool developers to, essentially, write compiler modules that would work in parallel with the parser generator; it would also mean that the development of a new tool cannot be done without modifying and augmenting the PADS compiler itself.
 
-In the general case, tools that perform arbitrary data manipulation must indeed be written as separate compiler modules. However, there is an important class of \emph{generic} tools that all share a common overall data processing method while differing in the details of how they transform data. These tools are characterized by a \emph{traversal} of the data, viewed as a (possibly recursive) tree of components. In broad terms, the process of traversal involves picking out a data item (i.e., a node in the tree), performing some operation on it (while possibly updating some state), and recursively traversing any of its subcomponents (represented as child nodes in a tree). The tools in this category share two important properties:
+In the general case, tools that perform arbitrary data manipulation must indeed be written as separate compiler modules. In the PADS/C system, this is how all tools are developed. However, there is an important class of \emph{generic} tools that all share a common overall data processing method while differing in the details of how they transform data. These tools are characterized by a \emph{traversal} of the data, viewed as a (possibly recursive) tree of components. In broad terms, the process of traversal involves picking out a data item (i.e., a node in the tree), performing some operation on it (while possibly updating some state), and recursively traversing any of its subcomponents (represented as child nodes in a tree). The tools in this category share two important properties:
 \begin{itemize}
 \item For any specific PADS data type, the generic tools traverse the data in the same manner, differing only in the operations they perform on individual data items.
 \item For any given generic tool, the operations performed on individual data items are fixed; different PADS types are handled by different data traversal orders.
@@ -23,27 +22,37 @@ Thus, it is evident that the traversal mechanism is common for all generic tools
 \item Tools are completely portable and independent. Under this framework, they become "pluggable modules" that can be installed, in any combination, on any PADS system without modifying other parts of the system.
 \end{itemize}
 
+\subsection{Traversing a Data Source: A Conceptual Overview}
+\label{sec:gen-tool-traversal}
+As described above, all generic tools share a common type-specific data source traversal algorithm, differing only in how they treat individual data items. This traversal mechanism views a data source as a tree structure whose leaves are elements of the PADS base types and whose internal nodes represent compound types: structures, data types (i.e., unions), and constrained types. The root of this tree is taken to be the element of the type declared as a \kw{Psource}.
 
 \begin{itemize}
-\item Intro
-\item Implementation: modules and functors.
-\item Explanation of traversal functor functionality (conceptual level).
-\item Overview of generic tool interface.
-\item Explanation of selected portions of gen. tool interface.
-\item Discuss two example tools: formatter, accumulator.
-\item Show output examples from tools.
+\item 
 \end{itemize}
 
-Intro outline:
-\begin{itemize}
-\item Tools are essential benefit of PADS.
-\item Tool generator development is difficult. How can we separate
-  from compiler? Want to give developer clean interface for writing
-  generic tools.
-\item Many tools share same characteristic: traversal and processing.
-\item Traversal is description specific while processing is tool specific.
-\item Split into generic tool and generic traversal.
-\end{itemize}
+\subsubsection{User-Defined Processing and the Notion of State in Traversal}
+\label{sec:gen-tool-traversal-state}
+
+\subsubsection{Example: Traversing the Movie Director Bowling Score Format}
+\label{sec:gen-tool-traversal-mbs}
+
+\subsection{The Generic Tool Interface in PADS/ML}
+\label{sec:gen-tool-interface}
+
+\subsubsection{The Structure of a Tool}
+\label{sec:gen-tool-interface-tool-struct}
+
+\subsubsection{Implementation of the Generic Tool Framework in PADS/ML}
+\label{sec:gen-tool-interface-implementation}
+
+\subsection{Example Tools}
+\label{sec:gen-tool-examples}
+
+\subsubsection{The Accumulator Tool}
+\label{sec:gen-tool-examples-acc}
+
+\subsubsection{The XML Formatter}
+\label{sec:gen-tool-examples-xml}
 
 %%% Local Variables: 
 %%% mode: latex
