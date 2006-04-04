@@ -1,9 +1,4 @@
 \begin{code}\scriptsize
-\kw{let} gmt = Pads.timezone\_of\_string "GMT"
-\kw{ptype} Timestamp = 
-   Ptimestamp\_explicit\_FW(8, "%H:%M:%S", gmt)
-\kw{ptype} Pip = Puint8 * '.' * Puint8 * '.' * 
-   Puint8 * '.' * Puint8
 (* Pstring terminated by semicolon or vertical bar. *)
 \kw{ptype} SVString = Pstring\_SE("/;|\\\\|/")
 \mbox{}
@@ -24,8 +19,8 @@
 \kw{ptype} Details = \{
       source      : Pip Nvp("src\_addr");
 ';';  dest        : Pip Nvp("dest\_addr");
-';';  start\_time  : Timestamp Nvp("start\_time");
-';';  end\_time    : Timestamp Nvp("end\_time");
+';';  start\_time  : Ptimestamp Nvp("start\_time");
+';';  end\_time    : Ptimestamp Nvp("end\_time");
 ';';  cycle\_time  : Puint32 Nvp("cycle\_time")
 \}
 \mbox{}
@@ -44,11 +39,11 @@
 \mbox{}
 \kw{ptype} Raw\_alarm = \{
        alarm     : [ i : Puint32 | i = 2 or i = 3];
- ':';  start     : Timestamp Popt;
- '|';  clear     : Timestamp Popt;
+ ':';  start     : Ptimestamp Popt;
+ '|';  clear     : Ptimestamp Popt;
  '|';  code      : Puint32;
- '|';  src\_dns  : SVString Nvp("dns1");
- ';';  dest\_dns : SVString Nvp("dns2");
+ '|';  src\_dns   : SVString Nvp("dns1");
+ ';';  dest\_dns  : SVString Nvp("dns2");
  '|';  info      : Info(code);
  '|';  service   : Service
 \}
