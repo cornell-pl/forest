@@ -561,7 +561,7 @@ than over the PD type itself. Correspondingly, type application
 applies the PD interpretation to the ...
 and type variables become ...
 
-The reason for this difference can be appreciate only once we have
+The reason for this difference can be appreciated only once we have
 discussed the parsing semantics of type abstractions and applications.
 
 
@@ -868,21 +868,8 @@ $\iok$, $\iecerr$, and $\iecpc$, corresponding to the three possible results of 
 it can succeed, parsing the data without errors; it can succeed,
 but discover errors in the process; or, it can find an
 unrecoverable error and fail.
-\trversion{
-Note that the the purpose of the $\iecpc$ code is to indicate to any
-higher level elements that some form of error recovery is required.
-Hence, the whole parse is marked as failed exactly when the parse ends
-in failure.}
 The error count is determined by subcomponent error counts and any errors associated directly with the type
 itself.  
-\trversion{
-If a subcomponent has errors then the error count is
-increased by one; otherwise its not increased at all. We use the
-function $\codefont {pos}$, which maps all positive numbers to 1
-(leaving zero as is), to assist in calculating the contribution of
-subcomponents to the total error count.  Errors at the level of the
-element itself - such as constraint violation in constrained types - are
-generally counted individually.}
 
 We translate recursive types into
 recursive functions with a special
