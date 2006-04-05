@@ -24,26 +24,53 @@
   
 }
 
-\emph{Explain motivation for DDC.}
+\padsml{} is a complex language and we wish to explain its semantics
+in a clear and concise form. Doing so serves a number of purposes. The
+process of specifying the semantics forces us to crystallize
+invariants of our design and implementation and thereby allows us to
+(informally) reason more easily about both. Furthermore, a semantics
+allows us to reason formally about the system, and even prove
+properties that we feel should hold. In addition, the model of the
+language that we build provides a convenient setting for experimenting
+with the language, because we can add new features and quickly see how
+they effect and interact with the existing ones. Finally, perhaps the
+most underated value of a semantics is that it allows us to convey the
+core ideas of the system to other researchers, language implementers,
+and even users.
 
-In previous work, Fisher et. al specified a low-level data description
-language \ddcold{}, intended to capture the core features of many existing
-and future data description langauges~\cite{fisher+:next700ddl}.
-Syntactically, \ddcold{} is a calculus of dependent types extended
-with a number of type constructors specific to the domain of data
-description. Semantically, however, rather than describing the
-properties of expressions, \ddcold{} types describe data sources. The
-base types describe atomic fragments of data, while the type
-constructors capture compound structures within a source.
+Previously, we designed a semantic framework for understanding a range
+of data description languages and guiding us in developing future
+ones~\cite{fisher+:next700ddl}. At the core of this framework is a
+low-level data description language \ddcold{}, intended to capture the
+essential features used in data description.  Syntactically, \ddcold{}
+is a calculus of dependent types extended with a number of type
+constructors specific to the domain of data description. Semantically,
+however, rather than describing the properties of expressions,
+\ddcold{} types describe data sources. The base types describe atomic
+fragments of data, while the type constructors capture compound
+structures within a source.
 
-While \ddcold{} was intended as a general-purpose low-level
-description language, the polymorphic types of \padsml{} language
-cannot be expressed in \ddcold{}.  Therefore, we extend \ddcold{} to
-enable reasoning about the semantics of \padsml{} and any future
-description language with similar features.  Specifically, we capture
-the semantics of polymorphic types by extending \ddcold{} with type
+We we would like to use \ddcold{} to specify the semantics of
+\padsml{}. \emph{Does this sound too negative about the original
+  \ddcold{}?}  However, the polymorphic types of \padsml{} cannot be
+expressed in \ddcold{}. Therefore, we capture the
+semantics of polymorphic types by extending \ddcold{} with type
 abstractions $\ptylam{\ptyvar}{\kty}{\ty}$ and type application
 $\ptyapp{\ty}{\ty}$. We refer to the extended calculus as \ddc{}.
+
+Note, however, that \padsml{} is not alone. As we discuss in more
+detail in our section on related work, there are a number of different
+data description languages. Therefore, the utility of \ddc{} is not
+limited to explaining \padsml{}, but should be useful for any data
+description language with similar features. Indeed, in the remainder
+of this section, we focus exclusively on \ddc{}, its syntax,
+semantics, and meta-theory and leave the connection to \padsml{}
+implicit.
+
+A final note before we begin. The benefits of \ddc{} have not been
+hypothetical alone. All of the essential design of polymorphic types
+occured within the setting of \ddc{}. With it and \ocaml{} functors,
+the implementation of polymophic types in \padsml{} took about a week.
 
 \subsection{\ddc{} Syntax}
 \begin{figure}
@@ -88,65 +115,10 @@ $\ptyapp{\ty}{\ty}$ allow us to parameterize types by other types.
 
 \subsection{\Implang{} Language}
 \label{sec:host-lang}
-\begin{figure}[tp]
-\small
-\begin{bnf}
-%   \name{Variables} \meta{f,x,y} \\
-%   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
-  \name{Bits}  \meta{B}   \::= \cdot \| 0\,B \| 1\,B \\ 
-  \name{Constants} \meta{c} \::=
-      () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
-      \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
 
-  \name{Values} \meta{v} \::= 
-      \const \| % \ilam{\nrm \var}{\ity}{e} \| 
-      \ifun {\nrm f} {\nrm x} e \| \ipair v v \nlalt
-      \iinld{\ity}{v} \| \iinrd{\ity}{v} \|
-      \iarr{\vec{v}} \\
-
-  \name{Operators} \meta{op} \::= 
-      = \; \| \; < \; \| \inotop % \| \isizeofop
-      \| \ldots \\
-
-  \name{Expressions} \meta{e} \::= 
-      \const \| \var \| \iop{e} \|
-%      \ilam {\nrm \var} \ity e \| 
-      \ifun {\nrm f} {\nrm x} e \| 
-      \iapp e e \nlalt
-    \Lambda \alpha.e \| e \; [\ty] \nlalt
-%      \iletfun {\nrm f} {\nrm x} e \; \iin \; e' \| 
-      \ilet {\nrm x} e \; e \|
-      \iif e \; \ithen e \; \ielse e \nlalt
-      \ipair{e}{e} \| \ipi {\nrm i}{e} \|
-      \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
-      \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
-      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e} \nlalt
-      \iroll{e}{\mu\alpha.\tau} \| \iunroll{e}
-      \\
-      
-  \name{Base Types} \meta{a} \::= 
-      \iunitty \| \iboolty \| \iintty  \| 
-      \invty \nlalt  \ibitsty \| \ioffty \| \iecty
-  \\
-  \name{Types} \meta{\ity} \::= 
-      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
-      \isum \ity \ity \nlalt
-      \iseq \ity \| \forall \ityvar.\ity  \|
-      \imu \ityvar \ity   
-      \| \lambda \alpha.\ity 
-      \| \ity \; \ity
-  \\
-  \name{Kinds} \meta{\kappa} \::= \kty \| \kappa \rightarrow \kappa
-  
-\end{bnf}
-\caption{\Implang{} Language: F$^\omega$}
-\label{fig:implang-syntax}
-\end{figure}
-
-The host language of
-\ddc{} is an extension of \fomega.  We use this host language both to
-write the expressions that can appear within \ddc{} itself and to
-encode the parsing semantics of \ddc{}.
+The host language of \ddc{} is an extension of \fomega.  We use this
+host language both to write the expressions that can appear within
+\ddc{} itself and to encode the parsing semantics of \ddc{}.
 
 As the host language is largely standard, we highlight only its
 unusual features. The constants include bitstrings $\data$; offsets
@@ -183,7 +155,7 @@ presentation. Otherwise, the polymorphism is implicit.
 The static semantics ($\stsem[e,{\ctxt},\ity]$), operational
 semantics ($e \stepsto e'$), and type equality ($\ity \equiv \ity'$) are those of \fomega extended with
 recursion functions and recursive types and are entirely standard.
-See, for example, Pierce~\cite{pierce:tapl}.
+See, for example, Pierce's TAPL~\cite{pierce:tapl}.
 
 \subsection{\ddc{} Semantics}
 \label{sec:ddc-sem}
@@ -205,6 +177,7 @@ Fisher, et. al~\cite{fisher+:next700ddl} discuss the semantics of
 \ddcold{} in detail. We will focus only on those aspects of the
 semantics that are new or modified from the original presentation.
 
+\trversion{
 \begin{table}
   \begin{center}
     \renewcommand{\arraystretch}{1.35}
@@ -229,7 +202,7 @@ semantics that are new or modified from the original presentation.
 For reference, we provide in
 \tblref{tab:judg-list} a listing of all the functions and judgments
 defined in this section and a brief description of each.  
-
+}
 
 \subsubsection{\ddc{} Kinding}
 \label{sec:ddc-kinding}
@@ -531,7 +504,7 @@ in \secref{sec:meta-theory}.
 \subsubsection{Parsing Semantics of \ddc{}}
 \label{sec:parse-sem}
 
-\begin{figure*}
+\begin{figure}
 \small
 \fbox{$\trans[\ty,\ctxt,\gk] = e$} 
 
@@ -570,7 +543,7 @@ in \secref{sec:meta-theory}.
     \quad \spair<\off'',\newrep {\gS}{r,r'},\newpd {\gS}{p,p'}>
   \end{array}  
 %\end{array}
-\\
+\\[3pt]
 %% Sum 
 %\begin{array}{l}
   \trans[\psum{\ty}{e}{\ty'},,] = \\
@@ -590,7 +563,7 @@ in \secref{sec:meta-theory}.
     \spair<\off',\r,\p>
   }\\ % end scope
   \end{array}
-\\
+\\[3pt]
 %\quad
 %% Set 
   \trans[\pset{x}{\ty}{e},\ctxt,\kty] = \\
@@ -601,21 +574,19 @@ in \secref{sec:meta-theory}.
     \quad \ilet c e \\
     \quad \spair<\off',\newrep {con} {c,r},\newpd {con} {c,p}>
   \end{array}
-\\
-\end{array}
-\begin{array}{l}
+\\[3pt]
 %% Var
 \trans[\ptyvar,,] = \codefont{f_\ptyvar}
 \\[3pt]
 %% Mu
 \trans[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {f_\ptyvar} {\itup{\data{:}\ibitsty,\off{:}\ioffty}  
-           : \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
+  \ifun {f_\ptyvar} {\itup{\data,\off} :
+    \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
                     * (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}) } {}\\
   \quad \ilet {\itup{\off',r,p}} 
    {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
-  \qquad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
+  \quad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
      (p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
 %}}
   \end{array}  
@@ -626,7 +597,7 @@ in \secref{sec:meta-theory}.
     \Lambda \tyvar_\repname. 
     \Lambda \tyvar_\pdbname. \lambda \codefont{f_\ptyvar}. \trans[\ty,,]
 %  \end{array}  
-\\
+\\[3pt]
 %% t1 t2
 \trans[\ty_1 \ty_2,,] = 
     \trans[\ty_1,,]\; [\itsem[\ty_2]]\; [\itpdsemstrip[\ty_2]]\; \trans[\ty_2,,]
@@ -636,7 +607,7 @@ in \secref{sec:meta-theory}.
 %\caption{\ddc{} Semantics (cont.)}
 \caption{Partial list of \ddc{} parsing semantics}
 \label{fig:ddc-sem}
-\end{figure*}
+\end{figure}
 
 \begin{figure}
 \small
@@ -731,7 +702,10 @@ corresponds directly to the name of the type variable. These
 expression variables are bound in the interpretations of recursive
 types and type abstractions. We interpret recursive types as recursive
 functions whose corresponds to the name of the recursive type
-variable.  Type abstraction, in essence, is interpreted as a function
+variable. For clarity, we annotate the recursive function with its
+type.
+
+Type abstraction, in essence, is interpreted as a function
 over other parsing functions. However, as those parsing functions
 could correspond to arbitrary \ddc{} types (of kind $\kty$), the
 interpretation must be a polymorphic function, parameterized by the
