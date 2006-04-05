@@ -70,7 +70,7 @@
   %% parser type of a context
 \newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
   %% Fomega context version of Poly-context.
-\newcommand{\fotyc}[1]{{#1}_{\ctxt}}
+\newcommand{\fotyc}[1]{\|{#1}\|}
   %% Rep-related subset of context.
 \newcommand{\fortyc}[1]{\itsem[#1]}
   %% PD-related subset of context.
@@ -408,6 +408,8 @@
 \newcommand{\ispdty}[1]{\mathrm{hh}(#1)}
   %% No Errors predicate
 \newcommand{\noerr}[1]{\mathrm{Correct}(#1)}
+  %% Has-header logical predicate.
+\newcommand{\hhpred}[2]{\mathrm{H}(#1:#2)}
 
   %% BW termination judgment
 \newcommand{\btjudge}[3]{#1 \vDash #2 \Rightarrow #3}

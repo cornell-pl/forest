@@ -1,5 +1,5 @@
 ToDo:
--  Check that well-formedness lemma can go after well-defined lemma.
+- Fix well-formedness lemma based on hasHeader lemma.
 - verify that types of constructors lemma is correct.
 x Ensure that all figures have consistent ordering.
 x Fix substitution lemmas, and proof cases for rec. and tyApp correspondingly.
@@ -11,18 +11,6 @@ x Add condition on base types. |- B_type(C) :: T
 
 Note: PT(s) = [s]_PT, for any string s.
 
-
-Definition: Kind interpretation in F-omega.
-K(T)      = T
-K(s -> k) = K(k)
-K(T -> k) = T -> K(k)
-
-Lemma: Rep. Type Well-Formedness
-If D;G |- t : k then 
-  D_rep |- [t]_rep :: K(k)
-  D_PD |- [t]_PD  :: K(k)
-  D_PD |- [t]_Pb  :: K(k)
-pf:  by induction.
 
 Lemma: If D;G |- t : k then |- D_G,G ok
 pf: by induction
@@ -149,8 +137,6 @@ Has-header theorem.
 
 Goal: To prove that [t]_PD is well-defined for all well-formed types t.
 
-Is [t]_PD well defined on all t, or just |- t:k? If the latter, then
-the definitions are mutually recursive, which we have to be careful about.
 
 % Note that by this definition, we not only get that [t]_PD type has the
 % structure pd_hdr * ..., but that the [t]_PD is well-defined.
@@ -159,7 +145,7 @@ the definitions are mutually recursive, which we have to be careful about.
 % used. Still, it "feels" right.
 
 Definition: H(t:k), 
-  H(t : k) iff FTV(s) = {} and
+  H(t : k) iff 
    1) k = T and exists s s.t. [t]_PD == pd_hdr * s.
    2) or, k = T -> k', exists s s.t. [t]_PD == s and for all t' s.t. H(t': T), H(t t' : k').
    3) or, k = s -> k', exists s' s.t. [t]_PD == s' and for all e, H(t e : k').
@@ -277,7 +263,7 @@ case Abs:
     Need to prove H((\x.t)[W] e: k). 
     Now, [(\x.t)[W] e]_PD = [(\x.t)[W]]_PD =[\x.t[W]]_PD = [t[W]]_PD.
     So, [(\x.t)[W] e]_PD == [t[W]]_PD.
-    By lemma, and IH, H((\x.t)[W] e:k).
+    By (previous?) lemma, and IH, H((\x.t)[W] e:k).
     
 case App:
   To prove: H((t e)[W]:k).
@@ -336,6 +322,22 @@ Corrollary 1:
 Corrollary 2:
  If |- t : k then H(t : k).
   
+
+Assume of F_omega:
+If G |- s :: k and s == u then G |- u :: k.
+
+Definition: Kind interpretation in F-omega.
+K(T)      = T
+K(s -> k) = K(k)
+K(T -> k) = T -> K(k)
+
+Lemma: Rep. Type Well-Formedness
+If D;G |- t : k then 
+  D_rep |- [t]_rep :: K(k)
+  D_PD |- [t]_PD  :: K(k)
+  if k = T then
+   D_PD |- [t]_Pb  :: T
+pf:  by induction using HasHeader lemma.
 
 **************************
 Type Correctness theorem:

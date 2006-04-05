@@ -1,13 +1,13 @@
 \section{The Semantics of Polymorphic Types}
 \label{sec:ddc}
-
 {\em Should we use a different meta-variable for fomega contexts given
   that they contain both types and variables?}
 
-\emph{Terminology: abstraction of types of values is ``value
-  abstraction,'' and over types is ``type abstraction.''}
+\emph{Do we want to show an example from pads/ml shown in DDC.
+  (e.g. name-value pairs?). It think it would be nice, but I don't
+  know that there is space.  }
 
-{\em Modify a\_pd to a\_pd\_body, everywhere. This name is more
+\trversion{\em Modify a\_pd to a\_pd\_body, everywhere. This name is more
   appropriate.  Note that the new scheme for translating type
   variables will affect WF rules. a will be in D but a\_rep and
   a\_pd\_body could appear in a sigma
@@ -23,20 +23,6 @@
   annotation types into F-omega types.
   
 }
-
-\begin{itemize}
-\item Review of DDC.
-\item Discussions of extensions.
-\item Relationship between host language and F-omega(i.e. \fomega
-  with following changes).
-\item Theory overview and Description of how judgements change from POPL.
-\item Describe simplification to theory/meta-theory of recursive types
-  and relationship to poly types.
-\item Example from pads/ml
-  shown in DDC. (name-value pairs?)
-\item Meta-theory.
-\end{itemize}
-
 
 \emph{Explain motivation for DDC.}
 
@@ -157,12 +143,10 @@ $\ptyapp{\ty}{\ty}$ allow us to parameterize types by other types.
 \label{fig:implang-syntax}
 \end{figure}
 
-In \figref{fig:implang-syntax}, we present the host language of
-\ddc{}, an extension of \fomega.  We use this host language both to
+The host language of
+\ddc{} is an extension of \fomega.  We use this host language both to
 write the expressions that can appear within \ddc{} itself and to
-encode the parsing semantics of \ddc{}. We will discuss
-in~\secref{sec:ddc-sem} our choice of \fomega in place of the
-polymorphic lamda calculus used in \ddcold{}.
+encode the parsing semantics of \ddc{}.
 
 As the host language is largely standard, we highlight only its
 unusual features. The constants include bitstrings $\data$; offsets
@@ -170,23 +154,15 @@ $\off$, representing locations in bitstrings; and error codes $\iok$,
 $\iecerr$, and $\iecpc$, indicating success, success with errors and
 failure, respectively. We use the constant $\ierr$ to indicate a
 failed parse.  Because of its specific meaning, we forbid its use in
-user-supplied expressions appearing in \ddc{} types.
-Our expressions include first-class polymorphic functions $\Lambda \alpha.e$ and their
-instantiation $e \; [\ty]$. Unlike \fomega, we do not include kind
-annotations on type parameters, as we only use parameterization over
-types at kind $\kty$. Expressions also include arbitrary length
-sequences $\iarr{\vec e}$, sequence append $\iappend e
-{e'}$, and sequence indexing $\isub e {\nrm i}$.
+user-specified expressions appearing in \ddc{} types.
 
-The type $\invty$ is the singleton type of the constant $\ierr$.
-Types $\iecty$ and $\ioffty$ classify error codes and bit string
-offsets, respectively. The remaining types have standard
-meanings: function types, product types, sum types, sequence types
-$\iseqty \ty$; universal types $\forall \ityvar.\ity$ and type
-variables $\ityvar$; recursive types $\imu \ityvar \ity$; and type
-constructors $\lambda \alpha.\ity$ and their application $\ity \;
-\ity$. Once again, note that universal types and type constructors do
-not include kind annotations, for the reason cited above.
+Our base types include the type $\invty$, the singleton type of the
+constant $\ierr$, and rypes $\iecty$ and $\ioffty$, which classify
+error codes and bit string offsets, respectively.
+
+Unlike \fomega, we do not include kind annotations on the parameters
+of type abstractions, type constrcutors or universal types, as we only
+use parameterization over types at kind $\kty$.
 
 We extend the formal syntax with some syntactic sugar 
 for use in the rest of the paper: anonymous functions
@@ -200,10 +176,12 @@ we have no formal records with named fields, we use a dot notation for
 commonly occuring projections. For example, for a pair $\mathtt x$ of
 rep and PD, we use $\codefont{x.rep}$ and $\codefont{x.pd}$ for the
 left and right projections of $\codefont{x}$, respectively. Also, sums and products are
-right-associative. 
+right-associative.  Finally, we only specify type abstraction (over
+terms) and application when we feel it will clarify the
+presentation. Otherwise, the polymorphism is implicit.
 
-The static semantics ($\stsem[e,{\ctxt},\ity]$) and operational
-semantics ($e \stepsto e'$) are those of \fomega extended with
+The static semantics ($\stsem[e,{\ctxt},\ity]$), operational
+semantics ($e \stepsto e'$), and type equality ($\ity \equiv \ity'$) are those of \fomega extended with
 recursion functions and recursive types and are entirely standard.
 See, for example, Pierce~\cite{pierce:tapl}.
 
@@ -271,11 +249,9 @@ defined in this section and a brief description of each.
 \infer[\text{Const}]{
     \ddck[\pbase{e},\pctxt;\ctxt,\kty,\con]
   }{
-    \begin{semcond}
       \wfd {} {\fotyc \pctxt,\ctxt} &
-      \stsem[e,{\fotyc \pctxt,\ctxt},\ity] \\
-      \vlet {\ity \iarrowi \kty} {\Ikind(C)}
-    \end{semcond}
+      \stsem[e,{\fotyc \pctxt,\ctxt},\ity] &
+      \Ikind(C) = {\ity \iarrowi \kty}
   }
 \]
 
@@ -305,23 +281,13 @@ defined in this section and a brief description of each.
               {\itpdsem[\ty]}},
           \kty,\mcon']
   }
-\]
-
-\[
+\quad
 \infer[\text{Sum}]{
     \ddck[\psum{\ty}{e}{\ty'},\pctxt;\ctxt,\kty,\con]
   }{
     \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\ctxt,\kty,\mcon'] 
   }
 \quad
-  \infer[\text{Intersection}]{
-    \ddck[\pand \ty {\ty'},\pctxt;\ctxt,\kty,\con]
-  }{
-    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\ctxt,\kty,\mcon'] 
-  }
-\]
-
-\[
   \infer[\text{Con}]{
     \ddck[\pset x \ty e,\pctxt;\ctxt,\kty,\con]
   }{ 
@@ -330,22 +296,6 @@ defined in this section and a brief description of each.
      {\fotyc \pctxt,
     \ectxt{x{:}\iprod{\itsem[\ty]} 
       {\itpdsem[\ty]}}},\iboolty]
-  }
-\]
-
-\[\infer[\text{Seq}]{
-    \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\pctxt;\ctxt,\kty,\con]
-  }{
-    \begin{array}{c}
-    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] \qquad
-    \ddck[{\ty_s},\pctxt;\ctxt,\kty,\mcon_s] \qquad
-    \ddck[{\ty_t},\pctxt;\ctxt,\kty,\mcon_t] \\
-    \stsem[e,{\fotyc \pctxt,\ctxt},
-    \iprod {\itsem[{\ty_m}]}      
-    {\itpdsem[{\ty_m}]}
-    \iarrowi \iboolty]
-    \quad (\ty_m = \pseq \ty {\ty_s} {\pterm e {\ty_t}})
-    \end{array}
   }
 \]
 
@@ -374,31 +324,7 @@ defined in this section and a brief description of each.
   \ddck[\ty_2,\pctxt;\ctxt,\kty,\mcon]
 }
 \]
-
-
-
-\[
-  \infer[\text{Compute}]{       
-    \ddck[\pcompute{e}{\ity},\pctxt;\ctxt,\kty,\con]
-  }{
-    \wfd {}{\fotyc \pctxt, \ctxt} &
-    \stsem[e,{\fotyc \pctxt,\ctxt},\ity] & 
-    \fomegak{\fortyc \pctxt}{\ity}{\kty}
-  }      
-\quad
-\infer[\text{Absorb}]{
-    \ddck[\pabsorb{\ty},\pctxt;\ctxt,\kty,\con]
-  }{
-    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon]
-  }
-\quad
-  \infer[\text{Scan}]{
-    \ddck[\pscan{\ty},\pctxt;\ctxt,\kty,\con]
-  }{
-    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon]
-  }
-\]
-\caption{\ddc{} Kinding Rules}
+\caption{Partial listing of \ddc{} kinding rules}
 \label{fig:ddc-kinding}
 \end{figure*}
 
@@ -544,46 +470,42 @@ as the body type.
 In \figref{fig:pd-tys}, we give the types of the parse descriptors
 corresponding to each \ddc{} type. The majority of the types shown are
 tuples of the type $\tyface{pd\_hdr}$ for the header, and another
-host-language type for the body.  This common shape enables us to
-write polymorphic functions that treat parse descriptors in a generic
-mannner. Indeed, the parsing semantics of types rely on this structure
-heavily, as discussed in \secref{sec:parse-sem}. 
+host-language type for the body. Note that this majority includes
+recursive types, which were not translated in this manner in our
+presentation of \ddcold{}. This common shape enables us to write
+polymorphic functions that treat parse descriptors in a generic
+mannner. Indeed, the parsing semantics of types rely on this
+structure, as discussed in \secref{sec:parse-sem}.
 
 The PD types without the common shape are those corresponding to
 abstractions and applications. Value abstractions and applications are
 translated in an identical manner for PD types as for representation
-types.  However, type abstractions and applications are translated in
-a subtly different manner. Type abstractions correspond to parse
-decriptor-type constructors in \fomega much like they correspond to
-representation-type constructors. The major difference is that PD-type
-constructors are parameterized over the PD \emph{body} type, rather
-than over the PD type itself. Correspondingly, type application
-applies the PD interpretation to the ...
-and type variables become ...
+types.  Type abstractions and applications, however, are translated in
+a subtly different manner. As with the rep-type interpretation, type
+abstractions correspond to parse decriptor-type constructors in
+\fomega. The major difference is that PD-type constructors are
+parameterized over the PD \emph{body} type, rather than over the PD
+type itself. Correspondingly, type application $\papp {\ty_1}{\ty_2}$ applies
+the PD interpretation of $\ty_1$ to the body portion of the PD
+interpretation of $\ty2$ (specified formally with the $\itbdsem[\ty]$
+function). Similarly, type variables are translated to tuples of a
+header and a type variable, rather than to a type variable alone. 
 
-The reason for this difference can be appreciated only once we have
-discussed the parsing semantics of type abstractions and applications.
+The reason for the parameterization over PD-body types (rather than
+parse-descriptor types) in the translation scheme will be
+explained in the next section, once we have discussed the parsing
+semantics of type abstractions and applications. Note, however, that
+an important result of this design is that the PD interpretation is no
+longer defined for all types. The problem lies with
+the interpretation of type application. It requires that
+$\itbdsem[\ty_2]$ be defined, which, in turn, requires that 
+$\itpdsem[\ty_2] \equiv \ipty{\ity}$, for some $\ity$. Yet, this
+requirement is not by some types; for example, $\lambda \ptyvar.\ty$.
 
-
-% For example, a
-% function to split a list of representation and parse-descriptor pairs
-% into two lists, one for valid representations and one for invalid
-% representations, could be written
-
-
-% The basic goal is that each PD should have a header and body.
-% However, this is only guaranteed to be true for well-formed types.
-% Type abstractions parameterize over pd_bodies. Now, should have
-% background to explain difference. In previous system, definition of
-% type variables and recursive types was $blah$. Then, we proved that
-% all well formed types had headers. However, the new system requires
-% that pd variables be for the body, not the whole pd type. Otherwise,
-% can't type type abstractions becuase depend on meta property that
-% can't be expressed in the type. Forall a, s.t. a == pd_hdr * b'.
-
-
-{\em Discuss change to rec. types and types variabls and explain new PD types here.}
-
+However, in reasoning about the theory, we do not need
+$\itpdsem[\cdot]$ to be total. Rather, we only require that it be well
+defined for all well-formed types. We prove that this property holds
+in \secref{sec:meta-theory}.
 
 
 \begin{figure}
@@ -669,15 +591,6 @@ discussed the parsing semantics of type abstractions and applications.
   }\\ % end scope
   \end{array}
 \\
-%% Intersection 
-  \trans[\pand{\ty}{\ty'},,] = \\
-  \begin{array}{l}  
-     \lampair{} \\
-     \quad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>} \\
-     \quad \ilet {\itup{\off'',r',p'}} {\trans[\ty',,] \sapp \spair<\idata,\off>} \\
-     \quad {\spair<\codefont{max}(\off',\off''),\newrep {\&}{r,r'},\newpd {\&}{p,p'}>}
-   \end{array}
-\\
 %\quad
 %% Set 
   \trans[\pset{x}{\ty}{e},\ctxt,\kty] = \\
@@ -691,40 +604,6 @@ discussed the parsing semantics of type abstractions and applications.
 \\
 \end{array}
 \begin{array}{l}
-%% Array 
-\trans[\pseq{\ty}{\ty_s}{\pterm e {\ty_t}},,] = \\
-  \begin{array}{l}  
-    \lampair{}\\
-      \quad \iletfun {isDone}{\itup{\off,r,p}}{\\
-        \qquad \ior {\eofpred {\idata,\off}} {e\codefont {\sapp
-          \spair<r,p>}} \iori \\
-        \qquad \ilet {\itup{\off',r',p'}}{\trans[\ty_t,,] \spair<\idata,\off>}\\
-        \qquad \pdok{p'}
-      }\\
-      \quad \iin \\
-      \quad \iletfun {continue} {\itup{\off,\off',r,p}} {\\
-        \qquad \iif  {\off = \off' \iori \isdone {\off',r,p}} \; \ithen {\itup{\off',\codefont{r,p}}} \\
-        \qquad \ielse {
-          \ilet {\itup{\off_s,r_s,p_s}}{\trans[\ty_s,,] \sapp \spair<\idata,\off'>}}\\
-        \qquad \ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp \ictup{\idata,\off_s}}\\
-        \qquad \mathtt{continue} \sapp \ictup{
-            \off,\off_e,\newrep {seq} {r,r_e}, \newpd {seq} {p, p_s, p_e}
-        }}\\
-      \quad \iin
-   \end{array}\\
-  \begin{array}{l}  
-      \quad \ilet {\mathtt{r}} {\newrep {seq\_init}{}}\\
-      \quad \ilet {\mathtt{p}} {\newpd {seq\_init}{\off}}\\
-      \quad \iif {\isdone{\off,r,p}} \; \ithen {\itup{\off,\codefont{r,p}}}\\
-      \quad \ielse {\ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp
-          \spair<\idata,\off>}} \\
-      \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
-        \newrep {seq} {r,r_e}, \newpd {seq} {p, \newpd {unit} \off, p_e}}      
-  \end{array}  
-\\
-%\end{array}
-%\quad
-%\begin{array}{l}
 %% Var
 \trans[\ptyvar,,] = \codefont{f_\ptyvar}
 \\[3pt]
@@ -752,40 +631,10 @@ discussed the parsing semantics of type abstractions and applications.
 \trans[\ty_1 \ty_2,,] = 
     \trans[\ty_1,,]\; [\itsem[\ty_2]]\; [\itpdsemstrip[\ty_2]]\; \trans[\ty_2,,]
 \\
-%% Compute
-\trans[\pcompute e \ity,,] = \\
-  \quad \lampair{\itup{\off,\newrep {compute} {\nrm e},\newpd {compute} \off}}
-\\[3pt]
-%% Absorb
-\trans[\pabsorb \ty,,] = \\
-  \begin{array}{l}  
-    \lampair{}\\
-    \quad \ilet {\itup {\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>}\\
-    \quad \itup{\off',\newrep {absorb} p,\newpd {absorb} p}   
-  \end{array}  
-\\
-%% Scan
-\trans[\pscan \ty,,] = \\
-  \begin{array}{l}  
-    \lampair{}\\
-    \quad \iletfun {try} {i} {\\
-      \qquad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp
-        \codefont{\spair<\data,\off + i>}} \\
-      \qquad \iif {\pdok p}\; \ithen \\
-      \qquad {\ictup{\off',\newrep {scan} r,
-        \newpd {scan} {i,p}}}\; \ielse {}\\
-      \qquad \iif {\codefont{i = scanMax}}\; \ithen \\
-      \qquad {\ictup{\off,\newrep {scan\_err} {},
-        \newpd {scan\_err} {\off}}}\; \ielse {}\\
-      \qquad \codefont {try \sapp (i+1)}
-   }\\
-   \quad \iin \sapp \codefont{try \sapp 0} \\
-  \end{array}  
-\\
 \end{array}
 \]
 %\caption{\ddc{} Semantics (cont.)}
-\caption{\ddc{} Semantics}
+\caption{Partial list of \ddc{} parsing semantics}
 \label{fig:ddc-sem}
 \end{figure*}
 
@@ -828,25 +677,23 @@ The type of PD headers is $\iintty
 \end{figure}
 
 
-The parsing semantics of a type $\tau$ with kind $\kty$ (\emph{Say the
-previous in less technical terms. This is an important, general point,
-not a technical detail.})is a
-function that transforms some amount of input into a pair of a
-representation and a parse descriptor, the types of which are
-determined by $\tau$.  \figref{fig:parser-types} specifies the
-\implang{} language types of the parsers generated from well-kinded
-\ddc{} types.  Note that parameterized \ddc{} types require their
-arguments before they can parse any input.
+The parsing semantics of a type $\tau$ with kind $\kty$ is a function
+that transforms some amount of input into a pair of a representation
+and a parse descriptor, the types of which are determined by $\tau$.
+The parsing semantics for types with higher kind, then, are functions
+to construct parsers, or functions to construct functions to construct parsers,
+etc. Formally, \figref{fig:parser-types} specifies the \implang{}
+language types of the functions generated from well-kinded \ddc{}
+types.
 
-\figref{fig:ddc-sem} shows the parsing semantics function.  For each
-type, the input to the corresponding parser is a bit string and an
-offset which indicates the point in the bit string at which parsing
-should commence.  The output is a new offset, a representation of the
-parsed data, and a parse descriptor. As the bit string input is
-never modified, it is not returned as an output.  In addition
-to specifying how to handle correct data, each function describes how
-to transform corrupted bit strings, marking detected errors in
-a parse descriptor.
+For each (unparameterized) type, the input to the corresponding parser
+is a bit string and an offset which indicates the point in the bit
+string at which parsing should commence.  The output is a new offset,
+a representation of the parsed data, and a parse descriptor. As the
+bit string input is never modified, it is not returned as an output.
+In addition to specifying how to handle correct data, each function
+describes how to transform corrupted bit strings, marking detected
+errors in a parse descriptor.
 
 For any type, there are three steps to parsing: parse the
 subcomponents of the type (if any), assemble the resultant
@@ -862,43 +709,121 @@ products is ${\codefont{H_{\gS}}}$. Selected constructors are shown in
 occuring code into ``built-in'' functions, explained as needed and
 defined formally in \appref{app:asst-functions}.
 
-The PD constructors determine the error code and
-calculate the error count.  There are three possible error codes:
-$\iok$, $\iecerr$, and $\iecpc$, corresponding to the three possible results of a parse: 
-it can succeed, parsing the data without errors; it can succeed,
-but discover errors in the process; or, it can find an
-unrecoverable error and fail.
-The error count is determined by subcomponent error counts and any errors associated directly with the type
-itself.  
+The PD constructors determine the error code and calculate the error
+count.  There are three possible error codes: $\iok$, $\iecerr$, and
+$\iecpc$, corresponding to the three possible results of a parse: it
+can succeed, parsing the data without errors; it can succeed, but
+discover errors in the process; or, it can find an unrecoverable error
+and fail.  The error count is determined by subcomponent error counts
+and any errors associated directly with the type itself.
 
-We translate recursive types into
-recursive functions with a special
-function name corresponding to the name of the 
-bound type   variable.
-Recursive type variables translate to these special names.
+In \figref{fig:ddc-sem}, we specify the parsing semantics of a portion
+of \ddc{}. We will explain the interpretations of select types, from
+which interpretation of the remaining types may be understood. The
+interpretation of dependent sums parses the data with the
+interpretation of the first type, and then binds the resulting
+representation and PD to $x$, before parsing the data with the
+interpretation of the second type. Finally, it bundles together the
+results using the appropriate constructor functions.
 
-{\em Discuss translation of poly types here. Also, note somewhere that
-we don'e use explicit type asbtraction and instantiation unless they
-will clarify things.}
+Type variables translate to an expression variables whose name
+corresponds directly to the name of the type variable. These
+expression variables are bound in the interpretations of recursive
+types and type abstractions. We interpret recursive types as recursive
+functions whose corresponds to the name of the recursive type
+variable.  Type abstraction, in essence, is interpreted as a function
+over other parsing functions. However, as those parsing functions
+could correspond to arbitrary \ddc{} types (of kind $\kty$), the
+interpretation must be a polymorphic function, parameterized by the
+representation and PD-body type of the of the \ddc{} type parameter.
+For clarity, we present this type parameterization explicitly.  Type
+application $\papp {\ty_1}{\ty_2}$ simply becomes the application of
+the interpretation of $\ty_1$ to the representation, PD, and parsing
+interpretations of $\ty_2$.
+
+At this point, we can explain why the PD and parsing interpretations
+of type abstraction and application involve the PD-body interpretation
+rather than just the PD interpretation. Notice that the constructor
+functions for dependent sums (and for many other types as well) are
+polymorphic. No matter the types of the subcomponent types $\ty$ and
+$\ty'$, we use the same functions $\newrepf \Sigma$ and $\newpdf
+\Sigma$. The PD constructor is not fully polymorphic, though, in that
+it assumes that the parse descriptors given to it have the familiar PD
+shape of header and body.  Therefore, in order to judge the type of
+this function, we must be sure that the PD types of the subcomponents
+$\ty$ and $\ty'$ satisfy this constraint.
+
+What happens, then, when we have $\ptyvar$ as a subcomponent? We must
+ensure that its PD type has the appropriate shape. To do so, we
+specify the translation of type variables explicitly as a tuple of
+a header and a type variable for the body, rather than simply as a
+type variable for the whole PD type. Therefore, all parameterization
+related to PD types must be over the PD-body type, rather than the PD
+type as a whole.
 
 \subsection{Meta-theory}
 \label{sec:meta-theory}
 
+In \secref{sec:intty-sem}, we informally noted that the parse
+descriptor-type semantics is only well-defined for well formed types.
+The cause of this limitation was that, for type application, we
+require that the PD-type of the argument describe a tuple of a PD
+header and (arbitrary) body. In the previous section, we explained why
+this ``header-body'' shape of parse descriptors is important for the
+parsing semantics as well. In general, we require that the PD-type of
+all well formed types with base kind either describes such a shape, or
+is equivalent to a type that does.  Now, we formally state this
+property and then prove that it holds for all well-formed types.
+However, before doing so, we must note that we cannot prove this
+property alone as it is too weak. Instead, we must state and prove a
+stronger property of the theory, and then derive this desired property
+from it.  The stronger property is a form of logical relation, defined
+below.
 
-{\em I think that conditions one and three should be moved to a
-  separate specification of simple well-formedness of the
-  interfaces. Condition two should stay here.}
+\begin{definition}
+\begin{itemize}
+\item $\hhpred \ty \kty$ iff $\exists\,\ity$ s.t. $\itpdsem[\ty] \equiv
+  {\ipty \ity}$.
+\item $\hhpred \ty {\kty \iarrowi \kind}$ iff $\exists\,\ity$
+  s.t. $\itpdsem[\ty] \equiv \ity$ and whenever $\hhpred
+  {\ty'}{\kty}$, we have $\hhpred {\papp \ty {\ty'}}{\kind}$.
+\item $\hhpred \ty {\ity \iarrowi \kind}$ iff $\exists\,\ity'$
+  s.t. $\itpdsem[\ty] \equiv \ity'$ and $\hhpred{\papp \ty e}{\kind}$ (for any $e$).
+\end{itemize}
+\end{definition}
 
-\begin{condition}[Conditions on Base-type Interfaces]
-  \begin{enumerate}
-  \item $\dom {\Ikind} = \dom {\Iimp}$.
-  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
-    \ioparrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$).
-  \item $\fomegak{}{\Irty(C)}{\kty}$.
-    \label{cond:closed-op}
-  \end{enumerate}
-\end{condition}
+We can now prove the following by induction on kinding derivations
+(with $\ty[\ty_1/\ptyvar_1,...,\ty_n/\ptyvar_n]$ denoting simultaneous
+capture-avoiding substitution defined in the standard way):
+\begin{lemma}
+   If
+   $\ddck[\ty,{\pctxt,\ptyvar_1{:}\kty,...,\ptyvar_n{:}\kty;\ctxt},\kind,{}]$ and $\hhpred {\ty_i} \kty$ then $\hhpred {\ty[\ty_1/\ptyvar_1,...,\ty_n/\ptyvar_n]} \kind$.
+\end{lemma}
 
+From this, we can derive our original goals as a corrollary:
+\begin{lemma}
+  \begin{itemize}
+  \item If $\ddck[\ty,\pctxt;\ctxt,\kind,{}]$ then $\exists
+     \ity.\itpdsem[\ty] = \ity$.
+   \item If $\ddck[\ty,\pctxt;\ctxt,\kty,{}]$ then $\exists
+     \ity.\itpdsem[\ty] \equiv \ipty \ity$.
+  \end{itemize}
+\end{lemma}
+
+With this lemma, we can now present the essential theoretical result
+of this paper. The intuitive relationship between the representation
+and parsing semantics of \ddc{} is that the former specifies the types
+of the data structures returned by the latter. We formalize this
+intuitition and prove it correct with a ``type-correctness'' theorem
+for well-formed types. A practical implication of this theorem is that
+it is sufficient to check data descriptions (i.e. \ddc{} types) for
+well-formedness in order to ensure that the generated types and
+functions are well formed. This property is sorely lacking in many
+common implementation of Lex and YACC, for which users must examine
+generated code in order to debug compile-time errors in
+specifications.
+
+\trversion{
 \begin{definition}
 $\pda \ptyvar = \ipty \ptyvar$
 \end{definition}
@@ -960,40 +885,40 @@ $.
 \begin{proof}
   By typing rules of \fomega.
 \end{proof}
+}
 
-To prove our type correctness theorem by induction, we must account
-for the fact that any free type variables in
-a \ddc{} type $\ty$ will become free function variables
-in $\trans[\ty,,]$.  
-
-To that end, we define the function $\ptyc \pctxt$, 
+We prove the type correctness theorem using a more general induction
+hypothesis for open types. This hypothesis must account for the fact
+that any free type variables in a \ddc{} type $\ty$ will become free
+function variables in $\trans[\ty,,]$. To that end, we define the function $\ptyc \pctxt$, 
 which maps type-variable contexts
 $\pctxt$ to typing contexts $\ctxt$:
 \vskip -1.5ex
 {\small
 \[
-\begin{array}{l}
-  \ptyc{\cdot} = \cdot \\[1ex]
+  \ptyc{\cdot} = \cdot \qquad
   \ptyc{\pctxt,\ptyvar{:}\kty} = \ptyc \pctxt,\codefont{f_\ptyvar}{:}\kTrans[\kty,\ptyvar]
-\end{array}
 \]
 }
 
-\begin{theorem}[Type Correctness]
+\begin{lemma}[Type Correctness Lemma]
 \label{thm:type-correctness}
   If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
   $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
             {\kTrans[\kind,\ty]}]$.
-\end{theorem}
+\end{lemma}
 
 \begin{proof}
   By induction on the height of the kinding derivation.
 \end{proof}
 
-\begin{corollary}[Type Correctness of Closed Types]
+The type correctness theorem now follows as a direct corrollary of
+the above lemma:
+
+\begin{theorem}[Type Correctness of Closed Types]
   If $\ddck[\ty,,\gk,\con]$ then
   $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
-\end{corollary}
+\end{theorem}
 
 
 %%% Local Variables: 

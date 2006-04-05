@@ -26,6 +26,208 @@ Finally, with the introduction of potentially open \implang types, we
 now check that $\ity$ in rule Compute is closed with respect to any
 types but the representation type variables corresponding to $\pctxt$.
 
+\begin{figure}[tp]
+\small
+\begin{bnf}
+%   \name{Variables} \meta{f,x,y} \\
+%   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
+  \name{Bits}  \meta{B}   \::= \cdot \| 0\,B \| 1\,B \\ 
+  \name{Constants} \meta{c} \::=
+      () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
+      \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
+
+  \name{Values} \meta{v} \::= 
+      \const \| % \ilam{\nrm \var}{\ity}{e} \| 
+      \ifun {\nrm f} {\nrm x} e \| \ipair v v \nlalt
+      \iinld{\ity}{v} \| \iinrd{\ity}{v} \|
+      \iarr{\vec{v}} \\
+
+  \name{Operators} \meta{op} \::= 
+      = \; \| \; < \; \| \inotop % \| \isizeofop
+      \| \ldots \\
+
+  \name{Expressions} \meta{e} \::= 
+      \const \| \var \| \iop{e} \|
+%      \ilam {\nrm \var} \ity e \| 
+      \ifun {\nrm f} {\nrm x} e \| 
+      \iapp e e \nlalt
+    \Lambda \alpha.e \| e \; [\ty] \nlalt
+%      \iletfun {\nrm f} {\nrm x} e \; \iin \; e' \| 
+      \ilet {\nrm x} e \; e \|
+      \iif e \; \ithen e \; \ielse e \nlalt
+      \ipair{e}{e} \| \ipi {\nrm i}{e} \|
+      \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
+      \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
+      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e} \nlalt
+      \iroll{e}{\mu\alpha.\tau} \| \iunroll{e}
+      \\
+      
+  \name{Base Types} \meta{a} \::= 
+      \iunitty \| \iboolty \| \iintty  \| 
+      \invty \nlalt  \ibitsty \| \ioffty \| \iecty
+  \\
+  \name{Types} \meta{\ity} \::= 
+      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
+      \isum \ity \ity \nlalt
+      \iseq \ity \| \forall \ityvar.\ity  \|
+      \imu \ityvar \ity   
+      \| \lambda \alpha.\ity 
+      \| \ity \; \ity
+  \\
+  \name{Kinds} \meta{\kappa} \::= \kty \| \kappa \rightarrow \kappa
+  
+\end{bnf}
+\caption{\Implang{} Language: F$^\omega$}
+\label{fig:implang-syntax}
+\end{figure}
+
+\begin{figure*}[t]
+\small
+\fbox{$\ddck[\ty,\pctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
+\[
+\infer[\text{Unit}]{
+    \ddck[\ptrue,\pctxt;\ctxt,\kty,\con]
+  }{\wfd {} {\fotyc \pctxt,\ctxt}}
+\quad 
+\infer[\text{Bottom}]{
+    \ddck[\pfalse,\pctxt;\ctxt,\kty,\con]
+  }{\wfd {} {\fotyc \pctxt, \ctxt}}
+\quad 
+\infer[\text{Const}]{
+    \ddck[\pbase{e},\pctxt;\ctxt,\kty,\con]
+  }{
+    \begin{semcond}
+      \wfd {} {\fotyc \pctxt,\ctxt} &
+      \stsem[e,{\fotyc \pctxt,\ctxt},\ity] \\
+      \vlet {\ity \iarrowi \kty} {\Ikind(C)}
+    \end{semcond}
+  }
+\]
+
+\[
+\infer[\text{Abs}]{
+    \ddck[\plam{\var}{\ity}{\ty},
+         \pctxt;\ctxt,\ity \iarrowi \kind,\mcon]
+  }{
+    \ddck[\ty,\pctxt;\ectxt{\var{:}\ity},\kind,\mcon]
+  }
+\quad
+\infer[\text{App}]{
+  \ddck[\papp{\ty}{e},\pctxt;\ctxt,\gk,\mcon]
+}{
+  \ddck[\ty,\pctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
+  \stsem[e,{\fotyc \pctxt,\ctxt},\ity]
+}
+\]
+
+\[
+\infer[\text{Prod}]{
+    \ddck[\psig{x}{\ty}{\ty'},\pctxt;\ctxt,\kty,\con]
+  }{       
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] &
+    \ddck[\ty',\pctxt;
+          \ectxt {x{:}\iprod {\itsem[\ty]} 
+              {\itpdsem[\ty]}},
+          \kty,\mcon']
+  }
+\]
+
+\[
+\infer[\text{Sum}]{
+    \ddck[\psum{\ty}{e}{\ty'},\pctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\ctxt,\kty,\mcon'] 
+  }
+\quad
+  \infer[\text{Intersection}]{
+    \ddck[\pand \ty {\ty'},\pctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\ctxt,\kty,\mcon'] 
+  }
+\]
+
+\[
+  \infer[\text{Con}]{
+    \ddck[\pset x \ty e,\pctxt;\ctxt,\kty,\con]
+  }{ 
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & 
+    \stsem[e,
+     {\fotyc \pctxt,
+    \ectxt{x{:}\iprod{\itsem[\ty]} 
+      {\itpdsem[\ty]}}},\iboolty]
+  }
+\]
+
+\[\infer[\text{Seq}]{
+    \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\pctxt;\ctxt,\kty,\con]
+  }{
+    \begin{array}{c}
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] \qquad
+    \ddck[{\ty_s},\pctxt;\ctxt,\kty,\mcon_s] \qquad
+    \ddck[{\ty_t},\pctxt;\ctxt,\kty,\mcon_t] \\
+    \stsem[e,{\fotyc \pctxt,\ctxt},
+    \iprod {\itsem[{\ty_m}]}      
+    {\itpdsem[{\ty_m}]}
+    \iarrowi \iboolty]
+    \quad (\ty_m = \pseq \ty {\ty_s} {\pterm e {\ty_t}})
+    \end{array}
+  }
+\]
+
+\[
+  \infer[\text{TyVar}]{
+    \ddck[\ptyvar,{\pctxt;\ctxt},\kty,\ncon]
+  }{\wfd {}{\fotyc \pctxt, \ctxt} \quad \tyvar{:}\kty \in \pctxt}
+\quad
+  \infer[\text{Rec}]{
+    \ddck[\pmu \ptyvar \kty \ty,\pctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,{\pctxt,\ptyvar{:}\kty;\ctxt},\kty,\con]
+  }
+\quad
+\infer[\text{TyAbs}]{
+    \ddck[\ptylam{\tyvar}{\kty}{\ty},
+         \pctxt;\ctxt,\kty \iarrowi \kind,\mcon]
+  }{
+    \ddck[\ty,{\pctxt,\tyvar{:}\kty;\ctxt},\kind,\mcon]
+  }
+\quad
+\infer[\text{TyApp}]{
+  \ddck[\ptyapp{\ty_1}{\ty_2},\pctxt;\ctxt,\gk,\mcon]
+}{
+  \ddck[\ty_1,\pctxt;\ctxt,\kty \iarrowi \gk,\mcon] &
+  \ddck[\ty_2,\pctxt;\ctxt,\kty,\mcon]
+}
+\]
+
+
+
+\[
+  \infer[\text{Compute}]{       
+    \ddck[\pcompute{e}{\ity},\pctxt;\ctxt,\kty,\con]
+  }{
+    \wfd {}{\fotyc \pctxt, \ctxt} &
+    \stsem[e,{\fotyc \pctxt,\ctxt},\ity] & 
+    \fomegak{\fortyc \pctxt}{\ity}{\kty}
+  }      
+\quad
+\infer[\text{Absorb}]{
+    \ddck[\pabsorb{\ty},\pctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon]
+  }
+\quad
+  \infer[\text{Scan}]{
+    \ddck[\pscan{\ty},\pctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\ctxt,\kty,\mcon]
+  }
+\]
+\caption{\ddc{} Kinding Rules}
+\label{fig:ddc-kinding}
+\end{figure*}
+
+
 \begin{figure}
 \fbox{$\itsem[\ty] = \ity$}
 \[
@@ -103,6 +305,196 @@ types but the representation type variables corresponding to $\pctxt$.
 \caption{Parse-Descriptor Types}
 \label{fig:complete-pd-tys}
 \end{figure}
+
+
+\begin{figure*}
+\small
+\fbox{$\trans[\ty,\ctxt,\gk] = e$} 
+
+\[
+\begin{array}{l}
+  %% None 
+\trans[\ptrue,\ctxt,\kty] =
+  \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}
+\\[3pt] %\\
+%% False 
+\trans[\pfalse,,] =
+  \lampair{\spair<\off,\newrep {bottom}{},\newpd {bottom}{\off}>}
+\\[3pt] %\\ 
+%% Const 
+\trans[\pbase{e},\ctxt,\kty] =
+  \lampair{\iapp {\iapp {\Iimp(C)} (e)} {\itup {\idata,\off}}}
+\\[3pt] %\\
+%% Abs 
+\trans[\plam{\var}{\ity}{\ty},,] =
+   \sfn{\nrm\var}{\ity}{\trans[\ty,\ectxt{\var{:}\ity},\kind]}
+\\[3pt] %\\
+%% App 
+\trans[\papp{\ty}{e},\ctxt,\gk] =
+  \trans[\ty,,] \sapp e  
+\\[3pt]
+%% Prod 
+%\begin{array}{l}
+\trans[\psig{x}{\ty}{\ty'},\ctxt,\kty] = \\
+  \begin{array}{l}  
+    \lampair{} \\
+    \quad  \ilet {\spair<\off',r,p>} 
+    {{\trans[\ty,,]} \sapp \spair<\idata,\off>} \\
+    \quad  \ilet x {\ictup{r,p}}\\
+    \quad  \ilet {\spair<\off'',r',p'>} 
+    {{\trans[\ty',,]} \sapp \spair<\idata,\off'>} \\
+    \quad \spair<\off'',\newrep {\gS}{r,r'},\newpd {\gS}{p,p'}>
+  \end{array}  
+%\end{array}
+\\
+%% Sum 
+%\begin{array}{l}
+  \trans[\psum{\ty}{e}{\ty'},,] = \\
+  \begin{array}{l}  
+  \lampair{} \\
+  \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+  \quad \iif {\pdok p} \; \ithen {
+    \def \r {\newrep {+left}{r}}
+    \def \p {\newpd {+left}{p}}
+    \spair<\off',\r,\p>} \\
+  \quad \ielse {\ilet {\itup{\off',r,p}}{\trans[\ty',,] \sapp \spair<\idata,\off>}} \\
+  \quad 
+  {  % begin scope
+    \def \r {\newrep {+right}{r}}
+    \def \p {\newpd {+right}{p}}
+    %% 
+    \spair<\off',\r,\p>
+  }\\ % end scope
+  \end{array}
+\\
+%% Intersection 
+  \trans[\pand{\ty}{\ty'},,] = \\
+  \begin{array}{l}  
+     \lampair{} \\
+     \quad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+     \quad \ilet {\itup{\off'',r',p'}} {\trans[\ty',,] \sapp \spair<\idata,\off>} \\
+     \quad {\spair<\codefont{max}(\off',\off''),\newrep {\&}{r,r'},\newpd {\&}{p,p'}>}
+   \end{array}
+\\
+%\quad
+%% Set 
+  \trans[\pset{x}{\ty}{e},\ctxt,\kty] = \\
+  \begin{array}{l}  
+    \lampair{} \\
+    \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+    \quad \ilet x {\ictup{r,p}}\\
+    \quad \ilet c e \\
+    \quad \spair<\off',\newrep {con} {c,r},\newpd {con} {c,p}>
+  \end{array}
+\\
+\end{array}
+\begin{array}{l}
+%% Array 
+\trans[\pseq{\ty}{\ty_s}{\pterm e {\ty_t}},,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+      \quad \iletfun {isDone}{\itup{\off,r,p}}{\\
+        \qquad \ior {\eofpred {\idata,\off}} {e\codefont {\sapp
+          \spair<r,p>}} \iori \\
+        \qquad \ilet {\itup{\off',r',p'}}{\trans[\ty_t,,] \spair<\idata,\off>}\\
+        \qquad \pdok{p'}
+      }\\
+      \quad \iin \\
+      \quad \iletfun {continue} {\itup{\off,\off',r,p}} {\\
+        \qquad \iif  {\off = \off' \iori \isdone {\off',r,p}} \; \ithen {\itup{\off',\codefont{r,p}}} \\
+        \qquad \ielse {
+          \ilet {\itup{\off_s,r_s,p_s}}{\trans[\ty_s,,] \sapp \spair<\idata,\off'>}}\\
+        \qquad \ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp \ictup{\idata,\off_s}}\\
+        \qquad \mathtt{continue} \sapp \ictup{
+            \off,\off_e,\newrep {seq} {r,r_e}, \newpd {seq} {p, p_s, p_e}
+        }}\\
+      \quad \iin
+   \end{array}\\
+  \begin{array}{l}  
+      \quad \ilet {\mathtt{r}} {\newrep {seq\_init}{}}\\
+      \quad \ilet {\mathtt{p}} {\newpd {seq\_init}{\off}}\\
+      \quad \iif {\isdone{\off,r,p}} \; \ithen {\itup{\off,\codefont{r,p}}}\\
+      \quad \ielse {\ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp
+          \spair<\idata,\off>}} \\
+      \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
+        \newrep {seq} {r,r_e}, \newpd {seq} {p, \newpd {unit} \off, p_e}}      
+  \end{array}  
+\\
+%\end{array}
+%\quad
+%\begin{array}{l}
+%% Var
+\trans[\ptyvar,,] = \codefont{f_\ptyvar}
+\\[3pt]
+%% Mu
+\trans[\pmu \ptyvar \gk \ty,,] = \\
+  \begin{array}{l}
+  \ifun {f_\ptyvar} {\itup{\data{:}\ibitsty,\off{:}\ioffty}  
+           : \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
+                    * (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}) } {}\\
+  \quad \ilet {\itup{\off',r,p}} 
+   {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
+  \qquad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
+     (p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
+%}}
+  \end{array}  
+\\[3pt]
+%% lambda \alpha
+\trans[\lambda\tyvar . \ty,,] = %\\
+%  \begin{array}{l}
+    \Lambda \tyvar_\repname. 
+    \Lambda \tyvar_\pdbname. \lambda \codefont{f_\ptyvar}. \trans[\ty,,]
+%  \end{array}  
+\\
+%% t1 t2
+\trans[\ty_1 \ty_2,,] = 
+    \trans[\ty_1,,]\; [\itsem[\ty_2]]\; [\itpdsemstrip[\ty_2]]\; \trans[\ty_2,,]
+\\
+%% Compute
+\trans[\pcompute e \ity,,] = \\
+  \quad \lampair{\itup{\off,\newrep {compute} {\nrm e},\newpd {compute} \off}}
+\\[3pt]
+%% Absorb
+\trans[\pabsorb \ty,,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \ilet {\itup {\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>}\\
+    \quad \itup{\off',\newrep {absorb} p,\newpd {absorb} p}   
+  \end{array}  
+\\
+%% Scan
+\trans[\pscan \ty,,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \iletfun {try} {i} {\\
+      \qquad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp
+        \codefont{\spair<\data,\off + i>}} \\
+      \qquad \iif {\pdok p}\; \ithen \\
+      \qquad {\ictup{\off',\newrep {scan} r,
+        \newpd {scan} {i,p}}}\; \ielse {}\\
+      \qquad \iif {\codefont{i = scanMax}}\; \ithen \\
+      \qquad {\ictup{\off,\newrep {scan\_err} {},
+        \newpd {scan\_err} {\off}}}\; \ielse {}\\
+      \qquad \codefont {try \sapp (i+1)}
+   }\\
+   \quad \iin \sapp \codefont{try \sapp 0} \\
+  \end{array}  
+\\
+\end{array}
+\]
+%\caption{\ddc{} Semantics (cont.)}
+\caption{\ddc{} Semantics}
+\label{fig:ddc-sem}
+\end{figure*}
+\begin{condition}[Conditions on Base-type Interfaces]
+  \begin{enumerate}
+  \item $\dom {\Ikind} = \dom {\Iimp}$.
+  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
+    \ioparrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$).
+  \item $\fomegak{}{\Irty(C)}{\kty}$.
+    \label{cond:closed-op}
+  \end{enumerate}
+\end{condition}
 
 
 
