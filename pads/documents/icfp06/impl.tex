@@ -1,120 +1,113 @@
 \section{From \padsmlbig{} to \ocamlbig{}}
 \label{sec:padsml-impl}
-
-{\em
-ToDo: 
-\begin{itemize}
-\item Move detail about Traverse functor to Generic tools section.
-\item Mention here or in section 2 that darkstar example is in file
-  ``regulus.pml'' and hence becomes module Regulus.
-\item modify all uses of Plist to match syntax used in section 2.
-\end{itemize}
-}
-
 We have implemented \padsml{} for use with \ocaml{}. From
 descriptions, the \padsml{} compiler generates \ocaml{} modules that
 can be used by any \ocaml{} program. In this section, we describe the
-contents of the generated modules followed by some examples
-demonstrating their use.
+generated modules and give some examples demonstrating their use.
 
 
 \subsection{Types as Modules}
 \label{sec:gen-code}
-
+We use the \ocaml{} module system to structure the libraries generated
+by the \padsml{} compiler.
+In particular, the \padsml{} system implements each base type as an
+\ocaml{} module.  
 For each named type in a description file, the \padsml{} compiler
-generates an \ocaml{} module of the same name containing all of the
-generated types and tools related to that type. The
-collection of modules generated from one description file is grouped
-together into a single corresponding ocaml source code file with a
+generates an \ocaml{} module of the same name containing the
+generated types, functions, and nested modules related to that type. 
+The compiler groups the collection of modules generated from one
+description file  into a single corresponding \ocaml{} source file with a
 name corresponding to the name of the original description file. For
-example, a description file named ``foo.pml'' containing three named
-types, results in a file ``foo.ml'' with three submodules, each
-corresponding to one named type.
+example, a description file named \texttt{foo.pml} containing
+three named types results in a file \texttt{foo.ml} defining
+module \cd{Foo} with three submodules, each corresponding to
+one named type. 
 
-Modules, then, are the building blocks of the \padsml{} system, with
-base types, too, implemented as modules. Namespace management alone is
-enough motivation for this ``types as modules'' approach. However, the
+Namespace management alone would be sufficient  
+motivation to adopt this ``types as modules'' approach. However, the
 power of the \ml{} module system provides us with substantially more.
-Polymorphic types, which map types to types, can be implemented simply
+We can implement polymorphic \padsml{} types simply
 and intuitively as functors from (type) modules to (type) modules. It
-would even be appropriate to map recursive types into recursive
-modules. Unfortunately, this approach fails due to the limitations of
-\ocaml{}'s particular implementation of recursive modules\footnote{An
-  earlier version of the system did indeed use this approach. However,
-  the addition of functors to each generated module forced us to find
-  another solution for recursive modules, as \ocaml{} recursive
-  modules cannot contain functors.} Instead, recursive modules are
-implemented with recursive datatypes and functions within the module.
+would even be appropriate to map recursive \padsml{} types into recursive
+modules. Unfortunately, this approach fails because \ocaml{}
+precludes functors from appearing within recursive modules,
+and the output of the \padsml{} compiler includes a functor for each
+type.  Instead, we implement recursive types as modules
+containing recursive datatypes and functions.
 As there is no theoretical reason to prevent recursive modules from
-containing functors\cite{???}, we present our system as a
-well-motivated challenge to the \ocaml{} implementers.
+containing functors\cite{???}, we consider our system a
+challenge problem for module system designers.
 
-Each generated module contains the following types and functions:
+Each generated module contains the following:
 \begin{itemize}
-\item The types of two data structures: one to describe parsed data in
-  memory and the other to describe meta-data about the parsing process.
-  These types are respectively called the
-  \emph{representation} (rep) type and the \emph{parse descriptor} (PD)
-  type.
+\item The types of two data structures: one to describe the in-memory
+  representation of the parsed data and the other to describe meta-data
+  collected during parsing.  We call these two types the
+  \emph{representation} (rep) type and the \emph{parse-descriptor} (PD)
+  type, respectively.
 \item A parsing function, which parses a data source to produce a
   representation and parse descriptor for the data.
-\item A generic tool generator, based on the new tool development
-  framework for \padsml{}. This framework is discussed in
-  \secref{sec:gen-tool}.
+\item A generic tool generator, implemented as a functor
+  in the tool development framework described in \secref{sec:gen-tool}.
 \end{itemize} 
-
-In general, the representation and parse-descriptor type definitions
-are designed to closely resemble the original description.
-The aim is to minimize the amount of effort a user must invest in
-order to understand and use the data structures returned by the
-parser.
-
-Furthermore, the type of parse descriptor mimics the type of the
-representation so that the parse descriptor can provide a parsing
-report for every element of a corresponding representation. Parse
+\noindent
+The representation and parse-descriptor types closely resemble the
+corresponding source type, making it easy to intuit their
+structure. Furthermore, the parse descriptor mimics the representation 
+so that the parse descriptor can provide meta-data about
+each piece of the corresponding representation. In more detail, parse
 descriptors have two components: a header and a body. The header
 reports on the parsing process that produced the representation. It
 includes an error count that indicates the number of subcomponents
-with errors; an error code that indicates the type of error, if any;
+with errors; an error code that describes the type of error, if any;
 and the location of the data within the original data source. The body
-of the parse descriptor contains the parse descriptors (if any) for
-subcomponents of corresponding representations. The body for a
-base-type parse descriptor is always of type \cd{unit}.
+of the parse descriptor contains the parse descriptors for 
+subcomponents of the corresponding representation.  Base type parse
+descriptors always have a body of type \cd{unit}.
 
-In general, the generated modules for all types that are not
-parameterized will match the following signature, \cd{Type.S}:
+More precisely, a module generated for a monomorphic \padsml{} type 
+matches the signature \cd{S}:
 \begin{code}\scriptsize
-\kw{type} rep
-\kw{type} pd\_body
-\kw{type} pd = Pads.pd_header * pd_body
+\kw{module} \kw{type} S = \kw{sig}
+  \kw{type} rep
+  \kw{type} pd\_body
+  \kw{type} pd = Pads.pd_header * pd_body
+  \kw{val} parse : Pads.handle -> rep * pd
+  ...
+\kw{end}\end{code}% 
+This signature refers to the module \cd{Pads}, which collects the
+types and functions that occur frequently in base-type and generated
+modules. In particular, \cd{Pads.pd_header} is the type of all
+parse-descriptor headers and \cd{Pads.handle} is the (abstract) type
+representing the private data structures \padsml{} uses to manage data
+sources. 
 
-\kw{val} parse : Pads.handle -> rep * pd\end{code} The module
-\cd{Pads} contains types and functions that commonly occur in
-generated and base-type modules. The above declarations use
-\cd{Pads.handle}, which is the type of the (abstract) handles used for
-data sources, and \cd{Pads.pd_header}, which is the type of all
-parse-descriptor headers. 
-
-Below is a simple \padsml{} description of a character
-and integer separated by a vertical bar.
+As an example, the \padsml{} description of a character
+and integer separated by a vertical bar
 \begin{code}\scriptsize
-  \kw{ptype} Pair = Pchar * '|' * Pint\end{code} Here are the
-representation and PD types generated from that description:
+  \kw{ptype} Pair = Pchar * '|' * Pint\end{code}%
+yields a module with the signature
 \begin{code}\scriptsize
-\kw{type} rep = Pchar.rep * Pint.rep
-\kw{type} pd_body = Pchar.pd  * Pint.pd\end{code}
+\kw{module} \kw{type} Pair_sig = \kw{sig}
+  \kw{type} rep = Pchar.rep * Pint.rep
+  \kw{type} pd_body = Pchar.pd  * Pint.pd
+  \kw{type} pd = Pads.pd_header * pd_body
+  \kw{val} parse : Pads.handle -> rep * pd
+  ...
+\kw{end}\end{code}%
 Note the close correspondence between the structure of the description
 and that of the \cd{rep} and \cd{pd_body} types. In addition, we see
 that the type of the parse function is defined in terms of the
 \cd{rep} and \cd{pd} types.
 
-Given the signature \cd{Type.S} for unparameterized types we can now
-show an example signature for a polymorphic type.
+We write the signatures for functors generated from polymorphic types
+using the signature \cd{Type.S}, defined earlier.  For example, given polymorphic 
+type \cd{ABPair}:  
 \begin{code}\scriptsize
-\kw{ptype} (Alpha,Beta) ABPair = Alpha * '|' * Beta\end{code}
-becomes
+\kw{ptype} (Alpha,Beta) ABPair = Alpha * '|' * Beta\end{code}%
+the compiler generates a module with the signature
 \begin{code}\scriptsize
-\kw{module} ABPair (Alpha : Type.S) (Beta : Type.S) :
+\kw{module} \kw{type} ABPair (Alpha : Type.S) (Beta : Type.S) = 
 \kw{sig}
   \kw{type} rep = Alpha.rep * Beta.rep
   \kw{type} pd\_body = (Pads.pd_header * Alpha.pd\_body) * 
@@ -122,76 +115,87 @@ becomes
   \kw{type} pd = Pads.pd_header * pd\_body
 
   \kw{val} parse : Pads.handle -> rep * pd
-\kw{end}\end{code}
+  ...
+\kw{end}\end{code}%
 
-In the remainder of this section, we will demonstrate a number of uses
-of generated modules, highlighting general computation,
-transformation, and filtering.
+\subsection{Using the Generated Libraries}
+\ocaml{} is an ideal target for a data description language.
+Its high-level of abstraction matches that of the
+data description language.  In contrast, \padsc{} users fall off an
+abstraction cliff when they shift from declaratively describing data
+to manipulating the generated data structures in \C{}, where they have
+to worry about details such as manipulating \C{} strings and worrying
+about memory management.  In addition, features such as pattern matching
+and higher order functions greatly facilitate data transformations, a
+common activity for data analysts.
+In the remainder of this section, we illustrate using
+generated \padsml{} libraries to compute properties of data, to filter
+data, and to transform it.
 
-\subsection{Example: General Computation}
+\subsubsection{Example: Computing Properties}
 \label{sec:ex-process}
-
 We begin with a simple example in which we process a triple of
-integers. Below is their description:
+integers, specified by the type
 \begin{code}\scriptsize
-\kw{ptype} Source = Pint * '|' * Pint * '|' * Pint\end{code} Next, we
-show a complete \ocaml{} program that finds the average of the three
-integers. (Note that we assume that the name of the description file
-is ``intTriple.pml,'' resulting in an \ocaml{} module \cd{IntTriple}.)
+\kw{ptype} Source = Pint * '|' * Pint * '|' * Pint\end{code}%
+We can compute the average of the three integers with the following
+\ocaml{} code, assuming that the name of the description file
+is \texttt{intTriple.pml}:
 \begin{code}\scriptsize
-\kw{open} Pads
 \kw{let} ((i1,i2,i3),pd) = 
-    parse_source IntTriple.Source.parse "input.txt"
-\kw{let} avg = match get_pd_hdr pd with
-    \{error_code = Good\} -> (i1 + i2 + i3)/3
-  | _ -> raise Bad_file\end{code}
-
-In this program, we parse the triple, check that it is valid and then
+    Pads.parse_source IntTriple.Source.parse "input.txt"
+\kw{let} avg = \kw{match} Pads.get_pd_hdr pd \kw{with}
+    \{error_code = Pads.Good\} -> (i1 + i2 + i3)/3
+  | _ -> \kw{raise} Pads.Bad_file \end{code}%
+\noindent
+In this program, we parse the triple, check that it is valid, and then
 average its elements. The function \cd{parse_source} takes a parsing
-function for a data source and a file name in which the data is
-stored, and parses the source. In order to ensure that the data is
+function and a file name as arguments and uses the function to parse
+the data in the file. 
+To ensure that the data is
 valid, the program projects the parse descriptor header from the parse
 descriptor \cd{pd} and checks that the error code is set to \cd{Good}.
-This error code is defined in the \cd{Pads} module, and indicates that
+This error code indicates that
 the data is syntactically and semantically valid. Other error codes
 include \cd{Nest}, indicating an error in a subcomponent, \cd{Syn},
-indicating that a syntactic error was encountered in parsing the
-datam, and \cd{Sem}, indicating that the data violates a semantic
-constraint. In our program, if any these error codes are specified,
-then the program will raise an exception to halt computation.
+indicating that a syntactic error occurred during parsing, and
+\cd{Sem}, indicating that the data violates a semantic 
+constraint. The averaging program will halt the computation by raising
+an exception if it encounters any of these error codes. 
 
 Notice that checking the parse descriptor of the triple is enough to
 guarantee that there are no errors in any of the triple's
-subcomponents. This property is generally true of all representations
-and corresponding parse descriptors. That is, if the header of a parse
+subcomponents. This property holds of all representations
+and corresponding parse descriptors: if the header of a parse
 descriptor reports no errors, then none of its subcomponents will
 report errors. In this way, we support a ``pay-as-you-go'' approach to
-application error handling, as the parse descriptor for valid data
+application error handling. The parse descriptor for valid data
 need only be consulted once, no matter the size of the corresponding
 data. Only if there are errors within the structure does the user then
-need to continue consulting the parse descriptor until the error is
+need to continue consulting the parse descriptor until the errors are
 located.
 
-\subsection{Example: Filtering}
+\subsubsection{Example: Filtering}
 \label{sec:ex-filter}
 
-An important set of tasks relating to ad hoc data are those related to
+An important set of tasks involving ad hoc data are those related to
 errors, including error analysis, repair, and removal.  Programmers
 often need to ``clean'' their data, \ie{}, filter out data containing
 errors, before loading it into a database or other application.
-\padsml{} makes this sort of task trivial.
+\ocaml{}'s patterm matching constructs and higher-order functions help
+with this kind of task.
 
 \begin{figure}
 \begin{code}\scriptsize
 \kw{open} Pads
 
-\kw{let} sort_orders orders pd (valid_os, invalid_os)=
-   match get\_pd\_hdr pd with
-    \{error_code = Good\} -> (orders::valid_os, invalid_os)
-   | _ => -> (valid_os, orders::invalid_os)
+\kw{let} classify_order order pd (good, bad)=
+   \kw{match} get\_pd\_hdr pd \kw{with}
+    \{error_code = Good\} -> (order::good, bad)
+   | _                    -> (good, order::bad)
 
 \kw{let} split_orders orders (orders_pd_hdr,order_pds) = 
-   List.fold_right2 sort_order orders order_pds []
+   List.fold_right2 classify_order orders order_pds []
 
 \kw{let} ((header, orders),(header_pd, orders_pd)) = 
    parse_source Sirius.Source.parse "input.txt"
@@ -202,21 +206,23 @@ errors, before loading it into a database or other application.
 \label{fig:ex-data-clean}
 \end{figure}
 
-\figref{fig:ex-data-clean} provides a demonstration of
-splitting a \dibbler{} data source into two separate sources, one with
+\figref{fig:ex-data-clean} demonstrates
+splitting \dibbler{} data into two pieces, one with
 valid orders and the other with invalid orders.  The valid
 orders may then be further processed or loaded into a database
-without corrupting the valuable data therein.  A human might examine
-the bad orders off-line to determine the cause of errors or to figure
-out how to fix the corrupted orders.
+without risk of failure during the load nor of
+corrupting the valuable data therein.  A person might examine
+the bad orders off-line to determine the cause of the errors or to figure
+out how to fix them.
 
-The \cd{sort_order} function receives an order, its parse descriptor,
-and the lists of valid and invalid orders, and, based on the parse
-descriptor, adds the order to the appropriate list.  The function
-\cd{split_orders} simply folds \cd{sort_order} over the lists of
+\cut{
+The \cd{classify_order} function receives an order, its parse descriptor,
+and the lists of good and bad orders. Based on the parse
+descriptor, it adds the order to the appropriate list.  The function
+\cd{split_orders} simply folds \cd{classify_order} over the lists of
 orders and corresponding parse descriptors.
-
-\subsection{Example: Transformation}
+}
+\subsubsection{Example: Transformation}
 \label{sec:ex-trans}
 
 \begin{figure}
@@ -230,7 +236,7 @@ orders and corresponding parse descriptors.
  '|';  code: Puint32;
  '|';  src\_dns  :  Nvp("dns1");
  ';';  dest\_dns :  Nvp("dns2");
- '|';  service  : service
+ '|';  service  : Service
 \}
 \mbox{}
 \kw{ptype} D\_alarm = \{
@@ -239,10 +245,10 @@ orders and corresponding parse descriptors.
  \}
 \mbox{}
 \kw{ptype} G\_alarm = \{
-       header : header;
- '|';  info   : (Nvp\_a,Semicolon,Vbar) Plist
+       header : Header;
+ '|';  info   : (Nvp\_a, Semicolon, Vbar) Plist
 \}\end{code}
-\caption{Listing of ``\darkstar{}Normal.pml,'' a normalized format for
+\caption{Listing of \texttt{\darkstar{}Normal.pml}, a normalized format for
   \darkstar{} data. All named types not explicitly included in this
   figure are unchanged from the original \darkstar{} description.}
 \label{fig:normal-darkstar}
@@ -258,12 +264,13 @@ orders and corresponding parse descriptors.
 \kw{module} Header = H
 
 \kw{let} splitAlarm ra =
-    let h = 
+    \kw{let} h = 
        \{H.alarm=ra.RA.alarm; H.start=ra.RA.start; 
-         H.clear=ra.RA.clear; H.code=ra.RA.code;
-         H.src\_dns=ra.RA.src\_dns; H.dest\_dns=ra.RA.dest\_dns;
-         H.service=ra.RA.service\};
-    in match ra with
+        H.clear=ra.RA.clear; H.code=ra.RA.code;
+        H.src\_dns=ra.RA.src\_dns; 
+        H.dest\_dns=ra.RA.dest\_dns;
+        H.service=ra.RA.service\};
+    \kw{in} \kw{match} ra \kw{with}
         \{info=Details(d)\} -> 
         (Some \{DA.header = h; DA.info = d\}, None)
       | \{info=Generic(g)\} ->
@@ -273,7 +280,7 @@ orders and corresponding parse descriptors.
   \label{fig:ex-no-err-check}
 \end{figure}
 
-Once a data source has been parsed and cleaned, a natural desire is to
+Once a data source has been parsed and cleaned, a common task is to
 transform such data to make it more amenable to further analysis.  For
 example, analysts often need to convert ad hoc data into a form
 suitable for loading into an existing system, such as a relational
@@ -293,22 +300,29 @@ field in any variation.  If a given field is not in a particular
 variation, it is marked as missing. 
 
 In \figref{fig:normal-darkstar} we show a partial listing of
-``\darkstar{}Normal.pml,'' a normalized version of the \darkstar{}
-description from \secref{sec:padsml-overview}. In this version,
-\cd{Alarm} has been split into two types \cd{D\_alarm} and
-\cd{G_alarm} with the \cd{info} field of each assigned the type of one
-variant from the \cd{Info} type (\cd{D_alarm.info} has the type of the
-\cd{Details} variant, \cd{D_alarm.info} has the type of the
-\cd{Generic} variant). In this way, neither \cd{D\_alarm} nor
-\cd{G_alarm} contain any fields with sum type.  
+\texttt{\darkstar{}Normal.pml}, a normalized version of the \darkstar{}
+description from \secref{sec:padsml-overview}. In this shredded version,
+\cd{Alarm} has been split into two top-level types \cd{D\_alarm} and
+\cd{G_alarm}.  The type \cd{D\_alarm} contains all the information
+concerning alarms with the detailed payload, while \cd{G\_alarm}
+contains the information for generic payloads.  In the original
+description, the \cd{info} field tagged each record as to the type of
+its payload.  In the shredded version, the two different types of
+records appear in two different data files. Since neither of these
+formats contains a union, they can be easily loaded into a relational
+database. 
 
 The code fragment in \figref{fig:ex-no-err-check} demonstrates
-shredding \darkstar{} data with \padsml{} and \ocaml{}, based on the
-``\darkstar{}.pml'' and ``\darkstar{}Normal.pml'' descriptions. We
-shred the data into two different tables based on the \cd{info} field
-of \cd{Alarm} records. In the process, we also reorder the fields,
+shredding \darkstar{} data with \padsml{} and \ocaml{}, mapping from
+the \texttt{\darkstar{}.pml} to the \texttt{darkstar{}Normal.pml}
+formats. We use the \cd{info} field of \cd{Alarm} records to partition
+the data. In the process, we also reorder the fields, 
 putting the \texttt{service} field into the common \texttt{header}.
+It is useful to have a \padsml{} description of the target format so
+that we can use tools generated for the data description to manipulate
+the resulting data (\eg{} pretty printers and statistical analysis tools).
 
+\cut{
 \begin{figure}
   \centering
   \begin{code}\scriptsize
@@ -325,7 +339,7 @@ putting the \texttt{service} field into the common \texttt{header}.
 In \figref{fig:ex-normalize}, we show an additional example of data
 transformation, where we normalize timestamp-timezone pairs into
 simple timestamps in GMT time.
-
+}
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "paper"
