@@ -199,6 +199,26 @@ an analyst is motivated to keep the description up-to-date in response
 to format changes.  Hence a description serves as ``living'',
 accurate, and reusable documentation of a data format.
 
+\textbf{***First describe features of \padsml{} types and the formal semantics.}
+\textbf{Lift text on types from Sec 2.}
+
+\padsml{} adds parametric polymorphism
+  and supports descriptions of variance and recursion 
+  in a single construct (closely related to ML's algebraic datatypes).
+  Together, these features allow for more concise and elegant
+  descriptions than other data description languages, including
+  \padsc{}.
+
+We extend our earlier work on the Data Description Calculus
+  (\ddcold{})~\cite{fisher+:next700ddl} to include support for
+  type-parameterized types. We also 
+  substantially simplify the theory of recursive types, resulting in
+  an overall simplification in the meta-theory of the extended DDC.
+  Finally, we have proven for the extended calculus that generated
+  parsers produce data representations and parse descriptors of the
+  correct type.
+
+\textbf{***Then describe the parser.}
 The core tool that \padsml{} generates from a description is a robust
 parser for the data source, expressed in the functional programming
 language \ocaml{}.  The parser maps raw data into two data structures:
@@ -218,6 +238,18 @@ parsing.
 % structure of the ML family of languages. Therefore, the compiler can
 % map the description into type declarations in ML with little change.
 
+\textbf{***Justify embedding in \ocaml{}/\ml{}}
+We have designed a data description language for use with
+functional programming languages. 
+We have implemented \padsml{} by translating descriptions into
+  \ocaml{} modules that can be used by any \ocaml{} program. We use a
+  ``types as modules'' implementation strategy, in which
+  \padsml{} types become modules and \padsml{} type constructors
+  become functors. This design exploits the strengths of the ML module
+  system to provide the user with an intuitive and convenient
+  interface to the generated libraries.
+
+\textbf{***Then other tools and tool framework}
 A key benefit of the \pads{} approach to data processing is the
 high return-on-investment that users derive from writing 
 descriptions of their data. To enable this return, we aim to generate
@@ -233,6 +265,7 @@ description a meta-tool that can take any tool generator that
 implements the interface and specialize it for use with the particular
 description.  Examples of such tools include {\em add examples}.
 
+\textbf{***THEN compare to \padsc{} in one paragraph only}
 \padsml{} is closely related to previous work on
 \padsc{}~\cite{fisher+:pads}~\footnote{We refer to the original \pads{}
   language as \padsc{} to help the reader distinguish between \padsc{}
@@ -251,48 +284,36 @@ tools.  Therefore,
 developing a new tool generator for \padsc{} is a complex and
 difficult process requiring a deep understanding of the core compiler
 code base.
+\padsml{} provides better support than \padsc{} for development of tool
+  generators by external parties. We present a generic interface
+  against which tool generators can be written and a number of
+  examples generators that match the interface.
 
 
-In summary, this work makes the following contributions:
-\begin{itemize}
-\item We have designed a data description language for use with
-  functional programming languages. In addition to providing
+\textbf{***Then give observations.}
+\textbf{Actually, this observation should go in the conclusion.  It's
+  distracting here.}
+Our ``types as modules'' implementation strategy encountered the
+  limits of the \ocaml{} module system in multiple ways. It therefore
+  provides a natural, well-motivated challenge example for
+  functional-programming researchers in type-directed programming and
+  advanced module design.
+
+\textbf{***Then speculate on expectations/impact.}
+In addition to providing
   functional programmers with a data description language, we
   feel that functional programming provides better support for data
   processing and transformation compared with conventional imperative
   languages like \C{} and \java{}. Therefore, the combination of
   \padsml{} and \ocaml{} is a significant step towards a unified
   language for data description, transformation, and analysis.
-\item \padsml{} adds parametric polymorphism
-  and supports descriptions of variance and recursion 
-  in a single construct (closely related to ML's algebraic datatypes).
-  Together, these features allow for more concise and elegant
-  descriptions than other data description languages, including
-  \padsc{}.
-\item We have implemented \padsml{} by translating descriptions into
-  \ocaml{} modules that can be used by any \ocaml{} program. We use a
-  ``types as modules'' implementation strategy, in which
-  \padsml{} types become modules and \padsml{} type constructors
-  become functors. This design exploits the strengths of the ML module
-  system to provide the user with an intuitive and convenient
-  interface to the generated libraries.
-\item Our ``types as modules'' implementation strategy encountered the
-  limits of the \ocaml{} module system in multiple ways. It therefore
-  provides a natural, well-motivated challenge example for
-  functional-programming researchers in type-directed programming and
-  advanced module design.
-\item \padsml{} provides better support than \padsc{} for development of tool
-  generators by external parties. We present a generic interface
-  against which tool generators can be written and a number of
-  examples generators that match the interface.
-\item We extend our earlier work on the Data Description Calculus
-  (\ddcold{})~\cite{fisher+:next700ddl} to include support for
-  type-parameterized types. We also 
-  substantially simplify the theory of recursive types, resulting in
-  an overall simplification in the meta-theory of the extended DDC.
-  Finally, we have proven for the extended calculus that generated
-  parsers produce data representations and parse descriptors of the
-  correct type.
+
+
+\textbf{***Then, if still necessary give a pithy list of contributions}
+In summary, this work makes the following contributions:
+
+\begin{itemize}
+\item Blah-di-blah
 \end{itemize}
 
 

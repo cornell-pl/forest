@@ -1,55 +1,55 @@
 \begin{code}\scriptsize
 (* Pstring terminated by semicolon or vertical bar. *)
-\kw{ptype} SVString = Pstring\_SE("/;|\\\\|/")
+ 1. \kw{ptype} SVString = Pstring\_SE("/;|\\\\|/")
 \mbox{}
 (* Generic name value pair. Accepts predicate 
    over name as argument.  *)
-\kw{ptype} (Alpha) Pnvp(p : string -> bool) =
-      \{ name : [name : Pstring('=') | p name]; 
-        '='; 
-        value : Alpha \}
+ 2. \kw{ptype} (Alpha) Pnvp(p : string -> bool) =
+ 3.       \{ name : [name : Pstring('=') | p name]; 
+ 4.         '='; 
+ 5.         value : Alpha \}
 \mbox{}
 (* Name value pair with name specified. *)
-\kw{ptype} (Alpha) Nvp(name:string) = 
-   Alpha Pnvp(fun s -> s = name)
+ 6. \kw{ptype} (Alpha) Nvp(name:string) = 
+ 7.    Alpha Pnvp(fun s -> s = name)
 \mbox{}
 (* Name value pair with any name. *)
-\kw{ptype} Nvp\_a = SVString Pnvp(fun \_ -> true)
+ 8. \kw{ptype} Nvp\_a = SVString Pnvp(fun \_ -> true)
 \mbox{}
-\kw{ptype} Details = \{
-      source      : Pip Nvp("src\_addr");
-';';  dest        : Pip Nvp("dest\_addr");
-';';  start\_time  : Ptimestamp Nvp("start\_time");
-';';  end\_time    : Ptimestamp Nvp("end\_time");
-';';  cycle\_time  : Puint32 Nvp("cycle\_time")
+ 9. \kw{ptype} Details = \{
+10.       source      : Pip Nvp("src\_addr");
+11. ';';  dest        : Pip Nvp("dest\_addr");
+12. ';';  start\_time  : Ptimestamp Nvp("start\_time");
+13. ';';  end\_time    : Ptimestamp Nvp("end\_time");
+14. ';';  cycle\_time  : Puint32 Nvp("cycle\_time")
+15. \}
+\mbox{}
+16. \kw{ptype} Semicolon = Pcharlit(';')
+17. \kw{ptype} Vbar = Pcharlit('|')
+\mbox{}
+18. \kw{pdatatype} Info(alarm\_code : int) =
+19.   Pmatch alarm\_code with
+20.     5074 -> Details of Details
+21.   | \_    -> Generic of (Nvp\_a,Semicolon,Vbar) Plist
+\mbox{}
+22. \kw{pdatatype} Service = 
+23.     DOMESTIC      of omit "DOMESTIC" 
+24.   | INTERNATIONAL of omit "INTERNATIONAL" 
+25.   | SPECIAL       of omit "SPECIAL"
+\mbox{}
+26. \kw{ptype} Raw\_alarm = \{
+27.        alarm     : [ i : Puint32 | i = 2 or i = 3];
+28.  ':';  start     : Ptimestamp Popt;
+29.  '|';  clear     : Ptimestamp Popt;
+30.  '|';  code      : Puint32;
+31.  '|';  src\_dns   : SVString Nvp("dns1");
+32.  ';';  dest\_dns  : SVString Nvp("dns2");
+33.  '|';  info      : Info(code);
+34.  '|';  service   : Service
 \}
 \mbox{}
-\kw{ptype} Semicolon = Pcharlit(';')
-\kw{ptype} Vbar = Pcharlit('|')
+35. \kw{let} checkCorr ra = ...
 \mbox{}
-\kw{pdatatype} Info(alarm\_code : int) =
-  Pmatch alarm\_code with
-    5074 -> Details of Details
-  | \_    -> Generic of (Nvp\_a,Semicolon,Vbar) Plist
+36. \kw{ptype} Alarm = [x:Raw\_alarm | checkCorr x]
 \mbox{}
-\kw{pdatatype} Service = 
-    DOMESTIC      of omit "DOMESTIC" 
-  | INTERNATIONAL of omit "INTERNATIONAL" 
-  | SPECIAL       of omit "SPECIAL"
-\mbox{}
-\kw{ptype} Raw\_alarm = \{
-       alarm     : [ i : Puint32 | i = 2 or i = 3];
- ':';  start     : Ptimestamp Popt;
- '|';  clear     : Ptimestamp Popt;
- '|';  code      : Puint32;
- '|';  src\_dns   : SVString Nvp("dns1");
- ';';  dest\_dns  : SVString Nvp("dns2");
- '|';  info      : Info(code);
- '|';  service   : Service
-\}
-\mbox{}
-\kw{let} checkCorr ra = ...
-\mbox{}
-\kw{ptype} Alarm = [x:Raw\_alarm | checkCorr x]
-\mbox{}
-\kw{ptype} Source = (Alarm,Peor,Peof) Plist\end{code}
+37. \kw{ptype} Source = (Alarm,Peor,Peof) Plist\end{code}
