@@ -32,18 +32,18 @@
   systems provide rich infrastructure for processing well-behaved
   data, but are of little use when dealing with data in ad hoc
   formats.  To address the challenges of ad hoc data, we have designed
-  PADS/ML, a declarative data description language for the ML family
-  of languages.  PADS/ML is based on the ML type structure and
+  \padsml{}, a declarative data description language for the \ml{} family
+  of languages.  \padsml{} is based on the \ml{} type structure and
   features polymorphic, recursive datatypes for describing ad hoc
-  data.  In addition, PADS/ML uses the ML module system as a general
+  data.  In addition, \padsml{} uses the \ml{} module system as a general
   framework to help users easily develop customized data-processing
-  tools for any data format described in PADS/ML.  We have formalized the
-  semantics of PADS/ML's datatypes by extending our previous work on
+  tools for any data format described in \padsml{}.  We have formalized the
+  semantics of \padsml{}'s datatypes by extending our previous work on
   the Data Description Calculus~\cite{fisher+:next700ddl} with
   type-paramterized types, and we have proven the resulting system
   ``type-correct,'' \ie{}, generated parsers return data of the
-  expected type.  Finally, we have implemented a version of PADS/ML
-  for the O'Caml language.  From a PADS/ML description, our compiler
+  expected type.  Finally, we have implemented a version of \padsml{}
+  for the O'Caml language.  From a \padsml{} description, our compiler
   generates an O'Caml module containing the relevant type
   declarations, a parser for the description, and other tools.
 
