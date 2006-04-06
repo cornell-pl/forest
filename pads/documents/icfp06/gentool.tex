@@ -1,12 +1,12 @@
 \section{A Generic Tool Framework}
 \label{sec:gen-tool}
-An important feature of PADS/ML is the generic tool framework, which leverages the power of the existing PADS system to allow users to rapidly develop data-processing tools. This framework is motivated by the fact that PADS type specifications are useful for many tasks beyond data parsing, and it strikes a balance between providing common functionality for such tools and enabling users to flexibly specify the concrete behavior of different tools.
+An important feature of \padsml{} is the generic tool framework, which leverages the power of the existing PADS system to allow users to rapidly develop data-processing tools. This framework is motivated by the fact that PADS type specifications are useful for many tasks beyond data parsing, and it strikes a balance between providing common functionality for such tools and enabling users to flexibly specify the concrete behavior of different tools.
 
-The main design principle for this framework, as detailed below, is that generic tools are defined by their behavior on the various components of PADS types, while the framework provides a uniform mechanism for traversing data satisfying any PADS description and applying the customized tool behavior at each node of the data tree. We have implemented two such data processing tools, the accumulator (for generating brief summaries of the value distributions for each type) and the XML formatter (for outputting data elements in using XML structure), as a proof-of-concept of the generic tool framework.
+The main design principle for this framework, as detailed below, is that generic tools are defined by their behavior on the various components of PADS types, while the framework provides a uniform mechanism for traversing data satisfying any PADS description and applying the customized tool behavior at each node of the data tree. We have implemented two such data processing tools, the accumulator (for keeping track of errors in data sources) and the XML formatter (for outputting \pads{} representations as XML), as a proof-of-concept of the generic tool framework.
 
 \subsection{Motivation: Traversal as a Generic Idiom for Data Processing}
-\label{sec:gen-tool-motivation}
-A system such as PADS that provides a concise, declarative language for specifying data formats lends itself naturally to many applications beyond the construction of parsers. Because parsers are generated from PADS specifications with a dedicated compiler, it would appear, at first glance, that each tool would need to be developed as a separate compiler that would take PADS specifications and output type-specific code. Such an architecture would require tool developers to, essentially, write compiler modules that would work in parallel with the parser generator; it would also mean that the development of a new tool cannot be done without modifying and augmenting the PADS compiler itself.
+\label{sec:gentool-motivation}
+A system such as PADS that provides a concise, declarative language for specifying data formats lends itself naturally to many applications beyond the construction of parsers. Because parsers are generated from PADS specifications with a dedicated compiler, it would appear, at first glance, that each tool would need to be developed as a separate compiler that would take PADS specifications and output type-specific code. Such an architecture would require tool developers to write compiler modules that would work in parallel with the parser generator; it would also mean that the development of a new tool could not be done without modifying and augmenting the PADS compiler itself.
 
 In the general case, tools that perform arbitrary data manipulation must indeed be written as separate compiler modules. In the PADS/C system, this is how all tools are developed. However, there is an important class of \emph{generic} tools that all share a common overall data processing method while differing in the details of how they transform data. These tools are characterized by a \emph{traversal} of the data, viewed as a (possibly recursive) tree of components. In broad terms, the process of traversal involves picking out a data item (i.e., a node in the tree), performing some operation on it (while possibly updating some state), and recursively traversing any of its subcomponents (represented as child nodes in a tree). The tools in this category share two important properties:
 \begin{itemize}
@@ -14,7 +14,11 @@ In the general case, tools that perform arbitrary data manipulation must indeed 
 \item For any given generic tool, the operations performed on individual data items are fixed; different PADS types are handled by different data traversal orders.
 \end{itemize}
 
-Thus, it is evident that the traversal mechanism is common for all generic tools and depends only on the data format, while, conversely, the data-processing code is tool-specific but format-independent. The generic tool framework presented here exploits these properties by decoupling the mechanism of data traversal from the operations performed on individual data items. The common traversal mechanism, since it is format-dependent, is generated by a traversal generator module in the PADS compiler. By contrast, the tool-specific data node processing code is provided by tool developers as a separate module that implements a common \emph{generic tool interface}. This interface, described below, declares that data-processing operations be available for each kind of PADS type (including structures, unions, and so on). The following benefits accrue due to this architecture:
+Thus, it is evident that the traversal mechanism is common for all generic tools and depends only on the data format, while, conversely, the data-processing code is tool-specific but format-independent. The generic tool framework presented here exploits these properties by decoupling the mechanism of data traversal from the operations performed on individual data items. The common traversal mechanism, since it is format-dependent, is generated by a traversal generator module in the PADS compiler. By contrast, the tool-specific data node processing code is provided by tool developers as a separate module that implements a common \emph{generic tool interface}. This interface, excerpted in \figref{fig:gentool-interface}, defines the abstract view that the traversal mechanism takes of all tools.
+
+The operations defined by concrete tools are callback methods that are invoked by the traversal functor as it walks over a data source. An important consequence of this is that the tools' operations cannot return results directly to the original invoker of the traversal. Instead, the operations are provided a \emph{state} object that is passed to, and returned from, every operation invoked by the traversal. The state itself is held abstract by the interface, and the types of all operations are defined in terms of this type. Thus, an important task for the tool developer is to decide on an appropriate notion of state that will serve to specify a tool's initialization parameters, carry information between different stages of the traversal, and encapsulate the desired results of the traversal to be returned to the user.
+
+In concrete terms, the following benefits accrue to developers because of this generic tool architecture:
 \begin{itemize}
 \item Tool developers need not modify the compiler code itself, since the common traversal mechanism is tool-independent and is generated based on the PADS type specification by the provided PADS compiler.
 \item Tool development is simplified because it involves merely implementing the generic tool interface with operations to be invoked on each kind of data item.
@@ -22,49 +26,185 @@ Thus, it is evident that the traversal mechanism is common for all generic tools
 \item Tools are completely portable and independent. Under this framework, they become "pluggable modules" that can be installed, in any combination, on any PADS system without modifying other parts of the system.
 \end{itemize}
 
-\subsection{Traversing a Data Source: A Conceptual Overview}
-\label{sec:gen-tool-traversal}
-As described above, all generic tools share a common type-specific data source traversal algorithm, differing only in how they treat individual data items. This traversal mechanism views a data source as a tree structure whose leaves are elements of the PADS base types and whose internal nodes represent compound types: structures, data types (i.e., unions), and constrained types. The root of this tree is taken to be the element of the type declared as a \kw{Psource}.
+\begin{figure}
+  \centering
+  \small
+\begin{verbatim}
+122Joe|Wright|450|95|790
+n/aEd|Wood|10|47|31
+124Chris|Nolan|80|93|85
+125Tim|Burton|30|82|71
+126George|Lucas|32|62|40
+\end{verbatim}  
+  \caption{A brief sample of the Movie Director Bowling Score (MBS) format. Note that the first record contains semantic errors (in that the minimum is larger than the maximum and the average is larger than both the minimum and the maximum).}
+  \label{fig:gentool-mbs-sample}
+\end{figure}
 
-Traversal proceeds by processing the root of the tree and recursing on subcomponents. To be expanded:
+\begin{figure}
+  \centering
+  \begin{code}\scriptsize
+\kw{ptype} Scores = \{
+       min : Pint;
+ '|';  max : [m : Pint | min <= m];
+ '|';  avg : [a : Pint | min <= a & a <= max]
+\}
+\mbox{}
+\kw{pdatatype} Id =
+       MBSNone of omit "n/a"
+       | MBSSome of Pint
+\mbox{}
+\kw{ptype} MBSEntry = \{
+       id       : Id;
+       first    : Pstring('|');
+ '|';  last     : Pstring('|');
+ '|';  scores   : Scores
+\}\end{code}
+\caption{Specification for Movie Director Bowling Score (MBS) format.}
+\label{fig:gentool-mbs-spec}
+\end{figure}
+
+\begin{figure*}
+  \centering
+  \small
+\begin{verbatim}
+<record size="4" status="ERROR">
+  <id><datatype active-variant="MBSSome" status="GOOD"><MBSSome><int value="122"/></MBSSome></datatype></id>
+  <first><string value="Joe"/></first>
+  <last><string value="Wright"/></last>
+  <scores>
+  	<record size="3" status="ERROR">
+      <min><int value="450"/></min>
+      <max><constraint status="ERROR"><int value="95"/></constraint></max>
+      <avg><constraint status="ERROR"><int value="790"/></constraint></avg>
+    </record>
+  </scores>
+</record>
+\end{verbatim}  
+  \caption{A one-record snippet of the output of the generic XML formatting tool when run on the MBS sample.}
+  \label{fig:gentool-xmlf-output}
+\end{figure*}
+
+\begin{figure}
+  \centering
+  \small
+\begin{verbatim}
+<record-data>
+  errors: 1; total: 1; cur. header: NEST
+  <first>
+    <string-data>errors: 0; total: 1</string-data>
+  </first>
+  <id>
+    <datatype-data>errors: 0; total: 1
+      <MBSSome>
+        <int-data>errors: 0; total: 1</int-data>
+      </MBSSome>
+    </datatype-data>
+  </id>
+  <last>
+    <string-data>errors: 0; total: 1</string-data>
+  </last>
+  <scores>
+    <record-data>
+    	errors: 1; total: 1; cur. header: NEST
+      <avg>
+        <constraint-data>
+          errors: 1; total: 1; cur. header: SEM
+          <int-data>errors: 0; total: 1</int-data>
+        </constraint-data>
+      </avg>
+      <max>
+        <constraint-data>
+          errors: 1; total: 1; cur. header: SEM
+          <int-data>errors: 0; total: 1</int-data>
+        </constraint-data>
+      </max>
+      <min>
+        <int-data>errors: 0; total: 1</int-data>
+      </min></record-data></scores></record-data>
+\end{verbatim}  
+  \caption{A one-record snippet of the XML-converted output of the accumulator when run on the MBS sample.}
+  \label{fig:gentool-acc-output}
+\end{figure}
+
+\subsubsection{Example Tools}
+\label{sec:gentool-motivation-ex}
+To motivate the development of the tool framework, we have implemented two simple generic tools that illustrate important features of the architecture. These tools are demonstrated on a small sample of data (see \figref{fig:gentool-mbs-sample}) in the Movie Director Bowling Score (MBS) format (defined in \figref{fig:gentool-mbs-spec}). (Note that this data deliberately violates semantic constraints in the first record.)
 \begin{itemize}
-\item Traversing a base type involves calling a user-defined processing routine.
-\item Traversing a compound type consists of performing user-defined initialization, processing each subcomponent, and doing user-defined post-processing.
-\item The user-defined processing routines can accumulate information via the notion of a \emph{state} that is the only means of communication between the processing tasks of different data items in the tree.
+\item The XML formatting tool converts an internal \padsml{} representation of data into XML. Importantly, the tool's output corresponds to the in-memory representation of the data rather than its original format (which may, for example, have delimiters that are not present in the representation). \figref{fig:gentool-xmlf-output} shows the result of traversing one MBS record with this tool. An excerpt of its implementation is in \figref{fig:gentool-xmlf-code}.
+\item The accumulator is used to maintain statistics on the distribution of values, and, in particular, data errors. Its result upon traversing a data source is an object analogous in structure to the source but containing a description of the quantity and location of errors. The accumulator's output on the MBS data is shown (after conversion to a XML format) in \figref{fig:gentool-acc-output}. Note that the precise format for display of accumulator data is specified outside the tool itself; the output shown here is one such representation.
 \end{itemize}
 
-\subsubsection{User-Defined Processing and the Notion of State in Traversal}
-\label{sec:gen-tool-traversal-state}
-\begin{itemize}
-\item Table describing the precise order of steps for each of the different PADS types (structures, datatypes, constraints).
-\item A user provides one custom processing routine for base types, structures, datatypes, and constrained types.
-\item Besides side effects, each processing routine takes as input and returns as output a state object that is updated by the routine; this state object's type is tool-specific and is defined by the tool developer.
-\item A separate state object is accumulated for each PADS type defined in the specification. In other words, two different Pstructs will each have their own associated state objects. Each base type has one global state object associated with it.
-\item User-defined routines are also provided to initialize these state objects for each PADS type.
-\item From the tool invoker's point of view, a traversal of a data source can be thought of as a procedure that takes an initial state object and a data source (including a representation and a parse descriptor) and returns an updated state that is the result of the processing.
-\item Error handling: tools can abort processing in exceptional conditions while providing a snapshot of the state at the time of the error as a debugging tool.
-\end{itemize}
+\begin{figure}
+\begin{code}\scriptsize
+\kw{module} \kw{type} S = \kw{sig}
+  \kw{type} state
+  \kw{exception} Tool\_error \kw{of} state * string
+  \kw{val} init : unit -> unit
 
-\subsubsection{Example: Traversing the Movie Director Bowling Score Format}
-\label{sec:gen-tool-traversal-mbs}
+  \kw{module} Int    : ...
+  \kw{module} Char   : ...
+  ...
 
-\subsection{The Generic Tool Interface in PADS/ML}
-\label{sec:gen-tool-interface}
+  \kw{module} Record : \kw{sig}
+    \kw{type} partial_state
+    \kw{val} init  : (string * state) list -> state
+    \kw{val} start : state -> Pads.pd_header 
+    	-> partial_state
+    \kw{val} project : state -> string -> state
+    \kw{val} process_field  : partial_state -> string
+    	-> state -> partial_state
+    \kw{val} finish : partial_state -> state
+  \kw{end}
 
-\subsubsection{The Structure of a Tool}
-\label{sec:gen-tool-interface-tool-struct}
+  \kw{module} Datatype : \kw{sig}
+    ...
+  \kw{end}
 
-\subsubsection{Implementation of the Generic Tool Framework in PADS/ML}
-\label{sec:gen-tool-interface-implementation}
+  \kw{module} Constraint : \kw{sig}
+    ...
+  \kw{end}
+\kw{end}
+\end{code}
+\caption{Details of the record-related portion of the {\tt Generic\_tool.S} interface.}
+\label{fig:gentool-interface}
+\end{figure}
 
-\subsection{Example Tools}
-\label{sec:gen-tool-examples}
+\begin{figure}
+\begin{code}\scriptsize
+\kw{type} state = Xml.xml
+\kw{exception} Tool_error \kw{of} state * string
+\kw{let} init () = ()
+...
+\kw{module} Record = \kw{struct}
+  (* Partial state is a list of XML objects 
+   * representing the fields processed so far 
+   * tagged with the record's PD header *)
+  \kw{type} partial_state = Pads.pd_header * (Xml.xml list)
 
-\subsubsection{The Accumulator Tool}
-\label{sec:gen-tool-examples-acc}
+  \kw{let} init named_states =
+    ... (* Create initial "blank" state with no data *)
 
-\subsubsection{The XML Formatter}
-\label{sec:gen-tool-examples-xml}
+  \kw{let} start state header =
+    ... (* Initialize processing of a new record *)
+
+  \kw{let} project state field_name =
+    ... (* Extract named field's state *)
+
+  \kw{let} process_field (header, fields) field_name state =
+    (header, fields@[Xml.Element 
+    	(field_name, [], [state])])
+
+  \kw{let} finish pstate =
+    ... (* Convert a partial state into a final state *)
+\kw{end}
+...
+\end{code}
+\caption{Excerpts from the implementation of the generic XML formatter tool in {\tt xml\_formatter.ml}.}
+\label{fig:gentool-xmlf-code}
+\end{figure}
+
+\subsection{Interface and Implementation: The Structure of Generic Tools in \padsml{}}
+\label{sec:gentool-impl}
 
 %%% Local Variables: 
 %%% mode: latex
