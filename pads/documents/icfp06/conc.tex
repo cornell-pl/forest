@@ -19,7 +19,7 @@ their work. Consequently,
 we plan to explore development a \padsml{} ``type checker'' 
 to infer description properties and catch obvious errors.
 
-A second specific, long-term goal is to build a collection of
+A second long-term goal is to build a collection of
 higher-level, format-independent data analysis tools.  By
 ``higher-level'' tools, we mean tools that perform semantic data
 analysis as opposed to simpler, low-level syntactic transformation
@@ -41,6 +41,15 @@ to provide access to scientists with limited programming skills
 through the LaunchPADS data visualization 
 environment~\cite{launchpads:planx,launchpads:sigmod}, which currently
 only interfaces with \padsc{}.
+
+As mentioned in Section~\ref{sec:intro}, ad hoc data sources are often
+very large scale.  Large data volumes often require that the data be
+processed without loading it into main memory all at once.  The
+\padsc{} language accommodates efficient processing of very
+large-scale data~\cite{fisher+:pldi05} by supporting multiple-entry
+point parsing, which permits a user to write tools that have fixed
+memory requirements and that can yield a result in one scan of the
+data source.  We plan to explore similar techniques in \padsml{}. 
 
 \section{Conclusions}
 \label{sec:conc}
