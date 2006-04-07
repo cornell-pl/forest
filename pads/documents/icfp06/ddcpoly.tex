@@ -42,27 +42,22 @@ and revision of our previous work on
 \ddcold{}~\cite{fisher+:next700ddl}.  The main new feature is 
 the ability to define functions from types to types, 
 which are needed to model \padsml's polymorphic data types.
-In the process of studying these new functions, which we will call
-{\em type abstractions} (as opposed to 
-{\em value abstractions}, which are functions 
-from values to types), we were able to simplify our overall semantics 
-by making a couple of subtle technical changes.  This, for instance,
-allowed us to eliminate the complicated ``contractiveness'' constraint from our
+In the process of adding these new functions, which we call {\em type
+abstractions} (as opposed to {\em value abstractions}, which are functions 
+from values to types), we simplified our overall semantics
+by making a couple of subtle technical changes.  For example, we were
+able to eliminate the complicated ``contractiveness'' constraint from our
 earlier work.
 
-The main practical benefit of this calculus to us so far has been as
-a guide for our implementation  --- before working through the formal details,
-it was difficult to disentangle the important invariants from one another.
-Once the calculus had been defined it took us approximately a week
-to implement it in O'Caml using functors to implement the type 
-abstractions.  We hope the calculus can serve as a guide for 
-implementations of {\sc PADS} in other strongly typed 
-functional languages.
-
-In the remainder of this section we describe the
-calculus to the extent possible given the space constraints, 
-focusing primarily on the type abstractions.  The appendix
-contains a complete formal specification.
+The main practical benefit of the calculus has been as a guide for our
+implementation. Before working through the formal semantics, we
+struggled to disentangle the invariants related to polymorphism. After
+we had defined the calculus, we were able to implement type
+abstractions as \ocaml{} functors in approximately a week.  We hope
+the calculus can serve as a guide for implementations of {\sc PADS} in
+other host languages.
+In the remainder of this section, we give an overview of the calculus.
+\appref{app:ddc-semantics} contain a complete formal specification.
 
 % designed a semantic framework for understanding a range
 % of data description languages and guiding us in developing future
@@ -100,8 +95,8 @@ contains a complete formal specification.
 \begin{figure}
 {\small
 \begin{bnf}
-  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
-                               \| \kty \-> \gk \\
+  \name{Kinds} \meta{\gk} \::= \kty \| \kty \-> \gk
+                               \| \ity \-> \gk  \\
   \name{Types} \meta{\ty} \::= 
     \ptrue\| \pfalse \| \pbase{e} \| 
     \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
@@ -115,7 +110,7 @@ contains a complete formal specification.
 \label{fig:ddc-syntax}
 \end{figure}
 
-\figref{fig:ddc-syntax} presents the main syntactic elements of the \ddc.
+\figref{fig:ddc-syntax} summarizes the syntax of the \ddc.
 % A portion of the syntax of \ddc{} is shown in \figref{fig:ddc-syntax}.
 % We leave out a number of primitives from \ddcold{} that do not play a
 % critical role in \padsml{} and are unaffected by the extensions of
@@ -125,64 +120,70 @@ contains a complete formal specification.
 % our previous paper for a full discussion of the omitted primitives. In
 % addition, all \ddc{}-related figures are included in their complete
 % form in the appendix.
-The interpretation of a description with kind $\kty$ 
-is a parser that maps data in an external form
-into an internal, programmatic form.  The interpretation of a description with
-kind $\ity \rightarrow \gk$ is a function that maps values
+The interpretation of a type with kind $\kty$ is a parser that maps
+data from an external form into an internal one.  
+A type with kind $\kty \rightarrow \gk$ is a function mapping 
+a parser to the interpretation of a type with kind $\gk$.
+Finally, types with kind $\ity \rightarrow \gk$  map values
 with host language type $\ity$ to the interpretation of
-descriptions with kind $\gk$.
-A description with kind $\kty \rightarrow \gk$ is a function mapping 
-a parser to the interpretation of a description with kind $\gk$.
+types with kind $\gk$.  For concreteness, we adopt \fomega{} as our
+host language.
 
-The basic descriptions include $\ptrue$ (the empty data fragment)
-and $\pfalse$ (no data fragment).  
-$\pbase{e}$ is a base description parameterized
-by an expression $e$ from the host language, which, in our case
-will be \fomega. \padsml's {\tt Pstring} is
-an example of such a base type.
+The atomic types include $\ptrue$, which consumes no input and reports
+no errors,  and $\pfalse$, which consumes no input but reports an
+error.   $\pbase{e}$ is a base type parameterized
+by an expression $e$ from the host language. 
+The \padsml type {\tt Pstring} is an example of such a base type.
 
-Any description in the language may be parameterized by a value using
-value abstraction 
-$\plam{\var}{\ity}{\ty}$.  We do not include the type $\sigma$ of
-the variable --- the reader will have to reconstruct it from context.
-If $\ty$ is such an abstraction,
-the parameter $\var$ may be instantiated
-using value application $\papp{\ty}{e}$. 
+Structured types include value abstraction $\plam{\var}{\ity}{\ty}$
+and application $\papp{\ty}{e}$, which allow us to parameterize types
+by host language values. 
+\cut{
+ Any type in the language may be parameterized by a value using
+ value abstraction $\plam{\var}{\ity}{\ty}$.  
+ We do not include the type $\sigma$ of the variable---the reader will
+ have to reconstruct it from context. 
+ If $\ty$ is such an abstraction,
+ the parameter $\var$ may be instantiated
+ using value application $\papp{\ty}{e}$. 
+}
 The dependent sum type, $\psig x \ty \ty$, describes a pair of values,
 where the value of the first element of the pair can be referenced
 when describing the second element.  Variation in a data source can be
 described with the sum type $\psum \ty e \ty$, which deterministically
-describes a data source that either matches the first type, or does
-not and matches the second type.  
+describes a data source that either matches the first type, or fails
+to match the first branch but does match the second one.
 %Intersections $\pand \ty \ty$
 %describe data sources which can be described in two ways
 %simultaneously. 
 We specify semantic constraints over a data source
-with $\pset x \ty e$, which describes any value $x$ that satisfies the
+with type $\pset x \ty e$, which describes any value $x$ that satisfies the
 description $\ty$ and the predicate $e$. Type variables $\ptyvar$ are
-abstract descriptions and are introduced by recursive types and type
+abstract descriptions; they are introduced by recursive types and type
 abstractions. Recursive types $\pmu{\ptyvar}{\gk}{\ty}$ describe
 recursive formats, like lists and trees. Type abstraction
 $\ptylam{\ptyvar}{\kty}{\ty}$ and application $\ptyapp{\ty}{\ty}$
 allow us to parameterize types by other types.  Type variables $\ptyvar$
 always have kind $\kty$.
 
-Well-formedness of descriptions is specified by a kinding judgment with the form $\ddck[\ty,\pctxt;\ctxt,\kind,\mcon]$ where $\pctxt$ maps type variables
+To specify the well-formedness of types, 
+we use a kinding judgment of the form
+$\ddck[\ty,\pctxt;\ctxt,\kind,\mcon]$,
+where $\pctxt$ maps type variables 
 to kinds and $\ctxt$ maps host language value variables to host language 
-types.  In our original work~\cite{fisher+:700ddl} these kinding rules
-were somewhat unorthodox, but due to some technical simplifications to the
-overall semantics,
-they now hold almost no surprises.  See the appendix for further details.
+types. In our original work~\cite{fisher+:next700ddl}, these kinding rules
+were somewhat unorthodox, but we have sinced simplifed them.  
+Details appear in \appref{app:ddc-semantics}.
 
 \subsection{\Implang{} Language}
 \label{sec:host-lang}
-
 The host language of \ddc{} is a straightforward 
-extension of \fomega\ with recursion and a variety of useful constants
-and operators.  We use \fomega\ 
-both to write the expressions that can appear within
-\ddc{} itself and to encode the parsing semantics of \ddc{}.
-
+extension of \fomega{} with recursion and a variety of useful constants
+and operators.  
+% We use \fomega{} 
+% both to write the expressions that can appear within
+% \ddc{} itself and to encode the parsing semantics of \ddc{}.
+For reference, the grammar appears in \appref{app:host-lang}.
 The constants include bitstrings $\data$; offsets $\off$, representing
 locations in bitstrings; and error codes $\iok$, $\iecerr$, and
 $\iecpc$, indicating success, success with errors, and failure,
@@ -211,7 +212,7 @@ expectation the reader can construct them from context.
 
 The static semantics ($\stsem[e,{\pctxt;\ctxt},\ity]$), operational
 semantics ($e \stepsto e'$), and type 
-equality ($\ity \equiv \ity'$) are those of \fomega extended with
+equality ($\ity \equiv \ity'$) are those of \fomega{} extended with
 recursive functions and recursive types and are entirely standard.
 See, for example, Pierce's text~\cite{pierce:tapl}.
 
@@ -219,14 +220,14 @@ See, for example, Pierce's text~\cite{pierce:tapl}.
 \label{sec:ddc-sem}
 
 The primitives of \ddc{} each have three interpretations: two
-datatypes in the host language -- one for the data representation
-itself and one for its parse descriptor -- and a transformation from
-bit strings (including invalid ones) into data and corresponding
+datatypes in the host language---one for the data representation
+itself and one for its parse descriptor---and a transformation from
+bit strings into data and corresponding
 meta-data.  We therefore specify the semantics of \ddc{} types using three semantic
-functions, each of which precisely conveys a particular facet of a
-type's meaning.  The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$
+functions, each of which precisely conveys a particular facet of the
+meaning of a type.  The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$
 describe the type of the data's in-memory representation and 
-parse descriptor respectively. The
+parse descriptor, respectively. The
 function $\trans[\cdot,,]$ describes the parsing semantics of
 \ddc{}.
 
@@ -234,7 +235,6 @@ function $\trans[\cdot,,]$ describes the parsing semantics of
 % semantics of \ddcold{} in detail. Here, we will focus only on those
 % aspects of the semantics that are new or modified from the original
 % presentation.
-
 \trversion{
 \begin{table}
   \begin{center}
@@ -435,7 +435,6 @@ erases the dependency because the \implang{} language
 does not have dependent types. This involves erasing all host language
 expressions that appear in types as well as 
 value abstractions and applications.
-
 A type variable $\ptyvar$ in \ddc{} is mapped to a corresponding
 type variable $\ptyvar_\repname$ in \fomega{}.
 Recursive types generate recursive representation types with the type
@@ -483,11 +482,11 @@ become \fomega{} type constructors and type application, respectively.
 \figref{fig:pd-tys} gives the types of the parse descriptors
 corresponding to selected \ddc{} types.  The translation reveals that
 all parse descriptors share a common structure, consisting of two
-components, a header and a body.  The header reports on a
+components, a header and a body.  The header reports on the
 corresponding representation as a whole. It stores the number of
 errors encountered during parsing, an error code indicating the degree
-of success of the parse -- success, success with errors, or failure --
-and the span of data (location in the source) 
+of success of the parse---success, success with errors, or
+failure---and the span of data (location in the source)  
 described by the descriptor.  To be precise, the type
 of the header ($\tyface{pd\_hdr}$) is $\iintty \iprodi \iecty \iprodi
 \ispty$. The body contains parse descriptors for the subcomponents of
@@ -681,7 +680,7 @@ where the argument type is the PD body type.
 \]
 %\caption{\ddc{} Semantics (cont.)}
 \caption{\ddc{} parsing semantics, selected constructs}
-\label{fig:ddc-sem}
+\label{fig:ddc-sem-sum}
 \end{figure}
 
 % \begin{figure}
@@ -728,9 +727,9 @@ where the argument type is the PD body type.
 The parsing semantics of a type $\tau$ with kind $\kty$ is a function that
 transforms some amount of input into a pair of a representation and a
 parse descriptor, the types of which are determined by $\tau$.  The
-parsing semantics for types with higher kind, then, are functions that
+parsing semantics for types with higher kind are functions that
 construct parsers, or functions that construct functions that
-construct parsers, etc. \figref{fig:parser-types} specifies
+construct parsers, \etc{} \figref{fig:parser-types} specifies
 the host-language types of the functions generated from well-kinded
 \ddc{} types.
 
@@ -760,31 +759,31 @@ discover errors in the process; or, it can find an unrecoverable error
 and fail.  The error count is determined by subcomponent error counts
 and any errors associated directly with the type itself.
 
-In \figref{fig:ddc-sem}, we specify the parsing semantics of the
-selected portion of \ddc{}. We will explain the interpretations of
-select types, from which the interpretation of the remaining types may be
-understood. The interpretation of dependent sums parses the data with
-the interpretation of the first type, and then binds the resulting
-representation and PD to $x$, before parsing the data with the
-interpretation of the second type. Finally, it bundles together the
-results using the appropriate constructor functions.
+In \figref{fig:ddc-sem-sum}, we specify the parsing semantics of
+selected portion of \ddc{}. We explain the interpretations of select
+types, from which the interpretation of the remaining types may be
+understood. The full semantics appears in \appref{app:ddc-semantics}.
+A dependent sum parses the data according to the first type, binding
+the resulting representation and PD to $x$ before parsing the
+remaining data according to the second type. It then bundles the
+results using the dependent sum constructor functions.
 
-A type variable translates to an expression variables whose name
+A type variable translates to an expression variable whose name
 corresponds directly to the name of the type variable. These
 expression variables are bound in the interpretations of recursive
-types and type abstractions. We interpret recursive types as recursive
-functions whose names corresponds to the name of the recursive type
-variable. For clarity, we annotate the recursive function with its
+types and type abstractions. We interpret each recursive type as a
+recursive function whose name corresponds to the name of the recursive
+type variable. For clarity, we annotate the recursive function with its
 type.
 
-Type abstraction, in essence, is interpreted as a function
-over other parsing functions. However, as those parsing functions
-could correspond to arbitrary \ddc{} types (of kind $\kty$), the
-interpretation must be a polymorphic function, parameterized by the
-representation and PD-body type of the of the \ddc{} type parameter.
-For clarity, we present this type parameterization explicitly.  Type
-application $\papp {\ty_1}{\ty_2}$ simply becomes the application of
-the interpretation of $\ty_1$ to the representation-type, PD-type, and parsing
+We interpret type abstraction as a function over other parsing
+functions. Because those parsing functions can have
+arbitrary \ddc{} types (of kind $\kty$), the interpretation must be a
+polymorphic function, parameterized by the representation and PD-body
+type of the \ddc{} type parameter.  For clarity, we present
+this type parameterization explicitly.  Type application $\papp
+{\ty_1}{\ty_2}$ simply becomes the application of the interpretation
+of $\ty_1$ to the representation-type, PD-type, and parsing
 interpretations of $\ty_2$.
 
 % Now, we can explain why the PD and parsing interpretations
