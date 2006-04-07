@@ -96,38 +96,27 @@ that English is a poor language for describing data formats!
 \dibbler{} data format.  The description is a sequence of type
 definitions.  Type definitions precede uses, therefore the description
 should be read bottom up.
-The type \cd{Source} (Line~320) describes a complete \dibbler{} data
+The type \cd{Source} (Line~30) describes a complete \dibbler{} data
 file and denotes an ordered tuple containing a
 \cd{Summary\_header} value followed by an \cd{Orders} value.
-Other tuple types are defined on Lines~1, 26, and~29.
+Other tuple types are defined on Lines~1, 24, and~27.
 
-The type \cd{Orders} (Line~30) uses the list type
-constructor \cd{Plist} to describe a homogenous sequence of
-values in a data source.  The \cd{Plist} constructor 
-takes three parameters: the type of elements in the list, 
-the type of the syntactic separator that delimits elements in the list,
-and the type of the list terminator.~\footnote{The \cd{Plist} 
-constructor itself is not built-in, but instead 
-is defined as a recursive, polymorphic datatype.} 
-In this example, the type \cd{Orders} is a list 
-of \cd{Order} elements, separated by an
-end-of-record \cd{Peor} marker~\footnote{%
-  The marker is left abstract in the description and set by the client program
-  that uses the generated libraries.
-  In this example, the end-of-record marker is a newline 
-  character, because there is one record per line.  
-}, 
-and terminated by \cd{Peof}, a 
-type that describes the special \emph{end-of-file marker}.  
-Similarly, the \cd{Events} type (Line~27)
-denotes a sequence of \cd{Event} values separated by vertical bars
-(Line~24) and terminated by an end-of-record marker.  
-\padsml{} can express more complex termination
-conditions on lists that may depend on 
-the number and values of elements already parsed.
+The type \cd{Orders} (Line~30) uses the list type constructor
+\cd{Plist} to describe a homogenous sequence of values in a data
+source.  The \cd{Plist} constructor takes three parameters: on the
+left, the type of elements in the list; on the right, the a literal
+\emph{separator} that delimits elements in the list, and a literal
+\emph{terminator}.  In this example, the type \cd{Orders} is a list of
+\cd{Order} elements, separated by a newline, and terminated by
+\cd{peof}, a special literal that describes the \emph{end-of-file
+  marker}.  Similarly, the \cd{Events} type (Line~25) denotes a
+sequence of \cd{Event} values separated by vertical bars and
+terminated by a newline.  \padsml{} can express more
+complex termination conditions on lists that may depend on the number
+and values of elements already parsed.
 
 Literal characters in type expressions denote singleton types.  For
-example, the \cd{Event} type (Line~26) is a string terminated by a
+example, the \cd{Event} type (Line~24) is a string terminated by a
 vertical bar, followed by a vertical bar, follwed by a timestamp.  The
 singleton type \cd{'|'} means that the data source must contain the
 character \cd{'|'} at this point in the input stream.  String,
@@ -225,21 +214,14 @@ data containts two alarm records.  We inserted extra newlines
 
 \subsection{Polymorphic Types}
 
-The last key feature of \padsml{} is parameterized types.
-Type parameterization makes descriptions more concise and allows
-programmers to define convenient libraries of reusable components. For
-example, the \cd{Plist} type that appears in both the \dibbler{} and
-Newick formats is a recursive, parameterized datatype:
-\begin{code}
-\kw{pdatatype} (Elem, Sep, Term) Plist = 
-  Elem * Sep * (Elem, Sep, Term) Plist
-| Term\end{code}
-This type is so useful that it is provided by default.
-
-The description in Figure~\ref{fig:darkstar-ml} illustrates types
-parameterized by both types and values.  This description specifies the format of
-alarm data recorded by a network-link monitor used by the \darkstar{}
-project at AT\&T.  Sample \darkstar{} data is in \figref{fig:darkstar-records1}.
+The last key feature of \padsml{} is parameterized types.  Type
+parameterization makes descriptions more concise and allows
+programmers to define convenient libraries of reusable components. The
+description in Figure~\ref{fig:darkstar-ml} illustrates types
+parameterized by both types and values.  This description specifies
+the format of alarm data recorded by a network-link monitor used by
+the \darkstar{} project at AT\&T.  Sample \darkstar{} data is in
+\figref{fig:darkstar-records1}.
 
 \cut{Each alarm signals some
 problem with a network link; 
@@ -257,15 +239,18 @@ shown in \figref{fig:darkstar-ml}.}
   \label{fig:darkstar-ml}
 \end{figure}
 
-This data format has several variants of name-value pairs.  The
-definition of the type \cd{Pnvp} (Line~2) takes both type and value
-parameters to encode all the variants.  Type parameters appear to the
-left of the type name, as is customary in \ml{}.  Value parameters and
-their \ml{} types appear to the right of the type name.  In the
-definition of \cd{Pnvp}, there is one type parameter named \cd{Alpha}
-and one value parameter named \cd{p}.  Informally, \cd{Alpha Pnvp(p)}
-is a name-value pair where the value is described by \cd{Alpha} and
-the name must satisfy the predicate \cd{p}.
+This data format has several variants of name-value pairs. The
+\padsc{} description of this format (shown in~\appref{regulus-padsc})
+must define a different type for each variant. In contrast, the
+polymorphic types of \padsml{} allow us to define the type \cd{Pnvp}
+(Line~2), which takes both type and value parameters to encode all the
+variants. Type parameters appear to the left of the type name, as is
+customary in \ml{}.  Value parameters and their \ml{} types appear to
+the right of the type name.  In the definition of \cd{Pnvp}, there is
+one type parameter named \cd{Alpha} and one value parameter named
+\cd{p}.  Informally, \cd{Alpha Pnvp(p)} is a name-value pair where the
+value is described by \cd{Alpha} and the name must satisfy the
+predicate \cd{p}.
 
 The \cd{Nvp} type (Lines~6--7) is defined in terms of \cd{Pnvp}, in
 which the name argument must match a particular string, but the type
@@ -296,7 +281,7 @@ The \darkstar{} description also illustrates the use of
 \textit{switched} datatypes.  A switched datatype selects a variant
 based on the value of a user-specified \ocaml{} expression, which
 typically references parsed data from earlier in the data source.  For
-example, the switched datatype \cd{Info} (Lines~18--21) chooses a
+example, the switched datatype \cd{Info} (Lines~16--19) chooses a
 variant based on the value of its \cd{alarm\_code} parameter.  More
 specifically, if the alarm code is \cd{5074}, the format specification
 given by the \cd{Details} constructor will be used to parse the
@@ -304,7 +289,7 @@ current data.  Otherwise, the format given by the \cd{Generic}
 constructor will be used to parse the current data.
 
 The last construct in the \darkstar{} description is the type
-qualifier \cd{omit}.  In the \cd{Service} datatype (Lines~22--25),
+qualifier \cd{omit}.  In the \cd{Service} datatype (Lines~20--23),
 \cd{omit} specifies that the parsed string literal should be omitted
 in the internal data representation, because the variant can be
 determined by the datatype constructor.

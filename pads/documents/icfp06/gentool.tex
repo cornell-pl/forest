@@ -15,33 +15,37 @@
 
 An essential benefit of \padsml{} is that it can provide the users
 with a high return-on-investment for describing their data. While the
-generated parser alone is often enough to justify the user's effort,
-we aim to increase the return by producing a large suite of data
-analysis tools for every data source described in \padsml{}. However,
-there is a limit, both in resources and expertise, to the range of
-tool generators that we can develop. Indeed, new and interesting data
-analysis tools are constantly being developed, and we have no hope of
-integrating even a fraction of them into the \padsml{} system
-ourselves.
+generated parser alone is enough to justify the user's effort, we aim
+to increase the return by by enabling users to easily construct data
+analysis tools. However, there is a limit, both in resources and
+expertise, to the range of tool generators that we can develop.
+Indeed, new and interesting data analysis tools are constantly being
+developed, and we have no hope of integrating even a fraction of them
+into the \padsml{} system ourselves.
 
-Fortunately, we don't have to. A large class of data analysis tools
-share a common data processing method while differing in the details
-of how they transform data. These tools traverse the data
-representation and parse descriptor in a depth-first, left-to-right
-manner, often carrying some auxiliary state.  For each element
-visited, they perform some action involving the auxiliary state,
-either before, after or between visiting the element's subcomponents.
-Often, the most interesting computations occur at the leaves, where
-the computation is based on the leaf's type.  
+Fortunately, we don't have to. Many of the tools that we have
+encountered in practice perform their computations in a single pass
+over the representation and corresponding parse descriptor, visiting
+each value in the data with a pre-,post-,or in-order traversal.
 
-Based on this observation, we can split a tool into a format-dependent
-traversal mechanism, which implements a generalized fold over the
-representation and parse descriptor; and a format-independent,
-\emph{generic tool} that specifies how to process individual data
-elements. The \padsml{} compiler generates such a format-dependent
-traversal for all descriptions, while generic tools are developed
-independently. The two interact through a signature that every generic
-tool must match.
+% A large class of data analysis tools
+% share a common data processing method while differing in the details
+% of how they transform data. These tools traverse the data
+% representation and parse descriptor in a depth-first, left-to-right
+% manner, often carrying some auxiliary state.  For each element
+% visited, they perform some action involving the auxiliary state,
+% either before, after or between visiting the element's subcomponents.
+% Often, the most interesting computations occur at the leaves, where
+% the computation is based on the leaf's type.  
+
+We can, therefore, split such tools into a format-dependent traversal
+mechanism, which implements a generalized fold over the representation
+and parse descriptor; and a format-independent, \emph{generic tool}
+that specifies how to process individual data elements. The \padsml{}
+compiler generates such a format-dependent traversal for all
+descriptions, while generic tools are developed independently by
+users. The traversal mechanism interacts with generic tools through a
+signature that every generic tool must match.
 
 The new, generic tool architecture of \padsml{} delivers a number of
 benefits over the fixed architecture of \padsc{}. In \padsc{}, all
@@ -81,7 +85,8 @@ can differ on a program-by-program basis.
                            -> partial_state
     \kw{val}  project         : state -> string -> state option
     \kw{val}  process_variant : partial_state -> string 
-                           -> state -> state
+                           -> state -> partial_state
+    \kw{val}  finish          : partial_state -> state
   \kw{end}
    ...
 \kw{end}
@@ -111,18 +116,6 @@ element, \cd{process_...} to process a subcomponent, and \cd{finish}
 to complete processing the element. For type constructs with only one
 subcomponent, the \cd{process} and \cd{finish} functions are combined.
 
-% The generated traversal function processes the data in a
-% depth-first, left-to-right manner. In general, given an abstract
-% state object for a a data element, it is traversed as follows.
-% First, it provides the generic tool with the state and the PD header
-% and receive a new, ``in-progress'' state object in return.  Next,
-% for each child of the node, it will ask the tool for the child's
-% state based on the node's state, recursively process the child node
-% with the given state, and then give the child's new state to the
-% tool.  For nodes with more than one child, such as records and
-% tuples, it will tell the tool that it has finished, at which point
-% the tool converts the ``in-progress'' state into a new state object.
-
 An excerpt of the generic tool interface is shown in
 \figref{fig:gentool-interface}. It includes the signatures of the
 \cd{Record} and \cd{Datatype} modules. The \cd{Record} module includes
@@ -143,9 +136,7 @@ start with the state of all the variants. Instead, variant's state is
 added during processing. In this way, only variants that have been
 visited will have corresponding state. For this reason, \cd{project}
 returns a \cd{state option}, rather than just \cd{state}. This design
-is essential for supporting recursive datatypes. Finally, as any
-datatype only has one variant at a time, the \cd{process_variant}
-function doubles as the \cd{finish} function.
+is essential for supporting recursive datatypes.
 
 \begin{figure}
 \begin{code}\scriptsize
@@ -155,12 +146,12 @@ function doubles as the \cd{finish} function.
     \kw{val} traverse : rep -> pd -> Tool.state -> Tool.state
   \kw{end}
 \end{code}
-\caption{The signature of the Traversal functor within the signature \texttt{Type.s}.}
+\caption{The signature of the Traversal functor within the signature \texttt{Type.S}.}
 \label{fig:traversal-interface}
 \end{figure}
 
 In~\figref{fig:traversal-interface}, we show the signature for the
-traversal functor as it appears in the signature \cd{Type.s} from
+traversal functor as it appears in the signature \cd{Type.S} from
 \secref{sec:padsml-impl}. The functor takes a generic tool and produce
 a specific tool with two functions: \cd{init}, to create the initial
 state for the tool, and \cd{traverse}, which traverses the
@@ -230,76 +221,64 @@ formatter.
 A common desire of a data analyst upon receiving a new data source is
 to get a sense of the quality of the data. In particular, they might
 be interested in knowing what percentage of the source has errors, or
-which fields are the most problematic. For this purpose, \padsc{}
-provides an \emph{accumulator} tool for \padsc{} that statistically
-summarizes data sources. The accumulator is designed for data sources
-whose basic structure is series of records of the same type.
-\emph{another sentence or two here. explain notion of one
-  acccumulator, many records}
+which fields are the most problematic. For this purpose, an
+\emph{accumulator} tool provides a statistical summary of data
+sources. For example, it tracks the distribution of the top $n$
+distinct legal values. The accumulator is designed for data sources
+whose basic structure is a series of records of the same type and
+provides the summary for the record type based on viewing many records
+of that type in the data source.
 
 We have implemented a generic tool that provides some of the basic
-features of \padsc{} accumulators. Our accummulator counts the number
-of errors and the total number of values for every element of a
-description. In \figref{fig:gentool-acc-output}, we show a sample
-portion of accumulator output for the \dibbler{} data
-from~\figref{figure:dibbler-records}.
+features of accumulators. Our accummulator counts the number of errors
+and the total number of values for every element of a description. In
+addition, based on past experience, we know of other statistical
+algorithms that could be implemented in a similar manner.
 
-The accumulator data shows that 1 out of the 2 \cd{Order}s has an
-error. Investigating further, we notice that the problem lies in the
-\cd{Order_header}, in particular within the \cd{att_order_num} field.
-This field has a constraint on it, and one of the values violates the
-constraint. A quick glance at the data fragment reveals that the
-second order is contains the offending field. In general, specific
-information like this could be found in the parse descriptor.
+In \figref{fig:gentool-acc-output}, we show a sample portion of
+accumulator output for the \dibbler{} data
+from~\figref{figure:dibbler-records}. The data shows that one out of the
+two \cd{Order}s has an error. Investigating further, we notice that the
+problem lies in the \cd{Order_header}, in particular within the
+\cd{att_order_num} field.  This field has a constraint on it, and one
+of the values violates the constraint. A quick glance at the data
+fragment reveals that the second order is contains the offending
+field. In general, specific information like this could be found in
+the parse descriptor.
 
 \begin{figure}
 \begin{code}\scriptsize
 \kw{type} baseAcc = int * int
-\kw{type} acc = baseAcc G.metadata
+\kw{type} acc = ...
+| RecordData of baseAcc * acc Table.t
+
+\kw{type} compoundAcc = baseAcc * acc Table.t
+
 \kw{type} state = acc
 
 \kw{module} Record = \kw{struct}
-  \kw{type} partial_state = baseAcc * acc Table.t
-  ... 
+  \kw{type} partial_state = compoundAcc
+
+  \kw{let} init accs = RecordData ((0,0), Table.from_list accs)
+
   \kw{let} start state header =
     \kw{match} state \kw{with}
-      G.RecordData ((errs, total), accs) ->
+      RecordData ((errs, total), accs) ->
 	\kw{let} errs' = if header.nerr > 0
                     then errs + 1 else errs
-	\kw{in} ((errs', total + 1), accs))
+	\kw{in} (((errs', total + 1), accs) : partial_state)
     | _ -> \kw{raise} ...
 	  
-  \kw{let} project state label = \kw{match} state \kw{with}
-      G.RecordData (_, accs) -> (\kw{try} Table.find accs label
+  \kw{let} project state label = 
+     \kw{match} state \kw{with}
+      RecordData (_, accs) -> (\kw{try} Table.find accs label
                                  \kw{with} _ -> \kw{raise} ...)
     | _ -> \kw{raise} ...
 
-  \kw{let} process_field (bAcc, accs) label acc =
-    (bAcc, Table.update accs label acc)
+  \kw{let} process_field (ba, accs) label acc =
+    (ba, Table.update accs label acc)
       
-  \kw{let} finish (bAcc, accs) = G.RecordData (bAcc, accs)
-\kw{end}
-    
-\kw{module} Datatype = \kw{struct}
-  \kw{type} partial_state = baseAcc * acc Table.t
-	
-  \kw{let} init () = G.DatatypeData (initBaseAcc, Table.empty)
-
-  \kw{let} start state header = 
-    \kw{match} state \kw{with}
-      G.DatatypeData ((errs, total), accs) ->
-	\kw{let} errs' = if header.nerr > 0
-                    then errs + 1 else errs
-	\kw{in} ((errs', total + 1), accs))
-    | _ -> \kw{raise} ...
-	  
-  \kw{let} project state label = \kw{match} state \kw{with}
-    G.DatatypeData (_, accs) -> (\kw{try} Some (Table.find accs label)
-                                 \kw{with} _ -> None)
-  | _ -> \kw{raise} ...
-	  
-  \kw{let} process_variant (bAcc, accs) label acc =
-    G.DatatypeData (bAcc, Table.update accs label acc)
+  \kw{let} finish (ba, accs) = RecordData (ba, accs)
 \kw{end}
 ...
 \end{code}
@@ -307,20 +286,20 @@ information like this could be found in the parse descriptor.
 \label{fig:gentool-accum-code}
 \end{figure}
 
-In~\figref{fig:gentool-accum-code}, we show a portion of the
-accumulator implementation. We first define a basic accumulator, which
-is simply a pair of integers counting the number of errors seen and
-the total number of elements seen. The type constructor
-\cd{G.metadata} is a universal datatype for describing metadata that
-corresponds to \padsml{} representations. Every variant contains a
-copy of the type parameter in addition to subcomponent metadata.
-Leaves contain only the type parameter. The tool state, then, is an
-object with accumulator summaries for every element in the
-representation type for which the tool is being used. The \cd{start}
-function in both modules updates the summary based on the error count
-\cd{nerr} in the PD header provided, and increments that total count
-by one. Projection and processing of fields and variants are simply
-lookups and insertions in a table of subcomponent accumulators.
+In~\figref{fig:gentool-accum-code}, we show a portion of the of the
+accumulator implementation, including the \cd{Record} module. We first
+define a basic accumulator, which is simply a pair of integers
+counting the number of errors seen and the total number of elements
+seen. The type \cd{acc} is essentially a universal datatype with
+accumulator summaries for every element of the representation type. We
+show the \cd{RecordData} variant for illustration.  The \cd{init}
+function starts both counts at zero and converts the provided list of
+subcomponent accumulators into a \cd{Table.t}.  The \cd{start}
+function updates the summary based on the error count \cd{nerr} in the
+PD header provided, and increments that total count by one. It returns
+a \cd{partial_state}, as indicated by the type annotation. Projection
+and processing of fields are simply lookups and insertions in a table
+of subcomponent accumulators.
 
 In addition to the accumulator, we have implemented two different
 kinds of pretty printers for parsed data.  One formats the data in
@@ -329,38 +308,6 @@ for debugging descriptions. Importantly, both tool's output corresponds to the i
 representation of the data rather than its original format (which may,
 for example, have delimiters that are not present in the
 representation).
-
-% \begin{figure}
-% \begin{code}\scriptsize
-%   \kw{type} state = Xml.xml \kw{exception} Tool_error \kw{of} state
-%   * string \kw{let} init () = () ...  \kw{module} Record =
-%   \kw{struct} (* Partial state is a list of XML objects *
-%   representing the fields processed so far * tagged with the
-%   record's PD header *) \kw{type} partial_state = Pads.pd_header *
-%   (Xml.xml list)
-
-%   \kw{let} init named_states =
-%     ... (* Create initial "blank" state with no data *)
-
-%   \kw{let} start state header =
-%     ... (* Initialize processing of a new record *)
-
-%   \kw{let} project state field_name =
-%     ... (* Extract named field's state *)
-
-%   \kw{let} process_field (header, fields) field_name state =
-%     (header, fields@[Xml.Element 
-%     	(field_name, [], [state])])
-
-%   \kw{let} finish pstate =
-%     ... (* Convert a partial state into a final state *)
-% \kw{end}
-% ...
-% \end{code}
-% \caption{Excerpts from the implementation of the generic XML formatter
-%   tool in {\tt xml\_formatter.ml}.}
-% \label{fig:gentool-xmlf-code}
-% \end{figure}
 
 %%% Local Variables: 
 %%% mode: latex

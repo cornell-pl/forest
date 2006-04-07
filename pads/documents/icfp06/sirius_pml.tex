@@ -1,5 +1,5 @@
 \begin{code}\scriptsize
- 1. \kw{ptype} Summary\_header = "0|" * Ptimestamp * Peor
+ 1. \kw{ptype} Summary\_header = "0|" * Ptimestamp * '\\n'
  2. \mbox{}
  3. \kw{pdatatype} Dib\_ramp = 
  4.   Ramp of Pint 
@@ -22,13 +22,11 @@
 21. '|'
 22. \} 
 23. \mbox{}
-24. \kw{ptype} Vbar = Pcharlit('|')
-25. \mbox{}
-26. \kw{ptype} Event  = Pstring('|') * '|' * Ptimestamp
-27. \kw{ptype} Events = (Event, Vbar, Peor) Plist
-28. \mbox{}
-29. \kw{ptype} Order  = Order\_header * Events
-30. \kw{ptype} Orders = (Order, Peor, Peof) Plist
-31. \mbox{}
-32. \kw{ptype} Source = Summary\_header * Orders
+24. \kw{ptype} Event  = Pstring('|') * '|' * Ptimestamp
+25. \kw{ptype} Events = Event Plist('|', '\\n')
+26. \mbox{}
+27. \kw{ptype} Order  = Order\_header * Events
+28. \kw{ptype} Orders = Order Plist('\\n', \kw{peof})
+29. \mbox{}
+30. \kw{ptype} Source = Summary\_header * Orders
 \end{code}

@@ -84,13 +84,14 @@ subcomponents that contain errors.  The body contains the parse
 descriptors for subcomponents of the corresponding representation.
 Parse descriptors for base types have a body of type \cd{unit}.
 
-The signature for a polymorphic \padsml{} type uses the signature \cd{S}, defined above.  For example,
-given the polymorphic \padsml{} type \cd{ABPair}:
+The signature for a polymorphic \padsml{} type uses the signature
+\cd{S}, defined above.  For example, given the polymorphic \padsml{}
+type \cd{ABPair}:
 \begin{code}\scriptsize
 \kw{ptype} (Alpha,Beta) ABPair = Alpha * '|' * Beta\end{code}%
 the compiler generates a module with the signature:
 \begin{code}\scriptsize
-\kw{module} \kw{type} ABPair (Alpha : S) (Beta : S) = 
+\kw{module} \kw{type} ABPair_sig (Alpha : S) (Beta : S) = 
 \kw{sig}
   \kw{type} rep      = Alpha.rep * Beta.rep
   \kw{type} pd\_body = (Pads.pd_header * Alpha.pd\_body) * 
@@ -173,7 +174,7 @@ errors, including error analysis, repair, and removal.}
 \kw{let} classify_order order (pd\_hdr, pd\_body) (good, bad)=
    \kw{match} pd\_hdr \kw{with}
     \{error_code = Good\} -> (order::good, bad)
-   | _                 -> (good, order::bad)
+   | _                  -> (good, order::bad)
 \kw{in}
 \kw{let} split_orders orders (orders_pd_hdr,order_pds) = 
    List.fold_right2 classify_order orders order_pds []
@@ -217,7 +218,7 @@ orders and corresponding parse descriptors.
 \mbox{}
 \kw{ptype} G\_alarm = \{
        header : Header;
- '|';  info   : (Nvp\_a, Semicolon, Vbar) Plist
+ '|';  info   : Nvp\_a Plist(';','|')
 \}\end{code}
 \caption{Listing of \texttt{\darkstar{}Normal.pml}, a normalized format for
   \darkstar{} data. All named types not explicitly included in this
