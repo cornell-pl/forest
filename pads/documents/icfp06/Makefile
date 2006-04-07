@@ -13,7 +13,7 @@ all:	paper
 %.c: %.p
 	$(PADSC) $<
 
-include $(PADS_HOME)/mk/rules.mk
+# include $(PADS_HOME)/mk/rules.mk
 
 rwxml_regulus: rwxml_regulus.c regulus.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
