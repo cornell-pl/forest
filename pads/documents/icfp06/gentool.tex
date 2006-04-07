@@ -96,7 +96,7 @@ can differ on a program-by-program basis.
    ...
 \kw{end}
 \end{code}
-\caption{An excerpt of the generic-tool interface.}
+\caption{An excerpt of the generic-tool interface \cd{Generic_tool.S}.}
 \label{fig:gentool-interface}
 \end{figure}
 
@@ -131,7 +131,28 @@ An excerpt of the generic tool interface is shown in
 \cd{Record} and \cd{Datatype} modules. Both modules include a type
 \cd{partial_state} that allows tools to represent intermediate state
 in a different form than the general state while processing
-subcomponents. In the \cd{Record} module, \textbf{I am here.}
+subcomponents. Also, both \cd{start} functions receive the PD header
+for the data element being traversed.
+
+\begin{figure}
+\begin{code}\scriptsize
+  \kw{module} Traverse (Tool : Generic_tool.S) :
+  \kw{sig}
+    \kw{val} init : unit -> Tool.state
+    \kw{val} traverse : rep -> pd -> Tool.state -> Tool.state
+  \kw{end}
+\end{code}
+\caption{The signature of the Traversal functor within the signature \cd{Type.s}.}
+\label{fig:traversal-interface}
+\end{figure}
+
+In~\figref{fig:traversal-interface}, we show the signature for the
+traversal functor as it appears in the signature \cd{Type.s},
+discussed in \secref{sec:padsml-impl}. The functor takes a generic
+tool and produce a specific tool with two functions: \cd{init}, to
+create the initial state for the tool, and \cd{traverse}, which
+traverses the representation and parse descriptor for the type and
+updates the given tool state.
 
 \subsection{Example Tools}
 \label{sec:gentool-motivation-ex}
