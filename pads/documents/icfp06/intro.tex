@@ -138,11 +138,10 @@ data mining researchers, they often ignore such sources as the work
 necessary to clean and vet the data is prohibitively expensive.}
 
 %% High-volume
-The high volume of ad hoc data sources is another challenge.
-~\figref{figure:data-sources} gives the volume of several sources.
-AT\&T's call-detail stream, for example, contains roughly 300~million
-calls per day requiring approximately 7GBs of storage space.  Although
-this data is eventually archived in a database, data analysts mine it
+The high volume of ad hoc data sources is another challenge. AT\&T's
+call-detail stream, for example, contains roughly 300~million calls
+per day requiring approximately 7GBs of storage space.  Although this
+data is eventually archived in a database, data analysts mine it
 profitably before such archiving~\cite{kdd98,kdd99}.  More
 challenging, the \ningaui{} project at AT\&T accumulates billing data
 at a rate of 250-300GB/day, with occasional spurts of 750GBs/day, and
@@ -197,9 +196,9 @@ formal, and living documentation of a data format.
 
 The \padsml{} language is inspired by the type structure of modern
 functional programming languages.  \padsml{} has a rich collection of base
-types and provides polymorphic, dependent, and recursive data types to
+types and provides polymorphic, dependent, and recursive datatypes to
 specify the syntactic structure and semantic properties of a data
-format.  Together, these features enable us to write concise,
+format.  Together, these features enable users to write concise,
 complete, and reusable descriptions of formats from domains like
 networking, computational biology, finance, and cosmology.  The
 \padsml{} language is described through examples from several domains
@@ -279,7 +278,7 @@ of descriptions.  Third, \padsml{} provides
 significantly better support for development of new tool generators.
 In particular, \padsml{} provides a generic interface against which
 tool generators can be written.  In \padsc{}, the compiler itself
-generates all tools, therefore, developing a new tool generator
+generates all tools, and, therefore, developing a new tool generator
 requires understanding and modifying the compiler.
 
 Finally, we have extended our earlier work on the Data Description Calculus

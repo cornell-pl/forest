@@ -1,6 +1,6 @@
 \section{From \padsmlbig{} to \ocamlbig{}}
 \label{sec:padsml-impl}
-Our \padsml{} compiler take descriptions and generates \ocaml{}
+Our \padsml{} compiler takes descriptions and generates \ocaml{}
 modules that can be used by any \ocaml{} program.  Next, we
 describe the generated modules and give some examples of their use.
 
@@ -30,7 +30,7 @@ and the output of the \padsml{} compiler includes a functor for each
 type.  Instead, we implement recursive types as modules containing
 recursive datatypes and functions.  As there is no theoretical reason
 to prevent recursive modules from containing functors~\cite{dreyer-thesis}, we
-pose our system as a challenge to designers of module systems.
+pose our system as a challenge to implementers of module systems.
 
 More precisely, a module generated for a monomorphic \padsml{} type 
 matches the signature \cd{S}:
