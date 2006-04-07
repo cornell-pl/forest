@@ -221,7 +221,9 @@ matching and higher-order functions, can more naturally express data
 processing and transformation tasks than imperative languages like
 \C{} and \java{}.
 Section~\ref{sec:padsml-impl} describes our ``types as module''
-strategy and shows how \padsml{}-generated modules are used to perform common
+strategy and shows how \padsml{}-generated modules together
+with \ocaml{} concisely express
+common
 data-processing tasks like filtering errors and format transformation.
 
 % Like the parser, the types of the representation and parse descriptor
@@ -239,41 +241,41 @@ this return, our goal is to generate automatically a collection of
 data analysis and processing tools from each description.  The core
 tool that \padsml{} generates from a description is a robust parser
 for the data source.  The parser maps raw data into two data
-structures: a canonical representation of the parsed data and a
-\textit{parse descriptor} (PD), a meta-data object detailing
-properties of the corresponding data representation.  Parse
-descriptors provide applications with programmatic access to a
-detailed profile of errors detected during parsing.
+structures: a canonical \textit{representation} of the parsed data and
+a \textit{parse descriptor}, a meta-data object detailing properties
+of the corresponding data representation.  Parse descriptors provide
+applications with programmatic access to errors detected during
+parsing.
 
 In addition to generating robust parsers, our framework permits
 developers to easily add their own tools - based on their expertise -
 to our tool suite without modifying the \padsml{} compiler.  A new
 tool generator need only match a generic interface, specified as an
-\ml{} signature.  Correspondingly, the \padsml{} compiler generates
-for each \padsml{} description a meta-tool that takes a tool generator
+\ml{} signature.  Correspondingly, for each \padsml{} description, the
+\padsml{} compiler generates a meta-tool that takes a tool generator
 that implements the generic interface and specializes it for use with
-the particular description.  Section~\ref{sec:gen-tool} describes
-the tool framework and gives examples of two tools that we have
+the particular description.  Section~\ref{sec:gen-tool} describes the
+tool framework and gives examples of two tools that we have
 implemented: an accumulator that generates value distributions for
 each type in a data source and a formatter that transforms a data
 source into XML.
 
 \cut{\textbf{***THEN compare to \padsc{} in one paragraph only}}
-\padsml{} has evolved from previous work
-on \padsc{}~\cite{fisher+:pads},~\footnote{We refer to the original
+\padsml{} has evolved from previous work on
+\padsc{}~\cite{fisher+:pads},~\footnote{We refer to the original
 \pads{} language as \padsc{} to distinguish it from \padsml{}.} but
 \padsml{} differs from \padsc{} in three significant ways.  First, it
 is targeted at the \ml{} family of languages.  Using \ml{} as the host
 language simplifies implementation of many data processing tasks, like
 data transformations, which benefit from \ml{}'s pattern matching and
-high level of abstraction.  Second, \padsml{} types may be
-parameterized by other types, resulting in more concise and elegant
-descriptions though code reuse.  Third, \padsml{} provides better
-support for development of new tool generators.  In particular,
-\padsml{} provides a generic interface against which tool generators
-can be written.  In \padsc{}, the compiler itself generates all tools,
-therefore, developing a new tool generator requires understanding and
-modifying the compiler.
+high level of abstraction.  Second, unlike \padsc{} types, \padsml{}
+types may be parameterized by other types, resulting in more concise
+and elegant descriptions though code reuse.  Third, \padsml{} provides
+significantly better support for development of new tool generators.
+In particular, \padsml{} provides a generic interface against which
+tool generators can be written.  In \padsc{}, the compiler itself
+generates all tools, therefore, developing a new tool generator
+requires understanding and modifying the compiler.
 
 Finally, we have extended our Data Description Calculus
 (\ddcold{})~\cite{fisher+:next700ddl} to account for \padsml{}'s
@@ -299,18 +301,21 @@ Therefore, the combination of
 
 \cut{\textbf{***Then, if still necessary give a pithy list of contributions}}
 
-\textbf{Left off here}
-
 In summary, this work makes the following contributions:
 \begin{itemize}
-\item Blah-di-blah
-\item Hit them over the head with a hammer here...
+\item We have designed and implemented \padsml{}, a functional
+data-description language that can concisely express the syntactic
+structure and semantic properties of data formats from numerous
+application domains.
+\item \padsml{} is inspired by, implemented in, and targeted to modern
+functional languages, making it an outstanding example of how
+functional languages can be used to solve
+important data-management problems.  In particular, \ml{} modules and
+functors provides an extensible framework for \padsml{} users to define their
+own \padsml{} tools. 
+\item The formal semantics of \padsml{} is defined in our Data Description
+Calculus, which has been extended to support polymorphic types.
 \end{itemize}
-
-Therefore,
-the combination of \padsml{} and \ocaml{} is a significant step
-towards a unified language for data description, transformation, and
-analysis.
 
 \cut{
 %% WHY IS PROCESSING IT HARD?
