@@ -26,7 +26,7 @@ into the \padsml{} system ourselves.
 Fortunately, we don't have to. Many of the tools that we have
 encountered in practice perform their computations in a single pass
 over the representation and corresponding parse descriptor, visiting
-each value in the data with a pre-,post-,or in-order traversal.
+each value in the data with a pre-, post-, or in-order traversal.
 
 % A large class of data analysis tools
 % share a common data processing method while differing in the details
@@ -47,7 +47,7 @@ descriptions, while generic tools are developed independently by
 users. The traversal mechanism interacts with generic tools through a
 signature that every generic tool must match.
 
-The new, generic tool architecture of \padsml{} delivers a number of
+The generic tool architecture of \padsml{} delivers a number of
 benefits over the fixed architecture of \padsc{}. In \padsc{}, all
 tools are generated from within the compiler. Therefore, developing a
 new tool generator requires understanding and modifying the compiler.
