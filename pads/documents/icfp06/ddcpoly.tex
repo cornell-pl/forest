@@ -54,10 +54,10 @@ implementation. Before working through the formal semantics, we
 struggled to disentangle the invariants related to polymorphism. After
 we had defined the calculus, we were able to implement type
 abstractions as \ocaml{} functors in approximately a week.  We hope
-the calculus can serve as a guide for implementations of {\sc PADS} in
+the calculus will serve as a guide for implementations of {\sc PADS} in
 other host languages.
 In the remainder of this section, we give an overview of the calculus.
-\appref{app:ddc-semantics} contain a complete formal specification.
+\appref{app:ddc-semantics} contains a complete formal specification.
 
 % designed a semantic framework for understanding a range
 % of data description languages and guiding us in developing future
@@ -133,7 +133,7 @@ The atomic types include $\ptrue$, which consumes no input and reports
 no errors,  and $\pfalse$, which consumes no input but reports an
 error.   $\pbase{e}$ is a base type parameterized
 by an expression $e$ from the host language. 
-The \padsml type {\tt Pstring} is an example of such a base type.
+The \padsml{} type {\tt Pstring} is an example of such a base type.
 
 Structured types include value abstraction $\plam{\var}{\ity}{\ty}$
 and application $\papp{\ty}{e}$, which allow us to parameterize types
@@ -429,7 +429,7 @@ defined in this section and a brief description of each.
 \paragraph*{\ddc{} representation types.}
 \label{sec:intty-sem}
 In Figure~\ref{fig:rep-tys}, we present the representation type
-of the selected \ddc{} primitives. While the primitives are
+of selected \ddc{} primitives. While the primitives are
 dependent types, the mapping to the \implang{} language 
 erases the dependency because the \implang{} language 
 does not have dependent types. This involves erasing all host language
@@ -808,48 +808,52 @@ interpretations of $\ty_2$.
 
 \subsection{Meta-theory}
 \label{sec:meta-theory}
+Our key theoretical result is that the various semantic functions we
+have defined are coherent.  In particular, we show that for any 
+well-kinded \ddc{} type $\tau$, the corresponding parser is
+well typed, returning a pair of the corresponding representation and
+parse descriptor.  
 
-In \secref{sec:intty-sem}, we informally noted that the parse
-descriptor-type semantics is only well-defined for well formed types.
-The cause of this limitation was that, for type application, we
-require that the PD-type of the argument describe a pair of a PD
-header and (arbitrary) body. In the previous section, we explained why
-this ``header-body'' shape of parse descriptors is important for the
-parsing semantics as well. In general, we require that the PD-type of
-all well formed types with kind $\kty$ either describes such a shape, or
-is equivalent to a type that does.  
-
-Next, we formally state this property and then prove that it holds for
-all well-formed types.  However, before doing so, we must note that we
-cannot prove this property alone, as it is too weak. Instead, we must
-state and prove a stronger property of the theory, and then derive
-this desired property from it.  The stronger property is a form of
-logical relation, defined below.
+To prove this theorem, we first need to characterize the shape of
+parse descriptors for arbitrary \ddc{} types.   
+Such a characterization is necessary because we require for type
+application that the argument parse descriptor be a pair of a PD
+header and an (arbitrary) body.
+The most straightforward characterization of this property is
+too weak to prove directly, so we instead characterize it
+as a logical relation in Definition~\ref{def:pd-props}.
+Lemma~\ref{lemma:pd-log-rel} establishes that the logical relation
+holds of all well-formed \ddc{} types by induction on kinding
+derivations, and the desired characterization follows as a corollary.
 
 \begin{definition}
+\label{def:pd-props}
 \begin{itemize}
-\item $\hhpred \ty \kty$ iff $\exists\,\ity$ s.t. $\itpdsem[\ty] \equiv
+\item $\hhpred \ty \kty$ iff $\ \exists\,\ity$ s.t. $\itpdsem[\ty] \equiv
   {\ipty \ity}$.
-\item $\hhpred \ty {\kty \iarrowi \kind}$ iff $\exists\,\ity$
+\item $\hhpred \ty {\kty \iarrowi \kind}$ iff $\ \exists\,\ity$
   s.t. $\itpdsem[\ty] \equiv \ity$ and whenever $\hhpred
   {\ty'}{\kty}$, we have $\hhpred {\papp \ty {\ty'}}{\kind}$.
-\item $\hhpred \ty {\ity \iarrowi \kind}$ iff $\exists\,\ity'$
-  s.t. $\itpdsem[\ty] \equiv \ity'$ and $\hhpred{\papp \ty e}{\kind}$ (for any $e$).
+\item $\hhpred \ty {\ity \iarrowi \kind}$ iff $\ \exists\,\ity'$
+  s.t. $\itpdsem[\ty] \equiv \ity'$ and $\hhpred{\papp \ty e}{\kind}$
+  for any expression $e$.
 \end{itemize}
 \end{definition}
-
+\cut{
 We can now prove the following lemma by induction on kinding derivations
 (with $\ty[\ty_1/\ptyvar_1,...,\ty_n/\ptyvar_n]$ denoting simultaneous
 capture-avoiding substitution defined in the standard way):
+}
 \begin{lemma}
+\label{lemma:pd-log-rel}
    If
    $\ddck[\ty,{\pctxt,\ptyvar_1{:}\kty,...,\ptyvar_n{:}\kty;\ctxt},\kind,{}]$ 
    and $\hhpred {\ty_i} \kty$, then \\ 
    $\hhpred {\ty[\ty_1/\ptyvar_1,...,\ty_n/\ptyvar_n]} \kind$.
 \end{lemma}
 
-From this, we can derive our original goals as a corrollary:
 \begin{lemma}
+\label{lemma:pd-props}
   \begin{itemize}
   \item If $\ddck[\ty,\pctxt;\ctxt,\kind,{}]$ then $\exists
      \ity.\itpdsem[\ty] = \ity$.
@@ -858,20 +862,6 @@ From this, we can derive our original goals as a corrollary:
   \end{itemize}
 \end{lemma}
 
-With this lemma, we can now present the essential theoretical result
-of this section. \emph{Compact the next few sentences (until ``A
-  practical ...''}
-The intuitive relationship between the representation
-and parsing semantics of \ddc{} is that the former specifies the types
-of the data structures returned by the latter. We formalize this
-intuitition and prove it correct with a ``type-correctness'' theorem
-for well-formed types. A practical implication of this theorem is that
-it is sufficient to check data descriptions (i.e. \ddc{} types) for
-well-formedness in order to ensure that the generated types and
-functions are well formed. This property is sorely lacking in many
-common implementation of Lex and YACC, for which users must examine
-generated code in order to debug compile-time errors in
-specifications.
 
 \trversion{
 \begin{definition}
@@ -936,9 +926,10 @@ $.
   By typing rules of \fomega.
 \end{proof}
 }
-
-We prove the type correctness theorem using a more general induction
-hypothesis for open types. This hypothesis must account for the fact
+With this lemma, we can establish the type correctness of the
+generated parsers. We prove the theorem using a more general induction
+hypothesis that applies to open types.
+This hypothesis must account for the fact
 that any free type variables in a \ddc{} type $\ty$ will become free
 function variables in $\trans[\ty,,]$. To that end, we define the function $\ptyc \pctxt$, 
 which maps type-variable contexts
@@ -962,13 +953,18 @@ $\pctxt$ to typing contexts $\ctxt$:
   By induction on the height of the kinding derivation.
 \end{proof}
 
-The type correctness theorem now follows as a direct corrollary of
-the above lemma:
-
 \begin{theorem}[Type Correctness of Closed Types]
   If $\ddck[\ty,,\gk,\con]$ then
   $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
 \end{theorem}
+
+A practical implication of this theorem is that
+it is sufficient to check data descriptions (i.e. \ddc{} types) for
+well-formedness to ensure that the generated types and
+functions are well formed. This property is sorely lacking in many
+common implementations of Lex and YACC, for which users must examine
+generated code to debug compile-time errors in
+specifications.
 
 
 %%% Local Variables: 

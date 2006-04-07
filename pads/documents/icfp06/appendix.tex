@@ -7,8 +7,9 @@
 
 \section{Complete Syntax and Semantics of \ddc{}}
 \label{app:ddc-semantics}
+We first define the syntax of \ddc{} terms:
 
-\begin{figure}
+%\begin{figure}
 {\small
 \begin{bnf}
   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
@@ -22,15 +23,20 @@
     \nlalt \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty}  
 \end{bnf}
 }
-\caption{\ddc{} Syntax}
-\label{fig:complete-ddc-syntax}
-\end{figure}
+%\caption{\ddc{} Syntax}
+%\label{fig:complete-ddc-syntax}
+%\end{figure}
 
+\noindent
+\figref{fig:ddc-kinding} gives the complete kinding rules for the
+system.
+
+\cut{
 \emph{Explain next sentence better.}
 Finally, with the introduction of potentially open \implang types, we
 now check that $\ity$ in rule Compute is closed with respect to any
 types but the representation type variables corresponding to $\pctxt$.
-
+}
 \begin{figure*}[t]
 \small
 \fbox{$\ddck[\ty,\pctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
@@ -177,8 +183,11 @@ types but the representation type variables corresponding to $\pctxt$.
 \label{fig:ddc-kinding}
 \end{figure*}
 
+\noindent
+The representation for each \ddc{} type $\tau$ are defined as follows:
+\vskip 1ex
 
-\begin{figure}
+%\begin{figure}
 \fbox{$\itsem[\ty] = \ity$}
 \[
 \begin{array}{lcl} 
@@ -207,12 +216,15 @@ types but the representation type variables corresponding to $\pctxt$.
 %% }
 \end{array}
 \]
-\caption{Representation Types}
-\label{fig:complete-rep-tys}
-\end{figure}
+%\caption{Representation Types}
+%\label{fig:complete-rep-tys}
+%\end{figure}
 
+\noindent
+The parse descriptor for each \ddc{} type $\tau$ are defined as follows:
+\vskip 1ex
 
-\begin{figure}
+%\begin{figure}
 \fbox{$\itpdsem[\ty] = \ity$}
 \[ 
 \begin{array}{lcl} 
@@ -252,11 +264,14 @@ types but the representation type variables corresponding to $\pctxt$.
 \itpdsemstrip[\ty] & = & \ity \ \ \mbox{where}\ \itpdsem[\ty] \equiv \ipty{\ity}
 \end{array}
 \]
-\caption{Parse-Descriptor Types}
-\label{fig:complete-pd-tys}
-\end{figure}
+%\caption{Parse-Descriptor Types}
+%\label{fig:complete-pd-tys}
+%\end{figure}
 
-
+\vskip 1ex
+\noindent
+\figref{fig:ddc-sem} gives the parsing semantics for \ddc{} type $\tau$.
+\vskip 1ex
 \begin{figure*}
 \small
 \fbox{$\trans[\ty,\ctxt,\gk] = e$} 
@@ -436,6 +451,10 @@ types but the representation type variables corresponding to $\pctxt$.
 \caption{\ddc{} Semantics}
 \label{fig:ddc-sem}
 \end{figure*}
+
+The type correctness theorem relies on base type parsers behaving
+properly.  The following conditions make explicit the properties that
+base type semantic functions must satisfy.
 \begin{condition}[Conditions on Base-type Interfaces]
   \begin{enumerate}
   \item $\dom {\Ikind} = \dom {\Iimp}$.
