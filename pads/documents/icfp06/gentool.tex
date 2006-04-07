@@ -2,7 +2,7 @@
 \label{sec:gen-tool}
 
 \begin{itemize}
-\item show signature of traversal functor.
+\item x show signature of traversal functor.
 \item show interface - explain that one module/constructor and base types.
 \item constrast records and one other module.
 \item x Make it 3 tools: accum, XML, debuger.
@@ -128,11 +128,27 @@ subcomponent, the \cd{process} and \cd{finish} functions are combined.
 
 An excerpt of the generic tool interface is shown in
 \figref{fig:gentool-interface}. It includes the signatures of the
-\cd{Record} and \cd{Datatype} modules. Both modules include a type
-\cd{partial_state} that allows tools to represent intermediate state
-in a different form than the general state while processing
-subcomponents. Also, both \cd{start} functions receive the PD header
-for the data element being traversed.
+\cd{Record} and \cd{Datatype} modules. The \cd{Record} module includes
+a type \cd{partial_state} that allows tools to represent intermediate
+state in a different form than the general state, while processing
+subcomponents. The \cd{init} function forms the state of the record
+from the state of its fields. The \cd{start} function receives the PD
+header for the data element being traversed. Function \cd{project}
+takes a record's state and the name of a field and returns that
+field's state. Function \cd{process_field} updates the intermediate
+state of the record based on the name and state of a field, and
+\cd{finish} converts the finished intermediate state into general tool
+state.  Note that any of these functions could have side effects.
+
+The \cd{Datatype} module is quite similar to \cd{Record}, however,
+there are some important difference. Its \cd{init} function does not
+start with the state of all the variants. Instead, variant's state is
+added during processing. In this way, only variants that have been
+visited will have corresponding state. For this reason, \cd{project}
+returns a \cd{state option}, rather than just \cd{state}. This design
+is essential for supporting recursive datatypes. Finally, as any
+datatype only has one variant at a time, the \cd{process_variant}
+function doubles as the \cd{finish} function.
 
 \begin{figure}
 \begin{code}\scriptsize
@@ -147,12 +163,12 @@ for the data element being traversed.
 \end{figure}
 
 In~\figref{fig:traversal-interface}, we show the signature for the
-traversal functor as it appears in the signature \cd{Type.s},
-discussed in \secref{sec:padsml-impl}. The functor takes a generic
-tool and produce a specific tool with two functions: \cd{init}, to
-create the initial state for the tool, and \cd{traverse}, which
-traverses the representation and parse descriptor for the type and
-updates the given tool state.
+traversal functor as it appears in the signature \cd{Type.s} from
+\secref{sec:padsml-impl}. The functor takes a generic tool and produce
+a specific tool with two functions: \cd{init}, to create the initial
+state for the tool, and \cd{traverse}, which traverses the
+representation and parse descriptor for the type and updates the given
+tool state.
 
 \subsection{Example Tools}
 \label{sec:gentool-motivation-ex}
