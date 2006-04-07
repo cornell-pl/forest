@@ -3,8 +3,8 @@
 
 \begin{itemize}
 \item x show signature of traversal functor.
-\item show interface - explain that one module/constructor and base types.
-\item constrast records and one other module.
+\item x show interface - explain that one module/constructor and base types.
+\item x constrast records and one other module.
 \item x Make it 3 tools: accum, XML, debuger.
 \item x Focus on accumulator. describe in more detail.
 \item show implementations,  including base types to show how they differ.
@@ -310,7 +310,12 @@ information like this could be found in the parse descriptor.
 \label{fig:gentool-accum-code}
 \end{figure}
 
-\emph{Discuss implementation of accum briefly here.}
+In~\figref{fig:gentool-accum-code}, we show a portion of the
+accumulator implementation. We first define a basic accumulator, which
+is simply a pair of integers counting the number of errors seen and
+the total number of elements seen. The type constructor
+\cd{G.metadata} is a universal datatype for describing metadata that
+corresponds to \padsml{} representations.
 
 In addition to the accumulator, we have implemented two different
 kinds of pretty printers for parsed data.  One formats the data in
