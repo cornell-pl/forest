@@ -7,9 +7,9 @@
 \item x constrast records and one other module.
 \item x Make it 3 tools: accum, XML, debuger.
 \item x Focus on accumulator. describe in more detail.
-\item show implementations,  including base types to show how they differ.
+\item x show implementations,  including base types to show how they differ.
 \item x then, describe XML, debugger as pretty printers.
-\item use ``generic tool'' in consistent way. I like it better than
+\item xuse ``generic tool'' in consistent way. I like it better than
   tool generator.
 \end{itemize}
 
@@ -315,7 +315,15 @@ accumulator implementation. We first define a basic accumulator, which
 is simply a pair of integers counting the number of errors seen and
 the total number of elements seen. The type constructor
 \cd{G.metadata} is a universal datatype for describing metadata that
-corresponds to \padsml{} representations.
+corresponds to \padsml{} representations. Every variant contains a
+copy of the type parameter in addition to subcomponent metadata.
+Leaves contain only the type parameter. The tool state, then, is an
+object with accumulator summaries for every element in the
+representation type for which the tool is being used. The \cd{start}
+function in both modules updates the summary based on the error count
+\cd{nerr} in the PD header provided, and increments that total count
+by one. Projection and processing of fields and variants are simply
+lookups and insertions in a table of subcomponent accumulators.
 
 In addition to the accumulator, we have implemented two different
 kinds of pretty printers for parsed data.  One formats the data in
