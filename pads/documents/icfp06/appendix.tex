@@ -3,6 +3,7 @@
 \section{Regulus Data Description in PADS/C}
 \input{regulus.tex}
 
+\section{Complete Syntax and Semantics of \ddc{}}
 \begin{figure}
 {\small
 \begin{bnf}
@@ -25,61 +26,6 @@
 Finally, with the introduction of potentially open \implang types, we
 now check that $\ity$ in rule Compute is closed with respect to any
 types but the representation type variables corresponding to $\pctxt$.
-
-\begin{figure}[tp]
-\small
-\begin{bnf}
-%   \name{Variables} \meta{f,x,y} \\
-%   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
-  \name{Bits}  \meta{B}   \::= \cdot \| 0\,B \| 1\,B \\ 
-  \name{Constants} \meta{c} \::=
-      () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
-      \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
-
-  \name{Values} \meta{v} \::= 
-      \const \| % \ilam{\nrm \var}{\ity}{e} \| 
-      \ifun {\nrm f} {\nrm x} e \| \ipair v v \nlalt
-      \iinld{\ity}{v} \| \iinrd{\ity}{v} \|
-      \iarr{\vec{v}} \\
-
-  \name{Operators} \meta{op} \::= 
-      = \; \| \; < \; \| \inotop % \| \isizeofop
-      \| \ldots \\
-
-  \name{Expressions} \meta{e} \::= 
-      \const \| \var \| \iop{e} \|
-%      \ilam {\nrm \var} \ity e \| 
-      \ifun {\nrm f} {\nrm x} e \| 
-      \iapp e e \nlalt
-    \Lambda \alpha.e \| e \; [\ty] \nlalt
-%      \iletfun {\nrm f} {\nrm x} e \; \iin \; e' \| 
-      \ilet {\nrm x} e \; e \|
-      \iif e \; \ithen e \; \ielse e \nlalt
-      \ipair{e}{e} \| \ipi {\nrm i}{e} \|
-      \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
-      \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
-      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e} \nlalt
-      \iroll{e}{\mu\alpha.\tau} \| \iunroll{e}
-      \\
-      
-  \name{Base Types} \meta{a} \::= 
-      \iunitty \| \iboolty \| \iintty  \| 
-      \invty \nlalt  \ibitsty \| \ioffty \| \iecty
-  \\
-  \name{Types} \meta{\ity} \::= 
-      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
-      \isum \ity \ity \nlalt
-      \iseq \ity \| \forall \ityvar.\ity  \|
-      \imu \ityvar \ity   
-      \| \lambda \alpha.\ity 
-      \| \ity \; \ity
-  \\
-  \name{Kinds} \meta{\kappa} \::= \kty \| \kappa \rightarrow \kappa
-  
-\end{bnf}
-\caption{\Implang{} Language: F$^\omega$}
-\label{fig:implang-syntax}
-\end{figure}
 
 \begin{figure*}[t]
 \small
@@ -496,443 +442,63 @@ types but the representation type variables corresponding to $\pctxt$.
   \end{enumerate}
 \end{condition}
 
-
-
 \section{Host Language}
 \label{app:host-lang}
 
-\subsection{Well-Formedness Rules}
-\label{app:well-form}
-
+\begin{figure}[tp]
 \small
-
-\fbox{$\wfd \pctxt \ity$}
-
-\[
-\infer{\wfd \pctxt a}{}
-\quad
-\infer{
-  \wfd \pctxt {\ity \iarrowi \ity'}
-}{
-  \wfd \pctxt \ity &
-  \wfd \pctxt {\ity'}
-}
-\quad
-\infer{
-  \wfd \pctxt {\ity \iprodi \ity'}
-}{
-  \wfd \pctxt \ity &
-  \wfd \pctxt {\ity'}
-}
-\]
-
-\[%\quad
-\infer{
-  \wfd \pctxt {\isum \ity {\ity'}}
-}{
-  \wfd \pctxt \ity &
-  \wfd \pctxt {\ity'}
-}
-\quad
-\infer{
-  \wfd \pctxt {\iseqty \ity}
-}{
-  \wfd \pctxt \ity
-}
-\quad
-\infer{
-  \wfd \pctxt {\ierrty \ity}
-}{
-  \wfd \pctxt \ity
-}
-\]
-
-\[%\quad
-\infer{
-  \wfd \pctxt {\forall \ityvar.\ity}
-}{
-  \wfd {\pctxt,\ityvar} \ity
-}
-\quad
-\infer{
-  \wfd \pctxt  \ityvar
-}{
-  \ityvar \in \pctxt
-}
-\quad
-\infer{
-  \wfd \pctxt {\imu \ityvar \ity}
-}{
-  \wfd {\pctxt,\ityvar} \ity
-}
-\]
-
-\fbox{$\wfd \pctxt \ctxt$}
-
-\[
-\infer{
-  \wfd \pctxt \cdot
-}{}
-\quad
-\infer{
-  \wfd \pctxt {\ctxt,x:\ity}
-}{
-  \wfd \pctxt \ctxt & x \not\in \dom \ctxt & \wfd \pctxt \ity
-}
-\]
-
-\fbox{$\wfd \ctxt \rctxt$}
-
-\[
-\infer{\wfd \ctxt \cdot}{}
-\quad
-\infer{
-  \wfd \ctxt {\rctxt,\ptyvar=\pmu \ptyvar \ty}
-}{
-  \wfd \ctxt \rctxt \quad \ptyvar \not\in \dom \rctxt &
-  \ddck[\pmu \ptyvar \ty, \rctxt;\ctxt,\kty,\con]
-}
-\]
-
-\subsection{Typing Rules}
-\label{app:hl-typing}
-
-Constants are assigned types with the interface $\Icty$ and operators
-with $\Iopty$. Some example constants and their types are show below.
-\[
-\begin{array}{ll}
- \Icty(\itrue) = \iboolty &
- \Icty(\ifalse) = \iboolty \\
- \Icty(\ierr) = \invty &
- \Icty(\data) = \ibitsty \\
- \Icty(\off) = \ioffty
-\end{array}
-\]
-
-
-% We use contexts $\pctxt$ to record the names of open type variables
-% and contexts $\ctxt$ to record the types of expression variables. The syntax of
-% $\pctxt$ and $\ctxt$ is as follows:
-% \begin{bnf}
-% \pctxt & \::= . \| \ctxt,\ityvar \\
-% \ctxt  & \::= . \| \ctxt,x{:}\ity
-% \end{bnf}
-
-% The typing judgment has the form $\stsem[e, \pctxt;\ctxt, \ity]$. When
-% the type-variable context $\pctxt$ is empty, we write $\stsem[e,
-% \ctxt, \ity]$ as an abbreviation.
-% % Note that \textit{T-Generalize} can only be used in the premise of a
-% % \texttt{let} expression.
-
-\[
-  \infer[\text{Const}]{
-    \stsem[\const,\pctxt;\ctxt,\Icty(\const)]
-  }{
-    \wfd \pctxt \ctxt
-  }
-\quad
-  \infer[\text{Var}]{
-    \stsem[\var,\pctxt;\ctxt,\ity]
-  }{
-    \wfd \pctxt \ctxt & \ctxt(\var) = \ity
-  }
-\]
-\[%\quad
-  \infer[\text{Op}]{
-    \stsem[\iop e,\pctxt;\ctxt,\ity]
-  }{
-    \Iopty({op}) = \ioparrow {\ity'} \ity &
-    \stsem[e,\pctxt;\ctxt,\ity']
-  }
-\]
-
-\[%\qquad
-%   \infer[\text{Abs}]{
-%     \stsem[\ilam{\nrm \var}{\ity'}{e},
-%     \ctxt,\ity' \iarrowi \ity]
-%   }{
-%     \stsem[e,\pctxt;\ectxt{\var{:}\ity'},\ity] &
-%     {\rm FTV}(\ity') \in \pctxt
-%   }
-% \quad
-  \infer[\text{Fun}]{
-    \stsem[\ifun {\nrm f} {\nrm x} e,
-           \pctxt;\ctxt,\ity' \iarrowi \ity]
-  }{
-    \stsem[e,\pctxt;\ectxt{f{:}\ity' \iarrowi \ity,x{:}\ity'},\ity]
-  }  
-\quad
-  \infer[\text{App}]{
-    \stsem[\iapp{e}{e'},\pctxt;\ctxt,\ity]
-  }{
-    \begin{array}{l}
-    \stsem[e,\pctxt;\ctxt,\ity' \iarrowi \ity]\\
-    \stsem[e',\pctxt;\ctxt,\ity']      
-    \end{array}
-  }
-\]
-
-\[%\qquad
-  \infer[\text{Let}]{
-    \stsem[{\ilet {\nrm x} {e'} \; e},
-           \pctxt;\ctxt,\ity]
-  }{
-%    \begin{array}{c}
-      \stsem[e',\pctxt;\ctxt,\ity'] &
-      \stsem[e,\pctxt;\ectxt{x{:}\ity'},\ity]
-%    \end{array}
-  }  
-% \quad
-%   \infer[\text{LetRec}]{
-%     \stsem[{\iletfun {\nrm f} {\nrm x} e \; \iin \; e'},
-%            \ctxt,\ity]
-%   }{
-%     \stsem[e,\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2,x{:}\ity_1},\ity_2] &
-%     \stsem[e',\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2},\ity] 
-%   }
-\]
-
-\[%\qquad
-  \infer[\text{Cond}]{
-    \stsem[\iif e \; \ithen {e_1} \; \ielse {e_2},\pctxt;\ctxt,\ity]
-  }{       
-    \stsem[e,\pctxt;\ctxt,\iboolty] &
-    \stsem[e_1,\pctxt;\ctxt,\ity] &
-    \stsem[e_2,\pctxt;\ctxt,\ity]
-  }
-\]
-\[%\quad
-  \infer[\text{Pair}]{
-    \stsem[\ipair {e_1}{e_2},\pctxt;\ctxt,\iprodty {\ity_1} {\ity_2}]
-  }{       
-    \stsem[e_1,\pctxt;\ctxt,\ity_1] &
-    \stsem[e_2,\pctxt;\ctxt,\ity_2]
-  }
-\quad
-  \infer[\text{Proj}]{
-    \stsem[\ipi{\nrm i}{e},\pctxt;\ctxt,\ity_i]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity_1 \iprodi \ity_2] 
-  }
-\]
-
-\[%\quad
-  \infer[\text{InL}]{
-    \stsem[\iinl e,\pctxt;\ctxt,\isum \ity {\ity'}]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity] &
-    \wfd \pctxt {\ity'}
-  }
-\quad
-  \infer[\text{InR}]{
-    \stsem[\iinr e,\pctxt;\ctxt,\isum \ity {\ity'}]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity'] &
-    \wfd \pctxt {\ity}
-  }
-\]
-
-\[%\qquad
-  \infer[\text{Case}]{
-    \stsem[\icaseg{e}{\nrm x}{e_l}{\nrm y}{e_r}
-    ,\pctxt;\ctxt,\ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\isum {\ity_l} {\ity_r}] &
-    \stsem[e_l,\pctxt;\ectxt{x{:}\ity_l},\ity] &
-    \stsem[e_r,\pctxt;\ectxt{y{:}\ity_r},\ity]
-  }
-\]
-
-\[
-  \infer[\text{Empty}]{
-    \stsem[\ieseq,\pctxt;\ctxt,\iseqty \ity]
-  }{
-    \wfd \pctxt \ctxt & \wfd \pctxt \ity
-  }
-\]
-\[%\quad
-  \infer[\text{Seq}]{
-    \stsem[\iarr{e_1 \cdots e_n},\pctxt;\ctxt,\iseqty \ity]
-  }{
-    \wfd \pctxt \ctxt & \stsem[e_i,\pctxt;\ctxt,\ity] \quad 
-    \mbox{(for $i=1 \ldots n$)}
-  }
-\]
-
-\[
-  \infer[\text{Append}]{
-    \stsem[\iappend e {e'},\pctxt;\ctxt,\iseqty \ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
-    \stsem[e',\pctxt;\ctxt,\iseqty \ity]
-  }
-\]
-\[%\quad
-  \infer[\text{Sub}]{
-    \stsem[\isub e {\nrm {e'}},\pctxt;\ctxt,\isum \ity \iunitty]
-  }{
-    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
-    \stsem[e',\pctxt;\ctxt,\iintty]    
-  }
-\]
-
-\[
-  \infer[\text{Roll}]{
-    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
-  }
-  \quad
-  \infer[\text{Unroll}]{
-    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
-  }{
-    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
-  }
-\]
-
-\[%\qquad
-  \infer[\text{Generalize}]{
-    \stsem[v,\pctxt;\ctxt,\forall \ityvar.\ity]
-  }{
-    \stsem[v,{\pctxt,\ityvar;\ctxt},\ity] & 
-    (\ityvar \not\in {\rm FTV}(\ctxt))
-  }
-\]
-\[%\quad
-  \infer[\text{Instantiate}]{
-    \stsem[\expr,{\pctxt;\ctxt},{\ity[\ity'/\ityvar]}]
-  }{
-    \stsem[\expr,\pctxt;\ctxt,\forall \ityvar.\ity]
-  }
-\]
-
-\subsection{Evaluation Rules}
-\label{app:hl-evaluation}
-
 \begin{bnf}
-\name{Evaluation} \meta{E} \::= 
-  [] \| \iop{E} \| \iapp E e \| \iapp v E \\
-\name{Contexts} \meta{} \| &
-  \ilet {\nrm x} E \; e \nlalt
-  \iif E \; \ithen {e_1} \; \ielse {e_2} \nlalt
-  \ipair E e \| \ipair v E \| \ipi{\nrm i}{E} \nlalt
-  \iinld \ity E \| \iinrd \ity E \nlalt
-  \icaseg E {\nrm x} e {\nrm x} {e'} \nlalt
-  \iarr{\vec v \, E \, \vec{e}} \| 
-  \iappend E e \| \iappend v E \nlalt
-  \isub e E \| \isub v E \\
+%   \name{Variables} \meta{f,x,y} \\
+%   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
+  \name{Bits}  \meta{B}   \::= \cdot \| 0\,B \| 1\,B \\ 
+  \name{Constants} \meta{c} \::=
+      () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
+      \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
+
+  \name{Values} \meta{v} \::= 
+      \const \| % \ilam{\nrm \var}{\ity}{e} \| 
+      \ifun {\nrm f} {\nrm x} e \| \ipair v v \nlalt
+      \iinld{\ity}{v} \| \iinrd{\ity}{v} \|
+      \iarr{\vec{v}} \\
+
+  \name{Operators} \meta{op} \::= 
+      = \; \| \; < \; \| \inotop % \| \isizeofop
+      \| \ldots \\
+
+  \name{Expressions} \meta{e} \::= 
+      \const \| \var \| \iop{e} \|
+%      \ilam {\nrm \var} \ity e \| 
+      \ifun {\nrm f} {\nrm x} e \| 
+      \iapp e e \nlalt
+    \Lambda \alpha.e \| e \; [\ty] \nlalt
+%      \iletfun {\nrm f} {\nrm x} e \; \iin \; e' \| 
+      \ilet {\nrm x} e \; e \|
+      \iif e \; \ithen e \; \ielse e \nlalt
+      \ipair{e}{e} \| \ipi {\nrm i}{e} \|
+      \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
+      \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
+      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e} \nlalt
+      \iroll{e}{\mu\alpha.\tau} \| \iunroll{e}
+      \\
+      
+  \name{Base Types} \meta{a} \::= 
+      \iunitty \| \iboolty \| \iintty  \| 
+      \invty \nlalt  \ibitsty \| \ioffty \| \iecty
+  \\
+  \name{Types} \meta{\ity} \::= 
+      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
+      \isum \ity \ity \nlalt
+      \iseq \ity \| \forall \ityvar.\ity  \|
+      \imu \ityvar \ity   
+      \| \lambda \alpha.\ity 
+      \| \ity \; \ity
+  \\
+  \name{Kinds} \meta{\kappa} \::= \kty \| \kappa \rightarrow \kappa
+  
 \end{bnf}
-
-We specify the implementation of an operator with
-$\mathcal{O}({op},v)$. 
-% Most of the rules are standard, although the
-% sequence rules are new. Append appends the contents of the second
-% array to that of the first array, while Sub extracts the element at
-% index i, if i is within the bounds of the array. If not, the
-% expression fails.
-
-\[
-\infer[\text{Op}]{
-  \iop v \stepsto v'
-}{
-  \mathcal{O}({op},v) = v'
-}
-% \quad
-% \infer[\text{App}]{
-%   \iapp v {v'} \stepsto e[v'/x]
-% }{
-%   (v = \ilam {\nrm x} {} e)
-% }
-\quad
-\infer[\text{App}]{
-  \iapp v {v'} \stepsto e[v/f][v'/x]
-}{
-  (v = \ifun {\nrm f}{\nrm x} e)
-}
-\]
-\[%\quad
-\infer[\text{Let}]{
-  \ilet {\nrm x} v \; e
-  \stepsto e[v/x]
-}{}
-% \quad
-% \infer[\text{LetRec}]{
-%   \iletfun {\nrm f} {\nrm x} e \; \iin \; e'
-%   \stepsto e'[{\ifun {\nrm f} {\nrm x} e}/f]
-% }{}
-\]
-
-\[
-\infer[\text{{IfTrue}}]{
-  \iif \itrue \; \ithen e \; \ielse {e'} \stepsto
-  e
-}{}
-\]
-\[%\quad
-\infer[\text{{IfFalse}}]{
-  \iif \ifalse \; \ithen e \; \ielse {e'} \stepsto
-  e'
-}{}
-\]
-
-\[
-\infer[\text{Proj1}]{
-  \ipi 1 {\ipair v {v'}} \stepsto v
-}{}
-\quad
-\infer[\text{Proj2}]{
-  \ipi 2 {\ipair v {v'}} \stepsto v'
-}{}
-\]
-
-\[
-\infer[\text{CaseL}]{
-  \icaseg{\iinl v}{\nrm x}{e_l}{\nrm y}{e_r}
-  \stepsto {e_l}[v/x]
-}{}
-\]
-
-\[%\quad
-\infer[\text{CaseR}]{
-  \icaseg{\iinr v}{\nrm x}{e_l}{\nrm y}{e_r}
-  \stepsto {e_r}[v/y]
-}{}
-\]
-
-\[
-\infer[\text{Append}]{
-  \iappend {\iarr{\vec v_1}} {\iarr{\vec v_2}} \stepsto
-  {\iarr{\vec v_1 \, \vec v_2}}
-}{}
-\quad
-\infer[\text{EmptySub}]{
-  \isub \ieseq {\nrm i} \stepsto \iinr{\iuval}
-}{}
-\]
-
-\[
-\infer[\text{SubIn}]{
-  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
-  \stepsto \iinl {v_{i}}
-}{
-  0 \leq i < n
-}
-\quad
-\infer[\text{SubOut}]{
-  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
-  \stepsto \iinr{\iuval}
-}{
-  i \geq n
-}
-\]
-
-\[
-\infer[\text{Step}]{
-  E[e] \stepsto E[e']
-}{
-  e \stepsto e'
-}
-\]
+\caption{\Implang{} Language: F$^\omega$}
+\label{fig:implang-syntax}
+\end{figure}
 
 \section{Helper Functions}
 \label{app:asst-functions}
@@ -1111,167 +677,6 @@ $\begin{array}{l}
   \forall \ga.\ipty \ga \iarrowi \iboolty]$.
 \end{lemma}
 }
-
-\trversion{
-\section{Conditions on Base Types}
-\label{app:meta-theory}
-\begin{condition}[Conditions on Base-type Interfaces]
-\label{cond:base-types}
-  \begin{enumerate}
-  \item $\dom {\Ikind} = \dom {\Iimp}$.
-  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
-    \iarrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$ of type $\ity$).
-  \item $\stsem[\Iimp(C),,\Iopty(C)]$.
-    \label{cond:closed-op}
-  \item If $\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and
-    $\Iimp(C) \sapp v \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$
-    then $\corr {\pbase v} r p $.
-  \end{enumerate}
-\end{condition}
-\noindent
-Note that by condition~\ref{cond:closed-op}, base type parsers must
-be closed.
-}
-
-\section{Complete \ipads{} Encoding in \ddc{}}
-\label{app:ipads-to-ddc}
-
-\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
-
-\[
- \infer{ 
-     \itmv \cipads \ty \; \text{prog}
-  }{
-     \itmv \cipads \ty
-  }
-\qquad
-\infer{ 
-  \ga = \itmv; \; p \cipads \ty \; \text{prog}
-}{
-  p[\itmv/\ga] \cipads \ty \; \text{prog}
-}
-\qquad
-  \infer{ 
-      \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
-  }{
-     p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
-  }
-\]
-
-\fbox{$ \itmv  \cipads \ty$}
-
-\[
-  \infer{ 
-     \pbase e \cipads \pbase e
-  }{}
-\qquad
-  \infer{ 
-     \Pfun (x:\ity) = \itmv \cipads \plam x
-    \ity \ty
-  }{
-    \itmv \cipads \ty
-  }
-\qquad
-  \infer{ 
-     \itmv \; e \cipads \ty \; e
-  }{
-     \itmv \cipads \ty
-  }
-\]
-
-\[
-%\qquad
-  \infer{
-    \begin{array}{l}
-     \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
-    \cipads \\
-    \quad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n
-   \end{array}
-  }{ 
-    \itmv_i \cipads \ty_i
-  }
-\qquad
-  \infer{
-    \begin{array}{l}
-       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
-      \cipads \\
-      \quad \ty_1 + \dots + \ty_n + \pfalse
-    \end{array}
-  }{ 
-     \itmv_i \cipads \ty_i
-  }
-\]
-
-\[
-%\qquad
-  \infer{
-     \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
-    \ty_1 \& \dots \& \ty_n
-  }{ 
-     \itmv_i \cipads \ty_i
-  }
-\qquad
-  \infer{
-     \Popt \; \itmv \cipads
-     \psum \ty {} \ptrue
-  }{
-     \itmv \cipads \ty
-  }
-\]
-
-\[
-  \infer{
-    \begin{array}{l}
-       \itmv \; \Pwhere \, x.e \cipads  \\
-      \quad
-      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
-        \itrue}
-    \end{array}
-  }{ 
-    \itmv \cipads \ty
-  }
-\]
-
-\[
-  \infer{
-     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
-    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
-  }{ 
-    \itmv \cipads \ty & 
-    \itmv_{sep} \cipads \ty_s &
-    \itmv_{term} \cipads \ty_t &
-    (f = \ilam x{}\ifalse)
-  }
-\]
-
-\[
-  \infer{ 
-    \begin{array}{l}
-      \Pcompute{} \; e{:}\ity \cipads \\
-      \quad \pcompute e \ity      
-    \end{array}     
-  }{}
-\qquad
-  \infer{ 
-     \Plit \const \cipads 
-    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
-  }{
-    \defty \const \ty
-  }
-\]
-
-\[
-  \infer{ 
-     \ga \cipads \ga
-  }{}    
-\qquad\qquad
-  \infer{ 
-     \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
-  }{
-     \itmv \cipads \ty
-  }
-\]
-
 
 %%% Local Variables: 
 %%% mode: latex
