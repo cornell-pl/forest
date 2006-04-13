@@ -8,6 +8,8 @@
 #ifndef __P_OUT_MACROS_H__
 #define __P_OUT_MACROS_H__
 
+//#define TRACE 1
+
 #ifdef FOR_CKIT
 /* Prototypes for CKIT */
 extern int P_LEV_INFO;
@@ -85,7 +87,8 @@ void P_FATAL7(Pdisc_t *t, char * fmt,...);
 #define P_GET_FLG(flags) (flags & ~P_LEV_MASK)
 
 #define P_DBG_FLAGS      -2
-#define P_TRACE_FLAGS    -4
+/* #define P_TRACE_FLAGS    -4 */
+#define P_TRACE_FLAGS    P_LEV_WARN
 #define P_WARN_FLAGS     P_LEV_WARN
 #define P_SYSERR_FLAGS   P_LEV_ERR|P_FLG_SYSERR
 #define P_FATAL_FLAGS    P_LEV_FATAL

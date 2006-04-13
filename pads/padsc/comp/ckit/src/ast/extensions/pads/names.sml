@@ -113,6 +113,7 @@ struct
   fun writeXMLSuf s = s^"_write_xml_"
   fun fmtSuf s = s^"_fmt"
   fun ioSuf s = s^"2io"
+  fun ioxmlSuf s = s^"2xml_io"
   fun bufSuf s = s^"2buf"
   fun bufFinalSuf s = s^"2buf_final"
   fun reportSuf s = s^"_report"

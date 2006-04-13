@@ -1184,13 +1184,19 @@ ret_type fn_prefix ## u ## typ ## 64 ## fn_suffix(PDCI_FIRST_ARGS, const P_u ## 
 
 #undef PDCI_FIRST_ARGS
 #define PDCI_FIRST_ARGS P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst
+#undef PDCI_FIRST_ARGS_XML
+#define PDCI_FIRST_ARGS_XML  P_t *pads, Sfio_t *outstr, int nst
 
-/* we always need these 4 functions */
+/* we always need these functions */
 Perror_t Pint32_acc_report2io  (PDCI_FIRST_ARGS, Pint32_acc *a);
 Perror_t Puint32_acc_report2io (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Pint32_acc_map_report2io(PDCI_FIRST_ARGS, Pint32_map_fn  fn, Pint32_acc *a);
 Perror_t P_nerr_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *what, int nst,
 				   Puint32_acc *a);
+
+Perror_t Puint32_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
+Perror_t Pint32_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Pint32_acc *a);
+Perror_t Pint32_acc_map_report2xml_io(PDCI_FIRST_ARGS_XML, Pint32_map_fn  fn, Pint32_acc *a);
 
 #if P_CONFIG_ACCUM_FUNCTIONS > 0
 Perror_t Pint8_acc_report2io   (PDCI_FIRST_ARGS, Pint8_acc *a);
@@ -1200,9 +1206,23 @@ Perror_t Puint8_acc_report2io  (PDCI_FIRST_ARGS, Puint8_acc *a);
 Perror_t Puint16_acc_report2io (PDCI_FIRST_ARGS, Puint16_acc *a);
 Perror_t Puint64_acc_report2io (PDCI_FIRST_ARGS, Puint64_acc *a);
 
-Perror_t Pstring_acc_report2io (PDCI_FIRST_ARGS, Pstring_acc *a);
-Perror_t Pchar_acc_report2io   (PDCI_FIRST_ARGS, Pchar_acc *a);
-Perror_t Pip_acc_report2io     (PDCI_FIRST_ARGS, Puint32_acc *a);
+#undef PDCI_FIRST_ARGS_XML
+#define PDCI_FIRST_ARGS_XML  P_t *pads, Sfio_t *outstr, int nst
+Perror_t Pint8_acc_report2xml_io   (PDCI_FIRST_ARGS_XML, Pint8_acc *a);
+Perror_t Pint16_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pint16_acc *a);
+Perror_t Pint64_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pint64_acc *a);
+Perror_t Puint8_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Puint8_acc *a);
+Perror_t Puint16_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Puint16_acc *a);
+Perror_t Puint64_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Puint64_acc *a);
+
+Perror_t Pstring_acc_report2io     (PDCI_FIRST_ARGS, Pstring_acc *a);
+Perror_t Pstring_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Pstring_acc *a);
+
+Perror_t Pchar_acc_report2io       (PDCI_FIRST_ARGS, Pchar_acc *a);
+Perror_t Pchar_acc_report2xml_io   (PDCI_FIRST_ARGS_XML, Pchar_acc *a);
+
+Perror_t Pip_acc_report2io         (PDCI_FIRST_ARGS, Puint32_acc *a);
+Perror_t Pip_acc_report2xml_io     (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
 
 Perror_t Pfpoint8_acc_report2io   (PDCI_FIRST_ARGS, Pfpoint8_acc *a);
 Perror_t Pfpoint16_acc_report2io  (PDCI_FIRST_ARGS, Pfpoint16_acc *a);
@@ -1213,8 +1233,20 @@ Perror_t Pufpoint16_acc_report2io (PDCI_FIRST_ARGS, Pufpoint16_acc *a);
 Perror_t Pufpoint32_acc_report2io (PDCI_FIRST_ARGS, Pufpoint32_acc *a);
 Perror_t Pufpoint64_acc_report2io (PDCI_FIRST_ARGS, Pufpoint64_acc *a);
 
+Perror_t Pfpoint8_acc_report2xml_io   (PDCI_FIRST_ARGS_XML, Pfpoint8_acc *a);
+Perror_t Pfpoint16_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pfpoint16_acc *a);
+Perror_t Pfpoint32_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pfpoint32_acc *a);
+Perror_t Pfpoint64_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pfpoint64_acc *a);
+Perror_t Pufpoint8_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pufpoint8_acc *a);
+Perror_t Pufpoint16_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Pufpoint16_acc *a);
+Perror_t Pufpoint32_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Pufpoint32_acc *a);
+Perror_t Pufpoint64_acc_report2xml_io (PDCI_FIRST_ARGS_XML, Pufpoint64_acc *a);
+
 Perror_t Pfloat32_acc_report2io  (PDCI_FIRST_ARGS, Pfloat32_acc *a);
 Perror_t Pfloat64_acc_report2io  (PDCI_FIRST_ARGS, Pfloat64_acc *a);
+
+Perror_t Pfloat32_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pfloat32_acc *a);
+Perror_t Pfloat64_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Pfloat64_acc *a);
 
 #ifdef FOR_CKIT
 Perror_t Ptimestamp_explicit_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
@@ -1223,6 +1255,14 @@ Perror_t Ptime_explicit_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Ptimestamp_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Pdate_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
 Perror_t Ptime_acc_report2io  (PDCI_FIRST_ARGS, Puint32_acc *a);
+
+Perror_t Ptimestamp_explicit_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
+Perror_t Pdate_explicit_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
+Perror_t Ptime_explicit_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
+Perror_t Ptimestamp_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
+Perror_t Pdate_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
+Perror_t Ptime_acc_report2xml_io  (PDCI_FIRST_ARGS_XML, Puint32_acc *a);
+
 #endif /* FOR_CKIT */
 
 #endif /* P_CONFIG_ACCUM_FUNCTIONS */
@@ -1886,9 +1926,11 @@ int         PDCI_regexp_match(P_t *pads, Pregexp_t *regexp, Pbyte *begin, Pbyte 
  * PDCI_nst_prefix_what prints a heading to outstr 
  * based on *nst nesting level and
  * (unless *nst is -1) it increments the nesting level.
+ * PDCI_indent prints nst spaces
  */
 
 void PDCI_nst_prefix_what(Sfio_t *outstr, int *nst, const char *prefix, const char *what, const char *xtra);
+void PDCI_indent(Sfio_t *outstr, int nst);
 
 /* 
  * PDCI_findfirst and PDCI_findlast are like strchr and strrchr except NULL does

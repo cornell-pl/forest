@@ -725,11 +725,12 @@ structure CnvExt : CNVEXT = struct
 				      SOME ((initSuf o pdSuf) name),
 				      SOME ((cleanupSuf o pdSuf) name))
 
-              fun buildTyProps (name, kind, diskSize, compoundDiskSize, memChar, endian, isRecord, 
+              fun buildTyProps (name, kind, tyInfo, diskSize, compoundDiskSize, memChar, endian, isRecord, 
 				containsRecord, largeHeuristic, isSource, pdTid, numArgs) = 
      		  let val (repInit, repClean, pdInit, pdClean) = getDynamicFunctions (name, memChar)
 		  in
 		      {kind     = kind,
+		       info     = tyInfo,
 		       diskSize = diskSize,
 		       compoundDiskSize = compoundDiskSize,
 	 	       memChar  = memChar,
@@ -1467,33 +1468,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 
-	      fun genTrivReportFuns (reportName, whatStr, baseWhatStr, accPCT, repioCallX) = 
-		  let fun genParamTys extraPCTs =
-		          [P.ptrPCT PL.toolStatePCT] 
-			 @ extraPCTs
-			 @ [P.ccharPtr,
-			    P.ccharPtr,
-			    P.int,
-			    P.ptrPCT accPCT]
-                      fun genParamNames extraNames = [pads] @ extraNames @ [ prefix, what, nst, acc]
-                      val intlParamNames = genParamNames [outstr]
-                      val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
-		      val intlFormalParams = List.map P.mkParam 
-			                        (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
-		      val macroCallS =
-			  case baseWhatStr of
-			      NONE   => PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_ACC_REP2IO", [PT.String whatStr, repioCallX]))
-			    | SOME b => PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_ACC_REP2IO", [PT.String whatStr, b, repioCallX]))
-		      val XXXsetWhatS = PT.IfThen(P.notX(PT.Id what),
-						 PT.Compound[P.assignS(PT.Id what, PT.String whatStr)])
-		      val XXXbodySs = PT.Compound([XXXsetWhatS, PT.Return(repioCallX)])
-		      val bodySs = PT.Compound([macroCallS])
-		      val returnTy = PL.toolErrPCT
-		      val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodySs, returnTy)
-		      val externalReportFunED = BU.genExternalReportFun(reportName, intlParamNames, extlFormalParams, acc)
-		  in
-		      [toioReportFunED, externalReportFunED]
-		  end
 
               (* const char * name2str(enumPCT which) *)
               fun genEnumToStringFun(name, enumPCT, members) = 
@@ -1514,12 +1488,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  in
 		      cnvFunED
 		  end
-
-
-	      fun callIntPrint (reportName, prefixX, whatX, nstX, fieldX) = 
-		  PT.Call(PT.Id reportName, 
-			  [PT.Id pads, PT.Id outstr, prefixX, whatX, nstX, fieldX])
-
 
 
 	      (* Like checkParamTys below, but uses specified error message. *)
@@ -2010,6 +1978,26 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			of PTys.CTy => [P.mkCommentS("C type "^fieldOrBranch^": cannot accumulate")]
 			 | _ => (cnvPtyForReport(reportSuf, ioSuf, getPadsName tyname, name, fieldOrBranch))
 
+	      (* Given manifest representation, generate report function *)
+	      fun cnvPtyForXMLReport(reportSuf, ioSuf, pty, name, fieldOrBranch) = 
+		  case lookupAcc(pty)
+		   of NONE =>
+		      [P.mkCommentS(fieldOrBranch^" '"^name^"': no acc function, cannot accumulate")]
+		| SOME a =>
+		  (let val reportName = reportSuf a
+		       fun gfieldX base = P.getFieldX(base, name)
+		   in
+		       BU.genXMLPrintPiece(ioSuf reportName, name, P.zero, gfieldX acc, [])
+		   end)
+
+	      fun genAccXMLReportMan (reportSuf, ioSuf, fieldOrBranch) {tyname, name, args, isVirtual, expr, pred, comment} =
+		  if isVirtual 
+		  then [P.mkCommentS("Pomit "^fieldOrBranch^": cannot accumulate")]
+		  else case isPadsTy tyname 
+			of PTys.CTy => [P.mkCommentS("C type "^fieldOrBranch^": cannot accumulate")]
+			 | _ => (cnvPtyForXMLReport(reportSuf, ioSuf, getPadsName tyname, name, fieldOrBranch))
+
+
 	      fun emit (condition, eds) = 
 		  if condition then 
 		      List.concat(List.map cnvExternalDecl eds)
@@ -2086,7 +2074,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val contR = lookupContainsRecord baseTy
  		      val lH = lookupHeuristic baseTy
 		      val numArgs = List.length params
-		      val typedefProps = buildTyProps(name, PTys.Typedef, ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
+		      val typedefProps = buildTyProps(name, PTys.Typedef, TyProps.TydefInfo, 
+						      ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, typedefProps)
 
@@ -2271,12 +2260,18 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* -- generate report function ptypedef *)
                       (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix) *)
 		      val reportFun = (reportSuf o accSuf) name
-		      val repioCallX =
+		      val whatStr = "typedef "^name
+		      val (repioCallX, repxmlioCallX) =
 			  case lookupAcc(baseTy)
-			   of NONE => PL.P_OK
-			    | SOME a => PT.Call(PT.Id((ioSuf o reportSuf) a),
-						[PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id acc])
-                      val reportFunEDs = genTrivReportFuns(reportFun, "typedef "^name, SOME(PT.String baseTyName), accPCT, repioCallX)
+			   of NONE => (PL.P_OK, PL.P_OK)
+			    | SOME a => (PT.Call(PT.Id((ioSuf o reportSuf) a),
+						 [PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id acc]),
+					 PT.Call(PT.Id((ioxmlSuf o reportSuf) a),
+						 [PT.Id pads, PT.Id outstr, PT.Id nst, PT.Id acc]))
+		      val printSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TYPEDEF_ACC_REP2IO", 
+						     [PT.String whatStr, PT.String baseTyName, repioCallX]))]
+		      val printXMLSs = [PT.Expr repxmlioCallX]
+                      val reportFunEDs = BU.genTrivReportFuns(reportFun, "typedef", name, whatStr, accPCT, acc, printSs,printXMLSs)
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
 	              (* Generate Hist functions typedef case *)
@@ -2414,7 +2409,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val contR = false
  		      val lH = false
 		      val numArgs = List.length params
-		      val recProps = buildTyProps(name, PTys.Typedef, ds, TyProps.Typedef (ds, baseName, (cNames, args)), mc, endian, 
+		      val recProps = buildTyProps(name, PTys.Typedef, TyProps.TydefInfo, 
+						  ds, TyProps.Typedef (ds, baseName, (cNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, recProps)
 
@@ -2725,8 +2721,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* -- generate acc. report function precur *)
                       (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix) *)
 		      val reportFun = (reportSuf o accSuf) name
-		      val repioCallX = PL.P_OK
-                      val reportFunEDs = genTrivReportFuns(reportFun, "recur "^name, NONE, accPCT, repioCallX)
+		      val printSs = [PT.Return PL.P_OK]
+                      val reportFunEDs = BU.genTrivReportFuns(reportFun, "recur", name, "recur "^name, 
+							      accPCT, acc, printSs,[])
 
 		      (* Generate only the acc. functions. The acc. types have already been generated by Precur. *)
 		      val accumEDs = initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
@@ -3227,10 +3224,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   in
 			       if Option.isSome reOpt then
                                     (isEmptyString (unMark(Option.valOf reOpt));
-			            (pExp, pExp, NONE, PRegExp, PL.reMatch, PL.reScan1, NONE))
+			            (pExp, pExp, NONE, PRegExp, PL.reMatch, PL.reScan1, NONE, TyProps.DRegExp pExp))
 			       else if isString then
-			            (pExp, pExp, #1(evalExpr exp), PString, PL.cstrlitMatch, PL.cstrlitScan1, SOME PL.cstrlitWriteBuf)
-			       else (pExp, pExp, #1(evalExpr exp), PChar,   PL.charlitMatch, PL.charlitScan1, SOME PL.charlitWriteBuf)
+			            (pExp, pExp, #1(evalExpr exp), PString, PL.cstrlitMatch, 
+				           PL.cstrlitScan1, SOME PL.cstrlitWriteBuf, TyProps.DString pExp)
+			       else (pExp, pExp, #1(evalExpr exp), PChar,   
+                                           PL.charlitMatch, PL.charlitScan1, SOME PL.charlitWriteBuf, TyProps.DChar pExp)
 			   end
 			       
 			  fun doOne (constr:pcexp PX.PConstraint) = 
@@ -3308,87 +3307,87 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      in
 			      case (sepXOpt, termXOpt) of
                                 (NONE, NONE) => (NONE, NONE, [], [], [], emptyFun, NONE)
-                              | (SOME (e, e2, v, PRegExp, match, scan, write), NONE) => 
+                              | (SOME (e, e2, v, PRegExp, match, scan, write, kind), NONE) => 
 				    let val (declSs, params, initSs, expr, closeS) = compRegExp("separator", endLabel, e)
 					val wCloseFun = makeCloseFun closeS
 				    in
-					(SOME(expr, expr, v, PRegExp, match, scan, write), termXOpt, declSs, 
+					(SOME(expr, expr, v, PRegExp, match, scan, write, kind), termXOpt, declSs, 
 					 params, initSs, wCloseFun, NONE)
 				    end
                               | (SOME s, NONE) => (sepXOpt, termXOpt, [], [], [], emptyFun, NONE)
-                              | (NONE, SOME(e, e2, v, PRegExp, match, scan, write)) =>
+                              | (NONE, SOME(e, e2, v, PRegExp, match, scan, write, kind)) =>
 				    let val (declSs, params, initSs, expr, closeS) = compRegExp("terminator", endLabel, e)
 					val wCloseFun = makeCloseFun closeS
 				    in
-					(NONE, SOME(expr, expr, v, PRegExp, match, scan, write), declSs, params, 
+					(NONE, SOME(expr, expr, v, PRegExp, match, scan, write, kind), declSs, params, 
 					 initSs, wCloseFun, NONE)
 				    end
                               | (NONE, SOME t) => (sepXOpt, termXOpt, [], [], [], emptyFun, NONE) 
-                              | (SOME(es, es2, vs, PChar, matchs, scans, writes), SOME(et, et2, vt, PChar, matcht, scant, writet)) =>
-				      (SOME(es, es2, vs, PChar, matchs, scans, writes), 
-				       SOME(et, et2, vt, PChar, matcht, scant, writet), [], [], [], emptyFun,
+                              | (SOME(es, es2, vs, PChar, matchs, scans, writes,kinds), SOME(et, et2, vt, PChar, matcht, scant, writet,kindt)) =>
+				      (SOME(es, es2, vs, PChar, matchs, scans, writes,kinds), 
+				       SOME(et, et2, vt, PChar, matcht, scant, writet,kindt), [], [], [], emptyFun,
 				       SOME PL.charlitScan2)
-                              | (SOME(es, es2, vs, PString, matchs, scans, writes), SOME(et, et2, vt, PString, matcht, scant, writet)) =>
-				      (SOME(es, es2, vs, PString, matchs, scans, writes), 
-				       SOME(et, et2, vt, PString, matcht, scant, writet), [], [], [], emptyFun,
+                              | (SOME(es, es2, vs, PString, matchs, scans, writes,kinds), SOME(et, et2, vt, PString, matcht, scant, writet,kindt)) =>
+				      (SOME(es, es2, vs, PString, matchs, scans, writes,kinds), 
+				       SOME(et, et2, vt, PString, matcht, scant, writet,kindt), [], [], [], emptyFun,
 				       SOME PL.cstrlitScan2)
-                              | (SOME(es, es2, vs, PRegExp, matchs, scans, writes), SOME(et, et2, vt, PRegExp, matcht, scant, writet)) =>
+                              | (SOME(es, es2, vs, PRegExp, matchs, scans, writes,kinds), SOME(et, et2, vt, PRegExp, matcht, scant, writet,kindt)) =>
 				    let val (declSss, paramss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
 					val (declSst, paramst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
 					val wCloseFun = makeCloseFun (closeSs @ closeSt)
 				    in
-					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes), 
-					 SOME(exprt, exprt, vt, PRegExp, matcht, scant, writet), 
+					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes,kinds), 
+					 SOME(exprt, exprt, vt, PRegExp, matcht, scant, writet,kindt), 
 					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseFun, SOME PL.reScan2)
 				    end
-                              | (SOME(es, es2, vs, PRegExp, matchs, scans, writes), SOME(et, et2, vt, PString, matcht, scant, writet)) =>
+                              | (SOME(es, es2, vs, PRegExp, matchs, scans, writes,kinds), SOME(et, et2, vt, PString, matcht, scant, writet,kindt)) =>
 				    let val (declSss, paramss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
 					val (declSst, paramst, initSst, exprt, closeSt) = strToRegExp("terminator", endLabel, et)
 					val wCloseFun = makeCloseFun (closeSs @ closeSt)
 				    in
-					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes), 
-					 SOME(et, exprt, vt, PString, matcht, scant, writet), 
+					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes,kinds), 
+					 SOME(et, exprt, vt, PString, matcht, scant, writet,kindt), 
 					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseFun, SOME PL.reScan2)
 				    end
-                              | (SOME(es, es2, vs, PString, matchs, scans, writes), SOME(et, et2, vt, PRegExp, matcht, scant, writet)) =>
+                              | (SOME(es, es2, vs, PString, matchs, scans, writes,kinds), SOME(et, et2, vt, PRegExp, matcht, scant, writet,kindt)) =>
 				    let val (declSss, paramss, initSss, exprs, closeSs) = strToRegExp("separator", endLabel, es)
 					val (declSst, paramst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
 					val wCloseFun = makeCloseFun (closeSs @ closeSt)
 				    in
-					(SOME(es, exprs, vs, PRegExp, matchs, scans, writes), 
-					 SOME(exprt, exprt, vt, PString, matcht, scant, writet), 
+					(SOME(es, exprs, vs, PRegExp, matchs, scans, writes,kinds), 
+					 SOME(exprt, exprt, vt, PString, matcht, scant, writet,kindt), 
 					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseFun, SOME PL.reScan2)
 				    end
-                              | (SOME(es, es2, vs, PRegExp, matchs, scans, writes), SOME(et, et2, vt, PChar, matcht, scant, writet)) =>
+                              | (SOME(es, es2, vs, PRegExp, matchs, scans, writes,kinds), SOME(et, et2, vt, PChar, matcht, scant, writet,kindt)) =>
 				    let val (declSss, paramss, initSss, exprs, closeSs) = compRegExp("separator", endLabel, es)
 					val (declSst, paramst, initSst, exprt, closeSt) = charToRegExp("terminator", endLabel, et)
 					val wCloseFun = makeCloseFun (closeSs @ closeSt)
 				    in
-					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes), 
-					 SOME(et, exprt, vt, PChar, matcht, scant, writet), 
+					(SOME(exprs, exprs, vs, PRegExp, matchs, scans, writes,kinds), 
+					 SOME(et, exprt, vt, PChar, matcht, scant, writet,kindt), 
 					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseFun, SOME PL.reScan2)
 				    end
-                              | (SOME(es, es2, vs, PChar, matchs, scans, writes), SOME(et, et2, vt, PRegExp, matcht, scant, writet)) =>
+                              | (SOME(es, es2, vs, PChar, matchs, scans, writes,kinds), SOME(et, et2, vt, PRegExp, matcht, scant, writet,kindt)) =>
 				    let val (declSss, paramss, initSss, exprs, closeSs) = charToRegExp("separator", endLabel, es)
 					val (declSst, paramst, initSst, exprt, closeSt) = compRegExp("terminator", endLabel, et)
 					val wCloseFun = makeCloseFun (closeSs @ closeSt)
 				    in
-					(SOME(es, exprs, vs, PChar, matchs, scans, writes), 
-					 SOME(exprt, exprt, vt, PRegExp, matcht, scant, writet), 
+					(SOME(es, exprs, vs, PChar, matchs, scans, writes,kinds), 
+					 SOME(exprt, exprt, vt, PRegExp, matcht, scant, writet,kindt), 
 					 declSss @ declSst, paramss @ paramst, initSss @ initSst, wCloseFun, SOME PL.reScan2)
 				    end
-                              | (SOME(es, es2, vs, PString, matchs, scans, writes), SOME(et, et2, vt, PChar, matcht, scant, writet)) =>
+                              | (SOME(es, es2, vs, PString, matchs, scans, writes,kinds), SOME(et, et2, vt, PChar, matcht, scant, writet,kindt)) =>
 				    let val (declSst, paramst, initSst, exprt, closeSt) = charToString("terminator", et)
 				    in
-				      (SOME(es, es2, vs, PString, matchs, scans, writes), 
-				       SOME(et, exprt, vt, PChar, matcht, scant, writet), declSst, paramst, initSst, fn _ => closeSt,
+				      (SOME(es, es2, vs, PString, matchs, scans, writes,kinds), 
+				       SOME(et, exprt, vt, PChar, matcht, scant, writet,kindt), declSst, paramst, initSst, fn _ => closeSt,
 				       SOME PL.cstrlitScan2)
 				    end
-                              | (SOME(es, es2, vs, PChar, matchs, scans, writes), SOME(et, et2, vt, PString, matcht, scant, writet)) =>
+                              | (SOME(es, es2, vs, PChar, matchs, scans, writes,kinds), SOME(et, et2, vt, PString, matcht, scant, writet,kindt)) =>
 				    let val (declSss, paramss, initSss, exprs, closeSs) = charToString("separator", es)
 				    in
-				      (SOME(es, exprs, vs, PChar, matchs, scans, writes), 
-				       SOME(et, et2, vt, PString, matcht, scant, writet), declSss, paramss, initSss, fn _ => closeSs,
+				      (SOME(es, exprs, vs, PChar, matchs, scans, writes,kinds), 
+				       SOME(et, et2, vt, PString, matcht, scant, writet,kindt), declSss, paramss, initSss, fn _ => closeSs,
 				       SOME PL.cstrlitScan2)
 				    end
 			      end
@@ -3401,17 +3400,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  fun intInftoStringRep i = Char.toString(Char.chr(IntInf.toInt i))
  			      in
 			      case (sepXOpt, termXOpt) 
-			      of (SOME(sepX, _, SOME i, _, _, _, _), SOME(termX, _, SOME j, _, _, _, _)) => 
+			      of (SOME(sepX, _, SOME i, _, _, _, _,_), SOME(termX, _, SOME j, _, _, _, _,_)) => 
 				  if i = j then (PE.error (sepTermEqErrorMsg); []) else []
-			      | (SOME(sepX, _, _, sepTyp, _, _, _), SOME(termX, _, _, termTyp, _, _, _)) => 
+			      | (SOME(sepX, _, _, sepTyp, _, _, _,_), SOME(termX, _, _, termTyp, _, _, _,_)) => 
 				      (case (sepX, termX) of
 				          (PT.String s, PT.String t) => (if String.isPrefix t s 
 									 then (PE.error (sepTermPreErrorMsg)) else (); [])
                                         | (PT.IntConst s, PT.IntConst t) => (if s = t
 									     then (PE.error (sepTermEqErrorMsg)) else ();[])
                                         | (PT.String s, PT.IntConst t) => (if String.isPrefix (intInftoStringRep t) s
-									   then (PE.error (sepTermPreErrorMsg)) else (); 
-									       print ("Terminator: "^(IntInf.toString t));[])
+									   then (PE.error (sepTermPreErrorMsg)) else (); [])
                                         | (PT.IntConst s, PT.String t) => (if (intInftoStringRep s) = t 
 									   then (PE.error (sepTermEqErrorMsg)) else ();[])
 					| _ => (
@@ -3444,15 +3442,18 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  val baseMemChar = lookupMemChar baseTy
 		 val arrayMemChar = TyProps.Dynamic (* at the moment, all arrays are dynamically allocated. *)
                  val baseDiskSize = computeDiskSize(name, paramNames, baseTy, args)
-                 val arrayRep = case sizeSpec 
-		                     of NONE => TyProps.Variable  (* unbounded array *)
+                 val (sizeInfo, arrayRep) = case sizeSpec 
+		                     of NONE => ({min=NONE,max=NONE,minConst=NONE, maxConst=NONE}, TyProps.Variable)  (* unbounded array *)
 				     |  SOME (PX.SizeInfo{min, max, maxTight}) => 
-					  if not maxTight then TyProps.Variable  (* lower and upper bounds differ *)
+					 let val aInfo = {min=min,max=max,minConst=minConstOpt, maxConst=maxConstOpt}
+					 in
+					  if not maxTight then (aInfo,TyProps.Variable)  (* lower and upper bounds differ *)
 					  else (case (maxConstOpt, minConstOpt)
 					        of (SOME (min,_), SOME( max,_)) =>  (* constant size given: maxTight => min = max *)
-						     TyProps.Size(max, IntInf.fromInt 0)
-					        | _ => TyProps.Param(paramNames, NONE, valOf max, P.zero)(* case max *))
-                 fun getSize Xopt = case Xopt of NONE => TyProps.mkSize(0,0) | SOME (e, _, _, typ, _, _, _) => getLitSize(typ, e)
+						     (aInfo, TyProps.Size(max, IntInf.fromInt 0))
+					        | _ => (aInfo, TyProps.Param(paramNames, NONE, valOf max, P.zero))(* case max *))
+					 end
+                 fun getSize Xopt = case Xopt of NONE => TyProps.mkSize(0,0) | SOME (e, _, _, typ, _, _, _,_) => getLitSize(typ, e)
 		 val sepSize  = getSize sepXOpt
 		 val termSize  = getSize termXOpt
 		 val arrayDiskSize = TyProps.add(coreArraySize(baseDiskSize, sepSize, arrayRep), termSize)
@@ -3463,7 +3464,22 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val compoundArrayDiskSize = TyProps.Array {baseTy=baseTyName, args=(paramNames, args),
 							    elem=baseDiskSize, sep = sepSize,
 							    term=termSize, length = arrayRep}
-                 val arrayProps = buildTyProps(name, PTys.Array, arrayDiskSize, compoundArrayDiskSize,
+                 val sepInfo = Option.map (fn t => #8 t) sepXOpt
+                 val termInfo = case termXOpt of NONE => if noSepIsTerm then  SOME TyProps.DNoSep else NONE
+		                | SOME t => (SOME (#8 t))
+		 val predInfo = let val lastX = case lastXOpt of NONE => [] | SOME exp => [PX.Last exp]
+		                    val (endedX,longestX) = case endedXOpt of NONE => ([],[]) 
+  (*				                            | SOME (PL.longestX) => ([],[PX.Longest]) compiled as syntactic sugar *)
+					                    | SOME exp => ([PX.Ended exp], [])
+                                    val skipX = case skipXOpt of NONE => [] | SOME exp => [PX.Skip exp]
+				in
+				    lastX @ endedX @ skipX @ longestX 
+				end
+		 val arrayInfo = TyProps.ArrayInfo {baseTy = {tyCon= baseTyName, args = args},
+						    delims = {sep=sepInfo, term=termInfo, preds=predInfo},
+						    size   = sizeInfo,
+						    post   = postCond}
+                 val arrayProps = buildTyProps(name, PTys.Array, arrayInfo, arrayDiskSize, compoundArrayDiskSize,
 					       arrayMemChar, false, isRecord, contR, lH, isSource, pdTid, numArgs)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
@@ -3661,7 +3677,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       recordArrayErrorS. 
 		  *)
                  fun genSepCheck' useChkPts (NONE, breakSs, esRetX) = []
-                   | genSepCheck' useChkPts (SOME (sepX, scan2SepX, cSepX, typ, matchSep, scan1Sep, writeSep), breakSs, esRetX) = 
+                   | genSepCheck' useChkPts (SOME (sepX, scan2SepX, cSepX, typ, matchSep, scan1Sep, writeSep,kindSep), breakSs, esRetX) = 
 		      case (termXOpt, noSepIsTerm) of 
                         (NONE, true) => 
                         [P.mkCommentS("Checking for separator"),
@@ -3693,7 +3709,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     @(BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, 
 						 "Missing separator", [], true, SOME(esRetX)) ::
 			        breakSs)))])]
-		      | (SOME(termX, scan2TermX, _, _, _, _, _), _) => 
+		      | (SOME(termX, scan2TermX, _, _, _, _, _, _), _) => 
                        [P.mkCommentS("Array not finished; read separator with recovery to terminator"),
                          PT.Compound([
 			 P.varDeclS'(P.int, "f_found"),
@@ -3831,16 +3847,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val recoverSs = 
 			 case (sepXOpt, termXOpt, maxOpt) 
                          of (NONE,                               NONE,  _) => noRecoverySs
-                         |  (SOME (sepX, _, _, _, _, sepScan1, _), NONE, NONE) => 
+                         |  (SOME (sepX, _, _, _, _, sepScan1, _,_), NONE, NONE) => 
 			        scan1ToRecoverSs("separator", sepScan1, sepX, P.trueX)
-                         |  (SOME (sepX, _, _, _, _, sepScan1, _), NONE, SOME _) => 
+                         |  (SOME (sepX, _, _, _, _, sepScan1, _,_), NONE, SOME _) => 
 			       [PT.IfThenElse(PT.Id reachedLimit,
 				 PT.Compound(noRecoverySs), 
 				 PT.Compound(scan1ToRecoverSs ("separator", sepScan1, sepX, P.trueX)))]
-                         |  (NONE, SOME(termX, _, _, _, _, termScan1, _), _ ) => 
+                         |  (NONE, SOME(termX, _, _, _, _, termScan1, _,_), _ ) => 
 				scan1ToRecoverSs ("terminator", termScan1, termX, P.trueX)
 
-                         |  (SOME (_, scan2SepX, _, _, _, _,  _), SOME(_, scan2TermX, _, _, _, _, _), _ ) =>
+                         |  (SOME (_, scan2SepX, _, _, _, _,  _,_), SOME(_, scan2TermX, _, _, _, _, _,_), _ ) =>
  			        scan2ToRecoverSs("separator and/or terminator", scan2SepX, scan2TermX, P.trueX, P.falseX)
 		     in
 			 PT.Compound recoverSs
@@ -3880,7 +3896,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     end
 
                  fun genTermCheck NONE = []
-                   | genTermCheck (SOME (exp, compExp, cExp, typ, readFun, scan1Fun, writeFun)) = 
+                   | genTermCheck (SOME (exp, compExp, cExp, typ, readFun, scan1Fun, writeFun,kindT)) = 
                       [P.mkCommentS("Looking for terminator"), 
 		       readTerm (readFun, exp, NONE)]
 
@@ -3969,7 +3985,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 fun insTermChk bdyS =
 			     case termXOpt of 
 				 NONE => PT.Compound[bdyS]
-		               | SOME (termX, _, _, _, termRead, _, _) => (readTerm (termRead, termX, SOME bdyS))
+		               | SOME (termX, _, _, _, termRead, _, _,_) => (readTerm (termRead, termX, SOME bdyS))
 
 			 val breakSs = [PT.Break]
 
@@ -4008,7 +4024,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     let val esRetX = PL.P_ERROR				      
 		     in case termXOpt of 
 			 NONE => []
-		         | SOME (termX, _, _, _, _, termScan1, _) => 
+		         | SOME (termX, _, _, _, _, termScan1, _,_) => 
 			 [P.mkCommentS("End of loop. Read trailing terminator if there was trailing junk"),
 			  PT.IfThen(P.andX(PL.testNotPanicX(PT.Id pd), P.notX(PT.Id foundTerm)),
 			   PT.Compound[
@@ -4442,9 +4458,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 fun trailingJunkChkSs'(name) = 
 		     case termXOpt of
 			 NONE => []
-		       | SOME (termX, _, _, PChar, _, termScan1, _) => 
+		       | SOME (termX, _, _, PChar, _, termScan1, _,_) => 
 			 [macroTestTrailingJunk(name,termX,termScan1,"C")]
-		       | SOME (termX, _, _, _, _, termScan1, _) => 
+		       | SOME (termX, _, _, _, _, termScan1, _,_) => 
 			 [macroTestTrailingJunk(name,termX,termScan1,"P")]
 
 		 (* Assemble read_one driver function *)
@@ -4498,7 +4514,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 fun genTermChkSs doneS =
 			     case termXOpt of 
 				 NONE => []
-		               | SOME (termX, _, _, _, termRead, _, _) => 
+		               | SOME (termX, _, _, _, termRead, _, _,_) => 
 				 [readTerm' (termRead, termX, doneS)]
 
 			 fun genLengthChkSs doneS = 
@@ -4626,7 +4642,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					PT.Compound bodySs)]
 
 			 fun genSepCheck (NONE) = []
-			   | genSepCheck (SOME (sepX, scan2SepX, cSepX, typ, matchSep, scan1Sep, writeSep)) = 
+			   | genSepCheck (SOME (sepX, scan2SepX, cSepX, typ, matchSep, scan1Sep, writeSep,kindSep)) = 
 			      (case (termXOpt, noSepIsTerm) of 
 				(NONE, true) => 
 				[P.mkCommentS("Checking for separator"),
@@ -4642,7 +4658,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 								  P.trueX, (* eatlit *) P.falseX, (* panic *) 
 								  P.addrX (PT.Id "offset"))),
 					       breakS)])]
-			      | (SOME(termX, scan2TermX, _, _, _, _, _), _) => 
+			      | (SOME(termX, scan2TermX, _, _, _, _, _,_), _) => 
 			       [P.mkCommentS("Array not finished; read separator with recovery to terminator"),
 				PT.Compound([P.varDeclS'(P.int, "f_found"),
 					     P.varDeclS'(PL.sizePCT, "offset")]
@@ -4774,7 +4790,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val writeLastBaseSs =  [PT.IfThen(P.neqX(lengthX, P.zero), PT.Compound(writeBaseSs))]
 		 fun writeLitSs litXOpt = 
 		     case litXOpt of NONE => [] 
-		     | SOME(e, _, _, _, _, _, SOME writeSep) => writeFieldSs(writeSep, [e], true)
+		     | SOME(e, _, _, _, _, _, SOME writeSep,_) => writeFieldSs(writeSep, [e], true)
                      | SOME _ => [P.mkCommentS "Don't currently support writing regular expressions"]
 		 val writeSepSs = writeLitSs sepXOpt
 		 val writeArraySs = [PT.Compound (
@@ -5094,20 +5110,28 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                  fun genReport () = 
 		     let val reportFun = (reportSuf o accSuf) name
 			 val lengthX = P.arrowX(PT.Id acc, PT.Id length)
-			 val doLengthSs = [BU.chkPrint(
-					     callIntPrint((ioSuf o reportSuf) PL.uint32Act, PT.String "Array lengths", 
-						 	 PT.String "array length", P.intX ~1, P.addrX lengthX)) ]
 			 val maxX = P.dotX(lengthX, PT.Id "max")
 			 val limitX = PT.QuestionColon(P.ltX(maxX, P.intX 10), maxX, P.intX 10)
-						 
-                         val doElems = 
-			     case lookupAcc baseTy of NONE => []
+
+			 val doLengthSs = [BU.chkPrint(
+					     PT.Call(PT.Id ((ioSuf o reportSuf) PL.uint32Act), 
+						     [PT.Id pads, PT.Id outstr,
+						      PT.String "Array lengths", 
+						      PT.String "array length", P.intX ~1, P.addrX lengthX])) ]
+			 val doXMLLengthSs = BU.genXMLPrintInt("length", P.addrX lengthX)
+
+                         val (doElems,doElemsXML) = 
+			     case lookupAcc baseTy of NONE => ([],[])
 			   | SOME a => (
 			       let val elemFunName = reportSuf a
-				   fun doOne (descriptor, prefixX, eX, extraArgXs) = 
-					BU.genPrintPiece (ioSuf elemFunName, descriptor, prefixX, eX, extraArgXs)
 				   val fieldX = P.addrX(P.subX(P.arrowX(PT.Id acc, PT.Id arrayDetail), PT.Id "i"))
-				   val doArrayDetailSs = [
+				   val arrayX = P.addrX(P.arrowX(PT.Id acc, PT.Id array))
+
+				   fun doOneText (descriptor, prefixX, eX, extraArgXs) = 
+					BU.genPrintPiece (ioSuf elemFunName, descriptor, prefixX, eX, extraArgXs)
+				   fun doOneXML (descriptor, prefixX, eX, extraArgXs) = 
+					BU.genXMLArrayPiece (ioxmlSuf elemFunName, eX, extraArgXs)
+				   fun genArrayDetails doOne = [
 					PT.Compound
 					 [P.varDeclS'(P.int, "i"),
 					  PT.For(P.assignX(PT.Id "i", P.zero),
@@ -5116,15 +5140,21 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						 PT.Compound (doOne (arrayDetail^"[%d]", PT.String "array element", 
 								     fieldX, [PT.Id "i"]))
 						 )]]
-				   val arrayX = P.addrX(P.arrowX(PT.Id acc, PT.Id array))
-				   val doArraySs = doOne ("allArrayElts", PT.String "all array element", arrayX, [])
+				   val doArraySs = doOneText ("allArrayElts", PT.String "all array element", arrayX, [])
+				   val doArrayDetailSs = genArrayDetails doOneText
+				   val doXMLArraySs = BU.genXMLArrayCompound(ioxmlSuf elemFunName, arrayX)
+				   val doXMLArrayDetailSs = genArrayDetails doOneXML
 			       in
-				   doArraySs @ doArrayDetailSs
+				   (doArraySs @ doArrayDetailSs,
+				    doXMLArraySs @ doXMLArrayDetailSs)
+				    
 			       end(* end SOME acc case *))
 			 val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_ACC_REP_NOVALS", []))]
 			 val theBodySs = checkNoValsSs @ doLengthSs @ doElems 
 			 val baseTyStr = case baseTy of PX.Name n => n
-			 val theFunEDs = BU.genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, accPCT, acc, theBodySs)
+			 val xmlbodySs = doXMLLengthSs @ doElemsXML
+			 val theFunEDs = BU.genReportFuns(reportFun, "array", name, "array "^ name ^" of "^baseTyStr, 
+							  accPCT, acc, theBodySs, xmlbodySs)
 		     in
 			 theFunEDs
 		     end
@@ -5482,7 +5512,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val compoundDiskSize = TyProps.Union ((ListPair.zip(List.rev labels, 
 									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		     val numArgs = List.length params
-		     val unionProps = buildTyProps(name, PTys.Union, diskSize, compoundDiskSize, memChar, 
+		     val unionProps = buildTyProps(name, PTys.Union, TyProps.UnionInfo, diskSize, compoundDiskSize, memChar, 
 						   endian, isRecord, containsRecord, 
 						   largeHeuristic, isSource, pdTid, numArgs)
                      val () = PTys.insert(Atom.atom name, unionProps)
@@ -6246,8 +6276,29 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_REP_NOVALS", []))]
 		      val reportVariants = P.mungeFields genAccReportFull genAccReportBrief 
 			                      (genAccReportMan (reportSuf, ioSuf, "branch")) variants
-                      val reportFunEDs = BU.genReportFuns(reportFun, which ^ " "^name, 
-						       accPCT, acc, checkNoValsSs @ reportTags @ reportVariants)
+
+		      fun genAccXMLReportFull ({pty :PX.Pty, args:pcexp list, name:string, 
+						isVirtual:bool, isEndian: bool, isRecord, containsRecord, largeHeuristic:bool, 
+						pred, comment,...}:BU.pfieldty) = 
+			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
+			  else cnvPtyForXMLReport(reportSuf, ioxmlSuf, pty, name, "branch")
+                      fun genAccXMLReportBrief e = []
+		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_XML_REP_NOVALS", []))]
+                      val reportXMLTags = [PL.indent(PT.Id outstr, PT.Id nst),
+					   PL.sfprintf(PT.Id outstr, PT.String ("<tag>\n"), []),  
+					   P.postIncS (PT.Id nst),
+					   BU.chkXMLPrint(BU.callEnumXMLPrint((ioxmlSuf o reportSuf o mapSuf) PL.intAct, PT.Id nst,
+									      PT.Id((toStringSuf o tgSuf) name), P.getFieldX(acc, tag))),
+					   P.postDecS (PT.Id nst),
+					   PL.indent(PT.Id outstr, PT.Id nst),
+					   PL.sfprintf(PT.Id outstr, PT.String ("</tag>\n"), [])  
+					   ]
+		      val reportXMLVariants = P.mungeFields genAccXMLReportFull genAccXMLReportBrief 
+			                      (genAccXMLReportMan (reportSuf, ioxmlSuf, "branch")) variants
+
+		      val xmlBodySs = checkNoValsSs @ reportXMLTags @ reportXMLVariants
+                      val reportFunEDs = BU.genReportFuns(reportFun, which, name, which ^ " "^name, 
+						       accPCT, acc, checkNoValsSs @ reportTags @ reportVariants, xmlBodySs)
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
 
@@ -6691,7 +6742,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val compoundDiskSize = TyProps.Struct ((ListPair.zip(List.rev labels, 
 									   (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		      val numArgs = List.length params
-		      val structProps = buildTyProps(name, PTys.Struct, diskSize, compoundDiskSize, memChar, endian, 
+		      val structProps = buildTyProps(name, PTys.Struct, TyProps.StructInfo, diskSize, 
+						     compoundDiskSize, memChar, endian, 
                                                      isRecord, containsRecord, largeHeuristic, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, structProps)
 
@@ -7173,8 +7225,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val addBodySs = addDeclSs @ initTpdSs @ addNErrSs @ BU.ifNotPanicSkippedSs(addFieldsSs) @ [addReturnS]
                       val addFunED = BU.genAddFun(addFun, acc, accPCT, pdPCT, canonicalPCT, addBodySs)
 
-					      (* -- generate report function pstruct *)
-					      (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix , ) *)
+		      (* -- generate report function pstruct *)
+		      (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix , ) *)
 		      val reportFun = (reportSuf o accSuf) name
 		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_ACC_REP_NOVALS", []))]
 		      val reportNerrSs = [BU.chkPrint(
@@ -7193,8 +7245,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       fun genAccReportBrief e = []
 		      val reportFields = (P.mungeFields genAccReportFull genAccReportBrief 
 						      (genAccReportMan (reportSuf, ioSuf, "field")) fields)
-                      val reportFunEDs = BU.genReportFuns(reportFun, "struct "^name, accPCT, acc,
-							  checkNoValsSs @ reportNerrSs @ headerSs @ reportFields)
+
+		      fun genAccXMLReportFull ({pty: PX.Pty, args: pcexp list, name: string, 
+						isVirtual: bool, isEndian: bool, 
+						isRecord, containsRecord, largeHeuristic: bool,
+						pred, comment,...}:BU.pfieldty) = 
+			  if not isVirtual then cnvPtyForXMLReport(reportSuf, ioxmlSuf, pty, name, "field")
+			  else []
+		      val xmlFields = (P.mungeFields genAccXMLReportFull (fn _=> [])
+						      (genAccXMLReportMan (reportSuf, ioxmlSuf, "field")) fields)
+                      val reportFunEDs = BU.genReportFuns(reportFun, "struct", name, "struct "^name, accPCT, acc,
+							  checkNoValsSs @ reportNerrSs @ headerSs @ reportFields, xmlFields)
 
 		      val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
@@ -7525,7 +7586,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      end
 			   else TyProps.mkSize (0,0)
 		  val numArgs = List.length params
-                  val enumProps = buildTyProps(name, PTys.Enum, ds, TyProps.Enum ds,
+                  val enumProps = buildTyProps(name, PTys.Enum, TyProps.EnumInfo, ds, TyProps.Enum ds,
 					       TyProps.Static, true, isRecord, containsRecord,
 					       largeHeuristic, isSource, pdTid, numArgs)
 		  val () = PTys.insert(Atom.atom name, enumProps)
@@ -7661,10 +7722,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		   (* -- generate report function enum *)
 		   (*  Perror_t T_acc_report (P_t* , T_acc* , const char* prefix ) *)
 		   val reportFun = (reportSuf o accSuf) name
+		   val whatStr = "enum "^name
 		   val repioCallX = BU.callEnumPrint((ioSuf o reportSuf o mapSuf) PL.intAct,
 						   PT.Id prefix, PT.Id what, PT.Id nst,
 						   PT.Id(toStringSuf name), PT.Id acc)
-		   val reportFunEDs = genTrivReportFuns(reportFun, "enum "^name, NONE, accPCT, repioCallX)
+		   val printSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_ACC_REP2IO", [PT.String whatStr, repioCallX]))]
+		   val printXMLSs = [BU.chkXMLPrint(
+		                       BU.callEnumXMLPrint((ioxmlSuf o reportSuf o mapSuf) PL.intAct,
+							   PT.Id nst, PT.Id(toStringSuf name), PT.Id acc))]
+		   val reportFunEDs = BU.genTrivReportFuns(reportFun, "enum", name, whatStr, accPCT, acc, printSs,printXMLSs) 
 		   val accumEDs = accED :: initFunED :: resetFunED :: cleanupFunED :: addFunED :: reportFunEDs
 
                    (* -- generate histogram functions *)

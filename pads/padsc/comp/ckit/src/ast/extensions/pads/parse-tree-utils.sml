@@ -305,51 +305,88 @@ struct
         |  PT.Cast(ct,e) => PT.Cast(ct, stripExp e)
         |  PT.InitList es => PT.InitList (List.map stripExp es)
         |  p => p
-
-    fun expToString p =
+    fun ppPL nested = if nested then "(" else ""
+    fun ppPR nested = if nested then ")" else ""
+    fun expToString {nested} p =
         case p
         of PT.EmptyExpr => ""
         |  PT.IntConst i => IntInf.toString i
         |  PT.RealConst r => Real.toString r
         |  PT.String s => "\"" ^ s ^ "\""
         |  PT.Id s => s
-        |  PT.Unop uexp => printUnopExp uexp
-        |  PT.Binop binexp => printBinopExp binexp
-        |  PT.QuestionColon (e1,e2,e3) => (expToString e1)^ " ? " ^
-                                          (expToString e2)^ " : " ^
-                                          (expToString e3)
-        |  PT.Call (e,es) => (expToString e)^"("^(printExpList "," es) ^")"
-        |  PT.MARKexpression (loc,e) => expToString e
+        |  PT.Unop uexp => printUnopExp {nested=nested} uexp
+        |  PT.Binop binexp => printBinopExp {nested=nested} binexp
+        |  PT.QuestionColon (e1,e2,e3) => (ppPL nested)^
+	                                  (expToString {nested = true} e1)^ " ? " ^
+                                          (expToString {nested = false} e2)^ " : " ^
+                                          (expToString {nested = false} e3)^
+					  (ppPR nested)
+        |  PT.Call (e,es) => (expToString {nested=true} e)^"("^(printExpList "," es) ^")"
+        |  PT.Cast (ct, e) => (ppPL nested)^"(ctype)"^(expToString {nested=true}e)^(ppPR nested)
+        |  PT.MARKexpression (loc,e) => expToString {nested=nested}e
         |  _ => ""
 
-    and printUnopExp (rator, exp) =
+    and printUnopExp {nested} (rator, exp) =
 	case rator
-        of PT.Uplus => "+ "^(expToString exp)
-        | PT.Not => "! "^(expToString exp)
-        | PT.BitNot => "~ "^(expToString exp)
-        |  _ => "unop(" ^ (expToString exp) ^")"
+        of PT.Star =>   (ppPL nested)^"*"^(expToString {nested=true} exp)^(ppPR nested)
+        |  PT.AddrOf => (ppPL nested)^"&"^(expToString {nested=true} exp)^(ppPR nested)
+        |  PT.Sizeof => (ppPL nested)^"sizeof("^(expToString {nested=false}exp)^")"^(ppPR nested)
+        |  PT.PreInc => (ppPL nested)^"++"^(expToString {nested=true} exp)^(ppPR nested)
+        |  PT.PostInc =>(ppPL nested)^ (expToString {nested=true} exp)^"++"^(ppPR nested)
+        |  PT.PreDec => (ppPL nested)^ "--"^(expToString {nested=true} exp)^(ppPR nested)
+        |  PT.PostDec =>(ppPL nested)^ (expToString {nested=true} exp)^"--"^(ppPR nested)
+        |  PT.Not =>    (ppPL nested)^"!"^(expToString {nested=true} exp)^(ppPR nested)
+        |  PT.Negate => (ppPL nested)^"-"^(expToString {nested=true} exp)^(ppPR nested)
+        |  PT.BitNot => (ppPL nested)^"~ "^(expToString {nested=true} exp)^(ppPR nested)
+        |  PT.Uplus =>  (ppPL nested)^"+ "^(expToString {nested=true} exp)^(ppPR nested)
+        |  (PT.SizeofType ct) => "sizeof(" ^ "ctype" ^")"
+        |  _ => "unop(" ^ (expToString {nested = false}exp) ^")"
 
-    and printBinopExp (rator, exp1, exp2) =
+    and printBinopExp {nested} (rator, exp1, exp2) =
+        let fun ppB mid = (ppPL nested)^(expToString {nested=true} exp1)^ mid ^(expToString {nested=false} exp2)^(ppPR nested)
+	in
 	case rator
-        of PT.Plus => (expToString exp1)^ " + " ^(expToString exp2)
-        |  PT.Minus => (expToString exp1)^ " - " ^(expToString exp2)
-        |  PT.Times => (expToString exp1)^ " * " ^(expToString exp2)
-        |  PT.Divide => (expToString exp1)^ " / " ^(expToString exp2)
-        |  PT.Mod => (expToString exp1)^ " % " ^(expToString exp2)
-        |  PT.BitAnd => (expToString exp1)^ " & " ^(expToString exp2)
-        |  PT.BitOr => (expToString exp1)^ " | " ^(expToString exp2)
-        |  PT.Gt => (expToString exp1)^ " > " ^(expToString exp2)
-        |  PT.Lt => (expToString exp1)^ " < " ^(expToString exp2)
-        |  PT.Gte => (expToString exp1)^ " >= " ^(expToString exp2)
-        |  PT.Lte => (expToString exp1)^ " <= " ^(expToString exp2)
-        |  PT.Eq => (expToString exp1)^ " == " ^(expToString exp2)
-        |  PT.Dot => (expToString exp1)^ "." ^(expToString exp2)
-        |  PT.Sub => (expToString exp1)^ "[" ^(expToString exp2)^ "]" 
-        |  _ => (expToString exp1) ^ "binop"  ^ (expToString exp2)
+        of PT.Plus =>   ppB " + "
+        |  PT.Minus =>  ppB " - " 
+        |  PT.Times =>  ppB " * " 
+        |  PT.Divide => ppB " / "
+        |  PT.Mod =>    ppB " % "
+        |  PT.Gt =>     ppB " > " 
+        |  PT.Lt =>     ppB " < " 
+        |  PT.Gte =>    ppB " >= " 
+        |  PT.Lte => ppB " <= " 
+        |  PT.Eq => ppB " == " 
+        |  PT.Neq => ppB " != " 
+        |  PT.And => ppB " && " 
+        |  PT.Or => ppB " || " 
+        |  PT.BitOr => ppB " | "
+        |  PT.BitAnd => ppB " & "
+        |  PT.BitXor => ppB " ^ "
+        |  PT.Lshift => ppB " << "
+        |  PT.Rshift => ppB " >> "
+        |  PT.Dot =>    ppB "."
+        |  PT.Arrow =>  ppB "->"
+        |  PT.Sub =>    (expToString {nested=true} exp1)^ "[" ^(expToString {nested=false} exp2)^ "]" 
+        |  PT.Comma => "("^(expToString {nested=false} exp1)^ ", " ^(expToString {nested=false} exp2)^ ")" 
+        |  PT.Assign => ppB " = "
+        |  PT.PlusAssign => ppB " += "
+        |  PT.MinusAssign => ppB " -= "
+        |  PT.TimesAssign => ppB " *= "
+        |  PT.DivAssign => ppB " /= " 
+        |  PT.ModAssign => ppB " %= " 
+        |  PT.XorAssign => ppB " ^= " 
+        |  PT.OrAssign => ppB " |= " 
+        |  PT.AndAssign => ppB " &= " 
+        |  PT.LshiftAssign => ppB " <<= " 
+        |  PT.RshiftAssign => ppB " >>= " 
+        |  _ => ppB "binop" 
+	end
 
     and printExpList s [] = ""
-      | printExpList s [e] = expToString e
-      | printExpList s (e::es) = ((expToString e) ^ s ^ " " ^ (printExpList s es))
+      | printExpList s [e] = expToString {nested=false} e
+      | printExpList s (e::es) = ((expToString {nested=false} e) ^ s ^ " " ^ (printExpList s es))
+
+    val expToString = expToString {nested = false}
 
     fun substPostCond subs [] = []
       | substPostCond subs (x::xs) = 

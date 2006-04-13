@@ -147,12 +147,15 @@ structure BuildUtils = struct
 	  @ printSs
       end
 
+  fun endSpecArray pads ret = PT.IfThen(PL.getSpecLevelX(PT.Id pads), 
+				   PT.Compound([PL.macroUnsetPartial,PT.Return ret]))
+
   fun recordArrayErrorS (getLocSs, locX, errCodeC, shouldPrint, whatFun, msg, args, setPanic, endSpec) = 
       PT.Compound([PT.IfThenElse(P.notX(P.fieldX(pd, nerr)),
 				 PT.Compound (reportErrorSs(getLocSs, locX, true, errCodeC,
 							    shouldPrint, whatFun, msg, args)),
 				 incPDNerrCompS)]
-		  @ (case endSpec of SOME(esRetX) => [PL.endSpec pads esRetX] | _ => [])
+		  @ (case endSpec of SOME(esRetX) => [endSpecArray pads esRetX] | _ => [])
 		  @ (if setPanic then [PL.setPanicS(PT.Id pd)] else []))
 
   fun genReturnChk e =  P.returnS (P.condX(P.eqX(e, P.zero), PL.P_OK, PL.P_ERROR))
@@ -197,6 +200,12 @@ structure BuildUtils = struct
 		 PT.Cast(PL.intCvtPCT, mapFnX),
 		 fieldX])
 
+    fun callEnumXMLPrint (reportName, nstX, mapFnX, fieldX) = 
+	PT.Call(PT.Id reportName, 
+		[PT.Id pads, PT.Id outstr, nstX,
+		 PT.Cast(PL.intCvtPCT, mapFnX),
+		 fieldX])
+
     fun genPrintPiece(reportName, fieldDescriptor, whatX, fieldX, extraArgsXs) = 
 	let val bodyX = PT.Call(PT.Id reportName, 
 				[PT.Id pads, PT.Id outstr, PL.sfstruse (PT.Id tmpstr), whatX, PT.Id nst, 
@@ -205,6 +214,78 @@ structure BuildUtils = struct
 	    [PL.sfprintf(PT.Id tmpstr, PT.String ("%s."^fieldDescriptor), [PT.Id prefix] @ extraArgsXs),  chkPrint bodyX]
 	end
 
+    fun chkXMLPrint (bodyX) = 		   
+	PT.IfThen(
+		P.eqX(PL.P_ERROR, bodyX), 
+		PT.Compound[PT.Return PL.P_ERROR])
+
+    fun genXMLPrintInt(tag, intX) = 
+	let val bodyX = PT.Call(PT.Id ((ioxmlSuf o reportSuf) PL.uint32Act), 
+				   [PT.Id pads, PT.Id outstr, PT.Id nst, intX])
+	in
+	    [PL.indent(PT.Id outstr, PT.Id nst),
+	     PL.sfprintf(PT.Id outstr, PT.String ("<"^tag^">\n"), []),  
+             P.postIncS (PT.Id nst),
+             chkXMLPrint bodyX,
+             P.postDecS (PT.Id nst),
+             PL.indent(PT.Id outstr, PT.Id nst),
+	     PL.sfprintf(PT.Id outstr, PT.String ("</"^tag^">\n"), [])]
+	end
+
+    fun genXMLPrintPiece(reportName, fieldDescriptor, whatX, fieldX, extraArgsXs) = 
+	let val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, fieldX])
+	in
+	    [PL.indent(PT.Id outstr, PT.Id nst),
+	     PL.sfprintf(PT.Id outstr, PT.String ("<field>\n"), []),  
+             P.postIncS (PT.Id nst),
+             PL.indent(PT.Id outstr, PT.Id nst),
+	     PL.sfprintf(PT.Id outstr, PT.String ("<name>"^fieldDescriptor^"</name>\n"), []),  
+	     PL.indent(PT.Id outstr, PT.Id nst),
+	     PL.sfprintf(PT.Id outstr, PT.String ("<type_acc>\n"), []),  
+             P.postIncS (PT.Id nst),
+             chkXMLPrint bodyX,
+             P.postDecS (PT.Id nst),
+	     PL.indent(PT.Id outstr, PT.Id nst),
+	     PL.sfprintf(PT.Id outstr, PT.String ("</type_acc>\n"), []),  
+             P.postDecS (PT.Id nst),
+             PL.indent(PT.Id outstr, PT.Id nst),
+	     PL.sfprintf(PT.Id outstr, PT.String ("</field>\n"), [])]
+	end
+    fun sfindent (s,args) = 
+	[PL.indent(PT.Id outstr, PT.Id nst),
+	 PL.sfprintf(PT.Id outstr, PT.String s, args)]
+
+    fun genXMLtag(tag, bodySs) = 
+	      sfindent("<"^tag^">\n", [])
+	    @ [P.postIncS (PT.Id nst)]
+	    @ bodySs 
+            @ [P.postDecS (PT.Id nst)]
+	    @ (sfindent("</"^tag^">\n", []))
+
+    fun genXMLtagInline(tag, bodySs,newline)= 
+	let val endTag = "</"^tag^">"
+	    val endTag = if newline then endTag^"\n" else endTag
+	in
+	       sfindent("<"^tag^">", [])
+             @ bodySs
+             @ [PL.sfprintf(PT.Id outstr, PT.String endTag, [])]
+	end
+             
+
+    fun genXMLArrayPiece(reportName,expX,indexX) =
+	let val indexXMLSs = genXMLtagInline("index", [PL.sfprintf(PT.Id outstr, PT.String "%d", indexX)], true)
+	    val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, expX])
+	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX])
+	in
+	   genXMLtag("arrayDetail", indexXMLSs @ accumXMLSs)
+	end
+
+    fun genXMLArrayCompound(reportName,expX) =
+	let val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, expX])
+	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX])
+	in
+	   genXMLtag("compoundLevel", accumXMLSs)
+	end
 
     (* Perror_t foostruct_report(P_t* pads, const char * prefix,
      const char* what, int nst, foostruct_acc* acc) *)
@@ -237,7 +318,33 @@ structure BuildUtils = struct
 
   (* Perror_t foo_report(P_t* pads, [sfio_t *str], const char * prefix,
                          const char* what, int nst, foostruct_acc* acc) *)
-  fun genReportFuns (reportName, whatStr, whichPCT, var, intlBodySs) = 
+
+  fun genXMLReportFuns(reportName, kind, name, whichPCT, var, xmlBodySs) = 
+      let fun genParamTys extraPCTs =
+	      [P.ptrPCT PL.toolStatePCT] 
+	    @ extraPCTs
+	    @ [P.int,P.ptrPCT whichPCT]
+	  fun genParamNames extraNames = [pads] @ extraNames @ [nst, var]
+	  val intlParamNames = genParamNames [outstr]
+	  val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
+	  val intlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
+	  val closeSs = [PT.Return PL.P_OK]
+          val bodyS = PT.Compound([PL.indent(PT.Id outstr, PT.Id nst),
+				   PL.sfprintf(PT.Id outstr, PT.String ("<"^kind^">\n"), []),  
+				   P.postIncS (PT.Id nst),
+				   PL.indent(PT.Id outstr, PT.Id nst),
+				   PL.sfprintf(PT.Id outstr, PT.String ("<name>"^name^"</name>\n"), [])] 
+				  @ xmlBodySs 
+				  @ [P.postDecS (PT.Id nst),
+				     PL.indent(PT.Id outstr, PT.Id nst),
+				     PL.sfprintf(PT.Id outstr, PT.String ("<"^kind^">\n"), []),  
+				     PT.Return PL.P_OK])
+	  val returnTy = PL.toolErrPCT
+      in
+	  [P.mkFunctionEDecl(ioxmlSuf reportName, intlFormalParams, bodyS, returnTy)]
+      end
+
+  fun genAccumReportFunShell (reportName, kind, name, whatStr, whichPCT, var, bodySs, xmlBodySs) = 
       let fun genParamTys extraPCTs =
 	    [P.ptrPCT PL.toolStatePCT] 
 	  @ extraPCTs
@@ -249,24 +356,34 @@ structure BuildUtils = struct
 	  val intlParamNames = genParamNames [outstr]
 	  val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
 	  val intlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
-	  val initTmpStrSs = genInitTmpStrSs tmpstr
+	  val returnTy = PL.toolErrPCT
+	  val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, PT.Compound bodySs, returnTy)
+	  val externalReportFunED = genExternalReportFun(reportName, intlParamNames, extlFormalParams, var)
+	  val toxmlioReportFunEDs = genXMLReportFuns(reportName, kind, name, whichPCT, var, xmlBodySs)
+
+      in
+	  [toioReportFunED, externalReportFunED] @ toxmlioReportFunEDs
+      end
+
+
+  fun genReportFuns (reportName, kind, name, whatStr, whichPCT, var, intlBodySs, xmlBodySs) = 
+      let val initTmpStrSs = genInitTmpStrSs tmpstr
 	  val setPrefixS = PT.IfThen(P.orX(P.notX(PT.Id prefix), P.eqX(P.zero, P.starX(PT.Id prefix))),
 				     PT.Compound[P.assignS(PT.Id prefix, PT.String "<top>")])
 	  val setWhatS = PT.IfThen(P.notX(PT.Id what),
 				   PT.Compound[P.assignS(PT.Id what, PT.String whatStr)])
 	  val printNstS = PL.nstPrefixWhat(PT.Id outstr, P.addrX(PT.Id nst), PT.Id prefix, PT.Id what)
 	  val closeSs = [PL.sfstrclose(PT.Id tmpstr), PT.Return PL.P_OK]
-	  val bodySs =   initTmpStrSs
+	  val bodySs = ( initTmpStrSs
 	               @ [setPrefixS, setWhatS, printNstS]
 	               @ intlBodySs
 	               @ closeSs
-	  val bodyS = PT.Compound bodySs
-	  val returnTy = PL.toolErrPCT
-	  val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, bodyS, returnTy)
-	  val externalReportFunED = genExternalReportFun(reportName, intlParamNames, extlFormalParams, var)
+			)
+          val origAccumReportFunEDs = genAccumReportFunShell(reportName, kind, name, whatStr, whichPCT, var, bodySs, xmlBodySs)
       in
-	  [toioReportFunED, externalReportFunED]
+	  origAccumReportFunEDs
       end
 
+  val genTrivReportFuns = genAccumReportFunShell
 
 end

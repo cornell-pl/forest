@@ -137,4 +137,8 @@ is
 	pp/extensions/pads/pp-ast-xschema-fn.sml       
 	pp/extensions/pads/pp-ast-xschema.sml       
 
+	pp/extensions/pads/pp-ast-desc-xschema-sig.sml       
+	pp/extensions/pads/pp-ast-desc-xschema-fn.sml       
+	pp/extensions/pads/pp-ast-desc-xschema.sml       
+
         extensions/pads/transform/transform.sml

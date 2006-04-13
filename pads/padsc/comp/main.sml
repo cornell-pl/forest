@@ -321,6 +321,17 @@ structure Main : sig
 	    end
 	else ()
 
+    fun generateDescXschema(padsDir, fileName, ast, tidtab,paidtab) =
+	if ((!xmlFlag) orelse not (!writeNoneFlag)) andalso not (!xschemaNoneFlag) then  
+	    let val (xoutname, xoutstream) = getOutStream(fileName, "p", "pxml")
+		val srcPath = OS.FileSys.fullPath(fileName)
+	    in
+		PPLib.ppToStrm((PPDescXSchemaAst.ppAst padsDir (SOME srcPath) paidtab) () tidtab) xoutstream ast;
+		TextIO.flushOut xoutstream;
+		TextIO.closeOut xoutstream			
+	    end
+	else ()
+
     fun generateCoreLibrary(padsDir, ast, tidtab, fileName) = 
 	let val srcFile = OS.Path.file fileName
 	    val (houtname, houtstream) = 
@@ -365,6 +376,7 @@ structure Main : sig
 	  generateSelect(fileName);
 	  generateAccum(padsDir, fileName, houtname, coutname);
 	  generateXschema(padsDir, fileName, ast,tidtab, paidtab);
+	  generateDescXschema(padsDir, fileName, ast,tidtab, paidtab);
           generateTransforms(ast,tidtab,paidtab)
       end
 	    

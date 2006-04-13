@@ -172,6 +172,7 @@ void PCGEN_FIND_EOR(const char *fn_nm);
 
 void PCGEN_STRUCT_ACC_REP_NOVALS();
 void PCGEN_UNION_ACC_REP_NOVALS();
+void PCGEN_UNION_ACC_XML_REP_NOVALS();
 void PCGEN_ARRAY_ACC_REP_NOVALS();
 Perror_t PCGEN_ENUM_ACC_REP2IO(const char *default_what, Perror_t int_acc_call);
 Perror_t PCGEN_TYPEDEF_ACC_REP2IO(const char *default_what, const char *basety_nm, Perror_t base_acc_call);
@@ -1920,6 +1921,14 @@ do {
 } while (0)
 /* END_MACRO */
 
+#define PCGEN_UNION_ACC_XML_REP_NOVALS()
+do {
+  if (dtsize(acc->tag.dict) == 0) {
+    return P_OK;
+  }
+} while (0)
+/* END_MACRO */
+
 #define PCGEN_ARRAY_ACC_REP_NOVALS()
 do {
   int dtsz_PCGEN_ = dtsize(acc->length.dict);
@@ -2525,6 +2534,19 @@ do{
 }while(0)
 /* END_MACRO */
 
+#define PCGEN_ARRAY_SET_PARTIAL()
+do{
+  P_PS_setPartial(pd);  
+}while(0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_UNSET_PARTIAL()
+do{
+  P_PS_unsetPartial(pd);  
+}while(0)
+/* END_MACRO */
+
+
 #define PCGEN_ARRAY_TEST_READ_ERR(addTest1IN, addTest2IN)
 do{
   if (result==P_ERR && (addTest1IN) && (addTest2IN)) 
@@ -2541,8 +2563,10 @@ do{
 	      /*  Index of first element with an error */
 	      pd->firstError = ((rep->length)-1);
 	    }
-	  if (P_spec_level (pads)) 
+	  if (P_spec_level (pads)) {
+	    PCGEN_ARRAY_UNSET_PARTIAL ();
 	    return P_READ_ERR;
+	  }
 	}
     }
   
@@ -2890,17 +2914,6 @@ do{
 ((keepEltIN) ? P_READ_OK_DATA : P_READ_OK_NO_DATA)
 /* END_MACRO */
 
-#define PCGEN_ARRAY_SET_PARTIAL()
-do{
-  P_PS_setPartial(pd);  
-}while(0)
-/* END_MACRO */
-
-#define PCGEN_ARRAY_UNSET_PARTIAL()
-do{
-  P_PS_unsetPartial(pd);  
-}while(0)
-/* END_MACRO */
 
 
 #define PCGEN_ARRAY_READ_ALL(allocCallIN,readCallIN,incIN,WHATFN)

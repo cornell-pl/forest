@@ -308,6 +308,9 @@ struct
   fun fmtStr s =
    PT.Call(PT.Id "P_fmt_cstr_n", [PT.String s, P.intX (String.size s)] )
 
+  fun indent (ioX, nX) = 
+   PT.Expr(PT.Call(PT.Id "PDCI_indent", [ioX, nX]))
+
 (* error functions *)
   val errorFX =  P.arrowX(P.arrowX(PT.Id pads, PT.Id disc), PT.Id errorf)
   val discX = P.arrowX(PT.Id pads, PT.Id disc)
@@ -640,7 +643,10 @@ struct
   fun getSpecLevelX(pads:PT.expression) =
      PT.Call(PT.Id "P_spec_level", [pads])
 
-  fun endSpec pads ret = PT.IfThen(getSpecLevelX(PT.Id pads), PT.Return ret)
+  val macroUnsetPartial = PT.Expr (PT.Call(PT.Id "PCGEN_ARRAY_UNSET_PARTIAL",[]))
+
+  fun endSpec pads ret = PT.IfThen(getSpecLevelX(PT.Id pads), 
+				   PT.Compound[PT.Return ret])
 
 
   fun commitS(pads:PT.expression, whatFun) =

@@ -31,6 +31,7 @@ Library
   structure PTys
   structure PPLib
   structure PPXSchemaAst
+  structure PPDescXSchemaAst
   structure BuildAst
   structure PadsState
   structure PInput

@@ -2575,6 +2575,79 @@ int_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const 
 }
 
 Perror_t
+int_type ## _acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, int_type ## _acc *a)
+{
+  int                    i, sz, rp;
+  Pfloat64               track_pcnt;
+  Void_t                *velt;
+  int_type ## _dt_elt_t *elt;
+
+  P_TRACE(pads->disc, PDCI_MacroArg2String(int_type) "_acc_report2xml_io called" );
+  int_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<%s></%s>\n", PDCI_MacroArg2String(int_type), PDCI_MacroArg2String(int_type));
+    return P_OK;
+  }
+  PDCI_indent(outstr, nst++);
+  sfprintf(outstr, "<%s>\n", PDCI_MacroArg2String(int_type));
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%" mfmt, a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%" mfmt, a->bad);
+  sfprintf(outstr, "</bad>\n");
+
+  dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<avg>%.3I8f</avg>\n", a->avg);
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<min>%" mfmt, a->min);
+  sfprintf(outstr, "</min>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<max>%" mfmt, a->max);
+  sfprintf(outstr, "</max>\n");
+  if (sz!=0){
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+     if (sz == a->max2track && a->good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     };
+  
+     for (i = 0, velt = dtfirst(a->dict);
+          velt && i < a->max2rep;
+          velt = dtnext(a->dict, velt), i++) {
+            elt = (int_type ## _dt_elt_t*)velt;
+            PDCI_indent(outstr, nst);
+            sfprintf(outstr, "<item>");
+            sfprintf(outstr, "<val>%" fmt, elt->key.val);
+            sfprintf(outstr, "</val>");
+            sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+            sfprintf(outstr, "</item>\n");
+     }
+     PDCI_indent(outstr, --nst);
+     sfprintf(outstr, "</distribution>\n");
+  }
+  PDCI_indent(outstr, --nst);
+  sfprintf(outstr, "</%s>\n", PDCI_MacroArg2String(int_type));
+
+  dtnext(a->dict, 0); /* discard any iterator state */
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &int_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+
+Perror_t
 int_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int nst,
 			int_type ## _acc *a)
 {
@@ -2730,6 +2803,87 @@ int_type ## _acc_map_report(P_t *pads, const char *prefix, const char *what, int
   sfstrclose (tmpstr);
   return res;
 }
+
+Perror_t
+int_type ## _acc_map_report2xml_io(P_t *pads, Sfio_t *outstr, int nst,
+			           int_type ## _map_fn fn, int_type ## _acc *a)
+{
+  const char            *mapped_min;
+  const char            *mapped_max;
+  const char            *mapped_val;
+  int                    i, sz, rp, tmp;
+  Pfloat64               track_pcnt;
+  Void_t                *velt;
+  int_type ## _dt_elt_t *elt;
+
+  P_TRACE(pads->disc, PDCI_MacroArg2String(int_type) "_acc_map_report2xml_io called" );
+  int_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    return P_OK;
+  }
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%" mfmt, a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%" mfmt, a->bad);
+  sfprintf(outstr, "</bad>\n");
+
+  dtdisc(a->dict,   &int_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+
+  mapped_min = fn(a->min);
+  mapped_max = fn(a->max);
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<min>%s</min>\n", mapped_min);
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<max>%s</max>\n", mapped_max);
+
+  if (sz != 0) {
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+     if (sz == a->max2track && a->good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     }
+     sz = tmp = 0;
+     for (i = 0, velt = dtfirst(a->dict); velt && i < a->max2rep; velt = dtnext(a->dict, velt), i++) {
+       elt = (int_type ## _dt_elt_t*)velt;
+       sz = strlen(fn(elt->key.val));
+       if (sz > tmp) {
+	 tmp = sz; 
+       }
+     }
+     dtnext(a->dict, 0); /* discard any iterator state */
+    for (i = 0, velt = dtfirst(a->dict);
+	 velt && i < a->max2rep;
+	 velt = dtnext(a->dict, velt), i++) {
+      dtnext(a->dict, 0); /* discard any iterator state */
+      elt = (int_type ## _dt_elt_t*)velt;
+      mapped_val = fn(elt->key.val);
+      PDCI_indent(outstr, nst);
+      sfprintf(outstr, "<item>");
+      sfprintf(outstr, "<val>%s</val>", mapped_val);
+      sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+      sfprintf(outstr, "</item>\n");
+    }
+    nst--;
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "</distribution>\n");
+  }
+
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &int_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
 /* END_MACRO */
 
 #define PDCI_FPOINT_ACCUM_GEN(fpoint_type, fpoint_descr)
@@ -3019,6 +3173,81 @@ fpoint_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, con
   dtdisc(a->dict,   &fpoint_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
   return P_OK;
 }
+
+Perror_t
+fpoint_type ## _acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst,fpoint_type ## _acc *a)
+{
+  int                       i, sz, rp;
+  Pfloat64                  track_pcnt;
+  Void_t                   *velt;
+  fpoint_type ## _dt_elt_t *elt;
+
+  P_TRACE(pads->disc, PDCI_MacroArg2String(fpoint_type) "_acc_report2xml_io called" );
+  fpoint_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<%s></%s>\n", PDCI_MacroArg2String(fpoint_type), PDCI_MacroArg2String(fpoint_type));
+    return P_OK;
+  }
+  PDCI_indent(outstr, nst++);
+  sfprintf(outstr, "<%s>\n", PDCI_MacroArg2String(fpoint_type));
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%llu", a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%llu", a->bad);
+  sfprintf(outstr, "</bad>\n");
+
+  dtdisc(a->dict,   &fpoint_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<avg>%.3I8f</avg>\n", a->avg);
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<min>%.5I8f", a->min);
+  sfprintf(outstr, "</min>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<max>%.5I8f", a->max);
+  sfprintf(outstr, "</max>\n");
+
+  if (sz!=0){
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+     if (sz == a->max2track && a->good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     };
+
+     for (i = 0, velt = dtfirst(a->dict);
+	  velt && i < a->max2rep;
+	  velt = dtnext(a->dict, velt), i++) {
+            elt = (fpoint_type ## _dt_elt_t*)velt;
+            PDCI_indent(outstr, nst);
+            sfprintf(outstr, "<item>");
+            sfprintf(outstr, "<val>%.5I8f", elt->key.val);
+            sfprintf(outstr, "</val>");
+            sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+            sfprintf(outstr, "</item>\n");
+     }
+     PDCI_indent(outstr, --nst);
+     sfprintf(outstr, "</distribution>\n");
+  }
+  PDCI_indent(outstr, --nst);
+  sfprintf(outstr, "</%s>\n", PDCI_MacroArg2String(fpoint_type));
+
+  dtnext(a->dict, 0); /* discard any iterator state */
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &fpoint_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
 
 Perror_t
 fpoint_type ## _acc_report(P_t *pads, const char *prefix, const char *what, int nst,
@@ -3324,6 +3553,83 @@ float_type ## _acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, cons
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %I88.3f\n",
 	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &float_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+
+Perror_t
+float_type ## _acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, float_type ## _acc *a)
+{
+  int                      i, sz, rp;
+  Pfloat64                 track_pcnt;
+  Void_t                  *velt;
+  float_type ## _dt_elt_t *elt;
+
+  P_TRACE(pads->disc, PDCI_MacroArg2String(float_type) "_acc_report2xml_io called" );
+  float_type ## _acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<%s></%s>\n", PDCI_MacroArg2String(float_type), PDCI_MacroArg2String(float_type));
+    return P_OK;
+  }
+
+  PDCI_indent(outstr, nst++);
+  sfprintf(outstr, "<%s>\n", PDCI_MacroArg2String(float_type));
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%llu", a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%llu", a->bad);
+  sfprintf(outstr, "</bad>\n");
+
+  dtdisc(a->dict,   &float_type ## _acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<avg>%.3I8f</avg>\n", a->avg);
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<min>%.5I8f", a->min);
+  sfprintf(outstr, "</min>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<max>%.5I8f", a->max);
+  sfprintf(outstr, "</max>\n");
+
+  if (sz!=0){
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+
+     if (sz == a->max2track && a->good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     };
+
+     for (i = 0, velt = dtfirst(a->dict);
+          velt && i < a->max2rep;
+          velt = dtnext(a->dict, velt), i++) {
+       elt = (float_type ## _dt_elt_t*)velt;
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<item>");
+       sfprintf(outstr, "<val>%I810.5f", elt->key.val);
+       sfprintf(outstr, "</val>");
+       sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+       sfprintf(outstr, "</item>\n");
+     }
+     PDCI_indent(outstr, --nst);
+     sfprintf(outstr, "</distribution>\n");
+  }
+  PDCI_indent(outstr, --nst);
+  sfprintf(outstr, "</%s>\n", PDCI_MacroArg2String(int_type));
+
+  dtnext(a->dict, 0); /* discard any iterator state */
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
   dtdisc(a->dict,   &float_type ## _acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
@@ -6372,6 +6678,81 @@ Pstring_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char 
 }
 
 Perror_t
+Pstring_acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, Pstring_acc *a)
+{
+  int                    i, sz, len_sz, rp;
+  Pfloat64               track_pcnt;
+  Void_t                 *velt;
+  PDCI_string_dt_elt_t   *elt;
+
+  P_TRACE(pads->disc, "Pstring_acc_report2xml_io called");
+  sz = dtsize(a->dict);
+  len_sz = dtsize(a->len_accum.dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (len_sz == 0) { /* no values accumulated */
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<Pstring></Pstring>\n");
+    return P_OK;
+  }
+  PDCI_indent(outstr, nst++);
+  sfprintf(outstr, "<Pstring>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<length>\n");
+  if (P_ERR == Puint32_acc_report2xml_io(pads, outstr, nst+1, &(a->len_accum))) {
+    return P_ERR;
+  }
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "</length>\n");
+
+  /* Apparently, string accumulators don't have good and bad fields; all are good? 
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%llu", a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%llu", a->bad);
+  sfprintf(outstr, "</bad>\n"); */
+
+  /* rehash tree to get keys ordered by count */
+  dtdisc(a->dict, &PDCI_string_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+
+  if (sz!=0){
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+
+     if (sz == a->max2track && a->len_accum.good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->len_accum.good);
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     }
+     for (i = 0, velt = dtfirst(a->dict);
+          velt && i < a->max2rep;
+          velt = dtnext(a->dict, velt), i++) {
+            elt = (PDCI_string_dt_elt_t*)velt;
+
+            PDCI_indent(outstr, nst);
+            sfprintf(outstr, "<item>");
+            sfprintf(outstr, "<val>%s", P_qfmt_cstr_n(elt->key.str, elt->key.len));
+            sfprintf(outstr, "</val>");
+            sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+            sfprintf(outstr, "</item>\n");
+     }
+     PDCI_indent(outstr, --nst);
+     sfprintf(outstr, "</distribution>\n");
+  }
+  PDCI_indent(outstr, --nst);
+  sfprintf(outstr, "</Pstring>\n");
+
+  dtnext(a->dict, 0); /* discard any iterator state */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict, &PDCI_string_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+Perror_t
 Pstring_acc_report(P_t *pads, const char *prefix, const char *what, int nst, Pstring_acc *a)
 {
   Sfio_t *tmpstr;
@@ -6482,6 +6863,80 @@ Perror_t Pip_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix,
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3I8f\n",
 	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &Puint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+
+Perror_t Pip_acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, Puint32_acc *a)
+{
+  int                i, sz, rp;
+  Pfloat64           track_pcnt;
+  Void_t            *velt;
+  Puint32_dt_elt_t  *elt;
+
+  P_TRACE(pads->disc, "Pip_acc_report2xml_io called");
+  Puint32_acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<Pip></Pip>\n");
+    return P_OK;
+  }
+
+  PDCI_indent(outstr, nst++);
+  sfprintf(outstr, "<Pip>\n");
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%llu", a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%llu", a->bad);
+  sfprintf(outstr, "</bad>\n");
+
+  dtdisc(a->dict,   &Puint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<min>%s", fmtip4(a->min, -1));
+  sfprintf(outstr, "</min>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<max>%s", fmtip4(a->max, -1));
+  sfprintf(outstr, "</max>\n");
+
+  if (sz!=0){
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+
+     if (sz == a->max2track && a->good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     }
+     for (i = 0, velt = dtfirst(a->dict);
+	  velt && i < a->max2rep;
+	  velt = dtnext(a->dict, velt), i++) {
+            elt = (Puint32_dt_elt_t*)velt;
+            PDCI_indent(outstr, nst);
+            sfprintf(outstr, "<item>");
+            sfprintf(outstr, "<val>%s", fmtip4(elt->key.val,-1));
+            sfprintf(outstr, "</val>");
+            sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+            sfprintf(outstr, "</item>\n");
+     }
+     PDCI_indent(outstr, --nst);
+     sfprintf(outstr, "</distribution>\n");
+  }
+  PDCI_indent(outstr, --nst);
+  sfprintf(outstr, "</Pip>\n");
+
+  dtnext(a->dict, 0); /* discard any iterator state */
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
   dtdisc(a->dict,   &Puint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
@@ -6613,6 +7068,89 @@ PDCI_date_time_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix,
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING         count: %10llu  pcnt-of-good-vals: %8.3I8f\n",
 	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &Puint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+
+Perror_t
+PDCI_date_time_acc_report2xml_io(P_t *pads, Sfio_t *outstr, const char *src_type,
+			         int nst, Puint32_acc *a, const char *whatfn, 
+				 const char *format, Tm_zone_t *tzone)
+{
+  int                i, sz, rp;
+  Pfloat64           track_pcnt;
+  Void_t            *velt;
+  Puint32_dt_elt_t  *elt;
+
+  P_TRACE2(pads->disc, "PDCI_date_time_acc_report2xml_io called, whatfn = %s, out format = %s",
+	   whatfn, format);
+  tmset(tzone);
+  Puint32_acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<%s></%s>\n", src_type, src_type);
+    return P_OK;
+  }
+
+  PDCI_indent(outstr, nst++);
+  sfprintf(outstr, "<%s>\n", src_type);
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%llu", a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%llu", a->bad);
+  sfprintf(outstr, "</bad>\n");
+
+  dtdisc(a->dict,   &Puint32_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+
+  {
+    Puint32 rounded_down = (Puint32) a->avg;
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<avg>%s</avg>\n", fmttime(format, (time_t)rounded_down));
+  }
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<min>%s", fmttime(format, (time_t)a->min));
+  sfprintf(outstr, "</min>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<max>%s", fmttime(format, (time_t)a->max));
+  sfprintf(outstr, "</max>\n");
+
+  if (sz!=0){
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+
+     if (sz == a->max2track && a->good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     }
+     for (i = 0, velt = dtfirst(a->dict);
+	  velt && i < a->max2rep;
+	  velt = dtnext(a->dict, velt), i++) {
+            elt = (Puint32_dt_elt_t*)velt;
+	    PDCI_indent(outstr, nst);
+	    sfprintf(outstr, "<item>");
+	    sfprintf(outstr, "<val>%s", fmttime(format, (time_t)elt->key.val));
+	    sfprintf(outstr, "</val>");
+	    sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+	    sfprintf(outstr, "</item>\n");
+     }
+     PDCI_indent(outstr, --nst);
+     sfprintf(outstr, "</distribution>\n");
+  }
+  PDCI_indent(outstr, --nst);
+  sfprintf(outstr, "</%s>\n", src_type);
+
+  dtnext(a->dict, 0); /* discard any iterator state */
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
   dtdisc(a->dict,   &Puint32_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
@@ -6756,6 +7294,81 @@ Pchar_acc_report2io(P_t *pads, Sfio_t *outstr, const char *prefix, const char *w
   sfprintf(outstr,   ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n");
   sfprintf(outstr,   "        SUMMING     count: %10llu  pcnt-of-good-vals: %8.3I8f\n",
 	   cnt_sum, cnt_sum_pcnt);
+  /* revert to unordered set in case more inserts will occur after this report */
+  dtmethod(a->dict, Dtset); /* change to unordered set */
+  dtdisc(a->dict,   &Puint8_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
+  return P_OK;
+}
+
+
+Perror_t
+Pchar_acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, Pchar_acc *a)
+{
+  int                   i, sz, rp;
+  Pfloat64              track_pcnt;
+  Void_t                *velt;
+  Puint8_dt_elt_t    *elt;
+
+  P_TRACE(pads->disc, "Pchar_acc_report2xml_io called");
+  Puint8_acc_fold_psum(a);
+  sz = dtsize(a->dict);
+  rp = (sz < a->max2rep) ? sz : a->max2rep;
+  if (sz == 0) { /* no values accumulated */
+    PDCI_indent(outstr, nst);
+    sfprintf(outstr, "<Pchar></Pchar>\n");
+    return P_OK;
+  }
+
+  PDCI_indent(outstr, nst++);
+  sfprintf(outstr, "<Pchar>\n");
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<good>%llu", a->good);
+  sfprintf(outstr, "</good>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<bad>%llu", a->bad);
+  sfprintf(outstr, "</bad>\n");
+
+  dtdisc(a->dict,   &Puint8_acc_dt_oset_disc, DT_SAMEHASH); /* change cmp function */
+  dtmethod(a->dict, Dtoset); /* change to ordered set -- establishes an ordering */
+
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<min>%s", P_qfmt_char(a->min));
+  sfprintf(outstr, "</min>\n");
+  PDCI_indent(outstr, nst);
+  sfprintf(outstr, "<max>%s", P_qfmt_char(a->max));
+  sfprintf(outstr, "</max>\n");
+
+  if (sz!=0){
+     PDCI_indent(outstr, nst++);
+     sfprintf(outstr, "<distribution>\n");
+     PDCI_indent(outstr, nst);
+     sfprintf(outstr, "<top>%d</top>", rp);
+     sfprintf(outstr, "<distinct>%d</distinct>\n", sz);
+
+     if (sz == a->max2track && a->good > a->tracked) {
+       track_pcnt = 100.0 * (a->tracked/(Pfloat64)a->good);
+       PDCI_indent(outstr, nst);
+       sfprintf(outstr, "<tracked>%.3I8f</tracked>\n", track_pcnt);
+     }
+     for (i = 0, velt = dtfirst(a->dict);
+          velt && i < a->max2rep;
+          velt = dtnext(a->dict, velt), i++) {
+           elt = (Puint8_dt_elt_t*)velt;
+            PDCI_indent(outstr, nst);
+            sfprintf(outstr, "<item>");
+            sfprintf(outstr, "<val>%s", P_qfmt_char(elt->key.val));
+            sfprintf(outstr, "</val>");
+            sfprintf(outstr, "<count>%llu</count>", elt->key.cnt);
+            sfprintf(outstr, "</item>\n");
+     }
+     PDCI_indent(outstr, --nst);
+     sfprintf(outstr, "</distribution>\n");
+  }
+  PDCI_indent(outstr, --nst);
+  sfprintf(outstr, "</Pchar>\n");
+
+  dtnext(a->dict, 0); /* discard any iterator state */
   /* revert to unordered set in case more inserts will occur after this report */
   dtmethod(a->dict, Dtset); /* change to unordered set */
   dtdisc(a->dict,   &Puint8_acc_dt_set_disc, DT_SAMEHASH); /* change cmp function */
@@ -6906,6 +7519,15 @@ static const char *PDCI_hdr_strings[] = {
   "+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +\n",
   "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =\n",
   "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n"
+};
+
+void 
+PDCI_indent(Sfio_t *outstr, int nst)
+{
+  int i;
+  for (i=0; i<nst; i++){
+    sfprintf(outstr, " ");
+  };
 };
 
 void
@@ -7140,7 +7762,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.198 2006-03-02 09:07:40 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.199 2006-04-13 06:34:05 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -9091,7 +9713,14 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
   int         nullspan = 0;
 
   P_TRACE(pads->disc, "PDCI_report_err called");
+#ifndef TRACE
   if ((pads->speclev || pads->disc->e_rep == PerrorRep_None) && P_GET_LEV(level) != P_LEV_FATAL) return P_OK;
+#else
+  if ((pads->disc->e_rep == PerrorRep_None) && P_GET_LEV(level) != P_LEV_FATAL) return P_OK;
+  if (pads->speclev) {
+    error(0, "*** SPECULATIVE MSG, NORMALLY IGNORED:");
+  }
+#endif
   if (!whatfn) {
     infn = "";
   } else {

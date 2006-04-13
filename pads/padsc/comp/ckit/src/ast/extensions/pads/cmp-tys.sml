@@ -12,6 +12,7 @@ struct
 		  labels   : TyProps.labelInfo option list} 
 
   type pTyInfo = {kind     : PKind,
+		  info     : TyProps.tyInfo,
 		  diskSize : TyProps.diskSize,
                   compoundDiskSize : TyProps.compoundSize,
 		  memChar  : TyProps.memChar,
@@ -38,6 +39,11 @@ struct
    datatype padsTy = BaseTy of PBaseTys.baseInfoTy | CompoundTy of pTyInfo | CTy
 
 
+  fun getArrayInfo (tyInfo: pTyInfo) = 
+     case #info tyInfo
+     of TyProps.ArrayInfo ainfo => ainfo
+     | _ => TyProps.defArrayInfo
+  
   fun mergeTyInfo mergeDiskSizes (r1 : sTyInfo, r2:sTyInfo) =
       {diskSize = mergeDiskSizes (#diskSize r1, #diskSize r2),
        memChar  = TyProps.mergeMemChar(#memChar r1,   #memChar  r2),

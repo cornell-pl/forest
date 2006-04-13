@@ -254,6 +254,10 @@ Perror_t PDCI_date_time_acc_report2io(P_t *pads, Sfio_t *outstr, const char *pre
 				      const char *format, const char *format_descr,
 				      Tm_zone_t *tzone, const char *tzone_descr);
 
+Perror_t PDCI_date_time_acc_report2xml_io(P_t *pads, Sfio_t *outstr, const char *src_type,
+				      int nst, Puint32_acc *a, const char *whatfn, 
+				      const char *format, Tm_zone_t *tzone);
+
 #define Ptimestamp_explicit_acc_report(pads, prefix, what, nst, a) \
   PDCI_date_time_acc_report(pads, prefix, what, nst, a, \
 			    "Ptimestamp_explicit_acc_report", "timestamp",  \
@@ -325,6 +329,45 @@ Perror_t PDCI_date_time_acc_report2io(P_t *pads, Sfio_t *outstr, const char *pre
 			       "Ptime_acc_report2io", "time",		\
 			       pads->disc->out_formats.time, "pads->disc->out_formats.time", \
 			       pads->out_zone, "default output time zone")
+
+
+#define Ptimestamp_explicit_acc_report2xml_io(pads, outstr, nst, a) \
+  PDCI_date_time_acc_report2xml_io(pads, outstr, "Ptimestamp_explicit", nst, a,	\
+			           "Ptimestamp_explicit_acc_report2xml_io",  \
+			           pads->disc->out_formats.timestamp_explicit, \
+			           pads->out_zone)
+
+#define Pdate_explicit_acc_report2xml_io(pads, outstr, nst, a) \
+  PDCI_date_time_acc_report2xml_io(pads, outstr, "Pdate_explicit",  nst, a,	\
+			           "Pdate_explicit_acc_report2xml_io", \
+			           pads->disc->out_formats.date_explicit, \
+			           pads->out_zone)
+
+#define Ptime_explicit_acc_report2xml_io(pads, outstr, nst, a) \
+  PDCI_date_time_acc_report2xml_io(pads, outstr, "Ptime_explicit", nst, a,	\
+			       "Ptime_explicit_acc_report2xml_io",  \
+			       pads->disc->out_formats.time_explicit, \
+			       pads->out_zone)
+
+#define Ptimestamp_acc_report2xml_io(pads, outstr, nst, a)	\
+  PDCI_date_time_acc_report2xml_io(pads, outstr, "Ptimestamp", nst, a,	\
+			       "Ptimestamp_acc_report2xml_io",\
+			       pads->disc->out_formats.timestamp, \
+			       pads->out_zone)
+
+#define Pdate_acc_report2xml_io(pads, outstr, nst, a)		\
+  PDCI_date_time_acc_report2xml_io(pads, outstr, "Pdate",  nst, a,	\
+			       "Pdate_acc_report2io", 		\
+			       pads->disc->out_formats.date, \
+			       pads->out_zone)
+
+#define Ptime_acc_report2xml_io(pads, outstr,  nst, a)		\
+  PDCI_date_time_acc_report2xml_io(pads, outstr, "Ptime",  nst, a,	\
+			          "Ptime_acc_report2io",		\
+			           pads->disc->out_formats.time,\
+			           pads->out_zone)
+
+
 
 #endif
 

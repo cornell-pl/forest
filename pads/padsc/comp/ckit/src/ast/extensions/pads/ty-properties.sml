@@ -3,14 +3,16 @@ structure TyProps =
 struct
    structure P = ParseTreeUtil
    structure PT = ParseTree
-
+   structure PX = ParseTreeExt
 
    datatype diskSize =  Size of IntInf.int * IntInf.int  (* number of bytes, number of EOR markers *)
                       | Param of string list * string option * PT.expression * PT.expression
                       | Variable
+   type pexp = PT.expression
+   type argList = string list * pexp list
 
-   type argList = string list * PT.expression list
-   type labelInfo = string * string * argList * bool * string option(* label name, label type, supplied arguments, is omitted, comment*)
+   (* label name, label type, supplied arguments, is omitted, comment *)
+   type labelInfo = string * string * argList * bool * string option
 
    datatype compoundSize =  Base of diskSize 
                           | Typedef of diskSize * string * argList
@@ -19,6 +21,26 @@ struct
                           | Array of {baseTy : string, args : argList,
 				      elem : diskSize, sep : diskSize, term : diskSize, length : diskSize}
                           | Enum of diskSize
+
+   type tyApp = {tyCon: string, args : pexp list}
+   datatype literalTy = DChar of pexp | DString of pexp | DRegExp of pexp | DNoSep
+   type delimTy = {sep:literalTy option, term:literalTy option, preds:pexp PX.PConstraint list}
+   type sizeTy = {min: pexp option, max: pexp option, minConst : (IntInf.int*bool) option, maxConst : (IntInf.int *bool) option}
+   type arrayPostConds = pexp PX.PArrayPostCond list
+   type arrayInfoTy = {baseTy:tyApp, delims : delimTy, size:sizeTy, post:arrayPostConds}
+   val defArrayInfo:arrayInfoTy = {baseTy={tyCon="Error",args=[]}, 
+				   delims={sep=NONE,term=NONE, preds=[]},
+				   size={min=NONE,max=NONE,minConst = NONE, maxConst =NONE},
+				   post=[]}
+
+
+   datatype tyInfo = BaseInfo 
+                   | TydefInfo 
+                   | StructInfo
+                   | UnionInfo
+                   | ArrayInfo of arrayInfoTy
+                   | EnumInfo
+           
 
    datatype memChar = Static | Dynamic
 
