@@ -1,0 +1,38 @@
+Accumulator report functions.
+
+Files:
+  pads/padsc/libpads/pads.c
+  pads/padsc/include/pads.h
+  pads/padsc/include/pads-internal.h
+  pads/padsc/include/pads-impl.h
+  pads/padsc/comp/ckit/src/ast/extensions/pads/cnv-ext.sml
+  pads/padsc/comp/ckit/src/ast/extensions/pads/build-utils.sml
+
+pads.c:
+Contains definitions of accumulator functions for each base
+type. The definitions are grouped into type families: integer, fpoint,
+floats, etc.   For each family and each operation, there is a macro
+that generates an instance for the operation for each member of the
+family.
+
+pads.h:
+Contains the public prototypes for all base type accumulator
+functions. 
+
+pads-internal.h:
+Contains prototypes for base type accumulators
+functions that are only used internally. 
+
+pads-impl.h
+Contains macros to define acc_report2xml_io functions for various date
+and time formats in terms of PDCI_date_time_acc_report2io function
+defined in pads.c
+
+cnv-ext.sml
+Contains the bulk of the compiler.  For each declaration, it generates
+all functions specific to the declared type.  There is a section for
+accumulator related functions within the code to process each type. 
+The code for histograms and cluster analysis has been factored into
+files cluster.sml and hist.sml, but the analysis code is still in
+cnv-ext.sml  Many useful support routines appear in build-utils.sml.
+The files hist.sml and cluster.sml share these rountes.
