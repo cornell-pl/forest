@@ -42,7 +42,7 @@
 # HAVE_SHARED_ASTLIB = 1
 
 # uncomment this to force static builds
-# FORCE_STATIC = 1
+FORCE_STATIC = 1
 
 # uncomment this to use gprof with debug libaries/executables
 # (only works with GNU compilers)
@@ -829,6 +829,12 @@ ifdef DEBUG_RULES_MK
 endif
 	@$(CCExec_DYNAMIC_D)
 
+accum_%_d: $(GEN_DIR)/%.c accum_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule ACCUM_D"
+endif
+	@$(CCExec_DYNAMIC_D)
+
 fmt_%_d: $(GEN_DIR)/%.c fmt_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule FMT_D"
@@ -856,6 +862,12 @@ endif
 test_%_dd: $(GEN_DIR)/%_expanded.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule R_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+
+accum_%_dd: $(GEN_DIR)/%_expanded.c accum_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule ACCUM_DD"
 endif
 	@$(CCExec_DYNAMIC_D)
 
@@ -924,6 +936,12 @@ ifdef REGRESS_TESTS
 test_%: $(GEN_DIR)/%.c test_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule R_O"
+endif
+	@$(CCExec_DYNAMIC_O)
+
+accum_%: $(GEN_DIR)/%.c accum_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule ACCUM_O"
 endif
 	@$(CCExec_DYNAMIC_O)
 
