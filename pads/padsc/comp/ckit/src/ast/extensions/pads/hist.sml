@@ -107,7 +107,7 @@ structure Hist = struct
 	  val repioCallX = PT.Call(PT.Id((ioSuf o reportSuf) (lookupHist baseTy)),
 				   [PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id hist])
 	  val reportBodySs = [PT.Expr repioCallX]
-	  val reportFunEDs = BU.genReportFuns(reportFun, "typedef", name, "typedef "^name, histPCT, hist, reportBodySs,[])
+	  val reportFunEDs = BU.genReportFuns(reportFun, "typedef "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -167,7 +167,7 @@ structure Hist = struct
 					    PT.Id prefix, PT.Id what, PT.Id nst,
 					    PT.Id(toStringSuf name), PT.Id hist)
 	  val reportBodySs = [PT.Expr repioCallX]
-	  val reportFunEDs = BU.genReportFuns(reportFun, "enum", name, "enum "^name, histPCT, hist, reportBodySs,[])
+	  val reportFunEDs = BU.genReportFuns(reportFun, "enum "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -248,7 +248,7 @@ structure Hist = struct
 							 PT.Id nst, P.addrX (arrayX)])
 
 	  val reportBodySs   = doLengthSs @ doArraySs 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, "array", name, "array "^ name ^" of "^baseTyStr, histPCT, hist, reportBodySs,[])
+	  val reportFunEDs   = BU.genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -377,7 +377,7 @@ structure Hist = struct
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) variants
 	  val reportBodySs   = reportTags @ reportFields 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, header, name, header^" tag "^name, histPCT, hist, reportBodySs,[])
+	  val reportFunEDs   = BU.genReportFuns(reportFun,  header^" tag "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -485,7 +485,7 @@ structure Hist = struct
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) fields
 	  val reportBodySs   = headerSs @ reportFields 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, "struct", name, "struct "^name, histPCT, hist, reportBodySs,[])
+	  val reportFunEDs   = BU.genReportFuns(reportFun, "struct "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end

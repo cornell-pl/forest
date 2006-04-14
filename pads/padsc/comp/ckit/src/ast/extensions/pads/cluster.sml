@@ -104,7 +104,7 @@ structure Cluster = struct
 	  val repioCallX = PT.Call(PT.Id((ioSuf o reportSuf) (lookupAnalysis baseTy)),
 				   [PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id analysis])
 	  val reportBodySs = [PT.Expr repioCallX]
-	  val reportFunEDs = BU.genReportFuns(reportFun, "typedef", name, "typedef "^name, analysisPCT, analysis, reportBodySs,[])
+	  val reportFunEDs = BU.genReportFuns(reportFun, "typedef "^name, analysisPCT, analysis, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -162,7 +162,7 @@ structure Cluster = struct
 					    PT.Id prefix, PT.Id what, PT.Id nst,
 					    PT.Id(toStringSuf name), PT.Id analysis)
 	  val reportBodySs = [PT.Expr repioCallX]
-	  val reportFunEDs = BU.genReportFuns(reportFun, "enum", name, "enum "^name, analysisPCT, analysis, reportBodySs,[])
+	  val reportFunEDs = BU.genReportFuns(reportFun, "enum "^name, analysisPCT, analysis, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -242,8 +242,8 @@ structure Cluster = struct
 							 PT.Id nst, P.addrX (arrayX)])
 
 	  val reportBodySs   = doLengthSs @ doArraySs 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, "array", name, "array "^ name ^" of "^baseTyStr, 
-						analysisPCT, analysis, reportBodySs,[])
+	  val reportFunEDs   = BU.genReportFuns(reportFun, "array "^ name ^" of "^baseTyStr, 
+						analysisPCT, analysis, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -371,7 +371,7 @@ structure Cluster = struct
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) variants
 	  val reportBodySs   = reportTags @ reportFields 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, header, name, header^" tag "^name, analysisPCT, analysis, reportBodySs,[])
+	  val reportFunEDs   = BU.genReportFuns(reportFun, header^" tag "^name, analysisPCT, analysis, reportBodySs)
       in
 	  reportFunEDs
       end
@@ -478,7 +478,7 @@ structure Cluster = struct
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) fields
 	  val reportBodySs   = headerSs @ reportFields 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, "struct", name, "struct "^name, analysisPCT, analysis, reportBodySs,[])
+	  val reportFunEDs   = BU.genReportFuns(reportFun, "struct "^name, analysisPCT, analysis, reportBodySs)
       in
 	  reportFunEDs
       end

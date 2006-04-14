@@ -271,7 +271,6 @@ structure BuildUtils = struct
              @ [PL.sfprintf(PT.Id outstr, PT.String endTag, [])]
 	end
              
-
     fun genXMLArrayPiece(reportName,expX,indexX) =
 	let val indexXMLSs = genXMLtagInline("index", [PL.sfprintf(PT.Id outstr, PT.String "%d", indexX)], true)
 	    val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, expX])
@@ -319,7 +318,7 @@ structure BuildUtils = struct
   (* Perror_t foo_report(P_t* pads, [sfio_t *str], const char * prefix,
                          const char* what, int nst, foostruct_acc* acc) *)
 
-  fun genXMLReportFuns(reportName, kind, name, whichPCT, var, xmlBodySs) = 
+  fun genXMLReportFuns(reportName, isSource, kind, name, whichPCT, var, xmlBodySs) = 
       let fun genParamTys extraPCTs =
 	      [P.ptrPCT PL.toolStatePCT] 
 	    @ extraPCTs
@@ -329,7 +328,7 @@ structure BuildUtils = struct
 	  val extlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [], genParamNames []))
 	  val intlFormalParams = List.map P.mkParam (ListPair.zip (genParamTys [PL.sfioPCT], intlParamNames))
 	  val closeSs = [PT.Return PL.P_OK]
-          val bodyS = PT.Compound([PL.indent(PT.Id outstr, PT.Id nst),
+          val rawbodySs = [PL.indent(PT.Id outstr, PT.Id nst),
 				   PL.sfprintf(PT.Id outstr, PT.String ("<"^kind^">\n"), []),  
 				   P.postIncS (PT.Id nst),
 				   PL.indent(PT.Id outstr, PT.Id nst),
@@ -338,13 +337,15 @@ structure BuildUtils = struct
 				  @ [P.postDecS (PT.Id nst),
 				     PL.indent(PT.Id outstr, PT.Id nst),
 				     PL.sfprintf(PT.Id outstr, PT.String ("<"^kind^">\n"), []),  
-				     PT.Return PL.P_OK])
+				     PT.Return PL.P_OK]
+	  val bodySs = if isSource then genXMLtag("Psource", rawbodySs) else rawbodySs
+	  val bodyS = PT.Compound bodySs
 	  val returnTy = PL.toolErrPCT
       in
 	  [P.mkFunctionEDecl(ioxmlSuf reportName, intlFormalParams, bodyS, returnTy)]
       end
 
-  fun genAccumReportFunShell (reportName, kind, name, whatStr, whichPCT, var, bodySs, xmlBodySs) = 
+  fun genAccumReportFunShell (reportName, whichPCT, var, bodySs) = 
       let fun genParamTys extraPCTs =
 	    [P.ptrPCT PL.toolStatePCT] 
 	  @ extraPCTs
@@ -359,14 +360,12 @@ structure BuildUtils = struct
 	  val returnTy = PL.toolErrPCT
 	  val toioReportFunED = P.mkFunctionEDecl(ioSuf reportName, intlFormalParams, PT.Compound bodySs, returnTy)
 	  val externalReportFunED = genExternalReportFun(reportName, intlParamNames, extlFormalParams, var)
-	  val toxmlioReportFunEDs = genXMLReportFuns(reportName, kind, name, whichPCT, var, xmlBodySs)
-
       in
-	  [toioReportFunED, externalReportFunED] @ toxmlioReportFunEDs
+	  [toioReportFunED, externalReportFunED] 
       end
 
 
-  fun genReportFuns (reportName, kind, name, whatStr, whichPCT, var, intlBodySs, xmlBodySs) = 
+  fun genReportFuns (reportName, whatStr, whichPCT, var, intlBodySs) = 
       let val initTmpStrSs = genInitTmpStrSs tmpstr
 	  val setPrefixS = PT.IfThen(P.orX(P.notX(PT.Id prefix), P.eqX(P.zero, P.starX(PT.Id prefix))),
 				     PT.Compound[P.assignS(PT.Id prefix, PT.String "<top>")])
@@ -377,13 +376,11 @@ structure BuildUtils = struct
 	  val bodySs = ( initTmpStrSs
 	               @ [setPrefixS, setWhatS, printNstS]
 	               @ intlBodySs
-	               @ closeSs
-			)
-          val origAccumReportFunEDs = genAccumReportFunShell(reportName, kind, name, whatStr, whichPCT, var, bodySs, xmlBodySs)
+	               @ closeSs)
       in
-	  origAccumReportFunEDs
+	  genAccumReportFunShell(reportName, whichPCT, var, bodySs)
       end
 
-  val genTrivReportFuns = genAccumReportFunShell
+  val genTrivReportFuns  = genAccumReportFunShell
 
 end
