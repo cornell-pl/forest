@@ -14,60 +14,29 @@
 %\setlength{\textheight}{8.5in}
 
 \begin{document}
-\title{PADS/ML: A Functional Data Description Language}
-\authorinfo{Yitzhak Mandelbaum$^\ast$, Kathleen Fisher$^\dagger$, David Walker$^\ast$, Mary
-  Fernandez$^\dagger$, Artem Gleyzer$^\ast$}
-{$^\ast$Princeton University \ \ \ \ \ \ \ $^\dagger$AT\&T Labs Research}
- {\mono{yitzhakm,dpw,agleyzer@CS.Princeton.EDU} \ \ \ \ \mono{kfisher,mff@research.att.com}}
+\title{DDC': There and Back Again}
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@att.com}}
+\authorinfo{Yitzhak Mandelbaum  \\ David Walker}{
+	   Princeton University}
+       {\mono{   yitzhakm,dpw@cs.princeton.edu   }}
+\authorinfo{John Launchbury}{
+	   Galois Connections}
+       {\mono{john@galois.com}}
 
 \input{definitions}
 
 \maketitle{}
 
 \begin{abstract}  
-
-  Massive amounts of useful data are stored and processed in
-  \textit{ad hoc} formats for which common tools like parsers and
-  pretty printers do not exist.  Traditional data management systems
-  provide rich infrastructure for processing well-behaved data, but
-  are of little use when dealing with data in ad hoc formats.  To
-  address the challenges of ad hoc data, we have designed \padsml{}, a
-  declarative data description language for the \ml{} family of
-  languages.  \padsml{} is based on the \ml{} type structure and
-  features polymorphic, dependent, recursive datatypes for describing
-  ad hoc data.  In addition, \padsml{} uses the \ml{} module system as
-  a general framework to help users easily develop customized
-  data-processing tools for any data format described in \padsml{}.
-  We have formalized the semantics of \padsml{}'s datatypes by
-  extending our previous work on the Data Description
-  Calculus~\cite{fisher+:next700ddl} with type-parameterized types,
-  and we have proven the resulting system ``type-correct,'' \ie{},
-  generated parsers return data of the expected type.  Finally, we
-  have implemented a version of \padsml{} for the \ocaml{} language.
-  From a \padsml{} description, our compiler generates an \ocaml{}
-  module containing the relevant type declarations, a parser for the
-  description, and other tools.
-
+Formal theory of parsing/pretty printing.
 \end{abstract}
-
-\input{intro}
-
-\input{pml_overview}
-
-\input{impl}
-
-\input{gentool}
 
 \input{ddcpoly}
 
-\input{related_work}
-
-\input{conc}
-
 \section*{Acknowledgments}
 
-We would like to thank Derek Dreyer for discussions and advice on
-advanced module systems.
 
 \bibliographystyle{abbrv}
 \bibliography{pads}

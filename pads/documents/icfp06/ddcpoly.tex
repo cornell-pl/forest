@@ -1,3 +1,1494 @@
+\section{A Data Description Calculus}
+\label{sec:ddc}
+
+At the heart of our work is a polymorphic data description calculus (\ddc{}),
+designed to capture the core features of \padsml.
+
+\subsection{\ddc{} Syntax}
+\begin{figure}
+{\small
+\begin{bnf}
+  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+                               \| \kty \-> \gk \\
+  \name{Types} \meta{\ty} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| 
+    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
+    \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \|
+    \pset x \ty e \| \pseq \ty \ty {\pterm e \ty} \nlalt
+    \ptyvar       \| \pmu{\ptyvar}{\gk}{\ty} \| \pcompute e \ity \| 
+     \pabsorb \ty \| \pscan{\ty} 
+    \nlalt \ptylam{\ptyvar}{\kty}{\ty} \| \ptyapp{\ty}{\ty}
+    \nlalt \ptry{\tau} \| \ptransform{e}{\ty}{\ty}{e} \| \pkleene{\ty}{e}
+\end{bnf}
+}
+\caption{\ddc{} Syntax}
+\label{fig:ddc-syntax}
+\end{figure}
+\figref{fig:ddc-syntax} shows the syntax of \ddc{}. 
+
+\subsection{\Implang{} Language}
+\label{sec:host-lang}
+\begin{figure}[tp]
+\small
+\begin{bnf}
+%   \name{Variables} \meta{f,x,y} \\
+%   \name{Bit}   \meta{b}   \::= 0 \| 1 \\ 
+  \name{Bits}  \meta{B}   \::= \cdot \| 0\,B \| 1\,B \\ 
+  \name{Constants} \meta{c} \::=
+      () \| \itrue \| \ifalse \| 0 \| 1 \| -1 \| \dots \nlalt
+      \ierr \| \data \| \off \| \iok \| \iecerr \| \iecpc \| \ldots \\
+
+  \name{Values} \meta{v} \::= 
+      \const \| % \ilam{\nrm \var}{\ity}{e} \| 
+      \ifun {\nrm f} {\nrm x} e \| \ipair v v \nlalt
+      \iinld{\ity}{v} \| \iinrd{\ity}{v} \|
+      \iarr{\vec{v}} \\
+
+  \name{Operators} \meta{op} \::= 
+      = \; \| \; < \; \| \inotop % \| \isizeofop
+      \| \ldots \\
+
+  \name{Expressions} \meta{e} \::= 
+      \const \| \var \| \iop{e} \|
+%      \ilam {\nrm \var} \ity e \| 
+      \ifun {\nrm f} {\nrm x} e \| 
+      \iapp e e \nlalt
+%      \iletfun {\nrm f} {\nrm x} e \; \iin \; e' \| 
+      \ilet {\nrm x} e \; e \|
+      \iif e \; \ithen e \; \ielse e \nlalt
+      \ipair{e}{e} \| \ipi {\nrm i}{e} \|
+      \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
+      \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
+      \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e}
+      \\
+      
+  \name{Base Types} \meta{a} \::= 
+      \iunitty \| \iboolty \| \iintty  \| 
+      \invty \nlalt  \ibitsty \| \ioffty \| \iecty
+  \\
+  \name{Types} \meta{\ity} \::= 
+      \ibasety \| \ityvar \| \iarrow \ity \ity \| \iprod \ity \ity \|
+      \isum \ity \ity \nlalt
+      \iseq \ity \| \forall \ityvar{:}\kappa.\ity  \|
+      \imu \ityvar \ity   
+      \| \lambda \alpha{:}\kappa.\ity 
+      \| \ity \; \ity
+  \\
+  \name{Kinds} \meta{\kappa} \::= \kty \| \kappa \rightarrow \kappa
+  
+\end{bnf}
+\caption{\Implang{} Language: F$^\omega$}
+\label{fig:implang-syntax}
+\end{figure}
+
+In \figref{fig:implang-syntax}, we present the host language of \ddc{}, an
+extension of the simple-typed polymorphic lambda calculus. 
+We use this host language both to encode the parsing semantics of \ddc{} 
+and to write the expressions that can appear within \ddc{} itself.
+
+As the calculus is largely standard, we highlight only its
+unusual features. The constants include bitstrings $\data$; offsets $\off$,
+representing locations in bitstrings; and error codes $\iok$,
+$\iecerr$, and $\iecpc$, indicating success, success with errors and
+failure, respectively. We use the constant $\ierr$ to indicate a
+failed parse.  
+Because of its specific meaning, we forbid its use in user-supplied expressions
+appearing in \ddc{} types. 
+%We include a special $\isizeofop$ operator, which returns the size in the data
+%source of its input. 
+Our expressions include arbitrary length
+sequences $\iarr{\vec e}$, sequence append $\iappend e
+{e'}$, and sequence indexing $\isub e {\nrm i}$.
+
+The type $\invty$ is the singleton type of the constant $\ierr$.
+Types $\iecty$ and $\ioffty$ classify error codes and bit string
+offsets, respectively. The remaining types have standard
+meanings: function types, product types, sum types, sequence types
+$\iseqty \ty$; polymorphic types $\forall \ityvar.\ity$ and type
+variables $\ityvar$; and recursive types $\imu \ityvar \ity$.
+
+We extend the formal syntax with some syntactic sugar 
+for use in the rest of the paper: anonymous functions
+$\ilam {\nrm x} \ity e$ for $\ifun {\nrm f} {\nrm x} e$, with $f
+\not\in {\rm FV}(e)$; function bindings $\iletfun {\nrm f} {\nrm x} e
+\; \iin \; e'$ for $\ilet {\nrm f} {\ifun {\nrm f} {\nrm x} e} \; e'$;
+$\ispty$ for $\iprod \ioffty \ioffty$.  We often use
+pattern-matching syntax for pairs in place of explicit projections, as
+in $\lampair{\codefont e}$ and $\ilet {\itup{\off,r,p}} e\; e'$.  Although
+we have no formal records with named fields, we use a dot notation for
+commonly occuring projections. For example, for a pair $\mathtt x$ of
+rep and PD, we use $\codefont{x.rep}$ and $\codefont{x.pd}$ for the
+left and right projections of $\codefont{x}$, respectively. \cut{Generally,
+the particular projection intended should be apparent from context,
+and will be specified when it is not.} Also, sums and products are
+right-associative. 
+
+We use standard judgments for the static semantics
+($\stsem[e,{\ctxt},\ity]$) and operational semantics ($e
+\stepsto e'$) of the \implang{} language. Details appear in \appref{app:host-lang}.
+
+\section{\ddc{} Semantics}
+\label{sec:ddc-sem}
+
+The primitives of \ddc{} are deceptively simple.  Each captures a
+simple concept, often familiar from type theory. However, in reality,
+each primitive is multi-faceted. Each simultaneously describes a
+collection of valid bit strings, two datatypes in the host language --
+one for the data representation itself and one for its parse
+descriptor -- and a transformation from bit strings, including
+invalid ones, into data and corresponding meta-data.
+We give semantics to \ddc{} types using three semantic functions, each
+of which precisely conveys a particular facet of a type's meaning.
+The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$ describe the {\it
+  representation semantics} of \ddc{}, detailing the types of the
+data's in-memory representation and parse descriptor. The function
+$\trans[\cdot,,]$ describes the {\it parsing semantics} of \ddc{},
+defining a \implang{} language function for each type that parses bit
+strings to produce a representation and parse descriptor. We define
+the set of valid bit strings for each type to be those strings for
+which the PD indicates no errors when parsed.
+
+We begin with a kinding judgment that checks if
+a type is well formed. We then formalize
+the three-fold semantics of \ddc{} types.
+
+\begin{table}
+  \begin{center}
+    \renewcommand{\arraystretch}{1.35}
+    \begin{tabular}{l l}
+      $\ddck[\ty,{\pctxt;\rctxt;\ctxt},\kind,\mcon]$ & {\it \ddc{}-type
+        kinding}\\
+      $\itsem[\ty] = \ity$ & {\it representation types of \ddc{} types}\\
+      $\itpdsem[\ty] = \ity$ & {\it pd types of \ddc{} types}\\
+      $\trans[\ty,\ctxt,\gk] = e$   & {\it \ddc{}-type parser semantics} \\
+      $\transpp[\ty,\ctxt,\gk] = e$   & {\it \ddc{}-type pretty printer semantics} \\
+      $\kTrans[\gk,\ty] = \ity$     & {\it parser type} \\
+      $\kTransPP[\gk,\ty] = \ity$     & {\it pretty printer type} \\
+      $\ptyc \rctxt = \ctxt$     & {\it context parser type}\\
+      $\stsem[e,{\pctxt;\ctxt},\ity]$ & {\it \implang expression typing} \\
+      $e \stepsto e'$ & {\it \implang expression evaluation}
+    \end{tabular}
+    \caption{Translations and Judgments}
+    \label{tab:judg-list}
+  \end{center}
+\end{table}
+For reference, we provide in
+\tblref{tab:judg-list} a listing of all the functions and judgments
+defined in this section and a brief description of each.  
+
+
+\subsection{\ddc{} Kinding}
+\label{sec:ddc-kinding}
+
+\begin{figure*}[t]
+\small
+\fbox{$\ddck[\ty,\pctxt;\rctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
+\[
+\infer[\text{Unit}]{
+    \ddck[\ptrue,\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{\wfd {} \ctxt}
+\quad 
+\infer[\text{Bottom}]{
+    \ddck[\pfalse,\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{\wfd {} \ctxt}
+\quad 
+\infer[\text{Const}]{
+    \ddck[\pbase{e},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \begin{semcond}
+      \stsem[e,\ctxt,\ity] &
+      (\vlet {\ity \iarrowi \kty} {\Ikind(C)})
+    \end{semcond}
+  }
+\]
+
+\[
+\infer[\text{Abs}]{
+    \ddck[\plam{\var}{\ity}{\ty},
+         \pctxt;\rctxt;\ctxt,\ity \iarrowi \kind,\mcon]
+  }{
+    \ddck[\ty,\pctxt;\rctxt;\ectxt{\var{:}\ity},\kind,\mcon]
+  }
+\quad
+\infer[\text{App}]{
+  \ddck[\papp{\ty}{e},\pctxt;\rctxt;\ctxt,\gk,\mcon]
+}{
+  \ddck[\ty,\pctxt;\rctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
+  \stsem[e,\ctxt,\ity]
+}
+\]
+
+\[
+\infer[\text{Prod}]{
+    \ddck[\psig{x}{\ty}{\ty'},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{       
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] &
+    \ddck[\ty',\pctxt;\rctxt;
+          \ectxt {x{:}\iprod {\itsem[\asub \rctxt \ty]} 
+              {\itpdsem[\asub \rctxt \ty]}},
+          \kty,\mcon']
+  }
+\]
+
+\[
+\infer[\text{Sum}]{
+    \ddck[\psum{\ty}{e}{\ty'},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\rctxt;\ctxt,\kty,\mcon'] 
+  }
+\quad
+  \infer[\text{Intersection}]{
+    \ddck[\pand \ty {\ty'},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\rctxt;\ctxt,\kty,\mcon'] 
+  }
+\]
+
+\[
+  \infer[\text{Con}]{
+    \ddck[\pset x \ty e,\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{ 
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] & 
+    \stsem[e,
+    \ectxt{x{:}\iprod{\itsem[\asub \rctxt \ty]} 
+      {\itpdsem[\asub \rctxt \ty]}},\iboolty]
+  }
+\]
+
+\[\infer[\text{Seq}]{
+    \ddck[\pseq \ty {\ty_s} {\pterm e {\ty_t}},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \begin{array}{c}
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon] \qquad
+    \ddck[{\ty_s},\pctxt;\rctxt;\ctxt,\kty,\mcon_s] \qquad
+    \ddck[{\ty_t},\pctxt;\rctxt;\ctxt,\kty,\mcon_t] \\
+    \stsem[e,\ctxt,
+    \iprod {\itsem[{\ty_m}]}      
+    {\itpdsem[{\ty_m}]}
+    \iarrowi \iboolty]
+    \quad (\ty_m = \asub \rctxt {\pseq \ty {\ty_s} {\pterm e {\ty_t}}})
+    \end{array}
+  }
+\]
+
+\[
+  \infer[\text{RecVar}]{
+    \ddck[\ptyvar,{\pctxt;\rctxt;\ctxt},\kty,\ncon]
+  }{\wfd {} \ctxt \quad \ptyvar {=} \pmu \ptyvar \kty \ty \in \dom \rctxt}
+\quad
+  \infer[\text{Rec}]{
+    \ddck[\pmu \ptyvar \kty \ty,\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,{\rctxt,\ptyvar {=} \pmu \ptyvar \kty \ty;\ctxt},\kty,\con]
+  }
+\]
+
+\[
+  \infer[\text{Compute}]{       
+    \ddck[\pcompute{e}{\ity},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \stsem[e,\ctxt,\ity]
+  }      
+\quad
+\infer[\text{Absorb}]{
+    \ddck[\pabsorb{\ty},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon]
+  }
+\quad
+  \infer[\text{Scan}]{
+    \ddck[\pscan{\ty},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon]
+  }
+\]
+
+\[
+  \infer[\text{TyVar}]{
+    \ddck[\ptyvar,{\pctxt;\rctxt;\ctxt},\kty,\ncon]
+  }{\wfd {} \ctxt \quad \tyvar{:}\kty \in \pctxt}
+\quad
+\infer[\text{TyAbs}]{
+    \ddck[\ptylam{\tyvar}{\kty}{\ty},
+         \pctxt;\rctxt;\ctxt,\kty \iarrowi \kind,\mcon]
+  }{
+    \ddck[\ty,{\pctxt,\tyvar{:}\kty;\rctxt;\ectxt},\kind,\mcon]
+  }
+\quad
+\infer[\text{TyApp}]{
+  \ddck[\ptyapp{\ty_1}{\ty_2},\pctxt;\rctxt;\ctxt,\gk,\mcon]
+}{
+  \ddck[\ty_1,\pctxt;\rctxt;\ctxt,\kty \iarrowi \gk,\mcon] &
+  \ddck[\ty_2,\pctxt;\rctxt;\ctxt,\kty,\mcon]
+}
+\]
+
+\[
+  \infer[\text{Try}]{       
+    \ddck[\ptry{\ty},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon]
+  }      
+\quad
+\infer[\text{Transform}]{
+    \ddck[\ptransform{e_1}{\ty_1}{\ty_2}{e_2},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \begin{array}{c}
+    \ddck[\ty_1,\pctxt;\rctxt;\ctxt,\kty,\mcon]\\
+    \ddck[\ty_2,\pctxt;\rctxt;\ctxt,\kty,\mcon]\\
+    \stsem[e_1,\ctxt,
+    \iprod {\itsem[{\asub \rctxt {\ty_1}}]}      
+           {\itpdsem[{\asub \rctxt {\ty_1}}]}
+    \iarrowi \iprod {\itsem[{\asub \rctxt {\ty_2}}]}      
+           {\itpdsem[{\asub \rctxt {\ty_2}}]}]\\
+    \stsem[e_2,\ctxt,
+    \iprod {\itsem[{\asub \rctxt {\ty_2}}]}      
+           {\itpdsem[{\asub \rctxt {\ty_2}}]}
+    \iarrowi \iprod {\itsem[{\asub \rctxt {\ty_1}}]}      
+           {\itpdsem[{\asub \rctxt {\ty_1}}]}]
+    \end{array}
+  }
+\]
+
+\[
+  \infer[\text{Kleene}]{
+    \ddck[\pkleene{\ty}{e},\pctxt;\rctxt;\ctxt,\kty,\con]
+  }{
+    \begin{array}{c}
+    \ddck[\ty,\pctxt;\rctxt;\ctxt,\kty,\mcon]\\
+    \stsem[e,\ctxt,
+    \iprod {\iseq{\itsem[{\asub \rctxt \ty}]}}
+    {\iseq{\itpdsem[{\asub \rctxt \ty}]}}
+    \iarrowi \iboolty]
+    \end{array}
+  }
+\]
+
+
+\caption{\ddc{} Kinding Rules}
+\label{fig:ddc-kinding}
+\end{figure*}
+
+The kinding judgment defined in \figref{fig:ddc-kinding} determines
+well-formed \ddc{} types, assigning kind $\kty$ to basic types and
+kind $\ity \iarrowi \kind$ to type abstractions.  We use two contexts to express our kinding judgment:
+\[
+\begin{array}{ll}
+\ctxt  & \mathrel{::=} \cdot \bnfalt \ctxt,{\var{:}\ity}\\
+\rctxt & \mathrel{::=} \cdot \bnfalt \rctxt,\ptyvar{=}\pmu \ptyvar \gk \ty\\
+\pctxt  & \mathrel{::=} \cdot \bnfalt \pctxt,\tyvar{:}\kty
+\end{array}
+\]
+Context $\Gamma$ is a finite partial map that binds expression
+variables to their types.
+Context $\rctxt$ is an ordered list of mappings between type variables and recursive types.
+This context serves two purposes: first, to ensure the well-formedness
+of types with free type variables; and second, to provide mappings
+between recursive type variables and their associated types. 
+This second purpose leads us to consider a context $\rctxt$ to be a
+substitution from type variables to types. Application of such a
+substitution has the form $\asub \rctxt \ty$.
+Context $\rctxt$ is a list of type variables with kind $\kty$.
+
+To ensure that recursive types have properly-shaped parse descriptors
+with a valid PD header (a condition necessary for the type safety of
+generated parsers), we disallow types such as $\pmu \ptyvar
+\ptyvar$. More generally, we ensure that
+recursive type variables are separated from their binder by at least
+one basic primitive, such as a product or sum, a condition called {\it contractiveness}. To this end, we annotate every judgment with a contractiveness
+indicator, one of $\con$, $\ncon$, or $\mcon$. A
+$\con$ indicates the type is contractive, an $\ncon$
+indicates it is not, and a $\mcon$ indicates it may be either. 
+We consider $\ncon < \con$. 
+
+As the rules are otherwise mostly straightforward, we highlight
+just two of them. We use the function $\Ikind$ to assign kinds to base types.
+While their kind does not differentiate them from type
+abstractions, base types are not well formed when not applied.  
+Once applied, all base types have kind $\kty$. The product rule
+shows that the name of the first component is bound to a pair of a representation and corresponding PD.
+The semantic functions defined in the next section determine the type of this pair.
+Note that we apply $\rctxt$ to the type of the first component before
+translation, thereby closing it,
+ as open \ddc{}
+types do not translate into well-formed \implang{} types.
+
+\subsection{Representation Semantics}
+\label{sec:intty-sem}
+
+\begin{figure}
+\fbox{$\itsem[\ty] = \ity$}
+\[
+\begin{array}{lcl} 
+\itsem[\ptrue] & = & \iunitty \\
+\itsem[\pfalse] & = & \invty \\
+\itsem[\pbase{e}] & = & \isum {\Irty(C)} \invty   \\
+\itsem[\plam{\var}{\ity}{\ty}] & = & \itsem[\ty] \\
+\itsem[\papp \ty e] & = & \itsem[\ty] \\
+\itsem[\psig \var {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]} {\itsem[\ty_2]}    \\
+\itsem[\psum {\ty_1} e {\ty_2}]     & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]} \\
+\itsem[\pand {\ty_1} {\ty_2}]  & = & \iprod {\itsem[\ty_1]}{\itsem[\ty_2]}\\
+\itsem[\pset x \ty e] & = & \isum {\itsem[\ty]}{\itsem[\ty]}\\
+% field names: length, elts
+\itsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
+    \iprod \iintty {(\iseq{\itsem[\ty]})}             \\
+%% \itsem[\pcase e c {\ty_1} {\ty_2}]       & = & \isum {\itsem[\ty_1]} {\itsem[\ty_2]}\\
+\itsem[\ptyvar] & = & \ptyvar_\repname \\
+\itsem[\pmu{\ptyvar}{\gk}{\ty}] & = & \imu{\ptyvar_\repname}{\itsem[\ty]} \\
+\itsem[\pcompute e \ity]                 & = & \ity \\
+\itsem[\pabsorb \ty]                     & = & \isum \iunitty \invty \\
+\itsem[\pscan \ty] & = & \isum {\itsem[\ty]} \invty \\
+%% \pext{
+%% \itsem[\ptransform e e \ty]              & = & \itsem[\ty]\\
+%% }
+\itsem[\lambda \ptyvar.\ty]       & = & \lambda \ptyvar_\repname.\itsem[\ty] \\
+\itsem[\ty_1 \ty_2]              & = & \itsem[\ty_1] \itsem[\ty_2] \\
+\itsem[\ptry{\ty}]    & = & \itsem[\ty] \\
+\itsem[\ptransform{e_1}{\ty_1}{\ty_2}{e_2}] & = & \itsem[\ty_2]\\
+\itsem[\pkleene{\ty}{e}] & = & \iseq{\itsem[\ty]}
+\end{array}
+\]
+\caption{Representation Types}
+\label{fig:rep-tys}
+\end{figure}
+
+In Figure~\ref{fig:rep-tys}, we present the representation type
+of each \ddc{} primitive. While the primitives are
+dependent types, the mapping to the \implang{} language erases the dependency because the \implang{} language does not have dependent types. For \ddc{} types in which expressions appear,
+the translation drops the expressions to remove the dependency.
+With these expressions gone, variables become useless, so we drop 
+variable bindings as well, as in product and constrained types.
+Similarly, as type abstraction and application are only relevant for
+dependency, we translate them according to their underlying types.
+
+In more detail,
+the \ddc{} type $\ptrue$ consumes no input and produces only
+the $\iunitty$ value.  Correspondingly, $\pfalse$ consumes no input,
+but uniformly fails, producing the value $\invty$. The
+function $\Irty$ maps each base type to a representation for
+successfully parsed data. Note that this representation does not depend
+on the argument expression. As base type parsers can fail, we sum this type
+with $\invty$ to produce the actual representation type.
+Intersection types produce a pair of values, one for each sub-type,
+because the representations of the subtypes need not be identical nor
+even compatible. 
+Constrained types produce sums, where a left branch indicates the data
+satisfies the constraint and the right indicates it does not. In
+the latter case, the parser returns the offending data rather than
+$\ierr$ because the error is semantic rather than syntactic.
+Sequences produce a \implang{} language sequence paired with its
+length.  Recursive types generate recursive representations. Note that the \implang{} type uses the same variable name
+as the \ddc{} type, and so the type corresponding to the type variable
+$\ptyvar$ is exactly $\ityvar$.
+The output of a $\pcomputen$ is exactly the computed value, and
+therefore shares its type.  The output of $\pabsorbn$ is a sum
+indicating whether parsing the underlying type succeeded or failed.
+The type of $\pscann$ is similar, but also returns an element of the
+underlying type in case of success.
+
+\begin{figure}
+\fbox{$\itpdsem[\ty] = \ity$}
+\[ 
+\begin{array}{lcl} 
+%% %% example: \ua.(int * a) + None
+%% %%          pd = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * [a]_pd)) + [None]_pd)
+%% %%             = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * a)) + [None]_pd)
+\itpdsem[\ptrue] & = & \ipty \iunitty \\                                                  
+\itpdsem[\pfalse] & = & \ipty \iunitty \\                                                  
+\itpdsem[\pbase{e}] & = & \ipty \iunitty\\
+\itpdsem[\plam \var \ity \ty] & = & \itpdsem[\ty] \\
+\itpdsem[\papp \ty e] & = & \itpdsem[\ty] \\
+\itpdsem[\psig \var {\ty_1} {\ty_2}] & = & 
+               \ipty {\iprod {\itpdsem[\ty_1]} {\itpdsem[\ty_2]}} \\
+\itpdsem[\psum {\ty_1} e {\ty_2}] & = & 
+               \ipty {(\isum {\itpdsem[\ty_1]} {\itpdsem[\ty_2]})} \\
+\itpdsem[\pand {\ty_1} {\ty_2}] & = & \ipty {\iprod {\itpdsem[\ty_1]} {\itpdsem[\ty_2]}}    \\
+\itpdsem[\pset x \ty e] & = & \ipty {\itpdsem[\ty]} \\
+\itpdsem[\pseq \ty {\ty_{\text{sep}}} {\pterm e {\ty_{\text{term}}}}] & = & 
+  \iapty {\itpdsem[\ty]} \\
+\itpdsem[\ptyvar] & = & \ipty{\ptyvar_\pdname} \\
+\itpdsem[\pmu \ptyvar \kty \ty] & = & 
+  \ipty{\imu{\ptyvar_\pdname}{\itpdsem[\ty]}} \\
+\itpdsem[\pcompute e \ity]            & = & \ipty \iunitty \\
+\itpdsem[\pabsorb \ty]                & = & \ipty \iunitty \\
+\itpdsem[\pscan{\ty}] & = & \ipty {(\isum {(\iprod \iintty
+    {\itpdsem[\ty]})} \iunitty)} \\
+\itpdsem[\lambda \ptyvar.\ty]      
+     & = & \lambda \ptyvar_\pdname.\itpdsem[\ty] \\
+\itpdsem[\ty_1 \ty_2]            & = & \itpdsem[\ty_1] \itpdsemstrip[\ty_2] \\
+\itpdsem[\ptry{\ty}]    & = & \ipty{\itpdsem[\ty]} \\
+\itpdsem[\ptransform{e_1}{\ty_1}{\ty_2}{e_2}] & = & \itpdsem[\ty_2]\\
+\itpdsem[\pkleene{\ty}{e}] & = & \iapty {\itpdsem[\ty]}
+\end{array}
+\]
+
+\fbox{$\itpdsemstrip[\ty] = \ity$}
+
+\[
+\begin{array}{lcl} 
+\itpdsemstrip[\ty] & = & \ity \ \ \mbox{where}\ \itpdsem[\ty] = \ipty{\ity}
+\end{array}
+\]
+\caption{Parse Descriptor Types}
+\label{fig:pd-tys}
+\end{figure}
+
+In \figref{fig:pd-tys}, we give the parse descriptor
+type for each \ddc{} type. Each PD type has a header and body.
+This common shape allows us to define functions that polymorphically
+process PDs based on their headers. Each header stores the number of
+errors encountered during parsing, an error code indicating the degree
+of success of the parse -- success, success with errors, or failure --
+and the span of data described by the descriptor.  Formally, the type
+of the header  ($\tyface{pd\_hdr}$) is $\iintty \iprodi \iecty \iprodi
+\ispty$.  Each body consists of subdescriptors corresponding to the
+subcomponents of the representation and any type-specific meta-data. For types with neither subcomponents nor special meta-data, we
+use $\iunitty$ as the body type.
+
+We discuss a few of the more complicated parse descriptors in detail.
+The parse descriptor body for sequences contains the parse descriptors of its elements,
+the number of element errors, and the sequence length. Note that the
+number of element errors is distinct from the number of sequence
+errors, as sequences can have errors that are not related to their
+elements (such as errors reading separators).  We introduce an
+abbreviation for array PD body types, $\iaptyname \; \ity =
+\iintty \iprodi \iintty \iprodi (\iseq \ity)$.
+\trversion{The $\pcomputen$ parse descriptors have no subelements because the
+data they describe is not parsed from the data source.}
+The $\pabsorbn$ PD
+type is $\iunitty$ as with its representation. We assume that just as
+the user does not want the represenation to be kept, so too the parse
+descriptor.  The $\pscann{}$ parse descriptor is either $\iunitty$, in case
+no match was found, or records the number of bits skipped before the
+type was matched along with the type's corresponding parse descriptor.
+
+
+\begin{figure}
+\small
+\fbox{$\kTrans[\gk,\ty] = \ity$} 
+    
+\begin{align*}
+  &\kTrans[\kty,\ty] = \extdom * \offdom \iarrowi \offdom * \itsem[\ty] * \itpdsem[\ty]
+   \\
+   &\kTrans[\ity \iarrowi \gk,\ty] = \ity \iarrowi \kTrans[\gk,\ty]
+   \\
+   &\kTrans[\kty \iarrowi \gk,\ty] = 
+      \forall\tyvar_\repname.\forall\tyvar_\pdname.
+         \kTrans[\kty,\tyvar] \iarrowi \kTrans[\gk,\ty \tyvar] 
+\end{align*}  
+  \caption{\Implang{} Language Types for Parsing Functions}
+  \label{fig:parser-types}
+\end{figure}
+
+\subsection{Parsing Semantics of the \ddc{}}
+\label{sec:parse-sem}
+
+\begin{figure*}
+\small
+\fbox{$\trans[\ty,\ctxt,\gk] = e$} 
+
+\[
+\begin{array}{l}
+  %% None 
+\trans[\ptrue,\ctxt,\kty] =
+  \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}
+\\[3pt] %\\
+%% False 
+\trans[\pfalse,,] =
+  \lampair{\spair<\off,\newrep {bottom}{},\newpd {bottom}{\off}>}
+\\[3pt] %\\ 
+%% Const 
+\trans[\pbase{e},\ctxt,\kty] =
+  \lampair{\iapp {\iapp {\Iimp(C)} (e)} {\itup {\idata,\off}}}
+\\[3pt] %\\
+%% Abs 
+\trans[\plam{\var}{\ity}{\ty},,] =
+   \sfn{\nrm\var}{\ity}{\trans[\ty,\ectxt{\var{:}\ity},\kind]}
+\\[3pt] %\\
+%% App 
+\trans[\papp{\ty}{e},\ctxt,\gk] =
+  \trans[\ty,,] \sapp e  
+\\[3pt]
+%% Prod 
+%\begin{array}{l}
+\trans[\psig{x}{\ty}{\ty'},\ctxt,\kty] = \\
+  \begin{array}{l}  
+    \lampair{} \\
+    \quad  \ilet {\spair<\off',r,p>} 
+    {{\trans[\ty,,]} \sapp \spair<\idata,\off>} \\
+    \quad  \ilet x {\ictup{r,p}}\\
+    \quad  \ilet {\spair<\off'',r',p'>} 
+    {{\trans[\ty',,]} \sapp \spair<\idata,\off'>} \\
+    \quad \spair<\off'',\newrep {\gS}{r,r'},\newpd {\gS}{p,p'}>
+  \end{array}  
+%\end{array}
+\\
+%% Sum 
+%\begin{array}{l}
+  \trans[\psum{\ty}{e}{\ty'},,] = \\
+  \begin{array}{l}  
+  \lampair{} \\
+  \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+  \quad \iif {\pdok p} \; \ithen {
+    \def \r {\newrep {+left}{r}}
+    \def \p {\newpd {+left}{p}}
+    \spair<\off',\r,\p>} \\
+  \quad \ielse {\ilet {\itup{\off',r,p}}{\trans[\ty',,] \sapp \spair<\idata,\off>}} \\
+  \quad 
+  {  % begin scope
+    \def \r {\newrep {+right}{r}}
+    \def \p {\newpd {+right}{p}}
+    %% 
+    \spair<\off',\r,\p>
+  }\\ % end scope
+  \end{array}
+\\
+%% Intersection 
+  \trans[\pand{\ty}{\ty'},,] = \\
+  \begin{array}{l}  
+     \lampair{} \\
+     \quad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+     \quad \ilet {\itup{\off'',r',p'}} {\trans[\ty',,] \sapp \spair<\idata,\off>} \\
+     \quad {\spair<\codefont{max}(\off',\off''),\newrep {\&}{r,r'},\newpd {\&}{p,p'}>}
+   \end{array}
+\\
+%\quad
+%% Set 
+  \trans[\pset{x}{\ty}{e},\ctxt,\kty] = \\
+  \begin{array}{l}  
+    \lampair{} \\
+    \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
+    \quad \ilet x {\ictup{r,p}}\\
+    \quad \ilet c e \\
+    \quad \spair<\off',\newrep {con} {c,r},\newpd {con} {c,p}>
+  \end{array}
+\\
+%% Array 
+\trans[\pseq{\ty}{\ty_s}{\pterm e {\ty_t}},,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+      \quad \iletfun {isDone}{\itup{\off,r,p}}{\\
+        \qquad \ior {\eofpred {\idata,\off}} {e\codefont {\sapp
+          \spair<r,p>}} \iori \\
+        \qquad \ilet {\itup{\off',r',p'}}{\trans[\ty_t,,] \spair<\idata,\off>}\\
+        \qquad \pdok{p'}
+      }\\
+      \quad \iin \\
+      \quad \iletfun {continue} {\itup{\off,\off',r,p}} {\\
+        \qquad \iif  {\off = \off' \iori \isdone {\off',r,p}} \; \ithen {\itup{\off',\codefont{r,p}}} \\
+        \qquad \ielse {
+          \ilet {\itup{\off_s,r_s,p_s}}{\trans[\ty_s,,] \sapp \spair<\idata,\off'>}}\\
+        \qquad \ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp \ictup{\idata,\off_s}}\\
+        \qquad \mathtt{continue} \sapp \ictup{
+            \off,\off_e,\newrep {seq} {r,r_e}, \newpd {seq} {p, p_s, p_e}
+        }}\\
+      \quad \iin
+   \end{array}\\
+  \begin{array}{l}  
+      \quad \ilet {\mathtt{r}} {\newrep {seq\_init}{}}\\
+      \quad \ilet {\mathtt{p}} {\newpd {seq\_init}{\off}}\\
+      \quad \iif {\isdone{\off,r,p}} \; \ithen {\itup{\off,\codefont{r,p}}}\\
+      \quad \ielse {\ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp
+          \spair<\idata,\off>}} \\
+      \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
+        \newrep {seq} {r,r_e}, \newpd {seq} {p, \newpd {unit} \off, p_e}}      
+  \end{array}  
+\\
+\end{array}
+%\quad
+\begin{array}{l}
+%% Var
+\trans[\ptyvar,,] = \codefont{f_\ptyvar}
+\\[3pt]
+%% Mu
+\trans[\pmu \ptyvar \gk \ty,,] = \\
+  \begin{array}{l}
+  \ifun {f_\ptyvar} {\itup{\data,\off}} {}\\
+  \quad \ilet {\itup{\off',r,p}} 
+  {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
+  \qquad \ictup{\off',r,\newpd{mu}{p}}
+  \end{array}  
+\\[3pt]
+%% Compute
+\trans[\pcompute e \ity,,] = \\
+  \quad \lampair{\itup{\off,\newrep {compute} {\nrm e},\newpd {compute} \off}}
+\\[3pt]
+%% Absorb
+\trans[\pabsorb \ty,,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \ilet {\itup {\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>}\\
+    \quad \itup{\off',\newrep {absorb} p,\newpd {absorb} p}   
+  \end{array}  
+\\
+%% Scan
+\trans[\pscan \ty,,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \iletfun {try} {i} {\\
+      \qquad \ilet {\itup{\off',r,p}} {\trans[\ty,,] \sapp
+        \codefont{\spair<\data,\off + i>}} \\
+      \qquad \iif {\pdok p}\; \ithen \\
+      \qquad {\ictup{\off',\newrep {scan} r,
+        \newpd {scan} {i,p}}}\; \ielse {}\\
+      \qquad \iif {\codefont{i = scanMax}}\; \ithen \\
+      \qquad {\ictup{\off,\newrep {scan\_err} {},
+        \newpd {scan\_err} {\off}}}\; \ielse {}\\
+      \qquad \codefont {try \sapp (i+1)}
+   }\\
+   \quad \iin \sapp \codefont{try \sapp 0} \\
+  \end{array}  
+\\
+%% lambda \alpha
+\trans[\lambda\tyvar . \ty,,] = %\\
+%  \begin{array}{l}
+    \Lambda \tyvar_\repname. 
+    \Lambda \tyvar_\pdname. \lambda \codefont{f_\ptyvar}. \trans[\ty,,]
+%  \end{array}  
+\\
+%% t1 t2
+\trans[\ty_1 \ty_2,,] = 
+    \trans[\ty_1,,]\; [\itsem[\ty_2]]\; [\itpdsemstrip[\ty_2]]\; \trans[\ty_2,,]
+
+\\
+%% Try ty
+\trans[\ptry \ty,,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \ilet {\itup {\off',r,p}} {\trans[\ty,,] \sapp \spair<\idata,\off>}\\
+    \quad \itup{\off,r,\newpd {try} p}   
+  \end{array}  
+\\
+%% Transform e1 ty1 ty2 e2
+\trans[\ptransform{e_1}{\ty_1}{\ty_2}{e_2},,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+    \quad \ilet {\itup {\off',r,p}} {\trans[{\ty_1},,] \sapp \spair<\idata,\off>}\\
+    \quad \ilet {\itup {r',p'}}{e_1\, r\, p}\\
+    \quad \itup{\off',r', p'}   
+  \end{array}  
+\\
+%% Kleene 
+\trans[\pkleene{\ty}{e},,] = \\
+  \begin{array}{l}  
+    \lampair{}\\
+      \quad \iletfun {isDone}{\itup{\off',r,p}}{\\
+        \qquad \ior {\eofpred {\idata,\off'}} {e\codefont {\sapp
+          \spair<r,p>}} 
+      }\\
+      \quad \iin \\
+      \quad \iletfun {continue} {\itup{\off,\off',r,p}} {\\
+        \qquad \iif  {\off = \off' \iori \isdone {\off',r,p}} \; \ithen {\itup{\off',\codefont{r,p}}} \\
+        \qquad \ielse {
+               \ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp \ictup{\idata,\off'}}}\\
+        \qquad \mathtt{continue} \sapp \ictup{
+            \off,\off_e,\newrep {kleene} {r,r_e}, \newpd {kleene} {p, p_e}
+        }}\\
+      \quad \iin
+   \end{array}\\
+  \begin{array}{l}  
+      \quad \ilet {\mathtt{r}} {\newrep {kleene\_init}{}}\\
+      \quad \ilet {\mathtt{p}} {\newpd {kleene\_init}{\off}}\\
+      \quad \iif {\isdone{\off,r,p}} \; \ithen {\itup{\off,\codefont{r,p}}}\\
+      \quad \ielse {\ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp
+          \spair<\idata,\off>}} \\
+      \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
+        \newrep {kleene} {r,r_e}, \newpd {kleene} {p, p_e}}      
+  \end{array}  
+\\
+\end{array}
+\]
+%\caption{\ddc{} Semantics (cont.)}
+\caption{\ddc{} Semantics}
+\label{fig:ddc-sem}
+\end{figure*}
+
+\begin{figure}
+\small
+\begin{itemize}
+\renewcommand{\labelitemi}{}
+
+%\item %[Unit:]
+\item $\ifun {R_{unit}} \iuval \iuval$
+\item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+
+%\item %[Bottom:]
+\item $\ifun {R_{bottom}} \iuval \ierr$
+\item $\ifun {P_{bottom}} \off ((1,\iecpc,\ipair \off \off),())$
+
+\item %[Pair:]
+\item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
+\item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
+  $\begin{array}{l}
+    \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+    \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
+    \quad \ictup {nerr,ec,sp}
+  \end{array}$
+
+\item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
+
+\end{itemize}
+\caption{Selected Constructor Functions. 
+The type of PD headers is $\iintty
+  \iprodi \iecty \iprodi \ispty$. 
+  We refer to the projections using
+  dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
+  $\codefont{sp}$, respectively. A span is a pair of offsets, referred
+  to as $\codefont{begin}$ and $\codefont{end}$, respectively.  The full collection of such constructor functions appears in \appref{app:asst-functions}.}
+\label{fig:cons-funs}
+%\caption{Constructor Functions (cont.)}
+\end{figure}
+
+
+The parsing semantics of a type $\tau$ is a function that transforms some amount of input into a pair of a representation and a parse descriptor, the types of which are determined by $\tau$.
+\figref{fig:parser-types} specifies the \implang{} language types of the parsers generated from well-kinded \ddc{} types.  Note that parameterized \ddc{} types require their arguments before they can parse any input.
+
+\figref{fig:ddc-sem} shows the parsing semantics function.  For each
+type, the input to the corresponding parser is a bit string and an
+offset which indicates the point in the bit string at which parsing
+should commence.  The output is a new offset, a representation of the
+parsed data, and a parse descriptor. As the bit string input is
+never modified, it is not returned as an output.  In addition
+to specifying how to handle correct data, each function describes how
+to transform corrupted bit strings, marking detected errors in
+a parse descriptor. The semantics function is partial, applying only
+to well-formed \ddc{} types.
+
+For any type, there are three steps to parsing: parse the
+subcomponents of the type (if any), assemble the resultant representation, and
+tabulate meta-data based on subcomponent meta-data
+(if any). For the sake of clarity, we have factored the latter two
+steps into separate representation and PD constructor functions which we define for
+each type. For some types, we additionally factor the PD header
+construction into a separate function. For example, the representation 
+and PD constructors for $\ptrue$ are $\newrepf {unit}$ and $\newpdf
+{unit}$, respectively, and the header constructor for products is
+${\codefont{H_{\gS}}}$. Selected constructors are shown in
+\figref{fig:cons-funs}. We have also factored out some commonly
+occuring code into ``built-in'' functions, explained as needed and
+defined formally in \appref{app:asst-functions}.
+
+The PD constructors determine the error code and
+calculate the error count.  There are three possible error codes:
+$\iok$, $\iecerr$, and $\iecpc$, corresponding to the three possible results of a parse: 
+it can succeed, parsing the data without errors; it can succeed,
+but discover errors in the process; or, it can find an
+unrecoverable error and fail.
+\trversion{
+Note that the the purpose of the $\iecpc$ code is to indicate to any
+higher level elements that some form of error recovery is required.
+Hence, the whole parse is marked as failed exactly when the parse ends
+in failure.}
+The error count is determined by subcomponent error counts and any errors associated directly with the type
+itself.  
+\trversion{
+If a subcomponent has errors then the error count is
+increased by one; otherwise its not increased at all. We use the
+function $\codefont {pos}$, which maps all positive numbers to 1
+(leaving zero as is), to assist in calculating the contribution of
+subcomponents to the total error count.  Errors at the level of the
+element itself - such as constraint violation in constrained types - are
+generally counted individually.}
+
+With this background, we can now discuss selected portions of the semantics.
+%With this background, we can now understand the semantics. 
+The semantics of $\ptrue$ and $\pfalse$ show that they do not consume any input, \ie{}, they do not change the offset. 
+A look at their constructors shows that the parse
+descriptor for $\ptrue$ always indicates no errors and a corresponding
+$\iok$ code, while that of $\pfalse$ always indicates failure with an
+error count of one and the $\iecpc$ error code. The semantics of base
+types applies the implementation of the base type's parser, provided
+by the function $\Iimp$, to the appropriate arguments.  Abstraction
+and application are defined directly in terms of \implang language
+abstraction and application.  Dependent pairs read the first element
+at $\off$ and then the second at $\off'$, the offset returned from
+parsing the first element.  Notice that we bind the pair of the
+returned representation and parse descriptor to the variable $\codefont{x}$
+before parsing the second element, implicitly mapping the 
+\ddc{} variable $x$ to the \implang{} language variable $\codefont{x}$ in the process.
+Finally, we combine the results
+using the constructor functions, returning $\off''$ as the final
+offset of the parse.
+
+\trversion{
+Sums first attempt to parse according to the left type, returning the resulting
+value if it parses without errors. Otherwise, it parses according to
+the right type. Intersections read both types starting at the same
+point. They advance the stream to the maximum of the two offsets
+returned by the component parsers. The construction of the parse
+descriptor is similar to that of products. For constrained types, we call the
+parser for the underlying type $\ty$, bind $\var$ to the resulting rep
+and PD, and check whether constraint is satisfied. The result
+indicates whether the data has a semantic error and is used in
+constructing the representation and PD. For example, the PD constructor will add
+one to the error count if the constraint is not satisfied. Notice that
+we advance the stream independent of whether the constraint was
+satisfied.
+}
+Sequences have the most complicated semantics because the number of subcomponents depends upon a combination of the data, the termination predicate, and the terminator type. Consequently, the sequence parser uses mutually
+recursive functions $\codefont{isDone}$ and $\codefont{continue}$ to implement this open-ended semantics. 
+Function $\codefont{isDone}$ determines if the parser
+should terminate by checking whether the end of the source has been
+reached, the termination condition $e$ has been satisfied, or the
+terminator type can be read from the stream without errors at
+$\off$.
+Function $\codefont{continue}$ takes four
+arguments: two offsets, a sequence representation, and a sequence PD.  The two
+offsets are the starting and ending offset of the previous round of
+parsing. They are compared to determine whether the parser is
+progressing in the source, a check that is critical to ensuring that
+the parser terminates. Next, the parser checks whether the sequence is
+finished, and if so, terminates. Otherwise, it attempts to read a
+separator followed by an element and then continues parsing the
+sequence with a call to $\codefont{continue}$.
+
+\trversion{
+Finally, the body of the parser creates an initial sequence representation and PD and
+then checks whether the sequence described is empty. If not, it reads
+an element and creates a new rep and PD for the sequence.  Note that
+it passes the PD for $\ptrue$ in place of a separator PD, as no
+separator is read before the first element.  Finally, it continues
+reading the sequence with a call to $\codefont{continue}$.
+
+Because of  the iterative nature of sequence parsing, the representation and PD are constructed incrementally. The parser first creates an empty representation and PD
+and then adds elements to them with each call to
+$\codefont{continue}$. The error count for an array is the sum of the
+number of separators with errors plus one if there were any element
+errors. Therefore, in function ${\codefont{H_{seq}}}$ we first check
+if the element is the first with an error, setting $\codefont{eerr}$
+to one if so. Then, the new error count is a sum of the old,
+potentially one for a separator error, and $\codefont{eerr}$. In
+$\newpdf{seq}$ we calculate the element error count by unconditionally
+adding one if the element had an error.
+}
+We translate recursive types into
+recursive functions with a special
+function name corresponding to the name of the 
+bound type   variable.
+Recursive type variables translate to these special names.
+\trversion{We note that the body of the recursive function is somewhat
+  redundant. However, the simpler encoding of $\ifun {f_\ptyvar}
+  {\itup{\data,\off}} {\trans[\ty,,] \; \itup{\data,\off}}$ would have
+  complicated the meta-theory.}
+
+The $\pscann$ type attempts to parse the underlying type from the
+stream at an increasing scan-offset, $i$, from the original offset
+$\off$, until success is achieved or a predefined maximum scan-offset
+(\cd{scanMax}) is reached.  In the semantics we give here, offsets are
+incremented one bit at a time --- a practical implementation would choose
+some larger increment ({\it e.g.,} 32 bits at a time).
+
+\trversion{
+The definition of $\pcomputen$ just calls the compute constructors.
+The representation constructor returns the value computed by $e$, while the PD
+records no errors and reports a span of length 0, as no data is
+consumed by the computation. The $\pabsorbn$ parser first parses the
+underlying type and then calls the absorb constructors, passing only
+the PD, which is needed by the rep constructor to determine whether an
+error occured while parsing the underlying type. If so, the value
+returned is a $\ierr$. Otherwise, it is $\iunitty$.  The absorb parse
+descriptor duplicates the error information of its underlying type.
+
+
+The $\pscann$ type attempts to parse the underlying type from the
+stream at an increasing scan-offset, $i$, from the original offset
+$\off$, until success is achieved or a predefined maximum scan-offset
+(\cd{scanMax}) is reached. Note that, upon success, $i$ is passed to
+the PD constructor function, which both records it in the PD and sets
+the error code based on it. It is considered a semantic error for the
+value to be found at a positive $i$, whereas it is a syntactic error
+for it not to be found at all.  }
+
+\section{Meta-theory}
+\label{sec:meta-theory}
+
+\cut{This paragraph belongs somewhere in the TR:
+A few things to note regarding variable names. First, all variable
+names introduced in translation are by definition not equal to the
+target of the substitution, nor present in the free variables of the
+term being substituted. Second, for those types with bound variables,
+we note that the potential alpha-conversion when performing a
+substitution on the type exactly parallels any alpha-conversion of the
+same variable where it appears in the translation of the type. Last,
+all constructors, support functions and base-type parsers are closed
+with respect to user-defined variable names.}
+
+One of the most difficult, and perhaps most interesting, challenges of our
+work on \ddc{} was determining what
+properties we wanted to hold. What are the ``correct''
+invariants of data description languages? While there are many
+well-known desirable invariants for programming languages, the
+meta-theory of data description languages has been
+uncharted.
+%
+We present the following two properties as critical invariants of
+our theory. We feel that they should hold, in some form, for any data
+description language.
+\begin{itemize}
+\trversion{
+\item {\bf Translation Completeness}: The semantic function
+  $\trans[\cdot,,]$ is a total function of well-formed \ddc{} types.
+}
+\item {\bf Parser Type Correctness}: For a \ddc{} type $\ty$, the
+  representation and PD output by the parsing function of $\ty$ will
+  have the types specified by $\itsem[\ty]$ and
+  $\itpdsem[\ty]$, respectively.
+  
+\item {\bf Parser Error Correlation}: For any representation and PD output by a
+  parsing function, the errors reported in the PD
+  will be correlated with the errors present in the representation.
+\end{itemize}
+%
+\trversion{
+Before presenting the formal statement of these properties, we specify
+some assumptions that we make about \ddc{} base types, their kinds,
+types, and implementations, that are necessary for the satisfaction of
+these properties. In essence, we assume that the properties we desire of
+the rest of the calculus hold for the base types.
+}
+% In formalizing these properties, we assume that \ddc{} base types, their kinds, representation and parse descriptor types, and parsers satisfy the properties we desire to hold of the rest of the calculus.  
+% \appref{app:meta-theory} contains a formal statement of these assumptions.
+
+\trversion{
+\begin{theorem}[Translation Completeness]
+\label{thm:translation-completeness}
+  If \ $\ddck[\ty,,\kind,\mcon]$ then $\trans[\ty,,] = e$.
+\end{theorem}
+
+\begin{proof}
+  By induction on kinding derivations. For constant case, use the
+  first item of Condition~\ref{cond:base-types}.
+\end{proof}
+}
+\trversion{
+We continue by stating and proving that parsers are type correct.
+However, to do so, we must first establish some typing properties of the Rep
+and PD constructors, as at least one of them appears in most
+parsing functions. 
+
+With this lemma we now formally state that each constructor
+produces a value whose type corresponds to its namesake \ddc{} type.
+Note that all universally quantified \ddc{} types $\ty$ are assumed
+to be well formed.
+
+\begin{lemma}[Types of Constructors]
+\label{lem:nice-types-of-constructors}
+\begin{itemize}
+\item $\newrepf {true} : \iarrow \iunitty \itsem[\ptrue]$
+\item $\newpdf  {true} : \iarrow \ioffty {\itpdsem[\ptrue]}$
+\item $\newrepf {false} : \iarrow \iunitty {\itsem[\pfalse]} $
+\item $\newpdf  {false} : \iarrow \ioffty {\itpdsem[\pfalse]}$
+\item $\forall \ty_1,\ty_2,x.\newrepf {\gS} : \iarrow {\iprod
+    {\itsem[\ty_1]}{\itsem[\ty_2]}} {\itsem[\psig x {\ty_1}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2,x.\newpdf {\gS} : 
+  \iarrow {\iprod {\itpdsem[\ty_1]}{\itpdsem[\ty_2]}}
+  {\itpdsem[\psig x {\ty_1}{\ty_2}]}
+$
+\item $\forall \ty_1,\ty_2.\newrepf {+left} : \iarrow {\itsem[\ty_1]} 
+                            {\itsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newrepf {+right} : \iarrow {\itsem[\ty_2]} 
+                            {\itsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newpdf {+left} : \iarrow {\itpdsem[\ty_1]} 
+                            {\itpdsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newpdf {+right} : \iarrow {\itpdsem[\ty_2]} 
+                            {\itpdsem[\psum {\ty_1}{}{\ty_2}]}$
+\item $\forall \ty_1,\ty_2.\newrepf {\&} : \iarrow {\iprod
+    {\itsem[\ty_1]}{\itsem[\ty_2]}} {\itsem[\pand {\ty_1}{\ty_2}]}$
+\item $\forall \hdtvs {\ty_1}{\ty_2}.\newpdf {\&} : 
+  \iarrow {\iprod {\itpdsem[\ty_1]}{\itpdsem[\ty_2]}}
+  {\itpdsem[\pand {\ty_1}{\ty_2}]}$.
+\item $\forall \ty,x,e.\newrepf {set} : \iprod \iboolty {\itsem[\ty]} 
+  \iarrowi \itsem[\pset x \ty e]$
+\item $\forall \ty,x,e.\newpdf {set} : \iprod \iboolty {\itpdsem[\ty]} 
+  \iarrowi \itpdsem[\pset x \ty e]$
+\item $\forall \ty,\ty_1.
+  \newrepf {seq\_init} : \iarrow \iunitty {\itsem[\pseq \ty
+      {\ty_1} {\_}]}$
+\item $\forall \ty,\ty_1.
+  \newpdf {seq\_init} : \iarrow \ioffty {\itpdsem[\pseq \ty
+      {\ty_1} {\_}]}$
+\item $\forall \ty,\ty_1.
+  \newrepf {seq} : \iarrow {\itsem[\pseq \ty
+      {\ty_1} {\_}] \iprodi \itsem[\ty]} 
+  {\itsem[\pseq \ty
+      {\ty_1} {\_}]}$
+\item $\forall \ty,\ty_1.
+  \newpdf {seq} : 
+  \itpdsem[\pseq \ty {\ty_1} {\_}] \iprodi
+   \itpdsem[\ty_1] \iprodi \itpdsem[\ty] \iarrowi \\
+  \itpdsem[\pseq \ty {\ty_1} {\_}]$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newrepf {seq\_init} : \iarrow \iunitty {\itsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}]}$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newpdf {seq\_init} : \iarrow \ioffty {\itpdsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}]}$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newrepf {seq} : \iarrow {\itsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}] \iprodi \itsem[\ty]} 
+%   {\itsem[\pseq \ty
+%       {\ty_1} {\pterm e {\ty_2}}]}$
+% \item $\forall \ty,\ty_1,\ty_2,e.
+%   \newpdf {seq} : 
+%   \itpdsem[\pseq \ty {\ty_1} {\pterm e {\ty_2}}] \iprodi
+%    \itpdsem[\ty_1] \iprodi \itpdsem[\ty] \iarrowi \\
+%   \itpdsem[\pseq \ty {\ty_1} {\pterm e {\ty_2}}]$
+\item $\forall e.\newrepf {compute} : \forall \ga.\iarrow \ga {\itsem[\pcompute
+    e \ga]}$
+\item $\forall e.\newpdf {compute} : \forall \ga.\iarrow \ioffty
+  {\itpdsem[\pcompute e \ga]}$
+\item $\forall \ty.\newrepf {absorb} : \iarrow {\itpdsem[\ty]}
+  {\itsem[\pabsorb \ty]}$
+\item $\forall \ty.\newpdf {absorb} : \iarrow {\itpdsem[\ty]}
+  {\itpdsem[\pabsorb \ty]}$
+\item $\forall \ty.\newrepf {scan} : \itsem[\ty] \iarrowi
+  \itsem[\pscan \ty]$
+\item $\forall \ty.\newpdf {scan} : \iintty \iprodi \itpdsem[\ty] \iarrowi
+  \itpdsem[\pscan \ty]$
+\item $\forall \ty.\newpdf {scan} : \iintty \iprodi \itpdsem[\ty] \iarrowi
+  \itpdsem[\pscan \ty]$
+\item $\forall \ty.\newrepf {scan\_err} : \iunitty \iarrowi
+  \itsem[\pscan \ty]$
+\item $\forall \ty.\newpdf {scan\_err} : \ioffty \iarrowi
+  \itpdsem[\pscan \ty]$
+\end{itemize}  
+\end{lemma}
+
+\begin{proofsketch}
+  By inspection of code. First we infer (by hand) the (polymorphic)
+  type of each function. Then we verify that it matches the types
+  specified above.
+\end{proofsketch}
+}
+
+\trversion{
+\begin{figure}
+{\small
+\fbox{$\ptyc{\rctxt} = \ctxt$} 
+    
+\[
+  \ptyc{\cdot} = \cdot \qquad\qquad
+  \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
+  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
+\]}
+  \caption{Recursive Parser \Implang{} Types}
+  \label{fig:rec-parser-types}
+\end{figure}
+}
+
+To prove our type correctness theorem by induction, we must account
+for the fact that any free recursive type variables in
+a \ddc{} type $\ty$ will become free function variables
+in $\trans[\ty,,]$.  
+\trversion{
+To that end, we define in \figref{fig:rec-parser-types}
+the function $\ptyc \rctxt$, 
+which maps recursive variable contexts
+$\rctxt$ to typing contexts $\ctxt$. 
+}
+\poplversion{
+To that end, we define the function $\ptyc \rctxt$, 
+which maps recursive variable contexts
+$\rctxt$ to typing contexts $\ctxt$:
+\vskip -1.5ex
+{\small
+\[
+\begin{array}{l}
+  \ptyc{\cdot} = \cdot \\[1ex]
+  \ptyc{\rctxt,\ptyvar{=}\pmu \ptyvar \ty} = \ptyc \rctxt,\codefont{f_\ptyvar}{:}
+  \kTrans[\kty,\asub \rctxt {\pmu \ptyvar \ty}]
+\end{array}
+\]%
+}%
+}%
+\noindent
+We also apply $\rctxt$ to $\ty$
+to close any open references to recursive types before
+determining the corresponding parser type. 
+\trversion{  We do not explicitly require that $\ctxt$
+be well formed in the premises, as it follows from the fact that $\ty$
+is well formed in $\ctxt$.
+}
+
+\begin{theorem}[Type Correctness]
+\label{thm:type-correctness}
+  If  $\wfd \ctxt \rctxt$ and
+   $\ddck[\ty,{\pctxt;\rctxt;\ctxt},\gk,\mcon]$ then
+  $\stsem[{\trans[\ty,,]},{\ctxt,\ptyc \rctxt},
+            {\kTrans[\kind,\asub \rctxt \ty]}]$.
+\end{theorem}
+
+\begin{proof}
+  By induction on the height of the second derivation.
+\end{proof}
+
+\begin{corollary}[Type Correctness of Closed Types]
+  If $\ddck[\ty,,\gk,\con]$ then
+  $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
+\end{corollary}
+
+We start our formalization of the error-correlation property by
+defining representation and PD correlation.
+Informally, a representation and a PD are correlated when the number
+of errors recorded in the PD is at least as many as the number of
+errors in the representation and semantic errors, \ie{},
+constraint violations, are properly reported.  Formally, we define
+correlation using two mutually recursive definitions.  The first,
+$\corrkl \ty r p$, defines error correlation between a representation
+$r$ and a parse descriptor $p$ at type $\ty$.  It does so by
+computing a weak-head normal form $\tyval$ for $\ty$ and then
+using the subsidiary relation $\corr \tyval r p$, which is defined for
+all weak-head normal types $\tyval$ with base kind $\kty$.
+Types with higher kind such as abstractions are excluded from this definition
+as they cannot directly produce representations and PDs.
+\figref{fig:revised-ddc-syntax} defines the weak-head
+normal types $\tyval$ and give normalization rules while the
+following definitions specify error correlation.   
+Below, we abbreviate $p.h.{nerr}$ as $p.{nerr}$.
+and use $\mathtt{pos}$ to denote the function which returns zero when
+passed zero and one otherwise.
+
+
+
+\begin{figure}
+\small
+\begin{bnf}
+%   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+%                                \pext{\| \gk \-> \gk} \\
+  \mname{Normalized\\ Types}{2} \meta{\tyval} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} \|
+%  \nlnalt{Types}
+%%        \|
+%%       \pext{\plam{\ptyvar}{\gk}{\ty} \| \papp{\ty}{\ty} \nlalt}
+%%       \pxpd{\ty}{e}
+%%       \pext{\nlalt
+%%         \ptransform{e}{e}{\ty} \| 
+%%       }
+    \psig x \ty \ty  \nlalt
+    \psum \ty e \ty  \| \pand \ty \ty \|
+    \pset x \ty e \|
+    \pseq \ty \ty {\pterm e \ty} \nlalt
+    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
+    \\
+  \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
+    \ptyvar \| \pmu{\ptyvar}{\ty} 
+\end{bnf}  
+\[
+  \infer{
+    \papp {\ty} {e} \stepsto \papp {\ty'} {e}
+  }{
+    \ty \stepsto \ty'
+  }
+\quad
+  \infer{
+    \papp {\tyval} {e} \stepsto \papp {\tyval} {e'}
+  }{
+    e \stepsto e'
+  }
+\quad
+  \infer{
+    \papp {(\plam x {} \ty)} {v} \stepsto \ty[v/x]
+  }{}
+\quad
+  \infer{
+    \pmu \ptyvar \ty \stepsto \ty[\pmu \ptyvar \ty/\ptyvar]
+  }{}
+\]
+  \caption{\ddc{} Weak-Head Normal Types and Normalization}
+  \label{fig:ddc-reduction-rules}
+  \label{fig:revised-ddc-syntax}
+\end{figure}
+
+\begin{definition}
+$\corrkl \ty r p$ iff if $\ty \kstepsto \tyval$ then $\corr \tyval r p$.
+\end{definition}
+
+\begin{definition}[Representation and PD Correlation Relation]
+$\corr \tyval r p$ iff exactly one of the following is true:
+  \begin{itemize}
+  \item $\tyval = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
+  \item $\tyval = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
+  \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1} {p_2}}$ 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
+    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
+    and $p = \ipair h {\iinld {\ity}{p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_1} {r'} {p'}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
+    and $p = \ipair h {\iinr {p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_2} {r'} {p'}$.
+  \item $\tyval = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1}{p_2}}$, 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
+    $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
+    \ipair h {p'}$, 
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
+    and $e[(r',p')/x] \kstepsto\itrue$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
+    and $p = \ipair h {p'}$,
+    and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
+    $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
+  \item $\tyval = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
+    $r = \ipair {len} {\iarr{\vec {r_i}}}$, $p = \itup{h,\itup{{neerr},{len}',\iarr {\vec {p_i}}}}$,
+    ${len} = {len}'$, ${neerr} = \sum_{i=1}^{len}
+    \mathtt{pos}(p_i.{nerr})$, $\corrkl {\ty_e}
+    {r_i} {p_i}$, (for $i=1 \ldots {len}$), and
+    $h.{nerr} \geq \mathtt{pos}({neerr})$.
+%   \item $\tyval = \pmu \ptyvar {\ty'}$ and 
+%     $\corrkl {\ty'[\pmu \ptyvar {\ty'}/\ptyvar]} r p$.
+  \item $\tyval = \pcompute e \ity$ and $p.{nerr} = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
+  \item $\tyval = \pscan {\ty'}$, $r =\iinl {r'}$,
+      $p = \ipair h {\iinl {\ipair i {p'}}}$,
+      $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and
+      $\corrkl {\ty'}{r'}{p'}$.
+  \item $\tyval = \pscan {\ty'}$,
+      $r =\iinr \ierr$,
+      $p = \ipair h {\iinr \iuval}$, and
+      $h.{nerr} = 1$.
+  \end{itemize}
+\end{definition}
+
+\trversion{
+Once again, we first need to prove error correlation properties of
+the Rep and PD constructors, as expressed in the following lemma.
+
+\begin{lemma}[Correlation Properties of Constructors]
+  \label{lem:cons-props}
+  \begin{itemize}
+  \item $\corr \ptrue {\newrep {true} {}} {\newpd {true} \off}$.
+  \item $\corr \pfalse {\newrep {false} {}} {\newpd {false} \off}$.
+  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$
+    then\\ $\corr {\psig x {\ty_1} {\ty_2}}
+    {\newrep {\gS} {r_1,r_2}}{\newpd {\gS} {p_1,p_2}}$.
+  \item If $\corrkl \ty r p$ then $\corr {\psum \ty e {\ty'}} 
+      {\newrep {+left} r} {\newpd {+left} p}$.
+  \item If $\corrkl \ty r p$ then $\corr {\psum {\ty'} e \ty} 
+      {\newrep {+right} r} {\newpd {+right} p}$.
+  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$
+    then\\ $\corr {\pand {\ty_1} {\ty_2}}
+    {\newrep {\&} {r_1,r_2}}{\newpd {\&} {p_1,p_2}}$.
+  \item If $\corrkl \ty r p$ and $e[(r,p)/x] \kstepsto c$ then\\ $\corr {\pset x \ty e} 
+    {\newrep {set} {c,r}} {\newpd {set} {c,p}}$
+  \item $\corr {\pseq \ty {\ty_s}{\pterm e {\ty_t}}} 
+    {\newrep {seq\_init} {}} {\newpd {seq\_init} \off}$.
+  \item If $\corr {\pseq \ty {\ty_s} {\pterm e {\ty_t}}} r p$ and
+    $\corrkl \ty {r'} {p'}$ then for any $p''$, $\corr {\pseq \ty {\ty_s}{\pterm e {\ty_t}}}
+    {\newrep {seq} {r,r'}} {\newpd {seq} {p,p'',p'}}$.    
+  \item $\corr {\pcompute e \ity} {\newrep {compute} {e}} {\newpd {compute} \off}$.
+  \item $\corr {\pabsorb \ty} {\newrep {absorb} p} {\newpd {absorb} p}$.
+  \item If $\corrkl {\ty} r p$ then $\corr {\pscan \ty} 
+      {\newrep {scan} r} {\newpd {scan} {i,p}}$.
+  \item $\corr {\pscan \ty} 
+      {\newrep {scan\_err} {}} {\newpd {scan\_err} \off}$.
+  \end{itemize}
+\end{lemma}
+
+\begin{proof}
+  By inspection of code. 
+\cut{
+  \reminder{Fix the following or drop it: }
+  Array case is most complicated, in particular proving the clause
+  $h.{nerr} \geq \mathtt{pos}({neerr})$. To do so, you must prove that
+  $H_{seq}$ maintains this invariant. The first case of the match is the
+  hard one, as ${nerr}$ is 0 (if its $1$, then it must be greater than
+  or equal to $\mathtt{pos}(n)$, for any $n$).  First, as $h.{nerr} =
+  0$, so too must $neerr$. Next, note that in this first case,
+  $h1.{nerr} = 0$. Now, the new value of ${neerr}$ is just the sum of
+  the original ${neerr}$ and $\mathtt{pos}(h1.{nerr})$, that is, $0 +
+  0$.}
+\end{proof}
+}
+
+Definition~\ref{def:err-corr} specifies the exact property we require
+of parsing functions. At base kind, we require that any representation and PD
+returned by the parser must be correlated. At higher kind, we require
+that the function preserve the property of error correlation. Hence,
+the definition is a simple form of logical relation.
+Lemma~\ref{lem:err-corr-at-T} states that any well-formed type of base
+kind is error-correlated.
+
+\begin{definition}[Error Correlation Relation]
+\label{def:err-corr}
+$\ecpred \ty \kind$ iff exactly one of the following is true:
+  \begin{itemize}
+  \item $\kind = \kty$ and if $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
+  \spair<\off',r,p>$ then $\corrkl \ty r p$
+  \item $\kind = \ity \iarrowi \kind'$ and if $\stsem[v,,\ity]$
+    then $\ecpred {\ty \sapp v} {\kind'}$
+  \end{itemize}
+\end{definition}
+
+\begin{lemma}[Error Correlation at Base Kind]
+\label{lem:err-corr-at-T}
+If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
+  \spair<\off',r,p>$ then $\corrkl \ty r p$.
+\end{lemma}
+
+\begin{proof}
+  By induction on the height of the second derivation.
+\end{proof}
+
+\begin{theorem}[Error Correlation]
+\label{thm:err-corr}
+If $\ddck[\ty,,\kind,\con]$ then $\ecpred \ty \kind$.
+\end{theorem}
+
+\begin{proof}
+  By induction on the size of the kind $\kind$. For $\kind = \kty$, we
+  use Lemma~\ref{lem:err-corr-at-T}.
+\end{proof}
+
+\trversion{
+We conclude this section with a useful property of correlated representations
+and PDs. If the PD reports no errors, then there are no syntactic
+errors in the representation data structure {\it at any level}. 
+We formally define
+{\it clean} (error-free) values next, followed by the statement of the
+property itself.
+
+\begin{definition}[Clean Value]
+$\noerr v$ iff exactly one of the following is true:
+\begin{itemize}
+\item $v = c$ and $c \neq \ierr$.
+\item $v = \ifun f x e$.
+\item $v = \ipair {v_1} {v_2}$ and $\noerr {v_1}$ and $\noerr {v_2}$.
+\item $v = \iinl {v'}$ and $\noerr {v'}$.
+\item $v = \iinr {v'}$ and $\noerr {v'}$.
+\item $v = \iarr{v_1 \cdots v_n}$ and $\noerr {v_i}$ for $i=1\ldots n$.
+\end{itemize}
+\end{definition}
+
+\begin{lemma}
+  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then $\noerr r$.
+\end{lemma}
+
+\begin{proof}
+  By induction on the structure of r.
+\end{proof}
+}
+
+\begin{corollary}
+  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then there are no syntactic
+  or semantic errors in the representation data structure $r$.
+\end{corollary}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
+\cut{
+=======
 \section{The Semantics of PADS/ML}
 \label{sec:ddc}
 % \emph{What is a good name for types with kind T?}
@@ -971,3 +2462,4 @@ specifications.
 %%% mode: latex
 %%% TeX-master: "paper"
 %%% End: 
+}
