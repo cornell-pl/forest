@@ -1,14 +1,26 @@
 <!-- Problems/Questions:
 
+April 6, 2006: 
+
+March 2006: 
+
      Union tag field is an int-accumulator (its physical type),
      but should be its abstract type.
 
+       - Mary should fix this to be a string.
+
      Same issue for enums.
+
+       - Mary should fix this to be a string.
 
      Should absence of accumulator info mean that no values were seen?
 
+       - Maybe print everything. 
+
      nerr field accumulator is missing in generated PADS types for
      union and struct accumulators
+
+       - Kathleen will fix this. 
 -->
 <xs:schema targetNamespace="http://www.padsproj.org/pads-accum.xsd"
 	   xmlns:xs="http://www.w3.org/2001/XMLSchema"

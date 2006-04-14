@@ -1,3 +1,16 @@
+April 14, 2006 - Mary (PADX)
+  o Realigned PADX data model with Galax data model
+
+March 23, 2006 - Mary
+
+  o Finished pads-accum.xsd and associated examples
+    
+    padsc/schemata/examles/ai.accum.xml contains XML representation of
+    PADS accumulator output in padsc/schemata/examles/ai.accum.
+
+    padsc/schemata/examles/ai.accum.xml validates against accumulator
+    schema in padsc/schemata/pads-accum.xsd.
+    
 March 13, 2006 - Mary
 
   o Moved pads.xsd from libpglx/ to schemata/

@@ -116,7 +116,7 @@ class virtual padsNode docid' nr' pnr' =
 (* PADS Document Nodes *)
 (* padsDocumentNode is passed the nodeRep of the dummy root element
    node of the virtual XML document. *)
-and padsDocumentNode (doc_uri_opt : atomicString option) docid psource_file (nr : Pads_c.nodeRep) =
+and padsDocumentNode (doc_uri_opt : atomicAnyURI option ref) docid psource_file (nr : Pads_c.nodeRep) =
   object (self)
     inherit document (doc_uri_opt)
     inherit padsNode docid nr (None)
@@ -145,14 +145,14 @@ and padsDocumentNode (doc_uri_opt : atomicString option) docid psource_file (nr 
 	    | _ -> Cursor.cursor_empty()
 	  end
 
-    method document_uri () =  doc_uri_opt
+    method document_uri () =  (!doc_uri_opt)
   end
 
 (* PADS Element Nodes *)
 
 and padsElementNode docid (nr' : Pads_c.nodeRep) rqname (pnr' : Pads_c.nodeRep option) (nsenv : nsenv) = 
   object (self)
-    inherit element
+    inherit element (ref None)  (* Not sure what to do here -- should base URI be propgated from document? *)
     inherit padsNode docid (nr') (pnr')
 
 (*    val rqname = (NSDefaultElementPrefix, NSUri "", Pads_c.name(nr')) *)
@@ -270,23 +270,20 @@ let docid_gen = Nodeid.build_docid_gen()
 let uri_docid_table = Hashtbl.create 101
 
 (* Pass name of PADS-generated schema *)
-let pads_document proc_ctxt uriopt psource_file nr = 
+let pads_document proc_ctxt uri psource_file nr = 
   (* Conf.print_physical_algebra := true; *)
   (* Normalization identity function, i.e., don't normalize the input query: 
   Processing_context.set_normalization_ident proc_ctxt true; *)
   start_monitor_call proc_ctxt Prolog "pads_document" ; 
   let docid =
-    match uriopt with
-    | Some uri ->
-	(try 
-	  Hashtbl.find uri_docid_table uri
-	with Not_found -> 
-	  let docid = (Nodeid.new_docid (docid_gen)) in
-	  Hashtbl.add uri_docid_table uri docid;
-	  docid)
-    | None -> Nodeid.new_docid (docid_gen)  (* If there is no uri, then generate a unique docid for this call. *)
+    try 
+      Hashtbl.find uri_docid_table uri
+    with Not_found -> 
+      let docid = (Nodeid.new_docid (docid_gen)) in
+      Hashtbl.add uri_docid_table uri docid;
+      docid
   in
-  let pdnfn (docid, nr) = new padsDocumentNode uriopt docid psource_file nr in
+  let pdnfn (docid, nr) = new padsDocumentNode (ref(Some(new atomicAnyURI (AnyURI._uri_of_string uri)))) docid psource_file nr in
   let pdn = 
     wrap_monitor 
       proc_ctxt 

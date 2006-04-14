@@ -42,7 +42,7 @@
 # HAVE_SHARED_ASTLIB = 1
 
 # uncomment this to force static builds
-FORCE_STATIC = 1
+# FORCE_STATIC = 1
 
 # uncomment this to use gprof with debug libaries/executables
 # (only works with GNU compilers)

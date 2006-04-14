@@ -175,6 +175,7 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
+      /* Put call to report XML function here */
       error(2, "read returned error");
 #endif
     }
