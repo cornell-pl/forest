@@ -1,3 +1,22 @@
+
+April 18, 2006 - Mary (PADX)
+
+  o Updated mk/rules.mk and padsc/pads-glx/GNUmakefile to align with
+    GODI-Galax configuration options.
+
+    This is an improvement, because we now include Galax's
+    configuration file in $(GALAX_HOME)/config/Makefile.galax, but
+    there are still some hacks in padsc/pads-glx/GNUmakefile for PADX.
+    See "HACK ALERT" in  padsc/pads-glx/GNUmakefile 
+
+  o New Environment Variables!
+
+    OCAML_BIN_DIR=/home/mff/godi/bin
+    OCAML_LIB_DIR=//home/mff/godi/lib/ocaml
+    GALAX_HOME=/home/mff/Galax-0.6.0-Linux/galax
+
+  o pads/documents/sigmoddemo06 -- last minutes fixes for ACM. 
+
 April 14, 2006 - Mary (PADX)
   o Realigned PADX data model with Galax data model
 

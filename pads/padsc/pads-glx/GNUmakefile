@@ -33,7 +33,7 @@ pads_dm.mli : pads_c.mli
 
 CAML_OBJS=pads_c.cmo pads_dm.cmo $(GALAX_SRC)/galapi/c_api/galax_wrap.cmo
 CAML_OPTOBJS=$(CAML_OBJS:.cmo=.cmx)
-OCAML_FLAGS=-I . -I $(VPATH) -I $(GALAX_HOME)/lib/caml-devel 
+OCAML_FLAGS=-I . -I $(VPATH) -I $(GALAX_HOME)/lib/caml
 
 # C object files
 OBJS_O=pads_dm_opt.o $(GALAX_SRC)/galapi/c_api/galax_util.o $(GALAX_SRC)/galapi/c_api/galax_stub.o $(GALAX_SRC)/galapi/c_api/itemlist.o pads_c_stubs.o pads_dm_stub.o pads_pglx.o
@@ -61,21 +61,24 @@ $(VPATH)/pads_c.mli     : pads_c.h
 pads_c.ml      : pads_c.h
 pads_c_stubs.c : pads_c.h
 
-# PADS Data model in Caml and C
-# These definitions come from galax/config/Makefile.gen
-CAMLLIBPCRE=$(OCAML_LIB_DIR)/site-lib/pcre
-CAMLLIBNETSTRING=$(OCAML_LIB_DIR)/site-lib/netstring
-CAMLLIBPXP=$(OCAML_LIB_DIR)/site-lib/pxp-engine
-CAMLLIBCAMOMILE=$(OCAML_LIB_DIR)/site-lib/camomile
-CAML_LIBS=nums.cmxa unix.cmxa str.cmxa pcre.cmxa netstring.cmxa pxp_engine.cmxa bigarray.cmxa camomileunpack.cmxa
-DEFAULT_CLIBS=-lnums -lunix -lstr -lbigarray -lpcre -lpcre_stubs -L$(OCAML_LIB_DIR) -L$(PCRE_LIB_DIR) -L$(CAMLLIBPCRE)
-CAML_DEFAULT_CLIBS=-cclib -lnums -cclib -lunix -cclib -lstr -cclib -lbigarray -cclib -lpcre_stubs -cclib -lpcre -ccopt -L$(PCRE_LIB_DIR) -ccopt -L$(CAMLLIBPCRE) -ccopt -L$(CAMLLIBPXP) -ccopt -L$(CAMLLIBCAMOMILE) -ccopt -L$(OCAML_LIB_DIR) 
+# Include Galax's own configuration Makefile:
+include $(GALAX_HOME)/config/Makefile.galax
 
-ALL_CAML_LIBS=-I $(CAMLLIBPCRE) -I $(CAMLLIBNETSTRING) -I $(CAMLLIBPXP)  -I $(CAMLLIBCAMOMILE) $(CAML_LIBS) $(CAML_DEFAULT_CLIBS) 
+# HACK ALERT!
+# These definitions are copied from $(GALAX_HOME)/config/Makefile.galax and edited to include -ccopt!
 
-API_ALL_CAML_LIBS=-linkall $(ALL_CAML_LIBS) $(GALAX_HOME)/lib/caml/galax.cmxa
+OCAML_CAPI_OPTLIB_PATHS=\
+-ccopt -L$(CONF_OCAML_STDLIB) \
+-ccopt -L$(CONF_OCAML_LIBPCRE) \
+-ccopt -L$(CONF_C_LIBPCRE) \
+-ccopt -L$(CONF_C_LIBASMRUN)
 
-# OPTLDFLAGS=-linkall nums.cma unix.cma str.cma pcre.cma netstring.cma pxp_engine.cma -cclib -lnums -cclib -lunix -cclib -lstr $(GALAX_HOME)/lib/caml/galax.cmxa
+OCAML_CAPI_OPTLIBS=\
+-ccopt -lnums -ccopt -lunix -ccopt -lstr -ccopt -lbigarray \
+-ccopt -lpcre_stubs \
+-ccopt -lpcre 
+
+API_ALL_CAML_LIBS=-linkall $(OCAML_LIB_INCLUDES) $(OCAML_OPTLIBS) $(GALAX_HOME)/lib/caml/galax.cmxa $(OCAML_CAPI_OPTLIB_PATHS) $(OCAML_CAPI_OPTLIBS)
 
 pads_dm_opt.o: $(CAML_OPTOBJS) $(GALAX_HOME)/lib/caml/galax.cmxa
 	$(OCAML_BIN_DIR)/ocamlopt -output-obj -o pads_dm_opt.o $(API_ALL_CAML_LIBS) $(CAML_OPTOBJS) 

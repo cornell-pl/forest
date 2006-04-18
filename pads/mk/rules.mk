@@ -461,9 +461,9 @@ STATIC_GALAXLIB_O = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_ARCHIVE)padsglxopt$(mam_c
 STATIC_GALAXLIB_D = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_ARCHIVE)padsglxopt$(mam_cc_SUFFIX_ARCHIVE)
 SHARED_GALAXLIB_O = $(PADSGLX_LIB_DIR)/$(mam_cc_PREFIX_SHARED)padsglxopt$(mam_cc_SUFFIX_SHARED)
 STATIC_OCAMLLIB_O = \
-  $(OCAML_LIB_DIR)/libnums$(mam_cc_SUFFIX_ARCHIVE) \
-  $(OCAML_LIB_DIR)/libunix$(mam_cc_SUFFIX_ARCHIVE) \
-  $(OCAML_LIB_DIR)/libstr$(mam_cc_SUFFIX_ARCHIVE)
+  $(OCAML_LIB_DIR)/std-lib/libnums$(mam_cc_SUFFIX_ARCHIVE) \
+  $(OCAML_LIB_DIR)/std-lib/libunix$(mam_cc_SUFFIX_ARCHIVE) \
+  $(OCAML_LIB_DIR)/std-lib/libstr$(mam_cc_SUFFIX_ARCHIVE)
 
 # These libraries on MacOS are not static:
 #  $(USR_LIB_DIR)/libm$(mam_cc_SUFFIX_ARCHIVE) \
@@ -543,9 +543,9 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_O += \
   $(PADSGALAX_LIBOPT_O) $(SHARED_ASTLIB_O)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
-  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
+  -L$(OCAML_LIB_DIR)/std-lib -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
-  -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
+  -L$(OCAML_LIB_DIR)/pkg-lib/pcre -lpcre_stubs
 else 
 DYNAMIC_LIBS_O += $(PADS_LIBOPT_O) $(SHARED_ASTLIB_O) 
 endif
@@ -576,9 +576,9 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
   $(PADSGALAX_LIBOPT_D) $(SHARED_ASTLIB_D)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
-  -L$(OCAML_LIB_DIR) -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
+  -L$(OCAML_LIB_DIR)/std-lib -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
-  -L$(OCAML_LIB_DIR)/site-lib/pcre -lpcre_stubs
+  -L$(OCAML_LIB_DIR)/pkg-lib/pcre -lpcre_stubs
 else
 DYNAMIC_LIBS_D += $(PADS_LIBOPT_D) $(SHARED_ASTLIB_D) 
 endif
@@ -618,7 +618,7 @@ INCLUDES += -I$(GEN_DIR)
 endif
 
 ifdef USE_GALAX
-INCLUDES +=  -I$(GALAX_HOME)/lib/c -I$(PADS_HOME)/padsc/pads-glx -I$(PADS_HOME)/padsc/pads-glx/$(AST_ARCH) -I$(OCAML_LIB_DIR) 
+INCLUDES +=  -I$(GALAX_HOME)/lib/c -I$(PADS_HOME)/padsc/pads-glx -I$(PADS_HOME)/padsc/pads-glx/$(AST_ARCH) -I$(OCAML_LIB_DIR)/std-lib 
 endif
 
 ifndef BuildAST4PADSLib

@@ -8,6 +8,9 @@
 \usepackage{code}
 \usepackage{xspace}
 
+% \pdfpagewidth=8.5in
+% \pdfpageheight=11in
+
 \renewcommand{\floatpagefraction}{0.9}
 \renewcommand{\dbltopfraction}{0.9}
 \renewcommand{\dblfloatpagefraction}{0.9}
@@ -25,26 +28,25 @@
 \newcommand{\typeddm}{type-specialized concrete data model}
 
 \title{PADS: An End-to-end System for Processing Ad Hoc Data}
-\author{
-Mark Daly\\Yitzhak Mandelbaum\\David Walker\\
-       {Princeton University}\\
-       {\mono{mdaly@princeton.edu}}\\
-       {\mono{\{yitzhakm,dpw\}@cs.princeton.edu}}
-\and Mary Fern\'andez\\Kathleen Fisher\\
-       {AT\&T Labs Research}\\
-       {\mono{\{mff,kfisher\}@research.att.com}}
-\and   {Robert Gruber\titlenote{Work conducted while at AT\&T
-                                     Labs Research.}}\\
-       {Google}\\
-       {\mono{gruber@google.com}}\\
-       {Xuan Zheng}\titlenote{Work supported by 
-	 AT\&T Labs Research and by NSF DMS 0354600.}\\
-       {University of Michigan}\\
-      {\mono{xuanzh@eecs.umich.edu}}}
 
+\numberofauthors{3} 
+\author{\alignauthor Mark Daly\\
+\affaddr{Princeton University}\\
+\email{mdaly@princeton.edu}
+\alignauthor Yitzhak Mandelbaum and David Walker\\
+\affaddr{Princeton University}\\
+\email{yitzhakm@cs.princeton.edu\\dpw@cs.princeton.edu}
+\alignauthor Mary Fern\'andez and Kathleen Fisher\\
+\affaddr{AT\&T Labs Research} \\
+\email{mff@research.att.com\\kfisher@research.att.com}}
+
+\eat{
+\additionalauthors{Robert Gruber (Google, 
+  {\texttt{gruber@google.com}}), while at AT\&T Labs and Xuan Zheng (Univ. of Michigan, 
+  {\texttt{xuanzh@eecs.umich.edu}}), supported by 
+	 AT\&T Labs and NSF DMS 0354600.}}
 
 \date{\today}
-
 
 \begin{document}
 
@@ -79,6 +81,13 @@ workshop~\cite{daly+:launchpads}.  An open-source implementation of
 
 \input{intro}
 \input{pads}
+
+\noindent
+\textbf{Additional Authors.}
+Robert Gruber ({\small{\texttt{gruber@google.com}}}), Google,
+while at AT\&T Labs.
+Xuan Zheng ({\small{\texttt{xuanzh@eecs.umich.edu}}}), Univ. of Michigan, 
+supported by AT\&T Labs and NSF DMS 0354600.
 
 \bibliographystyle{abbrv}
 \bibliography{../pads,../galax}

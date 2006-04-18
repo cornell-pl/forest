@@ -40,10 +40,10 @@ A.~C. Gilbert, Y.~Kotidis, S.~Muthukrishnan, and M.~Strauss.
 \newblock How to summarize the universe: Dynamic maintenance of quantiles.
 \newblock In {\em VLDB}, 2002.
 
-\bibitem{histograms}
+\eat{\bibitem{histograms}
 S.~Guha, P.~Indyk, S.~Muthukrishnan, and M.~Strauss.
 \newblock Histogramming data streams with fast per-item processing.
 \newblock In {\em ICALP}, 2002.
-}
+}}
 
 \end{thebibliography}
