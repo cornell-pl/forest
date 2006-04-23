@@ -1810,55 +1810,58 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   SOME (P.andBools(List.map (doOne subList) predList))
 			       end
 
-		      fun chkCond areExtra errCodeX condX = 
-			  if areExtra
-			  then
-			  [PT.IfThenElse(
-                              condX,
-			      PT.Compound([P.assignS(errCodeX, PL.P_NO_ERROR)]),
-			      PT.Compound([P.assignS(errCodeX, PL.P_USER_CONSTRAINT_VIOLATION)]
-					   @ recordStructErrorSs()))]
-			  else [P.assignS(errCodeX, PL.P_NO_ERROR)]
+	      fun chkCond areExtra errCodeX condX = 
+		  if areExtra
+		  then
+		      [PT.IfThenElse(
+				     condX,
+				     PT.Compound([P.assignS(errCodeX, PL.P_NO_ERROR)]),
+				     PT.Compound([P.assignS(errCodeX, PL.P_USER_CONSTRAINT_VIOLATION)]
+						 @ recordStructErrorSs()))]
+		  else [P.assignS(errCodeX, PL.P_NO_ERROR)]
 
-		      fun chkArgs args omitNames postReadSubList = 
-			  if List.exists(fn a=>PTSub.isFreeInExp(omitNames, a)) args
-			  then NONE
-			  else SOME( List.map(PTSub.substExps (!postReadSubList)) args)
+	      fun chkArgs args omitNames postReadSubList = 
+		  if List.exists(fn a=>PTSub.isFreeInExp(omitNames, a)) args
+		  then NONE
+		  else SOME( List.map(PTSub.substExps (!postReadSubList)) args)
 
-		      fun getConM fnName name pred omitNames postReadSubList = 
-  			          case pred of NONE => [] 
-			           | SOME e => if P.isFreeInPostCond omitNames e
-					       then (PE.warn ("Omitted field passed to constraint "^
-							      "for field "^name^". "^
-							      "Excluding constraint in "^ fnName); [])
-					       else P.getIsPredXs(P.substPostCond (!postReadSubList) e)
+	      fun getConM fnName name pred omitNames postReadSubList = 
+  		  case pred of NONE => [] 
+			     | SOME e => if P.isFreeInPostCond omitNames e
+					 then (PE.warn ("Omitted field passed to constraint "^
+							"for field "^name^". "^
+							"Excluding constraint in "^ fnName); [])
+					 else P.getIsPredXs(P.substPostCond (!postReadSubList) e)
 
-                      fun doPDGenPTy pty isVirtual name args pred repX pdX omitNames postReadSubList = 
-			  if isVirtual then []
-			  else let val genPDName = PNames.genPD name
-				   val extraConds = List.map (PTSub.substExps (!postReadSubList)) (getConM genPDName name pred omitNames postReadSubList)
-				   val areExtra = case extraConds of [] => false | _ => true
-				   val extraCondsXs =  P.andBools extraConds
-				   val errCodeX = P.dotX(pdX, PT.Id errCode)
-			       in case lookupPDgen pty 
-				  of Base NONE => chkCond areExtra errCodeX extraCondsXs
-				  |  Base (SOME fieldPred) => 
-				               (case chkArgs args omitNames postReadSubList
-				                of NONE => (PE.warn ("Omitted field passed to nested field type for field "^name^". "^
-								     "Excluding call to "^fieldPred ^" from "^ genPDName); [])
-                                                | SOME modArgs => 
-					             chkCond true errCodeX (P.andX(PT.Call(PT.Id fieldPred, [P.getFieldX(rep, name)] @ modArgs),extraCondsXs))) 
+	      (* Calls the genPD function for the given parameters.Returns a list of C statements.
+	         Used, for example, by Pstruct to call the genPD functions of its fields.
+	       *)
+              fun doPDGenPTy pty isVirtual name args pred repX pdX omitNames postReadSubList = 
+		  if isVirtual then [] (* Field is omitted from rep, so no need to generate a PD. *)
+		  else let val genPDName = PNames.genPD name
+			   val extraConds = List.map (PTSub.substExps (!postReadSubList)) (getConM genPDName name pred omitNames postReadSubList)
+			   val areExtra = case extraConds of [] => false | _ => true
+			   val extraCondsXs =  P.andBools extraConds
+			   val errCodeX = P.dotX(pdX, PT.Id errCode)
+		       in case lookupPDgen pty 
+			   of Base NONE => chkCond areExtra errCodeX extraCondsXs
+			    |  Base (SOME fieldPred) => 
+			       (case chkArgs args omitNames postReadSubList
+				 of NONE => (PE.warn ("Omitted field passed to nested field type for field "^name^". "^
+						      "Excluding call to "^fieldPred ^" from "^ genPDName); [])
+                                  | SOME modArgs => 
+				    chkCond true errCodeX (P.andX(PT.Call(PT.Id fieldPred, [P.getFieldX(rep, name)] @ modArgs),extraCondsXs))) 
 
-			          | Structured fieldPDGen =>  (* has a pdGen function *)
-				               (case chkArgs args omitNames postReadSubList
-				                of NONE => (PE.warn ("Omitted field passed to nested field type for field "^name^". "^
-								     "Excluding call to "^fieldPDGen ^" from "^ (genPDName)); [])
-                                                | SOME modArgs => 
-				                     [PT.Expr(PT.Call(PT.Id fieldPDGen, [PT.Id pads, P.addrX repX, P.addrX pdX]@modArgs))]
-				                   @ (case extraConds of [] => [] | _ => 
-					               [PT.IfThen(P.notX(extraCondsXs),
-						        PT.Compound (recordStructErrorSs ()))]))
-			       end
+			    | Structured fieldPDGen =>  (* has a pdGen function *)
+			      (case chkArgs args omitNames postReadSubList
+				of NONE => (PE.warn ("Omitted field passed to nested field type for field "^name^". "^
+						     "Excluding call to "^fieldPDGen ^" from "^ (genPDName)); [])
+                                 | SOME modArgs => 
+				   [PT.Expr(PT.Call(PT.Id fieldPDGen, [PT.Id pads, P.addrX repX, P.addrX pdX]@modArgs))]
+				   @ (case extraConds of [] => [] | _ => 
+								    [PT.IfThen(P.notX(extraCondsXs),
+									       PT.Compound (recordStructErrorSs ()))]))
+		       end
 
 
               fun doPDGenCTy tyname isVirtual name args pred repX pdX omitNames postReadSubList = 
@@ -2138,6 +2141,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* -- Some helper functions *)
 		      val readName = readSuf name
                       val baseReadFun = BU.lookupTy(baseTy, readSuf, #readname)
+		      (* Modified predicate expression option: *)
 		      val modPredXOpt = case pred of NONE => NONE
 			             | SOME {predTy, thisVar, pred} => SOME (PTSub.substExp (thisVar, P.starX(PT.Id rep), pred))
 		      fun chk () = 
@@ -2364,7 +2368,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 So don't need lookupTy, which checks to see if its a base type. 
 		         INV: There is an assumed invariant here that all of the above 
 		         constructs produce C structs. 
-			 INV: in case of SOME, we assume that bname is one of Pstruct,
+			 INV: in case of SOME (below), we assume that bname is one of Pstruct,
                          Punion, Popt or Parray.  *)
 		      val (baseName,args) = case base of 
 						SOME {name=bname,args} => (bname,args) 
@@ -2517,7 +2521,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  (PT.TypedefName (name ^ "_pd"),true,"pd"),
 						  (PT.TypedefName name,true,"rep")],
 						 cParamTuples),
+				   (* verify function *)
 				   genFunDeclBoth(PT.Int,name ^"_verify",[(PT.TypedefName name,true,"rep")],cParamTuples),
+				   (* genPD function *)
 				   genFunDeclBoth(PT.Int,PNames.genPD name,
 						  [(PT.TypedefName "P_t",true,"pads"),
 						   (PT.TypedefName name,true,"rep"),
@@ -2568,7 +2574,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      @ (fwDecls ())
 		  end
 
-              (*  Dynamic case *)
+              (*  Dynamically allocated, pointer-based case *)
+	      (*  Note on parameters. While parameters are supported, 
+	          the parameter list must be identical to that of the 
+		  underlying type.
+              *)
 	      fun cnvPDynamic ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
 			        isSource : bool, baseTy: PX.Pty})=
 		  let val base = "base"
@@ -2701,6 +2711,22 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodySs = [PT.Return P.trueX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
+		      (* ------ Generate genPD function dynamic case --------- *)
+
+		      val genPDName = PNames.genPD name
+				      
+		      (* Statement for allocating new pd. *)
+		      val allocS =
+				  PT.Expr(PT.Call(PT.Id "PCGEN_DYNAMIC_PD_ALLOC",
+					  [PT.String genPDName, PT.Id baseTypeName]))
+		      (* Statements for constructing PD of underlying (i.e. base) value. *)
+		      val baseSs = doPDGenPTy baseTy false baseTypeName args NONE (P.starX (P.starX(PT.Id rep))) (P.starX (P.fieldX(pd,value))) [] (ref [])
+
+		      val bodySs = [P.assignS(P.fieldX(pd, errCode), PL.P_NO_ERROR), allocS] 
+			           @ baseSs @ [PT.Return (P.eqX(P.zero, P.fieldX(pd, nerr))) ]
+
+		      val genPDFunEDs = [genPDFun(genPDName, cParams, rep, pd, canonicalPCT, pdPCT, bodySs) ]
+
                       (* -- generate accumulator init, reset, and cleanup functions (rec. case) *)
 		      fun genResetInitCleanup theSuf = 
 			  let val theFun = (theSuf o accSuf) name
@@ -2792,7 +2818,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		  in
 		        (emitRead readEDs)
-		      @ (emitPred isFunEDs)
+		      @ (emitPred (isFunEDs @ genPDFunEDs))
                       @ (emitAccum accumEDs)
                       @ (emitWrite writeFunEDs)
                       @ (emitWrite fmtFunEDs)
@@ -7145,7 +7171,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
 
-										(* Generate pd_gen function struct case *)
+		      (* Generate genPD function struct case *)
 		      val genPDName = PNames.genPD name
 		      val fieldSs = 
 			  let 

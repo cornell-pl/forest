@@ -215,12 +215,14 @@ typedef int type_t;
 typedef int field_t;
 typedef int var_t;
 
-/* DYNAMIC macros are used in implementation of recursive
-   types. -YHM */
+/* DYNAMIC macros are used in implementation of recursive types. -YHM */
 void PCGEN_DYNAMIC_READ(Perror_t read_call);
 void PCGEN_DYNAMIC_COPY(const char *fn_nm, type_t baseTy, void *src, void *dst, void *elt_copy_fn, void *elt_cleanup_fn);
 void PCGEN_DYNAMIC_PD_COPY(const char *fn_nm, type_t baseTy, void *src, void *dst, void *elt_copy_fn, void *elt_cleanup_fn);
 
+void PCGEN_DYNAMIC_REP_ALLOC(char *fnName, type_t baseTy);
+void PCGEN_DYNAMIC_PD_ALLOC(char *fnName, type_t baseTy);
+/* Allocs both rep and pd->value. */
 void PCGEN_DYNAMIC_ALLOC(char *fnName, type_t baseTy);
 void PCGEN_DYNAMIC_REP_CLEANUP(type_t baseTy);
 void PCGEN_DYNAMIC_PD_CLEANUP(type_t baseTy);
@@ -417,10 +419,13 @@ do{
 }while(0)
 /* END_MACRO */
 
+#define PCGEN_DYNAMIC_REP_ALLOC(fn_nm,ty) PCGEN_DYNAMIC_ANY_ALLOC(fn_nm,ty,*rep)
+#define PCGEN_DYNAMIC_PD_ALLOC(fn_nm,ty) PCGEN_DYNAMIC_ANY_ALLOC(fn_nm,ty ## _pd,pd->val)
+
 #define PCGEN_DYNAMIC_ALLOC(fn_nm, ty)
 do{
-  PCGEN_DYNAMIC_ANY_ALLOC(fn_nm,ty,*rep);
-  PCGEN_DYNAMIC_ANY_ALLOC(fn_nm,ty ## _pd,pd->val);  
+  PCGEN_DYNAMIC_REP_ALLOC(fn_nm,ty);
+  PCGEN_DYNAMIC_PD_ALLOC(fn_nm,ty);  
 }while(0)
 /* END_MACRO */
 
