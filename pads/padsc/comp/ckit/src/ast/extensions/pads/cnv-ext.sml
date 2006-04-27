@@ -239,10 +239,6 @@ structure CnvExt : CNVEXT = struct
        | Ast.Void => false
        | Ast.Error => false
 
-    fun getRE e = case e of (PT.ExprExt (PX.Pregexp e')) => SOME e' 
-	          | PT.MARKexpression (l,e) => getRE e
-                  | _ => NONE
-
     fun isEmptyString e = case e of PT.String s => String.size s = 0
 	                  | _ => false
     fun unMark (PT.MARKexpression (l, e)) = e
@@ -490,10 +486,10 @@ structure CnvExt : CNVEXT = struct
 	(case ct of 
 	     Ast.TypeRef tid =>
 		 (case lookTid tid of
-		      SOME {name, ntype = SOME (B.Typedef (_, ct)),...} => name
-		    | NONE => (PE.bug "Ill-formed type table"; SOME "bogus")
-		    | _ => NONE)
-	   | _ => NONE)
+		      SOME {name, ntype = SOME (B.Typedef (_, ct)),...} => (name,ct)
+		    | NONE => (PE.bug "Ill-formed type table"; (SOME "bogus",ct))
+		    | _ => (NONE,ct))
+	   | _ => (NONE,ct))
 	end
 
     fun CTgetPtrBase ct = 
@@ -532,6 +528,22 @@ structure CnvExt : CNVEXT = struct
 	    then ()
 	    else PE.error (genErrMsg (CTtoString expTy)) 
 	end
+
+    fun getRE e = case e of (PT.ExprExt (PX.Pregexp e')) => SOME e' 
+	          | PT.MARKexpression (l,e) => getRE e
+                  | _ => NONE
+
+    fun getLiteralKind e = 
+	let val eptOpt = getRE e
+	    val (expTy, expAst) = cnvExpression e
+	in
+	    if Option.isSome eptOpt then TyProps.DRegExp e
+	    else if CTisIntorChar expTy then TyProps.DChar e
+		 else if CTisString expTy then TyProps.DString e
+		      else TyProps.DNoSep
+	end
+
+
 
 (*     Exact repetition of earlier function: *)
 (*     fun CTcnvType (ct : PT.ctype) : (acty * Ast.storageClass)  *)
@@ -725,12 +737,12 @@ structure CnvExt : CNVEXT = struct
 				      SOME ((initSuf o pdSuf) name),
 				      SOME ((cleanupSuf o pdSuf) name))
 
-              fun buildTyProps (name, kind, tyInfo, diskSize, compoundDiskSize, memChar, endian, isRecord, 
+              fun buildTyProps (name, typarams, tyInfo, diskSize, compoundDiskSize, memChar, endian, isRecord, 
 				containsRecord, largeHeuristic, isSource, pdTid, numArgs) = 
      		  let val (repInit, repClean, pdInit, pdClean) = getDynamicFunctions (name, memChar)
 		  in
-		      {kind     = kind,
-		       info     = tyInfo,
+		      {info     = tyInfo,
+		       typarams = typarams,
 		       diskSize = diskSize,
 		       compoundDiskSize = compoundDiskSize,
 	 	       memChar  = memChar,
@@ -874,21 +886,30 @@ structure CnvExt : CNVEXT = struct
 
               fun getPadsName (pcty:pcty) : pty = 
   		  case PTgetTyName pcty 
-		  of SOME n => (case PBTys.find(PBTys.baseInfo, Atom.atom n)
+		  of (SOME n,_) => (case PBTys.find(PBTys.baseInfo, Atom.atom n)
 				of SOME b => PX.Name n
 			        |  NONE => (case PTys.find(Atom.atom n)
 					    of NONE => (PE.bug "expected PADS type name"; PX.Name "bogus")
 					    | SOME b => PX.Name n))
-                   | NONE => (PE.bug "expected PADS type name"; PX.Name "bogus")
+                   | (NONE,_) => (PE.bug "expected PADS type name"; PX.Name "bogus")
 
               fun isPadsTy tyname = 
 		  case PTgetTyName tyname
-                  of SOME n => (case PBTys.find(PBTys.baseInfo, Atom.atom n)
+                  of (SOME n,_) => (case PBTys.find(PBTys.baseInfo, Atom.atom n)
 				of SOME b => PTys.BaseTy b
 				|  NONE => (case PTys.find(Atom.atom n)
 					    of NONE => PTys.CTy
 					    | SOME b => PTys.CompoundTy b))
-                   | NONE => PTys.CTy
+                   | (NONE,_) => PTys.CTy
+
+              fun buildTyRep tyname args = 
+		  case PTgetTyName tyname
+                  of (SOME n,ct ) => (case PBTys.find(PBTys.baseInfo, Atom.atom n)
+				of SOME b => (TyProps.Pads {tyCon=n, args=args})
+				|  NONE => (case PTys.find(Atom.atom n)
+					    of NONE => TyProps.C ct
+					    | SOME b => TyProps.Pads{tyCon=n, args=args}))
+                   | (NONE,ct) => TyProps.C ct
  
 
 	      fun reduceArgList(args, (params, bodies):TyProps.argList)=
@@ -990,7 +1011,7 @@ structure CnvExt : CNVEXT = struct
 	      fun coreArraySize (elemSize, sepSize, rep) = 
 		  TyProps.scale(TyProps.add(elemSize, sepSize), rep)
 
-              fun mungeParam(pcty:pcty, decr:pcdecr) : string * pcty = 
+              fun mungeParam(pcty:pcty, decr:pcdecr) : string * pcty * Ast.ctype= 
 		  let val (act, nOpt) = CTcnvDecr(pcty, decr)
                       (* convert pads name to c name, if a pads typedef *)
                       val pct = case CTgetTyName act
@@ -1003,7 +1024,16 @@ structure CnvExt : CNVEXT = struct
 					     "bogus")
 				 | SOME n => n
 		  in
-                      (name, pct)
+                      (name, pct, act)
+		  end
+
+	      fun processParams (params:(pcty * pcdecr) list) = 
+		  let val rawParams : (string * pcty * acty) list = List.map mungeParam params
+		      val cParams = List.map (fn (n,p,a) => (n,p)) rawParams
+                      val paramInfo = List.map (fn (n,p,a) => (n,a)) rawParams
+		      val paramNames = List.map (fn(n,p,a) => n) rawParams
+		  in
+		      (cParams, paramInfo, paramNames)
 		  end
 
               fun recordStructErrorSs () = 
@@ -1539,12 +1569,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  let val (ct, _) = CTcnvType tyname
 		      val isStatic = CisStatic ct
 		      val tyStr = CTtoString ct
+		      val ty = buildTyRep tyname args
+		      val predS = case pred of NONE => [] | SOME s => s
+		      val fieldInfo = {ty = ty, name = name, def = expr, pred = predS, comment = comment}
 		  in
 		      [{diskSize = TyProps.mkSize (0,0), 
 			memChar = if isStatic then TyProps.Static else TyProps.Dynamic,
 			endian = false, isRecord = false, 
                         containsRecord = false, largeHeuristic = false, 
-			labels = [SOME (name, tyStr, ([], []), isVirtual, comment )]}]
+			labels = [SOME (name, tyStr, ([], []), isVirtual, comment )],
+			fieldInfo = [TyProps.Compute fieldInfo]}]
 		  end
 
 
@@ -2042,8 +2076,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  let val base = "base"
 		      val baseTyName = BU.lookupTy(baseTy, repSuf, #padsname)		
 		      val baseTypeName = BU.lookupTy(baseTy, repSuf, #padsxname)		
-		      val cParams : (string * pcty) list = List.map mungeParam params
-		      val paramNames = #1(ListPair.unzip cParams)
+		      val (cParams : (string * pcty) list, 
+			   paramInfo : (string * acty) list, 
+			   paramNames : string list) = processParams params
 
                       (* Generate CheckSet mask typedef case*)
 		      val baseMPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, mSuf, #mname))
@@ -2077,7 +2112,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val contR = lookupContainsRecord baseTy
  		      val lH = lookupHeuristic baseTy
 		      val numArgs = List.length params
-		      val typedefProps = buildTyProps(name, PTys.Typedef, TyProps.TydefInfo, 
+		      val typedefProps = buildTyProps(name, paramInfo, TyProps.TypedefInfo (), 
 						      ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, typedefProps)
@@ -2375,7 +2410,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					      | NONE => (recPre name,[])
 		      val baseTy = PX.Name baseName
 		      val baseTypeName = repSuf baseName
-		      val cParams : (string * pcty) list = List.map mungeParam params
+		      val (cParams : (string * pcty) list, 
+			   paramInfo : (string * acty) list, 
+			   paramNames : string list) = processParams params
 		      val (cNames,cTys) = ListPair.unzip cParams
                       val value = PNames.recVal
 				  
@@ -2414,7 +2451,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val contR = false
  		      val lH = false
 		      val numArgs = List.length params
-		      val recProps = buildTyProps(name, PTys.Typedef, TyProps.TydefInfo, 
+		      val recProps = buildTyProps(name, paramInfo, TyProps.TypedefInfo (), 
 						  ds, TyProps.Typedef (ds, baseName, (cNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, recProps)
@@ -2587,8 +2624,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val baseTypeName = let val PX.Name n = baseTy in repSuf n end
 		      val baseTypePCT = P.makeTypedefPCT (repSuf baseTypeName)
 		      val baseTypePdPCT = P.makeTypedefPCT (pdSuf baseTypeName)
-		      val cParams : (string * pcty) list = List.map mungeParam params
-		      val paramNames = #1(ListPair.unzip cParams)
+
+		      val (cParams : (string * pcty) list, 
+			   paramInfo : (string * acty) list, 
+			   paramNames : string list) = processParams params
 		      (* Create arguments to underlying type based on parameters. *)
 		      (* In this way, parameters to recursive type are passed directly to underlying type. *)
  		      val args = List.map PT.Id paramNames
@@ -2831,8 +2870,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			    sizeSpec:pcexp PX.PSize option, constraints: pcexp PX.PConstraint list,
 			    postCond : pcexp PX.PArrayPostCond list} =
 	     let 
-		 val cParams : (string * pcty) list = List.map mungeParam params
-		 val paramNames = #1(ListPair.unzip cParams)
+		 val (cParams : (string * pcty) list, 
+		      paramInfo : (string * acty) list, 
+		      paramNames : string list) = processParams params
 		 val length = PNames.arrayLen
                  val elts = PNames.arrayElts
 		 val numRead = "numRead"
@@ -2883,7 +2923,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                  (* add local variables, ie, parameters,  to scope *)
 		 val _ = pushLocalEnv()                                        (* create new scope *)
-		 val cParams : (string * pcty) list = List.map mungeParam params
+
+(*XXX Remove		 val cParams : (string * pcty) list = List.map mungeParam params *)
 		 val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		 (* scope is removed at end of cnvPArray *)
 
@@ -3506,7 +3547,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						    delims = {sep=sepInfo, term=termInfo, preds=predInfo},
 						    size   = sizeInfo,
 						    post   = postCond}
-                 val arrayProps = buildTyProps(name, PTys.Array, arrayInfo, arrayDiskSize, compoundArrayDiskSize,
+                 val arrayProps = buildTyProps(name, paramInfo, arrayInfo, arrayDiskSize, compoundArrayDiskSize,
 					       arrayMemChar, false, isRecord, contR, lH, isSource, pdTid, numArgs)
                  val () = PTys.insert(Atom.atom name, arrayProps)
 
@@ -5336,8 +5377,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val _ = List.map addPostReadSub postReadSubs
 
 		     val dummy = "_dummy"
-		     val cParams : (string * pcty) list = List.map mungeParam params
-		     val paramNames = #1(ListPair.unzip cParams)
+
+		     val (cParams : (string * pcty) list, 
+			  paramInfo : (string * acty) list, 
+			  paramNames : string list) = processParams params
                      val value = PNames.unionVal
 		     val tag = PNames.unionTag
 
@@ -5495,42 +5538,36 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		     (* Calculate and insert type properties into type table *)
 		     fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
-					 isVirtual: bool, isEndian: bool, 
-					 isRecord, containsRecord, largeHeuristic: bool,
-					 pred, comment: string option,...}:BU.pfieldty) = 
+					  isVirtual: bool, isEndian: bool, 
+					  isRecord, containsRecord, largeHeuristic: bool,
+					  pred, comment: string option,
+					  optPred, optDecl, arrayDecl, size,arraypred}:BU.pfieldty) = 
 			  let val PX.Name ftyName = pty
 			      val mc = lookupMemChar pty
 			      val ds = computeDiskSize(name, paramNames, pty, args)
 			      val contR = lookupContainsRecord pty	 
 			      val lH = lookupHeuristic pty 
+			      val predS = case pred of NONE => [] | SOME s => s
+			      val fieldInfo = {ty={tyCon=ftyName,args=args}, name = name, pred=predS,comment=comment,
+					       isOpt = optDecl, optPred = optPred,
+					       isArray = arrayDecl, size=size, arrayPred = arraypred}
 			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, 
 			       containsRecord=contR, largeHeuristic=lH, 
-			       labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment)]}] 
+			       labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment)],
+			       fieldInfo = [TyProps.Full fieldInfo]}] 
 			  end
-		     (* Not storing strings read via RE yet, so Static for now *) 
-		     fun genTyPropsBrief (e, labelOpt) = case extractString e 
-                           of NONE =>  (* either regular expression or error case; error reported elsewhere *)
-			        [{diskSize=TyProps.Variable, memChar=TyProps.Static, endian=false, isRecord=false, 
-				  containsRecord=false, largeHeuristic=false, 
-				  labels = [NONE]}] 
-		           | SOME s => 
-			     let val  ds = TyProps.Size(IntInf.fromInt (String.size s), IntInf.fromInt 0)
-			     in [{diskSize=ds, memChar=TyProps.Static, endian=false, isRecord=false, 
-				  containsRecord=false, largeHeuristic=false, 
-				  labels = [NONE]}] 
-			     end
+		     fun genTyPropsBrief (e, labelOpt) = 
+			 let val size = case extractString e
+			                of NONE   => TyProps.Variable
+					|  SOME s => TyProps.Size(IntInf.fromInt (String.size s), IntInf.fromInt 0)
+			 in
+			     [{diskSize=size, memChar=TyProps.Static, 
+			       endian=false, isRecord=false,containsRecord=false, largeHeuristic=false, 
+			       labels = [NONE], fieldInfo = [TyProps.Literal (getLiteralKind e)]}] 
+			 end
 
 		     val tyProps = P.mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan variants
-                     (* check that all variants are records if any are *)
-		     (* val () = case tyProps of [] => ()
-			      | 
-			  ({isRecord=first,...}::xs) => 
-			           (if List.exists (fn {isRecord, diskSize, memChar, endian,
-							containsRecord, largeHeuristic, labels} => not (isRecord = first)) xs 
-				    then PE.error "All branches of Punion must terminate record if any branch does"
-				    else ()) *)
-					
-		     val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic, labels} = 
+		     val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic, labels,fieldInfo} = 
 			 List.foldl (PTys.mergeTyInfo (fn (x, y) => x) ) PTys.minTyInfo tyProps
 		     fun computeUnionDiskSize tyProps = 
 			 case tyProps of [] => TyProps.mkSize(0,0)
@@ -5540,7 +5577,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val compoundDiskSize = TyProps.Union ((ListPair.zip(List.rev labels, 
 									  (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		     val numArgs = List.length params
-		     val unionProps = buildTyProps(name, PTys.Union, TyProps.UnionInfo, diskSize, compoundDiskSize, memChar, 
+
+                     val unionInfo = {fromOpt=fromOpt, descriminator = descOpt, cases=cases, fields=List.rev fieldInfo, pred=postCond}
+		     val unionProps = buildTyProps(name, paramInfo, TyProps.UnionInfo unionInfo, diskSize, compoundDiskSize, memChar, 
 						   endian, isRecord, containsRecord, 
 						   largeHeuristic, isSource, pdTid, numArgs)
                      val () = PTys.insert(Atom.atom name, unionProps)
@@ -5991,7 +6030,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val () = ignore(insTempVar(rep, P.ptrPCT canonicalPCT))
 		     val () = ignore(insTempVar(pd, P.ptrPCT pdPCT))
 		     val () = if isLongestMatch then ignore(insTempVar(pcgenName("trep"), canonicalPCT)) else ()
-		     val cParams : (string * pcty) list = List.map mungeParam params
+		     val (cParams : (string * pcty) list, 
+			  paramInfo : (string * acty) list, 
+			  paramNames : string list) = processParams params
+(* XXX Remove		     val cParams : (string * pcty) list = List.map mungeParam params		      *)
+
 		     val xtraParamNames = #1(ListPair.unzip cParams)
 		     val xtraParams = List.map PT.Id xtraParamNames
 		     val xmlwriteArgs = [PT.Id pads, PT.Id sfstderr, PT.Id pd, PT.Id rep, PT.String name, P.intX 4] @ xtraParams 
@@ -6598,8 +6641,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val _ = List.map addReadSub pdSubs
 		      val _ = List.map addPostReadSub postReadSubs
 		      val dummy = "_dummy"
-		      val cParams : (string * pcty) list = List.map mungeParam params
-		      val paramNames = #1(ListPair.unzip cParams)
+
+		      val (cParams : (string * pcty) list, 
+			   paramInfo : (string * acty) list, 
+			   paramNames : string list) = processParams params
 
                       (* Process in-line declarations *)
 		      fun findOffset p [] n = NONE
@@ -6727,7 +6772,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						    (* Struct: Calculate and insert type properties into type table *)
 		      fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					  isVirtual: bool, isEndian: bool, isRecord, containsRecord, 
-					  largeHeuristic: bool, pred, comment:string option,...}: BU.pfieldty) = 
+					  largeHeuristic: bool, pred, comment:string option,
+					  optPred, optDecl, arrayDecl, size,arraypred}: BU.pfieldty) = 
 			  let val ftyName = P.tyName pty
 			      val mc = lookupMemChar pty
 			      val ds = computeDiskSize (name, paramNames, pty, args)
@@ -6741,39 +6787,54 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				         else true
 			      val contR = lookupContainsRecord pty 
 			      val lH = lookupHeuristic pty
+			      val predS = case pred of NONE => [] | SOME s => s
+			      val fieldInfo = {ty={tyCon=ftyName,args=args}, name = name, pred=predS,comment=comment,
+					       isOpt = optDecl, optPred = optPred,
+					       isArray = arrayDecl, size=size, arrayPred = arraypred}
 			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, 
                                isRecord = isRecord, containsRecord = contR, 
-			       largeHeuristic = lH, labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment )]}] 
+			       largeHeuristic = lH, labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment )],
+			       fieldInfo = [TyProps.Full fieldInfo]}] 
                           end
 		      fun genTyPropsBrief (e,labelOpt) = 
 			  (* assume field is correct; error checking done in genReadBrief below *)
                               (* conservative analysis: variable expresions with type char could also lead to size of 1,0*)
-			      let fun getStaticSize eX =
-			              case eX of PT.MARKexpression(l, e) => getStaticSize e
-					       | PT.String s => TyProps.mkSize(String.size s, 0)
+			      let 
+				  val e = PTSub.substExps (!readSubList) (unMark e)
+				  fun getStaticInfo eX =
+			              case eX of PT.String s => TyProps.mkSize(String.size s, 0)
 					       | PT.IntConst i => TyProps.mkSize(1,0)
 					       | PT.ExprExt (PX.Pregexp e) => TyProps.Variable
 					       | _ => TyProps.Variable
-				  val diskSize = getStaticSize e
+				  val diskSize = getStaticInfo e
 				  val () = case labelOpt of NONE => () | SOME s => 
 				      (PE.error ("Pstruct "^ name ^" contains a literal renaming, which is not supported."))
 			      in
 				  [{diskSize = diskSize, memChar = TyProps.Static, 
-				    endian = false, isRecord = false, 
-				    containsRecord = false, largeHeuristic = false, labels = [NONE]}]
+				    endian = false, isRecord = false, containsRecord = false, largeHeuristic = false, 
+				    labels = [NONE], fieldInfo = [TyProps.Literal (getLiteralKind e)]}]
 		              end
-
+                      (* we need to typecheck the brief fields to find out what kind of literal they are;
+		         hence we need to introduce some variables that might be referenced *)
+                      val _ = pushLocalEnv()
+		      val () = ignore (List.map insTempVar omitVars)                (* insert virtuals into scope *)
+                      val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
 		      val tyProps = P.mungeFields genTyPropsFull genTyPropsBrief genTyPropsMan fields
-                      val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic, labels} = 
+		      val _ = popLocalEnv()                                         (* remove scope *)
+
+                      val {diskSize, memChar, endian, isRecord=_, containsRecord, largeHeuristic, labels,fieldInfo} = 
  			  List.foldl (PTys.mergeTyInfo TyProps.add) PTys.minTyInfo tyProps
 
 		      val compoundDiskSize = TyProps.Struct ((ListPair.zip(List.rev labels, 
 									   (List.map (fn (r : PTys.sTyInfo) => #diskSize r) tyProps))))
 		      val numArgs = List.length params
-		      val structProps = buildTyProps(name, PTys.Struct, TyProps.StructInfo, diskSize, 
+		      val structInfo = {fields=List.rev fieldInfo, pred=postCond}
+		      val structProps = buildTyProps(name, paramInfo, TyProps.StructInfo structInfo, diskSize, 
 						     compoundDiskSize, memChar, endian, 
                                                      isRecord, containsRecord, largeHeuristic, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, structProps)
+
+
 
 					  (* Struct: Generate canonical representation *)
 		      fun genRepFull ({pty: PX.Pty, args: pcexp list, name: string, 
@@ -6985,6 +7046,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      fun genReadBrief (eOrig, labelOpt) =
 			  let val firstNext = if isAlt then "" else (if !first then (first := false; "_FIRST") else "_NEXT")
+			      (* this logic is repeated from genTyPropsBrief.  should look up info in ty info table? *)
 			      val e = PTSub.substExps (!readSubList) (unMark eOrig)
 			      val eptopt = getRE e
 			      val (expTy, expAst) = cnvExpression e
@@ -7464,7 +7526,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 		      val _ = pushLocalEnv()       (* We convert literals to determine which write function to use*)
-(* unneeded?          val cParams : (string * pcty) list = List.map mungeParam params (* so we have to add params to scope *) *)
                       val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		      val wrFieldsSs = P.mungeFields genWriteFull genWriteBrief genWriteMan fields
 		      val wrXMLFieldsSs = P.mungeFields genXMLWriteFull genXMLWriteBrief genXMLWriteMan fields
@@ -7572,8 +7633,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val baseEM = mSuf baseTy
 		  val basePD = pdSuf baseTy
 		  val baseMatchFun = PL.strlitMatch
-		  val cParams : (string * pcty) list = List.map mungeParam params
-		  val paramNames = #1(ListPair.unzip cParams)
+		  val (cParams : (string * pcty) list, 
+		       paramInfo : (string * acty) list, 
+		       paramNames : string list) = processParams params
 		  val () = if (List.length cParams) > 0 then PE.warn ("Parameters are not supported for Penums") else ()
                   fun mungeMembers (name, fromXOpt, expOpt, commentOpt) = 
 		      let val expr = case expOpt of NONE =>   PT.EmptyExpr | SOME e => e
@@ -7616,7 +7678,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      end
 			   else TyProps.mkSize (0,0)
 		  val numArgs = List.length params
-                  val enumProps = buildTyProps(name, PTys.Enum, TyProps.EnumInfo, ds, TyProps.Enum ds,
+                  val enumProps = buildTyProps(name, paramInfo, TyProps.EnumInfo (), ds, TyProps.Enum ds,
 					       TyProps.Static, true, isRecord, containsRecord,
 					       largeHeuristic, isSource, pdTid, numArgs)
 		  val () = PTys.insert(Atom.atom name, enumProps)

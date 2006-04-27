@@ -1129,12 +1129,13 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
 
 
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
-      case #kind ptyInfo
-      of PTys.Typedef => ppPTypedef ptyInfo tidtab pps decl
-      |  PTys.Struct => ppPStruct ptyInfo tidtab pps decl
-      |  PTys.Union => ppPUnion ptyInfo tidtab pps decl 
-      |  PTys.Array => ppPArray ptyInfo tidtab pps decl 
-      |  PTys.Enum => ppPEnum ptyInfo tidtab pps decl
+      case #info ptyInfo
+      of TyProps.TypedefInfo _ => ppPTypedef ptyInfo tidtab pps decl
+      |  TyProps.StructInfo _ => ppPStruct ptyInfo tidtab pps decl
+      |  TyProps.UnionInfo _ => ppPUnion ptyInfo tidtab pps decl 
+      |  TyProps.ArrayInfo _  => ppPArray ptyInfo tidtab pps decl 
+      |  TyProps.EnumInfo _ => ppPEnum ptyInfo tidtab pps decl
+      |  TyProps.BaseInfo _ => PPL.addStr pps "Unexpected Base Type"
 
   fun ppCoreExternalDecl' ptyInfo aidinfo tidtab pps edecl =
     case edecl

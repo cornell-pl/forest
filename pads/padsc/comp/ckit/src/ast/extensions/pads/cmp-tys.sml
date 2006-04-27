@@ -1,18 +1,17 @@
 structure PTys = 
 
 struct
-  datatype PKind = Typedef | Struct | Union | Array | Enum
-
   type sTyInfo = {diskSize : TyProps.diskSize,
 		  memChar  : TyProps.memChar,
 		  endian   : bool,
                   isRecord : bool,
 		  containsRecord : bool,
 		  largeHeuristic : bool,
-		  labels   : TyProps.labelInfo option list} 
+		  labels   : TyProps.labelInfo option list,
+                  fieldInfo : TyProps.fieldInfoTy list} 
 
-  type pTyInfo = {kind     : PKind,
-		  info     : TyProps.tyInfo,
+  type pTyInfo = {info     : TyProps.tyInfo,
+                  typarams : (string * Ast.ctype) list,
 		  diskSize : TyProps.diskSize,
                   compoundDiskSize : TyProps.compoundSize,
 		  memChar  : TyProps.memChar,
@@ -43,6 +42,26 @@ struct
      case #info tyInfo
      of TyProps.ArrayInfo ainfo => ainfo
      | _ => TyProps.defArrayInfo
+
+  fun getUnionInfo (tyInfo: pTyInfo) = 
+     case #info tyInfo
+     of TyProps.UnionInfo ainfo => ainfo
+     | _ => TyProps.defUnionInfo
+
+  fun isOpt(tyInfo:pTyInfo) = 
+      case #info tyInfo
+      of TyProps.UnionInfo {fromOpt,...} => fromOpt
+      | _ => false
+
+  fun isSwitchedUnion(tyInfo:pTyInfo) = 
+      case #info tyInfo
+      of TyProps.UnionInfo {descriminator,...} => Option.isSome descriminator
+      | _ => false
+
+  fun getStructInfo (tyInfo: pTyInfo) = 
+     case #info tyInfo
+     of TyProps.StructInfo ainfo => ainfo
+     | _ => TyProps.defStructInfo
   
   fun mergeTyInfo mergeDiskSizes (r1 : sTyInfo, r2:sTyInfo) =
       {diskSize = mergeDiskSizes (#diskSize r1, #diskSize r2),
@@ -51,7 +70,8 @@ struct
        isRecord = #isRecord r1 orelse #isRecord r2,
        containsRecord = #containsRecord r1 orelse #containsRecord r2,
        largeHeuristic = #largeHeuristic r1 orelse #largeHeuristic r2,
-       labels = (#labels r1) @ (#labels r2)}
+       labels = (#labels r1) @ (#labels r2),
+       fieldInfo = (#fieldInfo r1) @ (#fieldInfo r2)}
 
   val minTyInfo : sTyInfo = 
                   {diskSize = TyProps.Size (IntInf.fromInt 0,IntInf.fromInt 0), 
@@ -60,7 +80,8 @@ struct
                    isRecord = false, 
              containsRecord = false,
              largeHeuristic = false, 
-		     labels = []}
+		     labels = [],
+	          fieldInfo = []}
 
   type pTyMap = pTyInfo PBaseTys.PBST.map
 

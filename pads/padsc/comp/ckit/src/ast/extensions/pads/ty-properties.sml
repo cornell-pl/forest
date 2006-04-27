@@ -23,7 +23,26 @@ struct
                           | Enum of diskSize
 
    type tyApp = {tyCon: string, args : pexp list}
+   datatype pType = Pads of tyApp | C of Ast.ctype
+
    datatype literalTy = DChar of pexp | DString of pexp | DRegExp of pexp | DNoSep
+
+
+   type baseInfoTy = unit
+   type typedefInfoTy = unit
+
+   datatype fieldInfoTy =  Full of {ty:tyApp, name:string, pred : pexp PX.PPostCond list, comment: string option,
+				    isOpt : bool, optPred : pexp PX.OptPredicate option,
+				    isArray : bool, size: (pexp PX.PSize) option, arrayPred : (pexp PX.PConstraint) list}
+                         | Literal of literalTy
+                         | Compute of {ty:pType, name:string, def:pexp, pred: pexp PX.PPostCond list, comment:string option}
+   type structInfoTy = {fields:fieldInfoTy list, pred: pexp PX.PPostCond list}
+   val defStructInfo:structInfoTy = {fields = [], pred = []}
+
+   type unionInfoTy = {fromOpt: bool, descriminator : pexp option, cases : pexp option list, 
+		       fields:fieldInfoTy list, pred: pexp PX.PPostCond list}
+   val defUnionInfo = {fromOpt=false, descriminator=NONE, cases = [], fields=[], pred=[]}
+
    type delimTy = {sep:literalTy option, term:literalTy option, preds:pexp PX.PConstraint list}
    type sizeTy = {min: pexp option, max: pexp option, minConst : (IntInf.int*bool) option, maxConst : (IntInf.int *bool) option}
    type arrayPostConds = pexp PX.PArrayPostCond list
@@ -33,13 +52,13 @@ struct
 				   size={min=NONE,max=NONE,minConst = NONE, maxConst =NONE},
 				   post=[]}
 
-
-   datatype tyInfo = BaseInfo 
-                   | TydefInfo 
-                   | StructInfo
-                   | UnionInfo
+   type enumInfoTy = unit
+   datatype tyInfo = BaseInfo of baseInfoTy
+                   | TypedefInfo of typedefInfoTy 
+                   | StructInfo of structInfoTy
+                   | UnionInfo of unionInfoTy
                    | ArrayInfo of arrayInfoTy
-                   | EnumInfo
+                   | EnumInfo of enumInfoTy
            
 
    datatype memChar = Static | Dynamic

@@ -42,47 +42,6 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 
   fun getCtype ({stClass,ctype,...}: Ast.id) = (stClass,ctype)
 
-(* Type-name munging functions *)
-
-(*
-
-   A reference to a base type in a PADS field is mapped to a reference
-   to the corresponding complex type in the pads.xsd namespace, and is
-   enclosed in quotes:
-
-       [[ base_ty ]]_field_typename 
-            ==
-       "\"p:val_" ^ base_ty ^ "\""
-
-   Any other reference to a base type is mapped to the corresponding
-   base type in the pads.xsd namespace, and is enclosed in quotes:
-
-       [[ base_ty ]]_typename 
-            ==
-       "\"p:" ^ base_ty ^ "\""
-
-   Any reference to a user-defined type is mapped to a reference to
-   the corresponding complex type in the empty namespace (i.e., the
-   target schema) and is enclosed in quotes:
-
-       [[ ty ]]_field_typename 
-         ty not a base type
-            ==
-           "\"" ^ ty ^ "\""
-
-       [[ ty ]]_typename 
-         ty not a base type
-            ==
-           "\"" ^ ty ^ "\""
-
-   A reference to a type's parse descriptor is just the name of the
-   type concatenated with "_pdname":
-
-       [[ identifier ]]_pdname
-            ==
-       \"[[ identifier ]]^"_pdname"\"
-
-*)
   fun strip suf s = String.extract(s, 0, SOME (String.size s - String.size suf))
       
   fun isSuffix suf s = 
@@ -762,12 +721,8 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 
   fun simpleTypeClose pps = PPL.addStr pps "</xs:simpleType>\n"
 
-  fun ppXMLFields pps eFields =			(* list of eFields w/o <seq> *)
-      ( PPL.ppList { pp=ppXMLHeader "<xs:element " "/>" 
-                      , sep="\n"
-                      , lDelim=""
-                      , rDelim=""
-                      } pps eFields)
+  fun ppXMLFields pps eFields =		
+      ( PPL.addStr pps "obsolete")
 
   fun ppXMLSequence pps eFields =		(* <seq> eFields </seq> *)
       ( PPL.addStr pps "<xs:sequence>\n"
@@ -822,199 +777,301 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       [ <element name="PSource" type=[[identifier]]> ]
 
   *)
-  fun ppTopElemIfPsource pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
-	if (#isSource ptyInfo) 
-	then ( ppXMLHeader "<xs:element " "/>" pps (mapFieldTypeName, repNameOpt, "PSource")
-	     ; newline pps)
-	else ()
-
-  (*
-    A Pstruct yields two global complex types: one for the type itself
-    and one for its parse descriptor.
-
-    [[  Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] ]]_schema
-                              == 
-    [ 
-      <complexType name=[[identifier]]_pdname>
-        <sequence>
-          <element name="pstate" type="p:Pflags_t"/>
-          <element name="nerr" type="p:Puint32"/>
-          <element name="errCode" type="p:PerrCode_t"/>
-          <element name="loc" type="p:Ploc_t"/>
-        </sequence>
-      </complexType>
-      ; 
-      <complexType name=[[identifier]]> 
-        <sequence>
-          [[ fields ]]_local @ 
-          [ <element name="pd" type=[[identifier]]_pdname minOccurs="0" maxOccurs="1"> ]
-        </sequence>
-      </complexType>
-    ]
-
-  *)
-  fun ppPStruct (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
-      let val pdTid = #pdTid ptyInfo
-	  val (pdTyName, pdFields) = structPdFields tidtab pdTid
-	  val pdHeader = makeBaseNames pdFields
-          val (repName, repFields) = structFields tidtab tid
-	  val augRepFields = makeFieldNames (repFields @ [(pdTyName, "pd")])
-      in
-	((newline pps
-(*	; PPL.addStr pps "<!-- Pstruct "^repName^" -->" *)
-        ; ppXMLComplex pps (pdTyName,pdHeader)
-	; ppXMLComplex pps (repName, augRepFields) 
-    	; newline pps
-	; ppTopElemIfPsource pps (ptyInfo,repName)
-	)						
-	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
-      end  
-    | ppPStruct ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
-
-  (* 
-
-   A Punion is mapped into a complex type that contains a choice of
-   all of the union's fields, an optional parse descriptor, and a
-   simple type for the pd's tag field.
-
-    [[ [Plongest] Punion identifier [p_formals] { union_bdy } [ Pwhere { predicate }] ]]_schema
-                                  == 
-*)  
-  fun ppPUnion (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...}) =
-      let val pdTid = #pdTid ptyInfo
-          val (repName,uFields) = unionFields tidtab tid
-	  val uFields' = makeFieldNames uFields 
-          val (pdTyName,pdFields) = unionPdFields tidtab pdTid
-	  val pdFields = makeBaseNames pdFields
-	  val tagName = SOME (valOf repName ^ "_tag")  
-       in 
-
-      ((newline pps
-(*      ; PPL.addStr pps "<!-- Punion "^repName^" -->" *)
-      (*
-        <xs:simpleType name=[[identifier]]_tag>
-          <restriction base="xsd:string"/> 
-        </xs:simpleType>
-      *)
-      ; simpleTypeOpen pps (tagName)
-      ; ppXMLRestriction pps "xs:string"
-      ; simpleTypeClose pps 
-
-      (*
-        <complexType name=[[identifier]]_pd>
-          <sequence>
-	    <element name="pstate" type="Pflags_t"/>
-            <element name="nerr" type="Puint32"/>
-            <element name="errCode" type="PerrCode_t"/>
-            <element name="loc" type="Ploc_t"/>
-          </sequence>
-        </complexType>
-        ; 
-      *)
-      ; ppXMLComplex pps (pdTyName, pdFields) 
-
-      (*
-        <complexType name=[[identifier]]> 
-          <sequence>
-            <choice>
-              [[ union_bdy ]]_local
-            </choice>
-            [ <element name="pd" type=[[identifier]]_pd minOccurs="0" maxOccurs="1"> ]
-          </sequence>
-        </complexType>
-      *)
-(*      ; ppXMLChoice mapFieldTypeName pps uFields   original union fields *)
-      ; complexTypeOpen pps repName
-      ; PPL.addStr pps "<xs:sequence>\n"
-      ; PPL.addStr pps "<xs:choice>\n"
-      ; ppXMLFields pps uFields'
-      ; newline pps
-      ; PPL.addStr pps "</xs:choice>\n"
-      ; ppXMLFields pps [(mapFieldTypeName, pdTyName, "pd")]
-      ; PPL.addStr pps "</xs:sequence>\n"
-      ; complexTypeClose pps
-
-      ; ppTopElemIfPsource pps (ptyInfo,repName)
-      )
-      handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
-    end
-    | ppPUnion ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
-
-  (* 
-
-    A Parray is mapped to a complex type that contains a sequence of
-    array elements, a length field, and a parse descriptor:
-
-    [[ Parray identifier [p_formals] { 
-         p_ty `['p_size_spec`]' [: p_array_constraints]
-       } [ Pwhere { p_array_posts }] 
-    ]]  ==
-  *)
 
   fun ppTagIndent tag ppArg pps arg  = 
-      (PPL.addStr pps ("<"^tag^">")
-      ;ppArg pps arg
-      ;PPL.newline pps
-      ;PPL.addStr pps ("</"^tag^">"))
+      ( PPL.addStr pps ("<"^tag^">")
+      ; blockify 2 ppArg pps arg
+      ; PPL.newline pps
+      ; PPL.addStr pps ("</"^tag^">"))
 
   fun ppTag tag ppArg pps arg  = 
       (PPL.addStr pps ("<"^tag^">")
       ;ppArg pps arg
       ;PPL.addStr pps ("</"^tag^">"))
 
+  fun ppTopElemIfPsource pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
+	if (#isSource ptyInfo) 
+	then ( ppXMLHeader "<xs:element " "/>" pps (mapFieldTypeName, repNameOpt, "PSource")
+	     ; newline pps)
+	else ()
+
   fun ppExp pps exp = PPL.addStr pps (ParseTreeUtil.expToString exp)
-  fun ppChar pps exp = 
-      case ParseTreeUtil.stripExp exp 
-      of ParseTree.IntConst i => (
-           PPL.addStr pps (Char.toString(Char.chr (IntInf.toInt i)))
-           handle _ => ppExp pps exp
-          )
-      | _ => ppExp pps exp
-
-  fun ppLit pps lit = 
-      let fun ppRE pps exp = (PPL.addStr pps "Pre ";
-			      ppExp pps exp)
-      in
-      case lit
-      of TyProps.DChar exp =>   ppTag "char" ppChar pps exp
-      |  TyProps.DString exp => ppTag "string" ppExp pps exp
-      |  TyProps.DRegExp exp => ppTag "string" ppRE pps exp
-      |  TyProps.DNoSep =>      PPL.addStr pps "<nosep/>"
-      end
-
-  fun ppTy name args pps = 
-       let fun ppArg pps a = ppTag "argument" ppExp pps a
-           fun ppTy' pps (name, args) = 
-	       (ppTag "name" PPL.addStr pps name
-	       ;(case args of nil => ()
-	         | _ => PPL.blockify 2 (PPL.separate (ppArg, PPL.newline)) pps args))
-       in
-        ( PPL.addStr pps "<ptype>" 
-	; blockify 2 ppTy' pps (name,args)
-	; PPL.newline pps
-        ; PPL.addStr pps "</ptype>")
-       end
-
-
   fun ppCExpr pps exp = ppTag "expr"  (ppTag "native" ppExp) pps exp
+  fun ppPExpr pps exp = 
+      case exp 
+      of ParseTree.MARKexpression(l,e) => ppPExpr pps e 
+      |  ParseTree.String s => ppExp pps exp
+      |  ParseTree.IntConst i => ppExp pps exp
+      |  ParseTree.RealConst r => ppExp pps exp
+      |  _ => ppCExpr pps exp
+
   fun ppConstraint pps con = 
       case con 
-      of PX.General    exp => ppCExpr pps exp
-      |  PX.ParseCheck exp => ppTag "parsecheck" ppExp pps exp
+      of PX.General    exp => ppPExpr pps exp
+      |  PX.ParseCheck exp => ppTag "parsecheck" ppPExpr pps exp
 
   fun ppConstraints pps cons = 
       case cons of [] => ()
-      | _ => PPL.blockify 2 (PPL.separate (ppConstraint, PPL.newline)) pps cons
+      | _ =>  PPL.separate (ppConstraint, PPL.newline) pps cons
 
-  fun ppPArray (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
-      let val declName = #repName ptyInfo
-          val {baseTy={tyCon,args}, delims, size, post} = PTys.getArrayInfo ptyInfo 
-	  fun ppSep pps sep   = ppTag "sep"   ppLit pps sep
+  fun ppPostConds pps cons = 
+      case cons of [] => ()
+      | _=>  (PPL.newline pps; ppTagIndent "postConstraints" ppConstraints pps cons)
+
+  fun ppTyApp pps (name,args) = 
+       let fun ppArg pps a = ppTag "argument" ppPExpr pps a
+       in
+	   (ppTag "name" PPL.addStr pps name
+	  ;(case args of nil => ()
+	    | _ => PPL.blockify 2 (PPL.separate (ppArg, PPL.newline)) pps args))
+       end
+
+  fun ppTy pps ty = 
+        ( PPL.addStr pps "<ptype>" 
+	; blockify 2 ppTyApp pps ty
+	; PPL.newline pps
+        ; PPL.addStr pps "</ptype>")
+
+  fun ppPTy aidinfo tidtab pps pty = 
+      case pty 
+      of TyProps.Pads {tyCon,args} => ppTy  pps (tyCon, args)
+      |  TyProps.C cty => ppTag "ctype" (ppCtype aidinfo tidtab) pps cty
+
+  fun ppPChar pps exp = 
+      case ParseTreeUtil.stripExp exp 
+      of ParseTree.IntConst i => (
+           PPL.addStr pps (Char.toString(Char.chr (IntInf.toInt i)))
+           handle _ => ppCExpr pps exp
+          )
+      | _ => ppCExpr pps exp
+
+  fun ppPString pps exp = 
+      case ParseTreeUtil.stripExp exp 
+      of ParseTree.String s => PPL.addStr pps s
+      | _ => ppCExpr pps exp
+
+  fun ppLit pps lit = 
+      case lit
+      of TyProps.DChar exp =>   ppTag "char" ppPChar pps exp
+      |  TyProps.DString exp => ppTag "string" ppPString pps exp
+      |  TyProps.DRegExp exp => ppTag "regexp" ppPString pps exp
+      |  TyProps.DNoSep =>      PPL.addStr pps "<nosep/>"
+
+  fun ppComment pps comment =
+      case comment of NONE => ()
+      | SOME s => (newline pps; ppTag "comment" PPL.addStr pps s)
+
+  fun ppNestedOpt pps (name,args,optPred) = 
+      let fun ppOptDecon pps {some,none} = ()  (* fix this *)
+	  fun ppOptPred pps optPred = 
+	      case optPred 
+	      of NONE => ()
+              | SOME(PX.Simple l) => ppTagIndent "pred" ppConstraints pps l
+	      | SOME(PX.Decon r) => ppTagIndent "optionPred" ppOptDecon pps r
+      in
+        ( PPL.addStr pps "<nestedOption>" 
+	; blockify 2 ppTyApp pps (name,args)
+	; PPL.newline pps
+        ; ppOptPred pps optPred
+        ; PPL.addStr pps "</nestedOption>")
+      end
+
+  fun ppSize which pps size = ppTag which ppPExpr pps size
+  fun ppSizeConstraints pps size = 
+      case size 
+      of {min=NONE,minConst=NONE,max=NONE,maxConst=NONE} => ()
+      |  {min,minConst,max,maxConst} 
+	  => ( newline pps
+	     ; PPL.addStr pps "<sizeConstraints>"
+	     ; Option.map (fn s => blockify 2 (ppSize "min") pps s) min
+	     ; Option.map (fn s => blockify 2 (ppSize "max") pps s) max
+	     ; PPL.newline pps
+	     ; PPL.addStr pps "</sizeConstraints>"
+	     )
+  fun ppTerm' pps term = 
+      case term of PX.Expr e => ppCExpr pps e
+    | PX.noSep => PPL.addStr pps "<nosep/>"
+
+  fun ppPred pps (PX.Last  e) = ppTagIndent "last"   ppConstraints pps e
+    | ppPred pps (PX.Ended e) = ppTagIndent "ended"  ppConstraints pps e
+    | ppPred pps (PX.Skip  e) = ppTagIndent "omit"   ppConstraints pps e
+    | ppPred pps (PX.Longest) = PPL.addStr pps "</longest>"
+    | ppPred pps (PX.Sep e)   = ppTagIndent "sep"   ppCExpr pps e  (* fix these *)
+    | ppPred pps (PX.Term e)  = ppTagIndent "term"  ppTerm' pps e
+
+  fun ppPredList pps preds = 
+      case preds of [] => () | _ => PPL.blockify 2 (PPL.separate (ppPred, PPL.newline)) pps preds
+
+  fun ppNestedArray pps (name,args,size,arrayPred) = 
+      let fun ppSizeOpt pps size = 
+	      case size of NONE => ()
+              | SOME (PX.SizeInfo{min,max,maxTight}) => ppSizeConstraints pps {min=min,max=max,maxConst=NONE, minConst=NONE} (* fix this*)
+	  fun ppDelims pps arrayPred = 
+	      case arrayPred of [] => ()
+              | _ => ( PPL.addStr pps "<delimiterConstraints>"
+                     ; ppPredList pps arrayPred
+                     ; PPL.addStr pps "</delimiterConstraints>")
+      in
+        ( PPL.addStr pps "<nestedArray>" 
+	; blockify 2 ppTyApp pps (name,args)
+	; PPL.newline pps
+        ; blockify 2 ppSizeOpt pps size
+        ; blockify 2 ppDelims pps arrayPred 
+        ; PPL.addStr pps "</nestedArray>")
+      end
+
+  fun ppNestedTy (name,args,isOpt,optPred,isArray,size,arrayPred) pps = 
+      let fun ppBody pps () = 
+	  if isOpt then ppNestedOpt pps (name, args, optPred) 
+	  else if isArray then ppNestedArray pps (name,args,size,arrayPred) 
+	  else ppTyApp pps (name, args) 
+      in
+        ( PPL.newline pps
+	; PPL.addStr pps "<ptype>" 
+	; blockify 2 ppBody pps ()
+	; PPL.newline pps
+        ; PPL.addStr pps "</ptype>")
+      end
+
+  fun ppFullField pps {ty,name,pred,comment,isOpt,optPred,isArray,size,arrayPred} =	
+      let val {tyCon, args} = ty
+      in
+	  ( ppTag "name" PPL.addStr pps name
+	  ; ppNestedTy (tyCon,args,isOpt,optPred,isArray,size,arrayPred) pps
+          ; ppComment pps comment
+	  ; ppPostConds pps pred
+          )
+      end
+
+  fun ppComputeField aidinfo tidtab pps {ty, name, def, pred, comment} =
+	  ( ppTag "name" PPL.addStr pps name
+	  ; PPL.newline pps
+	  ; ppPTy aidinfo tidtab pps ty
+	  ; PPL.newline pps
+          ; ppTag "definition" ppPExpr pps def
+          ; ppComment pps comment
+	  ; ppPostConds pps pred
+          )
+
+  fun ppPField aidinfo tidtab pps (field:TyProps.fieldInfoTy) = 
+      case field
+      of TyProps.Full r => ppTagIndent "full" ppFullField pps r
+      |  TyProps.Literal l => ppTag "literal" ppLit pps l
+      |  TyProps.Compute c => ppTagIndent "computed" (ppComputeField aidinfo tidtab) pps c
+
+  fun ppPFields aidinfo tidtab pps eFields =		
+      ( PPL.addStr pps "<fields>"
+      ; blockify 2 (separate (ppPField aidinfo tidtab, newline)) pps eFields
+      ; PPL.newline pps
+      ; PPL.addStr pps "</fields>"
+      )
+
+  fun ppPTyParam aidinfo tidtab pps (name,acty) = 
+      (  ppTag "name" PPL.addStr pps name
+       ; ppTag "type" (ppCtype aidinfo tidtab) pps acty)
+
+  fun ppPTyParams aidinfo tidtab pps typarams = 
+      ( PPL.addStr pps "<params>"
+       ; blockify 2 (separate (ppPTyParam aidinfo tidtab, newline)) pps typarams
+       ; newline pps
+       ; PPL.addStr pps "</params>"
+       )
+        
+  fun ppPDecl aidinfo tidtab pps (name, typarams) = 
+      ( PPL.addStr pps "<decl>"
+       ; blockify 2 (ppTag "name" PPL.addStr) pps name
+       ; case typarams of [] => () | _ => blockify 2 (ppPTyParams aidinfo tidtab) pps typarams
+       ; newline pps
+       ; PPL.addStr pps "</decl>")
+
+  fun ppPDeclaration pps kind ptyInfo ppKind = 
+	(PPL.addStr pps ("<"^kind^">" )
+        ; blockify 2 ppKind pps ptyInfo
+    	; newline pps
+	; PPL.addStr pps ("</"^kind^">" )
+    	; newline pps
+        )
+
+  fun ppPStruct (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  = 
+      let fun ppPStruct' pps (ptyInfo:PTys.pTyInfo) = 
+	      let val declName = #repName ptyInfo
+		  val typarams = #typarams ptyInfo
+		  val {fields,pred} = PTys.getStructInfo ptyInfo
+	      in
+	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+              ; newline pps
+	      ; ppPFields aidinfo tidtab pps fields
+              ; ppPostConds pps pred
+              )  
+	      end
+      in
+	(ppPDeclaration pps "struct" ptyInfo ppPStruct' 
+	handle _ => PPL.addStr pps "ERROR: unbound tid")
+      end  
+    | ppPStruct ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+
+  fun ppPOpt (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...}) =
+      let fun ppPOpt' pps (ptyInfo:PTys.pTyInfo) = 
+	      let val declName = #repName ptyInfo
+		  val typarams = #typarams ptyInfo
+		  val {fields,pred,...} = PTys.getUnionInfo ptyInfo
+		  val (TyProps.Full{ty={tyCon, args},pred=fpred,...})::rs = fields
+	      in
+	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ; PPL.newline pps
+	      ; ppTagIndent "base" ppTyApp pps (tyCon,args) 
+              ; ppPostConds pps fpred
+              )
+	      end
+       in 
+	(ppPDeclaration pps "option" ptyInfo ppPOpt' 
+	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
+    end
+    | ppPOpt ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+
+  fun ppPUnion (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...}) =
+      let fun ppCaseOpt pps caseOpt = 
+	      case caseOpt of NONE => PPL.addStr pps "<default/>"
+              | SOME e => ppPExpr pps e
+	  fun ppBranchBody aidinfo tidtab pps (caseOpt, field) = 
+	      ( ppTag "case" ppCaseOpt pps caseOpt
+              ; PPL.newline pps
+              ; ppTagIndent "body" (ppPField aidinfo tidtab) pps field
+              )
+	  fun ppPBranch aidinfo tidtab pps cf = ppTagIndent "branch" (ppBranchBody aidinfo tidtab) pps cf
+	  fun ppBranches aidinfo tidtab pps cfs =  separate (ppPBranch aidinfo tidtab, newline) pps cfs
+          fun ppPSwitched aidinfo tidtab pps (desc, cases, fields) = 
+	      ( ppTag "descriminator" ppPExpr pps desc
+              ; PPL.newline pps
+	      ; ppTagIndent "branches" (ppBranches aidinfo tidtab) pps (ListPair.zip(cases, fields))
+	      ) 
+	  fun ppPUnion' pps (ptyInfo:PTys.pTyInfo) = 
+	      let val declName = #repName ptyInfo
+		  val typarams = #typarams ptyInfo
+		  val {descriminator, cases, fields,pred,...} = PTys.getUnionInfo ptyInfo
+	      in
+	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+              ; newline pps
+	      ; if PTys.isSwitchedUnion ptyInfo 
+		    then ppTagIndent "switched" (ppPSwitched aidinfo tidtab) pps (Option.valOf descriminator,cases,fields) 
+		    else ppTagIndent "inplace" (ppPFields aidinfo tidtab) pps fields
+	      ; ppPostConds pps pred
+	      )  
+	      end
+       in 
+	(ppPDeclaration pps "union" ptyInfo ppPUnion' 
+	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
+    end
+    | ppPUnion ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+
+
+
+  fun ppPArray (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  = 
+      let fun ppSep pps sep   = ppTag "sep"   ppLit pps sep
 	  fun ppTerm pps term = ppTag "term"  ppLit pps term
-          fun ppPred pps (PX.Last  e) = ppTagIndent "last"   ppConstraints pps e
-            | ppPred pps (PX.Ended e) = ppTagIndent "ended"  ppConstraints pps e
-            | ppPred pps (PX.Skip  e) = ppTagIndent "omit"   ppConstraints pps e
-            | ppPred pps _ = PPL.addStr pps "unexpected"
 	  fun ppArrayDelims pps delims = 
 	      case delims
 	      of {sep=NONE,term=NONE,preds=[]} => ()
@@ -1023,21 +1080,9 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		     ; PPL.addStr pps "<delimiterConstraints>"
 		     ; Option.map (fn s => blockify 2 ppSep  pps s) sep
 		     ; Option.map (fn t => blockify 2 ppTerm pps t) term
-		     ; case preds of [] => () | _ => PPL.blockify 2 (PPL.separate (ppPred, PPL.newline)) pps preds
+		     ; ppPredList pps preds
 		     ; PPL.newline pps
 		     ; PPL.addStr pps "</delimiterConstraints>")
-	  fun ppSize which pps size = ppTag which ppExp pps size
-          fun ppSizeConstraints pps size = 
-	      case size 
-              of {min=NONE,minConst=NONE,max=NONE,maxConst=NONE} => ()
-              |  {min,minConst,max,maxConst} 
-                 => ( newline pps
-		    ; PPL.addStr pps "<sizeConstraints>"
-		    ; Option.map (fn s => blockify 2 (ppSize "min") pps s) min
-		    ; Option.map (fn s => blockify 2 (ppSize "max") pps s) max
-                    ; PPL.newline pps
-		    ; PPL.addStr pps "</sizeConstraints>"
-                    )
 	  fun ppRange pps r = 
 	      case r 
               of PX.ArrayName s => blockify 2 (ppTag "in" PPL.addStr) pps s
@@ -1068,29 +1113,24 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
                     ; PPL.newline pps
 		    ; PPL.addStr pps "</arrayConstraints>"
                     )
-          fun ppDecl pps name = 
-              ( PPL.addStr pps "<decl>"
-              ; blockify 2 (ppTag "name" PPL.addStr) pps name
+	  fun ppPArray' pps ptyInfo = 
+	      let val declName = #repName ptyInfo
+		  val typarams = #typarams ptyInfo
+		  val {baseTy={tyCon,args}, delims, size, post} = PTys.getArrayInfo ptyInfo 
+	      in
+	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
               ; PPL.newline pps
-              ; PPL.addStr pps "</decl>")
-	  fun ppPArray' pps () = 
-	      ( ppDecl pps declName
-              ; PPL.newline pps
-              ; ppTy tyCon args pps
+              ; ppTy pps (tyCon, args)
               ; ppArrayDelims pps delims
               ; ppSizeConstraints pps size
               ; ppPostConds pps post
               )
+	      end
       in
-	((PPL.addStr pps "<array>" 
-        ; blockify 2 ppPArray' pps ()
-    	; newline pps
-	; PPL.addStr pps "</array>" 
-    	; newline pps
-        )
+	(ppPDeclaration pps "array" ptyInfo ppPArray' 
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
-    | ppPArray ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+    | ppPArray ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
 	  (* 
               Galax does not support derivation by extension yet, so we have 
@@ -1109,7 +1149,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	   ]
 	 *)
 
-  fun ppPEnum (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  = 
+  fun ppPEnum (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  = 
       let val (repName, repFields) = enumInfo tidtab tid
       in
 	((newline pps
@@ -1120,39 +1160,14 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
         )
 	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
       end  
-    | ppPEnum ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+    | ppPEnum ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
 
-  (*
-      Ptypedef
-      ========
-      A Ptypedef is just a synonym for another type.  In XML Schema, we
-      use type derivation by restriction to specify a synonym.
-     *)
-  fun ppPTypedef (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  =
+  fun ppPTypedef (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  =
       let val (Name, Ty) = typedefInfo tidtab tid
 	  val Name_pd = mapPdName (valOf Name)
 	  val base = (valOf Ty)
       in 
-	  (* 
-              Galax does not support derivation by extension yet, so we have 
-              to use full-blown restriction, which requires specifying explicitly
-              fields from the base type :
-
-	   [[ Ptypedef p_ty identifier [p_formals] [:typedef_predicates] ]]_schema
-                 p_ty is a base type
-                       == 
-	   [
-	     <complexType name=[[identifier]]>
-	       <restriction base=[[p_ty]]_field_typename/>
-                 <xs:choice>
-                   <xs:element name="val" type=[[p_ty]]_typename/>
-                   <xs:element name="pd" type=[[[[p_ty]]_typename]]_pdname/>
-                 </xs:choice>
-               </restriction>
-	     </complexType>
-	   ]
-	 *)
 	  if isBaseTypeName base then 
 	      (newline pps
 	       (* ; PPL.addStr pps "<!-- Ptypedef "^Name^" -->" *)
@@ -1160,33 +1175,9 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	       (* ; ppXMLRestriction pps base_name *)
 	       ; ppXMLSequence pps [(mapBaseTypeName, SOME base, "val"), (mapPdName o mapFieldTypeName, SOME base, "pd")]
 	       ; complexTypeClose pps
-	       (*
-	     ; 
-	     <simpleType name=[[identifier]]_pdname>
-	       <restriction base=[[[[p_ty]]_base_typename]]_pdname/>
-	     </simpleType>
-
-	       ; simpleTypeOpen pps (SOME Name_pd)
-	       ; ppXMLRestriction pps pd_base_name
-	       ; simpleTypeClose pps
-*)
 		   ; ppTopElemIfPsource pps (ptyInfo,Name)
 	       )
 	      handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
-	  (*
-	   [[ Ptypedef p_ty identifier [p_formals] [:typedef_predicates] ]]_schema
-                 p_ty not a base type
-                       == 
-	   [
-	     <complexType name=[[identifier]]>
-	       <restriction base=[[p_ty]]_base_typename/>
-	     </complexType>
-	     ; 
-	     <complexType name=[[identifier]]_pdname>
-	       <restriction base=[[[[p_ty]]_base_typename]]_pdname/>
-	     </complexType>
-	   ]
-	   *)
 	  else
 	      (let val base_name = mapBaseTypeName base
 		  val pd_base_name = mapPdName base_name
@@ -1203,21 +1194,23 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	      )
 	      handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
       end
-    | ppPTypedef ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+    | ppPTypedef ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
 
-  fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
+  fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) aidinfo tidtab pps decl = 
     ( PPL.newline pps
-    ; case #kind ptyInfo
-      of PTys.Typedef => ppPTypedef ptyInfo tidtab pps decl
-      |  PTys.Struct => ppPStruct ptyInfo tidtab pps decl
-      |  PTys.Union => ppPUnion ptyInfo tidtab pps decl 
-      |  PTys.Array => ppPArray ptyInfo tidtab pps decl 
-      |  PTys.Enum => ppPEnum ptyInfo tidtab pps decl)
+    ; case #info ptyInfo
+      of TyProps.TypedefInfo _ => ppPTypedef ptyInfo aidinfo tidtab pps decl
+      |  TyProps.StructInfo _ => ppPStruct ptyInfo aidinfo tidtab pps decl
+      |  TyProps.UnionInfo {fromOpt,...} => if fromOpt then ppPOpt ptyInfo aidinfo tidtab pps decl
+					    else ppPUnion ptyInfo aidinfo tidtab pps decl 
+      |  TyProps.ArrayInfo _ => ppPArray ptyInfo aidinfo tidtab pps decl 
+      |  TyProps.EnumInfo _ => ppPEnum ptyInfo aidinfo tidtab pps decl
+      |  TyProps.BaseInfo _ => PPL.addStr pps "Unexpected Base Type")
 
   fun ppCoreExternalDecl' ptyInfo aidinfo tidtab pps edecl =
     case edecl
-      of ExternalDecl decl => ppPKind ptyInfo tidtab pps decl
+      of ExternalDecl decl => ppPKind ptyInfo aidinfo tidtab pps decl
        | FunctionDef (id,ids,stmt) =>  (* This branch will not be called as functions aren't being tagged *)
 	   let val {location,...} = id
 	       val (stClass,ctype) = getCtype id
@@ -1319,11 +1312,3 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 end
  
 
-(* 
-
-OLD CODE FOR UNIONS!
-
-      ; complexTypeOpen pps (SOME ((valOf pdTyName) ^ "_u"))
-      ; ppXMLChoice mapBaseTypeName pps Fields
-      ; complexTypeClose pps
-*)      
