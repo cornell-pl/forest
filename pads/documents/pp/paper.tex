@@ -1,0 +1,52 @@
+%\documentclass[fleqn]{article}
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{DDC': There and Back Again}
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@att.com}}
+\authorinfo{Yitzhak Mandelbaum  \\ David Walker}{
+	   Princeton University}
+       {\mono{   yitzhakm,dpw@cs.princeton.edu   }}
+\authorinfo{John Launchbury}{
+	   Galois Connections}
+       {\mono{john@galois.com}}
+
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+Formal theory of parsing/pretty printing.
+\end{abstract}
+
+\input{ddcpoly}
+
+\section*{Acknowledgments}
+
+
+\bibliographystyle{abbrv}
+\bibliography{pads}
+%\bibliography{../common/pads-long,../common/pads}
+
+\input{appendix}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+
