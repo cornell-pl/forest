@@ -1859,6 +1859,20 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  then NONE
 		  else SOME( List.map(PTSub.substExps (!postReadSubList)) args)
 
+	      (* Get the constraint expression for field 'name' based
+	         on parameters 'pred', 'omitNames', and 'postReadSubList'.
+
+		 The constraint expression is based only on the
+		 constraint applied to the field itself, not any
+		 constraints expressed in the underlying type. For
+		 manifest fields, this is the only constraint (hence
+		 the 'M' in the name of this function).
+
+		 Parameter 'fnName' is the name of the function in
+	         which the generated expression will be used.
+	         (Parameters fnName and name are for error reporting
+	         purposes only).
+               *)
 	      fun getConM fnName name pred omitNames postReadSubList = 
   		  case pred of NONE => [] 
 			     | SOME e => if P.isFreeInPostCond omitNames e
@@ -2177,8 +2191,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val readName = readSuf name
                       val baseReadFun = BU.lookupTy(baseTy, readSuf, #readname)
 		      (* Modified predicate expression option: *)
-		      val modPredXOpt = case pred of NONE => NONE
-			             | SOME {predTy, thisVar, pred} => SOME (PTSub.substExp (thisVar, P.starX(PT.Id rep), pred))
+		      val modPredXOpt = Option.map
+			                    (fn {predTy, thisVar, pred} => 
+						PTSub.substExp (thisVar, P.starX(PT.Id rep), pred))
+					    pred
 		      fun chk () = 
 			  (checkParamTys(name, baseReadFun, args, 4, 0);
 			   case modPredXOpt of NONE => ()
@@ -2226,7 +2242,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
                       (* -- generate is function (typedef case) *)
-		      val isName = isPref name
+		      val isName = PN.isPref name
 		      val predX  = case (lookupPred baseTy, modPredXOpt) of 
 			             (NONE, NONE) => P.trueX
 				   | (SOME basePred, NONE) => PT.Call(PT.Id basePred, [PT.Id rep] @ args)
@@ -2538,6 +2554,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      (* convert cParams for use in functions below. *)
 		      val cParamTuples = map (fn (n,cty) => (P.pctToPDT cty,false,n)) cParams
 
+
+		      (* XXX: Change these expressions to use names from PNames instead of hard coding the strings. *)
 		      val fwEDs = [genTDFunDecl("Perror_t",name ^"_init",
 						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName name,true,"rep")]),
 				   genTDFunDecl("Perror_t",name ^"_pd_init",
@@ -2586,6 +2604,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
 						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"prefix"),
 						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"what"),
+						 (P.makePDT [PT.Int],false,"nst"),
+						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)]),
+				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report2xml_io",
+						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
+						 (P.makePDT [PT.TypedefName "Sfio_t"],true,"outstr"),
 						 (P.makePDT [PT.Int],false,"nst"),
 						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)])]
                       (* Generate Write function declarations, PRecursive case *)
@@ -2745,9 +2768,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val readEDs = phantomEDs @ initRepEDs @ initPDEDs @ cleanupRepEDs @ cleanupPDEDs
 			          @ copyRepEDs @ copyPDEDs @ maskFunEDs @ readFunEDs
 
-                      (* -- generate "is" function (rec. case) *)
+                      (* -- generate "verify" function (rec. case) *)
 		      val isName = isPref name
-		      val bodySs = [PT.Return P.trueX]
+		      val predX  = case lookupPred baseTy of 
+			             NONE => P.trueX
+				   | SOME basePred => PT.Call(PT.Id basePred, [P.starX (PT.Id rep)] @ args)
+		      val bodySs = [PT.Return predX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
 		      (* ------ Generate genPD function dynamic case --------- *)
@@ -7200,7 +7226,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val readDecls = (emitRead readEDs)
 		      val () = popLocalEnv()
 
-										(* Generate is function struct case *)
+		      (* Generate is function struct case *)
 		      val isName = PNames.isPref name
 
 
@@ -7223,11 +7249,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   fieldXs @ predXs 
 				       end
 			      fun getConMan  {tyname, name, args, isVirtual, pred, expr, comment} = getConM isName name pred omitNames postReadSubList
-			      val fieldConS = P.mungeFields getConFull (fn x=>[]) getConMan fields
-			      val whereConS = [getIsExp postCond]
-			      val constraintSs = List.map (PTSub.substExps (!postReadSubList)) (fieldConS @ whereConS)
+			      val fieldConXs = P.mungeFields getConFull (fn x=>[]) getConMan fields
+			      val whereConX = [getIsExp postCond]
+			      val constraintXs = List.map (PTSub.substExps (!postReadSubList)) (fieldConXs @ whereConX)
 			  in
-			      P.andBools constraintSs
+			      P.andBools constraintXs
 			  end
 		      val bodySs = [PT.Return predX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
