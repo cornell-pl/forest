@@ -279,15 +279,17 @@
 \newcommand{\itup}[1]{\codefont({#1}\codefont)}
 \newcommand{\ictup}[1]{\codefont{(#1)}}
 \newcommand{\ipi}[2]{\codefont{\gp_{#1}} \, #2}
+\newcommand{\ipid}[2]{\codefont{#2.#1}}
 \newcommand{\iarr}[1]{\codefont{[}#1\codefont{]}}
 \newcommand{\ieseq}{\codefont{[]}}
-\newcommand{\iappend}[2]{#1 \; @ \; #2}
+\newcommand{\iappend}[2]{\codefont{#1 \; @ \; #2}}
 %%\newcommand{\isub}[2]{\codefont{sub_{#1}} \; #2}
 \newcommand{\isub}[2]{#1\,\codefont{[{#2}]}}
 \newcommand{\ifoldr}[3]{\codefont{foldr} \; #1 \, #2 \, #3}
 \newcommand{\iroll}[2]{\codefont{fold}[{#2}] (#1)}
 \newcommand{\iunroll}[1]{\codefont{unfold}(#1)}
 \newcommand{\iapp}[2]{#1 \; #2}
+\newcommand{\icapp}[2]{\codefont{#1 \; #2}}
 \newcommand{\iappi}{\;}
   %% Exception
 \newcommand{\ifail}{\codefont{fail}}
@@ -369,6 +371,7 @@
 
 %% Abbreviations
 \newcommand{\lampair}[1]{\gl \spair<\codefont{\data},\off>.#1}
+\newcommand{\lampppair}[1]{\gl \spair<\codefont{r},\codefont{pd}>.#1}
 %\newcommand{\funpair}[2]{\text{fun} \, #1\spair<\data,\off>.#2}
 
 %% Misc. operations
