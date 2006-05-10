@@ -36,11 +36,6 @@ REGRESS_TESTS = 1
 
 include $(PADS_HOME)/mk/rules.mk
 
-# Hack for MacOS X Panther
-ifeq ($(AST_ARCH),"darwin.ppc")
-  PADSC_EXTRA +=-D__ppc__
-endif
-
 VPATH =  .. ../../p
 
 ifndef GEN_GALAX
@@ -64,7 +59,7 @@ OTHER_TESTS  = test_array test_array_string test_record_enum test_struct1 test_s
                test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
                test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct1 \
-               test_cpyrecgen_rps rwxml_cpyrecgen_rps rwxml_format7
+               test_cpyrecgen_rps rwxml_cpyrecgen_rps rwxml_format7 rwxml_newick
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
@@ -120,6 +115,7 @@ regress_o:  sanity_check \
           regress_rw_struct_good_o \
           regress_rw_pendian_o \
           regress_rwxml_struct1_o \
+          regress_rwxml_newick_o \
           regress_rwxml_alt1_o \
           regress_rwxml_2ips_o \
           regress_rwxml_pfloat_o \
@@ -170,6 +166,7 @@ regress_d:  sanity_check \
           regress_rw_struct_good_d \
           regress_rw_pendian_d \
           regress_rwxml_struct1_d \
+          regress_rwxml_newick_d \
           regress_rwxml_alt1_d \
           regress_rwxml_2ips_d \
           regress_rwxml_pfloat_d \
@@ -394,7 +391,13 @@ regress_rwxml_struct1_o: rwxml_struct1
 	@(args=""; input="../../data/struct1"; suf=""; $(RegressInput))
 
 regress_rwxml_struct1_d: rwxml_struct1_d
-	@(args=""; input="../../data/struct1"; suf=""; $(RegressInput))
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_newick_o: rwxml_newick
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_newick_d: rwxml_newick_d
+	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_alt1_o: rwxml_alt1
 	@(args=""; suf=""; $(RegressDef))
@@ -700,8 +703,6 @@ test_cluster: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_clu
 	@$(CCExec_DYNAMIC_O)
 test_cluster_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_cluster.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
-
-$(GEN_DIR)/newick.c $(GEN_DIR)/newick.h: PADSC_EXTRA+=-xsnone
 
 ifdef GALAX_NONE
 test_children: var_error
