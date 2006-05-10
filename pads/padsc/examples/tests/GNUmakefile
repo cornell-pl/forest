@@ -59,7 +59,7 @@ OTHER_TESTS  = test_array test_array_string test_record_enum test_struct1 test_s
                test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
                test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct1 \
-               test_cpyrecgen_rps rwxml_cpyrecgen_rps rwxml_format7 rwxml_newick
+               test_cpyrecgen_rps rwxml_cpyrecgen_rps rwxml_format7 rwxml_newick rw_newick
 ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
@@ -116,6 +116,7 @@ regress_o:  sanity_check \
           regress_rw_pendian_o \
           regress_rwxml_struct1_o \
           regress_rwxml_newick_o \
+          regress_rw_newick_o \
           regress_rwxml_alt1_o \
           regress_rwxml_2ips_o \
           regress_rwxml_pfloat_o \
@@ -167,6 +168,7 @@ regress_d:  sanity_check \
           regress_rw_pendian_d \
           regress_rwxml_struct1_d \
           regress_rwxml_newick_d \
+          regress_rw_newick_d \
           regress_rwxml_alt1_d \
           regress_rwxml_2ips_d \
           regress_rwxml_pfloat_d \
@@ -397,6 +399,12 @@ regress_rwxml_newick_o: rwxml_newick
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_newick_d: rwxml_newick_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rw_newick_o: rw_newick
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rw_newick_d: rw_newick_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_alt1_o: rwxml_alt1
