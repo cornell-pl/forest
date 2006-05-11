@@ -59,78 +59,85 @@ class ClTokenManager{
     $TokensInEachRecord[r] this holds &object(cltoken)
   */
 
-
-  function FnMergeTokens(){
-    $this->FnInitTokensInEachRecord();
-
-    while (list($TokenContent, $TokenObject) = each($this->TokensInEachRecord)) {
-        $DidSomeMerging=$this->FnEvaluateTokenForMerge($TokenContent);
-	if($DidSomeMerging==TRUE){
-          $this->FnInitTokensInEachRecord();
-	  reset ($this->TokensInEachRecord);
-	  $DidSomeMerging=FALSE;
-        }
-    }
-  }
-
-  function FnInitTokensInEachRecord(){
-
-    $NumberOfRecords=sizeof($this->Records)-1; // we do all our counting from 0
-    $this->TokensInEachRecord=array();
-    reset ($this->UniqueTokens);
-
-    // find the tokens which appear in all records
-    while (list($TokenContent, $TokenObject) = each($this->UniqueTokens)) {
-      if( $TokenObject->Stats['NumberOfRecords'] == $NumberOfRecords ){
-	$this->TokensInEachRecord[$TokenContent]=&$this->UniqueTokens[$TokenContent];
+  function FnDiscoverTokensWithConstantFrequencyAcrossRecords(){
+    $this->FnCreateTheTokenFrequencyAcrossRecordsMatrix();
+    while(list($Token, $FrequencyAcrossRecords) = each($this->TokenFrequencyAcrossRecords)){
+      $StillSame=TRUE;
+      	$NumberOfRecordsWhereTheTokenAppears=0;
+      foreach($FrequencyAcrossRecords as $RecordNumber => $TokenFrequencyInRecord){
+	if(!isset($PrevTokenFrequencyInRecord)){
+	  $PrevTokenFrequencyInRecord=$TokenFrequencyInRecord;
+	}
+	if($TokenFrequencyInRecord==$PrevTokenFrequencyInRecord){
+	  $StillSame=TRUE;
+	}
+	else{
+	  $StillSame=FALSE;
+	  break;
+	}
+	$NumberOfRecordsWhereTheTokenAppears++;
+      }
+      if($StillSame===TRUE &&$NumberOfRecordsWhereTheTokenAppears==5){
+	$this->TokensWithConstantFrequencyAcrossRecords[$Token]=$TokenFrequencyInRecord;
       }
     }
   }
 
-  function FnEvaluateTokenForMerge($pTokenContent)
-  {
-    for($j=0;$j<sizeof($this->TokensInEachRecord[$pTokenContent]->Records);$j++){
-      $PositionOfOccurrenceArray=$this->TokensInEachRecord[$pTokenContent]->Records[$j];
-      for($i=0;$i<sizeof($PositionOfOccurrenceArray);$i++){
-	$DidSomeMerging=$this->FnEvaluateTokenAtPositionForMerge($pTokenContent,$PositionOfOccurrenceArray[$i]);
-	if($DidSomeMerging==TRUE){
-	  return true;
+  function FnCreateTheTokenFrequencyAcrossRecordsMatrix(){
+    for($pRecordNumber=0;$pRecordNumber<sizeof($this->Records);$pRecordNumber++){
+      while(list($key, $val) = each($this->Records[$pRecordNumber]->Tokens)){
+	$Token=$val->Content;
+	$this->TokenFrequencyAcrossRecords[$Token][$pRecordNumber]++;
+      }
+      reset($this->Records[$pRecordNumber]->Tokens);
+    }  
+  }
+
+  function FnDiscoverMultiByteTokens(){
+    $this->FnCreateTheTokenOccurrenceConditionalProbabilityMatrix();
+    $TokensForMerge=$this->FnGetTokensForMerge();
+    if(sizeof($TokensForMerge)==0){ 
+      return;
+    }
+    for($i=0;$i<sizeof($TokensForMerge);$i++){
+      $this->FnDoTheMergingInAllRecords($TokensForMerge[$i][0],$TokensForMerge[$i][1]);
+      //$this->Records[0]->FnPrintRecord(); // this is a good thing to turn on to see how the records are behaving.
+    }
+    $this->FnDiscoverMultiByteTokens();
+  }
+
+  function FnCreateTheTokenOccurrenceConditionalProbabilityMatrix(){
+    $this->TokenOccurrenceConditionalProbabilityMatrix=array();
+    for($pRecordNumber=0;$pRecordNumber<sizeof($this->Records);$pRecordNumber++){
+    $PrevToken='BOR';
+      while(list($key, $val) = each($this->Records[$pRecordNumber]->Tokens)){
+	$Token=$val->Content;
+	$this->TokenOccurrenceConditionalProbabilityMatrix[$PrevToken][$Token][$pRecordNumber]++;
+	$PrevToken=$Token;    
+      }
+      reset($this->Records[$pRecordNumber]->Tokens);
+    }
+  }
+
+
+  function FnGetTokensForMerge(){
+    $TotalNumberOfRecords=5;
+    $TokenNumberToMerge=0;
+    while (list($key, $val) = each($this->TokenOccurrenceConditionalProbabilityMatrix)) {
+      while (list($key2, $val2) = each($val)) {
+	$NumberOfRecordsWhereItOccurs=sizeof($val2);
+	if($TotalNumberOfRecords==$NumberOfRecordsWhereItOccurs){
+	  $TokensForMerge[$TokenNumberToMerge][0]=$key;
+	  $TokensForMerge[$TokenNumberToMerge][1]=$key2;
+  	  $TokenNumberToMerge++;
 	}
       }
     }
+    return $TokensForMerge;
   }
 
-  function FnEvaluateTokenAtPositionForMerge($pTokenContent,$pPosition)
-  {
-    // lets find out the merged pair and see if the merged pair exists in all the records
-    $TokenLength=strlen($pTokenContent);
-    $NextTokenContent=$this->Records[0]->Tokens[$pPosition+$TokenLength]->Content;
-    if($NextTokenContent==NULL){ // we have reached the end of the record
-      return false;
-    }
-    $MergedPair=$this->Records[0]->Tokens[$pPosition]->Content.$NextTokenContent;
-    $MergePositionInAllRecordsArray=$this->FnCheckMergedPairAcrossAllRecords($MergedPair);
-    if($MergePositionInAllRecordsArray!==FALSE){
-      $this->FnDoTheMergingInAllrecords($pTokenContent,$NextTokenContent,$MergePositionInAllRecordsArray);
 
-      // after we finished merging we have a bigger token. I would like to evaluate this bigger token for merge
-      $this->FnEvaluateTokenAtPositionForMerge($MergedPair,$pPosition);
-      // the call stack will be reduced here at this step for 17 times if we form record<html><body> here
-      // debugbreak();
-
-      // lets clean up all the memory. Its a recursive function so we are trying to be a careful.
-      $TokenLength=NULL;
-      $NextTokenContent=NULL;
-      $MergedPair=NULL;
-      $MergePositionInAllRecordsArray=NULL;
-      $pTokenContent=NULL;
-      $pPosition=NULL;
-
-      return true;
-    }
-  }
-
-  function FnDoTheMergingInAllRecords($pFirstTokenContent,$pSecondTokenContent,$pMergePositionInAllRecordsArray){
+  function FnDoTheMergingInAllRecords($pFirstTokenContent,$pSecondTokenContent){
     // check if the merged token already exists in UniqueTokens if not create it
     if($this->FnCheckIfTokenExistsInUniqueTokens($pFirstTokenContent.$pSecondTokenContent)){
     }
@@ -139,18 +146,22 @@ class ClTokenManager{
     }
     // go through all the records doing the merging
     for($RecordNumber=0;$RecordNumber<sizeof($this->Records);$RecordNumber++){
-      $FirstTokenPosition=$pMergePositionInAllRecordsArray[$RecordNumber];
-      $this->FnDoTheMergingInOneRecord($pFirstTokenContent,$FirstTokenPosition,$pSecondTokenContent,$RecordNumber);
+      $this->FnDoTheMergingInOneRecord($pFirstTokenContent,$pSecondTokenContent,$RecordNumber);
     }
   }
 
-  function FnDoTheMergingInOneRecord($pFirstTokenContent,$pFirstTokenPosition,$pSecondTokenContent,$pRecordNumber){
+  function FnDoTheMergingInOneRecord($pFirstTokenContent,$pSecondTokenContent,$pRecordNumber){
     // we need to update the token object both the old one and the new one
     // we need to update the records array
-    $this->FnRemoveTokenFromAPositionInARecord($pFirstTokenContent,$pFirstTokenPosition,$pRecordNumber);
-    $FirstTokenContentLength=strlen($pFirstTokenContent);
-    $this->FnRemoveTokenFromAPositionInARecord($pSecondTokenContent,$pFirstTokenPosition+$FirstTokenContentLength,$pRecordNumber);
-    $this->FnAddTokenToAPositionInARecord($pFirstTokenContent.$pSecondTokenContent,$pFirstTokenPosition,$pRecordNumber);
+    $pMergedPair=$pFirstTokenContent.$pSecondTokenContent;
+    $FirstTokenPositionArray=$this->FnGetAllMergedPairPositionsInOneRecord($pMergedPair,$pRecordNumber);
+    if($FirstTokenPositionArray===FALSE) return;
+    for($i=0;$i<sizeof($FirstTokenPositionArray);$i++){
+      $this->FnRemoveTokenFromAPositionInARecord($pFirstTokenContent,$FirstTokenPositionArray[$i],$pRecordNumber);
+      $FirstTokenContentLength=strlen($pFirstTokenContent);
+      $this->FnRemoveTokenFromAPositionInARecord($pSecondTokenContent,$FirstTokenPositionArray[$i]+$FirstTokenContentLength,$pRecordNumber);
+      $this->FnAddTokenToAPositionInARecord($pFirstTokenContent.$pSecondTokenContent,$FirstTokenPositionArray[$i],$pRecordNumber);
+    }
   }
 
   function FnRemoveTokenFromAPositionInARecord($pTokenContent,$pTokenPosition,$pRecordNumber){
@@ -183,13 +194,12 @@ class ClTokenManager{
       }// end of for loop
 
     }
-
   }
 
   function FnAddTokenToAPositionInARecord($pTokenContent,$pTokenPosition,$pRecordNumber){
     if(!isset($this->UniqueTokens[$pTokenContent]->Records[$pRecordNumber])){
       if($this->UniqueTokens[$pTokenContent]->Stats['NumberOfRecords']===NULL){ // populating the stats field of the tokenobj to say it occurs once
-	$this->UniqueTokens[$pTokenContent]->Stats['NumberOfRecords']=0;
+	$this->UniqueTokens[$pTokenContent]->Stats['NumberOfRecords']=0; // if u see NULL means occurs in no record. 0 means occurs in one record.
       }
       else{
 	$this->UniqueTokens[$pTokenContent]->Stats['NumberOfRecords']++;
@@ -225,57 +235,31 @@ class ClTokenManager{
     }
   }
 
-  function FnCheckMergedPairAcrossAllRecords($pMergedPair){
-    // go through all the records checking if the merged pair exists
-    $MergeFlag=TRUE;
-    for($RecordNumber=0;$RecordNumber<sizeof($this->Records) && $MergeFlag!=FALSE;$RecordNumber++){
-      $MergePositionInOneRecord=$this->FnCheckMergedPairInOneRecord($pMergedPair,$RecordNumber);
-      if($MergePositionInOneRecord!==FALSE){
-	$MergeFlag=TRUE;
-	$MergePositionInAllRecordsArray[$RecordNumber]=$MergePositionInOneRecord;
-      }
-      else{
-	$MergeFlag=FALSE;
-      }
-    }
-
-    if($MergeFlag==TRUE){
-      return $MergePositionInAllRecordsArray;
-    }
-    elseif($MergeFlag==FALSE){
-      return $MergeFlag;
-    }
-
-  }
-
-  function FnCheckMergedPairInOneRecord($pMergedPair,$pRecordNumber){
+  function FnGetAllMergedPairPositionsInOneRecord($pMergedPair,$pRecordNumber){
     // lets go through each of the tokens in this record
     $MergePosition=FALSE;
     $RecordPointer=0;
-    for($NumberOfUniqueTokens=0;$NumberOfUniqueTokens<sizeof($this->Records[$pRecordNumber]->Tokens) && $MergePosition===FALSE;$NumberOfUniqueTokens++){
+    for($NumberOfUniqueTokens=0;$NumberOfUniqueTokens<sizeof($this->Records[$pRecordNumber]->Tokens);$NumberOfUniqueTokens++){
       $CurrentTokenContent=$this->Records[$pRecordNumber]->Tokens[$RecordPointer]->Content;
       $CurrentTokenContentLength=strlen($CurrentTokenContent);
       $NextTokenContent=$this->Records[$pRecordNumber]->Tokens[$RecordPointer+$CurrentTokenContentLength]->Content;
       if($CurrentTokenContent.$NextTokenContent==$pMergedPair){
-	$MergePosition=$RecordPointer;
-	break;
+	$MergePositionArray[]=$RecordPointer;
       }
       else{
-	$MergePosition=FALSE;
       }
       $RecordPointer=$RecordPointer+$CurrentTokenContentLength;
     }
-    return $MergePosition;
+    return $MergePositionArray;
   }
 
-  function FnInitializeTokenObjects($pTokensInRecordArray,$pRecordNumber){
+  function FnInitializeTokenAndRecordObjects($pTokensInRecordArray,$pRecordNumber){
 
     global $ConfigObj;
 
+    // Initializing the matrix with SOR and EOR each has never occurred so the conditional prob is 0
     $NumberOfTokensInRecord=NULL;
-    $Token=NULL;
     $this->Records[$pRecordNumber]= new ClRecord;
-
 
     $NumberOfTokensInRecord=sizeof($pTokensInRecordArray);
     for($i=0;$i<$NumberOfTokensInRecord;$i++){ // evaluating each token in the record

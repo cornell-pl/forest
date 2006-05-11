@@ -1,15 +1,14 @@
-<?
+#!/usr/bin/php 
+<?php
 /*
 Usage: $php formatinference.php <filename>
 */
-
 include('./constants.php');
 include('./initclasses.php');
 include('./functions.php');
 
 $ConfigObj=new ClConfig;
 $TokenManagerObj=new ClTokenManager;
-
 $FileName=FnGetFileName($argv);
 
 $Fp=fopen($FileName,'r');
@@ -29,7 +28,7 @@ while (!feof($Fp)) {
   else{
     $RecordNumber++;
   }
-  $TokenManagerObj->FnInitializeTokenObjects($TokensInRecordArray,$RecordNumber);
+  $TokenManagerObj->FnInitializeTokenAndRecordObjects($TokensInRecordArray,$RecordNumber);
 }
 fclose($Fp);
 
@@ -38,7 +37,15 @@ Input: Single byte tokens
 Objective: The objective is to discover template multibyte tokens and not all multibyte tokens.
 Output: Single and Multibyte tokens. 
 **/
-$TokenManagerObj->FnMergeTokens();
+$TokenManagerObj->FnDiscoverMultiByteTokens();
+/** End algorithm **/
+
+/** Algorithm: Discover tokens with constant frequency across records.
+Input: All the tokens
+Objective: The objective is to discover tokens which occur with constant frequency across all records.
+Output: A set of tokens with the least variablity in occurrence frequency.
+**/
+$TokenManagerObj->FnDiscoverTokensWithConstantFrequencyAcrossRecords();
 /** End algorithm **/
 
 /** Algorithm: Format inference 
@@ -46,7 +53,9 @@ Input: Single and Multibyte tokens
 Objective: The objective is to discover the format
 Output: The format
 **/
-echo "The tokens appearing in each record are \n";
-print_r($TokenManagerObj->TokensInEachRecord);
+$FormatInferenceObj=new ClFormatInference;
+$FormatInferenceObj->FnDiscoverTokenOrdering($TokenManagerObj);
+$FormatInferenceObj->FnDiscoverTemplateTokens($TokenManagerObj);
+$FormatInferenceObj->FnPrintFormat($TokenManagerObj);
 /** End algorithm **/
 ?>
