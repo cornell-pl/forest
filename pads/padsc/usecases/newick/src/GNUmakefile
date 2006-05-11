@@ -35,11 +35,6 @@ REGRESS_TESTS = 1
 
 include $(PADS_HOME)/mk/rules.mk
 
-# Hack for MacOS X Panther
-ifeq ($(AST_ARCH),darwin.ppc)
-  PADSC_EXTRA +=-D__ppc__
-endif
-
 VPATH =  .. ../../p
 
 ifndef GEN_GALAX
@@ -48,7 +43,7 @@ GALAX_NONE = 1
 endif
 endif
 
-ALL_TESTS = test_$(FORMAT) # rwxml_$(FORMAT) fmt_$(FORMAT)
+ALL_TESTS = test_$(FORMAT) rwxml_$(FORMAT) rw_$(FORMAT) # fmt_$(FORMAT)
 REGRESS_TESTS = $(ALL_TESTS:%=regress_%)
 
 all: regress
@@ -62,15 +57,15 @@ sanity_check:
 regress_test_$(FORMAT): test_$(FORMAT)
 	@(args=""; suf=""; $(RegressDef))
 
+regress_rwxml_$(FORMAT): rwxml_$(FORMAT)
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rw_$(FORMAT): rw_$(FORMAT)
+	@(args=""; suf=""; $(RegressDef))
+
 # regress_fmt_$(FORMAT): fmt_$(FORMAT)
 # 	@(args=""; suf=""; $(RegressDef))
 
-# regress_rwxml_$(FORMAT): rwxml_$(FORMAT)
-# 	@(args=""; suf=""; $(RegressDef))
-
-
-# disable generation of xschema, as it does not yet support recursive types.
-$(GEN_DIR)/$(FORMAT).c $(GEN_DIR)/$(FORMAT).h: PADSC_EXTRA+=-xsnone
 
 $(FORMAT)-query: $(FORMAT)-query.c $(GEN_DIR)/$(FORMAT).c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)

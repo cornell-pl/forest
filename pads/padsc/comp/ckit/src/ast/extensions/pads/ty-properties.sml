@@ -8,6 +8,7 @@ struct
    datatype diskSize =  Size of IntInf.int * IntInf.int  (* number of bytes, number of EOR markers *)
                       | Param of string list * string option * PT.expression * PT.expression
                       | Variable
+   (* XXX: Change pexp to pcexp to be consistent with cnv-ext.sml? *)
    type pexp = PT.expression
    type argList = string list * pexp list
 
@@ -16,6 +17,7 @@ struct
 
    datatype compoundSize =  Base of diskSize 
                           | Typedef of diskSize * string * argList
+                          | Recursive of diskSize * string * argList
                           | Struct of (labelInfo option * diskSize) list 
                           | Union of (labelInfo option * diskSize) list 
                           | Array of {baseTy : string, args : argList,
@@ -30,6 +32,7 @@ struct
 
    type baseInfoTy = unit
    type typedefInfoTy = unit
+   type recursiveInfoTy = {base : tyApp} (* Describe the underlying type *)
 
    datatype fieldInfoTy =  Full of {ty:tyApp, name:string, pred : pexp PX.PPostCond list, comment: string option,
 				    isOpt : bool, optPred : pexp PX.OptPredicate option,
@@ -55,6 +58,7 @@ struct
    type enumInfoTy = unit
    datatype tyInfo = BaseInfo of baseInfoTy
                    | TypedefInfo of typedefInfoTy 
+                   | RecursiveInfo of recursiveInfoTy 
                    | StructInfo of structInfoTy
                    | UnionInfo of unionInfoTy
                    | ArrayInfo of arrayInfoTy

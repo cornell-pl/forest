@@ -1,9 +1,13 @@
+// XXX: This file should be divided into two separate tests:
+// one to write the original data and the other to write the xml.
+
 #include "newick.h"
 #include "out_macros.h"
 #define PADS_TY(suf) tree ## suf
 #define BASE_MASK_TY _tree_m
 #define EXTRA_BAD_READ_CODE printf("Tree read error.\n");
 #define MAX_RECS 1
+#define DEF_INPUT_FILE "../../data/simple.txt"
 
 
 #ifndef PDCI_MacroArg2String
@@ -26,16 +30,17 @@
 #  define DEF_INPUT_FILE "/dev/stdin"
 #endif
 
+#ifndef DEF_OUTPUT_FILE
+#  define DEF_OUTPUT_FILE "/dev/stdout"
+#endif
+
 #ifndef MAX_RECS
 #  define MAX_RECS 0
 #endif
 
-
-
 Puint64 num_recs = 0;
 
 int main(int argc, char** argv) {
-  int               argv_idx = 0;
   P_t              *pads;
   Pdisc_t           my_disc = Pdefault_disc;
   Pio_disc_t       *io_disc = 0;
@@ -48,9 +53,9 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_pd)  hdr_pd;
   PADS_HDR_TY(_m)   hdr_m;
 #endif /* PADS_HDR_TY */
-  char             *fileName = 0;
   Sfio_t           *io;
-  Sfio_t           *io_std;
+  char             *inName  = 0;
+  char             *outName = 0;
   
 #ifdef E_REP_LEV
   my_disc.e_rep = E_REP_LEV;
@@ -114,19 +119,26 @@ int main(int argc, char** argv) {
 #endif
 
   if (argc >= 2) {
-    argv_idx = 1;
+    inName = argv[1];
   } else {
-    fileName = DEF_INPUT_FILE;
+    inName = DEF_INPUT_FILE;
   }
-
+  error(0, "Input file = %s\n", inName);
+  if (argc == 3) {
+    outName = argv[2];
+  } else {
+    outName = DEF_OUTPUT_FILE;
+  }
+  error(0, "Output file = %s\n", outName);
+  
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
   }
-  if (!(io = P_fopen("tree.xml", "w"))) {
-    P_SYSERR1(pads->disc, "Failed to open output file \"%s\" for writing", "tree.xml");
+  if (P_ERR == P_io_fopen(pads, inName)) {
+    error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
-  if (!(io_std = P_fopen("/dev/stdout", "w"))) {
-    P_SYSERR1(pads->disc, "Failed to open output file \"%s\" for writing", "STDOUT");
+  if (!(io = P_fopen(outName, "w"))) {
+    P_SYSERR1(pads->disc, "Failed to open output file \"%s\" for writing", outName);
   }
   if (P_ERR == PADS_TY(_init)(pads, &rep)) {
     error(ERROR_FATAL, "*** representation initialization failed ***");
@@ -150,25 +162,18 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_m_init)(pads, &hdr_m, P_CheckAndSet);
 #endif /* PADS_HDR_TY */
 
- next_file:
-  if (argv_idx) {
-    fileName = argv[argv_idx];
-  }
-  error(0, "\nData file = %s\n", fileName);
-
-  if (P_ERR == P_io_fopen(pads, fileName)) {
-    error(ERROR_FATAL, "*** P_io_fopen failed ***");
-  }
-
 #ifdef PADS_HDR_TY
   /*
    * Try to read header
    */
   if (!P_io_at_eof(pads)) {
     if (P_OK != PADS_HDR_TY(_read)(pads, &hdr_m, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
-      error(ERROR_FATAL, "Note: header read returned error");
+      error(ERROR_FATAL, "header read returned error");
     } else {
       error(2, "Note: header read returned OK");
+      if (P_ERR == PADS_HDR_TY(_write2io)(pads, io, &hdr_pd, &hdr_rep EXTRA_HDR_READ_ARGS )) {
+	error(ERROR_FATAL, "*** IO error during header write");
+      }
     }
   }
 #endif /* PADS_HDR_TY */
@@ -182,32 +187,27 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
-    if (my_disc.e_rep > PerrorRep_Min) {
-      error(2, "read returned error");
-    }
+      if (my_disc.e_rep > PerrorRep_Min) {
+        error(2, "read returned error");
+      }
 #endif
     }
-#ifdef EXTRA_GOOD_READ_CODE
     else {
       if (PADS_TY(_verify)(&(rep))) {  
 	error(2, "read reported no errors and passed predicate test.");  
       } else {  error(2, "read reported no errors but failed predicate test.");  } 
+#ifdef EXTRA_GOOD_READ_CODE
       EXTRA_GOOD_READ_CODE;
-    }
 #endif
+    }
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
-    tree_write_xml_2io(pads,io,&pd,&rep,(const char*)0,0);
-    tree_write2io(pads,io_std,&pd,&rep);
+    tree_write2io(pads,io,&pd,&rep);
   }
   if (P_ERR == P_io_close(pads)) {
     error(ERROR_FATAL, "*** P_io_close failed ***");
-  }
-
-  if (argv_idx && ++argv_idx < argc) {
-    goto next_file;
   }
 
   if (P_ERR == PADS_TY(_cleanup)(pads, &rep)) {
@@ -220,6 +220,5 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** P_close failed ***");
   }
   sfclose(io);
-  sfclose(io_std);
   return 0;
-}
+  }

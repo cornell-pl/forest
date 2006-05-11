@@ -1201,6 +1201,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
     ( PPL.newline pps
     ; case #info ptyInfo
       of TyProps.TypedefInfo _ => ppPTypedef ptyInfo aidinfo tidtab pps decl
+      |  TyProps.RecursiveInfo _ => () (*XXX: must be filled in. *)
       |  TyProps.StructInfo _ => ppPStruct ptyInfo aidinfo tidtab pps decl
       |  TyProps.UnionInfo {fromOpt,...} => if fromOpt then ppPOpt ptyInfo aidinfo tidtab pps decl
 					    else ppPUnion ptyInfo aidinfo tidtab pps decl 

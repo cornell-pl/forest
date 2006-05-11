@@ -1127,10 +1127,58 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       end
     | ppPTypedef ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
+  (*
+      Precursive
+      ========
+      As far as xschema is concerned, a Precursive is just a synonym for another type. 
+      However, in the C type it is a pointer to that other type. So, we need to finesses that difference.
+      In XML Schema, we use type derivation by restriction to specify a synonym.
+     *)
+  fun ppPRecursive (ptyInfo:PTys.pTyInfo) tidtab pps (Ast.TypeDecl{tid,...})  =
+      let val Name = #name (PTyUtils.getBinding tidtab tid)
+	  val TyProps.RecursiveInfo {base={tyCon= base,...}} = #info ptyInfo
+	  val Name_pd = mapPdName (valOf Name)
+      in 
+	  (* 
+              Galax does not support derivation by extension yet, so we have 
+              to use full-blown restriction, which requires specifying explicitly
+              fields from the base type :
+	   [[ Precursive p_ty identifier [p_formals] [:typedef_predicates] ]]_schema
+                 p_ty not a base type
+                       == 
+	   [
+	     <complexType name=[[identifier]]>
+	       <restriction base=[[p_ty]]_base_typename/>
+	     </complexType>
+	     ; 
+	     <complexType name=[[identifier]]_pdname>
+	       <restriction base=[[[[p_ty]]_base_typename]]_pdname/>
+	     </complexType>
+	   ]
+	   *)
+	  (*INV: base is either a struct or union. It is NOT a base type, enum, etc. *)
+	  (let val base_name = mapBaseTypeName base
+	       val pd_base_name = mapPdName base_name
+	   in
+	       newline pps
+	       ; complexTypeOpen pps Name
+	       ; ppXMLRestriction pps base_name
+	       ; complexTypeClose pps
+	       ; complexTypeOpen pps (SOME Name_pd)
+	       ; ppXMLRestriction pps pd_base_name
+	       ; complexTypeClose pps
+	       ; ppTopElemIfPsource pps (ptyInfo,Name)
+	   end
+	       )
+	  handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
+      end
+    | ppPRecursive ptyInfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
 
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
       case #info ptyInfo
       of TyProps.TypedefInfo _ => ppPTypedef ptyInfo tidtab pps decl
+      |  TyProps.RecursiveInfo _ => ppPRecursive ptyInfo tidtab pps decl
       |  TyProps.StructInfo _ => ppPStruct ptyInfo tidtab pps decl
       |  TyProps.UnionInfo _ => ppPUnion ptyInfo tidtab pps decl 
       |  TyProps.ArrayInfo _  => ppPArray ptyInfo tidtab pps decl 
@@ -1141,36 +1189,36 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
     case edecl
       of ExternalDecl decl => ppPKind ptyInfo tidtab pps decl
        | FunctionDef (id,ids,stmt) =>  (* This branch will not be called as functions aren't being tagged *)
-	   let val {location,...} = id
-	       val (stClass,ctype) = getCtype id
-	       val (ctype,kNr,params) =
-		   case ctype
-		     of Ast.Function (retTy,paramTys) =>
-			 if null paramTys andalso not (null ids)
-			     then (ctype,true,KNR ids)
-			 else (ctype,false,ANSI ids)
-		      | _ =>
-			 (warning
-			  "ppCoreExternalDecl" 
-			  ("No function type associated with id:"
-			   ^(PPL.ppToString PPL.ppId id))
-			 ;(Ast.Function (Ast.Void,[]),false,ANSI [])
-			 )
-	       fun kr pps [] = []
-		 | kr pps (id::ids) = 
-		   (ppIdDecl aidinfo tidtab pps id
+	 let val {location,...} = id
+	      val (stClass,ctype) = getCtype id
+	      val (ctype,kNr,params) =
+		  case ctype
+		   of Ast.Function (retTy,paramTys) =>
+		      if null paramTys andalso not (null ids)
+		      then (ctype,true,KNR ids)
+		      else (ctype,false,ANSI ids)
+		    | _ =>
+		      (warning
+			   "ppCoreExternalDecl" 
+			   ("No function type associated with id:"
+			    ^(PPL.ppToString PPL.ppId id))
+			   ;(Ast.Function (Ast.Void,[]),false,ANSI [])
+			    )
+	      fun kr pps [] = []
+		| kr pps (id::ids) = 
+		  (ppIdDecl aidinfo tidtab pps id
 		   ;PPL.addStr pps ";"
-	   ;if null ids then () else newline pps
+		   ;if null ids then () else newline pps
 		   ;kr pps ids
-		   )
-	   in ppLoc pps location
-	     ;ppStorageClass pps stClass
-	     ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
-	     ;PPL.newline pps
-	     ;if kNr then (blockify 2 kr pps ids; newline pps) else ()
-	     ;ppStmt aidinfo tidtab pps stmt
-             ;PPL.newline pps
-	   end 
+		    )
+	  in ppLoc pps location
+	  ;ppStorageClass pps stClass
+	  ;ppDecl0 aidinfo tidtab pps (SOME (ID id),params,ctype)
+	  ;PPL.newline pps
+	  ;if kNr then (blockify 2 kr pps ids; newline pps) else ()
+	  ;ppStmt aidinfo tidtab pps stmt
+          ;PPL.newline pps
+	  end 
        | ExternalDeclExt ed => 
 	   PPAE.ppExternalDeclExt (* PADS *) NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 

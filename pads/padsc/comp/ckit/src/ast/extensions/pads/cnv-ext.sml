@@ -2415,6 +2415,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      fun cnvPRecursive ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
 			        isSource : bool, base:{name:string, args: pcexp list} option})=
 		  let 
+		      val (cParams : (string * pcty) list, 
+			   paramInfo : (string * acty) list, 
+			   paramNames : string list) = processParams params
+		      val (cNames,cTys) = ListPair.unzip cParams
+
 		      (* Assume that base type is a Pstruct, Punion, Popt or Parray. 
 			 So don't need lookupTy, which checks to see if its a base type. 
 		         INV: There is an assumed invariant here that all of the above 
@@ -2423,13 +2428,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                          Punion, Popt or Parray.  *)
 		      val (baseName,args) = case base of 
 						SOME {name=bname,args} => (bname,args) 
-					      | NONE => (recPre name,[])
+					      (* When no base type is specified, we generate the base type's *)
+					      (* name based on a special prefix (recPre) and generate the    *)
+					      (* arguments to the base type directly from this type's        *)
+					      (* parameters (if any).                                        *)
+					      | NONE => (recPre name, List.map PT.Id paramNames)
 		      val baseTy = PX.Name baseName
 		      val baseTypeName = repSuf baseName
-		      val (cParams : (string * pcty) list, 
-			   paramInfo : (string * acty) list, 
-			   paramNames : string list) = processParams params
-		      val (cNames,cTys) = ListPair.unzip cParams
+
                       val value = PNames.recVal
 				  
                       (* Generate mask recursive case*)
@@ -2461,14 +2467,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val accumEDs = [accED]
 
 		      (* Insert type properties into type table *)
+		      (* XXX: No effort is made here to correctly compute the ds and mc values.*)
                       val ds = TyProps.Variable
                       val mc = TyProps.Dynamic
                       val endian = false
                       val contR = false
  		      val lH = false
 		      val numArgs = List.length params
-		      val recProps = buildTyProps(name, paramInfo, TyProps.TypedefInfo (), 
-						  ds, TyProps.Typedef (ds, baseName, (cNames, args)), mc, endian, 
+		      val recProps = buildTyProps(name, paramInfo, TyProps.RecursiveInfo {base= {tyCon = baseName, args = args}}, 
+						  ds, TyProps.Recursive (ds, baseName, (cNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, recProps)
 

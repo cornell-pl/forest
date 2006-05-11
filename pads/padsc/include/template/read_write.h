@@ -134,7 +134,11 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
   /* init mask -- must do this! */
+#ifdef CUSTOM_MASK_CODE
+  CUSTOM_MASK_CODE;
+#else
   PADS_TY(_m_init)(pads, &m, READ_MASK);
+#endif
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
     error(ERROR_FATAL, "*** header representation initialization failed ***");

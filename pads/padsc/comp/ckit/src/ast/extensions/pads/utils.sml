@@ -2,7 +2,7 @@ structure PTyUtils =
 struct
   open Ast
 
-  (* HACK ALERT!!! These types are special-cased because they are
+  (* XXX: These types are special-cased because they are
      native C types, but fields of these types occur in PD structs. *)
   fun isPdFieldType t = 
       (case t
@@ -80,7 +80,9 @@ struct
 *)
 
 
-  fun bind tidtab tid = 
+  (* get binding of tid in table tidtable. *)
+  (* INV: tid in tidtab. Otherwise, will throw exception, *)
+  fun getBinding tidtab tid = 
       let val binding : Bindings.tidBinding = valOf (Tidtab.find(tidtab,tid)) 
       in 
        binding
@@ -93,10 +95,10 @@ struct
       end
 
   fun structFields tidtab tid =
-      let val binding = bind tidtab tid
+      let val binding = getBinding tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.StructRef stid) = cty
-	  val Bindings.Struct(tid'',fields) = valOf(#ntype (bind tidtab stid))
+	  val Bindings.Struct(tid'',fields) = valOf(#ntype (getBinding tidtab stid))
       in
 	 (#name binding, List.mapPartial (cnvStructField tidtab) fields)
 	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
@@ -109,16 +111,16 @@ struct
       end
 
   fun unionFields tidtab tid = 
-      let val binding = bind tidtab tid
+      let val binding = getBinding tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.StructRef stid) = cty
-          val Bindings.Struct(tid'',fields) = valOf(#ntype (bind tidtab stid))   (* first field = tag  *)
+          val Bindings.Struct(tid'',fields) = valOf(#ntype (getBinding tidtab stid))   (* first field = tag  *)
           val value = List.hd(List.tl(fields))                                   (* second field = val *)
           fun valtid (uctype,_,_,_) = uctype
           val (Ast.TypeRef utid) = valtid value
-          val Bindings.Typedef(tid''',utype) = valOf(#ntype (bind tidtab utid))
+          val Bindings.Typedef(tid''',utype) = valOf(#ntype (getBinding tidtab utid))
           val (Ast.UnionRef uutid) = utype
-          val Bindings.Union(tid'''',ufields) = valOf(#ntype (bind tidtab uutid)) (* union fields *)
+          val Bindings.Union(tid'''',ufields) = valOf(#ntype (getBinding tidtab uutid)) (* union fields *)
           fun cnvUField (cty, mem : Ast.member,_) =
               let val fsym : Symbol.symbol = #name mem
               in
@@ -131,10 +133,10 @@ struct
       end
 
   fun unionPdFields tidtab pdtid =
-      let val binding = bind tidtab pdtid
+      let val binding = getBinding tidtab pdtid
           val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
           val (Ast.StructRef stid) = cty
-          val Bindings.Struct(tid'',pdfields) = valOf(#ntype (bind tidtab stid))   
+          val Bindings.Struct(tid'',pdfields) = valOf(#ntype (getBinding tidtab stid))   
       in
 	 (#name binding, List.filter isPdFieldName (List.mapPartial (cnvStructField tidtab) pdfields))
 	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", []))
@@ -142,10 +144,10 @@ struct
       end
 
   fun enumInfo tidtab tid =
-      let val binding = bind tidtab tid
+      let val binding = getBinding tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.EnumRef stid) = cty
-	  val Bindings.Enum(tid'',fields) = valOf(#ntype (bind tidtab stid))
+	  val Bindings.Enum(tid'',fields) = valOf(#ntype (getBinding tidtab stid))
 	  fun cnvField (mem: Ast.member,_,_) = 
 	      let val fsym : Symbol.symbol = #name mem
 	      in
@@ -158,15 +160,26 @@ struct
       end
 
   fun typedefInfo tidtab tid =
-      let val binding = bind tidtab tid
+      let val binding = getBinding tidtab tid
 	  val Bindings.Typedef(tid',cty) = valOf(#ntype binding)
 	  val (Ast.TypeRef stid) = cty
-          val bindTy = bind tidtab stid
+          val bindTy = getBinding tidtab stid
       in
-	 (#name binding,#name bindTy)
-	 handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", SOME "bogus type"))
-  	 handle Option => (PError.bug "expected SOME"; (SOME "bogus", SOME "bogus type"))
+	  (#name binding,#name bindTy)
+	  handle Match => (PError.bug "expected typedef to struct binding"; (SOME "bogus", SOME "bogus type"))
+  	  handle Option => (PError.bug "expected SOME"; (SOME "bogus", SOME "bogus type"))
       end
+
+  fun recursiveInfo tidtab tid =
+      (let val binding = getBinding tidtab tid
+	   val Bindings.Typedef (tid',cty) = valOf(#ntype binding)
+	   val (Ast.Pointer (Ast.StructRef stid)) = cty
+           val bindTy = getBinding tidtab stid
+       in
+	   (#name binding, #name bindTy)
+       end)
+      handle Match => (PError.bug "unexpected datatype constructor"; (SOME "bogus", SOME "bogus type"))
+      handle Option => (PError.bug "expected SOME"; (SOME "bogus", SOME "bogus type"))
 
     fun mungeFileName (fileName, from, to) = 
     (case OS.Path.splitBaseExt fileName
