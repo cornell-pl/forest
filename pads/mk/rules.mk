@@ -800,7 +800,8 @@ endif
 ifndef TRULES_MK
 ifdef GEN_DIR
 
-PADSC_OPTIONS=-r $(GEN_DIR) -I. -I..
+# PADSC_OPTIONS=-r $(GEN_DIR) -I. -I.. 
+PADSC_OPTIONS=-r $(GEN_DIR) -I. -I.. $(INCLUDES)
 
 ifdef GEN_WRITE
 $(GEN_DIR)/%.c: %.p $(PADSC) $(PADSC_REAL)

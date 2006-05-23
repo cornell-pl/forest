@@ -1,4 +1,5 @@
 #define DEF_INPUT_FILE "../../data/pfloat"
+#define PADS_TY_STR "pfloat"
 #define PADS_TY(suf) test ## suf
 #include "pfloat.h"
 #define WSPACE_OK

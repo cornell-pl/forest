@@ -914,7 +914,7 @@ void P_STRING_INIT_CSTR_LEN(Pstring my_str, char *expr, size_t length_expr);
  * A base type T with T_init/T_cleanup must also have T_pd_init/T_pd_cleanup.
  * Similarly, if T has T_copy, it must also have T_pd_copy.
  *
- * For Pstring_ed, which is just a Pbase_pd, init and cleanup are no-ops,
+ * For Pstring_pd, which is just a Pbase_pd, init and cleanup are no-ops,
  * while copy has a trivial implementation (struct assignment).
  */
 

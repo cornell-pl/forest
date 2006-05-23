@@ -8,11 +8,13 @@
   </xs:restriction>
 </xs:simpleType>
 
+<!-- Both a val and pd can be present when a user-constraint is
+     violated by the value is otherwise valid -->
 <xs:complexType name="val_Pchar">
-  <xs:choice>
-   <xs:element name="val" type="p:Pchar"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pchar"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Pstring">
@@ -20,10 +22,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pstring">
-  <xs:choice>
-   <xs:element name="val" type="p:Pstring"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pstring"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -32,10 +34,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pint8">
-  <xs:choice>
-   <xs:element name="val" type="p:Pint8"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint8"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -44,10 +46,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pint16">
-  <xs:choice>
-   <xs:element name="val" type="p:Pint16"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint16"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -56,10 +58,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pint32">
-  <xs:choice>
-   <xs:element name="val" type="p:Pint32"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint32"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -68,10 +70,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pint64">
-  <xs:choice>
-   <xs:element name="val" type="p:Pint64"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint64"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Puint8">
@@ -79,10 +81,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Puint8">
-  <xs:choice>
-   <xs:element name="val" type="p:Puint8"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint8"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -91,10 +93,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Puint16">
-  <xs:choice>
-   <xs:element name="val" type="p:Puint16"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint16" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Puint32">
@@ -102,10 +104,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Puint32">
-  <xs:choice>
-   <xs:element name="val" type="p:Puint32"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -114,10 +116,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Puint64">
-  <xs:choice>
-   <xs:element name="val" type="p:Puint64"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Pfloat32">
@@ -126,10 +128,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pfloat32">
-  <xs:choice>
-   <xs:element name="val" type="p:Pfloat32"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfloat32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -139,10 +141,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pfloat64">
-  <xs:choice>
-   <xs:element name="val" type="p:Pfloat64"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfloat64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -154,10 +156,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pfpoint8">
-  <xs:choice>
-   <xs:element name="val" type="p:Pfpoint8"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint8" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -169,10 +171,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pfpoint16">
-  <xs:choice>
-   <xs:element name="val" type="p:Pfpoint16"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint16" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -184,10 +186,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pfpoint32">
-  <xs:choice>
-   <xs:element name="val" type="p:Pfpoint32"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -199,10 +201,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pfpoint64">
-  <xs:choice>
-   <xs:element name="val" type="p:Pfpoint64"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -214,10 +216,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pufpoint8">
-  <xs:choice>
-   <xs:element name="val" type="p:Pufpoint8"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint8" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -229,10 +231,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pufpoint16">
-  <xs:choice>
-   <xs:element name="val" type="p:Pufpoint16"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint16" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 
@@ -244,10 +246,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pufpoint32">
-  <xs:choice>
-   <xs:element name="val" type="p:Pufpoint32"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Pufpoint64">
@@ -258,10 +260,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pufpoint64">
-  <xs:choice>
-   <xs:element name="val" type="p:Pufpoint64"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="size_t">
@@ -271,13 +273,14 @@
 <!-- Pflags is probably an enumeration, so we could come up with a
      better type --> 
 <xs:simpleType name="Pflags_t">
- <xs:restriction base="p:Puint32"/>
+ <xs:restriction base="xs:string"/>
+<!-- <xs:restriction base="p:Puint32"/> -->
 </xs:simpleType>
 
 <xs:complexType name="Ppos_t"> 
  <xs:sequence>
-   <xs:element name="byte" type="p:size_t"/>
-   <xs:element name="num" type="p:size_t"/>
+   <xs:element name="num" type="p:size_t"/>    <!-- I/O unit number -->
+   <xs:element name="byte" type="p:size_t"/>   <!-- Byte or block position within I/O unit -->
  </xs:sequence>
 </xs:complexType>
 
@@ -295,8 +298,9 @@
 <xs:complexType name="Pbase_pd">
  <xs:sequence>
    <xs:element name="pstate" type="p:Pflags_t"/>
+   <xs:element name="nerr" type="p:Puint32"/>
    <xs:element name="errCode" type="p:PerrCode_t"/>
-   <xs:element name="loc" type="p:Ploc_t"/>
+   <xs:element name="loc" type="p:Ploc_t" minOccurs="0" maxOccurs="1"/>
  </xs:sequence>
 </xs:complexType>
 
@@ -305,10 +309,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pip">
-  <xs:choice>
-   <xs:element name="val" type="p:Pip"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pip"     minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Pdate">
@@ -316,10 +320,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Pdate">
-  <xs:choice>
-   <xs:element name="val" type="p:Pdate"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Pdate"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Ptime">
@@ -327,10 +331,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Ptime">
-  <xs:choice>
-   <xs:element name="val" type="p:Ptime"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Ptime"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="Ptimestamp">
@@ -338,10 +342,10 @@
 </xs:simpleType>
 
 <xs:complexType name="val_Ptimestamp">
-  <xs:choice>
-   <xs:element name="val" type="p:Ptimestamp"/>
-   <xs:element name="pd" type="p:Pbase_pd"/>
-  </xs:choice>
+  <xs:sequence>
+   <xs:element name="val" type="p:Ptimestamp" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 </xs:schema>

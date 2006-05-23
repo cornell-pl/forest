@@ -81,6 +81,10 @@ ALL_TESTS = $(ALL_TESTS_O) $(ALL_TESTS_D)
 
 .PHONY: pglx_lib clean
 
+foo:
+	echo "INCLUDE_DEPS=$(INCLUDE_DEPS)"
+	echo "LIB_DEPS_D=$(LIB_DEPS_D)"
+
 # Test O'Caml tree walk
 walk_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h $(CODE_DIR)/walk_%.c $(TEMPL_DIR)/pglx_load.h $(INCLUDE_DEPS) $(LIB_DEPS_D) 
 	@$(CCExec_DYNAMIC_D)
@@ -167,7 +171,7 @@ regress: $(REGRESS_TESTS)
 
 schema_%: load_%
 	./$?
-	$(GALAX_HOME)/bin/galax-parse load_$*.xml -validate -xmlschema ../../gen/$*.xsd
+	$(GALAX_HOME)/bin/galax-parse load_$*.xml -validate on -xmlschema ../../gen/$*.xsd
 
 #	$(MAKE) -f ../GNUmakefile -k -s N=schema_$* S=schema_$*.xml T=../../regress/schema_$*.xml compare_files
 

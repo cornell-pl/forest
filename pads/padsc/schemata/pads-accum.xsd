@@ -53,7 +53,104 @@ March 2006:
      We actually accumulate using the Internal rep, but when we report, we want to use the Abstract type. 
   -->   
 
-  <xs:complexType name="Pint_acc">
+  <xs:element name="none">
+   <xs:complexType>
+   </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="Pint8_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element ref="a:avg"/>
+    <xs:element name="min"       type="p:Pint8"/> 
+    <xs:element name="max"       type="p:Pint8"/> 
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pint8"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:complexType>
+  <xs:element name="Pint8" type="a:Pint8_acc"/>
+
+  <xs:complexType name="Pint16_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element ref="a:avg"/>
+    <xs:element name="min"       type="p:Pint16"/> 
+    <xs:element name="max"       type="p:Pint16"/> 
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pint16"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:complexType>
+  <xs:element name="Pint16" type="a:Pint16_acc"/>
+
+  <xs:complexType name="Pint32_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element ref="a:avg"/>
+    <xs:element name="min"       type="p:Pint32"/> 
+    <xs:element name="max"       type="p:Pint32"/> 
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pint32"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:complexType>
+  <xs:element name="Pint32" type="a:Pint32_acc"/>
+
+  <xs:complexType name="Pint64_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
     <xs:element ref="a:good"/>
     <xs:element ref="a:bad"/>
@@ -77,10 +174,111 @@ March 2006:
      </xs:complexType>
     </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="int" type="a:Pint_acc"/>
+  <xs:element name="Pint64" type="a:Pint64_acc"/>
 
-  <xs:complexType name="Puint_acc">
+  <xs:complexType name="Puint8_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element ref="a:avg"/>
+      <xs:element name="min"    type="p:Puint8"/>
+      <xs:element name="max"    type="p:Puint8"/>
+      <xs:element name="distribution" minOccurs="0">
+       <xs:complexType>
+        <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+          <xs:element name="item" maxOccurs="unbounded">
+           <xs:complexType>
+            <xs:sequence>
+             <xs:element name="val" type="p:Puint8"/>
+             <xs:element ref="a:count"/>
+            </xs:sequence>
+           </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+       </xs:complexType>
+      </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:complexType>
+  <xs:element name="Puint8" type="a:Puint8_acc"/>
+
+  <xs:complexType name="Puint16_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element ref="a:avg"/>
+      <xs:element name="min"    type="p:Puint16"/>
+      <xs:element name="max"    type="p:Puint16"/>
+      <xs:element name="distribution" minOccurs="0">
+       <xs:complexType>
+        <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+          <xs:element name="item" maxOccurs="unbounded">
+           <xs:complexType>
+            <xs:sequence>
+             <xs:element name="val" type="p:Puint16"/>
+             <xs:element ref="a:count"/>
+            </xs:sequence>
+           </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+       </xs:complexType>
+      </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:complexType>
+  <xs:element name="Puint16" type="a:Puint16_acc"/>
+
+  <xs:complexType name="Puint32_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+      <xs:element ref="a:good"/>
+      <xs:element ref="a:bad"/>
+      <xs:element ref="a:avg"/>
+      <xs:element name="min"    type="p:Puint32"/>
+      <xs:element name="max"    type="p:Puint32"/>
+      <xs:element name="distribution" minOccurs="0">
+       <xs:complexType>
+        <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+          <xs:element name="item" maxOccurs="unbounded">
+           <xs:complexType>
+            <xs:sequence>
+             <xs:element name="val" type="p:Puint32"/>
+             <xs:element ref="a:count"/>
+            </xs:sequence>
+           </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+       </xs:complexType>
+      </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:complexType>
+  <xs:element name="Puint32" type="a:Puint32_acc"/>
+
+  <xs:element name="length">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element ref="a:Puint32"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="Puint64_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
       <xs:element ref="a:good"/>
       <xs:element ref="a:bad"/>
@@ -104,10 +302,43 @@ March 2006:
        </xs:complexType>
       </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="uint" type="a:Puint_acc"/>
+  <xs:element name="Puint64" type="a:Puint64_acc"/>
 
-  <xs:complexType name="Pfloat_acc">
+  <xs:complexType name="Pfloat32_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element ref="a:avg"/>
+    <xs:element name="min" type="p:Pfloat32"/>
+    <xs:element name="max" type="p:Pfloat32"/>
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pfloat32"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:complexType>
+  <xs:element name="Pfloat32" type="a:Pfloat32_acc"/>
+ 
+  <xs:complexType name="Pfloat64_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
     <xs:element ref="a:good"/>
     <xs:element ref="a:bad"/>
@@ -131,12 +362,16 @@ March 2006:
      </xs:complexType>
     </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="fpoint" type="a:Pfloat_acc"/>
+  <xs:element name="Pfloat64" type="a:Pfloat64_acc"/>
  
+
   <xs:complexType name="Pstring_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
-    <xs:element name="length"    type="a:Puint_acc" minOccurs="0"/>
+    <xs:element ref="a:length" />
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
@@ -154,10 +389,13 @@ March 2006:
      </xs:complexType>
     </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="string" type="a:Pstring_acc"/>
+  <xs:element name="Pstring" type="a:Pstring_acc"/>
 
   <xs:complexType name="Pchar_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
     <xs:element ref="a:good"/>
     <xs:element ref="a:bad"/>
@@ -178,10 +416,13 @@ March 2006:
      </xs:complexType>
     </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="char" type="a:Pchar_acc"/>
+  <xs:element name="Pchar" type="a:Pchar_acc"/>
 
   <xs:complexType name="Ptimestamp_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
       <xs:element ref="a:good"/>
       <xs:element ref="a:bad"/>
@@ -205,10 +446,13 @@ March 2006:
        </xs:complexType>
       </xs:element> 
      </xs:sequence>
-    </xs:complexType>
-  <xs:element name="timestamp" type="a:Ptimestamp_acc"/>
+    </xs:choice>
+   </xs:complexType>
+  <xs:element name="Ptimestamp" type="a:Ptimestamp_acc"/>
 
   <xs:complexType name="Pdate_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
       <xs:element ref="a:good"/>
       <xs:element ref="a:bad"/>
@@ -232,10 +476,13 @@ March 2006:
      </xs:complexType>
     </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="date" type="a:Pdate_acc"/>
+  <xs:element name="Pdate" type="a:Pdate_acc"/>
 
   <xs:complexType name="Ptime_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
       <xs:element ref="a:good"/>
       <xs:element ref="a:bad"/>
@@ -259,10 +506,13 @@ March 2006:
        </xs:complexType>
       </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="time" type="a:Ptime_acc"/>
+  <xs:element name="Ptime" type="a:Ptime_acc"/>
 
   <xs:complexType name="Pip_acc">
+   <xs:choice>
+    <xs:element ref="a:none"/>
     <xs:sequence>
       <xs:element ref="a:good"/>
       <xs:element ref="a:bad"/>
@@ -286,21 +536,29 @@ March 2006:
        </xs:complexType>
       </xs:element> 
     </xs:sequence>
+   </xs:choice>
   </xs:complexType>
-  <xs:element name="ip" type="a:Pip_acc"/>
+  <xs:element name="Pip" type="a:Pip_acc"/>
 
-  <xs:complexType name="type">
+  <xs:group name="type-group">
     <xs:choice>
       <!-- Accumulators for the abstract base types -->
-      <xs:element ref="a:char"/> 
-      <xs:element ref="a:int"/> 
-      <xs:element ref="a:uint"/> 
-      <xs:element ref="a:fpoint"/> 
-      <xs:element ref="a:string"/> 
-      <xs:element ref="a:timestamp"/> 
-      <xs:element ref="a:date"/> 
-      <xs:element ref="a:time"/> 
-      <xs:element ref="a:ip"/> 
+      <xs:element ref="a:Pchar"/> 
+      <xs:element ref="a:Pint8"/> 
+      <xs:element ref="a:Pint16"/> 
+      <xs:element ref="a:Pint32"/> 
+      <xs:element ref="a:Pint64"/> 
+      <xs:element ref="a:Puint8"/> 
+      <xs:element ref="a:Puint16"/> 
+      <xs:element ref="a:Puint32"/> 
+      <xs:element ref="a:Puint64"/> 
+      <xs:element ref="a:Pfloat32"/> 
+      <xs:element ref="a:Pfloat64"/> 
+      <xs:element ref="a:Pstring"/> 
+      <xs:element ref="a:Ptimestamp"/> 
+      <xs:element ref="a:Pdate"/> 
+      <xs:element ref="a:Ptime"/> 
+      <xs:element ref="a:Pip"/> 
       <!-- Accumulators for the composite types -->
       <xs:element ref="a:union"/> 
       <xs:element ref="a:struct"/> 
@@ -308,6 +566,12 @@ March 2006:
       <xs:element ref="a:enum"/>
       <xs:element ref="a:typedef"/> 
     </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="type">
+    <xs:sequence>
+      <xs:group ref="a:type-group"/>
+    </xs:sequence>
   </xs:complexType>
 
   <!-- Array accumulator -->
@@ -315,7 +579,7 @@ March 2006:
    <xs:complexType>
     <xs:sequence>
       <xs:element ref="a:name"/>
-      <xs:element name="length"  type="a:Puint_acc"/>
+      <xs:element ref="a:length"/>
 
       <!-- Summary of all elements in the array -->
       <xs:element name="compoundLevel" type="a:type"/>  
@@ -324,12 +588,20 @@ March 2006:
           then uses N+1st bucket for the rest (we think).
           See input parameters at bottom of schema.
       -->
-      <xs:element name="arrayDetail" type="a:type"  minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="arrayDetail" minOccurs="0"
+          maxOccurs="unbounded">
+        <xs:complexType>
+         <xs:sequence>
+          <xs:element name="index" type="p:Puint32"/>
+          <xs:group ref="a:type-group"/>
+         </xs:sequence>
+        </xs:complexType>
+      </xs:element>
     </xs:sequence>
    </xs:complexType>
   </xs:element>
 
-  <!-- Enum acuumulator -->
+  <!-- Enum accumulator -->
   <!-- Internally, enums are unsigned ints, but externally, 
        they should be represented by strings.
   -->
@@ -370,12 +642,13 @@ March 2006:
   </xs:element>
   
   <!-- Union accumulator -->
+ <xs:element name="tag"  type="a:Pint32_acc"/>
   <xs:element name="union">
    <xs:complexType>
     <xs:sequence>
       <xs:element ref="a:name"/>
       <xs:element ref="a:nerr" minOccurs="0" maxOccurs="1"/>
-      <xs:element name="tag"  type="a:Pint_acc"  minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="a:tag"  minOccurs="0" maxOccurs="1"/>
       <xs:element ref="a:field" maxOccurs="unbounded"/>
     </xs:sequence>
    </xs:complexType>
@@ -391,6 +664,7 @@ March 2006:
   <xs:element name="pcnt2rep"  type="p:Pfloat64"/> <!-- IN: Report buckets that only exceed this percentage. -->
   <xs:element name="tracked"   type="p:Puint64"/>  <!-- IN: Percentage of total values tracked -->
 
+  <xs:element name="PSource" type="a:type"/>
   <xs:element name="PadsAccum">
    <xs:complexType>
     <xs:sequence>
@@ -404,7 +678,7 @@ March 2006:
        </xs:sequence>
       </xs:complexType>
      </xs:element>
-     <xs:element name="PSource" type="a:type"/>
+     <xs:element ref="a:PSource"/>
     </xs:sequence>
    </xs:complexType>
   </xs:element>

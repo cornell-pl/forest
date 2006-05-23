@@ -6546,9 +6546,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val fmtBufFinalName = bufFinalSuf fmtName
 		      val fmtVariantsSs = mkSwitch fmtBranchSs
 		      val bodySs = writeVariantsSs
-		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
-				       PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
+		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))]
 					@ writeXMLVariantsSs
+				        @ [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
 					@ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
 		      val bodyFmtFinalSs =  [PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ fmtVariantsSs 
                       val (writeFunEDs,  fmtFunEDs) = genWriteFuns(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, cParams, 
@@ -7566,9 +7566,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val fmtFieldsFinalSs = [PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ (P.mungeFields genFmtFull (fn x => []) genFmtMan fields) @ [PL.fmtFixLast()]
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val bodySs = wrFieldsSs
-		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)])),
-				       PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_PD_XML_OUT", []))]
+		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))]
 				      @ wrXMLFieldsSs
+				      @ [PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_PD_XML_OUT", []))]
 				      @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
                       val (writeFunEDs, fmtFunEDs) = genWriteFuns(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, cParams, 
 								       mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, fmtFieldsFinalSs)

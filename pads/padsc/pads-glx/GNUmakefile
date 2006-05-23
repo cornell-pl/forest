@@ -96,15 +96,15 @@ debug : $(STATIC_GALAXLIB_D)
 	echo "Making debug in pads-glx"
 
 $(STATIC_GALAXLIB_O) : $(OBJS_O)
-	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_O) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
+	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_O) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/std-lib/libasmrun.a $(OCAML_LIB_DIR)/std-lib/libcamlidl.a
 	(lib=$@; $(FixStaticLib))
 
 $(SHARED_GALAXLIB_O) : $(OBJS_O)
 	$(SHARED_LIBTOOL) -o $(SHARED_GALAXLIB_O) $(SHARED_LIBTOOL_WHOLE_ARCHIVE) \
-        $(OBJS_O) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
+        $(OBJS_O) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS) $(OCAML_LIB_DIR)/std-lib/libasmrun.a $(OCAML_LIB_DIR)/std-lib/libcamlidl.a
 #        $(OBJS_O) $(SHARED_LIBTOOL_NOT_WHOLE_ARCHIVE) $(SHARED_LIBTOOL_OPTS) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
 $(STATIC_GALAXLIB_D) : $(OBJS_O)
-	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_D) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/libasmrun.a $(OCAML_LIB_DIR)/libcamlidl.a
+	$(STATIC_LIBTOOL) $(STATIC_GALAXLIB_D) $(STATIC_LIBTOOL_OPTS) $(OBJS_O) $(OCAML_LIB_DIR)/std-lib/libasmrun.a $(OCAML_LIB_DIR)/std-lib/libcamlidl.a
 	(lib=$@; $(FixStaticLib))
 
 install : all

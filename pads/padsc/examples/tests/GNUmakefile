@@ -75,6 +75,10 @@ TIMING_TEST = timing_ai
 #           regress_test_dns_o \
 #           regress_test_dns_d \
 
+foo:
+	echo "INCLUDE_DEPS=$(INCLUDE_DEPS)"
+	echo "LIB_DEPS_D=$(LIB_DEPS_D)"
+
 rcount:
 	@(cd ..; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
 
@@ -711,6 +715,12 @@ test_cluster: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_clu
 	@$(CCExec_DYNAMIC_O)
 test_cluster_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_cluster.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
+
+regress_accum_%: accum_%
+	(accum_$* >$*_accum.xml; \
+	 $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(PADS_HOME)/padsc/schemata/pads-accum.xsd $*_accum.xml; \
+	 if [ -s $*_bad.xml ]; then $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(GEN_DIR)/$*.xsd $*_bad.xml; fi ;\
+	 if [ -s $*_good.xml ]; then $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(GEN_DIR)/$*.xsd $*_good.xml; fi )
 
 ifdef GALAX_NONE
 test_children: var_error

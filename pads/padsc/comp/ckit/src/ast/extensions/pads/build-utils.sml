@@ -255,12 +255,14 @@ structure BuildUtils = struct
 	[PL.indent(PT.Id outstr, PT.Id nst),
 	 PL.sfprintf(PT.Id outstr, PT.String s, args)]
 
-    fun genXMLtag(tag, bodySs) = 
-	      sfindent("<"^tag^">\n", [])
+    fun genXMLtagattrs(tag, attrs, bodySs) = 
+	      sfindent("<"^tag^" "^attrs^">\n", [])
 	    @ [P.postIncS (PT.Id nst)]
 	    @ bodySs 
             @ [P.postDecS (PT.Id nst)]
 	    @ (sfindent("</"^tag^">\n", []))
+
+    fun genXMLtag(tag, bodySs) = genXMLtagattrs(tag, "", bodySs)
 
     fun genXMLtagInline(tag, bodySs,newline)= 
 	let val endTag = "</"^tag^">"
@@ -274,16 +276,16 @@ structure BuildUtils = struct
     fun genXMLArrayPiece(reportName,expX,indexX) =
 	let val indexXMLSs = genXMLtagInline("index", [PL.sfprintf(PT.Id outstr, PT.String "%d", indexX)], true)
 	    val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, expX])
-	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX])
+(*	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX]) *)
 	in
-	   genXMLtag("arrayDetail", indexXMLSs @ accumXMLSs)
+	   genXMLtag("arrayDetail", indexXMLSs @ [chkXMLPrint bodyX])
 	end
 
     fun genXMLArrayCompound(reportName,expX) =
 	let val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, expX])
-	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX])
+(*	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX]) *)
 	in
-	   genXMLtag("compoundLevel", accumXMLSs)
+	   genXMLtag("compoundLevel", [chkXMLPrint bodyX])
 	end
 
     (* Perror_t foostruct_report(P_t* pads, const char * prefix,
@@ -336,9 +338,8 @@ structure BuildUtils = struct
 				  @ xmlBodySs 
 				  @ [P.postDecS (PT.Id nst),
 				     PL.indent(PT.Id outstr, PT.Id nst),
-				     PL.sfprintf(PT.Id outstr, PT.String ("<"^kind^">\n"), []),  
-				     PT.Return PL.P_OK]
-	  val bodySs = if isSource then genXMLtag("Psource", rawbodySs) else rawbodySs
+				     PL.sfprintf(PT.Id outstr, PT.String ("</"^kind^">\n"), [])]
+	  val bodySs = (if isSource then genXMLtagattrs("PadsAccum", "xmlns=\"http://www.padsproj.org/pads-accum.xsd\"", genXMLtag("PSource", rawbodySs)) else rawbodySs) @ [PT.Return PL.P_OK]
 	  val bodyS = PT.Compound bodySs
 	  val returnTy = PL.toolErrPCT
       in

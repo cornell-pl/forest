@@ -776,13 +776,13 @@ PDCI_node_t * Ppos_t_node_kthChild(PDCI_node_t *node, childIndex idx)
   PDCI_node_t *result = 0;
   switch (idx) {
   case 0:
-    result = Pint32_val_node_new(node, "byte", node->pd, &(pos->byte), 
-				 node->id_offset + PDCI_BYTE_OFF,
+    result = Pint32_val_node_new(node, "num", node->pd, &(pos->num), 
+				 node->id_offset + PDCI_NUM_OFF,				 
 				 WHATFN);
     break;
   case 1:
-    result = Pint32_val_node_new(node, "num", node->pd, &(pos->num), 
-				 node->id_offset + PDCI_NUM_OFF,				 
+    result = Pint32_val_node_new(node, "byte", node->pd, &(pos->byte), 
+				 node->id_offset + PDCI_BYTE_OFF,
 				 WHATFN);
     break;
   case 2:
@@ -801,8 +801,8 @@ PDCI_node_t * Ppos_t_node_kthChildNamed(PDCI_node_t *node, childIndex idx, const
   /* the only valid idx is 0 */
   if (idx) return result;
 
-  if (strcmp(name, "byte") == 0)        idx = 0;
-  else if (strcmp(name, "num") == 0)    idx = 1;
+  if (strcmp(name, "num") == 0)    	idx = 0;
+  else if (strcmp(name, "byte") == 0)   idx = 1;
 /*else if (strcmp(name, "offset") == 0) idx = 2; */
   else  return result;
 
@@ -846,13 +846,13 @@ PDCI_node_t * Ppos_t_sndNode_kthChild(PDCI_node_t *node, childIndex idx)
 
     switch (idx) {
     case 0:
-      result = Pint32_val_node_new(node, "byte", NULL, NULL, 
-				   node->id_offset + PDCI_BYTE_OFF, WHATFN);
+      result = Pint32_val_node_new(node, "num", NULL, NULL, 
+				   node->id_offset + PDCI_NUM_OFF, WHATFN);
       Pint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
     case 1:
-      result = Pint32_val_node_new(node, "num", NULL, NULL, 
-				   node->id_offset + PDCI_NUM_OFF, WHATFN);
+      result = Pint32_val_node_new(node, "byte", NULL, NULL, 
+				   node->id_offset + PDCI_BYTE_OFF, WHATFN);
       Pint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
     case 2:
@@ -862,13 +862,13 @@ PDCI_node_t * Ppos_t_sndNode_kthChild(PDCI_node_t *node, childIndex idx)
   }else{
     switch (idx) {
     case 0:
-      result = Pint32_val_node_new(node, "byte", node->pd, &(pos->byte), 
-				   node->id_offset + PDCI_BYTE_OFF, WHATFN);
+      result = Pint32_val_node_new(node, "num", node->pd, &(pos->num), 
+				   node->id_offset + PDCI_NUM_OFF, WHATFN);
       Pint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
     case 1:
-      result = Pint32_val_node_new(node, "num", node->pd, &(pos->num), 
-				   node->id_offset + PDCI_NUM_OFF, WHATFN);
+      result = Pint32_val_node_new(node, "byte", node->pd, &(pos->byte), 
+				   node->id_offset + PDCI_BYTE_OFF, WHATFN);
       Pint32_val_sndNode_init(result,node->manager,node->ancestor_idx,node->ptr_gen,idx);
       break;
     case 2:

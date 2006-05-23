@@ -2113,6 +2113,9 @@ do {
 } while (0)
 /* END_MACRO */
 
+#define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode>"
+#define LOC_FMT "<loc><b><num>%lld</num><byte>%lld</byte></b><e><num>%lld</num><byte>%lld</byte></e></loc>"
+
 #define PCGEN_ENUM_XML_OUT(def_tag, rep2str_fn)
 do {
   if (!_tag) { _tag = def_tag; }
@@ -2121,13 +2124,23 @@ do {
   if ((pd)->errCode == P_NO_ERR) { /* no error */
     tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><val>%s</val></%s>\n", indent, PDCI_spaces, _tag, rep2str_fn(*rep), _tag);
   } else if ((pd)->errCode < 100) { /* error, no location */
-    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd></%s>\n",
-		    indent, PDCI_spaces, _tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), _tag);
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd>" PSTATE_NERR_ERRCODE_FMT "</pd></%s>\n",
+		   indent, 
+		   PDCI_spaces, 
+		   _tag, 
+		   P_pstate2str((pd)->pstate), 
+		   (pd)->nerr, 
+                   P_errCode2str((pd)->errCode), 
+                   _tag);
   } else { /* error, location */
-    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc></pd></%s>\n",
-		    indent, PDCI_spaces, _tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
-		    (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
-		    (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd>" PSTATE_NERR_ERRCODE_FMT LOC_FMT "</pd></%s>\n",
+		    indent, 
+		    PDCI_spaces, _tag, 
+		    P_pstate2str((pd)->pstate), 
+		    (pd)->nerr, 
+		    P_errCode2str((pd)->errCode),
+		    (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, 
+		    (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, 
 		    _tag);
   }
   PDCI_FINAL_TMP4_TLEN_UPDATES();
@@ -2140,13 +2153,21 @@ do {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
     PDCI_sfstr_seek2zero(pads->tmp4);
     if ((pd)->errCode < 100) { /* no location */
-      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd>\n",
-		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode));
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT "</pd>\n",
+		      pd_indent_PCGEN_, 
+		      PDCI_spaces, 
+		      P_pstate2str((pd)->pstate), 
+		      (pd)->nerr,
+		      P_errCode2str((pd)->errCode));
     } else { /* location */
-      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc></pd>\n",
-		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
-		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
-		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset);
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT LOC_FMT "</pd>\n",
+		      pd_indent_PCGEN_, 
+                      PDCI_spaces, 
+                      P_pstate2str((pd)->pstate), 
+                      (pd)->nerr, 
+                      P_errCode2str((pd)->errCode),
+		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, 
+ 		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte);
     }
     PDCI_TMP4_TLEN_UPDATES();
   }
@@ -2162,14 +2183,25 @@ do {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
     PDCI_sfstr_seek2zero(pads->tmp4);
     if ((pd)->errCode < 100) { /* no location */
-      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
-		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), (pd)->neerr, (pd)->firstError);
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT "<neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
+		      pd_indent_PCGEN_, 
+		      PDCI_spaces, 
+                      P_pstate2str((pd)->pstate), 
+                      (pd)->nerr, 
+                      P_errCode2str((pd)->errCode), 
+                      (pd)->neerr, 
+                      (pd)->firstError);
     } else { /* location */
-      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc><neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
-		      pd_indent_PCGEN_, PDCI_spaces, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
-		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
-		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
-		      (pd)->neerr, (pd)->firstError);
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT LOC_FMT "<neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
+		      pd_indent_PCGEN_, 
+		      PDCI_spaces, 
+                      P_pstate2str((pd)->pstate), 
+                      (pd)->nerr, 
+                      P_errCode2str((pd)->errCode),
+		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte,
+		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte,
+		      (pd)->neerr, 
+                      (pd)->firstError);
     }
     PDCI_TMP4_TLEN_UPDATES();
   }

@@ -53,6 +53,7 @@ do { \
 #define DEF_INPUT_FILE "../../data/ai"
 //#define PADS_TY(suf) http_clf_t ## suf
 #define PADS_TY(suf) log_t ## suf
+#define PADS_TY_STR "ai"
 #include "ai.h"
 #include "template/accum_report_xml.h"
 

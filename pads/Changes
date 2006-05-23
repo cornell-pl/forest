@@ -1,4 +1,38 @@
 
+May 22, 2006 - Mary (PADX)
+
+  o mk/rules.mk
+    padsc/pads-glx/GNUmakefile
+  
+    Added INCLUDES to align with Galax 0.6.5.
+
+  o padsc/examples/tests/accum_*.c
+    Added name of PADS description as constant string
+
+  o padsc/examples/tests/GNUmakefile
+    Added regression target for regress_accum_*
+
+  o padsc/comp/ckit/src/ast/extensions/pads/build-utils.sml
+    padsc/comp/ckit/src/ast/extensions/pads/cnv-ext.sml
+    padsc/include/pcgen-macros.h
+    padsc/include/template/accum_report_xml.h
+    padsc/libpads/pads.c
+    padsc/schemata/pads-accum.xsd
+    padsc/schemata/pads.xsd
+    padsc/libpglx/pglx.c
+
+    Numerous changes to align accumulator and good/bad XML output with
+    corresponding schemata.
+
+May 15, 2006 - Mary (PADX)
+
+  o Updated padsc/pads-glx/GNUmakefile (again) to align with
+    GODI-Galax installation. 
+
+  o PADS-XML printing functions
+
+    - Fixed bug in which <pd> was printed before struct/union content
+
 April 18, 2006 - Mary (PADX)
 
   o Updated mk/rules.mk and padsc/pads-glx/GNUmakefile to align with
@@ -9,7 +43,7 @@ April 18, 2006 - Mary (PADX)
     there are still some hacks in padsc/pads-glx/GNUmakefile for PADX.
     See "HACK ALERT" in  padsc/pads-glx/GNUmakefile 
 
-  o New Environment Variables!
+  o New Environment Variables Definitions!
 
     OCAML_BIN_DIR=/home/mff/godi/bin
     OCAML_LIB_DIR=//home/mff/godi/lib/ocaml

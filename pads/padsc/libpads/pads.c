@@ -772,26 +772,54 @@ do {
   } while (0)
 /* END_MACRO */
 
+#define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode>"
+#define LOC_FMT "<loc><b><num>%lld</num><byte>%lld</byte></b><e><num>%lld</num><byte>%lld</byte></e></loc>"
 #define PDCI_BASEVAL_XML_OUT(sfprintf_prefix, io, tag, def_tag, indent, pd, outfmt, outval)
   do {
     if (!tag) { tag = def_tag; }
     indent = (indent > 128) ? 128 : indent;
-    if ((pd)->errCode == P_NO_ERR) {
-      sfprintf_prefix sfprintf(io, "%.*s<%s><val>" outfmt "</val></%s>\n", indent, PDCI_spaces, tag, outval, tag);
-    } else if ((pd)->errCode < 100) { /* no location, no value */
-      sfprintf_prefix sfprintf(io, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode></pd></%s>\n",
-			       indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode), tag);
-    } else if ((pd)->errCode == P_USER_CONSTRAINT_VIOLATION) { /* location and value */
-      sfprintf_prefix sfprintf(io, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc></pd><val>" outfmt "</val></%s>\n",
-			       indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
-			       (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
-			       (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
-			       outval, tag);
-    } else { /* location, no value */
-      sfprintf_prefix sfprintf(io, "%.*s<%s><pd><pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode><loc><b><num>%lld</num><byte>%lld</byte><offset>%lld</offset></b><e><num>%lld</num><byte>%lld</byte><offset>%lld</offset></e></loc></pd></%s>\n",
-			       indent, PDCI_spaces, tag, P_pstate2str((pd)->pstate), (pd)->nerr, P_errCode2str((pd)->errCode),
-			       (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, (long long)(pd)->loc.b.offset,
-			       (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, (long long)(pd)->loc.e.offset,
+    if ((pd)->errCode == P_NO_ERR) { /* value, no errors */
+      sfprintf_prefix sfprintf(io, "%.*s<%s><val>" outfmt "</val></%s>\n", 
+			       indent, 
+			       PDCI_spaces, 
+			       tag, 
+			       outval, 
+			       tag);
+    } else if ((pd)->errCode < 100) { /* no value, no location */
+      sfprintf_prefix sfprintf(io, "%.*s<%s><pd>" PSTATE_NERR_ERRCODE_FMT "</pd></%s>\n",
+			       indent, 
+			       PDCI_spaces, 
+			       tag, 
+			       P_pstate2str((pd)->pstate), 
+			       (pd)->nerr, 
+			       P_errCode2str((pd)->errCode), 
+			       tag);
+    } else if ((pd)->errCode == P_USER_CONSTRAINT_VIOLATION) { /* value and location */
+      sfprintf_prefix sfprintf(io, "%.*s<%s><val>" outfmt "</val>\n%.*s<pd>" PSTATE_NERR_ERRCODE_FMT "\n%.*s" LOC_FMT "</pd></%s>\n",
+			       indent, 
+			       PDCI_spaces, 
+			       tag, 			       	
+			       outval,
+ 			       indent, 
+			       PDCI_spaces, 
+			       P_pstate2str((pd)->pstate), 
+			       (pd)->nerr, 
+	                       P_errCode2str((pd)->errCode),
+			       indent, 
+			       PDCI_spaces, 
+			       (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, 
+			       (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, 
+			       tag);
+    } else { /* no value, location */
+      sfprintf_prefix sfprintf(io, "%.*s<%s><pd>" PSTATE_NERR_ERRCODE_FMT LOC_FMT "</pd></%s>\n",
+			       indent, 
+			       PDCI_spaces, 
+			       tag, 
+			       P_pstate2str((pd)->pstate), 
+			       (pd)->nerr, 
+			       P_errCode2str((pd)->errCode),
+			       (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, 
+			       (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, 
 			       tag);
     }
   } while (0)
@@ -2588,7 +2616,7 @@ int_type ## _acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, int_type ## _
   rp = (sz < a->max2rep) ? sz : a->max2rep;
   if (sz == 0) { /* no values accumulated */
     PDCI_indent(outstr, nst);
-    sfprintf(outstr, "<%s></%s>\n", PDCI_MacroArg2String(int_type), PDCI_MacroArg2String(int_type));
+    sfprintf(outstr, "<%s><none/></%s>\n", PDCI_MacroArg2String(int_type), PDCI_MacroArg2String(int_type));
     return P_OK;
   }
   PDCI_indent(outstr, nst++);
@@ -3188,7 +3216,7 @@ fpoint_type ## _acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst,fpoint_type
   rp = (sz < a->max2rep) ? sz : a->max2rep;
   if (sz == 0) { /* no values accumulated */
     PDCI_indent(outstr, nst);
-    sfprintf(outstr, "<%s></%s>\n", PDCI_MacroArg2String(fpoint_type), PDCI_MacroArg2String(fpoint_type));
+    sfprintf(outstr, "<%s><none/></%s>\n", PDCI_MacroArg2String(fpoint_type), PDCI_MacroArg2String(fpoint_type));
     return P_OK;
   }
   PDCI_indent(outstr, nst++);
@@ -3574,7 +3602,7 @@ float_type ## _acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, float_type 
   rp = (sz < a->max2rep) ? sz : a->max2rep;
   if (sz == 0) { /* no values accumulated */
     PDCI_indent(outstr, nst);
-    sfprintf(outstr, "<%s></%s>\n", PDCI_MacroArg2String(float_type), PDCI_MacroArg2String(float_type));
+    sfprintf(outstr, "<%s><none/></%s>\n", PDCI_MacroArg2String(float_type), PDCI_MacroArg2String(float_type));
     return P_OK;
   }
 
@@ -3627,7 +3655,7 @@ float_type ## _acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, float_type 
      sfprintf(outstr, "</distribution>\n");
   }
   PDCI_indent(outstr, --nst);
-  sfprintf(outstr, "</%s>\n", PDCI_MacroArg2String(int_type));
+  sfprintf(outstr, "</%s>\n", PDCI_MacroArg2String(float_type));
 
   dtnext(a->dict, 0); /* discard any iterator state */
   /* revert to unordered set in case more inserts will occur after this report */
@@ -6691,7 +6719,7 @@ Pstring_acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, Pstring_acc *a)
   rp = (sz < a->max2rep) ? sz : a->max2rep;
   if (len_sz == 0) { /* no values accumulated */
     PDCI_indent(outstr, nst);
-    sfprintf(outstr, "<Pstring></Pstring>\n");
+    sfprintf(outstr, "<Pstring><none/></Pstring>\n");
     return P_OK;
   }
   PDCI_indent(outstr, nst++);
@@ -6883,7 +6911,7 @@ Perror_t Pip_acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, Puint32_acc *
   rp = (sz < a->max2rep) ? sz : a->max2rep;
   if (sz == 0) { /* no values accumulated */
     PDCI_indent(outstr, nst);
-    sfprintf(outstr, "<Pip></Pip>\n");
+    sfprintf(outstr, "<Pip><none/></Pip>\n");
     return P_OK;
   }
 
@@ -7093,7 +7121,7 @@ PDCI_date_time_acc_report2xml_io(P_t *pads, Sfio_t *outstr, const char *src_type
   rp = (sz < a->max2rep) ? sz : a->max2rep;
   if (sz == 0) { /* no values accumulated */
     PDCI_indent(outstr, nst);
-    sfprintf(outstr, "<%s></%s>\n", src_type, src_type);
+    sfprintf(outstr, "<%s><none/></%s>\n", src_type, src_type);
     return P_OK;
   }
 
@@ -7315,7 +7343,7 @@ Pchar_acc_report2xml_io(P_t *pads, Sfio_t *outstr, int nst, Pchar_acc *a)
   rp = (sz < a->max2rep) ? sz : a->max2rep;
   if (sz == 0) { /* no values accumulated */
     PDCI_indent(outstr, nst);
-    sfprintf(outstr, "<Pchar></Pchar>\n");
+    sfprintf(outstr, "<Pchar><none/></Pchar>\n");
     return P_OK;
   }
 
@@ -7762,7 +7790,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.199 2006-04-13 06:34:05 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.200 2006-05-23 00:56:16 mff Exp $\0\n";
 
 static const char lib[] = "padsc";
 

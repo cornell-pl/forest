@@ -46,6 +46,11 @@ int main(int argc, char** argv) {
 #ifdef EXTRA_DECLS
   EXTRA_DECLS;
 #endif
+  char *pads_type = PADS_TY_STR;
+  char *accum_good_out = (char *)0;
+  Sfio_t *accum_good_sfio;
+  char *accum_bad_out = (char *)0;
+  Sfio_t *accum_bad_sfio;
 
 #ifdef PRE_LIT_LWS
   my_disc.pre_lit_lws = PRE_LIT_LWS;
@@ -119,6 +124,14 @@ int main(int argc, char** argv) {
     error(ERROR_FATAL, "*** P_io_fopen failed ***");
   }
 
+  /* Open output files */
+  accum_good_out = malloc(pads_type + strlen("_good.xml"));
+  strcpy(accum_good_out,pads_type); strcat(accum_good_out,"_good.xml");
+  if (!(accum_good_sfio = my_disc.fopen_fn(accum_good_out, "w"))) { error(2, "Cannot open %s\n", accum_good_out); exit(-1); }
+  accum_bad_out = malloc(pads_type + strlen("_bad.xml"));
+  strcpy(accum_bad_out,pads_type); strcat(accum_bad_out,"_bad.xml");
+  if (!(accum_bad_sfio = my_disc.fopen_fn(accum_bad_out, "w"))) { error(2, "Cannot open %s\n", accum_bad_out); exit(-1); }
+
   /* allocate the main rep, pd, m, and acc in the heap */
   rmm_zero = P_rmm_zero(pads);
   rep  = (PADS_TY( )*)   RMM_alloc_unmanaged_buf(rmm_zero, sizeof(PADS_TY( )));
@@ -176,17 +189,20 @@ int main(int argc, char** argv) {
       EXTRA_BAD_READ_CODE;
 #else
       /* Put call to report XML function here */
+      PADS_TY(_write_xml_2io) (pads, accum_bad_sfio, pd, rep, PADS_TY_STR, 0);
       error(2, "read returned error");
 #endif
     }
-#ifdef EXTRA_GOOD_READ_CODE
     else {
+#ifdef EXTRA_GOOD_READ_CODE
       if (PADS_TY(_verify)(rep EXTRA_READ_ARGS ) ) {  
 	error(2, "read reported no errors and passed predicate test.");  
       } else {  error(2, "read reported no errors but failed predicate test.");  } 
       EXTRA_GOOD_READ_CODE;
-    }
 #endif
+      /* Put call to report XML function here */
+      PADS_TY(_write_xml_2io) (pads, accum_good_sfio, pd, rep, PADS_TY_STR, 0);
+    }
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
