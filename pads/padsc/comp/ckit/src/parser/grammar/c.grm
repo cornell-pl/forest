@@ -179,12 +179,17 @@ fun insertParams params =
 
 fun addComment ((name, fromOpt, expOpt), commentOpt) = (name, fromOpt, expOpt, commentOpt)
 
+(* Update the postCond field of decl with postCondOpt. *)
 fun addStructPostCond (decl,postCondOpt) = 
    (case decl of
     (PX.PStruct{isAlt,isRecord,isSource,containsRecord,largeHeuristic,name,params,fields,postCond}) => 
       PX.PStruct{isAlt = isAlt, isRecord = isRecord, isSource = isSource, 
 		 containsRecord = containsRecord, largeHeuristic = largeHeuristic,
                  name = name, params = params, fields = fields, postCond = postCondOpt} 
+  (* XXX: This branch looks like defensive programming to me. *)
+  (* It should probably raise an internal compiler error,*) 
+  (* as only PX.PStruct should be given to this function.*)
+  (* --YHM                                               *)
     | s => s)
 
 fun addUnionPostCond (decl,postCondOpt) = 
@@ -366,6 +371,8 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | popScope of unit
         | strings of string
 (* PADS:start *)
+(* XXX *)
+        | foo of unit
         | pTyParamDeclaration of (ctype * declarator)
         | pTyParamList of (ctype * declarator)  list
         | pTyParams of (ctype * declarator) list
@@ -527,6 +534,7 @@ externalDeclaration:
         | pRecursive                    (SOME(markExternalDecl srcMap (pRecursive,pRecursiveleft,pRecursiveright)))
 (*         | pDynamic                      (SOME(markExternalDecl srcMap (pDynamic,pDynamicleft,pDynamicright))) *)
         | pOpt                          (SOME(markExternalDecl srcMap (pOpt,pOptleft,pOptright)))
+	  (* XXX: Why is the RCURLY not within Pstruct? --YHM *)
         | pStruct RCURLY pPostCondOpt   (let val augPStruct = addStructPostCond(pStruct, pPostCondOpt)
                                              val structDecl = ExternalDeclExt augPStruct
 	                                 in
@@ -1149,6 +1157,7 @@ pCommentOpt: (NONE)
 pIsRecord : (false)
   | PRECORD (true)
 
+(* ~ rule 288: *)
 pIsLongestMatch : (false)
   | PLONGEST (true)
 
@@ -1216,13 +1225,47 @@ pRecursive:
 				isRecord = pIsRecord,
 				isSource = pIsSource,
 				containsRecord = false}) )
+| pIsSource pIsRecord PRECURSIVE PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList RCURLY popScope pPostCondOpt
+ ( makeTypeName pName;
+   let val anonName = CommonNames.recPre pName
+       val anonPDecl = PX.PStruct 
+			   {isAlt = false, isRecord = pIsRecord, isSource = pIsSource, 
+			    containsRecord = false, largeHeuristic = false,
+			    name = anonName, params = pTyParams, fields = pStructFieldList, postCond = pPostCondOpt}
+   in
+       ExternalDeclExt(PX.PRecursive 
+			   {base = SOME anonPDecl,
+                            name   = pName, 
+			    params = pTyParams,
+			    isRecord = pIsRecord,
+			    isSource = pIsSource,
+			    containsRecord = false})
+   end
+ )
+| pIsSource pIsRecord PRECURSIVE pIsLongestMatch PUNION pName pushScope pTyParams LCURLY pVariants RCURLY popScope pPostCondOpt
+ ( makeTypeName pName;
+   let val anonName = CommonNames.recPre pName
+       val anonPDecl = PX.PUnion 
+			   {name = anonName, params = pTyParams, 
+			    containsRecord = false, largeHeuristic = false,
+			    isLongestMatch = pIsLongestMatch, isRecord = pIsRecord, isSource = pIsSource, 
+			    variants=pVariants, postCond = pPostCondOpt, fromOpt = false}
+   in
+       ExternalDeclExt(PX.PRecursive {base = SOME anonPDecl,
+                                      name   = pName, 
+				      params = pTyParams,
+				      isRecord = pIsRecord,
+				      isSource = pIsSource,
+				      containsRecord = false})
+   end
+ )  
 
 (* pDynamic: *)
 (*   pIsSource pIsRecord PDYNAMIC pName pOptActParams pName pushScope pTyParams *)
 (*  ( makeTypeName pName2; *)
-(*    ExternalDeclExt(PX.PDynamic {baseTy = PX.Name pName1,  *)
+(*    ExternalDeclExt(PX.PDynamic {baseTy = PX.Name pName1, *)
 (*                                 args   = pOptActParams, *)
-(*                                 name   = pName2,  *)
+(*                                 name   = pName2, *)
 (* 				params = pTyParams, *)
 (* 				isRecord = pIsRecord, *)
 (* 				isSource = pIsSource, *)

@@ -2411,9 +2411,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
   		      @ (emitXML galaxEDs )
 		  end
 
-              (*  Recursive case *)
-	      fun cnvPRecursive ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
-			        isSource : bool, base:{name:string, args: pcexp list} option})=
+              (* Recursive case *)
+	      (* Forward declaration of recursive type. *)
+	      fun cnvPRecursive ({base = NONE, 
+				  name : string, params: (pcty * pcdecr) list, 
+				  isRecord, containsRecord, isSource : bool})=
 		  let 
 		      val (cParams : (string * pcty) list, 
 			   paramInfo : (string * acty) list, 
@@ -2423,16 +2425,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      (* Assume that base type is a Pstruct, Punion, Popt or Parray. 
 			 So don't need lookupTy, which checks to see if its a base type. 
 		         INV: There is an assumed invariant here that all of the above 
-		         constructs produce C structs. 
-			 INV: in case of SOME (below), we assume that bname is one of Pstruct,
-                         Punion, Popt or Parray.  *)
-		      val (baseName,args) = case base of 
-						SOME {name=bname,args} => (bname,args) 
-					      (* When no base type is specified, we generate the base type's *)
-					      (* name based on a special prefix (recPre) and generate the    *)
-					      (* arguments to the base type directly from this type's        *)
-					      (* parameters (if any).                                        *)
-					      | NONE => (recPre name, List.map PT.Id paramNames)
+		         constructs produce C structs. *)
+		      (* As no base type is specified, we generate the base type's *)
+		      (* name based on a special prefix (recPre) and generate the    *)
+		      (* arguments to the base type directly from this type's        *)
+		      (* parameters (if any).                                        *)
+		      val (baseName,args) = (recPre name, List.map PT.Id paramNames)
 		      val baseTy = PX.Name baseName
 		      val baseTypeName = repSuf baseName
 
@@ -2641,17 +2639,19 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      @ (fwDecls ())
 		  end
 
-              (*  Dynamically allocated, pointer-based case *)
-	      (*  Note on parameters. While parameters are supported, 
-	          the parameter list must be identical to that of the 
-		  underlying type.
-              *)
-	      fun cnvPDynamic ({name : string, params: (pcty * pcdecr) list, isRecord, containsRecord, 
-			        isSource : bool, baseTy: PX.Pty})=
-		  let val base = "base"
-		      (* Assume that base type is a compound type (i.e. not a base type), 
-			so don't need lookupTy *)
-		      val baseTypeName = let val PX.Name n = baseTy in repSuf n end
+		(* Definition of recursive type. *)
+		| cnvPRecursive ({base = SOME baseEDecl, 
+				  name : string, params: (pcty * pcdecr) list, 
+				  isRecord, containsRecord, isSource : bool}) =
+		  let (* First, convert the underlying (anonymous) type.  *)
+		      (* Then, create functions that manipulate a pointer *)
+		      (* to that type. *)
+		      val baseEDs = pcnvExternalDecl baseEDecl
+				    
+		      val base = "base"
+		      (* Derive name of underlying (anonymous) type from name of this type. *)
+		      val baseTypeName = PN.recPre name
+		      val baseTy = PX.Name baseTypeName
 		      val baseTypePCT = P.makeTypedefPCT (repSuf baseTypeName)
 		      val baseTypePdPCT = P.makeTypedefPCT (pdSuf baseTypeName)
 
@@ -2889,7 +2889,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   G.makeSNDNodeVtable(name)]
 
 		  in
-		        (emitRead readEDs)
+		      baseEDs
+		      @ (emitRead readEDs)
 		      @ (emitPred (isFunEDs @ genPDFunEDs))
                       @ (emitAccum accumEDs)
                       @ (emitWrite writeFunEDs)
@@ -8113,7 +8114,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 	      case decl 
 	      of PX.PTypedef     t => cnvPTypedef   t
               |  PX.PRecursive   r => cnvPRecursive r
-              |  PX.PDynamic     d => cnvPDynamic   d
               |  PX.PArray       a => cnvPArray     a
               |  PX.Popt         p => cnvPOpt       p
               |  PX.PUnion       u => cnvPUnion     u

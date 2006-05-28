@@ -26,6 +26,7 @@ GENERATED_STUBS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs.c)
 GENERATED_OC_SOURCES= $(GENERATED_INTS) $(GENERATED_IMPLS)
 BT_GEN=$(GENERATED_INTS) $(GENERATED_IMPLS) $(GENERATED_STUBS)
 WRAPPERS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.c)
+WRAPPER_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.o)
 BT_CAML_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.cmo)
 BT_C_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.o $(base_type)_c.o)
 BT_OBJS=$(BT_CAML_OBJS) $(BT_C_OBJS)
@@ -61,6 +62,10 @@ OC_INCLUDES = -I $(CAMLIDL_LIB_DIR)
 
 # Rule to make programs
 
+.PHONY: all clean padsc padsclib depend
+
+all: padsc.cma
+
 padsc.mli padsc.ml padsc_stubs.c:padsc.idl
 	camlidl -no-include padsc.idl
 
@@ -76,6 +81,8 @@ $(GENERATED_STUBS):%_stubs.c: %.idl
 padsc_stubs_w.c: padsc_stubs.c
 
 $(WRAPPERS):%_stubs_w.c: %_stubs.c
+
+$(WRAPPER_OBJS):%_stubs_w.o: %_stubs_w.c
 
 $(CAML_OBJS): %.cmo: %.mli %.ml 
 	ocamlc $(OC_INCLUDES) -c $*.mli $*.ml
@@ -95,8 +102,6 @@ $(PADSIDL)/padsc.cma padsc.cma: $(CAML_OBJS) $(PADSIDL_LIB_NM)
 
 client: padsclib client.ml
 	ocamlc client.ml  padsc.cma  -o client
-
-.PHONY: clean padsc padsclib depend
 
 padsc: padsc_stubs_w.o
 

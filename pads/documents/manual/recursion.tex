@@ -11,15 +11,16 @@ the compiler that the type specified will be recursive.
 \section{Syntax}
 \label{sec:recur-syntax}
 The syntax for \Precur{} is given by the following BNF grammar fragment:
+
 \begin{tabular}{rcl}
-\nont{recur\_ty}    & \is{} & \Precur{} \opt{(\nont{p\_ty})} identifier ;
+\nont{recur\_ty}    & \is{} & \Precur{} \opt{(\nont{p\_ty})} identifier  \opt{\nont{p\_formals}};
 \end{tabular}
 
 \noindent
 We explain the meaning of this syntax in the remainder of this chapter.
 All non-terminals not defined in this grammar fragment were
 defined previously:
-\padsl{} types (\nont{p\_ty}) %and parameter lists (\nont{p\_formals})
+\padsl{} types (\nont{p\_ty}) and parameter lists (\nont{p\_formals})
 in \secref{sec:common-parameterization}. 
 
 \subsection{Examples}
@@ -30,93 +31,102 @@ the Newick format. A tree is encoded as a matched pair of parentheses
 containing either nothing in the leaf case or a pair of children
 separated by a comma in the interior node case.
 \inputCode{code/binarytree}
-\cut{see code/binarytree.p }
+
 In this example, types \cd{tree} and \cd{treeInterior} are mutually
 recursive. As with mutually recursive types in C, we need a forward
 declaration for the second type, \cd{tree}. The \kw{Precur} construct
 serves as forward declaration. 
 
-\textbf{This text is difficult to follow:ie, I am not sure what you
-  are trying to say.  It sounds like it has to do with the generated
-  representations and so should be in that section.}
-In addition, as C types cannot be
-directly recursive (that would lead to infinite types), we also change
-the (Pstruct) \textbf{which type?} type specified in the recursive
-  declaration so that it is 
-allocated dynamically. To do so, we define a new type \cd{_tree} which
-becomes the actual structure for the tree type. Then, \cd{tree} is
-defined as a pointer to \cd{_tree}.
+% For situations in which we cannot change the recursive types as
+% described, \textbf{when would that be?} we allow the \kw{Precur}
+% declaration to include an explicit 
+% specfication of the underlying type. So, for example, we could rewrite
+% the previous example as follows:
 
-For situations in which we cannot change the recursive types as
-described, \textbf{when would that be?} we allow the \kw{Precur}
-declaration to include an explicit 
-specfication of the underlying type. So, for example, we could rewrite
-the previous example as follows:
+% \inputCode{code/binarytree2}
 
-\inputCode{code/binarytree2}
-\cut{
-\begin{code}
-Precur (treeImpl) tree;
-
-Pstruct treeInterior {
-  tree left;
-  ',';
-  tree right;
-};
-
-Pstruct treeImpl{
-  '(';
-  Popt treeInterior;
-  ')';
-};
-\end{code}
-}
-
-Here, \cd{tree} is a pointer to the type \cd{treeImpl}. This feature
-can useful in a case where the implementation is specified elsewhere.
+% Here, \cd{tree} is a pointer to the type \cd{treeImpl}. This feature
+% can useful in a case where the implementation is specified elsewhere.
 
 \section{Generated library}
+% Conceptually, \Precur is a forward declaration for a \pads{} type
+% declared later in the file. In \C{}, recursive types are generally
+% defined by referring to the forward declared type through a
+% pointer. However, pointers are specific to in-memory data structures
+% and are not relevant to data descriptions. Hence, the user will refer
+% directly to the forward-declared type and the compiler must handle
+% inserting the pointers.
+
+The \Precur{} construct servers two purposes. It provides a forward
+declaration for a latter \pads{} type, thereby allowing for
+recursive types. And, it informs the compiler that the size of the
+in-memory representation and parse descriptor cannot be statically
+determined. Therefore, thec compiler translates \Precur{} declarations
+into forward declarations of the named type's representation, mask, and
+parse descriptor types. In addition, as the sizes of these data
+structures cannot be statically determined, the compiler defines all
+three data structures as pointers. 
+
+
+Correspondingly, the generated
+functions handle the dynamic allocation and deallocation of the
+representation and parse descriptor. The mask, being an input rather
+than an output, is handled differently, as discussed in
+\secref{sec:recur-masks}.
+
 We will use the \cd{tree} examples to illustrate the data structures
 and functions generated for recursive types.
 
 \subsection{In-memory representation}
 \label{sec:recur-rep}
+
+% In addition, as C types cannot be
+% directly recursive (that would lead to infinite types), we also change
+% the (Pstruct) \textbf{which type?} type specified in the recursive
+%   declaration so that it is 
+% allocated dynamically. To do so, we define a new type \cd{_tree} which
+% becomes the actual structure for the tree type. Then, \cd{tree} is
+% defined as a pointer to \cd{_tree}.
+
 The in-memory representation of a recursive type is a pointer to the
-representation of the underlying base type:
+representation of the underlying type:
 
 \begin{code}
 typedef struct _tree_s    *tree;
 \end{code}
-or (for second form of \Precur{}):
-\begin{code}
-typedef struct treeImpl    *tree;
-\end{code}
 
 \subsection{Mask}
 \label{sec:recur-masks}
-The mask for a recursive type is a pointer to the
-mask of the underlying base type. 
+The mask for a recursive type is a pointer to the mask of the
+underlying base type.
 
 \begin{code}
 typedef struct _tree_m_s  *tree_m;
-\end{code}
-or
-\begin{code}
-typedef struct treeImpl_m_s  *tree_m;
 \end{code}
 
 Note the difference from \ptypedef{}s, which provide a new mask for the new type.
 
 \subsection{Parse descriptor}
 \label{sec:recur-parse-descriptors}
-The parse descriptor for a recursive type is a pointer to the parse
+The parse descriptor of a \Precur{} with name \cd{myRecur} is a \C{}
+struct with name \pdSuf{myRecur}.  This struct has the fields
+described in \secref{sec:common-parse-descriptor}. In addition, it
+contains a field \cd{val}, the type of which is a pointer to the parse
 descriptor for the underlying base type.
+
+For example, the parse descriptor type \pdSuf{tree} has
+the following structure:
+
 \begin{code}
-typedef struct _tree_pd_s *tree_pd;
-\end{code}
-or
-\begin{code}
-typedef struct treeImpl_pd_s *tree_pd;
+typedef struct tree_pd_s tree_pd;
+
+struct tree_pd_s {
+  Pflags_t pstate;
+  Puint32 nerr;
+  PerrCode_t errCode;
+  Ploc_t loc;
+  struct _tree_pd_s *val;
+};
 \end{code}
 
 \subsection{Operations}

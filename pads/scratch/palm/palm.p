@@ -113,26 +113,3 @@ Psource Pstruct PalmDB{
   records_t(:rec_pointers.count,rec_pointers.pointers.elts:) records;
 };
 
-
-/* Pstruct record(:int i, Pbl_offset end, int attrs, int uid:){ */
-/*   Pcompute Pint32 index = i; */
-/*   /\* XXX: Temporary fix. Use computed value to break dependency of */
-/*      contents on parse-dependent value end.*\/ */
-/*   Pcompute Pint32 c_end = end; */
-/*   string_until(:c_end:) contents; */
-/*   Pcompute Pint32 attributes = attrs  & 0xF0; */
-/*   Pcompute Pint32 category = attrs & 0xF; */
-/*   Pcompute Pint32 unique_id = uid; */
-/* }; */
-
-/* Pbl_offset getEndOffset(int i, int n, pointer* ptrs){ */
-/*   return i < n - 1 ? ptrs[i+1].rec_pos : Pbl_eof_offset; */
-/* } */
-
-/* Parray records_t(:int nrec, pointer* ptrs:){ */
-/*   record(:current,  */
-/* 	 getEndOffset(current,nrec,ptrs), */
-/* 	 ptrs[current].rec_attrs, */
-/* 	 ptrs[current].rec_uid:) [nrec]; */
-/* }; */
-

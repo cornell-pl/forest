@@ -62,4 +62,6 @@ is
         extensions/pads/parse-tree-ext.sml        
         extensions/pads/parse-tree-subst-sig.sml
         extensions/pads/parse-tree-subst.sml        
+        extensions/pads/names.sml
 	grammar/c.grm
+

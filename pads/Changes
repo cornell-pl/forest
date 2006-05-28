@@ -1,3 +1,16 @@
+May 28, 2006 - Yitzhak (Recursive types)
+
+  o Modified the syntax of recursive types so that both declaration 
+    and defintion are both qualified with "Precur".
+  o Modified corressponding usecases and examples.
+  o Removed the "desugaring" phase from the compiler.
+  o Removed PDynamic from parse tree.  Unified it with Precur. 
+    There is now only Precur, and it has multiple different forms.
+  o Updated chapter in manual, but is still in progress.
+  o Pretty prints XSchema correctly for recursive types.
+  o Added regression tests for newick format.
+  o Added proper _verify function.
+
 
 May 22, 2006 - Mary (PADX)
 
@@ -83,6 +96,11 @@ March 13, 2006 - Mary
     ai.accum.xml: fragment of accumulator output in XML dialect
 
     GNUmakefile:  validates example files against schemata. 
+
+March 4, 2006 - Yitzhak 
+  o Added minor fix to rules.mk to add -D__ppc__ to padsc params when
+    called in OS X. I don't know why this was necessary, but it fixes
+    some problems with parsing system header files in OS X Panther.
 
 March 2, 2006 - Bob
   o Fixed some bugs in the low-level numeric parsing routines.

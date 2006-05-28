@@ -230,6 +230,20 @@ interface Scan{
 /* 			    int *f_found_out, size_t *offset_out); */
 }
 
+
+/* ================================================================================
+ * MATCH FUNCTIONS
+ *
+ */
+
+interface Match{
+  Perror_t Pchar_lit_match   ([in,ptr] P_t *pads, [in] Pchar f, [in] int eat_f);
+  /* Perror_t Pstr_lit_match    (P_t *pads, const Pstring *f, int eat_f); */
+  Perror_t Pcstr_lit_match   ([in,ptr] P_t *pads, [in,string] const char *f,    int eat_f);
+  /* Perror_t Pre_match         (P_t *pads, Pregexp_t *f,     int eat_f); */
+  /* Perror_t Pcstr_re_match    (P_t *pads, const char *f,    int eat_f); */
+}
+
 /* ================================================================================
  * IO CHECKPOINT API
  *

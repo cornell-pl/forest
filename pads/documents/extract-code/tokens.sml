@@ -125,13 +125,13 @@ structure Tokens : sig
 	  case List.find (fn (x, _) => (x = cmdName)) cmdList
 	   of (SOME(_, CMD cmd)) => cmd
 	    | (SOME(_, CMD_FILES cmd)) => let
-		val ss = (SS.all rest)
+		val ss = (SS.full rest)
 		fun cvt f = Atom.atom(SS.string f)
 		in
 		  cmd (List.map cvt (SS.tokens (Char.contains " \t\n,") ss))
 		end
 	    | (SOME(_, CMD_ATTRS_FILES cmd)) => let
-		val ss = (SS.all rest)
+		val ss = (SS.full rest)
 		fun cvt f = Atom.atom(SS.string f)
 		fun split ([], attrs) = (List.rev attrs, [])
 		  | split (tok::r, attrs) = (

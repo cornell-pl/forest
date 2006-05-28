@@ -368,6 +368,11 @@ ifeq ($(OPSYS),linux)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 endif
 
+# Fix for compilation on OS X Panther
+ifeq ($(ARCH_N_OPSYS),ppc-darwin)
+PADSC_EXTRA += -D__ppc__
+endif
+
 # iffy generated mam_cc_SHARED=-G is incorrect
 ifeq ($(ARCH_N_OPSYS),ppc-darwin)
 # XXX why doesn't mamake figure this out ???

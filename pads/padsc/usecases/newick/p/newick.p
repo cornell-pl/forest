@@ -10,7 +10,7 @@ Punion inode {
   Popt entry tip;
 };
 
-Pstruct tree{
+Precur Pstruct tree{
   '(';
   inode[] branches: Psep(',') && Pterm(')');
   ')';

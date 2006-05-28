@@ -107,7 +107,7 @@ functor OutputFn (Dev : OUTPUT_DEVICE) : OUTPUT =
     fun isBlank [] = true
       | isBlank l = let
 	  fun isB {space, kind, text} =
-		SS.isEmpty(SS.dropl Char.isSpace (SS.all text))
+		SS.isEmpty(SS.dropl Char.isSpace (SS.full text))
 	  in
 	    List.all isB l
 	  end

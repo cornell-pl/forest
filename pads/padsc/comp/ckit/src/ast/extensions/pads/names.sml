@@ -79,7 +79,7 @@ struct
   val acc       = "acc"
   val sfstderr  = "sfstderr"
 
-  fun recPre s = "_" ^ s (* Assign a prefix to the type underlying a recursive type *)
+  val recPre = CommonNames.recPre
 
   fun repSuf  s = s (* Make rep type same as pads name *)
   fun padsxSuf  s = s (* Make pads/x type same as pads name. will only differ at base types (potentially). *)
