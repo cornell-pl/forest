@@ -2,15 +2,17 @@
 /*@BEGIN binarytree.tex */
 Precur tree;
 
-Pstruct treeInterior {
+Pstruct fullTree{
+  '(';
   tree left;
   ',';
   tree right;
-};
-
-Pstruct tree{
-  '(';
-  Popt treeInterior;
   ')';
 };
+
+Precur Punion tree{
+  Pint32     value;
+  fullTree   nested;  
+};
+
 /*@END binarytree.tex */
