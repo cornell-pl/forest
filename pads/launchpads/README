@@ -1,0 +1,5 @@
+Installation:
+
+1. Copy Makefile.<os> to Makefile
+
+2. Run 'make'
