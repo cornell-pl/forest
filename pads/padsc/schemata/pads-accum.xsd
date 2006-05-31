@@ -4,23 +4,10 @@ April 6, 2006:
 
 March 2006: 
 
-     Union tag field is an int-accumulator (its physical type),
-     but should be its abstract type.
-
-       - Mary should fix this to be a string.
-
-     Same issue for enums.
-
-       - Mary should fix this to be a string.
-
      Should absence of accumulator info mean that no values were seen?
 
        - Maybe print everything. 
 
-     nerr field accumulator is missing in generated PADS types for
-     union and struct accumulators
-
-       - Kathleen will fix this. 
 -->
 <xs:schema targetNamespace="http://www.padsproj.org/pads-accum.xsd"
 	   xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -38,7 +25,7 @@ March 2006:
 
   <xs:element name="name" type="xs:string"/>
 
-  <!-- Common to to all accumulators: -->
+<!-- Common to to all accumulators: -->
   <xs:element name="good"      type="p:Puint64"/>  
   <xs:element name="bad"       type="p:Puint64"/>  
   <xs:element name="avg"       type="p:Pfloat64"/> 
@@ -47,11 +34,11 @@ March 2006:
   <xs:element name="distinct"  type="p:Puint32"/>
   <xs:element name="nerr"      type="p:Puint32"/>
 
-  <!-- Base type accumulators 
+<!-- Base type accumulators 
 
-     We want base types to have their own notion of accum types.
-     We actually accumulate using the Internal rep, but when we report, we want to use the Abstract type. 
-  -->   
+   We want base types to have their own notion of accum types.
+   We actually accumulate using the Internal rep, but when we report, we want to use the Abstract type. 
+-->   
 
   <xs:element name="none">
    <xs:complexType>
@@ -399,6 +386,10 @@ March 2006:
     <xs:sequence>
     <xs:element ref="a:good"/>
     <xs:element ref="a:bad"/>
+    <!-- These should probably be Pchar values, but printing 
+         needs to be fixed -->
+    <xs:element name="min"       type="p:Pstring"/> 
+    <xs:element name="max"       type="p:Pstring"/> 
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
@@ -540,7 +531,7 @@ March 2006:
   </xs:complexType>
   <xs:element name="Pip" type="a:Pip_acc"/>
 
-  <xs:group name="type-group">
+  <xs:group name="type_group">
     <xs:choice>
       <!-- Accumulators for the abstract base types -->
       <xs:element ref="a:Pchar"/> 
@@ -570,11 +561,11 @@ March 2006:
 
   <xs:complexType name="type">
     <xs:sequence>
-      <xs:group ref="a:type-group"/>
+      <xs:group ref="a:type_group"/>
     </xs:sequence>
   </xs:complexType>
 
-  <!-- Array accumulator -->
+<!-- Array accumulator -->
   <xs:element name="array">
    <xs:complexType>
     <xs:sequence>
@@ -593,7 +584,7 @@ March 2006:
         <xs:complexType>
          <xs:sequence>
           <xs:element name="index" type="p:Puint32"/>
-          <xs:group ref="a:type-group"/>
+          <xs:group ref="a:type_group"/>
          </xs:sequence>
         </xs:complexType>
       </xs:element>
@@ -601,31 +592,38 @@ March 2006:
    </xs:complexType>
   </xs:element>
 
-  <!-- Enum accumulator -->
-  <!-- Internally, enums are unsigned ints, but externally, 
-       they should be represented by strings.
-  -->
-  <xs:element name="enum" type="a:Pstring_acc"/>
-
-  <!-- Typedef accumulator
-       Error counts are tailored to typedefs. 
-  -->
-  <xs:element name="typedef">
+<!-- Enum accumulator -->
+<!-- Internally, enums are unsigned ints, but externally, 
+     they should be represented by strings.
+-->
+  <xs:element name="enum">
    <xs:complexType>
     <xs:sequence>
-      <xs:element ref="a:name"/>
-      <xs:element name="type_acc" type="a:type"/>
+     <xs:element ref="a:name"/>
+     <xs:group   ref="a:tag_acc_group"/>
     </xs:sequence>
    </xs:complexType>
   </xs:element>
 
-  <!-- Union or struct field accumulator -->
+<!-- Typedef accumulator
+     Error counts are tailored to typedefs. 
+-->
+  <xs:element name="typedef">
+   <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="a:name"/>
+      <xs:group ref="a:type_group"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+
+<!-- Union or struct field accumulator -->
   <xs:element name="field">
    <xs:complexType>
     <xs:sequence>
     <xs:element ref="a:name"/>
-    <!-- type_acc absent ==> no values of field -->
-    <xs:element name="type_acc" type="a:type" minOccurs="0" maxOccurs="1"/>
+    <!-- type absent ==> no values of field -->
+    <xs:group ref="a:type_group" minOccurs="0" maxOccurs="1"/>
     </xs:sequence>
    </xs:complexType>
   </xs:element>
@@ -641,8 +639,47 @@ March 2006:
    </xs:complexType>
   </xs:element>
   
-  <!-- Union accumulator -->
- <xs:element name="tag"  type="a:Pint32_acc"/>
+<!-- Union accumulator 
+
+  In the accumulator output, the abstract string rep of a tag is
+  emitted. The internal rep of a tag is a Puint8.
+
+-->
+  <xs:group name="tag_acc_group">
+   <xs:choice>
+    <xs:element ref="a:none"/>
+    <xs:sequence>
+    <xs:element ref="a:good"/>
+    <xs:element ref="a:bad"/>
+    <xs:element name="min"       type="p:Pstring"/> 
+    <xs:element name="max"       type="p:Pstring"/> 
+    <xs:element name="distribution" minOccurs="0">
+     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="a:top"/>
+        <xs:element ref="a:distinct"/>
+        <xs:element name="item" maxOccurs="unbounded">
+         <xs:complexType>
+          <xs:sequence>
+           <xs:element name="val" type="p:Pstring"/>
+           <xs:element ref="a:count"/>
+          </xs:sequence>
+         </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+     </xs:complexType>
+    </xs:element> 
+    </xs:sequence>
+   </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="tag_acc">
+    <xs:sequence>
+      <xs:group ref="a:tag_acc_group"/>
+    </xs:sequence>
+  </xs:complexType>
+
+ <xs:element name="tag"  type="a:tag_acc"/>
   <xs:element name="union">
    <xs:complexType>
     <xs:sequence>

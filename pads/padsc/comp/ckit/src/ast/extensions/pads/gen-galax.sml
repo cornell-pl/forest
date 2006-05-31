@@ -382,7 +382,7 @@ structure GenGalax = struct
   (****  Enum macros ****)
   fun macroEnumKC(ty) = 
       PT.Expr(PT.Call(PL.ENUM_NODE_KTH_CHILD_BODY,
-		      [PT.Id ty]))
+		      [PT.Id ty, PT.Id(PN.toStringSuf (ty))]))
 
   fun macroEnumKCRet() = PT.Call(PL.ENUM_NODE_KTH_CHILD_RET,nil)
 
@@ -392,7 +392,7 @@ structure GenGalax = struct
   fun macroEnumKCNRet() =
 		    PT.Call(PL.ENUM_NODE_KTH_CHILD_NAMED_RET,nil)
   fun macroEnumSNDKCBody(ty) =
-      PT.Expr(PT.Call(PL.ENUM_SND_NODE_KTH_CHILD_BODY,[PT.Id ty]))
+      PT.Expr(PT.Call(PL.ENUM_SND_NODE_KTH_CHILD_BODY,[PT.Id ty, PT.Id(PN.toStringSuf(ty))]))
 
   fun macroEnumSNDKCRet() = 
       PT.Call(PL.ENUM_SND_NODE_KTH_CHILD_RET,nil)

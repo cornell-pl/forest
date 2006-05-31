@@ -12,6 +12,8 @@
   <xs:element name="var" type="xs:string"/>
   <xs:element name="id" type="xs:string"/>
 
+  <xs:element name="comment" type="xs:string"/>
+
   <!-- Host language -->
   <xs:attribute name="language" type="xs:string"/>
 
@@ -20,15 +22,15 @@
     <xs:attribute ref="p:language" use="optional"/>
   </xs:complexType>
 
-  <xs:element name="re" type="p:Expr"/>
+  <xs:element name="regexp" type="p:Expr"/>
   <xs:element name="string" type="xs:string"/>
   <xs:element name="char" type="xs:string"/>   <!-- This is really a character -->
 
   <xs:complexType name="LiteralExpr">
     <xs:choice>
-      <xs:element ref="p:re"/>
-      <xs:element ref="p:string"/>
       <xs:element ref="p:char"/>
+      <xs:element ref="p:string"/>
+      <xs:element ref="p:regexp"/>
       <xs:element ref="p:id"/>
     </xs:choice>
   </xs:complexType>
@@ -58,6 +60,7 @@
   </xs:complexType>            <!-- pConstraintsWComma -->
   };
   <xs:element name="constraints" type="p:Constraints"/>
+  <xs:element name="postConstraints" type="p:Constraints"/>
 
   <!-- Function declaration in host language -->
   <xs:element name="function"> 
@@ -70,7 +73,7 @@
   </xs:element>
 
   <!-- Formal type parameter -->
-  <xs:element name="parameter">          <!-- pTyParamDeclaration, parameterDeclaration -->
+  <xs:element name="param">          <!-- pTyParamDeclaration, parameterDeclaration -->
     <xs:complexType>
       <xs:sequence>
         <xs:element ref="p:var"/>         <!-- Parameter name -->
@@ -107,7 +110,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element ref="p:name"/>
-        <xs:element ref="p:parameter" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="p:param" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -142,13 +145,10 @@
 
   <xs:element name="arrayConstraints">     <!-- pArrayPCorForList -->
     <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="p:size" minOccurs="0" maxOccurs="1"/>"
-        <xs:choice  minOccurs="0" maxOccurs="unbounded">
-          <xs:element ref="p:forAll"/>
-          <xs:element ref="p:parsecheck"/>
-        </xs:choice>
-      </xs:sequence>
+      <xs:choice  minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="p:forAll"/>
+        <xs:element ref="p:parsecheck"/>
+      </xs:choice>
     </xs:complexType>
   </xs:element>
 
@@ -180,7 +180,7 @@
     </xs:complexType>
   </xs:element>
 
-  <xs:element name="size">           <!-- pSizeSpec -->
+  <xs:element name="sizeConstraints">      <!-- pSizeSpec -->
     <xs:complexType>
       <xs:sequence>
         <xs:element ref="p:min" minOccurs="0" maxOccurs="1"/>
@@ -195,8 +195,9 @@
         <xs:group ref="p:modifiers"/>
         <xs:element ref="p:decl"/>
         <xs:element ref="p:ptype"/>
-        <xs:element ref="p:delimiterConstraints" minOccurs="0" maxOccurs="1"/>,   <!-- pArrayConstraintOpt -->
-        <xs:element ref="p:arrayConstraints" minOccurs="0" maxOccurs="1"/>        <!-- pArrayPostConds -->
+        <xs:element ref="p:delimiterConstraints" minOccurs="0" maxOccurs="1"/>   <!-- pArrayConstraintOpt -->
+        <xs:element ref="p:sizeConstraints" minOccurs="0"  maxOccurs="1"/>       <!-- pArrayPostConds -->
+        <xs:element ref="p:arrayConstraints" minOccurs="0" maxOccurs="1"/>       <!-- pArrayPostConds -->
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -237,6 +238,16 @@
   <xs:element name="endian" nillable="true" type="xs:string"/>   <!-- pStructQualifier -->
   <xs:element name="compute" type="p:Expr"/> <!-- pManifestField -->
 
+  <xs:element name="definition" type="p:Expr"/>
+  <xs:element name="computed"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:definition"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
   <xs:group name="structModifiers">
     <xs:all>
 <!--       <xs:element ref="p:omit" minOccurs="0" maxOccurs="1"/> -->
@@ -250,11 +261,11 @@
     <xs:complexType>
       <xs:sequence>
         <xs:group ref="p:structModifiers"/>
-        <xs:element ref="p:ptype"/>
         <xs:element ref="p:name"/>
+        <xs:element ref="p:ptype"/>
         <xs:element ref="p:from" minOccurs="0" maxOccurs="1"/>"
-        <xs:element ref="p:arrayConstraints" minOccurs="0" maxOccurs="1"/>
-        <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:comment" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:postConstraints" minOccurs="0" maxOccurs="1"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -268,6 +279,7 @@
         <xs:choice maxOccurs="unbounded">
           <xs:element ref="p:field"/>                  <!-- pStructFieldList -->
           <xs:element ref="p:literal"/>
+          <xs:element ref="p:computed"/>
         </xs:choice>
         <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>   <!-- pPostCondOpt -->
       </xs:sequence>
@@ -343,7 +355,7 @@
           <xs:element ref="p:field"/>          <!-- pStructFieldList -->
           <xs:element ref="p:literal"/>
         </xs:choice>
-       <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>      <!-- pPostCondOpt -->
+       <xs:element ref="p:postConstraints" minOccurs="0" maxOccurs="1"/>      <!-- pPostCondOpt -->
      </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -381,13 +393,31 @@
     </xs:complexType>
   </xs:element>
 
-  <xs:element name="switch">    <!-- pVariants -->
+  <xs:element name="branch">
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="p:expr"/>
         <xs:element ref="p:case" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element ref="p:default"/>  
       </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="switched">    <!-- pVariants -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:expr"/>
+        <xs:element ref="p:branch" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="inplace">    <!-- pVariants -->
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element ref="p:field"/>            <!-- pStructFieldList -->
+        <xs:element ref="p:literal"/>
+        <xs:element ref="p:computed"/>
+      </xs:choice>
     </xs:complexType>
   </xs:element>
   
@@ -397,11 +427,8 @@
         <xs:group ref="p:modifiers"/>
         <xs:element ref="p:decl"/>
         <xs:choice>
-          <xs:element ref="p:switch"/>         <!-- pVariants ::= Pswitch | pStructFieldList -->
-          <xs:choice maxOccurs="unbounded">
-            <xs:element ref="p:field"/>            <!-- pStructFieldList -->
-            <xs:element ref="p:literal"/>
-          </xs:choice>
+          <xs:element ref="p:switched"/>         <!-- pVariants ::= Pswitch | pStructFieldList -->
+          <xs:element ref="p:inplace"/> 
         </xs:choice>
         <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>       <!-- pPostCondOpt -->
       </xs:sequence>

@@ -184,12 +184,12 @@ Perror_t UNION_NODE_PATH_WALK_RET();
 int  UNION_NODE_PW_CASE(int branchTagIN, type_t branchTy);
 int  UNION_NODE_PW_CASE_LITERAL(type_t ty, int branchTagIN);
 
-void ENUM_NODE_KTH_CHILD_BODY(type_t ty);
+void ENUM_NODE_KTH_CHILD_BODY(type_t ty, const char *(rep2str_fn)(int));
 PDCI_node_t *ENUM_NODE_KTH_CHILD_RET();
 
 void ENUM_NODE_KTH_CHILD_NAMED_BODY();
 PDCI_node_t *ENUM_NODE_KTH_CHILD_NAMED_RET();
-void ENUM_SND_NODE_KTH_CHILD_BODY(type_t ty);
+void ENUM_SND_NODE_KTH_CHILD_BODY(type_t ty, const char *(rep2str_fn)(int));
 PDCI_node_t *ENUM_SND_NODE_KTH_CHILD_RET();
 void ENUM_NODE_PATH_WALK_BODY(type_t ty);
 Perror_t ENUM_NODE_PATH_WALK_RET();

@@ -720,7 +720,9 @@ regress_accum_%: accum_%
 	(accum_$* >$*_accum.xml; \
 	 $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(PADS_HOME)/padsc/schemata/pads-accum.xsd $*_accum.xml; \
 	 if [ -s $*_bad.xml ]; then $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(GEN_DIR)/$*.xsd $*_bad.xml; fi ;\
-	 if [ -s $*_good.xml ]; then $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(GEN_DIR)/$*.xsd $*_good.xml; fi )
+	 if [ -s $*_good.xml ]; then $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(GEN_DIR)/$*.xsd $*_good.xml; fi ; \
+	 $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(PADS_HOME)/padsc/schemata/pads-xml.xsd $(GEN_DIR)/$*.pxml; \
+	)
 
 ifdef GALAX_NONE
 test_children: var_error

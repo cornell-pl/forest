@@ -1,7 +1,16 @@
 (*
-  This module implements the rules to generate an XML representation
-  of the PADS description itself.  The schema for this representation
-  is available in pads/padsc/schemata/pads-xml.xsd.
+
+  This module implements the rules to generate the XML representation
+  of a PADS description, i.e., desc.p => desc.pxml.  The schema for
+  this representation is in pads/padsc/schemata/pads-xml.xsd.
+
+  Questions: 
+
+  1. How do you access the optional variable and constraints of a Ptypedef?
+  2. Type arguments that are character literals are emitted as HEX bytes instead of as characters. 
+  3. How do you access fields/values of a Penum?
+  4. Still missing native functions -- need help with these. 
+
 *)
 functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_DESC_XML_AST = struct 
 
@@ -41,49 +50,6 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   val ppRParen = PPL.ppGuarded ")"
 
   fun getCtype ({stClass,ctype,...}: Ast.id) = (stClass,ctype)
-
-  fun strip suf s = String.extract(s, 0, SOME (String.size s - String.size suf))
-      
-  fun isSuffix suf s = 
-      if String.size suf >= String.size s then false
-      else let val schars = String.explode s
-	       val endStr = String.implode (
-					    List.drop (schars, String.size s - String.size suf))
-	   in
-	       endStr = suf
-	   end
-
-  fun stripAll s = if isSuffix "_pd" s 
-		       then strip "_pd" s
-		   else if isSuffix "_tag" s
-			    then strip "_tag" s
-			else if isSuffix "_pd_u" s
-				 then strip "_pd_u" s
-			     else if isSuffix "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
-				      then strip "\" minOccurs=\"0\" maxOccurs=\"unbounded" s
-				  else s 
-
-  (* An XML Schema type attribute *)
-  fun isBaseTypeName s = 
-      not(Option.isSome (PTys.find (Atom.atom (stripAll s))))
-(* PBaseTys.isBaseTy(PBaseTys.baseInfo, ParseTreeExt.Name (stripAll s))  *)
-
-  fun typeAttribute s = (" type=\"" ^ s ^ "\"")
-
-  fun mapBaseTypeName name = 
-      if isBaseTypeName (name) then ("p:"^name) else name
-  
-  fun mapFieldTypeName name = 
-      if isBaseTypeName (name) then ("p:val_"^name) else name
-
-  fun makeFieldNames flds = 
-      List.map (fn (t,n) => (mapFieldTypeName, t, n)) flds 
-
-  fun makeBaseNames flds = 
-      List.map (fn (t,n) => (mapBaseTypeName, t, n)) flds 
-
-  fun mapPdName s = 
-      if isBaseTypeName s then ("p:Pbase_pd") else s^"_pd"
 
   fun isPostFix PostInc = true
     | isPostFix PostDec = true
@@ -669,29 +635,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		        , rDelim="}"
 		        } pps initExprs
 
-  (** PADS to XML XSchema translation **)
-
-  (* ppXMLHeader prints the header for a Schema declaration: 
-     opentag [ name="Name" ]  [ type="typeOpt" ] closetag 
-  
-     If the name of the element is "pd", it is always optional. 
-     This is a hack!!!!
-  *)
-  fun ppXMLHeader opentag closetag pps (mapTypeName, tyNameOpt, name) =	
-      ( PPL.addStr pps opentag
-      ; 
-       let val (NameAttr,isPdField) = (("name=\"" ^ name ^ "\""), name = "pd")
-           val tyNameAttr = 
-	       (case tyNameOpt of 
-		   NONE => "" | 
-		   SOME name => typeAttribute (mapTypeName name))
-	   val optStr = 
-	       if isPdField then " minOccurs=\"0\" maxOccurs=\"1\"" else ""
-       in
-	   PPL.addStr pps (NameAttr ^ tyNameAttr ^ optStr)
-       end
-       ; PPL.addStr pps closetag)
-
+  (** PADS to PXML translation **)
 
   fun complexTypeOpen pps NameOpt =	
       ( PPL.addStr pps "<xs:complexType "
@@ -739,31 +683,6 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   fun id s = s
 
   (*
-      <complexType name=[[identifier]]> 
-        <sequence>
-          [[ fields ]]_local 
-        <sequence>
-      </complexType>
-  *)
-  fun ppXMLComplex pps (eNameOpt,eFields) =	
-        ( complexTypeOpen pps eNameOpt
-        ; ppXMLSequence pps (List.filter (not o isIdentity) eFields) 
-        ; complexTypeClose pps)
-
-  (*
-      <complexType name=[[identifier]]> 
-        <choice>
-          [[ fields ]]_local 
-        <choice>
-      </complexType>
-  *)
-  fun ppXMLChoice pps Fields =		
-      ( PPL.addStr pps "<xs:choice>\n"
-      ; ppXMLFields pps Fields
-      ; newline pps
-      ; PPL.addStr pps "</xs:choice>\n")
-
-  (*
       The Psource modifier may be used as an annotation on any Pads type,
       indicating that the type in question describes the entirety of the
       external representation of the data.  In the XML representation of a
@@ -789,12 +708,6 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       ;ppArg pps arg
       ;PPL.addStr pps ("</"^tag^">"))
 
-  fun ppTopElemIfPsource pps (ptyInfo:PTys.pTyInfo,repNameOpt) =
-	if (#isSource ptyInfo) 
-	then ( ppXMLHeader "<xs:element " "/>" pps (mapFieldTypeName, repNameOpt, "PSource")
-	     ; newline pps)
-	else ()
-
   fun ppExp pps exp = PPL.addStr pps (ParseTreeUtil.expToString exp)
   fun ppCExpr pps exp = ppTag "expr"  (ppTag "native" ppExp) pps exp
   fun ppPExpr pps exp = 
@@ -818,6 +731,10 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       case cons of [] => ()
       | _=>  (PPL.newline pps; ppTagIndent "postConstraints" ppConstraints pps cons)
 
+(*
+  Actual type parameter 
+  <xs:element name="argument" type="p:Expr"/>
+*)
   fun ppTyApp pps (name,args) = 
        let fun ppArg pps a = ppTag "argument" ppPExpr pps a
        in
@@ -825,7 +742,17 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	  ;(case args of nil => ()
 	    | _ => PPL.blockify 2 (PPL.separate (ppArg, PPL.newline)) pps args))
        end
-
+(*
+  Type expression :
+  <xs:element name="ptype"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:argument" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+*)
   fun ppTy pps ty = 
         ( PPL.addStr pps "<ptype>" 
 	; blockify 2 ppTyApp pps ty
@@ -850,6 +777,16 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       of ParseTree.String s => PPL.addStr pps s
       | _ => ppCExpr pps exp
 
+(*
+  <xs:complexType name="LiteralExpr">
+    <xs:choice>
+      <xs:element ref="p:char"/>
+      <xs:element ref="p:string"/>
+      <xs:element ref="p:regexp"/>
+      <xs:element ref="p:id"/>
+    </xs:choice>
+  </xs:complexType>
+*)
   fun ppLit pps lit = 
       case lit
       of TyProps.DChar exp =>   ppTag "char" ppPChar pps exp
@@ -857,6 +794,9 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       |  TyProps.DRegExp exp => ppTag "regexp" ppPString pps exp
       |  TyProps.DNoSep =>      PPL.addStr pps "<nosep/>"
 
+(*
+  <xs:element name="comment" type="xs:string"/>
+*)
   fun ppComment pps comment =
       case comment of NONE => ()
       | SOME s => (newline pps; ppTag "comment" PPL.addStr pps s)
@@ -876,6 +816,16 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
         ; PPL.addStr pps "</nestedOption>")
       end
 
+  (* 
+    <xs:element name="sizeConstraints">      <!-- pSizeSpec -->
+      <xs:complexType>
+        <xs:sequence>
+          <xs:element ref="p:min" minOccurs="0" maxOccurs="1"/>
+          <xs:element ref="p:max" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:element>
+  *)    
   fun ppSize which pps size = ppTag which ppPExpr pps size
   fun ppSizeConstraints pps size = 
       case size 
@@ -888,16 +838,39 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	     ; PPL.newline pps
 	     ; PPL.addStr pps "</sizeConstraints>"
 	     )
+  (*
+   Type modifiers
+
+   <xs:element name="source" nillable="true" type="xs:string"/>  <!-- pIsSource -->
+   <xs:element name="record" nillable="true" type="xs:string"/>  <!-- pIsRecord -->
+  *)
+
+  fun ppPModifiers pps (ptyInfo : PTys.pTyInfo)=
+      (if (#isSource ptyInfo) then (PPL.addStr pps ("<source/>"); PPL.newline pps)
+      else ();
+      if (#isRecord ptyInfo) then (PPL.addStr pps ("<record/>"); PPL.newline pps)
+      else ())
+  (* 
+    <xs:element name="nosep" nillable="true" type="xs:string"/>
+    <xs:element name="sep"   type="p:LiteralExpr"/> 
+    <xs:element name="term"  type="p:TermExpr"   />                 
+    <xs:element name="last"  type="p:Constraints"/>
+    <xs:element name="ended" type="p:Constraints"/>
+    <xs:element name="omit"  type="p:Constraints"/>
+
+    <xs:element name="longest" nillable="true" type="xs:string"/> <!-- pIsLongestMatch -->
+  *)  
+
   fun ppTerm' pps term = 
       case term of PX.Expr e => ppCExpr pps e
     | PX.noSep => PPL.addStr pps "<nosep/>"
 
-  fun ppPred pps (PX.Last  e) = ppTagIndent "last"   ppConstraints pps e
+  fun ppPred pps (PX.Sep e)   = ppTagIndent "sep"   ppCExpr pps e  (* fix these *)
+    | ppPred pps (PX.Term e)  = ppTagIndent "term"  ppTerm' pps e
+    | ppPred pps (PX.Last  e) = ppTagIndent "last"   ppConstraints pps e
     | ppPred pps (PX.Ended e) = ppTagIndent "ended"  ppConstraints pps e
     | ppPred pps (PX.Skip  e) = ppTagIndent "omit"   ppConstraints pps e
-    | ppPred pps (PX.Longest) = PPL.addStr pps "</longest>"
-    | ppPred pps (PX.Sep e)   = ppTagIndent "sep"   ppCExpr pps e  (* fix these *)
-    | ppPred pps (PX.Term e)  = ppTagIndent "term"  ppTerm' pps e
+    | ppPred pps (PX.Longest) = PPL.addStr pps "<longest/>"
 
   fun ppPredList pps preds = 
       case preds of [] => () | _ => PPL.blockify 2 (PPL.separate (ppPred, PPL.newline)) pps preds
@@ -905,7 +878,8 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   fun ppNestedArray pps (name,args,size,arrayPred) = 
       let fun ppSizeOpt pps size = 
 	      case size of NONE => ()
-              | SOME (PX.SizeInfo{min,max,maxTight}) => ppSizeConstraints pps {min=min,max=max,maxConst=NONE, minConst=NONE} (* fix this*)
+	    (* fix this *)
+              | SOME (PX.SizeInfo{min,max,maxTight}) => ppSizeConstraints pps {min=min,max=max,maxConst=NONE, minConst=NONE} 
 	  fun ppDelims pps arrayPred = 
 	      case arrayPred of [] => ()
               | _ => ( PPL.addStr pps "<delimiterConstraints>"
@@ -943,6 +917,17 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
           )
       end
 
+(*
+  <xs:element name="definition" type="p:Expr"/>
+  <xs:element name="computed"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:definition"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+*)
   fun ppComputeField aidinfo tidtab pps {ty, name, def, pred, comment} =
 	  ( ppTag "name" PPL.addStr pps name
 	  ; PPL.newline pps
@@ -955,26 +940,32 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 
   fun ppPField aidinfo tidtab pps (field:TyProps.fieldInfoTy) = 
       case field
-      of TyProps.Full r => ppTagIndent "full" ppFullField pps r
+      of TyProps.Full r => ppTagIndent "field" ppFullField pps r
       |  TyProps.Literal l => ppTag "literal" ppLit pps l
       |  TyProps.Compute c => ppTagIndent "computed" (ppComputeField aidinfo tidtab) pps c
 
   fun ppPFields aidinfo tidtab pps eFields =		
-      ( PPL.addStr pps "<fields>"
-      ; blockify 2 (separate (ppPField aidinfo tidtab, newline)) pps eFields
-      ; PPL.newline pps
-      ; PPL.addStr pps "</fields>"
+      ( 
+       (* PPL.addStr pps "<fields>"; *)
+       (separate (ppPField aidinfo tidtab, newline)) pps eFields
+       (* ; PPL.newline pps
+	; PPL.addStr pps "</fields>" *)
       )
 
   fun ppPTyParam aidinfo tidtab pps (name,acty) = 
-      (  ppTag "name" PPL.addStr pps name
-       ; ppTag "type" (ppCtype aidinfo tidtab) pps acty)
+      (
+       PPL.addStr pps "<param>"
+       ; ppTag "name" PPL.addStr pps name
+       ; ppTag "type" (ppCtype aidinfo tidtab) pps acty
+       ; PPL.addStr pps "</param>"
+       )
 
   fun ppPTyParams aidinfo tidtab pps typarams = 
-      ( PPL.addStr pps "<params>"
-       ; blockify 2 (separate (ppPTyParam aidinfo tidtab, newline)) pps typarams
+      ( 
+       (* PPL.addStr pps "<params>"; *)
+       blockify 2 (separate (ppPTyParam aidinfo tidtab, newline)) pps typarams
        ; newline pps
-       ; PPL.addStr pps "</params>"
+       (* ; PPL.addStr pps "</params>" *)
        )
         
   fun ppPDecl aidinfo tidtab pps (name, typarams) = 
@@ -992,6 +983,23 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
     	; newline pps
         )
 
+
+(*
+  PStruct Declaration
+  <xs:element name="struct"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element ref="p:field"/>          <!-- pStructFieldList -->
+          <xs:element ref="p:literal"/>
+        </xs:choice>
+       <xs:element ref="p:postConstraints" minOccurs="0" maxOccurs="1"/>      <!-- pPostCondOpt -->
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+*)  
   fun ppPStruct (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  = 
       let fun ppPStruct' pps (ptyInfo:PTys.pTyInfo) = 
 	      let val declName = #repName ptyInfo
@@ -1043,7 +1051,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	  fun ppPBranch aidinfo tidtab pps cf = ppTagIndent "branch" (ppBranchBody aidinfo tidtab) pps cf
 	  fun ppBranches aidinfo tidtab pps cfs =  separate (ppPBranch aidinfo tidtab, newline) pps cfs
           fun ppPSwitched aidinfo tidtab pps (desc, cases, fields) = 
-	      ( ppTag "descriminator" ppPExpr pps desc
+	      ( ppTag "expr" ppPExpr pps desc
               ; PPL.newline pps
 	      ; ppTagIndent "branches" (ppBranches aidinfo tidtab) pps (ListPair.zip(cases, fields))
 	      ) 
@@ -1066,12 +1074,38 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
     end
     | ppPUnion ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
+  (*
 
-
-
+    <xs:element name="array">           <!-- pArray -->
+      <xs:complexType>
+        <xs:sequence>
+          <xs:group ref="p:modifiers"/>
+          <xs:element ref="p:decl"/>
+          <xs:element ref="p:ptype"/>
+          <xs:element ref="p:delimiterConstraints" minOccurs="0" maxOccurs="1"/>
+          <xs:element ref="p:sizeConstraints" minOccurs="0"  maxOccurs="1"/>     
+          <xs:element ref="p:arrayConstraints" minOccurs="0" maxOccurs="1"/>    
+        </xs:sequence>
+      </xs:complexType>
+    </xs:element>
+  *)
   fun ppPArray (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  = 
       let fun ppSep pps sep   = ppTag "sep"   ppLit pps sep
 	  fun ppTerm pps term = ppTag "term"  ppLit pps term
+          (*
+              <xs:element name="delimiterConstraints">               <!-- pArrayContraint -->
+                <xs:complexType>
+                  <xs:all>
+                    <xs:element ref="p:sep"   minOccurs="0" maxOccurs="1"/> 
+                    <xs:element ref="p:term"  minOccurs="0" maxOccurs="1"/>                 
+                    <xs:element ref="p:last"  minOccurs="0" maxOccurs="1"/>
+                    <xs:element ref="p:ended" minOccurs="0" maxOccurs="1"/>
+                    <xs:element ref="p:omit"  minOccurs="0" maxOccurs="1"/>
+                    <xs:element ref="p:longest" minOccurs="0" maxOccurs="1"/>
+                  </xs:all>
+                </xs:complexType>
+              </xs:element>
+          *)
 	  fun ppArrayDelims pps delims = 
 	      case delims
 	      of {sep=NONE,term=NONE,preds=[]} => ()
@@ -1118,7 +1152,9 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		  val typarams = #typarams ptyInfo
 		  val {baseTy={tyCon,args}, delims, size, post} = PTys.getArrayInfo ptyInfo 
 	      in
-	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ( 
+	        ppPModifiers pps ptyInfo
+	      ; ppPDecl aidinfo tidtab pps (declName, typarams)
               ; PPL.newline pps
               ; ppTy pps (tyCon, args)
               ; ppArrayDelims pps delims
@@ -1132,76 +1168,88 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       end  
     | ppPArray ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
-	  (* 
-              Galax does not support derivation by extension yet, so we have 
-              to use full-blown restriction, which requires specifying explicitly
-              fields from the base type :
+(* 
+  <xs:element name="from" type="p:LiteralExpr"/>
 
-	   [[ Penum identifier [p_formals] [p_enum_prefix] { p_enum_fields } ]]_schema
-                       == 
-	   [
-	     <complexType name=[[identifier]]>
-               <xs:choice>
-                 <xs:element name="val" type=[[p_ty]]_typename/>
-                 <xs:element name="pd" type=[[[[p_ty]]_typename]]_pdname/>
-              </xs:choice>
-	     </complexType>
-	   ]
-	 *)
+  <xs:element name="enumField"> 
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="p:name"/>
+       <xs:element ref="p:from" minOccurs="0" maxOccurs="1"/>
+       <xs:element ref="p:expr" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="prefix" type="xs:string"/>
+
+  <xs:element name="enum">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:prefix" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:enumField" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+*)
 
   fun ppPEnum (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  = 
-      let val (repName, repFields) = enumInfo tidtab tid
+      let fun ppPEnum' pps (ptyInfo:PTys.pTyInfo) = 
+	  let val declName = #repName ptyInfo
+	      val typarams = #typarams ptyInfo
+	  in
+	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	       )  
+	  end
+      (* Enum fields		  ; ppPFields aidinfo tidtab pps fields *)
       in
-	((newline pps
-	  ; complexTypeOpen pps (repName)
-	  ; ppXMLSequence pps [(mapBaseTypeName, SOME "Puint8", "val"), (mapPdName o mapFieldTypeName, SOME "Puint8", "pd")]
-	  ; complexTypeClose pps
-	  ; ppTopElemIfPsource pps (ptyInfo,repName)	
-        )
-	handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
+	  (ppPDeclaration pps "enum" ptyInfo ppPEnum')
+	  handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
       end  
-    | ppPEnum ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+| ppPEnum ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
-
+(*
+    <xs:element name="typedef"> 
+      <xs:complexType>
+        <xs:sequence>
+          <xs:group ref="p:modifiers"/>
+          <xs:element ref="p:decl"/>
+          <xs:element ref="p:ptype"/>
+          <xs:element ref="p:var" minOccurs="0" maxOccurs="1"/>
+          <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:element>  
+*)  
+(*
+  if (#isSource ptyInfo) then add psource modifier to definition 
+*)
   fun ppPTypedef (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  =
       let val (Name, Ty) = typedefInfo tidtab tid
-	  val Name_pd = mapPdName (valOf Name)
 	  val base = (valOf Ty)
-      in 
-	  if isBaseTypeName base then 
-	      (newline pps
-	       (* ; PPL.addStr pps "<!-- Ptypedef "^Name^" -->" *)
-	       ; complexTypeOpen pps (Name)
-	       (* ; ppXMLRestriction pps base_name *)
-	       ; ppXMLSequence pps [(mapBaseTypeName, SOME base, "val"), (mapPdName o mapFieldTypeName, SOME base, "pd")]
-	       ; complexTypeClose pps
-		   ; ppTopElemIfPsource pps (ptyInfo,Name)
-	       )
-	      handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
-	  else
-	      (let val base_name = mapBaseTypeName base
-		  val pd_base_name = mapPdName base_name
-	       in
-		   newline pps
-		   ; complexTypeOpen pps Name
-		   ; ppXMLRestriction pps base_name
-		   ; complexTypeClose pps
-		   ; complexTypeOpen pps (SOME Name_pd)
-		   ; ppXMLRestriction pps pd_base_name
-		   ; complexTypeClose pps
-		   ; ppTopElemIfPsource pps (ptyInfo,Name)
-	       end
-	      )
-	      handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
-      end
-    | ppPTypedef ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+	  fun ppPTypedef' pps (ptyInfo:PTys.pTyInfo) = 
+	      let val declName = #repName ptyInfo
+		  val typarams = #typarams ptyInfo
+	      in
+		  ( ppPDecl aidinfo tidtab pps (declName, typarams)
+		   ; PPL.newline pps
+		   ; ppTy pps (base, [])
+		   )  
+	      end
+      in
+	  (ppPDeclaration pps "typedef" ptyInfo ppPTypedef')
+	  handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
+      end  
+  | ppPTypedef ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
 
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) aidinfo tidtab pps decl = 
     ( PPL.newline pps
     ; case #info ptyInfo
       of TyProps.TypedefInfo _ => ppPTypedef ptyInfo aidinfo tidtab pps decl
-      |  TyProps.RecursiveInfo _ => () (*XXX: must be filled in. *)
+      |  TyProps.RecursiveInfo _ => () (* XXX: must be filled in. *)
       |  TyProps.StructInfo _ => ppPStruct ptyInfo aidinfo tidtab pps decl
       |  TyProps.UnionInfo {fromOpt,...} => if fromOpt then ppPOpt ptyInfo aidinfo tidtab pps decl
 					    else ppPUnion ptyInfo aidinfo tidtab pps decl 
@@ -1260,22 +1308,27 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       end
 
   (*
-    A complete PADS source file is mapped to a complete XML Schema.  The target
-    namespace is the name of the PADS source file.  The default PADS
-    schema is imported and associated with the 'p' namespace prefix.
-    The content of the XML schema is the concatenation of all the global 
-    declarations that result from mapping the top-level PADS types.
-    
-       [[ pads_decl pads_decl_list ]]_schema
-          == 
-       <schema targetNamespace=[[name-of-pads-source]]
-         xmlns=[[name-of-pads-source]]
-         xmlns:xs="http://www.w3.org/2001/XMLSchema"
-         xmlns:p="http://www.padsproj.org/pads.xsd" >
-         <import namespace="http://www.padsproj.org/pads.xsd"
-                 schemaLocation=[[location-of-pads.xsd]]/>
-         [[ pads_decl ]] @ [[ pads_decl_list ]]_schema
-       </schema>
+
+    A complete PADS.p description (pads.p) file is mapped to a
+    PADS.pxml description, which is an instance of the XML schema in
+    pads/padsc/schemata/pads-xml.xsd.
+
+    <xs:element name="PadsC"> 
+      <xs:complexType>
+        <xs:choice  minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="p:alternates"/>
+          <xs:element ref="p:array"/>
+          <xs:element ref="p:charclass"/>
+          <xs:element ref="p:enum"/>
+          <xs:element ref="p:function"/>
+          <xs:element ref="p:recursive"/>
+          <xs:element ref="p:select"/>
+          <xs:element ref="p:struct"/> 
+          <xs:element ref="p:typedef"/>
+          <xs:element ref="p:union"/>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
   *)
   fun ppAst padsDir srcFile paidinfo aidinfo tidtab pps edecls =
       let val fileName = case srcFile of NONE => "" | SOME name => OS.Path.file name

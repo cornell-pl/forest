@@ -1,3 +1,47 @@
+May 31, 2006 - Mary (PADX)
+
+  o Changes to align PADS-XML (.pxml) representation with with pads-xml.xsd
+    schema and to align description.xsd with corresponding data
+    output. 
+
+    padsc/comp/ckit/src/ast/extensions/pads/build-utils.sml
+    padsc/comp/ckit/src/ast/extensions/pads/cnv-ext.sml
+
+    padsc/comp/ckit/src/ast/extensions/pads/gen-galax.sml
+    -- Generated code for enum values fixed. 
+
+    padsc/schemata/pads-xml.xsd
+    padsc/comp/ckit/src/ast/pp/extensions/pads/pp-ast-desc-xschema-fn.sml
+    -- description.pxml output and schema
+
+    padsc/comp/ckit/src/ast/pp/extensions/pads/pp-ast-xschema-fn.sml
+    -- description.xsd output 
+
+    padsc/examples/tests/GNUmakefile
+    -- Added regression target for .pxml 
+
+    padsc/include/pglx-codegen-macros.h
+    padsc/include/pglx-internal.h
+    -- Emit enum value as abstract string. 
+       The code to do this is really ugly.  There must be an easier
+       way.  Need to review with Kathleen.
+
+    padsc/include/template/accum_report_xml.h
+    -- Added XML Schema time format to header
+
+    padsc/schemata/pads-accum.xsd
+    -- Accumulator output for unions. 
+
+  o To run accum_ai example, in padsc/examples/tests, run 
+
+    make regress_accum_ai
+
+    This will generate the following and validate each of them:
+
+      ai_accum.xml -- accumulator output
+      ai_bad.xml   -- bad data
+      ai_good.xml  -- good data
+
 May 28, 2006 - Yitzhak (Recursive types)
 
   o Modified the syntax of recursive types so that both declaration 

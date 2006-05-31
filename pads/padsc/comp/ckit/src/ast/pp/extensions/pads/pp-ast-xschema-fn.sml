@@ -1036,7 +1036,8 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
       in
 	((newline pps
 	  ; complexTypeOpen pps (repName)
-	  ; ppXMLSequence pps [(mapBaseTypeName, SOME "Puint8", "val"), (mapPdName o mapFieldTypeName, SOME "Puint8", "pd")]
+	  (* We are emitting abstract rep of enum value, not internal int value *)
+	  ; ppXMLSequence pps [(mapBaseTypeName, SOME "Pstring", "val"), (mapPdName o mapFieldTypeName, SOME "Pstring", "pd")]
 	  ; complexTypeClose pps
 	  ; ppTopElemIfPsource pps (ptyInfo,repName)	
         )

@@ -733,16 +733,28 @@ res
 /******* Enum macros ******/
 
 /* Enum node kthChild function */
-#define ENUM_NODE_KTH_CHILD_BODY(ty)
+#define ENUM_NODE_KTH_CHILD_BODY(ty, rep2str_fn)
   PDCI_node_t *result = 0;
   ty *rep=(ty *) (self->rep);
   Pbase_pd *pd=(Pbase_pd *) (self->pd);
 
+  Pstring *pstr; 
+  RMM_t *memory_mgr;
+  RBuf_t *rbuf;
+
   switch(idx){
   case 0:
     /* string val child */
-    result = Puint32_val_node_new(self, "val",  pd, rep, PDCI_VAL_OFF, 
+    /* The XML rep of an ENUM value is its abstract string value, not its internal int rep */
+    /* This is an awful lot of overhead to convert a Pint to a Pstring... Is there some other way? */
+    memory_mgr = P_rmm_zero(self->pads); 
+    rbuf = RMM_new_rbuf(memory_mgr);
+    RBuf_RESERVE(rbuf, pstr, Pstring, 1);
+    P_STRING_INIT_CSTR(*pstr,rep2str_fn(*rep));
+    result = Pstring_val_node_new(self, "val",  pd, pstr, PDCI_VAL_OFF, 
 				  PDCI_MacroArg2String(ty) "_node_kthChild");
+    /*    result = Puint32_val_node_new(self, "val",  pd, rep, PDCI_VAL_OFF, 
+	  PDCI_MacroArg2String(ty) "_node_kthChild"); */
     break;
   case 1:
     /* parse descriptor child */
@@ -773,22 +785,36 @@ result
 /* END_MACRO */
 
 /* Enum snd node kthChild function */
-#define ENUM_SND_NODE_KTH_CHILD_BODY(ty)
+#define ENUM_SND_NODE_KTH_CHILD_BODY(ty, rep2str_fn)
   PDCI_node_t *result = 0;
   ty *rep;
   Pbase_pd *pd;
+
+  Pstring *pstr; 
+  RMM_t *memory_mgr;
+  RBuf_t *rbuf;
 
   /* Make sure that the node is valid before attempting to access its contents. */ 
   PDCI_sndNode_validate(self);
   rep = (ty *) (self->rep);
   pd = (Pbase_pd *) (self->pd);
-
   switch(idx){
   case 0:
-    /* string val child */
+    /* The XML rep of an ENUM value is its abstract string value, not its internal int rep */
+    /* This is an awful lot of overhead to convert a Pint to a Pstring... Is there some other way? */
+    memory_mgr = P_rmm_zero(self->pads); 
+    rbuf = RMM_new_rbuf(memory_mgr);
+    RBuf_RESERVE(rbuf, pstr, Pstring, 1);
+    P_STRING_INIT_CSTR(*pstr,rep2str_fn(*rep));
+    result = Pstring_val_node_new(self, "val",  pd, pstr, PDCI_VAL_OFF, 
+				  PDCI_MacroArg2String(ty) "_node_kthChild");
+    Pstring_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+
+    /*
     result = Puint32_val_node_new(self, "val",  pd, rep, PDCI_VAL_OFF, 
 				  PDCI_MacroArg2String(ty) "_sndNode_kthChild");
     Puint32_val_sndNode_init(result,self->manager,self->ancestor_idx,self->ptr_gen,idx);
+    */
     break;
   case 1:
     /* parse descriptor child */

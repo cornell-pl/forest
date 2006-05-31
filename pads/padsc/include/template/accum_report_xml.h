@@ -26,6 +26,8 @@
 #include <rbuf-internal.h>
 Puint64 num_recs = 0;
 
+#define TIMESTAMP_EXPLICIT_OUT_FMT "%Y-%m-%dT%H:%M:%S"
+#define TIMESTAMP_OUT_FMT "%Y-%m-%dT%H:%M:%S"
 
 int main(int argc, char** argv) {
   RMM_t            *rmm_zero;

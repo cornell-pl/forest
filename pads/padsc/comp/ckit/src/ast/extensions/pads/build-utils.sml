@@ -240,13 +240,8 @@ structure BuildUtils = struct
              P.postIncS (PT.Id nst),
              PL.indent(PT.Id outstr, PT.Id nst),
 	     PL.sfprintf(PT.Id outstr, PT.String ("<name>"^fieldDescriptor^"</name>\n"), []),  
-	     PL.indent(PT.Id outstr, PT.Id nst),
-	     PL.sfprintf(PT.Id outstr, PT.String ("<type_acc>\n"), []),  
              P.postIncS (PT.Id nst),
              chkXMLPrint bodyX,
-             P.postDecS (PT.Id nst),
-	     PL.indent(PT.Id outstr, PT.Id nst),
-	     PL.sfprintf(PT.Id outstr, PT.String ("</type_acc>\n"), []),  
              P.postDecS (PT.Id nst),
              PL.indent(PT.Id outstr, PT.Id nst),
 	     PL.sfprintf(PT.Id outstr, PT.String ("</field>\n"), [])]
@@ -276,14 +271,12 @@ structure BuildUtils = struct
     fun genXMLArrayPiece(reportName,expX,indexX) =
 	let val indexXMLSs = genXMLtagInline("index", [PL.sfprintf(PT.Id outstr, PT.String "%d", indexX)], true)
 	    val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, expX])
-(*	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX]) *)
 	in
 	   genXMLtag("arrayDetail", indexXMLSs @ [chkXMLPrint bodyX])
 	end
 
     fun genXMLArrayCompound(reportName,expX) =
 	let val bodyX = PT.Call(PT.Id reportName, [PT.Id pads, PT.Id outstr, PT.Id nst, expX])
-(*	    val accumXMLSs = genXMLtag("type_acc", [chkXMLPrint bodyX]) *)
 	in
 	   genXMLtag("compoundLevel", [chkXMLPrint bodyX])
 	end

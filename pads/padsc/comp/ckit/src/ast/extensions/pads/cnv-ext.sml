@@ -4913,11 +4913,16 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val writeTermSs = writeLitSs termXOpt
 		 val writeTermSs = []  (* terminator not read, so should not be written. *)
 		 val bodySs = writeArraySs @ writeTermSs
-		 val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_OPEN_XML_OUT", []))]
+		 val bodyXMLSs = 
+		     (* For an array value, we either emit the Psource element or the name of the 
+                        field containing the element, but not both *)
+		                 (if isSource then [] else [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))])
+                                 @ [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_OPEN_XML_OUT", []))]
 				 @ writeXMLArraySs
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_XML_VALUE_OUT", [PT.String("length"), lengthX]))]
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_PD_XML_OUT", []))]
 				 @ [PT.Expr(PT.Call(PT.Id "PCGEN_ARRAY_CLOSE_XML_OUT", []))]
+				 @ (if isSource then [] else [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))])
 		 val fmtBufFinalName = bufFinalSuf fmtName
 		 val bodyFmtFinalSs = [P.varDeclS(P.int, "i", P.zero),
 				       PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ [PL.fmtArray(PT.String fmtBufFinalName, fmtBaseX)] @ [PL.fmtFixLast()]
@@ -6547,10 +6552,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val fmtBufFinalName = bufFinalSuf fmtName
 		      val fmtVariantsSs = mkSwitch fmtBranchSs
 		      val bodySs = writeVariantsSs
-		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))]
-					@ writeXMLVariantsSs
-				        @ [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
-					@ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
+		      val bodyXMLSs = 
+		     (* We either emit the Psource element or the name
+                        of the field containing the element, but not
+                        both *)
+                          (if isSource then [] else [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))])
+			  @ writeXMLVariantsSs
+			  @ [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_PD_XML_OUT", []))]
+			  @ (if isSource then [] else [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))])
 		      val bodyFmtFinalSs =  [PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ fmtVariantsSs 
                       val (writeFunEDs,  fmtFunEDs) = genWriteFuns(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, cParams, 
 									mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, bodyFmtFinalSs)
@@ -7567,10 +7576,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val fmtFieldsFinalSs = [PL.fmtFinalInitStruct (PT.String fmtBufFinalName) ] @ (P.mungeFields genFmtFull (fn x => []) genFmtMan fields) @ [PL.fmtFixLast()]
 		      val _ = popLocalEnv()                                         (* remove scope *)
 		      val bodySs = wrFieldsSs
-		      val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))]
-				      @ wrXMLFieldsSs
-				      @ [PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_PD_XML_OUT", []))]
-				      @ [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))]
+		      val bodyXMLSs = 
+		     (* We either emit the Psource element or the name
+                        of the field containing the element, but not
+                        both *)
+                          (if isSource then [] else [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_OPEN_XML_OUT", [PT.String(name)]))])
+  		           @ wrXMLFieldsSs
+			   @ [PT.Expr(PT.Call(PT.Id "PCGEN_STRUCT_PD_XML_OUT", []))]
+			   @ (if isSource then [] else [PT.Expr(PT.Call(PT.Id "PCGEN_TAG_CLOSE_XML_OUT", []))])
                       val (writeFunEDs, fmtFunEDs) = genWriteFuns(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, cParams, 
 								       mPCT, pdPCT, canonicalPCT, bodySs, bodyXMLSs, fmtFieldsFinalSs)
 
