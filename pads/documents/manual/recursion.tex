@@ -80,9 +80,7 @@ representation of the underlying type and a pointer to that
 representation. The name of the underlying type is derived from the
 name of the type by prefixing the name with an underscore ('\_'). In
 our example, type \cd{tree} is defined as follows:
-\begin{code}
-typedef struct _tree_s    *tree;
-\end{code}
+\inputCode{code/binarytree.BinarytreeRep}
 The definition of \cd{struct \_tree\_s} is just the representation of
 the underlying \Punion{}.
 
@@ -93,10 +91,7 @@ mask of the underlying type and a pointer to that
 mask. The name of the underlying type is derived from the
 name of the type by prefixing the name with an underscore ('\_'). In
 our example, type \cd{tree\_m} is defined as follows:
-
-\begin{code}
-typedef struct _tree_m_s  *tree_m;
-\end{code}
+\inputCode{code/binarytree.BinarytreeCSM}
 
 The definition of \cd{struct \_tree\_m\_s} is just the mask of the
 underlying \Punion{}.  Note the difference from \ptypedef{}s, which
@@ -112,18 +107,7 @@ descriptor for the underlying type.
 
 For example, the parse descriptor type \pdSuf{tree} has
 the following structure:
-
-\begin{code}
-typedef struct tree_pd_s tree_pd;
-
-struct tree_pd_s {
-  Pflags_t pstate;
-  Puint32 nerr;
-  PerrCode_t errCode;
-  Ploc_t loc;
-  struct _tree_pd_s *val;
-};
-\end{code}
+\inputCode{code/binarytree.BinarytreePD}
 
 The definition of \cd{struct \_tree\_pd\_s} is just the parse
 descriptor of the underlying \Punion{}.
@@ -183,41 +167,46 @@ Code such as this can be specified for some of the template programs
 with the macro \cd{CUSTOM\_MASK\_CODE}.
 
 \begin{figure}
-\begin{code}
-Perror_t tree_init (P_t *pads,tree *rep);
+\inputCode{code/binarytree.BinarytreeOps}
+% \begin{code}
+% Perror_t tree_init (P_t *pads,tree *rep);
 
-Perror_t tree_pd_init (P_t *pads,tree_pd *pd);
+% Perror_t tree_pd_init (P_t *pads,tree_pd *pd);
 
-Perror_t tree_cleanup (P_t *pads,tree *rep);
+% Perror_t tree_cleanup (P_t *pads,tree *rep);
 
-Perror_t tree_pd_cleanup (P_t *pads,tree_pd *pd);
+% Perror_t tree_pd_cleanup (P_t *pads,tree_pd *pd);
 
-Perror_t tree_copy (P_t *pads,tree *rep_dst,tree *rep_src);
+% Perror_t tree_copy (P_t *pads,tree *rep_dst,tree *rep_src);
 
-Perror_t tree_pd_copy (P_t *pads,tree_pd *pd_dst,tree_pd *pd_src);
+% Perror_t tree_pd_copy (P_t *pads,tree_pd *pd_dst,tree_pd *pd_src);
 
-void tree_m_init (P_t *pads,tree_m *mask,Pbase_m baseMask);
+% void tree_m_init (P_t *pads,tree_m *mask,Pbase_m baseMask);
 
-Perror_t tree_read (P_t *pads,tree_m *m,tree_pd *pd,tree *rep);
+% Perror_t tree_read (P_t *pads,tree_m *m,tree_pd *pd,tree *rep);
 
-int tree_verify (tree *rep);
+% int tree_verify (tree *rep);
 
-int tree_genPD (P_t *,tree *,tree_pd *);
+% int tree_genPD (P_t *,tree *,tree_pd *);
 
-ssize_t tree_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,tree_pd *pd,tree *rep);
+% ssize_t tree_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,
+%                         int *buf_full,tree_pd *pd,tree *rep);
 
-ssize_t tree_write2io (P_t *pads,Sfio_t *io,tree_pd *pd,tree *rep);
+% ssize_t tree_write2io (P_t *pads,Sfio_t *io,tree_pd *pd,tree *rep);
 
-ssize_t tree_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,tree_pd *pd,tree *rep,char const *tag,int indent);
+% ssize_t tree_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,
+%                              int *buf_full,tree_pd *pd,tree *rep,
+%                              char const *tag,int indent);
 
-ssize_t tree_write_xml_2io (P_t *pads,Sfio_t *io,tree_pd *pd,tree *rep,char const *tag,int indent);
+% ssize_t tree_write_xml_2io (P_t *pads,Sfio_t *io, tree_pd *pd,tree *rep, 
+% char const *tag,int indent);
 
-ssize_t tree_fmt2buf_final (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
+% ssize_t tree_fmt2buf_final (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
 
-ssize_t tree_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
+% ssize_t tree_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
 
-ssize_t tree_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
-\end{code}
+% ssize_t tree_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
+% \end{code}
 \caption{Prototypes of operations generated for
   the \Precur{} \texttt{tree}.}
 \label{figure:recur-ops}
