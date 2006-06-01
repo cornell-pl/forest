@@ -716,11 +716,17 @@ test_cluster: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_clu
 test_cluster_d: $(GEN_DIR)/ai.c $(PADS_HOME)/padsc/libpads/pads-cluster.c test_cluster.c $(INCLUDE_DEDS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+regress_accum: regress_accum_2ips regress_accum_array regress_accum_array_advance regress_accum_depends regress_accum_enum  regress_accum_pfloat regress_accum_ptimestamp regress_accum_punion regress_accum_struct1 regress_accum_typedef
+
 regress_accum_%: accum_%
-	(accum_$* >$*_accum.xml; \
+	(accum_$* ../../data/$* -report-good -report-bad >$*_accum.xml; \
+	echo "*** Validate $*_accum.xml"; \
 	 $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(PADS_HOME)/padsc/schemata/pads-accum.xsd $*_accum.xml; \
+	echo "*** Validate $*_bad.xml"; \
 	 if [ -s $*_bad.xml ]; then $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(GEN_DIR)/$*.xsd $*_bad.xml; fi ;\
+	echo "*** Validate $*_good.xml"; \
 	 if [ -s $*_good.xml ]; then $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(GEN_DIR)/$*.xsd $*_good.xml; fi ; \
+	echo "*** Validate $*.pxml"; \
 	 $(GALAX_HOME)/bin/galax-parse -validate on -xmlschema $(PADS_HOME)/padsc/schemata/pads-xml.xsd $(GEN_DIR)/$*.pxml; \
 	)
 

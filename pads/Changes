@@ -1,4 +1,40 @@
-May 31, 2006 - Mary (PADX)
+June 1, 2006 - Mary
+ 
+  o More fixes in XML Accumulator 
+
+    padsc/comp/ckit/src/ast/pp/extensions/pads/pp-ast-desc-xschema-fn.sml
+    padsc/comp/ckit/src/ast/pp/extensions/pads/pp-ast-xschema-fn.sml
+    padsc/include/pcgen-macros.h
+    padsc/include/template/accum_report_xml.h
+    padsc/schemata/pads-accum.xsd
+    padsc/schemata/pads-xml.xsd
+
+  o Regression tests
+
+    Changed following examples to have a top-level Psource type so
+    that I can use them for regression tests on XML accumulator output:
+
+    padsc/examples/p/{2ips,array,array_advance,depends,dns,enum,ijnltif,pfloat,ptimestamp,punion,struct1,typedef}.p
+
+    Following examples all pass XML accumulator regression:
+
+      {2ips,array,array_advance,depends,enum,pfloat,ptimestamp,punion,struct1,typedef}.p
+
+    Still have problems with: 
+        accum_ijnltif.c  
+        -- does not compile: node* functions not created for fpoint
+        accum_dns.c	
+        -- raises a memory allocation error when -report-good is on,
+           but accumulator output is OK. 
+
+  o XML Accumulator
+
+    Added options -report-good(-report-bad) to emit good(bad)
+    records.  By default, only accumulator data is emitted.
+   
+    padsc/include/template/accum_report_xml.h
+
+May 31, 2006 - Mary (PADX & XML Reps)
 
   o Changes to align PADS-XML (.pxml) representation with with pads-xml.xsd
     schema and to align description.xsd with corresponding data

@@ -709,7 +709,8 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       ;PPL.addStr pps ("</"^tag^">"))
 
   fun ppExp pps exp = PPL.addStr pps (ParseTreeUtil.expToString exp)
-  fun ppCExpr pps exp = ppTag "expr"  (ppTag "native" ppExp) pps exp
+  fun ppNative pps exp = ((PPL.addStr pps "<![CDATA["); ppExp pps exp; (PPL.addStr pps "]]>"))
+  fun ppCExpr pps exp = ppTag "expr"  (ppTag "native" ppNative) pps exp
   fun ppPExpr pps exp = 
       case exp 
       of ParseTree.MARKexpression(l,e) => ppPExpr pps e 
@@ -1028,12 +1029,13 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	      in
 	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
 	      ; PPL.newline pps
-	      ; ppTagIndent "base" ppTyApp pps (tyCon,args) 
+	      ; ppTy pps (tyCon,args) 
+(*	      ; ppTagIndent "base" ppTyApp pps (tyCon,args)  *)
               ; ppPostConds pps fpred
               )
 	      end
        in 
-	(ppPDeclaration pps "option" ptyInfo ppPOpt' 
+	(ppPDeclaration pps "opt" ptyInfo ppPOpt' 
 	 handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *))
     end
     | ppPOpt ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)

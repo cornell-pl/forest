@@ -26,13 +26,19 @@
   <xs:element name="string" type="xs:string"/>
   <xs:element name="char" type="xs:string"/>   <!-- This is really a character -->
 
-  <xs:complexType name="LiteralExpr">
+  <xs:group name="literals">
     <xs:choice>
       <xs:element ref="p:char"/>
       <xs:element ref="p:string"/>
       <xs:element ref="p:regexp"/>
       <xs:element ref="p:id"/>
     </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="LiteralExpr">
+    <xs:sequence> 
+      <xs:group  ref="p:literals"/>
+    </xs:sequence>
   </xs:complexType>
 
   <xs:element name="literal" type="p:LiteralExpr"/> <!-- A literal expression -->
@@ -49,7 +55,7 @@
 
   <xs:element name="parsecheck" type="p:Expr"/>     <!-- pPC -->
 
-  <xs:element name="typename" type="xs:string"/> 
+  <xs:element name="type" type="xs:string"/> 
   <xs:element name="typeexpr" type="p:Expr"/> 
 
   <xs:complexType name="Constraints">            <!-- pConstraintsWComma -->
@@ -76,9 +82,9 @@
   <xs:element name="param">          <!-- pTyParamDeclaration, parameterDeclaration -->
     <xs:complexType>
       <xs:sequence>
-        <xs:element ref="p:var"/>         <!-- Parameter name -->
+        <xs:element ref="p:name"/>         <!-- Parameter name -->
         <xs:choice>
-          <xs:element ref="p:typename"/>  <!-- A PADS type name or a native type expression  -->
+          <xs:element ref="p:type"/>  <!-- A PADS type name or a native type expression  -->
           <xs:element ref="p:typeexpr"/>                
         </xs:choice>
       </xs:sequence>
@@ -90,9 +96,6 @@
 
 <!-- TYPE MODIFIERS -->
 
-  <!-- These declarations aren't quite right, because they should
-       permit empty content.
-  -->
   <xs:element name="source" nillable="true" type="xs:string"/>  <!-- pIsSource -->
   <xs:element name="record" nillable="true" type="xs:string"/>  <!-- pIsRecord -->
   <xs:element name="longest" nillable="true" type="xs:string"/> <!-- pIsLongestMatch -->
@@ -162,7 +165,7 @@
   <xs:complexType name="TermExpr">                      <!-- pTermExp -->
     <xs:choice>      
       <xs:element ref="p:nosep"/>
-      <xs:element ref="p:literal"/>
+      <xs:group ref="p:literals"/>
     </xs:choice>
   </xs:complexType>
   
@@ -222,13 +225,17 @@
   	
   <xs:element name="opt">            <!-- pOpt is a type modifier -->
     <xs:complexType>
+      <xs:sequence>
+      <xs:element ref="p:decl"/>
+      <xs:element ref="p:ptype"/>
       <xs:choice>
-        <xs:element ref="p:constraints"/>  <!-- pConstraintsWComma -->
+        <xs:element ref="p:postConstraints"/>  <!-- pConstraintsWComma -->
         <xs:sequence>
           <xs:element ref="p:some" minOccurs="0" maxOccurs="1"/>
           <xs:element ref="p:none" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
       </xs:choice>
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
   
@@ -338,7 +345,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element ref="p:name"/>
-        <xs:element ref="p:typename"/>
+        <xs:element ref="p:type"/>
         <xs:element ref="p:var"/>
         <xs:element ref="p:expr"/>
       </xs:sequence>
@@ -430,7 +437,7 @@
           <xs:element ref="p:switched"/>         <!-- pVariants ::= Pswitch | pStructFieldList -->
           <xs:element ref="p:inplace"/> 
         </xs:choice>
-        <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>       <!-- pPostCondOpt -->
+        <xs:element ref="p:postConstraints" minOccurs="0" maxOccurs="1"/>       <!-- pPostCondOpt -->
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -447,6 +454,7 @@
         <xs:element ref="p:select"/>
         <xs:element ref="p:struct"/> 
         <xs:element ref="p:typedef"/>
+        <xs:element ref="p:opt"/>
         <xs:element ref="p:union"/>
       </xs:choice>
     </xs:complexType>

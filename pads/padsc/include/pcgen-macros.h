@@ -172,7 +172,7 @@ void PCGEN_FIND_EOR(const char *fn_nm);
 
 void PCGEN_STRUCT_ACC_REP_NOVALS();
 void PCGEN_UNION_ACC_REP_NOVALS();
-void PCGEN_UNION_ACC_XML_REP_NOVALS();
+void PCGEN_UNION_ACC_XML_REP_NOVALS(const char *);
 void PCGEN_ARRAY_ACC_REP_NOVALS();
 Perror_t PCGEN_ENUM_ACC_REP2IO(const char *default_what, Perror_t int_acc_call);
 Perror_t PCGEN_TYPEDEF_ACC_REP2IO(const char *default_what, const char *basety_nm, Perror_t base_acc_call);
@@ -1926,9 +1926,12 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_ACC_XML_REP_NOVALS()
+#define PCGEN_UNION_ACC_XML_REP_NOVALS(endtag)
 do {
   if (dtsize(acc->tag.dict) == 0) {
+    nst--;
+    PDCI_indent (outstr,nst);
+    sfprintf (outstr,"</%s>\n",endtag);
     return P_OK;
   }
 } while (0)

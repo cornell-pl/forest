@@ -24,3 +24,8 @@ Precord Pstruct line{
   ' '; auth_id_t  user;
   ' '; Pint32     t : check(t, user);
 };
+
+Psource Parray source {
+ line[];
+};
+

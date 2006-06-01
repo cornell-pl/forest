@@ -49,8 +49,12 @@ int main(int argc, char** argv) {
   EXTRA_DECLS;
 #endif
   char *pads_type = PADS_TY_STR;
+
+  int report_good = 0;
   char *accum_good_out = (char *)0;
   Sfio_t *accum_good_sfio;
+
+  int report_bad = 0; 
   char *accum_bad_out = (char *)0;
   Sfio_t *accum_bad_sfio;
 
@@ -112,12 +116,25 @@ int main(int argc, char** argv) {
 #endif
 #endif
 
-  if (argc == 2) {
+  if (argc >= 2) {
     fileName = argv[1];
   } else {
     fileName = DEF_INPUT_FILE;
   }
   error(0, "Data file = %s\n", fileName);
+
+  /* The remaining flags are for galax */
+  {
+    int i;
+    for (i = 2; i < argc; i++) {
+      if (strcmp(argv[i], "-report-good") == 0) {
+	report_good = 1;
+      }
+      else if (strcmp(argv[i], "-report-bad") == 0) {
+	report_bad = 1;
+      }
+    }
+  }
 
   if (P_ERR == P_open(&pads, &my_disc, io_disc)) {
     error(ERROR_FATAL, "*** P_open failed ***");
@@ -191,7 +208,8 @@ int main(int argc, char** argv) {
       EXTRA_BAD_READ_CODE;
 #else
       /* Put call to report XML function here */
-      PADS_TY(_write_xml_2io) (pads, accum_bad_sfio, pd, rep, PADS_TY_STR, 0);
+      if (report_bad)
+	PADS_TY(_write_xml_2io) (pads, accum_bad_sfio, pd, rep, PADS_TY_STR, 0);
       error(2, "read returned error");
 #endif
     }
@@ -203,7 +221,8 @@ int main(int argc, char** argv) {
       EXTRA_GOOD_READ_CODE;
 #endif
       /* Put call to report XML function here */
-      PADS_TY(_write_xml_2io) (pads, accum_good_sfio, pd, rep, PADS_TY_STR, 0);
+      if (report_good)
+	PADS_TY(_write_xml_2io) (pads, accum_good_sfio, pd, rep, PADS_TY_STR, 0);
     }
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {

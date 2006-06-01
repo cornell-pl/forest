@@ -8,3 +8,8 @@ Precord Pstruct entry {
   bar b;
   'x';
 };
+
+Psource Parray source {
+  entry[];
+};
+		      

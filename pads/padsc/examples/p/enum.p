@@ -7,4 +7,6 @@ Precord Penum orderStates {
     S_tpv = 5
 };
 
-
+Psource Parray enums {
+  orderStates[];
+}

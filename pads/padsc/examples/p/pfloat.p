@@ -9,3 +9,7 @@ Precord Pstruct test {
   '|';
   Pfloat64 y : within_epsilon(x*25, y);
 };
+
+Psource Parray source {
+  test[];
+};

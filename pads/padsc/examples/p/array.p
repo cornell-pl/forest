@@ -2,3 +2,8 @@
 Precord Parray intList {
   Pint32 [LIST_SIZE] : Psep('|');
 };
+
+Psource Pstruct source {
+  intList[] x;
+};
+

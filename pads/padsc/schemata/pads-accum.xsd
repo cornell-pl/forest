@@ -45,6 +45,14 @@ March 2006:
    </xs:complexType>
   </xs:element>
 
+  <xs:group name="distributionGroup">
+    <xs:sequence>
+      <xs:element ref="a:top"/>
+      <xs:element ref="a:distinct"/>
+      <xs:element ref="a:tracked" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:group>
+
   <xs:complexType name="Pint8_acc">
    <xs:choice>
     <xs:element ref="a:none"/>
@@ -57,8 +65,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -87,8 +94,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -117,8 +123,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -147,8 +152,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -177,10 +181,9 @@ March 2006:
       <xs:element name="distribution" minOccurs="0">
        <xs:complexType>
         <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+          <xs:group ref="a:distributionGroup"/>
           <xs:element name="item" maxOccurs="unbounded">
-           <xs:complexType>
+          <xs:complexType>
             <xs:sequence>
              <xs:element name="val" type="p:Puint8"/>
              <xs:element ref="a:count"/>
@@ -207,8 +210,7 @@ March 2006:
       <xs:element name="distribution" minOccurs="0">
        <xs:complexType>
         <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+          <xs:group ref="a:distributionGroup"/>
           <xs:element name="item" maxOccurs="unbounded">
            <xs:complexType>
             <xs:sequence>
@@ -237,8 +239,7 @@ March 2006:
       <xs:element name="distribution" minOccurs="0">
        <xs:complexType>
         <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+          <xs:group ref="a:distributionGroup"/>
           <xs:element name="item" maxOccurs="unbounded">
            <xs:complexType>
             <xs:sequence>
@@ -275,8 +276,7 @@ March 2006:
       <xs:element name="distribution" minOccurs="0">
        <xs:complexType>
         <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+          <xs:group ref="a:distributionGroup"/>
           <xs:element name="item" maxOccurs="unbounded">
            <xs:complexType>
             <xs:sequence>
@@ -305,8 +305,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -335,8 +334,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -362,8 +360,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -393,8 +390,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -423,8 +419,7 @@ March 2006:
       <xs:element name="distribution" minOccurs="0">
        <xs:complexType>
         <xs:sequence>
-          <xs:element ref="a:top"/>
-          <xs:element ref="a:distinct"/>
+          <xs:group ref="a:distributionGroup"/>
           <xs:element name="item" maxOccurs="unbounded">
            <xs:complexType>
             <xs:sequence>
@@ -453,8 +448,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -483,8 +477,7 @@ March 2006:
       <xs:element name="distribution" minOccurs="0">
        <xs:complexType>
         <xs:sequence>
-          <xs:element ref="a:top"/>
-          <xs:element ref="a:distinct"/>
+          <xs:group ref="a:distributionGroup"/>
           <xs:element name="item" maxOccurs="unbounded">
            <xs:complexType>
             <xs:sequence>
@@ -507,14 +500,12 @@ March 2006:
     <xs:sequence>
       <xs:element ref="a:good"/>
       <xs:element ref="a:bad"/>
-      <xs:element name="avg" type="p:Pip"/>
       <xs:element name="min" type="p:Pip"/>
       <xs:element name="max" type="p:Pip"/>
       <xs:element name="distribution" minOccurs="0">
        <xs:complexType>
         <xs:sequence>
-          <xs:element ref="a:top"/>
-          <xs:element ref="a:distinct"/>
+          <xs:group ref="a:distributionGroup"/>
           <xs:element name="item" maxOccurs="unbounded">
            <xs:complexType>
             <xs:sequence>
@@ -551,6 +542,7 @@ March 2006:
       <xs:element ref="a:Ptime"/> 
       <xs:element ref="a:Pip"/> 
       <!-- Accumulators for the composite types -->
+      <xs:element ref="a:opt"/> 
       <xs:element ref="a:union"/> 
       <xs:element ref="a:struct"/> 
       <xs:element ref="a:array"/> 
@@ -656,8 +648,7 @@ March 2006:
     <xs:element name="distribution" minOccurs="0">
      <xs:complexType>
       <xs:sequence>
-        <xs:element ref="a:top"/>
-        <xs:element ref="a:distinct"/>
+        <xs:group ref="a:distributionGroup"/>
         <xs:element name="item" maxOccurs="unbounded">
          <xs:complexType>
           <xs:sequence>
@@ -680,13 +671,25 @@ March 2006:
   </xs:complexType>
 
  <xs:element name="tag"  type="a:tag_acc"/>
-  <xs:element name="union">
+ <xs:element name="union">
    <xs:complexType>
     <xs:sequence>
       <xs:element ref="a:name"/>
       <xs:element ref="a:nerr" minOccurs="0" maxOccurs="1"/>
       <xs:element ref="a:tag"  minOccurs="0" maxOccurs="1"/>
-      <xs:element ref="a:field" maxOccurs="unbounded"/>
+      <xs:element ref="a:field" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+
+ <!-- A Popt type is a Punion with two tags: some or none -->
+ <xs:element name="opt">
+   <xs:complexType>
+    <xs:sequence>
+      <xs:element ref="a:name"/>
+      <xs:element ref="a:nerr" minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="a:tag"  minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="a:field" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
    </xs:complexType>
   </xs:element>
@@ -699,7 +702,7 @@ March 2006:
   <xs:element name="max2track" type="p:Puint64"/>  <!-- IN: Total # buckets -->
   <xs:element name="max2rep"   type="p:Puint64"/>  <!-- IN: # of buckets to report -->
   <xs:element name="pcnt2rep"  type="p:Pfloat64"/> <!-- IN: Report buckets that only exceed this percentage. -->
-  <xs:element name="tracked"   type="p:Puint64"/>  <!-- IN: Percentage of total values tracked -->
+  <xs:element name="tracked"   type="p:Pfloat64"/> <!-- IN: Percentage of total values tracked -->
 
   <xs:element name="PSource" type="a:type"/>
   <xs:element name="PadsAccum">

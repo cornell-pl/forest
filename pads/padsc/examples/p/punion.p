@@ -11,4 +11,6 @@ Precord Punion test2 {
   (tag == bigger)? val.bigger.id > 0 : 1;
 };
 
-
+Psource Parray source {
+  test2[];
+};

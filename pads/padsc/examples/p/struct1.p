@@ -9,3 +9,8 @@ Precord Pstruct testtwo{
   '|';
   Puint32 f : f == header.ts;   
 };
+
+
+Psource Parray source {
+  testtwo[];
+};

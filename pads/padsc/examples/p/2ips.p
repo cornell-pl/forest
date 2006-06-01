@@ -4,3 +4,7 @@ Precord Pstruct test {
   Pip ip2;
 };
 
+Psource Parray source {
+  test[];
+}
+

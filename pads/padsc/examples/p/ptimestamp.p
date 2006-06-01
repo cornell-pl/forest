@@ -3,3 +3,7 @@ Precord Pstruct threetimestamps {
   Ptimestamp(:'|':) ts2; '|';
   Ptimestamp_SE(:"/$/":) ts3;
 };
+
+Psource Parray source {
+  threetimestamps[];
+};		      

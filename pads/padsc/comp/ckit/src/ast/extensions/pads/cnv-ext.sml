@@ -6393,7 +6393,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  if isVirtual then [P.mkCommentS("Pomit branch: cannot accumulate")]
 			  else cnvPtyForXMLReport(reportSuf, ioxmlSuf, pty, name, "branch")
                       fun genAccXMLReportBrief e = []
-		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_XML_REP_NOVALS", []))]
+		      val checkNoValsSs = [PT.Expr(PT.Call(PT.Id "PCGEN_UNION_ACC_XML_REP_NOVALS", [PT.String(which)]))]
                       val reportXMLTags = [PL.indent(PT.Id outstr, PT.Id nst),
 					   PL.sfprintf(PT.Id outstr, PT.String ("<tag>\n"), []),  
 					   P.postIncS (PT.Id nst),
