@@ -52,7 +52,7 @@ This is more restrictive as s_k s' might not actually be in
 first(t'). We are saying that *any* appearance of s_k is forbidden.
 
 We could probably relax this restriction somewhat by defining the
-first-set not over the parser of t' but over the pretty printer of
+"first" set not over the parser of t' but over the pretty printer of
 t'. However, I think there's a good argument that any description
 that has this property even just for parsing alone is
 problematic. True, its not ambiguous, but it is, perhaps, bad style.
@@ -127,31 +127,16 @@ valid rep would be (for any s,n):
 Notice that this is consistent with the parsing, as 
 Pstring_ME(/*/) * Pint will always return an error for the Pint.
 
-Ok, now I am going to redo earlier work on restriction for tuples. I
-don't think we need a universal restriction over the types. I believe
-a predicate over particular values at a type will be sufficient. Then,
-the theorem(s) will be universally quanitified, as needed.
-
-*** Argghh, this is wrong! *** As a universal, it doesn't matter what
-    the printing is as long as it is parsable. But if we're looking at
-    specifics, then we have to consider how its printed (e.g.123one
-    example). I think that such reasoning will likely be circular.
-
-Ok, let's drop the elaboration idea. Instead, let's aim for an
+Instead of the elaboration idea, for starters let's aim for an
 algorithm to check a ddc type for satisfaction of this property
 (assuming all base types satisfy this, or some related, property),
-based on just the parsers. Or, perhaps we could refine it to be
-parameterized by parsers and printers. Or, maybe we could go all ways:
-given 2, derive restrictions on third (where 3 are type, parser,
-printer).
+based on just the parsers. 
 
 Also, would be nice if you could write reference implementations of
 base types that could provably meet their requirements.
 
-s = print x  iff x = parse s
-
-
-*** Insert email to RM here.  
+*** Insert email to RM here.  Note change of notation, eg. first(t)
+    becomes Prefix(t).
 
 We ended our discussion in your noting that print o parse o print =
 print.  However, this property isn't enough as we noted that the
@@ -175,10 +160,10 @@ challenge is to find a way to distinguish between types that induce
 one-to-one printers and those that do not.
 
 I think that a promising way to approach the problem is through the
-notion of ambiguity that we discussed. I suspect that a type is good
-iff it is *unambiguous*, where by that I mean that no too sequential
-elements of the type have any overlap. Or, more formally, for a tuple
-type t x t':
+CFG notion of ambiguity that we discussed. I suspect that a type is
+good iff it is "unambiguous" in the CFG-sense, where by that I mean
+that no too sequential elements of the type have any overlap. Or, more
+formally, for a tuple type t x t':
 
   forall s1,s2,s3,s4. t(s1 s2) /\ t'(s3 s4) => s2 != s3
 
