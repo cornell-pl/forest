@@ -1,0 +1,285 @@
+\section{Describing Data in \padsmlbig{}}
+\label{sec:padsml-overview}
+{\em
+To do:
+\begin{itemize}
+\item Check the details of the Kleinstein reference.
+\end{itemize}
+}
+A \padsml{} description specifies the physical layout and semantic
+properties of an ad hoc data source.  These descriptions are composed
+of types: base types describe atomic data, while structured types
+describe compound data built from simpler pieces.  Examples of base
+types include ASCII-encoded, 8-bit unsigned integers (\cd{Puint8}) and
+32-bit signed integers (\cd{Pint32}), binary 32-bit integers (\cd{Pbint32}),
+dates (\cd{Pdate}), strings (\cd{Pstring}), zip codes (\cd{Pzip}),
+phone numbers (\cd{Pphone}), and IP addresses (\cd{Pip}).  Semantic
+conditions for such base types include checking 
+that the resulting number fits in the indicated space, \ie, 16-bits
+for \cd{Pint16}.
+
+Base types may be parameterized by \ml{} values.  This mechanism
+reduces the number of built-in base types and permits base types to
+depend on values in the parsed data.  For example, the base type
+\cd{Puint16_FW(3)} specifies an unsigned two byte integer physically
+represented by exactly three characters, and the base type
+\cd{Pstring} takes an argument indicating the \textit{terminator
+character}, \ie{}, the character in the source that immediately
+follows the string.
+
+To describe more complex data, \padsml{} provides a collection of type
+constructors derived from the type structure of functional programming
+languages like Haskell and ML.  We explain these structured types in
+the following subsections using examples drawn from data sources we
+have encountered in practice.
+
+% Readers eager to see the complete syntax
+% of types should flip forward to Appendix~\ref{app:syntax-dd}.
+
+\subsection{Simple Structured Types}
+
+
+\begin{figure*}
+{\scriptsize
+\begin{verbatim}
+0|1005022800
+9152|9151|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+\end{verbatim}
+}
+  \caption{Miniscule example of \dibbler{} data.}
+  \label{figure:dibbler-records}
+\end{figure*}
+
+The bread and butter of a \padsml{} description are the simple
+structured types: tuples and records for specifying ordered data;
+lists for specifying homogeneous sequences of data; sum types for
+specifying alternatives; and singletons for specifying the occurrence
+of literal characters in the data.  We describe each of these
+constructs as applied to the \dibbler{} data presented in
+\figref{figure:dibbler-records}.
+
+\dibbler{} data summarizes orders for phone service placed with AT\&T.
+Each \dibbler{} data file starts with a timestamp followed by one
+record per phone service order.  Each order consists of a header and a
+sequence of events.  The header has 13 pipe separated fields: the
+order number, AT\&T's internal order number, the order version, four
+different telephone numbers associated with the order, the zip code of
+the order, a billing identifier, the order type, a measure of the
+complexity of the order, an unused field, and the source of the order
+data.  Many of these fields are optional, in which case nothing
+appears between the pipe characters.  The billing identifier may not
+be available at the time of processing, in which case the system
+generates a unique identifier, and prefixes this value with the string
+``no\_ii'' to indicate that the number was generated. The event
+sequence represents the various states a service order goes through;
+it is represented as a new-line terminated, pipe separated list of
+state, timestamp pairs.  There are over 400 distinct states that an
+order may go through during provisioning.  The sequence is sorted in
+order of increasing timestamps.  From this description, it is apparent
+that English is a poor language for describing data formats!
+
+\begin{figure}
+\input{sirius_pml}
+  \caption{\padsml{} description for \dibbler{} provisioning data.}
+  \label{figure:sirius_pml}
+\end{figure}
+
+\figref{figure:sirius_pml} contains the \padsml{} description for the
+\dibbler{} data format.  The description is a sequence of type
+definitions.  Type definitions precede uses, therefore the description
+should be read bottom up.
+The type \cd{Source} (Line~27) describes a complete \dibbler{} data
+file and denotes an ordered tuple containing a
+\cd{Summary\_header} value followed by an \cd{Orders} value.
+Other tuple types are defined on Lines~1, 23, and~25.
+
+The type \cd{Orders} (Line~26) uses the list type constructor
+\cd{Plist} to describe a homogenous sequence of values in a data
+source.  The \cd{Plist} constructor takes three parameters: on the
+left, the type of elements in the list; on the right, a literal
+\emph{separator} that delimits elements in the list, and a literal
+\emph{terminator}.  In this example, the type \cd{Orders} is a list of
+\cd{Order} elements, separated by a newline, and terminated by
+\cd{peof}, a special literal that describes the \emph{end-of-file
+  marker}.  Similarly, the \cd{Events} type (Line~24) denotes a
+sequence of \cd{Event} values separated by vertical bars and
+terminated by a newline.
+
+Literal characters in type expressions denote singleton types.  For
+example, the \cd{Event} type (Line~23) is a string terminated by a
+vertical bar, followed by a vertical bar, followed by a timestamp.  The
+singleton type \cd{'|'} means that the data source must contain the
+character \cd{'|'} at this point in the input stream.  String,
+character, and integer literals can be embedded in a description and
+are interpreted as singleton types, \eg{}, the singleton type
+\cd{"0|"} in the \cd{Summary\_header} type (Line~1) 
+denotes the string literal \cd{"0|"}.
+
+The type \cd{Order\_header} is a record type, \ie{}, a tuple type in
+which each field may have an associated name.  The named field
+\cd{att\_order\_num} (Line~9) illustrates two other features of
+\padsml: dependencies and constraints.  Here, \cd{att\_order\_num}
+depends on the previous field \cd{order\_num} and is constrained to be
+less than that value.  In practice, constraints may be complex, have
+multiple dependencies, and can specify, for example, the sorted order
+of records in a sequence.  Constrained types have the form \cd{[x:T |
+e]} where \cd{e} is an arbitrary pure boolean expression.  Data
+satisfies this description if it satisfies \cd{T} and boolean \cd{e}
+evaluates to true when the parsed representation of the data is
+substituted for \cd{x}.  If the boolean expression evaluates to false,
+the data contains a \textit{semantic} error.
+
+The datatype definition of \cd{Dib\_ramp} (Line~3) specifies two
+alternatives for a data fragment, either one integer or the fixed
+string \cd{"no\_ii"} followed by one integer.  The order of
+alternatives is significant, that is, the parser attempts to parse the
+first alternative and only if it fails, it attempts to parse the
+second alternative.  This semantics differs from similar constructs in
+regular expressions and context-free grammars, which
+non-deterministically choose between alternatives.
+\cut{Fortunately, we have yet to come across an ad hoc data
+source where we wish we had nondeterministic choice.\footnote{\padsml{}
+  can recognize string data based on regular expressions.
+  Non-determinism here has been useful, but as it has been confined to
+  parsing elements of the \cd{Pstring} base type, it has had no impact
+  on the overall parsing algorithm.}
+}
+\begin{figure}
+\input{newick_pml}
+Tiny fragment of Newick data:
+
+{
+\begin{verbatim}
+(((erHomoC:0.28006,erCaelC:0.22089):0.40998,
+(erHomoA:0.32304,(erpCaelC:0.58815,((erHomoB:0.5807,
+erCaelB:0.23569):0.03586,erCaelA:0.38272):0.06516):
+0.03492):0.14265):0.63594,(TRXHomo:0.65866,TRXSacch:
+0.38791):0.32147,TRXEcoli:0.57336)
+\end{verbatim}
+}
+  \caption{Simplified tree-shaped Newick data}
+  \label{fig:newick}
+\end{figure}
+
+\subsection{Recursive Types}
+
+\padsml{} can describe data sources with recursive structure.  One
+example of recursive data is the Newick format, a flat representation
+of trees used by biologists~\cite{newick} that uses properly nested
+parentheses to specify a tree's hierarchy.  A leaf node is a string
+label followed by a colon and a number.  An interior node contains a
+sequence of children nodes, delimited by parentheses, followed by a
+colon and a number.  The numbers represent the ``distance'' that
+separates a child node from its parent.
+
+\figref{fig:newick} contains a concise and elegant description of Newick
+and a small fragment of example data.  In this example, the string
+labels are gene names and the distance denotes the number of mutations
+that occur in the antibody receptor genes of B lymphocytes.  This
+data is provided by Steven Kleinstein, program coordinator of
+Princeton's Picasso project for interdisciplinary research in
+computational sciences.  \edcom{Is this true anymore? Should it be in
+  past tense? Should it be here at all?}. Kleinstein is building a simulator to study
+the proliferation of B lymphocytes during an immune response.
+
+\begin{figure}
+  \centering
+  \small
+\begin{verbatim}
+ 2:3004092508||5001|dns1=abc.com;dns2=xyz.com|c=slow link;w=lost packets|INTERNATIONAL
+ 3:|3004097201|5074|dns1=bob.com;dns2=alice.com|src_addr=192.168.0.10;
+ dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;cycle_time=17412|SPECIAL
+\end{verbatim}  
+  \caption{Simplified network-monitoring data. We inserted the newline
+    after the ';' to improve legibility.}
+  \label{fig:darkstar-records1}
+\end{figure}
+
+\subsection{Polymorphic Types}
+
+The last key feature of \padsml{} is parameterized types.  Type
+parameterization makes descriptions more concise and allows
+programmers to define convenient libraries of reusable components. The
+description in Figure~\ref{fig:darkstar-ml} illustrates types
+parameterized by both types and values.  This description specifies
+the format of alarm data recorded by a network-link monitor used by
+the \darkstar{} project at AT\&T.  Sample \darkstar{} data is in
+\figref{fig:darkstar-records1}.
+
+Each alarm signals some problem with a network link; At this point, we
+could write an English description of the \darkstar{} data. However,
+English is a terrible specification language for ad hoc data, both
+verbose and imprecise.  Hence, we dispense with the informal English
+and head straight for the \padsml{} description, shown in
+\figref{fig:darkstar-ml}.
+
+\begin{figure}
+  \centering
+  \input{darkstar_pml}
+  \caption{Description of \darkstar{} data.}
+  \label{fig:darkstar-ml}
+\end{figure}
+
+This data format has several variants of name-value pairs. The
+\padsc{} description of this format (shown in~\appref{app:regulus-padsc})
+must define a different type for each variant. In contrast, the
+polymorphic types of \padsml{} allow us to define the type \cd{Pnvp}
+(Line~2), which takes both type and value parameters to encode all the
+variants. Type parameters appear to the left of the type name, as is
+customary in \ml{}.  Value parameters and their \ml{} types appear to
+the right of the type name.  In the definition of \cd{Pnvp}, there is
+one type parameter named \cd{Alpha} and one value parameter named
+\cd{p}.  Informally, \cd{Alpha Pnvp(p)} is a name-value pair where the
+value is described by \cd{Alpha} and the name must satisfy the
+predicate \cd{p}.
+
+The \cd{Nvp} type (Lines~6--7) is defined in terms of \cd{Pnvp}, in
+which the name argument must match a particular string, but the type
+parameter remains abstract.  The \cd{Nvp\_a} (Line~8) is also defined
+in terms of \cd{Pnvp}.  In this case, any name is permitted, but the
+value must be a \cd{SVString}, \ie{}, string terminated by a semicolon
+or vertical bar.  Elsewhere in the description, the type parameter to
+\cd{Nvp} is instantiated with IP addresses, timestamps, and integers.
+
+% The source type is an array of \cd{alarm}s, where each alarm is a
+% \cd{raw\_alarm}, constrained to ensure that the alarm number is
+% properly correlated with the timestamps.  We check this correlation
+% with the function \cd{checkCorr}.  The type \cd{raw\_alarm} closely
+% follows the description above. We highlight a few important features.
+% First, we note that the type of the field \cd{info} depends on the
+% alarm code, reflecting the text above. More interestingly, the type
+% \cd{info} is implemented with a switched datatype, deciding how to
+% parse based on the parameter \cd{alarm\_code}.  Next, we note that the
+% description includes five different types of name-value pairs. We take
+% advantage of both the type and value parameterization of types to
+% encode all of these pair types based on one common description,
+% \cd{pnvp}. This type is polymorphic in the type of the value and takes
+% an arbitrary constraint \cd{c} as an argument. The type \cd{nvp} is
+% polymorphic in the type of the value, but takes the expected name of
+% the string as an argument. 
+
+The \darkstar{} description also illustrates the use of
+\textit{switched} datatypes.  A switched datatype selects a variant
+based on the value of a user-specified \ocaml{} expression, which
+typically references parsed data from earlier in the data source.  For
+example, the switched datatype \cd{Info} (Lines~16--19) chooses a
+variant based on the value of its \cd{alarm\_code} parameter.  More
+specifically, if the alarm code is \cd{5074}, the format specification
+given by the \cd{Details} constructor will be used to parse the
+current data.  Otherwise, the format given by the \cd{Generic}
+constructor will be used to parse the current data.
+
+The last construct in the \darkstar{} description is the type
+qualifier \cd{omit}.  In the \cd{Service} datatype (Lines~20--23),
+\cd{omit} specifies that the parsed string literal should be omitted
+in the internal data representation, because the literal can be
+determined by the datatype constructor.
+
+\cut{We can do this because we can discern from the
+datatype constructor which string was found in the data source.}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis.tex"
+%%% End: 
