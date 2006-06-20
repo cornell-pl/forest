@@ -131,6 +131,26 @@ typedef [abstract] struct P_s         P_t;
 typedef [abstract] struct Pdisc_s     Pdisc_t;
 typedef [abstract] struct Pio_disc_s  Pio_disc_t;
 typedef [abstract] struct Tm_zone_s   Tm_zone_t;
+typedef [abstract] struct Sfio_s      Sfio_t;
+
+/* As we are not outputing a header file, need to add this 
+   typedef by hand.
+*/
+quote(c,"typedef Sfio_t *SfioPtr;");
+typedef [ptr] Sfio_t            *SfioPtr;
+
+/* As we are not outputing a header file, need to add this 
+   typedef by hand.
+*/
+quote(c,"typedef SfioPtr SfioPtrOpt;");
+/* Declarations and Definitions for SfioPtrOpt conversion functions. */
+quote(h,"cnv_opt_decl(padsc,SfioPtr)");
+quote(c,"cnv_opt(padsc,SfioPtr)");
+
+typedef [mltype("sfio_t Com.opaque option"), 
+	 c2ml(c2ml_padsc_SfioPtrOpt), 
+	 ml2c(ml2c_padsc_SfioPtrOpt)] 
+        SfioPtr                     SfioPtrOpt;
 
 /* Hack: IDL defines "byte" as a type, making it illegal as a field
    identifier.  Unfortunately, the first field of the Ppos_s structure
@@ -157,6 +177,7 @@ struct Pbase_pd_s {
   Ploc_t      loc;
 };
 
+
 /* ================================================================================
  * LIBRARY HANDLE OPEN/CLOSE FUNCTIONS
  *
@@ -176,6 +197,7 @@ interface LibraryHandle {
 
 interface Misc {
   Tm_zone_t *P_cstr2timezone([in,string] const char *tzone_str);
+  SfioPtrOpt P_fopen([in,string] const char* source, [in,string] const char* mode);
 }
 
 /* ================================================================================
