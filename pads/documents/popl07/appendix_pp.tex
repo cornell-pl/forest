@@ -458,13 +458,13 @@ base type semantic functions must satisfy.
 \transpp[\psig{x}{\ty}{\ty'},\ctxt,\kty] = \\
   \begin{array}{l}  
     \lampppair{} \\
-    \quad  \ilet {bs_1} 
+      \quad  \ilet x {\ictup{\ipid{1}{r},\ipid{1}{\ipid{2}{pd}}}}\\
+      \quad  \ilet {bs_1} 
 %%    \def \rf {foo} %% {\ipid{1}{r}}
 %%   \def \pf {bar} %% {\ipid{1}{\ipid{2}{pd}}}
 %%  \def \rs {baz} %% {\ipid{2}{r}}
 %% \def \ps {foo} %% {\ipid{2}{\ipid{2}{pd}}}
-      {{\transpp[\ty,,]} \sapp \spair<\ipid{1}{r},\ipid{1}{\ipid{2}{pd}}>} \\
-      \quad  \ilet x {\ictup{\ipid{1}{r},\ipid{1}{\ipid{2}{pd}}}}\\
+      {{\transpp[\ty,,]} \sapp \codefont{x}} \\
       \quad  \ilet {bs_2} 
       {{\transpp[\ty',,]} \sapp \spair<\ipid{2}{r},\ipid{2}{\ipid{2}{pd}}>} \\
       \quad \iappend{bs_1}{bs_2}
