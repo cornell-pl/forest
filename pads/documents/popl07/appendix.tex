@@ -500,7 +500,7 @@ base type semantic functions must satisfy.
       \iinld{\ity}{e} \| \iinrd{\ity}{e} \nlalt
       \icaseg{e}{\nrm x}{e}{\nrm x}{e} \nlalt
       \iarr{\vec e} \| \iappend e e \| \isub e {\nrm e} \nlalt
-      \iroll{e}{\mu\alpha.\tau} \| \iunroll{e}
+      \iroll{e}{\mu\alpha.\tau} \| \iunroll{e}{\mu\alpha.\tau}
       \\
       
   \name{Base Types} \meta{a} \::= 
@@ -809,12 +809,10 @@ $\begin{array}{l}
 %% Mu
 \transpp[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {pp_\ptyvar} {\itup{\pmu \ptyvar \gk \itsem[\ty], (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]})}
+  \ifun {pp_\ptyvar} {\itup{r:\pmu \ptyvar \gk \itsem[\ty], pd:\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}}
                      : \data{:}\ibitsty} {}\\
-  \quad \ilet {\itup{\off',r,p}} 
-   {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
-  \qquad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
-     (p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
+  \quad \trans[\ty,,] \ictup{\iunroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
+     \iunroll{p.2}{\pmu \ptyvar \kty \itpdsem[\ty]}}
 %}}
   \end{array}  
 \\[3pt]
@@ -856,6 +854,10 @@ $\begin{array}{l}
 \caption{\ddc{} Printing semantics}
 \label{fig:ddc-print-sem}
 \end{figure*}
+
+% function pp_a (r, pd) = 
+%  [[t]]_pp (unfold r,unfold (pd.2))
+%
 
 
 %%% Local Variables: 
