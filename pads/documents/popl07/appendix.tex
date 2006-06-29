@@ -761,8 +761,13 @@ $\begin{array}{l}
 %% Intersection 
   \transpp[\pand{\ty_1}{\ty_2},,] = \\
   \begin{array}{l}  
-     \lampppair{} 
-     {{\transpp[\ty_2,,]} \sapp \spair<\ipid{2}{r},\ipid{2}{\ipid{2}{pd}}>}
+    \lampppair{} \\
+    \quad \ilet {p_1}{\ipid {1} {\ipid {2}{pd}}} \\
+    \quad \ilet {p_2}{\ipid {2} {\ipid {2}{pd}}} \\
+    \quad \iif {\ipid {end} {\ipid {sp} {\ipid h {p_1}}} > \ipid {end} {\ipid {sp}
+          {\ipid h {p_2}}}} \\
+    \qquad \ithen {{\transpp[\ty_1,,]} \sapp \spair<\ipid{1}{r},p_1>} \\
+    \qquad  \ielse{{\transpp[\ty_2,,]} \sapp \spair<\ipid{2}{r},p_2>}
    \end{array}
 \\
 %\quad
@@ -780,24 +785,23 @@ $\begin{array}{l}
 \end{array}
 \begin{array}{l}
 %% Array 
-\transpp[\pseq{\ty}{\ty_s}{\pterm e {\ty_t}},,] = \\
+\transpp[\pseq{\ty}{\ilit}{\pterm e {\ty_t}},,] = \\
   \begin{array}{l}  
     \lampppair{}\\
       \quad \iletfun {print}{\itup{rs,ps}}{\\
-         \qquad \icasess {\ictup{r,\ipid{2}{pd}}} \\
+         \qquad \icasess {\ictup{rs,ps}} \\
          \qquad \ipattss{\ictup{[], []}} \epsilon \\
          \qquad \ipattss{\ictup{[r], [p]}} 
-	         { {\transpp[\ty,,]} \sapp \codefont{\ictup{r,\ipid{1}{\ipid{2}p}}}}\\
+	         { {\transpp[\ty,,]} \sapp \ictup{r,p} }\\
          \qquad \ipattssp{\ictup{r::rs, p::ps}} \\
-	    \qqquad  {\transpp[\ty,,]} \sapp  \codefont{\ictup{r,\ipid{1}{\ipid{2}{p}}}}
+	    \qqquad  {\transpp[\ty,,]} \sapp  \ictup{r,p}
                      \; \codefont{@}\\
-	    \qqquad  {\transpp[\ty_s,,]} \sapp  \codefont{\ictup{\ipid{1}{\ipid{2}{\ipid{2}{p}}},
-		                                                 \ipid{2}{\ipid{2}{\ipid{2}{p}}}}}
+	    \qqquad  \printlit \ilit
                      \; \codefont{@} \\
             \qqquad  \codefont{print} \ictup{rs,ps}  
       }\\
       \quad \iin \\      
-      \quad \codefont{print} \ictup{r,\ipid{2}{pd}}
+      \quad \codefont{print} \ictup{\ipid {elts} r,\ipid{elts} {pd}}
   \end{array}  
 \\
 %\end{array}
@@ -820,7 +824,7 @@ $\begin{array}{l}
 \transpp[\lambda\tyvar . \ty,,] = %\\
 %  \begin{array}{l}
     \Lambda \tyvar_\repname. 
-    \Lambda \tyvar_\pdbname. \lambda \codefont{pp_\ptyvar}. \trans[\ty,,]
+    \Lambda \tyvar_\pdbname. \lambda \codefont{pp_\ptyvar}. \transpp[\ty,,]
 %  \end{array}  
 \\
 %% t1 t2
@@ -830,22 +834,21 @@ $\begin{array}{l}
 %% Compute
 \transpp[\pcompute e \ity,,] = \lampppair{} \epsilon \\
 %% Absorb
-\transpp[\pabsorb \ty,,] = \\
-  \begin{array}{l}  
-    \lampppair{}
-    {\transpp[\ty,,]} \sapp \codefont{\ictup{\ipid{1}{\ipid{2}{p}},
-		                                   \ipid{2}{\ipid{2}{p}}}} \\
-  \end{array}  
+\transpp[\pabsorblit \ilit,,] =
+    \gl \spair<\ictup{},\codefont{pd}>.\printlit \ilit
+%  \begin{array}{l}  
+%     {\transpp[\ty,,]} \sapp \codefont{\ictup{\ipid{1}{\ipid{2}{p}},
+% 		                                   \ipid{2}{\ipid{2}{p}}}} \\
+% \end{array}  
 \\
 %% Scan
 \transpp[\pscan \ty,,] = \\
   \begin{array}{l}  
     \lampppair{}\\
-    \quad \ipid{2}{\ipid{2}{p}} \; \codefont{@} \\
-    \quad \icasess {\ictup{r,\ipid{2}{\ipid{1}{pd}}}} \\
-    \quad \ipattss{\ictup{\iinl{r_1}, p_1}} 
-	{ {\transpp[\ty,,]} \sapp \codefont{\ictup{r_1,p_1}}}\\
-    \quad \ipattss{\ictup{\iinr{r_2}, p_2}} \epsilon\\
+    \quad \icasess {\ictup{r,\ipid{2}{pd}}} \\
+    \quad \ipattss{\ictup{\iinl{r_1}, \iinl{p_1}}} 
+	{ {\transpp[\ty,,]} \sapp \codefont{\ictup{r_1,\ipid 2 {p_1}}}}\\
+    \quad \ipattss{\ictup{\iinr{r_2}, \iinr {p_2}}} \epsilon\\
   \end{array}  
 \\
 \end{array}
@@ -862,5 +865,5 @@ $\begin{array}{l}
 
 %%% Local Variables: 
 %%% mode: latex
-%%% TeX-master: "semantics"
+%%% TeX-master: "paper.tex"
 %%% End: 

@@ -139,12 +139,17 @@
 \newcommand{\psum}[3]{#1 + #3} 
 \newcommand{\pand}[2]{#1 \, \& \, #2}
 \newcommand{\pseq}[3]{#1 \, \kwd{seq}(#2,#3)}
+% sequence w/ literal separator.
+\newcommand{\pseql}[3]{#1 \, \kwd{seq}(#2,#3)}
 \newcommand{\pterm}[2]{#1,#2}
 \newcommand{\pset}[3]{\{#1{:}#2 \,|\, #3\}} 
 \newcommand{\pcomputen}{\kwd{compute}}
 \newcommand{\pcompute}[2]{\pcomputen{}(#1{:}#2)}
 \newcommand{\pabsorbn}{\kwd{absorb}}
+\newcommand{\pabsorblitn}{\kwd{literal}}
 \newcommand{\pabsorb}[1]{\pabsorbn{}(#1)}
+% absorb a literal
+\newcommand{\pabsorblit}[1]{\pabsorblitn{}(#1)}
 \newcommand{\pnotn}{\kwd{not}}
 \newcommand{\pnot}[1]{\pnotn{}(#1)}
 \newcommand{\pscann}{\kwd{scan}}
@@ -242,6 +247,7 @@
 \newcommand{\ityvar}{\ga}
 
 %% Internal language term syntax
+\newcommand{\ilit}{\ell}
 \newcommand{\iconst}{\codefont{c}}
 \newcommand{\ivar}{\codefont{x}}
 \newcommand{\iexp}{\codefont{e}}
@@ -369,6 +375,7 @@
 \newcommand{\isdone}[1]{\codefont{isDone} \sapp \ictup{#1}}
 \newcommand{\maxec}[2]{\codefont{max\_ec} \iappi #1 \iappi #2}
 \newcommand{\scanmax}{\codefont{SCAN\_MAX}}
+\newcommand{\printlit}[1]{\codefont{printLit(#1)}}
 
 %% Abbreviations
 \newcommand{\lampair}[1]{\gl \spair<\codefont{\data},\off>.#1}
