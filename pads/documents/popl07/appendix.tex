@@ -755,7 +755,7 @@ $\begin{array}{l}
 	{ {\transpp[\ty_1,,]} \sapp \codefont{\ictup{r_1,p_1}}}\\
   \quad \ipattss{\ictup{\iinr{r_2}, \iinr{p_2}}} 
 	{ {\transpp[\ty_2,,]} \sapp \codefont{\ictup{r_2,p_2}}}\\
-  \quad \ipattss{\_}  {\epsilon}\\
+  \quad \ipattss{\_}  {\failpp}\\
   \end{array}
 \\
 %% Intersection 
@@ -798,7 +798,8 @@ $\begin{array}{l}
                      \; \codefont{@}\\
 	    \qqquad  \printlit \ilit
                      \; \codefont{@} \\
-            \qqquad  \codefont{print} \ictup{rs,ps}  
+            \qqquad  \codefont{print} \ictup{rs,ps}  \\
+         \qquad \ipattss{\_}  {\failpp}
       }\\
       \quad \iin \\      
       \quad \codefont{print} \ictup{\ipid {elts} r,\ipid{elts} {pd}}
@@ -849,6 +850,7 @@ $\begin{array}{l}
     \quad \ipattss{\ictup{\iinl{r_1}, \iinl{p_1}}} 
 	{ {\transpp[\ty,,]} \sapp \codefont{\ictup{r_1,\ipid 2 {p_1}}}}\\
     \quad \ipattss{\ictup{\iinr{r_2}, \iinr {p_2}}} \epsilon\\
+    \quad \ipattss{\_}  {\failpp}\\
   \end{array}  
 \\
 \end{array}

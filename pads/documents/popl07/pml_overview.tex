@@ -1,11 +1,6 @@
 \section{Describing Data in \padsmlbig{}}
 \label{sec:padsml-overview}
-{\em
-To do:
-\begin{itemize}
-\item Check the details of the Kleinstein reference.
-\end{itemize}
-}
+
 A \padsml{} description specifies the physical layout and semantic
 properties of an ad hoc data source.  These descriptions are composed
 of types: base types describe atomic data, while structured types
@@ -152,13 +147,15 @@ Tiny fragment of Newick data:
 {
 \begin{verbatim}
 (((erHomoC:0.28006,erCaelC:0.22089):0.40998,
-(erHomoA:0.32304,(erpCaelC:0.58815,((erHomoB:0.5807,
-erCaelB:0.23569):0.03586,erCaelA:0.38272):0.06516):
-0.03492):0.14265):0.63594,(TRXHomo:0.65866,TRXSacch:
-0.38791):0.32147,TRXEcoli:0.57336)
+(erHomoA:0.32304,(erpCaelC:0.58815,((erHomoB:
+0.5807,erCaelB:0.23569):0.03586,erCaelA:
+0.38272):0.06516):0.03492):0.14265):0.63594,
+(TRXHomo:0.65866,TRXSacch:0.38791):0.32147,
+TRXEcoli:0.57336)
 \end{verbatim}
 }
-  \caption{Simplified tree-shaped Newick data}
+  \caption{Simplified tree-shaped Newick data.  Newlines
+     inserted to improve legibility.}
   \label{fig:newick}
 \end{figure}
 
@@ -177,22 +174,23 @@ separates a child node from its parent.
 and a small fragment of example data.  In this example, the string
 labels are gene names and the distance denotes the number of mutations
 that occur in the antibody receptor genes of B lymphocytes.  This
-data is provided by Steven Kleinstein, program coordinator of
-Princeton's Picasso project for interdisciplinary research in
-computational sciences.  \edcom{Is this true anymore? Should it be in
-  past tense? Should it be here at all?}. Kleinstein is building a simulator to study
+data was provided by Steven Kleinstein. He used
+similar data in his study of
 the proliferation of B lymphocytes during an immune response.
 
 \begin{figure}
   \centering
   \small
 \begin{verbatim}
- 2:3004092508||5001|dns1=abc.com;dns2=xyz.com|c=slow link;w=lost packets|INTERNATIONAL
- 3:|3004097201|5074|dns1=bob.com;dns2=alice.com|src_addr=192.168.0.10;
- dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;cycle_time=17412|SPECIAL
+2:3004092508||5001|dns1=abc.com;dns2=xyz.com|
+c=slow link;w=lost packets|INTERNATIONAL
+3:|3004097201|5074|dns1=bob.com;dns2=alice.com|
+src_addr=192.168.0.10;dst_addr=192.168.23.10;
+start_time=1234567890;end_time=1234568000;
+cycle_time=17412|SPECIAL
 \end{verbatim}  
-  \caption{Simplified network-monitoring data. We inserted the newline
-    after the ';' to improve legibility.}
+  \caption{Simplified network-monitoring data. Newlines
+     inserted to improve legibility.}
   \label{fig:darkstar-records1}
 \end{figure}
 

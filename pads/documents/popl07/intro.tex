@@ -137,65 +137,87 @@ although ad hoc data sources are among the richest for database and
 data mining researchers, they often ignore such sources as the work
 necessary to clean and vet the data is prohibitively expensive.}
 
-%% High-volume
-The high volume of ad hoc data sources is another challenge. AT\&T's
-call-detail stream, for example, contains roughly 300~million calls
-per day requiring approximately 7GBs of storage space.  Although this
-data is eventually archived in a database, data analysts mine it
-profitably before such archiving~\cite{kdd98,kdd99}.  More
-challenging, the \ningaui{} project at AT\&T accumulates billing data
-at a rate of 250-300GB/day, with occasional spurts of 750GBs/day, and
-netflow data arrives from Cisco routers at rates over a Gigabit per
-second~\cite{gigascope}!  Such volumes require that the data be
-processed without loading it into memory all at once.  Not
-surprisingly, flexible error-response strategies are especially
-critical with high-volume sources, so that error detection does not
-halt or delay normal processing.
+%% %% High-volume
+%% The high volume of ad hoc data sources is another challenge. AT\&T's
+%% call-detail stream, for example, contains roughly 300~million calls
+%% per day requiring approximately 7GBs of storage space.  Although this
+%% data is eventually archived in a database, data analysts mine it
+%% profitably before such archiving~\cite{kdd98,kdd99}.  More
+%% challenging, the \ningaui{} project at AT\&T accumulates billing data
+%% at a rate of 250-300GB/day, with occasional spurts of 750GBs/day, and
+%% netflow data arrives from Cisco routers at rates over a Gigabit per
+%% second~\cite{gigascope}!  Such volumes require that the data be
+%% processed without loading it into memory all at once.  Not
+%% surprisingly, flexible error-response strategies are especially
+%% critical with high-volume sources, so that error detection does not
+%% halt or delay normal processing.
 
-%% EXISTING SOLUTIONS
+%% %% EXISTING SOLUTIONS
 
-To manage ad hoc data, analysts typically write custom programs in
-\C{} or \perl{} to parse and manipulate the data. 
-Unfortunately, writing such parsers is tedious and error-prone,
-complicated by the lack of documentation, convoluted encodings
-designed to save space, and the need to produce efficient code.
-Handling errors is a no-win situation.  If analysts insert code
-to detect all possible errors, then the error-related code dominates
-the rest of the program. If they don't, they run the risk of
-failing to detect a critical error and possibly corrupting valuable
-down-stream data.  Moreover, the parser writers'
-hard-won understanding of the data ends up embedded in parsing code,
-making long-term maintenance difficult for the original writers and
-sharing the knowledge with others nearly impossible.
+%% To manage ad hoc data, analysts typically write custom programs in
+%% \C{} or \perl{} to parse and manipulate the data. 
+%% Unfortunately, writing such parsers is tedious and error-prone,
+%% complicated by the lack of documentation, convoluted encodings
+%% designed to save space, and the need to produce efficient code.
+%% Handling errors is a no-win situation.  If analysts insert code
+%% to detect all possible errors, then the error-related code dominates
+%% the rest of the program. If they don't, they run the risk of
+%% failing to detect a critical error and possibly corrupting valuable
+%% down-stream data.  Moreover, the parser writers'
+%% hard-won understanding of the data ends up embedded in parsing code,
+%% making long-term maintenance difficult for the original writers and
+%% sharing the knowledge with others nearly impossible.
 
-\cut{
-The range of application domains, 
-the variability and irregularity of ad hoc formats, 
-the lack of documentation,
-the prevalence of errors, 
-the volume of data,
-and the lack of tools
-make processing ad hoc data both interesting and challenging.
-}
+%% \cut{
+%% The range of application domains, 
+%% the variability and irregularity of ad hoc formats, 
+%% the lack of documentation,
+%% the prevalence of errors, 
+%% the volume of data,
+%% and the lack of tools
+%% make processing ad hoc data both interesting and challenging.
+%% }
 
 %% OUR SOLUTION & CONTRIBUTIONS
 \subsection{\padsmlbig{}}
 
-Our solution to the challenges of ad hoc data is \padsml{}, a
-declarative language for describing data sources.  With \padsml{}, a
-data analyst can describe both the physical format and semantic
-properties of a data source.  From a \padsml{} description, our
-compiler generates robust data processing tools specific to the
-description.  Because valuable tools are generated from a description,
-an analyst is motivated to keep the description up-to-date in response
-to format changes.  Hence a \padsml{} description serves as accurate,
-formal, and living documentation of a data format.
+%% Slight change to emphasize generation of many tools.
+
+\padsml{} is a domain specific language and compiler system designed to 
+improve the productivity of computational biologists, physicists,
+network administrators, healthcare providers
+and anyone else who works with ad hoc data.
+In order to use the system, one must
+write a specification of their data in the \padsml{} language.
+This specification will describe the physical format of the data in question
+and may also include semantic constraints the user expects to hold.
+For the modest effort the user puts into writing this specification,
+and they gained a substantial return.  First of all, the description
+serves as clear, compact and formally specified documentation of 
+the data's structure and properties.  In addition, the \padsml{}
+compiler will produce a large suite of robust, end-to-end
+data processing tools as well as programming libraries specialized
+to the format.  If the user's data sources evolve over time,
+he or she may make simple changes to the high-level specification
+and recompile to produce new, reliable, up-to-date tools.
+
+%% Our solution to the challenges of ad hoc data is \padsml{}, a
+%% declarative language for describing data sources.  With \padsml{}, a
+%% data analyst can describe both the physical format and semantic
+%% properties of a data source.  From a \padsml{} description, our
+%% compiler generates robust data processing tools specific to the
+%% description.  Because valuable tools are generated from a description,
+%% an analyst is motivated to keep the description up-to-date in response
+%% to format changes.  Hence a \padsml{} description serves as accurate,
+%% formal, and living documentation of a data format.
 
 \cut{\textbf{***First describe features of \padsml{} types and the formal semantics.}
 \textbf{Lift text on types from Sec 2.}}
 
-The \padsml{} language is inspired by the type structure of modern
-functional programming languages.  \padsml{} has a rich collection of base
+The design of the 
+\padsml{} language is inspired by the type structure of modern
+functional programming languages.  More specifically, 
+\padsml{} has a rich collection of base
 types and provides polymorphic, dependent, and recursive datatypes to
 specify the syntactic structure and semantic properties of a data
 format.  Together, these features enable users to write concise,
@@ -237,16 +259,18 @@ data-processing tasks like filtering errors and format transformation.
 A key benefit of our approach is the high return-on-investment that
 users derive from describing their data in \padsml{}.  To increase
 this return, our goal is to generate automatically a collection of
-data analysis and processing tools from each description.  The core
-tool that \padsml{} generates from a description is a robust parser
-for the data source.  The parser maps raw data into two data
+data analysis and processing tools from each description.  The two core
+programming libraries that \padsml{} generates from a description 
+are a parser and printer for the data source.  The parser maps raw 
+data into two data
 structures: a canonical \textit{representation} of the parsed data and
 a \textit{parse descriptor}, a meta-data object detailing properties
 of the corresponding data representation.  Parse descriptors provide
 applications with programmatic access to errors detected during
-parsing.
+parsing.  The printer inverts the process, mapping internal data structures
+and their corresponding parse descriptors back into into raw data.
 
-In addition to generating robust parsers, our framework permits
+In addition to generating robust parsers and printer, our framework permits
 developers to easily add their own {\em format-independent} 
 tools, based on their expertise,
 to our tool suite without modifying the \padsml{} compiler.  A new
@@ -266,7 +290,7 @@ source into XML.
 \padsml{} has evolved from previous work on
 \padsc{}~\footnote{We refer to the original
 \pads{} language as \padsc{} to distinguish it from \padsml{}.}~\cite{fisher+:pads}, but
-\padsml{} differs from \padsc{} in three significant ways.  First, it
+\padsml{} differs from \padsc{} in five significant ways.  First, it
 is targeted at the \ml{} family of languages.  Using \ml{} as the host
 language simplifies implementation of many data processing tasks, like
 data transformations, which benefit from \ml{}'s pattern matching and
@@ -280,13 +304,21 @@ In particular, \padsml{} provides a generic interface against which
 tool generators can be written.  In \padsc{}, the compiler itself
 generates all tools, and, therefore, developing a new tool generator
 requires understanding and modifying the compiler.
-
-Finally, we have extended our earlier work on the Data Description Calculus
+Fourth, we have extended our earlier work on the Data Description Calculus
 (\ddcold{})~\cite{fisher+:next700ddl} to account for \padsml{}'s
-polymorphic types and we have simplified the theory of recursive
-types.  We also have proven for the extended calculus that generated
-parsers are type correct.  Section~\ref{sec:ddc} presents the extended
-calculus (\ddc{}), focusing on the semantics of polymorphic types.
+polymorphic types and we have simplified original presentation
+of the parser semantics substantially, particularly for recursive types.  
+We have 
+proven that generated
+parsers are type correct and
+produce pairs of parsed data and parse descriptors in {\em canonical form}.  
+Fifth and finally, we have extended our theory by giving a new interpretation of
+\ddc{} descriptions as printers.  This new interpretation
+helped guide and check our \padsml{} implementation.
+Section~\ref{sec:ddc} presents the extended
+calculus (\ddc{}), focusing on the semantics of 
+polymorphic types for parsing and the key elements of the
+printing semantics.
 
 \cut{
 \textbf{***Then give observations.}
@@ -305,7 +337,7 @@ Therefore, the combination of
 
 \cut{\textbf{***Then, if still necessary give a pithy list of contributions}}
 
-In summary, this work makes the following contributions:
+In summary, this work makes the following key contributions:
 \begin{itemize}
 \item We have designed and implemented \padsml{}, a functional
 data-description language that can concisely express the syntactic
@@ -317,8 +349,8 @@ functional languages can be used to solve
 important data-management problems.  In particular, \ml{} modules and
 functors provides an extensible framework for \padsml{} users to define their
 own \padsml{} tools. 
-\item The formal semantics of \padsml{} is defined in our Data Description
-Calculus, which has been extended to support polymorphic types.
+\item We have defined the formal semantics of both \padsml{} parsers 
+and printers.
 \end{itemize}
 
 \cut{

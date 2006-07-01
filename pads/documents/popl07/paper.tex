@@ -40,13 +40,17 @@
   data-processing tools for any data format described in \padsml{}.
   We have formalized the semantics of \padsml{}'s datatypes by
   extending our previous work on the Data Description
-  Calculus~\cite{fisher+:next700ddl} with type-parameterized types,
-  and we have proven the resulting system ``type-correct,'' \ie{},
-  generated parsers return data of the expected type.  Finally, we
+  Calculus~\cite{fisher+:next700ddl} in three important ways.
+  First, we simplified and a streamlined our previous work on recursive 
+  descriptions.  Second, we extended the Data Description Calculus
+  with type-parameterized types, which was necessary to capture
+  \padsml{}'s polymorphic datatypes, an important feature for code reuse.
+  Third, we augmented the framework by providing a complete semantics
+  for the generated printers.  Finally, we
   have implemented a version of \padsml{} for the \ocaml{} language.
   From a \padsml{} description, our compiler generates an \ocaml{}
-  module containing the relevant type declarations, a parser for the
-  description, and other tools.
+  module containing the relevant type declarations, a parser and printer
+  for the description, and other tools.
 
 \end{abstract}
 
