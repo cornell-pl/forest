@@ -47,13 +47,16 @@ abstractions} (as opposed to {\em value abstractions}, which are functions
 from values to types), we simplified our overall semantics
 by making a couple of subtle technical changes.  For example, we were
 able to eliminate the complicated ``contractiveness'' constraint from our
-earlier work.
+earlier work.  We have also added a new interpretation of \ddc{} types
+as printers.
 
 The main practical benefit of the calculus has been as a guide for our
 implementation. Before working through the formal semantics, we
 struggled to disentangle the invariants related to polymorphism. After
 we had defined the calculus, we were able to implement type
-abstractions as \ocaml{} functors in approximately a week.  We hope
+abstractions as \ocaml{} functors in approximately a week.  
+Our new printing semantics was also very important for helping us define
+and check the correctness of our printer implementation.  We hope
 the calculus will serve as a guide for implementations of {\sc PADS} in
 other host languages.
 In the remainder of this section, we give an overview of the calculus.
@@ -98,10 +101,11 @@ In the remainder of this section, we give an overview of the calculus.
   \name{Kinds} \meta{\gk} \::= \kty \| \kty \-> \gk
                                \| \ity \-> \gk  \\
   \name{Types} \meta{\ty} \::= 
-    \ptrue\| \pfalse \| \pbase{e} \| 
-    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
-    \psig x \ty \ty \| \psum \ty e \ty \|
-    \pset x \ty e \nlalt
+    %\ptrue\| \pfalse \| 
+    \pbase{e} \| 
+    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \| 
+    \psig x \ty \ty \| \psum \ty e \ty \nlalt
+    \pset x \ty e \|
     \ptyvar \| \pmu{\ptyvar}{\gk}{\ty} \| 
     \ptylam{\ptyvar}{\kty}{\ty} \| \ptyapp{\ty}{\ty} \| ...
 \end{bnf}
@@ -129,12 +133,13 @@ with host language type $\ity$ to the interpretation of
 types with kind $\gk$.  For concreteness, we adopt \fomega{} as our
 host language.
 
-The atomic types include $\ptrue$, which consumes no input and reports
-no errors,  and $\pfalse$, which consumes no input but reports an
-error.   $\pbase{e}$ is a base type parameterized
-by an expression $e$ from the host language. 
-The \padsml{} type {\tt Pstring} is an example of such a base type.
+%The atomic types include $\ptrue$, which consumes no input and reports
+%no errors,  and $\pfalse$, which consumes no input but reports an
+%error.   
 
+The simplest description is a base type $\pbase{e}$.
+The base type's parameter $e$ is drawn from the host language. 
+The \padsml{} type {\tt Pstring} is an example of such a base type.
 Structured types include value abstraction $\plam{\var}{\ity}{\ty}$
 and application $\papp{\ty}{e}$, which allow us to parameterize types
 by host language values. 
@@ -219,17 +224,17 @@ See, for example, Pierce's text~\cite{pierce:tapl}.
 \subsection{\ddc{} Semantics}
 \label{sec:ddc-sem}
 
-The primitives of \ddc{} each have three interpretations: two
-datatypes in the host language---one for the data representation
-itself and one for its parse descriptor---and a transformation from
-bit strings into data and corresponding
-meta-data.  We therefore specify the semantics of \ddc{} types using three semantic
+The primitives of \ddc{} each have four interpretations: two
+types in the host language, one for the data representation
+itself and one for its parse descriptor, and two functions,
+one for parsing and one for printing.
+We therefore specify the semantics of \ddc{} types using four semantic
 functions, each of which precisely conveys a particular facet of the
 meaning of a type.  The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$
 describe the type of the data's in-memory representation and 
 parse descriptor, respectively. The
-function $\trans[\cdot,,]$ describes the parsing semantics of
-\ddc{}.
+functions $\trans[\cdot,,]$ and $\transpp[\cdot,,]$ describe 
+the parsing and printing semantics of \ddc{}, respectively.
 
 % In our previous work~\cite{fisher+:next700ddl}, we discuss the
 % semantics of \ddcold{} in detail. Here, we will focus only on those
@@ -407,8 +412,8 @@ defined in this section and a brief description of each.
 \fbox{$\itsem[\ty] = \ity$}
 \[
 \begin{array}{lcl} 
-\itsem[\ptrue] & = & \iunitty \\
-\itsem[\pfalse] & = & \invty \\
+%\itsem[\ptrue] & = & \iunitty \\
+%\itsem[\pfalse] & = & \invty \\
 \itsem[\pbase{e}] & = & \isum {\Irty(C)} \invty   \\
 \itsem[\plam{\var}{\ity}{\ty}] & = & \itsem[\ty] \\
 \itsem[\papp \ty e] & = & \itsem[\ty] \\
@@ -448,8 +453,8 @@ become \fomega{} type constructors and type application, respectively.
 %% %% example: \ua.(int * a) + None
 %% %%          pd = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * [a]_pd)) + [None]_pd)
 %% %%             = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * a)) + [None]_pd)
-\itpdsem[\ptrue] & = & \ipty \iunitty \\                                                  
-\itpdsem[\pfalse] & = & \ipty \iunitty \\                                                  
+%\itpdsem[\ptrue] & = & \ipty \iunitty \\                                                  
+%\itpdsem[\pfalse] & = & \ipty \iunitty \\                                                  
 \itpdsem[\pbase{e}] & = & \ipty \iunitty\\
 \itpdsem[\plam \var \ity \ty] & = & \itpdsem[\ty] \\
 \itpdsem[\papp \ty e] & = & \itpdsem[\ty] \\
@@ -565,7 +570,7 @@ where the argument type is the PD body type.
 \begin{align*}
   &\kTrans[\kty,\ty] & = & \quad \extdom * \offdom \iarrowi \offdom * \itsem[\ty] * \itpdsem[\ty]
    \\
-   &\kTrans[\ity \iarrowi \gk,\ty] & = & \quad \ity \iarrowi \kTrans[\gk,\ty e],
+   &\kTrans[\ity \iarrowi \gk,\ty] & = & \quad \ity \iarrowi \kTrans[\gk,\ty\ e],
    \; \mbox{for any e}.
    \\
    &\kTrans[\kty \iarrowi \gk,\ty] & = & \quad 
@@ -585,13 +590,13 @@ where the argument type is the PD body type.
 \[
 \begin{array}{l}
   %% None 
-\trans[\ptrue,\ctxt,\kty] =
-  \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}
-\\[3pt] %\\
+%\trans[\ptrue,\ctxt,\kty] =
+%  \lampair{\spair<\off,\newrep{unit}{},\newpd{unit}{\off}>}
+%\\[3pt] %\\
 %% False 
-\trans[\pfalse,,] =
-  \lampair{\spair<\off,\newrep {bottom}{},\newpd {bottom}{\off}>}
-\\[3pt] %\\ 
+%\trans[\pfalse,,] =
+%  \lampair{\spair<\off,\newrep {bottom}{},\newpd {bottom}{\off}>}
+%\\[3pt] %\\ 
 %% Const 
 \trans[\pbase{e},\ctxt,\kty] =
   \lampair{\iapp {\iapp {\Iimp(C)} (e)} {\itup {\idata,\off}}}
@@ -805,6 +810,134 @@ interpretations of $\ty_2$.
 % variable for the whole PD type. Therefore, all parameterization
 % related to PD types must be over the PD-body type, rather than the PD
 % type as a whole.
+
+\begin{figure}
+\small
+\fbox{$\kTransPP[\gk,\ty] = \ity$} 
+    
+\begin{align*}
+  &\kTransPP[\kty,\ty] & = & \quad \itsem[\ty] * \itpdsem[\ty] \iarrowi \extdom 
+   \\
+   &\kTransPP[\ity \iarrowi \gk,\ty] & = & \quad \ity \iarrowi \kTransPP[\gk,\ty\ e],
+   \; \mbox{for any e}.
+   \\
+   &\kTransPP[\kty \iarrowi \gk,\ty] & = & \quad 
+      \forall\tyvar_\repname.\forall\tyvar_\pdbname.
+         \kTransPP[\kty,\tyvar] \iarrowi \kTransPP[\gk,\ty \tyvar] \\
+         & & & \quad (\ptyvar_\repname, \ptyvar_\pdbname \not \in \ftv \kind \cup
+         \ftv \ty)
+\end{align*}  
+  \caption{\Implang{} language types for printing functions}
+  \label{fig:printer-types}
+\end{figure}
+
+\begin{figure}
+\small
+\fbox{$\transpp[\ty,\ctxt,\gk] = e$} 
+
+\[
+\begin{array}{l}
+%% Const 
+\transpp[\pbase{e},\ctxt,\kty] =
+  \lampppair{\iapp {\iapp {\Igen{pp}(C)} (e)} {\ictup {r,pd}}}
+\\[3pt] %\\
+%% Abs 
+\transpp[\plam{\var}{\ity}{\ty},,] =
+   \sfn{\nrm\var}{\ity}{\transpp[\ty,\ectxt{\var{:}\ity},\kind]}
+\\[3pt] %\\
+%% App 
+\transpp[\papp{\ty}{e},\ctxt,\gk] =
+  \transpp[\ty,,] \sapp e  
+\\[3pt]
+%% Prod 
+%\begin{array}{l}
+\transpp[\psig{x}{\ty_1}{\ty_2},\ctxt,\kty] = \\
+  \begin{array}{l}  
+    \lampppair{} \\
+      \quad  \ilet x {\ictup{\ipid{1}{r},\ipid{1}{\ipid{2}{pd}}}}\\
+      \quad  \ilet {bs_1} 
+%%    \def \rf {foo} %% {\ipid{1}{r}}
+%%   \def \pf {bar} %% {\ipid{1}{\ipid{2}{pd}}}
+%%  \def \rs {baz} %% {\ipid{2}{r}}
+%% \def \ps {foo} %% {\ipid{2}{\ipid{2}{pd}}}
+      {{\transpp[\ty_1,,]} \sapp \codefont{x}} \\
+      \quad  \ilet {bs_2} 
+      {{\transpp[\ty_2,,]} \sapp \spair<\ipid{2}{r},\ipid{2}{\ipid{2}{pd}}>} \\
+      \quad \iappend{bs_1}{bs_2}
+  \end{array}  
+%\end{array}
+\\
+%% Sum 
+%\begin{array}{l}
+  \transpp[\psum{\ty_1}{e}{\ty_2},,] = \\
+  \begin{array}{l}  
+  \lampppair{} \\
+  \quad \icasess {\ictup{r,\ipid{2}{pd}}} \\
+  \quad \ipattss{\ictup{\iinl{r_1}, \iinl{p_1}}} 
+	{ {\transpp[\ty_1,,]} \sapp \codefont{\ictup{r_1,p_1}}}\\
+  \quad \ipattss{\ictup{\iinr{r_2}, \iinr{p_2}}} 
+	{ {\transpp[\ty_2,,]} \sapp \codefont{\ictup{r_2,p_2}}}\\
+  \quad \ipattss{\_}  {\failpp}\\
+  \end{array}
+\\
+%\quad
+%% Set 
+  \transpp[\pset{x}{\ty}{e},\ctxt,\kty] = \\
+  \begin{array}{l}  
+  \lampppair{} \\
+  \quad \icasess {\ictup{r,\ipid{2}{pd}}} \\
+  \quad \ipattss{\ictup{\iinl{r_1}, p_1}} 
+	{ {\transpp[\ty,,]} \sapp \codefont{\ictup{r_1,p_1}}}\\
+  \quad \ipattss{\ictup{\iinr{r_2}, p_2}} 
+	{ {\transpp[\ty,,]} \sapp \codefont{\ictup{r_2,p_2}}}\\
+  \end{array}
+\\[3pt]
+%% Var
+\transpp[\ptyvar,,] = \codefont{pp_\ptyvar}
+\\[3pt]
+%% Mu
+\transpp[\pmu \ptyvar \gk \ty,,] = \\
+  \begin{array}{l}
+  \ifun {pp_\ptyvar} {\itup{r:\pmu \ptyvar \gk \itsem[\ty], pd:\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}}
+                     : \data{:}\ibitsty} {}\\
+  \quad \trans[\ty,,] \ictup{\iunroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
+     \iunroll{p.2}{\pmu \ptyvar \kty \itpdsem[\ty]}}
+%}}
+  \end{array}  
+\\[3pt]
+%% lambda \alpha
+\transpp[\lambda\tyvar . \ty,,] = %\\
+%  \begin{array}{l}
+    \Lambda \tyvar_\repname. 
+    \Lambda \tyvar_\pdbname. \lambda \codefont{pp_\ptyvar}. \transpp[\ty,,]
+%  \end{array}  
+\\
+%% t1 t2
+\transpp[\ty_1 \ty_2,,] = 
+    \transpp[\ty_1,,]\; [\itsem[\ty_2]]\; [\itpdsemstrip[\ty_2]]\; \transpp[\ty_2,,]
+\\
+\end{array}
+\]
+%\caption{\ddc{} Printing semantics (cont.)}
+\caption{\ddc{} printing semantics, selected constructs}
+\label{fig:ddc-print-sem}
+\end{figure}
+
+
+\paragraph*{\ddc{} printing semantics}
+\label{sec:print-sem}
+The definition of the printing semantics for a \ddc{} description
+uses a similar set of concepts as the parsing semantics.  To begin,
+the semantic function $\kTransPP[\gk,\ty] = \ity$ gives the
+host language type $\ity$ for the printer generated from type $\ty$
+with kind $\gk$.  As shown in \figref{fig:parser-types},
+the printing semantics for descriptions with higher kind are functions that
+construct printers.  The printing semantics for descriptions with base kind
+are simple first-order functions that map a representation and a
+parse descriptor into a string of bits.
+
+Figure~\ref{fig:ddc-print-sem} presents the printing semantics of
+selected \ddc{} constructs.
 
 \subsection{Meta-theory}
 \label{sec:meta-theory}
