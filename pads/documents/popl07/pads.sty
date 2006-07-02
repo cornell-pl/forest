@@ -166,7 +166,10 @@
 \newcommand{\pdname}{\kwd{PD}}
   % pd body name.
 \newcommand{\pdbname}{\kwd{PDb}}
-
+  % parse function name
+\newcommand{\parsename}{parse}
+  % print function name
+\newcommand{\printname}{print}
   %% generic base-type interface macro
 \newcommand{\Igen}[1]{\mathcal{B}_{\text{#1}}}
   %% base type kind interface
@@ -286,6 +289,11 @@
 \newcommand{\ictup}[1]{\codefont{(#1)}}
 \newcommand{\ipi}[2]{\codefont{\gp_{#1}} \, #2}
 \newcommand{\ipid}[2]{\codefont{#2.#1}}
+% header projection for pds.
+\newcommand{\iphdr}{h}
+% body projection for pds.
+\newcommand{\ipbdy}{b}
+
 \newcommand{\iarr}[1]{\codefont{[}#1\codefont{]}}
 \newcommand{\ieseq}{\codefont{[]}}
 \newcommand{\iappend}[2]{\codefont{#1 \; @ \; #2}}
@@ -333,9 +341,6 @@
 \newcommand{\iori}{\; \codefont{or} \;}
 \newcommand{\iandi}{\; \codefont{and} \;}
 
-%%Dave
-\newcommand{\failpp}{\codefont{badInput}()}
-
 %% Semantic Domain syntax
   %% semantic definition
 %\newcommand{sbox
@@ -379,6 +384,8 @@
 \newcommand{\maxec}[2]{\codefont{max\_ec} \iappi #1 \iappi #2}
 \newcommand{\scanmax}{\codefont{SCAN\_MAX}}
 \newcommand{\printlit}[1]{\codefont{printLit(#1)}}
+\newcommand{\failpp}{\codefont{badInput}()}
+\newcommand{\subbits}[3]{\codefont{sub}(#1,#2,#3)}
 
 %% Abbreviations
 \newcommand{\lampair}[1]{\gl \spair<\codefont{\data},\off>.#1}
