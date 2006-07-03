@@ -1,12 +1,5 @@
 \section{The Semantics of PADS/ML}
 \label{sec:ddc}
-% \emph{What is a good name for types with kind T?}
-
-% {\em Should we use a different meta-variable for fomega contexts given
-%   that they contain both types and variables?}
-
-% \emph{Make change from single \fomega context to split context, for
-%   whole section.}
 
 % \emph{Do we want to show an example from pads/ml shown in DDC.
 %   (e.g. name-value pairs?). It think it would be nice, but I don't
@@ -28,12 +21,6 @@
   annotation types into F-omega types.
   
 }
-
-% In this section, we discuss the formal semantics of \padsml{}. This
-% semantics allows us to reason formally about the system, and prove
-% properties that we feel should hold. In addition, it allows us to
-% convey the core ideas of the system to other researchers, language
-% implementers, and even users.
 
 In this section, we introduce \ddc{}, a calculus of simple, orthogonal
 type constructors, which serves to give a semantics
@@ -62,38 +49,6 @@ other host languages.
 In the remainder of this section, we give an overview of the calculus.
 \appref{app:ddc-semantics} contains a complete formal specification.
 
-% designed a semantic framework for understanding a range
-% of data description languages and guiding us in developing future
-% ones. At the core of this framework is a
-% low-level data description language \ddcold{}, intended to capture the
-% essential features used in data description.  Syntactically, \ddcold{}
-% is a calculus of dependent types extended with a number of type
-% constructors specific to the domain of data description. Semantically,
-% however, rather than describing the properties of expressions,
-% \ddcold{} types describe data sources. The base types describe atomic
-% fragments of data, while the type constructors capture compound
-% structures within a source.
-
-% We we would like to use \ddcold{} to specify the semantics of
-% \padsml{}. However, the polymorphic types of \padsml{} cannot be
-% expressed in \ddcold{}. Therefore, we extend \ddcold{} with type
-% abstractions $\ptylam{\ptyvar}{\kty}{\ty}$ and type application
-% $\ptyapp{\ty}{\ty}$ in order to capture the semantics of polymorphic
-% types. We refer to the extended calculus as \ddc{}.
-
-% There are a number of different data description languages, as we
-% discuss in more detail in our section on related work. Therefore, the
-% utility of \ddc{} is not limited to explaining \padsml{}, but should
-% be useful for any data description language with similar features.
-% Indeed, in the remainder of this section, we focus exclusively on
-% \ddc{}, its syntax, semantics, and meta-theory and leave the
-% connection to \padsml{} implicit.
-
-% A final note before we begin. The benefits of \ddc{} have not been
-% hypothetical alone. All of the essential design of polymorphic types
-% occured within the setting of \ddc{}. Using \ddc{} and \ocaml{} functors,
-% the implementation of polymophic types in \padsml{} took about a week.
-
 \subsection{\ddc{} Syntax}
 \begin{figure}
 {\small
@@ -115,15 +70,6 @@ In the remainder of this section, we give an overview of the calculus.
 \end{figure}
 
 \figref{fig:ddc-syntax} summarizes the syntax of the \ddc.
-% A portion of the syntax of \ddc{} is shown in \figref{fig:ddc-syntax}.
-% We leave out a number of primitives from \ddcold{} that do not play a
-% critical role in \padsml{} and are unaffected by the extensions of
-% \ddc{}. While they are included in \ddc{}, we leave them out of the
-% discussion in this section, so as not to confuse the reader with
-% unnecessary details. The interested reader is encouraged to consult
-% our previous paper for a full discussion of the omitted primitives. In
-% addition, all \ddc{}-related figures are included in their complete
-% form in the appendix.
 The interpretation of a type with kind $\kty$ is a parser that maps
 data from an external form into an internal one.  
 A type with kind $\kty \rightarrow \gk$ is a function mapping 
@@ -219,7 +165,7 @@ The static semantics ($\stsem[e,{\pctxt;\ctxt},\ity]$), operational
 semantics ($e \stepsto e'$), and type 
 equality ($\ity \equiv \ity'$) are those of \fomega{} extended with
 recursive functions and recursive types and are entirely standard.
-See, for example, Pierce's text~\cite{pierce:tapl}.
+See Pierce's text~\cite{pierce:tapl} for details.
 
 \subsection{\ddc{} Semantics}
 \label{sec:ddc-sem}
@@ -232,9 +178,9 @@ We therefore specify the semantics of \ddc{} types using four semantic
 functions, each of which precisely conveys a particular facet of the
 meaning of a type.  The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$
 describe the type of the data's in-memory representation and 
-parse descriptor, respectively. The
-functions $\trans[\cdot,,]$ and $\transpp[\cdot,,]$ describe 
-the parsing and printing semantics of \ddc{}, respectively.
+parse descriptor, respectively. The semantic
+functions $\trans[\cdot,,]$ and $\transpp[\cdot,,]$ define
+the parsing and printing functions generated from \ddc{} descriptions.
 
 % In our previous work~\cite{fisher+:next700ddl}, we discuss the
 % semantics of \ddcold{} in detail. Here, we will focus only on those
@@ -266,147 +212,6 @@ For reference, we provide in
 \tblref{tab:judg-list} a listing of all the functions and judgments
 defined in this section and a brief description of each.  
 }
-
-% \subsubsection{\ddc{} Kinding}
-% \label{sec:ddc-kinding}
-
-% \begin{figure*}[t]
-% \small
-% \fbox{$\ddck[\ty,\pctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
-% \[
-% \infer[\text{Unit}]{
-%     \ddck[\ptrue,\pctxt;\ctxt,\kty,\con]
-%   }{\wfd {} {\fotyc \pctxt,\ctxt}}
-% \quad 
-% \infer[\text{Bottom}]{
-%     \ddck[\pfalse,\pctxt;\ctxt,\kty,\con]
-%   }{\wfd {} {\fotyc \pctxt, \ctxt}}
-% \quad 
-% \infer[\text{Const}]{
-%     \ddck[\pbase{e},\pctxt;\ctxt,\kty,\con]
-%   }{
-%       \wfd {} {\fotyc \pctxt,\ctxt} &
-%       \stsem[e,{\fotyc \pctxt,\ctxt},\ity] &
-%       \Ikind(C) = {\ity \iarrowi \kty}
-%   }
-% \]
-
-% \[
-% \infer[\text{Abs}]{
-%     \ddck[\plam{\var}{\ity}{\ty},
-%          \pctxt;\ctxt,\ity \iarrowi \kind,\mcon]
-%   }{
-%     \ddck[\ty,\pctxt;\ectxt{\var{:}\ity},\kind,\mcon]
-%   }
-% \quad
-% \infer[\text{App}]{
-%   \ddck[\papp{\ty}{e},\pctxt;\ctxt,\gk,\mcon]
-% }{
-%   \ddck[\ty,\pctxt;\ctxt,\ity \iarrowi \gk,\mcon] &
-%   \stsem[e,{\fotyc \pctxt,\ctxt},\ity]
-% }
-% \]
-
-% \[
-% \infer[\text{Prod}]{
-%     \ddck[\psig{x}{\ty}{\ty'},\pctxt;\ctxt,\kty,\con]
-%   }{       
-%     \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] &
-%     \ddck[\ty',\pctxt;
-%           \ectxt {x{:}\iprod {\itsem[\ty]} 
-%               {\itpdsem[\ty]}},
-%           \kty,\mcon']
-%   }
-% \quad
-% \infer[\text{Sum}]{
-%     \ddck[\psum{\ty}{e}{\ty'},\pctxt;\ctxt,\kty,\con]
-%   }{
-%     \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & \ddck[\ty',\pctxt;\ctxt,\kty,\mcon'] 
-%   }
-% \quad
-%   \infer[\text{Con}]{
-%     \ddck[\pset x \ty e,\pctxt;\ctxt,\kty,\con]
-%   }{ 
-%     \ddck[\ty,\pctxt;\ctxt,\kty,\mcon] & 
-%     \stsem[e,
-%      {\fotyc \pctxt,
-%     \ectxt{x{:}\iprod{\itsem[\ty]} 
-%       {\itpdsem[\ty]}}},\iboolty]
-%   }
-% \]
-
-% \[
-%   \infer[\text{TyVar}]{
-%     \ddck[\ptyvar,{\pctxt;\ctxt},\kty,\ncon]
-%   }{\wfd {}{\fotyc \pctxt, \ctxt} \quad \tyvar{:}\kty \in \pctxt}
-% \quad
-%   \infer[\text{Rec}]{
-%     \ddck[\pmu \ptyvar \kty \ty,\pctxt;\ctxt,\kty,\con]
-%   }{
-%     \ddck[\ty,{\pctxt,\ptyvar{:}\kty;\ctxt},\kty,\con]
-%   }
-% \quad
-% \infer[\text{TyAbs}]{
-%     \ddck[\ptylam{\tyvar}{\kty}{\ty},
-%          \pctxt;\ctxt,\kty \iarrowi \kind,\mcon]
-%   }{
-%     \ddck[\ty,{\pctxt,\tyvar{:}\kty;\ctxt},\kind,\mcon]
-%   }
-% \quad
-% \infer[\text{TyApp}]{
-%   \ddck[\ptyapp{\ty_1}{\ty_2},\pctxt;\ctxt,\gk,\mcon]
-% }{
-%   \ddck[\ty_1,\pctxt;\ctxt,\kty \iarrowi \gk,\mcon] &
-%   \ddck[\ty_2,\pctxt;\ctxt,\kty,\mcon]
-% }
-% \]
-% \caption{Partial listing of \ddc{} kinding rules}
-% \label{fig:ddc-kinding}
-% \end{figure*}
-
-% The kinding judgment defined in \figref{fig:ddc-kinding} determines
-% well-formed \ddc{} types, assigning kind $\kty$ to actual (i.e. unparameterized) types, kinds
-% $\ity \iarrowi \kind$ to value abstractions, and kinds $\kty \iarrowi
-% \kind$ to type abstractions. We use two contexts to express our
-% kinding judgment:
-% \[
-% \begin{array}{ll}
-% \ctxt  & \mathrel{::=} \cdot \bnfalt \ctxt,{\var{:}\ity}\\
-% \pctxt  & \mathrel{::=} \cdot \bnfalt \pctxt,\tyvar{:}\kty
-% \end{array}
-% \]
-
-% Context $\Gamma$ is a finite partial map that binds expression
-% variables to their types.
-% Context $\pctxt$ is a finite partial map that binds type
-% variables to their kinds. We provide the following translations from
-% type contexts $\pctxt$ to \fomega type-variable contexts $\pctxt$.
-% \begin{align*}
-% \fortyc {\cdot} &= \cdot &
-% \fortyc {\pctxt,\ptyvar{:}\kty} &= \fortyc \pctxt, \ptyvar_\repname
-% {\mathrel{::}} \kty \\
-% \fopdtyc {\cdot} &= \cdot &
-% \fopdtyc {\pctxt,\ptyvar{:}\kty} &= \fopdtyc \pctxt, \ptyvar_\pdbname
-% {\mathrel{::}} \kty
-% \end{align*}
-% The translation $\fortyc \pctxt$ and $\fopdtyc \pctxt$ respectively map type
-% variables of \ddc{} to the corresponding representation-type and parse
-% descriptor-type variables in \fomega. Translation
-% $\fotyc \pctxt$ simply a combines of the two ($\fotyc \pctxt = \fortyc \pctxt, \fopdtyc \pctxt$).  These
-% translations are used when checking the well-formedness of contexts
-% $\ctxt$ with open type variables.
-
-% An essential difference in the kinding rules between \ddcold{} and
-% \ddc{} is that we replace the context $M$ of \ddcold{}, which mapped
-% recursive-type variables to their definitions, with a simpler context
-% $\pctxt$ which merely assigns a kind (always $\kty$) to open type
-% variables. Recursive-type variables are now treated as abstract, just
-% like the type variables arising from type abstractions.
-% Correspondingly, the rule for type variables (TyVar) now has an
-% entirely standard form, and the premise of the rule for recursive types
-% (Rec) is now identical to the premise of the rule for type abstractions
-% (TyAbs). The rule for type application (TyApp) is almost standard,
-% except that parameters are restricted to having kind $\kty$. 
 
 \begin{figure}
 \fbox{$\itsem[\ty] = \ity$}
@@ -655,12 +460,12 @@ where the argument type is the PD body type.
   \end{array}
 \\[3pt]
 %% Var
-\trans[\ptyvar,,] = \codefont{f_\ptyvar}
+\trans[\ptyvar,,] = \codefont{\parsename_\ptyvar}
 \\[3pt]
 %% Mu
 \trans[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {f_\ptyvar} {\itup{\data,\off} :
+  \ifun {\parsename_\ptyvar} {\itup{\data,\off} :
     \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
                     * (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}) } {}\\
   \quad \ilet {\itup{\off',r,p}} 
@@ -674,7 +479,7 @@ where the argument type is the PD body type.
 \trans[\lambda\tyvar . \ty,,] = %\\
 %  \begin{array}{l}
     \Lambda \tyvar_\repname. 
-    \Lambda \tyvar_\pdbname. \lambda \codefont{f_\ptyvar}. \trans[\ty,,]
+    \Lambda \tyvar_\pdbname. \lambda \codefont{\parsename_\ptyvar}. \trans[\ty,,]
 %  \end{array}  
 \\[3pt]
 %% t1 t2
@@ -687,44 +492,6 @@ where the argument type is the PD body type.
 \caption{\ddc{} parsing semantics, selected constructs}
 \label{fig:ddc-sem-sum}
 \end{figure}
-
-% \begin{figure}
-% \small
-% \begin{itemize}
-% \renewcommand{\labelitemi}{}
-
-% %\item %[Unit:]
-% \item $\ifun {R_{unit}} \iuval \iuval$
-% \item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
-
-% %\item %[Bottom:]
-% \item $\ifun {R_{bottom}} \iuval \ierr$
-% \item $\ifun {P_{bottom}} \off ((1,\iecpc,\ipair \off \off),())$
-
-% \item %[Pair:]
-% \item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
-% \item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
-%   $\begin{array}{l}
-%     \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
-%     \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-%     \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
-%     \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
-%     \quad \ictup {nerr,ec,sp}
-%   \end{array}$
-
-% \item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
-
-% \end{itemize}
-% \caption{Selected Constructor Functions. 
-% The type of PD headers is $\iintty
-%   \iprodi \iecty \iprodi \ispty$. 
-%   We refer to the projections using
-%   dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
-%   $\codefont{sp}$, respectively. A span is a pair of offsets, referred
-%   to as $\codefont{begin}$ and $\codefont{end}$, respectively.  The full collection of such constructor functions appears in \appref{app:asst-functions}.}
-% \label{fig:cons-funs}
-% %\caption{Constructor Functions (cont.)}
-% \end{figure}
 
 
 \paragraph*{\ddc{} parsing semantics.}
@@ -748,11 +515,16 @@ subcomponents of the type (if any), assemble the resultant
 representation, and tabulate meta-data based on subcomponent meta-data
 (if any). For the sake of clarity, we have factored the latter two
 steps into separate representation and PD constructor functions which
-we define for each type. For some types, we additionally factor the PD
-header construction into a separate function. For example, the
-representation and PD constructors for $\ptrue$ are $\newrepf {unit}$
-and $\newpdf {unit}$, respectively, and the header constructor for
-products is ${\codefont{H_{\gS}}}$.  We have also factored out some commonly
+we define for each type. 
+%For some types, we additionally factor the PD
+%header construction into a separate function. 
+For example, the
+representation and PD constructors for the dependent sums are
+$\newrepf {\gS}$ and $\newpdf {\gS}$, 
+respectively
+%, and the header constructor for
+%products is ${\codefont{H_{\gS}}}$.  
+We have also factored out some commonly
 occuring code into auxiliary functions.  These constructors and functions
 appear in \appref{app:asst-functions}.
 
@@ -893,13 +665,13 @@ interpretations of $\ty_2$.
   \end{array}
 \\[3pt]
 %% Var
-\transpp[\ptyvar,,] = \codefont{pp_\ptyvar}
+\transpp[\ptyvar,,] = \codefont{\printname_\ptyvar}
 \\[3pt]
 %% Mu
 \transpp[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {pp_\ptyvar} {\itup{r:\pmu \ptyvar \gk \itsem[\ty], pd:\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}}
-                     : \data{:}\ibitsty} {}\\
+  \ifun {\printname_\ptyvar} {\itup{r:\pmu \ptyvar \gk \itsem[\ty], pd:\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}}
+                     : \ibitsty} {}\\
   \quad \trans[\ty,,] \ictup{\iunroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
      \iunroll{p.2}{\pmu \ptyvar \kty \itpdsem[\ty]}}
 %}}
@@ -909,7 +681,7 @@ interpretations of $\ty_2$.
 \transpp[\lambda\tyvar . \ty,,] = %\\
 %  \begin{array}{l}
     \Lambda \tyvar_\repname. 
-    \Lambda \tyvar_\pdbname. \lambda \codefont{pp_\ptyvar}. \transpp[\ty,,]
+    \Lambda \tyvar_\pdbname. \lambda \codefont{\printname_\ptyvar}. \transpp[\ty,,]
 %  \end{array}  
 \\
 %% t1 t2
@@ -932,12 +704,37 @@ the semantic function $\kTransPP[\gk,\ty] = \ity$ gives the
 host language type $\ity$ for the printer generated from type $\ty$
 with kind $\gk$.  As shown in \figref{fig:parser-types},
 the printing semantics for descriptions with higher kind are functions that
-construct printers.  The printing semantics for descriptions with base kind
+construct printers and the printing semantics for descriptions with base kind
 are simple first-order functions that map a representation and a
 parse descriptor into a string of bits.
 
 Figure~\ref{fig:ddc-print-sem} presents the printing semantics of
-selected \ddc{} constructs.
+selected \ddc{} constructs.  Base types $\pbase{e}$ are printed in
+various different ways according to the definition
+$\Igen{pp}$, which is a parameter to the semantics.  The base type
+printer $\Igen{pp}$ accepts the parse descriptor as a parameter, and
+in the case of an error, a base type printer will print nothing.
+Dependent sums print one component and then the next in order.\footnote{The
+notation $\iappend{bs_1}{bs_2}$ appends bit string $bs_1$ to $bs_2$.}
+Printing an ordinary sum type occurs by printing the underlying
+tagged value.  Notice that the structure of the parse descriptor
+and the representation should be isomorphic -- both should be
+left injections or both should be right injections.  Any pair
+of structures generated from the parser will satisfy this invariant.
+If the pair of parse descriptor and representation do not match then the
+programmer is using the printer has done so incorrectly.  In this case,
+the printer calls an unspecified error routine named $\failpp{}$.
+
+The semantics of printing recursive and parameterized types follows
+similar lines to the semantics for parsing these constructs.
+In particular, whenever a type parameter is introduced in the syntax
+of a description a corresponding value parameter with printer function type 
+is introduced in the generated printer code. We give the value parameter
+the name $\printname_\alpha$.  Both type abstractions and recursive functions
+introduce such parameters.  Notice that whereas the parsing interpretation
+of a description used a fold to build a recursive data structure
+when interpreting a recursive type, the printing interpretation uses
+unfold to deconstruct a recursive data structure for printing.  
 
 \subsection{Meta-theory}
 \label{sec:meta-theory}
