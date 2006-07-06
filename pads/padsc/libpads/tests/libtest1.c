@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     /* try to read 4 fixed width integers (width 6) */
     for (i = 0; i < 4; i++) {
       if (P_OK == Pa_int8_FW_read(pads, &m, &pd, &i1, 6)) {
-	error(0, "Read ascii integer of width 6: %ld", i1);
+	error(0, "Read ascii integer of width 6: %ld", (long)i1);
       }
     }
     if (strncmp(argv[1], "norec", 5) == 0) {

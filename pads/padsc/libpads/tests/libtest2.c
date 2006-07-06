@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     if (P_ERR == Pb_int8_read(pads, &m, &pd, &i1)) {
       goto check_newline;
     } else {
-      error(0, "Read bint8  : %ld", i1);
+      error(0, "Read bint8  : %ld", (long)i1);
     }
     if (P_ERR == Pb_uint8_read(pads, &m, &pd, &ui1)) {
       goto check_newline;
@@ -93,32 +93,32 @@ int main(int argc, char** argv) {
     if (P_ERR == Pb_int16_read(pads, &m, &pd, &i2)) {
       goto check_newline;
     } else {
-      error(0, "Read bint16  : %ld", i2);
+      error(0, "Read bint16  : %ld", (long)i2);
     }
     if (P_ERR == Pb_uint16_read(pads, &m, &pd, &ui2)) {
       goto check_newline;
     } else {
-      error(0, "Read buint16 : %lu", ui2);
+      error(0, "Read buint16 : %lu", (unsigned long)ui2);
     }
     if (P_ERR == Pb_int32_read(pads, &m, &pd, &i4)) {
       goto check_newline;
     } else {
-      error(0, "Read bint32  : %ld", i4);
+      error(0, "Read bint32  : %ld", (long)i4);
     }
     if (P_ERR == Pb_uint32_read(pads, &m, &pd, &ui4)) {
       goto check_newline;
     } else {
-      error(0, "Read buint32 : %lu", ui4);
+      error(0, "Read buint32 : %lu", (unsigned long)ui4);
     }
     if (P_ERR == Pb_int64_read(pads, &m, &pd, &i8)) {
       goto check_newline;
     } else {
-      error(0, "Read bint64  : %lld", i8);
+      error(0, "Read bint64  : %lld", (long)i8);
     }
     if (P_ERR == Pb_uint64_read(pads, &m, &pd, &ui8)) {
       goto check_newline;
     } else {
-      error(0, "Read buint64 : %llu", ui8);
+      error(0, "Read buint64 : %llu", (long)ui8);
     }
 
   check_newline:
