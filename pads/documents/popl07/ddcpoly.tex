@@ -874,9 +874,14 @@ $\pctxt$ to typing contexts $\ctxt$:
 
 \begin{lemma}[Type Correctness Lemma]
 \label{thm:type-correctness}
-  If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
+\begin{itemize}
+\item If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
   $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
-            {\kTrans[\kind,\ty]}]$.
+            {\kTrans[\kind,\ty]}]$
+\item If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
+  $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\pptyc \pctxt},
+            {\kTransPP[\kind,\ty]}]$.
+\end{itemize}  
 \end{lemma}
 
 \begin{proof}
@@ -884,8 +889,12 @@ $\pctxt$ to typing contexts $\ctxt$:
 \end{proof}
 
 \begin{theorem}[Type Correctness of Closed Types]
-  If $\ddck[\ty,,\gk,\con]$ then
-  $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.  
+  \begin{itemize}
+  \item If $\ddck[\ty,,\gk,\con]$ then
+    $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.
+  \item If $\ddck[\ty,,\gk,\con]$ then
+    $\stsem[{\trans[\ty,,]},,\kTransPP[\kind,\ty]]$.
+  \end{itemize}  
 \end{theorem}
 
 A practical implication of this theorem is that
@@ -895,6 +904,69 @@ functions are well formed. This property is sorely lacking in many
 common implementations of Lex and YACC, for which users must examine
 generated code to debug compile-time errors in
 specifications.
+
+\noindent \edcom{Canonical Forms meta-theory starts here.}
+
+Expression equivalence up to typing annotations.
+\begin{definition}[Expression Equivalence]
+  $\iexp \iexpreq \iexp'$ iff $\ierase \iexp = \ierase {\iexp'}$ and
+all type annotations in $\iexp$ are equivalent to
+the corresponding type annotations in $\iexp'$.
+\label{def:op-eq}
+\end{definition}
+
+\begin{definition}
+$\corrkl \ty r p$ iff $\trans[\ty,,] \kstepsto \ival, \ival \iexpreq
+\trans[\ty',,]$ and $\corr {\ty'} r p$.
+\end{definition}
+
+\begin{definition}[Representation and PD Correlation (selected constructs)]
+$\corr \tyval r p$ iff exactly one of the following is true:
+  \begin{itemize}
+  \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
+  \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1} {p_2}}$ 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
+    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
+    and $p = \ipair h {\iinld {\ity}{p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_1} {r'} {p'}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
+    and $p = \ipair h {\iinr {p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_2} {r'} {p'}$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
+    \ipair h {p'}$, 
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
+    and $e[(r',p')/x] \kstepsto\itrue$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
+    and $p = \ipair h {p'}$,
+    and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
+    $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
+  \item $\tyval = \pmu \ptyvar {} {\ty'}$, $p =
+    \ipair h {p'}$, $p.{nerr} = p'.{nerr}$ and
+    $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} r {p'}$.
+  \end{itemize}
+\end{definition}
+
+\begin{lemma}[Canonical Forms]
+\label{lem:err-corr-at-T}
+\begin{itemize}
+\item If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
+  \spair<\off',r,p>$ then $\corrkl \ty r p$.
+\item If $\ddck[\ty,,\kty,\con]$ , $\corrkl \ty r p$ and
+  $\transpp[\ty,,] \sapp \spair<r,p> \kstepsto \iexp$ then $\iexp \neq
+  \istuck$.
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+  First item: by induction on the height of the second derivation.
+  Second item: ??
+\end{proof}
+
 
 
 %%% Local Variables: 

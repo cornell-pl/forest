@@ -397,12 +397,13 @@ The parse descriptor for each \ddc{} type $\tau$ are defined as follows:
 \trans[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
   \ifun {\parsename_\ptyvar} {\itup{\data{:}\ibitsty,\off{:}\ioffty}  
-           : \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
-                    * (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}) } {}\\
+           : \ioffty * \itsem[\pmu \ptyvar \gk \ty] 
+                    * \itpdsem[\pmu \ptyvar \gk \ty] } {}\\
   \quad \ilet {\itup{\off',r,p}} 
-   {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
-  \qquad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
-     (p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
+   {\trans[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
+          [\itpdsem[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \iappi \ictup{\data,\off}} \\ 
+  \qquad \ictup{\off',\iroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
+     (p.h,\iroll{p}{\itpdsem[\pmu \ptyvar \gk \ty]})}
 %}}
   \end{array}  
 \\[3pt]
@@ -861,7 +862,61 @@ $\begin{array}{l}
 %\caption{\ddc{} Printing semantics (cont.)}
 \caption{\ddc{} Printing semantics}
 \label{fig:ddc-print-sem}
-\end{figure*}
+\end{figure*}a
+
+\begin{definition}[Representation and PD Correlation Relation]
+$\corr \tyval r p$ iff exactly one of the following is true:
+  \begin{itemize}
+  \item $\tyval = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
+  \item $\tyval = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
+  \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
+  \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1} {p_2}}$ 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
+    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
+    and $p = \ipair h {\iinld {\ity}{p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_1} {r'} {p'}$.
+  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
+    and $p = \ipair h {\iinr {p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_2} {r'} {p'}$.
+  \item $\tyval = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1}{p_2}}$, 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
+    $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
+    \ipair h {p'}$, 
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
+    and $e[(r',p')/x] \kstepsto\itrue$.
+  \item $\tyval = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
+    and $p = \ipair h {p'}$,
+    and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
+    $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
+  \item $\tyval = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
+    $r = \ipair {len} {\iarr{\vec {r_i}}}$, $p = \itup{h,\itup{{neerr},{len}',\iarr {\vec {p_i}}}}$,
+    ${len} = {len}'$, ${neerr} = \sum_{i=1}^{len}
+    \mathtt{pos}(p_i.{nerr})$, $\corrkl {\ty_e}
+    {r_i} {p_i}$, (for $i=1 \ldots {len}$), and
+    $h.{nerr} \geq \mathtt{pos}({neerr})$.
+  \item $\tyval = \pmu \ptyvar {} {\ty'}$, $p =
+    \ipair h {p'}$, $p.{nerr} = p'.{nerr}$ and
+    $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} r {p'}$.
+  \item $\tyval = \pcompute e \ity$ and $p.{nerr} = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
+  \item $\tyval = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
+  \item $\tyval = \pscan {\ty'}$, $r =\iinl {r'}$,
+      $p = \ipair h {\iinl {\ipair i {p'}}}$,
+      $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and
+      $\corrkl {\ty'}{r'}{p'}$.
+  \item $\tyval = \pscan {\ty'}$,
+      $r =\iinr \ierr$,
+      $p = \ipair h {\iinr \iuval}$, and
+      $h.{nerr} = 1$.
+  \end{itemize}
+\end{definition}
 
 % function pp_a (r, pd) = 
 %  [[t]]_pp (unfold r,unfold (pd.\ipbdy))

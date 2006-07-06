@@ -45,7 +45,8 @@
 \newcommand{\ceq}{\mathrel{\mbox{\tt =}}}
 
   %% parser type of a context
-%\newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
+\newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
+  %% printer type of a context
 \newcommand{\pptyc}[1]{\lsem#1\rsem_{\text{PPT}}}
 
 \def\itsem[#1]{\lsem#1\rsem_{\text{rep}}}
@@ -74,8 +75,6 @@
 \newcommand{\codefont}[1]{\mathtt{#1}} %% a piece of code
 \newcommand{\nrm}[1]{\mathnormal {#1}} %% normal math
 
-  %% parser type of a context
-\newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
   %% Fomega context version of Poly-context.
 \newcommand{\fotyc}[1]{\|{#1}\|}
   %% Rep-related subset of context.
@@ -94,7 +93,8 @@
 \newcommand{\tyvar}{\alpha}
 \newcommand{\kind}{\gk}    %% kind
 \newcommand{\ty}{\gt}      %% type
-\newcommand{\tyval}{\gn}   %% a fully reduced type
+%\newcommand{\tyval}{\gn}   %% a fully reduced type
+\newcommand{\tyval}{\ty}   %% removed notion of reduced type.
 \newcommand{\ity}{\gs}     %% internal language type
 \newcommand{\ctxt}{\gG}    %% context
 \newcommand{\pctxt}{\gD}   %% context for poly. vars
@@ -253,12 +253,14 @@
 \newcommand{\ilit}{\ell}
 \newcommand{\iconst}{\codefont{c}}
 \newcommand{\ivar}{\codefont{x}}
+\newcommand{\ival}{\codefont{v}}
 \newcommand{\iexp}{\codefont{e}}
 \newcommand{\idata}{\codefont B}
 \newcommand{\iuval}{\codefont{()}}
 \newcommand{\iok}{\codefont{ok}}
 \newcommand{\iecerr}{\codefont{err}}
 \newcommand{\iecpc}{\codefont{fail}}
+\newcommand{\istuck}{\codefont{stuck}}
 \newcommand{\iop}[1]{{op}(#1)}
 \newcommand{\inotop}{\codefont{not}}
 \newcommand{\isizeofop}{\codefont{sizeof}}
@@ -333,13 +335,17 @@
 %   \end{array} \\
 %   \codefont{end}
 % }
-% \newcommand{\ival}[2]{\codefont{val} \; #1 = #2}
 \newcommand{\ifun}[3]{\codefont{fun} \; \codefont{#1 \; #2} \ceq {#3}}
 \newcommand{\iletfun}[3]{\codefont{letfun} \; \codefont{#1 \; #2} \ceq #3}
 \newcommand{\ifunand}[3]{\codefont{and} \; \codefont{#1 \, #2} \ceq #3}
 \newcommand{\ior}[2]{#1 \; \codefont{or} \; #2}
 \newcommand{\iori}{\; \codefont{or} \;}
 \newcommand{\iandi}{\; \codefont{and} \;}
+
+  % Expression equivalence.
+\newcommand{\iexpreq}{\equiv}
+  % Erasure
+\newcommand{\ierase}[1]{|#1|}
 
 %% Semantic Domain syntax
   %% semantic definition
@@ -408,9 +414,9 @@
   %% err parse descr. judgment
 \newcommand{\errjudge}[1]{\vDash #1 \; \kwd{err}}
   %% instruction-level dynamic semantics ``steps to''.
-\newcommand{\stepstoi}{\hookrightarrow_i}
+\newcommand{\stepstoi}{\rightarrow_i}
   %% top-level dynamic semantics ``steps to''.
-\newcommand{\stepsto}{\hookrightarrow}
+\newcommand{\stepsto}{\rightarrow}
   %% Klean-closure of top-level ``steps to''.
 \newcommand{\kstepsto}{\stepsto^*}
   %% indicates a problem to be fixed.
