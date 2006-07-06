@@ -2,6 +2,7 @@ Input file = ../../data/newick
 Output file = /dev/stdout
 warning: P_open: Installing default IO discipline : newline-terminated records
 <tree>
+  <branches>
     <elt>
       <tip>
         <some_tip_t>
@@ -12,6 +13,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
     </elt>
     <elt>
       <interior>
+        <branches>
           <elt>
             <tip>
               <some_tip_t>
@@ -37,6 +39,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
             </tip>
           </elt>
           <length>3</length>
+          </branches>
       </interior>
     </elt>
     <elt>
@@ -48,4 +51,5 @@ warning: P_open: Installing default IO discipline : newline-terminated records
       </tip>
     </elt>
     <length>3</length>
+    </branches>
 </tree>

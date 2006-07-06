@@ -12,7 +12,7 @@
 
 // For now, we only use ckit-replace.h with cygwin.  With appropriate
 // changes it could be made to work with all operating systems.
-#if defined(FOR_CKIT) && (__CYGWIN__)
+#if defined(FOR_CKIT) // && (__CYGWIN__)
 // Include minimum set of defs for ckit, rather than having ckit
 // parse all the standard OS includes, which often contain a lot of
 // compiler-specific macros and pragmas.

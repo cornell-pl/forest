@@ -10,7 +10,9 @@ Output file = /dev/stdout
         <_bnf_1>
           <field_content><val>close</val></field_content>
         </_bnf_1>
+        <_bnf_2>
           <length>0</length>
+          </_bnf_2>
       </_bnf_0>
     </field_value>
   </_bnf_4>

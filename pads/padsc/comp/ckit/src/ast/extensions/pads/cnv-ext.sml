@@ -7788,7 +7788,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       P.varDeclS'(PL.toolErrPCT, result)]
 		      @ List.concat(List.map readOneBranch enumFields)
 		  val cleanupSs =  [P.mkCommentS("We didn't match any branch")]
-			           @ BU.reportErrorSs([locS], locX, false,
+			           @ BU.reportErrorSs([locS], locX, true,
 						   PL.P_ENUM_MATCH_FAILURE,
 						   true, 
 						   readName,
