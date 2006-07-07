@@ -38,6 +38,15 @@ types but the representation type variables corresponding to $\pctxt$.
 }
 \begin{figure*}[t]
 \small
+\fbox{$\fotyc {\pctxt} = \Delta$}
+\[
+\begin{array}{ll}
+  \fotyc \cdot = \cdot \qquad &
+  \fotyc {\pctxt,\alpha{:}\kty} = 
+    \fotyc {\pctxt},\tyvar_\repname{:}\kty,\tyvar_\pdbname{:}\kty
+\end{array}
+\]
+
 \fbox{$\ddck[\ty,\pctxt;\ctxt,\kind,\mcon]$}\\[-2ex]
 \[
 \infer[\text{Unit}]{

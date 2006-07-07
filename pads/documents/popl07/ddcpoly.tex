@@ -876,11 +876,16 @@ type $\ty$ will become free
 function variables in $\trans[\ty,,]$. To that end, 
 we define the functions $\ptyc \pctxt$ and $\pptyc \pctxt$ 
 which map type-variable contexts $\pctxt$ in the \ddc{}
-to value-variable contexts $\ctxt$ in \fomega:
+to value-variable contexts $\ctxt$ in \fomega.  In addition, the function
+$\fotyc{\pctxt}$ generates the appropriate \fomega\ type-variable context from
+the \ddc{} context $\pctxt$.
 \vskip -1.5ex
 {\small
 \[
 \begin{array}{ll}
+  \fotyc \cdot = \cdot \qquad &
+  \fotyc {\pctxt,\alpha{:}\kty} = 
+    \fotyc {\pctxt},\tyvar_\repname{:}\kty,\tyvar_\pdbname{:}\kty \\
   \ptyc{\cdot} = \cdot \qquad &
   \ptyc{\pctxt,\ptyvar{:}\kty} = \ptyc \pctxt,\codefont{\parsename_\ptyvar}{:}\kTrans[\kty,\ptyvar] \\
   \pptyc{\cdot} = \cdot \qquad &
