@@ -260,7 +260,7 @@
 \newcommand{\iok}{\codefont{ok}}
 \newcommand{\iecerr}{\codefont{err}}
 \newcommand{\iecpc}{\codefont{fail}}
-\newcommand{\istuck}{\codefont{stuck}}
+\newcommand{\istuck}{\codefont{wrong}}
 \newcommand{\iop}[1]{{op}(#1)}
 \newcommand{\inotop}{\codefont{not}}
 \newcommand{\isizeofop}{\codefont{sizeof}}
@@ -432,9 +432,9 @@
   %% Another error correlation relation (generic)
 \newcommand{\corrg}[2]{\mathrm{Corr}(#1,#2)}
   %% Another error correlation relation
-\newcommand{\corr}[3]{\mathrm{Corr}_{#1}(#2,#3)}
+\newcommand{\corr}[3]{\mathrm{Canon}_{#1}(#2,#3)}
   %% Clean closure version of correlation relation
-\newcommand{\corrkl}[3]{\mathrm{Corr^*}_{#1}(#2,#3)}
+\newcommand{\corrkl}[3]{\mathrm{Canon^*}_{#1}(#2,#3)}
   %% Error Correlation predicate.
 \newcommand{\cepred}[2]{\mathrm{CE}_{#1}(#2)}
   %% Function Error Correlation predicate.

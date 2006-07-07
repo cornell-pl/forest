@@ -905,9 +905,51 @@ common implementations of Lex and YACC, for which users must examine
 generated code to debug compile-time errors in
 specifications.
 
-\noindent \edcom{Canonical Forms meta-theory starts here.}
+\subsubsection{Canonical Forms}
 
-Expression equivalence up to typing annotations.
+In addition to proving our semantic functions coherent, we identify
+the canonical forms of representation parse-descriptor pairs
+produced by parsers and consumed by printers. Our canonical forms
+lemma goes beyond standard canonical forms lemmas by specifying
+essential correlation between the representation and parse
+descriptor. For example, in the canonical pair for sum types, the rep
+and PD are both injected in the same branch of the sum. Moreover, we
+specify correlations between the number of errors reported by the
+parse descriptor and the number of errors contained in the representation.
+
+\edcom{Mention delta from last POPL paper? Also, the text below is
+  nearly identical to the old POPL text.}  
+
+\edcom{Perhaps it would be good to put norm. rules back, as they
+  abstract over parsing and printing? Currently, defined in terms of
+  parser image.}
+
+% First, present canon. forms.
+% 2. But, only relevant for types of base kind.
+% 2.a. for convenience, normalize them, but have no evaluation
+% or normalization for DDC.
+% 3  We define in terms of F-Omega evaluation, but parsers don't
+% necessarily step to parsers. However, they do step to equivalent-of
+% parsers.
+
+We first define two (mutually recursive) relations that relate types
+to canonical forms of result pairs.  The first, $\corr \ty r p$,
+defines the canonical form of a representation $r$ and a parse
+descriptor $p$ at type $\ty$ and is defined for all weak-head normal
+types with base kind $\kty$.  Types with higher kind such as
+abstractions are excluded from this definition as they cannot directly
+produce representations and PDs.  
+
+As weak-head normal types can contain unnormalized types within them,
+we also define $\corrkl \ty r p$, which determines a weak-head
+normalized version $\ty'$ for $\ty$ and then uses $\corr {\ty'} r p$.
+However, as \ddc{} lacks evaluation rules, we derive the weak-head
+normal form of a type by deriving the weak-head normal form of the
+corresponding parser. As a technical detail, we note that this normal
+form will not necessarily be a parser for a weak-head normal \ddc{}
+type, but might only be equivalent to one. Therefore, we begin our
+definitions with expression equivalence.
+
 \begin{definition}[Expression Equivalence]
   $\iexp \iexpreq \iexp'$ iff $\ierase \iexp = \ierase {\iexp'}$ and
 all type annotations in $\iexp$ are equivalent to
@@ -920,7 +962,11 @@ $\corrkl \ty r p$ iff $\trans[\ty,,] \kstepsto \ival, \ival \iexpreq
 \trans[\ty',,]$ and $\corr {\ty'} r p$.
 \end{definition}
 
-\begin{definition}[Representation and PD Correlation (selected constructs)]
+Below, we abbreviate $p.h.{nerr}$ as
+$p.{nerr}$.  and use $\mathtt{pos}$ to denote the function which
+returns zero when passed zero and one otherwise.
+
+\begin{definition}[Rep and PD Correlation (selected constructs)]
 $\corr \tyval r p$ iff exactly one of the following is true:
   \begin{itemize}
   \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
@@ -950,6 +996,13 @@ $\corr \tyval r p$ iff exactly one of the following is true:
     $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} r {p'}$.
   \end{itemize}
 \end{definition}
+
+Lemma~\ref{lem:err-corr-at-T}, part 1, states that the parsers for
+well-formed types (of base kind) will produce a canonical pair of
+representation and parse descriptor, if they produce anything at all.
+Conversely, part 2 states that, given a canonical representation and
+parse descriptor, the printer for well-formed types (of base kind)
+will not ``go wrong.''
 
 \begin{lemma}[Canonical Forms]
 \label{lem:err-corr-at-T}
