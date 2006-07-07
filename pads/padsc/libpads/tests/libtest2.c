@@ -113,12 +113,12 @@ int main(int argc, char** argv) {
     if (P_ERR == Pb_int64_read(pads, &m, &pd, &i8)) {
       goto check_newline;
     } else {
-      error(0, "Read bint64  : %lld", (long)i8);
+      error(0, "Read bint64  : %lld", i8);
     }
     if (P_ERR == Pb_uint64_read(pads, &m, &pd, &ui8)) {
       goto check_newline;
     } else {
-      error(0, "Read buint64 : %llu", (long)ui8);
+      error(0, "Read buint64 : %llu", ui8);
     }
 
   check_newline:
