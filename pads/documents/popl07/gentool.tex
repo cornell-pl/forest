@@ -1,28 +1,45 @@
 \section{The Generic Tool Framework}
 \label{sec:gen-tool}
 
-eAn essential benefit of \padsml{} is that it can provide users
-with a high return-on-investment for describing their data. While the
+An essential benefit of \padsml{} is that it can provide users with a
+high return-on-investment for describing their data. While the
 generated parser alone is enough to justify the user's effort, we aim
 to increase the return by enabling users to easily construct data
 analysis tools. However, there is a limit, both in resources and
 expertise, to the range of tool generators that we can develop.
 Indeed, new and interesting data analysis tools are constantly being
 developed, and we have no hope of integrating even a fraction of them
-into the \padsml{} system ourselves.
+into the \padsml{} system ourselves. Therefore, it is essential that
+we provide a simple framework for others to develop tool generators.
 
-Fortunately, we don't have to. Many of the tools that we have
-encountered in practice perform their computations in a single pass
-over the representation and corresponding parse descriptor, visiting
-each value in the data with a pre-, post-, or in-order traversal.
-We can, therefore, split such tools into a format-dependent traversal
-mechanism, which implements a generalized fold over the representation
-and parse descriptor; and a format-independent, \emph{generic tool}
-that specifies how to process individual data elements. The \padsml{}
-compiler generates such a format-dependent traversal for all
-descriptions, while generic tools are developed independently by
-users. The traversal mechanism interacts with generic tools through a
-signature that every generic tool must match.
+The techniques of type-directed programming, known variously as
+\textit{generic} or \textit{polytypic} programming~\cite{}, provide a
+convenient conceptual starting point in designing a tool framework.
+Indeed, tool generators appear to be an excellent application for this
+line of research. In essence, any tool generator can be conceived as a
+function from descriptions to tools. As \padsml{} descriptions are
+types, a tool generator, then, is a type-directed program.
+
+Support for some form of generic programming over data representations
+and parse descriptors is an essential first step in supporting the
+development of tool generators. While a full-blown generic programming
+system like Generic Haskell could be useful in this context, \ocaml{}
+lacks support a generic programming facility. Yet, there are quite a
+number of tools that share a common data processing paradigm and, so,
+don't need full generic programming support.
+
+In particular, many of the tools that we have encountered in practice
+perform their computations in a single pass over the representation
+and corresponding parse descriptor, visiting each value in the data
+with a pre-, post-, or in-order traversal. This behaviour can be
+abstracted in a manner similar to the generic functions of Lammel and
+Peyton-Jones~\cite{???}. For each format description, we generate a
+format-dependent traversal mechanism that implements a generalized
+fold over the representation and parse descriptor corresponding to
+that format. Then, tool developers can write a format-independent,
+\emph{generic tool} by specifying the behaviour of the tool for each
+\padsml{} type constructor. The traversal mechanism interacts with
+generic tools through a signature that every generic tool must match.
 
 The generic tool architecture of \padsml{} delivers a number of
 benefits over the fixed architecture of \padsc{}. In \padsc{}, all
@@ -72,21 +89,15 @@ can differ on a program-by-program basis.
 \label{fig:gentool-interface}
 \end{figure}
 
-% As the elements of data representations and PD's do not have a uniform
-% type, the generic tool must provide different functionality for
-% different types, which the traversal functor can then apply
-% appropriately to each element of the data.  Therefore, the
-% generic-tool signature specifies a particular collection of types and
-% functions for every construct in \padsml{}.
-
-The generic tool interface specifies an (abstract) type for auxiliary
-state that is threaded through the traversal, and, for every type
-constructor in \padsml{}, a set of types and functions -- grouped
-together in a module -- that a generic tool must implement. 
-An excerpt of the generic tool interface is shown in
-\figref{fig:gentool-interface}. It includes the signatures of the
-\cd{Record} and \cd{Datatype} modules. The signatures of other modules
-are quite similar.
+The interface between format-specific traversals and generic tools is
+specified as an \ocaml{} signature.  For every type constructor in
+\padsml{}, the signature describes a sub-module that implements the
+generic tool for that type constructor.  In addition, it specifies an
+(abstract) type for auxiliary state that is threaded through the
+traversal. excerpted in \figref{fig:gentool-interface} contains an
+excerpt of the signature that includes the signatures of the
+\cd{Record} and \cd{Datatype} modules.  The signatures of other
+modules are quite similar.
 
 The \cd{Record} module includes a type \cd{partial_state} that allows
 tools to represent intermediate state in a different form than the
@@ -106,7 +117,9 @@ start with the state of all the variants. Instead, variants' state is
 added during processing. In this way, only variants that have been
 encountered will have corresponding state. For this reason,
 \cd{project} returns a \cd{state option}, rather than just \cd{state}.
-This design is essential for supporting recursive datatypes.
+This design is essential for supporting recursive datatypes as trying
+to initialize the state for all possible variants of the datatype
+would cause the \cd{init} function to infinite loop.
 
 \begin{figure}
 \begin{code}\scriptsize
@@ -130,23 +143,6 @@ tool state.
 
 \subsection{Example Tools}
 \label{sec:gentool-motivation-ex}
-
-% \begin{figure}
-%   \centering
-%   \small
-% \begin{verbatim}
-% 122Joe|Wright|450|95|790
-% n/aEd|Wood|10|47|31
-% 124Chris|Nolan|80|93|85
-% 125Tim|Burton|30|82|71
-% 126George|Lucas|32|62|40
-% \end{verbatim}  
-%   \caption{A fictitious data fragment in the Movie-director Bowling
-%     Score (MBS) format. Note that the first record contains semantic
-%     errors (in that the minimum is larger than the maximum and the
-%     average is larger than both the minimum and the maximum).}
-%   \label{fig:gentool-mbs-sample}
-% \end{figure}
 
 \begin{figure}
   \centering
@@ -216,46 +212,47 @@ fragment reveals that the second order contains the offending field.
 In general, particular invalid data can be located using the parse
 descriptor.
 
-\begin{figure}
-\begin{code}\scriptsize
-\kw{type} baseAcc = int * int
-\kw{type} acc = ...
-| RecordData of baseAcc * acc Table.t
+% \begin{figure}
+% \begin{code}\scriptsize
+% \kw{type} baseAcc = int * int
+% \kw{type} acc = ...
+% | RecordData of baseAcc * acc Table.t
 
-\kw{type} compoundAcc = baseAcc * acc Table.t
+% \kw{type} compoundAcc = baseAcc * acc Table.t
 
-\kw{type} state = acc
+% \kw{type} state = acc
 
-\kw{module} Record = \kw{struct}
-  \kw{type} partial_state = compoundAcc
+% \kw{module} Record = \kw{struct}
+%   \kw{type} partial_state = compoundAcc
 
-  \kw{let} init accs = RecordData ((0,0), Table.from_list accs)
+%   \kw{let} init accs = RecordData ((0,0), Table.from_list accs)
 
-  \kw{let} start state header =
-    \kw{match} state \kw{with}
-      RecordData ((errs, total), accs) ->
-	\kw{let} errs' = if header.nerr > 0
-                    then errs + 1 else errs
-	\kw{in} (((errs', total + 1), accs) : partial_state)
-    | _ -> \kw{raise} ...
+%   \kw{let} start state header =
+%     \kw{match} state \kw{with}
+%       RecordData ((errs, total), accs) ->
+% 	\kw{let} errs' = if header.nerr > 0
+%                     then errs + 1 else errs
+% 	\kw{in} (((errs', total + 1), accs) : partial_state)
+%     | _ -> \kw{raise} ...
 	  
-  \kw{let} project state label = 
-     \kw{match} state \kw{with}
-      RecordData (_, accs) -> (\kw{try} Table.find accs label
-                                 \kw{with} _ -> \kw{raise} ...)
-    | _ -> \kw{raise} ...
+%   \kw{let} project state label = 
+%      \kw{match} state \kw{with}
+%       RecordData (_, accs) -> (\kw{try} Table.find accs label
+%                                  \kw{with} _ -> \kw{raise} ...)
+%     | _ -> \kw{raise} ...
 
-  \kw{let} process_field (ba, accs) label acc =
-    (ba, Table.update accs label acc)
+%   \kw{let} process_field (ba, accs) label acc =
+%     (ba, Table.update accs label acc)
       
-  \kw{let} finish (ba, accs) = RecordData (ba, accs)
-\kw{end}
-...
-\end{code}
-\caption{Excerpts from the implementation of the accumulator.}
-\label{fig:gentool-accum-code}
-\end{figure}
+%   \kw{let} finish (ba, accs) = RecordData (ba, accs)
+% \kw{end}
+% ...
+% \end{code}
+% \caption{Excerpts from the implementation of the accumulator.}
+% \label{fig:gentool-accum-code}
+% \end{figure}
 
+\cut{
 In~\figref{fig:gentool-accum-code}, we show a portion of the
 accumulator implementation, including the \cd{Record} module. We first
 define a basic accumulator, which is simply a pair of integers
@@ -270,6 +267,7 @@ PD header provided, and increments that total count by one. It returns
 a \cd{partial_state}, as indicated by the type annotation. Projection
 and processing of fields are simply lookups and insertions in a table
 of subcomponent accumulators.
+}
 
 In addition to the accumulator, we have implemented two different
 kinds of pretty printers for parsed data.  One formats the data in
@@ -281,5 +279,5 @@ representation).
 
 %%% Local Variables: 
 %%% mode: latex
-%%% TeX-master: "paper"
+%%% TeX-master: "../thesis.tex"
 %%% End: 
