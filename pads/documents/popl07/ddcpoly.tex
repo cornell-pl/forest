@@ -927,58 +927,74 @@ common implementations of Lex and YACC, for which users must examine
 generated code to debug compile-time errors in
 specifications.
 
-\paragraph*{Canonical Forms.}
-In addition to proving our semantic functions coherent, we identify
-the canonical forms of representation parse-descriptor pairs
-produced by parsers and consumed by printers. Our canonical forms
-lemma goes beyond standard canonical forms lemmas by specifying
-essential correlation between the representation and parse
-descriptor. For example, in the canonical pair for sum types, the rep
-and PD are both injected in the same branch of the sum. Moreover, we
-specify correlations between the number of errors reported by the
-parse descriptor and the number of errors contained in the representation.
+\paragraph*{Canonical Forms for Parsed Data.}
+\ddc{} parsers generate pairs of representations and parse descriptors
+designed to satisfy a number of invariants.  Of greatest importance is 
+the fact that
+when the parse descriptor says there are no errors in a particular
+substructure, the programmer can count on the representation
+satisfying all of the syntactic and semantic
+constraints expressed by the dependent
+\ddc{} type description.  When parsed descriptor and representation
+satisfy these invariant and correspond properly, we say the pair
+of datastructures is {\em canonical} or in {\em canonical form}.
+The generated printer expects its arguments to be in canonical form,
+and if they are, it will never call the $\failpp{}$ function.
 
-\edcom{Should we specify the delta from last POPL paper?}  
+% In addition to proving our semantic functions coherent, we identify
+% the canonical forms of representation parse-descriptor pairs
+% produced by parsers and consumed by printers. Our canonical forms
+% lemma goes beyond standard canonical forms lemmas by specifying
+% essential correlation between the representation and parse
+% descriptor. For example, in the canonical pair for sum types, the rep
+% and PD are both injected in the same branch of the sum. Moreover, we
+% specify correlations between the number of errors reported by the
+% parse descriptor and the number of errors contained in the representation.
+
+% \edcom{Should we specify the delta from last POPL paper?}  
 
 % \edcom{Perhaps it would be good to put norm. rules back, as they
 %   abstract over parsing and printing? Currently, defined in terms of
 %   parser image.}
 
-We first define two (mutually recursive) relations that relate types
-to canonical forms of result pairs.  The first, $\corr \ty r p$,
+For each \ddc{} type, its canonical forms are defined via
+two (mutually recursive) relations.  The first, $\corr \ty r p$,
 defines the canonical form of a representation $r$ and a parse
-descriptor $p$ at type $\ty$ and is defined for all weak-head normal
-types with base kind $\kty$.  Types with higher kind such as
+descriptor $p$ at type $\ty$.  It is defined for all closed weak-head normal
+types (those for which neither type nor value application
+is outermost) with base kind $\kty$.  Types with higher kind such as
 abstractions are excluded from this definition as they cannot directly
 produce representations and PDs.  
 
-As weak-head normal types can contain unnormalized types within them,
-we also define $\corrkl \ty r p$, which determines a weak-head
-normalized version $\ty'$ for $\ty$ and then uses $\corr {\ty'} r p$.
-However, as \ddc{} lacks evaluation rules, we derive the weak-head
-normal form of a type by deriving the weak-head normal form of the
-corresponding parser. As a technical detail, we note that this normal
-form will not necessarily be a parser for a weak-head normal \ddc{}
-type, but might only be equivalent to one. Therefore, we begin our
-definitions with expression equivalence.
+A second definition, $\corrkl \ty r p$ evaluates the image of
+the translation of $\ty$, thereby eliminating outermost type and
+value applications.\footnote{This slightly indirect
+definition involving \fomega evaluation 
+allows us to avoid more notation defining ``evaluation''
+of \ddc\ types.}  The result is a value $v$ equivalent to the
+translation of $\ty'$, some weak-head
+normalized version of $\ty$.  The requirements on $\ty'$ are subsequently 
+given by $\corr {\ty'} r p$.  For brevity, we write $p.h.{nerr}$ as
+$p.{nerr}$ and use $\mathtt{pos}$ to denote the function that
+returns zero when passed zero and one when passed another natural number.
+The following definition gives the notion of \fomega\ expression equivalence
+we use.
 
-\begin{definition}[Expression Equivalence]
-  $\iexp \iexpreq \iexp'$ iff $\ierase \iexp = \ierase {\iexp'}$ and
-all type annotations in $\iexp$ are equivalent to
-the corresponding type annotations in $\iexp'$.
+% However, as \ddc{} lacks evaluation rules, we derive the weak-head
+% normal form of a type by deriving the weak-head normal form of the
+% corresponding parser. As a technical detail, we note that this normal
+% form will not necessarily be a parser for a weak-head normal \ddc{}
+% type, but might only be equivalent to one. Therefore, we begin our
+% definitions with expression equivalence.
+
+\begin{definition}[\fomega\ Expression Equivalence]
+  $\iexp \iexpreq \iexp'$ iff $\iexp$ is syntactically equal to $\iexp'$ 
+modulo alpha-conversion of bound variables and equivalence of
+typing annotations.
 \label{def:op-eq}
 \end{definition}
 
-\begin{definition}
-$\corrkl \ty r p$ iff $\trans[\ty,,] \kstepsto \ival, \ival \iexpreq
-\trans[\ty',,]$ and $\corr {\ty'} r p$.
-\end{definition}
-
-Below, we abbreviate $p.h.{nerr}$ as
-$p.{nerr}$.  and use $\mathtt{pos}$ to denote the function which
-returns zero when passed zero and one otherwise.
-
-\begin{definition}[Rep and PD Correlation (selected constructs)]
+\begin{definition}[Canonical Forms I (selected constructs)]
 $\corr \tyval r p$ iff exactly one of the following is true:
   \begin{itemize}
   \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
@@ -1004,10 +1020,17 @@ $\corr \tyval r p$ iff exactly one of the following is true:
     and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
     $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
   \item $\tyval = \pmu \ptyvar {} {\ty'}$, $p =
-    \ipair h {p'}$, $p.{nerr} = p'.{nerr}$ and
+    \ipair h {p'}$, $p.{nerr} = p'.{nerr}$ \\
+    and
     $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} r {p'}$.
   \end{itemize}
 \end{definition}
+
+\begin{definition}[Canonical Forms II]
+$\corrkl \ty r p$ iff $\trans[\ty,,] \kstepsto \ival, \ival \iexpreq
+\trans[\ty',,]$ and $\corr {\ty'} r p$.
+\end{definition}
+
 
 Lemma~\ref{lem:err-corr-at-T}, part 1, states that the parsers for
 well-formed types (of base kind) will produce a canonical pair of
@@ -1016,14 +1039,14 @@ Conversely, part 2 states that, given a canonical representation and
 parse descriptor, the printer for well-formed types (of base kind)
 will not ``go wrong.''
 
-\begin{lemma}[Canonical Forms]
+\begin{lemma}[Parsing to/Printing from Canonical Forms]
 \label{lem:err-corr-at-T}
 \begin{itemize}
 \item If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
   \spair<\off',r,p>$ then $\corrkl \ty r p$.
 \item If $\ddck[\ty,,\kty,\con]$ , $\corrkl \ty r p$ and
   $\transpp[\ty,,] \sapp \spair<r,p> \kstepsto \iexp$ then $\iexp \neq
-  \istuck$.
+  \failpp{}$.
 \end{itemize}
 \end{lemma}
 
