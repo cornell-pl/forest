@@ -410,9 +410,9 @@ The parse descriptor for each \ddc{} type $\tau$ are defined as follows:
                     * \itpdsem[\pmu \ptyvar \gk \ty] } {}\\
   \quad \ilet {\itup{\off',r,p}} 
    {\trans[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
-          [\itpdsem[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \iappi \ictup{\data,\off}} \\ 
+          [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \iappi \ictup{\data,\off}} \\ 
   \qquad \ictup{\off',\iroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
-     (p.h,\iroll{p}{\itpdsem[\pmu \ptyvar \gk \ty]})}
+     (p.h,\iroll{p}{\itpdsemstrip[\pmu \ptyvar\gk \ty]})}
 %}}
   \end{array}  
 \\[3pt]
@@ -827,10 +827,12 @@ $\begin{array}{l}
 %% Mu
 \transpp[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {\printname_\ptyvar} {\itup{r:\pmu \ptyvar \gk \itsem[\ty], pd:\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}}
+  \ifun {\printname_\ptyvar} {\itup{r:\itsem[\pmu \ptyvar \gk \ty], pd:\itpdsem[\pmu \ptyvar \kty \ty]}
                      : \ibitsty} {}\\
-  \quad \transpp[\ty,,] \ictup{\iunroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
-     \iunroll{pd.\ipbdy}{\pmu \ptyvar \kty \itpdsem[\ty]}}
+  \quad \transpp[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
+          [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \\
+  \qquad\ictup{\iunroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
+     \iunroll{pd.\ipbdy}{\itpdsemstrip[\pmu \ptyvar \kty \ty]}}
 %}}
   \end{array}  
 \\[3pt]

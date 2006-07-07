@@ -465,13 +465,14 @@ where the argument type is the PD body type.
 %% Mu
 \trans[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {\parsename_\ptyvar} {\itup{\data,\off} :
-    \ioffty * \pmu \ptyvar \gk \itsem[\ty] 
-                    * (\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}) } {}\\
+  \ifun {\parsename_\ptyvar} {\itup{\data{:}\ibitsty,\off{:}\ioffty}  
+           : \ioffty * \itsem[\pmu \ptyvar \gk \ty] 
+                    * \itpdsem[\pmu \ptyvar \gk \ty] } {}\\
   \quad \ilet {\itup{\off',r,p}} 
-   {\trans[\ty,,] \iappi \ictup{\data,\off}} \\ 
-  \quad \ictup{\off',\iroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
-     (p.h,\iroll{p}{\pmu \ptyvar \kty \itpdsem[\ty]})}
+   {\trans[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
+          [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \iappi \ictup{\data,\off}} \\ 
+  \qquad \ictup{\off',\iroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
+     (p.h,\iroll{p}{\itpdsemstrip[\pmu \ptyvar\gk \ty]})}
 %}}
   \end{array}  
 \\[3pt]
@@ -670,11 +671,12 @@ interpretations of $\ty_2$.
 %% Mu
 \transpp[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {\printname_\ptyvar} {\itup{r:\pmu \ptyvar \gk \itsem[\ty], pd:\ipty{\pmu \ptyvar \kty \itpdsem[\ty]}}
+  \ifun {\printname_\ptyvar} {\itup{r:\itsem[\pmu \ptyvar \gk \ty], pd:\itpdsem[\pmu \ptyvar \kty \ty]}
                      : \ibitsty} {}\\
-  \quad \trans[\ty,,] \ictup{\iunroll{r}{\pmu \ptyvar \gk \itsem[\ty]},
-     \iunroll{p.2}{\pmu \ptyvar \kty \itpdsem[\ty]}}
-%}}
+  \quad \transpp[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
+          [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \\
+  \qquad\ictup{\iunroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
+     \iunroll{pd.\ipbdy}{\itpdsemstrip[\pmu \ptyvar \kty \ty]}}
   \end{array}  
 \\[3pt]
 %% lambda \alpha
