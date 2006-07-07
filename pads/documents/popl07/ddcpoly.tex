@@ -738,20 +738,31 @@ unfold to deconstruct a recursive data structure for printing.
 
 \subsection{Meta-theory}
 \label{sec:meta-theory}
-Our key theoretical result is that the various semantic functions we
-have defined are coherent.  In particular, we show that for any 
-well-kinded \ddc{} type $\tau$, the corresponding parser is
-well typed, returning a pair of the corresponding representation and
-parse descriptor.  
+In order to further justify our semantic definitions,
+we have proven two key metatheoretic results.  First, we show that
+parsers and printers are {\em type-correct}, always returning representations
+and parse descriptors of the appropriate type.  Second, we give a precise
+characterization of the results of parsers
+(and input requirements of printers) by defining the {\em canonical forms}
+of representation-parse descriptor pairs associated with a
+dependent \ddc{} type.
 
-To prove this theorem, we first need to characterize the shape of
+% Our key theoretical result is that the various semantic functions we
+% have defined are coherent.  In particular, we show that for any 
+% well-kinded \ddc{} type $\tau$, the corresponding parser is
+% well typed, returning a pair of the corresponding representation and
+% parse descriptor.  
+
+\paragraph*{Type Correctness.}
+Demonstrating that generated parsers and printers are well formed
+and have the expected types is nontrivial primarily because
+the generated code expects parse descriptors to have a particular shape,
+and it is not completely obvious they do in the presence of polymorphism.
+Hence, to prove type correctness, we first need to characterize the shape of
 parse descriptors for arbitrary \ddc{} types.   
-Such a characterization is necessary because we require for type
-application that the argument parse descriptor be a pair of a PD
-header and an (arbitrary) body.
-The most straightforward characterization of this property is
-too weak to prove directly, so we instead characterize it
-as a logical relation in Definition~\ref{def:pd-props}.
+Unfortunately, the most straightforward characterization is
+too weak to prove directly, and we hence Definition~\ref{def:pd-props}
+specifies a much stronger property as a logical relation.
 Lemma~\ref{lemma:pd-log-rel} establishes that the logical relation
 holds of all well-formed \ddc{} types by induction on kinding
 derivations, and the desired characterization follows as a corollary.
@@ -860,15 +871,21 @@ With this lemma, we can establish the type correctness of the
 generated parsers. We prove the theorem using a more general induction
 hypothesis that applies to open types.
 This hypothesis must account for the fact
-that any free type variables in a \ddc{} type $\ty$ will become free
-function variables in $\trans[\ty,,]$. To that end, we define the function $\ptyc \pctxt$, 
-which maps type-variable contexts
-$\pctxt$ to typing contexts $\ctxt$:
+that any free type variables in a \ddc{} 
+type $\ty$ will become free
+function variables in $\trans[\ty,,]$. To that end, 
+we define the functions $\ptyc \pctxt$ and $\pptyc \pctxt$ 
+which map type-variable contexts in the \ddc{}
+$\pctxt$ to value-variable contexts $\ctxt$ in \fomega:
 \vskip -1.5ex
 {\small
 \[
-  \ptyc{\cdot} = \cdot \qquad
-  \ptyc{\pctxt,\ptyvar{:}\kty} = \ptyc \pctxt,\codefont{f_\ptyvar}{:}\kTrans[\kty,\ptyvar]
+\begin{array}{ll}
+  \ptyc{\cdot} = \cdot \qquad &
+  \ptyc{\pctxt,\ptyvar{:}\kty} = \ptyc \pctxt,\codefont{\parsename_\ptyvar}{:}\kTrans[\kty,\ptyvar] \\
+  \pptyc{\cdot} = \cdot \qquad &
+  \pptyc{\pctxt,\ptyvar{:}\kty} = \pptyc \pctxt,\codefont{\printname_\ptyvar}{:}\kTransPP[\kty,\ptyvar]
+\end{array}
 \]
 }
 
@@ -879,7 +896,7 @@ $\pctxt$ to typing contexts $\ctxt$:
   $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
             {\kTrans[\kind,\ty]}]$
 \item If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
-  $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\pptyc \pctxt},
+  $\stsem[{\transpp[\ty,,]},{\fotyc \pctxt, \ctxt,\pptyc \pctxt},
             {\kTransPP[\kind,\ty]}]$.
 \end{itemize}  
 \end{lemma}
@@ -893,7 +910,7 @@ $\pctxt$ to typing contexts $\ctxt$:
   \item If $\ddck[\ty,,\gk,\con]$ then
     $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.
   \item If $\ddck[\ty,,\gk,\con]$ then
-    $\stsem[{\trans[\ty,,]},,\kTransPP[\kind,\ty]]$.
+    $\stsem[{\transpp[\ty,,]},,\kTransPP[\kind,\ty]]$.
   \end{itemize}  
 \end{theorem}
 
@@ -905,8 +922,7 @@ common implementations of Lex and YACC, for which users must examine
 generated code to debug compile-time errors in
 specifications.
 
-\subsubsection{Canonical Forms}
-
+\paragraph*{Canonical Forms.}
 In addition to proving our semantic functions coherent, we identify
 the canonical forms of representation parse-descriptor pairs
 produced by parsers and consumed by printers. Our canonical forms
