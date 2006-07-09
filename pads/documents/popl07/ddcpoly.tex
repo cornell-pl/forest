@@ -989,12 +989,68 @@ we use.
 % type, but might only be equivalent to one. Therefore, we begin our
 % definitions with expression equivalence.
 
-\begin{definition}[\fomega\ Expression Equivalence]
-  $\iexp \iexpreq \iexp'$ iff $\iexp$ is syntactically equal to $\iexp'$ 
-modulo alpha-conversion of bound variables and equivalence of
-typing annotations.
-\label{def:op-eq}
-\end{definition}
+% \begin{definition}[\fomega\ Expression Equivalence]
+%   $\iexp \iexpreq \iexp'$ iff $\iexp$ is syntactically equal to $\iexp'$ 
+% modulo alpha-conversion of bound variables and equivalence of
+% typing annotations.
+% \label{def:op-eq}
+% \end{definition}
+
+\begin{figure}
+\small
+\begin{bnf}
+%   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+%                                \pext{\| \gk \-> \gk} \\
+  \mname{Normalized\\ Types}{2} \meta{\tyval} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} \|
+    \psig x \ty \ty  \nlalt
+    \psum \ty e \ty  \| \pand \ty \ty \|
+    \pset x \ty e \|
+    \pseq \ty \ty {\pterm e \ty} \nlalt
+    \pmu{\ptyvar}{}{\ty}  \| \plam{\ptyvar}{}{\ty} \nlalt
+    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
+    \\
+  \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
+                               \papp{\ty}{\ty} \| \ptyvar \| 
+\end{bnf}  
+\[
+  \infer{
+    \papp {\ty} {e} \stepsto \papp {\ty'} {e}
+  }{
+    \ty \stepsto \ty'
+  }
+\quad
+  \infer{
+    \papp {\tyval} {e} \stepsto \papp {\tyval} {e'}
+  }{
+    e \stepsto e'
+  }
+\quad
+  \infer{
+    \papp {(\plam x {} \ty)} {v} \stepsto \ty[v/x]
+  }{}
+\]
+\[
+  \infer{
+    \papp {\ty_1} {\ty_2} \stepsto \papp {\ty_1'} {\ty_2}
+  }{
+    \ty_1 \stepsto \ty_1'
+  }
+\quad
+  \infer{
+    \papp {\tyval} {\ty} \stepsto \papp {\tyval} {\ty'}
+  }{
+    \ty \stepsto \ty'
+  }
+\quad
+  \infer{
+    \papp {(\plam \ptyvar {} \ty)} {\tyval} \stepsto \ty[\tyval/\ptyvar]
+  }{}
+\]
+  \caption{\ddc{} Weak-Head Normal Types and Normalization}
+  \label{fig:ddc-reduction-rules}
+  \label{fig:revised-ddc-syntax}
+\end{figure}
 
 \begin{definition}[Canonical Forms I (selected constructs)]
 $\corr \tyval r p$ iff exactly one of the following is true:
@@ -1029,9 +1085,13 @@ $\corr \tyval r p$ iff exactly one of the following is true:
 \end{definition}
 
 \begin{definition}[Canonical Forms II]
-$\corrkl \ty r p$ iff $\trans[\ty,,] \kstepsto \ival, \ival \iexpreq
-\trans[\ty',,]$ and $\corr {\ty'} r p$.
+$\corrkl \ty r p$ iff $\ty \kstepsto \tyval$ and $\corr \tyval r p$.
 \end{definition}
+
+% \begin{definition}[Canonical Forms II]
+% $\corrkl \ty r p$ iff $\trans[\ty,,] \kstepsto \ival, \ival \iexpreq
+% \trans[\ty',,]$ and $\corr {\ty'} r p$.
+% \end{definition}
 
 
 Lemma~\ref{lem:err-corr-at-T}, part 1, states that the parsers for
