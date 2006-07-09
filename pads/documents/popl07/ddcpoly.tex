@@ -783,16 +783,11 @@ derivations, and the desired characterization follows as a corollary.
 \end{itemize}
 \end{definition}
 \cut{
-We can now prove the following lemma by induction on kinding derivations
-(with $\ty[\ty_1/\ptyvar_1,...,\ty_n/\ptyvar_n]$ denoting simultaneous
-capture-avoiding substitution defined in the standard way):
+We can now prove the following lemma by induction on kinding derivations:
 }
 \begin{lemma}
 \label{lemma:pd-log-rel}
-   If
-   $\ddck[\ty,{\pctxt,\ptyvar_1{:}\kty,...,\ptyvar_n{:}\kty;\ctxt},\kind,{}]$ 
-   and $\hhpred {\ty_i} \kty$, then \\ 
-   $\hhpred {\ty[\ty_1/\ptyvar_1,...,\ty_n/\ptyvar_n]} \kind$.
+If $\ddck[\ty,{\pctxt;\ctxt},\kind,{}]$ then $\hhpred \ty \kind$.
 \end{lemma}
 
 \begin{lemma}
@@ -1087,12 +1082,6 @@ $\corr \tyval r p$ iff exactly one of the following is true:
 \begin{definition}[Canonical Forms II]
 $\corrkl \ty r p$ iff $\ty \kstepsto \tyval$ and $\corr \tyval r p$.
 \end{definition}
-
-% \begin{definition}[Canonical Forms II]
-% $\corrkl \ty r p$ iff $\trans[\ty,,] \kstepsto \ival, \ival \iexpreq
-% \trans[\ty',,]$ and $\corr {\ty'} r p$.
-% \end{definition}
-
 
 Lemma~\ref{lem:err-corr-at-T}, part 1, states that the parsers for
 well-formed types (of base kind) will produce a canonical pair of
