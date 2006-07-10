@@ -938,6 +938,22 @@ of datastructures is {\em canonical} or in {\em canonical form}.
 The generated printer expects its arguments to be in canonical form,
 and if they are, it will never call the $\failpp{}$ function.
 
+\edcom{Add text here.}
+\begin{lemma}[Function Interpretation Corellation]
+  If $\ddck[\ty,,\kind,]$ and $\trans[\ty,,] \kstepsto \ival$ then
+  \begin{enumerate}
+  \item $\ty \kstepsto \tyval$,
+  \item $\ddck[\tyval,,\kind,]$
+  \item $\ival \iexpreq \trans[\tyval,,]$,
+  \item $\itsem[\ty] \equiv \itsem[\tyval]$, and
+  \item $\itpdsem[\ty] \equiv \itpdsem[\tyval]$.
+  \end{enumerate}
+\label{lemma:eval-corr}
+\end{lemma}
+\begin{proof}
+  By induction on evaluation derivations.
+\end{proof}
+
 % In addition to proving our semantic functions coherent, we identify
 % the canonical forms of representation parse-descriptor pairs
 % produced by parsers and consumed by printers. Our canonical forms
