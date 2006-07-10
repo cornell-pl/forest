@@ -1,4 +1,4 @@
-## This source file is run through srcgen.pl to produce:
+## This source file is run through mksrc.pl to produce:
 ##
 ##    pcgen-macros-gen.h        : pads codegen macros
 ##
@@ -2116,7 +2116,7 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode>"
+#define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%I4u</nerr><errCode>%s</errCode>"
 #define LOC_FMT "<loc><b><num>%lld</num><byte>%lld</byte></b><e><num>%lld</num><byte>%lld</byte></e></loc>"
 
 #define PCGEN_ENUM_XML_OUT(def_tag, rep2str_fn)

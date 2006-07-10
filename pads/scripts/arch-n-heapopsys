@@ -84,6 +84,7 @@ case `uname -s` in
       i486) ARCH=x86;;
       i586) ARCH=x86;;
       i686) ARCH=x86;;
+      x86_64) ARCH=x86;;
       ppc)
 	ARCH=ppc
 	case `uname -r` in

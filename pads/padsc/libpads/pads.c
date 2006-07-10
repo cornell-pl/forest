@@ -1,4 +1,4 @@
-## This source file is run through srcgen.pl to produce 
+## This source file is run through mksrc.pl to produce 
 ## a number of generated files:
 ##
 ##    pads-macros-gen.h       : generally useful macros
@@ -772,7 +772,10 @@ do {
   } while (0)
 /* END_MACRO */
 
-#define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%lu</nerr><errCode>%s</errCode>"
+/* AJF - this definition is available from pcgen-macros.h and if you have to update it, it's nice
+ * to only have to do it in one place.
+ * #define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%I4u</nerr><errCode>%s</errCode>" 
+ */
 #define LOC_FMT "<loc><b><num>%lld</num><byte>%lld</byte></b><e><num>%lld</num><byte>%lld</byte></e></loc>"
 #define PDCI_BASEVAL_XML_OUT(sfprintf_prefix, io, tag, def_tag, indent, pd, outfmt, outval)
   do {
@@ -6372,21 +6375,21 @@ PDCI_FMT_FN(Pfloat64,  Pa_float64,  Pfloat64,                                  "
 /* PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, mfmt, fold_test) */
 /* Always generate uint8, int32 and uint32 accumulator types */
 
-PDCI_INT_ACCUM_GEN(Puint8,  "uint8",  1, "u",   "llu", PDCI_FOLDTEST_UINT8)
-PDCI_INT_ACCUM_GEN(Pint32,  "int32",  4, "ld",  "lld", PDCI_FOLDTEST_INT32)
-PDCI_INT_ACCUM_GEN(Puint32, "uint32", 4, "lu",  "llu", PDCI_FOLDTEST_UINT32)
+PDCI_INT_ACCUM_GEN(Puint8,  "uint8",  1, "I1u",   "llu", PDCI_FOLDTEST_UINT8)
+PDCI_INT_ACCUM_GEN(Pint32,  "int32",  4, "I4d",  "lld", PDCI_FOLDTEST_INT32)
+PDCI_INT_ACCUM_GEN(Puint32, "uint32", 4, "I4u",  "llu", PDCI_FOLDTEST_UINT32)
 
 /* PDCI_INT_ACCUM(int_type, int_descr, num_bytes, fmt, mfmt, fold_test) */
 
-PDCI_INT_ACCUM(Pint8,   "int8",   1, "d",   "lld", PDCI_FOLDTEST_INT8)
-PDCI_INT_ACCUM(Pint16,  "int16",  2, "d",   "lld", PDCI_FOLDTEST_INT16)
-PDCI_INT_ACCUM(Puint16, "uint16", 2, "u",   "llu", PDCI_FOLDTEST_UINT16)
+PDCI_INT_ACCUM(Pint8,   "int8",   1, "I1d",   "lld", PDCI_FOLDTEST_INT8)
+PDCI_INT_ACCUM(Pint16,  "int16",  2, "I2d",   "lld", PDCI_FOLDTEST_INT16)
+PDCI_INT_ACCUM(Puint16, "uint16", 2, "I2u",   "llu", PDCI_FOLDTEST_UINT16)
 PDCI_INT_ACCUM(Pint64,  "int64",  8, "lld", "lld", PDCI_FOLDTEST_INT64)
 PDCI_INT_ACCUM(Puint64, "uint64", 8, "llu", "llu", PDCI_FOLDTEST_UINT64)
 
 /* PDCI_INT_ACCUM_MAP_REPORT_GEN(int_type, int_descr, fmt, mfmt) */
 /* Always generate this report function */  
-PDCI_INT_ACCUM_MAP_REPORT_GEN(Pint32, "int32", "ld", "lld")
+PDCI_INT_ACCUM_MAP_REPORT_GEN(Pint32, "int32", "I4d", "lld")
 
 /* PDCI_FPOINT_ACCUM(fpoint_type, fpoint_descr) */
 
@@ -7790,7 +7793,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.200 2006-05-23 00:56:16 mff Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.201 2006-07-10 15:18:51 forrest Exp $\0\n";
 
 static const char lib[] = "padsc";
 
