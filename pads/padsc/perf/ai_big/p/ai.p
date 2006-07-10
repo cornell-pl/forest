@@ -31,12 +31,12 @@ Pstruct http_v_t {
 
 Penum http_method_t {
     GET,     PUT,     POST,     HEAD,     DELETE, 
-    LINK,        /- Unused after http 1.1
-    UNLINK       /- Unused after http 1.1
+    LINK,        /- Unused after http 1.0
+    UNLINK       /- Unused after http 1.0
 };
 
 int  checkVersion(http_v_t version, http_method_t meth) {
-  if ((version.major == 1) && (version.minor == 1)) return 1;
+  if ((version.major == 1) && (version.minor == 0)) return 1;
   if ((meth == LINK)  || (meth == UNLINK )) return 0;
   return 1;
 }
