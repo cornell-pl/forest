@@ -73,6 +73,7 @@ the compiler generates a module with the signature:
   \kw{type} pd_body = Pchar.pd  * Pint.pd
   \kw{type} pd      = Pads.pd_header * pd_body
   \kw{val}  parse   : Pads.handle -> rep * pd
+  \kw{val}  print   : rep -> pd -> Pads.handle -> unit
   ...
 \kw{end}\end{code}%
 \noindent 
@@ -98,6 +99,7 @@ the compiler generates a module with the signature:
                  (Pads.pd_header * Beta.pd\_body)
   \kw{type} pd       = Pads.pd_header * pd\_body
   \kw{val}  parse    : Pads.handle -> rep * pd
+  \kw{val}  print    : rep -> pd -> Pads.handle -> unit
   ...
 \kw{end}\end{code}%
 
