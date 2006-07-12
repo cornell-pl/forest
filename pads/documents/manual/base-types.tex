@@ -333,8 +333,8 @@ with the \cd{Pa\_string\_ME} type, you would write:
 \inputCode{code/string-match}
 %
 \noindent
-This will match a sequence of zero or non-space characters and assign
-it to \cd{my\_string}.  Note that if a space occurs immediatley, a match
+This will match a sequence of zero or more non-space characters and assign
+it to \cd{my\_string}.  Note that if a space occurs immediately, a match
 still occurs, since we specified that zero characters was OK;
 \cd{my\_string} would be a string of length zero.  The extent is bound be
 end-of-record/end-of-file, so if there are no spaces before an

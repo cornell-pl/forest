@@ -15,7 +15,7 @@ Pstruct foo{
  Pstring_FW(: 10 :) my_string;
 /*@END stringFW.tex */
 /*@BEGIN string-stop.tex */
- Pstring_FW(: 10 :) my_string;
+ Pe_string(:'|':) my_string;
 /*@END string-stop.tex */
 /*@BEGIN string-match.tex */
  Pa_string_ME(: "/\\S\*/" :) my_string;
