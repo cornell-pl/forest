@@ -14,17 +14,19 @@ essential that we provide a simple framework for others to develop
 tool generators.
 
 The techniques of type-directed programming, known variously as
-\textit{generic} or \textit{polytypic} programming~\cite{}, provide a
-convenient conceptual starting point in designing a tool framework.
-Indeed, tool generators appear to be an excellent application for this
-line of research. In essence, any tool generator can be conceived as a
-function from descriptions to tools. As \padsml{} descriptions are
-types, a tool generator, then, is a type-directed program.
+\textit{generic}~\cite{hinze+:generic-programming} or
+\textit{polytypic}~\cite{jeuring+:polytypic-programming} programming,
+provide a convenient conceptual starting point in designing a tool
+framework.  Indeed, tool generators appear to be an excellent
+application for this line of research. In essence, any tool generator
+can be conceived as a function from descriptions to tools. As
+\padsml{} descriptions are types, a tool generator, then, is a
+type-directed program.
 
 Support for some form of generic programming over data representations
 and parse descriptors is an essential first step in supporting the
 development of tool generators. While a full-blown generic programming
-system like Generic Haskell could be useful in this context, \ocaml{}
+system like Generic Haskell~\cite{hinze+:generic-haskell} could be useful in this context, \ocaml{}
 lacks support a generic programming facility. Yet, there are quite a
 number of tools that share a common data processing paradigm and, so,
 don't need full generic programming support.
