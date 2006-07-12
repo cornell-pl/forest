@@ -932,27 +932,11 @@ when the parse descriptor says there are no errors in a particular
 substructure, the programmer can count on the representation
 satisfying all of the syntactic and semantic
 constraints expressed by the dependent
-\ddc{} type description.  When parsed descriptor and representation
-satisfy these invariant and correspond properly, we say the pair
-of datastructures is {\em canonical} or in {\em canonical form}.
-The generated printer expects its arguments to be in canonical form,
-and if they are, it will never call the $\failpp{}$ function.
-
-\edcom{Add text here.}
-\begin{lemma}[Function Interpretation Corellation]
-  If $\ddck[\ty,,\kind,]$ and $\trans[\ty,,] \kstepsto \ival$ then
-  \begin{enumerate}
-  \item $\ty \kstepsto \tyval$,
-  \item $\ddck[\tyval,,\kind,]$
-  \item $\ival \iexpreq \trans[\tyval,,]$,
-  \item $\itsem[\ty] \equiv \itsem[\tyval]$, and
-  \item $\itpdsem[\ty] \equiv \itpdsem[\tyval]$.
-  \end{enumerate}
-\label{lemma:eval-corr}
-\end{lemma}
-\begin{proof}
-  By induction on evaluation derivations.
-\end{proof}
+\ddc{} type description.  When parse descriptor and representation
+satisfy these invariants, we say the pair
+of datastructures is in {\em canonical form}.
+While generated parsers produce canonical outputs, generated printers
+expect canonical inputs.  
 
 % In addition to proving our semantic functions coherent, we identify
 % the canonical forms of representation parse-descriptor pairs
@@ -971,27 +955,24 @@ and if they are, it will never call the $\failpp{}$ function.
 %   parser image.}
 
 For each \ddc{} type, its canonical forms are defined via
-two (mutually recursive) relations.  The first, $\corr \ty r p$,
+two (mutually recursive) relations.  The first
+relation, $\corr \tyval r p$ (see Canonical Forms I below),
 defines the canonical form of a representation $r$ and a parse
-descriptor $p$ at type $\ty$.  It is defined for all closed weak-head normal
-types (those for which neither type nor value application
-is outermost) with base kind $\kty$.  Types with higher kind such as
-abstractions are excluded from this definition as they cannot directly
+descriptor $p$ at normal type $\tyval$.  {\em Normal types}
+are those closed types with base kind $\kty$ that are defined in 
+Figure~\ref{fig:ddc-reduction-rules}.  Types with higher kind such as
+abstractions are not described by this relation as they cannot directly
 produce representations and PDs.  
 
-A second definition, $\corrkl \ty r p$ evaluates the image of
-the translation of $\ty$, thereby eliminating outermost type and
-value applications.\footnote{This slightly indirect
-definition involving \fomega evaluation 
-allows us to avoid more notation defining ``evaluation''
-of \ddc\ types.}  The result is a value $v$ equivalent to the
-translation of $\ty'$, some weak-head
-normalized version of $\ty$.  The requirements on $\ty'$ are subsequently 
-given by $\corr {\ty'} r p$.  For brevity, we write $p.h.{nerr}$ as
-$p.{nerr}$ and use $\mathtt{pos}$ to denote the function that
-returns zero when passed zero and one when passed another natural number.
-The following definition gives the notion of \fomega\ expression equivalence
-we use.
+A second definition, $\corrkl \ty r p$ (see Canonical Forms II below),
+normalizes $\ty$, thereby eliminating outermost type and value
+applications.  The result is a normal type $\tyval$ and the
+requirements on $\tyval$ are subsequently given by $\corr {\tyval} r
+p$.  For brevity in these definitions, we write $p.h.{nerr}$ as
+$p.{nerr}$ and use $\mathtt{pos}$ to denote the function that returns
+zero when passed zero and one when passed another natural number.  The
+following definition gives the notion of \fomega\ expression
+equivalence we use.
 
 % However, as \ddc{} lacks evaluation rules, we derive the weak-head
 % normal form of a type by deriving the weak-head normal form of the
@@ -1012,7 +993,7 @@ we use.
 \begin{bnf}
 %   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
 %                                \pext{\| \gk \-> \gk} \\
-  \mname{Normalized\\ Types}{2} \meta{\tyval} \::= 
+  \mname{Normal\\ Types}{2} \meta{\tyval} \::= 
     \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} \|
     \psig x \ty \ty  \nlalt
     \psum \ty e \ty  \| \pand \ty \ty \|
@@ -1022,7 +1003,7 @@ we use.
     \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
     \\
   \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
-                               \papp{\ty}{\ty} \| \ptyvar \| 
+                               \papp{\ty}{\ty} \| \ptyvar 
 \end{bnf}  
 \[
   \infer{
@@ -1058,7 +1039,7 @@ we use.
     \papp {(\plam \ptyvar {} \ty)} {\tyval} \stepsto \ty[\tyval/\ptyvar]
   }{}
 \]
-  \caption{\ddc{} Weak-Head Normal Types and Normalization}
+  \caption{\ddc{} Normal Types and Normalization}
   \label{fig:ddc-reduction-rules}
   \label{fig:revised-ddc-syntax}
 \end{figure}
@@ -1118,9 +1099,28 @@ will not ``go wrong.''
 \end{lemma}
 
 \begin{proof}
-  First item: by induction on the height of the second derivation.
-  Second item: ??
+  Both items are proven by induction on the length of the respective 
+  \fomega\ evaluation relations.  Within the induction
+  they proceed using a case-by-case analysis of the possible structures 
+  of type $\ty$.
 \end{proof}
+
+
+% \edcom{Add text here.}
+% \begin{lemma}[Function Interpretation Corellation]
+%   If $\ddck[\ty,,\kind,]$ and $\trans[\ty,,] \kstepsto \ival$ then
+%   \begin{enumerate}
+%   \item $\ty \kstepsto \tyval$,
+%   \item $\ddck[\tyval,,\kind,]$
+%   \item $\ival \iexpreq \trans[\tyval,,]$,
+%   \item $\itsem[\ty] \equiv \itsem[\tyval]$, and
+%   \item $\itpdsem[\ty] \equiv \itpdsem[\tyval]$.
+%   \end{enumerate}
+% \label{lemma:eval-corr}
+% \end{lemma}
+% \begin{proof}
+%   By induction on evaluation derivations.
+% \end{proof}
 
 
 
