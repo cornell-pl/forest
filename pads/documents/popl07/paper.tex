@@ -28,29 +28,26 @@
 
   Massive amounts of useful data are stored and processed in
   \textit{ad hoc} formats for which common tools like parsers and
-  pretty printers do not exist.  Traditional data management systems
-  provide rich infrastructure for processing well-behaved data, but
-  are of little use when dealing with data in ad hoc formats.  To
-  address the challenges of ad hoc data, we have designed \padsml{}, a
+  pretty printers are not readily available.    To
+  facilitate processing such data, we have designed \padsml{}, a
   declarative data description language for the \ml{} family of
-  languages.  \padsml{} is based on the \ml{} type structure and
-  features polymorphic, dependent, recursive datatypes for describing
-  ad hoc data.  In addition, \padsml{} uses the \ml{} module system as
-  a general framework to help users easily develop customized
+  languages.  \padsml{} leverages the \ml{} type structure. It provides
+  polymorphic, dependent, recursive datatypes to describe
+  ad hoc data concisely.  In addition, \padsml{} uses the \ml{} module system to
+  provide a general framework in which users can easily develop customized
   data-processing tools for any data format described in \padsml{}.
   We have formalized the semantics of \padsml{}'s datatypes by
   extending our previous work on the Data Description
   Calculus~\cite{fisher+:next700ddl} in three important ways.
-  First, we simplified and a streamlined our previous work on recursive 
+  First, we simplified our previous treatment of recursive 
   descriptions.  Second, we extended the Data Description Calculus
-  with type-parameterized types, which was necessary to capture
-  \padsml{}'s polymorphic datatypes, an important feature for code reuse.
-  Third, we augmented the framework by providing a complete semantics
+  with type-parameterized types to express \padsml{}'s parametric polymorphism. 
+  Third, we augmented the framework to provide a semantics
   for the generated printers.  Finally, we
   have implemented a version of \padsml{} for the \ocaml{} language.
   From a \padsml{} description, our compiler generates an \ocaml{}
   module containing the relevant type declarations, a parser and printer
-  for the description, and other tools.
+  for the description, and support for user-specified tool generation.
 
 \end{abstract}
 
