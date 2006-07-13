@@ -1,31 +1,31 @@
 \begin{code}
- 1. \kw{ptype} Summary\_header = "0|" * Ptimestamp * '\\n'
- 2. \mbox{}
- 3. \kw{pdatatype} Dib\_ramp = 
- 4.   Ramp of Pint 
- 5. | GenRamp of "no\_ii" * Pint
- 6. \mbox{}
- 7. \kw{ptype} Order\_header = \{ 
- 8.      order\_num : Pint;  
- 9. '|'; att\_order\_num : [i:Pint | i < order\_num];  
-10. '|'; ord\_version : Pint;  
-11. '|'; service\_tn : Pphone Popt;
-12. '|'; billing\_tn : Pphone Popt;  
-13. '|'; nlp\_service\_tn : Pphone Popt;  
-14. '|'; nlp\_billing\_tn : Pphone Popt;  
-15. '|'; zip\_code : Pzip Popt;  
-16. '|'; ramp : Dib\_ramp;  
-17. '|'; order\_sort : Pstring('|');  
-18. '|'; order\_details : Pint;
-19. '|'; unused : Pstring('|');  
-20. '|'; stream : Pstring('|'); 
-21. '|'
-22. \} 
+\kw{ptype} Summary\_header = "0|" * Ptimestamp * '\\n'
+\mbox{}
+\kw{pdatatype} Dib\_ramp = 
+  Ramp of Pint 
+| GenRamp of "no\_ii" * Pint
+\mbox{}
+\kw{ptype} Order\_header = \{ 
+     order\_num : Pint;  
+'|'; att\_order\_num : [i:Pint | i < order\_num];  
+'|'; ord\_version : Pint;  
+'|'; service\_tn : Pphone Popt;
+'|'; billing\_tn : Pphone Popt;  
+'|'; nlp\_service\_tn : Pphone Popt;  
+'|'; nlp\_billing\_tn : Pphone Popt;  
+'|'; zip\_code : Pzip Popt;  
+'|'; ramp : Dib\_ramp;  
+'|'; order\_sort : Pstring('|');  
+'|'; order\_details : Pint;
+'|'; unused : Pstring('|');  
+'|'; stream : Pstring('|'); 
+'|'
+\} 
 
-23. \kw{ptype} Event  = Pstring('|') * '|' * Ptimestamp
-24. \kw{ptype} Events = Event Plist('|', '\\n')
+\kw{ptype} Event  = Pstring('|') * '|' * Ptimestamp
+\kw{ptype} Events = Event Plist('|', '\\n')
 
-25. \kw{ptype} Order  = Order\_header * Events
-26. \kw{ptype} Orders = Order Plist('\\n', \kw{peof})
+\kw{ptype} Order  = Order\_header * Events
+\kw{ptype} Orders = Order Plist('\\n', \kw{peof})
 
-27. \kw{ptype} Source = Summary\_header * Orders\end{code}
+\kw{ptype} Source = Summary\_header * Orders\end{code}
