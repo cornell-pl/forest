@@ -160,19 +160,16 @@ domain-specific than \padsml{}:  they do not directly generate a variety of
 data processing tools nor do they generate parsers that help programmers
 get their hands on the data directly and program with it.
 
-The Global Grid Forum is working on a standard
-data-format description language for describing ad hoc data formats,
-called DFDL~\cite{dfdl-proposal,dfdl-primer}.  Like \padsml{},
-DFDL{} has a rich collection of base types and supports a variety of
-ambient codings.  Unlike \padsml{}, DFDL{} does not support semantic
-constraints on types nor dependent types, \eg{}, it is not possible to
-specify that the length of an array is determined by some previously parsed field in the
-data.  Our practical experience indicates that many ad hoc formats,
-particularly binary formats, absolutely require dependent types in their
-specifications.  DFDL{} is an annotated subset of \xml{}{} Schema, which means
-that the \xml{}{} view of the ad hoc data is implicit in a DFDL{}
-description.  DFDL{} is still being specified, so no DFDL-aware
-parsers or data analyzers exist yet.  
+The Global Grid Forum is working on a standard data-format description
+language for describing ad hoc data formats, called
+DFDL~\cite{dfdl-proposal,dfdl-primer}. DFDL is a language
+\textit{specification}, not an entire system or an implementation.
+Like the \padsml{} language, DFDL{} has a rich collection of base
+types and supports a variety of ambient codings.  In terms of
+expressiveness, we believe the DFDL consortium has added dependency
+and semantic constraints to match the expressiveness of \padsc{}.
+However, because the specification is still under development, we
+cannot give a more detailed comparison at this point.
 
 % There are parallels between PADS types and some of the elements of parser
 % combinator libraries found in languages like
