@@ -5,23 +5,31 @@ use Getopt::Long;
 # file paths will be filled in by install script
 
 # padsc : front-end script to PADS compiler
-# 
+#
 # features of this front-end script:
-#         1. If all the .p files are in the same dir P 
-#            and there is a 'gen' dir at the same level
-#            as P, the generated files are placed in gen.
-#            This auto retargeting does not occur if
-#            there is no gen, or an explicit -p option
-#            is already present, or if some .p files
-#            are in different locations.
-#
-#         2. The script needs to determine $pads_home, the location
-#            of the PADS installation, so that it can find
-#            $pads_home/padsc/include and $pads_home/padsc/lib.
-#            If environment variable PADS_HOME is not set,
-#            or if the path to the script does not help us find
-#            pads_home, the script fails and reports an error.
-#
+
+sub ScriptHelp {
+print STDERR <<ENDHELP;
+
+Help for the padsc wrapper script:
+
+  1. Retargeting of generated files.
+       PRECONDITIONS for retargeting are:
+           + all .p files are in the same dir P
+           + an explicit -p option is used
+       When these conditions are met, the following retargeting
+       rules are applied, with rule A having higher precedence:
+           A. if P/gen is a directory, it is used as the target dir
+           B. if P/../gen is a directory, it is used as the target dir
+
+  2. The script needs to determine $pads_home, the location of the
+     PADS installation, so that it can find $pads_home/padsc/include
+     and $pads_home/padsc/lib.  If environment variable PADS_HOME is
+     not set, or if the path to the script does not help us find
+     pads_home, the script fails and reports an error.
+
+ENDHELP
+}
 
 # =========================
 sub cleanupStr
@@ -167,13 +175,17 @@ if ($smltest !~ /^sml [\d.]+$/) {
   print "... Trying to us it anyway...\n"
 }
 
-my $opts = "";      # all options other than pfiles
-my @pfiles = ();    # all pfiles
-my $retarg = "";    # detected gen dir, if found
-my $retarg_OK = 1;  # OK to use retarg
-my $help = 0;       # -h/--help option used
-my $optx = 0;       # -x option used
-my $nocheck = 0;    # -nocheck/--nocheck option used
+my $opts = "";       # all options other than pfiles
+my @pfiles = ();     # all pfiles
+my $retarg = "";     # detected gen dir, if found
+my $retarg_OK = 1;   # OK to use retarg
+my $multi_dir = 0;   # true if pfiles found in multiple dirs
+my $any_has_gen = 0; # true if any pfile dir has gen or ../gen
+my $pfile_dir = "";  # if $multi_dir is 0, this is the single dir containing
+                     #   all pfiles; it may be "." or a more complex path
+my $help = 0;        # -h/--help option used
+my $optx = 0;        # -x option used
+my $nocheck = 0;     # -nocheck/--nocheck option used
 
 my $full_args = join(" ", @ARGV);
 foreach $x (@ARGV) {
@@ -191,22 +203,27 @@ foreach $x (@ARGV) {
     # not an option of some kind, ends in .p, ergo a .p file
     push(@pfiles, $x);
     if ($retarg_OK) {
-      my $trydir = "../gen";
+      # figure out if this new $x is in same dir as prior $x
+      my $pdir = ".";  # default dir is "." unless we find a /
       if ($x =~ m|^(.*)/[^/]+$|) {
-	$trydir = $1 . "/../gen";
+	# $x has a path component
+	$pdir = $1;
       }
-      if (-d $trydir) {
-	my $possible_retarg = `(cd $trydir; pwd)` || "oops";
-	$possible_retarg = &cleanupStr($possible_retarg);
-	if ($retarg eq "") {
-	  $retarg = $possible_retarg;
-	} elsif ($retarg ne $possible_retarg) {
-	  # two different gen dirs found
-	  $retarg_OK = 0;
+      if (-d $pdir) {
+	my $canonical_pdir = `(cd $pdir; pwd)` || "oops";
+	$canonical_pdir = &cleanupStr($canonical_pdir);
+	# update $any_has_gen
+	if (!$any_has_gen &&
+	    (-d "$canonical_pdir/gen" || -d "$canonical_pdir/../gen")) {
+	  $any_has_gen = 1;
 	}
-      } else {
-	# possible_retarg not a dir
-	$retarg_OK = 0;
+	# update $pfile_dir/$multi_dir
+	if ($pfile_dir eq "") {	# first pfile
+	  $pfile_dir = $canonical_pdir;
+	} elsif ($pfile_dir ne $canonical_pdir) {
+	  # pfiles in different dirs
+	  $multi_dir = 1;
+	} # else $pfile_dir equals $canonical_pdir
       }
     }
   } else {
@@ -214,25 +231,51 @@ foreach $x (@ARGV) {
   }
 }
 
+# check for auto-retarget
+if ($retarg_OK && $pfile_dir ne "" && $any_has_gen) {
+  my $trydir = "";
+  if ($multi_dir) {
+    print STDERR "\n*** Your .p files are located in different dirs,"
+      . " so auto-retargeting to 'gen'\n     dir(s) will not occur,"
+      . " even though some gen dir(s) exist.  See --help for more info. ***\n\n";
+  } elsif (-d "$pfile_dir/gen") {
+    $trydir = "$pfile_dir/gen";
+  } elsif (-d "$pfile_dir/../gen") {
+    $trydir = "$pfile_dir/../gen";
+  }
+  if ($trydir ne "") {
+    my $possible_retarg = `(cd $trydir; pwd)` || "oops";
+    $possible_retarg = &cleanupStr($possible_retarg);
+    if (-d $possible_retarg) {
+      $retarg = $possible_retarg;
+    } # else possible_retarg not a dir
+  }
+}
+
 my $pfiles_str = join(" ", @pfiles);
 if ($dbg) {
-  print "full_args = $full_args\n";
-  print "pfiles    = $pfiles_str\n";
-  print "opts      = $opts\n";
-  print "retarg_OK = $retarg_OK\n";
-  print "retarg    = $retarg\n";
+  print "full_args   = $full_args\n";
+  print "pfiles      = $pfiles_str\n";
+  print "opts        = $opts\n";
+  print "retarg_OK   = $retarg_OK\n";
+  print "any_has_gen = $any_has_gen\n";
+  print "multi_dir   = $multi_dir\n";
+  print "pfile_dir   = $pfile_dir\n";
+  print "retarg      = $retarg\n";
+  print "\n";
 }
 
 my $cmd = "$sml \@SMLload=$image $pads_home $cc";
 if ($help) {
   $cmd .= " -help";
+  ScriptHelp();
 } else {
   if ($pfiles_str eq "") {
     print "\nNo .p files specified.  Usage:  $0 <options> <.p files>\n\tUse --help for all available options.\n\n";
     exit -1;
   }
   my $args = $full_args;
-  if ($retarg_OK) {
+  if ($retarg ne "") {
     $args = "-r $retarg $opts $pfiles_str";
     print "\nAuto-selecting target dir $retarg\n\n";
   }
