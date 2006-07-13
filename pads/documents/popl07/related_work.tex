@@ -19,7 +19,7 @@ a content-based search engine~\cite{lv+:cbs,oh:siw}, more statistical analysis, 
 Though we chose a compiled solution, a parser or printer combinator
 library might have served as an alternative implementation strategy
 for certain individual components of our tool suite.  However, by
-themselves, parser or printer combinator libraries, lex or yacc, are
+themselves, parser or printer combinator libraries, \lex{} or \yacc, are
 not properly architected to give the same, simple and powerful user
 experience as \padsml{}, which can be summed up through the motto
 ``one declarative description; many reliable tools.''  
@@ -162,14 +162,12 @@ get their hands on the data directly and program with it.
 
 The Global Grid Forum is working on a standard data-format description
 language for describing ad hoc data formats, called
-DFDL~\cite{dfdl-proposal,dfdl-primer}. DFDL is a language
-\textit{specification}, not an entire system or an implementation.
-Like the \padsml{} language, DFDL{} has a rich collection of base
-types and supports a variety of ambient codings.  In terms of
-expressiveness, we believe the DFDL consortium has added dependency
-and semantic constraints to match the expressiveness of \padsc{}.
-However, because the specification is still under development, we
-cannot give a more detailed comparison at this point.
+DFDL~\cite{dfdl-proposal,dfdl-primer}, the syntax of which is written
+in \xml. DFDL is a language \textit{specification}, not an entire
+system or an implementation.  We believe that DFDL is similar in its
+expressiveness to \padsc{}.  However, because the specification is
+still under development, we cannot give a more detailed comparison at
+this point.
 
 % There are parallels between PADS types and some of the elements of parser
 % combinator libraries found in languages like
