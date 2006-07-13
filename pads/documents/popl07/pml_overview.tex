@@ -33,7 +33,7 @@ have encountered in practice.
 
 \subsection{Simple Structured Types}
 
-
+\cut{
 \begin{figure*}
 {\scriptsize
 \begin{verbatim}
@@ -45,6 +45,7 @@ have encountered in practice.
   \caption{Miniscule example of \dibbler{} data.}
   \label{figure:dibbler-records}
 \end{figure*}
+}
 
 The bread and butter of a \padsml{} description are the simple
 structured types: tuples and records for specifying ordered data;
@@ -52,7 +53,7 @@ lists for specifying homogeneous sequences of data; sum types for
 specifying alternatives; and singletons for specifying the occurrence
 of literal characters in the data.  We describe each of these
 constructs as applied to the \dibbler{} data presented in
-\figref{figure:dibbler-records}.
+\figref{fig:sample-data}(b).
 
 \dibbler{} data summarizes orders for phone service placed with AT\&T.
 Each \dibbler{} data file starts with a timestamp followed by one
@@ -140,6 +141,7 @@ source where we wish we had nondeterministic choice.\footnote{\padsml{}
   parsing elements of the \cd{Pstring} base type, it has had no impact
   on the overall parsing algorithm.}
 }
+\cut{
 \begin{figure}
 \input{newick_pml}
 Tiny fragment of Newick data:
@@ -158,6 +160,7 @@ TRXEcoli:0.57336)
      inserted to improve legibility.}
   \label{fig:newick}
 \end{figure}
+}
 
 \subsection{Recursive Types}
 
@@ -170,7 +173,7 @@ sequence of children nodes, delimited by parentheses, followed by a
 colon and a number.  The numbers represent the ``distance'' that
 separates a child node from its parent.
 
-\figref{fig:newick} contains a concise and elegant description of Newick
+\figref{fig:sample-data}(c) contains a concise and elegant description of Newick
 and a small fragment of example data.  In this example, the string
 labels are gene names and the distance denotes the number of mutations
 that occur in the antibody receptor genes of B lymphocytes.  This
@@ -178,6 +181,7 @@ data was provided by Steven Kleinstein. He used
 similar data in his study of
 the proliferation of B lymphocytes during an immune response.
 
+\cut{
 \begin{figure}
   \centering
   \small
@@ -193,6 +197,7 @@ cycle_time=17412|SPECIAL
      inserted to improve legibility.}
   \label{fig:darkstar-records1}
 \end{figure}
+}
 
 \subsection{Polymorphic Types}
 
@@ -203,7 +208,7 @@ description in Figure~\ref{fig:darkstar-ml} illustrates types
 parameterized by both types and values.  This description specifies
 the format of alarm data recorded by a network-link monitor used by
 the \darkstar{} project at AT\&T.  Sample \darkstar{} data is in
-\figref{fig:darkstar-records1}.
+\figref{fig:sample-data}(a).
 
 Each alarm signals some problem with a network link; At this point, we
 could write an English description of the \darkstar{} data. However,
