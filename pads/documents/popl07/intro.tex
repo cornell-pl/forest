@@ -148,7 +148,7 @@ Device synchronization              & with data-dependent constraints & document
  dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;cycle_time=17412|SPECIAL
 \end{verbatim}  
 %  \label{fig:darkstar-records1}
-(a) Simplified Regulus network-monitoring data. The `$\backslash$' denotes a newline we inserted to improve readability. 
+(a) Simplified Regulus network-monitoring data. 
 
 \begin{verbatim}
 0|1005022800
@@ -159,15 +159,15 @@ Device synchronization              & with data-dependent constraints & document
 (b) \dibbler{} data used to monitor billing in telecommunications industry.
 
 \begin{verbatim}
-(((erHomoC:0.28006,erCaelC:0.22089):0.40998, (erHomoA:0.32304,(erpCaelC:0.58815,((erHomoB:
-0.5807,erCaelB:0.23569):0.03586,erCaelA: 0.38272):0.06516):0.03492):0.14265):0.63594,
+(((erHomoC:0.28006,erCaelC:0.22089):0.40998, (erHomoA:0.32304,(erpCaelC:0.58815,((erHomoB: \
+0.5807,erCaelB:0.23569):0.03586,erCaelA: 0.38272):0.06516):0.03492):0.14265):0.63594, \
 (TRXHomo:0.65866,TRXSacch:0.38791):0.32147, TRXEcoli:0.57336)
 \end{verbatim}
 % \label{fig:newick}
 (c) Newick data used to study immune system responses. 
 
 
-  \caption{Snippets of a variety of ad hoc data formats.}
+  \caption{Snippets of a variety of ad hoc data formats. Each `$\backslash$' denotes a newline we inserted to improve readability. }
   \label{fig:sample-data}
 \end{figure*}
 
@@ -228,11 +228,11 @@ necessary to clean and vet the data is prohibitively expensive.}
 \padsml{} is a domain-specific language designed to 
 improve the productivity of data analysts, be they computational biologists, physicists, network administrators, healthcare providers, financial analysts, \etc\
 To use the system, analysts describe their data in the \padsml{} language, capturing both the physical format of the data and any expected semantic constraints.  In return for this investment, analysts reap a substantial return.
-First of all, the description itself
+First of all, the description
 serves as clear, compact, and formally-specified documentation of 
 the data's structure and properties.  In addition, the \padsml{}
 compiler can convert the description into a suite of robust, end-to-end
-data processing tools and programming libraries specialized
+data processing tools and libraries specialized
 to the format.  As the analysts' data sources evolve over time,
 they can simply update the high-level descriptions
 and recompile to produce updated tools.
@@ -250,38 +250,25 @@ and recompile to produce updated tools.
 \cut{\textbf{***First describe features of \padsml{} types and the formal semantics.}
 \textbf{Lift text on types from Sec 2.}}
 
-The design of the 
-\padsml{} language is inspired by the type structure of modern
-functional programming languages.  More specifically, 
-\padsml{} has a rich collection of base
-types and provides polymorphic, dependent, and recursive datatypes to
-specify the syntactic structure and semantic properties of a data
-format.  Together, these features enable users to write concise,
-complete, and reusable descriptions of formats from domains like
-networking, computational biology, finance, and cosmology.  The
-\padsml{} language is described through examples from several domains
-in Section~\ref{sec:padsml-overview}.
+The type structure of modern functional programming languages inspired the design of the \padsml{} language.  
+Specifically, \padsml{} provides dependent, polymorphic recursive datatypes, layered on top of a rich collection of base types, to specify the syntactic structure and semantic properties of data
+formats.  Together, these features enable analysts to write concise,
+complete, and reusable descriptions of their data.  
+We describe the \padsml{} language using examples from several domains
+in \secref{sec:padsml-overview}.
 
 \cut{\textbf{***Justify embedding in \ocaml{}/\ml{}}} 
 
 We have implemented \padsml{} by compiling descriptions into
-\ocaml{}.  In order to do so, we use a
-``types as modules'' implementation strategy, in which \padsml{} types
-become modules and \padsml{} type constructors become functors. \cut{This
-design exploits the strengths of the \ml{} module system to provide
-the user with an intuitive and convenient interface to
-\padsml{}-generated libraries.}
-We were motivated to implement \padsml{} in an \ml{} language, not
-only to provide \ml{} programmers with a data-description language,
-but also  because we believe the features of \ml{} languages, like pattern
-matching and higher-order functions, can more naturally express data
-processing and transformation tasks than imperative languages like
-\C{} and \java{}.
-Section~\ref{sec:padsml-impl} describes our ``types as modules''
+\ocaml{} code.  We use a
+``types as modules'' implementation strategy, in which each \padsml{} type
+becomes a module and each \padsml{} type constructor becomes a functor. 
+We chose \ml{} as the host language because we believe that 
+functional languages lend themselves to data processing tasks more readily than imperative languages such as \C{} or \java{}.  In particular, constructs such as pattern matching and higher-order functions make expressing data transformations particularly convenient. \secref{sec:padsml-impl} describes our ``types as modules''
 strategy and shows how \padsml{}-generated modules together
 with functional \ocaml{} code can concisely express
 common
-data-processing tasks like filtering errors and format transformation.
+data-processing tasks such as filtering errors and format transformation.
 
 % Like the parser, the types of the representation and parse descriptor
 % produced by the parser are derived automatically from the data
@@ -293,11 +280,8 @@ data-processing tasks like filtering errors and format transformation.
 \cut{\textbf{***Then other tools and tool framework}}
 
 A key benefit of our approach is the high return-on-investment that
-users derive from describing their data in \padsml{}.  To increase
-this return, our goal is to generate automatically a collection of
-data analysis and processing tools from each description.  The two core
-programming libraries that \padsml{} generates from a description 
-are a parser and printer for the data source.  The parser maps raw 
+analysts can derive from describing their data in \padsml{}.  In particular, \padsml{} makes it possible to produce automatically a collection of data analysis and processing tools from each description.   
+As a start, the \padsml{} compiler generates from each description a parser and a printer for the associated data source.  The parser maps raw 
 data into two data
 structures: a canonical \textit{representation} of the parsed data and
 a \textit{parse descriptor}, a meta-data object detailing properties
@@ -306,55 +290,41 @@ applications with programmatic access to errors detected during
 parsing.  The printer inverts the process, mapping internal data structures
 and their corresponding parse descriptors back into into raw data.
 
-In addition to generating robust parsers and printer, our framework permits
-developers to easily add their own {\em format-independent} 
-tools, based on their expertise,
-to our tool suite without modifying the \padsml{} compiler.  A new
-tool generator need only match a generic interface, specified as an
-\ml{} signature.  Correspondingly, for each \padsml{} description, the
-\padsml{} compiler generates a meta-tool (a functor)
+In addition to generating parsers and printers, our framework permits
+developers to add {\em format-independent} tools without modifying the \padsml{} compiler by specifying \textit{tool generators}.  Such generators need only match a generic interface, specified as an \ml{} signature.  
+Correspondingly, for each \padsml{} description, the \padsml{} compiler generates a meta-tool (a functor)
 that takes a tool generator and specializes it for use with
-the particular description.  Section~\ref{sec:gen-tool} describes the
+the particular description.  \secref{sec:gen-tool} describes the
 tool framework and gives examples of three format-independent 
 tools that we have
 implemented: a data printer useful for description debugging,
 an accumulator that keeps track of error information for
-each type in a data source and a formatter that transforms a data
-source into XML.
+each type in a data source, and a formatter that maps data into XML.
+
+To define the semantics of \padsml{}, we extended our earlier work on the Data Description Calculus (\ddcold{})~\cite{fisher+:next700ddl} to account for \padsml{}'s
+polymorphic types.  In the process, we simplified the original presentation
+of the parser semantics substantially, particularly for recursive types.  
+In addition, we extended the theory to give a printing semantics.
+We used this new semantics to guide the \padsml{} implementation of printing.  \secref{sec:ddc} presents the extended \ddc{} calculus, focusing on the semantics of polymorphic types for parsing and the key elements of the printing semantics.  
+\cut{We show that both parsers and printers in the \ddc{} are type correct and furthermore that printers produce pairs of parsed data and parse descriptors in {\em canonical form}.  }
 
 \cut{\textbf{***THEN compare to \padsc{} in one paragraph only}}
 \padsml{} has evolved from previous work on
 \padsc{}~\footnote{We refer to the original
 \pads{} language as \padsc{} to distinguish it from \padsml{}.}~\cite{fisher+:pads}, but
-\padsml{} differs from \padsc{} in five significant ways.  First, it
+\padsml{} differs from \padsc{} in three significant ways.  First, it
 is targeted at the \ml{} family of languages.  Using \ml{} as the host
-language simplifies implementation of many data processing tasks, like
-data transformations, which benefit from \ml{}'s pattern matching and
+language simplifies many data processing tasks, such as filtering and normalization, 
+which benefit from \ml{}'s pattern matching constructs and
 high level of abstraction.  Second, unlike \padsc{} types, \padsml{}
 types may be parameterized by other types, resulting in more concise
-and elegant descriptions though code reuse.  ML-style datatypes and 
-anonymous nested tuples also help improve readability and compactness
-of descriptions.  Third, \padsml{} provides
-significantly better support for development of new tool generators.
+and elegant descriptions though code reuse.  \ml{}-style datatypes and 
+anonymous nested tuples also help improve readability by making descriptions more compact.  Third, \padsml{} provides
+significantly better support for the development of new tool generators.
 In particular, \padsml{} provides a generic interface against which
 tool generators can be written.  In \padsc{}, the compiler itself
 generates all tools, and, therefore, developing a new tool generator
 requires understanding and modifying the compiler.
-Fourth, we have extended our earlier work on the Data Description Calculus
-(\ddcold{})~\cite{fisher+:next700ddl} to account for \padsml{}'s
-polymorphic types and we have simplified original presentation
-of the parser semantics substantially, particularly for recursive types.  
-We have 
-proven that generated
-parsers are type correct and
-produce pairs of parsed data and parse descriptors in {\em canonical form}.  
-Fifth and finally, we have extended our theory by giving a new interpretation of
-\ddc{} descriptions as printers.  This new interpretation
-helped guide and check our \padsml{} implementation.
-Section~\ref{sec:ddc} presents the extended
-calculus (\ddc{}), focusing on the semantics of 
-polymorphic types for parsing and the key elements of the
-printing semantics.
 
 \cut{
 \textbf{***Then give observations.}
