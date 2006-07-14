@@ -1,0 +1,53 @@
+\begin{code}\scriptsize
+(* Pstring terminated by ';' or '|'. *)
+\kw{ptype} SVString = Pstring\_SE("/;|\\\\|/")
+\mbox{}
+(* Generic name value pair. Accepts predicate 
+   to validate name as argument.  *)
+\kw{ptype} (Alpha) Pnvp(p : string -> bool) =
+      \{ name : [name : Pstring('=') | p name]; 
+            '='; 
+       value : Alpha \}
+\mbox{}
+(* Name value pair with name specified. *)
+\kw{ptype} (Alpha) Nvp(name:string) = 
+   Alpha Pnvp(fun s -> s = name)
+\mbox{}
+(* Name value pair with any name. *)
+\kw{ptype} Nvp\_a = SVString Pnvp(fun \_ -> true)
+\mbox{}
+\kw{ptype} Details = \{
+      source      : Pip Nvp("src\_addr");
+';';  dest        : Pip Nvp("dest\_addr");
+';';  start\_time  : Ptimestamp Nvp("start\_time");
+';';  end\_time    : Ptimestamp Nvp("end\_time");
+';';  cycle\_time  : Puint32 Nvp("cycle\_time")
+\}
+
+\kw{pdatatype} Info(alarm\_code : int) =
+  match alarm\_code with
+    5074 -> Details of Details
+  | \_    -> Generic of Nvp\_a Plist(';','|')
+
+\kw{pdatatype} Service = 
+    DOMESTIC      of omit "DOMESTIC" 
+  | INTERNATIONAL of omit "INTERNATIONAL" 
+  | SPECIAL       of omit "SPECIAL"
+
+\kw{ptype} Alarm = \{
+       alarm    : [i : Puint32 | i = 2 or i = 3];
+ ':';  start    : Ptimestamp Popt;
+ '|';  clear    : Ptimestamp Popt;
+ '|';  code     : Puint32;
+ '|';  src\_dns  : SVString Nvp("dns1");
+ ';';  dest\_dns : SVString Nvp("dns2");
+ '|';  info     : Info(code);
+ '|';  service  : Service
+\} 
+
+\kw{ptype} Source = Alarm Plist('\\n',\kw{peof})\end{code}
+%
+%\kw{let} checkCorr ra = ...
+%\kw{ptype} Alarm = [x:Raw\_alarm | checkCorr x]
+
+
