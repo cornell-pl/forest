@@ -1,17 +1,13 @@
 \section{The Semantics of PADS/ML}
 \label{sec:ddc}
 
-% \emph{Do we want to show an example from pads/ml shown in DDC.
-%   (e.g. name-value pairs?). It think it would be nice, but I don't
-%   know that there is space.  }
-
 \trversion{\em Modify a\_pd to a\_pd\_body, everywhere. This name is more
   appropriate.  Note that the new scheme for translating type
   variables will affect WF rules. a will be in D but a\_rep and
   a\_pd\_body could appear in a sigma
 
   Consider a new convention: for compute type, any references to type
-  interepretations should be done with the type interpretation
+  interpretations should be done with the type interpretation
   functions rather than being hard coded. Otherwise, type substitution gets
   messed up,e.g., when unfolding a recursive type. 
   For example, should be compute(e:[a]\_rep) instead of
@@ -47,7 +43,8 @@ and check the correctness of our printer implementation.  We hope
 the calculus will serve as a guide for implementations of {\sc PADS} in
 other host languages.
 In the remainder of this section, we give an overview of the calculus.
-\appref{app:ddc-semantics} contains a complete formal specification.
+A companion technical report
+contains a complete formal specification~\cite{fisher+:popl-sub-long}.
 
 \subsection{\ddc{} Syntax}
 \begin{figure}
@@ -124,7 +121,7 @@ where $\pctxt$ maps type variables
 to kinds and $\ctxt$ maps host language value variables to host language 
 types. In our original work~\cite{fisher+:next700ddl}, these kinding rules
 were somewhat unorthodox, but we have since simplifed them.  
-Details appear in \appref{app:ddc-semantics}.
+Details appear in the companion technical report~\cite{fisher+:popl-sub-long}.
 
 \subsection{\Implang{} Language}
 \label{sec:host-lang}
@@ -134,7 +131,7 @@ and operators.
 % We use \fomega{} 
 % both to write the expressions that can appear within
 % \ddc{} itself and to encode the parsing semantics of \ddc{}.
-For reference, the grammar appears in \appref{app:host-lang}.
+% For reference, the grammar appears in \appref{app:host-lang}.
 The constants include bitstrings $\data$; offsets $\off$, representing
 locations in bitstrings; and error codes $\iok$, $\iecerr$, and
 $\iecpc$, indicating success, success with errors, and failure,
@@ -528,7 +525,8 @@ respectively.
 %products is ${\codefont{H_{\gS}}}$.  
 We have also factored out some commonly
 occuring code into auxiliary functions.  These constructors and functions
-appear in \appref{app:asst-functions}.
+appear in the companion technical report~\cite{fisher+:popl-sub-long}.
+%\appref{app:asst-functions}.
 
 The PD constructors determine the error code and calculate the error
 count.  There are three possible error codes: $\iok$, $\iecerr$, and
@@ -541,7 +539,7 @@ and any errors associated directly with the type itself.
 \figref{fig:ddc-sem-sum} specifies the parsing semantics of a
 selected portion of \ddc{}. We explain the interpretations of select
 types, from which the interpretation of the remaining types may be
-understood. The full semantics appears in \appref{app:ddc-semantics}.
+understood. The full semantics appears in the technical report~\cite{fisher+:popl-sub-long}.
 A dependent sum parses the data according to the first type, binding
 the resulting representation and PD to $x$ before parsing the
 remaining data according to the second type. It then bundles the

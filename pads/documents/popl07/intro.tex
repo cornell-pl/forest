@@ -180,48 +180,6 @@ although ad hoc data sources are among the richest for database and
 data mining researchers, they often ignore such sources as the work
 necessary to clean and vet the data is prohibitively expensive.}
 
-%% %% High-volume
-%% The high volume of ad hoc data sources is another challenge. AT\&T's
-%% call-detail stream, for example, contains roughly 300~million calls
-%% per day requiring approximately 7GBs of storage space.  Although this
-%% data is eventually archived in a database, data analysts mine it
-%% profitably before such archiving~\cite{kdd98,kdd99}.  More
-%% challenging, the \ningaui{} project at AT\&T accumulates billing data
-%% at a rate of 250-300GB/day, with occasional spurts of 750GBs/day, and
-%% netflow data arrives from Cisco routers at rates over a Gigabit per
-%% second~\cite{gigascope}!  Such volumes require that the data be
-%% processed without loading it into memory all at once.  Not
-%% surprisingly, flexible error-response strategies are especially
-%% critical with high-volume sources, so that error detection does not
-%% halt or delay normal processing.
-
-%% %% EXISTING SOLUTIONS
-
-%% To manage ad hoc data, analysts typically write custom programs in
-%% \C{} or \perl{} to parse and manipulate the data. 
-%% Unfortunately, writing such parsers is tedious and error-prone,
-%% complicated by the lack of documentation, convoluted encodings
-%% designed to save space, and the need to produce efficient code.
-%% Handling errors is a no-win situation.  If analysts insert code
-%% to detect all possible errors, then the error-related code dominates
-%% the rest of the program. If they don't, they run the risk of
-%% failing to detect a critical error and possibly corrupting valuable
-%% down-stream data.  Moreover, the parser writers'
-%% hard-won understanding of the data ends up embedded in parsing code,
-%% making long-term maintenance difficult for the original writers and
-%% sharing the knowledge with others nearly impossible.
-
-%% \cut{
-%% The range of application domains, 
-%% the variability and irregularity of ad hoc formats, 
-%% the lack of documentation,
-%% the prevalence of errors, 
-%% the volume of data,
-%% and the lack of tools
-%% make processing ad hoc data both interesting and challenging.
-%% }
-
-%% OUR SOLUTION & CONTRIBUTIONS
 \subsection{\padsmlbig{}}
 
 %% Slight change to emphasize generation of many tools.
@@ -238,18 +196,6 @@ to the format.  As the analysts' data sources evolve over time,
 they can simply update the high-level descriptions
 and recompile to produce updated tools.
 
-%% Our solution to the challenges of ad hoc data is \padsml{}, a
-%% declarative language for describing data sources.  With \padsml{}, a
-%% data analyst can describe both the physical format and semantic
-%% properties of a data source.  From a \padsml{} description, our
-%% compiler generates robust data processing tools specific to the
-%% description.  Because valuable tools are generated from a description,
-%% an analyst is motivated to keep the description up-to-date in response
-%% to format changes.  Hence a \padsml{} description serves as accurate,
-%% formal, and living documentation of a data format.
-
-\cut{\textbf{***First describe features of \padsml{} types and the formal semantics.}
-\textbf{Lift text on types from Sec 2.}}
 
 The type structure of modern functional programming languages inspired the design of the \padsml{} language.  
 Specifically, \padsml{} provides dependent, polymorphic recursive datatypes, layered on top of a rich collection of base types, to specify the syntactic structure and semantic properties of data
@@ -257,8 +203,6 @@ formats.  Together, these features enable analysts to write concise,
 complete, and reusable descriptions of their data.  
 We describe the \padsml{} language using examples from several domains
 in \secref{sec:padsml-overview}.
-
-\cut{\textbf{***Justify embedding in \ocaml{}/\ml{}}} 
 
 We have implemented \padsml{} by compiling descriptions into
 \ocaml{} code.  We use a
@@ -270,15 +214,6 @@ strategy and shows how \padsml{}-generated modules together
 with functional \ocaml{} code can concisely express
 common
 data-processing tasks such as filtering errors and format transformation.
-
-% Like the parser, the types of the representation and parse descriptor
-% produced by the parser are derived automatically from the data
-% description. The constructs of \padsml{} are based on the type
-% structure of the ML family of languages. Therefore, the compiler can
-% map the description into type declarations in ML with little change.
-
-\cut{\textbf{***Then describe the parser.}}
-\cut{\textbf{***Then other tools and tool framework}}
 
 A key benefit of our approach is the high return-on-investment that
 analysts can derive from describing their data in \padsml{}.  In particular, \padsml{} makes it possible to produce automatically a collection of data analysis and processing tools from each description.   
