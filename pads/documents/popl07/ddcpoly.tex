@@ -676,7 +676,7 @@ interpretations of $\ty_2$.
   \quad \transpp[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
           [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \\
   \qquad\ictup{\iunroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
-     \iunroll{pd.\ipbdy}{\itpdsemstrip[\pmu \ptyvar \kty \ty]}}
+     \iunroll{\ipid{2}{pd}}{\itpdsemstrip[\pmu \ptyvar \kty \ty]}}
   \end{array}  
 \\[3pt]
 %% lambda \alpha
@@ -956,15 +956,14 @@ expect canonical inputs.
 
 For each \ddc{} type, its canonical forms are defined via
 two (mutually recursive) relations.  The first
-relation, $\corr \tyval r p$ (see Canonical Forms I below),
+relation, $\corr \tyval r p$,
 defines the canonical form of a representation $r$ and a parse
 descriptor $p$ at normal type $\tyval$.  {\em Normal types}
 are those closed types with base kind $\kty$ that are defined in 
 Figure~\ref{fig:ddc-reduction-rules}.  Types with higher kind such as
 abstractions are not described by this relation as they cannot directly
 produce representations and PDs.  
-
-A second definition, $\corrkl \ty r p$ (see Canonical Forms II below),
+The second definition, $\corrkl \ty r p$,
 normalizes $\ty$, thereby eliminating outermost type and value
 applications.  The result is a normal type $\tyval$ and the
 requirements on $\tyval$ are subsequently given by $\corr {\tyval} r
@@ -993,17 +992,22 @@ equivalence we use.
 \begin{bnf}
 %   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
 %                                \pext{\| \gk \-> \gk} \\
-  \mname{Normal\\ Types}{2} \meta{\tyval} \::= 
-    \ptrue\| \pfalse \| \pbase{e} \| \plam{\var}{\ity}{\ty} \|
-    \psig x \ty \ty  \nlalt
-    \psum \ty e \ty  \| \pand \ty \ty \|
+  \name{Normal Types} \meta{\tyval} \::= 
+%    \ptrue\| \pfalse \| 
+    \pbase{e} \| \plam{\var}{\ity}{\ty} \|
+    \psig x \ty \ty  \|
+    \psum \ty e \ty  \nlalt
+ % \pand \ty \ty \|
     \pset x \ty e \|
-    \pseq \ty \ty {\pterm e \ty} \nlalt
-    \pmu{\ptyvar}{}{\ty}  \| \plam{\ptyvar}{}{\ty} \nlalt
-    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
+%    \pseq \ty \ty {\pterm e \ty} \nlalt
+    \pmu{\ptyvar}{}{\ty}  \| \plam{\ptyvar}{}{\ty} 
+%   \nlalt
+%    \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty} 
     \\
   \name{Types} \meta{\ty} \::= \tyval \| \papp{\ty}{e} \|
-                               \papp{\ty}{\ty} \| \ptyvar 
+                               \papp{\ty}{\ty} \| \ptyvar \\
+\\
+  \name{Normalization:}
 \end{bnf}  
 \[
   \infer{
@@ -1039,13 +1043,13 @@ equivalence we use.
     \papp {(\plam \ptyvar {} \ty)} {\tyval} \stepsto \ty[\tyval/\ptyvar]
   }{}
 \]
-  \caption{\ddc{} Normal Types and Normalization}
+  \caption{\ddc{} Normal Types, selected constructs}
   \label{fig:ddc-reduction-rules}
   \label{fig:revised-ddc-syntax}
 \end{figure}
 
-\begin{definition}[Canonical Forms I (selected constructs)]
-$\corr \tyval r p$ iff exactly one of the following is true:
+\begin{definition}[Canonical Forms (selected constructs)]
+(1) $\corr \tyval r p$ iff exactly one of the following is true:
   \begin{itemize}
   \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
   \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
@@ -1069,15 +1073,17 @@ $\corr \tyval r p$ iff exactly one of the following is true:
     and $p = \ipair h {p'}$,
     and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
     $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
-  \item $\tyval = \pmu \ptyvar {} {\ty'}$, $p =
-    \ipair h {p'}$, $p.{nerr} = p'.{nerr}$ \\
+  \item $\tyval = \pmu \ptyvar {} {\ty'}$, 
+    $r = \iroll{r'}{\itsem[\pmu \ptyvar {} {\ty'}]}$, $p =
+    \ipair h {\iroll{p'}{
+                \itpdsem[\pmu \ptyvar {} {\ty'}]}}$, 
+        $p.{nerr} = p'.{nerr}$ 
     and
-    $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} r {p'}$.
+    $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} {r'} {p'}$. \\
   \end{itemize}
-\end{definition}
 
-\begin{definition}[Canonical Forms II]
-$\corrkl \ty r p$ iff $\ty \kstepsto \tyval$ and $\corr \tyval r p$.
+\noindent
+(2) $\corrkl \ty r p$ iff $\ty \kstepsto \tyval$ and $\corr \tyval r p$.
 \end{definition}
 
 Lemma~\ref{lem:err-corr-at-T}, part 1, states that the parsers for
@@ -1085,9 +1091,9 @@ well-formed types (of base kind) will produce a canonical pair of
 representation and parse descriptor, if they produce anything at all.
 Conversely, part 2 states that, given a canonical representation and
 parse descriptor, the printer for well-formed types (of base kind)
-will not ``go wrong.''
+will not ``go wrong'' by calling the $\failpp{}$ function.
 
-\begin{lemma}[Parsing to/Printing from Canonical Forms]
+\begin{theorem}[Parsing to/Printing from Canonical Forms]
 \label{lem:err-corr-at-T}
 \begin{itemize}
 \item If $\ddck[\ty,,\kty,\con]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
@@ -1096,7 +1102,7 @@ will not ``go wrong.''
   $\transpp[\ty,,] \sapp \spair<r,p> \kstepsto \iexp$ then $\iexp \neq
   \failpp{}$.
 \end{itemize}
-\end{lemma}
+\end{theorem}
 
 \begin{proof}
   Both items are proven by induction on the length of the respective 
