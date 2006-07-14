@@ -228,7 +228,7 @@ necessary to clean and vet the data is prohibitively expensive.}
 
 \padsml{} is a domain-specific language designed to 
 improve the productivity of data analysts, be they computational biologists, physicists, network administrators, healthcare providers, financial analysts, \etc\
-To use the system, analysts describe their data in the \padsml{} language, capturing both the physical format of the data and any expected semantic constraints.  In return for this investment, analysts reap a substantial return.
+To use the system, analysts describe their data in the \padsml{} language, capturing both the physical format of the data and any expected semantic constraints.  In return for this investment, analysts reap substantial rewards.
 First of all, the description
 serves as clear, compact, and formally-specified documentation of 
 the data's structure and properties.  In addition, the \padsml{}
@@ -262,7 +262,7 @@ in \secref{sec:padsml-overview}.
 
 We have implemented \padsml{} by compiling descriptions into
 \ocaml{} code.  We use a
-``types as modules'' implementation strategy, in which each \padsml{} type
+``types as modules'' implementation strategy in which each \padsml{} type
 becomes a module and each \padsml{} type constructor becomes a functor. 
 We chose \ml{} as the host language because we believe that 
 functional languages lend themselves to data processing tasks more readily than imperative languages such as \C{} or \java{}.  In particular, constructs such as pattern matching and higher-order functions make expressing data transformations particularly convenient. \secref{sec:padsml-impl} describes our ``types as modules''
@@ -354,10 +354,10 @@ application domains.
 functional languages, making it an outstanding example of how
 functional languages can be used to solve
 important data-management problems.  In particular, \ml{} modules and
-functors provides an extensible framework for \padsml{} users to define their
+functors provide an extensible framework for \padsml{} users to define their
 own \padsml{} tools. 
 \item We have defined the formal semantics of both \padsml{} parsers 
-and printers.
+and printers and proven several important theorems concerning the semantics.
 \end{itemize}
 
 \cut{
