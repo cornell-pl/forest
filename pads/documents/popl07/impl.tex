@@ -171,14 +171,14 @@ errors, including error analysis, repair, and removal.}
    \kw{match} pd\_hdr \kw{with}
     \{error_code = Good\} -> (order::good, bad)
    | _                  -> (good, order::bad)
-\kw{in}
+
 \kw{let} split_orders orders (orders_pd_hdr,order_pds) = 
    List.fold_right2 classify_order orders order_pds []
-\kw{in}
+
 \kw{let} ((header, orders),(header_pd, orders_pd)) = 
    parse_source Sirius.parse "input.txt"
-\kw{in}
-split_orders orders orders_pd\end{code} 
+
+\kw{let} _ = split_orders orders orders_pd\end{code} 
 \caption{Error filtering of \dibbler{} data}
 \label{fig:ex-data-clean}
 \end{figure}
@@ -226,23 +226,35 @@ orders and corresponding parse descriptors.
 \begin{code}\scriptsize
 \kw{open} Regulus
 \kw{open} RegulusNormal
-\kw{module} RA = Raw\_alarm
+\kw{module} A = Alarm
 \kw{module} DA = D\_alarm
 \kw{module} GA = G\_alarm
 \kw{module} Header = H
 
-\kw{let} splitAlarm ra =
+\kw{type} ('a,'b) Sum = Left of 'a | Right of 'b
+
+\kw{let} split_alarm ra =
     \kw{let} h = 
-       \{H.alarm=ra.RA.alarm; H.start=ra.RA.start; 
-        H.clear=ra.RA.clear; H.code=ra.RA.code;
-        H.src\_dns=ra.RA.src\_dns; 
-        H.dest\_dns=ra.RA.dest\_dns;
-        H.service=ra.RA.service\}
+       \{H.alarm=ra.A.alarm; H.start=ra.A.start; 
+        H.clear=ra.A.clear; H.code=ra.A.code;
+        H.src\_dns=ra.A.src\_dns; 
+        H.dest\_dns=ra.A.dest\_dns;
+        H.service=ra.A.service\}
     \kw{in} \kw{match} ra \kw{with}
         \{info=Details(d)\} -> 
-        (Some \{DA.header = h; DA.info = d\}, None)
+        Left \{DA.header = h; DA.info = d\}
       | \{info=Generic(g)\} ->
-        (None, Some \{GA.header = h; GA.info = g\})    
+        Right \{GA.header = h; GA.info = g\}
+
+\kw{let} process_alarm pads [pads_D; pads_G] = 
+  \kw{let} a,a_pd = Alarm.parse pads in
+    \kw{match} (split_alarm a, split_alarm_pd a_pd) \kw{with}
+	(Left  da, Left  da_p) -> DA.print da da_p pads_D
+      | (Right ga, Right ga_p) -> GA.print ga ga_p pads_G
+      | _ -> ... (* Bug! *)
+
+\kw{let} _ = process_source process_alarm 
+                "input.data" ["d_out.data";"g_out.data"]
   \end{code}
   \caption{Shredding \darkstar{} data based on the {\tt info} field.}
   \label{fig:ex-no-err-check}
