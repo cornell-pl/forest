@@ -26,13 +26,19 @@ structure ParseCmdLine : PARSECMDLINE =
 			  raise Invalid)
 
 	fun helpMsg (banner,flags) = 
-	    let fun msg (f,m,Extension _) = (pr ("."^f^"\t"^m^"\n"))
+	    let fun msg (f,m,Extension _) = ()
 		  | msg (f,m,k) =  (pr ("-" ^ f ^ "\t" ^ m ^ "\n"))
 		fun loop (hd::tl) = (msg hd; loop tl)
 		  | loop [] = (pr "\n")
+	    fun msg (f,m,Extension _) = (pr ("."^f^"\t"^m^"\n"))
+		  | msg _ =  ()
+		fun loop2 (hd::tl) = (msg hd; loop2 tl)
+		  | loop2 [] = (pr "\n")
 	    in
 		pr (banner ^ "\n");
 		loop flags;
+		pr ("File extensions:\n");
+		loop2 flags;
 		()
 	    end
 
@@ -164,10 +170,7 @@ structure ParseCmdLine : PARSECMDLINE =
 	    in
 		tooldesc ^ "\n" ^
 		toolname ^ " "^ 
-		(String.concat (List.map describe_flag (flags @ [helpFlag])))
+		(String.concat (List.map describe_flag (flags @ [helpFlag]))) ^
+		" file..."
 	    end
     end
-
-
-
-

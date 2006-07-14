@@ -109,7 +109,6 @@ structure Main : sig
          ("a", "generate accumulator program",    PCL.String (addAccumulator, true)),	 
          ("parse", "generate parsetree only", PCL.BoolSet parseTreeOnlyFlag),
 	 ("ast",   "generate ast only", PCL.BoolSet astOnlyFlag),
-	 ("xsnone", "suppress XSchema generation", PCL.BoolSet xschemaNoneFlag),
          ("experimental", "generate experimental features", PCL.BoolSet experimentFlag),
          ("T", "transform specification",      PCL.String (addTranslate, true))
         ]
@@ -246,7 +245,7 @@ structure Main : sig
 	in
 	    TextIO.output(aoutstream, "#define PADS_TY(suf) " ^repName^ " ## suf\n\n");
 	    TextIO.output(aoutstream, "#include \""^headerFile^"\"\n");
-	    TextIO.output(aoutstream, "#include \"template/accum_report\"\n\n");
+	    TextIO.output(aoutstream, "#include \"template/accum_report.h\"\n\n");
 
 	    TextIO.flushOut aoutstream;
 	    TextIO.closeOut aoutstream
