@@ -1,6 +1,7 @@
-\section{Future Work and Conclusions}
+\section{Conclusions}
 \label{sec:future}
 
+\cut{
 \padsml{} is already an effective, working system for data description
 and processing.  However, there are a number of ways we plan to make it 
 even better.
@@ -46,59 +47,43 @@ large-scale data~\cite{fisher+:pads} by supporting multiple-entry
 point parsing, which permits a user to write tools that have fixed
 memory requirements and that can yield a result in one scan of the
 data source.  We plan to explore similar techniques in \padsml{}. 
-
+}
 % \section{Conclusions}
 % \label{sec:conc}
 
-% Despite the advent of standard data representation languages such as
-% \xml, vast quantities of important information continue to exist
-% in ad hoc data formats.  In order to deal with this data,
-% programmers desperately need reliable, high-level tools to 
-% help them document, parse, 
-% analyze, transform, query and visualize it.  
+Vast quantities of important information exist only in ad hoc formats.  
+Data analysts desperately need reliable, high-level tools to 
+help them document, parse, analyze, transform, query, and visualize such data.  
+\padsml{} is a high-level domain-specific language and system
+designed for this purpose.  
+Inspired by the type structure of functional
+programming languages, \padsml{} uses dependent
+polymorphic recursive data types to describe the syntax and the semantic properties of ad hoc data sources.  The language is compact and expressive, capable of describing data from diverse domains including networking, computational biology, finance, and cosmology. 
+The \padsml{} compiler uses a ``types as modules'' compilation strategy
+in which every \padsml{} type definition is compiled into
+an \ocaml{} module containing types for data representations
+and functions for data processing.  Functional programmers
+can use the generated modules to write clear and concise {\em format-dependent}
+data processing programs.  Furthermore, our system design
+allows external tool developers to write new {\em format-independent} tools
+simply by supplying a module that matches the appropriate generic
+signature.  
+To give \padsml{} a precise semantics, we have simplified and extended the Data Description Calculus (\ddc)~\cite{fisher+:next700ddl} to account for parametric polymorphism.
 
-% In this paper, we describe \padsml{}, 
-% a high-level, domain-specific language and system
-% designed to improve the productivity of programmers who 
-% manipulate ad hoc data.  The \padsml{} 
-% language is inspired by the type structure of modern functional
-% programming languages, and uses 
-% polymorphic, dependent and recursive data types to document both the
-% basic syntax and the semantic properties of any data source.  
-% We have simplified and extended the Data Description Calculus (DDC) 
-% developed in
-% our earlier work~\cite{fisher+:next700ddl} to account for these features.
-% We have also demonstrated that this specification language
-% is compact, expressive, and 
-% capable of describing data from many domains, ranging from
-% networking to computational biology to finance to cosmology.
 
-% The \padsml{} compiler uses a ``types as modules'' compilation strategy
-% in which every \padsml{} type definition is compiled into
-% an \ocaml{} module containing types for data representations
-% and functions for parsing and data processing.  Functional programmers
-% can use the generated modules to write clear and concise {\em format-dependent}
-% data processing programs;
-% we give several simple examples in this paper.  Our system design
-% also allows external
-% tool developers to write new {\em format-independent} tools
-% simply by supplying a module that matches the appropriate generic
-% signature.  In both cases, the design improves substantially over
-% our earlier work on \padsc{}.
-
-Finally, we hope the \padsml{} system can serve as a stimulating and
-practical test case for researchers studying functional programming language
+We hope the \padsml{} system can serve as a 
+challenge problem for researchers studying functional programming language
 design and implementation.  In particular, our ``types as modules'' 
-compilation strategy pushes up against
-the very limits of modern module system design --- O'Caml's experimental
+compilation strategy pushes against
+the limits of modern module system design --- \ocaml{}'s experimental
 recursive modules do not allow us to implement recursive types as
 recursive modules in the natural way we envision.  
 In addition, future \padsml{} programs
 might be phrased extremely elegantly
 as (dependently) type-directed programs, but mainstream
 languages lack either dependent types or type-directed programming
-features, or, most commonly, both.  Lastly, rather than erasing
-dependent typing information upon translation of \padsml{} into O'Caml,
+features, or  both.  Lastly, rather than erasing
+dependent typing information upon translation of \padsml{} into \ocaml{},
 it would be ideal to preserve the dependency and to verify
 that data processors preserve necessary data invariants.
 Unfortunately,

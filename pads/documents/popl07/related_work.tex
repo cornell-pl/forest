@@ -1,27 +1,26 @@
 \section{Related Work}
 \label{sec:related}
 
-There are many useful tools designed to help programmers generate
+Many useful tools exist to help programmers generate
 parsers.  Examples include compiler technology such as the many
-variants of Lex and Yacc as well as interpreter technology such the
+variants of \lex{} and \yacc{} as well as interpreter technology such the
 parser combinator libraries found in functional programming languages
 (Haskell~\cite{hutton+:parser-combinators}, for example).  Likewise,
 there are tools to help programmers generate printers.  Each of these
-technologies are very useful in their own domain, but none of them
-could possibly be substituted for \padsml{}.  A key difference is that
-a single \padsml{} description is sufficient to generate a large
-collection of useful data processing tools including a parser, a
-printer, a statistical error analysis, a format debugger, an \xml{}
+technologies is very useful in its own domain, but \padsml{} is broader in its scope than each of them:
+a single \padsml{} description is sufficient to generate \textit{both} a parser and a printer.  And a statistical error analysis, a format debugger, an \xml{}
 translator, and in the future, a query engine~\cite{fernandez+:padx},
 a content-based search engine~\cite{lv+:cbs,oh:siw}, more statistical
-analysis, etc.  Though we chose a compiled solution, a parser or
-printer combinator library might have served as an alternative
-implementation strategy for certain individual components of our tool
-suite.  However, by themselves, parser or printer combinator
+analyses, \etc\  Neither combinator libraries nor tools such as \lex{} and \yacc{} are designed to generate such a range of artifacts from a single specification.  Indeed, the proper way to think about combinator libraries in relation to \padsml{} is that they might serve as an alternative implementation strategy for some of the generated tools.
+
+
+\cut{
+However, by themselves, parser or printer combinator
 libraries, \lex{} or \yacc, are not properly architected to give the
 same, simple and powerful user experience as \padsml{}, which can be
 summed up through the motto ``one declarative description; many
 reliable tools.''
+}
 
 % A second way to characterize some of the differences between parser
 % technologies is to recognize that \padsml{} is higher level (leaving
@@ -35,22 +34,22 @@ reliable tools.''
 
 Generic
 programming~\cite{jeuring+:polytypic-programming,hinze+:generic-programming,lammel+:syb}
-and design patterns such as the visitor are technologies that can
+and design patterns such as the visitor pattern are technologies that can
 facilitate the implementation of type-directed data structure
 traversals.  Lammel and Peyton Jones' original ``scrap your
 boilerplate'' article~\cite{lammel+:syb} provides a detailed summary
 of the trade-offs between different techniques.  We investigated using
-one of these techniques before implementing the generator for
+these techniques before implementing the generator for
 \padsml{} traversal functors from scratch.  However, we found most
-advanced techniques for functional programming languages required
+advanced techniques for generic programming required
 features such as type classes that are only present in variants of
 Haskell.  The generated \padsml{} traversal functors are less flexible
-than some of these traversal techniques, but they suffice for helping
-us program the tools we have implemented, and for many more tools for
-ad hoc data we are considering implementing.  On the other hand, we
+than those possible in Haskell, but they suffice for many tools useful in practice. 
+\cut{ I'm not sure what you mean here:
+ On the other hand, we
 have not seen type directed programming techniques developed for
 systems of dependent types similar to the \padsml{} dependent type
-structure.  
+structure.  }
 % However, to summarize the central differences between
 % generic programming and \padsml{}, generic programming is a powerful
 % {\em implementation technique} which can be used to implement many
@@ -124,20 +123,21 @@ structure.
 % as opposed to strongly typed functional languages like \ml{}.
 
 The networking community has developed a number of domain-specific
-languages, including PacketTypes~\cite{sigcomm00},
-DataScript~\cite{gpce02} and Bro's~\cite{paxson:bro} packet processing
-language for parsing and printing binary data.  Like \padsml{}, these
-languages use a type-directed approach to describing ad hoc data and
+languages, including DataScript~\cite{gpce02}, PacketTypes~\cite{sigcomm00},
+and Bro's packet processing
+language~\cite{paxson:bro} for parsing and printing binary data.  
+Like \padsml{}, these
+languages use a type-directed approach to describe ad hoc data and
 permit the user to define semantic constraints.  In contrast to our
 work, these systems handle only binary data and assume the data is
-error-free or halt parsing if an error is detected. DFDL is a data
+error-free. DFDL is a data
 format specification language with an XML-based syntax and type
-structure~\cite{dfdl-proposal,dfdl-primer}. At this stage in its
-development, it appears DFDL remains a language specification; a tool
-generation architecture has not yet been developed. We believe that
+structure~\cite{dfdl-proposal,dfdl-primer}. DFDL is still under development.   
+It does not have a formal semantics, an implementation, or a tool
+generation architecture. We believe that
 DFDL is similar in its expressiveness to \padsc{}.  However, because
-the specification is still under development, we cannot give a more
-detailed comparison at this point.
+the specification is evolving, we cannot give a more
+detailed comparison.
 
 A somewhat different class of languages includes
 \textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}.  Both of
@@ -146,12 +146,12 @@ data and then automatically generate a {\em physical\/} on-disk
 representation.  This technology does not help process data that
 arrives in predetermined, ad hoc formats.
 
-There are a number of tools designed to deal with converting ad hoc
-data formats into \xml{} and various related tasks, including
+There are a number of tools designed to convert ad hoc
+data formats into \xml{}, including
 XSugar~\cite{brabrand+:xsugar2005} and the Binary Format Description
 language (BFD)~\cite{bfd}. The scope of both of these projects is
-limited to conversion to-and-from \xml{}, and neither seek to provide
-programmers with access to the raw data, nor produce a broad suite of
+limited to conversion to-and-from \xml{}; neither seeks to provide
+programmers with access to the raw data, nor to produce a broad suite of
 data processing tools.
 
 % There are probably hundreds of tools that one might use if their data were
@@ -160,13 +160,10 @@ data processing tools.
 % as ad hoc data often does.  Since many processes, machines, programs and other devices
 % currently output data and a whole most of
 
-Commercial database products provide support for
+Commercial database products provide limited support for
 parsing data in external formats so the data can be imported into
 their database systems, but they typically support a limited number of
-formats.  Also, no declarative description of the
-original format is exposed to the user for their own use, and they
-have fixed methods for coping with erroneous data.  For these reasons,
-\padsml{} is complementary to database systems.  
+formats and have fixed methods for coping with erroneous data.  They do not provide any description of the original format to users for purposes other than loading into the database.
 
 On the theoretical front, the scientific community's understanding of
 type-based languages for data description is much less mature.  To the
@@ -181,11 +178,11 @@ Regular expressions and context-free grammars, the basis for Lex and
 Yacc have been well-studied, but they do not have dependency, a key
 feature necessary for expressing constraints and parsing ad hoc
 scientific data.  {\em Parsing Expression Grammars} (PEGs), studied in
-the early seventies~\cite{birman+:parsing}, revitalized more recently
-by Ford~\cite{ford:pegs} and implemented using ``packrat parsing''
-techniques~\cite{ford:packrat,grimm:packrat}, are somewhat more
-similar to \padsml{}'s recursive descent parsers. However, our
-multiple interpretations of types in the DDC makes our theory
+the early seventies~\cite{birman+:parsing}, revitalized 
+by Ford~\cite{ford:pegs}, and implemented using ``packrat parsing''
+techniques~\cite{ford:packrat,grimm:packrat}, are more closely
+related to \padsml{}'s recursive descent parsers. However, the
+multiple interpretations of types in the \ddc{} makes our theory
 substantially different from the theory of PEGs.
 
 % {\em PEG difference: not just dependency, but error handling?}
