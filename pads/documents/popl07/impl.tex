@@ -1,4 +1,4 @@
-\section{From \padsmlbig{} to \ocamlbig{}}
+o\section{From \padsmlbig{} to \ocamlbig{}}
 \label{sec:padsml-impl}
 The \padsml{} compiler takes descriptions and generates \ocaml{}
 modules that can be used by any \ocaml{} program.  In this section, we
@@ -51,6 +51,7 @@ in-memory representation of parsed data, while the
 during parsing.
 The parsing function converts the raw data into an in-memory
 representation and parse descriptor for the representation.
+The printing function performs the reverse operation.
 The module also contains a generic tool generator implemented as a functor; we defer a description of this functor to \secref{sec:gen-tool}.
 The module \cd{Pads} contains the
 built-in types and functions that occur in base-type and generated
