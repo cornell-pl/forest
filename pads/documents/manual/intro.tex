@@ -407,17 +407,24 @@ the \texttt{my.p} file.
 \subsection{Command-line switches}
 \begin{figure}
 \begin{verbatim}
-padsc  [-wnone] [-anone] [-r <string>] 
-       [-I <string> ...] [-D <string> ...] [-U <string> ...] 
-       [-t] [--help]
--wnone	suppress write function generation
--anone	suppress accumulator generation
--r	output directory
--I	augment include path
--D	add definition
--U	remove definition
--t	trace system commands
-.p	PADS files
+padsc  [-wnone] [-xsnone] [-anone] [-x] [-hist] [-cluster] [-r <string>] [-b
+<string>] [-I <string> ...] [-D <string> ...] [-U <string> ...] [-t] [--help]
+file...
+-wnone  suppress write function generation
+-xsnone suppress XSchema generation
+-anone  suppress accumulator generation
+-x      output Galax Data API
+-hist   output histogram functions
+-cluster        output cluster functions
+-r      output directory
+-b      add base type table
+-I      augment include path
+-D      add definition
+-U      remove definition
+-t      trace system commands
+
+File extensions:
+.p      PADS files
 \end{verbatim}
 \caption{Command-line switches understood by the \pads{} compiler.}
 \label{figure:intro-switches}
