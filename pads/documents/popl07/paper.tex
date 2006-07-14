@@ -27,23 +27,39 @@
 \begin{abstract}  
 
   Massive amounts of useful data are stored and processed in
-  \textit{ad hoc} formats for which common tools like parsers and
-  pretty printers are not readily available.    To
-  facilitate processing such data, we have designed \padsml{}, a
-  declarative data description language for the \ml{} family of
-  languages.  \padsml{} leverages the \ml{} type structure. It provides
-  dependent polymorphic recursive datatypes to describe
-  ad hoc data concisely.  In addition, \padsml{} uses the \ml{} module system to
-  provide a general framework in which users can easily develop customized
-  data-processing tools for any data format described in \padsml{}.
-  We have formalized the semantics of \padsml{}'s datatypes by
-  extending our previous work on the Data Description
-  Calculus~\cite{fisher+:next700ddl} to support parametric polymorphism and to 
-  give a semantics to printing. Finally, we
-  have implemented a version of \padsml{} for the \ocaml{} language.
-  From a \padsml{} description, our compiler generates an \ocaml{}
-  module containing the relevant type declarations, a parser and printer
-  for the description, and support for user-specified tool generation.
+  \textit{ad hoc} formats for which common tools like parsers,
+  printers, query engines and format converters are not readily 
+  available.  In this paper,
+  we explain the {\em design}, {\em implementation} and {\em theory} of \padsml{},
+  a new language and system that facilitates
+  generation of data processing tools for ad hoc formats.
+  The \padsml{} design includes features such as
+  dependent, polymorphic and recursive datatypes, which allow
+  programmers to describe
+  the syntax and semantics of ad hoc data in a concise,
+  easy-to-read notation.
+  The \padsml{} implementation compiles these descriptions
+  into \ml{} structures and functors
+  that include types for parsed data, functions for parsing
+  and printing, and auxiliary support
+  for user-specified, format-dependent and format-independent 
+  tool generation.
+  Finally, the \padsml{} theory gives a precise formal meaning
+  to the descriptions in terms of the semantics of parsing,
+  the semantics of printing, and the types of data structures
+  that represent parsed data.
+
+%   In addition, \padsml{} uses the \ml{} module system to
+%   provide a general framework in which users can easily develop customized
+%   data-processing tools for any data format described in \padsml{}.
+%   We have formalized the semantics of \padsml{}'s datatypes by
+%   extending our previous work on the Data Description
+%   Calculus~\cite{fisher+:next700ddl} to support parametric polymorphism and to 
+%   give a semantics to printing. Finally, we
+%   have implemented a version of \padsml{} for the \ocaml{} language.
+%   From a \padsml{} description, our compiler generates an \ocaml{}
+%   module containing the relevant type declarations, a parser and printer
+%   for the description, and support for user-specified tool generation.
 
 \end{abstract}
 
