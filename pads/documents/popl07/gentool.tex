@@ -227,12 +227,14 @@ We have used this framework to implement a variety of tools useful for processin
 
 The \xml{} formatter converts any data with a \padsml{} description into a canonical \xml{} format.  This conversion is useful because it allows analysts to exploit the many useful tools that exist for manipulating data in \xml{}.  \figref{fig:gentool-xml-output} shows a sample portion of the output of this tool when run on the \dibbler{} data in \figref{fig:sample-data}(b).  
 
-Statistical overviews of data are useful to develop a quick understanding of data quality.  In particular,  after receiving a new batch of data, analysts might want to know the frequency of errors, or which fields are the most corrupted. For this purpose, an \emph{accumulator} tool provides a statistical summary of the data. For example, it tracks the distribution of the top $n$
+The accumulator tool provides a statistical summary of data.
+Such summaries are useful for developing a quick understanding of data quality.  In particular, after receiving a new batch of data, analysts might want to know the frequency of errors, or which fields are the most corrupted. 
+The accumulator tool tracks the distribution of the top $n$
 distinct legal values and the percentage of errors. 
-The accumulator operates over data sources
+It operates over data sources
 whose basic structure is a series of records of the same type, 
 providing a summary based on viewing many records
-in the data source.  We implemented a simple accumulator tool using the generic infrastructure.  It counts the number of errors and the total number of values for every element of a description.  More complex accumulator programs and a number of other statistical algorithms can be implemented in a similar manner.
+in the data source.    More complex accumulator programs and a number of other statistical algorithms can easily be implemented using the tool generation infrastructure..
 
 \cut{
 \figref{fig:gentool-acc-output} shows a sample portion of
