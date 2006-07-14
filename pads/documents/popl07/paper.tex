@@ -32,18 +32,14 @@
   facilitate processing such data, we have designed \padsml{}, a
   declarative data description language for the \ml{} family of
   languages.  \padsml{} leverages the \ml{} type structure. It provides
-  polymorphic, dependent, recursive datatypes to describe
+  dependent polymorphic recursive datatypes to describe
   ad hoc data concisely.  In addition, \padsml{} uses the \ml{} module system to
   provide a general framework in which users can easily develop customized
   data-processing tools for any data format described in \padsml{}.
   We have formalized the semantics of \padsml{}'s datatypes by
   extending our previous work on the Data Description
-  Calculus~\cite{fisher+:next700ddl} in three important ways.
-  First, we simplified our previous treatment of recursive 
-  descriptions.  Second, we extended the Data Description Calculus
-  with type-parameterized types to express \padsml{}'s parametric polymorphism. 
-  Third, we augmented the framework to provide a semantics
-  for the generated printers.  Finally, we
+  Calculus~\cite{fisher+:next700ddl} to support parametric polymorphism and to 
+  give a semantics to printing. Finally, we
   have implemented a version of \padsml{} for the \ocaml{} language.
   From a \padsml{} description, our compiler generates an \ocaml{}
   module containing the relevant type declarations, a parser and printer

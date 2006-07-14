@@ -1,4 +1,4 @@
-o\section{From \padsmlbig{} to \ocamlbig{}}
+\section{From \padsmlbig{} to \ocamlbig{}}
 \label{sec:padsml-impl}
 The \padsml{} compiler takes descriptions and generates \ocaml{}
 modules that can be used by any \ocaml{} program.  In this section, we
@@ -201,7 +201,7 @@ orders and corresponding parse descriptors.
        alarm : [ a : Puint32 | a = 2 or a = 3];
  ':';  start :  Ptimestamp Popt;
  '|';  clear :  Ptimestamp Popt;
- '|';  code: Puint32;
+ '|';  code  :  Puint32;
  '|';  src\_dns  :  Nvp("dns1");
  ';';  dest\_dns :  Nvp("dns2");
  '|';  service  : Service
@@ -234,28 +234,28 @@ orders and corresponding parse descriptors.
 \kw{type} ('a,'b) Sum = Left of 'a | Right of 'b
 
 \kw{let} split_alarm ra =
-    \kw{let} h = 
-       \{H.alarm=ra.A.alarm; H.start=ra.A.start; 
-        H.clear=ra.A.clear; H.code=ra.A.code;
-        H.src\_dns=ra.A.src\_dns; 
-        H.dest\_dns=ra.A.dest\_dns;
-        H.service=ra.A.service\}
-    \kw{in} \kw{match} ra \kw{with}
-        \{info=Details(d)\} -> 
-        Left \{DA.header = h; DA.info = d\}
-      | \{info=Generic(g)\} ->
-        Right \{GA.header = h; GA.info = g\}
+  \kw{let} h = 
+    \{H.alarm=ra.A.alarm; H.start=ra.A.start; 
+     H.clear=ra.A.clear; H.code=ra.A.code;
+     H.src\_dns=ra.A.src\_dns; H.dest\_dns=ra.A.dest\_dns;
+     H.service=ra.A.service\}
+  \kw{in} \kw{match} ra \kw{with}
+      \{info=Details(d)\} -> 
+      Left \{DA.header = h; DA.info = d\}
+    | \{info=Generic(g)\} ->
+      Right \{GA.header = h; GA.info = g\}
 
 \kw{let} process_alarm pads [pads_D; pads_G] = 
   \kw{let} a,a_pd = Alarm.parse pads in
     \kw{match} (split_alarm a, split_alarm_pd a_pd) \kw{with}
-	(Left  da, Left  da_p) -> DA.print da da_p pads_D
-      | (Right ga, Right ga_p) -> GA.print ga ga_p pads_G
-      | _ -> ... (* Bug! *)
+     (Left  da, Left  da_p) -> DA.print da da_p pads_D
+    |(Right ga, Right ga_p) -> GA.print ga ga_p pads_G
+    | _ -> ... (* Bug! *)
 
 \kw{let} _ = process_source process_alarm 
-                "input.data" ["d_out.data";"g_out.data"]
+              "input.data" ["d_out.data";"g_out.data"]
   \end{code}
+  \vskip -2ex
   \caption{Shredding \darkstar{} data based on the {\tt info} field.}
   \label{fig:ex-no-err-check}
 \end{figure}
@@ -266,7 +266,6 @@ relational database or a statistical analysis package.
 Transformations include removing extraneous literals, inserting
 delimiters, dropping or reordering fields, and normalizing the values
 of fields, \eg{}, converting all times into a specified time zone.
-
 Because relational databases typically cannot store unions directly,
 one common transformation is to convert data with variants (\ie{},
 datatypes) into a form that such systems can handle.  One option is to
@@ -290,13 +289,9 @@ database.
 
 The code fragment in \figref{fig:ex-no-err-check} shreds \darkstar{}
 data in the format described by \texttt{\darkstar{}.pml} into the
-format described in \texttt{\darkstar{}Normal.pml}.  We use the
-\cd{info} field of \cd{Alarm} records to partition the data. In the
-process, we also reorder the fields, putting the \texttt{service}
-field into the common \texttt{header}.  It is useful to have a
-\padsml{} description of the target format so that we can use tools
-generated for the data description to manipulate the resulting data
-(\eg{}, pretty printers and statistical analysis tools).
+formats described in \texttt{\darkstar{}Normal.pml}.  It uses the
+\cd{info} field of \cd{Alarm} records to partition the data. 
+Notice the code invokes the \cd{print} functions generated for the \cd{G_alarm} and \cd{D_alarm} types to output the shredded data.
 
 \cut{
 \begin{figure}
