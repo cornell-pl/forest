@@ -34,16 +34,14 @@ reliable tools.''
 
 Generic
 programming~\cite{jeuring+:polytypic-programming,hinze+:generic-programming,lammel+:syb}
-and design patterns such as the visitor pattern are technologies that can
+and design patterns such as the visitor pattern  can
 facilitate the implementation of type-directed data structure
 traversals.  Lammel and Peyton Jones' original ``scrap your
 boilerplate'' article~\cite{lammel+:syb} provides a detailed summary
 of the trade-offs between different techniques.  We investigated using
-these techniques before implementing the generator for
-\padsml{} traversal functors from scratch.  However, we found most
-advanced techniques for generic programming required
-features such as type classes that are only present in variants of
-Haskell.  The generated \padsml{} traversal functors are less flexible
+these techniques in our system; however, we found that most of them required
+language features such as type classes that are available only in Haskell.
+The generated \padsml{} traversal functors are less flexible
 than those possible in Haskell, but they suffice for many tools useful in practice. 
 \cut{ I'm not sure what you mean here:
  On the other hand, we
@@ -130,8 +128,8 @@ Like \padsml{}, these
 languages use a type-directed approach to describe ad hoc data and
 permit the user to define semantic constraints.  In contrast to our
 work, these systems handle only binary data and assume the data is
-error-free. DFDL is a data
-format specification language with an XML-based syntax and type
+error-free. DFDL is a specification of a data
+format description language with an \xml{}-based syntax and type
 structure~\cite{dfdl-proposal,dfdl-primer}. DFDL is still under development.   
 It does not have a formal semantics, or a tool
 generation architecture. We believe that
@@ -139,20 +137,13 @@ DFDL is similar in its expressiveness to \padsc{}.  However, because
 the specification is evolving, we cannot give a more
 detailed comparison.
 
-A somewhat different class of languages includes
-\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}.  Both of
-these systems specify the {\em logical\/} in-memory representation of
-data and then automatically generate a {\em physical\/} on-disk
-representation.  This technology does not help process data that
-arrives in predetermined, ad hoc formats.
-
 There are a number of tools designed to convert ad hoc
 data formats into \xml{}, including
 XSugar~\cite{brabrand+:xsugar2005} and the Binary Format Description
 language (BFD)~\cite{bfd}. The scope of both of these projects is
-limited to conversion to-and-from \xml{}; neither seeks to provide
-programmers with access to the raw data, nor to produce a broad suite of
-data processing tools.
+limited to conversion to-and-from \xml{};  neither is of any use for analysts who do not wish to convert their data to \xml{}. \padsml{} is thus broader in scope: it \textit{can} convert data into \xml{}, but it can do many other tasks as well.  
+
+
 
 % There are probably hundreds of tools that one might use if their data were
 % in \xml.  However, the point of PADS is to allow scientists whose data is {\em not}
@@ -160,10 +151,19 @@ data processing tools.
 % as ad hoc data often does.  Since many processes, machines, programs and other devices
 % currently output data and a whole most of
 
-Commercial database products provide limited support for
+Similarly, commercial database products provide some support for
 parsing data in external formats so the data can be imported into
-their database systems, but they typically support a limited number of
-formats and have fixed methods for coping with erroneous data.  They do not provide any description of the original format to users for purposes other than loading into the database.
+their systems, but they typically support only a limited number of
+formats and have fixed methods for coping with erroneous data.  
+As with the \xml{} systems, these tools are of no help in any task besides loading data into a database.
+%They do not provide any description of the original format to users for purposes other than loading into the database.
+
+A complementary class of languages includes
+\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}.  Both of
+these systems specify the {\em logical\/} in-memory representation of
+data and then automatically generate a {\em physical\/} on-disk
+representation.  While very useful, this technology does not help with data that
+arrives in predetermined, ad hoc formats.
 
 On the theoretical front, the scientific community's understanding of
 type-based languages for data description is much less mature.  To the
@@ -172,12 +172,13 @@ DDC~\cite{fisher+:next700ddl} was the first to provide a formal
 interpretation of dependent types as parsers and to study the
 properties of these parsers including error correctness and type
 safety.  The current paper extends and improves our earlier work by
-simplifying the basic theory in a number of subtle but important ways
-and by adding polymorphic types for the purpose of code reuse.
-Regular expressions and context-free grammars, the basis for Lex and
-Yacc have been well-studied, but they do not have dependency, a key
+simplifying the basic theory in a number of subtle but important ways,
+by adding polymorphic types for the purpose of code reuse, and by specifying the semantics of printing.
+
+Regular expressions and context-free grammars, the basis for \lex{} and
+\yacc{}, have been well-studied, but they do not have dependency, a key
 feature necessary for expressing constraints and parsing ad hoc
-scientific data.  {\em Parsing Expression Grammars} (PEGs), studied in
+data.  {\em Parsing Expression Grammars} (PEGs), studied in
 the early seventies~\cite{birman+:parsing}, revitalized 
 by Ford~\cite{ford:pegs}, and implemented using ``packrat parsing''
 techniques~\cite{ford:packrat,grimm:packrat}, are more closely

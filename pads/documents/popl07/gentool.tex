@@ -187,7 +187,7 @@ tool state.
 </Order>
 \end{verbatim}  
   \caption{A fragment of the accumulator output for \dibbler{}. The
-    output is encoded in XML.}
+    output is encoded in \xml{}.}
   \label{fig:gentool-acc-output}
 \end{figure}
 }
@@ -219,13 +219,13 @@ tool state.
  <stream><val>DUO</val></stream>
 </Order_header>
 \end{verbatim}  
-  \caption{A fragment of the XML output for \dibbler{}. }
+  \caption{A fragment of the \xml{} output for \dibbler{}. }
   \label{fig:gentool-xml-output}
 \end{figure}
 
-We have used this framework to implement a variety of tools useful for processing ad hoc data, including an XML formatter, a tool for generating statistical overviews of the data, and a data printer for debugging.  We briefly describe these tools to illustrate the flexibility of the framework.
+We have used this framework to implement a variety of tools useful for processing ad hoc data, including an \xml{} formatter, a tool for generating statistical overviews of the data, and a data printer for debugging.  We briefly describe these tools to illustrate the flexibility of the framework.
 
-To leverage the many useful tools that exist for manipulating data in XML, we built a translator that converts any data with a \padsml{} description into a canonical XML format.  \figref{fig:gentool-xml-output} shows a sample portion of the output of this tool when run on the \dibbler{} data in \figref{fig:sample-data}(b).  
+To leverage the many useful tools that exist for manipulating data in \xml{}, we built a translator that converts any data with a \padsml{} description into a canonical \xml{} format.  \figref{fig:gentool-xml-output} shows a sample portion of the output of this tool when run on the \dibbler{} data in \figref{fig:sample-data}(b).  
 
 Statistical overviews of data are useful to develop a quick understanding of data quality.  In particular,  after receiving a new batch of data, analysts might want to know the frequency of errors, or which fields are the most corrupted. For this purpose, an \emph{accumulator} tool provides a statistical summary of the data. For example, it tracks the distribution of the top $n$
 distinct legal values and the percentage of errors. 
