@@ -1,8 +1,8 @@
 \section{From \padsmlbig{} to \ocamlbig{}}
 \label{sec:padsml-impl}
-Our \padsml{} compiler takes descriptions and generates \ocaml{}
-modules that can be used by any \ocaml{} program.  Next, we
-describe the generated modules and give some examples of their use.
+The \padsml{} compiler takes descriptions and generates \ocaml{}
+modules that can be used by any \ocaml{} program.  In this section, we
+describe the generated modules and illustrate their use.
 
 \subsection{Types as Modules}
 \label{sec:gen-code}
@@ -32,37 +32,37 @@ recursive datatypes and functions.  As there is no theoretical reason
 to prevent recursive modules from containing functors~\cite{dreyer-thesis}, we
 pose our system as a challenge to implementers of module systems.
 
-More precisely, a module generated for a monomorphic \padsml{} type 
+The module generated for any monomorphic \padsml{} type 
 matches the signature \cd{S}:
 \begin{code}\scriptsize
 \kw{module} \kw{type} S = \kw{sig}
   \kw{type} rep
   \kw{type} pd\_body
   \kw{type} pd = Pads.pd_header * pd_body
-  \kw{val} parse : Pads.handle -> rep * pd
+  \kw{val}  parse : Pads.handle -> rep * pd
+  \kw{val}  print : rep -> pd -> Pads.handle -> unit
   (* Functor for tool generator ... *)
+  \kw{module} Traverse ...
 \kw{end}\end{code}% 
 \noindent 
 The \emph{representation} (rep) type describes the
-in-memory representation of parsed data, and the
+in-memory representation of parsed data, while the
 \emph{parse-descriptor} (PD) type describes meta-data collected
 during parsing.
-The parsing function parses data and produces a
-representation and parse descriptor for the value.
-The module also contains 
-a generic tool generator implemented as a functor
-in the tool development framework, which is described in \secref{sec:gen-tool}.
+The parsing function converts the raw data into an in-memory
+representation and parse descriptor for the representation.
+The module also contains a generic tool generator implemented as a functor; we defer a description of this functor to \secref{sec:gen-tool}.
 The module \cd{Pads} contains the
 built-in types and functions that occur in base-type and generated
-modules.  \cd{Pads.pd_header} is the type of all parse-descriptor
+modules.  The type \cd{Pads.pd_header} is the type of all parse-descriptor
 headers and \cd{Pads.handle} is an abstract type containing the
 private data structures \padsml{} uses to manage data sources.
 
 The structure of the representation and parse-descriptor types
 resembles the structure of the corresponding \padsml{} type, making it
 easy to see the correspondence between parsed data, its internal
-representation, and corresponding meta-data.  
-For example, given the \padsml{} type of a character
+representation, and the corresponding meta-data.  
+For example, given the \padsml{} type \cd{Pair} describing a character
 and integer separated by a vertical bar:
 \begin{code}\scriptsize
   \kw{ptype} Pair = Pchar * '|' * Pint\end{code}%
@@ -73,21 +73,21 @@ the compiler generates a module with the signature:
   \kw{type} pd_body = Pchar.pd  * Pint.pd
   \kw{type} pd      = Pads.pd_header * pd_body
   \kw{val}  parse   : Pads.handle -> rep * pd
-  \kw{val}  print   : rep -> pd -> Pads.handle -> unit
+  \kw{val}  print   : rep -> pd -> Pads.handle -> unit
   ...
 \kw{end}\end{code}%
 \noindent 
 The parse-descriptor header reports on the parsing
 process that produced the corresponding representation.  It includes
-the location of the data in the source; an error code that
-describes any error encountered in the parsed data; and the number of
-subcomponents that contain errors.  The body contains the parse
-descriptors for subcomponents of the corresponding representation.
+the location of the data in the source, an error code
+describing the first error encountered, and the number of
+subcomponents with errors.  The body contains the parse
+descriptors for subcomponents.
 Parse descriptors for base types have a body of type \cd{unit}.
 
 The signature for a polymorphic \padsml{} type uses the signature
-\cd{S}, defined above.  For example, given the polymorphic \padsml{}
-type \cd{ABPair}:
+\cd{S} for monomorphic types, defined above.  
+Given the polymorphic \padsml{} type \cd{ABPair}:
 \begin{code}\scriptsize
 \kw{ptype} (Alpha,Beta) ABPair = Alpha * '|' * Beta\end{code}%
 the compiler generates a module with the signature:
@@ -104,13 +104,7 @@ the compiler generates a module with the signature:
 \kw{end}\end{code}%
 
 \subsection{Using the Generated Libraries}
-
-\ocaml{} is an ideal host language for \padsml{}, because its
-high-level of abstraction and features like pattern matching and
-higher order functions simplify implementation of common data
-management tasks like filtering and transformation.  Next, we
-present \ocaml{} programs that use \padsml{} modules to compute
-properties of ad hoc data, to filter data, and to transform it.
+Common data management tasks like filtering and normalization are easy to express in \ocaml{}.  In the remainder of this section, we illustrate this point by giving \ocaml{} programs to compute properties of ad hoc data, to filter it, and to transform it.
 
 \cut{In contrast, \padsc{} users fall off an
 abstraction cliff when they shift from declaratively describing data
@@ -123,7 +117,7 @@ about memory management.  }
 Given the \padsml{} type:
 \begin{code}\scriptsize
 \kw{ptype} IntTriple = Pint * '|' * Pint * '|' * Pint\end{code}%
-the following \ocaml{} expression computes the average of the three integers:
+the following \ocaml{} expression computes the average of the three integers in the file \texttt{input.data}:
 \begin{code}\scriptsize
 \kw{let} ((i1,i2,i3), (pd_hdr, pd_body)) = 
  Pads.parse_source IntTriple.parse "input.data" \kw{in}
@@ -134,8 +128,7 @@ the following \ocaml{} expression computes the average of the three integers:
 The \cd{parse_source} function takes a parsing function and a file
 name, applies the parsing function to the data in the specified file,
 and returns the resulting representation and parse descriptor.  To
-ensure that the data is valid, the error code in the parse-descriptor
-header is examined.  The error code \cd{Good} indicates that the data
+ensure the data is valid, the program examines the error code in the parse-descriptor header.  The error code \cd{Good} indicates that the data
 is syntactically and semantically valid. Other error codes include
 \cd{Nest}, indicating an error in a subcomponent, \cd{Syn}, indicating
 that a syntactic error occurred during parsing, and \cd{Sem},
@@ -149,7 +142,7 @@ property holds for all representations and corresponding parse
 descriptors.  This design supports a ``pay-as-you-go'' approach to
 error handling. The parse descriptor for valid data need only be
 consulted once, no matter the size of the corresponding data, and user
-code only needs to traverse the nested parse descriptors if more
+code only needs to traverse nested parse descriptors if more
 precise information about the error is required.
 
 \subsubsection{Example: Filtering}
@@ -269,7 +262,7 @@ for each variant.  A second option is to create an universal table,
 with one column for each field in any variant.  If a given field does
 not occur in a particular variant, its value is marked as missing.
 
-In \figref{fig:normal-darkstar}, we show a partial listing of
+\figref{fig:normal-darkstar} shows a partial listing of
 \texttt{\darkstar{}Normal.pml}, a normalized version of the
 \darkstar{} description from \secref{sec:padsml-overview}. In this
 shredded version, \cd{Alarm} has been split into two top-level types
