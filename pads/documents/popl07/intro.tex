@@ -346,18 +346,20 @@ Therefore, the combination of
 
 In summary, this work makes the following key contributions:
 \begin{itemize}
-\item We have designed and implemented \padsml{}, a functional
-data-description language that can concisely express the syntactic
+\item We have designed and implemented \padsml{}, a novel
+data-description language that includes 
+polymorphic, dependent and recursive datatypes.  This design
+allows data analysts to express the syntactic
 structure and semantic properties of data formats from numerous
-application domains.
-\item \padsml{} is inspired by, implemented in, and targeted to modern
-functional languages, making it an outstanding example of how
-functional languages can be used to solve
-important data-management problems.  In particular, \ml{} modules and
-functors provide an extensible framework for \padsml{} users to define their
-own \padsml{} tools. 
+application domains in a concise, elegant and easy-to-read notation.  
+\item Our \padsml{} implementation employs an effective and
+general ``types as modules'' compilation strategy
+that produces robust parser and printer functions
+as well as auxiliary support for user-specified format-dependent
+and format-independent tool generation.
 \item We have defined the formal semantics of both \padsml{} parsers 
-and printers and proven several important theorems concerning the semantics.
+and printers and proven our generated code is type safe and
+well-behaved as defined by an important canonical forms theorem.
 \end{itemize}
 
 \cut{
