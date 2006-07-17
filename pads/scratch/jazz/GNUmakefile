@@ -16,17 +16,43 @@ LIBDIR=$(INSTALLROOT)/lib
 LIBS = $(LIBDIR)/libpads.a $(LIBDIR)/libast.a
 INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
-# Rule to run the pads compiler on go.p
+# Rule to run the pads compiler on adderley.p
 adderley.c: adderley.p
-	$(PADSC) -D__ppc__ $<
-
+	$(PADSC)  -D__ppc__ $<
 #	$(PADSC) -wnone -D__ppc__ $<
+
+short.c: short.p
+	$(PADSC)  -D__ppc__ $<
+
+adderley2.c: adderley2.p
+	$(PADSC)  -D__ppc__ $<
 
 include $(PADS_HOME)/mk/rules.mk
 
-# Rules to make go programs
+%.c: %.p
+	$(PADSC) $<
+
+# Rules to make programs
 test_adderley: test_adderley.c adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
+
+test_adderley2: test_adderley2.c adderley2.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_adderley2_d: test_adderley2.c adderley2.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+test_short: test_short.c short.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+test_short_d: test_short.c short.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+rwxml_adderley: rwxml_adderley.c adderley.c read_orig_write_xml_trailer.h $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+rwxml_adderley_d: rwxml_adderley.c adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
 
 test_adderley_d: test_adderley.c adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)

@@ -1,3 +1,4 @@
+
 #define TD "/\\<td\\>|\\<td width=\"\\d*%\"\\>/"
 #define WS "/\\s*/"
 
@@ -127,54 +128,93 @@ Punion songNumEntry_t{
   Pcompute Puint8 missing = 1;
 };
 
-Pstruct MG_t{
-  "MG ";
-  Puint32 num;
+Penum whichTag {
+  OJCCD,
+  CDPS Pfrom ("CDP 7"),
+  SKAO Pfrom ("SKA O"),   
+  MQ Pfrom("MQ9"), 
+  KCT Pfrom ("KC2"),
+  OJCD, EBCD, VJLP, FHCY, VNCD, MRCD, PACD, Live, AROC, SABB, SVBB, SWBB, SWBO, TOCJ, POCJ,
+  YD Pfrom("32YD"), 
+  EPJ Pfrom("18PJ"), TPJ Pfrom("25PJ"), 
+  OHNFJ Pfrom("195J"), TAP Pfrom ("20AP"),
+  VVS Pfrom("V/V6"), 
+  BSTT Pfrom("BST2"),
+  BNLA Pfrom("BN-LA"),
+  CFX Pfrom("C5X"),
+  CDP, DEM, EMS, HCY, JWC, SJL, BLP, FCD, OJC, RLP, MCD, MGW, JLP, SMJ, BNJ,
+  LLP, LCD, VIJ, CAL, UPS, CK, SXL,
+  CJ, CL, CP, CS, DR, EB, EP, GW, PG, WP, PA, RS, SR, ST, MG, VK,
+  CT Pfrom ("C2"), QN Pfrom ("Q9"),
+  C, F, G, M, O, P, R, T, W 
+};
+
+Penum prod_t{
+  ColumbiaLegacy Pfrom("Columbia/Legacy"),
+  EmArcy, Savoy, Mosaic,Mercury, Riverside, Columbia, Fantasy, Verve, Wing, Alto,
+  Milestone, Capitol, Jazzland, Landmark, Calliope, Atlantic, Session, Baybridge,
+  Dobre, FDC,Joker, Magnetic, Motown, Pablo,Prestige, Roulette,
+  VirginNight Pfrom ("Virgin Night"),
+  JazzBand Pfrom ("Jazz Band"),
+  CBSSony Pfrom("CBS/Sony"),
+  WorldPacific Pfrom ("World Pacific"),
+  BlueNote Pfrom ("Blue Note"),
+  PSJZ Pfrom("PSJ Z"),
+  PaloAlto Pfrom("Palo Alto Jazz"),
+  UlysseMusique Pfrom("Ulysse Musique"),
+  VJ Pfrom("Vee-Jay") 
+};
+
+
+Pstruct J_t{
+  '(';
+  Pstring(:')':) j;
+  ") ";
 };
 
 Pstruct numPair_t{
   Puint32 f;
-  '-';
-  Puint32 s;
+  Pre "/x|-|\\//";
+  Pstring_SE(:Pre "/[),;]|$/":) suffix;
 };
 
-Penum whichTag {
-  EP, EMS
-};
-
-Pstruct concise_t{
-  whichTag which;
-  ' ';
-  numPair_t num;
-};
-
-
-Punion EmArcyNum_t{
-  MG_t mg;
-  concise_t ep;
+Punion number_t {
+  numPair_t pair;
+  Puint32   single;
+  "rejected";
+  Pstring_SE(:Pre "/[),;]|$/":) otherNum;
 }
 
-Pstruct EmArcy_t{
-  "EmArcy ";
-  //Pstring_SE(:Peor:) r;
-  EmArcyNum_t[] indxs : Psep(", ") && Pterm(';');
+Pstruct albumNum_t{
+  Popt J_t j;
+  Popt whichTag which;
+  Pre "/ ?/";
+  number_t num;
 };
 
-Punion album_t{
+Pstruct album_t{
+  prod_t prod;
+  ' ';
+  albumNum_t[] indxs : Psep(", ") && Pterm(Pre "/[);]|$/");
+};
+
+Punion albumInfo_t{
   PisChar(:'-':) sameAlbum;
-  EmArcy_t       isEmArcy;
+  album_t        isKnown;
+  "unissued";
   Pstring_SE(:Peor:) rest;
 };
+
 
 Precord Pstruct song_t {
   "<tr>";
   Pre TD;
-  Popt itemNum_t    i;
+  Popt itemNum_t    itm;
   songNumEntry_t songNumber;
   Pre TD;
   Pstring_SE(:"/\\<td/":) title;
   Pre TD;
-  album_t album;
+  albumInfo_t[] albums : Psep("; ") && Pterm(Peor);
 };
 
 // Need some way to put end-of-record consume markers into literals
@@ -184,13 +224,38 @@ Pstruct songs_t{
   Pomit Pstringln etwidth; /-- </table>
 };
 
+Pstruct ArtAndTitle_t{
+  Pstring_SE(:"/ \\- /":) artists;
+  " - ";
+  Pstring(:'<':) title;
+}
+
+Punion v_t {
+  ArtAndTitle_t artAndTitle;
+  Pstring(:'<':) title;
+};
+
+Precord Pstruct venue_t{
+  Pre "/[*=]/";
+  " <i>";
+  v_t v;
+  "</i> ";
+  '(';
+  album_t albs;
+  ')';
+  Pre "/(\\<br\\>)?/";
+};
+
+// Need some way to put end-of-record consume markers into literals
+// Then separator can be <br>EOR
 
 Pstruct session_t{
   sessionHeader_t sessionHeader;
   artists_t       artists;
   sessionDate_t   date;
   songs_t         songsTable;
-  myheader_t(:"/\\<h3\\>|\\<h2\\>|\\<h4/":) body;
+  venue_t []      venues : Pterm(Pre "/\\<h/");
+  //  myheader_t(:"/\\<h3\\>|\\<h2\\>|\\<h4/":) body;
 };
 
 
@@ -203,10 +268,19 @@ Parray rest_t{
   Pstringln[];
 }
 
-Psource Pstruct entries_t{
+Pstruct jazzHeader_t{
   myheader_t(:"/\\<h1\\>/":) h;
   tagSln_t(:"h1":) title;
   Pstringln header;
-  year_t[] data : Pterm (Pre "/\\<h4/");
+};
+
+Pstruct jazzTrailer_t{
   rest_t r;
-}
+};
+
+Psource Pstruct jazz_t{
+  jazzHeader_t h;
+  year_t[] data : Pterm ("<h4");
+  jazzTrailer_t r;
+};
+
