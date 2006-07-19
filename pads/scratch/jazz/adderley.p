@@ -142,6 +142,8 @@ Penum whichTag {
   BSTT Pfrom("BST2"),
   BNLA Pfrom("BN-LA"),
   CFX Pfrom("C5X"),
+  CSK  Pfrom ("C6K"),
+  CFK  Pfrom ("C4K"),
   CDP, DEM, EMS, HCY, JWC, SJL, BLP, FCD, OJC, RLP, MCD, MGW, JLP, SMJ, BNJ,
   LLP, LCD, VIJ, CAL, UPS, CK, SXL,
   CJ, CL, CP, CS, DR, EB, EP, GW, PG, WP, PA, RS, SR, ST, MG, VK,
@@ -151,9 +153,9 @@ Penum whichTag {
 
 Penum prod_t{
   ColumbiaLegacy Pfrom("Columbia/Legacy"),
-  EmArcy, Savoy, Mosaic,Mercury, Riverside, Columbia, Fantasy, Verve, Wing, Alto,
+  EmArcy, Savoy, Mosaic, Mercury, Riverside, Columbia, Fantasy, Verve, Wing, Alto,
   Milestone, Capitol, Jazzland, Landmark, Calliope, Atlantic, Session, Baybridge,
-  Dobre, FDC,Joker, Magnetic, Motown, Pablo,Prestige, Roulette,
+  Dobre, FDC,Joker, Magnetic, Motown, Pablo,Prestige, Roulette, Universal, Limelight,
   VirginNight Pfrom ("Virgin Night"),
   JazzBand Pfrom ("Jazz Band"),
   CBSSony Pfrom("CBS/Sony"),
@@ -161,6 +163,7 @@ Penum prod_t{
   BlueNote Pfrom ("Blue Note"),
   PSJZ Pfrom("PSJ Z"),
   PaloAlto Pfrom("Palo Alto Jazz"),
+  PacificJazz Pfrom("Pacific Jazz"),
   UlysseMusique Pfrom("Ulysse Musique"),
   VJ Pfrom("Vee-Jay") 
 };
@@ -178,24 +181,24 @@ Pstruct numPair_t{
   Pstring_SE(:Pre "/[),;]|$/":) suffix;
 };
 
-Punion number_t {
+Punion number_t(:prod_t prod:) {
   numPair_t pair;
-  Puint32   single;
+  Puint32   single : prod != Verve;
   "rejected";
   Pstring_SE(:Pre "/[),;]|$/":) otherNum;
 }
 
-Pstruct albumNum_t{
+Pstruct albumNum_t(:prod_t prod:){
   Popt J_t j;
   Popt whichTag which;
   Pre "/ ?/";
-  number_t num;
+  number_t(:prod:) num;
 };
 
 Pstruct album_t{
   prod_t prod;
   ' ';
-  albumNum_t[] indxs : Psep(", ") && Pterm(Pre "/[);]|$/");
+  albumNum_t(:prod:)[] indxs : Psep(", ") && Pterm(Pre "/[);]|$/");
 };
 
 Punion albumInfo_t{
@@ -241,7 +244,7 @@ Precord Pstruct venue_t{
   v_t v;
   "</i> ";
   '(';
-  album_t albs;
+  album_t[] albs : Psep("; ") && Pterm(')');
   ')';
   Pre "/(\\<br\\>)?/";
 };
