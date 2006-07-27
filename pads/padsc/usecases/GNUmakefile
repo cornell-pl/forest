@@ -9,20 +9,20 @@ SUBDIRS = simple wsl sirius syslog simple2
 
 all:
 	+@(for subdir in $(SUBDIRS); do \
-		(cd $$subdir; $(MAKE) -f GNUMakefile ); \
+		(cd $$subdir; $(MAKE) -f GNUmakefile ); \
 	done)
 
 regress:
 	+@(for subdir in $(SUBDIRS); do \
-		(cd $$subdir; $(MAKE) -f GNUMakefile regress); \
+		(cd $$subdir; $(MAKE) -f GNUmakefile regress); \
 	done)
 
 clean:
 	+@(for subdir in $(SUBDIRS); do \
-		(cd $$subdir; $(MAKE) -f GNUMakefile clean); \
+		(cd $$subdir; $(MAKE) -f GNUmakefile clean); \
 	done)
 
 veryclean:
 	+@(for subdir in $(SUBDIRS); do \
-		(cd $$subdir; $(MAKE) -f GNUMakefile veryclean); \
+		(cd $$subdir; $(MAKE) -f GNUmakefile veryclean); \
 	done)

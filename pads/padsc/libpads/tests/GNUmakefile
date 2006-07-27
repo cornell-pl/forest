@@ -58,7 +58,7 @@ MISC_TESTS = test_re2_d
 ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS) $(MISC_TESTS)
 
 rcount:
-	@(cd ..; $(MAKE) -f GNUMakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
 regress: regress_o regress_d
 

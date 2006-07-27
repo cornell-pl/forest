@@ -139,7 +139,7 @@ test_rr_%-d: $(GEN_DIR)/%.c $(CODE_DIR)/test_rr_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D
 	@$(CCExec_DYNAMIC_D)
 
 pglx_lib:
-	@(cd $(PADS_HOME)/padsc; $(MAKE) -f GNUMakefile pglx_lib)
+	@(cd $(PADS_HOME)/padsc; $(MAKE) -f GNUmakefile pglx_lib)
 
 # REGRESSION TESTS
 compare_files:

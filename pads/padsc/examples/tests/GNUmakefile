@@ -80,7 +80,7 @@ foo:
 	echo "LIB_DEPS_D=$(LIB_DEPS_D)"
 
 rcount:
-	@(cd ..; $(MAKE) -f GNUMakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
 regress: regress_o regress_d
 
