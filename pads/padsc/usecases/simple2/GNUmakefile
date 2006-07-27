@@ -6,13 +6,13 @@ ifndef PADS_HOME
 endif
 
 all:
-	@(cd src; $(MAKE))
+	@(cd src; $(MAKE) -f GNUMakefile )
 
 regress:
-	@(cd src; $(MAKE) regress)
+	@(cd src; $(MAKE) -f GNUMakefile regress)
 
 clean:
-	@(cd src; $(MAKE) clean)
+	@(cd src; $(MAKE) -f GNUMakefile clean)
 
 veryclean:
-	@(cd src; $(MAKE) veryclean)
+	@(cd src; $(MAKE) -f GNUMakefile veryclean)

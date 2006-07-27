@@ -62,7 +62,7 @@ test_bulk_%: $(GEN_DIR)/%.c $(CODE_DIR)/test_%.h  $(CODE_DIR)/test_bulk_%.c $(TE
 	@$(CCExec_DYNAMIC_O)
 
 pglx_lib:
-	@(cd $(PADS_HOME)/padsc; $(MAKE) pglx_lib)
+	@(cd $(PADS_HOME)/padsc; $(MAKE) -f GNUMakefile pglx_lib)
 
 # REGRESSION TESTS
 compare_files:

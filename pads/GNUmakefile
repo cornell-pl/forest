@@ -22,43 +22,43 @@ all: $(TARGS)
 ast_lib : $(AST_LIB)
 
 padsc_lib:
-	@(cd padsc; $(MAKE) padsc_lib)
+	@(cd padsc; $(MAKE) -f GNUMakefile padsc_lib)
 
 pglx_lib:
-	@(cd padsc; $(MAKE) pglx_lib)
+	@(cd padsc; $(MAKE) -f GNUMakefile pglx_lib)
 
 pads_glx:
-	@(cd padsc; $(MAKE) pads_glx)
+	@(cd padsc; $(MAKE) -f GNUMakefile pads_glx)
 
 padsc_comp:
-	@(cd padsc; $(MAKE) padsc_comp)
+	@(cd padsc; $(MAKE) -f GNUMakefile padsc_comp)
 
 regress:
-	@(cd padsc; $(MAKE) regress)
+	@(cd padsc; $(MAKE) -f GNUMakefile regress)
 
 pglx_regress:
-	@(cd padsc; $(MAKE) pglx_regress)
+	@(cd padsc; $(MAKE) -f GNUMakefile pglx_regress)
 
 usecase_regress:
-	@(cd padsc; $(MAKE) usecase_regress)
+	@(cd padsc; $(MAKE) -f GNUMakefile usecase_regress)
 
 perf_regress:
-	@(cd padsc; $(MAKE) perf_regress)
+	@(cd padsc; $(MAKE) -f GNUMakefile perf_regress)
 
 test_xml:
-	@(cd padsc; $(MAKE) test_xml)
+	@(cd padsc; $(MAKE) -f GNUMakefile test_xml)
 
 test_libpads:
-	@(cd padsc; $(MAKE) test_libpads)
+	@(cd padsc; $(MAKE) -f GNUMakefile test_libpads)
 
 test_comp:
-	@(cd padsc; $(MAKE) test_comp)
+	@(cd padsc; $(MAKE) -f GNUMakefile test_comp)
 
 clean:
-	@(cd padsc; $(MAKE) clean)
+	@(cd padsc; $(MAKE) -f GNUMakefile clean)
 
 veryclean:
-	@(cd padsc; $(MAKE) veryclean)
+	@(cd padsc; $(MAKE) -f GNUMakefile veryclean)
 
 veryveryclean: veryclean
 	@(cd ast-ast/arch; $(RM) -rf `../bin/package`)

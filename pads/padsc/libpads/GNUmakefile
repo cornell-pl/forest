@@ -106,7 +106,7 @@ install_static : all
 	(lib=$(INSTALL_LIBDIR)/$(STATIC_PADSLIB_NM_O); $(FixStaticLib)); \
 	$(PADS_HOME)/scripts/install-sh -c -m 444 $(STATIC_PADSLIB_NM_D) $(INSTALL_LIBDIR); \
 	(lib=$(INSTALL_LIBDIR)/$(STATIC_PADSLIB_NM_D); $(FixStaticLib)) )
-	@(cd $(SRC_INCDIR); $(MAKE) install)
+	@(cd $(SRC_INCDIR); $(MAKE) -f GNUMakefile install)
 
 install_dynamic : all
 	+@(set -x ; \
@@ -138,7 +138,7 @@ dogen : $(PCGEN) $(SCRIPTS)/mksrc.pl $(PADS_HOME)/padsc/libpads/pads.c $(INCLUDE
 	touch dogen
 
 $(PCGEN) : $(SCRIPTS)/mksrc.pl $(PCGEN_IN)
-	@(cd $(SRC_INCDIR); $(MAKE) all)
+	@(cd $(SRC_INCDIR); $(MAKE) -f GNUMakefile all)
 
 pads-gen-g.o: pads-gen.c $(INCLUDE_DEPS)
 ifdef DEBUG_RULES_MK

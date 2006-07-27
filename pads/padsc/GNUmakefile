@@ -15,55 +15,55 @@ all:	$(TARGS)
 
 padsc_lib:
 	echo Making padsc library
-	@(cd libpads; $(MAKE) install)
+	@(cd libpads; $(MAKE) -f GNUMakefile install)
 
 pglx_lib:
 	echo Making pglx library
-	@(cd libpglx; $(MAKE) install)
+	@(cd libpglx; $(MAKE) -f GNUMakefile install)
 
 pads_glx:
 	echo Making pads-glx library
-	@(cd pads-glx; $(MAKE) install)
+	@(cd pads-glx; $(MAKE) -f GNUMakefile install)
 
 padsc_comp:
 	echo Making padsc compiler
-	@(cd comp; $(MAKE) all)
+	@(cd comp; $(MAKE) -f GNUMakefile all)
 
 regress:
-	@(cd libpads/tests; $(MAKE) regress; cd ../../examples/tests; $(MAKE) regress) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd libpads/tests; $(MAKE) -f GNUMakefile regress; cd ../../examples/tests; $(MAKE) -f GNUMakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
 pglx_regress:
-	@(cd tests_pglx; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd tests_pglx; $(MAKE) -f GNUMakefile ) | $(PADS_HOME)/scripts/count_differs.pl
 
 usecase_regress:
-	@(cd usecases; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd usecases; $(MAKE) -f GNUMakefile ) | $(PADS_HOME)/scripts/count_differs.pl
 
 perf_regress:
-	@(cd perf; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd perf; $(MAKE) -f GNUMakefile ) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_xml:
-	@(cd examples/xml/tests; $(MAKE) regress) 
+	@(cd examples/xml/tests; $(MAKE) -f GNUMakefile regress) 
 
 test_libpads:
-	@(cd libpads/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd libpads/tests; $(MAKE) -f GNUMakefile ) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_comp:
-	@(cd examples/tests; $(MAKE)) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd examples/tests; $(MAKE) -f GNUMakefile ) | $(PADS_HOME)/scripts/count_differs.pl
 
 clean:
-	@(cd comp; $(MAKE) clean)
-	@(cd libpads; $(MAKE) clean)
-	@(if [ -d usecases ]; then cd usecases; $(MAKE) clean; fi)
+	@(cd comp; $(MAKE) -f GNUMakefile clean)
+	@(cd libpads; $(MAKE) -f GNUMakefile clean)
+	@(if [ -d usecases ]; then cd usecases; $(MAKE) -f GNUMakefile clean; fi)
 ifdef USE_GALAX
-	@(cd pads-glx; $(MAKE) clean)
-	@(cd libpglx; $(MAKE) clean)
+	@(cd pads-glx; $(MAKE) -f GNUMakefile clean)
+	@(cd libpglx; $(MAKE) -f GNUMakefile clean)
 endif
 
 veryclean:
-	@(cd comp; $(MAKE) veryclean)
-	@(cd libpads; $(MAKE) veryclean)
-	@(if [ -d usecases ]; then cd usecases; $(MAKE) veryclean; fi)
+	@(cd comp; $(MAKE) -f GNUMakefile veryclean)
+	@(cd libpads; $(MAKE) -f GNUMakefile veryclean)
+	@(if [ -d usecases ]; then cd usecases; $(MAKE) -f GNUMakefile veryclean; fi)
 ifdef USE_GALAX
-	@(cd pads-glx; $(MAKE) veryclean)
-	@(cd libpglx; $(MAKE) veryclean)
+	@(cd pads-glx; $(MAKE) -f GNUMakefile veryclean)
+	@(cd libpglx; $(MAKE) -f GNUMakefile veryclean)
 endif
