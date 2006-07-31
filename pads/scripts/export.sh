@@ -32,22 +32,22 @@ rm -rf Notes
 # clean example directory
 cd padsc/examples
 pwd
-#clean p directory
-echo cleaning p directory
+#clean examples/p directory
+echo cleaning examples/p directory
 mkdir temp_p
 for x in `cat p/RELEASE_PFILES`; do cp p/$x temp_p; done
 rm -rf p
 mv temp_p p
 
-#clean test directory
-echo cleaning test directory
+#clean examples/test directory
+echo cleaning examples/test directory
 mkdir temp_tests
 for x in `cat tests/RELEASE_TESTS`; do cp tests/$x temp_tests; done
 rm -rf tests
 mv temp_tests tests
 
-#clean data directory
-echo cleaning data directory
+#clean examples/data directory
+echo cleaning examples/data directory
 mkdir temp_data
 for x in `cat data/take_list`; do cp data/$x temp_data; done
 rm -rf data 
@@ -60,6 +60,13 @@ mkdir temp_examples
 for x in `cat examples/take_list`; do mv examples/$x temp_examples; done
 rm -rf examples
 mv temp_examples examples
+
+echo cleaning usecases directory
+pwd
+mkdir temp_usecases
+for x in `cat usecases/take_list`; do mv usecases/$x temp_usecases; done
+rm -rf usecases
+mv temp_usecases usecases
 
 
 cd .. # now in pads directory

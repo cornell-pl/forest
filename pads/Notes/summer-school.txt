@@ -1,0 +1,25 @@
+summer school talks
+ -applied language work (why should a pl audience care?)
+
+what is life like at AT&T?
+ (how does type theory fit in to a telecom company?)
+ internal vs. external contributions
+ don't think pl research is useful
+
+ naturally lends itself to applied language work
+ apply pl principles to solve real problems
+
+ why aren't general language tools enough?
+  - amount of overhead
+  - tailored abstractions shorter, change the way you think
+  - not everyone is a genius programmer, level the playing field
+ work with users with pressing needs
+ don't care how something is done as long as they can do their core job 
+
+hancock
+ -streams: got wrong.
+   should have intro and cleanup pieces as well
+
+pads
+ - galois talk
+ - popl material

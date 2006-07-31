@@ -1,4 +1,3 @@
-
 #define TD "/\\<td\\>|\\<td width=\"\\d*%\"\\>/"
 #define WS "/\\s*/"
 
@@ -7,7 +6,6 @@ Precord Ptypedef Pstring_SE(:Peor:) Pstringln;
 Parray myheader_t(:char * stop:) {
   Pstringln[] : Pterm(Pre stop);
 }
-
 
 Pstruct tagS_t(:char *s:){
   '<'; s; '>';
@@ -38,8 +36,7 @@ Ptypedef Pchar PisChar(: char good :) : PnotChar c => {c == good};
 Pstruct sessionNumber_t {
   Puint32 num;
   Popt PnotChar(:'\"':) suff;
-}
-
+};
 
 Precord Pstruct sessionHeader_t{
   "<h3><a name=\"";
@@ -168,7 +165,6 @@ Penum prod_t{
   VJ Pfrom("Vee-Jay") 
 };
 
-
 Pstruct J_t{
   '(';
   Pstring(:')':) j;
@@ -258,18 +254,8 @@ Pstruct session_t{
   sessionDate_t   date;
   songs_t         songsTable;
   venue_t []      venues : Pterm(Pre "/\\<h/");
-  //  myheader_t(:"/\\<h3\\>|\\<h2\\>|\\<h4/":) body;
 };
 
-
-Pstruct year_t{
-  tagAgeln_t(:"h2":) year;
-  session_t[] sessions : Pterm(Pre "/\\<h2\\>|\\<h4/");
-};
-
-Parray rest_t{
-  Pstringln[];
-}
 
 Pstruct jazzHeader_t{
   myheader_t(:"/\\<h1\\>/":) h;
@@ -277,8 +263,13 @@ Pstruct jazzHeader_t{
   Pstringln header;
 };
 
+Pstruct year_t{
+  tagAgeln_t(:"h2":) year;
+  session_t[] sessions : Pterm(Pre "/\\<h2\\>|\\<h4/");
+};
+
 Pstruct jazzTrailer_t{
-  rest_t r;
+  Pstringln[] r;
 };
 
 Psource Pstruct jazz_t{

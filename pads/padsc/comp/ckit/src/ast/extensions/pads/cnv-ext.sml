@@ -714,6 +714,8 @@ structure CnvExt : CNVEXT = struct
 	      val tmpLength = pcgenName("length")
 	      val tlen      = pcgenName("tlen")
 	      val tdelim    = pcgenName("tdelim")
+	      val tindex    = pcgenName("i")
+	      val tresult   = "_result"
 	      val trequestedOut = pcgenName("trequestedOut")
 
 	      (* Some useful functions *)
@@ -6708,7 +6710,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  val otherFields = List.take (ListPair.zip (tys, List.map (PT.PointerDecr o PT.VarDecr) allVars), offset)
 				  val params = params @ otherFields
 				  val relSubs = List.take (readSubs, offset)
-				  val otherArgs = List.map (fn x=>P.addrX x) (#2 (ListPair.unzip relSubs))
                                   val modRelSubs = List.map (fn (name,rep) => (name, P.starX (PT.Id name))) relSubs
 				  val otherArgs =   List.map (fn x => P.addrX x) (List.take (#2(ListPair.unzip readSubs), offset))
 

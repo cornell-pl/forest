@@ -7793,7 +7793,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.201 2006-07-10 15:18:51 forrest Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.202 2006-07-31 21:29:53 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -10493,6 +10493,7 @@ PDCI_io_write_start(P_t *pads, Sfio_t *io, size_t *buf_len, int *set_buf, const 
   }
   nm = sfvalue(io);
   if (nm < (*buf_len)) {
+    error(0, "tried to reserve %ld bytes, got %ld bytes", (long) *buf_len, (long) nm);
     PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_IO_ERR, whatfn, "sfreserve returned insufficient bytes");
     sfwrite(io, (Void_t*)buf, 0); /* release sfreserve */
     if (*set_buf) {

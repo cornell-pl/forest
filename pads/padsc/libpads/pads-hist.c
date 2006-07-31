@@ -683,7 +683,7 @@ struct dpCell OptHei(P_hist *h, Pint64 s, Pint64 e) {
   Pfloat64 hei;
   Pfloat64 err;
   Pfloat64 sum;
-  struct dpCell temp_dp;
+  struct dpCell temp_dp = {0};
   struct bucket *temp;
 
   if (h->n == 1) {
