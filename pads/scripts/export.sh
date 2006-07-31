@@ -1,6 +1,11 @@
 #!/bin/sh
+# pads2005-03-07   pads 1.0     2005-03-07  
+# pads-1-01-a      pads 1.01    2006-01-26
+# pads-1-01-b      pads 1.01b   2006-05-17  new license
 
-cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r pads2005-03-07 pads
+cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
+bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`
+echo $bundlename
 
 # build documentation
 cd pads/documents/manual
@@ -80,15 +85,16 @@ mv temp_scripts scripts
 echo taring up the desired files
 cd ..  # now above checked out pads directory
 echo building bundle
-tar cfz pads.tar.gz `cat pads/take_list`
+tar cfz $bundlename.tar.gz `cat pads/take_list`
 
-rm -rf pads/scripts
-mkdir pads/scripts
-cp scripts/gigascope_make.pl pads/scripts
-cp -r scripts/templates pads/scripts/
-rm -rf pads/scripts/templates/CVS
-cp GIGASCOPE_README pads/
+# uncomment these lines if exporting gigascope as well
+#rm -rf pads/scripts
+#mkdir pads/scripts
+#cp scripts/gigascope_make.pl pads/scripts
+#cp -r scripts/templates pads/scripts/
+#rm -rf pads/scripts/templates/CVS
+#cp GIGASCOPE_README pads/
 
-tar cfz pads_gscp.tar.gz pads/scripts pads/GIGASCOPE_README
+#tar cfz $bundlename_gscp.tar.gz pads/scripts pads/GIGASCOPE_README
 
 mv pads pads_remove_me

@@ -18,7 +18,7 @@ contributor=(
 )
 
 license=(
-	type=cpl
+	type=ncu
 	package=pads
 	since=2005
 	author=kfisher+gruber+yitzhak+mff
@@ -26,11 +26,12 @@ license=(
 	organization="Network Services Research Center"
 
 	domain=research.att.com
-	corporation="AT&T"
+	parent="AT&T"
+	corporation="Knowledge Ventures"
 	company="Labs Research"
 	location="Florham Park NJ"
 
-	url=www.padsproj.org/LICENSE.html
+	url=www.padsproj.org/License.html
 
 	notice='
  This program contains certain software code or other information
