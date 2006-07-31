@@ -74,7 +74,7 @@ struct
 
 (* for reporting internal bugs *)
   fun bug (ES{outStrm,...}) (msg: string) : unit=
-      TextIO.output(outStrm,("Compiler bug: " ^ msg ^ "\n"))
+      TextIO.output(outStrm,("padsc compiler bug: " ^ msg ^ "\n"))
 
 (* output a warning/error message with location info *)
   fun sayError (es as ES{outStrm, ...}, loc, kind, msg) =
@@ -90,28 +90,28 @@ struct
 (* generate warning messages to the error stream *)
   fun warning (es as ES{numWarnings,warningsLimit,warningsEnabled,...}, loc, msg) =
     if !warningsEnabled then
-      (sayError(es, loc, "warning: ", msg);
+      (sayError(es, loc, "padsc warning: ", msg);
        inc numWarnings;
        if !numWarnings > warningsLimit then
 	 (warningsEnabled := false;
-	  sayError(es, loc, "warning: ", "additional warnings suppressed"))
+	  sayError(es, loc, "padsc warning: ", "additional warnings suppressed"))
        else ())
     else ()
 
   fun warningf (es as ES{numWarnings,warningsLimit,warningsEnabled,...},
 		loc, fmt, items) = 
     if !warningsEnabled then
-      (fmtError(es, loc, "warning: ", fmt, items);
+      (fmtError(es, loc, "padsc warning: ", fmt, items);
        inc numWarnings;
        if !numWarnings > warningsLimit then
 	 (warningsEnabled := false;
-	  sayError(es, loc, "warning: ", "additional warnings suppressed"))
+	  sayError(es, loc, "padsc warning: ", "additional warnings suppressed"))
        else ())	 
     else ()
 
   fun noMoreWarnings (es as ES{warningsEnabled,...}) = 
     (warningsEnabled := false;
-     sayError(es, SM.UNKNOWN, "warning: ", "additional warnings suppressed."))
+     sayError(es, SM.UNKNOWN, "padsc warning: ", "additional warnings suppressed."))
 
 (* hints - heuristic help for error messages;
    Note: must be called before error call is generated. *)
@@ -122,29 +122,29 @@ struct
   fun error (es as ES{numErrors, errorsLimit, errorsEnabled,...}, loc, msg) = 
       if !errorsEnabled then
 	(case !lastHint of
-	   SOME s => (sayError(es, loc, "error: ", msg ^ "\n" ^ s);
+	   SOME s => (sayError(es, loc, "padsc error: ", msg ^ "\n" ^ s);
 		      lastHint := NONE)
-	 | NONE => sayError(es, loc, "error: ", msg);
+	 | NONE => sayError(es, loc, "padsc error: ", msg);
 	 inc numErrors;
 	 if !numErrors > errorsLimit then
 	    (errorsEnabled := false;
-	     sayError(es, loc, "warning: ", "additional errors suppressed."))
+	     sayError(es, loc, "padsc warning: ", "additional errors suppressed."))
 	 else ())
       else ()
 
   fun errorf (es as ES{numErrors,errorsLimit,errorsEnabled,...}, loc, fmt, items) =
       if !errorsEnabled then
-	(fmtError(es, loc, "error: ", fmt, items);
+	(fmtError(es, loc, "padsc error: ", fmt, items);
 	 inc numErrors;
 	 if !numErrors > errorsLimit then
 	    (errorsEnabled := false;
-	     sayError(es, loc, "warning: ", "additional errors suppressed."))
+	     sayError(es, loc, "padsc warning: ", "additional errors suppressed."))
 	 else ())
       else ()
 
   fun noMoreErrors(es as ES{errorsEnabled,...}) =
     (errorsEnabled := false;
-     sayError(es, SM.UNKNOWN, "warning: ", "additional errors suppressed."))
+     sayError(es, SM.UNKNOWN, "padsc warning: ", "additional errors suppressed."))
 
 (* pretty-print an error message on the error stream *)
   fun ppError (es as ES{outStrm, numErrors, ...}, loc, pp) = let
@@ -157,7 +157,7 @@ struct
 	  inc numErrors;
 	  PP.begin_block ppStrm PP.INCONSISTENT 0;
 	    PP.add_string ppStrm
-	      (F.format "Error %s: " [F.STR(SM.locToString loc)]);
+	      (F.format "padsc error %s: " [F.STR(SM.locToString loc)]);
 	    pp ppStrm;
 	    PP.add_newline ppStrm;
 	  PP.end_block ppStrm;
