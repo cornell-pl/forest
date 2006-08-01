@@ -94,6 +94,10 @@ if (-e $archmk) {
   $cc = $ccline if (length($ccline));
 }
 
+if ($ast_arch =~ /linux.x86_64/){
+    $lda = $lda . " -DHAVE_VA_LIST";
+}
+
 if ($ast_arch =~ /cygwin/) {
   # For cygwin, we do not need lua/lda fixes -- we use ckit-replace.h instead
   $lua = "";

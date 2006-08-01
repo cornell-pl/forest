@@ -93,10 +93,6 @@ ifeq ($(AST_ARCH),cygwin.i386)
 FORCE_STATIC = 1
 endif 
 
-ifeq ($(AST_ARCH),linux.x86_64)
-CDBGFLAGS += -DHAVE_VA_LIST
-COPTFLAGS += -DHAVE_VA_LIST
-endif 
 
 
 ifndef INSTALLROOT
@@ -313,6 +309,8 @@ endif
 CC = $(mam_cc_CC)
 CDBGFLAGS = $(mam_cc_WARN) $(mam_cc_DEBUG)
 COPTFLAGS = $(mam_cc_WARN) $(mam_cc_OPTIMIZE) -DNDEBUG
+
+
 ifdef BuildPADSLib
 CSHAREFLAGS = $(CC_DLL)
 else
@@ -373,6 +371,12 @@ endif
 ifeq ($(OPSYS),linux)
 COPTFLAGS := $(subst -O$(space),-O2$(space),$(COPTFLAGS))
 endif
+
+ifeq ($(AST_ARCH),linux.x86_64)
+CDBGFLAGS += -DHAVE_VA_LIST
+COPTFLAGS += -DHAVE_VA_LIST
+endif 
+
 
 # Fix for compilation on OS X Panther
 ifeq ($(ARCH_N_OPSYS),ppc-darwin)
