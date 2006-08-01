@@ -1,6 +1,11 @@
 #!/bin/sh
+# pads2005-03-07   pads 1.0     2005-03-07  
+# pads-1-01-a      pads 1.01    2006-01-26
+# pads-1-01-b      pads 1.01b   2006-05-17  new license
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -D today pads
+bundlename=current
+echo $bundlename
 
 # build documentation
 cd pads/documents/manual
@@ -27,22 +32,22 @@ rm -rf Notes
 # clean example directory
 cd padsc/examples
 pwd
-#clean p directory
-echo cleaning p directory
+#clean examples/p directory
+echo cleaning examples/p directory
 mkdir temp_p
 for x in `cat p/RELEASE_PFILES`; do cp p/$x temp_p; done
 rm -rf p
 mv temp_p p
 
-#clean test directory
-echo cleaning test directory
+#clean examples/test directory
+echo cleaning examples/test directory
 mkdir temp_tests
 for x in `cat tests/RELEASE_TESTS`; do cp tests/$x temp_tests; done
 rm -rf tests
 mv temp_tests tests
 
-#clean data directory
-echo cleaning data directory
+#clean examples/data directory
+echo cleaning examples/data directory
 mkdir temp_data
 for x in `cat data/take_list`; do cp data/$x temp_data; done
 rm -rf data 
@@ -55,6 +60,13 @@ mkdir temp_examples
 for x in `cat examples/take_list`; do mv examples/$x temp_examples; done
 rm -rf examples
 mv temp_examples examples
+
+echo cleaning usecases directory
+pwd
+mkdir temp_usecases
+for x in `cat usecases/take_list`; do mv usecases/$x temp_usecases; done
+rm -rf usecases
+mv temp_usecases usecases
 
 
 cd .. # now in pads directory
@@ -80,15 +92,16 @@ mv temp_scripts scripts
 echo taring up the desired files
 cd ..  # now above checked out pads directory
 echo building bundle
-tar cfz pads.tar.gz `cat pads/take_list`
+tar cfz $bundlename.tar.gz `cat pads/take_list`
 
-rm -rf pads/scripts
-mkdir pads/scripts
-cp scripts/gigascope_make.pl pads/scripts
-cp -r scripts/templates pads/scripts/
-rm -rf pads/scripts/templates/CVS
-cp GIGASCOPE_README pads/
+# uncomment these lines if exporting gigascope as well
+#rm -rf pads/scripts
+#mkdir pads/scripts
+#cp scripts/gigascope_make.pl pads/scripts
+#cp -r scripts/templates pads/scripts/
+#rm -rf pads/scripts/templates/CVS
+#cp GIGASCOPE_README pads/
 
-tar cfz pads_gscp.tar.gz pads/scripts pads/GIGASCOPE_README
+#tar cfz $bundlename_gscp.tar.gz pads/scripts pads/GIGASCOPE_README
 
 mv pads pads_remove_me

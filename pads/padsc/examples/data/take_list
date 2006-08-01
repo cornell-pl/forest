@@ -35,6 +35,7 @@ struct_good
 endian.delenn
 endian.raptor
 struct1
+newick
 pfloat
 ptime
 ptime_explicit

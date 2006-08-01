@@ -40,8 +40,10 @@
 #define _AST_STD_H
 #include <ast_common.h>
 
+#ifndef HAVE_VA_LIST
 // map some _ast_foo types to corresponding normal types
 typedef _ast_va_list va_list;
+#endif
 
 // some common types
 typedef int size_t;
