@@ -511,7 +511,7 @@ clean:
 	$(RM) -f *~ *.o $(CLEANUP_TESTS)
 
 veryclean: clean
-	$(RM) $(GEN_DIR)/*.[hc] $(GEN_DIR)/*.xsd tmp/*
+	$(RM) $(GEN_DIR)/*.[hc] $(GEN_DIR)/*.xsd tmp/* $(GEN_DIR)/*.pxml
 
 # This works for some but not all test cases
 
