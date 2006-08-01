@@ -36,6 +36,7 @@ endian.delenn
 endian.raptor
 struct1
 newick
+pads-comp
 pfloat
 ptime
 ptime_explicit
