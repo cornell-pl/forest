@@ -1,4 +1,8 @@
 #!/bin/sh
+# this script should be run from the top level pads directory
+# it will leave a tar ball at that level, and a directory pads_remove_me
+# that is the source of the tar ball.
+
 # pads2005-03-07   pads 1.0     2005-03-07  
 # pads-1-01-a      pads 1.01    2006-01-26
 # pads-1-01-b      pads 1.01b   2006-05-17  new license
