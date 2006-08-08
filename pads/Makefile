@@ -244,7 +244,7 @@ $(CONF_SML_HOME)/config/install.sh: $(CONF_SML_HOME)/config.tgz
 $(CONF_SML_HOME)/config.tgz: $(CONF_SML_HOME)
 	@(if [ ! -s $@ ]; then ( \
 		echo "Retrieving $@"; \
-		if curl -u $(SML_CONFIG_URL) >$@ ||  wget -O $@ $(SML_CONFIG_URL); then ( \
+		if curl $(SML_CONFIG_URL) >$@ ||  wget -O $@ $(SML_CONFIG_URL); then ( \
 			echo "Retrieved $@"; \
 		) else ( \
 			$(RM) -f $@; \
