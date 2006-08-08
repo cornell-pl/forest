@@ -1,0 +1,153 @@
+#########################################################################
+#                                                                       #
+#                                PADS                                   #
+#                   Processing Ad Hoc Data Engine                       #
+#                                                                       #
+#   Copyright 2006, AT&T Labs Research                                  #
+#   Distributed only by permission.                                     #
+#                                                                       #
+#########################################################################
+
+ARCH=$(shell $(PADS_SRC)/scripts/arch-n-opsys)
+
+#########################################################################
+# Author:   Pamela L. Dragosh (AT&T Labs Research)
+# Descripton:
+#		This Makefile is included in the toplevel PADS Makefile and any
+#		component Makefiles beneath the toplevel.
+# History:
+#
+#########################################################################
+
+$(PADS_SRC)/config/Makefile.conf.$(ARCH):
+	@echo
+	@echo "You must run the configure script before attempting to build PADS!"
+	@echo "  e.g. $(PADS_SRC)/configure"
+	@echo
+	@echo "Read the INSTALL file for more details!"
+	@echo
+
+include $(PADS_SRC)/config/Makefile.conf.$(ARCH)
+
+#########################################################################
+# Section:	Variables
+# Description:
+#		These are variables used by all Makefiles
+#
+#	PADS_INCLUDES:		All of the directories to search for PADS files
+#
+#########################################################################
+HERE := $(shell pwd)
+VPATH=.:..:$(ARCH)
+PADS_INCLUDE_BASE=$(PADS_SRC)/padsc/include
+PADS_INCLUDE_BASE_ARCH=$(PADS_INCLUDE_BASE)/$(ARCH)
+
+#########################################################################
+# Section:	Generated files
+# Description:
+#		These are variables used by various Makefiles
+#
+#
+#########################################################################
+PADS_INCLUDES=\
+	-I$(PADS_INCLUDE_BASE)\
+	-I$(PADS_INCLUDE_BASE)/$(ARCH)\
+	-I$(CONF_AST_HOME)/arch/$(shell $(CONF_AST_BIN)/package)/include/ast\
+	-I.\
+	-I..\
+	-I$(ARCH)
+	
+PADS_LIBDIRS=\
+	-L$(PADS_SRC)/padsc/libpads/$(ARCH) \
+	-L$(CONF_AST_HOME)/arch/$(shell $(CONF_AST_BIN)/package)/lib
+
+PADS_PCGEN_IN = $(PADS_INCLUDE_BASE)/pcgen-macros.h
+PADS_PCGEN_OUT = $(PADS_INCLUDE_BASE_ARCH)/pcgen-macros-gen.h
+
+PADS_SCRIPT_MAKESRC = $(CONF_PACKAGE_SRC)/scripts/mksrc.pl
+
+PADS_PCGEN_TARGETS=$(PADS_PCGEN_OUT)
+
+#########################################################################
+# Section:	Object files
+# Description:
+#
+#
+#########################################################################
+
+LIBPADS_OBJS_O = \
+	default_io_disc.o \
+	pads-gen.o \
+	pads-acc-gen.o \
+	pads-read-gen.o \
+	pads-write-gen.o \
+	pads-misc-gen.o \
+	rbuf.o \
+	pads-hist.o \
+	pads-cluster.o
+
+LIBPADS_OBJS_D = $(LIBPADS_OBJS_O:%.o=%_d.o)
+
+#########################################################################
+# Section:	Target library names
+# Description:
+#
+#
+#########################################################################
+
+PADS_NAME_OPT=$(LIB_PREFIX)pads-$(ARCH)$(LIB_SUFFIX)
+PADS_NAME_DBG=$(LIB_PREFIX)pads-$(ARCH)-g$(LIB_SUFFIX)
+
+ifeq ($(CONF_PROFILING),false)
+PADS_TARGETS=$(PADS_NAME_OPT)
+else
+PADS_TARGETS=$(PADS_NAME_DBG)
+endif
+
+#########################################################################
+# Section:	installation directory targets
+# Description:
+#########################################################################
+ALL_PADS_DIRS=\
+$(CONF_PADS_BIN) \
+$(CONF_PADS_LIB) \
+$(CONF_PADS_MAN)
+
+$(ALL_PADS_DIRS):
+	$(MKDIR) $@
+
+#########################################################################
+# Section:	Regression Testing Definitions
+# Description:
+#########################################################################
+	
+define RegressDef
+(echo " "; echo "Performing $@"; \
+  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
+  $(RM) tmp/tmp.$<$$suf; \
+  regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
+  echo "(./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
+  (./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
+  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
+  echo " "; )
+endef
+
+#########################################################################
+# Section:	Make rules
+# Description:
+#		
+#########################################################################
+
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+%.o : %.c
+	$(CC) -O -D_PACKAGE_ast -DNDEBUG -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -c $< -o $@
+
+%_d.o : %.c
+	$(CC) -O -g -D_PACKAGE_ast -DDEBUG -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -c $< -o $@
+
+updatedepend::
+
+clobber::	clean
+
