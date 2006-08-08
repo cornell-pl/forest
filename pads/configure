@@ -304,6 +304,23 @@ check_eopt() {
 	exit 1
 }
 
+# Function:	check_bopt(path-name)
+# Description:
+#		Check to see if the given {build|dontbuild)-name is one of the supported
+#		enable options
+#
+check_bopt() {
+	for x in $boptions
+	do
+		if [ "$x" = "$1" ]
+		then
+			return 0
+		fi
+	done
+	echo "Unknown build option: $1" >&2
+	exit 1
+}
+
 if [ -z "$PADS_SRC" ]
 then
 	PADS_SRC=`pwd`
@@ -337,6 +354,18 @@ do
 			opt=`echo "$1" | sed -e 's/-without-//' -e 's/-/_/g'`
 			check_wopt "$opt"
 			eval "with_$opt=-1"
+			shift
+			;;
+		-build-*)
+			opt=`echo "$1" | sed -e 's/-build-//' -e 's/-/_/g'`
+			check_bopt "$opt"
+			eval "build_$opt=2"
+			shift
+			;;
+		-dontbuild-*)
+			opt=`echo "$1" | sed -e 's/-dontbuild-//' -e 's/-/_/g'`
+			check_bopt "$opt"
+			eval "build_$opt=-1"
 			shift
 			;;
 		-version)
