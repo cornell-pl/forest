@@ -666,14 +666,57 @@ LINK_O = $(LINKER) $(LINKOPTS_O)
 PADSC = $(PADS_HOME)/scripts/padsc 
 PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_HEAPOPSYS)
 
+LIBRARY_PATH_TEST = $(LD_LIBRARY_PATH)
+LIBRARY_PATH_TEST_NM = "LD_LIBRARY_PATH"
+ifeq ($(OPSYS),darwin)
+LIBRARY_PATH_TEST = $(DYLD_LIBRARY_PATH)
+LIBRARY_PATH_TEST_NM = "DYLD_LIBRARY_PATH"
+endif
+ifeq ($(OPSYS),hpux)
+LIBRARY_PATH_TEST = $(SHLIB_PATH)
+LIBRARY_PATH_TEST_NM = "SHLIB_PATH"
+endif
+
+ifdef FORCE_STATIC
+define LibraryPathSanityCheck
+( )
+endef
+else
+define LibraryPathSanityCheck
+( if [ $(LIBRARY_PATH_TEST)x = x ]; then \
+    echo "*** WARNING: $(LIBRARY_PATH_TEST_NM) is not set."; \
+    echo "*** You probably want it set it, and to include directory"; \
+    echo "***     $(INSTALL_LIBDIR)"; \
+    echo "*** to pick up the PADS/AST shared libraries."; \
+    echo "*** It can be set via a DO_SETENV script -- see pads/README"; \
+  else \
+    found=0; \
+    for dir in `echo $(LIBRARY_PATH_TEST) | sed -e 's|:| |g'`; do \
+      if [ $$dir = $(INSTALL_LIBDIR) ]; then \
+        found=1; \
+      fi; \
+    done; \
+    if [ $$found = 0 ]; then \
+      echo "*** WARNING: $(LIBRARY_PATH_TEST_NM) may be incomplete:"; \
+      echo "*** you probably want it to include directory"; \
+      echo "***     $(INSTALL_LIBDIR)"; \
+      echo "*** to pick up the PADS/AST shared libraries."; \
+      echo "*** It can be set via a DO_SETENV script -- see pads/README"; \
+    fi; \
+  fi; \
+)
+endef
+endif
+
 define SanityCheck
 ( if [ ! -e $(PADSC) ]; then \
-      echo "\nUNEXPECTED: $(PADSC) not found\n"; \
+      echo "UNEXPECTED: $(PADSC) not found"; \
       exit 1; \
   fi; \
   if [ ! -e $(PADSC_REAL) ]; then \
-      echo "\nUNEXPECTED: padsc compiler obj $(PADSC_REAL) not found"; \
-      echo "     Have you built the PADS compiler?\n     Try: using 'gmake' in the top-level padsc directory.\n"; \
+      echo "UNEXPECTED: padsc compiler obj $(PADSC_REAL) not found"; \
+      echo "     Have you built the PADS compiler?"; \
+      echo "     Try: using 'gmake' in the top-level padsc directory."; \
       exit 1; \
   fi; \
   for file in $(LIB_DEPS_D) $(LIB_DEPS_O); do \
@@ -738,7 +781,7 @@ define CCExec_STATIC_O
 endef
 
 define RegressPre
-(echo " "; echo "Performing $@"; \
+(echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<; \
 )
@@ -750,7 +793,7 @@ define RegressPost
 endef
 
 define RegressDef
-(echo " "; echo "Performing $@"; \
+(echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
@@ -761,7 +804,7 @@ define RegressDef
 endef
 
 define RegressInput
-(echo " "; echo "Performing $@"; \
+(echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
@@ -772,7 +815,7 @@ define RegressInput
 endef
 
 define RegressInputPP
-(echo " "; echo "Performing $@"; \
+(echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
@@ -783,7 +826,7 @@ define RegressInputPP
 endef
 
 define RegressFilter
-(echo " "; echo "Performing $@"; \
+(echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
@@ -794,7 +837,7 @@ define RegressFilter
 endef
 
 define RegressRW
-(echo " "; echo "Performing $@"; \
+(echo "Performing $@"; \
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
   echo "./$< $$args < $$input > tmp/tmp.$<$$suf 2>/dev/null"; \

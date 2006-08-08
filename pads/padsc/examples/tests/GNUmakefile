@@ -75,14 +75,10 @@ TIMING_TEST = timing_ai
 #           regress_test_dns_o \
 #           regress_test_dns_d \
 
-foo:
-	echo "INCLUDE_DEPS=$(INCLUDE_DEPS)"
-	echo "LIB_DEPS_D=$(LIB_DEPS_D)"
-
 rcount:
 	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
-regress: regress_o regress_d
+regress: regress_o regress_d repeat_library_sanity_check
 
 regress_o:  sanity_check \
 	  regress_o_announce \
@@ -134,7 +130,7 @@ regress_o:  sanity_check \
 	  regress_rwxml_message_header_o \
           regress_rwxml_pads-comp_o
 
-	@echo " "; echo "DONE"; echo " "
+	@echo "DONE"
 
 regress_d:  sanity_check \
 	  regress_d_announce \
@@ -188,7 +184,7 @@ regress_d:  sanity_check \
           regress_rwxml_message_header_d \
           regress_rwxml_pads-comp_d
 
-	@echo " "; echo "DONE"; echo " "
+	@echo "DONE"
 
 dib_tests: sanity_check $(DIB_TESTS)
 format_tests: sanity_check $(FORMAT_TESTS)
@@ -196,7 +192,11 @@ other_tests: sanity_check $(OTHER_TESTS)
 all_tests: sanity_check $(ALL_TESTS)
 
 sanity_check:
+	@$(LibraryPathSanityCheck)
 	@$(SanityCheck)
+
+repeat_library_sanity_check:
+	@$(LibraryPathSanityCheck)
 
 regress_o_announce:
 	@echo " "; echo "REGRESS USING OPTIMIZED CODE"; echo " " \

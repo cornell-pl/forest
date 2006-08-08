@@ -60,7 +60,7 @@ ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS) $(MISC_TESTS)
 rcount:
 	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
-regress: regress_o regress_d
+regress: regress_o regress_d repeat_library_sanity_check
 
 regress_o: sanity_check \
 	  regress_o_announce \
@@ -78,7 +78,7 @@ regress_o: sanity_check \
           regress_rwtest1_o \
           regress_recrwtest1_o \
           regress_a_ip_test_o
-	@echo " "; echo "DONE"; echo " "
+	@echo "DONE"
 
 regress_d: sanity_check \
 	  regress_d_announce \
@@ -96,14 +96,18 @@ regress_d: sanity_check \
           regress_rwtest1_d \
           regress_recrwtest1_d \
           regress_a_ip_test_d
-	@echo " "; echo "DONE"; echo " "
+	@echo "DONE"
 
 libtests: sanity_check $(LIBTESTS)
 accumtests: sanity_check $(ACCUMTESTS)
 all: sanity_check $(ALL_PROGS)
 
 sanity_check:
+	@$(LibraryPathSanityCheck)
 	@$(LibSanityCheck)
+
+repeat_library_sanity_check:
+	@$(LibraryPathSanityCheck)
 
 test_regaddclass_o: test_regaddclass.c
 	@$(TrivCCExec_O)
