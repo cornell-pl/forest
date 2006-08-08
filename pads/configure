@@ -500,11 +500,6 @@ then
 		# we are building sml
 		#
 		sml_home=$PADS_SRC/sml
-	else
-		#
-		# we are using a pre-built version of sml
-		#
-		sml_home=$local/sml
 	fi
 fi
 

@@ -274,7 +274,7 @@ else
 #
 # Here we are using a pre-built version of SML, we just verify it exists.
 #
-sml_package: $(CONF_SML_HOME)/bin/sml
+sml_package: $(SMLNJ_HOME)/bin/sml
 
 endif
 
