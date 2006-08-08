@@ -226,10 +226,14 @@ ast-ast/$(AST_AST):
 
 ifeq ($(CONF_BUILD_SML), true)
 #
+# Ensure an existing SML installation does not conflict with this install
+#
+export SMLNJ_HOME=
+export SML=
+#
 # Here we are going to try to download and install SML
 #
 SML_CONFIG_URL=http://smlnj.cs.uchicago.edu/dist/working/110.59/config.tgz
-
 
 sml_package: $(CONF_SML_HOME)/bin/sml
 		
