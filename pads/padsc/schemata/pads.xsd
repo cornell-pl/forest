@@ -298,7 +298,8 @@
 <xs:complexType name="Pbase_pd">
  <xs:sequence>
    <xs:element name="pstate" type="p:Pflags_t"/>
-   <xs:element name="nerr" type="p:Puint32"/>
+   <!-- nerr is always 1 for Pbase types, so why include it? -->
+   <xs:element name="nerr" type="p:Puint32"  minOccurs="0" maxOccurs="1"/> 
    <xs:element name="errCode" type="p:PerrCode_t"/>
    <xs:element name="loc" type="p:Ploc_t" minOccurs="0" maxOccurs="1"/>
  </xs:sequence>

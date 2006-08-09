@@ -104,13 +104,15 @@ class virtual padsNode docid' nr' pnr' =
       ((self#get_implid), Nodeid.PreIntPair(docid, nid))
 
     method update_parent n = node_parent <- (Some n)
+    method reset_parent () = raise(Error.Query(Error.Prototype("Reset_parent operation not implemented in PADX \n")))
 
     (* PADS does not support update methods *)
-    method delete     	 n = ()
-    method detach     	 n = ()
-    method insert     	 ns opt = ()
-    method replace    	 ns n = ()
-    method replace_value avl = ()
+    method delete     	 n = raise(Error.Query(Error.Prototype("Delete operation not implemented in PADX \n")))
+    method detach     	 n = raise(Error.Query(Error.Prototype("Detach operation not implemented in PADX \n")))
+    method insert     	 ns opt = raise(Error.Query(Error.Prototype("Insert operation not implemented in PADX \n")))
+    method replace    	 ns n = raise(Error.Query(Error.Prototype("Replace operation not implemented in PADX \n")))
+    method replace_value avl = raise(Error.Query(Error.Prototype("Replace_value operation not implemented in PADX \n")))
+    method rename        qn = raise(Error.Query(Error.Prototype("Rename operation not implemented in PADX \n")))
   end
 
 (* PADS Document Nodes *)

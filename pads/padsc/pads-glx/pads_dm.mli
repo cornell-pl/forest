@@ -34,13 +34,15 @@ class virtual padsNode :
     method nodeid        : unit  -> Nodeid.nodeid
     method docorder      : unit  -> Nodeid.docorder
     method update_parent : Dm.node -> unit
+    method reset_parent : unit -> unit
 
   (* Updates *)
     method delete     	 : Dm.node -> unit
     method detach     	 : Dm.node -> unit
     method insert     	 : Dm.node Cursor.cursor -> Dm.node option -> unit
     method replace    	 : Dm.node Cursor.cursor -> Dm.node -> unit
-    method replace_value : Dm_atomic.atomicValue Cursor.cursor -> unit
+    method replace_value : Dm.text -> unit
+    method rename        : Datatypes.xs_QName -> unit
 
   end
 

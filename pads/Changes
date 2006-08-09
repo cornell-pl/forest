@@ -1,3 +1,30 @@
+August 9, 2006 - Mary
+
+  o padsc/examples/xml/queries/
+    - Added comments
+
+  o padsc/libpglx/pglx.c
+    - Added <pstate/> and <errCode/> to <pd/> output 
+
+  o padsc/pads-glx/pads_dm.{ml,mli} 
+    - Align with changes to Galax DM
+
+  o scratch/go 
+    - Fixed some bugs in example
+ 
+  o pads/padsc/examples/xml/regress
+    - Updated expected results
+    - (To run regressions, in pads/padsc/examples/xml/tests, 'make regress')
+
+June 13, 2006 - Mary
+
+  o In pglx.c: 
+
+    We need to print pstate and errCode values as strings in XML, as
+    we do for ENUM values in pglx-codegen-macros.h, but there is a lot
+    of overhead to create a pads string from an
+    integer. P_pstate2str((pd)->pstate); 
+
 June 1, 2006 - Mary
  
   o More fixes in XML Accumulator 

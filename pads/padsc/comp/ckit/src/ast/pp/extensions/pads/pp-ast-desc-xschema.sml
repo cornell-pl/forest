@@ -21,7 +21,7 @@ local
     fun ppStatementAdornment ppCoreStmt aidinfo tidtab pps  (Ast.STMT (coreStmt,_,_)) = 
 	ppCoreStmt aidinfo tidtab pps coreStmt
 
-
+    (* *)
     fun ppExternalDeclAdornment srcFileOpt paidinfo ppCoreExternalDecl aidinfo tidtab pps
 	  (Ast.DECL (coreExtDecl,_,paid:Paid.uid,loc:SourceMap.location)) = 
 	  if isPads loc then 

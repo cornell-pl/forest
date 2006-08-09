@@ -1,4 +1,4 @@
-#define DEF_INPUT_FILE "../data/go_old"
+#define DEF_INPUT_FILE "../data/go.txt"
 #define DEF_QUERY_FILE "../../queries/dot.xq"
 #define PADS_TY(suf) OBO_file ## suf
 #define IO_DISC_MK P_nlrec_make(0)

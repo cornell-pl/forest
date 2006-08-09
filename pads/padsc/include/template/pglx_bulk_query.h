@@ -311,6 +311,7 @@ int main(int argc, char** argv) {
       
       char *ns_decl_head = "declare namespace padsns = \""; 
       char *ns_decl_tail = "\";\n";
+
       char *input = malloc(strlen(ns_decl_head) + strlen(pdci_uri) + strlen(ns_decl_tail) + 1);
       
       input = strcpy(input, ns_decl_head);       

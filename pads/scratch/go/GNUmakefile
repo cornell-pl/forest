@@ -18,7 +18,7 @@ INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
 # Rule to run the pads compiler on go.p
 go.c: go.p
-	$(PADSC) -D__ppc__ $<
+	$(PADSC) -D__ppc__ -x $<
 
 include $(PADS_HOME)/mk/rules.mk
 

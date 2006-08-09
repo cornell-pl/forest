@@ -1240,6 +1240,9 @@ PDCI_node_t * PDCI_structured_pd_node_kthChild(PDCI_node_t *node, childIndex idx
   /* the following mk calls raise an exception on alloc error */
   switch (idx) {
   case 0:
+    /* We need to print pstate and errCode values as strings in XML, as
+       we do for ENUM values in pglx-codegen-macros.h, but there is a lot of overhead to create a pads string 
+       from an integer. P_pstate2str((pd)->pstate); */
     result = Puint32_val_node_new(node, "pstate",  pd, &(pd->pstate),  
 				  node->id_offset + PDCI_PSTATE_OFF, WHATFN);
     break;
@@ -1248,6 +1251,7 @@ PDCI_node_t * PDCI_structured_pd_node_kthChild(PDCI_node_t *node, childIndex idx
 				  node->id_offset + PDCI_NERR_OFF, WHATFN);
     break;
   case 2:
+    /*    P_errCode2str((pd)->errCode) */
     result = Puint32_val_node_new(node, "errCode", pd, &(pd->errCode),    
 				  node->id_offset + PDCI_ERRCODE_OFF, WHATFN);
     break;
