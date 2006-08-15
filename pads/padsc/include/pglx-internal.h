@@ -10,8 +10,16 @@
 
 #include "pads-internal.h"
 
+#if defined(FOR_CKIT)
+// Include minimum set of defs for ckit, rather than having ckit
+// parse all the standard OS includes, which often contain a lot of
+// compiler-specific macros and pragmas.
+#include "ckit-replace-galax.h"
+#else
+//normal includes
 #include "galax.h"              /* Need to pack/unpack Galax atomic values */
 #include "limits.h"
+#endif
 
 /* Source variable */
 extern char * PDCI_source;
