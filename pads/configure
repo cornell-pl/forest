@@ -174,7 +174,7 @@ ast_lib=
 sml_home=
 
 build_ast=1
-build_sml=1
+build_sml=
 with_shared=1
 enable_profiling=0
 regression=PLEASESET
@@ -213,13 +213,13 @@ help_ast_home="The root directory where AST is located or will be installed"
 help_ast_bin="The directory where AST executables are installed"
 help_ast_lib="The directory where AST build libraries are installed"
 
-help_sml_home="The root directory where SML is located or will be installed"
+help_sml_home="The root directory where SML will be built and installed if -build-sml=true. (Otherwise environment variable SML is used)"
 
 help_host_type="The type of system PADS is being built for (automatically detected)"
 help_ccoption="The C compiler to use"
 help_package_dir="The directory to write the source package to"
 help_build_ast="Downloads and builds AST library (default=build)"
-help_build_sml="Downloads and builds SML library (default=build)"
+help_build_sml="Downloads and builds SML library (default=build if environment variable SML is not set)"
 help_with_shared="Include/exclude support for shared libraries (default with)"
 help_enable_profiling="Enable/disable support for profiling (default disable)"
 
@@ -492,18 +492,58 @@ fi
 #
 # sml_home
 #
+if [ -z "$build_sml" ]
+then
+	#
+	# Check if we should build SML. Does a SML
+	# environment variable exist?
+	#
+	if [ -z "$SML" ]
+	then
+		#
+		# Doesn't exist, so we need to build
+		#
+		echo "SML variable undefined, -build-sml is set to true"
+		build_sml=1
+	else
+		#
+		# Exists, no need to build
+		#
+		build_sml=0
+	fi
+fi
 if [ -z "$sml_home" ]
 then
+	#
+	# SML home is not specified
+	# Do we build it?
+	#
 	if [ $build_sml -gt 0 ]
 	then
 		#
 		# we are building sml
 		#
 		sml_home=$PADS_SRC/sml
+	else
+		#
+		# User does NOT want us to build SML
+		# Check if it exists
+		#
+		if [ -z "$SML" ]
+		then
+			#
+			# SML is not installed
+			#
+			echo "ERROR: SML is not installed"
+			exit 1
+		else
+			#
+			# SML is installed
+			#
+			echo "Using SML installation: $SML"
+		fi
 	fi
 fi
-
-
 
 if [ $need_copt -gt 0 ]
 then
@@ -646,9 +686,9 @@ then
 				;;
 			powerpc-apple-darwin*)
 				copt_MKSHAREDLIB=gcc
-				copt_MKSHAREDLIBFLAGS="-dynamiclib"
+				copt_MKSHAREDLIBFLAGS="-dynamiclib -flat_namespace -undefined suppress -read_only_relocs suppress"
 				copt_LD_LIBRARY_PATH_VAR="DYLD_LIBRARY_PATH"
-				copt_SUPPORTS_SHARED_LIBRARIES=false
+				copt_SUPPORTS_SHARED_LIBRARIES=true
 				;;
 			*mingw*|*cygwin*)
 				copt_SUPPORTS_SHARED_LIBRARIES=false
@@ -842,6 +882,8 @@ DLL=$arch_DLL
 
 STATIC_LIBTOOL = ar cr
 STATIC_LIBTOOL_OPTS =
+SHARED_LIBTOOL = $copt_MKSHAREDLIB
+SHARED_LIBTOOL_OPTS = $copt_MKSHAREDLIBFLAGS
 
 #########################################################################
 # Section:  Options
@@ -910,7 +952,7 @@ CONF_AST_BIN=$ast_bin
 CONF_AST_LIB=$ast_lib
 
 #
-# SML library location
+# SML library build location (if CONF_BUILD_SML is true)
 #
 CONF_SML_HOME=$sml_home
 CONF_SML_CYGWIN=$arch_SMLNJ_CYGWIN_RUNTIME

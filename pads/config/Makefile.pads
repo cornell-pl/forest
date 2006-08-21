@@ -61,6 +61,8 @@ PADS_LIBDIRS=\
 	-L$(PADS_SRC)/padsc/libpads/$(ARCH) \
 	-L$(CONF_AST_HOME)/arch/$(shell $(CONF_AST_BIN)/package)/lib
 
+PADS_AST_LIB=$(CONF_AST_HOME)/arch/$(shell $(CONF_AST_BIN)/package)/lib/libast.a
+
 PADS_PCGEN_IN = $(PADS_INCLUDE_BASE)/pcgen-macros.h
 PADS_PCGEN_OUT = $(PADS_INCLUDE_BASE_ARCH)/pcgen-macros-gen.h
 
@@ -104,6 +106,16 @@ else
 PADS_TARGETS=$(PADS_NAME_DBG)
 endif
 
+PADS_SHARED_NAME_OPT=$(LIB_PREFIX)pads-$(ARCH)$(DLL)
+PADS_SHARED_NAME_DBG=$(LIB_PREFIX)pads-$(ARCH)-g$(DLL)
+
+ifeq ($(CONF_PROFILING),false)
+PADS_TARGETS+=$(PADS_SHARED_NAME_OPT)
+else
+PADS_TARGETS+=$(PADS_SHARED_NAME_DBG)
+endif
+
+#########################################################################
 #########################################################################
 # Section:	installation directory targets
 # Description:
@@ -126,6 +138,7 @@ define RegressDef
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
+  export DYLD_LIBRARY_PATH=$(PADS_SRC)/padsc/libpads/$(ARCH):$(DYLD_LIBRARY_PATH);\
   echo "(./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
   echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
@@ -142,10 +155,10 @@ endef
 .SUFFIXES: .c .o
 
 %.o : %.c
-	$(CC) -O -D_PACKAGE_ast -DNDEBUG -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -c $< -o $@
+	$(CC) -O2 -DNDEBUG -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -c $< -o $@
 
 %_d.o : %.c
-	$(CC) -O -g -D_PACKAGE_ast -DDEBUG -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -c $< -o $@
+	$(CC) -O -g -DDEBUG -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -c $< -o $@
 
 updatedepend::
 

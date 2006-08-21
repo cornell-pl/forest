@@ -33,7 +33,7 @@ default:	all
 #		make will fail.
 #
 #		Makefile.pads:	Variables defined for compiling and linking PADS
-#								applications in the build environment
+#				applications in the build environment
 #########################################################################
 
 include $(PADS_SRC)/config/Makefile.pads
@@ -149,6 +149,12 @@ $(PADS_NAME_OPT): $(LIBPADS_OBJS_O)
 
 $(PADS_NAME_DBG): $(LIBPADS_OBJS_D)
 	$(STATIC_LIBTOOL) $@ $(STATIC_LIBTOOL_OPTS) $^
+
+$(PADS_SHARED_NAME_OPT): $(LIBPADS_OBJS_O)
+	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB)
+
+$(PADS_SHARED_NAME_DBG): $(LIBPADS_OBJS_D)
+	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB)
 
 #########################################################################
 # Section:	Makefile post-includes
