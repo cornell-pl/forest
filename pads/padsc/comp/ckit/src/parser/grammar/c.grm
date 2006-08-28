@@ -296,13 +296,13 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | PCOMMENT of string (* PADS *)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT | PCHARCLASS (* PADS *)
-        | PTYPEDEF | PRECURSIVE | PSTRUCT | PALTERNATES | PUNION  | PARRAY | PENUM (* | PDYNAMIC*) (* PADS *)
+        | PTYPEDEF | PRECURSIVE | PSTRUCT | PALTERNATES | PUNION | PARRAY | PENUM | PTRANS (* | PDYNAMIC*) (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  | PSOME | PNONE (*PADS*)
  	| PLONGEST | PRECORD | PSOURCE | PWHERE  (* PADS *)  
         | PSWITCH | PCASE | PDEFAULT | PPREFIX (* PADS*)
-        | PRE | PDONE (* PADS *)
+        | PRE | PDONE | PLTEQGT | PMASKMAP (* PADS *)
 
 %nonterm 
 	translationUnit of externalDecl list
@@ -385,6 +385,16 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pIsSource of bool
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
+        | pTransBody of {srcName  : string,
+                         srcArgs : expression list,
+                         dstName  : string,
+                         dstArgs : expression list,
+                         sToD    : expression,
+                         sToDArgs: expression list,
+                         dToS    : expression,
+                         dToSArgs: expression list}
+        | pMaskMap of expression option			
+        | pTrans of externalDecl
         | pRecursive of externalDecl
 (*         | pDynamic of externalDecl *)
 	| pOptNone of expression PX.PPostCond list option
@@ -531,6 +541,7 @@ externalDeclaration:
 							               functionDefinitionright)))
 (* PADS: start external declarations *)
         | pTypedef                      (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,pTypedefright)))
+        | pTrans                        (SOME(markExternalDecl srcMap (pTrans,pTransleft,pTransright)))
         | pRecursive                    (SOME(markExternalDecl srcMap (pRecursive,pRecursiveleft,pRecursiveright)))
 (*         | pDynamic                      (SOME(markExternalDecl srcMap (pDynamic,pDynamicleft,pDynamicright))) *)
         | pOpt                          (SOME(markExternalDecl srcMap (pOpt,pOptleft,pOptright)))
@@ -1209,6 +1220,41 @@ pTypedef:
 				containsRecord = false,
 				largeHeuristic = false,
 				pred = pTypedefPredOpt}) )
+
+pTransBody:
+  expr pOptActParams COLON pName pOptActParams PLTEQGT pName pOptActParams COLON expr pOptActParams SEMICOLON
+  ({srcName  = pName1,
+    srcArgs = pOptActParams2,
+    dstName  = pName2,
+    dstArgs = pOptActParams3,
+    sToD    = expr1,
+    sToDArgs= pOptActParams1,
+    dToS    = expr2,
+    dToSArgs= pOptActParams4}) 
+
+pMaskMap: 
+	           (NONE)
+ | PMASKMAP expr SEMICOLON (SOME expr)
+
+pTrans:
+  pIsSource pIsRecord PTRANS pName pushScope pTyParams LCURLY pTransBody pMaskMap RCURLY  popScope
+  (makeTypeName pName;
+   ExternalDeclExt(PX.PTrans {name   = pName, 
+			      params = pTyParams,
+			      isRecord = pIsRecord,
+			      isSource = pIsSource,
+			      containsRecord = false,
+			      largeHeuristic = false,
+			      srcName = #srcName pTransBody,
+			      srcArgs = #srcArgs pTransBody,
+			      dstName = #dstName pTransBody,
+			      dstArgs = #dstArgs pTransBody,
+			      sToD    = #sToD pTransBody,
+			      sToDArgs= #sToDArgs pTransBody,
+			      dToS    = #dToS pTransBody,
+			      dToSArgs= #dToSArgs pTransBody,
+			      maskMap = pMaskMap}) )  
+
 
 (* Support for specifying underlying type for recursive type, 
    instead of relying on the compiler. This feature has been 

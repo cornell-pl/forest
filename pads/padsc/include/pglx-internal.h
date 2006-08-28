@@ -169,7 +169,7 @@ void TYP_SND_NODE_KTH_CHILD_BODY(type_t ty, type_t childTy);
 PDCI_node_t *
      TYP_SND_NODE_KTH_CHILD_RET();
 
-void TYP_NODE_PATH_WALK_BODY(type_t childTy);
+void TYP_NODE_PATH_WALK_BODY(type_t childTy, void * mask);
 Perror_t
      TYP_NODE_PATH_WALK_RET();
 

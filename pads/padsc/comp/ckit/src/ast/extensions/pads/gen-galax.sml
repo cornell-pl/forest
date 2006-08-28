@@ -300,8 +300,8 @@ structure GenGalax = struct
   fun macroTypSNDKCRet() = 
       PT.Call(PL.TYP_SND_NODE_KTH_CHILD_RET,nil)
 
-  fun macroTypPWBody(childTy) =
-      PT.Expr(PT.Call(PL.TYP_NODE_PATH_WALK_BODY,[PT.Id childTy]))
+  fun macroTypPWBody(childTy, maskX) =
+      PT.Expr(PT.Call(PL.TYP_NODE_PATH_WALK_BODY,[PT.Id childTy, maskX]))
 
   fun macroTypPWRet() = 
       PT.Call(PL.TYP_NODE_PATH_WALK_RET,nil)
@@ -697,7 +697,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)
       end
 
-  fun makeTypedefPathWalkFun(name,baseName) =		
+  fun makeTypedefPathWalkFun(name,baseName, maskX) =		
       let val padsTy = P.ptrPCT PL.toolStatePCT
 	  val returnTy = PL.toolErrPCT
 	  val cnvName = PN.nodePWSuf name
@@ -711,7 +711,7 @@ ty ## _cachedNode_vtable = {PDCI_error_cachedNode_init, \
 	  val formalParams =  List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 
 	  val bodySs = makeInvisibleDecls([baseName], nil)
-		       @ [macroTypPWBody(baseName)] 
+		       @ [macroTypPWBody(baseName,maskX)] 
 		       @ [P.returnS (macroTypPWRet())] 
       in   
 	  P.mkFunctionEDecl(cnvName, formalParams, PT.Compound bodySs, returnTy)

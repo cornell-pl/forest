@@ -16,6 +16,7 @@ struct
    type labelInfo = string * string * argList * bool * string option
 
    datatype compoundSize =  Base of diskSize 
+                          | Trans of diskSize * string * argList
                           | Typedef of diskSize * string * argList
                           | Recursive of diskSize * string * argList
                           | Struct of (labelInfo option * diskSize) list 
@@ -32,6 +33,18 @@ struct
 
    type baseInfoTy = unit
    type typedefInfoTy = unit
+   type transInfoTy = {ds: diskSize,
+		       paramNames : string list,
+		       srcName : string,
+		       srcArgs : pexp list,
+		       dstName : string,
+		       dstArgs : pexp list,
+		       sToD    : pexp,
+		       sToDArgs: pexp list,
+		       dToS    : pexp,
+		       dToSArgs: pexp list}
+
+
    type recursiveInfoTy = {base : tyApp} (* Describe the underlying type *)
 
    datatype fieldInfoTy =  Full of {ty:tyApp, name:string, pred : pexp PX.PPostCond list, comment: string option,
@@ -57,6 +70,7 @@ struct
 
    type enumInfoTy = unit
    datatype tyInfo = BaseInfo of baseInfoTy
+                   | TransInfo of transInfoTy 
                    | TypedefInfo of typedefInfoTy 
                    | RecursiveInfo of recursiveInfoTy 
                    | StructInfo of structInfoTy

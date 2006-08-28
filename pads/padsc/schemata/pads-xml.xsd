@@ -41,6 +41,7 @@
     </xs:sequence>
   </xs:complexType>
 
+
   <xs:element name="literal" type="p:LiteralExpr"/> <!-- A literal expression -->
   <xs:element name="native" type="p:Expr"/>        <!-- An expression in native C -->
 
@@ -52,6 +53,8 @@
       </xs:choice>
     </xs:complexType>
   </xs:element>
+
+  <xs:element name="function" type="p:expr"/>        <!-- An expression denoting a function-->
 
   <xs:element name="parsecheck" type="p:Expr"/>     <!-- pPC -->
 
@@ -376,6 +379,46 @@
         <xs:element ref="p:ptype"/>
         <xs:element ref="p:var" minOccurs="0" maxOccurs="1"/>
         <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="partial">    <!-- partial application of C function  -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:function"/>
+        <xs:element ref="p:argument" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+
+  <xs:element name="physical">    <!-- info related to physical rep of transform    -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:ptype"/>
+        <xs:element ref="p:partial"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="logical">    <!-- info related to logical rep of transform    -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:ptype"/>
+        <xs:element ref="p:partial"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<!-- PTRANS Declaration -->         <!-- pTrans -->
+  <xs:element name="trans"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:physical"/>
+        <xs:element ref="p:logical"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

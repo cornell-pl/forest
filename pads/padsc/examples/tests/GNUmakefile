@@ -128,8 +128,9 @@ regress_o:  sanity_check \
           regress_rwxml_enum_o \
 	  regress_rwxml_array_advance_o \
 	  regress_rwxml_message_header_o \
-          regress_rwxml_pads-comp_o
-
+          regress_rwxml_pads-comp_o \
+          regress_rwxml_transform_o \
+          regress_test_transform_o 
 	@echo "DONE"
 
 regress_d:  sanity_check \
@@ -182,7 +183,9 @@ regress_d:  sanity_check \
           regress_rwxml_enum_d \
           regress_rwxml_array_advance_d \
           regress_rwxml_message_header_d \
-          regress_rwxml_pads-comp_d
+          regress_rwxml_pads-comp_d \
+          regress_rwxml_transform_d \
+          regress_test_transform_d 
 
 	@echo "DONE"
 
@@ -256,6 +259,16 @@ regress_test_ai_d: test_ai_d
 	@(args=""; suf=""; $(RegressDef))
 regress_rwxml_ai_o: rwxml_ai
 	@(args=""; suf=""; $(RegressDef))
+
+regress_test_transform_o: test_transform
+	@(args=""; suf=""; $(RegressDef))
+regress_test_transform_d: test_transform_d
+	@(args=""; suf=""; $(RegressDef))
+regress_rwxml_transform_o: rwxml_transform
+	@(args=""; suf=""; $(RegressDef))
+regress_rwxml_transform_d: rwxml_transform
+	@(args=""; suf=""; $(RegressDef))
+
 
 regress_test_dns_o: test_dns
 	@(args=""; suf=""; $(RegressDef))

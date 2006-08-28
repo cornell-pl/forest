@@ -81,6 +81,7 @@ struct
                ("Pfrom", Tokens.PFROM),
                ("Pin", Tokens.PIN),
                ("Plast", Tokens.PLAST),
+               ("Pmaskmap", Tokens.PMASKMAP),
 	       ("Pnone", Tokens.PNONE),
                ("Pnosep", Tokens.PNOSEP),
                ("Pomit", Tokens.POMIT),
@@ -97,6 +98,7 @@ struct
                ("Pstruct", Tokens.PSTRUCT),
                ("Pswitch", Tokens.PSWITCH),
                ("Pterm", Tokens.PTERM),
+               ("Ptrans", Tokens.PTRANS),
                ("Ptypedef", Tokens.PTYPEDEF),
                ("Precur", Tokens.PRECURSIVE),
 (*                ("Pdyn", Tokens.PDYNAMIC), *)

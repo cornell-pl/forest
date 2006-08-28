@@ -32,7 +32,7 @@ signature GENGALAX = sig
   val makeRecPathWalkFun : string * string -> ParseTree.externalDecl
 
   val makeTypedefSNDKthChildFun : string * string -> ParseTree.externalDecl
-  val makeTypedefPathWalkFun : string * string -> ParseTree.externalDecl
+  val makeTypedefPathWalkFun : string * string * ParseTree.expression -> ParseTree.externalDecl
 
   val makeUnionSNDKthChildFun : string * (string * string option) list -> ParseTree.externalDecl
   val makeUnionPathWalkFun : string * (string * string option) list -> ParseTree.externalDecl

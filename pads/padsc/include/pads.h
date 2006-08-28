@@ -582,6 +582,9 @@ typedef enum PerrCode_t_e {
   P_INVALID_TIME                  =  252,
   P_INVALID_IP                    =  260,
   P_INVALID_IP_RANGE              =  261,
+
+  P_TRANSFORM_FAILED               =  300
+
 } PerrCode_t;
 
 typedef enum Pread_res_t_e{

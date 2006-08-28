@@ -99,25 +99,25 @@ structure Cluster = struct
 	  addFunED
       end
 
-  fun genReportFunTypedef(name, baseTy, analysisPCT) =
+  fun genReportFunTypedef(name, baseTy, analysisPCT,kind) =
       let val reportFun = (reportSuf o analysisSuf) name
 	  val repioCallX = PT.Call(PT.Id((ioSuf o reportSuf) (lookupAnalysis baseTy)),
 				   [PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id analysis])
 	  val reportBodySs = [PT.Expr repioCallX]
-	  val reportFunEDs = BU.genReportFuns(reportFun, "typedef "^name, analysisPCT, analysis, reportBodySs)
+	  val reportFunEDs = BU.genReportFuns(reportFun, kind^" "^name, analysisPCT, analysis, reportBodySs)
       in
 	  reportFunEDs
       end
 
 
-  fun genTypedef (name, baseTy, repPCT, pdPCT) = 
+  fun genTypedef (name, baseTy, repPCT, pdPCT, kind) = 
       let val (analysisED, analysisPCT) = genRepTypedef  (name, baseTy)
 	  val initFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, initSuf,[])
 	  val setParamsFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, setParamSuf,[defPackage])
 	  val resetFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, resetSuf,[])
 	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, cleanupSuf,[])
 	  val addFunED = genAddFunTypedef(name, baseTy, analysisPCT, repPCT, pdPCT, PT.Id rep)
-	  val reportFunEDs = genReportFunTypedef(name, baseTy, analysisPCT) 
+	  val reportFunEDs = genReportFunTypedef(name, baseTy, analysisPCT,kind) 
       in
 	  [analysisED, initFunED, setParamsFunED, resetFunED,  addFunED] @  reportFunEDs @  [cleanupFunED] 
       end

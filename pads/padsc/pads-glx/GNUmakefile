@@ -74,6 +74,8 @@ OCAML_CAPI_OPTLIB_PATHS=\
 -ccopt -L$(CONF_C_LIBASMRUN)
 
 OCAML_CAPI_OPTLIBS=\
+-ccopt -fno-common \
+-ccopt -dynamic \
 -ccopt -lnums -ccopt -lunix -ccopt -lstr -ccopt -lbigarray \
 -ccopt -lpcre_stubs \
 -ccopt -lpcre 

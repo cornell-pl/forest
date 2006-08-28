@@ -1,0 +1,150 @@
+\chapter{Ptrans}
+\label{chap:trans}
+\cutname{transforms.html}
+\ptrans{} (short for transformations) allow users to specify both a physical and a logical
+representation for data, both as \pads{} types.  Users supply
+a pair of functions that map between the physical and logical
+representations.    The physical type is used to parse the data, which
+is then transformed according to the supplied transformation
+function.  The logical type is used in tools, such as accumulators,
+\xml{} convertion, \etc{}  The \cd{write2buf} and \cd{write2io}
+functions first call the reverse translations to map the logical
+representation to the physical representation before printing the
+data.  This mechanism has been designed to give users some control
+over the logical representation of their data and to make it easier to
+add new base types.
+
+\section{Syntax}
+\begin{tabular}{rcl}
+\nont{p\_trans\_spec}    & \is{} & \nont{expression} \opt{\nont{p\_actuals}} \\
+\nont{p\_trans\_maskmap} & \is{} & \Pmaskmap\ \nont{expression} \cd{;} \\
+\nont{trans\_ty}         & \is{} & \Ptrans{} identifier \opt{\nont{p\_formals}} \{  \\
+                      &       & \nont{p\_trans\_spec} \cd{:} \nont{p\_ty} \cd{<=>} \nont{p\_ty} \cd{:} \nont{p\_trans\_spec} \cd{;} \\
+                      &       & \opt{\nont{p\_trans\_maskmap}} \cd{\}}\\[4ex]
+\end{tabular}
+
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment were
+defined previously, as follows.
+Expressions (\term{expression}) are any C-expression,
+\padsl{} types (\nont{p\_ty}), parameter lists (\nont{p\_formals}), and lists of actual arguments (\nont{p\_actuals})
+in \secref{sec:common-parameterization}. 
+
+\subsection{Examples}
+The following \Ptrans{} declaration defines a type of 32-bit integers
+represented on disk as ASCII strings of length \cd{size}.
+\inputCode{code/hexint32}
+\noindent
+In this case, the type \cd{Pstring_FW(:8:)} denotes the physical type
+while \cd{Puint32} denotes the logical type.  The function
+\cd{toInt32} converts the parsed string and the corresponding parse
+descriptor into a 32-bit integer and parse descriptor, while
+the function \cd{toHexString} performs the reverse translation.  
+The notation \cd{toHexString(:pads,size:)} allows the user to pass
+additional arguments to the translation function.  The parameter
+\cd{pads} is a special variable in scope within the body of the
+\ptrans{} expression.  It is bound to the \pads{} handle active 
+when operations related to the \ptrans{} are invoked.
+Figures~\ref{fig:trans-toInt32}and \ref{fig:trans-toHexString} show
+the implementations of the two conversion functions.  Note that the
+function \cd{toHexString} needs the \pads{} handle to pass as an
+argument to the \cd{Pstring_cstr_copy} function that copies the \C{}
+string \cd{str} into the desired \cd{Pstring}.  
+
+\begin{figure}
+\inputCode{code/trans-toInt32}
+\caption{Code to convert a hex string of length \texttt{size} into a \texttt{Puint32}}
+\label{fig:trans-toInt32}
+\end{figure}
+
+\begin{figure}
+\inputCode{code/trans-toHexString}
+\caption{Code to convert a \texttt{Puint32} into a hex string of length \texttt{size}.}
+\label{fig:trans-toHexString}
+\end{figure}
+
+\subsection{Supplying a mask conversion function}
+If the masks of the logical and physical types differ, or if the
+desired conversion from the logical to the physical mask is not the
+identity function, the \Ptrans{} declaration must specify a function
+to convert the logical mask to the physical mask.  For example, the
+\Ptrans{} \cd{hexint32withMask} in \figref{fig:trans-hex32withMask}
+uses the function \cd{cnvMask} to map 
+the mask for the logical type to one for the physical type.  In the
+example, the mapping is simply the identify function, but the user is
+free to supply an arbitrary mapping function as long as it has the
+necessary type signature.  The generated library calls this function
+to convert the logical mask to the physical mask just before invoking
+the parser for the physical representation.
+
+\begin{figure}
+\inputCode{code/hexint32withMask}
+\caption{\Ptrans{} declaration with a supplied mask translation function.}
+\label{fig:trans-hex32withMask}
+\end{figure}
+
+
+
+\subsection{Special variables}
+\label{sec:trans-special-variables}
+Within the various expression contexts of \Ptrans{} declarations, 
+the special variable \cd{pads} is in scope.
+
+\myvskip{1ex}
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Variable & Type & Contexts & Binding \\\hline \hline
+\texttt{pads}  & \texttt{P\_t}     & all & Active \pads{} handle. \\ \hline
+\end{tabular}
+\end{center}
+\myvskip{1ex}
+
+
+\section{Generated library}
+\subsection{In-memory representation}
+\label{sec:trans-rep}
+The in-memory representation of a \ptrans{} is the same as the
+representation of logical type.
+
+\subsection{Mask}
+\label{sec:trans-masks}
+The mask of a \ptrans{} is the same as the
+mask of logical type.
+
+\subsection{Parse descriptor}
+\label{sec:trans-parse-descriptors}
+The parse descriptor for a \Ptrans{} is the same as the parse
+descriptor for the logical type.
+
+\subsection{Operations}
+The operations generated by the \pads{} compiler for a \Ptrans{} are
+those described in \chapref{chap:common-features}.
+
+
+\subsubsection{Read function}
+The error codes for \Ptrans{} are:
+
+\tskip{}
+\begin{center}
+\begin{tabular}{l|p{4in}}
+Code                           & Meaning \\ \hline
+ \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
+ \cd{P_TRANSFORM_FAILED}       & Indicates a failure during transformation.\\[1ex]
+\end{tabular}
+\end{center}
+
+\noindent
+
+\subsubsection{Accumulator functions}
+Accumulator functions for \Ptrans{} are just as the accumulator
+functions for the logical type.
+
+\subsubsection{Histogram functions}
+Histogram functions for \Ptrans{} are just as the histogram functions
+for the logical type.
+
+\subsubsection{Clustering functions}
+Clustering functions for \Ptrans{} are just as the clustering
+functions for the logical type.

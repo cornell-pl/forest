@@ -444,7 +444,7 @@ res
   PDCI_node_t *result = 0;
   ty *rep=(ty *) (self->rep);
   ty ## _pd *pd=(ty ## _pd *) (self->pd);
-  ty ## _m *m=(ty ## _m *) (self->m);
+/*  ty ## _m *m=(ty ## _m *) (self->m); */
 
   switch(idx){
   case 0:
@@ -518,7 +518,7 @@ result
 result
 /* END_MACRO */
 
-#define TYP_NODE_PATH_WALK_BODY(baseTy)
+#define TYP_NODE_PATH_WALK_BODY(baseTy, mask)
   Perror_t res = P_ERR;
   PDCI_childIndex_t idx;
   
@@ -528,7 +528,7 @@ result
 
     switch(idx){
     case 0: 
-      res = baseTy ## _node_pathWalk(pads,&(m->base),pd,rep,path,m_out,pd_out,rep_out);      
+      res = baseTy ## _node_pathWalk(pads,mask,pd,rep,path,m_out,pd_out,rep_out);      
       break;
     case 1:
       *m_out = NULL;

@@ -31,6 +31,7 @@ have the following form:
 & \alt{} & \nont{enum\_ty}             & (* \chapref{chap:enums} *)\\[1ex]
 & \alt{} & \nont{opt\_ty}              & (* \chapref{chap:opts} *)\\[1ex]
 & \alt{} & \nont{typedef\_ty}          & (* \chapref{chap:typedefs} *)\\[1ex]
+& \alt{} & \nont{trans\_ty}            & (* \chapref{chap:trans} *)\\[1ex]
 & \alt{} & \nont{charclass\_ty}        & (* \secref{sec:charclass} *)\\[1ex]
 \end{tabular}
 
@@ -262,7 +263,8 @@ depends on the data being parsed.
 Details appear in 
 \secref{sec:base-types-rep}, \secref{sec:structs-rep},
 \secref{sec:unions-rep}, \secref{sec:arrays-rep}, 
-\secref{sec:enums-rep}, and \secref{sec:typedefs-rep}.
+\secref{sec:enums-rep}, \secref{sec:typedefs-rep}, 
+and \secref{sec:trans-rep}.
 
 \section{Masks}
 \label{sec:common-masks}
@@ -273,7 +275,7 @@ type mirrors the structure of the representation type.  Details about
 the structure for various types
 appear in \secref{sec:base-type-mask}, \secref{sec:structs-masks},
 \secref{sec:unions-masks}, \secref{sec:arrays-masks}, 
-\secref{sec:enums-masks}, and \secref{sec:typedefs-masks}.
+\secref{sec:enums-masks}, \secref{sec:typedefs-masks}, and \secref{sec:trans-masks}.
 Different operations in the generated library interpret masks
 differently.  Details about how a given operation treats its mask
 argument appear in the sections describing the operations.
@@ -348,7 +350,9 @@ Details about how parse descriptors are customized for various \PADS{}
 types appear in
 \secref{sec:base-type-parse-descriptors}, \secref{sec:structs-parse-descriptors},
 \secref{sec:unions-parse-descriptors}, \secref{sec:arrays-parse-descriptors}, 
-\secref{sec:enums-parse-descriptors} and \secref{sec:typedefs-parse-descriptors}.
+\secref{sec:enums-parse-descriptors},
+\secref{sec:typedefs-parse-descriptors} and 
+\secref{sec:trans-parse-descriptors}.
 
 \section{Regular Expressions}
 \label{sec:regular-expressions}

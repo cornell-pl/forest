@@ -134,6 +134,22 @@ structure ParseTreeExt =
 		      isSource   : bool,
 		      prefix   :  string option,
                       members  : (string * string option * 'exp option * string option) list}
+         | PTrans  of {name    : string,
+                       params   : ('ct * 'decr) list,
+		       isRecord : bool, 
+                       containsRecord : bool, 
+                       largeHeuristic : bool,
+		       isSource   : bool,
+                       srcName : string,
+                       srcArgs : 'exp list,
+                       dstName  : string,
+                       dstArgs : 'exp list,
+                       sToD    : 'exp,
+                       sToDArgs: 'exp list,
+                       dToS    : 'exp,
+                       dToSArgs: 'exp list,
+		       maskMap : 'exp option}
+		       
          | PSelect of {selName : string,
 		       tyName  : string,
 		       varName : string,

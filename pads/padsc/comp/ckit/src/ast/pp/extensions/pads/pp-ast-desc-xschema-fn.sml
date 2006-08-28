@@ -736,13 +736,18 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   Actual type parameter 
   <xs:element name="argument" type="p:Expr"/>
 *)
-  fun ppTyApp pps (name,args) = 
+  fun ppArgList pps args = 
        let fun ppArg pps a = ppTag "argument" ppPExpr pps a
-       in
-	   (ppTag "name" PPL.addStr pps name
-	  ;(case args of nil => ()
-	    | _ => PPL.blockify 2 (PPL.separate (ppArg, PPL.newline)) pps args))
+       in      
+          case args 
+	  of nil => ()
+	  | _    => PPL.blockify 2 (PPL.separate (ppArg, PPL.newline)) pps args
        end
+
+  fun ppTyApp pps (name,args) = 
+      ( ppTag "name" PPL.addStr pps name
+      ; ppArgList pps args)
+
 (*
   Type expression :
   <xs:element name="ptype"> 
@@ -1247,17 +1252,49 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   | ppPTypedef ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
 
+  fun ppPTrans (t:TyProps.transInfoTy) (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  =
+      (* This needs to be fixed... Need tid for physical *)
+      let val {srcName, srcArgs, dstName, dstArgs, sToD, sToDArgs, dToS, dToSArgs,...} = t
+	  fun ppApp pps (f, args) = 
+	      (ppTag "function" ppPExpr pps f;
+               ppArgList pps args)
+	  fun ppPartial pps (f,args) = 
+	      ppTagIndent "partial" ppApp pps (f,args)
+	  fun ppSide' pps (tyCon, tyargs,f, fnargs) = 
+               (ppTy pps (tyCon, tyargs);
+		PPL.newline pps;
+	        ppPartial pps (f, fnargs)) 
+          fun ppSide pps which t = ppTagIndent which ppSide' pps t
+	  fun ppPTrans' pps (ptyInfo:PTys.pTyInfo) = 
+	      let val declName = #repName ptyInfo
+		  val typarams = #typarams ptyInfo
+	      in
+		  (  ppPDecl aidinfo tidtab pps (declName, typarams)
+		   ; PPL.newline pps
+		   ; ppSide pps "physical" (srcName, srcArgs, sToD, sToDArgs)
+		   ; PPL.newline pps
+		   ; ppSide pps "logical"  (dstName, dstArgs, dToS, dToSArgs)
+		   )  
+	      end
+      in
+	  (ppPDeclaration pps "trans" ptyInfo ppPTrans')
+	  handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
+      end  
+  | ppPTrans t ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) aidinfo tidtab pps decl = 
     ( PPL.newline pps
     ; case #info ptyInfo
-      of TyProps.TypedefInfo _ => ppPTypedef ptyInfo aidinfo tidtab pps decl
+      of TyProps.TransInfo     t => ppPTrans t ptyInfo aidinfo tidtab pps decl
+      |  TyProps.TypedefInfo   _ => ppPTypedef ptyInfo aidinfo tidtab pps decl
       |  TyProps.RecursiveInfo _ => () (* XXX: must be filled in. *)
-      |  TyProps.StructInfo _ => ppPStruct ptyInfo aidinfo tidtab pps decl
+      |  TyProps.StructInfo    _ => ppPStruct ptyInfo aidinfo tidtab pps decl
       |  TyProps.UnionInfo {fromOpt,...} => if fromOpt then ppPOpt ptyInfo aidinfo tidtab pps decl
 					    else ppPUnion ptyInfo aidinfo tidtab pps decl 
-      |  TyProps.ArrayInfo _ => ppPArray ptyInfo aidinfo tidtab pps decl 
-      |  TyProps.EnumInfo _ => ppPEnum ptyInfo aidinfo tidtab pps decl
-      |  TyProps.BaseInfo _ => PPL.addStr pps "Unexpected Base Type")
+      |  TyProps.ArrayInfo     _ => ppPArray ptyInfo aidinfo tidtab pps decl 
+      |  TyProps.EnumInfo      _ => ppPEnum ptyInfo aidinfo tidtab pps decl
+      |  TyProps.BaseInfo      _ => PPL.addStr pps "Unexpected Base Type")
 
   fun ppCoreExternalDecl' ptyInfo aidinfo tidtab pps edecl =
     case edecl

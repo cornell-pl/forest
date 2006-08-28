@@ -102,26 +102,26 @@ structure Hist = struct
 	  addFunED
       end
 
-  fun genReportFunTypedef(name, baseTy, histPCT, reportSuf) =
+  fun genReportFunTypedef(name, baseTy, histPCT, reportSuf, kind) =
       let val reportFun = (reportSuf o histSuf) name
 	  val repioCallX = PT.Call(PT.Id((ioSuf o reportSuf) (lookupHist baseTy)),
 				   [PT.Id pads, PT.Id outstr, PT.Id prefix, PT.Id what, PT.Id nst, PT.Id hist])
 	  val reportBodySs = [PT.Expr repioCallX]
-	  val reportFunEDs = BU.genReportFuns(reportFun, "typedef "^name, histPCT, hist, reportBodySs)
+	  val reportFunEDs = BU.genReportFuns(reportFun, kind^" "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end
 
 
-  fun genTypedef (name, baseTy, repPCT, pdPCT) = 
+  fun genTypedef (name, baseTy, repPCT, pdPCT, kind) = 
       let val (histED, histPCT) = genRepTypedef  (name, baseTy)
 	  val initFunED = genWalkFunsTypedef(name, baseTy, histPCT, initSuf,[])
 	  val setParamsFunED = genWalkFunsTypedef(name, baseTy, histPCT, setParamSuf,[defPackage])
 	  val resetFunED = genWalkFunsTypedef(name, baseTy, histPCT, resetSuf,[])
 	  val cleanupFunED = genWalkFunsTypedef(name, baseTy, histPCT, cleanupSuf,[])
 	  val addFunED = genAddFunTypedef(name, baseTy, histPCT, repPCT, pdPCT, PT.Id rep)
-	  val reportFullFunEDs = genReportFunTypedef(name, baseTy, histPCT, reportFullSuf) 
-	  val reportAllFunEDs = genReportFunTypedef(name, baseTy, histPCT, reportAllSuf) 
+	  val reportFullFunEDs = genReportFunTypedef(name, baseTy, histPCT, reportFullSuf, kind) 
+	  val reportAllFunEDs = genReportFunTypedef(name, baseTy, histPCT, reportAllSuf, kind) 
       in
 	  [histED, initFunED, setParamsFunED, resetFunED,  addFunED] @  
 	  reportFullFunEDs @  reportAllFunEDs @ [cleanupFunED] 
