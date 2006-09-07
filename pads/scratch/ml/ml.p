@@ -1,4 +1,4 @@
-#include <aux.p>
+#include "mlaux.p"
 
 typedef enum  {
    metric_user_defined = 0x00, /* gmetric message */
@@ -60,9 +60,9 @@ Pstruct Ganglia_gmetric_message{
   XDR_string name;
   XDR_string value;
   XDR_string units;
-  Pb_uint32 slope;
-  Pb_uint32 tmax;
-  Pb_uint32 dmax;
+  Psbh_uint32(:4:) slope;
+  Psbh_uint32(:4:) tmax;
+  Psbh_uint32(:4:) dmax;
 };
 
 Punion Ganglia_message (:Ganglia_message_formats id:) {
@@ -75,7 +75,6 @@ Punion Ganglia_message (:Ganglia_message_formats id:) {
   Pcase metric_cpu_speed:    Psbh_uint32(:4:) cpu_speed;
   Pcase metric_mem_total:    Psbh_uint32(:4:) mem_total;   
   Pcase metric_swap_total:   Psbh_uint32(:4:) swap_total;   
-  Pcase metric_boottime:     Psbh_uint32(:4:) boottime;
   Pcase metric_sys_clock:    Psbh_uint32(:4:) sys_clock;
   Pcase metric_proc_run:     Psbh_uint32(:4:) proc_run;
   Pcase metric_proc_total:   Psbh_uint32(:4:) proc_total;
@@ -84,7 +83,6 @@ Punion Ganglia_message (:Ganglia_message_formats id:) {
   Pcase metric_mem_buffers:  Psbh_uint32(:4:) mem_buffers;
   Pcase metric_mem_cached:   Psbh_uint32(:4:) mem_cached;
   Pcase metric_swap_free:    Psbh_uint32(:4:) swap_free;
-  Pcase metric_heartbeat:    Psbh_timestamp heartbeat;
   Pcase metric_mtu:          Psbh_uint32(:4:) mtu;
   Pcase metric_mem_arm:      Psbh_uint32(:4:) mem_arm;
   Pcase metric_mem_rm:       Psbh_uint32(:4:) mem_rm;
@@ -125,7 +123,10 @@ Punion Ganglia_message (:Ganglia_message_formats id:) {
   Pcase metric_disk_total:   XDR_float64 disk_total;
   Pcase metric_disk_free:    XDR_float64 disk_free;
 
-  Pdefault:                  Pcompute Puint8 other = 0; // define Pvoid
+  Pcase metric_boottime:     Psbh_timestamp boottime;
+  Pcase metric_heartbeat:    Psbh_timestamp heartbeat;
+
+  Pdefault:                  Pcompute Puint8 other = 0; 
   }
 };
 
@@ -138,7 +139,7 @@ Pstruct libpcapFrame_t{
   Pb_timestamp packetCaptureTime;
   Pb_uint32 microSecsSinceCapture;
   Pb_uint32 wireSize;
-  Pb_uint32 fileSize; /-- wire and file sizes are often equal
+  Pb_uint32 fileSize;              /-- wire and file sizes are often equal
 };
 
 // We should add this type as a base type with accum, etc support
@@ -165,7 +166,7 @@ Pstruct ip_t{
   Psbh_uint16(:2:) headerChecksum; // add code to verify
   Psbh_ip          src; 
   Psbh_ip          dst;
-  // if necessary, add options here, determined by size of header minus 20 (fixed size)
+  Pstring_FW(:headerLength*4 - 20:) options;
 };
 
 Pstruct udp_t{
@@ -175,7 +176,6 @@ Pstruct udp_t{
   Psbh_uint16(:2:) checkSum;
 };
 
-// should support physical sizeof construct
 Pstruct packet_t {
   libpcapFrame_t               libpcap;
   Pcompute size_t start = position.offset;
@@ -184,13 +184,13 @@ Pstruct packet_t {
   udp_t                        udp;
   payload_t                    payload;
   Pcompute size_t middle = position.offset;
-  Pb_uint8[libpcap.wireSize - (middle-start)]       padding;
+  Pstring_FW(:libpcap.wireSize - (middle-start):) padding;
 };
 
 Pstruct libpcapHeader_t{
   Pendian Pb_uint32 magicNumber : magicNumber == 0xa1b2c3d4;
-  Pb_uint16 majorVersion; /-- should be 2
-  Pb_uint16 minorVersion; /-- should be 4
+  Pb_uint16 majorVersion;       /-- should be 2
+  Pb_uint16 minorVersion;       /-- should be 4
   Pb_uint32 timeZoneOffset      : timeZoneOffset == 0;
   Pb_uint32 timeStampAccuracy   : timeStampAccuracy == 0;
   Pb_uint32 snapShotLength;     /-- 65535 indicates no limit
