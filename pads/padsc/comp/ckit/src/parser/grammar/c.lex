@@ -112,8 +112,9 @@ fun special_char(c,fst,last,errWarn:errWarn) =
    INITIAL -- predefined start state and the default token state
    S -- inside a string (entered from INTITAL with ")
    C -- inside a comment (entered from INITIAL with /* )
+   PDIR -- inside a directive to include in output code
    CC -- inside a C++ style comment
-   Pc -- inside a pads comment
+   PC -- inside a pads comment
  *)
 
 
@@ -124,7 +125,7 @@ fun special_char(c,fst,last,errWarn:errWarn) =
 			 sharing TokTable.Tokens = Tokens));
 
 %arg ({comLevel,errWarn,sourceMap,charlist,stringstart});
-%s CC C S PC; 
+%s CC C S PC PDIR; 
 
 eol=.*"\n";
 newline = ("\010" | "\010\013" | "\013" | "\013\010");
@@ -159,6 +160,12 @@ directive = #(.)*\n;
                             SourceMap.newline sourceMap yypos;
                             Tokens.PCOMMENT(makeString charlist, !stringstart, yypos));
 <PC>.		        => (addString(charlist,yytext); continue());
+
+<INITIAL>"Pinclude(:"	=> (charlist := [""]; stringstart := yypos; YYBEGIN PDIR; continue());
+<PDIR>":)"	 	=> (YYBEGIN INITIAL; 
+                            SourceMap.newline sourceMap yypos;
+                            Tokens.PINCLUDE(makeString charlist, !stringstart, yypos));
+<PDIR>.		        => (addString(charlist,yytext); continue());
 
 <INITIAL>"//"   => (YYBEGIN CC; continue());
 <CC>{newline}   => (YYBEGIN INITIAL; 

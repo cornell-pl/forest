@@ -294,6 +294,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
  	| ASSOCIATIVE | TO | KWAND                                         (* D *)     
         | COMMENT of string (* PADS *)
         | PCOMMENT of string (* PADS *)
+        | PINCLUDE of string (* PADS*)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT | PCHARCLASS (* PADS *)
         | PTYPEDEF | PRECURSIVE | PSTRUCT | PALTERNATES | PUNION | PARRAY | PENUM | PTRANS (* | PDYNAMIC*) (* PADS *)
@@ -446,6 +447,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pEnum of externalDecl
 	| pSelect of externalDecl
 	| pCharClass of externalDecl
+        | pInclude of externalDecl
 
 %pos int
 %verbose
@@ -570,6 +572,7 @@ externalDeclaration:
         | pEnum   RCURLY                (SOME(markExternalDecl srcMap (pEnum,      pEnumleft,      RCURLYright)))
         | pSelect RCURLY                (SOME(markExternalDecl srcMap (pSelect,    pSelectleft,    RCURLYright)))
         | pCharClass RCURLY             (SOME(markExternalDecl srcMap (pCharClass, pCharClassleft, RCURLYright)))
+        | pInclude                      (SOME(markExternalDecl srcMap (pInclude,   pIncludeleft,   pIncluderight)))
         | PDONE                         (SOME(markExternalDecl srcMap (ExternalDeclExt PX.PDone,      PDONEleft,      PDONEright)))
 (* PADS END *)
 
@@ -1527,4 +1530,7 @@ pSelect:
 
 pCharClass:
  PCHARCLASS pName LCURLY expr (ExternalDeclExt(PX.PCharClass{name=pName, pred = expr}))
+
+pInclude:
+ PINCLUDE (ExternalDeclExt(PX.PInclude PINCLUDE))
 

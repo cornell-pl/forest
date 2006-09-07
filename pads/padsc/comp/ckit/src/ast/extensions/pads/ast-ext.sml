@@ -3,7 +3,7 @@
 structure AstExt = struct
 
       datatype Edecl = 
-         EComment of string
+         EComment of string | Pinclude of string
 
       datatype Stmt = 
          SComment of string

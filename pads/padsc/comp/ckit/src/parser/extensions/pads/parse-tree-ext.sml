@@ -156,6 +156,7 @@ structure ParseTreeExt =
 		       path    : 'exp}
          | PCharClass of {name : string,
 		          pred : 'exp}
+         | PInclude of string
          | PDone
 
         datatype PStatement = PComment of string

@@ -1331,7 +1331,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
              ;PPL.newline pps
 	   end 
        | ExternalDeclExt ed => 
-	   PPAE.ppExternalDeclExt (* PADS *) NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+	   PPAE.ppExternalDeclExt (* PADS *) NONE false (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   (* Mary --- put wrapper code here to print native representation of a C function *)
   fun ppCoreExternalDecl NONE aidinfo tidtab pps edecl = ()

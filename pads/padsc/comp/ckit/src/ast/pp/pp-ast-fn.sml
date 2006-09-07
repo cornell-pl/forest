@@ -1,4 +1,4 @@
-(* Copyright (c) 1998 by Lucent Technologies *)
+ (* Copyright (c) 1998 by Lucent Technologies *)
 
 functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct 
 
@@ -708,7 +708,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	     ;ppStmt aidinfo tidtab pps stmt
              ;PPL.newline pps
 	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (* PADS *) NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt (* PADS *) NONE true (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   (* PADS: print .h version *)
   fun ppCoreExternalDeclH aidinfo tidtab pps edecl =
@@ -757,7 +757,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	          ;PPL.newline pps)
 	       else ()
 	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE 
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE true
 	                       (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   (* PADS: print .c version *)
@@ -795,7 +795,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	     ;ppStmt aidinfo tidtab pps stmt
              ;PPL.newline pps
 	   end 
-       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+       | ExternalDeclExt ed => PPAE.ppExternalDeclExt NONE false (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   fun ppExternalDecl aidinfo tidtab pps edecl = 
        PPAA.ppExternalDeclAdornment NONE ppCoreExternalDecl aidinfo tidtab pps edecl

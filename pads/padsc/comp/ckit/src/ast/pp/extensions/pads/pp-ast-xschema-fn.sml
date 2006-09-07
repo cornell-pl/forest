@@ -1214,7 +1214,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
           ;PPL.newline pps
 	  end 
        | ExternalDeclExt ed => 
-	   PPAE.ppExternalDeclExt (* PADS *) NONE (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
+	   PPAE.ppExternalDeclExt (* PADS *) NONE false (ppExpr {nested=false},ppStmt,ppBinop,ppUnop) aidinfo tidtab pps ed
 
   fun ppCoreExternalDecl NONE aidinfo tidtab pps edecl = ()
     | ppCoreExternalDecl (SOME p) aidinfo tidtab pps edecl = ppCoreExternalDecl' p aidinfo tidtab pps edecl

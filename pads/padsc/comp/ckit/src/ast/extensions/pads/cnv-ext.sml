@@ -8566,6 +8566,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               |  PX.PEnum        e => cnvPEnum      e
 	      |  PX.PCharClass   c => cnvPCharClass c
 	      |  PX.PSelect      s => cnvPSelect    s
+              |  PX.PInclude     s => [wrapDECL(Ast.ExternalDeclExt (AstExt.Pinclude s))]
 	      |  PX.PDone          => cnvPDone      ()
 	  end
 
