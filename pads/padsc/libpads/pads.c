@@ -7793,7 +7793,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.202 2006-07-31 21:29:53 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.203 2006-09-07 06:25:41 gruber Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -13981,7 +13981,7 @@ PDCI_countXtoY_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_fu
 /* ================================================================================ */
 /* INTERNAL MISC ROUTINES */
 
-#if defined(__GNUC__) && (__GNUC__ == 4)
+#if defined(__GNUC__) && (__GNUC__ >= 4) || defined(__CYGWIN__)
 /*
  * sfstruse and sfstrseek both use '?' conditional exprs that can
  * return NULL.  The newest gcc does not like such exprs appearing in

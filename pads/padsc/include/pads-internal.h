@@ -1951,7 +1951,7 @@ int PDCI_Plongest_chkErr(Puint32 nerr, int *consume);
 int sfsnscanf  (const char *s, size_t slen, const char *form, ...);
 int sfvsnscanf (const char *s, size_t slen, const char *form, va_list args);
 
-#if defined(__GNUC__) && (__GNUC__ == 4)
+#if defined(__GNUC__) && (__GNUC__ >= 4) || defined(__CYGWIN__)
 /*
  * sfstruse and sfstrseek both use '?' conditional exprs that can
  * return NULL.  The newest gcc does not like such exprs appearing in
