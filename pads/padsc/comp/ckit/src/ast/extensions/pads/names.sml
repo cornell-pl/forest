@@ -12,7 +12,7 @@ struct
 	      val delims    = "delims"
 	      val requestedOut = "requestedOut"
 	      val length    = "length"
-	      val tag       = "_tag"
+	      val xmltag    = "_tag" 
 	      val indent    = "indent"
 	      val tpd       = "tpd"
 	      val tm        = "tm"

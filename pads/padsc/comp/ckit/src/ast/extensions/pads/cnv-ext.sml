@@ -1156,8 +1156,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 *)
 
 	      fun modTagSs (newTag) = 
-		  [PT.IfThen(P.notX(PT.Id tag),
-		             P.assignS(PT.Id tag, PT.String newTag))]
+		  [PT.IfThen(P.notX(PT.Id xmltag),
+		             P.assignS(PT.Id xmltag, PT.String newTag))]
 
 	      fun writeAdjustLenSs shouldAdjustBuffer = 
 		[PT.Expr(PT.Call(PT.Id(if shouldAdjustBuffer then "PCGEN_TLEN_UPDATES" else "PCGEN_FINAL_TLEN_UPDATES"), []))]
@@ -1231,9 +1231,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val FmtBufFormalParams = List.map P.mkParam (ListPair.zip (FmtBufParamTys, FmtBufParamNames))
 
                       val IOXMLparamTys = IOcommonTys @ commonTys @ [P.ccharPtr, P.int] @ cTys
-                      val IOXMLparamNames = IOcommonNames @ commonNames @ [tag, indent] @ cNames
+                      val IOXMLparamNames = IOcommonNames @ commonNames @ [xmltag, indent] @ cNames
 		      val BufXMLParamTys =    BufcommonTys   @ commonTys   @ [P.ccharPtr, P.int] @ cTys 
-		      val BufXMLParamNames =  BufcommonNames @ commonNames @ [tag, indent]       @ cNames 
+		      val BufXMLParamNames =  BufcommonNames @ commonNames @ [xmltag, indent]       @ cNames 
                       val IOXMLformalParams = List.map P.mkParam (ListPair.zip (IOXMLparamTys, IOXMLparamNames))
 		      val BufXMLFormalParams = List.map P.mkParam (ListPair.zip (BufXMLParamTys, BufXMLParamNames))
 
@@ -1326,7 +1326,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					    returnTy)
 		      val writeIOFunED    = mkWriteFunED(writeIOName,    IOformalParams,    writeBufName,    [], [])
 		      val fmtIOFunED      = mkWriteFunED(fmtIOName,      FmtIOformalParams, fmtBufName,      [PT.Id requestedOut, PT.Id delims, PT.Id m], [])
-		      val writeXMLIOFunED = mkWriteFunED(writeXMLIOName, IOXMLformalParams, writeXMLBufName, [], [PT.Id tag, PT.Id indent])
+		      val writeXMLIOFunED = mkWriteFunED(writeXMLIOName, IOXMLformalParams, writeXMLBufName, [], [PT.Id xmltag, PT.Id indent])
 		  in
 		      ([writeBufFunED, writeIOFunED, writeXMLBufFunED, writeXMLIOFunED], [fmtBufFinalFunED, fmtBufFunED, fmtIOFunED])
 		  end
@@ -1369,9 +1369,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val FmtBufFormalParams = List.map P.mkParam (ListPair.zip (FmtBufParamTys, FmtBufParamNames))
 
                       val IOXMLparamTys = IOcommonTys @ commonTys @ [P.ccharPtr, P.int] @ cTys
-                      val IOXMLparamNames = IOcommonNames @ commonNames @ [tag, indent] @ cNames
+                      val IOXMLparamNames = IOcommonNames @ commonNames @ [xmltag, indent] @ cNames
 		      val BufXMLParamTys =    BufcommonTys   @ commonTys   @ [P.ccharPtr, P.int] @ cTys 
-		      val BufXMLParamNames =  BufcommonNames @ commonNames @ [tag, indent]       @ cNames 
+		      val BufXMLParamNames =  BufcommonNames @ commonNames @ [xmltag, indent]       @ cNames 
                       val IOXMLformalParams = List.map P.mkParam (ListPair.zip (IOXMLparamTys, IOXMLparamNames))
 		      val BufXMLFormalParams = List.map P.mkParam (ListPair.zip (BufXMLParamTys, BufXMLParamNames))
 
@@ -2427,7 +2427,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val writeXMLBaseName = (bufSuf o writeXMLSuf) dstWriteName
 		      val bodyXMLSs = modTagSs(name) @ 
 			              writeXMLFieldSs(writeXMLBaseName, 
-						      [PT.Id pd, PT.Id rep], PT.Id tag, false, false, dstArgs)
+						      [PT.Id pd, PT.Id rep], PT.Id xmltag, false, false, dstArgs)
 
 		      val fmtName = fmtSuf name
 		      val fmtNameFinalBuf = bufFinalSuf fmtName
@@ -2762,7 +2762,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val fmtBaseName = (bufSuf o fmtSuf) (lookupWrite baseTy) 
 		      val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy) 
 		      val bodySs = writeFieldSs(writeBaseName, [PT.Id pd, PT.Id rep] @ args, isRecord)
-		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, [PT.Id pd, PT.Id rep], PT.Id tag, false, false, args)
+		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, [PT.Id pd, PT.Id rep], PT.Id xmltag, false, false, args)
 		      val fmtNameFinalBuf = bufFinalSuf fmtName
 		      val bodyFmtFinalSs = (PL.fmtFinalInitTypedef (PT.String fmtNameFinalBuf)) ::(fmtTypedefSs(fmtBaseName, [P.getFieldX(m,base),PT.Id pd, PT.Id rep]@args))
                       val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, 
@@ -3253,7 +3253,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val fmtBaseName = (bufSuf o fmtSuf) (lookupWrite baseTy)
 		      val writeXMLBaseName = (bufSuf o writeXMLSuf) (lookupWrite baseTy)
 		      val bodySs = writeFieldSs(writeBaseName, [P.fieldX(pd,value), P.starX(PT.Id rep)] @ args, isRecord)
-		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, [P.fieldX (pd,value), P.starX(PT.Id rep)], PT.Id tag, false, false, args)
+		      val bodyXMLSs = modTagSs(name) @ writeXMLFieldSs(writeXMLBaseName, [P.fieldX (pd,value), P.starX(PT.Id rep)], PT.Id xmltag, false, false, args)
 		      val fmtNameFinalBuf = bufFinalSuf fmtName
 		      val bodyFmtFinalSs = (PL.fmtFinalInitTypedef (PT.String fmtNameFinalBuf)) ::(fmtTypedefSs(fmtBaseName, [P.starX(PT.Id m),
 															      P.fieldX (pd,value), P.starX(PT.Id rep)]@args))

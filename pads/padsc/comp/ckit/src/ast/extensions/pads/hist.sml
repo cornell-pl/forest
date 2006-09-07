@@ -283,7 +283,7 @@ structure Hist = struct
 	  fun genHistBrief e = []
 	  fun genHistMan ptyfuns m = BU.genMan ptyfuns (lookupHist, NONE, false, m)
 	  val histFields = P.mungeFields genHistFull genHistBrief (genHistMan ptyfuns) variants
-	  val auxHistFields = [(tag, intHistPCT, NONE)]
+	  val auxHistFields = [(unionTag, intHistPCT, NONE)]
 
 	  val histED = P.makeTyDefStructEDecl (auxHistFields @ histFields, histSuf name)
 	  val histPCT = P.makeTypedefPCT (histSuf name)			 
@@ -303,7 +303,7 @@ structure Hist = struct
 
 	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 	  val whichFields = P.mungeFields genWhichFull genWhichBrief (genWhichMan (ptyfuns, whichSuf)) variants
-	  val auxFields = BU.chk3Pfun(whichSuf intHist, (P.getFieldX(hist, tag))::otherXs)
+	  val auxFields = BU.chk3Pfun(whichSuf intHist, (P.getFieldX(hist, unionTag))::otherXs)
 	  val whichReturnS = BU.genReturnChk (PT.Id nerr)
 	  val whichBodySs = whichDeclSs @ auxFields @ whichFields @ [whichReturnS]
 	  val whichFunED = BU.gen3PFun(whichFun, thePCT::otherPCTs, hist::otherVars, whichBodySs)
@@ -318,8 +318,8 @@ structure Hist = struct
 				     P.condX(P.eqX(P.arrowX(PT.Id pd, PT.Id errCode),
 						   PL.P_UNION_MATCH_FAILURE),
 					     PL.P_UNION_MATCH_FAILURE, PL.P_NO_ERROR))]
-	  val addTagSs = chkAddFun(addSuf intHist, P.getFieldX(hist, tag), P.addrX(PT.Id tpd), 
-				   PT.Cast(P.ptrPCT PL.intPCT, P.getFieldX(rep, tag)))
+	  val addTagSs = chkAddFun(addSuf intHist, P.getFieldX(hist, unionTag), P.addrX(PT.Id tpd), 
+				   PT.Cast(P.ptrPCT PL.intPCT, P.getFieldX(rep, unionTag)))
 	  fun fieldAddrX (base, name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
 	  fun genCase (name, pty, initSs, pdX) = 
 	      let val funName = addSuf (lookupHist pty)
@@ -345,7 +345,7 @@ structure Hist = struct
 
 	  val addFields = P.mungeFields genAddFull genAddBrief (genAddMan ptyfuns) variants
 	  val errBranchSs = P.mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
-	  val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound (addFields @ errBranchSs))]
+	  val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id unionTag), PT.Compound (addFields @ errBranchSs))]
 	  val addBodySs = addDeclSs @ initTpdSs @ BU.ifNotPanicSkippedSs(addTagSs @ addVariantsSs)
 	  val addFunED = genAddFun(addFun, hist, histPCT, pdPCT, repPCT, addBodySs)
       in
@@ -358,7 +358,7 @@ structure Hist = struct
 	  val reportTags = [
 			     BU.chkPrint(BU.callEnumPrint((ioSuf o reportSuf o mapSuf) intHist,
 							 PT.String header, PT.String "tag", P.intX ~1,
-							 PT.Id((toStringSuf o tgSuf) name), P.getFieldX(hist, tag))),
+							 PT.Id((toStringSuf o tgSuf) name), P.getFieldX(hist, unionTag))),
 			    PL.sfprintf(PT.Id outstr, 
 					PT.String "\n[Describing each tag arm of %s]\n", 
 					[PT.Id prefix])]
@@ -377,7 +377,7 @@ structure Hist = struct
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) variants
 	  val reportBodySs   = reportTags @ reportFields 
-	  val reportFunEDs   = BU.genReportFuns(reportFun,  header^" tag "^name, histPCT, hist, reportBodySs)
+	  val reportFunEDs   = BU.genReportFuns(reportFun,  header^" unionTag "^name, histPCT, hist, reportBodySs)
       in
 	  reportFunEDs
       end

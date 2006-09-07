@@ -277,7 +277,7 @@ structure Cluster = struct
 	  fun genAnalysisBrief e = []
 	  fun genAnalysisMan ptyfuns m = BU.genMan ptyfuns (lookupAnalysis, NONE, false, m)
 	  val analysisFields = P.mungeFields genAnalysisFull genAnalysisBrief (genAnalysisMan ptyfuns) variants
-	  val auxAnalysisFields = [(tag, intAnalysisPCT, NONE)]
+	  val auxAnalysisFields = [(unionTag, intAnalysisPCT, NONE)]
 
 	  val analysisED = P.makeTyDefStructEDecl (auxAnalysisFields @ analysisFields, analysisSuf name)
 	  val analysisPCT = P.makeTypedefPCT (analysisSuf name)			 
@@ -297,7 +297,7 @@ structure Cluster = struct
 
 	  val whichDeclSs = [P.varDeclS(PL.uint32PCT, nerr, P.zero)]
 	  val whichFields = P.mungeFields genWhichFull genWhichBrief (genWhichMan (ptyfuns, whichSuf)) variants
-	  val auxFields = BU.chk3Pfun(whichSuf intAnalysis, (P.getFieldX(analysis, tag))::otherXs)
+	  val auxFields = BU.chk3Pfun(whichSuf intAnalysis, (P.getFieldX(analysis, unionTag))::otherXs)
 	  val whichReturnS = BU.genReturnChk (PT.Id nerr)
 	  val whichBodySs = whichDeclSs @ auxFields @ whichFields @ [whichReturnS]
 	  val whichFunED = BU.gen3PFun(whichFun, thePCT::otherPCTs, analysis::otherVars, whichBodySs)
@@ -312,8 +312,8 @@ structure Cluster = struct
 				     P.condX(P.eqX(P.arrowX(PT.Id pd, PT.Id errCode),
 						   PL.P_UNION_MATCH_FAILURE),
 					     PL.P_UNION_MATCH_FAILURE, PL.P_NO_ERROR))]
-	  val addTagSs = chkAddFun(addSuf intAnalysis, P.getFieldX(analysis, tag), P.addrX(PT.Id tpd), 
-				   PT.Cast(P.ptrPCT PL.intPCT, P.getFieldX(rep, tag)))
+	  val addTagSs = chkAddFun(addSuf intAnalysis, P.getFieldX(analysis, unionTag), P.addrX(PT.Id tpd), 
+				   PT.Cast(P.ptrPCT PL.intPCT, P.getFieldX(rep, unionTag)))
 	  fun fieldAddrX (base, name) = P.addrX(P.arrowX(PT.Id base, PT.Id name))
 	  fun genCase (name, pty, initSs, pdX) = 
 	      let val funName = addSuf (lookupAnalysis pty)
@@ -339,7 +339,7 @@ structure Cluster = struct
 
 	  val addFields = P.mungeFields genAddFull genAddBrief (genAddMan ptyfuns) variants
 	  val errBranchSs = P.mkCommentBreakCase(PT.Id(errSuf name), "error case", NONE)
-	  val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound (addFields @ errBranchSs))]
+	  val addVariantsSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id unionTag), PT.Compound (addFields @ errBranchSs))]
 	  val addBodySs = addDeclSs @ initTpdSs @ BU.ifNotPanicSkippedSs(addTagSs @ addVariantsSs)
 	  val addFunED = genAddFun(addFun, analysis, analysisPCT, pdPCT, repPCT, addBodySs)
       in
@@ -352,7 +352,7 @@ structure Cluster = struct
 	  val reportTags = [
 			     BU.chkPrint(BU.callEnumPrint((ioSuf o reportSuf o mapSuf) intAnalysis,
 							 PT.String header, PT.String "tag", P.intX ~1,
-							 PT.Id((toStringSuf o tgSuf) name), P.getFieldX(analysis, tag))),
+							 PT.Id((toStringSuf o tgSuf) name), P.getFieldX(analysis, unionTag))),
 			    PL.sfprintf(PT.Id outstr, 
 					PT.String "\n[Describing each tag arm of %s]\n", 
 					[PT.Id prefix])]
@@ -371,7 +371,7 @@ structure Cluster = struct
 
 	  val reportFields   = P.mungeFields genReportFull genReportBrief (genReportMan ptyfuns) variants
 	  val reportBodySs   = reportTags @ reportFields 
-	  val reportFunEDs   = BU.genReportFuns(reportFun, header^" tag "^name, analysisPCT, analysis, reportBodySs)
+	  val reportFunEDs   = BU.genReportFuns(reportFun, header^" unionTag "^name, analysisPCT, analysis, reportBodySs)
       in
 	  reportFunEDs
       end
