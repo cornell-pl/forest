@@ -829,6 +829,10 @@ structure CnvExt : CNVEXT = struct
 				    of NONE => s  (* non-base type; mem constructed from rep name*)
                                     |  SOME(b:PBTys.baseInfoTy) => Atom.toString (#padsxname b))
 
+	      fun printMem c = 
+		  case c of TyProps.Static => "static\n"
+                          | TyProps.Dynamic => "dynamic\n"
+
               fun lookupMemChar (ty:pty) = 
                   case ty 
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
@@ -836,7 +840,7 @@ structure CnvExt : CNVEXT = struct
 						of NONE => TyProps.Dynamic
 						| SOME (b:PTys.pTyInfo) => (#memChar b)
 						    (* end nested case *))
-                                    |  SOME(b:PBTys.baseInfoTy) => (#memChar b))
+                                    |  SOME(b:PBTys.baseInfoTy) => #memChar b)
 
               fun lookupDiskSize (ty:pty) = 
                   case ty 
@@ -2234,11 +2238,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  end
                       fun genReadBody() = 
 			  let val srcFunName = lookupMemFun srcPty
+			      val isStatic = case lookupMemChar srcPty of TyProps.Static => true | _ => false
 			      val decls = 
 				  [P.varDeclS'(srcRepPCT, tmprep),
 				   P.varDeclS'(srcPDPCT, tmppd),
 				   P.varDeclS'(srcmPCT, tmpm)]
 			      val initSs = 
+				  if isStatic then [] else
 				  [PT.Expr(PT.Call(PT.Id (initSuf srcFunName), [PT.Id pads, P.addrX tmprepX])),
 				   PT.Expr(PT.Call(PT.Id ((initSuf o pdSuf) srcFunName), [PT.Id pads, P.addrX tmppdX]))]
 			      val maskInitSs = (* if mask transform given, call that; else if src and desk masks are the same, just copy *)     
@@ -2254,6 +2260,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   sToDArgs 
 						   @ [P.addrX tmprepX, P.addrX tmppdX, PT.Id rep, PT.Id pd]))]
 			      val cleanupSs = 
+				  if isStatic then [] else
 				  [PT.Expr(PT.Call(PT.Id(cleanupSuf srcFunName), [PT.Id pads, P.addrX tmprepX])),
 				   PT.Expr(PT.Call(PT.Id((cleanupSuf o pdSuf) srcFunName), [PT.Id pads, P.addrX tmppdX]))]
 			      val returnSs = [PT.Return (P.condX(P.arrowX(PT.Id pd, PT.Id nerr), PL.P_ERROR, PL.P_OK  ))]
@@ -2382,12 +2389,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val writeName = writeSuf name
 		      fun genWriteBody () = 
 			  let val srcFunName = lookupMemFun srcPty
+			      val srcWriteFun = BU.lookupTy(srcPty, fn x=>x, #padsname)
+			      val isStatic = case lookupMemChar srcPty of TyProps.Static => true | _ => false
 			      val tmprep = pcgenName "src"     val tmprepX = PT.Id tmprep
 			      val tmppd  = pcgenName "src_pd"  val tmppdX  = PT.Id tmppd
 			      val decls = 
 				  [P.varDeclS'(srcRepPCT, tmprep),
 				   P.varDeclS'(srcPDPCT, tmppd)]
-			      val initSs = 
+			      val initSs = if isStatic then [] else
 				  [PT.Expr(PT.Call(PT.Id (initSuf srcFunName), [PT.Id pads, P.addrX tmprepX])),
 				   PT.Expr(PT.Call(PT.Id ((initSuf o pdSuf) srcFunName), [PT.Id pads, P.addrX tmppdX]))]
 			      val cnvRepSs = 
@@ -2396,11 +2405,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   @ [PT.Id rep, PT.Id pd, P.addrX tmprepX, P.addrX tmppdX]))]
 			      val rawWriteSs = 
 				  [P.assignS(PT.Id tlen, 
-					     PT.Call(PT.Id ((bufSuf o writeSuf) srcFunName),
+					     PT.Call(PT.Id ((bufSuf o writeSuf) srcWriteFun),
 						     ([PT.Id pads, PT.Id tmpBufCursor, PT.Id bufLen, 
 						       PT.Id bufFull, P.addrX tmppdX, P.addrX tmprepX]@ srcArgs)))]
 				  @ (writeAdjustLenSs isRecord)
-			      val cleanupSs = 
+			      val cleanupSs = if isStatic then [] else
 				  [PT.Expr(PT.Call(PT.Id(cleanupSuf srcFunName), [PT.Id pads, P.addrX tmprepX])),
 				   PT.Expr(PT.Call(PT.Id((cleanupSuf o pdSuf) srcFunName), [PT.Id pads, P.addrX tmppdX]))]
 			  in
@@ -7167,13 +7176,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  @ (case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "struct constraints")])
 		      fun genMBrief e = []
 		      fun genMMan {tyname : pcty, name, args, isVirtual, expr, pred, comment} = 
+			  let val structCons =
+			      case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "struct constraints")]
+			  in
 			  case isPadsTy tyname
-			   of PTys.CTy => []
+			   of PTys.CTy => structCons
 			    | _ => (let val pty : pty = getPadsName tyname
 				    in 
 					[(name, P.makeTypedefPCT(BU.lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
-					@ (case pred of NONE => [] | SOME _ =>  [(mConSuf name, PL.base_mPCT, SOME "struct constraints")])
+					@ structCons
 				    end)
+			  end
 		      val mFieldsNested = P.mungeFields genMFull genMBrief genMMan fields
 		      val auxMFields = [(PNames.structLevel, PL.base_mPCT, NONE)]
 		      val mFields = auxMFields @ mFieldsNested
@@ -7618,6 +7631,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val () = ignore (List.map insTempVar cParams)                 (* add params for type checking *)
                       val () = ignore (insTempVar(setEndID, P.int))                   (* add phantom arg to conrol setting end location
 										       to scope to fake out type checker. *)
+		      val () = ignore(insTempVar(pads, P.ptrPCT PL.toolStatePCT))
+
 		      val () = ignore (insTempVar(noopID, P.int))                   
 		      val readFields = P.mungeFields genReadFull genReadBrief genReadMan fields  
 		                                   (* does type checking *)
@@ -7648,6 +7663,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val () = ignore (insTempVar(setEndID, P.int))                   (* add phantom arg to conrol setting end location
 										       to scope to fake out type checker. *)
 		      val () = ignore (insTempVar(noopID, P.int))                   
+		      val () = ignore(insTempVar(pads, PL.toolStatePCT))
 		      val readDecls = (emitRead readEDs)
 		      val () = popLocalEnv()
 

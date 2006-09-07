@@ -10,19 +10,24 @@ structure Main : sig
     structure RegExp = RegExpFn (structure P=AwkSyntax  structure E=DfaEngine) : REGEXP 
 
     type offset = {offset: int, span:int}
-    datatype Token = Pint of int | Pstring of string | Other of char | Error
-    (*    Pint < Pstring < Other < Error *)
+    datatype Token = Pint of int | Pstring of string | Pwhite of string | Other of char | Error
+    (*    Pint < Pstring < Pwhite < Other < Error *)
     fun compToken (t1, t2) = 
 	case (t1,t2) 
         of (Pint i1, Pint i2) =>  EQUAL
         |  (Pstring s1, Pstring s2) => EQUAL
+        |  (Pwhite s1, Pwhite s2) => EQUAL
         |  (Other c1, Other c2) => Char.compare (c1, c2)
         |  (Error, Error) => EQUAL
         |  (Pint _, _) => LESS
         |  (Pstring _, Pint _) => GREATER
         |  (Pstring _,  _) => LESS
+        |  (Pwhite _, Pint _) => GREATER
+        |  (Pwhite _, Pstring _) => GREATER
+        |  (Pwhite _, _) => LESS
         |  (Other _, Pint _) => GREATER
         |  (Other _, Pstring _) => GREATER
+        |  (Other _, Pwhite _) => GREATER
         |  (Other _, Error) => LESS
         |  (Error, _) => GREATER
 
@@ -43,7 +48,7 @@ structure Main : sig
    fun loadFile path = 
        let val strm = TextIO.openIn path
 	   val data : String.string = TextIO.inputAll strm
-           fun isNewline c = c = #"\n"
+           fun isNewline c = c = #"\n" orelse c = #"\r"
            val lines = String.tokens isNewline data
 	   val numRecs = List.length lines
 	   val () = print (Int.toString numRecs ^" records.\n")
@@ -81,11 +86,25 @@ structure Main : sig
 		if offset+span >= len then (Pstring acc, {offset=offset, span=span})
 		else let val nxt = Substring.sub(sstring,offset+span)
 		     in
-			 if Char.isAlpha nxt then getRest (span + 1) (acc ^ (Char.toString nxt))
+			 if Char.isAlpha nxt orelse Char.isDigit nxt orelse nxt = #"_" then getRest (span + 1) (acc ^ (Char.toString nxt))
 			 else (Pstring acc, {offset=offset,span=span})
 		     end
 	in
 	    if Char.isAlpha fst then SOME (getRest 1 (Char.toString fst)) else NONE
+	end
+
+    (* assume offset is not at end of sstring *)
+    fun getWS (sstring, len, offset) = 
+	let val fst = Substring.sub(sstring,offset)
+	    fun getRest span acc = 
+		if offset+span >= len then (Pwhite acc, {offset=offset, span=span})
+		else let val nxt = Substring.sub(sstring,offset+span)
+		     in
+			 if nxt = #" " then getRest (span + 1) (acc ^ (Char.toString nxt))
+			 else (Pwhite acc, {offset=offset,span=span})
+		     end
+	in
+	    if fst = #" " then SOME (getRest 1 (Char.toString fst)) else NONE
 	end
 
     fun getOther (sstring, len, offset) = 
@@ -101,7 +120,7 @@ structure Main : sig
     fun tokenizeRecord record = 
 	let val record = Substring.full record
 	    val length = Substring.size record
-	    fun getFirst offset = pick [getInt, getString, getOther] (record,length,offset)
+	    fun getFirst offset = pick [getInt, getWS, getString, getOther] (record,length,offset)
             fun tR offset acc = 
 		if offset = length then acc
 		else let val first as (r, {offset=_,span=span}) = getFirst offset
@@ -116,6 +135,7 @@ structure Main : sig
 	case t 
         of Pint i => print "[int]" (*(" Pint("^(Int.toString i)^")") *)
         |  Pstring s => print "[string]" (*(" Pstring("^s^")") *)
+        |  Pwhite s => print "[white space]" (*(" Pstring("^s^")") *)
         |  Other c => print ("("^(Char.toString c)^")") (*(" Pother("^(Char.toString c)^")") *)
         |  Error => print (" Error")
 
@@ -140,7 +160,7 @@ structure Main : sig
   
     (* hs: maps tokens to histograms (which map ints to int refs) *)
     (* counts: maps tokens to int refs *)
-    fun buildHistograms countslist = 
+    fun buildHistograms numRecords countslist = 
 	let val () = print "Building histograms...\n"
 	    fun doOneRecord (fd : freqDist) (counts:recordCount) = 
                 let fun doOneToken (token,count,fd) : freqDist = 
@@ -155,7 +175,12 @@ structure Main : sig
 	    fun doAllRecords (fd:freqDist) [] = fd
               | doAllRecords fd (c::cs) = doAllRecords (doOneRecord fd c) cs
             val freqs : freqDist = doAllRecords TokenTable.empty countslist
-            fun printOneFreq (int, countRef) = (print "\t"; print (Int.toString int); print ":\t"; print(Int.toString(!countRef)); print "\n")
+            fun printOneFreq (int, countRef) = 
+		let val percent = (Real.fromInt (!countRef ))/(Real.fromInt numRecords)
+		in
+		(print "\t"; print (Int.toString int); print ":\t"; print(Int.toString(!countRef)); 
+		 print "\t"; print (Real.toString percent); ( print "\n"))
+		end
             fun printHist (token, intMap) = (print "Token: "; printToken token; print "\n"; IntMap.appi printOneFreq (!intMap); print "\n")
             fun printDist freqs = (print "Distributions:\n"; TokenTable.appi printHist freqs; print "\n")
 	    val () = printDist freqs
@@ -165,10 +190,11 @@ structure Main : sig
 
     fun doIt fileName = 
 	let val records = loadFile fileName
+	    val numRecords = List.length records
 	    val tokens = List.map tokenizeRecord records
 (*	    val () = List.app printTokens tokens  *)
             val counts = List.map countFreqs tokens
-            val fd: freqDist = buildHistograms counts
+            val fd: freqDist = buildHistograms numRecords counts
 	in
 	    counts
 	end

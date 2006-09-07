@@ -161,7 +161,7 @@ int main(int argc, char** argv) {
     } else {
       error(2, "<note>header read returned OK</note>");
     }
-    if (P_ERR == PADS_HDR_TY(_write_xml_2io)(pads, io, &hdr_pd, &hdr_rep, (const char*)0, 0, EXTRA_HDR_READ_ARGS) ) {
+    if (P_ERR == PADS_HDR_TY(_write_xml_2io)(pads, io, &hdr_pd, &hdr_rep, (const char*)0, 0 EXTRA_HDR_READ_ARGS)) {
       error(ERROR_FATAL, "*** IO error during header write");
     }
   }

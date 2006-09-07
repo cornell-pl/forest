@@ -19,7 +19,7 @@ INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 include $(PADS_HOME)/mk/rules.mk
 
 %.c: %.p
-	$(PADSC) $<
+	$(PADSC) -I. $<
 
 # Rules to make programs
 test_ml: test_ml.c ml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
@@ -29,7 +29,7 @@ test_ml_d: test_ml.c ml.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 
-rwxml_ml: rwxml_ml.c ml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+rwxml_ml: rwxml_ml.c ml.c $(INCLUDE_DEPS) $(LIB_DEPS_O) 
 	@$(CCExec_DYNAMIC_O)
 
 rwxml_ml_d: rwxml_ml.c ml.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
@@ -41,4 +41,4 @@ test_core_d: test_core.c adderley.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 clean:
-	$(RM) adderley.[ch] adderley.xsd test_adderley test_adderley_d test_adderley_dd adderley_expanded.c
+	$(RM) ml.[ch] ml.xsd test_ml test_ml_d test_ml_dd ml_expanded.c rwxml_ml rwxml_ml_d
