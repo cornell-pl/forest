@@ -2453,10 +2453,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
                       (* Transform: Generate Write function  *)
 		      val writeName = writeSuf name
+		      val isStatic = case lookupMemChar srcPty of TyProps.Static => true | _ => false
+		      val srcWriteFun = BU.lookupTy(srcPty, fn x=>x, #padsname)
+
 		      fun genWriteBufBody () = 
 			  let val srcFunName = lookupMemFun srcPty
-			      val srcWriteFun = BU.lookupTy(srcPty, fn x=>x, #padsname)
-			      val isStatic = case lookupMemChar srcPty of TyProps.Static => true | _ => false
 			      val tmprep = pcgenName "src"     val tmprepX = PT.Id tmprep
 			      val tmppd  = pcgenName "src_pd"  val tmppdX  = PT.Id tmppd
 			      val decls = 
@@ -2493,7 +2494,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val decls = 
 				  [P.varDeclS'(srcRepPCT, tmprep),
 				   P.varDeclS'(srcPDPCT, tmppd)]
-			      val initSs = 
+			      val initSs = if isStatic then [] else 
 				  [PT.Expr(PT.Call(PT.Id (initSuf srcFunName), [PT.Id pads, P.addrX tmprepX])),
 				   PT.Expr(PT.Call(PT.Id ((initSuf o pdSuf) srcFunName), [PT.Id pads, P.addrX tmppdX]))]
 			      val cnvRepSs = 
@@ -2502,10 +2503,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   @ [PT.Id rep, PT.Id pd, P.addrX tmprepX, P.addrX tmppdX]))]
 			      val rawWriteIOSs = 
 				  [P.assignS(PT.Id tlen, 
-					     PT.Call(PT.Id ((ioSuf o writeSuf) srcFunName),
+					     PT.Call(PT.Id ((ioSuf o writeSuf) srcWriteFun),
 						     ([PT.Id pads, PT.Id io, P.addrX tmppdX, P.addrX tmprepX ] @ srcArgs)))]
 				  @ (writeAdjustIOLenSs isRecord)
-			      val cleanupSs = 
+			      val cleanupSs = if isStatic then [] else
 				  [PT.Expr(PT.Call(PT.Id(cleanupSuf srcFunName), [PT.Id pads, P.addrX tmprepX])),
 				   PT.Expr(PT.Call(PT.Id((cleanupSuf o pdSuf) srcFunName), [PT.Id pads, P.addrX tmppdX]))]
 			  in

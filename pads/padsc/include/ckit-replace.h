@@ -46,8 +46,10 @@ typedef _ast_va_list va_list;
 #endif
 
 // some common types
+#ifndef HAVE_SIZE
 typedef int size_t;
 typedef int ssize_t;
+#endif
 
 // types/vars that we use from sfio.h
 struct _sfio_s; typedef struct _sfio_s Sfio_t;
