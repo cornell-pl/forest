@@ -1543,13 +1543,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp, format, tzone)
 
 #define Pa_timestamp_explicit_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_explicit_ME", "Pa_timestamp_explicit_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_ME", "Pa_timestamp_explicit_ME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
 
 #define Pe_timestamp_explicit_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_explicit_ME", "Pe_timestamp_explicit_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_ME", "Pe_timestamp_explicit_ME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
@@ -1579,13 +1579,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp, format, tzone)
 
 #define Pa_timestamp_explicit_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_explicit_CME", "Pa_timestamp_explicit_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_CME", "Pa_timestamp_explicit_CME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
 
 #define Pe_timestamp_explicit_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_explicit_CME", "Pe_timestamp_explicit_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_CME", "Pe_timestamp_explicit_CME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
@@ -1615,13 +1615,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp, format, tzone)
 
 #define Pa_timestamp_explicit_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_explicit_SE", "Pa_timestamp_explicit_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_SE", "Pa_timestamp_explicit_SE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
 
 #define Pe_timestamp_explicit_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_explicit_SE", "Pe_timestamp_explicit_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_SE", "Pe_timestamp_explicit_SE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
@@ -1651,13 +1651,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp, format, tzone)
 
 #define Pa_timestamp_explicit_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_explicit_CSE", "Pa_timestamp_explicit_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_CSE", "Pa_timestamp_explicit_CSE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
 
 #define Pe_timestamp_explicit_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_explicit_CSE", "Pe_timestamp_explicit_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_explicit_CSE", "Pe_timestamp_explicit_CSE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.timestamp_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
@@ -1982,13 +1982,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp, format, tzone)
 
 #define Pa_date_explicit_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_explicit_ME", "Pa_date_explicit_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_ME", "Pa_date_explicit_ME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
 
 #define Pe_date_explicit_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_explicit_ME", "Pe_date_explicit_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_ME", "Pe_date_explicit_ME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
@@ -2018,13 +2018,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp, format, tzone)
 
 #define Pa_date_explicit_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_explicit_CME", "Pa_date_explicit_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_CME", "Pa_date_explicit_CME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
 
 #define Pe_date_explicit_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_explicit_CME", "Pe_date_explicit_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_CME", "Pe_date_explicit_CME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
@@ -2054,13 +2054,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp, format, tzone)
 
 #define Pa_date_explicit_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_explicit_SE", "Pa_date_explicit_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_SE", "Pa_date_explicit_SE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
 
 #define Pe_date_explicit_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_explicit_SE", "Pe_date_explicit_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_SE", "Pe_date_explicit_SE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
@@ -2090,13 +2090,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp, format, tzone)
 
 #define Pa_date_explicit_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_explicit_CSE", "Pa_date_explicit_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_CSE", "Pa_date_explicit_CSE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
 
 #define Pe_date_explicit_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_explicit_CSE", "Pe_date_explicit_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_explicit_CSE", "Pe_date_explicit_CSE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.date_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
@@ -2422,13 +2422,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp, format, tzone)
 
 #define Pa_time_explicit_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_explicit_ME", "Pa_time_explicit_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_ME", "Pa_time_explicit_ME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
 
 #define Pe_time_explicit_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_explicit_ME", "Pe_time_explicit_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_ME", "Pe_time_explicit_ME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
@@ -2458,13 +2458,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp, format, tzone)
 
 #define Pa_time_explicit_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_explicit_CME", "Pa_time_explicit_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_CME", "Pa_time_explicit_CME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
 
 #define Pe_time_explicit_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_explicit_CME", "Pe_time_explicit_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_CME", "Pe_time_explicit_CME_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       matchRegexp, format, tzone)
@@ -2494,13 +2494,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp, format, tzone)
 
 #define Pa_time_explicit_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_explicit_SE", "Pa_time_explicit_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_SE", "Pa_time_explicit_SE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
 
 #define Pe_time_explicit_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_explicit_SE", "Pe_time_explicit_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_SE", "Pe_time_explicit_SE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
@@ -2530,13 +2530,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp, format, tzone)
 
 #define Pa_time_explicit_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_explicit_CSE", "Pa_time_explicit_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_CSE", "Pa_time_explicit_CSE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
 
 #define Pe_time_explicit_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp, format, tzone) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_explicit_CSE", "Pe_time_explicit_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_explicit_CSE", "Pe_time_explicit_CSE_write_xml_2io", \
 			       "format param", "tzone param", \
 			       pads->disc->out_formats.time_explicit, pads->out_zone, \
 			       stopRegexp, format, tzone)
@@ -2862,13 +2862,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp)
 
 #define Pa_timestamp_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_ME", "Pa_timestamp_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_ME", "Pa_timestamp_ME_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       matchRegexp)
 
 #define Pe_timestamp_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_ME", "Pe_timestamp_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_ME", "Pe_timestamp_ME_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       matchRegexp)
@@ -2898,13 +2898,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp)
 
 #define Pa_timestamp_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_CME", "Pa_timestamp_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_CME", "Pa_timestamp_CME_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       matchRegexp)
 
 #define Pe_timestamp_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_CME", "Pe_timestamp_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_CME", "Pe_timestamp_CME_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       matchRegexp)
@@ -2934,13 +2934,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp)
 
 #define Pa_timestamp_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_SE", "Pa_timestamp_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_SE", "Pa_timestamp_SE_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       stopRegexp)
 
 #define Pe_timestamp_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_SE", "Pe_timestamp_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_SE", "Pe_timestamp_SE_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       stopRegexp)
@@ -2970,13 +2970,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp)
 
 #define Pa_timestamp_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptimestamp_CSE", "Pa_timestamp_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_CSE", "Pa_timestamp_CSE_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       stopRegexp)
 
 #define Pe_timestamp_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptimestamp_CSE", "Pe_timestamp_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptimestamp_CSE", "Pe_timestamp_CSE_write_xml_2io", \
 			       "pads->disc->out_formats.timestamp", "default output time zone", \
 			       pads->disc->out_formats.timestamp, pads->out_zone, \
 			       stopRegexp)
@@ -3302,13 +3302,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp)
 
 #define Pa_date_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_ME", "Pa_date_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_ME", "Pa_date_ME_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       matchRegexp)
 
 #define Pe_date_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_ME", "Pe_date_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_ME", "Pe_date_ME_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       matchRegexp)
@@ -3338,13 +3338,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp)
 
 #define Pa_date_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_CME", "Pa_date_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_CME", "Pa_date_CME_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       matchRegexp)
 
 #define Pe_date_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_CME", "Pe_date_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_CME", "Pe_date_CME_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       matchRegexp)
@@ -3374,13 +3374,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp)
 
 #define Pa_date_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_SE", "Pa_date_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_SE", "Pa_date_SE_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       stopRegexp)
 
 #define Pe_date_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_SE", "Pe_date_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_SE", "Pe_date_SE_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       stopRegexp)
@@ -3410,13 +3410,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp)
 
 #define Pa_date_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Pdate_CSE", "Pa_date_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_CSE", "Pa_date_CSE_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       stopRegexp)
 
 #define Pe_date_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Pdate_CSE", "Pe_date_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Pdate_CSE", "Pe_date_CSE_write_xml_2io", \
 			       "pads->disc->out_formats.date", "default output time zone", \
 			       pads->disc->out_formats.date, pads->out_zone, \
 			       stopRegexp)
@@ -3742,13 +3742,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp)
 
 #define Pa_time_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_ME", "Pa_time_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_ME", "Pa_time_ME_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       matchRegexp)
 
 #define Pe_time_ME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_ME", "Pe_time_ME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_ME", "Pe_time_ME_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       matchRegexp)
@@ -3778,13 +3778,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       matchRegexp)
 
 #define Pa_time_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_CME", "Pa_time_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_CME", "Pa_time_CME_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       matchRegexp)
 
 #define Pe_time_CME_write_xml_2io(pads, io, pd, d, tag, indent, matchRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_CME", "Pe_time_CME_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_CME", "Pe_time_CME_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       matchRegexp)
@@ -3814,13 +3814,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp)
 
 #define Pa_time_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_SE", "Pa_time_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_SE", "Pa_time_SE_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       stopRegexp)
 
 #define Pe_time_SE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_SE", "Pe_time_SE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_SE", "Pe_time_SE_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       stopRegexp)
@@ -3850,13 +3850,13 @@ ssize_t PDCI_date_time_write_xml_2buf(P_t *pads,
 			       stopRegexp)
 
 #define Pa_time_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_ASCII, tag, indent, "Ptime_CSE", "Pa_time_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_CSE", "Pa_time_CSE_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       stopRegexp)
 
 #define Pe_time_CSE_write_xml_2io(pads, io, pd, d, tag, indent, stopRegexp) \
-  PDCI_date_time_write_xml_2io(pads, io, pd, d, Pcharset_EBCDIC, tag, indent, "Ptime_CSE", "Pe_time_CSE_write_xml_2io", \
+  PDCI_date_time_write_xml_2io(pads, io, pd, d, tag, indent, "Ptime_CSE", "Pe_time_CSE_write_xml_2io", \
 			       "pads->disc->out_formats.time", "default output time zone", \
 			       pads->disc->out_formats.time, pads->out_zone, \
 			       stopRegexp)

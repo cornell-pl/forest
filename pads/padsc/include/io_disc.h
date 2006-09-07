@@ -156,8 +156,9 @@ typedef Perror_t     (*P_io_sfopen_fn)    (P_t *pads, Pio_disc_t* io_disc, Sfio_
 typedef Perror_t     (*P_io_sfclose_fn)   (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t remain);
 typedef Perror_t     (*P_io_read_fn)      (P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt,
 					   Pio_elt_t **next_elt_out);
-typedef ssize_t      (*P_io_rec_close_fn) (P_t *pads, Pio_disc_t* io_disc, Pbyte *buf,
+typedef ssize_t      (*P_io_rec_close_buf_fn) (P_t *pads, Pio_disc_t* io_disc, Pbyte *buf,
 					   Pbyte *rec_start, size_t num_bytes);
+typedef ssize_t      (*P_io_rec_close_io_fn) (P_t *pads, Pio_disc_t* io_disc, Sfio_t *io);
 typedef ssize_t      (*P_io_blk_close_fn) (P_t *pads, Pio_disc_t* io_disc, Pbyte *buf,
 					   Pbyte *blk_start, size_t num_bytes, Puint32 num_recs);
 typedef const char * (*P_io_read_unit_fn) (P_t *pads, Pio_disc_t* io_disc);
@@ -179,7 +180,8 @@ struct Pio_disc_s {
   P_io_sfopen_fn      sfopen_fn;     /* Sfio-based open */
   P_io_sfclose_fn     sfclose_fn;    /* Sfio-based close */
   P_io_read_fn        read_fn;       /* read */
-  P_io_rec_close_fn   rec_close_fn;  /* fill in record markers for an output record */
+  P_io_rec_close_buf_fn  rec_close_buf_fn;  /* fill in record markers for an output record */
+  P_io_rec_close_io_fn   rec_close_io_fn;  /* fill in record markers for an output record */
   P_io_blk_close_fn   blk_close_fn;  /* fill in block markers for an output block */
   P_io_read_unit_fn   read_unit_fn;  /* return description of read unit */
 };

@@ -137,6 +137,12 @@ ssize_t Pa_float64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_ful
                     Pbase_pd *pd, Pfloat64 *val
                     );
 
+ssize_t Pa_float32_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32 *val
+                    );
+
+ssize_t Pa_float64_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64 *val
+                    );
+
 ssize_t Pa_float32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
                     int *buf_full, Pbase_pd *pd, Pfloat32 *val, const char *tag,
                     int indent
@@ -145,6 +151,14 @@ ssize_t Pa_float32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 ssize_t Pa_float64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
                     int *buf_full, Pbase_pd *pd, Pfloat64 *val, const char *tag,
                     int indent
+                    );
+
+ssize_t Pa_float32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32 *val, 
+                    const char *tag, int indent
+                    );
+
+ssize_t Pa_float64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64 *val, 
+                    const char *tag, int indent
                     );
 
 ssize_t Pa_float32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,
@@ -194,6 +208,12 @@ ssize_t Pe_float64_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_ful
                     Pbase_pd *pd, Pfloat64 *val
                     );
 
+ssize_t Pe_float32_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32 *val
+                    );
+
+ssize_t Pe_float64_write2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64 *val
+                    );
+
 ssize_t Pe_float32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
                     int *buf_full, Pbase_pd *pd, Pfloat32 *val, const char *tag,
                     int indent
@@ -202,6 +222,14 @@ ssize_t Pe_float32_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
 ssize_t Pe_float64_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len,
                     int *buf_full, Pbase_pd *pd, Pfloat64 *val, const char *tag,
                     int indent
+                    );
+
+ssize_t Pe_float32_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat32 *val, 
+                    const char *tag, int indent
+                    );
+
+ssize_t Pe_float64_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Pfloat64 *val, 
+                    const char *tag, int indent
                     );
 
 ssize_t Pe_float32_fmt2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full,

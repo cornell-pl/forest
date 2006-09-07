@@ -453,7 +453,14 @@ P_fwrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
 }
 
 ssize_t
-P_fwrec_noseek_rec_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
+P_fwrec_noseek_rec_buf_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
+{
+  /* nothing to fill in */
+  return 0;
+}
+
+ssize_t
+P_fwrec_noseek_rec_io_close(P_t *pads, Pio_disc_t* io_disc, Sfio_t *io)
 {
   /* nothing to fill in */
   return 0;
@@ -551,7 +558,8 @@ P_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trailer_len)
   io_disc->sfopen_fn    = P_fwrec_noseek_sfopen;
   io_disc->sfclose_fn   = P_fwrec_noseek_sfclose;
   io_disc->read_fn      = P_fwrec_noseek_read;
-  io_disc->rec_close_fn = P_fwrec_noseek_rec_close;
+  io_disc->rec_close_buf_fn = P_fwrec_noseek_rec_buf_close;
+  io_disc->rec_close_io_fn = P_fwrec_noseek_rec_io_close;
   io_disc->blk_close_fn = P_fwrec_noseek_blk_close;
   io_disc->read_unit_fn = P_fwrec_noseek_read_unit;
 
@@ -815,12 +823,22 @@ P_norec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
 }
 
 ssize_t
-P_norec_noseek_rec_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
+P_norec_noseek_rec_buf_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
 {
   if (!pads || !pads->disc) {
     return -1;
   }
-  P_WARN(pads->disc, "P_norec_noseek_rec_close: not a record-based discipline!");
+  P_WARN(pads->disc, "P_norec_noseek_rec_buf_close: not a record-based discipline!");
+  return -1;
+}
+
+ssize_t
+P_norec_noseek_rec_io_close(P_t *pads, Pio_disc_t* io_disc, Sfio_t *io)
+{
+  if (!pads || !pads->disc) {
+    return -1;
+  }
+  P_WARN(pads->disc, "P_norec_noseek_rec_io_close: not a record-based discipline!");
   return -1;
 }
 
@@ -919,7 +937,8 @@ P_norec_noseek_make(size_t block_size_hint)
   io_disc->sfopen_fn    = P_norec_noseek_sfopen;
   io_disc->sfclose_fn   = P_norec_noseek_sfclose;
   io_disc->read_fn      = P_norec_noseek_read;
-  io_disc->rec_close_fn = P_norec_noseek_rec_close;
+  io_disc->rec_close_buf_fn = P_norec_noseek_rec_buf_close;
+  io_disc->rec_close_io_fn = P_norec_noseek_rec_io_close;
   io_disc->blk_close_fn = P_norec_noseek_blk_close;
   io_disc->read_unit_fn = P_norec_noseek_read_unit;
 
@@ -1272,20 +1291,35 @@ P_ctrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
 }
 
 ssize_t
-P_ctrec_noseek_rec_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
+P_ctrec_noseek_rec_buf_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
 {
   P_ctrec_noseek_data_t  *data;
 
   if (!pads || !pads->disc) {
     return -1;
   }
-  if (!io_disc || !io_disc->data || !buf || !rec_start) {
-    P_WARN(pads->disc, "P_ctrec_noseek_rec_close: bad param(s)");
+  if (!io_disc || !(data = (P_ctrec_noseek_data_t*)io_disc->data) || !data->io || !rec_start) {
+    P_WARN(pads->disc, "P_ctrec_noseek_rec_buf_close: bad param(s)");
     return -1;
   }
   data = (P_ctrec_noseek_data_t*)io_disc->data;
   *buf = data->cterm;
   return 1;
+}
+
+ssize_t
+P_ctrec_noseek_rec_io_close(P_t *pads, Pio_disc_t* io_disc, Sfio_t *io)
+{
+  P_ctrec_noseek_data_t  *data;
+
+  if (!pads || !pads->disc) {
+    return -1;
+  }
+  if (!io_disc || !(data = (P_ctrec_noseek_data_t*)io_disc->data) || !io ) {
+    P_WARN(pads->disc, "P_ctrec_noseek_rec_io_close: bad param(s)");
+    return -1;
+  }
+  return (-1 != sfprintf(io, "%c", data->cterm) ? 1 : 0);
 }
 
 ssize_t
@@ -1372,7 +1406,8 @@ P_ctrec_noseek_make(Pbyte termChar, size_t block_size_hint)
   io_disc->sfopen_fn    = P_ctrec_noseek_sfopen;
   io_disc->sfclose_fn   = P_ctrec_noseek_sfclose;
   io_disc->read_fn      = P_ctrec_noseek_read;
-  io_disc->rec_close_fn = P_ctrec_noseek_rec_close;
+  io_disc->rec_close_buf_fn = P_ctrec_noseek_rec_buf_close;
+  io_disc->rec_close_io_fn = P_ctrec_noseek_rec_io_close;
   io_disc->blk_close_fn = P_ctrec_noseek_blk_close;
   io_disc->read_unit_fn = P_ctrec_noseek_read_unit;
 
@@ -1805,7 +1840,7 @@ P_vlrec_noseek_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_e
 }
 
 ssize_t
-P_vlrec_noseek_rec_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
+P_vlrec_noseek_rec_buf_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
 {
   Pbyte *ibytes;
 
@@ -1813,7 +1848,7 @@ P_vlrec_noseek_rec_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_
     return -1;
   }
   if (!io_disc || !buf || !rec_start) {
-    P_WARN(pads->disc, "P_vlrec_noseek_rec_close: bad param(s)");
+    P_WARN(pads->disc, "P_vlrec_noseek_rec_buf_close: bad param(s)");
     return -1;
   }
   /* num_bytes already equal to total bytes in record */
@@ -1830,6 +1865,20 @@ P_vlrec_noseek_rec_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_
     rec_start[3] = 0;
   }
   return 0; /* no bytes added at end */
+}
+
+ssize_t
+P_vlrec_noseek_rec_io_close(P_t *pads, Pio_disc_t* io_disc, Sfio_t *io)
+{
+  if (!pads || !pads->disc) {
+    return -1;
+  }
+  if (!io_disc) {
+    P_WARN(pads->disc, "P_vlrec_noseek_rec_io_close: bad param(s)");
+    return -1;
+  }
+  P_WARN(pads->disc, "P_vlrec_noseek_rec_io_close: cannot seek on non-seekable io!");
+  return -1;
 }
 
 ssize_t
@@ -1937,7 +1986,8 @@ P_vlrec_noseek_make(int blocked, size_t avg_rlen_hint)
   io_disc->sfopen_fn    = P_vlrec_noseek_sfopen;
   io_disc->sfclose_fn   = P_vlrec_noseek_sfclose;
   io_disc->read_fn      = P_vlrec_noseek_read;
-  io_disc->rec_close_fn = P_vlrec_noseek_rec_close;
+  io_disc->rec_close_buf_fn = P_vlrec_noseek_rec_buf_close;
+  io_disc->rec_close_io_fn = P_vlrec_noseek_rec_io_close; 
   io_disc->blk_close_fn = P_vlrec_noseek_blk_close;
   io_disc->read_unit_fn = P_vlrec_noseek_read_unit;
 
@@ -2255,12 +2305,22 @@ P_norec_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_elt_t **
 }
 
 ssize_t
-P_norec_rec_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
+P_norec_rec_buf_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
 {
   if (!pads || !pads->disc) {
     return -1;
   }
-  P_WARN(pads->disc, "P_norec_rec_close: not a record-based discipline!");
+  P_WARN(pads->disc, "P_norec_rec_buf_close: not a record-based discipline!");
+  return -1;
+}
+
+ssize_t
+P_norec_rec_io_close(P_t *pads, Pio_disc_t* io_disc, Sfio_t *io)
+{
+  if (!pads || !pads->disc) {
+    return -1;
+  }
+  P_WARN(pads->disc, "P_norec_rec_io_close: not a record-based discipline!");
   return -1;
 }
 
@@ -2347,7 +2407,8 @@ P_norec_make(size_t block_size_hint)
   io_disc->sfopen_fn    = P_norec_sfopen;
   io_disc->sfclose_fn   = P_norec_sfclose;
   io_disc->read_fn      = P_norec_read;
-  io_disc->rec_close_fn = P_norec_rec_close;
+  io_disc->rec_close_buf_fn = P_norec_rec_buf_close;
+  io_disc->rec_close_io_fn = P_norec_rec_io_close;
   io_disc->blk_close_fn = P_norec_blk_close;
   io_disc->read_unit_fn = P_norec_read_unit;
 

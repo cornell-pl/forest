@@ -237,6 +237,7 @@ struct
   val charlitScan1    = "Pchar_lit_scan1"
   val charlitScan2    = "Pchar_lit_scan2"
   val charlitWriteBuf = "Pchar_lit_write2buf"
+  val charlitWriteIO  = "Pchar_lit_write2io"
   val charlitWriteXMLBuf = "Pchar_lit_write_xml_2buf"
 
   val cstrlit         = "Pcstr_lit"
@@ -245,7 +246,9 @@ struct
   val cstrlitScan2    = "Pcstr_lit_scan2"
   val cstrlitWrite    = "Pcstr_lit"
   val cstrlitWriteBuf = "Pcstr_lit_write2buf"
+  val cstrlitWriteIO  = "Pcstr_lit_write2io"
   val cstrlitWriteXMLBuf = "Pcstr_lit_write_xml_2buf"
+  val cstrlitWriteXMLIO = "Pcstr_lit_write_xml_2io"
 
   val strlit         = "Pstr_lit"
   val strlitMatch    = "Pstr_lit_match"
@@ -261,6 +264,7 @@ struct
   val reMatch    = "Pre_match"
   val reMatchFromString = "Pcstr_re_match" (* pads, cstr, eat *)
   val reWriteBuf = cstrlitWriteBuf (* not yet implemented.  what should go here?*)
+  val reWriteIO  = cstrlitWriteIO (* not yet implemented.  what should go here?*)
   val reWriteXMLBuf = cstrlitWriteXMLBuf (* not yet implemented.  what should go here?*)
   val reScan1    = "Pre_scan1"
   val reScan2    = "Pre_scan2"
@@ -724,6 +728,12 @@ struct
 
   fun recCloseBufWrite(pads, bufCursor, bufLen, bufFull, buf, length, whatFn) = 
       PT.Call(PT.Id "PDCI_io_rec_close_write2buf", [pads, bufCursor,bufLen,bufFull,buf,length, whatFn])
+
+  fun recOpenIOWrite(pads, io, whatFn) = 
+      PT.Call(PT.Id "PDCI_io_rec_open_write2io", [pads, io, whatFn])
+
+  fun recCloseIOWrite(pads, io, whatFn) = 
+      PT.Call(PT.Id "PDCI_io_rec_close_write2io", [pads, io, whatFn])
 
 (* -- Sfio functions *)
   val SF_LOCKR = PT.Id "SF_LOCKR"

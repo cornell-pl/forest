@@ -772,10 +772,6 @@ do {
   } while (0)
 /* END_MACRO */
 
-/* AJF - this definition is available from pcgen-macros.h and if you have to update it, it's nice
- * to only have to do it in one place.
- * #define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%I4u</nerr><errCode>%s</errCode>" 
- */
 #define LOC_FMT "<loc><b><num>%lld</num><byte>%lld</byte></b><e><num>%lld</num><byte>%lld</byte></e></loc>"
 #define PDCI_BASEVAL_XML_OUT(sfprintf_prefix, io, tag, def_tag, indent, pd, outfmt, outval)
   do {
@@ -7793,7 +7789,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.203 2006-09-07 06:25:41 gruber Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.204 2006-09-07 20:49:48 forrest Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -10475,8 +10471,9 @@ PDCI_io_write_start(P_t *pads, Sfio_t *io, size_t *buf_len, int *set_buf, const 
   Pbyte  *buf;
   ssize_t    n, nm;
 
-  P_TRACE(pads->disc, "PDCI_io_write_start called");
+  P_TRACE1(pads->disc, "PDCI_io_write_start called for size_t: %ld", ((long)*buf_len) );
   if (!sfsetbuf(io, (Void_t *)1, 0))  {
+    P_TRACE1(pads->disc, "PDCI_io_write_start sets buf with size: %ld", ((long)pads->outbuf_len) );
     sfsetbuf(io, pads->outbuf, pads->outbuf_len);
     (*set_buf) = 1;
   } else {
@@ -10492,6 +10489,7 @@ PDCI_io_write_start(P_t *pads, Sfio_t *io, size_t *buf_len, int *set_buf, const 
     return 0;
   }
   nm = sfvalue(io);
+  P_TRACE1(pads->disc, "PDCI_io_write_start sfreserve returns: %ld", ((long)nm) );
   if (nm < (*buf_len)) {
     error(0, "tried to reserve %ld bytes, got %ld bytes", (long) *buf_len, (long) nm);
     PDCI_report_err(pads, P_FATAL_FLAGS, 0, P_IO_ERR, whatfn, "sfreserve returned insufficient bytes");
@@ -10562,7 +10560,7 @@ PDCI_io_rec_write2io(P_t *pads, Sfio_t *io, Pbyte *buf, size_t rec_data_len, con
   iobuf_cursor = iobuf + iodisc->rec_obytes;
   memcpy(iobuf_cursor, buf, rec_data_len);
   iobuf_cursor += rec_data_len;
-  if (-1 == (tlen = iodisc->rec_close_fn(pads, iodisc, iobuf_cursor, iobuf, num_bytes))) {
+  if (-1 == (tlen = iodisc->rec_close_buf_fn(pads, iodisc, iobuf_cursor, iobuf, num_bytes))) {
     P_WARN1(pads->disc, "%s: internal error, failed to write record", whatfn);
     PDCI_io_write_abort(pads, io, iobuf, set_buf, whatfn);
     return -1;
@@ -10603,7 +10601,34 @@ PDCI_io_rec_close_write2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
     (*buf_full) = 1;
     return -1;
   }
-  return iodisc->rec_close_fn(pads, iodisc, buf, rec_start, num_bytes);
+  return iodisc->rec_close_buf_fn(pads, iodisc, buf, rec_start, num_bytes);
+}
+
+ssize_t
+PDCI_io_rec_open_write2io(P_t *pads, Sfio_t *io, const char *whatfn)
+{
+  Pio_disc_t *iodisc = pads->disc->io_disc;
+
+  P_TRACE(pads->disc, "PDCI_io_rec_open_write2io called");
+  if (!iodisc->rec_based) {
+    P_WARN1(pads->disc, "%s: pads->disc->io_disc must support records to use this function", whatfn);
+    return -1;
+  }
+  return iodisc->rec_obytes;
+}
+
+ssize_t
+PDCI_io_rec_close_write2io(P_t *pads, Sfio_t *io, const char *whatfn)
+{
+  Pio_disc_t *iodisc = pads->disc->io_disc;
+
+  P_TRACE(pads->disc, "PDCI_io_rec_close_write2io called");
+  if (!iodisc->rec_based) {
+    P_WARN1(pads->disc, "%s: pads->disc->io_disc must support records to use this function", whatfn);
+    return -1;
+  }
+
+  return iodisc->rec_close_io_fn(pads, iodisc, io);
 }
 
 ssize_t
@@ -13681,7 +13706,7 @@ PDCI_date_time_write_xml_2io(P_t *pads,
   PDCI_ARG_OR_DISC_ELT_CHECK(format, format_descr, whatfn);
   PDCI_ARG_OR_DISC_ELT_CHECK(tzone, tzone_descr, whatfn);
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  P_TRACE3(pads->disc, "PDCI_date_time_write2io args: whatfn = %s, format = %s, tzone = %s",
+  P_TRACE3(pads->disc, "PDCI_date_time_write_xml_2io args: whatfn = %s, format = %s, tzone = %s",
 	   whatfn, format, tzone_descr);
 
   tmset(tzone);
@@ -13862,7 +13887,7 @@ PDCI_ip_write_xml_2io(P_t *pads, Sfio_t *io, Pbase_pd *pd, Puint32 *d,
   va_list       type_args;
 
   PDCI_DISC_2P_CHECKS_RET_SSIZE(whatfn, io, d);
-  P_TRACE1(pads->disc, "PDCI_ip_write2io args: whatfn = %s", whatfn);
+  P_TRACE1(pads->disc, "PDCI_ip_write_xml_2io args: whatfn = %s", whatfn);
   if (pd->errCode != P_NO_ERR) {
     fn = PDCI_GET_INV_VAL_FN(pads, inv_type);
     va_start(type_args, whatfn);

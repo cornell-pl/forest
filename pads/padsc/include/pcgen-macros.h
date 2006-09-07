@@ -179,21 +179,34 @@ Perror_t PCGEN_TYPEDEF_ACC_REP2IO(const char *default_what, const char *basety_n
 
 void PCGEN_WRITE2IO_USE_WRITE2BUF(const char *fn_nm, ssize_t write2buf_call);
 
-void PCGEN_TLEN_UPDATES();
-void PCGEN_FINAL_TLEN_UPDATES();
-void PCGEN_TAG_OPEN_XML_OUT(const char *def_tag);
-void PCGEN_TAG_CLOSE_XML_OUT();
-void PCGEN_ARRAY_OPEN_XML_OUT();
-void PCGEN_ARRAY_CLOSE_XML_OUT();
-void PCGEN_XML_VALUE_OUT(const char *def_tag, int value);
+void PCGEN_TLEN_BUF_UPDATES();
+void PCGEN_FINAL_TLEN_BUF_UPDATES();
+void PCGEN_TLEN_IO_UPDATES();
+void PCGEN_FINAL_TLEN_IO_UPDATES();
+void PCGEN_TAG_OPEN_XML_BUF_OUT(const char *def_tag);
+void PCGEN_TAG_OPEN_XML_IO_OUT(const char *def_tag);
+void PCGEN_TAG_CLOSE_XML_BUF_OUT();
+void PCGEN_TAG_CLOSE_XML_IO_OUT();
+void PCGEN_ARRAY_OPEN_XML_BUF_OUT();
+void PCGEN_ARRAY_OPEN_XML_IO_OUT();
+void PCGEN_ARRAY_CLOSE_XML_BUF_OUT();
+void PCGEN_ARRAY_CLOSE_XML_IO_OUT();
+void PCGEN_XML_VALUE_BUF_OUT(const char *def_tag, int value);
+void PCGEN_XML_VALUE_IO_OUT(const char *def_tag, int value);
 
-void PCGEN_STRUCT_PD_XML_OUT();
-void PCGEN_ARRAY_PD_XML_OUT();
-void PCGEN_UNION_PD_XML_OUT();
-void PCGEN_SOURCE_XML_OUT_BEGIN(char *schema_name);
-void PCGEN_SOURCE_XML_OUT_END();
+void PCGEN_STRUCT_PD_XML_BUF_OUT();
+void PCGEN_STRUCT_PD_XML_IO_OUT();
+void PCGEN_ARRAY_PD_XML_BUF_OUT();
+void PCGEN_ARRAY_PD_XML_IO_OUT();
+void PCGEN_UNION_PD_XML_BUF_OUT();
+void PCGEN_UNION_PD_XML_IO_OUT();
+void PCGEN_SOURCE_XML_BUF_OUT_BEGIN(char *schema_name);
+void PCGEN_SOURCE_XML_IO_OUT_BEGIN(char *schema_name);
+void PCGEN_SOURCE_XML_BUF_OUT_END();
+void PCGEN_SOURCE_XML_IO_OUT_END();
 
-void PCGEN_ENUM_XML_OUT(const char *def_tag, const char *(rep2str_fn)(int));
+void PCGEN_ENUM_XML_BUF_OUT(const char *def_tag, const char *(rep2str_fn)(int));
+void PCGEN_ENUM_XML_IO_OUT(const char *def_tag, const char *(rep2str_fn)(int));
 
 void PCGEN_ENUM_FMT2BUF_FINAL_INIT(char * fnName);
 void PCGEN_TYPEDEF_FMT2BUF_FINAL_INIT(char * fnName);
@@ -2017,7 +2030,7 @@ do {
   PDCI_io_write_abort(pads, io, buf, set_buf_PCGEN_, fn_nm)
 /* END_MACRO */
 
-#define PCGEN_TLEN_UPDATES()
+#define PCGEN_TLEN_BUF_UPDATES()
 do {
   if (tlen_PCGEN_<0) {
     return -1;
@@ -2028,7 +2041,25 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_FINAL_TLEN_UPDATES()
+#define PCGEN_FINAL_TLEN_BUF_UPDATES()
+do {
+  if (tlen_PCGEN_<0) {
+    return -1;
+  }
+  length_PCGEN_ += tlen_PCGEN_;
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_TLEN_IO_UPDATES()
+do {
+  if (tlen_PCGEN_<0) {
+    return -1;
+  }
+  length_PCGEN_      += tlen_PCGEN_;
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_FINAL_TLEN_IO_UPDATES() 
 do {
   if (tlen_PCGEN_<0) {
     return -1;
@@ -2053,6 +2084,18 @@ do {
 } while (0)
 /* END_MACRO */
 
+#define PDCI_TMP4_TLEN_IO_UPDATES()
+do {
+  if (tlen_PCGEN_ <= 0) {
+    return -1;
+  }
+/*  if (tlen_PCGEN_ > buf_len) { (*buf_full) = 1; return -1; } */
+/*  memcpy(buf_cursor_PCGEN_, PDCI_sfstr_use(pads->tmp4), tlen_PCGEN_); */
+  sfprintf(io, PDCI_sfstr_use(pads->tmp4), tlen_PCGEN_); 
+  length_PCGEN_     += tlen_PCGEN_;
+} while (0)
+/* END_MACRO */
+
 #define PDCI_FINAL_TMP4_TLEN_UPDATES()
 do {
   if (tlen_PCGEN_ <= 0) {
@@ -2067,7 +2110,17 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_TAG_OPEN_XML_OUT(def_tag)
+#define PDCI_FINAL_TMP4_TLEN_IO_UPDATES()
+do {
+  if (tlen_PCGEN_ <= 0) {
+    return -1;
+  }
+  sfprintf(io, PDCI_sfstr_use(pads->tmp4), tlen_PCGEN_);
+  length_PCGEN_ += tlen_PCGEN_;
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_TAG_OPEN_XML_BUF_OUT(def_tag)
 do {
   indent = (indent > 128) ? 128 : indent;
   if (!_tag) { _tag = def_tag; }
@@ -2077,7 +2130,7 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_TAG_CLOSE_XML_OUT()
+#define PCGEN_TAG_CLOSE_XML_BUF_OUT()
 do {
   PDCI_sfstr_seek2zero(pads->tmp4);
   tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, _tag);
@@ -2085,20 +2138,50 @@ do {
 } while (0)
 /* END_MACRO */
 
+#define PCGEN_TAG_OPEN_XML_IO_OUT(def_tag)
+do {
+  indent = (indent > 128) ? 128 : indent;
+  if (!_tag) { _tag = def_tag; }
+  PDCI_sfstr_seek2zero(pads->tmp4);
+  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>\n", indent, PDCI_spaces, _tag);
+  PDCI_TMP4_TLEN_IO_UPDATES();
+} while (0)
+/* END_MACRO */
 
-#define PCGEN_ARRAY_OPEN_XML_OUT()
+#define PCGEN_TAG_CLOSE_XML_IO_OUT()
+do {
+  PDCI_sfstr_seek2zero(pads->tmp4);
+  tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s</%s>\n", indent, PDCI_spaces, _tag);
+  PDCI_TMP4_TLEN_IO_UPDATES();
+} while (0)
+/* END_MACRO */
+
+
+#define PCGEN_ARRAY_OPEN_XML_BUF_OUT()
 do {
   PDCI_sfstr_seek2zero(pads->tmp4);
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_ARRAY_CLOSE_XML_OUT()
+#define PCGEN_ARRAY_OPEN_XML_IO_OUT()
 do {
   PDCI_sfstr_seek2zero(pads->tmp4);
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_XML_VALUE_OUT(ltag, val)
+#define PCGEN_ARRAY_CLOSE_XML_BUF_OUT()
+do {
+  PDCI_sfstr_seek2zero(pads->tmp4);
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_ARRAY_CLOSE_XML_IO_OUT()
+do {
+  PDCI_sfstr_seek2zero(pads->tmp4);
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_XML_VALUE_BUF_OUT(ltag, val)
 do{
     indent = (indent > 126) ? 128 : indent + 2;
     PDCI_sfstr_seek2zero(pads->tmp4);
@@ -2107,7 +2190,16 @@ do{
 } while (0)
 /* END_MACRO */
 
-#define PDCI_UNION_TAG_XML_OUT(tag)
+#define PCGEN_XML_VALUE_IO_OUT(ltag, val)
+do{
+    indent = (indent > 126) ? 128 : indent + 2;
+    PDCI_sfstr_seek2zero(pads->tmp4);
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s>%d</%s>\n", indent, PDCI_spaces, ltag, val, ltag);
+    PDCI_TMP4_TLEN_IO_UPDATES();
+} while (0)
+/* END_MACRO */
+
+#define PDCI_UNION_TAG_XML_BUF_OUT(tag)
 do {
   int tag_indent_PCGEN_ = (indent > 126) ? 128 : indent+2;
   PDCI_sfstr_seek2zero(pads->tmp4);
@@ -2119,7 +2211,7 @@ do {
 #define PSTATE_NERR_ERRCODE_FMT "<pstate>%s</pstate><nerr>%I4u</nerr><errCode>%s</errCode>"
 #define LOC_FMT "<loc><b><num>%lld</num><byte>%lld</byte></b><e><num>%lld</num><byte>%lld</byte></e></loc>"
 
-#define PCGEN_ENUM_XML_OUT(def_tag, rep2str_fn)
+#define PCGEN_ENUM_XML_BUF_OUT(def_tag, rep2str_fn)
 do {
   if (!_tag) { _tag = def_tag; }
   indent = ((indent) > 128) ? 128 : indent;
@@ -2150,7 +2242,38 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_STRUCT_PD_XML_OUT()
+#define PCGEN_ENUM_XML_IO_OUT(def_tag, rep2str_fn)
+do {
+  if (!_tag) { _tag = def_tag; }
+  indent = ((indent) > 128) ? 128 : indent;
+  PDCI_sfstr_seek2zero(pads->tmp4);
+  if ((pd)->errCode == P_NO_ERR) { /* no error */
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><val>%s</val></%s>\n", indent, PDCI_spaces, _tag, rep2str_fn(*rep), _tag);
+  } else if ((pd)->errCode < 100) { /* error, no location */
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd>" PSTATE_NERR_ERRCODE_FMT "</pd></%s>\n",
+		   indent, 
+		   PDCI_spaces, 
+		   _tag, 
+		   P_pstate2str((pd)->pstate), 
+		   (pd)->nerr, 
+                   P_errCode2str((pd)->errCode), 
+                   _tag);
+  } else { /* error, location */
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<%s><pd>" PSTATE_NERR_ERRCODE_FMT LOC_FMT "</pd></%s>\n",
+		    indent, 
+		    PDCI_spaces, _tag, 
+		    P_pstate2str((pd)->pstate), 
+		    (pd)->nerr, 
+		    P_errCode2str((pd)->errCode),
+		    (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, 
+		    (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte, 
+		    _tag);
+  }
+  PDCI_FINAL_TMP4_TLEN_IO_UPDATES();
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_STRUCT_PD_XML_BUF_OUT()
 do {
   if ((pd)->errCode != P_NO_ERR) {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
@@ -2177,10 +2300,40 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_UNION_PD_XML_OUT() PCGEN_STRUCT_PD_XML_OUT()
+#define PCGEN_STRUCT_PD_XML_IO_OUT()
+do {
+  if ((pd)->errCode != P_NO_ERR) {
+    int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
+    PDCI_sfstr_seek2zero(pads->tmp4);
+    if ((pd)->errCode < 100) { /* no location */
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT "</pd>\n",
+		      pd_indent_PCGEN_, 
+		      PDCI_spaces, 
+		      P_pstate2str((pd)->pstate), 
+		      (pd)->nerr,
+		      P_errCode2str((pd)->errCode));
+    } else { /* location */
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT LOC_FMT "</pd>\n",
+		      pd_indent_PCGEN_, 
+                      PDCI_spaces, 
+                      P_pstate2str((pd)->pstate), 
+                      (pd)->nerr, 
+                      P_errCode2str((pd)->errCode),
+		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte, 
+ 		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte);
+    }
+    PDCI_TMP4_TLEN_IO_UPDATES();
+  }
+} while (0)
 /* END_MACRO */
 
-#define PCGEN_ARRAY_PD_XML_OUT()
+#define PCGEN_UNION_PD_XML_BUF_OUT() PCGEN_STRUCT_PD_XML_BUF_OUT()
+/* END_MACRO */
+
+#define PCGEN_UNION_PD_XML_IO_OUT() PCGEN_STRUCT_PD_XML_IO_OUT()
+/* END_MACRO */
+
+#define PCGEN_ARRAY_PD_XML_BUF_OUT()
 do {
   if ((pd)->errCode != P_NO_ERR) {
     int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
@@ -2211,7 +2364,38 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_SOURCE_XML_OUT_BEGIN(schema_name)
+#define PCGEN_ARRAY_PD_XML_IO_OUT()
+do {
+  if ((pd)->errCode != P_NO_ERR) {
+    int pd_indent_PCGEN_ = ((indent) > 126) ? 128 : (indent)+2;
+    PDCI_sfstr_seek2zero(pads->tmp4);
+    if ((pd)->errCode < 100) { /* no location */
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT "<neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
+		      pd_indent_PCGEN_, 
+		      PDCI_spaces, 
+                      P_pstate2str((pd)->pstate), 
+                      (pd)->nerr, 
+                      P_errCode2str((pd)->errCode), 
+                      (pd)->neerr, 
+                      (pd)->firstError);
+    } else { /* location */
+      tlen_PCGEN_ = sfprintf(pads->tmp4, "%.*s<pd>" PSTATE_NERR_ERRCODE_FMT LOC_FMT "<neerr>%lu</neerr><firstError>%lu</firstError></pd>\n",
+		      pd_indent_PCGEN_, 
+		      PDCI_spaces, 
+                      P_pstate2str((pd)->pstate), 
+                      (pd)->nerr, 
+                      P_errCode2str((pd)->errCode),
+		      (long long)(pd)->loc.b.num, (long long)(pd)->loc.b.byte,
+		      (long long)(pd)->loc.e.num, (long long)(pd)->loc.e.byte,
+		      (pd)->neerr, 
+                      (pd)->firstError);
+    }
+    PDCI_TMP4_TLEN_IO_UPDATES();
+  }
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_SOURCE_XML_BUF_OUT_BEGIN(schema_name)
 do {
   PDCI_sfstr_seek2zero(pads->tmp4);
     tlen_PCGEN_ = sfprintf(pads->tmp4, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<padsns:PSource xmlns:padsns=\"file:%s\">\n",
@@ -2221,11 +2405,29 @@ do {
 } while (0)
 /* END_MACRO */
 
-#define PCGEN_SOURCE_XML_OUT_END()
+#define PCGEN_SOURCE_XML_IO_OUT_BEGIN(schema_name)
+do {
+  PDCI_sfstr_seek2zero(pads->tmp4);
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<padsns:PSource xmlns:padsns=\"file:%s\">\n",
+			   schema_name);
+    indent += 2;
+    PDCI_TMP4_TLEN_IO_UPDATES();
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_SOURCE_XML_BUF_OUT_END()
 do {
   PDCI_sfstr_seek2zero(pads->tmp4); 
     tlen_PCGEN_ = sfprintf(pads->tmp4, "</padsns:PSource>\n");
     PDCI_FINAL_TMP4_TLEN_UPDATES();
+} while (0)
+/* END_MACRO */
+
+#define PCGEN_SOURCE_XML_IO_OUT_END()
+do {
+  PDCI_sfstr_seek2zero(pads->tmp4); 
+    tlen_PCGEN_ = sfprintf(pads->tmp4, "</padsns:PSource>\n");
+    PDCI_FINAL_TMP4_TLEN_IO_UPDATES();
 } while (0)
 /* END_MACRO */
 
@@ -2294,7 +2496,7 @@ do {
  do { 
       trequestedOut_PCGEN_ = 0;
       tlen_PCGEN_ = fmtCall;
-      PCGEN_TLEN_UPDATES (); 
+      PCGEN_TLEN_BUF_UPDATES (); 
       if (trequestedOut_PCGEN_) { 
 	*requestedOut = 1; 
       };
@@ -2309,18 +2511,18 @@ do {
     tdelim_PCGEN_  = P_ADVANCE_DELIMS(tdelim_PCGEN_);
     if (P_WriteMeta & m->compoundLevel) {
         tlen_PCGEN_ = Pa_uint32_write2buf(pads,buf_cursor_PCGEN_,buf_len,buf_full,&pd_PCGEN_, &rep->length); 
-	PCGEN_TLEN_UPDATES (); 
+	PCGEN_TLEN_BUF_UPDATES (); 
         tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,delims[0]);
-        PCGEN_TLEN_UPDATES ();
+        PCGEN_TLEN_BUF_UPDATES ();
 	*requestedOut = 1; 
       };
     for (i = 0; i<rep->length; i++){
        tlen_PCGEN_ = fmtCall;
-       PCGEN_TLEN_UPDATES (); 
+       PCGEN_TLEN_BUF_UPDATES (); 
        if (trequestedOut_PCGEN_){
 	 *requestedOut = 1;
 	 tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,ttdelim_PCGEN_[0]);
-	 PCGEN_TLEN_UPDATES ();
+	 PCGEN_TLEN_BUF_UPDATES ();
        };
     };
 
@@ -2331,11 +2533,11 @@ do {
  do { 
       trequestedOut_PCGEN_ = 0;
       tlen_PCGEN_ = fmtCall;   /* uses tdelim_PCGEN_, sets trequesetedOut */
-      PCGEN_TLEN_UPDATES (); 
+      PCGEN_TLEN_BUF_UPDATES (); 
       if (trequestedOut_PCGEN_) { 
 	*requestedOut = 1; 
         tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,delims[0]);
-        PCGEN_TLEN_UPDATES ();
+        PCGEN_TLEN_BUF_UPDATES ();
       };
  } while (0)
 /* END_MACRO */
@@ -2362,13 +2564,13 @@ do{
       trequestedOut_PCGEN_ = 0;
       if (P_WriteMeta & m->compoundLevel) {
         tlen_PCGEN_ = Pcstr_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,tagStr);
-	PCGEN_TLEN_UPDATES (); 
+	PCGEN_TLEN_BUF_UPDATES (); 
         tlen_PCGEN_ = Pchar_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,delims[0]);
-        PCGEN_TLEN_UPDATES ();
+        PCGEN_TLEN_BUF_UPDATES ();
 	*requestedOut = 1; 
       };
       tlen_PCGEN_ = fmtCall;
-      PCGEN_TLEN_UPDATES (); 
+      PCGEN_TLEN_BUF_UPDATES (); 
       if (trequestedOut_PCGEN_) { 
 	*requestedOut = 1; 
       };
@@ -2379,7 +2581,7 @@ do{
  do { 
       if (P_Write & (*m)){
          tlen_PCGEN_ = Pcstr_lit_write2buf (pads,buf_cursor_PCGEN_,buf_len,buf_full,enumStr);
-	 PCGEN_TLEN_UPDATES (); 
+	 PCGEN_TLEN_BUF_UPDATES (); 
 	 *requestedOut = 1;
          tdelim_PCGEN_ = 0;
 	 trequestedOut_PCGEN_ = 0;
@@ -2390,7 +2592,7 @@ do{
 #define PCGEN_FMT2BUF_RECORD(fname)
 do {
     tlen_PCGEN_ = PDCI_io_rec_fmt2buf(pads, buf_cursor_PCGEN_, buf_len, buf_full, Pcharset_ASCII, (fname));
-    PCGEN_FINAL_TLEN_UPDATES ();
+    PCGEN_FINAL_TLEN_BUF_UPDATES ();
 } while (0)
 /* END_MACRO */
 
@@ -2556,7 +2758,7 @@ do{
 
 #define PCGEN_ARRAY_REREAD_ELEM_RET() P_READ_OK_DATA
 
-#define PCGEN_ARRAY_RECORD_ERROR(errCodeIN,WHATFN,ERRMSG...)
+#define PCGEN_ARRAY_RECORD_ERROR(errCodeIN,WHATFN,ERRMSG,...)
 do{
   if (!(pd->nerr)) 
     {
