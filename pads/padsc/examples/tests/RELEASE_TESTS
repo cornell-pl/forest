@@ -47,5 +47,6 @@ test_punion_manifest.c
 test_readint.c
 test_struct3.c
 test_struct_regexp.c
+test_transform.c
 test_write_struct1.c
 test_write_struct_strings.c

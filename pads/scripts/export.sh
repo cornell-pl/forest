@@ -2,14 +2,19 @@
 # this script should be run from the top level pads directory
 # it will leave a tar ball at that level, and a directory pads_remove_me
 # that is the source of the tar ball.
-# when putting out a new release, increment the compiler version number
-# in main.sml
+#
+# Notes: When putting out a new release, 
+#  . Increment the compiler version number in main.sml
+#  . Incremeent the manual version in version.tex
+#  . Be sure to update the take_lists in examples/{p,tests,data}
 
 # pads2005-03-07   pads 1.0     2005-03-07  
 # pads-1-01-a      pads 1.01    2006-01-26
 # pads-1-01-b      pads 1.01b   2006-05-17  new license
 # pads-1-02-a      pads 1.02    2006-08-01  64 bit support, bug fixes
 # pads-1-03-a      pads 1.03    2006-09-07  transform, pinclude, writetoio fix
+# pads-1-03-b      pads 1.03b   2006-09-08  fixed takelists, version numbers
+# pads-1-03-c      pads 1.03c   2006-09-08  fixed takelists, fixed makefile
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`
