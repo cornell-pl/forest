@@ -19,6 +19,7 @@ rwxml_message_header.c
 rwxml_ptimestamp.c
 rwxml_ptimestamp_explicit.c
 rwxml_pads-comp.c
+rwxml_transform.c
 test_ai.c
 test_array_ended.c
 test_array_ended2.c

@@ -78,5 +78,6 @@ struct_regexp.p
 struct_strings.p 
 struct_tricky.p 
 struct_good.p 
+transform.p
 typedef.p 
 typedef2.p 
