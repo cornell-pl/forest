@@ -558,7 +558,7 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_O += \
   $(PADSGALAX_LIBOPT_O) $(SHARED_ASTLIB_O)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx -lcamlidl \
-  -L$(OCAML_LIB_DIR)/std-lib -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
+  -L$(OCAML_LIB_DIR)/std-lib -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray -lthreadsnat -lpthread \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/pkg-lib/pcre -lpcre_stubs
 else 
@@ -591,7 +591,7 @@ ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
   $(PADSGALAX_LIBOPT_D) $(SHARED_ASTLIB_D)  \
   -L$(PADSGLX_LIB_DIR) -lpadsglxopt -lpglx-g -lcamlidl \
-  -L$(OCAML_LIB_DIR)/std-lib -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray \
+  -L$(OCAML_LIB_DIR)/std-lib -lnums -lm -ldl -lcurses -lunix -lstr -lbigarray  -lthreadsnat -lpthread \
   -L$(PCRE_LIB_DIR) -lpcre -L$(GALAX_HOME)/lib/c \
   -L$(OCAML_LIB_DIR)/pkg-lib/pcre -lpcre_stubs
 else

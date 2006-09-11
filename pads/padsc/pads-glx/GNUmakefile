@@ -77,6 +77,7 @@ OCAML_CAPI_OPTLIBS=\
 -ccopt -fno-common \
 -ccopt -dynamic \
 -ccopt -lnums -ccopt -lunix -ccopt -lstr -ccopt -lbigarray \
+-ccopt -lthreadsnat -ccopt -lpthread \
 -ccopt -lpcre_stubs \
 -ccopt -lpcre 
 
