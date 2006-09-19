@@ -138,7 +138,6 @@ define RegressDef
   if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
   $(RM) tmp/tmp.$<$$suf; \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
-  export DYLD_LIBRARY_PATH=$(PADS_SRC)/padsc/libpads/$(ARCH):$(DYLD_LIBRARY_PATH);\
   echo "(./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
   echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
