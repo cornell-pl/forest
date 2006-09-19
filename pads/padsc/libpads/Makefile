@@ -151,10 +151,10 @@ $(PADS_NAME_DBG): $(LIBPADS_OBJS_D)
 	$(STATIC_LIBTOOL) $@ $(STATIC_LIBTOOL_OPTS) $^
 
 $(PADS_SHARED_NAME_OPT): $(LIBPADS_OBJS_O)
-	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB)
+	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB) $(CCLIBS)
 
 $(PADS_SHARED_NAME_DBG): $(LIBPADS_OBJS_D)
-	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB)
+	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB) $(CCLIBS)
 
 #########################################################################
 # Section:	Makefile post-includes

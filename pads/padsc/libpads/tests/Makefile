@@ -50,6 +50,8 @@ else
 # For backward compatibility with 64 bit changes
 #
 export AST_ARCH=$(shell $(CONF_AST_BIN)/package)
+export LD_LIBRARY_PATH:=$(LD_LIBRARY_PATH):$(PADS_SRC)/padsc/libpads/$(ARCH)
+export DYLD_LIBRARY_PATH:=$(DYLD_LIBRARY_PATH):$(PADS_SRC)/padsc/libpads/$(ARCH)
 
 #
 # The rest of this file should be invoked from the ARCH sub-directory
@@ -205,7 +207,7 @@ clobber::
 # Individual targets
 #
 regress_o_announce:
-	@echo " "; echo "REGRESS USING OPTIMIZED CODE"; echo " " \
+	@echo " "; echo "REGRESS USING OPTIMIZED CODE $(LD_LIBRARY_PATH)"; echo " " \
 
 regress_d_announce:
 	@echo " "; echo "REGRESS USING DEBUG CODE"; echo " " \
