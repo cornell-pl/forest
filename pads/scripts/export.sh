@@ -5,7 +5,8 @@
 #
 # Notes: When putting out a new release, 
 #  . Increment the compiler version number in main.sml
-#  . Incremeent the manual version in version.tex
+#  . Increment the manual version in version.tex
+#     SCRIPT FOR EXPORTING MANUAL IS BROKEN: PICTURES, PDF MISSING
 #  . Be sure to update the take_lists in examples/{p,tests,data}
 
 # pads2005-03-07   pads 1.0     2005-03-07  

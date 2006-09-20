@@ -21,9 +21,9 @@ Pstruct hString{
 };
 
 Pstruct lazyBlock_t{
-  Pb_uint32 numBytes;
+  Pb_uint32 addressOfEnd;
   Pcompute size_t offset = position.offset;
-  Pb_uint8[numBytes - offset] payload;
+  Pb_uint8[addressOfEnd - offset] payload;
 };
 
 Pstruct version_t {
@@ -70,8 +70,68 @@ Pstruct export_t{
 
 Pstruct exports_t {
   Pb_uint8 length;
-  export_t[length] exports;
+  export_t[length] exps;
 };
+
+Pstruct dep_mods_t{
+  HFastString moduleName;
+  Pb_uint8    isBootInterface;
+}
+
+Punion lenRest_t(:Puint8 init:){
+  Pswitch(init){
+    Pcase 0xff : Psbl_uint32(:4:) longRep;
+    Pdefault   : Pcompute Puint32 shortRep = init;
+  }
+};
+
+Pstruct hiLenRaw_t{
+  Pb_uint8 initial;
+  lenRest_t(:initial:) rest;
+}
+
+
+void hiLenRaw_uint32(hiLenRaw_t *src, hiLenRaw_t_pd *src_pd, Puint32 *dest, Pbase_pd *dest_pd){
+  *dest_pd = src_pd->initial; 
+  *dest = src->rest.val.shortRep;  /* short and long are the same */
+};
+
+void uint32_hiLenRaw(P_t *pads, Puint32 *src, Pbase_pd *src_pd, hiLenRaw_t *dest, hiLenRaw_t_pd *dest_pd){
+  if (*src < 0xff) {
+    dest->initial = *src;
+    dest->rest.tag = shortRep;
+    dest->rest.val.shortRep = *src;
+  } else {
+    dest->initial = 0xff;
+    dest->rest.tag = longRep;
+    dest->rest.val.longRep = *src;
+  };
+  hiLenRaw_t_genPD(pads, dest, dest_pd);
+};
+
+void cnvMask(P_t *pads, hiLenRaw_t_m *phy, Pbase_m *log){
+  hiLenRaw_t_m_init(pads, phy, *log);
+};
+
+
+Ptrans hiLen_t{
+  hiLenRaw_uint32 : hiLenRaw_t <=> Puint32 : uint32_hiLenRaw(:pads:);
+  Pmaskmap cnvMask(:pads:);
+};
+
+Pstruct depBody_t {
+  hiLen_t                   dep_mods_len;
+  dep_mods_t[dep_mods_len]  dep_mods;
+  hiLen_t                   dep_pkgs_len;
+  HFastString[dep_pkgs_len] dep_pkgs;
+  hiLen_t                   dep_orphs_len;
+  module_t[dep_orphs_len]   dep_orphs;
+};
+
+Pstruct dep_t{
+  Pb_uint32   addressOfEnd;  /- Address of end
+  depBody_t   body;
+}
 
 Pstruct hi{
   Pendian Pb_uint32 id : id == 0x0001face || id == 0x01face64;
@@ -82,7 +142,7 @@ Pstruct hi{
   Pb_uint8 isBoot;
   Pb_uint8 iVersion;
   Pb_uint8 hasOrphan;
-  lazyBlock_t dependencies;
+  dep_t    dependencies;
   lazyBlock_t usages;
   exports_t   exports;
   Pcompute size_t offsetl = position.offset;

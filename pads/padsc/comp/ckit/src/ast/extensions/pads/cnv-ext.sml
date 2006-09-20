@@ -2161,7 +2161,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      isRecord, containsRecord, largeHeuristic, isSource : bool, 
 			      srcName: string, srcArgs: pcexp list, dstName: string, dstArgs: pcexp list,
 			      sToD : pcexp, sToDArgs: pcexp list, dToS : pcexp, dToSArgs : pcexp list,
-			      maskMap : pcexp option}) = 
+			      maskMap : (pcexp * pcexp list) option}) = 
 		  let val (cParams : (string * pcty) list, 
 			   paramInfo : (string * acty) list, 
 			   paramNames : string list) = processParams params
@@ -2298,8 +2298,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				  case maskMap of NONE => (
 				       if isAssignable(srcmCT, dstmCT, NONE) then () 
 				       else PE.error (err5 ()))
-				  | SOME maskFun => 
-				      checkParamTysWithErr(name, maskFun, [P.addrX tmpmX, PT.Id m], 0, 0, err4 ())
+				  | SOME (maskFun,args) => 
+				      checkParamTysWithErr(name, maskFun, args@[P.addrX tmpmX, PT.Id m], 0, 0, err4 ())
 				)
 			  end
                       fun genReadBody() = 
@@ -2316,7 +2316,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val maskInitSs = (* if mask transform given, call that; else if src and desk masks are the same, just copy *)     
 				  case maskMap 
 				  of NONE   => [P.assignS(tmpmX, P.starX (PT.Id m))]
-                                  |  SOME f => [PT.Expr(PT.Call(f, [P.addrX tmpmX,PT.Id m]))]
+                                  |  SOME (f,args) => [PT.Expr(PT.Call(f, args@[P.addrX tmpmX,PT.Id m]))]
 			      val rawReadSs = 
 				  [PT.Expr(PT.Call(PT.Id (srcReadFun),
 						   [PT.Id pads, P.addrX tmpmX, P.addrX tmppdX, P.addrX tmprepX]
@@ -3686,7 +3686,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 pushLocalEnv();
 			 ignore(insTempVar(index,             P.int));
 			 ignore(insTempVar(length,            PL.uint32PCT));
-			 ignore(insTempVar(name,              P.ptrPCT elemRepPCT)); 
 			 ignore(insTempVar(elts,              P.ptrPCT elemRepPCT)); 
 			 expEqualTy(lower, CTintTys, errMsg "Lower");
 			 expEqualTy(lower, CTintTys, errMsg "Upper");

@@ -394,7 +394,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
                          sToDArgs: expression list,
                          dToS    : expression,
                          dToSArgs: expression list}
-        | pMaskMap of expression option			
+        | pMaskMap of (expression * expression list) option
         | pTrans of externalDecl
         | pRecursive of externalDecl
 (*         | pDynamic of externalDecl *)
@@ -1214,6 +1214,8 @@ pTypedefPredOpt :
 pTypedef:
   pIsSource pIsRecord PTYPEDEF pName pOptActParams pName pushScope pTyParams pTypedefPredOpt
  ( makeTypeName pName2;
+   makeTypeName (pName2^"_pd");
+   makeTypeName (pName2^"_m");
    ExternalDeclExt(PX.PTypedef {baseTy = PX.Name pName1, 
                                 args   = pOptActParams,
                                 name   = pName2, 
@@ -1237,11 +1239,13 @@ pTransBody:
 
 pMaskMap: 
 	           (NONE)
- | PMASKMAP expr SEMICOLON (SOME expr)
+ | PMASKMAP expr pOptActParams SEMICOLON (SOME (expr, pOptActParams))
 
 pTrans:
   pIsSource pIsRecord PTRANS pName pushScope pTyParams LCURLY pTransBody pMaskMap RCURLY  popScope
   (makeTypeName pName;
+   makeTypeName (pName^"_pd");
+   makeTypeName (pName^"_m");
    ExternalDeclExt(PX.PTrans {name   = pName, 
 			      params = pTyParams,
 			      isRecord = pIsRecord,
@@ -1268,6 +1272,8 @@ pTrans:
 pRecursive:
   pIsSource pIsRecord PRECURSIVE pName pushScope pTyParams popScope
  ( makeTypeName pName;
+   makeTypeName (pName^"_pd");
+   makeTypeName (pName^"_m");
    ExternalDeclExt(PX.PRecursive {base = NONE,
                                 name   = pName, 
 				params = pTyParams,
@@ -1343,6 +1349,8 @@ pOptPredOpt : (NONE)
 pOpt:
  pIsSource pIsRecord POPT pName pOptActParams pName pushScope pTyParams pOptPredOpt
   (makeTypeName pName2;
+   makeTypeName (pName2^"_pd");
+   makeTypeName (pName2^"_m");
    ExternalDeclExt(PX.Popt {baseTy   = PX.Name pName1,
 			    args     = pOptActParams,
 			    params   = pTyParams,
@@ -1410,6 +1418,8 @@ pStructFieldList:
 pStruct:
  pIsSource pIsRecord  PSTRUCT pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
+   makeTypeName (pName^"_pd");
+   makeTypeName (pName^"_m");
    PX.PStruct {isAlt = false, isRecord = pIsRecord, isSource = pIsSource, 
 	       containsRecord = false, largeHeuristic = false,
                name = pName, params = pTyParams, fields = pStructFieldList, postCond = []}	
@@ -1418,6 +1428,8 @@ pStruct:
 pAlternates:
  pIsSource pIsRecord  PALTERNATES pName pushScope pTyParams LCURLY pStructFieldList popScope
  ( makeTypeName pName;
+   makeTypeName (pName^"_pd");
+   makeTypeName (pName^"_m");
    PX.PStruct {isAlt = true, isRecord = pIsRecord, isSource = pIsSource, 
 		   containsRecord = false, largeHeuristic = false,
 		   name = pName, params = pTyParams, fields = pStructFieldList, postCond = []}	
@@ -1457,7 +1469,10 @@ pSizeSpec:
 
 pArray:
  pIsSource pIsRecord PARRAY pName pushScope pTyParams LCURLY pName pOptActParams pSizeSpec pArrayConstraintOpt SEMICOLON popScope
- ( PX.PArray {isRecord=pIsRecord, isSource = pIsSource, 
+ ( makeTypeName  pName;
+   makeTypeName (pName^"_pd");
+   makeTypeName (pName^"_m");
+   PX.PArray {isRecord=pIsRecord, isSource = pIsSource, 
 	      containsRecord = false, largeHeuristic = false,
 	      name = pName1, params = pTyParams, 
               args = pOptActParams, baseTy = PX.Name pName2, 
@@ -1485,6 +1500,8 @@ pVariants:
 pUnion:
   pIsSource pIsRecord pIsLongestMatch PUNION pName pushScope pTyParams LCURLY pVariants popScope
  ( makeTypeName pName;
+   makeTypeName (pName^"_pd");
+   makeTypeName (pName^"_m");
    PX.PUnion {name = pName, params = pTyParams, 
 	      containsRecord = false, largeHeuristic = false,
               isLongestMatch = pIsLongestMatch, isRecord = pIsRecord, isSource = pIsSource, 
@@ -1518,7 +1535,9 @@ pEnumPrefixOpt:
 
 pEnum:
  pIsSource pIsRecord PENUM pName pushScope  pTyParams pEnumPrefixOpt LCURLY pEnumFieldList popScope
- ( makeTypeName pName1;
+ ( makeTypeName pName;
+   makeTypeName (pName^"_pd");
+   makeTypeName (pName^"_m");
    ExternalDeclExt(PX.PEnum {name = pName1, params = [], isRecord = pIsRecord, 
 		             containsRecord = false, largeHeuristic = false,
 			     isSource = pIsSource, prefix = pEnumPrefixOpt, members = pEnumFieldList})

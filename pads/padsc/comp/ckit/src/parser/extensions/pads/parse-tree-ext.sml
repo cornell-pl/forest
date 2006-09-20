@@ -148,7 +148,7 @@ structure ParseTreeExt =
                        sToDArgs: 'exp list,
                        dToS    : 'exp,
                        dToSArgs: 'exp list,
-		       maskMap : 'exp option}
+		       maskMap : ('exp * 'exp list) option}
 		       
          | PSelect of {selName : string,
 		       tyName  : string,

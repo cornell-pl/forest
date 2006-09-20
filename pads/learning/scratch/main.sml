@@ -8,9 +8,31 @@ structure Main : sig
     exception Exit of OS.Process.status
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
     structure RegExp = RegExpFn (structure P=AwkSyntax  structure E=DfaEngine) : REGEXP 
+    structure MT = MatchTree
+    structure SS = Substring
 
     type offset = {offset: int, span:int}
-    datatype Token = Pint of int | Pstring of string | Pwhite of string | Other of char | Error
+    datatype Token = Pint of LargeInt.int | Pstring of string | Pwhite of string | Other of char | Error
+
+    (*Note: regular expressions must consume at least one input character! *)
+    type mi = {pos:substring, len:int}
+    fun getToken mt f =
+	let val (root:mi option) = MT.root mt
+	in 
+	    case root of NONE => (Error, 0)
+	  | SOME m => (f (SS.string (SS.slice(#pos m, 0, SOME(#len m)))), #len m)
+	end
+    val alphaString = "[:a-zA-Z:]+"
+    fun alphaStringCvt mtOpt = getToken mtOpt (fn s=> Pstring s)
+    val integer = "-?[:0-9:]+"
+    fun integerCvt mtOpt = getToken mtOpt (fn s=> Pint (Option.valOf(LargeInt.fromString s)))
+    val ws = "[: \t:]+"
+    fun wsCvt mtOpt = getToken mtOpt (fn s=> Pwhite s)
+(*    val other = "[:,|(){}_;!~[]:]" *)
+    val other = "[:|:]" 
+    fun otherCvt mtOpt = getToken mtOpt (fn s=> Other (String.sub(s,0)))
+    val matchlist = [(integer, integerCvt), (alphaString, alphaStringCvt), (ws, wsCvt), (other,otherCvt)]
+
     (*    Pint < Pstring < Pwhite < Other < Error *)
     fun compToken (t1, t2) = 
 	case (t1,t2) 
@@ -57,90 +79,34 @@ structure Main : sig
 	   lines
        end
 
-    fun buildRegExps () = 
-	let val StringR = RegExp.compileString "[:alpha:]*"
-	in
-	    [StringR]
-	end
-
-
-    (* assume offset is not at end of sstring *)
-    fun getInt (sstring, len, offset) = 
-	let val fst = Substring.sub(sstring,offset)
-	    fun toInt d = (Char.ord d) - (Char.ord #"0")
-	    fun getRest span acc = 
-		if offset+span >= len then (Pint acc, {offset=offset, span=span})
-		else let val nxt = Substring.sub(sstring,offset+span)
-		     in
-			 if Char.isDigit nxt then getRest (span + 1) (acc * (toInt nxt))
-			 else (Pint acc, {offset=offset,span=span})
-		     end
-	in
-	    if Char.isDigit fst then SOME (getRest 1 (toInt fst)) else NONE
-	end
-
-    (* assume offset is not at end of sstring *)
-    fun getString (sstring, len, offset) = 
-	let val fst = Substring.sub(sstring,offset)
-	    fun getRest span acc = 
-		if offset+span >= len then (Pstring acc, {offset=offset, span=span})
-		else let val nxt = Substring.sub(sstring,offset+span)
-		     in
-			 if Char.isAlpha nxt orelse Char.isDigit nxt orelse nxt = #"_" then getRest (span + 1) (acc ^ (Char.toString nxt))
-			 else (Pstring acc, {offset=offset,span=span})
-		     end
-	in
-	    if Char.isAlpha fst then SOME (getRest 1 (Char.toString fst)) else NONE
-	end
-
-    (* assume offset is not at end of sstring *)
-    fun getWS (sstring, len, offset) = 
-	let val fst = Substring.sub(sstring,offset)
-	    fun getRest span acc = 
-		if offset+span >= len then (Pwhite acc, {offset=offset, span=span})
-		else let val nxt = Substring.sub(sstring,offset+span)
-		     in
-			 if nxt = #" " then getRest (span + 1) (acc ^ (Char.toString nxt))
-			 else (Pwhite acc, {offset=offset,span=span})
-		     end
-	in
-	    if fst = #" " then SOME (getRest 1 (Char.toString fst)) else NONE
-	end
-
-    fun getOther (sstring, len, offset) = 
-	SOME (Other (Substring.sub(sstring,offset)), {offset=offset, span=1})
-         handle _ => (print "KSF:caught exception\n"; NONE)
-
-    fun pick [] s = (Error, {offset=0,span=0})
-      | pick [f] s = Option.valOf(f s)
-      | pick (f::fs) s = 
-	case f s of NONE => pick fs s
-        | SOME r => r
-
-    fun tokenizeRecord record = 
-	let val record = Substring.full record
-	    val length = Substring.size record
-	    fun getFirst offset = pick [getInt, getWS, getString, getOther] (record,length,offset)
-            fun tR offset acc = 
-		if offset = length then acc
-		else let val first as (r, {offset=_,span=span}) = getFirst offset
-		     in
-			 tR (offset+span) (first::acc)
-		     end
-	in
-	    List.rev(tR 0 [])
-	end
 
     fun printToken t = 
 	case t 
-        of Pint i => print "[int]" (*(" Pint("^(Int.toString i)^")") *)
-        |  Pstring s => print "[string]" (*(" Pstring("^s^")") *)
+        of Pint i => print (*"[int]"*)(" Pint("^(LargeInt.toString i)^")") 
+        |  Pstring s => print (*"[string]"*)  (" Pstring("^s^")")
         |  Pwhite s => print "[white space]" (*(" Pstring("^s^")") *)
         |  Other c => print ("("^(Char.toString c)^")") (*(" Pother("^(Char.toString c)^")") *)
         |  Error => print (" Error")
 
     fun printTokens [] = print "\n"
       | printTokens ((t,loc)::ts) = (printToken t; printTokens ts)
+
+    
+
+    fun rtokenizeRecord record = 
+	let val record = Substring.full record
+	    val length = Substring.size record
+	    fun matchOne rest = RegExp.match matchlist SS.getc rest
+            fun getMatches offset rest acc = 
+		case matchOne rest of NONE => List.rev acc
+		| SOME ((token,len),rest) => 
+		    getMatches (offset+len) rest ((token,{offset=offset, span=len}) :: acc)
+	    val matches = getMatches 0 record []
+(*	    val () = printTokens matches *)
+	in
+	    matches
+	end
+
 
     fun countFreqs tokens = 
 	let fun doToken counts t = 
@@ -191,9 +157,9 @@ structure Main : sig
     fun doIt fileName = 
 	let val records = loadFile fileName
 	    val numRecords = List.length records
-	    val tokens = List.map tokenizeRecord records
-(*	    val () = List.app printTokens tokens  *)
-            val counts = List.map countFreqs tokens
+	    val rtokens = List.map rtokenizeRecord records
+(*	    val () = List.app printTokens rtokens  *)
+            val counts = List.map countFreqs rtokens
             val fd: freqDist = buildHistograms numRecords counts
 	in
 	    counts
