@@ -24,7 +24,12 @@ quick:  paper.tex
 pdfquick:  paper.tex
 	pdflatex paper.tex
 
-paper:  paper.tex pads.bib related_work.tex definitions.tex ddcpoly.tex appendix.tex 
+pdfpaper: paper.tex intro.tex pads.bib pml_overview.tex impl.tex conc.tex \
+	darkstar_pml.tex newick_pml.tex sirius_pml.tex gentool.tex \
+	related_work.tex definitions.tex
+	pdflatex paper.tex; bibtex paper; pdflatex paper.tex; pdflatex paper.tex
+
+paper:  paper.tex pads.bib related_work.tex definitions.tex
 	latex paper.tex; bibtex paper; latex paper.tex; latex paper.tex; dvips paper.dvi -o paper.ps -t letter
 	pdflatex paper.tex
 

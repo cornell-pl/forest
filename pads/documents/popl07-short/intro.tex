@@ -242,14 +242,16 @@ the Data Description Calculus (\ddcold{})~\cite{fisher+:next700ddl} to
 account for \padsml{}'s polymorphic types.  In the process, we
 simplified the original presentation of the parser semantics
 substantially, particularly for recursive types.  In addition, we
-extended the theory to give a printing semantics.  We used this new
-semantics to guide the \padsml{} implementation of printing.
-\edcom{Refer reader to thesis and tech report} presents the extended \ddc{} calculus, focusing on
-the semantics of polymorphic types for parsing and the key elements of
-the printing semantics.  \cut{We show that both parsers and printers
-  in the \ddc{} are type correct and furthermore that printers produce
-  pairs of parsed data and parse descriptors in {\em canonical form}.
-}
+extended the theory to give a printing semantics. We used this new
+semantics to guide the \padsml{} implementation of printing.  We 
+also proved that the generated code of the parsing and printing
+semantics is type safe and well-behaved as defined by a canonical
+forms theorem. A full treatment of the extended calculus appears in
+Mandelbaum's Ph.D. thesis~\cite{mandelbaum-thesis}, while an overview of
+the calculus and printing semantics, as well as the associated
+metatheory, can be found in our companion technical
+report~\cite{fisher+:popl-sub-long}.
+
 
 \cut{\textbf{***THEN compare to \padsc{} in one paragraph only}}
 \padsml{} has evolved from previous work on
@@ -298,70 +300,8 @@ application domains in a concise, elegant, and easy-to-read notation.
 general ``types as modules'' compilation strategy
 that produces robust parser and printer functions
 as well as auxiliary support for user-specified tool generation.
-\item We have defined the formal semantics of both \padsml{} parsers 
-and printers and proven our generated code is type safe and
-well-behaved as defined by a canonical forms theorem.
 \end{itemize}
 
-\cut{
-%% WHY IS PROCESSING IT HARD?
-%% No control of source or target format
-Once an analyst has the data, a common task is
-converting the source format to a standard database loading format.
-This transformation proceeds in three stages.  First, the analyst
-writes a parser for the ad hoc format, using whatever (in)accurate
-documentation may be available.  Second, he writes a program that 
-detects and handles erroneous data records, selects records
-of interest, and possibly normalizes records into a standard format,
-for example, by reordering, removing, or transforming fields.
-Unfortunately, the parsing, error handling, and transformation code is
-often tightly interleaved.  This interleaving hides the knowledge of
-the ad hoc format obtained by an analyst and severely limits the
-parser's reuse in other applications.
-
-\cut{In addition to poor documentation and error-prone data sources, other
-common characteristics of ad hoc data make basic processing tasks
-challenging.}
-
-\cut{A common phenomenon is for a
-field in a data source to fall into disuse.  After a while, a new
-piece of information becomes interesting, but compatibility issues
-prevent data suppliers from modifying the shape of their data, so
-instead they hijack the unused field, often failing to update the
-documentation in the process.
-}
-
-%% Sources, meaning, and handling of errors
-Another challenge is the variety of errors and the
-variety of application-dependent strategies for handling errors in ad
-hoc data.  Some common errors, listed in \figref{figure:data-sources},
-include undocumented data, corrupted data, missing data, and multiple
-representations for missing values.  Some sources of errors
-that we have encountered in ad hoc sources include malfunctioning
-equipment, race conditions on log entry~\cite{wpp}, presence of
-non-standard values to indicate ``no data available,'' human error
-when entering data, and unexpected data values.  A wide range of
-responses are possible when errors are detected, and they are highly
-application dependent.  Possible responses range from halting processing
-and alerting a human operator, to partitioning erroneous from valid
-records for examination off-line, to simply discarding erroneous or
-unexpected values.  One of the most challenging aspects of processing
-ad hoc data is that erroneous data is often more important than
-error-free data, because it may indicate, for example, that two
-systems are failing to communicate.  Writing code that reliably
-handles erros, however, is difficult and tedious.
-}
-% \subsection{\padsmlbig{} Architecture}
-
-
-% In the next section, we will describe, in detail, the \padsml{} approach
-% to data and meta data, the \padsml{}
-% syntax for data description, and illustrative examples. Next, in
-% Section~\ref{sec:} we will elaborate on
-% \padsml{}'s support for data transformation, including design,
-% syntax and some examples.  Section~\ref{sec:related-work} will discuss
-% the related work. A discussion of conclusions and future work is
-% included in section~\ref{sec:conclusion}.
 
 %%% Local Variables: 
 %%% mode: latex
