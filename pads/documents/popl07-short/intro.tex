@@ -40,9 +40,11 @@ malfunctioning equipment, race conditions on log entry, the
 % deleted this cite for race conditions:  ~\cite{wpp}
 presence of non-standard values to indicate ``no data available,'' and
 human error when entering data.  How to respond to errors is highly 
-application-specific: some need to halt processing and
-alert a human operator, others can repair errors by consulting auxiliary sources, while still others simply filter out erroneous values. In some cases, erroneous data is more important than error-free data; for example, 
-it may signal where two systems are failing to communicate.
+application-specific: Some need to halt processing and
+alert a human operator; others can repair errors by consulting 
+auxiliary sources; still others simply filter out erroneous values. 
+In some cases, erroneous data is more important than error-free data; 
+for example, it may signal where two systems are failing to communicate.
 Unfortunately, writing code that reliably handles
 both error-free and erroneous data is difficult and tedious.
 
@@ -185,7 +187,7 @@ necessary to clean and vet the data is prohibitively expensive.}
 %% Slight change to emphasize generation of many tools.
 
 \padsml{} is a domain-specific language designed to 
-improve the productivity of data analysts, be they computational biologists, physicists, network administrators, healthcare providers, financial analysts, \etc\
+improve the productivity of data analysts, be they computational biologists, physicists, network administrators, healthcare providers or financial analysts.
 To use the system, analysts describe their data in the \padsml{} language, capturing both the physical format of the data and any expected semantic constraints.  In return for this investment, analysts reap substantial rewards.
 First of all, the description
 serves as clear, compact, and formally-specified documentation of 
@@ -224,7 +226,7 @@ a \textit{parse descriptor}, a meta-data object detailing properties
 of the corresponding data representation.  Parse descriptors provide
 applications with programmatic access to errors detected during
 parsing.  The printer inverts the process, mapping internal data structures
-and their corresponding parse descriptors back into into raw data.
+and their corresponding parse descriptors back into raw data.
 
 In addition to generating parsers and printers, our framework permits
 developers to add {\em format-independent} tools without modifying the \padsml{} compiler by specifying \textit{tool generators}.  Such generators need only match a generic interface, specified as an \ml{} signature.  
@@ -270,6 +272,9 @@ In particular, \padsml{} provides a generic interface against which
 tool generators can be written.  In \padsc{}, the compiler itself
 generates all tools, and, therefore, developing a new tool generator
 requires understanding and modifying the compiler.
+For a full discussion of related work, we refer readers to
+Mandelbaum's Ph.D. thesis\cite{mandelbaum-thesis}.
+
 
 \cut{
 \textbf{***Then give observations.}
@@ -288,11 +293,11 @@ Therefore, the combination of
 
 \cut{\textbf{***Then, if still necessary give a pithy list of contributions}}
 
-In summary, this work makes the following key contributions:
+In summary, this research makes the following key contributions:
 \begin{itemize}
 \item We have designed and implemented \padsml{}, a novel
 data-description language that includes 
-dependent polymorphic recursive datatypes.  This design
+dependent, polymorphic, recursive datatypes.  This design
 allows data analysts to express the syntactic
 structure and semantic properties of data formats from numerous
 application domains in a concise, elegant, and easy-to-read notation.  
