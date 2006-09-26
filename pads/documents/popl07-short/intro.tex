@@ -246,9 +246,11 @@ simplified the original presentation of the parser semantics
 substantially, particularly for recursive types.  In addition, we
 extended the theory to give a printing semantics. We used this new
 semantics to guide the \padsml{} implementation of printing.  We 
-also proved that the generated code of the parsing and printing
-semantics is type safe and well-behaved as defined by a canonical
-forms theorem. A full treatment of the extended calculus appears in
+also proved a {\em canonical forms} theorem, which states 
+that the generated parsers produce well-typed, well-behaved canonical
+results, and, conversely, that printers operate correctly on the 
+appropriate canonical
+inputs. A full treatment of the extended calculus appears in
 Mandelbaum's Ph.D. thesis~\cite{mandelbaum-thesis}, while an overview of
 the calculus and printing semantics, as well as the associated
 metatheory, can be found in our companion technical

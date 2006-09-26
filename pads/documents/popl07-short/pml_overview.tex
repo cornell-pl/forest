@@ -106,11 +106,12 @@ Literal characters in type expressions denote singleton types.  For
 example, the \cd{Event} type is a string terminated by a
 vertical bar, followed by a vertical bar, followed by a timestamp.  The
 singleton type \cd{'|'} means that the data source must contain the
-character \cd{'|'} at this point in the input stream.  String,
-character, and integer literals can be embedded in a description and
-are interpreted as singleton types, \eg{}, the singleton type
+character \cd{'|'} at this point in the input stream.
+String, character, and integer literals can be embedded in a description and
+are interpreted as singleton types.  For example, the singleton type
 \cd{"0|"} in the \cd{Summary\_header} type
-denotes the string literal \cd{"0|"}.
+will generate a parser that reads \cd{"0|"} and printer that writes \cd{"0|"}.
+These literals do not appear in the generated data representations.
 
 The type \cd{Order\_header} is a record type, \ie{}, a tuple type in
 which each field may have an associated name.  The named field
@@ -227,7 +228,7 @@ one value parameter named \cd{p}.  Informally, \cd{Alpha Pnvp(p)} is a
 name-value pair where the value is described by \cd{Alpha} and the
 name must satisfy the predicate \cd{p}.
 
-The \cd{Nvp} type reuses the\cd{Pnvp} type to define a name-value pair
+The \cd{Nvp} type reuses the \cd{Pnvp} type to define a name-value pair
 whose name must match the argument string \texttt{name} but whose
 value can have any type.  The \cd{Nvp\_a} type also uses the type
 \cd{Pnvp}. It defines a name-value pair that permits any name, but
@@ -264,11 +265,11 @@ given by the \cd{Details} constructor will be used to parse the
 current data.  Otherwise, the format given by the \cd{Generic}
 constructor will be used.
 
-The last construct in the \darkstar{} description is the type
-qualifier \cd{omit}.  In the \cd{Service} datatype,
-\cd{omit} specifies that the parsed string literal should be omitted
-in the internal data representation because the literal can be
-determined by the datatype constructor.
+% The last construct in the \darkstar{} description is the type
+% qualifier \cd{omit}.  In the \cd{Service} datatype,
+% \cd{omit} specifies that the parsed string literal should be omitted
+% in the internal data representation because the literal can be
+% determined by the datatype constructor.
 
 \cut{We can do this because we can discern from the
 datatype constructor which string was found in the data source.}

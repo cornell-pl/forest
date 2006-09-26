@@ -11,50 +11,65 @@ construct data analysis tools.
 % interesting data analysis tools are constantly being developed, and
 % we have no hope of integrating even a fraction of them into the
 % \padsml{} system ourselves.
-To this end, we provide a simple framework for others to develop tool
-generators.
+To this end, we provide a simple framework for others to develop 
+format-independent tools.
 
 The techniques of type-directed programming, known variously as
 \textit{generic} or \textit{polytypic} programming, provide a
 convenient conceptual starting point in designing a tool framework.
-In essence, any tool generator is a function from a description to the
-corresponding tool. As \padsml{} descriptions are types, a tool
-generator is a type-directed function.
+In essence, any format-independent tool is a function from a description to 
+a concrete realization of that tool. 
+As \padsml{} descriptions are (dependent) types, a 
+format-independent tool is a type-directed function.
 
-Support for some form of generic programming over data representations
-and parse descriptors is an essential first step in supporting the
-development of tool generators. While a full-blown generic programming
-system like Generic Haskell~\cite{hinze+:generic-haskell} would be
-useful in this context, \ocaml{} lacks a generic programming facility.
-Yet, we can still achieve some of the benefits of generic programming
-even without such a facility, as a number of useful data processing
-tools can be specified genericly using only the \padsml\ compiler and
-the \ocaml\ module system. 
+% Support for some form of generic programming over data representations
+% and parse descriptors is an essential first step in supporting the
+% development of tool generators. 
 
-In particular, many of the tools we have encountered 
+Some modern functional programming languages,
+Generic Haskell~\cite{hinze+:generic-haskell}, in particular,
+have many features that support type-directed programming, and
+hence would support development of format-independent tools quite nicely. 
+% would be
+% useful in this context, 
+\ocaml{}, however, lacks any specific, built-in generic programming facility.
+Fortunately, we can still achieve many of the benefits of generic 
+programming idioms by having the \padsml\ compiler generate
+well-designed, format-specific libraries for us at compile time
+and then linking those libraries to format-independent routines.
+
+To be specific, for each format description, \padsml\ generates a
+format-dependent traversal mechanism that implements a generalized
+fold over the representations and parse descriptors that correspond to
+the description. Independently, tool developers write format-independent
+routines that specifying the behaviour of a tool over each
+\padsml{} type constructor. When a user needs a {\em specific tool} for a
+{\em specific format}, they link the format-dependent 
+traversal to the format-independent routines via 
+functor application.
+
+In principle, different tools might require different sorts of traversals.  
+However, all of the tools we have encountered in practice so far, both in 
+implementing \padsml\ and \pads,
 perform their computations in a single pass over the representation
 and corresponding parse descriptor, visiting each value in the data
-with a pre-, post-, or in-order traversal.  This paradigm arises naturally
-as it scales to very large data sets. It can be
-abstracted in a manner similar to the generic functions of Lammel and
-Peyton-Jones~\cite{lammel+:syb}. For each format description, we generate a
-format-dependent traversal mechanism that implements a generalized
-fold over the representation and parse descriptor corresponding to
-that format. Then, tool developers can write a format-independent,
-\emph{generic tool} by specifying the behaviour of the tool for each
-\padsml{} type constructor. The traversal mechanism interacts with
-generic tools through a signature that every generic tool must match.
+with a left-to-right, pre-, post-, or in-order traversal.  This 
+paradigm arises naturally as it scales to very large data sets. 
+Hence, the \padsml\ compiler generates an implementation of a such traversal
+for each data description. 
+%abstracted in a manner similar to the generic functions of Lammel and
+%Peyton-Jones~\cite{lammel+:syb}. 
 
-The generic tool architecture of \padsml{} delivers a number of
-benefits over the fixed architecture of \padsc{}. In \padsc{}, all
-tools are generated from within the compiler. Therefore, developing a
-new tool generator requires understanding and modifying the compiler.
-Furthermore, the user selects the set of tools to generate when compiling the description.  In \padsml{}, tool generators can be
-developed independent of the compiler and they can be developed more
-rapidly because the ``boilerplate'' code to traverse data need not be
-replicated for each tool generator. In addition, the user controls
-which tools to ``generate'' for a given data format, and the choice
-can differ on a program-by-program basis.
+% The generic tool architecture of \padsml{} delivers a number of
+% benefits over the fixed architecture of \padsc{}. In \padsc{}, all
+% tools are generated from within the compiler. Therefore, developing a
+% new tool generator requires understanding and modifying the compiler.
+% Furthermore, the user selects the set of tools to generate when compiling the description.  In \padsml{}, tool generators can be
+% developed independent of the compiler and they can be developed more
+% rapidly because the ``boilerplate'' code to traverse data need not be
+% replicated for each tool generator. In addition, the user controls
+% which tools to ``generate'' for a given data format, and the choice
+% can differ on a program-by-program basis.
 
 \subsection{The Generic-Tool Interface}
 \label{sec:gentool-interface}
@@ -177,7 +192,8 @@ providing a summary based on viewing many records
 in the data source.    More complex accumulator programs and a number of other statistical algorithms can easily be implemented using the tool generation infrastructure.
 
 Finally, as an aid in debugging \padsml{} descriptions, we have implemented a simple printing tool.  In contrast to the printer generated by the \padsml{} compiler, the output of this tool corresponds to the in-memory
-representation of the data rather than its original format, which may have delimiters \etc{} that are not present in the representation.  This format is often more readable than the raw data.
+representation of the data rather than its original format, which may have delimiters or literals that are not present in the representation.  
+This format is often more readable than the raw data.
 
 %%% Local Variables: 
 %%% mode: latex

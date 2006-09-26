@@ -44,9 +44,9 @@ matches the signature \cd{S}:
   \kw{module} Traverse ...
 \kw{end}\end{code}% 
 \noindent 
-The \emph{representation} (rep) type describes the
+The \emph{representation} (\cd{rep}) type describes the
 in-memory representation of parsed data, while the
-\emph{parse-descriptor} (PD) type describes meta-data collected
+\emph{parse-descriptor} (\cd{pd}) type describes meta-data collected
 during parsing.
 The parsing function converts the raw data into an in-memory
 representation and parse descriptor for the representation.
@@ -148,8 +148,8 @@ precise information about the error is required.
 \subsubsection{Example: Filtering}
 \label{sec:ex-filter}
 
-Data analysts often need to ``clean'' their data, \ie{}, remove or
-repair data containing errors, before loading the data into a database
+Data analysts often need to ``clean'' their data (\ie{}, remove or
+repair data containing errors) before loading the data into a database
 or other application.  \ocaml{}'s pattern matching and higher-order
 functions can simplify these tasks.  For example, the expression in
 \figref{fig:ex-data-clean} partitions \dibbler{} data into valid
@@ -264,7 +264,7 @@ transform the data into formats required by other tools, like a
 relational database or a statistical analysis package.
 Transformations include removing extraneous literals, inserting
 delimiters, dropping or reordering fields, and normalizing the values
-of fields, \eg{}, converting all times into a specified time zone.
+of fields (\eg{}, converting all times into a specified time zone).
 Because relational databases typically cannot store unions directly,
 one common transformation is to convert data with variants (\ie{},
 datatypes) into a form that such systems can handle.  One option is to

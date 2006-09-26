@@ -30,9 +30,9 @@
   | \_    -> Generic of Nvp\_a Plist(';','|')
 
 \kw{pdatatype} Service = 
-    DOMESTIC      of omit "DOMESTIC" 
-  | INTERNATIONAL of omit "INTERNATIONAL" 
-  | SPECIAL       of omit "SPECIAL"
+    DOMESTIC      of "DOMESTIC" 
+  | INTERNATIONAL of "INTERNATIONAL" 
+  | SPECIAL       of "SPECIAL"
 
 \kw{ptype} Alarm = \{
        alarm    : [i : Puint32 | i = 2 or i = 3];
