@@ -1,102 +1,64 @@
+Ptypedef Psbh_uint32(:4:) Version_t;
+Ptypedef Psbh_uint32(:4:) FastString_t;
+
+Pstruct Module_t{
+  FastString_t packageID;
+  FastString_t moduleName;
+};
+
+Pstruct String_t{
+  Pb_uint32 len;
+  Pstring_FW(:len:) name;
+};
+
+Penum Bool_t Pfrom (Pb_uint8) { False, True };
+
+Pstruct lazyBlock_t{
+  Pb_uint32 addressOfEnd;
+  Pcompute size_t offset = position.offset;
+  Pb_uint8[addressOfEnd - offset] body;
+};
+
 
 // Assume argument pointers point to valid space
-void Psbl32_char(Puint32 *src, Pbase_pd *src_pd, Pchar *dest, Pbase_pd *dest_pd){
+void Psbh32_char(Puint32 *src, Pbase_pd *src_pd, Pchar *dest, Pbase_pd *dest_pd){
   *dest_pd = *src_pd;
   *dest = *src;
 };
 
-void Pchar_sbl32(Pchar *src, Pbase_pd *src_pd, Puint32 *dest, Pbase_pd *dest_pd){
+void Pchar_sbh32(Pchar *src, Pbase_pd *src_pd, Puint32 *dest, Pbase_pd *dest_pd){
   *dest_pd = *src_pd;
   *dest = *src;
 };
 
 //TODO: for case where transform is identity, should be able to omit functions
-Ptrans Psbl_char{
-  Psbl32_char : Psbl_uint32(:4:) <=> Pchar : Pchar_sbl32;
+Ptrans Psbh_char{
+  Psbh32_char : Psbh_uint32(:4:) <=> Pchar : Pchar_sbh32;
 };
 
-Pstruct hString{
-  Pb_uint32 len;
-  Pstring_FW(:len:) name;
+Pstruct GHCversion_t {
+  Psbl_uint8(:1:) length;  
+  Psbh_char[length] nums;
 };
 
-Pstruct lazyBlock_t{
-  Pb_uint32 addressOfEnd;
-  Pcompute size_t offset = position.offset;
-  Pb_uint8[addressOfEnd - offset] payload;
-};
-
-Pstruct version_t {
-  Psbl_uint32(:4:) length;  
-   Psbl_char[length] nums;
-};
-
-Ptypedef Psbl_uint32(:4:) HFastString;
-
-Pstruct module_t{
-  HFastString packageID;
-  HFastString moduleName;
-};
-
-Pstruct occName_t{
-  HFastString occNameFS;
-  Pb_uint8    namespace; /- (VarName, DataName, TvName, TcClsName)
-};
-
-Pstruct typeName_t{
-  occName_t tyName;
-  Pb_uint8 numPieces;
-  occName_t[numPieces] pieces;
-}
-
-Punion availInfoPayload_t(:Puint8 tag:) {
-  Pswitch (tag){ 
-    Pcase 0 : occName_t  avail;
-    Pcase 1 : typeName_t availTC;
-  }
-};
-
-Pstruct genAvailInfo_t{
-  Pb_uint8 tag;
-  availInfoPayload_t(:tag:) payload;
-};
-
-Pstruct export_t{
-  module_t module;   
-  Pb_uint8 numExports;
-  genAvailInfo_t[numExports] genAvail;
-
-}
-
-Pstruct exports_t {
-  Pb_uint8 length;
-  export_t[length] exps;
-};
-
-Pstruct dep_mods_t{
-  HFastString moduleName;
-  Pb_uint8    isBootInterface;
-}
-
-Punion lenRest_t(:Puint8 init:){
+Punion LenRest_t(:Puint8 init:){
   Pswitch(init){
     Pcase 0xff : Psbl_uint32(:4:) longRep;
     Pdefault   : Pcompute Puint32 shortRep = init;
   }
 };
 
-Pstruct hiLenRaw_t{
+Pstruct HiLenRaw_t{
   Pb_uint8 initial;
-  lenRest_t(:initial:) rest;
-}
+  LenRest_t(:initial:) rest;
+};
 
-
-void hiLenRaw_uint32(hiLenRaw_t *src, hiLenRaw_t_pd *src_pd, Puint32 *dest, Pbase_pd *dest_pd){
+void HiLenRaw_uint32(HiLenRaw_t *src, HiLenRaw_t_pd *src_pd, Puint32 *dest, Pbase_pd *dest_pd){
   *dest_pd = src_pd->initial; 
   *dest = src->rest.val.shortRep;  /* short and long are the same */
 };
 
-void uint32_hiLenRaw(P_t *pads, Puint32 *src, Pbase_pd *src_pd, hiLenRaw_t *dest, hiLenRaw_t_pd *dest_pd){
+void uint32_HiLenRaw(P_t *pads, Puint32 *src, Pbase_pd *src_pd, HiLenRaw_t *dest, HiLenRaw_t_pd *dest_pd){
   if (*src < 0xff) {
     dest->initial = *src;
     dest->rest.tag = shortRep;
@@ -106,47 +68,271 @@ void uint32_hiLenRaw(P_t *pads, Puint32 *src, Pbase_pd *src_pd, hiLenRaw_t *dest
     dest->rest.tag = longRep;
     dest->rest.val.longRep = *src;
   };
-  hiLenRaw_t_genPD(pads, dest, dest_pd);
+  HiLenRaw_t_genPD(pads, dest, dest_pd);
 };
 
-void cnvMask(P_t *pads, hiLenRaw_t_m *phy, Pbase_m *log){
-  hiLenRaw_t_m_init(pads, phy, *log);
+void cnvHiLenMask(P_t *pads, HiLenRaw_t_m *phy, Pbase_m *log){
+  HiLenRaw_t_m_init(pads, phy, *log);
+};
+
+Ptrans HiLen_t{
+  HiLenRaw_uint32 : HiLenRaw_t <=> Puint32 : uint32_HiLenRaw(:pads:);
+  Pmaskmap cnvHiLenMask(:pads:);
 };
 
 
-Ptrans hiLen_t{
-  hiLenRaw_uint32 : hiLenRaw_t <=> Puint32 : uint32_hiLenRaw(:pads:);
-  Pmaskmap cnvMask(:pads:);
+
+Penum NameSpace_t Pfrom(Pb_uint8){
+  VarName, DataName, TvName, TcClasName
 };
 
-Pstruct depBody_t {
-  hiLen_t                   dep_mods_len;
-  dep_mods_t[dep_mods_len]  dep_mods;
-  hiLen_t                   dep_pkgs_len;
-  HFastString[dep_pkgs_len] dep_pkgs;
-  hiLen_t                   dep_orphs_len;
-  module_t[dep_orphs_len]   dep_orphs;
+
+Pstruct OccName_t{
+  NameSpace_t   namespace; 
+  FastString_t  occNameFS;
 };
 
-Pstruct dep_t{
-  Pb_uint32   addressOfEnd;  /- Address of end
-  depBody_t   body;
+Pstruct TypeName_t{
+  OccName_t tyName;
+  HiLen_t   numPieces;
+  OccName_t[numPieces] pieces;
 }
 
-Pstruct hi{
+Punion AvailInfoBranches_t(:Puint8 tag:) {
+  Pswitch (tag){ 
+    Pcase 0 : OccName_t  avail;
+    Pcase 1 : TypeName_t availTC;
+  }
+};
+
+Pstruct GenAvailInfo_t{
+  Pb_uint8                   tag;
+  AvailInfoBranches_t(:tag:) branches;
+};
+
+Pstruct Export_t{
+  Module_t  module;   
+  HiLen_t   numExports;
+  GenAvailInfo_t[numExports] genAvail;
+}
+
+Pstruct Exports_t {
+  HiLen_t length;
+  Export_t[length] exps;
+};
+
+Pstruct Dep_mods_t{
+  FastString_t moduleName;
+  Bool_t       isBootInterface;
+}
+
+Pstruct DepBody_t {
+  HiLen_t                    dep_mods_len;
+  Dep_mods_t[dep_mods_len]   dep_mods;
+  HiLen_t                    dep_pkgs_len;
+  FastString_t[dep_pkgs_len] dep_pkgs;
+  HiLen_t                    dep_orphs_len;
+  Module_t[dep_orphs_len]    dep_orphs;
+};
+
+Pstruct Dep_t{
+  Pb_uint32   addressOfEnd;  /- Address of end of dependency block
+  DepBody_t   body;
+};
+
+Pstruct Entity_t{
+  OccName_t name;
+  Version_t version;
+};
+
+Punion VerOptBranches_t(:Puint8 tag:){
+  Pswitch (tag) {
+    Pcase 0 : Pcompute Puint8 none = 0;
+    Pcase 1 : Version_t version;
+  }
+};
+
+Pstruct VerOpt_t{
+  Pb_uint8                tag;
+  VerOptBranches_t(:tag:) branches;
+};
+
+Pstruct Usage_t{
+  FastString_t   modName;
+  Version_t      modVersion;
+  VerOpt_t       exports;
+  HiLen_t        numEntities;
+  Entity_t[numEntities] entities;
+  Version_t      ruleVersion;
+}
+
+Pstruct UsagesBody_t{
+  HiLen_t         length;
+  Usage_t[length] uses;
+};
+
+Pstruct Usages_t{
+  Pb_uint32    addressOfEnd;
+  UsagesBody_t body;
+};
+
+Penum FixityDirection_t Pfrom(Pb_uint8) {
+  InfixL, InfixR, InfixN
+};
+
+Pstruct FixityInfo_t {
+  Psbl_uint32(:4:)  precedence;
+  FixityDirection_t direction; 
+};
+
+Pstruct Fixity_t{
+  OccName_t    name;
+  FixityInfo_t fixityInfo;
+};
+
+Pstruct Fixities_t{
+  HiLen_t len;
+  Fixity_t[len] fixities; 
+};
+
+Pstruct DeprecSomeEntry_t{
+  OccName_t    name;
+  FastString_t reason;
+};
+
+Pstruct DeprecSome_t{
+  HiLen_t len;
+  DeprecSomeEntry_t[len] deprec;
+};
+
+Punion DeprecsBranches_t(:Puint8 tag:){
+  Pswitch(tag){
+    Pcase 0x00: Pcompute Puint32 noDeprecs = 0;
+    Pcase 0x01: FastString_t     deprecAll;
+    Pcase 0x02: DeprecSome_t     deprecSome;
+  }
+};
+
+Pstruct DeprecsBody_t{
+  Pb_uint8                 tag;
+  DeprecsBranches_t(:tag:) branches;
+}
+
+Pstruct Deprecs_t{
+  Pb_uint32     addressOfEnd;
+  DeprecsBody_t body;
+};
+
+
+Penum KindEnum_t Pfrom(Pb_uint8){
+  LiftedTypeKind, UnliftedTypeKind, UnboxedTypeKind, OpenTypeKind, ArgTypeKind, UbxTupleKind, FunKind, KindVar
+};
+
+Precur Kind_t;
+
+Pstruct FunKindBody_t{
+  Kind_t arg;
+  Kind_t result;
+};
+
+Punion KindBranches_t(:KindEnum_t tag:){
+  Pswitch (tag){
+    Pcase FunKind: FunKindBody_t funKindBody;
+    Pdefault : Pcompute Puint32 other = 0;
+  }
+};
+
+Precur Pstruct Kind_t{
+  KindEnum_t  tag;
+  KindBranches_t(:tag:)  branches;
+};
+
+Pstruct IfaceTvBndr_t{
+  FastString_t name;
+  Kind_t  kind;
+};
+
+Precur IfaceType_t;
+
+Pstruct ForAllTy_t{
+  IfaceTvBndr_t iFaceTvBndr;
+  IfaceType_t   iFaceType;
+};
+
+Punion IfaceTypeBranches_t(:Puint8 tag:){
+  Pswitch (tag){
+    Pcase 0x00: ForAllTy_t forAllTy;
+       // TODO: more cases to be defined.
+  }
+};
+
+Precur Pstruct IfaceType_t{
+  Pb_uint8                   tag;
+  IfaceTypeBranches_t(:tag:) branches;
+};
+
+Punion IfaceIdInfoBranches_t(:Puint8 tag:){
+  Pswitch (tag){
+    Pcase 0x00 : Pcompute Puint32 noInfo = 0;
+    Pcase 0x01 : lazyBlock_t hasInfo;
+  }
+};
+
+Pstruct IfaceIdInfo_t{
+  Pb_uint8                     tag;
+  IfaceIdInfoBranches_t(:tag:) branches;
+}
+
+Pstruct IfaceId_t{
+  OccName_t    name;
+  IfaceType_t  ty;
+  IfaceIdInfo_t  idInfo;  // TODO: to be defined
+};
+
+Punion IFaceDeclBranches_t(:Puint8 tag:){
+  Pswitch(tag){
+    Pcase 0x00:  IfaceId_t iFaceId;
+    Pcase 0x01:  Pcompute Puint32 iFaceForeign = 0;
+       // TODO: other cases to be defined
+  }
+} Pwhere {
+  tag != iFaceForeign;
+};
+
+Pstruct IFaceDecl_t{
+  Pb_uint8                   tag;
+  IFaceDeclBranches_t(:tag:) branches; 
+};
+
+Pstruct Decl_t{
+  Version_t   version;
+  IFaceDecl_t iFaceDecl;
+};
+
+Pstruct Decls_t{
+  HiLen_t        length;
+  Decl_t[length] decls;
+};
+
+Pstruct Hi_t{
   Pendian Pb_uint32 id : id == 0x0001face || id == 0x01face64;
-  Pb_uint32 numBytes;
-  version_t GHCversion; 
-  Pb_uint8 way;
-  module_t module;
-  Pb_uint8 isBoot;
-  Pb_uint8 iVersion;
-  Pb_uint8 hasOrphan;
-  dep_t    dependencies;
-  lazyBlock_t usages;
-  exports_t   exports;
-  Pcompute size_t offsetl = position.offset;
-  Pb_uint8[numBytes - offsetl] unknown;
-  Pb_uint32 numFunctions;
-  hString[numFunctions] functions;
+  Pb_uint32     dictAddress;
+  GHCversion_t  GHCversion; 
+  Pb_uint8      way;  /* what is this? */
+  Module_t      module;
+  Bool_t        isBoot;
+  Version_t     modVersion;
+  Bool_t        hasOrphan;
+  Dep_t         dependencies;
+  Usages_t      usages;
+  Exports_t     exports;
+  Version_t     exportVersion;
+  Fixities_t    fixityInfo; 
+  Deprecs_t     deprecs;
+  Decls_t       decls;
+  Pcompute size_t numBytesRead = position.offset;
+  Pb_uint8[dictAddress - numBytesRead] unknown;
+  Pb_uint32     numFastStrings;
+  String_t[numFastStrings] fastStrings;
 }
+

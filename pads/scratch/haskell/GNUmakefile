@@ -29,5 +29,11 @@ rwxml_hi: rwxml_hi.c hi.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 rwxml_hi_d: rwxml_hi.c hi.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
+rwxml_iface: rwxml_iface.c iface.c $(INCLUDE_DEPS) $(LIB_DEPS_O) 
+	@$(CCExec_DYNAMIC_O)
+
+rwxml_iface_d: rwxml_iface.c iface.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
 clean:
 	$(RM) hi.[ch] hi.xsd hi.pxml test_hi test_hi_d test_hi_dd hi_expanded.c rwxml_hi rwxml_hi_d
