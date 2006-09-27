@@ -34,6 +34,9 @@ Boilerplate semantics:
 		p;pty_o || pty Pwhere x.e => {x:t|...}
 
 
+Next, choose one of the following three options for rules FieldMatch
+and Overlay.
+
 Replacement semantics (no intersection):
 
 			     pty_o => t_o
@@ -50,14 +53,14 @@ Leaf intersection semantics:
 
 		       pty => t   pty_o => t_o
 		     --------------------------- 		  (FieldMatch)
-		     x;pty_o || pty x => t & t_o
+		     x;pty_o || pty x => absorb(t) & t_o
 
 			 p;pty_o || pty => t
 		   ------------------------------- 		     (Overlay)
 		   overlay pty @ p with pty_o => t
 
 
-
+ 
 Root intersection semantics:
 
 			     pty_o => t_o

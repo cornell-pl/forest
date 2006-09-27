@@ -10,14 +10,13 @@ describe the generated modules and illustrate their use.
 We use the \ocaml{} module system to structure the libraries generated
 by the \padsml{} compiler.  Each \padsml{} base type is implemented as
 an \ocaml{} module.  For each \padsml{} type in a description, the
-\padsml{} compiler generates an \ocaml{} module containing the
-generated \ocaml{} types, functions, and nested modules that implement
-the \padsml{} type.  All the generated modules are grouped into one
-module that implements the complete description.  For example, a
-\padsml{} description named \texttt{sirius.pml} containing three named
-types results in the \ocaml{} file \texttt{sirius.ml} defining the
-module \cd{Sirius}, which contains three submodules, each
-corresponding to one named type.
+\padsml{} compiler generates an \ocaml{} module containing the types,
+functions, and nested modules that implement the \padsml{} type.  All
+the generated modules are grouped into one module that implements the
+complete description.  For example, a \padsml{} description named
+\texttt{sirius.pml} containing three named types results in the
+\ocaml{} file \texttt{sirius.ml} defining the module \cd{Sirius},
+which contains three submodules, each corresponding to one named type.
 
 Namespace management alone is sufficient motivation to employ a
 ``types as modules'' approach, but the power of the \ml{} module
@@ -178,7 +177,7 @@ errors, including error analysis, repair, and removal.}
 \kw{let} ((header, orders),(header_pd, orders_pd)) = 
    parse_source Sirius.parse "input.txt"
 
-\kw{let} _ = split_orders orders orders_pd\end{code} 
+\kw{let} (good,bad) = split_orders orders orders_pd\end{code} 
 \caption{Error filtering of \dibbler{} data}
 \label{fig:ex-data-clean}
 \end{figure}

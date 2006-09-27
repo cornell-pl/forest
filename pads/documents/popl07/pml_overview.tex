@@ -216,19 +216,25 @@ the \darkstar{} project at AT\&T.  \figref{fig:sample-data}(a) contains correspo
 \end{figure}
 
 This data format has several variants of name-value pairs. The
-\padsc{} description of this format~\cite{fisher+:popl-sub-long}
-must define a different type for each variant. In contrast, the
-polymorphic types of \padsml{} allow us to define the type \cd{Pnvp},
-which takes both type and value parameters to encode all the
-variants. As is customary in \ml{},  type parameters appear to the left of the type name, while value parameters and their \ml{} types appear to
-the right.  The type\cd{Pnvp} has
-one type parameter named \cd{Alpha} and one value parameter named
-\cd{p}.  Informally, \cd{Alpha Pnvp(p)} is a name-value pair where the
-value is described by \cd{Alpha} and the name must satisfy the
-predicate \cd{p}.
+\padsc{} description of this format~\cite{fisher+:popl-sub-long} must
+define a different type for each variant. In contrast, the polymorphic
+types of \padsml{} allow us to define the type \cd{Pnvp}, which takes
+both type and value parameters to encode all the variants. As is
+customary in \ml{}, type parameters appear to the left of the type
+name, while value parameters and their \ml{} types appear to the
+right.  The type\cd{Pnvp} has one type parameter named \cd{Alpha} and
+one value parameter named \cd{p}.  Informally, \cd{Alpha Pnvp(p)} is a
+name-value pair where the value is described by \cd{Alpha} and the
+name must satisfy the predicate \cd{p}.
 
-The \cd{Nvp} type reuses the\cd{Pnvp} type to define a name-value pair whose name must match the argument string \texttt{name} but whose value can have any type. 
-The \cd{Nvp\_a} also uses the type \cd{Pnvp}. It defines a name-value pair that permits any name, but requires the value to have type \cd{SVString} (a string terminated by a semicolon or vertical bar).  Later in the description, the type parameter to \cd{Nvp} is instantiated with IP addresses, timestamps, and integers.
+The \cd{Nvp} type reuses the\cd{Pnvp} type to define a name-value pair
+whose name must match the argument string \texttt{name} but whose
+value can have any type.  The \cd{Nvp\_a} type also uses the type
+\cd{Pnvp}. It defines a name-value pair that permits any name, but
+requires the value to have type \cd{SVString} (a string terminated by
+a semicolon or vertical bar).  Later in the description, the type
+parameter to \cd{Nvp} is instantiated with IP addresses, timestamps,
+and integers.
 
 % The source type is an array of \cd{alarm}s, where each alarm is a
 % \cd{raw\_alarm}, constrained to ensure that the alarm number is

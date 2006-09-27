@@ -8,89 +8,87 @@ typedef enum Perror_t_e {
   P_ERR                           =   -1
 } Perror_t;
 
-typedef int PerrCode_t;
+typedef enum PerrCode_t_e {
+  /* First set of errors have no corresponding location  */
+  P_NOT_PARSED                    =    0,
+  P_NO_ERR                        =    1,
+  P_SKIPPED                       =    2,
 
-/* typedef enum PerrCode_t_e { */
-/*   /\* First set of errors have no corresponding location  *\/ */
-/*   P_NOT_PARSED                    =    0, */
-/*   P_NO_ERR                        =    1, */
-/*   P_SKIPPED                       =    2, */
+  P_UNEXPECTED_ERR                =    3,
 
-/*   P_UNEXPECTED_ERR                =    3, */
+  P_BAD_PARAM                     =    4,
+  P_SYS_ERR                       =    5,
+  P_IO_ERR                        =    6,
 
-/*   P_BAD_PARAM                     =    4, */
-/*   P_SYS_ERR                       =    5, */
-/*   P_IO_ERR                        =    6, */
+  P_CHKPOINT_ERR                  =   11,
+  P_COMMIT_ERR                    =   12,
+  P_RESTORE_ERR                   =   13,
+  P_ALLOC_ERR                     =   14,
+  P_FORWARD_ERR                   =   15,
+  P_PANIC_SKIPPED                 =   20,
 
-/*   P_CHKPOINT_ERR                  =   11, */
-/*   P_COMMIT_ERR                    =   12, */
-/*   P_RESTORE_ERR                   =   13, */
-/*   P_ALLOC_ERR                     =   14, */
-/*   P_FORWARD_ERR                   =   15, */
-/*   P_PANIC_SKIPPED                 =   20, */
+  P_FMT_EMPTY_DELIM_ERR           =   30,
 
-/*   P_FMT_EMPTY_DELIM_ERR           =   30, */
+  P_INVALID_FUNCTION_CALL         =   50,
 
-/*   P_INVALID_FUNCTION_CALL         =   50, */
+  /* A general error relating to smart nodes*/
+  P_SMART_NODE_ERR                =   60,
 
-/*   /\* A general error relating to smart nodes*\/ */
-/*   P_SMART_NODE_ERR                =   60, */
+  /*
+   * A general error that requires that an ocaml
+   * ocaml exception be thrown.
+   */
+  P_FAILWITH_ERR                  =   61,
 
-/*   /\* */
-/*    * A general error that requires that an ocaml */
-/*    * ocaml exception be thrown. */
-/*    *\/ */
-/*   P_FAILWITH_ERR                  =   61, */
+  /* The following errors (code >= 100) DO have a corresponding location  */
+  P_USER_CONSTRAINT_VIOLATION     =  100,
+  P_MISSING_LITERAL               =  101,
+  P_ARRAY_ELEM_ERR                =  110,
+  P_ARRAY_SEP_ERR                 =  111,
+  P_ARRAY_TERM_ERR                =  112,
+  P_ARRAY_SIZE_ERR                =  113,
+  P_ARRAY_SEP_TERM_SAME_ERR       =  114,
+  P_ARRAY_USER_CONSTRAINT_ERR     =  115,
+  P_ARRAY_MIN_BIGGER_THAN_MAX_ERR =  116,
+  P_ARRAY_MIN_NEGATIVE            =  117,
+  P_ARRAY_MAX_NEGATIVE            =  118,
+  P_ARRAY_EXTRA_BEFORE_SEP        =  119,
+  P_ARRAY_EXTRA_BEFORE_TERM       =  120,
 
-/*   /\* The following errors (code >= 100) DO have a corresponding location  *\/ */
-/*   P_USER_CONSTRAINT_VIOLATION     =  100, */
-/*   P_MISSING_LITERAL               =  101, */
-/*   P_ARRAY_ELEM_ERR                =  110, */
-/*   P_ARRAY_SEP_ERR                 =  111, */
-/*   P_ARRAY_TERM_ERR                =  112, */
-/*   P_ARRAY_SIZE_ERR                =  113, */
-/*   P_ARRAY_SEP_TERM_SAME_ERR       =  114, */
-/*   P_ARRAY_USER_CONSTRAINT_ERR     =  115, */
-/*   P_ARRAY_MIN_BIGGER_THAN_MAX_ERR =  116, */
-/*   P_ARRAY_MIN_NEGATIVE            =  117, */
-/*   P_ARRAY_MAX_NEGATIVE            =  118, */
-/*   P_ARRAY_EXTRA_BEFORE_SEP        =  119, */
-/*   P_ARRAY_EXTRA_BEFORE_TERM       =  120, */
+  P_STRUCT_FIELD_ERR              =  125,
+  P_STRUCT_EXTRA_BEFORE_SEP       =  126,
+  P_UNION_MATCH_ERR               =  130,
+  P_OPTION_MATCH_ERR              =  130,
+  P_ENUM_MATCH_ERR                =  140,
+  P_TYPEDEF_CONSTRAINT_ERR        =  150,
+  P_RECUR_VAL_ERR                 =  155,
 
-/*   P_STRUCT_FIELD_ERR              =  125, */
-/*   P_STRUCT_EXTRA_BEFORE_SEP       =  126, */
-/*   P_UNION_MATCH_ERR               =  130, */
-/*   P_OPTION_MATCH_ERR              =  130, */
-/*   P_ENUM_MATCH_ERR                =  140, */
-/*   P_TYPEDEF_CONSTRAINT_ERR        =  150, */
-/*   P_RECUR_VAL_ERR                 =  155, */
+  P_AT_EOF                        =  160,
+  P_AT_EOR                        =  161,
+  P_EXTRA_BEFORE_EOR              =  162,
+  P_EOF_BEFORE_EOR                =  163,
+  P_COUNT_MAX_LIMIT               =  164,
+  P_RANGE                         =  170,
 
-/*   P_AT_EOF                        =  160, */
-/*   P_AT_EOR                        =  161, */
-/*   P_EXTRA_BEFORE_EOR              =  162, */
-/*   P_EOF_BEFORE_EOR                =  163, */
-/*   P_COUNT_MAX_LIMIT               =  164, */
-/*   P_RANGE                         =  170, */
+  P_INVALID_A_NUM                 =  180,
+  P_INVALID_E_NUM                 =  181,
+  P_INVALID_EBC_NUM               =  182,
+  P_INVALID_BCD_NUM               =  183,
 
-/*   P_INVALID_A_NUM                 =  180, */
-/*   P_INVALID_E_NUM                 =  181, */
-/*   P_INVALID_EBC_NUM               =  182, */
-/*   P_INVALID_BCD_NUM               =  183, */
+  P_INVALID_CHARSET               =  190,
+  P_INVALID_WIDTH                 =  191,
 
-/*   P_INVALID_CHARSET               =  190, */
-/*   P_INVALID_WIDTH                 =  191, */
-
-/*   P_CHAR_LIT_NOT_FOUND            =  200, */
-/*   P_STR_LIT_NOT_FOUND             =  210, */
-/*   P_REGEXP_NOT_FOUND              =  220, */
-/*   P_INVALID_REGEXP                =  230, */
-/*   P_WIDTH_NOT_AVAILABLE           =  240, */
-/*   P_INVALID_TIMESTAMP             =  250, */
-/*   P_INVALID_DATE                  =  251, */
-/*   P_INVALID_TIME                  =  252, */
-/*   P_INVALID_IP                    =  260, */
-/*   P_INVALID_IP_RANGE              =  261, */
-/* } PerrCode_t; */
+  P_CHAR_LIT_NOT_FOUND            =  200,
+  P_STR_LIT_NOT_FOUND             =  210,
+  P_REGEXP_NOT_FOUND              =  220,
+  P_INVALID_REGEXP                =  230,
+  P_WIDTH_NOT_AVAILABLE           =  240,
+  P_INVALID_TIMESTAMP             =  250,
+  P_INVALID_DATE                  =  251,
+  P_INVALID_TIME                  =  252,
+  P_INVALID_IP                    =  260,
+  P_INVALID_IP_RANGE              =  261,
+} PerrCode_t;
 
 /* ================================================================================
  * BASIC LIBRARY TYPES
@@ -115,7 +113,7 @@ typedef struct Pstring_s Pstring;
 
 struct Pstring_s{
   size_t         len;
-  [string] char *str;
+  [string,unique] char *str;
 };
 
 typedef struct Pbase_pd_s Pbase_pd;
@@ -133,16 +131,8 @@ typedef [abstract] struct Pio_disc_s  Pio_disc_t;
 typedef [abstract] struct Tm_zone_s   Tm_zone_t;
 typedef [abstract] struct Sfio_s      Sfio_t;
 
-/* As we are not outputing a header file, need to add this 
-   typedef by hand.
-*/
-quote(c,"typedef Sfio_t *SfioPtr;");
 typedef [ptr] Sfio_t            *SfioPtr;
 
-/* As we are not outputing a header file, need to add this 
-   typedef by hand.
-*/
-quote(c,"typedef SfioPtr SfioPtrOpt;");
 /* Declarations and Definitions for SfioPtrOpt conversion functions. */
 quote(h,"cnv_opt_decl(padsc,SfioPtr)");
 quote(c,"cnv_opt(padsc,SfioPtr)");
@@ -197,7 +187,17 @@ interface LibraryHandle {
 
 interface Misc {
   Tm_zone_t *P_cstr2timezone([in,string] const char *tzone_str);
+
+  /* Open a file for reading, writing, etc. */
   SfioPtrOpt P_fopen([in,string] const char* source, [in,string] const char* mode);
+  /* Close a file opened by P_fopen. */
+  Perror_t P_fclose([in] SfioPtr io);
+
+  /* Function wrappers for macros P_POS_... 
+   * Prefix function name with i (for idl).
+   */
+  int iP_POS_EQ([in] Ppos_t first, [in] Ppos_t second);
+  int iP_POS_GT([in] Ppos_t first, [in] Ppos_t second);
 }
 
 /* ================================================================================
@@ -272,7 +272,7 @@ interface Match{
  */
 
 interface Checkpoint{
-  Perror_t  P_io_checkpoint  ([in,ptr] P_t *pads, int speculative);
+  Perror_t  P_io_checkpoint  ([in,ptr] P_t *pads, [in] int speculative);
   Perror_t  P_io_commit      ([in,ptr] P_t *pads);
   /* Perror_t  P_io_commit_pos  (P_t *pads, Ppos_t pos); */
   /*           /\* commit at pos rather than using the current IO cursor position *\/ */

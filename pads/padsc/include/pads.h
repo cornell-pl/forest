@@ -1432,7 +1432,7 @@ extern void P_lib_init(void);
  *                 should not be unmade; in this case it CAN be used again, e.g., in a future
  *                 P_set_io_disc call. 
  *
- * P_string2tzone: convert a string to a time zone pointer.
+ * P_cstr2timezone: convert a string to a time zone pointer.
  *                 returns NULL if invalid time zone string.
  *
  * P_set_in_time_zone:

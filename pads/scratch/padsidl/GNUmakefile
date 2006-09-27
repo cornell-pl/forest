@@ -20,13 +20,10 @@ INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 PADSIDL=$(PADS_HOME)/scratch/padsidl
 
 BASE_TYPES=pint pchar pstring ptimestamp
-GENERATED_INTS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.mli)
-GENERATED_IMPLS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.ml)
-GENERATED_STUBS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs.c)
-GENERATED_OC_SOURCES= $(GENERATED_INTS) $(GENERATED_IMPLS)
-BT_GEN=$(GENERATED_INTS) $(GENERATED_IMPLS) $(GENERATED_STUBS)
-WRAPPERS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.c)
-WRAPPER_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.o)
+BT_GENERATED_INTS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.mli)
+BT_GENERATED_IMPLS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.ml)
+BT_GENERATED_STUBS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs.c)
+BT_GEN=$(BT_GENERATED_INTS) $(BT_GENERATED_IMPLS) $(BT_GENERATED_STUBS)
 BT_CAML_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c.cmo)
 BT_C_OBJS=$(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.o $(base_type)_c.o)
 BT_OBJS=$(BT_CAML_OBJS) $(BT_C_OBJS)
@@ -38,6 +35,10 @@ PADSC_OBJS=$(PADSC_CAML_OBJS) $(PADSC_C_OBJS)
 CAML_OBJS=$(PADSC_CAML_OBJS) $(BT_CAML_OBJS)
 C_OBJS=$(PADSC_C_OBJS) $(BT_C_OBJS)
 OBJS=$(PADSC_OBJS) $(BT_OBJS)
+
+GENERATED_OC_SOURCES= padsc.mli padsc.ml $(BT_GENERATED_INTS) $(BT_GENERATED_IMPLS)
+WRAPPERS=padsc_stubs_w.c $(foreach base_type,$(BASE_TYPES),$(base_type)_c_stubs_w.c)
+WRAPPER_OBJS=$(WRAPPERS:.c=.o)
 
 # Name of padsidl library
 PADSIDL_NAME=padsidl
@@ -66,29 +67,28 @@ OC_INCLUDES = -I $(CAMLIDL_LIB_DIR)
 
 all: padsc.cma
 
+$(BT_GENERATED_INTS):%.mli: %.idl
+	camlidl -no-include -header $*.idl
+
+$(BT_GENERATED_IMPLS):%.ml: %.idl
+	camlidl -no-include -header $*.idl
+
+$(BT_GENERATED_STUBS):%_stubs.c: %.idl
+	camlidl -no-include -header $*.idl
+
 padsc.mli padsc.ml padsc_stubs.c:padsc.idl
 	camlidl -no-include padsc.idl
-
-$(GENERATED_INTS):%.mli: %.idl
-	camlidl -no-include -header $*.idl
-
-$(GENERATED_IMPLS):%.ml: %.idl
-	camlidl -no-include -header $*.idl
-
-$(GENERATED_STUBS):%_stubs.c: %.idl
-	camlidl -no-include -header $*.idl
-
-padsc_stubs_w.c: padsc_stubs.c
-
-$(WRAPPERS):%_stubs_w.c: %_stubs.c
-
-$(WRAPPER_OBJS):%_stubs_w.o: %_stubs_w.c
 
 $(CAML_OBJS): %.cmo: %.mli %.ml 
 	ocamlc $(OC_INCLUDES) -c $*.mli $*.ml
 
 %.cmo: %.mli %.ml 
 	ocamlc $(OC_INCLUDES) -c $*.mli $*.ml
+
+%.cmi: %.mli
+	ocamlc $(OC_INCLUDES) -c $*.mli
+
+$(WRAPPER_OBJS):%_stubs_w.o: %_stubs_w.c %_stubs.c %.h
 
 $(PADSIDL_LIB_NM) : $(C_OBJS)
 	$(STATIC_LIBTOOL) $(PADSIDL_LIB_NM) $(STATIC_LIBTOOL_OPTS) $^
@@ -100,8 +100,8 @@ $(PADSIDL)/padsc.cma padsc.cma: $(CAML_OBJS) $(PADSIDL_LIB_NM)
         -ccopt -L$(INSTALLROOT)/lib -cclib -lpads -cclib -last -ccopt -L$(CAMLIDL_LIB_DIR) \
 	-cclib -lcamlidl
 
-client: padsclib client.ml
-	ocamlc client.ml  padsc.cma  -o client
+# client: padsclib client.ml
+# 	ocamlc client.ml  padsc.cma  -o client
 
 padsc: padsc_stubs_w.o
 
@@ -114,6 +114,7 @@ endif
 
 depend:	
 	$(OCAMLDEP) $(OC_INCLUDES) $(GENERATED_OC_SOURCES) > .depend
+
 clean:
 	$(RM) padsc.ml padsc.mli 
 	$(RM) $(BT_GEN)

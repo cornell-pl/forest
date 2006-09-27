@@ -178,7 +178,7 @@ errors, including error analysis, repair, and removal.}
 \kw{let} ((header, orders),(header_pd, orders_pd)) = 
    parse_source Sirius.parse "input.txt"
 
-\kw{let} _ = split_orders orders orders_pd\end{code} 
+\kw{let} (good,bad) = split_orders orders orders_pd\end{code} 
 \caption{Error filtering of \dibbler{} data}
 \label{fig:ex-data-clean}
 \end{figure}

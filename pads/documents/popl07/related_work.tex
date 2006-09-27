@@ -1,17 +1,24 @@
 \section{Related Work}
 \label{sec:related}
 
-Many useful tools exist to help programmers generate
-parsers.  Examples include compiler technology such as the many
-variants of \lex{} and \yacc{} as well as interpreter technology such the
-parser combinator libraries found in functional programming languages
+Many useful tools exist to help programmers generate parsers.
+Examples include compiler technology like the many variants of
+\lex{} and \yacc{} as well as interpreter technology like the parser
+combinator libraries found in functional programming languages
 (Haskell~\cite{hutton+:parser-combinators}, for example).  Likewise,
 there are tools to help programmers generate printers.  Each of these
-technologies is very useful in its own domain, but \padsml{} is broader in its scope than each of them:
-a single \padsml{} description is sufficient to generate \textit{both} a parser and a printer.  And a statistical error analysis, a format debugger, an \xml{}
-translator, and in the future, a query engine~\cite{fernandez+:padx},
-a content-based search engine~\cite{lv+:cbs,oh:siw}, more statistical
-analyses, \etc\  Neither combinator libraries nor tools such as \lex{} and \yacc{} are designed to generate such a range of artifacts from a single specification.  Indeed, the proper way to think about combinator libraries in relation to \padsml{} is that they might serve as an alternative implementation strategy for some of the generated tools.
+technologies is very useful in its own domain, but \padsml{} is
+broader in its scope than each of them: a single \padsml{} description
+is sufficient to generate \textit{both} a parser and a printer.  And a
+statistical error analysis, a format debugger, an \xml{} translator,
+and in the future, a query engine~\cite{fernandez+:padx}, a
+content-based search engine~\cite{lv+:cbs,oh:siw}, more statistical
+analyses, \etc\ Neither combinator libraries nor tools such as \lex{}
+and \yacc{} are designed to generate such a range of artifacts from a
+single specification.  Indeed, the proper way to think about
+combinator libraries in relation to \padsml{} is that they might serve
+as an alternative implementation strategy for some of the generated
+tools.
 
 
 \cut{
