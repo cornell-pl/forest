@@ -8417,7 +8417,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 	  fun cnvPEnum  {name:string, params: (pcty * pcdecr) list, 
-			 isRecord, containsRecord, largeHeuristic, isSource, prefix = eprefix : string option,
+			 isRecord, containsRecord, largeHeuristic, isSource, modifiers: (pcexp PX.EnumMod) option,
 			 members: (string * string option * pcexp option * string option) list } =
 	      let val baseTy = PL.strlit
 		  val baseEM = mSuf baseTy
@@ -8426,13 +8426,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val (cParams : (string * pcty) list, 
 		       paramInfo : (string * acty) list, 
 		       paramNames : string list) = processParams params
-		  val () = if (List.length cParams) > 0 then PE.warn ("Parameters are not supported for Penums") else ()
+
                   fun mungeMembers (name, fromXOpt, expOpt, commentOpt) = 
 		      let val expr = case expOpt of NONE =>   PT.EmptyExpr | SOME e => e
-			  val prefix = case eprefix of NONE => "" | SOME p => p
+			  val eprefix = case modifiers of SOME (PX.EnumPrefix s) => s | _ => ""
 		      in
-			  case fromXOpt of NONE => (prefix^name, name, expr, commentOpt)
-                          | SOME fromName =>       (prefix^name, fromName, expr, commentOpt)
+			  case fromXOpt of NONE => (eprefix^name, name, expr, commentOpt)
+                          | SOME fromName =>       (eprefix^name, fromName, expr, commentOpt)
 			                     (* enum label, on disk name, value of enum label, comment *)
 			   
 		      end
@@ -8535,21 +8535,49 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   PL.P_ENUM_MATCH_FAILURE,
 						   true, 
 						   readName,
-						   ("Did not match any branch of enum "^name),
+						   ("Did not match any branch of Penum "^name),
 						   [])
 			           @ [PL.setPanicS(PT.Id pd),
 				      P.assignS(PT.Id result, PL.P_ERROR)]
 		  val slurpToEORSs = if isRecord then genReadEOR (readName, reportBaseErrorSs, PL.P_ERROR) () else []
                   val gotoSs = [PT.Labeled(findEORSuf name,
 					   PT.Compound (slurpToEORSs @ [PT.Return (PT.Id result)]))]
+
+                  fun genReadWithBase(baseName, args) = 
+		      let val baseTy = PX.Name baseName  
+			  val baseTyRepName = BU.lookupTy(baseTy, repSuf, #padsxname)
+			  val basePCT       = P.makeTypedefPCT baseTyRepName
+                          val baseReadFun   = BU.lookupTy(baseTy, readSuf, #readname)
+			  val tmpRep        = tmpName rep
+			  val () = ignore (insTempVar(tmpRep, basePCT)) (* add tmprep to scope *)
+			  val () = expEqualTy(PT.Id tmpRep, CTintTys, 
+					      fn s=> ("The underlying type for Penum "^name^" is not compatible with type int."))
+			  
+			  val readDecls     = [P.varDeclS'(PL.toolErrPCT, result),
+					       P.varDeclS'(basePCT, tmpRep)]
+			  val readBaseX     = PL.readFunX(baseReadFun, PT.Id pads, PT.Id m, args, PT.Id pd, P.addrX (PT.Id tmpRep)) 
+			  val readBaseS     = P.assignS(PT.Id result, readBaseX)
+			  val setRepS       = P.assignS(P.starX(PT.Id rep), PT.Id tmpRep)
+                          fun doOneBranch (ename, _, _) = P.mkCase(PT.Id ename, SOME [PT.Break])
+			  val defBranch     = P.mkDefCase(SOME cleanupSs)
+			  val branches      = (List.concat(List.map doOneBranch enumFieldsforTy)) @ defBranch
+			  val checkValueS   = PT.Switch (P.starX(PT.Id rep), PT.Compound branches) 
+		      in
+			  [PT.Compound (readDecls @[readBaseS, setRepS, checkValueS] @ slurpToEORSs @[PT.Return (PT.Id result)])]
+		      end
+
+		  fun genReadBodySs modifiers = 
+		      case modifiers 
+		      of SOME (PX.EnumRaw(baseName, argList)) => genReadWithBase(baseName, argList)
+                      | _ => [PT.Compound((genReadBranches()) @ cleanupSs @ gotoSs)]
 			       
 		  (* -- Assemble read function enum case*)
 		  val _ = pushLocalEnv()                                        (* create new scope *)
 		  val () = ignore (insTempVar(rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		  val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
-		  val readFields = genReadBranches()                            (* does type checking *)
+		  val bodySs = genReadBodySs modifiers
 		  val _ = popLocalEnv()                                         (* remove scope *)
-		  val bodySs = [PT.Compound(readFields @ cleanupSs @ gotoSs)]
+
 		  val readFunEDs = genReadFun(readName, cParams, 
 					      mPCT, pdPCT, canonicalPCT, NONE, true, bodySs)
 
@@ -8627,15 +8655,40 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		   val writeXMLName = writeXMLSuf name
 		   val fmtName = fmtSuf name
 		   val fmtBufFinalName = bufFinalSuf fmtName
-		   val writeBaseBufName = PL.cstrlitWriteBuf
-		   val writeBaseIOName = PL.cstrlitWriteIO
-		   val writeXMLBaseName = PL.cstrlitWriteXMLBuf
-                   val expX = PT.Call(PT.Id(toStringSuf name), [P.starX(PT.Id rep)])
-		   val bodyBufSs = writeFieldBufSs(writeBaseBufName, [expX], isRecord)
-		   val bodyIOSs = writeFieldIOSs(writeBaseIOName, [expX], isRecord)
+		   val expX = PT.Call(PT.Id(toStringSuf name), [P.starX(PT.Id rep)])
+
+		   fun genWritesWithBase(baseName, args) =
+		       let val baseTy = PX.Name baseName  
+			   val baseTyRepName = BU.lookupTy(baseTy, repSuf, #padsxname)
+			   val basePCT       = P.makeTypedefPCT baseTyRepName
+			   val writeBaseBufName = (bufSuf o writeSuf) (lookupWrite baseTy) 
+			   val writeBaseIOName = (ioSuf o writeSuf) (lookupWrite baseTy) 
+			   val tmpRep        = tmpName rep
+			   val tmpDecls      = [P.varDeclS(basePCT, tmpRep, P.starX(PT.Id rep))]
+
+			   val bodyBufSs     = writeFieldBufSs(writeBaseBufName, [PT.Id pd, P.addrX (PT.Id tmpRep)] @ args, isRecord)
+			   val bodyIOSs      = writeFieldIOSs(writeBaseIOName, [PT.Id pd, P.addrX(PT.Id tmpRep)] @ args, isRecord)
+			   fun wrapSs ss     = [PT.Compound (tmpDecls @ ss)]
+		       in
+			   (wrapSs bodyBufSs, wrapSs bodyIOSs)
+		       end
+
+		   fun genWriteBufandIOBodies modifiers = 
+		       case modifiers of
+		       SOME (PX.EnumRaw(baseName, args)) => genWritesWithBase(baseName, args)
+                       | _ => (let val writeBaseBufName = PL.cstrlitWriteBuf
+				   val writeBaseIOName = PL.cstrlitWriteIO
+				   val writeXMLBaseName = PL.cstrlitWriteXMLBuf
+				   val bodyBufSs = writeFieldBufSs(writeBaseBufName, [expX], isRecord)
+				   val bodyIOSs = writeFieldIOSs(writeBaseIOName, [expX], isRecord)
+			       in
+				   (bodyBufSs, bodyIOSs)
+			       end)
+		   val (bodyBufSs, bodyIOSs) = genWriteBufandIOBodies modifiers
+
 		   val bodyXMLSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_XML_BUF_OUT", [PT.String(name), PT.Id(toStringSuf name)]))]
 		   val bodyXMLIOSs = [PT.Expr(PT.Call(PT.Id "PCGEN_ENUM_XML_IO_OUT", [PT.String(name), PT.Id(toStringSuf name)]))]
-				   
+
 		   val bodyFmtFinalSs = [PL.fmtFinalInitEnum(PT.String fmtBufFinalName), PL.fmtEnum(PT.String fmtBufFinalName, expX)] 
 		   val (writeFunEDs, fmtFunEDs) = genWriteFuns(name, "ENUM", writeName, writeXMLName, fmtName, isRecord, isSource, cParams,
 								    mPCT, pdPCT, canonicalPCT, bodyBufSs, bodyIOSs, bodyXMLSs, bodyXMLIOSs, bodyFmtFinalSs)

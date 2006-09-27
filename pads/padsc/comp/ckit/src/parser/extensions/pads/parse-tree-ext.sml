@@ -67,6 +67,9 @@ structure ParseTreeExt =
 			branches      : (('ct, 'dt, 'decr, 'exp) PSField) list}
 
         type 'exp  PPredicate =  {predTy: Pty, thisVar : string, pred : 'exp}
+
+        datatype 'exp EnumMod = EnumPrefix of string | EnumRaw of (string * 'exp list)
+
         datatype ('decr, 'ct, 'dt, 'exp) PExternal = 
            PTypedef of {name : string,
 			params: ('ct * 'decr) list, 
@@ -132,7 +135,7 @@ structure ParseTreeExt =
                       containsRecord : bool, 
                       largeHeuristic : bool,
 		      isSource   : bool,
-		      prefix   :  string option,
+		      modifiers   :  ('exp EnumMod) option,
                       members  : (string * string option * 'exp option * string option) list}
          | PTrans  of {name    : string,
                        params   : ('ct * 'decr) list,

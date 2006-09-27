@@ -5,4 +5,4 @@ SMLofNJ.Internals.GC.messages false;
 CM.make "main.cm";
 (* Turn off backtracing *)
 (* SMLofNJ.Internals.BTrace.mode (SOME false); *)
-Main.emit false
+Main.emit true

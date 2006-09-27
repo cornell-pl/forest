@@ -8,7 +8,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
 <orderStates><val>S_tpv</val></orderStates>
 <orderStates><val>for</val></orderStates>
 <orderStates><val>for</val></orderStates>
-warning: Error [in orderStates_read]: record 8 byte 1 : Did not match any branch of enum orderStates
+warning: Error [in orderStates_read]: record 8 byte 1 : Did not match any branch of Penum orderStates
 [record 8]>>><<<frob
 Note [in orderStates_read]: record 8 byte 1 : Resynching at EOR
 [record 8]>>>frob<<<

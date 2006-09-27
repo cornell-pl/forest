@@ -126,6 +126,7 @@ regress_o:  sanity_check \
           regress_rwxml_pdate_explicit_o \
           regress_rwxml_pdate_explicit_me_o \
           regress_rwxml_enum_o \
+          regress_rwxml_enum3_o \
 	  regress_rwxml_array_advance_o \
 	  regress_rwxml_message_header_o \
           regress_rwxml_pads-comp_o \
@@ -181,6 +182,7 @@ regress_d:  sanity_check \
           regress_rwxml_pdate_explicit_d \
           regress_rwxml_pdate_explicit_me_d \
           regress_rwxml_enum_d \
+          regress_rwxml_enum3_d \
           regress_rwxml_array_advance_d \
           regress_rwxml_message_header_d \
           regress_rwxml_pads-comp_d \
@@ -488,6 +490,12 @@ regress_rwxml_enum_o: rwxml_enum
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_enum_d: rwxml_enum_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_enum3_o: rwxml_enum3
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_enum3_d: rwxml_enum3_d
 	@(args=""; suf=""; $(RegressDef))
 
 regress_rwxml_array_advance_o: rwxml_array_advance

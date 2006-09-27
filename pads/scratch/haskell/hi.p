@@ -329,7 +329,7 @@ Pstruct Hi_t{
   Version_t     exportVersion;
   Fixities_t    fixityInfo; 
   Deprecs_t     deprecs;
-  Decls_t       decls;
+  // Decls_t       decls;  --need to fix mask
   Pcompute size_t numBytesRead = position.offset;
   Pb_uint8[dictAddress - numBytesRead] unknown;
   Pb_uint32     numFastStrings;

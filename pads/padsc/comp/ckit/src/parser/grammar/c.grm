@@ -443,7 +443,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pAnnotatedEnumField of string * string option * expression option * string option
         | pAnnotatedLastEnumField of string * string option * expression option * string option
         | pEnumFieldList of (string * string option * expression option * string option) list
-	| pEnumPrefixOpt of string option
+	| pEnumModOpt of (expression PX.EnumMod option)
         | pEnum of externalDecl
 	| pSelect of externalDecl
 	| pCharClass of externalDecl
@@ -1528,19 +1528,19 @@ pEnumFieldList:
   | pAnnotatedEnumField pEnumFieldList
                                          (pAnnotatedEnumField :: pEnumFieldList)
 
-pEnumPrefixOpt:
-                             	(NONE)
- | PPREFIX LPAREN STRING RPAREN (SOME STRING)
-
+pEnumModOpt:
+                             	           (NONE)
+ | PPREFIX LPAREN STRING RPAREN            (SOME (PX.EnumPrefix STRING))
+ | PFROM LPAREN pName pOptActParams RPAREN (SOME (PX.EnumRaw(pName, pOptActParams)))
 
 pEnum:
- pIsSource pIsRecord PENUM pName pushScope  pTyParams pEnumPrefixOpt LCURLY pEnumFieldList popScope
+ pIsSource pIsRecord PENUM pName pushScope  pTyParams pEnumModOpt LCURLY pEnumFieldList popScope
  ( makeTypeName pName;
    makeTypeName (pName^"_pd");
    makeTypeName (pName^"_m");
-   ExternalDeclExt(PX.PEnum {name = pName1, params = [], isRecord = pIsRecord, 
+   ExternalDeclExt(PX.PEnum {name = pName1, params = pTyParams, isRecord = pIsRecord, 
 		             containsRecord = false, largeHeuristic = false,
-			     isSource = pIsSource, prefix = pEnumPrefixOpt, members = pEnumFieldList})
+			     isSource = pIsSource, modifiers = pEnumModOpt, members = pEnumFieldList})
  ) 
 
 pSelect:
