@@ -95,8 +95,7 @@ the compiler generates a module with the signature:
 \kw{module} \kw{type} ABPair_sig (Alpha : S) (Beta : S) = 
 \kw{sig}
   \kw{type} rep      = Alpha.rep * Beta.rep
-  \kw{type} pd\_body = (Pads.pd_header * Alpha.pd\_body) * 
-                 (Pads.pd_header * Beta.pd\_body)
+  \kw{type} pd\_body = Alpha.pd * Beta.pd
   \kw{type} pd       = Pads.pd_header * pd\_body
   \kw{val}  parse    : Pads.handle -> rep * pd
   \kw{val}  print    : rep -> pd -> Pads.handle -> unit
@@ -172,7 +171,7 @@ errors, including error analysis, repair, and removal.}
    | _                  -> (good, order::bad)
 
 \kw{let} split_orders orders (orders_pd_hdr,order_pds) = 
-   List.fold_right2 classify_order orders order_pds []
+   List.fold_right2 classify_order orders order_pds ([],[])
 
 \kw{let} ((header, orders),(header_pd, orders_pd)) = 
    parse_source Sirius.parse "input.txt"
