@@ -617,7 +617,66 @@ most recent revision of the PADS manual."),
     case TOOLBAR_FILTER:
       DB_P("toolbar filter\n");
       break;
+    case TOOLBAR_LOADPXML:
+      {
+	DB_P("load P-XML file\n");
+	wxFileDialog openFileDialog(this, 
+				    "Open PXML file",
+				    "",
+				    "",
+				    XML_FILETYPES,
+				    wxOPEN | 
+				    wxFILE_MUST_EXIST,	
+				    wxDefaultPosition);
 
+	if(openFileDialog.ShowModal() != wxID_OK)
+	  {
+	    DB_P("pxml: show modal != wxOK\n");
+	    return;
+	  }
+	DB_P("openFileDialog returned with wxID_OK with '%s'\n", openFileDialog.GetPath().c_str());
+	DB_P("trying wxFile: %d\n", wxFile::Access(openFileDialog.GetPath(), wxFile::read));
+	if(!wxFile::Access(openFileDialog.GetPath(), wxFile::read))
+	  {
+	    wxMessageBox(_T("Selected XML state file could not be opened!"), 
+			 _T("Could Not Open XML State"),
+			 wxICON_ERROR | wxCANCEL);
+	    return;
+	  }
+	wxString xmldefpath;
+	DB_P("file access worked okay, moving on to set pXMLDefPath\n");
+	xmldefpath = openFileDialog.GetPath();
+	DB_P("calling LoadPXMLFile %s\n", pXMLDefPath.c_str());
+	LoadPXMLFile(xmldefpath);
+      }
+      break;
+    case TOOLBAR_SAVEPXML:
+      {
+	DB_P("save P-XML file\n");
+	wxFileDialog saveFileDialog(this, 
+				    "Save state sequence to XML",
+				    "",
+				    "",
+				    XML_FILETYPES,
+				    wxSAVE |
+				    wxOVERWRITE_PROMPT,
+				    wxDefaultPosition);
+
+	if(saveFileDialog.ShowModal() != wxID_OK)
+	  {
+	    DB_P("pxml: show modal != wxOK\n");
+	    return;
+	  }
+	DB_P("saveFileDialog returned with wxID_OK with '%s'\n", saveFileDialog.GetPath().c_str());
+	//DB_P("trying wxFile: %d\n", wxFile::Access(saveFileDialog.GetPath(), wxFile::read));
+
+	wxString xmldefpath;
+	DB_P("file access worked okay, moving on to set pXMLDefPath\n");
+	xmldefpath = saveFileDialog.GetPath();
+	DB_P("calling SavePXMLFile %s\n", pXMLDefPath.c_str());
+	SavePXMLFile(xmldefpath);
+      }
+      break;
     }
      
   return;

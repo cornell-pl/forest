@@ -55,7 +55,7 @@ void LaunchPADS::BottomInitFrame(long panelflags,
 				     textflags);
   assert(bottomCodeDisplay != NULL);
 
-  
+  DB_P("panel and code display built\n");
 #ifdef DB_ON
   bottomCodeDisplay->SetValue(_T("Fill me with code!\n"));
 
@@ -72,7 +72,7 @@ void LaunchPADS::BottomInitFrame(long panelflags,
   BottomAppendText(str, (int)pLit);
 #endif
   
-
+  DB_P("adding bottom sizers\n");
   bottomWinSizer = new wxBoxSizer(wxHORIZONTAL);
   assert(bottomWinSizer != NULL);
   bottomWinSizer->Add(bottomCodeDisplay, 1,  wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 5);
@@ -82,7 +82,7 @@ void LaunchPADS::BottomInitFrame(long panelflags,
   m_bottomWinPanel->SetSizer(bottomWinSizer);
   m_bottomWinPanel->SetAutoLayout(true);
   bottomWinSizer->SetSizeHints(m_bottomWinPanel);
-
+  DB_P("returning from bottom init\n");
 }
 
 /* ************************************ */

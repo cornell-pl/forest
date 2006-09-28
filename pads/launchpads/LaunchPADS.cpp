@@ -84,6 +84,9 @@ BEGIN_EVENT_TABLE(LaunchPADS, wxFrame)
   EVT_MENU_RANGE(LEFT_MAKE_CHILD_KEY, LEFT_MOVE_NODE_BOTTOM_KEY, LaunchPADS::OnLeftTreeCtrlKeys)  
   EVT_MENU_RANGE(LEFT_QUALIFIER_MENU_0, LEFT_QUALIFIER_MENU_19, LaunchPADS::OnLeftArgContextMenu)
 
+  EVT_TREE_SEL_CHANGED(LEFT_TREE_CTRL, LaunchPADS::OnLeftTreeCtrlSelect)
+  EVT_TREE_BEGIN_DRAG(LEFT_TREE_CTRL, LaunchPADS::OnLeftTreeBeginDrag)
+  EVT_TREE_END_DRAG(LEFT_TREE_CTRL, LaunchPADS::OnLeftTreeEndDrag)
   // right frame functions
   EVT_RADIOBOX(RIGHT_MODE_SELECT, LaunchPADS::OnRightModeSelect)
   EVT_BUTTON(RIGHT_FRAGMENT, LaunchPADS::OnRightFragment)
@@ -306,6 +309,8 @@ LaunchPADS::LaunchPADS(const wxChar *title,
 
   if(leftControlSafeMode)
     leftSafeModeAltered = true;
+
+  DB_P("done reading config file\n");
   /* **************************************** */
   // adapted from wxWidgets sashtest.cpp sample
   // init all the sashes and build the controls for each subframe
@@ -333,7 +338,8 @@ LaunchPADS::LaunchPADS(const wxChar *title,
   LeftInitFrame(wxTAB_TRAVERSAL | mywxBORDER, 
 	        wxTR_HAS_BUTTONS | wxTR_SINGLE | mywxBORDER | wxTR_HIDE_ROOT,
 		0);
-  
+
+  DB_P("done left init\n");
   /* **************************************** */
 
   win = 
@@ -360,6 +366,7 @@ LaunchPADS::LaunchPADS(const wxChar *title,
 	       wxBU_EXACTFIT 
 	       );
 
+  DB_P("done top init\n");
   /* **************************************** */
 
   win = 
@@ -386,6 +393,7 @@ LaunchPADS::LaunchPADS(const wxChar *title,
 		 wxCB_DROPDOWN | wxCB_READONLY | wxCB_SORT
 		 );
 
+  DB_P("done right init\n");
   /* **************************************** */
 
   win = 
@@ -410,8 +418,9 @@ LaunchPADS::LaunchPADS(const wxChar *title,
   MidInitFrame(wxTAB_TRAVERSAL | mywxBORDER,
 	       wxTAB_TRAVERSAL | mywxBORDER);
   //  m_midWin->SetMinimumSizeY(MID_WIN_DEFAULT_Y);
+  DB_P("done mid init\n");
   /* **************************************** */
-
+  DB_P("starting bottom init\n");
   win = 
     new wxSashLayoutWindow(this, 
 			   ID_WINDOW_BOTTOM,
@@ -430,14 +439,17 @@ LaunchPADS::LaunchPADS(const wxChar *title,
 #endif
   win->SetSashVisible(wxSASH_TOP, false);
   m_bottomWin = win;
-
+  DB_P("calling bottom init\n");
   BottomInitFrame(wxTAB_TRAVERSAL | mywxBORDER, 
 		  wxTE_MULTILINE | wxTE_RICH | wxHSCROLL 
 		  | wxTE_READONLY | mywxBORDER);
 
+  DB_P("done bottom init\n");
   /* **************************************** */
 
   /* **************************************** */
+  DB_P("done frame init, making other controls\n");
+
   // init the menus, toolbar, and status bar
   fileMenu = new wxMenu;
   assert(fileMenu != NULL);
@@ -579,6 +591,26 @@ LaunchPADS::LaunchPADS(const wxChar *title,
 
   toolBar->AddSeparator();
 
+  wxBitmap loadPXMLIcon(fileopen_xpm);
+  toolBar->AddTool(TOOLBAR_LOADPXML,
+		   _T("Load P-XML"),
+		   loadPXMLIcon,
+		   wxNullBitmap,
+		   wxITEM_NORMAL,
+		   _T("Load PADS XML Definition"),
+		   _T("Open saved PADS definition from PADS generated XML definition file."));
+
+  wxBitmap savePXMLIcon(htmpage_xpm);
+  toolBar->AddTool(TOOLBAR_SAVEPXML,
+		   _T("Save P-XML"),
+		   savePXMLIcon,
+		   wxNullBitmap,
+		   wxITEM_NORMAL,
+		   _T("Save PADS XML Definition"),
+		   _T("Save PADS definition in XML format."));
+
+  toolBar->AddSeparator();
+
   wxBitmap launchIcon(launch_icon3_xpm);
   toolBar->AddTool(TOOLBAR_LAUNCH,
 		   _T("Launch"),
@@ -668,6 +700,8 @@ LaunchPADS::LaunchPADS(const wxChar *title,
   toolBar->Show();
 
   CreateStatusBar(1);   // shortcut function to create a simple status bar in the current frame
+
+  DB_P("done making tools\n");
 
   //  wxToolTip::Enable(true); // turn on tooltips for all UI elements for which tooltips are set
 

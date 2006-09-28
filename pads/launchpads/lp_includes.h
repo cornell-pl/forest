@@ -60,11 +60,15 @@
 #include "wx/valtext.h"
 #include "wx/wfstream.h"
 #include "wx/wizard.h"
+#include "wx/minifram.h"
 //#endif
 
 #include "tinyxml.h"
 #include "lp_XML.h"
 #include "lp_PADS.h"
+#include "padslang/pads_lang_includes.h"
+#include "lp_PNode_Container.h"
+#include "inspector/PADS_inspector.h"
 #include "pads_gui.h"
 #include "lp_CodeGen.h"
 #include "prefs.h"

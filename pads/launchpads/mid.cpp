@@ -2075,4 +2075,71 @@ void LaunchPADS::MidGridNewTermColour(int a, int b)
   return;
 }
 
+PADSGridNode* LaunchPADS::MidMakeGridNodeTreeFromGridData()
+{
+  int depth = 0;
+  int left = 0;
+  int right = midGridText.Length();
+  PADSGridNode* treeRoot = new PADSGridNode(-1, left, right);
+  gridTreeRoot = treeRoot;
+  MidMakeGridNodeTreeRecur(treeRoot, left, right, 0);
+  gridTreeRoot->setDepth(0);
+
+  PSTRING testStr;
+  gridTreeRoot->getTextRepresentation(testStr);
+  DB_P("***text representation:***\n%s\n***", testStr.c_str());
+  return treeRoot;
+}
+
+PADSGridNode* LaunchPADS::MidMakeGridNodeTreeRecur(PADSGridNode* parent, int left, int right, int depth)
+{
+  int i;
+  int thisType = midGridTypeLevels[depth][left];
+  int thisElementId = midGridUDefIDLevels[depth][left];
+  PADSGridNode* newNode;
+  for(i = left; i < right; i++)
+    {
+      if(midGridTypeLevels[depth][i] != thisType ||
+	 midGridUDefIDLevels[depth][i] != thisElementId)
+	{
+
+	  if(PElement::IsPTerminal(thisType))
+	    {
+	      if(thisType == pGuess)
+		{ thisType = MidGridTermGuessMode(left, i); }
+	      newNode = parent->makeAndAddNewChildNode(thisType, left, i);
+	      newNode->setDepth(depth);
+	    }
+	  else
+	    {
+	      newNode = parent->makeAndAddNewChildNode(thisType, left, i);
+	      newNode->setDepth(depth);
+	      MidMakeGridNodeTreeRecur(newNode, left, i, depth+1);
+	    }
+	  left = i;
+	  thisType = midGridTypeLevels[depth][left];
+	  thisElementId = midGridUDefIDLevels[depth][left];
+	}      
+    }
+  // one more once i reaches the end of the grid
+  if(PElement::IsPTerminal(thisType))
+    {
+      if(thisType == pGuess)
+	{ thisType = MidGridTermGuessMode(left, i); }
+      newNode = parent->makeAndAddNewChildNode(thisType, left, i);
+      newNode->setDepth(depth);
+    }
+  else
+    {
+      newNode = parent->makeAndAddNewChildNode(thisType, left, i);
+      newNode->setDepth(depth);
+      MidMakeGridNodeTreeRecur(newNode, left, i, depth+1);
+    }
+  left = i;
+  thisType = midGridTypeLevels[depth][left];
+  thisElementId = midGridUDefIDLevels[depth][left];      
+  
+  return parent;
+}
+
 /* ************************************ */

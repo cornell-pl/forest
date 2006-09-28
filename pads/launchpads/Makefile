@@ -23,35 +23,25 @@
 # version
 #
 # by default, wx-config from the PATH is used
+# On Mark's machine: WX_VERSION = 2.6.3
 WX_VERSION = 2.6.2
-WX_CONFIG := ${HOME}/wxGTK-${WX_VERSION}/build_gtk/wx-config
-
-# set XERCESCHOME to the path where the Xerces library lives
-XERCES_DIR = ${XERCESCHOME}
-XERCES_INC = ${XERCES_DIR}/include/
-XERCES_LIB = xerces-c
+WX_HOME = ${HOME}/lib/wxGTK-${WX_VERSION}
+WX_CONFIG := ${WX_HOME}/buildgtk/wx-config
 
 # set this to the name of the main executable file
 PROGRAM = LaunchPADS
 
-XMLPATH = ${HOME}/tinyxml
+XMLPATH = ${HOME}/lib/tinyxml
 
 XMLSOURCES = ${XMLPATH}/tinyxml.cpp ${XMLPATH}/tinyxmlerror.cpp ${XMLPATH}/tinyxmlparser.cpp ${XMLPATH}/tinystr.cpp
 
-PATHS = -I ${HOME}/wxGTK-${WX_VERSION}/art/ -I ${XMLPATH} -I ${XERCES_INC}
+PATHS = -I ${WX_HOME}/art/ -I ${XMLPATH}
 
 # if your program has more than one source file, add more .o files to the line
 # below
-XERCES_FLAGS= -l${XERCES_LIB} 
-PADSLANG_DIR = ./padslang
-INSPECTOR_DIR = ./inspector
-PADSLANG_OBJECTS = ${PADSLANG_DIR}/PADS_lang.o ${PADSLANG_DIR}/PADS_lang_factory.o ${PADSLANG_DIR}/PADS_lang_helper_classes.o \
- ${PADSLANG_DIR}/PADS_lang_simple_tree.o ${PADSLANG_DIR}/PADS_lang_pnode_tree.o ${PADSLANG_DIR}/PADS_lang_xerces_parser.o
-INSPECTOR_OBJECTS = ${INSPECTOR_DIR}/PADS_inspector.o
-MINIMAL_OBJECTS = bottom.o lp_PADS.o mid.o right.o tool_proc.o left.o lp_XML.o shell_d.o tool_proc_event.o \
-lp_CodeGen.o main_event.o prefs.o state_seq.o top.o padx_d.o LaunchPADS.o \
-tinyxml.o tinystr.o tinyxmlerror.o tinyxmlparser.o lp_PNode_Container.o left_new_additions.o \
-${PADSLANG_OBJECTS} ${INSPECTOR_OBJECTS}
+OBJECTS = $(PROGRAM).o top.o mid.o left.o right.o bottom.o main_event.o \
+lp_XML.o prefs.o shell_d.o tool_proc.o tool_proc_event.o state_seq.o \
+lp_PADS.o lp_CodeGen.o padx_d.o
 
 # you shouldn't have to edit anything below this line
 CXX = $(shell $(WX_CONFIG) --cxx)
@@ -64,8 +54,7 @@ CXX = $(shell $(WX_CONFIG) --cxx)
 all:    $(PROGRAM)
 
 $(PROGRAM):	$(OBJECTS)
-	$(CXX) -o $(PROGRAM) $(PATHS) $(OBJECTS) ${XERCES_FLAGS} $(XMLSOURCES) \
-`$(WX_CONFIG) --libs`
+	$(CXX) -o $(PROGRAM) $(PATHS) $(OBJECTS) $(XMLSOURCES) `$(WX_CONFIG) --libs`
 
 clean: 
-	rm -f *.o $(PROGRAM)
+	rm -f *.o $(PROGRAM) LP__*.xml

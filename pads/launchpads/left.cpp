@@ -66,13 +66,13 @@ void LaunchPADS::LeftInitFrame(long panelflags,
   assert(m_leftWinPanel != NULL);
 
   leftTreeCtrl   = new wxTreeCtrl(m_leftWinPanel,
-				  wxID_ANY,
+				  LEFT_TREE_CTRL,
 				  wxDefaultPosition,
 				  wxDefaultSize,//wxSize(20, 500),
 				  treeflags);
   assert(leftTreeCtrl != NULL);
   leftTreeCtrl->SetBackgroundColour(wxColour(255, 255, 255));
-
+  
   // build context menu for tree
   leftTreeMenu = new wxMenu;
   leftTreeMenu->Append(LEFT_FIND_IN_CODE_MENU,
@@ -113,10 +113,11 @@ void LaunchPADS::LeftInitFrame(long panelflags,
 		       _T("Move to &Bottom"),
 		       _T("Move selected node to bottom of sibling group"));
 
-
+  DB_P("done building tree, initalizing...\n");
   LeftTreeTest();
   LeftTreeInit();
-
+  DB_P("done building tree, initalizing...\n");
+  
   leftEnableControls = new wxButton(m_leftWinPanel, 
 				    LEFT_ENABLE_CONTROLS,
 				    _T("Toggle &Tree Controls"), 
@@ -157,17 +158,23 @@ void LaunchPADS::LeftInitFrame(long panelflags,
   leftStatBoxSizer_1->Add(leftSubSizer_6, 0, wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 5);
   //  leftStatBoxSizer_1->Add(leftSubSizer_7, 0, wxALL | wxALIGN_BOTTOM | wxALIGN_CENTER, 2);
   
-
   leftWinSizer   = new wxBoxSizer(wxVERTICAL);
   assert(leftWinSizer != NULL);
   leftWinSizer_2 = new wxBoxSizer(wxHORIZONTAL);
   assert(leftWinSizer_2 != NULL);
   leftWinSizer_2->Add(leftTreeCtrl, 1,  wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 3);
-  leftWinSizer_2->Add(leftStatBoxSizer_1, 1, wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 2);
+  leftWinSizer_2->Add(leftStatBoxSizer_1, 0, wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 2);
   leftWinSizer->Add(leftWinSizer_2, 1,  wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 2);
   leftWinSizer->Add(leftEnableControls, 0, wxGROW | wxALL | wxALIGN_BOTTOM | wxALIGN_CENTER, 7);
 
-  leftStatBoxSizer_1->Show(!(leftStatBoxSizer_1->IsShown()));
+  DB_P("doing show/hide modifications\n");
+  leftStatBoxSizer_1->Show(false);
+  leftSubSizer_1->Show(false);
+  leftSubSizer_2->Show(false);
+  leftSubSizer_3->Show(false);
+  leftSubSizer_4->Show(false);
+  leftSubSizer_5->Show(false);
+  leftSubSizer_6->Show(false);
 
   // I don't understand why this doesn't work... oh well
   /*
@@ -204,6 +211,16 @@ void LaunchPADS::LeftInitFrame(long panelflags,
   m_leftWinPanel->SetAutoLayout(true);
   leftWinSizer->SetSizeHints(m_leftWinPanel);
 
+  // new additions for updated type system 
+  leftInspector = new PADSLangInspector(this, 
+					wxID_ANY,
+					_T("Tree Inspector"),
+					wxPoint(800, 150), 
+					wxSize(270, 100), 
+					leftTreeCtrl, 
+					colourModeOn);
+  leftInspector->Show(false);
+  // *****************
 }
 
 void LaunchPADS::LeftTreeTest(void)
@@ -235,7 +252,18 @@ void LaunchPADS::LeftTreeTest(void)
 
 void LaunchPADS::LeftTreeInit(void)
 {
+  DB_P("deleting all tree items...\n");
   leftTreeCtrl->DeleteAllItems();
+  PNodeFactory pFactory;
+  DB_P("making new root element\n");
+  PNodeP* rootElement = pFactory.makeEmptyPNodeFromType(PT_PADS);
+  rootElement->makeCompleteNode();
+  DB_P("rootElement value = %d\n", rootElement);
+  DB_P("calling LeftMakeVisualTreeFromAST =>\n");
+  LeftMakeVisualTreeFromAST(rootElement);
+
+  DB_P("Returning from tree init\n");
+  /*
   wxString str;
   str = "Root";
   PElement *elem = new PElement((int)pStruct, str, 0);
@@ -254,6 +282,7 @@ void LaunchPADS::LeftTreeInit(void)
     leftTreeCtrl->SetItemTextColour(source, wxColour(MID_MODE_UDEF_COLOUR));
   else
     leftTreeCtrl->SetItemBackgroundColour(source, wxColour(MID_MODE_UDEF_NO_COLOUR));
+  */
 }
 
 void LaunchPADS::LeftBuildControlPanel(long buttonflags, long comboflags, 
@@ -741,7 +770,8 @@ void LaunchPADS::LeftBuildControlPanel(long buttonflags, long comboflags,
 // toggle tree control panel visible/invisible
 void LaunchPADS::OnLeftEnableControls(wxCommandEvent &event)
 {
-  LeftEnableControls(!leftStatBoxSizer_1->IsShown());
+  //leftInspector->Show(!leftInspector->IsShown());
+  LeftEnableControls(!leftInspector->IsShown());
 }
 
 // tree context menu command router
@@ -835,6 +865,7 @@ void LaunchPADS::OnLeftTreeContextMenu(wxCommandEvent &event)
 void LaunchPADS::OnLeftStopExprContextMenu(wxCommandEvent &event)
 {
   int id = event.GetId();
+  DB_P("OnLeftStopExprContextMenu Envoked\n");
 
   leftStopExpr->SetValue(PADS_expression_prototypes[id - LEFT_SET_SE_DEFAULT]);
 
@@ -1942,7 +1973,8 @@ void LaunchPADS::LeftEnableControls(bool show)
   //DB_P("show box = %s\n", leftStatBoxSizer_1->IsShown() ? "true" : "false");
   if(show)
     {
-      leftStatBoxSizer_1->Show(true);
+      leftStatBoxSizer_1->Show(false);
+      leftInspector->Show(true);
       m_topWin->Show(false);
       m_midWin->Show(false);
       m_leftWin->Show(true);
@@ -1954,6 +1986,7 @@ void LaunchPADS::LeftEnableControls(bool show)
   else
     {
       leftStatBoxSizer_1->Show(false);
+      leftInspector->Show(false);
       m_topWin->Show(true);
       m_midWin->Show(true);
       m_leftWin->Show(true);
@@ -1975,8 +2008,23 @@ wxTreeItemId LaunchPADS::LeftGetTreeRoot(void)
 void LaunchPADS::LeftBuildTree(void)
 {
   wxBeginBusyCursor();
+  DB_P("left build tree called\n");
   leftTreeCtrl->DeleteAllItems();
-  MidGridMakeTreeFromParse(leftTreeCtrl);
+  //MidGridMakeTreeFromParse(leftTreeCtrl);
+  PADSGridNode* rootGridNode = MidMakeGridNodeTreeFromGridData();
+  DB_P("MidMakeGridNodeTreeFromGridData returned %d\n", rootGridNode);
+  PNodeFactory pFactory;
+  PSTRING gridText = midGridText.c_str();
+  DB_P("gridText == %s\n", gridText.c_str());
+
+  PNodeP* newPRoot = (Pads*)pFactory.makeEmptyPNodeFromType(PT_PADS);
+  newPRoot->makeCompleteNode();
+  DB_P("calling convertGridTreeToAST on %d\n", newPRoot);
+  rootGridNode->convertGridTreeToAST(newPRoot, gridText);
+  newPRoot->serializeXMLRepresentation(0, gridText);
+  DB_P("**new XML output**\n%s\n***\n", gridText.c_str());
+  leftDefTree = newPRoot;
+  LeftMakeVisualTreeFromAST(leftDefTree);
   wxEndBusyCursor();
   return;
 }
@@ -2342,19 +2390,23 @@ bool LaunchPADS::LeftSetTreeElemType(wxTreeItemId selected, int newType)
 // build code from tree structure
 void LaunchPADS::LeftMakeCodeFromTree(void)
 {
-  wxTreeItemIdValue cookie;
-  wxTreeItemId root;
-  root = leftTreeCtrl->GetRootItem();
-
-#ifdef DB_ON
-  for(int i = 0; i < pEndTerminals; i++)
-    DB_P("Type %s %s printable\n", PADS_labels[i], 
-	 PElement::IsPPrintableTerminal(i) ? "true" : "false");
-#endif
+  // #ifdef DB_ON
+  //for(int i = 0; i < pEndTerminals; i++)
+  //  DB_P("Type %s %s printable\n", PADS_labels[i], 
+  //	 PElement::IsPPrintableTerminal(i) ? "true" : "false");
+  // #endif
 
   wxBeginBusyCursor();
   // the root should only have one child, so we just do this once
-  LeftMakeCodeRecur(leftTreeCtrl->GetFirstChild(root, cookie));
+  //LeftMakeCodeRecur(leftTreeCtrl->GetFirstChild(root, cookie));
+  wxTreeItemId selectedId = leftTreeCtrl->GetRootItem();
+  PNodeWXTreeItem* newLink = (PNodeWXTreeItem*)leftTreeCtrl->GetItemData(selectedId);
+  PNodeP* selectedNode = newLink->linkNode;
+  PSTRING codeStr;
+  selectedNode->codifyRepresentation(0, codeStr);
+  wxString writeThisStr = codeStr.c_str();
+  BottomClearText();
+  BottomAppendText(writeThisStr, pUndefined);
   wxEndBusyCursor();
   return;
 }
@@ -2939,6 +2991,5 @@ void LaunchPADS::LeftSetItemBackgroundColour(wxTreeItemId this_id, int type)
 	}
 
 }
-
 
 /* ************************************ */

@@ -14,72 +14,6 @@
 #pragma interface "pads_gui.h"
 #endif
 
-#define APP_NAME_STRING "LaunchPADS"
-#define VENDOR_NAME_STRING "PADS_Project_Group"
-#define CONFIG_FILE_STRING "LaunchPADS_Config.txt"
-
-#define GUI_VERSION "0.0.21"
-
-#define DEFAULT_BUFFER_SIZE 0x800
-#define MAX_FILE_READ_SIZE 1<<22
-
-#define MAIN_WIN_HEIGHT 832
-#define MAIN_WIN_WIDTH  616
-
-#define TOP_WIN_DEFAULT_X 100
-#define TOP_WIN_DEFAULT_Y 125
-#define TOP_NUM_LINES_MAX 100
-
-#define BOTTOM_WIN_DEFAULT_X 500
-#define BOTTOM_WIN_DEFAULT_Y 50
-
-#define MID_WIN_DEFAULT_X 200
-#define MID_WIN_DEFAULT_Y 250
-#define MID_MODE_NONE_COLOUR 255, 255, 255
-#define MID_MODE_DELIM_COLOUR 128, 255, 128
-#define MID_MODE_TERM_COLOUR 128, 128, 255
-#define MID_MODE_TERM_VARCOL(a, b) \
-(64 + ((96 * a) / b)  % 64), \
-(96 + (((255 * a * 2) / b) % 159)), \
-255
-#define MID_MODE_TERM_COL_STEPS ((pCase - pStartTerminals))
-#define MID_MODE_UDEF_COLOUR 255, 152, 152
-#define MID_MODE_UDEF_VARCOL(a, b) 255, \
-((192+ ((a % 32) * b)) %224), \
-((192+ ((a % 8) * b)) %224)
-//((192+ ((a * ((int)(3.141592654 / 2.718281828)) % 32) * b)) %255), \
-//((192+ ((a * ((int)(1.618033989) << 1 ) % 8) * b)) %255)
-//((192+ (a / (a % 7 + 1)) * b)%255), \
-//((192+ (a / ((a + 31) % 3 + 1)) * b) %255)
-#define MID_MODE_UDEF_COL_STEPS 51
-#define MID_GRID_INIT_MAX_STEPS 1024
-#define MID_GRID_STEPS_MULTIPLIER 4
-#define MID_NO_ID -1
-#define MID_MODE_NONE_NO_COLOUR 255, 255, 255
-#define MID_MODE_DELIM_NO_COLOUR 224, 224, 224
-#define MID_MODE_TERM_NO_COLOUR 128, 128, 128
-#define MID_MODE_UDEF_NO_COLOUR 192, 192, 192
-
-#define RIGHT_WIN_DEFAULT_X 155
-#define RIGHT_WIN_DEFAULT_Y 300
-
-#define LEFT_WIN_DEFAULT_X 175
-#define LEFT_WIN_DEFAULT_Y 300
-
-#define BOTTOM_TERM_COLOUR    16, 16, 152
-#define BOTTOM_NONTERM_COLOUR 224, 158, 64
-#define BOTTOM_LIT_COLOUR     16, 152, 16
-#define BOTTOM_ERROR_COLOUR   255, 0, 0
-#define BOTTOM_OTHER_COLOUR   0, 0, 0
-
-#define PADS_MANUAL_URI "http://www.padsproj.org/doc/index.html"
-
-#define XML_ENCODING_VER "1.0"
-#define XML_ENCTYPE     "ISO-8859-1"
-#define XML_STANDALONE   "no"
-
-#define LP_OSX_METAL
-
 //debug macros
 #define DB_P(a, ...)   fprintf(stderr, a, ## __VA_ARGS__ ) // from RHEL documentation, 6.15
   // doesn't work with vc++!!!
@@ -103,283 +37,8 @@ static const wxChar *lpNum_Chars[] =
     "6", "7", "8", "9", "0"
   };
 
-enum
-  {
-    LP_EXIT = wxID_HIGHEST + 1,
-    LP_OPEN,
-    LB_SAVE,
-    LP_ABOUT,
-    LP_UNDO, 
-    LP_CUT,
-    LP_COPY,
-    LP_PASTE,
-
-    ID_WINDOW_TOP,
-    ID_WINDOW_MID,
-    ID_WINDOW_LEFT,
-    ID_WINDOW_RIGHT,
-    ID_WINDOW_BOTTOM,
-
-    WIN_SWAP_TOP,
-    WIN_SWAP_MID,
-    WIN_SWAP_LEFT,
-    WIN_SWAP_RIGHT,
-    WIN_SWAP_BOTTOM,
-    WIN_EXCLUSIVE_TOP,
-    WIN_EXCLUSIVE_MID,
-    WIN_EXCLUSIVE_LEFT,
-    WIN_EXCLUSIVE_RIGHT,
-    WIN_EXCLUSIVE_BOTTOM,
-    WIN_RESET_VIEW,
-
-    TOOLS_PADSC,
-    TOOLS_TOXML,
-    TOOLS_TOFMT,
-    TOOLS_ACCUM,
-    TOOLS_FILTER,
-    TOOLS_RECORD_DEMO,
-    TOOLS_PLAYBACK_DEMO,
-
-    WIN_PREFS_DIALOG,
-    WIN_OPEN_HELP,
-    WIN_OPEN_PADS_MANUAL,
-
-    TOOLBAR_OPEN,
-    TOOLBAR_SAVE,
-    TOOLBAR_SAVEAS,
-    TOOLBAR_PADS_MANUAL,
-    TOOLBAR_HELP,
-    TOOLBAR_LAUNCH,
-    TOOLBAR_XML,
-    TOOLBAR_FMT,
-    TOOLBAR_ACCUM,
-    TOOLBAR_PADX,
-    TOOLBAR_SUM,
-    TOOLBAR_FILTER,
-    TOOLBAR_END_CMDS, //convenience place holder
-
-    TOP_OPEN_FILE,
-    TOP_CLEAR,
-    TOP_IMPORT_STRING,
-    TOP_LIST_BOX_CHECK,
-
-    MID_GRID_EVENT,
-    MID_SELECT_NONE,
-    MID_SELECT_DELIM,    
-    MID_SELECT_TERM,
-    MID_SELECT_UDEF,
-    MID_SELECT_GET,
-
-    LEFT_ENABLE_CONTROLS,
-    LEFT_TYPE_SELECT,
-    LEFT_NAME_INPUT,
-    LEFT_SIGN_SELECT,
-    LEFT_ENCODING_SELECT,
-    LEFT_TERM_SELECT,
-    LEFT_BIN_SELECT,
-    LEFT_BYTE_SELECT,
-    LEFT_TYPEDEF_CHECK,
-    LEFT_STOP_EXPR,
-    LEFT_SET_SE_DEFAULT,
-    LEFT_SET_SE_FW,
-    LEFT_SET_SE_REGEX,
-    LEFT_SET_SE_DATE,
-    LEFT_SET_SE_EBC,
-    LEFT_SET_SE_BCD,
-    LEFT_SELECT_CLAUSE_TYPE,
-    LEFT_APPEND_ARGUMENT,
-    LEFT_REMOVE_ARGUMENT,
-    LEFT_ARG_INPUT_1,
-    LEFT_ARG1_RCLICK,
-    LEFT_QUALIFIER_MENU_0, 
-    LEFT_QUALIFIER_MENU_1, 
-    LEFT_QUALIFIER_MENU_2, 
-    LEFT_QUALIFIER_MENU_3, 
-    LEFT_QUALIFIER_MENU_4, 
-    LEFT_QUALIFIER_MENU_5, 
-    LEFT_QUALIFIER_MENU_6, 
-    LEFT_QUALIFIER_MENU_7, 
-    LEFT_QUALIFIER_MENU_8, 
-    LEFT_QUALIFIER_MENU_9, 
-    LEFT_QUALIFIER_MENU_10,
-    LEFT_QUALIFIER_MENU_11, 
-    LEFT_QUALIFIER_MENU_12, 
-    LEFT_QUALIFIER_MENU_13, 
-    LEFT_QUALIFIER_MENU_14, 
-    LEFT_QUALIFIER_MENU_15, 
-    LEFT_QUALIFIER_MENU_16, 
-    LEFT_QUALIFIER_MENU_17, 
-    LEFT_QUALIFIER_MENU_18,
-    LEFT_QUALIFIER_MENU_19, 
-    LEFT_TEXTSPEC_MAIN,
-    LEFT_SET_CLAUSE,
-    LEFT_CLEAR_CLAUSE,
-
-    LEFT_CLEAR_CONTROLS,
-    LEFT_SET_ATTR,
-    LEFT_GET_ATTR,
-    LEFT_DELETE_TREE,
-    LEFT_MAKE_CHILD,
-    LEFT_MAKE_SIBLING,
-    LEFT_DELETE_NODE,
-    LEFT_DELETE_CHILDREN,
-    LEFT_MOVE_NODE_TOP,
-    LEFT_MOVE_NODE_UP,
-    LEFT_MOVE_NODE_DOWN,
-    LEFT_MOVE_NODE_BOTTOM,
-
-    LEFT_MAKE_CHILD_KEY,
-    LEFT_MAKE_SIBLING_KEY,
-    LEFT_GET_ATTR_KEY,
-    LEFT_SET_ATTR_KEY,
-    LEFT_MOVE_NODE_TOP_KEY,
-    LEFT_MOVE_NODE_UP_KEY,
-    LEFT_MOVE_NODE_DOWN_KEY,  
-    LEFT_MOVE_NODE_BOTTOM_KEY,
-
-    LEFT_FIND_IN_CODE_MENU,
-    LEFT_CHANGE_NAME_MENU,
-    LEFT_CHANGE_TYPE_MENU,
-    LEFT_SET_ATTR_MENU,
-    LEFT_GET_ATTR_MENU,
-    LEFT_MAKE_CHILD_MENU,
-    LEFT_MAKE_SIBLING_MENU,
-    LEFT_MOVE_NODE_TOP_MENU,
-    LEFT_MOVE_NODE_UP_MENU,
-    LEFT_MOVE_NODE_DOWN_MENU,
-    LEFT_MOVE_NODE_BOTTOM_MENU,
-
-
-    RIGHT_FRAGMENT,
-    RIGHT_RESET,
-    RIGHT_BACK,
-    //RIGHT_DELIM_MODE,
-    //RIGHT_FIELD_MODE,
-    RIGHT_MODE_SELECT,
-    RIGHT_FIELD_SELECT,
-    RIGHT_MAKE_TREE,
-    RIGHT_MAKE_CODE,
-    RIGHT_EXPORT_CODE,
-    RIGHT_SAVE_SESSION,
-
-    PREFS_SAVE_LAYOUT_EXIT,
-    PREFS_SAVE_LAYOUT_NOW,
-    PREFS_NO_COLOUR,
-    PREFS_XML_MESSAGE_ON_SAVE,
-
-    PREFS_TOP_SET_FONT,
-    PREFS_TOP_EDIT_NUM_LINES,
-    PREFS_TOP_SET_NUM_LINES,
-
-    PREFS_MID_TERM_WARNINGS,
-    PREFS_MID_NONTERM_WARNINGS,
-    PREFS_MID_COLUMN_LABELS,
-    PREFS_MID_BUILD_WARNING,
-    PREFS_MID_WRITE_NEW_TYPE,
-
-    PREFS_LEFT_ACTIVE_WARNINGS,
-    PREFS_LEFT_CONTROL_SAFE_MODE,
-    PREFS_LEFT_BG_COLOUR,
-
-    PREFS_BOTTOM_COLOUR_TERM,
-    PREFS_BOTTOM_COLOUR_NONTERM,
-    PREFS_BOTTOM_COLOUR_LIT,
-    PREFS_BOTTOM_COLOUR_ERROR,
-    PREFS_BOTTOM_COLOUR_OTHER,
-    PREFS_BOTTOM_SET_FONT,
-
-    SD_EXECUTE, 
-
-    ACC_WIZ_EXPERT_MODE,
-    ACC_WIZ_HELP_SELECT,
-    ACC_WIZ_NUM_RECS_SPIN,
-    ACC_WIZ_SET_INCLUDE_PATH,
-    ACC_WIZ_RESET_DEFAULTS,
-    FMT_WIZ_EXPERT_MODE,
-    FMT_WIZ_HELP_SELECT,
-    FMT_WIZ_NUM_RECS_SPIN,
-    FMT_WIZ_SET_INCLUDE_PATH,
-    FMT_WIZ_RESET_DEFAULTS,
-    XML_WIZ_EXPERT_MODE,
-    XML_WIZ_HELP_SELECT,
-    XML_WIZ_NUM_RECS_SPIN,
-    XML_WIZ_SET_INCLUDE_PATH,
-    XML_WIZ_RESET_DEFAULTS,
-
-    TOOL_DIAG_CHECKBOX,
-
-    SSD_PLAYBACK, 
-    SSD_RECORD,
-    SSD_SPIN_BUTTON,
-    SSD_STATE_BUTTON,
-    SSD_TEXT_ENTERED,
-    SSD_NEXT_STATE,
-    SSD_LAST_STATE,
-
-    PXD_QUERY_CHANGE,
-    PXD_EXECUTE,
-    PXD_SAVE,
-    PXD_QUERYLOAD,
-    PXD_QUERYCLEAR,
-    PXD_SOURCELOAD,
-    PXD_SOURCECLEAR,
-    PXD_QUERYLIST,
-    PXD_SOURCELIST,
-    
-  };
-
-enum
-  {
-    MID_MODE_NONE = 0,
-    MID_MODE_DELIM,
-    MID_MODE_TERM,
-    MID_MODE_UDEF,
-  };
-
-enum
-  {
-    TREE_COLOUR_NONE = 0,
-    TREE_COLOUR_BG,
-    TREE_COLOUR_TEXT,
-    
-  };
-
-enum
-  {
-    EXEC_USE_INPUT = 0x1,
-    EXEC_USE_IO = 0x2,
-    EXEC_COMPILE = 0x4,    
-  };
-
-enum
-  {
-    TP_FROM_TOOLBAR = 1,
-    TP_FROM_MENU
-  };
-
-
-static const wxChar *TITLE = _T(APP_NAME_STRING);
-
-static const wxChar *ANY_FILETYPES = _T("All Files (*.*)|*");
-
-static const wxChar *IMPORT_FILETYPES = _T("Text files (*.txt)|*.txt|"
-					   "All files (*.*)|*"
-					   );
-
-static const wxChar *CODE_FILETYPES   = _T("PADS definitions (*.p)|*.p|"
-					   "All files (*.*)|*.*"
-					   );
-
-static const wxChar *STATE_FILETYPES  = _T("XML Files (*.xml)|*.xml|"
-					   "All files (*.*)|*.*"
-					   );
-
-static const wxChar *XML_FILETYPES  = _T("XML Files (*.xml)|*.xml|"
-					   "All files (*.*)|*.*"
-					   );
-
-static const wxChar *HEADER_FILETYPES = _T("Header Files (*.h)|*.h");
-static const wxChar *C_FILETYPES = _T("C Files (*.c)|*.c");
+#include "lp_event_ids.h"
+#include "lp_constants.h"
 
 /* ***Core Application Classes *** */
 
@@ -567,10 +226,15 @@ class LaunchPADS : public wxFrame
   void OnLeftSetClause(wxCommandEvent &event);
   void OnLeftClearClause(wxCommandEvent &event);
 
+  void OnLeftTreeCtrlSelect(wxTreeEvent &event);
+  void OnLeftTreeBeginDrag(wxTreeEvent &event);
+  void OnLeftTreeEndDrag(wxTreeEvent &event);
+
   void LeftEnableControls(bool show);
   wxTreeItemId LeftGetTreeRoot(void);
   void LeftBuildTree(void);
   void LeftMakeCodeFromTree(void);
+  void LeftMakeVisualTreeFromAST(PNodeP* rootASTNode);
 
   void OnRightModeSelect(wxCommandEvent &event);
   void OnRightFragment(wxCommandEvent &event);
@@ -616,6 +280,7 @@ class LaunchPADS : public wxFrame
 
   friend class StateSequenceDialog;
   friend class PADXDialog;
+  friend class PADSLangInspector;
   /* **************************** */
  protected:
   /* **General******************* */
@@ -668,6 +333,9 @@ class LaunchPADS : public wxFrame
   void SaveStateAs(int stateNum, bool catState);
   void SaveState(int stateNum, bool catState);
   void SaveStateWrapped(int stateNum, bool catState);
+
+  int LoadPXMLFile(wxString& loadPath);
+  int SavePXMLFile(wxString& savePat);
 
   /* **TOOLS********************* */
   wxBitmap      *wizBitmap;
@@ -750,6 +418,11 @@ class LaunchPADS : public wxFrame
 		    int left, 
 		    int right);
   int MidGridTermGuessMode(int left, int right);
+
+  PADSGridNode* MidMakeGridNodeTreeFromGridData();
+  PADSGridNode* MidMakeGridNodeTreeRecur(PADSGridNode* parent, int left, int right, int depth);
+
+  PADSGridNode* gridTreeRoot; 
 
   bool midUDefErrorMBoxOn;     // show message box on nonterminal type selection errors in grid
   bool midTermErrorMBoxOn;     // show message box on terminal type selection errors in grid
@@ -842,6 +515,10 @@ class LaunchPADS : public wxFrame
   wxButton         *leftAddClause;
   wxTextCtrl       *leftClauseInput;
 
+  wxString           pXMLDefPath;
+  PNodeP            *leftDefTree;
+  PADSLangInspector *leftInspector;
+
   void LeftBuildControlPanel(long buttonflags, long comboflags, 
 			     long radioflags,  long textflags);
   void LeftInitFrame(long panelflags, long treeflags, long buttonflags);
@@ -855,6 +532,9 @@ class LaunchPADS : public wxFrame
   void LeftMakeCodeRecur(wxTreeItemId this_id);
   void LeftCodeOptRecur(wxTreeItemId this_id);
   void LeftPrintTermElem(PElement& elem, int parent_type);
+
+  wxTreeItemId LeftRecurThroughSimpleTree(PADSPNodeTreeNode* thisNode, wxTreeItemId& parentID);
+  void LeftSetTreeElementColourFromType(int type, wxColour& setMe);
 
   bool leftTreeBackgroundColourOn;   // change background colors of tree items to match item type
   bool leftTreeTextColourOn;         // change text colors of tree items to match item type
