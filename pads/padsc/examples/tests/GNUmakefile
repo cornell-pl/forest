@@ -131,7 +131,9 @@ regress_o:  sanity_check \
 	  regress_rwxml_message_header_o \
           regress_rwxml_pads-comp_o \
           regress_rwxml_transform_o \
-          regress_test_transform_o 
+          regress_test_transform_o \
+          regress_rwxml_try_o 
+
 	@echo "DONE"
 
 regress_d:  sanity_check \
@@ -187,7 +189,8 @@ regress_d:  sanity_check \
           regress_rwxml_message_header_d \
           regress_rwxml_pads-comp_d \
           regress_rwxml_transform_d \
-          regress_test_transform_d 
+          regress_test_transform_d \
+          regress_rwxml_try_d 
 
 	@echo "DONE"
 
@@ -269,6 +272,11 @@ regress_test_transform_d: test_transform_d
 regress_rwxml_transform_o: rwxml_transform
 	@(args=""; suf=""; $(RegressDef))
 regress_rwxml_transform_d: rwxml_transform
+	@(args=""; suf=""; $(RegressDef))
+
+regress_rwxml_try_o: rwxml_try
+	@(args=""; suf=""; $(RegressDef))
+regress_rwxml_try_d: rwxml_try
 	@(args=""; suf=""; $(RegressDef))
 
 

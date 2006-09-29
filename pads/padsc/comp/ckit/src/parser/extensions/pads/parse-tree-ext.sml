@@ -152,6 +152,14 @@ structure ParseTreeExt =
                        dToS    : 'exp,
                        dToSArgs: 'exp list,
 		       maskMap : ('exp * 'exp list) option}
+         | PTry    of {name           : string,
+                       params         : ('ct * 'decr) list,
+		       baseName       : string,
+		       baseArgs       : 'exp list,
+		       isRecord       : bool, 
+                       containsRecord : bool, 
+                       largeHeuristic : bool,
+		       isSource       : bool}
 		       
          | PSelect of {selName : string,
 		       tyName  : string,

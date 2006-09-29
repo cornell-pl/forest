@@ -1283,10 +1283,31 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   | ppPTrans t ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
 
 
+  fun ppPTry (t:TyProps.tryInfoTy) (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  =
+      (* This needs to be fixed... Need tid for physical *)
+      let val {baseName, baseArgs,...} = t
+          fun ppBase pps which t = ppTagIndent which ppTy pps t
+	  fun ppPTry' pps (ptyInfo:PTys.pTyInfo) = 
+	      let val declName = #repName ptyInfo
+		  val typarams = #typarams ptyInfo
+	      in
+		  (  ppPDecl aidinfo tidtab pps (declName, typarams)
+		   ; PPL.newline pps
+		   ; ppBase pps "spec" (baseName, baseArgs)
+		   )  
+	      end
+      in
+	  (ppPDeclaration pps "try" ptyInfo ppPTry')
+	  handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
+      end  
+  | ppPTry t ptyInfo aidinfo tidtab pps _ = PPL.addStr pps "ERROR: Unexepected variable" (* fix this *)
+
+
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) aidinfo tidtab pps decl = 
     ( PPL.newline pps
     ; case #info ptyInfo
       of TyProps.TransInfo     t => ppPTrans t ptyInfo aidinfo tidtab pps decl
+      |  TyProps.TryInfo       t => ppPTry   t ptyInfo aidinfo tidtab pps decl
       |  TyProps.TypedefInfo   _ => ppPTypedef ptyInfo aidinfo tidtab pps decl
       |  TyProps.RecursiveInfo _ => () (* XXX: must be filled in. *)
       |  TyProps.StructInfo    _ => ppPStruct ptyInfo aidinfo tidtab pps decl

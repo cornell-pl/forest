@@ -297,7 +297,8 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | PINCLUDE of string (* PADS*)
         | LCOLON | RCOLON  | DOTDOT | COLONCOLON | EQGT (* PADS *)
         | PSELECT | PCHARCLASS (* PADS *)
-        | PTYPEDEF | PRECURSIVE | PSTRUCT | PALTERNATES | PUNION | PARRAY | PENUM | PTRANS (* | PDYNAMIC*) (* PADS *)
+        | PTYPEDEF | PRECURSIVE | PSTRUCT | PALTERNATES | PUNION 
+ 	| PARRAY | PENUM | PTRANS | PTRY (* | PDYNAMIC*) (* PADS *)
 	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
         | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  | PSOME | PNONE (*PADS*)
@@ -386,6 +387,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | pIsSource of bool
         | pTypedefPredOpt of (expression PX.PPredicate) option
         | pTypedef of externalDecl
+        | pTry of externalDecl
         | pTransBody of {srcName  : string,
                          srcArgs : expression list,
                          dstName  : string,
@@ -544,6 +546,7 @@ externalDeclaration:
 (* PADS: start external declarations *)
         | pTypedef                      (SOME(markExternalDecl srcMap (pTypedef,pTypedefleft,pTypedefright)))
         | pTrans                        (SOME(markExternalDecl srcMap (pTrans,pTransleft,pTransright)))
+        | pTry                          (SOME(markExternalDecl srcMap (pTry,pTryleft,pTryright)))
         | pRecursive                    (SOME(markExternalDecl srcMap (pRecursive,pRecursiveleft,pRecursiveright)))
 (*         | pDynamic                      (SOME(markExternalDecl srcMap (pDynamic,pDynamicleft,pDynamicright))) *)
         | pOpt                          (SOME(markExternalDecl srcMap (pOpt,pOptleft,pOptright)))
@@ -1225,6 +1228,20 @@ pTypedef:
 				containsRecord = false,
 				largeHeuristic = false,
 				pred = pTypedefPredOpt}) )
+
+pTry:
+  pIsSource pIsRecord PTRY pName pushScope pTyParams pName pOptActParams  popScope
+  ( makeTypeName pName1;
+   makeTypeName (pName1^"_pd");
+   makeTypeName (pName1^"_m");
+   ExternalDeclExt(PX.PTry     {name   = pName1, 
+				params = pTyParams,
+				baseName = pName2,
+				baseArgs = pOptActParams,
+				isRecord = pIsRecord,
+				isSource = pIsSource,
+				containsRecord = false,
+				largeHeuristic = false}) )
 
 pTransBody:
   expr pOptActParams COLON pName pOptActParams PLTEQGT pName pOptActParams COLON expr pOptActParams SEMICOLON

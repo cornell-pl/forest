@@ -1171,6 +1171,7 @@ functor PPAstXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) : PP_
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) tidtab pps decl = 
       case #info ptyInfo
       of TyProps.TransInfo     _ => ppPTypedef ptyInfo tidtab pps decl   (* for now, typedef and trans print the same *)
+      |  TyProps.TryInfo       _ => ppPTypedef ptyInfo tidtab pps decl   (* for now, typedef and try print the same *)
       |  TyProps.TypedefInfo   _ => ppPTypedef ptyInfo tidtab pps decl
       |  TyProps.RecursiveInfo _ => ppPRecursive ptyInfo tidtab pps decl
       |  TyProps.StructInfo    _ => ppPStruct ptyInfo tidtab pps decl

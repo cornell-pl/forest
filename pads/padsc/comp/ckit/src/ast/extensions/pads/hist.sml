@@ -113,7 +113,7 @@ structure Hist = struct
       end
 
 
-  fun genTypedef (name, baseTy, repPCT, pdPCT, kind) = 
+  fun genSimple (name, baseTy, repPCT, pdPCT, kind) = 
       let val (histED, histPCT) = genRepTypedef  (name, baseTy)
 	  val initFunED = genWalkFunsTypedef(name, baseTy, histPCT, initSuf,[])
 	  val setParamsFunED = genWalkFunsTypedef(name, baseTy, histPCT, setParamSuf,[defPackage])

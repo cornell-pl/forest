@@ -383,6 +383,17 @@
     </xs:complexType>
   </xs:element>
 
+<!-- PTRY Declaration -->         <!-- pTry -->
+  <xs:element name="try"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:ptype"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
   <xs:element name="partial">    <!-- partial application of C function  -->
     <xs:complexType>
       <xs:sequence>

@@ -15,7 +15,8 @@ struct
    (* label name, label type, supplied arguments, is omitted, comment *)
    type labelInfo = string * string * argList * bool * string option
 
-   datatype compoundSize =  Base of diskSize 
+   datatype compoundSize =  Base  of diskSize 
+                          | Try   of diskSize * string * argList
                           | Trans of diskSize * string * argList
                           | Typedef of diskSize * string * argList
                           | Recursive of diskSize * string * argList
@@ -33,6 +34,11 @@ struct
 
    type baseInfoTy = unit
    type typedefInfoTy = unit
+   type tryInfoTy = {ds : diskSize,
+		     paramNames : string list,
+		     baseName : string,
+		     baseArgs : pexp list}
+
    type transInfoTy = {ds: diskSize,
 		       paramNames : string list,
 		       srcName : string,
@@ -71,6 +77,7 @@ struct
    type enumInfoTy = unit
    datatype tyInfo = BaseInfo of baseInfoTy
                    | TransInfo of transInfoTy 
+                   | TryInfo of tryInfoTy 
                    | TypedefInfo of typedefInfoTy 
                    | RecursiveInfo of recursiveInfoTy 
                    | StructInfo of structInfoTy

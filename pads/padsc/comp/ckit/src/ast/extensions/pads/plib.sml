@@ -284,6 +284,7 @@ struct
   val bigEndian    = PbigEndian
   val flags_t      = P.makeTypedefPCT "Pflags_t"
 
+  val uint8PCT     = P.makeTypedefPCT "Puint8"
   val uint32PCT    = P.makeTypedefPCT "Puint32"
   val uint64PCT    = P.makeTypedefPCT "Puint64"
   val uint32Act    = "Puint32_acc"
@@ -775,4 +776,6 @@ struct
 				[PT.Cast(P.ptrPCT bytePCT, P.addrX exp), PT.Cast(P.uint,P.sizeofEX exp)])
   fun swapBytesS(exp) = PT.Expr(swapBytesX(exp))
   fun end2StringX(endian) = PT.Call(PT.Id "Pendian2str", [endian])
+
+
 end

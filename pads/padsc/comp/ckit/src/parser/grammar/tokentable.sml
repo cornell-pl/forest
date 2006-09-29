@@ -99,6 +99,7 @@ struct
                ("Pswitch", Tokens.PSWITCH),
                ("Pterm", Tokens.PTERM),
                ("Ptrans", Tokens.PTRANS),
+               ("Ptry", Tokens.PTRY),
                ("Ptypedef", Tokens.PTYPEDEF),
                ("Precur", Tokens.PRECURSIVE),
 (*                ("Pdyn", Tokens.PDYNAMIC), *)

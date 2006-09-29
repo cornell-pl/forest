@@ -110,7 +110,7 @@ structure Cluster = struct
       end
 
 
-  fun genTypedef (name, baseTy, repPCT, pdPCT, kind) = 
+  fun genSimple (name, baseTy, repPCT, pdPCT, kind) = 
       let val (analysisED, analysisPCT) = genRepTypedef  (name, baseTy)
 	  val initFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, initSuf,[])
 	  val setParamsFunED = genWalkFunsTypedef(name, baseTy, analysisPCT, setParamSuf,[defPackage])

@@ -2,7 +2,7 @@
 #define PADS_TY(suf) Hi_t ## suf
 #define IO_DISC_MK P_norec_noseek_make(0)
 
-#define IFACE_TY_VAR  m.decls.decls.iFaceDecl.branches.iFaceId.ty
+#define IFACE_TY_VAR  m.decls.decls.element.iFaceDecl.branches.iFaceId.ty
 #define IFACE_TY_PATH branches.forAllTy.iFaceType
 #define KIND_VAR      IFACE_TY_VAR->branches.forAllTy.iFaceTvBndr.kind
 #define KIND_PATH_ARG    branches.funKindBody.arg
@@ -18,6 +18,7 @@ KIND_VAR->KIND_PATH_RESULT = KIND_VAR;\
 }while(0)
 
 #define COPY_STRINGS 1
+#define CUSTOM_MASK_CODE initHiMask(pads, &m, P_CheckAndSet)
 #include "hi.h"
 #include "template/read_orig_write_xml.h"
 
