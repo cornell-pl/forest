@@ -1,7 +1,24 @@
 \section{Conclusions}
 \label{sec:future}
-
-\cut{
+Vast quantities of important information exist only in ad hoc formats.  
+Data analysts desperately need reliable, high-level tools to 
+help them document, parse, analyze, transform, query, and visualize such data.  
+% \padsml{} is a high-level domain-specific language and system
+% designed for this purpose.  
+% Inspired by the type structure of functional
+% programming languages, \padsml{} uses dependent
+% polymorphic recursive data types to describe the syntax and the semantic properties of ad hoc data sources.  The language is compact and expressive, capable of describing data from diverse domains including networking, computational biology, finance, and cosmology. 
+% The \padsml{} compiler uses a ``types as modules'' compilation strategy
+% in which every \padsml{} type definition is compiled into
+% an \ocaml{} module containing types for data representations
+% and functions for data processing.  Functional programmers
+% can use the generated modules to write clear and concise {\em format-dependent}
+% data processing programs.  Furthermore, our system design
+% allows external tool developers to write new {\em format-independent} tools
+% simply by supplying a module that matches the appropriate generic
+% signature.  
+% To give \padsml{} a precise semantics, we have simplified and extended the Data Description Calculus (\ddc)~\cite{fisher+:next700ddl} to account for parametric polymorphism and to provide a semantics for printing.
+%\cut{
 \padsml{} is already an effective, working system for data description
 and processing.  However, there are a number of ways we plan to make it 
 even better.
@@ -22,22 +39,19 @@ Consequently,
 we plan to explore development a \padsml{} ``type checker'' 
 to infer description properties and catch obvious errors.
 
-A second long-term goal is to build a collection of
-higher-level, format-independent data analysis tools.  By
-``higher-level'' tools, we mean tools that perform semantic data
-analysis as opposed to simpler, low-level syntactic transformation
-(such as \xml\ conversion) and analysis.  
-Tools in this category include tools for
-content-based search, clustering, statistical data modeling, data 
-generation and machine learning.  We believe that if we can automatically
-generate stand-alone,
-end-to-end tools that perform these functions over arbitrary data, 
-we can have a substantial impact on the
-productivity of many researchers in fields ranging from computational
-in biology and networking.  We hope to provide access to these tools
-through LaunchPADS, our data visualization 
-environment~\cite{launchpads:planx,launchpads:sigmod}, which currently
-only interfaces with \padsc{}.
+A second long-term goal is to build a collection of higher-level,
+format-independent data analysis tools.  By ``higher-level'' tools, we
+mean tools that perform semantic data analysis as opposed to simpler,
+low-level syntactic transformation (such as \xml\ conversion) and
+analysis.  Tools in this category include tools for content-based
+search, clustering, statistical data modeling, data generation and
+machine learning.  We believe that if we can automatically generate
+stand-alone, end-to-end tools that perform these functions over
+arbitrary data, we can have a substantial impact on the productivity
+of many researchers in fields ranging from computational in biology
+and networking.  We hope to provide access to these tools through
+LaunchPADS, our data visualization environment, which currently only
+interfaces with \padsc{}.
 
 Third, as mentioned in Section~\ref{sec:intro}, ad hoc data sources are often
 very large scale.  Large data volumes often require that the data be
@@ -47,28 +61,9 @@ large-scale data~\cite{fisher+:pads} by supporting multiple-entry
 point parsing, which permits a user to write tools that have fixed
 memory requirements and that can yield a result in one scan of the
 data source.  We plan to explore similar techniques in \padsml{}. 
-}
+%}
 % \section{Conclusions}
 % \label{sec:conc}
-
-Vast quantities of important information exist only in ad hoc formats.  
-Data analysts desperately need reliable, high-level tools to 
-help them document, parse, analyze, transform, query, and visualize such data.  
-\padsml{} is a high-level domain-specific language and system
-designed for this purpose.  
-Inspired by the type structure of functional
-programming languages, \padsml{} uses dependent
-polymorphic recursive data types to describe the syntax and the semantic properties of ad hoc data sources.  The language is compact and expressive, capable of describing data from diverse domains including networking, computational biology, finance, and cosmology. 
-The \padsml{} compiler uses a ``types as modules'' compilation strategy
-in which every \padsml{} type definition is compiled into
-an \ocaml{} module containing types for data representations
-and functions for data processing.  Functional programmers
-can use the generated modules to write clear and concise {\em format-dependent}
-data processing programs.  Furthermore, our system design
-allows external tool developers to write new {\em format-independent} tools
-simply by supplying a module that matches the appropriate generic
-signature.  
-To give \padsml{} a precise semantics, we have simplified and extended the Data Description Calculus (\ddc)~\cite{fisher+:next700ddl} to account for parametric polymorphism and to provide a semantics for printing.
 
 \cut{
 We hope the \padsml{} system can serve as a 
