@@ -10,9 +10,8 @@ structure Main : sig
     structure RegExp = RegExpFn (structure P=AwkSyntax  structure E=DfaEngine) : REGEXP 
     structure MT = MatchTree
     structure SS = Substring
+    open Tokens
 
-    type offset = {offset: int, span:int}
-    datatype Token = Pint of LargeInt.int | Pstring of string | Pwhite of string | Other of char | Error
 
     (*Note: regular expressions must consume at least one input character! *)
     type mi = {pos:substring, len:int}
@@ -32,21 +31,36 @@ structure Main : sig
     val other = "[:|:]" 
     fun otherCvt mtOpt = getToken mtOpt (fn s=> Other (String.sub(s,0)))
     val matchlist = [(integer, integerCvt), (alphaString, alphaStringCvt), (ws, wsCvt), (other,otherCvt)]
+    val matchlist = [(alphaString, alphaStringCvt)]
+	          
 
-    (*    Pint < Pstring < Pwhite < Other < Error *)
+    (*    Ptime < Pip < Pint < Pstring < Pwhite < Other < Error *)
     fun compToken (t1, t2) = 
 	case (t1,t2) 
-        of (Pint i1, Pint i2) =>  EQUAL
+        of (Ptime i1, Ptime i2) => EQUAL
+	|  (Pip i1, Pip i2) => EQUAL
+        |  (Pint i1, Pint i2) =>  EQUAL
         |  (Pstring s1, Pstring s2) => EQUAL
         |  (Pwhite s1, Pwhite s2) => EQUAL
         |  (Other c1, Other c2) => Char.compare (c1, c2)
         |  (Error, Error) => EQUAL
+        |  (Ptime _, _) => LESS
+        |  (Pip _, Ptime _) => GREATER
+        |  (Pip _, _) => LESS
+        |  (Pint _, Ptime _) => GREATER
+        |  (Pint _, Pip _) => GREATER
         |  (Pint _, _) => LESS
+        |  (Pstring _, Ptime _) => GREATER
+        |  (Pstring _, Pip _) => GREATER
         |  (Pstring _, Pint _) => GREATER
         |  (Pstring _,  _) => LESS
+        |  (Pwhite _, Ptime _) => GREATER
+        |  (Pwhite _, Pip _) => GREATER
         |  (Pwhite _, Pint _) => GREATER
         |  (Pwhite _, Pstring _) => GREATER
         |  (Pwhite _, _) => LESS
+        |  (Other _, Ptime _) => GREATER
+        |  (Other _, Pip _) => GREATER
         |  (Other _, Pint _) => GREATER
         |  (Other _, Pstring _) => GREATER
         |  (Other _, Pwhite _) => GREATER
@@ -82,16 +96,16 @@ structure Main : sig
 
     fun printToken t = 
 	case t 
-        of Pint i => print (*"[int]"*)(" Pint("^(LargeInt.toString i)^")") 
-        |  Pstring s => print (*"[string]"*)  (" Pstring("^s^")")
+        of Ptime i => print ("[Time]")
+	|  Pip i  => print ("[IP]")
+	|  Pint i => print ("[int]") (*" Pint("^(LargeInt.toString i)^")"*) 
+        |  Pstring s => print ("[string]")  (*" Pstring("^s^")"*)
         |  Pwhite s => print "[white space]" (*(" Pstring("^s^")") *)
         |  Other c => print ("("^(Char.toString c)^")") (*(" Pother("^(Char.toString c)^")") *)
         |  Error => print (" Error")
 
     fun printTokens [] = print "\n"
       | printTokens ((t,loc)::ts) = (printToken t; printTokens ts)
-
-    
 
     fun rtokenizeRecord record = 
 	let val record = Substring.full record
@@ -102,6 +116,28 @@ structure Main : sig
 		| SOME ((token,len),rest) => 
 		    getMatches (offset+len) rest ((token,{offset=offset, span=len}) :: acc)
 	    val matches = getMatches 0 record []
+(*	    val () = printTokens matches *)
+	in
+	    matches
+	end
+
+    fun ltokenizeRecord (record:string) = 
+	let val length = String.size record
+	    val cursor : int ref = ref 0
+            fun feedLex n = 
+		let val s = if (n > (length - !cursor)) 
+			    then SS.string(SS.extract(record, !cursor, NONE))  handle Subscript => ""
+			    else SS.string(SS.substring(record, !cursor, n))  handle Subscript => ""
+		in
+		    cursor := !cursor + n;
+		    s
+		end
+	    val lex = TokenLex.makeLexer feedLex
+            fun getMatches acc =
+		case lex() 
+		of SOME a => getMatches(a::acc)
+                |  NONE   => List.rev acc
+	    val matches = getMatches []
 (*	    val () = printTokens matches *)
 	in
 	    matches
@@ -157,7 +193,7 @@ structure Main : sig
     fun doIt fileName = 
 	let val records = loadFile fileName
 	    val numRecords = List.length records
-	    val rtokens = List.map rtokenizeRecord records
+	    val rtokens = List.map ltokenizeRecord records
 (*	    val () = List.app printTokens rtokens  *)
             val counts = List.map countFreqs rtokens
             val fd: freqDist = buildHistograms numRecords counts

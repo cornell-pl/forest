@@ -15,7 +15,7 @@ SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT39)
 BUILD_EXEC = build-exec.sml
 
 
-all:	compiler
+all:	learn
 
 foo:
 	@(echo SML = $(SML))
@@ -24,8 +24,9 @@ foo:
 	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))
 	@(echo BUILD_EXEC = $(BUILD_EXEC))
 
-compiler:
-	echo Making compiler
+learn:	main.sml tokens.lex
+	echo Making learning program
+	lexgen --ml-lex-mode tokens.lex
 	$(SML) < $(BUILD_EXEC)
 
 clean:
