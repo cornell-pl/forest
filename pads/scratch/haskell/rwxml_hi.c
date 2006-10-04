@@ -18,7 +18,7 @@ KIND_VAR->KIND_PATH_RESULT = KIND_VAR;\
 }while(0)
 
 #define COPY_STRINGS 1
-#define CUSTOM_MASK_CODE initHiMask(pads, &m, P_CheckAndSet)
+//#define CUSTOM_MASK_CODE initHiMask(pads, &m, P_CheckAndSet)
 #include "hi.h"
 #include "template/read_orig_write_xml.h"
 
