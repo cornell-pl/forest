@@ -305,10 +305,10 @@ regress_a_ip_test_d: a_ip_test_d
 #########################################################################
 
 % : %.c
-	$(CC) -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH) -last -o $@ 
+	$(CC) -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH) -last -liconv -o $@ 
 
 %_d : %.c
-	$(CC) -Wall -g $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH)-g -last -o $@ 
+	$(CC) -Wall -g $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH)-g -last -liconv -o $@ 
 
 clobber::
 	$(RM) .depend
