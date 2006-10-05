@@ -140,9 +140,9 @@ guarantee that there are no errors in any of the subcomponents.  This
 property holds for all representations and corresponding parse
 descriptors.  This design supports a ``pay-as-you-go'' approach to
 error handling. The parse descriptor for valid data need only be
-consulted once, no matter the size of the corresponding data, and user
-code only needs to traverse nested parse descriptors if more
-precise information about the error is required.
+consulted once, no matter the size of the corresponding data. User
+code only needs to traverse nested parse descriptors if information
+about an error is required.
 
 \subsubsection{Example: Filtering}
 \label{sec:ex-filter}
@@ -243,6 +243,8 @@ orders and corresponding parse descriptors.
     | \{info=Generic(g)\} ->
       Right \{GA.header = h; GA.info = g\}
 
+\kw{let} split_alarm_pd pd = ... (* mirrors split_alarm *)
+
 \kw{let} process_alarm pads [pads_D; pads_G] = 
   \kw{let} a,a_pd = Alarm.parse pads in
     \kw{match} (split_alarm a, split_alarm_pd a_pd) \kw{with}
@@ -289,7 +291,7 @@ The code fragment in \figref{fig:ex-no-err-check} shreds \darkstar{}
 data in the format described by \texttt{\darkstar{}.pml} into the
 formats described in \texttt{\darkstar{}Normal.pml}.  It uses the
 \cd{info} field of \cd{Alarm} records to partition the data. 
-Notice the code invokes the \cd{print} functions generated for the \cd{G_alarm} and \cd{D_alarm} types to output the shredded data.
+Notice that the code invokes the \cd{print} functions generated for the \cd{G_alarm} and \cd{D_alarm} types to output the shredded data.
 
 \cut{
 \begin{figure}

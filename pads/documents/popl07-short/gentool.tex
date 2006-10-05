@@ -34,22 +34,22 @@ hence would support development of format-independent tools quite nicely.
 % useful in this context, 
 \ocaml{}, however, lacks any specific, built-in generic programming facility.
 Fortunately, we can still achieve many of the benefits of generic 
-programming idioms by having the \padsml\ compiler generate
-well-designed, format-specific libraries for us at compile time
+programming idioms by having the \padsml{} compiler generate
+well-designed, format-specific libraries at compile time
 and then linking those libraries to format-independent routines.
 
-To be specific, for each format description, \padsml\ generates a
+To be specific, for each format description, \padsml{} generates a
 format-dependent traversal mechanism that implements a generalized
 fold over the representations and parse descriptors that correspond to
 the description. Independently, tool developers write format-independent
-routines that specifying the behaviour of a tool over each
-\padsml{} type constructor. When a user needs a {\em specific tool} for a
+routines that specify the behaviour of a tool over each
+\padsml{} type constructor. When users need a {\em specific tool} for a
 {\em specific format}, they link the format-dependent 
 traversal to the format-independent routines via 
 functor application.
 
 In principle, different tools might require different sorts of traversals.  
-However, all of the tools we have encountered in practice so far, both in 
+However, many of the tools we have encountered in practice so far, both in 
 implementing \padsml\ and \pads,
 perform their computations in a single pass over the representation
 and corresponding parse descriptor, visiting each value in the data
