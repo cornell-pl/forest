@@ -287,27 +287,60 @@ structure Main : sig
 		    List.app printOne summary
 		end
             fun mergeStructEntries ta =
-		let fun doOne ((token,kind,count,coverage),(cumCoverage,tlist)) = 
+		let fun doOne ((token,kind,count,coverage),(cumCount, cumCoverage,tlist)) = 
  		    case kind of Struct =>
-			    (Int.min(coverage, cumCoverage), (token, count)::tlist)
+			    (cumCount + count, Int.min(coverage, cumCoverage), (token, count)::tlist)
 		in
-		    (Struct, List.foldl doOne (numRecords,[]) tokenAnalysis)
+		    (Struct, List.foldl doOne (0, numRecords,[]) tokenAnalysis)
 		end
 	    val structSummary = mergeStructEntries tokenAnalysis
 
-	    fun printStructSummary (kind, (coverage, tinfos)) = 
+	    fun printStructSummary (kind, (count, coverage, tinfos)) = 
 		let fun printOne (t,count) =
 		     (printToken t; print "\t";
 		      print "Occurrences:"; print (Int.toString count);  print "\n")
 		in
 		    (printKind kind; print "\t";
-		     print "Coverage:"; print (Int.toString coverage);  print "\n";
+		     print "Coverage:";    print (Int.toString coverage);  print "\n";
+		     print "Token count:"; print (Int.toString count);     print "\n";
 		     List.app printOne tinfos)
 		end
 	    val () = printStructSummary structSummary
 
 	in
-	    structSummary
+	    structSummary : (Kind * (int * int * ((Token * int)  list) ))
+	end
+
+    type Context = LToken list
+    type TokenOrder = LToken list
+    exception UnexpectedToken
+    fun splitRecords summary (records : Context list ) =
+	let val (kind,(count, coverage, tokenfreqs)) = summary
+	    val numFound = ref 0
+	    fun getTokenOrder summary record = 
+	        let fun insertOne ((token,freq),tTable) = TokenTable.insert(tTable, token, ref freq)
+		    val tTable = List.foldl insertOne TokenTable.empty summary
+		    fun doOneToken tTable ((token,loc), acc) = 
+			case TokenTable.find(tTable, token)
+			of NONE => acc
+			|  SOME freq => 
+			    if !freq = 0 then raise UnexpectedToken
+			    else (freq := !freq - 1;
+				  numFound := !numFound + 1;
+				  token::acc)
+		    val tList = List.rev(List.foldl (doOneToken tTable) [] record)
+		    val () = if not ((!numFound) = count) then print "Did not find all desired tokens" else ()
+		    fun printTList tList = (print "tokenOrder:\n";
+					    List.app (fn t => (printToken t; print " ")) tList;
+					    print "\n")
+					   
+		    val () = printTList(tList)
+		in
+		    tTable
+		end
+	    val tokenOrder = getTokenOrder tokenfreqs (List.hd records)
+	in
+	    ()
 	end
 
 
@@ -321,7 +354,8 @@ structure Main : sig
 	    val () = print ("THRESHOLD for histogram equality: "^(Int.toString THRESHOLD)^".\n")
 	    val clusters : (Token * histogram) list list = findClusters numRecords THRESHOLD fd
 	    val () = printClusters numRecords clusters
-	    val analysis = analyzeCluster numRecords (List.hd clusters)
+	    val analysis : (Kind * (int * int * ((Token * int)  list) )) = analyzeCluster numRecords (List.hd clusters)
+            val newPartitions = splitRecords analysis rtokens
 	in
 	    counts
 	end
