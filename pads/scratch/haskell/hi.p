@@ -12,7 +12,7 @@ Pstruct Pblob_t(:Puint32 length:){
 
 Pstruct LongInt_t{
   NativeInt_t             size;
-  NativeInt_t             byteArraySize;
+  Psbh_uint32(:WORDSIZE:) byteArraySize;
   Pb_uint8[byteArraySize] bytes;
 }
 
@@ -331,8 +331,8 @@ Precur Pstruct Kind_t{
 Precur IfaceType_t(:Dictionary_t *dict:);
 
 Pstruct IfaceIdBndr_t(:Dictionary_t *dict:){
-  String_t(:dict:) name;
-  IfaceType_t      type;
+  String_t   (:dict:) name;
+  IfaceType_t(:dict:) type;
 };
 
 Pstruct IfaceTvBndr_t(:Dictionary_t *dict:){
@@ -370,8 +370,8 @@ Punion IfaceExtNameBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Pstruct IfaceExtName_t(:Dictionary_t *dict:){
-  Pb_uint8                      tag;
-  IfaceExtNameBranches_t(:tag:) branches;
+  Pb_uint8                            tag;
+  IfaceExtNameBranches_t(:tag, dict:) branches;
 };
 
 Pstruct ClassP_t(:Dictionary_t *dict:){
@@ -397,10 +397,10 @@ Pstruct IParam_t(:Dictionary_t *dict:){
   IfaceType_t(:dict:) tys;
 };
 
-Punion PredTyBranches(:Puint8 tag, Dictionary_t *dict:){
+Punion PredTyBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch (tag){
     Pcase 0x00: ClassP_t(:dict:) classp;
-    Pcase 0x01: IParam_t         iparam;
+    Pcase 0x01: IParam_t(:dict:) iparam;
   }
 };
 
@@ -428,7 +428,7 @@ Pstruct IfaceTupTc_t{
   Arity_t   arity;
 }
 
-Punion IfaceTyConBranches(:Puint8 tag, Dictionary_t *dict:){
+Punion IfaceTyConBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch(tag){
     Pcase 0x01: Pvoid                  intTc;
     Pcase 0x02: Pvoid                  boolTc;
@@ -456,7 +456,7 @@ Punion IfaceTypeBranches_t(:Puint8 tag, Dictionary_t *dict:){
     Pcase 0x00: ForAllTy_t(:dict:)  forAllTy;
     Pcase 0x01: String_t(:dict:)    tyVar;
     Pcase 0x02: AppTy_t(:dict:)     appTy;
-    Pcase 0x03: FunTy_t(:dict:)     funTy;
+    Pcase 0x03: AppTy_t(:dict:)     funTy;
     Pcase 0x05: PredTy_t(:dict:)    predTy;
     Pcase 0x06: Pvoid               intTy;
     Pcase 0x07: Pvoid               charTy;
@@ -464,7 +464,7 @@ Punion IfaceTypeBranches_t(:Puint8 tag, Dictionary_t *dict:){
     Pcase 0x09: IfaceType_t(:dict:) listTy;
     Pcase 0x0a: Pvoid               unitTy;
     Pcase 0x0b: PairTy_t(:dict:)    pairTy;
-    Pcase 0x0c: KnownTc_t(:dict:)   knownTcTy;
+    Pcase 0x0c: KnownTcTy_t(:dict:) knownTcTy;
     Pcase 0x0d: TyConApp_t(:dict:)  tyConTy;
   }
 };
@@ -481,7 +481,7 @@ Pstruct DemandList_t{
   Demand_t[numDemands] demands;      /* XXX: recursive loop back */
 };
 
-Pstruct DemandsBranches_t(:Puint8 tag:){
+Punion DemandsBranches_t(:Puint8 tag:){
   Pswitch(tag){
     Pcase 0x00: Demand_t     poly;   /* XXX: recursive loop back */
     Pcase 0x01: DemandList_t prod;
@@ -544,11 +544,11 @@ Pstruct IfaceLam_t(:Dictionary_t *dict:){
 };
 
 Pstruct IfaceApp_t(:Dictionary_t *dict:){
-  IfaceExp_t(:dict:)  fun;
+  IfaceExpr_t(:dict:)  fun;
   IfaceExpr_t(:dict:) arg;  /* XXX recursive loop back */
 };
 
-Punion LiteralBranches(:Puint8 tag, Dictionary_t *dict:){
+Punion LiteralBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch(tag) {
     Pcase 0x00: Char_t           machChar;
     Pcase 0x01: String_t(:dict:) machStr;
@@ -578,8 +578,8 @@ Punion IfaceConAltBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Pstruct IfaceConAlt_t(:Dictionary_t *dict:){
-  Pb_uint8                        tag;
-  IfaceAltBranches_t(:tag, dict:) branches;
+  Pb_uint8                           tag;
+  IfaceConAltBranches_t(:tag, dict:) branches;
 };
 
 Pstruct IfaceAlt_t(:Dictionary_t *dict:){
@@ -669,9 +669,9 @@ Punion CCallTargetBranches_t(:Puint8 tag, Dictionary_t *dict:){
   }
 };
 
-Pstruct CCallTarget_t(:Dictionary *dict:){
-  Pb_uint8 tag;
-  CCallTargetBranches_t(:tag,dict:);
+Pstruct CCallTarget_t(:Dictionary_t *dict:){
+  Pb_uint8                          tag;
+  CCallTargetBranches_t(:tag,dict:) branches;
 };
 
 Penum CCallConv_t Pfrom(Pb_uint8){CCallConv, StdCallConv};
@@ -688,7 +688,7 @@ Pstruct Safety_t{
   SafetyBranches_t(:tag:) branches;
 }
 
-Pstruct CCall_t(:Dictionary *dict:){
+Pstruct CCall_t(:Dictionary_t *dict:){
   CCallTarget_t(:dict:) fun;
   CCallConv_t           cconv; 
   Safety_t              safety; 
@@ -736,7 +736,7 @@ Punion IfaceExprBranches_t(:Puint8 tag, Dictionary_t *dict:){
   }
 };
 
-Pstruct IfaceExpr_t(:Dictionary_t *dict:){
+Precur Pstruct IfaceExpr_t(:Dictionary_t *dict:){
   Pb_uint8                        tag;
   IfaceExprBranches_t(:tag,dict:) branches;
 };
@@ -755,7 +755,7 @@ Pstruct Activation_t{
   ActivationBranches_t(:tag:) branches;
 };
 
-Pstruct Worker_t(:Dictionary *dict:){
+Pstruct Worker_t(:Dictionary_t *dict:){
   IfaceExtName_t(:dict:) name;
   Arity_t                arity;
 };
@@ -769,8 +769,8 @@ Punion IfaceInfoItemBranches_t(:Puint8 tag, Dictionary_t *dict:){
     Pcase 0x03: Activation_t        inlineInfo;
     Pcase 0x04: Pvoid               noCafRefsInfo;
     Pcase 0x05: Worker_t(:dict:)    workerInfo;
-  };
-}
+  }
+};
 
 Pstruct IfaceInfoItem_t(:Dictionary_t *dict:){
   Pb_uint8                             tag;
@@ -886,15 +886,52 @@ Pstruct IfaceData_t(:Dictionary_t *dict:){
   IfaceConDecls_t(:dict:)           cons;
   RecFlag_t                         rec;
   ArgVrcs_t                         vrcs;
-  Bool_t generic;
+  Bool_t                            generic;
+};
+
+Pstruct IfaceSyn_t(:Dictionary_t *dict:){
+  OccName_t(:dict:)                tyConName;
+  HiLen_t                          numTyVars;
+  IfaceTvBndr_t(:dict:)[numTyVars] tyVars;
+  ArgVrcs_t                        vrcs;
+  IfaceType_t(:dict:)              synRhs;
+};
+
+Pstruct FunDep_t(:Dictionary_t *dict:){
+  HiLen_t                  numFst;
+  String_t(:dict:)[numFst] fst;
+  HiLen_t                  numSnd;
+  String_t(:dict:)[numSnd] snd;
+};
+
+Penum DefMeth_t Pfrom(Pb_uint8){NoDefMeth, DefMeth, GenDefMeth};
+
+Pstruct ClassOp_t(:Dictionary_t *dict:){
+  OccName_t(:dict:)   methodName;
+  DefMeth_t           defMeth;
+  IfaceType_t(:dict:) methodTy;
+};
+
+Pstruct IfaceClass_t(:Dictionary_t *dict:){
+  IfaceContext_t(:dict:)           ctxt;
+  OccName_t(:dict:)                className;
+  HiLen_t                          numTyVars;
+  IfaceTvBndr_t(:dict:)[numTyVars] tyVars;
+  HiLen_t                          numFunDeps;
+  FunDep_t(:dict:)[numFunDeps]     funDependencies;
+  HiLen_t                          numClassOps;
+  ClassOp_t(:dict:)[numClassOps]   funDeps;
+  RecFlag_t                        recFlag;
+  ArgVrcs_t                        argVrcs;
 };
 
 Punion IfaceDeclBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch(tag){
-    Pcase 0x00:  IfaceId_t(:dict:)   iFaceId;
-    Pcase 0x01:  Pvoid               iFaceForeign;
-    Pcase 0x02:  IfaceData_t(:data:) iFaceData;
-       //XXX other cases to be defined
+    Pcase 0x00:  IfaceId_t   (:dict:) iFaceId;
+    Pcase 0x01:  Pvoid                iFaceForeign;
+    Pcase 0x02:  IfaceData_t (:dict:) iFaceData;
+    Pcase 0x03:  IfaceSyn_t  (:dict:) iFaceSyn;
+    Pcase 0x04:  IfaceClass_t(:dict:) iFaceClass;
   }
 } Pwhere {
   tag != iFaceForeign;
