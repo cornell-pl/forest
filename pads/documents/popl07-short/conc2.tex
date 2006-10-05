@@ -1,0 +1,34 @@
+\section{Conclusions}
+\label{sec:future}
+
+\padsml{} is a high-level, domain-specific language and system
+designed to help improve the productivity of the legions of data analysts
+who work with ad hoc data on a regular basis.  
+Inspired by the type structure of functional
+programming languages, \padsml{} uses dependent,
+polymorphic and recursive data types to describe the syntax and 
+the semantic properties of ad hoc data sources.  The language 
+is compact and expressive, capable of describing data from diverse 
+domains including networking, computational biology, finance, and physics. 
+The \padsml{} compiler uses a ``types as modules'' compilation strategy
+in which every \padsml{} type definition is compiled into
+an \ocaml{} module containing types for data representations
+and functions for data processing.  Functional programmers
+can use the generated modules to write clear and concise {\em format-dependent}
+data processing programs.  Furthermore, our system design
+allows external tool developers to write new {\em format-independent} tools
+simply by supplying a module that matches the appropriate generic
+signature.  
+
+The next step in our long-term agenda is to build a new generation of
+format-independent data analysis tools.  While our current tools
+perform some simple syntactic analysis and transformation, we intend
+our next generation toolkit to perform deeper semantic analysis and
+more sophisticated transformations.  For example, we may explore
+specification-driven, content-based search, clustering, test data
+generation, machine learning, security, and data visualization.  We
+believe that if we can automatically generate stand-alone, end-to-end
+tools that perform these functions over arbitrary data, we can have a
+substantial impact on the productivity of researchers in a broad array
+of scientific fields ranging from computational biology through
+computer science to cosmology and beyond.
