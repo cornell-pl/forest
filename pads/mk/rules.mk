@@ -42,13 +42,13 @@
 # HAVE_SHARED_ASTLIB = 1
 
 # uncomment this to force static builds
-# FORCE_STATIC = 1
+ FORCE_STATIC = 1
 
 # uncomment this to use gprof with debug libaries/executables
 # (only works with GNU compilers)
 # you should also uncomment FORCE_STATIC to include pads
 # library routines in the profile
-# GPROF_FLAGS = -pg
+ GPROF_FLAGS = -pg
 
 
 # uncomment this to use memory profiling with debug libraries/executables
@@ -549,9 +549,7 @@ SHARED_ASTLIB_D = $(STATIC_ASTLIB_D)
 endif
 
 DYNAMIC_LIBS_O = -L$(INSTALL_LIBDIR)
-ifdef WAVELETS 
 DYNAMIC_LIBS_O += -lm
-endif
 
 ifdef USE_GALAX
 # Note: PCRE_LIB_DIR needs to be defined in any makefile using Galax.
@@ -584,9 +582,7 @@ DYNAMIC_LIB_DEPS_O += $(SHARED_DLL_LIB_DEP_O) $(SHARED_BZLIB_DEP_O) $(SHARED_ZLI
 endif
 
 DYNAMIC_LIBS_D = -L$(INSTALL_LIBDIR)
-ifdef WAVELETS 
 DYNAMIC_LIBS_D += -lm
-endif
 ifdef USE_GALAX
 DYNAMIC_LIBS_D += \
   $(PADSGALAX_LIBOPT_D) $(SHARED_ASTLIB_D)  \
@@ -679,7 +675,7 @@ endif
 
 ifdef FORCE_STATIC
 define LibraryPathSanityCheck
-( )
+( : )
 endef
 else
 define LibraryPathSanityCheck
@@ -781,69 +777,96 @@ define CCExec_STATIC_O
 endef
 
 define RegressPre
-(echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<; \
-)
+echo "Performing $@"; \
+  if [ ! -e tmp ]; then mkdir tmp; fi; \
+  $(RM) tmp/tmp.$<$$suf;
 endef
 
 define RegressPost
-(echo diff tmp/tmp.$< ../../regress/$<.regress; diff tmp/tmp.$< ../../regress/$<.regress || echo "**********" $< DIFFERS; \
-  echo " "; )
+echo diff tmp/tmp.$<$$suf $$regfile; \
+  diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
+  echo " "; 
+endef
+
+PERFHOST=`hostname -s`
+define PerfRegressPre
+$(RegressPre)
+endef
+
+###
+# PERF_DELTA_THRESHOLD is the percentage difference between a current
+# measurement and a baseline measurement before is SIGNIFICANT*.  I.e.
+# if CURRENT is PERF_DELTA_THRESHOLD % greater than BASELINE, then a
+# "DIFFERS" message is issued and counted.
+# ---
+# * assumes PERF_DELTA_THRESHOLD exceeds estimate of error in measurement
+
+PERF_DELTA_THRESHOLD = 10	# in percent.  (+/- PERF_TOLERANCE %)
+
+define PerfRegressPost
+echo $(PADS_HOME)/scripts/check_performance.pl $$regfile tmp/tmp.$<$$suf $(PERF_DELTA_THRESHOLD); \
+  $(PADS_HOME)/scripts/check_performance.pl $$regfile tmp/tmp.$<$$suf $(PERF_DELTA_THRESHOLD) ||  echo "**********" $@$$suf DIFFERS; \
+  echo " "; 
 endef
 
 define RegressDef
-(echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<$$suf; \
+($(RegressPre) \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
-  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
-  echo " "; )
+  $(RegressPost) )
 endef
 
 define RegressInput
-(echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<$$suf; \
+($(RegressPre) \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args < $$input 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
-  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
-  echo " "; )
+  $(RegressPost) )
 endef
 
 define RegressInputPP
-(echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<$$suf; \
+($(RegressPre) \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(cat $$input | $$pp | ./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (cat $$input | $$pp | ./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
-  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
-  echo " "; )
+  $(RegressPost) )
 endef
 
 define RegressFilter
-(echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<$$suf; \
+($(RegressPre) \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | grep $$filter | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_HOME)/scripts/remove_junk.pl | grep $$filter | cat > tmp/tmp.$<$$suf; \
-  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
-  echo " "; )
+  $(RegressPost) )
 endef
 
 define RegressRW
-(echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<$$suf; \
+($(RegressPre) \
   echo "./$< $$args < $$input > tmp/tmp.$<$$suf 2>/dev/null"; \
   ./$< $$args < $$input > tmp/tmp.$<$$suf 2>/dev/null; \
   echo cmp tmp/tmp.$<$$suf $$input; cmp tmp/tmp.$<$$suf $$input || echo "**********" $<$$suf DIFFERS; \
   echo " "; )
+endef
+
+define PerfRegressDef
+($(RegressPre) \
+  regfile="../../regress/$<.perf_regress$$suf.$(PERFHOST)"; \
+  echo "$(PADS_HOME)/scripts/time_execution.pl ./$< $$args > tmp/tmp.$<$$suf"; \
+  $(PADS_HOME)/scripts/time_execution.pl ./$< $$args > tmp/tmp.$<$$suf; \
+  $(PerfRegressPost) )
+endef
+
+define PerfRegressRW
+($(RegressPre) \
+  regfile="../../regress/$<.perf_regress$$suf.$(PERFHOST)"; \
+  echo "$(PADS_HOME)/scripts/time_execution.pl ./$< $$args $$input > tmp/tmp.$<$$suf"; \
+  $(PADS_HOME)/scripts/time_execution.pl ./$< $$args $$input > tmp/tmp.$<$$suf; \
+  $(PerfRegressPost) )
+endef
+
+define PerfRegressInput
+$(PerfRegressRW)
 endef
 
 .SUFFIXES:

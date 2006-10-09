@@ -17,6 +17,11 @@ regress:
 		(cd $$subdir; $(MAKE) -f GNUmakefile regress); \
 	done)
 
+perf_regress:
+	+@(for subdir in $(SUBDIRS); do \
+		(cd $$subdir; $(MAKE) -f GNUmakefile perf_regress); \
+	done)
+
 clean:
 	+@(for subdir in $(SUBDIRS); do \
 		(cd $$subdir; $(MAKE) -f GNUmakefile clean); \

@@ -60,7 +60,9 @@ ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS) $(MISC_TESTS)
 rcount:
 	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
-regress: regress_o regress_d repeat_library_sanity_check
+regress: regress_o regress_d perf_regress_o perf_regress_d repeat_library_sanity_check
+
+perf_regress: perf_regress_o perf_regress_d repeat_library_sanity_check
 
 regress_o: sanity_check \
 	  regress_o_announce \
@@ -98,6 +100,44 @@ regress_d: sanity_check \
           regress_a_ip_test_d
 	@echo "DONE"
 
+perf_regress_o: sanity_check \
+	perf_regress_o_announce \
+	perf_regress_libtest1_o \
+	perf_regress_libtest2_o \
+        perf_regress_libtest4_o \
+        perf_regress_ebcdic_test_o \
+        perf_regress_ebcdic_libtest4_o \
+        perf_regress_cobol_ebc_test_o \
+        perf_regress_bcd_test_o \
+        perf_regress_sb_test_o \
+        perf_regress_bcd_fpoint_test_o \
+        perf_regress_ebc_fpoint_test_o \
+        perf_regress_re_scan_test_o \
+        perf_regress_rwtest1_o \
+        perf_regress_recrwtest1_o \
+        perf_regress_a_ip_test_o \
+	perf_regress_o_final
+	@echo "DONE"
+
+perf_regress_d: sanity_check \
+	perf_regress_d_announce \
+	perf_regress_libtest1_d \
+	perf_regress_libtest2_d \
+        perf_regress_libtest4_d \
+        perf_regress_ebcdic_test_d \
+        perf_regress_ebcdic_libtest4_d \
+        perf_regress_cobol_ebc_test_d \
+        perf_regress_bcd_test_d \
+        perf_regress_sb_test_d \
+        perf_regress_bcd_fpoint_test_d \
+        perf_regress_ebc_fpoint_test_d \
+        perf_regress_re_scan_test_d \
+        perf_regress_rwtest1_d \
+        perf_regress_recrwtest1_d \
+        perf_regress_a_ip_test_d \
+	perf_regress_d_final
+	@echo "DONE"
+
 libtests: sanity_check $(LIBTESTS)
 accumtests: sanity_check $(ACCUMTESTS)
 all: sanity_check $(ALL_PROGS)
@@ -127,75 +167,143 @@ regress_o_announce:
 regress_d_announce:
 	@echo " "; echo "REGRESS USING DEBUG CODE"; echo " " \
 
+perf_regress_o_announce:
+	@echo " "; echo "Performance REGRESSION USING OPTIMIZED CODE"; echo " " \
+
+perf_regress_d_announce:
+	@echo " "; echo "Performance REGRESSION USING DEBUG CODE"; echo " " \
+
+perf_regress_o_final:
+	@echo " "; echo "Performance REGRESSION USING OPTIMIZED CODE DONE"; echo " " \
+
+perf_regress_d_final:
+	@echo " "; echo "Performance REGRESSION USING DEBUG CODE DONE"; echo " " \
+
 regress_rwtest1_o: rwtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
 regress_rwtest1_d: rwtest1_d
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
+perf_regress_rwtest1_o: rwtest1
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_rwtest1_d: rwtest1_d
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_recrwtest1_o: recrwtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
 regress_recrwtest1_d: recrwtest1_d
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
+perf_regress_recrwtest1_o: recrwtest1
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_recrwtest1_d: recrwtest1_d
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_libtest1_o: libtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
 regress_libtest1_d: libtest1_d
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
+perf_regress_libtest1_o: libtest1
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_libtest1_d: libtest1_d
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_libtest2_o: libtest2
 	@(args=""; suf=".$(AST_ARCH)"; $(RegressDef))
 regress_libtest2_d: libtest2_d
 	@(args=""; suf=".$(AST_ARCH)"; $(RegressDef))
+perf_regress_libtest2_o: libtest2
+	@(args=""; suf=".$(AST_ARCH)"; $(PerfRegressDef))
+perf_regress_libtest2_d: libtest2_d
+	@(args=""; suf=".$(AST_ARCH)"; $(PerfRegressDef))
 
 regress_libtest4_o: libtest4
 	@(args=""; suf=""; $(RegressDef))
 regress_libtest4_d: libtest4_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_libtest4_o: libtest4
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_libtest4_d: libtest4_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_ebcdic_libtest4_o: ebcdic_libtest4
 	@(args=""; suf=""; $(RegressDef))
 regress_ebcdic_libtest4_d: ebcdic_libtest4_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_ebcdic_libtest4_o: ebcdic_libtest4
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_ebcdic_libtest4_d: ebcdic_libtest4_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_re_scan_test_o: re_scan_test
 	@(args=""; suf=""; $(RegressDef))
 regress_re_scan_test_d: re_scan_test_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_re_scan_test_o: re_scan_test
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_re_scan_test_d: re_scan_test_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_ebcdic_test_o: ebcdic_test
 	@(args="ctrec_noseek"; suf=""; $(RegressDef))
 regress_ebcdic_test_d: ebcdic_test_d
 	@(args="ctrec_noseek"; suf=""; $(RegressDef))
+perf_regress_ebcdic_test_o: ebcdic_test
+	@(args="ctrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_ebcdic_test_d: ebcdic_test_d
+	@(args="ctrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_cobol_ebc_test_o: cobol_ebc_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
 regress_cobol_ebc_test_d: cobol_ebc_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_cobol_ebc_test_o: cobol_ebc_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_cobol_ebc_test_d: cobol_ebc_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_bcd_test_o: bcd_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
 regress_bcd_test_d: bcd_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_bcd_test_o: bcd_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_bcd_test_d: bcd_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_sb_test_o: sb_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
 regress_sb_test_d: sb_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_sb_test_o: sb_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_sb_test_d: sb_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_ebc_fpoint_test_o: ebc_fpoint_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
 regress_ebc_fpoint_test_d: ebc_fpoint_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_ebc_fpoint_test_o: ebc_fpoint_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_ebc_fpoint_test_d: ebc_fpoint_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_bcd_fpoint_test_o: bcd_fpoint_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
 regress_bcd_fpoint_test_d: bcd_fpoint_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_bcd_fpoint_test_o: bcd_fpoint_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_bcd_fpoint_test_d: bcd_fpoint_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_a_ip_test_o: a_ip_test
 	@(args=""; suf=""; $(RegressDef))
 regress_a_ip_test_d: a_ip_test_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_a_ip_test_o: a_ip_test
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_a_ip_test_d: a_ip_test_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 clean:
 	$(RM) $(ALL_PROGS) *.o *~ tmp/*

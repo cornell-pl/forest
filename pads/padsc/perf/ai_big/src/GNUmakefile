@@ -37,10 +37,14 @@ endif
 
 ALL_TESTS = test_ai rwxml_ai
 REGRESS_TESTS = $(ALL_TESTS:%=regress_%)
+PERF_REGRESS_TESTS = $(ALL_TESTS:%=perf_regress_%)
 
 all: regress
 
-regress: sanity_check $(REGRESS_TESTS)
+regress: sanity_check $(REGRESS_TESTS) $(PERF_REGRESS_TESTS)
+	@echo " "; echo "DONE"; echo " "
+
+perf_regress: sanity_check $(PERF_REGRESS_TESTS)
 	@echo " "; echo "DONE"; echo " "
 
 sanity_check:
@@ -48,9 +52,13 @@ sanity_check:
 
 regress_test_ai: test_ai
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_ai: test_ai
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_ai: rwxml_ai
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_ai: rwxml_ai
+	@(args=""; suf=""; $(PerfRegressDef))
 
 clean:
 	$(RM) -f *~ *.o $(ALL_TESTS)

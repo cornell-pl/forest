@@ -78,7 +78,9 @@ TIMING_TEST = timing_ai
 rcount:
 	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
-regress: regress_o regress_d repeat_library_sanity_check
+regress: regress_o regress_d perf_regress_o perf_regress_d repeat_library_sanity_check
+
+perf_regress: perf_regress_o perf_regress_d repeat_library_sanity_check
 
 regress_o:  sanity_check \
 	  regress_o_announce \
@@ -194,6 +196,114 @@ regress_d:  sanity_check \
 
 	@echo "DONE"
 
+perf_regress_o:  sanity_check \
+	  perf_regress_o_announce \
+          perf_regress_test_format1_o \
+          perf_regress_test_format2_o \
+          perf_regress_test_format3_o \
+          perf_regress_test_format5_o \
+          perf_regress_test_format6_o \
+          perf_regress_test_readint_o \
+          perf_regress_test_punion_manifest_o \
+	  perf_regress_rwxml_punion_literal2_o \
+          perf_regress_test_ai_o \
+	  perf_regress_test_pswitch_o \
+	  perf_regress_test_pswitch2_o \
+	  perf_regress_test_depends_o \
+	  perf_regress_test_struct3_o \
+          perf_regress_test_me_o \
+          perf_regress_test_me_fooclass_o \
+	  perf_regress_test_write_struct1_o \
+	  perf_regress_test_write_struct_strings_o \
+          perf_regress_test_struct_regexp_o \
+          perf_regress_test_array_regexp_o \
+          perf_regress_test_array_nosep_o \
+          perf_regress_test_array_pred_o  \
+          perf_regress_test_array_pred2_o  \
+          perf_regress_test_array_ended_o \
+          perf_regress_test_array_ended2_o \
+          perf_regress_test_array_post_o \
+          perf_regress_test_array_skip_o \
+          perf_regress_test_array_skip2_o \
+          perf_regress_test_in_place_o \
+          perf_regress_test_opt_o \
+          perf_regress_test_charclass_o \
+          perf_regress_rw_struct_good_o \
+          perf_regress_rw_pendian_o \
+          perf_regress_rwxml_struct1_o \
+          perf_regress_rwxml_newick_o \
+          perf_regress_rw_newick_o \
+          perf_regress_rwxml_alt1_o \
+          perf_regress_rwxml_2ips_o \
+          perf_regress_rwxml_pfloat_o \
+          perf_regress_rwxml_ptime_o \
+          perf_regress_rwxml_ptime_explicit_o \
+          perf_regress_rwxml_pdate_o \
+          perf_regress_rwxml_pdate_explicit_o \
+          perf_regress_rwxml_pdate_explicit_me_o \
+          perf_regress_rwxml_enum_o \
+	  perf_regress_rwxml_array_advance_o \
+	  perf_regress_rwxml_message_header_o \
+          perf_regress_rwxml_pads-comp_o \
+          perf_regress_rwxml_transform_o \
+          perf_regress_test_transform_o 
+	@echo "DONE"
+
+perf_regress_d:  sanity_check \
+	  perf_regress_d_announce \
+          perf_regress_test_format1_d \
+          perf_regress_test_format2_d \
+          perf_regress_test_format3_d \
+          perf_regress_test_format5_d \
+          perf_regress_test_format6_d \
+          perf_regress_test_readint_d \
+          perf_regress_test_punion_manifest_d \
+	  perf_regress_rwxml_punion_literal2_d \
+          perf_regress_test_ai_d \
+	  perf_regress_test_pswitch_d \
+	  perf_regress_test_pswitch2_d \
+	  perf_regress_test_depends_d \
+	  perf_regress_test_struct3_d \
+          perf_regress_test_me_d \
+          perf_regress_test_me_fooclass_d \
+	  perf_regress_test_write_struct1_d \
+	  perf_regress_test_write_struct_strings_d \
+          perf_regress_test_struct_regexp_d \
+          perf_regress_test_array_regexp_d \
+          perf_regress_test_array_nosep_d \
+          perf_regress_test_array_pred_d \
+          perf_regress_test_array_pred2_d \
+          perf_regress_test_array_ended_d  \
+          perf_regress_test_array_ended2_d \
+          perf_regress_test_array_post_d \
+          perf_regress_test_array_skip_d \
+          perf_regress_test_array_skip2_d \
+          perf_regress_test_in_place_d \
+          perf_regress_test_opt_d \
+          perf_regress_test_charclass_d \
+          perf_regress_rw_struct_good_d \
+          perf_regress_rw_pendian_d \
+          perf_regress_rwxml_struct1_d \
+          perf_regress_rwxml_newick_d \
+          perf_regress_rw_newick_d \
+          perf_regress_rwxml_alt1_d \
+          perf_regress_rwxml_2ips_d \
+          perf_regress_rwxml_pfloat_d \
+          perf_regress_rwxml_ptime_d \
+          perf_regress_rwxml_ptime_explicit_d \
+          perf_regress_rwxml_ptimestamp_d \
+          perf_regress_rwxml_ptimestamp_explicit_d \
+          perf_regress_rwxml_pdate_d \
+          perf_regress_rwxml_pdate_explicit_d \
+          perf_regress_rwxml_pdate_explicit_me_d \
+          perf_regress_rwxml_enum_d \
+          perf_regress_rwxml_array_advance_d \
+          perf_regress_rwxml_message_header_d \
+          perf_regress_rwxml_pads-comp_d \
+          perf_regress_rwxml_transform_d \
+          perf_regress_test_transform_d 
+	@echo "DONE"
+
 dib_tests: sanity_check $(DIB_TESTS)
 format_tests: sanity_check $(FORMAT_TESTS)
 other_tests: sanity_check $(OTHER_TESTS)
@@ -212,51 +322,92 @@ regress_o_announce:
 regress_d_announce:
 	@echo " "; echo "REGRESS USING DEBUG CODE"; echo " " \
 
+perf_regress_o_announce:
+	@echo " "; echo "Performance REGRESSION TEST USING OPTIMIZED CODE"; echo " " \
+
+perf_regress_d_announce:
+	@echo " "; echo "Performance REGRESSION TEST USING DEBUG CODE"; echo " " \
 
 regress_test_me_o: test_me
 	@(args=""; suf=""; $(RegressDef))
 regress_test_me_d: test_me_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_me_o: test_me
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_me_d: test_me_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_me_fooclass_o: test_me_fooclass
 	@(args=""; suf=""; $(RegressDef))
 regress_test_me_fooclass_d: test_me_fooclass_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_me_fooclass_o: test_me_fooclass
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_me_fooclass_d: test_me_fooclass_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_format1_o: test_format1
 	@(args=""; suf=""; $(RegressDef))
 regress_test_format1_d: test_format1_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_format1_o: test_format1
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_format1_d: test_format1_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_format2_o: test_format2
 	@(args=""; suf=""; $(RegressDef))
 regress_test_format2_d: test_format2_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_format2_o: test_format2
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_format2_d: test_format2_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_format3_o: test_format3
 	@(args=""; suf=""; $(RegressDef))
 regress_test_format3_d: test_format3_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_format3_o: test_format3
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_format3_d: test_format3_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_format4_o: test_format4
 	@(args=""; suf=""; $(RegressDef))
 regress_test_format4_d: test_format4_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_format4_o: test_format4
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_format4_d: test_format4_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_format5_o: test_format5
 	@(args=""; suf=""; $(RegressDef))
 regress_test_format5_d: test_format5_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_format5_o: test_format5
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_format5_d: test_format5_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_format6_o: test_format6
 	@(args=""; suf=""; $(RegressDef))
 regress_test_format6_d: test_format6_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_format6_o: test_format6
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_format6_d: test_format6_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_readint_o: test_readint
 	@(args=""; suf=""; filter="error:"; $(RegressFilter))
 regress_test_readint_d: test_readint_d
 	@(args=""; suf=""; filter="error:"; $(RegressFilter))
+perf_regress_test_readint_o: test_readint
+	@(args=""; suf=""; filter="error:"; $(PerfRegressDef))
+perf_regress_test_readint_d: test_readint_d
+	@(args=""; suf=""; filter="error:"; $(PerfRegressDef))
 
 regress_test_ai_o: test_ai
 	@(args=""; suf=""; $(RegressDef))
@@ -264,15 +415,30 @@ regress_test_ai_d: test_ai_d
 	@(args=""; suf=""; $(RegressDef))
 regress_rwxml_ai_o: rwxml_ai
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_ai_o: test_ai
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_ai_d: test_ai_d
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_ai_o: rwxml_ai
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_transform_o: test_transform
 	@(args=""; suf=""; $(RegressDef))
 regress_test_transform_d: test_transform_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_transform_o: test_transform
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_transform_d: test_transform_d
+	@(args=""; suf=""; $(PerfRegressDef))
+
 regress_rwxml_transform_o: rwxml_transform
 	@(args=""; suf=""; $(RegressDef))
 regress_rwxml_transform_d: rwxml_transform
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_transform_o: rwxml_transform
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_transform_d: rwxml_transform
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_try_o: rwxml_try
 	@(args=""; suf=""; $(RegressDef))
@@ -284,112 +450,200 @@ regress_test_dns_o: test_dns
 	@(args=""; suf=""; $(RegressDef))
 regress_test_dns_d: test_dns_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_dns_o: test_dns
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_dns_d: test_dns_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_write_struct1_o: test_write_struct1
 	@(args=""; suf=""; $(RegressDef))
 regress_test_write_struct1_d: test_write_struct1_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_write_struct1_o: test_write_struct1
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_write_struct1_d: test_write_struct1_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_write_struct_strings_o: test_write_struct_strings
 	@(args=""; suf=""; $(RegressDef))
 regress_test_write_struct_strings_d: test_write_struct_strings_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_write_struct_strings_o: test_write_struct_strings
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_write_struct_strings_d: test_write_struct_strings_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_punion_manifest_o: test_punion_manifest
 	@(args=""; suf=""; $(RegressDef))
 regress_test_punion_manifest_d: test_punion_manifest_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_punion_manifest_o: test_punion_manifest
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_punion_manifest_d: test_punion_manifest_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_punion_literal2_o: rwxml_punion_literal2
 	@(args=""; suf=""; $(RegressDef))
 regress_rwxml_punion_literal2_d: rwxml_punion_literal2_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_punion_literal2_o: rwxml_punion_literal2
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_punion_literal2_d: rwxml_punion_literal2_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_pswitch_o: test_pswitch
 	@(args=""; suf=""; $(RegressDef))
 regress_test_pswitch_d: test_pswitch_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_pswitch_o: test_pswitch
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_pswitch_d: test_pswitch_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_pswitch2_o: test_pswitch2
 	@(args=""; suf=""; $(RegressDef))
 regress_test_pswitch2_d: test_pswitch2_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_pswitch2_o: test_pswitch2
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_pswitch2_d: test_pswitch2_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_depends_o: test_depends
 	@(args=""; suf=""; $(RegressDef))
 regress_test_depends_d: test_depends_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_depends_o: test_depends
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_depends_d: test_depends_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_struct3_o: test_struct3
 	@(args=""; suf=""; $(RegressDef))
 regress_test_struct3_d: test_struct3_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_struct3_o: test_struct3
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_struct3_d: test_struct3_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_struct_regexp_o: test_struct_regexp
 	@(args=""; suf=""; $(RegressDef))
 regress_test_struct_regexp_d: test_struct_regexp_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_struct_regexp_o: test_struct_regexp
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_struct_regexp_d: test_struct_regexp_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_regexp_o: test_array_regexp
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_regexp_d: test_array_regexp_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_regexp_o: test_array_regexp
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_regexp_d: test_array_regexp_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_nosep_o: test_array_nosep
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_nosep_d: test_array_nosep_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_nosep_o: test_array_nosep
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_nosep_d: test_array_nosep_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_pred_o: test_array_pred
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_pred_d: test_array_pred_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_pred_o: test_array_pred
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_pred_d: test_array_pred_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_pred2_o: test_array_pred2
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_pred2_d: test_array_pred2_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_pred2_o: test_array_pred2
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_pred2_d: test_array_pred2_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_ended_o: test_array_ended
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_ended_d: test_array_ended_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_ended_o: test_array_ended
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_ended_d: test_array_ended_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_ended2_o: test_array_ended2
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_ended2_d: test_array_ended2_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_ended2_o: test_array_ended2
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_ended2_d: test_array_ended2_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_skip_o: test_array_skip
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_skip_d: test_array_skip_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_skip_o: test_array_skip
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_skip_d: test_array_skip_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_skip2_o: test_array_skip2
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_skip2_d: test_array_skip2_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_skip2_o: test_array_skip2
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_skip2_d: test_array_skip2_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_in_place_o: test_in_place
 	@(args=""; suf=""; $(RegressDef))
 regress_test_in_place_d: test_in_place_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_in_place_o: test_in_place
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_in_place_d: test_in_place_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 
 regress_test_opt_o: test_opt
 	@(args=""; suf=""; $(RegressDef))
 regress_test_opt_d: test_opt_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_opt_o: test_opt
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_opt_d: test_opt_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_array_post_o: test_array_post
 	@(args=""; suf=""; $(RegressDef))
 regress_test_array_post_d: test_array_post_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_array_post_o: test_array_post
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_array_post_d: test_array_post_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_charclass_o: test_charclass
 	@(args=""; suf=""; $(RegressDef))
 regress_test_charclass_d: test_charclass_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_charclass_o: test_charclass
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_test_charclass_d: test_charclass_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_ios_o: test_ios
 	@(args=""; input="../../data/small_ios_config"; suf=""; pp="$(PADS_HOME)/scripts/ios_pp.pl"; $(RegressInputPP))
@@ -404,101 +658,153 @@ regress_rw_dns_d: rw_dns_d
 
 regress_rw_struct_good_o: rw_struct_good
 	@(args=""; input="../../data/struct_good"; suf=""; $(RegressRW))
-
 regress_rw_struct_good_d: rw_struct_good_d
 	@(args=""; input="../../data/struct_good"; suf=""; $(RegressRW))
+perf_regress_rw_struct_good_o: rw_struct_good
+	@(args=""; input="../../data/struct_good"; suf=""; $(PerfRegressDef))
+perf_regress_rw_struct_good_d: rw_struct_good_d
+	@(args=""; input="../../data/struct_good"; suf=""; $(PerfRegressDef))
 
 regress_rw_pendian_o: rw_pendian
 	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))
 	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(RegressRW))
-
 regress_rw_pendian_d: rw_pendian_d
 	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(RegressRW))
 	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(RegressRW))
+perf_regress_rw_pendian_o: rw_pendian
+	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(PerfRegressRW))
+	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(PerfRegressRW))
+perf_regress_rw_pendian_d: rw_pendian_d
+	@(args=""; input="../../data/endian.delenn"; suf="_delenn"; $(PerfRegressRW))
+	@(args=""; input="../../data/endian.raptor"; suf="_raptor"; $(PerfRegressRW))
 
 regress_rwxml_struct1_o: rwxml_struct1
 	@(args=""; input="../../data/struct1"; suf=""; $(RegressInput))
-
+#AJF: how come the action clause for *_d doesn't match *_o in this case?
 regress_rwxml_struct1_d: rwxml_struct1_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_struct1_o: rwxml_struct1
+	@(args=""; input="../../data/struct1"; suf=""; $(PerfRegressInput))
+perf_regress_rwxml_struct1_d: rwxml_struct1_d
+	@(args=""; input="../../data/struct1"; suf=""; $(PerfRegressInput))
 
 regress_rwxml_newick_o: rwxml_newick
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_newick_d: rwxml_newick_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_newick_o: rwxml_newick
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_newick_d: rwxml_newick_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rw_newick_o: rw_newick
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rw_newick_d: rw_newick_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rw_newick_o: rw_newick
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rw_newick_d: rw_newick_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_alt1_o: rwxml_alt1
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_alt1_d: rwxml_alt1_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_alt1_o: rwxml_alt1
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_alt1_d: rwxml_alt1_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_2ips_o: rwxml_2ips
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_2ips_d: rwxml_2ips_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_2ips_o: rwxml_2ips
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_2ips_d: rwxml_2ips_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_pfloat_o: rwxml_pfloat
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_pfloat_d: rwxml_pfloat_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_pfloat_o: rwxml_pfloat
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_pfloat_d: rwxml_pfloat_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_ptime_o: rwxml_ptime
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_ptime_d: rwxml_ptime_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_ptime_o: rwxml_ptime
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_ptime_d: rwxml_ptime_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_ptime_explicit_o: rwxml_ptime_explicit
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_ptime_explicit_d: rwxml_ptime_explicit_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_ptime_explicit_o: rwxml_ptime_explicit
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_ptime_explicit_d: rwxml_ptime_explicit_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_ptimestamp_o: rwxml_ptimestamp
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_ptimestamp_d: rwxml_ptimestamp_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_ptimestamp_o: rwxml_ptimestamp
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_ptimestamp_d: rwxml_ptimestamp_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
+#AJF: _o Unused.
 regress_rwxml_ptimestamp_explicit_o: rwxml_ptimestamp_explicit
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_ptimestamp_explicit_d: rwxml_ptimestamp_explicit_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_ptimestamp_explicit_o: rwxml_ptimestamp_explicit
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_ptimestamp_explicit_d: rwxml_ptimestamp_explicit_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_pdate_o: rwxml_pdate
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_pdate_d: rwxml_pdate_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_pdate_o: rwxml_pdate
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_pdate_d: rwxml_pdate_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_pdate_explicit_o: rwxml_pdate_explicit
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_pdate_explicit_d: rwxml_pdate_explicit_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_pdate_explicit_o: rwxml_pdate_explicit
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_pdate_explicit_d: rwxml_pdate_explicit_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_pdate_explicit_me_o: rwxml_pdate_explicit_me
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_pdate_explicit_me_d: rwxml_pdate_explicit_me_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_pdate_explicit_me_o: rwxml_pdate_explicit_me
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_pdate_explicit_me_d: rwxml_pdate_explicit_me_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_enum_o: rwxml_enum
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_enum_d: rwxml_enum_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_enum_o: rwxml_enum
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_enum_d: rwxml_enum_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_enum3_o: rwxml_enum3
 	@(args=""; suf=""; $(RegressDef))
@@ -508,33 +814,48 @@ regress_rwxml_enum3_d: rwxml_enum3_d
 
 regress_rwxml_array_advance_o: rwxml_array_advance
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_array_advance_d: rwxml_array_advance_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_array_advance_o: rwxml_array_advance
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_array_advance_d: rwxml_array_advance_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_message_header_o: rwxml_message_header
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_message_header_d: rwxml_message_header_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_message_header_o: rwxml_message_header
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_message_header_d: rwxml_message_header_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_pads-comp_o: rwxml_pads-comp
 	@(args=""; suf=""; $(RegressDef))
-
 regress_rwxml_pads-comp_d: rwxml_pads-comp_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_rwxml_pads-comp_o: rwxml_pads-comp
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_rwxml_pads-comp_d: rwxml_pads-comp_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o
 	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
-
 regress_test_cpyrecgen_rps_d: test_cpyrecgen_rps_d
 	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
+perf_regress_test_cpyrecgen_rps_o: test_cpyrecgen_rps_o
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(PerfRegressInput))
+perf_regress_test_cpyrecgen_rps_d: test_cpyrecgen_rps_d
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(PerfRegressInput))
 
 regress_rwxml_cpyrecgen_rps_o: rwxml_cpyrecgen_rps_o
 	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
-
 regress_rwxml_cpyrecgen_rps_d: rwxml_cpyrecgen_rps_d
 	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(RegressInput))
+perf_regress_rwxml_cpyrecgen_rps_o: rwxml_cpyrecgen_rps_o
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(PerfRegressInput))
+perf_regress_rwxml_cpyrecgen_rps_d: rwxml_cpyrecgen_rps_d
+	@(args=""; input="../../data/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804"; suf=""; $(PerfRegressInput))
 
 clean:
 	$(RM) -f *~ *.o $(CLEANUP_TESTS)
@@ -693,6 +1014,15 @@ test_copy_ai: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 test_copy_ai_d: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
+
+regress_test_dibbler1:	test_dibbler1
+	@(args=""; suf=""; $(RegressDef))
+#regress_test_format1_d: test_format1_d
+#	@(args=""; suf=""; $(RegressDef))
+#perf_regress_test_format1_o: test_format1
+#	@(args=""; suf=""; $(PerfRegressDef))
+#perf_regress_test_format1_d: test_format1_d
+#	@(args=""; suf=""; $(PerfRegressDef))
 
 count_dibbler: $(GEN_DIR)/dibbler_notrailer.c count_dibbler.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
