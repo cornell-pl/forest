@@ -150,9 +150,11 @@ rcount:
 	@(cd ..; $(MAKE) -f Makefile regress) | $(PADS_SRC)/scripts/count_differs.pl
 
 ifeq ($(CONF_PROFILING),false)
-regress: regress_o
+regress: regress_o perf_regress_o
+perf: perf_regress_o
 else
-regress: regress_d
+regress: regress_d perf_regress_d
+perf: perf_regress_d
 endif
 
 regress_o: \
@@ -173,6 +175,25 @@ regress_o: \
           regress_a_ip_test_o
 	@echo " "; echo "DONE"; echo " "
 
+perf_regress_o: sanity_check \
+		perf_regress_o_announce \
+		perf_regress_libtest1_o \
+		perf_regress_libtest2_o \
+        perf_regress_libtest4_o \
+        perf_regress_ebcdic_test_o \
+        perf_regress_ebcdic_libtest4_o \
+        perf_regress_cobol_ebc_test_o \
+        perf_regress_bcd_test_o \
+        perf_regress_sb_test_o \
+        perf_regress_bcd_fpoint_test_o \
+        perf_regress_ebc_fpoint_test_o \
+        perf_regress_re_scan_test_o \
+        perf_regress_rwtest1_o \
+        perf_regress_recrwtest1_o \
+        perf_regress_a_ip_test_o \
+		perf_regress_o_final
+	@echo " "; echo "DONE"; echo " "
+
 ifeq ($(CONF_PROFILING),true)
 regress_d: \
 	regress_d_announce \
@@ -191,6 +212,26 @@ regress_d: \
           regress_recrwtest1_d \
           regress_a_ip_test_d
 	@echo " "; echo "DONE"; echo " "
+
+perf_regress_d: sanity_check \
+		perf_regress_d_announce \
+		perf_regress_libtest1_d \
+		perf_regress_libtest2_d \
+        perf_regress_libtest4_d \
+        perf_regress_ebcdic_test_d \
+        perf_regress_ebcdic_libtest4_d \
+        perf_regress_cobol_ebc_test_d \
+        perf_regress_bcd_test_d \
+        perf_regress_sb_test_d \
+        perf_regress_bcd_fpoint_test_d \
+        perf_regress_ebc_fpoint_test_d \
+        perf_regress_re_scan_test_d \
+        perf_regress_rwtest1_d \
+        perf_regress_recrwtest1_d \
+        perf_regress_a_ip_test_d \
+		perf_regress_d_final
+	@echo " "; echo "DONE"; echo " "
+
 endif
 
 clean::
@@ -204,97 +245,154 @@ clobber::
 	$(DELTREE) tmp
 
 #
-# Individual targets
+# Announcements
 #
 regress_o_announce:
-	@echo " "; echo "REGRESS USING OPTIMIZED CODE $(LD_LIBRARY_PATH)"; echo " " \
+	@echo " "; echo "REGRESS USING OPTIMIZED CODE"; echo " " \
 
 regress_d_announce:
 	@echo " "; echo "REGRESS USING DEBUG CODE"; echo " " \
 
+perf_regress_o_announce:
+	@echo " "; echo "Performance REGRESSION USING OPTIMIZED CODE"; echo " " \
+
+perf_regress_d_announce:
+	@echo " "; echo "Performance REGRESSION USING DEBUG CODE"; echo " " \
+
+perf_regress_o_final:
+	@echo " "; echo "Performance REGRESSION USING OPTIMIZED CODE DONE"; echo " " \
+
+perf_regress_d_final:
+	@echo " "; echo "Performance REGRESSION USING DEBUG CODE DONE"; echo " " \
+
+#
+# Individual targets
+#
 regress_rwtest1_o: rwtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
-
 regress_rwtest1_d: rwtest1_d
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
+perf_regress_rwtest1_o: rwtest1
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_rwtest1_d: rwtest1_d
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_recrwtest1_o: recrwtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
-
 regress_recrwtest1_d: recrwtest1_d
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
+perf_regress_recrwtest1_o: recrwtest1
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_recrwtest1_d: recrwtest1_d
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_libtest1_o: libtest1
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
-
 regress_libtest1_d: libtest1_d
 	@(args="nlrec_noseek"; suf=""; $(RegressDef))
+perf_regress_libtest1_o: libtest1
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_libtest1_d: libtest1_d
+	@(args="nlrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_libtest2_o: libtest2
 	@(args=""; suf=".$(AST_ARCH)"; $(RegressDef))
-	
 regress_libtest2_d: libtest2_d
 	@(args=""; suf=".$(AST_ARCH)"; $(RegressDef))
+perf_regress_libtest2_o: libtest2
+	@(args=""; suf=".$(AST_ARCH)"; $(PerfRegressDef))
+perf_regress_libtest2_d: libtest2_d
+	@(args=""; suf=".$(AST_ARCH)"; $(PerfRegressDef))
 
 regress_libtest4_o: libtest4
 	@(args=""; suf=""; $(RegressDef))
-
 regress_libtest4_d: libtest4_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_libtest4_o: libtest4
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_libtest4_d: libtest4_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_ebcdic_libtest4_o: ebcdic_libtest4
 	@(args=""; suf=""; $(RegressDef))
-
 regress_ebcdic_libtest4_d: ebcdic_libtest4_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_ebcdic_libtest4_o: ebcdic_libtest4
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_ebcdic_libtest4_d: ebcdic_libtest4_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_re_scan_test_o: re_scan_test
 	@(args=""; suf=""; $(RegressDef))
-
 regress_re_scan_test_d: re_scan_test_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_re_scan_test_o: re_scan_test
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_re_scan_test_d: re_scan_test_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_ebcdic_test_o: ebcdic_test
 	@(args="ctrec_noseek"; suf=""; $(RegressDef))
-
 regress_ebcdic_test_d: ebcdic_test_d
 	@(args="ctrec_noseek"; suf=""; $(RegressDef))
+perf_regress_ebcdic_test_o: ebcdic_test
+	@(args="ctrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_ebcdic_test_d: ebcdic_test_d
+	@(args="ctrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_cobol_ebc_test_o: cobol_ebc_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
-
 regress_cobol_ebc_test_d: cobol_ebc_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_cobol_ebc_test_o: cobol_ebc_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_cobol_ebc_test_d: cobol_ebc_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_bcd_test_o: bcd_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
-
 regress_bcd_test_d: bcd_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_bcd_test_o: bcd_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_bcd_test_d: bcd_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_sb_test_o: sb_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
-
 regress_sb_test_d: sb_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_sb_test_o: sb_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_sb_test_d: sb_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_ebc_fpoint_test_o: ebc_fpoint_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
-
 regress_ebc_fpoint_test_d: ebc_fpoint_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_ebc_fpoint_test_o: ebc_fpoint_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_ebc_fpoint_test_d: ebc_fpoint_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_bcd_fpoint_test_o: bcd_fpoint_test
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
-
 regress_bcd_fpoint_test_d: bcd_fpoint_test_d
 	@(args="fwrec_noseek"; suf=""; $(RegressDef))
+perf_regress_bcd_fpoint_test_o: bcd_fpoint_test
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
+perf_regress_bcd_fpoint_test_d: bcd_fpoint_test_d
+	@(args="fwrec_noseek"; suf=""; $(PerfRegressDef))
 
 regress_a_ip_test_o: a_ip_test
 	@(args=""; suf=""; $(RegressDef))
-
 regress_a_ip_test_d: a_ip_test_d
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_a_ip_test_o: a_ip_test
+	@(args=""; suf=""; $(PerfRegressDef))
+perf_regress_a_ip_test_d: a_ip_test_d
+	@(args=""; suf=""; $(PerfRegressDef))
 
 #########################################################################
 # Section:	Makefile post-includes
