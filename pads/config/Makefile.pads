@@ -132,16 +132,53 @@ $(ALL_PADS_DIRS):
 # Section:	Regression Testing Definitions
 # Description:
 #########################################################################
-	
+define RegressPre
+echo "Performing $@"; \
+  if [ ! -e tmp ]; then mkdir tmp; fi; \
+  $(RM) tmp/tmp.$<$$suf;
+endef
+
+define RegressPost
+echo diff tmp/tmp.$<$$suf $$regfile; \
+  diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
+  echo " "; 
+endef
+
+PERFHOST=`hostname -s`
+define PerfRegressPre
+$(RegressPre)
+endef
+
+###
+# PERF_DELTA_THRESHOLD is the percentage difference between a current
+# measurement and a baseline measurement before is SIGNIFICANT*.  I.e.
+# if CURRENT is PERF_DELTA_THRESHOLD % greater than BASELINE, then a
+# "DIFFERS" message is issued and counted.
+# ---
+# * assumes PERF_DELTA_THRESHOLD exceeds estimate of error in measurement
+
+PERF_DELTA_THRESHOLD = 10	# in percent.  (+/- PERF_TOLERANCE %)
+
+define PerfRegressPost
+echo $(PADS_SRC)/scripts/check_performance.pl $$regfile tmp/tmp.$<$$suf $(PERF_DELTA_THRESHOLD); \
+  $(PADS_SRC)/scripts/check_performance.pl $$regfile tmp/tmp.$<$$suf $(PERF_DELTA_THRESHOLD) ||  echo "**********" $@$$suf DIFFERS; \
+  echo " "; 
+endef
+
 define RegressDef
-(echo " "; echo "Performing $@"; \
-  if [ -e tmp ]; then echo -n "";else mkdir tmp; fi; \
-  $(RM) tmp/tmp.$<$$suf; \
+($(RegressPre) \
   regfile=`echo ../../regress/$<.regress$$suf | sed -e 's|_d[.]regress|.regress|'`; \
   echo "(./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf"; \
   (./$< $$args 2>&1) | $(PADS_SRC)/scripts/remove_junk.pl | cat > tmp/tmp.$<$$suf; \
-  echo diff tmp/tmp.$<$$suf $$regfile; diff tmp/tmp.$<$$suf $$regfile || echo "**********" $<$$suf DIFFERS; \
-  echo " "; )
+  $(RegressPost) )
+endef
+
+define PerfRegressDef
+($(RegressPre) \
+  regfile="../../regress/$<.perf_regress$$suf.$(PERFHOST)"; \
+  echo "$(PADS_SRC)/scripts/time_execution.pl ./$< $$args > tmp/tmp.$<$$suf"; \
+  $(PADS_SRC)/scripts/time_execution.pl ./$< $$args > tmp/tmp.$<$$suf; \
+  $(PerfRegressPost) )
 endef
 
 #########################################################################
