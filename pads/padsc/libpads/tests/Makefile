@@ -175,10 +175,10 @@ regress_o: \
           regress_a_ip_test_o
 	@echo " "; echo "DONE"; echo " "
 
-perf_regress_o: sanity_check \
-		perf_regress_o_announce \
-		perf_regress_libtest1_o \
-		perf_regress_libtest2_o \
+perf_regress_o: \
+	perf_regress_o_announce \
+	perf_regress_libtest1_o \
+	perf_regress_libtest2_o \
         perf_regress_libtest4_o \
         perf_regress_ebcdic_test_o \
         perf_regress_ebcdic_libtest4_o \
@@ -191,7 +191,7 @@ perf_regress_o: sanity_check \
         perf_regress_rwtest1_o \
         perf_regress_recrwtest1_o \
         perf_regress_a_ip_test_o \
-		perf_regress_o_final
+	perf_regress_o_final
 	@echo " "; echo "DONE"; echo " "
 
 ifeq ($(CONF_PROFILING),true)
@@ -213,10 +213,10 @@ regress_d: \
           regress_a_ip_test_d
 	@echo " "; echo "DONE"; echo " "
 
-perf_regress_d: sanity_check \
-		perf_regress_d_announce \
-		perf_regress_libtest1_d \
-		perf_regress_libtest2_d \
+perf_regress_d: \
+	perf_regress_d_announce \
+	perf_regress_libtest1_d \
+	perf_regress_libtest2_d \
         perf_regress_libtest4_d \
         perf_regress_ebcdic_test_d \
         perf_regress_ebcdic_libtest4_d \
@@ -229,7 +229,7 @@ perf_regress_d: sanity_check \
         perf_regress_rwtest1_d \
         perf_regress_recrwtest1_d \
         perf_regress_a_ip_test_d \
-		perf_regress_d_final
+	perf_regress_d_final
 	@echo " "; echo "DONE"; echo " "
 
 endif
@@ -403,10 +403,10 @@ perf_regress_a_ip_test_d: a_ip_test_d
 #########################################################################
 
 % : %.c
-	$(CC) -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH) -last -liconv -o $@ 
+	$(CC) -Wall $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
 
 %_d : %.c
-	$(CC) -Wall -g $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH)-g -last -liconv -o $@ 
+	$(CC) -Wall -g $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) $(PADS_LIBDIRS) $< -lpads-$(ARCH)-g -last $(CCLIBS) -o $@ 
 
 clobber::
 	$(RM) .depend

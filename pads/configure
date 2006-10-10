@@ -598,7 +598,7 @@ then
 			copt_CCLIBS="-lm -lcurses"
 			;;
 		*darwin*)
-			copt_CCLIBS="-lm -lcurses"
+			copt_CCLIBS="-lm -lcurses -liconv"
 			;;
 		*solaris*)
 			copt_CCLIBS="-lm -lcurses -lnsl -lsocket"
