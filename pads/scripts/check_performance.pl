@@ -119,17 +119,17 @@ if ($baseline == $current) {
   # comparison of the diff to the threshold is meaningful.
   if ($current > $baseline) {
     if ($normalized_delta_pct > $delta_threshold_pct) {
-      print "$report: significantly worse (exceeds threshold)\n";
+      print "$report: significantly WORSE (exceeds threshold)\n";
       exit 1;	# trigger a "DIFFERS" message
     }
-    print "$report: moderately worse (within threshold)\n";
+    print "$report: moderately WORSE (within threshold)\n";
     exit 0;
   } else {
     if ($normalized_delta_pct < -$delta_threshold_pct) {
-      print "$report: significantly better (exceeds threshold)\n";
+      print "$report: significantly BETTER (exceeds threshold)\n";
       exit 0;
     }
-    print "$report: moderately better (within threshold)\n";
+    print "$report: moderately BETTER (within threshold)\n";
     exit 0;
   }
 }
