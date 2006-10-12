@@ -30,8 +30,7 @@ padsc_comp:
 	@(cd comp; $(MAKE) -f GNUmakefile all)
 
 regress:
-	@(cd libpads/tests; $(MAKE) -f GNUmakefile regress; cd ../../examples/tests; $(MAKE) -f GNUmakefile regress; \
-	  cd ../../perf ; $(MAKE) -f GNUmakefile regress ) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd libpads/tests; $(MAKE) -f GNUmakefile regress; cd ../../examples/tests; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
 pglx_regress:
 	@(cd tests_pglx; $(MAKE) -f GNUmakefile ) | $(PADS_HOME)/scripts/count_differs.pl
@@ -40,7 +39,8 @@ usecase_regress:
 	@(cd usecases; $(MAKE) -f GNUmakefile ) | $(PADS_HOME)/scripts/count_differs.pl
 
 perf_regress:
-	@(cd perf; $(MAKE) -f GNUmakefile perf_regress ) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd libpads/tests; $(MAKE) -f GNUmakefile perf_regress; cd ../../perf; $(MAKE) -f GNUmakefile perf_regress ; \
+	cd ../../examples/tests; $(MAKE) -f GNUmakefile perf_regress ) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_xml:
 	@(cd examples/xml/tests; $(MAKE) -f GNUmakefile regress) 
