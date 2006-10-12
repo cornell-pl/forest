@@ -63,7 +63,14 @@ else
 #	
 #########################################################################
 
-all: dogen libpads
+#
+# Because dogen generates c files, I must invoke it before libpads so when libpads is
+# invoked, the implicit search will find all the source files before the build process.
+# Else, make does not *know* that new .c have been created and it barfs looking for them.
+#
+all:
+	@$(MAKE) -f ../Makefile dogen
+	@$(MAKE) -f ../Makefile libpads
 
 #########################################################################
 # Sub-Section:	Secondary targets
@@ -89,7 +96,7 @@ all: dogen libpads
 #########################################################################
 
 dogen: $(PADS_PCGEN_TARGETS) $(PADS_SCRIPT_MAKESRC) $(CONF_PACKAGE_SRC)/padsc/libpads/pads.c
-	$(PADS_SCRIPT_MAKESRC) $(CC) $(CONF_PACKAGE_SRC)/padsc/libpads/pads.c $(HERE) $(CONF_PACKAGE_SRC)
+	$(PADS_SCRIPT_MAKESRC) $(CC) $(PADS_SRC)/padsc/libpads/pads.c $(HERE) $(PADS_SRC)
 	touch dogen
 
 clean::
@@ -144,17 +151,32 @@ clobber:: veryclean
 #
 # Individual command targets
 #
+LIBPADS_OBJS_O = \
+        default_io_disc.o \
+        pads-gen.o \
+        pads-acc-gen.o \
+        pads-read-gen.o \
+        pads-write-gen.o \
+        pads-misc-gen.o \
+        rbuf.o \
+        pads-hist.o \
+        pads-cluster.o
+
+LIBPADS_OBJS_D = $(LIBPADS_OBJS_O:%.o=%_d.o)
+
 $(PADS_NAME_OPT): $(LIBPADS_OBJS_O)
 	$(STATIC_LIBTOOL) $@ $(STATIC_LIBTOOL_OPTS) $^
 
 $(PADS_NAME_DBG): $(LIBPADS_OBJS_D)
 	$(STATIC_LIBTOOL) $@ $(STATIC_LIBTOOL_OPTS) $^
 
+ifeq ($(CONF_SHARED),true)
 $(PADS_SHARED_NAME_OPT): $(LIBPADS_OBJS_O)
 	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB) $(CCLIBS)
 
 $(PADS_SHARED_NAME_DBG): $(LIBPADS_OBJS_D)
 	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB) $(CCLIBS)
+endif
 
 #########################################################################
 # Section:	Makefile post-includes
