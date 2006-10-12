@@ -40,7 +40,7 @@ usecase_regress:
 
 perf_regress:
 	@(cd libpads/tests; $(MAKE) -f GNUmakefile perf_regress; cd ../../perf; $(MAKE) -f GNUmakefile perf_regress ; \
-	cd ../../examples/tests; $(MAKE) -f GNUmakefile perf_regress ) | $(PADS_HOME)/scripts/count_differs.pl
+	cd ../examples/tests; $(MAKE) -f GNUmakefile perf_regress ) | $(PADS_HOME)/scripts/count_differs.pl
 
 test_xml:
 	@(cd examples/xml/tests; $(MAKE) -f GNUmakefile regress) 
