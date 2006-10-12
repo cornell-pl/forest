@@ -150,10 +150,10 @@ rcount:
 	@(cd ..; $(MAKE) -f Makefile regress) | $(PADS_SRC)/scripts/count_differs.pl
 
 ifeq ($(CONF_PROFILING),false)
-regress: regress_o perf_regress_o
+regress: regress_o
 perf: perf_regress_o
 else
-regress: regress_d perf_regress_d
+regress: regress_d
 perf: perf_regress_d
 endif
 
