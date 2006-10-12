@@ -60,9 +60,9 @@ ALL_PROGS = $(HELPERS) $(LIBTESTS) $(ACCUMTESTS) $(MISC_TESTS)
 rcount:
 	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
-regress: regress_o regress_d perf_regress_o perf_regress_d repeat_library_sanity_check
+regress: regress_o regress_d repeat_library_sanity_check
 
-perf_regress: perf_regress_o perf_regress_d repeat_library_sanity_check
+perf_regress: regress perf_regress_o perf_regress_d repeat_library_sanity_check
 
 regress_o: sanity_check \
 	  regress_o_announce \
