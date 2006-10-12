@@ -360,21 +360,27 @@ clobber::
 
 regress:	compiler
 	@(cd padsc/libpads/tests; $(MAKE) -f Makefile regress) | $(PADS_SRC)/scripts/count_differs.pl
+	@(cd padsc/examples/tests; $(MAKE) -f Makefile regress) | $(PADS_SRC)/scripts/count_differs.pl
 
 updatedepend::
 	@(cd padsc/libpads/tests; $(MAKE) -f Makefile updatedepend)
+	@(cd padsc/examples/tests; $(MAKE) -f Makefile updatedepend)
 
 clean::
 	@(cd padsc/libpads/tests; $(MAKE) -f Makefile clean)
+	@(cd padsc/examples/tests; $(MAKE) -f Makefile clean)
 
 veryclean::
 	@(cd padsc/libpads/tests; $(MAKE) -f Makefile veryclean)
+	@(cd padsc/examples/tests; $(MAKE) -f Makefile veryclean)
 
 veryveryclean::
 	@(cd padsc/libpads/tests; $(MAKE) -f Makefile veryveryclean)
+	@(cd padsc/examples/tests; $(MAKE) -f Makefile veryveryclean)
 
 clobber::
 	@(cd padsc/libpads/tests; $(MAKE) -f Makefile clobber)
+	@(cd padsc/examples/tests; $(MAKE) -f Makefile clobber)
 
 #########################################################################
 # Section:	Makefile post-includes
