@@ -120,7 +120,7 @@ install::
 uninstall::
 
 clean::
-	$(RM) $(PADS_SRC)/lib/padsc.$(ARCH)
+	$(RM) $(PADS_PADSC_TARGET)
 	@(cd ckit; x="`find . -name \*~`"; if [ "$$x"x != x ]; then echo "In ckit, removing:\n$$x"; $(RM) $$x; fi)
 
 veryclean:: clean
@@ -139,3 +139,4 @@ clobber:: veryclean
 #		We place the dependencies to make sure that various files
 #		are generated before we need them.
 #########################################################################
+
