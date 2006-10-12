@@ -935,6 +935,12 @@ ifdef DEBUG_RULES_MK
 endif
 	@$(CCExec_DYNAMIC_D)
 
+rdonly_%_d: $(GEN_DIR)/%.c rdonly_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RDONLY_D"
+endif
+	@$(CCExec_DYNAMIC_D)
+
 rwxml_%_d: $(GEN_DIR)/%.c rwxml_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RWXML_D"
@@ -968,6 +974,12 @@ endif
 rw_%_dd: $(GEN_DIR)/%_expanded.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RW_DD"
+endif
+	@$(CCExec_DYNAMIC_D)
+
+rdonly_%_dd: $(GEN_DIR)/%_expanded.c rdonly_%.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RDONLY_DD"
 endif
 	@$(CCExec_DYNAMIC_D)
 
@@ -1042,6 +1054,12 @@ endif
 rw_%: $(GEN_DIR)/%.c rw_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 ifdef DEBUG_RULES_MK
 	@echo "Using rules.mk rule RW_O"
+endif
+	@$(CCExec_DYNAMIC_O)
+
+rdonly_%: $(GEN_DIR)/%.c rdonly_%.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+ifdef DEBUG_RULES_MK
+	@echo "Using rules.mk rule RDONLY_O"
 endif
 	@$(CCExec_DYNAMIC_O)
 

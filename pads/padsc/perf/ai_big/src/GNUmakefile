@@ -35,16 +35,16 @@ GALAX_NONE = 1
 endif
 endif
 
-ALL_TESTS = test_ai rwxml_ai
+ALL_TESTS = test_ai rwxml_ai rdonly_ai
 REGRESS_TESTS = $(ALL_TESTS:%=regress_%)
 PERF_REGRESS_TESTS = $(ALL_TESTS:%=perf_regress_%)
 
 all: regress
 
-regress: sanity_check $(REGRESS_TESTS) $(PERF_REGRESS_TESTS)
+regress: sanity_check $(REGRESS_TESTS) 
 	@echo " "; echo "DONE"; echo " "
 
-perf_regress: sanity_check $(PERF_REGRESS_TESTS)
+perf_regress: sanity_check $(REGRESS_TESTS) $(PERF_REGRESS_TESTS)
 	@echo " "; echo "DONE"; echo " "
 
 sanity_check:
@@ -60,6 +60,10 @@ regress_rwxml_ai: rwxml_ai
 perf_regress_rwxml_ai: rwxml_ai
 	@(args=""; suf=""; $(PerfRegressDef))
 
+regress_rdonly_ai: rdonly_ai
+	@(args=""; suf=""; $(RegressDef))
+perf_regress_rdonly_ai: rdonly_ai
+	@(args=""; suf=""; $(PerfRegressDef))
 clean:
 	$(RM) -f *~ *.o $(ALL_TESTS)
 
