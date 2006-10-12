@@ -78,9 +78,9 @@ TIMING_TEST = timing_ai
 rcount:
 	@(cd ..; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
 
-regress: regress_o regress_d perf_regress_o perf_regress_d repeat_library_sanity_check
+regress: regress_o regress_d repeat_library_sanity_check
 
-perf_regress: perf_regress_o perf_regress_d repeat_library_sanity_check
+perf_regress: regress perf_regress_o perf_regress_d repeat_library_sanity_check
 
 regress_o:  sanity_check \
 	  regress_o_announce \
@@ -1015,8 +1015,14 @@ test_copy_ai: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 test_copy_ai_d: $(GEN_DIR)/ai.c test_copy_ai.c $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
-regress_test_dibbler1:	test_dibbler1
+regress_test_dibbler_new:	test_dibbler_new
 	@(args=""; suf=""; $(RegressDef))
+perf_regress_test_dibbler_new:	test_dibbler_new
+	@(args=""; suf=""; $(PerfRegressDef))
+regress_rwxml_dibbler_new:	rwxml_dibbler_new
+	@(args=""; input="../../data/dibbler.10001"; suf=""; $(RegressInput))
+perf_regress_rwxml_dibbler_new:	rwxml_dibbler_new
+	@(args=""; input="../../data/dibbler.10001"; suf=""; $(PerfRegressInput))
 #regress_test_format1_d: test_format1_d
 #	@(args=""; suf=""; $(RegressDef))
 #perf_regress_test_format1_o: test_format1
