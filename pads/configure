@@ -688,7 +688,7 @@ then
 				copt_MKSHAREDLIB=gcc
 				copt_MKSHAREDLIBFLAGS="-dynamiclib -flat_namespace -undefined suppress -read_only_relocs suppress"
 				copt_LD_LIBRARY_PATH_VAR="DYLD_LIBRARY_PATH"
-				copt_SUPPORTS_SHARED_LIBRARIES=true
+				copt_SUPPORTS_SHARED_LIBRARIES=false
 				;;
 			*mingw*|*cygwin*)
 				copt_SUPPORTS_SHARED_LIBRARIES=false
@@ -757,6 +757,7 @@ case "$host" in
 		arch_ZIP="tar cvf"
 		arch_ZIPOPT="--gzip"
 		arch_LD_LIBRARY_PATH_VAR=LD_LIBRARY_PATH
+		arch_PADSC_EXTRA=
 		;;
 	*darwin*)
 		arch_EXE=
@@ -779,6 +780,7 @@ case "$host" in
 		arch_ZIP="tar cvf"
 		arch_ZIPOPT="--gzip"
 		arch_LD_LIBRARY_PATH_VAR=DYLD_LIBRARY_PATH
+		arch_PADSC_EXTRA=-D__ppc__
 		;;
 	*mingw*|*cygwin*)
 		arch_EXE=.exe
@@ -801,6 +803,7 @@ case "$host" in
 		arch_ZIPOPT=-r
 		arch_LD_LIBRARY_PATH_VAR=LD_LIBRARY_PATH
 		arch_SMLNJ_CYGWIN_RUNTIME=1
+		arch_PADSC_EXTRA=
 		;;
 	*)
 		echo "Unknown host type $host"
@@ -851,7 +854,6 @@ cat <<_EOF_ > $config_out
 CC=$copt_CC
 CCFLAGS=$copt_CCFLAGS
 CCLIBS=$copt_CCLIBS
-
 _EOF_
 
 
@@ -896,6 +898,8 @@ SHARED_LIBTOOL_OPTS = $copt_MKSHAREDLIBFLAGS
 #		build-options.
 #########################################################################
 
+CONF_PADSC_EXTRA=$arch_PADSC_EXTRA
+
 _EOF_
 
 #
@@ -922,9 +926,6 @@ else
 echo "CONF_SHARED=false"
 fi >> $config_out
 
-#
-# Optional flags
-#
 if [ "$enable_profiling" -gt 0 ]
 then
 echo "CONF_PROFILING=true"
