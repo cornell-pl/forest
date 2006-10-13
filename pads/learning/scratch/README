@@ -1,0 +1,27 @@
+This directory contains a prototype system for inferring a desription
+of newline-separated ASCII data.  
+
+Requirements:
+You must have sml/nj 110.59 or later.
+
+To build:
+> make
+
+To invoke:
+./learn rawfile outputdir
+   rawfile   contains the data to run the inference on
+   outputdir names the directory for ouptut
+
+The tool currently sends to standard out the following information:
+* A count of the number of records in the input file
+* A list of the frequency distributions of the tokens in the file,
+  grouped into clusters, sorted by the cluster with the lowest
+  "score".  The score is a heuristic designed to find the cluster with
+  the strongest signal.  
+* An output indicating which cluster the system chose and the coverage
+  of that cluster. 
+* A representation of the inferred top-level type of the data.
+  Contexts that have not yet been analyzed are marked TBD.  For each
+  such marker TBD_i in the type representation, there is a file in
+  outputdir/TBD_i containing the portion of the original input that
+  falls into that context.

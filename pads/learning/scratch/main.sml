@@ -12,6 +12,34 @@ structure Main : sig
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
     structure SS = Substring
     open Tokens
+    type TokenOrder = Token list
+    type Context = LToken list
+    type DerivedContexts = Context list
+    type Partition = (TokenOrder * (DerivedContexts list)) list * (Context list)
+
+    datatype Ty = Base of Token | Pvoid 
+                | TBD of Context list | Bad of Context list
+                | Pstruct of Ty list |  Punion of Ty list 
+
+
+    fun doTranspose m =
+	let fun transposeOne (dc, acc) = 
+	    let fun tO' (dc,acc) result = 
+		case (dc,acc) 
+		    of ([], [])          => List.rev result
+		  |  (nt::tks, na::accs) => tO' (tks, accs) ((nt :: na)::result)
+		  | _                    => raise Fail "UnequalLengths"
+	    in
+		tO' (dc,acc) []
+	    end
+	    fun listify ls = List.map (fn x => [x]) ls 
+	    val revTrans = case m
+		of [] => []
+	      |  [dc] => listify dc
+	      |  (dc::rest) => List.foldl transposeOne (listify dc) rest 
+	in
+	    List.map List.rev revTrans
+	end
 
     (*    Ptime < Pmonth < Pip < Pint < Pstring < Pwhite < Other < Error *)
     fun compToken (t1, t2) = 
@@ -54,6 +82,8 @@ structure Main : sig
         |  (Other _, Error) => LESS
         |  (Error, _) => GREATER
 
+   fun TokenEq (t1, t2) = compToken (t1, t2) = EQUAL
+
    structure TokenTable = RedBlackMapFn(
                      struct type ord_key = Token
 			    val compare = compToken
@@ -72,20 +102,35 @@ structure Main : sig
 
    datatype Kind = Struct
 
+   (* Printing routines *)
     fun printKind Struct = print "Struct"
+    fun tokenToString t = 
+	case t 
+        of Ptime i => i
+	|  Pip i  => i
+        |  Pmonth m => m
+	|  Pint i => LargeInt.toString i
+        |  Pstring s => s
+        |  Pwhite s => s
+        |  Other c => Char.toString c
+        |  Error => " Error"
+
     fun printToken t = 
 	case t 
         of Ptime i => print ("[Time]")
 	|  Pip i  => print ("[IP]")
         |  Pmonth m => print ("[Month]")
-	|  Pint i => print ("[int]") (*" Pint("^(LargeInt.toString i)^")"*) 
-        |  Pstring s => print ("[string]")  (*" Pstring("^s^")"*)
-        |  Pwhite s => print "[white space]" (*(" Pstring("^s^")") *)
+	|  Pint i => print (* ("[int]")*)         (" Pint("^(LargeInt.toString i)^")")
+        |  Pstring s => print (* ("[string]")*)   (" Pstring("^s^")")
+        |  Pwhite s => print (* "[white space]"*) (" Pwhite("^s^")") 
         |  Other c => print ("("^(Char.toString c)^")") (*(" Pother("^(Char.toString c)^")") *)
         |  Error => print (" Error")
 
+    fun printLTokens [] = print "\n"
+      | printLTokens ((t,loc)::ts) = (printToken t; printLTokens ts)
+
     fun printTokens [] = print "\n"
-      | printTokens ((t,loc)::ts) = (printToken t; printTokens ts)
+      | printTokens (t::ts) = (printToken t; printTokens ts)
 
     fun printFreq (token,value) = (printToken token; print ":\t"; print (Int.toString (!value)); print "\n" )
     fun printFreqs counts = (TokenTable.appi printFreq counts; print "\n")
@@ -106,6 +151,25 @@ structure Main : sig
     
     fun printDist numRecords freqs = (print "Distributions:\n"; TokenTable.appi (printAugHist numRecords) freqs; print "\n")
 
+    fun printStructSummary (kind, (count, coverage, tinfos)) = 
+	let fun printOne (t,count) =
+	    (printToken t; print "\t";
+	     print "Occurrences:"; print (Int.toString count);  print "\n")
+	in
+	    (printKind kind; print "\t";
+	     print "Coverage:";    print (Int.toString coverage);  print "\n";
+	     print "Token count:"; print (Int.toString count);     print "\n";
+	     List.app printOne tinfos)
+	end
+
+    fun printTokenAnalysis summary = 
+	let fun printOne (t,k,count, coverage) =
+	    (printToken t; print "\t"; printKind k;             print "\t"; 
+	     print "Occurrences:"; print (Int.toString count);  print "\t";
+	     print "Coverage:"; print (Int.toString coverage);  print "\n")
+	in
+	    List.app printOne summary
+	end
 
     fun printClusters numRecords clusters = 
        let fun printOne n c = 
@@ -119,7 +183,96 @@ structure Main : sig
        end
 
 
+    fun printTList tList = (print "tokenOrder:\n";
+			    List.app (fn t => (printToken t; print " ")) tList;
+			    print "\n")
 
+    fun printDerivedContexts contexts = 
+	(print "Derived Contexts:\n";
+	 (case contexts 
+	  of [] => print "<no records matched context>\n"
+	  | _ => (print "Record:\n";
+	         List.app (fn tl => 
+			    (case tl 
+			     of [] => print "\t<empty>\n"
+			     | _ => (print "\t"; printLTokens tl; print "\n"))) contexts));
+	 print "\n")
+
+    fun printContexts contexts = 
+	((case contexts 
+	  of [] => print "<no records matched context>\n"
+	  | _ => (List.app (fn tl => 
+			    (case tl 
+			     of [] => print "\t<empty>\n"
+			     | _ => (print "\t"; printLTokens tl; print "\n"))) contexts)))
+
+
+ 
+   fun printOnePartition (tokenOrder, contexts) = 
+       (printTList tokenOrder;
+        List.app printDerivedContexts contexts)
+
+   fun printPartitions (matches, badRecords) = 
+       (print "\nPartitioned Records:\n";
+        List.app printOnePartition matches;
+        print "Bad records:\n";
+        List.app (fn r => (print "\t"; printLTokens r)) badRecords;
+        print "\n")
+
+   fun printTyD prefix longTBDs longBad suffix ty = 
+       (print prefix;
+        (case ty 
+         of Pvoid  => (print "Pvoid")
+         |  Base t => (printToken t)
+         |  TBD cl => (print "TBD";
+		       if longTBDs then
+			   (print "\n"; printContexts cl; print prefix; print "End TBD")
+		       else ())
+         |  Bad cl => (print "Bad";
+	 	       if longBad then
+			  (print "\n"; printContexts cl; print prefix; print "End Bad")
+		       else ())
+         |  Pstruct tys => (print "Pstruct\n";
+	 		    List.app (printTyD (prefix^"\t") longTBDs longBad (";\n")) tys;
+			    print prefix; print "End Pstruct\n")
+         |  Punion tys  => (print "Punion\n";
+	 		    List.app (printTyD (prefix^"\t") longTBDs longBad (";\n")) tys;
+			    print prefix; print "End Punion\n"));
+	print suffix)
+       
+    fun printTy ty = printTyD "" false false "" ty
+
+
+    fun dumpLToken strm (tk,loc) = TextIO.output(strm, tokenToString tk)
+    fun dumpCL fileName contexts = 
+	let val strm = TextIO.openOut fileName
+            fun dumpOneContext context = (List.app (dumpLToken strm) context;
+					  TextIO.output(strm, "\n"))
+            val () = List.app dumpOneContext contexts
+	in
+	    TextIO.closeOut strm
+	end
+
+    fun dumpTBDs path ty = 
+	let val TBDstamp = ref ~1
+	    val BADstamp = ref ~1
+	    val () = (print "Outputing parititons to directory: "; print path; print "\n")
+	    fun doIt ty = 
+		case ty
+                of Pvoid => ()
+		|  Base t => ()
+                |  TBD cl => dumpCL (TBDstamp := !TBDstamp + 1; path^"TBD_"^(Int.toString (!TBDstamp))) cl
+                |  Bad cl => dumpCL (BADstamp := !BADstamp + 1; path^"BAD_"^(Int.toString (!BADstamp))) cl
+	        |  Pstruct tys => List.app doIt tys
+	        |  Punion tys => List.app doIt tys
+    	in  
+	   if OS.FileSys.isDir path handle SysErr => (OS.FileSys.mkDir path; true)
+	   then doIt ty
+	   else print "Output path should specify a directory.\n"
+	end
+       
+
+   (* Histogram compuations *)
    fun mkHistogram (column:int) : histogram =
        {hist=ref (IntMap.insert(IntMap.empty, column, ref 1)), total=ref column, weight = ref 1, score = ref 0, width = ref 0}
 
@@ -191,7 +344,7 @@ structure Main : sig
 		of SOME a => getMatches(a::acc)
                 |  NONE   => List.rev acc
 	    val matches = getMatches []
-(*	    val () = printTokens matches *)
+(*	    val () = printLTokens matches *)
 	in
 	    matches
 	end
@@ -263,6 +416,13 @@ structure Main : sig
 	    clusters
 	end
 
+    (* Selects the "top-level" cluster from the input cluster list.
+       Return:
+          kind of cluster: struct, union, array
+          count of the number of tokens in the cluster
+          count of the number of records in which the cluster appears
+          a list of the tokens in the cluster and the number of times each token appears in the cluster
+     *)
     fun analyzeCluster numRecords (cluster : (Token * histogram) list) = 
 	let fun doOneToken((t, {hist, total, weight, score, width}), result) =
 	        let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
@@ -278,14 +438,7 @@ structure Main : sig
 		    if isStruct sortedHlist then [(t, Struct, #1 primary, #2 primary)]@result  else result
 		end
 	    val tokenAnalysis = List.foldl doOneToken [] cluster
-	    fun printTokenAnalysis summary = 
-		let fun printOne (t,k,count, coverage) =
-		     (printToken t; print "\t"; printKind k;             print "\t"; 
-		      print "Occurrences:"; print (Int.toString count);  print "\t";
-		      print "Coverage:"; print (Int.toString coverage);  print "\n")
-		in
-		    List.app printOne summary
-		end
+
             fun mergeStructEntries ta =
 		let fun doOne ((token,kind,count,coverage),(cumCount, cumCoverage,tlist)) = 
  		    case kind of Struct =>
@@ -295,56 +448,131 @@ structure Main : sig
 		end
 	    val structSummary = mergeStructEntries tokenAnalysis
 
-	    fun printStructSummary (kind, (count, coverage, tinfos)) = 
-		let fun printOne (t,count) =
-		     (printToken t; print "\t";
-		      print "Occurrences:"; print (Int.toString count);  print "\n")
-		in
-		    (printKind kind; print "\t";
-		     print "Coverage:";    print (Int.toString coverage);  print "\n";
-		     print "Token count:"; print (Int.toString count);     print "\n";
-		     List.app printOne tinfos)
-		end
 	    val () = printStructSummary structSummary
 
 	in
 	    structSummary : (Kind * (int * int * ((Token * int)  list) ))
 	end
 
-    type Context = LToken list
-    type TokenOrder = LToken list
-    exception UnexpectedToken
+    (* 
+       Result of this function:
+         a list of:
+           a tokenOrder and a list of the derived contexts for that order
+         a list of records that do not match any token order for the supplied token set.
+       The derived contexts for a tokenOrder is a list of contexts, the "holes" between the tokens.
+       Each context is a list of tokens.
+    *)
+    exception TokenMatchFailure
     fun splitRecords summary (records : Context list ) =
 	let val (kind,(count, coverage, tokenfreqs)) = summary
-	    val numFound = ref 0
 	    fun getTokenOrder summary record = 
 	        let fun insertOne ((token,freq),tTable) = TokenTable.insert(tTable, token, ref freq)
 		    val tTable = List.foldl insertOne TokenTable.empty summary
+		    val numFound = ref 0
 		    fun doOneToken tTable ((token,loc), acc) = 
 			case TokenTable.find(tTable, token)
 			of NONE => acc
 			|  SOME freq => 
-			    if !freq = 0 then raise UnexpectedToken
+			    if !freq = 0 then raise TokenMatchFailure
 			    else (freq := !freq - 1;
 				  numFound := !numFound + 1;
 				  token::acc)
 		    val tList = List.rev(List.foldl (doOneToken tTable) [] record)
-		    val () = if not ((!numFound) = count) then print "Did not find all desired tokens" else ()
-		    fun printTList tList = (print "tokenOrder:\n";
-					    List.app (fn t => (printToken t; print " ")) tList;
-					    print "\n")
-					   
-		    val () = printTList(tList)
+		    val () = if not ((!numFound) = count) 
+			     then (print "Did not find all desired tokens";  raise TokenMatchFailure)
+			     else ()
 		in
-		    tTable
+		    SOME(tList) handle TokenMatchFailure => NONE
 		end
-	    val tokenOrder = getTokenOrder tokenfreqs (List.hd records)
+	    fun classifyOneRecordWithMatch (thisRecord:Context) (tokenOrder:TokenOrder)  = 
+		let fun doMatch (tokensToMatch:TokenOrder) (recordTokens: Context)
+		                (curContextAcc : Context, contextListAcc : DerivedContexts) = 
+		    case (tokensToMatch, recordTokens) 
+		    of ([],[])   => List.rev ((List.rev curContextAcc) :: contextListAcc)
+                    |  ([], rts) => List.rev  (rts :: contextListAcc)
+                    |  (tks, []) => raise TokenMatchFailure
+                    |  (tokens as tk::tks, (lrtoken as (rt,loc))::rts) => 
+			let val (rt, loc) = lrtoken : LToken
+			in
+			  if TokenEq(tk, rt)  (* found next token; push current context *)
+			  then doMatch tks rts    ([], (List.rev curContextAcc) :: contextListAcc)
+			  else doMatch tokens rts (lrtoken :: curContextAcc, contextListAcc)
+			end
+		    val thisRecordContexts = doMatch tokenOrder thisRecord ([],[])
+		in
+		    SOME thisRecordContexts handle TokenMatchFailure => NONE
+		end
+            (* Given a summary, a token order * DerivedContexts list, and a record,
+                try each token order in list.  
+                if matches, add to corresponding DerivedContexts list.
+                if doesn't match, try to infer a different tokenOrder.
+                  if matches, add to list of token orders with corresonding derivedContext
+                  if doesn't match, add to bad record list *)
+	    fun classifyOneRecord tokenfreqs (thisRecord, (matches, badRecords)) = 
+		let (* convert to accumulator form? *)
+		    fun findFirstMatch [] = (* no existing match succeeded, see if another token order matches *)
+			 (case getTokenOrder tokenfreqs thisRecord
+                          of NONE => raise TokenMatchFailure (* tokens don't match this record *)
+                          |  SOME tokenOrder => findFirstMatch [(tokenOrder,[])])
+                      | findFirstMatch ((current as (match, matchedContextLists))::rest) = 
+		          (case classifyOneRecordWithMatch thisRecord match
+			   of NONE => current :: (findFirstMatch rest)
+                           |  SOME contexts => ((match, contexts :: matchedContextLists) :: rest) (* matches are in reverse order *))
+		in
+		    (findFirstMatch matches, badRecords)
+		    handle tokenMatchFailure => (matches, thisRecord :: badRecords) (* bad records are in reverse *)
+		end
+	    val revPartition : Partition = List.foldl (classifyOneRecord tokenfreqs) ([],[]) records
+            fun reversePartition (matches, badRecords) = 
+		let fun revMatch (tokenOrder, matchedRecords) = (tokenOrder, List.rev matchedRecords)
+		    fun revMatches [] acc = List.rev acc
+                      | revMatches (m::ms) acc = revMatches ms ((revMatch m)::acc)
+		in  
+		    (revMatches matches [], List.rev badRecords)
+		end
+	    
+	    val partition : Partition = reversePartition revPartition
 	in
-	    ()
+	   partition
 	end
 
+    (* This function takes a Partition and returns a Ty describing that partition *)
+    fun partitionToTy partitions = 
+	let val (matches, badRecords) = partitions
+	    fun cnvOneMatch (tokenOrder, dclist) = 
+		let val columns = doTranspose dclist
+		    fun isEmpty column = not (List.exists (not o null) column)
+                    fun shuffle(columns, tokens) result =
+			case (columns, tokens) 
+			of ([],[])      => raise Fail "token and column numbers didn't match (2)"
+                        |  ([last], []) => List.rev (if isEmpty last then result else ((TBD last) :: result))
+                        |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
+                        |  (col::cols, tk::tks) => 
+			    let val result = if isEmpty col then  (Base tk):: result 
+					     else (Base tk) :: (TBD col) :: result
+			    in
+				shuffle(cols, tks) result
+			    end
+		in
+		    case shuffle (columns, tokenOrder) []
+		    of [] => raise Fail "Expected at least one field."
+                    |  [ty] => ty
+                    |  tys  => Pstruct tys
+		end
+	    val matchTys = List.map cnvOneMatch matches
+	    val resultTy =
+		case (matchTys, badRecords)
+                of ([], [])   => Pvoid  (* I don't think this case can arise *)
+                |  ([], brs)  => Bad brs
+                |  ([ty], []) => ty
+                |  (tys, brs) => Punion (tys @ [(TBD brs)])
+	    val () = print "Inferred type:\n"
+	    val () = printTy resultTy
+	in
+	    resultTy
+	end
 
-    fun doIt fileName = 
+    fun doIt fileName outputDir = 
 	let val records = loadFile fileName
 	    val numRecords = List.length records
 	    val rtokens : LToken list list = List.map ltokenizeRecord records
@@ -356,15 +584,18 @@ structure Main : sig
 	    val () = printClusters numRecords clusters
 	    val analysis : (Kind * (int * int * ((Token * int)  list) )) = analyzeCluster numRecords (List.hd clusters)
             val newPartitions = splitRecords analysis rtokens
+            val ty = partitionToTy newPartitions
+	    val () = dumpTBDs outputDir ty
 	in
 	    counts
 	end
 
     fun main (cmd, args) = 
       (let val fileName = hd args
+           val outputDir = case tl args of [] => "gen/"	| (d::args) => (d^"/")
        in
          print ("Starting on file "^fileName^"\n");
-         doIt fileName; 
+         doIt fileName outputDir; 
          if !anyErrors 
 	     then  OS.Process.exit(OS.Process.failure)
 	 else  OS.Process.exit(OS.Process.success)
