@@ -9,6 +9,7 @@
 #     SCRIPT FOR EXPORTING MANUAL IS BROKEN: PICTURES, PDF MISSING
 #  . Be sure to update the take_lists in examples/{p,tests,data}
 #  . Make sure compiler is set to generate release version of compiler
+#  . Add tarball to pads-private/dist directory.
 
 # pads2005-03-07   pads 1.0     2005-03-07  
 # pads-1-01-a      pads 1.01    2006-01-26
