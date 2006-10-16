@@ -1,5 +1,6 @@
 %\documentclass[fleqn]{article}
-\documentclass[nocopyrightspace]{sigplanconf}
+%\documentclass[nocopyrightspace]{sigplanconf}
+\documentclass{sigplanconf}
 
 \usepackage{xspace,pads,amsmath,math-cmds,
             math-envs,inference-rules,times,
@@ -14,6 +15,12 @@
 %\setlength{\textheight}{8.5in}
 
 \begin{document}
+\conferenceinfo{POPL'07} {January 17--19, 2007, Nice, France.}
+
+\copyrightyear{2007}
+
+\copyrightdata{1-59593-575-4/07/0001} 
+
 \title{PADS/ML: A Functional Data Description Language}
 \authorinfo{Yitzhak Mandelbaum$^\ast$, Kathleen Fisher$^\dagger$, David Walker$^\ast$, Mary
   Fernandez$^\dagger$, Artem Gleyzer$^\ast$}
@@ -48,6 +55,16 @@
 %% dpw -- couldn't think of anything useful to say.
 
 \end{abstract}
+
+\category{D.3.2}{Language Classifications}{Applicative (functional) languages}
+
+\terms
+Languages
+
+\keywords
+Data description languages, domain-specific languages, functional programming,
+dependent types, ML, modules, parsing, printing
+
 
 \input{intro}
 

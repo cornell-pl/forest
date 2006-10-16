@@ -1,0 +1,1348 @@
+%\documentclass[fleqn]{article}
+%\documentclass[nocopyrightspace]{sigplanconf}
+\documentclass{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\conferenceinfo{POPL'07} {January 17--19, 2007, Nice, France.}
+
+\copyrightyear{2007}
+
+\copyrightdata{1-59593-575-4/07/0001} 
+
+\title{PADS/ML: A Functional Data Description Language}
+\authorinfo{Yitzhak Mandelbaum$^\ast$, Kathleen Fisher$^\dagger$, David Walker$^\ast$, Mary
+  Fernandez$^\dagger$, Artem Gleyzer$^\ast$}
+{$^\ast$Princeton University \ \ \ \ \ \ \ $^\dagger$AT\&T Labs Research}
+ {\mono{yitzhakm,dpw,agleyzer@CS.Princeton.EDU} \ \ \ \ \mono{kfisher,mff@research.att.com}}
+
+\newcommand{\cut}[1]{}
+\newcommand{\reminder}[1]{{\it #1 }}
+\newcommand{\poplversion}[1]{#1}
+\newcommand{\trversion}[1]{}
+\newcommand{\edcom}[1]{\textbf{*** #1}}
+
+\newcommand{\qqquad}{\quad \qquad}
+
+\newcommand{\appref}[1]{Appendix~\ref{#1}}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\tblref}[1]{Table~\ref{#1}}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\listingref}[1]{Listing~\ref{#1}}
+%\newcommand{\pref}[1]{{page~\pageref{#1}}}
+
+\newcommand{\eg}{{\em e.g.}}
+\newcommand{\cf}{{\em cf.}}
+\newcommand{\ie}{{\em i.e.}}
+\newcommand{\etc}{{\em etc.\/}}
+\newcommand{\naive}{na\"{\i}ve}
+\newcommand{\role}{r\^{o}le}
+\newcommand{\forte}{{fort\'{e}\/}}
+\newcommand{\appr}{\~{}}
+
+%\newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
+\newcommand{\kw}[1]{\bftt{#1}}
+\newcommand{\pads}{\textsc{pads}}
+\newcommand{\padsc}{\textsc{pads/c}}
+\newcommand{\ipads}{\textsc{ipads}}
+\newcommand{\padsl}{\textsc{padsl}}
+\newcommand{\blt}{\textsc{blt}}
+\newcommand{\ddc}{\textsc{ddc}$^{\alpha}$}
+\newcommand{\ddcold}{\textsc{ddc}}
+\newcommand{\padsml}{\textsc{pads/ml}}
+\newcommand{\padsmlbig}{\textsc{PADS/ML}}
+\newcommand{\ddl}{\textsc{ddl}}
+\newcommand{\C}{\textsc{c}}
+\newcommand{\perl}{\textsc{perl}}
+\newcommand{\ml}{\textsc{ml}}
+\newcommand{\smlnj}{\textsc{sml/nj}}
+\newcommand{\ocaml}{\textsc{o'caml}}
+\newcommand{\ocamlbig}{\textsc{O'CAML}}
+\newcommand{\java}{\textsc{java}}
+\newcommand{\xml}{\textsc{xml}}
+\newcommand{\xquery}{\textsc{xquery}}
+\newcommand{\datascript}{\textsc{datascript}}
+\newcommand{\packettypes}{\textsc{packettypes}}
+\newcommand{\lex}{\textsc{Lex}}
+\newcommand{\yacc}{\textsc{YACC}}
+\newcommand{\erlang}{\textsc{Erlang}}
+
+\newcommand{\dibbler}{Sirius}
+\newcommand{\ningaui}{Altair}
+\newcommand{\darkstar}{Regulus}
+
+%% \newcommand{\IParray}[4]{{\tt Parray} \; #1 \; \[#2, #3, #4\]}
+
+\newcommand{\figHeight}[4]{\begin{figure}[tb]
+	\centerline{
+	            \epsfig{file=#1,height=#4}}
+	\caption{#2}
+	\label{#3}
+	\end{figure}}
+
+
+
+
+\maketitle{}
+
+\begin{abstract}  
+
+  Massive amounts of useful data are stored and processed in
+  \textit{ad hoc} formats for which common tools like parsers,
+  printers, query engines and format converters are not readily 
+  available.  In this paper,
+  we explain the design and implementation of \padsml{},
+  a new language and system that facilitates the
+  generation of data processing tools for ad hoc formats.
+  The \padsml{} design includes features such as
+  dependent, polymorphic and recursive datatypes, which allow
+  programmers to describe
+  the syntax and semantics of ad hoc data in a concise,
+  easy-to-read notation.
+  The \padsml{} implementation compiles these descriptions
+  into \ml{} structures and functors
+  that include types for parsed data, functions for parsing
+  and printing, and auxiliary support
+  for user-specified, format-dependent and format-independent 
+  tool generation.
+%%  \edcom {sentence here about \padsml{} being based on theory?}
+%% dpw -- couldn't think of anything useful to say.
+
+\end{abstract}
+
+\category{D.3.2}{Language Classifications}{Applicative (functional) languages}
+
+\terms
+Languages
+
+\keywords
+Data description languages, domain-specific languages, functional programming,
+dependent types, ML, modules, parsing, printing
+
+
+%\input{intro}
+
+\section{Introduction}
+\label{sec:intro}
+\cut{
+{\em
+To do:
+\begin{itemize}
+\item update text to include description of tools generated using the framework.
+\item add size column to data source table.
+\end{itemize}
+}}
+%% WHAT IS AD HOC DATA?
+
+An {\em ad hoc} data format is any semi-structured data format for which
+parsing, querying, analysis, or transformation tools are not readily
+available.  Despite the existence of standard
+formats like \xml{}, ad hoc data sources are ubiquitous,
+arising in industries as diverse as finance, health care,
+transportation, and telecommunications as well as in scientific
+domains, such as computational biology and physics.
+\figref{figure:data-sources} summarizes a variety of such formats,
+including ASCII, binary, and Cobol encodings, with both fixed and
+variable-width records arranged in linear sequences and in tree-shaped
+hierarchies.  Snippets of some of these data formats appear in \figref{fig:sample-data}.
+Note that even a single format can exhibit a great deal of
+syntactic variability.  For example, \figref{fig:sample-data}(c)
+contains two records from a network-monitoring application.  
+Each record has a different number of fields (delimited by `$|$') and
+individual fields contain structured values (\eg{},
+attribute-value pairs separated by `=' and delimited by `;').
+
+Common characteristics of ad hoc data make it difficult to perform
+even basic data-processing tasks.  To start, data analysts typically
+have little control over the format of the data;  it
+arrives ``as is,'' and the analysts can only thank the supplier,
+not request a more convenient format.  The documentation accompanying
+ad hoc data is often incomplete, inaccurate, or missing entirely,
+which makes understanding the data format more difficult.
+Managing the errors that frequently occur poses another challenge. Common errors include undocumented fields, corrupted or missing data, and multiple representations for missing values.  Sources of errors include
+malfunctioning equipment, race conditions on log entry, the
+% deleted this cite for race conditions:  ~\cite{wpp}
+presence of non-standard values to indicate ``no data available,'' and
+human error when entering data.  How to respond to errors is highly 
+application-specific: Some need to halt processing and
+alert a human operator; others can repair errors by consulting 
+auxiliary sources; still others simply filter out erroneous values. 
+In some cases, erroneous data is more important than error-free data; 
+for example, it may signal where two systems are failing to communicate.
+Unfortunately, writing code that reliably handles
+both error-free and erroneous data is difficult and tedious.
+
+\begin{figure}
+\begin{center}
+\scriptsize
+\begin{tabular}{@{}|l|l|l|l|l|}
+\hline
+Name: Use                               & Representation     \\ \hline\hline
+Gene Ontology (GO): & Variable-width     \\
+Gene Product Information 	           & ASCII records      \\ \hline
+SDSS/Reglens Data:  & Floating point numbers,  \\
+Weak gravitational lensing analysis     & among others       \\ \hline
+Web server logs (CLF):                  & Fixed-column       \\ 
+Measuring web workloads                 & ASCII records      \\ \hline
+AT\&T Call detail data:                 & Fixed-width        \\
+Phone call fraud detection              & binary records     \\ \hline 
+AT\&T billing data:                     & Cobol              \\ 
+Monitoring billing process              &                    \\ \hline
+Newick:                           & Fixed-width ASCII records  \\ 
+Immune system response simulation              & in tree-shaped hierarchy   \\ \hline                                
+OPRA:                                   & Mixed binary \& ASCII records  \\
+Options-market transactions             & with data-dependent unions     \\ \hline
+Palm PDA:                               & Mixed binary \& character  \\
+Device synchronization                  & with data-dependent constraints \\ \hline
+\end{tabular}
+\caption{Selected ad hoc data sources.}
+\label{figure:data-sources}
+\end{center}
+\end{figure}
+
+\cut{
+\begin{figure*}
+\begin{center}
+\scriptsize
+\begin{tabular}{@{}|l|l|l|l|l|}
+\hline
+Name: Use                           & Representation    & Processing Problems \\ \hline\hline
+Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
+Gene Product Information 	      & ASCII records &  \\ \hline
+SDSS/Reglens Data~\cite{mandelbaum+:reglens}:                & Floating point numbers, & Repeated multiplicative error \\
+Weak gravitational lensing analysis   & among others & \\ \hline
+Web server logs (CLF):                & Fixed-column      & Race conditions on log entry\\ 
+Measuring web workloads               & ASCII records     & Unexpected values\\ \hline
+AT\&T Call detail data:                          & Fixed-width       & Undocumented data\\
+Phone call fraud detection            & binary records  & \\ \hline 
+AT\&T billing data:                 & Cobol             &  Unexpected values\\ 
+Monitoring billing process          &                   & Corrupted data feeds \\ \hline
+Newick:   Immune                    & Fixed-width ASCII records & None \\ 
+system response simulation          & in tree-shaped hierarchy &\\ \hline                                
+OPRA:                               & Mixed binary \& ASCII records 
+                                                       & 100-page informal \\
+Options-market transactions         & with data-dependent unions & documentation \\ \hline
+Palm PDA:                           & Mixed binary \& character & No high-level  \\
+Device synchronization              & with data-dependent constraints & documentation available\\ \hline
+\end{tabular}
+\caption{Selected ad hoc data sources.}
+\label{figure:data-sources}
+\end{center}
+\end{figure*}
+}
+
+% \begin{figure*}
+% \begin{center}
+% \begin{tabular}{@{}|l|l|l|}
+% \hline
+% \textbf{Name:} Use & Record Format (Size) 
+% %& Size
+%            & Common Errors \\ \hline\hline
+% \textbf{Web server logs (CLF):}           & Fixed-column ASCII & Race conditions on log entry\\ 
+% Measuring Web workloads  & ($\leq$12GB/week)  & Unexpected values\\ \hline
+% \textbf{AT\&T provisioning data (\dibbler{}):} & Variable-width ASCII & Unexpected values \\ 
+% Monitoring service activation  & (2.2GB/week) & Corrupted data feeds \\ \hline
+% \textbf{Call detail:}                   & Fixed-width binary &  Undocumented data\\
+% Fraud detection                         &   (\appr{}7GB/day) & \\ \hline 
+% \textbf{AT\&T billing data (\ningaui{}):}      & Cobol      & Unexpected values\\ 
+% Monitoring billing process  &  ($>$250GB/day) & Corrupted data feeds \\ \hline
+% \textbf{IP backbone data (\darkstar{}):}  & ASCII & Multiple representations \\
+% {Network Monitoring}       &  ($\ge$ 15 sources,\appr{}15 GB/day)  & of missing values \\
+%           & & Undocumented data \\ \hline
+% \textbf{Netflow:}               & Data-dependent number of & Missed packets\\ 
+% {Network Monitoring}  & fixed-width binary records & \\ 
+%                       & ($\ge$1Gigabit/second) & \\ \hline
+% \textbf{Gene Ontology data:}    & Variable-width  & \\
+% Gene product information & ASCII records & White-space ambiguities\\\hline
+% \textbf{Newick data}              & Fixed-width ASCII & Manual entry errors \\
+% Immune system response simulation & in tree-shaped hierarchy 
+% & \\
+% \hline
+% \end{tabular}
+% \normalsize
+% \caption{Selected ad hoc data sources.}
+% \label{figure:data-sources}
+% \end{center}
+% \end{figure*}
+
+\begin{figure*}
+  \centering
+  \small
+
+\begin{verbatim}
+ 2:3004092508||5001|dns1=abc.com;dns2=xyz.com|c=slow link;w=lost packets|INTERNATIONAL
+ 3:|3004097201|5074|dns1=bob.com;dns2=alice.com|src_addr=192.168.0.10; \
+ dst_addr=192.168.23.10;start_time=1234567890;end_time=1234568000;cycle_time=17412|SPECIAL
+\end{verbatim}  
+%  \label{fig:darkstar-records1}
+(a) Simplified Regulus network-monitoring data. 
+
+\begin{verbatim}
+0|1005022800
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+9152|9151|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
+\end{verbatim}
+%   \label{figure:dibbler-records}
+(b) \dibbler{} data used to monitor billing in telecommunications industry.
+
+\begin{verbatim}
+(((erHomoC:0.28006,erCaelC:0.22089):0.40998, (erHomoA:0.32304,(erpCaelC:0.58815,((erHomoB: \
+0.5807,erCaelB:0.23569):0.03586,erCaelA: 0.38272):0.06516):0.03492):0.14265):0.63594, \
+(TRXHomo:0.65866,TRXSacch:0.38791):0.32147, TRXEcoli:0.57336)
+\end{verbatim}
+% \label{fig:newick}
+(c) Newick data used to study immune system responses. 
+
+
+  \caption{Snippets of a variety of ad hoc data formats. Each `$\backslash$' denotes a newline we inserted to improve readability. }
+  \label{fig:sample-data}
+\end{figure*}
+
+\cut{
+Surprisingly,
+few meta-language tools, such as data-description languages or parser
+generators, exist to assist in management of ad hoc data.  And
+although ad hoc data sources are among the richest for database and
+data mining researchers, they often ignore such sources as the work
+necessary to clean and vet the data is prohibitively expensive.}
+
+\subsection{\padsmlbig{}}
+
+%% Slight change to emphasize generation of many tools.
+
+\padsml{} is a domain-specific language designed to 
+improve the productivity of data analysts, be they computational biologists, physicists, network administrators, healthcare providers or financial analysts.
+To use the system, analysts describe their data in the \padsml{} language, capturing both the physical format of the data and any expected semantic constraints.  In return for this investment, analysts reap substantial rewards.
+First of all, the description
+serves as clear, compact, and formally-specified documentation of 
+the data's structure and properties.  In addition, the \padsml{}
+compiler can convert the description into a suite of robust, end-to-end
+data processing tools and libraries specialized
+to the format.  As the analysts' data sources evolve over time,
+they can simply update the high-level descriptions
+and recompile to produce updated tools.
+
+
+The type structure of modern functional programming languages inspired the design of the \padsml{} language.  
+Specifically, \padsml{} provides dependent, polymorphic recursive datatypes, layered on top of a rich collection of base types, to specify the syntactic structure and semantic properties of data
+formats.  Together, these features enable analysts to write concise,
+complete, and reusable descriptions of their data.  
+We describe the \padsml{} language using examples from several domains
+in \secref{sec:padsml-overview}.
+
+We have implemented \padsml{} by compiling descriptions into
+\ocaml{} code.  We use a
+``types as modules'' implementation strategy in which each \padsml{} type
+becomes a module and each \padsml{} type constructor becomes a functor. 
+We chose \ml{} as the host language because we believe that 
+functional languages lend themselves to data processing tasks more readily than imperative languages such as \C{} or \java{}.  In particular, constructs such as pattern matching and higher-order functions make expressing data transformations particularly convenient. \secref{sec:padsml-impl} describes our ``types as modules''
+strategy and shows how \padsml{}-generated modules together
+with functional \ocaml{} code can concisely express
+common
+data-processing tasks such as filtering errors and format transformation.
+
+A key benefit of our approach is the high return-on-investment that
+analysts can derive from describing their data in \padsml{}.  In particular, \padsml{} makes it possible to produce automatically a collection of data analysis and processing tools from each description.   
+As a start, the \padsml{} compiler generates from each description a parser and a printer for the associated data source.  The parser maps raw 
+data into two data
+structures: a canonical \textit{representation} of the parsed data and
+a \textit{parse descriptor}, a meta-data object detailing properties
+of the corresponding data representation.  Parse descriptors provide
+applications with programmatic access to errors detected during
+parsing.  The printer inverts the process, mapping internal data structures
+and their corresponding parse descriptors back into raw data.
+
+In addition to generating parsers and printers, our framework permits
+developers to add {\em format-independent} tools without modifying the \padsml{} compiler by specifying \textit{tool generators}.  Such generators need only match a generic interface, specified as an \ml{} signature.  
+Correspondingly, for each \padsml{} description, the \padsml{} compiler generates a meta-tool (a functor)
+that takes a tool generator and specializes it for use with
+the particular description.  \secref{sec:gen-tool} describes the
+tool framework and gives examples of three format-independent 
+tools that we have
+implemented: a data printer useful for description debugging,
+an accumulator that keeps track of error information for
+each type in a data source, and a formatter that maps data into XML.
+
+To define the semantics of \padsml{}, we extended our earlier work on
+the Data Description Calculus (\ddcold{})~\cite{fisher+:next700ddl} to
+account for \padsml{}'s polymorphic types.  In the process, we
+simplified the original presentation of the parser semantics
+substantially, particularly for recursive types.  In addition, we
+extended the theory to give a printing semantics. We used this new
+semantics to guide the \padsml{} implementation of printing.  We 
+also proved a {\em canonical forms} theorem, which states 
+that the generated parsers produce well-typed, well-behaved canonical
+results, and, conversely, that printers operate correctly on the 
+appropriate canonical
+inputs. A full treatment of the extended calculus appears in
+Mandelbaum's Ph.D. thesis~\cite{mandelbaum-thesis}, while an overview of
+the calculus and printing semantics, as well as the associated
+metatheory, can be found in our companion technical
+report~\cite{fisher+:popl-sub-long}.
+
+
+\cut{\textbf{***THEN compare to \padsc{} in one paragraph only}}
+\padsml{} has evolved from previous work on
+\padsc{}~\footnote{We henceforth call the original
+\pads{} language \padsc{}.}~\cite{fisher+:pads}, but
+\padsml{} differs from \padsc{} in three significant ways.  First, it
+is targeted at the \ml{} family of languages.  Using \ml{} as the host
+language simplifies many data processing tasks, such as filtering and normalization, 
+which benefit from \ml{}'s pattern matching constructs and
+high level of abstraction.  Second, unlike \padsc{} types, \padsml{}
+types may be parameterized by other types, resulting in more concise
+and elegant descriptions through code reuse.  \ml{}-style datatypes and 
+anonymous nested tuples also help improve readability by making descriptions more compact.  Third, \padsml{} provides
+significantly better support for the development of new tool generators.
+In particular, \padsml{} provides a generic interface against which
+tool generators can be written.  In \padsc{}, the compiler itself
+generates all tools, and, therefore, developing a new tool generator
+requires understanding and modifying the compiler.
+Mandelbaum's Ph.D. thesis~\cite{mandelbaum-thesis}
+contains a full discussion of related work.
+
+
+\cut{
+\textbf{***Then give observations.}
+\textbf{Actually, this observation should go in the conclusion.  It's
+  distracting here.}
+Our ``types as modules'' implementation strategy encountered the
+  limits of the \ocaml{} module system in multiple ways. It therefore
+  provides a natural, well-motivated challenge example for
+  functional-programming researchers in type-directed programming and
+  advanced module design.
+
+Therefore, the combination of
+  \padsml{} and \ocaml{} is a significant step towards a unified
+  language for data description, transformation, and analysis.
+}
+
+\cut{\textbf{***Then, if still necessary give a pithy list of contributions}}
+
+In summary, this research makes the following contributions:
+\begin{itemize}
+\item We have designed and implemented \padsml{}, a novel
+data-description language that includes 
+dependent, polymorphic, recursive datatypes.  This design
+allows data analysts to express the syntactic
+structure and semantic properties of data formats from numerous
+application domains in a concise, elegant, and easy-to-read notation.  
+\item Our \padsml{} implementation employs an effective and
+general ``types as modules'' compilation strategy
+that produces robust parser and printer functions
+as well as auxiliary support for user-specified tool generation.
+Our implementation is available
+at \url{http://www.padsproj.org/padsml/}.
+\end{itemize}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
+
+
+% \input{pml_overview}
+\section{Describing Data in \padsmlbig{}}
+\label{sec:padsml-overview}
+
+A \padsml{} description specifies the physical layout and semantic
+properties of an ad hoc data source.  These descriptions are composed
+of types: base types describe atomic data, while structured types
+describe compound data built from simpler pieces.  Examples of base
+types include ASCII-encoded, 8-bit unsigned integers (\cd{Puint8}) and
+32-bit signed integers (\cd{Pint32}), binary 32-bit integers (\cd{Pbint32}),
+dates (\cd{Pdate}), strings (\cd{Pstring}), zip codes (\cd{Pzip}),
+phone numbers (\cd{Pphone}), and IP addresses (\cd{Pip}).  Semantic
+conditions for such base types include checking 
+that the resulting number fits in the indicated space, \ie, 16-bits
+for \cd{Pint16}.
+
+Base types may be parameterized by \ml{} values.  This mechanism
+reduces the number of built-in base types and permits base types to
+depend on values in the parsed data.  For example, the base type
+\cd{Puint16_FW(3)} specifies an unsigned two byte integer physically
+represented by exactly three characters, and the base type
+\cd{Pstring} takes an argument indicating the \textit{terminator
+character}, \ie{}, the character in the source that
+follows the string.
+
+To describe more complex data, \padsml{} provides a collection of type
+constructors derived from the type structure of functional programming
+languages like Haskell and ML.  We explain these structured types in
+the following subsections using examples drawn from data sources we
+have encountered in practice.
+
+% Readers eager to see the complete syntax
+% of types should flip forward to Appendix~\ref{app:syntax-dd}.
+
+\subsection{Simple Structured Types}
+
+\cut{
+\begin{figure*}
+{\scriptsize
+\begin{verbatim}
+0|1005022800
+9152|9151|1|9735551212|0||9085551212|07988|no_ii152272|EDTF_6|0|APRL1|DUO|10|1000295291
+9153|9153|1|0|0|0|0||152268|LOC_6|0|FRDW1|DUO|LOC_CRTE|1001476800|LOC_OS_10|1001649601
+\end{verbatim}
+}
+  \caption{Miniscule example of \dibbler{} data.}
+  \label{figure:dibbler-records}
+\end{figure*}
+}
+
+The bread and butter of a \padsml{} description are the simple
+structured types: tuples and records for specifying ordered data,
+lists for specifying homogeneous sequences of data, sum types for
+specifying alternatives, and singletons for specifying the occurrence
+of literal characters in the data.  We describe each of these
+constructs as applied to the \dibbler{} data presented in
+\figref{fig:sample-data}(b).
+
+\dibbler{} data summarizes orders for phone service placed with AT\&T.
+Each \dibbler{} data file starts with a timestamp followed by one
+record per phone service order.  Each order consists of a header and a
+sequence of events.  The header has 13 pipe separated fields: the
+order number, AT\&T's internal order number, the order version, four
+different telephone numbers associated with the order, the zip code of
+the order, a billing identifier, the order type, a measure of the
+complexity of the order, an unused field, and the source of the order
+data.  Many of these fields are optional, in which case nothing
+appears between the pipe characters.  The billing identifier may not
+be available at the time of processing, in which case the system
+generates a unique identifier, and prefixes this value with the string
+``no\_ii'' to indicate that the number was generated. The event
+sequence represents the various states a service order goes through;
+it is represented as a newline-terminated, pipe-separated list of
+state, timestamp pairs.  There are over 400 distinct states that an
+order may go through during provisioning.  The sequence is sorted in
+order of increasing timestamps.  Clearly
+English is a poor language for describing data formats!
+
+\begin{figure}
+\input{sirius_pml}
+  \caption{\padsml{} description for \dibbler{} provisioning data.}
+  \label{figure:sirius_pml}
+\end{figure}
+
+\figref{figure:sirius_pml} contains the \padsml{} description for the
+\dibbler{} data format.  The description is a sequence of type
+definitions.  Type definitions precede uses, therefore the description
+should be read bottom up.
+The type \cd{Source} describes a complete \dibbler{} data
+file and denotes an ordered tuple containing a
+\cd{Summary\_header} value followed by an \cd{Orders} value.
+
+The type \cd{Orders} uses the list type constructor
+\cd{Plist} to describe a homogenous sequence of values in a data
+source.  The \cd{Plist} constructor takes three parameters: on the
+left, the type of elements in the list; on the right, a literal
+\emph{separator} that separates elements in the list and a literal
+\emph{terminator} that marks the end of the list.  
+In this example, the type \cd{Orders} is a list of
+\cd{Order} elements, separated by a newline, and terminated by
+\cd{peof}, a special literal that describes the \emph{end-of-file
+  marker}.  Similarly, the \cd{Events} type denotes a
+sequence of \cd{Event} values separated by vertical bars and
+terminated by a newline.
+
+String, character, and integer literals can be embedded in a
+description and are interpreted as singleton types.  For example, the
+\cd{Event} type is a string terminated by a vertical bar, followed by
+a vertical bar, followed by a timestamp.  The singleton type \cd{'|'}
+means that the data source must contain the character \cd{'|'} at this
+point in the input stream. Correspondingly, the generated parser reads
+\cd{'|'} and the generated printer writes \cd{'|'}.  These literals do
+not appear in the generated data representations.
+
+The type \cd{Order\_header} is a record type, \ie{}, a tuple type in
+which each field may have an associated name.  The named field
+\cd{att\_order\_num} illustrates two other features of
+\padsml: dependencies and constraints.  Here, \cd{att\_order\_num}
+depends on the previous field \cd{order\_num} and is constrained to be
+less than that value.  In practice, constraints may be complex, have
+multiple dependencies, and can specify, for example, the sorted order
+of records in a sequence.  Constrained types have the form \cd{[x:T |
+e]} where \cd{e} is an arbitrary pure boolean expression.  Data
+satisfies this description if it satisfies \cd{T} and \cd{e}
+evaluates to \cd{true} when the parsed representation of the data is
+substituted for \cd{x}.  If the boolean expression evaluates to false,
+the data contains a \textit{semantic} error.
+
+The datatype \cd{Dib\_ramp} specifies two
+alternatives for a data fragment: either one integer or the fixed
+string \cd{"no\_ii"} followed by one integer.  The order of
+alternatives is significant, that is, the parser attempts to parse the
+first alternative and only if it fails, it attempts to parse the
+second alternative.  This semantics differs from similar constructs in
+regular expressions and context-free grammars, which
+non-deterministically choose between alternatives.
+\cut{Fortunately, we have yet to come across an ad hoc data
+source where we wish we had nondeterministic choice.\footnote{\padsml{}
+  can recognize string data based on regular expressions.
+  Non-determinism here has been useful, but as it has been confined to
+  parsing elements of the \cd{Pstring} base type, it has had no impact
+  on the overall parsing algorithm.}
+}
+\cut{
+\begin{figure}
+\input{newick_pml}
+Tiny fragment of Newick Standard data:
+
+{
+\begin{verbatim}
+(((erHomoC:0.28006,erCaelC:0.22089):0.40998,
+(erHomoA:0.32304,(erpCaelC:0.58815,((erHomoB:
+0.5807,erCaelB:0.23569):0.03586,erCaelA:
+0.38272):0.06516):0.03492):0.14265):0.63594,
+(TRXHomo:0.65866,TRXSacch:0.38791):0.32147,
+TRXEcoli:0.57336)
+\end{verbatim}
+}
+  \caption{Simplified tree-shaped Newick Standard data.  Newlines
+     inserted to improve legibility.}
+  \label{fig:newick}
+\end{figure}
+}
+
+
+\subsection{Recursive Types}
+
+\padsml{} can describe data sources with recursive structure.  An
+example of such data is the Newick Standard format, a flat representation
+of trees used by biologists~\cite{newick}.
+Example Newick Standard data provided by Steven Kleinstein appears in
+\figref{fig:sample-data}(c). 
+The format uses properly nested
+parentheses to specify a tree hierarchy.  A leaf node is a string
+label followed by a colon and a number.  An interior node contains a
+sequence of children nodes, delimited by parentheses, followed by a
+colon and a number.  The numbers represent the ``distance'' that
+separates a child node from its parent. 
+In this example,  the string labels are gene names and the distances denotes the number of mutations that occur in the antibody receptor genes of B lymphocytes. \cut{Kleinstein uses this kind of data to study
+the proliferation of B lymphocytes during an immune response.}
+The following \padsml{} code 
+describes this format:
+\input{newick_pml}
+ 
+\cut{
+\begin{figure}
+  \centering
+  \small
+\begin{verbatim}
+2:3004092508||5001|dns1=abc.com;dns2=xyz.com|
+c=slow link;w=lost packets|INTERNATIONAL
+3:|3004097201|5074|dns1=bob.com;dns2=alice.com|
+src_addr=192.168.0.10;dst_addr=192.168.23.10;
+start_time=1234567890;end_time=1234568000;
+cycle_time=17412|SPECIAL
+\end{verbatim}  
+  \caption{Simplified network-monitoring data. Newlines
+     inserted to improve legibility.}
+  \label{fig:darkstar-records1}
+\end{figure}
+}
+
+\subsection{Polymorphic Types and Advanced Datatypes}
+
+Polymorphic types enable more concise descriptions and allow
+programmers to define convenient libraries of reusable descriptions. The
+description in \figref{fig:darkstar-ml} illustrates types
+parameterized by both types and values.  It specifies
+the format of alarm data recorded by a network-link monitor used in
+the \darkstar{} project at AT\&T.  \figref{fig:sample-data}(a) contains corresponding example data. We describe the format in tandem with describing its \padsml{} description.
+\begin{figure}
+  \centering
+  \input{darkstar_pml}
+  \caption{Description of \darkstar{} data.}
+  \label{fig:darkstar-ml}
+\end{figure}
+
+This data format has several variants of name-value pairs. The
+\padsc{} description of this format~\cite{fisher+:popl-sub-long} must
+define a different type for each variant. In contrast, the polymorphic
+types of \padsml{} allow us to define the type \cd{Pnvp}, which takes
+both type and value parameters to encode all the variants. As is
+customary in \ml{}, type parameters appear to the left of the type
+name, while value parameters and their \ml{} types appear to the
+right.  The type \cd{Pnvp} has one type parameter named \cd{Alpha} and
+one value parameter named \cd{p}.  Informally, \cd{Alpha Pnvp(p)} is a
+name-value pair where the value is described by \cd{Alpha} and the
+name must satisfy the predicate \cd{p}.
+
+The \cd{Nvp} type reuses the \cd{Pnvp} type to define a name-value pair
+whose name must match the argument string \texttt{name} but whose
+value can have any type.  The \cd{Nvp\_a} type also uses the type
+\cd{Pnvp}. It defines a name-value pair that permits any name, but
+requires the value to have type \cd{SVString} (a string terminated by
+a semicolon or vertical bar).  Later in the description, the type
+parameter to \cd{Nvp} is instantiated with IP addresses, timestamps,
+and integers.
+
+% The source type is an array of \cd{alarm}s, where each alarm is a
+% \cd{raw\_alarm}, constrained to ensure that the alarm number is
+% properly correlated with the timestamps.  We check this correlation
+% with the function \cd{checkCorr}.  The type \cd{raw\_alarm} closely
+% follows the description above. We highlight a few important features.
+% First, we note that the type of the field \cd{info} depends on the
+% alarm code, reflecting the text above. More interestingly, the type
+% \cd{info} is implemented with a switched datatype, deciding how to
+% parse based on the parameter \cd{alarm\_code}.  Next, we note that the
+% description includes five different types of name-value pairs. We take
+% advantage of both the type and value parameterization of types to
+% encode all of these pair types based on one common description,
+% \cd{pnvp}. This type is polymorphic in the type of the value and takes
+% an arbitrary constraint \cd{c} as an argument. The type \cd{nvp} is
+% polymorphic in the type of the value, but takes the expected name of
+% the string as an argument. 
+
+The \darkstar{} description also illustrates the use of
+\textit{switched} datatypes.  A switched datatype selects a variant
+based on the value of a user-specified \ocaml{} expression, which
+typically references parsed data from earlier in the data source.  For
+example, the switched datatype \cd{Info} chooses a
+variant based on the value of its \cd{alarm\_code} parameter.  More
+specifically, if the alarm code is \cd{5074}, the format specification
+given by the \cd{Details} constructor will be used to parse the
+current data.  Otherwise, the format given by the \cd{Generic}
+constructor will be used.
+
+% The last construct in the \darkstar{} description is the type
+% qualifier \cd{omit}.  In the \cd{Service} datatype,
+% \cd{omit} specifies that the parsed string literal should be omitted
+% in the internal data representation because the literal can be
+% determined by the datatype constructor.
+
+\cut{We can do this because we can discern from the
+datatype constructor which string was found in the data source.}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis.tex"
+%%% End: 
+
+%\input{impl}
+\section{From \padsmlbig{} to \ocamlbig{}}
+\label{sec:padsml-impl}
+The \padsml{} compiler takes descriptions and generates \ocaml{}
+modules that can be used by any \ocaml{} program.  In this section, we
+describe the generated modules and illustrate their use.
+
+\subsection{Types as Modules}
+\label{sec:gen-code}
+
+We use the \ocaml{} module system to structure the libraries generated
+by the \padsml{} compiler.  Each \padsml{} base type is implemented as
+an \ocaml{} module.  For each \padsml{} type in a description, the
+\padsml{} compiler generates an \ocaml{} module containing the types,
+functions, and nested modules that implement the \padsml{} type.  All
+the generated modules are grouped into one module that implements the
+complete description.  For example, a \padsml{} description named
+\texttt{sirius.pml}, which contains three named types, will result in the
+\ocaml{} file \texttt{sirius.ml} defining the module \cd{Sirius},
+which will contain three submodules, each corresponding to one named type.
+
+Namespace management alone is sufficient motivation to employ a
+``types as modules'' approach, but the power of the \ml{} module
+system provides substantially more.  We implement polymorphic
+\padsml{} types as functors from (type) modules to (type) modules.
+Ideally, we would like to map recursive \padsml{} types into recursive
+modules.  Unfortunately, this approach currently is not possible, because
+\ocaml{} prohibits the use of functors within recursive modules,
+and the output of the \padsml{} compiler includes a functor for each
+type.  Instead, we implement recursive types as modules containing
+recursive datatypes and functions.  As there is no theoretical reason
+to prevent recursive modules from containing functors~\cite{dreyer-thesis}, we
+pose our system as a challenge to implementers of module systems.
+
+The module generated for any monomorphic \padsml{} type 
+matches the signature \cd{S}:
+\begin{code}\scriptsize
+\kw{module} \kw{type} S = \kw{sig}
+  \kw{type} rep
+  \kw{type} pd\_body
+  \kw{type} pd = Pads.pd_header * pd_body
+  \kw{val}  parse : Pads.handle -> rep * pd
+  \kw{val}  print : rep -> pd -> Pads.handle -> unit
+  (* Functor for tool generator ... *)
+  \kw{module} Traverse ...
+\kw{end}\end{code}% 
+\noindent 
+The \emph{representation} (\cd{rep}) type describes the
+in-memory representation of parsed data, while the
+\emph{parse-descriptor} (\cd{pd}) type describes meta-data collected
+during parsing.
+The parsing function converts the raw data into an in-memory
+representation and parse descriptor for the representation.
+The printing function performs the reverse operation.
+The module also contains a generic tool generator implemented as a functor; we defer a description of this functor to \secref{sec:gen-tool}.
+The module \cd{Pads} contains the
+built-in types and functions that occur in base-type and generated
+modules.  The type \cd{Pads.pd_header} is the type of all parse-descriptor
+headers and \cd{Pads.handle} is an abstract type containing the
+private data structures \padsml{} uses to manage data sources.
+
+The structure of the representation and parse-descriptor types
+resembles the structure of the corresponding \padsml{} type, making it
+easy to see the correspondence between parsed data, its internal
+representation, and the corresponding meta-data.  
+For example, given the \padsml{} type \cd{Pair} describing a character
+and integer separated by a vertical bar:
+\begin{code}\scriptsize
+  \kw{ptype} Pair = Pchar * '|' * Pint\end{code}%
+the compiler generates a module with the signature:
+\begin{code}\scriptsize
+\kw{module} \kw{type} Pair_sig = \kw{sig}
+  \kw{type} rep     = Pchar.rep * Pint.rep
+  \kw{type} pd_body = Pchar.pd  * Pint.pd
+  \kw{type} pd      = Pads.pd_header * pd_body
+  \kw{val}  parse   : Pads.handle -> rep * pd
+  \kw{val}  print   : rep -> pd -> Pads.handle -> unit
+  ...
+\kw{end}\end{code}%
+\noindent 
+The parse-descriptor header reports on the parsing
+process that produced the corresponding representation.  It includes
+the location of the data in the source, an error code
+describing the first error encountered, and the number of
+subcomponents with errors.  The body contains the parse
+descriptors for subcomponents.
+Parse descriptors for base types have a body of type \cd{unit}.
+
+The signature for a polymorphic \padsml{} type uses the signature
+\cd{S} for monomorphic types, defined above.  
+Given the polymorphic \padsml{} type \cd{ABPair}:
+\begin{code}\scriptsize
+\kw{ptype} (Alpha,Beta) ABPair = Alpha * '|' * Beta\end{code}%
+the compiler generates a module with the signature:
+\begin{code}\scriptsize
+\kw{module} \kw{type} ABPair_sig (Alpha : S) (Beta : S) = 
+\kw{sig}
+  \kw{type} rep      = Alpha.rep * Beta.rep
+  \kw{type} pd\_body = Alpha.pd * Beta.pd
+  \kw{type} pd       = Pads.pd_header * pd\_body
+  \kw{val}  parse    : Pads.handle -> rep * pd
+  \kw{val}  print    : rep -> pd -> Pads.handle -> unit
+  ...
+\kw{end}\end{code}%
+
+\subsection{Using the Generated Libraries}
+Common data management tasks like filtering and normalization are easy to express in \ocaml{}.  In the remainder of this section, we illustrate this point by giving \ocaml{} programs to compute properties of ad hoc data, to filter it, and to transform it.
+
+\cut{In contrast, \padsc{} users fall off an
+abstraction cliff when they shift from declaratively describing data
+to manipulating the generated data structures in \C{}, where they have
+to worry about details such as manipulating \C{} strings and worrying
+about memory management.  }
+
+\subsubsection{Example: Computing Properties}
+\label{sec:ex-process}
+Given the \padsml{} type:
+\begin{code}\scriptsize
+\kw{ptype} IntTriple = Pint * '|' * Pint * '|' * Pint\end{code}%
+the following \ocaml{} expression computes the average of the three integers in the file \texttt{input.data}:
+\begin{code}\scriptsize
+\kw{let} ((i1,i2,i3), (pd_hdr, pd_body)) = 
+ Pads.parse_source IntTriple.parse "input.data" \kw{in}
+\kw{match} pd_hdr \kw{with}
+  \{error_code = Pads.Good\} -> (i1 + i2 + i3)/3
+{|} _ -> \kw{raise} Pads.Bad_file \end{code}%
+\noindent
+The \cd{parse_source} function takes a parsing function and a file
+name, applies the parsing function to the data in the specified file,
+and returns the resulting representation and parse descriptor.  To
+ensure the data is valid, the program examines the error code in the parse-descriptor header.  The error code \cd{Good} indicates that the data
+is syntactically and semantically valid. Other error codes include
+\cd{Nest}, indicating an error in a subcomponent, \cd{Syn}, indicating
+that a syntactic error occurred during parsing, and \cd{Sem},
+indicating that the data violates a semantic constraint. The
+expression above raises an exception if it encounters any of these
+error codes.
+
+Checking the top-level parse descriptor for errors is sufficient to
+guarantee that there are no errors in any of the subcomponents.  This
+property holds for all representations and corresponding parse
+descriptors.  This design supports a ``pay-as-you-go'' approach to
+error handling. The parse descriptor for valid data need only be
+consulted once, no matter the size of the corresponding data. User
+code only needs to traverse nested parse descriptors if information
+about an error is required.
+
+\subsubsection{Example: Filtering}
+\label{sec:ex-filter}
+
+Data analysts often need to ``clean'' their data (\ie{}, remove or
+repair data containing errors) before loading the data into a database
+or other application.  \ocaml{}'s pattern matching and higher-order
+functions can simplify these tasks.  For example, the expression in
+\figref{fig:ex-data-clean} partitions \dibbler{} data into valid
+orders and invalid orders.  \cut{The valid orders may then be further
+processed or loaded into a database without risk of failure during the
+load nor of corrupting the valuable data therein.  The invalid orders
+can be examined off-line to determine the cause of the errors or to
+repair them.
+
+An important set of tasks involving ad hoc data are those related to
+errors, including error analysis, repair, and removal.}
+
+\begin{figure}
+\begin{code}\scriptsize
+\kw{open} Pads
+
+\kw{let} classify_order order (pd\_hdr, pd\_body) (good, bad)=
+   \kw{match} pd\_hdr \kw{with}
+    \{error_code = Good\} -> (order::good, bad)
+   | _                  -> (good, order::bad)
+
+\kw{let} split_orders orders (orders_pd_hdr,order_pds) = 
+   List.fold_right2 classify_order orders order_pds ([],[])
+
+\kw{let} ((header, orders),(header_pd, orders_pd)) = 
+   parse_source Sirius.parse "input.txt"
+
+\kw{let} (good,bad) = split_orders orders orders_pd\end{code} 
+\caption{Error filtering of \dibbler{} data}
+\label{fig:ex-data-clean}
+\end{figure}
+
+\cut{
+The \cd{classify_order} function receives an order, its parse descriptor,
+and the lists of good and bad orders. Based on the parse
+descriptor, it adds the order to the appropriate list.  The function
+\cd{split_orders} simply folds \cd{classify_order} over the lists of
+orders and corresponding parse descriptors.
+}
+\subsubsection{Example: Transformation}
+\label{sec:ex-trans}
+
+\begin{figure}
+  \centering
+  \begin{code}\scriptsize
+...
+\kw{ptype} Header = \{
+       alarm : [ a : Puint32 | a = 2 or a = 3];
+ ':';  start :  Ptimestamp Popt;
+ '|';  clear :  Ptimestamp Popt;
+ '|';  code  :  Puint32;
+ '|';  src\_dns  :  Nvp("dns1");
+ ';';  dest\_dns :  Nvp("dns2");
+ '|';  service  : Service
+\}
+\mbox{}
+\kw{ptype} D\_alarm = \{
+       header : Header;
+ '|';  info   : Details
+ \}
+\mbox{}
+\kw{ptype} G\_alarm = \{
+       header : Header;
+ '|';  info   : Nvp\_a Plist(';','|')
+\}\end{code}
+\caption{Listing of \texttt{\darkstar{}Normal.pml}, a normalized format for
+  \darkstar{} data. All named types not explicitly included in this
+  figure are unchanged from the original \darkstar{} description.}
+\label{fig:normal-darkstar}
+\end{figure}
+
+\begin{figure}
+\begin{code}\scriptsize
+\kw{open} Regulus
+\kw{open} RegulusNormal
+\kw{module} A = Alarm
+\kw{module} DA = D\_alarm
+\kw{module} GA = G\_alarm
+\kw{module} Header = H
+
+\kw{type} ('a,'b) Sum = Left of 'a | Right of 'b
+
+\kw{let} split_alarm ra =
+  \kw{let} h = 
+    \{H.alarm=ra.A.alarm; H.start=ra.A.start; 
+     H.clear=ra.A.clear; H.code=ra.A.code;
+     H.src\_dns=ra.A.src\_dns; H.dest\_dns=ra.A.dest\_dns;
+     H.service=ra.A.service\}
+  \kw{in} \kw{match} ra \kw{with}
+      \{info=Details(d)\} -> 
+      Left \{DA.header = h; DA.info = d\}
+    | \{info=Generic(g)\} ->
+      Right \{GA.header = h; GA.info = g\}
+
+\kw{let} split_alarm_pd pd = ... (* mirrors split_alarm *)
+
+\kw{let} process_alarm pads [pads_D; pads_G] = 
+  \kw{let} a,a_pd = Alarm.parse pads in
+    \kw{match} (split_alarm a, split_alarm_pd a_pd) \kw{with}
+     (Left  da, Left  da_p) -> DA.print da da_p pads_D
+    |(Right ga, Right ga_p) -> GA.print ga ga_p pads_G
+    | _ -> ... (* Bug! *)
+
+\kw{let} _ = process_source process_alarm 
+              "input.data" ["d_out.data";"g_out.data"]
+  \end{code}
+  \vskip -2ex
+  \caption{Shredding \darkstar{} data based on the {\tt info} field.}
+  \label{fig:ex-no-err-check}
+\end{figure}
+
+Once a data source has been parsed and cleaned, a common task is to
+transform the data into formats required by other tools, like a
+relational database or a statistical analysis package.
+Transformations include removing extraneous literals, inserting
+delimiters, dropping or reordering fields, and normalizing the values
+of fields (\eg{}, converting all times into a specified time zone).
+Because relational databases typically cannot store unions directly,
+one common transformation is to convert data with variants (\ie{},
+datatypes) into a form that such systems can handle.  One option is to
+partition or ``shred'' the data into several relational tables, one
+for each variant.  A second option is to create an universal table,
+with one column for each field in any variant.  If a given field does
+not occur in a particular variant, its value is marked as missing.
+
+\figref{fig:normal-darkstar} shows a partial listing of
+\texttt{\darkstar{}Normal.pml}, a normalized version of the
+\darkstar{} description from \secref{sec:padsml-overview}. In this
+shredded version, \cd{Alarm} has been split into two top-level types
+\cd{D\_alarm} and \cd{G_alarm}.  The type \cd{D\_alarm} contains all
+the information concerning alarms with the detailed payload, while
+\cd{G\_alarm} contains the information for generic payloads.  In the
+original description, the \cd{info} field identified the type of its
+payload.  In the shredded version, the two different types of records
+appear in two different data files. Since neither of these formats
+contains a union, they can be easily loaded into a relational
+database.
+
+The code fragment in \figref{fig:ex-no-err-check} shreds \darkstar{}
+data in the format described by \texttt{\darkstar{}.pml} into the
+formats described in \texttt{\darkstar{}Normal.pml}.  It uses the
+\cd{info} field of \cd{Alarm} records to partition the data. 
+Notice that the code invokes the \cd{print} functions generated for the \cd{G_alarm} and \cd{D_alarm} types to output the shredded data.
+
+\cut{
+\begin{figure}
+  \centering
+  \begin{code}\scriptsize
+\kw{let} normalizeTimeToGMT t = 
+    match t with
+      \{time=t;timezone="GMT"\} => t
+    | \{time=t;timezone="EST"\} => t + (5 * 60 * 60)
+    | \{time=t;timezone="PST"\} => t + (8 * 60 * 60)
+    | ... \end{code}
+  \caption{Normalizing timestamps}
+  \label{fig:ex-normalize}
+\end{figure}
+
+In \figref{fig:ex-normalize}, we show an additional example of data
+transformation, where we normalize timestamp-timezone pairs into
+simple timestamps in GMT time.
+}
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
+
+
+%\input{gentool}
+\section{The Generic Tool Framework}
+\label{sec:gen-tool}
+
+An essential benefit of \padsml{} is that it can provide users with a
+high return-on-investment for describing their data. While the
+generated parser and printer alone are enough to justify the user's
+effort, we aim to increase the return by enabling users to easily
+construct data analysis tools.
+% However, there is a limit, both in resources and expertise, to the
+% range of tool generators that we can develop.  Indeed, new and
+% interesting data analysis tools are constantly being developed, and
+% we have no hope of integrating even a fraction of them into the
+% \padsml{} system ourselves.
+To this end, we provide a simple framework for others to develop 
+format-independent tools.
+
+The techniques of type-directed programming, known variously as
+\textit{generic} or \textit{polytypic} programming, provide a
+convenient conceptual starting point in designing a tool framework.
+In essence, any format-independent tool is a function from a description to 
+a concrete realization of that tool. 
+As \padsml{} descriptions are (dependent) types, a 
+format-independent tool is a type-directed function.
+
+% Support for some form of generic programming over data representations
+% and parse descriptors is an essential first step in supporting the
+% development of tool generators. 
+
+Some modern functional programming languages,
+Generic Haskell~\cite{hinze+:generic-haskell}, in particular,
+have many features that support type-directed programming, and
+hence would support development of format-independent tools quite nicely. 
+% would be
+% useful in this context, 
+\ocaml{}, however, lacks any specific, built-in generic programming facility.
+Fortunately, we can still achieve many of the benefits of generic 
+programming idioms by having the \padsml{} compiler generate
+well-designed, format-specific libraries at compile time
+and then linking those libraries to format-independent routines.
+
+To be specific, for each format description, \padsml{} generates a
+format-dependent traversal mechanism that implements a generalized
+fold over the representations and parse descriptors that correspond to
+the description. Independently, tool developers write format-independent
+routines that specify the behaviour of a tool over each
+\padsml{} type constructor. When users need a {\em specific tool} for a
+{\em specific format}, they link the format-dependent 
+traversal to the format-independent routines via 
+functor application.
+
+In principle, different tools might require different sorts of traversals.  
+However, many of the tools we have encountered in practice so far, both in 
+implementing \padsml\ and \pads,
+perform their computations in a single pass over the representation
+and corresponding parse descriptor, visiting each value in the data
+with a left-to-right, pre-, post-, or in-order traversal.  This 
+paradigm arises naturally as it scales to very large data sets. 
+Hence, the \padsml\ compiler generates an implementation of a such traversal
+for each data description. 
+%abstracted in a manner similar to the generic functions of Lammel and
+%Peyton-Jones~\cite{lammel+:syb}. 
+
+% The generic tool architecture of \padsml{} delivers a number of
+% benefits over the fixed architecture of \padsc{}. In \padsc{}, all
+% tools are generated from within the compiler. Therefore, developing a
+% new tool generator requires understanding and modifying the compiler.
+% Furthermore, the user selects the set of tools to generate when compiling the description.  In \padsml{}, tool generators can be
+% developed independent of the compiler and they can be developed more
+% rapidly because the ``boilerplate'' code to traverse data need not be
+% replicated for each tool generator. In addition, the user controls
+% which tools to ``generate'' for a given data format, and the choice
+% can differ on a program-by-program basis.
+
+\subsection{The Generic-Tool Interface}
+\label{sec:gentool-interface}
+
+\begin{figure}
+\begin{code}\scriptsize
+\kw{module} \kw{type} S = \kw{sig}
+ \kw{type} state
+ ...
+ \kw{module} Record : \kw{sig}
+   \kw{type} partial_state
+   \kw{val}  init          : (string * state) list -> state
+   \kw{val}  start         : state -> Pads.pd_header 
+                        -> partial_state
+   \kw{val}  project       : state -> string -> state
+   \kw{val}  process_field : partial_state -> string
+                        -> state -> partial_state
+   \kw{val}  finish        : partial_state -> state
+ \kw{end}
+
+ \kw{module} Datatype : \kw{sig}
+   \kw{type} partial_state
+   \kw{val}  init            : unit -> state
+   \kw{val}  start           : state -> Pads.pd_header 
+                          -> partial_state
+   \kw{val}  project         : state -> string -> state option
+   \kw{val}  process_variant : partial_state -> string 
+                          -> state -> partial_state
+   \kw{val}  finish          : partial_state -> state
+ \kw{end}
+  ...
+\kw{end}
+\end{code}
+\vskip -2ex
+\caption{Excerpt of generic-tool interface \texttt{Generic\_tool.S}.}
+\label{fig:gentool-interface}
+\end{figure}
+
+The interface between format-specific traversals and generic tools is
+specified as an \ocaml{} signature.  For every type constructor in
+\padsml{}, the signature describes a sub-module that implements the
+generic tool for that type constructor.  In addition, it specifies an
+(abstract) type for auxiliary state that is threaded through the
+traversal. \figref{fig:gentool-interface} contains an
+excerpt of the signature that includes the signatures of the
+\cd{Record} and \cd{Datatype} modules.  The signatures of other
+modules are quite similar.
+
+The \cd{Record} module includes a type \cd{partial_state} that allows
+tools to represent intermediate state in a different form than the
+general state. The \cd{init} function forms the state of the record
+from the state of its fields. The \cd{start} function receives the PD
+header for the data element being traversed and begins processing the
+element. Function \cd{project} takes a record's state and the name of
+a field and returns that field's state. Function \cd{process_field}
+updates the intermediate state of the record based on the name and
+state of a field, and \cd{finish} converts the finished intermediate
+state into general tool state.  Note that any of these functions could
+have side effects.
+
+Although the \cd{Datatype} module is similar to the \cd{Record} module,
+there are some important differences. The \cd{Datatype} \cd{init} function 
+does not
+start with the state of all the variants. Instead, a variant's state is
+added during processing so that only variants that have been
+encountered will have corresponding state. For this reason,
+\cd{project} returns a \cd{state option}, rather than a \cd{state}.
+This design is essential for supporting recursive datatypes as trying
+to initialize the state for all possible variants of the datatype
+would cause the \cd{init} function to loop infinitely.
+\cut{
+\begin{figure}
+\begin{code}\scriptsize
+\kw{module} Traverse (Tool : Generic_tool.S) :
+\kw{sig}
+  \kw{val} init : unit -> Tool.state
+  \kw{val} traverse : rep -> pd -> Tool.state -> Tool.state
+\kw{end}
+\end{code}
+\caption{The signature of the Traversal functor within the signature \texttt{Type.S}.}
+\label{fig:traversal-interface}
+\end{figure}
+}
+
+The following code snippet gives the signature of the
+traversal functor as it would appear in the signature \cd{S} from
+\secref{sec:padsml-impl}. 
+\begin{code}\scriptsize
+\kw{module} Traverse (Tool : Generic_tool.S) :
+\kw{sig}
+  \kw{val} init : unit -> Tool.state
+  \kw{val} traverse : rep -> pd -> Tool.state -> Tool.state
+\kw{end}
+\end{code}%
+\vskip -2ex
+\noindent
+The functor takes a generic tool generator and produces
+a format-specific tool with two functions: \cd{init}, to create the initial
+state for the tool, and \cd{traverse}, which traverses the
+representation and parse descriptor for the type and updates the given
+tool state.
+
+\subsection{Example Tools}
+\label{sec:gentool-motivation-ex}
+
+We have used this framework to implement a variety of tools useful for processing ad hoc data, including an \xml{} formatter, an accumulator tool for generating statistical overviews of the data, and a data printer for debugging.  We briefly describe these tools to illustrate the flexibility of the framework.
+
+The \xml{} formatter converts any data with a \padsml{} description
+into a canonical \xml{} format.  This conversion is useful because it
+allows analysts to exploit the many useful tools that exist for
+manipulating data in \xml{}. 
+
+The accumulator tool provides a statistical summary of data.
+Such summaries are useful for developing a quick understanding of data quality.  In particular, after receiving a new batch of data, analysts might want to know the frequency of errors, or which fields are the most corrupted. 
+The accumulator tool tracks the distribution of the top $n$
+distinct legal values and the percentage of errors. 
+It operates over data sources
+whose basic structure is a series of records of the same type, 
+providing a summary based on viewing many records
+in the data source.    More complex accumulator programs and a number of other statistical algorithms can easily be implemented using the tool generation infrastructure.
+
+Finally, as an aid in debugging \padsml{} descriptions, we have implemented a simple printing tool.  In contrast to the printer generated by the \padsml{} compiler, the output of this tool corresponds to the in-memory
+representation of the data rather than its original format, which may have delimiters or literals that are not present in the representation.  
+This format is often more readable than the raw data.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis.tex"
+%%% End: 
+
+
+\section{Conclusions}
+\label{sec:future}
+
+\padsml{} is a high-level, domain-specific language and system
+designed to help improve the productivity of the legions of data analysts
+who work with ad hoc data on a regular basis.  
+Inspired by the type structure of functional
+programming languages, \padsml{} uses dependent,
+polymorphic and recursive data types to describe the syntax and 
+the semantic properties of ad hoc data sources.  The language 
+is compact and expressive, capable of describing data from diverse 
+domains including networking, computational biology, finance, and physics. 
+The \padsml{} compiler uses a ``types as modules'' compilation strategy
+in which every \padsml{} type definition is compiled into
+an \ocaml{} module containing types for data representations
+and functions for data processing.  Functional programmers
+can use the generated modules to write clear and concise {\em format-dependent}
+data processing programs.  Furthermore, our system design
+allows external tool developers to write new {\em format-independent} tools
+simply by supplying a module that matches the appropriate generic
+signature.  The latest release of our implementation is available
+at \url{http://www.padsproj.org/padsml/}.
+
+The next step in our long-term agenda is to build a new generation of
+format-independent data analysis tools.  While our current tools
+perform some simple syntactic analysis and transformation, we intend
+our next generation toolkit to perform deeper semantic analysis and
+more sophisticated transformations.  For example, we may explore
+specification-driven, content-based search, clustering, test data
+generation, machine learning, security, and data visualization.  We
+believe that if we can automatically generate stand-alone, end-to-end
+tools that perform these functions over arbitrary data, we can have a
+substantial impact on the productivity of researchers in a broad array
+of scientific fields ranging from computational biology through
+computer science to cosmology and beyond.
+
+
+\paragraph*{Acknowledgments.}
+We would like to thank Derek Dreyer for discussions and advice on
+advanced module systems.  Some of this material is based upon work 
+supported by NSF awards 0615062 and 0612147.  
+Any opinions, findings, and conclusions 
+or recommendations expressed in the material are those of the authors 
+and do not necessarily reflect the views of the NSF.
+
+\bibliographystyle{abbrv}
+%\bibliography{pads}
+\begin{thebibliography}{1}
+
+\bibitem{dreyer-thesis}
+D.~Dreyer.
+\newblock {\em Understanding and Evolving the ML Module System}.
+\newblock PhD thesis, CMU, May 2005.
+
+\bibitem{fisher+:pads}
+K.~Fisher and R.~Gruber.
+\newblock {PADS}: A domain specific language for processing ad hoc data.
+\newblock In {\em {ACM} Conference on Programming Language Design and
+  Implementation}, pages 295--304. {ACM} Press, June 2005.
+
+\bibitem{fisher+:next700ddl}
+K.~Fisher, Y.~Mandelbaum, and D.~Walker.
+\newblock The next 700 data description languages.
+\newblock In {\em {ACM SIGPLAN-SIGACT} Symposium on Principles of Programming
+  Languages}, pages 2 -- 15, Jan. 2006.
+
+\bibitem{mandelbaum-thesis}
+Y.~Mandelbaum.
+\newblock {\em The Theory and Practice of Data Description}.
+\newblock PhD thesis, Princeton University, September 2006.
+
+\bibitem{fisher+:popl-sub-long}
+Y.~Mandelbaum, K.~Fisher, D.~Walker, M.~Fernandez, and A.~Gleyzer.
+\newblock {PADS/ML: A} functional data description language.
+\newblock Technical Report TR-761-06, Princeton University, July 2006.
+
+\bibitem{newick}
+Tree formats. {Workshop} on molecular evolution.
+\newblock \url{http://workshop.molecularevolution.org/resources/}\\\noindent
+  \url{fileformats/tree}$\_$\url{formats.php}.
+
+\end{thebibliography}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+
