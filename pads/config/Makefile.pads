@@ -37,6 +37,10 @@ include $(PADS_SRC)/config/Makefile.conf.$(ARCH)
 #	PADS_INCLUDES:		All of the directories to search for PADS files
 #
 #########################################################################
+PADS_PACKAGE_SRC=$(CONF_PACKAGE_SRC)
+PADS_PROFILING=$(CONF_PROFILING)
+PADS_SHARED=$(CONF_SHARED)
+PADS_HOSTNAME=$(CONF_HOSTNAME)
 PADS_HOME=$(PADS_SRC)
 HERE := $(shell pwd)
 VPATH=.:..:$(ARCH)
@@ -167,7 +171,6 @@ echo diff tmp/tmp.$<$$suf $$regfile; \
   echo " "; 
 endef
 
-PERFHOST=`hostname -s`
 define PerfRegressPre
 $(RegressPre)
 endef
@@ -230,7 +233,7 @@ endef
 
 define PerfRegressDef
 ($(RegressPre) \
-  regfile="../../regress/$<.perf_regress$$suf.$(PERFHOST)"; \
+  regfile="../../regress/$<.perf_regress$$suf.$(PADS_HOSTNAME)"; \
   echo "$(PADS_SRC)/scripts/time_execution.pl ./$< $$args > tmp/tmp.$<$$suf"; \
   $(PADS_SRC)/scripts/time_execution.pl ./$< $$args > tmp/tmp.$<$$suf; \
   $(PerfRegressPost) )
@@ -238,7 +241,7 @@ endef
 
 define PerfRegressRW
 ($(RegressPre) \
-  regfile="../../regress/$<.perf_regress$$suf.$(PERFHOST)"; \
+  regfile="../../regress/$<.perf_regress$$suf.$(PADS_HOSTNAME)"; \
   echo "$(PADS_SRC)/scripts/time_execution.pl ./$< $$args $$input > tmp/tmp.$<$$suf"; \
   $(PADS_SRC)/scripts/time_execution.pl ./$< $$args $$input > tmp/tmp.$<$$suf; \
   $(PerfRegressPost) )
