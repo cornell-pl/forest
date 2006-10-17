@@ -95,7 +95,7 @@ all:
 #						are created by automatic rules
 #########################################################################
 
-dogen: $(PADS_PCGEN_TARGETS) $(PADS_SCRIPT_MAKESRC) $(CONF_PACKAGE_SRC)/padsc/libpads/pads.c
+dogen: $(PADS_PCGEN_TARGETS) $(PADS_SCRIPT_MAKESRC) $(PADS_PACKAGE_SRC)/padsc/libpads/pads.c
 	$(PADS_SCRIPT_MAKESRC) $(CC) $(PADS_SRC)/padsc/libpads/pads.c $(HERE) $(PADS_SRC)
 	touch dogen
 
@@ -170,7 +170,7 @@ $(PADS_NAME_OPT): $(LIBPADS_OBJS_O)
 $(PADS_NAME_DBG): $(LIBPADS_OBJS_D)
 	$(STATIC_LIBTOOL) $@ $(STATIC_LIBTOOL_OPTS) $^
 
-ifeq ($(CONF_SHARED),true)
+ifeq ($(PADS_SHARED),true)
 $(PADS_SHARED_NAME_OPT): $(LIBPADS_OBJS_O)
 	$(SHARED_LIBTOOL) -o $@ $(SHARED_LIBTOOL_OPTS) $^ $(PADS_AST_LIB) $(CCLIBS)
 

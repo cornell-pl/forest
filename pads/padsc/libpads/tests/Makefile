@@ -98,7 +98,7 @@ LIBTESTS_O = rwtest1 \
 
 LIBTESTS_D = $(LIBTESTS_O:%=%_d)
 
-ifeq ($(CONF_PROFILING),false)
+ifeq ($(PADS_PROFILING),false)
 HELPERS = myrand cvt_ebcdic_to_ascii cvt_ascii_to_ebcdic dttest
 LIBTESTS = $(LIBTESTS_O)
 ACCUMTESTS = accumtest accumtest2 accumtest_s
@@ -149,7 +149,7 @@ clobber:: clean
 rcount:
 	@(cd ..; $(MAKE) -f Makefile regress) | $(PADS_SRC)/scripts/count_differs.pl
 
-ifeq ($(CONF_PROFILING),false)
+ifeq ($(PADS_PROFILING),false)
 regress: regress_o
 perf: perf_regress_o
 else
@@ -194,7 +194,7 @@ perf_regress_o: \
 	perf_regress_o_final
 	@echo " "; echo "DONE"; echo " "
 
-ifeq ($(CONF_PROFILING),true)
+ifeq ($(PADS_PROFILING),true)
 regress_d: \
 	regress_d_announce \
           regress_libtest1_d \
