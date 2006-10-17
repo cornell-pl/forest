@@ -179,6 +179,7 @@ with_shared=1
 enable_profiling=0
 regression=PLEASESET
 host_type="unknown"
+host_name=`hostname -s`
 ccoption=
 arch_opsys=
 
@@ -401,6 +402,7 @@ then
 		exit 2
 	fi
 fi
+echo "host_name is $host_name"
 echo "host_type is $host_type"
 if ! host=`config/config.sub $host_type`
 then
@@ -881,6 +883,7 @@ ZIPOPT=$arch_ZIPOPT
 ZIPEXT=$arch_ZIPEXT
 
 ARCH=$arch_opsys
+CONF_HOSTNAME=$host_name
 LIB_PREFIX=$arch_LIB_PREFIX
 LIB_SUFFIX=$arch_LIB_SUFFIX
 EXE=$arch_EXE
