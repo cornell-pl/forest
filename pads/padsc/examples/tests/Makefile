@@ -58,6 +58,8 @@ export DYLD_LIBRARY_PATH:=$(DYLD_LIBRARY_PATH):$(PADS_SRC)/padsc/libpads/$(ARCH)
 #
 GEN_DIR=../../gen
 VPATH+=../../p
+TEST_BUILD_O=$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+TEST_BUILD_D=$(CC) -g -Wall -DDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH)-g -last $(CCLIBS) -o $@ 
 
 # the following indicates that generated files should not be removed
 .PRECIOUS: %.o $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c %_expanded.c \
@@ -80,34 +82,44 @@ VPATH+=../../p
 #	
 #########################################################################
 
-FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct_regexp test_array_regexp \
+FORMAT_TESTS_O = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct_regexp test_array_regexp \
                test_array_nosep test_array_pred test_array_pred2 test_array_ended test_array_ended2 test_array_post \
                test_array_skip test_array_skip2 test_charclass test_me test_me_fooclass
-DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
-WRITE_TESTS = test_write_struct1 test_write_struct_strings
-OTHER_TESTS  = test_array test_array_string test_record_enum test_struct1 test_struct2 \
+DIB_TESTS_O =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
+WRITE_TESTS_O = test_write_struct1 test_write_struct_strings
+OTHER_TESTS_O  = test_array test_array_string test_record_enum test_struct1 test_struct2 \
                test_punion2 test_punion_manifest test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
                test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct1 \
                test_cpyrecgen_rps rwxml_cpyrecgen_rps rwxml_format7 rwxml_newick rw_newick
 
-ALL_TESTS_O = $(FORMAT_TESTS) $(DIB_TESTS) $(WRITE_TESTS) $(OTHER_TESTS) $(XML_TESTS)
+ALL_TESTS_O = $(FORMAT_TESTS_O) $(DIB_TESTS_O) $(WRITE_TESTS_O) $(OTHER_TESTS_O)
 ALL_TESTS_D = $(ALL_TESTS_O:%=%_d)
 ALL_TESTS_EXE = $(ALL_TESTS_O) $(ALL_TESTS_D)
 MISC_TESTS_O = test_ios 
 MISC_TESTS_D = $(MISC_TESTS_O:%=%_d)
 MISC_TESTS_EXE = $(MISC_TESTS_O) $(MISC_TESTS_D)
+OTHER_TESTS_D = $(OTHER_TESTS_O:%=%_d)
+DIB_TESTS_D = $(DIB_TESTS_O:%=%_d)
+WRITE_TESTS_D = $(WRITE_TESTS_O:%=%_d)
 
-ifeq ($(CONF_PROFILING),false)
+ifeq ($(PADS_PROFILING),false)
 ALL_TESTS=$(ALL_TESTS_O)
 MISC_TESTS=$(MISC_TESTS_O)
 else
 ALL_TESTS=$(ALL_TESTS_D)
 MISC_TESTS=$(MISC_TESTS_D)
+OTHER_TESTS=$(OTHER_TESTS_D)
+DIB_TESTS=$(DIB_TESTS_D)
+WRITE_TESTS=$(WRITE_TESTS_D)
 endif
 
 all: $(ALL_TESTS)
 misc: $(MISC_TESTS)
+dib: $(DIB_TESTS)
+format: $(FORMAT_TESTS)
+write: $(WRITE_TESTS)
+other: $(OTHER_TESTS)
 
 clean::
 	$(RM) $(ALL_TESTS_EXE) $(MISC_TESTS_EXE)
@@ -143,7 +155,7 @@ clobber:: clean
 rcount:
 	@(cd ..; $(MAKE) -f Makefile regress) | $(PADS_SRC)/scripts/count_differs.pl
 
-ifeq ($(CONF_PROFILING),false)
+ifeq ($(PADS_PROFILING),false)
 regress: regress_o
 perf: perf_regress_o
 else
@@ -259,7 +271,7 @@ perf_regress_o: \
           perf_regress_test_transform_o 
 	@echo " "; echo "DONE"; echo " "
 
-ifeq ($(CONF_PROFILING),true)
+ifeq ($(PADS_PROFILING),true)
 regress_d: \
 	  regress_d_announce \
           regress_test_format1_d \
@@ -513,16 +525,16 @@ perf_regress_test_transform_d: test_transform_d
 
 regress_rwxml_transform_o: rwxml_transform
 	@(args=""; suf=""; $(RegressDef))
-regress_rwxml_transform_d: rwxml_transform
+regress_rwxml_transform_d: rwxml_transform_d
 	@(args=""; suf=""; $(RegressDef))
 perf_regress_rwxml_transform_o: rwxml_transform
 	@(args=""; suf=""; $(PerfRegressDef))
-perf_regress_rwxml_transform_d: rwxml_transform
+perf_regress_rwxml_transform_d: rwxml_transform_d
 	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_try_o: rwxml_try
 	@(args=""; suf=""; $(RegressDef))
-regress_rwxml_try_d: rwxml_try
+regress_rwxml_try_d: rwxml_try_d
 	@(args=""; suf=""; $(RegressDef))
 
 
@@ -950,34 +962,52 @@ $(GEN_DIR)/%.c: %.p $(PADS_SCRIPT_PADSC) $(PADS_PADSC_TARGET)
 	$(PADS_SCRIPT_PADSC) $< $(PADS_SCRIPT_PADSC_PARMS) -r $(GEN_DIR) $(PADS_INCLUDES) 
 
 test_%: $(GEN_DIR)/%.c test_%.c
-	@echo "Compiling $@"
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
+test_%_d: $(GEN_DIR)/%.c test_%.c
+	$(TEST_BUILD_D)
 
 accum_%: $(GEN_DIR)/%.c accum_%.c
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
+accum_%_d: $(GEN_DIR)/%.c accum_%.c
+	$(TEST_BUILD_D)
 
 fmt_%: $(GEN_DIR)/%.c fmt_%.c
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
+fmt_%_d: $(GEN_DIR)/%.c fmt_%.c
+	$(TEST_BUILD_D)
 
 filter_%: $(GEN_DIR)/%.c filter_%.c
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
+filter_%_d: $(GEN_DIR)/%.c filter_%.c
+	$(TEST_BUILD_D)
 
 rw_%: $(GEN_DIR)/%.c rw_%.c
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
+rw_%_d: $(GEN_DIR)/%.c rw_%.c
+	$(TEST_BUILD_D)
 
 rwxml_%: $(GEN_DIR)/%.c rwxml_%.c
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
+rwxml_%_d: $(GEN_DIR)/%.c rwxml_%.c
+	$(TEST_BUILD_D)
 
 test_write_struct1: $(GEN_DIR)/struct1.c test_write_struct1.c 
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
 test_write_struct1_d: $(GEN_DIR)/struct1.c test_write_struct1.c 
+	$(TEST_BUILD_D)
 
 test_write_struct_strings: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
 test_write_struct_strings_d: $(GEN_DIR)/struct_strings.c test_write_struct_strings.c
+	$(TEST_BUILD_D)
 
+ifeq ($(PADS_PROFILING),false)
 %: $(GEN_DIR)/%.c
-	$(CC) -Wall -DNDEBUG $(CFLAGS) $(CPPFLAGS) $(PADS_INCLUDES) -I../../gen $^ $(PADS_LIBDIRS) -lpads-$(ARCH) -last $(CCLIBS) -o $@ 
+	$(TEST_BUILD_O)
+else
+%: $(GEN_DIR)/%.c
+	$(TEST_BUILD_D)
+endif
 
 clobber::
 	$(RM) .depend
