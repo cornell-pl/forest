@@ -1451,7 +1451,16 @@ Perror_t  P_set_out_time_zone(P_t *pads, const char *new_out_time_zone);
 
 Tm_zone_t *P_cstr2timezone(const char *tzone_str);
 
-/* P_rmm_zero    : get rbuf memory manager that zeroes allocated memory
+/* ================================================================================
+ * MEMORY MANAGEMENT FUNCTIONS
+ *
+ * In general, avoid malloc/free in favor of using the memory managers
+ * stored in the pads handle. There are zero-ing and nonzero-ing
+ * allocators available via the functions described below.  The
+ * advantage of using these allocators is that the memory will be
+ * freed when the pads handle is cleaned up.
+ *  
+ * P_rmm_zero    : get rbuf memory manager that zeroes allocated memory
  * P_rmm_nozero  : get rbuf memory manager that does not zero allocated memory
  *
  * See rbuf.h for the RMM/Rbuf memory management API

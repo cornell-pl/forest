@@ -66,7 +66,8 @@
   /* The following are related to nested internal calls */ \
   unsigned int      inestlev;    /* internal call nesting level */ \
   /* dummy used for error case */ \
-  char              dummy[1]    
+  char              dummy[1];    \
+  Dt_t              *mask_map    /* map used in initializing recursive masks. */
 
 
 /* ================================================================================ */

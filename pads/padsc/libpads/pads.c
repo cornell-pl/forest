@@ -2311,7 +2311,13 @@ fn_pref ## _write_xml_2io(P_t *pads, Sfio_t *io,
 #gen_include "pads-config.h"
 
 /* ********************************** END_HEADER ********************************** */
-
+/* int_type:  pads int type
+ * int_descr: string description of integer type.
+ * num_bytes: number of bytes used to store this type.
+ * fmt:       ???
+ * mfmt:      ???
+ * fold_test: ???
+ */
 #define PDCI_INT_ACCUM_GEN(int_type, int_descr, num_bytes, fmt, mfmt, fold_test)
 
 /*
@@ -7789,7 +7795,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.204 2006-09-07 20:49:48 forrest Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.205 2006-10-17 15:06:39 yitzhakm Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -14245,5 +14251,121 @@ PDCI_Plongest_chkErr(Puint32 nerr, int *consume)
   return 0;
 }
 
+/* ================================================================================ */
+/* INTERNAL REC.MASK INIT ROUTINES */
+
+static Void_t* amask_make(Dt_t *dt, AMask_t *a, Dtdisc_t *disc)
+{
+  AMask_t *b;
+  if ((b = oldof(0, AMask_t, 1, 0))) {
+    b->typeName  = a->typeName;
+    b->maskPtr  = a->maskPtr;
+  }
+  return b;
+}
+
+static void amask_free(Dt_t *dt, AMask_t *am, Dtdisc_t *disc)
+{
+  free(am);
+}
+
+static int amask_compare(Dt_t* dt, Void_t* key1, Void_t* key2, Dtdisc_t* disc){
+  return strcmp(key1,key2);
+}
+
+static Dtdisc_t mask_map_set_disc = {
+  DTOFFSET(AMask_t,typeName),   /* key      */
+  -1,                           /* size     */
+  DTOFFSET(AMask_t, link),      /* link     */
+  (Dtmake_f)amask_make,         /* makef    */
+  (Dtfree_f)amask_free,         /* freef    */
+  (Dtcompar_f)amask_compare     /* comparef */
+};
+
+Perror_t PDCI_alloc_mask_map(P_t* pads,int* did_alloc)
+{  
+  if (pads->mask_map != NULL)
+    { // Map already allocated.
+      *did_alloc = 0;
+      return P_OK;
+    } 
+ else
+   {  
+     pads->mask_map = dtopen(&mask_map_set_disc, Dtset);
+     if (pads->mask_map == NULL)
+       {
+	 *did_alloc = 0;
+	 return P_ERR;
+       }
+     *did_alloc = 1;
+     return P_OK;
+   }
+}
+
+Perror_t PDCI_dealloc_mask_map(P_t* pads){
+  if (dtclose(pads->mask_map) == 0)
+    return P_OK;
+
+  return P_ERR;
+}
+
+void* PDCI_lookup_dyn_mask(P_t* pads, const char* s){
+  AMask_t* am;
+
+  if ((am = dtmatch(pads->mask_map,s)))
+     { return am->maskPtr; }
+
+  return NiL;
+}
+
+void *PDCI_insert_dyn_mask(P_t* pads, const char* tyname, void* maskPtr){
+  AMask_t am; // Use stack-allocated AMask_t as discipline allocates new AMask_t-s on insert.
+  
+  am.typeName = tyname;
+  am.maskPtr = maskPtr;
+  
+  return dtinsert(pads->mask_map, &am);
+}
+ 
+/* Generic version of recursive mask init function. Called from
+ * generated m_rec_init functions.  
+ *
+ * N.B.: Calling this function otherwise is at the caller's own risk,
+ * due to the precaurious use of void pointers. The real type of the
+ * mask passed through the "mask" parameter and the real type of the
+ * mask expected by parameter m_r_init **must** be the same.
+ *
+ * The approach used in this function (void pointers and function
+ * pointers) is an alternative to the PCGEN_... approach.
+ */
+Perror_t PDCI_mask_rec_init(P_t* pads,void** mask, Pbase_m baseMask, 
+			    mask_rec_init_f m_r_init, const char* tyname, ssize_t mask_size)
+{
+  void* tmp_m;
+  // Lookup type name in table. 
+  tmp_m = PDCI_lookup_dyn_mask(pads,tyname);
+
+  if (tmp_m)
+    {
+      *mask = tmp_m;
+      return P_OK;
+    }
+
+  // If not found, allocate and initialize new mask.
+  tmp_m = malloc(mask_size);
+  if (!tmp_m)
+    {
+      P_WARN(pads->disc, "** PADS runtime internal error: malloc of mask failed ***");
+      return P_ERR;
+    }
+  *mask = tmp_m;
+    
+  // Add new mask to table. 
+  // (Critical that this step come before next, or we'll cause infinite loop.)
+  PDCI_insert_dyn_mask(pads,tyname,tmp_m);
+      
+  // Call mask init on new mask.
+  return m_r_init(pads, tmp_m, baseMask);
+}
 
 /* ================================================================================ */

@@ -109,6 +109,8 @@ struct
   fun scan1Suf s = s^"_scan1"
   fun scan2Suf s = s^"_scan2"
   fun maskInitSuf s = s^"_m_init"
+  fun maskRecInitSuf s = s^"_m_rec_init"
+  val maskRecInitErrorLabel = "cleanup"
   fun writeSuf s = s^"_write"
   fun writeXMLSuf s = s^"_write_xml_"
   fun fmtSuf s = s^"_fmt"

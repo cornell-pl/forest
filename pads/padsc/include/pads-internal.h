@@ -1971,5 +1971,28 @@ char* PDCI_sfstr_seek2zero(Sfio_t* io);
 #define Peor Pre "/$/"
 
 /* ================================================================================ */
+/* SUPPORT ROUTINES FOR RECURSIVE MASK INITIALIZATION                               */
+/* ================================================================================ */
+
+/* Structure used to place mask pointers into Cdt (container data type)
+ * for use in mask initialization.
+ */
+typedef struct
+{ Dtlink_t link;
+  const char*     typeName;		   
+  void*     maskPtr;
+} AMask_t;
+
+/* Generic type for recursive mask init routines. Specific rec. init functions are cast
+ * to this type.
+ */
+typedef Perror_t (*mask_rec_init_f)(P_t* pads,void* mask, Pbase_m baseMask);
+
+Perror_t PDCI_alloc_mask_map(P_t* pads,int* did_alloc);
+Perror_t PDCI_dealloc_mask_map(P_t* pads);
+Perror_t PDCI_mask_rec_init(P_t* pads,void** mask, Pbase_m baseMask, 
+			    mask_rec_init_f m_r_init, const char* ty_name, ssize_t mask_size);
+
+/* ================================================================================ */
 
 #endif /*  __PADS_INTERNAL__  */

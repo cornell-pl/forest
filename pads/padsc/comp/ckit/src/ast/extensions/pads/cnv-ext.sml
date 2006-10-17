@@ -791,11 +791,13 @@ structure CnvExt : CNVEXT = struct
                                     |  SOME(b:PBTys.baseInfoTy) => Option.map Atom.toString (#predname b))
 
               datatype ('a,'b) TyInfo = Base of 'a | Structured of 'b
-              (* returns name of genpred function for structured types, name of verification function for base types*)
+
+              (* returns name of pdgen function for structured types, 
+	       name of verification function (aka. pred) for base types*)
               fun lookupPDgen(ty:pty) = 
 		  case ty
                   of PX.Name s => ( case PBTys.find(PBTys.baseInfo, Atom.atom s)
-				    of NONE => Structured(genPD s)  (* non-base type; pred constructed from type name*)
+				    of NONE => Structured(genPD s)  (* non-base type; pd_gen function constructed from type name*)
                                     |  SOME(b:PBTys.baseInfoTy) => Base (Option.map Atom.toString (#predname b)))
 
               fun lookupWrite(ty:pty) = 
@@ -890,6 +892,16 @@ structure CnvExt : CNVEXT = struct
                                                 |  SOME (b:PTys.pTyInfo) => (#compoundDiskSize b)
                                                     (* end nested case *))) 
 
+
+				  
+	      (* Construct recursive mask init function from from type name. 
+                 Option returned to indicate whether it exists. Only exist for non-base types.
+	       *)
+              fun lookupRecMaskInit(PX.Name s:pty) = 
+		  case PBTys.find(PBTys.baseInfo, Atom.atom s) of
+		      NONE => SOME (PN.maskRecInitSuf s )
+                    | SOME(b:PBTys.baseInfoTy) => NONE
+								   
               fun getPadsName (pcty:pcty) : pty = 
   		  case PTgetTyName pcty 
 		  of (SOME n,_) => (case PBTys.find(PBTys.baseInfo, Atom.atom n)
@@ -1578,6 +1590,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val formalParams = List.map P.mkParam (ListPair.zip(paramTys, paramNames))
 		      val bodySs = [PT.Expr(PT.Call(PT.Id "PDCI_DISC_1P_CHECKS_RET_VOID",
 							  [PT.String funName, PT.Id mask])),
+				    (* This call assumes that baseType has a been declared 
+                                       (in a phantom decl) to be of var of type type_t. *)
 				    PT.Expr(PT.Call(PT.Id "PCGEN_DYNAMIC_MASK_INIT",
 						    [PT.Id baseType, PT.Id baseMask]))]
 					
@@ -1589,6 +1603,113 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      [maskInitFunED]
 		  end
 
+	      (* Generate m_rec_init function declaration. Parameter
+		 mkSubInitSs is a function from the names of the mask
+		 and baseMask parameters to a list of statements 
+                 (including a return statement(s)) for initializing the mask.  
+	       *)
+	      fun genRecMaskInitFunDecl(funName, maskPCT, mkInitSs) = 
+		  let val mask = "mask"
+		      val baseMask = "baseMask"
+		      val paramTys = [P.ptrPCT PL.toolStatePCT, P.ptrPCT maskPCT, PL.base_mPCT]
+		      val paramNames = [pads, mask, baseMask]  
+		      val formalParams = List.map P.mkParam (ListPair.zip(paramTys, paramNames))					  
+		      val returnTy =  PL.toolErrPCT
+		      val maskInitFunED = 
+			  P.mkFunctionEDecl(funName, formalParams, PT.Compound (mkInitSs(mask,baseMask)), returnTy)
+		  in
+		      [maskInitFunED]
+		  end
+
+	      (* Generate m_rec_init function for types with no
+		 subcomponents (e.g. base types or enums).  Parameter
+		 mkSubInitSs is a function from the names of the mask
+		 and baseMask parameters to a list of statements for initializing the mask.  
+	       *)
+	      fun genRecMaskInitFunBase(funName, maskPCT, mkInitSs) = 
+		  genRecMaskInitFunDecl(funName, maskPCT,
+					fn (mask,baseMask) => (mkInitSs(mask,baseMask) @ [P.returnS PL.P_OK]))
+
+	      (* Generate a function to recursively initialize a mask:
+	         - Common code to potentially allocate mask map in pads handle.
+                   int did_alloc = P_alloc_mask_map(pads);
+		 - Init of aux fields.
+		 - Init of children fields.
+		   if (did_alloc) P_dealloc_mask_map(pads);
+
+		 Parameter mkSubInitSs is a function from the names of the mask,
+		 baseMask and err variables, and the check error statement to a 
+		 list of statements for initializing the subcomponents of the mask.
+	       *)
+	      fun genRecMaskInitFun(funName, maskPCT, 
+				    mkSubInitSs : string * string * string * PT.statement -> PT.statement list) = 
+		  let val did_alloc = "did_alloc"
+		      val err = "err"
+		      val didAllocDecl = PT.Declaration 
+					 (P.pctToPDT P.int,
+					  [(PT.VarDecr did_alloc,PT.EmptyExpr)])
+		      val errDecl = PT.Declaration 
+					(P.pctToPDT PL.toolErrPCT,
+					 [(PT.VarDecr err,
+					   PT.Call (PT.Id PL.allocMaskMap,[PT.Id PN.pads,P.addrX (PT.Id did_alloc)]))])
+
+		      val checkErrS = PT.IfThen(P.eqX(PL.P_ERROR,PT.Id err), PT.Goto PN.maskRecInitErrorLabel)
+
+		      val didAllocCheckS = 
+			  PT.IfThen (P.andX(PT.Id did_alloc,
+					    P.eqX(PL.P_ERROR,PT.Call (PT.Id PL.deallocMaskMap,[PT.Id PN.pads]))),
+				     P.returnS PL.P_ERROR)
+		      val errCaseS = PT.Labeled (PN.maskRecInitErrorLabel, didAllocCheckS)
+		      val returnS = P.returnS (PT.Id err)
+
+		      val mkBodySs = fn (mask,baseMask) => 
+				      (PT.Decl didAllocDecl) :: (PT.Decl errDecl) :: checkErrS :: 
+				      (mkSubInitSs(mask,baseMask,err,checkErrS) @ [errCaseS,returnS])
+		  in
+		      genRecMaskInitFunDecl(funName, maskPCT, mkBodySs)
+		  end
+		      
+	      (* Set a mask value. *)
+	      fun setMaskX mkMaskX mask =
+		  let val baseMask = "baseMask"
+		  in
+		      P.assignX(mkMaskX mask, PT.Id baseMask)
+		  end
+
+	      (* Set a constraint or <foo>level field within a rec_mask_init call. *)
+	      fun setMaskFieldX field = setMaskX (fn mask => P.fieldX(mask, field))
+
+	      (* Set a constraint or <foo>level field within a rec_mask_init call. *)
+	      fun setMaskFieldS field mask = PT.Expr (setMaskFieldX field mask)
+
+	      (* generate an expression that calls the specified
+	         m_rec_init function based on the provided get expression,
+	         or sets a mask value based on the set expression. 
+		 returns generated expression and boolean indicating whether a function was called.
+	       *)		      
+	      fun callRecMaskInitX (pty,mkGetX,mkSetX) mask =
+		  case lookupRecMaskInit pty of
+			  NONE => (mkSetX mask,false)
+			| SOME funName => 
+			  let val baseMask = "baseMask"
+			      val params = [PT.Id PN.pads, mkGetX mask, PT.Id baseMask]  
+			  in
+			      (PT.Call (PT.Id funName,params), true)
+			  end
+
+	      (* generate a statement that calls the specified
+	         m_rec_init function on the subcomponent of
+                 the given name and performs the appropriate error checking.
+                 param. err is the string name of the error variable.
+                 param. checkErrS is a statement for checking the error value in 
+                        the err variable.
+	       *)		      
+	      fun callRecMaskInitSs (field,pty,err,checkErrS) mask =		  
+		  case callRecMaskInitX (pty,fn mask => P.getFieldX (mask,field),
+					 setMaskFieldX field) mask of
+		      (callX,false) => [PT.Expr callX]
+		    | (callX,true)  =>[P.assignS(PT.Id err, callX), checkErrS]
+				      
               (* Perror_t foo_copy(P_t* pads, foo *dst, foo* src) *)
               fun genCopyFun(funName, dst, src, argPCT, bodySs, noParamChecks) = 
 		  let val paramTys = [P.ptrPCT PL.toolStatePCT, 
@@ -2439,9 +2560,18 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Try: Generate Copy Function *)
                       val copyEDs =    genCopySimple    (thisFunName, baseFunName, memChar, canonicalPCT, pdPCT)
 
-                      (* Try: Generate m_init function*)
+                      (* Try: Generate m_init and m_rec_init functions*)
                       val maskInitName = maskInitSuf name 
+                      val maskRecInitName = PN.maskRecInitSuf name
+		      fun mkMaskX m = PT.Id m
+		      fun mkStarMaskX m = P.starX (PT.Id m)
+		      val mkBaseInitSs = fn (mask,_) => 
+					    case callRecMaskInitX (basePty, mkMaskX, setMaskX mkStarMaskX) mask of
+						(callX,false) => [PT.Expr callX, PT.Return PL.P_OK]
+					      | (callX,true)  => [PT.Return callX]
+
                       val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
+				       @ genRecMaskInitFunDecl(maskRecInitName, mPCT, mkBaseInitSs)
 
                       (* Try: Generate read function *)
 		      val readName = readSuf name
@@ -2612,9 +2742,17 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Transform: Generate Copy Function *)
 		      val copyEDs    = genCopySimple   (thisFunName, dstFunName, memChar, canonicalPCT, pdPCT)
 
-                      (* Transform: Generate m_init function*)
+                      (* Transform: Generate m_init and m_rec_init functions *)
                       val maskInitName = maskInitSuf name 
+                      val maskRecInitName = PN.maskRecInitSuf name
+		      fun mkMaskX m = PT.Id m
+		      fun mkStarMaskX m = P.starX (PT.Id m)
+		      val mkLogicalInitSs = fn (mask,_) => 
+					    case callRecMaskInitX (dstPty, mkMaskX, setMaskX mkStarMaskX) mask of
+						(callX,false) => [PT.Expr callX, PT.Return PL.P_OK]
+					      | (callX,true)  => [PT.Return callX]
                       val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
+				       @ genRecMaskInitFunDecl(maskRecInitName, mPCT, mkLogicalInitSs)
 
                       (* Transform: Generate read function *)
 		      val readName = readSuf name
@@ -2800,7 +2938,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       (* Generate CheckSet mask typedef case*)
 		      val baseMPCT = P.makeTypedefPCT(BU.lookupTy(baseTy, mSuf, #mname))
                       val mFields  = [(base, baseMPCT,          SOME "Base mask"),
-				      (user, PL.base_mPCT,      SOME "Typedef mask")]
+				      (PN.user, PL.base_mPCT,      SOME "Typedef mask")]
 		      val mED      = P.makeTyDefStructEDecl (mFields, mSuf name)
 		      val mDecls   = cnvExternalDecl mED
                       val mPCT     = P.makeTypedefPCT (mSuf name)		
@@ -2885,10 +3023,15 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, canonicalPCT)
 		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
 
-                      (* Generate m_init function typedef case *)
+                      (* Typedef: Generate m_init and m_rec_init functions *)
                       val maskInitName = maskInitSuf name 
+                      val maskRecInitName = PN.maskRecInitSuf name
+		      val mkBaseInitSs = fn (mask,_,err,checkErrS) => 
+					    (setMaskFieldS PN.user mask)
+					    :: (callRecMaskInitSs (base,baseTy,err,checkErrS) mask)
                       val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
-
+				       @ genRecMaskInitFun(maskRecInitName, mPCT, mkBaseInitSs)
+				       
                       (* Generate read function *)
                       (* -- Some helper functions *)
 		      val readName = readSuf name
@@ -3279,8 +3422,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName name,true,"rep_dst"),(PT.TypedefName name,true,"rep_src")]),
 				   genTDFunDecl("Perror_t",name ^"_pd_copy",
 						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_pd"),true,"pd_dst"),(PT.TypedefName (name ^ "_pd"),true,"pd_src")]),
-				   genVFunDecl(name^ "_m_init",
+				   (* mask init funs *)
+				   genVFunDecl(PN.maskInitSuf name,
 					       [(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name^"_m"),true,"mask"),(PT.TypedefName "Pbase_m",false,"baseMask")]),
+				   genTDFunDecl("Perror_t", PN.maskRecInitSuf name,
+					       [(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name^"_m"),true,"mask"),(PT.TypedefName "Pbase_m",false,"baseMask")]),
+
 				   genFunDeclBoth(PT.TypedefName "Perror_t",name ^"_read",
 						 [(PT.TypedefName "P_t",true,"pads"),
 						  (PT.TypedefName (name ^ "_m"),true,"m"),
@@ -3435,9 +3582,27 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val copyRepEDs = genCopyEDs(copySuf o repSuf, rep, true, canonicalPCT)
 		      val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  false, pdPCT)
 
-                      (* Generate m_init function rec. case *)
+                      (* Generate m_init and m_rec_init functions rec. case *)
                       val maskInitName = maskInitSuf name 
+                      val maskRecInitName = PN.maskRecInitSuf name					    
+		      (* The recursive mask init call:
+		         PDCI_mask_rec_init(pads,(void**\) mask, baseMask, 
+				            (mask_rec_init_f)_foo_m_rec_init,
+					    "foo_m",sizeof(_foo_m) *)
+		      fun mkSubInitSs (mask,baseMask,err,checkErrS) =
+			  let
+			      val recCallX = PT.Call (PL.PDCI_mask_rec_init,
+						      [PT.Id PN.pads, 
+						       PT.Cast (P.voidPtrPtr,PT.Id mask), 
+						       PT.Id baseMask,
+						       PT.Cast(PL.maskRecInitFunTy, PT.Id (maskRecInitSuf  baseTypeName)),
+						       PT.String (mSuf name),P.sizeofX(P.makeTypedefPCT (mSuf baseTypeName))])
+			  in
+			      [P.assignS (PT.Id err, recCallX), checkErrS]
+			  end
+
                       val maskFunEDs = genMaskPtrInitFun(maskInitName, mPCT, baseTypeName)
+				       @ genRecMaskInitFun(maskRecInitName,mPCT, mkSubInitSs)
 
                       (* Generate read function *)
                       (* -- Some helper functions *)
@@ -4363,9 +4528,14 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		 val copyRepEDs = genCopyEDs(copySuf o repSuf, cleanupSuf o repSuf, rep, canonicalPCT, elemRepPCT)
 		 val copyPDEDs = genCopyEDs(copySuf o pdSuf, cleanupSuf o pdSuf, pd, pdPCT, elemEdPCT)
 
-                 (* Generate m_init function array case *)
+                 (* Generate m_init and m_rec_init functions array case *)
                  val maskInitName = maskInitSuf name 
+                 val maskRecInitName = PN.maskRecInitSuf name
+		 val mkBaseInitSs = fn (mask,_,err,checkErrS) => 
+				       (setMaskFieldS PN.arrayLevel mask)
+				       :: (callRecMaskInitSs (element,baseTy,err,checkErrS) mask)
                  val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
+				  @ genRecMaskInitFun(maskRecInitName, mPCT, mkBaseInitSs)
 
 		 (* Array: Generate read function *)
 		 val _ = pushLocalEnv()                                        (* create new scope *)
@@ -6287,7 +6457,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     (* fun genMMan m = [] foofoofoo *)
 		     fun genMMan {tyname : pcty, name, args, isVirtual, expr, pred, comment} = 
 			 case isPadsTy tyname
-			  of PTys.CTy => []
+			  of PTys.CTy => [] (* note that this is intentionally different than the Pstruct case. *)
 			   | _ => (let val pty : pty = getPadsName tyname
 				   in 
 				       [(name, P.makeTypedefPCT(BU.lookupTy (pty, mSuf, #mname)), SOME "nested constraints")]
@@ -6455,10 +6625,38 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      (* Generate tag to string function *)
 		     val tagFields' = List.map (fn(name, exp, comment) => (name, name, exp, comment)) tagFields
 		     val toStringEDs = [genEnumToStringFun(tgSuf name, tagPCT, tagFields')]
+				       
+                      (* Generate m_init and m_rec_init functions union case *)
+                     val maskInitName = maskInitSuf name 
+                     val maskRecInitName = PN.maskRecInitSuf name
+		     fun mkVarsInitSs (mask,_,err,checkErrS) =
+			 let 
+			     fun genMInitFull ({pty: PX.Pty, args: pcexp list, name: string,
+						isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+						pred, comment,...} : BU.pfieldty ) =
+ 				 callRecMaskInitSs (name,pty,err,checkErrS) mask
+				 @ (case pred of NONE => []
+					       | SOME _ => [setMaskFieldS (mConSuf name) mask])
+			     fun genMInitBrief e = []
+			     fun genMInitMan {tyname : pcty, name, args, isVirtual, expr, pred, comment} =
+				 case isPadsTy tyname
+				  of PTys.CTy => [] 
+				   | _ => (let val pty : pty = getPadsName tyname
+					       val unionConsSetSs =
+						   case pred of NONE => []
+							      | SOME _ => [setMaskFieldS (mConSuf name) mask]
+					   in
+ 					       callRecMaskInitSs (name,pty,err,checkErrS) mask
+					       @ unionConsSetSs
+					   end)
+			     val mFieldsNestedSs = P.mungeFields genMInitFull genMInitBrief genMInitMan variants
+			     val auxMFieldsSs = [setMaskFieldS PNames.unionLevel mask]
+			 in
+			     auxMFieldsSs @ mFieldsNestedSs
+			 end
 
-                      (* Generate m_init function union case *)
-                      val maskInitName = maskInitSuf name 
-                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
+                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT) 
+				       @ genRecMaskInitFun(maskRecInitName, mPCT, mkVarsInitSs)
 
                       (* Generate init function, union case *)
                       val baseFunName = lookupMemFun (PX.Name name)
@@ -7871,10 +8069,38 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val copyPDEDs  = genCopyEDs (copySuf o pdSuf, pd,  pdPCT)
 
 
-						  (* Generate m_init function struct case *)
+		      (* Generate m_init and m_rec_init functions struct case *)
                       val maskInitName = maskInitSuf name 
-                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
-
+                      val maskRecInitName = PN.maskRecInitSuf name 
+		      fun mkFieldInitSs (mask,_,err,checkErrS) =
+			  let
+			      fun genMInitFull ({pty: PX.Pty, args: pcexp list, name: string, 
+						 isVirtual: bool, isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
+						 pred, comment,...} : BU.pfieldty ) = 
+ 				  callRecMaskInitSs (name,pty,err,checkErrS) mask
+				  @ (case pred of NONE => [] 
+						| SOME _ => [setMaskFieldS (mConSuf name) mask])
+			      fun genMInitBrief e = []
+			      fun genMInitMan {tyname : pcty, name, args, isVirtual, expr, pred, comment} = 
+				  let val structConsSetSs = 
+					  case pred of NONE => [] 
+						     | SOME _ => [setMaskFieldS (mConSuf name) mask]		  
+				  in			      
+				      case isPadsTy tyname
+				       of PTys.CTy => structConsSetSs
+					| _ => (let val pty : pty = getPadsName tyname
+						in 
+ 						    callRecMaskInitSs (name,pty,err,checkErrS) mask
+						    @ structConsSetSs
+						end)
+				  end
+			      val mFieldsNested = P.mungeFields genMInitFull genMInitBrief genMInitMan fields
+			      val auxMFieldsSs = [setMaskFieldS PNames.structLevel mask]
+			  in
+			      auxMFieldsSs @ mFieldsNested
+			  end
+                      val maskFunEDs = genMaskInitFun(maskInitName, mPCT) 
+				       @ genRecMaskInitFun(maskRecInitName, mPCT, mkFieldInitSs)
 
 						     (* Generate read function struct case *)
 
@@ -8703,9 +8929,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val copyPDEDs  = genCopyEDs(copySuf o pdSuf,  pd,  pdPCT)
 				   
 				   
-                  (* Generate m_init function enum case *)
+                  (* Generate m_init and m_rec_init functions enum case *)
                   val maskInitName = maskInitSuf name 
+                  val maskRecInitName = PN.maskRecInitSuf name
+		  val mkInitSs = fn (mask,baseMask) => [P.assignS(P.starX(PT.Id mask), PT.Id baseMask)]
                   val maskFunEDs = genMaskInitFun(maskInitName, mPCT)
+				   @ genRecMaskInitFunBase(maskRecInitName, mPCT, mkInitSs)
 				   
 				   
                   (* Generate read function *)

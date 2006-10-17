@@ -78,6 +78,8 @@ struct
   val PDCI_MK_NODE = PT.Id "PDCI_MK_NODE"	
   val PDCI_NEW_NODE_PTR_LIST = PT.Id "PDCI_NEW_NODE_PTR_LIST"
 
+  val PDCI_mask_rec_init = PT.Id "PDCI_mask_rec_init"
+
   (* pads-galax function generation macros *)
   val NODE_NEW_BODY = PT.Id "NODE_NEW_BODY"
   val NODE_NEW_RET = PT.Id "NODE_NEW_RET"
@@ -232,6 +234,8 @@ struct
   val VoidPtr      = P.ptrPCT(P.makeTypedefPCT "Void_t")
   val stringPCT    = P.makeTypedefPCT "Pstring"
 
+  val maskRecInitFunTy = P.makeTypedefPCT "mask_rec_init_f"
+
   val charlit         = "Pchar_lit"
   val charlitMatch    = "Pchar_lit_match"
   val charlitScan1    = "Pchar_lit_scan1"
@@ -268,6 +272,9 @@ struct
   val reWriteXMLBuf = cstrlitWriteXMLBuf (* not yet implemented.  what should go here?*)
   val reScan1    = "Pre_scan1"
   val reScan2    = "Pre_scan2"
+
+  val allocMaskMap = "PDCI_alloc_mask_map"
+  val deallocMaskMap = "PDCI_dealloc_mask_map"
 
   val str          = "str"
   val len          = "len"

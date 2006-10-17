@@ -4,7 +4,7 @@
 #include "newick.h"
 #include "out_macros.h"
 #define PADS_TY(suf) tree ## suf
-#define BASE_MASK_TY _tree_m
+/* #define BASE_MASK_TY _tree_m */
 #define EXTRA_BAD_READ_CODE printf("Tree read error.\n");
 #define MAX_RECS 1
 #define DEF_INPUT_FILE "../../data/simple.txt"
@@ -146,10 +146,15 @@ int main(int argc, char** argv) {
   if (P_ERR == PADS_TY(_pd_init)(pads, &pd)) {
     error(ERROR_FATAL, "*** parse description initialization failed ***");
   }
-  /*** New rec. code ***/
-  P_DynamicMaskInit(m, PADS_TY(_m), BASE_MASK_TY,
-		    READ_MASK,m->branches.element.interior);
-  /*** End new rec. code ***/
+
+/*   /\*** New rec. code ***\/ */
+  if (P_ERR == PADS_TY(_m_rec_init)(pads, &m, READ_MASK)) {
+    error(ERROR_FATAL, "*** recursive mask initialization failed ***");
+  }
+  if (m != m->branches.element.interior) {
+    error(ERROR_FATAL, "*** recursive mask initialization did not operate correctly. ***");
+  }
+/*   /\*** End new rec. code ***\/ */
 
 #ifdef PADS_HDR_TY
   if (P_ERR == PADS_HDR_TY(_init)(pads, &hdr_rep)) {
