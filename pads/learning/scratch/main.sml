@@ -4,9 +4,26 @@ structure Main : sig
     val emit : unit -> unit
 
   end = struct
-    val PERCENTAGE = 0.01
-    fun intFraction x = Real.ceil(PERCENTAGE * Real.fromInt(x)) 
+    (********************************************************************************)
+    (*********************  Configuration *******************************************)
+    (********************************************************************************)
+    val HIST_PERCENTAGE   = ref 0.01
+    val STRUCT_PERCENTAGE = ref 0.01
+    val JUNK_PERCENTAGE   = ref 0.1
 
+    fun histEqTolerance   x = Real.ceil((!HIST_PERCENTAGE)   * Real.fromInt(x)) 
+    fun isStructTolerance x = Real.ceil((!STRUCT_PERCENTAGE) * Real.fromInt(x)) 
+    fun isJunkTolerance   x = Real.ceil((!JUNK_PERCENTAGE)   * Real.fromInt(x)) 
+
+    val depthLimit = ref 5
+    val outputDir = ref "gen/"
+    val srcFile = ref "toBeSupplied"
+
+
+    (********************************************************************************)
+    (*********************  Configuration *******************************************)
+    (********************************************************************************)
+	    
     val anyErrors = ref false
     exception Exit of OS.Process.status
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
@@ -18,8 +35,12 @@ structure Main : sig
     type Partition = (TokenOrder * (DerivedContexts list)) list * (Context list)
 
     datatype Ty = Base of Token | Pvoid 
-                | TBD of Context list | Bad of Context list
+                | TBD of int * Context list | Bottom of int * Context list 
                 | Pstruct of Ty list |  Punion of Ty list 
+
+    val TBDstamp = ref 0
+    val Bottomstamp = ref 0
+
 
 
     fun doTranspose m =
@@ -39,6 +60,14 @@ structure Main : sig
 	      |  (dc::rest) => List.foldl transposeOne (listify dc) rest 
 	in
 	    List.map List.rev revTrans
+	end
+
+    fun lconcat ls = 
+	let fun doit l a = 
+	    case l of [] => a
+            | (s::ss) => doit ss (s^a)
+	in
+	    doit (List.rev ls) ""
 	end
 
     (*    Ptime < Pmonth < Pip < Pint < Pstring < Pwhite < Other < Error *)
@@ -100,10 +129,11 @@ structure Main : sig
    type freqDist = histogram TokenTable.map
    type cluster  = freqDist list
 
-   datatype Kind = Struct
+   datatype Kind = Struct of {numTokensInCluster:int, numRecordsWithCluster:int,
+			      tokens: (Token * int) list}
+                 | Blob 
 
    (* Printing routines *)
-    fun printKind Struct = print "Struct"
     fun tokenToString t = 
 	case t 
         of Ptime i => i
@@ -115,7 +145,20 @@ structure Main : sig
         |  Other c => Char.toString c
         |  Error => " Error"
 
-    fun printToken t = 
+    fun tokenTyToString t = 
+	case t 
+        of Ptime i   => "[Time]"
+	|  Pip i     => "[IP]"
+        |  Pmonth m  => "[Month]"
+	|  Pint i    => "[int]"                   (*" Pint("^(LargeInt.toString i)^")"*)
+        |  Pstring s => "[string]"                (*" Pstring("^s^")"*)
+        |  Pwhite s  => "[white space]"           (*" Pwhite("^s^")"*) 
+        |  Other c   => "("^(Char.toString c)^")" (*(" Pother("^(Char.toString c)^")") *)
+        |  Error     => " Error"
+
+
+    (* replace with print (tokenTyToString t) *)
+    fun printTokenTy t = 
 	case t 
         of Ptime i => print ("[Time]")
 	|  Pip i  => print ("[IP]")
@@ -126,13 +169,17 @@ structure Main : sig
         |  Other c => print ("("^(Char.toString c)^")") (*(" Pother("^(Char.toString c)^")") *)
         |  Error => print (" Error")
 
+    fun LTokensToString [] = "\n"
+      | LTokensToString ((t,loc)::ts) = ((tokenToString t) ^ (LTokensToString ts))
+
+    (* Replace with print LTokensToString arg *)
     fun printLTokens [] = print "\n"
-      | printLTokens ((t,loc)::ts) = (printToken t; printLTokens ts)
+      | printLTokens ((t,loc)::ts) = (printTokenTy t; printLTokens ts)
 
-    fun printTokens [] = print "\n"
-      | printTokens (t::ts) = (printToken t; printTokens ts)
+    fun printTokenTys [] = print "\n"
+      | printTokenTys (t::ts) = (printTokenTy t; printTokenTys ts)
 
-    fun printFreq (token,value) = (printToken token; print ":\t"; print (Int.toString (!value)); print "\n" )
+    fun printFreq (token,value) = (printTokenTy token; print ":\t"; print (Int.toString (!value)); print "\n" )
     fun printFreqs counts = (TokenTable.appi printFreq counts; print "\n")
 
     fun printOneFreq numRecords (int, countRef) = 
@@ -143,7 +190,7 @@ structure Main : sig
 	end
     fun printAugHist numRecords (token, (h:histogram)) = 
 	(print "Token: "; 
-	 printToken token; print "\n"; 
+	 printTokenTy token; print "\n"; 
          print ("Total number of token occurrences: "^(Int.toString (!(#total h))^".\n"));
          print ("Number of records with at least one token occurrence: "^(Int.toString (!(#weight h))^".\n"));
          print ("Score: "^(Int.toString (!(#score h))^".\n"));
@@ -151,25 +198,19 @@ structure Main : sig
     
     fun printDist numRecords freqs = (print "Distributions:\n"; TokenTable.appi (printAugHist numRecords) freqs; print "\n")
 
-    fun printStructSummary (kind, (count, coverage, tinfos)) = 
-	let fun printOne (t,count) =
-	    (printToken t; print "\t";
-	     print "Occurrences:"; print (Int.toString count);  print "\n")
-	in
-	    (printKind kind; print "\t";
-	     print "Coverage:";    print (Int.toString coverage);  print "\n";
-	     print "Token count:"; print (Int.toString count);     print "\n";
-	     List.app printOne tinfos)
-	end
-
-    fun printTokenAnalysis summary = 
-	let fun printOne (t,k,count, coverage) =
-	    (printToken t; print "\t"; printKind k;             print "\t"; 
-	     print "Occurrences:"; print (Int.toString count);  print "\t";
-	     print "Coverage:"; print (Int.toString coverage);  print "\n")
-	in
-	    List.app printOne summary
-	end
+    fun printKindSummary kind = 
+	case kind 
+        of Struct {numTokensInCluster=count, numRecordsWithCluster=coverage, tokens=tinfos} =>
+	    let fun printOne (t,count) =
+		(printTokenTy t; print "\t";
+		 print "Occurrences:"; print (Int.toString count);  print "\n")
+	    in
+		(print "Struct"; print "\t";
+		 print "Coverage:";    print (Int.toString coverage);  print "\n";
+		 print "Token count:"; print (Int.toString count);     print "\n";
+		 List.app printOne tinfos)
+	    end
+        | Blob => (print  "Blob"; print "\n")
 
     fun printClusters numRecords clusters = 
        let fun printOne n c = 
@@ -184,7 +225,7 @@ structure Main : sig
 
 
     fun printTList tList = (print "tokenOrder:\n";
-			    List.app (fn t => (printToken t; print " ")) tList;
+			    List.app (fn t => (printTokenTy t; print " ")) tList;
 			    print "\n")
 
     fun printDerivedContexts contexts = 
@@ -198,6 +239,17 @@ structure Main : sig
 			     | _ => (print "\t"; printLTokens tl; print "\n"))) contexts));
 	 print "\n")
 
+    fun contextsToString contexts = 
+	((case contexts 
+	  of [] => "<no records matched context>\n"
+	  | _ => (lconcat(
+		  List.map (fn tl => 
+			    (case tl 
+			     of [] => "\t<empty>\n"
+			     | _ => ("\t"^( LTokensToString tl) ^"\n"))) contexts))))
+
+
+    (* Replace when debugged with print (contextsToString contexts) *)
     fun printContexts contexts = 
 	((case contexts 
 	  of [] => print "<no records matched context>\n"
@@ -219,27 +271,34 @@ structure Main : sig
         List.app (fn r => (print "\t"; printLTokens r)) badRecords;
         print "\n")
 
-   fun printTyD prefix longTBDs longBad suffix ty = 
-       (print prefix;
+   fun TyToStringD prefix longTBDs longBottom suffix ty = 
+       (prefix^
         (case ty 
-         of Pvoid  => (print "Pvoid")
-         |  Base t => (printToken t)
-         |  TBD cl => (print "TBD";
-		       if longTBDs then
-			   (print "\n"; printContexts cl; print prefix; print "End TBD")
-		       else ())
-         |  Bad cl => (print "Bad";
-	 	       if longBad then
-			  (print "\n"; printContexts cl; print prefix; print "End Bad")
-		       else ())
-         |  Pstruct tys => (print "Pstruct\n";
-	 		    List.app (printTyD (prefix^"\t") longTBDs longBad (";\n")) tys;
-			    print prefix; print "End Pstruct\n")
-         |  Punion tys  => (print "Punion\n";
-	 		    List.app (printTyD (prefix^"\t") longTBDs longBad (";\n")) tys;
-			    print prefix; print "End Punion\n"));
-	print suffix)
+         of Pvoid  => "Pvoid"
+         |  Base t => tokenTyToString t
+         |  TBD (i,cl) => "TBD_"^(Int.toString i)^
+		       (if longTBDs then
+			   ("\n"^(contextsToString cl)^prefix^"End TBD")
+		        else "")
+         |  Bottom (i, cl) => "BTM_"^(Int.toString i)^
+	 	         (if longBottom then
+			     ("\n"^(contextsToString cl)^prefix^"End Bottom")
+		          else "")
+         |  Pstruct tys =>  "Pstruct\n"^
+	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
+			    prefix ^ "End Pstruct"
+         |  Punion tys  => "Punion\n"^
+	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
+			    prefix ^ "End Punion")^
+	suffix)
        
+    fun TyToString ty = TyToStringD "" false false "" ty
+
+   (* Replace with a call to 
+     
+      when debugged *)
+    
+    fun printTyD prefix longTBDs longBottom suffix ty =  print (TyToStringD prefix longTBDs longBottom suffix ty )
     fun printTy ty = printTyD "" false false "" ty
 
 
@@ -253,22 +312,28 @@ structure Main : sig
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTBDs path ty = 
-	let val TBDstamp = ref ~1
-	    val BADstamp = ref ~1
-	    val () = (print "Outputing parititons to directory: "; print path; print "\n")
-	    fun doIt ty = 
+    fun dumpTy fileName ty = 
+	let val strm = TextIO.openOut fileName
+            val () = TextIO.output(strm, TyToString ty)
+	in
+	    TextIO.closeOut strm
+	end
+
+    fun dumpTyInfo path ty = 
+	let fun dumpTBDs ty = 
 		case ty
                 of Pvoid => ()
 		|  Base t => ()
-                |  TBD cl => dumpCL (TBDstamp := !TBDstamp + 1; path^"TBD_"^(Int.toString (!TBDstamp))) cl
-                |  Bad cl => dumpCL (BADstamp := !BADstamp + 1; path^"BAD_"^(Int.toString (!BADstamp))) cl
-	        |  Pstruct tys => List.app doIt tys
-	        |  Punion tys => List.app doIt tys
+                |  TBD(i, cl)    => dumpCL (path^"TBD_"^(Int.toString i)) cl
+                |  Bottom(i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
+	        |  Pstruct tys => List.app dumpTBDs tys
+	        |  Punion tys => List.app dumpTBDs tys
     	in  
+          (print "\nOutputing parititons to directory: "; print path; print "\n";
 	   if OS.FileSys.isDir path handle SysErr => (OS.FileSys.mkDir path; true)
-	   then doIt ty
+	   then (dumpTBDs ty; dumpTy (path^"Ty") ty)
 	   else print "Output path should specify a directory.\n"
+          )
 	end
        
 
@@ -397,8 +462,10 @@ structure Main : sig
 	end
 
     
-    fun findClusters numRecords threshold (freqDist:freqDist) = 
+    fun findClusters numRecords (freqDist:freqDist) = 
 	let val distList = TokenTable.listItemsi(freqDist)
+	    val threshold = histEqTolerance numRecords
+	    val () = print ("THRESHOLD for histogram equality: "^(Int.toString threshold)^".\n")
 	    fun cmpDists ((k1,h1), (k2,h2)) = histScoreCmp threshold (h1, h2)
             fun eqDists  ((k1,h1), (k2,h2)) = histScoreEq threshold (h1, h2)
 	    val sortedDistList = ListMergeSort.sort cmpDists distList
@@ -418,10 +485,12 @@ structure Main : sig
 
     (* Selects the "top-level" cluster from the input cluster list.
        Return:
+        Struct of
           kind of cluster: struct, union, array
           count of the number of tokens in the cluster
           count of the number of records in which the cluster appears
           a list of the tokens in the cluster and the number of times each token appears in the cluster
+        | Blob, indicating no match
      *)
     fun analyzeCluster numRecords (cluster : (Token * histogram) list) = 
 	let fun doOneToken((t, {hist, total, weight, score, width}), result) =
@@ -432,26 +501,30 @@ structure Main : sig
 			let val rest = List.tl sortedHlist
 			    val massOfRest = List.foldl (fn((i,c:int),acc)=> acc + c) 0 rest
 			in
-			    massOfRest < (intFraction numRecords)
+			    massOfRest < (isStructTolerance numRecords)
 			end
 		in
-		    if isStruct sortedHlist then [(t, Struct, #1 primary, #2 primary)]@result  else result
+		    if isStruct sortedHlist then [(t, #1 primary, #2 primary)]@result  else result
 		end
 	    val tokenAnalysis = List.foldl doOneToken [] cluster
 
             fun mergeStructEntries ta =
-		let fun doOne ((token,kind,count,coverage),(cumCount, cumCoverage,tlist)) = 
- 		    case kind of Struct =>
+		let fun doOne ((token,count,coverage),(cumCount, cumCoverage,tlist)) = 
 			    (cumCount + count, Int.min(coverage, cumCoverage), (token, count)::tlist)
+		    val (numTokens, coverage, tokens) = List.foldl doOne (0, numRecords,[]) tokenAnalysis
 		in
-		    (Struct, List.foldl doOne (0, numRecords,[]) tokenAnalysis)
+		    (print "Junk Tolerance Threshold: "; print (Int.toString(isJunkTolerance numRecords)); print "\n";
+		    if coverage > (isJunkTolerance numRecords) 
+		    then Struct {numTokensInCluster = numTokens, numRecordsWithCluster = coverage, tokens = tokens}
+		    else (print "Identifed a blob\n"; Blob)
+)
 		end
-	    val structSummary = mergeStructEntries tokenAnalysis
+	    val kindSummary = mergeStructEntries tokenAnalysis
 
-	    val () = printStructSummary structSummary
+	    val () = printKindSummary kindSummary
 
 	in
-	    structSummary : (Kind * (int * int * ((Token * int)  list) ))
+	    kindSummary : Kind
 	end
 
     (* 
@@ -464,7 +537,7 @@ structure Main : sig
     *)
     exception TokenMatchFailure
     fun splitRecords summary (records : Context list ) =
-	let val (kind,(count, coverage, tokenfreqs)) = summary
+	let val {numTokensInCluster=count, numRecordsWithCluster=coverage, tokens=tokenfreqs} =summary
 	    fun getTokenOrder summary record = 
 	        let fun insertOne ((token,freq),tTable) = TokenTable.insert(tTable, token, ref freq)
 		    val tTable = List.foldl insertOne TokenTable.empty summary
@@ -479,7 +552,7 @@ structure Main : sig
 				  token::acc)
 		    val tList = List.rev(List.foldl (doOneToken tTable) [] record)
 		    val () = if not ((!numFound) = count) 
-			     then (print "Did not find all desired tokens";  raise TokenMatchFailure)
+			     then raise TokenMatchFailure
 			     else ()
 		in
 		    SOME(tList) handle TokenMatchFailure => NONE
@@ -536,71 +609,118 @@ structure Main : sig
 	   partition
 	end
 
-    (* This function takes a Partition and returns a Ty describing that partition *)
-    fun partitionToTy partitions = 
-	let val (matches, badRecords) = partitions
-	    fun cnvOneMatch (tokenOrder, dclist) = 
-		let val columns = doTranspose dclist
-		    fun isEmpty column = not (List.exists (not o null) column)
-                    fun shuffle(columns, tokens) result =
-			case (columns, tokens) 
-			of ([],[])      => raise Fail "token and column numbers didn't match (2)"
-                        |  ([last], []) => List.rev (if isEmpty last then result else ((TBD last) :: result))
-                        |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
-                        |  (col::cols, tk::tks) => 
-			    let val result = if isEmpty col then  (Base tk):: result 
-					     else (Base tk) :: (TBD col) :: result
-			    in
-				shuffle(cols, tks) result
-			    end
+    fun mkBottom cl = Bottom (!Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
+    fun mkTBD (currentDepth, cl) = 
+        if (currentDepth < !depthLimit)
+	then
+	    ContextListToTy (currentDepth +1) cl
+	else 
+	    TBD (!TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
+
+
+    and clustersToTy curDepth rtokens numRecords clusters = 
+	let val analysis = analyzeCluster numRecords (List.hd clusters)
+           (* This function takes a Partition and returns a Ty describing that partition *)
+	    fun partitionToTy partitions = 
+		let val (matches, badRecords) = partitions
+		    fun cnvOneMatch (tokenOrder, dclist) = 
+			let val columns = doTranspose dclist
+			    fun isEmpty column = not (List.exists (not o null) column)
+			    fun shuffle(columns, tokens) result =
+				case (columns, tokens) 
+				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
+				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD (curDepth,last)) :: result))
+				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
+				  |  (col::cols, tk::tks) => 
+					let val result = if isEmpty col then  (Base tk):: result 
+							 else (Base tk) :: (mkTBD (curDepth, col)) :: result
+					in
+					    shuffle(cols, tks) result
+					end
+			in
+			    case shuffle (columns, tokenOrder) []
+			    of   []   => raise Fail "Expected at least one field."
+			      |  [ty] => ty
+			      |  tys  => Pstruct tys
+			end
+		    val matchTys = List.map cnvOneMatch matches
+		    val resultTy =
+			case (matchTys, badRecords)
+  		        of   ([], [])   => Pvoid  (* I don't think this case can arise *)
+			  |  ([], brs)  => mkBottom brs (* I'm not sure this case arises either *)
+			  |  ([ty], []) => ty
+			  |  (tys, brs) => Punion (tys @ [(mkTBD (curDepth, brs))])
+		    val () = print "Inferred type:\n"
+		    val () = printTy resultTy
 		in
-		    case shuffle (columns, tokenOrder) []
-		    of [] => raise Fail "Expected at least one field."
-                    |  [ty] => ty
-                    |  tys  => Pstruct tys
+		    resultTy
 		end
-	    val matchTys = List.map cnvOneMatch matches
-	    val resultTy =
-		case (matchTys, badRecords)
-                of ([], [])   => Pvoid  (* I don't think this case can arise *)
-                |  ([], brs)  => Bad brs
-                |  ([ty], []) => ty
-                |  (tys, brs) => Punion (tys @ [(TBD brs)])
-	    val () = print "Inferred type:\n"
-	    val () = printTy resultTy
+            val ty = case analysis 
+		     of Blob => mkBottom rtokens
+		     |  Struct s => partitionToTy (splitRecords s rtokens)
+	    val () = dumpTyInfo (!outputDir) ty
 	in
-	    resultTy
+	    ty
 	end
 
-    fun doIt fileName outputDir = 
-	let val records = loadFile fileName
-	    val numRecords = List.length records
-	    val rtokens : LToken list list = List.map ltokenizeRecord records
-            val counts  : RecordCount list = List.map countFreqs rtokens
-            val fd: freqDist = buildHistograms numRecords counts
-            val THRESHOLD = intFraction numRecords
-	    val () = print ("THRESHOLD for histogram equality: "^(Int.toString THRESHOLD)^".\n")
-	    val clusters : (Token * histogram) list list = findClusters numRecords THRESHOLD fd
-	    val () = printClusters numRecords clusters
-	    val analysis : (Kind * (int * int * ((Token * int)  list) )) = analyzeCluster numRecords (List.hd clusters)
-            val newPartitions = splitRecords analysis rtokens
-            val ty = partitionToTy newPartitions
-	    val () = dumpTBDs outputDir ty
+    and ContextListToTy curDepth contexts = 
+	let val numContexts = List.length contexts
+            val counts : RecordCount list = List.map countFreqs contexts
+	    val fd: freqDist = buildHistograms numContexts counts
+	    val clusters : (Token * histogram) list list = findClusters numContexts fd
+	    val () = printClusters numContexts clusters
+            val ty = clustersToTy curDepth contexts numContexts clusters
 	in
-	    counts
+	    ty
 	end
+
+    fun doIt () = 
+	let val fileName = !srcFile
+	    val () = print ("Starting on file "^fileName^"\n");
+	    val records = loadFile fileName
+	    val rtokens : Context list = List.map ltokenizeRecord records
+	in
+	    ContextListToTy 0 rtokens
+	end
+
+    (********************************************************************************)
+    structure PCL = ParseCmdLine
+
+    fun setOutputDir  s = outputDir  := (s^"/")
+    fun setDepth      d = depthLimit := d
+    fun setHistPer    h = HIST_PERCENTAGE := h
+    fun setStructPer  s = STRUCT_PERCENTAGE := s
+    fun setJunkPer    j = JUNK_PERCENTAGE := j
+    fun addSourceFile f = srcFile    := f
+
+    val flags = [
+         ("d",        "output directory (default gen/)",              PCL.String (setOutputDir, false)),
+         ("maxdepth", "maximum depth for exploration (default 5)",    PCL.Int    (setDepth,     false)),
+         ("h",        "histogram comparison tolerance (percentage, default 0.01)",  PCL.Float  (setHistPer,   false)),
+         ("s",        "struct determination tolerance (percentage, default 0.01)",  PCL.Float  (setStructPer, false)),
+         ("j",        "junk threshold (percentage, default 0.1)",     PCL.Float  (setJunkPer,   false))
+        ]
+
+    fun processSwitches args = 
+	let val banner = PCL.genBanner("learn", "Prototype Learning System", flags)
+	in
+	   (PCL.parseArgs(args, flags, addSourceFile, banner);
+	    print ("Source file to process: "^(!srcFile)   ^"\n");
+	    print ("Output directory: "      ^(!outputDir) ^"\n");
+	    print ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n");
+	    print ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n");
+	    print ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n");
+	    print ("Junk threshold (percentage): "                  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n"))
+	end
+    (********************************************************************************)
 
     fun main (cmd, args) = 
-      (let val fileName = hd args
-           val outputDir = case tl args of [] => "gen/"	| (d::args) => (d^"/")
-       in
-         print ("Starting on file "^fileName^"\n");
-         doIt fileName outputDir; 
-         if !anyErrors 
-	     then  OS.Process.exit(OS.Process.failure)
-	 else  OS.Process.exit(OS.Process.success)
-       end)  
-            handle  Exit r => OS.Process.exit(OS.Process.failure)
+	 (processSwitches args;
+          doIt (); 
+          if !anyErrors then  OS.Process.exit(OS.Process.failure)
+	  else OS.Process.exit(OS.Process.success))
+            handle  Exit r      => OS.Process.exit(OS.Process.failure)
+                  | PCL.Invalid => OS.Process.exit(OS.Process.failure)
                   | OS.SysErr(s, sopt) => (TextIO.output(TextIO.stdErr, 
 					   concat[s,"\n"]); 
 					   OS.Process.exit(OS.Process.failure))

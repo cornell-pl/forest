@@ -8,9 +8,17 @@ To build:
 > make
 
 To invoke:
-./learn rawfile outputdir
-   rawfile   contains the data to run the inference on
-   outputdir names the directory for ouptut
+./learn --help
+Prototype Learning System
+learn  [-d <string>] [-maxdepth <int>] [-h <float>] [-s <float>] [-j <float>] [--help] file...
+-d	        output directory               (default gen/)
+-maxdepth	maximum depth for exploration  (default 5)
+-h	        histogram comparison tolerance (percentage, default 0.01)
+-s	        struct determination tolerance (percentage, default 0.01)
+-j	        junk threshold                 (percentage, default 0.1)
+
+Sample invocation:
+./learn apache.txt -d output/apache -maxdepth 3 
 
 The tool currently sends to standard out the following information:
 * A count of the number of records in the input file
@@ -20,8 +28,9 @@ The tool currently sends to standard out the following information:
   the strongest signal.  
 * An output indicating which cluster the system chose and the coverage
   of that cluster. 
-* A representation of the inferred top-level type of the data.
+* A representation of the inferred top-level type of the data in outputdir/Ty.
   Contexts that have not yet been analyzed are marked TBD.  For each
   such marker TBD_i in the type representation, there is a file in
   outputdir/TBD_i containing the portion of the original input that
-  falls into that context.
+  falls into that context.  
+
