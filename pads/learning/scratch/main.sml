@@ -157,22 +157,11 @@ structure Main : sig
         |  Error     => " Error"
 
 
-    (* replace with print (tokenTyToString t) *)
-    fun printTokenTy t = 
-	case t 
-        of Ptime i => print ("[Time]")
-	|  Pip i  => print ("[IP]")
-        |  Pmonth m => print ("[Month]")
-	|  Pint i => print (* ("[int]")*)         (" Pint("^(LargeInt.toString i)^")")
-        |  Pstring s => print (* ("[string]")*)   (" Pstring("^s^")")
-        |  Pwhite s => print (* "[white space]"*) (" Pwhite("^s^")") 
-        |  Other c => print ("("^(Char.toString c)^")") (*(" Pother("^(Char.toString c)^")") *)
-        |  Error => print (" Error")
+    fun printTokenTy t = print (tokenTyToString t)
 
     fun LTokensToString [] = "\n"
       | LTokensToString ((t,loc)::ts) = ((tokenToString t) ^ (LTokensToString ts))
 
-    (* Replace with print LTokensToString arg *)
     fun printLTokens [] = print "\n"
       | printLTokens ((t,loc)::ts) = (printTokenTy t; printLTokens ts)
 
@@ -294,10 +283,6 @@ structure Main : sig
        
     fun TyToString ty = TyToStringD "" false false "" ty
 
-   (* Replace with a call to 
-     
-      when debugged *)
-    
     fun printTyD prefix longTBDs longBottom suffix ty =  print (TyToStringD prefix longTBDs longBottom suffix ty )
     fun printTy ty = printTyD "" false false "" ty
 
@@ -335,7 +320,21 @@ structure Main : sig
 	   else print "Output path should specify a directory.\n"
           )
 	end
-       
+
+   (* Type simplification *)
+   fun simplifyTy ty = 
+       let fun collapseStruct [] a = a
+	     | collapseStruct ((Pstruct tys)::tysRest) a = collapseStruct tysRest (a @ (collapseStruct tys []))
+	     | collapseStruct (ty::tysRest) a = collapseStruct tysRest (a @ [simplifyTy ty])
+	   fun collapseUnion [] a = a
+	     | collapseUnion ((Punion tys)::tysRest) a = collapseUnion tysRest (a @ (collapseUnion tys []))
+	     | collapseUnion (ty::tysRest) a = collapseUnion tysRest (a @ [simplifyTy ty])
+       in
+	   case ty 
+	   of Pstruct tys => Pstruct (collapseStruct tys [])
+           |  Punion  tys => Punion  (collapseUnion  tys [])
+	   |  ty          => ty
+       end
 
    (* Histogram compuations *)
    fun mkHistogram (column:int) : histogram =
@@ -650,15 +649,15 @@ structure Main : sig
 			  |  ([], brs)  => mkBottom brs (* I'm not sure this case arises either *)
 			  |  ([ty], []) => ty
 			  |  (tys, brs) => Punion (tys @ [(mkTBD (curDepth, brs))])
-		    val () = print "Inferred type:\n"
-		    val () = printTy resultTy
+(*		    val () = print "\nInferred type:\n"
+		    val () = printTy (simplifyTy resultTy) 
+*)
 		in
 		    resultTy
 		end
             val ty = case analysis 
 		     of Blob => mkBottom rtokens
 		     |  Struct s => partitionToTy (splitRecords s rtokens)
-	    val () = dumpTyInfo (!outputDir) ty
 	in
 	    ty
 	end
@@ -679,8 +678,10 @@ structure Main : sig
 	    val () = print ("Starting on file "^fileName^"\n");
 	    val records = loadFile fileName
 	    val rtokens : Context list = List.map ltokenizeRecord records
+	    val ty = ContextListToTy 0 rtokens
+	    val sty = simplifyTy ty
 	in
-	    ContextListToTy 0 rtokens
+	    dumpTyInfo (!outputDir) sty
 	end
 
     (********************************************************************************)
