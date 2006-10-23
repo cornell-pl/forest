@@ -15,7 +15,7 @@ structure Main : sig
     fun isStructTolerance x = Real.ceil((!STRUCT_PERCENTAGE) * Real.fromInt(x)) 
     fun isJunkTolerance   x = Real.ceil((!JUNK_PERCENTAGE)   * Real.fromInt(x)) 
 
-    val depthLimit = ref 5
+    val depthLimit = ref 2
     val outputDir = ref "gen/"
     val srcFile = ref "toBeSupplied"
 
@@ -70,7 +70,7 @@ structure Main : sig
 	    doit (List.rev ls) ""
 	end
 
-    (*    Ptime < Pmonth < Pip < Pint < Pstring < Pwhite < Other < Error *)
+    (*    Ptime < Pmonth < Pip < Pint < Pstring < Pwhite < Other < Pempty < Error *)
     fun compToken (t1, t2) = 
 	case (t1,t2) 
         of (Ptime i1, Ptime i2) => EQUAL
@@ -80,6 +80,7 @@ structure Main : sig
         |  (Pstring s1, Pstring s2) => EQUAL
         |  (Pwhite s1, Pwhite s2) => EQUAL
         |  (Other c1, Other c2) => Char.compare (c1, c2)
+        |  (Pempty, Pempty) => EQUAL
         |  (Error, Error) => EQUAL
         |  (Ptime _, _) => LESS
         |  (Pmonth _, Ptime _) => GREATER
@@ -108,7 +109,17 @@ structure Main : sig
         |  (Other _, Pint _) => GREATER
         |  (Other _, Pstring _) => GREATER
         |  (Other _, Pwhite _) => GREATER
-        |  (Other _, Error) => LESS
+        |  (Other _, _) => LESS
+
+        |  (Pempty, Ptime _) => GREATER
+        |  (Pempty, Pmonth _) => GREATER
+        |  (Pempty, Pip _) => GREATER
+        |  (Pempty, Pint _) => GREATER
+        |  (Pempty, Pstring _) => GREATER
+        |  (Pempty, Pwhite _) => GREATER
+        |  (Pempty, Other _) => GREATER
+        |  (Pempty, _) => LESS
+
         |  (Error, _) => GREATER
 
    fun TokenEq (t1, t2) = compToken (t1, t2) = EQUAL
@@ -131,7 +142,7 @@ structure Main : sig
 
    datatype Kind = Struct of {numTokensInCluster:int, numRecordsWithCluster:int,
 			      tokens: (Token * int) list}
-                 | Blob 
+                 | Blob | Empty
 
    (* Printing routines *)
     fun tokenToString t = 
@@ -143,6 +154,7 @@ structure Main : sig
         |  Pstring s => s
         |  Pwhite s => s
         |  Other c => Char.toString c
+        |  Pempty => ""
         |  Error => " Error"
 
     fun tokenTyToString t = 
@@ -154,6 +166,7 @@ structure Main : sig
         |  Pstring s => "[string]"                (*" Pstring("^s^")"*)
         |  Pwhite s  => "[white space]"           (*" Pwhite("^s^")"*) 
         |  Other c   => "("^(Char.toString c)^")" (*(" Pother("^(Char.toString c)^")") *)
+        |  Pempty    => "[empty]"
         |  Error     => " Error"
 
 
@@ -200,6 +213,7 @@ structure Main : sig
 		 List.app printOne tinfos)
 	    end
         | Blob => (print  "Blob"; print "\n")
+        | Empty => (print  "Empty"; print "\n")
 
     fun printClusters numRecords clusters = 
        let fun printOne n c = 
@@ -379,11 +393,14 @@ structure Main : sig
 	    end
        end
 
+   (* The call to String.tokens does not produce the correct results when
+    * applied to a file with blank lines.  Instead of returning an empty
+    * string in the resulting list, it omits the line from the output list *)
    fun loadFile path = 
        let val strm = TextIO.openIn path
 	   val data : String.string = TextIO.inputAll strm
            fun isNewline c = c = #"\n" orelse c = #"\r"
-           val lines = String.tokens isNewline data
+           val lines = String.fields isNewline data
 	   val numRecs = List.length lines
 	   val () = print (Int.toString numRecs ^" records.\n")
 	   val () = TextIO.closeIn strm
@@ -393,24 +410,28 @@ structure Main : sig
 
     fun ltokenizeRecord (record:string) = 
 	let val length = String.size record
-	    val cursor : int ref = ref 0
-            fun feedLex n = 
-		let val s = if (n > (length - !cursor)) 
+	    fun doNonEmpty record = 
+		let val cursor : int ref = ref 0
+		    fun feedLex n = 
+			let val s = if (n > (length - !cursor)) 
 			    then SS.string(SS.extract(record, !cursor, NONE))  handle Subscript => ""
 			    else SS.string(SS.substring(record, !cursor, n))  handle Subscript => ""
+			in
+			    cursor := !cursor + n;
+			    s
+			end
+		    val lex = TokenLex.makeLexer feedLex
+		    fun getMatches acc =
+			case lex() 
+			of SOME a => getMatches(a::acc)
+		      |  NONE   => List.rev acc
+		    val matches = getMatches []
+		(*	    val () = printLTokens matches *)
 		in
-		    cursor := !cursor + n;
-		    s
+		    matches
 		end
-	    val lex = TokenLex.makeLexer feedLex
-            fun getMatches acc =
-		case lex() 
-		of SOME a => getMatches(a::acc)
-                |  NONE   => List.rev acc
-	    val matches = getMatches []
-(*	    val () = printLTokens matches *)
 	in
-	    matches
+	    if length = 0 then [(Pempty,{offset=0, span=0})] else doNonEmpty record
 	end
 
     (* This function takes a list of tokens and returns an (int ref) TokenTable.map *)
@@ -478,6 +499,7 @@ structure Main : sig
 		end
 	    val clusters = case sortedDistList of [] => []
 	                   | (f::fs) => buildClusters (fs, [[f]])
+	    val () = print "Computed clusters\n"
 	in
 	    clusters
 	end
@@ -513,7 +535,9 @@ structure Main : sig
 		    val (numTokens, coverage, tokens) = List.foldl doOne (0, numRecords,[]) tokenAnalysis
 		in
 		    (print "Junk Tolerance Threshold: "; print (Int.toString(isJunkTolerance numRecords)); print "\n";
-		    if coverage > (isJunkTolerance numRecords) 
+		     print "Coverage: ";                 print (Int.toString(coverage)); print "\n";
+		     print "Num Tokens: ";               print (Int.toString(numTokens)); print "\n";
+		    if (coverage >= (isJunkTolerance numRecords) andalso (numTokens > 0))
 		    then Struct {numTokensInCluster = numTokens, numRecordsWithCluster = coverage, tokens = tokens}
 		    else (print "Identifed a blob\n"; Blob)
 )
@@ -608,27 +632,33 @@ structure Main : sig
 	   partition
 	end
 
-    fun mkBottom cl = Bottom (!Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
+    fun mkBottom which cl = 
+	( print "Which bottom construction for"; print (Int.toString (!Bottomstamp)); print ": "; print which; print "\n";
+	Bottom (!Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
+)
     fun mkTBD (currentDepth, cl) = 
         if (currentDepth < !depthLimit)
 	then
-	    ContextListToTy (currentDepth +1) cl
+	    ContextListToTy (currentDepth + 1) cl
 	else 
 	    TBD (!TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
 
 
+
     and clustersToTy curDepth rtokens numRecords clusters = 
-	let val analysis = analyzeCluster numRecords (List.hd clusters)
+	let val analysis = case clusters of [] => Empty 
+                           | (c::cs) => analyzeCluster numRecords c
            (* This function takes a Partition and returns a Ty describing that partition *)
 	    fun partitionToTy partitions = 
 		let val (matches, badRecords) = partitions
 		    fun cnvOneMatch (tokenOrder, dclist) = 
 			let val columns = doTranspose dclist
 			    fun isEmpty column = not (List.exists (not o null) column)
+			    (* Invariant: List.length columns = List.length tokens + 1 *)
 			    fun shuffle(columns, tokens) result =
 				case (columns, tokens) 
 				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
-				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD (curDepth,last)) :: result))
+				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (curDepth,last)) :: result))
 				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
 				  |  (col::cols, tk::tks) => 
 					let val result = if isEmpty col then  (Base tk):: result 
@@ -646,7 +676,7 @@ structure Main : sig
 		    val resultTy =
 			case (matchTys, badRecords)
   		        of   ([], [])   => Pvoid  (* I don't think this case can arise *)
-			  |  ([], brs)  => mkBottom brs (* I'm not sure this case arises either *)
+			  |  ([], brs)  => mkBottom "resultTy" brs (* I'm not sure this case arises either *)
 			  |  ([ty], []) => ty
 			  |  (tys, brs) => Punion (tys @ [(mkTBD (curDepth, brs))])
 (*		    val () = print "\nInferred type:\n"
@@ -656,7 +686,8 @@ structure Main : sig
 		    resultTy
 		end
             val ty = case analysis 
-		     of Blob => mkBottom rtokens
+		     of Blob => mkBottom "blob" rtokens
+		     |  Empty => Base Pempty
 		     |  Struct s => partitionToTy (splitRecords s rtokens)
 	in
 	    ty
