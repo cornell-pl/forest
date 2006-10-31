@@ -112,7 +112,7 @@ bool LaunchPADSApplication::OnInit()
   // build the frame in which to contain our app
   wxString argv0 = argv[0];
 
-  LaunchPADS *frame = new LaunchPADS("LaunchPADS", argv0, 100, 84, MAIN_WIN_HEIGHT, MAIN_WIN_WIDTH);
+  LaunchPADS *frame = new LaunchPADS("Hello LaunchPADS!", argv0, 100, 84, MAIN_WIN_HEIGHT, MAIN_WIN_WIDTH);
   assert(frame != NULL);
 
   SetAppName(_T(APP_NAME_STRING));

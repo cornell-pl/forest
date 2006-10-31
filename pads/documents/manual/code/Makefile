@@ -21,7 +21,7 @@ INCLUDES = -I$(PADS_HOME)/padsc/include -I$(INSTALLROOT)/include/ast -I.
 
 
 EXAMPLE_DIR= $(PADS_HOME)/documents/manual/code
-PEXAMPLES= ai.p pstruct.p punion.p parray.p opt.p ptypedef.p enum2.p wsl.p sirius.p char.p pendian.p $(PADS_HOME)/padsc/examples/p/me_fooclass.p binarytree.p transform.p
+PEXAMPLES= ai.p pstruct.p punion.p parray.p opt.p ptypedef.p enum2.p wsl.p sirius.p char.p pendian.p $(PADS_HOME)/padsc/examples/p/me_fooclass.p binarytree.p transform.p pinclude.p $(PADS_HOME)/padsc/examples/p/try2.p
 CEXAMPLES= ai-annotated.h punion-annotated.h opt-annotated.h typedef-annotated.h \
   enum2-annotated.h sirius-filter.c wsl-accum.c wsl-fmt.c sirius-xml.c \
   dibbler_new_annotated.h parse-state.h library.h strings.h limits.h \

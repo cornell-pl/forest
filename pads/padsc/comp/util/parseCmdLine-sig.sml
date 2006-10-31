@@ -4,6 +4,7 @@ sig
       Bool   of   bool -> unit
     | String of (string -> unit) * bool
     | Int    of    (int -> unit) * bool (* true = can occur multiply. *)
+    | Float  of (real -> unit) * bool(* true = can occur multiply. *)
     | BoolSet of bool ref (* true if present, false otherwise. *)
     | Extension of (string -> unit) * bool
 

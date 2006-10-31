@@ -33,11 +33,13 @@ struct
 
 
    type baseInfoTy = unit
-   type typedefInfoTy = unit
    type tryInfoTy = {ds : diskSize,
 		     paramNames : string list,
 		     baseName : string,
 		     baseArgs : pexp list}
+
+   type typedefInfoTy = tryInfoTy
+
 
    type transInfoTy = {ds: diskSize,
 		       paramNames : string list,

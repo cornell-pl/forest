@@ -402,7 +402,8 @@ structure Main : sig
            fun isNewline c = c = #"\n" orelse c = #"\r"
            val lines = String.fields isNewline data
 	   val numRecs = List.length lines
-	   val () = print (Int.toString numRecs ^" records.\n")
+	   val lines = List.take(lines, numRecs-1)
+	   val () = print (Int.toString (numRecs - 1)^" records.\n")
 	   val () = TextIO.closeIn strm
        in
 	   lines
@@ -560,7 +561,7 @@ structure Main : sig
     *)
     exception TokenMatchFailure
     fun splitRecords summary (records : Context list ) =
-	let val {numTokensInCluster=count, numRecordsWithCluster=coverage, tokens=tokenfreqs} =summary
+	let val {numTokensInCluster=count, numRecordsWithCluster=coverage, tokens=tokenfreqs} = summary
 	    fun getTokenOrder summary record = 
 	        let fun insertOne ((token,freq),tTable) = TokenTable.insert(tTable, token, ref freq)
 		    val tTable = List.foldl insertOne TokenTable.empty summary
@@ -633,16 +634,23 @@ structure Main : sig
 	end
 
     fun mkBottom which cl = 
-	( print "Which bottom construction for"; print (Int.toString (!Bottomstamp)); print ": "; print which; print "\n";
 	Bottom (!Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
-)
-    fun mkTBD (currentDepth, cl) = 
-        if (currentDepth < !depthLimit)
-	then
-	    ContextListToTy (currentDepth + 1) cl
-	else 
-	    TBD (!TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
 
+    (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
+    fun mkTBD (currentDepth, cl) = 
+        (* Columns that have some empty rows must have the empty list representation
+           of the empty row converted to the [Pempty] token.  Otherwise, a column
+           that is either empty or some value gets silently converted to the value only. *)
+	let fun cnvEmptyRowsToPempty [] = [(Pempty,{offset=0, span=0})]
+              | cnvEmptyRowsToPempty l  = l
+	    val cl = List.map cnvEmptyRowsToPempty cl
+	in
+	    if (currentDepth < !depthLimit)
+	    then
+	      ContextListToTy (currentDepth + 1) cl
+	    else 
+		TBD (!TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
+	end
 
 
     and clustersToTy curDepth rtokens numRecords clusters = 
@@ -651,9 +659,9 @@ structure Main : sig
            (* This function takes a Partition and returns a Ty describing that partition *)
 	    fun partitionToTy partitions = 
 		let val (matches, badRecords) = partitions
+		    fun isEmpty column = not (List.exists (not o null) column)
 		    fun cnvOneMatch (tokenOrder, dclist) = 
 			let val columns = doTranspose dclist
-			    fun isEmpty column = not (List.exists (not o null) column)
 			    (* Invariant: List.length columns = List.length tokens + 1 *)
 			    fun shuffle(columns, tokens) result =
 				case (columns, tokens) 
@@ -675,10 +683,10 @@ structure Main : sig
 		    val matchTys = List.map cnvOneMatch matches
 		    val resultTy =
 			case (matchTys, badRecords)
-  		        of   ([], [])   => Pvoid  (* I don't think this case can arise *)
+  		        of   ([], [])   => Pvoid                   (* I don't think this case can arise *)
 			  |  ([], brs)  => mkBottom "resultTy" brs (* I'm not sure this case arises either *)
 			  |  ([ty], []) => ty
-			  |  (tys, brs) => Punion (tys @ [(mkTBD (curDepth, brs))])
+			  |  (tys, brs) => if isEmpty brs then Punion tys else Punion (tys @ [(mkTBD (curDepth, brs))])
 (*		    val () = print "\nInferred type:\n"
 		    val () = printTy (simplifyTy resultTy) 
 *)

@@ -1,18 +1,20 @@
 \chapter{Penums}
 \label{chap:enums}
 \cutname{enums.html}
-\Penum{}s allow a fixed collection of source strings to be converted into
+\Penum{}s allow a fixed collection of source constants to be converted into
 integers in-memory.
 
 \section{Syntax}
 \begin{tabular}{rcl}
 \nont{p\_enum\_prefix}      & \is{}  & \kw{Pprefix} ( identifier ) \\
+\nont{p\_enum\_base\_ty}    & \is{}  & \kw{Pfrom} ( \nont{p\_ty} ) \\
+\nont{p\_enum\_modifier}    & \is{}  & \nont{p\_enum\_prefix}\ \alt{}\ \nont{p\_enum\_base\_ty}\\
 \nont{p\_raw\_enum\_field}  & \is{}  & \nont{p\_literal} \opt{= expression } \\
 \nont{p\_enum\_field}       & \is{}  & \nont{p\_raw\_enum\_field}, \opt{p\_comment}\\
 \nont{p\_last\_enum\_field} & \is{}  & \nont{p\_raw\_enum\_field} \opt{p\_comment}\\
 \nont{p\_enum\_fields}   & \is{}  & \nont{p\_last\_enum\_field} \\
                          & \alt{} & \nont{p\_enum\_field} \nont{p\_enum\_fields} \\
-\nont{enum\_ty}    & \is{} & \Penum{} identifier \opt{\nont{p\_formals}} \opt{\nont{p\_enum\_prefix}} \{ \nont{p\_enum\_fields} \} ;\\[4ex]
+\nont{enum\_ty}    & \is{} & \Penum{} identifier \opt{\nont{p\_formals}} \opt{\nont{p\_enum\_modifier}} \{ \nont{p\_enum\_fields} \} ;\\[4ex]
 \end{tabular}
 
 \subsection{Example}
@@ -25,14 +27,16 @@ then we can use the specification:
 \inputCode{code/enum}
 %
 \noindent
-to describe the data. 
-The labels in the enumeration correspond to the strings in the
-physical representation.  To support physical representations that are
+to describe the data. Because this \penum{} does not explicitly list a
+\pads{} type for the physical representation of the constants, the
+system assumes the underlying representation is a string.  In this case,
+the labels in the enumeration correspond to the strings in the
+physical representation.  To support physical string representations that are
 not valid \C{} identifiers, the \Pfrom{} clause allows the user to
 specify the physical string separately from the enumeration label,
 \eg{}, \texttt{my\_for} in place of \texttt{for}.  The argument 
 to the \Pfrom{} clause can be any character, string, or regular expression.
-The \Pprefix{} clause indicates that all the
+The optional \Pprefix{} clause indicates that all the
 labels in the enumeration are prefixed by the specified string in the
 physical representation.  \pads{} assigns integer values to the labels
 in the enumeration in the same fashion that \C{} does, so the first
@@ -44,6 +48,19 @@ into \C{} is that all labels must be globally distinct.  If two
 different enumerations contain the same string, one of them must be
 differentiated using a \Pfrom{} clause.
 
+To support the case where the physical representation of the constant
+is not a string, \pads{} allows users to specify in the 
+\nont{p\_enum\_base\_ty} clause any \pads{} type with an integer
+in-memory representation as the base type of the enumeration.  For
+example, the following code
+
+\inputCode{code/enum-base}
+%
+\noindent
+defines a type \cd{Bool\_t} that is represented on disk as a one-byte,
+unsigned binary number.  A physical value of \cd{0} corresponds to the
+enumeration label \cd{False}, while a value of \cd{1} corresponds to
+\cd{True}. 
 
 \section{Generated library}
 We use the \texttt{orderStates} example to illustrate the data

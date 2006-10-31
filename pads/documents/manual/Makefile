@@ -59,7 +59,7 @@ manual:
 	pdflatex manual.tex; bibtex manual
 	pdflatex manual.tex; pdflatex manual.tex
 
-manual-html: docode
+manual-html: 
 	$(HEVEA) $(HEVEA_FLAGS) $(HEVEA_FILES) manual.tex
 	$(HACHA) manual.html
 

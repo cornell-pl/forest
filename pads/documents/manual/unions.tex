@@ -129,6 +129,21 @@ string literal \literal{\cd{"*"}} and the regular expression literal \cd{\Pre{}
 
 \inputCode{code/union.literal}
 
+Within a \punion{}, the type \pvoid{} describes no physical data.
+There is no corresponding field in the in-memory representation of the
+union, but the union tag is set to indicate which branch of the union
+was used during the parse.
+This type is useful with switched unions where the value of the tag
+indicates that there is no data associated with the tag.  For example,
+the following \punion{} \cd{branches} 
+
+\inputCode{code/union-void}
+
+indicates that when the value of
+the tag \cd{which} is \cd{0}, there is no more data associated with
+the type \cd{branches} in the input source, while the tag value \cd{1}
+indicates there is a \cd{Pint32} following.  
+
 
 \cut{
 Optional fields in data sources can be described using an in-place
@@ -146,6 +161,8 @@ a default value for the omitted field.
 \label{fig:union-option}
 \end{figure}
 }
+
+
 
 \subsection{In-line declarations}
 \label{sec:unions-inline}

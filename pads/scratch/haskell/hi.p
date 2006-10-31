@@ -173,6 +173,20 @@ Pstruct OccName_t(:Dictionary_t *dict:){
   String_t(:dict:) occNameFS;
 };
 
+Punion OccNameBranches_t(:Puint8 tag, Dictionary_t *dict:){
+  Pswitch(tag){
+    Pcase 0x00: Pvoid             noOccName;
+    Pcase 0x01: OccName_t(:dict:) someOccName;
+  }
+};
+
+Pstruct OccNameOpt_t(:Dictionary_t *dict:){
+  Pb_uint8                       tag;
+  OccNameBranches_t(:tag, dict:) branches;
+};
+
+
+
 Pstruct TypeName_t(:Dictionary_t *dict:){
   OccName_t(:dict:) tyName;
   HiLen_t           numPieces;
@@ -355,6 +369,7 @@ Pstruct IfaceExtPkg_t(:Dictionary_t *dict:){
   OccName_t(:dict:) occ;
 }
 
+/* Error in reading this type */
 Pstruct IfaceHomePkg_t(:Dictionary_t *dict:){
   Module_t(:dict:)  mod;
   OccName_t(:dict:) occ;
@@ -370,7 +385,7 @@ Punion IfaceExtNameBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Pstruct IfaceExtName_t(:Dictionary_t *dict:){
-  Pb_uint8                            tag;
+  Pb_uint8                            tag : sfprintf(sfstdout, "the IfaceExtName_t tag is %d\n", tag) + 1;
   IfaceExtNameBranches_t(:tag, dict:) branches;
 };
 
@@ -405,7 +420,7 @@ Punion PredTyBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Pstruct PredTy_t(:Dictionary_t *dict:){
-  Pb_uint8                      tag;
+  Pb_uint8                      tag : sfprintf(sfstdout, "The predty_t tag is %d\n", tag) + 1;
   PredTyBranches_t(:tag, dict:) branches;
 }
 
@@ -445,6 +460,18 @@ Pstruct IfaceTyCon_t(:Dictionary_t *dict:){
   IfaceTyConBranches_t(:tag, dict:) branches;
 };
 
+Punion IfaceTyConOptBranches_t(:Puint8 tag, Dictionary_t *dict:){
+  Pswitch(tag){
+    Pcase 0x00: Pvoid                noTyCon;
+    Pcase 0x01: IfaceTyCon_t(:dict:) someTyCon;
+  }
+};
+
+Pstruct IfaceTyConOpt_t(:Dictionary_t *dict:){
+  Pb_uint8 tag;
+  IfaceTyConOptBranches_t(:tag, dict:) branches;
+};
+
 Pstruct TyConApp_t(:Dictionary_t *dict:){
   IfaceTyCon_t(:dict:)         tyCon;
   HiLen_t                      numArgs;
@@ -470,7 +497,7 @@ Punion IfaceTypeBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Precur Pstruct IfaceType_t(:Dictionary_t *dict:){
-  Pb_uint8                         tag;
+  Pb_uint8                         tag : sfprintf(sfstdout, "The tag in IfaceType_t is %d\n", tag) + 1;
   IfaceTypeBranches_t(:tag, dict:) branches;
 };
 
@@ -496,7 +523,7 @@ Pstruct Demands_t{
 Punion DemandBranches_t(:Puint8 tag:){
   Pswitch(tag){
     Pcase 0x00: Pvoid     top;
-    Pcase 0x01: Pvoid     abs;
+    Pcase 0x01: Pvoid     abstraction;
     Pcase 0x02: Demand_t  call;      /* XXX: recursive loop back */
     Pcase 0x03: Demands_t eval;
     Pcase 0x04: Demands_t defer;
@@ -802,7 +829,7 @@ Pstruct IfaceIdInfo_t(:Dictionary_t *dict:){
 Pstruct IfaceId_t(:Dictionary_t *dict:){
   OccName_t    (:dict:) name;
   IfaceType_t  (:dict:) ty;
-  IfaceIdInfo_t(:dict:) idInfo; 
+  //  IfaceIdInfo_t(:dict:) idInfo; 
 };
 
 Pstruct IfaceContext_t(:Dictionary_t *dict:){
@@ -933,12 +960,13 @@ Punion IfaceDeclBranches_t(:Puint8 tag, Dictionary_t *dict:){
     Pcase 0x03:  IfaceSyn_t  (:dict:) iFaceSyn;
     Pcase 0x04:  IfaceClass_t(:dict:) iFaceClass;
   }
-} Pwhere {
-  tag != iFaceForeign;
+} 
+Pwhere {
+  tag != 0x01;
 };
 
 Pstruct IfaceDecl_t(:Dictionary_t *dict:){
-  Pb_uint8                         tag;
+  Pb_uint8                         tag : sfprintf(sfstdout, "The value of IfaceDecl_t tag is: %d\n", tag) + 1;
   IfaceDeclBranches_t(:tag, dict:) branches; 
 };
 
@@ -951,6 +979,45 @@ Pstruct Decls_t(:Dictionary_t *dict:){
   HiLen_t        len;
   Decl_t(:dict:)[len] decls;
 };
+
+Penum OverlapFlag_t Pfrom(Pb_uint8){NoOverlap, OverlapOk, Inconherent};
+
+Pstruct Inst_t(:Dictionary_t *dict:){
+  IfaceExtName_t(:dict:)                ifInstCls;
+  HiLen_t                               numIfInstTys;
+  IfaceTyConOpt_t(:dict:)[numIfInstTys] ifInstTys;
+  OccName_t(:dict:)                     ifDFun;
+  OverlapFlag_t                         ifOverlapFlag;
+  OccNameOpt_t(:dict:)                  ifInstOrph;
+};
+
+Pstruct Insts_t(:Dictionary_t *dict:){
+  HiLen_t        len;
+  Inst_t(:dict:)[len] inst;
+};
+
+Pstruct Rule_t(:Dictionary_t *dict:){
+  String_t(:dict:)                  ruleName;
+  Activation_t                      activation;
+  HiLen_t                           numRuleBndrs;
+  IfaceBndr_t(:dict:)[numRuleBndrs] ruleBndrs;
+  IfaceExtName_t(:dict:)            ruleHead;
+  HiLen_t                           numRuleArgs;
+  IfaceExpr_t(:dict:)[numRuleArgs]  ruleArgs;
+  IfaceExpr_t(:dict:)               ruleRhs;
+  OccNameOpt_t(:dict:)              ruleOrph;
+};
+
+Pstruct RulesBody_t(:Dictionary_t *dict:){
+  HiLen_t             len;
+  Rule_t(:dict:)[len] rules;
+};
+
+Pstruct Rules_t(:Dictionary_t *dict:){
+  Pb_uint32           addressOfEnd;
+  RulesBody_t(:dict:) body;
+};
+
 
 int checkId(Puint32 id){
   if (id == 0x01face64) {
@@ -977,6 +1044,9 @@ Pstruct Hi_t{
   Fixities_t(:&fd.dict:) fixityInfo; 
   Deprecs_t(:&fd.dict:)  deprecs;
   Decls_t(:&fd.dict:)    decls;
+  //  Insts_t(:&fd.dict:)    insts;
+  //  Rules_t(:&fd.dict:)    rules;
+  Version_t              ruleVersion;
   Pcompute size_t numBytesRead = position.offset;
   Pb_uint8[dictAddress - numBytesRead] unknown; 
   Dictionary_t  dictionary;  

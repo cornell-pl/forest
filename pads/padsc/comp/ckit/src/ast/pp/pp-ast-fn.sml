@@ -408,7 +408,7 @@ functor PPAstFn (structure PPAstAdornment : PPASTADORNMENT) : PP_AST = struct
 	  ;PPL.addStr pps ";")
     | ppDeclarationH aidinfo tidtab pps (VarDecl (id as {location,...}, initOpt)) = 
        (ppLoc pps location
-       ;PPLib.addStr pps "extern "
+       ;PPLib.addStr pps "" (*"extern " *)
        ;ppIdDeclH aidinfo tidtab pps id
        ;PPL.addStr pps ";")
 

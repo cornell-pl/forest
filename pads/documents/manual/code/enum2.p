@@ -1,4 +1,4 @@
-/*@FILE @LEFT enum.tex */
+/*@FILE @LEFT enum.tex enum-base.tex*/
 
 /*@BEGIN enum.tex */
 Penum orderStates Pprefix("S_"){
@@ -11,3 +11,6 @@ Penum orderStates Pprefix("S_"){
 };
 /*@END enum.tex */
 
+/*@BEGIN enum-base.tex */
+Penum Bool_t Pfrom (Pb_uint8) { False, True };
+/*@END enum-base.tex */

@@ -1,4 +1,4 @@
-/*@FILE @LEFT union.switch.tex union.option.tex union.literal.tex*/
+/*@FILE @LEFT union.switch.tex union.option.tex union.literal.tex union-void.tex*/
 
 /*@BEGIN union.switch.tex */
 Punion branches(:Puint32 which:) {
@@ -40,3 +40,13 @@ Precord Punion test {
   Pint32 f;
 };
 /*@END union.literal.tex */
+
+/*@BEGIN union-void.tex */
+Punion branches(:Puint32 which:) {
+  Pswitch (which) {
+    Pcase 0  : Pvoid                noValue;
+    Pcase 1  : Pint32               someValue;
+  }
+}
+/*@END union-void.tex */
+

@@ -8,7 +8,8 @@ structure ParseCmdLine : PARSECMDLINE =
 	datatype flagType = 
 	    Bool   of   bool -> unit
 	  | String of (string -> unit) * bool
-	  | Int    of    (int -> unit) * bool
+	  | Int    of (int -> unit) * bool
+	  | Float  of (real -> unit) * bool
 	  | BoolSet of bool ref
 	  | Extension of (string -> unit) * bool
 
@@ -85,6 +86,7 @@ structure ParseCmdLine : PARSECMDLINE =
 			case kind of
 			    String(_,w) => w
 			  | Int(_,w) => w
+			  | Float(_,w) => w
 			  | Extension(_,w) => w
 			  | _ => false
 		    in
@@ -109,6 +111,14 @@ structure ParseCmdLine : PARSECMDLINE =
 			      | SOME i => i				
 			in
 			    (iFun i); rest
+			end
+		  | Float (fFun,w) =>
+			let val (opt,rest) = getOption ()
+			    val f = case Real.fromString opt of
+				NONE => (invalidOption opt)
+			      | SOME i => i				
+			in
+			    (fFun f); rest
 			end
 		  | BoolSet b => (b := true; args)
 		  | Extension(xFun,w) => (xFun arg0; args)
@@ -164,6 +174,7 @@ structure ParseCmdLine : PARSECMDLINE =
 			 Bool _ => genDesc(name,"",false)
 		       | String (_,w) => genDesc(name," <string>",w)
 		       | Int (_,w) => genDesc(name," <int>",w)
+		       | Float (_,w) => genDesc(name," <float>",w)
 		       | BoolSet _ => genDesc(name,"",false)
 		       | Extension(_,w) => "")
 		val helpFlag = ("-help","",Bool (fn b => ()))

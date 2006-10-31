@@ -1167,6 +1167,24 @@ ssize_t test_write_xml_2io (P_t *pads, Sfio_t *io, <test_params>, test_pd *pd, t
 ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full, <test_params>, test_pd *pd, test *rep, const char *tag, int indent)
 *)
 
+	      fun getBaseKind(baseName) = 
+		  let val basePropOpt = PTys.find (Atom.atom baseName)
+		  in
+		      case basePropOpt
+		      of SOME baseProp =>  (
+			 case #info baseProp
+		         of TyProps.BaseInfo  b => "ENUM"
+		         |  TyProps.EnumInfo  e => "ENUM"
+			 |  TyProps.TransInfo t => getBaseKind(#dstName t)
+			 |  TyProps.TryInfo   t => getBaseKind(#baseName t)
+			 |  TyProps.TypedefInfo t => getBaseKind(#baseName t) 
+			 |  TyProps.RecursiveInfo r => "POINTER"
+			 |  _ => "STANDARD"
+			   (* end some *))
+		      |  NONE => "ENUM"  (* a base type *)
+		  end
+
+
 	      fun modTagSs (newTag) = 
 		  [PT.IfThen(P.notX(PT.Id xmltag),
 		             P.assignS(PT.Id xmltag, PT.String newTag))]
@@ -2649,7 +2667,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val writeBodyIOSs  = [] (* don't print anything *)
 
 		      val (writeXMLName,bodyXMLBufSs, bodyXMLIOSs, fmtName, bodyFmtFinalSs) = genWriteXMLfmtSimple(name,basePty,baseArgs)
-                      val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, "ENUM", writeName, writeXMLName, fmtName, 
+
+		      val whichMacro = getBaseKind baseName
+                      val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, whichMacro, writeName, writeXMLName, fmtName, 
 								   false (* don't write record even if type is annotated as a record*), 
 								   isSource, true, (* this is a try *)
 								   cParams, mPCT, pdPCT, canonicalPCT, 
@@ -2900,7 +2920,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val writeBodyIOSs  = genWriteBody rawWriteIOX
 
 		      val (writeXMLName, bodyXMLBufSs, bodyXMLIOSs, fmtName, bodyFmtFinalSs) = genWriteXMLfmtSimple(name,dstPty,dstArgs)
-                      val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, "ENUM", writeName, writeXMLName, fmtName, 
+		      val whichMacro = getBaseKind dstName
+                      val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, whichMacro, writeName, writeXMLName, fmtName, 
 								   isRecord, isSource, false, (* not try*) cParams, 
 								   mPCT, pdPCT, canonicalPCT, 
 								   writeBodyBufSs, writeBodyIOSs, bodyXMLBufSs, bodyXMLIOSs, bodyFmtFinalSs)
@@ -2967,7 +2988,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val contR = lookupContainsRecord baseTy
  		      val lH = lookupHeuristic baseTy
 		      val numArgs = List.length params
-		      val typedefProps = buildTyProps(name, paramInfo, TyProps.TypedefInfo (), 
+		      val typedefInfo = {ds = ds, paramNames = paramNames, baseName = baseName, baseArgs = args}
+		      val typedefProps = buildTyProps(name, paramInfo, TyProps.TypedefInfo typedefInfo, 
 						      ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
                       val () = PTys.insert(Atom.atom name, typedefProps)
@@ -3195,9 +3217,13 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val bodyXMLBufSs = modTagSs(name) @ writeXMLFieldBufSs(writeXMLBaseBufName, [PT.Id pd, PT.Id rep], PT.Id xmltag, false, false, args)
 		      val bodyXMLIOSs = modTagSs(name) @ writeXMLFieldIOSs(writeXMLBaseIOName, [PT.Id pd, PT.Id rep], PT.Id xmltag, false, false, args)
 		      val fmtNameFinalBuf = bufFinalSuf fmtName
-		      val bodyFmtFinalSs = (PL.fmtFinalInitTypedef (PT.String fmtNameFinalBuf)) ::(fmtTypedefSs(fmtBaseName, [P.getFieldX(m,base),PT.Id pd, PT.Id rep]@args))
-                      val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, "STANDARD", writeName, writeXMLName, fmtName, isRecord, isSource, false,
-								   cParams, mPCT, pdPCT, canonicalPCT, bodyBufSs, bodyIOSs, bodyXMLBufSs, bodyXMLIOSs, bodyFmtFinalSs)
+		      val bodyFmtFinalSs = (PL.fmtFinalInitTypedef (PT.String fmtNameFinalBuf)) 
+			  ::(fmtTypedefSs(fmtBaseName, [P.getFieldX(m,base),PT.Id pd, PT.Id rep]@args))
+
+		      val whichMacro = "STANDARD"
+                      val (writeFunEDs, fmtFunEDs)  = genWriteFuns(name, whichMacro, writeName, writeXMLName, fmtName, isRecord, isSource, false,
+								   cParams, mPCT, pdPCT, canonicalPCT, 
+								   bodyBufSs, bodyIOSs, bodyXMLBufSs, bodyXMLIOSs, bodyFmtFinalSs)
 
 	              (***** typedef PADS-Galax *****)
 

@@ -32,6 +32,7 @@ have the following form:
 & \alt{} & \nont{opt\_ty}              & (* \chapref{chap:opts} *)\\[1ex]
 & \alt{} & \nont{typedef\_ty}          & (* \chapref{chap:typedefs} *)\\[1ex]
 & \alt{} & \nont{trans\_ty}            & (* \chapref{chap:trans} *)\\[1ex]
+& \alt{} & \nont{try\_ty}              & (* \chapref{chap:trys} *)\\[1ex]
 & \alt{} & \nont{charclass\_ty}        & (* \secref{sec:charclass} *)\\[1ex]
 \end{tabular}
 
@@ -215,6 +216,19 @@ to set the appropriate record discipline for a data source.
 The \Psource{} modifier may be used as an annotation on any \pads{}
 type, indicating that the type in question describes the entirety of
 the external representation of the data.
+
+
+\section{\Pinclude{}}
+The \Pinclude{} statement within a \texttt{.p} file causes the supplied
+argument to be mirrored to the generated \texttt{.h} file, but not the
+generated \texttt{.c} file.  It is useful for including necessary
+header files for \C{} code referenced in the \pads{} description.  For
+example, the following use causes the generated \texttt{.h} file to
+include the directive \cd{#include <rpc/rpc.h>}. 
+
+\inputCode{code/pinclude}
+
+
 
 \section{Error model}
 \label{sec:common-error-model}

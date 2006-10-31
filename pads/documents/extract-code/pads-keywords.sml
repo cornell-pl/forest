@@ -65,6 +65,7 @@ structure PadsKeywords : sig
               ("Pforall", T.Keyword),
               ("Pfrom", T.Keyword),
               ("Pin", T.Keyword),
+              ("Pinclude", T.Keyword),
               ("Plast", T.Keyword),
               ("Plongest", T.Keyword),
               ("Pmaskmap", T.Keyword),
@@ -85,6 +86,7 @@ structure PadsKeywords : sig
               ("Pswitch",T.Keyword),
               ("Pterm", T.Keyword),
               ("Ptrans", T.Keyword),
+              ("Ptry", T.Keyword),
               ("Ptypedef", T.Keyword),
               ("Punion",T.Keyword),
               ("Pwhere",T.Keyword)
