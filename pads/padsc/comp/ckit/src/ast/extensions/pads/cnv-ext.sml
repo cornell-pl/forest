@@ -3436,6 +3436,39 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
 		      (* XXX: Change these expressions to use names from PNames instead of hard coding the strings. *)
+
+		      val accumFwEDs = 
+			  if !(#outputAccum(PInput.inputs)) then
+				  [genTDFunDecl("Perror_t",name ^"_acc_init",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
+				   genTDFunDecl("Perror_t",name ^"_acc_reset",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
+				   genTDFunDecl("Perror_t",name ^"_acc_cleanup",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
+				   genTDFunDecl("Perror_t",name ^"_acc_add",
+						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc),
+						 (PT.TypedefName (name ^ "_pd"),true,"pd"),
+						 (PT.TypedefName name,true,"rep")]),
+				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report2io",
+						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
+						 (P.makePDT [PT.TypedefName "Sfio_t"],true,"outstr"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"prefix"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"what"),
+						 (P.makePDT [PT.Int],false,"nst"),
+						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)]),
+				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report",
+						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"prefix"),
+						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"what"),
+						 (P.makePDT [PT.Int],false,"nst"),
+						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)]),
+				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report2xml_io",
+						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
+						 (P.makePDT [PT.TypedefName "Sfio_t"],true,"outstr"),
+						 (P.makePDT [PT.Int],false,"nst"),
+						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)])]
+				       else []
+
 		      val fwEDs = [genTDFunDecl("Perror_t",name ^"_init",
 						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName name,true,"rep")]),
 				   genTDFunDecl("Perror_t",name ^"_pd_init",
@@ -3466,35 +3499,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				   genFunDeclBoth(PT.Int,PNames.genPD name,
 						  [(PT.TypedefName "P_t",true,"pads"),
 						   (PT.TypedefName name,true,"rep"),
-						   (PT.TypedefName (name ^ "_pd"),true,"pd")],cParamTuples),
-				   genTDFunDecl("Perror_t",name ^"_acc_init",
-						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
-				   genTDFunDecl("Perror_t",name ^"_acc_reset",
-						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
-				   genTDFunDecl("Perror_t",name ^"_acc_cleanup",
-						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc)]),
-				   genTDFunDecl("Perror_t",name ^"_acc_add",
-						[(PT.TypedefName "P_t",true,"pads"),(PT.TypedefName (name ^ "_acc"),true,acc),
-						 (PT.TypedefName (name ^ "_pd"),true,"pd"),
-						 (PT.TypedefName name,true,"rep")]),
-				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report2io",
-						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
-						 (P.makePDT [PT.TypedefName "Sfio_t"],true,"outstr"),
-						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"prefix"),
-						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"what"),
-						 (P.makePDT [PT.Int],false,"nst"),
-						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)]),
-				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report",
-						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
-						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"prefix"),
-						 ({qualifiers = [PT.CONST], specifiers = [PT.Char],storage=[]},true,"what"),
-						 (P.makePDT [PT.Int],false,"nst"),
-						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)]),
-				   genFunDeclPDT(PT.TypedefName "Perror_t",name ^"_acc_report2xml_io",
-						[(P.makePDT [PT.TypedefName "P_t"],true,"pads"),
-						 (P.makePDT [PT.TypedefName "Sfio_t"],true,"outstr"),
-						 (P.makePDT [PT.Int],false,"nst"),
-						 (P.makePDT [PT.TypedefName (name ^ "_acc")],true,acc)])]
+						   (PT.TypedefName (name ^ "_pd"),true,"pd")],cParamTuples)]
+			           @ accumFwEDs
                       (* Generate Write function declarations, PRecursive case *)
 		      val writeName = writeSuf name
 		      val fmtName = fmtSuf name

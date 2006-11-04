@@ -13,7 +13,7 @@ PADSC=$(PADS_HOME)/scripts/padsc
 include $(PADS_HOME)/mk/rules.mk
 
 %.c: %.p
-	$(PADSC) -I. $<
+	$(PADSC) -I. -anone $<
 
 # Rules to make programs
 test_hi: test_hi.c hi.c $(INCLUDE_DEPS) $(LIB_DEPS_O)

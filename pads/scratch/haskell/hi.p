@@ -59,11 +59,14 @@ Pstruct IRawString_t{
   RawString_t rs;
 };
 
+/* The functions uint32_IRstring and IRstring_uint32 are used in the definition 
+ * of the Ptrans String_t, which converts between the integer index of a string 
+ * in the dictionary to the actual string
+ */
 void uint32_IRstring(P_t *p, Dictionary_t *dict, 
 		     Puint32 *src, Pbase_pd *src_pd, IRawString_t *dst, IRawString_t_pd *dst_pd){
   dst->index = *src;
   if (*src < dict->numStrings){
-    //    dst->rs = dict->strings.elts[*src];
     Pstring_share(p, &dst->rs.name, &(dict->strings.elts[*src].name));
     dst->rs.len = dict->strings.elts[*src].len;
     IRawString_t_genPD(p, dst, dst_pd);
@@ -136,6 +139,10 @@ Pstruct HiLenRaw_t{
   LenRest_t(:initial:) rest;
 };
 
+/* The functions HiLenRaw_uint32 and uint32_HiLenRaw are used in the Ptrans HiLen_t to 
+ * convert the two different on-disk encodings of a lenght into a single representation
+ * in-memory.
+ */
 void HiLenRaw_uint32(HiLenRaw_t *src, HiLenRaw_t_pd *src_pd, Puint32 *dest, Pbase_pd *dest_pd){
   *dest_pd = src_pd->initial; 
   *dest = src->rest.val.shortRep;  /* short and long are the same */
@@ -185,13 +192,11 @@ Pstruct OccNameOpt_t(:Dictionary_t *dict:){
   OccNameBranches_t(:tag, dict:) branches;
 };
 
-
-
 Pstruct TypeName_t(:Dictionary_t *dict:){
   OccName_t(:dict:) tyName;
   HiLen_t           numPieces;
   OccName_t(:dict:)[numPieces] pieces;
-}
+};
 
 Punion AvailInfoBranches_t(:Puint8 tag, Dictionary_t *dict:) {
   Pswitch (tag){ 
@@ -209,7 +214,7 @@ Pstruct Export_t(:Dictionary_t *dict:){
   Module_t(:dict:)      module;   
   HiLen_t               numExports;
   GenAvailInfo_t(:dict:)[numExports] genAvail;
-}
+};
 
 Pstruct Exports_t(:Dictionary_t *dict:) {
   HiLen_t length;
@@ -219,7 +224,7 @@ Pstruct Exports_t(:Dictionary_t *dict:) {
 Pstruct Dep_mods_t(:Dictionary_t *dict:){
   String_t(:dict:) moduleName;
   Bool_t           isBootInterface;
-}
+};
 
 Pstruct DepBody_t(:Dictionary_t *dict:) {
   HiLen_t                           dep_mods_len;
@@ -259,7 +264,7 @@ Pstruct Usage_t(:Dictionary_t *dict:){
   HiLen_t          numEntities;
   Entity_t(:dict:)[numEntities] entities;
   Version_t        ruleVersion;
-}
+};
 
 Pstruct UsagesBody_t(:Dictionary_t *dict:){
   HiLen_t         length;
@@ -311,7 +316,7 @@ Punion DeprecsBranches_t(:Puint8 tag, Dictionary_t *dict:){
 Pstruct DeprecsBody_t(:Dictionary_t *dict:){
   Pb_uint8                       tag;
   DeprecsBranches_t(:tag, dict:) branches;
-}
+};
 
 Pstruct Deprecs_t(:Dictionary_t *dict:){
   Pb_uint32             addressOfEnd;
@@ -367,11 +372,10 @@ Pstruct AppTy_t(:Dictionary_t *dict:){
 Pstruct IfaceExtPkg_t(:Dictionary_t *dict:){
   Module_t(:dict:)  mod;
   OccName_t(:dict:) occ;
-}
+};
 
-/* Error in reading this type */
 Pstruct IfaceHomePkg_t(:Dictionary_t *dict:){
-  Module_t(:dict:)  mod;
+  String_t(:dict:)  modName;
   OccName_t(:dict:) occ;
   Version_t         version;
 };
@@ -385,7 +389,7 @@ Punion IfaceExtNameBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Pstruct IfaceExtName_t(:Dictionary_t *dict:){
-  Pb_uint8                            tag : sfprintf(sfstdout, "the IfaceExtName_t tag is %d\n", tag) + 1;
+  Pb_uint8                            tag;
   IfaceExtNameBranches_t(:tag, dict:) branches;
 };
 
@@ -420,9 +424,9 @@ Punion PredTyBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Pstruct PredTy_t(:Dictionary_t *dict:){
-  Pb_uint8                      tag : sfprintf(sfstdout, "The predty_t tag is %d\n", tag) + 1;
+  Pb_uint8                      tag;
   PredTyBranches_t(:tag, dict:) branches;
-}
+};
 
 Pstruct PairTy_t(:Dictionary_t *dict:){
   IfaceType_t(:dict:) first;
@@ -441,7 +445,7 @@ Ptypedef Psbh_uint32(:4:) Arity_t;
 Pstruct IfaceTupTc_t{
   Boxity_t  boxity;
   Arity_t   arity;
-}
+};
 
 Punion IfaceTyConBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch(tag){
@@ -497,7 +501,7 @@ Punion IfaceTypeBranches_t(:Puint8 tag, Dictionary_t *dict:){
 };
 
 Precur Pstruct IfaceType_t(:Dictionary_t *dict:){
-  Pb_uint8                         tag : sfprintf(sfstdout, "The tag in IfaceType_t is %d\n", tag) + 1;
+  Pb_uint8                         tag;
   IfaceTypeBranches_t(:tag, dict:) branches;
 };
 
@@ -505,12 +509,12 @@ Precur Demand_t;
 
 Pstruct DemandList_t{
   HiLen_t              numDemands;
-  Demand_t[numDemands] demands;      /* XXX: recursive loop back */
+  Demand_t[numDemands] demands;      
 };
 
 Punion DemandsBranches_t(:Puint8 tag:){
   Pswitch(tag){
-    Pcase 0x00: Demand_t     poly;   /* XXX: recursive loop back */
+    Pcase 0x00: Demand_t     poly;   
     Pcase 0x01: DemandList_t prod;
   }
 };
@@ -524,10 +528,10 @@ Punion DemandBranches_t(:Puint8 tag:){
   Pswitch(tag){
     Pcase 0x00: Pvoid     top;
     Pcase 0x01: Pvoid     abstraction;
-    Pcase 0x02: Demand_t  call;      /* XXX: recursive loop back */
+    Pcase 0x02: Demand_t  call;      
     Pcase 0x03: Demands_t eval;
     Pcase 0x04: Demands_t defer;
-    Pcase 0x05: Demand_t  box;       /* XXX: recursive loop back */
+    Pcase 0x05: Demand_t  box;       
     Pcase 0x06: Pvoid     bot;
   }
 };
@@ -562,17 +566,17 @@ Pstruct IfaceBndr_t(:Dictionary_t *dict:){
 Pstruct IfaceTuple_t(:Dictionary_t *dict:){
   Boxity_t            boxity;
   HiLen_t             length;
-  IfaceExpr_t(:dict:)[length] tuple;   /* XXX recursive loop back */
+  IfaceExpr_t(:dict:)[length] tuple;   
 };
 
 Pstruct IfaceLam_t(:Dictionary_t *dict:){
   IfaceBndr_t(:dict:) var;
-  IfaceExpr_t(:dict:) body;  /* XXX recursive loop back */
+  IfaceExpr_t(:dict:) body;  
 };
 
 Pstruct IfaceApp_t(:Dictionary_t *dict:){
   IfaceExpr_t(:dict:)  fun;
-  IfaceExpr_t(:dict:) arg;  /* XXX recursive loop back */
+  IfaceExpr_t(:dict:) arg;
 };
 
 Punion LiteralBranches_t(:Puint8 tag, Dictionary_t *dict:){
@@ -613,7 +617,7 @@ Pstruct IfaceAlt_t(:Dictionary_t *dict:){
   IfaceConAlt_t(:dict:)     info;
   HiLen_t                   numVars;
   String_t(:dict:)[numVars] vars;
-  IfaceExpr_t(:dict:)       body;  /* XXX recursive loop back */
+  IfaceExpr_t(:dict:)       body;  
 };
 
 Pstruct IfaceCase_t(:Dictionary_t *dict:){
@@ -648,19 +652,18 @@ Pstruct IfaceBinding_t(:Dictionary_t *dict:){
 
 Pstruct IfaceLet_t(:Dictionary_t *dict:){
   IfaceBinding_t(:dict:) binding;
-  IfaceExpr_t(:dict:)    body;      /* XXX recursive loop back */
+  IfaceExpr_t(:dict:)    body;      
 };
 
 Penum IsDupdCC_t Pfrom(Pb_uint8) {OriginalCC, DupdCC};
 Penum IsCafCC_t  Pfrom(Pb_uint8) {CafCC, NotCafCC};
-
 
 Pstruct NormalCC_t(:Dictionary_t *dict:){
   String_t(:dict:) name;
   Module_t(:dict:) module;
   IsDupdCC_t       isDupdCC;
   IsCafCC_t        isCafCC;
-}
+};
 
 Punion CostCentreBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch(tag){
@@ -713,7 +716,7 @@ Punion SafetyBranches_t(:Puint8 tag:){
 Pstruct Safety_t{
   Pb_uint8                tag;
   SafetyBranches_t(:tag:) branches;
-}
+};
 
 Pstruct CCall_t(:Dictionary_t *dict:){
   CCallTarget_t(:dict:) fun;
@@ -744,7 +747,7 @@ Pstruct ForeignCall_t(:Dictionary_t *dict:){
 
 Pstruct IfaceFCall_t(:Dictionary_t *dict:){
   ForeignCall_t(:dict:) foreignCall;
-  IfaceType_t(:dict:)   ty;         /* XXX recursive loop back */
+  IfaceType_t(:dict:)   ty;         
 };
 
 Punion IfaceExprBranches_t(:Puint8 tag, Dictionary_t *dict:){
@@ -829,7 +832,7 @@ Pstruct IfaceIdInfo_t(:Dictionary_t *dict:){
 Pstruct IfaceId_t(:Dictionary_t *dict:){
   OccName_t    (:dict:) name;
   IfaceType_t  (:dict:) ty;
-  //  IfaceIdInfo_t(:dict:) idInfo; 
+  IfaceIdInfo_t(:dict:) idInfo;
 };
 
 Pstruct IfaceContext_t(:Dictionary_t *dict:){
@@ -878,7 +881,7 @@ Pstruct IfaceConDecl_t(:Dictionary_t *dict:){
 Pstruct IfaceConDeclList_t(:Dictionary_t *dict:){
   HiLen_t                          numDecls;
   IfaceConDecl_t(:dict:)[numDecls] decls;
-}
+};
 
 Punion IfaceConDeclsBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch(tag){
@@ -898,7 +901,7 @@ Penum RecFlag_t Pfrom(Pb_uint8){Recursive, NonRecursive};
 Pstruct VarPair_t{
   Bool_t occPos;
   Bool_t occNeg;
-}
+};
 
 Pstruct ArgVrcs_t {
   HiLen_t numEntries;
@@ -955,18 +958,16 @@ Pstruct IfaceClass_t(:Dictionary_t *dict:){
 Punion IfaceDeclBranches_t(:Puint8 tag, Dictionary_t *dict:){
   Pswitch(tag){
     Pcase 0x00:  IfaceId_t   (:dict:) iFaceId;
-    Pcase 0x01:  Pvoid                iFaceForeign;
+    Pcase 0x01:  Pvoid                iFaceForeign; // This case does occur.
     Pcase 0x02:  IfaceData_t (:dict:) iFaceData;
     Pcase 0x03:  IfaceSyn_t  (:dict:) iFaceSyn;
     Pcase 0x04:  IfaceClass_t(:dict:) iFaceClass;
   }
-} 
-Pwhere {
-  tag != 0x01;
 };
 
+
 Pstruct IfaceDecl_t(:Dictionary_t *dict:){
-  Pb_uint8                         tag : sfprintf(sfstdout, "The value of IfaceDecl_t tag is: %d\n", tag) + 1;
+  Pb_uint8                         tag;
   IfaceDeclBranches_t(:tag, dict:) branches; 
 };
 
@@ -1032,7 +1033,7 @@ Pstruct Hi_t{
   Pb_uint32              dictAddress;
   ForwardDict_t(:dictAddress - 8 :) fd; 
   GHCversion_t           GHCversion; 
-  Pb_uint8               way;  /* what is this? */
+  Pb_uint8               way;  
   Module_t (:&fd.dict:)  module;
   Bool_t                 isBoot;
   Version_t              modVersion;
@@ -1044,26 +1045,8 @@ Pstruct Hi_t{
   Fixities_t(:&fd.dict:) fixityInfo; 
   Deprecs_t(:&fd.dict:)  deprecs;
   Decls_t(:&fd.dict:)    decls;
-  //  Insts_t(:&fd.dict:)    insts;
-  //  Rules_t(:&fd.dict:)    rules;
+  Insts_t(:&fd.dict:)    insts;
+  Rules_t(:&fd.dict:)    rules;
   Version_t              ruleVersion;
-  Pcompute size_t numBytesRead = position.offset;
-  Pb_uint8[dictAddress - numBytesRead] unknown; 
   Dictionary_t  dictionary;  
 };
-
-/*
-void initHiMask(P_t *pads, Hi_t_m *m, Puint32 initialMask){
-  IfaceType_t_m ifaceRoot = m->decls.decls.element.iFaceDecl.branches.iFaceId.ty;
-  Kind_t_m      kindRoot  = m->decls.decls.element.iFaceDecl.branches.iFaceId.ty->branches.forAllTy.iFaceTvBndr.kind;
-
-  Hi_t_m_init(pads, m, initialMask);
-  P_DynamicMaskInit(ifaceRoot, IfaceType_t_m, _IfaceType_t_m, initialMask, ifaceRoot->branches.forAllTy.iFaceType);
-  //  ifaceRoot->branches.forAllTy.iFaceType = ifaceRoot;
-
-  P_DynamicMaskInit(kindRoot, Kind_t_m, _Kind_t_m, initialMask, kindRoot->branches.funKindBody.arg);
-  //  kindRoot->branches.funKindBody.arg    = kindRoot;
-  kindRoot->branches.funKindBody.result = kindRoot;
-};
-
-*/
