@@ -21,7 +21,7 @@ structure Main : sig
 
 
     (********************************************************************************)
-    (*********************  Configuration *******************************************)
+    (*********************  END Configuration ***************************************)
     (********************************************************************************)
 	    
     val anyErrors = ref false
@@ -34,9 +34,31 @@ structure Main : sig
     type DerivedContexts = Context list
     type Partition = (TokenOrder * (DerivedContexts list)) list * (Context list)
 
-    datatype Ty = Base of Token | Pvoid 
-                | TBD of int * Context list | Bottom of int * Context list 
-                | Pstruct of Ty list |  Punion of Ty list 
+    type AuxInfo = {coverage:int} (* Coverage of 
+				      -- a struct is minimum coverage of its constituents;
+				      -- a union is sum of coverage of its consituents; *)
+				     
+    datatype Ty = Base of AuxInfo * Token | Pvoid of AuxInfo
+                | TBD of AuxInfo * int * Context list | Bottom of AuxInfo * int * Context list 
+                | Pstruct of AuxInfo * Ty list |  Punion of AuxInfo * Ty list 
+
+    fun getAuxInfo ty : AuxInfo = 
+	case ty 
+        of Base (a,t) => a
+        |  Pvoid a    => a
+        |  TBD (a,i,cl) => a
+        |  Bottom (a,i,cl) => a
+        |  Pstruct (a,tys) => a
+        |  Punion (a,tys) => a
+
+    fun getCoverage ty = #coverage(getAuxInfo ty)
+    fun sumCoverage tys = 
+	case tys of [] => 0
+        | (ty::tys) => (getCoverage ty) + (sumCoverage tys)
+    fun minCoverage tys = 
+	case tys of [] => Option.valOf Int.maxInt
+        | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
+      
 
     val TBDstamp = ref 0
     val Bottomstamp = ref 0
@@ -274,23 +296,27 @@ structure Main : sig
         List.app (fn r => (print "\t"; printLTokens r)) badRecords;
         print "\n")
 
+   fun covToString {coverage} = Int.toString coverage
+
    fun TyToStringD prefix longTBDs longBottom suffix ty = 
        (prefix^
         (case ty 
-         of Pvoid  => "Pvoid"
-         |  Base t => tokenTyToString t
-         |  TBD (i,cl) => "TBD_"^(Int.toString i)^
-		       (if longTBDs then
-			   ("\n"^(contextsToString cl)^prefix^"End TBD")
-		        else "")
-         |  Bottom (i, cl) => "BTM_"^(Int.toString i)^
-	 	         (if longBottom then
-			     ("\n"^(contextsToString cl)^prefix^"End Bottom")
-		          else "")
-         |  Pstruct tys =>  "Pstruct\n"^
+         of Pvoid aux      => ("Pvoid(" ^(covToString aux)^")")
+         |  Base (aux, t)  => tokenTyToString t
+         |  TBD (aux,i,cl) => "TBD_"^(Int.toString i)^
+	                      "("^(covToString aux)^")"^
+		              (if longTBDs then
+			          ("\n"^(contextsToString cl)^prefix^"End TBD")
+		               else "")
+         |  Bottom (aux,i, cl) => "BTM_"^(Int.toString i)^
+	                      "("^(covToString aux)^")"^
+			      (if longBottom then
+				   ("\n"^(contextsToString cl)^prefix^"End Bottom")
+			       else "")
+         |  Pstruct (aux, tys) =>  "Pstruct("^(covToString aux)^")\n"^
 	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
 			    prefix ^ "End Pstruct"
-         |  Punion tys  => "Punion\n"^
+         |  Punion (aux, tys)  => "Punion("^(covToString aux)^")\n"^
 	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
 			    prefix ^ "End Punion")^
 	suffix)
@@ -321,12 +347,12 @@ structure Main : sig
     fun dumpTyInfo path ty = 
 	let fun dumpTBDs ty = 
 		case ty
-                of Pvoid => ()
-		|  Base t => ()
-                |  TBD(i, cl)    => dumpCL (path^"TBD_"^(Int.toString i)) cl
-                |  Bottom(i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
-	        |  Pstruct tys => List.app dumpTBDs tys
-	        |  Punion tys => List.app dumpTBDs tys
+                of Pvoid aux => ()
+		|  Base (aux,t) => ()
+                |  TBD(aux,i, cl)    => dumpCL (path^"TBD_"^(Int.toString i)) cl
+                |  Bottom(aux,i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
+	        |  Pstruct (aux,tys) => List.app dumpTBDs tys
+	        |  Punion (aux,tys) => List.app dumpTBDs tys
     	in  
           (print "\nOutputing parititons to directory: "; print path; print "\n";
 	   if OS.FileSys.isDir path handle SysErr => (OS.FileSys.mkDir path; true)
@@ -338,16 +364,16 @@ structure Main : sig
    (* Type simplification *)
    fun simplifyTy ty = 
        let fun collapseStruct [] a = a
-	     | collapseStruct ((Pstruct tys)::tysRest) a = collapseStruct tysRest (a @ (collapseStruct tys []))
+	     | collapseStruct ((Pstruct (aux,tys))::tysRest) a = collapseStruct tysRest (a @ (collapseStruct tys []))
 	     | collapseStruct (ty::tysRest) a = collapseStruct tysRest (a @ [simplifyTy ty])
 	   fun collapseUnion [] a = a
-	     | collapseUnion ((Punion tys)::tysRest) a = collapseUnion tysRest (a @ (collapseUnion tys []))
+	     | collapseUnion ((Punion (aux,tys))::tysRest) a = collapseUnion tysRest (a @ (collapseUnion tys []))
 	     | collapseUnion (ty::tysRest) a = collapseUnion tysRest (a @ [simplifyTy ty])
        in
 	   case ty 
-	   of Pstruct tys => Pstruct (collapseStruct tys [])
-           |  Punion  tys => Punion  (collapseUnion  tys [])
-	   |  ty          => ty
+	   of Pstruct (aux,tys) => Pstruct (aux, collapseStruct tys [])
+           |  Punion  (aux,tys) => Punion  (aux, collapseUnion  tys [])
+	   |  ty                => ty
        end
 
    (* Histogram compuations *)
@@ -633,11 +659,11 @@ structure Main : sig
 	   partition
 	end
 
-    fun mkBottom which cl = 
-	Bottom (!Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
+    fun mkBottom (coverage,cl) = 
+	Bottom ({coverage=coverage}, !Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
 
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
-    fun mkTBD (currentDepth, cl) = 
+    fun mkTBD (currentDepth, coverage, cl) = 
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
            that is either empty or some value gets silently converted to the value only. *)
@@ -649,7 +675,7 @@ structure Main : sig
 	    then
 	      ContextListToTy (currentDepth + 1) cl
 	    else 
-		TBD (!TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
+		TBD ({coverage=coverage}, !TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
 	end
 
 
@@ -657,7 +683,7 @@ structure Main : sig
 	let val analysis = case clusters of [] => Empty 
                            | (c::cs) => analyzeCluster numRecords c
            (* This function takes a Partition and returns a Ty describing that partition *)
-	    fun partitionToTy partitions = 
+	    fun buildStructTy partitions = 
 		let val (matches, badRecords) = partitions
 		    fun isEmpty column = not (List.exists (not o null) column)
 		    fun cnvOneMatch (tokenOrder, dclist) = 
@@ -666,11 +692,12 @@ structure Main : sig
 			    fun shuffle(columns, tokens) result =
 				case (columns, tokens) 
 				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
-				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (curDepth,last)) :: result))
+				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (curDepth,(List.length last), last)) :: result))
 				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
 				  |  (col::cols, tk::tks) => 
-					let val result = if isEmpty col then  (Base tk):: result 
-							 else (Base tk) :: (mkTBD (curDepth, col)) :: result
+					let val coverage = List.length col
+					    val result = if isEmpty col then  (Base ({coverage=coverage}, tk)):: result 
+							 else (Base ({coverage=coverage},tk)) :: (mkTBD (curDepth, coverage, col)) :: result
 					in
 					    shuffle(cols, tks) result
 					end
@@ -678,15 +705,21 @@ structure Main : sig
 			    case shuffle (columns, tokenOrder) []
 			    of   []   => raise Fail "Expected at least one field."
 			      |  [ty] => ty
-			      |  tys  => Pstruct tys
+			      |  tys  => Pstruct ({coverage=minCoverage tys}, tys)
 			end
 		    val matchTys = List.map cnvOneMatch matches
 		    val resultTy =
 			case (matchTys, badRecords)
-  		        of   ([], [])   => Pvoid                   (* I don't think this case can arise *)
-			  |  ([], brs)  => mkBottom "resultTy" brs (* I'm not sure this case arises either *)
+  		        of   ([], [])   => Pvoid {coverage=0}                   (* I don't think this case can arise *)
+			  |  ([], brs)  => mkBottom (List.length brs,brs)       (* I'm not sure this case arises either *)
 			  |  ([ty], []) => ty
-			  |  (tys, brs) => if isEmpty brs then Punion tys else Punion (tys @ [(mkTBD (curDepth, brs))])
+			  |  (tys, brs) => if isEmpty brs 
+					   then Punion ({coverage=sumCoverage tys}, tys) 
+					   else let val badCoverage = List.length brs
+						in 
+						    Punion ({coverage=badCoverage + sumCoverage tys}, 
+							    (tys @ [(mkTBD (curDepth, badCoverage, brs))]))
+						end
 (*		    val () = print "\nInferred type:\n"
 		    val () = printTy (simplifyTy resultTy) 
 *)
@@ -694,9 +727,9 @@ structure Main : sig
 		    resultTy
 		end
             val ty = case analysis 
-		     of Blob => mkBottom "blob" rtokens
-		     |  Empty => Base Pempty
-		     |  Struct s => partitionToTy (splitRecords s rtokens)
+		     of Blob => mkBottom (List.length rtokens, rtokens)
+		     |  Empty => Base ({coverage=0}, Pempty)
+		     |  Struct s => buildStructTy (splitRecords s rtokens) (* Can produce union of structs *)
 	in
 	    ty
 	end
