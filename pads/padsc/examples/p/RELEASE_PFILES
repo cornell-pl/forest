@@ -79,5 +79,6 @@ struct_strings.p
 struct_tricky.p 
 struct_good.p 
 transform.p
+try.p
 typedef.p 
 typedef2.p 

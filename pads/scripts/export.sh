@@ -18,6 +18,7 @@
 # pads-1-03-a      pads 1.03    2006-09-07  transform, pinclude, writetoio fix
 # pads-1-03-b      pads 1.03b   2006-09-08  fixed takelists, version numbers
 # pads-1-03-c      pads 1.03c   2006-09-08  fixed takelists, fixed makefile
+# pads-1-04-a      pads 1.04    2006-07-11  try, enums can specify base type, mask generation functions
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`

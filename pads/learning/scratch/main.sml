@@ -58,8 +58,37 @@ structure Main : sig
     fun minCoverage tys = 
 	case tys of [] => Option.valOf Int.maxInt
         | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
-      
 
+    (* Function to compute the "complexity" of a type.
+       -- defined to be the depth of the tree, ie, the number of alternations of type constructors
+       -- plus the number of TBD contexts
+       -- plus the number of Bottom contexts
+     *)
+
+    type complexity = {numAlt:int, numTBD:int, numBottom:int}
+    fun mkComplexity (alt, tbd, bottom) = {numAlt=alt, numTBD=tbd,numBottom=bottom}
+
+    fun complexity ty : complexity =
+	let fun mergeComplexity (ty, (cumAlt,cumTBD,cumBottom)) = 
+	        let val {numAlt,numTBD,numBottom} = complexity ty
+		in
+		    (Int.max(cumAlt,numAlt), cumTBD+numTBD, cumBottom+numBottom)
+		end
+	    fun incAlt (alt,tbd,btm) = (alt + 1,tbd,btm) 
+	in
+	case ty
+        of Base (a,t)      => mkComplexity(0,0,0)
+        |  Pvoid a         => mkComplexity(0,0,0)
+        |  TBD (a,i,cl)    => mkComplexity(0,1,0)
+        |  Bottom (a,i,cl) => mkComplexity(0,0,1)
+        |  Pstruct (a,tys) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
+        |  Punion (a,tys)  => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
+	end
+
+    fun printComplexity {numAlt, numTBD, numBottom} = 
+	(print ("numAlt = "^(Int.toString numAlt)^"  ");
+	 print ("numTBD = "^(Int.toString numTBD)^"  ");
+	 print ("numBtm = "^(Int.toString numBottom)))
     val TBDstamp = ref 0
     val Bottomstamp = ref 0
 
@@ -354,7 +383,9 @@ structure Main : sig
 	        |  Pstruct (aux,tys) => List.app dumpTBDs tys
 	        |  Punion (aux,tys) => List.app dumpTBDs tys
     	in  
-          (print "\nOutputing parititons to directory: "; print path; print "\n";
+          (print "Complexity of inferred type:\n\t";
+	   printComplexity (complexity ty);
+	   print "\nOutputing parititons to directory: "; print path; print "\n";
 	   if OS.FileSys.isDir path handle SysErr => (OS.FileSys.mkDir path; true)
 	   then (dumpTBDs ty; dumpTy (path^"Ty") ty)
 	   else print "Output path should specify a directory.\n"
