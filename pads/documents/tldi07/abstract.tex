@@ -1,0 +1,78 @@
+%\documentclass[fleqn]{article}
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+\input{../popl07/definitions}
+
+\begin{document}
+\title{Typing Ad Hoc Data}
+\authorinfo{Kathleen Fisher\\
+            AT\&T Labs Research\\ 
+            \mono{kfisher@research.att.com}}
+
+
+
+\maketitle{}
+\begin{abstract}
+Traditionally, types describe the internal data manipulated by
+programs.  To accommodate the variety of desired data structures,
+language designers and type theorists have developed a wide variety of
+types and type constructors.  But not all useful data is in programs;
+in fact, enormous amounts of it sit on disks or stream by on wires in
+a dizzying array of encodings and formats.  It turns out that many of
+the types developed for internal data can be used to describe external
+data: tuples, records, unions, options, and lists come to mind as
+obvious examples.  Perhaps more surprisingly, recursive types,
+singletons, functions, parametric polymorphism, and dependent types
+are relevant as well.  Using types to describe external data leads
+naturally to the insight that we can reuse the same type to define an
+internal data structure and to generate parsing and printing functions
+to map between the two representations.  The PADS
+project~\cite{padsproject} has exploited this idea, building data
+description languages based on the type structure of C
+(PADS/C)~\cite{fisher+:pads} and on ML
+(PADS/ML)~\cite{mandelbaum+:pads-ml} and exploring the theoretical
+basis for such languages with the Data Description Calculus
+(DDC)~\cite{fisher+:next700ddl}.
+Other groups have also leveraged this
+insight, most closely the work on DataScript~\cite{gpce02} and
+PacketTypes~\cite{sigcomm00}. 
+Continuing the analogy, it turns out that other concepts from the
+types world are also relevant to ad hoc data processing, including
+generic programming, type inference, type isomorphisms, and subtyping.
+
+In this talk, I will describe the domain of ad hoc data processing and
+explain how types enable precise descriptions of such data.  I will
+then explore the question of type inference, describing quantitative
+techniques we are currently developing to construct a description of
+ad hoc data given example instances.
+
+
+\end{abstract}
+\section*{Acknowledgments}
+Many people have worked on the PADS project, including 
+Mark Daly, Mary Fern\'andez,
+Robert Gruber, Yitzhak Mandelbaum, and David Walker. 
+
+\bibliographystyle{abbrv}
+\bibliography{../popl07/pads}
+%\bibliography{../common/pads-long,../common/pads}
+
+%\input{appendix}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+
