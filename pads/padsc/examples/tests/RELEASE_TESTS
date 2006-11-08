@@ -13,6 +13,7 @@ rwxml_pdate.c
 rwxml_pdate_explicit.c 
 rwxml_pdate_explicit_me.c 
 rwxml_enum.c
+rwxml_enum3.c
 rwxml_struct1.c
 rwxml_array_advance.c
 rwxml_message_header.c

@@ -46,6 +46,7 @@ pdate
 pdate_explicit
 pdate_explicit_me
 enum
+enum3
 array_advance
 message-header-01
 transform

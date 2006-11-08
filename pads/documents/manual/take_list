@@ -1,4 +1,2 @@
 *.html
-pictures/*.pdf
-pictures/*.jpg
-pictures/*.png
+*.pdf

@@ -6,7 +6,6 @@
 # Notes: When putting out a new release, 
 #  . Increment the compiler version number in main.sml
 #  . Increment the manual version in version.tex
-#     SCRIPT FOR EXPORTING MANUAL IS BROKEN: PICTURES, PDF MISSING
 #  . Be sure to update the take_lists in examples/{p,tests,data}
 #  . Make sure compiler is set to generate release version of compiler
 #  . Add tarball to pads-private/dist directory.
@@ -19,6 +18,7 @@
 # pads-1-03-b      pads 1.03b   2006-09-08  fixed takelists, version numbers
 # pads-1-03-c      pads 1.03c   2006-09-08  fixed takelists, fixed makefile
 # pads-1-04-a      pads 1.04    2006-07-11  try, enums can specify base type, mask generation functions
+# pads-1-04-b      pads 1.04b   2006-07-11  enum test files added, manual script fixed?
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`
@@ -31,6 +31,9 @@ make
 # install documentation
 mkdir ../../temp_docs
 for x in `cat take_list`; do cp $x ../../temp_docs; done
+mkdir ../../temp_docs/pictures
+cd ../../temp_docs/pictures
+for x in `cat take_list`; do cp $x pictures; done
 cd ../..  # now at pads
 rm -rf documents
 mv temp_docs documents
