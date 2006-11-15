@@ -10,10 +10,13 @@ structure Main : sig
     val HIST_PERCENTAGE   = ref 0.01
     val STRUCT_PERCENTAGE = ref 0.01
     val JUNK_PERCENTAGE   = ref 0.1
+    val NOISE_PERCENTAGE  = ref 0.0
+    val ARRAY_WIDTH_THRESHOLD = ref 4
 
     fun histEqTolerance   x = Real.ceil((!HIST_PERCENTAGE)   * Real.fromInt(x)) 
     fun isStructTolerance x = Real.ceil((!STRUCT_PERCENTAGE) * Real.fromInt(x)) 
     fun isJunkTolerance   x = Real.ceil((!JUNK_PERCENTAGE)   * Real.fromInt(x)) 
+    fun isNoiseTolerance  x = Real.ceil((!NOISE_PERCENTAGE)   * Real.fromInt(x)) 
 
     val depthLimit = ref 2
     val outputDir = ref "gen/"
@@ -23,7 +26,8 @@ structure Main : sig
     (********************************************************************************)
     (*********************  END Configuration ***************************************)
     (********************************************************************************)
-	    
+  
+    val initialRecordCount = ref ~1  (* will be set at beginning of program based on input file *)    
     val anyErrors = ref false
     exception Exit of OS.Process.status
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
@@ -41,6 +45,7 @@ structure Main : sig
     datatype Ty = Base of AuxInfo * Token | Pvoid of AuxInfo
                 | TBD of AuxInfo * int * Context list | Bottom of AuxInfo * int * Context list 
                 | Pstruct of AuxInfo * Ty list |  Punion of AuxInfo * Ty list 
+                | Parray of AuxInfo * (Token * int) list * Ty * Ty
 
     fun getAuxInfo ty : AuxInfo = 
 	case ty 
@@ -50,6 +55,7 @@ structure Main : sig
         |  Bottom (a,i,cl) => a
         |  Pstruct (a,tys) => a
         |  Punion (a,tys) => a
+        |  Parray (a,tokens,ty1,ty2) => a
 
     fun getCoverage ty = #coverage(getAuxInfo ty)
     fun sumCoverage tys = 
@@ -83,6 +89,8 @@ structure Main : sig
         |  Bottom (a,i,cl) => mkComplexity(0,0,1)
         |  Pstruct (a,tys) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
         |  Punion (a,tys)  => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
+        |  Parray (a,tks,ty1,ty2) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) [ty1,ty2]))
+
 	end
 
     fun printComplexity {numAlt, numTBD, numBottom} = 
@@ -186,13 +194,17 @@ structure Main : sig
 		     end) 
 
    type RecordCount = (int ref) TokenTable.map
-   type histogram = {hist : (int ref) IntMap.map ref, total: int ref, weight : int ref, 
-		     score : int ref, width : int ref}
+   type histogram = {hist : (int ref) IntMap.map ref, 
+		     total: int ref,        (* number of occurrences of token in file *)
+		     coverage : int ref,    (* number of records with at least one occurrence of token *)
+		     structScore : int ref, (* structScore metric: weights heavy mass in single column *)
+		     width : int ref}       (* number of columns in histogram *)
    type freqDist = histogram TokenTable.map
    type cluster  = freqDist list
 
    datatype Kind = Struct of {numTokensInCluster:int, numRecordsWithCluster:int,
 			      tokens: (Token * int) list}
+                 | Array of {tokens: (Token * int) list}
                  | Blob | Empty
 
    (* Printing routines *)
@@ -245,8 +257,8 @@ structure Main : sig
 	(print "Token: "; 
 	 printTokenTy token; print "\n"; 
          print ("Total number of token occurrences: "^(Int.toString (!(#total h))^".\n"));
-         print ("Number of records with at least one token occurrence: "^(Int.toString (!(#weight h))^".\n"));
-         print ("Score: "^(Int.toString (!(#score h))^".\n"));
+         print ("Number of records with at least one token occurrence: "^(Int.toString (!(#coverage h))^".\n"));
+         print ("StructScore: "^(Int.toString (!(#structScore h))^".\n"));
 	 IntMap.appi (printOneFreq numRecords) (!(#hist h)); print "\n")
     
     fun printDist numRecords freqs = (print "Distributions:\n"; TokenTable.appi (printAugHist numRecords) freqs; print "\n")
@@ -262,6 +274,14 @@ structure Main : sig
 		 print "Coverage:";    print (Int.toString coverage);  print "\n";
 		 print "Token count:"; print (Int.toString count);     print "\n";
 		 List.app printOne tinfos)
+	    end
+      | Array {tokens} =>
+	    let fun printOne (t,count) =
+		(printTokenTy t; print "\t";
+		 print "Occurrences:"; print (Int.toString count);  print "\n")
+	    in
+		(print "Array"; print "\t";
+		 List.app printOne tokens)
 	    end
         | Blob => (print  "Blob"; print "\n")
         | Empty => (print  "Empty"; print "\n")
@@ -331,7 +351,7 @@ structure Main : sig
        (prefix^
         (case ty 
          of Pvoid aux      => ("Pvoid(" ^(covToString aux)^")")
-         |  Base (aux, t)  => tokenTyToString t
+         |  Base (aux, t)  => (tokenTyToString t)^("(" ^(covToString aux)^")")
          |  TBD (aux,i,cl) => "TBD_"^(Int.toString i)^
 	                      "("^(covToString aux)^")"^
 		              (if longTBDs then
@@ -347,7 +367,15 @@ structure Main : sig
 			    prefix ^ "End Pstruct"
          |  Punion (aux, tys)  => "Punion("^(covToString aux)^")\n"^
 	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
-			    prefix ^ "End Punion")^
+			    prefix ^ "End Punion"
+         |  Parray (aux, tkns, ty1,ty2)  => "Parray("^(covToString aux)^")"^
+			    "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
+			    prefix ^ "Body:\n"^
+                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty1)^
+			    prefix^"Tail:\n"^
+                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty2)^
+			    prefix ^ "End Parray"
+        )^
 	suffix)
        
     fun TyToString ty = TyToStringD "" false false "" ty
@@ -382,6 +410,7 @@ structure Main : sig
                 |  Bottom(aux,i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
 	        |  Pstruct (aux,tys) => List.app dumpTBDs tys
 	        |  Punion (aux,tys) => List.app dumpTBDs tys
+	        |  Parray (aux,tkns,ty1,ty2) => List.app dumpTBDs [ty1,ty2]
     	in  
           (print "Complexity of inferred type:\n\t";
 	   printComplexity (complexity ty);
@@ -404,51 +433,47 @@ structure Main : sig
 	   case ty 
 	   of Pstruct (aux,tys) => Pstruct (aux, collapseStruct tys [])
            |  Punion  (aux,tys) => Punion  (aux, collapseUnion  tys [])
+           |  Parray  (aux,tkns,ty1,ty2) => Parray  (aux,tkns,simplifyTy ty1, simplifyTy ty2)
 	   |  ty                => ty
        end
 
    (* Histogram compuations *)
    fun mkHistogram (column:int) : histogram =
-       {hist=ref (IntMap.insert(IntMap.empty, column, ref 1)), total=ref column, weight = ref 1, score = ref 0, width = ref 0}
+       {hist=ref (IntMap.insert(IntMap.empty, column, ref 1)), total=ref column, coverage = ref 1, 
+	structScore = ref 0, width = ref 0}
 
    fun getSortedHistogramList c = 
-       let val cList = List.map (!) (IntMap.listItems c)
+       let val cList = List.map (fn(x,y)=>(x,!y)) (IntMap.listItemsi c)
+	   fun cmp((x1,y1),(x2,y2)) = Int.<(y1,y2)
        in
-	   ListMergeSort.sort (Int.<) cList
+	   ListMergeSort.sort cmp cList
        end
 
    fun fuzzyIntEq threshold (i1, i2) = abs(i1 - i2) < threshold
 
-   (* formula: sum over all columns of columnNumber * (numRemainingRecords - columnHeight) *)
+   (* formula: sum over all columns of columnNumber * (numRemainingRecords - colHeight) *)
    fun histScore numRecords (h:histogram) = 
        let val cSorted = getSortedHistogramList (!(#hist h))
-	   fun foldNext (columnHeight, (score, columnNumber, numRemainingRecords)) =
-	       (columnNumber * (numRemainingRecords - columnHeight) + score, columnNumber +1, numRemainingRecords - columnHeight)
+	   fun foldNext ((colIndex, colHeight), (structScore, columnNumber, numRemainingRecords)) =
+	       let val mass = colIndex * colHeight
+	       in
+		   (columnNumber * (numRemainingRecords - colHeight) + structScore, columnNumber +1, numRemainingRecords - colHeight)
+	       end
+	   val (structScore, colNumber, numRemaining) = List.foldl foldNext (0,1,numRecords) cSorted 
        in
-	   (#1 (List.foldl foldNext (0,1,numRecords) cSorted ), List.length cSorted)
+	   (structScore, List.length cSorted)
        end
 
-    fun histScoreCmp threshold ({score=score1,...}:histogram,{score=score2,...}:histogram) = 
+    fun histScoreCmp threshold ({structScore=score1,...}:histogram,{structScore=score2,...}:histogram) = 
 	(!score1) < (!score2)
 
-    fun histScoreEq threshold ({score=score1,...}:histogram,{score=score2,...}:histogram) = 
+    fun histScoreEq threshold ({structScore=score1,...}:histogram,{structScore=score2,...}:histogram) = 
 	(fuzzyIntEq threshold (!score1,!score2)) 
 
-   (* OBSOLETE function *)
-   (* two histograms are equal if they have the same number of columns,
-    * and when sorted by height, corresponding columns are of equal height *)
-   fun histogramEqual threshold (h1:histogram, h2:histogram) = 
-       let val c1 = !(#hist h1)
-	   val c2 = !(#hist h2)
-       in
-       (fuzzyIntEq threshold (IntMap.numItems c1, IntMap.numItems c2))
-       andalso
-            let val c1Sorted = getSortedHistogramList c1
-		val c2Sorted = getSortedHistogramList c2
-	    in
-		ListPair.all (fuzzyIntEq threshold) (c1Sorted, c2Sorted)
-	    end
-       end
+
+    (********************************************************************)
+    (******************** Processing functions **************************)
+    (********************************************************************)
 
    (* The call to String.tokens does not produce the correct results when
     * applied to a file with blank lines.  Instead of returning an empty
@@ -515,12 +540,12 @@ structure Main : sig
                 let fun doOneToken (token,count,fd) : freqDist = 
 		    case TokenTable.find(fd,token)
 		    of NONE => TokenTable.insert(fd, token, mkHistogram (!count))
-                    |  SOME ({hist, total, weight, ...}: histogram)  => 
+                    |  SOME ({hist, total, coverage, ...}: histogram)  => 
 		       ((case IntMap.find(!hist, !count)
 			 of NONE      => hist := IntMap.insert(!hist, !count, ref 1) 
 		         |  SOME cref => cref := !cref + 1);
 			 total := !total + !count;
-			 weight := !weight + 1;
+			 coverage := !coverage + 1;
 			 fd)
 		in
 		    (TokenTable.foldli doOneToken fd counts : freqDist)
@@ -528,10 +553,10 @@ structure Main : sig
 	    fun doAllRecords (fd:freqDist) [] = fd
               | doAllRecords fd (c::cs) = doAllRecords (doOneRecord fd c) cs
             val freqs : freqDist = doAllRecords TokenTable.empty countslist
-	    fun scoreHistogram (h as {hist, total, weight, score, width} : histogram) = 
+	    fun scoreHistogram (h as {hist, total, coverage, structScore, width} : histogram) = 
 		let val (s,w) = histScore numRecords h
 		in
-		    score := s;
+		    structScore := s;
 		    width := w
 		end
 	    val () = TokenTable.app scoreHistogram freqs
@@ -562,45 +587,97 @@ structure Main : sig
 	    clusters
 	end
 
-    (* Selects the "top-level" cluster from the input cluster list.
+    (* Given the highest ranked cluster from the input cluster list.
        Return:
         Struct of
-          kind of cluster: struct, union, array
+          kind of cluster: struct, array
           count of the number of tokens in the cluster
           count of the number of records in which the cluster appears
           a list of the tokens in the cluster and the number of times each token appears in the cluster
+        | Array of tokens and number of occurrences of those tokens in possible array
         | Blob, indicating no match
      *)
-    fun analyzeCluster numRecords (cluster : (Token * histogram) list) = 
-	let fun doOneToken((t, {hist, total, weight, score, width}), result) =
-	        let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
-		    val sortedHlist = ListMergeSort.sort (fn((i1,c1:int),(i2,c2))=>(c1 < c2)) hList
-		    val primary = List.hd sortedHlist
-		    fun isStruct sortedHlist =
-			let val rest = List.tl sortedHlist
-			    val massOfRest = List.foldl (fn((i,c:int),acc)=> acc + c) 0 rest
-			in
-			    massOfRest < (isStructTolerance numRecords)
-			end
-		in
-		    if isStruct sortedHlist then [(t, #1 primary, #2 primary)]@result  else result
-		end
-	    val tokenAnalysis = List.foldl doOneToken [] cluster
+    fun analyzeClusters numRecords (clusters : (Token * histogram) list list) = 
+	let fun isStruct cluster = 
+		let fun getStructInfo((t, {hist, total, coverage, structScore, width}), result) =
+		    let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
+			val sortedHlist = ListMergeSort.sort (fn((i1,c1:int),(i2,c2))=>(c1 < c2)) hList
+			val primary = List.hd sortedHlist
+			fun isStruct sortedHlist =
+			    let val rest = List.tl sortedHlist
+				val massOfRest = List.foldl (fn((i,c:int),acc)=> acc + c) 0 rest
+			    in
+				massOfRest < (isStructTolerance numRecords)
+			    end
+		    in
+			if isStruct sortedHlist then [(t, #1 primary, #2 primary)]@result  else result
+		    end
 
-            fun mergeStructEntries ta =
-		let fun doOne ((token,count,coverage),(cumCount, cumCoverage,tlist)) = 
+		    fun mergeStructEntries tokenAnalysis =
+			let fun doOne ((token,count,coverage),(cumCount, cumCoverage,tlist)) = 
 			    (cumCount + count, Int.min(coverage, cumCoverage), (token, count)::tlist)
-		    val (numTokens, coverage, tokens) = List.foldl doOne (0, numRecords,[]) tokenAnalysis
-		in
-		    (print "Junk Tolerance Threshold: "; print (Int.toString(isJunkTolerance numRecords)); print "\n";
-		     print "Coverage: ";                 print (Int.toString(coverage)); print "\n";
-		     print "Num Tokens: ";               print (Int.toString(numTokens)); print "\n";
-		    if (coverage >= (isJunkTolerance numRecords) andalso (numTokens > 0))
-		    then Struct {numTokensInCluster = numTokens, numRecordsWithCluster = coverage, tokens = tokens}
-		    else (print "Identifed a blob\n"; Blob)
-)
+			    val (numTokens, coverage, tokens) = List.foldl doOne (0, numRecords,[]) tokenAnalysis
+			in
+			    (print "Junk Tolerance Threshold: "; print (Int.toString(isJunkTolerance numRecords)); print "\n";
+			     print "Coverage: ";                 print (Int.toString(coverage)); print "\n";
+			     print "Num Tokens: ";               print (Int.toString(numTokens)); print "\n";
+			     if (coverage >= (isJunkTolerance numRecords) andalso (numTokens > 0))
+				 then (SOME (Struct {numTokensInCluster = numTokens, numRecordsWithCluster = coverage, tokens = tokens}))
+			     else NONE
+				 )
+			end
+		in 
+		    mergeStructEntries (List.foldl getStructInfo [] cluster)
 		end
-	    val kindSummary = mergeStructEntries tokenAnalysis
+
+                
+	    fun getArrayScore (h:histogram) = !(#coverage h)
+	    (* For tokens with fuzzy-equal array scores, gives preference to punctuation tokens according
+             * to token order, ie, "other" characters, and then white space, etc. *)
+            fun lessArrayHist((t1,h1),(t2,h2)) = 
+		let val as1 = getArrayScore h1
+		    val as2 = getArrayScore h2
+		    fun tknCompToBool cmp = case cmp of LESS => true | _ => false
+		in
+		    if Int.abs(as1 - as2) < (histEqTolerance numRecords) then tknCompToBool(compToken(t1,t2))
+		    else as1 < as2
+		end
+
+            fun lessArrayCluster (c1,c2) = 
+		case (c1,c2) 
+                of ([],_) => true
+                |  (_,[]) => false
+                |  (th1::_, th2::_) => lessArrayHist(th1,th2)
+
+            fun isArray clusters = 
+		let val sortedClusters = ListMergeSort.sort lessArrayCluster clusters
+		    val () = print "Clusters sorted by array criteria:\n"
+		    val () = printClusters numRecords sortedClusters
+		    val cluster = List.hd sortedClusters (* guaranteed by earlier check not to be [] *)
+		    fun getArrayInfo((t, {hist, total, coverage, structScore, width}), result) = 
+		    (print "Possible array tokens:\n"; 
+		     printTokenTy t; print "\n";
+		     print ("Records in possible array context:"^(Int.toString numRecords)^"\n");
+                     print ("Total:"^(Int.toString (!total))^"\n");
+                     print ("Coverage:"^(Int.toString (!coverage))^"\n");
+                     print ("Width:"^(Int.toString (!width))^"\n");
+		     if (!width >= !ARRAY_WIDTH_THRESHOLD) andalso (!coverage > numRecords - (isJunkTolerance numRecords)) 
+			 then (t,1)::result else result)
+		    (* we probably want to compute the number of times the token appears in the cluster...*)
+		    val arrayTokenAnalysis = List.foldl getArrayInfo [] cluster 
+		in
+		    case arrayTokenAnalysis of [] => NONE | a => SOME(Array {tokens = a})
+		end
+
+	    val kindSummary = 
+		case clusters 
+                of [] => Empty
+                |  (cluster::cs) => 
+		    case isStruct cluster
+		    of SOME s => s
+                    |  NONE => (case isArray clusters 
+			        of SOME a => a
+                                |  NONE   => (print "Identified a blob\n"; Blob))
 
 	    val () = printKindSummary kindSummary
 
@@ -694,6 +771,7 @@ structure Main : sig
 	Bottom ({coverage=coverage}, !Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
 
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
+    (* coverage is number of records in this context *)
     fun mkTBD (currentDepth, coverage, cl) = 
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
@@ -702,18 +780,17 @@ structure Main : sig
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
 	in
-	    if (currentDepth < !depthLimit)
-	    then
-	      ContextListToTy (currentDepth + 1) cl
-	    else 
-		TBD ({coverage=coverage}, !TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
+	    if (coverage < isNoiseTolerance(!initialRecordCount))
+	    then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
+	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
+	    then TBD ({coverage=coverage}, !TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
+	    else ContextListToTy (currentDepth + 1) cl
 	end
 
 
     and clustersToTy curDepth rtokens numRecords clusters = 
-	let val analysis = case clusters of [] => Empty 
-                           | (c::cs) => analyzeCluster numRecords c
-           (* This function takes a Partition and returns a Ty describing that partition *)
+	let val analysis = analyzeClusters numRecords clusters
+           (* This function takes a Struct Partition and returns a Ty describing that partition *)
 	    fun buildStructTy partitions = 
 		let val (matches, badRecords) = partitions
 		    fun isEmpty column = not (List.exists (not o null) column)
@@ -751,16 +828,66 @@ structure Main : sig
 						    Punion ({coverage=badCoverage + sumCoverage tys}, 
 							    (tys @ [(mkTBD (curDepth, badCoverage, brs))]))
 						end
-(*		    val () = print "\nInferred type:\n"
-		    val () = printTy (simplifyTy resultTy) 
-*)
 		in
 		    resultTy
 		end
+	    fun buildArrayTy ({tokens=atokens}, rtokens) = 
+		let val numTokens = List.foldl (fn((token,freq),sum) => sum + freq) 0 atokens
+		    fun partitionOneRecord tlist = 
+		        let fun insertOne ((token,freq),tTable) = TokenTable.insert(tTable, token, ref freq)
+			    val tTable = List.foldl insertOne TokenTable.empty atokens
+			    val numFound = ref 0
+			    fun resetTable () = 
+				let fun setOne(token,freq) = 
+				    let val freqRef = Option.valOf (TokenTable.find(tTable,token))
+				    in
+					freqRef := freq
+				    end
+				in
+				    List.app setOne atokens;
+				    numFound := 0
+				end
+			    (* Return two contexts: one for all tokens in array slots except for the last one,
+			       and one for the tokens in the last slot; this partition is to avoid confusion
+			       with the separator not being in the last slot *)
+			    fun doNextToken [] (current, all) = (all, List.rev current)
+                              | doNextToken ((rt as (lrt,loc))::rts) (current, all) = 
+				  case TokenTable.find(tTable, lrt)
+				  of NONE => doNextToken rts (rt::current, all)
+                                  |  SOME freq => 
+				      if !freq <= 0 then (freq := !freq - 1; doNextToken rts (rt::current, all))
+				      else (freq := !freq - 1;
+					    numFound := !numFound + 1;
+					    if !numFound = numTokens 
+					    then (resetTable(); doNextToken rts ([], (List.rev (rt::current) :: all)))
+					    else doNextToken rts (rt::current, all))
+			in
+			    doNextToken tlist ([],[])
+			end
+		    fun partitionRecords rtokens = 
+			let fun pR [] (mainA,lastA) = (List.rev mainA, List.rev lastA)
+                              | pR (t::ts) (mainA, lastA)= 
+			    let val (main,last) = partitionOneRecord t
+			    in 
+				pR ts (main@mainA, last::lastA)
+			    end
+			in
+			    pR rtokens ([],[])
+			end
+
+		    val (mainContext,lastContext) = partitionRecords rtokens
+		in
+		    (print "Array context\n"; 
+		     Parray ({coverage=numRecords}, atokens, 
+			     mkTBD(curDepth, List.length mainContext, mainContext),
+			     mkTBD(curDepth, List.length lastContext, lastContext)))
+		end
+
             val ty = case analysis 
 		     of Blob => mkBottom (List.length rtokens, rtokens)
 		     |  Empty => Base ({coverage=0}, Pempty)
 		     |  Struct s => buildStructTy (splitRecords s rtokens) (* Can produce union of structs *)
+		     |  Array a =>  buildArrayTy (a, rtokens)
 	in
 	    ty
 	end
@@ -780,6 +907,7 @@ structure Main : sig
 	let val fileName = !srcFile
 	    val () = print ("Starting on file "^fileName^"\n");
 	    val records = loadFile fileName
+	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map ltokenizeRecord records
 	    val ty = ContextListToTy 0 rtokens
 	    val sty = simplifyTy ty
@@ -795,6 +923,7 @@ structure Main : sig
     fun setHistPer    h = HIST_PERCENTAGE := h
     fun setStructPer  s = STRUCT_PERCENTAGE := s
     fun setJunkPer    j = JUNK_PERCENTAGE := j
+    fun setNoisePer   n = NOISE_PERCENTAGE := n
     fun addSourceFile f = srcFile    := f
 
     val flags = [
@@ -802,6 +931,7 @@ structure Main : sig
          ("maxdepth", "maximum depth for exploration (default 5)",    PCL.Int    (setDepth,     false)),
          ("h",        "histogram comparison tolerance (percentage, default 0.01)",  PCL.Float  (setHistPer,   false)),
          ("s",        "struct determination tolerance (percentage, default 0.01)",  PCL.Float  (setStructPer, false)),
+         ("n",        "noise level (percentage, default 0.01)",       PCL.Float  (setNoisePer, false)),
          ("j",        "junk threshold (percentage, default 0.1)",     PCL.Float  (setJunkPer,   false))
         ]
 
@@ -814,7 +944,8 @@ structure Main : sig
 	    print ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n");
 	    print ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n");
 	    print ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n");
-	    print ("Junk threshold (percentage): "                  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n"))
+	    print ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n");
+	    print ("Junk threshold (percentage): "                  ^(Real.toString (!JUNK_PERCENTAGE))^"\n"))
 	end
     (********************************************************************************)
 
