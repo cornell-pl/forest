@@ -1,0 +1,661 @@
+\section{Encoding \ddl{}s in \ddc{}}
+\label{sec:encodings}
+
+We can better understand the data description languages mentioned
+earlier by translating their constructs into the types of \ddc{}. We
+start with the translation of \ipads{}, which captures many of the
+common features of \ddl{}s. We then discuss features of \pads{},
+\datascript{}, and \packettypes{} that are not found in \ipads{}.
+\trversion{
+Finally, we briefly discuss some limitations of \ddc{}.
+}
+\subsection{\ipads{} Translation}
+\label{sec:trans-sl}
+
+\trversion{
+\begin{figure*}
+{\small
+\fbox{$\ctxt \turn \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer[\text{Prog-One}]{ 
+    \ctxt \turn \itmv \cipads \ty \; \text{prog}
+  }{
+    \ctxt \turn \itmv \cipads \ty : \kty
+  }
+\quad
+  \infer[\text{Prog-Def}]{ 
+    \ctxt \turn \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+    \ctxt \turn \mathit{prog}[\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\quad
+  \infer[\text{Prog-RecDef}]{ 
+    \ctxt \turn  \Prec{}\; \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+    \ctxt \turn \mathit{prog}[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$\ctxt \turn \itmv  \cipads \ty : \kind$}
+
+\[
+  \infer[\text{Base}]{ 
+    \ctxt \turn \pbase e \cipads \pbase e : \kty
+  }{
+    \ctxt \turn e : \ity & (\Ikind(C) = \ity \to \kty)
+  }
+\quad
+  \infer[\text{Pfun}]{ 
+    \ctxt \turn \Pfun (x:\ity) = \itmv \cipads \plam x
+    \ity \ty : \ity \to \kind
+  }{
+    \ectxt{x{:}\ity} \turn \itmv \cipads \ty : \kind
+  }
+\quad
+  \infer[\text{App}]{ 
+    \ctxt \turn \itmv \; e \cipads \ty \; e : \kind
+  }{
+    \ctxt \turn \itmv \cipads \ty : \ity \to \kind & \ctxt \turn e : \ity
+  }
+\]
+
+\[
+  \infer[\text{Pstruct}]{
+    \begin{array}{l}
+    \ctxt \turn \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+    \cipads \\
+    \qquad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n : \kty      
+    \end{array}
+  }{ 
+    \begin{array}{c}
+%       \ctxt_1 = \ctxt \quad \ity_{i-1} = \iprod{\itsem[\ty_{i-1}]} {\itpdsem[\ty_{i-1}]}\\
+%       \ctxt_i = \ctxt_{i-1},x_{i-1}{:} \ity_{i-1} \quad 
+%       (\text{for} \; i = 2 \ldots n) \\
+%       \ctxt_i \turn \itmv_i \cipads \ty_i : \kty \quad
+%       (\text{for} \; i = 1 \ldots n)
+      \ctxt_i = \ctxt,x_1{:}\ity_1, \dots, x_{i-1}{:} \ity_{i-1} \\
+      \ity_{i} = \iprod{\itsem[\ty_{i}]} {\itpdsem[\ty_{i}]} \quad
+      \ctxt_i \turn \itmv_i \cipads \ty_i : \kty
+    \end{array}
+  }
+\quad
+  \infer[\text{Punion}]{
+    \begin{array}{l}
+      \ctxt \turn \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads \\
+      \ty_1 + \dots + \ty_n + \pfalse : \kty
+    \end{array}
+  }{ 
+    \ctxt \turn \itmv_i \cipads \ty_i : \kty
+  }
+\]
+
+\[
+  \infer[\text{Palt}]{
+    \ctxt \turn \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
+    \ty_1 \& \dots \& \ty_n: \kty
+  }{ 
+    \ctxt \turn \itmv_i \cipads \ty_i : \kty
+  }
+\quad
+  \infer[\text{Popt}]{
+    \ctxt \turn \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue : \kty
+  }{
+    \ctxt \turn \itmv \cipads \ty : \kty
+  }
+\quad
+  \infer[\text{Pwhere}]{
+    \begin{array}{l}
+      \ctxt \turn \itmv \; \Pwhere \, x.e \cipads  \\
+      \qquad
+      \pset x \ty {\iif {\pdok {x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+    \end{array}
+  }{ 
+     \ctxt \turn \itmv \cipads \ty : \kty & 
+     \stsem[e,\ectxt{x{:}\iprod{\itsem[\ty]} {\itpdsem[\ty]}},\iboolty]
+  }
+\]
+
+\[
+  \infer[\text{Parray}]{
+    \ctxt \turn \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}} : \kty
+  }{ 
+       \begin{array}{lr}
+         \ctxt \turn \itmv \cipads \ty : \kty & 
+         \ctxt \turn \itmv_{sep} \cipads \ty_s : \kty \\ 
+         \ctxt \turn \itmv_{term} \cipads \ty_t : \kty &
+         (f = \ilam x{}\ifalse)\\
+       \end{array}
+  }
+\quad
+  \infer[\text{Pcompute}]{ 
+    \ctxt \turn \Pcompute{} \; e \cipads \pcompute e \ity : \kty
+  }{
+    \stsem[e,\ctxt,\ity]
+  }
+\]
+
+\[
+  \infer[\text{Plit}]{ 
+    \ctxt \turn \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\ivar = \iconst}}} : \kty
+  }{
+    \stsem[\const,\ctxt,\ity] & \defty \ity \ty
+  }
+\quad
+  \infer[\text{Var}]{ 
+    \ctxt \turn \ga \cipads \ga
+  }{}    
+\quad
+  \infer[\text{Prec}]{ 
+    \ctxt \turn \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
+  }{
+    \ctxt \turn \itmv \cipads \ty
+  }
+\]
+}
+  \caption{Encoding \ipads{} in \ddc{} with type checking}
+  \label{fig:encode-ipads-with-tc}
+\end{figure*}
+
+ \reminder{Add poly. context to all typing judgments that appear in
+   premises. See email (subject:Prec) for details on how to fix translation}
+
+\begin{figure*}
+{\small
+\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer[\text{Prog-One}]{ 
+     \itmv \cipads \ty \; \text{prog}
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+  \infer[\text{Prog-Def}]{ 
+     \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+     \mathit{prog}[\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\qquad
+  \infer[\text{Prog-RecDef}]{ 
+      \Prec{}\; \ga = \itmv; \; \mathit{prog} \cipads \ty \; \text{prog}
+  }{
+     \mathit{prog}[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$ \itmv  \cipads \ty$}
+
+\[
+  \infer[\text{Base}]{ 
+     \pbase e \cipads \pbase e
+  }{}
+\qquad
+  \infer[\text{Pfun}]{ 
+     \Pfun (x:\ity) = \itmv \cipads \plam x
+    \ity \ty
+  }{
+    \itmv \cipads \ty
+  }
+\qquad
+  \infer[\text{App}]{ 
+     \itmv \; e \cipads \ty \; e
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+  \infer[\text{Pstruct}]{
+    \begin{array}{l}
+     \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+    \cipads \\
+    \qquad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n
+   \end{array}
+  }{ 
+    \itmv_i \cipads \ty_i
+  }
+\]
+
+\[
+  \infer[\text{Punion}]{
+    \begin{array}{l}
+       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads \\
+      \qquad \ty_1 + \dots + \ty_n + \pfalse
+    \end{array}
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer[\text{Palt}]{
+     \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
+    \ty_1 \& \dots \& \ty_n
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\qquad
+  \infer[\text{Popt}]{
+     \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue
+  }{
+     \itmv \cipads \ty
+  }
+\]
+
+\[
+  \infer[\text{Pwhere}]{
+    \begin{array}{l}
+       \itmv \; \Pwhere \, x.e \cipads  \\
+      \qquad
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+    \end{array}
+  }{ 
+    \itmv \cipads \ty
+  }
+\qquad\qquad
+  \infer[\text{Parray}]{
+     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+  }{ 
+    \itmv \cipads \ty & 
+    \itmv_{sep} \cipads \ty_s &
+    \itmv_{term} \cipads \ty_t &
+    (f = \ilam x{}\ifalse)
+  }
+\]
+
+\[
+  \infer[\text{Pcompute}]{ 
+     \Pcompute{} \; e{:}\ity \cipads \pcompute e \ity
+  }{}
+\qquad
+  \infer[\text{Plit}]{ 
+     \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+  }{
+    \defty \const \ty
+  }
+\qquad
+  \infer[\text{Var}]{ 
+     \ga \cipads \ga
+  }{}    
+\qquad
+  \infer[\text{Prec}]{ 
+     \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
+  }{
+     \itmv \cipads \ty
+  }
+\]
+}
+  \caption{Encoding \ipads{} in \ddc{}}
+  \label{fig:encode-ipads}
+\end{figure*}
+}
+
+\poplversion{
+\begin{figure}
+{\small
+\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+
+\[
+ \infer{ 
+     \itmv \cipads \ty \; \text{prog}
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+  \infer{ 
+     \ga = \itmv; \; p \cipads \ty \; \text{prog}
+  }{
+     p[\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\qquad
+  \infer{ 
+      \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
+  }{
+     p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+  }
+\]
+
+\fbox{$ \itmv  \cipads \ty$}
+
+\[
+  \infer{
+%    \begin{array}{l}
+       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+      \cipads %\\
+      %\qquad 
+      \ty_1 + \dots + \ty_n + \pfalse
+%    \end{array}
+  }{ 
+     \itmv_i \cipads \ty_i
+  }
+\]
+
+\[
+%\quad
+  \infer{
+%    \begin{array}{l}
+       \itmv \; \Pwhere \, x.e \cipads  %\\
+      %\qquad
+      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+        \itrue}
+%    \end{array}
+  }{ 
+    \itmv \cipads \ty
+  }
+\]
+
+\[
+%\qquad\qquad
+  \infer{
+     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+  }{ 
+    \itmv \cipads \ty & 
+    \itmv_{sep} \cipads \ty_s &
+    \itmv_{term} \cipads \ty_t &
+    (f = \ilam x{}\ifalse)
+  }
+\]
+
+\[
+%\qquad\qquad
+  \infer{
+     \Popt \; \itmv \cipads
+     \psum \ty {} \ptrue
+  }{
+     \itmv \cipads \ty
+  }
+\qquad
+\infer{ 
+     \Plit \const \cipads 
+    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+  }{
+    \defty \const \ty
+  }
+\]
+}
+\caption{Selected Rules for Encoding \ipads{} in \ddc{}. The full
+  collection of rules appears in \appref{app:ipads-to-ddc}.}
+  \label{fig:encode-ipads}
+\end{figure}
+}
+
+\trversion{
+In \secref{sec:ddc-example}, we showed how an
+\ipads{} description would appear in \ddc{} and informally described
+how \ipads{} is encoded in \ddc{}. In \figref{fig:encode-ipads}, we
+formalize this translation. The judgment $p \cipads \ty\;
+\text{prog}$ indicates that the \ipads{} program $p$ is encoded
+as \ddc{} type $\ty$, while $\itmv \cipads \ty$ does the same
+for \ipads{} types $\itmv$.
+
+As much of the translation is straightforward, we mention only a few
+important points.}
+\poplversion{
+We formalize the translation from \ipads{} to \ddc{}, described
+informally in \secref{sec:ddc-example}, with two judgments:
+ $p \cipads \ty\; \text{prog}$ indicates that the \ipads{} program
+$p$ is encoded as \ddc{} type $\ty$, while $\itmv \cipads \ty$
+does the same for \ipads{} types $\itmv$.
+
+As much of the translation is straightforward, we present only
+selected rules in \figref{fig:encode-ipads}.}  Notice we add $\pbot$ as the
+last branch of the \ddc{} sum when translating \Punion{} so that the
+parse will fail if none of the branches match rather than returning
+the result of the last branch.  \trversion{We based this behaviour
+  directly on the actual \pads{} language.}  In the translation of
+\Pwhere{}, we only check the constraint if the underlying value parsed
+with no errors. For \Parray{}s, we add simple error recovery by
+scanning for the separator type.  This behaviour allows us to easily
+skip erroneous elements. We use the $\pscann$ type in the same way for
+\padskw{Plit}, as literals often appear as field separators in
+\Pstruct{}s.  We also absorb the literal as its value is known
+statically.  We use the function ${\rm Ty}(c)$ to determine the
+correct type for the particular literal. For example, a string
+literal would require a \Pstring{} type.
+
+\subsection{Beyond \ipads{}}
+
+We now give semantics to three features not found in \ipads{}:
+\pads{} switched unions, \packettypes{} overlays, and \datascript{} arrays.
+
+A switched union, like a \Punion, indicates variability in the data
+format with a set of alternative formats (branches). However, instead
+of trying each branch in turn, the switched union takes an expression that
+determines which branch to use. Typically, this expression depends upon data read earlier in the parse. Each branch is preceded by a tag,
+and the first branch whose tag matches the expression is selected.
+If none match then the default branch $\itmv_{\text{def}}$ is chosen.
+The syntax of a switched union is $\Pswitch{}\;e\;\{\overrightarrow{e
+  \Rightarrow x{:}\itmv}\; \itmv_{\text{def}}\}$.
+
+To aid in our translation of \Pswitch{}, we define a type $\iif e\;
+\ithen {\itmv_1}\; \ielse {\itmv_2}$ that allows us to choose
+between two types conditionally : 
+\trversion{
+Our first attempt to
+translate the conditional relies on \ddc{} sums:
+\[
+\infer{
+  \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
+  \cipads \psum
+  {\pset y {\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}} e}
+  {} {\ty_2}
+}{
+  \itmv_1 \cipads \ty_1 &
+  \itmv_2 \cipads \ty_2
+}
+\]
+If $e$ is true, then the nested constraint will fail causing the left
+branch of the nested sum to fail and $\ty_1$ will be used to parse
+the data. As $e$ is true, the second constraint will succeed, leaving
+us with the left branch of the root sum. Conversely, if $e$ is false,
+the first constraint will be satisfied, but the second will not,
+causing us to parse the data with $\ty_2$. 
+
+Unfortunately. while this seems to work, it will fail if there is an
+error in $\ty_1$ when $e$ is true. The error will cause errors in the
+constrained type despite the satisfaction of its constraint, thereby causing
+the parser to use $\ty_2$. To address this problem, we use 
+intersections:
+}
+{\small
+\[
+\infer{
+    \begin{array}{l}
+    \iif e\; \ithen {\itmv_1}\; \ielse {\itmv_2} 
+    \cipads \\
+    \qquad \qquad \quad c \iprodi \pand {({\psum {\pset x \ptrue {\inotop\;e}} {} {\ty_1}})}
+    {({\psum {\pset x \ptrue {e}} {} {\ty_2}})}
+    \end{array}
+}{
+  \itmv_1 \cipads \ty_1 &
+  \itmv_2 \cipads \ty_2 &
+  (c  = \pcompute {\codefont{if}
+          \;e\;\codefont{then\;1\;else\;2\;}}{\codefont{Pint}})
+}
+\]}%
+\noindent
+The computed value $c$ records which branch of the conditional is
+selected.  If the condition $e$ is true, $c$ will be 1, the left-hand
+side of the intesection will parse $\ty_1$ and the right will parse nothing.
+Otherwise, $c$ will be 2, the left-hand side will parse nothing and the
+right $\ty_2$.
+% The computed value $c$ indicates which branch is to be taken and the
+% intersection parses exactly that branch of the conditional-type.  We
+% use a combination of constrained and sum type to guard each branch with a
+% condition such that the branch is only parsed if the condition is
+% false. We guarantee that exactly one branch is parsed by guarding the
+% two branches with mutually exclusive conditions. 
+
+Now, we can encode \Pswitch{} as syntactic sugar for a series of cascading
+conditional types.
+{\small
+\[
+\begin{array}{l}
+\Pswitch{}\;e\;\{\\
+\quad e_1 \Rightarrow x_1{:}\itmv_1\\ 
+\quad \dots \\
+\quad e_n \Rightarrow x_n{:}\itmv_n\\
+\quad \itmv_{\text{def}} \}
+\end{array}
+\quad
+ \mathbf{=}
+\quad
+\begin{array}{l} 
+    \iif {e = e_1}\; \ithen {\itmv_1}\; \ielse{}\\
+%    \iif {e = e_2}\; \ithen {\itmv_2}\; \ielse{}\\
+    \dots\\
+    \iif {e = e_n}\; \ithen {\itmv_1}\; \ielse{}\\
+    \itmv_{\text{def}}
+\end{array}
+\]}%
+\noindent
+Note that we can safely replicate $e$ as the
+host language is pure.
+
+Next, we consider the {\it overlay} construct found in \packettypes{}.
+An overlay allows us ``to merge two type specifications by embedding
+one within the other, as is done when one protocol is {\it
+  encapsulated} within another. Overlay[s] introduce additional
+substructure to an already existing field.''~\cite{sigcomm00}.  For
+example, consider a network packet from a fictional protocol FP, where
+the packet body is represented as a simple byte-array. 
+\begin{code}
+FPPacket = \Pstruct \{
+  header : FPHeader;
+  body   : \Pbyte \Parray{}(\Pnosep,\Peof);
+\}\linebreak
+
+IPinFP = \Poverlay FPPacket.body \Pwith IPPacket
+\end{code}
+Type \Pnosep{} indicates that there are no separators between elements
+of the byte array. It can be encoded as \cd{\Pcompute{}(():unit)}, as
+this type consumes no data and produces a unit value without errors.
+The overlay creates a new type \cd{IPinFP} where the body field is an
+\cd{IPPacket} rather than a simple byte array.
+
+We have developed a translation of the overlay syntax into \ddc{} (not
+shown due to space constraints).
+Although overlays are conceptually intuitive, we discovered a critical
+subtlety, not mentioned by the authors, when formalizing their 
+semantics.  Any expressions in the
+original type that refer to the overlayed field may no longer be well
+typed after applying the overlay.
+\trversion{
+We thought to disallow such expressions in the
+overlayed type.However, we found this to be a difficult, if not
+impossible task. More importantly, such a restriction is unnecessary.
+Instead, we designed the translation so that the new type is
+checked for well formedness after the overlay process, an easy task
+in the \ddc{} framework.
+}
+\poplversion{
+It is therefore necessary for the translation to check the new type 
+for well formedness after the overlay process, which is an easy task
+in the \ddc{} framework.
+}
+
+Finally, we introduce \datascript{}-style arrays for binary data,
+$\itmv\;[\mathit{length}]$. They are parameterized by an optional
+length field, instead of a separator and terminator. If the user
+supplies the length of the sequence, the array parser reads exactly
+that number of elements.  Otherwise, the parser continues until an
+element constraint is violated or the input is completely consumed.
+
+Fixed-length arrays can be encoded in a straightforward manner with
+\ddc{} sequences:
+{\small
+\[
+  \infer{
+    \itmv \; [\mathit{length}] \cipads 
+    \pseq \ty {\ptrue{}} {\pterm {f} {\pfalse{}}}
+  }{ 
+    \itmv \cipads \ty & 
+    (f = \ilam {((len,elts),p)} {} {\codefont{len} = \mathit{length}})
+  }
+\]}
+As these arrays have neither separators nor terminators, we use
+$\ptrue$ (always succeeds, parsing nothing)
+and $\pfalse$ (always fails, parsing nothing), 
+respectively, for separator and terminator. The
+function $f$ takes a pair of array representation and PD and compares
+the sequence length recorded in the representation to
+$\mathit{length}$.
+
+Unbounded arrays are more difficult to encode as they must check the
+next element for parse errors without consuming it from the data
+stream. A termination predicate cannot encode this check as they
+\trversion{are limited to the in-memory representation and PD and}
+cannot perform lookahead. Therefore, we must use the terminator type
+to look ahead for an element parse error. For this purpose, we
+construct a type (abbreviated $\pnot \ty$) which succeeds where $\ty$
+fails and fails where $\ty$ succeeds: 
+\trversion{
+\[
+\pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
+  {\ifalse} {\_} {\itrue}}
+\]
+\noindent
+Abbreviated $\pnot \ty$, this type attempts to parse a $\ty$. On
+success, the representation will be a left injection. The constraint
+in the constrained type will therefore fail. If a $\ty$ cannot be parsed, the
+sum will default to $\ptrue$, the rep will be a right injection, and
+the constraint will succeed. The use of the sum in the underlying type
+is critical as it allows the constrained type to be error free even if parsing
+a $\ty$ fails.
+
+With $\pnotn$, we can encode the unbounded \datascript{} array as
+follows:
+\[
+  \infer{
+    \itmv \; [{length}] \cipads 
+    \pseq \ty {\ptrue{}} {\pterm {\ilam x {} \ifalse} {\pnot \ty}}
+  }{ 
+    \itmv \cipads \ty
+  }
+\]
+Note that the termination predicate is trivially false, as we use the
+lookahead-terminator exclusively to terminate the array.  }
+\poplversion{ 
+\[
+\pset x {\psum \ty {} \ptrue} {\icaseg {x.rep} {\_}
+  {\ifalse} {\_} {\itrue}}
+\]
+\noindent
+Unbounded arrays with element type $\ty$ can now be encoded as
+sequences with terminator $\pnot \ty$.  }
+
+While there are many more features that we can encode, space prevents us from
+detailing them here. To give a sense of what is possible, we
+briefly list those features of \datascript{} and \packettypes{} for
+which we have found encodings in \ddc{}:
+\begin{itemize}
+\item \packettypes{}: arrays, where clauses, structures, overlays,
+  and alternation.
+\item \datascript{}: constrained types (enumerations and bitmask sets),
+  arrays, constraints, value-parameterized types (which they refer to
+  as ``type parameters''), and (monotonically increasing) labels.
+\end{itemize}
+
+We know of a couple of features from data description languages
+that we cannot implement in \ddc{} as it stands.  An example is a label construct that permits the user to rewind the input. However, we do not view 
+such limitations as particularly troublesome. Like the lambda 
+calculus or pi calculus,
+\ddc{} is intended to capture many common language features, while providing
+a convenient and effective basis for extension with new features.
+
+% Indeed, the two main features of \datascript{} that cannot currently
+% be encoded in \ddc{}, require only straightforward modifications or
+% additions.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
