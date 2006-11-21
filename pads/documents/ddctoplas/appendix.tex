@@ -1,779 +1,779 @@
 %\newpage
 \appendix
 
-\section{Host Language}
-\label{app:host-lang}
+% \section{Host Language}
+% \label{app:host-lang}
 
-\subsection{Well-Formedness Rules}
-\label{app:well-form}
+% \subsection{Well-Formedness Rules}
+% \label{app:well-form}
 
-\small
+% \small
 
-\fbox{$\wfd \pctxt \ity$}
+% \fbox{$\wfd \pctxt \ity$}
 
-\[
-\infer{\wfd \pctxt a}{}
-\quad
-\infer{
-  \wfd \pctxt {\ity \iarrowi \ity'}
-}{
-  \wfd \pctxt \ity &
-  \wfd \pctxt {\ity'}
-}
-\quad
-\infer{
-  \wfd \pctxt {\ity \iprodi \ity'}
-}{
-  \wfd \pctxt \ity &
-  \wfd \pctxt {\ity'}
-}
-\]
+% \[
+% \infer{\wfd \pctxt a}{}
+% \quad
+% \infer{
+%   \wfd \pctxt {\ity \iarrowi \ity'}
+% }{
+%   \wfd \pctxt \ity &
+%   \wfd \pctxt {\ity'}
+% }
+% \quad
+% \infer{
+%   \wfd \pctxt {\ity \iprodi \ity'}
+% }{
+%   \wfd \pctxt \ity &
+%   \wfd \pctxt {\ity'}
+% }
+% \]
 
-\[%\quad
-\infer{
-  \wfd \pctxt {\isum \ity {\ity'}}
-}{
-  \wfd \pctxt \ity &
-  \wfd \pctxt {\ity'}
-}
-\quad
-\infer{
-  \wfd \pctxt {\iseqty \ity}
-}{
-  \wfd \pctxt \ity
-}
-\quad
-\infer{
-  \wfd \pctxt {\ierrty \ity}
-}{
-  \wfd \pctxt \ity
-}
-\]
+% \[%\quad
+% \infer{
+%   \wfd \pctxt {\isum \ity {\ity'}}
+% }{
+%   \wfd \pctxt \ity &
+%   \wfd \pctxt {\ity'}
+% }
+% \quad
+% \infer{
+%   \wfd \pctxt {\iseqty \ity}
+% }{
+%   \wfd \pctxt \ity
+% }
+% \quad
+% \infer{
+%   \wfd \pctxt {\ierrty \ity}
+% }{
+%   \wfd \pctxt \ity
+% }
+% \]
 
-\[%\quad
-\infer{
-  \wfd \pctxt {\forall \ityvar.\ity}
-}{
-  \wfd {\pctxt,\ityvar} \ity
-}
-\quad
-\infer{
-  \wfd \pctxt  \ityvar
-}{
-  \ityvar \in \pctxt
-}
-\quad
-\infer{
-  \wfd \pctxt {\imu \ityvar \ity}
-}{
-  \wfd {\pctxt,\ityvar} \ity
-}
-\]
+% \[%\quad
+% \infer{
+%   \wfd \pctxt {\forall \ityvar.\ity}
+% }{
+%   \wfd {\pctxt,\ityvar} \ity
+% }
+% \quad
+% \infer{
+%   \wfd \pctxt  \ityvar
+% }{
+%   \ityvar \in \pctxt
+% }
+% \quad
+% \infer{
+%   \wfd \pctxt {\imu \ityvar \ity}
+% }{
+%   \wfd {\pctxt,\ityvar} \ity
+% }
+% \]
 
-\fbox{$\wfd \pctxt \ctxt$}
+% \fbox{$\wfd \pctxt \ctxt$}
 
-\[
-\infer{
-  \wfd \pctxt \cdot
-}{}
-\quad
-\infer{
-  \wfd \pctxt {\ctxt,x:\ity}
-}{
-  \wfd \pctxt \ctxt & x \not\in \dom \ctxt & \wfd \pctxt \ity
-}
-\]
+% \[
+% \infer{
+%   \wfd \pctxt \cdot
+% }{}
+% \quad
+% \infer{
+%   \wfd \pctxt {\ctxt,x:\ity}
+% }{
+%   \wfd \pctxt \ctxt & x \not\in \dom \ctxt & \wfd \pctxt \ity
+% }
+% \]
 
-\fbox{$\wfd \ctxt \rctxt$}
+% \fbox{$\wfd \ctxt \rctxt$}
 
-\[
-\infer{\wfd \ctxt \cdot}{}
-\quad
-\infer{
-  \wfd \ctxt {\rctxt,\ptyvar=\pmu \ptyvar \ty}
-}{
-  \wfd \ctxt \rctxt \quad \ptyvar \not\in \dom \rctxt &
-  \ddck[\pmu \ptyvar \ty, \rctxt;\ctxt,\kty,\con]
-}
-\]
+% \[
+% \infer{\wfd \ctxt \cdot}{}
+% \quad
+% \infer{
+%   \wfd \ctxt {\rctxt,\ptyvar=\pmu \ptyvar \ty}
+% }{
+%   \wfd \ctxt \rctxt \quad \ptyvar \not\in \dom \rctxt &
+%   \ddck[\pmu \ptyvar \ty, \rctxt;\ctxt,\kty,\con]
+% }
+% \]
 
-\subsection{Typing Rules}
-\label{app:hl-typing}
+% \subsection{Typing Rules}
+% \label{app:hl-typing}
 
-Constants are assigned types with the interface $\Icty$ and operators
-with $\Iopty$. Some example constants and their types are show below.
-\[
-\begin{array}{ll}
- \Icty(\itrue) = \iboolty &
- \Icty(\ifalse) = \iboolty \\
- \Icty(\ierr) = \invty &
- \Icty(\data) = \ibitsty \\
- \Icty(\off) = \ioffty
-\end{array}
-\]
+% Constants are assigned types with the interface $\Icty$ and operators
+% with $\Iopty$. Some example constants and their types are show below.
+% \[
+% \begin{array}{ll}
+%  \Icty(\itrue) = \iboolty &
+%  \Icty(\ifalse) = \iboolty \\
+%  \Icty(\ierr) = \invty &
+%  \Icty(\data) = \ibitsty \\
+%  \Icty(\off) = \ioffty
+% \end{array}
+% \]
 
 
-% We use contexts $\pctxt$ to record the names of open type variables
-% and contexts $\ctxt$ to record the types of expression variables. The syntax of
-% $\pctxt$ and $\ctxt$ is as follows:
+% % We use contexts $\pctxt$ to record the names of open type variables
+% % and contexts $\ctxt$ to record the types of expression variables. The syntax of
+% % $\pctxt$ and $\ctxt$ is as follows:
+% % \begin{bnf}
+% % \pctxt & \::= . \| \ctxt,\ityvar \\
+% % \ctxt  & \::= . \| \ctxt,x{:}\ity
+% % \end{bnf}
+
+% % The typing judgment has the form $\stsem[e, \pctxt;\ctxt, \ity]$. When
+% % the type-variable context $\pctxt$ is empty, we write $\stsem[e,
+% % \ctxt, \ity]$ as an abbreviation.
+% % % Note that \textit{T-Generalize} can only be used in the premise of a
+% % % \texttt{let} expression.
+
+% \[
+%   \infer[\text{Const}]{
+%     \stsem[\const,\pctxt;\ctxt,\Icty(\const)]
+%   }{
+%     \wfd \pctxt \ctxt
+%   }
+% \quad
+%   \infer[\text{Var}]{
+%     \stsem[\var,\pctxt;\ctxt,\ity]
+%   }{
+%     \wfd \pctxt \ctxt & \ctxt(\var) = \ity
+%   }
+% \]
+% \[%\quad
+%   \infer[\text{Op}]{
+%     \stsem[\iop e,\pctxt;\ctxt,\ity]
+%   }{
+%     \Iopty({op}) = \ioparrow {\ity'} \ity &
+%     \stsem[e,\pctxt;\ctxt,\ity']
+%   }
+% \]
+
+% \[%\qquad
+% %   \infer[\text{Abs}]{
+% %     \stsem[\ilam{\nrm \var}{\ity'}{e},
+% %     \ctxt,\ity' \iarrowi \ity]
+% %   }{
+% %     \stsem[e,\pctxt;\ectxt{\var{:}\ity'},\ity] &
+% %     {\rm FTV}(\ity') \in \pctxt
+% %   }
+% % \quad
+%   \infer[\text{Fun}]{
+%     \stsem[\ifun {\nrm f} {\nrm x} e,
+%            \pctxt;\ctxt,\ity' \iarrowi \ity]
+%   }{
+%     \stsem[e,\pctxt;\ectxt{f{:}\ity' \iarrowi \ity,x{:}\ity'},\ity]
+%   }  
+% \quad
+%   \infer[\text{App}]{
+%     \stsem[\iapp{e}{e'},\pctxt;\ctxt,\ity]
+%   }{
+%     \begin{array}{l}
+%     \stsem[e,\pctxt;\ctxt,\ity' \iarrowi \ity]\\
+%     \stsem[e',\pctxt;\ctxt,\ity']      
+%     \end{array}
+%   }
+% \]
+
+% \[%\qquad
+%   \infer[\text{Let}]{
+%     \stsem[{\ilet {\nrm x} {e'} \; e},
+%            \pctxt;\ctxt,\ity]
+%   }{
+% %    \begin{array}{c}
+%       \stsem[e',\pctxt;\ctxt,\ity'] &
+%       \stsem[e,\pctxt;\ectxt{x{:}\ity'},\ity]
+% %    \end{array}
+%   }  
+% % \quad
+% %   \infer[\text{LetRec}]{
+% %     \stsem[{\iletfun {\nrm f} {\nrm x} e \; \iin \; e'},
+% %            \ctxt,\ity]
+% %   }{
+% %     \stsem[e,\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2,x{:}\ity_1},\ity_2] &
+% %     \stsem[e',\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2},\ity] 
+% %   }
+% \]
+
+% \[%\qquad
+%   \infer[\text{Cond}]{
+%     \stsem[\iif e \; \ithen {e_1} \; \ielse {e_2},\pctxt;\ctxt,\ity]
+%   }{       
+%     \stsem[e,\pctxt;\ctxt,\iboolty] &
+%     \stsem[e_1,\pctxt;\ctxt,\ity] &
+%     \stsem[e_2,\pctxt;\ctxt,\ity]
+%   }
+% \]
+% \[%\quad
+%   \infer[\text{Pair}]{
+%     \stsem[\ipair {e_1}{e_2},\pctxt;\ctxt,\iprodty {\ity_1} {\ity_2}]
+%   }{       
+%     \stsem[e_1,\pctxt;\ctxt,\ity_1] &
+%     \stsem[e_2,\pctxt;\ctxt,\ity_2]
+%   }
+% \quad
+%   \infer[\text{Proj}]{
+%     \stsem[\ipi{\nrm i}{e},\pctxt;\ctxt,\ity_i]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\ity_1 \iprodi \ity_2] 
+%   }
+% \]
+
+% \[%\quad
+%   \infer[\text{InL}]{
+%     \stsem[\iinl e,\pctxt;\ctxt,\isum \ity {\ity'}]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\ity] &
+%     \wfd \pctxt {\ity'}
+%   }
+% \quad
+%   \infer[\text{InR}]{
+%     \stsem[\iinr e,\pctxt;\ctxt,\isum \ity {\ity'}]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\ity'] &
+%     \wfd \pctxt {\ity}
+%   }
+% \]
+
+% \[%\qquad
+%   \infer[\text{Case}]{
+%     \stsem[\icaseg{e}{\nrm x}{e_l}{\nrm y}{e_r}
+%     ,\pctxt;\ctxt,\ity]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\isum {\ity_l} {\ity_r}] &
+%     \stsem[e_l,\pctxt;\ectxt{x{:}\ity_l},\ity] &
+%     \stsem[e_r,\pctxt;\ectxt{y{:}\ity_r},\ity]
+%   }
+% \]
+
+% \[
+%   \infer[\text{Empty}]{
+%     \stsem[\ieseq,\pctxt;\ctxt,\iseqty \ity]
+%   }{
+%     \wfd \pctxt \ctxt & \wfd \pctxt \ity
+%   }
+% \]
+% \[%\quad
+%   \infer[\text{Seq}]{
+%     \stsem[\iarr{e_1 \cdots e_n},\pctxt;\ctxt,\iseqty \ity]
+%   }{
+%     \wfd \pctxt \ctxt & \stsem[e_i,\pctxt;\ctxt,\ity] \quad 
+%     \mbox{(for $i=1 \ldots n$)}
+%   }
+% \]
+
+% \[
+%   \infer[\text{Append}]{
+%     \stsem[\iappend e {e'},\pctxt;\ctxt,\iseqty \ity]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
+%     \stsem[e',\pctxt;\ctxt,\iseqty \ity]
+%   }
+% \]
+% \[%\quad
+%   \infer[\text{Sub}]{
+%     \stsem[\isub e {\nrm {e'}},\pctxt;\ctxt,\isum \ity \iunitty]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
+%     \stsem[e',\pctxt;\ctxt,\iintty]    
+%   }
+% \]
+
+% \[
+%   \infer[\text{Roll}]{
+%     \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
+%   }
+%   \quad
+%   \infer[\text{Unroll}]{
+%     \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
+%   }{
+%     \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
+%   }
+% \]
+
+% \[%\qquad
+%   \infer[\text{Generalize}]{
+%     \stsem[v,\pctxt;\ctxt,\forall \ityvar.\ity]
+%   }{
+%     \stsem[v,{\pctxt,\ityvar;\ctxt},\ity] & 
+%     (\ityvar \not\in {\rm FTV}(\ctxt))
+%   }
+% \]
+% \[%\quad
+%   \infer[\text{Instantiate}]{
+%     \stsem[\expr,{\pctxt;\ctxt},{\ity[\ity'/\ityvar]}]
+%   }{
+%     \stsem[\expr,\pctxt;\ctxt,\forall \ityvar.\ity]
+%   }
+% \]
+
+% \subsection{Evaluation Rules}
+% \label{app:hl-evaluation}
+
 % \begin{bnf}
-% \pctxt & \::= . \| \ctxt,\ityvar \\
-% \ctxt  & \::= . \| \ctxt,x{:}\ity
+% \name{Evaluation} \meta{E} \::= 
+%   [] \| \iop{E} \| \iapp E e \| \iapp v E \\
+% \name{Contexts} \meta{} \| &
+%   \ilet {\nrm x} E \; e \nlalt
+%   \iif E \; \ithen {e_1} \; \ielse {e_2} \nlalt
+%   \ipair E e \| \ipair v E \| \ipi{\nrm i}{E} \nlalt
+%   \iinld \ity E \| \iinrd \ity E \nlalt
+%   \icaseg E {\nrm x} e {\nrm x} {e'} \nlalt
+%   \iarr{\vec v \, E \, \vec{e}} \| 
+%   \iappend E e \| \iappend v E \nlalt
+%   \isub e E \| \isub v E \\
 % \end{bnf}
 
-% The typing judgment has the form $\stsem[e, \pctxt;\ctxt, \ity]$. When
-% the type-variable context $\pctxt$ is empty, we write $\stsem[e,
-% \ctxt, \ity]$ as an abbreviation.
-% % Note that \textit{T-Generalize} can only be used in the premise of a
-% % \texttt{let} expression.
+% We specify the implementation of an operator with
+% $\mathcal{O}({op},v)$. 
+% % Most of the rules are standard, although the
+% % sequence rules are new. Append appends the contents of the second
+% % array to that of the first array, while Sub extracts the element at
+% % index i, if i is within the bounds of the array. If not, the
+% % expression fails.
 
-\[
-  \infer[\text{Const}]{
-    \stsem[\const,\pctxt;\ctxt,\Icty(\const)]
-  }{
-    \wfd \pctxt \ctxt
-  }
-\quad
-  \infer[\text{Var}]{
-    \stsem[\var,\pctxt;\ctxt,\ity]
-  }{
-    \wfd \pctxt \ctxt & \ctxt(\var) = \ity
-  }
-\]
-\[%\quad
-  \infer[\text{Op}]{
-    \stsem[\iop e,\pctxt;\ctxt,\ity]
-  }{
-    \Iopty({op}) = \ioparrow {\ity'} \ity &
-    \stsem[e,\pctxt;\ctxt,\ity']
-  }
-\]
-
-\[%\qquad
-%   \infer[\text{Abs}]{
-%     \stsem[\ilam{\nrm \var}{\ity'}{e},
-%     \ctxt,\ity' \iarrowi \ity]
-%   }{
-%     \stsem[e,\pctxt;\ectxt{\var{:}\ity'},\ity] &
-%     {\rm FTV}(\ity') \in \pctxt
-%   }
-% \quad
-  \infer[\text{Fun}]{
-    \stsem[\ifun {\nrm f} {\nrm x} e,
-           \pctxt;\ctxt,\ity' \iarrowi \ity]
-  }{
-    \stsem[e,\pctxt;\ectxt{f{:}\ity' \iarrowi \ity,x{:}\ity'},\ity]
-  }  
-\quad
-  \infer[\text{App}]{
-    \stsem[\iapp{e}{e'},\pctxt;\ctxt,\ity]
-  }{
-    \begin{array}{l}
-    \stsem[e,\pctxt;\ctxt,\ity' \iarrowi \ity]\\
-    \stsem[e',\pctxt;\ctxt,\ity']      
-    \end{array}
-  }
-\]
-
-\[%\qquad
-  \infer[\text{Let}]{
-    \stsem[{\ilet {\nrm x} {e'} \; e},
-           \pctxt;\ctxt,\ity]
-  }{
-%    \begin{array}{c}
-      \stsem[e',\pctxt;\ctxt,\ity'] &
-      \stsem[e,\pctxt;\ectxt{x{:}\ity'},\ity]
-%    \end{array}
-  }  
-% \quad
-%   \infer[\text{LetRec}]{
-%     \stsem[{\iletfun {\nrm f} {\nrm x} e \; \iin \; e'},
-%            \ctxt,\ity]
-%   }{
-%     \stsem[e,\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2,x{:}\ity_1},\ity_2] &
-%     \stsem[e',\pctxt;\ectxt{f{:}\ity_1 \iarrowi \ity_2},\ity] 
-%   }
-\]
-
-\[%\qquad
-  \infer[\text{Cond}]{
-    \stsem[\iif e \; \ithen {e_1} \; \ielse {e_2},\pctxt;\ctxt,\ity]
-  }{       
-    \stsem[e,\pctxt;\ctxt,\iboolty] &
-    \stsem[e_1,\pctxt;\ctxt,\ity] &
-    \stsem[e_2,\pctxt;\ctxt,\ity]
-  }
-\]
-\[%\quad
-  \infer[\text{Pair}]{
-    \stsem[\ipair {e_1}{e_2},\pctxt;\ctxt,\iprodty {\ity_1} {\ity_2}]
-  }{       
-    \stsem[e_1,\pctxt;\ctxt,\ity_1] &
-    \stsem[e_2,\pctxt;\ctxt,\ity_2]
-  }
-\quad
-  \infer[\text{Proj}]{
-    \stsem[\ipi{\nrm i}{e},\pctxt;\ctxt,\ity_i]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity_1 \iprodi \ity_2] 
-  }
-\]
-
-\[%\quad
-  \infer[\text{InL}]{
-    \stsem[\iinl e,\pctxt;\ctxt,\isum \ity {\ity'}]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity] &
-    \wfd \pctxt {\ity'}
-  }
-\quad
-  \infer[\text{InR}]{
-    \stsem[\iinr e,\pctxt;\ctxt,\isum \ity {\ity'}]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity'] &
-    \wfd \pctxt {\ity}
-  }
-\]
-
-\[%\qquad
-  \infer[\text{Case}]{
-    \stsem[\icaseg{e}{\nrm x}{e_l}{\nrm y}{e_r}
-    ,\pctxt;\ctxt,\ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\isum {\ity_l} {\ity_r}] &
-    \stsem[e_l,\pctxt;\ectxt{x{:}\ity_l},\ity] &
-    \stsem[e_r,\pctxt;\ectxt{y{:}\ity_r},\ity]
-  }
-\]
-
-\[
-  \infer[\text{Empty}]{
-    \stsem[\ieseq,\pctxt;\ctxt,\iseqty \ity]
-  }{
-    \wfd \pctxt \ctxt & \wfd \pctxt \ity
-  }
-\]
-\[%\quad
-  \infer[\text{Seq}]{
-    \stsem[\iarr{e_1 \cdots e_n},\pctxt;\ctxt,\iseqty \ity]
-  }{
-    \wfd \pctxt \ctxt & \stsem[e_i,\pctxt;\ctxt,\ity] \quad 
-    \mbox{(for $i=1 \ldots n$)}
-  }
-\]
-
-\[
-  \infer[\text{Append}]{
-    \stsem[\iappend e {e'},\pctxt;\ctxt,\iseqty \ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
-    \stsem[e',\pctxt;\ctxt,\iseqty \ity]
-  }
-\]
-\[%\quad
-  \infer[\text{Sub}]{
-    \stsem[\isub e {\nrm {e'}},\pctxt;\ctxt,\isum \ity \iunitty]
-  }{
-    \stsem[e,\pctxt;\ctxt,\iseqty \ity] &
-    \stsem[e',\pctxt;\ctxt,\iintty]    
-  }
-\]
-
-\[
-  \infer[\text{Roll}]{
-    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
-  }{
-    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
-  }
-  \quad
-  \infer[\text{Unroll}]{
-    \stsem[e,\pctxt;\ctxt,\ity[\imu \ityvar \ity/\ityvar]]
-  }{
-    \stsem[e,\pctxt;\ctxt,\imu \ityvar \ity]
-  }
-\]
-
-\[%\qquad
-  \infer[\text{Generalize}]{
-    \stsem[v,\pctxt;\ctxt,\forall \ityvar.\ity]
-  }{
-    \stsem[v,{\pctxt,\ityvar;\ctxt},\ity] & 
-    (\ityvar \not\in {\rm FTV}(\ctxt))
-  }
-\]
-\[%\quad
-  \infer[\text{Instantiate}]{
-    \stsem[\expr,{\pctxt;\ctxt},{\ity[\ity'/\ityvar]}]
-  }{
-    \stsem[\expr,\pctxt;\ctxt,\forall \ityvar.\ity]
-  }
-\]
-
-\subsection{Evaluation Rules}
-\label{app:hl-evaluation}
-
-\begin{bnf}
-\name{Evaluation} \meta{E} \::= 
-  [] \| \iop{E} \| \iapp E e \| \iapp v E \\
-\name{Contexts} \meta{} \| &
-  \ilet {\nrm x} E \; e \nlalt
-  \iif E \; \ithen {e_1} \; \ielse {e_2} \nlalt
-  \ipair E e \| \ipair v E \| \ipi{\nrm i}{E} \nlalt
-  \iinld \ity E \| \iinrd \ity E \nlalt
-  \icaseg E {\nrm x} e {\nrm x} {e'} \nlalt
-  \iarr{\vec v \, E \, \vec{e}} \| 
-  \iappend E e \| \iappend v E \nlalt
-  \isub e E \| \isub v E \\
-\end{bnf}
-
-We specify the implementation of an operator with
-$\mathcal{O}({op},v)$. 
-% Most of the rules are standard, although the
-% sequence rules are new. Append appends the contents of the second
-% array to that of the first array, while Sub extracts the element at
-% index i, if i is within the bounds of the array. If not, the
-% expression fails.
-
-\[
-\infer[\text{Op}]{
-  \iop v \stepsto v'
-}{
-  \mathcal{O}({op},v) = v'
-}
+% \[
+% \infer[\text{Op}]{
+%   \iop v \stepsto v'
+% }{
+%   \mathcal{O}({op},v) = v'
+% }
+% % \quad
+% % \infer[\text{App}]{
+% %   \iapp v {v'} \stepsto e[v'/x]
+% % }{
+% %   (v = \ilam {\nrm x} {} e)
+% % }
 % \quad
 % \infer[\text{App}]{
-%   \iapp v {v'} \stepsto e[v'/x]
+%   \iapp v {v'} \stepsto e[v/f][v'/x]
 % }{
-%   (v = \ilam {\nrm x} {} e)
+%   (v = \ifun {\nrm f}{\nrm x} e)
 % }
-\quad
-\infer[\text{App}]{
-  \iapp v {v'} \stepsto e[v/f][v'/x]
-}{
-  (v = \ifun {\nrm f}{\nrm x} e)
-}
-\]
-\[%\quad
-\infer[\text{Let}]{
-  \ilet {\nrm x} v \; e
-  \stepsto e[v/x]
-}{}
-% \quad
-% \infer[\text{LetRec}]{
-%   \iletfun {\nrm f} {\nrm x} e \; \iin \; e'
-%   \stepsto e'[{\ifun {\nrm f} {\nrm x} e}/f]
+% \]
+% \[%\quad
+% \infer[\text{Let}]{
+%   \ilet {\nrm x} v \; e
+%   \stepsto e[v/x]
 % }{}
-\]
+% % \quad
+% % \infer[\text{LetRec}]{
+% %   \iletfun {\nrm f} {\nrm x} e \; \iin \; e'
+% %   \stepsto e'[{\ifun {\nrm f} {\nrm x} e}/f]
+% % }{}
+% \]
 
-\[
-\infer[\text{{IfTrue}}]{
-  \iif \itrue \; \ithen e \; \ielse {e'} \stepsto
-  e
-}{}
-\]
-\[%\quad
-\infer[\text{{IfFalse}}]{
-  \iif \ifalse \; \ithen e \; \ielse {e'} \stepsto
-  e'
-}{}
-\]
+% \[
+% \infer[\text{{IfTrue}}]{
+%   \iif \itrue \; \ithen e \; \ielse {e'} \stepsto
+%   e
+% }{}
+% \]
+% \[%\quad
+% \infer[\text{{IfFalse}}]{
+%   \iif \ifalse \; \ithen e \; \ielse {e'} \stepsto
+%   e'
+% }{}
+% \]
 
-\[
-\infer[\text{Proj1}]{
-  \ipi 1 {\ipair v {v'}} \stepsto v
-}{}
-\quad
-\infer[\text{Proj2}]{
-  \ipi 2 {\ipair v {v'}} \stepsto v'
-}{}
-\]
+% \[
+% \infer[\text{Proj1}]{
+%   \ipi 1 {\ipair v {v'}} \stepsto v
+% }{}
+% \quad
+% \infer[\text{Proj2}]{
+%   \ipi 2 {\ipair v {v'}} \stepsto v'
+% }{}
+% \]
 
-\[
-\infer[\text{CaseL}]{
-  \icaseg{\iinl v}{\nrm x}{e_l}{\nrm y}{e_r}
-  \stepsto {e_l}[v/x]
-}{}
-\]
+% \[
+% \infer[\text{CaseL}]{
+%   \icaseg{\iinl v}{\nrm x}{e_l}{\nrm y}{e_r}
+%   \stepsto {e_l}[v/x]
+% }{}
+% \]
 
-\[%\quad
-\infer[\text{CaseR}]{
-  \icaseg{\iinr v}{\nrm x}{e_l}{\nrm y}{e_r}
-  \stepsto {e_r}[v/y]
-}{}
-\]
+% \[%\quad
+% \infer[\text{CaseR}]{
+%   \icaseg{\iinr v}{\nrm x}{e_l}{\nrm y}{e_r}
+%   \stepsto {e_r}[v/y]
+% }{}
+% \]
 
-\[
-\infer[\text{Append}]{
-  \iappend {\iarr{\vec v_1}} {\iarr{\vec v_2}} \stepsto
-  {\iarr{\vec v_1 \, \vec v_2}}
-}{}
-\quad
-\infer[\text{EmptySub}]{
-  \isub \ieseq {\nrm i} \stepsto \iinr{\iuval}
-}{}
-\]
+% \[
+% \infer[\text{Append}]{
+%   \iappend {\iarr{\vec v_1}} {\iarr{\vec v_2}} \stepsto
+%   {\iarr{\vec v_1 \, \vec v_2}}
+% }{}
+% \quad
+% \infer[\text{EmptySub}]{
+%   \isub \ieseq {\nrm i} \stepsto \iinr{\iuval}
+% }{}
+% \]
 
-\[
-\infer[\text{SubIn}]{
-  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
-  \stepsto \iinl {v_{i}}
-}{
-  0 \leq i < n
-}
-\quad
-\infer[\text{SubOut}]{
-  \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
-  \stepsto \iinr{\iuval}
-}{
-  i \geq n
-}
-\]
+% \[
+% \infer[\text{SubIn}]{
+%   \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
+%   \stepsto \iinl {v_{i}}
+% }{
+%   0 \leq i < n
+% }
+% \quad
+% \infer[\text{SubOut}]{
+%   \isub {\iarr{v_0 \ldots v_{n-1}}} {\nrm i}
+%   \stepsto \iinr{\iuval}
+% }{
+%   i \geq n
+% }
+% \]
 
-\[
-\infer[\text{Step}]{
-  E[e] \stepsto E[e']
-}{
-  e \stepsto e'
-}
-\]
+% \[
+% \infer[\text{Step}]{
+%   E[e] \stepsto E[e']
+% }{
+%   e \stepsto e'
+% }
+% \]
 
-\section{Helper Functions}
-\label{app:asst-functions}
+% \section{Helper Functions}
+% \label{app:asst-functions}
 
-\trversion{
-%% Maps pads base types to implementation language base types
-\begin{description}
-\item $\Ikind : {Const} \rightarrow {Kind}$.
-\item $\Irty : {Const} \rightarrow {Type}$.
-% \item $\Ipdty : {Const} \rightarrow {Type}$.
-\item $\Iimp : {Const} \rightarrow {Expression}$.
-\end{description}
-}
+% \trversion{
+% %% Maps pads base types to implementation language base types
+% \begin{description}
+% \item $\Ikind : {Const} \rightarrow {Kind}$.
+% \item $\Irty : {Const} \rightarrow {Type}$.
+% % \item $\Ipdty : {Const} \rightarrow {Type}$.
+% \item $\Iimp : {Const} \rightarrow {Expression}$.
+% \end{description}
+% }
 
-% In defining the parsing functions, we use the following helper functions:
+% % In defining the parsing functions, we use the following helper functions:
 
-Generic Helpers:
+% Generic Helpers:
 
-{\small
-\begin{itemize}
-\newcommand{\labelitemi}{}
-%\begin{description}
-\item $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
+% {\small
+% \begin{itemize}
+% \newcommand{\labelitemi}{}
+% %\begin{description}
+% \item $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
 
-\item $\codefont{scanMax} : \iintty$
+% \item $\codefont{scanMax} : \iintty$
 
-\item $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
-\item $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
-\item $\ifun {isOk} p {\codefont{pos(p.h.nerr) = 0}}$
-\item $\ifun {isErr} p {\codefont{pos(p.h.nerr) = 1}}$
+% \item $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
+% \item $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
+% \item $\ifun {isOk} p {\codefont{pos(p.h.nerr) = 0}}$
+% \item $\ifun {isErr} p {\codefont{pos(p.h.nerr) = 1}}$
 
-\item $\ifun {max\_ec} {\ictup{ec_1, ec_2}} {}$ \\
-  $\begin{array}{l}
-    \iif {\codefont{ec_1} = \iecpc \iori \codefont{ec_2} = \iecpc}\; \ithen \iecpc \\
-    \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
-    \ielse \iok
-   \end{array}$
-\end{itemize}
-%\end{description}
-}
+% \item $\ifun {max\_ec} {\ictup{ec_1, ec_2}} {}$ \\
+%   $\begin{array}{l}
+%     \iif {\codefont{ec_1} = \iecpc \iori \codefont{ec_2} = \iecpc}\; \ithen \iecpc \\
+%     \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
+%     \ielse \iok
+%    \end{array}$
+% \end{itemize}
+% %\end{description}
+% }
 
-% We define for each \ddc{} type a pair of constructor functions, one to build a representation and another to build a parse descriptor.
-% The type of PD headers is $\iintty
-%   \iprodi \iecty \iprodi \ispty$. We refer to the projections using
-%   dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
-%   $\codefont{sp}$, respectively. A span is a pair of offsets, referred
-%   to as $\codefont{begin}$ and $\codefont{end}$, respectively. Array
-%   bodies have type $\iintty \iprodi \iintty \iprodi (\iseq \ity)$ (for
-%   element type $\ity$). We refer to the projections as
-%   $\codefont{neerr}$, $\codefont{length}$ and $\codefont{elts}$,
-%   respectively.  
+% % We define for each \ddc{} type a pair of constructor functions, one to build a representation and another to build a parse descriptor.
+% % The type of PD headers is $\iintty
+% %   \iprodi \iecty \iprodi \ispty$. We refer to the projections using
+% %   dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
+% %   $\codefont{sp}$, respectively. A span is a pair of offsets, referred
+% %   to as $\codefont{begin}$ and $\codefont{end}$, respectively. Array
+% %   bodies have type $\iintty \iprodi \iintty \iprodi (\iseq \ity)$ (for
+% %   element type $\ity$). We refer to the projections as
+% %   $\codefont{neerr}$, $\codefont{length}$ and $\codefont{elts}$,
+% %   respectively.  
 
-\noindent
-Type-Specific Helpers:
+% \noindent
+% Type-Specific Helpers:
 
-{\small
-\begin{itemize}
-\newcommand{\labelitemi}{}
+% {\small
+% \begin{itemize}
+% \newcommand{\labelitemi}{}
 
-\item %[Unit:]
-\item $\ifun {R_{unit}} \iuval \iuval$
-\item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+% \item %[Unit:]
+% \item $\ifun {R_{unit}} \iuval \iuval$
+% \item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
 
-\item %[Bottom:]
-\item $\ifun {R_{bottom}} \iuval \ierr$
-\item $\ifun {P_{bottom}} \off ((1,\iecpc,\ipair \off \off),())$
+% \item %[Bottom:]
+% \item $\ifun {R_{bottom}} \iuval \ierr$
+% \item $\ifun {P_{bottom}} \off ((1,\iecpc,\ipair \off \off),())$
 
-\item %[Pair:]
-\item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
-\item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
-  $\begin{array}{l}
-    \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
-    \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
-    \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
-    \quad \ictup {nerr,ec,sp}
-  \end{array}$
+% \item %[Pair:]
+% \item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
+% \item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
+%   $\begin{array}{l}
+%     \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+%     \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+%     \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+%     \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
+%     \quad \ictup {nerr,ec,sp}
+%   \end{array}$
 
-\item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
+% \item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
 
-\item %[Sum:]
-\item $\ifun {R_{+left}} r {\iinl {\codefont r}}$
-\item $\ifun {R_{+right}} r {\iinr {\codefont r}}$
+% \item %[Sum:]
+% \item $\ifun {R_{+left}} r {\iinl {\codefont r}}$
+% \item $\ifun {R_{+right}} r {\iinr {\codefont r}}$
 
-\item $\ifun {H_+} h {\ictup{pos(h.nerr),h.ec,h.sp}}$
-\item $\ifun {P_{+left}} p {\ictup{\codefont{H_+} \iappi p.h, \iinl p}}$
-\item $\ifun {P_{+right}} p {\ictup{\codefont{H_+} \iappi p.h, 
-      \iinr  p}}$
+% \item $\ifun {H_+} h {\ictup{pos(h.nerr),h.ec,h.sp}}$
+% \item $\ifun {P_{+left}} p {\ictup{\codefont{H_+} \iappi p.h, \iinl p}}$
+% \item $\ifun {P_{+right}} p {\ictup{\codefont{H_+} \iappi p.h, 
+%       \iinr  p}}$
 
-\item %[Intersection:]
-\item $\ifun {R_{\&}} {\ictup {r,r'}} {\ictup {r,r'}}$
-\item $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
-    $\begin{array}{l}
-      \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
-      \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-      \quad \ielse{\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
-      \ilet {sp} {\ictup{h_1.sp.begin, max \itup{h_1.sp.end, h_2.sp.end}}} \\
-      \quad \ictup {nerr,ec,sp}
-    \end{array}$
+% \item %[Intersection:]
+% \item $\ifun {R_{\&}} {\ictup {r,r'}} {\ictup {r,r'}}$
+% \item $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
+%     $\begin{array}{l}
+%       \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
+%       \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
+%       \quad \ielse{\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+%       \ilet {sp} {\ictup{h_1.sp.begin, max \itup{h_1.sp.end, h_2.sp.end}}} \\
+%       \quad \ictup {nerr,ec,sp}
+%     \end{array}$
 
-\item $\ifun {P_{\&}} {\ictup {p_1,p_2}} {\ictup{H_{\&} \iappi 
-      \itup{p_1.h, p_2.h},\itup{p_1,p_2}}}$
+% \item $\ifun {P_{\&}} {\ictup {p_1,p_2}} {\ictup{H_{\&} \iappi 
+%       \itup{p_1.h, p_2.h},\itup{p_1,p_2}}}$
 
-\item %[Set:]
-\item $\ifun {R_{con}} {\ictup{c,r}} {
-    \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\codefont r}}
-  }$ 
-\item $\ifun {P_{con}} {\ictup {c, p}} {}$ \\
-    $\begin{array}{l}
-      \iif {\codefont c} \; \ithen {\ictup{(pos(p.h.nerr),p.h.ec,p.h.sp),p}} \\
-      \ielse {\ictup {(1 + pos(p.h.nerr),\maxec \iecerr {p.h.ec},p.h.sp),p}}
-    \end{array}$
- \end{itemize}
+% \item %[Set:]
+% \item $\ifun {R_{con}} {\ictup{c,r}} {
+%     \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\codefont r}}
+%   }$ 
+% \item $\ifun {P_{con}} {\ictup {c, p}} {}$ \\
+%     $\begin{array}{l}
+%       \iif {\codefont c} \; \ithen {\ictup{(pos(p.h.nerr),p.h.ec,p.h.sp),p}} \\
+%       \ielse {\ictup {(1 + pos(p.h.nerr),\maxec \iecerr {p.h.ec},p.h.sp),p}}
+%     \end{array}$
+%  \end{itemize}
 
- \begin{itemize}
- \newcommand{\labelitemi}{}
+%  \begin{itemize}
+%  \newcommand{\labelitemi}{}
 
-\item %[Array:] 
-\item $\ifun {R_{seq\_init}} {\iuval} {\ictup{0,\ieseq}}$   
-\item $\ifun {P_{seq\_init}} \off {\ictup{(0,\iok,\ipair \off
-      \off),(0,0,\ieseq)}}$
+% \item %[Array:] 
+% \item $\ifun {R_{seq\_init}} {\iuval} {\ictup{0,\ieseq}}$   
+% \item $\ifun {P_{seq\_init}} \off {\ictup{(0,\iok,\ipair \off
+%       \off),(0,0,\ieseq)}}$
 
-\item $\ifun {R_{seq}} {\ictup{r, r_e}} 
-  {\ictup{r.len+1,\iappend{r.elts} {\iarr{r_e}}}}$
-\item $\ifun {H_{seq}} {\ictup{h, h_s, h_e}} {}$ \\
-  $\begin{array}{l}
-      \ilet {eerr} {
-        \codefont{\iif {h.neerr = 0 \mathrel{and} h_e.nerr > 0}}\\
-        \codefont{\quad \ithen 1 \;  \ielse 0}
-      }\\
-      \ilet {nerr} {\codefont{h.nerr + pos(h_s.nerr) + eerr}}\\
-      \ilet {ec} {\iif{\codefont{h_e.ec} = \iecpc}\; \ithen {\iecpc}\\
-      \quad \ielse{\maxec {\codefont{h.ec}} {\codefont{h_e.ec}}
-          }} \\
-      \ilet {sp} {\ictup{h.sp.begin,h_e.sp.end}} \\
-      \quad \ictup {nerr,ec,sp}
-    \end{array}$
+% \item $\ifun {R_{seq}} {\ictup{r, r_e}} 
+%   {\ictup{r.len+1,\iappend{r.elts} {\iarr{r_e}}}}$
+% \item $\ifun {H_{seq}} {\ictup{h, h_s, h_e}} {}$ \\
+%   $\begin{array}{l}
+%       \ilet {eerr} {
+%         \codefont{\iif {h.neerr = 0 \mathrel{and} h_e.nerr > 0}}\\
+%         \codefont{\quad \ithen 1 \;  \ielse 0}
+%       }\\
+%       \ilet {nerr} {\codefont{h.nerr + pos(h_s.nerr) + eerr}}\\
+%       \ilet {ec} {\iif{\codefont{h_e.ec} = \iecpc}\; \ithen {\iecpc}\\
+%       \quad \ielse{\maxec {\codefont{h.ec}} {\codefont{h_e.ec}}
+%           }} \\
+%       \ilet {sp} {\ictup{h.sp.begin,h_e.sp.end}} \\
+%       \quad \ictup {nerr,ec,sp}
+%     \end{array}$
 
-\item $\ifun{P_{seq}} {\ictup{p, p_s, p_e}}{}$ \\ 
-  $\begin{array}{l}
-    \codefont{(H_{seq} \iappi \itup{p.h,p_s.h,p_e.h},}\\ 
-    \codefont{\itup{p.neerr + pos(p_e.h.nerr), p.len + 1,\iappend {p.elts}
-        {\iarr{p_e}}})}
-  \end{array}$
+% \item $\ifun{P_{seq}} {\ictup{p, p_s, p_e}}{}$ \\ 
+%   $\begin{array}{l}
+%     \codefont{(H_{seq} \iappi \itup{p.h,p_s.h,p_e.h},}\\ 
+%     \codefont{\itup{p.neerr + pos(p_e.h.nerr), p.len + 1,\iappend {p.elts}
+%         {\iarr{p_e}}})}
+%   \end{array}$
 
-\item %[Compute:]
-\item $\ifun{R_{compute}} r {\codefont r}$
-\item $\ifun{P_{compute}} \off {\ictup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+% \item %[Compute:]
+% \item $\ifun{R_{compute}} r {\codefont r}$
+% \item $\ifun{P_{compute}} \off {\ictup{\itup{0,\iok,\ipair \off \off},\iuval}}$
 
-\item %[Absorb:]
-\item $\ifun {R_{absorb}} p {\iif {\pdok p}\; 
-    \ithen {\iinl \iuval}\; \ielse {\iinr \ierr}}$
-\item $\ifun {P_{absorb}} p {\ictup{p.h,\iuval}}$
+% \item %[Absorb:]
+% \item $\ifun {R_{absorb}} p {\iif {\pdok p}\; 
+%     \ithen {\iinl \iuval}\; \ielse {\iinr \ierr}}$
+% \item $\ifun {P_{absorb}} p {\ictup{p.h,\iuval}}$
 
-\item %[Scan:]
-\item $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
-\item $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
-$\begin{array}{l}
-\ilet {nerr} {\codefont{pos(i) + pos(p'.h.nerr)}}\\
-\ilet {ec} {\iif {\codefont{nerr = 0}}\; \ithen \iok\; \ielse \iecerr} \\
-\ilet {hdr} {\ictup{nerr,ec,(p.sp.begin - i,p.sp.end)}} \\
-\quad \ictup{hdr,\iinl {\ictup{i,p}}}
-\end{array}$
+% \item %[Scan:]
+% \item $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
+% \item $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
+% $\begin{array}{l}
+% \ilet {nerr} {\codefont{pos(i) + pos(p'.h.nerr)}}\\
+% \ilet {ec} {\iif {\codefont{nerr = 0}}\; \ithen \iok\; \ielse \iecerr} \\
+% \ilet {hdr} {\ictup{nerr,ec,(p.sp.begin - i,p.sp.end)}} \\
+% \quad \ictup{hdr,\iinl {\ictup{i,p}}}
+% \end{array}$
 
-\item $\ifun {R_{scan\_err}} {()} {\iinr \ierr}$
-\item $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,\iecpc,(\off,\off)}}}$\\
-  \verb+ +$\ictup{hdr,\iinr \iuval}$
-%% \item[Transform:]
-%% \item \fnm{P_T} (h,b) = (h,(???,b))
-\end{itemize}
-}
-\trversion{
-\begin{lemma}[Function Types]
-  $\stsem[\codefont{isOk},
-  \codefont{pos}{:}\iintty \iarrowi \iintty,
-  \forall \ga.\ipty \ga \iarrowi \iboolty]$.
-\end{lemma}
-}
+% \item $\ifun {R_{scan\_err}} {()} {\iinr \ierr}$
+% \item $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,\iecpc,(\off,\off)}}}$\\
+%   \verb+ +$\ictup{hdr,\iinr \iuval}$
+% %% \item[Transform:]
+% %% \item \fnm{P_T} (h,b) = (h,(???,b))
+% \end{itemize}
+% }
+% \trversion{
+% \begin{lemma}[Function Types]
+%   $\stsem[\codefont{isOk},
+%   \codefont{pos}{:}\iintty \iarrowi \iintty,
+%   \forall \ga.\ipty \ga \iarrowi \iboolty]$.
+% \end{lemma}
+% }
 
-\trversion{
-\section{Conditions on Base Types}
-\label{app:meta-theory}
-\begin{condition}[Conditions on Base-type Interfaces]
-\label{cond:base-types}
-  \begin{enumerate}
-  \item $\dom {\Ikind} = \dom {\Iimp}$.
-  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
-    \iarrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$ of type $\ity$).
-  \item $\stsem[\Iimp(C),,\Iopty(C)]$.
-    \label{cond:closed-op}
-  \item If $\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and
-    $\Iimp(C) \sapp v \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$
-    then $\corr {\pbase v} r p $.
-  \end{enumerate}
-\end{condition}
-\noindent
-Note that by condition~\ref{cond:closed-op}, base type parsers must
-be closed.
-}
+% \trversion{
+% \section{Conditions on Base Types}
+% \label{app:meta-theory}
+% \begin{condition}[Conditions on Base-type Interfaces]
+% \label{cond:base-types}
+%   \begin{enumerate}
+%   \item $\dom {\Ikind} = \dom {\Iimp}$.
+%   \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
+%     \iarrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$ of type $\ity$).
+%   \item $\stsem[\Iimp(C),,\Iopty(C)]$.
+%     \label{cond:closed-op}
+%   \item If $\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and
+%     $\Iimp(C) \sapp v \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$
+%     then $\corr {\pbase v} r p $.
+%   \end{enumerate}
+% \end{condition}
+% \noindent
+% Note that by condition~\ref{cond:closed-op}, base type parsers must
+% be closed.
+% }
 
-\section{Complete \ipads{} Encoding in \ddc{}}
-\label{app:ipads-to-ddc}
+% \section{Complete \ipads{} Encoding in \ddc{}}
+% \label{app:ipads-to-ddc}
 
-\fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
+% \fbox{$ \mathit{prog} \cipads \ty \; \text{prog}$}
 
-\[
- \infer{ 
-     \itmv \cipads \ty \; \text{prog}
-  }{
-     \itmv \cipads \ty
-  }
-\qquad
-\infer{ 
-  \ga = \itmv; \; p \cipads \ty \; \text{prog}
-}{
-  p[\itmv/\ga] \cipads \ty \; \text{prog}
-}
-\qquad
-  \infer{ 
-      \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
-  }{
-     p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
-  }
-\]
+% \[
+%  \infer{ 
+%      \itmv \cipads \ty \; \text{prog}
+%   }{
+%      \itmv \cipads \ty
+%   }
+% \qquad
+% \infer{ 
+%   \ga = \itmv; \; p \cipads \ty \; \text{prog}
+% }{
+%   p[\itmv/\ga] \cipads \ty \; \text{prog}
+% }
+% \qquad
+%   \infer{ 
+%       \Prec{}\; \ga = \itmv; \; p \cipads \ty \; \text{prog}
+%   }{
+%      p[\Prec{}\; \ga.\itmv/\ga] \cipads \ty \; \text{prog}
+%   }
+% \]
 
-\fbox{$ \itmv  \cipads \ty$}
+% \fbox{$ \itmv  \cipads \ty$}
 
-\[
-  \infer{ 
-     \pbase e \cipads \pbase e
-  }{}
-\qquad
-  \infer{ 
-     \Pfun (x:\ity) = \itmv \cipads \plam x
-    \ity \ty
-  }{
-    \itmv \cipads \ty
-  }
-\qquad
-  \infer{ 
-     \itmv \; e \cipads \ty \; e
-  }{
-     \itmv \cipads \ty
-  }
-\]
+% \[
+%   \infer{ 
+%      \pbase e \cipads \pbase e
+%   }{}
+% \qquad
+%   \infer{ 
+%      \Pfun (x:\ity) = \itmv \cipads \plam x
+%     \ity \ty
+%   }{
+%     \itmv \cipads \ty
+%   }
+% \qquad
+%   \infer{ 
+%      \itmv \; e \cipads \ty \; e
+%   }{
+%      \itmv \cipads \ty
+%   }
+% \]
 
-\[
-%\qquad
-  \infer{
-    \begin{array}{l}
-     \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
-    \cipads \\
-    \quad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n
-   \end{array}
-  }{ 
-    \itmv_i \cipads \ty_i
-  }
-\qquad
-  \infer{
-    \begin{array}{l}
-       \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
-      \cipads \\
-      \quad \ty_1 + \dots + \ty_n + \pfalse
-    \end{array}
-  }{ 
-     \itmv_i \cipads \ty_i
-  }
-\]
+% \[
+% %\qquad
+%   \infer{
+%     \begin{array}{l}
+%      \Pstruct \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+%     \cipads \\
+%     \quad \gS \; x_1{:}\ty_1. \cdots \gS \; x_{n-1}{:}\ty_{n-1}.\ty_n
+%    \end{array}
+%   }{ 
+%     \itmv_i \cipads \ty_i
+%   }
+% \qquad
+%   \infer{
+%     \begin{array}{l}
+%        \Punion \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\}
+%       \cipads \\
+%       \quad \ty_1 + \dots + \ty_n + \pfalse
+%     \end{array}
+%   }{ 
+%      \itmv_i \cipads \ty_i
+%   }
+% \]
 
-\[
-%\qquad
-  \infer{
-     \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
-    \ty_1 \& \dots \& \ty_n
-  }{ 
-     \itmv_i \cipads \ty_i
-  }
-\qquad
-  \infer{
-     \Popt \; \itmv \cipads
-     \psum \ty {} \ptrue
-  }{
-     \itmv \cipads \ty
-  }
-\]
+% \[
+% %\qquad
+%   \infer{
+%      \Palt \{x_1{:}\itmv_1 \dots x_n{:}\itmv_n\} \cipads
+%     \ty_1 \& \dots \& \ty_n
+%   }{ 
+%      \itmv_i \cipads \ty_i
+%   }
+% \qquad
+%   \infer{
+%      \Popt \; \itmv \cipads
+%      \psum \ty {} \ptrue
+%   }{
+%      \itmv \cipads \ty
+%   }
+% \]
 
-\[
-  \infer{
-    \begin{array}{l}
-       \itmv \; \Pwhere \, x.e \cipads  \\
-      \quad
-      \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
-        \itrue}
-    \end{array}
-  }{ 
-    \itmv \cipads \ty
-  }
-\]
+% \[
+%   \infer{
+%     \begin{array}{l}
+%        \itmv \; \Pwhere \, x.e \cipads  \\
+%       \quad
+%       \pset x \ty {\iif {\pdok {\nrm x.\codefont{pd}}} \; \ithen e \; \ielse
+%         \itrue}
+%     \end{array}
+%   }{ 
+%     \itmv \cipads \ty
+%   }
+% \]
 
-\[
-  \infer{
-     \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
-    \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
-  }{ 
-    \itmv \cipads \ty & 
-    \itmv_{sep} \cipads \ty_s &
-    \itmv_{term} \cipads \ty_t &
-    (f = \ilam x{}\ifalse)
-  }
-\]
+% \[
+%   \infer{
+%      \iParray{\itmv}{{\itmv_{sep}}}{{\itmv_{term}}}{} \cipads 
+%     \pseq \ty {\pscan {\ty_s}} {\pterm f {\ty_t}}
+%   }{ 
+%     \itmv \cipads \ty & 
+%     \itmv_{sep} \cipads \ty_s &
+%     \itmv_{term} \cipads \ty_t &
+%     (f = \ilam x{}\ifalse)
+%   }
+% \]
 
-\[
-  \infer{ 
-    \begin{array}{l}
-      \Pcompute{} \; e{:}\ity \cipads \\
-      \quad \pcompute e \ity      
-    \end{array}     
-  }{}
-\qquad
-  \infer{ 
-     \Plit \const \cipads 
-    \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
-  }{
-    \defty \const \ty
-  }
-\]
+% \[
+%   \infer{ 
+%     \begin{array}{l}
+%       \Pcompute{} \; e{:}\ity \cipads \\
+%       \quad \pcompute e \ity      
+%     \end{array}     
+%   }{}
+% \qquad
+%   \infer{ 
+%      \Plit \const \cipads 
+%     \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
+%   }{
+%     \defty \const \ty
+%   }
+% \]
 
-\[
-  \infer{ 
-     \ga \cipads \ga
-  }{}    
-\qquad\qquad
-  \infer{ 
-     \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
-  }{
-     \itmv \cipads \ty
-  }
-\]
+% \[
+%   \infer{ 
+%      \ga \cipads \ga
+%   }{}    
+% \qquad\qquad
+%   \infer{ 
+%      \Prec{}\; \ga.\itmv \cipads \pmu \ga \ty
+%   }{
+%      \itmv \cipads \ty
+%   }
+% \]
 
 \input{appendix-proofs}
 
