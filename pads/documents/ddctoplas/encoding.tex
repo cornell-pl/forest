@@ -5,86 +5,86 @@
   elab. Then, explain separately.}
 
 We can better understand data description languages by elaborating
-their constructs into the types of \ddc{}. We start by introducing
-\ipads\ -- an idealized data description language -- and specifying
-its elaboration into \ddc. We then discuss features of \padsc{}, \padsml{},
+their constructs into the types of \ddc{}. We start by specifying the
+complete elaboration of \ipads{}
+into \ddc. We then discuss other features of \padsc{}, \padsml{},
 \datascript{}, and \packettypes{} that are not found in \ipads{}.
 Finally, we briefly discuss some limitations of \ddc{}.
 
-\subsection{\ipads{}:  An Idealized DDL}
-\label{sec:ddc-ipads}
+% \subsection{\ipads{}:  An Idealized DDL}
+% \label{sec:ddc-ipads}
 
-\ipads{} is an idealized version of the \padsc\ language that captures
-many of the common features of \ddl{}s. % \ipads{} captures the essence
-% of \padsc{}, on which it is based, in a fashion similar to the way
-% that MinML~\cite{harper:plbook} captures the essence of ML or
-% Featherweight Java~\cite{igarasi+:featherweight} captures the essence
-% of Java.
-The two essential differences between \padsc\ and \ipads\ are
-that many of the compound constructs have been replaced by simpler,
-orthogonal contstructs, and some of the subtler syntactic features of
-\padsc\ have been eliminated. Though the syntax differs, the structure
-of \padsc{}'s relatives \padsml{}, \packettypes{} and \datascript{}
-are similar. Hence, \ipads\ serves as an effective idealization of
-these languages as well. Some features, however, are particular to a
-given language, and are therefore introduced as separate \ipads\
-extensions, later in this section.
+% \ipads{} is an idealized version of the \padsc\ language that captures
+% many of the common features of \ddl{}s. % \ipads{} captures the essence
+% % of \padsc{}, on which it is based, in a fashion similar to the way
+% % that MinML~\cite{harper:plbook} captures the essence of ML or
+% % Featherweight Java~\cite{igarasi+:featherweight} captures the essence
+% % of Java.
+% The two essential differences between \padsc\ and \ipads\ are
+% that many of the compound constructs have been replaced by simpler,
+% orthogonal contstructs, and some of the subtler syntactic features of
+% \padsc\ have been eliminated. Though the syntax differs, the structure
+% of \padsc{}'s relatives \padsml{}, \packettypes{} and \datascript{}
+% are similar. Hence, \ipads\ serves as an effective idealization of
+% these languages as well. Some features, however, are particular to a
+% given language, and are therefore introduced as separate \ipads\
+% extensions, later in this section.
 
-\ipads{} data descriptions are types.  Complex \ipads{} descriptions
-are built by using type constructors to glue together a collection of
-simpler types, with the simplest being base types like those of
-\padsml{}. A complete \ipads{} description
-is a sequence of type definitions terminated by a single type.  This
-terminal type describes the entirety of a data source, making use of
-the previous type definitions to do so.  \ipads{} type definitions can
-have one of two forms.  The form ($\alpha = \itmv$) introduces the
-type identifier $\alpha$ and binds it to \ipads{} type $\itmv$.  The
-type identifier may be used in subsequent types.  The second form
-($\Prec{}\; \alpha = \itmv$) introduces a recursive type definition.
-In this case, $\alpha$ may appear in $\itmv$.
+% \ipads{} data descriptions are types.  Complex \ipads{} descriptions
+% are built by using type constructors to glue together a collection of
+% simpler types, with the simplest being base types like those of
+% \padsml{}. A complete \ipads{} description
+% is a sequence of type definitions terminated by a single type.  This
+% terminal type describes the entirety of a data source, making use of
+% the previous type definitions to do so.  \ipads{} type definitions can
+% have one of two forms.  The form ($\alpha = \itmv$) introduces the
+% type identifier $\alpha$ and binds it to \ipads{} type $\itmv$.  The
+% type identifier may be used in subsequent types.  The second form
+% ($\Prec{}\; \alpha = \itmv$) introduces a recursive type definition.
+% In this case, $\alpha$ may appear in $\itmv$.
 
-\figref{fig:ipads-syntax} summarizes the formal syntax of \ipads.  As
-with \ddc, expressions $e$ and types $\sigma$ are taken from the host
-language, described in \secref{sec:host-lang}.  Notice that we use $x$
-for host language variables and $\alpha$ for \ipads{} type variables.
-$\pbase{e}$ denotes a base type parameterized by a value. $\Pfun{}$
-introduces value-parameterized types and $\Plit{\const}$ describes a
-literal in the data source. $\Pstruct{}$s describe sequences, much
-like \padsml{} records.  $\Punion{}$ is a simplified version of
-\padsml{} datatypes, supporting only description of variance in the
-data source.  $\Parray{}$ describes homogenous sequences like the
-\padsml{} built-in type \cd{Plist}. However, the separator and
-terminator of $\Parray{}$ are specified as types rather than literals.
-$\Pwhere$ specifies constraints, $\Popt$ allows for an optional
-element, and $\Prec$ introduces recursive types. $\Pcompute$ is
-identical to $\pcomputen$ of \ddc.  $\Palt{}$ is an intersection type;
-it describes data that is described by all the branches simultaneously
-and produces a set of values - one from each type.
+% \figref{fig:ipads-syntax} summarizes the formal syntax of \ipads.  As
+% with \ddc, expressions $e$ and types $\sigma$ are taken from the host
+% language, described in \secref{sec:host-lang}.  Notice that we use $x$
+% for host language variables and $\alpha$ for \ipads{} type variables.
+% $\pbase{e}$ denotes a base type parameterized by a value. $\Pfun{}$
+% introduces value-parameterized types and $\Plit{\const}$ describes a
+% literal in the data source. $\Pstruct{}$s describe sequences, much
+% like \padsml{} records.  $\Punion{}$ is a simplified version of
+% \padsml{} datatypes, supporting only description of variance in the
+% data source.  $\Parray{}$ describes homogenous sequences like the
+% \padsml{} built-in type \cd{Plist}. However, the separator and
+% terminator of $\Parray{}$ are specified as types rather than literals.
+% $\Pwhere$ specifies constraints, $\Popt$ allows for an optional
+% element, and $\Prec$ introduces recursive types. $\Pcompute$ is
+% identical to $\pcomputen$ of \ddc.  $\Palt{}$ is an intersection type;
+% it describes data that is described by all the branches simultaneously
+% and produces a set of values - one from each type.
 
-\begin{figure}
-\begin{bnf}
-%   \mname{Type Definitions}{2} \meta{d} \::= \alpha = \itmv
-%   \|  \Prec{} \; \alpha = \itmv \\ \\
-  \name{Types} \meta{\itmv} \::= 
-    \pbase{e} \| \Plit{\const} \nlalt
-    \Pfun{} (\var:\ity) = \itmv \| \itmv\; e \nlalt
-    \Pstruct{} \{\overrightarrow {\var{:}\itmv}\} \| 
-    \Punion{} \{\overrightarrow {\var{:}\itmv}\} \|
-    \Palt{} \{\overrightarrow {\var{:}\itmv}\} \nlalt
-    \itmv \; \Pwhere{} \, x.e \| 
-    \Popt{}\; \itmv \|
-    \iParray{\itmv}{\itmv}{\itmv}{} \nlalt 
-    \Pcompute{} \; e{:}\ity \|
-     \alpha \| \Prec{} \; \alpha . \itmv
-     \\
-%   \mname{Host Lang. Expressions}{2} \meta{e}  \::= ... \\ \\
-%   \mname{Host Lang. Types}{2} \meta{\sigma}  \::= ...
-  \name{Programs} \meta{p} \::= \itmv \| \alpha = \itmv;\,\nont{p} \|
-  \Prec{} \; \alpha = \itmv;\,\nont {p}
-\end{bnf}
-\caption{The syntax of the \ipads{} data description langauge.}
-\label{fig:ipads-syntax}
-\end{figure}
+% \begin{figure}
+% \begin{bnf}
+% %   \mname{Type Definitions}{2} \meta{d} \::= \alpha = \itmv
+% %   \|  \Prec{} \; \alpha = \itmv \\ \\
+%   \name{Types} \meta{\itmv} \::= 
+%     \pbase{e} \| \Plit{\const} \nlalt
+%     \Pfun{} (\var:\ity) = \itmv \| \itmv\; e \nlalt
+%     \Pstruct{} \{\overrightarrow {\var{:}\itmv}\} \| 
+%     \Punion{} \{\overrightarrow {\var{:}\itmv}\} \|
+%     \Palt{} \{\overrightarrow {\var{:}\itmv}\} \nlalt
+%     \itmv \; \Pwhere{} \, x.e \| 
+%     \Popt{}\; \itmv \|
+%     \iParray{\itmv}{\itmv}{\itmv}{} \nlalt 
+%     \Pcompute{} \; e{:}\ity \|
+%      \alpha \| \Prec{} \; \alpha . \itmv
+%      \\
+% %   \mname{Host Lang. Expressions}{2} \meta{e}  \::= ... \\ \\
+% %   \mname{Host Lang. Types}{2} \meta{\sigma}  \::= ...
+%   \name{Programs} \meta{p} \::= \itmv \| \alpha = \itmv;\,\nont{p} \|
+%   \Prec{} \; \alpha = \itmv;\,\nont {p}
+% \end{bnf}
+% \caption{The syntax of the \ipads{} data description langauge.}
+% \label{fig:ipads-syntax}
+% \end{figure}
 
 \subsection{\ipads{} Elaboration}
 \label{sec:trans-sl}
@@ -249,7 +249,7 @@ We now give semantics to four features not found in \ipads{}: \padsc{}
 switched unions, \padsml{} polymorphic, recursive datatypes,
 \datascript{} arrays, and \packettypes{} overlays.
 
-\paragraph{\em \padsc{} switched unions.}
+\paragraph*{\padsc{} switched unions}
 A switched union, like a \Punion, indicates variability in the data
 format with a set of alternative formats (branches). However, instead
 of trying each branch in turn, the switched union takes an expression that
@@ -343,7 +343,7 @@ conditional types.
 Note that we can safely replicate $e$ as the
 host language is pure.
 
-\paragraph{\em \padsml\ polymorphic, recursive datatypes.}
+\paragraph*{\padsml\ polymorphic, recursive datatypes.}
 We have also developed an encoding of \padsml{}'s polymorphic,
 recursive datatypes. We present this encoding in two steps. First, we
 extend \ipads{} with type abstraction and application, and specify
@@ -403,17 +403,17 @@ type, it is a monomorphic type referring only to the recursive type
 itself, while within the rest of the program it is a polymorphic type
 referring to the entire type abstraction.
 
-Our choice to limit \padsml{} uniform datatypes was based on three
-factors: first, and foremost, we lacked any compelling examples that
-demanded nonuniform datatypes; second, recursion over higher-order
-types significantly complicates both the theory of \ddc{} and the
-implementation of \padsml{}; lastly, there is no support in \ocaml{}
-for polymorphic recursion~\footnote{The absence might be due to the
-  fact that type inference for polymorphicly-recursive functions
-  (without type annotations) is
-  undecidable~\cite{henglein:poly-recursion}.}.
+% Our choice to limit \padsml{} uniform datatypes was based on three
+% factors: first, and foremost, we lacked any compelling examples that
+% demanded nonuniform datatypes; second, recursion over higher-order
+% types significantly complicates both the theory of \ddc{} and the
+% implementation of \padsml{}; lastly, there is no support in \ocaml{}
+% for polymorphic recursion~\footnote{The absence might be due to the
+%   fact that type inference for polymorphicly-recursive functions
+%   (without type annotations) is
+%   undecidable~\cite{henglein:poly-recursion}.}.
 
-\paragraph{\em \datascript\ arrays.}
+\paragraph*{\datascript\ arrays.}
 Next, we introduce \datascript{}-style arrays for binary data,
 $\itmv\;[\mathit{length}]$. They are parameterized by an optional
 length field, instead of a separator and terminator. If the user
@@ -470,7 +470,7 @@ follows:
 Note that the termination predicate is trivially false, as we use the
 lookahead-terminator exclusively to terminate the array. 
 
-\paragraph{\em \packettypes\ overlays.}
+\paragraph*{\em \packettypes\ overlays.}
 Finally, we consider the {\it overlay} construct found in
 \packettypes{}.  An overlay allows description authors ``to merge two
 type specifications by embedding one within the other, as is done when

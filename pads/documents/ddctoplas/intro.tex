@@ -146,7 +146,7 @@ researchers have begun to develop high-level languages
 for describing and processing ad hoc data.  For instance,
 McCann and Chandra introduced
 \packettypes{}~\cite{sigcomm00}, a specification language designed to help 
-systems programmers process the binary data associated
+programmers process the binary data associated
 with networking protocols.  Godmar Back developed
 \datascript{}~\cite{gpce02}, a scripting language with explicit
 support for specifying and parsing binary data formats. \datascript{}
@@ -159,12 +159,16 @@ of developing a
 language of Bit-Level Types (BLT)~\cite{eger:blt} for specifying file
 formats such as ELF, JPEG, and MIDI as well as packet layouts.
 Finally, we are part of a group developing
-\pads{}~\cite{fisher+:pads}, another system for specifying ad hoc data.
+\pads{}, another system for managing ad hoc data.
 \pads{} focuses on robust error handling and tool generation.
 It is also unusual in that it supports a variety of data encodings:
 ASCII formats used by financial analysts, medical professionals and scientists,
 EBCDIC formats used in Cobol-based legacy business systems,
 binary data from network applications, and mixed encodings as well.
+\pads{} comes with not one but two specification languages: 
+\padsc~\cite{fisher+:pads} generates
+libraries and tools for C programmers while \padsml~\cite{mandelbaum+:padsml}
+generates O'Caml.
 
 % Consequently, \pads{} can be used in applications 
 % ranging from network packet processing to financial data analysis to
@@ -241,7 +245,7 @@ a data source in a data description.  If a data source changes,
 as they frequently do, by extending a record with an additional field or new
 variant, one often only needs to make a single local change to
 the declarative description to keep it up to date.  
-
+and
 Second, basing the description language on type theory is especially helpful as
 ordinary programmers have built up strong intuitions about types.  
 The designers of data description languages
@@ -372,19 +376,19 @@ marked as error-free.
 %as well, but this is a solid starting point.
 % eg: the existence of inverse mappings?
 
-To study and compare \pads{}, \datascript{}, and/or
+To study and compare \padsc{}, \padsml{}, \datascript{}, and/or
 some other data description language, we advocate translating
-the language into \ddc{}.  The translation decomposes
+the language into the \ddc{}.  The translation decomposes
 the relatively complex, high-level descriptions of the language 
 in question into a series of lower-level
 \ddc{} descriptions, which have all been formally defined.  
 We have done this decomposition for \ipads{}, an idealized version of the
-\pads{} language that captures the essence of the actual 
+\padsc{} language that captures the essence of the actual 
 implementation.  We have also analyzed many of the features of
 \packettypes{} and \datascript{} using our model.  The process of
 giving semantics to these languages
 highlighted features that were ambiguous or 
-ill-defined in the documentation we had available to us.
+ill-defined in the documentation we had available to us.  
 % given a semantics to one of the features
 % of \packettypes{}, its {\em overlays}, not found in \pads{}.
 % Our semantic investigation of overlays uncovered the fact that
@@ -394,21 +398,32 @@ ill-defined in the documentation we had available to us.
 % add them to the \pads{} implementation by encoding them as
 % ``\Palternate{}s,'' \pads{} own form of intersection type.
 
-To our delight, the process of giving \pads{} 
+To our delight, the process of giving \padsc{} 
 a semantics in this framework has had additional benefits.  
 In particular, since we defined the
 semantics by reviewing the existing 
 implementation, we found (and fixed!) a couple of subtle bugs.  The semantics has also raised several
 design questions that we are continuing to study. 
 It has also helped us explore important extensions.
-In particular, driven by examples found in biological data~\cite{geneontology,newick}, we decided to add recursion to \pads{}.
+In particular, driven by examples found in biological data~\cite{geneontology,newick}, we decided to add recursion to \padsc{}.
 We used our semantic framework to study the ramifications of this addition.
 
-In summary, this paper makes the following theoretical and practical
+Finally, \ddc{} has been instrumental in the development of our
+latest data description language,
+\padsml{}.  Unlike \padsc, which was created prior to our semantic analysis,
+\padsml{} was defined with \ddc{} already in hand.  The semantics
+was a useful guide in all aspects of the \padsml{} implementation, but
+particularly so in the development of polymorphic descriptions, a new
+feature in \padsml{}.  The compilation invariants required for correct
+code generation in the presence of polymorphism are quite subtle.  However,
+using \ddc{}, we were able to workout the details in an clean, elegant
+setting and prove our implementation technique was correct.
+
+In summary, this article makes the following theoretical and practical
 contributions:
 %
 \begin{itemize}
-\item We define a semantic framework for understanding and comparing data description languages such as \pads{},
+\item We define a semantic framework for understanding and comparing data description languages such as \padsc{}, \padsml{},
 \packettypes{}, \datascript{}, and \blt{}.
 No one has previously given a formal semantics to any of these 
 languages.  In fact, as far as we are aware, no one has developed 
@@ -419,7 +434,7 @@ a semantics for internal representation of this data within a
 rich, strongly-typed programming language.
 
 \item At the center of the framework is \ddc{},
-a calculus of data descriptions based on dependent type theory.
+a calculus of data descriptions based on a polymorphic, dependent type theory.
 We give a denotational semantics
 to \ddc{} by interpreting
 types both as parsers and, more conventionally, 
@@ -430,7 +445,7 @@ stating that all errors in the parsed data are reported in the parse
 descriptor.  We prove \ddc{} parsers maintain this property.
 
 \item We define \ipads{}, an idealized
-version of the \pads{} programming language
+version of the \padsc{} programming language
 that captures its essential features,
 and show how to give it a semantics by translating it into \ddc{}.  
 The process of defining the semantics led to the
@@ -446,23 +461,58 @@ language design
 as opposed to falling prey to ``accidents of history and personal background.''
 
 \item We use \ipads{} and \ddc{} to experiment with 
-a definition and implementation strategy for recursive data types,
-a feature not found in any existing ad hoc data description language that
-we are aware of.  Recursive types are essential for representing 
+a definition and implementation strategy for recursive data types.  
+Recursive types are essential for representing 
 tree-shaped hierarchical
 data~\cite{geneontology,newick}.  
-We have integrated recursion into \pads{},
+We have integrated recursion into \padsc{},
 using our theory as a guide. 
+
+\item We also used \ipads{} and \ddc{} as a guide for the 
+implementation of \padsml{},
+a new data description language for O'Caml.  The chief difficulty
+in the design involved understanding how to compile
+polymorphic descriptions into O'Caml.  Polymorphism allows for effective
+``description reuse'' and fits elegantly in the context of
+typed functional programming languages like O'Caml.  \ddc{} served as
+a simple formal framework in which we could work out and prove the
+correctness of our implementation strategy.
 \end{itemize}
 
+Most of the basic ideas mentioned above were presented at the ACM 
+Symposium on Principles of Programming Languages in 2006,
+in a paper with the same title~\cite{fisher+:popl06}.  However,
+there are two important differences.  First, we have found several subtle
+ways to improve the structure of the semantics of the
+\ddc{}, since we first introduced it in 2006.  In particular,
+we have been able to eliminate the ``contractiveness'' constraint
+we previously thought was necessary.  This had the effect of allowing us 
+to simplify our earlier kinding rules substantially.  Second, we have
+added polymorphism to the calculus so that we may use it to understand
+the semantics of \padsml{}'s polymorphic, recursive and dependent
+data types.  The addition of polymorphism led to
+a number of technical challenges in the proof of correctness of our 
+system.  Finally, this article differs from our previously published work as
+it explains the proof techniques used to achieve all our formal results
+in detail.  Much of the new work, including proofs, are drawn directly from
+Mandelbaum's Ph.D. thesis~\cite{mandelbaum:thesis}.
+
+The rest of the paper describes our contributions in detail.
 Section~\ref{sec:ipads} gives a gentle introduction to data description
-languages by introducing \ipads.  Sections~\ref{sec:ddc}, \ref{sec:ddc-sem} and \ref{sec:meta-theory}
+languages by introducing \ipads.  
+Sections~\ref{sec:ddc}, \ref{sec:ddc-sem} and \ref{sec:ddc-meta-theory}
 explain the syntax, semantics and metatheory of \ddc{}.
-Section~\ref{sec:encodings} discusses encodings of \ipads{}, \packettypes{}
+Section~\ref{sec:ddc-encodings} discusses encodings of \ipads{}, \packettypes{}
 and \datascript{} in \ddc{} and \secref{sec:applications}
 explains how we have already made use of our semantics in practice.  
 Sections~\ref{sec:related} and 
 \ref{sec:conclusion} discuss related work and conclude.
+We have explicitly excluded discussion of a variety of practical 
+considerations concerning the engineering of either the \padsc{} or \padsml{}
+systems from this article so we may focus specifically on the semantics 
+of data description languages.  We consider engineering concerns,
+system performance and the architecture of the 
+\pads{} tool generation system beyond the scope of this article.
 
 %%% Local Variables: 
 %%% mode: latex

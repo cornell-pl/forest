@@ -1,16 +1,29 @@
 \section{\ddc{} Semantics}
 \label{sec:ddc-sem}
 
-The primitives of \ddc{} are deceptively simple.  Each captures a
-simple concept, often familiar from type theory. However, in reality,
-each primitive is multifaceted. Except for abstractions, each type
-simultaneously describes a collection of valid bit strings, two
-datatypes in the host language -- one for the data representation
-itself and one for its parse descriptor -- and a transformation from
-bit strings, including invalid ones, into data and corresponding
-metadata.
 
-We give semantics to \ddc{} types using three semantic functions, each
+At first glance, the primitives of \ddc{} are deceptively simple.  
+However, deeper thought reveals
+their semantics is multi-faceted. For example, each basic type
+simultaneously describes a
+collection of valid bit strings, two datatypes in the host language --
+one for the data representation itself and one for its parse
+descriptor -- and a transformation from bit strings, including
+invalid ones, into data and corresponding meta-data. 
+
+% There are multiple facets to the semantics of every description in the \ddc{}.
+% For example, every basic description
+% simultaneously describes (1) a collection of valid bit strings, (2) two
+% datatypes in the host language -- one for the data representation
+% itself and one for its parse descriptor -- and (3) a transformation from
+% bit strings, including invalid ones, into data and corresponding
+% metadata.  Type and value abstractions also have multiple different
+% semantic interpretations:  (1) functions that generate sets of bit strings,
+% (2) representation and parse descriptor types in the host language, and
+% (3) functions of the generate parsers.
+
+We give semantics to \ddc{} types using three primary
+semantic functions, each
 of which precisely conveys a particular facet of a type's meaning.
 The functions $\itsem[\cdot]$ and $\itpdsem[\cdot]$ describe the {\it
   representation semantics} of \ddc{}, detailing the types of the
@@ -19,25 +32,40 @@ $\trans[\cdot,,]$ describes the {\it parsing semantics} of \ddc{},
 defining a \implang{} language function for each type that parses bit
 strings to produce a representation and parse descriptor. We define
 the set of valid bit strings for each type to be those strings for
-which the PD indicates no errors when parsed.
+which the PD indicates no errors when parsed.  In addition to these
+three semantic functions, we define a normalization relation,
+which facilitates reasoning about parameterized descriptions.
 
-\ddc{} abstractions are a special case of \ddc{} types in that they do
-not directly describe data, but rather are conventional functions that
-enable the writing of more concise data descriptions.
-Therefore, their meaning, and that of application, can be expressed
-independently of any particular semantic interpretation of \ddc{}. We
-do so with a small-step \textit{normalization} judgment $\ty \stepsto
-\ty'$.  
-%\edcom{M: Explain that also interpet them in other judgments, and
-%  explain why.}
-However, despite our assigning them a semantics with the normalization
-judgment, we still interpret them in the other semantic
-interpretations of \ddc.  We do so because the implementations of
-\padsc\ and \padsml\ do not normalize types before translating them,
-but, rather, translate abstraction and application directly into the
-host language. The role of normalization, then, is only to provide
-users with a simple and direct explanation of the meaning of
-abstraction and application.
+We begin the technical discussion by describing
+with a kinding judgment that checks if a type is well formed
+--- the other semantic functions
+should only be applied to well-formed \ddc{} types.
+We then specify the normalization relation after which we formalize
+the three-fold semantics of \ddc{} types.  For reference,
+\tblref{tab:judg-list} lists all the functions and judgments defined
+in this section and a brief description of each. Additionally,
+\tblref{tab:fomega-judg-list} lists all of the \fomega{} judgments
+that we reference.
+
+
+
+% % \ddc{} abstractions are a special case of \ddc{} types in that they do
+% % not directly describe data, but rather are conventional functions that
+% % operate over descriptions.
+% % Therefore, the meaning \ddc{} abstractions (and applications) can be expressed
+% % independently of any particular semantic interpretation of \ddc{}. We
+% % do so with a small-step \textit{normalization} judgment $\ty \stepsto
+% % \ty'$.  
+% % %\edcom{M: Explain that also interpet them in other judgments, and
+% % %  explain why.}
+% % However, despite our assigning them a semantics with the normalization
+% % judgment, we still interpret them in the other semantic
+% % interpretations of \ddc.  We do so because the implementations of
+% % \padsc\ and \padsml\ do not normalize types before translating them,
+% % but, rather, translate abstraction and application directly into the
+% % host language. The role of normalization, then, is only to provide
+% % users with a simple and direct explanation of the meaning of
+% % abstraction and application.
 
 \edcom{TP: Put two tables side by side.}
 \begin{table}
@@ -61,7 +89,7 @@ abstraction and application.
       $\fopdtyc \pctxt = \ctxt$     & {\it parse-descriptor type variables in $\fotyc \pctxt$ }\\
       %$\stsem[e,\pctxt;\ctxt,\ity]$ & {\it \fomega expression typing} \\
     \end{tabular}
-    \caption{\ddc{} Functions and judgments defined in this section.}
+    \caption{\ddc{} functions and judgments defined in this section.}
     \label{tab:judg-list}
   \end{center}
 \end{table}
@@ -79,14 +107,6 @@ abstraction and application.
     \label{tab:fomega-judg-list}
   \end{center}
 \end{table}
-
-We begin with a kinding judgment that checks if a type is well formed.
-We then specify the normalization semantics after which we formalize
-the three-fold semantics of \ddc{} types.  For reference,
-\tblref{tab:judg-list} lists all the functions and judgments defined
-in this section and a brief description of each. Additionally,
-\tblref{tab:fomega-judg-list} lists all of the \fomega{} judgments
-that we reference.
 
 \subsection{\ddc{} Kinding}
 \label{sec:ddc-kinding}
@@ -784,17 +804,17 @@ to well-formed \ddc{} types.
 
 \begin{figure}
 \begin{itemize}
-\newcommand{\labelitemi}{}
-\item $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
+%\newcommand{\labelitemi}{}
+\item[] $\codefont {Eof} : \ibitsty \iprodi \ioffty \iarrowi \iboolty$
 
-\item $\codefont{scanMax} : \iintty$
+\item[] $\codefont{scanMax} : \iintty$
 
-\item $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
-\item $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
-\item $\ifun {isOk} p {\codefont{pos(p.h.nerr) = 0}}$
-\item $\ifun {isErr} p {\codefont{pos(p.h.nerr) = 1}}$
+\item[] $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
+\item[] $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
+\item[] $\ifun {isOk} p {\codefont{pos(p.h.nerr) = 0}}$
+\item[] $\ifun {isErr} p {\codefont{pos(p.h.nerr) = 1}}$
 
-\item $\ifun {max\_ec} {\ictup{ec_1, ec_2}} {}$ \\
+\item[] $\ifun {max\_ec} {\ictup{ec_1, ec_2}} {}$ \\
   $\begin{array}{l}
     \iif {\codefont{ec_1} = \iecpc \iori \codefont{ec_2} = \iecpc}\; \ithen \iecpc \\
     \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
@@ -811,19 +831,19 @@ to well-formed \ddc{} types.
 
 \begin{figure}
 \begin{itemize}
-\newcommand{\labelitemi}{}
 
-\item %[Unit:]
-\item $\ifun {R_{unit}} \iuval \iuval$
-\item $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
 
-\item %[Bottom:]
-\item $\ifun {R_{bot}} \iuval \ierr$
-\item $\ifun {P_{bot}} \off ((1,\iecpc,\ipair \off \off),())$
+\item[] %[Unit:]
+\item[] $\ifun {R_{unit}} \iuval \iuval$
+\item[] $\ifun {P_{unit}} \off {\itup{\itup{0,\iok,\ipair \off \off},\iuval}}$
 
-\item %[Pair:]
-\item $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
-\item $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
+\item[] %[Bottom:]
+\item[] $\ifun {R_{bot}} \iuval \ierr$
+\item[] $\ifun {P_{bot}} \off ((1,\iecpc,\ipair \off \off),())$
+
+\item[] %[Pair:]
+\item[] $\ifun {R_{\gS}} {\ipair {r_1} {r_2}} {\itup {\codefont{r_1,r_2}}}$
+\item[] $\ifun{H_{\gS}} {\ictup{h_1,h_2}}{}$ \\
   $\begin{array}{l}
     \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
     \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
@@ -832,20 +852,20 @@ to well-formed \ddc{} types.
     \quad \ictup {nerr,ec,sp}
   \end{array}$
 
-\item $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
+\item[] $\ifun {P_{\gS}} {\ictup{p_1, p_2}} {\ictup {H_{\gS} \itup{p_1.h,p_2.h},\itup{p_1,p_2}}}$
 
-\item %[Sum:]
-\item $\ifun {R_{+left}} r {\iinl {\codefont r}}$
-\item $\ifun {R_{+right}} r {\iinr {\codefont r}}$
+\item[] %[Sum:]
+\item[] $\ifun {R_{+left}} r {\iinl {\codefont r}}$
+\item[] $\ifun {R_{+right}} r {\iinr {\codefont r}}$
 
-\item $\ifun {H_+} h {\ictup{pos(h.nerr),h.ec,h.sp}}$
-\item $\ifun {P_{+left}} p {\ictup{\codefont{H_+} \iappi p.h, \iinl p}}$
-\item $\ifun {P_{+right}} p {\ictup{\codefont{H_+} \iappi p.h, 
+\item[] $\ifun {H_+} h {\ictup{pos(h.nerr),h.ec,h.sp}}$
+\item[] $\ifun {P_{+left}} p {\ictup{\codefont{H_+} \iappi p.h, \iinl p}}$
+\item[] $\ifun {P_{+right}} p {\ictup{\codefont{H_+} \iappi p.h, 
       \iinr  p}}$
 
-\item %[Intersection:]
-\item $\ifun {R_{\&}} {\ictup {r,r'}} {\ictup {r,r'}}$
-\item $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
+\item[] %[Intersection:]
+\item[] $\ifun {R_{\&}} {\ictup {r,r'}} {\ictup {r,r'}}$
+\item[] $\ifun {H_{\&}} {\ictup {h_1, h_2}} {}$ \\
     $\begin{array}{l}
       \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
       \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
@@ -854,7 +874,7 @@ to well-formed \ddc{} types.
       \quad \ictup {nerr,ec,sp}
     \end{array}$
 
-\item $\ifun {P_{\&}} {\ictup {p_1,p_2}} {\ictup{H_{\&} \iappi 
+\item[] $\ifun {P_{\&}} {\ictup {p_1,p_2}} {\ictup{H_{\&} \iappi 
       \itup{p_1.h, p_2.h},\itup{p_1,p_2}}}$
  \end{itemize}
 
@@ -869,24 +889,24 @@ to well-formed \ddc{} types.
 \begin{figure}
 \begin{itemize}
   \newcommand{\labelitemi}{}
-\item %[Set:]
-\item $\ifun {R_{con}} {\ictup{c,r}} {
+\item[] %[Set:]
+\item[] $\ifun {R_{con}} {\ictup{c,r}} {
     \iif {\codefont c} \; \ithen {\iinl {\codefont r}} \; \ielse {\iinr {\codefont r}}
   }$ 
-\item $\ifun {P_{con}} {\ictup {c, p}} {}$ \\
+\item[] $\ifun {P_{con}} {\ictup {c, p}} {}$ \\
     $\begin{array}{l}
       \iif {\codefont c} \; \ithen {\ictup{(pos(p.h.nerr),p.h.ec,p.h.sp),p}} \\
       \ielse {\ictup {(1 + pos(p.h.nerr),\maxec \iecerr {p.h.ec},p.h.sp),p}}
     \end{array}$
    
-\item %[Array:] 
-\item $\ifun {R_{seq\_init}} {\iuval} {\ictup{0,\ieseq}}$   
-\item $\ifun {P_{seq\_init}} \off {\ictup{(0,\iok,\ipair \off
+\item[] %[Array:] 
+\item[] $\ifun {R_{seq\_init}} {\iuval} {\ictup{0,\ieseq}}$   
+\item[] $\ifun {P_{seq\_init}} \off {\ictup{(0,\iok,\ipair \off
       \off),(0,0,\ieseq)}}$
 
-\item $\ifun {R_{seq}} {\ictup{r, r_e}} 
+\item[] $\ifun {R_{seq}} {\ictup{r, r_e}} 
   {\ictup{r.len+1,\iappend{r.elts} {\iarr{r_e}}}}$
-\item $\ifun {H_{seq}} {\ictup{h, h_s, h_e}} {}$ \\
+\item[] $\ifun {H_{seq}} {\ictup{h, h_s, h_e}} {}$ \\
   $\begin{array}{l}
       \ilet {eerr} {
         \codefont{\iif {h.neerr = 0 \mathrel{and} h_e.nerr > 0}}\\
@@ -900,25 +920,25 @@ to well-formed \ddc{} types.
       \quad \ictup {nerr,ec,sp}
     \end{array}$
 
-\item $\ifun{P_{seq}} {\ictup{p, p_s, p_e}}{}$ \\ 
+\item[] $\ifun{P_{seq}} {\ictup{p, p_s, p_e}}{}$ \\ 
   $\begin{array}{l}
     \codefont{(H_{seq} \iappi \itup{p.h,p_s.h,p_e.h},}\\ 
     \codefont{\itup{p.neerr + pos(p_e.h.nerr), p.len + 1,\iappend {p.elts}
         {\iarr{p_e}}})}
   \end{array}$
 
-\item %[Compute:]
-\item $\ifun{R_{compute}} r {\codefont r}$
-\item $\ifun{P_{compute}} \off {\ictup{\itup{0,\iok,\ipair \off \off},\iuval}}$
+\item[] %[Compute:]
+\item[] $\ifun{R_{compute}} r {\codefont r}$
+\item[] $\ifun{P_{compute}} \off {\ictup{\itup{0,\iok,\ipair \off \off},\iuval}}$
 
-\item %[Absorb:]
-\item $\ifun {R_{absorb}} p {\iif {\pdok p}\; 
+\item[] %[Absorb:]
+\item[] $\ifun {R_{absorb}} p {\iif {\pdok p}\; 
     \ithen {\iinl \iuval}\; \ielse {\iinr \ierr}}$
-\item $\ifun {P_{absorb}} p {\ictup{p.h,\iuval}}$
+\item[] $\ifun {P_{absorb}} p {\ictup{p.h,\iuval}}$
 
-\item %[Scan:]
-\item $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
-\item $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
+\item[] %[Scan:]
+\item[] $\ifun{R_{scan}} r  {\codefont{\iinl r}}$
+\item[] $\ifun{P_{scan}} {\itup{i,p}} {}$ \\
 $\begin{array}{l}
 \ilet {nerr} {\codefont{pos(i) + pos(p'.h.nerr)}}\\
 \ilet {ec} {\iif {\codefont{nerr = 0}}\; \ithen \iok\; \ielse \iecerr} \\
@@ -926,8 +946,8 @@ $\begin{array}{l}
 \quad \ictup{hdr,\iinl {\ictup{i,p}}}
 \end{array}$
 
-\item $\ifun {R_{scan\_err}} {()} {\iinr \ierr}$
-\item $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,\iecpc,(\off,\off)}}}$\\
+\item[] $\ifun {R_{scan\_err}} {()} {\iinr \ierr}$
+\item[] $\ifun {P_{scan\_err}} \off {\ilet {hdr} {\ictup{1,\iecpc,(\off,\off)}}}$\\
   \verb+ +$\ictup{hdr,\iinr \iuval}$
 \end{itemize}
 \caption{Constructor functions, part 2.}
@@ -966,8 +986,8 @@ subcomponents to the total error count.  Errors at the level of the
 element itself - such as constraint violation in constrained types -
 are generally counted individually.
 
-With this background, we can now discuss the semantics.  $\ptrue$ and
-$\pfalse$ do not consume any input. Hence, the output offset is the
+With this background, we can now discuss the semantics.  The $\ptrue$ and
+$\pfalse$ descriptions do not consume any input. Hence, the output offset is the
 same as the input offset in the parsers for these constructs. A look
 at their constructors shows that the parse descriptor for $\ptrue$
 always indicates no errors and a corresponding $\iok$ code, while that

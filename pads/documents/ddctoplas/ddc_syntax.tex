@@ -5,10 +5,11 @@ At the heart of our work is a data description calculus (\ddc{}),
 containing simple, orthogonal type constructors designed to capture
 the core features of data description languages.  Consequently, the
 syntax of \ddc{} is at a significantly lower level of abstraction than
-that of \padsml{}.  Like \padsml{}, however, \ddc{} presents a
-type-based model.  
+that of \padsc, \padsml{} or \ipads.  Like any of these languages, 
+however, the form and function of \ddc{} features are directly 
+inspired by type theory.  
 
-Informally, we may divide \ddc{} into types and
+Informally, we may divide the features that make up \ddc{} into types and
 type operators. Each \ddc{} type describes the external representation
 of a piece of data and implicitly specifies how to transform that
 external representation into an internal one.  The internal
@@ -19,40 +20,35 @@ over types.
 
 Syntactically, the primitives of the calculus are similar to the types
 found in many dependent type systems, with a number of additions
-specific to the domain of data description.  We base our calculus on a
-dependent type theory because expressions frequently appear within
-types in data description languages. However, unlike other dependent
-type systems, \ddc\ is not part of a programming language.  Therefore,
-there is no ``obvious'' choice for an expression language from which
-to draw the expressions that appear in \ddc\ types.
-
-However, data description languages tend to draw their expressions
+specific to the domain of data description.  The types are {\em dependent} 
+because data parsed earlier often guides parsing of later data
+(\ie the form of the later data {\em depends} on the earlier data).
+In addition, parsing ad hoc formats correctly
+often involves checking constraints 
+phrased as expressions in some conventional programming language.
+%
+% We base our calculus on a
+% {\em dependent} type theory because we both need to represent
+% constraints
+% the latter parts of a data format
+% often depend directly on values parsed at the beginning of the format.
+% However, unlike other dependent
+% type systems, \ddc\ is not part of a programming language.  Therefore,
+% there is no ``obvious'' choice for an expression language from which
+% to draw the expressions that appear in \ddc\ types.
+%
+Data description languages tend to draw their expressions
 from their {\em host language} -- the programming language in which
 their generated software artifacts are encoded.  The host language of
-\padsml, for example, is \ocaml. Therefore, we mimic this design in
-\ddc and choose a single language -- a variant of \fomega -- for
+\padsc, for example, is C and therefore the \padsc constraint
+language is also C.  We mimic this design in
+\ddc{} and choose a single language -- a variant of \fomega -- for
 expressing both the expressions embedded in types and the
 interpretations of \ddc. This host language is discussed further in
 \secref{sec:host-lang}.
 
 \subsection{\ddca{} Syntax}
 \label{sec:ddc-syntax}
-
-\begin{figure}
-\begin{bnf}
-  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
-                               \| \kty \-> \gk \\
-  \name{Types} \meta{\ty} \::= 
-    \ptrue\| \pfalse \| \pbase{e} \| 
-    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
-    \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \|
-    \pset x \ty e \| \pseq \ty \ty {\pterm e \ty} \nlalt
-    \ptyvar       \| \pmu{\ptyvar}{\gk}{\ty} \| \ptylam{\ptyvar}{\kty}{\ty} \| \ptyapp{\ty}{\ty}
-    \nlalt \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty}  
-\end{bnf}
-\caption{\ddc{} syntax}
-\label{fig:ddca-syntax}
-\end{figure}
 
 \figref{fig:ddca-syntax} shows the syntax of \ddc{}. Expressions $e$
 and types $\ity$ belong to the host language.  
@@ -92,6 +88,23 @@ $\ty_2$. They transform a single set of bits to produce
 a pair of values, one from each type. Constrained types $\pset x \ty e$
 transform data according to the underlying type $\ty$ and
 then check that the constraint $e$ holds when $x$ is bound to the parsed value.
+
+
+\begin{figure}
+\begin{bnf}
+  \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 
+                               \| \kty \-> \gk \\
+  \name{Types} \meta{\ty} \::= 
+    \ptrue\| \pfalse \| \pbase{e} \| 
+    \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \nlalt
+    \psig x \ty \ty \| \psum \ty e \ty \| \pand \ty \ty \|
+    \pset x \ty e \| \pseq \ty \ty {\pterm e \ty} \nlalt
+    \ptyvar       \| \pmu{\ptyvar}{\gk}{\ty} \| \ptylam{\ptyvar}{\kty}{\ty} \| \ptyapp{\ty}{\ty}
+    \nlalt \pcompute e \ity \| \pabsorb \ty \| \pscan{\ty}  
+\end{bnf}
+\caption{\ddc{} syntax}
+\label{fig:ddca-syntax}
+\end{figure}
 
 The type $\pseq \ty {\ty_s} {\pterm e {\ty_t}}$ represents a sequence
 of values of type $\ty$. The type $\ty_s$ specifies the type of the

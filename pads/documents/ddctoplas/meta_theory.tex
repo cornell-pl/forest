@@ -10,7 +10,9 @@ metatheory of data description languages has been
 uncharted.
 
 We present the following two properties as critical invariants of
-our theory. We feel that they should hold, in some form, for any data
+our theory.  Just like the classic Progress and Preservation theorems
+should hold for any conventional typed programming language,
+we feel that the following properties should hold, in some form, for any data
 description language.
 \begin{itemize}
 \item {\bf Parser Type Correctness}: For a \ddc{} type $\ty$, the
@@ -73,8 +75,8 @@ condition~\ref{cond:closed-op}, base type parsers must be closed.
   {\iexpn \stepsto \iexpn' \quad \iexpn' \stepstok k \iexpn''}
 \end{array}
 \]
-\label{fig:k-steps-norm-eval}
 \caption{K-steps normalization and evaluation judgments}
+\label{fig:k-steps-norm-eval}
 \end{figure}
 
 The evaluation of \fomega{} terms and the normalization of \ddc{}

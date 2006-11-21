@@ -2,7 +2,7 @@
 \label{sec:ipads}
 
 In this section, we define \ipads{}, an idealized data description
-language.  \ipads{} captures the essence of \pads{} in a fashion
+language.  \ipads{} captures the essence of \padsc{} in a fashion
 similar to the way that MinML~\cite{harper:plbook} captures the essence of ML or Featherweight
 Java~\cite{igarasi+:featherweight} captures the essence of Java.  The main goal of this section is to introduce
 the reader to the form and function of \ipads{} by giving its syntax
@@ -12,10 +12,11 @@ the structure of \pads{}' relatives \blt{}, \packettypes{}, and
 formal semantics to \ipads.
 
 \paragraph*{Preliminary Concepts.}
-Like \pads{}, \packettypes{}, \datascript{}, and \blt{}, \ipads{} data
+Like \padsc{}, \padsml{}, 
+\packettypes{}, \datascript{}, and \blt{}, \ipads{} data
 descriptions are types.  These types specify both the external data
 format (a sequence of bits or characters) and a mapping into a
-data structure in the host programming language.  In \pads,
+data structure in the host programming language.  In \padsc,
 the host language is C; in \ipads, the host language is an extension
 of the polymorphic lambda calculus.  For the most part, however, the
 specifics of the host language are unimportant.
@@ -90,7 +91,7 @@ of the array elements (in this case, {\tt entry$\_$t}),
 a description of the separator that appears between elements
 (in this case, a newline marker \Peor{}), and 
 a description of the terminator (in this case, the end-of-file marker).
-\pads{} itself provides a much wider selection of separators and
+\padsc{} itself provides a much wider selection of separators and
 termination conditions, but these additional variations are of little semantic 
 interest so we omit them from \ipads.  
 The host language representation for 
@@ -132,7 +133,7 @@ injection.  Otherwise, there is an error.
 
 Finally, the {\tt response$\_$t} type is a \Pfun, a user-defined
 parameterized type.  The parameter of {\tt response$\_$t} is a host
-language integer.  The body of the \Pfun{} is a \padskw{Puint16$\_$FW}
+language integer.  The body of the \Pfun{} expression is a \padskw{Puint16$\_$FW}
 where \cd{x}, the fixed width, is the argument of the function.  In
 addition, the value of the fixed-width integer is constrained by the
 \Pwhere{} clause.  In this case, the \Pwhere{} clause demands that
@@ -166,8 +167,7 @@ entry\_t = \Pstruct{} \{
   request  : \Pstring("\(\backslash\)"");   "\(\backslash\)" ";
   response : response\_t 3;    " "; 
   length   : \Puint{};
-  academic : \Pcompute 
-             (getdomain client) == "edu" : bool;
+  academic : \Pcompute (getdomain client) == "edu" : bool;
 \};
 \(\qquad\)
 entry\_t \Parray{}(\Peor, \Peof)
@@ -246,9 +246,9 @@ node\_t = \Popt \Pstruct \{
 \figref{fig:ipads-syntax} summarizes the formal syntax of \ipads.
 Expressions $e$ and types $\sigma$ are taken from the host language,  
 described in \secref{sec:host-lang}. 
-\trversion{Notice, however, that we use $x$ for host
+Notice, however, that we use $x$ for host
 language expression variables and $\alpha$ for \ipads{} type
-variables. }
+variables.
 In the examples, we have abbreviated the syntax in places.  
 For instance, we omit the operator ``\padskw{Plit}'' and formal label 
 $x$ when specifying constant types in \Pstruct{}s, writing
@@ -256,10 +256,10 @@ $x$ when specifying constant types in \Pstruct{}s, writing
 \Plit{c};$''. In addition, all
 base types $C$ formally have a single parameter, but we have omitted
 parameters for base types such as \Puint.  
-
-\trversion{Finally, the type $\Palt{}$, which did not appear in the
+Finally, the type $\Palt{}$, which did not appear in the
   examples, describes data that is described by all the branches
-  simultaneously and produces a set of values - one from each type.}
+  simultaneously and produces a set of values - one from each type.
+Intuitively, $\Palt{}$ is a form of intersection type.
 
 \begin{figure}
 {\small
@@ -267,14 +267,14 @@ parameters for base types such as \Puint.
 %   \mname{Type Definitions}{2} \meta{d} \::= \alpha = \itmv
 %   \|  \Prec{} \; \alpha = \itmv \\ \\
   \name{Types} \meta{\itmv} \::= 
-    \pbase{e} \| \Plit{\const} \nlalt
+    \pbase{e} \| \Plit{\const} \|
     \Pfun{} (\var:\ity) = \itmv \| \itmv\; e \nlalt
     \Pstruct{} \{\overrightarrow {\var{:}\itmv}\} \| 
-    \Punion{} \{\overrightarrow {\var{:}\itmv}\} \nlalt
-    \trversion{\Palt{} \{\overrightarrow {\var{:}\itmv}\}}
-    \itmv \; \Pwhere{} \, x.e \| 
+    \Punion{} \{\overrightarrow {\var{:}\itmv}\} \|
+    \Palt{} \{\overrightarrow {\var{:}\itmv}\} \|
+    \itmv \; \Pwhere{} \, x.e \nlalt
     \Popt{}\; \itmv \|
-    \iParray{\itmv}{\itmv}{\itmv}{} \nlalt 
+    \iParray{\itmv}{\itmv}{\itmv}{} \| 
     \Pcompute{} \; e{:}\ity \|
      \alpha \| \Prec{} \; \alpha . \itmv
      \\
