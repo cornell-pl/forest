@@ -487,14 +487,17 @@ ways to improve the structure of the semantics of the
 \ddc{}, since we first introduced it in 2006.  In particular,
 we have been able to eliminate the ``contractiveness'' constraint
 we previously thought was necessary.  This had the effect of allowing us 
-to simplify our earlier kinding rules substantially.  Second, we have
+to simplify our earlier kinding rules substantially.  They now 
+take on a much more standard format.  Second, we have
 added polymorphism to the calculus so that we may use it to understand
 the semantics of \padsml{}'s polymorphic, recursive and dependent
 data types.  The addition of polymorphism led to
 a number of technical challenges in the proof of correctness of our 
 system.  Finally, this article differs from our previously published work as
-it explains the proof techniques used to achieve all our formal results
-in detail.  Much of the new work, including proofs, are drawn directly from
+it explains the proof techniques and all intermediate lemmas needed 
+to achieve all our formal results.  We have omitted the line-by-line 
+details of the proofs, but key cases of the most challenging
+lemmas may be found in
 Mandelbaum's Ph.D. thesis~\cite{mandelbaum:thesis}.
 
 The rest of the paper describes our contributions in detail.

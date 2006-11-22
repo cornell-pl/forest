@@ -245,9 +245,10 @@ then $\trans[{\ty[\ty'/\ptyvar]},,] \iexpreq
 \end{lemma}
 
 \begin{proof}
-  Parts 1,3-7: By induction on structure of types. For part 3, the
-  most interesting case is for the type $\ptyvar$, which is shown in
-  detail in \appref{app:extended-proofs}.
+  Parts 1,3-7: By induction on structure of types. 
+% For part 3, the
+%  most interesting case is for the type $\ptyvar$, which is shown in
+%  detail in \appref{app:extended-proofs}.
   Part 2 is proven by induction
   on the height of the kinding derivation.  The most interesting case
   is $\pcomputen$, as it is the only construct in which a variable of
@@ -256,8 +257,9 @@ then $\trans[{\ty[\ty'/\ptyvar]},,] \iexpreq
   variables allowed in $\ity$ are of the form $\tyvar_\repname$.
   For part 4, note that variables of the form $\parsenamecd_\repname$
   cannot appear in any $\ty$ -- they can only be introduced by the
-  parsing semantics function. A number of the more challenging cases
-  are shown in detail in \appref{app:extended-proofs}. 
+  parsing semantics function. 
+%A number of the more challenging cases
+%  are shown in detail in \appref{app:extended-proofs}. 
   For part 6, note that the open variables in $\trans[\ty,,]$ are
   exactly those that are open in $\ty$ itself, as none are introduced
   in the translation.
@@ -388,8 +390,9 @@ premise were switched with the first conclusion.
 \begin{proof}
   By induction on the number of steps in the evaluation.  Within the
   induction, we proceed using a case-by-case analysis of the possible
-  structures of type $\ty$. The complete proof is shown in
-  \appref{app:extended-proofs}.
+  structures of type $\ty$. 
+% The complete proof is shown in
+%  \appref{app:extended-proofs}.
 \end{proof}
 
 
@@ -458,8 +461,9 @@ prove.
 \label{lemma:sub-preserve-H}
 \end{lemma}
 \begin{proof}
-  By induction on the structure of the kind.  The proof is detailed in
-  \appref{app:extended-proofs}.
+  By induction on the structure of the kind. 
+% The proof is detailed in
+%  \appref{app:extended-proofs}.
 \end{proof}
 
 \begin{lemma}
@@ -468,8 +472,9 @@ If $\ddck[\ty,{\pctxt;\ctxt},\kind,{}]$ then $\hhpred \ty \kind$.
 \end{lemma}
 
 \begin{proof}
-  By induction on the height of the kinding derivation. A number of
-  the more challenging cases are shown in \appref{app:extended-proofs}.
+  By induction on the height of the kinding derivation. 
+% A number of
+%  the more challenging cases are shown in \appref{app:extended-proofs}.
 \end{proof}
 
 \begin{corollary}
@@ -607,8 +612,9 @@ $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
 \end{lemma}
 
 \begin{proof}
-  By induction on the height of the kinding derivation. A number of
-  the more challenging cases are shown in \appref{app:extended-proofs}.
+  By induction on the height of the kinding derivation. 
+% A number of
+%  the more challenging cases are shown in \appref{app:extended-proofs}.
 \end{proof}
 
 \begin{theorem}[Type Correctness of Closed Types]
@@ -785,8 +791,9 @@ If $\; \ddck[\ty,,\kty,]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
   By induction on the height of the second derivation -- that is, the
   number of steps taken to evaluate. Within the induction, we proceed
   using a case-by-case analysis of the possible structures of type
-  $\ty$.  A number of the more challenging cases are shown in
-  \appref{app:extended-proofs}.
+  $\ty$.  
+% A number of the more challenging cases are shown in
+%  \appref{app:extended-proofs}.
 \end{proof}
 
 % We conclude this section with a useful property of canonical
