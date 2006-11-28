@@ -11,7 +11,7 @@ the structure of \pads{}' relatives \blt{}, \packettypes{}, and
 \datascript{} are similar.  Later sections will show how to give a
 formal semantics to \ipads.
 
-\paragraph*{Preliminary Concepts.}
+\paragraph*{Preliminary Concepts}
 Like \padsc{}, \padsml{}, 
 \packettypes{}, \datascript{}, and \blt{}, \ipads{} data
 descriptions are types.  These types specify both the external data
@@ -30,10 +30,7 @@ $\alpha$ and binds it to \ipads{} type $\itmv$.
 The type identifier may be used in
 subsequent types.  The second form  ($\Prec{}\; \alpha = \itmv$) introduces
 a recursive type definition.  In this case, $\alpha$ may appear in 
-$\itmv$.\trversion{~\footnote{For technical reasons, 
-we require that recursive definitions be {\it contractive}:
-$\alpha$ can only appear inside another type constructor such as a
-record or union.  See Section~\ref{sec:ddc-kinding} for further details.}}
+$\itmv$.
 
 Complex \ipads{} descriptions are built by using type constructors to glue together a collection of simpler types. In our examples, we
 assume \ipads{} contains a wide variety of base types including
@@ -68,7 +65,7 @@ an unexpected character or bit-sequence, it sets the internal representation to
 $\ierr$ (\ie{} null) and notes the error in the
 parse descriptor.
 
-\paragraph*{An \ipads{} Example.}
+\paragraph*{An \ipads{} Example}
 \ipads{} contains a rich collection of type constructors for creating
 sophisticated descriptions of ad hoc data.  We present these
 constructors through a series of examples.  The first example, shown
@@ -192,7 +189,7 @@ tj62.aol.com - - [16/Oct/1997:14:32:22 -0700]
 }
 \end{figure}
 
-\paragraph*{A Recursive \ipads{} Example.}
+\paragraph*{A Recursive \ipads{} Example}
 Figure~\ref{fig:ipads-newick} presents a second \ipads{} example.
 In this example, \ipads{} describes the Newick format, a flat
 representation of tree-structured data.  The leaves of the trees
@@ -242,7 +239,7 @@ node\_t = \Popt \Pstruct \{
 }
 \end{figure}
 
-\paragraph*{Formal Syntax.}
+\paragraph*{Formal Syntax}
 \figref{fig:ipads-syntax} summarizes the formal syntax of \ipads.
 Expressions $e$ and types $\sigma$ are taken from the host language,  
 described in \secref{sec:host-lang}. 

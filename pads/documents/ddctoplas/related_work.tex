@@ -1,5 +1,5 @@
 \section{Related Work}
-\label{chap:related-work}
+\label{sec:related}
 
 The primary purpose of this article is to describe the semantic theory
 of type-based data description languages.  However, 
@@ -126,7 +126,7 @@ does not help process data that arrives in predetermined, ad hoc
 formats.  Another language in this category is the Hierarchical Data
 Format 5 (HDF5)~\cite{hdf5}.  This file format allows users to store
 scientific data, but it does not help users deal with legacy ad hoc
-formats like \padsml{} does.
+formats.
 
 At the other end of the spectrum,
 some of the oldest tools for describing data formats are parser
@@ -139,7 +139,7 @@ generator, and then specify the lexer and the parser separately, in
 addition to the glue code to use them together. In addition, \lex{}
 and \yacc{} do not support data-dependent parsing, do not generate
 internal representations automatically, and do not supply a collection
-of value-added tools such as \padsml's \xml{} translator.
+of value-added tools.
 
 \paragraph*{Grammar-based Parser Generators}
 More modern parser generators alleviate several of the
@@ -243,6 +243,10 @@ parser combinator libraries.
 semantics of dependent \ddc{} types is structured
 entirely differently from the semantics of parser generators given
 in the literature.
+\item A parser combinator library is specifying a \textit{parser},
+  while a term in \ddc{} is \textit{describing a data format}, which
+  means that the \ddc{} term can be used to generate a printer and
+  other analysis tools in addition to a parser.
 \end{itemize}
 
 % Parser combinators, however, are a general approach to specifying

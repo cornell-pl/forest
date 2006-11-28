@@ -93,7 +93,7 @@ applications, errors in the data can be the most interesting part
 because they can signal where two systems are failing to communicate.
 
 Today, many programmers tackle the challenge of ad hoc data by writing
-scripts in a language like Perl.  Unfortunately, this process is slow,
+scripts in a language like \perl{}.  Unfortunately, this process is slow,
 tedious, and unreliable.  Error checking and recovery in these scripts
 is often minimal or nonexistent because when present, such error code
 swamps the main-line computation.  The program itself is often
@@ -168,7 +168,7 @@ binary data from network applications, and mixed encodings as well.
 \pads{} comes with not one but two specification languages: 
 \padsc~\cite{fisher+:pads} generates
 libraries and tools for C programmers while \padsml~\cite{mandelbaum+:padsml}
-generates O'Caml.
+generates O'Caml code.
 
 % Consequently, \pads{} can be used in applications 
 % ranging from network packet processing to financial data analysis to
@@ -206,9 +206,8 @@ generates O'Caml.
 
 \figHeight{revised-architecture}{Architecture of \pads{}  system.}{fig:architecture}{2.25in}
 
-While differing in many details, 
-these languages derive their power from 
-a remarkable insight: 
+Although these languages differ in many details, 
+they both derive their power from a remarkable insight: 
 Types can describe data in both its external (on-disk) and internal
 (programmatic) forms.
 \figref{fig:architecture} illustrates how systems such as
@@ -245,15 +244,14 @@ a data source in a data description.  If a data source changes,
 as they frequently do, by extending a record with an additional field or new
 variant, one often only needs to make a single local change to
 the declarative description to keep it up to date.  
-and
+
 Second, basing the description language on type theory is especially helpful as
 ordinary programmers have built up strong intuitions about types.  
 The designers of data description languages
 have been able to exploit these intuitions to make the syntax and
 semantics of descriptions
 particularly easy to understand, even for beginners.  For instance,
-an array type is naturally used to describe sequences of data objects.
-And, really, what else could an array type describe?  Similarly,
+an array type is used to describe sequences of data objects, while
 union types are used to describe alternatives.
 
 Third, programmers can write generic, type-directed programs that
@@ -482,12 +480,11 @@ correctness of our implementation strategy.
 Most of the basic ideas mentioned above were presented at the ACM 
 Symposium on Principles of Programming Languages in 2006,
 in a paper with the same title~\cite{fisher+:popl06}.  However,
-there are two important differences.  First, we have found several subtle
+there are two important differences.  First, we have found several 
 ways to improve the structure of the semantics of the
-\ddc{}, since we first introduced it in 2006.  In particular,
-we have been able to eliminate the ``contractiveness'' constraint
-we previously thought was necessary.  This had the effect of allowing us 
-to simplify our earlier kinding rules substantially.  They now 
+\ddc{} since we first introduced it in 2006.  In particular,
+we were able to eliminate the ``contractiveness'' constraint, which
+allowed us to simplify our earlier kinding rules substantially.  They now 
 take on a much more standard format.  Second, we have
 added polymorphism to the calculus so that we may use it to understand
 the semantics of \padsml{}'s polymorphic, recursive and dependent
@@ -495,7 +492,7 @@ data types.  The addition of polymorphism led to
 a number of technical challenges in the proof of correctness of our 
 system.  Finally, this article differs from our previously published work as
 it explains the proof techniques and all intermediate lemmas needed 
-to achieve all our formal results.  We have omitted the line-by-line 
+to achieve our formal results.  We have omitted the line-by-line 
 details of the proofs, but key cases of the most challenging
 lemmas may be found in
 Mandelbaum's Ph.D. thesis~\cite{mandelbaum:thesis}.
