@@ -1,0 +1,15 @@
+Descriptions of files in this directory
+
+backup1.log       -- Cut down log file from C:WINDOWS/security/logs on Mogilny
+backup2.log       -- full version of backup1.log (different kinds of records)
+convert.log       -- same place as backup2.log but may be easier due to
+                      the presence of more core records
+ProfSec.log       -- another variant of backup2.log
+SCESETUP.LOG      -- another variant of backup2.log
+
+dmesg             -- Log file from Linux /var/log on tux.cs.princeton.edu
+                      -- very hard -- huge record-level variation
+rpmpkgs           -- Log files from Linux /var/log on tux.cs.princeton.edu
+scrollkeeper.log  -- Log files from Linux /var/log on tux.cs.princeton.edu
+yum.log           -- Log files from Linux /var/log on tux.cs.princeton.edu
+
