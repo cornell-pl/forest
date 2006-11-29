@@ -546,6 +546,9 @@ structure Main : sig
     fun isGroup (Pgroup g) = true
       | isGroup _ = false
 
+    fun isString (Pstring s) = true
+      | isString _ = false
+
     fun findGroups (tokens : LToken list) : LToken list = 
 	let fun findDelim (Other c,loc) = List.find (fn(f,s) => c = f) groupOps
               | findDelim _ = NONE
@@ -746,7 +749,9 @@ structure Main : sig
                      print ("Total:"^(Int.toString (!total))^"\n");
                      print ("Coverage:"^(Int.toString (!coverage))^"\n");
                      print ("Width:"^(Int.toString (!width))^"\n");
-		     if (!width >= !ARRAY_WIDTH_THRESHOLD) andalso (!coverage > numRecords - (isJunkTolerance numRecords)) 
+		     if (!width >= !ARRAY_WIDTH_THRESHOLD) andalso 
+			(!coverage > numRecords - (isJunkTolerance numRecords))  andalso
+                        (not (isString t))
 			 then (t,1)::result else result)
 		    (* we probably want to compute the number of times the token appears in the cluster...*)
 		    val arrayTokenAnalysis = List.foldl getArrayInfo [] cluster 
