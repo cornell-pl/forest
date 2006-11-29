@@ -18,7 +18,7 @@ str     = [1-9]*[A-Za-z][A-Za-z0-9_\-]*;
 %%
 
 {ipAddr}  => (SOME (Tokens.Pip yytext, {offset=yypos, span=size(yytext) - 1}));
-{month}   => (SOME (Tokens.Pmonth yytext, {offset=yypos, span=size(yytext) - 1}));
+
 {time}    => (SOME (Tokens.Ptime yytext, {offset=yypos, span=size(yytext) - 1}));
 {str}     => (SOME (Tokens.Pstring yytext, {offset=yypos, span=size(yytext) - 1}));
 -?[0-9]+  => (SOME (Tokens.Pint (Option.valOf(LargeInt.fromString yytext)), {offset=yypos, span=size(yytext) - 1}));

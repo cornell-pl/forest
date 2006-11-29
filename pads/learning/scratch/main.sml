@@ -7,21 +7,44 @@ structure Main : sig
     (********************************************************************************)
     (*********************  Configuration *******************************************)
     (********************************************************************************)
-    val HIST_PERCENTAGE   = ref 0.01
-    val STRUCT_PERCENTAGE = ref 0.01
-    val JUNK_PERCENTAGE   = ref 0.1
-    val NOISE_PERCENTAGE  = ref 0.0
-    val ARRAY_WIDTH_THRESHOLD = ref 4
+    val DEF_HIST_PERCENTAGE   = 0.01
+    val DEF_STRUCT_PERCENTAGE = 0.1
+    val DEF_JUNK_PERCENTAGE   =  0.1
+    val DEF_NOISE_PERCENTAGE  =  0.0
+    val DEF_ARRAY_WIDTH_THRESHOLD =  2
+
+    val def_depthLimit =  5
+    val def_outputDir  =  "gen/"
+    val def_srcFile    = "toBeSupplied"
+
+    val depthLimit = ref def_depthLimit
+    val outputDir = ref def_outputDir
+    val srcFile = ref def_srcFile
+
+    val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
+    val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
+    val JUNK_PERCENTAGE   = ref DEF_JUNK_PERCENTAGE
+    val NOISE_PERCENTAGE  = ref DEF_NOISE_PERCENTAGE
+    val ARRAY_WIDTH_THRESHOLD = ref DEF_ARRAY_WIDTH_THRESHOLD
 
     fun histEqTolerance   x = Real.ceil((!HIST_PERCENTAGE)   * Real.fromInt(x)) 
     fun isStructTolerance x = Real.ceil((!STRUCT_PERCENTAGE) * Real.fromInt(x)) 
     fun isJunkTolerance   x = Real.ceil((!JUNK_PERCENTAGE)   * Real.fromInt(x)) 
     fun isNoiseTolerance  x = Real.ceil((!NOISE_PERCENTAGE)   * Real.fromInt(x)) 
 
-    val depthLimit = ref 2
-    val outputDir = ref "gen/"
-    val srcFile = ref "toBeSupplied"
+    val groupOps : (char * char) list = [(#"\"", #"\""),  (#"[", #"]"),  (#"(", #")"),  (#"{", #"}")]  
 
+    fun parametersToString () = 
+	(   ("Source file to process: "^(!srcFile)   ^"\n")^
+	    ("Output directory: "      ^(!outputDir) ^"\n")^
+	    ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n")^
+	    ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n")^
+	    ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n")^
+	    ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n")^
+	    ("Minimum width threshold for array: "            ^( Int.toString (!ARRAY_WIDTH_THRESHOLD))^"\n")^
+	    ("Junk threshold (percentage): "                  ^(Real.toString (!JUNK_PERCENTAGE))^"\n"))
+
+    fun printParameters () = print (parametersToString ())
 
     (********************************************************************************)
     (*********************  END Configuration ***************************************)
@@ -38,6 +61,8 @@ structure Main : sig
     type DerivedContexts = Context list
     type Partition = (TokenOrder * (DerivedContexts list)) list * (Context list)
 
+    val missingspan = {offset=0, span=0}
+	
     type AuxInfo = {coverage:int} (* Coverage of 
 				      -- a struct is minimum coverage of its constituents;
 				      -- a union is sum of coverage of its consituents; *)
@@ -93,10 +118,14 @@ structure Main : sig
 
 	end
 
-    fun printComplexity {numAlt, numTBD, numBottom} = 
-	(print ("numAlt = "^(Int.toString numAlt)^"  ");
-	 print ("numTBD = "^(Int.toString numTBD)^"  ");
-	 print ("numBtm = "^(Int.toString numBottom)))
+
+    fun complexityToString {numAlt, numTBD, numBottom} = 
+	( ("numAlt = "^(Int.toString numAlt)^"  ")^
+	  ("numTBD = "^(Int.toString numTBD)^"  ")^
+	  ("numBtm = "^(Int.toString numBottom)))
+
+    fun printComplexity complexity = print (complexityToString complexity)
+
     val TBDstamp = ref 0
     val Bottomstamp = ref 0
 
@@ -129,7 +158,7 @@ structure Main : sig
 	    doit (List.rev ls) ""
 	end
 
-    (*    Ptime < Pmonth < Pip < Pint < Pstring < Pwhite < Other < Pempty < Error *)
+    (*    Ptime < Pmonth < Pip < Pint < Pstring < Pgroup < Pwhite < Other < Pempty < Error *)
     fun compToken (t1, t2) = 
 	case (t1,t2) 
         of (Ptime i1, Ptime i2) => EQUAL
@@ -138,6 +167,7 @@ structure Main : sig
         |  (Pint i1, Pint i2) =>  EQUAL
         |  (Pstring s1, Pstring s2) => EQUAL
         |  (Pwhite s1, Pwhite s2) => EQUAL
+        |  (Pgroup g1, Pgroup g2) => compToken(#left g1, #left g2)
         |  (Other c1, Other c2) => Char.compare (c1, c2)
         |  (Pempty, Pempty) => EQUAL
         |  (Error, Error) => EQUAL
@@ -156,25 +186,33 @@ structure Main : sig
         |  (Pstring _, Pip _) => GREATER
         |  (Pstring _, Pint _) => GREATER
         |  (Pstring _,  _) => LESS
+        |  (Pgroup _, Ptime _) => GREATER
+        |  (Pgroup _, Pmonth _) => GREATER
+        |  (Pgroup _, Pip _) => GREATER
+        |  (Pgroup _, Pint _) => GREATER
+        |  (Pgroup _, Pstring _) => GREATER
+        |  (Pgroup _,  _) => LESS
         |  (Pwhite _, Ptime _) => GREATER
         |  (Pwhite _, Pmonth _) => GREATER
         |  (Pwhite _, Pip _) => GREATER
         |  (Pwhite _, Pint _) => GREATER
         |  (Pwhite _, Pstring _) => GREATER
+        |  (Pwhite _, Pgroup _) => GREATER
         |  (Pwhite _, _) => LESS
         |  (Other _, Ptime _) => GREATER
         |  (Other _, Pmonth _) => GREATER
         |  (Other _, Pip _) => GREATER
         |  (Other _, Pint _) => GREATER
         |  (Other _, Pstring _) => GREATER
+        |  (Other _, Pgroup _) => GREATER
         |  (Other _, Pwhite _) => GREATER
         |  (Other _, _) => LESS
-
         |  (Pempty, Ptime _) => GREATER
         |  (Pempty, Pmonth _) => GREATER
         |  (Pempty, Pip _) => GREATER
         |  (Pempty, Pint _) => GREATER
         |  (Pempty, Pstring _) => GREATER
+        |  (Pempty, Pgroup _) => GREATER
         |  (Pempty, Pwhite _) => GREATER
         |  (Pempty, Other _) => GREATER
         |  (Pempty, _) => LESS
@@ -208,13 +246,15 @@ structure Main : sig
                  | Blob | Empty
 
    (* Printing routines *)
-    fun tokenToString t = 
+    fun ltokenToString (t,loc) = tokenToString t
+    and tokenToString t = 
 	case t 
         of Ptime i => i
 	|  Pip i  => i
         |  Pmonth m => m
-	|  Pint i => LargeInt.toString i
+	|  Pint i => if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
         |  Pstring s => s
+        |  Pgroup {left, body, right} => (tokenToString left)^(String.concat (List.map ltokenToString body))^(tokenToString right)
         |  Pwhite s => s
         |  Other c => Char.toString c
         |  Pempty => ""
@@ -228,6 +268,7 @@ structure Main : sig
 	|  Pint i    => "[int]"                   (*" Pint("^(LargeInt.toString i)^")"*)
         |  Pstring s => "[string]"                (*" Pstring("^s^")"*)
         |  Pwhite s  => "[white space]"           (*" Pwhite("^s^")"*) 
+        |  Pgroup {left, body, right} => (tokenTyToString left) ^"[Group Body]"^(tokenTyToString right)
         |  Other c   => "("^(Char.toString c)^")" (*(" Pother("^(Char.toString c)^")") *)
         |  Pempty    => "[empty]"
         |  Error     => " Error"
@@ -383,7 +424,7 @@ structure Main : sig
     fun printTyD prefix longTBDs longBottom suffix ty =  print (TyToStringD prefix longTBDs longBottom suffix ty )
     fun printTy ty = printTyD "" false false "" ty
 
-
+   
     fun dumpLToken strm (tk,loc) = TextIO.output(strm, tokenToString tk)
     fun dumpCL fileName contexts = 
 	let val strm = TextIO.openOut fileName
@@ -401,6 +442,15 @@ structure Main : sig
 	    TextIO.closeOut strm
 	end
 
+    fun dumpParameters fileName ty = 
+	let val strm = TextIO.openOut fileName
+            val () = TextIO.output(strm, parametersToString())
+	    val () = TextIO.output(strm, "Complexity of derived type:\n\t")
+	    val () = TextIO.output(strm, complexityToString(complexity ty))
+	in
+	    TextIO.closeOut strm
+	end
+
     fun dumpTyInfo path ty = 
 	let fun dumpTBDs ty = 
 		case ty
@@ -414,9 +464,9 @@ structure Main : sig
     	in  
           (print "Complexity of inferred type:\n\t";
 	   printComplexity (complexity ty);
-	   print "\nOutputing parititons to directory: "; print path; print "\n";
+	   print "\nOutputing partitions to directory: "; print path; print "\n";
 	   if OS.FileSys.isDir path handle SysErr => (OS.FileSys.mkDir path; true)
-	   then (dumpTBDs ty; dumpTy (path^"Ty") ty)
+	   then (dumpParameters (path^"Params") ty; dumpTBDs ty; dumpTy (path^"Ty") ty)
 	   else print "Output path should specify a directory.\n"
           )
 	end
@@ -491,6 +541,33 @@ structure Main : sig
 	   lines
        end
 
+    fun findGroups (tokens : LToken list) : LToken list = 
+	let fun findDelim (Other c,loc) = List.find (fn(f,s) => c = f) groupOps
+              | findDelim _ = NONE
+            fun delimMatches r (Other c,loc) = r = c
+              | delimMatches r _ = false
+	    fun flatten [] = []
+              | flatten ((l,body,r)::rest) = ((Other l,missingspan) :: (List.rev body)) @ (flatten rest) @ [(Other r,missingspan)] 
+            fun topSearch [] acc = List.rev acc
+              | topSearch (t::ts) acc = case findDelim t 
+		                        of NONE => topSearch ts (t::acc)
+					|  SOME (l:char,r:char) => findMatch [(l,[],r)] ts acc
+
+            and findMatch  (delims:(char * LToken list * char) list) [] acc =  (flatten delims)@ (List.rev acc) (* missing right delim: forget grouping *)
+              | findMatch ((l:char,body:LToken list,r:char)::next) (t::ts) acc = 
+		  if delimMatches r t 
+		  then let val match =  (Pgroup{left=Other l, body = List.rev body, right= Other r}, {offset=0,span=0})
+		       in
+			   case next of [] => topSearch ts (match::acc)
+			   | (l1,body1,r1)::rest => findMatch ((l1, match::body1,r1)::rest) ts acc
+		       end
+		  else case findDelim t
+		       of NONE => findMatch ((l, t::body, r)::next) ts acc
+                        | SOME(l1,r1) => findMatch ((l1,[],r1)::(l,body,r)::next) ts acc 
+	in
+	    topSearch tokens []
+	end
+
     fun ltokenizeRecord (record:string) = 
 	let val length = String.size record
 	    fun doNonEmpty record = 
@@ -509,9 +586,12 @@ structure Main : sig
 			of SOME a => getMatches(a::acc)
 		      |  NONE   => List.rev acc
 		    val matches = getMatches []
-		(*	    val () = printLTokens matches *)
+		    val groupedMatches = findGroups matches
+(*		    val () = print "printing grouped tokens:\n"
+		    val () = printLTokens groupedMatches
+*)
 		in
-		    matches
+		    groupedMatches
 		end
 	in
 	    if length = 0 then [(Pempty,{offset=0, span=0})] else doNonEmpty record
@@ -767,6 +847,27 @@ structure Main : sig
 	   partition
 	end
 
+    (* convert a list of token lists into a list of token lists, 
+       expanding group tokens if argument list contains entirely
+       single element lists of the same group token; otherwise, 
+       return argument token list list. *)
+    fun crackUniformGroups cl = 
+	let fun cuf [] = []
+              | cuf ([(Pgroup{left,body,right},loc)]::lts) = 
+	         let fun mkEntry l body r = (l,missingspan) :: body @ [(r, missingspan)]
+		     fun cuf' [] acc = List.rev acc
+                       | cuf' ([(Pgroup{left=l,body,right=r},loc)]::lts) acc = 
+			 if l = left then cuf' lts ((mkEntry l body r) :: acc)
+			 else cl
+                       | cuf' _ acc = cl
+		 in
+		     cuf' lts [mkEntry left body right]
+		 end
+              | cuf lts = cl
+	in
+	    cuf cl
+	end
+
     fun mkBottom (coverage,cl) = 
 	Bottom ({coverage=coverage}, !Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
 
@@ -779,6 +880,7 @@ structure Main : sig
 	let fun cnvEmptyRowsToPempty [] = [(Pempty,{offset=0, span=0})]
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
+	    val cl = crackUniformGroups cl
 	in
 	    if (coverage < isNoiseTolerance(!initialRecordCount))
 	    then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
@@ -786,7 +888,6 @@ structure Main : sig
 	    then TBD ({coverage=coverage}, !TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
 	    else ContextListToTy (currentDepth + 1) cl
 	end
-
 
     and clustersToTy curDepth rtokens numRecords clusters = 
 	let val analysis = analyzeClusters numRecords clusters
@@ -892,13 +993,13 @@ structure Main : sig
 	    ty
 	end
 
-    and ContextListToTy curDepth contexts = 
-	let val numContexts = List.length contexts
-            val counts : RecordCount list = List.map countFreqs contexts
-	    val fd: freqDist = buildHistograms numContexts counts
-	    val clusters : (Token * histogram) list list = findClusters numContexts fd
-	    val () = printClusters numContexts clusters
-            val ty = clustersToTy curDepth contexts numContexts clusters
+    and ContextListToTy curDepth context = 
+	let val numRecordsinContext = List.length context
+            val counts : RecordCount list = List.map countFreqs context
+	    val fd: freqDist = buildHistograms numRecordsinContext counts
+	    val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd
+	    val () = printClusters numRecordsinContext clusters
+            val ty = clustersToTy curDepth context numRecordsinContext clusters
 	in
 	    ty
 	end
@@ -909,6 +1010,7 @@ structure Main : sig
 	    val records = loadFile fileName
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map ltokenizeRecord records
+            val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val ty = ContextListToTy 0 rtokens
 	    val sty = simplifyTy ty
 	in
@@ -924,28 +1026,24 @@ structure Main : sig
     fun setStructPer  s = STRUCT_PERCENTAGE := s
     fun setJunkPer    j = JUNK_PERCENTAGE := j
     fun setNoisePer   n = NOISE_PERCENTAGE := n
+    fun setArrayWidth a = ARRAY_WIDTH_THRESHOLD := a
     fun addSourceFile f = srcFile    := f
 
     val flags = [
-         ("d",        "output directory (default gen/)",              PCL.String (setOutputDir, false)),
-         ("maxdepth", "maximum depth for exploration (default 5)",    PCL.Int    (setDepth,     false)),
-         ("h",        "histogram comparison tolerance (percentage, default 0.01)",  PCL.Float  (setHistPer,   false)),
-         ("s",        "struct determination tolerance (percentage, default 0.01)",  PCL.Float  (setStructPer, false)),
-         ("n",        "noise level (percentage, default 0.01)",       PCL.Float  (setNoisePer, false)),
-         ("j",        "junk threshold (percentage, default 0.1)",     PCL.Float  (setJunkPer,   false))
+         ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
+         ("maxdepth", "maximum depth for exploration (default "^(Int.toString def_depthLimit)^")",         PCL.Int    (setDepth,     false)),
+         ("h",        "histogram comparison tolerance (percentage, default "^(Real.toString DEF_HIST_PERCENTAGE)^")",    PCL.Float  (setHistPer,   false)),
+         ("s",        "struct determination tolerance (percentage, default "^(Real.toString DEF_STRUCT_PERCENTAGE)^")",  PCL.Float  (setStructPer, false)),
+         ("n",        "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),
+         ("a",        "minimum array width (default "^(Int.toString DEF_ARRAY_WIDTH_THRESHOLD)^")",        PCL.Int    (setArrayWidth, false)),
+         ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false))
         ]
 
     fun processSwitches args = 
 	let val banner = PCL.genBanner("learn", "Prototype Learning System", flags)
 	in
 	   (PCL.parseArgs(args, flags, addSourceFile, banner);
-	    print ("Source file to process: "^(!srcFile)   ^"\n");
-	    print ("Output directory: "      ^(!outputDir) ^"\n");
-	    print ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n");
-	    print ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n");
-	    print ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n");
-	    print ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n");
-	    print ("Junk threshold (percentage): "                  ^(Real.toString (!JUNK_PERCENTAGE))^"\n"))
+	    printParameters())
 	end
     (********************************************************************************)
 
