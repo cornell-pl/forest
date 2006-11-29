@@ -541,6 +541,11 @@ structure Main : sig
 	   lines
        end
 
+    fun groupToTokens {left,body,right} = (left,missingspan)::body @ [(right, missingspan)]
+    fun groupToRevTokens g = List.rev (groupToTokens g)
+    fun isGroup (Pgroup g) = true
+      | isGroup _ = false
+
     fun findGroups (tokens : LToken list) : LToken list = 
 	let fun findDelim (Other c,loc) = List.find (fn(f,s) => c = f) groupOps
               | findDelim _ = NONE
@@ -806,7 +811,10 @@ structure Main : sig
 			let val (rt, loc) = lrtoken : LToken
 			in
 			  if TokenEq(tk, rt)  (* found next token; push current context *)
-			  then doMatch tks rts    ([], (List.rev curContextAcc) :: contextListAcc)
+			  then 
+			      case rt 
+			      of Pgroup g => doMatch tks rts ([], (groupToTokens g) :: (List.rev curContextAcc) :: contextListAcc)
+			      |  _        => doMatch tks rts ([],                      (List.rev curContextAcc) :: contextListAcc)
 			  else doMatch tokens rts (lrtoken :: curContextAcc, contextListAcc)
 			end
 		    val thisRecordContexts = doMatch tokenOrder thisRecord ([],[])
@@ -897,19 +905,28 @@ structure Main : sig
 		    fun isEmpty column = not (List.exists (not o null) column)
 		    fun cnvOneMatch (tokenOrder, dclist) = 
 			let val columns = doTranspose dclist
-			    (* Invariant: List.length columns = List.length tokens + 1 *)
 			    fun shuffle(columns, tokens) result =
 				case (columns, tokens) 
 				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
 				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (curDepth,(List.length last), last)) :: result))
 				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
+				  |  (col1::colg::cols, (Pgroup g)::tks) => 
+					let val coverage1 = List.length col1
+					    val coverageg = List.length colg
+					    val col1Ty = if isEmpty col1 then  [] else [(mkTBD (curDepth, coverage1, col1))]
+					    val colgTy = [(mkTBD (curDepth, coverageg, colg))]
+					in
+					    shuffle(cols, tks) (colgTy @ col1Ty @ result)
+					end
 				  |  (col::cols, tk::tks) => 
 					let val coverage = List.length col
-					    val result = if isEmpty col then  (Base ({coverage=coverage}, tk)):: result 
-							 else (Base ({coverage=coverage},tk)) :: (mkTBD (curDepth, coverage, col)) :: result
+					    val thisMatch = 
+						if isEmpty col then  [(Base ({coverage=coverage}, tk))]
+						else [Base ({coverage=coverage},tk), (mkTBD (curDepth, coverage, col))]
 					in
-					    shuffle(cols, tks) result
+					    shuffle(cols, tks) (thisMatch @ result)
 					end
+			         |  (cols,[]) => raise Fail "Unexpected case in shuffle function."
 			in
 			    case shuffle (columns, tokenOrder) []
 			    of   []   => raise Fail "Expected at least one field."
