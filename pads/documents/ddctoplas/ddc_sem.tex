@@ -445,17 +445,14 @@ the normalization judgment in \figref{fig:ddc-reduction-rules}.
 \label{fig:rep-tys}
 \end{figure}
 
-\edcom{TP: This paragraph is verbose/redundant.  Revise.}
+\edcom{TP: This paragraph is verbose/redundant.  Revised.}
 In Figure~\ref{fig:rep-tys}, we present the representation type of
 each \ddc{} primitive. While the primitives are dependent types, the
-mapping to the \implang{} language erases the dependency because the
-\implang{} language does not have dependent types. For \ddc{} types in
-which expressions appear, the translation drops the expressions to
-remove the dependency.  With these expressions gone, variables become
-useless, so we drop variable bindings as well, as in dependent-sum and
-constrained types.  Similarly, as value abstraction and application are
-only relevant for dependency, we translate them according to their
-underlying types.
+\implang{} does not have such types, so the translation erases all
+dependency. Removing expressions from the types renders variable
+binding and application useless, so we drop those forms as well.
+Consequently, we translate abstraction and application according to their
+underlying types. 
 
 In more detail, the \ddc{} type $\ptrue$ consumes no input and
 produces only the $\iunitty$ value.  Correspondingly, $\pfalse$
