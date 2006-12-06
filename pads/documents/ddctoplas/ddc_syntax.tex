@@ -266,55 +266,55 @@ omit the usual type and kind annotations on functions, with the
 expectation the reader can construct them from context.  
 \edcom{TP: add example written in \ddc}
 
-% \subsection{Example}
-% \label{sec:ddc-example}
+\subsection{Example}
+\label{sec:ddc-example}
 
-% As an example, we present an abbreviated description of the common log
-% format as it might appear in \ddc{}. For brevity,
-% this description does not fully capture the semantics of the
-% \ipads{} description from \secref{sec:ddc-ipads}. Additionally, we
-% use the standard abbreviation $\ty * \ty'$ for non-dependent products and introduce a number of type abbreviations
-% in the form $\mathtt{name} = \ty$ before giving the type that describes the data source.
+As an example, we present an abbreviated description of the common log
+format as it might appear in \ddc{}. For brevity,
+this description does not fully capture the semantics of the
+\ipads{} description from \secref{sec:ipads}. Additionally, we
+use the standard abbreviation $\ty * \ty'$ for products and introduce a number of type abbreviations
+in the form $\mathtt{name} = \ty$ before giving the type that describes the data source.
 
-% {\small
-% \[
-% \begin{array}{l}
-% \mathtt{S} = \plam {\mathtt{str}} {} {\pset {\mathtt{s}}
-%   {\mathtt{Pstring\_FW(1)}} {\mathtt{s = str}}}\\
-% \\
-% \mathtt{authid\_t} = 
-% \psum {\mathtt{S(``-")}} {} {\mathtt{Pstring(``\;")}}\\
-% \\
-% \mathtt{response\_t} = \plam {\mathtt x} {} {
-%       \pset {\mathtt y} {\mathtt{Puint16\_FW(x)}} 
-%       {\codefont{100 \leq y \iandi y < 600}}
-%     }\\
-% \\
-% \mathtt{entry\_t} = \\ \;
-% \begin{array}{lll}
-% \psig {\mathtt{client}} {\mathtt{Pip}} {&\mathtt{S(``\;")}} &* \\
-% \psig {\mathtt{remoteid}} {\mathtt{authid\_t}} {&\mathtt{S(``\;")}} &* \\
-% \psig {\mathtt{response}} {
-%   \papp
-%     {\mathtt{response\_t}} 3
-% }{} \\
-% \multicolumn{3}{c}{
-% \quad \pcompute {\codefont{getdomain\;client = ``edu"}} \iboolty}
-% \end{array}\\
-% \\
-% \pseq {\mathtt{entry\_t}} {\mathtt{S(``\backslash n")}}{
-%   \pterm {\ilam {\mathtt x} {} \ifalse} {\pfalse}
-% }
-% \end{array}
-% \]}%
-% \noindent
-% In the example, we define type constructor $\mathtt{S}$ to encode literals
-% with a constrained type. We also use the following
-% informal translations: \Pwhere{} becomes a set-type, \Pstruct{} a
-% series of dependent products, \Punion{} a series of sums, and
-% \Parray{} a sequence. As the array terminates at the end of the file, we
-% use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
-% absence of termination condition and terminator, respectively.
+{\small
+\[
+\begin{array}{l}
+\mathtt{S} = \plam {\mathtt{str}} {} {\pset {\mathtt{s}}
+  {\mathtt{Pstring\_FW(1)}} {\mathtt{s = str}}}\\
+\\
+\mathtt{authid\_t} = 
+\psum {\mathtt{S(``-")}} {} {\mathtt{Pstring(``\;")}}\\
+\\
+\mathtt{response\_t} = \plam {\mathtt x} {} {
+      \pset {\mathtt y} {\mathtt{Puint16\_FW(x)}} 
+      {\codefont{100 \leq y \iandi y < 600}}
+    }\\
+\\
+\mathtt{entry\_t} = \\ \;
+\begin{array}{lll}
+\psig {\mathtt{client}} {\mathtt{Pip}} {&\mathtt{S(``\;")}} &* \\
+\psig {\mathtt{remoteid}} {\mathtt{authid\_t}} {&\mathtt{S(``\;")}} &* \\
+\psig {\mathtt{response}} {
+  \papp
+    {\mathtt{response\_t}} 3
+}{} \\
+\multicolumn{3}{c}{
+\quad \pcompute {\codefont{getdomain\;client = ``edu"}} \iboolty}
+\end{array}\\
+\\
+\pseq {\mathtt{entry\_t}} {\mathtt{S(``\backslash n")}}{
+  \pterm {\ilam {\mathtt x} {} \ifalse} {\pfalse}
+}
+\end{array}
+\]}%
+\noindent
+In the example, we define type constructor $\mathtt{S}$ to encode literals
+with a constrained type. We also use the following
+informal translations: \Pwhere{} becomes a set-type, \Pstruct{} a
+series of dependent sums, \Punion{} a series of sums, and
+\Parray{} a sequence. As the array terminates at the end of the file, we
+use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
+absence of termination condition and terminator, respectively.
 
 %%% Local Variables: 
 %%% mode: latex

@@ -154,10 +154,7 @@ has been used to manipulate Java jar files and ELF object files.  The
 developers of Erlang have also introduced language extensions that
 they refer to as {\em binaries}~\cite{erlang-bits,gustafsson+:binaries} 
 to aid in packet
-processing and protocol programming.  At CMU, Eger is in the process
-of developing a
-language of Bit-Level Types (BLT)~\cite{eger:blt} for specifying file
-formats such as ELF, JPEG, and MIDI as well as packet layouts.
+processing and protocol programming.
 Finally, we are part of a group developing
 \pads{}, another system for managing ad hoc data.
 \pads{} focuses on robust error handling and tool generation.
@@ -294,7 +291,7 @@ buffer overflows.
 % vulnerabilities or buffer overflows will be added to the code base.
 
 In summary, data description languages such as \datascript{},
-\packettypes{}, Erlang, \blt{}, and \pads{} meet the challenge of
+\packettypes{}, Erlang, and \pads{} meet the challenge of
 processing ad hoc data by providing a concise and precise form of
 ``living'' data documentation and producing reliable tools that handle
 errors robustly.
@@ -409,7 +406,7 @@ contributions:
 %
 \begin{itemize}
 \item We define a semantic framework for understanding and comparing data description languages such as \padsc{}, \padsml{},
-\packettypes{}, \datascript{}, and \blt{}.
+\packettypes{}, and \datascript{}.
 No one has previously given a formal semantics to any of these 
 languages.  In fact, as far as we are aware, no one has developed 
 a general and complete ``theory of front-ends'' 
