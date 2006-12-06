@@ -7,9 +7,9 @@ similar to the way that MinML~\cite{harper:plbook} captures the essence of ML or
 Java~\cite{igarasi+:featherweight} captures the essence of Java.  The main goal of this section is to introduce
 the reader to the form and function of \ipads{} by giving its syntax
 and walking through a couple of examples.  Though the syntax differs,
-the structure of \pads{}' relatives \blt{}, \packettypes{}, and
+the structure of \padsc{}'s relatives \blt{}, \padsml{}, \packettypes{}, and
 \datascript{} are similar.  Later sections will show how to give a
-formal semantics to \ipads.
+formal semantics to \ipads{}.
 
 \paragraph*{Preliminary Concepts}
 Like \padsc{}, \padsml{}, 
@@ -38,7 +38,7 @@ integers (\Puint{} is an ASCII representation of an unsigned
 integer that may be represented internally in 32 bits), 
 characters (\Pchar), strings (\Pstring), dates
 (\Pdate), IP addresses (\Pip), and others.  In general, these base
-types may parameterized.  For instance, we will assume \Pstring{} is
+types may be parameterized.  For instance, we will assume \Pstring{} is
 parameterized by an argument that signals termination of the
 string.  For example, \Pstring({\tt " "}) describes any sequence of
 characters terminated by a space. 
@@ -53,10 +53,10 @@ When interpreted as a parser, each of these base types reads
 the external data source and generates a pair of data structures
 in the host language.  The first data structure is the
 {\em internal representation}  and
-the second is the {\em parse descriptor}, which contains meta-data collected during parsing.
+the second is the {\em parse descriptor}, which contains metadata collected during parsing.
 For instance, \Puint{} reads a series of digits and generates an unsigned 32-bit integer as its
 internal representation.  \Pstring{} generates a 
-host language string.  
+host-language string.  
 \Pdate{} might read dates in a multitude of
 different formats, but always generates a tuple
 with time, day, month, and year fields as its internal 
@@ -98,7 +98,7 @@ We use a \Pstruct{} to describe the contents of each line in a web log.
 Like an array, a \Pstruct{} describes a sequence of 
 objects in a data source.  We represent the result of parsing a \Pstruct{} 
 as a tuple in the host language.  The elements
-of a \Pstruct{} are either named fields (\eg{} {\tt client : \Pip{}}) or
+of a \Pstruct{} are either named fields (\eg{} {\tt client {:} \Pip{}}) or
 anonymous fields (\eg{} {\tt "~["}).  The \Pstruct{} {\tt
 entry$\_$t} declares that the first thing on the line
 is an IP address (\Pip) followed by a space
@@ -191,9 +191,9 @@ tj62.aol.com - - [16/Oct/1997:14:32:22 -0700]
 
 \paragraph*{A Recursive \ipads{} Example}
 Figure~\ref{fig:ipads-newick} presents a second \ipads{} example.
-In this example, \ipads{} describes the Newick format, a flat
+In this example, \ipads{} describes the Newick Standard format, a flat
 representation of tree-structured data.  The leaves of the trees
-are names that describe an ``entity''.   In our variant of Newick, 
+are names that describe an ``entity''.   In our variant of Newick Standard, 
 leaf names may be omitted.  If the leaf name does appear,
 it is followed by a colon and a number.  The number describes the ``distance''
 from the parent node.  Microbiologists often use
@@ -203,8 +203,8 @@ to the child.  An internal tree node may have any number of (comma-separated)
 children within parentheses.  Distances follow the closed-paren
 of the internal tree node.
 
-The Newick format and other formats that describe tree-shaped 
-hierarchies~\cite{geneontology,newick}
+The Newick Standard format and other formats that describe tree-shaped 
+hierarchies~\cite{geneontology,newick,newick-data}
 provide strong motivation for including recursion in \ipads.  
 We have not been able to find any useable description of Newick data as
 simple sequences (structs and arrays) and alternatives (unions); some

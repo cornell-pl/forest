@@ -82,7 +82,7 @@ condition~\ref{cond:closed-op}, base type parsers must be closed.
 The evaluation of \fomega{} terms and the normalization of \ddc{}
 types are both defined with a small-step semantics. However, it is
 useful to be able to reason about terms and types that are related by
-arbitrary many ($k$) steps in these semantics, rather than just one.
+arbitrarily many ($k$) steps in these semantics, rather than just one.
 To this end, in \figref{fig:k-steps-norm-eval}, we define two
 judgments that respectively generalize evaluation and normalization to
 $k$ steps. Next, we state some properties of these judgments.
@@ -379,6 +379,7 @@ premise were switched with the first conclusion.
 
 \begin{lemma}[Commutativity of Evaluation and Semantic Interpretation]
   If $\; \ddck[\ty,,\kind,]$ and $\trans[\ty,,] \kstepsto \ivaln$ then
+  $\exists\, \tyval$ such that
   \begin{enumerate}
   \item $\ty \kstepsto \tyval$,
   \item $\ivaln \iexpreq \trans[\tyval,,]$,
@@ -593,11 +594,9 @@ This hypothesis must account for the fact
 that any free type variables in a \ddc{} 
 type $\ty$ will become free
 function variables in $\trans[\ty,,]$. To that end, 
-we define the function $\ptyc \pctxt$ which maps type-variable contexts $\pctxt$ in the \ddc{}
-to value-variable contexts $\ctxt$ in \fomega.  
-% In addition, the function
-% $\fotyc{\pctxt}$ generates the appropriate \fomega\ type-variable context from
-% the \ddc{} context $\pctxt$.
+we define the function $\ptyc \pctxt$ which maps the set of
+type-variable bindings in a \ddc{} context $\pctxt$
+to a corresponding set of function-variable bindings in an \fomega{} context $\ctxt$.  
 \vskip -1.5ex
 \[
   \ptyc{\cdot} = \cdot \qquad 
@@ -769,7 +768,7 @@ conditions, produce values in canonical form.
 %   0$.}
 \end{proof}
 
-In addition, we require that base type parsers produce values in canonical form:
+In addition, we require that base-type parsers produce values in canonical form:
 \begin{condition}[Base Type Parsers Produce Values in Canonical Form]
   \label{cond:base-types-cf}
   If $\;\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and $\Iimp(C)

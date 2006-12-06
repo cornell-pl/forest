@@ -94,7 +94,7 @@ question applies, but for which we do not yet know the answer. The \Punion{}
 construct chooses between branches by searching for the first one
 without errors. However, this semantics ignores situations in which
 the correct branch in fact has errors. Often, this behavior will lead
-to parsing nothing and flagging a panic, rather than parsing the
+to parsing nothing and flagging a failure, rather than parsing the
 correct branch to the best of its ability.  The process of
 developing a semantics brought this fact to our attention and
 it now seems clear we would like a more robust

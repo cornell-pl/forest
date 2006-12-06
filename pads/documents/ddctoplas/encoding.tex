@@ -414,12 +414,13 @@ referring to the entire type abstraction.
 %   undecidable~\cite{henglein:poly-recursion}.}.
 
 \paragraph*{\datascript\ arrays}
-Next, we introduce \datascript{}-style arrays for binary data,
-$\itmv\;[\mathit{length}]$. They are parameterized by an optional
-length field, instead of a separator and terminator. If the user
-supplies the length of the sequence, the array parser reads exactly
-that number of elements. Arrays with the length field specfied can be
-encoded in a straightforward manner with \ddc{} sequences: 
+Next, we introduce \datascript{}-style arrays
+$\itmv\;[\mathit{length}]$, used to describe binary data. They are
+parameterized by an optional length field, instead of a separator and
+terminator. If the user supplies the length of the sequence, the array
+parser reads exactly that number of elements. Arrays with the length
+field specfied can be encoded in a straightforward manner with \ddc{}
+sequences:
 \[
   \infer{
     \itmv \; [\mathit{length}] \cipads 
@@ -461,7 +462,7 @@ With $\pnotn$, we can encode the unbounded \datascript{} array as
 follows:
 \[
   \infer{
-    \itmv \; [{length}] \cipads 
+    \itmv \; [] \cipads 
     \pseq \ty {\ptrue{}} {\pterm {\ilam x {} \ifalse} {\pnot \ty}}
   }{ 
     \itmv \cipads \ty
@@ -488,13 +489,14 @@ FPPacket = \Pstruct \{
 IPinFP = \Poverlay FPPacket.body \Pwith IPPacket
 \end{code}
 Type \Pnosep{} indicates that there are no separators between elements
-of the byte array. It can be encoded as \cd{\Pcompute{}(():unit)}, as
-this type consumes no data and produces a unit value without errors.
-The overlay creates a new type \cd{IPinFP} where the body field is an
-\cd{IPPacket} rather than a simple byte array.
+of the byte array and type \Peof{} indicates that the array is
+terminated by the end-of-file. They can be encoded in \ddc{} using
+$\ptrue$ and $\pfalse$, respectively. The overlay creates a new type
+\cd{IPinFP} where the body field is an \cd{IPPacket} rather than a
+simple byte array.
 
 \edcom{TP: show encoding. Mention that technical, but uninteresting.}
-We have developed a elaboration of the overlay syntax into \ddc{}. In
+We have developed an elaboration of the overlay syntax into \ddc{}. In
 essence, overlays are syntactic sugar: overlaying a subfield of a
 given type replaces the type of that subfield with a new type.
 However, despite the essentially syntactic nature of overlays, we

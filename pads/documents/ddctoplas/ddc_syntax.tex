@@ -5,7 +5,7 @@ At the heart of our work is a data description calculus (\ddc{}),
 containing simple, orthogonal type constructors designed to capture
 the core features of data description languages.  Consequently, the
 syntax of \ddc{} is at a significantly lower level of abstraction than
-that of \padsc, \padsml{} or \ipads.  Like any of these languages, 
+that of \padsc{}, \padsml{} or \ipads.  Like any of these languages, 
 however, the form and function of \ddc{} features are directly 
 inspired by type theory.  
 
@@ -40,7 +40,7 @@ phrased as expressions in some conventional programming language.
 Data description languages tend to draw their expressions
 from their {\em host language} -- the programming language in which
 their generated software artifacts are encoded.  The host language of
-\padsc, for example, is C and therefore the \padsc constraint
+\padsc{}, for example, is C and therefore the \padsc{} constraint
 language is also C.  We mimic this design in
 \ddc{} and choose a single language -- a variant of \fomega -- for
 expressing both the expressions embedded in types and the
@@ -73,7 +73,7 @@ expression $e$.
 
 We provide abstraction $\plam x {} \ty$ and application
 $\papp \ty e$ so that we may parameterize types by expressions.
-Dependent product types $\psig x {\ty_1} {\ty_2}$ describe a sequence
+Dependent sum types $\psig x {\ty_1} {\ty_2}$ describe a sequence
 of values in which the second type may refer to the value of the first.
 Sum types $\psum {\ty_1} {} {\ty_2}$
 express flexibility in the data format, as they describe
@@ -217,7 +217,7 @@ itself.
 As the calculus is largely standard, we highlight only its unusual
 features. The constants include bitstrings $\data$; offsets $\off$,
 representing locations in bitstrings; and error codes $\iok$,
-$\iecerr$, and $\iecpc$, indicating success, success with errors and
+$\iecerr$, and $\iecpc$, indicating success, success with errors, and
 failure, respectively. We use the constant $\ierr$ to indicate a
 failed parse.  Because of its specific meaning, we forbid its use in
 user-supplied expressions appearing in \ddc{} types.
@@ -264,8 +264,7 @@ abstraction over terms and application when we feel it will clarify
 the presentation. Otherwise, the polymorphism is implicit.  We also
 omit the usual type and kind annotations on functions, with the
 expectation the reader can construct them from context.  
-
-\edcom{TP: add example written in \ddc}.
+\edcom{TP: add example written in \ddc}
 
 % \subsection{Example}
 % \label{sec:ddc-example}
