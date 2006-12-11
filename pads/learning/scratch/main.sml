@@ -525,9 +525,6 @@ structure Main : sig
     (******************** Processing functions **************************)
     (********************************************************************)
 
-   (* The call to String.tokens does not produce the correct results when
-    * applied to a file with blank lines.  Instead of returning an empty
-    * string in the resulting list, it omits the line from the output list *)
    fun loadFile path = 
        let val strm = TextIO.openIn path
 	   val data : String.string = TextIO.inputAll strm
@@ -576,6 +573,25 @@ structure Main : sig
 	    topSearch tokens []
 	end
 
+    fun lengthsToHist records =
+	let val lens = List.map List.length records
+	    fun insOneLen(len,fd) = 
+		case IntMap.find(fd,len)
+		of NONE => IntMap.insert(fd, len, ref 1)
+                |  SOME count => (count := !count + 1; fd)
+	    val fd = List.foldl insOneLen IntMap.empty lens
+	    fun printLenHist fd = 
+		let fun printOne (index, count) = 
+		    (print "\t"; print (Int.toString index); print ":\t"; print(Int.toString(!count)); print "\n")
+		in
+		    (print "Histogram of number of tokens per record:\n";
+		     IntMap.appi printOne fd;
+		     print "\n")
+		end
+	in
+	    printLenHist fd
+	end
+
     fun ltokenizeRecord (record:string) = 
 	let val length = String.size record
 	    fun doNonEmpty record = 
@@ -599,7 +615,7 @@ structure Main : sig
 		    val () = printLTokens groupedMatches
 *)
 		in
-		    groupedMatches
+		    groupedMatches 
 		end
 	in
 	    if length = 0 then [(Pempty,{offset=0, span=0})] else doNonEmpty record
@@ -1033,6 +1049,7 @@ structure Main : sig
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map ltokenizeRecord records
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
+	    val () = lengthsToHist rtokens
 	    val ty = ContextListToTy 0 rtokens
 	    val sty = simplifyTy ty
 	in

@@ -13,7 +13,7 @@ time    = {doublet}:{doublet}((:{doublet})?);
 month   = Jan | jan | Feb | feb | Mar | mar | Apr | apr | May | may | Jun | jun | 
           Jul | jul | Aug | aug | Sep | sep | Oct | oct | Nov | nov | Dec | dec;
 
-str     = [1-9]*[A-Za-z][A-Za-z0-9_\-]*;
+str     = [A-Za-z][A-Za-z0-9_\-]*;
 
 %%
 
