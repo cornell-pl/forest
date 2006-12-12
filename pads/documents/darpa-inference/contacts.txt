@@ -1,0 +1,51 @@
+********************
+Contacts
+********************
+Gary Klein
+contact: eDavid
+plan: Kathleen should ping
+
+Col Hunt
+contact: eDavid
+plan: Chris believes Col Hunt has retired, will find another contact person
+
+PSU: Wu-Chang Feng
+     status: sent email, need to meet
+     contact: eDavid 
+     efficient collection of audit data, recons of captured activity.  kernal audit for single machine. cover distributed event logs. 
+
+Princeton Computer Science Administrator
+status: informal conversations already
+contact: Dave
+by end of next week, fill out form.
+domain: sys admin for princeton cs, people break in, and security for department.
+
+AT&T
+status: phone conv yesterday, follow on 1st in jan.
+contact: Kathleen
+domain:  network analysis
+i will fill out check list in january
+experts: Russ Truscott, Lefty, Dan Sheleheda
+Lefty sent data
+talk to dan on 1/2?
+
+Booz Allen Hamilton
+status: sent us NDA to set up phone conf. 
+either in house or outside folks
+can we afford it? help us now, get more money later?
+contact: David Burke
+sign NDA, phone call 12/11
+
+Raytheon
+status: black hole? not returning emails.
+contact person: Larry Snider (ISSO)
+contact: David Burke, Andy Adams Moran
+commercial tools lousy: verity?  
+plan: recontact second week in january
+look into Verity (David Burke)
+
+Jurinnov
+status: 
+contact: Andy Adams-Moran
+domain: investigation side, selling product and services. 
+plan: explore web site, see if Andy has other ideas.
