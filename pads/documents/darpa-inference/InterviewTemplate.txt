@@ -1,0 +1,53 @@
+We envision building a network forensic analysis workbench based on the PADS system for managing ad hoc data.  This workbench would help 
+ (1) ingest ad hoc data formats, 
+ (2) understand and analyze the resulting data, and 
+ (3) transform the data into desired formats.  
+
+There is a powerpoint slide that shows these three phases.
+
+During the first phase, the system might already have a description of the given data, it might be able to use statistical techniques to automatically infer a description, or it might present snippets of the data to users to interactively define a description of the data. 
+
+During the second phase, users will be able to compute statistical properties of the data and display the results graphically, run semi-structured queries over the data, compute arbitrary properties, run google-like searches, etc.  Data collected in this phase may serve to further refine the description of the data.  It may be that the information processing in this phase is sufficient for the users' purposes, or it may be passed to the third phase.
+
+During the third phase, users can specify data transformations to put the data into a more convenient format: XML, tables for loading into a relational database, a regular form for running in S, or other ad hoc data formats that could be passed back to phase 2.  
+
+We have some experience with applications for which such a workbench would be useful, but we'd like to understand whether such a tool would be useful to you.  
+
+. What tasks might you use such a workbench for?  What kinds of problems are you trying to solve? (prevention? detection? investigation? other?)
+
+. What is your workflow?
+
+. Who are your customers/clients?  
+
+. What kinds of tools do you use now?  
+   - What do you like about them?
+   _ What would you like improved?
+
+. If you were using the workbench, what would need to be in it to make it useful to you?
+
+. Can you characterize the kinds of data you encounter?
+   - ASCII, Cobol, Binary, etc.
+   - type of data contained?
+   - size?
+   - frequency?
+   - how much variation within single file?
+
+. What kinds of performance requirements do you have?  
+   - How much data do you need to process?
+   - How frequently?  
+   - What bit rate?
+   - How many different kinds of data sources do you need to process?
+   - How frequently do you get a new data source to process?
+   - Are correlations between data sources important?
+
+. What would be show-stoppers?  
+
+. What functions over the data do you need?
+   - queries?
+   - statistical analysis?
+   - visualization?
+   - google search?
+   - the ability to add custom analyses?
+
+. Can we get example data?
+
