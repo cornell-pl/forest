@@ -44,6 +44,8 @@ We have some experience with applications for which such a workbench would be us
 
 . Have you ever had a "bad day" that you attribute to the lack of a network forensic analysis workbench?
 
+. How much time does it take to track down your "average" security problem?
+
 . What functions over the data do you need?
    - queries?
    - statistical analysis?
