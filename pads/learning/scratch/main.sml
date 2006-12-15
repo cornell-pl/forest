@@ -256,7 +256,7 @@ structure Main : sig
         |  Pstring s => s
         |  Pgroup {left, body, right} => (tokenToString left)^(String.concat (List.map ltokenToString body))^(tokenToString right)
         |  Pwhite s => s
-        |  Other c => Char.toString c
+        |  Other c => String.implode [c]
         |  Pempty => ""
         |  Error => " Error"
 
@@ -311,7 +311,7 @@ structure Main : sig
 		(printTokenTy t; print "\t";
 		 print "Occurrences:"; print (Int.toString count);  print "\n")
 	    in
-		(print "Struct"; print "\t";
+		(print "Struct"; print "\n";
 		 print "Coverage:";    print (Int.toString coverage);  print "\n";
 		 print "Token count:"; print (Int.toString count);     print "\n";
 		 List.app printOne tinfos)
@@ -529,7 +529,23 @@ structure Main : sig
        let val strm = TextIO.openIn path
 	   val data : String.string = TextIO.inputAll strm
            fun isNewline c = c = #"\n" orelse c = #"\r"
-           val lines = String.fields isNewline data
+           fun getLines(ss,l) = 
+               if (Substring.isEmpty ss) then List.rev l
+	       else let val (ln, rest) = Substring.splitl (not o isNewline) ss
+                        val rest = (case Substring.getc rest
+				    of NONE => rest
+				    |  SOME(#"\n", rest) => rest (* UNIX EOR discipline *)
+				    |  SOME(#"\r", rest) => 
+					(case Substring.getc rest 
+					 of SOME(#"\n", rest) => rest (* DOS EOR discipline *)
+                                         |  _ => rest (* Mac OS EOR discipline *)))
+			            | _ => rest (* This case is impossible because of the def if isNewline *)
+		    in
+			getLines(rest, (Substring.string ln)::l)
+		    end
+(*OLD: This doesn't work with DOS style records
+           val lines = String.fields isNewline data *)
+           val lines = getLines ( Substring.full data, [])
 	   val numRecs = List.length lines
 	   val lines = List.take(lines, numRecs-1)
 	   val () = print (Int.toString (numRecs - 1)^" records.\n")
@@ -958,7 +974,7 @@ structure Main : sig
 		    val resultTy =
 			case (matchTys, badRecords)
   		        of   ([], [])   => Pvoid {coverage=0}                   (* I don't think this case can arise *)
-			  |  ([], brs)  => mkBottom (List.length brs,brs)       (* I'm not sure this case arises either *)
+			  |  ([], brs)  => (print "in mkbottom case\n"; mkBottom (List.length brs,brs))       (* I'm not sure this case arises either *)
 			  |  ([ty], []) => ty
 			  |  (tys, brs) => if isEmpty brs 
 					   then Punion ({coverage=sumCoverage tys}, tys) 
