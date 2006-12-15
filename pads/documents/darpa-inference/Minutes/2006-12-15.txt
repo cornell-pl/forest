@@ -1,0 +1,92 @@
+Agenda for 12/15.
+
+Other items?
+
+Kenny Zhu hiring update?
+cvs access for David Burke?
+Galois Teaming Agreement and NDA for AT&T
+Dave: did you update the NFAW powerpoint slide in cvs?
+
+Review Action Items (included below)
+Review Domain expert contact status (included below)
+
+Status reports
+ Kathleen
+ Dave Walker
+ David Burke
+
+What needs to be done for kick-off meeting?
+
+Timeline sanity check
+
+Vikas offer to do market research
+
+Status meeting next week?
+ 12/22 at 10am pacific/1pm eastern
+
+******************************************************************
+ACTION items from 12/8:
+ - Various: update kick off slides, individual sections by Dec 15
+ - Kathleen: convert interview template into usable form
+      include questions on nfw architecture (DONE)
+ - Various: domain expert interviews, assigned below in notes
+ - Dave: draft slide on architecture to include in interview template (DONE)
+         replace slide in kick off
+ - David Burke: understand how S/R might fit in architecture.  
+ - Dave: ask David Blei re R. 
+ - Dave: convert experimental eval. notes into slides for kick off meeting. (DONE)
+ - David Burke: convert schedule and task ownership to slides for kick-off
+ - David Burke: fix financial expenditure kick off slide
+ - Davids: check with afrl on visa for kenny & david
+ - David Burke: rewrite underlying theory slides
+ - Kathleen: send mail to Gary Klein to ping (DONE)
+    a lot of people at mitre who will be good interview candidates.
+ - Kathleen: implement ideas in types.sml file for modifying data structure for types to be directly input into format refinement stage.
+
+********************************************************************
+Gary Klein
+contact: eDavid
+status: Kathleen sent email on 12/15.
+
+Col Hunt
+contact: eDavid
+status: Chris believes Col Hunt has retired, will find another contact person
+
+PSU: Wu-Chang Feng
+status: sent email, need to meet
+contact: eDavid 
+efficient collection of audit data, recons of captured activity.  kernal audit for single machine. cover distributed event logs. 
+
+Princeton Computer Science Administrator
+status: informal conversations already
+contact: Dave
+by end of next week, fill out form.
+domain: sys admin for princeton cs, people break in, and security for department.
+
+AT&T
+status: phone conv yesterday, follow on 1st in jan.
+contact: Kathleen
+domain:  network analysis
+status: meetings scheduled for 1/2
+
+Booz Allen Hamilton
+status: sent us NDA to set up phone conf. 
+either in house or outside folks
+can we afford it? help us now, get more money later?
+contact: David Burke
+sign NDA, phone call 12/11
+
+Raytheon
+status: black hole? not returning emails.
+contact person: Larry Snider (ISSO)
+contact: David Burke, Andy Adams Moran
+commercial tools lousy: verity?  
+plan: recontact second week in january
+look into Verity (David Burke)
+
+Jurinnov
+status: 
+contact: Andy Adams-Moran
+domain: investigation side, selling product and services. 
+plan: explore web site, see if Andy has other ideas.
+
