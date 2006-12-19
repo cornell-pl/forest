@@ -19,6 +19,7 @@
 # pads-1-03-c      pads 1.03c   2006-09-08  fixed takelists, fixed makefile
 # pads-1-04-a      pads 1.04    2006-07-11  try, enums can specify base type, mask generation functions
 # pads-1-04-b      pads 1.04b   2006-07-11  enum test files added, manual script fixed?
+# pads-1-04-c      pads 1.04c   2006-08-11  added jpg and gif to manual takelist
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`
@@ -32,9 +33,9 @@ make
 mkdir ../../temp_docs
 for x in `cat take_list`; do cp $x ../../temp_docs; done
 mkdir ../../temp_docs/pictures
-cd ../../temp_docs/pictures
-for x in `cat take_list`; do cp $x pictures; done
-cd ../..  # now at pads
+cd pictures
+for x in `cat take_list`; do cp $x ../../../temp_docs/pictures; done
+cd ../../..  # now at pads
 rm -rf documents
 mv temp_docs documents
 
