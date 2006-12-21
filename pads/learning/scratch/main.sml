@@ -16,10 +16,12 @@ structure Main : sig
     val def_depthLimit =  5
     val def_outputDir  =  "gen/"
     val def_srcFile    = "toBeSupplied"
+    val def_printLineNos = false
 
     val depthLimit = ref def_depthLimit
     val outputDir = ref def_outputDir
     val srcFile = ref def_srcFile
+    val printLineNos = ref def_printLineNos
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
@@ -32,12 +34,11 @@ structure Main : sig
     fun isJunkTolerance   x = Real.ceil((!JUNK_PERCENTAGE)   * Real.fromInt(x)) 
     fun isNoiseTolerance  x = Real.ceil((!NOISE_PERCENTAGE)   * Real.fromInt(x)) 
 
-    val groupOps : (char * char) list = [(#"\"", #"\""),  (#"[", #"]"),  (#"(", #")"),  (#"{", #"}")]  
-
     fun parametersToString () = 
 	(   ("Source file to process: "^(!srcFile)   ^"\n")^
 	    ("Output directory: "      ^(!outputDir) ^"\n")^
 	    ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n")^
+ 	    ("Print line numbers in output contexts: "        ^(Bool.toString (!printLineNos))^"\n")^
 	    ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n")^
 	    ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n")^
 	    ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n")^
@@ -61,8 +62,6 @@ structure Main : sig
     type DerivedContexts = Context list
     type Partition = (TokenOrder * (DerivedContexts list)) list * (Context list)
 
-    val missingspan = {offset=0, span=0}
-	
     type AuxInfo = {coverage:int} (* Coverage of 
 				      -- a struct is minimum coverage of its constituents;
 				      -- a union is sum of coverage of its consituents; *)
@@ -71,6 +70,20 @@ structure Main : sig
                 | TBD of AuxInfo * int * Context list | Bottom of AuxInfo * int * Context list 
                 | Pstruct of AuxInfo * Ty list |  Punion of AuxInfo * Ty list 
                 | Parray of AuxInfo * (Token * int) list * Ty * Ty
+
+
+    (* delimiter tokens *)
+    val groupOps : (Token * (Token -> Token)) list = 
+	 [(Other #"\"", fn t => t),  
+	  (Other #"[",  fn t => Other #"]"),  
+	  (Other #"(",  fn t => Other #")"),  
+	  (Other #"{",  fn t => Other #"}"),
+	  (PbXML("",""), fn t => 
+	                     (case t 
+			      of PbXML(tag,args)=> PeXML(tag,"")
+			      |  _ => raise Fail "Unexpected beginning tag.\n"))]
+
+
 
     fun getAuxInfo ty : AuxInfo = 
 	case ty 
@@ -158,16 +171,18 @@ structure Main : sig
 	    doit (List.rev ls) ""
 	end
 
-    (*    Ptime < Pmonth < Pip < Pint < Pstring < Pgroup < Pwhite < Other < Pempty < Error *)
+    (*    Ptime < Pmonth < Pip < PbXML < PeXML < Pint < Pstring < Pgroup < Pwhite < Other < Pempty < Error *)
     fun compToken (t1, t2) = 
 	case (t1,t2) 
         of (Ptime i1, Ptime i2) => EQUAL
 	|  (Pmonth i1, Pmonth i2) => EQUAL
 	|  (Pip i1, Pip i2) => EQUAL
+	|  (PbXML (f1,s1), PbXML (f2,s2)) => String.compare(f1,f2)
+	|  (PeXML (f1,s1), PeXML (f2,s2)) => String.compare(f1,f2)
         |  (Pint i1, Pint i2) =>  EQUAL
         |  (Pstring s1, Pstring s2) => EQUAL
         |  (Pwhite s1, Pwhite s2) => EQUAL
-        |  (Pgroup g1, Pgroup g2) => compToken(#left g1, #left g2)
+        |  (Pgroup g1, Pgroup g2) => compToken(#1(#left g1), (#1(#left g2)))
         |  (Other c1, Other c2) => Char.compare (c1, c2)
         |  (Pempty, Pempty) => EQUAL
         |  (Error, Error) => EQUAL
@@ -177,20 +192,35 @@ structure Main : sig
         |  (Pip _, Ptime _) => GREATER
         |  (Pip _, Pmonth _) => GREATER
         |  (Pip _, _) => LESS
+        |  (PbXML _, Ptime _ ) => GREATER
+        |  (PbXML _, Pmonth _) => GREATER
+        |  (PbXML _, Pip _) => GREATER
+        |  (PbXML _,  _) => LESS
+        |  (PeXML _, Ptime _ ) => GREATER
+        |  (PeXML _, Pmonth _) => GREATER
+        |  (PeXML _, Pip _) => GREATER
+        |  (PeXML _, PbXML _) => GREATER
+        |  (PeXML _,  _) => LESS
         |  (Pint _, Ptime _) => GREATER
         |  (Pint _, Pmonth _) => GREATER
         |  (Pint _, Pip _) => GREATER
+        |  (Pint _, PbXML _) => GREATER
+        |  (Pint _, PeXML _) => GREATER
         |  (Pint _, _) => LESS
         |  (Pstring _, Ptime _) => GREATER
         |  (Pstring _, Pmonth _) => GREATER
         |  (Pstring _, Pip _) => GREATER
         |  (Pstring _, Pint _) => GREATER
+        |  (Pstring _, PbXML _) => GREATER
+        |  (Pstring _, PeXML _) => GREATER
         |  (Pstring _,  _) => LESS
         |  (Pgroup _, Ptime _) => GREATER
         |  (Pgroup _, Pmonth _) => GREATER
         |  (Pgroup _, Pip _) => GREATER
         |  (Pgroup _, Pint _) => GREATER
         |  (Pgroup _, Pstring _) => GREATER
+        |  (Pgroup _, PbXML _) => GREATER
+        |  (Pgroup _, PeXML _) => GREATER
         |  (Pgroup _,  _) => LESS
         |  (Pwhite _, Ptime _) => GREATER
         |  (Pwhite _, Pmonth _) => GREATER
@@ -198,6 +228,8 @@ structure Main : sig
         |  (Pwhite _, Pint _) => GREATER
         |  (Pwhite _, Pstring _) => GREATER
         |  (Pwhite _, Pgroup _) => GREATER
+        |  (Pwhite _, PbXML _) => GREATER
+        |  (Pwhite _, PeXML _) => GREATER
         |  (Pwhite _, _) => LESS
         |  (Other _, Ptime _) => GREATER
         |  (Other _, Pmonth _) => GREATER
@@ -206,6 +238,8 @@ structure Main : sig
         |  (Other _, Pstring _) => GREATER
         |  (Other _, Pgroup _) => GREATER
         |  (Other _, Pwhite _) => GREATER
+        |  (Other _, PbXML _) => GREATER
+        |  (Other _, PeXML _) => GREATER
         |  (Other _, _) => LESS
         |  (Pempty, Ptime _) => GREATER
         |  (Pempty, Pmonth _) => GREATER
@@ -215,6 +249,8 @@ structure Main : sig
         |  (Pempty, Pgroup _) => GREATER
         |  (Pempty, Pwhite _) => GREATER
         |  (Pempty, Other _) => GREATER
+        |  (Pempty, PbXML _) => GREATER
+        |  (Pempty, PeXML _) => GREATER
         |  (Pempty, _) => LESS
 
         |  (Error, _) => GREATER
@@ -252,23 +288,28 @@ structure Main : sig
         of Ptime i => i
 	|  Pip i  => i
         |  Pmonth m => m
+        |  PbXML (f,s) => "<"^f^s^">"
+        |  PeXML (f,s) => "</"^f^s^">"
 	|  Pint i => if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
         |  Pstring s => s
-        |  Pgroup {left, body, right} => (tokenToString left)^(String.concat (List.map ltokenToString body))^(tokenToString right)
+        |  Pgroup {left, body, right} => (ltokenToString left)^(String.concat (List.map ltokenToString body))^(ltokenToString right)
         |  Pwhite s => s
         |  Other c => String.implode [c]
         |  Pempty => ""
         |  Error => " Error"
 
-    fun tokenTyToString t = 
+    fun ltokenTyToString (t,loc) = tokenTyToString t
+    and tokenTyToString t = 
 	case t 
         of Ptime i   => "[Time]"
 	|  Pip i     => "[IP]"
         |  Pmonth m  => "[Month]"
+        |  PbXML (f,s) => "bXML["^f^"]"
+        |  PeXML (f,s) => "eXML["^f^"]"
 	|  Pint i    => "[int]"                   (*" Pint("^(LargeInt.toString i)^")"*)
         |  Pstring s => "[string]"                (*" Pstring("^s^")"*)
         |  Pwhite s  => "[white space]"           (*" Pwhite("^s^")"*) 
-        |  Pgroup {left, body, right} => (tokenTyToString left) ^"[Group Body]"^(tokenTyToString right)
+        |  Pgroup {left, body, right} => (ltokenTyToString left) ^"[Group Body]"^(ltokenTyToString right)
         |  Other c   => "("^(Char.toString c)^")" (*(" Pother("^(Char.toString c)^")") *)
         |  Pempty    => "[empty]"
         |  Error     => " Error"
@@ -279,8 +320,11 @@ structure Main : sig
     fun LTokensToString [] = "\n"
       | LTokensToString ((t,loc)::ts) = ((tokenToString t) ^ (LTokensToString ts))
 
+    fun locationToString {lineNo, beginloc, endloc} = "Line #:"^(Int.toString lineNo)
+    fun printLocation loc = print (locationToString loc)
+
     fun printLTokens [] = print "\n"
-      | printLTokens ((t,loc)::ts) = (printTokenTy t; printLTokens ts)
+      | printLTokens ((t,loc)::ts) = (printLocation loc; print ":\t"; printTokenTy t; printLTokens ts)
 
     fun printTokenTys [] = print "\n"
       | printTokenTys (t::ts) = (printTokenTy t; printTokenTys ts)
@@ -428,7 +472,16 @@ structure Main : sig
     fun dumpLToken strm (tk,loc) = TextIO.output(strm, tokenToString tk)
     fun dumpCL fileName contexts = 
 	let val strm = TextIO.openOut fileName
-            fun dumpOneContext context = (List.app (dumpLToken strm) context;
+	    fun getLineNo context = 
+		let fun extractLineNo (t,{lineNo,...}:location) = lineNo
+		in
+		    if !printLineNos then 
+			case context of [] => "No line information."
+                        | (lt::rest) => ((Int.toString (extractLineNo lt)) ^ ": ")
+		    else ""
+		end
+            fun dumpOneContext context = (TextIO.output(strm, getLineNo context);
+					  List.app (dumpLToken strm) context;
 					  TextIO.output(strm, "\n"))
             val () = List.app dumpOneContext contexts
 	in
@@ -538,8 +591,8 @@ structure Main : sig
 				    |  SOME(#"\r", rest) => 
 					(case Substring.getc rest 
 					 of SOME(#"\n", rest) => rest (* DOS EOR discipline *)
-                                         |  _ => rest (* Mac OS EOR discipline *)))
-			            | _ => rest (* This case is impossible because of the def if isNewline *)
+                                         |  _ => rest (* Mac OS EOR discipline *))
+			            | _ => rest (* This case is impossible because of the def if isNewline *))
 		    in
 			getLines(rest, (Substring.string ln)::l)
 		    end
@@ -554,7 +607,7 @@ structure Main : sig
 	   lines
        end
 
-    fun groupToTokens {left,body,right} = (left,missingspan)::body @ [(right, missingspan)]
+    fun groupToTokens {left,body,right} = left::body @ [right]
     fun groupToRevTokens g = List.rev (groupToTokens g)
     fun isGroup (Pgroup g) = true
       | isGroup _ = false
@@ -563,28 +616,31 @@ structure Main : sig
       | isString _ = false
 
     fun findGroups (tokens : LToken list) : LToken list = 
-	let fun findDelim (Other c,loc) = List.find (fn(f,s) => c = f) groupOps
-              | findDelim _ = NONE
-            fun delimMatches r (Other c,loc) = r = c
-              | delimMatches r _ = false
-	    fun flatten [] = []
-              | flatten ((l,body,r)::rest) = ((Other l,missingspan) :: (List.rev body)) @ (flatten rest) @ [(Other r,missingspan)] 
+	let fun TokenMatch (t1,t2) = case (t1,t2) 
+	                             of (PbXML _, PbXML _) => (print "looking for a pbxml token\n"; true) (* begin xml tag in group list has placeholder tag, so any bXML matches *)
+				     | _ => TokenEq(t1,t2)
+	    fun findDelim (t,loc) = List.find (fn(f,s) => TokenMatch (t,f)) groupOps
+            fun delimMatches r (t,loc) = TokenEq(t, r)
+	    fun flatten [] = (print "in flatten function\n"; [])
+              | flatten ((ltoken,body,r)::rest) = (ltoken :: (List.rev body)) @ (flatten rest) 
+            fun getGroupLoc ((lt, {lineNo=llineNo, beginloc=lbegin, endloc=lend}), (rt, {lineNo, beginloc=rbegin, endloc=rend})) =
+		{lineNo=llineNo, beginloc=lbegin, endloc=rend}
             fun topSearch [] acc = List.rev acc
               | topSearch (t::ts) acc = case findDelim t 
 		                        of NONE => topSearch ts (t::acc)
-					|  SOME (l:char,r:char) => findMatch [(l,[],r)] ts acc
+					|  SOME (lt:Token,rtf:Token->Token) => findMatch [(t,[],rtf (#1 t))] ts acc
 
-            and findMatch  (delims:(char * LToken list * char) list) [] acc =  (flatten delims)@ (List.rev acc) (* missing right delim: forget grouping *)
-              | findMatch ((l:char,body:LToken list,r:char)::next) (t::ts) acc = 
+            and findMatch  (delims:(LToken * LToken list * Token) list) [] acc = (flatten delims)@ (List.rev acc) (* missing right delim: forget grouping *)
+              | findMatch ((lt:LToken,body:LToken list,r:Token)::next) (t::ts) acc = 
 		  if delimMatches r t 
-		  then let val match =  (Pgroup{left=Other l, body = List.rev body, right= Other r}, {offset=0,span=0})
+		  then let val match =  (Pgroup{left=lt, body = List.rev body, right= t}, getGroupLoc(lt,t))
 		       in
 			   case next of [] => topSearch ts (match::acc)
-			   | (l1,body1,r1)::rest => findMatch ((l1, match::body1,r1)::rest) ts acc
+			   | (lt1,body1,r1)::rest => findMatch ((lt1, match::body1,r1)::rest) ts acc
 		       end
 		  else case findDelim t
-		       of NONE => findMatch ((l, t::body, r)::next) ts acc
-                        | SOME(l1,r1) => findMatch ((l1,[],r1)::(l,body,r)::next) ts acc 
+		       of NONE => findMatch ((lt, t::body, r)::next) ts acc
+                        | SOME(lt1,rtf1) => findMatch ((t,[],rtf1 (#1 t))::(lt,body,r)::next) ts acc 
 	in
 	    topSearch tokens []
 	end
@@ -608,10 +664,11 @@ structure Main : sig
 	    printLenHist fd
 	end
 
-    fun ltokenizeRecord (record:string) = 
+    fun ltokenizeRecord recordNumberRef (record:string) = 
 	let val length = String.size record
 	    fun doNonEmpty record = 
 		let val cursor : int ref = ref 0
+		    fun addLineNo (t,{beginloc,endloc}) = (t,{lineNo=(!recordNumberRef),beginloc=beginloc,endloc=endloc})
 		    fun feedLex n = 
 			let val s = if (n > (length - !cursor)) 
 			    then SS.string(SS.extract(record, !cursor, NONE))  handle Subscript => ""
@@ -623,18 +680,18 @@ structure Main : sig
 		    val lex = TokenLex.makeLexer feedLex
 		    fun getMatches acc =
 			case lex() 
-			of SOME a => getMatches(a::acc)
+			of SOME a => getMatches((addLineNo a)::acc)
 		      |  NONE   => List.rev acc
 		    val matches = getMatches []
 		    val groupedMatches = findGroups matches
 (*		    val () = print "printing grouped tokens:\n"
-		    val () = printLTokens groupedMatches
-*)
+		    val () = printLTokens groupedMatches *)
+		    val () = recordNumberRef := !recordNumberRef + 1
 		in
 		    groupedMatches 
 		end
 	in
-	    if length = 0 then [(Pempty,{offset=0, span=0})] else doNonEmpty record
+	    if length = 0 then [(Pempty,{lineNo = (!recordNumberRef), beginloc=0, endloc=0})] else doNonEmpty record
 	end
 
     (* This function takes a list of tokens and returns an (int ref) TokenTable.map *)
@@ -898,15 +955,14 @@ structure Main : sig
        return argument token list list. *)
     fun crackUniformGroups cl = 
 	let fun cuf [] = []
-              | cuf ([(Pgroup{left,body,right},loc)]::lts) = 
-	         let fun mkEntry l body r = (l,missingspan) :: body @ [(r, missingspan)]
-		     fun cuf' [] acc = List.rev acc
-                       | cuf' ([(Pgroup{left=l,body,right=r},loc)]::lts) acc = 
-			 if l = left then cuf' lts ((mkEntry l body r) :: acc)
+              | cuf ([(Pgroup(g as {left,body,right}),loc)]::lts) = 
+	         let fun cuf' [] acc = List.rev acc
+                       | cuf' ([(Pgroup (g' as {left=l,body,right=r}), loc)]::lts) acc = 
+			 if l = left then cuf' lts ((groupToTokens g') :: acc)
 			 else cl
                        | cuf' _ acc = cl
 		 in
-		     cuf' lts [mkEntry left body right]
+		     cuf' lts [groupToTokens g]
 		 end
               | cuf lts = cl
 	in
@@ -922,7 +978,7 @@ structure Main : sig
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
            that is either empty or some value gets silently converted to the value only. *)
-	let fun cnvEmptyRowsToPempty [] = [(Pempty,{offset=0, span=0})]
+	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= ~1, beginloc=0, endloc=0})] (* XXX fix line number *)
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
 	    val cl = crackUniformGroups cl
@@ -1060,10 +1116,11 @@ structure Main : sig
 
     fun doIt () = 
 	let val fileName = !srcFile
+	    val recordNumber = ref 0
 	    val () = print ("Starting on file "^fileName^"\n");
 	    val records = loadFile fileName
 	    val () = initialRecordCount := (List.length records) 
-	    val rtokens : Context list = List.map ltokenizeRecord records
+	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = lengthsToHist rtokens
 	    val ty = ContextListToTy 0 rtokens
@@ -1087,6 +1144,7 @@ structure Main : sig
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("maxdepth", "maximum depth for exploration (default "^(Int.toString def_depthLimit)^")",         PCL.Int    (setDepth,     false)),
+         ("lineNos",  "print line numbers in output contexts (default "^(Bool.toString def_printLineNos)^")",            PCL.BoolSet  printLineNos),
          ("h",        "histogram comparison tolerance (percentage, default "^(Real.toString DEF_HIST_PERCENTAGE)^")",    PCL.Float  (setHistPer,   false)),
          ("s",        "struct determination tolerance (percentage, default "^(Real.toString DEF_STRUCT_PERCENTAGE)^")",  PCL.Float  (setStructPer, false)),
          ("n",        "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),
