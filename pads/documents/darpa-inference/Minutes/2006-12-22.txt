@@ -1,32 +1,93 @@
-Agenda for 12/22 meeting
+Next meeting: 1/3 10 pacific, 1 eastern, 888 380 9638, pc 517211
 
+Active action items:
+ Administrative
+  - ACTION DW: account for Kenny email at Princeton.
+  - ACTION DB: check on itar provisions for follow on proposal. (in negotiation) at meeting
+  - ACTION DB: send NDA and Teaming agreement to KF for follow-on. (by when?)
+
+ Kick off slides (in order of tokens...)
+  - ACTION DW: Format refinement 
+  - ACTION KF: Integrate slides re network forensic architecture
+  - ACTION DB: Underlying theory (finished slides sent 1/2)
+
+ Related work/market research
+  - ACTION DW: investigate splunk
+  - ACTION DB: fill out expert questionnaire for PSU folks (Jan 2 or 3)
+  - ACTION DB: explore how R/S might fit into architecture
+  - ACTION DB: explore www.predict.org web site
+  - ACTION DB+KF: domain expert interviews
+
+ Technical
+  - ACTION DB: work on evaluation metric (week of 12/18)
+  - ACTION KF: update type data structure.
+  - ACTION DW: supervise Zack over break.
+
+
+Minutes for 12/22 meeting
+****************************************
 Status of hiring Kenny Zhu
+  paperwork is done, processing visa. 
 
 CVS access for David Burke
   - outside Galois firewall?
   - move repository to princeton?
+  - january 2nd work with paul
 
 Kick off meeting 1/4, 10-2 in Florham Park, NJ
   - dial in: PARTICIPANTS CALL:  1 888-895-4286  ENTER CODE: 569707
 
 
 Review kick-off slide deck
+  - ACTION DB: add kenny's name to org chart
+  - ACTION DB: recent accomplishments,
+	       list specific experts we have already talked to
+  - ACTION DB: move risk on complexity up to risk slide
+  - ACTION KF: nfwa picture, add exit arrow to "problem solved"
+
+
 Review domain expert interview status
 Review active action items
+
 Status updates
  Kathleen: type structure redesign in progress.
- David Walker:
- David Burke:
+ David Walker: 
+    talked to david blei
+    learned about R
+      downloaded onto work computer
+      really just an untyped, functional programming language
+      lists, closures, association lists
+      bunch of libraries for doing interesting statistical stuff
+      library for derscholet distributions
+      creating plots and charts of various functions
+      in workbench, create a pads description, generate programs to read and write data into R
+      read/eval print loop
+      read table to input data
+      mainly deals with lists and tables
+      using PADS/C and PADX or some other selection mechanism, select portions of data to load R
+      open source license? (freely downloadable)  GNU license?
+      commercial version is S
+    learned about learning theory
+      he started to go too fast, and couldn't keep up
+      had to go back and read more chapters of ai book
+      on hidden markov models and definitions
+ David Burke: 
+      middle or late week be in town to check email once
+
+send slides to andy
+
 Timeline sanity check
 Schedule next meeting
+  Jan 3 at 10/1 next meeting
+
 
 Active action items:
  Administrative
   - ACTION KF: send akhelp mail to get Kenny set up for cvs access, in pads group (DONE)
   - ACTION DW: account for Kenny email at Princeton.
-  - ACTION DB: check on itar provisions for follow on proposal.
+  - ACTION DB: check on itar provisions for follow on proposal. (in negotiation) at meeting
   - ACTION DB: send mail to Gang cc'ing KF re cvs troubles. (DONE)
-  - ACTION DB: send NDA and Teaming agreement to KF for follow-on.
+  - ACTION DB: send NDA and Teaming agreement to KF for follow-on. (by when?)
   - ACTION DW: contact Kenny re move to NJ, activities for January.
   - ACTION DB: kick-off slides (for 12/15)
                - schedule and task ownership
@@ -36,8 +97,8 @@ Active action items:
 
  Related work/market research
   - ACTION DW: investigate splunk
-  - ACTION DB: fill out expert questionnaire for PSU folks
-  - ACTION DW: meet with David Blei re R and metric
+  - ACTION DB: fill out expert questionnaire for PSU folks (Jan 2 or 3)
+  - ACTION DW: meet with David Blei re R and metric (DONE)
   - ACTION DB: explore how R/S might fit into architecture
   - ACTION DB: explore www.predict.org web site
   - ACTION KB: give Vikas instructions related to market research. (DONE)
