@@ -7795,7 +7795,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.205 2006-10-17 15:06:39 yitzhakm Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.206 2006-12-22 14:01:48 yitzhakm Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -9328,6 +9328,16 @@ P_spec_level(P_t *pads)
   return pads->speclev;
 }
 
+unsigned int
+P_is_current_spec(P_t *pads)
+{
+  PDCI_DISC_INIT_CHECKS("P_is_current_spec");
+
+  if (pads->top <= 0)
+    return 0;
+
+  return pads->stack[pads->top].spec;
+}
 /* ================================================================================ */
 /* Pstring helper functions */
 
@@ -9839,10 +9849,10 @@ PDCI_report_err(P_t *pads, int level, Ploc_t *loc,
       msg = "Array element error";
       break;
     case P_ARRAY_SEP_ERR:
-      msg = "Arrey seperator error";
+      msg = "Array seperator error";
       break;
     case P_ARRAY_TERM_ERR:
-      msg = "Arrey terminator error";
+      msg = "Array terminator error";
       break;
     case P_ARRAY_SIZE_ERR:
       msg = "Array size error";

@@ -429,7 +429,7 @@
  * --------------------------
  *   XXX_TODOC
  *
- * Here is an example initialization that modifies the constructs a discipline
+ * Here is an example initialization that constructs a discipline
  * object, my_disc, and allocates an instance of the 'norec' IO discpline
  * to be the IO discipline:
  *
@@ -1004,7 +1004,7 @@ int P_error(const char *libnm, int level, ...);
  *
  * The second argument, "level", is used to specify the severity of
  * the error.  Level P_LEV_INFO is used for an informative (non-error)
- * message, P_LEV_WARN is used for a warning, P_LEVL_ERR for a
+ * message, P_LEV_WARN is used for a warning, P_LEV_ERR for a
  * non-fatal error, and P_LEV_FATAL for a fatal error.
  * One can 'or' in the following flags (as in P_LEV_WARN|P_FLG_PROMPT):
  *
@@ -2333,6 +2333,7 @@ Pfloat64 Pfloat64_acc_avg     (P_t *pads, Pfloat64_acc *a);
  * speculative nesting level  is incremented by one.  Once the checkpoint
  * is removed by either commit or restore, the nesting level is
  * decremented by one.  P_spec_level gives the current nesting level.
+ * Use P_is_current_spec to check whether the most recent checkpoint was speculative.
  */
 Perror_t  P_io_checkpoint  (P_t *pads, int speculative);
 Perror_t  P_io_commit      (P_t *pads);
@@ -2341,6 +2342,7 @@ Perror_t  P_io_commit_pos  (P_t *pads, Ppos_t pos);
           /* pos should be >= the checkpoint position and <= the current IO cursor position */
 Perror_t  P_io_restore     (P_t *pads);
 unsigned int P_spec_level  (P_t *pads);
+unsigned int P_is_current_spec  (P_t *pads);
 
 /* ================================================================================
  * REGULAR EXPRESSION SUPPORT

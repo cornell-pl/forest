@@ -42,13 +42,13 @@
 # HAVE_SHARED_ASTLIB = 1
 
 # uncomment this to force static builds
- FORCE_STATIC = 1
+#  FORCE_STATIC = 1
 
 # uncomment this to use gprof with debug libaries/executables
 # (only works with GNU compilers)
 # you should also uncomment FORCE_STATIC to include pads
 # library routines in the profile
- GPROF_FLAGS = -pg
+#  GPROF_FLAGS = -pg
 
 
 # uncomment this to use memory profiling with debug libraries/executables
