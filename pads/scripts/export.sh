@@ -9,6 +9,12 @@
 #  . Be sure to update the take_lists in examples/{p,tests,data}
 #  . Make sure compiler is set to generate release version of compiler
 #  . Add tarball to pads-private/dist directory.
+#
+# When you take a new set of tgz files from gsf you should take the
+# latest version of the bin/package script (which gets installed when it
+# unbundles and builds ast) and copy it to 'bin/package.cvs'
+
+
 
 # pads2005-03-07   pads 1.0     2005-03-07  
 # pads-1-01-a      pads 1.01    2006-01-26
