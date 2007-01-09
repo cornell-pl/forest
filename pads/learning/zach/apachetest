@@ -1,0 +1,14 @@
+#!/bin/bash
+#Runs the apache tests
+echo '
+Trials.apache();
+OS.Process.exit(OS.Process.success);
+' > scratch.sml
+
+I=1000
+while [ $I -le 10000 ]
+do
+head -n $I apache > apache_test.txt
+sml -m sources-new.cm scratch.sml
+((I=I+200))
+done
