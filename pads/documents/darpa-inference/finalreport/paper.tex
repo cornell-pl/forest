@@ -26,7 +26,7 @@ DARPA Contract No. FA8750-07-C-0014}
 \author{
 David Burke \qquad
 Kathleen Fisher \qquad
-Andy Moran \qquad
+Andy Adams-Moran \qquad
 David Walker
 }
 
@@ -171,6 +171,208 @@ privacy reasons (it could be if we had an appropriate anonymization tool.)
 
 \end{itemize}
 
+\paragraph*{Lefty Elfeterious, AT\&T Labs Research}
+\begin{itemize}
+\item What tasks might you use such a workbench for?  What kinds of problems are you trying to solve? (prevention? detection? investigation? other?)
+
+Lefty has built a system that monitors AT\&T's hosting service. It
+detects and correlates relevant alarms.  It finds places where a
+system is down, a disk is full, a cpu is overloaded, \textit{etc}.
+The tool helps operations people understand how the monitored system
+is behaving, not just whether it is under attack.  It is used for
+planning purposes and to administer triage when the system is misbehaving.
+
+\item What is your workflow?
+
+Logs and active monitoring information such as the results of pings
+are sent to collection point every 5 minutes, processed into internal
+format, normalized, sorted, and made ready for visualization.  A web
+browswer then gives the user a variety of options for visualizing the
+data, navigated using pull down menus.  Graphs show current data
+against a "signature" of the device/resource previously. They have a
+topology of system presented as graph, which can be used to navigate
+the data.
+
+\item Who are your customers/clients?  
+Operations people and network managers.
+
+
+\item What kinds of tools do you use now?  What do you like about
+  them?  What would you like improved? 
+The system is hand-built by Lefty, using locally developed tools and
+libraries such as pzip, graphviz.  It has a web based interface with
+pre-packaged queries.  It is fast. It uses rules to trigger alarms. 
+They measure direction and speed of change of the data and are able to
+shift alarm definitions as circumstances warrant. They want to be able
+to do more statistical analysis. 
+
+\item If you were using the workbench, what would need to be in it to
+ make it useful to you?  See what the tool does.
+
+\item Can you characterize the kinds of data you encounter?
+The raw data is typically ASCII, some in XML.  Lefty's tool converts
+it into his DDS format, which is a binary, fixed-width format.  They
+process something like 2.4 million records a day.  There are always
+new formats, from different operating systems, different machines,
+different versions, different applications.
+
+\item What kinds of performance requirements do you have?  
+They process something like 3GBits/day, in roughly five minute
+increments.  They have ``lots and lots'' of different data sources to
+process; the data sources to process are evolving, and correlations
+between data sources are important.
+
+\item  What would be show-stoppers?  Not discussed.
+
+\item Have you ever had a "bad day" that you attribute to the lack of
+  a network forensic analysis workbench?
+The people I spoke with were responsible for building the workbench,
+so the question isn't really relevant.
+
+\item How much time does it take to track down your "average" security problem?
+These people don't do the tracking.
+
+\item What functions over the data do you need?
+They provide canned time plots of historical values versus current
+values, color-coded alarm values, a topology view, the ability to see
+all current values associated with a given machine.
+
+\item Can we get example data?
+Yes, Lefty has sent pointer to where some of the data lives on an
+AT\&T machine.
+\end{itemize}
+
+\paragraph*{Dan Sheleheda}
+\begin{itemize}
+
+\item  What tasks might you use such a workbench for?  What kinds of
+  problems are you trying to solve? (prevention? detection?
+  investigation? other?) 
+
+He would use a workbench to help ingest new data formats into a system
+for managing alerts for AT\&T's internal network.  They are mostly doing
+triage on virus outbreaks with occasional intrusion events.  
+
+\item What is your workflow?
+
+Raw data sources send files to collection machines, where data is
+vetted, normalized, and aggregated, pushed into daytona database and
+into commercial rule-based system, which raises alerts based on
+hard-coded patterns in the data.  Alerts and relevant data are passed
+to web portal (aurora). Case workers manage alerts and can view
+relevant data; can't query back into main system for information
+privacy considerations.  Both legacy S and T have such systems.  Use
+different commercial rule engines (intellitactics, accusite) Ingest
+logs from firewall, vpn, microsoft domains, proxies, and intrusion
+detection systems.
+
+
+\item Who are your customers/clients?  
+Operations agents who solve alerts and network managers.
+
+\item What kinds of tools do you use now?   (see above)
+
+
+\item If you were using the workbench, what would need to be in it to make it useful to you?
+He would love to have registry of all files managed by system,
+something that managed the feeds knowing the frequency of data, pull
+vs push, and timeliness requirements. Historical profiles of the data
+and topology views would be very helpful.  Integrating a new data
+source is really time consuming.  Assistance in auto-understanding
+data would be marvelous.  Commercial tools from accusite provides
+parsers for a up-front fee, seat license, and per use charges.  It is
+very expensive.
+
+
+\item Can you characterize the kinds of data you encounter?
+They generally process ASCII, avoiding binary.  They deal with enough
+data that they have to aggregate it before storing it in databases. It
+is common for files to have a fair bit of variation and for
+``records'' to span more than a single line.
+
+
+\item What kinds of performance requirements do you have?  
+They process roughly 200 million raw events per day.  They process
+data in five minute batches.  They have many different kinds of data
+sources they need to process.  They have a huge backlog of new data
+sources that they need to process.  Correlations are really important,
+but very difficult.  What do you join on?
+
+\item What would be show-stoppers?  
+Linux is main platform.
+
+\item Have you ever had a "bad day" that you attribute to the lack of a network forensic analysis workbench?
+Not answered.
+
+\item How much time does it take to track down your "average" security
+  problem?
+Not known.
+
+\item What functions over the data do you need?
+They provide a data dump to web front end.
+
+\item Can we get example data?
+He will work on sending.
+
+\end{itemize}
+
+\paragraph*{Chris Volinsky}
+\begin{itemize}
+
+\item What tasks might you use such a workbench for?  What kinds of
+  problems are you trying to solve? (prevention? detection?
+  investigation? other?) 
+He would use it to vet and transform data before loading into R.
+
+\item What is your workflow?
+Chris gets a new data source and batch of questions every month or so.
+He uses hand-written perl code to understand and normalize the data,
+tabularize it, remove error values, and convert all representations of
+missing values to a standard missing value representation.  
+
+\item Who are your customers/clients?  
+Managers trying to understand marketing applications, system performance. 
+
+\item What kinds of tools do you use now?  
+Chris uses  S and  perl. 
+Input to S must be clean, rectangular data.  Perl good at some stuff, but clunky at others.  
+
+\item If you were using the workbench, what would need to be in it to make it useful to you?
+Support for transforming data into R
+
+\item Can you characterize the kinds of data you encounter?
+Chris processes all kinds of data, typically containing transactions.
+The files range in size, up to Gigabytes.  He gets them in batches,
+sometimes daily, sometimes monthly.  They often have a lot of
+variation within a single file.
+
+\item What kinds of performance requirements do you have?  
+He gets a new data source about once a month, and correlations between
+data sources are important.
+
+\item What would be show-stoppers?  
+Not addressed.
+
+\item Have you ever had a "bad day" that you attribute to the lack of
+  a network forensic analysis workbench?
+Not addressed
+
+\item How much time does it take to track down your "average" security problem?
+Not focused on security problems per se
+
+\item What functions over the data do you need?
+Histograms, outliers, skewed distribution (3rd moments) would all be
+useful, as would general measures of whether two variables the same or
+correlated? Given a particular column, figure out how other columsn
+relate to it via regressions, fuzzy functional dependencies. 
+Box plots |-------[   |   ]--------| (min, 25\%, median, 75\%, max)
+sometimes outliers represented as separate dots are also very useful..
+Time progressions, grouped by day, week, month, and also by monday,
+tuesday, etc, and hour of the day would be very useful.
+
+\item Can we get example data?
+He will send some.
+\end{itemize}
 
 \bibliographystyle{abbrv}
 {
