@@ -66,7 +66,7 @@ other tasks.  The {\em monitoring subsystems} that perform these tasks
 take a wide range of forms, from embedded sensors that monitor
 physical processes to intrusion detection systems that monitor flows
 to a single organization to large-scale systems that monitor the
-health and performance of hundreds to thousands of nodes on the Grid.
+health and performance of thousands of nodes on the Grid.
 
 At the heart of such monitoring systems is a complex, multifaceted
 data processing problem that involves, at a minimum, the following
@@ -203,32 +203,35 @@ Monitoring network performance              &  fixed-width    &                 
 
 \paragraph*{Specification-driven Monitor Generation.}
 This paper describes work-in-progress towards construction
-of a new framework for semi-automatic generation of
-construction system monitors. In this new framework
-we call {\em specification-driven monitor generation}, programmers
-describe the shape and properties of data manipulated by
-the monitoring system using a domain-specific language and a compiler automatically
-generates efficient, reliable, and secure
-monitoring tools from that specification.
-More specifically, the system will consist of the 
+of a new framework for semi-automatic generation system monitors. 
+In this new framework, programmers create descriptions of
+the shape and properties of data manipulated by
+the monitoring system.  These descriptions are then processed by
+a compiler, which generates a suite of efficient, reliable, and secure
+monitoring tools specific to the described data sources.
+In more detail, the system we are building will consist of the 
 following components:
 
 \begin{enumerate}
 
-\item A high-level specification language to describe a monitor's
-data sources.  The specification language will be able to
+\item A high-level {\em specification language} to describe a monitor's
+data sources and processing requirements.  
+This specification language will extend and improve upon
+\pads{}~\cite{fisher+:pads,fisher+:700,mandelbaum+:padsml}, the authors
+existing, general-purpose ad hoc data description language.  
+It will be able to
 concisely and accurately describing any ad hoc data source,
-including its format, semantic properties, location, and
-temporal attributes in an easy-to-understand, easy-to-modify syntax.
+including its format, semantic properties, location,
+availability and security requirements in an easy-to-understand, easy-to-modify syntax.
 
-\item A compiler that takes data specifications as inputs and
+\item A {\em compiler} that takes data specifications as inputs and
 automatically generates a suite of 
 efficient data processing libraries for parsing, printing, error detection
 and correction, distributed data gathering, compression, and 
 reformatting of ad hoc data.
 
-\item A fully automatic tool generator that links the compiler-generated 
-libraries to format-independent tool stubs to produce easy-to-use 
+\item A fully automatic {\em tool generator} that links the compiler-generated 
+libraries to generic, format-independent system components to produce easy-to-use 
 tools for high-level tasks including data display and querying.
 
 \end{enumerate}
@@ -244,7 +247,7 @@ tools for high-level tasks including data display and querying.
 In the follow section, we will explain 
 the general architecture of a specification-driven monitor generation system
 in more detail.
-Section~\ref{sec:pads} continues by briefly describing PADS, the specification language
+Section~\ref{sec:pads} continues by briefly describing \pads{}, the specification language
 we will use as a foundation for our specification-driven monitor generation system.
 Section~\ref{sec:framework} focuses on the key systems components that make up the back end of
 the specification-driven monitor generation system.  Finally,
@@ -258,11 +261,9 @@ Figure~\ref{fig:arch} presents the architecture of our proposed
 system.  At the top of the picture is the declarative description of all
 data that will be used by the monitoring system.  It is here that
 programmers encode all their knowledge about their data sources,
-including the physical layout of data, its semantic properties
-(including constraints on data fields and expected relations
-with other fields) so deviations can be flagged as errors, 
-its location, access protocol, when the data
-will be ready for fetching and how often, etc.
+including the physical layout of data, its semantic properties,
+its location, access protocol, availability, pre-processing requirements,
+retention policy, security requirements and presentation elements.
 
 In exchange for the programmer's work in describing their
 data sources, the compiler system will generate
@@ -296,13 +297,15 @@ be highly optimized for processing the massive
 data sets one sees in practice.
 
 In addition to the compiler, which generates the core, format-specific
-libraries, the system includes a number of {\em format-independent stubs}
+libraries, the system includes a number of format-independent stubs,
+or {\em systems components},
 that make use of the generated libraries and implement higher-level
 functionality.  Each of these stubs are programmed once, independent
-of any format.  In order to implement application-specific behavior, they
+of any data specification.  
+In order to implement application-specific behavior, they
 are linked with the core libraries, which will be carefully designed to
-satisfy a generic, format-independent interface.  Examples of
-format-independent tools include a generic query engine that
+satisfy a generic, specification-independent interface.  Examples of
+specification-independent tools include a generic query engine that
 allows users to extract information from the data, 
 a visualization tool that produces
 web page summaries of data statistics or a reformatter to convert data
@@ -310,7 +313,7 @@ to a new format required by an off-the-shelf tool.  In addition,
 a programmer may simply use the generated format-specific libraries directly 
 within their own application program, custom built for some unique task. 
 Of course whenever a programmer builds a new tool for their application, 
-they may do so using the format-independent interface to the generated
+they may do so using the specification-independent interface to the generated
 libraries.  If they do so, their new tool may be reused by others
 who have different data, but require a similar functionality.
 
@@ -338,12 +341,13 @@ of the underlying data.
 \section{PADS:  A Format Description Language}
 \label{sec:pads}
 
-PADS~\cite{fisher+:pads,launchpads,fisher+:700,mandelbaum+:padsml} is 
+\pads{}~\cite{fisher+:pads,launchpads,fisher+:700,mandelbaum+:padsml} is 
 a family of domain-specific languages, and associated compiler technology, 
 designed to allow programmers to specify the structure of ad hoc data sources, 
 and to generate tools for querying, analyzing and manipulating data in the specified formats.
 
-To understand further how the \pads{} can be used to describe the sorts of data used by system monitors,
+To understand further how the \pads{} can be used to 
+describe the sorts of data used by system monitors,
 let us look at an example of a simple ad hoc data source:
 a tiny fragment of data in the Common Log Format (CLF) that web
 servers use to log client requests~\cite{wpp}.  
@@ -626,7 +630,7 @@ to proceed.
 The oldest tools for describing data formats are parser generators such as
 Lex and Yacc.  While excellent for parsing programming languages, Lex and Yacc
 are too heavyweight for parsing the simpler ad hoc data formats one
-runs into in the sciences.   
+runs into in monitoring systems.   
 Unlike PADS, whose syntax is based on types from the well-known C language,
 the syntax of Lex and Yacc is somewhat foreign.  Perhaps more importantly,
 users must write a lexer, write a
@@ -638,7 +642,7 @@ Some more modern parser generators such as ANTLR~\cite{antlr} alleviate
 a few of these problems, but they still do not automatically generate auxiliary tools
 useful that help systems implementers solve the monitoring problem. 
 
-The closest related work includes domain-specific
+The closest work related to our specification language includes domain-specific
 languages such as PacketTypes~\cite{sigcomm00} and DataScript~\cite{gpce02} 
 for parsing and printing binary data, particularly packets
 from common networking protocols such as \textsc{TCP/IP} and also
@@ -657,7 +661,8 @@ descriptions to automatically generate additional useful tools and
 programming libraries.  \pads{} substantial 
 collection of automatically-generated tools and libraries is 
 one of the key incentives that will make it
-worth a programmer's while to use \pads{} to generate monitoring infrastructure.
+worth a programmer's while to use \pads{} to generate 
+monitoring infrastructure.
 
 
 \section{Conclusions}
@@ -665,7 +670,8 @@ worth a programmer's while to use \pads{} to generate monitoring infrastructure.
 
 Every complex distributed system must be monitored to ensure that it is secure and healthy.  Unfortunately,
 systems builders currently spend an inordinate amount of their time designing special-purpose tools
-to enable this task.  We propose specification-driven monitor generation as a promising new technique for building
+to perform this task.  We propose specification-driven 
+monitor generation as a promising new technique for building
 monitoring software for distributed systems of all kinds.  More specifically, we are currently designing 
 extensions to the \pads{} language in order to specify the structure of the vast, disorganized ad hoc data streams
 that systems monitors depend upon.  From these specifications, we will generate reliable and efficient systems
