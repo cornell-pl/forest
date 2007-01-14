@@ -13,15 +13,17 @@ structure Main : sig
     val DEF_NOISE_PERCENTAGE  =  0.0
     val DEF_ARRAY_WIDTH_THRESHOLD =  2
 
-    val def_depthLimit =  5
+    val def_depthLimit =  50
     val def_outputDir  =  "gen/"
     val def_srcFile    = "toBeSupplied"
     val def_printLineNos = false
+    val def_printIDs     = false
 
     val depthLimit = ref def_depthLimit
     val outputDir = ref def_outputDir
     val srcFile = ref def_srcFile
     val printLineNos = ref def_printLineNos
+    val printIDs = ref def_printIDs
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
@@ -39,6 +41,7 @@ structure Main : sig
 	    ("Output directory: "      ^(!outputDir) ^"\n")^
 	    ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n")^
  	    ("Print line numbers in output contexts: "        ^(Bool.toString (!printLineNos))^"\n")^
+ 	    ("Print ids and output type tokens: "             ^(Bool.toString (!printIDs))^"\n")^
 	    ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n")^
 	    ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n")^
 	    ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n")^
@@ -50,7 +53,10 @@ structure Main : sig
     (********************************************************************************)
     (*********************  END Configuration ***************************************)
     (********************************************************************************)
-  
+    val TBDstamp = ref 0
+    val Bottomstamp = ref 0
+    val Tystamp = ref 0
+
     val initialRecordCount = ref ~1  (* will be set at beginning of program based on input file *)    
     val anyErrors = ref false
     exception Exit of OS.Process.status
@@ -62,14 +68,51 @@ structure Main : sig
     type DerivedContexts = Context list
     type Partition = (TokenOrder * (DerivedContexts list)) list * (Context list)
 
-    type AuxInfo = {coverage:int} (* Coverage of 
+    type Id = Atom.atom			     
+    type AuxInfo = {coverage:int, (* Coverage of 
 				      -- a struct is minimum coverage of its constituents;
 				      -- a union is sum of coverage of its consituents; *)
-				     
-    datatype Ty = Base of AuxInfo * Token | Pvoid of AuxInfo
-                | TBD of AuxInfo * int * Context list | Bottom of AuxInfo * int * Context list 
-                | Pstruct of AuxInfo * Ty list |  Punion of AuxInfo * Ty list 
-                | Parray of AuxInfo * (Token * int) list * Ty * Ty
+                    label : Id option (* introduced during refinement as a tag *)}
+
+    fun mkLabel prefix i = Atom.atom("BTy_"^(Int.toString i))
+    fun mkTyLabel i = mkLabel "BTy_" i
+    fun mkTBDLabel i = mkLabel "TBD_" i
+    fun mkBOTLabel i = mkLabel "BOT_" i
+
+    fun getLabel {coverage, label} = 
+	case label of NONE => (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp 
+        | SOME id => id
+    fun getLabelString aux = Atom.toString (getLabel aux)
+
+    fun mkTyAux coverage = 
+	let val next = !Tystamp
+            val () = Tystamp := !Tystamp + 1
+            val label = mkTyLabel next
+	in
+	  {coverage = coverage, label = SOME label}
+	end
+
+
+    datatype Refined = StringME of string (* describe regular expression in pads syntax *) 
+	             | Int of int * int  (* min, max *)
+	             | IntConst of int    (* value *)
+                     | StringConst of string (* string literal *)
+                     | Enum of Refined list  
+                     | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
+
+    datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
+                | Pvoid   of AuxInfo
+                | TBD     of AuxInfo * int * Context list 
+                | Bottom  of AuxInfo * int * Context list 
+                | Pstruct of AuxInfo * Ty list 
+                | Punion  of AuxInfo * Ty list 
+                | Parray  of AuxInfo * (Token * int) list * (* first *)Ty * (*body*) Ty * (* last *)Ty
+
+                | RefinedBase of AuxInfo * Refined
+                | Switch  of AuxInfo * Id * (Refined (* switch value *)* Ty) list
+                | RArray of AuxInfo * Ty option (*sepatator*) * Ty option (* terminator *)
+	                            * Ty (*Body type *) * Refined option (* length *) 
+
 
 
     (* delimiter tokens *)
@@ -93,7 +136,10 @@ structure Main : sig
         |  Bottom (a,i,cl) => a
         |  Pstruct (a,tys) => a
         |  Punion (a,tys) => a
-        |  Parray (a,tokens,ty1,ty2) => a
+        |  Parray (a,tokens,ty1,ty2,ty3) => a
+        |  RefinedBase (a,r) => a
+        |  Switch(a,id,branches) =>a
+        |  RArray (a,sep,term,body,len) => a
 
     fun getCoverage ty = #coverage(getAuxInfo ty)
     fun sumCoverage tys = 
@@ -127,8 +173,10 @@ structure Main : sig
         |  Bottom (a,i,cl) => mkComplexity(0,0,1)
         |  Pstruct (a,tys) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
         |  Punion (a,tys)  => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
-        |  Parray (a,tks,ty1,ty2) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) [ty1,ty2]))
-
+        |  Parray (a,tks,ty1,ty2,ty3) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) [ty1,ty2,ty3]))
+        |  RefinedBase (a,r) => mkComplexity(0,0,0)
+        |  Switch(a,id,branches) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) ((#2 o ListPair.unzip) branches)))
+        |  RArray (a,sep,term,body,len) => complexity body (* fix this!*)
 	end
 
 
@@ -138,9 +186,6 @@ structure Main : sig
 	  ("numBtm = "^(Int.toString numBottom)))
 
     fun printComplexity complexity = print (complexityToString complexity)
-
-    val TBDstamp = ref 0
-    val Bottomstamp = ref 0
 
 
 
@@ -430,13 +475,22 @@ structure Main : sig
         List.app (fn r => (print "\t"; printLTokens r)) badRecords;
         print "\n")
 
-   fun covToString {coverage} = Int.toString coverage
+   fun covToString {coverage, label} = 
+       let val label = 
+	   if !printIDs then 
+	       case label 
+               of NONE => ""
+               | SOME id => ("Id = "^(Atom.toString id)^" ")
+	   else ""
+       in
+	   label ^ Int.toString coverage
+       end
 
    fun TyToStringD prefix longTBDs longBottom suffix ty = 
        (prefix^
         (case ty 
          of Pvoid aux      => ("Pvoid(" ^(covToString aux)^")")
-         |  Base (aux, t)  => (tokenTyToString t)^("(" ^(covToString aux)^")")
+         |  Base (aux, t)  => (ltokenTyToString (hd t))^("(" ^(covToString aux)^")") 
          |  TBD (aux,i,cl) => "TBD_"^(Int.toString i)^
 	                      "("^(covToString aux)^")"^
 		              (if longTBDs then
@@ -453,12 +507,14 @@ structure Main : sig
          |  Punion (aux, tys)  => "Punion("^(covToString aux)^")\n"^
 	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
 			    prefix ^ "End Punion"
-         |  Parray (aux, tkns, ty1,ty2)  => "Parray("^(covToString aux)^")"^
+         |  Parray (aux, tkns, ty1,ty2,ty3)  => "Parray("^(covToString aux)^")"^
 			    "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
-			    prefix ^ "Body:\n"^
+			    prefix ^ "First:\n"^
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty1)^
-			    prefix^"Tail:\n"^
+			    prefix ^ "Body:\n"^
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty2)^
+			    prefix^"Tail:\n"^
+                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty3)^
 			    prefix ^ "End Parray"
         )^
 	suffix)
@@ -507,13 +563,16 @@ structure Main : sig
     fun dumpTyInfo path ty = 
 	let fun dumpTBDs ty = 
 		case ty
-                of Pvoid aux => ()
-		|  Base (aux,t) => ()
+                of Pvoid aux => () 
+		|  Base (aux,tls) => if !printIDs then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls) else ()
                 |  TBD(aux,i, cl)    => dumpCL (path^"TBD_"^(Int.toString i)) cl
                 |  Bottom(aux,i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
 	        |  Pstruct (aux,tys) => List.app dumpTBDs tys
 	        |  Punion (aux,tys) => List.app dumpTBDs tys
-	        |  Parray (aux,tkns,ty1,ty2) => List.app dumpTBDs [ty1,ty2]
+	        |  Parray (aux,tkns,ty1,ty2,ty3) => List.app dumpTBDs [ty1,ty2,ty3]
+                |  RefinedBase (aux, Refined ) => ()  (* to be filled in *)
+                |  Switch (aux, id, labeledTys) => ()(* to be filled in *)
+                |  RArray _ => () (* to be filled in *)
     	in  
           (print "Complexity of inferred type:\n\t";
 	   printComplexity (complexity ty);
@@ -536,7 +595,7 @@ structure Main : sig
 	   case ty 
 	   of Pstruct (aux,tys) => Pstruct (aux, collapseStruct tys [])
            |  Punion  (aux,tys) => Punion  (aux, collapseUnion  tys [])
-           |  Parray  (aux,tkns,ty1,ty2) => Parray  (aux,tkns,simplifyTy ty1, simplifyTy ty2)
+           |  Parray  (aux,tkns,ty1,ty2,ty3) => Parray  (aux,tkns,simplifyTy ty1, simplifyTy ty2, simplifyTy ty3)
 	   |  ty                => ty
        end
 
@@ -596,12 +655,9 @@ structure Main : sig
 		    in
 			getLines(rest, (Substring.string ln)::l)
 		    end
-(*OLD: This doesn't work with DOS style records
-           val lines = String.fields isNewline data *)
            val lines = getLines ( Substring.full data, [])
 	   val numRecs = List.length lines
-	   val lines = List.take(lines, numRecs-1)
-	   val () = print (Int.toString (numRecs - 1)^" records.\n")
+	   val () = print ((Int.toString numRecs)^" records.\n")
 	   val () = TextIO.closeIn strm
        in
 	   lines
@@ -850,7 +906,7 @@ structure Main : sig
 
 	    val kindSummary = 
 		case clusters 
-                of [] => Empty
+                of [] => (print "No clusters found\n"; Empty)
                 |  (cluster::cs) => 
 		    case isStruct cluster
 		    of SOME s => s
@@ -869,7 +925,8 @@ structure Main : sig
          a list of:
            a tokenOrder and a list of the derived contexts for that order
          a list of records that do not match any token order for the supplied token set.
-       The derived contexts for a tokenOrder is a list of contexts, the "holes" between the tokens.
+       The derived contexts for a tokenOrder is a list of contexts, the "holes" between the tokens
+       and the tokens corresponding to the matched tokens.
        Each context is a list of tokens.
     *)
     exception TokenMatchFailure
@@ -906,9 +963,13 @@ structure Main : sig
 			in
 			  if TokenEq(tk, rt)  (* found next token; push current context *)
 			  then 
-			      case rt 
-			      of Pgroup g => doMatch tks rts ([], (groupToTokens g) :: (List.rev curContextAcc) :: contextListAcc)
-			      |  _        => doMatch tks rts ([],                      (List.rev curContextAcc) :: contextListAcc)
+			      let val matchTokens = 
+				  case rt 
+				  of Pgroup g => (groupToTokens g)
+				  |  _        => [lrtoken]
+			      in
+				  doMatch tks rts ([], matchTokens :: (List.rev curContextAcc) :: contextListAcc)
+			      end
 			  else doMatch tokens rts (lrtoken :: curContextAcc, contextListAcc)
 			end
 		    val thisRecordContexts = doMatch tokenOrder thisRecord ([],[])
@@ -970,7 +1031,7 @@ structure Main : sig
 	end
 
     fun mkBottom (coverage,cl) = 
-	Bottom ({coverage=coverage}, !Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
+	Bottom ({coverage=coverage, label=SOME(mkBOTLabel (!Bottomstamp))}, !Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
 
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
     (* coverage is number of records in this context *)
@@ -986,7 +1047,7 @@ structure Main : sig
 	    if (coverage < isNoiseTolerance(!initialRecordCount))
 	    then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
 	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
-	    then TBD ({coverage=coverage}, !TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
+	    then TBD ({coverage=coverage, label=SOME(mkTBDLabel (!TBDstamp))}, !TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
 	    else ContextListToTy (currentDepth + 1) cl
 	end
 
@@ -998,45 +1059,42 @@ structure Main : sig
 		    fun isEmpty column = not (List.exists (not o null) column)
 		    fun cnvOneMatch (tokenOrder, dclist) = 
 			let val columns = doTranspose dclist
-			    fun shuffle(columns, tokens) result =
+			    fun recurse(columns, tokens) result =
 				case (columns, tokens) 
 				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
 				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (curDepth,(List.length last), last)) :: result))
 				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
-				  |  (col1::colg::cols, (Pgroup g)::tks) => 
+				  |  (col1::coltk::cols, tk::tks) => 
+				       (* col1 is context before tk;
+					  colt is context corresponding to tk
+					  cols is list of contexts following *)
 					let val coverage1 = List.length col1
-					    val coverageg = List.length colg
+					    val coveraget = List.length coltk
 					    val col1Ty = if isEmpty col1 then  [] else [(mkTBD (curDepth, coverage1, col1))]
-					    val colgTy = [(mkTBD (curDepth, coverageg, colg))]
+					    val coltkTy = case tk 
+						          of Pgroup g => [(mkTBD (curDepth, coveraget, coltk))]
+							   | _ =>        [(Base  (mkTyAux coveraget, List.concat coltk))]
 					in
-					    shuffle(cols, tks) (colgTy @ col1Ty @ result)
+					    recurse(cols, tks) (coltkTy @ col1Ty @ result)
 					end
-				  |  (col::cols, tk::tks) => 
-					let val coverage = List.length col
-					    val thisMatch = 
-						if isEmpty col then  [(Base ({coverage=coverage}, tk))]
-						else [Base ({coverage=coverage},tk), (mkTBD (curDepth, coverage, col))]
-					in
-					    shuffle(cols, tks) (thisMatch @ result)
-					end
-			         |  (cols,[]) => raise Fail "Unexpected case in shuffle function."
+			         |  (cols,[]) => raise Fail "Unexpected case in recurse function."
 			in
-			    case shuffle (columns, tokenOrder) []
+			    case recurse (columns, tokenOrder) []
 			    of   []   => raise Fail "Expected at least one field."
 			      |  [ty] => ty
-			      |  tys  => Pstruct ({coverage=minCoverage tys}, tys)
+			      |  tys  => Pstruct (mkTyAux (minCoverage tys), tys)
 			end
 		    val matchTys = List.map cnvOneMatch matches
 		    val resultTy =
 			case (matchTys, badRecords)
-  		        of   ([], [])   => Pvoid {coverage=0}                   (* I don't think this case can arise *)
+  		        of   ([], [])   => Pvoid (mkTyAux 0)                   (* I don't think this case can arise *)
 			  |  ([], brs)  => (print "in mkbottom case\n"; mkBottom (List.length brs,brs))       (* I'm not sure this case arises either *)
 			  |  ([ty], []) => ty
 			  |  (tys, brs) => if isEmpty brs 
-					   then Punion ({coverage=sumCoverage tys}, tys) 
+					   then Punion (mkTyAux(sumCoverage tys), tys) 
 					   else let val badCoverage = List.length brs
 						in 
-						    Punion ({coverage=badCoverage + sumCoverage tys}, 
+						    Punion (mkTyAux(badCoverage + sumCoverage tys), 
 							    (tys @ [(mkTBD (curDepth, badCoverage, brs))]))
 						end
 		in
@@ -1061,42 +1119,48 @@ structure Main : sig
 			    (* Return two contexts: one for all tokens in array slots except for the last one,
 			       and one for the tokens in the last slot; this partition is to avoid confusion
 			       with the separator not being in the last slot *)
-			    fun doNextToken [] (current, all) = (all, List.rev current)
-                              | doNextToken ((rt as (lrt,loc))::rts) (current, all) = 
+			    fun doNextToken isFirst [] (current, first, main) = (first, main, List.rev current)
+                              | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
 				  case TokenTable.find(tTable, lrt)
-				  of NONE => doNextToken rts (rt::current, all)
+				  of NONE => doNextToken isFirst rts (rt::current, first, main)
                                   |  SOME freq => 
-				      if !freq <= 0 then (freq := !freq - 1; doNextToken rts (rt::current, all))
+				      if !freq <= 0 
+				      then (freq := !freq - 1; 
+					    doNextToken isFirst rts (rt::current, first, main))
 				      else (freq := !freq - 1;
 					    numFound := !numFound + 1;
 					    if !numFound = numTokens 
-					    then (resetTable(); doNextToken rts ([], (List.rev (rt::current) :: all)))
-					    else doNextToken rts (rt::current, all))
+					    then (resetTable(); 
+						  if isFirst 
+						    then doNextToken false   rts ([], List.rev (rt::current),  main)
+						    else doNextToken isFirst rts ([], first, (List.rev (rt::current) :: main)))
+					    else doNextToken isFirst rts (rt::current, first, main))
 			in
-			    doNextToken tlist ([],[])
+			    doNextToken true tlist ([],[],[])
 			end
 		    fun partitionRecords rtokens = 
-			let fun pR [] (mainA,lastA) = (List.rev mainA, List.rev lastA)
-                              | pR (t::ts) (mainA, lastA)= 
-			    let val (main,last) = partitionOneRecord t
-			    in 
-				pR ts (main@mainA, last::lastA)
-			    end
+			let fun pR [] (firstA, mainA,lastA) = (List.rev firstA, List.rev mainA, List.rev lastA)
+                              | pR (t::ts) (firstA, mainA, lastA) = 
+			            let val (first, main,last) = partitionOneRecord t
+				    in 
+					pR ts (first::firstA, main@mainA, last::lastA)
+				    end
 			in
-			    pR rtokens ([],[])
+			    pR rtokens ([],[],[])
 			end
 
-		    val (mainContext,lastContext) = partitionRecords rtokens
+		    val (firstContext,mainContext,lastContext) = partitionRecords rtokens
 		in
 		    (print "Array context\n"; 
-		     Parray ({coverage=numRecords}, atokens, 
+		     Parray (mkTyAux numRecords, atokens, 
+			     mkTBD(curDepth, List.length firstContext, firstContext),
 			     mkTBD(curDepth, List.length mainContext, mainContext),
 			     mkTBD(curDepth, List.length lastContext, lastContext)))
 		end
 
             val ty = case analysis 
-		     of Blob => mkBottom (List.length rtokens, rtokens)
-		     |  Empty => Base ({coverage=0}, Pempty)
+		     of Blob =>     mkBottom (List.length rtokens, rtokens)
+		     |  Empty =>    Base (mkTyAux 0, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0})])
 		     |  Struct s => buildStructTy (splitRecords s rtokens) (* Can produce union of structs *)
 		     |  Array a =>  buildArrayTy (a, rtokens)
 	in
@@ -1145,6 +1209,7 @@ structure Main : sig
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("maxdepth", "maximum depth for exploration (default "^(Int.toString def_depthLimit)^")",         PCL.Int    (setDepth,     false)),
          ("lineNos",  "print line numbers in output contexts (default "^(Bool.toString def_printLineNos)^")",            PCL.BoolSet  printLineNos),
+         ("ids",      "print ids in type and tokens matching base types (default "^(Bool.toString def_printLineNos)^")",            PCL.BoolSet  printIDs),
          ("h",        "histogram comparison tolerance (percentage, default "^(Real.toString DEF_HIST_PERCENTAGE)^")",    PCL.Float  (setHistPer,   false)),
          ("s",        "struct determination tolerance (percentage, default "^(Real.toString DEF_STRUCT_PERCENTAGE)^")",  PCL.Float  (setStructPer, false)),
          ("n",        "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),
