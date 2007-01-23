@@ -1,4 +1,5 @@
 pads/GNUmakefile
+pads/common.mk
 pads/README
 pads/README.cygwin
 pads/ast-ast

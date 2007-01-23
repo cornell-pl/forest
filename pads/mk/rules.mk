@@ -384,7 +384,7 @@ PADSC_EXTRA += -D__ppc__
 endif
 
 # iffy generated mam_cc_SHARED=-G is incorrect
-ifeq ($(ARCH_N_OPSYS),ppc-darwin)
+ifeq ($(OPSYS),darwin)
 # XXX why doesn't mamake figure this out ???
 #OS_SPEC_XTRA_LIBS += -liconv
 OS_SPEC_XTRA_LIBS += /usr/lib/libiconv.dylib
