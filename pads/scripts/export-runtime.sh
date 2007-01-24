@@ -17,16 +17,16 @@
 # pads-1-04-b      pads 1.04b   2006-07-11  enum test files added, manual script fixed?
 # pads-1-04-c      pads 1.04c   2006-08-11  added jpg and gif to manual takelist
 # pads-1-04-rt     pads 1.04rt  2007-01-23  added support for exporting the runtime only. used by pads/ml.
-cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 -d pads_runtime pads
+cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 -d padsc_runtime pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`
 echo $bundlename
 
 # move into checked out copy
-if [ ! -e pads_runtime ] ; then 
-    echo cvs failed to create temporary pads_runtime directory;
+if [ ! -e padsc_runtime ] ; then 
+    echo cvs failed to create temporary padsc_runtime directory;
     exit 1
 fi
-cd pads_runtime
+cd padsc_runtime
 
 echo cleaning padsc directory
 mkdir temp_padsc
@@ -35,7 +35,7 @@ rm -rf padsc
 mv temp_padsc padsc
 
 echo Adding licenses
-# should be in pads_runtime directory
+# should be in padsc_runtime directory
 # must do this before cleaning scripts directory
 scripts/release/make.notices.sh
 
@@ -50,8 +50,8 @@ rm -f GNUmakefile
 mv runtime.mk GNUmakefile
 
 echo taring up the desired files
-cd ..  # now above checked out pads_runtime directory
+cd ..  # now above checked out padsc_runtime directory
 echo building bundle
-tar cfz "$bundlename".runtime.tar.gz `cat pads_runtime/runtime_take_list`
+tar cfz "$bundlename".runtime.tar.gz `cat padsc_runtime/runtime_take_list`
 
-mv pads_runtime pads_runtime_remove_me
+mv padsc_runtime padsc_runtime_remove_me
