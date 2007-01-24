@@ -52,6 +52,6 @@ mv runtime.mk GNUmakefile
 echo taring up the desired files
 cd ..  # now above checked out pads_runtime directory
 echo building bundle
-tar cfz $bundlename.tar.gz `cat pads_runtime/runtime_take_list`
+tar cfz "$bundlename".runtime.tar.gz `cat pads_runtime/runtime_take_list`
 
 mv pads_runtime pads_runtime_remove_me
