@@ -11,7 +11,7 @@ TARGS += pads_glx pglx_lib
 endif
 # Set ADDITIONAL_TARGS in any file that includes this one to augment
 # TARGS after-the-fact.
-TARGS += ADDITIONAL_TARGS
+TARGS += $(ADDITIONAL_TARGS)
 
 ifndef AST_ARCH
 AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
