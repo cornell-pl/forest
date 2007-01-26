@@ -1,0 +1,46 @@
+\section{Conclusions}
+\label{sec:future}
+
+Our work on \ddc\ has suggested a number of possible directions for
+future work, of which we will briefly describe two. First, we have
+begun to consider which properties we might expect to hold of the
+interaction between the parser and printer of any given description.
+
+{\em Add more detail here.}
+
+%\edcom{M: Scan is primitive. speculate on using fancier algorithm.}
+Second, we would like to enhance our support for expressing error
+recovery mechanisms in \ddc. The $\pscann$ type provides a very simple
+error recovery mechanism that is similar to the {\em local} error
+recovery mechanisms of many early versions of the
+\yacc{} parser generator~\cite{appel:mci}.  These mechanisms operate,
+in essence, by deleting input tokens until a particular {\em
+  synchronizing} token is found. However, the choice of where and when
+to attempt error recovery, and which synchronizing tokens to use, is
+not made automatically, but must be specified within the grammar
+itself with special error recovery rules.  Yet, more advanced error
+recovery mechanisms exist that take a substantially different approach
+to error recovery. For example, {\em global error repair} ``finds the
+smallest set of insertions and deletions that would turn the source
+string into a syntactically correct string, even if the insertions or
+deletions are not at a point where an LL or LR parser would first
+report an error''~\cite{appel:mci}. In addition, global error repair
+does not depend on explicit error recovery rules, but instead uses a
+single, uniform mechanism for the entire grammar.
+
+%Burke-Fisher~\cite{burke-fisher} 
+
+We would like to support such global error repair in the \ddc\
+framework. However, adding a new set of type constructors to \ddc\
+would be insufficient, as it would still require that error recovery
+be specified as part of the description and would be limited to local
+recovery due to the orthogonal nature of types.  Instead, support for
+a global mechanism would likely require that we parameterize the
+parsing semantics itself by an error recovery mechanism. Furthermore,
+as the exact operation of the error repair, including the choice of
+which tokens to insert or delete, depends on the particular
+description, we hypothesize that the error recovery mechanism itself
+should be specified as an interpretation of \ddc.
+
+
+{\em add genuine conclusion.}

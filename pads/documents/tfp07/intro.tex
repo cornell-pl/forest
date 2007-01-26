@@ -1,0 +1,53 @@
+\section{Introduction}
+\label{sec:intro}
+
+\datascript{}~\cite{gpce02}. \packettypes{}~\cite{sigcomm00}. \padsc{}~\cite{fisher+:pads}
+and \padsml{}~\cite{mandelbaum+:padsml}. Bro\cite{paxson:bro}. These
+are but a few of the many languages designed for describing data
+formats. In his classic paper {\em The Next 700 Programming
+  Languages}, 1966~\cite{landin:700}, Landin asserts that principled
+programming language design involves thinking in terms of ``families
+of languages'' and choosing from a ``well-mapped space.''  However,
+when it comes to the domain of processing ad hoc data, there is no
+well-mapped space and no systematic understanding of the family of
+languages one might be dealing with.
+
+In our previous work, we developed the data description calculus
+\ddcold{} to capture the core features of many existing data
+description languages~\cite{fisher+:next700ddl}, like \padsc{},
+\packettypes{} and \datascript{}. Given the broad applicability of
+\ddcold{}, we wanted to use it to define the semantics of
+\padsml{}. However, the polymorphic types that we wished to include in
+\padsml{} can not be formalized with \ddcold{}.  In addition, both
+\padsc{} and \padsml{} generate tools from data format descriptions to
+{\em print} data in the specified format. For
+many applications, printing data correctly can be as important as
+parsing it correctly. Yet, our previous work
+specified only the type and parsing semantics of \ddcold{}. 
+
+In this work, we address both of these limitations of
+\ddcold{}. First, we extend \ddcold{} with abstractions over types to
+create \ddc. In the process, we also improve the \ddc\ theory, as
+noted in \secref{sec:ddc-sem}. The new \ddc provides basis for
+specifying the semantics of \padsml{}. Second, we specify the a
+printing semantics for the new \ddc{}.  We used this new
+semantics to guide the \padsml{} implementation of printing.
+\secref{sec:ddc} presents the extended \ddc{} calculus, focusing on
+the semantics of polymorphic types for parsing and the key elements of
+the printing semantics.  We show that both parsers and printers in the
+\ddc{} are type correct and furthermore that parsers produce pairs of
+parsed data and parse descriptors in {\em canonical form}, and that
+printers, given data in canonical form, print successfully.
+
+In summary, this work makes the following key contributions:
+\begin{itemize}
+\item We have defined the formal semantics of both \padsml{} parsers 
+and printers. 
+\item We have proven our generated code is type safe and
+well-behaved as defined by a canonical forms theorem.
+\end{itemize}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 
