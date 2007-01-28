@@ -27,17 +27,47 @@ specified only the type and parsing semantics of \ddcold{}.
 
 In this work, we address both of these limitations of
 \ddcold{}. First, we extend \ddcold{} with abstractions over types to
-create \ddc. In the process, we also improve the \ddc\ theory, as
-noted in \secref{sec:ddc-sem}. The new \ddc provides basis for
+create \ddc. In the process, we also improve the \ddcold{} theory, as
+noted in \secref{sec:ddc-sem}. The new \ddc{} provides a basis for
 specifying the semantics of \padsml{}. Second, we specify the a
-printing semantics for the new \ddc{}.  We used this new
-semantics to guide the \padsml{} implementation of printing.
-\secref{sec:ddc} presents the extended \ddc{} calculus, focusing on
-the semantics of polymorphic types for parsing and the key elements of
-the printing semantics.  We show that both parsers and printers in the
-\ddc{} are type correct and furthermore that parsers produce pairs of
-parsed data and parse descriptors in {\em canonical form}, and that
-printers, given data in canonical form, print successfully.
+printing semantics for the new \ddc{}.  We used this new semantics to
+guide the \padsml{} implementation of printing.
+Sections~\ref{sec:ddc-syntax} through \ref{sec:ddc-sem} present the
+extended \ddc{} calculus, focusing on the semantics of polymorphic
+types for parsing and the key elements of the printing semantics.
+Then, in \secref{sec:meta-theory}, we show that both parsers and
+printers in the \ddc{} are type correct and furthermore that parsers
+produce pairs of parsed data and parse descriptors in {\em canonical
+  form}, and that printers, given data in canonical form, print
+successfully.
+
+{\em Merge the next two paragraphs into the above intro:}
+
+In the remainder of this paper, we introduce \ddc{}, a calculus of
+simple, orthogonal type constructors, which serves to give a semantics
+to the main features of \padsml.  \ddc{} is an extension and revision
+of our previous work on \ddcold{}~\cite{fisher+:next700ddl}.  The main
+new feature is the ability to define functions from types to types,
+which are needed to model \padsml's polymorphic data types.  In the
+process of adding these new functions, which we call {\em type
+  abstractions} (as opposed to {\em value abstractions}, which are
+functions from values to types), we simplified our overall semantics
+by making a couple of subtle technical changes.  For example, we were
+able to eliminate the complicated ``contractiveness'' constraint from
+our earlier work.  We have also added a new interpretation of \ddc{}
+types as printers.
+
+The main practical benefit of the calculus has been as a guide for our
+implementation. Before working through the formal semantics, we
+struggled to disentangle the invariants related to polymorphism. After
+we had defined the calculus, we were able to implement type
+abstractions as \ocaml{} functors in approximately a week.  Our new
+printing semantics was also very important for helping us define and
+check the correctness of our printer implementation.  We hope the
+calculus will serve as a guide for implementations of \pads{} in
+other host languages.  In this paper, we give an overview of the
+calculus.  A companion technical report contains a complete formal
+specification~\cite{fisher+:popl-sub-long}.
 
 In summary, this work makes the following key contributions:
 \begin{itemize}

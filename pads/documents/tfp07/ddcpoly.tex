@@ -1,52 +1,6 @@
-\section{The Semantics of PADS/ML}
-\label{sec:ddc}
+\section{\ddc{} Syntax}
+\label{sec:ddc-syntax}
 
-\trversion{\em Modify a\_pd to a\_pd\_body, everywhere. This name is more
-  appropriate.  Note that the new scheme for translating type
-  variables will affect WF rules. a will be in D but a\_rep and
-  a\_pd\_body could appear in a sigma
-
-  Consider a new convention: for compute type, any references to type
-  interpretations should be done with the type interpretation
-  functions rather than being hard coded. Otherwise, type substitution gets
-  messed up,e.g., when unfolding a recursive type. 
-  For example, should be compute(e:[a]\_rep) instead of
-  compute(e:a\_rep). Then, substitution on DDC types will burrow into
-  the type annotation $\gs$ of compute types. To support, need new
-  syntax for type annotations $\gs$ and need to explicitly translate
-  annotation types into F-omega types.
-  
-}
-
-In this section, we introduce \ddc{}, a calculus of simple, orthogonal
-type constructors, which serves to give a semantics
-to the main features of \padsml.  \ddc{} is an extension
-and revision of our previous work on 
-\ddcold{}~\cite{fisher+:next700ddl}.  The main new feature is 
-the ability to define functions from types to types, 
-which are needed to model \padsml's polymorphic data types.
-In the process of adding these new functions, which we call {\em type
-abstractions} (as opposed to {\em value abstractions}, which are functions 
-from values to types), we simplified our overall semantics
-by making a couple of subtle technical changes.  For example, we were
-able to eliminate the complicated ``contractiveness'' constraint from our
-earlier work.  We have also added a new interpretation of \ddc{} types
-as printers.
-
-The main practical benefit of the calculus has been as a guide for our
-implementation. Before working through the formal semantics, we
-struggled to disentangle the invariants related to polymorphism. After
-we had defined the calculus, we were able to implement type
-abstractions as \ocaml{} functors in approximately a week.  
-Our new printing semantics was also very important for helping us define
-and check the correctness of our printer implementation.  We hope
-the calculus will serve as a guide for implementations of {\sc PADS} in
-other host languages.
-In the remainder of this section, we give an overview of the calculus.
-A companion technical report
-contains a complete formal specification~\cite{fisher+:popl-sub-long}.
-
-\subsection{\ddc{} Syntax}
 \begin{figure}
 {\small
 \begin{bnf}
@@ -123,7 +77,7 @@ types. In our original work~\cite{fisher+:next700ddl}, these kinding rules
 were somewhat unorthodox, but we have since simplifed them.  
 Details appear in the companion technical report~\cite{fisher+:popl-sub-long}.
 
-\subsection{\Implang{} Language}
+\section{\Implang{} Language}
 \label{sec:host-lang}
 The host language of \ddc{} is a straightforward 
 extension of \fomega{} with recursion and a variety of useful constants
@@ -165,7 +119,7 @@ equality ($\ity \equiv \ity'$) are those of \fomega{} extended with
 recursive functions and recursive types and are entirely standard.
 See Pierce's text~\cite{pierce:tapl} for details.
 
-\subsection{\ddc{} Semantics}
+\section{\ddc{} Semantics}
 \label{sec:ddc-sem}
 
 The primitives of \ddc{} each have four interpretations: two
@@ -234,7 +188,7 @@ defined in this section and a brief description of each.
 \end{figure}
 
 
-\paragraph*{\ddc{} representation types.}
+\subsection{\ddc{} representation types.}
 \label{sec:intty-sem}
 In Figure~\ref{fig:rep-tys}, we present the representation type
 of selected \ddc{} primitives. While the primitives are
@@ -286,7 +240,7 @@ become \fomega{} type constructors and type application, respectively.
 \label{fig:pd-tys}
 \end{figure}
 
-\paragraph*{\ddc{} parse descriptor types.}
+\subsection{\ddc{} parse descriptor types.}
 \figref{fig:pd-tys} gives the types of the parse descriptors
 corresponding to selected \ddc{} types.  The translation reveals that
 all parse descriptors share a common structure, consisting of two
@@ -329,42 +283,6 @@ header of a PD, even though it does not know the \ddc{} type it is parsing.
 abstract the body of the PD (as opposed to the entire PD)
 and \ddc{} applications are translated into \fomega\ type applications
 where the argument type is the PD body type.
-
-% PD-type constructors are
-% parameterized over the PD \emph{body} type, rather than over the PD
-% type itself. Correspondingly, type application $\papp {\ty_1}{\ty_2}$ applies
-% the PD interpretation of $\ty_1$ to the body 
-
-% This common shape enables us to write
-% polymorphic functions that treat parse descriptors in a generic
-% mannner. Indeed, the parsing semantics of types rely on this
-% structure, as discussed in \secref{sec:parse-sem}.
-
-% The PD types without the common shape are those corresponding to
-% abstractions and applications. Value abstractions and applications are
-% translated in an identical manner for PD types as for representation
-% types.  Type abstractions and applications, however, are translated in
-% a subtly different manner. As with the rep-type interpretation, type
-% abstractions correspond to parse decriptor-type constructors in
-% \fomega. The major difference is that PD-type constructors are
-% parameterized over the PD \emph{body} type, rather than over the PD
-% type itself. Correspondingly, type application $\papp {\ty_1}{\ty_2}$ applies
-% the PD interpretation of $\ty_1$ to the body portion of the PD
-% interpretation of $\ty2$ (specified formally with the $\itbdsem[\ty]$
-% function). Similarly, type variables are translated to tuples of a
-% header and a type variable, rather than to a type variable alone. 
-
-% The reason for parameterization over PD-body types (rather than
-% parse-descriptor types) in the translation scheme will be explained in
-% the next section, once we have discussed the parsing semantics of type
-% abstractions and applications. Note, however, that an important result
-% of this design is that the PD interpretation is not defined for all
-% types. The problem lies with the interpretation of type application.
-% It requires that $\itbdsem[\ty_2]$ be defined, which, in turn,
-% requires that $\itpdsem[\ty_2] \equiv \ipty{\ity}$, for some $\ity$.
-% Yet, this requirement is not mebt by some types; for example, $\lambda
-% \ptyvar.\ty$.
-
 
 \begin{figure}
 \small
@@ -493,7 +411,7 @@ where the argument type is the PD body type.
 \end{figure}
 
 
-\paragraph*{\ddc{} parsing semantics.}
+\subsection{\ddc{} parsing semantics.}
 \label{sec:parse-sem}
 The parsing semantics of a type $\tau$ with kind $\kty$ is a function that
 transforms some amount of input into a pair of a representation and a
@@ -697,7 +615,7 @@ interpretations of $\ty_2$.
 \end{figure}
 
 
-\paragraph*{\ddc{} printing semantics}
+\subsection{\ddc{} printing semantics}
 \label{sec:print-sem}
 The definition of the printing semantics for a \ddc{} description
 uses a similar set of concepts as the parsing semantics.  To begin,
@@ -736,7 +654,7 @@ uses a fold to build a recursive data structure
 when interpreting a recursive type, the printing semantics uses an
 unfold to deconstruct a recursive data structure for printing.  
 
-\subsection{Meta-theory}
+\section{Metatheory}
 \label{sec:meta-theory}
 To validate our semantic definitions,
 we have proven two key metatheoretic results.  First, we show that
@@ -753,117 +671,118 @@ dependent \ddc{} type.
 % well typed, returning a pair of the corresponding representation and
 % parse descriptor.  
 
-\paragraph*{Type Correctness.}
+\subsection{Type Correctness.}
 Demonstrating that generated parsers and printers are well formed
 and have the expected types is nontrivial primarily because
 the generated code expects parse descriptors to have a particular shape,
 and it is not completely obvious they do in the presence of polymorphism.
 Hence, to prove type correctness, we first need to characterize the shape of
 parse descriptors for arbitrary \ddc{} types.   
-Unfortunately, the most straightforward characterization is
-too weak to prove directly, and hence Definition~\ref{def:pd-props}
-specifies a much stronger property as a logical relation.
-Lemma~\ref{lemma:pd-log-rel} establishes that the logical relation
-holds of all well-formed \ddc{} types by induction on kinding
-derivations, and the desired characterization follows as a corollary.
+% Unfortunately, the most straightforward characterization is
+% too weak to prove directly, and hence Definition~\ref{def:pd-props}
+% specifies a much stronger property as a logical relation.
+% Lemma~\ref{lemma:pd-log-rel} establishes that the logical relation
+% holds of all well-formed \ddc{} types by induction on kinding
+% derivations, and the desired characterization follows as a corollary.
 
-\begin{definition}
-\label{def:pd-props}
-\begin{itemize}
-\item $\hhpred \ty \kty$ iff $\ \exists\,\ity$ s.t. $\itpdsem[\ty] \equiv
-  {\ipty \ity}$.
-\item $\hhpred \ty {\kty \iarrowi \kind}$ iff $\ \exists\,\ity$
-  s.t. $\itpdsem[\ty] \equiv \ity$ and whenever $\hhpred
-  {\ty'}{\kty}$, we have $\hhpred {\papp \ty {\ty'}}{\kind}$.
-\item $\hhpred \ty {\ity \iarrowi \kind}$ iff $\ \exists\,\ity'$
-  s.t. $\itpdsem[\ty] \equiv \ity'$ and $\hhpred{\papp \ty e}{\kind}$
-  for any expression $e$.
-\end{itemize}
-\end{definition}
-\cut{
-We can now prove the following lemma by induction on kinding derivations:
-}
-\begin{lemma}
-\label{lemma:pd-log-rel}
-If $\ddck[\ty,{\pctxt;\ctxt},\kind,{}]$ then $\hhpred \ty \kind$.
-\end{lemma}
+% \begin{definition}
+% \label{def:pd-props}
+% \begin{itemize}
+% \item $\hhpred \ty \kty$ iff $\ \exists\,\ity$ s.t. $\itpdsem[\ty] \equiv
+%   {\ipty \ity}$.
+% \item $\hhpred \ty {\kty \iarrowi \kind}$ iff $\ \exists\,\ity$
+%   s.t. $\itpdsem[\ty] \equiv \ity$ and whenever $\hhpred
+%   {\ty'}{\kty}$, we have $\hhpred {\papp \ty {\ty'}}{\kind}$.
+% \item $\hhpred \ty {\ity \iarrowi \kind}$ iff $\ \exists\,\ity'$
+%   s.t. $\itpdsem[\ty] \equiv \ity'$ and $\hhpred{\papp \ty e}{\kind}$
+%   for any expression $e$.
+% \end{itemize}
+% \end{definition}
+% \cut{
+% We can now prove the following lemma by induction on kinding derivations:
+% }
+% \begin{lemma}
+% \label{lemma:pd-log-rel}
+% If $\ddck[\ty,{\pctxt;\ctxt},\kind,{}]$ then $\hhpred \ty \kind$.
+% \end{lemma}
 
-\begin{lemma}
-\label{lemma:pd-props}
-  \begin{itemize}
-  \item If $\ddck[\ty,\pctxt;\ctxt,\kind,{}]$ then $\exists
-     \ity.\itpdsem[\ty] = \ity$.
-   \item If $\ddck[\ty,\pctxt;\ctxt,\kty,{}]$ then $\exists
-     \ity.\itpdsem[\ty] \equiv \ipty \ity$.
-  \end{itemize}
-\end{lemma}
+% \begin{lemma}
+% \label{lemma:pd-props}
+%   \begin{itemize}
+%   \item If $\ddck[\ty,\pctxt;\ctxt,\kind,{}]$ then $\exists
+%      \ity.\itpdsem[\ty] = \ity$.
+%    \item If $\ddck[\ty,\pctxt;\ctxt,\kty,{}]$ then $\exists
+%      \ity.\itpdsem[\ty] \equiv \ipty \ity$.
+%   \end{itemize}
+% \end{lemma}
 
 
-\trversion{
-\begin{definition}
-$\pda \ptyvar = \ipty \ptyvar$
-\end{definition}
+% \trversion{
+% \begin{definition}
+% $\pda \ptyvar = \ipty \ptyvar$
+% \end{definition}
 
-\begin{lemma}[Types of Constructors]
-\label{lem:types-of-constructors}
-\begin{itemize}
-\item $\newrepf {unit} : \iarrow \iunitty \iunitty$
-\item $\newpdf  {unit} : \iarrow \ioffty {\ipty \iunitty}$
-\item $\newrepf {bottom} : \iarrow \iunitty \invty$
-\item $\newpdf  {bottom} : \iarrow \ioffty {\ipty \iunitty}$
-\item $\newrepf {\gS} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
-\item $\newpdf {\gS} : \forall \ga,\gb. 
-  \iarrow {\iprod {\pda \ga} {\pda \gb}}
-  {\pda {(\pda \ga \iprodi \pda \gb)}}
-$
-\item $\newrepf {+left} : \forall \ga.\forall \gb.\iarrow \ga 
-                            {\isum \ga \gb}$
-\item $\newrepf {+right} : \forall \ga.\forall \gb.\iarrow \gb {\isum \ga \gb}$
-\item $\newpdf {+left} : \forall \ga, \gb.\iarrow {\pda \ga} 
-  {\ipty {(\isum {\pda \ga}{\pda \gb})}}$
-\item $\newpdf {+right} :\forall  \ga, \gb. \iarrow {\pda \gb} 
-                            {\ipty {(\isum {\pda \ga} {\pda \gb})}}$
-\item $\newrepf {\&} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
-\item $\newpdf {\&} : 
-\forall \ga,\gb.
-  \pda \ga \iprodi
-  \pda \gb \iarrowi 
-         {\ipty {(\pda \ga \iprodi \pda \gb)}}
-$.
-\item $\newrepf {con} : \forall \ga.\iprod \iboolty \ga 
-  \iarrowi {\isum \ga \ga}$
-\item $\newpdf {con} :\forall  \ga. \iprod \iboolty \iarrow {\pda \ga} {\ipty {\pda \ga}}$
-\item $\newrepf {seq\_init} : \forall \ga.\iarrow \iunitty {\iintty \iprodi \iseq \ga}$
-\item $\newpdf {seq\_init} : \forall \ga. \iarrow \ioffty {\iapty {\pda\ga}}$
-\item $\newrepf {seq} : \forall \ga.\iarrow
-  {(\iintty \iprodi \iseq \ga) \iprodi \ga}
-  {\iintty \iprodi \iseq \ga}$
-\item $\newpdf {seq} :\forall  {\ga_{elt}},{\ga_{sep}}. 
-  (\iapty {\pda {\ga_{elt}}}) \iprodi
-  \pda {\ga_{sep}} \iprodi 
-  \pda {\ga_{elt}} \iarrowi \\
-  \iapty {\pda {\ga_{elt}}}$
-\item $\newrepf {compute} : \forall \ga.\iarrow \ga \ga$
-\item $\newpdf {compute} : \iarrow \ioffty {\ipty \iunitty}$
-\item $\newrepf {absorb} : \forall \ga.\iarrow {\pda \ga} {\isum
-    \iunitty \invty}$
-\item $\newpdf {absorb} :\forall  \ga. \iarrow {\pda \ga} {\ipty
-    \iunitty}$
-\item $\newrepf {scan} : \forall \ga.\iarrow \ga {\isum \ga \invty}$
-\item $\newpdf {scan} :\forall  \ga. \iarrow {\iprod \iintty {\pda \ga}}
-  {\ipty {(\isum {\iprod \iintty {\pda \ga}} \iunitty)}}$
-\item $\newrepf {scan\_err} : \forall \ga.\iarrow \iunitty {\isum \ga \invty}$
-\item $\newpdf {scan\_err} :\forall  \ga. \iarrow \ioffty
-  {\ipty {(\isum {\iprod \iintty \ga} \iunitty)}}$
-\end{itemize}  
-\end{lemma}
+% \begin{lemma}[Types of Constructors]
+% \label{lem:types-of-constructors}
+% \begin{itemize}
+% \item $\newrepf {unit} : \iarrow \iunitty \iunitty$
+% \item $\newpdf  {unit} : \iarrow \ioffty {\ipty \iunitty}$
+% \item $\newrepf {bottom} : \iarrow \iunitty \invty$
+% \item $\newpdf  {bottom} : \iarrow \ioffty {\ipty \iunitty}$
+% \item $\newrepf {\gS} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
+% \item $\newpdf {\gS} : \forall \ga,\gb. 
+%   \iarrow {\iprod {\pda \ga} {\pda \gb}}
+%   {\pda {(\pda \ga \iprodi \pda \gb)}}
+% $
+% \item $\newrepf {+left} : \forall \ga.\forall \gb.\iarrow \ga 
+%                             {\isum \ga \gb}$
+% \item $\newrepf {+right} : \forall \ga.\forall \gb.\iarrow \gb {\isum \ga \gb}$
+% \item $\newpdf {+left} : \forall \ga, \gb.\iarrow {\pda \ga} 
+%   {\ipty {(\isum {\pda \ga}{\pda \gb})}}$
+% \item $\newpdf {+right} :\forall  \ga, \gb. \iarrow {\pda \gb} 
+%                             {\ipty {(\isum {\pda \ga} {\pda \gb})}}$
+% \item $\newrepf {\&} : \forall \ga,\gb.\iarrow {\iprod \ga \gb} {\iprod \ga \gb}$
+% \item $\newpdf {\&} : 
+% \forall \ga,\gb.
+%   \pda \ga \iprodi
+%   \pda \gb \iarrowi 
+%          {\ipty {(\pda \ga \iprodi \pda \gb)}}
+% $.
+% \item $\newrepf {con} : \forall \ga.\iprod \iboolty \ga 
+%   \iarrowi {\isum \ga \ga}$
+% \item $\newpdf {con} :\forall  \ga. \iprod \iboolty \iarrow {\pda \ga} {\ipty {\pda \ga}}$
+% \item $\newrepf {seq\_init} : \forall \ga.\iarrow \iunitty {\iintty \iprodi \iseq \ga}$
+% \item $\newpdf {seq\_init} : \forall \ga. \iarrow \ioffty {\iapty {\pda\ga}}$
+% \item $\newrepf {seq} : \forall \ga.\iarrow
+%   {(\iintty \iprodi \iseq \ga) \iprodi \ga}
+%   {\iintty \iprodi \iseq \ga}$
+% \item $\newpdf {seq} :\forall  {\ga_{elt}},{\ga_{sep}}. 
+%   (\iapty {\pda {\ga_{elt}}}) \iprodi
+%   \pda {\ga_{sep}} \iprodi 
+%   \pda {\ga_{elt}} \iarrowi \\
+%   \iapty {\pda {\ga_{elt}}}$
+% \item $\newrepf {compute} : \forall \ga.\iarrow \ga \ga$
+% \item $\newpdf {compute} : \iarrow \ioffty {\ipty \iunitty}$
+% \item $\newrepf {absorb} : \forall \ga.\iarrow {\pda \ga} {\isum
+%     \iunitty \invty}$
+% \item $\newpdf {absorb} :\forall  \ga. \iarrow {\pda \ga} {\ipty
+%     \iunitty}$
+% \item $\newrepf {scan} : \forall \ga.\iarrow \ga {\isum \ga \invty}$
+% \item $\newpdf {scan} :\forall  \ga. \iarrow {\iprod \iintty {\pda \ga}}
+%   {\ipty {(\isum {\iprod \iintty {\pda \ga}} \iunitty)}}$
+% \item $\newrepf {scan\_err} : \forall \ga.\iarrow \iunitty {\isum \ga \invty}$
+% \item $\newpdf {scan\_err} :\forall  \ga. \iarrow \ioffty
+%   {\ipty {(\isum {\iprod \iintty \ga} \iunitty)}}$
+% \end{itemize}  
+% \end{lemma}
 
-\begin{proof}
-  By typing rules of \fomega.
-\end{proof}
-}
-With this lemma, we can establish the type correctness of the
-generated parsers and printers. We prove the theorem using a more general induction
+% \begin{proof}
+%   By typing rules of \fomega.
+% \end{proof}
+% }
+% With this lemma, we can establish the type correctness of the
+% generated parsers and printers. 
+We prove the theorem using a general induction
 hypothesis that applies to open types.
 This hypothesis must account for the fact
 that any free type variables in a \ddc{} 
@@ -922,7 +841,7 @@ common implementations of Lex and YACC, for which users must examine
 generated code to debug compile-time errors in
 specifications.
 
-\paragraph*{Canonical Forms for Parsed Data.}
+\subsection{Canonical Forms for Parsed Data.}
 \ddc{} parsers generate pairs of representations and parse descriptors
 designed to satisfy a number of invariants.  Of greatest importance is 
 the fact that

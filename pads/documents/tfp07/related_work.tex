@@ -17,12 +17,6 @@ type-based descriptions define {\em both} external data formats {\em
   and} rich invariants on the internal parsed data structures.  This
 dual interpretation of types lies at the heart of tools such as \pads,
 \datascript{} and \packettypes{}.
-%\pads{} programmers, for instance, demand that
-%representations produced by their \pads{} parsers have the expected type and 
-%count on the fact that the associated PD is accurately correlated
-%with the representation.  
-%Existing formalisms simply do not address
-%this elements of data description languages.
 
 {\em Parsing Expression Grammars} (PEGs), studied in the early
 70s~\cite{birman+:parsing} and revitalized more recently by
@@ -34,15 +28,10 @@ operators, they may be parsed in linear time through the use of
 Once again, our multiple interpretations of types in \ddc{} makes our
 theory substantially different from the theory of PEGs.
 
-As with \padsml{}, there are many parallels between \ddc{} and {\it
-  parser
+There are many parallels between \ddc{} and {\it parser
   combinators}~\cite{burge:parser-combinators,hutton+:parser-combinators}.
 In particular, \ddc{}'s dependent sum construct is reminiscent of the
 bind operator in the monadic formulation of parser combinators.
-Indeed, we can model dependent sums in Haskell as:
-\begin{code}
-sigma :: P s -> (s->P t) -> P (s,t)
-sigma m q = do \{x <- m; y <- q x; return (x,y)\}\end{code}%%\noindent
 Parser combinators, however, are a general approach to specifying
 recursive descent parsing, whereas we have targeted \ddc{} to the
 more-specific domain of parsing ad hoc data. This focus leads to many
