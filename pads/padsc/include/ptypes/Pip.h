@@ -21,23 +21,8 @@
  * Pip_read                       Pa_ip_read                     Pe_ip_read
  *
  * Attempts to read a numeric IP address string, i.e., an IP address
- * form consisting of one to four numeric parts with values 0-255,
- * separated by ".", with an optional trailing dot.  When there are
- * fewer than four parts, the missing parts are treated as implicitly
- * zero, and are inserted as shown in the following diagram, which
- * shows the 8 legal input forms and the equivalent form.
- *
- *  <part1>                          --> <part1>.0.0.0
- *  <part1>.                         --> <part1>.0.0.0.
- *  <part1>.<part4>                  --> <part1>.0.0.<part4>
- *  <part1>.<part4>.                 --> <part1>.0.0.<part4>.
- *  <part1>.<part2>.<part4>          --> <part1>.<part2>.0.<part4>
- *  <part1>.<part2>.<part4>.         --> <part1>.<part2>.0.<part4>.
- *  <part1>.<part2>.<part3>.<part4>  --> same
- *  <part1>.<part2>.<part3>.<part4>. --> same
- *
- * where each <part> is made up of 1 to 3 digits which specify a
- * number in the range [0, 255].
+ * form consisting of four numeric parts with values 0-255,
+ * separated by ".", with an optional trailing dot.  
  */
 /*@END Pip_app_1.tex*/
 /*@BEGIN Pip_app_2.tex*/

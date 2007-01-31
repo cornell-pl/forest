@@ -7795,7 +7795,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.206 2006-12-22 14:01:48 yitzhakm Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.207 2007-01-31 18:11:37 forrest Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -12254,28 +12254,15 @@ PDCI_ip_read(P_t *pads, const Pbase_m *m,
       if (!((*p1) >= zero && (*p1) <= nine)) break;
       // found another part, continue loop
     }
-    // Successfully skipped over up to four parts and optional trailing dot.
+    // Successfully skipped over four parts and optional trailing dot.
+    // (OR didn't find a dot or found a char outside 0..9!)
+    if (parts != 4) {
+      // IP addresses have four parts
+      goto invalid;
+    } 
     // The final byte has not been added to addr yet.
-    // TODO: unless it is the first part,
-    // we think it is added at the end, but we are not sure.
-    switch (parts) {
-    case 1:
-      addr = byte;
-      addr = addr << 24;
-      break;
-    case 2:
-      addr = addr << 24;
-      addr += byte;
-      break;
-    case 3:
-      addr = addr << 16;
-      addr += byte;
-      break;
-    case 4:
-      addr = addr << 8;
-      addr += byte;
-      break;
-    }
+    addr = addr << 8;
+    addr += byte;
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (range_err_start && P_Test_SemCheck(*m)) goto invalid_range;
     if (P_Test_Set(*m)) {
