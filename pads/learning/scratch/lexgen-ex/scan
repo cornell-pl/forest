@@ -1,0 +1,4 @@
+#!/usr/bin/env perl
+my $args=join(" ", @ARGV);
+my $cmd = "sml \@SMLload=lib/learn.ppc-darwin $args";
+exec $cmd;

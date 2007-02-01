@@ -1035,11 +1035,11 @@ structure Main : sig
 
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
     (* coverage is number of records in this context *)
-    fun mkTBD (currentDepth, coverage, cl) = 
+    fun mkTBD (callsite, currentDepth, coverage, cl) = 
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
            that is either empty or some value gets silently converted to the value only. *)
-	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= ~1, beginloc=0, endloc=0})] (* XXX fix line number *)
+	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= callsite, beginloc=0, endloc=0})] (* XXX fix line number *)
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
 	    val cl = crackUniformGroups cl
@@ -1062,17 +1062,25 @@ structure Main : sig
 			    fun recurse(columns, tokens) result =
 				case (columns, tokens) 
 				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
-				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (curDepth,(List.length last), last)) :: result))
+				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (~1, curDepth,(List.length last), last)) :: result))
 				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
 				  |  (col1::coltk::cols, tk::tks) => 
 				       (* col1 is context before tk;
 					  colt is context corresponding to tk
 					  cols is list of contexts following *)
-					let val coverage1 = List.length col1
+					let fun borrowLoc col1 colref = 
+					        let fun doit ([],[] : LToken list list) (a : LToken list list) = List.rev a
+						    |   doit ([]::r, [(t,{lineNo,beginloc,endloc})]::s) a = 
+						                 doit (r,s) ([(Pempty,{lineNo=lineNo, beginloc=0,endloc=beginloc})]::a)
+						    |   doit (r::rs,t::ts) a = doit (rs,ts) (r ::a)
+						in
+						    doit (col1, colref) []
+						end
+					    val coverage1 = List.length col1
 					    val coveraget = List.length coltk
-					    val col1Ty = if isEmpty col1 then  [] else [(mkTBD (curDepth, coverage1, col1))]
+					    val col1Ty = if isEmpty col1 then  [] else [(mkTBD (~8, curDepth, coverage1, (borrowLoc col1 coltk)))]
 					    val coltkTy = case tk 
-						          of Pgroup g => [(mkTBD (curDepth, coveraget, coltk))]
+						          of Pgroup g => [(mkTBD (~3, curDepth, coveraget, coltk))]
 							   | _ =>        [(Base  (mkTyAux coveraget, List.concat coltk))]
 					in
 					    recurse(cols, tks) (coltkTy @ col1Ty @ result)
@@ -1095,7 +1103,7 @@ structure Main : sig
 					   else let val badCoverage = List.length brs
 						in 
 						    Punion (mkTyAux(badCoverage + sumCoverage tys), 
-							    (tys @ [(mkTBD (curDepth, badCoverage, brs))]))
+							    (tys @ [(mkTBD (~4, curDepth, badCoverage, brs))]))
 						end
 		in
 		    resultTy
@@ -1153,9 +1161,9 @@ structure Main : sig
 		in
 		    (print "Array context\n"; 
 		     Parray (mkTyAux numRecords, atokens, 
-			     mkTBD(curDepth, List.length firstContext, firstContext),
-			     mkTBD(curDepth, List.length mainContext, mainContext),
-			     mkTBD(curDepth, List.length lastContext, lastContext)))
+			     mkTBD(~5, curDepth, List.length firstContext, firstContext),
+			     mkTBD(~6, curDepth, List.length mainContext, mainContext),
+			     mkTBD(~7, curDepth, List.length lastContext, lastContext)))
 		end
 
             val ty = case analysis 
