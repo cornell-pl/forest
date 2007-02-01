@@ -16,42 +16,42 @@
 %\setlength{\textheight}{8.5in}
 
 \begin{document}
-\title{The Next 699 Data Description Languages\\(Research Paper)}
-\author{Yitzhak Mandelbaum$^{1,2}$ \and Kathleen Fisher$^1$ \and David Walker$^2$}
+\title{A Dual Semantics for the Data Description Calculus\\(Extended Abstract)}
+\author{Yitzhak Mandelbaum$^{1,2}$ \qquad Kathleen Fisher$^1$ \qquad David Walker$^2$}
 \institute{AT\&T Research \and Princeton University}
 
 \input{definitions}
 
 \maketitle{}
 
-\begin{abstract}  
+% \begin{abstract}  
 
-%   Massive amounts of useful data are stored and processed in
-%   \textit{ad hoc} formats for which common tools like parsers,
-%   printers, query engines and format converters are not readily
-%   available.  In this paper, we explain the semantics of \padsml{}, a new language and
-%   system that facilitates generation of data processing tools for ad
-%   hoc formats.  The \padsml{} design includes features such as
-%   dependent, polymorphic and recursive datatypes, which allow
-%   programmers to describe the syntax and semantics of ad hoc data in a
-%   concise, easy-to-read notation.  The \padsml{} theory
-%   gives a precise formal meaning to the descriptions in terms of the
-%   semantics of parsing, the semantics of printing, and the types of
-%   data structures that represent parsed data.
+% %   Massive amounts of useful data are stored and processed in
+% %   \textit{ad hoc} formats for which common tools like parsers,
+% %   printers, query engines and format converters are not readily
+% %   available.  In this paper, we explain the semantics of \padsml{}, a new language and
+% %   system that facilitates generation of data processing tools for ad
+% %   hoc formats.  The \padsml{} design includes features such as
+% %   dependent, polymorphic and recursive datatypes, which allow
+% %   programmers to describe the syntax and semantics of ad hoc data in a
+% %   concise, easy-to-read notation.  The \padsml{} theory
+% %   gives a precise formal meaning to the descriptions in terms of the
+% %   semantics of parsing, the semantics of printing, and the types of
+% %   data structures that represent parsed data.
 
-  In previous work, we presented \ddcold{}, a semantic framework for
-  understanding {\em Data Description Languages}, a class of
-  domain-specific languages for declaratively describing data formats
-  for the purpose of automatically constructing format-specific
-  data-processing tools. In this paper, we present \ddc{}, which
-  extends \ddcold{} in two directions. First, we have added
-  ``polymorphic'' types -- or, types parameterized by types, and
-  significantly revised the metatheory in order to account for
-  semantics. Second, we have defined the semantics of printers
-  for \ddc{}, thereby specifying more completely the relationship
-  between raw data and in-memory data, for any given format described
-  in \ddc{}.
-\end{abstract}
+%   In previous work, we presented \ddcold{}, a semantic framework for
+%   understanding {\em Data Description Languages}, a class of
+%   domain-specific languages for declaratively describing data formats
+%   for the purpose of automatically constructing format-specific
+%   data-processing tools. In this paper, we present \ddc{}, which
+%   extends \ddcold{} in two directions. First, we have added
+%   ``polymorphic'' types -- or, types parameterized by types, and
+%   significantly revised the metatheory in order to account for
+%   semantics. Second, we have defined the semantics of printers
+%   for \ddc{}, thereby specifying more completely the relationship
+%   between raw data and in-memory data, for any given format described
+%   in \ddc{}.
+% \end{abstract}
 
 \input{intro}
 
@@ -61,12 +61,18 @@
 
 \input{conc}
 
-% \section*{Acknowledgments}
+\paragraph*{Acknowledgments:} This material is based upon work supported by the National Science
+   Foundation under Grant Nos. 0615062 and 0612147.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of the NSF.
 
+\small
 \bibliographystyle{abbrv}
 % \bibliographystyle{plainnat}
 % \bibliographystyle{alpha}
-\bibliography{pads}
+
+  \bibliography{pads} 
 %\bibliography{../common/pads-long,../common/pads}
 
 %\input{appendix}
