@@ -1,6 +1,7 @@
 
  # This is a GNU makefile.
 
+ADDITIONAL_TARGS := padsc_comp
+
 include common.mk
 
-ADDITIONAL_TARGS := padsc_comp

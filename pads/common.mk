@@ -6,12 +6,12 @@ ifndef PADS_HOME
 endif
 
 TARGS = ast_lib padsc_lib
+# Set ADDITIONAL_TARGS in any file that includes this one to augment
+# TARGS. Be sure to set ADDITIONAL_TARGS *before* including this file.
+TARGS += $(ADDITIONAL_TARGS)
 ifdef USE_GALAX
 TARGS += pads_glx pglx_lib 
 endif
-# Set ADDITIONAL_TARGS in any file that includes this one to augment
-# TARGS after-the-fact.
-TARGS += $(ADDITIONAL_TARGS)
 
 ifndef AST_ARCH
 AST_ARCH := $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
