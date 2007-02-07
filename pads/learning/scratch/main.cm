@@ -8,8 +8,12 @@ is
   $smlnj/compiler/compiler.cm
   $/regexp-lib.cm
 
-  tokens.sml
+  config.sml
+  utils.sml
+  types.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
+  structure.sml
+  print.sml
   main.sml
   tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
