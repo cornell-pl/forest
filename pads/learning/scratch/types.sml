@@ -45,7 +45,11 @@ struct
                 | Bottom  of AuxInfo * int * Context list 
                 | Pstruct of AuxInfo * Ty list 
                 | Punion  of AuxInfo * Ty list 
-                | Parray  of AuxInfo * (Token * int) list * (* first *)Ty * (*body*) Ty * (* last *)Ty
+                | Parray  of AuxInfo * {tokens:(Token * int) list,
+					lengths: int list, (* lengths, *in tokens* of array, [first]+[body]+[last] *)
+					first : Ty,
+					body  : Ty,
+					last  : Ty}
 
                 | RefinedBase of AuxInfo * Refined * LToken list
                 | Switch  of AuxInfo * Id * (Refined (* switch value *)* Ty) list
@@ -61,7 +65,7 @@ struct
         |  Bottom (a,i,cl) => a
         |  Pstruct (a,tys) => a
         |  Punion (a,tys) => a
-        |  Parray (a,tokens,ty1,ty2,ty3) => a
+        |  Parray (a, _) => a
         |  RefinedBase (a,r,tl) => a
         |  Switch(a,id,branches) =>a
         |  RArray (a,sep,term,body,len) => a
@@ -195,7 +199,7 @@ struct
          |  Punion (aux, tys)  => "Punion("^(covToString aux)^")\n"^
 	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
 			    prefix ^ "End Punion"
-         |  Parray (aux, tkns, ty1,ty2,ty3)  => "Parray("^(covToString aux)^")"^
+         |  Parray (aux, {tokens=tkns, lengths, first=ty1,body=ty2,last=ty3})  => "Parray("^(covToString aux)^")"^
 			    "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
 			    prefix ^ "First:\n"^
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty1)^

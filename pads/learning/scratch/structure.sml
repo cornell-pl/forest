@@ -47,7 +47,7 @@ struct
         |  Bottom (a,i,cl) => mkComplexity(0,0,1)
         |  Pstruct (a,tys) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
         |  Punion (a,tys)  => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
-        |  Parray (a,tks,ty1,ty2,ty3) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) [ty1,ty2,ty3]))
+        |  Parray (a,{first=ty1,body=ty2,last=ty3,...}) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) [ty1,ty2,ty3]))
         |  RefinedBase (a,r,tl) => mkComplexity(0,0,0)
         |  Switch(a,id,branches) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) ((#2 o ListPair.unzip) branches)))
         |  RArray (a,sep,term,body,len) => complexity body (* fix this!*)
@@ -266,8 +266,9 @@ struct
 	   case ty 
 	   of Pstruct (aux,tys) => Pstruct (aux, collapseStruct tys [])
            |  Punion  (aux,tys) => Punion  (aux, collapseUnion  tys [])
-           |  Parray  (aux,tkns,ty1,ty2,ty3) => Parray  (aux,tkns,simplifyTy ty1, simplifyTy ty2, simplifyTy ty3)
-	   |  ty                => ty
+           |  Parray  (aux,{tokens=tkns,lengths,first=ty1,body=ty2,last=ty3}) => 
+		     Parray  (aux, {tokens=tkns,lengths=lengths, first=simplifyTy ty1, body=simplifyTy ty2, last=simplifyTy ty3})
+   |  ty                => ty
        end
 
    (* Histogram compuations *)
@@ -798,7 +799,7 @@ struct
 			    (* Return two contexts: one for all tokens in array slots except for the last one,
 			       and one for the tokens in the last slot; this partition is to avoid confusion
 			       with the separator not being in the last slot *)
-			    fun doNextToken isFirst [] (current, first, main) = (first, main, List.rev current)
+			    fun doNextToken isFirst [] (current, first, main) = (List.length rtokens, first, main, List.rev current)
                               | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
 				  case TokenTable.find(tTable, lrt)
 				  of NONE => doNextToken isFirst rts (rt::current, first, main)
@@ -818,23 +819,25 @@ struct
 			    doNextToken true tlist ([],[],[])
 			end
 		    fun partitionRecords rtokens = 
-			let fun pR [] (firstA, mainA,lastA) = (List.rev firstA, List.rev mainA, List.rev lastA)
-                              | pR (t::ts) (firstA, mainA, lastA) = 
-			            let val (first, main,last) = partitionOneRecord t
+			let fun pR [] (numTokensA, firstA, mainA,lastA) = (List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
+                              | pR (t::ts) (numTokenA, firstA, mainA, lastA) = 
+			            let val (numTokens, first, main,last) = partitionOneRecord t
 				    in 
-					pR ts (first::firstA, main@mainA, last::lastA)
+					pR ts (numTokens::numTokenA, first::firstA, main@mainA, last::lastA)
 				    end
 			in
-			    pR rtokens ([],[],[])
+			    pR rtokens ([],[],[],[])
 			end
 
-		    val (firstContext,mainContext,lastContext) = partitionRecords rtokens
+		    val (arrayLengths, firstContext,mainContext,lastContext) = partitionRecords rtokens
 		in
 		    (print "Array context\n"; 
-		     Parray (mkTyAux numRecords, atokens, 
-			     mkTBD(~5, curDepth, List.length firstContext, firstContext),
-			     mkTBD(~6, curDepth, List.length mainContext, mainContext),
-			     mkTBD(~7, curDepth, List.length lastContext, lastContext)))
+		     Parray (mkTyAux numRecords, 
+			     {tokens  = atokens, 
+			      lengths = arrayLengths,
+			      first   = mkTBD(~5, curDepth, List.length firstContext, firstContext),
+			      body    = mkTBD(~6, curDepth, List.length mainContext, mainContext),
+			      last    = mkTBD(~7, curDepth, List.length lastContext, lastContext)}))
 		end
 
             val ty = case analysis 
