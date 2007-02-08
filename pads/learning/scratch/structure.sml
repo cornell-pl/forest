@@ -799,7 +799,11 @@ struct
 			    (* Return two contexts: one for all tokens in array slots except for the last one,
 			       and one for the tokens in the last slot; this partition is to avoid confusion
 			       with the separator not being in the last slot *)
-			    fun doNextToken isFirst [] (current, first, main) = (List.length rtokens, first, main, List.rev current)
+			    fun doNextToken isFirst [] (current, first, main) = 
+				 let val length = (List.length current) + (List.length first) + (List.length main)
+				 in
+				     (length, first, main, List.rev current)
+				 end
                               | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
 				  case TokenTable.find(tTable, lrt)
 				  of NONE => doNextToken isFirst rts (rt::current, first, main)
@@ -872,5 +876,6 @@ struct
 	in
 	    sty
 	end
+
 
 end
