@@ -1,0 +1,61 @@
+\newpage
+\section{Bottom Line}
+\label{sec:BottomLine}
+
+\subsection{Version 1 complexity metric}
+
+The PADS types that will be supported by the complexity metric in
+version 1 are listed in table \ref{tab:v1Complexity}. The table
+specifies the information that is needed for some of the PADS types.
+
+\begin{longtable}{||l|l|l|}
+\caption[Version 1 complexity metric]{Version 1 complexity metric}
+\label{tab:v1Complexity}
+\\\hline
+\hline
+PADS type & Length distribution & Value distribution \\\hline\hline
+
+Base type &
+\multicolumn{2}{l}{
+The list of values of the base type is stored in the abstract
+syntax tree resulting from the parse of the data. From this
+list of values we can derive a length distribution and/or
+a value distribution.
+\vspace{0.5mm}} \\\hline
+
+\textbf{Punion} &
+\parbox[t]{5cm}{
+A histogram of frequencies versus variant in the \textbf{Punion}.
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+Each subtype of the union will have its own distribution information
+associated with it.
+\vspace{0.5mm}} \\\hline
+
+\textbf{Pstruct} &
+\parbox[t]{5cm}{
+No additional information at this time.
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+No additional information at this time.
+\vspace{0.5mm}} \\\hline
+
+\textbf{Pre} &
+\parbox[t]{5cm}{
+Not supported at this time
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+Not supported at this time
+\vspace{0.5mm}} \\\hline
+
+\textbf{Parray} &
+\parbox[t]{5cm}{
+A histogram of length of \textbf{Parray} versus frequency.
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+The element type will have its own distribution information
+associated with it.
+\vspace{0.5mm}}
+
+\\\hline
+\end{longtable}

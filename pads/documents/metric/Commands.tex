@@ -1,0 +1,142 @@
+% Abbreviations
+\newcommand{\cc}{Common Criteria}
+\newcommand{\role}{r\^{o}le}
+\newcommand{\roles}{r\^{o}les}
+\newcommand{\Role}{R\^{o}le}
+\newcommand{\Roles}{R\^{o}les}
+
+% Conventions
+\newcommand{\selection}[1]{\uline{#1}}
+\newcommand{\assignment}[1]{\textit{#1}}
+
+% Miscellaneous
+\newcommand{\paralb}[1]{\paragraph{#1} \hspace{1mm} \linebreak} %% Paragraph with line break
+\newenvironment{applicationNote}{\begin{verse} \itshape Application Note:}
+{\upshape \end{verse}}
+
+\newenvironment{layeringNote}{\vspace{2mm}\itshape \textbf{Layering Note:}}
+{\upshape}
+
+\newcommand{\target}[1]{\texttt{\hypertarget{#1}{#1}}}
+\newcommand{\link}[1]{\texttt{\hyperlink{#1}{#1}}}
+
+% Haskell stuff
+\newcommand{\hs}[1]{\textsf{#1}}
+
+% Math mode stuff
+\newcommand{\col}[1]{\ensuremath{\{ \mathit{#1} \}}}
+\newcommand{\mita}[1]{$\mathit{#1}$}
+\newcommand{\qm}[1]{\hspace{4pt}\mbox{#1}}
+
+%
+%      STUFF FROM DISSERTATION
+%      STUFF FROM DISSERTATION
+%      STUFF FROM DISSERTATION
+%
+
+\newcommand{\dom}[1]{\ensuremath{\mathrm{dom}(#1)}}
+\newcommand{\cod}[1]{\ensuremath{\mathrm{cod}(#1)}}
+\newcommand{\begdef}{\begin{definition}\rm\raggedright\ }
+\newcommand{\eeedef}{\vspace{1mm}\end{definition}}
+\newcommand{\begter}{\begin{terminology}\rm\raggedright\ }
+\newcommand{\edefi}{\hspace{1mm}\ensuremath{\clubsuit} \end{definition}}
+\newcommand{\edefii}{\hspace{1mm}\ensuremath{\clubsuit}}
+\newcommand{\begex}{\begin{example}\rm\raggedright\ }
+\newcommand{\begrem}{\begin{remark}\rm\raggedright\ }
+\newcommand{\begthm}{\begin{theorem}\raggedright\ }
+\newcommand{\begcor}{\begin{corollary}\raggedright\ }
+\newcommand{\beglem}{\begin{lemma}\raggedright\ }
+\newcommand{\begnot}{\begin{notation}\rm\raggedright\ }
+\newcommand{\begprob}{\begin{problem}\rm\raggedright\ }
+\newcommand{\begprim}{\begin{primitive}\rm\raggedright\ }
+\newcommand{\begax}{\begin{axiom}\rm\raggedright\ }
+
+\newcommand{\letcat}[1]{Let $\cal #1$ be a category.}
+\newcommand{\letsite}[2]{Let $(\cal #1, #2)$ be a site on $\cal #1$.}
+\newcommand{\letpresheaf}[2]{Let \onearrow{\ensuremath{{\cal #1}^\mathrm{op}}}{#2}{\Set} be a presheaf on $\cal #1$.}
+% \newcommand{\letcats}[2]{Let \mbox{${\cal #1}$} and \mbox{${\cal #2}$}
+% be categories.}
+\newcommand{\letobj}[2]{Let \mbox{$#1$} be an object of \mbox{${\cal #2}$}.}
+\newcommand{\letobjs}[2]{Let \mbox{$#1$} be objects of \mbox{${\cal #2}$}.}
+\newcommand{\letinit}[2]{Let \mbox{$#1$} be an initial object of \mbox{${\cal #2}$}.}
+
+\newcommand{\letfunctor}[3]{Let \mbox{${\cal #1} \stackrel{#2}{\rightarrow} {\cal #3}$} be a functor.}
+\newcommand{\func}[3]{\mbox{${#1} \stackrel{#2}{\rightarrow} {#3}$}}
+\newcommand{\letfunc}[3]{Let \mbox{${#1} \stackrel{#2}{\rightarrow} {#3}$} be a function.}
+
+\newcommand{\letnat}[3]{Let \mbox{${\cal #1} \stackrel{#2}{\rightarrow} {\cal #2}$} be a natural transformation.}
+
+\newcommand{\obcat}[1]{\ensuremath{\mathrm{Ob}({\cal #1})}}
+\newcommand{\inobcat}[2]{\ensuremath{#1 \in \obcat{#2}}}
+\newcommand{\arcat}[1]{\ensuremath{\mathrm{Ar}({\cal #1})}}
+\newcommand{\inarcat}[4]{\ensuremath{\onearrow{#1}{#2}{#3} \in \arcat{#4}}}
+\newcommand{\homm}{\ensuremath{\mathrm{hom}}}
+\newcommand{\homcat}[1]{\ensuremath{Hom({\cal #1})}}
+\newcommand{\homsub}[1]{\ensuremath{Hom_{\cal #1}}}
+\newcommand{\homset}[3]{\ensuremath{\homm_{\cal #1}( #2, #3 )}}
+\newcommand{\homsettwo}[2]{\ensuremath{\homm( #1, #2 )}}
+
+%% Special command for domain annotations
+\newcommand{\ann}{\ensuremath{(n \stackrel{\eta}{\rightarrow} x) \rightarrow a \rightarrow a}}
+
+\newcommand{\onearrow}[3]{\ensuremath{#1 \stackrel{#2}{\rightarrow} #3}}
+\newcommand{\onearrowt}[3]{\mbox{#1 $\stackrel{#2}{\rightarrow}$ #3}}
+\newcommand{\onearrowl}[3]{\mbox{$#1 \stackrel{#2}{\longrightarrow} #3$}}
+\newcommand{\maparrow}[2]{\mbox{$#1 \mapsto #2$}}
+\newcommand{\functor}[3]{\mbox{${\cal #1} \stackrel{#2}{\rightarrow} {\cal #3}$}}
+\newcommand{\naturalt}[3]{\mbox{$#1 \stackrel{#2}{\rightarrow} #3$}}
+
+\newcommand{\set}[1]{\mbox{$\{ #1 \}\ $}}
+\newcommand{\setqual}[2]{\mbox{$\{ #1 \mid $ #2 $\}\ $}}
+\newcommand{\family}[1]{\mbox{$\{ #1 \}_{i \in I}\ $}}
+\newcommand{\calA}{\ensuremath{{\cal A}\ }}
+\newcommand{\calB}{\ensuremath{{\cal B}\ }}
+\newcommand{\calBnsp}{\ensuremath{{\cal B}}}
+\newcommand{\calC}{\ensuremath{{\cal C}\ }}
+\newcommand{\calCnsp}{\ensuremath{{\cal C}}}
+\newcommand{\calD}{\ensuremath{{\cal D}\ }}
+\newcommand{\calE}{\ensuremath{{\cal E}\ }}
+\newcommand{\calF}{\ensuremath{{\cal F}\ }}
+\newcommand{\calH}{\ensuremath{{\cal H}\ }}
+\newcommand{\calI}{\ensuremath{{\cal I}\ }}
+\newcommand{\calM}{\ensuremath{{\cal M}\ }}
+\newcommand{\calMnsp}{\ensuremath{{\cal M}}}
+\newcommand{\calN}{\ensuremath{{\cal N}\ }}
+\newcommand{\calO}{\ensuremath{{\cal O}\ }}
+\newcommand{\calOnsp}{\ensuremath{{\cal O}}}
+\newcommand{\calP}{\ensuremath{{\cal P}\ }}
+\newcommand{\calS}{\ensuremath{{\cal S}\ }}
+\newcommand{\calT}{\ensuremath{{\cal T}\ }}
+\newcommand{\Set}{\mbox{\bf Set}\ }
+\newcommand{\Setop}[1]{\ensuremath{\mathbf{Set}^{#1^\mathrm{op}}}}
+\newcommand{\Cat}{\mbox{\bf Cat}\ }
+\newcommand{\qed}{\ ${\cal Q.E.D.}\ $}
+\newcommand{\proof}{\rm\ \linebreak {\raggedleft {\bf PROOF}\hspace{0.5in}}}
+
+\newcommand{\homo}[1]{\mbox{${\cal HOM}_{\ \cal #1}$}}
+\newcommand{\homright}[1]{\mbox{${\cal H}_{#1}$}}
+\newcommand{\homleft}[1]{\mbox{${\cal H}^{#1}$}}
+\newcommand{\homop}[1]{\mbox{${\cal #1}^{op}$}}
+\newcommand{\calop}[1]{\mbox{${\cal #1}^{op} \times {\cal #1}$}}
+
+\newcommand{\powercat}[2]{\mbox{${\cal #1}^{\cal #2}$}}
+\newcommand{\power}[1]{\mbox{${\cal P}(a)$}}
+
+\newcommand{\bs}{\mbox{$\calB / {S^*}$ }}
+\newcommand{\tabref}{table \arabic{chapter}.\arabic{table}}
+
+\newcommand{\limit}[1]{\mbox{$\stackrel{\lim}{\leftarrow} #1$}}
+
+\newcommand{\fover}[2]{\mbox{$\left(\frac{\onearrow{#1}{\empty}{X}}{\textstyle{\em #2}}\right)$}}
+\newcommand{\fnover}[2]{\mbox{$\left(\frac{\onearrow{#1}{\empty}{\calN}}{\textstyle{\em #2}}\right)$}}
+
+\newcommand{\pplist}{ \setlength{\rightmargin}{0.0in}
+ \setlength{\leftmargin}{1.2in}
+ \setlength{\labelwidth}{0.5in}
+ \setlength{\labelsep}{0.2in}
+}
+\newcommand{\pplii}{ \setlength{\rightmargin}{0.0in}}
+\newcommand{\ppliii}{ \setlength{\rightmargin}{0.0in}}
+
+\newcommand{\fromzero}[1]{\hat{\mathbf{#1}}}
+\newcommand{\centralblock}[1]{\bar{\mathbf{#1}}}

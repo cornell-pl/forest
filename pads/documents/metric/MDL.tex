@@ -1,0 +1,31 @@
+\section{Minimum Description Length}
+
+We present the basic concept of \textit{minimum description length} for
+reference. This is an excerpt from
+\textit{A Tutorial Introduction to the Minimum Description Length Principle}
+by Peter Gr\"{u}nwald.
+
+\fbox{
+\parbox{12cm}{
+\textbf{Crude two-part version of MDL principle:}
+
+Let $\calH^{(1)}, \calH^{(2)}, \ldots$ be a list of candidate models (e.g.
+$\calH^{(2)}$ is the set of $k$-th degree polynomials), each containing
+a set of point hypotheses (e.g. individual polynomials).
+The best point hypothesis $H \in \calH^{(1)} \cup \calH^{(2)} \ldots$
+to explain the data $D$ is the one which minimizes $L(H) + L(D|H)$, where
+\begin{itemize}
+
+\item
+$L(H)$ is the length, in bits, of the description of the hypothesis; and
+
+\item
+$L(D|H)$ is the length, in bits, of the description of the data when
+encoded with the help of the hypothesis.
+
+\end{itemize}
+
+The best \textit{model} to explain $D$ is the smallest model containing
+the selected $H$.
+}
+}
