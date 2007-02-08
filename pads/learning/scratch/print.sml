@@ -49,7 +49,7 @@ struct
                 |  Bottom(aux,i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
 	        |  Pstruct (aux,tys) => List.app dumpTBDs tys
 	        |  Punion (aux,tys) => List.app dumpTBDs tys
-	        |  Parray (aux,tkns,ty1,ty2,ty3) => List.app dumpTBDs [ty1,ty2,ty3]
+	        |  Parray (aux,{first=ty1,body=ty2,last=ty3,...}) => List.app dumpTBDs [ty1,ty2,ty3]
                 |  RefinedBase (aux, r,tl ) => ()  (* to be filled in *)
                 |  Switch (aux, id, labeledTys) => ()(* to be filled in *)
                 |  RArray _ => () (* to be filled in *)

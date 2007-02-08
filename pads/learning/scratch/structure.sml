@@ -819,7 +819,7 @@ struct
 			    doNextToken true tlist ([],[],[])
 			end
 		    fun partitionRecords rtokens = 
-			let fun pR [] (numTokensA, firstA, mainA,lastA) = (List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
+			let fun pR [] (numTokenA, firstA, mainA,lastA) = (List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
                               | pR (t::ts) (numTokenA, firstA, mainA, lastA) = 
 			            let val (numTokens, first, main,last) = partitionOneRecord t
 				    in 
