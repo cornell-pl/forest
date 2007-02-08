@@ -801,8 +801,10 @@ struct
 			       with the separator not being in the last slot *)
 			    fun doNextToken isFirst [] (current, first, main) = 
 				 let val length = (List.length current) + (List.length first) + (List.length main)
+				     fun getLoc [] = (print "WARNING: ARRAY first context empty!"; ~1)
+				       | getLoc ((tok,loc:location)::ltocs) = #lineNo loc
 				 in
-				     (length, first, main, List.rev current)
+				     ((length, getLoc first), first, main, List.rev current)
 				 end
                               | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
 				  case TokenTable.find(tTable, lrt)

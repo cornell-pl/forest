@@ -46,7 +46,7 @@ struct
                 | Pstruct of AuxInfo * Ty list 
                 | Punion  of AuxInfo * Ty list 
                 | Parray  of AuxInfo * {tokens:(Token * int) list,
-					lengths: int list, (* lengths, *in tokens* of array, [first]+[body]+[last] *)
+					lengths: (int * int) list, (* list of array (lengths,linenumbers) *)
 					first : Ty,
 					body  : Ty,
 					last  : Ty}
