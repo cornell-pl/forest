@@ -19,6 +19,23 @@ structure Main : sig
 	    Printing.dumpTyInfo (!outputDir) ty
 	end
 
+  (*** Another doIt function that invokes the inferencing ***)
+  fun doIt1 () =
+	let val fileName = !srcFile
+	    val recordNumber = ref 0
+	    val () = print ("Starting on file "^fileName^"\n");
+	    val records = loadFile fileName
+	    val () = initialRecordCount := (List.length records) 
+	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
+            val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
+	    val () = lengthsToHist rtokens
+	    val ty = ContextListToTy 0 rtokens
+	    val sty = simplifyTy ty
+	    val rewrited_ty = Infer.run sty
+	in
+	    dumpTyInfo (!outputDir) rewrited_ty
+	
+
     (********************************************************************************)
     structure PCL = ParseCmdLine
 
