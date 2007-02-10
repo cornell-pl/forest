@@ -387,7 +387,7 @@ installed, you can use
 \noindent
 to see Perl's regular expression man page.
 
-An regular expression is specified in a \pads{} description
+A regular expression is specified in a \pads{} description
 as a string (a \cd{\kw{const} \kw{char}*}).  The first character in
 the string is the expression delimiter: the next (non-escaped) occurrence of
 this delimiter marks the end of the regular expression.
@@ -453,6 +453,29 @@ should be using one of the \cd{nlrec} IO disciplines described in
 do not appear in your normal input, so there is no issue of \cd{\literal{'.'}}
 matching newlines, and \cd{\literal{'\$'}} and \cd{\literal{'^'}} will
 have their normal POSIX behavior.
+
+
+A regular expression that uses \textem{both} \cd{\literal{'^'}} and
+\cd{\literal{'\$'}} may have problems matching arbitrarily large
+strings because the implementation divides the input into chunks of a
+particular size for processing. If the records in a data source are
+larger than this size, the regular expression will not have access to
+the entire record for matching.  In more detail, the matching code
+finds a region [\cd{begin}, \cd{end}] to match over and determines
+whether \cd{begin} is actually the beginning of the record and whether
+\cd{end} is actually the end of the record.  If \cd{begin} is not
+really the beginning of the record, then it disables \cd{\literal{'^'}},
+and if \cd{end} is not really the end of the record, then it disables
+\cd{\literal{'\$'}}.  This implementation choice will effectively
+prevent a successful match if the regular expression uses
+\cd{\literal{'^'}} or \cd{\literal{'\$'}} unless the regular
+expression has alternation with a clause that does not use the
+disabled \cd{\literal{'^'}} or \cd{\literal{'\$'}}.  The scope of
+matching is controlled by the \pads{} discipline, as described in
+\secref{sec:library-customization-scanning-extent}.
+
+
+
 
 Regular expressions are used for two purposes in \pads{},
 and the matching semantics with respect the current IO position
