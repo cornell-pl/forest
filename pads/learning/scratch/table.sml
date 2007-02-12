@@ -15,18 +15,12 @@ structure Table = struct
 	fun appendtab ((hdrs1, body1):infertable, (hdrs2, body2):infertable):infertable = 
 		(hdrs1 @ hdrs2, body1 @ body2)
 
-	(* function to transpose a table *)
-        fun transpose( alistlist : 'a list list) : 'a list list =
-                let
-                        fun addtohead(alist, alistlist) = case (alist,alistlist) of
-                          (h::t, h2::t2) => (h :: h2) :: addtohead(t,t2)
-                        | (nil,nil) => nil
-                        | _                        => raise IRMismatch
-                in
-                        List.foldr addtohead (List.map (fn x => nil) 
-				(List.hd alistlist)) alistlist
-                end
-
+        fun printHeaders(hlist) = (List.app (fn x => print (x ^ " " )) hlist; print "\n")
+	fun printTable (table) =
+		case table of (hdrs, rows) =>
+		  printHeaders(hdrs);
+		  List.app (fn x => print ((bdoltos x) ^ "\n")) rows
+	
 
 	(*given an infertable (without headers), 
 	  find out if record n exists in that table
@@ -108,5 +102,6 @@ structure Table = struct
 			in List.foldr appendtab (nil, nil) 
 				([lencol] @ [firsttab] @ [bodytab] @ [lasttab])
 			end
+
 
 end

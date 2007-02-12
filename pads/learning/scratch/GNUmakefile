@@ -11,9 +11,7 @@ ifeq ($(SML_VER),$(SML_MINOR_VER))
 SML_MINOR_VER = 0
 endif
 SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT39)
-
 BUILD_EXEC = build-exec.sml
-
 
 all:	learn
 
@@ -24,7 +22,7 @@ foo:
 	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))
 	@(echo BUILD_EXEC = $(BUILD_EXEC))
 
-learn:	main.sml tokens.lex
+learn:	main.sml tokens.lex types.sml structure.sml
 	echo Making learning program
 	lexgen --ml-lex-mode tokens.lex
 	$(SML) < $(BUILD_EXEC)

@@ -17,3 +17,14 @@ is
   print.sml
   main.sml
   tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
+
+(* the following files are used for refinement not ready to be compiled together
+  yet *)
+(*
+  infer.sml
+  table.sml
+  constraints.sml
+  common.sml
+  functionaldep.sml
+  reduce.sml
+*)
