@@ -17,6 +17,3 @@ is
   print.sml
   main.sml
   tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
-  infer.sml
-  constraints.sml
-  reduce.sml
