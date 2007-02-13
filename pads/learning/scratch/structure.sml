@@ -167,9 +167,11 @@ struct
    type freqDist = histogram TokenTable.map
    type cluster  = freqDist list
 
+   datatype unionDiv = FirstToken
    datatype Kind = Struct of {numTokensInCluster:int, numRecordsWithCluster:int,
 			      tokens: (Token * int) list}
                  | Array of {tokens: (Token * int) list}
+                 | Union of unionDiv
                  | Blob | Empty
 
    (* printing *)
@@ -212,6 +214,7 @@ struct
 		(print "Array"; print "\t";
 		 List.app printOne tokens)
 	    end
+	| Union _ => (print  "Union"; print "\n")
         | Blob => (print  "Blob"; print "\n")
         | Empty => (print  "Empty"; print "\n")
 
@@ -503,19 +506,19 @@ struct
         | Blob, indicating no match
      *)
     fun analyzeClusters numRecords (clusters : (Token * histogram) list list) = 
-	let fun isStruct cluster = 
+	let fun isStruct (cluster::_) = 
 		let fun getStructInfo((t, {hist, total, coverage, structScore, width}), result) =
 		    let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
 			val sortedHlist = ListMergeSort.sort (fn((i1,c1:int),(i2,c2))=>(c1 < c2)) hList
 			val primary = List.hd sortedHlist
-			fun isStruct sortedHlist =
+			fun hIsStruct sortedHlist =
 			    let val rest = List.tl sortedHlist
 				val massOfRest = List.foldl (fn((i,c:int),acc)=> acc + c) 0 rest
 			    in
 				massOfRest < (isStructTolerance numRecords)
 			    end
 		    in
-			if isStruct sortedHlist then [(t, #1 primary, #2 primary)]@result  else result
+			if hIsStruct sortedHlist then [(t, #1 primary, #2 primary)]@result  else result
 		    end
 
 		    fun mergeStructEntries tokenAnalysis =
@@ -573,10 +576,23 @@ struct
 		    (* we probably want to compute the number of times the token appears in the cluster...*)
 		    val arrayTokenAnalysis = List.foldl getArrayInfo [] cluster 
 		in
-		    case arrayTokenAnalysis of [] => NONE | a => SOME(Array {tokens = a})
+		    case arrayTokenAnalysis of [] => (print "ARRAY NOT CHOSEN\n"; NONE) | a => SOME(Array {tokens = a})
 		end
+	    val unionFirst = false
+	    fun isUnion clusters = SOME (Union FirstToken)
+            val analyses = isStruct ::
+		(if unionFirst then [isUnion, isArray] else [isArray, isUnion])
+
+	    fun findFirst arg [] = (print "Identified a blob\n"; Blob)
+	      | findFirst arg (f::fs) = case f arg of NONE => findFirst arg fs
+		                        | SOME s => s 
 
 	    val kindSummary = 
+		case clusters 
+                of [] => (print "No clusters found\n"; Empty)
+                |  _ => findFirst clusters analyses
+
+(*	    val kindSummary = 
 		case clusters 
                 of [] => (print "No clusters found\n"; Empty)
                 |  (cluster::cs) => 
@@ -584,7 +600,8 @@ struct
 		    of SOME s => s
                     |  NONE => (case isArray clusters 
 			        of SOME a => a
-                                |  NONE   => (print "Identified a blob\n"; Blob))
+                                |  NONE   => (print "Identified a blob\n"; Blob))*)
+
 
 	    val () = printKindSummary kindSummary
 
@@ -725,6 +742,45 @@ struct
 
     and clustersToTy curDepth rtokens numRecords clusters = 
 	let val analysis = analyzeClusters numRecords clusters
+            (* This functioin partitions a context into a union. *)
+            (* It currently uses the first token in each context to do the partition *)
+            fun buildUnionTy (FirstToken, rtokens) = 
+		let val () = print "BUILDING UNION TY\n"
+		    val numChunks = List.length rtokens
+		    fun updateTable(token,chunk,tTable) = 
+		        case TokenTable.find(tTable, token)
+			of NONE => TokenTable.insert(tTable, token, ref [chunk])
+                        |  SOME chunkList => (chunkList := chunk::(!chunkList);   (* note that chunks end up in reverse order *)
+					      tTable)
+		    fun doOneChunk([], tTable) = updateTable(Pempty,[], tTable)
+                      | doOneChunk(chunk as ((t,loc)::ts), tTable) = updateTable(t,chunk,tTable)
+		    val pTable = List.foldl doOneChunk TokenTable.empty rtokens 
+		    (* allSame handles the case where all chunks start with the same, non-Empty token *)
+                    fun allSame rtokens = 
+			let fun doOne ((lt::lts), (fst,snd)) = ([lt]::fst, lts::snd)
+			    val (fsts,snds) = List.foldl doOne ([],[]) rtokens
+			in
+			    Pstruct(mkTyAux numRecords, 
+				    [mkTBD(~9, curDepth, numChunks, List.rev fsts),
+				     mkTBD(~10,curDepth, numChunks, List.rev snds)])
+			end
+                    (* allEmpty handles the case where all chunks are the empty chunk *)
+		    fun allEmpty () = Base(mkTyAux numRecords, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0})])
+		    (* doPartition handles the case where the chunks did not all have the same initial token *)
+		    fun doPartition pTable = 
+			let val items = TokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
+			    val tys = List.map (fn item => mkTBD(~11, curDepth, List.length (!item), List.rev (!item)) ) items
+			in
+			    Punion(mkTyAux numRecords, tys)
+			end
+			    
+		in
+		    if TokenTable.numItems(pTable) = 1 
+			then if TokenTable.inDomain(pTable, Pempty) then allEmpty () 
+			else allSame rtokens
+                    else doPartition pTable
+		end
+
            (* This function takes a Struct Partition and returns a Ty describing that partition *)
 	    fun buildStructTy partitions = 
 		let val (matches, badRecords) = partitions
@@ -768,7 +824,11 @@ struct
 		    val resultTy =
 			case (matchTys, badRecords)
   		        of   ([], [])   => Pvoid (mkTyAux 0)                   (* I don't think this case can arise *)
-			  |  ([], brs)  => (print "in mkbottom case\n"; mkBottom (List.length brs,brs))       (* I'm not sure this case arises either *)
+			  |  ([], brs)  => (* This case arises if a false cluster is identified: a cluster with one
+					      or more tokens coming from one subset of records, and another group of tokens
+					      coming from a disjoint subset. So we should introduce a union.*)
+(*			                   (print "in mkbottom case\n"; mkBottom (List.length brs,brs))       *)
+					   (print "converting false struct into union\n"; buildUnionTy(FirstToken, brs))
 			  |  ([ty], []) => ty
 			  |  (tys, brs) => if isEmpty brs 
 					   then Punion (mkTyAux(sumCoverage tys), tys) 
@@ -846,11 +906,13 @@ struct
 			      last    = mkTBD(~7, curDepth, List.length lastContext, lastContext)}))
 		end
 
+
             val ty = case analysis 
 		     of Blob =>     mkBottom (List.length rtokens, rtokens)
 		     |  Empty =>    Base (mkTyAux 0, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0})])
 		     |  Struct s => buildStructTy (splitRecords s rtokens) (* Can produce union of structs *)
 		     |  Array a =>  buildArrayTy (a, rtokens)
+                     |  Union u =>  buildUnionTy(u, rtokens)
 	in
 	    ty
 	end
