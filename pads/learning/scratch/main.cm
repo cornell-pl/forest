@@ -20,11 +20,16 @@ is
 
 (* the following files are used for refinement not ready to be compiled together
   yet *)
-(*
-  infer.sml
+  rat.sml
+  matrix.sml
+  RatMatrix.sml
+  common.sml
+  options.sml
+  partition.sml
+  rewrite.sml
   table.sml
   constraints.sml
-  common.sml
   functionaldep.sml
+(*
   reduce.sml
 *)

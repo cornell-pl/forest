@@ -31,11 +31,9 @@ structure Main : sig
 	    val () = lengthsToHist rtokens
 	    val ty = ContextListToTy 0 rtokens
 	    val sty = simplifyTy ty
-(*
-	    val rewrited_ty = Infer.run sty
-*)
+	    val rewrited_ty = Rewrite.run sty
 	in
-	    Printing.dumpTyInfo (!outputDir) sty 
+	    Printing.dumpTyInfo (!outputDir) rewrited_ty 
 	end
 	
 

@@ -4,23 +4,26 @@
 *)
 structure Table = struct
 	open Common
-	structure LMap = Label.Map
-	exception IRMismatch
+	structure LMap = LabelMap
+	exception TyMismatch
+	exception MissingId
 
 	(*an infertable is a table of Tokens plus headers*)
-	type infertable = Id option list * (Token option list list)
+	type infertable = (Id list) * (Token option list list)
 
 	(* append two infertables, i.e. append the headers and append the body 
 	*)
 	fun appendtab ((hdrs1, body1):infertable, (hdrs2, body2):infertable):infertable = 
 		(hdrs1 @ hdrs2, body1 @ body2)
 
-        fun printHeaders(hlist) = (List.app (fn x => print (x ^ " " )) hlist; print "\n")
+        fun printHeaders(hlist) = (List.app (fn x => print (Atom.toString(x) ^ " " )) 
+		hlist; print "\n")
 	fun printTable (table) =
 		case table of (hdrs, rows) =>
-		  printHeaders(hdrs);
-		  List.app (fn x => print ((bdoltos x) ^ "\n")) rows
-	
+		  (
+		    	printHeaders(hdrs);
+		  	(List.app (fn x => print ((bdoltos x) ^ "\n")) rows)
+		  )
 
 	(*given an infertable (without headers), 
 	  find out if record n exists in that table
@@ -33,7 +36,9 @@ structure Table = struct
 				else existsRecord(remainder, n)
 
 	(* this function generate a column in the resulting table from 
-		a Token list and fill NONEs to empty cells *)
+		a Token list and fill NONEs to empty cells
+	   if the Token list is longer than the stipulated size of the column
+	   it will truncate the extra tokens from the list *)
 	fun gencolumn (ltokens, columnsize) = 
 		(*get a token from a specfic line no from the token list
 		  if that line no doesn't exist, return NONE*)
@@ -60,11 +65,12 @@ structure Table = struct
 				else getIntfromList tail lineno
 		in List.tabulate(columnsize, (getIntfromList lints))
 		end
-	
+
 	fun genTable totalrecords ty : infertable = case ty of
 		Base (a, ltokenl) =>
-			let val col = gencolumn(ltokenl, totalrecords)
-			in ([#label a], [col]):infertable
+			let 
+				val col = gencolumn(ltokenl, totalrecords)
+			in ([some(#label a)], [col]):infertable
 			end
 		| Pvoid _ => (nil, nil): infertable
 		| TBD _ => (nil, nil) : infertable
@@ -87,12 +93,12 @@ structure Table = struct
 			  val branchcol = List.tabulate(List.length(#2 (List.nth(tablelist, 0))), 
 					(g tablelist 1))
 			in
-		   	  List.foldr appendtab ([#label a], [branchcol]) tablelist
+		   	  List.foldr appendtab ([some(#label a)], [branchcol]) tablelist
 			end
 		| Parray (a, {tokens=_, 
 			lengths= lens, first = fty, body=bty, last=lty}) =>
 			let 
-				val lencol = ([#label a], [genintcolumn(lens, totalrecords)])
+				val lencol = ([some(#label a)], [genintcolumn(lens, totalrecords)])
 				val firsttab = genTable totalrecords fty
 				(* currently we will truncate the first totalrecords from 
 				   the token list from the body ty
@@ -102,6 +108,7 @@ structure Table = struct
 			in List.foldr appendtab (nil, nil) 
 				([lencol] @ [firsttab] @ [bodytab] @ [lasttab])
 			end
+		| _ => (nil, nil):infertable
 
 
 end
