@@ -20,6 +20,7 @@ structure Main : sig
 	end
 
   (*** Another doIt function that invokes the inferencing ***)
+  (*
   fun doIt1 () =
 	let val fileName = !srcFile
 	    val recordNumber = ref 0
@@ -35,7 +36,7 @@ structure Main : sig
 	in
 	    Printing.dumpTyInfo (!outputDir) rewrited_ty 
 	end
-	
+*)	
 
     (********************************************************************************)
     structure PCL = ParseCmdLine

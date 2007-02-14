@@ -40,7 +40,6 @@ struct
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
 
     datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
-                | Pvoid   of AuxInfo
                 | TBD     of AuxInfo * int * Context list 
                 | Bottom  of AuxInfo * int * Context list 
                 | Pstruct of AuxInfo * Ty list 
@@ -60,7 +59,6 @@ struct
     fun getAuxInfo ty : AuxInfo = 
 	case ty 
         of Base (a,t) => a
-        |  Pvoid a    => a
         |  TBD (a,i,cl) => a
         |  Bottom (a,i,cl) => a
         |  Pstruct (a,tys) => a
@@ -181,8 +179,7 @@ struct
    fun TyToStringD prefix longTBDs longBottom suffix ty = 
        (prefix^
         (case ty 
-         of Pvoid aux      => ("Pvoid(" ^(covToString aux)^")")
-         |  Base (aux, t)  => (ltokenTyToString (hd t))^("(" ^(covToString aux)^")") 
+         of Base (aux, t)  => (ltokenTyToString (hd t))^("(" ^(covToString aux)^")") 
          |  TBD (aux,i,cl) => "TBD_"^(Int.toString i)^
 	                      "("^(covToString aux)^")"^
 		              (if longTBDs then

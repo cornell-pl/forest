@@ -42,7 +42,6 @@ struct
 	in
 	case ty
         of Base (a,t)      => mkComplexity(0,0,0)
-        |  Pvoid a         => mkComplexity(0,0,0)
         |  TBD (a,i,cl)    => mkComplexity(0,1,0)
         |  Bottom (a,i,cl) => mkComplexity(0,0,1)
         |  Pstruct (a,tys) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) tys))
@@ -823,7 +822,7 @@ struct
 		    val matchTys = List.map cnvOneMatch matches
 		    val resultTy =
 			case (matchTys, badRecords)
-  		        of   ([], [])   => Pvoid (mkTyAux 0)                   (* I don't think this case can arise *)
+  		        of   ([], [])   => raise Fail "Expected records in struct context."
 			  |  ([], brs)  => (* This case arises if a false cluster is identified: a cluster with one
 					      or more tokens coming from one subset of records, and another group of tokens
 					      coming from a disjoint subset. So we should introduce a union.*)

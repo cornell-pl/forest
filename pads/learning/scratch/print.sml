@@ -43,8 +43,7 @@ struct
     fun dumpTyInfo path ty = 
 	let fun dumpTBDs ty = 
 		case ty
-                of Pvoid aux => () 
-		|  Base (aux,tls) => if !printIDs then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls) else ()
+                of Base (aux,tls) => if !printIDs then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls) else ()
                 |  TBD(aux,i, cl)    => dumpCL (path^"TBD_"^(Int.toString i)) cl
                 |  Bottom(aux,i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
 	        |  Pstruct (aux,tys) => List.app dumpTBDs tys
