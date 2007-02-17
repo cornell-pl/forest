@@ -5,10 +5,7 @@ open Common
 fun run (ty : Ty) =
 let
   val cmap = Constraint.constrain'(ty);
-  val reduced_ty = ty;
-(*
-  val reduced_ty = Reduce.reduce (SOME(cmap, usedLabels)) ty
-*)
+  val reduced_ty = Reduce.reduce (SOME(cmap)) ty 
 in
   reduced_ty
 end

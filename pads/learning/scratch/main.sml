@@ -95,6 +95,5 @@ structure Main : sig
     fun emit () = 
 	    (silenceGC();
 	     SMLofNJ.exportFn ("lib/learn", main ))
-
   end; 
 

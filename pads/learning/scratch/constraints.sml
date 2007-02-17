@@ -69,9 +69,9 @@ structure Map = RedBlackMapFn(struct
 						    then Unique(bdata) 
 						    else raise InvalidConst 
 						  | NONE => Unique(bdata))
-					   (* max number of items in Enum is 10 *)
-					|   Enum _ => if (BDSet.numItems previous_values) > 10 
-					 	      then raise InvalidConst else (Enum(previous_values))
+					   (* max number of items in EnumC is 10 *)
+					|   EnumC _ => if (BDSet.numItems previous_values) > 10 
+					 	      then raise InvalidConst else (EnumC(previous_values))
 					|   _ => raise InvalidConst
 					, SOME bdata) 
 					
@@ -232,13 +232,13 @@ structure Map = RedBlackMapFn(struct
 						nil smap
 			
 			
-			(* finds the most popular result of the switch and makes it a default value
-			   to try to reduce switched size *)
+			(* finds the most popular result of the switch and 
+			   makes it a default value to try to reduce switched size *)
 			fun tryDefault() = 
 			let
 				fun insert(m,v,r) = case Map.find(m,v) of 
-									  SOME x => Map.insert(m,v,x+1)
-									| NONE => Map.insert(m,v,1)
+				  SOME x => Map.insert(m,v,x+1)
+				| NONE => Map.insert(m,v,1)
 				val counts = foldr (fn ((row,v),m) => insert(m,v,row) ) Map.empty slist
 				val (v,count) = Map.foldri (fn (key,c,(mkey,max)) => if c > max then (key,c) else (mkey,max)) (NONE,0) counts
 				val filteredlist = List.filter (fn (row,v') =>not(compare(v,v') = EQUAL)) slist
@@ -282,7 +282,6 @@ structure Map = RedBlackMapFn(struct
 		(case label of 
 			SOME id => (if Atom.same(lab, id) then true else false)
 		        | NONE => false)
-	  | Pvoid _ => false
 	  | TBD _ => false
 	  | Bottom _ => false
 	  | Pstruct (_, tylist) => List.exists (is_inside lab) tylist
@@ -304,7 +303,6 @@ structure Map = RedBlackMapFn(struct
 				 	else try (sum_with_lab lab) tylist)
 				     | NONE => try (sum_with_lab lab) tylist)
 		| Base _ => raise Empty
-		| Pvoid _ => raise Empty
 		| TBD _ => raise Empty
 		| Pstruct (_, tylist) => try (sum_with_lab lab) tylist
 		| Parray (_, {tokens, lengths, first, body, last}) => 
@@ -348,7 +346,6 @@ Also prints out information about the dependencies and keys it found *)
 		(* make the table *)
 		fun getnumrecords (ty) = 
 			case ty of Base(aux, _) => (#coverage aux)
-			| Pvoid(aux) => (#coverage aux)
 			| TBD (aux, _, _) => (#coverage aux)
 			| Bottom (aux, _, _) => (#coverage aux)
 			| Pstruct (aux, _) => (#coverage aux)
@@ -412,7 +409,7 @@ Also prints out information about the dependencies and keys it found *)
 		(* initialize each entry to some starting values *)
 		val consts = zip1([ Range a, Length 0, Ordered Ascend, 
 				    Ordered Descend, Unique(Pstring "NONE"), 
-				    Enum BDSet.empty ], NONE)
+				    EnumC BDSet.empty ], NONE)
 		(*depstart is a list of constraints of size num of cols in the table*)
 		val depstart:constraint_record = map (fn x=> {label = x, 
 			constraints = consts:(constraint*Token option) list, 

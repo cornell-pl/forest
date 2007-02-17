@@ -33,8 +33,8 @@ struct
 
 
     datatype Refined = StringME of string (* describe regular expression in pads syntax *) 
-	             | Int of int * int  (* min, max *)
-	             | IntConst of int    (* value *)
+	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
+	             | IntConst of LargeInt.int    (* value *)
                      | StringConst of string (* string literal *)
                      | Enum of Refined list  
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
@@ -212,6 +212,5 @@ struct
 
     fun printTyD prefix longTBDs longBottom suffix ty =  print (TyToStringD prefix longTBDs longBottom suffix ty )
     fun printTy ty = printTyD "" false false "" ty
-
 
 end

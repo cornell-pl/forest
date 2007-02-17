@@ -72,7 +72,6 @@ structure Table = struct
 				val col = gencolumn(ltokenl, totalrecords)
 			in ([some(#label a)], [col]):infertable
 			end
-		| Pvoid _ => (nil, nil): infertable
 		| TBD _ => (nil, nil) : infertable
 		| Bottom _ => (nil, nil): infertable
 		| Pstruct (a, l) => 

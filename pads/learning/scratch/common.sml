@@ -55,7 +55,7 @@ structure Common = struct
 	| Range of LargeInt.int * LargeInt.int (* constrains integers to fall in this range, inclusive *)
 	| Switched of Id list * (Token option list * Token option) list (* a mapping between ids in id list, their values in the list of Token options, and the value of this node *)
 	| Eq of (Id * Rat.rat) list * Rat.rat (* lin equation of Id list plus constant *)
-	| Enum of BDSet.set (* set of values it takes on *)
+	| EnumC of BDSet.set (* set of values it takes on *)
 	and ordered = Ascend | Descend
 
 	fun bdtos (d:Token):string = 
@@ -73,6 +73,18 @@ structure Common = struct
 	| 	_ => "" ))
 	 end
 
+	fun tokentorefine (d:Token):Refined =
+		case d of
+		PbXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
+	|	PeXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
+	|	Pint (i) => IntConst(i)
+	|	Ptime(t) => StringConst(t)
+	|	Pmonth(t) => StringConst(t)
+	|	Pip(t)  => StringConst(t)
+	|	Pstring(str)  => StringConst(str)
+	|	Pwhite (str)  =>  StringConst(str)  
+	| 	_ => StringConst("")
+
 	fun bdoltos (x:Token option list): string = (case x of
 		h :: nil => (case h of SOME a => bdtos a | NONE => "NONE      ")
 	|	h :: t => (case h of SOME a => bdtos a | NONE => "NONE       ") ^ "" ^ (bdoltos t)
@@ -89,7 +101,7 @@ structure Common = struct
 		  Length x => "Length " ^ (Int.toString x)
 		| Ordered x => (case x of Ascend => "Ascending" | Descend => "Decending")
 		| Unique x => "Unique: " ^ (bdtos x)
-		| Enum bdset => "Enum:\n" ^ ( implode(map bdtos (BDSet.listItems bdset),"\n") )
+		| EnumC bdset => "EnumC:\n" ^ ( implode(map bdtos (BDSet.listItems bdset),"\n") )
 		| Range(l,h) => "Range [" ^ (LargeInt.toString l) ^ "," ^ 
 				(LargeInt.toString h) ^ "]"
 		| Eq(((lb,i) :: idlist), c) => "Equation " ^ (foldl (fn ((lb,i),str) => str ^ " + " ^ (Rat.toString i) ^ Atom.toString(lb)) ((Rat.toString i) ^ Atom.toString(lb)) idlist) ^ " + " ^ (Rat.toString c)
@@ -106,7 +118,73 @@ structure Common = struct
 	fun some(a : 'a option) : 'a = case a of SOME x => x | NONE => raise Size
 	fun isIn(ch,str) = List.exists (fn x => x = ch) (String.explode str)
 	fun escapeRegex(str) = String.translate (fn x => 	if isIn(x ,"^$.[]|()*+?" )
-														then "\\" ^ (String.str x)
-														else String.str x
-											) str
+														then "\\" ^ (String.str x) 
+		 else String.str x) str
+
+    (* function to test of two ty's are completely equal minus the labels *)
+    fun ty_equal(ty1, ty2) = 
+	let
+		fun myand(a,b) = a andalso b
+		fun check_list(l1,l2) = 
+		let 
+			val bools = ListPair.map ty_equal (l1, l2)
+		in
+			foldr myand true bools
+		end
+		fun ltoken_equal((tk1, _), (tk2, _)) =
+		  case ((tk1, tk2)) of 
+			    (PbXML(a,b), PbXML(a1, b1)) => (a=a1 andalso b = b1)
+			  | (PeXML(a,b), PeXML(a1, b1)) =>  (a=a1 andalso b = b1) 
+			  | (Ptime(a), Ptime(b)) => (a = b)
+			  | (Pmonth(a), Pmonth(b)) => (a = b)
+			  | (Pip(a), Pip(b)) => (a = b)
+			  | (Pint(a), Pint(b)) => (a = b)
+			  | (Pstring(a), Pstring(b)) => (a = b)
+			  | (Pwhite(a), Pwhite(b)) => (a = b)
+			  | (Other(a), Other(b)) => (a = b)
+			  | (Pempty, Pempty) => true
+			  (* ignoring Pgroup for now *)
+			  | _ => false
+
+		fun refine_equal (a, b) =
+			case (a, b) of 
+				(StringME(x), StringME(y)) => (x = y)
+			       |(Int(x, y), Int(x1, y1)) => (x = x1 andalso y = y1)
+			       |(IntConst(x), IntConst(y)) => (x = y)
+			       |(StringConst(x), StringConst(y)) => (x = y)
+			       |(Enum(l1), Enum(l2)) => foldr myand true 
+					(ListPair.map refine_equal(l1, l2))
+			       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
+			       | _ => false
+	in
+		case (ty1,ty2) of
+			(Base(_, tl1), Base (_, tl2)) => 
+				foldr myand true (ListPair.map ltoken_equal (tl1, tl2))
+			| (TBD _, TBD _) => true
+			| (Bottom _, Bottom _) => true
+			| (Punion(_, tylist), Punion(_, tylist2)) => check_list(tylist,tylist2)
+			| (Pstruct(_, tylist), Pstruct(_, tylist2)) => check_list(tylist,tylist2)
+			| (Parray(_, a1), 
+			   Parray(_, a2)) => ty_equal(#first a1, #first a2) andalso 
+				ty_equal(#body a1, #body a2) andalso ty_equal(#last a1, #last a2)
+			| (RefinedBase (_, r1, tl1), RefinedBase(_, r2, tl2)) => 
+				refine_equal(r1, r2) andalso 
+				foldr myand true (ListPair.map ltoken_equal(tl1, tl2))
+			| (Switch (_, id1, rtylist1), Switch(_, id2, rtylist2)) =>
+				let val (rl1, tylist1) = ListPair.unzip (rtylist1)
+				    val (rl2, tylist2) = ListPair.unzip (rtylist2)
+				in
+				        Atom.same(id1, id2) andalso 
+					foldr myand true (ListPair.map refine_equal(rl1, rl2)) 
+					andalso check_list (tylist1, tylist2)
+				end
+			| (RArray(_, sepop1, termop1, ty1, len1), 
+				RArray (_, sepop2, termop2, ty2, len2))
+				=> ty_equal(some(sepop1), some(sepop2)) andalso
+				   ty_equal(some(termop1), some(termop2)) andalso
+				   ty_equal (ty1, ty2) andalso
+				   refine_equal(some(len1), some(len2))
+			| _ => false
+	end
+
 end

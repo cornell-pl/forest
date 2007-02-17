@@ -29,7 +29,4 @@ is
   table.sml
   constraints.sml
   functionaldep.sml
-(*
   reduce.sml
-*)
-
