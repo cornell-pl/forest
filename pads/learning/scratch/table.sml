@@ -16,7 +16,7 @@ structure Table = struct
 	fun appendtab ((hdrs1, body1):infertable, (hdrs2, body2):infertable):infertable = 
 		(hdrs1 @ hdrs2, body1 @ body2)
 
-        fun printHeaders(hlist) = (List.app (fn x => print (Atom.toString(x) ^ " " )) 
+        fun printHeaders(hlist) = (List.app (fn x => print (Atom.toString(x) ^ "\t" )) 
 		hlist; print "\n")
 	fun printTable (table) =
 		case table of (hdrs, rows) =>
@@ -87,10 +87,9 @@ structure Table = struct
 				case tablist of 
 				  [] => NONE
 				  | (_, cols)::tail => 
-				    if existsRecord(cols, n) = true then SOME (intToToken(n))
+				    if existsRecord(cols, n) = true then SOME (intToToken(index))
 				    else g tail (index+1) n
-			  val branchcol = List.tabulate(List.length(#2 (List.nth(tablelist, 0))), 
-					(g tablelist 1))
+			  val branchcol = List.tabulate(totalrecords, (g tablelist 1))
 			in
 		   	  List.foldr appendtab ([some(#label a)], [branchcol]) tablelist
 			end

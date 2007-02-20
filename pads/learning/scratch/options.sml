@@ -2,7 +2,7 @@
 structure Options = struct
 val print_interp_debug = false (* useful for finding where a parse fails *)
 val print_pre_reduced_IR = false (* prints the IR as used for parsing *)
-val print_tables = false (* prints out the data as it appears in tables *)
+val print_tables = true (* prints out the data as it appears in tables *)
 val print_functional_deps = true
 val print_report = true (* prints out a report summarizing information in Main.main' *)
 val reparse_data = false (* try to reparse the data with the simplified IR *)

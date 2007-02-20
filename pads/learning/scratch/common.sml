@@ -43,7 +43,7 @@ structure Common = struct
                         fun addtohead(alist, alistlist) = case (alist,alistlist) of
                           (h::t, h2::t2) => (h :: h2) :: addtohead(t,t2)
                         | (nil,nil) => nil
-                        | _                        => raise TyMismatch
+                        | _  => raise TyMismatch
                 in
                         List.foldr addtohead (List.map (fn x => nil) 
 				(List.hd alistlist)) alistlist
@@ -62,15 +62,17 @@ structure Common = struct
 	  let fun pad x = if String.size x < 11 
 		then pad (x ^ " ") else x 
 	  in (pad (case d of
-		PbXML(node, attrib) => node ^ " + " ^ attrib 
-	|	PeXML(node, attrib) => node ^ " + " ^ attrib 
+		PbXML(node, attrib) => "<" ^ node ^ " " ^ attrib ^ ">"
+	|	PeXML(node, attrib) => "</" ^ node ^ " " ^ attrib ^ ">"
 	|	Pint (i) => LargeInt.toString(i)
 	|	Ptime(t) => t
 	|	Pmonth(t) => t
 	|	Pip(t)  => t
 	|	Pstring(str)  => str
-	|	Pwhite (str)  =>  str  
-	| 	_ => "" ))
+	|	Pwhite (str)  =>  "["^str^"]"  
+	|	Other (c)  => Char.toString(c) 
+	| 	Pempty => "[]" 
+	|	_ => raise TyMismatch ))
 	 end
 
 	fun tokentorefine (d:Token):Refined =
@@ -87,7 +89,8 @@ structure Common = struct
 
 	fun bdoltos (x:Token option list): string = (case x of
 		h :: nil => (case h of SOME a => bdtos a | NONE => "NONE      ")
-	|	h :: t => (case h of SOME a => bdtos a | NONE => "NONE       ") ^ "" ^ (bdoltos t)
+	|	h :: t => (case h of SOME a => bdtos a | NONE => "NONE       ") 
+				^ "" ^ (bdoltos t)
 	|	nil => "()\n")
 
 	fun idstostrs(idlist: Id list) = map (fn id => Atom.toString(id)) idlist

@@ -354,16 +354,20 @@ Also prints out information about the dependencies and keys it found *)
 			| _ => raise TyMismatch 
 
 		val tytable = Table.genTable (getnumrecords(ty)) ty
+(*
+		val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n")
+		val _ = if Options.print_tables then 
+			Table.printTable(tytable) else ()
+*)
 		val header = #1 tytable
 		val bdocols = #2 tytable
 		val bdolist = transpose(bdocols)
 		val _ = if Options.print_tables then 
-			Table.printTable(tytable) else ()
+			Table.printTable(header, bdolist) else ()
 
 		(* take a table entry and run TANE on it, find the constraints that apply *)
 		val partitions = initPartitionMap(bdolist, bdocols)
 		val (deps,keys) = FunctionalDep.tane(partitions)
-			
 		(* val _ = print (String.concat (map bdoltos bdolist) ) *)
 			
 		(* finds the labels associated with a numbered dep *)
@@ -379,6 +383,10 @@ Also prints out information about the dependencies and keys it found *)
 					(ListPair.zip(labeled_deps,deps)))
 			
 		(* label and print the deps and keys *)
+(*
+		val _ = print ("num of dependencies: " ^ Int.toString(length(deps))^ "\n")
+		val _ = print ("num of keys: " ^ Int.toString(length keys) ^ "\n")
+*)
 		val labeled_keys = map (map (fn x => List.nth(header,x))) keys
 		fun printDep ( llist, l ) = print ("{" ^ 
 			(concat (map (fn x => x ^ ",") (idstostrs llist))) ^ 
@@ -405,7 +413,8 @@ Also prints out information about the dependencies and keys it found *)
 		val found_deps:(Id* constraint) list = map some found_deps
 
  		(* find the single column constraints *)
-		val a = (some(LargeInt.maxInt),some(LargeInt.minInt))
+		val a = (Int.toLarge(some(Int.maxInt)), Int.toLarge(some(Int.minInt)))
+		val _ = print(LargeInt.toString(#1 a) ^" "^ LargeInt.toString(#2 a)^ "\n")
 		(* initialize each entry to some starting values *)
 		val consts = zip1([ Range a, Length 0, Ordered Ascend, 
 				    Ordered Descend, Unique(Pstring "NONE"), 

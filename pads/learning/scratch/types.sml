@@ -109,6 +109,14 @@ struct
         |  Other c => String.implode [c]
         |  Pempty => ""
         |  Error => " Error"
+    and refinedToString re =
+	case re
+	of StringME s => "\""^ s ^ "\""
+        | Int(min, max) => "[int]["^LargeInt.toString(min)^", "^LargeInt.toString(max)^"]"
+        | IntConst a => "[intconst] "^ LargeInt.toString(a) 
+        | StringConst s => "\""^s^"\"" 
+        | Enum rel => "[enum]{" ^ String.concat(map (fn x => (refinedToString x) ^", ") rel) ^ "}"
+        | LabelRef id => "[id]"^ Atom.toString(id)    
 
     fun ltokenTyToString (t,loc) = tokenTyToString t
     and tokenTyToString t = 
@@ -118,6 +126,11 @@ struct
         |  Pmonth m  => "[Month]"
         |  PbXML (f,s) => "bXML["^f^"]"
         |  PeXML (f,s) => "eXML["^f^"]"
+(*
+	|  Pint i    => " Pint("^(LargeInt.toString i)^")"
+        |  Pstring s => " Pstring("^s^")"
+        |  Pwhite s  => " Pwhite("^s^")" 
+*)
 	|  Pint i    => "[int]"                   (*" Pint("^(LargeInt.toString i)^")"*)
         |  Pstring s => "[string]"                (*" Pstring("^s^")"*)
         |  Pwhite s  => "[white space]"           (*" Pwhite("^s^")"*) 
@@ -204,6 +217,25 @@ struct
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty2)^
 			    prefix^"Tail:\n"^
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty3)^
+			    prefix ^ "End Parray"
+        |  RefinedBase (aux, refined, tl) => (refinedToString refined)^("(" ^(covToString aux)^")") 
+        |  Switch(aux ,id, retys) => "Switch("^Atom.toString(id)^"):\n"^
+	 		    (lconcat (List.map (fn (re, ty) => (prefix^"\t case "^(refinedToString re)^": "^ 
+			    (TyToStringD prefix longTBDs longBottom (";\n") ty))) retys))^
+			    prefix ^ "End Switch"
+        |  RArray (aux, sep, term, body, len) => "Parray("^(covToString aux)^")\n"^
+			    (case sep of SOME septok =>
+			    prefix ^ "Separator:\n"^
+                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") septok)
+			    | _ => ""
+			    )^
+			    (case term of SOME termtok =>
+			    prefix ^ "Terminator:\n"^
+                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") termtok)
+			    | _ => ""
+			    )^
+			    prefix ^ "Body:\n"^
+                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") body) ^ 
 			    prefix ^ "End Parray"
         )^
 	suffix)

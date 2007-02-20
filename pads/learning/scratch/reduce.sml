@@ -37,7 +37,16 @@ fun cost const_map ty =
 	  end
   in
 	case ty of 
-	  RefinedBase _ => 1 (* consts are cheaper than variables *)
+	(* consts are cheaper than variables *)
+	  RefinedBase (_, r, _) =>  (
+		case r of 
+			StringME _ => 1 
+			| Int _ => 2
+			| IntConst _ => 1
+			| StringConst _ => 1
+			| Enum _ => 3
+			| LabelRef _ => 1
+		)
 	| Base _ => 2 
 	| TBD _ => 1
 	| Bottom _ => 1
@@ -186,6 +195,18 @@ and adjacent_consts ty : Ty =
 			  (Pstring(s1 ^ s2), combineloc(loc1, loc2))
 			| ((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
 			  (Pwhite(s1 ^ s2), combineloc(loc1, loc2))
+			| ((Pwhite(s1), loc1), (Pstring(s2), loc2)) => 
+			  (Pstring(s1 ^ s2), combineloc(loc1, loc2))
+			| ((Pstring(s1), loc1), (Pwhite(s2), loc2)) => 
+			  (Pstring(s1 ^ s2), combineloc(loc1, loc2))
+			| ((Pwhite(s1), loc1), (Other(s2), loc2)) => 
+			  (Pstring(s1 ^ Char.toString(s2)), combineloc(loc1, loc2))
+			| ((Other(s1), loc1), (Pwhite(s2), loc2)) => 
+			  (Pstring(Char.toString(s1) ^ s2), combineloc(loc1, loc2))
+			| ((Other(s1), loc1), (Pstring(s2), loc2)) => 
+			  (Pstring(Char.toString(s1) ^ s2), combineloc(loc1, loc2))
+			| ((Pstring(s1), loc1), (Other(s2), loc2)) => 
+			  (Pstring(s1 ^ Char.toString(s2)), combineloc(loc1, loc2))
 			| ((Other(a), loc1), (Other(b), loc2)) => 
 			  (Pstring(Char.toString(a) ^ Char.toString(b)), 
 					combineloc(loc1, loc2))
@@ -194,10 +215,9 @@ and adjacent_consts ty : Ty =
 	    end
 	 (*the two token lists are supposed to be of equal length*)
 	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
-		if (length tl1 <> length tl2) then raise TyMismatch
-		else case tl2 of 
+			case tl2 of 
 			nil => tl1
-			| _ => ListPair.map mergetok (tl1, tl2)
+			| _ => ListPair.mapEq mergetok (tl1, tl2)
 
   	 fun for_const while_const t x tl = 
   	 let
@@ -271,8 +291,20 @@ case ty of
 		val (newcmos, _) = LabelMap.remove(cmos, id)
 	    	val newcmos = LabelMap.insert(newcmos, id, newconsts)
         in
-       		case somety of
-         	  SOME(Pint(x)) => 
+       		case somety of 			
+		  SOME(PbXML(x, y)) => 
+			(
+				newcmos, 
+				RefinedBase({coverage=coverage, label = SOME id}, 
+				StringConst("<"^x^" "^y^">"), tokens)
+			)
+		| SOME(PeXML(x, y)) => 
+			(
+				newcmos, 
+				RefinedBase({coverage=coverage, label = SOME id}, 
+				StringConst("</"^x^" "^y^">"), tokens)
+			)
+         	| SOME(Pint(x)) => 
 			(
 				newcmos, 
 				RefinedBase({coverage=coverage, label = SOME id}, 
@@ -307,6 +339,18 @@ case ty of
 				newcmos, 
 				RefinedBase({coverage=coverage, label = SOME id},
 				StringConst(x), tokens)
+			)
+		| SOME(Other(x)) => 
+			(
+				newcmos, 
+				RefinedBase({coverage=coverage, label = SOME id},
+				StringConst(Char.toString(x)), tokens)
+			)
+		| SOME(Pempty) => 
+			(
+				newcmos, 
+				RefinedBase({coverage=coverage, label = SOME id},
+				StringConst("\"\""), tokens)
 			)
        		| _ => (cmos, ty)
       	end
@@ -468,7 +512,8 @@ let
 		  	unused_branches
 		]
   val post_constraint_rules : post_reduction_rule list =
-		[ uniqueness_to_const,
+		[ 
+		  uniqueness_to_const,
 		  enum_range_to_refine,
 		  sum_to_switch
 		  (* need to add a constraint for RArray *)
