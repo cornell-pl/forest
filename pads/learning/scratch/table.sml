@@ -70,6 +70,9 @@ structure Table = struct
 		Base (a, ltokenl) =>
 			let 
 				val col = gencolumn(ltokenl, totalrecords)
+(*
+				val _ = printLTokens ltokenl
+*)
 			in ([some(#label a)], [col]):infertable
 			end
 		| TBD _ => (nil, nil) : infertable

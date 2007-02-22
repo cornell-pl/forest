@@ -54,15 +54,14 @@ fun cost const_map ty =
 	| Pstruct(a, tylist) => foldr op+ 0 (map (cost const_map) tylist) + 3 
 	| Punion (a, tylist) => foldr op+ 0 (map (cost const_map) tylist) + 3
 	| Parray (a, {tokens, lengths, first, body, last}) => 
-			foldr op+ 0 (map (cost const_map) [first, body, last])+3
-	| Switch (a, id, l) => foldr op+ 0 (map (fn (_, t) => cost const_map t) l)+3
-	| RArray (a, sepop, termop, body, refinedop) =>
-		(case sepop of SOME (sep) => cost const_map sep
-			| NONE => 0) +
-		(case termop of SOME (term) => cost const_map term 
-			| NONE => 0) + (cost const_map body) +
-		(case refinedop of SOME _ => 1
-			| NONE => 0) 
+		(* first, body and last are potentially structs so plus 9*)
+			foldr op+ 0 (map (cost const_map) [first, body, last])+9
+	| Switch (a, id, l) => foldr op+ 0 (map (fn (_, t) => cost const_map t) l)
+	| RArray (a, sepop, termop, body, lenop) => 
+		(case sepop of SOME (sep) => 0 | NONE => 1) +
+		(case termop of SOME (term) => 0 | NONE => 1) + 
+		(cost const_map body) 
+		
   end
 
 type constraint_map = constraint list LabelMap.map
@@ -89,11 +88,12 @@ case ty of
 	if lengths=nil then Base(a, nil) else ty 
 | RArray(a, _, _, _, length_op) => 
 	(
-	case some(length_op) of
-		IntConst(0) => Base(a, nil) 
+	case length_op of
+		SOME(IntConst(0)) => Base(a, nil) 
 	| _ => ty
-	)
+	) 
 | _ => ty
+
 (* tuples inside tuples are removed*)
 and unnest_tuples ty : Ty =
 case ty of 
@@ -153,7 +153,7 @@ case ty of
 		case elems of
 		  h :: t => 
 		  let 
-		  	val not_equal = List.exists (fn x => not(ty_equal(x,h) )) t
+		  	val not_equal = List.exists (fn x => not(ty_equal(0, x, h) )) t
 		  in 
 		  	if not_equal then nil else h :: commonPrefix tails
   	          end
@@ -191,33 +191,19 @@ and adjacent_consts ty : Ty =
 		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2)}
 	    in
 		case (t1, t2) of 
-			((Pstring(s1), loc1), (Pstring(s2), loc2)) => 
-			  (Pstring(s1 ^ s2), combineloc(loc1, loc2))
-			| ((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
-			  (Pwhite(s1 ^ s2), combineloc(loc1, loc2))
-			| ((Pwhite(s1), loc1), (Pstring(s2), loc2)) => 
-			  (Pstring(s1 ^ s2), combineloc(loc1, loc2))
-			| ((Pstring(s1), loc1), (Pwhite(s2), loc2)) => 
-			  (Pstring(s1 ^ s2), combineloc(loc1, loc2))
-			| ((Pwhite(s1), loc1), (Other(s2), loc2)) => 
-			  (Pstring(s1 ^ Char.toString(s2)), combineloc(loc1, loc2))
-			| ((Other(s1), loc1), (Pwhite(s2), loc2)) => 
-			  (Pstring(Char.toString(s1) ^ s2), combineloc(loc1, loc2))
-			| ((Other(s1), loc1), (Pstring(s2), loc2)) => 
-			  (Pstring(Char.toString(s1) ^ s2), combineloc(loc1, loc2))
-			| ((Pstring(s1), loc1), (Other(s2), loc2)) => 
-			  (Pstring(s1 ^ Char.toString(s2)), combineloc(loc1, loc2))
-			| ((Other(a), loc1), (Other(b), loc2)) => 
-			  (Pstring(Char.toString(a) ^ Char.toString(b)), 
-					combineloc(loc1, loc2))
-			| ((Pempty, loc1), (Pempty, loc2)) => (Pempty, combineloc(loc1, loc2))
-			| _ => raise TyMismatch
+			((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
+			  	(Pwhite(s1 ^ s2), combineloc(loc1, loc2))
+			| ((Pempty, loc1), (Pempty, loc2)) => 
+				(Pempty, combineloc(loc1, loc2))
+			| ((tk1, loc1), (tk2, loc2)) =>
+				(Pstring(tokenToString(tk1) ^ tokenToString(tk2)), combineloc(loc1, loc2))
 	    end
 	 (*the two token lists are supposed to be of equal length*)
 	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
 			case tl2 of 
 			nil => tl1
 			| _ => ListPair.mapEq mergetok (tl1, tl2)
+			handle UnequalLengths => (ListPair.map mergetok (tl1, tl2))
 
   	 fun for_const while_const t x tl = 
   	 let
@@ -242,7 +228,7 @@ and adjacent_consts ty : Ty =
 				 mergetoklist(l, tlists)) 
 				:: find_adj rest
     			end
-  	    			| _ => h :: find_adj t)
+  	    		| _ => h :: find_adj t)
   		| nil => nil
   	val newtylist = find_adj tylist
     in
@@ -271,7 +257,156 @@ case ty of
   	Punion (aux, remove_unused())
   end
 | _ => ty
-		
+(* rule to convert a normal Parray to a refined RArray *)
+and refine_array ty = 
+	case ty of 
+	(* 1st case is looking at the Parray itself *)
+	Parray(aux, {tokens, lengths, first, body, last}) =>
+		let
+(*
+		val _ = (print "trying to refine array\n"; printTy ty) 
+*)
+		fun getlen (lens, x) = 
+			case lens of 
+			l::tail => if (l = x) then getlen(tail, x)
+				   else NONE
+			| nil => SOME(IntConst(Int.toLarge(x)))
+		val lens = (#1 (ListPair.unzip(lengths)))		
+		val lenop = getlen(lens, hd lens)
+		fun isStruct ty = case ty of (Pstruct(_)) => true | _ => false
+		fun firstEle(ty) = 
+		  case ty of 
+		  Pstruct(aux, tylist) => List.hd tylist
+		  | _ => raise TyMismatch
+		fun lastEle(ty) = 
+		  case ty of 
+		  Pstruct(aux, tylist) => List.last tylist
+		  | _ => raise TyMismatch
+		fun droplast(ty) = 
+		  case ty of 
+		  Pstruct(aux, tylist) => Pstruct(aux, List.take(tylist, (length tylist) -1))
+		  | _ => raise TyMismatch
+		fun dropfirst(ty) = 
+		  case ty of 
+		  Pstruct(aux, tylist) => Pstruct(aux, List.drop(tylist, 1))
+		  | _ => raise TyMismatch
+		fun addtohead(ty, newty) =
+		  (*Note: aux is wrong here *)
+		  case ty of
+		  Pstruct(aux, tylist) => Pstruct(aux, [newty]@tylist)
+		  |RefinedBase(aux, _, _) => Pstruct(aux, [newty, ty])
+		  | _ => raise TyMismatch
+		fun addtotail(ty, newty) =
+		  (*Note: aux is wrong here *)
+		  case ty of
+		  Pstruct(aux, tylist) => Pstruct(aux, tylist@[newty])
+		  |RefinedBase(aux, _, _) => Pstruct(aux, [ty, newty])
+		  | _ => raise TyMismatch
+	  	fun findRefined ty =
+		  (*funtion to find the first const refined string in this ty*)
+			case ty of
+			  Pstruct(_, tylist) => findRefined (hd tylist)
+			| RefinedBase(_, refined, _) => SOME(refined)
+			| _ => NONE
+		fun getRefine(ty) = case ty of RefinedBase(_, r, _) => SOME(r) 
+					| _ => NONE
+		(*the separator should be a refinedbase ty in the last position
+		 of the first and body tys, or the first position of the body and
+		 the last tys*)
+		fun getSep(first, body, last)=
+		let
+			val bodyhd = getRefine(firstEle(body))	
+			val bodytail = getRefine(lastEle(body))
+			val firsttail = if (isStruct(first)) then getRefine(lastEle(first))
+					else getRefine(first) (*assume it's a base itself*)
+			val lasthd= if (isStruct(last)) then getRefine(firstEle(last))
+					else getRefine(last)
+		in
+			if (refine_equal_op(bodytail, firsttail))
+			then ("tail", bodytail, first, droplast(body), 
+				addtohead(last, lastEle(body)))
+			else if (refine_equal_op(bodyhd, lasthd)) 
+			  then ("head", bodyhd, addtotail(first, firstEle(body)), 
+				dropfirst(body), last) 
+			  else ("none", NONE, first, body, last) 
+		end 
+	in
+		if (isStruct(body))
+		then
+		(
+		  let 
+		    val (pos, sepop, first', body', last') = getSep(first, body, last)
+		    val newty = 
+			if ((pos="tail" andalso ty_equal(1, first, body) 
+				andalso ty_equal(1, body', last))
+			   orelse (pos="head" andalso ty_equal(1, first, body') 
+					andalso ty_equal(1, body, last)))
+			then RArray(aux, sepop, NONE, body', lenop)
+			else if (ty_equal(1, first, body))
+			     then
+				  Pstruct({coverage=(#coverage aux), 
+				  label = SOME(getLabel({coverage=0, label=NONE}))}, 
+				  [RArray(aux, sepop, findRefined(last'), body', lenop), last'])
+			     else if (ty_equal(1, body, last))
+				  (*not possible for body = last*)
+			          then Pstruct({coverage=(#coverage aux), 
+				  label = SOME(getLabel({coverage=0, label=NONE}))},
+				  [first', RArray(aux, sepop, NONE, body', lenop)])
+				  else 
+				    Pstruct({coverage=(#coverage aux), 
+				    label = SOME(getLabel {coverage=0, label=NONE})},
+				    [first', 
+				     RArray(aux, sepop, findRefined(last'), body', lenop), last'])
+(*
+			val _ = (print "Done refining array to:\n"; printTy newty) 
+*)
+		  in
+		 	newty
+		  end
+		)
+		else ty
+		end
+	| Pstruct(a, tylist) =>
+		let 
+(*
+		  val _ = (print "trying to refine array in struct \n"; printTy ty)
+*)
+		  fun findRefined ty =
+		  (*funtion to find the first const refined string in this ty*)
+			case ty of
+			  Pstruct(_, tylist) => findRefined (hd tylist)
+			| RefinedBase(_, refined, _) => SOME(refined)
+			| _ => NONE
+		  fun updateTerm (arrayty, termop) =
+			case (arrayty) of
+				RArray(a, sep, term, body, len)=>RArray(a, sep, termop, body, len)
+			| _ => raise TyMismatch
+		  fun updateArray tylist newlist =
+			case tylist of
+			nil => newlist
+			| ty::tail =>
+				case ty of RArray (_, _, NONE, _, _) => 
+				(
+				  case tail of 
+				  nil => newlist@tylist
+				  | _ =>
+				  	let
+				  	val nextRefined= findRefined(hd tail)	
+				  	val newArray = updateTerm(ty, nextRefined)
+					in newlist@[newArray]@tail
+				  	end
+				)
+				| _ => updateArray tail newlist@[ty] 
+
+		  val tylist' = updateArray tylist nil
+(*
+		  val _ = (print "Done refining array in struct to:\n"; printTy (Pstruct(a, tylist')))
+*)
+		in
+		  Pstruct(a, tylist')
+		end
+	|_ => ty
+
 (* post constraint rules, these require the cmap to be filled  and the 
 data labeled *)
 
@@ -350,7 +485,7 @@ case ty of
 			(
 				newcmos, 
 				RefinedBase({coverage=coverage, label = SOME id},
-				StringConst("\"\""), tokens)
+				StringConst(""), tokens)
 			)
        		| _ => (cmos, ty)
       	end
@@ -432,7 +567,7 @@ case ty of
 		case h of 
 			Punion(a, sumlist) => 
 			  let 
-			    val (c, newcmos)  = is_switch(cmos, some(#label a))
+			    val (c, newcmos)  = is_switch(cmos, some(#label a)) 
 			  in 
 			    case c of 
 				SOME ([id], mappings) =>
@@ -509,14 +644,14 @@ let
 			prefix_postfix_sums,
 			adjacent_consts,
 			remove_nils,
-		  	unused_branches
+		  	unused_branches,
+			refine_array
 		]
   val post_constraint_rules : post_reduction_rule list =
 		[ 
 		  uniqueness_to_const,
 		  enum_range_to_refine,
 		  sum_to_switch
-		  (* need to add a constraint for RArray *)
 		]
   (* generate the lust of rules *)
   val cmap = case const_info_op of 
@@ -562,17 +697,16 @@ let
 			| RefinedBase b => (cmap, RefinedBase b)
 			| Switch b => (cmap, Switch b)
 			| RArray b => (cmap, RArray b)
-
 	  fun iterate cmap ty = 
 	  let
 	    (* calculate the current cost *)
 	    val cur_cost = cost cmap ty
 	    (* apply each rule to the ty *)
-	    val post_pairs = map (fn x => x cmap ty) post_constraint_rules
-	    val pre_pairs = map (fn x =>(cmap, x ty)) pre_constraint_rules
+	    val post_pairs = map (fn x => x cmap ty) post_constraint_rules 
+	    val pre_pairs = map (fn x =>(cmap, x ty)) pre_constraint_rules 
 	    val cmap_ty_pairs = post_pairs@pre_pairs
 	    (* find the costs for each one *)
-	    val costs = map (fn (m, t)=> cost m t) cmap_ty_pairs
+	    val costs = map (fn (m, t)=> cost m t) cmap_ty_pairs 
 	    val pairs = ListPair.zip(cmap_ty_pairs,costs)
 	    fun min((a,b),(c,d)) = if b < d then (a,b) else (c,d)
 	    (* find the minimum cost out of the ones found *)
@@ -580,18 +714,18 @@ let
 	  in
 	  	(* as long as the cost keeps going down, keep iterating *)
 	  	if lowCost < cur_cost then iterate newcmap newTy
-	  	else (newcmap, newTy)
+	  	else (newcmap, newTy) 
 	  end
     in
- 	(iterate newcmap reduced_ty)
+ 	(iterate newcmap reduced_ty) 
     end
-  val cbefore = cost cmap ty
-  val (cmap', ty') = reduce' cmap ty
+  val cbefore = cost cmap ty 
+  val (cmap', ty') = reduce' cmap ty 
   val cafter = cost cmap' ty'
 (*  val _ = print ("Before:" ^ (Int.toString cbefore) ^ " After:" ^ (Int.toString cafter) ^ "\n") *)
 in
   ty'
-end
+end 
 
 (* now some tests *)
 (******************

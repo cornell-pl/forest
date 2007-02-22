@@ -52,7 +52,7 @@ struct
 
                 | RefinedBase of AuxInfo * Refined * LToken list
                 | Switch  of AuxInfo * Id * (Refined (* switch value *)* Ty) list
-                | RArray of AuxInfo * Ty option (*sepatator*) * Ty option (* terminator *)
+                | RArray of AuxInfo * Refined option (*sepatator*) * Refined option (* terminator *)
 	                            * Ty (*Body type *) * Refined option (* length *) 
 
 
@@ -112,11 +112,11 @@ struct
     and refinedToString re =
 	case re
 	of StringME s => "\""^ s ^ "\""
-        | Int(min, max) => "[int]["^LargeInt.toString(min)^", "^LargeInt.toString(max)^"]"
-        | IntConst a => "[intconst] "^ LargeInt.toString(a) 
+        | Int(min, max) => "["^LargeInt.toString(min)^", "^LargeInt.toString(max)^"]"
+        | IntConst a => "["^ LargeInt.toString(a) ^"]" 
         | StringConst s => "\""^s^"\"" 
-        | Enum rel => "[enum]{" ^ String.concat(map (fn x => (refinedToString x) ^", ") rel) ^ "}"
-        | LabelRef id => "[id]"^ Atom.toString(id)    
+        | Enum rel => "{" ^ String.concat(map (fn x => (refinedToString x) ^", ") rel) ^ "}"
+        | LabelRef id => "id="^ Atom.toString(id)    
 
     fun ltokenTyToString (t,loc) = tokenTyToString t
     and tokenTyToString t = 
@@ -223,26 +223,26 @@ struct
 	 		    (lconcat (List.map (fn (re, ty) => (prefix^"\t case "^(refinedToString re)^": "^ 
 			    (TyToStringD prefix longTBDs longBottom (";\n") ty))) retys))^
 			    prefix ^ "End Switch"
-        |  RArray (aux, sep, term, body, len) => "Parray("^(covToString aux)^")\n"^
+        |  RArray (aux, sep, term, body, len) => "RArray("^(covToString aux)^")\n"^
 			    (case sep of SOME septok =>
-			    prefix ^ "Separator:\n"^
-                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") septok)
+			    prefix ^ "Separator: "^
+                            refinedToString(septok)^"\n"
 			    | _ => ""
 			    )^
 			    (case term of SOME termtok =>
-			    prefix ^ "Terminator:\n"^
-                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") termtok)
+			    prefix ^ "Terminator: "^
+                            refinedToString(termtok)^"\n"
 			    | _ => ""
 			    )^
 			    prefix ^ "Body:\n"^
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") body) ^ 
-			    prefix ^ "End Parray"
+			    prefix ^ "End RArray"
         )^
 	suffix)
        
     fun TyToString ty = TyToStringD "" false false "" ty
 
     fun printTyD prefix longTBDs longBottom suffix ty =  print (TyToStringD prefix longTBDs longBottom suffix ty )
-    fun printTy ty = printTyD "" false false "" ty
+    fun printTy ty = printTyD "" false false "\n" ty
 
 end

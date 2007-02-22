@@ -62,8 +62,8 @@ structure Common = struct
 	  let fun pad x = if String.size x < 11 
 		then pad (x ^ " ") else x 
 	  in (pad (case d of
-		PbXML(node, attrib) => "<" ^ node ^ " " ^ attrib ^ ">"
-	|	PeXML(node, attrib) => "</" ^ node ^ " " ^ attrib ^ ">"
+		PbXML(node, attrib) => "<" ^ node ^ attrib ^ ">"
+	|	PeXML(node, attrib) => "</" ^ node ^ attrib ^ ">"
 	|	Pint (i) => LargeInt.toString(i)
 	|	Ptime(t) => t
 	|	Pmonth(t) => t
@@ -124,52 +124,76 @@ structure Common = struct
 														then "\\" ^ (String.str x) 
 		 else String.str x) str
 
+	fun myand(a,b) = a andalso b
+	fun ltoken_equal((tk1, _), (tk2, _)) =
+	  case (tk1, tk2) of 
+		    (PbXML(a,b), PbXML(a1, b1)) => (a=a1 andalso b = b1)
+		  | (PeXML(a,b), PeXML(a1, b1)) =>  (a=a1 andalso b = b1) 
+		  | (Ptime(a), Ptime(b)) => (a = b)
+		  | (Pmonth(a), Pmonth(b)) => (a = b)
+		  | (Pip(a), Pip(b)) => (a = b)
+		  | (Pint(a), Pint(b)) => (a = b)
+		  | (Pstring(a), Pstring(b)) => (a = b)
+		  | (Pwhite(a), Pwhite(b)) => (a = b)
+		  | (Other(a), Other(b)) => (a = b)
+		  | (Pempty, Pempty) => true
+		  (* ignoring Pgroup for now *)
+		  | _ => false
+	fun ltoken_ty_equal ((tk1, _), (tk2, _)) =
+	  case (tk1, tk2) of 
+		    (PbXML(a,b), PbXML(a1, b1)) => true
+		  | (PeXML(a,b), PeXML(a1, b1)) => true 
+		  | (Ptime(a), Ptime(b)) => true
+		  | (Pmonth(a), Pmonth(b)) => true
+		  | (Pip(a), Pip(b)) => true
+		  | (Pint(a), Pint(b)) => true
+		  | (Pstring(a), Pstring(b)) => true
+		  | (Pwhite(a), Pwhite(b)) => true
+		  | (Other(a), Other(b)) => true
+		  | (Pempty, Pempty) => true
+		  (* ignoring Pgroup for now *)
+		  | _ => false
+
+	fun refine_equal (a, b) =
+		case (a, b) of 
+			(StringME(x), StringME(y)) => (x = y)
+		       |(Int(x, y), Int(x1, y1)) => (x = x1 andalso y = y1)
+		       |(IntConst(x), IntConst(y)) => (x = y)
+		       |(StringConst(x), StringConst(y)) => (x = y)
+		       |(Enum(l1), Enum(l2)) => foldr myand true 
+				(ListPair.map refine_equal(l1, l2))
+		       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
+		       | _ => false
+	fun refine_equal_op (a, b) =
+		case (a,b) of 
+			(SOME a', SOME b') => refine_equal(a', b')
+		|_ => false
+
     (* function to test of two ty's are completely equal minus the labels *)
-    fun ty_equal(ty1, ty2) = 
+    (* if comparetype = 0, compare everything, otherwise compare down to 
+	base modulo the token list *)
+    fun ty_equal (comparetype, ty1, ty2) = 
 	let
-		fun myand(a,b) = a andalso b
 		fun check_list(l1,l2) = 
 		let 
-			val bools = ListPair.map ty_equal (l1, l2)
+			val bools = ListPair.map (fn (t1, t2) => ty_equal(comparetype, t1, t2)) (l1, l2)
 		in
 			foldr myand true bools
 		end
-		fun ltoken_equal((tk1, _), (tk2, _)) =
-		  case ((tk1, tk2)) of 
-			    (PbXML(a,b), PbXML(a1, b1)) => (a=a1 andalso b = b1)
-			  | (PeXML(a,b), PeXML(a1, b1)) =>  (a=a1 andalso b = b1) 
-			  | (Ptime(a), Ptime(b)) => (a = b)
-			  | (Pmonth(a), Pmonth(b)) => (a = b)
-			  | (Pip(a), Pip(b)) => (a = b)
-			  | (Pint(a), Pint(b)) => (a = b)
-			  | (Pstring(a), Pstring(b)) => (a = b)
-			  | (Pwhite(a), Pwhite(b)) => (a = b)
-			  | (Other(a), Other(b)) => (a = b)
-			  | (Pempty, Pempty) => true
-			  (* ignoring Pgroup for now *)
-			  | _ => false
-
-		fun refine_equal (a, b) =
-			case (a, b) of 
-				(StringME(x), StringME(y)) => (x = y)
-			       |(Int(x, y), Int(x1, y1)) => (x = x1 andalso y = y1)
-			       |(IntConst(x), IntConst(y)) => (x = y)
-			       |(StringConst(x), StringConst(y)) => (x = y)
-			       |(Enum(l1), Enum(l2)) => foldr myand true 
-					(ListPair.map refine_equal(l1, l2))
-			       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
-			       | _ => false
 	in
 		case (ty1,ty2) of
 			(Base(_, tl1), Base (_, tl2)) => 
+				if (comparetype = 0) then
 				foldr myand true (ListPair.map ltoken_equal (tl1, tl2))
+				else ltoken_ty_equal(hd tl1, hd tl2)
 			| (TBD _, TBD _) => true
 			| (Bottom _, Bottom _) => true
 			| (Punion(_, tylist), Punion(_, tylist2)) => check_list(tylist,tylist2)
 			| (Pstruct(_, tylist), Pstruct(_, tylist2)) => check_list(tylist,tylist2)
 			| (Parray(_, a1), 
-			   Parray(_, a2)) => ty_equal(#first a1, #first a2) andalso 
-				ty_equal(#body a1, #body a2) andalso ty_equal(#last a1, #last a2)
+			   Parray(_, a2)) => ty_equal(comparetype, #first a1, #first a2) andalso 
+				ty_equal(comparetype, #body a1, #body a2) andalso 
+				ty_equal(comparetype, #last a1, #last a2)
 			| (RefinedBase (_, r1, tl1), RefinedBase(_, r2, tl2)) => 
 				refine_equal(r1, r2) andalso 
 				foldr myand true (ListPair.map ltoken_equal(tl1, tl2))
@@ -183,11 +207,11 @@ structure Common = struct
 				end
 			| (RArray(_, sepop1, termop1, ty1, len1), 
 				RArray (_, sepop2, termop2, ty2, len2))
-				=> ty_equal(some(sepop1), some(sepop2)) andalso
-				   ty_equal(some(termop1), some(termop2)) andalso
-				   ty_equal (ty1, ty2) andalso
+				=> refine_equal(some(sepop1), some(sepop2)) andalso
+				   refine_equal(some(termop1), some(termop2)) andalso
+				   ty_equal (comparetype, ty1, ty2) andalso
 				   refine_equal(some(len1), some(len2))
-			| _ => false
+			| _ => false 
+		handle Size => (print "hahahahahahaha\n"; false)
 	end
-
 end

@@ -414,10 +414,9 @@ Also prints out information about the dependencies and keys it found *)
 
  		(* find the single column constraints *)
 		val a = (Int.toLarge(some(Int.maxInt)), Int.toLarge(some(Int.minInt)))
-		val _ = print(LargeInt.toString(#1 a) ^" "^ LargeInt.toString(#2 a)^ "\n")
 		(* initialize each entry to some starting values *)
 		val consts = zip1([ Range a, Length 0, Ordered Ascend, 
-				    Ordered Descend, Unique(Pstring "NONE"), 
+				    Ordered Descend, Unique(Pempty), 
 				    EnumC BDSet.empty ], NONE)
 		(*depstart is a list of constraints of size num of cols in the table*)
 		val depstart:constraint_record = map (fn x=> {label = x, 
