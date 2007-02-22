@@ -23,7 +23,7 @@
 #define VERBOSE 1
 
 /* setup/teardown functions */
-int InitGetData();
+int InitGetData(char *dir);
 int CleanupGetData();
 
 /* Loop that waits for requests and gets data 

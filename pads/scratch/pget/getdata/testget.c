@@ -16,7 +16,7 @@ void *GenerateRequests() {
 
   usleep(100000);
 
-  MakeRequest("www.cnn.com");
+  MakeRequest("http://www.cnnnnnn.com");
   MakeRequest("www.nytimes.com");
 
   usleep(1000000);
@@ -36,14 +36,17 @@ void *GenerateRequests() {
 /* test get.c/get.h by making various requests */
 int main(int argc, char *argv[]) {
 
-  pthread_t getdata, makerequests;
+  pthread_t getdata;
 
-  InitGetData();
+  InitGetData("data");
 
+  /* create a thread to get data in the background */
   pthread_create(&getdata, NULL, RunGetData, NULL);
-  pthread_create(&makerequests, NULL, GenerateRequests, NULL);
+  
+  /* make requests for data */
+  GenerateRequests();
 
-  pthread_join(makerequests, NULL);
+  /* wait for the get data thread to complete */
   pthread_join(getdata, NULL);
 
   CleanupGetData();

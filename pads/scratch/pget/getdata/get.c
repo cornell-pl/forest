@@ -1,6 +1,6 @@
 #include "get.h"
 #include <assert.h>
-
+#include <sys/stat.h>
 
 
 /*-----------------------------------------------------------------*/
@@ -8,7 +8,7 @@
 
 /* information about a request */
 typedef struct RequestInfo {
-  TAILQ_ENTRY(RequestInfo) entries;  /* next/previous pointers */
+  TAILQ_ENTRY(RequestInfo)entries;  /* next/previous pointers */
   CURL *handle;                      /* curl handle */
   char *url;                         /* url */
   char *filename;                    /* filename for resulting data */
@@ -22,6 +22,10 @@ typedef struct RequestInfo {
 
 /*-----------------------------------------------------------------*/
 /* Global variables */
+
+
+/* directory for result files */
+char *resultdir;
 
 /* global lock - yes I'm lazy, can break this up later 
  * lock all accesses to request queues, queue counts, and done_requesting flag */
@@ -417,7 +421,7 @@ void *RunGetData() {
   assert((numToDo == 0) && (numInProgress == 0));
   assert(numCompleted = totalRequests);
 
-  if (VERBOSE) printf("YAY!!!!!");
+  if (VERBOSE) printf("YAY!!!!!\n\n");
 
   exit(0);
 }
@@ -426,7 +430,7 @@ void *RunGetData() {
 
 /*-----------------------------------------------------------------*/
 /* InitGetData - initialize queues, curl handles, lock */
-int InitGetData() {
+int InitGetData(char *dir) {
 
   /* initialize queues */
   TAILQ_INIT(&toDo);
@@ -438,8 +442,17 @@ int InitGetData() {
   curl_global_init(CURL_GLOBAL_ALL);
   multi_handle = curl_multi_init();
 
+  /* init lock */
   pthread_mutex_init(&lock, NULL);
 
+  /* create directory for results, cd there */
+  resultdir = dir;
+  // fjp -- should check if it already exists? check errno?
+  mkdir(resultdir, S_IRWXU | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH); 
+  if (chdir(resultdir)) {
+    fprintf(stderr, "error: could not change to %s\n",resultdir);
+    exit(-1);
+  }
 }
 
 
