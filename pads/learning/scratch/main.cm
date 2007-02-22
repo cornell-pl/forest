@@ -10,13 +10,15 @@ is
 
   config.sml
   utils.sml
+  complexity.sml
+  distribution.sml
   types.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
+  tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
   structure.sml
   print.sml
   main.sml
-  tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
 (* the following files are used for refinement not ready to be compiled together
   yet *)
   rat.sml
