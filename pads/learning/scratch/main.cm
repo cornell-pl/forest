@@ -14,6 +14,7 @@ is
   distribution.sml
   tokens.sml
   types.sml
+  model.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
   structure.sml
