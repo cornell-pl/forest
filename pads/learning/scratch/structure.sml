@@ -723,7 +723,6 @@ struct
                  , label=SOME(mkBOTLabel (!Bottomstamp))
                  , typeComp = junkComplexity    (* TEMP *)
                  , dataComp = junkComplexity    (* TEMP *)
-                 , model    = NoModel           (* TEMP *)
                  }
                , !Bottomstamp
                , cl
@@ -747,7 +746,6 @@ struct
                             , label=SOME(mkTBDLabel (!TBDstamp))
                             , typeComp = junkComplexity    (* TEMP *)
                             , dataComp = junkComplexity    (* TEMP *)
-                            , model    = NoModel           (* TEMP *)
                             }
                           , !TBDstamp
                           , cl

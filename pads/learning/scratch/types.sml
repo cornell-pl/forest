@@ -22,14 +22,12 @@ struct
                    , label    : Id option  (* introduced during refinement as a tag *)
                    , typeComp : Complexity (* Inherent complexity of the type *)
                    , dataComp : Complexity (* Average complexity of data given type *)
-                   , model    : DataModel  (* Model chosen for the data *)
                    }
 
     val emptyAuxInfo : AuxInfo = { coverage = 0
                                  , label    = NONE
                                  , typeComp = junkComplexity
                                  , dataComp = junkComplexity
-                                 , model    = NoModel
                                  }
 
     (* Update the type and data complexity of an AuxInfo *)
@@ -38,10 +36,9 @@ struct
         , label    = #label a
         , typeComp = t
         , dataComp = d
-        , model    = #model a
         }
 
-    datatype Refined = StringME of string (* describe regular expression in pads syntax *) 
+    datatype Refined = StringME of string
 	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
 	             | IntConst of LargeInt.int    (* value *)
                      | StringConst of string (* string literal *)
@@ -60,8 +57,9 @@ struct
 					last  : Ty}
 
                 | RefinedBase of AuxInfo * Refined * LToken list
-                | Switch  of AuxInfo * Id * (Refined (* switch value *)* Ty) list
-                | RArray of AuxInfo * Refined option (*sepatator*) * Refined option (* terminator *)
+                | Switch  of AuxInfo * Id * (Refined (* switch value *) * Ty) list
+                | RArray of AuxInfo * Refined option (* separator *)
+                                    * Refined option (* terminator *)
 	                            * Ty (*Body type *) * Refined option (* length *) 
 
     (* Representation of empty type *)
@@ -79,7 +77,6 @@ struct
         |  Switch(a,id,branches)        => a
         |  RArray (a,sep,term,body,len) => a
 
-    fun getModel ( ty : Ty ) : DataModel = #model (getAuxInfo ty)
     fun getTypeComplexity ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
     fun getDataComplexity ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
 
@@ -113,7 +110,6 @@ struct
            , label = SOME label
            , typeComp = junkComplexity
            , dataComp = junkComplexity
-           , model    = NoModel
            }
 	end
 
@@ -125,7 +121,6 @@ struct
            , label = SOME label
            , typeComp = junkComplexity
            , dataComp = junkComplexity
-           , model    = NoModel
            }
 	end
 

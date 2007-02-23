@@ -3,7 +3,7 @@ structure Complexity = struct
     (* Determine if a positive integer is a power of two.
        This is a tail recursive implementation
      *)
-    fun isPowerTwo (n:int):int option =
+    fun isPowerTwo ( n : int ) : int option =
         let fun isPowerTwo'(n:int,acc:int):int option =
                 ( case n of
                     0 => NONE
@@ -14,6 +14,20 @@ structure Complexity = struct
                 )
         in isPowerTwo'(n,0)
         end
+
+    (* Same thing for large integers *)
+    fun isPowerTwoL ( n : LargeInt.int ) : int option =
+        let fun isPowerTwo'(n:LargeInt.int,acc:int) : int option =
+                ( case n of
+                    0 => NONE
+                  | 1 => SOME acc
+                  | n => if n mod 2 = 0
+                         then isPowerTwo'(LargeInt.div (n,2),acc + 1)
+                         else NONE
+                )
+        in isPowerTwo'(n,0)
+        end
+
 
     (* Complexity type
        Sometimes it is easy to measure complexity in bits, sometimes
@@ -36,6 +50,8 @@ structure Complexity = struct
 
     (* Log base 2 of a positive integer *)
     fun log2 (n:int):real = Math.ln (Real.fromInt n) / Math.ln (Real.fromInt 2)
+    fun log2L (n:LargeInt.int):real =
+      Math.ln (Real.fromLargeInt n) / Math.ln (Real.fromInt 2)
     (* Log base 2 of a positive real *)
     fun log2r (r:real):real = Math.ln r / Math.ln (Real.fromInt 2)
 
@@ -107,5 +123,21 @@ structure Complexity = struct
                NONE   => f
              | SOME m => LengthMap.insert (f,n,m+1)
         )
+
+    (* Convert an integer to a complexity *)
+    fun int2Complexity ( n : int ) : Complexity =
+    ( case isPowerTwo n of
+           NONE   => Precise (log2 n)
+         | SOME p => Bits p
+    )
+
+    fun int2ComplexityL ( n : LargeInt.int ) : Complexity =
+    ( case isPowerTwoL n of
+           NONE   => Precise (log2L n)
+         | SOME p => Bits p
+    )
+
+    fun sumComplexities ( cs : Complexity list ) : Complexity =
+        foldl ( fn (c1,c2) => combine c1 c2 ) zeroComplexity cs
 
 end

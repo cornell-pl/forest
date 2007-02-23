@@ -23,68 +23,44 @@ structure Model = struct
              let val tok     = tokenOf (hd ts)
                  val maxlen  = maxTokenLength ts
                  val rmaxlen = Real.fromInt maxlen
+                 fun updateCompBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
+                     Base ( updateComplexities a t d, ts )
              in ( case tok of
                     PbXML (s1, s2)    => raise GoFigure
                   | PeXML (s1, s2)    => raise GoFigure
                   | Ptime s           =>
                        let val timeProb = (1.0 / 60.0) * (1.0 / 60.0) * (1.0 / 24.0)
                            val timeComp = prob2Complexity timeProb
-                       in Base ( updateComplexities a timeComp timeComp
-                               , ts
-                               )
+                       in updateCompBase ty timeComp timeComp
                        end
                   | Pmonth s          =>
-                       let val monthProb = 1.0 / 12.0
-                           val monthComp = prob2Complexity monthProb
-                       in Base ( updateComplexities a monthComp monthComp
-                               , ts
-                               )
+                       let val monthComp = prob2Complexity ( 1.0 / 12.0 )
+                       in updateCompBase ty monthComp monthComp
                        end
                   (* Assumes IP addresses are made up of 3 digit pieces
                      Note: this is a case where type complexity differs
                      from data complexity
                    *)
                   | Pip s             =>
-                       Base ( updateComplexities a
-                                ( prob2Complexity ( 1.0 / 100.0 ) )
-                                ( prob2Complexity ( power ( 1.0 / 100.0 ) rmaxlen ) )
-                            , ts
-                            )
+                       updateCompBase ty ( prob2Complexity ( 1.0 / 100.0 ) )
+                                         ( prob2Complexity ( power ( 1.0 / 100.0 ) rmaxlen ) )
                   (* Assumes ints are digits 0 through 10 *)
                   | Pint l            =>
-                       Base ( updateComplexities a
-                                ( prob2Complexity ( 1.0 / 10.0 ) )
-                                ( prob2Complexity ( power ( 1.0 / 10.0 ) rmaxlen ) )
-                            , ts
-                            )
+                       updateCompBase ty ( prob2Complexity ( 1.0 / 10.0 ) )
+                                         ( prob2Complexity ( power ( 1.0 / 10.0 ) rmaxlen ) )
                   | Pstring s         =>
-                       Base ( updateComplexities a
-                                ( prob2Complexity probStringChar )
-                                ( prob2Complexity ( power probStringChar rmaxlen ) )
-                            , ts
-                            )
+                       updateCompBase ty ( prob2Complexity probStringChar )
+                                         ( prob2Complexity ( power probStringChar rmaxlen ) )
                   | Pgroup x          => raise GoFigure
                   | Pwhite s          =>
-                       Base ( updateComplexities a
-                                ( prob2Complexity probWhiteChar )
-                                ( prob2Complexity ( power probWhiteChar rmaxlen ) )
-                            , ts
-                            )
+                       updateCompBase ty ( prob2Complexity probWhiteChar )
+                                         ( prob2Complexity ( power probWhiteChar rmaxlen ) )
                   | Other c           =>
-                       let val otherProb = 1.0 / 256.0
-                           val otherComp = prob2Complexity otherProb
-                       in Base ( updateComplexities a otherComp otherComp
-                               , ts
-                               )
+                       let val otherComp = prob2Complexity ( 1.0 / 256.0 )
+                       in updateCompBase ty otherComp otherComp
                        end
-                  | Pempty            =>
-                       Base ( updateComplexities a zeroComplexity zeroComplexity
-                            , ts
-                            )
-                  | Error             =>
-                       Base ( updateComplexities a impossible impossible
-                            , ts
-                            )
+                  | Pempty            => updateCompBase ty zeroComplexity zeroComplexity
+                  | Error             => updateCompBase ty impossible impossible
                 )
              end
          | TBD (a,i,cl)                 => raise GoFigure
@@ -126,7 +102,35 @@ structure Model = struct
                        , x
                        )
              end
-         | RefinedBase (a,r,tl)         => raise GoFigure
+         | RefinedBase (a,r,ts)         =>
+             let fun refinedComp ( ts:LToken list ) ( r:Refined ) : Complexity * Complexity =
+                 let val maxlen  = maxTokenLength ts
+                     val rmaxlen = Real.fromInt maxlen
+                 in ( case r of
+                           StringME s     => ( prob2Complexity probStringChar
+                                             , prob2Complexity ( power probStringChar rmaxlen )
+                                             )
+                         | Int (min, max) => ( int2ComplexityL ( max - min + 1 )
+                                             , multComp maxlen ( int2ComplexityL ( max - min + 1 ) )
+                                             )
+                         | IntConst n     => ( int2ComplexityL n, int2ComplexityL n )
+                         | StringConst s  => ( int2Complexity (size s), int2Complexity (size s) )
+                         | Enum rl        =>
+                             let val comps     = map (refinedComp ts) rl
+                                 val typeComps = map #1 comps
+                                 val dataComps = map #2 comps
+                             in ( sumComplexities typeComps
+                                , sumComplexities dataComps
+                                )
+                             end
+                         | LabelRef i     => raise GoFigure
+                    )
+                 end
+                 fun updateCompRefinedBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
+                     RefinedBase ( updateComplexities a t d, r, ts )
+                 val ( typeComp, dataComp ) = refinedComp ts r
+             in updateCompRefinedBase ty typeComp dataComp
+             end
          | Switch(a,id,branches)        => raise GoFigure
          | RArray (a,sep,term,body,len) => raise GoFigure
     )
