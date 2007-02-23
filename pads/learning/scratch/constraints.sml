@@ -278,7 +278,7 @@ structure Map = RedBlackMapFn(struct
 	(* utility functions to determine if a dependency is "useless" *)
 	(*determine if a label is found inside Ty *)
 	fun is_inside (lab:Id) (ty:Ty) = case ty of
-            Base ({coverage, label}, _) => 
+            Base ({coverage, label, ...}, _) => 
 		(case label of 
 			SOME id => (if Atom.same(lab, id) then true else false)
 		        | NONE => false)
@@ -297,7 +297,7 @@ structure Map = RedBlackMapFn(struct
 	
 	(* finds the Punion with a particular label in Ty *)
 	fun sum_with_lab (lab:Id) (ty:Ty) = case ty of 
-		Punion({coverage, label}, tylist) => 
+		Punion({coverage, label, ...}, tylist) => 
 				(case label of SOME id =>
 					(if Atom.same(id, lab) then ty
 				 	else try (sum_with_lab lab) tylist)

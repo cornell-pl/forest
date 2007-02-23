@@ -172,11 +172,9 @@ case ty of
   	val rem_reduced = map (remove_degenerate_list) rem_tups
   in
   	case (cpfx, csfx) of
-  	  (h::t, _) => Pstruct ({coverage=(#coverage a), 
-			label=SOME(getLabel({coverage=0, label=NONE}))}, 
+  	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ [ Punion(a, rem_reduced) ] @ csfx)
-  	| (_,h::t) => Pstruct ({coverage=(#coverage a), 
-			label=SOME(getLabel({coverage=0, label=NONE}))}, 
+  	| (_,h::t) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ [ Punion(a, rem_reduced) ] @ csfx)
   	| (nil,nil) => Punion (a, rem_reduced)
   end
@@ -284,7 +282,13 @@ and refine_array ty =
 		  | _ => raise TyMismatch
 		fun droplast(ty) = 
 		  case ty of 
-		  Pstruct(aux, tylist) => Pstruct(aux, List.take(tylist, (length tylist) -1))
+		  Pstruct(aux, tylist) => 
+			(case (length tylist) of 
+			 0 => raise Size
+			| 1 => RefinedBase(aux, StringConst(""), nil)
+			| 2 => (hd tylist)
+			| _ =>	Pstruct(aux, List.take(tylist, (length tylist) -1))
+			)
 		  | _ => raise TyMismatch
 		fun dropfirst(ty) = 
 		  case ty of 
@@ -295,25 +299,62 @@ and refine_array ty =
 		  case ty of
 		  Pstruct(aux, tylist) => Pstruct(aux, [newty]@tylist)
 		  |RefinedBase(aux, _, _) => Pstruct(aux, [newty, ty])
+		  |Base(aux, _) => Pstruct(aux, [newty, ty])
 		  | _ => raise TyMismatch
 		fun addtotail(ty, newty) =
 		  (*Note: aux is wrong here *)
 		  case ty of
 		  Pstruct(aux, tylist) => Pstruct(aux, tylist@[newty])
 		  |RefinedBase(aux, _, _) => Pstruct(aux, [ty, newty])
+		  |Base(aux, _) => Pstruct(aux, [ty, newty])
 		  | _ => raise TyMismatch
+
 	  	fun findRefined ty =
-		  (*funtion to find the first const refined string in this ty*)
+		  (*funtion to find the first base or refine type and convert it to refined type *)
 			case ty of
 			  Pstruct(_, tylist) => findRefined (hd tylist)
 			| RefinedBase(_, refined, _) => SOME(refined)
+			| Base(_, ltokens) => 
+				let val token = (#1 (hd ltokens))	
+				in
+				case token of
+					  Pint(x) => SOME(IntConst(x))
+					| Pstring(s) => SOME(StringConst(s))
+					| Pwhite(s) => SOME(StringConst(s))
+					| Other(c) => SOME(StringConst(Char.toString(c)))
+					| _ => NONE
+				end
 			| _ => NONE
+		fun combineRefined (ref1, ref2) =
+			case (ref1, ref2) of
+			(StringME(s), Int(_)) => SOME(StringME(substring(s, 0, size(s)-1)
+						^"[0-9]*/"))
+			| (StringME(s), IntConst(_)) => SOME(StringME(substring(s, 0, size(s)-1)^
+							"[0-9]*/"))
+			| (StringME(s), StringME(t)) => SOME(StringME(substring(s, 0, size(s)-1)^
+						      substring(s, 1, size(s)-1)))
+			| (StringConst(s), StringConst(t)) => SOME(StringConst(s^t))
+			| (StringConst(s), Int(_)) => SOME(StringME("/"^s^"[0-9]*/"))
+			| (StringConst(s), IntConst(_)) => SOME(StringME("/"^s^"[0-9]*/"))
+			| (Enum(l1), Enum(l2)) => SOME(Enum(l1@l2))
+			| _ => NONE
+				
 		fun getRefine(ty) = case ty of RefinedBase(_, r, _) => SOME(r) 
 					| _ => NONE
+		fun isEmpty(ty) = case ty of 
+					RefinedBase(_, StringConst(""), _) => true
+					| Base(_, tkl) =>
+						( 
+						case (hd tkl) of 
+							(Pempty, _) => true
+							| _ => false
+						)
+					| _=> false
+
 		(*the separator should be a refinedbase ty in the last position
-		 of the first and body tys, or the first position of the body and
-		 the last tys*)
-		fun getSep(first, body, last)=
+		 of the first and body tys, or no separator if the two elements are not
+		 equal, or if the body is the same as the tail or the tail is empty *)
+		fun getSepTerm(first, body, last)=
 		let
 			val bodyhd = getRefine(firstEle(body))	
 			val bodytail = getRefine(lastEle(body))
@@ -321,42 +362,57 @@ and refine_array ty =
 					else getRefine(first) (*assume it's a base itself*)
 			val lasthd= if (isStruct(last)) then getRefine(firstEle(last))
 					else getRefine(last)
+			fun findTerm(refined_sep, ty) = 
+				case(refined_sep, findRefined(ty)) of
+				(SOME(x), SOME(y)) => combineRefined(x, y)
+				| _ => NONE
 		in
-			if (refine_equal_op(bodytail, firsttail))
-			then ("tail", bodytail, first, droplast(body), 
-				addtohead(last, lastEle(body)))
-			else if (refine_equal_op(bodyhd, lasthd)) 
-			  then ("head", bodyhd, addtotail(first, firstEle(body)), 
-				dropfirst(body), last) 
-			  else ("none", NONE, first, body, last) 
+			if (isEmpty(last)) (*no sep and terminator is outside*)
+			  then if ty_equal(1, first, body) then
+					(NONE, NONE, NONE, SOME body, NONE)
+				else
+					(NONE, NONE, SOME first, SOME body, NONE)
+			else (* with possible sep and possible term inside last *)
+			     (* two cases: first = body or first != body *)
+			    if (ty_equal(1, first, body)) then 
+				if (refine_equal_op(firsttail, bodytail)) then (*with sep*)
+				  	if (ty_equal(1, droplast(body), last)) then
+					  (bodytail, NONE, NONE, SOME (droplast(body)), NONE)
+					else (bodytail, findTerm(bodytail, last), 
+					  NONE, SOME(droplast(body)), 
+					  SOME (addtohead(last, lastEle(body))))
+				else (*no sep*)
+					(NONE, findRefined(last), NONE, SOME body, SOME last)
+			     else 
+				if (refine_equal_op(firsttail, bodytail)) then (*with sep*)
+				  	if (ty_equal(1, droplast(body), last)) then
+				  	  (bodytail, NONE, SOME first, SOME(droplast(body)), NONE)
+					else (bodytail, findTerm(bodytail, last), 
+					  SOME first, SOME(droplast(body)), 
+					  SOME(addtohead(last, lastEle(body))))
+				else (*no sep*)
+					(NONE, findRefined(last), SOME first, SOME body, SOME last)
 		end 
 	in
 		if (isStruct(body))
 		then
 		(
 		  let 
-		    val (pos, sepop, first', body', last') = getSep(first, body, last)
+		    val (sepop, termop, firstop, bodyop, lastop) = getSepTerm(first, body, last)
 		    val newty = 
-			if ((pos="tail" andalso ty_equal(1, first, body) 
-				andalso ty_equal(1, body', last))
-			   orelse (pos="head" andalso ty_equal(1, first, body') 
-					andalso ty_equal(1, body, last)))
-			then RArray(aux, sepop, NONE, body', lenop)
-			else if (ty_equal(1, first, body))
-			     then
-				  Pstruct({coverage=(#coverage aux), 
-				  label = SOME(getLabel({coverage=0, label=NONE}))}, 
-				  [RArray(aux, sepop, findRefined(last'), body', lenop), last'])
-			     else if (ty_equal(1, body, last))
-				  (*not possible for body = last*)
-			          then Pstruct({coverage=(#coverage aux), 
-				  label = SOME(getLabel({coverage=0, label=NONE}))},
-				  [first', RArray(aux, sepop, NONE, body', lenop)])
-				  else 
-				    Pstruct({coverage=(#coverage aux), 
-				    label = SOME(getLabel {coverage=0, label=NONE})},
-				    [first', 
-				     RArray(aux, sepop, findRefined(last'), body', lenop), last'])
+			case (firstop, bodyop, lastop) of 
+			 (NONE, SOME(body'), NONE) => 
+				RArray(aux, sepop, termop, body', lenop)
+			|(NONE, SOME(body'), SOME(last')) =>
+			  	Pstruct(mkTyAux(#coverage aux), 
+				[RArray(aux, sepop, termop, body', lenop), last'])
+			|(SOME(first'), SOME(body'), NONE) =>
+			  	Pstruct(mkTyAux(#coverage aux), 
+				[first', RArray(aux, sepop, NONE, body', lenop)])
+			|(SOME(first'), SOME(body'), SOME(last')) =>
+			  	Pstruct(mkTyAux(#coverage aux), 
+			    	[first', RArray(aux, sepop, findRefined(last'), body', lenop), last'])
+			| _ => raise TyMismatch
 (*
 			val _ = (print "Done refining array to:\n"; printTy newty) 
 *)
@@ -414,7 +470,7 @@ data labeled *)
 (* Notice that the unique constraint has not been taken away from the LabelMap *)
 and uniqueness_to_const cmos ty =
 case ty of
-  Base({coverage, label=SOME id}, tokens) => 
+  Base({coverage, label=SOME id, ...}, tokens) => 
     (case LabelMap.find(cmos, id) of  
       SOME consts => 
         let
@@ -430,61 +486,61 @@ case ty of
 		  SOME(PbXML(x, y)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id}, 
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst("<"^x^" "^y^">"), tokens)
 			)
 		| SOME(PeXML(x, y)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id}, 
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst("</"^x^" "^y^">"), tokens)
 			)
          	| SOME(Pint(x)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id}, 
+				RefinedBase((mkTyAux1(coverage, id)), 
 				IntConst(x), tokens)
 			)
 		| SOME(Pstring(x)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id}, 
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
 		| SOME(Ptime(x)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id}, 
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
 		| SOME(Pmonth(x)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id},
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
 		| SOME(Pip(x)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id}, 
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
 		| SOME(Pwhite(x)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id},
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
 		| SOME(Other(x)) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id},
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(Char.toString(x)), tokens)
 			)
 		| SOME(Pempty) => 
 			(
 				newcmos, 
-				RefinedBase({coverage=coverage, label = SOME id},
+				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(""), tokens)
 			)
        		| _ => (cmos, ty)
@@ -524,8 +580,8 @@ case ty of
     	 	| NONE => (NONE, cmos) 
 	(* function to test if a base value with a specific id exists in a ty list*) 
 	fun existsbase(tylist, id) = 
-		case tylist of Base({coverage, label=SOME id}, _)::tail => true
-			| RefinedBase({coverage, label=SOME id}, _, _)::tail => true
+		case tylist of Base({coverage, label=SOME id, ...}, _)::tail => true
+			| RefinedBase({coverage, label=SOME id, ...}, _, _)::tail => true
 			| _::tail => existsbase(tail, id)
 			| nil => false
 				
@@ -604,7 +660,7 @@ case ty of
 (*Notice constraints are not deleted from the cmap yet*)
 and enum_range_to_refine cmos ty = 
   case ty of                  
-    Base({coverage, label=SOME(id)}, b) =>         
+    Base({coverage, label=SOME(id), ...}, b) =>         
     (case LabelMap.find(cmos,id) of 
       SOME consts =>    
         let             
@@ -613,13 +669,13 @@ and enum_range_to_refine cmos ty =
                       let
                         val items = BDSet.listItems set
                         val refs = map tokentorefine items
-                        val ty' = RefinedBase({coverage=coverage, label = SOME id}, 
+                        val ty' = RefinedBase(mkTyAux1(coverage, id), 
 						Enum refs, b)
                      	(* val _ = print ("ENUM" ^ (tytos ty')) *)
                       in
                         (ty', newconsts@t)
                       end
-		  | (Range(min,max)):: t => (RefinedBase({coverage=coverage, label = SOME id}, 
+		  | (Range(min,max)):: t => (RefinedBase(mkTyAux1(coverage, id), 
 				Int(min, max), b), newconsts@t)
                   | h :: t => check_enum t (newconsts@[h])
                   | nil => (ty, newconsts) 

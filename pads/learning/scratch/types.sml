@@ -106,6 +106,18 @@ struct
            }
 	end
 
+    fun mkTyAux1 (coverage, id) = 
+	let val next = !Tystamp
+            val () = Tystamp := !Tystamp + 1
+            val label = id
+	in { coverage = coverage
+           , label = SOME label
+           , typeComp = junkComplexity
+           , dataComp = junkComplexity
+           , model    = NoModel
+           }
+	end
+
     fun getCoverage ty = #coverage(getAuxInfo ty)
     fun sumCoverage tys = 
 	case tys of [] => 0

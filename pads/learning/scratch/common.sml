@@ -195,8 +195,10 @@ structure Common = struct
 				ty_equal(comparetype, #body a1, #body a2) andalso 
 				ty_equal(comparetype, #last a1, #last a2)
 			| (RefinedBase (_, r1, tl1), RefinedBase(_, r2, tl2)) => 
-				refine_equal(r1, r2) andalso 
-				foldr myand true (ListPair.map ltoken_equal(tl1, tl2))
+				if (comparetype = 0) then
+				(refine_equal(r1, r2) andalso 
+				foldr myand true (ListPair.map ltoken_equal(tl1, tl2)))
+				else refine_equal(r1, r2)
 			| (Switch (_, id1, rtylist1), Switch(_, id2, rtylist2)) =>
 				let val (rl1, tylist1) = ListPair.unzip (rtylist1)
 				    val (rl2, tylist2) = ListPair.unzip (rtylist2)

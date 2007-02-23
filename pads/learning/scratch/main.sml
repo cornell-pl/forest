@@ -15,6 +15,9 @@ structure Main : sig
     fun doIt () = 
 	let val fileName = !srcFile
 	    val ty = computeStructure fileName
+
+	    val ty = Rewrite.run(ty)
+
 	in
 	    Printing.dumpTyInfo (!outputDir) ty
 	end
