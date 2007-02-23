@@ -719,7 +719,15 @@ struct
 	end
 
     fun mkBottom (coverage,cl) = 
-	Bottom ({coverage=coverage, label=SOME(mkBOTLabel (!Bottomstamp))}, !Bottomstamp, cl) before Bottomstamp := !Bottomstamp + 1
+	Bottom ( { coverage=coverage
+                 , label=SOME(mkBOTLabel (!Bottomstamp))
+                 , typeComp = junkComplexity    (* TEMP *)
+                 , dataComp = junkComplexity    (* TEMP *)
+                 , model    = NoModel           (* TEMP *)
+                 }
+               , !Bottomstamp
+               , cl
+               ) before Bottomstamp := !Bottomstamp + 1
 
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
     (* coverage is number of records in this context *)
@@ -735,8 +743,16 @@ struct
 	    if (coverage < isNoiseTolerance(!initialRecordCount))
 	    then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
 	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
-	    then TBD ({coverage=coverage, label=SOME(mkTBDLabel (!TBDstamp))}, !TBDstamp, cl) before TBDstamp := !TBDstamp    + 1
-	    else ContextListToTy (currentDepth + 1) cl
+                 then TBD ( { coverage=coverage
+                            , label=SOME(mkTBDLabel (!TBDstamp))
+                            , typeComp = junkComplexity    (* TEMP *)
+                            , dataComp = junkComplexity    (* TEMP *)
+                            , model    = NoModel           (* TEMP *)
+                            }
+                          , !TBDstamp
+                          , cl
+                          ) before TBDstamp := !TBDstamp    + 1
+                 else ContextListToTy (currentDepth + 1) cl
 	end
 
     and clustersToTy curDepth rtokens numRecords clusters = 

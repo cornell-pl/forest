@@ -27,4 +27,14 @@ struct
 	    doit (List.rev ls) ""
 	end
 
+    (* position in a list *)
+    fun position ( a : ''a ) ( l : ''a list ): int option =
+    let fun position' ( n : int ) ( a : ''a ) ( l : ''a list ): int option =
+        ( case l of
+               []      => NONE
+             | (x::xs) => if x = a then SOME n else position' (n+1) a xs
+        )
+    in position' 0 a l
+    end
+
 end

@@ -3,6 +3,10 @@ structure Types =
 struct
     open Config
     open Utils
+    open Complexity
+    open Distribution
+    open Tokens
+
     type location = {lineNo: int, beginloc: int, endloc:int}
 
     datatype Token = PbXML of string * string |
@@ -26,11 +30,30 @@ struct
 
     val Tystamp = ref 0  (* used to give unique ids to nodes in type trees *)
     type Id = Atom.atom			     
-    type AuxInfo = {coverage:int, (* Coverage of 
-				      -- a struct is minimum coverage of its constituents;
-				      -- a union is sum of coverage of its consituents; *)
-                    label : Id option (* introduced during refinement as a tag *)}
+    type AuxInfo = { coverage : int        (* Coverage of
+                                                 -- a struct is minimum coverage
+                                                 --      of its constituents;
+                                                 -- a union is sum of coverage
+                                                         of its consituents; *)
+                   , label    : Id option  (* introduced during refinement as a tag *)
+                   , typeComp : Complexity (* Inherent complexity of the type *)
+                   , dataComp : Complexity (* Average complexity of data given type *)
+                   , model    : DataModel  (* Model chosen for the data *)
+                   }
 
+    val emptyAuxInfo : AuxInfo = { coverage = 0
+                                 , label    = NONE
+                                 , typeComp = junkComplexity
+                                 , dataComp = junkComplexity
+                                 , model    = NoModel
+                                 }
+    fun updateComplexities (a : AuxInfo) (t : Complexity) (d : Complexity) : AuxInfo =
+        { coverage = #coverage a
+        , label    = #label a
+        , typeComp = t
+        , dataComp = d
+        , model    = #model a
+        }
 
     datatype Refined = StringME of string (* describe regular expression in pads syntax *) 
 	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
@@ -68,22 +91,33 @@ struct
         |  Switch(a,id,branches) =>a
         |  RArray (a,sep,term,body,len) => a
 
+    (*    fun getModel (ty : Ty) : Model = #model (getAuxInfo ty) *)
+    fun getModel (ty : Ty) : DataModel = #model (getAuxInfo ty)
+
     fun mkLabel prefix i = Atom.atom("BTy_"^(Int.toString i))
     fun mkTyLabel i = mkLabel "BTy_" i
     fun mkTBDLabel i = mkLabel "TBD_" i
     fun mkBOTLabel i = mkLabel "BOT_" i
 
-    fun getLabel {coverage, label} = 
-	case label of NONE => (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp 
-        | SOME id => id
-    fun getLabelString aux = Atom.toString (getLabel aux)
+    fun getLabel ( a : AuxInfo ) : Atom.atom =
+    let val { coverage = c, label = l, ... } = a
+    in case l of
+            NONE => (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp 
+          | SOME id => id
+    end
+
+    fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
 
     fun mkTyAux coverage = 
 	let val next = !Tystamp
             val () = Tystamp := !Tystamp + 1
             val label = mkTyLabel next
-	in
-	  {coverage = coverage, label = SOME label}
+	in { coverage = coverage
+           , label = SOME label
+           , typeComp = junkComplexity
+           , dataComp = junkComplexity
+           , model    = NoModel
+           }
 	end
 
     fun getCoverage ty = #coverage(getAuxInfo ty)
@@ -155,17 +189,15 @@ struct
       | printTokenTys (t::ts) = (printTokenTy t; printTokenTys ts)
 
 
-   fun covToString {coverage, label} = 
-       let val label = 
-	   if !printIDs then 
-	       case label 
-               of NONE => ""
-               | SOME id => ("Id = "^(Atom.toString id)^" ")
-	   else ""
-       in
-	   label ^ Int.toString coverage
-       end
-
+    fun covToString ( a : AuxInfo ):string =
+    let val { coverage = cov, label=l, ... } = a
+        val lbl = if !printIDs then 
+                     case l of
+                          NONE => ""
+                        | SOME id => ("Id = "^(Atom.toString id)^" ")
+                  else ""
+    in lbl ^ Int.toString cov
+    end
 
     fun contextsToString contexts = 
 	((case contexts 
