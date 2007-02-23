@@ -31,6 +31,8 @@ struct
                                  , dataComp = junkComplexity
                                  , model    = NoModel
                                  }
+
+    (* Update the type and data complexity of an AuxInfo *)
     fun updateComplexities (a : AuxInfo) (t : Complexity) (d : Complexity) : AuxInfo =
         { coverage = #coverage a
         , label    = #label a
@@ -50,7 +52,7 @@ struct
                 | TBD     of AuxInfo * int * Context list 
                 | Bottom  of AuxInfo * int * Context list 
                 | Pstruct of AuxInfo * Ty list 
-                | Punion  of AuxInfo * Ty list 
+                | Punion  of AuxInfo * Ty list
                 | Parray  of AuxInfo * {tokens:(Token * int) list,
 					lengths: (int * int) list, (* list of array (lengths,linenumbers) *)
 					first : Ty,
@@ -65,21 +67,30 @@ struct
     (* Representation of empty type *)
     val emptyTy : Ty = Base (emptyAuxInfo, [])
 
-    fun getAuxInfo ty : AuxInfo = 
+    fun getAuxInfo ( ty : Ty ) : AuxInfo = 
 	case ty 
-        of Base (a,t) => a
-        |  TBD (a,i,cl) => a
-        |  Bottom (a,i,cl) => a
-        |  Pstruct (a,tys) => a
-        |  Punion (a,tys) => a
-        |  Parray (a, _) => a
-        |  RefinedBase (a,r,tl) => a
-        |  Switch(a,id,branches) =>a
+        of Base (a,t)                   => a
+        |  TBD (a,i,cl)                 => a
+        |  Bottom (a,i,cl)              => a
+        |  Pstruct (a,tys)              => a
+        |  Punion (a,tys)               => a
+        |  Parray (a, _)                => a
+        |  RefinedBase (a,r,tl)         => a
+        |  Switch(a,id,branches)        => a
         |  RArray (a,sep,term,body,len) => a
 
-    (*    fun getModel (ty : Ty) : Model = #model (getAuxInfo ty) *)
-    fun getModel (ty : Ty) : DataModel = #model (getAuxInfo ty)
+    fun getModel ( ty : Ty ) : DataModel = #model (getAuxInfo ty)
+    fun getTypeComplexity ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
+    fun getDataComplexity ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
 
+    fun sumTypeComplexities ( tys : Ty list ) : Complexity =
+        foldl ( fn (t,c) => combine (getTypeComplexity t) c )
+              zeroComplexity tys
+                 
+    fun sumDataComplexities ( tys : Ty list ) : Complexity =
+        foldl ( fn (t,c) => combine (getDataComplexity t) c )
+              zeroComplexity tys
+                 
     fun mkLabel prefix i = Atom.atom("BTy_"^(Int.toString i))
     fun mkTyLabel i = mkLabel "BTy_" i
     fun mkTBDLabel i = mkLabel "TBD_" i

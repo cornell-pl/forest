@@ -16,13 +16,14 @@ structure Complexity = struct
         end
 
     (* Complexity type
-       Sometimes it is easy to measure complexity in bits, sometimes it is easier
-       to measure complexity in the number of choices. For example, in an int
-       type, the number of bits is a good measurement, but for a union type,
-       the number of choices is a good measurement. When you convert a number
-       of choices to bits, you get a floating point number (unless the number
-       of choices is a power of two). Similarly, when you combine complexities
-       of bit and choices, you get a floating point number.
+       Sometimes it is easy to measure complexity in bits, sometimes
+       it is easier to measure complexity in the number of choices.
+       For example, in an int type, the number of bits is a good
+       measurement, but for a union type, the number of choices is a
+       good measurement. When you convert a number of choices to bits,
+       you get a floating point number (unless the number
+       of choices is a power of two). Similarly, when you combine
+       complexities of bit and choices, you get a floating point number.
      *)
     datatype Complexity = Bits    of int
                         | Choices of int
@@ -80,6 +81,13 @@ structure Complexity = struct
            )
         end
 
+    (* Multiply a complexity by an integer constant *)
+    fun multComp ( n : int ) ( c : Complexity ) : Complexity =
+        ( case c of
+               Bits b    => Bits    ( n * b )
+             | Choices c => Choices ( n * c )
+             | Precise p => Precise ( Real.fromInt n * p )
+        ) 
     (* Probabilities should be in the interval [0, 1] *)
     type Probability = real
 
