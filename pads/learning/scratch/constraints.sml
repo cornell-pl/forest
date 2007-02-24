@@ -106,16 +106,19 @@ structure Map = RedBlackMapFn(struct
 				
 	(* map used for Switched dependencies *)
 	structure BDOListMap = RedBlackMapFn(struct
-									type ord_key = Token option list
-									fun compare(a,b) = case (a,b) of
-									  (h::t,h2::t2) => if Common.compare(h,h2) = EQUAL then compare(t,t2)
-													 else Common.compare(h,h2)
-									| (nil,h::t) => GREATER
-									| (h::t,nil) => LESS
-									| (nil,nil) => EQUAL
+				type ord_key = Token option list
+				fun compare(a,b) = case (a,b) of
+				  (h::t,h2::t2) => if Common.compare(h,h2) = EQUAL then compare(t,t2)
+						 else Common.compare(h,h2)
+				| (nil,h::t) => GREATER
+				| (h::t,nil) => LESS
+				| (nil,nil) => EQUAL
 									end)
 	fun printll ll f = app (fn x => (app (fn y => print ((f y)^" ")) x; print "\n")) ll
 	
+	fun printDep ( llist, l ) = print ("{" ^ 
+			(concat (map (fn x => x ^ ",") (idstostrs llist))) ^ 
+			"} -> " ^ Atom.toString(l) ^ "\n")
 	(* determines what dependency applies to a specific mapping.
 	   cols are the columns of base data options for each of the columns labeled 
 	   with colLabels. values is the single column list of the value they determine. 
@@ -231,7 +234,6 @@ structure Map = RedBlackMapFn(struct
 			val slist = BDOListMap.foldri (fn(row,v,list) => (row,v) :: list) 
 						nil smap
 			
-			
 			(* finds the most popular result of the switch and 
 			   makes it a default value to try to reduce switched size *)
 			fun tryDefault() = 
@@ -244,7 +246,7 @@ structure Map = RedBlackMapFn(struct
 				val filteredlist = List.filter (fn (row,v') =>not(compare(v,v') = EQUAL)) slist
 				val filteredlist = ([SOME (Pstring "*")], v) :: filteredlist 
 			in
-				if length filteredlist < length rows div 4 andalso length filteredlist < 50 then
+				if length filteredlist < length rows div 2 andalso length filteredlist < 50 then
 					(valLabel,Switched(colLabels,filteredlist))
 				else
 					raise DetermineFailed
@@ -261,7 +263,7 @@ structure Map = RedBlackMapFn(struct
 		    h :: t => ((SOME (h ())) handle DetermineFailed => tryEach t)
 		  | nil => NONE
 	in
-		tryEach [ toMatrix, toSwitched]
+		tryEach [toSwitched, toMatrix]
 	end
 	
 	(* takes a list of columns and a dependency in number form
@@ -336,7 +338,6 @@ structure Map = RedBlackMapFn(struct
 	in
 		List.exists (fn x => x()) [ inside_sum, determines_from_inside ]
 	end
-
 (* the main constraining function. Takes an unlabeled IR and data
 parsed using that IR, and returns:
 the labeled IR, the constraint_map that constraints it, and the labels that were used.
@@ -388,10 +389,6 @@ Also prints out information about the dependencies and keys it found *)
 		val _ = print ("num of keys: " ^ Int.toString(length keys) ^ "\n")
 *)
 		val labeled_keys = map (map (fn x => List.nth(header,x))) keys
-		fun printDep ( llist, l ) = print ("{" ^ 
-			(concat (map (fn x => x ^ ",") (idstostrs llist))) ^ 
-			"} -> " ^ Atom.toString(l) ^ "\n")
-		    
 	        val _ = if Options.print_functional_deps then print "Dependencies:\n" else ()
 	        val _ = if Options.print_functional_deps 
 	              then app printDep labeled_deps

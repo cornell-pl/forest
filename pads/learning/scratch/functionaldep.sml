@@ -192,7 +192,8 @@ fun tane(partition_map : Partition.partition ASMap.map) =
 				val new_part_map = ASMap.filteri ( fn(set,_) => AS.numItems set >= size) new_part_map
 				val keys = map #1 maybe_deps
 			in
-				if AS2.isEmpty newLevel then (print_part_map(new_part_map); (new_deps @ maybe_deps,keys))
+				if AS2.isEmpty newLevel then 
+					(print_part_map(new_part_map); (new_deps @ maybe_deps,keys))
 				else let
 						val (deps,keys') = iterate(newLevel,new_cand,new_part_map,size+1)
 					 in

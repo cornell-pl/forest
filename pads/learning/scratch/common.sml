@@ -109,14 +109,14 @@ structure Common = struct
 				(LargeInt.toString h) ^ "]"
 		| Eq(((lb,i) :: idlist), c) => "Equation " ^ (foldl (fn ((lb,i),str) => str ^ " + " ^ (Rat.toString i) ^ Atom.toString(lb)) ((Rat.toString i) ^ Atom.toString(lb)) idlist) ^ " + " ^ (Rat.toString c)
 		| Eq(nil,c) => "Equation " ^ (Rat.toString c)
-		| Switched (lablist, branches) => "Switched " ^ (let
-														val lab = implode(idstostrs(lablist),"\t")
-														val branches' = map (fn (bdolist,bdo) => "(" ^ bdoltos bdolist ^ ") -> " ^ bdoltos [bdo]) branches
-														val vals = implode(branches',"\n")
-														in
-														 "\n(" ^ lab ^ ")\n" ^ vals ^ "\n"
-														 end)
-	) ^ "\n"
+		| Switched (lablist, branches) => "Switched " ^ (
+		let 
+		val lab = implode(idstostrs(lablist),"\t") 
+		val branches' = map (fn (bdolist,bdo) => "(" ^ bdoltos bdolist ^ ") -> " ^ bdoltos [bdo]) branches 
+		val vals = implode(branches',"\n") 
+		in 
+		"(" ^ lab ^ ")\n" ^ vals 
+		end)) ^ "\n"
 	fun printConstMap cmap = LabelMap.appi (fn (lab,clist) => print (Atom.toString(lab) ^ ":\n" ^ (String.concat(map ctos clist))^ "\n")) cmap
 	fun some(a : 'a option) : 'a = case a of SOME x => x | NONE => raise Size
 	fun isIn(ch,str) = List.exists (fn x => x = ch) (String.explode str)
@@ -214,6 +214,6 @@ structure Common = struct
 				   ty_equal (comparetype, ty1, ty2) andalso
 				   refine_equal(some(len1), some(len2))
 			| _ => false 
-		handle Size => (print "hahahahahahaha\n"; false)
+		handle Size => false
 	end
 end

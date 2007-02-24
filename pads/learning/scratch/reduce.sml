@@ -567,7 +567,8 @@ case ty of
 				    (* we are only interested in 1-1 mapping in switched *)
 				    if length(ids) = 1 andalso 
 					length(#1 (hd mappings))=1 
-				    then (SOME (ids, mappings), newclist@t)
+				    then 
+					(SOME (ids, mappings), newclist@t)
 				    else find_switch t (newclist@[Switched(ids, mappings)])
       	  			  | h :: t => find_switch t (newclist@[h])
       	  			  | nil => (NONE, newclist)
@@ -616,8 +617,8 @@ case ty of
 		end
 	   | _ => ty
 		    
-	fun rewrite_switch (cmos, tylist) =
-	    case tylist of 
+	fun rewrite_switch (cmos, tlist) =
+	    case tlist of 
 		h::rest => 
 		(
 		case h of 
@@ -627,7 +628,7 @@ case ty of
 			  in 
 			    case c of 
 				SOME ([id], mappings) =>
-					if existsbase(tylist, id)
+					if (existsbase(tylist, id))
 			    		then 
 					  let val (newcmos, rest') = rewrite_switch(newcmos, rest)
 					  in

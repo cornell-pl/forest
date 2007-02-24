@@ -12,7 +12,7 @@ structure Config = struct
     val def_outputDir  =  "gen/"
     val def_srcFile    = "toBeSupplied"
     val def_printLineNos = false
-    val def_printIDs     = false
+    val def_printIDs     = false 
 
     val depthLimit = ref def_depthLimit
     val outputDir = ref def_outputDir

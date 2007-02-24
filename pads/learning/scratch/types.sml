@@ -256,8 +256,8 @@ struct
 			    prefix ^ "End Parray"
         |  RefinedBase (aux, refined, tl) => (refinedToString refined)^("(" ^(covToString aux)^")") 
         |  Switch(aux ,id, retys) => "Switch("^Atom.toString(id)^"):\n"^
-	 		    (lconcat (List.map (fn (re, ty) => (prefix^"\t case "^(refinedToString re)^": "^ 
-			    (TyToStringD prefix longTBDs longBottom (";\n") ty))) retys))^
+	 		    (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
+			    (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty))) retys))^
 			    prefix ^ "End Switch"
         |  RArray (aux, sep, term, body, len) => "RArray("^(covToString aux)^")\n"^
 			    (case sep of SOME septok =>

@@ -8,7 +8,7 @@ let
   val _ = printTy ty
   val _ = print "\n"
   val cmap = Constraint.constrain'(ty);
-(*  val _ = printConstMap cmap *)
+  (*val _ = printConstMap cmap *)
   val reduced_ty = Reduce.reduce (SOME(cmap)) ty 
   val _ = print "\nAfter reduction:\n"
   val _ = printTy reduced_ty
