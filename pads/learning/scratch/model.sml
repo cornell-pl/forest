@@ -17,6 +17,29 @@ structure Model = struct
 
     fun maxInt ( l : int list ) : int = foldl Int.max 0 l
 
+    fun refinedComp ( multiplier:int ) ( r:Refined ) : Complexity * Complexity =
+        let val rmaxlen = Real.fromInt multiplier
+        in ( case r of
+                  StringME s     => ( prob2Complexity probStringChar
+                                    , prob2Complexity ( power probStringChar rmaxlen )
+                                    )
+                | Int (min, max) => ( int2ComplexityL ( max - min + 1 )
+                                    , multComp multiplier ( int2ComplexityL ( max - min + 1 ) )
+                                    )
+                | IntConst n     => ( int2ComplexityL n, int2ComplexityL n )
+                | StringConst s  => ( int2Complexity (size s), int2Complexity (size s) )
+                | Enum rl        =>
+                    let val comps     = map (refinedComp 1) rl
+                        val typeComps = map #1 comps
+                        val dataComps = map #2 comps
+                    in ( sumComplexities typeComps
+                        , sumComplexities dataComps
+                        )
+                    end
+                | LabelRef i     => raise GoFigure
+           )
+        end
+
     fun measure ( ty : Ty ) : Ty =
     ( case ty of
            Base (a, ts)               =>
@@ -103,35 +126,25 @@ structure Model = struct
                        )
              end
          | RefinedBase (a,r,ts)         =>
-             let fun refinedComp ( ts:LToken list ) ( r:Refined ) : Complexity * Complexity =
-                 let val maxlen  = maxTokenLength ts
-                     val rmaxlen = Real.fromInt maxlen
-                 in ( case r of
-                           StringME s     => ( prob2Complexity probStringChar
-                                             , prob2Complexity ( power probStringChar rmaxlen )
-                                             )
-                         | Int (min, max) => ( int2ComplexityL ( max - min + 1 )
-                                             , multComp maxlen ( int2ComplexityL ( max - min + 1 ) )
-                                             )
-                         | IntConst n     => ( int2ComplexityL n, int2ComplexityL n )
-                         | StringConst s  => ( int2Complexity (size s), int2Complexity (size s) )
-                         | Enum rl        =>
-                             let val comps     = map (refinedComp ts) rl
-                                 val typeComps = map #1 comps
-                                 val dataComps = map #2 comps
-                             in ( sumComplexities typeComps
-                                , sumComplexities dataComps
-                                )
-                             end
-                         | LabelRef i     => raise GoFigure
-                    )
-                 end
-                 fun updateCompRefinedBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
+             let fun updateCompRefinedBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
                      RefinedBase ( updateComplexities a t d, r, ts )
-                 val ( typeComp, dataComp ) = refinedComp ts r
+                 val maxlen = maxTokenLength ts
+                 val ( typeComp, dataComp ) = refinedComp maxlen r
              in updateCompRefinedBase ty typeComp dataComp
              end
-         | Switch(a,id,branches)        => raise GoFigure
+         | Switch(a,id,bs)        =>
+             let val switches    = map #1 bs
+                 val branches    = map #2 bs
+                 val switchComps = map (refinedComp 1) switches
+                 val switchTypeComps  = sumComplexities (map #1 switchComps)
+                 val measuredBranches = map measure branches
+                 val branchesTypeComp = sumTypeComplexities measuredBranches
+                 val branchesDataComp = sumDataComplexities measuredBranches
+             in Switch ( updateComplexities a zeroComplexity zeroComplexity
+                       , id
+                       , ListPair.zip (switches, measuredBranches)
+                       )
+             end
          | RArray (a,sep,term,body,len) => raise GoFigure
     )
 
