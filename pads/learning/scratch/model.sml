@@ -13,7 +13,7 @@ structure Model = struct
 
     type TokenListDensity = ( Token list ) Density
     fun junkTokenListDensity ( tl : Token list ) : TokenListDensity =
-       fn ( ul : Token list ) => if ul = tl then 1.0 else 0.0
+      fn ( ul : Token list ) => if ul = tl then 1.0 else 0.0
 
     fun maxInt ( l : int list ) : int = foldl Int.max 0 l
 
@@ -24,10 +24,13 @@ structure Model = struct
                                     , prob2Complexity ( power probStringChar rmaxlen )
                                     )
                 | Int (min, max) => ( int2ComplexityL ( max - min + 1 )
-                                    , multComp multiplier ( int2ComplexityL ( max - min + 1 ) )
+                                    , multComp multiplier
+                                               ( int2ComplexityL ( max - min + 1 ) )
                                     )
                 | IntConst n     => ( int2ComplexityL n, int2ComplexityL n )
-                | StringConst s  => ( int2Complexity (size s), int2Complexity (size s) )
+                | StringConst s  => ( int2Complexity (size s)
+                                    , int2Complexity (size s)
+                                    )
                 | Enum rl        =>
                     let val comps     = map (refinedComp 1) rl
                         val typeComps = map #1 comps
@@ -125,14 +128,14 @@ structure Model = struct
                        , x
                        )
              end
-         | RefinedBase (a,r,ts)         =>
+         | RefinedBase ( a, r, ts ) =>
              let fun updateCompRefinedBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
                      RefinedBase ( updateComplexities a t d, r, ts )
                  val maxlen = maxTokenLength ts
                  val ( typeComp, dataComp ) = refinedComp maxlen r
              in updateCompRefinedBase ty typeComp dataComp
              end
-         | Switch(a,id,bs)        =>
+         | Switch ( a, id, bs)      =>
              let val switches    = map #1 bs
                  val branches    = map #2 bs
                  val switchComps = map (refinedComp 1) switches
@@ -142,10 +145,32 @@ structure Model = struct
                  val branchesDataComp = sumDataComplexities measuredBranches
              in Switch ( updateComplexities a zeroComplexity zeroComplexity
                        , id
-                       , ListPair.zip (switches, measuredBranches)
+                       , ListPair.zip ( switches, measuredBranches )
                        )
              end
-         | RArray (a,sep,term,body,len) => raise GoFigure
+         | RArray ( a, osep, oterm, body, olen ) =>
+             let val rlen = 7 (* How to compute this ????? *)
+                 val measuredBody = measure body
+                 val tbody        = getTypeComplexity measuredBody
+                 val dbody        = getDataComplexity measuredBody
+                 fun updateRArray (t:Complexity) (d:Complexity) =
+                     RArray ( updateComplexities a t d, osep, oterm, measuredBody, olen )
+                 val ( tlen, dlen ) = ( case olen of
+                                             NONE     => ( zeroComplexity, zeroComplexity )
+                                           | SOME len => refinedComp 1 len
+                                      )
+                 val ( tterm, dterm ) = ( case oterm of
+                                               NONE      => ( zeroComplexity, zeroComplexity )
+                                             | SOME term => refinedComp 1 term
+                                        )
+                 val ( tsep, dsep ) = ( case osep of
+                                               NONE     => ( zeroComplexity, zeroComplexity )
+                                             | SOME sep => refinedComp 1 sep
+                                        )
+                 val tcomp = sumComplexities [tbody, tlen, tterm, tsep]
+                 val dcomp = sumComplexities [dbody, dlen, dterm, dsep]
+             in updateRArray tcomp dcomp
+             end
     )
 
 end
