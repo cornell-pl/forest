@@ -2,12 +2,6 @@ structure Tokens = struct
     open Complexity
     open Distribution
 
-    exception BadToken      (* For functions defined on some of the tokens *)
-    exception XMLToken      (* Don't know how to handle these yet *)
-    exception LargeIntToken (* Don't know how to handle these yet *)
-    exception GroupToken    (* Don't know how to handle these yet *)
-    exception ErrorToken    (* Don't know how to handle these yet *)
-
     type location = { lineNo: int, beginloc: int, endloc:int }
 
     (* Establish an order on locations *)
@@ -28,10 +22,12 @@ structure Tokens = struct
     (* Number of possible ASCII characters for string values, according
        to the definition in tokens.lex
      *)
-    val numStringChars : int = 26 + 26 + 10 + 1 + 1
+    val numStringChars : int  = 26 + 26 + 10 + 1 + 1
     val probStringChar : real = 1.0 / Real.fromInt numStringChars
-    val numWhiteChars  : int = 2 (* Space and tab *)
-    val probWhiteChar  : real = 1.0 / Real.fromInt numStringChars
+    val numWhiteChars  : int  = 2 (* Space and tab *)
+    val probWhiteChar  : real = 1.0 / Real.fromInt numWhiteChars
+    val numXMLChars    : int  = 26 + 26
+    val probXMLChar    : real = 1.0 / Real.fromInt numXMLChars
 
     (* Raw token format, pass one over the data *)
     datatype Token = PbXML of string * string |
@@ -162,18 +158,18 @@ structure Tokens = struct
     fun tokenOf (t:LToken):Token = #1 t
     fun tokenLength (t:Token):int =
         ( case t of
-               PbXML (s1, s2) => raise XMLToken
-             | PeXML (s1, s2) => raise XMLToken
+               PbXML (s1, s2) => size s1 + size s2
+             | PeXML (s1, s2) => size s1 + size s2
              | Ptime s        => size s
              | Pmonth s       => size s
              | Pip s          => size s
-             | Pint n         => raise LargeIntToken
+             | Pint n         => size (LargeInt.toString n)
              | Pstring s      => size s
-             | Pgroup grp     => raise GroupToken
+             | Pgroup grp     => 0
              | Pwhite s       => size s
              | Other c        => 1
              | Pempty         => 0
-             | Error          => raise ErrorToken
+             | Error          => 0
         )
 
     fun lTokenLength (t:LToken):int = tokenLength (tokenOf t)

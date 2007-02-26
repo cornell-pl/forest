@@ -8,7 +8,11 @@ struct
     open Tokens
 
     type TokenOrder = Token list
-    type Context = LToken list
+    type Context    = LToken list
+
+    fun maxContextLength ( cl : Context list ) : int =
+        foldl (fn (ltl : LToken list,x : int) => Int.max (maxTokenLength ltl,x)) 0 cl
+
     type DerivedContexts = Context list
     type Partition = (TokenOrder * (DerivedContexts list)) list * (Context list)
 
@@ -23,12 +27,6 @@ struct
                    , typeComp : Complexity (* Inherent complexity of the type *)
                    , dataComp : Complexity (* Average complexity of data given type *)
                    }
-
-    val emptyAuxInfo : AuxInfo = { coverage = 0
-                                 , label    = NONE
-                                 , typeComp = junkComplexity
-                                 , dataComp = junkComplexity
-                                 }
 
     (* Update the type and data complexity of an AuxInfo *)
     fun updateComplexities (a : AuxInfo) (t : Complexity) (d : Complexity) : AuxInfo =
@@ -46,24 +44,27 @@ struct
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
 
     datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
-                | TBD     of AuxInfo * int * Context list 
-                | Bottom  of AuxInfo * int * Context list 
+                | TBD     of AuxInfo *
+                             int     * (* Current depth *) 
+                             Context list
+                  (* Bottom appears to be a noisy TBD *)
+                | Bottom  of AuxInfo *
+                             int     * (* Sequence number on bottoms *)
+                             Context list 
                 | Pstruct of AuxInfo * Ty list 
                 | Punion  of AuxInfo * Ty list
-                | Parray  of AuxInfo * {tokens:(Token * int) list,
-					lengths: (int * int) list, (* list of array (lengths,linenumbers) *)
-					first : Ty,
-					body  : Ty,
-					last  : Ty}
+                | Parray  of AuxInfo * { tokens:(Token * int) list,
+					 lengths: (int * int) list, (* list of array (lengths,linenumbers) *)
+					 first : Ty,
+					 body  : Ty,
+					 last  : Ty}
 
                 | RefinedBase of AuxInfo * Refined * LToken list
                 | Switch  of AuxInfo * Id * (Refined (* switch value *) * Ty) list
-                | RArray of AuxInfo * Refined option (* separator *)
-                                    * Refined option (* terminator *)
-	                            * Ty (*Body type *) * Refined option (* length *) 
-
-    (* Representation of empty type *)
-    val emptyTy : Ty = Base (emptyAuxInfo, [])
+                | RArray  of AuxInfo * Refined option (* separator *)
+                                     * Refined option (* terminator *)
+	                             * Ty             (* body type *)
+                                     * Refined option (* length *) 
 
     fun getAuxInfo ( ty : Ty ) : AuxInfo = 
 	case ty 
@@ -108,8 +109,8 @@ struct
             val label = mkTyLabel next
 	in { coverage = coverage
            , label = SOME label
-           , typeComp = junkComplexity
-           , dataComp = junkComplexity
+           , typeComp = zeroComplexity
+           , dataComp = zeroComplexity
            }
 	end
 
@@ -119,8 +120,8 @@ struct
             val label = id
 	in { coverage = coverage
            , label = SOME label
-           , typeComp = junkComplexity
-           , dataComp = junkComplexity
+           , typeComp = zeroComplexity
+           , dataComp = zeroComplexity
            }
 	end
 

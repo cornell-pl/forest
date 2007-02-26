@@ -28,7 +28,6 @@ structure Complexity = struct
         in isPowerTwo'(n,0)
         end
 
-
     (* Complexity type
        Sometimes it is easy to measure complexity in bits, sometimes
        it is easier to measure complexity in the number of choices.
@@ -52,6 +51,7 @@ structure Complexity = struct
     fun log2 (n:int):real = Math.ln (Real.fromInt n) / Math.ln (Real.fromInt 2)
     fun log2L (n:LargeInt.int):real =
       Math.ln (Real.fromLargeInt n) / Math.ln (Real.fromInt 2)
+
     (* Log base 2 of a positive real *)
     fun log2r (r:real):real = Math.ln r / Math.ln (Real.fromInt 2)
 
@@ -109,20 +109,6 @@ structure Complexity = struct
 
     (* Convert a probability to a complexity *)
     fun prob2Complexity ( p : Probability ) : Complexity = Precise (~ (log2r p))
-
-    (* A mapping having integers as a domain *)
-    structure LengthMap = RedBlackMapFn ( struct type ord_key = int
-                                                 val  compare = Int.compare
-                                          end
-                                        )
-    (* Mapping integers to frequency *)
-    type LengthFreq = int LengthMap.map
-    val emptyLengthFreq : LengthFreq = LengthMap.empty
-    fun addLengthFreq (n:int, f:LengthFreq):LengthFreq =
-        ( case LengthMap.find (f,n) of
-               NONE   => f
-             | SOME m => LengthMap.insert (f,n,m+1)
-        )
 
     (* Convert an integer to a complexity *)
     fun int2Complexity ( n : int ) : Complexity =

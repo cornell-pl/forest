@@ -39,59 +39,81 @@ structure Model = struct
                         , sumComplexities dataComps
                         )
                     end
-                | LabelRef i     => raise GoFigure
+                | LabelRef i     => ( zeroComplexity, zeroComplexity ) (* ????? *)
            )
         end
 
+    fun baseComplexity ( ts : LToken list ) : Complexity * Complexity =
+    let val tok     = tokenOf (hd ts)
+        val maxlen  = maxTokenLength ts
+        val rmaxlen = Real.fromInt maxlen
+    in ( case tok of
+              PbXML (s1, s2)    => ( prob2Complexity probXMLChar
+                                   , prob2Complexity ( power probXMLChar rmaxlen )
+                                   )
+            | PeXML (s1, s2)    => ( prob2Complexity probXMLChar
+                                   , prob2Complexity ( power probXMLChar rmaxlen )
+                                   )
+            | Ptime s           =>
+               let val timeProb = (1.0 / 60.0) * (1.0 / 60.0) * (1.0 / 24.0)
+               in ( prob2Complexity timeProb, prob2Complexity timeProb )
+               end
+            | Pmonth s          => ( prob2Complexity ( 1.0 / 12.0 )
+                                   , prob2Complexity ( 1.0 / 12.0 )
+                                   )
+            (* Assumes IP addresses are made up of 3 digit pieces
+               Note: this is a case where type complexity differs
+               from data complexity *)
+            | Pip s             => ( prob2Complexity ( 1.0 / 100.0 )
+                                   , prob2Complexity ( power ( 1.0 / 100.0 ) rmaxlen )
+                                   )
+            (* Assumes ints are digits 0 through 10 *)
+            | Pint l            => ( prob2Complexity ( 1.0 / 10.0 )
+                                   , prob2Complexity ( power ( 1.0 / 10.0 ) rmaxlen )
+                                   )
+            | Pstring s         => ( prob2Complexity probStringChar
+                                   , prob2Complexity ( power probStringChar rmaxlen )
+                                   )
+            | Pgroup x          => ( zeroComplexity,  zeroComplexity )
+            | Pwhite s          => ( prob2Complexity probWhiteChar
+                                   , prob2Complexity ( power probWhiteChar rmaxlen )
+                                   )
+            | Other c           => ( prob2Complexity ( 1.0 / 256.0 )
+                                   , prob2Complexity ( 1.0 / 256.0 )
+                                   )
+            | Pempty            => ( zeroComplexity,  zeroComplexity )
+            | Error             => ( impossible, impossible )
+       )
+    end
+
+    fun mkBaseComplexity ( a : AuxInfo ) ( ts : LToken list ) : Ty =
+    let val ty      = Base (a, ts)
+        val ( tcomp, dcomp ) = baseComplexity ts
+        fun updateCompBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
+            Base ( updateComplexities a t d, ts )
+    in updateCompBase ty tcomp dcomp
+    end
+
+    fun maxContextComplexity ( cl : Context list ) : Complexity * Complexity =
+    let fun f (ltl:LToken list,comps:Complexity * Complexity ) : Complexity * Complexity =
+        let val ( t1, d1 ) = baseComplexity ltl
+            val ( t2, d2 ) = comps
+        in ( combine t1 t2, combine d1 d2 )
+        end
+    in foldl f ( zeroComplexity, zeroComplexity ) cl
+    end
+    
     fun measure ( ty : Ty ) : Ty =
     ( case ty of
-           Base (a, ts)               =>
-             let val tok     = tokenOf (hd ts)
-                 val maxlen  = maxTokenLength ts
-                 val rmaxlen = Real.fromInt maxlen
-                 fun updateCompBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
-                     Base ( updateComplexities a t d, ts )
-             in ( case tok of
-                    PbXML (s1, s2)    => raise GoFigure
-                  | PeXML (s1, s2)    => raise GoFigure
-                  | Ptime s           =>
-                       let val timeProb = (1.0 / 60.0) * (1.0 / 60.0) * (1.0 / 24.0)
-                           val timeComp = prob2Complexity timeProb
-                       in updateCompBase ty timeComp timeComp
-                       end
-                  | Pmonth s          =>
-                       let val monthComp = prob2Complexity ( 1.0 / 12.0 )
-                       in updateCompBase ty monthComp monthComp
-                       end
-                  (* Assumes IP addresses are made up of 3 digit pieces
-                     Note: this is a case where type complexity differs
-                     from data complexity
-                   *)
-                  | Pip s             =>
-                       updateCompBase ty ( prob2Complexity ( 1.0 / 100.0 ) )
-                                         ( prob2Complexity ( power ( 1.0 / 100.0 ) rmaxlen ) )
-                  (* Assumes ints are digits 0 through 10 *)
-                  | Pint l            =>
-                       updateCompBase ty ( prob2Complexity ( 1.0 / 10.0 ) )
-                                         ( prob2Complexity ( power ( 1.0 / 10.0 ) rmaxlen ) )
-                  | Pstring s         =>
-                       updateCompBase ty ( prob2Complexity probStringChar )
-                                         ( prob2Complexity ( power probStringChar rmaxlen ) )
-                  | Pgroup x          => raise GoFigure
-                  | Pwhite s          =>
-                       updateCompBase ty ( prob2Complexity probWhiteChar )
-                                         ( prob2Complexity ( power probWhiteChar rmaxlen ) )
-                  | Other c           =>
-                       let val otherComp = prob2Complexity ( 1.0 / 256.0 )
-                       in updateCompBase ty otherComp otherComp
-                       end
-                  | Pempty            => updateCompBase ty zeroComplexity zeroComplexity
-                  | Error             => updateCompBase ty impossible impossible
-                )
+           Base ( a, ts )               => mkBaseComplexity a ts
+         | TBD ( a, i, cl )             =>
+             let val (t, d) = maxContextComplexity cl
+             in TBD ( updateComplexities a t d, i, cl )
              end
-         | TBD (a,i,cl)                 => raise GoFigure
-         | Bottom (a,i,cl)              => raise GoFigure
-           (* How to get entropy of data with respect to model? *)
+         | Bottom ( a, i, cl )          =>
+             let val (t, d) = maxContextComplexity cl
+             in Bottom ( updateComplexities a t d, i, cl )
+             end
          | Pstruct (a,tys)              =>
              Pstruct ( updateComplexities a (sumTypeComplexities tys)
                                             (sumDataComplexities tys)

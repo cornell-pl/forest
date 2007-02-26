@@ -17,9 +17,9 @@ is
   model.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
+  tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
   structure.sml
   print.sml
-  tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
   main.sml
 (* the following files are used for refinement not ready to be compiled together
   yet *)
