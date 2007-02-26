@@ -660,13 +660,14 @@ LINK_D = $(LINKER) $(LINKOPTS_D)
 LINK_O = $(LINKER) $(LINKOPTS_O)
 
 PADSC = $(PADS_HOME)/scripts/padsc 
+# PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_HEAPOPSYS)
 PADSC_REAL = $(shell ls $(PADS_HOME)/lib/padsc.* | head -n 1)
-ifeq ($(PADSC_REAL),)
-%: forceabort2
-	@echo "ERROR: no padsc compiler found in $(PADS_HOME)/lib."
-	@exit 1
-forceabort2: ;
-endif
+# ifeq ($(PADSC_REAL),)
+# %: forceabort2
+# 	@echo "ERROR: no padsc compiler found in $(PADS_HOME)/lib."
+# 	@exit 1
+# forceabort2: ;
+# endif
 
 LIBRARY_PATH_TEST = $(LD_LIBRARY_PATH)
 LIBRARY_PATH_TEST_NM = "LD_LIBRARY_PATH"
