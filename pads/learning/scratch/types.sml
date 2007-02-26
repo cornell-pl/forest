@@ -261,16 +261,15 @@ struct
 			    prefix ^ "End Switch"
         |  RArray (aux, sep, term, body, len) => "RArray("^(covToString aux)^")\n"^
 			    (case sep of SOME septok =>
-			    prefix ^ "Separator: "^
+			    prefix ^ "\tSeparator: "^
                             refinedToString(septok)^"\n"
 			    | _ => ""
 			    )^
 			    (case term of SOME termtok =>
-			    prefix ^ "Terminator: "^
+			    prefix ^ "\tTerminator: "^
                             refinedToString(termtok)^"\n"
 			    | _ => ""
 			    )^
-			    prefix ^ "Body:\n"^
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") body) ^ 
 			    prefix ^ "End RArray"
         )^

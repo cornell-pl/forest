@@ -290,17 +290,23 @@ and refine_array ty =
 			| _ =>	Pstruct(aux, List.take(tylist, (length tylist) -1))
 			)
 		  | _ => raise TyMismatch
+(*
 		fun dropfirst(ty) = 
 		  case ty of 
 		  Pstruct(aux, tylist) => Pstruct(aux, List.drop(tylist, 1))
 		  | _ => raise TyMismatch
+*)
 		fun addtohead(ty, newty) =
 		  (*Note: aux is wrong here *)
 		  case ty of
-		  Pstruct(aux, tylist) => Pstruct(aux, [newty]@tylist)
-		  |RefinedBase(aux, _, _) => Pstruct(aux, [newty, ty])
+		  Pstruct(aux, tylist) => adjacent_consts(Pstruct(aux, [newty]@tylist))
+		  | Punion(aux, tylist) => Punion(aux, map (fn oldty => addtohead(oldty, newty)) 
+						tylist)
+		  |RefinedBase(aux, _, _) => adjacent_consts(Pstruct(aux, [newty, ty]))
 		  |Base(aux, _) => Pstruct(aux, [newty, ty])
-		  | _ => raise TyMismatch
+		  | _ => (raise TyMismatch)
+
+(*
 		fun addtotail(ty, newty) =
 		  (*Note: aux is wrong here *)
 		  case ty of
@@ -308,6 +314,7 @@ and refine_array ty =
 		  |RefinedBase(aux, _, _) => Pstruct(aux, [ty, newty])
 		  |Base(aux, _) => Pstruct(aux, [ty, newty])
 		  | _ => raise TyMismatch
+*)
 
 	  	fun findRefined ty =
 		  (*funtion to find the first base or refine type and convert it to refined type *)
@@ -318,10 +325,8 @@ and refine_array ty =
 				let val token = (#1 (hd ltokens))	
 				in
 				case token of
-					  Pint(x) => SOME(IntConst(x))
-					| Pstring(s) => SOME(StringConst(s))
+					  Pint(x) => SOME(Int(x, x)) (* exact range doesn't matter *)
 					| Pwhite(s) => SOME(StringConst(s))
-					| Other(c) => SOME(StringConst(Char.toString(c)))
 					| _ => NONE
 				end
 			| _ => NONE
@@ -375,23 +380,36 @@ and refine_array ty =
 			else (* with possible sep and possible term inside last *)
 			     (* two cases: first = body or first != body *)
 			    if (ty_equal(1, first, body)) then 
-				if (refine_equal_op(firsttail, bodytail)) then (*with sep*)
-				  	if (ty_equal(1, droplast(body), last)) then
-					  (bodytail, NONE, NONE, SOME (droplast(body)), NONE)
-					else (bodytail, findTerm(bodytail, last), 
-					  NONE, SOME(droplast(body)), 
+			  	if (ty_equal(1, droplast(body), last)) then
+				  (bodytail, NONE, NONE, SOME (droplast(body)), NONE)
+				else
+				(* if the body tail can be pushed to last to find a terminator then
+				   we have a sep, otherwise no sep *)
+				let
+				  val termop = findTerm(bodytail, last)
+				in
+				  case termop of 
+					NONE => (NONE, NONE, NONE, SOME body, SOME last)
+					| _ => (bodytail, termop, NONE,  SOME(droplast(body)), 
 					  SOME (addtohead(last, lastEle(body))))
-				else (*no sep*)
-					(NONE, findRefined(last), NONE, SOME body, SOME last)
+				end
 			     else 
-				if (refine_equal_op(firsttail, bodytail)) then (*with sep*)
+				if (refine_equal_op(firsttail, bodytail)) then (*possible with sep*)
 				  	if (ty_equal(1, droplast(body), last)) then
 				  	  (bodytail, NONE, SOME first, SOME(droplast(body)), NONE)
-					else (bodytail, findTerm(bodytail, last), 
-					  SOME first, SOME(droplast(body)), 
-					  SOME(addtohead(last, lastEle(body))))
-				else (*no sep*)
-					(NONE, findRefined(last), SOME first, SOME body, SOME last)
+					else 
+					let
+					  val termop = findTerm(bodytail, last)
+					in
+					  case termop of 
+						NONE => (NONE, findRefined(last), 
+							SOME first, SOME body, SOME last)
+						| _ => (bodytail, termop, SOME first,  
+							SOME(droplast(body)), 
+							SOME (addtohead(last, lastEle(body))))
+					end
+				else (* no sep *)
+					(NONE, findRefined(last), SOME first, SOME body, SOME last)	
 		end 
 	in
 		if (isStruct(body))
@@ -411,7 +429,7 @@ and refine_array ty =
 				[first', RArray(aux, sepop, NONE, body', lenop)])
 			|(SOME(first'), SOME(body'), SOME(last')) =>
 			  	Pstruct(mkTyAux(#coverage aux), 
-			    	[first', RArray(aux, sepop, findRefined(last'), body', lenop), last'])
+			    	[first', RArray(aux, sepop, termop, body', lenop), last'])
 			| _ => raise TyMismatch
 (*
 			val _ = (print "Done refining array to:\n"; printTy newty) 
@@ -428,7 +446,7 @@ and refine_array ty =
 		  val _ = (print "trying to refine array in struct \n"; printTy ty)
 *)
 		  fun findRefined ty =
-		  (*funtion to find the first const refined string in this ty*)
+		  (*function to find the first const refined string in this ty*)
 			case ty of
 			  Pstruct(_, tylist) => findRefined (hd tylist)
 			| RefinedBase(_, refined, _) => SOME(refined)

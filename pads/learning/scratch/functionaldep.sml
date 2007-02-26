@@ -72,6 +72,7 @@ fun compute_deps(level : AS2.set, candidates : AS.set ASMap.map, partition_map :
 	end
 fun printAS(a) = (print "(";app(fn y => print ((Int.toString y) ^ " ")) (AS.listItems a);print ")")
 fun printAS2(as2) =  AS2.app (fn a => (print ""; printAS a; print "")) as2
+fun printASMap(as2) =  ASMap.app (fn a => (print ""; printAS a; print "")) as2
 
 (* implements TANE's prune function, that removes/finds Keys and empty candidates *)
 fun prune(lev, candidates,partition_map,r) = 
@@ -153,6 +154,7 @@ let
 							) pairs
 	val newPart = foldr ( fn((x,y),oldPart) => ASMap.insert(oldPart,AS.union(x,y),Partition.union(find(oldPart,x), find(oldPart,y)))) partition_map newLev
 	val newLevSet = AS2.addList(AS2.empty, map AS.union newLev)
+
 (*
 	val _ = print "Start"
 	val _ = map (fn x => (print "[";printAS2 x; print "]")) blocks
@@ -161,7 +163,9 @@ let
 	val _ = print "\n" *)
 	val _ = (printAS2 lastLevel; print "\n")
 	val _ = printAS2 newLevSet
-	val _ = print "\n" *)
+	val _ = print "\n" 
+*)
+
 in
 	(newLevSet,newPart)
 end
@@ -185,14 +189,23 @@ fun tane(partition_map : Partition.partition ASMap.map) =
 		(* iterate through the levels *)
 		fun iterate(level, candidates, partition_map,size) = 
 			let
-				val _ = if Options.print_levels then print ("Begin Level: " ^ (Int.toString size) ^ "\n") else ()
+				val _ = if Options.print_levels then 
+					(print ("Begin Level: " ^ (Int.toString size) ^ "\n"); 
+					printAS2(level); print "\n";
+					print("Candidates are: "); printASMap(candidates)) 
+					else ()
 				val (new_deps,new_cand) = compute_deps(level,candidates,partition_map,R)
+(*
+				val _ = (print "\nnumber of deps : "; print (Int.toString(length(new_deps))))
+*)
 				val (pl,maybe_deps) = prune(level,new_cand,partition_map,R)
+(*				val _ = (print "\nafter prune number of deps : "; print (Int.toString(length(maybe_deps))))
+*)
 				val (newLevel, new_part_map) = generate_next_level(pl,partition_map)
 				val new_part_map = ASMap.filteri ( fn(set,_) => AS.numItems set >= size) new_part_map
 				val keys = map #1 maybe_deps
 			in
-				if AS2.isEmpty newLevel then 
+				if ((AS2.isEmpty newLevel) orelse (size>1)) then 
 					(print_part_map(new_part_map); (new_deps @ maybe_deps,keys))
 				else let
 						val (deps,keys') = iterate(newLevel,new_cand,new_part_map,size+1)
@@ -209,6 +222,4 @@ fun tane(partition_map : Partition.partition ASMap.map) =
 	in
 		(depSetsToLists(deps), keyList) (* return both the deps (int list) * int and the keys (int lists) *)
 	end
-
-
 end
