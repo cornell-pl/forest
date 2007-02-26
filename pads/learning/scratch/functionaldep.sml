@@ -41,12 +41,12 @@ fun compute_deps(level : AS2.set, candidates : AS.set ASMap.map, partition_map :
 		fun each_x(x : AS.set, (deps : (AS.set * int) list, candidates': AS.set ASMap.map) ) = 
 			let
 				val newCand = ASintersect (map (fn y => find2(candidates', AS.delete(x,y))) (AS.listItems x))
-				val candidates'' = ASMap.insert(candidates',x,newCand)
+				val candidates'' = ASMap.insert(candidates', x, newCand)
 				
 				(* use the Partition.error function since we use stripped partitions *)
 				fun isValid(aset, a) = (
-											Partition.error( find(partition_map, aset) ) =
-									   		Partition.error( find(partition_map, AS.add(aset, a)))
+					Partition.error( find(partition_map, aset) ) =
+					Partition.error( find(partition_map, AS.add(aset, a)))
 									   )
 				fun iterate(a, (deplist, cand) ) = 
 					let
@@ -73,9 +73,9 @@ fun compute_deps(level : AS2.set, candidates : AS.set ASMap.map, partition_map :
 fun printAS(a) = (print "(";app(fn y => print ((Int.toString y) ^ " ")) (AS.listItems a);print ")")
 fun printAS2(as2) =  AS2.app (fn a => (print ""; printAS a; print "")) as2
 fun printASMap(as2) =  ASMap.app (fn a => (print ""; printAS a; print "")) as2
-
+fun printDepList(deps) = app (fn (a, b) => (printAS(a); print "=>"; print((Int.toString b)^"\n"))) deps
 (* implements TANE's prune function, that removes/finds Keys and empty candidates *)
-fun prune(lev, candidates,partition_map,r) = 
+fun prune(lev, candidates, partition_map, r) = 
 let
 	val levl = AS2.listItems lev
 	val levl' = List.filter (fn x => not (AS.isEmpty (find(candidates,x)))) levl
@@ -194,24 +194,34 @@ fun tane(partition_map : Partition.partition ASMap.map) =
 					printAS2(level); print "\n";
 					print("Candidates are: "); printASMap(candidates)) 
 					else ()
-				val (new_deps,new_cand) = compute_deps(level,candidates,partition_map,R)
+				val (new_deps,new_cand) = compute_deps(level,candidates,
+							partition_map,R)
 (*
-				val _ = (print "\nnumber of deps : "; print (Int.toString(length(new_deps))))
+				val _ = (print ("\nnew deps:"^Int.toString(length(new_deps))^"\n"); 
+					printDepList(new_deps))	
 *)
+			in
+				if (size>1) then (new_deps, nil)
+				else
+				let
 				val (pl,maybe_deps) = prune(level,new_cand,partition_map,R)
-(*				val _ = (print "\nafter prune number of deps : "; print (Int.toString(length(maybe_deps))))
+(*
+				val _ = (print ("\nafter prune number of maybe deps:"^
+					Int.toString(length(maybe_deps))^"\n"); 
+				printDepList(maybe_deps))
 *)
 				val (newLevel, new_part_map) = generate_next_level(pl,partition_map)
 				val new_part_map = ASMap.filteri ( fn(set,_) => AS.numItems set >= size) new_part_map
 				val keys = map #1 maybe_deps
-			in
-				if ((AS2.isEmpty newLevel) orelse (size>1)) then 
+				in
+				if ((AS2.isEmpty newLevel)) then 
 					(print_part_map(new_part_map); (new_deps @ maybe_deps,keys))
 				else let
 						val (deps,keys') = iterate(newLevel,new_cand,new_part_map,size+1)
 					 in
 					 	(new_deps @ maybe_deps @ deps, keys @ keys')
 					 end
+				end
 			end
 		(* remove the sets so we can return the deps an easy to use form *)
 		fun depSetsToLists( deplist ) = case deplist of

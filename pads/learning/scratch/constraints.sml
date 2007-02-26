@@ -389,7 +389,8 @@ Also prints out information about the dependencies and keys it found *)
 		val _ = print ("num of keys: " ^ Int.toString(length keys) ^ "\n")
 *)
 		val labeled_keys = map (map (fn x => List.nth(header,x))) keys
-	        val _ = if Options.print_functional_deps then print "Dependencies:\n" else ()
+	        val _ = if Options.print_functional_deps then print ("Dependencies ("^Int.toString(length(labeled_deps))^"):\n") 
+							else ()
 	        val _ = if Options.print_functional_deps 
 	              then app printDep labeled_deps
 	              else ()
