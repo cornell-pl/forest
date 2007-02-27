@@ -1,0 +1,77 @@
+\section{Metric Spaces}
+
+\begdef
+\textit{Metric space}
+
+Let $M$ Be a set.
+% \letfunc{$M \times M$}{$\rho$}{$[0,\infty)$}
+\letfunc{M \times M}{\rho}{[0,\infty)} such that
+\begin{eqnarray*}
+\rho(x,y) = 0\ \mathrm{if\ and\ only\ if}\ x = y & \mathsf{identity} \\
+\rho(x,y) = \rho(y,x)                       & \mathsf{symmetry} \\
+\rho(x,z) \leq \rho(x,y) + \rho(y,z)        & \mathsf{triangle\ inequality}
+\end{eqnarray*}
+The pair $(M,\rho)$ is called a metric space.
+\edefi
+
+\begdef
+\textit{Norm} $\|\cdot\|$ on a metric space.
+
+Let $(M,\rho)$ be a metric space.
+\letfunc{M}{\|\cdot\|}{e}.
+Then $\|\cdot\|$ is a \textit{norm} if
+\begin{eqnarray*}
+\|\mathbf{x}\| = 0 \ \mathrm{if\ and\ only\ if}\ \mathbf{x} = 0 \\
+\|t \mathbf{x}\| = |t| \cdot \|\mathbf{x}\|\ \forall t \in \Re  \\
+\|\mathbf{x} + \mathbf{y}\| \leq \|\mathbf{x}\| + \| \mathbf{y} \|
+\end{eqnarray*}
+\edefi
+
+\begdef
+\textit{Product metric} on $M_1 \times M_2$
+
+Let $(M_1, \rho_1)$ and $(M_2, \rho_2)$ be metric spaces.
+Let $M = M_1 \times M_2$,
+define $\func{M_1 \times M_2}{\rho_1 \times \rho_2}{\mathbb{R}}$ by
+$(\rho_1 \times \rho_2)((x_1, x_2), (y_1, y_2)) = max (\rho_1(x_1,y_1), \rho_2(x_2,y_2))$.
+$\rho_1 \times \rho_2$ is the \textit{product metric} on
+the \textit{product space} $(M_1 \times M_2, \rho_1 \times \rho_2)$.
+\edefi
+
+\begdef
+$\mathbb{T}$
+
+Let $M = [0,1)$.
+Define $\func{M}{\rho}{\mathbb{R}}$ by
+$\rho(x, y) = min\{ |x-y|,|1-x+y|,|1+x-y| \}$, i.e. the shortest arc from $x$
+to $y$ on the circle formed by identifying $0$ with $1$.
+\edefi
+
+\begdef
+\textit{Torus}
+
+The \textit{torus} is the product space $\mathbb{T}^2 = \mathbb{T}\times\mathbb{T}$.
+\edefi
+
+\begdef
+Shift space as a metric space
+
+Let $M = A^\mathbb{Z}$.
+Let $\func{M}{\rho}{\mathbb{R}}$ be defined by
+\[
+\rho(x,y) =
+\begin{cases}
+   2^{-k} & \text{if $x \neq y$ and $k$ is maximal st $x_{[-k,k]} = y_{[-k,k]}$,} \\
+   0      & \text{if $x = y$.}
+\end{cases}
+\]
+
+\edefi
+
+\begdef
+\textit{diameter} of a set $E$
+
+Let $(M,\rho)$ be a metric space.
+Let $E\subseteq M$.
+Then $\mathrm{diam} ( E ) = sup \{ \rho ( x, y ) . x, y \in E \}$.
+\edefi

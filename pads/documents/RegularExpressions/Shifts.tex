@@ -1,0 +1,97 @@
+\section{Shifts}
+
+\subsection {Background}
+
+\begdef
+\textit{Cardinality} $k$.
+
+$\fromzero{k} = \{ 0 \ldots k - 1 \}$
+\edefi
+
+\begdef
+\textit{Cardinality} $2 k + 1$.
+
+$\centralblock{k} = \{ -k \ldots k \}$
+\edefi
+
+\subsection{Full Shifts}
+
+\begdef
+\textit{Bi-infinite sequence} over an alphabet $A$.
+
+A bi-infinite sequence over an alphabet $A$ is an element of the
+set of mappings $\mathbb{Z} \rightarrow A$, i.e. a mapping from integers
+into the alphabet $A$.
+\edefi
+
+\begdef
+\textit{full} $A$ \textit{shift}
+
+Let $A$ be a finite alphabet.
+The \textit{full} $A$ \textit{shift} is the collection of all bi-infinite
+sequences of symbols from $A$. I.e. it is the set \onearrow{A}{}{\mathbb{Z}},
+which is also written $A^{\mathbb{Z}}$.
+\edefi
+
+\begdef
+\textit{block} over $A$
+
+Finite sequence of symbols of $A$, i.e. a map $\fromzero{k}\rightarrow A$
+for some $k$.
+\edefi
+
+\begdef
+$k$-\textit{block}
+
+A $k$-block is a mapping $\fromzero{k} \rightarrow A$.
+\edefi
+
+\begdef
+\textit{central} $2 k$ \textit{block} of $x$
+
+A central $2 k$ block is the subblock $x_{[-k,k]}$
+\edefi
+
+\begdef
+Shift map \func{A^{\mathbb{Z}}}{\sigma}{A^{\mathbb{Z}}}
+
+The \textit{shift map} \func{A^{\mathbb{Z}}}{\sigma}{A^{\mathbb{Z}}}
+is defined by $\sigma(x)_i = x_{i+1}$.
+\edefi
+
+\begdef
+\textit{periodic point}
+
+$\exists n \geq 1\ .\ \sigma^n(x) = x$
+\edefi
+
+\begdef
+\textit{period} of $x$
+
+The least $n$ such that $\sigma^n(x) = x$.
+\edefi
+
+\begdef
+\textit{stationary code}
+
+A code $\phi$ is stationary when $\sigma \circ \phi = \phi \circ
+\sigma$.  In other words, the code $\phi$ has the same behaviour at
+each index $i$ of an input $x$.
+\edefi
+
+\subsection{Shift Spaces}
+
+\begdef
+\textit{Forbidden blocks}
+
+Let \calF be a collection of blocks over $A$. $X_\calF$ is the subset of
+the full shift $A^{\mathbb{Z}}$ where each sequence $x \in X_\calF$ contains
+no block in \calF.
+\edefi
+
+\begdef
+\textit{shift space}
+
+A subset $X$ of a full shift $A^{\mathbb{Z}}$ such that $X = X_\calF$ for some
+collection \calF of forbidden block over $A$.
+\edefi

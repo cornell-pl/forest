@@ -1,0 +1,123 @@
+\section{Calculating Entropy}
+
+\subsection {Definition and Basic Properties}
+
+\begdef
+$p_n(\mathbf{X}) = $ number of points of perion $n$ in $\mathbf{X}$
+\edefi
+
+\subsection{Cyclic Structure}
+
+\begdef
+\textit{irreducible} matrix
+
+A nonnegative matrix A is irreducible if
+$\forall i,j\ .\ 1 \leq i,j \leq n \Rightarrow \exists k > 0\ .\ A_{ij}(k) > 0$.
+
+\edefi
+
+\begrem
+A matrix with nonnegative integer entries is \textit{irreducible} if
+its associated graph is strongly connected????
+\end{remark}
+
+\begrem
+$A_{ij}(k) > 0\ \mathrm{if\ and\ only\ if}\ \exists j_1,...,j_{k-1}\ .\ a_{i j_1}a_{j_1 j_2}\ldots a_{j_{k-1} j} > 0$.
+i.e. if and only if there is a path from $i$ to $j$ in the associated graph.
+\end{remark}
+
+\begdef
+\textit{period} of a state $I$
+
+Let $A$ be a nonnegative matrix.
+The period of state $I$ is
+$\mathrm{per}(I) = \gcd {\{ n \geq 1\ .\ (A^n)_{II} > 0\}}$.
+When no such integers exist, then $\mathrm{per}(I) = \infty$.
+The matrix is \textit{aperiodic} if it has period $1$.
+\edefi
+
+\begdef
+\textit{period} of a graph $G$
+
+Let $G$ be a graph.
+The period of $G$ is the period of its adjacency matrix 
+\edefi
+
+\begthm
+Period of a graph and its shift
+
+Let $G$ be a graph.
+Then $\mathrm{per}(X_G) = \mathrm{per}(G)$
+\end{theorem}
+
+\begthm
+Period of an irreducible matrix.
+
+Let $A$ be an irreducible matrix. Then all of the states $I$ of $A$
+have the same period, so we can set $\mathrm{per}(A) = \mathrm{per}(A_I)$.
+\end{theorem}
+
+\begdef
+\textit{period} of a shift space $\mathbf{X}$.
+
+$\mathrm{per}(\mathbf{X}) = \gcd \{n \geq 1. p_n(\mathbf{X}) > 0\}$
+\edefi
+
+\begthm
+$\mathrm{per}(\mathbf{X}_G) = \mathrm{per}(G)$
+\end{theorem}
+
+\begdef
+\textit{Period equivalence} $I \sim J$
+
+Let $A$ be an irreducible matrix with period $p$.
+
+States $I$ and $J$ are period equivalent (written $I \sim J$) when there is
+a path $r$ from vertex $I$ to vertex $J$ in the graph $G(A)$
+with $\mathrm{length}(r)$ divisible by $p$.
+\edefi
+
+\begthm
+$\sim$ is an equivalence relation.
+\end{theorem}
+
+\begdef
+\textit{Period classes} of states of a matrix $A$.
+
+The equivalence classes of the state of $A$ under $\sim$ are called
+\textit{period classes}.
+\edefi
+
+\begthm
+Period classes of a matrix
+
+Let $A$ be an irreducible matrix with period $p$.
+Then there are exactly $p$ period classes of $A$, call them
+$D_0,\ldots,D_{p-1}$. Let $D_p = D_0$. The period classes can be constructed
+to have the property that every edge that starts in $D_i$
+ends in $D_{i+1}$
+\end{theorem}
+
+\[
+\begin{array}{ll}
+ \ & \hspace{0.2in}
+ \begin{array}{ccccc}
+    D_0 & D_1 & D_2 & \ldots & D_{p-1}
+ \end{array} \\
+ \begin{array}{c}
+    D_0 \\
+    D_1 \\
+    \vdots \\
+    D_{p-2} \\
+    D_{p-1}
+ \end{array} &
+ \left[ \begin{array}{ccccc}
+           0       & B_0    & 0      & \ldots & 0       \\
+           0       & 0      & B_1    & \ldots & 0       \\
+           \vdots  & \vdots & \vdots & \ddots & \vdots  \\
+           0       & 0      & 0      & \ldots & B_{p-2} \\
+           B_{p-1} & 0      & 0      & \ldots & 0
+        \end{array}
+ \right]
+\end{array}
+\]
