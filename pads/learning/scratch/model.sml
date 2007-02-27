@@ -158,9 +158,9 @@ structure Model = struct
              in updateCompRefinedBase ty typeComp dataComp
              end
          | Switch ( a, id, bs)      =>
-             let val switches    = map #1 bs
-                 val branches    = map #2 bs
-                 val switchComps = map (refinedComp 1) switches
+             let val switches         = map #1 bs
+                 val branches         = map #2 bs
+                 val switchComps      = map (refinedComp 1) switches
                  val switchTypeComps  = sumComplexities (map #1 switchComps)
                  val measuredBranches = map measure branches
                  val branchesTypeComp = sumTypeComplexities measuredBranches
@@ -171,7 +171,7 @@ structure Model = struct
                        )
              end
          | RArray ( a, osep, oterm, body, olen ) =>
-             let val rlen = 7 (* How to compute this ????? *)
+             let val rlen         = getLengthRArray ty
                  val measuredBody = measure body
                  val tbody        = getTypeComplexity measuredBody
                  val dbody        = getDataComplexity measuredBody

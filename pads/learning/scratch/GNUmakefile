@@ -22,13 +22,29 @@ foo:
 	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))
 	@(echo BUILD_EXEC = $(BUILD_EXEC))
 
-learn:	main.sml tokens.lex types.sml structure.sml
-	echo Making learning program
+tokens.lex.sml: tokens.lex
+	@echo Making learning program
 	lexgen --ml-lex-mode tokens.lex
+
+learn:  complexity.sml
+learn:  distribution.sml
+learn:  model.sml
+learn:  config.sml
+learn:  utils.sml
+learn:  parseCmdLine-sig.sml
+learn:  parseCmdLine.sml
+learn:  tokens.lex.sml
+learn:  types.sml
+learn:  structure.sml
+learn:  print.sml
+learn:	main.sml
+	@echo Making learning program
 	$(SML) < $(BUILD_EXEC)
+	@echo
 
 clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
+	$(RM) tokens.lex.sml
 
 veryclean: clean
 	@(echo "Removing .cm .bin files"; if [ -d .cm ]; then cd .cm; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In .cm, removing:\n$$x"; $(RM) $$x; fi; fi)

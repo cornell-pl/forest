@@ -78,6 +78,28 @@ struct
         |  Switch(a,id,branches)        => a
         |  RArray (a,sep,term,body,len) => a
 
+    (* Compute the length of an RArray. This function should always be
+       passed a Ty value under the RArray constructor, if not, it throws
+       an exception
+     *)
+    exception NotRArray
+    exception NoRArrayLength
+    exception BadRArrayLength
+    fun getLengthRArray   ( ty : Ty ) : int =
+        ( case ty of
+               RArray ( a, osep, oterm, body, olen) =>
+                  ( case olen of
+                         NONE => raise NoRArrayLength
+                       | SOME r =>
+                           ( case r of
+                                  Int (min, max) => Int.fromLarge max
+                                | IntConst n     => Int.fromLarge n
+                                | _              => raise BadRArrayLength
+                           )
+                  )
+             | _ => raise NotRArray
+        )
+
     fun getTypeComplexity ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
     fun getDataComplexity ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
 
