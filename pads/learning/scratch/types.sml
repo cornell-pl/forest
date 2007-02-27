@@ -45,7 +45,7 @@ struct
 
     datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
                 | TBD     of AuxInfo *
-                             int     * (* Current depth *) 
+                             int     * (* Sequence number on tbds *) 
                              Context list
                   (* Bottom appears to be a noisy TBD *)
                 | Bottom  of AuxInfo *

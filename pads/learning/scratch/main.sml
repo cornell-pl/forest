@@ -51,13 +51,15 @@ structure Main : sig
     fun setJunkPer    j = JUNK_PERCENTAGE := j
     fun setNoisePer   n = NOISE_PERCENTAGE := n
     fun setArrayWidth a = ARRAY_WIDTH_THRESHOLD := a
+    fun setPrintLineNos b = (if b then printLineNos := b else ())
+    fun setPrintIDs b   = (if b then  printIDs := b else ())
     fun addSourceFile f = srcFile    := f
 
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("maxdepth", "maximum depth for exploration (default "^(Int.toString def_depthLimit)^")",         PCL.Int    (setDepth,     false)),
-         ("lineNos",  "print line numbers in output contexts (default "^(Bool.toString def_printLineNos)^")",            PCL.BoolSet  printLineNos),
-         ("ids",      "print ids in type and tokens matching base types (default "^(Bool.toString def_printLineNos)^")",            PCL.BoolSet  printIDs),
+         ("lineNos",  "print line numbers in output contexts (default "^(Bool.toString def_printLineNos)^")",            PCL.Bool  setPrintLineNos),
+         ("ids",      "print ids in type and tokens matching base types (default "^(Bool.toString def_printLineNos)^")", PCL.Bool  setPrintIDs),
          ("h",        "histogram comparison tolerance (percentage, default "^(Real.toString DEF_HIST_PERCENTAGE)^")",    PCL.Float  (setHistPer,   false)),
          ("s",        "struct determination tolerance (percentage, default "^(Real.toString DEF_STRUCT_PERCENTAGE)^")",  PCL.Float  (setStructPer, false)),
          ("n",        "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),
