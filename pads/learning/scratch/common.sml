@@ -169,6 +169,11 @@ structure Common = struct
 			(SOME a', SOME b') => refine_equal(a', b')
 		|_ => false
 
+	fun refine_equal_op1 (a, b) =
+		case (a,b) of 
+			(SOME a', SOME b') => refine_equal(a', b')
+		| (NONE, NONE) => true
+		|_ => false
     (* function to test of two ty's are completely equal minus the labels *)
     (* if comparetype = 0, compare everything, otherwise compare down to 
 	base modulo the token list *)
@@ -209,11 +214,11 @@ structure Common = struct
 				end
 			| (RArray(_, sepop1, termop1, ty1, len1), 
 				RArray (_, sepop2, termop2, ty2, len2))
-				=> refine_equal(some(sepop1), some(sepop2)) andalso
-				   refine_equal(some(termop1), some(termop2)) andalso
+				=> refine_equal_op1(sepop1, sepop2) andalso
+				   refine_equal_op1(termop1, termop2) andalso
 				   ty_equal (comparetype, ty1, ty2) andalso
-				   refine_equal(some(len1), some(len2))
+				   refine_equal_op1(len1, len2)
 			| _ => false 
-		handle Size => false
+		handle Size => (print "size in ty_equal!\n" ; false)
 	end
 end

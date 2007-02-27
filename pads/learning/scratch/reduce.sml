@@ -153,9 +153,9 @@ case ty of
 		case elems of
 		  h :: t => 
 		  let 
-		  	val not_equal = List.exists (fn x => not(ty_equal(0, x, h) )) t
+		  	val not_equal = (List.exists (fn x => not(ty_equal(0, x, h) )) t) 
 		  in 
-		  	if not_equal then nil else h :: commonPrefix tails
+		  	if not_equal then nil else h :: commonPrefix tails 
   	          end
 		| nil => nil
   	end handle Empty => nil

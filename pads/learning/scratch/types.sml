@@ -245,9 +245,6 @@ struct
 			     of [] => print "\t<empty>\n"
 			     | _ => (print "\t"; printLTokens tl; print "\n"))) contexts)))
 
-
-
-
    fun TyToStringD prefix longTBDs longBottom suffix ty = 
        (prefix^
         (case ty 
