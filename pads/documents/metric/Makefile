@@ -1,6 +1,6 @@
-all: ProtectionProfile.bbl
+all: Metric.pdf
 
-.PRECIOUS: ProtectionProfile.pdf
+.PRECIOUS: Metric.pdf
 
 di:
 	rm -f Diag.pdf
@@ -23,8 +23,8 @@ try:    Try.tex
 # *** Running twice is currently commented out
 %.pdf: %.tex
 	pdflatex $<
-#	rm -f $@
-#	pdflatex $<
+	rm -f $@
+	pdflatex $<
 
 # Generate the bibliography
 %.bbl: %.pdf

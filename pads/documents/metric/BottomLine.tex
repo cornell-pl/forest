@@ -17,11 +17,12 @@ PADS type & Length distribution & Value distribution \\\hline\hline
 
 Base type &
 \multicolumn{2}{l}{
+\parbox[t]{11cm}{
 The list of values of the base type is stored in the abstract
 syntax tree resulting from the parse of the data. From this
 list of values we can derive a length distribution and/or
 a value distribution.
-\vspace{0.5mm}} \\\hline
+\vspace{0.5mm}}} \vline\\\hline
 
 \textbf{Punion} &
 \parbox[t]{5cm}{
@@ -58,4 +59,138 @@ associated with it.
 \vspace{0.5mm}}
 
 \\\hline
+\end{longtable}
+
+\subsection{Version 2 complexity metric}
+
+This section describes the complexity metric as coded during February,
+2007. The metric is a function called \textsf{measure} having type
+\textsf{Ty} $\rightarrow$ \textsf{Ty}. The function fills in complexity
+information in the \textsf{AuxInfo} associated with each node of the
+\textsf{Ty} structure. Two fields have been added to the \textsf{AuxInfo} type
+to support the complexity metric:
+
+\begin{verbatim}
+    type AuxInfo = { coverage : int
+                   , label    : Id option
+                   , typeComp : Complexity
+                   , dataComp : Complexity
+                   }
+\end{verbatim}
+
+The \textsf{typeComp} field records the complexity of the type itself,
+regardless of the data scanned. The \textsf{dataComp} field records
+the complexity of the data as viewed through the type.
+
+\newpage
+\begin{longtable}{||l|l|l|l|}
+\caption[Base types]{Base types}
+\label{tab:v2Base}
+\\\hline
+\hline
+Sub type & Type complexity & Data complexity & Notes \\\hline\hline
+
+\textsf{Ptime} &
+      $\left(\frac{1}{60}\right) \cdot \left(\frac{1}{60}\right) \cdot \left(\frac{1}{24}\right)$ &
+      $\left(\frac{1}{60}\right) \cdot \left(\frac{1}{60}\right) \cdot \left(\frac{1}{24}\right)$ &
+\parbox[t]{5cm}{
+This is a much oversimplified case. In order to do better, we need to
+have a regular expression identified with the time, and analyze the
+complexity of the regular expression. See section
+\ref{sec:RegularExpressions}.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Pmonth} & $\left(\frac{1}{12}\right)$ & $\left(\frac{1}{12}\right)$ &
+\parbox[t]{5cm}{
+Again an oversimplification of month, need also regular expressions here
+eventually.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Pip} &
+    $\left(\frac{1}{255}\right)$ &
+    $\left(\frac{1}{255}\right)^\mathrm{maxlen}$
+\footnote{$\mathrm{maxlen}$ is the maximum length of the token address seen} &
+\parbox[t]{5cm}{
+Perhaps we should use average length? Maximum length gives us a worst
+case complexity. On the other hand, IP address are often all of the same
+length, namely four number in the range 0 through 255.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Pint} &
+    $\left(\frac{1}{10}\right)$ &
+    $\left(\frac{1}{10}\right)^\mathrm{maxlen}$ &
+\parbox[t]{5cm}{
+This assumes integers are a sequence of digits 0 \ldots 9.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Pstring} &
+    $\left(\frac{1}{68}\right)$ &
+    $\left(\frac{1}{68}\right)^\mathrm{maxlen}$ &
+\parbox[t]{5cm}{
+There are 68 characters that make up strings.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Pgroup} & 0 & 0 &
+\parbox[t]{5cm}{
+Don't know how to handle this one yet.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Pwhite} & $\frac{1}{2}$ & $\left(\frac{1}{2}\right)^\mathrm{maxlen}$ &
+\parbox[t]{5cm}{
+White space can have either blank or tab characters (2 possibilities).
+\vspace{0.5mm}} \\\hline
+
+\textsf{Other} & $\frac{1}{256}$ & $\frac{1}{256}$ &
+\parbox[t]{5cm}{
+A single ASCII character.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Pempty} & 0 & 0 &
+\parbox[t]{5cm}{
+Not sure about this one.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Error} & \textsf{impossible} & \textsf{impossible} &
+\parbox[t]{5cm}{
+Not sure about this one.
+\vspace{0.5mm}} \\\hline
+
+\textsf{PbXML} &
+      $\left(\frac{1}{52}\right)$ &
+      $\left(\frac{1}{52}\right)^\mathrm{maxlen} $ &
+\parbox[t]{5cm}{
+XML seems to handled as a fancy string type. There are 52 possible XML
+characters.  Should consider sum of two string lengths?
+\vspace{0.5mm}} \\\hline
+
+\textsf{PeXML} &
+      $\left(\frac{1}{52}\right)$ &
+      $\left(\frac{1}{52}\right)^\mathrm{maxlen}$ &
+\parbox[t]{5cm}{
+XML seems to handled as a fancy string type. There are 52 possible XML
+characters.  Should consider sum of two string lengths?
+\vspace{0.5mm}} \\\hline
+
+\end{longtable}
+
+\begin{longtable}{||l|l|l|l|}
+\caption[Refined base types]{Refined base types}
+\label{tab:v2RefinedBase}
+\\\hline
+\hline
+Type & Type complexity & Data complexity & Notes \\\hline\hline
+
+\textsf{StringME} &
+    $\left(\frac{1}{68}\right)$ &
+    $\left(\frac{1}{68}\right)^\mathrm{maxlen}$ &
+\parbox[t]{5cm}{
+There are 68 characters that make up strings.
+\vspace{0.5mm}} \\\hline
+
+\textsf{Int} &
+    $\log (\mathrm{max} - \mathrm{min} + 1)$ &
+    $\log (\mathrm{max} - \mathrm{min} + 1)^\mathrm{maxlen}$ &
+\parbox[t]{5cm}{
+\vspace{0.5mm}} \\\hline
+
 \end{longtable}
