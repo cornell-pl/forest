@@ -282,12 +282,16 @@ and refine_array ty =
 		  | _ => raise TyMismatch
 		fun droplast(ty) = 
 		  case ty of 
-		  Pstruct(aux, tylist) => 
+		  Pstruct({label=SOME(id),... }, tylist) => 
 			(case (length tylist) of 
 			 0 => raise Size
-			| 1 => RefinedBase(aux, StringConst(""), nil)
+			| 1 => RefinedBase(mkTyAux1(0, id), StringConst(""), nil)
 			| 2 => (hd tylist)
-			| _ =>	Pstruct(aux, List.take(tylist, (length tylist) -1))
+			| _ => let
+				val newtylist = List.take(tylist, (length tylist) -1)	
+			       in
+				Pstruct(mkTyAux1(minCoverage(newtylist), id), newtylist)
+			       end
 			)
 		  | _ => raise TyMismatch
 (*
@@ -297,13 +301,19 @@ and refine_array ty =
 		  | _ => raise TyMismatch
 *)
 		fun addtohead(ty, newty) =
-		  (*Note: aux is wrong here *)
 		  case ty of
-		  Pstruct(aux, tylist) => adjacent_consts(Pstruct(aux, [newty]@tylist))
-		  | Punion(aux, tylist) => Punion(aux, map (fn oldty => addtohead(oldty, newty)) 
-						tylist)
-		  |RefinedBase(aux, _, _) => adjacent_consts(Pstruct(aux, [newty, ty]))
-		  |Base(aux, _) => Pstruct(aux, [newty, ty])
+		  Pstruct({coverage, label=SOME id, ...}, tylist) => 
+				adjacent_consts(Pstruct(
+				mkTyAux1(Int.min(coverage, getCoverage newty), id), [newty]@tylist))
+		  |Punion({label=SOME id, ...}, tylist) => 
+				let val newtylist = map (fn oldty => addtohead(oldty, newty)) tylist
+				in 
+				Punion (mkTyAux1(sumCoverage newtylist, id), newtylist)
+				end
+		  |RefinedBase({coverage, ...}, _, _) => adjacent_consts(Pstruct(
+						mkTyAux(Int.min(coverage, getCoverage(newty))), [newty, ty]))
+		  |Base({coverage, ...}, _) => Pstruct(mkTyAux(Int.min(coverage, getCoverage(newty))), 
+							[newty, ty])
 		  | _ => (raise TyMismatch)
 
 (*
