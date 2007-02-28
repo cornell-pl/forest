@@ -44,20 +44,22 @@ struct
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
 
     datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
+	        (* TBD is introduced when maxdepth limit kicks in *)
                 | TBD     of AuxInfo *
                              int     * (* Sequence number on tbds *) 
                              Context list
-                  (* Bottom appears to be a noisy TBD *)
+                (* Bottom is introduced when structure inference gives up *)
                 | Bottom  of AuxInfo *
                              int     * (* Sequence number on bottoms *)
                              Context list 
                 | Pstruct of AuxInfo * Ty list 
                 | Punion  of AuxInfo * Ty list
-                | Parray  of AuxInfo * { tokens:(Token * int) list,
+                | Parray  of AuxInfo * { tokens:(Token * int) list, (* list of tokens and freq count in 
+								       cluster identified as an array cell *)
 					 lengths: (int * int) list, (* list of array (lengths,linenumbers) *)
-					 first : Ty,
-					 body  : Ty,
-					 last  : Ty}
+					 first : Ty, (* inferred type for first cell of list of arrays *)
+					 body  : Ty, (* inferred type for middle cells of list of arrays *)
+					 last  : Ty} (* inferred type for last cell of list of arrays *)
 
                 | RefinedBase of AuxInfo * Refined * LToken list
                 | Switch  of AuxInfo * Id * (Refined (* switch value *) * Ty) list
