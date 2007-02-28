@@ -45,6 +45,7 @@ learn:	main.sml
 clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
 	$(RM) tokens.lex.sml
+	$(RM) *~
 
 veryclean: clean
 	@(echo "Removing .cm .bin files"; if [ -d .cm ]; then cd .cm; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In .cm, removing:\n$$x"; $(RM) $$x; fi; fi)

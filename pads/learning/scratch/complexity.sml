@@ -126,4 +126,8 @@ structure Complexity = struct
     fun sumComplexities ( cs : Complexity list ) : Complexity =
         foldl ( fn (c1,c2) => combine c1 c2 ) zeroComplexity cs
 
+    (* Complexity from the number of choices *)
+    fun cardComp ( l : 'a list ) : Complexity =
+        Choices (length l)
+
 end

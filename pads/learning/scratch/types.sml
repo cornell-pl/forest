@@ -102,13 +102,17 @@ struct
              | _ => raise NotRArray
         )
 
+    (* Retrieve computed type complexity from a type *)
     fun getTypeComplexity ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
+    (* Retrieve computed data complexity from a type *)
     fun getDataComplexity ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
 
+    (* Sum the type complexities of a measured type *)
     fun sumTypeComplexities ( tys : Ty list ) : Complexity =
         foldl ( fn (t,c) => combine (getTypeComplexity t) c )
               zeroComplexity tys
-                 
+
+    (* Sum the data complexities of a measured type *)
     fun sumDataComplexities ( tys : Ty list ) : Complexity =
         foldl ( fn (t,c) => combine (getDataComplexity t) c )
               zeroComplexity tys

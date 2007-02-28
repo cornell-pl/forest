@@ -15,8 +15,10 @@ structure Model = struct
     fun junkTokenListDensity ( tl : Token list ) : TokenListDensity =
       fn ( ul : Token list ) => if ul = tl then 1.0 else 0.0
 
+    (* Get the maximum from a list of integers *)
     fun maxInt ( l : int list ) : int = foldl Int.max 0 l
 
+    (* Compute the type and data complexity of a refined type *)
     fun refinedComp ( multiplier:int ) ( r:Refined ) : Complexity * Complexity =
         let val rmaxlen = Real.fromInt multiplier
         in ( case r of
@@ -31,18 +33,25 @@ structure Model = struct
                 | StringConst s  => ( int2Complexity (size s)
                                     , int2Complexity (size s)
                                     )
-                | Enum rl        =>
-                    let val comps     = map (refinedComp 1) rl
-                        val typeComps = map #1 comps
-                        val dataComps = map #2 comps
-                    in ( sumComplexities typeComps
-                        , sumComplexities dataComps
-                        )
-                    end
-                | LabelRef i     => ( zeroComplexity, zeroComplexity ) (* ????? *)
+                | Enum rl        => ( sumComplexities ( map refinedTypeComp rl ) 
+                                    , sumComplexities ( map refinedDataComp rl )
+                                    )
+                | LabelRef i     => ( zeroComplexity, zeroComplexity )
            )
         end
+    (* Get the type complexity of a refined type, assuming multiplier of 1 *)
+    and refinedTypeComp ( r : Refined ) : Complexity = #1 (refinedComp 1 r)
+    (* Get the type complexity of a refined type, assuming multiplier of 1 *)
+    and refinedDataComp ( r : Refined ) : Complexity = #2 (refinedComp 1 r)
 
+    (* Complexity of refined option type, assuming multiplier 1 *)
+    fun refinedOptionComp ( ro : Refined option ) : Complexity * Complexity =
+    ( case ro of
+           NONE =>   ( zeroComplexity, zeroComplexity )
+         | SOME r => refinedComp 1 r
+    )
+
+    (* Compute the complexity of a base type (e.g. Pint) *)
     fun baseComplexity ( ts : LToken list ) : Complexity * Complexity =
     let val tok     = tokenOf (hd ts)
         val maxlen  = maxTokenLength ts
@@ -64,8 +73,8 @@ structure Model = struct
             (* Assumes IP addresses are made up of 3 digit pieces
                Note: this is a case where type complexity differs
                from data complexity *)
-            | Pip s             => ( prob2Complexity ( 1.0 / 100.0 )
-                                   , prob2Complexity ( power ( 1.0 / 100.0 ) rmaxlen )
+            | Pip s             => ( prob2Complexity ( 1.0 / 255.0 )
+                                   , prob2Complexity ( power ( 1.0 / 255.0 ) rmaxlen )
                                    )
             (* Assumes ints are digits 0 through 10 *)
             | Pint l            => ( prob2Complexity ( 1.0 / 10.0 )
@@ -102,7 +111,8 @@ structure Model = struct
         end
     in foldl f ( zeroComplexity, zeroComplexity ) cl
     end
-    
+
+    (* Compute the type and data complexity of an inferred type *)    
     fun measure ( ty : Ty ) : Ty =
     ( case ty of
            Base ( a, ts )               => mkBaseComplexity a ts
@@ -122,13 +132,11 @@ structure Model = struct
            (* We will need information about the frequency of each branch
               of the union to do a better job here *)
          | Punion (a,tys)               =>
-             let val l = length tys
-             in Punion ( updateComplexities a
-                           ( combine (Choices l) (sumTypeComplexities tys) )
-                           ( combine (Choices l) (sumDataComplexities tys) )
-                       , tys
-                       )
-             end
+             Punion ( updateComplexities a
+                        ( combine (cardComp tys) (sumTypeComplexities tys) )
+                        ( combine (cardComp tys) (sumDataComplexities tys) )
+                    , tys
+                    )
            (* Don't really want a complexity for a Parray, want to
               wait until we have a refined array (see below)
             *)
@@ -165,7 +173,8 @@ structure Model = struct
                  val measuredBranches = map measure branches
                  val branchesTypeComp = sumTypeComplexities measuredBranches
                  val branchesDataComp = sumDataComplexities measuredBranches
-             in Switch ( updateComplexities a zeroComplexity zeroComplexity
+             in Switch ( updateComplexities a
+                         (combine switchTypeComps branchesTypeComp) branchesDataComp
                        , id
                        , ListPair.zip ( switches, measuredBranches )
                        )
@@ -176,23 +185,20 @@ structure Model = struct
                  val tbody        = getTypeComplexity measuredBody
                  val dbody        = getDataComplexity measuredBody
                  fun updateRArray (t:Complexity) (d:Complexity) =
-                     RArray ( updateComplexities a t d, osep, oterm, measuredBody, olen )
-                 val ( tlen, dlen ) = ( case olen of
-                                             NONE     => ( zeroComplexity, zeroComplexity )
-                                           | SOME len => refinedComp 1 len
-                                      )
-                 val ( tterm, dterm ) = ( case oterm of
-                                               NONE      => ( zeroComplexity, zeroComplexity )
-                                             | SOME term => refinedComp 1 term
-                                        )
-                 val ( tsep, dsep ) = ( case osep of
-                                               NONE     => ( zeroComplexity, zeroComplexity )
-                                             | SOME sep => refinedComp 1 sep
-                                        )
+                   RArray ( updateComplexities a t d, osep, oterm, measuredBody, olen )
+                 val ( tlen, dlen )   = refinedOptionComp olen
+                 val ( tterm, dterm ) = refinedOptionComp oterm
+                 val ( tsep, dsep )   = refinedOptionComp osep
                  val tcomp = sumComplexities [tbody, tlen, tterm, tsep]
                  val dcomp = sumComplexities [dbody, dlen, dterm, dsep]
              in updateRArray tcomp dcomp
              end
     )
+
+    (* Using this function will result in lots of computation on
+       the type, which may have already been done
+     *)
+    fun typeMeasure ( ty : Ty ) : Complexity = getTypeComplexity ( measure ty )
+    fun dataMeasure ( ty : Ty ) : Complexity = getDataComplexity ( measure ty )
 
 end
