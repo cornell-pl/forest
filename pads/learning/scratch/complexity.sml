@@ -130,4 +130,19 @@ structure Complexity = struct
     fun cardComp ( l : 'a list ) : Complexity =
         Choices (length l)
 
+    (* Convert complexity to the precise method *)
+    fun toPrecise ( c : Complexity ) : Complexity =
+        ( case c of
+               Bits n    => Precise (Real.fromInt n)
+             | Choices l => Precise (log2 l)
+             | Precise p => Precise p
+        )
+
+    (* Convert a complexity to a string *)
+    fun showComp ( c : Complexity ) : string =
+        ( case c of
+               Bits n    => "Bits "    ^ (Int.toString n)
+             | Choices l => "Choices " ^ (Int.toString l)
+             | Precise p => "Precise " ^ (Real.toString p)
+        )
 end
