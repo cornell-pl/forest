@@ -786,11 +786,17 @@ struct
 				    List.app setOne atokens;
 				    numFound := 0
 				end
-			    (* Return two contexts: one for all tokens in array slots except for the last one,
+			    (* Return three contexts: 
+			       one for all tokens in first slot,
+			       one for all tokens in array slots except for the first or last one,
 			       and one for the tokens in the last slot; this partition is to avoid confusion
 			       with the separator not being in the last slot *)
 			    fun doNextToken isFirst [] (current, first, main) = 
-				 let val length = (List.length current) + (List.length first) + (List.length main)
+				 let fun getLen [] = 0
+				       | getLen _ = 1
+				     val length = (getLen current) + (* list of tokens in current context: if present, length is 1 *)
+						  (getLen first) +   (* list of tokens in first context: if present, length is 1 *)
+						  (List.length main) (* a list of matched tokens, so no need to compute div*)
 				     fun getLoc [] = (print "WARNING: ARRAY first context empty!"; ~1)
 				       | getLoc ((tok,loc:location)::ltocs) = #lineNo loc
 				 in
