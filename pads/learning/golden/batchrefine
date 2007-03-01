@@ -1,0 +1,7 @@
+#!/usr/bin/perl -w
+@files = @ARGV;
+foreach $file (@files)
+{
+ print "learning $file\n";
+ `learn data/$file > refinement/$file.res`;
+}
