@@ -622,20 +622,22 @@ case ty of
 	    Punion(aux, tlist) =>
 	  	let
 		    fun getrefine (index, mappings) = 
-		    (*given an index, give the refined value from the mapping*)
+		    (*given an index, give a list of refined values that points to this index from the mapping*)
 		      case mappings of 
 			([SOME tok1], SOME(Pint i))::tail => 
-				if (i=index) then SOME(tokentorefine(tok1))
+				if (i=index) then tokentorefine(tok1)::getrefine(index, tail)
 				else getrefine (index, tail)
 		      	| _::tail => getrefine(index, tail)
-		      	| nil => NONE
+		      	| nil => nil
 		    (*assume index starts from 1 for the tylist branches*)
 		    fun   gen_ref_ty_list (_, nil, _) = nil
-			| gen_ref_ty_list (mappings, hd::tail, index) =
+			| gen_ref_ty_list (mappings, head::tail, index) =
 			(case getrefine(index, mappings) of
-			  SOME refined => (refined, hd):: 
-				gen_ref_ty_list(mappings, tail, index+1)
-			  | NONE => nil (* returns immediately if no refine is found *)
+			    nil => nil(* returns immediately if no refine is found *)
+			  | refined => if length(refined) = 1 then
+						((hd refined), head):: gen_ref_ty_list(mappings, tail, index+1)
+					else
+						(Enum(refined), head):: gen_ref_ty_list(mappings, tail, index+1)
 			)
 		    val refine_ty_list = gen_ref_ty_list (mappings, tlist, 1)
 		in
