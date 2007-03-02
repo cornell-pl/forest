@@ -39,7 +39,7 @@ structure Map = RedBlackMapFn(struct
 		let
 			val paired = ListPair.zip( torow, cr)
 			fun doUpdate (bdata: Token option, 
-			   {label=lab:Id,constraints, previous_values}) = 
+				     {label=lab:Id,constraints, previous_values}) = 
 				let
 					exception InvalidConst
 					val value_set = 
@@ -47,7 +47,7 @@ structure Map = RedBlackMapFn(struct
 					    SOME x => BDSet.add(previous_values,x)
 					  | NONE => previous_values
 					 (* calls update constraint on each constraint and removes it if it raises InvalidConstraint *)
-					fun updateConstraints(oldConstraintlist : (constraint * Token option) list, bdataopt : Token option) : (constraint * Token option) list = 
+					fun updateConstraints(oldConstraintlist:(constraint * Token option) list, bdataopt:Token option) : (constraint * Token option) list = 
 						case oldConstraintlist of
 						h :: t =>( updateConstraint(h,bdataopt) :: updateConstraints(t,bdataopt)
 							handle InvalidConst => updateConstraints(t,bdataopt) )
@@ -71,7 +71,8 @@ structure Map = RedBlackMapFn(struct
 						  | NONE => Unique(bdata))
 					   (* max number of items in EnumC is 10 *)
 					|   EnumC _ => if (BDSet.numItems previous_values) > 10 
-					 	      then raise InvalidConst else (EnumC(previous_values))
+					 	      then raise InvalidConst else 
+								EnumC(value_set)
 					|   _ => raise InvalidConst
 					, SOME bdata) 
 					
@@ -421,7 +422,7 @@ Also prints out information about the dependencies and keys it found *)
 			constraints = consts:(constraint*Token option) list, 
 			previous_values= BDSet.empty}) header
 		val consts:constraint_record = foldr update depstart bdolist (* returns a constraint_record *)
-			
+
 		(* combine the constraints found through dep analysis with the single column constraints *)
 		fun add_to_consts consts (lab, dep) = 
 		  map (fn {label,constraints, previous_values} => 

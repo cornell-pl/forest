@@ -179,7 +179,7 @@ struct
     and refinedToString re =
 	case re
 	of StringME s => "\""^ s ^ "\""
-        | Int(min, max) => "["^LargeInt.toString(min)^", "^LargeInt.toString(max)^"]"
+        | Int(min, max) => "["^LargeInt.toString(min)^"..."^LargeInt.toString(max)^"]"
         | IntConst a => "["^ LargeInt.toString(a) ^"]" 
         | StringConst s => "\""^s^"\"" 
         | Enum rel => "{" ^ String.concat(map (fn x => (refinedToString x) ^", ") rel) ^ "}"

@@ -33,35 +33,35 @@ fun cost const_map ty =
 	  	    SOME x => foldr op+ 0 (map (const_cost isbase) x)
 	  	  | NONE => 0
 	  in
-	  	e_cost + 1 (* every constraint is counted towards cost *)
+	  	e_cost 
 	  end
-  in
-	case ty of 
-	(* consts are cheaper than variables *)
-	  RefinedBase (_, r, _) =>  (
-		case r of 
-			StringME _ => 1 
-			| Int _ => 2
-			| IntConst _ => 1
-			| StringConst _ => 1
-			| Enum _ => 3
-			| LabelRef _ => 1
-		)
-	| Base _ => 2 
-	| TBD _ => 1
-	| Bottom _ => 1
-	(* bigger datastructures are more complex than bases*)
-	| Pstruct(a, tylist) => foldr op+ 0 (map (cost const_map) tylist) + 3 
-	| Punion (a, tylist) => foldr op+ 0 (map (cost const_map) tylist) + 3
-	| Parray (a, {tokens, lengths, first, body, last}) => 
-		(* first, body and last are potentially structs so plus 9*)
-			foldr op+ 0 (map (cost const_map) [first, body, last])+9
-	| Switch (a, id, l) => foldr op+ 0 (map (fn (_, t) => cost const_map t) l)
-	| RArray (a, sepop, termop, body, lenop) => 
-		(case sepop of SOME (sep) => 0 | NONE => 1) +
-		(case termop of SOME (term) => 0 | NONE => 1) + 
-		(cost const_map body) 
-		
+	fun ty_cost myty =
+		case myty of 
+		(* consts are cheaper than variables *)
+		  RefinedBase (_, r, _) =>  (
+			case r of 
+				StringME _ => 1 
+				| Int _ => 2
+				| IntConst _ => 1
+				| StringConst _ => 1
+				| Enum l => length(l)
+				| LabelRef _ => 1
+			)
+		| Base _ => 3 
+		| TBD _ => 1
+		| Bottom _ => 1
+		(* bigger datastructures are more complex than bases*)
+		| Pstruct(a, tylist) => foldr op+ 0 (map (cost const_map) tylist) + 3 
+		| Punion (a, tylist) => foldr op+ 0 (map (cost const_map) tylist) + 3
+		| Parray (a, {tokens, lengths, first, body, last}) => 
+			(* first, body and last are potentially structs so plus 9*)
+				foldr op+ 0 (map (cost const_map) [first, body, last])+9
+		| Switch (a, id, l) => foldr op+ 0 (map (fn (_, t) => cost const_map t) l)
+		| RArray (a, sepop, termop, body, lenop) => 
+			(case sepop of SOME (sep) => 0 | NONE => 1) +
+			(case termop of SOME (term) => 0 | NONE => 1) + 
+			(cost const_map body) 
+	in (ty_cost ty) + (total_const_cost ty) + 1 (* every constraint is counted towards cost *)
   end
 
 type constraint_map = constraint list LabelMap.map
@@ -688,7 +688,6 @@ case ty of
 
 (*convert an enum constraint to a Enum refined type or a range constraint to 
 	a range refined type *)
-(*Notice constraints are not deleted from the cmap yet*)
 and enum_range_to_refine cmos ty = 
   case ty of                  
     Base({coverage, label=SOME(id), ...}, b) =>         
@@ -700,9 +699,14 @@ and enum_range_to_refine cmos ty =
                       let
                         val items = BDSet.listItems set
                         val refs = map tokentorefine items
-                        val ty' = RefinedBase(mkTyAux1(coverage, id), 
-						Enum refs, b)
-                     	(* val _ = print ("ENUM" ^ (tytos ty')) *)
+                        val ty' = (if length(refs)=1 then 
+				RefinedBase(mkTyAux1(coverage, id), hd refs, b)
+				else
+				(if (length(refs)=0) then ty
+				else RefinedBase(mkTyAux1(coverage, id), Enum refs, b)
+				)
+				)
+(*                     	val _ = print ("ENUM: " ^ (TyToString ty')^"\n") *)
                       in
                         (ty', newconsts@t)
                       end
