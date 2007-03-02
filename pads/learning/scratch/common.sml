@@ -2,7 +2,8 @@
 structure Common = struct
 	open Types (* defined in types.sml *)
 
-	fun idcompare (id1, id2) = String.compare(Atom.toString(id1), Atom.toString(id2))
+	fun idcompare (id1:Id, id2:Id):order =
+            String.compare(Atom.toString(id1), Atom.toString(id2))
 
 	structure LabelMap = SplayMapFn(struct
                  type ord_key = Id
@@ -14,10 +15,9 @@ structure Common = struct
         end)
 	exception TyMismatch
 
-	(* defines an arbitrary order on tokens
-	to put it in maps *)
+	(* defines an arbitrary order on tokens	to put it in maps *)
 	(* it overrides some of the ordering in structure.sml *)
-	fun compare(a,b) = case (a,b) of
+	fun compare(a : Token option,b:Token option) = case (a,b) of
 			(SOME a', SOME b') => compared(a',b')
 		|	(SOME a, _) => GREATER
 		|	(NONE, SOME _) => LESS
@@ -93,14 +93,17 @@ structure Common = struct
 				^ "" ^ (bdoltos t)
 	|	nil => "()\n")
 
-	fun idstostrs(idlist: Id list) = map (fn id => Atom.toString(id)) idlist
+	fun idstostrs(idlist: Id list):string list =
+            map (fn id => Atom.toString(id)) idlist
 		
 	(* link a list of labels with separators *)
-	fun implode(slist, seperator) = case slist of
-			h :: nil => h
-		|   h :: t => h ^ seperator ^ implode(t,seperator)
-		|	nil => ""
-	fun ctos(c:constraint) = (case c of
+	fun implode(slist : string list, seperator:string):string =
+            case slist of
+                 h :: nil => h
+               | h :: t   => h ^ seperator ^ implode(t,seperator)
+               | nil      => ""
+
+	fun ctos(c:constraint):string = (case c of
 		  Length x => "Length " ^ (Int.toString x)
 		| Ordered x => (case x of Ascend => "Ascending" | Descend => "Decending")
 		| Unique x => "Unique: " ^ (bdtos x)
@@ -117,15 +120,18 @@ structure Common = struct
 		in 
 		"(" ^ lab ^ ")\n" ^ vals 
 		end)) ^ "\n"
-	fun printConstMap cmap = LabelMap.appi (fn (lab,clist) => print (Atom.toString(lab) ^ ":\n" ^ (String.concat(map ctos clist))^ "\n")) cmap
+	fun printConstMap (cmap:constraint list LabelMap.map):unit =
+            LabelMap.appi (fn (lab,clist) => print (Atom.toString(lab) ^ ":\n" ^ (String.concat(map ctos clist))^ "\n")) cmap
 	fun some(a : 'a option) : 'a = case a of SOME x => x | NONE => raise Size
-	fun isIn(ch,str) = List.exists (fn x => x = ch) (String.explode str)
-	fun escapeRegex(str) = String.translate (fn x => 	if isIn(x ,"^$.[]|()*+?" )
-														then "\\" ^ (String.str x) 
-		 else String.str x) str
+	fun isIn(ch:char,str:string):bool =
+            List.exists (fn x => x = ch) (String.explode str)
+	fun escapeRegex(str:string):string =
+            String.translate (fn x => if isIn(x ,"^$.[]|()*+?" )
+                                      then "\\" ^ (String.str x) 
+                                      else String.str x) str
 
 	fun myand(a,b) = a andalso b
-	fun ltoken_equal((tk1, _), (tk2, _)) =
+	fun ltoken_equal((tk1, _):LToken, (tk2, _):LToken):bool =
 	  case (tk1, tk2) of 
 		    (PbXML(a,b), PbXML(a1, b1)) => (a=a1 andalso b = b1)
 		  | (PeXML(a,b), PeXML(a1, b1)) =>  (a=a1 andalso b = b1) 
@@ -139,7 +145,7 @@ structure Common = struct
 		  | (Pempty, Pempty) => true
 		  (* ignoring Pgroup for now *)
 		  | _ => false
-	fun ltoken_ty_equal ((tk1, _), (tk2, _)) =
+	fun ltoken_ty_equal ((tk1, _):LToken, (tk2, _):LToken):bool =
 	  case (tk1, tk2) of 
 		    (PbXML(a,b), PbXML(a1, b1)) => true
 		  | (PeXML(a,b), PeXML(a1, b1)) => true 
@@ -154,7 +160,7 @@ structure Common = struct
 		  (* ignoring Pgroup for now *)
 		  | _ => false
 
-	fun refine_equal (a, b) =
+	fun refine_equal (a:Refined, b:Refined):bool =
 		case (a, b) of 
 			(StringME(x), StringME(y)) => (x = y)
 		       |(Int(x, y), Int(x1, y1)) => (x = x1 andalso y = y1)
@@ -164,22 +170,23 @@ structure Common = struct
 				(ListPair.map refine_equal(l1, l2))
 		       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
 		       | _ => false
-	fun refine_equal_op (a, b) =
+	fun refine_equal_op (a:Refined option, b:Refined option):bool =
 		case (a,b) of 
 			(SOME a', SOME b') => refine_equal(a', b')
 		|_ => false
 
-	fun refine_equal_op1 (a, b) =
+	fun refine_equal_op1 (a:Refined option, b:Refined option):bool =
 		case (a,b) of 
 			(SOME a', SOME b') => refine_equal(a', b')
 		| (NONE, NONE) => true
 		|_ => false
+
     (* function to test of two ty's are completely equal minus the labels *)
     (* if comparetype = 0, compare everything, otherwise compare down to 
 	base modulo the token list *)
-    fun ty_equal (comparetype, ty1, ty2) = 
+    fun ty_equal (comparetype:int, ty1:Ty, ty2:Ty):bool = 
 	let
-		fun check_list(l1,l2) = 
+		fun check_list(l1:Ty list,l2: Ty list):bool = 
 		let 
 			val bools = ListPair.map (fn (t1, t2) => ty_equal(comparetype, t1, t2)) (l1, l2)
 		in

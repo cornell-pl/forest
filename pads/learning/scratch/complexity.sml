@@ -145,4 +145,5 @@ structure Complexity = struct
              | Choices l => "Choices " ^ (Int.toString l)
              | Precise p => "Precise " ^ (Real.toString p)
         )
+
 end
