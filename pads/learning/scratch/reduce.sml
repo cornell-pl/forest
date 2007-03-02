@@ -23,7 +23,7 @@ fun cost const_map ty =
 		  | Range _ => if isbase then 1 else 0
 		  | Switched (_,ops) => 5
 		  | Eq _ => 1
-		  | EnumC set => if isbase then 5 else 0
+		  | EnumC set => if isbase then 1 else 0
 	fun total_const_cost myty = 
 	  let
 		val id = getLabel(getAuxInfo(myty))
@@ -755,8 +755,8 @@ let
 			refine_array
 		]
   val post_constraint_rules : post_reduction_rule list =
-		[ (*
-		  uniqueness_to_const, *)
+		[ 
+		  uniqueness_to_const, 
 		  enum_range_to_refine,
 		  sum_to_switch
 		]
@@ -811,7 +811,6 @@ let
 	    (* apply each rule to the ty *)
 	    val post_pairs = map (fn x => x cmap ty) post_constraint_rules 
 	    val pre_pairs = map (fn x =>(cmap, x ty)) pre_constraint_rules 
-	    val pre_pairs = nil
 	    val cmap_ty_pairs = post_pairs@pre_pairs
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> cost m t) cmap_ty_pairs 
