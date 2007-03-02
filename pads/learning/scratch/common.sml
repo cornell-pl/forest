@@ -85,6 +85,7 @@ structure Common = struct
 	|	Pip(t)  => StringConst(t)
 	|	Pstring(str)  => StringConst(str)
 	|	Pwhite (str)  =>  StringConst(str)  
+	|	Other(c)  =>  StringConst(Char.toString(c))  
 	| 	_ => StringConst("")
 
 	fun bdoltos (x:Token option list): string = (case x of

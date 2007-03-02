@@ -281,7 +281,7 @@ struct
                             (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty3)^
 			    prefix ^ "End Parray"
         |  RefinedBase (aux, refined, tl) => (refinedToString refined)^("(" ^(covToString aux)^")") 
-        |  Switch(aux ,id, retys) => "Switch("^Atom.toString(id)^"):\n"^
+        |  Switch(aux ,id, retys) => "Switch("^Atom.toString(id)^")("^(covToString aux)^"):\n"^
 	 		    (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
 			    (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty))) retys))^
 			    prefix ^ "End Switch"

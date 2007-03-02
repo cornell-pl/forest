@@ -589,18 +589,34 @@ case ty of
 	  case LabelMap.find(cmos, id) of  
       		SOME consts => 
         	  let 
-			fun find_switch clist newclist =
+			fun cost_switch c =
+				case c of
+					NONE => some(Int.maxInt)
+					| SOME(Switched (_, mappings)) => (length mappings)
+					|_ => raise TyMismatch
+			fun find_switch(clist, newclist, cur_cheapest) =
       	  			case clist of 
 				  Switched (ids, mappings) :: t => 
 				    (* we are only interested in 1-1 mapping in switched *)
+				    (* we also use the "cheapest" switch of all the switches and
+					delete all the more expensive 1-1 switches *)
 				    if length(ids) = 1 andalso 
 					length(#1 (hd mappings))=1 
 				    then 
-					(SOME (ids, mappings), newclist@t)
-				    else find_switch t (newclist@[Switched(ids, mappings)])
-      	  			  | h :: t => find_switch t (newclist@[h])
-      	  			  | nil => (NONE, newclist)
-			val (someidmappings, newconsts) = find_switch consts nil
+					(
+					if (cost_switch(SOME(Switched (ids, mappings)))< 
+						cost_switch(cur_cheapest))
+					then find_switch (t, newclist, SOME(Switched(ids, mappings)))
+					else find_switch (t, newclist, cur_cheapest)
+					)
+				    else find_switch (t, (newclist@[Switched(ids, mappings)]), cur_cheapest)
+      	  			  | h :: t => find_switch (t, (newclist@[h]), cur_cheapest)
+      	  			  | nil => (case cur_cheapest of 
+						SOME(Switched(ids, mappings)) => 
+							(SOME(ids, mappings), newclist)
+						| _ => (NONE, newclist)
+					   )
+			val (someidmappings, newconsts) = find_switch(consts, nil, NONE)
 			val (newcmos, _) = LabelMap.remove(cmos, id)
 	    		val newcmos = LabelMap.insert(newcmos, id, newconsts)
 		  in
@@ -739,8 +755,8 @@ let
 			refine_array
 		]
   val post_constraint_rules : post_reduction_rule list =
-		[ 
-		  uniqueness_to_const,
+		[ (*
+		  uniqueness_to_const, *)
 		  enum_range_to_refine,
 		  sum_to_switch
 		]
@@ -795,6 +811,7 @@ let
 	    (* apply each rule to the ty *)
 	    val post_pairs = map (fn x => x cmap ty) post_constraint_rules 
 	    val pre_pairs = map (fn x =>(cmap, x ty)) pre_constraint_rules 
+	    val pre_pairs = nil
 	    val cmap_ty_pairs = post_pairs@pre_pairs
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> cost m t) cmap_ty_pairs 

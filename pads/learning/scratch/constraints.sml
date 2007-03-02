@@ -231,7 +231,12 @@ structure Map = RedBlackMapFn(struct
 		let
 			val rows = transpose cols
 			val vals = map hd ( values)
-			val smap = foldr (fn((row,v), theMap) => BDOListMap.insert(theMap,row,v) ) BDOListMap.empty (ListPair.zip(rows,vals))	
+			val smap = foldr (fn((row,v), theMap) => 
+					case (row, v) of 
+						([NONE], _) => theMap
+						| (_, NONE) => theMap
+						| _ => (BDOListMap.insert(theMap,row,v)) ) 
+					BDOListMap.empty (ListPair.zip(rows,vals))	
 			val slist = BDOListMap.foldri (fn(row,v,list) => (row,v) :: list) 
 						nil smap
 			
@@ -247,13 +252,15 @@ structure Map = RedBlackMapFn(struct
 				val filteredlist = List.filter (fn (row,v') =>not(compare(v,v') = EQUAL)) slist
 				val filteredlist = ([SOME (Pstring "*")], v) :: filteredlist 
 			in
-				if length filteredlist < length rows div 2 andalso length filteredlist < 50 then
-					(valLabel,Switched(colLabels,filteredlist))
+				if length filteredlist < length rows div 2 andalso length filteredlist < 50 
+					andalso length filteredlist>1 then
+					(valLabel, Switched(colLabels,filteredlist))
 				else
 					raise DetermineFailed
 			end
 		in
-			if BDOListMap.numItems smap < length rows div 4 andalso BDOListMap.numItems smap < 50 then
+			if BDOListMap.numItems smap < length rows div 4 andalso BDOListMap.numItems smap < 50 
+				andalso length slist > 1 then
 				(valLabel,Switched(colLabels,slist))
 			else
 				tryDefault() (* see if the default makes it small enough *)
