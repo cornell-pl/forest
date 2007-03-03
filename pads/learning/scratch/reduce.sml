@@ -583,7 +583,18 @@ case ty of
 and sum_to_switch cmos ty =
 case ty of 
   Pstruct(aux, tylist) =>
-  let
+  let	
+	(* function to test if a base value with a specific id exists in a ty list*) 
+	fun existsbase(tlist, id) = 
+		case (tlist) of
+			Base(a, _)::tail => if Atom.same(id, getLabel(a)) then true
+							else existsbase(tail, id)
+			| RefinedBase(a, _, _)::tail => if Atom.same(id, getLabel(a)) then true
+							else existsbase(tail, id)
+			| ty::tail => if (Atom.same(getLabel(getAuxInfo(ty)), id)) then false
+					else existsbase(tail, id)
+			| nil => false
+	
 	(* test if a sum is a switched sum depending on some other id*)
 	fun is_switch(cmos, id) = 
 	  case LabelMap.find(cmos, id) of  
@@ -601,7 +612,7 @@ case ty of
 				    (* we also use the "cheapest" switch of all the switches and
 					delete all the more expensive 1-1 switches *)
 				    if length(ids) = 1 andalso 
-					length(#1 (hd mappings))=1 
+					length(#1 (hd mappings))=1 andalso existsbase(tylist, hd ids)
 				    then 
 					(
 					if (cost_switch(SOME(Switched (ids, mappings)))< 
@@ -623,13 +634,7 @@ case ty of
 			(someidmappings, newcmos)
 		  end 
     	 	| NONE => (NONE, cmos) 
-	(* function to test if a base value with a specific id exists in a ty list*) 
-	fun existsbase(tylist, id) = 
-		case tylist of Base({coverage, label=SOME id, ...}, _)::tail => true
-			| RefinedBase({coverage, label=SOME id, ...}, _, _)::tail => true
-			| _::tail => existsbase(tail, id)
-			| nil => false
-				
+			
 	fun to_switch (ty, id, mappings)=
 	(* convert a union ty to a Switch type if possible given an id 
 	   from a switch variable and mappings of a list of tuples 
@@ -658,7 +663,7 @@ case ty of
 		    val refine_ty_list = gen_ref_ty_list (mappings, tlist, 1)
 		in
 		    if (length refine_ty_list = length tlist) 
-		    then Switch (aux, id, refine_ty_list)
+		    then (Switch (aux, id, refine_ty_list))
 		    else ty
 		end
 	   | _ => ty
@@ -674,17 +679,13 @@ case ty of
 			  in 
 			    case c of 
 				SOME ([id], mappings) =>
-					if (existsbase(tylist, id))
-			    		then 
-					  let val (newcmos, rest') = rewrite_switch(newcmos, rest)
+					(
+					  let 
+						val (newcmos, rest') = rewrite_switch(newcmos, rest)
 					  in
 						(newcmos, to_switch(h, id, mappings)::rest')
 					  end
-			    		else 
-					  let val (newcmos, rest') = rewrite_switch(newcmos, rest)
-					  in
-					  	(newcmos, h::rest')
-					  end
+					)
 				| _ =>    let val (newcmos, rest') = rewrite_switch(newcmos, rest)
 					  in
 					  	(newcmos, h::rest')
