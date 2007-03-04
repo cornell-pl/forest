@@ -598,10 +598,73 @@ Tail:
 	[int](Id = BTy_23 999);
 End Parray
 
+trying to refine array
+Parray(Id = BTy_0 999)((|) )
+First:
+	Pstruct(Id = BTy_3 999)
+		[0...9152272](Id = BTy_1 999);
+		"|"(Id = BTy_2 999);
+	End Pstruct;
+Body:
+	Pstruct(Id = BTy_22 18998)
+		Punion(Id = BTy_11 18998)
+			Pstruct(Id = BTy_10 11714)
+				Punion(Id = BTy_5 11714)
+					""(Id = BTy_4 11713);
+					"MELISSA "(Id = BTy_6 1);
+				End Punion;
+				[9150767...9152272](Id = BTy_9 11714);
+			End Pstruct;
+			Pstruct(Id = BTy_18 6286)
+				[string](Id = BTy_12 6286);
+				Punion(Id = BTy_14 6286)
+					""(Id = BTy_13 6285);
+					" c"(Id = BTy_15 1);
+				End Punion;
+			End Pstruct;
+			""(Id = BTy_20 998);
+		End Punion;
+		"|"(Id = BTy_21 18998);
+	End Pstruct;
+Tail:
+	[995428801...1054663253](Id = BTy_23 999);
+End Parray
+Done refining array to:
+Pstruct(Id = BTy_46 999)
+	Pstruct(Id = BTy_3 999)
+		[0...9152272](Id = BTy_1 999);
+		"|"(Id = BTy_2 999);
+	End Pstruct;
+	RArray(Id = BTy_0 999)
+		Separator: "|"
+		Terminator: "/|[0-9]*/"
+		Punion(Id = BTy_11 18998)
+			Pstruct(Id = BTy_10 11714)
+				Punion(Id = BTy_5 11714)
+					""(Id = BTy_4 11713);
+					"MELISSA "(Id = BTy_6 1);
+				End Punion;
+				[9150767...9152272](Id = BTy_9 11714);
+			End Pstruct;
+			Pstruct(Id = BTy_18 6286)
+				[string](Id = BTy_12 6286);
+				Punion(Id = BTy_14 6286)
+					""(Id = BTy_13 6285);
+					" c"(Id = BTy_15 1);
+				End Punion;
+			End Pstruct;
+			""(Id = BTy_20 998);
+		End Punion;
+	End RArray;
+	Pstruct(Id = BTy_45 999)
+		"|"(Id = BTy_21 18998);
+		[995428801...1054663253](Id = BTy_23 999);
+	End Pstruct;
+End Pstruct
 
 After reduction:
 Pstruct(Id = BTy_46 999)
-	[int](Id = BTy_1 999);
+	[0...9152272](Id = BTy_1 999);
 	"|"(Id = BTy_2 999);
 	RArray(Id = BTy_0 999)
 		Separator: "|"
@@ -612,7 +675,7 @@ Pstruct(Id = BTy_46 999)
 					""(Id = BTy_4 11713);
 					"MELISSA "(Id = BTy_6 1);
 				End Punion;
-				[int](Id = BTy_9 11714);
+				[9150767...9152272](Id = BTy_9 11714);
 			End Pstruct;
 			Pstruct(Id = BTy_18 6286)
 				[string](Id = BTy_12 6286);
@@ -625,7 +688,7 @@ Pstruct(Id = BTy_46 999)
 		End Punion;
 	End RArray;
 	"|"(Id = BTy_21 18998);
-	[int](Id = BTy_23 999);
+	[995428801...1054663253](Id = BTy_23 999);
 End Pstruct
 
 Complexity of inferred type:

@@ -1,4 +1,4 @@
-Source file to process: ../golden/data/1967Transactions.short
+Source file to process: data/1967Transactions.short
 Output directory: gen/
 Max depth to explore: 50
 Print line numbers in output contexts: false
@@ -8,7 +8,7 @@ Struct determination tolerance (percentage): 0.1
 Noise level threshold (percentage): 0.0
 Minimum width threshold for array: 2
 Junk threshold (percentage): 0.1
-Starting on file ../golden/data/1967Transactions.short
+Starting on file data/1967Transactions.short
 999 records.
 Histogram of number of tokens per record:
 	12:	943
@@ -338,16 +338,16 @@ End Pstruct
 
 After reduction:
 Pstruct(Id = BTy_27 999)
-	[int](Id = BTy_0 999);
+	[101...103](Id = BTy_0 999);
 	"      "(Id = BTy_1 999);
-	[int](Id = BTy_2 999);
+	[101...9890](Id = BTy_2 999);
 	"      "(Id = BTy_3 999);
-	[int](Id = BTy_4 999);
+	[~10...12072](Id = BTy_4 999);
 	Punion(Id = BTy_6 999)
 		""(Id = BTy_5 937);
 		Pstruct(Id = BTy_9 62)
 			"."(Id = BTy_7 62);
-			[int](Id = BTy_8 62);
+			[1...9](Id = BTy_8 62);
 		End Pstruct;
 	End Punion;
 	"                   "(Id = BTy_11 999);
@@ -356,20 +356,18 @@ Pstruct(Id = BTy_27 999)
 		""(Id = BTy_13 943);
 		Pstruct(Id = BTy_17 56)
 			"."(Id = BTy_15 56);
-			[int](Id = BTy_16 56);
+			[2...53321](Id = BTy_16 56);
 		End Pstruct;
 	End Punion;
 	"                   "(Id = BTy_19 999);
-	Switch(BTy_2):
-	case "*":
+	Punion(Id = BTy_24 999)
 		Pstruct(Id = BTy_23 988)
-			[int](Id = BTy_20 988);
+			[0...1](Id = BTy_20 988);
 			"."(Id = BTy_21 988);
-			[int](Id = BTy_22 988);
+			[1...87353](Id = BTy_22 988);
 		End Pstruct;
-	case {[9100], [9300], [9400], [9710], [9720], [9860], [9870], [9880], [9890], }:
 		[0](Id = BTy_25 11);
-	End Switch;
+	End Punion;
 	"   "(Id = BTy_26 999);
 End Pstruct
 

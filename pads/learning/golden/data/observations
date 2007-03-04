@@ -1,0 +1,35 @@
+1. Floating point numbers are not detected (1967Transactions)
+
+2. Special characters are treated as newlines (boot.txt)
+
+3. Dates are not detected (boot.txt, ai.3000, yum.txt)
+
+4. If array body is too complicated, chances are it's not an array; also if an array has too few elements,
+it may not be an array especially when it doesn't have a separator (boot.txt, rpmpkgs.txt)
+
+5. If a Ty has too complex structure and low coverage, can consider downgrading it to a simple string because
+it could be just comments, human language, rather than a fixed format (boot.txt)
+
+6. File paths and URLs are not detected (boot.txt)
+
+7. The current system was able to correct identify rc.sysinit and fsck have the same semantics (a daemon name) by putting them into a union (boot.txt)
+
+8. Failed to recognize multi-line records and file that contains different types of records (convert.log)
+
+9. Hostname was not identified (ai.3000)
+
+10. Timezone -0700 taken as integer (ai.3000)
+
+11. Terminator appears in the body of the array itself (dibbler.1000)
+
+12. Failed to detect the file permission format as a whole string (ls-l.txt)
+
+13. Array not detected when the separator is also used uniformly as a separator for structs (quarterlypersonalincome)
+
+14. Unable to distinguish table headers from the table body (quarterlypersonalincome) -> 
+consider doing the following rewriting:
+(a1 + b1), (a2 + b2), (a3 + b3) = (a1, a2, a3) + (b1, b2, b3) 
+where a and b are header and body rows of a table
+
+15. Cannot handle Parray with a non-struct body, e.g. base or refinedbase (will be fixed) (rpmpkgs.txt)
+

@@ -760,25 +760,25 @@ End Punion
 After reduction:
 Punion(Id = BTy_41 35)
 	Pstruct(Id = BTy_40 34)
-		Switch(BTy_3):
-		case {"rw-r-----", "rw-r--r--", }:
+		Switch(BTy_6)(Id = BTy_1 34):
+		case [1]:
 			"-"(Id = BTy_0 18);
-		case {"drwx------", "drwxr-xr-x", }:
+		case "*":
 			""(Id = BTy_2 16);
 		End Switch;
 		[string](Id = BTy_3 34);
 		"   "(Id = BTy_5 34);
-		[int](Id = BTy_6 34);
+		[1...21](Id = BTy_6 34);
 		" dpw fac      "(Id = BTy_7 34);
-		[int](Id = BTy_12 34);
+		[0...274595840](Id = BTy_12 34);
 		" "(Id = BTy_13 34);
 		[string](Id = BTy_14 34);
 		" "(Id = BTy_15 34);
-		[int](Id = BTy_16 34);
+		[2...28](Id = BTy_16 34);
 		"  "(Id = BTy_17 34);
-		Switch(BTy_23):
+		Switch(BTy_23)(Id = BTy_19 34):
 		case "*":
-			[int](Id = BTy_18 27);
+			[2002...2006](Id = BTy_18 27);
 		case {"cv", "davehome", "grants", "other", "recommendations", "reviews", "talks", }:
 			[Time](Id = BTy_20 7);
 		End Switch;

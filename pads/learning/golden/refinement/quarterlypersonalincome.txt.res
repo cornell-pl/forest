@@ -2090,17 +2090,17 @@ After reduction:
 Punion(Id = BTy_222 62)
 	Pstruct(Id = BTy_221 61)
 		"\""(Id = BTy_0 61);
-		Switch(BTy_12):
-		case [1]:
+		Switch(BTy_19)(Id = BTy_2 61):
+		case "*":
 			[10](Id = BTy_1 60);
-		case [2]:
+		case "AreaName":
 			"Personal income"(Id = BTy_3 1);
 		End Switch;
 		"\",\""(Id = BTy_7 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_11 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_12 61):
+		case "*":
+			[0...98](Id = BTy_11 60);
+		case "AreaName":
 			"FIPS"(Id = BTy_13 1);
 		End Switch;
 		"\",\""(Id = BTy_14 61);
@@ -2117,10 +2117,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Punion;
 		"\","(Id = BTy_30 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_33 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_34 61):
+		case "*":
+			[14691...8681021](Id = BTy_33 60);
+		case "AreaName":
 			Pstruct(Id = BTy_40 1)
 				"\""(Id = BTy_35 1);
 				[2001](Id = BTy_36 1);
@@ -2130,10 +2130,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_41 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_42 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_43 61):
+		case "*":
+			[14934...8713764](Id = BTy_42 60);
+		case "AreaName":
 			Pstruct(Id = BTy_49 1)
 				"\""(Id = BTy_44 1);
 				[2001](Id = BTy_45 1);
@@ -2143,10 +2143,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_50 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_51 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_52 61):
+		case "*":
+			[15054...8726357](Id = BTy_51 60);
+		case "AreaName":
 			Pstruct(Id = BTy_58 1)
 				"\""(Id = BTy_53 1);
 				[2001](Id = BTy_54 1);
@@ -2156,10 +2156,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_59 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_60 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_61 61):
+		case "*":
+			[15208...8746826](Id = BTy_60 60);
+		case "AreaName":
 			Pstruct(Id = BTy_67 1)
 				"\""(Id = BTy_62 1);
 				[2001](Id = BTy_63 1);
@@ -2169,10 +2169,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_68 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_69 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_70 61):
+		case "*":
+			[15312...8802758](Id = BTy_69 60);
+		case "AreaName":
 			Pstruct(Id = BTy_76 1)
 				"\""(Id = BTy_71 1);
 				[2002](Id = BTy_72 1);
@@ -2182,10 +2182,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_77 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_78 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_79 61):
+		case "*":
+			[15398...8876427](Id = BTy_78 60);
+		case "AreaName":
 			Pstruct(Id = BTy_85 1)
 				"\""(Id = BTy_80 1);
 				[2002](Id = BTy_81 1);
@@ -2195,10 +2195,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_86 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_87 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_88 61):
+		case "*":
+			[15485...8888413](Id = BTy_87 60);
+		case "AreaName":
 			Pstruct(Id = BTy_94 1)
 				"\""(Id = BTy_89 1);
 				[2002](Id = BTy_90 1);
@@ -2208,10 +2208,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_95 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_96 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_97 61):
+		case "*":
+			[15658...8923886](Id = BTy_96 60);
+		case "AreaName":
 			Pstruct(Id = BTy_103 1)
 				"\""(Id = BTy_98 1);
 				[2002](Id = BTy_99 1);
@@ -2221,10 +2221,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_104 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_105 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_106 61):
+		case "*":
+			[15869...9004711](Id = BTy_105 60);
+		case "AreaName":
 			Pstruct(Id = BTy_112 1)
 				"\""(Id = BTy_107 1);
 				[2003](Id = BTy_108 1);
@@ -2234,10 +2234,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_113 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_114 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_115 61):
+		case "*":
+			[16052...9106950](Id = BTy_114 60);
+		case "AreaName":
 			Pstruct(Id = BTy_121 1)
 				"\""(Id = BTy_116 1);
 				[2003](Id = BTy_117 1);
@@ -2247,10 +2247,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_122 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_123 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_124 61):
+		case "*":
+			[16321...9202945](Id = BTy_123 60);
+		case "AreaName":
 			Pstruct(Id = BTy_130 1)
 				"\""(Id = BTy_125 1);
 				[2003](Id = BTy_126 1);
@@ -2260,10 +2260,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_131 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_132 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_133 61):
+		case "*":
+			[16564...9314423](Id = BTy_132 60);
+		case "AreaName":
 			Pstruct(Id = BTy_139 1)
 				"\""(Id = BTy_134 1);
 				[2003](Id = BTy_135 1);
@@ -2273,10 +2273,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_140 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_141 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_142 61):
+		case "*":
+			[16916...9473036](Id = BTy_141 60);
+		case "AreaName":
 			Pstruct(Id = BTy_148 1)
 				"\""(Id = BTy_143 1);
 				[2004](Id = BTy_144 1);
@@ -2286,10 +2286,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_149 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_150 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_151 61):
+		case "*":
+			[17199...9607693](Id = BTy_150 60);
+		case "AreaName":
 			Pstruct(Id = BTy_157 1)
 				"\""(Id = BTy_152 1);
 				[2004](Id = BTy_153 1);
@@ -2299,10 +2299,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_158 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_159 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_160 61):
+		case "*":
+			[17402...9723125](Id = BTy_159 60);
+		case "AreaName":
 			Pstruct(Id = BTy_166 1)
 				"\""(Id = BTy_161 1);
 				[2004](Id = BTy_162 1);
@@ -2312,10 +2312,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_167 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_168 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_169 61):
+		case "*":
+			[17847...10018162](Id = BTy_168 60);
+		case "AreaName":
 			Pstruct(Id = BTy_175 1)
 				"\""(Id = BTy_170 1);
 				[2004](Id = BTy_171 1);
@@ -2325,10 +2325,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_176 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_177 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_178 61):
+		case "*":
+			[18131...10076392](Id = BTy_177 60);
+		case "AreaName":
 			Pstruct(Id = BTy_184 1)
 				"\""(Id = BTy_179 1);
 				[2005](Id = BTy_180 1);
@@ -2338,10 +2338,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_185 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_186 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_187 61):
+		case "*":
+			[18943...10187218](Id = BTy_186 60);
+		case "AreaName":
 			Pstruct(Id = BTy_193 1)
 				"\""(Id = BTy_188 1);
 				[2005](Id = BTy_189 1);
@@ -2351,10 +2351,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_194 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_195 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_196 61):
+		case "*":
+			[18716...10252277](Id = BTy_195 60);
+		case "AreaName":
 			Pstruct(Id = BTy_202 1)
 				"\""(Id = BTy_197 1);
 				[2005](Id = BTy_198 1);
@@ -2364,10 +2364,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_203 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_204 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_205 61):
+		case "*":
+			[19229...10444012](Id = BTy_204 60);
+		case "AreaName":
 			Pstruct(Id = BTy_211 1)
 				"\""(Id = BTy_206 1);
 				[2005](Id = BTy_207 1);
@@ -2377,10 +2377,10 @@ Punion(Id = BTy_222 62)
 			End Pstruct;
 		End Switch;
 		","(Id = BTy_212 61);
-		Switch(BTy_2):
-		case [1]:
-			[int](Id = BTy_213 60);
-		case [2]:
+		Switch(BTy_19)(Id = BTy_214 61):
+		case "*":
+			[19488...10588304](Id = BTy_213 60);
+		case "AreaName":
 			Pstruct(Id = BTy_220 1)
 				"\""(Id = BTy_215 1);
 				[2006](Id = BTy_216 1);

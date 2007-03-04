@@ -1292,17 +1292,251 @@ Tail:
 	[string](Id = BTy_50 886);
 End Parray
 
+trying to refine array
+Parray(Id = BTy_10 8)([int] )
+First:
+	[~296...~1](Id = BTy_11 8);
+Body:
+	[~3...~2](Id = BTy_12 2);
+Tail:
+	""(Id = BTy_13 8);
+End Parray
+trying to refine array
+Parray(Id = BTy_7 9)((+) )
+First:
+	"+"(Id = BTy_8 9);
+Body:
+	"+"(Id = BTy_9 7);
+Tail:
+	Punion(Id = BTy_17 9)
+		Parray(Id = BTy_10 8)([int] )
+		First:
+			[~296...~1](Id = BTy_11 8);
+		Body:
+			[~3...~2](Id = BTy_12 2);
+		Tail:
+			""(Id = BTy_13 8);
+		End Parray;
+		"-devel-3"(Id = BTy_14 1);
+	End Punion;
+End Parray
+trying to refine array
+Parray(Id = BTy_22 64)([int] )
+First:
+	[0...875](Id = BTy_23 64);
+Body:
+	[~80...~2](Id = BTy_24 11);
+Tail:
+	Punion(Id = BTy_26 64)
+		""(Id = BTy_25 51);
+		"_"(Id = BTy_27 9);
+		"-"(Id = BTy_29 4);
+	End Punion;
+End Parray
+trying to refine array
+Parray(Id = BTy_33 1823)([int] )
+First:
+	Punion(Id = BTy_39 1823)
+		Pstruct(Id = BTy_38 1822)
+			Switch(BTy_37)(Id = BTy_35 1822):
+			case "*":
+				""(Id = BTy_34 1820);
+			case [~21]:
+				{"15.92.0.2", "4.1.2.90", }(Id = BTy_36 2);
+			End Switch;
+			[~44...20060823](Id = BTy_37 1822);
+		End Pstruct;
+		""(Id = BTy_40 1);
+	End Punion;
+Body:
+	[~187...0](Id = BTy_41 819);
+Tail:
+	Punion(Id = BTy_43 1823)
+		""(Id = BTy_42 1822);
+		"(none)"(Id = BTy_44 1);
+	End Punion;
+End Parray
+trying to refine array
+Parray(Id = BTy_0 886)((.) )
+First:
+	Pstruct(Id = BTy_19 886)
+		Switch(BTy_4)(Id = BTy_2 886):
+		case "*":
+			""(Id = BTy_1 885);
+		case "Suite-1":
+			[4](Id = BTy_3 1);
+		End Switch;
+		[string](Id = BTy_4 886);
+		Switch(BTy_4)(Id = BTy_6 886):
+		case "*":
+			""(Id = BTy_5 877);
+		case {"compat-gcc-32-c", "compat-libstdc", "gcc-c", "gcc4-c", "gtk", "libstdc", "memtest86", }:
+			Parray(Id = BTy_7 9)((+) )
+			First:
+				"+"(Id = BTy_8 9);
+			Body:
+				"+"(Id = BTy_9 7);
+			Tail:
+				Punion(Id = BTy_17 9)
+					Parray(Id = BTy_10 8)([int] )
+					First:
+						[~296...~1](Id = BTy_11 8);
+					Body:
+						[~3...~2](Id = BTy_12 2);
+					Tail:
+						""(Id = BTy_13 8);
+					End Parray;
+					"-devel-3"(Id = BTy_14 1);
+				End Punion;
+			End Parray;
+		End Switch;
+		"."(Id = BTy_18 886);
+	End Pstruct;
+Body:
+	Pstruct(Id = BTy_49 3043)
+		Punion(Id = BTy_32 3043)
+			Pstruct(Id = BTy_31 1220)
+				Punion(Id = BTy_21 1220)
+					""(Id = BTy_20 1156);
+					Parray(Id = BTy_22 64)([int] )
+					First:
+						[0...875](Id = BTy_23 64);
+					Body:
+						[~80...~2](Id = BTy_24 11);
+					Tail:
+						Punion(Id = BTy_26 64)
+							""(Id = BTy_25 51);
+							"_"(Id = BTy_27 9);
+							"-"(Id = BTy_29 4);
+						End Punion;
+					End Parray;
+				End Punion;
+				[string](Id = BTy_30 1220);
+			End Pstruct;
+			Parray(Id = BTy_33 1823)([int] )
+			First:
+				Punion(Id = BTy_39 1823)
+					Pstruct(Id = BTy_38 1822)
+						Switch(BTy_37)(Id = BTy_35 1822):
+						case "*":
+							""(Id = BTy_34 1820);
+						case [~21]:
+							{"15.92.0.2", "4.1.2.90", }(Id = BTy_36 2);
+						End Switch;
+						[~44...20060823](Id = BTy_37 1822);
+					End Pstruct;
+					""(Id = BTy_40 1);
+				End Punion;
+			Body:
+				[~187...0](Id = BTy_41 819);
+			Tail:
+				Punion(Id = BTy_43 1823)
+					""(Id = BTy_42 1822);
+					"(none)"(Id = BTy_44 1);
+				End Punion;
+			End Parray;
+		End Punion;
+		"."(Id = BTy_48 3043);
+	End Pstruct;
+Tail:
+	"rpm"(Id = BTy_50 886);
+End Parray
+Done refining array to:
+Pstruct(Id = BTy_101 886)
+	Pstruct(Id = BTy_19 886)
+		Switch(BTy_4)(Id = BTy_2 886):
+		case "*":
+			""(Id = BTy_1 885);
+		case "Suite-1":
+			[4](Id = BTy_3 1);
+		End Switch;
+		[string](Id = BTy_4 886);
+		Switch(BTy_4)(Id = BTy_6 886):
+		case "*":
+			""(Id = BTy_5 877);
+		case {"compat-gcc-32-c", "compat-libstdc", "gcc-c", "gcc4-c", "gtk", "libstdc", "memtest86", }:
+			Parray(Id = BTy_7 9)((+) )
+			First:
+				"+"(Id = BTy_8 9);
+			Body:
+				"+"(Id = BTy_9 7);
+			Tail:
+				Punion(Id = BTy_17 9)
+					Parray(Id = BTy_10 8)([int] )
+					First:
+						[~296...~1](Id = BTy_11 8);
+					Body:
+						[~3...~2](Id = BTy_12 2);
+					Tail:
+						""(Id = BTy_13 8);
+					End Parray;
+					"-devel-3"(Id = BTy_14 1);
+				End Punion;
+			End Parray;
+		End Switch;
+		"."(Id = BTy_18 886);
+	End Pstruct;
+	RArray(Id = BTy_0 886)
+		Separator: "."
+		Terminator: ".rpm"
+		Punion(Id = BTy_32 3043)
+			Pstruct(Id = BTy_31 1220)
+				Punion(Id = BTy_21 1220)
+					""(Id = BTy_20 1156);
+					Parray(Id = BTy_22 64)([int] )
+					First:
+						[0...875](Id = BTy_23 64);
+					Body:
+						[~80...~2](Id = BTy_24 11);
+					Tail:
+						Punion(Id = BTy_26 64)
+							""(Id = BTy_25 51);
+							"_"(Id = BTy_27 9);
+							"-"(Id = BTy_29 4);
+						End Punion;
+					End Parray;
+				End Punion;
+				[string](Id = BTy_30 1220);
+			End Pstruct;
+			Parray(Id = BTy_33 1823)([int] )
+			First:
+				Punion(Id = BTy_39 1823)
+					Pstruct(Id = BTy_38 1822)
+						Switch(BTy_37)(Id = BTy_35 1822):
+						case "*":
+							""(Id = BTy_34 1820);
+						case [~21]:
+							{"15.92.0.2", "4.1.2.90", }(Id = BTy_36 2);
+						End Switch;
+						[~44...20060823](Id = BTy_37 1822);
+					End Pstruct;
+					""(Id = BTy_40 1);
+				End Punion;
+			Body:
+				[~187...0](Id = BTy_41 819);
+			Tail:
+				Punion(Id = BTy_43 1823)
+					""(Id = BTy_42 1822);
+					"(none)"(Id = BTy_44 1);
+				End Punion;
+			End Parray;
+		End Punion;
+	End RArray;
+	Pstruct(Id = BTy_100 886)
+		".rpm"(Id = BTy_48 3043);
+	End Pstruct;
+End Pstruct
 
 After reduction:
 Pstruct(Id = BTy_101 886)
-	Switch(BTy_4):
+	Switch(BTy_4)(Id = BTy_2 886):
 	case "*":
 		""(Id = BTy_1 885);
 	case "Suite-1":
 		[4](Id = BTy_3 1);
 	End Switch;
 	[string](Id = BTy_4 886);
-	Switch(BTy_4):
+	Switch(BTy_4)(Id = BTy_6 886):
 	case "*":
 		""(Id = BTy_5 877);
 	case {"compat-gcc-32-c", "compat-libstdc", "gcc-c", "gcc4-c", "gtk", "libstdc", "memtest86", }:
@@ -1315,9 +1549,9 @@ Pstruct(Id = BTy_101 886)
 			Punion(Id = BTy_17 9)
 				Parray(Id = BTy_10 8)([int] )
 				First:
-					[int](Id = BTy_11 8);
+					[~296...~1](Id = BTy_11 8);
 				Body:
-					[int](Id = BTy_12 2);
+					[~3...~2](Id = BTy_12 2);
 				Tail:
 					""(Id = BTy_13 8);
 				End Parray;
@@ -1329,16 +1563,15 @@ Pstruct(Id = BTy_101 886)
 	RArray(Id = BTy_0 886)
 		Separator: "."
 		Terminator: ".rpm"
-		Switch(BTy_4):
-		case "*":
+		Punion(Id = BTy_32 3043)
 			Pstruct(Id = BTy_31 1220)
 				Punion(Id = BTy_21 1220)
 					""(Id = BTy_20 1156);
 					Parray(Id = BTy_22 64)([int] )
 					First:
-						[int](Id = BTy_23 64);
+						[0...875](Id = BTy_23 64);
 					Body:
-						[int](Id = BTy_24 11);
+						[~80...~2](Id = BTy_24 11);
 					Tail:
 						Punion(Id = BTy_26 64)
 							""(Id = BTy_25 51);
@@ -1349,30 +1582,29 @@ Pstruct(Id = BTy_101 886)
 				End Punion;
 				[string](Id = BTy_30 1220);
 			End Pstruct;
-		case "gpg-pubkey-443e1821-421f218f":
 			Parray(Id = BTy_33 1823)([int] )
 			First:
 				Punion(Id = BTy_39 1823)
 					Pstruct(Id = BTy_38 1822)
-						Switch(BTy_4):
+						Switch(BTy_37)(Id = BTy_35 1822):
 						case "*":
 							""(Id = BTy_34 1820);
-						case "binutils-2":
-							[IP](Id = BTy_36 2);
+						case [~21]:
+							{"15.92.0.2", "4.1.2.90", }(Id = BTy_36 2);
 						End Switch;
-						[int](Id = BTy_37 1822);
+						[~44...20060823](Id = BTy_37 1822);
 					End Pstruct;
 					""(Id = BTy_40 1);
 				End Punion;
 			Body:
-				[int](Id = BTy_41 819);
+				[~187...0](Id = BTy_41 819);
 			Tail:
 				Punion(Id = BTy_43 1823)
 					""(Id = BTy_42 1822);
 					"(none)"(Id = BTy_44 1);
 				End Punion;
 			End Parray;
-		End Switch;
+		End Punion;
 	End RArray;
 	".rpm"(Id = BTy_48 3043);
 End Pstruct

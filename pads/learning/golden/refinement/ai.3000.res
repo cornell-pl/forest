@@ -1935,33 +1935,212 @@ Pstruct(Id = BTy_110 3000)
 	End Punion;
 End Pstruct
 
+trying to refine array
+Parray(Id = BTy_10 5)([int] )
+First:
+	[142...171](Id = BTy_11 5);
+Body:
+	[~164](Id = BTy_12 8);
+Tail:
+	""(Id = BTy_13 5);
+End Parray
+trying to refine array
+Parray(Id = BTy_2 1296)((.) )
+First:
+	Pstruct(Id = BTy_123 1296)
+		Punion(Id = BTy_9 1296)
+			Pstruct(Id = BTy_8 1291)
+				Switch(BTy_6)(Id = BTy_4 1291):
+				case "*":
+					""(Id = BTy_3 1246);
+				case {"cust108", "cust230", "cust40", "inf121", }:
+					[1...130](Id = BTy_5 45);
+				End Switch;
+				[string](Id = BTy_6 1291);
+			End Pstruct;
+			Parray(Id = BTy_10 5)([int] )
+			First:
+				[142...171](Id = BTy_11 5);
+			Body:
+				[~164](Id = BTy_12 8);
+			Tail:
+				""(Id = BTy_13 5);
+			End Parray;
+		End Punion;
+		"."(Id = BTy_7 1291);
+	End Pstruct;
+Body:
+	Pstruct(Id = BTy_18 2280)
+		[string](Id = BTy_16 2280);
+		"."(Id = BTy_17 2280);
+	End Pstruct;
+Tail:
+	[string](Id = BTy_19 1296);
+End Parray
+Done refining array to:
+Pstruct(Id = BTy_126 1296)
+	Pstruct(Id = BTy_123 1296)
+		Punion(Id = BTy_9 1296)
+			Pstruct(Id = BTy_8 1291)
+				Switch(BTy_6)(Id = BTy_4 1291):
+				case "*":
+					""(Id = BTy_3 1246);
+				case {"cust108", "cust230", "cust40", "inf121", }:
+					[1...130](Id = BTy_5 45);
+				End Switch;
+				[string](Id = BTy_6 1291);
+			End Pstruct;
+			Parray(Id = BTy_10 5)([int] )
+			First:
+				[142...171](Id = BTy_11 5);
+			Body:
+				[~164](Id = BTy_12 8);
+			Tail:
+				""(Id = BTy_13 5);
+			End Parray;
+		End Punion;
+		"."(Id = BTy_7 1291);
+	End Pstruct;
+	RArray(Id = BTy_2 1296)
+		Separator: "."
+		[string](Id = BTy_16 2280);
+	End RArray;
+End Pstruct
+trying to refine array
+Parray(Id = BTy_43 2872)((/) )
+First:
+	"/"(Id = BTy_44 2872);
+Body:
+	Pstruct(Id = BTy_47 4511)
+		[string](Id = BTy_45 4511);
+		"/"(Id = BTy_46 4511);
+	End Pstruct;
+Tail:
+	Pstruct(Id = BTy_65 2872)
+		Switch(BTy_57)(Id = BTy_49 2872):
+		case "*":
+			""(Id = BTy_48 2856);
+		case {"candle", "uaup", "ways", }:
+			Pstruct(Id = BTy_56 16)
+				[3...8](Id = BTy_50 16);
+				Punion(Id = BTy_52 16)
+					""(Id = BTy_51 15);
+					Pstruct(Id = BTy_55 1)
+						"'"(Id = BTy_53 1);
+						[5](Id = BTy_54 1);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
+		End Switch;
+		[string](Id = BTy_57 2872);
+		Punion(Id = BTy_59 2872)
+			""(Id = BTy_58 2864);
+			Pstruct(Id = BTy_64 8)
+				Switch(BTy_63)(Id = BTy_61 8):
+				case "a":
+					"&"(Id = BTy_60 7);
+				case "aiusa":
+					"@"(Id = BTy_62 1);
+				End Switch;
+				{"a", "aiusa", }(Id = BTy_63 8);
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+End Parray
+Done refining array to:
+Pstruct(Id = BTy_185 2872)
+	"/"(Id = BTy_44 2872);
+	RArray(Id = BTy_43 2872)
+		Pstruct(Id = BTy_47 4511)
+			[string](Id = BTy_45 4511);
+			"/"(Id = BTy_46 4511);
+		End Pstruct;
+	End RArray;
+	Pstruct(Id = BTy_65 2872)
+		Switch(BTy_57)(Id = BTy_49 2872):
+		case "*":
+			""(Id = BTy_48 2856);
+		case {"candle", "uaup", "ways", }:
+			Pstruct(Id = BTy_56 16)
+				[3...8](Id = BTy_50 16);
+				Punion(Id = BTy_52 16)
+					""(Id = BTy_51 15);
+					Pstruct(Id = BTy_55 1)
+						"'"(Id = BTy_53 1);
+						[5](Id = BTy_54 1);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
+		End Switch;
+		[string](Id = BTy_57 2872);
+		Punion(Id = BTy_59 2872)
+			""(Id = BTy_58 2864);
+			Pstruct(Id = BTy_64 8)
+				Switch(BTy_63)(Id = BTy_61 8):
+				case "a":
+					"&"(Id = BTy_60 7);
+				case "aiusa":
+					"@"(Id = BTy_62 1);
+				End Switch;
+				{"a", "aiusa", }(Id = BTy_63 8);
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+End Pstruct
+trying to refine array
+Parray(Id = BTy_87 128)((/) )
+First:
+	"/"(Id = BTy_88 128);
+Body:
+	Pstruct(Id = BTy_91 88)
+		[string](Id = BTy_89 88);
+		"/"(Id = BTy_90 88);
+	End Pstruct;
+Tail:
+	Punion(Id = BTy_93 128)
+		""(Id = BTy_92 106);
+		[string](Id = BTy_94 22);
+	End Punion;
+End Parray
+Done refining array to:
+Pstruct(Id = BTy_214 128)
+	"/"(Id = BTy_88 128);
+	RArray(Id = BTy_87 128)
+		Pstruct(Id = BTy_91 88)
+			[string](Id = BTy_89 88);
+			"/"(Id = BTy_90 88);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_93 128)
+		""(Id = BTy_92 106);
+		[string](Id = BTy_94 22);
+	End Punion;
+End Pstruct
 
 After reduction:
 Pstruct(Id = BTy_110 3000)
 	Punion(Id = BTy_1 3000)
 		[IP](Id = BTy_0 1704);
 		Pstruct(Id = BTy_126 1296)
-			Switch(BTy_16):
-			case "*":
+			Punion(Id = BTy_9 1296)
 				Pstruct(Id = BTy_8 1291)
-					Switch(BTy_6):
+					Switch(BTy_6)(Id = BTy_4 1291):
 					case "*":
 						""(Id = BTy_3 1246);
 					case {"cust108", "cust230", "cust40", "inf121", }:
-						[int](Id = BTy_5 45);
+						[1...130](Id = BTy_5 45);
 					End Switch;
 					[string](Id = BTy_6 1291);
 				End Pstruct;
-			case {"ipt", "los-angeles-09", }:
 				Parray(Id = BTy_10 5)([int] )
 				First:
-					[int](Id = BTy_11 5);
+					[142...171](Id = BTy_11 5);
 				Body:
 					[~164](Id = BTy_12 8);
 				Tail:
 					""(Id = BTy_13 5);
 				End Parray;
-			End Switch;
+			End Punion;
 			"."(Id = BTy_7 1291);
 			RArray(Id = BTy_2 1296)
 				Separator: "."
@@ -1970,14 +2149,12 @@ Pstruct(Id = BTy_110 3000)
 		End Pstruct;
 	End Punion;
 	" - "(Id = BTy_20 3000);
-	Switch(BTy_107):
-	case "*":
+	Punion(Id = BTy_24 3000)
 		"-"(Id = BTy_23 2999);
-	case [450]:
 		"amnesty"(Id = BTy_25 1);
-	End Switch;
+	End Punion;
 	" ["(Id = BTy_26 3000);
-	[int](Id = BTy_28 3000);
+	[15...16](Id = BTy_28 3000);
 	"/Oct/"(Id = BTy_29 3000);
 	[1997](Id = BTy_32 3000);
 	":"(Id = BTy_33 3000);
@@ -1985,23 +2162,22 @@ Pstruct(Id = BTy_110 3000)
 	" "(Id = BTy_35 3000);
 	[~700](Id = BTy_36 3000);
 	"] \""(Id = BTy_37 3000);
-	[string](Id = BTy_41 3000);
-	" "(Id = BTy_42 3000);
+	{"GET", "POST", }(Id = BTy_41 3000);
+	" /"(Id = BTy_42 3000);
 	Punion(Id = BTy_86 3000)
 		Pstruct(Id = BTy_85 2872)
-			"/"(Id = BTy_44 2872);
 			RArray(Id = BTy_43 2872)
 				Pstruct(Id = BTy_47 4511)
 					[string](Id = BTy_45 4511);
 					"/"(Id = BTy_46 4511);
 				End Pstruct;
 			End RArray;
-			Switch(BTy_57):
+			Switch(BTy_57)(Id = BTy_49 2872):
 			case "*":
 				""(Id = BTy_48 2856);
 			case {"candle", "uaup", "ways", }:
 				Pstruct(Id = BTy_56 16)
-					[int](Id = BTy_50 16);
+					[3...8](Id = BTy_50 16);
 					Punion(Id = BTy_52 16)
 						""(Id = BTy_51 15);
 						Pstruct(Id = BTy_55 1)
@@ -2015,13 +2191,13 @@ Pstruct(Id = BTy_110 3000)
 			Punion(Id = BTy_59 2872)
 				""(Id = BTy_58 2864);
 				Pstruct(Id = BTy_64 8)
-					Switch(BTy_57):
-					case "fwq":
+					Switch(BTy_63)(Id = BTy_61 8):
+					case "a":
 						"&"(Id = BTy_60 7);
-					case "aimember":
+					case "aiusa":
 						"@"(Id = BTy_62 1);
 					End Switch;
-					[string](Id = BTy_63 8);
+					{"a", "aiusa", }(Id = BTy_63 8);
 				End Pstruct;
 			End Punion;
 			"."(Id = BTy_66 2872);
@@ -2029,7 +2205,7 @@ Pstruct(Id = BTy_110 3000)
 			Punion(Id = BTy_69 2872)
 				""(Id = BTy_68 2865);
 				Pstruct(Id = BTy_79 5)
-					Switch(BTy_75):
+					Switch(BTy_75)(Id = BTy_73 5):
 					case "ALT":
 						Pstruct(Id = BTy_72 4)
 							"%"(Id = BTy_70 4);
@@ -2038,7 +2214,7 @@ Pstruct(Id = BTy_110 3000)
 					case "confirm":
 						"/"(Id = BTy_74 1);
 					End Switch;
-					[string](Id = BTy_75 5);
+					{"ALT", "confirm", }(Id = BTy_75 5);
 					Punion(Id = BTy_77 5)
 						"="(Id = BTy_76 4);
 						""(Id = BTy_78 1);
@@ -2048,7 +2224,6 @@ Pstruct(Id = BTy_110 3000)
 			End Punion;
 		End Pstruct;
 		Pstruct(Id = BTy_214 128)
-			"/"(Id = BTy_88 128);
 			RArray(Id = BTy_87 128)
 				Pstruct(Id = BTy_91 88)
 					[string](Id = BTy_89 88);
@@ -2064,12 +2239,12 @@ Pstruct(Id = BTy_110 3000)
 	" HTTP/"(Id = BTy_95 3000);
 	[1](Id = BTy_99 3000);
 	"."(Id = BTy_100 3000);
-	[int](Id = BTy_101 3000);
+	[0...1](Id = BTy_101 3000);
 	"\" "(Id = BTy_102 3000);
-	[int](Id = BTy_105 3000);
+	[200...404](Id = BTy_105 3000);
 	" "(Id = BTy_106 3000);
 	Punion(Id = BTy_108 3000)
-		[int](Id = BTy_107 2651);
+		[35...37947](Id = BTy_107 2651);
 		"-"(Id = BTy_109 349);
 	End Punion;
 End Pstruct
