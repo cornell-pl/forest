@@ -31,5 +31,5 @@ consider doing the following rewriting:
 (a1 + b1), (a2 + b2), (a3 + b3) = (a1, a2, a3) + (b1, b2, b3) 
 where a and b are header and body rows of a table
 
-15. Cannot handle Parray with a non-struct body, e.g. base or refinedbase (will be fixed) (rpmpkgs.txt)
+15. Cannot handle Parray with a non-struct body, e.g. base or refinedbase, however these arrays with a base Ty as body are normally not really arrays (ai.3000, rpmpkgs.txt)
 
