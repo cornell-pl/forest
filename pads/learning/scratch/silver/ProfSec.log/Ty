@@ -1,0 +1,110 @@
+Punion(Id = BTy_55 59)
+	Pstruct(Id = BTy_54 46)
+		Switch(BTy_10)(Id = BTy_2 46):
+		case [1]:
+			""(Id = BTy_1 40);
+		case [2]:
+			"Warning"(Id = BTy_3 6);
+		End Switch;
+		"	"(Id = BTy_4 46);
+		RArray(Id = BTy_0 46)
+			Pstruct(Id = BTy_8 58)
+				{"Configure", "Error", }(Id = BTy_6 58);
+				" "(Id = BTy_7 58);
+			End Pstruct;
+		End RArray;
+		Punion(Id = BTy_10 46)
+			"c"(Id = BTy_9 40);
+			[2](Id = BTy_11 6);
+		End Punion;
+		":"(Id = BTy_12 46);
+		Switch(BTy_2)(Id = BTy_18 46):
+		case [1]:
+			"\\documents"(Id = BTy_15 40);
+		case [2]:
+			""(Id = BTy_19 6);
+		End Switch;
+		" "(Id = BTy_20 46);
+		RArray(Id = BTy_14 46)
+			Pstruct(Id = BTy_33 158)
+				{"The", "and", }(Id = BTy_23 158);
+				Punion(Id = BTy_25 158)
+					""(Id = BTy_24 77);
+					Parray(Id = BTy_26 81)((\\) )
+					First:
+						"\\"(Id = BTy_27 81);
+					Body:
+						"microsoft\\"(Id = BTy_28 12);
+					Tail:
+						{"all", "default", }(Id = BTy_31 81);
+					End Parray;
+				End Punion;
+				" "(Id = BTy_32 158);
+			End Pstruct;
+		End RArray;
+		[string](Id = BTy_35 46);
+		Punion(Id = BTy_37 46)
+			""(Id = BTy_36 15);
+			Pstruct(Id = BTy_169 31)
+				"\\"(Id = BTy_39 31);
+				RArray(Id = BTy_38 31)
+					Pstruct(Id = BTy_42 47)
+						{"documents", "microsoft", "msfax", }(Id = BTy_40 47);
+						"\\"(Id = BTy_41 47);
+					End Pstruct;
+				End RArray;
+				Switch(BTy_46)(Id = BTy_44 31):
+				case "*":
+					""(Id = BTy_43 29);
+				case "cmphone":
+					"_"(Id = BTy_45 2);
+				End Switch;
+				[string](Id = BTy_46 31);
+			End Pstruct;
+		End Punion;
+		"."(Id = BTy_48 46);
+		RArray(Id = BTy_13 46)
+			Pstruct(Id = BTy_52 8)
+				{"ini", "pbk", "pol", }(Id = BTy_50 8);
+				"."(Id = BTy_51 8);
+			End Pstruct;
+		End RArray;
+	End Pstruct;
+	""(Id = BTy_56 6);
+	Pstruct(Id = BTy_73 1)
+		"Wednesday, October "(Id = BTy_58 1);
+		[6](Id = BTy_64 1);
+		", "(Id = BTy_65 1);
+		[2004](Id = BTy_67 1);
+		" 10:37:43 PM"(Id = BTy_68 1);
+	End Pstruct;
+	"	File Security configuration was completed successfully."(Id = BTy_75 1);
+	Pstruct(Id = BTy_276 5)
+		"-"(Id = BTy_90 5);
+		RArray(Id = BTy_89 5)
+			Pstruct(Id = BTy_105 58)
+				Punion(Id = BTy_92 58)
+					""(Id = BTy_91 57);
+					"Configuration engine was initialized successfully."(Id = BTy_93 1);
+				End Punion;
+				"-"(Id = BTy_104 58);
+			End Pstruct;
+		End RArray;
+		Punion(Id = BTy_118 5)
+			Pstruct(Id = BTy_117 3)
+				{"Configure", "Reading", "Un-initialize", }(Id = BTy_107 3);
+				" "(Id = BTy_108 3);
+				RArray(Id = BTy_106 3)
+					Terminator: {"Security", "engine", "info", }
+					Pstruct(Id = BTy_112 4)
+						{"Configuration", "File", "configuration", }(Id = BTy_110 4);
+						" "(Id = BTy_111 4);
+					End Pstruct;
+				End RArray;
+				{"Security", "engine", "info", }(Id = BTy_113 3);
+				"..."(Id = BTy_114 3);
+			End Pstruct;
+			""(Id = BTy_119 2);
+		End Punion;
+	End Pstruct;
+End Punion
