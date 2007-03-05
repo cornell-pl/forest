@@ -1,0 +1,29 @@
+#!/bin/bash
+echo number of arguments is $#
+echo data file is $1
+
+if [ $# -ne 1 ]
+then
+  exit -10
+fi
+
+if make $1
+then
+  echo silver file $1
+  if [ -d silver/$1 ]
+  then
+       echo silver/$1 already exists
+       cp output/$1/Ty silver/$1/Ty
+       cp output/$1/Params silver/$1/Params
+       cd silver; cvs up
+  else
+       echo silver/$1 does not exist
+       mkdir silver/$1
+       cp output/$1/Ty silver/$1/Ty
+       cp output/$1/Params silver/$1/Params
+       cd silver; cvs add $1; cvs add $1/Ty cvs add $1/Params
+       cvs commit -m "Silver version of $1"
+  fi
+else
+  echo "\"make learn\" failed, this version is not silver"
+fi
