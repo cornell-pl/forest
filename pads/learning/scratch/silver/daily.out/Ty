@@ -1,0 +1,54 @@
+Punion(Id = BTy_1 5788)
+	""(Id = BTy_0 1668);
+	Pstruct(Id = BTy_23 834)
+		[string](Id = BTy_2 834);
+		Switch(BTy_2)(Id = BTy_4 834):
+		case {"en0", "en1", "fw0", "lo0", }:
+			""(Id = BTy_3 556);
+		case {"gif0", "stf0", }:
+			"*"(Id = BTy_5 278);
+		End Switch;
+		"   "(Id = BTy_6 834);
+		[576...16384](Id = BTy_7 834);
+		" <Link#"(Id = BTy_8 834);
+		[1...6](Id = BTy_13 834);
+		">                        "(Id = BTy_14 834);
+		RArray(Id = BTy_15 834)
+			Terminator: [0...25153]
+			Pstruct(Id = BTy_21 3753)
+				Punion(Id = BTy_19 3753)
+					Pstruct(Id = BTy_18 3614)
+						TBD_0(Id = BTy_0 3614);
+						[0...12177617](Id = BTy_17 3614);
+						TBD_1(Id = BTy_1 3614);
+					End Pstruct;
+					TBD_2(Id = BTy_2 139);
+				End Punion;
+				"     "(Id = BTy_20 3753);
+			End Pstruct;
+		End RArray;
+		[0...25153](Id = BTy_22 834);
+	End Pstruct;
+	Pstruct(Id = BTy_25 3075)
+		[string](Id = BTy_26 3075);
+		Punion(Id = BTy_27 3075)
+			TBD_3(Id = BTy_3 2241);
+			TBD_4(Id = BTy_4 834);
+		End Punion;
+	End Pstruct;
+	"  DUMP: WARNING: no file `/etc/dumpdates', making an empty one"(Id = BTy_28 1);
+	Pstruct(Id = BTy_71 210)
+		"/dev/"(Id = BTy_55 210);
+		[string](Id = BTy_58 210);
+		"  "(Id = BTy_59 210);
+		[2520...88997888](Id = BTy_60 210);
+		" "(Id = BTy_61 210);
+		[2044...77779304](Id = BTy_62 210);
+		" "(Id = BTy_63 210);
+		[0...88078368](Id = BTy_64 210);
+		"    "(Id = BTy_65 210);
+		[1...100](Id = BTy_66 210);
+		"%    "(Id = BTy_68 210);
+		TBD_5(Id = BTy_5 210);
+	End Pstruct;
+End Punion

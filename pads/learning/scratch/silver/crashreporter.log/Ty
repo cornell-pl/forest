@@ -1,0 +1,125 @@
+Pstruct(Id = BTy_127 440)
+	[string](Id = BTy_0 440);
+	" "(Id = BTy_1 440);
+	[string](Id = BTy_2 440);
+	" "(Id = BTy_3 440);
+	[1...31](Id = BTy_5 440);
+	" "(Id = BTy_6 440);
+	[Time](Id = BTy_7 440);
+	" "(Id = BTy_8 440);
+	[2006](Id = BTy_9 440);
+	" "(Id = BTy_10 440);
+	{"crashdump", "crashreporterd", }(Id = BTy_11 440);
+	"["(Id = BTy_13 440);
+	[120...29874](Id = BTy_14 440);
+	"]:"(Id = BTy_15 440);
+	RArray(Id = BTy_17 440)
+		Separator: ":"
+		Terminator: ": "
+		Pstruct(Id = BTy_76 293)
+			" "(Id = BTy_19 293);
+			Punion(Id = BTy_58 297)
+				Pstruct(Id = BTy_57 293)
+					[string](Id = BTy_20 293);
+					" "(Id = BTy_21 293);
+					{"to", "writing", }(Id = BTy_22 293);
+					" "(Id = BTy_23 293);
+					{"crash", "determine", "re-launch", }(Id = BTy_24 293);
+					" "(Id = BTy_25 293);
+					Switch(BTy_24)(Id = BTy_27 293):
+					case {"crash", "determine", }:
+						""(Id = BTy_26 292);
+					case "re-launch":
+						"/"(Id = BTy_28 1);
+					End Switch;
+					{"Applications", "report", "task_t", }(Id = BTy_29 293);
+					Punion(Id = BTy_31 293)
+						""(Id = BTy_30 292);
+						"/iPhoto.app/Contents/MacOS/iPhoto"(Id = BTy_32 1);
+					End Punion;
+					" "(Id = BTy_44 293);
+					Switch(BTy_24)(Id = BTy_46 293):
+					case {"crash", "determine", }:
+						""(Id = BTy_45 292);
+					case "re-launch":
+						"- "(Id = BTy_47 1);
+					End Switch;
+					{"CGSError", "for", "to", }(Id = BTy_50 293);
+					Punion(Id = BTy_52 293)
+						""(Id = BTy_51 291);
+						" pid"(Id = BTy_53 2);
+					End Punion;
+				End Pstruct;
+				Punion(Id = BTy_74 4)
+					Pstruct(Id = BTy_64 2)
+						[95](Id = BTy_61 2);
+						" name"(Id = BTy_62 2);
+					End Pstruct;
+					"mach_msg() reply failed"(Id = BTy_65 2);
+				End Punion;
+			End Punion;
+		End Pstruct;
+	End RArray;
+	": "(Id = BTy_75 297);
+	RArray(Id = BTy_77 440)
+		Pstruct(Id = BTy_100 163)
+			Punion(Id = BTy_92 163)
+				Pstruct(Id = BTy_91 161)
+					Switch(BTy_82)(Id = BTy_80 161):
+					case {"Exited", "crashdump", "invalid", }:
+						""(Id = BTy_79 151);
+					case {"Library", "Users", }:
+						"/"(Id = BTy_81 10);
+					End Switch;
+					[string](Id = BTy_82 161);
+					Punion(Id = BTy_84 161)
+						""(Id = BTy_83 151);
+						Pstruct(Id = BTy_244 10)
+							"/"(Id = BTy_86 10);
+							RArray(Id = BTy_85 10)
+								Terminator: {"Exited", "Microsoft", }
+								Pstruct(Id = BTy_89 32)
+									{"Logs", "kfisher", }(Id = BTy_87 32);
+									"/"(Id = BTy_88 32);
+								End Pstruct;
+							End RArray;
+							{"Exited", "Microsoft", }(Id = BTy_90 10);
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+				"(ipc/send)"(Id = BTy_93 2);
+			End Punion;
+			" "(Id = BTy_99 163);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_126 440)
+		Pstruct(Id = BTy_103 1)
+			[1025](Id = BTy_101 1);
+			"!"(Id = BTy_102 1);
+		End Pstruct;
+		Pstruct(Id = BTy_112 159)
+			[string](Id = BTy_104 159);
+			Punion(Id = BTy_106 159)
+				""(Id = BTy_105 149);
+				".crash.log"(Id = BTy_107 10);
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_286 280)
+			"/"(Id = BTy_114 280);
+			RArray(Id = BTy_113 280)
+				Pstruct(Id = BTy_117 1344)
+					{"Library", "Users", }(Id = BTy_115 1344);
+					"/"(Id = BTy_116 1344);
+				End Pstruct;
+			End RArray;
+			[string](Id = BTy_119 280);
+			"."(Id = BTy_120 280);
+			RArray(Id = BTy_118 280)
+				Separator: "."
+				Terminator: ".log"
+				{"crash", "exe", "ppc-darwin", }(Id = BTy_122 360);
+			End RArray;
+			".log"(Id = BTy_123 360);
+		End Pstruct;
+	End Punion;
+End Pstruct

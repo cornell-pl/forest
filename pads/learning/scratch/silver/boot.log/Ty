@@ -1,0 +1,295 @@
+Pstruct(Id = BTy_260 262)
+	Switch(BTy_5)(Id = BTy_1 262):
+	case "Apr":
+		""(Id = BTy_0 260);
+	case "G":
+		Pstruct(Id = BTy_4 2)
+			"["(Id = BTy_2 2);
+			[60](Id = BTy_3 2);
+		End Pstruct;
+	End Switch;
+	{"Apr", "G", }(Id = BTy_5 262);
+	Switch(BTy_5)(Id = BTy_7 262):
+	case "Apr":
+		""(Id = BTy_6 260);
+	case "G":
+		"Apr"(Id = BTy_8 2);
+	End Switch;
+	" "(Id = BTy_9 262);
+	[24...30](Id = BTy_10 262);
+	" "(Id = BTy_11 262);
+	[Time](Id = BTy_13 262);
+	Punion(Id = BTy_27 262)
+		Pstruct(Id = BTy_26 261)
+			" srv7 "(Id = BTy_15 261);
+			[string](Id = BTy_19 261);
+			Punion(Id = BTy_21 261)
+				""(Id = BTy_20 233);
+				Pstruct(Id = BTy_24 28)
+					"."(Id = BTy_22 28);
+					{"static", "sysinit", }(Id = BTy_23 28);
+				End Pstruct;
+			End Punion;
+			":"(Id = BTy_25 261);
+		End Pstruct;
+		""(Id = BTy_28 1);
+	End Punion;
+	RArray(Id = BTy_14 262)
+		Pstruct(Id = BTy_81 93)
+			Punion(Id = BTy_79 93)
+				Pstruct(Id = BTy_31 4)
+					[6](Id = BTy_29 4);
+					"e"(Id = BTy_30 4);
+				End Pstruct;
+				"f1"(Id = BTy_32 8);
+				Pstruct(Id = BTy_345 81)
+					" "(Id = BTy_34 81);
+					RArray(Id = BTy_33 81)
+						Pstruct(Id = BTy_45 157)
+							Punion(Id = BTy_40 157)
+								Pstruct(Id = BTy_39 145)
+									[string](Id = BTy_35 145);
+									Punion(Id = BTy_37 145)
+										""(Id = BTy_36 143);
+										","(Id = BTy_38 2);
+									End Punion;
+								End Pstruct;
+								[24](Id = BTy_41 8);
+								{"14:47:06", "21:08:22", }(Id = BTy_43 4);
+							End Punion;
+							" "(Id = BTy_44 157);
+						End Pstruct;
+					End RArray;
+					Punion(Id = BTy_78 81)
+						[53](Id = BTy_46 2);
+						Pstruct(Id = BTy_61 71)
+							[string](Id = BTy_47 71);
+							Punion(Id = BTy_49 71)
+								""(Id = BTy_48 65);
+								Pstruct(Id = BTy_60 6)
+									Switch(BTy_53)(Id = BTy_51 6):
+									case "eth0":
+										"/"(Id = BTy_50 4);
+									case "grmtech":
+										"."(Id = BTy_52 2);
+									End Switch;
+									{"eth0", "grmtech", }(Id = BTy_53 6);
+									Switch(BTy_53)(Id = BTy_57 6):
+									case "eth0":
+										"/00:0"(Id = BTy_54 4);
+									case "grmtech":
+										"."(Id = BTy_58 2);
+									End Switch;
+									{"c", "com", }(Id = BTy_59 6);
+								End Pstruct;
+							End Punion;
+						End Pstruct;
+						"(localtime)"(Id = BTy_62 2);
+						Pstruct(Id = BTy_344 6)
+							"/"(Id = BTy_67 6);
+							RArray(Id = BTy_66 6)
+								Terminator: {"LogVol00", "S90squid", "boot", }
+								Pstruct(Id = BTy_76 8)
+									{"dev", "etc", }(Id = BTy_69 8);
+									Punion(Id = BTy_71 8)
+										""(Id = BTy_70 6);
+										".d"(Id = BTy_72 2);
+									End Punion;
+									"/"(Id = BTy_75 8);
+								End Pstruct;
+							End RArray;
+							{"LogVol00", "S90squid", "boot", }(Id = BTy_77 6);
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+			End Punion;
+			":"(Id = BTy_80 93);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_134 262)
+		Pstruct(Id = BTy_133 28)
+			" "(Id = BTy_83 28);
+			RArray(Id = BTy_82 28)
+				Pstruct(Id = BTy_107 64)
+					Punion(Id = BTy_93 64)
+						Pstruct(Id = BTy_92 8)
+							Punion(Id = BTy_88 8)
+								"--"(Id = BTy_84 4);
+								""(Id = BTy_87 4);
+							End Punion;
+							"use-syslog,"(Id = BTy_89 8);
+						End Pstruct;
+						Pstruct(Id = BTy_94 56)
+							{"kernel", "net", "no", }(Id = BTy_95 56);
+							Punion(Id = BTy_97 56)
+								""(Id = BTy_96 32);
+								Parray(Id = BTy_98 24)((.) )
+								First:
+									"."(Id = BTy_99 24);
+								Body:
+									"ipv4."(Id = BTy_100 28);
+								Tail:
+									Punion(Id = BTy_104 24)
+										[string](Id = BTy_103 20);
+										""(Id = BTy_105 4);
+									End Punion;
+								End Parray;
+							End Punion;
+						End Pstruct;
+					End Punion;
+					" "(Id = BTy_106 64);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_109 28)
+				""(Id = BTy_108 24);
+				"LABEL"(Id = BTy_110 4);
+			End Punion;
+			"="(Id = BTy_111 28);
+			Punion(Id = BTy_116 28)
+				Pstruct(Id = BTy_115 20)
+					" "(Id = BTy_112 20);
+					[0...1](Id = BTy_113 20);
+					" "(Id = BTy_114 20);
+				End Pstruct;
+				Pstruct(Id = BTy_130 4)
+					"/boot duplicate - not mounted"(Id = BTy_117 4);
+					Punion(Id = BTy_129 4)
+						" "(Id = BTy_127 2);
+						""(Id = BTy_128 2);
+					End Punion;
+				End Pstruct;
+				"?"(Id = BTy_131 4);
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_556 234)
+			Punion(Id = BTy_137 234)
+				" "(Id = BTy_136 228);
+				""(Id = BTy_138 6);
+			End Punion;
+			RArray(Id = BTy_135 234)
+				Pstruct(Id = BTy_198 527)
+					Punion(Id = BTy_184 527)
+						Pstruct(Id = BTy_183 482)
+							Punion(Id = BTy_140 482)
+								""(Id = BTy_139 461);
+								"-"(Id = BTy_141 11);
+								Pstruct(Id = BTy_150 6)
+									Punion(Id = BTy_148 6)
+										"'"(Id = BTy_143 2);
+										">>"(Id = BTy_144 2);
+										""(Id = BTy_147 2);
+									End Punion;
+									"/"(Id = BTy_149 6);
+								End Pstruct;
+								"$"(Id = BTy_152 4);
+							End Punion;
+							[string](Id = BTy_153 482);
+							Punion(Id = BTy_155 482)
+								""(Id = BTy_154 451);
+								","(Id = BTy_156 14);
+								Pstruct(Id = BTy_170 13)
+									Punion(Id = BTy_159 13)
+										""(Id = BTy_158 9);
+										Parray(Id = BTy_160 4)((/) )
+										First:
+											"/"(Id = BTy_161 4);
+										Body:
+											"log/"(Id = BTy_162 4);
+										Tail:
+											{"ntop", "squid", }(Id = BTy_165 4);
+										End Parray;
+									End Punion;
+									"."(Id = BTy_166 13);
+									Punion(Id = BTy_168 13)
+										[string](Id = BTy_167 9);
+										""(Id = BTy_169 4);
+									End Punion;
+								End Pstruct;
+								"(s)"(Id = BTy_172 2);
+								"/sbin/kudzu'"(Id = BTy_176 2);
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_188 8)
+							[38...2299759](Id = BTy_185 8);
+							"/"(Id = BTy_186 8);
+							[128520...14499840](Id = BTy_187 8);
+						End Pstruct;
+						[0...4858](Id = BTy_190 25);
+						[Time](Id = BTy_192 6);
+						Pstruct(Id = BTy_195 6)
+							[IP](Id = BTy_193 6);
+							"."(Id = BTy_194 6);
+						End Pstruct;
+					End Punion;
+					" "(Id = BTy_197 527);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_200 234)
+				""(Id = BTy_199 80);
+				Pstruct(Id = BTy_238 144)
+					Punion(Id = BTy_202 144)
+						""(Id = BTy_201 140);
+						Parray(Id = BTy_203 4)((/) )
+						First:
+							"/"(Id = BTy_204 4);
+						Body:
+							"/"(Id = BTy_205 2);
+						Tail:
+							""(Id = BTy_206 4);
+						End Parray;
+					End Punion;
+					[string](Id = BTy_207 144);
+					Punion(Id = BTy_209 144)
+						""(Id = BTy_208 124);
+						Pstruct(Id = BTy_214 2)
+							"."(Id = BTy_210 2);
+							[0](Id = BTy_211 2);
+							"."(Id = BTy_212 2);
+							[1](Id = BTy_213 2);
+						End Pstruct;
+						Pstruct(Id = BTy_519 14)
+							"."(Id = BTy_217 14);
+							RArray(Id = BTy_216 14)
+								Pstruct(Id = BTy_222 6)
+									Punion(Id = BTy_219 6)
+										""(Id = BTy_218 4);
+										"isc"(Id = BTy_220 2);
+									End Punion;
+									"."(Id = BTy_221 6);
+								End Pstruct;
+							End RArray;
+							Punion(Id = BTy_224 14)
+								""(Id = BTy_223 12);
+								"org/sw/dhcp/"(Id = BTy_225 2);
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_236 4)
+							"/"(Id = BTy_232 4);
+							{"fallback", "libexec", }(Id = BTy_233 4);
+							"/"(Id = BTy_234 4);
+							{"fallback-net", "webmin", }(Id = BTy_235 4);
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+				Pstruct(Id = BTy_250 4)
+					[44](Id = BTy_240 4);
+					"/"(Id = BTy_241 4);
+					[10](Id = BTy_242 4);
+					"."(Id = BTy_243 4);
+					[0](Id = BTy_244 4);
+					"."(Id = BTy_245 4);
+					[1](Id = BTy_246 4);
+					"/"(Id = BTy_248 4);
+					[24](Id = BTy_249 4);
+				End Pstruct;
+				Pstruct(Id = BTy_256 2)
+					[2](Id = BTy_252 2);
+					">&"(Id = BTy_253 2);
+					[1](Id = BTy_255 2);
+				End Pstruct;
+				"\^["(Id = BTy_257 2);
+				"."(Id = BTy_258 2);
+			End Punion;
+		End Pstruct;
+	End Punion;
+End Pstruct
