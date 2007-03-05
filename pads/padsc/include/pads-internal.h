@@ -825,7 +825,10 @@ do { \
     (pos).num         =  0; \
     (pos).byte        =  0; \
     (pos).offset      = -1; \
-    P_WARN(pads->disc, "XXX_REMOVE PDCI_ALWAYS_GETPOS_PLUS called with bad offset"); \
+    size_t pos_offset = elt->len - tp->remain; \
+    (pos).byte        = pos_offset + 1; \
+    (pos).offset      = elt->offset + pos_offset; \
+    P_WARN2(pads->disc, "XXX_REMOVE PDCI_ALWAYS_GETPOS_PLUS called with bad offset %d at position %ld",offset,tp->elt->offset + tp->elt->len - tp->remain); \
   } else { \
     size_t pos_offset = elt->len - remain; \
     (pos).num         = elt->num; \
