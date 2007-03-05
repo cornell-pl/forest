@@ -30,10 +30,10 @@ structure Common = struct
 			| (Pip(s1), Pip(s2)) => String.compare(s1, s2)
 			| _ => Structure.compToken(a, b)
 	
-		structure BDSet = RedBlackSetFn(struct
-	                                                        type ord_key = Token 
-	                                                        val compare = compared
-	                                                        end)
+	structure BDSet = RedBlackSetFn(struct
+                                              type ord_key = Token 
+                                              val compare = compared
+                                        end)
 	
 	(* ____ to string functions useful for debugging *)
 
@@ -181,6 +181,48 @@ structure Common = struct
 			(SOME a', SOME b') => refine_equal(a', b')
 		| (NONE, NONE) => true
 		|_ => false
+
+    (*function to merge two AuxInfos *)
+    fun mergeAux(a1, a2) =
+	case (a1, a2) of 
+	 ({coverage=c1, label=l1, typeComp=tc1, dataComp=dc1},
+ 	 {coverage=c2, label=l2, typeComp=tc2, dataComp=dc2}) =>
+ 	 	{coverage=c1+c2, label=l1, typeComp=tc1, dataComp=dc1}
+    (*function to merge to tys that are equal structurally*)
+    (*assume ty1 is before ty2*)
+    (*used by refine_array *)
+    fun mergeTy (ty1, ty2) =
+	case (ty1,ty2) of
+		(Base(a1, tl1), Base (a2, tl2)) => Base (mergeAux(a1, a2), tl1@tl2)
+		| (RefinedBase (a1, r1, tl1), RefinedBase(a2, r2, tl2)) => 
+						RefinedBase(mergeAux(a1, a2), r1, tl1@tl2)
+		| (TBD (a1, s1, cl1), TBD (a2, s2, cl2)) => TBD (mergeAux(a1, a2), s1, cl1@cl2)
+		| (Bottom (a1, s1, cl1), Bottom (a2, s2, cl2)) => Bottom (mergeAux(a1, a2), s1, cl1@cl2)
+		| (Punion(a1, tylist), Punion(a2, tylist2)) => Punion(mergeAux(a1, a2), 
+				map mergeTy (ListPair.zip(tylist,tylist2)))
+		| (Pstruct(a1, tylist), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, a2),
+				map mergeTy (ListPair.zip(tylist,tylist2)))
+		| (Parray(a1, {tokens=t1, lengths=len1, first=f1, body=b1, last=l1}), 
+		   Parray(a2, {tokens=t2, lengths=len2, first=f2, body=b2, last=l2})) => 
+			Parray(mergeAux(a1, a2), {tokens = t1@t2, lengths = len1@len2, 
+			first = mergeTy(f1, f2),
+			body = mergeTy(b1, b2),
+			last = mergeTy(l1, l2)})
+		| (Switch (a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
+			let val (rl1, tylist1) = ListPair.unzip (rtylist1)
+			    val (rl2, tylist2) = ListPair.unzip (rtylist2)
+			in
+			    if (Atom.same(id1, id2) andalso
+					foldr myand true (ListPair.map refine_equal(rl1, rl2)) )
+			    then
+				Switch(mergeAux(a1, a2), id1, 
+					ListPair.zip(rl1, map mergeTy (ListPair.zip(tylist1, tylist2))))
+			    else raise TyMismatch
+			end
+		| (RArray(a1, sepop1, termop1, ty1, len1), 
+			RArray (a2, sepop2, termop2, ty2, len2))
+			=> RArray(mergeAux(a1, a2), sepop1, termop1, mergeTy(ty1, ty2), len1) 	
+		| _ => raise TyMismatch
 
     (* function to test of two ty's are completely equal minus the labels *)
     (* if comparetype = 0, compare everything, otherwise compare down to 

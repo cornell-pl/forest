@@ -56,10 +56,13 @@ fun cost const_map ty =
 		| Parray (a, {tokens, lengths, first, body, last}) => 
 			(* first, body and last are potentially structs so plus 9*)
 				foldr op+ 0 (map (cost const_map) [first, body, last])+9
-		| Switch (a, id, l) => foldr op+ 0 (map (fn (_, t) => cost const_map t) l)
+		| Switch (a, id, l) => foldr op+ 0 (map (fn (r, t) => 
+			ty_cost (RefinedBase(a, r, nil))+cost const_map t) l)
 		| RArray (a, sepop, termop, body, lenop) => 
+(*
 			(case sepop of SOME (sep) => 0 | NONE => 1) +
 			(case termop of SOME (term) => 0 | NONE => 1) + 
+*)
 			(cost const_map body) 
 	in (ty_cost ty) + (total_const_cost ty) + 1 (* every constraint is counted towards cost *)
   end
@@ -261,9 +264,7 @@ and refine_array ty =
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
-(*
-		val _ = (print "trying to refine array\n"; printTy ty) 
-*)
+	(*	val _ = (print "trying to refine array in struct \n"; printTy ty) *)
 		fun getlen (lens, x) = 
 			case lens of 
 			l::tail => if (l = x) then getlen(tail, x)
@@ -272,6 +273,10 @@ and refine_array ty =
 		val lens = (#1 (ListPair.unzip(lengths)))		
 		val lenop = getlen(lens, hd lens)
 		fun isStruct ty = case ty of (Pstruct(_)) => true | _ => false
+		fun is_base ty' = case ty' of 
+			Base _ => true 
+			| RefinedBase _ => true
+			| _ => false
 		fun firstEle(ty) = 
 		  case ty of 
 		  Pstruct(aux, tylist) => List.hd tylist
@@ -384,14 +389,14 @@ and refine_array ty =
 		in
 			if (isEmpty(last)) (*no sep and terminator is outside*)
 			  then if ty_equal(1, first, body) then
-					(NONE, NONE, NONE, SOME body, NONE)
+					(NONE, NONE, NONE, SOME(mergeTy(first, body)), NONE)
 				else
 					(NONE, NONE, SOME first, SOME body, NONE)
 			else (* with possible sep and possible term inside last *)
 			     (* two cases: first = body or first != body *)
 			    if (ty_equal(1, first, body)) then 
 			  	if (ty_equal(1, droplast(body), last)) then
-				  (bodytail, NONE, NONE, SOME (droplast(body)), NONE)
+				  (bodytail, NONE, NONE, SOME (mergeTy(droplast(body), last)), NONE)
 				else
 				(* if the body tail can be pushed to last to find a terminator then
 				   we have a sep, otherwise no sep *)
@@ -406,7 +411,8 @@ and refine_array ty =
 			     else 
 				if (refine_equal_op(firsttail, bodytail)) then (*possible with sep*)
 				  	if (ty_equal(1, droplast(body), last)) then
-				  	  (bodytail, NONE, SOME first, SOME(droplast(body)), NONE)
+				  	  (bodytail, NONE, SOME first, 
+						SOME(mergeTy(droplast(body), last)), NONE)
 					else 
 					let
 					  val termop = findTerm(bodytail, last)
@@ -441,15 +447,13 @@ and refine_array ty =
 			  	Pstruct(mkTyAux(#coverage aux), 
 			    	[first', RArray(aux, sepop, termop, body', lenop), last'])
 			| _ => raise TyMismatch
-(*
-			val _ = (print "Done refining array to:\n"; printTy newty) 
-*)
+(*		    val _ = (print "Done refining array in struct to:\n"; printTy newty) *)
 		  in
 		 	newty
 		  end
 		)
 		else ty
-		end
+	end
 	| Pstruct(a, tylist) =>
 		let 
 (*
