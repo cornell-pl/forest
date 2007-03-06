@@ -2,8 +2,7 @@ Pstruct(Id = BTy_110 3000)
 	Punion(Id = BTy_1 3000)
 		[IP](Id = BTy_0 1704);
 		Pstruct(Id = BTy_126 1296)
-			Switch(BTy_16)(Id = BTy_9 1296):
-			case "*":
+			Punion(Id = BTy_9 1296)
 				Pstruct(Id = BTy_8 1291)
 					Switch(BTy_6)(Id = BTy_4 1291):
 					case "*":
@@ -13,7 +12,6 @@ Pstruct(Id = BTy_110 3000)
 					End Switch;
 					[string](Id = BTy_6 1291);
 				End Pstruct;
-			case {"ipt", "los-angeles-09", }:
 				Parray(Id = BTy_10 5)([int] )
 				First:
 					[142...171](Id = BTy_11 5);
@@ -22,21 +20,19 @@ Pstruct(Id = BTy_110 3000)
 				Tail:
 					""(Id = BTy_13 5);
 				End Parray;
-			End Switch;
+			End Punion;
 			"."(Id = BTy_7 1291);
 			RArray(Id = BTy_2 1296)
 				Separator: "."
-				[string](Id = BTy_16 2280);
+				[string](Id = BTy_16 3576);
 			End RArray;
 		End Pstruct;
 	End Punion;
 	" - "(Id = BTy_20 3000);
-	Switch(BTy_107)(Id = BTy_24 3000):
-	case "*":
+	Punion(Id = BTy_24 3000)
 		"-"(Id = BTy_23 2999);
-	case [450]:
 		"amnesty"(Id = BTy_25 1);
-	End Switch;
+	End Punion;
 	" ["(Id = BTy_26 3000);
 	[15...16](Id = BTy_28 3000);
 	"/Oct/"(Id = BTy_29 3000);
@@ -75,10 +71,10 @@ Pstruct(Id = BTy_110 3000)
 			Punion(Id = BTy_59 2872)
 				""(Id = BTy_58 2864);
 				Pstruct(Id = BTy_64 8)
-					Switch(BTy_57)(Id = BTy_61 8):
-					case "fwq":
+					Switch(BTy_63)(Id = BTy_61 8):
+					case "a":
 						"&"(Id = BTy_60 7);
-					case "aimember":
+					case "aiusa":
 						"@"(Id = BTy_62 1);
 					End Switch;
 					{"a", "aiusa", }(Id = BTy_63 8);

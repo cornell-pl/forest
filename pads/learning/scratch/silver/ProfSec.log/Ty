@@ -1,11 +1,9 @@
 Punion(Id = BTy_55 59)
 	Pstruct(Id = BTy_54 46)
-		Switch(BTy_10)(Id = BTy_2 46):
-		case [1]:
+		Punion(Id = BTy_2 46)
 			""(Id = BTy_1 40);
-		case [2]:
 			"Warning"(Id = BTy_3 6);
-		End Switch;
+		End Punion;
 		"	"(Id = BTy_4 46);
 		RArray(Id = BTy_0 46)
 			Pstruct(Id = BTy_8 58)
@@ -18,12 +16,10 @@ Punion(Id = BTy_55 59)
 			[2](Id = BTy_11 6);
 		End Punion;
 		":"(Id = BTy_12 46);
-		Switch(BTy_2)(Id = BTy_18 46):
-		case [1]:
+		Punion(Id = BTy_18 46)
 			"\\documents"(Id = BTy_15 40);
-		case [2]:
 			""(Id = BTy_19 6);
-		End Switch;
+		End Punion;
 		" "(Id = BTy_20 46);
 		RArray(Id = BTy_14 46)
 			Pstruct(Id = BTy_33 158)

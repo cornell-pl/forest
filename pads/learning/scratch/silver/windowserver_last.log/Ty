@@ -1,0 +1,166 @@
+Pstruct(Id = BTy_223 680)
+	"Nov "(Id = BTy_0 680);
+	[6...19](Id = BTy_2 680);
+	" "(Id = BTy_3 680);
+	[Time](Id = BTy_5 680);
+	"  ["(Id = BTy_6 680);
+	[70...71](Id = BTy_8 680);
+	"]"(Id = BTy_9 680);
+	Punion(Id = BTy_131 680)
+		Pstruct(Id = BTy_130 340)
+			" "(Id = BTy_11 340);
+			Punion(Id = BTy_13 340)
+				""(Id = BTy_12 328);
+				"kCGErrorCannotComplete: CGXPostNotification2 : Time out waiting for reply from "(Id = BTy_14 10);
+				"kCGErrorFailure: CGXDisableUpdate: UI updates were forcibly disabled by application "(Id = BTy_35 2);
+			End Punion;
+			"\""(Id = BTy_57 340);
+			[string](Id = BTy_58 340);
+			Punion(Id = BTy_60 340)
+				""(Id = BTy_59 336);
+				" Preferences"(Id = BTy_61 4);
+			End Punion;
+			"\""(Id = BTy_65 340);
+			Punion(Id = BTy_110 340)
+				Pstruct(Id = BTy_109 338)
+					" "(Id = BTy_67 338);
+					Punion(Id = BTy_69 338)
+						""(Id = BTy_68 328);
+						Pstruct(Id = BTy_78 10)
+							"for notification type "(Id = BTy_70 10);
+							[100...102](Id = BTy_76 10);
+							" "(Id = BTy_77 10);
+						End Pstruct;
+					End Punion;
+					"("(Id = BTy_80 338);
+					Punion(Id = BTy_82 338)
+						""(Id = BTy_81 328);
+						"CID "(Id = BTy_83 10);
+					End Punion;
+					[0](Id = BTy_86 338);
+					[string](Id = BTy_87 338);
+					Punion(Id = BTy_89 338)
+						""(Id = BTy_88 328);
+						Pstruct(Id = BTy_95 10)
+							", PID "(Id = BTy_90 10);
+							[75...336](Id = BTy_94 10);
+						End Pstruct;
+					End Punion;
+					")"(Id = BTy_97 338);
+					Parray(Id = BTy_99 338)([white space] )
+					First:
+						Punion(Id = BTy_101 338)
+							" "(Id = BTy_100 328);
+							""(Id = BTy_102 10);
+						End Punion;
+					Body:
+						"set "(Id = BTy_103 2130);
+					Tail:
+						Punion(Id = BTy_107 338)
+							{"disabled", "normal", }(Id = BTy_106 328);
+							""(Id = BTy_108 10);
+						End Punion;
+					End Parray;
+				End Pstruct;
+				Pstruct(Id = BTy_129 2)
+					" for over "(Id = BTy_111 2);
+					[1](Id = BTy_116 2);
+					" second. Server has re-enabled them."(Id = BTy_117 2);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_523 340)
+			" "(Id = BTy_133 340);
+			RArray(Id = BTy_132 340)
+				Pstruct(Id = BTy_185 2217)
+					Punion(Id = BTy_148 2217)
+						Pstruct(Id = BTy_147 2190)
+							Punion(Id = BTy_135 2190)
+								""(Id = BTy_134 2179);
+								[0](Id = BTy_136 11);
+							End Punion;
+							[string](Id = BTy_137 2190);
+							Punion(Id = BTy_139 2190)
+								""(Id = BTy_138 2136);
+								":"(Id = BTy_140 51);
+								"/N"(Id = BTy_142 2);
+								";"(Id = BTy_146 1);
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_175 20)
+							"("(Id = BTy_149 20);
+							Punion(Id = BTy_154 20)
+								"ipc/send"(Id = BTy_150 9);
+								"gServiceSet"(Id = BTy_155 9);
+								Pstruct(Id = BTy_160 2)
+									[0...2304](Id = BTy_157 2);
+									","(Id = BTy_158 2);
+									[0](Id = BTy_159 2);
+								End Pstruct;
+							End Punion;
+							")"(Id = BTy_161 20);
+							Punion(Id = BTy_164 20)
+								""(Id = BTy_163 18);
+								Pstruct(Id = BTy_174 2)
+									"["(Id = BTy_165 2);
+									[1...1280](Id = BTy_166 2);
+									" x "(Id = BTy_167 2);
+									[1...854](Id = BTy_170 2);
+									"],"(Id = BTy_171 2);
+								End Pstruct;
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_181 6)
+							[0...257](Id = BTy_177 6);
+							Punion(Id = BTy_179 6)
+								";"(Id = BTy_178 4);
+								""(Id = BTy_180 2);
+							End Punion;
+						End Pstruct;
+						":"(Id = BTy_183 1);
+					End Punion;
+					" "(Id = BTy_184 2217);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_194 340)
+				Pstruct(Id = BTy_193 319)
+					Punion(Id = BTy_187 319)
+						""(Id = BTy_186 317);
+						[0](Id = BTy_188 2);
+					End Punion;
+					[string](Id = BTy_189 319);
+					Punion(Id = BTy_191 319)
+						""(Id = BTy_190 318);
+						"."(Id = BTy_192 1);
+					End Punion;
+				End Pstruct;
+				Pstruct(Id = BTy_220 11)
+					"("(Id = BTy_195 11);
+					Punion(Id = BTy_212 11)
+						Pstruct(Id = BTy_211 10)
+							Switch(BTy_199)(Id = BTy_197 10):
+							case "last":
+								""(Id = BTy_196 9);
+							case "off":
+								" "(Id = BTy_198 1);
+							End Switch;
+							{"last", "off", }(Id = BTy_199 10);
+							" "(Id = BTy_200 10);
+							{"RPC", "console", }(Id = BTy_201 10);
+							Switch(BTy_199)(Id = BTy_205 10):
+							case "last":
+								": "(Id = BTy_202 9);
+							case "off":
+								" , "(Id = BTy_206 1);
+							End Switch;
+							{"GetPortStreamOutofline", "defunct", }(Id = BTy_210 10);
+						End Pstruct;
+						" on console "(Id = BTy_213 1);
+					End Punion;
+					")"(Id = BTy_219 11);
+				End Pstruct;
+				[3...23052](Id = BTy_222 10);
+			End Punion;
+		End Pstruct;
+	End Punion;
+End Pstruct

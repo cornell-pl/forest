@@ -1,0 +1,33 @@
+Pstruct(Id = BTy_27 999)
+	[101...103](Id = BTy_0 999);
+	"      "(Id = BTy_1 999);
+	[101...9890](Id = BTy_2 999);
+	"      "(Id = BTy_3 999);
+	[~10...12072](Id = BTy_4 999);
+	Punion(Id = BTy_6 999)
+		""(Id = BTy_5 937);
+		Pstruct(Id = BTy_9 62)
+			"."(Id = BTy_7 62);
+			[1...9](Id = BTy_8 62);
+		End Pstruct;
+	End Punion;
+	"                   "(Id = BTy_11 999);
+	[0](Id = BTy_12 999);
+	Punion(Id = BTy_14 999)
+		""(Id = BTy_13 943);
+		Pstruct(Id = BTy_17 56)
+			"."(Id = BTy_15 56);
+			[2...53321](Id = BTy_16 56);
+		End Pstruct;
+	End Punion;
+	"                   "(Id = BTy_19 999);
+	Punion(Id = BTy_24 999)
+		Pstruct(Id = BTy_23 988)
+			[0...1](Id = BTy_20 988);
+			"."(Id = BTy_21 988);
+			[1...87353](Id = BTy_22 988);
+		End Pstruct;
+		[0](Id = BTy_25 11);
+	End Punion;
+	"   "(Id = BTy_26 999);
+End Pstruct

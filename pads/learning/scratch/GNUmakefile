@@ -107,15 +107,15 @@ DATA = ProfSec.log             \
 
 .PHONY: $(DATA)
 
-1967Transactions.short: learn
+1967Transactions.short: learn # quick
 1967Transactions.short: $(IND)/1967Transactions.short
 	./learn $< -d $(OUTD)/$@
 
-MER_T01_01.csv: learn
+MER_T01_01.csv: learn # quick
 MER_T01_01.csv: $(IND)/MER_T01_01.csv
 	./learn $< -d $(OUTD)/$@
 
-ProfSec.log: learn
+ProfSec.log: learn # quick
 ProfSec.log: $(IND)/ProfSec.log
 	./learn $< -d $(OUTD)/$@
 
@@ -131,28 +131,29 @@ ai-simple: learn # quick
 ai-simple: $(IND)/ai-simple
 	./learn $< -d $(OUTD)/$@
 
-ai.3000: learncvs 
+ai.3000: learn # several minutes
 ai.3000: $(IND)/ai.3000
 	./learn $< -d $(OUTD)/$@
 
 # Takes really really long time without maxdepth of 3
+# Ran for more than four hours
 apache.txt: learn # Takes too long
 apache.txt: $(IND)/apache.txt
 	./learn $< -d $(OUTD)/$@ -maxdepth 3
 
-asl.log: learn
+asl.log: learn # too long, even with maxdepth of 3
 asl.log: $(IND)/asl.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ -maxdepth 3
 
-backup1.log: learn
+backup1.log: learn # quick
 backup1.log: $(IND)/backup1.log
 	./learn $< -d $(OUTD)/$@
 
-backup2.log: learn
+backup2.log: learn # quick
 backup2.log: $(IND)/backup2.log
 	./learn $< -d $(OUTD)/$@
 
-boot.log: learn
+boot.log: learn # quick
 boot.log: $(IND)/boot.log
 	./learn $< -d $(OUTD)/$@
 
@@ -160,16 +161,16 @@ crashreporter.log: learn # one minute
 crashreporter.log: $(IND)/crashreporter.log
 	./learn $< -d $(OUTD)/$@
 
-daily.out: learn
+daily.out: learn # ten minutes with maxdepth of 4
 daily.out: $(IND)/daily.out # two minutes with maxdepth of 3
 	./learn $< -d $(OUTD)/$@ -maxdepth 4 # ten minutes with maxdepth of 4
 
-dibbler.1000: learn # 
+dibbler.1000: learn # quick
 dibbler.1000: $(IND)/dibbler.1000
 	./learn $< -d $(OUTD)/$@
 
-dmesg: learn
-dmesg: $(IND)/dmesg # quick with maxdepth of 5
+dmesg: learn # quick with maxdepth of 5
+dmesg: $(IND)/dmesg
 	./learn $< -d $(OUTD)/$@ -maxdepth 6
 
 error_log: learn # takes a while
@@ -190,69 +191,70 @@ ijnltif: $(IND)/ijnltif
 
 install.log: learn # too long without maxdepth specified
 install.log: $(IND)/install.log
-	./learn $< -d $(OUTD)/$@ -maxdepth 7
+	./learn $< -d $(OUTD)/$@ -maxdepth 7 # tolerable but long at maxdepth 7
 
+# **** Generates error with maxdepth=7
 interactions.txt.small: learn # too long without maxdepth specified
 interactions.txt.small: $(IND)/interactions.txt.small
-	./learn $< -d $(OUTD)/$@ -maxdepth 5
+	./learn $< -d $(OUTD)/$@ -maxdepth 6 # tolerable at maxdepth 6
 
-interface.loop: learn
+interface.loop: learn # ten minutes at maxdepth of 4
 interface.loop: $(IND)/interface.loop
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ -maxdepth 4
 
-lsof: learn
+lsof: learn # five minutes at maxdepth of 5
 lsof: $(IND)/lsof
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ -maxdepth 4
 
-netstat: learn
+netstat: learn # quick
 netstat: $(IND)/netstat
 	./learn $< -d $(OUTD)/$@
 
-netstat-an: learn
+netstat-an: learn # quick
 netstat-an: $(IND)/netstat-an
 	./learn $< -d $(OUTD)/$@
 
-page_log: learn
+page_log: learn # quick
 page_log: $(IND)/page_log
 	./learn $< -d $(OUTD)/$@
 
-quarterlypersonalincome: learn
+quarterlypersonalincome: learn # quick
 quarterlypersonalincome: $(IND)/quarterlypersonalincome
 	./learn $< -d $(OUTD)/$@
 
-railroad.txt: learn
+railroad.txt: learn # 15 minutes
 railroad.txt: $(IND)/railroad.txt
 	./learn $< -d $(OUTD)/$@
 
-rpmpkgs: learn
+rpmpkgs: learn # quick
 rpmpkgs: $(IND)/rpmpkgs
 	./learn $< -d $(OUTD)/$@
 
-scesetup2.log: learn
+scesetup2.log: learn # finished, lost track of how long
 scesetup2.log: $(IND)/scesetup2.log
 	./learn $< -d $(OUTD)/$@
 
-scrollkeeper.log: learn
+scrollkeeper.log: learn # quick
 scrollkeeper.log: $(IND)/scrollkeeper.log
 	./learn $< -d $(OUTD)/$@
 
-simplegroups: learn
+simplegroups: learn # quick
 simplegroups: $(IND)/simplegroups
 	./learn $< -d $(OUTD)/$@
 
-simplexml: learn
+simplexml: learn # very quick
 simplexml: $(IND)/simplexml
 	./learn $< -d $(OUTD)/$@
 
-windowserver_last.log: learn
+windowserver_last.log: learn # three minutes
 windowserver_last.log: $(IND)/windowserver_last.log
 	./learn $< -d $(OUTD)/$@
 
-yum.log: learn
+yum.log: learn # very quick
 yum.log: $(IND)/yum.log
 	./learn $< -d $(OUTD)/$@
 
-yum.txt: learn
+yum.txt: learn # quick
 yum.txt: $(IND)/yum.txt
 	./learn $< -d $(OUTD)/$@
 

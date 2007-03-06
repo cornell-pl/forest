@@ -1,0 +1,15 @@
+Punion(Id = BTy_17 491)
+	Pstruct(Id = BTy_16 490)
+		"\""(Id = BTy_0 490);
+		[string](Id = BTy_1 490);
+		"\","(Id = BTy_2 490);
+		[197313...200605](Id = BTy_5 490);
+		","(Id = BTy_6 490);
+		[~1...100](Id = BTy_7 490);
+		"."(Id = BTy_8 490);
+		[537...999688](Id = BTy_9 490);
+		",Quadrillion Btu,"(Id = BTy_10 490);
+		[1...5](Id = BTy_15 490);
+	End Pstruct;
+	"\"MSN\",\"YYYYMM\",\"Publication Value\",\"Publication Unit\",\"Column Order\""(Id = BTy_18 1);
+End Punion

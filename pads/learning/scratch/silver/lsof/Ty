@@ -1,0 +1,141 @@
+Punion(Id = BTy_58 2521)
+	Pstruct(Id = BTy_57 2239)
+		[string](Id = BTy_0 2239);
+		Punion(Id = BTy_2 2239)
+			""(Id = BTy_1 2148);
+			Pstruct(Id = BTy_5 84)
+				"\\"(Id = BTy_3 84);
+				{"x20Com", "x20He", }(Id = BTy_4 84);
+			End Pstruct;
+			TBD_0(Id = BTy_0 7);
+		End Punion;
+		"    "(Id = BTy_8 2239);
+		[78...25518](Id = BTy_9 2239);
+		" kfisher  "(Id = BTy_10 2239);
+		Switch(BTy_16)(Id = BTy_14 2239):
+		case {"cwd", "txt", }:
+			""(Id = BTy_13 1826);
+		case {"r", "u", "w", }:
+			[0...62](Id = BTy_15 413);
+		End Switch;
+		[string](Id = BTy_16 2239);
+		"     "(Id = BTy_18 2239);
+		[string](Id = BTy_19 2239);
+		"       "(Id = BTy_20 2239);
+		[0...14](Id = BTy_21 2239);
+		Punion(Id = BTy_23 2239)
+			""(Id = BTy_22 2232);
+			Pstruct(Id = BTy_29 7)
+				[string](Id = BTy_24 7);
+				"                     count="(Id = BTy_25 7);
+				[0](Id = BTy_28 7);
+			End Pstruct;
+		End Punion;
+		","(Id = BTy_32 2239);
+		Switch(BTy_19)(Id = BTy_50 2239):
+		case {"VCHR", "VDIR", "VREG", }:
+			Pstruct(Id = BTy_49 2232)
+				[0...4](Id = BTy_33 2232);
+				"       "(Id = BTy_34 2232);
+				[0...79085358](Id = BTy_35 2232);
+				Punion(Id = BTy_37 2232)
+					""(Id = BTy_36 2063);
+					[string](Id = BTy_38 169);
+				End Punion;
+				"        "(Id = BTy_39 2232);
+				[2...42721156](Id = BTy_41 2232);
+				" /"(Id = BTy_42 2232);
+				RArray(Id = BTy_43 2232)
+					Pstruct(Id = BTy_46 13077)
+						TBD_1(Id = BTy_1 13077);
+						"/"(Id = BTy_45 13077);
+					End Pstruct;
+				End RArray;
+				Punion(Id = BTy_47 2232)
+					TBD_2(Id = BTy_2 9);
+					TBD_3(Id = BTy_3 2179);
+					TBD_4(Id = BTy_4 2);
+					TBD_5(Id = BTy_5 2);
+					TBD_6(Id = BTy_6 4);
+					TBD_7(Id = BTy_7 36);
+				End Punion;
+			End Pstruct;
+		case "KQUEUE":
+			Pstruct(Id = BTy_56 7)
+				" state="(Id = BTy_51 7);
+				[0](Id = BTy_54 7);
+				"x2"(Id = BTy_55 7);
+			End Pstruct;
+		End Switch;
+	End Pstruct;
+	Pstruct(Id = BTy_84 141)
+		[string](Id = BTy_59 141);
+		Punion(Id = BTy_61 141)
+			""(Id = BTy_60 134);
+			TBD_8(Id = BTy_8 7);
+		End Punion;
+		"    "(Id = BTy_63 141);
+		[78...25479](Id = BTy_64 141);
+		" kfisher    "(Id = BTy_65 141);
+		[0...13](Id = BTy_68 141);
+		"r  PSXSHM "(Id = BTy_69 141);
+		[0](Id = BTy_73 141);
+		[string](Id = BTy_74 141);
+		"       "(Id = BTy_75 141);
+		[4096](Id = BTy_76 141);
+		"          obj="(Id = BTy_77 141);
+		[0](Id = BTy_81 141);
+		{"x02c4ac70", "x02cfd7b8", }(Id = BTy_82 141);
+	End Pstruct;
+	Pstruct(Id = BTy_99 98)
+		[string](Id = BTy_87 98);
+		Punion(Id = BTy_88 98)
+			TBD_9(Id = BTy_9 89);
+			TBD_10(Id = BTy_10 1);
+			TBD_11(Id = BTy_11 8);
+		End Punion;
+		"->"(Id = BTy_89 98);
+		Punion(Id = BTy_97 98)
+			Pstruct(Id = BTy_96 76)
+				Punion(Id = BTy_92 76)
+					""(Id = BTy_91 72);
+					TBD_12(Id = BTy_12 4);
+				End Punion;
+				[0...54656](Id = BTy_93 76);
+				Punion(Id = BTy_95 76)
+					[string](Id = BTy_94 72);
+					TBD_13(Id = BTy_13 4);
+				End Punion;
+			End Pstruct;
+			Pstruct(Id = BTy_98 22)
+				TBD_14(Id = BTy_14 22);
+				TBD_15(Id = BTy_15 22);
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+	Pstruct(Id = BTy_107 11)
+		Parray(Id = BTy_101 11)([white space] )
+		First:
+			TBD_16(Id = BTy_16 11);
+		Body:
+			TBD_17(Id = BTy_17 64);
+		Tail:
+			TBD_18(Id = BTy_18 11);
+		End Parray;
+		"("(Id = BTy_102 11);
+		TBD_19(Id = BTy_19 11);
+		")"(Id = BTy_103 11);
+		Punion(Id = BTy_106 11)
+			""(Id = BTy_105 8);
+			TBD_20(Id = BTy_20 3);
+		End Punion;
+	End Pstruct;
+	Parray(Id = BTy_109 32)([white space] )
+	First:
+		TBD_21(Id = BTy_21 32);
+	Body:
+		TBD_22(Id = BTy_22 186);
+	Tail:
+		TBD_23(Id = BTy_23 32);
+	End Parray;
+End Punion

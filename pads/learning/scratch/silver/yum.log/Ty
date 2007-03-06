@@ -1,0 +1,67 @@
+Pstruct(Id = BTy_54 41)
+	"Oct "(Id = BTy_0 41);
+	[26](Id = BTy_2 41);
+	" "(Id = BTy_3 41);
+	[Time](Id = BTy_4 41);
+	" "(Id = BTy_5 41);
+	{"Installed", "Updated", }(Id = BTy_6 41);
+	": "(Id = BTy_7 41);
+	[string](Id = BTy_9 41);
+	"."(Id = BTy_10 41);
+	[string](Id = BTy_11 41);
+	" "(Id = BTy_13 41);
+	Switch(BTy_9)(Id = BTy_16 41):
+	case "*":
+		""(Id = BTy_15 36);
+	case {"ImageMagick", "firefox", "thunderbird", }:
+		{"1.5.0.7", "6.0.7.1", }(Id = BTy_17 3);
+	case {"kdelibs", "kdelibs-devel", }:
+		"6:3."(Id = BTy_19 2);
+	End Switch;
+	[~16...2006](Id = BTy_22 41);
+	RArray(Id = BTy_14 41)
+		Pstruct(Id = BTy_41 168)
+			Punion(Id = BTy_39 168)
+				Parray(Id = BTy_24 4)((.) )
+				First:
+					Pstruct(Id = BTy_27 4)
+						{"a-43", "p1-8", }(Id = BTy_25 4);
+						"."(Id = BTy_26 4);
+					End Pstruct;
+				Body:
+					"RHEL4."(Id = BTy_28 2);
+				Tail:
+					""(Id = BTy_31 4);
+				End Parray;
+				Pstruct(Id = BTy_99 132)
+					"."(Id = BTy_33 132);
+					RArray(Id = BTy_32 132)
+						Pstruct(Id = BTy_36 16)
+							{"EL", "EL4", "centos4", }(Id = BTy_34 16);
+							"."(Id = BTy_35 16);
+						End Pstruct;
+					End RArray;
+				End Pstruct;
+				""(Id = BTy_38 32);
+			End Punion;
+			[0...146](Id = BTy_40 168);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_43 41)
+		""(Id = BTy_42 23);
+		Parray(Id = BTy_44 18)((.) )
+		First:
+			Pstruct(Id = BTy_49 18)
+				Punion(Id = BTy_46 18)
+					""(Id = BTy_45 17);
+					"m-2"(Id = BTy_47 1);
+				End Punion;
+				"."(Id = BTy_48 18);
+			End Pstruct;
+		Body:
+			"el4."(Id = BTy_50 6);
+		Tail:
+			[string](Id = BTy_53 18);
+		End Parray;
+	End Punion;
+End Pstruct

@@ -1,0 +1,258 @@
+Pstruct(Id = BTy_204 1253)
+	Switch(BTy_35)(Id = BTy_1 1253):
+	case "*":
+		""(Id = BTy_0 1249);
+	case "ppp":
+		"("(Id = BTy_2 4);
+	End Switch;
+	{"AC", "ACC", "CBB", }(Id = BTy_3 1253);
+	Punion(Id = BTy_5 1253)
+		""(Id = BTy_4 1249);
+		Pstruct(Id = BTy_26 4)
+			Parray(Id = BTy_6 4)([white space] )
+			First:
+				TBD_0(Id = BTy_0 4);
+			Body:
+				TBD_1(Id = BTy_1 9);
+			Tail:
+				TBD_2(Id = BTy_2 4);
+			End Parray;
+			"."(Id = BTy_7 4);
+			[296720...423478](Id = BTy_8 4);
+			"."(Id = BTy_9 4);
+			Punion(Id = BTy_11 4)
+				""(Id = BTy_10 3);
+				TBD_3(Id = BTy_3 1);
+			End Punion;
+			".ATI  "(Id = BTy_12 4);
+			[198226](Id = BTy_15 4);
+			"  "(Id = BTy_16 4);
+			[837559...889691](Id = BTy_17 4);
+			"  "(Id = BTy_18 4);
+			[852012...906560](Id = BTy_19 4);
+			"  USA  MIS  "(Id = BTy_20 4);
+		End Pstruct;
+	End Punion;
+	"|"(Id = BTy_28 1253);
+	Punion(Id = BTy_30 1253)
+		[string](Id = BTy_29 1249);
+		""(Id = BTy_31 3);
+		[1](Id = BTy_33 1);
+	End Punion;
+	"|"(Id = BTy_34 1253);
+	[string](Id = BTy_35 1253);
+	Punion(Id = BTy_54 1253)
+		Pstruct(Id = BTy_53 877)
+			"/"(Id = BTy_36 868);
+			Punion(Id = BTy_42 877)
+				Pstruct(Id = BTy_41 868)
+					[0...1](Id = BTy_37 868);
+					"/"(Id = BTy_38 868);
+					[0...1](Id = BTy_39 868);
+				End Pstruct;
+				[0...1](Id = BTy_44 9);
+			End Punion;
+			"/"(Id = BTy_40 868);
+			[Time](Id = BTy_47 877);
+			Punion(Id = BTy_49 877)
+				""(Id = BTy_48 874);
+				Pstruct(Id = BTy_52 3)
+					"."(Id = BTy_50 3);
+					[1...2](Id = BTy_51 3);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_275 376)
+			Punion(Id = BTy_57 376)
+				"/"(Id = BTy_56 340);
+				TBD_4(Id = BTy_4 36);
+			End Punion;
+			RArray(Id = BTy_55 376)
+				Pstruct(Id = BTy_60 179)
+					[0...40](Id = BTy_58 179);
+					"/"(Id = BTy_59 179);
+				End Pstruct;
+			End RArray;
+			Parray(Id = BTy_61 376)([int] )
+			First:
+				TBD_5(Id = BTy_5 376);
+			Body:
+				TBD_6(Id = BTy_6 39);
+			Tail:
+				TBD_7(Id = BTy_7 376);
+			End Parray;
+		End Pstruct;
+	End Punion;
+	"|"(Id = BTy_63 1253);
+	Switch(BTy_35)(Id = BTy_65 1253):
+	case "*":
+		[50304](Id = BTy_64 1249);
+	case "ppp":
+		""(Id = BTy_66 4);
+	End Switch;
+	"|"(Id = BTy_67 1253);
+	Punion(Id = BTy_69 1253)
+		""(Id = BTy_68 1208);
+		{"multipoint", "point-to-point", }(Id = BTy_70 41);
+		[2022...2154](Id = BTy_72 4);
+	End Punion;
+	"|"(Id = BTy_73 1253);
+	Punion(Id = BTy_75 1253)
+		[IP](Id = BTy_74 1050);
+		"none"(Id = BTy_76 192);
+		""(Id = BTy_78 11);
+	End Punion;
+	"|"(Id = BTy_79 1253);
+	Punion(Id = BTy_81 1253)
+		[IP](Id = BTy_80 1050);
+		"none"(Id = BTy_82 192);
+		""(Id = BTy_84 11);
+	End Punion;
+	"|"(Id = BTy_85 1253);
+	Punion(Id = BTy_87 1253)
+		""(Id = BTy_86 197);
+		Pstruct(Id = BTy_336 5)
+			[1536...52160](Id = BTy_89 5);
+			RArray(Id = BTy_88 5)
+				Pstruct(Id = BTy_104 1)
+					" Avon Products / RyeNY / DNEC."(Id = BTy_90 1);
+					[803493](Id = BTy_103 1);
+				End Pstruct;
+			End RArray;
+		End Pstruct;
+		Pstruct(Id = BTy_106 1051)
+			[string](Id = BTy_107 1051);
+			Punion(Id = BTy_108 1051)
+				TBD_8(Id = BTy_8 2);
+				TBD_9(Id = BTy_9 974);
+				TBD_10(Id = BTy_10 3);
+				TBD_11(Id = BTy_11 2);
+				TBD_12(Id = BTy_12 62);
+				TBD_13(Id = BTy_13 1);
+				TBD_14(Id = BTy_14 2);
+				TBD_15(Id = BTy_15 5);
+			End Punion;
+		End Pstruct;
+	End Punion;
+	"|"(Id = BTy_110 1253);
+	Punion(Id = BTy_112 1253)
+		""(Id = BTy_111 1001);
+		[0...1](Id = BTy_113 252);
+	End Punion;
+	"|"(Id = BTy_114 1253);
+	Punion(Id = BTy_122 1253)
+		Pstruct(Id = BTy_121 882)
+			[string](Id = BTy_115 882);
+			Punion(Id = BTy_117 882)
+				""(Id = BTy_116 881);
+				Pstruct(Id = BTy_120 1)
+					" "(Id = BTy_118 1);
+					[3](Id = BTy_119 1);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		""(Id = BTy_123 371);
+	End Punion;
+	"|"(Id = BTy_124 1253);
+	Punion(Id = BTy_126 1253)
+		""(Id = BTy_125 1198);
+		[50...50000](Id = BTy_127 55);
+	End Punion;
+	"|"(Id = BTy_128 1253);
+	Punion(Id = BTy_130 1253)
+		[10...2690](Id = BTy_129 951);
+		""(Id = BTy_131 298);
+		"NetFlow"(Id = BTy_133 4);
+	End Punion;
+	"|"(Id = BTy_134 1253);
+	Punion(Id = BTy_136 1253)
+		""(Id = BTy_135 1240);
+		[101...2192](Id = BTy_137 13);
+	End Punion;
+	"|"(Id = BTy_138 1253);
+	Punion(Id = BTy_140 1253)
+		""(Id = BTy_139 1188);
+		[10500...44210](Id = BTy_141 65);
+	End Punion;
+	"|"(Id = BTy_142 1253);
+	Punion(Id = BTy_148 1253)
+		Pstruct(Id = BTy_147 944)
+			[0...2500000](Id = BTy_143 944);
+			Punion(Id = BTy_145 944)
+				""(Id = BTy_144 940);
+				"CBB"(Id = BTy_146 4);
+			End Punion;
+		End Pstruct;
+		""(Id = BTy_149 309);
+	End Punion;
+	"|"(Id = BTy_150 1253);
+	Switch(BTy_35)(Id = BTy_152 1253):
+	case "*":
+		""(Id = BTy_151 1249);
+	case "ppp":
+		[string](Id = BTy_153 4);
+	End Switch;
+	"|"(Id = BTy_154 1253);
+	Punion(Id = BTy_156 1253)
+		""(Id = BTy_155 1187);
+		Pstruct(Id = BTy_170 66)
+			Switch(BTy_162)(Id = BTy_158 66):
+			case {[3], [10], [50], [250], [450], }:
+				""(Id = BTy_157 62);
+			case [1]:
+				Pstruct(Id = BTy_161 4)
+					{"Serial10", "Serial3", "Serial4", }(Id = BTy_159 4);
+					"/"(Id = BTy_160 4);
+				End Pstruct;
+			End Switch;
+			[1...450](Id = BTy_162 66);
+			Punion(Id = BTy_164 66)
+				""(Id = BTy_163 62);
+				Pstruct(Id = BTy_169 4)
+					"/"(Id = BTy_165 4);
+					[0...1](Id = BTy_166 4);
+					"/"(Id = BTy_167 4);
+					[Time](Id = BTy_168 4);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+	End Punion;
+	"|"(Id = BTy_171 1253);
+	Punion(Id = BTy_173 1253)
+		""(Id = BTy_172 1173);
+		[16...50304](Id = BTy_174 80);
+	End Punion;
+	"|"(Id = BTy_175 1253);
+	Punion(Id = BTy_177 1253)
+		""(Id = BTy_176 1191);
+		"c-bit"(Id = BTy_178 62);
+	End Punion;
+	"|"(Id = BTy_179 1253);
+	Punion(Id = BTy_181 1253)
+		""(Id = BTy_180 1063);
+		[0](Id = BTy_182 186);
+		[IP](Id = BTy_184 4);
+	End Punion;
+	"|"(Id = BTy_185 1253);
+	Punion(Id = BTy_187 1253)
+		""(Id = BTy_186 1116);
+		[1](Id = BTy_188 133);
+		"255.255.255.252"(Id = BTy_190 4);
+	End Punion;
+	"|"(Id = BTy_191 1253);
+	Punion(Id = BTy_193 1253)
+		[0](Id = BTy_192 1206);
+		""(Id = BTy_194 43);
+		Pstruct(Id = BTy_448 4)
+			{"MNX", "PROV", }(Id = BTy_197 4);
+			"  "(Id = BTy_198 4);
+			RArray(Id = BTy_196 4)
+				Pstruct(Id = BTy_202 13)
+					[string](Id = BTy_200 13);
+					TBD_16(Id = BTy_16 13);
+					" "(Id = BTy_201 13);
+				End Pstruct;
+			End RArray;
+		End Pstruct;
+	End Punion;
+End Pstruct

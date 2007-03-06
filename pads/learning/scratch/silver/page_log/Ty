@@ -1,0 +1,26 @@
+Pstruct(Id = BTy_32 354)
+	{"Andrew_s_printer", "hp_color_LaserJet_3700__378392_", "officejet_7100_series", }(Id = BTy_0 354);
+	Switch(BTy_0)(Id = BTy_2 354):
+	case {"Andrew_s_printer", "hp_color_LaserJet_3700__378392_", }:
+		""(Id = BTy_1 220);
+	case "officejet_7100_series":
+		"(Printer)"(Id = BTy_3 134);
+	End Switch;
+	" kfisher "(Id = BTy_7 354);
+	[2...130](Id = BTy_10 354);
+	" ["(Id = BTy_11 354);
+	[1...31](Id = BTy_13 354);
+	"/"(Id = BTy_14 354);
+	[string](Id = BTy_15 354);
+	"/"(Id = BTy_16 354);
+	[2006](Id = BTy_17 354);
+	":"(Id = BTy_18 354);
+	[Time](Id = BTy_19 354);
+	" "(Id = BTy_20 354);
+	[~800...~700](Id = BTy_21 354);
+	"] "(Id = BTy_22 354);
+	[1...41](Id = BTy_25 354);
+	" "(Id = BTy_26 354);
+	[1](Id = BTy_27 354);
+	" - localhost"(Id = BTy_28 354);
+End Pstruct

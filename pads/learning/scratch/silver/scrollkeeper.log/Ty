@@ -1,0 +1,86 @@
+Pstruct(Id = BTy_98 671)
+	"Oct "(Id = BTy_0 671);
+	[26](Id = BTy_2 671);
+	" "(Id = BTy_3 671);
+	[Time](Id = BTy_5 671);
+	Punion(Id = BTy_13 671)
+		Pstruct(Id = BTy_12 670)
+			" AM "(Id = BTy_7 670);
+			{"scrollkeeper-rebuilddb", "scrollkeeper-update", }(Id = BTy_10 670);
+			":"(Id = BTy_11 670);
+		End Pstruct;
+		""(Id = BTy_14 1);
+	End Punion;
+	RArray(Id = BTy_6 671)
+		Pstruct(Id = BTy_39 144)
+			" "(Id = BTy_15 144);
+			Punion(Id = BTy_29 144)
+				Pstruct(Id = BTy_28 18)
+					"/opt/gnome-2."(Id = BTy_16 18);
+					[0](Id = BTy_22 18);
+					"/share/omf"(Id = BTy_23 18);
+				End Pstruct;
+				"scrollkeeper-update"(Id = BTy_30 64);
+				Pstruct(Id = BTy_148 62)
+					"/"(Id = BTy_32 62);
+					RArray(Id = BTy_31 62)
+						Terminator: {"omf", "scrollkeeper-update", }
+						Pstruct(Id = BTy_35 160)
+							{"opt", "usr", }(Id = BTy_33 160);
+							"/"(Id = BTy_34 160);
+						End Pstruct;
+					End RArray;
+					{"omf", "scrollkeeper-update", }(Id = BTy_36 62);
+				End Pstruct;
+			End Punion;
+			":"(Id = BTy_38 144);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_68 671)
+		Pstruct(Id = BTy_67 596)
+			" Registering /usr/share/omf/"(Id = BTy_40 596);
+			[string](Id = BTy_51 596);
+			"/"(Id = BTy_52 596);
+			[string](Id = BTy_53 596);
+			"."(Id = BTy_54 596);
+			Switch(BTy_53)(Id = BTy_56 596):
+			case "*":
+				""(Id = BTy_55 595);
+			case "evolution-2":
+				Pstruct(Id = BTy_59 1)
+					[0](Id = BTy_57 1);
+					"-"(Id = BTy_58 1);
+				End Pstruct;
+			End Switch;
+			{"C", "omf", }(Id = BTy_60 596);
+			Punion(Id = BTy_62 596)
+				""(Id = BTy_61 595);
+				".omf"(Id = BTy_63 1);
+			End Punion;
+		End Pstruct;
+		" No such file or directory"(Id = BTy_69 72);
+		Pstruct(Id = BTy_228 3)
+			" "(Id = BTy_83 3);
+			RArray(Id = BTy_82 3)
+				Pstruct(Id = BTy_86 8)
+					{"AM", "Done", "Rebuilding", }(Id = BTy_84 8);
+					" "(Id = BTy_85 8);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_88 3)
+				"database"(Id = BTy_87 2);
+				[0](Id = BTy_89 1);
+			End Punion;
+			"."(Id = BTy_90 3);
+			RArray(Id = BTy_81 3)
+				Pstruct(Id = BTy_96 6)
+					Punion(Id = BTy_93 6)
+						""(Id = BTy_92 4);
+						[3](Id = BTy_94 2);
+					End Punion;
+					"."(Id = BTy_95 6);
+				End Pstruct;
+			End RArray;
+		End Pstruct;
+	End Punion;
+End Pstruct

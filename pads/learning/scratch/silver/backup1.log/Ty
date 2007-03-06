@@ -1,0 +1,5 @@
+Pstruct(Id = BTy_5 36)
+	"	Configure "(Id = BTy_0 36);
+	[string](Id = BTy_3 36);
+	"."(Id = BTy_4 36);
+End Pstruct

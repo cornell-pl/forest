@@ -1,0 +1,119 @@
+Pstruct(Id = BTy_210 193)
+	Punion(Id = BTy_2 193)
+		""(Id = BTy_1 143);
+		[string](Id = BTy_3 50);
+	End Punion;
+	" "(Id = BTy_4 193);
+	RArray(Id = BTy_0 193)
+		Pstruct(Id = BTy_54 1231)
+			Punion(Id = BTy_27 1231)
+				Pstruct(Id = BTy_26 1019)
+					Punion(Id = BTy_7 1019)
+						""(Id = BTy_6 979);
+						Pstruct(Id = BTy_21 40)
+							Punion(Id = BTy_9 40)
+								{"localhost", "soumar", }(Id = BTy_8 20);
+								{"192.168.15.100", "192.168.15.107", }(Id = BTy_10 18);
+								"*"(Id = BTy_12 2);
+							End Punion;
+							"."(Id = BTy_13 40);
+							Punion(Id = BTy_15 40)
+								""(Id = BTy_14 39);
+								"netlab.cz."(Id = BTy_16 1);
+							End Punion;
+						End Pstruct;
+					End Punion;
+					[0...3701990](Id = BTy_22 1019);
+					Punion(Id = BTy_24 1019)
+						""(Id = BTy_23 724);
+						[string](Id = BTy_25 295);
+					End Punion;
+				End Pstruct;
+				Pstruct(Id = BTy_31 2)
+					{"135.207.33.115", "205.188.8.45", }(Id = BTy_28 2);
+					"."(Id = BTy_29 2);
+					{"aol", "ntp", }(Id = BTy_30 2);
+				End Pstruct;
+				Pstruct(Id = BTy_32 180)
+					[string](Id = BTy_33 180);
+					Punion(Id = BTy_35 180)
+						""(Id = BTy_34 159);
+						Pstruct(Id = BTy_141 21)
+							"."(Id = BTy_37 21);
+							RArray(Id = BTy_36 21)
+								Separator: "."
+								[string](Id = BTy_38 42);
+							End RArray;
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+				"(UNIX)"(Id = BTy_42 1);
+				Pstruct(Id = BTy_51 29)
+					"*."(Id = BTy_46 29);
+					Punion(Id = BTy_49 29)
+						"*"(Id = BTy_48 23);
+						[string](Id = BTy_50 6);
+					End Punion;
+				End Pstruct;
+			End Punion;
+			" "(Id = BTy_53 1231);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_72 193)
+		Pstruct(Id = BTy_71 115)
+			Punion(Id = BTy_56 115)
+				""(Id = BTy_55 114);
+				"/var/launchd/"(Id = BTy_57 1);
+			End Punion;
+			[0...3701908](Id = BTy_63 115);
+			Punion(Id = BTy_65 115)
+				""(Id = BTy_64 67);
+				Pstruct(Id = BTy_70 48)
+					Switch(BTy_69)(Id = BTy_67 48):
+					case "*":
+						""(Id = BTy_66 47);
+					case "sock":
+						"/"(Id = BTy_68 1);
+					End Switch;
+					[string](Id = BTy_69 48);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		""(Id = BTy_73 23);
+		[string](Id = BTy_75 26);
+		"(state)"(Id = BTy_76 1);
+		Pstruct(Id = BTy_209 28)
+			"/"(Id = BTy_81 28);
+			RArray(Id = BTy_80 28)
+				Pstruct(Id = BTy_87 54)
+					Punion(Id = BTy_83 54)
+						""(Id = BTy_82 49);
+						"."(Id = BTy_84 5);
+					End Punion;
+					{"private", "tmp", "var", }(Id = BTy_85 54);
+					"/"(Id = BTy_86 54);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_101 28)
+				Pstruct(Id = BTy_94 25)
+					[string](Id = BTy_88 25);
+					Punion(Id = BTy_90 25)
+						""(Id = BTy_89 24);
+						".socket"(Id = BTy_91 1);
+					End Punion;
+				End Pstruct;
+				Pstruct(Id = BTy_207 3)
+					"."(Id = BTy_96 3);
+					RArray(Id = BTy_95 3)
+						Terminator: {"APSock", "Nm8OWe", }
+						Pstruct(Id = BTy_99 5)
+							{"com", "webdavUDS", }(Id = BTy_97 5);
+							"."(Id = BTy_98 5);
+						End Pstruct;
+					End RArray;
+					{"APSock", "Nm8OWe", }(Id = BTy_100 3);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+	End Punion;
+End Pstruct

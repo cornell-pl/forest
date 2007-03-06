@@ -1,0 +1,70 @@
+Punion(Id = BTy_1 58)
+	""(Id = BTy_0 10);
+	Pstruct(Id = BTy_243 48)
+		Punion(Id = BTy_19 48)
+			Pstruct(Id = BTy_18 47)
+				Punion(Id = BTy_4 47)
+					""(Id = BTy_3 40);
+					Pstruct(Id = BTy_16 7)
+						Switch(BTy_12)(Id = BTy_10 7):
+						case {"Configuration", "Configure", "Reading", "Un-initialize", }:
+							"----"(Id = BTy_5 5);
+						case {"Error", "Wednesday", }:
+							""(Id = BTy_11 2);
+						End Switch;
+						[string](Id = BTy_12 7);
+						Punion(Id = BTy_14 7)
+							""(Id = BTy_13 6);
+							","(Id = BTy_15 1);
+						End Punion;
+					End Pstruct;
+				End Punion;
+				" "(Id = BTy_17 47);
+			End Pstruct;
+			""(Id = BTy_20 1);
+		End Punion;
+		RArray(Id = BTy_2 48)
+			Pstruct(Id = BTy_31 74)
+				Punion(Id = BTy_22 74)
+					[string](Id = BTy_21 70);
+					Pstruct(Id = BTy_27 3)
+						[0...11](Id = BTy_23 3);
+						Punion(Id = BTy_25 3)
+							""(Id = BTy_24 2);
+							","(Id = BTy_26 1);
+						End Punion;
+					End Pstruct;
+					"5:14:58"(Id = BTy_29 1);
+				End Punion;
+				" "(Id = BTy_30 74);
+			End Pstruct;
+		End RArray;
+		Punion(Id = BTy_50 48)
+			Pstruct(Id = BTy_49 46)
+				[string](Id = BTy_32 46);
+				Punion(Id = BTy_35 46)
+					"."(Id = BTy_34 45);
+					""(Id = BTy_36 1);
+				End Punion;
+				RArray(Id = BTy_33 46)
+					Pstruct(Id = BTy_41 9)
+						Punion(Id = BTy_38 9)
+							""(Id = BTy_37 8);
+							"inf"(Id = BTy_39 1);
+						End Punion;
+						"."(Id = BTy_40 9);
+					End Pstruct;
+				End RArray;
+				Punion(Id = BTy_43 46)
+					""(Id = BTy_42 45);
+					"----"(Id = BTy_44 1);
+				End Punion;
+			End Pstruct;
+			Pstruct(Id = BTy_53 1)
+				[0](Id = BTy_51 1);
+				"."(Id = BTy_52 1);
+			End Pstruct;
+			"-------------------------------------------"(Id = BTy_54 1);
+		End Punion;
+	End Pstruct;
+End Punion
