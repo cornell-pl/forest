@@ -1,6 +1,29 @@
 ######################################################################
 # This is a GNU makefile
 #
+# Synopsis:
+#
+# 1. To compile the learning program, just type "make".
+#    Note: This will not modify the script "learn". Instead, it
+#          produces an updated file in the subdirectory "lib".
+# 2. To run a test case, e.g. yum.txt, type "make yum.txt"
+#    This will check if the output in the output/yum.txt directory
+#    is up to date with respect the the input data/yum.txt. If
+#    it is up to date, make will say so, otherwise it will run
+#    the learning program to update output/yum.txt.
+# 3. To check if a change affected an output, e.g. for the yum.txt
+#    test case, type "make yum.txt.test". First it will run the
+#    test case, as in case 2 above. Then it will check if the
+#    output in output/yum.txt is different from the silver version
+#    of the output in silver/yum.txt. It will report if there is
+#    a difference or not.
+# 4. To make a new silver version, e.g. for yum.txt, type
+#    make "yum.txt.silver".
+#
+######################################################################
+
+######################################################################
+#
 # Crib notes:
 # $@ = name of target
 # $< = name of first prerequisite
@@ -54,7 +77,7 @@ learn:	main.sml
 
 ######################################################################
 #
-# Testing infrastructure
+# Silver version infrastructure
 #
 ######################################################################
 
@@ -75,7 +98,7 @@ DATA = ProfSec.log             \
        ai-simple               \
        ai.3000                 \
 #       apache.txt              \
-       asl.log                 \
+#       asl.log                 \
        backup1.log             \
        backup2.log             \
        boot.log                \
@@ -107,162 +130,127 @@ DATA = ProfSec.log             \
 
 .PHONY: $(DATA)
 
-1967Transactions.short: learn # quick
 1967Transactions.short: $(IND)/1967Transactions.short
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-MER_T01_01.csv: learn # quick
 MER_T01_01.csv: $(IND)/MER_T01_01.csv
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-ProfSec.log: learn # quick
 ProfSec.log: $(IND)/ProfSec.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-SCESETUP.LOG: learn # 30 minutes
 SCESETUP.LOG: $(IND)/SCESETUP.LOG
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # 30 minutes
 
-access_log: learn # 5 minutes
 access_log: $(IND)/access_log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # 5 minutes
 
-ai-simple: learn # quick
 ai-simple: $(IND)/ai-simple
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-ai.3000: learn # several minutes
 ai.3000: $(IND)/ai.3000
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # several minutes
 
-# Takes really really long time without maxdepth of 3
-# Ran for more than four hours
-apache.txt: learn # Takes too long
 apache.txt: $(IND)/apache.txt
-	./learn $< -d $(OUTD)/$@ -maxdepth 3
+	./learn $< -d $(OUTD)/$@ -maxdepth 3 # Ran for more than four hours
 
-asl.log: learn # too long, even with maxdepth of 3
 asl.log: $(IND)/asl.log
-	./learn $< -d $(OUTD)/$@ -maxdepth 3
+	./learn $< -d $(OUTD)/$@ -maxdepth 3 # too long, even with maxdepth of 3
 
-backup1.log: learn # quick
 backup1.log: $(IND)/backup1.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-backup2.log: learn # quick
 backup2.log: $(IND)/backup2.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-boot.log: learn # quick
 boot.log: $(IND)/boot.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-crashreporter.log: learn # one minute
 crashreporter.log: $(IND)/crashreporter.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # one minute
 
-daily.out: learn # ten minutes with maxdepth of 4
 daily.out: $(IND)/daily.out # two minutes with maxdepth of 3
 	./learn $< -d $(OUTD)/$@ -maxdepth 4 # ten minutes with maxdepth of 4
 
-dibbler.1000: learn # quick
 dibbler.1000: $(IND)/dibbler.1000
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-dmesg: learn # quick with maxdepth of 5
 dmesg: $(IND)/dmesg
-	./learn $< -d $(OUTD)/$@ -maxdepth 6
+	./learn $< -d $(OUTD)/$@ -maxdepth 6 # quick with maxdepth of 5
 
-error_log: learn # takes a while
 error_log: $(IND)/error_log
-	./learn $< -d $(OUTD)/$@ -maxdepth 4
+	./learn $< -d $(OUTD)/$@ -maxdepth 4 # takes a while
 
-hp-array: learn # quick
 hp-array: $(IND)/hp-array
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-hp-struct: learn # quick
 hp-struct: $(IND)/hp-struct
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-ijnltif: learn # too long, even with maxdepth at 3
 ijnltif: $(IND)/ijnltif
-	./learn $< -d $(OUTD)/$@ -maxdepth 3
+	./learn $< -d $(OUTD)/$@ -maxdepth 3 # too long, even with maxdepth at 3
 
-install.log: learn # too long without maxdepth specified
 install.log: $(IND)/install.log
 	./learn $< -d $(OUTD)/$@ -maxdepth 7 # tolerable but long at maxdepth 7
 
 # **** Generates error with maxdepth=7
-interactions.txt.small: learn # too long without maxdepth specified
 interactions.txt.small: $(IND)/interactions.txt.small
 	./learn $< -d $(OUTD)/$@ -maxdepth 6 # tolerable at maxdepth 6
 
-interface.loop: learn # ten minutes at maxdepth of 4
 interface.loop: $(IND)/interface.loop
-	./learn $< -d $(OUTD)/$@ -maxdepth 4
+	./learn $< -d $(OUTD)/$@ -maxdepth 4 # ten minutes at maxdepth of 4
 
-lsof: learn # five minutes at maxdepth of 5
 lsof: $(IND)/lsof
-	./learn $< -d $(OUTD)/$@ -maxdepth 4
+	./learn $< -d $(OUTD)/$@ -maxdepth 4 # five minutes at maxdepth of 5
 
-netstat: learn # quick
 netstat: $(IND)/netstat
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-netstat-an: learn # quick
 netstat-an: $(IND)/netstat-an
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-page_log: learn # quick
 page_log: $(IND)/page_log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-quarterlypersonalincome: learn # quick
 quarterlypersonalincome: $(IND)/quarterlypersonalincome
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-railroad.txt: learn # 15 minutes
 railroad.txt: $(IND)/railroad.txt
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # 15 minutes
 
-rpmpkgs: learn # quick
 rpmpkgs: $(IND)/rpmpkgs
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-scesetup2.log: learn # finished, lost track of how long
 scesetup2.log: $(IND)/scesetup2.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # finished, lost track of how long
 
-scrollkeeper.log: learn # quick
 scrollkeeper.log: $(IND)/scrollkeeper.log
-	./learn $< -d $(OUTD)/$@
+	./learn $< -d $(OUTD)/$@ # quick
 
-simplegroups: learn # quick
-simplegroups: $(IND)/simplegroups
-	./learn $< -d $(OUTD)/$@
+simplegroups: $(IND)/simplegroups  # quick
+	cd output; make $@
 
-simplexml: learn # very quick
 simplexml: $(IND)/simplexml
-	./learn $< -d $(OUTD)/$@
+	cd output; make $@  # very quick
 
-windowserver_last.log: learn # three minutes
 windowserver_last.log: $(IND)/windowserver_last.log
-	./learn $< -d $(OUTD)/$@
+	cd output; make $@ # three minutes
 
-yum.log: learn # very quick
-yum.log: $(IND)/yum.log
-	./learn $< -d $(OUTD)/$@
+yum.log: $(IND)/yum.log;
+	cd output; make $@  # very quick
 
-yum.txt: learn # quick
-yum.txt: $(IND)/yum.txt
-	./learn $< -d $(OUTD)/$@
+yum.txt: $(IND)/yum.txt;
+	cd output; make $@   # quick
+
+######################################################################
+#
+# Silver version infrastructure
+#
+######################################################################
 
 # Test against a silver version
-# ***** Add date to Ty and Params
-%.test :
-
-#%::
+%.test:
+	make -C test $(*F)
 
 ######################################################################
 #

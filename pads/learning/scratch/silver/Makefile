@@ -9,11 +9,6 @@
 ######################################################################
 
 %::
-	@echo target=$@;
-	@echo prerequisites=$^;
-	@echo first prerequisite=$<;
-	@echo basenames=$(basename $^);
-	@echo notdirs=$(notdir $^);
 	@if [ ! -d $@ ] ; then mkdir $@; cvs add $@; fi
 	@if [ -e $< ] ; then cp $^ $@ ; else cp $^ $@; cd $@; cvs add $(notdir $^); fi
 
@@ -54,3 +49,9 @@ simplexml: ../output/simplexml/Ty ../output/simplexml/Params
 windowserver_last.log: ../output/windowserver_last.log/Ty ../output/windowserver_last.log/Params
 yum.log: ../output/yum.log/Ty ../output/yum.log/Params
 yum.txt: ../output/yum.txt/Ty ../output/yum.txt/Params
+
+#	@echo target=$@;
+#	@echo prerequisites=$^;
+#	@echo first prerequisite=$<;
+#	@echo basenames=$(basename $^);
+#	@echo notdirs=$(notdir $^);
