@@ -161,6 +161,7 @@ structure Common = struct
 		  (* ignoring Pgroup for now *)
 		  | _ => false
 
+	(* the two refine types are exactly the same *)
 	fun refine_equal (a:Refined, b:Refined):bool =
 		case (a, b) of 
 			(StringME(x), StringME(y)) => (x = y)

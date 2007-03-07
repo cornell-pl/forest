@@ -183,7 +183,7 @@ case ty of
   end
 | _ => ty
 (* adjacent constant strings are merged together *)
-and adjacent_consts ty : Ty = 
+and adjacent_consts cmos ty = 
   case ty of Pstruct(a, tylist) => 
     let
 	 fun mergetok (t1:LToken, t2:LToken) : LToken =
@@ -233,9 +233,9 @@ and adjacent_consts ty : Ty =
   		| nil => nil
   	val newtylist = find_adj tylist
     in
-  	Pstruct(a, newtylist)
+  	(cmos, Pstruct(a, newtylist))
     end
-| _ => ty
+| _ => (cmos, ty)
 (* removed unused branches of sums *)
 and unused_branches ty =
 case ty of 
@@ -264,7 +264,7 @@ and refine_array ty =
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
-	(*	val _ = (print "trying to refine array in struct \n"; printTy ty) *)
+(*		val _ = (print "trying to refine array in struct \n"; printTy ty) *)
 		fun getlen (lens, x) = 
 			case lens of 
 			l::tail => if (l = x) then getlen(tail, x)
@@ -308,15 +308,15 @@ and refine_array ty =
 		fun addtohead(ty, newty) =
 		  case ty of
 		  Pstruct({coverage, label=SOME id, ...}, tylist) => 
-				adjacent_consts(Pstruct(
-				mkTyAux1(Int.min(coverage, getCoverage newty), id), [newty]@tylist))
+				Pstruct(mkTyAux1(Int.min(coverage, getCoverage newty), id), 
+					[newty]@tylist)
 		  |Punion({label=SOME id, ...}, tylist) => 
 				let val newtylist = map (fn oldty => addtohead(oldty, newty)) tylist
 				in 
 				Punion (mkTyAux1(sumCoverage newtylist, id), newtylist)
 				end
-		  |RefinedBase({coverage, ...}, _, _) => adjacent_consts(Pstruct(
-						mkTyAux(Int.min(coverage, getCoverage(newty))), [newty, ty]))
+		  |RefinedBase({coverage, ...}, _, _) => Pstruct(mkTyAux(Int.min(coverage, 
+				getCoverage(newty))), [newty, ty])
 		  |Base({coverage, ...}, _) => Pstruct(mkTyAux(Int.min(coverage, getCoverage(newty))), 
 							[newty, ty])
 		  | _ => (raise TyMismatch)
@@ -447,7 +447,7 @@ and refine_array ty =
 			  	Pstruct(mkTyAux(#coverage aux), 
 			    	[first', RArray(aux, sepop, termop, body', lenop), last'])
 			| _ => raise TyMismatch
-(*		    val _ = (print "Done refining array in struct to:\n"; printTy newty) *)
+	(*	    val _ = (print "Done refining array in struct to:\n"; printTy newty)  *)
 		  in
 		 	newty
 		  end
@@ -754,7 +754,6 @@ let
 			unnest_tuples,
 			unnest_sums,
 			prefix_postfix_sums,
-			adjacent_consts,
 			remove_nils,
 		  	unused_branches,
 			refine_array
@@ -762,43 +761,45 @@ let
   val post_constraint_rules : post_reduction_rule list =
 		[ 
 		  uniqueness_to_const, 
+		  adjacent_consts,
 		  enum_range_to_refine,
 		  sum_to_switch
 		]
   (* generate the lust of rules *)
-  val cmap = case const_info_op of 
-      SOME (cmap) => cmap
-    | NONE => LabelMap.empty
+  val (mode, cmap) = case const_info_op of 
+      SOME (cmap) => (1, cmap)
+    | NONE => (0, LabelMap.empty)
   (* returns a new cmap after reducing all the tys in the list and a new tylist *)
-  fun mymap f cmap tylist newlist =
+  fun mymap f mode cmap tylist newlist =
 	case tylist of 
 		ty::tail => let 
-				val(cmap', ty') = f cmap ty
-			    in	mymap f cmap' tail (newlist@[ty'])
+				val(cmap', ty') = f mode cmap ty
+			    in	mymap f mode cmap' tail (newlist@[ty'])
 			    end
 		| nil => (cmap, newlist)
 
   (*reduce a ty and returns the new constraint map and the new ty *)
-  fun reduce' cmap ty =
+  (* mode = 0: pre_constraint; mode = 1: post_constraint *)
+  fun reduce' mode cmap ty =
     let 
       	(* go bottom up, calling reduce' on children values first *)
       	val (newcmap, reduced_ty) = 
 			case ty of
 			  Pstruct (a, tylist) => let 
-				val (cmap', tylist') = mymap reduce' cmap tylist nil
+				val (cmap', tylist') = mymap reduce' mode cmap tylist nil
 				in (cmap', Pstruct (a, tylist'))
 				end
 			| Punion (a, tylist) => let
-				val (cmap', tylist') = mymap reduce' cmap tylist nil
+				val (cmap', tylist') = mymap reduce' mode cmap tylist nil
 				in (cmap', Punion(a, tylist'))
 				end
 			| Parray (a, {tokens, lengths, first, body, last}) => 
 				let
-				val (cmap1, firstty) = reduce' cmap first
-				val (cmap2, bodyty) = reduce' cmap1 body 
-				val (cmap3, lastty) = reduce' cmap2 last 
+				val (cmap1, firstty) = reduce' mode cmap first
+				val (cmap2, bodyty) = reduce' mode cmap1 body 
+				val (cmap3, lastty) = reduce' mode cmap2 last 
 				in
-				(cmap2, Parray(a, {tokens=tokens, lengths=lengths, 
+				(cmap3, Parray(a, {tokens=tokens, lengths=lengths, 
 				first=firstty,
 				body= bodyty,
 				last=lastty}))
@@ -807,16 +808,28 @@ let
 			| TBD b => (cmap, TBD b)
 			| Bottom b => (cmap, Bottom b)
 			| RefinedBase b => (cmap, RefinedBase b)
-			| Switch b => (cmap, Switch b)
-			| RArray b => (cmap, RArray b)
+                        | Switch (a, id, pairs) =>  
+                                let
+                                val (refs, tylist) = ListPair.unzip(pairs)
+                                val (cmap', tylist') = mymap reduce' mode cmap tylist nil
+                                in (cmap', Switch (a, id, ListPair.zip(refs, tylist')))
+                                end
+                        | RArray (a, sep, term, body, len) => 
+                                let
+                                val (cmap', body') = reduce' mode cmap body
+                                in
+                                (cmap', RArray (a, sep, term, body', len))
+                                end
+
 	  fun iterate cmap ty = 
 	  let
 	    (* calculate the current cost *)
 	    val cur_cost = cost cmap ty
 	    (* apply each rule to the ty *)
-	    val post_pairs = map (fn x => x cmap ty) post_constraint_rules 
-	    val pre_pairs = map (fn x =>(cmap, x ty)) pre_constraint_rules 
-	    val cmap_ty_pairs = post_pairs@pre_pairs
+	    val cmap_ty_pairs = if mode=0 then
+					map(fn x => (cmap, x ty)) pre_constraint_rules
+				else
+					map (fn x => x cmap ty) post_constraint_rules 
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> cost m t) cmap_ty_pairs 
 	    val pairs = ListPair.zip(cmap_ty_pairs,costs)
@@ -831,108 +844,12 @@ let
     in
  	(iterate newcmap reduced_ty) 
     end
-  val cbefore = cost cmap ty 
-  val (cmap', ty') = reduce' cmap ty 
-  val cafter = cost cmap' ty'
+(*val cbefore = cost cmap ty *)
+  val (cmap', ty') = reduce' mode cmap ty 
+(*  val cafter = cost cmap' ty'*)
 (*  val _ = print ("Before:" ^ (Int.toString cbefore) ^ " After:" ^ (Int.toString cafter) ^ "\n") *)
 in
   ty'
 end 
-
-(* now some tests *)
-(******************
-fun dotest() = 
-let
-	val a = Base IntBase
-	val b = Base LettersBase
-	val c = Base (ConstBase "c")
-	val d = Base (REBase "*")
-	val pre = Tuple [ a, b, d ]
-	val post = Tuple [d, b, a ]
-	
-    val cmap_info = [ ("lab1", [Unique (Letters "a_unique_value")]), ("lab2",[]),("lab3",[Unique (Letters "a_unique_value")]), ("lab4",[Range (0,1)]) ]
-	val labels = ["lab1","lab3","lab4"]
-	
-	fun wrap lab = SOME(Const lab)
-	val cmap_info = [ 
-					  ("s1", [ Range (1,3),
-					           Switched (["s3"],
-					            [
-					              ([wrap "r101"],wrap "r1"),
-					              ([wrap "r102"],wrap "r1"),
-					              ([wrap "r103"],wrap "r1"),
-					              ([wrap "r104"],wrap "r2"),
-					              ([wrap "r105"],wrap "r2"),
-					              ([wrap "r106"],wrap "r2")
-					            ]),
-					            Switched (["s2"],
-					            [
-					              ([wrap "r10"],wrap "r1"),
-					              ([wrap "r11"],wrap "r1"),
-					              ([wrap "r12"],wrap "r2"),
-					              ([wrap "r13"],wrap "r2")
-					            ])
-					          ] ),
-					   ("s2", [ Range (5,6),
-					           Switched (["s3"],
-					            [
-					              ([wrap "r101"],wrap "r10"),
-					              ([wrap "r102"],wrap "r11"),
-					              ([wrap "r103"],wrap "r11"),
-					              ([wrap "r104"],wrap "r12"),
-					              ([wrap "r105"],wrap "r13"),
-					              ([wrap "r106"],wrap "r13")
-					            ])
-					          ] ) 
-					   
-					] @ cmap_info
-					            
-	val labels = ["r1","r2","r10","r11","r12","r13","r101","r102","r103","r104","r105","r106"] @ labels
-	
-	val cmap = foldr (fn (a,m) => LabelMap.insert'(a,m) ) LabelMap.empty cmap_info
-	val labset = LabelSet.addList(LabelSet.empty,labels)
-	
-	val tests = [ Tuple [], Sum [], Tuple [ Base LettersBase ], Sum [ Base LettersBase ],
-				  Tuple[ Sum [ Sum [] ] ],
-				  Tuple[ b,Tuple[a,a,a,a],b,Tuple[b,b,a]],
-				  Sum[ Sum[a,b],Sum[c,d],a],
-				  Sum [ Tuple[ pre,a,post], Tuple[pre,b,post], Tuple[pre,c,post] ],
-				  Sum [ Tuple[ pre,a,post], Tuple[pre,b], Tuple[pre,c,post] ],
-				  Sum [ Tuple[ pre,a,post], Tuple[pre,b,post], Tuple[c,post] ],
-				  Tuple[ c,c,c ],
-				  Tuple[ b,c,c,b,c,c,b,c,c,c],
-				  Label("lab1",b),
-				  Label("lab2",b),
-				  Sum[a,Label("lab2", b),c,d]
-				 ]
-				 
-	val r1 = Label("r1", Base (ConstBase "1"))
-	val r2 = Label("r2", Base (ConstBase "2"))
-	val r10 = Label("r10", Base (ConstBase "10"))
-	val r11 = Label("r11", Base (ConstBase "11"))
-	val r12 = Label("r12", Base (ConstBase "12"))
-	val r13 = Label("r13", Base (ConstBase "13"))
-	val r101 = Label("r101", Base (ConstBase "101"))
-	val r102 = Label("r102", Base (ConstBase "102"))
-	val r103 = Label("r103", Base (ConstBase "103"))
-	val r104 = Label("r104", Base (ConstBase "104"))
-	val r105 = Label("r105", Base (ConstBase "105"))
-	val r106 = Label("r106", Base (ConstBase "106"))
-	
-	val test = Tuple [ a,Label("s1",Sum [ r1, r2]),Label("s2",Sum[ r10,r11,r12,r13 ]), Label("s3",Sum[ r101,r102,r103,r104,r105,r106 ]),a]
-	
-(*	val _ = print (irtos test)
-	val (newIr,cmap) = sum_to_switch cmap labels test
-	val _ = print (irtos newIr) *)
-	val tests = tests @ [test]
-	val pre_results = ( map (reduce (NONE)) tests )
-	val results = ( map (reduce (SOME(cmap,labset))) pre_results )
-	val strings = ListPair.zip(map irtos tests, map irtos results)
-	val strings' = map (fn (x,y) => "From:\n" ^ x ^ "To:\n" ^ y ^ "\n\n\n") strings
-	val _ = map print strings'
-in
- strings
-end
-*************)
 
 end
