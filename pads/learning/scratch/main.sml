@@ -11,15 +11,16 @@ structure Main : sig
     open Config
     open Types
     open Structure
+    open Model
 
     fun doIt () = 
-	let val fileName = !srcFile
-	    val ty = computeStructure fileName
-
-	    val ty = Rewrite.run(ty)
-
+	let val fileName    = !srcFile
+	    val ty          = computeStructure fileName
+	    val ty          = Rewrite.run(ty)
+            val measuredTy  = measure ty
 	in
-	    Printing.dumpTyInfo (!outputDir) ty
+(*	    Printing.dumpTyInfo (!outputDir) ty *)
+	    Printing.dumpTyInfo (!outputDir) measuredTy
 	end
 
   (*** Another doIt function that invokes the inferencing ***)

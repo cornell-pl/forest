@@ -52,52 +52,34 @@ structure Model = struct
     )
 
     (* Compute the complexity of a base type (e.g. Pint) *)
-    fun baseComplexity ( ts : LToken list ) : Complexity * Complexity =
-    let val tok     = tokenOf (hd ts)
-        val maxlen  = maxTokenLength ts
-        val rmaxlen = Real.fromInt maxlen
-    in ( case tok of
-              PbXML (s1, s2)    => ( prob2Complexity probXMLChar
-                                   , prob2Complexity ( power probXMLChar rmaxlen )
-                                   )
-            | PeXML (s1, s2)    => ( prob2Complexity probXMLChar
-                                   , prob2Complexity ( power probXMLChar rmaxlen )
-                                   )
-            | Ptime s           =>
-               let val timeProb = (1.0 / 60.0) * (1.0 / 60.0) * (1.0 / 24.0)
-               in ( prob2Complexity timeProb, prob2Complexity timeProb )
-               end
-            | Pmonth s          => ( prob2Complexity ( 1.0 / 12.0 )
-                                   , prob2Complexity ( 1.0 / 12.0 )
-                                   )
-            (* Assumes IP addresses are made up of 3 digit pieces
-               Note: this is a case where type complexity differs
-               from data complexity *)
-            | Pip s             => ( prob2Complexity ( 1.0 / 255.0 )
-                                   , prob2Complexity ( power ( 1.0 / 255.0 ) rmaxlen )
-                                   )
-            (* Assumes ints are digits 0 through 10 *)
-            | Pint l            => ( prob2Complexity ( 1.0 / 10.0 )
-                                   , prob2Complexity ( power ( 1.0 / 10.0 ) rmaxlen )
-                                   )
-            | Pstring s         => ( prob2Complexity probStringChar
-                                   , prob2Complexity ( power probStringChar rmaxlen )
-                                   )
-            | Pgroup x          => ( zeroComplexity,  zeroComplexity )
-            | Pwhite s          => ( prob2Complexity probWhiteChar
-                                   , prob2Complexity ( power probWhiteChar rmaxlen )
-                                   )
-            | Other c           => ( prob2Complexity ( 1.0 / 256.0 )
-                                   , prob2Complexity ( 1.0 / 256.0 )
-                                   )
-            | Pempty            => ( zeroComplexity,  zeroComplexity )
-            | Error             => ( impossible, impossible )
-       )
-    end
+    fun baseComp ( lts : LToken list ) : Complexity * Complexity =
+    ( case lts of
+           []      => ( zeroComplexity, zeroComplexity )
+         | (t::ts) =>
+             let val maxlen  = maxTokenLength lts
+                 val nTimes  = 60 * 60 * 24
+                 fun mkBaseComp ( mult : int ) ( choices : int ) : Complexity  * Complexity =
+                 ( unitComplexity, multComp mult ( int2Complexity choices ) )
+             in ( case tokenOf t of
+                    PbXML (s1, s2)    => mkBaseComp maxlen numXMLChars
+                  | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
+                  | Ptime s           => mkBaseComp maxlen nTimes
+                  | Pmonth s          => mkBaseComp maxlen 12
+                  | Pip s             => mkBaseComp maxlen 256
+                  | Pint l            => mkBaseComp maxlen 10
+                  | Pstring s         => mkBaseComp maxlen numStringChars
+                  | Pgroup x          => ( zeroComplexity, zeroComplexity )
+                  | Pwhite s          => mkBaseComp maxlen numWhiteChars
+                  | Other c           => mkBaseComp maxlen 256
+                  | Pempty            => ( zeroComplexity, zeroComplexity )
+                  | Error             => ( impossible, impossible )
+                )
+             end
+    )
 
     fun mkBaseComplexity ( a : AuxInfo ) ( ts : LToken list ) : Ty =
     let val ty      = Base (a, ts)
-        val ( tcomp, dcomp ) = baseComplexity ts
+        val ( tcomp, dcomp ) = baseComp ts
         fun updateCompBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
             Base ( updateComplexities a t d, ts )
     in updateCompBase ty tcomp dcomp
@@ -105,7 +87,7 @@ structure Model = struct
 
     fun maxContextComplexity ( cl : Context list ) : Complexity * Complexity =
     let fun f (ltl:LToken list,comps:Complexity * Complexity ) : Complexity * Complexity =
-        let val ( t1, d1 ) = baseComplexity ltl
+        let val ( t1, d1 ) = baseComp ltl
             val ( t2, d2 ) = comps
         in ( combine t1 t2, combine d1 d2 )
         end
@@ -125,18 +107,22 @@ structure Model = struct
              in Bottom ( updateComplexities a t d, i, cl )
              end
          | Pstruct (a,tys)              =>
-             Pstruct ( updateComplexities a (sumTypeComplexities tys)
-                                            (sumDataComplexities tys)
-                     , tys
-                     )
+             let val measuredtys = map measure tys
+             in Pstruct ( updateComplexities a (sumTypeComplexities measuredtys)
+                                               (sumDataComplexities measuredtys)
+                        , measuredtys
+                        )
+             end
            (* We will need information about the frequency of each branch
               of the union to do a better job here *)
          | Punion (a,tys)               =>
-             Punion ( updateComplexities a
-                        ( combine (cardComp tys) (sumTypeComplexities tys) )
-                        ( combine (cardComp tys) (sumDataComplexities tys) )
-                    , tys
-                    )
+             let val measuredtys = map measure tys
+             in Punion ( updateComplexities a
+                           ( combine (cardComp tys) (sumTypeComplexities measuredtys) )
+                           ( combine (cardComp tys) (sumDataComplexities measuredtys) )
+                       , measuredtys
+                       )
+             end
            (* Don't really want a complexity for a Parray, want to
               wait until we have a refined array (see below)
             *)
@@ -200,5 +186,11 @@ structure Model = struct
      *)
     fun typeMeasure ( ty : Ty ) : Complexity = getTypeComplexity ( measure ty )
     fun dataMeasure ( ty : Ty ) : Complexity = getDataComplexity ( measure ty )
+
+(*------------------------------------------------------------------------------
+--
+-- Test cases for the measurement function
+--
+------------------------------------------------------------------------------*)
 
 end

@@ -13,11 +13,12 @@ maxdepth-simplegroups = 50
 	cd ../output; make $@
 	@if ! cmp --quiet ../output/yum.txt/Ty ../silver/yum.txt/Ty ; \
          then echo $@/Ty has changed since the silver version       ; \
-              cmp ../output/yum.txt/Ty ../silver/yum.txt/Ty         ; \
+              diff ../output/yum.txt/Ty ../silver/yum.txt/Ty        ; \
+              echo; \
          fi
 	@if ! cmp --quiet ../output/yum.txt/Params ../silver/yum.txt/Params  ;\
          then echo $@/Params has changed since the silver version       ;\
-              cmp ../output/yum.txt/Params ../silver/yum.txt/Params     ; \
+              diff ../output/yum.txt/Params ../silver/yum.txt/Params    ; \
          fi
 	@if cmp --quiet ../output/yum.txt/Params ../silver/yum.txt/Params && \
             cmp --quiet ../output/yum.txt/Ty ../silver/yum.txt/Ty           ;\

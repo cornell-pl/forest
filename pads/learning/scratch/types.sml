@@ -91,7 +91,7 @@ struct
         ( case ty of
                RArray ( a, osep, oterm, body, olen) =>
                   ( case olen of
-                         NONE => raise NoRArrayLength
+                         NONE => 1 (***** For now !!!!!!*)
                        | SOME r =>
                            ( case r of
                                   Int (min, max) => Int.fromLarge max
@@ -251,57 +251,56 @@ struct
 			     of [] => print "\t<empty>\n"
 			     | _ => (print "\t"; printLTokens tl; print "\n"))) contexts)))
 
-   fun TyToStringD prefix longTBDs longBottom suffix ty = 
-       (prefix^
-        (case ty 
-         of Base (aux, t)  => (ltokenTyToString (hd t))^("(" ^(covToString aux)^")") 
-         |  TBD (aux,i,cl) => "TBD_"^(Int.toString i)^
-	                      "("^(covToString aux)^")"^
-		              (if longTBDs then
-			          ("\n"^(contextsToString cl)^prefix^"End TBD")
-		               else "")
-         |  Bottom (aux,i, cl) => "BTM_"^(Int.toString i)^
-	                      "("^(covToString aux)^")"^
-			      (if longBottom then
-				   ("\n"^(contextsToString cl)^prefix^"End Bottom")
-			       else "")
-         |  Pstruct (aux, tys) =>  "Pstruct("^(covToString aux)^")\n"^
-	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
-			    prefix ^ "End Pstruct"
-         |  Punion (aux, tys)  => "Punion("^(covToString aux)^")\n"^
-	 		    (lconcat (List.map (TyToStringD (prefix^"\t") longTBDs longBottom (";\n")) tys))^
-			    prefix ^ "End Punion"
-         |  Parray (aux, {tokens=tkns, lengths, first=ty1,body=ty2,last=ty3})  => "Parray("^(covToString aux)^")"^
-			    "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
-			    prefix ^ "First:\n"^
-                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty1)^
-			    prefix ^ "Body:\n"^
-                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty2)^
-			    prefix^"Tail:\n"^
-                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty3)^
-			    prefix ^ "End Parray"
-        |  RefinedBase (aux, refined, tl) => (refinedToString refined)^("(" ^(covToString aux)^")") 
-        |  Switch(aux ,id, retys) => "Switch("^Atom.toString(id)^")("^(covToString aux)^"):\n"^
-	 		    (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
-			    (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") ty))) retys))^
-			    prefix ^ "End Switch"
-        |  RArray (aux, sep, term, body, len) => "RArray("^(covToString aux)^")\n"^
-			    (case sep of SOME septok =>
-			    prefix ^ "\tSeparator: "^
-                            refinedToString(septok)^"\n"
-			    | _ => ""
-			    )^
-			    (case term of SOME termtok =>
-			    prefix ^ "\tTerminator: "^
-                            refinedToString(termtok)^"\n"
-			    | _ => ""
-			    )^
-                            (TyToStringD (prefix^"\t") longTBDs longBottom (";\n") body) ^ 
-			    prefix ^ "End RArray"
-        )^
-	suffix)
-       
-    fun TyToString ty = TyToStringD "" false false "" ty
+   fun TyToStringD (prefix:string) (longTBDs:bool) (longBottom:bool)
+                   (suffix:string) (ty:Ty) : string = 
+   let val aux = getAuxInfo ty
+       val tcomp = #typeComp aux
+       val dcomp = #dataComp aux
+       val stats = ( "(" ^  (covToString aux) ^
+                     ", " ^ (showComp tcomp)  ^
+                     ", " ^ (showComp dcomp)  ^ ")"
+                   )
+       val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
+   in ( prefix ^
+        ( case ty of
+              Base (aux, t)  => ( ltokenTyToString (hd t) ) ^ stats
+            | TBD (aux,i,cl) =>
+               "TBD_" ^ (Int.toString i) ^ stats ^
+               ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )
+            | Bottom (aux,i, cl) =>
+               "BTM_" ^ (Int.toString i) ^ stats ^
+               (if longBottom then ("\n"^(contextsToString cl)^prefix^"End Bottom") else "")
+            | Pstruct (aux, tys) =>
+               "Pstruct" ^ stats ^ "\n" ^
+               (lconcat (List.map partialD tys)) ^ prefix ^ "End Pstruct"
+            | Punion (aux, tys)  =>
+               "Punion" ^ stats ^ "\n" ^ (lconcat (List.map partialD tys)) ^ prefix ^ "End Punion"
+            | Parray (aux, {tokens=tkns, lengths, first=ty1,body=ty2,last=ty3}) =>
+               "Parray" ^ stats ^
+               "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
+               prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
+               prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
+            | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats
+            | Switch(aux ,id, retys) =>
+               "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
+               (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
+               (partialD ty))) retys)) ^ prefix ^ "End Switch"
+            | RArray (aux, sep, term, body, len) =>
+               "RArray" ^ stats ^ "\n" ^
+               ( case sep of
+                      SOME septok =>
+                        prefix ^ "\tSeparator: "^ refinedToString(septok) ^ "\n"
+                    | _ => "" ) ^
+               ( case term of
+                      SOME termtok =>
+                        prefix ^ "\tTerminator: "^ refinedToString(termtok) ^ "\n"
+                    | _ => "" ) ^
+               ( partialD body ) ^ prefix ^ "End RArray"
+        ) ^
+	suffix )
+    end
+
+    fun TyToString (ty:Ty):string = TyToStringD "" false false "" ty
 
     fun printTyD prefix longTBDs longBottom suffix ty =  print (TyToStringD prefix longTBDs longBottom suffix ty )
     fun printTy ty = printTyD "" false false "\n" ty

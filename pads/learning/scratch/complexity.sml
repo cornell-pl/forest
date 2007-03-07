@@ -45,6 +45,7 @@ structure Complexity = struct
     (* Value to use to get compilation started *)
     val junkComplexity : Complexity = Bits ( ~ 1 )
     val zeroComplexity : Complexity = Bits 0
+    val unitComplexity : Complexity = Bits 1
     val impossible     : Complexity = Bits ( ~ 1 )
 
     (* Log base 2 of a positive integer *)
@@ -103,7 +104,8 @@ structure Complexity = struct
                Bits b    => Bits    ( n * b )
              | Choices c => Choices ( n * c )
              | Precise p => Precise ( Real.fromInt n * p )
-        ) 
+        )
+
     (* Probabilities should be in the interval [0, 1] *)
     type Probability = real
 
