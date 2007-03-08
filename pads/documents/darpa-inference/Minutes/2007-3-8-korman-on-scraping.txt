@@ -1,0 +1,82 @@
+screen scraping
+----------------------------
+
+Dave Korman 3/8/2007
+
+> What kinds of web sites do you scrape?
+We scrape a wide variety of web sites, both internal and external to AT&T.
+An internal system is a trouble-ticket site, indexed by phone numbers.  We can see trouble tickets on smaug:/fs/rev_assure/BMP/date/area_code/phone_number.  We scrape Verizon's clec (competitive local exchange carrier) site for information on the services associated with a customer's phone number.  Alternative is to phone verizon and be sent a fax.
+
+We prefer not to scrape, but there are times when we have to, either because there is no programmatic interface to a system, the interface doesn't contain the right information, and/or it is too expensive to set up such an interface.   Can't spend a year negotiating an interface.
+
+Scraping is slow and unreliable, and very vulnerable to changes in the underlying system.  It generally makes the people running the system being scraped nervous.  It is inherently inefficient, in that a lot of effort goes into producing html that will immediately be parsed through and discarded and firing up cgi scripts, perl engines, etc. is slow.
+
+Scraping can be safer, in that more capabilities are typically exposed in programmatic interfaces than to web sites.  Also, web sites often put in checks to make sure web users are not taking potential harmful actions.  Scrapers are subject to some of these checks.  The scraper has to authenticate, and can be throttled back. 
+
+Verizon just put up a SOAP interface to its data (SOAP is standard rpc mechanism using XML).  Might be an alternative to scraping verizon web sites, except that they gave AT&T only a single authentication ID and password.  Since this can't be shared across all the people at AT&T who would need to use it, AT&T would have to build a concentrator and authenticator to multiplex the password.  This is prohibitively expensive, so we will continue to scrape.
+
+
+> What kinds of information do you pull?
+  We pull trouble tickets for phone numbers. Configurations of various network routers.  Test results.  Customer service records.  Circuit information. Performance data from channel service units of T1s.  
+  Most scrapers only pull data, but some push it as well.
+
+> How much data do you pull?
+ It varies from one scraper to the next.  Some pull a couple of megabytes every night, others pull a couple bytes constantly.
+ 
+> How often do you scrape a given site?
+ It depends on the application.  We make a concerted effort to be friendly to the sites.
+It is easy for a program to beat the hell out of a web site.  Various scrapers will sleep a few seconds between successive requests in a particular pull, and a minute between pulls.  We try to proceed at a pace of an efficient human, ie, put the hit rate on a human scale.  Note that we only pull data relevant to query: we don't load pictures, etc., and only pull data in frame we care about, so we can keep our traffic volume down.
+
+> How many levels down do you need to go?
+  We have to go to where the information is.  We are typically scraping, not crawling though, which means that we know where we are going.  We may have to make a series of requests in order to set the necessary state on the server.  This process often starts with having to authenticate with the server, which typically means providing the appropriate cookies, which we may have to get by visiting appropriate sites.  
+
+> How do you deal with cgi?
+  We start out by doing what a human would do, using a browser with a proxy that prints out post/get requests.  We look at the arguments that vary between requests, and then set those programmatically.
+
+
+> How often does the web site change?
+  Tools will break frequently when web site changes,  BUT sites change far less often than you might expect. Of course, change is controlled for program to program interface.  Nominally for a web site, you don't have to advertise change.  In practice, however, there is also a contract that precludes change within the web site: between the web designer and the cgi-designer.  You can't vary the behavior too suddenly or the web site will break and require a massive amount of re-engineering.   The html representation also does not change all that often, because such changes break the end-user's expectations about the site.  The exception to this seems to be Verizon's clec facing web site, which seems to introduce changes explicitly to break scrapers.
+
+
+> What happens when it does change?
+  Things break, usually in byzantine ways that are very hard to debug.  It is best to have scrapers written so that they scream when they don't find what they expect, but in practice developers don't always follow this practice.   As a defense mechanism, scraper parsers tend to be written to assume the minimal amount about the html they are handling.  Ie, don't look for these five pieces of information in this order, but rather collect all the name value pairs and then see if the desired ones are in the resulting set.  Coding defensively can make code robust to changes.  We basically rely on the fact that web sites don't change radically very often.  We have thought vaguely about using some kind of web differencing tool to detect changes, but haven't been able to come up with a workable system.
+
+> What are the web pages like? 
+> How much of the web page is display information?
+> How much is data? 
+> How intimately connected are the data and the display info?
+  Data and formatting is mushed together.  The ideal would be to have xml + stylesheets, but that almost never happens.  The data is buried inside broken html, badly written, tables are frequently not closed, tags are not closed, fields are delimited in different ways across the page, every page is different and they are all a mess.  There is far more
+mark up than data.  One big preformatted block is good, but again the exception rather than the rule.  Sometimes the data is also in the page as a hidden form field, which is great when it happens.  
+  I wondered if it would be possible to get many pages of the same kind, could we learn the boilerplate and extract the data.  Dave thought this was quite likely possible, and very useful.  He pointed me at some sample data we can play with.  This is very exciting, as it addresses the most time consuming piece of their work, and might mean we have something good to say about web scraping after all.
+  The trouble ticket data follows this pattern;  they don't keep the html, but they have ascii versions on smaug:/fs/rev_assure/BMP/date/area_code/phone_number.  We could play with it and see what we can come up with.
+
+>What kind of tools do you use?
+  perl, lwp module.  The lwp module sets the user-agent to be perl-lwp, advertising that the code hitting the web site is a scraper.  Each individual request is otherwise indistinguishable from a human request.  The collection of requests is identifiable as a scraper however, as it is not asking for pictures, complete web pages, etc.  
+  They use libwwwperl, which is a basic scraper that knows how to do puts and gets and posts.  It is easy to pass arguments and get results back.  lwp-automate is a basic scraper that knows how to make requests; Simon Byers uses this tool heavily.  They have an html parser that they use to process the pages returned.  They make libraries for each of the sites they use frequently.  They have an authentication library that helps to manage the authentication process.  
+  They use a web scraping proxy to get started, in which a human visits the web site and makes the desired requests.  The proxy spits out all the requests issued by the browser, and then turn those requests into a script.  
+
+> In scraping a new site, how much from has to be done from scratch?
+  There is a fair amount of boiler plate involved in sending and receiving requests and setting up user authentications.  The parsing is the bulk of work.  The  actual scraper logic: tends to be miniscule in terms of lines of code and straightforward once you have the data.  Jason Adams has a simple declarative language for specifying filters and actions. The heavy lifting is in libraries that do parsing and state maintenance.
+
+> Who is doing this?
+The VIP group: Ken Lyons and Howard Katseff
+Dave Kormann, Jason Adams on bmp automation
+Simon Byers
+anyone working near automation or data gathering
+
+>Other questions?
+ What do we do with the data once we get it?
+  .  put it into another web site
+  .  put it into the same web site
+      life pushes orders forward
+      pull, modify, push
+  .  put it into another database
+      cttp scraper does this
+      walks the 4e and turns it into reports
+  . data really much smaller once it has been processed; html is thrown away
+
+other tricky bit:
+  dealing with authentication systems: convincing a server that you are who you claim to be. For most internal sites, a trip to csp (corporate sign-on system) for authentication (sets two cookies ) then pass those cookies to web site, which sets its own cookies, then you gather them all up. Howard's proxy is unstable in the face of ssl...  perl ssl binding is not great.  Authentication requests are made over ssl, so it can crash.
+
+For external web sites, sometimes it is best to not advertise you are coming from att. EG, Don't want to bang on amazon really hard
+Simon has built something that rotates among a bunch of open proxies on the web, rotating user agent, reducing detectability of scraping.   Don't hit things too hard.  We have to push until it turns us off, and then scale back.  Automated throttles that trigger for a while. 
