@@ -130,7 +130,7 @@ struct
 
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
 
-    fun mkTyAux ( coverage : int ) AuxInfo = 
+    fun mkTyAux ( coverage : int ) : AuxInfo = 
 	let val next = !Tystamp
             val () = Tystamp := !Tystamp + 1
             val label = mkTyLabel next
