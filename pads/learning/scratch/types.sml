@@ -85,7 +85,6 @@ struct
        an exception
      *)
     exception NotRArray
-    exception NoRArrayLength
     exception BadRArrayLength
     fun getLengthRArray   ( ty : Ty ) : int =
         ( case ty of
@@ -117,12 +116,12 @@ struct
         foldl ( fn (t,c) => combine (getDataComplexity t) c )
               zeroComplexity tys
                  
-    fun mkLabel prefix i = Atom.atom("BTy_"^(Int.toString i))
-    fun mkTyLabel i = mkLabel "BTy_" i
-    fun mkTBDLabel i = mkLabel "TBD_" i
-    fun mkBOTLabel i = mkLabel "BOT_" i
+    fun mkLabel (prefix:string) (i:int) : Id = Atom.atom("BTy_"^(Int.toString i))
+    fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i
+    fun mkTBDLabel (i:int) : Id = mkLabel "TBD_" i
+    fun mkBOTLabel (i:int) : Id = mkLabel "BOT_" i
 
-    fun getLabel ( a : AuxInfo ) : Atom.atom =
+    fun getLabel ( a : AuxInfo ) : Id =
     let val { coverage = c, label = l, ... } = a
     in case l of
             NONE => (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp 
@@ -131,7 +130,7 @@ struct
 
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
 
-    fun mkTyAux coverage = 
+    fun mkTyAux ( coverage : int ) AuxInfo = 
 	let val next = !Tystamp
             val () = Tystamp := !Tystamp + 1
             val label = mkTyLabel next
@@ -142,7 +141,7 @@ struct
            }
 	end
 
-    fun mkTyAux1 (coverage, id) = 
+    fun mkTyAux1 ( coverage : int, id : Id ) : AuxInfo = 
 	let val next = !Tystamp
             val () = Tystamp := !Tystamp + 1
             val label = id
@@ -153,16 +152,16 @@ struct
            }
 	end
 
-    fun getCoverage ty = #coverage(getAuxInfo ty)
-    fun sumCoverage tys = 
+    fun getCoverage ( ty : Ty ) : int = #coverage(getAuxInfo ty)
+    fun sumCoverage ( tys : Ty list ) : int = 
 	case tys of [] => 0
         | (ty::tys) => (getCoverage ty) + (sumCoverage tys)
-    fun minCoverage tys = 
+    fun minCoverage ( tys : Ty list ) : int = 
 	case tys of [] => Option.valOf Int.maxInt
         | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
 
-    fun ltokenToString (t,loc) = tokenToString t
-    and tokenToString t = 
+    fun ltokenToString ( t : Token, loc : location ) : string = tokenToString t
+    and tokenToString ( t : Token ) : string = 
 	case t 
         of Ptime i => i
 	|  Pip i  => i
@@ -176,7 +175,7 @@ struct
         |  Other c => String.implode [c]
         |  Pempty => ""
         |  Error => " Error"
-    and refinedToString re =
+    and refinedToString ( re : Refined ) : string =
 	case re
 	of StringME s => "\""^ s ^ "\""
         | Int(min, max) => "["^LargeInt.toString(min)^"..."^LargeInt.toString(max)^"]"
@@ -185,8 +184,8 @@ struct
         | Enum rel => "{" ^ String.concat(map (fn x => (refinedToString x) ^", ") rel) ^ "}"
         | LabelRef id => "id="^ Atom.toString(id)    
 
-    fun ltokenTyToString (t,loc) = tokenTyToString t
-    and tokenTyToString t = 
+    fun ltokenTyToString ( t : Token, loc : location ) : string = tokenTyToString t
+    and tokenTyToString ( t : Token ) : string = 
 	case t 
         of Ptime i   => "[Time]"
 	|  Pip i     => "[IP]"
@@ -207,13 +206,13 @@ struct
         |  Error     => " Error"
 
 
-    fun printTokenTy t = print (tokenTyToString t)
+    fun printTokenTy ( t : Token ) : unit = print (tokenTyToString t)
 
     fun LTokensToString [] = "\n"
       | LTokensToString ((t,loc)::ts) = ((tokenToString t) ^ (LTokensToString ts))
 
     fun locationToString {lineNo, beginloc, endloc} = "Line #:"^(Int.toString lineNo)
-    fun printLocation loc = print (locationToString loc)
+    fun printLocation ( loc : location ) : unit = print (locationToString loc)
 
     fun printLTokens [] = print "\n"
       | printLTokens ((t,loc)::ts) = (printLocation loc; print ":\t"; printTokenTy t; printLTokens ts)
@@ -222,7 +221,7 @@ struct
       | printTokenTys (t::ts) = (printTokenTy t; printTokenTys ts)
 
 
-    fun covToString ( a : AuxInfo ):string =
+    fun covToString ( a : AuxInfo ) : string =
     let val { coverage = cov, label=l, ... } = a
         val lbl = if !printIDs then 
                      case l of
@@ -232,7 +231,7 @@ struct
     in lbl ^ Int.toString cov
     end
 
-    fun contextsToString contexts = 
+    fun contextsToString ( contexts : Context list ) : string = 
 	((case contexts 
 	  of [] => "<no records matched context>\n"
 	  | _ => (lconcat(
@@ -243,7 +242,7 @@ struct
 
 
     (* Replace when debugged with print (contextsToString contexts) *)
-    fun printContexts contexts = 
+    fun printContexts ( contexts : Context list ) : unit = 
 	((case contexts 
 	  of [] => print "<no records matched context>\n"
 	  | _ => (List.app (fn tl => 
@@ -251,58 +250,61 @@ struct
 			     of [] => print "\t<empty>\n"
 			     | _ => (print "\t"; printLTokens tl; print "\n"))) contexts)))
 
-   fun TyToStringD (prefix:string) (longTBDs:bool) (longBottom:bool)
-                   (suffix:string) (ty:Ty) : string = 
-   let val aux = getAuxInfo ty
-       val tcomp = #typeComp aux
-       val dcomp = #dataComp aux
-       val stats = ( "(" ^  (covToString aux) ^
-                     ", " ^ (showComp tcomp)  ^
-                     ", " ^ (showComp dcomp)  ^ ")"
-                   )
-       val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
-   in ( prefix ^
-        ( case ty of
-              Base (aux, t)  => ( ltokenTyToString (hd t) ) ^ stats
-            | TBD (aux,i,cl) =>
-               "TBD_" ^ (Int.toString i) ^ stats ^
-               ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )
-            | Bottom (aux,i, cl) =>
-               "BTM_" ^ (Int.toString i) ^ stats ^
-               (if longBottom then ("\n"^(contextsToString cl)^prefix^"End Bottom") else "")
-            | Pstruct (aux, tys) =>
-               "Pstruct" ^ stats ^ "\n" ^
-               (lconcat (List.map partialD tys)) ^ prefix ^ "End Pstruct"
-            | Punion (aux, tys)  =>
-               "Punion" ^ stats ^ "\n" ^ (lconcat (List.map partialD tys)) ^ prefix ^ "End Punion"
-            | Parray (aux, {tokens=tkns, lengths, first=ty1,body=ty2,last=ty3}) =>
-               "Parray" ^ stats ^
-               "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
-               prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
-               prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
-            | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats
-            | Switch(aux ,id, retys) =>
-               "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
-               (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
-               (partialD ty))) retys)) ^ prefix ^ "End Switch"
-            | RArray (aux, sep, term, body, len) =>
-               "RArray" ^ stats ^ "\n" ^
-               ( case sep of
-                      SOME septok =>
-                        prefix ^ "\tSeparator: "^ refinedToString(septok) ^ "\n"
-                    | _ => "" ) ^
-               ( case term of
-                      SOME termtok =>
-                        prefix ^ "\tTerminator: "^ refinedToString(termtok) ^ "\n"
-                    | _ => "" ) ^
-               ( partialD body ) ^ prefix ^ "End RArray"
-        ) ^
-	suffix )
-    end
+    fun TyToStringD (prefix:string) (longTBDs:bool) (longBottom:bool)
+                    (suffix:string) (ty:Ty) : string = 
+    let val aux = getAuxInfo ty
+        val tcomp = #typeComp aux
+        val dcomp = #dataComp aux
+        val stats = ( "(" ^  (covToString aux) ^
+                      ", " ^ (showComp tcomp)  ^
+                      ", " ^ (showComp dcomp)  ^ ")"
+                    )
+        val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
+    in ( prefix ^
+         ( case ty of
+               Base (aux, t)  => ( ltokenTyToString (hd t) ) ^ stats
+             | TBD (aux,i,cl) =>
+                "TBD_" ^ (Int.toString i) ^ stats ^
+                ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )
+             | Bottom (aux,i, cl) =>
+                "BTM_" ^ (Int.toString i) ^ stats ^
+                (if longBottom then ("\n"^(contextsToString cl)^prefix^"End Bottom") else "")
+             | Pstruct (aux, tys) =>
+                "Pstruct" ^ stats ^ "\n" ^
+                (lconcat (List.map partialD tys)) ^ prefix ^ "End Pstruct"
+             | Punion (aux, tys)  =>
+                "Punion" ^ stats ^ "\n" ^ (lconcat (List.map partialD tys)) ^ prefix ^ "End Punion"
+             | Parray (aux, {tokens=tkns, lengths, first=ty1,body=ty2,last=ty3}) =>
+                "Parray" ^ stats ^
+                "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
+                prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
+                prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
+             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats
+             | Switch(aux ,id, retys) =>
+                "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
+                (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
+                (partialD ty))) retys)) ^ prefix ^ "End Switch"
+             | RArray (aux, sep, term, body, len) =>
+                "RArray" ^ stats ^ "\n" ^
+                ( case sep of
+                       SOME septok =>
+                         prefix ^ "\tSeparator: "^ refinedToString(septok) ^ "\n"
+                     | _ => "" ) ^
+                ( case term of
+                       SOME termtok =>
+                         prefix ^ "\tTerminator: "^ refinedToString(termtok) ^ "\n"
+                     | _ => "" ) ^
+                ( partialD body ) ^ prefix ^ "End RArray"
+         ) ^
+         suffix )
+     end
 
-    fun TyToString (ty:Ty):string = TyToStringD "" false false "" ty
+     fun TyToString (ty:Ty):string = TyToStringD "" false false "" ty
 
-    fun printTyD prefix longTBDs longBottom suffix ty =  print (TyToStringD prefix longTBDs longBottom suffix ty )
-    fun printTy ty = printTyD "" false false "\n" ty
+     fun printTyD (prefix:string) (longTBDs:bool) (longBottom:bool)
+                  (suffix:string) (ty:Ty) : unit =
+         print (TyToStringD prefix longTBDs longBottom suffix ty )
+
+     fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
 
 end

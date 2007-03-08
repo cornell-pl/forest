@@ -1,3 +1,13 @@
+(*------------------------------------------------------------------------------
+-- Revision history
+--
+-- version 1: March 1, 2007: first draft
+-- version 2: March 8, 2007:
+--   Fixed elementary coding bugs
+--   Changed type complexity to codebook scheme
+--   Ran against some of the PADS test cases
+------------------------------------------------------------------------------*)
+
 structure Model = struct
     open Complexity
     open Distribution
@@ -133,15 +143,23 @@ structure Model = struct
                             , last    = l
                             }
                   )                =>
-             let val maxlen    = maxInt (map #1 ls)
-                 val firstLastType = combine (getTypeComplexity f) (getTypeComplexity l)
-                 val firstLastData = combine (getDataComplexity f) (getDataComplexity l)
+             let val f'        = measure f
+                 val b'        = measure b
+                 val l'        = measure l
+                 val maxlen    = maxInt (map #1 ls)
+                 val firstLastType = combine (getTypeComplexity f') (getTypeComplexity l')
+                 val firstLastData = combine (getDataComplexity f') (getDataComplexity l')
                  val totalType = combine firstLastType
-                                         ( multComp maxlen (getTypeComplexity b) )
+                                         ( multComp maxlen (getTypeComplexity b') )
                  val totalData = combine firstLastData
-                                         ( multComp maxlen (getDataComplexity b) )
+                                         ( multComp maxlen (getDataComplexity b') )
              in Parray ( updateComplexities a totalType totalData
-                       , x
+                       , { tokens  = ts
+                         , lengths = ls
+                         , first   = f'
+                         , body    = b
+                         , last    = l
+                         }
                        )
              end
          | RefinedBase ( a, r, ts ) =>
@@ -186,11 +204,5 @@ structure Model = struct
      *)
     fun typeMeasure ( ty : Ty ) : Complexity = getTypeComplexity ( measure ty )
     fun dataMeasure ( ty : Ty ) : Complexity = getDataComplexity ( measure ty )
-
-(*------------------------------------------------------------------------------
---
--- Test cases for the measurement function
---
-------------------------------------------------------------------------------*)
 
 end
