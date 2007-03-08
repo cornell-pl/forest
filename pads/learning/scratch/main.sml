@@ -16,10 +16,9 @@ structure Main : sig
     fun doIt () = 
 	let val fileName    = !srcFile
 	    val ty          = computeStructure fileName
-	    val ty          = Rewrite.run(ty)
-            val measuredTy  = measure ty
+	    val rewrittenTy = Rewrite.run(ty)
+            val measuredTy  = measure rewrittenTy
 	in
-(*	    Printing.dumpTyInfo (!outputDir) ty *)
 	    Printing.dumpTyInfo (!outputDir) measuredTy
 	end
 

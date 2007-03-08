@@ -1,6 +1,5 @@
 structure Tokens = struct
     open Complexity
-    open Distribution
 
     type location = { lineNo: int, beginloc: int, endloc:int }
 
@@ -183,21 +182,5 @@ structure Tokens = struct
 
     (* A record is a special kind of list of tokens *)
     type Record = Token list
-
-    (* Distributions must consider a list of tokens, for example when
-       dealing with a structure. The *clump* is our grouping concept
-       for tokens.
-     *)
-    datatype Clump = EmptyClump
-                   | BasicClump         of Token
-                   | BoundedClump       of Token list * int
-                   | UnboundedClump     of Token list
-                   | SingletonMetaClump of Clump
-                   | BoundedMetaClump   of Clump list * int
-                   | UngoundedMetaClump of Clump list
-
-    type Model = Clump Density
-    fun junkModel ( c : Clump ) : Model =
-       fn ( u : Clump ) => if u = c then 1.0 else 0.0
 
 end

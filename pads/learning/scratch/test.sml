@@ -38,7 +38,7 @@ structure Tests = struct
     val temp1  : Token = Pempty
     val terr1  : Token = Error
 
-    (* Some location to use *)
+    (* Some locations to use *)
     val ln1 : location = { lineNo = 1, beginloc = 10, endloc = 20 }
     val ln2 : location = { lineNo = 2, beginloc = 12, endloc = 22 }
     val ln3 : location = { lineNo = 3, beginloc = 13, endloc = 23 }
@@ -66,7 +66,18 @@ structure Tests = struct
     val ltlemp1  : LToken list = [ ( temp1, ln1 ) ]
     val ltlerr1  : LToken list = [ ( terr1, ln1 ) ]
 
-    (* Some Ty structures to use *)
+    (* Some refined base types to use *)
+    val rsme1  : Refined = StringME "one"
+    val rsme2  : Refined = StringME "two"
+    val rsme3  : Refined = StringME "three"
+    val rint1  : Refined = Int ( 4, 7 )
+    val rint2  : Refined = Int ( 444, 777 )
+    val rintc1 : Refined = IntConst 83838383838
+    val rstr1  : Refined = StringConst "abcdefgh"
+    val renum1 : Refined = Enum [ rsme1, rint1, rstr1 ]
+    val rlbl1  : Refined = LabelRef (Atom.atom "label")
+
+    (* Some Base Ty structures to use *)
     val ty1  : Ty = Base (a1, [])
     val ty2  : Ty = Base (a1, ltl1)
     val ty3  : Ty = Base (a1, ltlip1)
@@ -79,6 +90,25 @@ structure Tests = struct
     val ty10 : Ty = Base (a1, ltloth3)
     val ty11 : Ty = Base (a1, ltlemp1)
     val ty12 : Ty = Base (a1, ltlerr1)
+    (* Some RefinedBase Ty structures to use *)
+    val ty20 : Ty = RefinedBase (a1, rsme1, ltlstr4)
+    val ty21 : Ty = RefinedBase (a1, rint1, ltl2)
+    val ty22 : Ty = RefinedBase (a1, rintc1, ltl2)
+    val ty23 : Ty = RefinedBase (a1, rstr1, ltlstr4)
+    val ty24 : Ty = RefinedBase (a1, renum1, ltlstr4)
+    val ty25 : Ty = RefinedBase (a1, rlbl1, [])
+    (* Now to test structured, but unrefined types *)
+    val ty30 : Ty = Pstruct (a1, [ ty3, ty9, ty21 ])
+    val ty31 : Ty = Punion (a1, [ ty3, ty9, ty21, ty10 ])
+    val ty32 : Ty = Parray ( a1, { tokens  = []
+                                 , lengths = [ ( 6, 12 ) ]
+                                 , first   = ty3
+                                 , body    = ty9
+                                 , last    = ty10
+                                 }
+                           )
+    (* Test refined structures *)
+    val ty40 : Ty = RArray (a1, NONE, NONE, ty9, NONE )
 
     (* Carry out the measurements on the Ty structures *)
     val m1  : Ty = measure ty1;
@@ -94,5 +124,19 @@ structure Tests = struct
     val m11 : Ty = measure ty11;
     val m12 : Ty = measure ty12;
 
-    (* Miscellaneous results *)
+    val m20 : Ty = measure ty20;
+    val m21 : Ty = measure ty21;
+    val m22 : Ty = measure ty22;
+    val m23 : Ty = measure ty23;
+    val m24 : Ty = measure ty24;
+    val m25 : Ty = measure ty25;
+
+    val m30 : Ty = measure ty30;
+    val m31 : Ty = measure ty31;
+    val m32 : Ty = measure ty32;
+    val (Parray (a32, s32)) = m32;
+
+    val m40 : Ty = measure ty40;
+    val (RArray (a40, osep40, oterm40, body40, olen40)) = m40;
+
 end

@@ -6,6 +6,9 @@
 --   Fixed elementary coding bugs
 --   Changed type complexity to codebook scheme
 --   Ran against some of the PADS test cases
+-- version 3: March 8, 2007
+--   Tested and fixed Refined base type computations.
+--
 ------------------------------------------------------------------------------*)
 
 structure Model = struct
@@ -28,31 +31,42 @@ structure Model = struct
     (* Get the maximum from a list of integers *)
     fun maxInt ( l : int list ) : int = foldl Int.max 0 l
 
+    (* Make a base complexity from a multiplier (often maximum length of token)
+       and a number of choices.
+     *)
+    fun mkBaseComp ( mult : int ) ( choices : int ) : Complexity  * Complexity =
+        ( unitComplexity, multComp mult ( int2Complexity choices ) )
+    (* Same thing with a large integer *)
+    fun mkBaseCompL ( mult : int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
+        ( unitComplexity, multComp mult ( int2ComplexityL choices ) )
+
     (* Compute the type and data complexity of a refined type *)
     fun refinedComp ( multiplier:int ) ( r:Refined ) : Complexity * Complexity =
-        let val rmaxlen = Real.fromInt multiplier
-        in ( case r of
-                  StringME s     => ( prob2Complexity probStringChar
-                                    , prob2Complexity ( power probStringChar rmaxlen )
-                                    )
-                | Int (min, max) => ( int2ComplexityL ( max - min + 1 )
-                                    , multComp multiplier
-                                               ( int2ComplexityL ( max - min + 1 ) )
-                                    )
-                | IntConst n     => ( int2ComplexityL n, int2ComplexityL n )
-                | StringConst s  => ( int2Complexity (size s)
-                                    , int2Complexity (size s)
-                                    )
-                | Enum rl        => ( sumComplexities ( map refinedTypeComp rl ) 
-                                    , sumComplexities ( map refinedDataComp rl )
-                                    )
-                | LabelRef i     => ( zeroComplexity, zeroComplexity )
-           )
-        end
+        ( case r of
+               StringME s     => mkBaseComp multiplier numStringChars
+             | Int (min, max) => mkBaseCompL multiplier ( max - min + 1 )
+             | IntConst n     => ( unitComplexity, int2ComplexityL n )
+             | StringConst s  => ( unitComplexity, int2Complexity (size s) )
+               (* Need term here for number of choices???? *)
+             | Enum rl        => ( unitComplexity, sumComplexities ( map refinedDataComp rl))
+             | LabelRef i     => ( zeroComplexity, zeroComplexity )
+        )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedTypeComp ( r : Refined ) : Complexity = #1 (refinedComp 1 r)
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedDataComp ( r : Refined ) : Complexity = #2 (refinedComp 1 r)
+
+
+    (* Measure a refined base type *)
+    exception NotRefinedBase
+    fun measureRefined (m:int) (ty:Ty) : Ty =
+    ( case ty of
+           RefinedBase ( a, r, ts ) =>
+             let val ( tcomp, dcomp ) = refinedComp m r
+             in RefinedBase ( updateComplexities a tcomp dcomp, r, ts )
+             end
+         | _ => raise NotRefinedBase
+    )
 
     (* Complexity of refined option type, assuming multiplier 1 *)
     fun refinedOptionComp ( ro : Refined option ) : Complexity * Complexity =
@@ -68,8 +82,6 @@ structure Model = struct
          | (t::ts) =>
              let val maxlen  = maxTokenLength lts
                  val nTimes  = 60 * 60 * 24
-                 fun mkBaseComp ( mult : int ) ( choices : int ) : Complexity  * Complexity =
-                 ( unitComplexity, multComp mult ( int2Complexity choices ) )
              in ( case tokenOf t of
                     PbXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
@@ -157,18 +169,12 @@ structure Model = struct
                        , { tokens  = ts
                          , lengths = ls
                          , first   = f'
-                         , body    = b
-                         , last    = l
+                         , body    = b'
+                         , last    = l'
                          }
                        )
              end
-         | RefinedBase ( a, r, ts ) =>
-             let fun updateCompRefinedBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
-                     RefinedBase ( updateComplexities a t d, r, ts )
-                 val maxlen = maxTokenLength ts
-                 val ( typeComp, dataComp ) = refinedComp maxlen r
-             in updateCompRefinedBase ty typeComp dataComp
-             end
+         | rb as RefinedBase ( a, r, ts ) => measureRefined (maxTokenLength ts) rb
          | Switch ( a, id, bs)      =>
              let val switches         = map #1 bs
                  val branches         = map #2 bs
