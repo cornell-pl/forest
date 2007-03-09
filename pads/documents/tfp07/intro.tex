@@ -76,29 +76,28 @@ implementation of future data description languages.
 %   and well-behaved as defined by a canonical forms theorem.
 % \end{itemize}
 
-In this paper, we give a brief overview of the calculus,
-and then discuss its dual semantics and their properties.  A companion technical
-report contains a complete formal
-specification~\cite{fisher+:popl-sub-long}.  In comparison to our
-previous work on the \ddcold{} at POPL 06~\cite{fisher+:next700ddl},
-the calculus we present here has been streamlined in several subtle,
-but useful ways.  It has also been improved through the addition of
-polymorphic types.  We call this new polymorphic variant
-\ddc{}.  These improvements and extensions, together with
-proofs, appear in Mandelbaum's thesis~\cite{mandelbaum:thesis} and in
-a recently submitted journal article~\cite{fisher+:ddcjournal}.
-This abstract reviews the \ddc{} and extends all the previous 
-work with a printing semantics and appropriate theorems.
-To be more specific,
+In this paper, we give an overview of the calculus, its dual semantics
+and their properties.  A companion technical report contains a
+complete formal specification~\cite{fisher+:popl-sub-long}.  In
+comparison to our previous work on the \ddcold{} at POPL
+06~\cite{fisher+:next700ddl}, the calculus we present here has been
+streamlined in several subtle, but useful ways.  It has also been
+improved through the addition of polymorphic types.  We call this new
+polymorphic variant \ddc{}.  These improvements and extensions,
+together with proofs, appear in Mandelbaum's
+thesis~\cite{mandelbaum:thesis} and in a recently submitted journal
+article~\cite{fisher+:ddcjournal}.  This abstract reviews the \ddc{}
+and extends all the previous work with a printing semantics and
+appropriate theorems.  To be more specific,
 sections~\ref{sec:ddc-syntax} through \ref{sec:ddc-sem} present the
 extended \ddc{} calculus, focusing on the semantics of polymorphic
 types for parsing and the key elements of the printing semantics.
-Then, \secref{sec:meta-theory} shows that both parsers and
-printers in the \ddc{} are type correct and furthermore that parsers
-produce pairs of parsed data and parse descriptors in {\em canonical
-  form}, and that printers, given data in canonical form, print
-successfully. We briefly discuss related work in \secref{sec:related}, and
-conclude in \secref{sec:conc}.
+Then, \secref{sec:meta-theory} shows that both parsers and printers in
+the \ddc{} are type correct and furthermore that parsers produce pairs
+of parsed data and parse descriptors in {\em canonical form}, and that
+printers, given data in canonical form, print successfully. We briefly
+discuss related work in \secref{sec:related}, and conclude in
+\secref{sec:conc}.
 
 %%% Local Variables: 
 %%% mode: latex
