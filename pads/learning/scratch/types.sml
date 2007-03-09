@@ -105,6 +105,9 @@ struct
     fun getTypeComp ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
     (* Retrieve computed data complexity from a type *)
     fun getDataComp ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
+    (* Retrieve both complexities from a measured type *)
+    fun getComps ( ty : Ty ) : Complexity * Complexity =
+        (#typeComp (getAuxInfo ty), #dataComp (getAuxInfo ty))
 
     (* Sum the type complexities of a measured type *)
     fun sumTypeComps ( tys : Ty list ) : Complexity =

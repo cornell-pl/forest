@@ -178,18 +178,17 @@ structure Model = struct
                        , ListPair.zip ( switches, measuredBranches )
                        )
              end
-         | RArray ( a, osep, oterm, body, olen, lengths ) =>
-             let val rlen             = getLengthRArray ty
-                 val measuredBody     = measure body
-                 val tbody            = getTypeComp measuredBody
-                 val dbody            = getDataComp measuredBody
+         | RArray ( a, osep, oterm, body, olen, ls ) =>
+             let val maxlen           = maxInt (map #1 ls)
+                 val mBody            = measure body
+                 val (tbody, dbody)   = getComps mBody
                  val ( tlen, dlen )   = refinedOptionComp olen
                  val ( tterm, dterm ) = refinedOptionComp oterm
                  val ( tsep, dsep )   = refinedOptionComp osep
-                 val tcomp            = sumComps [tbody, tlen, tterm, tsep]
-                 val dcomp            = sumComps [dbody, dlen, dterm, dsep]
+                 val tcomp = sumComps [ tbody, tlen, tterm, tsep ]
+                 val dcomp = sumComps [ multComp maxlen dbody, dlen, dterm, dsep]
                  fun updateRArray (t:Complexity) (d:Complexity) =
-                   RArray ( updateComps a t d, osep, oterm, measuredBody, olen, lengths )
+                   RArray ( updateComps a t d, osep, oterm, mBody, olen, ls )
              in updateRArray tcomp dcomp
              end
     )
