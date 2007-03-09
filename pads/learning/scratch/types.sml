@@ -4,7 +4,6 @@ struct
     open Config
     open Utils
     open Complexity
-    open Distribution
     open Tokens
 
     type TokenOrder = Token list

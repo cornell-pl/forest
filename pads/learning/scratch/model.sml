@@ -1,4 +1,5 @@
 (*------------------------------------------------------------------------------
+--
 -- Revision history
 --
 -- version 1: March 1, 2007: first draft
@@ -13,27 +14,13 @@
 
 structure Model = struct
     open Complexity
-    open Distribution
     open Types
-
-    exception GoFigure
-    exception NoDensity
-    exception BadModel
-
-    type TokenDensity = Token Density
-    fun junkTokenDensity ( t : Token ) : TokenDensity =
-       fn ( u : Token ) => if u = t then 1.0 else 0.0
-
-    type TokenListDensity = ( Token list ) Density
-    fun junkTokenListDensity ( tl : Token list ) : TokenListDensity =
-      fn ( ul : Token list ) => if ul = tl then 1.0 else 0.0
 
     (* Get the maximum from a list of integers *)
     fun maxInt ( l : int list ) : int = foldl Int.max 0 l
 
     (* Make a base complexity from a multiplier (often maximum length of token)
-       and a number of choices.
-     *)
+       and a number of choices. *)
     fun mkBaseComp ( mult : int ) ( choices : int ) : Complexity  * Complexity =
         ( unitComplexity, multComp mult ( int2Complexity choices ) )
     (* Same thing with a large integer *)

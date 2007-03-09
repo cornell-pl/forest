@@ -17,7 +17,9 @@ structure Main : sig
 	let val fileName    = !srcFile
 	    val ty          = computeStructure fileName
 	    val rewrittenTy = Rewrite.run(ty)
+            val ()          = print "\n===== Rewritten\n"
             val measuredTy  = measure rewrittenTy
+            val ()          = print "\n===== Measured\n"
 	in
 	    Printing.dumpTyInfo (!outputDir) measuredTy
 	end
@@ -44,16 +46,16 @@ structure Main : sig
     (********************************************************************************)
     structure PCL = ParseCmdLine
 
-    fun setOutputDir  s = outputDir  := (s^"/")
-    fun setDepth      d = depthLimit := d
-    fun setHistPer    h = HIST_PERCENTAGE := h
-    fun setStructPer  s = STRUCT_PERCENTAGE := s
-    fun setJunkPer    j = JUNK_PERCENTAGE := j
-    fun setNoisePer   n = NOISE_PERCENTAGE := n
-    fun setArrayWidth a = ARRAY_WIDTH_THRESHOLD := a
+    fun setOutputDir    s = outputDir  := (s^"/")
+    fun setDepth        d = depthLimit := d
+    fun setHistPer      h = HIST_PERCENTAGE := h
+    fun setStructPer    s = STRUCT_PERCENTAGE := s
+    fun setJunkPer      j = JUNK_PERCENTAGE := j
+    fun setNoisePer     n = NOISE_PERCENTAGE := n
+    fun setArrayWidth   a = ARRAY_WIDTH_THRESHOLD := a
     fun setPrintLineNos b = (if b then printLineNos := b else ())
-    fun setPrintIDs b   = (if b then  printIDs := b else ())
-    fun addSourceFile f = srcFile    := f
+    fun setPrintIDs     b = (if b then  printIDs := b else ())
+    fun addSourceFile   f = srcFile    := f
 
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
