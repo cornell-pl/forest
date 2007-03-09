@@ -108,7 +108,7 @@ structure Tests = struct
                                  }
                            )
     (* Test refined structures *)
-    val ty40 : Ty = RArray (a1, NONE, NONE, ty9, NONE )
+    val ty40 : Ty = RArray (a1, NONE, NONE, ty9, NONE, [ ( 6, 12 ) ] )
 
     (* Carry out the measurements on the Ty structures *)
     val m1  : Ty = measure ty1;
@@ -137,6 +137,6 @@ structure Tests = struct
     val (Parray (a32, s32)) = m32;
 
     val m40 : Ty = measure ty40;
-    val (RArray (a40, osep40, oterm40, body40, olen40)) = m40;
+    val (RArray (a40, osep40, oterm40, body40, olen40, lens)) = m40;
 
 end

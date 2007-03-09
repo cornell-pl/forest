@@ -125,7 +125,7 @@ structure Complexity = struct
          | SOME p => Bits p
     )
 
-    fun sumComplexities ( cs : Complexity list ) : Complexity =
+    fun sumComps ( cs : Complexity list ) : Complexity =
         foldl ( fn (c1,c2) => combine c1 c2 ) zeroComplexity cs
 
     (* Complexity from the number of choices *)
@@ -146,6 +146,14 @@ structure Complexity = struct
                Bits n    => "Bits "    ^ (Int.toString n)
              | Choices l => "Choices " ^ (Int.toString l)
              | Precise p => "Precise " ^ (Real.toString p)
+        )
+
+    (* Show the complexity in bits *)
+    fun showBits ( c : Complexity ) : string =
+        ( case c of
+               Bits n    => (Int.toString n)  ^ "b"
+             | Choices l => (Int.toString l)  ^ "b"
+             | Precise p => (Real.toString p) ^ "b"
         )
 
 end

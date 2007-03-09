@@ -28,7 +28,7 @@ struct
                    }
 
     (* Update the type and data complexity of an AuxInfo *)
-    fun updateComplexities (a : AuxInfo) (t : Complexity) (d : Complexity) : AuxInfo =
+    fun updateComps (a : AuxInfo) (t : Complexity) (d : Complexity) : AuxInfo =
         { coverage = #coverage a
         , label    = #label a
         , typeComp = t
@@ -102,19 +102,17 @@ struct
         )
 
     (* Retrieve computed type complexity from a type *)
-    fun getTypeComplexity ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
+    fun getTypeComp ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
     (* Retrieve computed data complexity from a type *)
-    fun getDataComplexity ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
+    fun getDataComp ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
 
     (* Sum the type complexities of a measured type *)
-    fun sumTypeComplexities ( tys : Ty list ) : Complexity =
-        foldl ( fn (t,c) => combine (getTypeComplexity t) c )
-              zeroComplexity tys
+    fun sumTypeComps ( tys : Ty list ) : Complexity =
+        foldl ( fn (t,c) => combine (getTypeComp t) c ) zeroComplexity tys
 
     (* Sum the data complexities of a measured type *)
-    fun sumDataComplexities ( tys : Ty list ) : Complexity =
-        foldl ( fn (t,c) => combine (getDataComplexity t) c )
-              zeroComplexity tys
+    fun sumDataComps ( tys : Ty list ) : Complexity =
+        foldl ( fn (t,c) => combine (getDataComp t) c ) zeroComplexity tys
                  
     fun mkLabel (prefix:string) (i:int) : Id = Atom.atom("BTy_"^(Int.toString i))
     fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i

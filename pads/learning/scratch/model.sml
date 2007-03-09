@@ -35,7 +35,7 @@ structure Model = struct
              | IntConst n     => ( unitComplexity, int2ComplexityL n )
              | StringConst s  => ( unitComplexity, int2Complexity (size s) )
                (* Need term here for number of choices???? *)
-             | Enum rl        => ( unitComplexity, sumComplexities ( map refinedDataComp rl))
+             | Enum rl        => ( unitComplexity, sumComps ( map refinedDataComp rl))
              | LabelRef i     => ( zeroComplexity, zeroComplexity )
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
@@ -50,7 +50,7 @@ structure Model = struct
     ( case ty of
            RefinedBase ( a, r, ts ) =>
              let val ( tcomp, dcomp ) = refinedComp m r
-             in RefinedBase ( updateComplexities a tcomp dcomp, r, ts )
+             in RefinedBase ( updateComps a tcomp dcomp, r, ts )
              end
          | _ => raise NotRefinedBase
     )
@@ -90,7 +90,7 @@ structure Model = struct
     let val ty      = Base (a, ts)
         val ( tcomp, dcomp ) = baseComp ts
         fun updateCompBase (ty:Ty) (t:Complexity) (d:Complexity) : Ty =
-            Base ( updateComplexities a t d, ts )
+            Base ( updateComps a t d, ts )
     in updateCompBase ty tcomp dcomp
     end
 
@@ -109,16 +109,16 @@ structure Model = struct
            Base ( a, ts )               => mkBaseComplexity a ts
          | TBD ( a, i, cl )             =>
              let val (t, d) = maxContextComplexity cl
-             in TBD ( updateComplexities a t d, i, cl )
+             in TBD ( updateComps a t d, i, cl )
              end
          | Bottom ( a, i, cl )          =>
              let val (t, d) = maxContextComplexity cl
-             in Bottom ( updateComplexities a t d, i, cl )
+             in Bottom ( updateComps a t d, i, cl )
              end
          | Pstruct (a,tys)              =>
              let val measuredtys = map measure tys
-             in Pstruct ( updateComplexities a (sumTypeComplexities measuredtys)
-                                               (sumDataComplexities measuredtys)
+             in Pstruct ( updateComps a (sumTypeComps measuredtys)
+                                        (sumDataComps measuredtys)
                         , measuredtys
                         )
              end
@@ -126,33 +126,35 @@ structure Model = struct
               of the union to do a better job here *)
          | Punion (a,tys)               =>
              let val measuredtys = map measure tys
-             in Punion ( updateComplexities a
-                           ( combine (cardComp tys) (sumTypeComplexities measuredtys) )
-                           ( combine (cardComp tys) (sumDataComplexities measuredtys) )
+             in Punion ( updateComps a
+                           ( combine (cardComp tys) (sumTypeComps measuredtys) )
+                           ( combine (cardComp tys) (sumDataComps measuredtys) )
                        , measuredtys
                        )
              end
            (* Don't really want a complexity for a Parray, want to
               wait until we have a refined array (see below)
             *)
-         | Parray ( a, x as { tokens  = ts
-                            , lengths = ls
-                            , first   = f
-                            , body    = b
-                            , last    = l
-                            }
+         | Parray ( a, { tokens  = ts
+                       , lengths = ls
+                       , first   = f
+                       , body    = b
+                       , last    = l
+                       }
                   )                =>
-             let val f'        = measure f
-                 val b'        = measure b
-                 val l'        = measure l
-                 val maxlen    = maxInt (map #1 ls)
-                 val firstLastType = combine (getTypeComplexity f') (getTypeComplexity l')
-                 val firstLastData = combine (getDataComplexity f') (getDataComplexity l')
-                 val totalType = combine firstLastType
-                                         ( multComp maxlen (getTypeComplexity b') )
-                 val totalData = combine firstLastData
-                                         ( multComp maxlen (getDataComplexity b') )
-             in Parray ( updateComplexities a totalType totalData
+             let val f'     = measure f
+                 val b'     = measure b
+                 val l'     = measure l
+                 val maxlen = maxInt (map #1 ls)
+                 val tcomp  = sumComps [ getTypeComp f'
+                                       , getTypeComp l'
+                                       , getTypeComp b'
+                                       ]
+                 val dcomp  = sumComps [ getDataComp f'
+                                       , getDataComp l'
+                                       , multComp maxlen (getDataComp b')
+                                       ]
+             in Parray ( updateComps a tcomp dcomp
                        , { tokens  = ts
                          , lengths = ls
                          , first   = f'
@@ -166,28 +168,28 @@ structure Model = struct
              let val switches         = map #1 bs
                  val branches         = map #2 bs
                  val switchComps      = map (refinedComp 1) switches
-                 val switchTypeComps  = sumComplexities (map #1 switchComps)
+                 val switchTypeComps  = sumComps (map #1 switchComps)
                  val measuredBranches = map measure branches
-                 val branchesTypeComp = sumTypeComplexities measuredBranches
-                 val branchesDataComp = sumDataComplexities measuredBranches
-             in Switch ( updateComplexities a
+                 val branchesTypeComp = sumTypeComps measuredBranches
+                 val branchesDataComp = sumDataComps measuredBranches
+             in Switch ( updateComps a
                          (combine switchTypeComps branchesTypeComp) branchesDataComp
                        , id
                        , ListPair.zip ( switches, measuredBranches )
                        )
              end
          | RArray ( a, osep, oterm, body, olen, lengths ) =>
-             let val rlen         = getLengthRArray ty
-                 val measuredBody = measure body
-                 val tbody        = getTypeComplexity measuredBody
-                 val dbody        = getDataComplexity measuredBody
-                 fun updateRArray (t:Complexity) (d:Complexity) =
-                   RArray ( updateComplexities a t d, osep, oterm, measuredBody, olen, lengths )
+             let val rlen             = getLengthRArray ty
+                 val measuredBody     = measure body
+                 val tbody            = getTypeComp measuredBody
+                 val dbody            = getDataComp measuredBody
                  val ( tlen, dlen )   = refinedOptionComp olen
                  val ( tterm, dterm ) = refinedOptionComp oterm
                  val ( tsep, dsep )   = refinedOptionComp osep
-                 val tcomp = sumComplexities [tbody, tlen, tterm, tsep]
-                 val dcomp = sumComplexities [dbody, dlen, dterm, dsep]
+                 val tcomp            = sumComps [tbody, tlen, tterm, tsep]
+                 val dcomp            = sumComps [dbody, dlen, dterm, dsep]
+                 fun updateRArray (t:Complexity) (d:Complexity) =
+                   RArray ( updateComps a t d, osep, oterm, measuredBody, olen, lengths )
              in updateRArray tcomp dcomp
              end
     )
@@ -195,7 +197,7 @@ structure Model = struct
     (* Using this function will result in lots of computation on
        the type, which may have already been done
      *)
-    fun typeMeasure ( ty : Ty ) : Complexity = getTypeComplexity ( measure ty )
-    fun dataMeasure ( ty : Ty ) : Complexity = getDataComplexity ( measure ty )
+    fun typeMeasure ( ty : Ty ) : Complexity = getTypeComp ( measure ty )
+    fun dataMeasure ( ty : Ty ) : Complexity = getDataComp ( measure ty )
 
 end
