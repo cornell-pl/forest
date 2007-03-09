@@ -20,7 +20,8 @@ structure Main : sig
             val measuredTy       = measure rewrittenTy
             val ( tcomp, dcomp ) = getComps measuredTy
 	in
-	    ( Printing.dumpTyInfo (!outputDir) measuredTy 
+	    ( Printing.dumpTyInfo (!outputDir) measuredTy
+            , print ( "\nCompleted " ^ !srcFile )
             , print ( "\nOverall type complexity = " ^ showBits tcomp )
             , print ( "\nOverall data complexity = " ^ showBits dcomp ^ "\n\n" )
             )
