@@ -84,7 +84,6 @@ learn:	main.sml
 IND  = data
 OUTD = output
 
-# Silver targets
 %.silver :
 	@make $(*F).ag
 
@@ -95,7 +94,6 @@ OUTD = output
 DATA = 1967Transactions.short  \
        MER_T01_01.csv          \
        ProfSec.log             \
-       SCESETUP.log            \
        access_log              \
        ai-simple               \
        ai.3000                 \
@@ -127,6 +125,7 @@ DATA = 1967Transactions.short  \
        yum.log                 \
        yum.txt
 # The following currently take too long
+#       SCESETUP.log            \
 #       apache.txt              \
 #       asl.log                 \
 #       ijnltif                 \
@@ -139,6 +138,11 @@ silvers: $(SILVERS)
 define learn-it
 ./learn data/$@ -d output/$@ `maxdepth.pl $@`
 touch output/$@
+endef
+
+define silver-it
+@if [ ! -d silver/$@ ] ; then mkdir silver/$@; cvs add silver/$@; fi
+@if [ -e silver/$< ] ; then cp $^ silver/$@ ; else cp $^ silver/$@; cd silver/$@; cvs add $(notdir $^); fi
 endef
 
 .PHONY: $(DATA)
@@ -189,8 +193,24 @@ yum.txt:                 $(IND)/yum.txt                 ; $(learn-it)
 ######################################################################
 
 # Test against a silver version
-%.test:
-	make -C test $(*F)
+define test-it
+make $(*F)
+@if ! cmp --quiet output/yum.txt/Ty silver/yum.txt/Ty ; \
+ then echo $@/Ty has changed since the silver version ; \
+      diff output/yum.txt/Ty silver/yum.txt/Ty        ; \
+      echo; \
+ fi
+@if ! cmp --quiet output/yum.txt/Params silver/yum.txt/Params ;\
+ then echo $@/Params has changed since the silver version     ;\
+      diff output/yum.txt/Params silver/yum.txt/Params        ; \
+ fi
+@if cmp --quiet output/yum.txt/Params silver/yum.txt/Params &&   \
+    cmp --quiet output/yum.txt/Ty silver/yum.txt/Ty             ;\
+ then echo No changes for test case $@ since the silver version ;\
+ fi
+endef
+
+%.test:   ; $(test-it)
 
 ######################################################################
 #
