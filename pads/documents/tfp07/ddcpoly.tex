@@ -2,12 +2,11 @@
 \label{sec:ddc-syntax}
 
 \begin{figure}
-{\small
+{%\small
 \begin{bnf}
   \name{Kinds} \meta{\gk} \::= \kty \| \kty \-> \gk
                                \| \ity \-> \gk  \\
   \name{Types} \meta{\ty} \::= 
-    %\ptrue\| \pfalse \| 
     \pbase{e} \| 
     \plam{\var}{\ity}{\ty} \| \papp{\ty}{e} \| 
     \psig x \ty \ty \| \psum \ty e \ty \nlalt
@@ -16,11 +15,12 @@
     \ptylam{\ptyvar}{\kty}{\ty} \| \ptyapp{\ty}{\ty} \| ...
 \end{bnf}
 }
-\caption{\ddc{} syntax, selected constructs}
+% \caption{\ddc{} syntax, selected constructs}
+\caption{\ddc{} syntax}
 \label{fig:ddc-syntax}
 \end{figure}
 
-\figref{fig:ddc-syntax} summarizes the syntax of \ddc{}.  The syntax
+\figref{fig:ddc-syntax} presents the syntax of \ddc{}.  The syntax
 is parameterized by that of a {\em host language} -- the language in
 which \ddc{} parsers and printers are encoded.  For concreteness, the
 host language of \ddc{} is a straightforward extension of \fomega{}
@@ -193,11 +193,6 @@ become \fomega{} type constructors and type application, respectively.
 \fbox{$\itpdsem[\ty] = \ity$}
 \[ 
 \begin{array}{lcl} 
-%% %% example: \ua.(int * a) + None
-%% %%          pd = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * [a]_pd)) + [None]_pd)
-%% %%             = \ua.pd_hdr  * ((pd_hdr * ([int]_pd * a)) + [None]_pd)
-%\itpdsem[\ptrue] & = & \ipty \iunitty \\                                                  
-%\itpdsem[\pfalse] & = & \ipty \iunitty \\                                                  
 \itpdsem[\pbase{e}] & = & \ipty \iunitty\\
 \itpdsem[\plam \var \ity \ty] & = & \itpdsem[\ty] \\
 \itpdsem[\papp \ty e] & = & \itpdsem[\ty] \\
@@ -312,9 +307,8 @@ where the argument type is the PD body type.
   \label{fig:printer-types}
 \end{figure}
 
-\begin{figure}
-\small
-\begin{minipage}[b]{0.5\linewidth} % A minipage that covers half the page
+\begin{figure}[p]
+\begin{minipage}[t]{0.5\linewidth} % A minipage that covers half the page
 \fbox{$\trans[\ty,\ctxt,\gk] = e$} 
 \[
 \begin{array}{l}
@@ -358,7 +352,7 @@ where the argument type is the PD body type.
   \begin{array}{l}  
   \lampair{} \\
   \quad \ilet {\itup{\off',r,p}}{\trans[\ty,,] \sapp \spair<\idata,\off>} \\
-  \quad \iif {\pdok p} \; \ithen {
+  \quad \iif {\pdok p} \; \ithen{} \\ \qquad {
     \def \r {\newrep {+left}{r}}
     \def \p {\newpd {+left}{p}}
     \spair<\off',\r,\p>} \\
@@ -390,14 +384,23 @@ where the argument type is the PD body type.
 %% Mu
 \trans[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {\parsename_\ptyvar} {\itup{\data{:}\ibitsty,\off{:}\ioffty}  
-           : \ioffty * \itsem[\pmu \ptyvar \gk \ty] 
-                    * \itpdsem[\pmu \ptyvar \gk \ty] } {}\\
-  \quad \ilet {\itup{\off',r,p}} 
-   {\trans[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
-          [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \iappi \ictup{\data,\off}} \\ 
-  \qquad \ictup{\off',\iroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
-     (p.h,\iroll{p}{\itpdsemstrip[\pmu \ptyvar\gk \ty]})}
+%   \ifun {\parsename_\ptyvar} {\itup{\data{:}\ibitsty,\off{:}\ioffty}  
+%            : \ioffty * \itsem[\pmu \ptyvar \gk \ty] 
+%                     * \itpdsem[\pmu \ptyvar \gk \ty] } {}\\
+%   \quad \ilet {\itup{\off',r,p}} 
+%    {\trans[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
+%           [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \iappi \ictup{\data,\off}} \\ 
+%   \qquad \ictup{\off',\iroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
+%      (p.h,\iroll{p}{\itpdsemstrip[\pmu \ptyvar\gk \ty]})}
+\codefont{fun} \; \codefont{{\parsename_\ptyvar} \;
+  {\itup{\data,\off}}} : \ioffty * \ity_1 * \ity_2 \ceq \\                     
+  \quad \codefont{let \; {\itup{\off',r,p}}} \ceq \\ \qquad
+   {\trans[\ty,,][\ity_1/\ptyvar_\repname] [ \ity_3 / \ptyvar_\pdbname]\iappi \ictup{\data,\off}} \\ 
+  \quad \iin{} \\
+  \qquad \ictup{\off',\iroll{r}{\ity_1},
+     (p.h,\iroll{p}{\ity_3})} \\
+\mbox{\it where} \; \ity_1 = \itsem[\pmu \ptyvar \gk \ty]\;, \ity_2 =
+\itpdsem[\pmu \ptyvar \gk \ty],\\  \mbox{\it and} \; \ity_3 = \itpdsemstrip[\pmu \ptyvar \gk \ty]
 %
   \end{array}  
 \\[3pt]
@@ -420,9 +423,8 @@ where the argument type is the PD body type.
 \label{fig:ddc-sem-sum}
 \end{minipage}
 \hspace{0.5cm} % To get a little bit of space between the figures
-\begin{minipage}[b]{0.5\linewidth}
+\begin{minipage}[t]{0.5\linewidth}
 \fbox{$\transpp[\ty,\ctxt,\gk] = e$} 
-
 \[
 \begin{array}{l}
 %% Const 
@@ -469,6 +471,7 @@ where the argument type is the PD body type.
   \end{array}
 \\
 %\quad
+\\
 %% Set 
   \transpp[\pset{x}{\ty}{e},\ctxt,\kty] = \\
   \begin{array}{l}  
@@ -481,21 +484,24 @@ where the argument type is the PD body type.
   \end{array}
 \\[3pt]
 %% Var
+\\
 \transpp[\ptyvar,,] = \codefont{\printname_\ptyvar}
 \\[3pt]
 \eacut{
 %% Mu
 \transpp[\pmu \ptyvar \gk \ty,,] = \\
   \begin{array}{l}
-  \ifun {\printname_\ptyvar} {\itup{r:\itsem[\pmu \ptyvar \gk \ty], pd:\itpdsem[\pmu \ptyvar \kty \ty]}
+  \ifun {\printname_\ptyvar} {\itup{r:\ity_1, pd:\ity_2}
                      : \ibitsty} {}\\
-  \quad \transpp[\ty,,][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]
-          [\itpdsemstrip[\pmu \ptyvar \gk \ty]/\ptyvar_\pdbname] \\
-  \qquad\ictup{\iunroll{r}{\itsem[\pmu \ptyvar \gk \ty]},
-     \iunroll{\ipid{2}{pd}}{\itpdsemstrip[\pmu \ptyvar \kty \ty]}}
+  \quad \transpp[\ty,,][\ity_1/\ptyvar_\repname] [\ity_3/\ptyvar_\pdbname] \\
+  \qquad\ictup{\iunroll{r}{\ity_1}, \iunroll{\ipid{2}{pd}}{\ity_3}}
+\\
+\mbox{\it where} \; \ity_1 = \itsem[\pmu \ptyvar \gk \ty]\;, \ity_2 =
+\itpdsem[\pmu \ptyvar \gk \ty],\\  \mbox{\it and} \; \ity_3 = \itpdsemstrip[\pmu \ptyvar \gk \ty]
   \end{array}  
 \\[3pt]
 }
+\\ \\
 %% lambda \alpha
 \transpp[\lambda\tyvar . \ty,,] = %\\
 %  \begin{array}{l}
@@ -648,87 +654,101 @@ unfold to deconstruct a recursive data structure for printing.
 
 \section{Metatheory}
 \label{sec:meta-theory}
-To validate our semantic definitions,
-we have proven two key metatheoretic results, one concerning {\em type 
-correctness} and the other concerning {\em canonical forms}.  
-%First, we show that
-%parsers and printers are {\em type-correct}, always returning representations
-%and parse descriptors of the appropriate type.  Second, we give a precise
-%characterization of the results of parsers
-%(and input requirements of printers) by defining the {\em canonical forms}
-%of representation-parse descriptor pairs associated with a
-%dependent \ddc{} type.
-
-% Our key theoretical result is that the various semantic functions we
-% have defined are coherent.  In particular, we show that for any 
-% well-kinded \ddc{} type $\tau$, the corresponding parser is
-% well typed, returning a pair of the corresponding representation and
-% parse descriptor.  
+To validate our semantic definitions, we have proven two key
+metatheoretic results.  First, we show that parsers and printers are
+{\em type-correct}, always returning representations and parse
+descriptors of the appropriate type.  Second, we give a precise
+characterization of the results of parsers and input requirements of
+printers, by defining the {\em canonical forms} of
+representation-parse descriptor pairs associated with a dependent
+\ddc{} type.
 
 \subsection{Type Correctness.}
-Demonstrating that generated parsers and printers are well formed
-and have the expected types is nontrivial primarily because
-the generated code expects parse descriptors to have a particular shape,
-and it is not completely obvious they do in the presence of polymorphism.
-We discuss these and other issues in more detail in the companion 
-technical report~\cite{fisher+:popl-sub-long}; below we present the 
-final theorem on type correctness.
+Demonstrating that generated parsers and printers are well formed and
+have the expected types is nontrivial primarily because the generated
+code expects parse descriptors to have a particular shape, and it is
+not completely obvious they do in the presence of polymorphism.
+Hence, to prove type correctness, we first need to characterize the
+shape of parse descriptors for arbitrary \ddc{} types.
 
-% Hence, to prove type correctness, we first need to characterize the shape 
-% of
-% parse descriptors for arbitrary \ddc{} types.   
-% \eareplace{
+Unfortunately, the most straightforward characterization is
+too weak to prove directly, and hence Definition~\ref{def:pd-props}
+specifies a much stronger property as a logical relation.
+Lemma~\ref{lemma:pd-log-rel} establishes that the logical relation
+holds of all well-formed \ddc{} types by induction on kinding
+derivations, and the desired characterization follows as a corollary.
 
-% We}{
-% In addition, we need to
-% }
-% prove the theorem using a general induction
-% hypothesis that applies to open types.
-% %This hypothesis must account for the fact
-% %that any free type variables in a \ddc{} 
-% %type $\ty$ will become free
-% %function variables in $\trans[\ty,,]$. 
-% \eareplace{
-% To that end, 
-% we define the functions $\ptyc \pctxt$ and $\pptyc \pctxt$ 
-% which map type-variable contexts $\pctxt$ in the \ddc{}
-% to value-variable contexts $\ctxt$ in \fomega.  In addition, the function
-% $\fotyc{\pctxt}$ generates the appropriate \fomega\ type-variable context from
-% the \ddc{} context $\pctxt$.
-% \vskip -1.5ex
-% {\small
-% \[
-% \begin{array}{ll}
-%   \fotyc \cdot = \cdot \qquad &
-%   \fotyc {\pctxt,\alpha{:}\kty} = 
-%     \fotyc {\pctxt},\tyvar_\repname{:}\kty,\tyvar_\pdbname{:}\kty \\
-%   \ptyc{\cdot} = \cdot \qquad &
-%   \ptyc{\pctxt,\ptyvar{:}\kty} = \ptyc \pctxt,\codefont{\parsename_\ptyvar}{:}\kTrans[\kty,\ptyvar] \\
-%   \pptyc{\cdot} = \cdot \qquad &
-%   \pptyc{\pctxt,\ptyvar{:}\kty} = \pptyc \pctxt,\codefont{\printname_\ptyvar}{:}\kTransPP[\kty,\ptyvar]
-% \end{array}
-% \]
-% }
+\begin{definition}
+\label{def:pd-props}
+\begin{itemize}
+\item $\hhpred \ty \kty$ iff $\ \exists\,\ity$ s.t. $\itpdsem[\ty] \equiv
+  {\ipty \ity}$.
+\item $\hhpred \ty {\kty \iarrowi \kind}$ iff $\ \exists\,\ity$
+  s.t. $\itpdsem[\ty] \equiv \ity$ and whenever $\hhpred
+  {\ty'}{\kty}$, we have $\hhpred {\papp \ty {\ty'}}{\kind}$.
+\item $\hhpred \ty {\ity \iarrowi \kind}$ iff $\ \exists\,\ity'$
+  s.t. $\itpdsem[\ty] \equiv \ity'$ and $\hhpred{\papp \ty e}{\kind}$
+  for any expression $e$.
+\end{itemize}
+\end{definition}
+\begin{lemma}
+\label{lemma:pd-log-rel}
+If $\ddck[\ty,{\pctxt;\ctxt},\kind,{}]$ then $\hhpred \ty \kind$.
+\end{lemma}
 
-% \begin{lemma}[Type Correctness Lemma]
-% \label{thm:type-correctness}
-% \begin{itemize}
-% \item If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
-%   $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
-%             {\kTrans[\kind,\ty]}]$
-% \item If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
-%   $\stsem[{\transpp[\ty,,]},{\fotyc \pctxt, \ctxt,\pptyc \pctxt},
-%             {\kTransPP[\kind,\ty]}]$.
-% \end{itemize}  
-% \end{lemma}
+\begin{lemma}
+\label{lemma:pd-props}
+  \begin{itemize}
+  \item If $\ddck[\ty,\pctxt;\ctxt,\kind,{}]$ then $\exists
+     \ity.\itpdsem[\ty] = \ity$.
+   \item If $\ddck[\ty,\pctxt;\ctxt,\kty,{}]$ then $\exists
+     \ity.\itpdsem[\ty] \equiv \ipty \ity$.
+  \end{itemize}
+\end{lemma}
 
-% \begin{proof}
-%   By induction on the height of the kinding derivation.
-% \end{proof}
-% }{
-%   We discuss these and other issues in more detail in the companion technical report~\cite{fisher+:popl-sub-long}.  
-%   Below we present just the final theorem on type correctness.
-% }
+With this lemma, we can establish the type correctness of the
+generated parsers and printers. We prove the theorem using a general induction
+hypothesis that applies to open types.
+This hypothesis must account for the fact
+that any free type variables in a \ddc{} 
+type $\ty$ will become free
+function variables in $\trans[\ty,,]$. 
+To that end, 
+we define the functions $\ptyc \pctxt$ and $\pptyc \pctxt$ 
+which map type-variable contexts $\pctxt$ in the \ddc{}
+to value-variable contexts $\ctxt$ in \fomega.  In addition, the function
+$\fotyc{\pctxt}$ generates the appropriate \fomega\ type-variable context from
+the \ddc{} context $\pctxt$.
+\vskip -1.5ex
+{%\small
+\[
+\begin{array}{ll}
+  \fotyc \cdot = \cdot \qquad &
+  \fotyc {\pctxt,\alpha{:}\kty} = 
+    \fotyc {\pctxt},\tyvar_\repname{:}\kty,\tyvar_\pdbname{:}\kty \\
+  \ptyc{\cdot} = \cdot \qquad &
+  \ptyc{\pctxt,\ptyvar{:}\kty} = \ptyc \pctxt,\codefont{\parsename_\ptyvar}{:}\kTrans[\kty,\ptyvar] \\
+  \pptyc{\cdot} = \cdot \qquad &
+  \pptyc{\pctxt,\ptyvar{:}\kty} = \pptyc \pctxt,\codefont{\printname_\ptyvar}{:}\kTransPP[\kty,\ptyvar]
+\end{array}
+\]
+}
+
+\begin{lemma}[Type Correctness Lemma]
+\label{thm:type-correctness}
+\begin{itemize}
+\item If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
+  $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
+            {\kTrans[\kind,\ty]}]$
+\item If $\ddck[\ty,{\pctxt;\ctxt},\gk,{}]$ then
+  $\stsem[{\transpp[\ty,,]},{\fotyc \pctxt, \ctxt,\pptyc \pctxt},
+            {\kTransPP[\kind,\ty]}]$.
+\end{itemize}  
+\end{lemma}
+
+\begin{proof}
+  By induction on the height of the kinding derivation.
+\end{proof}
 
 \begin{theorem}[Type Correctness of Closed Types]
   \begin{itemize}
@@ -761,22 +781,6 @@ of data structures is in {\em canonical form}.
 While generated parsers produce canonical outputs, generated printers
 expect canonical inputs.  
 
-% In addition to proving our semantic functions coherent, we identify
-% the canonical forms of representation parse-descriptor pairs
-% produced by parsers and consumed by printers. Our canonical forms
-% lemma goes beyond standard canonical forms lemmas by specifying
-% essential correlation between the representation and parse
-% descriptor. For example, in the canonical pair for sum types, the rep
-% and PD are both injected in the same branch of the sum. Moreover, we
-% specify correlations between the number of errors reported by the
-% parse descriptor and the number of errors contained in the representation.
-
-% \edcom{Should we specify the delta from last POPL paper?}  
-
-% \edcom{Perhaps it would be good to put norm. rules back, as they
-%   abstract over parsing and printing? Currently, defined in terms of
-%   parser image.}
-
 For each \ddc{} type, its canonical forms are defined via
 two (mutually recursive) relations.  The first
 relation, $\corr \tyval r p$,
@@ -790,32 +794,12 @@ Another relation, $\corrkl \ty r p$ (formal definition
 omitted)
 normalizes $\ty$, thereby eliminating outermost type and value
 applications.  
-%The result is a normal type $\tyval$ and the
-%requirements on $\tyval$ are subsequently given by $\corr {\tyval} r
-%p$.  
 For brevity, we write $p.h.{nerr}$ as
 $p.{nerr}$ and use $\mathtt{pos}$ to denote the function that returns
 zero when passed zero and one when passed another natural number.  
-%The
-%following definition gives the notion of \fomega\ expression
-%equivalence we use.
-
-% However, as \ddc{} lacks evaluation rules, we derive the weak-head
-% normal form of a type by deriving the weak-head normal form of the
-% corresponding parser. As a technical detail, we note that this normal
-% form will not necessarily be a parser for a weak-head normal \ddc{}
-% type, but might only be equivalent to one. Therefore, we begin our
-% definitions with expression equivalence.
-
-% \begin{definition}[\fomega\ Expression Equivalence]
-%   $\iexp \iexpreq \iexp'$ iff $\iexp$ is syntactically equal to $\iexp'$ 
-% modulo alpha-conversion of bound variables and equivalence of
-% typing annotations.
-% \label{def:op-eq}
-% \end{definition}
 
 \begin{figure}
-\small
+%\small
 %\begin{minipage}[b]{0.5\linewidth} % A minipage that covers half the page
 \begin{bnf}
 %   \name{Kinds} \meta{\gk} \::= \kty \| \ity \-> \gk 

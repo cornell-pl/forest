@@ -27,21 +27,6 @@ transforms are inverses of one another, something we have not yet proven
 for \ddc{}.  On the other hand, neither \demeter{} nor \xsugar{} supports
 dependent types or polymorphism.
 
-There is also a clear relation between our work and the parser/printer
-combinator libraries developed for many functional programming languages.
-One difference between the \ddc{} and, for instance, Haskell
-combinator libraries~\cite{hutton+:parser-combinators,wadler99prettier}, is that a single \ddc{} description specifies
-multiple programs ({\em i.e.,} a parser and a printer) whereas
-a program built from Haskell combinators will generally only specify 
-one thing -- either a parser or a printer.  
-
-The \ddc{} and its semantics are also closely tied to 
-{\em type-directed} programming techniques
-(See, for example, Hinze's work~\cite{hinze:generic}).
-Indeed, the \ddc{} parsers and printers really are just
-specially crafted (dependently) type-directed programs.
-
-
 % {\em Parsing Expression Grammars} (PEGs), studied in the early
 % 70s~\cite{birman+:parsing} and revitalized more recently by
 % Ford~\cite{ford:pegs}, evolved from context-free grammars but have
@@ -51,6 +36,14 @@ specially crafted (dependently) type-directed programs.
 % ``packrat parsing'' techniques~\cite{ford:packrat,grimm:packrat}.
 % Once again, our multiple interpretations of types in \ddc{} makes our
 % theory substantially different from the theory of PEGs.
+
+There is also a clear relation between our work and the parser/printer
+combinator libraries developed for many functional programming languages.
+One difference between the \ddc{} and, for instance, Haskell
+combinator libraries~\cite{hutton+:parser-combinators,wadler99prettier}, is that a single \ddc{} description specifies
+multiple programs ({\em i.e.,} a parser and a printer) whereas
+a program built from Haskell combinators will generally only specify 
+one thing -- either a parser or a printer.  
 
 % There are many parallels between \ddc{} and {\it parser
 %   combinators}~\cite{burge:parser-combinators,hutton+:parser-combinators}.
@@ -68,3 +61,25 @@ specially crafted (dependently) type-directed programs.
 % purpose language and parser combinators themselves. That is, while
 % parser combinators form an (embedded) domain-specific language, \ddc{}
 % constructs form a language that is even more domain-specific.
+
+The \ddc{} and its semantics are also closely tied to 
+{\em type-directed} programming techniques
+(See, for example, Hinze's work~\cite{hinze:generic}).
+Indeed, the \ddc{} parsers and printers really are just
+specially crafted (dependently) type-directed programs.
+
+
+% Perhaps one of the most closely related works on generic programming
+% is that of van Weelden \textit{et al}~\cite{weelden+:polytypic-ast},
+% as it relates to the generated parser and printers, rather than only
+% to the generic tool support. The authors investigate the use of
+% polytypic programming to produce a parser for a language based only on
+% the specification of its AST type(s). In this way, the AST types
+% themselves serve as the grammar for the language. They also
+% investigate applying this approach to other compiler-related analyses,
+% like scope checking and type inference.  However, while their
+% ``types-as-grammar'' approach is clearly related to \padsml{}, they
+% are using standard functional-programming types, and they
+% are targeting the domain of programming languages. Dependent types
+% like those of \padsml{} and support for ad hoc data processing are
+% beyond the scope of their work.
