@@ -1,5 +1,5 @@
-Source file to process: data/crashreporter.log
-Output directory: output/crashreporter.log/
+Source file to process: data/access_log
+Output directory: output/access_log/
 Max depth to explore: 50
 Print line numbers in output contexts: false
 Print ids and output type tokens: true
@@ -9,4 +9,4 @@ Noise level threshold (percentage): 0.0
 Minimum width threshold for array: 2
 Junk threshold (percentage): 0.1
 Complexity of derived type:
-	numAlt = 7  numTBD = 0  numBtm = 0
+	numAlt = 6  numTBD = 0  numBtm = 0

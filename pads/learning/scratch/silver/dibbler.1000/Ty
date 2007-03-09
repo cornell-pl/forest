@@ -1,27 +1,33 @@
-Pstruct(Id = BTy_46 999)
-	[0...9152272](Id = BTy_1 999);
-	"|"(Id = BTy_2 999);
-	RArray(Id = BTy_0 999)
+Pstruct(Id = BTy_25 999, 15.5849625007b, 10461.1401149b)
+	[int](Id = BTy_1 999, 1b, 23.2534966642b);
+	(|)(Id = BTy_2 999, 1b, 8b);
+	RArray(Id = BTy_0 999, 11.5849625007b, 10388.6673373b)
 		Separator: "|"
 		Terminator: "/|[0-9]*/"
-		Punion(Id = BTy_11 18998)
-			Pstruct(Id = BTy_10 11714)
-				Punion(Id = BTy_5 11714)
-					""(Id = BTy_4 11713);
-					"MELISSA "(Id = BTy_6 1);
+		Punion(Id = BTy_11 18998, 9.58496250072b, 164.80424345b)
+			Pstruct(Id = BTy_10 11714, 4b, 77.2192809489b)
+				Punion(Id = BTy_5 11714, 3b, 44b)
+					[empty](Id = BTy_4 11713, 0b, 0b);
+					Pstruct(Id = BTy_8 1, 2b, 43b)
+						[string](Id = BTy_6 1, 1b, 42b);
+						[white space](Id = BTy_7 1, 1b, 1b);
+					End Pstruct;
 				End Punion;
-				[9150767...9152272](Id = BTy_9 11714);
+				[int](Id = BTy_9 11714, 1b, 33.2192809489b);
 			End Pstruct;
-			Pstruct(Id = BTy_18 6286)
-				[string](Id = BTy_12 6286);
-				Punion(Id = BTy_14 6286)
-					""(Id = BTy_13 6285);
-					" c"(Id = BTy_15 1);
+			Pstruct(Id = BTy_18 6286, 4b, 86b)
+				[string](Id = BTy_12 6286, 1b, 78b);
+				Punion(Id = BTy_14 6286, 3b, 8b)
+					[empty](Id = BTy_13 6285, 0b, 0b);
+					Pstruct(Id = BTy_17 1, 2b, 7b)
+						[white space](Id = BTy_15 1, 1b, 1b);
+						[string](Id = BTy_16 1, 1b, 6b);
+					End Pstruct;
 				End Punion;
 			End Pstruct;
-			""(Id = BTy_20 998);
+			[empty](Id = BTy_20 998, 0b, 0b);
 		End Punion;
 	End RArray;
-	"|"(Id = BTy_21 18998);
-	[995428801...1054663253](Id = BTy_23 999);
+	(|)(Id = BTy_21 18998, 1b, 8b);
+	[int](Id = BTy_23 999, 1b, 33.2192809489b);
 End Pstruct

@@ -153,7 +153,7 @@ structure Complexity = struct
         ( case c of
                Bits n    => (Int.toString n)  ^ "b"
              | Choices l => (Int.toString l)  ^ "b"
-             | Precise p => (Real.toString p) ^ "b"
+             | Precise p => (Real.fmt (StringCvt.FIX (SOME 3)) p) ^ "b"
         )
 
 end

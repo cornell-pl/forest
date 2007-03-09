@@ -107,7 +107,7 @@ struct
     fun getDataComp ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
     (* Retrieve both complexities from a measured type *)
     fun getComps ( ty : Ty ) : Complexity * Complexity =
-        (#typeComp (getAuxInfo ty), #dataComp (getAuxInfo ty))
+        (getTypeComp ty, getDataComp ty)
 
     (* Sum the type complexities of a measured type *)
     fun sumTypeComps ( tys : Ty list ) : Complexity =
@@ -257,8 +257,8 @@ struct
         val tcomp = #typeComp aux
         val dcomp = #dataComp aux
         val stats = ( "(" ^  (covToString aux) ^
-                      ", " ^ (showComp tcomp)  ^
-                      ", " ^ (showComp dcomp)  ^ ")"
+                      ", " ^ (showBits tcomp)  ^
+                      ", " ^ (showBits dcomp)  ^ ")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
     in ( prefix ^

@@ -1,67 +1,61 @@
-Pstruct(Id = BTy_54 41)
-	"Oct "(Id = BTy_0 41);
-	[26](Id = BTy_2 41);
-	" "(Id = BTy_3 41);
-	[Time](Id = BTy_4 41);
-	" "(Id = BTy_5 41);
-	{"Installed", "Updated", }(Id = BTy_6 41);
-	": "(Id = BTy_7 41);
-	[string](Id = BTy_9 41);
-	"."(Id = BTy_10 41);
-	[string](Id = BTy_11 41);
-	" "(Id = BTy_13 41);
-	Switch(BTy_9)(Id = BTy_16 41):
-	case "*":
-		""(Id = BTy_15 36);
-	case {"ImageMagick", "firefox", "thunderbird", }:
-		{"1.5.0.7", "6.0.7.1", }(Id = BTy_17 3);
-	case {"kdelibs", "kdelibs-devel", }:
-		"6:3."(Id = BTy_19 2);
-	End Switch;
-	[~16...2006](Id = BTy_22 41);
-	RArray(Id = BTy_14 41)
-		Pstruct(Id = BTy_41 168)
-			Punion(Id = BTy_39 168)
-				Parray(Id = BTy_24 4)((.) )
-				First:
-					Pstruct(Id = BTy_27 4)
-						{"a-43", "p1-8", }(Id = BTy_25 4);
-						"."(Id = BTy_26 4);
+Pstruct(Id = BTy_54 41, 32.1699250014b, 2097.75793918b)
+	[string](Id = BTy_0 41, 1b, 18b);
+	[white space](Id = BTy_1 41, 1b, 1b);
+	[int](Id = BTy_2 41, 1b, 6.64385618977b);
+	[white space](Id = BTy_3 41, 1b, 1b);
+	[Time](Id = BTy_4 41, 1b, 131.189949536b);
+	[white space](Id = BTy_5 41, 1b, 1b);
+	[string](Id = BTy_6 41, 1b, 54b);
+	(:)(Id = BTy_7 41, 1b, 8b);
+	[white space](Id = BTy_8 41, 1b, 1b);
+	[string](Id = BTy_9 41, 1b, 180b);
+	(.)(Id = BTy_10 41, 1b, 8b);
+	[string](Id = BTy_11 41, 1b, 36b);
+	[white space](Id = BTy_13 41, 1b, 1b);
+	Punion(Id = BTy_16 41, 4.58496250072b, 114.781193577b)
+		[empty](Id = BTy_15 36, 0b, 0b);
+		[IP](Id = BTy_17 3, 1b, 56b);
+		Pstruct(Id = BTy_21 2, 2b, 57.1962310758b)
+			[Time](Id = BTy_19 2, 1b, 49.1962310758b);
+			(.)(Id = BTy_20 2, 1b, 8b);
+		End Pstruct;
+	End Punion;
+	[int](Id = BTy_22 41, 1b, 13.2877123795b);
+	RArray(Id = BTy_14 41, 7.58496250072b, 1368.8552275b)
+		Pstruct(Id = BTy_41 168, 7.58496250072b, 195.550746785b)
+			Punion(Id = BTy_39 168, 6.58496250072b, 185.584962501b)
+				RArray(Id = BTy_24 4, 2b, 76b)
+					Pstruct(Id = BTy_27 6, 2b, 38b)
+						[string](Id = BTy_25 6, 1b, 30b);
+						(.)(Id = BTy_26 6, 1b, 8b);
 					End Pstruct;
-				Body:
-					"RHEL4."(Id = BTy_28 2);
-				Tail:
-					""(Id = BTy_31 4);
-				End Parray;
-				Pstruct(Id = BTy_99 132)
-					"."(Id = BTy_33 132);
-					RArray(Id = BTy_32 132)
-						Pstruct(Id = BTy_36 16)
-							{"EL", "EL4", "centos4", }(Id = BTy_34 16);
-							"."(Id = BTy_35 16);
+				End RArray;
+				Pstruct(Id = BTy_55 132, 3b, 108b)
+					(.)(Id = BTy_33 132, 1b, 8b);
+					RArray(Id = BTy_32 132, 2b, 100b)
+						Pstruct(Id = BTy_36 16, 2b, 50b)
+							[string](Id = BTy_34 16, 1b, 42b);
+							(.)(Id = BTy_35 16, 1b, 8b);
 						End Pstruct;
 					End RArray;
 				End Pstruct;
-				""(Id = BTy_38 32);
+				[empty](Id = BTy_38 32, 0b, 0b);
 			End Punion;
-			[0...146](Id = BTy_40 168);
+			[int](Id = BTy_40 168, 1b, 9.96578428466b);
 		End Pstruct;
 	End RArray;
-	Punion(Id = BTy_43 41)
-		""(Id = BTy_42 23);
-		Parray(Id = BTy_44 18)((.) )
-		First:
-			Pstruct(Id = BTy_49 18)
-				Punion(Id = BTy_46 18)
-					""(Id = BTy_45 17);
-					"m-2"(Id = BTy_47 1);
-				End Punion;
-				"."(Id = BTy_48 18);
-			End Pstruct;
-		Body:
-			"el4."(Id = BTy_50 6);
-		Tail:
-			[string](Id = BTy_53 18);
-		End Parray;
+	Punion(Id = BTy_43 41, 6b, 154b)
+		[empty](Id = BTy_42 23, 0b, 0b);
+		Pstruct(Id = BTy_56 18, 5b, 153b)
+			Punion(Id = BTy_46 18, 2b, 19b)
+				[empty](Id = BTy_45 17, 0b, 0b);
+				[string](Id = BTy_47 1, 1b, 18b);
+			End Punion;
+			(.)(Id = BTy_48 18, 1b, 8b);
+			RArray(Id = BTy_44 18, 2b, 126b)
+				Separator: "."
+				[string](Id = BTy_50 24, 1b, 42b);
+			End RArray;
+		End Pstruct;
 	End Punion;
 End Pstruct

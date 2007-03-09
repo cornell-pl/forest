@@ -1,4 +1,4 @@
-RArray(Id = BTy_0 6)
+RArray(Id = BTy_0 6, 2b, 480b)
 	Separator: "|"
-	[string](Id = BTy_4 23);
+	[string](Id = BTy_4 23, 1b, 60b);
 End RArray

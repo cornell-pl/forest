@@ -14,14 +14,16 @@ structure Main : sig
     open Model
 
     fun doIt () = 
-	let val fileName    = !srcFile
-	    val ty          = computeStructure fileName
-	    val rewrittenTy = Rewrite.run(ty)
-            val ()          = print "\n===== Rewritten\n"
-            val measuredTy  = measure rewrittenTy
-            val ()          = print "\n===== Measured\n"
+	let val fileName         = !srcFile
+	    val ty               = computeStructure fileName
+	    val rewrittenTy      = Rewrite.run(ty)
+            val measuredTy       = measure rewrittenTy
+            val ( tcomp, dcomp ) = getComps measuredTy
 	in
-	    Printing.dumpTyInfo (!outputDir) measuredTy
+	    ( Printing.dumpTyInfo (!outputDir) measuredTy 
+            , print ( "\nOverall type complexity = " ^ showBits tcomp )
+            , print ( "\nOverall data complexity = " ^ showBits dcomp ^ "\n\n" )
+            )
 	end
 
   (*** Another doIt function that invokes the inferencing ***)

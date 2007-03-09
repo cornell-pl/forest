@@ -1,5 +1,5 @@
-Source file to process: data/crashreporter.log
-Output directory: output/crashreporter.log/
+Source file to process: data/ai-simple
+Output directory: output/ai-simple/
 Max depth to explore: 50
 Print line numbers in output contexts: false
 Print ids and output type tokens: true

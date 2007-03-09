@@ -1,5 +1,7 @@
-Pstruct(Id = BTy_5 36)
-	"	Configure "(Id = BTy_0 36);
-	[string](Id = BTy_3 36);
-	"."(Id = BTy_4 36);
+Pstruct(Id = BTy_5 36, 5b, 166b)
+	[white space](Id = BTy_0 36, 1b, 1b);
+	[string](Id = BTy_1 36, 1b, 54b);
+	[white space](Id = BTy_2 36, 1b, 1b);
+	[string](Id = BTy_3 36, 1b, 102b);
+	(.)(Id = BTy_4 36, 1b, 8b);
 End Pstruct
