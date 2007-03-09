@@ -167,13 +167,15 @@ structure Model = struct
          | Switch ( a, id, bs)      =>
              let val switches         = map #1 bs
                  val branches         = map #2 bs
-                 val switchComps      = map (refinedComp 1) switches
-                 val switchTypeComps  = sumComps (map #1 switchComps)
+                 val switchesComps    = map (refinedComp 1) switches
+                 val switchesTypeComp = sumComps (map #1 switchesComps)
+                 val switchesDataComp = sumComps (map #2 switchesComps)
                  val measuredBranches = map measure branches
                  val branchesTypeComp = sumTypeComps measuredBranches
                  val branchesDataComp = sumDataComps measuredBranches
              in Switch ( updateComps a
-                         (combine switchTypeComps branchesTypeComp) branchesDataComp
+                          (combine switchesTypeComp branchesTypeComp)
+                          (combine switchesDataComp branchesDataComp)
                        , id
                        , ListPair.zip ( switches, measuredBranches )
                        )

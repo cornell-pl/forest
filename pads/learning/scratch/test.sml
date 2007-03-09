@@ -108,7 +108,17 @@ structure Tests = struct
                                  }
                            )
     (* Test refined structures *)
-    val ty40 : Ty = RArray (a1, NONE, NONE, ty9, NONE, [ ( 6, 12 ) ] )
+    val ty40 : Ty = Switch ( a1
+                           , Atom.atom "Switch"
+                           , [ ( rintc1, ty32 ), ( rstr1, ty23 ) ]
+                           )
+    val ty41 : Ty = RArray ( a1
+                           , NONE
+                           , NONE
+                           , ty9
+                           , NONE
+                           , [ ( 6, 12 ) ]
+                           )
 
     (* Carry out the measurements on the Ty structures *)
     val m1  : Ty = measure ty1;
@@ -137,6 +147,7 @@ structure Tests = struct
     val (Parray (a32, s32)) = m32;
 
     val m40 : Ty = measure ty40;
-    val (RArray (a40, osep40, oterm40, body40, olen40, lens)) = m40;
+    val m41 : Ty = measure ty41;
+    val (RArray (a40, osep40, oterm40, body40, olen40, lens)) = m41;
 
 end
