@@ -109,8 +109,12 @@ structure Table = struct
 			in List.foldr appendtab (nil, nil) 
 				([lencol] @ [firsttab] @ [bodytab] @ [lasttab])
 			end
-		| RArray (a, _, _, body, _) => genTable totalrecords body 
-			(* the lens of the arrays should be stored somewhere *)
+		| RArray (a, _, _, body, _, lens) => 
+			let 
+				val lencol = ([some(#label a)], [genintcolumn(lens, totalrecords)])
+			in
+				appendtab(lencol, genTable totalrecords body)
+			end 
 		| _ => (nil, nil):infertable
 
 end

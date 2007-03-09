@@ -49,7 +49,7 @@ struct
         |  Parray (a,{first=ty1,body=ty2,last=ty3,...}) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) [ty1,ty2,ty3]))
         |  RefinedBase (a,r,tl) => mkComplexity(0,0,0)
         |  Switch(a,id,branches) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) ((#2 o ListPair.unzip) branches)))
-        |  RArray (a,sep,term,body,len) => complexity body (* fix this!*)
+        |  RArray (a,sep,term,body,len,_) => complexity body (* fix this!*)
 	end
 
 

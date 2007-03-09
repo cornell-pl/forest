@@ -189,13 +189,13 @@ structure Model = struct
                        , ListPair.zip ( switches, measuredBranches )
                        )
              end
-         | RArray ( a, osep, oterm, body, olen ) =>
+         | RArray ( a, osep, oterm, body, olen, lengths ) =>
              let val rlen         = getLengthRArray ty
                  val measuredBody = measure body
                  val tbody        = getTypeComplexity measuredBody
                  val dbody        = getDataComplexity measuredBody
                  fun updateRArray (t:Complexity) (d:Complexity) =
-                   RArray ( updateComplexities a t d, osep, oterm, measuredBody, olen )
+                   RArray ( updateComplexities a t d, osep, oterm, measuredBody, olen, lengths )
                  val ( tlen, dlen )   = refinedOptionComp olen
                  val ( tterm, dterm ) = refinedOptionComp oterm
                  val ( tsep, dsep )   = refinedOptionComp osep

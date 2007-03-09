@@ -183,6 +183,17 @@ structure Common = struct
 		| (NONE, NONE) => true
 		|_ => false
 
+	fun ltokenlToRefinedOp ltokenl=
+		case ltokenl of
+		  h::t =>
+		  let 
+			val not_equal = (List.exists (fn x => not (ltoken_equal(x, h))) t)
+		  in
+			if not_equal then NONE else SOME (tokentorefine (#1 (hd ltokenl)))
+		  end
+		  | nil => NONE
+
+
     (*function to merge two AuxInfos *)
     fun mergeAux(a1, a2) =
 	case (a1, a2) of 
@@ -220,14 +231,15 @@ structure Common = struct
 					ListPair.zip(rl1, map mergeTy (ListPair.zip(tylist1, tylist2))))
 			    else raise TyMismatch
 			end
-		| (RArray(a1, sepop1, termop1, ty1, len1), 
-			RArray (a2, sepop2, termop2, ty2, len2))
-			=> RArray(mergeAux(a1, a2), sepop1, termop1, mergeTy(ty1, ty2), len1) 	
+		| (RArray(a1, sepop1, termop1, ty1, len1, l1), 
+			RArray (a2, sepop2, termop2, ty2, len2, l2))
+			=> RArray(mergeAux(a1, a2), sepop1, termop1, mergeTy(ty1, ty2), len1, (l1@l2)) 	
 		| _ => raise TyMismatch
 
     (* function to test of two ty's are completely equal minus the labels *)
     (* if comparetype = 0, compare everything, otherwise compare down to 
-	base modulo the token list *)
+	base modulo the token list and other meta data *)
+    (* comparetype = 0 is currently not used and is not fully implemented *)
     fun ty_equal (comparetype:int, ty1:Ty, ty2:Ty):bool = 
 	let
 		fun check_list(l1:Ty list,l2: Ty list):bool = 
@@ -249,7 +261,7 @@ structure Common = struct
 			| (Parray(_, a1), 
 			   Parray(_, a2)) => ty_equal(comparetype, #first a1, #first a2) andalso 
 				ty_equal(comparetype, #body a1, #body a2) andalso 
-				ty_equal(comparetype, #last a1, #last a2)
+				ty_equal(comparetype, #last a1, #last a2) 
 			| (RefinedBase (_, r1, tl1), RefinedBase(_, r2, tl2)) => 
 				if (comparetype = 0) then
 				(refine_equal(r1, r2) andalso 
@@ -263,13 +275,13 @@ structure Common = struct
 					foldr myand true (ListPair.map refine_equal(rl1, rl2)) 
 					andalso check_list (tylist1, tylist2)
 				end
-			| (RArray(_, sepop1, termop1, ty1, len1), 
-				RArray (_, sepop2, termop2, ty2, len2))
+			| (RArray(_, sepop1, termop1, ty1, len1, _), 
+				RArray (_, sepop2, termop2, ty2, len2, _))
 				=> refine_equal_op1(sepop1, sepop2) andalso
 				   refine_equal_op1(termop1, termop2) andalso
 				   ty_equal (comparetype, ty1, ty2) andalso
 				   refine_equal_op1(len1, len2)
 			| _ => false 
-		handle Size => (print "size in ty_equal!\n" ; false)
+		handle Size => (print "Size in ty_equal!\n" ; false)
 	end
 end

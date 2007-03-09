@@ -66,7 +66,8 @@ struct
                 | RArray  of AuxInfo * Refined option (* separator *)
                                      * Refined option (* terminator *)
 	                             * Ty             (* body type *)
-                                     * Refined option (* length *) 
+                                     * Refined option (* fixed length *) 
+				     * (int*int) list (* (length, linenumber) list*)
 
     fun getAuxInfo ( ty : Ty ) : AuxInfo = 
 	case ty 
@@ -78,7 +79,7 @@ struct
         |  Parray (a, _)                => a
         |  RefinedBase (a,r,tl)         => a
         |  Switch(a,id,branches)        => a
-        |  RArray (a,sep,term,body,len) => a
+        |  RArray (a,sep,term,body,len,lengths) => a
 
     (* Compute the length of an RArray. This function should always be
        passed a Ty value under the RArray constructor, if not, it throws
@@ -88,7 +89,7 @@ struct
     exception BadRArrayLength
     fun getLengthRArray   ( ty : Ty ) : int =
         ( case ty of
-               RArray ( a, osep, oterm, body, olen) =>
+               RArray ( a, osep, oterm, body, olen, _) =>
                   ( case olen of
                          NONE => 1 (***** For now !!!!!!*)
                        | SOME r =>
@@ -262,7 +263,8 @@ struct
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
     in ( prefix ^
          ( case ty of
-               Base (aux, t)  => ( ltokenTyToString (hd t) ) ^ stats
+               Base (aux, t)  => (case t of nil => "[NULL]"
+					| _ => ( ltokenTyToString (hd t) )) ^ stats 
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
                 ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )
@@ -279,12 +281,12 @@ struct
                 "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
-             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats
+             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats 
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
                 (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
                 (partialD ty))) retys)) ^ prefix ^ "End Switch"
-             | RArray (aux, sep, term, body, len) =>
+             | RArray (aux, sep, term, body, len, _) => 
                 "RArray" ^ stats ^ "\n" ^
                 ( case sep of
                        SOME septok =>
@@ -294,16 +296,16 @@ struct
                        SOME termtok =>
                          prefix ^ "\tTerminator: "^ refinedToString(termtok) ^ "\n"
                      | _ => "" ) ^
-                ( partialD body ) ^ prefix ^ "End RArray"
+                ( partialD body ) ^ prefix ^ "End RArray" 
          ) ^
          suffix )
-     end
+     end 
 
      fun TyToString (ty:Ty):string = TyToStringD "" false false "" ty
 
      fun printTyD (prefix:string) (longTBDs:bool) (longBottom:bool)
                   (suffix:string) (ty:Ty) : unit =
-         print (TyToStringD prefix longTBDs longBottom suffix ty )
+         print (TyToStringD prefix longTBDs longBottom suffix ty ) 
 
      fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
 

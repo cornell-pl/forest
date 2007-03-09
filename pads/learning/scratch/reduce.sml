@@ -58,7 +58,7 @@ fun cost const_map ty =
 				foldr op+ 0 (map (cost const_map) [first, body, last])+9
 		| Switch (a, id, l) => foldr op+ 0 (map (fn (r, t) => 
 			ty_cost (RefinedBase(a, r, nil))+cost const_map t) l)
-		| RArray (a, sepop, termop, body, lenop) => 
+		| RArray (a, sepop, termop, body, lenop, lens) => 
 (*
 			(case sepop of SOME (sep) => 0 | NONE => 1) +
 			(case termop of SOME (term) => 0 | NONE => 1) + 
@@ -89,12 +89,7 @@ case ty of
 | Switch(a, id, nil) => Base(a, nil)
 | Parray(a, {tokens, lengths, first, body, last}) => 
 	if lengths=nil then Base(a, nil) else ty 
-| RArray(a, _, _, _, length_op) => 
-	(
-	case length_op of
-		SOME(IntConst(0)) => Base(a, nil) 
-	| _ => ty
-	) 
+| RArray(a, _, _, _, _, nil) => Base(a, nil) 
 | _ => ty
 
 (* tuples inside tuples are removed*)
@@ -156,9 +151,9 @@ case ty of
 		case elems of
 		  h :: t => 
 		  let 
-		  	val not_equal = (List.exists (fn x => not(ty_equal(0, x, h) )) t) 
+		  	val not_equal = (List.exists (fn x => not(ty_equal(1, x, h) )) t) 
 		  in 
-		  	if not_equal then nil else h :: commonPrefix tails 
+		  	if not_equal then nil else (foldr mergeTy h t) :: commonPrefix tails 
   	          end
 		| nil => nil
   	end handle Empty => nil
@@ -171,8 +166,9 @@ case ty of
   	val remaining_rev = map (fn x => List.drop(x,slen) ) remaining_rev
   	val remaining = map List.rev remaining_rev
   	val csfx = List.rev csfx_rev
-  	val rem_tups = map (fn x => Pstruct(x) ) (ListPair.zip(auxlist, remaining))
-  	val rem_reduced = map (remove_degenerate_list) rem_tups
+  	val rem_tups = map(fn x => Pstruct(x)) (ListPair.zip(auxlist, remaining))
+  	val rem_reduced = List.filter (fn x => case x of Pstruct(a, nil) => false 
+						| _ => true) rem_tups
   in
   	case (cpfx, csfx) of
   	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
@@ -264,7 +260,9 @@ and refine_array ty =
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
-(*		val _ = (print "trying to refine array in struct \n"; printTy ty) *)
+(*		
+		val _ = (print "trying to refine array in struct \n"; printTy ty) 
+*)
 		fun getlen (lens, x) = 
 			case lens of 
 			l::tail => if (l = x) then getlen(tail, x)
@@ -360,16 +358,35 @@ and refine_array ty =
 			| _ => NONE
 				
 		fun getRefine(ty) = case ty of RefinedBase(_, r, _) => SOME(r) 
+					| Base (_, tl) => ltokenlToRefinedOp tl
 					| _ => NONE
 		fun isEmpty(ty) = case ty of 
 					RefinedBase(_, StringConst(""), _) => true
 					| Base(_, tkl) =>
 						( 
-						case (hd tkl) of 
+						  case (hd tkl) of 
 							(Pempty, _) => true
 							| _ => false
 						)
 					| _=> false
+
+		fun getSeptTerm1 (first, body, last) =
+		let
+			val bodytail = getRefine(lastEle(body))
+			val firsttail = if (isStruct(first)) then getRefine(lastEle(first))
+					else getRefine(first) (*assume it's a base itself*)
+		in
+			(* if the firsttail = body tail, then this is a possible separator.
+			   if the stripped first is part of body and last is part of body, then
+			   the separator is confirmed, and the first and last can be obsorbed
+			   into the body. if either stripped first or the stripped last is part 
+			   of the body, then the separator is confirmed and either the first or the
+			   the last is absorbed into the body, and the other one is pushed out 
+			   of the array.
+			   if none of the first and the body is part of body, then no separator is
+			   defined and both first and last are pushed out of the array. *)
+			(NONE, NONE, NONE, SOME(mergeTy(first, body)), NONE)
+		end
 
 		(*the separator should be a refinedbase ty in the last position
 		 of the first and body tys, or no separator if the two elements are not
@@ -436,18 +453,20 @@ and refine_array ty =
 		    val newty = 
 			case (firstop, bodyop, lastop) of 
 			 (NONE, SOME(body'), NONE) => 
-				RArray(aux, sepop, termop, body', lenop)
+				RArray(aux, sepop, termop, body', lenop, lengths)
 			|(NONE, SOME(body'), SOME(last')) =>
 			  	Pstruct(mkTyAux(#coverage aux), 
-				[RArray(aux, sepop, termop, body', lenop), last'])
+				[RArray(aux, sepop, termop, body', lenop, lengths), last'])
 			|(SOME(first'), SOME(body'), NONE) =>
 			  	Pstruct(mkTyAux(#coverage aux), 
-				[first', RArray(aux, sepop, NONE, body', lenop)])
+				[first', RArray(aux, sepop, NONE, body', lenop, lengths)])
 			|(SOME(first'), SOME(body'), SOME(last')) =>
 			  	Pstruct(mkTyAux(#coverage aux), 
-			    	[first', RArray(aux, sepop, termop, body', lenop), last'])
+			    	[first', RArray(aux, sepop, termop, body', lenop, lengths), last'])
 			| _ => raise TyMismatch
-	(*	    val _ = (print "Done refining array in struct to:\n"; printTy newty)  *)
+(*
+		    val _ = (print "Done refining array in struct to:\n"; printTy newty)  
+*)
 		  in
 		 	newty
 		  end
@@ -467,13 +486,14 @@ and refine_array ty =
 			| _ => NONE
 		  fun updateTerm (arrayty, termop) =
 			case (arrayty) of
-				RArray(a, sep, term, body, len)=>RArray(a, sep, termop, body, len)
+				RArray(a, sep, term, body, len, lengths)=>
+					RArray(a, sep, termop, body, len, lengths)
 			| _ => raise TyMismatch
 		  fun updateArray tylist newlist =
 			case tylist of
 			nil => newlist
 			| ty::tail =>
-				case ty of RArray (_, _, NONE, _, _) => 
+				case ty of RArray (_, _, NONE, _, _, _) => 
 				(
 				  case tail of 
 				  nil => newlist@tylist
@@ -814,11 +834,11 @@ let
                                 val (cmap', tylist') = mymap reduce' mode cmap tylist nil
                                 in (cmap', Switch (a, id, ListPair.zip(refs, tylist')))
                                 end
-                        | RArray (a, sep, term, body, len) => 
+                        | RArray (a, sep, term, body, len, lengths) => 
                                 let
                                 val (cmap', body') = reduce' mode cmap body
                                 in
-                                (cmap', RArray (a, sep, term, body', len))
+                                (cmap', RArray (a, sep, term, body', len, lengths))
                                 end
 
 	  fun iterate cmap ty = 
