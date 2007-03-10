@@ -1206,175 +1206,177 @@ Token count:1
 [string]	Occurrences:1
 
 Before reduction:
-Parray(Id = BTy_0 886)((.) )
+Parray(Id = BTy_0 886, 0b, 0b)((.) )
 First:
-	Pstruct(Id = BTy_19 886)
-		Punion(Id = BTy_2 886)
-			[empty](Id = BTy_1 885);
-			[int](Id = BTy_3 1);
+	Pstruct(Id = BTy_19 886, 0b, 0b)
+		Punion(Id = BTy_2 886, 0b, 0b)
+			[empty](Id = BTy_1 885, 0b, 0b);
+			[int](Id = BTy_3 1, 0b, 0b);
 		End Punion;
-		[string](Id = BTy_4 886);
-		Punion(Id = BTy_6 886)
-			[empty](Id = BTy_5 877);
-			Parray(Id = BTy_7 9)((+) )
+		[string](Id = BTy_4 886, 0b, 0b);
+		Punion(Id = BTy_6 886, 0b, 0b)
+			[empty](Id = BTy_5 877, 0b, 0b);
+			Parray(Id = BTy_7 9, 0b, 0b)((+) )
 			First:
-				(+)(Id = BTy_8 9);
+				(+)(Id = BTy_8 9, 0b, 0b);
 			Body:
-				(+)(Id = BTy_9 7);
+				(+)(Id = BTy_9 7, 0b, 0b);
 			Tail:
-				Punion(Id = BTy_17 9)
-					Parray(Id = BTy_10 8)([int] )
+				Punion(Id = BTy_17 9, 0b, 0b)
+					Parray(Id = BTy_10 8, 0b, 0b)([int] )
 					First:
-						[int](Id = BTy_11 8);
+						[int](Id = BTy_11 8, 0b, 0b);
 					Body:
-						[int](Id = BTy_12 2);
+						[int](Id = BTy_12 2, 0b, 0b);
 					Tail:
-						[empty](Id = BTy_13 8);
+						[empty](Id = BTy_13 8, 0b, 0b);
 					End Parray;
-					Pstruct(Id = BTy_16 1)
-						(-)(Id = BTy_14 1);
-						[string](Id = BTy_15 1);
+					Pstruct(Id = BTy_16 1, 0b, 0b)
+						(-)(Id = BTy_14 1, 0b, 0b);
+						[string](Id = BTy_15 1, 0b, 0b);
 					End Pstruct;
 				End Punion;
 			End Parray;
 		End Punion;
-		(.)(Id = BTy_18 886);
+		(.)(Id = BTy_18 886, 0b, 0b);
 	End Pstruct;
 Body:
-	Pstruct(Id = BTy_49 3043)
-		Punion(Id = BTy_32 3043)
-			Pstruct(Id = BTy_31 1220)
-				Punion(Id = BTy_21 1220)
-					[empty](Id = BTy_20 1156);
-					Parray(Id = BTy_22 64)([int] )
+	Pstruct(Id = BTy_49 3043, 0b, 0b)
+		Punion(Id = BTy_32 3043, 0b, 0b)
+			Pstruct(Id = BTy_31 1220, 0b, 0b)
+				Punion(Id = BTy_21 1220, 0b, 0b)
+					[empty](Id = BTy_20 1156, 0b, 0b);
+					Parray(Id = BTy_22 64, 0b, 0b)([int] )
 					First:
-						[int](Id = BTy_23 64);
+						[int](Id = BTy_23 64, 0b, 0b);
 					Body:
-						[int](Id = BTy_24 11);
+						[int](Id = BTy_24 11, 0b, 0b);
 					Tail:
-						Punion(Id = BTy_26 64)
-							[empty](Id = BTy_25 51);
-							(_)(Id = BTy_27 9);
-							(-)(Id = BTy_29 4);
+						Punion(Id = BTy_26 64, 0b, 0b)
+							[empty](Id = BTy_25 51, 0b, 0b);
+							(_)(Id = BTy_27 9, 0b, 0b);
+							(-)(Id = BTy_29 4, 0b, 0b);
 						End Punion;
 					End Parray;
 				End Punion;
-				[string](Id = BTy_30 1220);
+				[string](Id = BTy_30 1220, 0b, 0b);
 			End Pstruct;
-			Parray(Id = BTy_33 1823)([int] )
+			Parray(Id = BTy_33 1823, 0b, 0b)([int] )
 			First:
-				Punion(Id = BTy_39 1823)
-					Pstruct(Id = BTy_38 1822)
-						Punion(Id = BTy_35 1822)
-							[empty](Id = BTy_34 1820);
-							[IP](Id = BTy_36 2);
+				Punion(Id = BTy_39 1823, 0b, 0b)
+					Pstruct(Id = BTy_38 1822, 0b, 0b)
+						Punion(Id = BTy_35 1822, 0b, 0b)
+							[empty](Id = BTy_34 1820, 0b, 0b);
+							[IP](Id = BTy_36 2, 0b, 0b);
 						End Punion;
-						[int](Id = BTy_37 1822);
+						[int](Id = BTy_37 1822, 0b, 0b);
 					End Pstruct;
-					[empty](Id = BTy_40 1);
+					[empty](Id = BTy_40 1, 0b, 0b);
 				End Punion;
 			Body:
-				[int](Id = BTy_41 819);
+				[int](Id = BTy_41 819, 0b, 0b);
 			Tail:
-				Punion(Id = BTy_43 1823)
-					[empty](Id = BTy_42 1822);
-					Pstruct(Id = BTy_47 1)
-						(()(Id = BTy_44 1);
-						[string](Id = BTy_45 1);
-						())(Id = BTy_46 1);
+				Punion(Id = BTy_43 1823, 0b, 0b)
+					[empty](Id = BTy_42 1822, 0b, 0b);
+					Pstruct(Id = BTy_47 1, 0b, 0b)
+						(()(Id = BTy_44 1, 0b, 0b);
+						[string](Id = BTy_45 1, 0b, 0b);
+						())(Id = BTy_46 1, 0b, 0b);
 					End Pstruct;
 				End Punion;
 			End Parray;
 		End Punion;
-		(.)(Id = BTy_48 3043);
+		(.)(Id = BTy_48 3043, 0b, 0b);
 	End Pstruct;
 Tail:
-	[string](Id = BTy_50 886);
+	[string](Id = BTy_50 886, 0b, 0b);
 End Parray
 
 
-After reduction:
-Pstruct(Id = BTy_101 886)
-	Switch(BTy_4)(Id = BTy_2 886):
+After final reduction:
+Pstruct(Id = BTy_55 886, 0b, 0b)
+	Switch(BTy_4)(Id = BTy_2 886, 0b, 0b):
 	case "*":
-		""(Id = BTy_1 885);
+		""(Id = BTy_1 885, 0b, 0b);
 	case "Suite-1":
-		[4](Id = BTy_3 1);
+		[4](Id = BTy_3 1, 0b, 0b);
 	End Switch;
-	[string](Id = BTy_4 886);
-	Switch(BTy_4)(Id = BTy_6 886):
+	[string](Id = BTy_4 886, 0b, 0b);
+	Switch(BTy_4)(Id = BTy_6 886, 0b, 0b):
 	case "*":
-		""(Id = BTy_5 877);
+		""(Id = BTy_5 877, 0b, 0b);
 	case {"compat-gcc-32-c", "compat-libstdc", "gcc-c", "gcc4-c", "gtk", "libstdc", "memtest86", }:
-		Parray(Id = BTy_7 9)((+) )
-		First:
-			"+"(Id = BTy_8 9);
-		Body:
-			"+"(Id = BTy_9 7);
-		Tail:
-			Punion(Id = BTy_17 9)
-				Parray(Id = BTy_10 8)([int] )
-				First:
-					[~296...~1](Id = BTy_11 8);
-				Body:
-					[~3...~2](Id = BTy_12 2);
-				Tail:
-					""(Id = BTy_13 8);
-				End Parray;
-				"-devel-3"(Id = BTy_14 1);
+		Pstruct(Id = BTy_52 9, 0b, 0b)
+			"+"(Id = BTy_8 9, 0b, 0b);
+			RArray(Id = BTy_7 9, 0b, 0b)
+				"+"(Id = BTy_9 7, 0b, 0b);
+			End RArray;
+			Punion(Id = BTy_17 9, 0b, 0b)
+				Pstruct(Id = BTy_51 8, 0b, 0b)
+					[~296...~1](Id = BTy_11 8, 0b, 0b);
+					RArray(Id = BTy_10 8, 0b, 0b)
+						[~3...~2](Id = BTy_12 2, 0b, 0b);
+					End RArray;
+				End Pstruct;
+				Pstruct(Id = BTy_16 1, 0b, 0b)
+					"-devel-3"(Id = BTy_14 1, 0b, 0b);
+				End Pstruct;
 			End Punion;
-		End Parray;
+		End Pstruct;
 	End Switch;
-	"."(Id = BTy_18 886);
-	RArray(Id = BTy_0 886)
+	"."(Id = BTy_18 886, 0b, 0b);
+	RArray(Id = BTy_0 886, 0b, 0b)
 		Separator: "."
-		Terminator: ".rpm"
-		Punion(Id = BTy_32 3043)
-			Pstruct(Id = BTy_31 1220)
-				Punion(Id = BTy_21 1220)
-					""(Id = BTy_20 1156);
-					Parray(Id = BTy_22 64)([int] )
-					First:
-						[0...875](Id = BTy_23 64);
-					Body:
-						[~80...~2](Id = BTy_24 11);
-					Tail:
-						Punion(Id = BTy_26 64)
-							""(Id = BTy_25 51);
-							"_"(Id = BTy_27 9);
-							"-"(Id = BTy_29 4);
+		Punion(Id = BTy_32 3929, 0b, 0b)
+			Pstruct(Id = BTy_31 1220, 0b, 0b)
+				Punion(Id = BTy_21 1220, 0b, 0b)
+					""(Id = BTy_20 1156, 0b, 0b);
+					Pstruct(Id = BTy_53 64, 0b, 0b)
+						[0...875](Id = BTy_23 64, 0b, 0b);
+						RArray(Id = BTy_22 64, 0b, 0b)
+							[~80...~2](Id = BTy_24 11, 0b, 0b);
+						End RArray;
+						Punion(Id = BTy_26 64, 0b, 0b)
+							""(Id = BTy_25 51, 0b, 0b);
+							"_"(Id = BTy_27 9, 0b, 0b);
+							"-"(Id = BTy_29 4, 0b, 0b);
 						End Punion;
-					End Parray;
-				End Punion;
-				[string](Id = BTy_30 1220);
-			End Pstruct;
-			Parray(Id = BTy_33 1823)([int] )
-			First:
-				Punion(Id = BTy_39 1823)
-					Pstruct(Id = BTy_38 1822)
-						Switch(BTy_37)(Id = BTy_35 1822):
-						case "*":
-							""(Id = BTy_34 1820);
-						case [~21]:
-							{"15.92.0.2", "4.1.2.90", }(Id = BTy_36 2);
-						End Switch;
-						[~44...20060823](Id = BTy_37 1822);
 					End Pstruct;
-					""(Id = BTy_40 1);
 				End Punion;
-			Body:
-				[~187...0](Id = BTy_41 819);
-			Tail:
-				Punion(Id = BTy_43 1823)
-					""(Id = BTy_42 1822);
-					"(none)"(Id = BTy_44 1);
+				[string](Id = BTy_30 2106, 0b, 0b);
+			End Pstruct;
+			Pstruct(Id = BTy_54 1823, 0b, 0b)
+				Punion(Id = BTy_39 1823, 0b, 0b)
+					Pstruct(Id = BTy_38 1822, 0b, 0b)
+						Switch(BTy_37)(Id = BTy_35 1822, 0b, 0b):
+						case "*":
+							""(Id = BTy_34 1820, 0b, 0b);
+						case [~21]:
+							{"15.92.0.2", "4.1.2.90", }(Id = BTy_36 2, 0b, 0b);
+						End Switch;
+						[~44...20060823](Id = BTy_37 1822, 0b, 0b);
+					End Pstruct;
+					""(Id = BTy_40 1, 0b, 0b);
 				End Punion;
-			End Parray;
+				RArray(Id = BTy_33 1823, 0b, 0b)
+					[~187...0](Id = BTy_41 819, 0b, 0b);
+				End RArray;
+				Punion(Id = BTy_43 1823, 0b, 0b)
+					""(Id = BTy_42 1822, 0b, 0b);
+					Pstruct(Id = BTy_47 1, 0b, 0b)
+						"(none)"(Id = BTy_44 1, 0b, 0b);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
 		End Punion;
 	End RArray;
-	".rpm"(Id = BTy_48 3043);
 End Pstruct
 
 Complexity of inferred type:
 	numAlt = 7  numTBD = 0  numBtm = 0
 Outputing partitions to directory: gen/
+
+Completed data/rpmpkgs.txt
+Overall type complexity = 30.585b
+Overall data complexity = 3814.486b
+

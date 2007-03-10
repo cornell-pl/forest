@@ -301,76 +301,81 @@ Token count:1
 [int]	Occurrences:1
 
 Before reduction:
-Pstruct(Id = BTy_27 999)
-	[int](Id = BTy_0 999);
-	[white space](Id = BTy_1 999);
-	[int](Id = BTy_2 999);
-	[white space](Id = BTy_3 999);
-	[int](Id = BTy_4 999);
-	Punion(Id = BTy_6 999)
-		[empty](Id = BTy_5 937);
-		Pstruct(Id = BTy_9 62)
-			(.)(Id = BTy_7 62);
-			[int](Id = BTy_8 62);
+Pstruct(Id = BTy_27 999, 0b, 0b)
+	[int](Id = BTy_0 999, 0b, 0b);
+	[white space](Id = BTy_1 999, 0b, 0b);
+	[int](Id = BTy_2 999, 0b, 0b);
+	[white space](Id = BTy_3 999, 0b, 0b);
+	[int](Id = BTy_4 999, 0b, 0b);
+	Punion(Id = BTy_6 999, 0b, 0b)
+		[empty](Id = BTy_5 937, 0b, 0b);
+		Pstruct(Id = BTy_9 62, 0b, 0b)
+			(.)(Id = BTy_7 62, 0b, 0b);
+			[int](Id = BTy_8 62, 0b, 0b);
 		End Pstruct;
 	End Punion;
-	[white space](Id = BTy_11 999);
-	[int](Id = BTy_12 999);
-	Punion(Id = BTy_14 999)
-		[empty](Id = BTy_13 943);
-		Pstruct(Id = BTy_17 56)
-			(.)(Id = BTy_15 56);
-			[int](Id = BTy_16 56);
+	[white space](Id = BTy_11 999, 0b, 0b);
+	[int](Id = BTy_12 999, 0b, 0b);
+	Punion(Id = BTy_14 999, 0b, 0b)
+		[empty](Id = BTy_13 943, 0b, 0b);
+		Pstruct(Id = BTy_17 56, 0b, 0b)
+			(.)(Id = BTy_15 56, 0b, 0b);
+			[int](Id = BTy_16 56, 0b, 0b);
 		End Pstruct;
 	End Punion;
-	[white space](Id = BTy_19 999);
-	Punion(Id = BTy_24 999)
-		Pstruct(Id = BTy_23 988)
-			[int](Id = BTy_20 988);
-			(.)(Id = BTy_21 988);
-			[int](Id = BTy_22 988);
+	[white space](Id = BTy_19 999, 0b, 0b);
+	Punion(Id = BTy_24 999, 0b, 0b)
+		Pstruct(Id = BTy_23 988, 0b, 0b)
+			[int](Id = BTy_20 988, 0b, 0b);
+			(.)(Id = BTy_21 988, 0b, 0b);
+			[int](Id = BTy_22 988, 0b, 0b);
 		End Pstruct;
-		[int](Id = BTy_25 11);
+		[int](Id = BTy_25 11, 0b, 0b);
 	End Punion;
-	[white space](Id = BTy_26 999);
+	[white space](Id = BTy_26 999, 0b, 0b);
 End Pstruct
 
 
-After reduction:
-Pstruct(Id = BTy_27 999)
-	[101...103](Id = BTy_0 999);
-	"      "(Id = BTy_1 999);
-	[101...9890](Id = BTy_2 999);
-	"      "(Id = BTy_3 999);
-	[~10...12072](Id = BTy_4 999);
-	Punion(Id = BTy_6 999)
-		""(Id = BTy_5 937);
-		Pstruct(Id = BTy_9 62)
-			"."(Id = BTy_7 62);
-			[1...9](Id = BTy_8 62);
+After final reduction:
+Pstruct(Id = BTy_27 999, 0b, 0b)
+	[101...103](Id = BTy_0 999, 0b, 0b);
+	"      "(Id = BTy_1 999, 0b, 0b);
+	[101...9890](Id = BTy_2 999, 0b, 0b);
+	"      "(Id = BTy_3 999, 0b, 0b);
+	[~10...12072](Id = BTy_4 999, 0b, 0b);
+	Punion(Id = BTy_6 999, 0b, 0b)
+		""(Id = BTy_5 937, 0b, 0b);
+		Pstruct(Id = BTy_9 62, 0b, 0b)
+			"."(Id = BTy_7 62, 0b, 0b);
+			[1...9](Id = BTy_8 62, 0b, 0b);
 		End Pstruct;
 	End Punion;
-	"                   "(Id = BTy_11 999);
-	[0](Id = BTy_12 999);
-	Punion(Id = BTy_14 999)
-		""(Id = BTy_13 943);
-		Pstruct(Id = BTy_17 56)
-			"."(Id = BTy_15 56);
-			[2...53321](Id = BTy_16 56);
+	"                   "(Id = BTy_11 999, 0b, 0b);
+	[0](Id = BTy_12 999, 0b, 0b);
+	Punion(Id = BTy_14 999, 0b, 0b)
+		""(Id = BTy_13 943, 0b, 0b);
+		Pstruct(Id = BTy_17 56, 0b, 0b)
+			"."(Id = BTy_15 56, 0b, 0b);
+			[2...53321](Id = BTy_16 56, 0b, 0b);
 		End Pstruct;
 	End Punion;
-	"                   "(Id = BTy_19 999);
-	Punion(Id = BTy_24 999)
-		Pstruct(Id = BTy_23 988)
-			[0...1](Id = BTy_20 988);
-			"."(Id = BTy_21 988);
-			[1...87353](Id = BTy_22 988);
+	"                   "(Id = BTy_19 999, 0b, 0b);
+	Punion(Id = BTy_24 999, 0b, 0b)
+		Pstruct(Id = BTy_23 988, 0b, 0b)
+			[0...1](Id = BTy_20 988, 0b, 0b);
+			"."(Id = BTy_21 988, 0b, 0b);
+			[1...87353](Id = BTy_22 988, 0b, 0b);
 		End Pstruct;
-		[0](Id = BTy_25 11);
+		[0](Id = BTy_25 11, 0b, 0b);
 	End Punion;
-	"   "(Id = BTy_26 999);
+	"   "(Id = BTy_26 999, 0b, 0b);
 End Pstruct
 
 Complexity of inferred type:
 	numAlt = 4  numTBD = 0  numBtm = 0
 Outputing partitions to directory: gen/
+
+Completed data/1967Transactions.short
+Overall type complexity = 20b
+Overall data complexity = 172.370b
+

@@ -703,110 +703,117 @@ Token count:3
 [white space]	Occurrences:1
 
 Before reduction:
-Punion(Id = BTy_41 35)
-	Pstruct(Id = BTy_40 34)
-		Punion(Id = BTy_1 34)
-			(-)(Id = BTy_0 18);
-			[empty](Id = BTy_2 16);
+Punion(Id = BTy_41 35, 0b, 0b)
+	Pstruct(Id = BTy_40 34, 0b, 0b)
+		Punion(Id = BTy_1 34, 0b, 0b)
+			(-)(Id = BTy_0 18, 0b, 0b);
+			[empty](Id = BTy_2 16, 0b, 0b);
 		End Punion;
-		[string](Id = BTy_3 34);
-		[white space](Id = BTy_5 34);
-		[int](Id = BTy_6 34);
-		[white space](Id = BTy_7 34);
-		[string](Id = BTy_8 34);
-		[white space](Id = BTy_9 34);
-		[string](Id = BTy_10 34);
-		[white space](Id = BTy_11 34);
-		[int](Id = BTy_12 34);
-		[white space](Id = BTy_13 34);
-		[string](Id = BTy_14 34);
-		[white space](Id = BTy_15 34);
-		[int](Id = BTy_16 34);
-		[white space](Id = BTy_17 34);
-		Punion(Id = BTy_19 34)
-			[int](Id = BTy_18 27);
-			[Time](Id = BTy_20 7);
+		[string](Id = BTy_3 34, 0b, 0b);
+		[white space](Id = BTy_5 34, 0b, 0b);
+		[int](Id = BTy_6 34, 0b, 0b);
+		[white space](Id = BTy_7 34, 0b, 0b);
+		[string](Id = BTy_8 34, 0b, 0b);
+		[white space](Id = BTy_9 34, 0b, 0b);
+		[string](Id = BTy_10 34, 0b, 0b);
+		[white space](Id = BTy_11 34, 0b, 0b);
+		[int](Id = BTy_12 34, 0b, 0b);
+		[white space](Id = BTy_13 34, 0b, 0b);
+		[string](Id = BTy_14 34, 0b, 0b);
+		[white space](Id = BTy_15 34, 0b, 0b);
+		[int](Id = BTy_16 34, 0b, 0b);
+		[white space](Id = BTy_17 34, 0b, 0b);
+		Punion(Id = BTy_19 34, 0b, 0b)
+			[int](Id = BTy_18 27, 0b, 0b);
+			[Time](Id = BTy_20 7, 0b, 0b);
 		End Punion;
-		[white space](Id = BTy_21 34);
-		[string](Id = BTy_23 34);
-		Punion(Id = BTy_25 34)
-			[empty](Id = BTy_24 17);
-			Pstruct(Id = BTy_35 16)
-				(.)(Id = BTy_26 16);
-				[string](Id = BTy_27 16);
-				Punion(Id = BTy_29 16)
-					[empty](Id = BTy_28 14);
-					Pstruct(Id = BTy_32 1)
-						(.)(Id = BTy_30 1);
-						[string](Id = BTy_31 1);
+		[white space](Id = BTy_21 34, 0b, 0b);
+		[string](Id = BTy_23 34, 0b, 0b);
+		Punion(Id = BTy_25 34, 0b, 0b)
+			[empty](Id = BTy_24 17, 0b, 0b);
+			Pstruct(Id = BTy_35 16, 0b, 0b)
+				(.)(Id = BTy_26 16, 0b, 0b);
+				[string](Id = BTy_27 16, 0b, 0b);
+				Punion(Id = BTy_29 16, 0b, 0b)
+					[empty](Id = BTy_28 14, 0b, 0b);
+					Pstruct(Id = BTy_32 1, 0b, 0b)
+						(.)(Id = BTy_30 1, 0b, 0b);
+						[string](Id = BTy_31 1, 0b, 0b);
 					End Pstruct;
-					(~)(Id = BTy_33 1);
+					(~)(Id = BTy_33 1, 0b, 0b);
 				End Punion;
 			End Pstruct;
-			Pstruct(Id = BTy_39 1)
-				[white space](Id = BTy_37 1);
-				[int](Id = BTy_38 1);
+			Pstruct(Id = BTy_39 1, 0b, 0b)
+				[white space](Id = BTy_37 1, 0b, 0b);
+				[int](Id = BTy_38 1, 0b, 0b);
 			End Pstruct;
 		End Punion;
 	End Pstruct;
-	Pstruct(Id = BTy_45 1)
-		[string](Id = BTy_42 1);
-		[white space](Id = BTy_43 1);
-		[int](Id = BTy_44 1);
+	Pstruct(Id = BTy_45 1, 0b, 0b)
+		[string](Id = BTy_42 1, 0b, 0b);
+		[white space](Id = BTy_43 1, 0b, 0b);
+		[int](Id = BTy_44 1, 0b, 0b);
 	End Pstruct;
 End Punion
 
 
-After reduction:
-Punion(Id = BTy_41 35)
-	Pstruct(Id = BTy_40 34)
-		Switch(BTy_6)(Id = BTy_1 34):
+After final reduction:
+Punion(Id = BTy_41 35, 0b, 0b)
+	Pstruct(Id = BTy_40 34, 0b, 0b)
+		Switch(BTy_6)(Id = BTy_1 34, 0b, 0b):
 		case [1]:
-			"-"(Id = BTy_0 18);
+			"-"(Id = BTy_0 18, 0b, 0b);
 		case "*":
-			""(Id = BTy_2 16);
+			""(Id = BTy_2 16, 0b, 0b);
 		End Switch;
-		[string](Id = BTy_3 34);
-		"   "(Id = BTy_5 34);
-		[1...21](Id = BTy_6 34);
-		" dpw fac      "(Id = BTy_7 34);
-		[0...274595840](Id = BTy_12 34);
-		" "(Id = BTy_13 34);
-		[string](Id = BTy_14 34);
-		" "(Id = BTy_15 34);
-		[2...28](Id = BTy_16 34);
-		"  "(Id = BTy_17 34);
-		Switch(BTy_23)(Id = BTy_19 34):
+		[string](Id = BTy_3 34, 0b, 0b);
+		"   "(Id = BTy_5 34, 0b, 0b);
+		[1...21](Id = BTy_6 34, 0b, 0b);
+		" dpw fac      "(Id = BTy_7 34, 0b, 0b);
+		[0...274595840](Id = BTy_12 34, 0b, 0b);
+		" "(Id = BTy_13 34, 0b, 0b);
+		[string](Id = BTy_14 34, 0b, 0b);
+		" "(Id = BTy_15 34, 0b, 0b);
+		[2...28](Id = BTy_16 34, 0b, 0b);
+		"  "(Id = BTy_17 34, 0b, 0b);
+		Switch(BTy_23)(Id = BTy_19 34, 0b, 0b):
 		case "*":
-			[2002...2006](Id = BTy_18 27);
+			[2002...2006](Id = BTy_18 27, 0b, 0b);
 		case {"cv", "davehome", "grants", "other", "recommendations", "reviews", "talks", }:
-			[Time](Id = BTy_20 7);
+			[Time](Id = BTy_20 7, 0b, 0b);
 		End Switch;
-		" "(Id = BTy_21 34);
-		[string](Id = BTy_23 34);
-		Punion(Id = BTy_25 34)
-			""(Id = BTy_24 17);
-			Pstruct(Id = BTy_35 16)
-				"."(Id = BTy_26 16);
-				[string](Id = BTy_27 16);
-				Punion(Id = BTy_29 16)
-					""(Id = BTy_28 14);
-					".gz"(Id = BTy_30 1);
-					"~"(Id = BTy_33 1);
+		" "(Id = BTy_21 34, 0b, 0b);
+		[string](Id = BTy_23 34, 0b, 0b);
+		Punion(Id = BTy_25 34, 0b, 0b)
+			""(Id = BTy_24 17, 0b, 0b);
+			Pstruct(Id = BTy_35 16, 0b, 0b)
+				"."(Id = BTy_26 16, 0b, 0b);
+				[string](Id = BTy_27 16, 0b, 0b);
+				Punion(Id = BTy_29 16, 0b, 0b)
+					""(Id = BTy_28 14, 0b, 0b);
+					Pstruct(Id = BTy_32 1, 0b, 0b)
+						".gz"(Id = BTy_30 1, 0b, 0b);
+					End Pstruct;
+					"~"(Id = BTy_33 1, 0b, 0b);
 				End Punion;
 			End Pstruct;
-			Pstruct(Id = BTy_39 1)
-				" "(Id = BTy_37 1);
-				[8](Id = BTy_38 1);
+			Pstruct(Id = BTy_39 1, 0b, 0b)
+				" "(Id = BTy_37 1, 0b, 0b);
+				[8](Id = BTy_38 1, 0b, 0b);
 			End Pstruct;
 		End Punion;
 	End Pstruct;
-	Pstruct(Id = BTy_45 1)
-		"total "(Id = BTy_42 1);
-		[275528](Id = BTy_44 1);
+	Pstruct(Id = BTy_45 1, 0b, 0b)
+		"total "(Id = BTy_42 1, 0b, 0b);
+		[275528](Id = BTy_44 1, 0b, 0b);
 	End Pstruct;
 End Punion
 
 Complexity of inferred type:
-	numAlt = 6  numTBD = 0  numBtm = 0
+	numAlt = 7  numTBD = 0  numBtm = 0
 Outputing partitions to directory: gen/
+
+Completed data/ls-l.txt
+Overall type complexity = 35.170b
+Overall data complexity = 515.890b
+

@@ -561,73 +561,75 @@ Token count:1
 [int]	Occurrences:1
 
 Before reduction:
-Parray(Id = BTy_0 999)((|) )
+Parray(Id = BTy_0 999, 0b, 0b)((|) )
 First:
-	Pstruct(Id = BTy_3 999)
-		[int](Id = BTy_1 999);
-		(|)(Id = BTy_2 999);
+	Pstruct(Id = BTy_3 999, 0b, 0b)
+		[int](Id = BTy_1 999, 0b, 0b);
+		(|)(Id = BTy_2 999, 0b, 0b);
 	End Pstruct;
 Body:
-	Pstruct(Id = BTy_22 18998)
-		Punion(Id = BTy_11 18998)
-			Pstruct(Id = BTy_10 11714)
-				Punion(Id = BTy_5 11714)
-					[empty](Id = BTy_4 11713);
-					Pstruct(Id = BTy_8 1)
-						[string](Id = BTy_6 1);
-						[white space](Id = BTy_7 1);
+	Pstruct(Id = BTy_22 18998, 0b, 0b)
+		Punion(Id = BTy_11 18998, 0b, 0b)
+			Pstruct(Id = BTy_10 11714, 0b, 0b)
+				Punion(Id = BTy_5 11714, 0b, 0b)
+					[empty](Id = BTy_4 11713, 0b, 0b);
+					Pstruct(Id = BTy_8 1, 0b, 0b)
+						[string](Id = BTy_6 1, 0b, 0b);
+						[white space](Id = BTy_7 1, 0b, 0b);
 					End Pstruct;
 				End Punion;
-				[int](Id = BTy_9 11714);
+				[int](Id = BTy_9 11714, 0b, 0b);
 			End Pstruct;
-			Pstruct(Id = BTy_18 6286)
-				[string](Id = BTy_12 6286);
-				Punion(Id = BTy_14 6286)
-					[empty](Id = BTy_13 6285);
-					Pstruct(Id = BTy_17 1)
-						[white space](Id = BTy_15 1);
-						[string](Id = BTy_16 1);
+			Pstruct(Id = BTy_18 6286, 0b, 0b)
+				[string](Id = BTy_12 6286, 0b, 0b);
+				Punion(Id = BTy_14 6286, 0b, 0b)
+					[empty](Id = BTy_13 6285, 0b, 0b);
+					Pstruct(Id = BTy_17 1, 0b, 0b)
+						[white space](Id = BTy_15 1, 0b, 0b);
+						[string](Id = BTy_16 1, 0b, 0b);
 					End Pstruct;
 				End Punion;
 			End Pstruct;
-			[empty](Id = BTy_20 998);
+			[empty](Id = BTy_20 998, 0b, 0b);
 		End Punion;
-		(|)(Id = BTy_21 18998);
+		(|)(Id = BTy_21 18998, 0b, 0b);
 	End Pstruct;
 Tail:
-	[int](Id = BTy_23 999);
+	[int](Id = BTy_23 999, 0b, 0b);
 End Parray
 
 
-After reduction:
-Pstruct(Id = BTy_46 999)
-	[0...9152272](Id = BTy_1 999);
-	"|"(Id = BTy_2 999);
-	RArray(Id = BTy_0 999)
-		Separator: "|"
-		Terminator: "/|[0-9]*/"
-		Punion(Id = BTy_11 18998)
-			Pstruct(Id = BTy_10 11714)
-				Punion(Id = BTy_5 11714)
-					""(Id = BTy_4 11713);
-					"MELISSA "(Id = BTy_6 1);
-				End Punion;
-				[9150767...9152272](Id = BTy_9 11714);
-			End Pstruct;
-			Pstruct(Id = BTy_18 6286)
-				[string](Id = BTy_12 6286);
-				Punion(Id = BTy_14 6286)
-					""(Id = BTy_13 6285);
-					" c"(Id = BTy_15 1);
-				End Punion;
-			End Pstruct;
-			""(Id = BTy_20 998);
-		End Punion;
-	End RArray;
-	"|"(Id = BTy_21 18998);
-	[995428801...1054663253](Id = BTy_23 999);
-End Pstruct
+After final reduction:
+RArray(Id = BTy_0 999, 0b, 0b)
+	Separator: "|"
+	Punion(Id = BTy_11 20996, 0b, 0b)
+		Pstruct(Id = BTy_10 11714, 0b, 0b)
+			Punion(Id = BTy_5 11714, 0b, 0b)
+				""(Id = BTy_4 11713, 0b, 0b);
+				Pstruct(Id = BTy_8 1, 0b, 0b)
+					"MELISSA "(Id = BTy_6 1, 0b, 0b);
+				End Pstruct;
+			End Punion;
+			[0...9152272](Id = BTy_9 13712, 0b, 0b);
+		End Pstruct;
+		Pstruct(Id = BTy_18 6286, 0b, 0b)
+			[string](Id = BTy_12 6286, 0b, 0b);
+			Punion(Id = BTy_14 6286, 0b, 0b)
+				""(Id = BTy_13 6285, 0b, 0b);
+				Pstruct(Id = BTy_17 1, 0b, 0b)
+					" c"(Id = BTy_15 1, 0b, 0b);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		""(Id = BTy_20 998, 0b, 0b);
+	End Punion;
+End RArray
 
 Complexity of inferred type:
 	numAlt = 5  numTBD = 0  numBtm = 0
 Outputing partitions to directory: gen/
+
+Completed data/dibbler.1000
+Overall type complexity = 10.585b
+Overall data complexity = 10382.667b
+
