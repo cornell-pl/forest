@@ -21,7 +21,7 @@ structure Common = struct
 			(SOME a', SOME b') => compared(a',b')
 		|	(SOME a, _) => GREATER
 		|	(NONE, SOME _) => LESS
-		|	(NONE,NONE) => EQUAL
+		|	(NONE, NONE) => EQUAL
 		and compared(a,b) = case (a, b) of
 			(Pint (x), Pint (x')) => LargeInt.compare(x,x')
 			| (Pstring (s1), Pstring(s2)) => String.compare(s1, s2)
@@ -36,6 +36,11 @@ structure Common = struct
                                         end)
 	
 	(* ____ to string functions useful for debugging *)
+
+	fun printTyList tylist =
+		case tylist of
+			ty::tail => (printTy ty; printTyList tail)
+			| nil => print "--- end of TyList ---\n"
 
 	(* function to transpose a table *)
         fun transpose( alistlist : 'a list list) : 'a list list =
@@ -132,6 +137,7 @@ structure Common = struct
                                       else String.str x) str
 
 	fun myand(a,b) = a andalso b
+	fun myor(a,b) = a orelse b
 	fun ltoken_equal((tk1, _):LToken, (tk2, _):LToken):bool =
 	  case (tk1, tk2) of 
 		    (PbXML(a,b), PbXML(a1, b1)) => (a=a1 andalso b = b1)
@@ -200,7 +206,101 @@ structure Common = struct
 	 ({coverage=c1, label=l1, typeComp=tc1, dataComp=dc1},
  	 {coverage=c2, label=l2, typeComp=tc2, dataComp=dc2}) =>
  	 	{coverage=c1+c2, label=l1, typeComp=tc1, dataComp=dc1}
-    (*function to merge to tys that are equal structurally*)
+
+    (*function that test if tylist1 in a struct can be described by tylist2 in another struct*)
+    (* tylist1 is described by tylist2 if tylist1 is a sub-sequence of tylist2 and 
+	all other elements in tylist2 can describe Pempty *)
+    fun listDescribedBy (tylist1, tylist2) = 
+      let
+	 val (len1, len2) = (length(tylist1), length(tylist2))
+      in
+	(len1 <= len2) andalso
+	let 
+	   val head2 = List.take(tylist2, len1)
+	   val tail2 = List.drop(tylist2, len1)
+	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0})])
+	in
+	   (
+	   (foldr myand true (map describedBy (ListPair.zip (tylist1, head2)))) 
+	   andalso (*the tail2 all describe Pempty *)
+	   (foldr myand true (map (fn x => describedBy (emptyBase, x)) tail2)) 
+	   )
+	   orelse (describedBy(emptyBase, hd tylist2) andalso 
+	   	listDescribedBy (tylist1, List.drop(tylist2, 1)))
+	end
+      end
+    (*function that test if ty1 can be described by ty2 *)
+    and describedBy(ty1, ty2) =
+	case (ty1, ty2) of 
+		(*assume no Pempty in the Pstruct as they have been cleared by remove_nils*)
+		(Base(a1, tl1), Base(a2, tl2)) => ltoken_ty_equal(hd tl1, hd tl2)
+		| (Base(a1, tl1), Pstruct(a2, tylist2)) => listDescribedBy ([Base(a1, tl1)], tylist2)
+		(*below is not completely right, haven't considered the case of tylist1 is a subset
+		  of tylist2 and the rest of tylist2 can describe Pempty *) 
+		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => listDescribedBy(tylist1, tylist2)
+		| (Punion(a1, tylist1), Punion(a2, tylist2)) =>
+			foldr myand true (map 
+				(fn ty => (foldr myor true (map (fn x => describedBy (ty, x)) tylist2))) 
+				tylist1)
+		| (ty1, Punion(a2, tylist2)) =>
+			foldr myor true (map (fn x => describedBy (ty1, x)) tylist2)
+		(*
+		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
+			Atom.same(id1, id2) andalso 
+			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
+		*)
+		| _ => false
+    
+    (*merge a ty into a tylist in a union *)
+    fun mergeUnion (ty, tylist, newlist) = 
+      case tylist of 
+	h::tail => if (describedBy (ty, h)) then newlist@[mergeTyInto(ty, h)]@tail
+		   else (mergeUnion (ty, tail, newlist@[h]))
+	| nil => newlist
+    and describesEmpty tylist =
+      case tylist of 
+      nil => true
+      | h::t =>
+	let
+	   val emptyBase = Base(getAuxInfo(hd tylist), [(Pempty, {lineNo=0, beginloc=0, endloc=0})])
+	in
+	   foldr myand true (map (fn x => describedBy (emptyBase, x)) tylist) 
+	end handle Empty => false
+    (*function to merge one list in struct to another list in struct*)
+    and mergeListInto (tylist1, tylist2, headlist) =
+	let 
+	   val (len1, len2) = (length(tylist1), length(tylist2))
+	   val head2 = List.take(tylist2, len1)
+	   val tail2 = List.drop(tylist2, len1)
+	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0})])
+	in
+	   if (describesEmpty headlist andalso 
+	       foldr myand true (map describedBy (ListPair.zip (tylist1, head2))) andalso 
+	       describesEmpty tail2) (*found the merging point*)
+	   then
+		headlist@(map mergeTyInto (ListPair.zip (tylist1, head2)))@tail2	
+	   else mergeListInto (tylist1, List.drop(tylist2, 1), headlist@[hd tylist2])
+	end
+    (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
+    and mergeTyInto (ty1, ty2) =
+		case (ty1, ty2) of 
+		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a2, a1), tl2@tl1) 
+		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(a2, mergeListInto([Base(a1, tl1)], tylist2, nil))
+		(*below is not completely right, haven't considered the case of tylist1 is a subset
+		  of tylist2 and the rest of tylist2 can describe Pempty *) 
+		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => 
+			Pstruct(mergeAux(a2, a1), mergeListInto(tylist1, tylist2, nil))
+		| (Punion(a1, tylist1), Punion(a2, tylist2)) => foldl mergeTyInto ty2 tylist1
+		| (ty1, Punion(a2, tylist2)) => Punion(mergeAux(a2, getAuxInfo(ty1)), mergeUnion(ty1, tylist2, nil))
+		(*
+		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
+			Atom.same(id1, id2) andalso 
+			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
+		*)
+		| _ => (print "here!!\n"; raise TyMismatch)
+
+
+    (*function to merge two tys that are equal structurally*)
     (*assume ty1 is before ty2*)
     (*used by refine_array *)
     fun mergeTy (ty1, ty2) =
@@ -235,6 +335,8 @@ structure Common = struct
 			RArray (a2, sepop2, termop2, ty2, len2, l2))
 			=> RArray(mergeAux(a1, a2), sepop1, termop1, mergeTy(ty1, ty2), len1, (l1@l2)) 	
 		| _ => raise TyMismatch
+
+    (* function to attempt to merge ty1 into the leftmost part of the ty2*)
 
     (* function to test of two ty's are completely equal minus the labels *)
     (* if comparetype = 0, compare everything, otherwise compare down to 

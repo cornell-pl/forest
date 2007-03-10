@@ -59,10 +59,8 @@ fun cost const_map ty =
 		| Switch (a, id, l) => foldr op+ 0 (map (fn (r, t) => 
 			ty_cost (RefinedBase(a, r, nil))+cost const_map t) l)
 		| RArray (a, sepop, termop, body, lenop, lens) => 
-(*
 			(case sepop of SOME (sep) => 0 | NONE => 1) +
 			(case termop of SOME (term) => 0 | NONE => 1) + 
-*)
 			(cost const_map body) 
 	in (ty_cost ty) + (total_const_cost ty) + 1 (* every constraint is counted towards cost *)
   end
@@ -121,14 +119,18 @@ case ty of
   end
 | _ => ty
 (* remove nil items from struct*)
+(* also removes Pemptys from struct*)
 and remove_nils ty : Ty = 
 case ty of
   Pstruct (a, tylist) => 
     Pstruct(a, List.filter (fn x => case x of 
 			Base(_, nil) => false 
+			| Base (_, tl) => not(ltoken_equal((hd tl), 
+					(Pempty, {lineNo=0, beginloc=0, endloc=0}))) 
 			| RefinedBase(_, _, nil) => false
 			| _ => true ) tylist)
 | _ => ty
+
 (* elements of a sum are check to see if they share a common prefix (ie tuples with
 a common prefix, or a common postfix) these elements are then brought out of a sum
 and a tuple is created *)
@@ -288,7 +290,7 @@ and refine_array ty =
 		  Pstruct({label=SOME(id),... }, tylist) => 
 			(case (length tylist) of 
 			 0 => raise Size
-			| 1 => RefinedBase(mkTyAux1(0, id), StringConst(""), nil)
+			| 1 => Base(mkTyAux1(0, id), nil)
 			| 2 => (hd tylist)
 			| _ => let
 				val newtylist = List.take(tylist, (length tylist) -1)	
@@ -334,14 +336,7 @@ and refine_array ty =
 			case ty of
 			  Pstruct(_, tylist) => findRefined (hd tylist)
 			| RefinedBase(_, refined, _) => SOME(refined)
-			| Base(_, ltokens) => 
-				let val token = (#1 (hd ltokens))	
-				in
-				case token of
-					  Pint(x) => SOME(Int(x, x)) (* exact range doesn't matter *)
-					| Pwhite(s) => SOME(StringConst(s))
-					| _ => NONE
-				end
+			| Base(_, ltokens) => ltokenlToRefinedOp ltokens
 			| _ => NONE
 		fun combineRefined (ref1, ref2) =
 			case (ref1, ref2) of
@@ -370,23 +365,15 @@ and refine_array ty =
 						)
 					| _=> false
 
-		fun getSeptTerm1 (first, body, last) =
-		let
-			val bodytail = getRefine(lastEle(body))
-			val firsttail = if (isStruct(first)) then getRefine(lastEle(first))
-					else getRefine(first) (*assume it's a base itself*)
-		in
-			(* if the firsttail = body tail, then this is a possible separator.
-			   if the stripped first is part of body and last is part of body, then
-			   the separator is confirmed, and the first and last can be obsorbed
-			   into the body. if either stripped first or the stripped last is part 
-			   of the body, then the separator is confirmed and either the first or the
-			   the last is absorbed into the body, and the other one is pushed out 
-			   of the array.
-			   if none of the first and the body is part of body, then no separator is
-			   defined and both first and last are pushed out of the array. *)
-			(NONE, NONE, NONE, SOME(mergeTy(first, body)), NONE)
-		end
+		(* if the firsttail = body tail, then this is a possible separator.
+		   if the stripped first is part of body and last is part of body, then
+		   the separator is confirmed, and the first and last can be obsorbed
+		   into the body. if either stripped first or the stripped last is part 
+		   of the body, then the separator is confirmed and either the first or the
+		   the last is absorbed into the body, and the other one is pushed out 
+		   of the array.
+		   if none of the first and the last is part of body, then no separator is
+		   defined and both first and last are pushed out of the array. *)
 
 		(*the separator should be a refinedbase ty in the last position
 		 of the first and body tys, or no separator if the two elements are not
@@ -399,55 +386,39 @@ and refine_array ty =
 					else getRefine(first) (*assume it's a base itself*)
 			val lasthd= if (isStruct(last)) then getRefine(firstEle(last))
 					else getRefine(last)
-			fun findTerm(refined_sep, ty) = 
-				case(refined_sep, findRefined(ty)) of
-				(SOME(x), SOME(y)) => combineRefined(x, y)
-				| _ => NONE
 		in
 			if (isEmpty(last)) (*no sep and terminator is outside*)
-			  then if ty_equal(1, first, body) then
-					(NONE, NONE, NONE, SOME(mergeTy(first, body)), NONE)
+			then if describedBy(first, body) then
+					(NONE, NONE, NONE, SOME(mergeTyInto(first, body)), NONE)
 				else
 					(NONE, NONE, SOME first, SOME body, NONE)
 			else (* with possible sep and possible term inside last *)
 			     (* two cases: first = body or first != body *)
-			    if (ty_equal(1, first, body)) then 
-			  	if (ty_equal(1, droplast(body), last)) then
-				  (bodytail, NONE, NONE, SOME (mergeTy(droplast(body), last)), NONE)
-				else
-				(* if the body tail can be pushed to last to find a terminator then
-				   we have a sep, otherwise no sep *)
-				let
-				  val termop = findTerm(bodytail, last)
-				in
-				  case termop of 
-					NONE => (NONE, NONE, NONE, SOME body, SOME last)
-					| _ => (bodytail, termop, NONE,  SOME(droplast(body)), 
-					  SOME (addtohead(last, lastEle(body))))
-				end
-			     else 
-				if (refine_equal_op(firsttail, bodytail)) then (*possible with sep*)
-				  	if (ty_equal(1, droplast(body), last)) then
-				  	  (bodytail, NONE, SOME first, 
-						SOME(mergeTy(droplast(body), last)), NONE)
-					else 
-					let
-					  val termop = findTerm(bodytail, last)
+			  let
+			     val firsteqbody = describedBy(first, body)
+			     val lasteqbody = describedBy(last, droplast(body)) 
+			     val withSep = refine_equal_op(firsttail, bodytail)
+			  in
+			     case (firsteqbody, lasteqbody, withSep) of 
+				(true, true, true) => 
+					let 
+					  val body' = mergeTyInto(droplast(first), droplast(body))
+					  val body'' = mergeTyInto(last, body')
 					in
-					  case termop of 
-						NONE => (NONE, findRefined(last), 
-							SOME first, SOME body, SOME last)
-						| _ => (bodytail, termop, SOME first,  
-							SOME(droplast(body)), 
-							SOME (addtohead(last, lastEle(body))))
+					(bodytail, NONE, NONE, SOME(body''), NONE)
 					end
-				else (* no sep *)
-					(NONE, findRefined(last), SOME first, SOME body, SOME last)	
-		end 
+				| (true, true, false) => (NONE, NONE, NONE,
+					SOME(mergeTyInto(last, 
+						mergeTyInto(droplast(first), droplast(body)))),
+					NONE)
+				| (true, false, _) => (NONE, NONE, NONE, 
+					SOME(mergeTyInto(first, body)), SOME last)
+				| (false, true, _) => (bodytail, NONE, SOME first,
+					SOME(mergeTyInto(last, droplast(body))), NONE)
+				| (_, _, _) => (NONE, NONE, SOME first, SOME body, SOME last)
+			  end
+		end handle TyMismatch => (NONE, NONE, SOME first, SOME body, SOME last)
 	in
-		if (isStruct(body))
-		then
-		(
 		  let 
 		    val (sepop, termop, firstop, bodyop, lastop) = getSepTerm(first, body, last)
 		    val newty = 
@@ -463,27 +434,27 @@ and refine_array ty =
 			|(SOME(first'), SOME(body'), SOME(last')) =>
 			  	Pstruct(mkTyAux(#coverage aux), 
 			    	[first', RArray(aux, sepop, termop, body', lenop, lengths), last'])
-			| _ => raise TyMismatch
+			| _ => ty
 (*
 		    val _ = (print "Done refining array in struct to:\n"; printTy newty)  
 *)
 		  in
 		 	newty
 		  end
-		)
-		else ty
-	end
+	end 
 	| Pstruct(a, tylist) =>
 		let 
 (*
 		  val _ = (print "trying to refine array in struct \n"; printTy ty)
 *)
 		  fun findRefined ty =
-		  (*function to find the first const refined string in this ty*)
+		  (*funtion to find the first base or refine type and convert it to refined type *)
 			case ty of
 			  Pstruct(_, tylist) => findRefined (hd tylist)
 			| RefinedBase(_, refined, _) => SOME(refined)
+			| Base(_, ltokens) => ltokenlToRefinedOp ltokens
 			| _ => NONE
+
 		  fun updateTerm (arrayty, termop) =
 			case (arrayty) of
 				RArray(a, sep, term, body, len, lengths)=>
