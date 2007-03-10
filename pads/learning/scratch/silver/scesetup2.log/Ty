@@ -1,187 +1,187 @@
-Punion(Id = BTy_1 2368)
-	""(Id = BTy_0 1213);
-	Pstruct(Id = BTy_342 1155)
-		Punion(Id = BTy_103 1155)
-			Pstruct(Id = BTy_102 1152)
-				Punion(Id = BTy_5 1152)
-					""(Id = BTy_4 1139);
-					Pstruct(Id = BTy_11 13)
-						"----"(Id = BTy_6 13);
-						[string](Id = BTy_10 13);
+Punion(Id = BTy_1 2368, 95.340b, 24458.771b)
+	[empty](Id = BTy_0 1213, 0b, 0b);
+	Pstruct(Id = BTy_165 1155, 94.340b, 24457.771b)
+		Punion(Id = BTy_103 1155, 59.170b, 17909.150b)
+			Pstruct(Id = BTy_102 1152, 58.170b, 17908.150b)
+				Punion(Id = BTy_5 1152, 6b, 111b)
+					[empty](Id = BTy_4 1139, 0b, 0b);
+					Pstruct(Id = BTy_11 13, 5b, 110b)
+						(-)(Id = BTy_6 13, 1b, 8b);
+						(-)(Id = BTy_7 13, 1b, 8b);
+						(-)(Id = BTy_8 13, 1b, 8b);
+						(-)(Id = BTy_9 13, 1b, 8b);
+						[string](Id = BTy_10 13, 1b, 78b);
 					End Pstruct;
 				End Punion;
-				"	"(Id = BTy_12 1152);
-				RArray(Id = BTy_3 1152)
-					Pstruct(Id = BTy_35 1814)
-						Punion(Id = BTy_33 1814)
-							[1](Id = BTy_14 1);
-							Pstruct(Id = BTy_15 1809)
-								[string](Id = BTy_16 1809);
-								Punion(Id = BTy_18 1809)
-									""(Id = BTy_17 1353);
-									Pstruct(Id = BTy_189 456)
-										Punion(Id = BTy_21 456)
-											"\\"(Id = BTy_20 455);
-											""(Id = BTy_22 1);
+				[white space](Id = BTy_12 1152, 1b, 2b);
+				RArray(Id = BTy_3 1152, 15b, 15250.507b)
+					Pstruct(Id = BTy_35 1814, 15b, 1089.322b)
+						Punion(Id = BTy_33 1814, 14b, 1088.322b)
+							[int](Id = BTy_14 1, 1b, 3.322b);
+							Pstruct(Id = BTy_15 1809, 9b, 1067b)
+								[string](Id = BTy_16 1809, 1b, 84b);
+								Punion(Id = BTy_18 1809, 8b, 983b)
+									[empty](Id = BTy_17 1353, 0b, 0b);
+									Pstruct(Id = BTy_159 456, 7b, 982b)
+										Punion(Id = BTy_21 456, 2b, 9b)
+											(\\)(Id = BTy_20 455, 1b, 8b);
+											[empty](Id = BTy_22 1, 0b, 0b);
 										End Punion;
-										RArray(Id = BTy_19 456)
-											Pstruct(Id = BTy_25 820)
-												{"software", "system", }(Id = BTy_23 820);
-												"\\"(Id = BTy_24 820);
+										RArray(Id = BTy_19 456, 2b, 880b)
+											Pstruct(Id = BTy_25 820, 2b, 110b)
+												[string](Id = BTy_23 820, 1b, 102b);
+												(\\)(Id = BTy_24 820, 1b, 8b);
 											End Pstruct;
 										End RArray;
-										Punion(Id = BTy_27 456)
-											""(Id = BTy_26 455);
-											"/"(Id = BTy_28 1);
+										Punion(Id = BTy_27 456, 2b, 9b)
+											[empty](Id = BTy_26 455, 0b, 0b);
+											(/)(Id = BTy_28 1, 1b, 8b);
 										End Punion;
-										[string](Id = BTy_29 456);
+										[string](Id = BTy_29 456, 1b, 84b);
 									End Pstruct;
 								End Punion;
 							End Pstruct;
-							":"(Id = BTy_31 2);
-							"="(Id = BTy_32 2);
+							(:)(Id = BTy_31 2, 1b, 8b);
+							(=)(Id = BTy_32 2, 1b, 8b);
 						End Punion;
-						" "(Id = BTy_34 1814);
+						[white space](Id = BTy_34 1814, 1b, 1b);
 					End Pstruct;
 				End RArray;
-				Punion(Id = BTy_100 1152)
-					[2](Id = BTy_36 1);
-					Pstruct(Id = BTy_37 1151)
-						[string](Id = BTy_38 1151);
-						Punion(Id = BTy_40 1151)
-							""(Id = BTy_39 182);
-							Pstruct(Id = BTy_272 969)
-								Punion(Id = BTy_47 969)
-									Pstruct(Id = BTy_46 967)
-										Punion(Id = BTy_43 967)
-											""(Id = BTy_42 965);
-											":"(Id = BTy_44 2);
+				Punion(Id = BTy_100 1152, 35.170b, 2536.643b)
+					[int](Id = BTy_36 1, 1b, 3.322b);
+					Pstruct(Id = BTy_37 1151, 33.170b, 2532.321b)
+						[string](Id = BTy_38 1151, 1b, 258b);
+						Punion(Id = BTy_40 1151, 32.170b, 2274.321b)
+							[empty](Id = BTy_39 182, 0b, 0b);
+							Pstruct(Id = BTy_160 969, 31.170b, 2273.321b)
+								Punion(Id = BTy_47 969, 4b, 18b)
+									Pstruct(Id = BTy_46 967, 3b, 17b)
+										Punion(Id = BTy_43 967, 2b, 9b)
+											[empty](Id = BTy_42 965, 0b, 0b);
+											(:)(Id = BTy_44 2, 1b, 8b);
 										End Punion;
-										"\\"(Id = BTy_45 967);
+										(\\)(Id = BTy_45 967, 1b, 8b);
 									End Pstruct;
-									""(Id = BTy_48 2);
+									[empty](Id = BTy_48 2, 0b, 0b);
 								End Punion;
-								RArray(Id = BTy_41 969)
-									Pstruct(Id = BTy_51 2134)
-										[string](Id = BTy_49 2134);
-										"\\"(Id = BTy_50 2134);
+								RArray(Id = BTy_41 969, 2b, 1120b)
+									Pstruct(Id = BTy_51 2134, 2b, 140b)
+										[string](Id = BTy_49 2134, 1b, 132b);
+										(\\)(Id = BTy_50 2134, 1b, 8b);
 									End Pstruct;
 								End RArray;
-								Punion(Id = BTy_59 969)
-									Pstruct(Id = BTy_58 796)
-										Punion(Id = BTy_53 796)
-											""(Id = BTy_52 770);
-											[0...1080](Id = BTy_54 25);
-											"_"(Id = BTy_56 1);
+								Punion(Id = BTy_59 969, 25.170b, 1135.321b)
+									Pstruct(Id = BTy_58 796, 4.585b, 190.873b)
+										Punion(Id = BTy_53 796, 3.585b, 22.873b)
+											[empty](Id = BTy_52 770, 0b, 0b);
+											[int](Id = BTy_54 25, 1b, 13.288b);
+											(_)(Id = BTy_56 1, 1b, 8b);
 										End Punion;
-										[string](Id = BTy_57 796);
+										[string](Id = BTy_57 796, 1b, 168b);
 									End Pstruct;
-									""(Id = BTy_60 114);
-									[402...60408](Id = BTy_62 52);
-									Pstruct(Id = BTy_68 4)
-										"{"(Id = BTy_64 4);
-										[4](Id = BTy_65 4);
-										[string](Id = BTy_66 4);
-										"}"(Id = BTy_67 4);
+									[empty](Id = BTy_60 114, 0b, 0b);
+									[int](Id = BTy_62 52, 1b, 16.610b);
+									Pstruct(Id = BTy_68 4, 4b, 229.322b)
+										({)(Id = BTy_64 4, 1b, 8b);
+										[int](Id = BTy_65 4, 1b, 3.322b);
+										[string](Id = BTy_66 4, 1b, 210b);
+										(})(Id = BTy_67 4, 1b, 8b);
 									End Pstruct;
-									Pstruct(Id = BTy_97 2)
-										":("(Id = BTy_70 2);
-										{"A", "D", }(Id = BTy_73 2);
-										";;"(Id = BTy_74 2);
-										[0](Id = BTy_76 2);
-										{"x800", "xf1fff", }(Id = BTy_77 2);
-										";;;"(Id = BTy_78 2);
-										{"AN", "BA", }(Id = BTy_81 2);
-										")"(Id = BTy_82 2);
-										RArray(Id = BTy_71 2)
-											Pstruct(Id = BTy_95 9)
-												"(A;;"(Id = BTy_84 9);
-												[0](Id = BTy_88 9);
-												{"x20801", "xf1fff", }(Id = BTy_89 9);
-												";;;"(Id = BTy_90 9);
-												{"BA", "WD", }(Id = BTy_93 9);
-												")"(Id = BTy_94 9);
+									Pstruct(Id = BTy_97 2, 12b, 687.932b)
+										(:)(Id = BTy_70 2, 1b, 8b);
+										RArray(Id = BTy_71 2, 11b, 679.932b)
+											Pstruct(Id = BTy_83 11, 11b, 113.322b)
+												(()(Id = BTy_72 11, 1b, 8b);
+												[string](Id = BTy_73 11, 1b, 6b);
+												(;)(Id = BTy_74 11, 1b, 8b);
+												(;)(Id = BTy_75 11, 1b, 8b);
+												[int](Id = BTy_76 11, 1b, 3.322b);
+												[string](Id = BTy_77 11, 1b, 36b);
+												(;)(Id = BTy_78 11, 1b, 8b);
+												(;)(Id = BTy_79 11, 1b, 8b);
+												(;)(Id = BTy_80 11, 1b, 8b);
+												[string](Id = BTy_81 11, 1b, 12b);
+												())(Id = BTy_82 11, 1b, 8b);
 											End Pstruct;
 										End RArray;
 									End Pstruct;
-									"*"(Id = BTy_99 1);
+									(*)(Id = BTy_99 1, 1b, 8b);
 								End Punion;
 							End Pstruct;
 						End Punion;
 					End Pstruct;
 				End Punion;
-				"."(Id = BTy_101 1152);
+				(.)(Id = BTy_101 1152, 1b, 8b);
 			End Pstruct;
-			""(Id = BTy_104 3);
+			[empty](Id = BTy_104 3, 0b, 0b);
 		End Punion;
-		RArray(Id = BTy_2 1155)
-			Pstruct(Id = BTy_137 356)
-				Punion(Id = BTy_106 356)
-					[1...2](Id = BTy_105 57);
-					Pstruct(Id = BTy_107 267)
-						[string](Id = BTy_108 267);
-						Punion(Id = BTy_110 267)
-							""(Id = BTy_109 235);
-							Parray(Id = BTy_111 32)((\\) )
-							First:
-								"\\"(Id = BTy_112 32);
-							Body:
-								"software\\"(Id = BTy_113 60);
-							Tail:
-								Pstruct(Id = BTy_116 32)
-									[string](Id = BTy_117 32);
-									Punion(Id = BTy_119 32)
-										""(Id = BTy_118 22);
-										Pstruct(Id = BTy_295 9)
-											" "(Id = BTy_121 9);
-											RArray(Id = BTy_120 9)
-												Pstruct(Id = BTy_124 2)
-													{"Program", "Trusted", }(Id = BTy_122 2);
-													" "(Id = BTy_123 2);
-												End Pstruct;
-											End RArray;
-											[string](Id = BTy_125 9);
-										End Pstruct;
-										"+"(Id = BTy_126 1);
-									End Punion;
-								End Pstruct;
-							End Parray;
+		RArray(Id = BTy_2 1155, 18.585b, 5932.915b)
+			Pstruct(Id = BTy_137 356, 18.585b, 1483.229b)
+				Punion(Id = BTy_106 356, 17.585b, 1475.229b)
+					[int](Id = BTy_105 57, 1b, 6.644b);
+					Pstruct(Id = BTy_107 267, 11.585b, 1195.585b)
+						[string](Id = BTy_108 267, 1b, 210b);
+						Punion(Id = BTy_110 267, 10.585b, 985.585b)
+							[empty](Id = BTy_109 235, 0b, 0b);
+							Pstruct(Id = BTy_163 32, 9.585b, 984.585b)
+								(\\)(Id = BTy_112 32, 1b, 8b);
+								RArray(Id = BTy_111 32, 2b, 696b)
+									Pstruct(Id = BTy_115 60, 2b, 116b)
+										[string](Id = BTy_113 60, 1b, 108b);
+										(\\)(Id = BTy_114 60, 1b, 8b);
+									End Pstruct;
+								End RArray;
+								[string](Id = BTy_117 32, 1b, 108b);
+								Punion(Id = BTy_119 32, 5.585b, 172.585b)
+									[empty](Id = BTy_118 22, 0b, 0b);
+									Pstruct(Id = BTy_162 9, 3b, 163b)
+										[white space](Id = BTy_121 9, 1b, 1b);
+										RArray(Id = BTy_120 9, 2b, 162b)
+											Separator: " "
+											[string](Id = BTy_122 11, 1b, 54b);
+										End RArray;
+									End Pstruct;
+									(+)(Id = BTy_126 1, 1b, 8b);
+								End Punion;
+							End Pstruct;
 						End Punion;
 					End Pstruct;
-					Pstruct(Id = BTy_304 10)
-						" "(Id = BTy_129 10);
-						RArray(Id = BTy_128 10)
-							Terminator: {"Enigma", "Time", }
-							Pstruct(Id = BTy_132 21)
-								[string](Id = BTy_130 21);
-								" "(Id = BTy_131 21);
-							End Pstruct;
+					Pstruct(Id = BTy_164 10, 3b, 271b)
+						[white space](Id = BTy_129 10, 1b, 1b);
+						RArray(Id = BTy_128 10, 2b, 270b)
+							Separator: " "
+							[string](Id = BTy_130 31, 1b, 54b);
 						End RArray;
-						{"Enigma", "Time", }(Id = BTy_133 10);
 					End Pstruct;
-					""(Id = BTy_134 22);
+					[empty](Id = BTy_134 22, 0b, 0b);
 				End Punion;
-				"."(Id = BTy_136 356);
+				(.)(Id = BTy_136 356, 1b, 8b);
 			End Pstruct;
 		End RArray;
-		Punion(Id = BTy_139 1155)
-			""(Id = BTy_138 1150);
-			Pstruct(Id = BTy_153 2)
-				"Saturday, March "(Id = BTy_140 2);
-				[20](Id = BTy_145 2);
-				", "(Id = BTy_146 2);
-				[2004](Id = BTy_148 2);
-				" "(Id = BTy_149 2);
-				{"12:50:55", "12:59:00", }(Id = BTy_150 2);
-				" PM"(Id = BTy_151 2);
+		Punion(Id = BTy_139 1155, 16.585b, 615.706b)
+			[empty](Id = BTy_138 1150, 0b, 0b);
+			Pstruct(Id = BTy_153 2, 13b, 262.122b)
+				[string](Id = BTy_140 2, 1b, 48b);
+				(,)(Id = BTy_141 2, 1b, 8b);
+				[white space](Id = BTy_142 2, 1b, 1b);
+				[string](Id = BTy_143 2, 1b, 30b);
+				[white space](Id = BTy_144 2, 1b, 1b);
+				[int](Id = BTy_145 2, 1b, 6.644b);
+				(,)(Id = BTy_146 2, 1b, 8b);
+				[white space](Id = BTy_147 2, 1b, 1b);
+				[int](Id = BTy_148 2, 1b, 13.288b);
+				[white space](Id = BTy_149 2, 1b, 1b);
+				[Time](Id = BTy_150 2, 1b, 131.190b);
+				[white space](Id = BTy_151 2, 1b, 1b);
+				[string](Id = BTy_152 2, 1b, 12b);
 			End Pstruct;
-			Parray(Id = BTy_155 3)((-) )
+			Parray(Id = BTy_155 3, 2b, 352b)((-) )
 			First:
-				"-"(Id = BTy_156 3);
+				(-)(Id = BTy_156 3, 1b, 8b);
 			Body:
-				"-"(Id = BTy_157 48);
+				(-)(Id = BTy_157 48, 1b, 8b);
 			Tail:
-				""(Id = BTy_158 3);
+				[empty](Id = BTy_158 3, 0b, 0b);
 			End Parray;
 		End Punion;
 	End Pstruct;

@@ -1,26 +1,25 @@
-Pstruct(Id = BTy_22 3)
-	[12...123](Id = BTy_0 3);
-	","(Id = BTy_1 3);
-	Punion(Id = BTy_3 3)
-		" "(Id = BTy_2 2);
-		""(Id = BTy_4 1);
+Pstruct(Id = BTy_22 3, 16b, 246.966b)
+	[int](Id = BTy_0 3, 1b, 9.966b);
+	(,)(Id = BTy_1 3, 1b, 8b);
+	Punion(Id = BTy_3 3, 2b, 2b)
+		[white space](Id = BTy_2 2, 1b, 1b);
+		[empty](Id = BTy_4 1, 0b, 0b);
 	End Punion;
-	"\""(Id = BTy_5 3);
-	Punion(Id = BTy_15 3)
-		Pstruct(Id = BTy_14 2)
-			{"goodbye", "hello", }(Id = BTy_6 2);
-			","(Id = BTy_7 2);
-			Parray(Id = BTy_8 2)([white space] )
-			First:
-				" "(Id = BTy_9 2);
-			Body:
-				"the "(Id = BTy_10 1);
-			Tail:
-				{"fred", "moon", }(Id = BTy_13 2);
-			End Parray;
+	(\")(Id = BTy_5 3, 1b, 8b);
+	Punion(Id = BTy_15 3, 7b, 148b)
+		Pstruct(Id = BTy_14 2, 5b, 123b)
+			[string](Id = BTy_6 2, 1b, 42b);
+			(,)(Id = BTy_7 2, 1b, 8b);
+			[white space](Id = BTy_9 2, 1b, 1b);
+			RArray(Id = BTy_8 2, 2b, 72b)
+				Separator: " "
+				[string](Id = BTy_10 3, 1b, 24b);
+			End RArray;
 		End Pstruct;
-		"helo"(Id = BTy_16 1);
+		[string](Id = BTy_16 1, 1b, 24b);
 	End Punion;
-	"\", "(Id = BTy_17 3);
-	{"today", "tomorrow", "yesterday", }(Id = BTy_21 3);
+	(\")(Id = BTy_17 3, 1b, 8b);
+	(,)(Id = BTy_19 3, 1b, 8b);
+	[white space](Id = BTy_20 3, 1b, 1b);
+	[string](Id = BTy_21 3, 1b, 54b);
 End Pstruct

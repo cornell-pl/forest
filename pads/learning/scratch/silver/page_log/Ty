@@ -1,26 +1,35 @@
-Pstruct(Id = BTy_32 354)
-	{"Andrew_s_printer", "hp_color_LaserJet_3700__378392_", "officejet_7100_series", }(Id = BTy_0 354);
-	Switch(BTy_0)(Id = BTy_2 354):
-	case {"Andrew_s_printer", "hp_color_LaserJet_3700__378392_", }:
-		""(Id = BTy_1 220);
-	case "officejet_7100_series":
-		"(Printer)"(Id = BTy_3 134);
-	End Switch;
-	" kfisher "(Id = BTy_7 354);
-	[2...130](Id = BTy_10 354);
-	" ["(Id = BTy_11 354);
-	[1...31](Id = BTy_13 354);
-	"/"(Id = BTy_14 354);
-	[string](Id = BTy_15 354);
-	"/"(Id = BTy_16 354);
-	[2006](Id = BTy_17 354);
-	":"(Id = BTy_18 354);
-	[Time](Id = BTy_19 354);
-	" "(Id = BTy_20 354);
-	[~800...~700](Id = BTy_21 354);
-	"] "(Id = BTy_22 354);
-	[1...41](Id = BTy_25 354);
-	" "(Id = BTy_26 354);
-	[1](Id = BTy_27 354);
-	" - localhost"(Id = BTy_28 354);
+Pstruct(Id = BTy_32 354, 29b, 599.341b)
+	[string](Id = BTy_0 354, 1b, 186b);
+	Punion(Id = BTy_2 354, 4b, 59b)
+		[empty](Id = BTy_1 220, 0b, 0b);
+		Pstruct(Id = BTy_6 134, 3b, 58b)
+			(()(Id = BTy_3 134, 1b, 8b);
+			[string](Id = BTy_4 134, 1b, 42b);
+			())(Id = BTy_5 134, 1b, 8b);
+		End Pstruct;
+	End Punion;
+	[white space](Id = BTy_7 354, 1b, 1b);
+	[string](Id = BTy_8 354, 1b, 42b);
+	[white space](Id = BTy_9 354, 1b, 1b);
+	[int](Id = BTy_10 354, 1b, 9.966b);
+	[white space](Id = BTy_11 354, 1b, 1b);
+	([)(Id = BTy_12 354, 1b, 8b);
+	[int](Id = BTy_13 354, 1b, 6.644b);
+	(/)(Id = BTy_14 354, 1b, 8b);
+	[string](Id = BTy_15 354, 1b, 18b);
+	(/)(Id = BTy_16 354, 1b, 8b);
+	[int](Id = BTy_17 354, 1b, 13.288b);
+	(:)(Id = BTy_18 354, 1b, 8b);
+	[Time](Id = BTy_19 354, 1b, 131.190b);
+	[white space](Id = BTy_20 354, 1b, 1b);
+	[int](Id = BTy_21 354, 1b, 13.288b);
+	(])(Id = BTy_22 354, 1b, 8b);
+	[white space](Id = BTy_24 354, 1b, 1b);
+	[int](Id = BTy_25 354, 1b, 6.644b);
+	[white space](Id = BTy_26 354, 1b, 1b);
+	[int](Id = BTy_27 354, 1b, 3.322b);
+	[white space](Id = BTy_28 354, 1b, 1b);
+	(-)(Id = BTy_29 354, 1b, 8b);
+	[white space](Id = BTy_30 354, 1b, 1b);
+	[string](Id = BTy_31 354, 1b, 54b);
 End Pstruct

@@ -1,0 +1,93 @@
+Pstruct(Id = BTy_370 2371)
+	Punion(Id = BTy_2 2371)
+		""(Id = BTy_1 2370);
+		"\255\254-"(Id = BTy_3 1);
+	End Punion;
+	"\^@"(Id = BTy_7 2371);
+	RArray(Id = BTy_0 2371)
+		Pstruct(Id = BTy_138 72469)
+			Punion(Id = BTy_10 72469)
+				[string](Id = BTy_9 62329);
+				"\\"(Id = BTy_11 4468);
+				" "(Id = BTy_13 3048);
+				"."(Id = BTy_15 1508);
+				[0...9](Id = BTy_17 885);
+				"-"(Id = BTy_19 190);
+				Pstruct(Id = BTy_49 11)
+					RArray(Id = BTy_29 11)
+						Terminator: ";\^@;\^@;\^@"
+						Pstruct(Id = BTy_35 67)
+							Punion(Id = BTy_32 67)
+								[0](Id = BTy_31 48);
+								"x"(Id = BTy_33 19);
+							End Punion;
+							"\^@"(Id = BTy_34 67);
+						End Pstruct;
+					End RArray;
+					";\^@;\^@;\^@"(Id = BTy_37 11);
+					{"A", "B", }(Id = BTy_43 11);
+					"\^@"(Id = BTy_44 11);
+					{"A", "N", }(Id = BTy_45 11);
+					"\^@)\^@;\^@;\^@"(Id = BTy_46 11);
+					{"A", "D", }(Id = BTy_23 11);
+					"(\^@"(Id = BTy_21 11);
+				End Pstruct;
+				":"(Id = BTy_51 10);
+				"_"(Id = BTy_53 7);
+				Pstruct(Id = BTy_130 4)
+					"{\^@"(Id = BTy_55 4);
+					[4](Id = BTy_57 4);
+					"\^@D\^@"(Id = BTy_58 4);
+					[3](Id = BTy_61 4);
+					"\^@"(Id = BTy_62 4);
+					[6](Id = BTy_63 4);
+					"\^@E\^@"(Id = BTy_64 4);
+					[9](Id = BTy_67 4);
+					"\^@"(Id = BTy_68 4);
+					[7](Id = BTy_69 4);
+					"\^@"(Id = BTy_70 4);
+					[2...5](Id = BTy_71 4);
+					"\^@-\^@E\^@"(Id = BTy_72 4);
+					[3](Id = BTy_77 4);
+					"\^@"(Id = BTy_78 4);
+					[2](Id = BTy_79 4);
+					"\^@"(Id = BTy_80 4);
+					[5](Id = BTy_81 4);
+					"\^@-\^@"(Id = BTy_82 4);
+					[1](Id = BTy_85 4);
+					"\^@"(Id = BTy_86 4);
+					[1](Id = BTy_87 4);
+					"\^@C\^@E\^@-\^@B\^@F\^@C\^@"(Id = BTy_88 4);
+					[1](Id = BTy_101 4);
+					"\^@-\^@"(Id = BTy_102 4);
+					[0](Id = BTy_105 4);
+					"\^@"(Id = BTy_106 4);
+					[8](Id = BTy_107 4);
+					"\^@"(Id = BTy_108 4);
+					[0](Id = BTy_109 4);
+					"\^@"(Id = BTy_110 4);
+					[0](Id = BTy_111 4);
+					"\^@"(Id = BTy_112 4);
+					[2](Id = BTy_113 4);
+					"\^@B\^@E\^@"(Id = BTy_114 4);
+					[1](Id = BTy_119 4);
+					"\^@"(Id = BTy_120 4);
+					[0](Id = BTy_121 4);
+					"\^@"(Id = BTy_122 4);
+					[3](Id = BTy_123 4);
+					"\^@"(Id = BTy_124 4);
+					[1](Id = BTy_125 4);
+					"\^@"(Id = BTy_126 4);
+					[8](Id = BTy_127 4);
+					"\^@}"(Id = BTy_128 4);
+				End Pstruct;
+				"*"(Id = BTy_131 1);
+				"+"(Id = BTy_132 1);
+				","(Id = BTy_133 4);
+				"/"(Id = BTy_134 1);
+				"="(Id = BTy_135 2);
+			End Punion;
+			"\^@"(Id = BTy_137 72469);
+		End Pstruct;
+	End RArray;
+End Pstruct

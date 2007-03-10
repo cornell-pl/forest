@@ -84,13 +84,6 @@ learn:	main.sml
 IND  = data
 OUTD = output
 
-%.silver :
-	@make $(*F).ag
-
-%.ag :
-	make $(*F)
-	make -C silver $(*F)
-
 DATA = 1967Transactions.short  \
        MER_T01_01.csv          \
        ProfSec.log             \
@@ -135,14 +128,57 @@ SILVERS = $(addsuffix .ag,$(DATA))
 silvers: $(SILVERS)
 	echo Making silver version of each data file output
 
+1967Transactions.short.ag: 1967Transactions.short
+MER_T01_01.csv.ag:         MER_T01_01.csv
+ProfSec.log.ag: ProfSec.log
+SCESETUP.LOG.ag: SCESETUP.LOG
+access_log.ag: access_log
+ai-simple.ag: ai-simple
+ai.3000.ag: ai.3000
+apache.txt.ag: apache.txt
+asl.log.ag: asl.log
+backup1.log.ag: backup1.log
+backup2.log.ag: backup2.log
+boot.log.ag: boot.log
+crashreporter.log.ag: crashreporter.log
+daily.out.ag: daily.out
+dibbler.1000.ag: dibbler.1000
+dmesg.ag: dmesg
+error_log.ag: error_log
+hp-array.ag: hp-array
+hp-struct.ag: hp-struct
+ijnltif.ag: ijnltif
+install.log.ag: install.log
+interactions.txt.small.ag: interactions.txt.small
+interface.loop.ag: interface.loop
+lsof.ag: lsof
+netstat.ag: netstat
+netstat-an.ag: netstat-an
+page_log.ag: page_log
+quarterlypersonalincome.ag: quarterlypersonalincome
+railroad.txt.ag: railroad.txt
+rpmpkgs.ag: rpmpkgs
+scesetup2.log.ag: scesetup2.log
+scrollkeeper.log.ag: scrollkeeper.log
+simplegroups.ag: simplegroups
+simplexml.ag: simplexml
+windowserver_last.log.ag: windowserver_last.log
+yum.log.ag: yum.log
+yum.txt.ag: yum.txt
+
+
+define silver-it
+@if [ ! -d silver/$(*F) ] ; then mkdir silver/$(*F); fi
+cp output/$(*F)/Ty silver/$(*F);
+cp output/$(*F)/Params silver/$(*F);
+endef
+
+%.silver :    ; $(silver-it)
+%.ag     :    ; $(silver-it)
+
 define learn-it
 ./learn data/$@ -d output/$@ `maxdepth.pl $@`
 touch output/$@
-endef
-
-define silver-it
-@if [ ! -d silver/$@ ] ; then mkdir silver/$@; cvs add silver/$@; fi
-@if [ -e silver/$< ] ; then cp $^ silver/$@ ; else cp $^ silver/$@; cd silver/$@; cvs add $(notdir $^); fi
 endef
 
 .PHONY: $(DATA)

@@ -1,23 +1,23 @@
-Pstruct(Id = BTy_127 440, 87.5849625007b, 7060.17925822b)
+Pstruct(Id = BTy_127 440, 87.585b, 7060.179b)
 	[string](Id = BTy_0 440, 1b, 18b);
 	[white space](Id = BTy_1 440, 1b, 1b);
 	[string](Id = BTy_2 440, 1b, 18b);
 	[white space](Id = BTy_3 440, 1b, 2b);
-	[int](Id = BTy_5 440, 1b, 6.64385618977b);
+	[int](Id = BTy_5 440, 1b, 6.644b);
 	[white space](Id = BTy_6 440, 1b, 1b);
-	[Time](Id = BTy_7 440, 1b, 131.189949536b);
+	[Time](Id = BTy_7 440, 1b, 131.190b);
 	[white space](Id = BTy_8 440, 1b, 1b);
-	[int](Id = BTy_9 440, 1b, 13.2877123795b);
+	[int](Id = BTy_9 440, 1b, 13.288b);
 	[white space](Id = BTy_10 440, 1b, 1b);
 	[string](Id = BTy_11 440, 1b, 84b);
 	([)(Id = BTy_13 440, 1b, 8b);
-	[int](Id = BTy_14 440, 1b, 16.6096404744b);
+	[int](Id = BTy_14 440, 1b, 16.610b);
 	(])(Id = BTy_15 440, 1b, 8b);
 	(:)(Id = BTy_18 440, 1b, 8b);
-	RArray(Id = BTy_17 440, 42b, 2635.57542476b)
+	RArray(Id = BTy_17 440, 42b, 2635.575b)
 		Separator: ":"
 		Terminator: ": "
-		Punion(Id = BTy_58 297, 40b, 658.64385619b)
+		Punion(Id = BTy_58 297, 40b, 658.644b)
 			Pstruct(Id = BTy_57 293, 29b, 517b)
 				[white space](Id = BTy_19 293, 1b, 1b);
 				[string](Id = BTy_20 293, 1b, 48b);
@@ -63,11 +63,11 @@ Pstruct(Id = BTy_127 440, 87.5849625007b, 7060.17925822b)
 					End Pstruct;
 				End Punion;
 			End Pstruct;
-			Pstruct(Id = BTy_59 4, 10b, 140.64385619b)
+			Pstruct(Id = BTy_59 4, 10b, 140.644b)
 				[white space](Id = BTy_60 4, 1b, 1b);
-				Punion(Id = BTy_74 4, 7b, 102.64385619b)
-					Pstruct(Id = BTy_64 2, 1b, 6.64385618977b)
-						[int](Id = BTy_61 2, 1b, 6.64385618977b);
+				Punion(Id = BTy_74 4, 7b, 102.644b)
+					Pstruct(Id = BTy_64 2, 1b, 6.644b)
+						[int](Id = BTy_61 2, 1b, 6.644b);
 					End Pstruct;
 					Pstruct(Id = BTy_73 2, 5b, 95b)
 						[string](Id = BTy_65 2, 1b, 48b);
@@ -115,9 +115,9 @@ Pstruct(Id = BTy_127 440, 87.5849625007b, 7060.17925822b)
 			[white space](Id = BTy_99 163, 1b, 1b);
 		End Pstruct;
 	End RArray;
-	Punion(Id = BTy_126 440, 14.5849625007b, 997.87267488b)
-		Pstruct(Id = BTy_103 1, 2b, 21.2877123795b)
-			[int](Id = BTy_101 1, 1b, 13.2877123795b);
+	Punion(Id = BTy_126 440, 14.585b, 997.873b)
+		Pstruct(Id = BTy_103 1, 2b, 21.288b)
+			[int](Id = BTy_101 1, 1b, 13.288b);
 			(!)(Id = BTy_102 1, 1b, 8b);
 		End Pstruct;
 		Pstruct(Id = BTy_112 159, 6b, 125b)

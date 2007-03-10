@@ -1,237 +1,340 @@
-Pstruct(Id = BTy_327 67)
-	Punion(Id = BTy_192 67)
-		Pstruct(Id = BTy_0 62)
-			[string](Id = BTy_1 62);
-			Punion(Id = BTy_8 62)
-				Pstruct(Id = BTy_7 60)
-					Punion(Id = BTy_4 60)
-						""(Id = BTy_3 59);
-						":"(Id = BTy_5 1);
+Pstruct(Id = BTy_327 67, 232.681b, 13116.143b)
+	Punion(Id = BTy_192 67, 133.077b, 12055.510b)
+		Pstruct(Id = BTy_0 62, 24.907b, 3246.401b)
+			[string](Id = BTy_1 62, 1b, 96b);
+			Punion(Id = BTy_8 62, 4b, 12b)
+				Pstruct(Id = BTy_7 60, 3b, 11b)
+					Punion(Id = BTy_4 60, 2b, 9b)
+						[empty](Id = BTy_3 59, 0b, 0b);
+						(:)(Id = BTy_5 1, 1b, 8b);
 					End Punion;
-					" "(Id = BTy_6 60);
+					[white space](Id = BTy_6 60, 1b, 2b);
 				End Pstruct;
-				""(Id = BTy_9 2);
+				[empty](Id = BTy_9 2, 0b, 0b);
 			End Punion;
-			RArray(Id = BTy_2 62)
-				Pstruct(Id = BTy_28 188)
-					Punion(Id = BTy_15 188)
-						Pstruct(Id = BTy_14 179)
-							[string](Id = BTy_10 179);
-							Punion(Id = BTy_12 179)
-								""(Id = BTy_11 178);
-								";"(Id = BTy_13 1);
+			RArray(Id = BTy_2 62, 14.322b, 3006.816b)
+				Pstruct(Id = BTy_28 188, 14.322b, 158.253b)
+					Punion(Id = BTy_15 188, 13.322b, 156.253b)
+						Pstruct(Id = BTy_14 179, 3b, 93b)
+							[string](Id = BTy_10 179, 1b, 84b);
+							Punion(Id = BTy_12 179, 2b, 9b)
+								[empty](Id = BTy_11 178, 0b, 0b);
+								(;)(Id = BTy_13 1, 1b, 8b);
 							End Punion;
 						End Pstruct;
-						Pstruct(Id = BTy_16 2)
-							[1...1992](Id = BTy_17 2);
-							Switch(BTy_17)(Id = BTy_22 2):
-							case [1]:
-								Pstruct(Id = BTy_20 1)
-									[~9](Id = BTy_18 1);
-									":"(Id = BTy_19 1);
+						Pstruct(Id = BTy_16 2, 5b, 36.932b)
+							[int](Id = BTy_17 2, 1b, 13.288b);
+							Punion(Id = BTy_22 2, 4b, 23.644b)
+								Pstruct(Id = BTy_20 1, 2b, 14.644b)
+									[int](Id = BTy_18 1, 1b, 6.644b);
+									(:)(Id = BTy_19 1, 1b, 8b);
 								End Pstruct;
-							case [1992]:
-								";"(Id = BTy_21 1);
-							End Switch;
+								(;)(Id = BTy_21 1, 1b, 8b);
+							End Punion;
 						End Pstruct;
-						"-"(Id = BTy_23 3);
-						"/"(Id = BTy_24 1);
-						"="(Id = BTy_25 3);
+						(-)(Id = BTy_23 3, 1b, 8b);
+						(/)(Id = BTy_24 1, 1b, 8b);
+						(=)(Id = BTy_25 3, 1b, 8b);
 					End Punion;
-					"  "(Id = BTy_27 188);
+					[white space](Id = BTy_27 188, 1b, 2b);
 				End Pstruct;
 			End RArray;
-			Punion(Id = BTy_30 62)
-				[string](Id = BTy_29 41);
-				""(Id = BTy_31 19);
-				Pstruct(Id = BTy_36 2)
-					"("(Id = BTy_33 2);
-					{"PATCO", "PATH", }(Id = BTy_34 2);
-					")"(Id = BTy_35 2);
+			Punion(Id = BTy_30 62, 5.585b, 131.585b)
+				[string](Id = BTy_29 41, 1b, 84b);
+				[empty](Id = BTy_31 19, 0b, 0b);
+				Pstruct(Id = BTy_36 2, 3b, 46b)
+					(()(Id = BTy_33 2, 1b, 8b);
+					[string](Id = BTy_34 2, 1b, 30b);
+					())(Id = BTy_35 2, 1b, 8b);
 				End Pstruct;
 			End Punion;
 		End Pstruct;
-		Pstruct(Id = BTy_190 4)
-			"\""(Id = BTy_37 4);
-			Punion(Id = BTy_52 4)
-				Pstruct(Id = BTy_51 2)
-					{"Niagara", "San", }(Id = BTy_40 2);
-					" "(Id = BTy_41 2);
-					RArray(Id = BTy_39 2)
-						Terminator: {"System", "Trolley", }
-						Pstruct(Id = BTy_45 4)
-							{"Diego", "Frontier", }(Id = BTy_43 4);
-							" "(Id = BTy_44 4);
-						End Pstruct;
+		Pstruct(Id = BTy_190 4, 106.585b, 8807.524b)
+			(\")(Id = BTy_37 4, 1b, 8b);
+			Punion(Id = BTy_52 4, 25b, 567.288b)
+				Pstruct(Id = BTy_51 2, 4b, 249b)
+					RArray(Id = BTy_39 2, 2b, 240b)
+						Separator: " "
+						[string](Id = BTy_43 6, 1b, 48b);
 					End RArray;
-					{"System", "Trolley", }(Id = BTy_46 2);
-					", Inc"(Id = BTy_47 2);
+					(,)(Id = BTy_47 2, 1b, 8b);
+					[white space](Id = BTy_48 2, 1b, 1b);
 				End Pstruct;
-				Pstruct(Id = BTy_74 1)
-					"Rail transit data for "(Id = BTy_53 1);
-					[2002](Id = BTy_61 1);
-					" includes both directly operated and purchased"(Id = BTy_62 1);
+				Pstruct(Id = BTy_74 1, 20b, 317.288b)
+					[string](Id = BTy_53 1, 1b, 24b);
+					[white space](Id = BTy_54 1, 1b, 1b);
+					[string](Id = BTy_55 1, 1b, 42b);
+					[white space](Id = BTy_56 1, 1b, 1b);
+					[string](Id = BTy_57 1, 1b, 24b);
+					[white space](Id = BTy_58 1, 1b, 1b);
+					[string](Id = BTy_59 1, 1b, 18b);
+					[white space](Id = BTy_60 1, 1b, 1b);
+					[int](Id = BTy_61 1, 1b, 13.288b);
+					[white space](Id = BTy_62 1, 1b, 1b);
+					[string](Id = BTy_63 1, 1b, 48b);
+					[white space](Id = BTy_64 1, 1b, 1b);
+					[string](Id = BTy_65 1, 1b, 24b);
+					[white space](Id = BTy_66 1, 1b, 1b);
+					[string](Id = BTy_67 1, 1b, 48b);
+					[white space](Id = BTy_68 1, 1b, 1b);
+					[string](Id = BTy_69 1, 1b, 48b);
+					[white space](Id = BTy_70 1, 1b, 1b);
+					[string](Id = BTy_71 1, 1b, 18b);
+					[white space](Id = BTy_72 1, 1b, 1b);
 				End Pstruct;
-				"U"(Id = BTy_76 1);
 			End Punion;
-			"."(Id = BTy_77 4);
-			RArray(Id = BTy_38 4)
-				Pstruct(Id = BTy_185 6)
-					Punion(Id = BTy_174 6)
-						Pstruct(Id = BTy_173 3)
-							Punion(Id = BTy_139 3)
-								"nsf?OpenDatabase as of February "(Id = BTy_79 1);
-								" Department of Transportation, Federal Transit Administration, National Transit Database (Washington, DC: Annual Issues), table "(Id = BTy_90 1);
-								"  Prior to "(Id = BTy_133 1);
-							End Punion;
-							[21...2002](Id = BTy_140 3);
-							Punion(Id = BTy_171 3)
-								Pstruct(Id = BTy_170 2)
-									","(Id = BTy_141 2);
-									Punion(Id = BTy_154 2)
-										" Internet site http://www"(Id = BTy_142 1);
-										"  the data include directly operated service only"(Id = BTy_155 1);
-									End Punion;
+			[string](Id = BTy_73 4, 1b, 54b);
+			(.)(Id = BTy_77 4, 1b, 8b);
+			RArray(Id = BTy_38 4, 75.585b, 8159.236b)
+				Pstruct(Id = BTy_185 6, 75.585b, 1359.873b)
+					Punion(Id = BTy_174 6, 74.585b, 1351.873b)
+						Pstruct(Id = BTy_173 3, 67.585b, 1213.873b)
+							Punion(Id = BTy_139 3, 43.585b, 832.585b)
+								Pstruct(Id = BTy_89 1, 7b, 124b)
+									[string](Id = BTy_79 1, 1b, 18b);
+									(?)(Id = BTy_80 1, 1b, 8b);
+									[string](Id = BTy_81 1, 1b, 72b);
+									[white space](Id = BTy_82 1, 1b, 1b);
+									[string](Id = BTy_83 1, 1b, 12b);
+									[white space](Id = BTy_84 1, 1b, 1b);
+									[string](Id = BTy_85 1, 1b, 12b);
 								End Pstruct;
-								""(Id = BTy_172 1);
+								Pstruct(Id = BTy_131 1, 33b, 675b)
+									[white space](Id = BTy_90 1, 1b, 1b);
+									[string](Id = BTy_91 1, 1b, 60b);
+									[white space](Id = BTy_92 1, 1b, 1b);
+									[string](Id = BTy_93 1, 1b, 12b);
+									[white space](Id = BTy_94 1, 1b, 1b);
+									[string](Id = BTy_95 1, 1b, 84b);
+									(,)(Id = BTy_97 1, 1b, 8b);
+									[white space](Id = BTy_98 1, 1b, 1b);
+									[string](Id = BTy_99 1, 1b, 42b);
+									[white space](Id = BTy_100 1, 1b, 1b);
+									[string](Id = BTy_101 1, 1b, 42b);
+									[white space](Id = BTy_102 1, 1b, 1b);
+									[string](Id = BTy_103 1, 1b, 84b);
+									(,)(Id = BTy_105 1, 1b, 8b);
+									[white space](Id = BTy_106 1, 1b, 1b);
+									[string](Id = BTy_107 1, 1b, 48b);
+									[white space](Id = BTy_108 1, 1b, 1b);
+									[string](Id = BTy_109 1, 1b, 42b);
+									[white space](Id = BTy_110 1, 1b, 1b);
+									[string](Id = BTy_111 1, 1b, 48b);
+									[white space](Id = BTy_112 1, 1b, 1b);
+									(()(Id = BTy_114 1, 1b, 8b);
+									[string](Id = BTy_115 1, 1b, 60b);
+									(,)(Id = BTy_116 1, 1b, 8b);
+									[white space](Id = BTy_117 1, 1b, 1b);
+									[string](Id = BTy_118 1, 1b, 12b);
+									(:)(Id = BTy_119 1, 1b, 8b);
+									[white space](Id = BTy_120 1, 1b, 1b);
+									[string](Id = BTy_121 1, 1b, 36b);
+									[white space](Id = BTy_122 1, 1b, 1b);
+									[string](Id = BTy_123 1, 1b, 36b);
+									())(Id = BTy_124 1, 1b, 8b);
+									(,)(Id = BTy_126 1, 1b, 8b);
+								End Pstruct;
+								Pstruct(Id = BTy_138 1, 2b, 32b)
+									[white space](Id = BTy_133 1, 1b, 2b);
+									[string](Id = BTy_134 1, 1b, 30b);
+								End Pstruct;
+							End Punion;
+							[white space](Id = BTy_127 3, 1b, 1b);
+							[string](Id = BTy_128 3, 1b, 48b);
+							[white space](Id = BTy_129 3, 1b, 1b);
+							[int](Id = BTy_140 3, 1b, 13.288b);
+							Punion(Id = BTy_171 3, 20b, 318b)
+								Pstruct(Id = BTy_170 2, 19b, 317b)
+									(,)(Id = BTy_141 2, 1b, 8b);
+									[white space](Id = BTy_155 2, 1b, 2b);
+									[string](Id = BTy_156 2, 1b, 48b);
+									[white space](Id = BTy_157 2, 1b, 1b);
+									[string](Id = BTy_158 2, 1b, 24b);
+									[white space](Id = BTy_159 2, 1b, 1b);
+									[string](Id = BTy_160 2, 1b, 42b);
+									Punion(Id = BTy_154 2, 11b, 167b)
+										Pstruct(Id = BTy_153 1, 3b, 24b)
+											(:)(Id = BTy_149 1, 1b, 8b);
+											(/)(Id = BTy_150 1, 1b, 8b);
+											(/)(Id = BTy_151 1, 1b, 8b);
+										End Pstruct;
+										Pstruct(Id = BTy_169 1, 7b, 142b)
+											[white space](Id = BTy_161 1, 1b, 1b);
+											[string](Id = BTy_162 1, 1b, 48b);
+											[white space](Id = BTy_163 1, 1b, 1b);
+											[string](Id = BTy_164 1, 1b, 48b);
+											[white space](Id = BTy_165 1, 1b, 1b);
+											[string](Id = BTy_166 1, 1b, 42b);
+											[white space](Id = BTy_167 1, 1b, 1b);
+										End Pstruct;
+									End Punion;
+									[string](Id = BTy_168 2, 1b, 24b);
+								End Pstruct;
+								[empty](Id = BTy_172 1, 0b, 0b);
 							End Punion;
 						End Pstruct;
-						Pstruct(Id = BTy_175 3)
-							"S"(Id = BTy_176 3);
-							Punion(Id = BTy_178 3)
-								""(Id = BTy_177 2);
-								"/NTD/ntdhome"(Id = BTy_179 1);
+						Pstruct(Id = BTy_175 3, 6b, 137b)
+							[string](Id = BTy_176 3, 1b, 60b);
+							Punion(Id = BTy_178 3, 5b, 77b)
+								[empty](Id = BTy_177 2, 0b, 0b);
+								Pstruct(Id = BTy_183 1, 4b, 76b)
+									(/)(Id = BTy_179 1, 1b, 8b);
+									[string](Id = BTy_180 1, 1b, 18b);
+									(/)(Id = BTy_181 1, 1b, 8b);
+									[string](Id = BTy_182 1, 1b, 42b);
+								End Pstruct;
 							End Punion;
 						End Pstruct;
 					End Punion;
-					"."(Id = BTy_184 6);
+					(.)(Id = BTy_184 6, 1b, 8b);
 				End Pstruct;
 			End RArray;
-			Punion(Id = BTy_187 4)
-				""(Id = BTy_186 3);
-				"  "(Id = BTy_188 1);
+			Punion(Id = BTy_187 4, 2b, 3b)
+				[empty](Id = BTy_186 3, 0b, 0b);
+				[white space](Id = BTy_188 1, 1b, 2b);
 			End Punion;
-			"\""(Id = BTy_189 4);
+			(\")(Id = BTy_189 4, 1b, 8b);
 		End Pstruct;
-		""(Id = BTy_191 1);
+		[empty](Id = BTy_191 1, 0b, 0b);
 	End Punion;
-	","(Id = BTy_193 67);
-	Punion(Id = BTy_218 67)
-		Pstruct(Id = BTy_217 56)
-			"\""(Id = BTy_194 56);
-			[string](Id = BTy_196 56);
-			Punion(Id = BTy_198 56)
-				""(Id = BTy_197 35);
-				Pstruct(Id = BTy_209 21)
-					Punion(Id = BTy_200 21)
-						""(Id = BTy_199 20);
-						"."(Id = BTy_201 1);
+	(,)(Id = BTy_193 67, 1b, 8b);
+	Punion(Id = BTy_218 67, 21.585b, 306.585b)
+		Pstruct(Id = BTy_217 56, 15b, 201b)
+			(\")(Id = BTy_194 56, 1b, 8b);
+			[string](Id = BTy_196 56, 1b, 72b);
+			Punion(Id = BTy_198 56, 8b, 91b)
+				[empty](Id = BTy_197 35, 0b, 0b);
+				Pstruct(Id = BTy_209 21, 7b, 90b)
+					Punion(Id = BTy_200 21, 2b, 9b)
+						[empty](Id = BTy_199 20, 0b, 0b);
+						(.)(Id = BTy_201 1, 1b, 8b);
 					End Punion;
-					" "(Id = BTy_202 21);
-					[string](Id = BTy_203 21);
-					Punion(Id = BTy_205 21)
-						""(Id = BTy_204 20);
-						" City"(Id = BTy_206 1);
+					[white space](Id = BTy_202 21, 1b, 1b);
+					[string](Id = BTy_203 21, 1b, 54b);
+					Punion(Id = BTy_205 21, 3b, 26b)
+						[empty](Id = BTy_204 20, 0b, 0b);
+						Pstruct(Id = BTy_208 1, 2b, 25b)
+							[white space](Id = BTy_206 1, 1b, 1b);
+							[string](Id = BTy_207 1, 1b, 24b);
+						End Pstruct;
 					End Punion;
 				End Pstruct;
 			End Punion;
-			","(Id = BTy_210 56);
-			Switch(BTy_196)(Id = BTy_212 56):
-			case "*":
-				" "(Id = BTy_211 55);
-			case "Fort":
-				""(Id = BTy_213 1);
-			End Switch;
-			[string](Id = BTy_214 56);
-			"\""(Id = BTy_216 56);
+			(,)(Id = BTy_210 56, 1b, 8b);
+			Punion(Id = BTy_212 56, 2b, 2b)
+				[white space](Id = BTy_211 55, 1b, 1b);
+				[empty](Id = BTy_213 1, 0b, 0b);
+			End Punion;
+			[string](Id = BTy_214 56, 1b, 12b);
+			(\")(Id = BTy_216 56, 1b, 8b);
 		End Pstruct;
-		""(Id = BTy_219 10);
-		"Primary city served"(Id = BTy_221 1);
+		[empty](Id = BTy_219 10, 0b, 0b);
+		Pstruct(Id = BTy_226 1, 5b, 104b)
+			[string](Id = BTy_221 1, 1b, 42b);
+			[white space](Id = BTy_222 1, 1b, 1b);
+			[string](Id = BTy_223 1, 1b, 24b);
+			[white space](Id = BTy_224 1, 1b, 1b);
+			[string](Id = BTy_225 1, 1b, 36b);
+		End Pstruct;
 	End Punion;
-	","(Id = BTy_227 67);
-	Punion(Id = BTy_229 67)
-		[2...1996](Id = BTy_228 41);
-		""(Id = BTy_230 9);
-		{"NA", "U", }(Id = BTy_232 16);
-		"Number of stations"(Id = BTy_234 1);
+	(,)(Id = BTy_227 67, 1b, 8b);
+	Punion(Id = BTy_229 67, 9b, 125.288b)
+		[int](Id = BTy_228 41, 1b, 13.288b);
+		[empty](Id = BTy_230 9, 0b, 0b);
+		[string](Id = BTy_232 16, 1b, 12b);
+		Pstruct(Id = BTy_239 1, 5b, 98b)
+			[string](Id = BTy_234 1, 1b, 36b);
+			[white space](Id = BTy_235 1, 1b, 1b);
+			[string](Id = BTy_236 1, 1b, 12b);
+			[white space](Id = BTy_237 1, 1b, 1b);
+			[string](Id = BTy_238 1, 1b, 48b);
+		End Pstruct;
 	End Punion;
-	","(Id = BTy_240 67);
-	Punion(Id = BTy_242 67)
-		[3...1997](Id = BTy_241 42);
-		{"NA", "U", }(Id = BTy_243 15);
-		""(Id = BTy_245 10);
+	(,)(Id = BTy_240 67, 1b, 8b);
+	Punion(Id = BTy_242 67, 3.585b, 26.873b)
+		[int](Id = BTy_241 42, 1b, 13.288b);
+		[string](Id = BTy_243 15, 1b, 12b);
+		[empty](Id = BTy_245 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_246 67);
-	Punion(Id = BTy_248 67)
-		[3...1998](Id = BTy_247 43);
-		{"NA", "U", }(Id = BTy_249 14);
-		""(Id = BTy_251 10);
+	(,)(Id = BTy_246 67, 1b, 8b);
+	Punion(Id = BTy_248 67, 3.585b, 26.873b)
+		[int](Id = BTy_247 43, 1b, 13.288b);
+		[string](Id = BTy_249 14, 1b, 12b);
+		[empty](Id = BTy_251 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_252 67);
-	Punion(Id = BTy_254 67)
-		[9...1999](Id = BTy_253 43);
-		{"NA", "U", }(Id = BTy_255 14);
-		""(Id = BTy_257 10);
+	(,)(Id = BTy_252 67, 1b, 8b);
+	Punion(Id = BTy_254 67, 3.585b, 26.873b)
+		[int](Id = BTy_253 43, 1b, 13.288b);
+		[string](Id = BTy_255 14, 1b, 12b);
+		[empty](Id = BTy_257 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_258 67);
-	Punion(Id = BTy_260 67)
-		[1...2000](Id = BTy_259 44);
-		{"NA", "U", }(Id = BTy_261 13);
-		""(Id = BTy_263 10);
+	(,)(Id = BTy_258 67, 1b, 8b);
+	Punion(Id = BTy_260 67, 3.585b, 26.873b)
+		[int](Id = BTy_259 44, 1b, 13.288b);
+		[string](Id = BTy_261 13, 1b, 12b);
+		[empty](Id = BTy_263 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_264 67);
-	Punion(Id = BTy_266 67)
-		[1...2001](Id = BTy_265 45);
-		"U"(Id = BTy_267 12);
-		""(Id = BTy_269 10);
+	(,)(Id = BTy_264 67, 1b, 8b);
+	Punion(Id = BTy_266 67, 3.585b, 20.873b)
+		[int](Id = BTy_265 45, 1b, 13.288b);
+		[string](Id = BTy_267 12, 1b, 6b);
+		[empty](Id = BTy_269 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_270 67);
-	Punion(Id = BTy_272 67)
-		[1...2002](Id = BTy_271 56);
-		""(Id = BTy_273 10);
-		"U"(Id = BTy_275 1);
+	(,)(Id = BTy_270 67, 1b, 8b);
+	Punion(Id = BTy_272 67, 3.585b, 20.873b)
+		[int](Id = BTy_271 56, 1b, 13.288b);
+		[empty](Id = BTy_273 10, 0b, 0b);
+		[string](Id = BTy_275 1, 1b, 6b);
 	End Punion;
-	","(Id = BTy_276 67);
-	Punion(Id = BTy_278 67)
-		[0...1996](Id = BTy_277 41);
-		""(Id = BTy_279 9);
-		{"NA", "U", }(Id = BTy_281 16);
-		"Number of ADA-accessible stations"(Id = BTy_283 1);
+	(,)(Id = BTy_276 67, 1b, 8b);
+	Punion(Id = BTy_278 67, 11b, 210.288b)
+		[int](Id = BTy_277 41, 1b, 13.288b);
+		[empty](Id = BTy_279 9, 0b, 0b);
+		[string](Id = BTy_281 16, 1b, 12b);
+		Pstruct(Id = BTy_290 1, 7b, 183b)
+			[string](Id = BTy_283 1, 1b, 36b);
+			[white space](Id = BTy_284 1, 1b, 1b);
+			[string](Id = BTy_285 1, 1b, 12b);
+			[white space](Id = BTy_286 1, 1b, 1b);
+			[string](Id = BTy_287 1, 1b, 84b);
+			[white space](Id = BTy_288 1, 1b, 1b);
+			[string](Id = BTy_289 1, 1b, 48b);
+		End Pstruct;
 	End Punion;
-	","(Id = BTy_291 67);
-	Punion(Id = BTy_293 67)
-		[0...1997](Id = BTy_292 42);
-		{"NA", "U", }(Id = BTy_294 15);
-		""(Id = BTy_296 10);
+	(,)(Id = BTy_291 67, 1b, 8b);
+	Punion(Id = BTy_293 67, 3.585b, 26.873b)
+		[int](Id = BTy_292 42, 1b, 13.288b);
+		[string](Id = BTy_294 15, 1b, 12b);
+		[empty](Id = BTy_296 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_297 67);
-	Punion(Id = BTy_299 67)
-		[0...1998](Id = BTy_298 43);
-		{"NA", "U", }(Id = BTy_300 14);
-		""(Id = BTy_302 10);
+	(,)(Id = BTy_297 67, 1b, 8b);
+	Punion(Id = BTy_299 67, 3.585b, 26.873b)
+		[int](Id = BTy_298 43, 1b, 13.288b);
+		[string](Id = BTy_300 14, 1b, 12b);
+		[empty](Id = BTy_302 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_303 67);
-	Punion(Id = BTy_305 67)
-		[0...1999](Id = BTy_304 43);
-		{"NA", "U", }(Id = BTy_306 14);
-		""(Id = BTy_308 10);
+	(,)(Id = BTy_303 67, 1b, 8b);
+	Punion(Id = BTy_305 67, 3.585b, 26.873b)
+		[int](Id = BTy_304 43, 1b, 13.288b);
+		[string](Id = BTy_306 14, 1b, 12b);
+		[empty](Id = BTy_308 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_309 67);
-	Punion(Id = BTy_311 67)
-		[0...2000](Id = BTy_310 44);
-		{"NA", "U", }(Id = BTy_312 13);
-		""(Id = BTy_314 10);
+	(,)(Id = BTy_309 67, 1b, 8b);
+	Punion(Id = BTy_311 67, 3.585b, 26.873b)
+		[int](Id = BTy_310 44, 1b, 13.288b);
+		[string](Id = BTy_312 13, 1b, 12b);
+		[empty](Id = BTy_314 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_315 67);
-	Punion(Id = BTy_317 67)
-		[0...2001](Id = BTy_316 45);
-		"U"(Id = BTy_318 12);
-		""(Id = BTy_320 10);
+	(,)(Id = BTy_315 67, 1b, 8b);
+	Punion(Id = BTy_317 67, 3.585b, 20.873b)
+		[int](Id = BTy_316 45, 1b, 13.288b);
+		[string](Id = BTy_318 12, 1b, 6b);
+		[empty](Id = BTy_320 10, 0b, 0b);
 	End Punion;
-	","(Id = BTy_321 67);
-	Punion(Id = BTy_323 67)
-		[0...2002](Id = BTy_322 56);
-		""(Id = BTy_324 10);
-		"U"(Id = BTy_326 1);
+	(,)(Id = BTy_321 67, 1b, 8b);
+	Punion(Id = BTy_323 67, 3.585b, 20.873b)
+		[int](Id = BTy_322 56, 1b, 13.288b);
+		[empty](Id = BTy_324 10, 0b, 0b);
+		[string](Id = BTy_326 1, 1b, 6b);
 	End Punion;
 End Pstruct

@@ -1,84 +1,110 @@
-Pstruct(Id = BTy_98 671)
-	"Oct "(Id = BTy_0 671);
-	[26](Id = BTy_2 671);
-	" "(Id = BTy_3 671);
-	[Time](Id = BTy_5 671);
-	Punion(Id = BTy_13 671)
-		Pstruct(Id = BTy_12 670)
-			" AM "(Id = BTy_7 670);
-			{"scrollkeeper-rebuilddb", "scrollkeeper-update", }(Id = BTy_10 670);
-			":"(Id = BTy_11 670);
+Pstruct(Id = BTy_98 671, 70.170b, 4914.909b)
+	[string](Id = BTy_0 671, 1b, 18b);
+	[white space](Id = BTy_1 671, 1b, 1b);
+	[int](Id = BTy_2 671, 1b, 6.644b);
+	[white space](Id = BTy_3 671, 1b, 1b);
+	[Time](Id = BTy_5 671, 1b, 131.190b);
+	Punion(Id = BTy_13 671, 6b, 155b)
+		Pstruct(Id = BTy_12 670, 5b, 154b)
+			[white space](Id = BTy_7 670, 1b, 1b);
+			[string](Id = BTy_8 670, 1b, 12b);
+			[white space](Id = BTy_9 670, 1b, 1b);
+			[string](Id = BTy_10 670, 1b, 132b);
+			(:)(Id = BTy_11 670, 1b, 8b);
 		End Pstruct;
-		""(Id = BTy_14 1);
+		[empty](Id = BTy_14 1, 0b, 0b);
 	End Punion;
-	RArray(Id = BTy_6 671)
-		Pstruct(Id = BTy_39 144)
-			" "(Id = BTy_15 144);
-			Punion(Id = BTy_29 144)
-				Pstruct(Id = BTy_28 18)
-					"/opt/gnome-2."(Id = BTy_16 18);
-					[0](Id = BTy_22 18);
-					"/share/omf"(Id = BTy_23 18);
+	RArray(Id = BTy_6 671, 18.585b, 3415.628b)
+		Terminator: " "
+		Pstruct(Id = BTy_39 144, 17.585b, 853.907b)
+			[white space](Id = BTy_15 144, 1b, 1b);
+			Punion(Id = BTy_29 144, 15.585b, 844.907b)
+				Pstruct(Id = BTy_28 18, 10b, 151.322b)
+					(/)(Id = BTy_16 18, 1b, 8b);
+					[string](Id = BTy_17 18, 1b, 18b);
+					(/)(Id = BTy_18 18, 1b, 8b);
+					[string](Id = BTy_19 18, 1b, 42b);
+					(.)(Id = BTy_21 18, 1b, 8b);
+					[int](Id = BTy_22 18, 1b, 3.322b);
+					(/)(Id = BTy_23 18, 1b, 8b);
+					[string](Id = BTy_24 18, 1b, 30b);
+					(/)(Id = BTy_25 18, 1b, 8b);
+					[string](Id = BTy_26 18, 1b, 18b);
 				End Pstruct;
-				"scrollkeeper-update"(Id = BTy_30 64);
-				Pstruct(Id = BTy_148 62)
-					"/"(Id = BTy_32 62);
-					RArray(Id = BTy_31 62)
-						Terminator: {"omf", "scrollkeeper-update", }
-						Pstruct(Id = BTy_35 160)
-							{"opt", "usr", }(Id = BTy_33 160);
-							"/"(Id = BTy_34 160);
-						End Pstruct;
+				[string](Id = BTy_30 64, 1b, 114b);
+				Pstruct(Id = BTy_99 62, 3b, 578b)
+					(/)(Id = BTy_32 62, 1b, 8b);
+					RArray(Id = BTy_31 62, 2b, 570b)
+						Separator: "/"
+						[string](Id = BTy_33 222, 1b, 114b);
 					End RArray;
-					{"omf", "scrollkeeper-update", }(Id = BTy_36 62);
 				End Pstruct;
 			End Punion;
-			":"(Id = BTy_38 144);
+			(:)(Id = BTy_38 144, 1b, 8b);
 		End Pstruct;
 	End RArray;
-	Punion(Id = BTy_68 671)
-		Pstruct(Id = BTy_67 596)
-			" Registering /usr/share/omf/"(Id = BTy_40 596);
-			[string](Id = BTy_51 596);
-			"/"(Id = BTy_52 596);
-			[string](Id = BTy_53 596);
-			"."(Id = BTy_54 596);
-			Switch(BTy_53)(Id = BTy_56 596):
-			case "*":
-				""(Id = BTy_55 595);
-			case "evolution-2":
-				Pstruct(Id = BTy_59 1)
-					[0](Id = BTy_57 1);
-					"-"(Id = BTy_58 1);
+	[white space](Id = BTy_69 671, 1b, 1b);
+	Punion(Id = BTy_68 671, 39.585b, 1185.448b)
+		Pstruct(Id = BTy_67 596, 20b, 550.322b)
+			[string](Id = BTy_41 596, 1b, 66b);
+			[white space](Id = BTy_42 596, 1b, 1b);
+			(/)(Id = BTy_44 596, 1b, 8b);
+			[string](Id = BTy_45 596, 1b, 18b);
+			(/)(Id = BTy_46 596, 1b, 8b);
+			[string](Id = BTy_47 596, 1b, 30b);
+			(/)(Id = BTy_48 596, 1b, 8b);
+			[string](Id = BTy_49 596, 1b, 18b);
+			(/)(Id = BTy_50 596, 1b, 8b);
+			[string](Id = BTy_51 596, 1b, 120b);
+			(/)(Id = BTy_52 596, 1b, 8b);
+			[string](Id = BTy_53 596, 1b, 192b);
+			(.)(Id = BTy_54 596, 1b, 8b);
+			Punion(Id = BTy_56 596, 3b, 12.322b)
+				[empty](Id = BTy_55 595, 0b, 0b);
+				Pstruct(Id = BTy_59 1, 2b, 11.322b)
+					[int](Id = BTy_57 1, 1b, 3.322b);
+					(-)(Id = BTy_58 1, 1b, 8b);
 				End Pstruct;
-			End Switch;
-			{"C", "omf", }(Id = BTy_60 596);
-			Punion(Id = BTy_62 596)
-				""(Id = BTy_61 595);
-				".omf"(Id = BTy_63 1);
+			End Punion;
+			[string](Id = BTy_60 596, 1b, 18b);
+			Punion(Id = BTy_62 596, 3b, 27b)
+				[empty](Id = BTy_61 595, 0b, 0b);
+				Pstruct(Id = BTy_65 1, 2b, 26b)
+					(.)(Id = BTy_63 1, 1b, 8b);
+					[string](Id = BTy_64 1, 1b, 18b);
+				End Pstruct;
 			End Punion;
 		End Pstruct;
-		" No such file or directory"(Id = BTy_69 72);
-		Pstruct(Id = BTy_228 3)
-			" "(Id = BTy_83 3);
-			RArray(Id = BTy_82 3)
-				Pstruct(Id = BTy_86 8)
-					{"AM", "Done", "Rebuilding", }(Id = BTy_84 8);
-					" "(Id = BTy_85 8);
+		Pstruct(Id = BTy_79 72, 9b, 130b)
+			[string](Id = BTy_70 72, 1b, 12b);
+			[white space](Id = BTy_71 72, 1b, 1b);
+			[string](Id = BTy_72 72, 1b, 24b);
+			[white space](Id = BTy_73 72, 1b, 1b);
+			[string](Id = BTy_74 72, 1b, 24b);
+			[white space](Id = BTy_75 72, 1b, 1b);
+			[string](Id = BTy_76 72, 1b, 12b);
+			[white space](Id = BTy_77 72, 1b, 1b);
+			[string](Id = BTy_78 72, 1b, 54b);
+		End Pstruct;
+		Pstruct(Id = BTy_101 3, 9b, 503.541b)
+			RArray(Id = BTy_82 3, 2b, 365b)
+				Pstruct(Id = BTy_86 8, 2b, 73b)
+					[string](Id = BTy_84 8, 1b, 72b);
+					[white space](Id = BTy_85 8, 1b, 1b);
 				End Pstruct;
 			End RArray;
-			Punion(Id = BTy_88 3)
-				"database"(Id = BTy_87 2);
-				[0](Id = BTy_89 1);
+			Punion(Id = BTy_88 3, 3b, 52.322b)
+				[string](Id = BTy_87 2, 1b, 48b);
+				[int](Id = BTy_89 1, 1b, 3.322b);
 			End Punion;
-			"."(Id = BTy_90 3);
-			RArray(Id = BTy_81 3)
-				Pstruct(Id = BTy_96 6)
-					Punion(Id = BTy_93 6)
-						""(Id = BTy_92 4);
-						[3](Id = BTy_94 2);
+			(.)(Id = BTy_90 3, 1b, 8b);
+			RArray(Id = BTy_81 3, 3b, 78.219b)
+				Pstruct(Id = BTy_96 6, 3b, 15.644b)
+					Punion(Id = BTy_93 6, 2b, 7.644b)
+						[empty](Id = BTy_92 4, 0b, 0b);
+						[int](Id = BTy_94 2, 1b, 6.644b);
 					End Punion;
-					"."(Id = BTy_95 6);
+					(.)(Id = BTy_95 6, 1b, 8b);
 				End Pstruct;
 			End RArray;
 		End Pstruct;
