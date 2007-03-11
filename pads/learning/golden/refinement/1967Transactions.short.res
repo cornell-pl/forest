@@ -376,6 +376,6 @@ Complexity of inferred type:
 Outputing partitions to directory: gen/
 
 Completed data/1967Transactions.short
-Overall type complexity = 20b
-Overall data complexity = 172.370b
+Overall type complexity = 22b
+Overall data complexity = ~infb
 

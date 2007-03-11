@@ -1377,6 +1377,6 @@ Complexity of inferred type:
 Outputing partitions to directory: gen/
 
 Completed data/rpmpkgs.txt
-Overall type complexity = 30.585b
-Overall data complexity = 3814.486b
+Overall type complexity = 37.585b
+Overall data complexity = nanb
 

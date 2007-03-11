@@ -630,6 +630,6 @@ Complexity of inferred type:
 Outputing partitions to directory: gen/
 
 Completed data/dibbler.1000
-Overall type complexity = 10.585b
-Overall data complexity = 10382.667b
+Overall type complexity = 11.585b
+Overall data complexity = ~infb
 

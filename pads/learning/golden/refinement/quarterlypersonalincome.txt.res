@@ -2404,6 +2404,6 @@ Complexity of inferred type:
 Outputing partitions to directory: gen/
 
 Completed data/quarterlypersonalincome.txt
-Overall type complexity = 225b
-Overall data complexity = 2501.345b
+Overall type complexity = 210b
+Overall data complexity = ~infb
 
