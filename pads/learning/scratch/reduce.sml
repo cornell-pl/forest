@@ -262,7 +262,7 @@ and refine_array ty =
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
-(*		
+(*
 		val _ = (print "trying to refine array in struct \n"; printTy ty) 
 *)
 		fun getlen (lens, x) = 
@@ -398,6 +398,11 @@ and refine_array ty =
 			     val firsteqbody = describedBy(first, body)
 			     val lasteqbody = describedBy(last, droplast(body)) 
 			     val withSep = refine_equal_op(firsttail, bodytail)
+(*
+			     val _ = (if firsteqbody then print "true " else print "false ";
+				   	if lasteqbody then print "true " else print "false ";
+				   	if withSep then print "true\n" else print "false\n")
+*)
 			  in
 			     case (firsteqbody, lasteqbody, withSep) of 
 				(true, true, true) => 
@@ -531,6 +536,12 @@ case ty of
 				StringConst(x), tokens)
 			)
 		| SOME(Ptime(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
+		| SOME(Pdate(x)) => 
 			(
 				newcmos, 
 				RefinedBase((mkTyAux1(coverage, id)), 

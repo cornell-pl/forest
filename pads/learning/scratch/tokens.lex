@@ -19,11 +19,22 @@ triplet = [0-9]{1,3};
 ipAddr  = {triplet}\.{triplet}\.{triplet}\.{triplet};
 
 doublet = [0-9]{1,2};
-time    = {doublet}:{doublet}((:{doublet})?);
+timezone = [+-][0-1][0-9]00;
+ampm = am | AM | pm | PM;
+time    = {doublet}:{doublet}((:{doublet})?)(([ ]*{ampm})?)([ \t]+{timezone})?;
 
+day	= [1-9] | [1-2][0-9] | 0[1-9] | 3[0-1];
+weekday = Mon | Monday | Tue | Tuesday | Wed | Wednesday | Thu | Thursday | Fri | Friday | 
+	  Sat | Saturday | Sun | Sunday | mon | tue | wed | thu | fri | sat | sun;
 month   = Jan | jan | Feb | feb | Mar | mar | Apr | apr | May | may | Jun | jun | 
-          Jul | jul | Aug | aug | Sep | sep | Oct | oct | Nov | nov | Dec | dec;
-
+          Jul | jul | Aug | aug | Sep | sep | Oct | oct | Nov | nov | Dec | dec |
+	  January | February | March | April | May | June | July | August | September |
+	  October | November | December;
+year = [0-2][0-9]{3};
+date =  {month}\/{day}\/{year} | {day}\/{month}\/{year} | {year}\/{month}\/{day} |
+	{month}\-{day}\-{year} | {day}\-{month}\-{year} | {year}\-{month}\-{day} |
+	({weekday},[ \t]+)?{month}[ \t]+{day}(,[ \t]+{year})? | 
+	({weekday},[ \t]+)?{day}[ \t]+{month}(,[ \t]+{year})?;
 str     = [A-Za-z][A-Za-z0-9_\-]*;
 xmlb    = \<([a-zA-Z])+\>;
 oxmlb   = \<[^\>]+\>;
@@ -35,6 +46,7 @@ xmle    = \<\/[^\>]+\>;
 {xmlb}    => (SOME (Types.PbXML (getFirst yytext true),  getLoc(yypos, yytext) ));
 {xmle}    => (SOME (Types.PeXML (getFirst yytext false), getLoc(yypos, yytext) ));
 {time}    => (SOME (Types.Ptime yytext,                  getLoc(yypos, yytext) ));
+{date}    => (SOME (Types.Pdate yytext,                  getLoc(yypos, yytext) ));
 {str}     => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 -?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext)), getLoc(yypos, yytext) ));
 [ \t]+    => (SOME (Types.Pwhite yytext,                 getLoc(yypos, yytext) ));

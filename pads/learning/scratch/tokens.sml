@@ -32,6 +32,7 @@ structure Tokens = struct
     datatype Token = PbXML of string * string |
                      PeXML of string * string |
 	             Ptime of string | 
+	             Pdate of string | 
 		     Pmonth of string | 
 		     Pip of string | 
                      Pint of LargeInt.int | 
@@ -44,12 +45,13 @@ structure Tokens = struct
     withtype LToken = Token * location
 
     (*    Establish an order on Token using the following constraints:
-          Ptime < Pmonth < Pip < PbXML < PeXML < Pint < Pstring < Pgroup <
+          Ptime < Pdate < Pmonth < Pip < PbXML < PeXML < Pint < Pstring < Pgroup <
           Pwhite < Other < Pempty < Error
      *)
     fun compToken (t1:Token, t2:Token):order = 
 	case (t1,t2) of
            (Ptime i1, Ptime i2)           => EQUAL
+        |  (Pdate i1, Pdate i2)         => EQUAL
         |  (Pmonth i1, Pmonth i2)         => EQUAL
         |  (Pip i1, Pip i2)               => EQUAL
         |  (PbXML (f1,s1), PbXML (f2,s2)) => String.compare(f1,f2)
@@ -62,27 +64,35 @@ structure Tokens = struct
         |  (Pempty, Pempty)               => EQUAL
         |  (Error, Error)                 => EQUAL
         |  (Ptime _, _)                   => LESS
+        |  (Pdate _, Ptime _)            => GREATER
+        |  (Pdate _, _)                  => LESS
         |  (Pmonth _, Ptime _)            => GREATER
+        |  (Pmonth _, Pdate _)            => GREATER
         |  (Pmonth _, _)                  => LESS
         |  (Pip _, Ptime _)               => GREATER
+        |  (Pip _, Pdate _)               => GREATER
         |  (Pip _, Pmonth _)              => GREATER
         |  (Pip _, _)                     => LESS
         |  (PbXML _, Ptime _ )            => GREATER
+        |  (PbXML _, Pdate _ )            => GREATER
         |  (PbXML _, Pmonth _)            => GREATER
         |  (PbXML _, Pip _)               => GREATER
         |  (PbXML _,  _)                  => LESS
         |  (PeXML _, Ptime _ )            => GREATER
+        |  (PeXML _, Pdate _ )            => GREATER
         |  (PeXML _, Pmonth _)            => GREATER
         |  (PeXML _, Pip _)               => GREATER
         |  (PeXML _, PbXML _)             => GREATER
         |  (PeXML _,  _)                  => LESS
         |  (Pint _, Ptime _)              => GREATER
+        |  (Pint _, Pdate _)              => GREATER
         |  (Pint _, Pmonth _)             => GREATER
         |  (Pint _, Pip _)                => GREATER
         |  (Pint _, PbXML _)              => GREATER
         |  (Pint _, PeXML _)              => GREATER
         |  (Pint _, _)                    => LESS
         |  (Pstring _, Ptime _)           => GREATER
+        |  (Pstring _, Pdate _)           => GREATER
         |  (Pstring _, Pmonth _)          => GREATER
         |  (Pstring _, Pip _)             => GREATER
         |  (Pstring _, Pint _)            => GREATER
@@ -90,6 +100,7 @@ structure Tokens = struct
         |  (Pstring _, PeXML _)           => GREATER
         |  (Pstring _,  _)                => LESS
         |  (Pgroup _, Ptime _)            => GREATER
+        |  (Pgroup _, Pdate _)            => GREATER
         |  (Pgroup _, Pmonth _)           => GREATER
         |  (Pgroup _, Pip _)              => GREATER
         |  (Pgroup _, Pint _)             => GREATER
@@ -98,6 +109,7 @@ structure Tokens = struct
         |  (Pgroup _, PeXML _)            => GREATER
         |  (Pgroup _,  _)                 => LESS
         |  (Pwhite _, Ptime _)            => GREATER
+        |  (Pwhite _, Pdate _)            => GREATER
         |  (Pwhite _, Pmonth _)           => GREATER
         |  (Pwhite _, Pip _)              => GREATER
         |  (Pwhite _, Pint _)             => GREATER
@@ -107,6 +119,7 @@ structure Tokens = struct
         |  (Pwhite _, PeXML _)            => GREATER
         |  (Pwhite _, _)                  => LESS
         |  (Other _, Ptime _)             => GREATER
+        |  (Other _, Pdate _)             => GREATER
         |  (Other _, Pmonth _)            => GREATER
         |  (Other _, Pip _)               => GREATER
         |  (Other _, Pint _)              => GREATER
@@ -117,6 +130,7 @@ structure Tokens = struct
         |  (Other _, PeXML _)             => GREATER
         |  (Other _, _)                   => LESS
         |  (Pempty, Ptime _)              => GREATER
+        |  (Pempty, Pdate _)              => GREATER
         |  (Pempty, Pmonth _)             => GREATER
         |  (Pempty, Pip _)                => GREATER
         |  (Pempty, Pint _)               => GREATER
@@ -160,6 +174,7 @@ structure Tokens = struct
                PbXML (s1, s2) => size s1 + size s2
              | PeXML (s1, s2) => size s1 + size s2
              | Ptime s        => size s
+             | Pdate s        => size s
              | Pmonth s       => size s
              | Pip s          => size s
              | Pint n         => size (LargeInt.toString n)

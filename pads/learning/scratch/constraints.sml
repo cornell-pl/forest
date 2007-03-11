@@ -18,6 +18,7 @@ structure Map = RedBlackMapFn(struct
 		PbXML (x, y) => (String.size x) + (String.size y)
 	|	PeXML (x, y) => (String.size x) + (String.size y)
 	|	Ptime (x) => String.size x
+	|	Pdate (x) => String.size x
 	| 	Pip(x) => String.size x
 	|	Pint (x) => String.size (LargeInt.toString(x))
 	|	Pstring s => String.size s

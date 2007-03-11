@@ -19,7 +19,7 @@ let
   val _ = printTy reduced_ty'
   val _ = print "\n"
 in
-  reduced_ty
+  reduced_ty'
 end
 
 end

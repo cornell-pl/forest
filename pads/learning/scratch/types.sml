@@ -166,6 +166,7 @@ struct
 	case t 
         of Ptime i => i
 	|  Pip i  => i
+	|  Pdate i  => i
         |  Pmonth m => m
         |  PbXML (f,s) => "<"^f^s^">"
         |  PeXML (f,s) => "</"^f^s^">"
@@ -189,6 +190,7 @@ struct
     and tokenTyToString ( t : Token ) : string = 
 	case t 
         of Ptime i   => "[Time]"
+	|  Pdate i     => "[Date]"
 	|  Pip i     => "[IP]"
         |  Pmonth m  => "[Month]"
         |  PbXML (f,s) => "bXML["^f^"]"

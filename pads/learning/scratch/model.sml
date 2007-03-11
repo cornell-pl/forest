@@ -73,6 +73,7 @@ structure Model = struct
                     PbXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | Ptime s           => mkBaseComp maxlen nTimes
+                  | Pdate s           => mkBaseComp maxlen 365
                   | Pmonth s          => mkBaseComp maxlen 12
                   | Pip s             => mkBaseComp maxlen 256
                   | Pint l            => mkBaseComp maxlen 10

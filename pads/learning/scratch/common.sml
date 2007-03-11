@@ -26,6 +26,7 @@ structure Common = struct
 			(Pint (x), Pint (x')) => LargeInt.compare(x,x')
 			| (Pstring (s1), Pstring(s2)) => String.compare(s1, s2)
 			| (Ptime(s1), Ptime(s2)) => String.compare(s1, s2)
+			| (Pdate(s1), Pdate(s2)) => String.compare(s1, s2)
 			| (Pmonth(s1), Pmonth(s2)) => String.compare(s1, s2)
 			| (Pip(s1), Pip(s2)) => String.compare(s1, s2)
 			| _ => Structure.compToken(a, b)
@@ -71,6 +72,7 @@ structure Common = struct
 	|	PeXML(node, attrib) => "</" ^ node ^ attrib ^ ">"
 	|	Pint (i) => LargeInt.toString(i)
 	|	Ptime(t) => t
+	|	Pdate(t) => t
 	|	Pmonth(t) => t
 	|	Pip(t)  => t
 	|	Pstring(str)  => str
@@ -86,6 +88,7 @@ structure Common = struct
 	|	PeXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
 	|	Pint (i) => IntConst(i)
 	|	Ptime(t) => StringConst(t)
+	|	Pdate(t) => StringConst(t)
 	|	Pmonth(t) => StringConst(t)
 	|	Pip(t)  => StringConst(t)
 	|	Pstring(str)  => StringConst(str)
@@ -143,6 +146,7 @@ structure Common = struct
 		    (PbXML(a,b), PbXML(a1, b1)) => (a=a1 andalso b = b1)
 		  | (PeXML(a,b), PeXML(a1, b1)) =>  (a=a1 andalso b = b1) 
 		  | (Ptime(a), Ptime(b)) => (a = b)
+		  | (Pdate(a), Pdate(b)) => (a = b)
 		  | (Pmonth(a), Pmonth(b)) => (a = b)
 		  | (Pip(a), Pip(b)) => (a = b)
 		  | (Pint(a), Pint(b)) => (a = b)
@@ -157,6 +161,7 @@ structure Common = struct
 		    (PbXML(a,b), PbXML(a1, b1)) => true
 		  | (PeXML(a,b), PeXML(a1, b1)) => true 
 		  | (Ptime(a), Ptime(b)) => true
+		  | (Pdate(a), Pdate(b)) => true
 		  | (Pmonth(a), Pmonth(b)) => true
 		  | (Pip(a), Pip(b)) => true
 		  | (Pint(a), Pint(b)) => true
@@ -231,6 +236,7 @@ structure Common = struct
       end
     (*function that test if ty1 can be described by ty2 *)
     and describedBy(ty1, ty2) =
+	let val res =
 	case (ty1, ty2) of 
 		(*assume no Pempty in the Pstruct as they have been cleared by remove_nils*)
 		(Base(a1, tl1), Base(a2, tl2)) => ltoken_ty_equal(hd tl1, hd tl2)
@@ -240,16 +246,23 @@ structure Common = struct
 		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => listDescribedBy(tylist1, tylist2)
 		| (Punion(a1, tylist1), Punion(a2, tylist2)) =>
 			foldr myand true (map 
-				(fn ty => (foldr myor true (map (fn x => describedBy (ty, x)) tylist2))) 
+				(fn ty => (foldr myor false (map (fn x => describedBy (ty, x)) tylist2))) 
 				tylist1)
 		| (ty1, Punion(a2, tylist2)) =>
-			foldr myor true (map (fn x => describedBy (ty1, x)) tylist2)
+			foldr myor false (map (fn x => describedBy (ty1, x)) tylist2)
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 
 			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
 		*)
 		| _ => false
+(*
+	    val _ = (print "Checking\n"; printTy(ty1); print "with ...\n"; printTy(ty2); 
+			print "Answer is: "; (if res = true then print "true\n\n" else print "false\n\n"))
+*)
+	in res
+	end
+
     
     (*merge a ty into a tylist in a union *)
     fun mergeUnion (ty, tylist, newlist) = 
