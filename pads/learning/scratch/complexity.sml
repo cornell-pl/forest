@@ -43,7 +43,6 @@ structure Complexity = struct
                         | Precise of real
 
     (* Value to use to get compilation started *)
-    val junkComplexity : Complexity = Bits ( ~ 1 )
     val zeroComplexity : Complexity = Bits 0
     val unitComplexity : Complexity = Bits 1
     val impossible     : Complexity = Bits ( ~ 1 )

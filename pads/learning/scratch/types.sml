@@ -137,7 +137,7 @@ struct
             val label = mkTyLabel next
 	in { coverage = coverage
            , label = SOME label
-           , typeComp = zeroComplexity
+           , typeComp = unitComplexity
            , dataComp = zeroComplexity
            }
 	end
@@ -148,7 +148,7 @@ struct
             val label = id
 	in { coverage = coverage
            , label = SOME label
-           , typeComp = zeroComplexity
+           , typeComp = unitComplexity
            , dataComp = zeroComplexity
            }
 	end
@@ -164,20 +164,21 @@ struct
     fun ltokenToString ( t : Token, loc : location ) : string = tokenToString t
     and tokenToString ( t : Token ) : string = 
 	case t 
-        of Ptime i => i
-	|  Pip i  => i
-	|  Pdate i  => i
-	|  Ppath i  => i
-	|  Purl i  => i
+        of Ptime i     => i
+	|  Pip i       => i
+	|  Pdate i     => i
+	|  Ppath i     => i
+	|  Purl i      => i
         |  PbXML (f,s) => "<"^f^s^">"
         |  PeXML (f,s) => "</"^f^s^">"
-	|  Pint i => if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
-        |  Pstring s => s
+	|  Pint i      =>
+             if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
+        |  Pstring s   => s
         |  Pgroup {left, body, right} => (ltokenToString left)^(String.concat (List.map ltokenToString body))^(ltokenToString right)
         |  Pwhite s => s
-        |  Other c => String.implode [c]
-        |  Pempty => ""
-        |  Error => " Error"
+        |  Other c  => String.implode [c]
+        |  Pempty   => ""
+        |  Error    => " Error"
     and refinedToString ( re : Refined ) : string =
 	case re
 	of StringME s   => "[StringME] \""^ s ^ "\""
