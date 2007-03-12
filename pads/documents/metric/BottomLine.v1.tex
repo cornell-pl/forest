@@ -2,9 +2,68 @@
 \section{Bottom Line}
 \label{sec:BottomLine}
 
+\subsection{Version 1 complexity metric}
+
+The PADS types that will be supported by the complexity metric in
+version 1 are listed in table \ref{tab:v1Complexity}. The table
+specifies the information that is needed for some of the PADS types.
+
+\begin{longtable}{||l|l|l|}
+\caption[Version 1 complexity metric]{Version 1 complexity metric}
+\label{tab:v1Complexity}
+\\\hline
+\hline
+PADS type & Length distribution & Value distribution \\\hline\hline
+
+Base type &
+\multicolumn{2}{l}{
+\parbox[t]{11cm}{
+The list of values of the base type is stored in the abstract
+syntax tree resulting from the parse of the data. From this
+list of values we can derive a length distribution and/or
+a value distribution.
+\vspace{0.5mm}}} \vline\\\hline
+
+\textbf{Punion} &
+\parbox[t]{5cm}{
+A histogram of frequencies versus variant in the \textbf{Punion}.
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+Each subtype of the union will have its own distribution information
+associated with it.
+\vspace{0.5mm}} \\\hline
+
+\textbf{Pstruct} &
+\parbox[t]{5cm}{
+No additional information at this time.
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+No additional information at this time.
+\vspace{0.5mm}} \\\hline
+
+\textbf{Pre} &
+\parbox[t]{5cm}{
+Not supported at this time
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+Not supported at this time
+\vspace{0.5mm}} \\\hline
+
+\textbf{Parray} &
+\parbox[t]{5cm}{
+A histogram of length of \textbf{Parray} versus frequency.
+\vspace{0.5mm}} &
+\parbox[t]{6cm}{
+The element type will have its own distribution information
+associated with it.
+\vspace{0.5mm}}
+
+\\\hline
+\end{longtable}
+
 \subsection{Version 2 complexity metric}
 
-This section describes the complexity metric as coded during March,
+This section describes the complexity metric as coded during February,
 2007. The metric is a function called \textsf{measure} having type
 \textsf{Ty} $\rightarrow$ \textsf{Ty}. The function fills in complexity
 information in the \textsf{AuxInfo} associated with each node of the
@@ -133,19 +192,8 @@ fun getDataComplexity ( ty : Ty ) : Complexity = $\sharp$dataComp (getAuxInfo ty
 \hline
 Sub type & Type complexity & Data complexity & Notes \\\hline\hline
 
-\textsf{PbXML} & 1 & $\left(\frac{1}{52}\right)^\mathrm{maxlen} $ &
-\parbox[t]{5cm}{
-XML seems to handled as a fancy string type. There are 52 possible XML
-characters.
-\vspace{0.5mm}} \\\hline
-
-\textsf{PeXML} & 1 & $\left(\frac{1}{52}\right)^\mathrm{maxlen}$ &
-\parbox[t]{5cm}{
-XML seems to handled as a fancy string type. There are 52 possible XML
-characters.
-\vspace{0.5mm}} \\\hline
-
-\textsf{Ptime} & 1 &
+\textsf{Ptime} &
+      $\left(\frac{1}{60}\right) \cdot \left(\frac{1}{60}\right) \cdot \left(\frac{1}{24}\right)$ &
       $\left(\frac{1}{60}\right) \cdot \left(\frac{1}{60}\right) \cdot \left(\frac{1}{24}\right)$ &
 \parbox[t]{5cm}{
 This is a much oversimplified case. In order to do better, we need to
@@ -154,60 +202,75 @@ complexity of the regular expression. See section
 \ref{sec:RegularExpressions}.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Pdate} & 1 & $\left(\frac{1}{365}\right)$ &
-\parbox[t]{5cm}{ One of possible 365 days.
-\ref{sec:RegularExpressions}.
+\textsf{Pmonth} & $\left(\frac{1}{12}\right)$ & $\left(\frac{1}{12}\right)$ &
+\parbox[t]{5cm}{
+Again an oversimplification of month, need also regular expressions here
+eventually.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Ppath} & 1 & $\left(\frac{1}{256}\right)^\mathrm{maxlen}$ &
-\parbox[t]{5cm}{ Are there really 256 characters that can make up a path?
-\ref{sec:RegularExpressions}.
-\vspace{0.5mm}} \\\hline
-
-\textsf{Purl} & 1 & $\left(\frac{1}{256}\right)^\mathrm{maxlen}$ &
-\parbox[t]{5cm}{ Are there really 256 characters that can make up a path?
-\ref{sec:RegularExpressions}.
-\vspace{0.5mm}} \\\hline
-
-\textsf{Pip} & 1 & $\left(\frac{1}{256}\right)^\mathrm{maxlen}$
+\textsf{Pip} &
+    $\left(\frac{1}{255}\right)$ &
+    $\left(\frac{1}{255}\right)^\mathrm{maxlen}$
 \footnote{$\mathrm{maxlen}$ is the maximum length of the token address seen} &
 \parbox[t]{5cm}{
-Calculation should take into account groups of three.
+Perhaps we should use average length? Maximum length gives us a worst
+case complexity. On the other hand, IP address are often all of the same
+length, namely four number in the range 0 through 255.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Pint} & 1 & $\left(\frac{1}{10}\right)^\mathrm{maxlen}$ &
+\textsf{Pint} &
+    $\left(\frac{1}{10}\right)$ &
+    $\left(\frac{1}{10}\right)^\mathrm{maxlen}$ &
 \parbox[t]{5cm}{
 This assumes integers are a sequence of digits 0 \ldots 9.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Pstring} & 1 & $\left(\frac{1}{64}\right)^\mathrm{maxlen}$ &
+\textsf{Pstring} &
+    $\left(\frac{1}{68}\right)$ &
+    $\left(\frac{1}{68}\right)^\mathrm{maxlen}$ &
 \parbox[t]{5cm}{
-There are 64 characters that make up strings.
+There are 68 characters that make up strings.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Pgroup} & 1 & 1 &
+\textsf{Pgroup} & 0 & 0 &
 \parbox[t]{5cm}{
 Don't know how to handle this one yet.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Pwhite} & 1 & $\left(\frac{1}{2}\right)^\mathrm{maxlen}$ &
+\textsf{Pwhite} & $\frac{1}{2}$ & $\left(\frac{1}{2}\right)^\mathrm{maxlen}$ &
 \parbox[t]{5cm}{
 White space can have either blank or tab characters (2 possibilities).
 \vspace{0.5mm}} \\\hline
 
-\textsf{Other} & 1 & $\frac{1}{256}$ &
+\textsf{Other} & $\frac{1}{256}$ & $\frac{1}{256}$ &
 \parbox[t]{5cm}{
 A single ASCII character.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Pempty} & 1 & 1 &
+\textsf{Pempty} & 0 & 0 &
 \parbox[t]{5cm}{
 Not sure about this one.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Error} & 1 & 1 &
+\textsf{Error} & \textsf{impossible} & \textsf{impossible} &
 \parbox[t]{5cm}{
 Not sure about this one.
+\vspace{0.5mm}} \\\hline
+
+\textsf{PbXML} &
+      $\left(\frac{1}{52}\right)$ &
+      $\left(\frac{1}{52}\right)^\mathrm{maxlen} $ &
+\parbox[t]{5cm}{
+XML seems to handled as a fancy string type. There are 52 possible XML
+characters.  Should consider sum of two string lengths?
+\vspace{0.5mm}} \\\hline
+
+\textsf{PeXML} &
+      $\left(\frac{1}{52}\right)$ &
+      $\left(\frac{1}{52}\right)^\mathrm{maxlen}$ &
+\parbox[t]{5cm}{
+XML seems to handled as a fancy string type. There are 52 possible XML
+characters.  Should consider sum of two string lengths?
 \vspace{0.5mm}} \\\hline
 
 \end{longtable}
@@ -219,36 +282,40 @@ Not sure about this one.
 \hline
 Type & Type complexity & Data complexity & Notes \\\hline\hline
 
-\textsf{StringME} & 1 & $\left(\frac{1}{68}\right)^\mathrm{maxlen}$ &
+\textsf{StringME} &
+    $\left(\frac{1}{68}\right)$ &
+    $\left(\frac{1}{68}\right)^\mathrm{maxlen}$ &
 \parbox[t]{5cm}{
-There are 64 characters that make up strings.
+There are 68 characters that make up strings.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Int (min, max)} & 1 & $\log (\mathrm{max}- \mathrm{min}+1)^\mathrm{maxlen}$ &
+\textsf{Int (min, max)} &
+    $\log (\mathrm{max} - \mathrm{min} + 1)$ &
+    $\log (\mathrm{max} - \mathrm{min} + 1)^\mathrm{maxlen}$ &
 \parbox[t]{5cm}{
 \vspace{0.5mm}} \\\hline
 
-\textsf{IntConst n} & 1 & $\log n$ &
+\textsf{IntConst n} & $\log n$ & $\log n$ &
 \parbox[t]{5cm}{
 The data and type complexity are the same for a constant.
-When $n$ is zero, we use a complexity of one.
-When $n$ is negative, we negate it to make a positive, and then take the $\log$.
 \vspace{0.5mm}} \\\hline
 
-\textsf{StringConst s} & 1 & $\mathrm{size} s$ &
+\textsf{StringConst s} & $\mathrm{size} s$ & $\mathrm{size} s$ &
 \parbox[t]{5cm}{
-Should have length multiplied by 8?
+The data and type complexity are the same for a constant.
 \vspace{0.5mm}} \\\hline
 
-\textsf{Enum rl} & 1 & $\sum_{r\in rl} \calR_\delta (r)$
+\textsf{Enum rl} &
+$\sum_{r\in rl} \calR_\tau (r)$
 \footnote{The summation is using the \textsf{combine} operation
 defined on the type \textsf{Complexity}} &
+$\sum_{r\in rl} \calR_\delta (r)$ &
 \parbox[t]{5cm}{
 The recursion here is in support of the requirement of
 \textit{compositionality}.
 \vspace{0.5mm}} \\\hline
 
-\textsf{LabelRef i} & 1 & 1 &
+\textsf{LabelRef i} & 0 & 0 &
 \parbox[t]{5cm}{
 Not sure what to do about this one.
 \vspace{0.5mm}} \\\hline
@@ -263,39 +330,28 @@ Not sure what to do about this one.
 Type & Type complexity & Data complexity & Notes \\\hline\hline
 
 \footnotesize\textsf{Pstruct (a,ts)}\normalsize &
+    $\sum_{t} \mu_\tau (t)$ &
+    $\sum_{t} \mu_\delta (t)$ &
+\parbox[t]{4cm}{
 \footnotesize
-$\sum_{t} \mu_\tau (t)$
-\normalsize &
-\footnotesize
-$\sum_{t} \mu_\delta (t)$
-\normalsize &
-\parbox[t]{3cm}{
-\footnotesize
+Should this be product instead of sum?
 Sum defined using \textsf{combine} operation.
 \normalsize
 \vspace{0.5mm}} \\\hline
 
 \footnotesize\textsf{Punion (a,ts)}\normalsize &
-\footnotesize
-$\mathsf{card} (ts) + \sum_{t} \mu_\tau (t)$
-\normalsize &
-\footnotesize
-$\mathsf{card} (ts) + \sum_{t} \mu_\delta (t)$
-\normalsize &
-\parbox[t]{3cm}{
+    $\mathsf{card} (ts) + \sum_{t} \mu_\tau (t)$ &
+    $\mathsf{card} (ts) + \sum_{t} \mu_\delta (t)$ &
+\parbox[t]{4cm}{
 \footnotesize
 Sum defined using \textsf{combine} operation.
 \normalsize
 \vspace{0.5mm}} \\\hline
 
 \footnotesize\textsf{Parray (a,ls,f,b,l)}\normalsize &
-\footnotesize
-$\tau (f) + \tau (l) + \mathsf{maxlen} \cdot \tau (b)$
-\normalsize &
-\footnotesize
-$\delta (f) + \delta (l) + \mathsf{maxlen} \cdot \delta (b)$
-\normalsize &
-\parbox[t]{3cm}{
+    $\tau (f) + \tau (l) + \mathsf{maxlen} \cdot \tau (b)$ &
+    $\delta (f) + \delta (l) + \mathsf{maxlen} \cdot \delta (b)$ &
+\parbox[t]{4cm}{
 \footnotesize
 \textsf{ls} = list of array length and linenumbers,
 \textsf{f} = type of first token,
@@ -307,41 +363,29 @@ Should we use \textsf{maxlen} as an exponent instead of a multiplier?
 \vspace{0.5mm}} \\\hline
 
 \footnotesize\textsf{RefinedBase (a,r,ts) }\normalsize &
-\footnotesize
-$\tau (\calR (\mathrm{maxlen}, r))$
-\normalsize &
-\footnotesize
-$\delta (\calR (\mathrm{maxlen}, r))$
-\normalsize &
-\parbox[t]{3cm}{
+$\tau (\calR (\mathrm{maxlen}, (r)))$ &
+$\delta (\calR (\mathrm{maxlen}, (r)))$ &
+\parbox[t]{4cm}{
 \footnotesize
 \textsf{maxlen} is the maximum token length from the list \textsf{ls}.
 \normalsize
 \vspace{0.5mm}} \\\hline
 
 \footnotesize\textsf{Switch (a,id,ts) }\normalsize &
+$\sum_{s \in ss} \calR_\tau (s) + \sum_{b \in bs} \mu_\tau (b)$ &
+$\sum_{b \in bs} \mu_\tau (b)$ &
+\parbox[t]{4cm}{
 \footnotesize
-$\sum_{b \in bs} \mu_\tau (b) + \sum_{s \in ss} \calR_\tau (s)$
-\normalsize &
-\footnotesize
-$\sum_{b \in bs} \mu_\delta (b) + \sum_{s \in ss} \mu_\delta (s)$
-\normalsize &
-\parbox[t]{3cm}{
-\footnotesize
-$\mathsf{ss} = \mathsf{map} \sharp 1 \mathsf{ts}$ are the
-\textit{switch types}, and $\mathsf{bs} = \mathsf{map} \sharp 2 \textsf{ts}$
-are the \textit{branch types}.
+\textsf{ss = map} $\sharp$ \textsf{1 ts} are the \textit{switch types},
+and \textsf{bs = map} $\sharp$ \textsf{2 ts} are the \textit{branch types}.
+Why is data complexity not considered in the switch types?
 \normalsize
 \vspace{0.5mm}} \\\hline
 
 \footnotesize\textsf{Rarray (a,os,ot,b,ol) }\normalsize &
-\footnotesize
-$\mathsf{tlen} + \mathsf{tterm} + \mathsf{tsep} + \mu_\tau (b)$
-\normalsize &
-\footnotesize
-$\mathsf{dlen} + \mathsf{dterm} + \mathsf{dsep} + \mu_\delta (b)$
-\normalsize &
-\parbox[t]{3cm}{
+$\mathsf{tlen} + \mathsf{tterm} + \mathsf{tsep} + \mu_\tau (b)$ &
+$\mathsf{dlen} + \mathsf{dterm} + \mathsf{dsep} + \mu_\delta (b)$ &
+\parbox[t]{4cm}{
 \footnotesize
 For the optional \textit{length} field
 $\mathsf{(tlen,dlen)} = \calR_{\mathsf{opt}} (\mathsf{ol})$.
