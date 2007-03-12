@@ -82,6 +82,7 @@ structure Tests = struct
     val renum1 : Refined = Enum [ rsme1, rint1, rstr1 ]
     val rlbl1  : Refined = LabelRef (Atom.atom "label")
     val rstr2  : Refined = StringConst "" (* Zero length string *)
+    val rintc2 : Refined = IntConst 0
 
     (* Some Base Ty structures to use *)
     val ty1  : Ty = Base (a1, [])
@@ -105,6 +106,7 @@ structure Tests = struct
     val ty24 : Ty = RefinedBase (a1, renum1, ltlstr4)
     val ty25 : Ty = RefinedBase (a1, rlbl1, [])
     val ty26 : Ty = RefinedBase (a1, rstr2, ltlstr4)
+    val ty27 : Ty = RefinedBase (a1, rintc2, ltl2)
     (* Now to test structured, but unrefined types *)
     val ty30 : Ty = Pstruct (a1, [ ty3, ty9, ty21 ])
     val ty31 : Ty = Punion (a1, [ ty3, ty9, ty21, ty10 ])
@@ -153,6 +155,7 @@ structure Tests = struct
     val m24 : Ty = measure ty24;
     val m25 : Ty = measure ty25;
     val m26 : Ty = measure ty26;
+    val m27 : Ty = measure ty27;
 
     val m30 : Ty = measure ty30;
     val m31 : Ty = measure ty31;

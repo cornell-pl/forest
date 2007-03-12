@@ -116,7 +116,7 @@ structure Complexity = struct
     exception InfiniteComplexity
     fun int2Complexity ( n : int ) : Complexity =
     if n < 0
-    then raise InfiniteComplexity
+    then int2Complexity ( ~n )
     else if n = 0
          then zeroComplexity
          else case isPowerTwo n of
@@ -124,10 +124,13 @@ structure Complexity = struct
                  | SOME p => Bits p
 
     fun int2ComplexityL ( n : LargeInt.int ) : Complexity =
-    ( case isPowerTwoL n of
-           NONE   => Precise (log2L n)
-         | SOME p => Bits p
-    )
+    if n < 0
+    then int2ComplexityL ( ~n )
+    else if n = 0
+         then zeroComplexity
+         else case isPowerTwoL n of
+                   NONE   => Precise (log2L n)
+                 | SOME p => Bits p
 
     fun sumComps ( cs : Complexity list ) : Complexity =
         foldl ( fn (c1,c2) => combine c1 c2 ) zeroComplexity cs
