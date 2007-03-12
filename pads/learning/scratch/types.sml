@@ -167,7 +167,8 @@ struct
         of Ptime i => i
 	|  Pip i  => i
 	|  Pdate i  => i
-        |  Pmonth m => m
+	|  Ppath i  => i
+	|  Purl i  => i
         |  PbXML (f,s) => "<"^f^s^">"
         |  PeXML (f,s) => "</"^f^s^">"
 	|  Pint i => if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
@@ -192,7 +193,8 @@ struct
         of Ptime i   => "[Time]"
 	|  Pdate i     => "[Date]"
 	|  Pip i     => "[IP]"
-        |  Pmonth m  => "[Month]"
+	|  Ppath i     => "[Path]"
+	|  Purl i     => "[URL]"
         |  PbXML (f,s) => "bXML["^f^"]"
         |  PeXML (f,s) => "eXML["^f^"]"
 (*

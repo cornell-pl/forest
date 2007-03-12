@@ -547,18 +547,25 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
-		| SOME(Pmonth(x)) => 
-			(
-				newcmos, 
-				RefinedBase((mkTyAux1(coverage, id)), 
-				StringConst(x), tokens)
-			)
 		| SOME(Pip(x)) => 
 			(
 				newcmos, 
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
+		| SOME(Ppath(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
+		| SOME(Purl(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
+
 		| SOME(Pwhite(x)) => 
 			(
 				newcmos, 

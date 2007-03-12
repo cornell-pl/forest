@@ -27,8 +27,9 @@ structure Common = struct
 			| (Pstring (s1), Pstring(s2)) => String.compare(s1, s2)
 			| (Ptime(s1), Ptime(s2)) => String.compare(s1, s2)
 			| (Pdate(s1), Pdate(s2)) => String.compare(s1, s2)
-			| (Pmonth(s1), Pmonth(s2)) => String.compare(s1, s2)
 			| (Pip(s1), Pip(s2)) => String.compare(s1, s2)
+			| (Ppath(s1), Ppath(s2)) => String.compare(s1, s2)
+			| (Purl(s1), Purl(s2)) => String.compare(s1, s2)
 			| _ => Structure.compToken(a, b)
 	
 	structure BDSet = RedBlackSetFn(struct
@@ -73,8 +74,9 @@ structure Common = struct
 	|	Pint (i) => LargeInt.toString(i)
 	|	Ptime(t) => t
 	|	Pdate(t) => t
-	|	Pmonth(t) => t
 	|	Pip(t)  => t
+	|	Ppath(t)  => t
+	|	Purl(t)  => t
 	|	Pstring(str)  => str
 	|	Pwhite (str)  =>  "["^str^"]"  
 	|	Other (c)  => Char.toString(c) 
@@ -89,8 +91,9 @@ structure Common = struct
 	|	Pint (i) => IntConst(i)
 	|	Ptime(t) => StringConst(t)
 	|	Pdate(t) => StringConst(t)
-	|	Pmonth(t) => StringConst(t)
 	|	Pip(t)  => StringConst(t)
+	|	Ppath(t)  => StringConst(t)
+	|	Purl(t)  => StringConst(t)
 	|	Pstring(str)  => StringConst(str)
 	|	Pwhite (str)  =>  StringConst(str)  
 	|	Other(c)  =>  StringConst(Char.toString(c))  
@@ -147,8 +150,9 @@ structure Common = struct
 		  | (PeXML(a,b), PeXML(a1, b1)) =>  (a=a1 andalso b = b1) 
 		  | (Ptime(a), Ptime(b)) => (a = b)
 		  | (Pdate(a), Pdate(b)) => (a = b)
-		  | (Pmonth(a), Pmonth(b)) => (a = b)
 		  | (Pip(a), Pip(b)) => (a = b)
+		  | (Ppath(a), Ppath(b)) => (a = b)
+		  | (Purl(a), Purl(b)) => (a = b)
 		  | (Pint(a), Pint(b)) => (a = b)
 		  | (Pstring(a), Pstring(b)) => (a = b)
 		  | (Pwhite(a), Pwhite(b)) => (a = b)
@@ -162,8 +166,9 @@ structure Common = struct
 		  | (PeXML(a,b), PeXML(a1, b1)) => true 
 		  | (Ptime(a), Ptime(b)) => true
 		  | (Pdate(a), Pdate(b)) => true
-		  | (Pmonth(a), Pmonth(b)) => true
 		  | (Pip(a), Pip(b)) => true
+		  | (Ppath(a), Ppath(b)) => true
+		  | (Purl(a), Purl(b)) => true
 		  | (Pint(a), Pint(b)) => true
 		  | (Pstring(a), Pstring(b)) => true
 		  | (Pwhite(a), Pwhite(b)) => true

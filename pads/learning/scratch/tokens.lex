@@ -22,7 +22,10 @@ doublet = [0-9]{1,2};
 timezone = [+-][0-1][0-9]00;
 ampm = am | AM | pm | PM;
 time    = {doublet}:{doublet}((:{doublet})?)(([ ]*{ampm})?)([ \t]+{timezone})?;
-
+port = [1-9][0-9]*;
+filename = [^\\\/?*:<>\"]+;
+filepath =  \/{filename}(\/{filename})*\/? | ([a-zA-Z]:)?\\{filename}(\\{filename})*\\? |
+	\\\\{filename}(\\{filename})*\\?;
 day	= [1-9] | [1-2][0-9] | 0[1-9] | 3[0-1];
 weekday = Mon | Monday | Tue | Tuesday | Wed | Wednesday | Thu | Thursday | Fri | Friday | 
 	  Sat | Saturday | Sun | Sunday | mon | tue | wed | thu | fri | sat | sun;
@@ -36,6 +39,10 @@ date =  {month}\/{day}\/{year} | {day}\/{month}\/{year} | {year}\/{month}\/{day}
 	({weekday},[ \t]+)?{month}[ \t]+{day}(,[ \t]+{year})? | 
 	({weekday},[ \t]+)?{day}[ \t]+{month}(,[ \t]+{year})?;
 str     = [A-Za-z][A-Za-z0-9_\-]*;
+str1     = [0-9A-Za-z][A-Za-z0-9_\-]*;
+query = [^\&=]+=[^\&]*(\&[^\&=]+=[^\&]*)*;
+url = http:\/\/{str1}(\.{str1})*(:{port})?\/?({filepath})?(\?)?\&?{query}?(#{str1})? |
+	{filepath}\?{query}(#{str1})?;
 xmlb    = \<([a-zA-Z])+\>;
 oxmlb   = \<[^\>]+\>;
 xmle    = \<\/[^\>]+\>;
@@ -47,6 +54,8 @@ xmle    = \<\/[^\>]+\>;
 {xmle}    => (SOME (Types.PeXML (getFirst yytext false), getLoc(yypos, yytext) ));
 {time}    => (SOME (Types.Ptime yytext,                  getLoc(yypos, yytext) ));
 {date}    => (SOME (Types.Pdate yytext,                  getLoc(yypos, yytext) ));
+{filepath}    => (SOME (Types.Ppath yytext,                  getLoc(yypos, yytext) ));
+{url}    => (SOME (Types.Purl yytext,                  getLoc(yypos, yytext) ));
 {str}     => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 -?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext)), getLoc(yypos, yytext) ));
 [ \t]+    => (SOME (Types.Pwhite yytext,                 getLoc(yypos, yytext) ));
