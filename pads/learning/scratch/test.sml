@@ -32,8 +32,9 @@ structure Tests = struct
     val tstr2  : Token = Pstring "HIGH THEIR"
     val tstr3  : Token = Pstring "Gupe nga lata"
     val tstr4  : Token = Pstring "Cant parse this (mj hammer)"
-    val tgrp1  : Token = Pgroup { left = (tip1, ln1)
-                                , body = [(tip2, ln2)]
+    val tstr5  : Token = Pstring "" (* Zero length string *)
+    val tgrp1  : Token = Pgroup { left  = (tip1, ln1)
+                                , body  = [ (tip2, ln2) ]
                                 , right = (tip1, ln1)
                                 }
     val twht1  : Token = Pwhite "   "
@@ -43,6 +44,9 @@ structure Tests = struct
     val toth3  : Token = Other #"c"
     val temp1  : Token = Pempty
     val terr1  : Token = Error
+    (* Some contexts to use *)
+    val ctxt1  : Context = [ ( tstr2, ln1 ), ( twht1, ln2 ), ( toth2, ln3 ) ]
+    val ctxt2  : Context = [ ( tip2, ln1 ), ( tint2, ln2 ), ( tstr5, ln3 ) ]
 
     (* Some token lists to use *)
     val ltl1     : LToken list = [ ( tint1, ln1 ) ]
@@ -60,6 +64,7 @@ structure Tests = struct
     val ltlstr4  : LToken list = [ ( tstr1, ln1 ), ( tstr2, ln2 )
                                  , ( tstr3, ln3 ), ( tstr4, ln4 )
                                  ]
+    val ltlstr5  : LToken list = [ ( tstr5, ln4 ) ]
     val ltlgrp1  : LToken list = [ ( tgrp1, ln1 ) ]
     val ltlwht2  : LToken list = [ ( twht1, ln1 ), ( twht2, ln2 ) ]
     val ltloth3  : LToken list = [ ( toth1, ln1 ), ( toth2, ln2 ), ( toth3, ln3 ) ]
@@ -76,6 +81,7 @@ structure Tests = struct
     val rstr1  : Refined = StringConst "abcdefgh"
     val renum1 : Refined = Enum [ rsme1, rint1, rstr1 ]
     val rlbl1  : Refined = LabelRef (Atom.atom "label")
+    val rstr2  : Refined = StringConst "" (* Zero length string *)
 
     (* Some Base Ty structures to use *)
     val ty1  : Ty = Base (a1, [])
@@ -90,6 +96,7 @@ structure Tests = struct
     val ty10 : Ty = Base (a1, ltloth3)
     val ty11 : Ty = Base (a1, ltlemp1)
     val ty12 : Ty = Base (a1, ltlerr1)
+    val ty13 : Ty = Base (a1, ltlstr5)
     (* Some RefinedBase Ty structures to use *)
     val ty20 : Ty = RefinedBase (a1, rsme1, ltlstr4)
     val ty21 : Ty = RefinedBase (a1, rint1, ltl2)
@@ -97,6 +104,7 @@ structure Tests = struct
     val ty23 : Ty = RefinedBase (a1, rstr1, ltlstr4)
     val ty24 : Ty = RefinedBase (a1, renum1, ltlstr4)
     val ty25 : Ty = RefinedBase (a1, rlbl1, [])
+    val ty26 : Ty = RefinedBase (a1, rstr2, ltlstr4)
     (* Now to test structured, but unrefined types *)
     val ty30 : Ty = Pstruct (a1, [ ty3, ty9, ty21 ])
     val ty31 : Ty = Punion (a1, [ ty3, ty9, ty21, ty10 ])
@@ -107,6 +115,9 @@ structure Tests = struct
                                  , last    = ty10
                                  }
                            )
+    val ty33 : Ty = TBD    ( a1, 12, [ ctxt1, ctxt2 ] )
+    val ty34 : Ty = Bottom ( a1, 12, [ ctxt1, ctxt2 ] )
+
     (* Test refined structures *)
     val ty40 : Ty = Switch ( a1
                            , Atom.atom "Switch"
@@ -133,6 +144,7 @@ structure Tests = struct
     val m10 : Ty = measure ty10;
     val m11 : Ty = measure ty11;
     val m12 : Ty = measure ty12;
+    val m13 : Ty = measure ty13;
 
     val m20 : Ty = measure ty20;
     val m21 : Ty = measure ty21;
@@ -140,11 +152,14 @@ structure Tests = struct
     val m23 : Ty = measure ty23;
     val m24 : Ty = measure ty24;
     val m25 : Ty = measure ty25;
+    val m26 : Ty = measure ty26;
 
     val m30 : Ty = measure ty30;
     val m31 : Ty = measure ty31;
     val m32 : Ty = measure ty32;
     val (Parray (a32, s32)) = m32;
+    val m33 : Ty = measure ty33;
+    val m34 : Ty = measure ty34;
 
     val m40 : Ty = measure ty40;
     val m41 : Ty = measure ty41;

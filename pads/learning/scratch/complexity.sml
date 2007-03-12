@@ -113,11 +113,15 @@ structure Complexity = struct
     fun prob2Complexity ( p : Probability ) : Complexity = Precise (~ (log2r p))
 
     (* Convert an integer to a complexity *)
+    exception InfiniteComplexity
     fun int2Complexity ( n : int ) : Complexity =
-    ( case isPowerTwo n of
-           NONE   => Precise (log2 n)
-         | SOME p => Bits p
-    )
+    if n < 0
+    then raise InfiniteComplexity
+    else if n = 0
+         then zeroComplexity
+         else case isPowerTwo n of
+                   NONE   => Precise (log2 n)
+                 | SOME p => Bits p
 
     fun int2ComplexityL ( n : LargeInt.int ) : Complexity =
     ( case isPowerTwoL n of

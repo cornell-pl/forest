@@ -16,11 +16,11 @@
 $maxdepth{"1967Transactions.short"}    = "";
 $maxdepth{"MER_T01_01.csv"}            = "";
 $maxdepth{"ProfSec.log"}               = "";
-$maxdepth{"SCESETUP.LOG"}              = "";
+$maxdepth{"SCESETUP.LOG"}              = "-maxdepth 4";
 $maxdepth{"access_log"}                = "";
 $maxdepth{"ai-simple"}                 = "";
 $maxdepth{"ai.3000"}                   = "";
-$maxdepth{"apache.txt"}                = "ERROR TOO LONG";
+$maxdepth{"apache.txt"}                = "-maxdepth 9";
 $maxdepth{"asl.log"}                   = "ERROR TOO LONG";
 $maxdepth{"backup1.log"}               = "";
 $maxdepth{"backup2.log"}               = "";

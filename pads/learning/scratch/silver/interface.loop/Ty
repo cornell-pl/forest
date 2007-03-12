@@ -7,14 +7,11 @@ Pstruct(Id = BTy_204 1253, ~infb, ~infb)
 	Punion(Id = BTy_5 1253, 36b, 1455.692b)
 		[empty](Id = BTy_4 1249, 0b, 0b);
 		Pstruct(Id = BTy_26 4, 35b, 1454.692b)
-			Parray(Id = BTy_6 4, 17b, 1273b)([white space] )
-			First:
-				TBD_0(Id = BTy_0 4, 4b, 7b);
-			Body:
+			TBD_0(Id = BTy_0 4, 4b, 7b);
+			RArray(Id = BTy_6 4, 9b, 1170b)
 				TBD_1(Id = BTy_1 9, 9b, 234b);
-			Tail:
-				TBD_2(Id = BTy_2 4, 4b, 96b);
-			End Parray;
+			End RArray;
+			TBD_2(Id = BTy_2 4, 4b, 96b);
 			(.)(Id = BTy_7 4, 1b, 8b);
 			[int](Id = BTy_8 4, 1b, 19.932b);
 			(.)(Id = BTy_9 4, 1b, 8b);
@@ -65,7 +62,7 @@ Pstruct(Id = BTy_204 1253, ~infb, ~infb)
 				End Pstruct;
 			End Punion;
 		End Pstruct;
-		Pstruct(Id = BTy_206 376, 383b, 2221.840b)
+		Pstruct(Id = BTy_208 376, 383b, 2221.840b)
 			Punion(Id = BTy_57 376, 2b, 9b)
 				(/)(Id = BTy_56 340, 1b, 8b);
 				TBD_4(Id = BTy_4 36, 0b, 0b);
@@ -76,14 +73,11 @@ Pstruct(Id = BTy_204 1253, ~infb, ~infb)
 					(/)(Id = BTy_59 179, 1b, 8b);
 				End Pstruct;
 			End RArray;
-			Parray(Id = BTy_61 376, 379b, 2168.908b)([int] )
-			First:
-				TBD_5(Id = BTy_5 376, 340b, 1288.908b);
-			Body:
+			TBD_5(Id = BTy_5 376, 340b, 1288.908b);
+			RArray(Id = BTy_61 376, 39b, 880b)
 				TBD_6(Id = BTy_6 39, 39b, 440b);
-			Tail:
-				TBD_7(Id = BTy_7 376, 0b, 0b);
-			End Parray;
+			End RArray;
+			TBD_7(Id = BTy_7 376, 0b, 0b);
 		End Pstruct;
 	End Punion;
 	(|)(Id = BTy_63 1253, 1b, 8b);
@@ -112,7 +106,7 @@ Pstruct(Id = BTy_204 1253, ~infb, ~infb)
 	(|)(Id = BTy_85 1253, 1b, 8b);
 	Punion(Id = BTy_87 1253, ~infb, ~infb)
 		[empty](Id = BTy_86 197, 0b, 0b);
-		Pstruct(Id = BTy_207 5, 15b, 368.473b)
+		Pstruct(Id = BTy_209 5, 15b, 368.473b)
 			[int](Id = BTy_89 5, 1b, 16.610b);
 			RArray(Id = BTy_88 5, 14b, 351.863b)
 				Pstruct(Id = BTy_104 1, 14b, 175.932b)
@@ -245,7 +239,7 @@ Pstruct(Id = BTy_204 1253, ~infb, ~infb)
 	Punion(Id = BTy_193 1253, 7.585b, 376.907b)
 		[int](Id = BTy_192 1206, 1b, 3.322b);
 		[empty](Id = BTy_194 43, 0b, 0b);
-		Pstruct(Id = BTy_209 4, 5b, 372b)
+		Pstruct(Id = BTy_211 4, 5b, 372b)
 			[string](Id = BTy_197 4, 1b, 24b);
 			[white space](Id = BTy_198 4, 1b, 3b);
 			RArray(Id = BTy_196 4, 3b, 345b)

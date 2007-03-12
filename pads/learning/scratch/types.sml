@@ -180,21 +180,23 @@ struct
         |  Error => " Error"
     and refinedToString ( re : Refined ) : string =
 	case re
-	of StringME s => "\""^ s ^ "\""
-        | Int(min, max) => "["^LargeInt.toString(min)^"..."^LargeInt.toString(max)^"]"
-        | IntConst a => "["^ LargeInt.toString(a) ^"]" 
-        | StringConst s => "\""^s^"\"" 
-        | Enum rel => "{" ^ String.concat(map (fn x => (refinedToString x) ^", ") rel) ^ "}"
-        | LabelRef id => "id="^ Atom.toString(id)    
+	of StringME s   => "[StringME] \""^ s ^ "\""
+        | Int(min, max) => "[Int] [" ^ LargeInt.toString(min) ^ "..." ^
+                           LargeInt.toString(max)^"]"
+        | IntConst a    => "[IntConst] ["^ LargeInt.toString(a) ^"]" 
+        | StringConst s => "[StringConst] \"" ^ s ^ "\"" 
+        | Enum rel      => "[Enum] {"^ String.concat(map (fn x => (refinedToString x) ^
+                           ", ") rel) ^ "}"
+        | LabelRef id   => "[Label] id="^ Atom.toString(id)    
 
     fun ltokenTyToString ( t : Token, loc : location ) : string = tokenTyToString t
     and tokenTyToString ( t : Token ) : string = 
 	case t 
-        of Ptime i   => "[Time]"
+        of Ptime i     => "[Time]"
 	|  Pdate i     => "[Date]"
-	|  Pip i     => "[IP]"
+	|  Pip i       => "[IP]"
 	|  Ppath i     => "[Path]"
-	|  Purl i     => "[URL]"
+	|  Purl i      => "[URL]"
         |  PbXML (f,s) => "bXML["^f^"]"
         |  PeXML (f,s) => "eXML["^f^"]"
 (*
@@ -202,14 +204,15 @@ struct
         |  Pstring s => " Pstring("^s^")"
         |  Pwhite s  => " Pwhite("^s^")" 
 *)
-	|  Pint i    => "[int]"                   (*" Pint("^(LargeInt.toString i)^")"*)
-        |  Pstring s => "[string]"                (*" Pstring("^s^")"*)
-        |  Pwhite s  => "[white space]"           (*" Pwhite("^s^")"*) 
-        |  Pgroup {left, body, right} => (ltokenTyToString left) ^"[Group Body]"^(ltokenTyToString right)
-        |  Other c   => "("^(Char.toString c)^")" (*(" Pother("^(Char.toString c)^")") *)
+	|  Pint i    => "[int]"               (*" Pint("^(LargeInt.toString i)^")"*)
+        |  Pstring s => "[string]"            (*" Pstring("^s^")"*)
+        |  Pwhite s  => "[white]"             (*" Pwhite("^s^")"*) 
+        |  Pgroup {left, body, right} =>
+             (ltokenTyToString left) ^ "[Group Body]" ^ (ltokenTyToString right)
+           (*(" Other("^(Char.toString c)^")") *)
+        |  Other c   => "[other]("^(Char.toString c)^")"
         |  Pempty    => "[empty]"
         |  Error     => " Error"
-
 
     fun printTokenTy ( t : Token ) : unit = print (tokenTyToString t)
 

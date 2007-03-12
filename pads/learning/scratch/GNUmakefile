@@ -83,46 +83,8 @@ learn:	main.sml
 
 IND  = data
 OUTD = output
-
-DATA = 1967Transactions.short  \
-       MER_T01_01.csv          \
-       ProfSec.log             \
-       access_log              \
-       ai-simple               \
-       ai.3000                 \
-       backup1.log             \
-       backup2.log             \
-       boot.log                \
-       crashreporter.log       \
-       daily.out               \
-       dibbler.1000            \
-       dmesg                   \
-       error_log               \
-       hp-array                \
-       hp-struct               \
-       install.log             \
-       interactions.txt.small  \
-       interface.loop          \
-       lsof                    \
-       netstat                 \
-       netstat-an              \
-       page_log                \
-       quarterlypersonalincome \
-       railroad.txt            \
-       rpmpkgs                 \
-       scesetup2.log           \
-       scrollkeeper.log        \
-       simplegroups            \
-       simplexml               \
-       windowserver_last.log   \
-       yum.log                 \
-       yum.txt
-# The following currently take too long
-#       SCESETUP.log            \
-#       apache.txt              \
-#       asl.log                 \
-#       ijnltif                 \
-
+# Data files, omitting those that take too long
+DATA := $(shell ls data | egrep -v "CVS|README" | egrep -v "ijnltif|asl.log")
 SILVERS = $(addsuffix .ag,$(DATA))
 
 silvers: $(SILVERS)
@@ -130,8 +92,8 @@ silvers: $(SILVERS)
 
 1967Transactions.short.ag: 1967Transactions.short
 MER_T01_01.csv.ag:         MER_T01_01.csv
-ProfSec.log.ag: ProfSec.log
-SCESETUP.LOG.ag: SCESETUP.LOG
+ProfSec.log.ag:            ProfSec.log
+SCESETUP.LOG.ag:           SCESETUP.LOG
 access_log.ag: access_log
 ai-simple.ag: ai-simple
 ai.3000.ag: ai.3000
@@ -178,9 +140,12 @@ endef
 
 define learn-it
 ./learn data/$@ -d output/$@ `maxdepth.pl $@`
-touch output/$@
+touch output/$@;
+echo "Sleep for five seconds";
+sleep 5;
 endef
 
+datas : $(DATA)
 .PHONY: $(DATA)
 
 1967Transactions.short:  $(IND)/1967Transactions.short  ; $(learn-it)

@@ -36,7 +36,7 @@ structure Model = struct
              | StringConst s  => ( unitComplexity, int2Complexity (size s) )
                (* Need term here for number of choices???? *)
              | Enum rl        => ( unitComplexity, sumComps ( map refinedDataComp rl))
-             | LabelRef i     => ( zeroComplexity, zeroComplexity )
+             | LabelRef i     => ( unitComplexity, unitComplexity )
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedTypeComp ( r : Refined ) : Complexity = #1 (refinedComp 1 r)
@@ -74,16 +74,16 @@ structure Model = struct
                   | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | Ptime s           => mkBaseComp maxlen nTimes
                   | Pdate s           => mkBaseComp maxlen 365
+                  | Ppath s           => mkBaseComp maxlen 256
+                  | Purl s            => mkBaseComp maxlen 256
                   | Pip s             => mkBaseComp maxlen 256
-                  | Ppath s             => mkBaseComp maxlen 256 (*need fix here *)
-                  | Purl s             => mkBaseComp maxlen 256 (*need fix here *)
                   | Pint l            => mkBaseComp maxlen 10
                   | Pstring s         => mkBaseComp maxlen numStringChars
-                  | Pgroup x          => ( zeroComplexity, zeroComplexity )
+                  | Pgroup x          => ( unitComplexity, unitComplexity )
                   | Pwhite s          => mkBaseComp maxlen numWhiteChars
-                  | Other c           => mkBaseComp maxlen 256
-                  | Pempty            => ( zeroComplexity, zeroComplexity )
-                  | Error             => ( impossible, impossible )
+                  | Other c           => mkBaseComp 1 256
+                  | Pempty            => ( unitComplexity, unitComplexity )
+                  | Error             => ( unitComplexity, unitComplexity )
                 )
              end
     )
@@ -97,7 +97,7 @@ structure Model = struct
     end
 
     fun maxContextComplexity ( cl : Context list ) : Complexity * Complexity =
-    let fun f (ltl:LToken list,comps:Complexity * Complexity ) : Complexity * Complexity =
+    let fun f (ltl:LToken list,comps:Complexity * Complexity ):Complexity*Complexity =
         let val ( t1, d1 ) = baseComp ltl
             val ( t2, d2 ) = comps
         in ( combine t1 t2, combine d1 d2 )
@@ -124,8 +124,6 @@ structure Model = struct
                         , measuredtys
                         )
              end
-           (* We will need information about the frequency of each branch
-              of the union to do a better job here *)
          | Punion (a,tys)               =>
              let val measuredtys = map measure tys
              in Punion ( updateComps a
@@ -134,9 +132,6 @@ structure Model = struct
                        , measuredtys
                        )
              end
-           (* Don't really want a complexity for a Parray, want to
-              wait until we have a refined array (see below)
-            *)
          | Parray ( a, { tokens  = ts
                        , lengths = ls
                        , first   = f
