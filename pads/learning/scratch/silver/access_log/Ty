@@ -1,53 +1,14 @@
-Pstruct(Id = BTy_49 8188, 43b, 667.272b)
-	[string](Id = BTy_0 8188, 1b, 54b);
-	[white space](Id = BTy_1 8188, 1b, 1b);
-	(-)(Id = BTy_2 8188, 1b, 8b);
-	[white space](Id = BTy_3 8188, 1b, 1b);
-	(-)(Id = BTy_4 8188, 1b, 8b);
-	[white space](Id = BTy_5 8188, 1b, 1b);
-	([)(Id = BTy_6 8188, 1b, 8b);
-	[int](Id = BTy_7 8188, 1b, 6.644b);
-	(/)(Id = BTy_8 8188, 1b, 8b);
-	[string](Id = BTy_9 8188, 1b, 18b);
-	(/)(Id = BTy_10 8188, 1b, 8b);
-	[int](Id = BTy_11 8188, 1b, 13.288b);
-	(:)(Id = BTy_12 8188, 1b, 8b);
-	[Time](Id = BTy_13 8188, 1b, 131.190b);
-	[white space](Id = BTy_14 8188, 1b, 1b);
-	[int](Id = BTy_15 8188, 1b, 13.288b);
-	(])(Id = BTy_16 8188, 1b, 8b);
-	[white space](Id = BTy_18 8188, 1b, 1b);
-	(\")(Id = BTy_19 8188, 1b, 8b);
-	[string](Id = BTy_20 8188, 1b, 24b);
-	[white space](Id = BTy_21 8188, 1b, 1b);
-	(/)(Id = BTy_22 8188, 1b, 8b);
-	Punion(Id = BTy_24 8188, 10b, 238b)
-		[empty](Id = BTy_23 8184, 0b, 0b);
-		Pstruct(Id = BTy_36 4, 9b, 237b)
-			[string](Id = BTy_25 4, 1b, 18b);
-			(/)(Id = BTy_26 4, 1b, 8b);
-			[string](Id = BTy_27 4, 1b, 126b);
-			Punion(Id = BTy_32 4, 4b, 59b)
-				Pstruct(Id = BTy_31 3, 3b, 58b)
-					(()(Id = BTy_28 3, 1b, 8b);
-					[string](Id = BTy_29 3, 1b, 42b);
-					())(Id = BTy_30 3, 1b, 8b);
-				End Pstruct;
-				[empty](Id = BTy_33 1, 0b, 0b);
-			End Punion;
-			(.)(Id = BTy_34 4, 1b, 8b);
-			[string](Id = BTy_35 4, 1b, 18b);
-		End Pstruct;
-	End Punion;
-	[white space](Id = BTy_37 8188, 1b, 1b);
-	[string](Id = BTy_38 8188, 1b, 24b);
-	(/)(Id = BTy_39 8188, 1b, 8b);
-	[int](Id = BTy_40 8188, 1b, 3.322b);
-	(.)(Id = BTy_41 8188, 1b, 8b);
-	[int](Id = BTy_42 8188, 1b, 3.322b);
-	(\")(Id = BTy_43 8188, 1b, 8b);
-	[white space](Id = BTy_45 8188, 1b, 1b);
-	[int](Id = BTy_46 8188, 1b, 9.966b);
-	[white space](Id = BTy_47 8188, 1b, 1b);
-	[int](Id = BTy_48 8188, 1b, 23.253b);
+Pstruct(Id = BTy_23 8188, 12b, 415.228b)
+	[StringConst] "localhost - - ["(Id = BTy_0 8188, 1b, 3.907b);
+	[Enum] {[StringConst] "25/Nov/2006", [StringConst] "26/Nov/2006", [StringConst] "27/Nov/2006", }(Id = BTy_7 8188, 1b, 10.378b);
+	[StringConst] ":"(Id = BTy_8 8188, 1b, 0b);
+	[Time](Id = BTy_9 8188, 1b, 229.582b);
+	[StringConst] "] \""(Id = BTy_10 8188, 1b, 2b);
+	[Enum] {[StringConst] "GET", [StringConst] "POST", }(Id = BTy_14 8188, 1b, 3.585b);
+	[StringConst] " "(Id = BTy_15 8188, 1b, 0b);
+	[Enum] {[StringConst] "/ HTTP/1.1", [StringConst] "/ppd/Andrew_s_printer.ppd HTTP/1.1", [StringConst] "/ppd/officejet_7100_series(Printer).ppd HTTP/1.1", }(Id = BTy_16 8188, 1b, 13.994b);
+	[StringConst] "\" "(Id = BTy_17 8188, 1b, 1.585b);
+	[IntConst] [200](Id = BTy_20 8188, 1b, 7.644b);
+	[StringConst] " "(Id = BTy_21 8188, 1b, 0b);
+	[Int] [75...1350164](Id = BTy_22 8188, 1b, 142.552b);
 End Pstruct

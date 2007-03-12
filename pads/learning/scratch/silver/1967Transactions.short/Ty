@@ -1,33 +1,33 @@
-Pstruct(Id = BTy_27 999, 20b, 172.370b)
-	[int](Id = BTy_0 999, 1b, 9.966b);
-	[white space](Id = BTy_1 999, 1b, 6b);
-	[int](Id = BTy_2 999, 1b, 13.288b);
-	[white space](Id = BTy_3 999, 1b, 6b);
-	[int](Id = BTy_4 999, 1b, 16.610b);
-	Punion(Id = BTy_6 999, 3b, 12.322b)
-		[empty](Id = BTy_5 937, 0b, 0b);
-		Pstruct(Id = BTy_9 62, 2b, 11.322b)
-			(.)(Id = BTy_7 62, 1b, 8b);
-			[int](Id = BTy_8 62, 1b, 3.322b);
+Pstruct(Id = BTy_27 999, 22b, 308.592b)
+	[Int] [101...103](Id = BTy_0 999, 1b, 4.755b);
+	[StringConst] "      "(Id = BTy_1 999, 1b, 2.585b);
+	[Int] [101...9890](Id = BTy_2 999, 1b, 53.028b);
+	[StringConst] "      "(Id = BTy_3 999, 1b, 2.585b);
+	[Int] [~10...12072](Id = BTy_4 999, 1b, 67.803b);
+	Punion(Id = BTy_6 999, 4b, 4.170b)
+		[StringConst] ""(Id = BTy_5 937, 1b, 0b);
+		Pstruct(Id = BTy_9 62, 2b, 3.170b)
+			[StringConst] "."(Id = BTy_7 62, 1b, 0b);
+			[Int] [1...9](Id = BTy_8 62, 1b, 3.170b);
 		End Pstruct;
 	End Punion;
-	[white space](Id = BTy_11 999, 1b, 19b);
-	[int](Id = BTy_12 999, 1b, 3.322b);
-	Punion(Id = BTy_14 999, 3b, 25.610b)
-		[empty](Id = BTy_13 943, 0b, 0b);
-		Pstruct(Id = BTy_17 56, 2b, 24.610b)
-			(.)(Id = BTy_15 56, 1b, 8b);
-			[int](Id = BTy_16 56, 1b, 16.610b);
+	[StringConst] "                   "(Id = BTy_11 999, 1b, 4.248b);
+	[IntConst] [0](Id = BTy_12 999, 1b, 0b);
+	Punion(Id = BTy_14 999, 4b, 79.512b)
+		[StringConst] ""(Id = BTy_13 943, 1b, 0b);
+		Pstruct(Id = BTy_17 56, 2b, 78.512b)
+			[StringConst] "."(Id = BTy_15 56, 1b, 0b);
+			[Int] [2...53321](Id = BTy_16 56, 1b, 78.512b);
 		End Pstruct;
 	End Punion;
-	[white space](Id = BTy_19 999, 1b, 19b);
-	Punion(Id = BTy_24 999, 5b, 32.253b)
-		Pstruct(Id = BTy_23 988, 3b, 27.932b)
-			[int](Id = BTy_20 988, 1b, 3.322b);
-			(.)(Id = BTy_21 988, 1b, 8b);
-			[int](Id = BTy_22 988, 1b, 16.610b);
+	[StringConst] "                   "(Id = BTy_19 999, 1b, 4.248b);
+	Punion(Id = BTy_24 999, 5b, 84.073b)
+		Pstruct(Id = BTy_23 988, 3b, 83.073b)
+			[Int] [0...1](Id = BTy_20 988, 1b, 1b);
+			[StringConst] "."(Id = BTy_21 988, 1b, 0b);
+			[Int] [1...87353](Id = BTy_22 988, 1b, 82.073b);
 		End Pstruct;
-		[int](Id = BTy_25 11, 1b, 3.322b);
+		[IntConst] [0](Id = BTy_25 11, 1b, 0b);
 	End Punion;
-	[white space](Id = BTy_26 999, 1b, 9b);
+	[StringConst] "   "(Id = BTy_26 999, 1b, 1.585b);
 End Pstruct

@@ -1,119 +1,48 @@
-Punion(Id = BTy_55 59, 71.322b, 16106.443b)
-	Pstruct(Id = BTy_54 46, 23b, 2661.322b)
-		Punion(Id = BTy_2 46, 2b, 43b)
-			[empty](Id = BTy_1 40, 0b, 0b);
-			[string](Id = BTy_3 6, 1b, 42b);
-		End Punion;
-		[white space](Id = BTy_4 46, 1b, 2b);
-		RArray(Id = BTy_0 46, 2b, 330b)
-			Pstruct(Id = BTy_8 58, 2b, 55b)
-				[string](Id = BTy_6 58, 1b, 54b);
-				[white space](Id = BTy_7 58, 1b, 1b);
+Punion(Id = BTy_8 59, 22.585b, 1176.471b)
+	Pstruct(Id = BTy_7 40, 4b, 827.459b)
+		[StringConst] "	"(Id = BTy_1 40, 1b, 0b);
+		RArray(Id = BTy_0 40, 2b, 27.459b)
+			Pstruct(Id = BTy_4 58, 2b, 5.492b)
+				[Enum] {[StringConst] "Configure", [StringConst] "Error", }(Id = BTy_2 58, 1b, 5.492b);
+				[StringConst] " "(Id = BTy_3 58, 1b, 0b);
 			End Pstruct;
 		End RArray;
-		Punion(Id = BTy_10 46, 3b, 10.322b)
-			[string](Id = BTy_9 40, 1b, 6b);
-			[int](Id = BTy_11 6, 1b, 3.322b);
-		End Punion;
-		(:)(Id = BTy_12 46, 1b, 8b);
-		RArray(Id = BTy_14 46, 7b, 2144b)
-			Separator: " "
-			Terminator: "."
-			Pstruct(Id = BTy_33 204, 5b, 268b)
-				[string](Id = BTy_23 204, 1b, 60b);
-				Punion(Id = BTy_25 204, 4b, 208b)
-					[empty](Id = BTy_24 92, 0b, 0b);
-					Pstruct(Id = BTy_122 81, 3b, 207b)
-						(\\)(Id = BTy_27 81, 1b, 8b);
-						RArray(Id = BTy_26 81, 2b, 199b)
-							Separator: "\\"
-							[string](Id = BTy_28 93, 1b, 66b);
-						End RArray;
+		[Path](Id = BTy_6 40, 1b, 800b);
+	End Pstruct;
+	Pstruct(Id = BTy_12 1, 1b, 5.285b)
+		[StringConst] "Wednesday, October 06, 2004 10:37:43 PM"(Id = BTy_9 1, 1b, 5.285b);
+	End Pstruct;
+	Pstruct(Id = BTy_32 6, 3b, 9.459b)
+		[StringConst] "Warning "(Id = BTy_13 6, 1b, 3b);
+		[IntConst] [2](Id = BTy_15 6, 1b, 1b);
+		[StringConst] ": The system cannot find the file specified."(Id = BTy_16 6, 1b, 5.459b);
+	End Pstruct;
+	Pstruct(Id = BTy_46 1, 1b, 5.807b)
+		[StringConst] "	File Security configuration was completed successfully."(Id = BTy_33 1, 1b, 5.807b);
+	End Pstruct;
+	Pstruct(Id = BTy_81 5, 10b, 325.874b)
+		RArray(Id = BTy_47 5, 4b, 285.686b)
+			Pstruct(Id = BTy_63 58, 4b, 6.644b)
+				Punion(Id = BTy_50 58, 3b, 6.644b)
+					[StringConst] ""(Id = BTy_49 57, 1b, 0b);
+					Pstruct(Id = BTy_61 1, 1b, 5.644b)
+						[StringConst] "Configuration engine was initialized successfully."(Id = BTy_51 1, 1b, 5.644b);
 					End Pstruct;
 				End Punion;
+				[StringConst] "-"(Id = BTy_62 63, 1b, 0b);
 			End Pstruct;
 		End RArray;
-		(.)(Id = BTy_48 46, 1b, 8b);
-		[white space](Id = BTy_20 46, 1b, 1b);
-		Punion(Id = BTy_18 46, 3b, 63b)
-			Pstruct(Id = BTy_17 40, 2b, 62b)
-				(\\)(Id = BTy_15 40, 1b, 8b);
-				[string](Id = BTy_16 40, 1b, 54b);
-			End Pstruct;
-			[empty](Id = BTy_19 6, 0b, 0b);
-		End Punion;
-		RArray(Id = BTy_13 46, 2b, 52b)
-			Pstruct(Id = BTy_52 8, 2b, 26b)
-				[string](Id = BTy_50 8, 1b, 18b);
-				(.)(Id = BTy_51 8, 1b, 8b);
-			End Pstruct;
-		End RArray;
-	End Pstruct;
-	[empty](Id = BTy_56 6, 0b, 0b);
-	Pstruct(Id = BTy_73 1, 13b, 276.800b)
-		[string](Id = BTy_58 1, 1b, 54b);
-		(,)(Id = BTy_59 1, 1b, 8b);
-		[white space](Id = BTy_60 1, 1b, 1b);
-		[string](Id = BTy_61 1, 1b, 42b);
-		[white space](Id = BTy_62 1, 1b, 1b);
-		[int](Id = BTy_64 1, 1b, 3.322b);
-		(,)(Id = BTy_65 1, 1b, 8b);
-		[white space](Id = BTy_66 1, 1b, 1b);
-		[int](Id = BTy_67 1, 1b, 13.288b);
-		[white space](Id = BTy_68 1, 1b, 1b);
-		[Time](Id = BTy_69 1, 1b, 131.190b);
-		[white space](Id = BTy_70 1, 1b, 1b);
-		[string](Id = BTy_71 1, 1b, 12b);
-	End Pstruct;
-	Pstruct(Id = BTy_88 1, 13b, 308b)
-		[white space](Id = BTy_75 1, 1b, 1b);
-		[string](Id = BTy_76 1, 1b, 24b);
-		[white space](Id = BTy_77 1, 1b, 1b);
-		[string](Id = BTy_78 1, 1b, 48b);
-		[white space](Id = BTy_79 1, 1b, 1b);
-		[string](Id = BTy_80 1, 1b, 78b);
-		[white space](Id = BTy_81 1, 1b, 1b);
-		[string](Id = BTy_82 1, 1b, 18b);
-		[white space](Id = BTy_83 1, 1b, 1b);
-		[string](Id = BTy_84 1, 1b, 54b);
-		[white space](Id = BTy_85 1, 1b, 1b);
-		[string](Id = BTy_86 1, 1b, 72b);
-		(.)(Id = BTy_87 1, 1b, 8b);
-	End Pstruct;
-	Pstruct(Id = BTy_128 5, 20b, 12858b)
-		(-)(Id = BTy_90 5, 1b, 8b);
-		RArray(Id = BTy_89 5, 12b, 12513b)
-			Pstruct(Id = BTy_105 58, 12b, 291b)
-				Punion(Id = BTy_92 58, 11b, 283b)
-					[empty](Id = BTy_91 57, 0b, 0b);
-					Pstruct(Id = BTy_103 1, 10b, 282b)
-						[string](Id = BTy_93 1, 1b, 78b);
-						[white space](Id = BTy_94 1, 1b, 1b);
-						[string](Id = BTy_95 1, 1b, 36b);
-						[white space](Id = BTy_96 1, 1b, 1b);
-						[string](Id = BTy_97 1, 1b, 18b);
-						[white space](Id = BTy_98 1, 1b, 1b);
-						[string](Id = BTy_99 1, 1b, 66b);
-						[white space](Id = BTy_100 1, 1b, 1b);
-						[string](Id = BTy_101 1, 1b, 72b);
-						(.)(Id = BTy_102 1, 1b, 8b);
-					End Pstruct;
-				End Punion;
-				(-)(Id = BTy_104 58, 1b, 8b);
-			End Pstruct;
-		End RArray;
-		Punion(Id = BTy_118 5, 7b, 337b)
-			Pstruct(Id = BTy_117 3, 6b, 336b)
-				RArray(Id = BTy_106 3, 3b, 312b)
-					Separator: " "
-					Terminator: "."
-					[string](Id = BTy_110 10, 1b, 78b);
+		Punion(Id = BTy_76 5, 6b, 40.188b)
+			Pstruct(Id = BTy_75 3, 4b, 39.188b)
+				RArray(Id = BTy_64 3, 3b, 37.604b)
+					Separator: [StringConst] " "
+					Terminator: [StringConst] "."
+					[Enum] {[StringConst] "Configuration", [StringConst] "File", [StringConst] "configuration", }(Id = BTy_68 10, 1b, 9.401b);
 				End RArray;
-				(.)(Id = BTy_114 3, 1b, 8b);
-				(.)(Id = BTy_115 3, 1b, 8b);
-				(.)(Id = BTy_116 3, 1b, 8b);
+				[StringConst] "..."(Id = BTy_72 3, 1b, 1.585b);
 			End Pstruct;
-			[empty](Id = BTy_119 2, 0b, 0b);
+			[StringConst] ""(Id = BTy_77 2, 1b, 0b);
 		End Punion;
 	End Pstruct;
+	[StringConst] ""(Id = BTy_78 6, 1b, 0b);
 End Punion
