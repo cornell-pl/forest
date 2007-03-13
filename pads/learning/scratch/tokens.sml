@@ -34,13 +34,13 @@ structure Tokens = struct
 	             Ptime of string | 
 	             Pdate of string | 
 	             Ppath of string | 
-	             Purl of string | 
-		     Pip of string | 
-                     Pint of LargeInt.int | 
+	             Purl  of string | 
+		     Pip   of string | 
+                     Pint  of LargeInt.int | 
 		     Pstring of string | 
-                     Pgroup of {left : LToken, body : LToken list, right : LToken} | 
-	             Pwhite of string | 
-		     Other of char | 
+                     Pgroup  of {left : LToken, body : LToken list, right : LToken} | 
+	             Pwhite  of string | 
+		     Other   of char | 
 		     Pempty | 
 		     Error
     withtype LToken = Token * location
@@ -191,7 +191,7 @@ structure Tokens = struct
              | Ptime s        => size s
              | Pdate s        => size s
              | Ppath s        => size s
-             | Purl s        => size s
+             | Purl s         => size s
              | Pip s          => size s
              | Pint n         => size (LargeInt.toString n)
              | Pstring s      => size s

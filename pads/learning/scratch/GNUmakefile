@@ -84,7 +84,7 @@ learn:	main.sml
 IND  = data
 OUTD = output
 # Data files, omitting those that take too long
-DATA := $(shell ls data | egrep -v "CVS|README" | egrep -v "ijnltif|asl.log")
+DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "ijnltif|asl.log")
 SILVERS = $(addsuffix .ag,$(DATA))
 
 silvers: $(SILVERS)

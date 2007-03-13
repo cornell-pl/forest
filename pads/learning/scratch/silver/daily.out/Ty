@@ -1,85 +1,57 @@
-Punion(Id = BTy_1 5788, 4040.322b, 293660.292b)
-	[empty](Id = BTy_0 1668, 0b, 0b);
-	Pstruct(Id = BTy_23 834, 711b, 238965.278b)
+Punion(Id = BTy_1 5788, 11406b, 360827.696b)
+	[StringConst] ""(Id = BTy_0 1668, 1b, 0b);
+	Pstruct(Id = BTy_23 834, 7381b, 271229.871b)
 		[string](Id = BTy_2 834, 1b, 24b);
-		Punion(Id = BTy_4 834, 2b, 9b)
-			[empty](Id = BTy_3 556, 0b, 0b);
-			(*)(Id = BTy_5 278, 1b, 8b);
-		End Punion;
-		[white space](Id = BTy_6 834, 1b, 3b);
-		[int](Id = BTy_7 834, 1b, 16.610b);
-		[white space](Id = BTy_8 834, 1b, 3b);
-		(<)(Id = BTy_10 834, 1b, 8b);
-		[string](Id = BTy_11 834, 1b, 24b);
-		(#)(Id = BTy_12 834, 1b, 8b);
-		[int](Id = BTy_13 834, 1b, 3.322b);
-		(>)(Id = BTy_14 834, 1b, 8b);
-		[white space](Id = BTy_16 834, 1b, 29b);
-		RArray(Id = BTy_15 834, 698b, 238812.737b)
-			Pstruct(Id = BTy_21 3753, 698b, 34116.105b)
-				Punion(Id = BTy_19 3753, 697b, 34108.105b)
-					Pstruct(Id = BTy_18 3614, 557b, 22709.978b)
-						TBD_0(Id = BTy_0 3614, 278b, 18235.403b);
-						[int](Id = BTy_17 3614, 1b, 26.575b);
-						TBD_1(Id = BTy_1 3614, 278b, 4448b);
+		Switch(BTy_2)(Id = BTy_4 834, 4b, 10.340b):
+		case [Enum] {[StringConst] "en0", [StringConst] "en1", [StringConst] "fw0", [StringConst] "lo0", }:
+			[StringConst] ""(Id = BTy_3 556, 1b, 0b);
+		case [Enum] {[StringConst] "gif0", [StringConst] "stf0", }:
+			[StringConst] "*"(Id = BTy_5 278, 1b, 0b);
+		End Switch;
+		[StringConst] "   "(Id = BTy_6 834, 1b, 1.585b);
+		[Int] [576...16384](Id = BTy_7 834, 1b, 69.742b);
+		[StringConst] " <Link#"(Id = BTy_8 834, 1b, 2.807b);
+		[Int] [1...6](Id = BTy_13 834, 1b, 2.585b);
+		[StringConst] ">                        "(Id = BTy_14 834, 1b, 4.644b);
+		RArray(Id = BTy_15 834, 7370b, 271041.075b)
+			Pstruct(Id = BTy_21 3753, 7370b, 38720.154b)
+				Punion(Id = BTy_19 3753, 7369b, 38717.832b)
+					Pstruct(Id = BTy_18 3614, 7229b, 27319.705b)
+						TBD_0(Id = BTy_0 3614, 3614b, 21571.403b);
+						[Int] [0...12177617](Id = BTy_17 3614, 1b, 188.302b);
+						TBD_1(Id = BTy_1 3614, 3614b, 5560b);
 					End Pstruct;
 					TBD_2(Id = BTy_2 139, 139b, 11397.127b);
 				End Punion;
-				[white space](Id = BTy_20 3753, 1b, 8b);
+				[StringConst] "     "(Id = BTy_20 3753, 1b, 2.322b);
 			End Pstruct;
 		End RArray;
-		[int](Id = BTy_22 834, 1b, 16.610b);
+		[Int] [0...25153](Id = BTy_22 834, 1b, 73.093b);
 	End Pstruct;
-	Pstruct(Id = BTy_25 3075, 3077b, 47931b)
-		[string](Id = BTy_26 3075, 1b, 60b);
-		Punion(Id = BTy_27 3075, 3076b, 47871b)
-			TBD_3(Id = BTy_3 2241, 2241b, 18958b);
-			TBD_4(Id = BTy_4 834, 834b, 28912b);
+	Pstruct(Id = BTy_43 608, 1342b, 67352.825b)
+		Punion(Id = BTy_26 608, 1338b, 66747.070b)
+			[StringConst] ""(Id = BTy_25 210, 1b, 0b);
+			Pstruct(Id = BTy_50 398, 1336b, 66746.070b)
+				TBD_3(Id = BTy_3 398, 398b, 11318b);
+				RArray(Id = BTy_27 398, 540b, 54258.438b)
+					TBD_4(Id = BTy_4 540, 540b, 9043.073b);
+				End RArray;
+				TBD_5(Id = BTy_5 398, 398b, 1169.633b);
+			End Pstruct;
+		End Punion;
+		[Path](Id = BTy_28 608, 1b, 600b);
+		Punion(Id = BTy_30 608, 3b, 5.755b)
+			[StringConst] ""(Id = BTy_29 469, 1b, 0b);
+			Pstruct(Id = BTy_42 139, 1b, 4.755b)
+				[StringConst] ": No such file or directory"(Id = BTy_31 139, 1b, 4.755b);
+			End Pstruct;
 		End Punion;
 	End Pstruct;
-	Pstruct(Id = BTy_54 1, 26b, 336b)
-		[white space](Id = BTy_28 1, 1b, 2b);
-		[string](Id = BTy_29 1, 1b, 24b);
-		(:)(Id = BTy_30 1, 1b, 8b);
-		[white space](Id = BTy_31 1, 1b, 1b);
-		[string](Id = BTy_32 1, 1b, 42b);
-		(:)(Id = BTy_33 1, 1b, 8b);
-		[white space](Id = BTy_34 1, 1b, 1b);
-		[string](Id = BTy_35 1, 1b, 12b);
-		[white space](Id = BTy_36 1, 1b, 1b);
-		[string](Id = BTy_37 1, 1b, 24b);
-		[white space](Id = BTy_38 1, 1b, 1b);
-		(`)(Id = BTy_39 1, 1b, 8b);
-		(/)(Id = BTy_40 1, 1b, 8b);
-		[string](Id = BTy_41 1, 1b, 18b);
-		(/)(Id = BTy_42 1, 1b, 8b);
-		[string](Id = BTy_43 1, 1b, 54b);
-		(')(Id = BTy_44 1, 1b, 8b);
-		(,)(Id = BTy_45 1, 1b, 8b);
-		[white space](Id = BTy_46 1, 1b, 1b);
-		[string](Id = BTy_47 1, 1b, 36b);
-		[white space](Id = BTy_48 1, 1b, 1b);
-		[string](Id = BTy_49 1, 1b, 12b);
-		[white space](Id = BTy_50 1, 1b, 1b);
-		[string](Id = BTy_51 1, 1b, 30b);
-		[white space](Id = BTy_52 1, 1b, 1b);
-		[string](Id = BTy_53 1, 1b, 18b);
-	End Pstruct;
-	Pstruct(Id = BTy_71 210, 224b, 6425.692b)
-		(/)(Id = BTy_55 210, 1b, 8b);
-		[string](Id = BTy_56 210, 1b, 18b);
-		(/)(Id = BTy_57 210, 1b, 8b);
-		[string](Id = BTy_58 210, 1b, 42b);
-		[white space](Id = BTy_59 210, 1b, 6b);
-		[int](Id = BTy_60 210, 1b, 26.575b);
-		[white space](Id = BTy_61 210, 1b, 5b);
-		[int](Id = BTy_62 210, 1b, 26.575b);
-		[white space](Id = BTy_63 210, 1b, 8b);
-		[int](Id = BTy_64 210, 1b, 26.575b);
-		[white space](Id = BTy_65 210, 1b, 5b);
-		[int](Id = BTy_66 210, 1b, 9.966b);
-		(%)(Id = BTy_68 210, 1b, 8b);
-		[white space](Id = BTy_69 210, 1b, 4b);
-		TBD_5(Id = BTy_5 210, 210b, 6224b);
+	Pstruct(Id = BTy_45 2678, 2680b, 22243b)
+		[string](Id = BTy_46 2678, 1b, 60b);
+		Punion(Id = BTy_47 2678, 2679b, 22183b)
+			TBD_6(Id = BTy_6 2122, 2122b, 17734b);
+			TBD_7(Id = BTy_7 556, 556b, 4448b);
+		End Punion;
 	End Pstruct;
 End Punion
