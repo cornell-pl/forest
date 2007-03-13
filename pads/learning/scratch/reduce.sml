@@ -180,6 +180,82 @@ case ty of
   	| (nil,nil) => Punion (a, rem_reduced)
   end
 | _ => ty
+(* detect a table with a header and rewrite the struct with unions inside
+(a1 + b1), (a2 + b2), (a3 + b3) = (a1, a2, a3) + (b1, b2, b3) 
+where a and b are header and body rows of a table respectively *)
+(*this rule cause the cost of the ty to go up so it's currently not used *)
+and extract_table_header ty =
+ case ty of 
+	Pstruct (a, tylist) =>
+	  let
+		fun getNewLabel x = SOME(getLabel ({coverage=x, label=NONE, 
+					typeComp=Bits(0), dataComp=Bits(0)}))
+		fun numUnions tylist =
+			case tylist of
+				h::tail => (case h of 
+						Punion(_, _) => 1+numUnions tail
+						| _ => numUnions tail
+					   )
+				| nil => 0
+		fun check_table tylist =
+		  case tylist of
+			h::tail => 
+				(
+				case h of 
+				Punion(a, [ty1, ty2]) =>
+					let
+						val c1 = getCoverage(ty1)
+						val c2 = getCoverage(ty2)
+					in
+						if (c1=1 andalso c2 >1) orelse
+						   (c1>1 andalso c2=1) then
+							check_table tail
+						else false	
+					end
+				| _ => check_table tail
+				)
+			| nil => true	 
+		fun split_union ty =
+			case ty of
+				Punion(a, [ty1, ty2]) => 
+					let
+						val c1 = getCoverage(ty1)
+						val c2 = getCoverage(ty2)
+					in
+						if (c1=1) then (ty1, ty2) (* table header comes first *)
+						else (ty2, ty1)
+					end
+				| ty => let
+					val aux = getAuxInfo(ty)
+					val c= #coverage aux
+					val l= #label aux
+					val t= #typeComp aux
+					val d= #dataComp aux
+					val aux1 = {coverage=1, label=getNewLabel 1, typeComp=t, dataComp=d}
+					val aux2 = {coverage=c-1, label=l, typeComp=t, dataComp=d}
+					in
+						(setAuxInfo ty aux1, setAuxInfo ty aux2)
+					end
+		val overallCoverage = getCoverage(ty)
+		val unions = numUnions tylist
+	  in
+		if unions>=2 andalso check_table tylist = true then
+		  let
+			val _ = print "Found a table!!! Rewriting!!!\n"
+			val _ = printTy ty
+			val (tys1, tys2) = ListPair.unzip (map split_union tylist)
+			val a1 = {coverage=1, label=getNewLabel 1, typeComp=Bits 0, dataComp=Bits 0}
+			val a2 = {coverage=overallCoverage-1, 
+				label=getNewLabel 1, typeComp=Bits 0, dataComp=Bits 0}
+			val newty = Punion(a, [Pstruct(a1, tys1), Pstruct(a2, tys2)])
+			val _ = (print "Cost for ty: "; print (Int.toString(cost LabelMap.empty ty)))
+			val _ = (print "\nCost for newty: "; print (Int.toString(cost LabelMap.empty newty)))
+		  in newty
+		  end
+		else ty
+	  end
+     	| _ => ty
+
 (* adjacent constant strings are merged together *)
 and adjacent_consts cmos ty = 
   case ty of Pstruct(a, tylist) => 

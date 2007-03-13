@@ -80,6 +80,18 @@ struct
         |  Switch(a,id,branches)        => a
         |  RArray (a,sep,term,body,len,lengths) => a
 
+    fun setAuxInfo ty aux = 
+	case ty 
+        of Base (a,t)                   => Base(aux, t)
+        |  TBD (a,i,cl)                 => TBD(aux, i, cl)
+        |  Bottom (a,i,cl)              => Bottom(aux, i, cl)
+        |  Pstruct (a,tys)              => Pstruct(aux, tys)
+        |  Punion (a,tys)               => Punion(aux, tys)
+        |  Parray (a, x)                => Parray(aux, x)
+        |  RefinedBase (a,r,tl)         => RefinedBase(aux, r, tl)
+        |  Switch(a,id,branches)        => Switch(aux, id, branches)
+        |  RArray (a,sep,term,body,len,lengths) => RArray(aux, sep, term, body, len, lengths)
+
     (* Compute the length of an RArray. This function should always be
        passed a Ty value under the RArray constructor, if not, it throws
        an exception

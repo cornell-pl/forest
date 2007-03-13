@@ -24,7 +24,8 @@ ampm = am | AM | pm | PM;
 time    = {doublet}:{doublet}((:{doublet})?)(([ ]*{ampm})?)([ \t]+{timezone})?;
 port = [1-9][0-9]*;
 filename = [^\\\/?*:<>\"]+;
-filepath =  \/{filename}(\/{filename})*\/? | ([a-zA-Z]:)?\\{filename}(\\{filename})*\\? |
+filepath =  \/{filename}(\/{filename})*\/? | 
+	([a-zA-Z]:)?\\{filename}(\\{filename})*\\? |
 	\\\\{filename}(\\{filename})*\\?;
 day	= [1-9] | [1-2][0-9] | 0[1-9] | 3[0-1];
 weekday = Mon | Monday | Tue | Tuesday | Wed | Wednesday | Thu | Thursday | Fri | Friday | 
