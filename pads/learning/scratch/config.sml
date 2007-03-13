@@ -13,12 +13,14 @@ structure Config = struct
     val def_srcFile    = "toBeSupplied"
     val def_printLineNos = false
     val def_printIDs     = true
+    val def_entropy      = false
 
     val depthLimit = ref def_depthLimit
     val outputDir = ref def_outputDir
     val srcFile = ref def_srcFile
     val printLineNos = ref def_printLineNos
     val printIDs = ref def_printIDs
+    val printEntropy = ref def_entropy
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
@@ -37,6 +39,7 @@ structure Config = struct
 	    ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n")^
  	    ("Print line numbers in output contexts: "        ^(Bool.toString (!printLineNos))^"\n")^
  	    ("Print ids and output type tokens: "             ^(Bool.toString (!printIDs))^"\n")^
+	    ("Print Entropy: "                                ^(Bool.toString (!printEntropy))^"\n")^
 	    ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n")^
 	    ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n")^
 	    ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n")^

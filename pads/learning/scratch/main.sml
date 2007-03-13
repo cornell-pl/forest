@@ -58,6 +58,7 @@ structure Main : sig
     fun setArrayWidth   a = ARRAY_WIDTH_THRESHOLD := a
     fun setPrintLineNos b = (if b then printLineNos := b else ())
     fun setPrintIDs     b = (if b then  printIDs := b else ())
+    fun setEntropy      b = (if b then  printEntropy := b else ())
     fun addSourceFile   f = srcFile    := f
 
     val flags = [
@@ -69,7 +70,8 @@ structure Main : sig
          ("s",        "struct determination tolerance (percentage, default "^(Real.toString DEF_STRUCT_PERCENTAGE)^")",  PCL.Float  (setStructPer, false)),
          ("n",        "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),
          ("a",        "minimum array width (default "^(Int.toString DEF_ARRAY_WIDTH_THRESHOLD)^")",        PCL.Int    (setArrayWidth, false)),
-         ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false))
+         ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false)),
+         ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy)
         ]
 
     fun processSwitches args = 

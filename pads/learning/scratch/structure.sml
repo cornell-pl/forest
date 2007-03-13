@@ -224,12 +224,181 @@ struct
 
 
     (********************************************************************)
+    (******************** Entropy functions    **************************)
+    (********************************************************************)
+    structure AtomMap = RedBlackMapFn(
+			   struct type ord_key = Atom.atom
+				  val  compare = Atom.compare
+			   end)
+    type OneGram = (int ref) AtomMap.map
+    type TwoGram = (OneGram ref) AtomMap.map
+
+    fun insOne(oneGram,atom) = 
+	case AtomMap.find(oneGram,atom)
+	of NONE => AtomMap.insert(oneGram,atom, ref 1)
+        |  SOME count => (count := !count + 1; oneGram)
+
+    fun insTwo(twoGram,first,second) = 
+        case AtomMap.find(twoGram,first)
+        of NONE => (* first time we've seen a two gram starting with first *)
+	           AtomMap.insert(twoGram,first, ref (insOne(AtomMap.empty,second)))
+        | SOME oneGram => (oneGram := insOne(!oneGram,second); twoGram)
+
+    fun prob1G(totalChars, numDistinct, oneGram, next) = 
+	let val denominator = Real.fromInt (totalChars + numDistinct)
+	in case AtomMap.find(oneGram,next)
+           of NONE => 1.0/ denominator  (* This case really should never arise...*)
+           |  SOME c => ((Real.fromInt (!c)) + 1.0) /denominator
+	end
+
+    fun prob2G(oneGram, twoGram, context, next) = 
+	let val numDistinct = AtomMap.numItems oneGram
+	in
+	case AtomMap.find(twoGram,context)
+        of NONE => 0.0 (* this case should not arise *)
+        |  SOME condOneGram => (
+	      let val numContext = !(Option.valOf (AtomMap.find(oneGram,context)))
+		  val denominator = numContext + numDistinct (* to account for +1 to solve zero-occurrence problem *)
+		  val numerator = 
+		  case AtomMap.find(!condOneGram, next) 
+		  of NONE => 1 
+                  |  SOME count => ((!count) + 1) 
+	      in
+		  (Real.fromInt numerator) / (Real.fromInt denominator)
+	      end
+	   (* end case *))
+	end
+   
+    fun predict(m,s,c) = 
+	let val (totalChars, numDistinct,oneGram,twoGram) = m
+	in
+	    0.8*prob2G(oneGram,twoGram,s,c) + 
+            0.2*prob1G(totalChars,numDistinct,oneGram,c)
+	end
+    fun ln(x:real) : real = Math.ln x
+    fun I (m,s,c) = ~(ln (predict (m,s,c)))
+
+    val Hmemo : (real ref) AtomMap.map ref = ref AtomMap.empty 
+    fun H (m,s) = 
+	let val s = Atom.atom (Char.toString s) (* convert char to atom *)
+	in
+	    case AtomMap.find(!Hmemo,s)
+	    of NONE =>
+		let val (totalChars, numDistinct,oneGram,twoGram) = m
+		    val alphabet = AtomMap.listKeys oneGram
+		    fun doSum(c,sum:real) = sum + (predict (m,s,c)*I(m,s,c)) 
+		    val result = List.foldl doSum 0.0 alphabet 
+		in
+		    Hmemo := AtomMap.insert(!Hmemo,s, ref result);
+		    result
+		end
+	  | SOME result => !result
+	end
+
+    fun getThreshold m = 
+	let val (totalChars, numDistinct,oneGram,twoGram) = m
+	in
+	    (1.0/Math.e) * (ln(Real.fromInt numDistinct))
+	end
+
+
+    fun eTokenize (m, threshold, sdata, len) = 
+	let val () = print (("Len is:")^(Int.toString len)^".\n")
+	    fun finish entropy c (little:char list) (big:(string * real) list) = (String.implode(List.rev(c@little)),entropy) :: big
+	    fun loop index (littleAcc:char list) (bigAcc:(string * real) list) = 
+		if index = len then 
+		    List.rev(finish 0.0 [] littleAcc bigAcc)
+		else let val current = Substring.sub(sdata,index)
+			 val entropy = H(m,current) 
+(*			 val () = if index mod 1000 = 0 then
+			             print ("Current index: "^(Int.toString index)^" Entropy: "^(Real.toString entropy)^"\n")
+				  else () *)
+		     in
+			 if entropy > threshold then 
+			     loop (index+1) [] (finish entropy [current] littleAcc bigAcc)
+			 else
+			     loop (index+1) (current::littleAcc) bigAcc
+		     end
+	in
+	    loop 0 [] []
+	end
+
+
+
+     fun OneGramToString prefix oneGram f = 
+	let val sList = List.map (fn(x,y) => 
+				  "\t"^prefix^(Atom.toString x)^
+				  "\t"^(Int.toString (!y))^
+				  "\t"^(f (x,(!y)))^
+				  "\n") 
+	                (AtomMap.listItemsi oneGram)
+	in
+	    String.concat sList
+	end
+
+    fun TwoGramToString prefix oneGram twoGram = 
+	let  
+	    val sList = List.map (fn(x,y) => (OneGramToString (prefix ^(Atom.toString x)) 
+					                       (!y)
+							       (fn(second,_)=>Real.toString(prob2G(oneGram,twoGram,x,second)))
+							       )^"\n") (AtomMap.listItemsi twoGram)			 
+	in
+	    String.concat sList
+	end
+
+    fun eTokens2String tks = 
+	case tks 
+        of [] => "\n"
+        | ((s,entropy)::ts) => s^"\t"^(Real.toString entropy)^"\n"^(eTokens2String ts)
+
+    fun printETokens tks = 
+	case tks 
+        of [] => print "\n"
+        | ((s,entropy)::ts) => ((print (s^"\t"^(Real.toString entropy)^"\n")); (printETokens ts))
+
+    fun buildCounts sdata = 
+	let val data = Substring.full sdata
+	    val len = Substring.size data
+	    fun loop i (r as (oneGram, twoGram)) = 
+		if i = len then r
+		else let val currentAtom = Atom.atom(Char.toString(Substring.sub(data,i)))
+                         val oneGram' = insOne(oneGram,currentAtom)
+			 val twoGram' = 
+   			      let val prevAtom = Atom.atom(Char.toString(Substring.sub(data,i-1)))
+			      in
+				  insTwo(twoGram,prevAtom,currentAtom) 
+			      end handle Subscript => twoGram
+		     in
+			 loop (i+1) (oneGram', twoGram')
+		     end
+	    val (oneGram,twoGram) = loop 0 (AtomMap.empty, AtomMap.empty)
+	    val numDistinctChars = AtomMap.numItems oneGram
+	    val model = (len,numDistinctChars, oneGram,twoGram)
+	    val threshold = getThreshold model
+	    val eTokens = eTokenize (model,threshold, data,len)
+	in
+	 (   print ("Number of characters: "^(Int.toString len)^"\n");
+             print ("Number of distinct characters: "^(Int.toString numDistinctChars)^"\n");
+	     print "One Grams:\n";
+	     print (OneGramToString "" oneGram (fn _=>""));
+	     print "Two Grams:\n";
+	     print (TwoGramToString "" oneGram twoGram);
+	     print "END Character counts:\n\n";
+	     print ("Tokens detected by entropy with threshold:"^(Real.toString threshold)^":\n");
+	 (*    print (eTokens2String eTokens); *)
+	     printETokens eTokens;
+	     print "END Entropy tokens:\n\n"
+	 )
+	end
+
+    (********************************************************************)
     (******************** Processing functions **************************)
     (********************************************************************)
 
    fun loadFile path = 
        let val strm = TextIO.openIn path
 	   val data : String.string = TextIO.inputAll strm
+	   val () = if !printEntropy then buildCounts data else ()
            fun isNewline c = c = #"\n" orelse c = #"\r"
            fun getLines(ss,l) = 
                if (Substring.isEmpty ss) then List.rev l
@@ -661,8 +830,8 @@ struct
 	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
                  then TBD ( { coverage=coverage
                             , label=SOME(mkTBDLabel (!TBDstamp))
-                            , typeComp = unitComplexity
-                            , dataComp = zeroComplexity
+                            , typeComp = unitComplexity    (* TEMP *)
+                            , dataComp = zeroComplexity    (* TEMP *)
                             }
                           , !TBDstamp
                           , cl
