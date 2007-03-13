@@ -84,50 +84,19 @@ learn:	main.sml
 IND  = data
 OUTD = output
 # Data files, omitting those that take too long
-DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "ijnltif|asl.log")
+DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "ijnltif|asl.log|lsof")
 SILVERS = $(addsuffix .ag,$(DATA))
+XS      = $(addsuffix .x,x $(DATA))
+TESTS   = $(addsuffix .test,$(DATA))
+
+.PHONY: $(DATA)
+.PHONY: x
+
+$(XS): %.x: %
+	echo $^
 
 silvers: $(SILVERS)
 	echo Making silver version of each data file output
-
-1967Transactions.short.ag: 1967Transactions.short
-MER_T01_01.csv.ag:         MER_T01_01.csv
-ProfSec.log.ag:            ProfSec.log
-SCESETUP.LOG.ag:           SCESETUP.LOG
-access_log.ag: access_log
-ai-simple.ag: ai-simple
-ai.3000.ag: ai.3000
-apache.txt.ag: apache.txt
-asl.log.ag: asl.log
-backup1.log.ag: backup1.log
-backup2.log.ag: backup2.log
-boot.log.ag: boot.log
-crashreporter.log.ag: crashreporter.log
-daily.out.ag: daily.out
-dibbler.1000.ag: dibbler.1000
-dmesg.ag: dmesg
-error_log.ag: error_log
-hp-array.ag: hp-array
-hp-struct.ag: hp-struct
-ijnltif.ag: ijnltif
-install.log.ag: install.log
-interactions.txt.small.ag: interactions.txt.small
-interface.loop.ag: interface.loop
-lsof.ag: lsof
-netstat.ag: netstat
-netstat-an.ag: netstat-an
-page_log.ag: page_log
-quarterlypersonalincome.ag: quarterlypersonalincome
-railroad.txt.ag: railroad.txt
-rpmpkgs.ag: rpmpkgs
-scesetup2.log.ag: scesetup2.log
-scrollkeeper.log.ag: scrollkeeper.log
-simplegroups.ag: simplegroups
-simplexml.ag: simplexml
-windowserver_last.log.ag: windowserver_last.log
-yum.log.ag: yum.log
-yum.txt.ag: yum.txt
-
 
 define silver-it
 @if [ ! -d silver/$(*F) ] ; then mkdir silver/$(*F); fi
@@ -135,8 +104,11 @@ cp output/$(*F)/Ty silver/$(*F);
 cp output/$(*F)/Params silver/$(*F);
 endef
 
-%.silver :    ; $(silver-it)
-%.ag     :    ; $(silver-it)
+# The silver file depends on the corresponding output file.
+$(SILVERS): %.ag: %
+
+# %.silver :    ; $(silver-it)
+# %.ag     :    ; $(silver-it)
 
 define learn-it
 ./learn data/$@ -d output/$@ `maxdepth.pl $@`
@@ -145,8 +117,7 @@ echo "Sleep for five seconds";
 sleep 5;
 endef
 
-datas : $(DATA)
-.PHONY: $(DATA)
+outputs : $(DATA)
 
 1967Transactions.short:  $(IND)/1967Transactions.short  ; $(learn-it)
 MER_T01_01.csv:          $(IND)/MER_T01_01.csv          ; $(learn-it)
@@ -201,9 +172,10 @@ make $(*F)
       diff output/yum.txt/Ty silver/yum.txt/Ty        ; \
       echo; \
  fi
-@if ! cmp --quiet output/yum.txt/Params silver/yum.txt/Params ;\
- then echo $@/Params has changed since the silver version     ;\
+@if ! cmp --quiet output/yum.txt/Params silver/yum.txt/Params ; \
+ then echo $@/Params has changed since the silver version     ; \
       diff output/yum.txt/Params silver/yum.txt/Params        ; \
+      echo; \
  fi
 @if cmp --quiet output/yum.txt/Params silver/yum.txt/Params &&   \
     cmp --quiet output/yum.txt/Ty silver/yum.txt/Ty             ;\
