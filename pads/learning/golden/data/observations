@@ -16,8 +16,10 @@ it could be just comments, human language, rather than a fixed format (boot.txt)
 ** this is fixed by adding tokenization for Ppath and Purl
 
 7. The current system was unable to correctly identify rc.sysinit and fsck as having the same semantics (a daemon name) by putting them into a union (boot.txt)
+** this requires semantics analysis which is hard
 
 8. Failed to recognize multi-line records and file that contains different types of records (convert.log)
+** this is a remification of the current system having various assumption of a single line record
 
 9. Hostname was not identified (ai.3000)
 
@@ -35,6 +37,14 @@ it could be just comments, human language, rather than a fixed format (boot.txt)
 consider doing the following rewriting:
 (a1 + b1), (a2 + b2), (a3 + b3) = (a1, a2, a3) + (b1, b2, b3) 
 where a and b are header and body rows of a table
+** Implemented a new rewriting rule for separating the header from the body of a table. 
+It turns out there are two problems with this: first just by looking at the coverage of the header
+(presumably 1) and the body (n-1) is not enough; some tables may not exhibit that property. Second,
+the rewrite of the above kind often causes the cost of the Ty to be higher due to the fact that there
+are often common elements in both the header and body (such as spaces) and 
+these get duplicated in the above, e.g. if we have
+x, (a1 + b1), y, z, (a2 + b2), (a3 + b3) ==> (x, a1, y, z, a2, a3) + (x, b1, y, z, b2, b3)
+the resulting structure is longer and more complicated cos of the duplicate of x, y and z.
 
 15. Cannot handle Parray with a non-struct body, e.g. base or refinedbase, however these arrays with a base Ty as body are normally not really arrays (ai.3000, rpmpkgs.txt). 
 ** fixed by the new refine_array rewriting rule, however such Parrays are not really arrays, the initial
