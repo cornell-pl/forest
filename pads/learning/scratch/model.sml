@@ -21,8 +21,8 @@ structure Model = struct
 
     (* Make a base complexity from a multiplier (often maximum length of token)
        and a number of choices. *)
-    fun mkBaseComp ( mult : int ) ( choices : int ) : Complexity  * Complexity =
-        ( unitComplexity, multComp mult ( int2Complexity choices ) )
+    fun mkBaseComp ( mult : LargeInt.int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
+        ( unitComplexity, multCompL mult ( int2ComplexityL choices ) )
     (* Same thing with a large integer *)
     fun mkBaseCompL ( mult : int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
         ( unitComplexity, multComp mult ( int2ComplexityL choices ) )
@@ -30,7 +30,7 @@ structure Model = struct
     (* Compute the type and data complexity of a refined type *)
     fun refinedComp ( multiplier:int ) ( r:Refined ) : Complexity * Complexity =
         ( case r of
-               StringME s     => mkBaseComp multiplier numStringChars
+               StringME s     => mkBaseCompL multiplier numStringChars
              | Int (min, max) => mkBaseCompL multiplier ( max - min + 1 )
              | IntConst n     => ( unitComplexity, int2ComplexityL n )
              | StringConst s  => ( unitComplexity, int2Complexity (size s) )
@@ -43,9 +43,8 @@ structure Model = struct
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedDataComp ( r : Refined ) : Complexity = #2 (refinedComp 1 r)
 
-
     (* Measure a refined base type *)
-    exception NotRefinedBase
+    exception NotRefinedBase (* Function should be called only with refined base type *)
     fun measureRefined (m:int) (ty:Ty) : Ty =
     ( case ty of
            RefinedBase ( a, r, ts ) =>
@@ -67,16 +66,15 @@ structure Model = struct
     ( case lts of
            []      => ( zeroComplexity, zeroComplexity )
          | (t::ts) =>
-             let val maxlen  = maxTokenLength lts
-                 val nTimes  = 60 * 60 * 24
+             let val maxlen  = Int.toLarge ( maxTokenLength lts )
              in ( case tokenOf t of
                     PbXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
-                  | Ptime s           => mkBaseComp maxlen nTimes
-                  | Pdate s           => mkBaseComp maxlen 365
+                  | Ptime s           => mkBaseComp 1 numTime
+                  | Pdate s           => mkBaseComp maxlen numDate
                   | Ppath s           => mkBaseComp maxlen 256
                   | Purl s            => mkBaseComp maxlen 256
-                  | Pip s             => mkBaseComp maxlen 256
+                  | Pip s             => mkBaseComp 1 numIP
                   | Pint l            => mkBaseComp maxlen 10
                   | Pstring s         => mkBaseComp maxlen numStringChars
                   | Pgroup x          => ( unitComplexity, unitComplexity )

@@ -3,6 +3,7 @@ Output directory: output/1967Transactions.short/
 Max depth to explore: 50
 Print line numbers in output contexts: false
 Print ids and output type tokens: true
+Print Entropy: false
 Histogram comparison tolerance (percentage): 0.01
 Struct determination tolerance (percentage): 0.1
 Noise level threshold (percentage): 0.0

@@ -1,8 +1,6 @@
-Pstruct(Id = BTy_8 5, 6b, 193.207b)
+Pstruct(Id = BTy_8 5, 4b, 109.615b)
 	[string](Id = BTy_0 5, 1b, 72b);
-	bXML[html](Id = BTy_1 5, 1b, 22.802b);
-	bXML[body](Id = BTy_2 5, 1b, 22.802b);
+	[StringConst] "html + body + "(Id = BTy_1 5, 1b, 3.807b);
 	[string](Id = BTy_3 5, 1b, 30b);
-	eXML[body](Id = BTy_4 5, 1b, 22.802b);
-	eXML[html](Id = BTy_6 5, 1b, 22.802b);
+	[StringConst] "body + html + "(Id = BTy_4 5, 1b, 3.807b);
 End Pstruct

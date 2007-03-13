@@ -1,11 +1,10 @@
-Pstruct(Id = BTy_8 6, 8b, 93.932b)
-	(\")(Id = BTy_0 6, 1b, 8b);
-	[int](Id = BTy_1 6, 1b, 13.288b);
-	(,)(Id = BTy_2 6, 1b, 8b);
-	[white space](Id = BTy_3 6, 1b, 1b);
-	Punion(Id = BTy_5 6, 3b, 55.644b)
+Pstruct(Id = BTy_8 6, 7b, 115.626b)
+	[StringConst] "\""(Id = BTy_0 6, 1b, 1b);
+	[Int] [12...9378](Id = BTy_1 6, 1b, 52.773b);
+	[StringConst] ", "(Id = BTy_2 6, 1b, 1b);
+	Punion(Id = BTy_5 6, 3b, 59.853b)
 		[string](Id = BTy_4 4, 1b, 48b);
-		[int](Id = BTy_6 2, 1b, 6.644b);
+		[Int] [14...56](Id = BTy_6 2, 1b, 10.853b);
 	End Punion;
-	(\")(Id = BTy_7 6, 1b, 8b);
+	[StringConst] "\""(Id = BTy_7 6, 1b, 1b);
 End Pstruct

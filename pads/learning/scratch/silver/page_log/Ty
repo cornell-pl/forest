@@ -1,35 +1,22 @@
-Pstruct(Id = BTy_32 354, 29b, 599.341b)
-	[string](Id = BTy_0 354, 1b, 186b);
-	Punion(Id = BTy_2 354, 4b, 59b)
-		[empty](Id = BTy_1 220, 0b, 0b);
-		Pstruct(Id = BTy_6 134, 3b, 58b)
-			(()(Id = BTy_3 134, 1b, 8b);
-			[string](Id = BTy_4 134, 1b, 42b);
-			())(Id = BTy_5 134, 1b, 8b);
+Pstruct(Id = BTy_26 354, 16b, 393.578b)
+	[Enum] {[StringConst] "Andrew_s_printer", [StringConst] "hp_color_LaserJet_3700__378392_", [StringConst] "officejet_7100_series", }(Id = BTy_0 354, 1b, 13.347b);
+	Switch(BTy_0)(Id = BTy_2 354, 4b, 16.516b):
+	case [Enum] {[StringConst] "Andrew_s_printer", [StringConst] "hp_color_LaserJet_3700__378392_", }:
+		[StringConst] ""(Id = BTy_1 220, 1b, 0b);
+	case [StringConst] "officejet_7100_series":
+		Pstruct(Id = BTy_6 134, 1b, 3.170b)
+			[StringConst] "(Printer)"(Id = BTy_3 134, 1b, 3.170b);
 		End Pstruct;
-	End Punion;
-	[white space](Id = BTy_7 354, 1b, 1b);
-	[string](Id = BTy_8 354, 1b, 42b);
-	[white space](Id = BTy_9 354, 1b, 1b);
-	[int](Id = BTy_10 354, 1b, 9.966b);
-	[white space](Id = BTy_11 354, 1b, 1b);
-	([)(Id = BTy_12 354, 1b, 8b);
-	[int](Id = BTy_13 354, 1b, 6.644b);
-	(/)(Id = BTy_14 354, 1b, 8b);
-	[string](Id = BTy_15 354, 1b, 18b);
-	(/)(Id = BTy_16 354, 1b, 8b);
-	[int](Id = BTy_17 354, 1b, 13.288b);
-	(:)(Id = BTy_18 354, 1b, 8b);
-	[Time](Id = BTy_19 354, 1b, 131.190b);
-	[white space](Id = BTy_20 354, 1b, 1b);
-	[int](Id = BTy_21 354, 1b, 13.288b);
-	(])(Id = BTy_22 354, 1b, 8b);
-	[white space](Id = BTy_24 354, 1b, 1b);
-	[int](Id = BTy_25 354, 1b, 6.644b);
-	[white space](Id = BTy_26 354, 1b, 1b);
-	[int](Id = BTy_27 354, 1b, 3.322b);
-	[white space](Id = BTy_28 354, 1b, 1b);
-	(-)(Id = BTy_29 354, 1b, 8b);
-	[white space](Id = BTy_30 354, 1b, 1b);
-	[string](Id = BTy_31 354, 1b, 54b);
+	End Switch;
+	[StringConst] " kfisher "(Id = BTy_7 354, 1b, 3.170b);
+	[Int] [2...130](Id = BTy_10 354, 1b, 21.034b);
+	[StringConst] " ["(Id = BTy_11 354, 1b, 1b);
+	[Date](Id = BTy_13 354, 1b, 93.629b);
+	[StringConst] ":"(Id = BTy_14 354, 1b, 0b);
+	[Time](Id = BTy_15 354, 1b, 229.582b);
+	[StringConst] "] "(Id = BTy_16 354, 1b, 1b);
+	[Int] [1...41](Id = BTy_19 354, 1b, 10.715b);
+	[StringConst] " "(Id = BTy_20 354, 1b, 0b);
+	[IntConst] [1](Id = BTy_21 354, 1b, 0b);
+	[StringConst] " - localhost"(Id = BTy_22 354, 1b, 3.585b);
 End Pstruct

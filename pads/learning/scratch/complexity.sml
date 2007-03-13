@@ -3,26 +3,26 @@ structure Complexity = struct
     (* Determine if a positive integer is a power of two.
        This is a tail recursive implementation
      *)
-    fun isPowerTwo ( n : int ) : int option =
-        let fun isPowerTwo'(n:int,acc:int):int option =
+    fun isPowerTwo ( n : int ) : LargeInt.int option =
+        let fun isPowerTwo'( n : int, acc : int ) : LargeInt.int option =
                 ( case n of
                     0 => NONE
-                  | 1 => SOME acc
+                  | 1 => SOME (Int.toLarge acc)
                   | n => if n mod 2 = 0
-                         then isPowerTwo'(n div 2,acc + 1)
+                         then isPowerTwo'( n div 2, acc + 1 )
                          else NONE
                 )
         in isPowerTwo'(n,0)
         end
 
     (* Same thing for large integers *)
-    fun isPowerTwoL ( n : LargeInt.int ) : int option =
-        let fun isPowerTwo'(n:LargeInt.int,acc:int) : int option =
+    fun isPowerTwoL ( n : LargeInt.int ) : LargeInt.int option =
+        let fun isPowerTwo'( n : LargeInt.int, acc : int ) : LargeInt.int option =
                 ( case n of
                     0 => NONE
-                  | 1 => SOME acc
+                  | 1 => SOME (Int.toLarge acc)
                   | n => if n mod 2 = 0
-                         then isPowerTwo'(LargeInt.div (n,2),acc + 1)
+                         then isPowerTwo'( LargeInt.div (n,2), acc + 1 )
                          else NONE
                 )
         in isPowerTwo'(n,0)
@@ -38,8 +38,8 @@ structure Complexity = struct
        of choices is a power of two). Similarly, when you combine
        complexities of bit and choices, you get a floating point number.
      *)
-    datatype Complexity = Bits    of int
-                        | Choices of int
+    datatype Complexity = Bits    of LargeInt.int
+                        | Choices of LargeInt.int
                         | Precise of real
 
     (* Value to use to get compilation started *)
@@ -73,25 +73,25 @@ structure Complexity = struct
 
     (* Combine two complexities *)
     fun combine (x1:Complexity) (x2:Complexity):Complexity =
-        let fun bitsAndChoice ( b : int, c : int ) : Complexity =
-                ( case (isPowerTwo c) of
-                       NONE   => Precise ( Real.fromInt b + log2 c )
+        let fun bitsAndChoice ( b : LargeInt.int, c : LargeInt.int ) : Complexity =
+                ( case (isPowerTwoL c) of
+                       NONE   => Precise ( Real.fromLargeInt b + log2L c )
                      | SOME d => Bits    ( b + d )
                 )
         in ( case x1 of
                   Bits b1    => ( case x2 of
                                        Bits b2    => Bits (b1 + b2)
                                      | Choices c2 => bitsAndChoice ( b1, c2 )
-                                     | Precise p2 => Precise (p2 + Real.fromInt b1)
+                                     | Precise p2 => Precise (p2 + Real.fromLargeInt b1)
                                 )
                 | Choices c1 => ( case x2 of
                                        Bits b2    => bitsAndChoice ( b2, c1 )
                                      | Choices c2 => Choices ( c1 + c2 )
-                                     | Precise p2 => Precise ( log2 c1 + p2 )
+                                     | Precise p2 => Precise ( log2L c1 + p2 )
                                 )
                 | Precise p1 => ( case x2 of
-                                       Bits b2    => Precise ( p1 + Real.fromInt b2 )
-                                     | Choices c2 => Precise ( p1 + log2 c2 )
+                                       Bits b2    => Precise ( p1 + Real.fromLargeInt b2 )
+                                     | Choices c2 => Precise ( p1 + log2L c2 )
                                      | Precise p2 => Precise ( p1 + p2 )
                                 )
            )
@@ -100,9 +100,16 @@ structure Complexity = struct
     (* Multiply a complexity by an integer constant *)
     fun multComp ( n : int ) ( c : Complexity ) : Complexity =
         ( case c of
+               Bits b    => Bits    ( Int.toLarge n * b )
+             | Choices c => Choices ( Int.toLarge n * c )
+             | Precise p => Precise ( Real.fromInt n * p )
+        )
+    (* Same thing for large integers *)
+    fun multCompL ( n : LargeInt.int ) ( c : Complexity ) : Complexity =
+        ( case c of
                Bits b    => Bits    ( n * b )
              | Choices c => Choices ( n * c )
-             | Precise p => Precise ( Real.fromInt n * p )
+             | Precise p => Precise ( Real.fromLargeInt n * p )
         )
 
     (* Probabilities should be in the interval [0, 1] *)
@@ -136,29 +143,29 @@ structure Complexity = struct
 
     (* Complexity from the number of choices *)
     fun cardComp ( l : 'a list ) : Complexity =
-        Choices (length l)
+        Choices (Int.toLarge (length l))
 
     (* Convert complexity to the precise method *)
     fun toPrecise ( c : Complexity ) : Complexity =
         ( case c of
-               Bits n    => Precise (Real.fromInt n)
-             | Choices l => Precise (log2 l)
+               Bits n    => Precise (Real.fromLargeInt n)
+             | Choices l => Precise (log2L l)
              | Precise p => Precise p
         )
 
     (* Convert a complexity to a string *)
     fun showComp ( c : Complexity ) : string =
         ( case c of
-               Bits n    => "Bits "    ^ (Int.toString n)
-             | Choices l => "Choices " ^ (Int.toString l)
+               Bits n    => "Bits "    ^ (LargeInt.toString n)
+             | Choices l => "Choices " ^ (LargeInt.toString l)
              | Precise p => "Precise " ^ (Real.toString p)
         )
 
     (* Show the complexity in bits *)
     fun showBits ( c : Complexity ) : string =
         ( case c of
-               Bits n    => (Int.toString n)  ^ "b"
-             | Choices l => (Int.toString l)  ^ "b"
+               Bits n    => (LargeInt.toString n)  ^ "b"
+             | Choices l => (LargeInt.toString l)  ^ "b"
              | Precise p => (Real.fmt (StringCvt.FIX (SOME 3)) p) ^ "b"
         )
 
