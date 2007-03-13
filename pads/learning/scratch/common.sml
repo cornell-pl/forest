@@ -28,6 +28,7 @@ structure Common = struct
 			| (Ptime(s1), Ptime(s2)) => String.compare(s1, s2)
 			| (Pdate(s1), Pdate(s2)) => String.compare(s1, s2)
 			| (Pip(s1), Pip(s2)) => String.compare(s1, s2)
+			| (Phostname(s1), Phostname(s2)) => String.compare(s1, s2)
 			| (Ppath(s1), Ppath(s2)) => String.compare(s1, s2)
 			| (Purl(s1), Purl(s2)) => String.compare(s1, s2)
 			| _ => Structure.compToken(a, b)
@@ -75,6 +76,7 @@ structure Common = struct
 	|	Ptime(t) => t
 	|	Pdate(t) => t
 	|	Pip(t)  => t
+	|	Phostname(t)  => t
 	|	Ppath(t)  => t
 	|	Purl(t)  => t
 	|	Pstring(str)  => str
@@ -92,6 +94,7 @@ structure Common = struct
 	|	Ptime(t) => StringConst(t)
 	|	Pdate(t) => StringConst(t)
 	|	Pip(t)  => StringConst(t)
+	|	Phostname(t)  => StringConst(t)
 	|	Ppath(t)  => StringConst(t)
 	|	Purl(t)  => StringConst(t)
 	|	Pstring(str)  => StringConst(str)
@@ -151,6 +154,7 @@ structure Common = struct
 		  | (Ptime(a), Ptime(b)) => (a = b)
 		  | (Pdate(a), Pdate(b)) => (a = b)
 		  | (Pip(a), Pip(b)) => (a = b)
+		  | (Phostname(a), Phostname(b)) => (a = b)
 		  | (Ppath(a), Ppath(b)) => (a = b)
 		  | (Purl(a), Purl(b)) => (a = b)
 		  | (Pint(a), Pint(b)) => (a = b)
@@ -167,6 +171,7 @@ structure Common = struct
 		  | (Ptime(a), Ptime(b)) => true
 		  | (Pdate(a), Pdate(b)) => true
 		  | (Pip(a), Pip(b)) => true
+		  | (Phostname(a), Phostname(b)) => true
 		  | (Ppath(a), Ppath(b)) => true
 		  | (Purl(a), Purl(b)) => true
 		  | (Pint(a), Pint(b)) => true

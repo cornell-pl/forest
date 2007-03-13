@@ -20,6 +20,7 @@ structure Map = RedBlackMapFn(struct
 	|	Ptime (x) => String.size x
 	|	Pdate (x) => String.size x
 	| 	Pip(x) => String.size x
+	| 	Phostname(x) => String.size x
 	| 	Ppath(x) => String.size x
 	| 	Purl(x) => String.size x
 	|	Pint (x) => String.size (LargeInt.toString(x))

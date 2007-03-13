@@ -75,6 +75,7 @@ structure Model = struct
                   | Ppath s           => mkBaseComp maxlen 256
                   | Purl s            => mkBaseComp maxlen 256
                   | Pip s             => mkBaseComp 1 numIP
+                  | Phostname s             => mkBaseComp maxlen 256
                   | Pint l            => mkBaseComp maxlen 10
                   | Pstring s         => mkBaseComp maxlen numStringChars
                   | Pgroup x          => ( unitComplexity, unitComplexity )

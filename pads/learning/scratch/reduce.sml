@@ -629,6 +629,12 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
+		| SOME(Phostname(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
 		| SOME(Ppath(x)) => 
 			(
 				newcmos, 
