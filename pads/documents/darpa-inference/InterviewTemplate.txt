@@ -5,13 +5,27 @@ We envision building a network forensic analysis workbench based on the PADS sys
 
 There is a powerpoint slide that shows these three phases.
 
-During the first phase, the system might already have a description of the given data, it might be able to use statistical techniques to automatically infer a description, or it might present snippets of the data to users to interactively define a description of the data. 
+During the first phase, the system might already have a description of
+the given data, it might be able to use statistical techniques to
+automatically infer a description, or it might present snippets of the
+data to users to interactively define a description of the data.
 
-During the second phase, users will be able to compute statistical properties of the data and display the results graphically, run semi-structured queries over the data, compute arbitrary properties, run google-like searches, etc.  Data collected in this phase may serve to further refine the description of the data.  It may be that the information processing in this phase is sufficient for the users' purposes, or it may be passed to the third phase.
+During the second phase, users will be able to compute statistical
+properties of the data and display the results graphically, run
+semi-structured queries over the data, compute arbitrary properties,
+run google-like searches, etc.  Data collected in this phase may serve
+to further refine the description of the data.  It may be that the
+information processing in this phase is sufficient for the users'
+purposes, or it may be passed to the third phase.
 
-During the third phase, users can specify data transformations to put the data into a more convenient format: XML, tables for loading into a relational database, a regular form for running in S, or other ad hoc data formats that could be passed back to phase 2.  
+During the third phase, users can specify data transformations to put
+the data into a more convenient format: XML, tables for loading into a
+relational database, a regular form for running in S, or other ad hoc
+data formats that could be passed back to phase 2.
 
-We have some experience with applications for which such a workbench would be useful, but we'd like to understand whether such a tool would be useful to you.  
+We have some experience with applications for which such a workbench
+would be useful, but we'd like to understand whether such a tool would
+be useful to you.
 
 . What tasks might you use such a workbench for?  What kinds of problems are you trying to solve? (prevention? detection? investigation? other?)
 
