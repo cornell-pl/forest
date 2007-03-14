@@ -178,7 +178,7 @@ struct
 	case t 
         of Ptime i     => i
 	|  Pip i       => i
-	|  Phostname i       => i
+	|  Phostname i => i
 	|  Pdate i     => i
 	|  Ppath i     => i
 	|  Purl i      => i
@@ -209,7 +209,7 @@ struct
         of Ptime i     => "[Time]"
 	|  Pdate i     => "[Date]"
 	|  Pip i       => "[IP]"
-	|  Phostname i       => "[Host]"
+	|  Phostname i => "[Host]"
 	|  Ppath i     => "[Path]"
 	|  Purl i      => "[URL]"
         |  PbXML (f,s) => "bXML["^f^"]"

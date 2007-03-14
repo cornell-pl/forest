@@ -12,6 +12,7 @@ is
   utils.sml
   complexity.sml
   distribution.sml
+  hosts.sml
   tokens.sml
   types.sml
   model.sml

@@ -47,21 +47,22 @@ structure Tokens = struct
                                           2 + 2 + 2 + ( ( 2 + numWeekDay ) *
                                                         ( 2 + numMonth ) * numDay *
                                                         ( 2 + numYear ) )
+    val numDomain        : LargeInt.int = 256
 
     (* Raw token format, pass one over the data *)
-    datatype Token = PbXML of string * string |
-                     PeXML of string * string |
-	             Ptime of string | 
-	             Pdate of string | 
-	             Ppath of string | 
-	             Purl  of string | 
-		     Pip   of string | 
-		     Phostname   of string | 
-                     Pint  of LargeInt.int | 
-		     Pstring of string | 
-                     Pgroup  of {left : LToken, body : LToken list, right : LToken} | 
-	             Pwhite  of string | 
-		     Other   of char | 
+    datatype Token = PbXML       of string * string |
+                     PeXML       of string * string |
+	             Ptime       of string |
+	             Pdate       of string |
+	             Ppath       of string |
+	             Purl        of string |
+		     Pip         of string |
+		     Phostname   of string |
+                     Pint        of LargeInt.int |
+		     Pstring     of string |
+                     Pgroup      of {left : LToken, body : LToken list, right : LToken} |
+	             Pwhite      of string |
+		     Other       of char |
 		     Pempty |
 		     Error
     withtype LToken = Token * location
@@ -219,6 +220,19 @@ structure Tokens = struct
              | SOME n => LTokenMap.insert (f,t,n+1)
         )
 
+    (* Count occurences of a character in a string *)
+    fun countCh ( c : char ) ( s : string ) : int =
+        let fun countCh' ( c : char ) ( cl : char list ) : int =
+                ( case cl of
+                       []      => 0
+                     | (x::xs) => if ( x = c )
+                                  then 1 + countCh' c xs
+                                  else countCh' c xs
+                )
+        in countCh' c ( explode s )
+        end
+    fun isDot ( x : char ) : bool = x = #"."
+
     fun tokenOf (t:LToken):Token = #1 t
     fun tokenLength (t:Token):int =
         ( case t of
@@ -229,7 +243,16 @@ structure Tokens = struct
              | Ppath s        => size s
              | Purl s         => size s
              | Pip s          => size s
-             | Phostname s          => size s
+               (* For now, we assume the last component is a domain name.
+                  we should check this later *)
+             | Phostname s    =>
+                 let val ndot       : int            = countCh #"." s
+                     val components : substring list =
+                           Substring.fields isDot ( Substring.full s )
+                 in if ndot = 0
+                    then size s
+                    else size s - ndot - ( size ( Substring.string ( List.last components ) ) )
+                 end
              | Pint n         => size (LargeInt.toString n)
              | Pstring s      => size s
              | Pgroup grp     => 0
