@@ -31,6 +31,8 @@ structure Common = struct
 			| (Phostname(s1), Phostname(s2)) => String.compare(s1, s2)
 			| (Ppath(s1), Ppath(s2)) => String.compare(s1, s2)
 			| (Purl(s1), Purl(s2)) => String.compare(s1, s2)
+			| (Pwhite(s1), Pwhite(s2)) => String.compare(s1, s2)
+			| (Other(c1), Other(c2)) => String.compare(Char.toString(c1), Char.toString(c2))
 			| _ => Structure.compToken(a, b)
 	
 	structure BDSet = RedBlackSetFn(struct
