@@ -1,13 +1,13 @@
 Using PADSC IO discipline nlrec
-Read IP address term by vbar: 1.0.0.0. (Puint32 = 16777216)
-Read date term by NULL: 12.0.0.0. (Puint32 = 201326592)
-bytes_skipped to find EOR/newline = 0
-Read IP address term by vbar: 123.0.0.234. (Puint32 = 2063597802)
-Read date term by NULL: 255.0.0.0. (Puint32 = 4278190080)
-bytes_skipped to find EOR/newline = 0
-Read IP address term by vbar: 10.0.0.10. (Puint32 = 167772170)
-Read date term by NULL: 10.10.0.10. (Puint32 = 168427530)
-bytes_skipped to find EOR/newline = 0
+warning: Error [in Pa_ip_read]: at record 1 at byte 1 : Invalid IP address 
+[record 1]>>>1<<<|12.
+bytes_skipped to find EOR/newline = 5
+warning: Error [in Pa_ip_read]: at record 2 from byte 1 to byte 7: Invalid IP address 
+[record 2]>>>123.234<<<|255.0.
+bytes_skipped to find EOR/newline = 14
+warning: Error [in Pa_ip_read]: at record 3 from byte 1 to byte 7: Invalid IP address 
+[record 3]>>>10.0.10<<<|10.10.10
+bytes_skipped to find EOR/newline = 16
 Read IP address term by vbar: 6.7.8.9. (Puint32 = 101124105)
 Read date term by NULL: 6.7.8.9. (Puint32 = 101124105)
 bytes_skipped to find EOR/newline = 0
