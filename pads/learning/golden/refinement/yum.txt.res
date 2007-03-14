@@ -1897,5 +1897,5 @@ Outputing partitions to directory: gen/
 
 Completed data/yum.txt
 Overall type complexity = 62.585b
-Overall data complexity = 2769.510b
+Overall data complexity = 2745.510b
 

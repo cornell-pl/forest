@@ -522,5 +522,5 @@ Outputing partitions to directory: gen/
 
 Completed data/ai.3000
 Overall type complexity = 25b
-Overall data complexity = 1020.092b
+Overall data complexity = 964.092b
 

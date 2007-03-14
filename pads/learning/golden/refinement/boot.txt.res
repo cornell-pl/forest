@@ -4748,7 +4748,7 @@ Pstruct(Id = BTy_215 262, 1b, 0b)
 		End Pstruct;
 		Pstruct(Id = BTy_221 234, 1b, 0b)
 			Punion(Id = BTy_144 234, 1b, 0b)
-				[StringConst] " "(Id = BTy_143 230, 1b, 0b);
+				[white](Id = BTy_143 230, 1b, 0b);
 				[StringConst] ""(Id = BTy_145 4, 1b, 0b);
 			End Punion;
 			RArray(Id = BTy_142 234, 1b, 0b)
@@ -4836,5 +4836,5 @@ Outputing partitions to directory: gen/
 
 Completed data/boot.txt
 Overall type complexity = 123.662b
-Overall data complexity = 9476.291b
+Overall data complexity = 9432.291b
 

@@ -351,7 +351,7 @@ Pstruct(Id = BTy_27 999, 1b, 0b)
 			[Int] [1...9](Id = BTy_8 62, 1b, 0b);
 		End Pstruct;
 	End Punion;
-	[StringConst] "                   "(Id = BTy_11 999, 1b, 0b);
+	[white](Id = BTy_11 999, 1b, 0b);
 	[IntConst] [0](Id = BTy_12 999, 1b, 0b);
 	Punion(Id = BTy_14 999, 1b, 0b)
 		[StringConst] ""(Id = BTy_13 943, 1b, 0b);
@@ -360,11 +360,11 @@ Pstruct(Id = BTy_27 999, 1b, 0b)
 			[Int] [2...53321](Id = BTy_16 56, 1b, 0b);
 		End Pstruct;
 	End Punion;
-	[StringConst] "                   "(Id = BTy_19 999, 1b, 0b);
+	[Enum] {[StringConst] "             ", [StringConst] "              ", [StringConst] "                   ", }(Id = BTy_19 999, 1b, 0b);
 	[Int] [0...1](Id = BTy_25 999, 1b, 0b);
 	[StringConst] "."(Id = BTy_21 988, 1b, 0b);
 	[Int] [1...87353](Id = BTy_22 988, 1b, 0b);
-	[StringConst] "   "(Id = BTy_26 999, 1b, 0b);
+	[Enum] {[StringConst] "   ", [StringConst] "    ", [StringConst] "         ", }(Id = BTy_26 999, 1b, 0b);
 End Pstruct
 
 Complexity of inferred type:
@@ -373,5 +373,5 @@ Outputing partitions to directory: gen/
 
 Completed data/1967Transactions.short
 Overall type complexity = 20b
-Overall data complexity = 307.592b
+Overall data complexity = 335.022b
 

@@ -894,17 +894,18 @@ Punion(Id = BTy_44 35, 1b, 0b)
 			[StringConst] ""(Id = BTy_2 16, 1b, 0b);
 		End Switch;
 		[string](Id = BTy_3 34, 1b, 0b);
-		[StringConst] "   "(Id = BTy_4 34, 1b, 0b);
+		[Enum] {[StringConst] "  ", [StringConst] "   ", }(Id = BTy_4 34, 1b, 0b);
 		[Int] [1...21](Id = BTy_5 34, 1b, 0b);
-		[StringConst] " dpw fac      "(Id = BTy_6 34, 1b, 0b);
+		[StringConst] " dpw fac"(Id = BTy_6 34, 1b, 0b);
+		[white](Id = BTy_10 34, 1b, 0b);
 		[Int] [0...274595840](Id = BTy_11 34, 1b, 0b);
 		[StringConst] " "(Id = BTy_12 34, 1b, 0b);
 		[Date](Id = BTy_14 34, 1b, 0b);
-		[StringConst] "  "(Id = BTy_15 34, 1b, 0b);
-		Switch(BTy_14)(Id = BTy_17 34, 1b, 0b):
-		case [StringConst] "*":
+		[Enum] {[StringConst] " ", [StringConst] "  ", }(Id = BTy_15 34, 1b, 0b);
+		Switch(BTy_15)(Id = BTy_17 34, 1b, 0b):
+		case [StringConst] "  ":
 			[Int] [2002...2006](Id = BTy_16 27, 1b, 0b);
-		case [Enum] {[StringConst] "Jan  2", [StringConst] "Jan  5", [StringConst] "Jan 14", [StringConst] "Jul 25", [StringConst] "Nov 15", [StringConst] "Sep 11", }:
+		case [StringConst] " ":
 			[Time](Id = BTy_18 7, 1b, 0b);
 		End Switch;
 		[StringConst] " "(Id = BTy_19 34, 1b, 0b);
@@ -948,6 +949,6 @@ Complexity of inferred type:
 Outputing partitions to directory: gen/
 
 Completed data/ls-l.txt
-Overall type complexity = 35.170b
-Overall data complexity = 728.983b
+Overall type complexity = 36.170b
+Overall data complexity = 723.666b
 
