@@ -3,6 +3,7 @@ Output directory: gen/
 Max depth to explore: 50
 Print line numbers in output contexts: false
 Print ids and output type tokens: true
+Print Entropy: false
 Histogram comparison tolerance (percentage): 0.01
 Struct determination tolerance (percentage): 0.1
 Noise level threshold (percentage): 0.0
@@ -58,7 +59,7 @@ StructScore: 834.
 
 
 Cluster 1:
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
 StructScore: 997.
@@ -66,7 +67,7 @@ StructScore: 997.
 
 
 Cluster 2:
-Token: (|)
+Token: [other](|)
 Total number of token occurrences: 19997.
 Number of records with at least one token occurrence: 999.
 StructScore: 10609.
@@ -152,7 +153,7 @@ Coverage: 999
 Num Tokens: 0
 Clusters sorted by array criteria:
 Cluster 0:
-Token: (|)
+Token: [other](|)
 Total number of token occurrences: 19997.
 Number of records with at least one token occurrence: 999.
 StructScore: 10609.
@@ -248,7 +249,7 @@ StructScore: 26812.
 
 
 Cluster 3:
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
 StructScore: 997.
@@ -256,12 +257,12 @@ StructScore: 997.
 
 
 Possible array tokens:
-(|)
+[other](|)
 Records in possible array context:999
 Total:19997
 Coverage:999
 Width:26
-Array	(|)	Occurrences:1
+Array	[other](|)	Occurrences:1
 Array context
 Building histograms...
 THRESHOLD for histogram equality: 10.
@@ -273,7 +274,7 @@ Number of records with at least one token occurrence: 999.
 StructScore: 0.
 	1:	999	1.0
 
-Token: (|)
+Token: [other](|)
 Total number of token occurrences: 999.
 Number of records with at least one token occurrence: 999.
 StructScore: 0.
@@ -287,12 +288,12 @@ Struct
 Coverage:999
 Token count:2
 [int]	Occurrences:1
-(|)	Occurrences:1
+[other](|)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 190.
 Computed clusters
 Cluster 0:
-Token: (|)
+Token: [other](|)
 Total number of token occurrences: 18998.
 Number of records with at least one token occurrence: 18998.
 StructScore: 0.
@@ -308,7 +309,7 @@ StructScore: 7284.
 
 
 Cluster 2:
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
 StructScore: 18996.
@@ -330,7 +331,7 @@ Num Tokens: 1
 Struct
 Coverage:18998
 Token count:1
-(|)	Occurrences:1
+[other](|)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 190.
 Computed clusters
@@ -351,7 +352,7 @@ StructScore: 18000.
 
 
 Cluster 2:
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
 StructScore: 18996.
@@ -392,7 +393,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 11713.
 	1:	1	8.53679358033E~05
 
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 11713.
@@ -416,7 +417,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 0.
 	1:	1	1.0
 
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 0.
@@ -430,7 +431,7 @@ Struct
 Coverage:1
 Token count:2
 [string]	Occurrences:1
-[white space]	Occurrences:1
+[white]	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 73.
 Computed clusters
@@ -452,7 +453,7 @@ StructScore: 6286.
 
 
 Cluster 2:
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 7283.
@@ -484,7 +485,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 6285.
 	1:	1	0.000159083678015
 
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 6285.
@@ -508,7 +509,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 0.
 	1:	1	1.0
 
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 0.
@@ -522,7 +523,7 @@ Struct
 Coverage:1
 Token count:2
 [string]	Occurrences:1
-[white space]	Occurrences:1
+[white]	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 10.
 Computed clusters
@@ -561,67 +562,67 @@ Token count:1
 [int]	Occurrences:1
 
 Before reduction:
-Parray(Id = BTy_0 999, 0b, 0b)((|) )
+Parray(Id = BTy_0 999, 1b, 0b)([other](|) )
 First:
-	Pstruct(Id = BTy_3 999, 0b, 0b)
-		[int](Id = BTy_1 999, 0b, 0b);
-		(|)(Id = BTy_2 999, 0b, 0b);
+	Pstruct(Id = BTy_3 999, 1b, 0b)
+		[int](Id = BTy_1 999, 1b, 0b);
+		[other](|)(Id = BTy_2 999, 1b, 0b);
 	End Pstruct;
 Body:
-	Pstruct(Id = BTy_22 18998, 0b, 0b)
-		Punion(Id = BTy_11 18998, 0b, 0b)
-			Pstruct(Id = BTy_10 11714, 0b, 0b)
-				Punion(Id = BTy_5 11714, 0b, 0b)
-					[empty](Id = BTy_4 11713, 0b, 0b);
-					Pstruct(Id = BTy_8 1, 0b, 0b)
-						[string](Id = BTy_6 1, 0b, 0b);
-						[white space](Id = BTy_7 1, 0b, 0b);
+	Pstruct(Id = BTy_22 18998, 1b, 0b)
+		Punion(Id = BTy_11 18998, 1b, 0b)
+			Pstruct(Id = BTy_10 11714, 1b, 0b)
+				Punion(Id = BTy_5 11714, 1b, 0b)
+					[empty](Id = BTy_4 11713, 1b, 0b);
+					Pstruct(Id = BTy_8 1, 1b, 0b)
+						[string](Id = BTy_6 1, 1b, 0b);
+						[white](Id = BTy_7 1, 1b, 0b);
 					End Pstruct;
 				End Punion;
-				[int](Id = BTy_9 11714, 0b, 0b);
+				[int](Id = BTy_9 11714, 1b, 0b);
 			End Pstruct;
-			Pstruct(Id = BTy_18 6286, 0b, 0b)
-				[string](Id = BTy_12 6286, 0b, 0b);
-				Punion(Id = BTy_14 6286, 0b, 0b)
-					[empty](Id = BTy_13 6285, 0b, 0b);
-					Pstruct(Id = BTy_17 1, 0b, 0b)
-						[white space](Id = BTy_15 1, 0b, 0b);
-						[string](Id = BTy_16 1, 0b, 0b);
+			Pstruct(Id = BTy_18 6286, 1b, 0b)
+				[string](Id = BTy_12 6286, 1b, 0b);
+				Punion(Id = BTy_14 6286, 1b, 0b)
+					[empty](Id = BTy_13 6285, 1b, 0b);
+					Pstruct(Id = BTy_17 1, 1b, 0b)
+						[white](Id = BTy_15 1, 1b, 0b);
+						[string](Id = BTy_16 1, 1b, 0b);
 					End Pstruct;
 				End Punion;
 			End Pstruct;
-			[empty](Id = BTy_20 998, 0b, 0b);
+			[empty](Id = BTy_20 998, 1b, 0b);
 		End Punion;
-		(|)(Id = BTy_21 18998, 0b, 0b);
+		[other](|)(Id = BTy_21 18998, 1b, 0b);
 	End Pstruct;
 Tail:
-	[int](Id = BTy_23 999, 0b, 0b);
+	[int](Id = BTy_23 999, 1b, 0b);
 End Parray
 
 
 After final reduction:
-RArray(Id = BTy_0 999, 0b, 0b)
-	Separator: "|"
-	Punion(Id = BTy_11 20996, 0b, 0b)
-		Pstruct(Id = BTy_10 11714, 0b, 0b)
-			Punion(Id = BTy_5 11714, 0b, 0b)
-				""(Id = BTy_4 11713, 0b, 0b);
-				Pstruct(Id = BTy_8 1, 0b, 0b)
-					"MELISSA "(Id = BTy_6 1, 0b, 0b);
+RArray(Id = BTy_0 999, 1b, 0b)
+	Separator: [StringConst] "|"
+	Punion(Id = BTy_11 20996, 1b, 0b)
+		Pstruct(Id = BTy_10 11714, 1b, 0b)
+			Punion(Id = BTy_5 11714, 1b, 0b)
+				[StringConst] ""(Id = BTy_4 11713, 1b, 0b);
+				Pstruct(Id = BTy_8 1, 1b, 0b)
+					[StringConst] "MELISSA "(Id = BTy_6 1, 1b, 0b);
 				End Pstruct;
 			End Punion;
-			[0...9152272](Id = BTy_9 13712, 0b, 0b);
+			[Int] [0...9152272](Id = BTy_9 13712, 1b, 0b);
 		End Pstruct;
-		Pstruct(Id = BTy_18 6286, 0b, 0b)
-			[string](Id = BTy_12 6286, 0b, 0b);
-			Punion(Id = BTy_14 6286, 0b, 0b)
-				""(Id = BTy_13 6285, 0b, 0b);
-				Pstruct(Id = BTy_17 1, 0b, 0b)
-					" c"(Id = BTy_15 1, 0b, 0b);
+		Pstruct(Id = BTy_18 6286, 1b, 0b)
+			[string](Id = BTy_12 6286, 1b, 0b);
+			Punion(Id = BTy_14 6286, 1b, 0b)
+				[StringConst] ""(Id = BTy_13 6285, 1b, 0b);
+				Pstruct(Id = BTy_17 1, 1b, 0b)
+					[StringConst] " c"(Id = BTy_15 1, 1b, 0b);
 				End Pstruct;
 			End Punion;
 		End Pstruct;
-		""(Id = BTy_20 998, 0b, 0b);
+		[StringConst] ""(Id = BTy_20 998, 1b, 0b);
 	End Punion;
 End RArray
 
@@ -631,5 +632,5 @@ Outputing partitions to directory: gen/
 
 Completed data/dibbler.1000
 Overall type complexity = 11.585b
-Overall data complexity = ~infb
+Overall data complexity = 19961.043b
 

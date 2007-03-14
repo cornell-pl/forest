@@ -3,6 +3,7 @@ Output directory: gen/
 Max depth to explore: 50
 Print line numbers in output contexts: false
 Print ids and output type tokens: true
+Print Entropy: false
 Histogram comparison tolerance (percentage): 0.01
 Struct determination tolerance (percentage): 0.1
 Noise level threshold (percentage): 0.0
@@ -11,20 +12,20 @@ Junk threshold (percentage): 0.1
 Starting on file data/rpmpkgs.txt
 886 records.
 Histogram of number of tokens per record:
-	5:	9
-	7:	5
-	8:	154
+	4:	102
+	5:	6
+	7:	3
+	8:	117
 	9:	3
-	10:	354
-	11:	5
-	12:	195
-	13:	15
-	14:	82
-	15:	16
-	16:	20
-	17:	3
-	18:	23
-	19:	1
+	10:	324
+	11:	2
+	12:	181
+	13:	14
+	14:	77
+	15:	15
+	16:	19
+	17:	2
+	18:	20
 	21:	1
 
 Building histograms...
@@ -32,27 +33,35 @@ THRESHOLD for histogram equality: 9.
 Computed clusters
 Cluster 0:
 Token: [string]
-Total number of token occurrences: 2993.
+Total number of token occurrences: 2855.
 Number of records with at least one token occurrence: 886.
-StructScore: 370.
-	2:	1	0.00112866817156
-	3:	577	0.651241534989
-	4:	280	0.316027088036
-	5:	28	0.0316027088036
+StructScore: 693.
+	2:	103	0.11625282167
+	3:	504	0.568848758465
+	4:	258	0.291196388262
+	5:	21	0.0237020316027
 
 
 Cluster 1:
-Token: (_)
+Token: [Host]
+Total number of token occurrences: 107.
+Number of records with at least one token occurrence: 107.
+StructScore: 779.
+	1:	107	0.120767494357
+
+
+Cluster 2:
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
 StructScore: 877.
 	1:	9	0.010158013544
 
-Token: (-)
-Total number of token occurrences: 5.
-Number of records with at least one token occurrence: 5.
-StructScore: 881.
-	1:	5	0.00564334085779
+Token: [other](-)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 6.
+StructScore: 880.
+	1:	6	0.00677200902935
 
 Token: [IP]
 Total number of token occurrences: 2.
@@ -60,43 +69,15 @@ Number of records with at least one token occurrence: 2.
 StructScore: 884.
 	1:	2	0.00225733634312
 
-Token: (()[Group Body]())
+Token: [other](()[Group Body][other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 885.
 	1:	1	0.00112866817156
 
 
-Cluster 2:
-Token: [int]
-Total number of token occurrences: 2727.
-Number of records with at least one token occurrence: 874.
-StructScore: 1636.
-	1:	18	0.020316027088
-	2:	168	0.189616252822
-	3:	462	0.52144469526
-	4:	162	0.182844243792
-	5:	45	0.0507900677201
-	6:	19	0.0214446952596
-
-
 Cluster 3:
-Token: (.)
-Total number of token occurrences: 3929.
-Number of records with at least one token occurrence: 886.
-StructScore: 2060.
-	2:	9	0.010158013544
-	3:	162	0.182844243792
-	4:	367	0.414221218962
-	5:	203	0.229119638826
-	6:	99	0.111738148984
-	7:	22	0.0248306997743
-	8:	23	0.0259593679458
-	10:	1	0.00112866817156
-
-
-Cluster 4:
-Token: (+)
+Token: [other](+)
 Total number of token occurrences: 16.
 Number of records with at least one token occurrence: 9.
 StructScore: 2633.
@@ -104,61 +85,99 @@ StructScore: 2633.
 	2:	7	0.0079006772009
 
 
+Cluster 4:
+Token: [other](.)
+Total number of token occurrences: 3615.
+Number of records with at least one token occurrence: 886.
+StructScore: 2985.
+	1:	102	0.115124153499
+	2:	6	0.00677200902935
+	3:	123	0.138826185102
+	4:	336	0.379232505643
+	5:	187	0.211060948081
+	6:	92	0.103837471783
+	7:	21	0.0237020316027
+	8:	18	0.020316027088
+	10:	1	0.00112866817156
+
+
+Cluster 5:
+Token: [int]
+Total number of token occurrences: 2449.
+Number of records with at least one token occurrence: 777.
+StructScore: 3460.
+	1:	14	0.0158013544018
+	2:	134	0.151241534989
+	3:	423	0.477426636569
+	4:	149	0.168171557562
+	5:	40	0.0451467268623
+	6:	17	0.0191873589165
+
+
 Junk Tolerance Threshold: 89
 Coverage: 886
 Num Tokens: 0
 Clusters sorted by array criteria:
 Cluster 0:
-Token: (.)
-Total number of token occurrences: 3929.
+Token: [other](.)
+Total number of token occurrences: 3615.
 Number of records with at least one token occurrence: 886.
-StructScore: 2060.
-	2:	9	0.010158013544
-	3:	162	0.182844243792
-	4:	367	0.414221218962
-	5:	203	0.229119638826
-	6:	99	0.111738148984
-	7:	22	0.0248306997743
-	8:	23	0.0259593679458
+StructScore: 2985.
+	1:	102	0.115124153499
+	2:	6	0.00677200902935
+	3:	123	0.138826185102
+	4:	336	0.379232505643
+	5:	187	0.211060948081
+	6:	92	0.103837471783
+	7:	21	0.0237020316027
+	8:	18	0.020316027088
 	10:	1	0.00112866817156
 
 
 Cluster 1:
 Token: [string]
-Total number of token occurrences: 2993.
+Total number of token occurrences: 2855.
 Number of records with at least one token occurrence: 886.
-StructScore: 370.
-	2:	1	0.00112866817156
-	3:	577	0.651241534989
-	4:	280	0.316027088036
-	5:	28	0.0316027088036
+StructScore: 693.
+	2:	103	0.11625282167
+	3:	504	0.568848758465
+	4:	258	0.291196388262
+	5:	21	0.0237020316027
 
 
 Cluster 2:
 Token: [int]
-Total number of token occurrences: 2727.
-Number of records with at least one token occurrence: 874.
-StructScore: 1636.
-	1:	18	0.020316027088
-	2:	168	0.189616252822
-	3:	462	0.52144469526
-	4:	162	0.182844243792
-	5:	45	0.0507900677201
-	6:	19	0.0214446952596
+Total number of token occurrences: 2449.
+Number of records with at least one token occurrence: 777.
+StructScore: 3460.
+	1:	14	0.0158013544018
+	2:	134	0.151241534989
+	3:	423	0.477426636569
+	4:	149	0.168171557562
+	5:	40	0.0451467268623
+	6:	17	0.0191873589165
 
 
 Cluster 3:
-Token: (_)
+Token: [Host]
+Total number of token occurrences: 107.
+Number of records with at least one token occurrence: 107.
+StructScore: 779.
+	1:	107	0.120767494357
+
+
+Cluster 4:
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
 StructScore: 877.
 	1:	9	0.010158013544
 
-Token: (-)
-Total number of token occurrences: 5.
-Number of records with at least one token occurrence: 5.
-StructScore: 881.
-	1:	5	0.00564334085779
+Token: [other](-)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 6.
+StructScore: 880.
+	1:	6	0.00677200902935
 
 Token: [IP]
 Total number of token occurrences: 2.
@@ -166,15 +185,15 @@ Number of records with at least one token occurrence: 2.
 StructScore: 884.
 	1:	2	0.00225733634312
 
-Token: (()[Group Body]())
+Token: [other](()[Group Body][other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 885.
 	1:	1	0.00112866817156
 
 
-Cluster 4:
-Token: (+)
+Cluster 5:
+Token: [other](+)
 Total number of token occurrences: 16.
 Number of records with at least one token occurrence: 9.
 StructScore: 2633.
@@ -183,48 +202,56 @@ StructScore: 2633.
 
 
 Possible array tokens:
-(.)
+[other](.)
 Records in possible array context:886
-Total:3929
+Total:3615
 Coverage:886
-Width:8
-Array	(.)	Occurrences:1
+Width:9
+Array	[other](.)	Occurrences:1
 Array context
 Building histograms...
 THRESHOLD for histogram equality: 9.
 Computed clusters
 Cluster 0:
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 886.
 Number of records with at least one token occurrence: 886.
 StructScore: 0.
 	1:	886	1.0
 
 Token: [string]
-Total number of token occurrences: 887.
-Number of records with at least one token occurrence: 886.
-StructScore: 1.
-	1:	885	0.998871331828
+Total number of token occurrences: 886.
+Number of records with at least one token occurrence: 885.
+StructScore: 4.
+	1:	884	0.997742663657
 	2:	1	0.00112866817156
 
 
 Cluster 1:
-Token: (-)
-Total number of token occurrences: 1.
-Number of records with at least one token occurrence: 1.
-StructScore: 885.
-	1:	1	0.00112866817156
+Token: [Host]
+Total number of token occurrences: 107.
+Number of records with at least one token occurrence: 107.
+StructScore: 779.
+	1:	107	0.120767494357
 
 
 Cluster 2:
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
+StructScore: 883.
+	1:	3	0.00338600451467
+
+
+Cluster 3:
 Token: [int]
-Total number of token occurrences: 11.
-Number of records with at least one token occurrence: 9.
-StructScore: 2633.
-	1:	7	0.0079006772009
+Total number of token occurrences: 12.
+Number of records with at least one token occurrence: 10.
+StructScore: 2630.
+	1:	8	0.00902934537246
 	2:	2	0.00225733634312
 
-Token: (+)
+Token: [other](+)
 Total number of token occurrences: 16.
 Number of records with at least one token occurrence: 9.
 StructScore: 2633.
@@ -233,39 +260,129 @@ StructScore: 2633.
 
 
 Junk Tolerance Threshold: 89
-Coverage: 885
+Coverage: 884
 Num Tokens: 2
 Struct
-Coverage:885
+Coverage:884
 Token count:2
-(.)	Occurrences:1
+[other](.)	Occurrences:1
 [string]	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 9.
 Computed clusters
 Cluster 0:
 Token: [empty]
-Total number of token occurrences: 885.
-Number of records with at least one token occurrence: 885.
-StructScore: 1.
-	1:	885	0.998871331828
+Total number of token occurrences: 778.
+Number of records with at least one token occurrence: 778.
+StructScore: 107.
+	1:	778	0.879096045198
 
 
 Cluster 1:
+Token: [Host]
+Total number of token occurrences: 106.
+Number of records with at least one token occurrence: 106.
+StructScore: 779.
+	1:	106	0.119774011299
+
+
+Cluster 2:
+Token: [other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 883.
+	1:	2	0.00225988700565
+
 Token: [int]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 885.
-	1:	1	0.00112866817156
+StructScore: 884.
+	1:	1	0.00112994350282
 
 
 Junk Tolerance Threshold: 89
-Coverage: 885
+Coverage: 778
 Num Tokens: 1
 Struct
-Coverage:885
+Coverage:778
 Token count:1
 [empty]	Occurrences:1
+Building histograms...
+THRESHOLD for histogram equality: 2.
+Computed clusters
+Cluster 0:
+Token: [Host]
+Total number of token occurrences: 106.
+Number of records with at least one token occurrence: 106.
+StructScore: 1.
+	1:	106	0.990654205607
+
+
+Cluster 1:
+Token: [other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 105.
+	1:	2	0.018691588785
+
+Token: [int]
+Total number of token occurrences: 1.
+Number of records with at least one token occurrence: 1.
+StructScore: 106.
+	1:	1	0.00934579439252
+
+
+Junk Tolerance Threshold: 11
+Coverage: 106
+Num Tokens: 1
+Struct
+Coverage:106
+Token count:1
+[Host]	Occurrences:1
+Building histograms...
+THRESHOLD for histogram equality: 2.
+Computed clusters
+Cluster 0:
+Token: [empty]
+Total number of token occurrences: 104.
+Number of records with at least one token occurrence: 104.
+StructScore: 2.
+	1:	104	0.981132075472
+
+
+Cluster 1:
+Token: [other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 104.
+	1:	2	0.0188679245283
+
+
+Junk Tolerance Threshold: 11
+Coverage: 104
+Num Tokens: 1
+Struct
+Coverage:104
+Token count:1
+[empty]	Occurrences:1
+Building histograms...
+THRESHOLD for histogram equality: 1.
+Computed clusters
+Cluster 0:
+Token: [other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+	1:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Coverage: 2
+Num Tokens: 1
+Struct
+Coverage:2
+Token count:1
+[other](-)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
@@ -289,54 +406,54 @@ THRESHOLD for histogram equality: 9.
 Computed clusters
 Cluster 0:
 Token: [empty]
-Total number of token occurrences: 877.
-Number of records with at least one token occurrence: 877.
+Total number of token occurrences: 876.
+Number of records with at least one token occurrence: 876.
 StructScore: 9.
-	1:	877	0.989841986456
+	1:	876	0.989830508475
 
 
 Cluster 1:
 Token: [string]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 885.
-	1:	1	0.00112866817156
+StructScore: 884.
+	1:	1	0.00112994350282
 
-Token: (-)
+Token: [other](-)
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 885.
-	1:	1	0.00112866817156
+StructScore: 884.
+	1:	1	0.00112994350282
 
 
 Cluster 2:
-Token: (+)
+Token: [other](+)
 Total number of token occurrences: 16.
 Number of records with at least one token occurrence: 9.
-StructScore: 2633.
-	1:	2	0.00225733634312
-	2:	7	0.0079006772009
+StructScore: 2630.
+	1:	2	0.00225988700565
+	2:	7	0.00790960451977
 
 Token: [int]
 Total number of token occurrences: 10.
 Number of records with at least one token occurrence: 8.
-StructScore: 2636.
-	1:	6	0.00677200902935
-	2:	2	0.00225733634312
+StructScore: 2633.
+	1:	6	0.00677966101695
+	2:	2	0.00225988700565
 
 
 Junk Tolerance Threshold: 89
-Coverage: 877
+Coverage: 876
 Num Tokens: 1
 Struct
-Coverage:877
+Coverage:876
 Token count:1
 [empty]	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
-Token: (+)
+Token: [other](+)
 Total number of token occurrences: 16.
 Number of records with at least one token occurrence: 9.
 StructScore: 2.
@@ -360,7 +477,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 8.
 	1:	1	0.111111111111
 
-Token: (-)
+Token: [other](-)
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 8.
@@ -372,7 +489,7 @@ Coverage: 9
 Num Tokens: 0
 Clusters sorted by array criteria:
 Cluster 0:
-Token: (+)
+Token: [other](+)
 Total number of token occurrences: 16.
 Number of records with at least one token occurrence: 9.
 StructScore: 2.
@@ -396,7 +513,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 8.
 	1:	1	0.111111111111
 
-Token: (-)
+Token: [other](-)
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 8.
@@ -404,18 +521,18 @@ StructScore: 8.
 
 
 Possible array tokens:
-(+)
+[other](+)
 Records in possible array context:9
 Total:16
 Coverage:9
 Width:2
-Array	(+)	Occurrences:1
+Array	[other](+)	Occurrences:1
 Array context
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
-Token: (+)
+Token: [other](+)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
 StructScore: 0.
@@ -428,12 +545,12 @@ Num Tokens: 1
 Struct
 Coverage:9
 Token count:1
-(+)	Occurrences:1
+[other](+)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
-Token: (+)
+Token: [other](+)
 Total number of token occurrences: 7.
 Number of records with at least one token occurrence: 7.
 StructScore: 0.
@@ -446,7 +563,7 @@ Num Tokens: 1
 Struct
 Coverage:7
 Token count:1
-(+)	Occurrences:1
+[other](+)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
@@ -466,7 +583,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 8.
 	1:	1	0.111111111111
 
-Token: (-)
+Token: [other](-)
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 8.
@@ -493,7 +610,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 8.
 	1:	1	0.111111111111
 
-Token: (-)
+Token: [other](-)
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 8.
@@ -606,7 +723,7 @@ Number of records with at least one token occurrence: 1.
 StructScore: 0.
 	1:	1	1.0
 
-Token: (-)
+Token: [other](-)
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 0.
@@ -620,160 +737,192 @@ Struct
 Coverage:1
 Token count:2
 [string]	Occurrences:1
-(-)	Occurrences:1
+[other](-)	Occurrences:1
 Building histograms...
-THRESHOLD for histogram equality: 31.
+THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
-Token: (.)
-Total number of token occurrences: 3043.
-Number of records with at least one token occurrence: 3043.
+Token: [Host]
+Total number of token occurrences: 1.
+Number of records with at least one token occurrence: 1.
 StructScore: 0.
-	1:	3043	1.0
+	1:	1	1.0
+
+Token: [int]
+Total number of token occurrences: 1.
+Number of records with at least one token occurrence: 1.
+StructScore: 0.
+	1:	1	1.0
+
+Token: [other](.)
+Total number of token occurrences: 1.
+Number of records with at least one token occurrence: 1.
+StructScore: 0.
+	1:	1	1.0
+
+
+Junk Tolerance Threshold: 1
+Coverage: 1
+Num Tokens: 3
+Struct
+Coverage:1
+Token count:3
+[Host]	Occurrences:1
+[int]	Occurrences:1
+[other](.)	Occurrences:1
+Building histograms...
+THRESHOLD for histogram equality: 28.
+Computed clusters
+Cluster 0:
+Token: [other](.)
+Total number of token occurrences: 2729.
+Number of records with at least one token occurrence: 2729.
+StructScore: 0.
+	1:	2729	1.0
 
 
 Cluster 1:
 Token: [string]
-Total number of token occurrences: 1220.
-Number of records with at least one token occurrence: 1220.
-StructScore: 1823.
-	1:	1220	0.400920144594
+Total number of token occurrences: 1083.
+Number of records with at least one token occurrence: 1083.
+StructScore: 1646.
+	1:	1083	0.396848662514
 
 
 Cluster 2:
-Token: (_)
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
-StructScore: 3034.
-	1:	9	0.00295760762406
+StructScore: 2720.
+	1:	9	0.00329791132283
 
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
-StructScore: 3039.
-	1:	4	0.00131449227736
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
+StructScore: 2726.
+	1:	3	0.00109930377428
 
 Token: [IP]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
-StructScore: 3041.
-	1:	2	0.000657246138679
+StructScore: 2727.
+	1:	2	0.000732869182851
 
-Token: (()[Group Body]())
+Token: [other](()[Group Body][other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 3042.
-	1:	1	0.000328623069339
+StructScore: 2728.
+	1:	1	0.000366434591425
 
 
 Cluster 3:
 Token: [int]
-Total number of token occurrences: 2716.
-Number of records with at least one token occurrence: 1886.
-StructScore: 4301.
-	1:	1056	0.347025961222
-	2:	830	0.272757147552
+Total number of token occurrences: 2437.
+Number of records with at least one token occurrence: 1699.
+StructScore: 3828.
+	1:	961	0.35214364236
+	2:	738	0.270428728472
 
 
-Junk Tolerance Threshold: 305
-Coverage: 3043
+Junk Tolerance Threshold: 273
+Coverage: 2729
 Num Tokens: 1
 Struct
-Coverage:3043
+Coverage:2729
 Token count:1
-(.)	Occurrences:1
+[other](.)	Occurrences:1
 Building histograms...
-THRESHOLD for histogram equality: 31.
+THRESHOLD for histogram equality: 28.
 Computed clusters
 Cluster 0:
 Token: [string]
-Total number of token occurrences: 1220.
-Number of records with at least one token occurrence: 1220.
-StructScore: 1823.
-	1:	1220	0.400920144594
+Total number of token occurrences: 1083.
+Number of records with at least one token occurrence: 1083.
+StructScore: 1646.
+	1:	1083	0.396848662514
 
 
 Cluster 1:
-Token: (_)
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
-StructScore: 3034.
-	1:	9	0.00295760762406
+StructScore: 2720.
+	1:	9	0.00329791132283
 
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
-StructScore: 3039.
-	1:	4	0.00131449227736
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
+StructScore: 2726.
+	1:	3	0.00109930377428
 
 Token: [IP]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
-StructScore: 3041.
-	1:	2	0.000657246138679
+StructScore: 2727.
+	1:	2	0.000732869182851
 
-Token: (()[Group Body]())
+Token: [other](()[Group Body][other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 3042.
-	1:	1	0.000328623069339
+StructScore: 2728.
+	1:	1	0.000366434591425
 
 
 Cluster 2:
 Token: [int]
-Total number of token occurrences: 2716.
-Number of records with at least one token occurrence: 1886.
-StructScore: 4301.
-	1:	1056	0.347025961222
-	2:	830	0.272757147552
+Total number of token occurrences: 2437.
+Number of records with at least one token occurrence: 1699.
+StructScore: 3828.
+	1:	961	0.35214364236
+	2:	738	0.270428728472
 
 
-Junk Tolerance Threshold: 305
-Coverage: 1220
+Junk Tolerance Threshold: 273
+Coverage: 1083
 Num Tokens: 1
 Struct
-Coverage:1220
+Coverage:1083
 Token count:1
 [string]	Occurrences:1
 Building histograms...
-THRESHOLD for histogram equality: 13.
+THRESHOLD for histogram equality: 11.
 Computed clusters
 Cluster 0:
 Token: [empty]
-Total number of token occurrences: 1156.
-Number of records with at least one token occurrence: 1156.
-StructScore: 64.
-	1:	1156	0.947540983607
+Total number of token occurrences: 1029.
+Number of records with at least one token occurrence: 1029.
+StructScore: 54.
+	1:	1029	0.950138504155
 
 
 Cluster 1:
-Token: (_)
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
-StructScore: 1211.
-	1:	9	0.00737704918033
+StructScore: 1074.
+	1:	9	0.00831024930748
 
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
-StructScore: 1216.
-	1:	4	0.00327868852459
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
+StructScore: 1080.
+	1:	3	0.00277008310249
 
 
 Cluster 2:
 Token: [int]
-Total number of token occurrences: 75.
-Number of records with at least one token occurrence: 64.
-StructScore: 3479.
-	1:	53	0.0434426229508
-	2:	11	0.00901639344262
+Total number of token occurrences: 63.
+Number of records with at least one token occurrence: 54.
+StructScore: 3096.
+	1:	45	0.0415512465374
+	2:	9	0.00831024930748
 
 
-Junk Tolerance Threshold: 122
-Coverage: 1156
+Junk Tolerance Threshold: 109
+Coverage: 1029
 Num Tokens: 1
 Struct
-Coverage:1156
+Coverage:1029
 Token count:1
 [empty]	Occurrences:1
 Building histograms...
@@ -781,63 +930,63 @@ THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 75.
-Number of records with at least one token occurrence: 64.
-StructScore: 11.
-	1:	53	0.828125
-	2:	11	0.171875
+Total number of token occurrences: 63.
+Number of records with at least one token occurrence: 54.
+StructScore: 9.
+	1:	45	0.833333333333
+	2:	9	0.166666666667
 
 
 Cluster 1:
-Token: (_)
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
-StructScore: 55.
-	1:	9	0.140625
+StructScore: 45.
+	1:	9	0.166666666667
 
 
 Cluster 2:
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
-StructScore: 60.
-	1:	4	0.0625
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
+StructScore: 51.
+	1:	3	0.0555555555556
 
 
-Junk Tolerance Threshold: 7
-Coverage: 64
+Junk Tolerance Threshold: 6
+Coverage: 54
 Num Tokens: 0
 Clusters sorted by array criteria:
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 75.
-Number of records with at least one token occurrence: 64.
-StructScore: 11.
-	1:	53	0.828125
-	2:	11	0.171875
+Total number of token occurrences: 63.
+Number of records with at least one token occurrence: 54.
+StructScore: 9.
+	1:	45	0.833333333333
+	2:	9	0.166666666667
 
 
 Cluster 1:
-Token: (_)
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
-StructScore: 55.
-	1:	9	0.140625
+StructScore: 45.
+	1:	9	0.166666666667
 
 
 Cluster 2:
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
-StructScore: 60.
-	1:	4	0.0625
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
+StructScore: 51.
+	1:	3	0.0555555555556
 
 
 Possible array tokens:
 [int]
-Records in possible array context:64
-Total:75
-Coverage:64
+Records in possible array context:54
+Total:63
+Coverage:54
 Width:2
 Array	[int]	Occurrences:1
 Array context
@@ -846,17 +995,17 @@ THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 64.
-Number of records with at least one token occurrence: 64.
+Total number of token occurrences: 54.
+Number of records with at least one token occurrence: 54.
 StructScore: 0.
-	1:	64	1.0
+	1:	54	1.0
 
 
-Junk Tolerance Threshold: 7
-Coverage: 64
+Junk Tolerance Threshold: 6
+Coverage: 54
 Num Tokens: 1
 Struct
-Coverage:64
+Coverage:54
 Token count:1
 [int]	Occurrences:1
 Building histograms...
@@ -864,17 +1013,17 @@ THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 11.
-Number of records with at least one token occurrence: 11.
+Total number of token occurrences: 9.
+Number of records with at least one token occurrence: 9.
 StructScore: 0.
-	1:	11	1.0
+	1:	9	1.0
 
 
-Junk Tolerance Threshold: 2
-Coverage: 11
+Junk Tolerance Threshold: 1
+Coverage: 9
 Num Tokens: 1
 Struct
-Coverage:11
+Coverage:9
 Token count:1
 [int]	Occurrences:1
 Building histograms...
@@ -882,52 +1031,52 @@ THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
 Token: [empty]
-Total number of token occurrences: 51.
-Number of records with at least one token occurrence: 51.
-StructScore: 13.
-	1:	51	0.796875
+Total number of token occurrences: 42.
+Number of records with at least one token occurrence: 42.
+StructScore: 12.
+	1:	42	0.777777777778
 
 
 Cluster 1:
-Token: (_)
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
-StructScore: 55.
-	1:	9	0.140625
+StructScore: 45.
+	1:	9	0.166666666667
 
 
 Cluster 2:
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
-StructScore: 60.
-	1:	4	0.0625
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
+StructScore: 51.
+	1:	3	0.0555555555556
 
 
-Junk Tolerance Threshold: 7
-Coverage: 51
+Junk Tolerance Threshold: 6
+Coverage: 42
 Num Tokens: 1
 Struct
-Coverage:51
+Coverage:42
 Token count:1
 [empty]	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
-Token: (_)
+Token: [other](_)
 Total number of token occurrences: 9.
 Number of records with at least one token occurrence: 9.
-StructScore: 4.
-	1:	9	0.692307692308
+StructScore: 3.
+	1:	9	0.75
 
 
 Cluster 1:
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
 StructScore: 9.
-	1:	4	0.307692307692
+	1:	3	0.25
 
 
 Junk Tolerance Threshold: 2
@@ -936,142 +1085,142 @@ Num Tokens: 1
 Struct
 Coverage:9
 Token count:1
-(_)	Occurrences:1
+[other](_)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
 Cluster 0:
-Token: (-)
-Total number of token occurrences: 4.
-Number of records with at least one token occurrence: 4.
+Token: [other](-)
+Total number of token occurrences: 3.
+Number of records with at least one token occurrence: 3.
 StructScore: 0.
-	1:	4	1.0
+	1:	3	1.0
 
 
 Junk Tolerance Threshold: 1
-Coverage: 4
+Coverage: 3
 Num Tokens: 1
 Struct
-Coverage:4
+Coverage:3
 Token count:1
-(-)	Occurrences:1
+[other](-)	Occurrences:1
 Building histograms...
-THRESHOLD for histogram equality: 19.
+THRESHOLD for histogram equality: 17.
 Computed clusters
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 2641.
-Number of records with at least one token occurrence: 1822.
-StructScore: 822.
-	1:	1003	0.550191991223
-	2:	819	0.449259462425
+Total number of token occurrences: 2374.
+Number of records with at least one token occurrence: 1645.
+StructScore: 732.
+	1:	916	0.556500607533
+	2:	729	0.442891859052
 
 
 Cluster 1:
 Token: [IP]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
-StructScore: 1821.
-	1:	2	0.00109709270433
+StructScore: 1644.
+	1:	2	0.00121506682868
 
-Token: (()[Group Body]())
+Token: [other](()[Group Body][other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 1822.
-	1:	1	0.000548546352167
+StructScore: 1645.
+	1:	1	0.000607533414338
 
 
-Junk Tolerance Threshold: 183
-Coverage: 1823
+Junk Tolerance Threshold: 165
+Coverage: 1646
 Num Tokens: 0
 Clusters sorted by array criteria:
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 2641.
-Number of records with at least one token occurrence: 1822.
-StructScore: 822.
-	1:	1003	0.550191991223
-	2:	819	0.449259462425
+Total number of token occurrences: 2374.
+Number of records with at least one token occurrence: 1645.
+StructScore: 732.
+	1:	916	0.556500607533
+	2:	729	0.442891859052
 
 
 Cluster 1:
 Token: [IP]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
-StructScore: 1821.
-	1:	2	0.00109709270433
+StructScore: 1644.
+	1:	2	0.00121506682868
 
-Token: (()[Group Body]())
+Token: [other](()[Group Body][other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 1822.
-	1:	1	0.000548546352167
+StructScore: 1645.
+	1:	1	0.000607533414338
 
 
 Possible array tokens:
 [int]
-Records in possible array context:1823
-Total:2641
-Coverage:1822
+Records in possible array context:1646
+Total:2374
+Coverage:1645
 Width:2
 Array	[int]	Occurrences:1
 WARNING: ARRAY first context empty!Array context
 Building histograms...
-THRESHOLD for histogram equality: 19.
+THRESHOLD for histogram equality: 17.
 Computed clusters
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 1822.
-Number of records with at least one token occurrence: 1822.
+Total number of token occurrences: 1645.
+Number of records with at least one token occurrence: 1645.
 StructScore: 1.
-	1:	1822	0.999451453648
+	1:	1645	0.999392466586
 
 
 Cluster 1:
 Token: [IP]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
-StructScore: 1821.
-	1:	2	0.00109709270433
+StructScore: 1644.
+	1:	2	0.00121506682868
 
 Token: [empty]
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 1822.
-	1:	1	0.000548546352167
+StructScore: 1645.
+	1:	1	0.000607533414338
 
 
-Junk Tolerance Threshold: 183
-Coverage: 1822
+Junk Tolerance Threshold: 165
+Coverage: 1645
 Num Tokens: 1
 Struct
-Coverage:1822
+Coverage:1645
 Token count:1
 [int]	Occurrences:1
 Building histograms...
-THRESHOLD for histogram equality: 19.
+THRESHOLD for histogram equality: 17.
 Computed clusters
 Cluster 0:
 Token: [empty]
-Total number of token occurrences: 1820.
-Number of records with at least one token occurrence: 1820.
+Total number of token occurrences: 1643.
+Number of records with at least one token occurrence: 1643.
 StructScore: 2.
-	1:	1820	0.998902305159
+	1:	1643	0.998784194529
 
 
 Cluster 1:
 Token: [IP]
 Total number of token occurrences: 2.
 Number of records with at least one token occurrence: 2.
-StructScore: 1820.
-	1:	2	0.00109769484083
+StructScore: 1643.
+	1:	2	0.00121580547112
 
 
-Junk Tolerance Threshold: 183
-Coverage: 1820
+Junk Tolerance Threshold: 165
+Coverage: 1643
 Num Tokens: 1
 Struct
-Coverage:1820
+Coverage:1643
 Token count:1
 [empty]	Occurrences:1
 Building histograms...
@@ -1111,47 +1260,47 @@ Coverage:1
 Token count:1
 [empty]	Occurrences:1
 Building histograms...
-THRESHOLD for histogram equality: 9.
+THRESHOLD for histogram equality: 8.
 Computed clusters
 Cluster 0:
 Token: [int]
-Total number of token occurrences: 819.
-Number of records with at least one token occurrence: 819.
+Total number of token occurrences: 729.
+Number of records with at least one token occurrence: 729.
 StructScore: 0.
-	1:	819	1.0
+	1:	729	1.0
 
 
-Junk Tolerance Threshold: 82
-Coverage: 819
+Junk Tolerance Threshold: 73
+Coverage: 729
 Num Tokens: 1
 Struct
-Coverage:819
+Coverage:729
 Token count:1
 [int]	Occurrences:1
 Building histograms...
-THRESHOLD for histogram equality: 19.
+THRESHOLD for histogram equality: 17.
 Computed clusters
 Cluster 0:
 Token: [empty]
-Total number of token occurrences: 1822.
-Number of records with at least one token occurrence: 1822.
+Total number of token occurrences: 1645.
+Number of records with at least one token occurrence: 1645.
 StructScore: 1.
-	1:	1822	0.999451453648
+	1:	1645	0.999392466586
 
 
 Cluster 1:
-Token: (()[Group Body]())
+Token: [other](()[Group Body][other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
-StructScore: 1822.
-	1:	1	0.000548546352167
+StructScore: 1645.
+	1:	1	0.000607533414338
 
 
-Junk Tolerance Threshold: 183
-Coverage: 1822
+Junk Tolerance Threshold: 165
+Coverage: 1645
 Num Tokens: 1
 Struct
-Coverage:1822
+Coverage:1645
 Token count:1
 [empty]	Occurrences:1
 Building histograms...
@@ -1164,13 +1313,13 @@ Number of records with at least one token occurrence: 1.
 StructScore: 0.
 	1:	1	1.0
 
-Token: (()
+Token: [other](()
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 0.
 	1:	1	1.0
 
-Token: ())
+Token: [other]())
 Total number of token occurrences: 1.
 Number of records with at least one token occurrence: 1.
 StructScore: 0.
@@ -1184,8 +1333,8 @@ Struct
 Coverage:1
 Token count:3
 [string]	Occurrences:1
-(()	Occurrences:1
-())	Occurrences:1
+[other](()	Occurrences:1
+[other]())	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 9.
 Computed clusters
@@ -1206,165 +1355,196 @@ Token count:1
 [string]	Occurrences:1
 
 Before reduction:
-Parray(Id = BTy_0 886, 0b, 0b)((.) )
+Parray(Id = BTy_0 886, 1b, 0b)([other](.) )
 First:
-	Pstruct(Id = BTy_19 886, 0b, 0b)
-		Punion(Id = BTy_2 886, 0b, 0b)
-			[empty](Id = BTy_1 885, 0b, 0b);
-			[int](Id = BTy_3 1, 0b, 0b);
-		End Punion;
-		[string](Id = BTy_4 886, 0b, 0b);
-		Punion(Id = BTy_6 886, 0b, 0b)
-			[empty](Id = BTy_5 877, 0b, 0b);
-			Parray(Id = BTy_7 9, 0b, 0b)((+) )
-			First:
-				(+)(Id = BTy_8 9, 0b, 0b);
-			Body:
-				(+)(Id = BTy_9 7, 0b, 0b);
-			Tail:
-				Punion(Id = BTy_17 9, 0b, 0b)
-					Parray(Id = BTy_10 8, 0b, 0b)([int] )
-					First:
-						[int](Id = BTy_11 8, 0b, 0b);
-					Body:
-						[int](Id = BTy_12 2, 0b, 0b);
-					Tail:
-						[empty](Id = BTy_13 8, 0b, 0b);
-					End Parray;
-					Pstruct(Id = BTy_16 1, 0b, 0b)
-						(-)(Id = BTy_14 1, 0b, 0b);
-						[string](Id = BTy_15 1, 0b, 0b);
-					End Pstruct;
-				End Punion;
-			End Parray;
-		End Punion;
-		(.)(Id = BTy_18 886, 0b, 0b);
-	End Pstruct;
+	Punion(Id = BTy_26 886, 1b, 0b)
+		Pstruct(Id = BTy_25 885, 1b, 0b)
+			Punion(Id = BTy_2 885, 1b, 0b)
+				[empty](Id = BTy_1 778, 1b, 0b);
+				Pstruct(Id = BTy_7 106, 1b, 0b)
+					[Host](Id = BTy_3 106, 1b, 0b);
+					Punion(Id = BTy_5 106, 1b, 0b)
+						[empty](Id = BTy_4 104, 1b, 0b);
+						[other](-)(Id = BTy_6 2, 1b, 0b);
+					End Punion;
+				End Pstruct;
+				[int](Id = BTy_9 1, 1b, 0b);
+			End Punion;
+			[string](Id = BTy_10 885, 1b, 0b);
+			Punion(Id = BTy_12 885, 1b, 0b)
+				[empty](Id = BTy_11 876, 1b, 0b);
+				Parray(Id = BTy_13 9, 1b, 0b)([other](+) )
+				First:
+					[other](+)(Id = BTy_14 9, 1b, 0b);
+				Body:
+					[other](+)(Id = BTy_15 7, 1b, 0b);
+				Tail:
+					Punion(Id = BTy_23 9, 1b, 0b)
+						Parray(Id = BTy_16 8, 1b, 0b)([int] )
+						First:
+							[int](Id = BTy_17 8, 1b, 0b);
+						Body:
+							[int](Id = BTy_18 2, 1b, 0b);
+						Tail:
+							[empty](Id = BTy_19 8, 1b, 0b);
+						End Parray;
+						Pstruct(Id = BTy_22 1, 1b, 0b)
+							[other](-)(Id = BTy_20 1, 1b, 0b);
+							[string](Id = BTy_21 1, 1b, 0b);
+						End Pstruct;
+					End Punion;
+				End Parray;
+			End Punion;
+			[other](.)(Id = BTy_24 885, 1b, 0b);
+		End Pstruct;
+		Pstruct(Id = BTy_30 1, 1b, 0b)
+			[Host](Id = BTy_27 1, 1b, 0b);
+			[int](Id = BTy_28 1, 1b, 0b);
+			[other](.)(Id = BTy_29 1, 1b, 0b);
+		End Pstruct;
+	End Punion;
 Body:
-	Pstruct(Id = BTy_49 3043, 0b, 0b)
-		Punion(Id = BTy_32 3043, 0b, 0b)
-			Pstruct(Id = BTy_31 1220, 0b, 0b)
-				Punion(Id = BTy_21 1220, 0b, 0b)
-					[empty](Id = BTy_20 1156, 0b, 0b);
-					Parray(Id = BTy_22 64, 0b, 0b)([int] )
+	Pstruct(Id = BTy_60 2729, 1b, 0b)
+		Punion(Id = BTy_43 2729, 1b, 0b)
+			Pstruct(Id = BTy_42 1083, 1b, 0b)
+				Punion(Id = BTy_32 1083, 1b, 0b)
+					[empty](Id = BTy_31 1029, 1b, 0b);
+					Parray(Id = BTy_33 54, 1b, 0b)([int] )
 					First:
-						[int](Id = BTy_23 64, 0b, 0b);
+						[int](Id = BTy_34 54, 1b, 0b);
 					Body:
-						[int](Id = BTy_24 11, 0b, 0b);
+						[int](Id = BTy_35 9, 1b, 0b);
 					Tail:
-						Punion(Id = BTy_26 64, 0b, 0b)
-							[empty](Id = BTy_25 51, 0b, 0b);
-							(_)(Id = BTy_27 9, 0b, 0b);
-							(-)(Id = BTy_29 4, 0b, 0b);
+						Punion(Id = BTy_37 54, 1b, 0b)
+							[empty](Id = BTy_36 42, 1b, 0b);
+							[other](_)(Id = BTy_38 9, 1b, 0b);
+							[other](-)(Id = BTy_40 3, 1b, 0b);
 						End Punion;
 					End Parray;
 				End Punion;
-				[string](Id = BTy_30 1220, 0b, 0b);
+				[string](Id = BTy_41 1083, 1b, 0b);
 			End Pstruct;
-			Parray(Id = BTy_33 1823, 0b, 0b)([int] )
+			Parray(Id = BTy_44 1646, 1b, 0b)([int] )
 			First:
-				Punion(Id = BTy_39 1823, 0b, 0b)
-					Pstruct(Id = BTy_38 1822, 0b, 0b)
-						Punion(Id = BTy_35 1822, 0b, 0b)
-							[empty](Id = BTy_34 1820, 0b, 0b);
-							[IP](Id = BTy_36 2, 0b, 0b);
+				Punion(Id = BTy_50 1646, 1b, 0b)
+					Pstruct(Id = BTy_49 1645, 1b, 0b)
+						Punion(Id = BTy_46 1645, 1b, 0b)
+							[empty](Id = BTy_45 1643, 1b, 0b);
+							[IP](Id = BTy_47 2, 1b, 0b);
 						End Punion;
-						[int](Id = BTy_37 1822, 0b, 0b);
+						[int](Id = BTy_48 1645, 1b, 0b);
 					End Pstruct;
-					[empty](Id = BTy_40 1, 0b, 0b);
+					[empty](Id = BTy_51 1, 1b, 0b);
 				End Punion;
 			Body:
-				[int](Id = BTy_41 819, 0b, 0b);
+				[int](Id = BTy_52 729, 1b, 0b);
 			Tail:
-				Punion(Id = BTy_43 1823, 0b, 0b)
-					[empty](Id = BTy_42 1822, 0b, 0b);
-					Pstruct(Id = BTy_47 1, 0b, 0b)
-						(()(Id = BTy_44 1, 0b, 0b);
-						[string](Id = BTy_45 1, 0b, 0b);
-						())(Id = BTy_46 1, 0b, 0b);
+				Punion(Id = BTy_54 1646, 1b, 0b)
+					[empty](Id = BTy_53 1645, 1b, 0b);
+					Pstruct(Id = BTy_58 1, 1b, 0b)
+						[other](()(Id = BTy_55 1, 1b, 0b);
+						[string](Id = BTy_56 1, 1b, 0b);
+						[other]())(Id = BTy_57 1, 1b, 0b);
 					End Pstruct;
 				End Punion;
 			End Parray;
 		End Punion;
-		(.)(Id = BTy_48 3043, 0b, 0b);
+		[other](.)(Id = BTy_59 2729, 1b, 0b);
 	End Pstruct;
 Tail:
-	[string](Id = BTy_50 886, 0b, 0b);
+	[string](Id = BTy_61 886, 1b, 0b);
 End Parray
 
 
 After final reduction:
-Pstruct(Id = BTy_55 886, 0b, 0b)
-	Switch(BTy_4)(Id = BTy_2 886, 0b, 0b):
-	case "*":
-		""(Id = BTy_1 885, 0b, 0b);
-	case "Suite-1":
-		[4](Id = BTy_3 1, 0b, 0b);
-	End Switch;
-	[string](Id = BTy_4 886, 0b, 0b);
-	Switch(BTy_4)(Id = BTy_6 886, 0b, 0b):
-	case "*":
-		""(Id = BTy_5 877, 0b, 0b);
-	case {"compat-gcc-32-c", "compat-libstdc", "gcc-c", "gcc4-c", "gtk", "libstdc", "memtest86", }:
-		Pstruct(Id = BTy_52 9, 0b, 0b)
-			"+"(Id = BTy_8 9, 0b, 0b);
-			RArray(Id = BTy_7 9, 0b, 0b)
-				"+"(Id = BTy_9 7, 0b, 0b);
-			End RArray;
-			Punion(Id = BTy_17 9, 0b, 0b)
-				Pstruct(Id = BTy_51 8, 0b, 0b)
-					[~296...~1](Id = BTy_11 8, 0b, 0b);
-					RArray(Id = BTy_10 8, 0b, 0b)
-						[~3...~2](Id = BTy_12 2, 0b, 0b);
+Pstruct(Id = BTy_67 886, 1b, 0b)
+	Punion(Id = BTy_26 886, 1b, 0b)
+		Pstruct(Id = BTy_25 885, 1b, 0b)
+			Switch(BTy_10)(Id = BTy_2 885, 1b, 0b):
+			case [StringConst] "*":
+				[StringConst] ""(Id = BTy_1 778, 1b, 0b);
+			case [Enum] {[StringConst] "arch", [StringConst] "e16", [StringConst] "e5", [StringConst] "i18n-1", [StringConst] "libs-1", }:
+				Pstruct(Id = BTy_7 106, 1b, 0b)
+					[Host](Id = BTy_3 106, 1b, 0b);
+					Punion(Id = BTy_5 106, 1b, 0b)
+						[StringConst] ""(Id = BTy_4 104, 1b, 0b);
+						[StringConst] "-"(Id = BTy_6 2, 1b, 0b);
+					End Punion;
+				End Pstruct;
+			case [StringConst] "Suite-1":
+				[IntConst] [4](Id = BTy_9 1, 1b, 0b);
+			End Switch;
+			[string](Id = BTy_10 885, 1b, 0b);
+			Switch(BTy_10)(Id = BTy_12 885, 1b, 0b):
+			case [StringConst] "*":
+				[StringConst] ""(Id = BTy_11 876, 1b, 0b);
+			case [Enum] {[StringConst] "compat-gcc-32-c", [StringConst] "compat-libstdc", [StringConst] "gcc-c", [StringConst] "gcc4-c", [StringConst] "gtk", [StringConst] "libstdc", [StringConst] "memtest86", }:
+				Pstruct(Id = BTy_63 9, 1b, 0b)
+					[StringConst] "+"(Id = BTy_14 9, 1b, 0b);
+					RArray(Id = BTy_13 9, 1b, 0b)
+						[StringConst] "+"(Id = BTy_15 7, 1b, 0b);
 					End RArray;
+					Punion(Id = BTy_23 9, 1b, 0b)
+						Pstruct(Id = BTy_62 8, 1b, 0b)
+							[Int] [~296...~1](Id = BTy_17 8, 1b, 0b);
+							RArray(Id = BTy_16 8, 1b, 0b)
+								[Int] [~3...~2](Id = BTy_18 2, 1b, 0b);
+							End RArray;
+						End Pstruct;
+						Pstruct(Id = BTy_22 1, 1b, 0b)
+							[StringConst] "-devel-3"(Id = BTy_20 1, 1b, 0b);
+						End Pstruct;
+					End Punion;
 				End Pstruct;
-				Pstruct(Id = BTy_16 1, 0b, 0b)
-					"-devel-3"(Id = BTy_14 1, 0b, 0b);
-				End Pstruct;
-			End Punion;
+			End Switch;
+			[StringConst] "."(Id = BTy_24 885, 1b, 0b);
 		End Pstruct;
-	End Switch;
-	"."(Id = BTy_18 886, 0b, 0b);
-	RArray(Id = BTy_0 886, 0b, 0b)
-		Separator: "."
-		Punion(Id = BTy_32 3929, 0b, 0b)
-			Pstruct(Id = BTy_31 1220, 0b, 0b)
-				Punion(Id = BTy_21 1220, 0b, 0b)
-					""(Id = BTy_20 1156, 0b, 0b);
-					Pstruct(Id = BTy_53 64, 0b, 0b)
-						[0...875](Id = BTy_23 64, 0b, 0b);
-						RArray(Id = BTy_22 64, 0b, 0b)
-							[~80...~2](Id = BTy_24 11, 0b, 0b);
+		Pstruct(Id = BTy_30 1, 1b, 0b)
+			[StringConst] "openoffice.org"(Id = BTy_27 1, 1b, 0b);
+			[IntConst] [~1](Id = BTy_28 1, 1b, 0b);
+			[StringConst] "."(Id = BTy_29 1, 1b, 0b);
+		End Pstruct;
+	End Punion;
+	RArray(Id = BTy_0 886, 1b, 0b)
+		Separator: [StringConst] "."
+		Punion(Id = BTy_43 3615, 1b, 0b)
+			Pstruct(Id = BTy_42 1083, 1b, 0b)
+				Punion(Id = BTy_32 1083, 1b, 0b)
+					[StringConst] ""(Id = BTy_31 1029, 1b, 0b);
+					Pstruct(Id = BTy_65 54, 1b, 0b)
+						[Int] [0...875](Id = BTy_34 54, 1b, 0b);
+						RArray(Id = BTy_33 54, 1b, 0b)
+							[Int] [~80...~14](Id = BTy_35 9, 1b, 0b);
 						End RArray;
-						Punion(Id = BTy_26 64, 0b, 0b)
-							""(Id = BTy_25 51, 0b, 0b);
-							"_"(Id = BTy_27 9, 0b, 0b);
-							"-"(Id = BTy_29 4, 0b, 0b);
+						Punion(Id = BTy_37 54, 1b, 0b)
+							[StringConst] ""(Id = BTy_36 42, 1b, 0b);
+							[StringConst] "_"(Id = BTy_38 9, 1b, 0b);
+							[StringConst] "-"(Id = BTy_40 3, 1b, 0b);
 						End Punion;
 					End Pstruct;
 				End Punion;
-				[string](Id = BTy_30 2106, 0b, 0b);
+				[string](Id = BTy_41 1969, 1b, 0b);
 			End Pstruct;
-			Pstruct(Id = BTy_54 1823, 0b, 0b)
-				Punion(Id = BTy_39 1823, 0b, 0b)
-					Pstruct(Id = BTy_38 1822, 0b, 0b)
-						Switch(BTy_37)(Id = BTy_35 1822, 0b, 0b):
-						case "*":
-							""(Id = BTy_34 1820, 0b, 0b);
-						case [~21]:
-							{"15.92.0.2", "4.1.2.90", }(Id = BTy_36 2, 0b, 0b);
+			Pstruct(Id = BTy_66 1646, 1b, 0b)
+				Punion(Id = BTy_50 1646, 1b, 0b)
+					Pstruct(Id = BTy_49 1645, 1b, 0b)
+						Switch(BTy_48)(Id = BTy_46 1645, 1b, 0b):
+						case [StringConst] "*":
+							[StringConst] ""(Id = BTy_45 1643, 1b, 0b);
+						case [IntConst] [~21]:
+							[Enum] {[StringConst] "15.92.0.2", [StringConst] "4.1.2.90", }(Id = BTy_47 2, 1b, 0b);
 						End Switch;
-						[~44...20060823](Id = BTy_37 1822, 0b, 0b);
+						[Int] [~44...20060823](Id = BTy_48 1645, 1b, 0b);
 					End Pstruct;
-					""(Id = BTy_40 1, 0b, 0b);
+					[StringConst] ""(Id = BTy_51 1, 1b, 0b);
 				End Punion;
-				RArray(Id = BTy_33 1823, 0b, 0b)
-					[~187...0](Id = BTy_41 819, 0b, 0b);
+				RArray(Id = BTy_44 1646, 1b, 0b)
+					[Int] [~187...0](Id = BTy_52 729, 1b, 0b);
 				End RArray;
-				Punion(Id = BTy_43 1823, 0b, 0b)
-					""(Id = BTy_42 1822, 0b, 0b);
-					Pstruct(Id = BTy_47 1, 0b, 0b)
-						"(none)"(Id = BTy_44 1, 0b, 0b);
+				Punion(Id = BTy_54 1646, 1b, 0b)
+					[StringConst] ""(Id = BTy_53 1645, 1b, 0b);
+					Pstruct(Id = BTy_58 1, 1b, 0b)
+						[StringConst] "(none)"(Id = BTy_55 1, 1b, 0b);
 					End Pstruct;
 				End Punion;
 			End Pstruct;
@@ -1373,10 +1553,10 @@ Pstruct(Id = BTy_55 886, 0b, 0b)
 End Pstruct
 
 Complexity of inferred type:
-	numAlt = 7  numTBD = 0  numBtm = 0
+	numAlt = 8  numTBD = 0  numBtm = 0
 Outputing partitions to directory: gen/
 
 Completed data/rpmpkgs.txt
-Overall type complexity = 37.585b
-Overall data complexity = nanb
+Overall type complexity = 46.585b
+Overall data complexity = 5598.053b
 

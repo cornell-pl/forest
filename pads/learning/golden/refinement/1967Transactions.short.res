@@ -3,6 +3,7 @@ Output directory: gen/
 Max depth to explore: 50
 Print line numbers in output contexts: false
 Print ids and output type tokens: true
+Print Entropy: false
 Histogram comparison tolerance (percentage): 0.01
 Struct determination tolerance (percentage): 0.1
 Noise level threshold (percentage): 0.0
@@ -19,7 +20,7 @@ Building histograms...
 THRESHOLD for histogram equality: 10.
 Computed clusters
 Cluster 0:
-Token: [white space]
+Token: [white]
 Total number of token occurrences: 4995.
 Number of records with at least one token occurrence: 999.
 StructScore: 0.
@@ -35,7 +36,7 @@ StructScore: 66.
 	7:	5	0.00500500500501
 	8:	51	0.0510510510511
 
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 1106.
 Number of records with at least one token occurrence: 999.
 StructScore: 66.
@@ -50,7 +51,7 @@ Num Tokens: 5
 Struct
 Coverage:999
 Token count:5
-[white space]	Occurrences:5
+[white]	Occurrences:5
 Building histograms...
 THRESHOLD for histogram equality: 10.
 Computed clusters
@@ -100,7 +101,7 @@ StructScore: 62.
 
 
 Cluster 1:
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 62.
 Number of records with at least one token occurrence: 62.
 StructScore: 937.
@@ -132,7 +133,7 @@ Number of records with at least one token occurrence: 62.
 StructScore: 937.
 	1:	62	0.0620620620621
 
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 62.
 Number of records with at least one token occurrence: 62.
 StructScore: 937.
@@ -156,7 +157,7 @@ Number of records with at least one token occurrence: 62.
 StructScore: 0.
 	1:	62	1.0
 
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 62.
 Number of records with at least one token occurrence: 62.
 StructScore: 0.
@@ -170,7 +171,7 @@ Struct
 Coverage:62
 Token count:2
 [int]	Occurrences:1
-(.)	Occurrences:1
+[other](.)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 10.
 Computed clusters
@@ -184,7 +185,7 @@ StructScore: 56.
 
 
 Cluster 1:
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 56.
 Number of records with at least one token occurrence: 56.
 StructScore: 943.
@@ -216,7 +217,7 @@ Number of records with at least one token occurrence: 56.
 StructScore: 943.
 	1:	56	0.0560560560561
 
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 56.
 Number of records with at least one token occurrence: 56.
 StructScore: 943.
@@ -240,7 +241,7 @@ Number of records with at least one token occurrence: 56.
 StructScore: 0.
 	1:	56	1.0
 
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 56.
 Number of records with at least one token occurrence: 56.
 StructScore: 0.
@@ -254,7 +255,7 @@ Struct
 Coverage:56
 Token count:2
 [int]	Occurrences:1
-(.)	Occurrences:1
+[other](.)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 10.
 Computed clusters
@@ -266,7 +267,7 @@ StructScore: 11.
 	1:	11	0.011011011011
 	2:	988	0.988988988989
 
-Token: (.)
+Token: [other](.)
 Total number of token occurrences: 988.
 Number of records with at least one token occurrence: 988.
 StructScore: 11.
@@ -280,7 +281,7 @@ Struct
 Coverage:988
 Token count:3
 [int]	Occurrences:2
-(.)	Occurrences:1
+[other](.)	Occurrences:1
 Building histograms...
 THRESHOLD for histogram equality: 1.
 Computed clusters
@@ -301,74 +302,69 @@ Token count:1
 [int]	Occurrences:1
 
 Before reduction:
-Pstruct(Id = BTy_27 999, 0b, 0b)
-	[int](Id = BTy_0 999, 0b, 0b);
-	[white space](Id = BTy_1 999, 0b, 0b);
-	[int](Id = BTy_2 999, 0b, 0b);
-	[white space](Id = BTy_3 999, 0b, 0b);
-	[int](Id = BTy_4 999, 0b, 0b);
-	Punion(Id = BTy_6 999, 0b, 0b)
-		[empty](Id = BTy_5 937, 0b, 0b);
-		Pstruct(Id = BTy_9 62, 0b, 0b)
-			(.)(Id = BTy_7 62, 0b, 0b);
-			[int](Id = BTy_8 62, 0b, 0b);
+Pstruct(Id = BTy_27 999, 1b, 0b)
+	[int](Id = BTy_0 999, 1b, 0b);
+	[white](Id = BTy_1 999, 1b, 0b);
+	[int](Id = BTy_2 999, 1b, 0b);
+	[white](Id = BTy_3 999, 1b, 0b);
+	[int](Id = BTy_4 999, 1b, 0b);
+	Punion(Id = BTy_6 999, 1b, 0b)
+		[empty](Id = BTy_5 937, 1b, 0b);
+		Pstruct(Id = BTy_9 62, 1b, 0b)
+			[other](.)(Id = BTy_7 62, 1b, 0b);
+			[int](Id = BTy_8 62, 1b, 0b);
 		End Pstruct;
 	End Punion;
-	[white space](Id = BTy_11 999, 0b, 0b);
-	[int](Id = BTy_12 999, 0b, 0b);
-	Punion(Id = BTy_14 999, 0b, 0b)
-		[empty](Id = BTy_13 943, 0b, 0b);
-		Pstruct(Id = BTy_17 56, 0b, 0b)
-			(.)(Id = BTy_15 56, 0b, 0b);
-			[int](Id = BTy_16 56, 0b, 0b);
+	[white](Id = BTy_11 999, 1b, 0b);
+	[int](Id = BTy_12 999, 1b, 0b);
+	Punion(Id = BTy_14 999, 1b, 0b)
+		[empty](Id = BTy_13 943, 1b, 0b);
+		Pstruct(Id = BTy_17 56, 1b, 0b)
+			[other](.)(Id = BTy_15 56, 1b, 0b);
+			[int](Id = BTy_16 56, 1b, 0b);
 		End Pstruct;
 	End Punion;
-	[white space](Id = BTy_19 999, 0b, 0b);
-	Punion(Id = BTy_24 999, 0b, 0b)
-		Pstruct(Id = BTy_23 988, 0b, 0b)
-			[int](Id = BTy_20 988, 0b, 0b);
-			(.)(Id = BTy_21 988, 0b, 0b);
-			[int](Id = BTy_22 988, 0b, 0b);
+	[white](Id = BTy_19 999, 1b, 0b);
+	Punion(Id = BTy_24 999, 1b, 0b)
+		Pstruct(Id = BTy_23 988, 1b, 0b)
+			[int](Id = BTy_20 988, 1b, 0b);
+			[other](.)(Id = BTy_21 988, 1b, 0b);
+			[int](Id = BTy_22 988, 1b, 0b);
 		End Pstruct;
-		[int](Id = BTy_25 11, 0b, 0b);
+		[int](Id = BTy_25 11, 1b, 0b);
 	End Punion;
-	[white space](Id = BTy_26 999, 0b, 0b);
+	[white](Id = BTy_26 999, 1b, 0b);
 End Pstruct
 
 
 After final reduction:
-Pstruct(Id = BTy_27 999, 0b, 0b)
-	[101...103](Id = BTy_0 999, 0b, 0b);
-	"      "(Id = BTy_1 999, 0b, 0b);
-	[101...9890](Id = BTy_2 999, 0b, 0b);
-	"      "(Id = BTy_3 999, 0b, 0b);
-	[~10...12072](Id = BTy_4 999, 0b, 0b);
-	Punion(Id = BTy_6 999, 0b, 0b)
-		""(Id = BTy_5 937, 0b, 0b);
-		Pstruct(Id = BTy_9 62, 0b, 0b)
-			"."(Id = BTy_7 62, 0b, 0b);
-			[1...9](Id = BTy_8 62, 0b, 0b);
+Pstruct(Id = BTy_27 999, 1b, 0b)
+	[Int] [101...103](Id = BTy_0 999, 1b, 0b);
+	[StringConst] "      "(Id = BTy_1 999, 1b, 0b);
+	[Int] [101...9890](Id = BTy_2 999, 1b, 0b);
+	[StringConst] "      "(Id = BTy_3 999, 1b, 0b);
+	[Int] [~10...12072](Id = BTy_4 999, 1b, 0b);
+	Punion(Id = BTy_6 999, 1b, 0b)
+		[StringConst] ""(Id = BTy_5 937, 1b, 0b);
+		Pstruct(Id = BTy_9 62, 1b, 0b)
+			[StringConst] "."(Id = BTy_7 62, 1b, 0b);
+			[Int] [1...9](Id = BTy_8 62, 1b, 0b);
 		End Pstruct;
 	End Punion;
-	"                   "(Id = BTy_11 999, 0b, 0b);
-	[0](Id = BTy_12 999, 0b, 0b);
-	Punion(Id = BTy_14 999, 0b, 0b)
-		""(Id = BTy_13 943, 0b, 0b);
-		Pstruct(Id = BTy_17 56, 0b, 0b)
-			"."(Id = BTy_15 56, 0b, 0b);
-			[2...53321](Id = BTy_16 56, 0b, 0b);
+	[StringConst] "                   "(Id = BTy_11 999, 1b, 0b);
+	[IntConst] [0](Id = BTy_12 999, 1b, 0b);
+	Punion(Id = BTy_14 999, 1b, 0b)
+		[StringConst] ""(Id = BTy_13 943, 1b, 0b);
+		Pstruct(Id = BTy_17 56, 1b, 0b)
+			[StringConst] "."(Id = BTy_15 56, 1b, 0b);
+			[Int] [2...53321](Id = BTy_16 56, 1b, 0b);
 		End Pstruct;
 	End Punion;
-	"                   "(Id = BTy_19 999, 0b, 0b);
-	Punion(Id = BTy_24 999, 0b, 0b)
-		Pstruct(Id = BTy_23 988, 0b, 0b)
-			[0...1](Id = BTy_20 988, 0b, 0b);
-			"."(Id = BTy_21 988, 0b, 0b);
-			[1...87353](Id = BTy_22 988, 0b, 0b);
-		End Pstruct;
-		[0](Id = BTy_25 11, 0b, 0b);
-	End Punion;
-	"   "(Id = BTy_26 999, 0b, 0b);
+	[StringConst] "                   "(Id = BTy_19 999, 1b, 0b);
+	[Int] [0...1](Id = BTy_25 999, 1b, 0b);
+	[StringConst] "."(Id = BTy_21 988, 1b, 0b);
+	[Int] [1...87353](Id = BTy_22 988, 1b, 0b);
+	[StringConst] "   "(Id = BTy_26 999, 1b, 0b);
 End Pstruct
 
 Complexity of inferred type:
@@ -376,6 +372,6 @@ Complexity of inferred type:
 Outputing partitions to directory: gen/
 
 Completed data/1967Transactions.short
-Overall type complexity = 22b
-Overall data complexity = ~infb
+Overall type complexity = 20b
+Overall data complexity = 307.592b
 

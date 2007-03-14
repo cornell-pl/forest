@@ -7,7 +7,7 @@
 ** this is fixed by adding tokenization for Pdate 
 
 4. If array body is too complicated, chances are it's not an array; also if an array has too few elements,
-it may not be an array especially when it doesn't have a separator (boot.txt, rpmpkgs.txt)
+it may not be an array especially when it doesn't have a separator. Another thought is if the body is an array is a union or contains a union, this array is probably not valid. (boot.txt, rpmpkgs.txt)
 
 5. If a Ty has too complex structure and low coverage, can consider downgrading it to a simple string because
 it could be just comments, human language, rather than a fixed format (boot.txt)
@@ -22,6 +22,7 @@ it could be just comments, human language, rather than a fixed format (boot.txt)
 ** this is a remification of the current system having various assumption of a single line record
 
 9. Hostname was not identified (ai.3000)
+** fixed by adding tokenization for hostnames
 
 10. Timezone -0700 taken as integer (ai.3000)
 ** this fixed by modifying the tokenization for Ptime
