@@ -168,4 +168,18 @@ structure Complexity = struct
              | Precise p => (Real.fmt (StringCvt.FIX (SOME 3)) p) ^ "b"
         )
 
+    fun mDownFromN ( m : LargeInt.int ) ( n : LargeInt.int ) : LargeInt.int list =
+        if n <= m
+        then [m]
+        else n :: mDownFromN m ( n - 1 )
+
+    fun mUpToN ( m : LargeInt.int ) ( n : LargeInt.int ) : LargeInt.int list =
+        rev ( mDownFromN m n )
+
+    fun binomial ( n : LargeInt.int ) ( k : LargeInt.int ) : LargeInt.int =
+        if n <= k
+        then 1
+        else ( foldl ( fn (a,b) => a * b ) 1 ( mDownFromN ( n - k + 1 ) n ) ) div
+             ( foldl ( fn (a,b) => a * b ) 1 ( mDownFromN 1 k ) )
+
 end

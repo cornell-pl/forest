@@ -1,4 +1,5 @@
 structure Hosts = struct
+    open Complexity
 
     val hostnames = [ "ac"
                     , "ad"
@@ -267,6 +268,9 @@ structure Hosts = struct
                     , "zr"
                     , "zw"
                     ]
+
+    val numHostNames : LargeInt.int = Int.toLarge ( length hostnames )
+    val hostNameComp : Complexity   = int2Comp numHostNames
 
     fun isDomainName ( s : string ) : bool =
         let fun search ( s : string ) ( low : int ) ( high : int ) : bool =

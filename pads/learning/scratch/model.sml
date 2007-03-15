@@ -15,6 +15,7 @@
 structure Model = struct
     open Complexity
     open Types
+    open Hosts
 
     (* Get the maximum from a list of integers *)
     fun maxInt ( l : int list ) : int = foldl Int.max 0 l
@@ -85,17 +86,48 @@ structure Model = struct
                   | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | Ptime s           => mkBaseComp 1 numTime
                   | Pdate s           => mkBaseComp 1 numDate
-                  | Ppath s           => mkBaseComp maxlen 256
-                  | Purl s            => mkBaseComp maxlen 256
+                  | Ppath s           =>
+                      let val nsep       : int    = countCh #"/" s
+                          fun isSep ( x : char ) : bool = x = #"/"
+                          val components : string list =
+                            map Substring.string
+                                ( Substring.fields isSep ( Substring.full s ) )
+                          val pathLen : int = if nsep = 0
+                                              then size s
+                                              else size s - nsep
+                      in mkBaseComp pathLen numStringChars
+                      end
+                    (* Need better separation here *)
+                  | Purl s            => mkBaseComp maxlen numStringChars
                   | Pip s             => mkBaseComp 1 numIP
-                  | Phostname s             => mkBaseComp maxlen 256
-                  | Pint l            => mkBaseComp maxlen 10
+                  | Phostname s       =>
+                      let val ndot       : int    = countCh #"." s
+                          fun isDot ( x : char ) : bool = x = #"."
+                          val components : string list =
+                            map Substring.string
+                                ( Substring.fields isDot ( Substring.full s ) )
+                          val lastComp   : string = List.last components
+                          val isDom      : bool = isDomainName lastComp
+                          val hostNameLen : int =
+                            if ndot = 0
+                            then size s
+                            else if isDom
+                                 then size s - ndot - size lastComp
+                                 else size s - ndot
+                      in if isDom
+                         then ( constructorComp
+                              , combine ( multCompS hostNameLen ( int2Comp numStringChars ) )
+                                        hostNameComp
+                              )
+                         else mkBaseComp hostNameLen numStringChars
+                      end
+                  | Pint l            => mkBaseComp maxlen numDigits
                   | Pstring s         => mkBaseComp maxlen numStringChars
-                  | Pgroup x          => ( unitComplexity, unitComplexity )
+                  | Pgroup x          => ( constructorComp, unitComplexity ) (* ???? *)
                   | Pwhite s          => mkBaseComp maxlen numWhiteChars
                   | Other c           => mkBaseComp 1 256
-                  | Pempty            => ( unitComplexity, unitComplexity )
-                  | Error             => ( unitComplexity, unitComplexity )
+                  | Pempty            => ( constructorComp, unitComplexity )
+                  | Error             => ( constructorComp, unitComplexity )
                 )
              end
     )

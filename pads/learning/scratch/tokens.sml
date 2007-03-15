@@ -24,6 +24,7 @@ structure Tokens = struct
     val numStringChars : LargeInt.int  = 26 + 26 + 10 + 1 + 1
     val numWhiteChars  : LargeInt.int  = 2 (* Space and tab *)
     val numXMLChars    : LargeInt.int  = 26 + 26
+    val numDigits      : LargeInt.int  = 10
 
     (* Some analysis of the structure of tokens from tokens.lex: *)
     fun powerL ( x : LargeInt.int ) ( y : int ) : LargeInt.int =
@@ -232,7 +233,6 @@ structure Tokens = struct
                 )
         in countCh' c ( explode s )
         end
-    fun isDot ( x : char ) : bool = x = #"."
 
     fun tokenOf (t:LToken):Token = #1 t
     fun tokenLength (t:Token):int =
@@ -248,6 +248,7 @@ structure Tokens = struct
                   we should check this later *)
              | Phostname s    =>
                  let val ndot       : int            = countCh #"." s
+                     fun isDot ( x : char ) : bool = x = #"."
                      val components : substring list =
                            Substring.fields isDot ( Substring.full s )
                  in if ndot = 0
