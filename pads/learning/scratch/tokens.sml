@@ -36,7 +36,7 @@ structure Tokens = struct
     val numDoublet       : LargeInt.int = 100
     val numTimeZone      : LargeInt.int = 2 * 2 * 10
     val numAMPM          : LargeInt.int = 4
-    val numTime          : LargeInt.int = 2 + 2 + 2 + ( numDoublet * numDoublet *
+    val numTime          : LargeInt.int = 2 + 2 + ( numDoublet * numDoublet *
                                           numDoublet * numAMPM * numTimeZone )
     val numPort          : LargeInt.int = powerL 2 16 (* 65535 *)
     val numFileNameChars : LargeInt.int = 256 (* Revisit this one *)

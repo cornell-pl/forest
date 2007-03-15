@@ -28,11 +28,13 @@ structure Tests = struct
     val ttime1 : Token = Ptime "12:12:12"
     val ttime2 : Token = Ptime "01:23:45"
     val ttime3 : Token = Ptime "12:34:56"
+    val ttime4 : Token = Ptime "12:12:12pm +0700"
     val tstr1  : Token = Pstring "12:12:12"
     val tstr2  : Token = Pstring "HIGH THEIR"
     val tstr3  : Token = Pstring "Gupe nga lata"
     val tstr4  : Token = Pstring "Cant parse this (mj hammer)"
     val tstr5  : Token = Pstring "" (* Zero length string *)
+    val tstr6 : Token = Pstring "12:12:12pm +0700"
     val tgrp1  : Token = Pgroup { left  = (tip1, ln1)
                                 , body  = [ (tip2, ln2) ]
                                 , right = (tip1, ln1)
@@ -61,6 +63,9 @@ structure Tests = struct
     val ltltime1 : LToken list = [ ( ttime1, ln1 ) ]
     val ltltime2 : LToken list = [ ( ttime2, ln1 ) ]
     val ltltime3 : LToken list = [ ( ttime1, ln1 ), ( ttime2, ln2 ), ( ttime3, ln3 ) ]
+    val ltltime4 : LToken list = [ ( ttime4, ln1 ) ]
+    val ltlstr1  : LToken list = [ ( tstr1, ln4 ) ]
+    val ltlstr2  : LToken list = [ ( tstr6, ln4 ) ]
     val ltlstr4  : LToken list = [ ( tstr1, ln1 ), ( tstr2, ln2 )
                                  , ( tstr3, ln3 ), ( tstr4, ln4 )
                                  ]
@@ -133,6 +138,13 @@ structure Tests = struct
                            , NONE
                            , [ ( 6, 12 ) ]
                            )
+    (*--------------------------------------------------------------------
+      Comparison 1: Ptime "12:12:12" vs Pstring "12:12:12"
+      --------------------------------------------------------------------*)
+    val ty50  : Ty = Base (a1, ltltime1)
+    val ty51  : Ty = Base (a1, ltlstr1)
+    val ty52  : Ty = Base (a1, ltltime4)
+    val ty53  : Ty = Base (a1, ltlstr2)
 
     (* Carry out the measurements on the Ty structures *)
     val m1  : Ty = measure ty1;
@@ -170,5 +182,10 @@ structure Tests = struct
     val m40 : Ty = measure ty40;
     val m41 : Ty = measure ty41;
     val (RArray (a40, osep40, oterm40, body40, olen40, lens)) = m41;
+
+    val m50 : Ty = measure ty50;
+    val m51 : Ty = measure ty51;
+    val m52 : Ty = measure ty52;
+    val m53 : Ty = measure ty53;
 
 end
