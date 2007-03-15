@@ -196,7 +196,9 @@ struct
              if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
         |  Pstring s   => s
         |  Pgroup {left, body, right} => (ltokenToString left)^(String.concat (List.map ltokenToString body))^(ltokenToString right)
-        |  Pwhite s => s
+        |  Pwhite s => (case s of 
+			"\t" => "\\t"
+			| _ => s)
         |  Other c  => String.implode [c]
         |  Pempty   => ""
         |  Error    => " Error"
@@ -206,7 +208,10 @@ struct
         | Int(min, max) => "[Int] [" ^ LargeInt.toString(min) ^ "..." ^
                            LargeInt.toString(max)^"]"
         | IntConst a    => "[IntConst] ["^ LargeInt.toString(a) ^"]" 
-        | StringConst s => "[StringConst] \"" ^ s ^ "\"" 
+        | StringConst s => (case s of 
+				"\t" => "[StringConst] \"\\t\"" 
+				| _ => "[StringConst] \"" ^ s ^ "\"" 
+			   )
         | Enum rel      => "[Enum] {"^ String.concat(map (fn x => (refinedToString x) ^
                            ", ") rel) ^ "}"
         | LabelRef id   => "[Label] id="^ Atom.toString(id)    
