@@ -112,6 +112,13 @@ structure Complexity = struct
              | Precise p => Precise ( Real.fromLargeInt n * p )
         )
 
+    fun multCompR ( r : real ) ( c : Complexity ) : Complexity =
+        ( case c of
+               Bits b    => Precise ( r * Real.fromLargeInt b )
+             | Choices c => Precise ( r * Real.fromLargeInt c )
+             | Precise p => Precise ( r * p )
+        )
+
     (* Probabilities should be in the interval [0, 1] *)
     type Probability = real
 

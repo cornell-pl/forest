@@ -273,6 +273,14 @@ structure Tokens = struct
     fun maxTokenLength ( ts : LToken list ) : int =
         foldl (fn (t:LToken,x:int) => Int.max (x, lTokenLength t)) 0 ts
 
+    fun sumTokenLength ( ts : LToken list ) : LargeInt.int =
+        foldl ( fn ( t : LToken, x : LargeInt.int ) =>
+                x + Int.toLarge ( lTokenLength t ) ) 0 ts
+
+    fun avgTokenLength ( ts : LToken list ) : real =
+        ( Real.fromLargeInt ( sumTokenLength ts ) ) /
+        ( Real.fromInt ( length ts ) ) 
+
     (* A record is a special kind of list of tokens *)
     type Record = Token list
 

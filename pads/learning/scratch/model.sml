@@ -121,10 +121,19 @@ structure Model = struct
                               )
                          else mkBaseComp hostNameLen numStringChars
                       end
-                  | Pint l            => mkBaseComp maxlen numDigits
-                  | Pstring s         => mkBaseComp maxlen numStringChars
+                  | Pint l            => ( constructorComp
+                                         , multCompR ( avgTokenLength lts )
+                                                     ( int2Comp numDigits )
+                                         )
+                  | Pstring s         => ( constructorComp
+                                         , multCompR ( avgTokenLength lts )
+                                                     ( int2Comp numStringChars )
+                                         )
                   | Pgroup x          => ( constructorComp, unitComplexity ) (* ???? *)
-                  | Pwhite s          => mkBaseComp maxlen numWhiteChars
+                  | Pwhite s          => ( constructorComp
+                                         , multCompR ( avgTokenLength lts )
+                                                     ( int2Comp numWhiteChars )
+                                         )
                   | Other c           => mkBaseComp 1 256
                   | Pempty            => ( constructorComp, unitComplexity )
                   | Error             => ( constructorComp, unitComplexity )

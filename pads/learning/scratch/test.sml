@@ -37,8 +37,8 @@ structure Tests = struct
                                 , body  = [ (tip2, ln2) ]
                                 , right = (tip1, ln1)
                                 }
-    val twht1  : Token = Pwhite "   "
-    val twht2  : Token = Pwhite "\t\t\t   "
+    val twht1  : Token = Pwhite "  "
+    val twht2  : Token = Pwhite "\t\t\t\t  "
     val toth1  : Token = Other #"a"
     val toth2  : Token = Other #"b"
     val toth3  : Token = Other #"c"
