@@ -172,7 +172,7 @@ structure Model = struct
              end
          | Pstruct (a,tys)              =>
              let val measuredtys = map measure tys
-             in Pstruct ( updateComps a (sumTypeComps measuredtys)
+             in Pstruct ( updateComps a (combine constructorComp (sumTypeComps measuredtys))
                                         (sumDataComps measuredtys)
                         , measuredtys
                         )
@@ -180,7 +180,11 @@ structure Model = struct
          | Punion (a,tys)               =>
              let val measuredtys = map measure tys
              in Punion ( updateComps a
-                           ( combine (cardComp tys) (sumTypeComps measuredtys) )
+                           ( sumComps [ constructorComp
+                                      , cardComp tys
+                                      , sumTypeComps measuredtys
+                                      ]
+                           )
                            ( combine (cardComp tys) (sumDataComps measuredtys) )
                        , measuredtys
                        )
@@ -196,7 +200,8 @@ structure Model = struct
                  val b'     = measure b
                  val l'     = measure l
                  val maxlen = maxInt (map #1 ls)
-                 val tcomp  = sumComps [ getTypeComp f'
+                 val tcomp  = sumComps [ constructorComp
+                                       , getTypeComp f'
                                        , getTypeComp l'
                                        , getTypeComp b'
                                        ]
@@ -242,7 +247,7 @@ structure Model = struct
                  val ( tlen, dlen )   = refinedOptionComp olen
                  val ( tterm, dterm ) = refinedOptionComp oterm
                  val ( tsep, dsep )   = refinedOptionComp osep
-                 val tcomp = sumComps [ tbody, tlen, tterm, tsep ]
+                 val tcomp = sumComps [ constructorComp, tbody, tlen, tterm, tsep ]
                  val dcomp = sumComps [ multCompS maxlen dbody, dlen, dterm, dsep]
                  fun updateRArray (t:Complexity) (d:Complexity) =
                    RArray ( updateComps a t d, osep, oterm, mBody, olen, ls )
