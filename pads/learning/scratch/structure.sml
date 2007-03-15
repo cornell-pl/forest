@@ -445,7 +445,7 @@ struct
 		                        of NONE => topSearch ts (t::acc)
 					|  SOME (lt:Token,rtf:Token->Token) => findMatch [(t,[],rtf (#1 t))] ts acc
 
-            and findMatch  (delims:(LToken * LToken list * Token) list) [] acc = (flatten delims)@ (List.rev acc) (* missing right delim: forget grouping *)
+            and findMatch  (delims:(LToken * LToken list * Token) list) [] acc = (List.rev acc)@(flatten delims) (* missing right delim: forget grouping *)
               | findMatch ((lt:LToken,body:LToken list,r:Token)::next) (t::ts) acc = 
 		  if delimMatches r t 
 		  then let val match =  (Pgroup{left=lt, body = List.rev body, right= t}, getGroupLoc(lt,t))

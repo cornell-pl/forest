@@ -1,5 +1,8 @@
 Descriptions of files in this directory
-
+1967Transactions.short -- int*int*float*float*float; from a government web site
+                          has leading zeroes in first field
+                          detect floating point numbers?
+MER_T01_01.csv    -- Energy score, comma separated values, title header
 backup1.log       -- Cut down log file from C:WINDOWS/security/logs on Mogilny
 backup2.log       -- full version of backup1.log (different kinds of records)
 convert.log       -- same place as backup2.log but may be easier due to
