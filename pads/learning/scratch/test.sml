@@ -79,7 +79,7 @@ structure Tests = struct
     val rint2  : Refined = Int ( 444, 777 )
     val rintc1 : Refined = IntConst 83838383838
     val rstr1  : Refined = StringConst "abcdefgh"
-    val renum1 : Refined = Enum [ rsme1, rint1, rstr1 ]
+    val renum1 : Refined = Enum [ rintc1, rstr1 ]
     val rlbl1  : Refined = LabelRef (Atom.atom "label")
     val rstr2  : Refined = StringConst "" (* Zero length string *)
     val rintc2 : Refined = IntConst 0
@@ -98,6 +98,7 @@ structure Tests = struct
     val ty11 : Ty = Base (a1, ltlemp1)
     val ty12 : Ty = Base (a1, ltlerr1)
     val ty13 : Ty = Base (a1, ltlstr5)
+
     (* Some RefinedBase Ty structures to use *)
     val ty20 : Ty = RefinedBase (a1, rsme1, ltlstr4)
     val ty21 : Ty = RefinedBase (a1, rint1, ltl2)
@@ -153,6 +154,8 @@ structure Tests = struct
     val m22 : Ty = measure ty22;
     val m23 : Ty = measure ty23;
     val m24 : Ty = measure ty24;
+    val (RefinedBase (a24, r24, tl24)) = m24;
+    val (Enum rl) = r24;
     val m25 : Ty = measure ty25;
     val m26 : Ty = measure ty26;
     val m27 : Ty = measure ty27;

@@ -268,22 +268,19 @@ structure Hosts = struct
                     , "zw"
                     ]
 
-    exception TooBig
     fun isDomainName ( s : string ) : bool =
-        let fun search ( s : string ) ( low : int ) ( high : int ) ( n : int ) : bool =
+        let fun search ( s : string ) ( low : int ) ( high : int ) : bool =
             let val mid = low + ( ( high - low ) div 2 )
                 val dom = List.nth ( hostnames, mid )
-            in if n > 9
-               then raise TooBig
-               else if dom = s
-                    then true
-                    else if low >= high
-                         then false
-                         else if s < dom
-                              then search s low ( mid - 1 ) ( n + 1 )
-                              else search s ( mid + 1 ) high ( n + 1 )
+            in if dom = s
+               then true
+               else if low >= high
+                    then false
+                    else if s < dom
+                         then search s low ( mid - 1 )
+                         else search s ( mid + 1 ) high
             end
-        in search s 0 ( length hostnames - 1 ) 0
+        in search s 0 ( length hostnames - 1 )
         end
 
 end

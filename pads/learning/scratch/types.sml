@@ -35,6 +35,9 @@ struct
         , dataComp = d
         }
 
+    val numRefined      : LargeInt.int = 6 (* Number of cases in datatype Refined *)
+    val numConstRefined : LargeInt.int = 2 (* Number of constant cases in datatype Refined *)
+
     datatype Refined = StringME of string
 	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
 	             | IntConst of LargeInt.int    (* value *)
@@ -42,6 +45,7 @@ struct
                      | Enum of Refined list  
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
 
+    val numTy : LargeInt.int = 9 (* Number of constructors in datatype Ty *)
     datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
 	        (* TBD is introduced when maxdepth limit kicks in *)
                 | TBD     of AuxInfo *
@@ -67,6 +71,10 @@ struct
 	                             * Ty             (* body type *)
                                      * Refined option (* fixed length *) 
 				     * (int*int) list (* (length, linenumber) list*)
+
+    (* Number of kinds of tree nodes in Ty *)
+    val numConstruct    : LargeInt.int = numTy + numRefined + numToken
+    val constructorComp : Complexity   = int2Comp numConstruct
 
     fun getAuxInfo ( ty : Ty ) : AuxInfo = 
 	case ty 
@@ -219,14 +227,14 @@ struct
         |  Pstring s => " Pstring("^s^")"
         |  Pwhite s  => " Pwhite("^s^")" 
 *)
-	|  Pint i    => "[int]"               (*" Pint("^(LargeInt.toString i)^")"*)
-        |  Pstring s => "[string]"            (*" Pstring("^s^")"*)
-        |  Pwhite s  => "[white]"             (*" Pwhite("^s^")"*) 
+	|  Pint i    => "[Int]"               (*" Pint("^(LargeInt.toString i)^")"*)
+        |  Pstring s => "[String]"            (*" Pstring("^s^")"*)
+        |  Pwhite s  => "[White]"             (*" Pwhite("^s^")"*) 
         |  Pgroup {left, body, right} =>
              (ltokenTyToString left) ^ "[Group Body]" ^ (ltokenTyToString right)
            (*(" Other("^(Char.toString c)^")") *)
-        |  Other c   => "[other]("^(Char.toString c)^")"
-        |  Pempty    => "[empty]"
+        |  Other c   => "[Other]("^(Char.toString c)^")"
+        |  Pempty    => "[Empty]"
         |  Error     => " Error"
 
     fun printTokenTy ( t : Token ) : unit = print (tokenTyToString t)

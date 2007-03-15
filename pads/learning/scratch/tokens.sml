@@ -48,6 +48,7 @@ structure Tokens = struct
                                                         ( 2 + numMonth ) * numDay *
                                                         ( 2 + numYear ) )
     val numDomain        : LargeInt.int = 256
+    val numToken         : LargeInt.int = 15 (* Number of cases in datatype Token *)
 
     (* Raw token format, pass one over the data *)
     datatype Token = PbXML       of string * string |

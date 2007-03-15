@@ -98,14 +98,14 @@ structure Complexity = struct
         end
 
     (* Multiply a complexity by an integer constant *)
-    fun multComp ( n : int ) ( c : Complexity ) : Complexity =
+    fun multCompS ( n : int ) ( c : Complexity ) : Complexity =
         ( case c of
                Bits b    => Bits    ( Int.toLarge n * b )
              | Choices c => Choices ( Int.toLarge n * c )
              | Precise p => Precise ( Real.fromInt n * p )
         )
     (* Same thing for large integers *)
-    fun multCompL ( n : LargeInt.int ) ( c : Complexity ) : Complexity =
+    fun multComp ( n : LargeInt.int ) ( c : Complexity ) : Complexity =
         ( case c of
                Bits b    => Bits    ( n * b )
              | Choices c => Choices ( n * c )
@@ -116,22 +116,21 @@ structure Complexity = struct
     type Probability = real
 
     (* Convert a probability to a complexity *)
-    fun prob2Complexity ( p : Probability ) : Complexity = Precise (~ (log2r p))
+    fun prob2Comp ( p : Probability ) : Complexity = Precise (~ (log2r p))
 
     (* Convert an integer to a complexity *)
-    exception InfiniteComplexity
-    fun int2Complexity ( n : int ) : Complexity =
+    fun int2CompS ( n : int ) : Complexity =
     if n < 0
-    then int2Complexity ( ~n )
+    then int2CompS ( ~n )
     else if n = 0
          then zeroComplexity
          else case isPowerTwo n of
                    NONE   => Precise (log2 n)
                  | SOME p => Bits p
 
-    fun int2ComplexityL ( n : LargeInt.int ) : Complexity =
+    fun int2Comp ( n : LargeInt.int ) : Complexity =
     if n < 0
-    then int2ComplexityL ( ~n )
+    then int2Comp ( ~n )
     else if n = 0
          then zeroComplexity
          else case isPowerTwoL n of

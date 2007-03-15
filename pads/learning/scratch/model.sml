@@ -21,21 +21,34 @@ structure Model = struct
 
     (* Make a base complexity from a multiplier (often maximum length of token)
        and a number of choices. *)
-    fun mkBaseComp ( mult : LargeInt.int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
-        ( unitComplexity, multCompL mult ( int2ComplexityL choices ) )
-    (* Same thing with a large integer *)
-    fun mkBaseCompL ( mult : int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
-        ( unitComplexity, multComp mult ( int2ComplexityL choices ) )
+    fun mkBaseComp ( mult : int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
+        ( constructorComp, multComp (Int.toLarge mult) ( int2Comp choices ) )
 
     (* Compute the type and data complexity of a refined type *)
     fun refinedComp ( multiplier:int ) ( r:Refined ) : Complexity * Complexity =
         ( case r of
-               StringME s     => mkBaseCompL multiplier numStringChars
-             | Int (min, max) => mkBaseCompL multiplier ( max - min + 1 )
-             | IntConst n     => ( unitComplexity, int2ComplexityL n )
-             | StringConst s  => ( unitComplexity, int2Complexity (size s) )
-               (* Need term here for number of choices???? *)
-             | Enum rl        => ( unitComplexity, sumComps ( map refinedDataComp rl))
+               StringME s     => mkBaseComp multiplier numStringChars
+             | Int (min, max) => ( sumComps [ constructorComp
+                                            , int2Comp min
+                                            , int2Comp max
+                                            ]
+                                 , multCompS multiplier ( int2Comp ( max - min + 1 ) )
+                                 )
+             | IntConst n     => ( combine constructorComp ( int2Comp n )
+                                 , zeroComplexity
+                                 )
+             | StringConst s  => ( combine constructorComp
+                                           ( multCompS (size s) (int2Comp numStringChars) )
+                                 , zeroComplexity
+                                 )
+             | Enum rl        => ( combine ( sumComps ( map refinedTypeComp rl ) )
+                                           ( sumComps [ constructorComp
+                                                      , int2CompS ( length rl )
+                                                      , int2Comp numConstRefined
+                                                      ]
+                                           )
+                                 , int2CompS ( length rl )
+                                 )
              | LabelRef i     => ( unitComplexity, unitComplexity )
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
@@ -66,12 +79,12 @@ structure Model = struct
     ( case lts of
            []      => ( zeroComplexity, zeroComplexity )
          | (t::ts) =>
-             let val maxlen  = Int.toLarge ( maxTokenLength lts )
+             let val maxlen  = maxTokenLength lts
              in ( case tokenOf t of
                     PbXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
                   | Ptime s           => mkBaseComp 1 numTime
-                  | Pdate s           => mkBaseComp maxlen numDate
+                  | Pdate s           => mkBaseComp 1 numDate
                   | Ppath s           => mkBaseComp maxlen 256
                   | Purl s            => mkBaseComp maxlen 256
                   | Pip s             => mkBaseComp 1 numIP
@@ -148,7 +161,7 @@ structure Model = struct
                                        ]
                  val dcomp  = sumComps [ getDataComp f'
                                        , getDataComp l'
-                                       , multComp maxlen (getDataComp b')
+                                       , multCompS maxlen (getDataComp b')
                                        ]
              in Parray ( updateComps a tcomp dcomp
                        , { tokens  = ts
@@ -184,7 +197,7 @@ structure Model = struct
                  val ( tterm, dterm ) = refinedOptionComp oterm
                  val ( tsep, dsep )   = refinedOptionComp osep
                  val tcomp = sumComps [ tbody, tlen, tterm, tsep ]
-                 val dcomp = sumComps [ multComp maxlen dbody, dlen, dterm, dsep]
+                 val dcomp = sumComps [ multCompS maxlen dbody, dlen, dterm, dsep]
                  fun updateRArray (t:Complexity) (d:Complexity) =
                    RArray ( updateComps a t d, osep, oterm, mBody, olen, ls )
              in updateRArray tcomp dcomp
