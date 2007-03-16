@@ -1,4 +1,4 @@
-all: ProtectionProfile.bbl
+all: RE.pdf
 
 .PRECIOUS: ProtectionProfile.pdf
 
