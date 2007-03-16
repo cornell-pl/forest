@@ -173,10 +173,9 @@ struct
            }
 	end
 
-    fun getCoverage ( ty : Ty ) : int = #coverage(getAuxInfo ty)
-    fun sumCoverage ( tys : Ty list ) : int = 
-	case tys of [] => 0
-        | (ty::tys) => (getCoverage ty) + (sumCoverage tys)
+    fun getCoverage ( ty : Ty ) : int = #coverage ( getAuxInfo ty )
+    fun sumCoverage ( tys : Ty list ) : int =
+        foldl ( fn (t:Ty,n:int) => getCoverage t + n ) 0 tys
     fun minCoverage ( tys : Ty list ) : int = 
 	case tys of [] => Option.valOf Int.maxInt
         | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)

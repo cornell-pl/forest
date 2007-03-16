@@ -158,6 +158,14 @@ structure Model = struct
     in foldl f ( zeroComplexity, zeroComplexity ) cl
     end
 
+    (* Compute the weighted sum of the data complexities of a list of types *)
+    fun weighted ( tot : int ) ( tys : Ty list ) : Complexity =
+    let fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
+        fun f ( t : Ty, c : Complexity ) : Complexity =
+              combine c ( multCompR ( frac ( getCoverage t ) tot ) ( getDataComp t ) )
+    in foldl f zeroComplexity tys
+    end
+
     (* Compute the type and data complexity of an inferred type *)    
     fun measure ( ty : Ty ) : Ty =
     ( case ty of
@@ -222,20 +230,13 @@ structure Model = struct
          | Switch ( a, id, bs)      =>
              let val switches         = map #1 bs
                  val branches         = map #2 bs
-                 val branchCountComp  = int2CompS ( length bs )
-                 val switchesComps    = map (refinedComp 1) switches
-                 val switchesTypeComp = sumComps (map #1 switchesComps)
-                 val switchesDataComp = sumComps (map #2 switchesComps)
+                 val sumBranches      = sumCoverage branches
                  val measuredBranches = map measure branches
                  val branchesTypeComp = sumTypeComps measuredBranches
-                 val branchesDataComp = sumDataComps measuredBranches
+                 val branchesDataComp = weighted sumBranches measuredBranches
              in Switch ( updateComps a
-                          ( sumComps [ constructorComp
-                                     , switchesTypeComp
-                                     , branchesTypeComp
-                                     ]
-                          )
-                          (combine switchesDataComp branchesDataComp)
+                          ( sumComps [ constructorComp, cardComp bs, branchesTypeComp ] )
+                          ( combine ( cardComp bs ) branchesDataComp )
                        , id
                        , ListPair.zip ( switches, measuredBranches )
                        )

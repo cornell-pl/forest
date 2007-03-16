@@ -14,6 +14,8 @@ structure Tests = struct
                        , typeComp = zeroComplexity
                        , dataComp = zeroComplexity
                        }
+    fun freq ( n : int ) : AuxInfo =
+        { coverage = n, label = NONE, typeComp = zeroComplexity, dataComp = zeroComplexity }
 
     (* Some tokens to use *)
     val tint1  : Token = Pint 1
@@ -66,6 +68,7 @@ structure Tests = struct
     val ltltime4 : LToken list = [ ( ttime4, ln1 ) ]
     val ltlstr1  : LToken list = [ ( tstr1, ln4 ) ]
     val ltlstr2  : LToken list = [ ( tstr6, ln4 ) ]
+    val ltlstr2  : LToken list = [ ( tstr2, ln4 ) ]
     val ltlstr4  : LToken list = [ ( tstr1, ln1 ), ( tstr2, ln2 )
                                  , ( tstr3, ln3 ), ( tstr4, ln4 )
                                  ]
@@ -75,6 +78,7 @@ structure Tests = struct
     val ltloth3  : LToken list = [ ( toth1, ln1 ), ( toth2, ln2 ), ( toth3, ln3 ) ]
     val ltlemp1  : LToken list = [ ( temp1, ln1 ) ]
     val ltlerr1  : LToken list = [ ( terr1, ln1 ) ]
+    val ltlint2  : LToken list = [ ( tint2, ln2 ) ]
 
     (* Some refined base types to use *)
     val rsme1  : Refined = StringME "one"
@@ -84,9 +88,11 @@ structure Tests = struct
     val rint2  : Refined = Int ( 444, 777 )
     val rintc1 : Refined = IntConst 83838383838
     val rstr1  : Refined = StringConst "abcdefgh"
+    val rstr2  : Refined = StringConst "a"
+    val rstr3  : Refined = StringConst "b"
+    val rstr4  : Refined = StringConst "" (* Zero length string *)
     val renum1 : Refined = Enum [ rintc1, rstr1 ]
     val rlbl1  : Refined = LabelRef (Atom.atom "label")
-    val rstr2  : Refined = StringConst "" (* Zero length string *)
     val rintc2 : Refined = IntConst 0
 
     (* Some Base Ty structures to use *)
@@ -103,6 +109,8 @@ structure Tests = struct
     val ty11 : Ty = Base (a1, ltlemp1)
     val ty12 : Ty = Base (a1, ltlerr1)
     val ty13 : Ty = Base (a1, ltlstr5)
+    val ty14 : Ty = Base (freq 100, ltlstr2)
+    val ty15 : Ty = Base (freq 900, ltlint2)
 
     (* Some RefinedBase Ty structures to use *)
     val ty20 : Ty = RefinedBase (a1, rsme1, ltlstr4)
@@ -111,7 +119,7 @@ structure Tests = struct
     val ty23 : Ty = RefinedBase (a1, rstr1, ltlstr4)
     val ty24 : Ty = RefinedBase (a1, renum1, ltlstr4)
     val ty25 : Ty = RefinedBase (a1, rlbl1, [])
-    val ty26 : Ty = RefinedBase (a1, rstr2, ltlstr4)
+    val ty26 : Ty = RefinedBase (a1, rstr4, ltlstr4)
     val ty27 : Ty = RefinedBase (a1, rintc2, ltl2)
     (* Now to test structured, but unrefined types *)
     val ty30 : Ty = Pstruct (a1, [ ty3, ty9, ty21 ])
@@ -128,7 +136,7 @@ structure Tests = struct
 
     (* Test refined structures *)
     val ty40 : Ty = Switch ( a1
-                           , Atom.atom "Switch"
+                           , Atom.atom "Switch1"
                            , [ ( rintc1, ty32 ), ( rstr1, ty23 ) ]
                            )
     val ty41 : Ty = RArray ( a1
@@ -145,6 +153,12 @@ structure Tests = struct
     val ty51  : Ty = Base (a1, ltlstr1)
     val ty52  : Ty = Base (a1, ltltime4)
     val ty53  : Ty = Base (a1, ltlstr2)
+    val ty54  : Ty = Punion (a1, [ ty14, ty15 ] )
+    val ty55  : Ty = Switch ( a1
+                           , Atom.atom "Switch2"
+                           , [ ( rstr2, ty14 ), ( rstr3, ty15 ) ]
+                           )
+
 
     (* Carry out the measurements on the Ty structures *)
     val m1  : Ty = measure ty1;
@@ -160,6 +174,8 @@ structure Tests = struct
     val m11 : Ty = measure ty11;
     val m12 : Ty = measure ty12;
     val m13 : Ty = measure ty13;
+    val m14 : Ty = measure ty14;
+    val m15 : Ty = measure ty15;
 
     val m20 : Ty = measure ty20;
     val m21 : Ty = measure ty21;
@@ -187,5 +203,10 @@ structure Tests = struct
     val m51 : Ty = measure ty51;
     val m52 : Ty = measure ty52;
     val m53 : Ty = measure ty53;
+    val m54 : Ty = measure ty54;
+    val m55 : Ty = measure ty55;
+    val (Switch (a55, id55, brs55)) = m55;
+    val (Base (a55a,ltl55a)) = #2 (hd brs55)
+    val (Base (a55b,ltl55b)) = #2 (hd (tl brs55))
 
 end
