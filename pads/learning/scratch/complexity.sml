@@ -43,9 +43,9 @@ structure Complexity = struct
                         | Precise of real
 
     (* Value to use to get compilation started *)
-    val zeroComplexity : Complexity = Bits 0
-    val unitComplexity : Complexity = Bits 1
-    val impossible     : Complexity = Bits ( ~ 1 )
+    val zeroComp   : Complexity = Bits 0
+    val unitComp   : Complexity = Bits 1
+    val impossible : Complexity = Bits ( ~ 1 )
 
     (* Log base 2 of a positive integer *)
     fun log2 (n:int):real = Math.ln (Real.fromInt n) / Math.ln (Real.fromInt 2)
@@ -130,7 +130,7 @@ structure Complexity = struct
     if n < 0
     then int2CompS ( ~n )
     else if n = 0
-         then zeroComplexity
+         then zeroComp
          else case isPowerTwo n of
                    NONE   => Precise (log2 n)
                  | SOME p => Bits p
@@ -139,13 +139,13 @@ structure Complexity = struct
     if n < 0
     then int2Comp ( ~n )
     else if n = 0
-         then zeroComplexity
+         then zeroComp
          else case isPowerTwoL n of
                    NONE   => Precise (log2L n)
                  | SOME p => Bits p
 
     fun sumComps ( cs : Complexity list ) : Complexity =
-        foldl ( fn (c1,c2) => combine c1 c2 ) zeroComplexity cs
+        foldl ( fn (c1,c2) => combine c1 c2 ) zeroComp cs
 
     (* Complexity from the number of choices *)
     fun cardComp ( l : 'a list ) : Complexity =
@@ -184,9 +184,19 @@ structure Complexity = struct
         rev ( mDownFromN m n )
 
     fun binomial ( n : LargeInt.int ) ( k : LargeInt.int ) : LargeInt.int =
-        if n <= k
-        then 1
-        else ( foldl ( fn (a,b) => a * b ) 1 ( mDownFromN ( n - k + 1 ) n ) ) div
-             ( foldl ( fn (a,b) => a * b ) 1 ( mDownFromN 1 k ) )
+    let val k' = LargeInt.min ( k, n - k )
+    in if n <= k
+       then 1
+       else ( foldl ( fn (a,b) => a * b ) 1 ( mDownFromN ( n - k' + 1 ) n ) ) div
+            ( foldl ( fn (a,b) => a * b ) 1 ( mDownFromN 1 k' ) )
+    end
+
+    fun average ( ns : int list ) : real =
+    let fun sumCount ( n : int, sc : int * int ) : int * int = ( #1 sc + n, #2 sc + 1 )
+        val ( sum, count ) = foldl sumCount (0,0) ns
+    in if count = 0
+       then 0.0
+       else Real.fromInt sum / Real.fromInt count
+    end
 
 end

@@ -11,11 +11,11 @@ structure Tests = struct
     (* Some AuxInfo structures to use *)
     val a1 : AuxInfo = { coverage = 7
                        , label    = NONE
-                       , typeComp = zeroComplexity
-                       , dataComp = zeroComplexity
+                       , typeComp = zeroComp
+                       , dataComp = zeroComp
                        }
     fun freq ( n : int ) : AuxInfo =
-        { coverage = n, label = NONE, typeComp = zeroComplexity, dataComp = zeroComplexity }
+        { coverage = n, label = NONE, typeComp = zeroComp, dataComp = zeroComp }
 
     (* Some tokens to use *)
     val tint1  : Token = Pint 1

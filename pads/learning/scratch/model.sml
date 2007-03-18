@@ -35,12 +35,12 @@ structure Model = struct
                                             ]
                                  , multCompS multiplier ( int2Comp ( max - min + 1 ) )
                                  )
-             | IntConst n     => ( combine constructorComp ( int2Comp n )
-                                 , zeroComplexity
+             | IntConst n     => ( sumComps [ constructorComp, int2Comp 2, int2Comp n ]
+                                 , zeroComp
                                  )
              | StringConst s  => ( combine constructorComp
                                            ( multCompS (size s) (int2Comp numStringChars) )
-                                 , zeroComplexity
+                                 , zeroComp
                                  )
              | Enum rl        => ( combine ( sumComps ( map refinedTypeComp rl ) )
                                            ( sumComps [ constructorComp
@@ -50,7 +50,7 @@ structure Model = struct
                                            )
                                  , int2CompS ( length rl )
                                  )
-             | LabelRef i     => ( unitComplexity, unitComplexity )
+             | LabelRef i     => ( unitComp, unitComp )
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedTypeComp ( r : Refined ) : Complexity = #1 (refinedComp 1 r)
@@ -71,14 +71,14 @@ structure Model = struct
     (* Complexity of refined option type, assuming multiplier 1 *)
     fun refinedOptionComp ( ro : Refined option ) : Complexity * Complexity =
     ( case ro of
-           NONE =>   ( zeroComplexity, zeroComplexity )
+           NONE   => ( zeroComp, zeroComp )
          | SOME r => refinedComp 1 r
     )
 
     (* Compute the complexity of a base type (e.g. Pint) *)
     fun baseComp ( lts : LToken list ) : Complexity * Complexity =
     ( case lts of
-           []      => ( zeroComplexity, zeroComplexity )
+           []      => ( zeroComp, zeroComp )
          | (t::ts) =>
              let val maxlen  = maxTokenLength lts
              in ( case tokenOf t of
@@ -122,21 +122,22 @@ structure Model = struct
                          else mkBaseComp hostNameLen numStringChars
                       end
                   | Pint l            => ( constructorComp
-                                         , multCompR ( avgTokenLength lts )
-                                                     ( int2Comp numDigits )
+                                         , combine ( int2Comp 2 )
+                                                   ( multCompR ( avgTokenLength lts )
+                                                               ( int2Comp numDigits ) )
                                          )
                   | Pstring s         => ( constructorComp
                                          , multCompR ( avgTokenLength lts )
                                                      ( int2Comp numStringChars )
                                          )
-                  | Pgroup x          => ( constructorComp, unitComplexity ) (* ???? *)
+                  | Pgroup x          => ( constructorComp, unitComp ) (* ???? *)
                   | Pwhite s          => ( constructorComp
                                          , multCompR ( avgTokenLength lts )
                                                      ( int2Comp numWhiteChars )
                                          )
-                  | Other c           => mkBaseComp 1 256
-                  | Pempty            => ( constructorComp, unitComplexity )
-                  | Error             => ( constructorComp, unitComplexity )
+                  | Other c           => mkBaseComp 1 numStringChars
+                  | Pempty            => ( constructorComp, unitComp )
+                  | Error             => ( constructorComp, unitComp )
                 )
              end
     )
@@ -155,7 +156,7 @@ structure Model = struct
             val ( t2, d2 ) = comps
         in ( combine t1 t2, combine d1 d2 )
         end
-    in foldl f ( zeroComplexity, zeroComplexity ) cl
+    in foldl f ( zeroComp, zeroComp ) cl
     end
 
     (* Compute the weighted sum of the data complexities of a list of types *)
@@ -163,7 +164,7 @@ structure Model = struct
     let fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
         fun f ( t : Ty, c : Complexity ) : Complexity =
               combine c ( multCompR ( frac ( getCoverage t ) tot ) ( getDataComp t ) )
-    in foldl f zeroComplexity tys
+    in foldl f zeroComp tys
     end
 
     (* Compute the type and data complexity of an inferred type *)    
@@ -244,12 +245,12 @@ structure Model = struct
          | RArray ( a, osep, oterm, body, olen, ls ) =>
              let val maxlen           = maxInt (map #1 ls)
                  val mBody            = measure body
-                 val (tbody, dbody)   = getComps mBody
+                 val ( tbody, dbody ) = getComps mBody
                  val ( tlen, dlen )   = refinedOptionComp olen
                  val ( tterm, dterm ) = refinedOptionComp oterm
                  val ( tsep, dsep )   = refinedOptionComp osep
-                 val tcomp = sumComps [ constructorComp, tbody, tlen, tterm, tsep ]
-                 val dcomp = sumComps [ multCompS maxlen dbody, dlen, dterm, dsep]
+                 val tcomp = sumComps [ constructorComp, tbody, tterm, tsep, unitComp, unitComp ]
+                 val dcomp = sumComps [ dbody, dlen, dterm, dsep]
                  fun updateRArray (t:Complexity) (d:Complexity) =
                    RArray ( updateComps a t d, osep, oterm, mBody, olen, ls )
              in updateRArray tcomp dcomp

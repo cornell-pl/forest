@@ -131,11 +131,11 @@ struct
 
     (* Sum the type complexities of a measured type *)
     fun sumTypeComps ( tys : Ty list ) : Complexity =
-        foldl ( fn (t,c) => combine (getTypeComp t) c ) zeroComplexity tys
+        foldl ( fn (t,c) => combine (getTypeComp t) c ) zeroComp tys
 
     (* Sum the data complexities of a measured type *)
     fun sumDataComps ( tys : Ty list ) : Complexity =
-        foldl ( fn (t,c) => combine (getDataComp t) c ) zeroComplexity tys
+        foldl ( fn (t,c) => combine (getDataComp t) c ) zeroComp tys
                  
     fun mkLabel (prefix:string) (i:int) : Id = Atom.atom("BTy_"^(Int.toString i))
     fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i
@@ -157,8 +157,8 @@ struct
             val label = mkTyLabel next
 	in { coverage = coverage
            , label = SOME label
-           , typeComp = unitComplexity
-           , dataComp = zeroComplexity
+           , typeComp = unitComp
+           , dataComp = zeroComp
            }
 	end
 
@@ -168,8 +168,8 @@ struct
             val label = id
 	in { coverage = coverage
            , label = SOME label
-           , typeComp = unitComplexity
-           , dataComp = zeroComplexity
+           , typeComp = unitComp
+           , dataComp = zeroComp
            }
 	end
 
