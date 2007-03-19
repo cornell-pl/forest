@@ -438,8 +438,9 @@ struct
             fun delimMatches r (t,loc) = TokenEq(t, r)
 	    fun flatten [] = (print "in flatten function\n"; [])
               | flatten ((ltoken,body,r)::rest) = (ltoken :: (List.rev body)) @ (flatten rest) 
-            fun getGroupLoc ((lt, {lineNo=llineNo, beginloc=lbegin, endloc=lend}), (rt, {lineNo, beginloc=rbegin, endloc=rend})) =
-		{lineNo=llineNo, beginloc=lbegin, endloc=rend}
+            fun getGroupLoc ((lt, {lineNo=llineNo, beginloc=lbegin, endloc=lend,arrayIndexList=lail}), 
+			     (rt, {lineNo,         beginloc=rbegin, endloc=rend,arrayIndexList=rail})) =
+		{lineNo=llineNo, beginloc=lbegin, endloc=rend,arrayIndexList=lail}
             fun topSearch [] acc = List.rev acc
               | topSearch (t::ts) acc = case findDelim t 
 		                        of NONE => topSearch ts (t::acc)
@@ -483,7 +484,7 @@ struct
 	let val length = String.size record
 	    fun doNonEmpty record = 
 		let val cursor : int ref = ref 0
-		    fun addLineNo (t,{beginloc,endloc}) = (t,{lineNo=(!recordNumberRef),beginloc=beginloc,endloc=endloc})
+		    fun addLineNo (t,{beginloc,endloc}) = (t,{lineNo=(!recordNumberRef),beginloc=beginloc,endloc=endloc,arrayIndexList=[]})
 		    fun feedLex n = 
 			let val s = if (n > (length - !cursor)) 
 			    then SS.string(SS.extract(record, !cursor, NONE))  handle Subscript => ""
@@ -507,7 +508,7 @@ struct
 		    groupedMatches 
 		end
 	in
-	    if length = 0 then [(Pempty,{lineNo = (!recordNumberRef), beginloc=0, endloc=0})] else doNonEmpty record
+	    if length = 0 then [(Pempty,{lineNo = (!recordNumberRef), beginloc=0, endloc=0,arrayIndexList=[]})] else doNonEmpty record
 	end
 
     (* This function takes a list of tokens and returns an (int ref) TokenTable.map *)
@@ -820,7 +821,7 @@ struct
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
            that is either empty or some value gets silently converted to the value only. *)
-	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= callsite, beginloc=0, endloc=0})] (* XXX fix line number *)
+	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= callsite, beginloc=0, endloc=0,arrayIndexList=[]})] (* XXX fix line number *)
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
 	    val cl = crackUniformGroups cl
@@ -864,7 +865,7 @@ struct
 				     mkTBD(~10,curDepth, numChunks, List.rev snds)])
 			end
                     (* allEmpty handles the case where all chunks are the empty chunk *)
-		    fun allEmpty () = Base(mkTyAux numRecords, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0})])
+		    fun allEmpty () = Base(mkTyAux numRecords, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0,arrayIndexList=[]})])
 		    (* doPartition handles the case where the chunks did not all have the same initial token *)
 		    fun doPartition pTable = 
 			let val items = TokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
@@ -897,8 +898,9 @@ struct
 					  cols is list of contexts following *)
 					let fun borrowLoc col1 colref = 
 					        let fun doit ([],[] : LToken list list) (a : LToken list list) = List.rev a
-						    |   doit ([]::r, [(t,{lineNo,beginloc,endloc})]::s) a = 
-						                 doit (r,s) ([(Pempty,{lineNo=lineNo, beginloc=0,endloc=beginloc})]::a)
+						    |   doit ([]::r, [(t,{lineNo,beginloc,endloc,arrayIndexList=ail})]::s) a = 
+						                 doit (r,s) ([(Pempty,{lineNo=lineNo, beginloc=0,
+										       endloc=beginloc,arrayIndexList=ail})]::a)
 						    |   doit (r::rs,t::ts) a = doit (rs,ts) (r ::a)
 						in
 						    doit (col1, colref) []
@@ -1014,7 +1016,7 @@ struct
 
             val ty = case analysis 
 		     of Blob =>     mkBottom (List.length rtokens, rtokens)
-		     |  Empty =>    Base (mkTyAux 0, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0})])
+		     |  Empty =>    Base (mkTyAux 0, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0,arrayIndexList=[]})])
 		     |  Struct s => buildStructTy (splitRecords s rtokens) (* Can produce union of structs *)
 		     |  Array a =>  buildArrayTy (a, rtokens)
                      |  Union u =>  buildUnionTy(u, rtokens)

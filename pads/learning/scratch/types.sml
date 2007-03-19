@@ -246,7 +246,7 @@ struct
     fun LTokensToString [] = "\n"
       | LTokensToString ((t,loc)::ts) = ((tokenToString t) ^ (LTokensToString ts))
 
-    fun locationToString {lineNo, beginloc, endloc} = "Line #:"^(Int.toString lineNo)
+    fun locationToString ({lineNo, beginloc, endloc,...}:location) = "Line #:"^(Int.toString lineNo)
     fun printLocation ( loc : location ) : unit = print (locationToString loc)
 
     fun printLTokens [] = print "\n"

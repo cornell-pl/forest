@@ -126,7 +126,7 @@ case ty of
     Pstruct(a, List.filter (fn x => case x of 
 			Base(_, nil) => false 
 			| Base (_, tl) => not(ltoken_equal((hd tl), 
-					(Pempty, {lineNo=0, beginloc=0, endloc=0}))) 
+					(Pempty, {lineNo=0, beginloc=0, endloc=0,arrayIndexList=[]}))) 
 			| RefinedBase(_, _, nil) => false
 			| _ => true ) tylist)
 | _ => ty
@@ -267,7 +267,7 @@ and adjacent_consts cmos ty =
 	 fun mergetok (t1:LToken, t2:LToken) : LToken =
 	    let
 		fun combineloc (loc1:location, loc2:location) = 
-		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2)}
+		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2),arrayIndexList=(#arrayIndexList loc1)}
 	    in
 		case (t1, t2) of 
 			((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 

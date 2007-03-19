@@ -235,7 +235,7 @@ structure Common = struct
 	let 
 	   val head2 = List.take(tylist2, len1)
 	   val tail2 = List.drop(tylist2, len1)
-	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0})])
+	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0,arrayIndexList=[]})])
 	in
 	   (
 	   (foldr myand true (map describedBy (ListPair.zip (tylist1, head2)))) 
@@ -287,7 +287,7 @@ structure Common = struct
       nil => true
       | h::t =>
 	let
-	   val emptyBase = Base(getAuxInfo(hd tylist), [(Pempty, {lineNo=0, beginloc=0, endloc=0})])
+	   val emptyBase = Base(getAuxInfo(hd tylist), [(Pempty, {lineNo=0, beginloc=0, endloc=0,arrayIndexList=[]})])
 	in
 	   foldr myand true (map (fn x => describedBy (emptyBase, x)) tylist) 
 	end handle Empty => false
@@ -297,7 +297,7 @@ structure Common = struct
 	   val (len1, len2) = (length(tylist1), length(tylist2))
 	   val head2 = List.take(tylist2, len1)
 	   val tail2 = List.drop(tylist2, len1)
-	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0})])
+	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0,arrayIndexList=[]})])
 	in
 	   if (describesEmpty headlist andalso 
 	       foldr myand true (map describedBy (ListPair.zip (tylist1, head2))) andalso 

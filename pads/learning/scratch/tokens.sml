@@ -1,12 +1,12 @@
 structure Tokens = struct
     open Complexity
 
-    type location = { lineNo: int, beginloc: int, endloc:int }
+    type location = { lineNo: int, beginloc: int, endloc:int, arrayIndexList : int list }
 
     (* Establish an order on locations *)
     fun compLocation (l1:location, l2:location):order =
-        let val {lineNo = ln1, beginloc = b1, endloc = e1} = l1
-            val {lineNo = ln2, beginloc = b2, endloc = e2} = l2
+        let val {lineNo = ln1, beginloc = b1, endloc = e1, ... } = l1
+            val {lineNo = ln2, beginloc = b2, endloc = e2, ... } = l2
         in ( case Int.compare (ln1, ln2) of
                   LESS    => LESS
                 | GREATER => GREATER
