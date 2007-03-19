@@ -246,7 +246,17 @@ struct
     fun LTokensToString [] = "\n"
       | LTokensToString ((t,loc)::ts) = ((tokenToString t) ^ (LTokensToString ts))
 
-    fun locationToString ({lineNo, beginloc, endloc,...}:location) = "Line #:"^(Int.toString lineNo)
+    fun locationToString ({lineNo, beginloc, endloc,arrayIndexList}:location) = 
+	let fun slotsToString [] = ""
+              | slotsToString [x] = Int.toString x
+              | slotsToString (x::xs) = (Int.toString x)^", "^(slotsToString xs)
+	    val indexList = 
+  	        case arrayIndexList 
+	        of [] => ""
+	        |  indexes => "Array Slots: "^(slotsToString indexes)
+	in
+	    "Line #:"^(Int.toString lineNo) ^" "^(indexList)
+	end
     fun printLocation ( loc : location ) : unit = print (locationToString loc)
 
     fun printLTokens [] = print "\n"

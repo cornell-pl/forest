@@ -962,7 +962,10 @@ struct
 			       one for all tokens in array slots except for the first or last one,
 			       and one for the tokens in the last slot; this partition is to avoid confusion
 			       with the separator not being in the last slot *)
-			    fun doNextToken isFirst [] (current, first, main) = 
+			    fun pushArrayLoc ({lineNo,beginloc,endloc,arrayIndexList=ail}, newIndex) = 
+				              {lineNo=lineNo,beginloc=beginloc,endloc=endloc,arrayIndexList=ail@[newIndex]}
+
+			    fun doNextToken isFirst [] index (current, first, main) = 
 				 let fun getLen [] = 0
 				       | getLen _ = 1
 				     val length = (getLen current) + (* list of tokens in current context: if present, length is 1 *)
@@ -973,23 +976,27 @@ struct
 				 in
 				     ((length, getLoc first), first, main, List.rev current)
 				 end
-                              | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
+                              | doNextToken isFirst ((rt as (lrt,loc))::rts) index (current, first, main) = 
+				 let val uloc = pushArrayLoc (loc, index)
+				     val rt = (lrt,uloc) 
+				 in
 				  case TokenTable.find(tTable, lrt)
-				  of NONE => doNextToken isFirst rts (rt::current, first, main)
+				  of NONE => doNextToken isFirst rts index (rt::current, first, main)
                                   |  SOME freq => 
 				      if !freq <= 0 
 				      then (freq := !freq - 1; 
-					    doNextToken isFirst rts (rt::current, first, main))
+					    doNextToken isFirst rts index (rt::current, first, main))
 				      else (freq := !freq - 1;
 					    numFound := !numFound + 1;
 					    if !numFound = numTokens 
 					    then (resetTable(); 
 						  if isFirst 
-						    then doNextToken false   rts ([], List.rev (rt::current),  main)
-						    else doNextToken isFirst rts ([], first, (List.rev (rt::current) :: main)))
-					    else doNextToken isFirst rts (rt::current, first, main))
+						    then doNextToken false   rts (index+1) ([], List.rev (rt::current),  main)
+						    else doNextToken isFirst rts (index+1) ([], first, (List.rev (rt::current) :: main)))
+					    else doNextToken isFirst rts index (rt::current, first, main))
+				 end
 			in
-			    doNextToken true tlist ([],[],[])
+			    doNextToken true tlist 0 ([],[],[])
 			end
 		    fun partitionRecords rtokens = 
 			let fun pR [] (numTokenA, firstA, mainA,lastA) = (List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
