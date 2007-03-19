@@ -24,6 +24,8 @@ structure Model = struct
        and a number of choices. *)
     fun mkBaseComp ( mult : int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
         ( constructorComp, multComp (Int.toLarge mult) ( int2Comp choices ) )
+    fun mkBaseCompR ( mult : real ) ( choices : LargeInt.int ) : Complexity  * Complexity =
+        ( constructorComp, multCompR mult ( int2Comp choices ) )
 
     (* Compute the type and data complexity of a refined type *)
     fun refinedComp ( multiplier:int ) ( r:Refined ) : Complexity * Complexity =
@@ -80,60 +82,26 @@ structure Model = struct
     ( case lts of
            []      => ( zeroComp, zeroComp )
          | (t::ts) =>
-             let val maxlen  = maxTokenLength lts
+             let val avglen  = avgTokenLength lts
              in ( case tokenOf t of
-                    PbXML (s1, s2)    => mkBaseComp maxlen numXMLChars
-                  | PeXML (s1, s2)    => mkBaseComp maxlen numXMLChars
+                    PbXML (s1, s2)    => mkBaseCompR avglen numXMLChars
+                  | PeXML (s1, s2)    => mkBaseCompR avglen numXMLChars
                   | Ptime s           => mkBaseComp 1 numTime
                   | Pdate s           => mkBaseComp 1 numDate
-                  | Ppath s           =>
-                      let val nsep       : int    = countCh #"/" s
-                          fun isSep ( x : char ) : bool = x = #"/"
-                          val components : string list =
-                            map Substring.string
-                                ( Substring.fields isSep ( Substring.full s ) )
-                          val pathLen : int = if nsep = 0
-                                              then size s
-                                              else size s - nsep
-                      in mkBaseComp pathLen numStringChars
-                      end
-                    (* Need better separation here *)
-                  | Purl s            => mkBaseComp maxlen numStringChars
+                  | Ppath s           => mkBaseCompR avglen numStringChars
+                  | Purl s            => mkBaseCompR avglen numStringChars
                   | Pip s             => mkBaseComp 1 numIP
-                  | Phostname s       =>
-                      let val ndot       : int    = countCh #"." s
-                          fun isDot ( x : char ) : bool = x = #"."
-                          val components : string list =
-                            map Substring.string
-                                ( Substring.fields isDot ( Substring.full s ) )
-                          val lastComp   : string = List.last components
-                          val isDom      : bool = isDomainName lastComp
-                          val hostNameLen : int =
-                            if ndot = 0
-                            then size s
-                            else if isDom
-                                 then size s - ndot - size lastComp
-                                 else size s - ndot
-                      in if isDom
-                         then ( constructorComp
-                              , combine ( multCompS hostNameLen ( int2Comp numStringChars ) )
-                                        hostNameComp
-                              )
-                         else mkBaseComp hostNameLen numStringChars
-                      end
+                  | Phostname s       => mkBaseCompR avglen numStringChars
                   | Pint l            => ( constructorComp
                                          , combine ( int2Comp 2 )
-                                                   ( multCompR ( avgTokenLength lts )
-                                                               ( int2Comp numDigits ) )
+                                                   ( multCompR avglen ( int2Comp numDigits ) )
                                          )
                   | Pstring s         => ( constructorComp
-                                         , multCompR ( avgTokenLength lts )
-                                                     ( int2Comp numStringChars )
+                                         , multCompR avglen ( int2Comp numStringChars )
                                          )
                   | Pgroup x          => ( constructorComp, unitComp ) (* ???? *)
                   | Pwhite s          => ( constructorComp
-                                         , multCompR ( avgTokenLength lts )
-                                                     ( int2Comp numWhiteChars )
+                                         , multCompR avglen ( int2Comp numWhiteChars )
                                          )
                   | Other c           => mkBaseComp 1 numStringChars
                   | Pempty            => ( constructorComp, unitComp )

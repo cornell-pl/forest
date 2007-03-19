@@ -1,5 +1,6 @@
 structure Tokens = struct
     open Complexity
+    open Hosts
 
     type location = { lineNo: int, beginloc: int, endloc:int, arrayIndexList : int list }
 
@@ -86,7 +87,7 @@ structure Tokens = struct
         |  (Ppath i1, Ppath i2)           => EQUAL
         |  (Purl i1, Purl i2)             => EQUAL
         |  (Pip i1, Pip i2)               => EQUAL
-        |  (Phostname i1, Phostname i2)               => EQUAL
+        |  (Phostname i1, Phostname i2)   => EQUAL
         |  (PbXML (f1,s1), PbXML (f2,s2)) => String.compare(f1,f2)
         |  (PeXML (f1,s1), PeXML (f2,s2)) => String.compare(f1,f2)
         |  (Pint i1, Pint i2)             => EQUAL
@@ -102,51 +103,51 @@ structure Tokens = struct
         |  (Pip _, Ptime _)               => GREATER
         |  (Pip _, Pdate _)               => GREATER
         |  (Pip _, _)                     => LESS
-        |  (Phostname _, Ptime _)               => GREATER
-        |  (Phostname _, Pdate _)               => GREATER
-        |  (Phostname _, Pip _)               => GREATER
+        |  (Phostname _, Ptime _)         => GREATER
+        |  (Phostname _, Pdate _)         => GREATER
+        |  (Phostname _, Pip _)           => GREATER
         |  (Phostname _, _)               => LESS 
-        |  (Ppath _, Ptime _)               => GREATER
-        |  (Ppath _, Pdate _)               => GREATER
+        |  (Ppath _, Ptime _)             => GREATER
+        |  (Ppath _, Pdate _)             => GREATER
         |  (Ppath _, Pip _)               => GREATER
-        |  (Ppath _, Phostname _)               => GREATER
+        |  (Ppath _, Phostname _)         => GREATER
         |  (Ppath _, _)               	  => LESS
-        |  (Purl _, Ptime _)               => GREATER
-        |  (Purl _, Pdate _)               => GREATER
-        |  (Purl _, Pip _)               => GREATER
-        |  (Purl _, Phostname _)               => GREATER
-        |  (Purl _, Ppath _)            	  => GREATER
+        |  (Purl _, Ptime _)              => GREATER
+        |  (Purl _, Pdate _)              => GREATER
+        |  (Purl _, Pip _)                => GREATER
+        |  (Purl _, Phostname _)          => GREATER
+        |  (Purl _, Ppath _)              => GREATER
         |  (Purl _, _)            	  => LESS
         |  (PbXML _, Ptime _ )            => GREATER
         |  (PbXML _, Pdate _ )            => GREATER
         |  (PbXML _, Pip _)               => GREATER
-        |  (PbXML _, Phostname _)               => GREATER
-        |  (PbXML _, Ppath _)               => GREATER
-        |  (PbXML _, Purl _)               => GREATER
+        |  (PbXML _, Phostname _)         => GREATER
+        |  (PbXML _, Ppath _)             => GREATER
+        |  (PbXML _, Purl _)              => GREATER
         |  (PbXML _,  _)                  => LESS
         |  (PeXML _, Ptime _ )            => GREATER
         |  (PeXML _, Pdate _ )            => GREATER
         |  (PeXML _, Pip _)               => GREATER
-        |  (PeXML _, Phostname _)               => GREATER
-        |  (PeXML _, Ppath _)               => GREATER
-        |  (PeXML _, Purl _)               => GREATER
+        |  (PeXML _, Phostname _)         => GREATER
+        |  (PeXML _, Ppath _)             => GREATER
+        |  (PeXML _, Purl _)              => GREATER
         |  (PeXML _, PbXML _)             => GREATER
         |  (PeXML _,  _)                  => LESS
         |  (Pint _, Ptime _)              => GREATER
         |  (Pint _, Pdate _)              => GREATER
         |  (Pint _, Pip _)                => GREATER
-        |  (Pint _, Phostname _)                => GREATER
-        |  (Pint _, Ppath _)                => GREATER
-        |  (Pint _, Purl _)                => GREATER
+        |  (Pint _, Phostname _)          => GREATER
+        |  (Pint _, Ppath _)              => GREATER
+        |  (Pint _, Purl _)               => GREATER
         |  (Pint _, PbXML _)              => GREATER
         |  (Pint _, PeXML _)              => GREATER
         |  (Pint _, _)                    => LESS
         |  (Pstring _, Ptime _)           => GREATER
         |  (Pstring _, Pdate _)           => GREATER
         |  (Pstring _, Pip _)             => GREATER
-        |  (Pstring _, Phostname _)             => GREATER
-        |  (Pstring _, Ppath _)             => GREATER
-        |  (Pstring _, Purl _)             => GREATER
+        |  (Pstring _, Phostname _)       => GREATER
+        |  (Pstring _, Ppath _)           => GREATER
+        |  (Pstring _, Purl _)            => GREATER
         |  (Pstring _, Pint _)            => GREATER
         |  (Pstring _, PbXML _)           => GREATER
         |  (Pstring _, PeXML _)           => GREATER
@@ -154,9 +155,9 @@ structure Tokens = struct
         |  (Pgroup _, Ptime _)            => GREATER
         |  (Pgroup _, Pdate _)            => GREATER
         |  (Pgroup _, Pip _)              => GREATER
-        |  (Pgroup _, Phostname _)              => GREATER
-        |  (Pgroup _, Ppath _)              => GREATER
-        |  (Pgroup _, Purl _)              => GREATER
+        |  (Pgroup _, Phostname _)        => GREATER
+        |  (Pgroup _, Ppath _)            => GREATER
+        |  (Pgroup _, Purl _)             => GREATER
         |  (Pgroup _, Pint _)             => GREATER
         |  (Pgroup _, Pstring _)          => GREATER
         |  (Pgroup _, PbXML _)            => GREATER
@@ -165,9 +166,9 @@ structure Tokens = struct
         |  (Pwhite _, Ptime _)            => GREATER
         |  (Pwhite _, Pdate _)            => GREATER
         |  (Pwhite _, Pip _)              => GREATER
-        |  (Pwhite _, Phostname _)              => GREATER
-        |  (Pwhite _, Ppath _)              => GREATER
-        |  (Pwhite _, Purl _)              => GREATER
+        |  (Pwhite _, Phostname _)        => GREATER
+        |  (Pwhite _, Ppath _)            => GREATER
+        |  (Pwhite _, Purl _)             => GREATER
         |  (Pwhite _, Pint _)             => GREATER
         |  (Pwhite _, Pstring _)          => GREATER
         |  (Pwhite _, Pgroup _)           => GREATER
@@ -177,9 +178,9 @@ structure Tokens = struct
         |  (Other _, Ptime _)             => GREATER
         |  (Other _, Pdate _)             => GREATER
         |  (Other _, Pip _)               => GREATER
-        |  (Other _, Phostname _)               => GREATER
-        |  (Other _, Ppath _)               => GREATER
-        |  (Other _, Purl _)               => GREATER
+        |  (Other _, Phostname _)         => GREATER
+        |  (Other _, Ppath _)             => GREATER
+        |  (Other _, Purl _)              => GREATER
         |  (Other _, Pint _)              => GREATER
         |  (Other _, Pstring _)           => GREATER
         |  (Other _, Pgroup _)            => GREATER
@@ -190,9 +191,9 @@ structure Tokens = struct
         |  (Pempty, Ptime _)              => GREATER
         |  (Pempty, Pdate _)              => GREATER
         |  (Pempty, Pip _)                => GREATER
-        |  (Pempty, Phostname _)                => GREATER
-        |  (Pempty, Ppath _)                => GREATER
-        |  (Pempty, Purl _)                => GREATER
+        |  (Pempty, Phostname _)          => GREATER
+        |  (Pempty, Ppath _)              => GREATER
+        |  (Pempty, Purl _)               => GREATER
         |  (Pempty, Pint _)               => GREATER
         |  (Pempty, Pstring _)            => GREATER
         |  (Pempty, Pgroup _)             => GREATER
@@ -247,19 +248,29 @@ structure Tokens = struct
              | PeXML (s1, s2) => size s1 + size s2
              | Ptime s        => size s
              | Pdate s        => size s
-             | Ppath s        => size s
+             | Ppath s        =>
+                 let val nsep       : int    = countCh #"/" s
+                     fun isSep ( x : char ) : bool = x = #"/"
+                     val components : string list =
+                       map Substring.string
+                           ( Substring.fields isSep ( Substring.full s ) )
+                 in if nsep = 0 then size s else size s - nsep
+                 end
              | Purl s         => size s
              | Pip s          => size s
                (* For now, we assume the last component is a domain name.
                   we should check this later *)
              | Phostname s    =>
-                 let val ndot       : int            = countCh #"." s
+                 let val ndot          : int            = countCh #"." s
                      fun isDot ( x : char ) : bool = x = #"."
-                     val components : substring list =
-                           Substring.fields isDot ( Substring.full s )
+                     val components    : string list =
+                           map Substring.string ( Substring.fields isDot ( Substring.full s ) )
+                     val lastComponent : string = List.last components
                  in if ndot = 0
                     then size s
-                    else size s - ndot - ( size ( Substring.string ( List.last components ) ) )
+                    else if isDomainName lastComponent
+                         then size s - ndot - ( size lastComponent )
+                         else size s - ndot
                  end
              | Pint n         => size (LargeInt.toString n)
              | Pstring s      => size s
