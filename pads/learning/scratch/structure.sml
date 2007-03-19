@@ -808,7 +808,7 @@ struct
     fun mkBottom (coverage,cl) = 
 	Bottom ( { coverage=coverage
                  , label=SOME(mkBOTLabel (!Bottomstamp))
-                 , typeComp = unitComp
+                 , typeComp = zeroComp
                  , dataComp = zeroComp
                  }
                , !Bottomstamp
@@ -831,7 +831,7 @@ struct
 	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
                  then TBD ( { coverage=coverage
                             , label=SOME(mkTBDLabel (!TBDstamp))
-                            , typeComp = unitComp
+                            , typeComp = zeroComp
                             , dataComp = zeroComp
                             }
                           , !TBDstamp

@@ -33,7 +33,7 @@ structure Model = struct
                                             , int2Comp min
                                             , int2Comp max
                                             ]
-                                 , multCompS multiplier ( int2Comp ( max - min + 1 ) )
+                                 , int2Comp ( max - min + 1 )
                                  )
              | IntConst n     => ( sumComps [ constructorComp, int2Comp 2, int2Comp n ]
                                  , zeroComp
@@ -42,12 +42,12 @@ structure Model = struct
                                            ( multCompS (size s) (int2Comp numStringChars) )
                                  , zeroComp
                                  )
-             | Enum rl        => ( combine ( sumComps ( map refinedTypeComp rl ) )
+             | Enum rl        => ( combine ( maxComps ( map refinedTypeComp rl ) )
                                            ( sumComps [ constructorComp
                                                       , int2CompS ( length rl )
-                                                      , int2Comp numConstRefined
                                                       ]
                                            )
+                                  (* Assumes all brances constants *)
                                  , int2CompS ( length rl )
                                  )
              | LabelRef i     => ( unitComp, unitComp )

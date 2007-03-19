@@ -21,10 +21,11 @@ structure Tokens = struct
     (* Number of possible ASCII characters for string values, according
        to the definition in tokens.lex
      *)
-    val numStringChars : LargeInt.int  = 26 + 26 + 10 + 1 + 1
-    val numWhiteChars  : LargeInt.int  = 2 (* Space and tab *)
-    val numXMLChars    : LargeInt.int  = 26 + 26
+    val numAlphaChars  : LargeInt.int  = 52
     val numDigits      : LargeInt.int  = 10
+    val numStringChars : LargeInt.int  = numAlphaChars + numDigits + 1 + 1
+    val numWhiteChars  : LargeInt.int  = 2 (* Space and tab *)
+    val numXMLChars    : LargeInt.int  = numAlphaChars
 
     (* Some analysis of the structure of tokens from tokens.lex: *)
     fun powerL ( x : LargeInt.int ) ( y : int ) : LargeInt.int =
@@ -36,8 +37,11 @@ structure Tokens = struct
     val numDoublet       : LargeInt.int = 100
     val numTimeZone      : LargeInt.int = 2 * 2 * 10
     val numAMPM          : LargeInt.int = 4
-    val numTime          : LargeInt.int = 2 + 2 + ( numDoublet * numDoublet *
-                                          numDoublet * numAMPM * numTimeZone )
+    val numTime          : LargeInt.int =
+        let val numDoublet3 = numDoublet * numDoublet * numDoublet
+        in numDoublet3 * numAMPM * numTimeZone + numDoublet3 * numAMPM +
+           numDoublet3 * numTimeZone + numDoublet3
+        end
     val numPort          : LargeInt.int = powerL 2 16 (* 65535 *)
     val numFileNameChars : LargeInt.int = 256 (* Revisit this one *)
     val numDay           : LargeInt.int = 4 + 30
@@ -50,6 +54,8 @@ structure Tokens = struct
                                                         ( 2 + numYear ) )
     val numDomain        : LargeInt.int = 256
     val numToken         : LargeInt.int = 15 (* Number of cases in datatype Token *)
+
+    val compTime         : Complexity = int2Comp numTime
 
     (* Raw token format, pass one over the data *)
     datatype Token = PbXML       of string * string |

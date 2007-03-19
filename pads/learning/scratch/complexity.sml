@@ -147,6 +147,21 @@ structure Complexity = struct
     fun sumComps ( cs : Complexity list ) : Complexity =
         foldl ( fn (c1,c2) => combine c1 c2 ) zeroComp cs
 
+    fun realComp ( c : Complexity ) : real =
+        ( case c of
+               Bits n    => Real.fromLargeInt n
+             | Choices l => log2L l
+             | Precise p => p
+        )
+
+    fun maxComp ( c1 : Complexity ) ( c2 : Complexity ) : Complexity =
+    if realComp c1 < realComp c2
+    then c2
+    else c1
+        
+    fun maxComps ( cs : Complexity list ) : Complexity =
+        foldl ( fn (c1, c2) => maxComp c1 c2 ) zeroComp cs
+
     (* Complexity from the number of choices *)
     fun cardComp ( l : 'a list ) : Complexity =
         Choices (Int.toLarge (length l))
