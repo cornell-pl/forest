@@ -115,8 +115,8 @@ structure Tests = struct
     (* Some RefinedBase Ty structures to use *)
     val ty20 : Ty = RefinedBase (a1, rsme1, ltlstr4)
     val ty21 : Ty = RefinedBase (a1, rint1, ltl2)
-    val ty22 : Ty = RefinedBase (a1, rintc1, ltl2)
-    val ty23 : Ty = RefinedBase (a1, rstr1, ltlstr4)
+    val ty22 : Ty = RefinedBase ( freq 100, rintc1, ltl2 )
+    val ty23 : Ty = RefinedBase ( freq 900, rstr1, ltlstr4 )
     val ty24 : Ty = RefinedBase (a1, renum1, ltlstr4)
     val ty25 : Ty = RefinedBase (a1, rlbl1, [])
     val ty26 : Ty = RefinedBase (a1, rstr4, ltlstr4)
@@ -137,7 +137,7 @@ structure Tests = struct
     (* Test refined structures *)
     val ty40 : Ty = Switch ( a1
                            , Atom.atom "Switch1"
-                           , [ ( rintc1, ty32 ), ( rstr1, ty23 ) ]
+                           , [ ( rintc1, ty22 ), ( rstr1, ty23 ) ]
                            )
     val ty41 : Ty = RArray ( a1
                            , NONE
