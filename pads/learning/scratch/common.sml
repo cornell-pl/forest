@@ -13,7 +13,13 @@ structure Common = struct
                  type ord_key = Id
                  val compare = idcompare
         end)
+   	structure IntMap = RedBlackMapFn(
+                 struct type ord_key = int
+	    		val compare = Int.compare
+		 end) 
+
 	exception TyMismatch
+	exception RecordNum
 
 	(* defines an arbitrary order on tokens	to put it in maps *)
 	(* it overrides some of the ordering in structure.sml *)
@@ -217,12 +223,12 @@ structure Common = struct
 		  | nil => NONE
 
 
-    (*function to merge two AuxInfos *)
+    (*function to merge AuxInfo a1 into a2*)
     fun mergeAux(a1, a2) =
 	case (a1, a2) of 
 	 ({coverage=c1, label=l1, typeComp=tc1, dataComp=dc1},
  	 {coverage=c2, label=l2, typeComp=tc2, dataComp=dc2}) =>
- 	 	{coverage=c1+c2, label=l1, typeComp=tc1, dataComp=dc1}
+ 	 	{coverage=c1+c2, label=l2, typeComp=tc2, dataComp=dc2}
 
     (*function that test if tylist1 in a struct can be described by tylist2 in another struct*)
     (* tylist1 is described by tylist2 if tylist1 is a sub-sequence of tylist2 and 
@@ -297,7 +303,6 @@ structure Common = struct
 	   val (len1, len2) = (length(tylist1), length(tylist2))
 	   val head2 = List.take(tylist2, len1)
 	   val tail2 = List.drop(tylist2, len1)
-	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0,recNo=0})])
 	in
 	   if (describesEmpty headlist andalso 
 	       foldr myand true (map describedBy (ListPair.zip (tylist1, head2))) andalso 
@@ -307,22 +312,24 @@ structure Common = struct
 	   else mergeListInto (tylist1, List.drop(tylist2, 1), headlist@[hd tylist2])
 	end
     (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
+    (*this function is used in refine_array rewriting rule, the recNo in ty1 is updated so that they are
+	consistent with ty2 *)
     and mergeTyInto (ty1, ty2) =
 		case (ty1, ty2) of 
-		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a2, a1), tl2@tl1) 
+		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, a2), tl2@tl1) 
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(a2, mergeListInto([Base(a1, tl1)], tylist2, nil))
 		(*below is not completely right, haven't considered the case of tylist1 is a subset
 		  of tylist2 and the rest of tylist2 can describe Pempty *) 
 		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => 
-			Pstruct(mergeAux(a2, a1), mergeListInto(tylist1, tylist2, nil))
+			Pstruct(mergeAux(a1, a2), mergeListInto(tylist1, tylist2, nil))
 		| (Punion(a1, tylist1), Punion(a2, tylist2)) => foldl mergeTyInto ty2 tylist1
-		| (ty1, Punion(a2, tylist2)) => Punion(mergeAux(a2, getAuxInfo(ty1)), mergeUnion(ty1, tylist2, nil))
+		| (ty1, Punion(a2, tylist2)) => Punion(mergeAux(getAuxInfo(ty1), a2), mergeUnion(ty1, tylist2, nil))
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 
 			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
 		*)
-		| _ => (print "here!!\n"; raise TyMismatch)
+		| _ => (print "mergeTyInto error!\n"; raise TyMismatch)
 
 
     (*function to merge two tys that are equal structurally*)
@@ -411,4 +418,70 @@ structure Common = struct
 			| _ => false 
 		handle Size => (print "Size in ty_equal!\n" ; false)
 	end
+
+	(*this function reindex the recNo by collapsing them in every token of a given ty 
+	and a start index and returns the updated ty *)
+	fun reIndexRecNo ty startindex = 
+	  let
+		fun insertTListToMap tl intmap =
+			case tl of
+				nil => intmap
+				| (t, {lineNo, beginloc, endloc, recNo}) :: ts => 
+					insertTListToMap ts (IntMap.insert(intmap, recNo, 0))
+		fun insertToMap ty intmap =
+		  case ty of
+			Base(_, tl)=> insertTListToMap tl intmap
+			| RefinedBase (_, _, tl) => insertTListToMap tl intmap
+			| TBD _  => intmap
+			| Bottom _ => intmap
+			| Punion(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
+			| Pstruct(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
+			| Parray(_, {tokens, lengths, first, body, last}) =>
+				 foldr (fn (x, m) => insertToMap x m) intmap [first, body, last]
+			| RArray(_, _, _, ty, _, lens) => insertToMap ty intmap 
+			(*TODO: need to work on lens of RArray as well!!!*)
+			| Switch (a, i, rtl) => foldr (fn ((r, ty), m) => insertToMap ty m) intmap rtl
+
+		fun updateMap intmap =
+		  let
+			val pairs = IntMap.listItemsi intmap
+		    	fun insertPairs pairs index intmap =
+			  case pairs of 
+			    nil => intmap
+			    | (oldRecNo, _)::rest => insertPairs rest (index+1) 
+						(IntMap.insert(intmap, oldRecNo, index))
+		  in
+			insertPairs pairs startindex intmap
+		  end
+		fun updateTL(intmap, tl, newtl) =
+			case tl of 
+			  nil => newtl
+			  | (t, {lineNo, beginloc, endloc, recNo})::ts => 
+				let
+				  val newRecop = IntMap.find(intmap, recNo)
+				in
+				  case newRecop of
+					NONE => raise RecordNum
+					| _ => newtl@[(t, {lineNo=lineNo, beginloc=beginloc, 
+							endloc=endloc, recNo=some(newRecop)})]
+				end
+		fun updateTy intmap ty =
+		  case ty of
+			Base(a, tl)=> Base(a, updateTL(intmap, tl, nil))
+			| RefinedBase (a, r, tl) => RefinedBase(a, r, updateTL(intmap, tl, nil))
+			| Punion(a, tylist)=> Punion(a, map (updateTy intmap) tylist)
+			| Pstruct(a, tylist)=> Pstruct(a, map (updateTy intmap) tylist)
+			| Parray(a, {tokens, lengths, first, body, last}) => Parray(a, {tokens = tokens,
+					lengths = lengths, first = updateTy intmap first, 
+					body = updateTy intmap body, last = updateTy intmap last})
+			| RArray(a, s, t, body, l, lens) => RArray(a, s, t, updateTy intmap body, l, lens) 
+			(*TODO: need to work on lens of RArray as well!!!*)
+			| Switch (a, i, rtl) => Switch(a, i, map (fn (r, t) => (r, updateTy intmap ty)) rtl)
+			| _ => ty
+
+		val recNoMap = insertToMap ty IntMap.empty
+
+	  in
+		updateTy (updateMap recNoMap) ty	
+	  end
 end

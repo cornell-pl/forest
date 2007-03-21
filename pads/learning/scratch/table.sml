@@ -47,6 +47,8 @@ structure Table = struct
 			case tlist of 
 			  [] => NONE
 			| (token, loc:location) :: tail =>
+			    if #recNo loc >= columnsize then raise RecordNum
+			    else	
 				if #recNo loc = recnum then SOME token
 				else getTokenfromList tail recnum
 		in List.tabulate(columnsize, (getTokenfromList ltokens))
