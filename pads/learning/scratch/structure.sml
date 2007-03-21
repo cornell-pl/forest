@@ -430,6 +430,8 @@ struct
     fun isString (Pstring s) = true
       | isString _ = false
 
+    (*given a list of LTokens, find groupings in them and return the list of groups, or if no groupings are found,
+	return the original list *)
     fun findGroups (tokens : LToken list) : LToken list = 
 	let fun TokenMatch (t1,t2) = case (t1,t2) 
 	                             of (PbXML _, PbXML _) => (print "looking for a pbxml token\n"; true) (* begin xml tag in group list has placeholder tag, so any bXML matches *)
@@ -438,9 +440,9 @@ struct
             fun delimMatches r (t,loc) = TokenEq(t, r)
 	    fun flatten [] = (print "in flatten function\n"; [])
               | flatten ((ltoken,body,r)::rest) = (ltoken :: (List.rev body)) @ (flatten rest) 
-            fun getGroupLoc ((lt, {lineNo=llineNo, beginloc=lbegin, endloc=lend,arrayIndexList=lail}), 
-			     (rt, {lineNo,         beginloc=rbegin, endloc=rend,arrayIndexList=rail})) =
-		{lineNo=llineNo, beginloc=lbegin, endloc=rend,arrayIndexList=lail}
+            fun getGroupLoc ((lt, {lineNo=llineNo, beginloc=lbegin, endloc=lend, recNo=lrecNo}), 
+			     (rt, {lineNo,         beginloc=rbegin, endloc=rend, recNo=rrecNo})) =
+		{lineNo=llineNo, beginloc=lbegin, endloc=rend, recNo=lrecNo}
             fun topSearch [] acc = List.rev acc
               | topSearch (t::ts) acc = case findDelim t 
 		                        of NONE => topSearch ts (t::acc)
@@ -484,7 +486,8 @@ struct
 	let val length = String.size record
 	    fun doNonEmpty record = 
 		let val cursor : int ref = ref 0
-		    fun addLineNo (t,{beginloc,endloc}) = (t,{lineNo=(!recordNumberRef),beginloc=beginloc,endloc=endloc,arrayIndexList=[]})
+		    fun addLineNo (t,{beginloc,endloc}) = (t,
+			{lineNo=(!recordNumberRef),beginloc=beginloc,endloc=endloc, recNo=(!recordNumberRef)})
 		    fun feedLex n = 
 			let val s = if (n > (length - !cursor)) 
 			    then SS.string(SS.extract(record, !cursor, NONE))  handle Subscript => ""
@@ -501,14 +504,18 @@ struct
                         )
 		    val matches = getMatches []
 		    val groupedMatches = findGroups matches
-(*		    val () = print "printing grouped tokens:\n"
-		    val () = printLTokens groupedMatches *)
+(*
+		    val () = print "printing grouped tokens:\n"
+		    val () = printLTokens groupedMatches 
+*)
 		    val () = recordNumberRef := !recordNumberRef + 1
 		in
 		    groupedMatches 
 		end
 	in
-	    if length = 0 then [(Pempty,{lineNo = (!recordNumberRef), beginloc=0, endloc=0,arrayIndexList=[]})] else doNonEmpty record
+	    if length = 0 then 
+		[(Pempty,{lineNo = (!recordNumberRef), beginloc=0, endloc=0, recNo=(!recordNumberRef)})] 
+	    else doNonEmpty record
 	end
 
     (* This function takes a list of tokens and returns an (int ref) TokenTable.map *)
@@ -821,7 +828,7 @@ struct
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
            that is either empty or some value gets silently converted to the value only. *)
-	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= callsite, beginloc=0, endloc=0,arrayIndexList=[]})] (* XXX fix line number *)
+	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
 	    val cl = crackUniformGroups cl
@@ -865,7 +872,7 @@ struct
 				     mkTBD(~10,curDepth, numChunks, List.rev snds)])
 			end
                     (* allEmpty handles the case where all chunks are the empty chunk *)
-		    fun allEmpty () = Base(mkTyAux numRecords, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0,arrayIndexList=[]})])
+		    fun allEmpty () = Base(mkTyAux numRecords, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})])
 		    (* doPartition handles the case where the chunks did not all have the same initial token *)
 		    fun doPartition pTable = 
 			let val items = TokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
@@ -898,9 +905,9 @@ struct
 					  cols is list of contexts following *)
 					let fun borrowLoc col1 colref = 
 					        let fun doit ([],[] : LToken list list) (a : LToken list list) = List.rev a
-						    |   doit ([]::r, [(t,{lineNo,beginloc,endloc,arrayIndexList=ail})]::s) a = 
+						    |   doit ([]::r, [(t,{lineNo,beginloc,endloc, recNo})]::s) a = 
 						                 doit (r,s) ([(Pempty,{lineNo=lineNo, beginloc=0,
-										       endloc=beginloc,arrayIndexList=ail})]::a)
+									       endloc=beginloc,recNo=recNo})]::a)
 						    |   doit (r::rs,t::ts) a = doit (rs,ts) (r ::a)
 						in
 						    doit (col1, colref) []
@@ -962,46 +969,46 @@ struct
 			       one for all tokens in array slots except for the first or last one,
 			       and one for the tokens in the last slot; this partition is to avoid confusion
 			       with the separator not being in the last slot *)
-			    fun pushArrayLoc ({lineNo,beginloc,endloc,arrayIndexList=ail}, newIndex) = 
-				              {lineNo=lineNo,beginloc=beginloc,endloc=endloc,arrayIndexList=ail@[newIndex]}
 
-			    fun doNextToken isFirst [] index (current, first, main) = 
+
+			    fun doNextToken isFirst [] (current, first, main) = 
 				 let fun getLen [] = 0
 				       | getLen _ = 1
 				     val length = (getLen current) + (* list of tokens in current context: if present, length is 1 *)
 						  (getLen first) +   (* list of tokens in first context: if present, length is 1 *)
 						  (List.length main) (* a list of matched tokens, so no need to compute div*)
 				     fun getLoc [] = (print "WARNING: ARRAY first context empty!"; ~1)
-				       | getLoc ((tok,loc:location)::ltocs) = #lineNo loc
+				       | getLoc ((tok,loc:location)::ltocs) = #recNo loc
 				 in
 				     ((length, getLoc first), first, main, List.rev current)
 				 end
-                              | doNextToken isFirst ((rt as (lrt,loc))::rts) index (current, first, main) = 
-				 let val uloc = pushArrayLoc (loc, index)
-				     val rt = (lrt,uloc) 
+                              | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
+				 let 
+				     val rt = (lrt,loc) 
 				 in
 				  case TokenTable.find(tTable, lrt)
-				  of NONE => doNextToken isFirst rts index (rt::current, first, main)
+				  of NONE => doNextToken isFirst rts (rt::current, first, main)
                                   |  SOME freq => 
 				      if !freq <= 0 
 				      then (freq := !freq - 1; 
-					    doNextToken isFirst rts index (rt::current, first, main))
+					    doNextToken isFirst rts (rt::current, first, main))
 				      else (freq := !freq - 1;
 					    numFound := !numFound + 1;
 					    if !numFound = numTokens 
 					    then (resetTable(); 
 						  if isFirst 
-						    then doNextToken false   rts (index+1) ([], List.rev (rt::current),  main)
-						    else doNextToken isFirst rts (index+1) ([], first, (List.rev (rt::current) :: main)))
-					    else doNextToken isFirst rts index (rt::current, first, main))
+						    then doNextToken false   rts ([], List.rev (rt::current),  main)
+						    else doNextToken isFirst rts ([], first, (List.rev (rt::current) :: main)))
+					    else doNextToken isFirst rts (rt::current, first, main))
 				 end
 			in
-			    doNextToken true tlist 0 ([],[],[])
+			    doNextToken true tlist ([],[],[])
 			end
 		    fun partitionRecords rtokens = 
-			let fun pR [] (numTokenA, firstA, mainA,lastA) = (List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
+			let fun pR [] (numTokenA, firstA, mainA,lastA) = 
+					(List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
                               | pR (t::ts) (numTokenA, firstA, mainA, lastA) = 
-			            let val (numTokens, first, main,last) = partitionOneRecord t
+			            let val (numTokens, first, main,last) = partitionOneRecord t 
 				    in 
 					pR ts (numTokens::numTokenA, first::firstA, main@mainA, last::lastA)
 				    end
@@ -1010,6 +1017,20 @@ struct
 			end
 
 		    val (arrayLengths, firstContext,mainContext,lastContext) = partitionRecords rtokens
+		    fun pushRecNo contexts index=
+		    	let 
+				fun pushRecNo' tl index =
+					case tl of
+					(t, {lineNo, beginloc, endloc, recNo}) :: ts => 
+					  (t, {lineNo=lineNo, beginloc=beginloc, endloc=endloc, recNo=index})::
+						(pushRecNo' ts index)
+					| nil => nil
+			in 
+				case contexts of 
+				  c::rest => (pushRecNo' c index) :: pushRecNo rest (index+1)
+				  | nil => nil
+			end
+		    val mainContext = pushRecNo mainContext 0
 		in
 		    (print "Array context\n"; 
 		     Parray (mkTyAux numRecords, 
@@ -1023,7 +1044,7 @@ struct
 
             val ty = case analysis 
 		     of Blob =>     mkBottom (List.length rtokens, rtokens)
-		     |  Empty =>    Base (mkTyAux 0, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0,arrayIndexList=[]})])
+		     |  Empty =>    Base (mkTyAux 0, [(Pempty,{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})])
 		     |  Struct s => buildStructTy (splitRecords s rtokens) (* Can produce union of structs *)
 		     |  Array a =>  buildArrayTy (a, rtokens)
                      |  Union u =>  buildUnionTy(u, rtokens)
@@ -1033,6 +1054,10 @@ struct
 
     and ContextListToTy curDepth context = 
 	let val numRecordsinContext = List.length context
+(*
+	    val _ = print ("Number records being considered: "^Int.toString(numRecordsinContext)^"\nThe records are:\n"
+		^(contextsToString context))
+*)
             val counts : RecordCount list = List.map countFreqs context
 	    val fd: freqDist = buildHistograms numRecordsinContext counts
 	    val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd

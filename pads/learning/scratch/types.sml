@@ -75,7 +75,10 @@ struct
     (* Number of kinds of tree nodes in Ty *)
     val numConstruct    : LargeInt.int = numTy + numRefined + numToken
     val constructorComp : Complexity   = int2Comp numConstruct
-
+    fun lengthsToString lens =
+	case lens of
+	(len, recno)::rest => "("^ (Int.toString len)^", "^(Int.toString recno)^")" ^ (lengthsToString  rest)
+	| nil => "\n"
     fun getAuxInfo ( ty : Ty ) : AuxInfo = 
 	case ty 
         of Base (a,t)                   => a
@@ -180,7 +183,24 @@ struct
 	case tys of [] => Option.valOf Int.maxInt
         | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
 
-    fun ltokenToString ( t : Token, loc : location ) : string = tokenToString t
+    fun locationToString ({lineNo, beginloc, endloc, recNo}:location) = 
+(*
+	let fun slotsToString [] = ""
+              | slotsToString [x] = Int.toString x
+              | slotsToString (x::xs) = (Int.toString x)^", "^(slotsToString xs)
+	    val indexList = 
+  	        case arrayIndexList 
+	        of [] => ""
+	        |  indexes => "Array Slots: "^(slotsToString indexes)
+	in
+*)
+	    "Line #"^(Int.toString lineNo) ^" Rec #"^(Int.toString recNo)
+(*
+	end
+*)
+
+
+    fun ltokenToString ( t : Token, loc : location ) : string = "("^tokenToString t^") loc: "^locationToString loc^" "
     and tokenToString ( t : Token ) : string = 
 	case t 
         of Ptime i     => i
@@ -199,7 +219,7 @@ struct
 			"\t" => "\\t"
 			| _ => s)
         |  Other c  => String.implode [c]
-        |  Pempty   => ""
+        |  Pempty   => "\\0"
         |  Error    => " Error"
     and refinedToString ( re : Refined ) : string =
 	case re
@@ -215,7 +235,7 @@ struct
                            ", ") rel) ^ "}"
         | LabelRef id   => "[Label] id="^ Atom.toString(id)    
 
-    fun ltokenTyToString ( t : Token, loc : location ) : string = tokenTyToString t
+    fun ltokenTyToString ( t : Token, loc : location ) : string = tokenTyToString t 
     and tokenTyToString ( t : Token ) : string = 
 	case t 
         of Ptime i     => "[Time]"
@@ -244,19 +264,8 @@ struct
     fun printTokenTy ( t : Token ) : unit = print (tokenTyToString t)
 
     fun LTokensToString [] = "\n"
-      | LTokensToString ((t,loc)::ts) = ((tokenToString t) ^ (LTokensToString ts))
+      | LTokensToString (t::ts) = (ltokenTyToString t) ^ (LTokensToString ts)
 
-    fun locationToString ({lineNo, beginloc, endloc,arrayIndexList}:location) = 
-	let fun slotsToString [] = ""
-              | slotsToString [x] = Int.toString x
-              | slotsToString (x::xs) = (Int.toString x)^", "^(slotsToString xs)
-	    val indexList = 
-  	        case arrayIndexList 
-	        of [] => ""
-	        |  indexes => "Array Slots: "^(slotsToString indexes)
-	in
-	    "Line #:"^(Int.toString lineNo) ^" "^(indexList)
-	end
     fun printLocation ( loc : location ) : unit = print (locationToString loc)
 
     fun printLTokens [] = print "\n"
@@ -308,7 +317,7 @@ struct
     in ( prefix ^
          ( case ty of
                Base (aux, t)  => (case t of nil => "[NULL]"
-					| _ => ( ltokenTyToString (hd t) )) ^ stats 
+					| _ => (ltokenTyToString (hd t)) ) ^ stats 
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
                 ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )

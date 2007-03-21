@@ -7,7 +7,8 @@ let
   val _ = print "\nBefore reduction:\n"
   val _ = printTy ty
   val _ = print "\n"
-(*  val _ = printConstMap cmap *)
+(*  val _ = printConstMap cmap 
+*)
   val reduced_ty = Reduce.reduce NONE ty 
 (*
   val _ = print "\nAfter initial reduction:\n"
@@ -19,7 +20,7 @@ let
   val _ = printTy reduced_ty'
   val _ = print "\n"
 in
-  reduced_ty'
+  reduced_ty' 
 end
 
 end

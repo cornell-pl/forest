@@ -23,7 +23,7 @@ timezone = [+-][0-1][0-9]00;
 ampm = am | AM | pm | PM;
 time    = {doublet}:{doublet}((:{doublet})?)(([ ]*{ampm})?)([ \t]+{timezone})?;
 port = [1-9][0-9]*;
-filename = [^\\/?*:<>"]+;
+filename = [^\\/?*:<>"]*[^\\/?*:<>".];
 filepath =  \/{filename}(\/{filename})*\/? | 
 	([a-zA-Z]:)?\\{filename}(\\{filename})*\\? |
 	\\\\{filename}(\\{filename})*\\?;

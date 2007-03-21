@@ -2,7 +2,7 @@ structure Tokens = struct
     open Complexity
     open Hosts
 
-    type location = { lineNo: int, beginloc: int, endloc:int, arrayIndexList : int list }
+    type location = { lineNo: int, beginloc: int, endloc:int, recNo:int}
 
     (* Establish an order on locations *)
     fun compLocation (l1:location, l2:location):order =

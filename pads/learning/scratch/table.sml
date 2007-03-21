@@ -6,6 +6,7 @@ structure Table = struct
 	open Common
 	structure LMap = LabelMap
 	exception TyMismatch
+	exception RecordNum
 	exception MissingId
 
 	(*an infertable is a table of Tokens plus headers*)
@@ -42,27 +43,27 @@ structure Table = struct
 	fun gencolumn (ltokens, columnsize) = 
 		(*get a token from a specfic line no from the token list
 		  if that line no doesn't exist, return NONE*)
-		let fun getTokenfromList tlist lineno = 
+		let fun getTokenfromList tlist recnum= 
 			case tlist of 
 			  [] => NONE
 			| (token, loc:location) :: tail =>
-				if #lineNo loc = lineno then SOME token
-				else getTokenfromList tail lineno
+				if #recNo loc = recnum then SOME token
+				else getTokenfromList tail recnum
 		in List.tabulate(columnsize, (getTokenfromList ltokens))
 		end
 
 	fun intToToken (i:int):Token = Pint(Int.toLarge i)
 
 	fun genintcolumn(lints, columnsize) =
-		(*get a token from a specfic line no from the token list
-		  if that line no doesn't exist, return NONE*)
-		let fun getIntfromList tlist lineno = 
+		(*get a token from a specfic record no from the int list
+		  if that record no doesn't exist, return NONE*)
+		let fun getIntfromList tlist recnum= 
 			case tlist of 
 			  [] => NONE
-			| (arraysize:int, linenum:int) :: tail =>
-				if linenum = lineno then 
+			| (arraysize:int, recordnum:int) :: tail =>
+				if recordnum = recnum then 
 				  SOME (intToToken(arraysize)) 
-				else getIntfromList tail lineno
+				else getIntfromList tail recnum
 		in List.tabulate(columnsize, (getIntfromList lints))
 		end
 
@@ -98,23 +99,25 @@ structure Table = struct
 			end
 		| Parray (a, {tokens=_, 
 			lengths= lens, first = fty, body=bty, last=lty}) =>
-			let 
-				val lencol = ([some(#label a)], [genintcolumn(lens, totalrecords)])
-				val firsttab = genTable totalrecords fty
-				(* currently we will truncate the first totalrecords from 
-				   the token list from the body ty
-				*)
-				val bodytab = genTable totalrecords bty
-				val lasttab = genTable totalrecords lty
-			in List.foldr appendtab (nil, nil) 
-				([lencol] @ [firsttab] @ [bodytab] @ [lasttab])
-			end
-		| RArray (a, _, _, body, _, lens) => 
-			let 
-				val lencol = ([some(#label a)], [genintcolumn(lens, totalrecords)])
-			in
-				appendtab(lencol, genTable totalrecords body)
-			end 
+			List.foldr appendtab (nil, nil) 
+				[([some(#label a)], [genintcolumn(lens, totalrecords)]),
+				 genTable totalrecords fty, genTable totalrecords lty]
+		| RArray (a, _, _, _, _, lens) => 
+			([some(#label a)], [genintcolumn(lens, totalrecords)])
 		| _ => (nil, nil):infertable
+
+	fun parseArrays ty =
+	  case ty of
+		Base _ => []
+	 	| TBD _ => []
+		| Bottom _ => []
+		| Pstruct (_, l) => List.concat (map parseArrays l)
+		| Punion (_, l) => List.concat (map parseArrays l)
+		| Parray(_, {tokens=_, 
+			lengths= lens, first = fty, body=bty, last=lty}) =>
+			(parseArrays fty) @ [bty] @ (parseArrays lty)
+		| RefinedBase _ => []
+		| RArray (_, _, _, body, _, _) => [body]
+		| _ => raise TyMismatch
 
 end

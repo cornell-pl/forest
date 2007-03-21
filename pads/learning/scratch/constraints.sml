@@ -352,24 +352,13 @@ structure Map = RedBlackMapFn(struct
 	in
 		List.exists (fn x => x()) [ inside_sum, determines_from_inside ]
 	end
-(* the main constraining function. Takes an unlabeled IR and data
-parsed using that IR, and returns:
-the labeled IR, the constraint_map that constraints it, and the labels that were used.
-Also prints out information about the dependencies and keys it found *)
-	fun constrain'(ty:Ty) = 
+
+(* the main constraining function. Takes a constraint map and a Ty, and returns an updated
+constraint map *)
+	fun constrainTy (ty, cmap) = 
 	let
 		(* make the table *)
-		fun getnumrecords (ty) = 
-			case ty of Base(aux, _) => (#coverage aux)
-			| TBD (aux, _, _) => (#coverage aux)
-			| Bottom (aux, _, _) => (#coverage aux)
-			| Pstruct (aux, _) => (#coverage aux)
-			| Punion (aux, _) => (#coverage aux)
-			| Parray (aux, _) => (#coverage aux)
-			| RArray (aux, _, _, _, _, _) => (#coverage aux)
-			| _ => raise TyMismatch 
-
-		val tytable = Table.genTable (getnumrecords(ty)) ty
+		val tytable = Table.genTable (getCoverage(ty)) ty
 (*
 		val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n")
 		val _ = if Options.print_tables then 
@@ -446,6 +435,18 @@ Also prints out information about the dependencies and keys it found *)
 		     ) consts
 		val consts = foldr (fn (dep, c) => add_to_consts c dep) consts found_deps
 	in foldr (fn ({label,constraints,previous_values},cm) => 
-			LabelMap.insert(cm,label,map #1 constraints)) LabelMap.empty consts
+			LabelMap.insert(cm,label,map #1 constraints)) cmap consts
 	end
+
+	fun constrain' ty =
+	let
+		val arrays= Table.parseArrays ty
+		val newarrays = case ty of 
+				Parray _ => arrays
+			|	RArray _ => arrays
+			|	_ => ty::arrays	
+	in
+		foldl constrainTy LabelMap.empty newarrays 
+	end
+
 end

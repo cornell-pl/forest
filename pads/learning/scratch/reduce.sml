@@ -126,7 +126,7 @@ case ty of
     Pstruct(a, List.filter (fn x => case x of 
 			Base(_, nil) => false 
 			| Base (_, tl) => not(ltoken_equal((hd tl), 
-					(Pempty, {lineNo=0, beginloc=0, endloc=0,arrayIndexList=[]}))) 
+					(Pempty, {lineNo=0, beginloc=0, endloc=0,recNo=0}))) 
 			| RefinedBase(_, _, nil) => false
 			| _ => true ) tylist)
 | _ => ty
@@ -267,7 +267,8 @@ and adjacent_consts cmos ty =
 	 fun mergetok (t1:LToken, t2:LToken) : LToken =
 	    let
 		fun combineloc (loc1:location, loc2:location) = 
-		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2),arrayIndexList=(#arrayIndexList loc1)}
+		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2),
+			recNo=(#recNo loc1)}
 	    in
 		case (t1, t2) of 
 			((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
@@ -337,7 +338,7 @@ case ty of
   end
 | _ => ty
 (* rule to convert a normal Parray to a refined RArray *)
-and refine_array ty = 
+and refine_array cmos ty = 
 	case ty of 
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
@@ -524,7 +525,7 @@ and refine_array ty =
 		    val _ = (print "Done refining array in struct to:\n"; printTy newty)  
 *)
 		  in
-		 	newty
+		 	(cmos, newty)
 		  end
 	end 
 	| Pstruct(a, tylist) =>
@@ -567,9 +568,9 @@ and refine_array ty =
 		  val _ = (print "Done refining array in struct to:\n"; printTy (Pstruct(a, tylist')))
 *)
 		in
-		  Pstruct(a, tylist')
+		  (cmos, Pstruct(a, tylist'))
 		end
-	|_ => ty
+	|_ => (cmos, ty)
 
 (* post constraint rules, these require the cmap to be filled  and the 
 data labeled *)
@@ -850,11 +851,11 @@ let
 			unnest_sums,
 			prefix_postfix_sums,
 			remove_nils,
-		  	unused_branches,
-			refine_array
+		  	unused_branches
 		]
   val post_constraint_rules : post_reduction_rule list =
 		[ 
+			refine_array,
 		  uniqueness_to_const, 
 		  adjacent_consts,
 		  enum_range_to_refine,
