@@ -256,10 +256,9 @@ structure Tokens = struct
                            ( Substring.fields isSep ( Substring.full s ) )
                  in if nsep = 0 then size s else size s - nsep
                  end
+               (* URLs are too hard to parse right now *)
              | Purl s         => size s
              | Pip s          => size s
-               (* For now, we assume the last component is a domain name.
-                  we should check this later *)
              | Phostname s    =>
                  let val ndot          : int            = countCh #"." s
                      fun isDot ( x : char ) : bool = x = #"."

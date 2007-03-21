@@ -3,10 +3,10 @@ structure Tests = struct
     open Model
 
     (* Some locations to use *)
-    val ln1 : location = { lineNo = 1, beginloc = 10, endloc = 20 }
-    val ln2 : location = { lineNo = 2, beginloc = 12, endloc = 22 }
-    val ln3 : location = { lineNo = 3, beginloc = 13, endloc = 23 }
-    val ln4 : location = { lineNo = 4, beginloc = 14, endloc = 24 }
+    val ln1 : location = { lineNo = 1, beginloc = 10, endloc = 20, recNo = 1 }
+    val ln2 : location = { lineNo = 2, beginloc = 12, endloc = 22, recNo = 1 }
+    val ln3 : location = { lineNo = 3, beginloc = 13, endloc = 23, recNo = 1 }
+    val ln4 : location = { lineNo = 4, beginloc = 14, endloc = 24, recNo = 1 }
 
     (* Some AuxInfo structures to use *)
     val a1 : AuxInfo = { coverage = 7

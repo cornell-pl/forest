@@ -98,6 +98,12 @@ $(XS): %.x: %
 silvers: $(SILVERS)
 	echo Making silver version of each data file output
 
+define tosilver
+foreach 
+cp output/$(*F)/Ty silver/$(*F);
+cp output/$(*F)/Params silver/$(*F);
+endef
+
 define silver-it
 @if [ ! -d silver/$(*F) ] ; then mkdir silver/$(*F); fi
 cp output/$(*F)/Ty silver/$(*F);

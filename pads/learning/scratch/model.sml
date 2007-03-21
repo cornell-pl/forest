@@ -1,17 +1,3 @@
-(*------------------------------------------------------------------------------
---
--- Revision history
---
--- version 1: March 1, 2007: first draft
--- version 2: March 8, 2007:
---   Fixed elementary coding bugs
---   Changed type complexity to codebook scheme
---   Ran against some of the PADS test cases
--- version 3: March 8, 2007
---   Tested and fixed Refined base type computations.
---
-------------------------------------------------------------------------------*)
-
 structure Model = struct
     open Complexity
     open Types
@@ -44,7 +30,7 @@ structure Model = struct
                                            ( multCompS (size s) (int2Comp numStringChars) )
                                  , zeroComp
                                  )
-             | Enum rl        => ( combine ( maxComps ( map refinedTypeComp rl ) )
+             | Enum rl        => ( combine ( sumComps ( map refinedTypeComp rl ) )
                                            ( sumComps [ constructorComp
                                                       , int2CompS ( length rl )
                                                       ]
@@ -77,7 +63,7 @@ structure Model = struct
          | SOME r => refinedComp 1 r
     )
 
-    (* Compute the complexity of a base type (e.g. Pint) *)
+    (* Compute the complexity of a base type *)
     fun baseComp ( lts : LToken list ) : Complexity * Complexity =
     ( case lts of
            []      => ( zeroComp, zeroComp )
@@ -149,8 +135,12 @@ structure Model = struct
              end
          | Pstruct (a,tys)              =>
              let val measuredtys = map measure tys
-             in Pstruct ( updateComps a (combine constructorComp (sumTypeComps measuredtys))
-                                        (sumDataComps measuredtys)
+             in Pstruct ( updateComps a ( sumComps [ constructorComp 
+                                                   , cardComp tys
+                                                   , sumTypeComps measuredtys
+                                                   ]
+                                        )
+                                        ( sumDataComps measuredtys )
                         , measuredtys
                         )
              end
