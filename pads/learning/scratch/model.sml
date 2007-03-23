@@ -8,20 +8,20 @@ structure Model = struct
 
     (* Make a base complexity from a multiplier (often maximum length of token)
        and a number of choices. *)
-    fun mkBaseComp ( mult : int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
-        ( constructorComp, multComp (Int.toLarge mult) ( int2Comp choices ) )
+    fun mkBaseComp ( mult : LargeInt.int ) ( choices : LargeInt.int ) : Complexity  * Complexity =
+        ( constructorComp, multComp mult ( int2Comp choices ) )
     fun mkBaseCompR ( mult : real ) ( choices : LargeInt.int ) : Complexity  * Complexity =
         ( constructorComp, multCompR mult ( int2Comp choices ) )
 
     (* Compute the type and data complexity of a refined type *)
-    fun refinedComp ( multiplier:int ) ( r:Refined ) : Complexity * Complexity =
+    fun refinedComp ( mult : LargeInt.int ) ( r : Refined ) : Complexity * Complexity =
         ( case r of
-               StringME s     => mkBaseComp multiplier numStringChars
+               StringME s     => mkBaseComp mult numStringChars
              | Int (min, max) => ( sumComps [ constructorComp
                                             , int2Comp min
                                             , int2Comp max
                                             ]
-                                 , int2Comp ( max - min + 1 )
+                                 , multComp mult ( int2Comp ( max - min + 1 ) )
                                  )
              | IntConst n     => ( sumComps [ constructorComp, int2Comp 2, int2Comp n ]
                                  , zeroComp
@@ -30,24 +30,24 @@ structure Model = struct
                                            ( multCompS (size s) (int2Comp numStringChars) )
                                  , zeroComp
                                  )
-             | Enum rl        => ( combine ( sumComps ( map refinedTypeComp rl ) )
+             | Enum rl        => ( combine ( maxComps ( map (refinedTypeComp mult) rl ) )
                                            ( sumComps [ constructorComp
                                                       , int2CompS ( length rl )
                                                       ]
                                            )
                                   (* Assumes all brances constants *)
-                                 , int2CompS ( length rl )
+                                 , multComp mult ( int2CompS ( length rl ) )
                                  )
              | LabelRef i     => ( unitComp, unitComp )
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
-    and refinedTypeComp ( r : Refined ) : Complexity = #1 (refinedComp 1 r)
+    and refinedTypeComp ( mult : LargeInt.int ) ( r : Refined ) : Complexity = #1 (refinedComp mult r)
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
-    and refinedDataComp ( r : Refined ) : Complexity = #2 (refinedComp 1 r)
+    and refinedDataComp ( mult : LargeInt.int ) ( r : Refined ) : Complexity = #2 (refinedComp mult r)
 
     (* Measure a refined base type *)
     exception NotRefinedBase (* Function should be called only with refined base type *)
-    fun measureRefined (m:int) (ty:Ty) : Ty =
+    fun measureRefined ( m : LargeInt.int ) ( ty : Ty ) : Ty =
     ( case ty of
            RefinedBase ( a, r, ts ) =>
              let val ( tcomp, dcomp ) = refinedComp m r
@@ -68,28 +68,31 @@ structure Model = struct
     ( case lts of
            []      => ( zeroComp, zeroComp )
          | (t::ts) =>
-             let val avglen  = avgTokenLength lts
+             let val avglen : real         = avgTokenLength lts
+                 val totlen : LargeInt.int = sumTokenLength lts
+                 val numTokens : int       = length lts
+                 val mult : real           = Real.fromInt numTokens * avglen
              in ( case tokenOf t of
-                    PbXML (s1, s2)    => mkBaseCompR avglen numXMLChars
-                  | PeXML (s1, s2)    => mkBaseCompR avglen numXMLChars
-                  | Ptime s           => mkBaseComp 1 numTime
-                  | Pdate s           => mkBaseComp 1 numDate
-                  | Ppath s           => mkBaseCompR avglen numStringChars
-                  | Purl s            => mkBaseCompR avglen numStringChars
-                  | Pip s             => mkBaseComp 1 numIP
-                  | Phostname s       => mkBaseCompR avglen numStringChars
+                    PbXML (s1, s2)    => mkBaseComp totlen numXMLChars
+                  | PeXML (s1, s2)    => mkBaseComp totlen numXMLChars
+                  | Ptime s           => mkBaseComp totlen numTime
+                  | Pdate s           => mkBaseComp totlen numDate
+                  | Ppath s           => mkBaseComp totlen numStringChars
+                  | Purl s            => mkBaseComp totlen numStringChars
+                  | Pip s             => mkBaseComp totlen numIP
+                  | Phostname s       => mkBaseComp totlen numStringChars
                   | Pint l            => ( constructorComp
                                          , combine ( int2Comp 2 )
                                                    ( multCompR avglen ( int2Comp numDigits ) )
                                          )
                   | Pstring s         => ( constructorComp
-                                         , multCompR avglen ( int2Comp numStringChars )
+                                         , multComp totlen ( int2Comp numStringChars )
                                          )
                   | Pgroup x          => ( constructorComp, unitComp ) (* ???? *)
                   | Pwhite s          => ( constructorComp
-                                         , multCompR avglen ( int2Comp numWhiteChars )
+                                         , multComp totlen ( int2Comp numWhiteChars )
                                          )
-                  | Other c           => mkBaseComp 1 numStringChars
+                  | Other c           => mkBaseComp totlen numStringChars
                   | Pempty            => ( constructorComp, unitComp )
                   | Error             => ( constructorComp, unitComp )
                 )
@@ -152,7 +155,8 @@ structure Model = struct
                                       , sumTypeComps measuredtys
                                       ]
                            )
-                           ( combine (cardComp tys) (sumDataComps measuredtys) )
+                           ( combine (cardComp tys)  ( sumDataComps measuredtys ) )
+(*                           ( combine (cardComp tys)  ( weighted ( sumCoverage measuredtys ) measuredtys ) ) *)
                        , measuredtys
                        )
              end
@@ -166,7 +170,6 @@ structure Model = struct
              let val f'     = measure f
                  val b'     = measure b
                  val l'     = measure l
-                 val maxlen = maxInt (map #1 ls)
                  val tcomp  = sumComps [ constructorComp
                                        , getTypeComp f'
                                        , getTypeComp l'
@@ -174,7 +177,7 @@ structure Model = struct
                                        ]
                  val dcomp  = sumComps [ getDataComp f'
                                        , getDataComp l'
-                                       , multCompS maxlen (getDataComp b')
+                                       , getDataComp b'
                                        ]
              in Parray ( updateComps a tcomp dcomp
                        , { tokens  = ts
@@ -185,17 +188,17 @@ structure Model = struct
                          }
                        )
              end
-         | rb as RefinedBase ( a, r, ts ) => measureRefined (maxTokenLength ts) rb
+         | rb as RefinedBase ( a, r, ts ) => measureRefined (Int.toLarge (length ts)) rb
          | Switch ( a, id, bs)      =>
              let val switches         = map #1 bs
                  val branches         = map #2 bs
                  val sumBranches      = sumCoverage branches
                  val measuredBranches = map measure branches
                  val branchesTypeComp = sumTypeComps measuredBranches
-                 val branchesDataComp = weighted sumBranches measuredBranches
+                 val branchesDataComp = multCompS ( #coverage a ) ( weighted sumBranches measuredBranches )
              in Switch ( updateComps a
                           ( sumComps [ constructorComp, cardComp bs, branchesTypeComp ] )
-                          ( combine ( cardComp bs ) branchesDataComp )
+                          branchesDataComp
                        , id
                        , ListPair.zip ( switches, measuredBranches )
                        )
@@ -209,7 +212,7 @@ structure Model = struct
                  val ( tsep, dsep )   = refinedOptionComp osep
                  val tcomp = sumComps [ constructorComp, tbody, tterm, tsep, unitComp, unitComp ]
                  val dcomp = sumComps [ dbody, dlen, dterm, dsep]
-                 fun updateRArray (t:Complexity) (d:Complexity) =
+                 fun updateRArray ( t : Complexity ) ( d : Complexity ) =
                    RArray ( updateComps a t d, osep, oterm, mBody, olen, ls )
              in updateRArray tcomp dcomp
              end

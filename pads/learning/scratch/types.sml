@@ -218,7 +218,7 @@ struct
         |  Pwhite s => (case s of 
 			"\t" => "\\t"
 			| _ => s)
-        |  Other c  => String.implode [c]
+        |  Other c  => Char.toString c
         |  Pempty   => "\\0"
         |  Error    => " Error"
     and refinedToString ( re : Refined ) : string =
@@ -264,7 +264,7 @@ struct
     fun printTokenTy ( t : Token ) : unit = print (tokenTyToString t)
 
     fun LTokensToString [] = "\n"
-      | LTokensToString (t::ts) = (ltokenTyToString t) ^ (LTokensToString ts)
+      | LTokensToString (t::ts) = (ltokenToString t) ^ (LTokensToString ts)
 
     fun printLocation ( loc : location ) : unit = print (locationToString loc)
 
@@ -317,7 +317,7 @@ struct
     in ( prefix ^
          ( case ty of
                Base (aux, t)  => (case t of nil => "[NULL]"
-					| _ => (ltokenTyToString (hd t)) ) ^ stats 
+					| _ => (LTokensToString t) ) ^ stats 
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
                 ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )

@@ -1020,17 +1020,31 @@ struct
 		    fun pushRecNo contexts index=
 		    	let 
 				fun pushRecNo' tl index =
+(*
+				  let
+		    			val _ = print ("Printing main context: ("^(Int.toString index)^")\n" ^ LTokensToString tl) 
+				  in
+*)
 					case tl of
-					(t, {lineNo, beginloc, endloc, recNo}) :: ts => 
+					(t, {lineNo, beginloc, endloc, recNo}) :: rest => 
 					  (t, {lineNo=lineNo, beginloc=beginloc, endloc=endloc, recNo=index})::
-						(pushRecNo' ts index)
+						(pushRecNo' rest index)
 					| nil => nil
+(*
+				  end
+*)
 			in 
 				case contexts of 
 				  c::rest => (pushRecNo' c index) :: pushRecNo rest (index+1)
 				  | nil => nil
 			end
+(*
+		    val _ = print ("Before pushing contexts:\n"^(contextsToString mainContext))
 		    val mainContext = pushRecNo mainContext 0
+*)
+(*
+		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
+*)
 		in
 		    (print "Array context\n"; 
 		     Parray (mkTyAux numRecords, 

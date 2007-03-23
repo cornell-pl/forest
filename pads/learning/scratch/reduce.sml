@@ -338,7 +338,7 @@ case ty of
   end
 | _ => ty
 (* rule to convert a normal Parray to a refined RArray *)
-and refine_array cmos ty = 
+and refine_array ty = 
 	case ty of 
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
@@ -470,7 +470,11 @@ and refine_array cmos ty =
 		in
 			if (isEmpty(last)) (*no sep and terminator is outside*)
 			then if describedBy(first, body) then
-					(NONE, NONE, NONE, SOME(mergeTyInto(first, body)), NONE)
+				  let
+					val first' = reIndexRecNo first (getCoverage body)
+				  in
+					(NONE, NONE, NONE, SOME(mergeTyInto(first', body)), NONE)
+				  end
 				else
 					(NONE, NONE, SOME first, SOME body, NONE)
 			else (* with possible sep and possible term inside last *)
@@ -488,19 +492,27 @@ and refine_array cmos ty =
 			     case (firsteqbody, lasteqbody, withSep) of 
 				(true, true, true) => 
 					let 
-					  val body' = mergeTyInto(droplast(first), droplast(body))
-					  val body'' = mergeTyInto(last, body')
+					  val first' = reIndexRecNo (droplast first) (getCoverage body)
+					  val body' = mergeTyInto(first', droplast(body))
+					  val last' = reIndexRecNo last (getCoverage body')
+					  val body'' = mergeTyInto(last', body')
 					in
 					(bodytail, NONE, NONE, SOME(body''), NONE)
 					end
-				| (true, true, false) => (NONE, NONE, NONE,
-					SOME(mergeTyInto(last, 
-						mergeTyInto(droplast(first), droplast(body)))),
-					NONE)
+				| (true, true, false) => 
+					let
+					  val first' = reIndexRecNo (droplast first) (getCoverage body)
+					  val body' = mergeTyInto(first', (droplast body))
+					  val last' = reIndexRecNo last (getCoverage body')
+					in
+					  (NONE, NONE, NONE, SOME(mergeTyInto(last', body')), NONE)
+					end
 				| (true, false, _) => (NONE, NONE, NONE, 
-					SOME(mergeTyInto(first, body)), SOME last)
+					SOME(mergeTyInto((reIndexRecNo first (getCoverage body)), body)), 
+					SOME last)
 				| (false, true, _) => (bodytail, NONE, SOME first,
-					SOME(mergeTyInto(last, droplast(body))), NONE)
+					SOME(mergeTyInto((reIndexRecNo last (getCoverage body)), 
+					droplast(body))), NONE)
 				| (_, _, _) => (NONE, NONE, SOME first, SOME body, SOME last)
 			  end
 		end handle TyMismatch => (NONE, NONE, SOME first, SOME body, SOME last)
@@ -525,7 +537,7 @@ and refine_array cmos ty =
 		    val _ = (print "Done refining array in struct to:\n"; printTy newty)  
 *)
 		  in
-		 	(cmos, newty)
+		 	newty
 		  end
 	end 
 	| Pstruct(a, tylist) =>
@@ -567,10 +579,9 @@ and refine_array cmos ty =
 (*
 		  val _ = (print "Done refining array in struct to:\n"; printTy (Pstruct(a, tylist')))
 *)
-		in
-		  (cmos, Pstruct(a, tylist'))
+		in Pstruct(a, tylist')
 		end
-	|_ => (cmos, ty)
+	|_ => ty
 
 (* post constraint rules, these require the cmap to be filled  and the 
 data labeled *)
@@ -851,11 +862,11 @@ let
 			unnest_sums,
 			prefix_postfix_sums,
 			remove_nils,
-		  	unused_branches
+		  	unused_branches,
+			refine_array
 		]
   val post_constraint_rules : post_reduction_rule list =
 		[ 
-			refine_array,
 		  uniqueness_to_const, 
 		  adjacent_consts,
 		  enum_range_to_refine,

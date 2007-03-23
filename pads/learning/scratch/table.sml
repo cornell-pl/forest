@@ -47,7 +47,8 @@ structure Table = struct
 			case tlist of 
 			  [] => NONE
 			| (token, loc:location) :: tail =>
-			    if #recNo loc >= columnsize then raise RecordNum
+			    if #recNo loc >= columnsize then 
+				(print ((LTokensToString ltokens)^"\n"^Int.toString (#recNo loc)^">"^(Int.toString columnsize)^"\n"); raise RecordNum)
 			    else	
 				if #recNo loc = recnum then SOME token
 				else getTokenfromList tail recnum
@@ -72,10 +73,11 @@ structure Table = struct
 	fun genTable totalrecords ty : infertable = case ty of
 		Base (a, ltokenl) =>
 			let 
-				val col = gencolumn(ltokenl, totalrecords)
 (*
+				val _ = printTy ty
 				val _ = printLTokens ltokenl
 *)
+				val col = gencolumn(ltokenl, totalrecords)
 			in ([some(#label a)], [col]):infertable
 			end
 		| TBD _ => (nil, nil) : infertable

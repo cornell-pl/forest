@@ -423,6 +423,10 @@ structure Common = struct
 	and a start index and returns the updated ty *)
 	fun reIndexRecNo ty startindex = 
 	  let
+(*
+		val _ = print ("startindex = "^(Int.toString startindex)^" and The ty is\n")
+		val _ = printTy ty
+*)
 		fun insertTListToMap tl intmap =
 			case tl of
 				nil => intmap
@@ -461,9 +465,9 @@ structure Common = struct
 				  val newRecop = IntMap.find(intmap, recNo)
 				in
 				  case newRecop of
-					NONE => raise RecordNum
-					| _ => newtl@[(t, {lineNo=lineNo, beginloc=beginloc, 
-							endloc=endloc, recNo=some(newRecop)})]
+					NONE => (print "One recNum not found!\n"; raise RecordNum)
+					| _ => updateTL(intmap, ts, newtl@[(t, {lineNo=lineNo, beginloc=beginloc, 
+							endloc=endloc, recNo=some(newRecop)})])
 				end
 		fun updateTy intmap ty =
 		  case ty of
