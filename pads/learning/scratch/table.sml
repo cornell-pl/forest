@@ -116,9 +116,9 @@ structure Table = struct
 		| Punion (_, l) => List.concat (map parseArrays l)
 		| Parray(_, {tokens=_, 
 			lengths= lens, first = fty, body=bty, last=lty}) =>
-			(parseArrays fty) @ [bty] @ (parseArrays lty)
+			(parseArrays fty) @ [bty] @ (parseArrays bty) @ (parseArrays lty)
 		| RefinedBase _ => []
-		| RArray (_, _, _, body, _, _) => [body]
+		| RArray (_, _, _, body, _, _) => [body] @ (parseArrays body)
 		| _ => raise TyMismatch
 
 end
