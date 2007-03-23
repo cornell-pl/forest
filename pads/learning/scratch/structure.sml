@@ -1019,6 +1019,11 @@ struct
 		    val (arrayLengths, firstContext,mainContext,lastContext) = partitionRecords rtokens
 		    fun pushRecNo contexts index=
 		    	let 
+				fun f ltoken index =
+					case ltoken of 
+					 (t, {lineNo, beginloc, endloc, recNo}) => 
+						(t, {lineNo=lineNo, beginloc=beginloc, endloc=endloc, 
+							recNo=index})
 				fun pushRecNo' tl index =
 (*
 				  let
@@ -1026,9 +1031,14 @@ struct
 				  in
 *)
 					case tl of
-					(t, {lineNo, beginloc, endloc, recNo}) :: rest => 
-					  (t, {lineNo=lineNo, beginloc=beginloc, endloc=endloc, recNo=index})::
-						(pushRecNo' rest index)
+					  t :: rest => 
+					  (
+					    case t of (Pgroup {left=lt, body=bts, right=rt}, loc) =>
+					        (f (Pgroup {left=(f lt index), body=pushRecNo' bts index,
+						    right= (f rt index)}, loc) index)::
+						    (pushRecNo' rest index)
+					    | _ => (f t index)::(pushRecNo' rest index)
+					  )
 					| nil => nil
 (*
 				  end
