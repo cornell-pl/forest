@@ -73,10 +73,7 @@ structure Table = struct
 	fun genTable totalrecords ty : infertable = case ty of
 		Base (a, ltokenl) =>
 			let 
-(*
 				val _ = printTy ty
-				val _ = printLTokens ltokenl
-*)
 				val col = gencolumn(ltokenl, totalrecords)
 			in ([some(#label a)], [col]):infertable
 			end

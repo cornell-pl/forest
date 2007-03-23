@@ -317,7 +317,8 @@ struct
     in ( prefix ^
          ( case ty of
                Base (aux, t)  => (case t of nil => "[NULL]"
-					| _ => (LTokensToString t) ) ^ stats 
+					| _ => (ltokenTyToString (hd t)) )^"TL len: "^
+					(Int.toString (length t))^" "^ stats 
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
                 ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )
@@ -334,7 +335,8 @@ struct
                 "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
-             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats 
+             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ "TL len: "^
+					(Int.toString (length tl))^" "^stats 
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
                 (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 

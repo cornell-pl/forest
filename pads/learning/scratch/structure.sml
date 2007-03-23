@@ -1040,8 +1040,8 @@ struct
 			end
 (*
 		    val _ = print ("Before pushing contexts:\n"^(contextsToString mainContext))
-		    val mainContext = pushRecNo mainContext 0
 *)
+		    val mainContext = pushRecNo mainContext 0
 (*
 		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
 *)
