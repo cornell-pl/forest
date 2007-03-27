@@ -61,7 +61,8 @@ fun cost const_map ty =
 		| RArray (a, sepop, termop, body, lenop, lens) => 
 			(case sepop of SOME (sep) => 0 | NONE => 1) +
 			(case termop of SOME (term) => 0 | NONE => 1) + 
-			(cost const_map body) 
+			(cost const_map body)
+		| Poption (a, ty) => (cost const_map ty) + 3 
 	in (ty_cost ty) + (total_const_cost ty) + 1 (* every constraint is counted towards cost *)
   end
 
@@ -583,6 +584,38 @@ and refine_array ty =
 		end
 	|_ => ty
 
+and union_to_optional ty =
+	case ty of 
+		Punion (a, tys) =>
+		    let 
+			fun onlyNonEmpty tylist find =
+			  case tylist of
+				nil => find
+				| t :: ts =>
+					( 
+					case t of
+					  Base (_, ltokens) => (case (hd ltokens) of 
+								(Pempty, _) => onlyNonEmpty ts find
+								| _ => (case find of 
+									NONE => onlyNonEmpty ts (SOME t)
+									| _ => NONE
+									)
+							       )
+					 | RefinedBase (_, StringConst (""), _) => onlyNonEmpty ts find
+					 | _ => (case find of 
+							NONE => onlyNonEmpty ts (SOME t)
+							| _ => NONE
+						)
+
+					)
+			val tyop = onlyNonEmpty tys NONE
+		    in
+			case tyop of 
+				NONE => ty
+				| SOME(ty') => Poption (a, ty')
+		    end	
+		| _ => ty
+
 (* post constraint rules, these require the cmap to be filled  and the 
 data labeled *)
 
@@ -863,7 +896,8 @@ let
 			prefix_postfix_sums,
 			remove_nils,
 		  	unused_branches,
-			refine_array
+			refine_array,
+			union_to_optional
 		]
   val post_constraint_rules : post_reduction_rule list =
 		[ 
@@ -927,6 +961,12 @@ let
                                 in
                                 (cmap', RArray (a, sep, term, body', len, lengths))
                                 end
+			| Poption (a, body) => 
+                                let
+                                val (cmap', body') = reduce' mode cmap body
+                                in
+                                (cmap', Poption(a, body'))
+				end
 
 	  fun iterate cmap ty = 
 	  let

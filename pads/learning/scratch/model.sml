@@ -216,6 +216,14 @@ structure Model = struct
                    RArray ( updateComps a t d, osep, oterm, mBody, olen, ls )
              in updateRArray tcomp dcomp
              end
+	| Poption (a, ty) => 
+	    let val mBody = measure ty
+                 val ( tbody, dbody ) = getComps mBody
+                 val tcomp = sumComps [ constructorComp, tbody, unitComp, unitComp ]
+                 val dcomp = sumComps [ dbody ]
+	    in
+		Poption(updateComps a tcomp dcomp, mBody)
+	    end
     )
 
     (* Using this function will result in lots of computation on

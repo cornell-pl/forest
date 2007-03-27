@@ -445,6 +445,7 @@ structure Common = struct
 			| RArray(_, _, _, ty, _, lens) => insertToMap ty intmap 
 			(*TODO: need to work on lens of RArray as well!!!*)
 			| Switch (a, i, rtl) => foldr (fn ((r, ty), m) => insertToMap ty m) intmap rtl
+			| Poption (a, ty) => insertToMap ty intmap
 
 		fun updateMap intmap =
 		  let

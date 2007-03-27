@@ -105,6 +105,7 @@ structure Table = struct
 				 genTable totalrecords fty, genTable totalrecords lty]
 		| RArray (a, _, _, _, _, lens) => 
 			([some(#label a)], [genintcolumn(lens, totalrecords)])
+		| Poption (a, ty') => genTable totalrecords ty'
 		| _ => (nil, nil):infertable
 
 	fun parseArrays ty =
@@ -119,6 +120,7 @@ structure Table = struct
 			(parseArrays fty) @ [bty] @ (parseArrays bty) @ (parseArrays lty)
 		| RefinedBase _ => []
 		| RArray (_, _, _, body, _, _) => [body] @ (parseArrays body)
+		| Poption (_, t) => parseArrays t
 		| _ => raise TyMismatch
 
 end

@@ -71,6 +71,7 @@ struct
 	                             * Ty             (* body type *)
                                      * Refined option (* fixed length *) 
 				     * (int*int) list (* (length, linenumber) list*)
+		| Poption of AuxInfo * Ty (* a Ty which is optional *)
 
     (* Number of kinds of tree nodes in Ty *)
     val numConstruct    : LargeInt.int = numTy + numRefined + numToken
@@ -90,6 +91,7 @@ struct
         |  RefinedBase (a,r,tl)         => a
         |  Switch(a,id,branches)        => a
         |  RArray (a,sep,term,body,len,lengths) => a
+        |  Poption (a, _)               => a
 
     fun setAuxInfo ty aux = 
 	case ty 
@@ -102,6 +104,7 @@ struct
         |  RefinedBase (a,r,tl)         => RefinedBase(aux, r, tl)
         |  Switch(a,id,branches)        => Switch(aux, id, branches)
         |  RArray (a,sep,term,body,len,lengths) => RArray(aux, sep, term, body, len, lengths)
+        |  Poption (a,ty)               => Poption(aux, ty)
 
     (* Compute the length of an RArray. This function should always be
        passed a Ty value under the RArray constructor, if not, it throws
@@ -352,6 +355,9 @@ struct
                          prefix ^ "\tTerminator: "^ refinedToString(termtok) ^ "\n"
                      | _ => "" ) ^
                 ( partialD body ) ^ prefix ^ "End RArray" 
+             | Poption (aux, ty) =>
+                "Poption" ^ stats ^ "\n" ^
+                (partialD ty) ^ prefix ^ "End Pstruct"
          ) ^
          suffix )
      end 

@@ -50,6 +50,7 @@ struct
         |  RefinedBase (a,r,tl) => mkComplexity(0,0,0)
         |  Switch(a,id,branches) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) ((#2 o ListPair.unzip) branches)))
         |  RArray (a,sep,term,body,len,_) => complexity body (* fix this!*)
+	| Poption (a, ty) => complexity ty (* fix this! *)
 	end
 
 

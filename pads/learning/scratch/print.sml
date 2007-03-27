@@ -55,6 +55,7 @@ struct
                  | RefinedBase (aux, r,tl ) => ()  (* to be filled in *)
                  | Switch (aux, id, labeledTys) => ()(* to be filled in *)
                  | RArray _ => () (* to be filled in *)
+		 | Poption _ => () (* to be filled in *)
     	in  
           ( print "Complexity of inferred type:\n\t";
             printComplexity (complexity ty);
