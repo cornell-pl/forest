@@ -27,6 +27,7 @@ structure Tokens = struct
     val numStringChars : LargeInt.int  = numAlphaChars + numDigits + 1 + 1
     val numWhiteChars  : LargeInt.int  = 2 (* Space and tab *)
     val numXMLChars    : LargeInt.int  = numAlphaChars
+    val compXML        : Complexity    = int2Comp numXMLChars
 
     (* Some analysis of the structure of tokens from tokens.lex: *)
     fun powerL ( x : LargeInt.int ) ( y : int ) : LargeInt.int =
@@ -35,6 +36,7 @@ structure Tokens = struct
     val numTriplet       : LargeInt.int = 1000
     val numIPTriplet     : LargeInt.int = 256
     val numIP            : LargeInt.int = powerL numIPTriplet 4
+    val compIP           : Complexity   = int2Comp numIP
     val numDoublet       : LargeInt.int = 100
     val numTimeZone      : LargeInt.int = 2 * 2 * 10
     val numAMPM          : LargeInt.int = 4

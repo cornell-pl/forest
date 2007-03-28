@@ -102,18 +102,12 @@ structure Model = struct
                                          , dc  = combine ( int2Comp 2 )
                                                          ( multComp totlen ( int2Comp numDigits ) )
                                          }
-                  | Pstring s         => { tc  = constructorComp
-                                         , adc = multComp totlen ( int2Comp numStringChars )
-                                         , dc  = multComp totlen ( int2Comp numStringChars )
-                                         }
+                  | Pstring s         => mkBaseComp avglen totlen numStringChars
                   | Pgroup x          => { tc  = constructorComp
                                          , adc = unitComp
                                          , dc  = unitComp
                                          }
-                  | Pwhite s          => { tc  =  constructorComp
-                                         , adc = multCompR avglen ( int2Comp numWhiteChars )
-                                         , dc  = multComp totlen ( int2Comp numWhiteChars )
-                                         }
+                  | Pwhite s          => mkBaseComp avglen totlen numWhiteChars
                   | Other c           => mkBaseComp avglen totlen numStringChars
                   | Pempty            => { tc  = constructorComp
                                          , adc = unitComp
