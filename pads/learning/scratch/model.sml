@@ -45,13 +45,13 @@ structure Model = struct
                                  , adc = zeroComp
                                  , dc  = zeroComp
                                  }
-             | Enum rl        => { tc  = combine ( maxComps ( map (refinedTypeComp avg tot) rl ) )
-                                                 ( sumComps [ constructorComp
-                                                            , int2CompS ( length rl )
-                                                            ]
-                                                 )
-                                 , adc = multCompR avg ( int2CompS ( length rl ) )
-                                 , dc  = multComp tot ( int2CompS ( length rl ) )
+             | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot) rl )
+                                                  , constructorComp
+                                                  , int2CompS ( length rl )
+                                                  ]
+                                 , adc = int2CompS ( length rl )
+                                 , dc  = multCompS ( length rl )
+                                                   ( int2CompS ( length rl ) )
                                  }
              | LabelRef i     => { tc =  unitComp, adc = unitComp, dc = unitComp }
         )

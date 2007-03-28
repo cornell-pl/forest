@@ -91,7 +91,7 @@ structure Tests = struct
 
     (* Some refined base types to use *)
     val rsme1  : Refined = StringME "one"
-    val rsme2  : Refined = StringME "two"
+    val rsme2  : Refined = StringME "four"
     val rsme3  : Refined = StringME "three"
     val rint1  : Refined = Int ( 4, 7 )
     val rint2  : Refined = Int ( 444, 777 )
@@ -122,14 +122,15 @@ structure Tests = struct
     val ty15 : Ty = Base ( freq 900, ltlint2 )
 
     (* Some RefinedBase Ty structures to use *)
-    val ty20 : Ty = RefinedBase (a1, rsme1, ltlstr4)
-    val ty21 : Ty = RefinedBase (a1, rint1, ltl2)
+    val ty20 : Ty = RefinedBase ( a1, rsme1, ltlstr4 )
+    val ty21 : Ty = RefinedBase ( a1, rint1, ltl2 )
     val ty22 : Ty = RefinedBase ( freq 100, rintc1, ltl2 )
     val ty23 : Ty = RefinedBase ( freq 900, rstr1, ltlstr4 )
-    val ty24 : Ty = RefinedBase (a1, renum1, ltlstr4)
-    val ty25 : Ty = RefinedBase (a1, rlbl1, [])
-    val ty26 : Ty = RefinedBase (a1, rstr4, ltlstr4)
-    val ty27 : Ty = RefinedBase (a1, rintc2, ltl2)
+    val ty24 : Ty = RefinedBase ( a1, renum1, ltlstr4 )
+    val ty25 : Ty = RefinedBase ( a1, rlbl1, [] )
+    val ty26 : Ty = RefinedBase ( a1, rstr4, ltlstr4 )
+    val ty27 : Ty = RefinedBase ( a1, rintc2, ltl2 )
+
     (* Now to test structured, but unrefined types *)
     val ty30 : Ty = Pstruct (a1, [ ty3, ty9, ty21 ])
     val ty31 : Ty = Punion (a1, [ ty3, ty9, ty21, ty10 ])
@@ -202,15 +203,23 @@ structure Tests = struct
     val p15 : string = showTyComp (getComps m15);
 
     val m20 : Ty = measure ty20;
+    val p20 : string = showTyComp (getComps m20);
     val m21 : Ty = measure ty21;
+    val p21 : string = showTyComp (getComps m21);
     val m22 : Ty = measure ty22;
+    val p22 : string = showTyComp (getComps m22);
     val m23 : Ty = measure ty23;
+    val p23 : string = showTyComp (getComps m23);
     val m24 : Ty = measure ty24;
+    val p24 : string = showTyComp (getComps m24);
     val (RefinedBase (a24, r24, tl24)) = m24;
     val (Enum rl) = r24;
     val m25 : Ty = measure ty25;
+    val p25 : string = showTyComp (getComps m25);
     val m26 : Ty = measure ty26;
+    val p26 : string = showTyComp (getComps m26);
     val m27 : Ty = measure ty27;
+    val p27 : string = showTyComp (getComps m27);
 
     val m30 : Ty = measure ty30;
     val m31 : Ty = measure ty31;
