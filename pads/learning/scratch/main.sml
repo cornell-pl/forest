@@ -18,11 +18,15 @@ structure Main : sig
 	    val ty               = computeStructure fileName
 	    val rewrittenTy      = Rewrite.run(ty)
             val measuredTy       = measure rewrittenTy
-            val ( tcomp, dcomp ) = getComps measuredTy
+            val comps            = getComps measuredTy
+            val tcomp            = #tc comps
+            val acomp            = #adc comps
+            val dcomp            = #dc comps
 	in
 	    ( Printing.dumpTyInfo (!outputDir) measuredTy
             , print ( "\nCompleted " ^ !srcFile )
             , print ( "\nOverall type complexity = " ^ showBits tcomp )
+            , print ( "\nOverall atomic complexity = " ^ showBits acomp )
             , print ( "\nOverall data complexity = " ^ showBits dcomp ^ "\n\n" )
             )
 	end

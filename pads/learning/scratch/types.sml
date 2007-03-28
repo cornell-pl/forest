@@ -17,22 +17,42 @@ struct
 
     val Tystamp = ref 0  (* used to give unique ids to nodes in type trees *)
     type Id = Atom.atom			     
+    type TyComp = { tc       : Complexity (* Type complexity *)
+                  , adc      : Complexity (* Atomic data complexity *)
+                  , dc       : Complexity (* Data complexity *)
+                  }
+
+    val zeroComps : TyComp = { tc = zeroComp, adc = zeroComp, dc = zeroComp }
+
+    fun showTyComp ( tyc : TyComp ) : string =
+        "{" ^ showComp (#tc tyc) ^ ", " ^ showComp (#adc tyc) ^ ", " ^ showComp (#dc tyc) ^ "}"
+
+    fun combTyComp ( t1 : TyComp ) ( t2 : TyComp ) : TyComp =
+        { tc  = combine (#tc t1) (#tc t2)
+        , adc = combine (#adc t1) (#adc t2)
+        , dc  = combine (#dc t1) (#dc t2)
+        }
+
+    fun combTyComp2 ( t1 : TyComp, t2 : TyComp ) : TyComp =
+        { tc  = combine (#tc t1) (#tc t2)
+        , adc = combine (#adc t1) (#adc t2)
+        , dc  = combine (#dc t1) (#dc t2)
+        }
+
     type AuxInfo = { coverage : int        (* Coverage of
                                                  -- a struct is minimum coverage
                                                  --      of its constituents;
                                                  -- a union is sum of coverage
                                                          of its consituents; *)
                    , label    : Id option  (* introduced during refinement as a tag *)
-                   , typeComp : Complexity (* Inherent complexity of the type *)
-                   , dataComp : Complexity (* Average complexity of data given type *)
+                   , tycomp   : TyComp
                    }
 
     (* Update the type and data complexity of an AuxInfo *)
-    fun updateComps (a : AuxInfo) (t : Complexity) (d : Complexity) : AuxInfo =
-        { coverage = #coverage a
-        , label    = #label a
-        , typeComp = t
-        , dataComp = d
+    fun updateComps ( aux : AuxInfo ) ( comps : TyComp ) : AuxInfo =
+        { coverage = #coverage aux
+        , label    = #label aux
+        , tycomp   = comps
         }
 
     val numRefined      : LargeInt.int = 6 (* Number of cases in datatype Refined *)
@@ -70,8 +90,8 @@ struct
                                      * Refined option (* terminator *)
 	                             * Ty             (* body type *)
                                      * Refined option (* fixed length *) 
-				     * (int*int) list (* (length, linenumber) list*)
-		| Poption of AuxInfo * Ty (* a Ty which is optional *)
+                                     * (int*int) list (* (length, linenumber) list*)
+                | Poption of AuxInfo * Ty (* a Ty which is optional *)
 
     (* Number of kinds of tree nodes in Ty *)
     val numConstruct    : LargeInt.int = numTy + numRefined + numToken
@@ -128,12 +148,13 @@ struct
         )
 
     (* Retrieve computed type complexity from a type *)
-    fun getTypeComp ( ty : Ty ) : Complexity = #typeComp (getAuxInfo ty)
+    fun getTypeComp ( ty : Ty ) : Complexity = #tc (#tycomp (getAuxInfo ty))
     (* Retrieve computed data complexity from a type *)
-    fun getDataComp ( ty : Ty ) : Complexity = #dataComp (getAuxInfo ty)
-    (* Retrieve both complexities from a measured type *)
-    fun getComps ( ty : Ty ) : Complexity * Complexity =
-        (getTypeComp ty, getDataComp ty)
+    fun getDataComp ( ty : Ty ) : Complexity = #dc (#tycomp (getAuxInfo ty))
+    (* Retrieve atomic data complexity from a type *)
+    fun getAtomicComp ( ty : Ty ) : Complexity = #adc (#tycomp (getAuxInfo ty))
+    (* Retrieve all complexities from a measured type *)
+    fun getComps ( ty : Ty ) : TyComp = #tycomp (getAuxInfo ty)
 
     (* Sum the type complexities of a measured type *)
     fun sumTypeComps ( tys : Ty list ) : Complexity =
@@ -142,6 +163,10 @@ struct
     (* Sum the data complexities of a measured type *)
     fun sumDataComps ( tys : Ty list ) : Complexity =
         foldl ( fn (t,c) => combine (getDataComp t) c ) zeroComp tys
+
+    (* Sum the atomic complexities of a measured type *)
+    fun sumAtomicComps ( tys : Ty list ) : Complexity =
+        foldl ( fn (t,c) => combine (getAtomicComp t) c ) zeroComp tys
                  
     fun mkLabel (prefix:string) (i:int) : Id = Atom.atom("BTy_"^(Int.toString i))
     fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i
@@ -162,9 +187,11 @@ struct
             val () = Tystamp := !Tystamp + 1
             val label = mkTyLabel next
 	in { coverage = coverage
-           , label = SOME label
-           , typeComp = unitComp
-           , dataComp = zeroComp
+           , label    = SOME label
+           , tycomp   = { tc  = zeroComp
+                        , adc = zeroComp
+                        , dc  = zeroComp
+                        }
            }
 	end
 
@@ -173,9 +200,11 @@ struct
             val () = Tystamp := !Tystamp + 1
             val label = id
 	in { coverage = coverage
-           , label = SOME label
-           , typeComp = unitComp
-           , dataComp = zeroComp
+           , label    = SOME label
+           , tycomp   = { tc  = zeroComp
+                        , adc = zeroComp
+                        , dc  = zeroComp
+                        }
            }
 	end
 
@@ -310,10 +339,10 @@ struct
     fun TyToStringD (prefix:string) (longTBDs:bool) (longBottom:bool)
                     (suffix:string) (ty:Ty) : string = 
     let val aux = getAuxInfo ty
-        val tcomp = #typeComp aux
-        val dcomp = #dataComp aux
+        val { tc = tcomp, adc = acomp, dc = dcomp } = #tycomp aux
         val stats = ( "(" ^  (covToString aux) ^
                       ", " ^ (showBits tcomp)  ^
+                      ", " ^ (showBits acomp)  ^
                       ", " ^ (showBits dcomp)  ^ ")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
@@ -321,7 +350,7 @@ struct
          ( case ty of
                Base (aux, t)  => (case t of nil => "[NULL]"
 					| _ => (ltokenTyToString (hd t)) )^"TL len: "^
-					(Int.toString (length t))^" "^ stats 
+					(Int.toString (length t))^" "^ stats
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
                 ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )
@@ -338,8 +367,7 @@ struct
                 "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
-             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ "TL len: "^
-					(Int.toString (length tl))^" "^stats 
+             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats 
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
                 (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 

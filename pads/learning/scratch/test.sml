@@ -11,16 +11,21 @@ structure Tests = struct
     (* Some AuxInfo structures to use *)
     val a1 : AuxInfo = { coverage = 7
                        , label    = NONE
-                       , typeComp = zeroComp
-                       , dataComp = zeroComp
+                       , tycomp   = zeroComps
                        }
-    fun freq ( n : int ) : AuxInfo =
-        { coverage = n, label = NONE, typeComp = zeroComp, dataComp = zeroComp }
+    fun freq ( n : int ) : AuxInfo = { coverage = n, label = NONE, tycomp = zeroComps }
 
     (* Some tokens to use *)
     val tint1  : Token = Pint 1
-    val tint2  : Token = Pint 2
-    val tint3  : Token = Pint 3
+    val tint2  : Token = Pint 22
+    val tint3  : Token = Pint 333
+    val tint4  : Token = Pint 4444
+    val tint5  : Token = Pint 55555
+    val tint6  : Token = Pint 666666
+    val tint7  : Token = Pint 7777777
+    val tint8  : Token = Pint 88888888
+    val tint9  : Token = Pint 999999999
+    val tint10 : Token = Pint 1000000000
     val tip1   : Token = Pip "100.034.176.202"
     val tip2   : Token = Pip "101.034.176.102"
     val tbxml1 : Token = PbXML ("<tag>junk1</tag>", "attribute1")
@@ -54,7 +59,8 @@ structure Tests = struct
 
     (* Some token lists to use *)
     val ltl1     : LToken list = [ ( tint1, ln1 ) ]
-    val ltl2     : LToken list = [ ( tint1, ln1 ), ( tint2, ln2 ) ]
+    val ltl2     : LToken list = [ ( tint1, ln1 ), ( tint2, ln2 ), ( tint4, ln2 )
+                                 , ( tint5, ln3 ) ]
     val ltlip1   : LToken list = [ ( tip1, ln1 ) ]
     val ltlbxml1 : LToken list = [ ( tbxml1, ln1 ) ]
     val ltlbxml2 : LToken list = [ ( tbxml2, ln1 ) ]
@@ -96,8 +102,8 @@ structure Tests = struct
     val rintc2 : Refined = IntConst 0
 
     (* Some Base Ty structures to use *)
-    val ty1  : Ty = Base (a1, [])
-    val ty2  : Ty = Base (a1, ltl1)
+    val ty1  : Ty = Base ( a1, [] )
+    val ty2  : Ty = Base ( a1, ltl2 )
     val ty3  : Ty = Base (a1, ltlip1)
     val ty4  : Ty = Base (a1, ltlbxml3)
     val ty5  : Ty = Base (a1, ltlexml3)
@@ -162,12 +168,19 @@ structure Tests = struct
 
     (* Carry out the measurements on the Ty structures *)
     val m1  : Ty = measure ty1;
+    val p1  : string = showTyComp (getComps m1);
     val m2  : Ty = measure ty2;
+    val p2  : string = showTyComp (getComps m2);
     val m3  : Ty = measure ty3;
+    val p3  : string = showTyComp (getComps m3);
     val m4  : Ty = measure ty4;
+    val p4  : string = showTyComp (getComps m4);
     val m5  : Ty = measure ty5;
+    val p5 : string = showTyComp (getComps m5);
     val m6  : Ty = measure ty6;
+    val p6 : string = showTyComp (getComps m6);
     val m7  : Ty = measure ty7;
+    val p7 : string = showTyComp (getComps m7);
     val m8  : Ty = measure ty8;
     val m9  : Ty = measure ty9;
     val m10 : Ty = measure ty10;

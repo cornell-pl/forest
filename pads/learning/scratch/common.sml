@@ -226,9 +226,8 @@ structure Common = struct
     (*function to merge AuxInfo a1 into a2*)
     fun mergeAux(a1, a2) =
 	case (a1, a2) of 
-	 ({coverage=c1, label=l1, typeComp=tc1, dataComp=dc1},
- 	 {coverage=c2, label=l2, typeComp=tc2, dataComp=dc2}) =>
- 	 	{coverage=c1+c2, label=l2, typeComp=tc2, dataComp=dc2}
+	 ({coverage=c1, label=l1, tycomp=tc1},{coverage=c2, label=l2, tycomp=tc2}) =>
+ 	 	{coverage=c1+c2, label=l2, tycomp=tc2} (* ????? *)
 
     (*function that test if tylist1 in a struct can be described by tylist2 in another struct*)
     (* tylist1 is described by tylist2 if tylist1 is a sub-sequence of tylist2 and 

@@ -193,8 +193,12 @@ and extract_table_header ty =
  case ty of 
 	Pstruct (a, tylist) =>
 	  let
-		fun getNewLabel x = SOME(getLabel ({coverage=x, label=NONE, 
-					typeComp=Bits(0), dataComp=Bits(0)}))
+		fun getNewLabel x = SOME ( getLabel ( { coverage = x
+                                                      , label=NONE
+                                                      , tycomp = zeroComps
+                                                      }
+                                                    )
+                                         )
 		fun numUnions tylist =
 			case tylist of
 				h::tail => (case h of 
@@ -232,12 +236,11 @@ and extract_table_header ty =
 					end
 				| ty => let
 					val aux = getAuxInfo(ty)
-					val c= #coverage aux
-					val l= #label aux
-					val t= #typeComp aux
-					val d= #dataComp aux
-					val aux1 = {coverage=1, label=getNewLabel 1, typeComp=t, dataComp=d}
-					val aux2 = {coverage=c-1, label=l, typeComp=t, dataComp=d}
+					val c   = #coverage aux
+					val l   = #label aux
+					val tc  = #tycomp aux
+					val aux1 = {coverage=1, label=getNewLabel 1, tycomp=tc }
+					val aux2 = {coverage=c-1, label=l, tycomp = tc }
 					in
 						(setAuxInfo ty aux1, setAuxInfo ty aux2)
 					end
@@ -249,9 +252,9 @@ and extract_table_header ty =
 			val _ = print "Found a table!!! Rewriting!!!\n"
 			val _ = printTy ty
 			val (tys1, tys2) = ListPair.unzip (map split_union tylist)
-			val a1 = {coverage=1, label=getNewLabel 1, typeComp=Bits 0, dataComp=Bits 0}
+			val a1 = {coverage=1, label=getNewLabel 1, tycomp = zeroComps }
 			val a2 = {coverage=overallCoverage-1, 
-				label=getNewLabel 1, typeComp=Bits 0, dataComp=Bits 0}
+				label=getNewLabel 1, tycomp = zeroComps }
 			val newty = Punion(a, [Pstruct(a1, tys1), Pstruct(a2, tys2)])
 			val _ = (print "Cost for ty: "; print (Int.toString(cost LabelMap.empty ty)))
 			val _ = (print "\nCost for newty: "; print (Int.toString(cost LabelMap.empty newty)))

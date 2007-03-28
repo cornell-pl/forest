@@ -50,7 +50,6 @@ struct
         |  RefinedBase (a,r,tl) => mkComplexity(0,0,0)
         |  Switch(a,id,branches) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) ((#2 o ListPair.unzip) branches)))
         |  RArray (a,sep,term,body,len,_) => complexity body (* fix this!*)
-	| Poption (a, ty) => complexity ty (* fix this! *)
 	end
 
 
@@ -816,8 +815,7 @@ struct
     fun mkBottom (coverage,cl) = 
 	Bottom ( { coverage=coverage
                  , label=SOME(mkBOTLabel (!Bottomstamp))
-                 , typeComp = zeroComp
-                 , dataComp = zeroComp
+                 , tycomp = zeroComps
                  }
                , !Bottomstamp
                , cl
@@ -839,8 +837,7 @@ struct
 	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
                  then TBD ( { coverage=coverage
                             , label=SOME(mkTBDLabel (!TBDstamp))
-                            , typeComp = zeroComp
-                            , dataComp = zeroComp
+                            , tycomp = zeroComps
                             }
                           , !TBDstamp
                           , cl

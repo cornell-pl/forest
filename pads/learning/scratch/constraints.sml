@@ -356,7 +356,7 @@ structure Map = RedBlackMapFn(struct
 (* the main constraining function. Takes a constraint map and a Ty, and returns an updated
 constraint map *)
 	fun constrainTy (ty, cmap) = 
-	let
+ 	let
 		(* make the table *)
 		val tytable = Table.genTable (getCoverage(ty)) ty
 (*
