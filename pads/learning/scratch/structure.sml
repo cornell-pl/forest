@@ -429,7 +429,9 @@ struct
 	    fun loadSingleFile path = 
 		let val strm = TextIO.openIn path
 		    val record = TextIO.inputAll strm
+(*
 		    val _ = print ("record:\n"^record^"\n")
+*)
 		in record
 		end
 	    val records = map loadSingleFile paths 
@@ -1111,7 +1113,9 @@ file is a record and all of them collectively represent a sample data *)
 	    val records = loadFiles fileNames
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
+(*
 	    val _ = print (contextsToString rtokens)
+*)
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = lengthsToHist rtokens
 	    val ty = ContextListToTy 0 rtokens
