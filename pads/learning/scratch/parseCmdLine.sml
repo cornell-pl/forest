@@ -143,13 +143,14 @@ structure ParseCmdLine : PARSECMDLINE =
 
 		fun loop [] = ()
 		  | loop (hd::tl : string list) = 
+		    (
 		    (case getFlag hd of
 			 NONE => (default hd; loop tl)
 		       | SOME(f,"") =>
 			     loop (processFlag (f,hd,tl))
 		       | SOME(f,hd_left) => 
 			     loop (processFlag (f,hd,hd_left::tl)))
-			 
+			) 
 		fun callUnvisited (flag,_,kind) =
 		    (case (isFlagVisited flag,kind) of
 			 (false,Bool bFun) => (bFun false)
@@ -182,6 +183,6 @@ structure ParseCmdLine : PARSECMDLINE =
 		tooldesc ^ "\n" ^
 		toolname ^ " "^ 
 		(String.concat (List.map describe_flag (flags @ [helpFlag]))) ^
-		" file..."
+		" files..."
 	    end
     end

@@ -231,6 +231,12 @@ struct
 	end
 *)
 
+    fun stringToPrintable s =
+		case s of 
+			"\t" => "\\t"
+			| "\n" => "\\n"
+			| "\r" => "\\r"
+			| _ => s
 
     fun ltokenToString ( t : Token, loc : location ) : string = "("^tokenToString t^") loc: "^locationToString loc^" "
     and tokenToString ( t : Token ) : string = 
@@ -247,9 +253,7 @@ struct
              if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
         |  Pstring s   => s
         |  Pgroup {left, body, right} => (ltokenToString left)^(String.concat (List.map ltokenToString body))^(ltokenToString right)
-        |  Pwhite s => (case s of 
-			"\t" => "\\t"
-			| _ => s)
+        |  Pwhite s => stringToPrintable s
         |  Other c  => Char.toString c
         |  Pempty   => "\\0"
         |  Error    => " Error"
@@ -259,10 +263,7 @@ struct
         | Int(min, max) => "[Int] [" ^ LargeInt.toString(min) ^ "..." ^
                            LargeInt.toString(max)^"]"
         | IntConst a    => "[IntConst] ["^ LargeInt.toString(a) ^"]" 
-        | StringConst s => (case s of 
-				"\t" => "[StringConst] \"\\t\"" 
-				| _ => "[StringConst] \"" ^ s ^ "\"" 
-			   )
+        | StringConst s =>  "[StringConst] \""^(stringToPrintable s) ^ "\"" 
         | Enum rel      => "[Enum] {"^ String.concat(map (fn x => (refinedToString x) ^
                            ", ") rel) ^ "}"
         | LabelRef id   => "[Label] id="^ Atom.toString(id)    
@@ -349,8 +350,7 @@ struct
     in ( prefix ^
          ( case ty of
                Base (aux, t)  => (case t of nil => "[NULL]"
-					| _ => (ltokenTyToString (hd t)) )^"TL len: "^
-					(Int.toString (length t))^" "^ stats
+					| _ => (ltokenTyToString (hd t)) )^" "^ stats 
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
                 ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )
@@ -367,7 +367,7 @@ struct
                 "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
-             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^ stats 
+             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^" "^stats 
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
                 (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 

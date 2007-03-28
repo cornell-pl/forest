@@ -67,6 +67,6 @@ xmle    = \<\/[^>]+\>;
 {hostname}    => (SOME (Types.Phostname yytext,                  getLoc(yypos, yytext) ));
 {str}     => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 -?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext)), getLoc(yypos, yytext) ));
-[ \t]+    => (SOME (Types.Pwhite yytext,                 getLoc(yypos, yytext) ));
+[ \t\n\r]+    => (SOME (Types.Pwhite yytext,                 getLoc(yypos, yytext) ));
 .         => (SOME (Types.Other (String.sub(yytext,0)),  getLoc(yypos, yytext) )); 
 \n        => (continue());

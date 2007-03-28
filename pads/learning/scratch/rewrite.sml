@@ -17,8 +17,10 @@ let
 (*  val _ = printConstMap cmap 
 *)
   val reduced_ty = Reduce.reduce NONE ty 
+(*
   val _ = print "\nAfter initial reduction:\n"
   val _ = printTy reduced_ty 
+*)
   val cmap = Constraint.constrain'(reduced_ty)
   val reduced_ty' = Reduce.reduce (SOME(cmap)) reduced_ty 
   val measured_reduced_ty' = measure reduced_ty'

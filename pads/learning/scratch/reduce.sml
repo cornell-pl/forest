@@ -538,7 +538,7 @@ and refine_array ty =
 			    	[first', RArray(aux, sepop, termop, body', lenop, lengths), last'])
 			| _ => ty
 (*
-		    val _ = (print "Done refining array in struct to:\n"; printTy newty)  
+		    val _ = (print "Done refining array to:\n"; printTy newty)  
 *)
 		  in
 		 	newty
@@ -565,19 +565,19 @@ and refine_array ty =
 		  fun updateArray tylist newlist =
 			case tylist of
 			nil => newlist
-			| ty::tail =>
-				case ty of RArray (_, _, NONE, _, _, _) => 
+			| t::tys =>
+				case t of RArray (_, _, NONE, _, _, _) => 
 				(
-				  case tail of 
-				  nil => newlist@tylist
+				  case tys of 
+				  nil => newlist@[t]
 				  | _ =>
 				  	let
-				  	val nextRefined= findRefined(hd tail)	
-				  	val newArray = updateTerm(ty, nextRefined)
-					in newlist@[newArray]@tail
+				  	val nextRefined= findRefined(hd tys)	
+				  	val newArray = updateTerm(t, nextRefined)
+					in newlist@[newArray]@tys
 				  	end
 				)
-				| _ => updateArray tail newlist@[ty] 
+				| _ => updateArray tys (newlist@[t]) 
 
 		  val tylist' = updateArray tylist nil
 (*
@@ -893,7 +893,8 @@ NONE.  It will use the constraints that it can apply. *)
 and reduce const_info_op ty = 
 let
   val pre_constraint_rules : pre_reduction_rule list = 
-		[ 	remove_degenerate_list,
+		[ 	
+			remove_degenerate_list,
 			unnest_tuples,
 			unnest_sums,
 			prefix_postfix_sums,
@@ -974,6 +975,9 @@ let
 	  fun iterate cmap ty = 
 	  let
 	    (* calculate the current cost *)
+(*
+	    val _ = (print ("Old Ty: \n"); printTy ty)
+*)
 	    val cur_cost = cost cmap ty
 	    (* apply each rule to the ty *)
 	    val cmap_ty_pairs = if mode=0 then
@@ -986,6 +990,9 @@ let
 	    fun min((a,b),(c,d)) = if b < d then (a,b) else (c,d)
 	    (* find the minimum cost out of the ones found *)
 	    val ((newcmap, newTy), lowCost) = foldr min ((cmap, ty), cur_cost) pairs
+(*
+	    val _ = (print ("New Ty: \n"); printTy newTy)
+*)
 	  in
 	  	(* as long as the cost keeps going down, keep iterating *)
 	  	if lowCost < cur_cost then iterate newcmap newTy

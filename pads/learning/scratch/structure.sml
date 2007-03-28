@@ -50,6 +50,7 @@ struct
         |  RefinedBase (a,r,tl) => mkComplexity(0,0,0)
         |  Switch(a,id,branches) => mkComplexity(incAlt(List.foldr mergeComplexity (1,0,0) ((#2 o ListPair.unzip) branches)))
         |  RArray (a,sep,term,body,len,_) => complexity body (* fix this!*)
+        |  Poption (a, body) => complexity body (* fix this!*)
 	end
 
 
@@ -395,7 +396,7 @@ struct
     (******************** Processing functions **************************)
     (********************************************************************)
 
-   fun loadFile path = 
+    fun loadFile path = 
        let val strm = TextIO.openIn path
 	   val data : String.string = TextIO.inputAll strm
 	   val () = if !printEntropy then buildCounts data else ()
@@ -421,7 +422,19 @@ struct
        in
 	   lines
        end
-
+    fun loadFiles paths =
+      if length paths = 1 then loadFile (hd paths)
+      else
+	let 
+	    fun loadSingleFile path = 
+		let val strm = TextIO.openIn path
+		    val record = TextIO.inputAll strm
+		    val _ = print ("record:\n"^record^"\n")
+		in record
+		end
+	    val records = map loadSingleFile paths 
+	in records
+	end
     fun groupToTokens {left,body,right} = left::body @ [right]
     fun groupToRevTokens g = List.rev (groupToTokens g)
     fun isGroup (Pgroup g) = true
@@ -1088,12 +1101,17 @@ struct
 	in
 	    ty
 	end
-    fun computeStructure fileName = 
+
+(* if filenames contains just one file, the whole file is the data source which
+contains multiple records; if filenames contains more than one file, every
+file is a record and all of them collectively represent a sample data *)
+    fun computeStructure fileNames = 
 	let val recordNumber = ref 0
-	    val () = print ("Starting on file "^fileName^"\n");
-	    val records = loadFile fileName
+	    val () = print ("Starting on files "^(lconcat fileNames)^"\n");
+	    val records = loadFiles fileNames
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
+	    val _ = print (contextsToString rtokens)
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = lengthsToHist rtokens
 	    val ty = ContextListToTy 0 rtokens

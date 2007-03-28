@@ -10,14 +10,14 @@ structure Config = struct
 
     val def_depthLimit =  50
     val def_outputDir  =  "gen/"
-    val def_srcFile    = "toBeSupplied"
+    val def_srcFiles    = [] : string list
     val def_printLineNos = false
     val def_printIDs     = true
     val def_entropy      = false
 
     val depthLimit = ref def_depthLimit
     val outputDir = ref def_outputDir
-    val srcFile = ref def_srcFile
+    val srcFiles = ref def_srcFiles
     val printLineNos = ref def_printLineNos
     val printIDs = ref def_printIDs
     val printEntropy = ref def_entropy
@@ -34,7 +34,7 @@ structure Config = struct
     fun isNoiseTolerance  x = Real.ceil((!NOISE_PERCENTAGE)   * Real.fromInt(x)) 
 
     fun parametersToString () = 
-	(   ("Source file to process: "^(!srcFile)   ^"\n")^
+	(   ("Source files to process: "^(String.concat (!srcFiles))   ^"\n")^
 	    ("Output directory: "      ^(!outputDir) ^"\n")^
 	    ("Max depth to explore: "  ^(Int.toString (!depthLimit))^"\n")^
  	    ("Print line numbers in output contexts: "        ^(Bool.toString (!printLineNos))^"\n")^

@@ -14,8 +14,8 @@ structure Main : sig
     open Model
 
     fun doIt () = 
-	let val fileName         = !srcFile
-	    val ty               = computeStructure fileName
+	let val fileNames         = !srcFiles
+	    val ty               = computeStructure fileNames
 	    val rewrittenTy      = Rewrite.run(ty)
             val measuredTy       = measure rewrittenTy
             val comps            = getComps measuredTy
@@ -24,7 +24,7 @@ structure Main : sig
             val dcomp            = #dc comps
 	in
 	    ( Printing.dumpTyInfo (!outputDir) measuredTy
-            , print ( "\nCompleted " ^ !srcFile )
+            , print ( "\nCompleted " ^ (lconcat (!srcFiles)) )
             , print ( "\nOverall type complexity = " ^ showBits tcomp )
             , print ( "\nOverall atomic complexity = " ^ showBits acomp )
             , print ( "\nOverall data complexity = " ^ showBits dcomp ^ "\n\n" )
@@ -63,7 +63,7 @@ structure Main : sig
     fun setPrintLineNos b = (if b then printLineNos := b else ())
     fun setPrintIDs     b = (if b then  printIDs := b else ())
     fun setEntropy      b = (if b then  printEntropy := b else ())
-    fun addSourceFile   f = srcFile    := f
+    fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
 
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
