@@ -398,7 +398,7 @@ struct
                 ( partialD body ) ^ prefix ^ "End RArray" 
              | Poption (aux, ty) =>
                 "Poption" ^ stats ^ "\n" ^
-                (partialD ty) ^ prefix ^ "End Pstruct"
+                (partialD ty) ^ prefix ^ "End Poption"
          ) ^
          suffix )
      end 
