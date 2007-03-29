@@ -226,9 +226,12 @@ structure Tests = struct
     val m31 : Ty = measure ty31;
     val p31 : string = showTyComp (getComps m31);
     val m32 : Ty = measure ty32;
+    val p32 : string = showTyComp (getComps m32);
     val (Parray (a32, s32)) = m32;
     val m33 : Ty = measure ty33;
+    val p33 : string = showTyComp (getComps m33);
     val m34 : Ty = measure ty34;
+    val p34 : string = showTyComp (getComps m34);
 
     val m40 : Ty = measure ty40;
     val m41 : Ty = measure ty41;

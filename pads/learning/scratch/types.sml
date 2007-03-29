@@ -355,7 +355,7 @@ struct
                  in ( case ts of nil =>
                          "[NULL]"
                        | _ => (ltokenTyToString (hd ts))
-                    ) ^ " " ^ stats ^ "(avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
+                    ) ^ " " ^ stats ^ " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
                                       ", tot: " ^ LargeInt.toString tot ^ ")"
                  end
              | TBD (aux,i,cl) =>
@@ -374,7 +374,13 @@ struct
                 "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
-             | RefinedBase (aux, refined, tl) => (refinedToString refined) ^" "^stats 
+             | RefinedBase (aux, refined, tl) =>
+                 let val avg = avgTokenLength tl
+                     val tot = sumTokenLength tl
+                 in ( refinedToString refined ) ^ " " ^ stats ^
+                    " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
+                    ", tot: " ^ LargeInt.toString tot ^ ")"
+                 end
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
                 (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 

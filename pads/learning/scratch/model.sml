@@ -110,8 +110,8 @@ structure Model = struct
                   | Pwhite s          => mkBaseComp avglen totlen numWhiteChars
                   | Other c           => mkBaseComp avglen totlen numStringChars
                   | Pempty            => { tc  = constructorComp
-                                         , adc = unitComp
-                                         , dc  = unitComp
+                                         , adc = zeroComp
+                                         , dc  = zeroComp
                                          }
                   | Error             => { tc  = constructorComp
                                          , adc = unitComp
@@ -135,17 +135,22 @@ structure Model = struct
     in foldl f zeroComps cl
     end
 
+    fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
+
     (* Compute the weighted sum of the data complexities of a list of types *)
     fun weightedData ( tot : int ) ( tys : Ty list ) : Complexity =
-    let fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
-        fun f ( t : Ty, c : Complexity ) : Complexity =
-              combine c ( multCompR ( frac ( getCoverage t ) tot ) ( getDataComp t ) )
+    let fun f ( t : Ty, c : Complexity ) : Complexity =
+              combine c ( multCompR ( frac ( getCoverage t ) tot )
+                                    ( getDataComp t )
+                        )
     in foldl f zeroComp tys
     end
+
     fun weightedAtomic ( tot : int ) ( tys : Ty list ) : Complexity =
-    let fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
-        fun f ( t : Ty, c : Complexity ) : Complexity =
-              combine c ( multCompR ( frac ( getCoverage t ) tot ) ( getAtomicComp t ) )
+    let fun f ( t : Ty, c : Complexity ) : Complexity =
+              combine c ( multCompR ( frac ( getCoverage t ) tot )
+                                    ( getAtomicComp t )
+                        )
     in foldl f zeroComp tys
     end
 
@@ -233,15 +238,16 @@ structure Model = struct
                  val sumBranches      = sumCoverage branches
                  val measuredBranches = map measure branches
                  val branchesTypeComp = sumTypeComps measuredBranches
-                 val avgBranches      = weightedAtomic sumBranches measuredBranches
+                 val weightedBranches = weightedAtomic sumBranches measuredBranches
                  val branchesDataComp = sumDataComps branches
                  val comps            = { tc  = sumComps [ constructorComp
                                                          , cardComp bs
                                                          , branchesTypeComp
                                                          ]
-                                        , adc = avgBranches
+                                        , adc = weightedBranches
                                         , dc  = combine ( cardComp branches )
-                                                        ( multCompS cover avgBranches )
+                                                        ( multCompS cover
+                                                                    weightedBranches )
                                         }
              in Switch ( updateComps a comps
                        , id
@@ -256,7 +262,7 @@ structure Model = struct
                  val { tc = tterm, adc = aterm, dc = dterm } = refinedOptionComp oterm
                  val { tc = tsep, adc = asep, dc = dsep }    = refinedOptionComp osep
                  val tcomp = sumComps [ constructorComp, tbody, tterm, tsep, unitComp, unitComp ]
-                 val acomp = zeroComp  (* **** *)
+                 val acomp = sumComps [ abody, alen, aterm, asep]
                  val dcomp = sumComps [ dbody, dlen, dterm, dsep]
                  val comps = { tc = tcomp, adc = acomp, dc = dcomp }
                  fun updateRArray ( comps : TyComp ) =
@@ -267,7 +273,16 @@ structure Model = struct
              let val mBody   = measure ty
                  val tycomp  = getComps mBody
                  val tcomp   = sumComps [ constructorComp, #tc tycomp, unitComp ]
-                 val tycomp' = { tc = tcomp, adc = #adc tycomp, dc = #dc tycomp }
+                 (* Half as complex, because sometimes not there ????? *)
+                 val acomp   = multCompR ( frac ( getCoverage ty )
+                                                ( #coverage aux )
+                                         )
+                                         ( #adc tycomp )
+                 val dcomp   = multCompR ( frac ( getCoverage ty )
+                                                ( #coverage aux )
+                                         )
+                                         ( #dc tycomp )
+                 val tycomp' = { tc = tcomp, adc = acomp, dc = dcomp }
              in Poption ( updateComps aux tycomp', mBody )
 	     end
     )
