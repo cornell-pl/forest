@@ -161,7 +161,7 @@ structure Model = struct
                                               , cardComp tys
                                               , sumTypeComps measuredtys
                                               ]
-                             , adc = sumDataComps measuredtys
+                             , adc = sumAtomicComps measuredtys
                              , dc  = sumDataComps measuredtys
                              }
              in Pstruct ( updateComps a comps, measuredtys )
