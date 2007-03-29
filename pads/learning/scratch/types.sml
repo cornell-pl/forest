@@ -284,7 +284,7 @@ struct
         |  Pstring s => " Pstring("^s^")"
         |  Pwhite s  => " Pwhite("^s^")" 
 *)
-	|  Pint _    => "[Int]"               (*" Pint("^(LargeInt.toString i)^")"*)
+	|  Pint _    => "[Pint]"              (*" Pint("^(LargeInt.toString i)^")"*)
         |  Pstring s => "[String]"            (*" Pstring("^s^")"*)
         |  Pwhite s  => "[White]"             (*" Pwhite("^s^")"*) 
         |  Pgroup {left, body, right} =>

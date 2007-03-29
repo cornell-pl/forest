@@ -21,15 +21,19 @@ structure Model = struct
         }
 
     (* Compute the type and data complexity of a refined type *)
-    fun refinedComp ( avg : real ) ( tot : LargeInt.int ) ( r : Refined ) : TyComp =
+    fun refinedComp ( avg : real )         (* Average length of tokens *)
+                    ( tot : LargeInt.int ) (* Sum of length of tokens *)
+                    ( num : LargeInt.int ) (* Number of tokens *)
+                    ( r : Refined )        (* refined type *)
+                     : TyComp =            (* Complexity numbers *)
         ( case r of
                StringME s     => mkBaseComp avg tot numStringChars
              | Int (min, max) => { tc  = sumComps [ constructorComp
                                                   , int2Comp min
                                                   , int2Comp max
                                                   ]
-                                 , adc = multCompR avg ( int2Comp ( max - min + 1 ) )
-                                 , dc  = multComp tot ( int2Comp ( max - min + 1 ) )
+                                 , adc = int2Comp ( max - min + 1 )
+                                 , dc  = multComp num ( int2Comp ( max - min + 1 ) )
                                  }
              | IntConst n     => { tc  = sumComps [ constructorComp
                                                   , int2Comp 2
@@ -45,7 +49,7 @@ structure Model = struct
                                  , adc = zeroComp
                                  , dc  = zeroComp
                                  }
-             | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot) rl )
+             | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot num) rl )
                                                   , constructorComp
                                                   , int2CompS ( length rl )
                                                   ]
@@ -56,16 +60,29 @@ structure Model = struct
              | LabelRef i     => { tc =  unitComp, adc = unitComp, dc = unitComp }
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
-    and refinedTypeComp ( avg : real ) ( tot : LargeInt.int ) ( r : Refined ) : Complexity = #tc (refinedComp avg tot r)
+    and refinedTypeComp ( avg : real )         (* Average length of tokens *)
+                        ( tot : LargeInt.int ) (* Sum of length of tokens *)
+                        ( num : LargeInt.int ) (* Number of tokens *)
+                        ( r : Refined )        (* refined type *)
+                         : Complexity =        (* Type complexity *)
+           #tc (refinedComp avg tot num r)
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
-    and refinedDataComp ( avg : real ) ( tot : LargeInt.int ) ( r : Refined ) : Complexity = #dc (refinedComp avg tot r)
+    and refinedDataComp ( avg : real )         (* Average length of tokens *)
+                        ( tot : LargeInt.int ) (* Sum of length of tokens *)
+                        ( num : LargeInt.int ) (* Number of tokens *)
+                        ( r : Refined )        (* refined type *)
+                         : Complexity =        (* Data complexity *)
+          #dc (refinedComp avg tot num r)
 
     (* Measure a refined base type *)
-    exception NotRefinedBase (* Function should be called only with refined base type *)
-    fun measureRefined ( avg : real ) ( tot : LargeInt.int ) ( ty : Ty ) : Ty =
+    exception NotRefinedBase (* Should be called only with refined base type *)
+    fun measureRefined ( avg : real )         (* Average length of tokens *)
+                       ( tot : LargeInt.int ) (* Sum of length of tokens *)
+                       ( num : LargeInt.int ) (* Number of tokens *)
+                       ( ty : Ty ) : Ty =
     ( case ty of
            RefinedBase ( a, r, ts ) =>
-             let val comps = refinedComp avg tot r
+             let val comps = refinedComp avg tot num r
              in RefinedBase ( updateComps a comps, r, ts )
              end
          | _ => raise NotRefinedBase
@@ -75,7 +92,7 @@ structure Model = struct
     fun refinedOptionComp ( ro : Refined option ) : TyComp =
     ( case ro of
            NONE   => zeroComps
-         | SOME r => refinedComp 1.0 1 r (* Probably wrong ***** *)
+         | SOME r => refinedComp 1.0 1 1 r (* Probably wrong ***** *)
     )
 
     (* Compute the complexity of a base type *)
@@ -229,7 +246,8 @@ structure Model = struct
          | rb as RefinedBase ( a, r, ts ) =>
              let val avg = avgTokenLength ts
                  val tot = sumTokenLength ts
-             in measureRefined avg tot rb
+                 val num = LargeInt.fromInt ( length ts )
+             in measureRefined avg tot num rb
              end
          | Switch ( a, id, bs)      =>
              let val switches         = map #1 bs
