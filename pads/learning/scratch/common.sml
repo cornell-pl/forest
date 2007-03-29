@@ -29,7 +29,7 @@ structure Common = struct
 		|	(NONE, SOME _) => LESS
 		|	(NONE, NONE) => EQUAL
 		and compared(a,b) = case (a, b) of
-			(Pint (x), Pint (x')) => LargeInt.compare(x,x')
+			(Pint (x, _), Pint (x', _)) => LargeInt.compare(x,x')
 			| (Pstring (s1), Pstring(s2)) => String.compare(s1, s2)
 			| (Ptime(s1), Ptime(s2)) => String.compare(s1, s2)
 			| (Pdate(s1), Pdate(s2)) => String.compare(s1, s2)
@@ -80,7 +80,7 @@ structure Common = struct
 	  in (pad (case d of
 		PbXML(node, attrib) => "<" ^ node ^ attrib ^ ">"
 	|	PeXML(node, attrib) => "</" ^ node ^ attrib ^ ">"
-	|	Pint (i) => LargeInt.toString(i)
+	|	Pint (i, s) => s
 	|	Ptime(t) => t
 	|	Pdate(t) => t
 	|	Pip(t)  => t
@@ -98,7 +98,7 @@ structure Common = struct
 		case d of
 		PbXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
 	|	PeXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
-	|	Pint (i) => IntConst(i)
+	|	Pint (i, _) => IntConst(i)
 	|	Ptime(t) => StringConst(t)
 	|	Pdate(t) => StringConst(t)
 	|	Pip(t)  => StringConst(t)
@@ -165,7 +165,7 @@ structure Common = struct
 		  | (Phostname(a), Phostname(b)) => (a = b)
 		  | (Ppath(a), Ppath(b)) => (a = b)
 		  | (Purl(a), Purl(b)) => (a = b)
-		  | (Pint(a), Pint(b)) => (a = b)
+		  | (Pint(a, s1), Pint(b, s2)) => (a = b andalso s1 = s2)
 		  | (Pstring(a), Pstring(b)) => (a = b)
 		  | (Pwhite(a), Pwhite(b)) => (a = b)
 		  | (Other(a), Other(b)) => (a = b)
@@ -182,7 +182,7 @@ structure Common = struct
 		  | (Phostname(a), Phostname(b)) => true
 		  | (Ppath(a), Ppath(b)) => true
 		  | (Purl(a), Purl(b)) => true
-		  | (Pint(a), Pint(b)) => true
+		  | (Pint(_), Pint(_)) => true
 		  | (Pstring(a), Pstring(b)) => true
 		  | (Pwhite(a), Pwhite(b)) => true
 		  | (Other(a), Other(b)) => true

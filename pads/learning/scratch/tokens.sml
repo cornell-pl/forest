@@ -69,7 +69,7 @@ structure Tokens = struct
 	             Purl        of string |
 		     Pip         of string |
 		     Phostname   of string |
-                     Pint        of LargeInt.int |
+                     Pint        of LargeInt.int * string |  (* a pair of int and string representations *)
 		     Pstring     of string |
                      Pgroup      of {left : LToken, body : LToken list, right : LToken} |
 	             Pwhite      of string |
@@ -92,7 +92,7 @@ structure Tokens = struct
         |  (Phostname i1, Phostname i2)   => EQUAL
         |  (PbXML (f1,s1), PbXML (f2,s2)) => String.compare(f1,f2)
         |  (PeXML (f1,s1), PeXML (f2,s2)) => String.compare(f1,f2)
-        |  (Pint i1, Pint i2)             => EQUAL
+        |  (Pint _, Pint _)             => EQUAL
         |  (Pstring s1, Pstring s2)       => EQUAL
         |  (Pwhite s1, Pwhite s2)         => EQUAL
         |  (Pgroup g1, Pgroup g2)         => compToken(#1(#left g1), (#1(#left g2)))
@@ -273,7 +273,7 @@ structure Tokens = struct
                          then size s - ndot - ( size lastComponent )
                          else size s - ndot
                  end
-             | Pint n         => size (LargeInt.toString n)
+             | Pint (n, s)        => size (LargeInt.toString n) + size s
              | Pstring s      => size s
              | Pgroup grp     => 0
              | Pwhite s       => size s

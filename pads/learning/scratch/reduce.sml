@@ -651,7 +651,7 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst("</"^x^" "^y^">"), tokens)
 			)
-         	| SOME(Pint(x)) => 
+         	| SOME(Pint(x, _)) => 
 			(
 				newcmos, 
 				RefinedBase((mkTyAux1(coverage, id)), 
@@ -792,7 +792,7 @@ case ty of
 		    fun getrefine (index, mappings) = 
 		    (*given an index, give a list of refined values that points to this index from the mapping*)
 		      case mappings of 
-			([SOME tok1], SOME(Pint i))::tail => 
+			([SOME tok1], SOME(Pint(i, _)))::tail => 
 				if (i=index) then tokentorefine(tok1)::getrefine(index, tail)
 				else getrefine (index, tail)
 		      	| _::tail => getrefine(index, tail)

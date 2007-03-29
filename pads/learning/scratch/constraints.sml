@@ -23,7 +23,7 @@ structure Map = RedBlackMapFn(struct
 	| 	Phostname(x) => String.size x
 	| 	Ppath(x) => String.size x
 	| 	Purl(x) => String.size x
-	|	Pint (x) => String.size (LargeInt.toString(x))
+	|	Pint (x, s) => String.size s
 	|	Pstring s => String.size s
 	|	Pwhite c => String.size c
 	|	Other c => 1
@@ -62,7 +62,7 @@ structure Map = RedBlackMapFn(struct
 						case oldConst of
 						Length x => if bdlength bdata = x orelse lastbdata = NONE then Length (bdlength bdata) else  raise InvalidConst
 					|	Range(a,b) => ( case bdata of
-								  Pint (d) => Range(LargeInt.min(d,a),LargeInt.max(d,b))
+								  Pint (d, _) => Range(LargeInt.min(d,a),LargeInt.max(d,b))
 								  |	_ => raise InvalidConst )
 					|	Ordered a => (case lastbdata of SOME lastbdata => 
 						  if (compared(lastbdata,bdata) = (if a = Ascend then GREATER else LESS) 
@@ -135,7 +135,7 @@ structure Map = RedBlackMapFn(struct
 		(* finds a linear equation between integer types *)
 		let
 			fun strip e = case e of 
-						 SOME(Pint (x) ) => x
+						 SOME(Pint (x, _) ) => x
 						| _ => raise DetermineFailed (* not integers *)
 			fun toRat x = Rat.reduce(x,1)
 			

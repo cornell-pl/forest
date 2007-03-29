@@ -96,7 +96,7 @@ structure Model = struct
                   | Purl s            => mkBaseComp avglen totlen numStringChars
                   | Pip s             => mkBaseComp avglen totlen numIP
                   | Phostname s       => mkBaseComp avglen totlen numStringChars
-                  | Pint l            => { tc  = constructorComp
+                  | Pint (l, s)            => { tc  = constructorComp
                                          , adc = combine ( int2Comp 2 )
                                                          ( multCompR avglen ( int2Comp numDigits ) )
                                          , dc  = combine ( int2Comp 2 )

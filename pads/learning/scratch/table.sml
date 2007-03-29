@@ -56,7 +56,7 @@ structure Table = struct
 		in List.tabulate(columnsize, (getTokenfromList ltokens))
 		end
 
-	fun intToToken (i:int):Token = Pint(Int.toLarge i)
+	fun intToToken (i:int):Token = Pint(Int.toLarge i, Int.toString i)
 
 	fun genintcolumn(lints, columnsize) =
 		(*get a token from a specfic record no from the int list

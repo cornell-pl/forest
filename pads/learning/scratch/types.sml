@@ -249,7 +249,7 @@ struct
 	|  Purl i      => i
         |  PbXML (f,s) => "<"^f^s^">"
         |  PeXML (f,s) => "</"^f^s^">"
-	|  Pint i      =>
+	|  Pint (i, s)      =>
              if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
         |  Pstring s   => s
         |  Pgroup {left, body, right} => (ltokenToString left)^(String.concat (List.map ltokenToString body))^(ltokenToString right)
@@ -280,11 +280,11 @@ struct
         |  PbXML (f,s) => "bXML["^f^"]"
         |  PeXML (f,s) => "eXML["^f^"]"
 (*
-	|  Pint i    => " Pint("^(LargeInt.toString i)^")"
+	|  Pint (i, s)    => " Pint("^(LargeInt.toString i)^")"
         |  Pstring s => " Pstring("^s^")"
         |  Pwhite s  => " Pwhite("^s^")" 
 *)
-	|  Pint i    => "[Int]"               (*" Pint("^(LargeInt.toString i)^")"*)
+	|  Pint _    => "[Int]"               (*" Pint("^(LargeInt.toString i)^")"*)
         |  Pstring s => "[String]"            (*" Pstring("^s^")"*)
         |  Pwhite s  => "[White]"             (*" Pwhite("^s^")"*) 
         |  Pgroup {left, body, right} =>
