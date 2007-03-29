@@ -342,15 +342,22 @@ struct
     let val aux = getAuxInfo ty
         val { tc = tcomp, adc = acomp, dc = dcomp } = #tycomp aux
         val stats = ( "(" ^  (covToString aux) ^
-                      ", " ^ (showBits tcomp)  ^
-                      ", " ^ (showBits acomp)  ^
-                      ", " ^ (showBits dcomp)  ^ ")"
+                      ", tc: " ^ (showBits tcomp)  ^
+                      ", ac: " ^ (showBits acomp)  ^
+                      ", dc: " ^ (showBits dcomp)  ^ ")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
     in ( prefix ^
          ( case ty of
-               Base (aux, t)  => (case t of nil => "[NULL]"
-					| _ => (ltokenTyToString (hd t)) )^" "^ stats 
+               Base (aux, ts)  =>
+                 let val avg = avgTokenLength ts
+                     val tot = sumTokenLength ts
+                 in ( case ts of nil =>
+                         "[NULL]"
+                       | _ => (ltokenTyToString (hd ts))
+                    ) ^ " " ^ stats ^ "(avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
+                                      ", tot: " ^ LargeInt.toString tot ^ ")"
+                 end
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
                 ( if longTBDs then ( "\n"^ (contextsToString cl) ^ prefix ^ "End TBD" ) else "" )

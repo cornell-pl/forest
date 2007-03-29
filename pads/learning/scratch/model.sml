@@ -136,10 +136,16 @@ structure Model = struct
     end
 
     (* Compute the weighted sum of the data complexities of a list of types *)
-    fun weighted ( tot : int ) ( tys : Ty list ) : Complexity =
+    fun weightedData ( tot : int ) ( tys : Ty list ) : Complexity =
     let fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
         fun f ( t : Ty, c : Complexity ) : Complexity =
               combine c ( multCompR ( frac ( getCoverage t ) tot ) ( getDataComp t ) )
+    in foldl f zeroComp tys
+    end
+    fun weightedAtomic ( tot : int ) ( tys : Ty list ) : Complexity =
+    let fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
+        fun f ( t : Ty, c : Complexity ) : Complexity =
+              combine c ( multCompR ( frac ( getCoverage t ) tot ) ( getAtomicComp t ) )
     in foldl f zeroComp tys
     end
 
@@ -173,8 +179,9 @@ structure Model = struct
                                               , sumTypeComps measuredtys
                                               ]
                              , adc = combine ( cardComp tys )
-                                             ( weighted ( sumCoverage measuredtys )
-                                                        measuredtys
+                                             ( weightedAtomic
+                                                  ( sumCoverage measuredtys )
+                                                  measuredtys
                                              )
                              , dc  = combine ( cardComp tys )
                                              ( sumDataComps measuredtys )
@@ -226,7 +233,7 @@ structure Model = struct
                  val sumBranches      = sumCoverage branches
                  val measuredBranches = map measure branches
                  val branchesTypeComp = sumTypeComps measuredBranches
-                 val avgBranches      = weighted sumBranches measuredBranches
+                 val avgBranches      = weightedAtomic sumBranches measuredBranches
                  val branchesDataComp = sumDataComps branches
                  val comps            = { tc  = sumComps [ constructorComp
                                                          , cardComp bs
