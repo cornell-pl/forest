@@ -107,14 +107,14 @@ structure Tests = struct
     (* Some Base Ty structures to use *)
     val ty1  : Ty = Base ( a1, [] )
     val ty2  : Ty = Base ( a1, ltl2 )
-    val ty3  : Ty = Base ( a1, ltlip1 )
+    val ty3  : Ty = Base ( freq 100, ltlip1 )
     val ty4  : Ty = Base ( a1, ltlbxml3  )
     val ty5  : Ty = Base ( a1, ltlexml3 )
     val ty6  : Ty = Base ( a1, ltltime3 )
     val ty7  : Ty = Base ( a1, ltlstr4 )
     val ty8  : Ty = Base ( a1, ltlgrp1 )
-    val ty9  : Ty = Base ( a1, ltlwht2 )
-    val ty10 : Ty = Base ( a1, ltloth3 )
+    val ty9  : Ty = Base ( freq 100, ltlwht2 )
+    val ty10 : Ty = Base ( freq 100, ltloth3 )
     val ty11 : Ty = Base ( a1, ltlemp1 )
     val ty12 : Ty = Base ( a1, ltlerr1 )
     val ty13 : Ty = Base ( a1, ltlstr5 )
@@ -123,7 +123,7 @@ structure Tests = struct
 
     (* Some RefinedBase Ty structures to use *)
     val ty20 : Ty = RefinedBase ( a1, rsme1, ltlstr4 )
-    val ty21 : Ty = RefinedBase ( a1, rint1, ltl2 )
+    val ty21 : Ty = RefinedBase ( freq 100, rint1, ltl2 )
     val ty22 : Ty = RefinedBase ( freq 100, rintc1, ltl2 )
     val ty23 : Ty = RefinedBase ( freq 900, rstr1, ltlstr4 )
     val ty24 : Ty = RefinedBase ( a1, renum1, ltlstr4 )
@@ -132,15 +132,15 @@ structure Tests = struct
     val ty27 : Ty = RefinedBase ( a1, rintc2, ltl2 )
 
     (* Now to test structured, but unrefined types *)
-    val ty30 : Ty = Pstruct (a1, [ ty3, ty9, ty21 ])
-    val ty31 : Ty = Punion (a1, [ ty3, ty9, ty21, ty10 ])
-    val ty32 : Ty = Parray ( a1, { tokens  = []
-                                 , lengths = [ ( 6, 12 ) ]
-                                 , first   = ty3
-                                 , body    = ty9
-                                 , last    = ty10
-                                 }
-                           )
+    val ty30 : Ty = Pstruct ( a1, [ ty3, ty9, ty21, ty10 ] )
+    val ty31 : Ty = Punion  ( a1, [ ty3, ty9, ty21, ty10 ] )
+    val ty32 : Ty = Parray  ( a1, { tokens  = []
+                                  , lengths = [ ( 6, 12 ) ]
+                                  , first   = ty3
+                                  , body    = ty9
+                                  , last    = ty10
+                                  }
+                            )
     val ty33 : Ty = TBD    ( a1, 12, [ ctxt1, ctxt2 ] )
     val ty34 : Ty = Bottom ( a1, 12, [ ctxt1, ctxt2 ] )
 
@@ -222,7 +222,9 @@ structure Tests = struct
     val p27 : string = showTyComp (getComps m27);
 
     val m30 : Ty = measure ty30;
+    val p30 : string = showTyComp (getComps m30);
     val m31 : Ty = measure ty31;
+    val p31 : string = showTyComp (getComps m31);
     val m32 : Ty = measure ty32;
     val (Parray (a32, s32)) = m32;
     val m33 : Ty = measure ty33;

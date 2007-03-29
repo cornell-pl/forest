@@ -203,9 +203,9 @@ structure Model = struct
                                        , getTypeComp l'
                                        , getTypeComp b'
                                        ]
-                 val acomp  = sumComps [ getDataComp f'
-                                       , getDataComp l'
-                                       , getDataComp b'
+                 val acomp  = sumComps [ getAtomicComp f'
+                                       , getAtomicComp l'
+                                       , getAtomicComp b'
                                        ]
                  val dcomp  = sumComps [ getDataComp f'
                                        , getDataComp l'
