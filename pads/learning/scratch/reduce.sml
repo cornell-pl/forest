@@ -91,6 +91,19 @@ case ty of
 | RArray(a, _, _, _, _, nil) => Base(a, nil) 
 | _ => ty
 
+fun remove_degenerate_list1 cmap ty =
+case ty of
+  Punion(a, h :: nil) => (cmap, h)
+| Punion (a, nil) => (cmap, Base(a, nil))
+| Pstruct (a, h :: nil) => (cmap, h)
+| Pstruct (a, nil) => (cmap, Base(a, nil))
+| Switch(a, id, nil) => (cmap, Base(a, nil))
+| Parray(a, {tokens, lengths, first, body, last}) => 
+	if lengths=nil then (cmap, Base(a, nil)) else (cmap, ty) 
+| RArray(a, _, _, _, _, nil) => (cmap, Base(a, nil)) 
+| _ => (cmap, ty)
+
+
 (* tuples inside tuples are removed*)
 and unnest_tuples ty : Ty =
 case ty of 
@@ -348,7 +361,7 @@ and refine_array ty =
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
 (*
-		val _ = (print "trying to refine array in struct \n"; printTy ty) 
+		val _ = (print "trying to refine array \n"; printTy ty) 
 *)
 		fun getlen (lens, x) = 
 			case lens of 
@@ -357,7 +370,10 @@ and refine_array ty =
 			| nil => SOME(IntConst(Int.toLarge(x)))
 		val lens = (#1 (ListPair.unzip(lengths)))		
 		val lenop = getlen(lens, hd lens)
-		fun isStruct ty = case ty of (Pstruct(_)) => true | _ => false
+		fun isStruct ty = case ty of 
+			(Pstruct(_)) => true 
+			| Poption (a, ty') => isStruct ty'
+			| _ => false
 		fun is_base ty' = case ty' of 
 			Base _ => true 
 			| RefinedBase _ => true
@@ -365,10 +381,12 @@ and refine_array ty =
 		fun firstEle(ty) = 
 		  case ty of 
 		  Pstruct(aux, tylist) => List.hd tylist
+		  | Poption(_, ty') => firstEle ty'
 		  | _ => raise TyMismatch
 		fun lastEle(ty) = 
 		  case ty of 
 		  Pstruct(aux, tylist) => List.last tylist
+		  | Poption(_, ty') => lastEle ty'
 		  | _ => raise TyMismatch
 		fun droplast(ty) = 
 		  case ty of 
@@ -383,13 +401,13 @@ and refine_array ty =
 				Pstruct(mkTyAux1(minCoverage(newtylist), id), newtylist)
 			       end
 			)
+		  | Poption (a, ty') => Poption (a, droplast ty')
 		  | _ => raise TyMismatch
 (*
 		fun dropfirst(ty) = 
 		  case ty of 
 		  Pstruct(aux, tylist) => Pstruct(aux, List.drop(tylist, 1))
 		  | _ => raise TyMismatch
-*)
 		fun addtohead(ty, newty) =
 		  case ty of
 		  Pstruct({coverage, label=SOME id, ...}, tylist) => 
@@ -405,8 +423,6 @@ and refine_array ty =
 		  |Base({coverage, ...}, _) => Pstruct(mkTyAux(Int.min(coverage, getCoverage(newty))), 
 							[newty, ty])
 		  | _ => (raise TyMismatch)
-
-(*
 		fun addtotail(ty, newty) =
 		  (*Note: aux is wrong here *)
 		  case ty of
@@ -420,6 +436,7 @@ and refine_array ty =
 		  (*funtion to find the first base or refine type and convert it to refined type *)
 			case ty of
 			  Pstruct(_, tylist) => findRefined (hd tylist)
+			| Poption (_, ty') => findRefined ty'
 			| RefinedBase(_, refined, _) => SOME(refined)
 			| Base(_, ltokens) => ltokenlToRefinedOp ltokens
 			| _ => NONE
@@ -905,6 +922,7 @@ let
 		]
   val post_constraint_rules : post_reduction_rule list =
 		[ 
+		  remove_degenerate_list1,
 		  uniqueness_to_const, 
 		  adjacent_consts,
 		  enum_range_to_refine,

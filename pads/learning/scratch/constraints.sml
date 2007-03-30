@@ -358,6 +358,10 @@ constraint map *)
 	fun constrainTy (ty, cmap) = 
  	let
 		(* make the table *)
+		(*
+		val _ = print ("Building table for ("^Int.toString (getCoverage ty)^")\n")
+		val _ = printTy ty
+		*)
 		val tytable = Table.genTable (getCoverage(ty)) ty
 (*
 		val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n")

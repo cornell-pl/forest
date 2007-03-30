@@ -341,10 +341,13 @@ struct
                     (suffix:string) (ty:Ty) : string = 
     let val aux = getAuxInfo ty
         val { tc = tcomp, adc = acomp, dc = dcomp } = #tycomp aux
-        val stats = ( "(" ^  (covToString aux) ^
+        val stats = ( "(" ^  (covToString aux)  ^
+(*
                       ", tc: " ^ (showBits tcomp)  ^
                       ", ac: " ^ (showBits acomp)  ^
-                      ", dc: " ^ (showBits dcomp)  ^ ")"
+                      ", dc: " ^ (showBits dcomp)  ^ 
+*)
+			")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
     in ( prefix ^
@@ -355,8 +358,11 @@ struct
                  in ( case ts of nil =>
                          "[NULL]"
                        | _ => (ltokenTyToString (hd ts))
-                    ) ^ " " ^ stats ^ " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
-                                      ", tot: " ^ LargeInt.toString tot ^ ")"
+                    ) ^ " " ^ stats 
+(*
+					^ " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
+                                      ", tot: " ^ LargeInt.toString tot ^ ")" 
+*)
                  end
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
@@ -377,9 +383,9 @@ struct
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
-                 in ( refinedToString refined ) ^ " " ^ stats ^
-                    " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
-                    ", tot: " ^ LargeInt.toString tot ^ ")"
+                 in ( refinedToString refined ) ^ " " ^ stats  
+		    ^ " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
+                    ", tot: " ^ LargeInt.toString tot ^ ")" 
                  end
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^

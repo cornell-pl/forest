@@ -71,7 +71,8 @@ structure Table = struct
 		in List.tabulate(columnsize, (getIntfromList lints))
 		end
 
-	fun genTable totalrecords ty : infertable = case ty of
+	fun genTable totalrecords ty : infertable = 
+	case ty of
 		Base (a, ltokenl) =>
 			let 
 				val col = gencolumn(ltokenl, totalrecords)
@@ -105,6 +106,7 @@ structure Table = struct
 				 genTable totalrecords fty, genTable totalrecords lty]
 		| RArray (a, _, _, _, _, lens) => 
 			([some(#label a)], [genintcolumn(lens, totalrecords)])
+		| Poption (a, ty') => genTable totalrecords ty'
 		| _ => (nil, nil):infertable
 
 	fun parseArrays ty =

@@ -267,6 +267,7 @@ structure Common = struct
 				tylist1)
 		| (ty1, Punion(a2, tylist2)) =>
 			foldr myor false (map (fn x => describedBy (ty1, x)) tylist2)
+		| (Poption(a1, ty), ty2) => describedBy (ty, ty2)
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 
@@ -323,6 +324,7 @@ structure Common = struct
 			Pstruct(mergeAux(a1, a2), mergeListInto(tylist1, tylist2, nil))
 		| (Punion(a1, tylist1), Punion(a2, tylist2)) => foldl mergeTyInto ty2 tylist1
 		| (ty1, Punion(a2, tylist2)) => Punion(mergeAux(getAuxInfo(ty1), a2), mergeUnion(ty1, tylist2, nil))
+		| (Poption (a1, ty), ty2) => mergeTyInto (ty, ty2)
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 
@@ -481,6 +483,7 @@ structure Common = struct
 			| RArray(a, s, t, body, l, lens) => RArray(a, s, t, updateTy intmap body, l, lens) 
 			(*TODO: need to work on lens of RArray as well!!!*)
 			| Switch (a, i, rtl) => Switch(a, i, map (fn (r, t) => (r, updateTy intmap ty)) rtl)
+			| Poption(a, ty') => Poption(a, updateTy intmap ty')
 			| _ => ty
 
 		val recNoMap = insertToMap ty IntMap.empty
