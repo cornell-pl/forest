@@ -376,7 +376,7 @@ struct
              | Punion (aux, tys)  =>
                 "Punion" ^ stats ^ "\n" ^ (lconcat (List.map partialD tys)) ^ prefix ^ "End Punion"
              | Parray (aux, {tokens=tkns, lengths, first=ty1,body=ty2,last=ty3}) =>
-                "Parray" ^ stats ^
+                "Parray" ^ stats ^ 
                 "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
@@ -391,7 +391,7 @@ struct
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
                 (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
                 (partialD ty))) retys)) ^ prefix ^ "End Switch"
-             | RArray (aux, sep, term, body, len, _) => 
+             | RArray (aux, sep, term, body, len, lengths) => 
                 "RArray" ^ stats ^ "\n" ^
                 ( case sep of
                        SOME septok =>

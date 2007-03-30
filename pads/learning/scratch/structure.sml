@@ -963,6 +963,7 @@ struct
 		end
 	    fun buildArrayTy ({tokens=atokens}, rtokens) = 
 		let val numTokens = List.foldl (fn((token,freq),sum) => sum + freq) 0 atokens
+		    val recIndex = ref 0
 		    fun partitionOneRecord tlist = 
 		        let fun insertOne ((token,freq),tTable) = TokenTable.insert(tTable, token, ref freq)
 			    val tTable = List.foldl insertOne TokenTable.empty atokens
@@ -993,7 +994,7 @@ struct
 				     fun getLoc [] = (print "WARNING: ARRAY first context empty!"; ~1)
 				       | getLoc ((tok,loc:location)::ltocs) = #recNo loc
 				 in
-				     ((length, getLoc first), first, main, List.rev current)
+				     ((length, !recIndex), first, main, List.rev current)
 				 end
                               | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
 				 let 
@@ -1021,7 +1022,9 @@ struct
 			let fun pR [] (numTokenA, firstA, mainA,lastA) = 
 					(List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
                               | pR (t::ts) (numTokenA, firstA, mainA, lastA) = 
-			            let val (numTokens, first, main,last) = partitionOneRecord t 
+			            let 
+					val (numTokens, first, main,last) = partitionOneRecord t 
+				        val _ = recIndex := (!recIndex)+1
 				    in 
 					pR ts (numTokens::numTokenA, first::firstA, main@mainA, last::lastA)
 				    end

@@ -471,6 +471,17 @@ structure Common = struct
 					| _ => updateTL(intmap, ts, newtl@[(t, {lineNo=lineNo, beginloc=beginloc, 
 							endloc=endloc, recNo=some(newRecop)})])
 				end
+		fun updateLens intmap lengths =
+			case lengths of
+			  nil => nil
+			  | (l, r)::tail => 
+				let
+				  val newRecOp = IntMap.find (intmap, r)
+				in
+			  	  case newRecOp of
+					NONE => (print "One recNum not found!\n"; raise RecordNum)
+					| _ => (l, (some newRecOp))::(updateLens intmap tail)
+				end
 		fun updateTy intmap ty =
 		  case ty of
 			Base(a, tl)=> Base(a, updateTL(intmap, tl, nil))
@@ -478,10 +489,10 @@ structure Common = struct
 			| Punion(a, tylist)=> Punion(a, map (updateTy intmap) tylist)
 			| Pstruct(a, tylist)=> Pstruct(a, map (updateTy intmap) tylist)
 			| Parray(a, {tokens, lengths, first, body, last}) => Parray(a, {tokens = tokens,
-					lengths = lengths, first = updateTy intmap first, 
+					lengths = (updateLens intmap lengths), first = updateTy intmap first, 
 					body = updateTy intmap body, last = updateTy intmap last})
-			| RArray(a, s, t, body, l, lens) => RArray(a, s, t, updateTy intmap body, l, lens) 
-			(*TODO: need to work on lens of RArray as well!!!*)
+			| RArray(a, s, t, body, l, lens) => RArray(a, s, t, updateTy intmap body, l, 
+					(updateLens intmap lens)) 
 			| Switch (a, i, rtl) => Switch(a, i, map (fn (r, t) => (r, updateTy intmap ty)) rtl)
 			| Poption(a, ty') => Poption(a, updateTy intmap ty')
 			| _ => ty
