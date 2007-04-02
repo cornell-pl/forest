@@ -7,4 +7,5 @@ val print_functional_deps = false
 val print_report = false (* prints out a report summarizing information in Main.main' *)
 val reparse_data = false (* try to reparse the data with the simplified IR *)
 val print_levels = false (* report each level in TANE *)
+val print_verbose = false (* print verbose information *)
 end

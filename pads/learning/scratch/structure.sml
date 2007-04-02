@@ -3,6 +3,7 @@ struct
     open Config
     open Utils
     open Types
+    open Options
     structure SS = Substring
 
     val TBDstamp = ref 0
@@ -551,7 +552,7 @@ struct
     (* hs: maps tokens to histograms (which map ints to int refs) *)
     (* counts: maps tokens to int refs *)
     fun buildHistograms numRecords (countslist : RecordCount list)= 
-	let val () = print "Building histograms...\n"
+	let val () = if print_verbose then print "Building histograms...\n" else ()
 	    fun doOneRecord (fd : freqDist) (counts:RecordCount) = 
                 let fun doOneToken (token,count,fd) : freqDist = 
 		    case TokenTable.find(fd,token)
@@ -584,7 +585,9 @@ struct
     fun findClusters numRecords (freqDist:freqDist) = 
 	let val distList = TokenTable.listItemsi(freqDist)
 	    val threshold = histEqTolerance numRecords
-	    val () = print ("THRESHOLD for histogram equality: "^(Int.toString threshold)^".\n")
+	    val () = if print_verbose then 
+			print ("THRESHOLD for histogram equality: "^(Int.toString threshold)^".\n")
+		     else ()
 	    fun cmpDists ((k1,h1), (k2,h2)) = histScoreCmp threshold (h1, h2)
             fun eqDists  ((k1,h1), (k2,h2)) = histScoreEq threshold (h1, h2)
 	    val sortedDistList = ListMergeSort.sort cmpDists distList
@@ -598,7 +601,7 @@ struct
 		end
 	    val clusters = case sortedDistList of [] => []
 	                   | (f::fs) => buildClusters (fs, [[f]])
-	    val () = print "Computed clusters\n"
+	    val () = if print_verbose then print "Computed clusters\n" else ()
 	in
 	    clusters
 	end
@@ -634,9 +637,11 @@ struct
 			    (cumCount + count, Int.min(coverage, cumCoverage), (token, count)::tlist)
 			    val (numTokens, coverage, tokens) = List.foldl doOne (0, numRecords,[]) tokenAnalysis
 			in
-			    (print "Junk Tolerance Threshold: "; print (Int.toString(isJunkTolerance numRecords)); print "\n";
+			     (if print_verbose then 
+			     (print "Junk Tolerance Threshold: "; print (Int.toString(isJunkTolerance numRecords)); print "\n";
 			     print "Coverage: ";                 print (Int.toString(coverage)); print "\n";
-			     print "Num Tokens: ";               print (Int.toString(numTokens)); print "\n";
+			     print "Num Tokens: ";               print (Int.toString(numTokens)); print "\n")
+			     else ();
 			     if (coverage >= (isJunkTolerance numRecords) andalso (numTokens > 0))
 				 then (SOME (Struct {numTokensInCluster = numTokens, numRecordsWithCluster = coverage, tokens = tokens}))
 			     else NONE
@@ -667,16 +672,18 @@ struct
 
             fun isArray clusters = 
 		let val sortedClusters = ListMergeSort.sort lessArrayCluster clusters
-		    val () = print "Clusters sorted by array criteria:\n"
-		    val () = printClusters numRecords sortedClusters
+		    val () = if print_verbose then print "Clusters sorted by array criteria:\n" else ()
+		    val () = if print_verbose then printClusters numRecords sortedClusters else ()
 		    val cluster = List.hd sortedClusters (* guaranteed by earlier check not to be [] *)
 		    fun getArrayInfo((t, {hist, total, coverage, structScore, width}), result) = 
-		    (print "Possible array tokens:\n"; 
+		    (if print_verbose then (
+		     print "Possible array tokens:\n"; 
 		     printTokenTy t; print "\n";
 		     print ("Records in possible array context:"^(Int.toString numRecords)^"\n");
                      print ("Total:"^(Int.toString (!total))^"\n");
                      print ("Coverage:"^(Int.toString (!coverage))^"\n");
-                     print ("Width:"^(Int.toString (!width))^"\n");
+                     print ("Width:"^(Int.toString (!width))^"\n")) 
+		     else ();
 		     if (!width >= !ARRAY_WIDTH_THRESHOLD) andalso 
 			(!coverage > numRecords - (isJunkTolerance numRecords))  andalso
                         (not (isString t))
@@ -684,7 +691,7 @@ struct
 		    (* we probably want to compute the number of times the token appears in the cluster...*)
 		    val arrayTokenAnalysis = List.foldl getArrayInfo [] cluster 
 		in
-		    case arrayTokenAnalysis of [] => (print "ARRAY NOT CHOSEN\n"; NONE) | a => SOME(Array {tokens = a})
+		    case arrayTokenAnalysis of [] => ((*print "ARRAY NOT CHOSEN\n";*) NONE) | a => SOME(Array {tokens = a})
 		end
 	    val unionFirst = false
 	    fun isUnion clusters = SOME (Union FirstToken)
@@ -711,7 +718,7 @@ struct
                                 |  NONE   => (print "Identified a blob\n"; Blob))*)
 
 
-	    val () = printKindSummary kindSummary
+	    val () = if print_verbose then printKindSummary kindSummary else ()
 
 	in
 	    kindSummary : Kind
@@ -865,7 +872,7 @@ struct
             (* This function partitions a context into a union. *)
             (* It currently uses the first token in each context to do the partition *)
             fun buildUnionTy (FirstToken, rtokens) = 
-		let val () = print "BUILDING UNION TY\n"
+		let (*val () = print "BUILDING UNION TY\n"*)
 		    val numChunks = List.length rtokens
 		    fun updateTable(token,chunk,tTable) = 
 		        case TokenTable.find(tTable, token)
@@ -1072,7 +1079,7 @@ struct
 		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
 *)
 		in
-		    (print "Array context\n"; 
+		    ((*print "Array context\n"; *)
 		     Parray (mkTyAux numRecords, 
 			     {tokens  = atokens, 
 			      lengths = arrayLengths,
@@ -1101,7 +1108,7 @@ struct
             val counts : RecordCount list = List.map countFreqs context
 	    val fd: freqDist = buildHistograms numRecordsinContext counts
 	    val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd
-	    val () = printClusters numRecordsinContext clusters
+	    val () = if print_verbose then printClusters numRecordsinContext clusters else ()
             val ty = clustersToTy curDepth context numRecordsinContext clusters
 	in
 	    ty
@@ -1120,7 +1127,7 @@ file is a record and all of them collectively represent a sample data *)
 	    val _ = print (contextsToString rtokens)
 *)
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
-	    val () = lengthsToHist rtokens
+	    val () = if print_verbose = true then lengthsToHist rtokens else ()
 	    val ty = ContextListToTy 0 rtokens
 	    val sty = simplifyTy ty
 	in

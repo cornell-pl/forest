@@ -11,10 +11,10 @@ let
   val acomp  = #adc comps
   val datacomp = #dc comps
   val rawcomp = combine tycomp datacomp
-  val _ = print "\nBefore reduction:\n"
+(*  val _ = print "\nBefore reduction:\n"
   val _ = printTy measuredTy
   val _ = print "\n"
-(*  val _ = printConstMap cmap 
+  val _ = printConstMap cmap 
 *)
   val reduced_ty = Reduce.reduce NONE ty 
 (*
@@ -24,7 +24,7 @@ let
   val cmap = Constraint.constrain'(reduced_ty)
   val reduced_ty' = Reduce.reduce (SOME(cmap)) reduced_ty 
   val measured_reduced_ty' = measure reduced_ty'
-  val _ = print "\nAfter final reduction:\n"
+  val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty'
   val _ = print "\n"
   val comps' = getComps measured_reduced_ty'

@@ -12,6 +12,7 @@ structure Main : sig
     open Types
     open Structure
     open Model
+    open Options
 
     fun doIt () = 
 	let val fileNames         = !srcFiles
@@ -82,7 +83,7 @@ structure Main : sig
 	let val banner = PCL.genBanner("learn", "Prototype Learning System", flags)
 	in
 	   (PCL.parseArgs(args, flags, addSourceFile, banner);
-	    printParameters())
+	    if print_verbose=true then printParameters() else () )
 	end
     (********************************************************************************)
 
