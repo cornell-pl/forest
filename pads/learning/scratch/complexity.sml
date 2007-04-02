@@ -173,6 +173,13 @@ structure Complexity = struct
              | Choices l => Precise (log2L l)
              | Precise p => Precise p
         )
+    (* Convert compleixy to a real number *)
+    fun toReal ( c : Complexity ) : real =
+        ( case c of
+               Bits n    => (Real.fromLargeInt n)
+             | Choices l => log2L l
+             | Precise p => p
+        )
 
     (* Convert a complexity to a string *)
     fun showComp ( c : Complexity ) : string =

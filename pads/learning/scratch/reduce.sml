@@ -6,6 +6,7 @@ Reduce implements the simplification system for Tys
 structure Reduce = struct
 open Common
 open Types
+open Model
 exception TyMismatch
 
 (* calculates the complexity of a datatype so that we can try to minimize it*)
@@ -65,6 +66,13 @@ fun cost const_map ty =
 		| Poption (a, ty) => (cost const_map ty) + 3 
 	in (ty_cost ty) + (total_const_cost ty) + 1 (* every constraint is counted towards cost *)
   end
+
+fun score ty =
+	let
+		val comps = getComps (measure ty)
+		val rawcomp = combine (#tc comps) (#dc comps)
+	in (toReal rawcomp)
+end
 
 type constraint_map = constraint list LabelMap.map
 
@@ -269,8 +277,8 @@ and extract_table_header ty =
 			val a2 = {coverage=overallCoverage-1, 
 				label=getNewLabel 1, tycomp = zeroComps }
 			val newty = Punion(a, [Pstruct(a1, tys1), Pstruct(a2, tys2)])
-			val _ = (print "Cost for ty: "; print (Int.toString(cost LabelMap.empty ty)))
-			val _ = (print "\nCost for newty: "; print (Int.toString(cost LabelMap.empty newty)))
+			val _ = (print "Cost for ty: "; print (Real.toString(score ty)))
+			val _ = (print "\nCost for newty: "; print (Real.toString(score newty)))
 		  in newty
 		  end
 		else ty
@@ -996,14 +1004,14 @@ let
 (*
 	    val _ = (print ("Old Ty: \n"); printTy ty)
 *)
-	    val cur_cost = cost cmap ty
+	    val cur_cost = score ty
 	    (* apply each rule to the ty *)
 	    val cmap_ty_pairs = if mode=0 then
 					map(fn x => (cmap, x ty)) pre_constraint_rules
 				else
 					map (fn x => x cmap ty) post_constraint_rules 
 	    (* find the costs for each one *)
-	    val costs = map (fn (m, t)=> cost m t) cmap_ty_pairs 
+	    val costs = map (fn (m, t)=> score t) cmap_ty_pairs 
 	    val pairs = ListPair.zip(cmap_ty_pairs,costs)
 	    fun min((a,b),(c,d)) = if b < d then (a,b) else (c,d)
 	    (* find the minimum cost out of the ones found *)
