@@ -5,6 +5,7 @@ struct
     open Utils
     open Complexity
     open Tokens
+    exception InvalidId
 
     type TokenOrder = Token list
     type Context    = LToken list
@@ -181,6 +182,18 @@ struct
     end
 
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
+
+    fun getLabelInt (a: AuxInfo): int =
+	let
+	  val label = getLabelString a
+	  val sublabel = Substring.full label
+	  val id = Substring.string (Substring.triml 4 sublabel)
+	  val idop = Int.fromString id
+        in
+	  case idop of
+		NONE => (print "The id in invalid!"; raise InvalidId)
+	|	SOME i => i
+	end
 
     fun mkTyAux ( coverage : int ) : AuxInfo = 
 	let val next = !Tystamp
@@ -416,5 +429,26 @@ struct
          print (TyToStringD prefix longTBDs longBottom suffix ty ) 
 
      fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
+
+     (* Function to sort the Unions and Switches in the ty by the order of their IDs
+  	this is a prerequisite for comparing two ty's *)
+     fun sortTy ty =
+        let
+		fun cmp (ty1, ty2) = (getLabelInt (getAuxInfo ty1)) > (getLabelInt (getAuxInfo ty2))
+		fun cmp1 ((r1, ty1), (r2, ty2)) = cmp (ty1, ty2) 
+	in
+	case ty 
+        of Base _ => ty
+        |  TBD _ => ty
+        |  Bottom _ => ty
+        |  Pstruct (a,tys)              => Pstruct (a, map sortTy tys)
+        |  Punion (a,tys)               => Punion(a, ListMergeSort.sort cmp tys)
+        |  Parray (a, {tokens, lengths, first, body, last}) => 
+		Parray (a, {tokens=tokens, lengths=lengths, first=sortTy first, body = sortTy body, last = sortTy last})
+        |  RefinedBase _ => ty
+        |  Switch(a,id,branches)        => Switch(a, id, ListMergeSort.sort cmp1 branches)
+        |  RArray (a,sep,term,body,len,lengths) => RArray(a, sep, term, sortTy body, len, lengths)
+        |  Poption (a, body) => Poption(a, sortTy body)
+	end
 
 end
