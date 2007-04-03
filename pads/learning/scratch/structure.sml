@@ -454,7 +454,7 @@ struct
 				     | _ => TokenEq(t1,t2)
 	    fun findDelim (t,loc) = List.find (fn(f,s) => TokenMatch (t,f)) groupOps
             fun delimMatches r (t,loc) = TokenEq(t, r)
-	    fun flatten [] = (print "in flatten function\n"; [])
+	    fun flatten [] = ((*print "in flatten function\n";*) [])
               | flatten ((ltoken,body,r)::rest) = (ltoken :: (List.rev body)) @ (flatten rest) 
             fun getGroupLoc ((lt, {lineNo=llineNo, beginloc=lbegin, endloc=lend, recNo=lrecNo}), 
 			     (rt, {lineNo,         beginloc=rbegin, endloc=rend, recNo=rrecNo})) =
@@ -698,13 +698,15 @@ struct
             val analyses = isStruct ::
 		(if unionFirst then [isUnion, isArray] else [isArray, isUnion])
 
-	    fun findFirst arg [] = (print "Identified a blob\n"; Blob)
+	    fun findFirst arg [] = (if print_verbose then 
+					print "Identified a blob\n"
+				    else (); Blob)
 	      | findFirst arg (f::fs) = case f arg of NONE => findFirst arg fs
 		                        | SOME s => s 
 
 	    val kindSummary = 
 		case clusters 
-                of [] => (print "No clusters found\n"; Empty)
+                of [] => ((* print "No clusters found\n";*) Empty)
                 |  _ => findFirst clusters analyses
 
 (*	    val kindSummary = 
@@ -956,7 +958,7 @@ struct
 					      or more tokens coming from one subset of records, and another group of tokens
 					      coming from a disjoint subset. So we should introduce a union.*)
 (*			                   (print "in mkbottom case\n"; mkBottom (List.length brs,brs))       *)
-					   (print "converting false struct into union\n"; buildUnionTy(FirstToken, brs))
+					   ((*print "converting false struct into union\n";*) buildUnionTy(FirstToken, brs))
 			  |  ([ty], []) => ty
 			  |  (tys, brs) => if isEmpty brs 
 					   then Punion (mkTyAux(sumCoverage tys), tys) 

@@ -930,13 +930,12 @@ let
 		]
   val post_constraint_rules : post_reduction_rule list =
 		[ 
-		  remove_degenerate_list1,
 		  uniqueness_to_const, 
 		  adjacent_consts,
 		  enum_range_to_refine,
 		  sum_to_switch
 		]
-  (* generate the lust of rules *)
+  (* generate the list of rules *)
   val (mode, cmap) = case const_info_op of 
       SOME (cmap) => (1, cmap)
     | NONE => (0, LabelMap.empty)

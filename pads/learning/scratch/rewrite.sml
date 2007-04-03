@@ -11,23 +11,29 @@ let
   val acomp  = #adc comps
   val datacomp = #dc comps
   val rawcomp = combine tycomp datacomp
-(*  val _ = print "\nBefore reduction:\n"
+(*
+  val _ = print "\nBefore reduction:\n"
   val _ = printTy measuredTy
   val _ = print "\n"
   val _ = printConstMap cmap 
 *)
-  val reduced_ty = Reduce.reduce NONE ty 
+  (*phase one *)
+  val ty1 = Reduce.reduce NONE ty 
 (*
   val _ = print "\nAfter initial reduction:\n"
-  val _ = printTy reduced_ty 
+  val _ = printTy ty1
 *)
-  val cmap = Constraint.constrain'(reduced_ty)
-  val reduced_ty' = Reduce.reduce (SOME(cmap)) reduced_ty 
-  val measured_reduced_ty' = measure reduced_ty'
+  (*phase two *)
+  val cmap = Constraint.constrain'(ty1)
+  val ty2 = Reduce.reduce (SOME(cmap)) ty1
+  (*phase three, redo constraint-free reduction *)
+  val ty3 = Reduce.reduce NONE ty2
+
+  val measured_reduced_ty = measure ty3
   val _ = print "\nRefined Ty:\n"
-  val _ = printTy measured_reduced_ty'
+  val _ = printTy measured_reduced_ty
   val _ = print "\n"
-  val comps' = getComps measured_reduced_ty'
+  val comps' = getComps measured_reduced_ty
   val tycomp' = #tc comps'
   val acomp' = #adc comps'
   val datacomp' = #dc comps'
@@ -41,7 +47,7 @@ let
   val _ =  print ("new data comp = "^ (showComp datacomp') ^"\n");
   val _ =  print ("new total comp = "^ (showComp rawcomp') ^"\n");
 in
-  reduced_ty' 
+  measured_reduced_ty 
 end
 
 end

@@ -451,4 +451,8 @@ struct
         |  Poption (a, body) => Poption(a, sortTy body)
 	end
 
+     (*This function measure the similarity of two tys and returns a fractional number to represent the percentage*)
+     (* if two tys are exactly the same structurally (modulo the token lists), it returns 1, or 100% *)
+	
+
 end
