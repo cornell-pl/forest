@@ -24,6 +24,7 @@ structure Map = RedBlackMapFn(struct
 	| 	Ppath(x) => String.size x
 	| 	Purl(x) => String.size x
 	|	Pint (x, s) => String.size s
+	|	Pfloat (a, b) => String.size (LargeInt.toString(a)) + String.size (LargeInt.toString(b))
 	|	Pstring s => String.size s
 	|	Pwhite c => String.size c
 	|	Other c => 1

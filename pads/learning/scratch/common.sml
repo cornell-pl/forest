@@ -30,6 +30,12 @@ structure Common = struct
 		|	(NONE, NONE) => EQUAL
 		and compared(a,b) = case (a, b) of
 			(Pint (x, _), Pint (x', _)) => LargeInt.compare(x,x')
+			| (Pfloat x, Pfloat x') => 
+				(
+				case (x, x') of 
+				  ((a, b), (a', b')) => if a=a' then LargeInt.compare (b, b')
+				  			else LargeInt.compare(a, a')
+				)
 			| (Pstring (s1), Pstring(s2)) => String.compare(s1, s2)
 			| (Ptime(s1), Ptime(s2)) => String.compare(s1, s2)
 			| (Pdate(s1), Pdate(s2)) => String.compare(s1, s2)
@@ -81,6 +87,7 @@ structure Common = struct
 		PbXML(node, attrib) => "<" ^ node ^ attrib ^ ">"
 	|	PeXML(node, attrib) => "</" ^ node ^ attrib ^ ">"
 	|	Pint (i, s) => s
+	|	Pfloat (a, b) => (LargeInt.toString a) ^"."^(LargeInt.toString b)
 	|	Ptime(t) => t
 	|	Pdate(t) => t
 	|	Pip(t)  => t
@@ -99,6 +106,8 @@ structure Common = struct
 		PbXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
 	|	PeXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
 	|	Pint (i, _) => IntConst(i)
+	(*TODO: should add float refine type *)
+	|	Pfloat(t) => FloatConst(t)
 	|	Ptime(t) => StringConst(t)
 	|	Pdate(t) => StringConst(t)
 	|	Pip(t)  => StringConst(t)
@@ -166,6 +175,7 @@ structure Common = struct
 		  | (Ppath(a), Ppath(b)) => (a = b)
 		  | (Purl(a), Purl(b)) => (a = b)
 		  | (Pint(a, s1), Pint(b, s2)) => (a = b andalso s1 = s2)
+		  | (Pfloat(a), Pfloat(b)) => (a = b)
 		  | (Pstring(a), Pstring(b)) => (a = b)
 		  | (Pwhite(a), Pwhite(b)) => (a = b)
 		  | (Other(a), Other(b)) => (a = b)
@@ -183,6 +193,7 @@ structure Common = struct
 		  | (Ppath(a), Ppath(b)) => true
 		  | (Purl(a), Purl(b)) => true
 		  | (Pint(_), Pint(_)) => true
+		  | (Pfloat(a), Pfloat(b)) => true
 		  | (Pstring(a), Pstring(b)) => true
 		  | (Pwhite(a), Pwhite(b)) => true
 		  | (Other(a), Other(b)) => true

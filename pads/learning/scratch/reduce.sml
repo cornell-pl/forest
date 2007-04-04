@@ -44,6 +44,7 @@ fun cost const_map ty =
 				StringME _ => 1 
 				| Int _ => 2
 				| IntConst _ => 1
+				| FloatConst _ => 1
 				| StringConst _ => 1
 				| Enum l => length(l)
 				| LabelRef _ => 1
@@ -682,6 +683,13 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				IntConst(x), tokens)
 			)
+		| SOME(Pfloat(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				FloatConst(x), tokens)
+			)
+
 		| SOME(Pstring(x)) => 
 			(
 				newcmos, 
