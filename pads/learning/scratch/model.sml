@@ -274,8 +274,7 @@ structure Model = struct
                                                          ]
                                         , adc = weightedBranches
                                         , dc  = combine ( cardComp branches )
-                                                        ( multCompS cover
-                                                                    weightedBranches )
+                                                        ( sumDataComps measuredBranches )
                                         }
              in Switch ( updateComps a comps
                        , id
