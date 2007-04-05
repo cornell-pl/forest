@@ -62,7 +62,7 @@ struct
     datatype Refined = StringME of string
 	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
 	             | IntConst of LargeInt.int    (* value *)
-		     | FloatConst of LargeInt.int*LargeInt.int (*value*)
+		     | FloatConst of LargeInt.int * LargeInt.int (*value*)
                      | StringConst of string (* string literal *)
                      | Enum of Refined list  
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)

@@ -276,7 +276,7 @@ structure Tokens = struct
                  end
                (* URLs are too hard to parse right now *)
              | Purl s         => size s
-             | Pip s          => size s
+             | Pip s          => countCh #"." s + 1
              | Phostname s    =>
                  let val ndot          : int            = countCh #"." s
                      fun isDot ( x : char ) : bool = x = #"."
