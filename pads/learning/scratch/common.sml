@@ -106,7 +106,6 @@ structure Common = struct
 		PbXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
 	|	PeXML(node, attrib) => StringConst(node ^ " + " ^ attrib) 
 	|	Pint (i, _) => IntConst(i)
-	(*TODO: should add float refine type *)
 	|	Pfloat(t) => FloatConst(t)
 	|	Ptime(t) => StringConst(t)
 	|	Pdate(t) => StringConst(t)

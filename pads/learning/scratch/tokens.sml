@@ -24,7 +24,7 @@ structure Tokens = struct
     val numAlphaChars  : LargeInt.int  = 52
     val numDigits      : LargeInt.int  = 10
     val numStringChars : LargeInt.int  = numAlphaChars + numDigits + 1 + 1
-    val numWhiteChars  : LargeInt.int  = 2 (* Space and tab *)
+    val numWhiteChars  : LargeInt.int  = 4 (* Space, tab, \n and \r *)
     val numXMLChars    : LargeInt.int  = numAlphaChars
     val compXML        : Complexity    = int2Comp numXMLChars
 
@@ -55,7 +55,7 @@ structure Tokens = struct
                                                         ( 2 + numMonth ) * numDay *
                                                         ( 2 + numYear ) )
     val numDomain        : LargeInt.int = 256
-    val numToken         : LargeInt.int = 15 (* Number of cases in datatype Token *)
+    val numToken         : LargeInt.int = 16 (* Number of cases in datatype Token *)
 
     val compTime         : Complexity = int2Comp numTime
 
@@ -289,7 +289,7 @@ structure Tokens = struct
                          then size s - ndot - ( size lastComponent )
                          else size s - ndot
                  end
-             | Pint (n, s)    => size (LargeInt.toString n) + size s
+             | Pint (n, s)    => size (LargeInt.toString n) (*ignore the length of the s as it's aux info*)
              | Pfloat (i,f)   => size (LargeInt.toString i) + size (LargeInt.toString f) 
              | Pstring s      => size s
              | Pgroup grp     => 0

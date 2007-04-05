@@ -56,8 +56,8 @@ struct
         , tycomp   = comps
         }
 
-    val numRefined      : LargeInt.int = 6 (* Number of cases in datatype Refined *)
-    val numConstRefined : LargeInt.int = 2 (* Number of constant cases in datatype Refined *)
+    val numRefined      : LargeInt.int = 7 (* Number of cases in datatype Refined *)
+    val numConstRefined : LargeInt.int = 3 (* Number of constant cases in datatype Refined *)
 
     datatype Refined = StringME of string
 	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
@@ -67,7 +67,7 @@ struct
                      | Enum of Refined list  
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
 
-    val numTy : LargeInt.int = 9 (* Number of constructors in datatype Ty *)
+    val numTy : LargeInt.int = 10 (* Number of constructors in datatype Ty *)
     datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
 	        (* TBD is introduced when maxdepth limit kicks in *)
                 | TBD     of AuxInfo *
@@ -138,7 +138,7 @@ struct
         ( case ty of
                RArray ( a, osep, oterm, body, olen, _) =>
                   ( case olen of
-                         NONE => 1 (***** For now !!!!!!*)
+                         NONE => 1 (***** TODO: For now !!!!!!*)
                        | SOME r =>
                            ( case r of
                                   Int (min, max) => Int.fromLarge max
@@ -362,6 +362,7 @@ struct
                       ", tc: " ^ (showBits tcomp)  ^
                       ", ac: " ^ (showBits acomp)  ^
                       ", dc: " ^ (showBits dcomp)  ^ 
+		      ", raw: "^ (showBits (combine tcomp dcomp)) ^
 			")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
@@ -398,9 +399,11 @@ struct
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
-                 in ( refinedToString refined ) ^ " " ^ stats  
+                 in ( refinedToString refined ) ^ " " ^ stats 
+(* 
 		    ^ " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
                     ", tot: " ^ LargeInt.toString tot ^ ")" 
+*)
                  end
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
@@ -431,78 +434,5 @@ struct
          print (TyToStringD prefix longTBDs longBottom suffix ty ) 
 
      fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
-
-     (* Function to sort the Unions and Switches in the ty by the order of their IDs
-  	this is a prerequisite for comparing two ty's *)
-     fun sortTy ty =
-        let
-		fun cmp (ty1, ty2) = (getLabelInt (getAuxInfo ty1)) > (getLabelInt (getAuxInfo ty2))
-		fun cmp1 ((r1, ty1), (r2, ty2)) = cmp (ty1, ty2) 
-	in
-	case ty 
-        of Base _ => ty
-        |  TBD _ => ty
-        |  Bottom _ => ty
-        |  Pstruct (a,tys)              => Pstruct (a, map sortTy tys)
-        |  Punion (a,tys)               => Punion(a, ListMergeSort.sort cmp tys)
-        |  Parray (a, {tokens, lengths, first, body, last}) => Parray (a, {tokens=tokens, lengths=lengths, 
-				first=sortTy first, body = sortTy body, last = sortTy last})
-        |  RefinedBase _ => ty
-        |  Switch(a,id,branches)        => Switch(a, id, ListMergeSort.sort cmp1 branches)
-        |  RArray (a,sep,term,body,len,lengths) => RArray(a, sep, term, sortTy body, len, lengths)
-        |  Poption (a, body) => Poption(a, sortTy body)
-	end
-
-     (*This function measure the similarity of two tys and returns a fractional number to represent 
-	the percentage. If two tys are exactly the same structurally (modulo the token lists), 
-	it returns 1, or 100% *)
-
-(************** working *******
-     fun similar ty1 ty2 =
-	let
-	  (*a path is a list of string identifiers (abbrv of ty/token ty constructors) *)
-	  (*given a ty and a list of ancesters to this ty, create a list of paths*)
-	  fun paths l ty =
-	    	of Base (a, tl) => [l@["B"]]
-		| RefinedBase _ => [l@["F"]]
-        	| TBD _ => [l@["T"]]
-        	| Bottom _ => [l@["M"]]
-        	| Pstruct (a,tys) => List.concat (map (paths (l@["S"])) tys)
-        	| Punion (a,tys) => List.concat (map (paths (l@["U"])) tys)
-        	| Parray (a, {tokens, lengths, first, body, last}) => 
-				List.concat (map (paths (l@["A"])) [first, body, last]) 
-  		(*TODO: we don't take into account the switched variable for now*)
-        	| Switch(a,id,branches) => List.concat (map (fn (r, t) => paths (l@["W"]) t) branches) 
-		(*TODO: not considering the sep and term for now *)
-        	| RArray (a,sep,term,body,len,lengths) => paths (l@["R"]) body
-        	| Poption (a, body) => Poption(a, sortTy body) = paths (l@["O"]) body 
-	 (*the similarity matrix*)
-	  fun similarStr s1 s2 : real =
-	    if s1 = s2 then 1.0
-	    else
-		case (s1, s2) of 
-		  ("B", "F") => 0.5		 
-		  | ("F", "B") => 0.5		 
-		  | ("U", "W") => 0.5
-		  | ("W", "U") => 0.5
-		  | ("A", "R") => 0.5
-		  | ("R", "A") => 0.5
-		  | _ => 0
-	  (*this function calculates the edit distance between to equi-length paths*)
-	  fun distance p1 p2 =
-		case (p1, p2) of 
-			(nil, nil) => 0
-			| (str1::t1, str2::t2) => (similarStr str1 str2) + (distance t1 t2)
-	  (* this function align second path to the first and return a pair of new paths, based on
-		Needleman-Wunsch algorithm*)
-	  fun alignPaths p1 p2  =
-	    if (length p1 = length p2) then (p1, p2) (*already aligned*)
-	    else 
-		if (length p1<length p2) then
-		let
-		   (p2', p1') = alignPaths p2 p1
-		in (p1', p2')
-		else (* p1 longer than p2 *)
-
-********* end of working ****)		
+	
 end

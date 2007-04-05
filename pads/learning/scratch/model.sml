@@ -42,6 +42,16 @@ structure Model = struct
                                  , adc = zeroComp
                                  , dc  = zeroComp
                                  }
+	     (*TODO: complexity for FloatConst *)
+             | FloatConst (m, n)     => { tc  = sumComps [ constructorComp
+                                                  , int2Comp 2
+                                                  , int2Comp m
+                                                  , int2Comp n
+                                                  ]
+                                 , adc = zeroComp
+                                 , dc  = zeroComp
+                                 }
+
              | StringConst s  => { tc  = combine constructorComp
                                                  ( multCompS (size s)
                                                              (int2Comp numStringChars)
