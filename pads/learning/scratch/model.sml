@@ -120,7 +120,7 @@ structure Model = struct
                                                          ( multComp totlen ( int2Comp numDigits ) )
                                          }
 		  (*TODO: what to do for float *)
-		  | Pfloat n	      => mkBaseComp avglen totlen numDigits
+                  | Pfloat (i,f)      => mkBaseComp avglen totlen numDigits
                   | Pstring s         => mkBaseComp avglen totlen numStringChars
                   | Pgroup x          => { tc  = constructorComp
                                          , adc = unitComp
