@@ -1,8 +1,8 @@
 structure Yumtxt = struct
     open Model
-    val yumAux : AuxInfo = { coverage = 327, label = NONE, typeComp = zeroComp, dataComp = zeroComp }
+    val yumAux : AuxInfo = { coverage = 327, label = NONE, tycomp = zeroComps }
     val swLabel : Id = Atom.atom("sw1")
-    val swAux : AuxInfo = { coverage = 327, label = SOME swLabel, typeComp = zeroComp, dataComp = zeroComp }
+    val swAux : AuxInfo = { coverage = 327, label = SOME swLabel, tycomp = zeroComps }
     val yumLoc : location = { lineNo = 0, beginloc = 0, endloc = 0, recNo = 0 }
     val date1 : Ty = Base ( yumAux, [ ( Pdate "Dec 10", yumLoc ) ] )
     val sp1 : Ty = RefinedBase ( yumAux, StringConst " ", [] )

@@ -294,14 +294,18 @@ structure Model = struct
                  val tycomp  = getComps mBody
                  val tcomp   = sumComps [ constructorComp, #tc tycomp, unitComp ]
                  (* Half as complex, because sometimes not there ????? *)
-                 val acomp   = multCompR ( frac ( getCoverage ty )
-                                                ( #coverage aux )
-                                         )
-                                         ( #adc tycomp )
-                 val dcomp   = multCompR ( frac ( getCoverage ty )
-                                                ( #coverage aux )
-                                         )
-                                         ( #dc tycomp )
+                 val acomp   = combine unitComp
+                                       ( multCompR ( frac ( getCoverage ty )
+                                                          ( #coverage aux )
+                                                   )
+                                                   ( #adc tycomp )
+                                       )
+                 val dcomp   = combine unitComp
+                                       ( multCompR ( frac ( getCoverage ty )
+                                                          ( #coverage aux )
+                                                   )
+                                                   ( #dc tycomp )
+                                       )
                  val tycomp' = { tc = tcomp, adc = acomp, dc = dcomp }
              in Poption ( updateComps aux tycomp', mBody )
 	     end
