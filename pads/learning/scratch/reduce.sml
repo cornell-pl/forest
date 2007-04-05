@@ -923,9 +923,9 @@ and enum_range_to_refine cmos ty =
 
 (* the actual reduce function can either take a SOME(const_map) or
 NONE.  It will use the constraints that it can apply. *)
-and reduce const_info_op ty = 
+and reduce phase ty = 
 let
-  val pre_constraint_rules : pre_reduction_rule list = 
+  val phase_one_rules : pre_reduction_rule list = 
 		[ 	
 			remove_degenerate_list,
 			unnest_tuples,
@@ -933,49 +933,59 @@ let
 			prefix_postfix_sums,
 			remove_nils,
 		  	unused_branches,
-			refine_array,
-			union_to_optional
+			refine_array
 		]
-  val post_constraint_rules : post_reduction_rule list =
+  val phase_two_rules : post_reduction_rule list =
 		[ 
 		  uniqueness_to_const, 
 		  adjacent_consts,
 		  enum_range_to_refine,
 		  sum_to_switch
 		]
+  val phase_three_rules : pre_reduction_rule list = 
+		[ 	
+			remove_degenerate_list,
+			unnest_tuples,
+			unnest_sums,
+			prefix_postfix_sums,
+			remove_nils,
+		  	unused_branches,
+			union_to_optional
+		]
+
   (* generate the list of rules *)
-  val (mode, cmap) = case const_info_op of 
-      SOME (cmap) => (1, cmap)
-    | NONE => (0, LabelMap.empty)
+  val cmap = case phase of
+	2 => Constraint.constrain' ty
+	| _ => LabelMap.empty
   (* returns a new cmap after reducing all the tys in the list and a new tylist *)
-  fun mymap f mode cmap tylist newlist =
+  fun mymap f phase cmap tylist newlist =
 	case tylist of 
 		ty::tail => let 
-				val(cmap', ty') = f mode cmap ty
-			    in	mymap f mode cmap' tail (newlist@[ty'])
+				val(cmap', ty') = f phase cmap ty
+			    in	mymap f phase cmap' tail (newlist@[ty'])
 			    end
 		| nil => (cmap, newlist)
 
   (*reduce a ty and returns the new constraint map and the new ty *)
-  (* mode = 0: pre_constraint; mode = 1: post_constraint *)
-  fun reduce' mode cmap ty =
+  (* phase = 0: pre_constraint; phase = 1: post_constraint *)
+  fun reduce' phase cmap ty =
     let 
       	(* go bottom up, calling reduce' on children values first *)
       	val (newcmap, reduced_ty) = 
 			case ty of
 			  Pstruct (a, tylist) => let 
-				val (cmap', tylist') = mymap reduce' mode cmap tylist nil
+				val (cmap', tylist') = mymap reduce' phase cmap tylist nil
 				in (cmap', Pstruct (a, tylist'))
 				end
 			| Punion (a, tylist) => let
-				val (cmap', tylist') = mymap reduce' mode cmap tylist nil
+				val (cmap', tylist') = mymap reduce' phase cmap tylist nil
 				in (cmap', Punion(a, tylist'))
 				end
 			| Parray (a, {tokens, lengths, first, body, last}) => 
 				let
-				val (cmap1, firstty) = reduce' mode cmap first
-				val (cmap2, bodyty) = reduce' mode cmap1 body 
-				val (cmap3, lastty) = reduce' mode cmap2 last 
+				val (cmap1, firstty) = reduce' phase cmap first
+				val (cmap2, bodyty) = reduce' phase cmap1 body 
+				val (cmap3, lastty) = reduce' phase cmap2 last 
 				in
 				(cmap3, Parray(a, {tokens=tokens, lengths=lengths, 
 				first=firstty,
@@ -989,18 +999,18 @@ let
                         | Switch (a, id, pairs) =>  
                                 let
                                 val (refs, tylist) = ListPair.unzip(pairs)
-                                val (cmap', tylist') = mymap reduce' mode cmap tylist nil
+                                val (cmap', tylist') = mymap reduce' phase cmap tylist nil
                                 in (cmap', Switch (a, id, ListPair.zip(refs, tylist')))
                                 end
                         | RArray (a, sep, term, body, len, lengths) => 
                                 let
-                                val (cmap', body') = reduce' mode cmap body
+                                val (cmap', body') = reduce' phase cmap body
                                 in
                                 (cmap', RArray (a, sep, term, body', len, lengths))
                                 end
 			| Poption (a, body) => 
                                 let
-                                val (cmap', body') = reduce' mode cmap body
+                                val (cmap', body') = reduce' phase cmap body
                                 in
                                 (cmap', Poption(a, body'))
 				end
@@ -1013,10 +1023,11 @@ let
 *)
 	    val cur_cost = score ty
 	    (* apply each rule to the ty *)
-	    val cmap_ty_pairs = if mode=0 then
-					map(fn x => (cmap, x ty)) pre_constraint_rules
-				else
-					map (fn x => x cmap ty) post_constraint_rules 
+	    val cmap_ty_pairs = case phase of
+			1 => map(fn x => (cmap, x ty)) phase_one_rules
+		|	2 => map (fn x => x cmap ty) phase_two_rules
+		|	3 => map(fn x => (cmap, x ty)) phase_three_rules
+		| 	_ => (print "Wrong phase!\n"; raise TyMismatch)
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> score t) cmap_ty_pairs 
 	    val pairs = ListPair.zip(cmap_ty_pairs,costs)
@@ -1035,7 +1046,7 @@ let
  	(iterate newcmap reduced_ty) 
     end
 (*val cbefore = cost cmap ty *)
-  val (cmap', ty') = reduce' mode cmap ty 
+  val (cmap', ty') = reduce' phase cmap ty 
 (*  val cafter = cost cmap' ty'*)
 (*  val _ = print ("Before:" ^ (Int.toString cbefore) ^ " After:" ^ (Int.toString cafter) ^ "\n") *)
 in

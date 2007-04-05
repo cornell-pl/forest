@@ -264,8 +264,10 @@ structure Common = struct
       end
     (*function that test if ty1 can be described by ty2 *)
     and describedBy(ty1, ty2) =
-	let val res =
-	case (ty1, ty2) of 
+	let
+	  val emptyBase = Base(getAuxInfo(ty1), [(Pempty, {lineNo=0, beginloc=0, endloc=0,recNo=0})])
+	  val res =
+	    case (ty1, ty2) of 
 		(*assume no Pempty in the Pstruct as they have been cleared by remove_nils*)
 		(Base(a1, tl1), Base(a2, tl2)) => ltoken_ty_equal(hd tl1, hd tl2)
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => listDescribedBy ([Base(a1, tl1)], tylist2)
@@ -278,7 +280,8 @@ structure Common = struct
 				tylist1)
 		| (ty1, Punion(a2, tylist2)) =>
 			foldr myor false (map (fn x => describedBy (ty1, x)) tylist2)
-		| (Poption(a1, ty), ty2) => describedBy (ty, ty2)
+		| (Poption(a1, ty), ty2) => describedBy (emptyBase, ty2) andalso describedBy (ty, ty2)
+		| (ty1, Poption(a2, ty)) => describedBy (ty1, emptyBase) orelse describedBy (ty1, ty)
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 
@@ -319,23 +322,45 @@ structure Common = struct
 	       foldr myand true (map describedBy (ListPair.zip (tylist1, head2))) andalso 
 	       describesEmpty tail2) (*found the merging point*)
 	   then
-		headlist@(map mergeTyInto (ListPair.zip (tylist1, head2)))@tail2	
+		let
+	          (*here need to push a base with correct number of Pempty tokens into the head and tail lists
+			note that the recNo of those "fake" tokens will be -1 and will not be used in
+			table generation *)
+		  fun genEmptyTokens 0 = nil
+		  | genEmptyTokens numTokens =
+			(Pempty, {lineNo=0, beginloc=0, endloc=0, recNo=(~1)})::(genEmptyTokens (numTokens-1))
+	   	  val emptyBase = Base(getAuxInfo(hd tylist1), genEmptyTokens (getCoverage (hd tylist1)))
+		  fun pushInto ty tylist = map (fn t => mergeTyInto (ty, t)) tylist
+		in
+		  (pushInto emptyBase headlist)@(map mergeTyInto (ListPair.zip (tylist1, head2)))@
+		  (pushInto emptyBase tail2)	
+		end
 	   else mergeListInto (tylist1, List.drop(tylist2, 1), headlist@[hd tylist2])
 	end
     (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
-    (*this function is used in refine_array rewriting rule, the recNo in ty1 is updated so that they are
-	consistent with ty2 *)
+    (*this function is used in refine_array rewriting rule, the recNo in ty1 
+	is updated so that they are consistent with ty2 *)
     and mergeTyInto (ty1, ty2) =
 		case (ty1, ty2) of 
 		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, a2), tl2@tl1) 
-		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(a2, mergeListInto([Base(a1, tl1)], tylist2, nil))
+		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, a2), 
+			mergeListInto([Base(a1, tl1)], tylist2, nil))
 		(*below is not completely right, haven't considered the case of tylist1 is a subset
 		  of tylist2 and the rest of tylist2 can describe Pempty *) 
 		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => 
 			Pstruct(mergeAux(a1, a2), mergeListInto(tylist1, tylist2, nil))
 		| (Punion(a1, tylist1), Punion(a2, tylist2)) => foldl mergeTyInto ty2 tylist1
 		| (ty1, Punion(a2, tylist2)) => Punion(mergeAux(getAuxInfo(ty1), a2), mergeUnion(ty1, tylist2, nil))
-		| (Poption (a1, ty), ty2) => mergeTyInto (ty, ty2)
+		| (Poption (a1, ty), ty2) => 
+			let
+		  	  fun genEmptyTokens 0 = nil
+		  	  | genEmptyTokens numTokens =
+				(Pempty, {lineNo=0, beginloc=0, endloc=0, recNo=(~1)})::(genEmptyTokens (numTokens-1))
+			  val emptyCoverage = getCoverage ty1 - getCoverage ty
+			in
+			  mergeTyInto (Base((mkTyAux emptyCoverage), 
+						(genEmptyTokens emptyCoverage)), mergeTyInto (ty, ty2))
+			end
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 

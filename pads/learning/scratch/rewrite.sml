@@ -18,16 +18,15 @@ let
   val _ = printConstMap cmap 
 *)
   (*phase one *)
-  val ty1 = Reduce.reduce NONE ty 
+  val ty1 = Reduce.reduce 1 ty 
 (*
   val _ = print "\nAfter initial reduction:\n"
   val _ = printTy ty1
 *)
   (*phase two *)
-  val cmap = Constraint.constrain'(ty1)
-  val ty2 = Reduce.reduce (SOME(cmap)) ty1
+  val ty2 = Reduce.reduce 2 ty1
   (*phase three, redo constraint-free reduction *)
-  val ty3 = Reduce.reduce NONE ty2
+  val ty3 = Reduce.reduce 3 ty2
 
   val measured_reduced_ty = measure ty3
   val _ = print "\nRefined Ty:\n"
