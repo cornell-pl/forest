@@ -86,6 +86,8 @@ type constraint_map = constraint list LabelMap.map
 type pre_reduction_rule = Ty -> Ty
 type post_reduction_rule = constraint_map -> Ty -> constraint_map*Ty
 
+(* TODO: add a rule to create fixed length Rarray from a struct *)
+
 (* reduction rules *)
 (* single member lists are removed*)
 fun remove_degenerate_list ty =
@@ -957,6 +959,9 @@ let
   val cmap = case phase of
 	2 => Constraint.constrain' ty
 	| _ => LabelMap.empty
+(*
+  val _ = printConstMap cmap
+*)
   (* returns a new cmap after reducing all the tys in the list and a new tylist *)
   fun mymap f phase cmap tylist newlist =
 	case tylist of 
@@ -1018,9 +1023,9 @@ let
 	  fun iterate cmap ty = 
 	  let
 	    (* calculate the current cost *)
-(*
-	    val _ = (print ("Old Ty: \n"); printTy ty)
-*)
+	    (*
+	    val _ = (print ("Old Ty: \n"); printTy (measure ty))
+	    *)
 	    val cur_cost = score ty
 	    (* apply each rule to the ty *)
 	    val cmap_ty_pairs = case phase of
@@ -1031,7 +1036,9 @@ let
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> score t) cmap_ty_pairs 
 	    val pairs = ListPair.zip(cmap_ty_pairs,costs)
-	    fun min((a,b),(c,d)) = if b < d then (a,b) else (c,d)
+	    fun min(((c1, t1), b),((c2, t2), d)) = 
+		if b <= d andalso ty_equal(1, t1, ty)=false 
+		then ((c1, t1), b) else ((c2, t2), d)
 	    (* find the minimum cost out of the ones found *)
 	    val ((newcmap, newTy), lowCost) = foldr min ((cmap, ty), cur_cost) pairs
 (*

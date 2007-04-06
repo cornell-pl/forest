@@ -14,8 +14,6 @@ let
 (*
   val _ = print "\nBefore reduction:\n"
   val _ = printTy measuredTy
-  val _ = print "\n"
-  val _ = printConstMap cmap 
 *)
   (*phase one *)
   val ty1 = Reduce.reduce 1 ty 
