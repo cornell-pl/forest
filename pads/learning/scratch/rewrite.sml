@@ -16,14 +16,22 @@ let
   val _ = printTy measuredTy
 *)
   (*phase one *)
+(*
+  val _ = print "Phase one ...\n";
+*)
   val ty1 = Reduce.reduce 1 ty 
 (*
-  val _ = print "\nAfter initial reduction:\n"
   val _ = printTy ty1
 *)
   (*phase two *)
+(*
+  val _ = print "Phase two ...\n";
+*)
   val ty2 = Reduce.reduce 2 ty1
   (*phase three, redo constraint-free reduction *)
+(*  
+  val _ = print "Phase three ...\n";
+*)
   val ty3 = Reduce.reduce 3 ty2
 
   val measured_reduced_ty = measure ty3

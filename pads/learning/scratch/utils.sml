@@ -24,7 +24,7 @@ struct
 	    case l of [] => a
             | (s::ss) => doit ss (s^a)
 	in
-	    doit (List.rev ls) " "
+	    doit (List.rev ls) ""
 	end
 
     (* position in a list *)

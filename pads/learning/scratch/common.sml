@@ -262,6 +262,7 @@ structure Common = struct
 	end
       end
     (*function that test if ty1 can be described by ty2 *)
+    (*TODO: not considering Parray and RArray for now *)
     and describedBy(ty1, ty2) =
 	let
 	  val emptyBase = Base(getAuxInfo(ty1), [(Pempty, {lineNo=0, beginloc=0, endloc=0,recNo=0})])
@@ -339,6 +340,7 @@ structure Common = struct
     (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
     (*this function is used in refine_array rewriting rule, the recNo in ty1 
 	is updated so that they are consistent with ty2 *)
+    (*TODO: not considering Parray and RArray for now *)
     and mergeTyInto (ty1, ty2) =
 		case (ty1, ty2) of 
 		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, a2), tl2@tl1) 
@@ -367,9 +369,99 @@ structure Common = struct
 		*)
 		| _ => (print "mergeTyInto error!\n"; raise TyMismatch)
 
+	(*this function reindex the recNo by collapsing them in every token of a given ty 
+	and a start index and returns the updated ty *)
+	fun reIndexRecNo ty startindex = 
+	  let
+(*
+		val _ = print ("startindex = "^(Int.toString startindex)^" and The ty is\n")
+		val _ = printTy ty
+*)
+		fun insertTListToMap tl intmap =
+			case tl of
+				nil => intmap
+				| (t, {lineNo, beginloc, endloc, recNo}) :: ts => 
+					insertTListToMap ts (IntMap.insert(intmap, recNo, 0))
+		fun insertLensToMap lens intmap =
+			case lens of 
+				nil => intmap
+				| (l, r) :: ls => insertLensToMap ls (IntMap.insert(intmap, r, 0))
+		fun insertToMap ty intmap =
+		  case ty of
+			Base(_, tl)=> insertTListToMap tl intmap
+			| RefinedBase (_, _, tl) => insertTListToMap tl intmap
+			| TBD _  => intmap
+			| Bottom _ => intmap
+			| Punion(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
+			| Pstruct(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
+			(*inside body is another scope *)
+			| Parray(_, {tokens, lengths, first, body, last}) =>
+				 foldr (fn (x, m) => insertToMap x m) 
+					(insertLensToMap lengths intmap) [first,last]
+			(*inside RArray body is another scope*)
+			| RArray(_, _, _, ty, _, lens) => insertLensToMap lens intmap 
+			| Switch (a, i, rtl) => foldr (fn ((r, ty), m) => insertToMap ty m) intmap rtl
+			| Poption (a, ty) => insertToMap ty intmap
+
+		fun updateMap intmap =
+		  let
+			val pairs = IntMap.listItemsi intmap
+		    	fun insertPairs pairs index intmap =
+			  case pairs of 
+			    nil => intmap
+			    | (oldRecNo, _)::rest => insertPairs rest (index+1) 
+						(IntMap.insert(intmap, oldRecNo, index))
+		  in
+			insertPairs pairs startindex intmap
+		  end
+		fun updateTL(intmap, tl, newtl) =
+			case tl of 
+			  nil => newtl
+			  | (t, {lineNo, beginloc, endloc, recNo})::ts => 
+				let
+				  val newRecop = IntMap.find(intmap, recNo)
+				in
+				  case newRecop of
+					NONE => (print ("recNum " ^ Int.toString recNo ^
+						" not found!\n"); raise RecordNum)
+					| _ => updateTL(intmap, ts, newtl@[(t, {lineNo=lineNo, beginloc=beginloc, 
+							endloc=endloc, recNo=some(newRecop)})])
+				end
+		fun updateLens intmap lengths =
+			case lengths of
+			  nil => nil
+			  | (l, r)::tail => 
+				let
+				  val newRecOp = IntMap.find (intmap, r)
+				in
+			  	  case newRecOp of
+					NONE => (print ("recNum " ^ Int.toString r ^
+						" not found!\n"); raise RecordNum)
+					| _ => (l, (some newRecOp))::(updateLens intmap tail)
+				end
+		fun updateTy intmap ty =
+		  case ty of
+			Base(a, tl)=> (Base(a, updateTL(intmap, tl, nil)))
+			| RefinedBase (a, r, tl) => (RefinedBase(a, r, updateTL(intmap, tl, nil)))
+			| Punion(a, tylist)=> Punion(a, map (updateTy intmap) tylist)
+			| Pstruct(a, tylist)=> Pstruct(a, map (updateTy intmap) tylist)
+			| Parray(a, {tokens, lengths, first, body, last}) => Parray(a, {tokens = tokens,
+					lengths = (updateLens intmap lengths), first = updateTy intmap first, 
+					body = body, last = updateTy intmap last})
+			| RArray(a, s, t, body, l, lens) => RArray(a, s, t, body, l, 
+					(updateLens intmap lens)) 
+			| Switch (a, i, rtl) => Switch(a, i, map (fn (r, t) => (r, updateTy intmap ty)) rtl)
+			| Poption(a, ty') => Poption(a, updateTy intmap ty')
+			| _ => ty
+
+		val recNoMap = insertToMap ty IntMap.empty
+
+	  in
+		updateTy (updateMap recNoMap) ty	
+	  end
 
     (*function to merge two tys that are equal structurally*)
-    (*assume ty1 is before ty2*)
+    (*merge ty1 into ty2, assuming ty1 and ty2 are in the same scope*)
     (*used by refine_array *)
     fun mergeTy (ty1, ty2) =
 	case (ty1,ty2) of
@@ -384,9 +476,10 @@ structure Common = struct
 				map mergeTy (ListPair.zip(tylist,tylist2)))
 		| (Parray(a1, {tokens=t1, lengths=len1, first=f1, body=b1, last=l1}), 
 		   Parray(a2, {tokens=t2, lengths=len2, first=f2, body=b2, last=l2})) => 
+			(*body is in a different scope so reindex*)
 			Parray(mergeAux(a1, a2), {tokens = t1@t2, lengths = len1@len2, 
 			first = mergeTy(f1, f2),
-			body = mergeTy(b1, b2),
+			body = mergeTy((reIndexRecNo b1 (getCoverage b2)), b2),
 			last = mergeTy(l1, l2)})
 		| (Switch (a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			let val (rl1, tylist1) = ListPair.unzip (rtylist1)
@@ -401,10 +494,10 @@ structure Common = struct
 			end
 		| (RArray(a1, sepop1, termop1, ty1, len1, l1), 
 			RArray (a2, sepop2, termop2, ty2, len2, l2))
-			=> RArray(mergeAux(a1, a2), sepop1, termop1, mergeTy(ty1, ty2), len1, (l1@l2)) 	
+			(*body is in a different scope so reindex*)
+			=> RArray(mergeAux(a1, a2), sepop1, termop1, 
+				mergeTy((reIndexRecNo ty1 (getCoverage ty2)), ty2), len1, (l1@l2)) 	
 		| _ => raise TyMismatch
-
-    (* function to attempt to merge ty1 into the leftmost part of the ty2*)
 
     (* function to test of two ty's are completely equal minus the labels *)
     (* if comparetype = 0, compare everything, otherwise compare down to 
@@ -455,86 +548,6 @@ structure Common = struct
 		handle Size => (print "Size in ty_equal!\n" ; false)
 	end
 
-	(*this function reindex the recNo by collapsing them in every token of a given ty 
-	and a start index and returns the updated ty *)
-	fun reIndexRecNo ty startindex = 
-	  let
-(*
-		val _ = print ("startindex = "^(Int.toString startindex)^" and The ty is\n")
-		val _ = printTy ty
-*)
-		fun insertTListToMap tl intmap =
-			case tl of
-				nil => intmap
-				| (t, {lineNo, beginloc, endloc, recNo}) :: ts => 
-					insertTListToMap ts (IntMap.insert(intmap, recNo, 0))
-		fun insertToMap ty intmap =
-		  case ty of
-			Base(_, tl)=> insertTListToMap tl intmap
-			| RefinedBase (_, _, tl) => insertTListToMap tl intmap
-			| TBD _  => intmap
-			| Bottom _ => intmap
-			| Punion(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
-			| Pstruct(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
-			| Parray(_, {tokens, lengths, first, body, last}) =>
-				 foldr (fn (x, m) => insertToMap x m) intmap [first, body, last]
-			| RArray(_, _, _, ty, _, lens) => insertToMap ty intmap 
-			(*TODO: need to work on lens of RArray as well!!!*)
-			| Switch (a, i, rtl) => foldr (fn ((r, ty), m) => insertToMap ty m) intmap rtl
-			| Poption (a, ty) => insertToMap ty intmap
 
-		fun updateMap intmap =
-		  let
-			val pairs = IntMap.listItemsi intmap
-		    	fun insertPairs pairs index intmap =
-			  case pairs of 
-			    nil => intmap
-			    | (oldRecNo, _)::rest => insertPairs rest (index+1) 
-						(IntMap.insert(intmap, oldRecNo, index))
-		  in
-			insertPairs pairs startindex intmap
-		  end
-		fun updateTL(intmap, tl, newtl) =
-			case tl of 
-			  nil => newtl
-			  | (t, {lineNo, beginloc, endloc, recNo})::ts => 
-				let
-				  val newRecop = IntMap.find(intmap, recNo)
-				in
-				  case newRecop of
-					NONE => (print "One recNum not found!\n"; raise RecordNum)
-					| _ => updateTL(intmap, ts, newtl@[(t, {lineNo=lineNo, beginloc=beginloc, 
-							endloc=endloc, recNo=some(newRecop)})])
-				end
-		fun updateLens intmap lengths =
-			case lengths of
-			  nil => nil
-			  | (l, r)::tail => 
-				let
-				  val newRecOp = IntMap.find (intmap, r)
-				in
-			  	  case newRecOp of
-					NONE => (print "One recNum not found!\n"; raise RecordNum)
-					| _ => (l, (some newRecOp))::(updateLens intmap tail)
-				end
-		fun updateTy intmap ty =
-		  case ty of
-			Base(a, tl)=> Base(a, updateTL(intmap, tl, nil))
-			| RefinedBase (a, r, tl) => RefinedBase(a, r, updateTL(intmap, tl, nil))
-			| Punion(a, tylist)=> Punion(a, map (updateTy intmap) tylist)
-			| Pstruct(a, tylist)=> Pstruct(a, map (updateTy intmap) tylist)
-			| Parray(a, {tokens, lengths, first, body, last}) => Parray(a, {tokens = tokens,
-					lengths = (updateLens intmap lengths), first = updateTy intmap first, 
-					body = updateTy intmap body, last = updateTy intmap last})
-			| RArray(a, s, t, body, l, lens) => RArray(a, s, t, updateTy intmap body, l, 
-					(updateLens intmap lens)) 
-			| Switch (a, i, rtl) => Switch(a, i, map (fn (r, t) => (r, updateTy intmap ty)) rtl)
-			| Poption(a, ty') => Poption(a, updateTy intmap ty')
-			| _ => ty
-
-		val recNoMap = insertToMap ty IntMap.empty
-
-	  in
-		updateTy (updateMap recNoMap) ty	
-	  end
+	fun mergeTyForArray (ty1, ty2) = mergeTy (ty1, (reIndexRecNo ty2 (getCoverage ty1)))
 end

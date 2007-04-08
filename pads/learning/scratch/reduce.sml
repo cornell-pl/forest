@@ -86,8 +86,6 @@ type constraint_map = constraint list LabelMap.map
 type pre_reduction_rule = Ty -> Ty
 type post_reduction_rule = constraint_map -> Ty -> constraint_map*Ty
 
-(* TODO: add a rule to create fixed length Rarray from a struct *)
-
 (* reduction rules *)
 (* single member lists are removed*)
 fun remove_degenerate_list ty =
@@ -372,7 +370,7 @@ and refine_array ty =
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
 (*
-		val _ = (print "trying to refine array \n"; printTy ty) 
+		val _ = (print "trying to refine array \n"; printTy (measure ty)) 
 *)
 		fun getlen (lens, x) = 
 			case lens of 
@@ -566,7 +564,7 @@ and refine_array ty =
 			    	[first', RArray(aux, sepop, termop, body', lenop, lengths), last'])
 			| _ => ty
 (*
-		    val _ = (print "Done refining array to:\n"; printTy newty)  
+		    val _ = (print "Done refining array to:\n"; printTy (measure newty))  
 *)
 		  in
 		 	newty
@@ -614,6 +612,106 @@ and refine_array ty =
 		in Pstruct(a, tylist')
 		end
 	|_ => ty
+
+and struct_to_array ty =
+(*this rule converts a struct with repeated content to an fixed length RArray*)
+(*TODO: it is possible to convert a subsequence of the tylist into an RArray
+	but this could be expensive *)
+  case ty of 
+    Pstruct (a, tylist) =>
+	if length tylist <3 then ty
+	else
+	  let
+	    (*function to takes a tylist and divides it into 
+		size n chunks and merges the chunks together, the resulting
+		SOME tylist plus SOME sep is of size n or NONE if not possible to do that *)
+(*
+	    val _ = (print "Before:\n";printTy (measure ty))
+*)
+	    fun tylistEqual (tys1, tys2) =
+		let
+		  val pairs = ListPair.zipEq (tys1, tys2)
+		  val equal = foldl myand true (map (fn (x, y) => ty_equal (1, x, y)) pairs)
+		in
+		  equal
+		end handle UnequalLengths => false
+		  	
+	    fun getRefine(ty) = case ty of RefinedBase(_, r, _) => SOME(r) 
+					| Base (_, tl) => ltokenlToRefinedOp tl
+					| _ => NONE
+	    fun divMerge (tylist:Ty list) (n : int) (newlist: Ty list) = 
+	      if ((length tylist) mod n)>0 andalso ((length tylist) mod n) < (n-1) 
+	      then NONE
+	      else
+		(* last iteration possibly with a sep *)
+		if (length tylist <>0) andalso (length tylist) = (length newlist)-1  
+		then
+		  let
+			val refop = getRefine (List.last newlist)
+			val body = List.take (newlist, n-1)
+		  in
+			case refop of
+			NONE => NONE
+			| SOME r => 
+			  if tylistEqual (body, tylist) then 
+			    SOME ((map mergeTyForArray (ListPair.zip (body, tylist))), SOME r)
+			  else NONE
+		  end
+		else case tylist of 
+		  nil => SOME (newlist, NONE)
+		  | _ =>
+		    let
+		      val first = List.take (tylist, n)
+		      val tail = List.drop (tylist, n)
+		    in
+		      case newlist of
+			(*at the begining, the first chunk is reindexed at 0 *)
+			nil => divMerge tail n (map (fn t => reIndexRecNo t 0) first)
+			| _ =>
+		          if tylistEqual (newlist, first) then 
+				divMerge tail n (map mergeTyForArray (ListPair.zip (newlist, first))) 
+			  else NONE
+		     end handle Subscript => NONE
+	    fun try m n = 
+		if (m>n) then NONE
+	        else 
+		let
+		  val listop = divMerge tylist m nil 
+		in
+		  case listop of 
+			NONE => try (m+1) n
+			| _ => listop
+		end
+	    val tysop = try 1 ((length tylist) div 3)
+	  in
+	    case tysop of
+		NONE => ty
+		(*TODO: need to fix lengths !! *)
+		| SOME (tylist', NONE) => 
+		  let
+		    (* no sep *)
+		    val len = (length tylist) div (length tylist')
+		    val lens = List.tabulate((#coverage a), (fn x => (len, x)))
+		    val newty = RArray (a, NONE, NONE, Pstruct(mkTyAux (getCoverage (hd tylist')), tylist'), 
+			(SOME (IntConst (Int.toLarge len))), lens)
+(*
+	    	    val _ = (print "After:\n"; printTy newty)
+*)
+		  in newty 
+		  end 
+		| SOME (tylist', SOME r) => 
+		  let
+		    val len = (length tylist) div ((length tylist') + 1)
+		    val lens = List.tabulate((#coverage a), (fn x => (len, x)))
+		    val newty = RArray (a, SOME r, NONE, Pstruct(mkTyAux (getCoverage (hd tylist')), tylist'), 
+			(SOME (IntConst (Int.toLarge len))), lens)
+(*
+	    	    val _ = (print "After:\n";printTy (measure newty))
+*)
+		  in newty 
+		  end 
+	  end
+    | _ => ty
 
 and union_to_optional ty =
 	case ty of 
@@ -935,6 +1033,7 @@ let
 			prefix_postfix_sums,
 			remove_nils,
 		  	unused_branches,
+			struct_to_array,
 			refine_array
 		]
   val phase_two_rules : post_reduction_rule list =

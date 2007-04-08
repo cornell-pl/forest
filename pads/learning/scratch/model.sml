@@ -52,7 +52,7 @@ structure Model = struct
                                  }
              | StringConst s  => { tc  = combine constructorComp
                                                  ( multCompS (size s)
-                                                             (int2Comp numStringChars)
+                                                   (int2Comp numStringChars)
                                                 )
                                  , adc = zeroComp
                                  , dc  = zeroComp
