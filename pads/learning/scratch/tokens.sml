@@ -69,7 +69,7 @@ structure Tokens = struct
 		     Pip         of string |
 		     Phostname   of string |
                      Pint        of LargeInt.int * string |  (* a pair of int and string representations *)
-                     Pfloat      of LargeInt.int * LargeInt.int	|  
+                     Pfloat      of string * string | (*string representations of the integer and fraction parts*) 
 		     Pstring     of string |
                      Pgroup      of {left : LToken, body : LToken list, right : LToken} |
 	             Pwhite      of string |
@@ -290,7 +290,7 @@ structure Tokens = struct
                          else size s - ndot
                  end
              | Pint (n, s)    => size (LargeInt.toString n) (*ignore the length of the s as it's aux info*)
-             | Pfloat (i,f)   => size (LargeInt.toString i) + size (LargeInt.toString f) 
+             | Pfloat (i,f)   => size (i) + size (f) 
              | Pstring s      => size s
              | Pgroup grp     => 0
              | Pwhite s       => size s

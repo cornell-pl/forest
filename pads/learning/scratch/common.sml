@@ -2,6 +2,7 @@
 structure Common = struct
 	open Types (* defined in types.sml *)
 
+	fun some(a : 'a option) : 'a = case a of SOME x => x | NONE => raise Size
 	fun idcompare (id1:Id, id2:Id):order =
             String.compare(Atom.toString(id1), Atom.toString(id2))
 
@@ -33,8 +34,9 @@ structure Common = struct
 			| (Pfloat x, Pfloat x') => 
 				(
 				case (x, x') of 
-				  ((a, b), (a', b')) => if a=a' then LargeInt.compare (b, b')
-				  			else LargeInt.compare(a, a')
+				  ((a, b), (a', b')) => if a=a' then String.compare (b, b')
+				  			else LargeInt.compare(some(LargeInt.fromString(a)), 
+							     some(LargeInt.fromString(a')))
 				)
 			| (Pstring (s1), Pstring(s2)) => String.compare(s1, s2)
 			| (Ptime(s1), Ptime(s2)) => String.compare(s1, s2)
@@ -87,7 +89,7 @@ structure Common = struct
 		PbXML(node, attrib) => "<" ^ node ^ attrib ^ ">"
 	|	PeXML(node, attrib) => "</" ^ node ^ attrib ^ ">"
 	|	Pint (i, s) => s
-	|	Pfloat (a, b) => (LargeInt.toString a) ^"."^(LargeInt.toString b)
+	|	Pfloat (a, b) =>  a ^"."^ b
 	|	Ptime(t) => t
 	|	Pdate(t) => t
 	|	Pip(t)  => t
@@ -153,7 +155,6 @@ structure Common = struct
 		end)) ^ "\n"
 	fun printConstMap (cmap:constraint list LabelMap.map):unit =
             LabelMap.appi (fn (lab,clist) => print (Atom.toString(lab) ^ ":\n" ^ (String.concat(map ctos clist))^ "\n")) cmap
-	fun some(a : 'a option) : 'a = case a of SOME x => x | NONE => raise Size
 	fun isIn(ch:char,str:string):bool =
             List.exists (fn x => x = ch) (String.explode str)
 	fun escapeRegex(str:string):string =
@@ -369,14 +370,9 @@ structure Common = struct
 		*)
 		| _ => (print "mergeTyInto error!\n"; raise TyMismatch)
 
-	(*this function reindex the recNo by collapsing them in every token of a given ty 
-	and a start index and returns the updated ty *)
-	fun reIndexRecNo ty startindex = 
-	  let
-(*
-		val _ = print ("startindex = "^(Int.toString startindex)^" and The ty is\n")
-		val _ = printTy ty
-*)
+(*this function insert all the rec no of a ty into a map*)
+	fun insertToMap ty intmap =
+	let
 		fun insertTListToMap tl intmap =
 			case tl of
 				nil => intmap
@@ -386,23 +382,31 @@ structure Common = struct
 			case lens of 
 				nil => intmap
 				| (l, r) :: ls => insertLensToMap ls (IntMap.insert(intmap, r, 0))
-		fun insertToMap ty intmap =
-		  case ty of
-			Base(_, tl)=> insertTListToMap tl intmap
-			| RefinedBase (_, _, tl) => insertTListToMap tl intmap
-			| TBD _  => intmap
-			| Bottom _ => intmap
-			| Punion(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
-			| Pstruct(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
-			(*inside body is another scope *)
-			| Parray(_, {tokens, lengths, first, body, last}) =>
-				 foldr (fn (x, m) => insertToMap x m) 
-					(insertLensToMap lengths intmap) [first,last]
-			(*inside RArray body is another scope*)
-			| RArray(_, _, _, ty, _, lens) => insertLensToMap lens intmap 
-			| Switch (a, i, rtl) => foldr (fn ((r, ty), m) => insertToMap ty m) intmap rtl
-			| Poption (a, ty) => insertToMap ty intmap
-
+	in
+	  case ty of
+		Base(_, tl)=> insertTListToMap tl intmap
+		| RefinedBase (_, _, tl) => insertTListToMap tl intmap
+		| TBD _  => intmap
+		| Bottom _ => intmap
+		| Punion(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
+		| Pstruct(_, tylist)=> foldr (fn (x, m) => insertToMap x m) intmap tylist
+		(*inside body is another scope *)
+		| Parray(_, {tokens, lengths, first, body, last}) =>
+			 foldr (fn (x, m) => insertToMap x m) 
+				(insertLensToMap lengths intmap) [first,last]
+		(*inside RArray body is another scope*)
+		| RArray(_, _, _, ty, _, lens) => insertLensToMap lens intmap 
+		| Switch (a, i, rtl) => foldr (fn ((r, ty), m) => insertToMap ty m) intmap rtl
+		| Poption (a, ty) => insertToMap ty intmap
+	end
+	(*this function reindex the recNo by collapsing them in every token of a given ty 
+	and a start index and returns the updated ty *)
+	fun reIndexRecNo ty startindex = 
+	  let
+(*
+		val _ = print ("startindex = "^(Int.toString startindex)^" and The ty is\n")
+		val _ = printTy ty
+*)
 		fun updateMap intmap =
 		  let
 			val pairs = IntMap.listItemsi intmap

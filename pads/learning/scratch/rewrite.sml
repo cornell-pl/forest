@@ -11,23 +11,22 @@ let
   val acomp  = #adc comps
   val datacomp = #dc comps
   val rawcomp = combine tycomp datacomp
-(*
   val _ = print "\nBefore reduction:\n"
   val _ = printTy measuredTy
-*)
-  (*phase one *)
-(*
+(*phase one 
   val _ = print "Phase one ...\n";
 *)
   val ty1 = Reduce.reduce 1 ty 
 (*
   val _ = printTy ty1
 *)
-  (*phase two *)
-(*
+(*phase two 
   val _ = print "Phase two ...\n";
 *)
   val ty2 = Reduce.reduce 2 ty1
+(*
+  val _ = printTy ty2
+*)
   (*phase three, redo constraint-free reduction *)
 (*  
   val _ = print "Phase three ...\n";

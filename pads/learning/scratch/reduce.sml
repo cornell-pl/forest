@@ -686,12 +686,13 @@ and struct_to_array ty =
 	  in
 	    case tysop of
 		NONE => ty
-		(*TODO: need to fix lengths !! *)
 		| SOME (tylist', NONE) => 
 		  let
 		    (* no sep *)
+		    (* get the map of recNos *)
+		    val recNoMap = insertToMap ty IntMap.empty
 		    val len = (length tylist) div (length tylist')
-		    val lens = List.tabulate((#coverage a), (fn x => (len, x)))
+		    val lens = map (fn (r, _) => (len, r)) (IntMap.listItemsi recNoMap)
 		    val newty = RArray (a, NONE, NONE, Pstruct(mkTyAux (getCoverage (hd tylist')), tylist'), 
 			(SOME (IntConst (Int.toLarge len))), lens)
 (*
@@ -701,9 +702,13 @@ and struct_to_array ty =
 		  end 
 		| SOME (tylist', SOME r) => 
 		  let
+		    (* with sep *)
+		    (* get the map of recNos *)
+		    val recNoMap = insertToMap ty IntMap.empty
 		    val len = (length tylist) div ((length tylist') + 1)
-		    val lens = List.tabulate((#coverage a), (fn x => (len, x)))
-		    val newty = RArray (a, SOME r, NONE, Pstruct(mkTyAux (getCoverage (hd tylist')), tylist'), 
+		    val lens = map (fn (r, _) => (len, r)) (IntMap.listItemsi recNoMap)
+		    val newty = RArray (a, SOME r, NONE, Pstruct(mkTyAux (getCoverage (hd tylist')), 
+			tylist'), 
 			(SOME (IntConst (Int.toLarge len))), lens)
 (*
 	    	    val _ = (print "After:\n";printTy (measure newty))
@@ -712,6 +717,11 @@ and struct_to_array ty =
 		  end 
 	  end
     | _ => ty
+
+(* TODO: int to float rule 
+and to_float ty = 
+
+*)
 
 and union_to_optional ty =
 	case ty of 
@@ -1033,6 +1043,9 @@ let
 			prefix_postfix_sums,
 			remove_nils,
 		  	unused_branches,
+(*
+			extract_table_header,
+*)
 			struct_to_array,
 			refine_array
 		]
@@ -1052,6 +1065,9 @@ let
 			remove_nils,
 		  	unused_branches,
 			union_to_optional
+(*
+			, extract_table_header
+*)
 		]
 
   (* generate the list of rules *)
@@ -1135,9 +1151,9 @@ let
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> score t) cmap_ty_pairs 
 	    val pairs = ListPair.zip(cmap_ty_pairs,costs)
-	    fun min(((c1, t1), b),((c2, t2), d)) = 
-		if b <= d andalso ty_equal(1, t1, ty)=false 
-		then ((c1, t1), b) else ((c2, t2), d)
+	    (* we do greedy descent for now *)
+	    fun min((a, b),(c, d)) = 
+		if b < d then (a, b) else (c, d)
 	    (* find the minimum cost out of the ones found *)
 	    val ((newcmap, newTy), lowCost) = foldr min ((cmap, ty), cur_cost) pairs
 (*

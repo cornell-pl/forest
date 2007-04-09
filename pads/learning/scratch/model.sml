@@ -44,8 +44,8 @@ structure Model = struct
                                  }
              | FloatConst (m,n) => { tc  = sumComps [ constructorComp
                                                     , int2Comp 2
-                                                    , int2Comp m
-                                                    , int2Comp n
+                                                    , (multCompS (size m) (int2Comp numDigits)) 
+                                                    , (multCompS (size n) (int2Comp numDigits)) 
                                                     ]
                                  , adc = zeroComp
                                  , dc  = zeroComp

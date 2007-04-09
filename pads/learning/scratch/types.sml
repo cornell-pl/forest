@@ -62,7 +62,7 @@ struct
     datatype Refined = StringME of string
 	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
 	             | IntConst of LargeInt.int    (* value *)
-		     | FloatConst of LargeInt.int * LargeInt.int (*value*)
+		     | FloatConst of string * string (*value*)
                      | StringConst of string (* string literal *)
                      | Enum of Refined list  
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
@@ -265,7 +265,7 @@ struct
         |  PeXML (f,s) => "</"^f^s^">"
 	|  Pint (i, s)      =>
              if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
-	|  Pfloat (a, b) => (LargeInt.toString a) ^ "." ^ (LargeInt.toString b)
+	|  Pfloat (a, b) => a ^ "." ^ b
         |  Pstring s   => s
         |  Pgroup {left, body, right} => (ltokenToString left)^(String.concat (List.map ltokenToString body))^(ltokenToString right)
         |  Pwhite s => stringToPrintable s
@@ -278,7 +278,7 @@ struct
         | Int(min, max) => "[Int] [" ^ LargeInt.toString(min) ^ "..." ^
                            LargeInt.toString(max)^"]"
         | IntConst a    => "[IntConst] ["^ LargeInt.toString(a) ^"]" 
-        | FloatConst (a,b)    => "[FloatConst] ["^ (LargeInt.toString a)^"."^(LargeInt.toString b) ^"]" 
+        | FloatConst (a,b)    => "[FloatConst] ["^ a ^"."^ b ^"]" 
         | StringConst s =>  "[StringConst] \""^(stringToPrintable s) ^ "\"" 
         | Enum rel      => "[Enum] {"^ String.concat(map (fn x => (refinedToString x) ^
                            ", ") rel) ^ "}"
