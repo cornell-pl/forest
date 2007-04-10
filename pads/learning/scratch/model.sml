@@ -27,6 +27,7 @@ structure Model = struct
                     ( r : Refined )        (* refined type *)
                      : TyComp =            (* Complexity numbers *)
         ( case r of
+	       (*TODO: StringME is handled as Pstring for now *)
                StringME s     => mkBaseComp avg tot numStringChars
              | Int (min, max) => { tc  = sumComps [ constructorComp
                                                   , int2Comp min
@@ -220,6 +221,8 @@ structure Model = struct
                              }
              in Punion ( updateComps a comps, measuredtys )
              end
+	 (*the complexity of Parray (first, body, last) should be at least the same
+		as that of Pstruct (first, RArray body, last) *)
          | Parray ( a, { tokens  = ts
                        , lengths = ls
                        , first   = f
@@ -227,10 +230,17 @@ structure Model = struct
                        , last    = l
                        }
                   )                =>
+	     (*TODO: we are not looking at lengths here now*)
              let val f'     = measure f
                  val b'     = measure b
                  val l'     = measure l
-                 val tcomp  = sumComps [ constructorComp
+                 val tcomp  = sumComps [ constructorComp (*this is for the Pstruct *)
+				       , constructorComp (*this is for RArray *)
+				       , constructorComp (*this is for the sep *)
+				       , constructorComp (*this is for the term *)
+				       , Choices 3 (*card 3 for Pstruct(first, RArray body, last) *)	
+				       , unitComp  (* for sep in RArray *)
+				       , unitComp  (* for term in RArray *)
                                        , getTypeComp f'
                                        , getTypeComp l'
                                        , getTypeComp b'
@@ -273,8 +283,7 @@ structure Model = struct
                                                          , branchesTypeComp
                                                          ]
                                         , adc = weightedBranches
-                                        , dc  = combine ( cardComp branches )
-                                                        ( sumDataComps measuredBranches )
+                                        , dc  = sumDataComps measuredBranches
                                         }
              in Switch ( updateComps a comps
                        , id
@@ -282,6 +291,7 @@ structure Model = struct
                        )
              end
          | RArray ( aux, osep, oterm, body, olen, ls ) =>
+	     (*TODO: we are not looking at lengths here now*)
              let val maxlen           = maxInt (map #1 ls)
                  val mBody            = measure body
                  val { tc = tbody, adc = abody, dc = dbody } = getComps mBody
