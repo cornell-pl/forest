@@ -240,6 +240,13 @@ structure Common = struct
 	 ({coverage=c1, label=l1, tycomp=tc1},{coverage=c2, label=l2, tycomp=tc2}) =>
  	 	{coverage=c1+c2, label=l2, tycomp=tc2} (* ????? *)
 
+    (*this function generate a dummy empty base type with nTokens number of Pempty tokens *)
+    fun genEmptyBase aux nTokens =
+	let
+	   val ltokens = List.tabulate(nTokens, (fn n => (Pempty, {lineNo=(~1), beginloc=0, endloc=0,recNo=(~1)})))
+	   val emptyBase = Base(aux, ltokens)
+	in emptyBase
+	end
     (*function that test if tylist1 in a struct can be described by tylist2 in another struct*)
     (* tylist1 is described by tylist2 if tylist1 is a sub-sequence of tylist2 and 
 	all other elements in tylist2 can describe Pempty *)
@@ -251,7 +258,7 @@ structure Common = struct
 	let 
 	   val head2 = List.take(tylist2, len1)
 	   val tail2 = List.drop(tylist2, len1)
-	   val emptyBase = Base(getAuxInfo(hd tylist1), [(Pempty, {lineNo=0, beginloc=0, endloc=0,recNo=0})])
+	   val emptyBase = genEmptyBase (getAuxInfo (hd tylist1)) 1
 	in
 	   (
 	   (foldr myand true (map describedBy (ListPair.zip (tylist1, head2)))) 
@@ -266,7 +273,7 @@ structure Common = struct
     (*TODO: not considering Parray and RArray for now *)
     and describedBy(ty1, ty2) =
 	let
-	  val emptyBase = Base(getAuxInfo(ty1), [(Pempty, {lineNo=0, beginloc=0, endloc=0,recNo=0})])
+	  val emptyBase = genEmptyBase (getAuxInfo ty1) 1
 	  val res =
 	    case (ty1, ty2) of 
 		(*assume no Pempty in the Pstruct as they have been cleared by remove_nils*)
@@ -308,7 +315,7 @@ structure Common = struct
       nil => true
       | h::t =>
 	let
-	   val emptyBase = Base(getAuxInfo(hd tylist), [(Pempty, {lineNo=0, beginloc=0, endloc=0,recNo=0})])
+	   val emptyBase = genEmptyBase (getAuxInfo (hd tylist)) 1
 	in
 	   foldr myand true (map (fn x => describedBy (emptyBase, x)) tylist) 
 	end handle Empty => false
@@ -327,10 +334,7 @@ structure Common = struct
 	          (*here need to push a base with correct number of Pempty tokens into the head and tail lists
 			note that the recNo of those "fake" tokens will be -1 and will not be used in
 			table generation *)
-		  fun genEmptyTokens 0 = nil
-		  | genEmptyTokens numTokens =
-			(Pempty, {lineNo=0, beginloc=0, endloc=0, recNo=(~1)})::(genEmptyTokens (numTokens-1))
-	   	  val emptyBase = Base(getAuxInfo(hd tylist1), genEmptyTokens (getCoverage (hd tylist1)))
+	   	  val emptyBase = genEmptyBase (getAuxInfo(hd tylist1)) (getCoverage (hd tylist1))
 		  fun pushInto ty tylist = map (fn t => mergeTyInto (ty, t)) tylist
 		in
 		  (pushInto emptyBase headlist)@(map mergeTyInto (ListPair.zip (tylist1, head2)))@
@@ -355,13 +359,9 @@ structure Common = struct
 		| (ty1, Punion(a2, tylist2)) => Punion(mergeAux(getAuxInfo(ty1), a2), mergeUnion(ty1, tylist2, nil))
 		| (Poption (a1, ty), ty2) => 
 			let
-		  	  fun genEmptyTokens 0 = nil
-		  	  | genEmptyTokens numTokens =
-				(Pempty, {lineNo=0, beginloc=0, endloc=0, recNo=(~1)})::(genEmptyTokens (numTokens-1))
 			  val emptyCoverage = getCoverage ty1 - getCoverage ty
 			in
-			  mergeTyInto (Base((mkTyAux emptyCoverage), 
-						(genEmptyTokens emptyCoverage)), mergeTyInto (ty, ty2))
+			  mergeTyInto ((genEmptyBase (mkTyAux emptyCoverage) emptyCoverage), mergeTyInto (ty, ty2))
 			end
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>

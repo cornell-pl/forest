@@ -191,20 +191,21 @@ case ty of
   	val remaining_rev = map (fn x => List.drop(x,slen) ) remaining_rev
   	val remaining = map List.rev remaining_rev
   	val csfx = List.rev csfx_rev
-  	val rem_tups = map(fn x => Pstruct(x)) (ListPair.zip(auxlist, remaining))
-  	val rem_reduced = List.filter (fn x => case x of Pstruct(a, nil) => false 
-						| _ => true) rem_tups
-	val unionTys = case length rem_reduced of
+  	val rem_tups = map(fn (a, tys) => case tys of
+				nil => genEmptyBase a (#coverage a)
+				| _ => Pstruct(a, tys)
+			      ) (ListPair.zip(auxlist, remaining))
+	val unionTys = case length rem_tups of
 			0 => nil
-			| 1 => rem_reduced
-			| _ => [Punion(a, rem_reduced)]
-  in
-  	case (cpfx, csfx) of
+			| 1 => rem_tups
+			| _ => [union_to_optional (Punion(a, rem_tups))]
+  	val newty = case (cpfx, csfx) of
   	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
   	| (_,h::t) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
   	| (nil,nil) => Punion (a, tylist)
+  in newty
   end
 | _ => ty
 (* detect a table with a header and rewrite the struct with unions inside
