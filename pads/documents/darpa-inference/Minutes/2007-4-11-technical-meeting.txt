@@ -1,0 +1,117 @@
+
+Kathleen has proposed an agenda for today's discussions:
+
+ - review CDRLs to measure technical progress, plan next batch of work
+ - discuss transfer of Peter's work to Kenny
+ - discuss comparison of gold vs silver
+ - discuss adding pads pretty-printer
+ - discuss scoring function
+ - discuss test infrastructure progress
+
+
+*****************************
+-- cdrls
+  ACTION: david burke will find more detailed list.
+
+-- discuss transfer of Peter's work to Kenny
+  scoring function is coded
+  Kenny: sort of understand it
+  keep all meeting on a weekly basis, put in some time on critical
+  makefile describes test automation
+  ACTION: peter make a short document describing make file automation.
+
+- discuss comparison of gold vs silver
+  added a few more gold structures, manually written versions
+4: ai.3000 1967transactions, ls-l, yum.txt
+   learning/scratch
+issue: can't get hand-coded version into scoring system 
+ACTION: kenny add another 6 gold fomats
+
+- scoring function
+  using simple sum of type complexity and data complexity
+  may or may not be correct
+  might want to use atomic complexity
+  we have a structure that is anticipating some data
+  modified union and array scoring to convert to switched union and array
+  
+ ADC(T,d) = 1-record data complexity
+   cost of transmitting a single record d relative to type T
+   not supposed to be an end result
+   just a useful way of formulating the series of def that we need.
+
+ DC(T, d1...dk) = (Sum(i=1..k) ADC(T,di))/k
+   average ...
+   we currently sum, but we don't divide by 'k'
+
+ C(T, d1...dk) = h*TC(T) + DC(T, d1...dk)  <<=== total complexity
+
+  where h is a hyper-parameter, which we will initially set << 1. eg: 1/10
+
+ACTION: Peter will write ascii version of scoring function as currently implemented to compare with david's formulation.  To be Done 4/11.
+
+https://ssl.perfora.net/gargou.net/cgi-bin/twiki/pads/view.pl/PADS/ComplexityMetric
+MIT Peter D. Grunwald book on MLD
+The minimum description length principle
+
+ACTION: david burke: hunt through literature to figure out about overfitting.
+
+- pads pretty-printer
+- pads parser...
+   ACTION: kenny investigate pads pretty printer
+
+
+
+*****************************
+
+See you there!
+
+
+The contractor shall design, develop, document, implement, evaluate and deliver a format inference algorithm for ad hoc data and propose architecture for a Network Forensics Analysis Workbench that includes inference algorithm.
+ 
+The following is a list deliverables: 
+
+A003 Ð Real Time Network Forensics Inference Evaluation/Effectiveness Technical Information Report on the evaluation of the effectiveness of format inference for real-time network forensics, by having a collection of data sources relevant to the domain. 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+ - what is format of technical information report?
+ - basically, we have to write a report on our evaluation
+
+A004 - Inference Algorithm Design Technical Information Report on the design, development, documentation and implementation of an Inference Algorithm to support the evaluation. 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+  - we have to write a report on the design and implementation.
+
+A005 Ð Architecture for Forensic Data Workbench Technical Information Report on the use of ideas of the LaunchPADS system to propose a Forensic Data Workbench Architecture. 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+
+ - not technical cdrl
+
+
+A006 Ð Evaluation to Produce High-Quality Descriptions of Ad Hoc Data to evaluate and document the effectiveness of the inference algorithm. 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+  - what is really due here?  
+    descriptions of actual ad hoc data sources?
+
+A007 Ð Software Demonstrations and Evaluation Documentation 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+  - do a demo
+
+A008 Ð Executable Software, Source Files and Packaging Requirements. We will deliver all computer software developed under this effort as source and object (executable) code on electronic media. We shall likewise include the commented source listings and source coded for the target computer system. 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+  - deliver software
+
+A009 - COTS Manual and Associated Supplemental Data for all software purchased or licensed as a component of the software delivered, transfer licensing and maintenance agreements to the Government. 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+  - nothing to be delivered here, right?
+
+
+A010 Ð DARPA Final Report which will document the details of all technical work accomplished and information gained during the performance of this acquisition to permit full understanding of the techniques and procedures used in evolving technology or processes developed. We shall include all pertinent observations, nature or problems, positive and negative outcome, and design criteria where applicable. The report shall document procedures followed, processes developed, Òlessons learnedÓ, and other useful information. 
+Receiving Organization: USAF-AFMC 
+Expected Delivery Date: 20 July 2007 
+
+ -- is there a format for darpa final reports?
