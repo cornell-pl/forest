@@ -363,12 +363,15 @@ structure Common = struct
 			in
 			  mergeTyInto ((genEmptyBase (mkTyAux emptyCoverage) emptyCoverage), mergeTyInto (ty, ty2))
 			end
+		| (ty1, Poption (a2, ty2)) =>
+			if (describesEmpty [ty1]) then Poption(mergeAux(getAuxInfo(ty1), a2), ty2)
+			else Poption(mergeAux(getAuxInfo(ty1), a2), mergeTyInto(ty1, ty2))
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 
 			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
 		*)
-		| _ => (print "mergeTyInto error!\n"; raise TyMismatch)
+		| _ => (print "mergeTyInto error!\n"; printTy ty1; printTy ty2; raise TyMismatch)
 
 (*this function insert all the rec no of a ty into a map*)
 	fun insertToMap ty intmap =
