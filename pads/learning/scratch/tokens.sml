@@ -289,7 +289,7 @@ structure Tokens = struct
                          then size s - ndot - ( size lastComponent )
                          else size s - ndot
                  end
-             | Pint (n, s)    => size (LargeInt.toString n) (*ignore the length of the s as it's aux info*)
+             | Pint (n, s)    => size s (*ignore the length of the s as it's aux info*)
              | Pfloat (i,f)   => size (i) + size (f) 
              | Pstring s      => size s
              | Pgroup grp     => 0
@@ -318,5 +318,4 @@ structure Tokens = struct
 
     (* A record is a special kind of list of tokens *)
     type Record = Token list
-
 end

@@ -719,10 +719,85 @@ and struct_to_array ty =
 	  end
     | _ => ty
 
-(* TODO: int to float rule 
-and to_float ty = 
-
+(* int to float rule (Phase one rule)
+several scenarios:
+tys = Pint . Pint => Pfloat
+tys = Pint  Poption (. Pint) => Pfloat
+[not dot] tys [not dot]
 *)
+(*TODO: when checking no dot, we are assuming it's a base, it could be more complex than that,
+  also, maybe the second case should rewrite to Pfloat + Pint, instead? *)
+and to_float ty = 
+	case ty of
+	Pstruct (a, tylist) =>
+	  let
+(*
+		val _ = (print "before:\n"; printTy (measure ty))
+*)
+		fun getFloatTokens (tokens1, tokens2) =
+		  let
+			fun insertIntToMap (ltok, intmap) =
+				case ltok of
+				(Pint (i, s), (loc:location)) => 
+					IntMap.insert(intmap, (#recNo loc), (Pfloat(s, ""), loc)) 
+				| _ => (print "Got a different token than Pint for int!"; raise TyMismatch)
+			fun insertFracToMap (ltok, intmap) =
+				case ltok of
+				(Pint (i, s), (loc:location)) => 
+				  let
+					val tokOp = IntMap.find (intmap, (#recNo loc))
+				  in
+					case tokOp of
+					  NONE => intmap
+					  | SOME (Pfloat(ipart, _), (loc:location)) => 
+						IntMap.insert(intmap, (#recNo loc), (Pfloat(ipart, s), loc))
+					  | _ => raise TyMismatch
+				  end
+				| _ => (print "Got a different token than Pint for frac!"; raise TyMismatch)
+			val tokenmap= foldl insertIntToMap IntMap.empty tokens1
+			val tokenmap = foldl insertFracToMap tokenmap tokens2
+		  in
+			IntMap.listItems tokenmap
+		  end
+		fun combineTys tys =
+		  case tys of
+			[Base(a1, intTokList), Base(_, _), Base (_, intTokList1)]=> 
+				Base(a1, getFloatTokens(intTokList, intTokList1))
+		      |  [Base(a1, intTokList), Poption(_, Pstruct(_, [(Base _), Base(a3, intTokList1)]))]=>
+				Base(a1, getFloatTokens(intTokList, intTokList1))
+		      | _ => raise TyMismatch
+		fun matchPattern pre tys =
+			case tys of 
+			   nil => NONE
+			  | (Base(a1, (Pint _, _)::_))::((Base(a2, (Other (#"."), _)::_))::
+				((Base(a3, (Pint _, _)::_)) :: post)) => 
+				SOME (pre, List.take(tys, 3), post)
+			  | (Base(a1, (Pint _, _)::_))::((Poption(_, Pstruct(_,
+				[Base(a2, (Other (#"."), _)::_), Base(a3, (Pint _, _)::_)]))):: post) => 
+				SOME (pre, List.take(tys, 2), post)
+			  | (Base(a1, (Other (#"."), _)::_))::(x::rest) => 
+				matchPattern (pre@(List.take(tys, 2))) rest
+			  | x::rest => matchPattern (pre@[x]) rest
+			
+		(* there can be multiple floats in the same tylist, we are getting all of them *)	
+		fun matchAll pre tys = 
+		  let 		  
+			val listOp = matchPattern nil tys
+		  in
+			case listOp of
+			NONE => pre@tys
+			| SOME (pre', tys', post) => matchAll (pre@pre'@[(combineTys tys')]) post
+		  end
+		val newtylist = matchAll nil tylist
+		val newty = if (length newtylist) = 1 then hd newtylist
+			    else Pstruct(a, newtylist)
+(*
+		val _ = (print "New Ty:\n"; printTy (measure newty))
+*)
+	  in
+		newty
+	  end
+	| _ => ty
 
 and union_to_optional ty =
 	case ty of 
@@ -1047,7 +1122,9 @@ let
 (*
 			extract_table_header,
 *)
+			union_to_optional,
 			struct_to_array,
+			to_float,
 			refine_array
 		]
   val phase_two_rules : post_reduction_rule list =

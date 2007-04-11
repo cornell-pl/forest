@@ -317,12 +317,7 @@ structure Model = struct
                                                    )
                                                    ( #adc tycomp )
                                        )
-                 val dcomp   = combine unitComp
-                                       ( multCompR ( frac ( getCoverage ty )
-                                                          ( #coverage aux )
-                                                   )
-                                                   ( #dc tycomp )
-                                       )
+                 val dcomp   = combine unitComp ( #dc tycomp )
                  val tycomp' = { tc = tcomp, adc = acomp, dc = dcomp }
              in Poption ( updateComps aux tycomp', mBody )
 	     end
