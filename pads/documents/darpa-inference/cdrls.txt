@@ -1,0 +1,48 @@
+The contractor shall design, develop, document, implement, evaluate
+and deliver a format inference algorithm for ad hoc data and propose
+architecture for a Network Forensics Analysis Workbench that includes
+inference algorithm.
+
+Receiving Organization: USAF-AFMC
+Expected Delivery Date: 20 July 2007 
+
+======
+CDRLS:
+======
+
+A003 Real Time Network Forensics Inference Evaluation/Effectiveness
+Technical Information Report on the evaluation of the effectiveness of
+format inference for real-time network forensics, by having a
+collection of data sources relevant to the domain.
+
+A004 - Inference Algorithm Design Technical Information Report on the
+design, development, documentation and implementation of an Inference
+Algorithm to support the evaluation.
+
+A005 Architecture for Forensic Data Workbench Technical Information
+Report on the use of ideas of the LaunchPADS system to propose a
+Forensic Data Workbench Architecture.
+
+A006 Evaluation to Produce High-Quality Descriptions of Ad Hoc Data to
+evaluate and document the effectiveness of the inference algorithm.
+
+A007 Software Demonstrations and Evaluation Documentation
+
+A008 Executable Software, Source Files and Packaging Requirements. We
+will deliver all computer software developed under this effort as
+source and object (executable) code on electronic media. We shall
+likewise include the commented source listings and source coded for
+the target computer system.
+
+A009 - COTS Manual and Associated Supplemental Data for all software
+purchased or licensed as a component of the software delivered,
+transfer licensing and maintenance agreements to the Government.
+
+A010 DARPA Final Report which will document the details of all
+technical work accomplished and information gained during the
+performance of this acquisition to permit full understanding of the
+techniques and procedures used in evolving technology or processes
+developed. We shall include all pertinent observations, nature or
+problems, positive and negative outcome, and design criteria where
+applicable. The report shall document procedures followed, processes
+developed, "lessons learned," and other useful information.
