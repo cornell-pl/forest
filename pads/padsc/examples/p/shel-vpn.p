@@ -3,18 +3,25 @@ Pstruct repeat_t {
   "last message repeated ";
   Puint8 count;
   " time";
+  Pre "/s{0,1}/";
 };
 
+/*
 Penum SysName_t {
-  alivpn1, alivpn2, alivpn3, alivpn5, alivpn6, kcivpn2, kcivpn3, kcivpn4, kcivpn5, ukvpn3, alivpn 
+  alivpn1, alivpn2, alivpn3, alivpn4, alivpn5, alivpn6, alivpn,
+  kcivpn1, kcivpn2, kcivpn3, kcivpn4, kcivpn5, kcivpn6, 
+  ukvpn1,  ukvpn2,  ukvpn3 
 };
+*/
+
+Ptypedef Pstring(:' ':) SysName_t;
 
 
 Pstruct CSFW_t {
   " [";         Puint8          id1;
   "] Rule[";    Pstring(:' ':)  ruleName;
   "  ";         Puint8          id2;
-  "] Firewall:  [";  Pip       ip1;
+  "] Firewall:  [";  Pip        ip1;
   ':';          Puint32         port1;
   '-';          Pip             ip2;
   ':';          Puint32         port2;
@@ -23,22 +30,19 @@ Pstruct CSFW_t {
   "\\n";
 };
 
-Penum ISAKMP_tag_t{
-  NoProposal    Pfrom("No proposal chosen"), 
-  ClientVersion Pfrom("Client Version Information"),
-  invalid_id    Pfrom("invalid id"),
-  Invalid_ID    Pfrom("Invalid ID information")
-};
-
 Pstruct ISAKMP_message_t{
   " in message from ";
   Pip msgSource;
 };
 
-Pstruct ISAKMP_client_t{
-  ": ";   Pstring_SE(:"/ \\d/":) clientName;
+Pstruct ISAKMP_version_t{
   ' ';    Puint32[] version : Psep('.') && Pterm(' ');
   ' ';
+};
+
+Pstruct ISAKMP_client_t{
+  ": ";   Pstring_SE(:"/( \\d)|$/":) clientName;  /* end with space digit or end of record */
+          Popt ISAKMP_version_t  clientVersion;
 };
 
 Pstruct ISAKMP_invalid_t{
@@ -46,12 +50,40 @@ Pstruct ISAKMP_invalid_t{
   ":line "; Puint32        lineNumber;
 };
 
+Pstruct ISAKMP_error_t{
+  " (";
+  Pstring(:')':) errorReason;
+  ") received from ";
+  Pip errorFrom;
+};
+
+Pstruct  ISAKMP_other_t {
+        Pip entity;
+   ' '; Pstring_SE(:Peor:) msg;
+};
+
+Penum ISAKMP_tag_t{
+  NoProposal         Pfrom("No proposal chosen"), 
+  ClientVersion      Pfrom("Client Version Information"),
+  invalid_id         Pfrom("invalid id"),
+  Invalid_ID         Pfrom("Invalid ID information"),
+  Invalid_Payload    Pfrom("Invalid payload type"),
+  ErrorNotification  Pfrom("Error notification"),
+  ISAKMP_AuthFailure Pfrom("Authentication failure"),
+  ISAKMP_Other       Pfrom("")
+};
+
+
 Punion ISAKMP_body_t (:ISAKMP_tag_t tag:){
-  Pswitch(tag){
-    Pcase NoProposal:    ISAKMP_message_t   noProposalMsg;
-    Pcase ClientVersion: ISAKMP_client_t    clientMsg;
-    Pcase invalid_id:    ISAKMP_invalid_t   invalidMsg;
-    Pcase Invalid_ID:    ISAKMP_message_t   InvalidMsg;
+  Pswitch(tag){ 
+    Pcase NoProposal:         ISAKMP_message_t   noProposalMsg;
+    Pcase ClientVersion:      ISAKMP_client_t    clientMsg;
+    Pcase invalid_id:         ISAKMP_invalid_t   invalidMsg;
+    Pcase Invalid_ID:         ISAKMP_message_t   InvalidMsg;
+    Pcase Invalid_Payload:    ISAKMP_message_t   invalidPayloadMsg;
+    Pcase ErrorNotification:  ISAKMP_error_t     errorMsg;
+    Pcase ISAKMP_AuthFailure: ISAKMP_message_t   authFailureMsg;
+    Pcase ISAKMP_Other:       ISAKMP_other_t     ipMsg;
   }
 };
 
@@ -61,7 +93,11 @@ Pstruct ISAKMP_t{
         ISAKMP_body_t(:ISKAMP_tag:) ISKAMP_body;
 };
 
-Penum SecurityMsgTag_t{ SecuritySession Pfrom("Session"), Alert};
+Pstruct HWAccel_t{
+  " ["; Puint32                   HWAccel_id;
+  "] "; Pstring_SE(:Peor:)      HWAccellMsg;
+};
+
 
 Punion Host_t{
   Pchar                unavailable : unavailable == '-';
@@ -107,15 +143,28 @@ Pstruct AssignedIP_t{
 Punion SecuritySessionBody_t{
     PhysicalAddresses_t                physicalAddresses;
     Pstring_ME(:"/logged out/":)       loggedOut;
+    Pstring_ME(:"/No response from client - logging out/":)       
+                                       noResponse;
+    Pstring_ME(:"/- authentication failed using all authservers/":)       
+                                       authFailed;
+    Pstring_ME(:"/authentication failed using RADIUS/":)       
+                                       radiusAuthFailed;
     IPPair_t                           ipPair;
     AssignedIP_t                       assignedIP;
 };
 
 
-Pstruct SecuritySession_t{
+Pstruct SecuritySessionPayload_t{
+  Popt Pstring_ME(:"/[0-9a-z]+/":) sessionID;
+  Pre "/(:  )?/";
   address_t address;
   ' ';  SecuritySessionBody_t securitySessionBody;
 };
+
+Punion SecuritySession_t{
+  Pstring_ME(:"/IPSEC uid invalid - authentication failed/":) securitySessionAuthFailure;
+  SecuritySessionPayload_t securitySessionPayload;
+}
 
 Pstruct SecurityAlert_t{
   "IP OPTIONS RECEIVED from "; Pip            src;
@@ -123,24 +172,76 @@ Pstruct SecurityAlert_t{
   ')';
 };
 
+Pstruct SecurityRadius_t{
+   "\"";  Pstring(:'\"':) securityRadiusName;
+   "\" access DENIED by server \"";
+   Pip serverIP;
+   "\".";
+};
+
+Pstruct SecurityAccount_t{
+  "IPSEC[";
+  Pstring(:']':) accountID;     /* hex number? */
+  "] no LOCAL account found";
+};
+
+Penum SecurityMsgTag_t{ SecuritySession Pfrom("Session"), Alert, RADIUS, Account};
 
 Punion SecurityBody_t(:SecurityMsgTag_t tag:){
   Pswitch(tag){
     Pcase (SecuritySession): SecuritySession_t securitySession;
-    Pcase (Alert):           SecurityAlert_t securityAlert;
+    Pcase (Alert):           SecurityAlert_t   securityAlert;
+    Pcase (RADIUS):          SecurityRadius_t  securityRadius;
+    Pcase (Account):         SecurityAccount_t securityAccount;
   }
 };
 
 Pstruct Security_t {
   " ["; Puint32 security_id;
   "] "; SecurityMsgTag_t securityTag;
-  ": "; SecurityBody_t(:securityTag:) securityBody;
+  Pre "/:? /"; SecurityBody_t(:securityTag:) securityBody;
 };
 
 Pstruct FailedLogIn_t{
+  Pre "/([.]   Invalid Account)?/";
   ": Username=";  Pstring(:':':)   userName;
   ": Date/Time="; Pdate(:' ':)     loginDate;
   ' ';            Ptime_SE(:Peor:) loginTime;
+};
+
+Penum SNMPTrapTag_t{
+    SNMPServer    Pfrom ("SNMP Servers"), 
+    SNMPDiskRed   Pfrom ("Disk Redundancy"),
+    SNMPHardDisk  Pfrom ("Hard Disk"),
+    SNMPDualPower Pfrom ("Dual Power Supply")
+};
+
+Pstruct SNMPservMsg_t{
+  ": "; Pstring(:';':) srvMessage;
+};
+
+Pstruct SNMPDiskRed_t{
+  ": "; Pstring(:';':) diskRedMessage;
+};
+
+Pstruct SNMPHardDisk_t{
+  ' ';           Puint32        diskID;
+  ": Device ";   Pstring(:' ':) deviceName;
+  " not available";
+};
+
+Pstruct SNMPDualPower_t{
+  ": "; Pstring(:';':) dualPowerMessage;
+};
+
+
+Punion SNMPTrapBody_t(:SNMPTrapTag_t tag:){
+  Pswitch(tag){
+    Pcase SNMPServer:    SNMPservMsg_t   srvMessage;
+    Pcase SNMPDiskRed:   SNMPDiskRed_t   diskRedMessage;
+    Pcase SNMPHardDisk:  SNMPHardDisk_t  hardDisk;
+    Pcase SNMPDualPower: SNMPDualPower_t dualPower;
+  }
 };
 
 Pstruct SNMPTraps_t{
@@ -148,14 +249,20 @@ Pstruct SNMPTraps_t{
   "] ";  Puint32[] snmpTrapsList : Psep('.') && Pterm(' ');
   ' ';   Puint32   snmpInt1;
   ' ';   Puint32   snmpInt2;
-  " SNMP Servers: ";
-         Pstring(:';':) srvMessage;
+  ' ';   SNMPTrapTag_t snmptag;
+         SNMPTrapBody_t(:snmptag:) snmpBody;  
   "; \\n";
-  
+};
+
+Pstruct VersionFuture_t{
+  "Future Version (ID ";  
+  Puint32 versionID;
+  ')';
 };
 
 Punion Version_t{
   "unknown";
+  VersionFuture_t future;
   Pstring(:')':) vName;
 };
 
@@ -173,19 +280,46 @@ Pstruct Session_t{
   "), action not needed";
 };
 
+Pstruct SNMPAuth_t{
+  " on ";                Pstring(:' ':) requestType;
+  " request from host "; Pip            hostIP;
+  " using community string ";
+                         Pstring_SE(:Peor:) communityString;
+};
+
+Pstruct InboundESP_t{
+  " from "; Pip sourceIP;
+  " to ";   Pip destIP;
+  " SPI ";  Pstring(:' ':) hexID; /-- should be hex type; not currently implemented.
+  " [";     Puint32 inboundESPID;
+  "] ";
+  "authentication failure detected--npbuf ";
+  Pstring_SE(:Peor:) hexID2;
+};
+
 Penum MsgTy_t{
-  CSFW, failed Pfrom("Failed Login Attempt"),  ISAKMP, Security, Session, SNMPTraps 
+  CSFW, ISAKMP, Security, Session, SNMPTraps,
+  InboundESP Pfrom ("Inbound ESP"),
+  SNMPAuth Pfrom ("SNMP Authentication Failure"),
+  failed Pfrom("Failed Login Attempt"),  
+  failedRemoteLogin Pfrom("Failed Remote Network Login"),
+  hwAccel Pfrom("Hw Accel unit")  
 };
 
 
 Punion MsgPayload_t(:MsgTy_t ty:){
   Pswitch (ty){ 
-    Pcase CSFW     :  CSFW_t        csfw;
-    Pcase ISAKMP   :  ISAKMP_t      isakmp;
-    Pcase Security :  Security_t    security;
-    Pcase failed   :  FailedLogIn_t failedLogIn;
-    Pcase SNMPTraps:  SNMPTraps_t   snmpTraps;
-    Pcase Session  :  Session_t     session;
+    Pcase CSFW       :  CSFW_t        csfw;
+    Pcase ISAKMP     :  ISAKMP_t      isakmp;
+    Pcase hwAccel    :  HWAccel_t     HWAccel;
+    Pcase InboundESP :  InboundESP_t  inboundESP;
+    Pcase Security   :  Security_t    security;
+    Pcase failed     :  FailedLogIn_t failedLogIn;
+    Pcase failedRemoteLogin:
+                        FailedLogIn_t failedRemoteLogIn;
+    Pcase SNMPAuth   :  SNMPAuth_t    snmpAuth;
+    Pcase SNMPTraps  :  SNMPTraps_t   snmpTraps;
+    Pcase Session    :  Session_t     session;
   }
 };
 
