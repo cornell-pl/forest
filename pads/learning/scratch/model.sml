@@ -128,7 +128,6 @@ structure Model = struct
                                          , dc  = combine ( int2Comp 2 )
                                                          ( multComp totlen ( int2Comp numDigits ) )
                                          }
-		  (*TODO: what to do for float *)
                   | Pfloat (i,f)      => mkBaseComp avglen totlen numDigits
                   | Pstring s         => mkBaseComp avglen totlen numStringChars
                   | Pgroup x          => { tc  = constructorComp
