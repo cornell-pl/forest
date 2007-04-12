@@ -19,5 +19,5 @@ structure Yumtxt = struct
     val eor : Ty = Base ( yumAux, [ ( Pstring "", yumLoc ) ] )
     val erase_package : Ty = Pstruct ( yumAux, [ eor ] )
     val switch : Ty = Switch ( yumAux, swLabel, [ ( installUpdateR, ins_update_package), ( erasedR, erase_package ) ] )
-    val yum : Ty = Pstruct ( yumAux, [ date1, sp1, time1, sp2, method, colsp ] )
+    val yum : Ty = Pstruct ( yumAux, [ date1, sp1, time1, sp2, method, colsp, switch ] )
 end
