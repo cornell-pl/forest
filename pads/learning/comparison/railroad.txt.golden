@@ -1,0 +1,27 @@
+Punion(35, tc: 271.884b, ac: 84.661b, dc: 173.644b, raw: 445.527b)
+        Pstruct(35, tc: 106.133b, ac: 36.000b, dc: 36b, raw: 142.133b)
+                [String] (35, tc: 5.044b, ac: 36.000b, dc: 36b, raw: 41.044b);
+                [StringConst] ",,,,,,,,,,,,,,," (35, tc: 95.044b, ac: 0b, dc: 0b, raw: 95.044b);
+        End Pstruct;
+        Pstruct(35, tc: 159.706b, ac: 131.322b, dc: 136.644b, raw: 296.350b)
+                [String] (35, tc: 5.044b, ac: 60.000b, dc: 60b, raw: 65.044b);
+                [StringConst] "," (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                Pstruct(35, tc: 61.896b, ac: 66.000b, dc: 66b, raw: 127.896b)
+                        [StringConst] """ (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [String] (35, tc: 5.044b, ac: 54.000b, dc: 54b, raw: 59.044b);
+                        [StringConst] "," (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [StringConst] " " (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [StringME] "/[A-Z][A-Z]/" (35, tc: 5.044b, ac: 12.000b, dc: 12b, raw: 17.044b);
+                        [StringConst] """ (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                End Pstruct;
+                [StringConst] "," (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                RArray(35, tc: 63.311b, ac: 5.322b, dc: 10.644b, raw: 73.955b)
+                        Separator: [StringConst] ","
+                        Punion(35, tc: 45.222b, ac: 5.322b, dc: 10.644b, raw: 55.866b)
+                                [Pint] (35, tc: 5.044b, ac: 7.644b, dc: 7.644b, raw: 12.688b);
+                                [Enum] {[StringConst] "U", [StringConst] "NA", } (35, tc: 34.133b, ac: 1b, dc: 2b, raw: 36.133b);
+                        End Punion;
+                End RArray;
+        End Pstruct;
+End Punion
+

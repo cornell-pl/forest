@@ -1,0 +1,25 @@
+Pstruct(327, tc: 288.132b, ac: 479.667b, dc: 578.837b, raw: 866.968b)
+        [Date] (327, tc: 5.044b, ac: 161.193b, dc: 161.193b, raw: 166.238b);
+        [StringConst] " " (327, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        [Time] (327, tc: 5.044b, ac: 220.888b, dc: 220.888b, raw: 225.933b);
+        [StringConst] " " (327, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        [Enum] {[StringConst] "Installed", [StringConst] "Updated", [StringConst] "Erased", } (Id = sw1 327, tc: 153.763b, ac: 1.585b, dc: 4.755b, raw: 158.517b);
+        [StringConst] ": " (327, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b);
+        Switch(sw1)(327, tc: 77.296b, ac: 96.000b, dc: 192b, raw: 269.296b):
+        case [Enum] {[StringConst] "Installed", [StringConst] "Updated", }:
+                Pstruct(327, tc: 61.163b, ac: 192.000b, dc: 192b, raw: 253.163b)
+                        [String] (327, tc: 5.044b, ac: 48.000b, dc: 48b, raw: 53.044b);
+                        [StringConst] "." (327, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [String] (327, tc: 5.044b, ac: 48.000b, dc: 48b, raw: 53.044b);
+                        [StringConst] " " (327, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [String] (327, tc: 5.044b, ac: 48.000b, dc: 48b, raw: 53.044b);
+                        [StringConst] "-" (327, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [String] (327, tc: 5.044b, ac: 48.000b, dc: 48b, raw: 53.044b);
+                End Pstruct;
+        case [StringConst] "Erased":
+                Pstruct(327, tc: 10.089b, ac: 0.000b, dc: 0b, raw: 10.089b)
+                        [String] (327, tc: 5.044b, ac: 0.000b, dc: 0b, raw: 5.044b);
+                End Pstruct;
+        End Switch;
+End Pstruct
+

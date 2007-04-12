@@ -1,0 +1,24 @@
+RArray(Id = BTy_0 999, tc: 96.295b, ac: 28.703b, dc: 535657.700b, raw: 535753.995b)
+        Separator: [StringConst] "|"
+        Punion(Id = BTy_11 20996, tc: 78.206b, ac: 28.703b, dc: 535657.700b, raw: 535735.906b)
+                Pstruct(Id = BTy_10 13712, tc: 33.266b, ac: 19.553b, dc: 240693.115b, raw: 240726.381b)
+                        Poption(Id = BTy_5 13712, tc: 22.178b, ac: 1.003b, dc: 45b, raw: 67.178b)
+                                Pstruct(Id = BTy_8 1, tc: 16.133b, ac: 44.000b, dc: 44b, raw: 60.133b)
+                                        [String] (Id = BTy_6 1, tc: 5.044b, ac: 42.000b, dc: 42b, raw: 47.044b);
+                                        [White] (Id = BTy_7 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b);
+                                End Pstruct;
+                        End Poption;
+                        [Pint] (Id = BTy_9 13712, tc: 5.044b, ac: 18.550b, dc: 240648.115b, raw: 240653.159b);
+                End Pstruct;
+                Pstruct(Id = BTy_18 6286, tc: 33.266b, ac: 47.924b, dc: 294963b, raw: 294996.266b)
+                        [String] (Id = BTy_12 6286, tc: 5.044b, ac: 46.922b, dc: 294954b, raw: 294959.044b);
+                        Poption(Id = BTy_14 6286, tc: 22.178b, ac: 1.001b, dc: 9b, raw: 31.178b)
+                                Pstruct(Id = BTy_17 1, tc: 16.133b, ac: 8.000b, dc: 8b, raw: 24.133b)
+                                        [White] (Id = BTy_15 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b);
+                                        [String] (Id = BTy_16 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+                                End Pstruct;
+                        End Poption;
+                End Pstruct;
+                [Empty] (Id = BTy_20 998, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b);
+        End Punion;
+End RArray
