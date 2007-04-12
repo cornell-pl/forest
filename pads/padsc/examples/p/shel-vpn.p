@@ -111,9 +111,12 @@ Punion Trailer_t{
   Puint32                                       trailer_id;
 }
 
+Penum AddressType_t{IPSEC, LOCAL};
+
 Pstruct address_t{
-  "IPSEC["; Host_t host; 
-  "]:";     Trailer_t trailer;
+           AddressType_t addressTy;
+  '[';     Host_t        host; 
+  "]:";   Trailer_t      trailer;
 };
 
 Pstruct PhysicalAddresses_t{
@@ -297,13 +300,40 @@ Pstruct InboundESP_t{
   Pstring_SE(:Peor:) hexID2;
 };
 
+Pstruct NTP_t{
+  " ["; Puint32 NIP_id;
+  "] time reset "; Pfloat32 NTPtime; 
+  " s";
+};
+
+Pstruct FTPSynch_t{
+  "Synchronizing Pri [/";
+  Pstring(:'/':) primary;
+  "/] to Sec [/";
+  Pstring(:'/':) secondary;
+  "/] ...";
+};
+
+Punion FTPBody_t{
+  Pstring_ME(:"/Update completed successfully/":) updateSuccess;
+  Pstring_ME(:"/Update done. Check Status to assure the success/":) updateDone;
+  FTPSynch_t FTPSynch;
+};
+
+Pstruct FTP_t{
+  " ["; Puint32 FTP_Id;
+  "] ";
+  FTPBody_t FTPbody;
+};
+
 Penum MsgTy_t{
-  CSFW, ISAKMP, Security, Session, SNMPTraps,
+  CSFW, ISAKMP, Security, Session, SNMPTraps, NTP,
   InboundESP Pfrom ("Inbound ESP"),
   SNMPAuth Pfrom ("SNMP Authentication Failure"),
   failed Pfrom("Failed Login Attempt"),  
   failedRemoteLogin Pfrom("Failed Remote Network Login"),
-  hwAccel Pfrom("Hw Accel unit")  
+  hwAccel Pfrom("Hw Accel unit"),  
+  FTP Pfrom("FTP Backup")
 };
 
 
@@ -311,6 +341,7 @@ Punion MsgPayload_t(:MsgTy_t ty:){
   Pswitch (ty){ 
     Pcase CSFW       :  CSFW_t        csfw;
     Pcase ISAKMP     :  ISAKMP_t      isakmp;
+    Pcase Session    :  Session_t     session;
     Pcase hwAccel    :  HWAccel_t     HWAccel;
     Pcase InboundESP :  InboundESP_t  inboundESP;
     Pcase Security   :  Security_t    security;
@@ -319,7 +350,8 @@ Punion MsgPayload_t(:MsgTy_t ty:){
                         FailedLogIn_t failedRemoteLogIn;
     Pcase SNMPAuth   :  SNMPAuth_t    snmpAuth;
     Pcase SNMPTraps  :  SNMPTraps_t   snmpTraps;
-    Pcase Session    :  Session_t     session;
+    Pcase NTP        :  NTP_t         ntp;
+    Pcase FTP        :  FTP_t         ftp;
   }
 };
 
