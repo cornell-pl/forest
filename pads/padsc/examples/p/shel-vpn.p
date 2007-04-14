@@ -1,4 +1,3 @@
-
 Pstruct repeat_t {
   "last message repeated ";
   Puint8 count;
@@ -6,16 +5,7 @@ Pstruct repeat_t {
   Pre "/s{0,1}/";
 };
 
-/*
-Penum SysName_t {
-  alivpn1, alivpn2, alivpn3, alivpn4, alivpn5, alivpn6, alivpn,
-  kcivpn1, kcivpn2, kcivpn3, kcivpn4, kcivpn5, kcivpn6, 
-  ukvpn1,  ukvpn2,  ukvpn3 
-};
-*/
-
 Ptypedef Pstring(:' ':) SysName_t;
-
 
 Pstruct CSFW_t {
   " [";         Puint8          id1;
@@ -62,6 +52,22 @@ Pstruct  ISAKMP_other_t {
    ' '; Pstring_SE(:Peor:) msg;
 };
 
+Pstruct ISAKMP_unknown_t{
+  " (";               Puint32 unknownID;
+  ") received from "; Pip     unknownIP;
+};
+
+Pstruct ISAKMP_Diffie_t{
+  " group mismatch for ";
+  Pip groupIP;
+  " - terminating connection attempt";
+};
+
+Pstruct ISAKMP_NoSPI_t{
+  " on Notify message after Phase "; Puint8 phaseNum;
+    " - dropping it";
+};
+
 Penum ISAKMP_tag_t{
   NoProposal         Pfrom("No proposal chosen"), 
   ClientVersion      Pfrom("Client Version Information"),
@@ -70,6 +76,12 @@ Penum ISAKMP_tag_t{
   Invalid_Payload    Pfrom("Invalid payload type"),
   ErrorNotification  Pfrom("Error notification"),
   ISAKMP_AuthFailure Pfrom("Authentication failure"),
+  SPIFailure         Pfrom("Could not find SPI"),
+  UnknownNotify      Pfrom("Unknown Notify message"),
+  InvalidCookie      Pfrom("Invalid cookie"),
+  DiffieHellman      Pfrom("Diffie-Hellman"),
+  NoSPI              Pfrom("No SPI"),
+  NoProtocol         Pfrom("Protocol not recognized"),
   ISAKMP_Other       Pfrom("")
 };
 
@@ -77,13 +89,19 @@ Penum ISAKMP_tag_t{
 Punion ISAKMP_body_t (:ISAKMP_tag_t tag:){
   Pswitch(tag){ 
     Pcase NoProposal:         ISAKMP_message_t   noProposalMsg;
-    Pcase ClientVersion:      ISAKMP_client_t    clientMsg;
+    Pcase ClientVersion:      ISAKMP_client_t    clientMsg; 
     Pcase invalid_id:         ISAKMP_invalid_t   invalidMsg;
     Pcase Invalid_ID:         ISAKMP_message_t   InvalidMsg;
     Pcase Invalid_Payload:    ISAKMP_message_t   invalidPayloadMsg;
     Pcase ErrorNotification:  ISAKMP_error_t     errorMsg;
     Pcase ISAKMP_AuthFailure: ISAKMP_message_t   authFailureMsg;
     Pcase ISAKMP_Other:       ISAKMP_other_t     ipMsg;
+    Pcase SPIFailure:         Pstring_SE(:Peor:) isakmp_otherMsg;
+    Pcase InvalidCookie:      ISAKMP_message_t   invalidCookie;
+    Pcase DiffieHellman:      ISAKMP_Diffie_t    diffieHellman;
+    Pcase NoSPI:              ISAKMP_NoSPI_t     noSPI;
+    Pcase NoProtocol:         Pstring_SE(:Peor:) noProtocol;
+    Pcase UnknownNotify:      ISAKMP_unknown_t   unknownNotify;
   }
 };
 
@@ -106,17 +124,21 @@ Punion Host_t{
   Pstring(:']':)       namedHost;
 };
 
-Punion Trailer_t{
+Punion TrailerBody_t{
   Pstring_ME(:"/Access Network Passed/":)       accessNetwork;
   Puint32                                       trailer_id;
+};
+
+Pstruct Trailer_t{
+  ':'; TrailerBody_t trailerBody;
 }
 
 Penum AddressType_t{IPSEC, LOCAL};
 
 Pstruct address_t{
-           AddressType_t addressTy;
-  '[';     Host_t        host; 
-  "]:";   Trailer_t      trailer;
+        AddressType_t  addressTy;
+  '[';  Host_t         host; 
+  ']';  Popt Trailer_t trailer;
 };
 
 Pstruct PhysicalAddresses_t{
@@ -143,17 +165,44 @@ Pstruct AssignedIP_t{
   Pip assignedMask;
 };
 
+Pstruct SSFTPLogin_t {
+  "logged in from "; Pip ssFTPIP;
+};
+
+Pstruct SSFTPGet_t {
+  "Get filename ";
+  Pstring_SE(:Peor:) fileName;
+};
+
+Punion SecuritySessionFTPBody_t{
+  SSFTPLogin_t ssFTPlogin;
+  SSFTPGet_t   ssFTPGet;
+};
+
+Pstruct SecuritySessionFTP_t {
+  "FTP";
+  Pre "/:? /";
+  SecuritySessionFTPBody_t secSesFTPBody;
+};
+
 Punion SecuritySessionBody_t{
-    PhysicalAddresses_t                physicalAddresses;
-    Pstring_ME(:"/logged out/":)       loggedOut;
+    PhysicalAddresses_t                  physicalAddresses;
+    Pstring_ME(:"/logged out/":)         loggedOut;
+    Pstring_ME(:"/authorized/":)         authorized;
+    Pstring_ME(:"/attempting login/":)   attemptingLogin;
+    Pstring_ME(:"/login by using ftp/":) ftpLogin;
     Pstring_ME(:"/No response from client - logging out/":)       
-                                       noResponse;
+                                         noResponse;
     Pstring_ME(:"/- authentication failed using all authservers/":)       
-                                       authFailed;
+                                         authFailed;
     Pstring_ME(:"/authentication failed using RADIUS/":)       
-                                       radiusAuthFailed;
-    IPPair_t                           ipPair;
-    AssignedIP_t                       assignedIP;
+                                         radiusAuthFailed;
+    Pstring_ME(:"/authenticated using LOCAL/":)       
+                                         localAuth;
+    IPPair_t                             ipPair;
+    AssignedIP_t                         assignedIP;
+    SecuritySessionFTP_t                 ftpSecSession;
+    Pstring_SE(:Peor:)                   other;
 };
 
 
@@ -169,17 +218,83 @@ Punion SecuritySession_t{
   SecuritySessionPayload_t securitySessionPayload;
 }
 
-Pstruct SecurityAlert_t{
+Pstruct SecurityAlertIPOptions_t{
   "IP OPTIONS RECEIVED from "; Pip            src;
   " (";                        Pstring(:')':) explanation;
   ')';
 };
 
+Pstruct SecurityAlertSuspiciousFragments_t{
+  "SUSPICIOUS FRAGMENTS RECEIVED from "; Pip src;
+};
+
+Pstruct SecurityAlertLandDOS_t{
+  "LAND DENIAL OF SERVICE ATTACK targetted at "; Pip target;
+};
+
+Punion SecurityAlert_t{
+  SecurityAlertIPOptions_t           options;
+  SecurityAlertSuspiciousFragments_t fragments;
+  SecurityAlertLandDOS_t             landDOS;
+};
+
+Punion IPorHostBody_t(:char * stopExp:){
+  Pip                  hostIPAddress;
+  Pstring_SE(:stopExp:) srvName;
+};
+
+Pstruct QuotedIPorHost_t{
+  '"';
+  IPorHostBody_t(:"/[\"]/":) body;
+  '"';
+};
+
+Pstruct UnQuotedIPorHost_t{
+  IPorHostBody_t(:"/[ .]/":) body;
+};
+
+Punion IPorHost_t{
+  QuotedIPorHost_t   qIPorHost;
+  UnQuotedIPorHost_t uqIPorHost;
+}
+
+Penum Status_t{OK, DENIED};
+
+Pstruct SecurityRadiusAccess_t{
+   "access ";        Status_t status;
+   " by server ";  IPorHost_t serverIP;
+};
+
+Pstruct SecurityRadiusTimeOut_t{
+  "server timed out authenticating ";
+  IPorHost_t serverIP;
+};
+
+Pstruct SecurityRadiusChallenge_t{
+  "sent challenge for ";
+  IPorHost_t serverIP;
+};
+
+Punion SecurityRadiusBody_t{
+  SecurityRadiusAccess_t    radiusAccess;
+  SecurityRadiusTimeOut_t   timeout;
+  SecurityRadiusChallenge_t challenge;
+};
+
 Pstruct SecurityRadius_t{
-   "\"";  Pstring(:'\"':) securityRadiusName;
-   "\" access DENIED by server \"";
-   Pip serverIP;
-   "\".";
+        IPorHost_t           securityRadiusName;
+   ' '; SecurityRadiusBody_t body;
+   Pre "/[.]?/";
+};
+
+Pstruct SecurityradiusUnknown_t{
+  "Received unknown attribute "; Puint32 attributeNumber;
+  " of length ";                 Puint32 attributeLength;
+};
+
+Punion Securityradius_t{
+  SecurityradiusUnknown_t               unknownAttribute;
+  Pstring_ME(:"/Bad packet detected/":) badPacket;
 };
 
 Pstruct SecurityAccount_t{
@@ -188,13 +303,14 @@ Pstruct SecurityAccount_t{
   "] no LOCAL account found";
 };
 
-Penum SecurityMsgTag_t{ SecuritySession Pfrom("Session"), Alert, RADIUS, Account};
+Penum SecurityMsgTag_t{ SecuritySession Pfrom("Session"), Alert, RADIUS, Radius, Account};
 
 Punion SecurityBody_t(:SecurityMsgTag_t tag:){
   Pswitch(tag){
     Pcase (SecuritySession): SecuritySession_t securitySession;
     Pcase (Alert):           SecurityAlert_t   securityAlert;
     Pcase (RADIUS):          SecurityRadius_t  securityRadius;
+    Pcase (Radius):          Securityradius_t  securityradius;
     Pcase (Account):         SecurityAccount_t securityAccount;
   }
 };
@@ -212,12 +328,6 @@ Pstruct FailedLogIn_t{
   ' ';            Ptime_SE(:Peor:) loginTime;
 };
 
-Penum SNMPTrapTag_t{
-    SNMPServer    Pfrom ("SNMP Servers"), 
-    SNMPDiskRed   Pfrom ("Disk Redundancy"),
-    SNMPHardDisk  Pfrom ("Hard Disk"),
-    SNMPDualPower Pfrom ("Dual Power Supply")
-};
 
 Pstruct SNMPservMsg_t{
   ": "; Pstring(:';':) srvMessage;
@@ -233,23 +343,33 @@ Pstruct SNMPHardDisk_t{
   " not available";
 };
 
-Pstruct SNMPDualPower_t{
-  ": "; Pstring(:';':) dualPowerMessage;
+Pstruct SNMPMsg_t{
+  ": "; Pstring(:';':) SNMPMessage;
 };
 
+Penum SNMPTrapTag_t{
+    SNMPServer    Pfrom ("SNMP Servers"), 
+    SNMPDiskRed   Pfrom ("Disk Redundancy"),
+    SNMPHardDisk  Pfrom ("Hard Disk"),
+    SNMPDualPower Pfrom ("Dual Power Supply"),
+    SNMPRadius    Pfrom ("RADIUS Accounting Server"),
+    SNMPDNS       Pfrom ("DNS Servers")
+};
 
 Punion SNMPTrapBody_t(:SNMPTrapTag_t tag:){
   Pswitch(tag){
     Pcase SNMPServer:    SNMPservMsg_t   srvMessage;
     Pcase SNMPDiskRed:   SNMPDiskRed_t   diskRedMessage;
     Pcase SNMPHardDisk:  SNMPHardDisk_t  hardDisk;
-    Pcase SNMPDualPower: SNMPDualPower_t dualPower;
+    Pcase SNMPDualPower: SNMPMsg_t       dualPower;
+    Pcase SNMPRadius:    SNMPMsg_t       radiusSrv;
+    Pcase SNMPDNS:       SNMPMsg_t       dns;
   }
 };
 
 Pstruct SNMPTraps_t{
   " [";  Puint32   snmpTrapsID;
-  "] ";  Puint32[] snmpTrapsList : Psep('.') && Pterm(' ');
+  "] ";  Puint32[10] snmpTrapsList : Psep('.');
   ' ';   Puint32   snmpInt1;
   ' ';   Puint32   snmpInt2;
   ' ';   SNMPTrapTag_t snmptag;
@@ -290,13 +410,18 @@ Pstruct SNMPAuth_t{
                          Pstring_SE(:Peor:) communityString;
 };
 
+Penum InboundMsg_t{
+  ESPAuthFailure Pfrom ("authentication failure detected--"),
+  ESPCorruptPacket Pfrom("corrupt packet detected ")
+};
+
 Pstruct InboundESP_t{
   " from "; Pip sourceIP;
   " to ";   Pip destIP;
   " SPI ";  Pstring(:' ':) hexID; /-- should be hex type; not currently implemented.
   " [";     Puint32 inboundESPID;
-  "] ";
-  "authentication failure detected--npbuf ";
+  "] ";     InboundMsg_t msgTy;
+  "npbuf ";
   Pstring_SE(:Peor:) hexID2;
 };
 
@@ -326,14 +451,62 @@ Pstruct FTP_t{
   FTPBody_t FTPbody;
 };
 
+Pstruct FlushAccounting_t{
+  " ["; Puint32             Id;
+  "] "; Pstring_SE(:Peor:)  Msg;
+ };
+
+Penum ipsecSession_t{encap, decap};
+
+Pstruct tIpsecDecap_t {
+  " ["; Puint32             Id;
+  "] "; "ESP "; 
+  ipsecSession_t session;
+  " session SPI ";
+  Pstring(:' ':) spi;
+  " bound to s/w on cpu ";
+  Puint8 cpuNum;
+};
+
+Pstruct tIsakmpAuthFailure_t{
+  "Authentication failure";
+  ISAKMP_message_t  msg;
+};
+
+Pstruct tIsakmpIPMsg_t{
+         Pip                tIsakmpIP;
+  ' ';   Pstring_SE(:Peor:) tIsakmpMsg;
+};
+
+Punion tIsakmpBody_t{
+  tIsakmpAuthFailure_t  tIsakmpAuthFailure;
+  tIsakmpIPMsg_t        tIsakmpIPMessage;
+};
+
+Pstruct tIsakmp_t{
+  " [";  Puint32            id;
+  "] ";  tIsakmpBody_t      body;
+};
+
+Pstruct Accounting_t{
+  " [";                       Puint32  id;
+  "] ";  
+  "RADIUS: ";
+  "No reply from server \"";  Pip serverIP;
+  '(';                        Puint32 int1; 
+  ")\"";
+};
+
 Penum MsgTy_t{
-  CSFW, ISAKMP, Security, Session, SNMPTraps, NTP,
+  CSFW, ISAKMP, Security, Session, SNMPTraps, NTP, tIpsecDecap, tIsakmp,
   InboundESP Pfrom ("Inbound ESP"),
   SNMPAuth Pfrom ("SNMP Authentication Failure"),
   failed Pfrom("Failed Login Attempt"),  
   failedRemoteLogin Pfrom("Failed Remote Network Login"),
   hwAccel Pfrom("Hw Accel unit"),  
-  FTP Pfrom("FTP Backup")
+  FTP Pfrom("FTP Backup"),
+  FlushAccounting Pfrom("Flush Accounting"),
+  Accounting
 };
 
 
@@ -347,11 +520,16 @@ Punion MsgPayload_t(:MsgTy_t ty:){
     Pcase Security   :  Security_t    security;
     Pcase failed     :  FailedLogIn_t failedLogIn;
     Pcase failedRemoteLogin:
-                        FailedLogIn_t failedRemoteLogIn;
+          FailedLogIn_t failedRemoteLogIn;
     Pcase SNMPAuth   :  SNMPAuth_t    snmpAuth;
     Pcase SNMPTraps  :  SNMPTraps_t   snmpTraps;
     Pcase NTP        :  NTP_t         ntp;
     Pcase FTP        :  FTP_t         ftp;
+    Pcase FlushAccounting :
+          FlushAccounting_t flushAccounting;
+    Pcase tIpsecDecap:  tIpsecDecap_t ipsecDecap;
+    Pcase tIsakmp    :  tIsakmp_t     tisakmp;
+    Pcase Accounting :  Accounting_t  accounting;
   }
 };
 
