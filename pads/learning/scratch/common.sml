@@ -201,28 +201,6 @@ structure Common = struct
 		  (* ignoring Pgroup for now *)
 		  | _ => false
 
-	(* the two refine types are exactly the same *)
-	fun refine_equal (a:Refined, b:Refined):bool =
-		case (a, b) of 
-			(StringME(x), StringME(y)) => (x = y)
-		       |(Int(x, y), Int(x1, y1)) => (x = x1 andalso y = y1)
-		       |(IntConst(x), IntConst(y)) => (x = y)
-		       |(StringConst(x), StringConst(y)) => (x = y)
-		       |(Enum(l1), Enum(l2)) => foldr myand true 
-				(ListPair.map refine_equal(l1, l2))
-		       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
-		       | _ => false
-	fun refine_equal_op (a:Refined option, b:Refined option):bool =
-		case (a,b) of 
-			(SOME a', SOME b') => refine_equal(a', b')
-		|_ => false
-
-	fun refine_equal_op1 (a:Refined option, b:Refined option):bool =
-		case (a,b) of 
-			(SOME a', SOME b') => refine_equal(a', b')
-		| (NONE, NONE) => true
-		|_ => false
-
 	fun ltokenlToRefinedOp ltokenl=
 		case ltokenl of
 		  h::t =>

@@ -1,7 +1,7 @@
 (* 
 Zach DeVito
 Kenny Zhu
-Reduce implements the simplification system for Tys
+Reduce implements the refinement system for Tys
 *)
 structure Reduce = struct
 open Common
@@ -365,6 +365,7 @@ case ty of
   end
 | _ => ty
 (* rule to convert a normal Parray to a refined RArray *)
+(*TODO: the merging still has a problem Poption, see dibbler.1000 results*)
 and refine_array ty = 
 	case ty of 
 	(* 1st case is looking at the Parray itself *)
@@ -801,35 +802,27 @@ and to_float ty =
 
 and union_to_optional ty =
 	case ty of 
-		Punion (a, tys) =>
-		    let 
-			fun onlyNonEmpty tylist find =
-			  case tylist of
-				nil => find
-				| t :: ts =>
-					( 
-					case t of
-					  Base (_, ltokens) => (case (hd ltokens) of 
-								(Pempty, _) => onlyNonEmpty ts find
-								| _ => (case find of 
-									NONE => onlyNonEmpty ts (SOME t)
-									| _ => NONE
-									)
-							       )
-					 | RefinedBase (_, StringConst (""), _) => onlyNonEmpty ts find
-					 | _ => (case find of 
-							NONE => onlyNonEmpty ts (SOME t)
-							| _ => NONE
-						)
+	Punion (a, tys) =>
+	    let 
+		fun isNotPempty ty =
+		case ty of
+		  Base (_, ltokens) => 
+		    (case (hd ltokens) of 
+		     (Pempty, _) => false
+		     | _ => true)
+		 | RefinedBase (_, StringConst (""), _) => false 
+		 | _ => true 
 
-					)
-			val tyop = onlyNonEmpty tys NONE
-		    in
-			case tyop of 
-				NONE => ty
-				| SOME(ty') => Poption (a, ty')
-		    end	
-		| _ => ty
+		val nonPemptyTys = List.filter isNotPempty tys
+	     in
+		if length tys = length nonPemptyTys then ty (* no Pempty in this list *)
+		else (* some Pemptys exist *)
+		  let
+		    val unionCoverage = sumCoverage nonPemptyTys
+		  in Poption (a, Punion((mkTyAux unionCoverage), nonPemptyTys))
+		  end
+	     end	
+	| _ => ty
 
 (* post constraint rules, these require the cmap to be filled  and the 
 data labeled *)
@@ -951,18 +944,21 @@ case ty of
   Pstruct(aux, tylist) =>
   let	
 	(* function to test if a base value with a specific id exists in a ty list*) 
+	(* only int base or refined base as well as enum can be considered *)
 	fun existsbase(tlist, id) = 
 		case (tlist) of
-			Base(a, _)::tail => if Atom.same(id, getLabel(a)) then true
+			Base(a, (Pint _, l)::ts)::tail => if Atom.same(id, getLabel(a)) then true
 							else existsbase(tail, id)
-			| RefinedBase(a, _, _)::tail => if Atom.same(id, getLabel(a)) then true
+			| RefinedBase(a, (Int _), _)::tail => if Atom.same(id, getLabel(a)) then true
+							else existsbase(tail, id)
+			| RefinedBase(a, (Enum _), _)::tail => if Atom.same(id, getLabel(a)) then true
 							else existsbase(tail, id)
 			| ty::tail => if (Atom.same(getLabel(getAuxInfo(ty)), id)) then false
 					else existsbase(tail, id)
 			| nil => false
 	
-	(* test if a sum is a switched sum depending on some other id*)
-	fun is_switch(cmos, id) = 
+	(* test if a sum is a switched sum depending on some other id, test only the first n elements of tylist*)
+	fun is_switch(cmos, id, n) = 
 	  case LabelMap.find(cmos, id) of  
       		SOME consts => 
         	  let 
@@ -978,7 +974,7 @@ case ty of
 				    (* we also use the "cheapest" switch of all the switches and
 					delete all the more expensive 1-1 switches *)
 				    if length(ids) = 1 andalso 
-					length(#1 (hd mappings))=1 andalso existsbase(tylist, hd ids)
+					length(#1 (hd mappings))=1 andalso existsbase(List.take(tylist, n), hd ids)
 				    then 
 					(
 					if (cost_switch(SOME(Switched (ids, mappings)))< 
@@ -1041,7 +1037,7 @@ case ty of
 		case h of 
 			Punion(a, sumlist) => 
 			  let 
-			    val (c, newcmos)  = is_switch(cmos, some(#label a)) 
+			    val (c, newcmos)  = is_switch(cmos, some(#label a), (length tylist)-(length tlist)) 
 			  in 
 			    case c of 
 				SOME ([id], mappings) =>

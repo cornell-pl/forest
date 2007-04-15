@@ -6,10 +6,13 @@ struct
     open Complexity
     open Tokens
     exception InvalidId
+    exception TyMismatch
+    exception InvalidTokenTy
 
     type TokenOrder = Token list
     type Context    = LToken list
-
+    fun myand(a,b) = a andalso b
+    fun myor(a,b) = a orelse b
     fun maxContextLength ( cl : Context list ) : int =
         foldl (fn (ltl : LToken list,x : int) => Int.max (maxTokenLength ltl,x)) 0 cl
 
@@ -222,12 +225,43 @@ struct
            }
 	end
 
+    (*function to get a Ty from a list of Tys by Id *)
+    fun getTyById tylist id = 
+	let val filtered = List.filter (fn ty => Atom.same ((getLabel (getAuxInfo ty)), id)) tylist
+	in case filtered of
+		nil => NONE
+		| _ => SOME(hd filtered)
+	end
+
     fun getCoverage ( ty : Ty ) : int = #coverage ( getAuxInfo ty )
     fun sumCoverage ( tys : Ty list ) : int =
         foldl ( fn (t:Ty,n:int) => getCoverage t + n ) 0 tys
     fun minCoverage ( tys : Ty list ) : int = 
 	case tys of [] => Option.valOf Int.maxInt
         | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
+
+
+    (* the two refine types are exactly the same *)
+    fun refine_equal (a:Refined, b:Refined):bool =
+    	case (a, b) of 
+    		(StringME(x), StringME(y)) => (x = y)
+    	       |(Int(x, y), Int(x1, y1)) => (x = x1 andalso y = y1)
+    	       |(IntConst(x), IntConst(y)) => (x = y)
+    	       |(StringConst(x), StringConst(y)) => (x = y)
+    	       |(Enum(l1), Enum(l2)) => foldr myand true 
+    			(ListPair.map refine_equal(l1, l2))
+    	       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
+    	       | _ => false
+    fun refine_equal_op (a:Refined option, b:Refined option):bool =
+    	case (a,b) of 
+    		(SOME a', SOME b') => refine_equal(a', b')
+    	|_ => false
+    
+    fun refine_equal_op1 (a:Refined option, b:Refined option):bool =
+    	case (a,b) of 
+    		(SOME a', SOME b') => refine_equal(a', b')
+    	| (NONE, NONE) => true
+    	|_ => false
 
     fun locationToString ({lineNo, beginloc, endloc, recNo}:location) = 
 (*
@@ -261,8 +295,8 @@ struct
 	|  Pdate i     => i
 	|  Ppath i     => i
 	|  Purl i      => i
-        |  PbXML (f,s) => "<"^f^s^">"
-        |  PeXML (f,s) => "</"^f^s^">"
+        |  PbXML (f,s) => "<"^f^" "^s^">"
+        |  PeXML (f,s) => "</"^f^" "^s^">"
 	|  Pint (i, s)      =>
              if i < 0 then "-"^(LargeInt.toString (~i)) else LargeInt.toString i
 	|  Pfloat (a, b) => a ^ "." ^ b
@@ -425,14 +459,347 @@ struct
                 (partialD ty) ^ prefix ^ "End Poption"
          ) ^
          suffix )
-     end 
+    end 
 
-     fun TyToString (ty:Ty):string = TyToStringD "" false false "" ty
+    fun TyToString (ty:Ty):string = TyToStringD "" false false "" ty
 
-     fun printTyD (prefix:string) (longTBDs:bool) (longBottom:bool)
+    fun printTyD (prefix:string) (longTBDs:bool) (longBottom:bool)
                   (suffix:string) (ty:Ty) : unit =
          print (TyToStringD prefix longTBDs longBottom suffix ty ) 
 
-     fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
-	
+    fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
+
+   (**** Function to convert a Ty to a PADS string ***)
+    fun TyToPADS (prefix:string) (isRecord:bool) (siblings: Ty list) (ty:Ty) : string = 
+    let val label = getLabelString (getAuxInfo ty)
+   	fun getLabelParam ty =
+		case ty of
+		Switch (aux, id, tys) => (getLabelString aux, SOME((Atom.toString id)^"_Name"))
+		| _ => (getLabelString (getAuxInfo ty), NONE)
+    	fun labelToTyString (label:string, paramop) = 
+		case paramop of
+		NONE => label 
+		| SOME param => label ^ "(:" ^ param ^ ":)"
+   
+    	fun labelToPADS prefix (label:string, paramop) = 
+		prefix ^ (labelToTyString (label, paramop)) ^ " " ^ label ^ "_Name;\n"
+(*
+	fun notBaseTy ty = case ty of 
+		Base _ => false 
+		| RefinedBase (_, Enum _, _) => true (*Enum is not considered base here*)
+		| RefinedBase _ => false
+		| TBD _ => false
+		| Bottom _  => false
+		| _ => true
+*)
+    	fun tyToInlinePADS prefix ty = labelToPADS prefix (getLabelParam ty)
+        fun tokenToPADS label token =
+	  "Ptypedef " ^
+         ( case token of 
+		Pstring _ => "Pstring_ME(:\"/[:word:]/\":) " ^ label ^ ";\n"
+              | Pint _ => "Pint32 " ^ label ^ ";\n"
+	      | Pfloat _ => "Pfloat32 " ^ label ^ ";\n"
+	      | Ptime _ => "Ptime " ^ label ^ ";\n"
+	      | Pdate _ => "Pdate " ^ label ^ ";\n"
+	      | Pip _ => "Pip " ^ label ^ ";\n"
+	      | Phostname _ => "Phostname " ^ label ^ ";\n"
+	      | Purl _ => "Pstring_ME(:\"/[:print:]/\":) " ^ label ^ ";\n"
+	      | Ppath _ => "Pstring_ME(:\"/[:print:]/\":) " ^ label ^ ";\n"
+	      | Pwhite _ => "Pstring_ME(:\"/[:space:]{1}/\":) " ^ label ^ ";\n"
+	      | Other c => "Pchar " ^ label ^ " : " ^ label ^ " x =>  {x == '" ^ (Char.toString c) ^ "'};\n"
+	      | PbXML _ => "Pstring_ME(:\"/[[:word:]<>]+/\":) " ^ label ^ ";\n"
+	      | PeXML _ => "Pstring_ME(:\"/[[:word:]<>/]+/\":) "  ^ label ^ ";\n"
+	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
+	      | Pempty => "Pempty "  ^ label ^ ";\n" (*TODO: this may not be right*)
+	      | _ => raise InvalidTokenTy
+         ) 
+
+	fun allStringConsts relist =
+		foldr myand true (map (fn re => (case re of 
+						StringConst _ => true 
+						| _ => false)
+				     ) relist)
+(*
+        fun isNumConst ty =
+		case ty of 
+		RefinedBase (aux, (IntConst x), tl) => true
+		| RefinedBase (aux, (FloatConst (i, f)), tl) => true
+		| _ => false
+
+	fun declareConst prefix ty =
+	  let val label = getLabelString(getAuxInfo ty)
+	  in
+	    case ty of 
+		RefinedBase (aux, IntConst x, tl) => prefix ^ "Ptypedef Pint32 "^ label ^
+			" : " ^ label ^ " x => {x == " ^ (LargeInt.toString x) ^ "};\n"
+		| RefinedBase (aux, FloatConst (i, f), tl) => prefix ^ "Ptypedef Pfloat32 "^ label ^
+			" : " ^ label ^ " x => {x == " ^ (i ^ "." ^ f) ^ "};\n"
+		| _ => raise TyMismatch
+	  end
+*)
+	fun refinedToPADS labelop prefix refined =
+	  let
+	    val label = case labelop of
+	    	SOME l => l
+	    	| NONE => (Atom.toString (getLabel ({coverage=0, label=NONE, tycomp=zeroComps})))
+	  in
+	    "Ptypedef " ^ 
+  	    (
+	      case refined of 
+	      StringME re => "Pstring_ME(:\""^ re ^"\":) " ^ label
+	      | Int (min, max) => 
+	    	let val minLen = int2Bits min
+	    	    val maxLen = int2Bits max
+	    	    val maxBits = Real.max(minLen, maxLen)
+	    	in 
+	    	    if (maxBits<= 8.0) then "Pint8 " ^ label
+	    	    else if maxBits <=16.0 then "Pint16 " ^ label
+	    	         else if maxBits <=32.0 then "Pint32 " ^ label
+	    	              else "Pint64 " ^ label
+	    	end
+	      | IntConst i => 
+	    	let val bits = int2Bits i
+	    	in
+	    	  (
+	    	  if (bits<=8.0) then "Pint8 "
+	    	  else if bits<=16.0 then "Pint16 "
+	    	  else if bits<=32.0 then "Pint32 "
+	    	  else "Pint64 " 
+	    	  ) ^ label ^ " : " ^ label ^ " x => {x == " ^ (LargeInt.toString i) ^ "}"
+	    	end
+	      | FloatConst (i, f) => 
+	    		"Pfloat32 "^ label ^ " : " ^ label ^ " x => {x == " ^ (i ^ "." ^ f) ^ "}"
+	      | StringConst s => if (size s) = 1 then 
+				("Pchar " ^ label ^ " : " ^ label ^ " x =>  {x == '" ^ s ^ "'}")
+				 else ("Pstring_ME(:\"/"^ s ^"/\":) " ^ label)
+	      | Enum res => ""
+	      | LabelRef _ => ""
+	    ) 
+	  end
+(*
+	fun refinedToInlineArray prefix refined =
+	    (*only handles a few types of refined here *)
+	    prefix ^
+	    (
+	      case refined of 
+	           StringME re => "Pstring_ME(:\""^ re ^"\":) " 
+	         | Int (min, max) => 
+		    	let val minLen = int2Bits min
+		    	    val maxLen = int2Bits max
+		    	    val maxBits = Real.max(minLen, maxLen)
+		    	in 
+		    	    if (maxBits<= 8.0) then "Pint8 " 
+		    	    else if maxBits <=16.0 then "Pint16 " 
+		    	         else if maxBits <=32.0 then "Pint32 "
+		    	              else "Pint64 "
+		    	end
+	         | StringConst s => "PstringME(:\"/" ^ s ^ "/\":) "
+		 | _ => raise TyMismatch
+	    )
+*)
+
+	fun getRefStr refined = case refined of
+	    StringME s => "\"" ^ s ^"\""
+	  | StringConst s => if (size s) = 1 then ("'" ^ s ^ "'")
+				else ("\"" ^ s ^ "\"")
+	  | _ => ""
+
+        fun arrayBodyToInlinePADS prefix ty sep term len =
+           (prefix ^ (labelToTyString (getLabelParam ty))
+	     ^ "[" ^ 
+	    ( case len of 
+		SOME (IntConst x) => LargeInt.toString x
+		| _ => ""
+	    ) ^ "]" ^
+	    ( case sep of 
+	     SOME refsep => 
+		let val sepstr = getRefStr refsep
+		in
+		  (case term of
+		  SOME refterm => 
+		    let val termstr = getRefStr refterm
+		    in " : Psep(" ^ sepstr ^ ") && Pterm(" ^ termstr ^ ")"
+		    end
+		  | NONE => " : Psep(" ^ sepstr ^ ")"
+		  )
+		 end
+	     | NONE => 
+		(case term of
+		  SOME refterm => 
+		    (
+		    let 
+			val termstr = getRefStr refterm
+		    in 
+			" : Pterm(" ^ termstr ^ ")"
+		    end
+		    )
+		  | NONE => ""
+		)
+	    ) ^ ";\n"
+	)
+
+	fun getIndexes (res, re) =
+	  let
+		fun getIndex refinedlist re index =
+		  case refinedlist of 
+		    nil => (~1) (*not found*)
+		  | head::tail =>
+			if refine_equal (head, re) then index
+			else getIndex tail re (index+1)
+	  in
+		case re of
+		StringConst _ => 
+			let
+				val i = getIndex res re 0
+			in 
+			  if (i<>(~1)) then [i] 
+			  else (case re of
+				StringConst "*" => [(~1)]
+				| _ => nil
+			       )
+			 end 
+		| IntConst _ => 
+			let
+				val i = getIndex res re 0
+			in if (i<>(~1)) then [i] else nil
+			end
+		| Enum l => 
+		  let 
+			val candidates = map (fn x => getIndex res x 0) l
+			val finallist = List.filter (fn x => x <> (~1)) candidates
+		  in finallist
+		  end
+		| _ => []
+	  end
+	fun reToSwitch switchedTy (re, targetTy) =
+	  "\t" ^ 
+	  (case switchedTy of
+		Base (aux, (Pint _, l)::ts) => 
+		  (case re of IntConst x => "Pcase " ^ (LargeInt.toString x) ^ " : " ^ 
+						(tyToInlinePADS (prefix ^ "\t") targetTy)
+		  	   | StringConst "*" => "Pdefault : " ^ (tyToInlinePADS (prefix ^ "\t") targetTy)
+			   | Enum res => lconcat (map (fn re => reToSwitch switchedTy (re, targetTy)) res)
+			   | _ => raise TyMismatch
+		  )
+		| RefinedBase (aux, Int _, _) =>
+		  (case re of IntConst x => "Pcase " ^ (LargeInt.toString x) ^ " : " ^ 
+						(tyToInlinePADS (prefix ^ "\t") targetTy) 
+		  	   | StringConst "*" => "Pdefault : " ^ (tyToInlinePADS (prefix ^ "\t") targetTy)
+			   | Enum res => lconcat (map (fn re => reToSwitch switchedTy (re, targetTy)) res)
+			   | _ => raise TyMismatch
+		  )
+		(* we assume the Enum will only contain IntConst or StringConst and not another Enum *)
+		| RefinedBase (aux, Enum res, _) =>
+			let
+			  val indexes = getIndexes (res, re)
+			in
+			  case indexes of
+				[~1] => "Pdefault " ^ (tyToInlinePADS (prefix ^ "\t") targetTy)
+				| _ => lconcat (map (fn i => "Pcase " ^ (Int.toString i) ^ " : " ^
+						(tyToInlinePADS (prefix ^ "\t") targetTy)) indexes)
+			end
+		| _ => raise TyMismatch
+	  ) 
+
+	val pRecord = if isRecord then "Precord " else ""  
+    in ( prefix ^
+         ( case ty of
+               Base (aux, (t, loc)::ts)  => pRecord ^ (tokenToPADS label t) 
+	     (*Refined enum is not really base *)
+	     | RefinedBase (aux, Enum res, tl) => 
+		if allStringConsts res then
+		  let 
+		    fun strConstToEnumItem re =
+			case re of StringConst s => 
+			  let
+			    val newlabel = (Atom.toString (getLabel ({coverage=0, label=NONE, tycomp=zeroComps})))
+			  in ("\t" ^ newlabel ^ " Pfrom(\"" ^ s ^ "\")")
+			  end
+		    	| _ => raise TyMismatch
+		  in (pRecord ^
+		    "Penum " ^ label ^ " {\n" ^
+	    	     (join (map strConstToEnumItem res) ",\n") ^
+	    	     "\n" ^ prefix ^ "};\n")
+		  end
+	    	else
+		  let
+		    val labels = map (fn x => (Atom.toString (getLabel ({coverage=0, label=NONE, tycomp=zeroComps})))) res
+		    val	pre = lconcat(map (fn (re, label) => 
+						(refinedToPADS (SOME label) (prefix ^ "\t") re) ^ ";\n") 
+					(ListPair.zip (res, labels)))
+		  in (pre ^ pRecord ^
+		     "Punion "^ label ^ " {\n" ^
+		      (lconcat (map (fn x => labelToPADS (prefix^"\t") (x, NONE)) labels)) ^
+		   prefix ^ "};\n")
+		  end	
+             | RefinedBase (aux, refined, tl) => pRecord ^ (refinedToPADS (SOME label) prefix refined) ^";\n"
+             | TBD _ =>
+                pRecord ^ "Pstring_ME(:\"/[:print:]/\":) " ^ "TBD_" ^ label ^";\n"
+             | Bottom _ =>
+                pRecord ^ "Pstring_ME(:\"/[:print:]/\":) " ^ "BTM_" ^ label ^";\n"
+             | Pstruct (aux, tys) =>
+		let
+		   val pre = lconcat (map (TyToPADS prefix false tys) tys)
+		in pre ^ pRecord ^
+		   "Pstruct "^ label ^ " {\n" ^
+			(lconcat (map (tyToInlinePADS (prefix ^ "\t") ) tys)) ^
+		   prefix ^ "};\n"
+		end	
+             | Punion (aux, tys)  =>
+		let
+		   val pre = lconcat (map (TyToPADS prefix false nil) tys)
+		in (pre ^ pRecord ^
+		   "Punion "^ label ^ " {\n" ^
+			(lconcat (map (tyToInlinePADS (prefix ^ "\t") ) tys)) ^
+		   prefix ^ "};\n")
+		end	
+             | Switch(aux ,id, retys) =>
+		let
+		   val tys = map #2 retys
+		   val pre = lconcat (map (TyToPADS prefix false nil) tys)
+		   val switch = Atom.toString id
+		   val switchvar = switch ^ "_Name"
+		   val switchedTyOp = getTyById siblings id
+		in 
+		  case switchedTyOp of
+		  NONE =>  (*switched id not found, go back to printing union *)
+		   (pre ^ pRecord ^
+		   "Punion "^ label ^ " {\n" ^
+			(lconcat (map (tyToInlinePADS (prefix ^ "\t") ) tys)) ^
+		   prefix ^ "};\n")
+		  | SOME switchedTy =>
+		   (pre ^ pRecord ^
+		   "Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 
+		   prefix ^ "  Pswitch (" ^ switchvar ^ ") {\n" ^
+			(lconcat (map (reToSwitch switchedTy) retys)) ^
+		   prefix ^ "  }\n" ^
+		   prefix ^ "};\n")
+		end	
+             | RArray (aux, sep, term, body, len, lengths) => 
+		let val pre = TyToPADS prefix false nil body
+		in (pre ^ pRecord ^
+                  "Parray " ^ label ^ "{\n" ^
+		    (arrayBodyToInlinePADS (prefix ^ "\t") body sep term len) ^
+		  prefix ^ "};\n")
+		end
+             | Poption (aux, ty) =>
+		let
+		  val pre = TyToPADS prefix false nil ty
+		in (pre ^ pRecord ^
+                  "Popt " ^ (getLabelString (getAuxInfo ty)) ^ " " ^ label ^ ";\n" 
+		   )
+		end
+	     | _ => ""
+         )
+        )
+     end 
+     fun TyToPADSFile ty =
+	let
+	  val pads = (TyToPADS "" true nil ty) ^
+			"Psource Parray entries_t {\n" ^
+		    	"\t" ^ (getLabelString (getAuxInfo ty)) ^ "[];\n" ^
+			"};\n"
+	in
+	  pads
+	end  
 end

@@ -305,6 +305,7 @@ structure Map = RedBlackMapFn(struct
 				is_inside lab (#body arr) orelse 
 				is_inside lab (#last arr)
 	  | RArray (_, _, _, body, _, _) => is_inside lab body
+	  | Poption (_, body) => is_inside lab body
 	  | _ => false
 
 	fun try f list = case list of 
@@ -324,7 +325,8 @@ structure Map = RedBlackMapFn(struct
 		| Parray (_, {tokens, lengths, first, body, last}) => 
 			try (sum_with_lab lab) [first, body, last]
 		| RArray (_, _, _, body, _, _) => sum_with_lab lab body 
-		| _ => raise TyMismatch 
+		| Poption (_, ty') => sum_with_lab lab ty'
+		| _ => (print "the offending ty is \n"; printTy ty; raise TyMismatch) 
 
 	(* determines if a dependency is useless *)
 	fun is_useless ty (labList: Id list, determined:Id) =

@@ -144,6 +144,13 @@ structure Complexity = struct
                    NONE   => Precise (log2L n)
                  | SOME p => Bits p
 
+    (*function to convert the number of bits (real) needed to encode an integer*)
+    fun int2Bits (n: LargeInt.int) : real =
+	if n<0
+	then 1.0 + int2Bits (~n)
+	else if n= 0 then 1.0
+		else (log2L n)
+
     fun sumComps ( cs : Complexity list ) : Complexity =
         foldl ( fn (c1,c2) => combine c1 c2 ) zeroComp cs
 

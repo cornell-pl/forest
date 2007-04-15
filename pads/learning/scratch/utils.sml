@@ -26,6 +26,16 @@ struct
 	in
 	    doit (List.rev ls) ""
 	end
+   
+    (*funtion to join a list of strings with a string token*)
+    fun join ls s =
+	let fun doit l a = 
+	    case l of 
+	      (s::nil)=> s
+            | (s::ss) => (s^a) ^ (doit ss a)
+	in
+	    doit ls s
+	end
 
     (* position in a list *)
     fun position ( a : ''a ) ( l : ''a list ): int option =
