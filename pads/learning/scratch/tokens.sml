@@ -3,6 +3,9 @@ structure Tokens = struct
     open Hosts
 
     type location = { lineNo: int, beginloc: int, endloc:int, recNo:int}
+    fun mkLoc( b : int ) ( e : int ) ( r : int ) ( ln : int ) : location =
+        { lineNo = ln, beginloc = b, endloc = e, recNo = r }
+
     (* Establish an order on locations *)
     fun compLocation (l1:location, l2:location):order =
         let val {lineNo = ln1, beginloc = b1, endloc = e1, ... } = l1
@@ -71,7 +74,7 @@ structure Tokens = struct
                      Pint        of LargeInt.int * string |  (* a pair of int and string representations *)
                      Pfloat      of string * string | (*string representations of the integer and fraction parts*) 
 		     Pstring     of string |
-                     Pgroup      of {left : LToken, body : LToken list, right : LToken} |
+                     Pgroup      of { left : LToken, body : LToken list, right : LToken } |
 	             Pwhite      of string |
 		     Other       of char |
 		     Pempty |
@@ -145,16 +148,16 @@ structure Tokens = struct
         |  (Pint _, PbXML _)              => GREATER
         |  (Pint _, PeXML _)              => GREATER
         |  (Pint _, _)                    => LESS
-        |  (Pfloat _, Ptime _)              => GREATER
-        |  (Pfloat _, Pdate _)              => GREATER
-        |  (Pfloat _, Pip _)                => GREATER
-        |  (Pfloat _, Phostname _)          => GREATER
-        |  (Pfloat _, Ppath _)              => GREATER
-        |  (Pfloat _, Purl _)               => GREATER
-        |  (Pfloat _, PbXML _)              => GREATER
-        |  (Pfloat _, PeXML _)              => GREATER
-        |  (Pfloat _, Pint _)              => GREATER
-        |  (Pfloat _, _)                    => LESS
+        |  (Pfloat _, Ptime _)            => GREATER
+        |  (Pfloat _, Pdate _)            => GREATER
+        |  (Pfloat _, Pip _)              => GREATER
+        |  (Pfloat _, Phostname _)        => GREATER
+        |  (Pfloat _, Ppath _)            => GREATER
+        |  (Pfloat _, Purl _)             => GREATER
+        |  (Pfloat _, PbXML _)            => GREATER
+        |  (Pfloat _, PeXML _)            => GREATER
+        |  (Pfloat _, Pint _)             => GREATER
+        |  (Pfloat _, _)                  => LESS
         |  (Pstring _, Ptime _)           => GREATER
         |  (Pstring _, Pdate _)           => GREATER
         |  (Pstring _, Pip _)             => GREATER
@@ -162,7 +165,7 @@ structure Tokens = struct
         |  (Pstring _, Ppath _)           => GREATER
         |  (Pstring _, Purl _)            => GREATER
         |  (Pstring _, Pint _)            => GREATER
-        |  (Pstring _, Pfloat _)            => GREATER
+        |  (Pstring _, Pfloat _)          => GREATER
         |  (Pstring _, PbXML _)           => GREATER
         |  (Pstring _, PeXML _)           => GREATER
         |  (Pstring _,  _)                => LESS
@@ -173,7 +176,7 @@ structure Tokens = struct
         |  (Pgroup _, Ppath _)            => GREATER
         |  (Pgroup _, Purl _)             => GREATER
         |  (Pgroup _, Pint _)             => GREATER
-        |  (Pgroup _, Pfloat _)             => GREATER
+        |  (Pgroup _, Pfloat _)           => GREATER
         |  (Pgroup _, Pstring _)          => GREATER
         |  (Pgroup _, PbXML _)            => GREATER
         |  (Pgroup _, PeXML _)            => GREATER
@@ -185,7 +188,7 @@ structure Tokens = struct
         |  (Pwhite _, Ppath _)            => GREATER
         |  (Pwhite _, Purl _)             => GREATER
         |  (Pwhite _, Pint _)             => GREATER
-        |  (Pwhite _, Pfloat _)             => GREATER
+        |  (Pwhite _, Pfloat _)           => GREATER
         |  (Pwhite _, Pstring _)          => GREATER
         |  (Pwhite _, Pgroup _)           => GREATER
         |  (Pwhite _, PbXML _)            => GREATER
@@ -198,7 +201,7 @@ structure Tokens = struct
         |  (Other _, Ppath _)             => GREATER
         |  (Other _, Purl _)              => GREATER
         |  (Other _, Pint _)              => GREATER
-        |  (Other _, Pfloat _)              => GREATER
+        |  (Other _, Pfloat _)            => GREATER
         |  (Other _, Pstring _)           => GREATER
         |  (Other _, Pgroup _)            => GREATER
         |  (Other _, Pwhite _)            => GREATER
@@ -212,7 +215,7 @@ structure Tokens = struct
         |  (Pempty, Ppath _)              => GREATER
         |  (Pempty, Purl _)               => GREATER
         |  (Pempty, Pint _)               => GREATER
-        |  (Pempty, Pfloat _)               => GREATER
+        |  (Pempty, Pfloat _)             => GREATER
         |  (Pempty, Pstring _)            => GREATER
         |  (Pempty, Pgroup _)             => GREATER
         |  (Pempty, Pwhite _)             => GREATER
@@ -232,6 +235,14 @@ structure Tokens = struct
                   | EQUAL   => compLocation (l1, l2)
            )
         end
+
+    fun repeatLToken ( cnt : int ) ( tok : Token ) ( b : int ) ( e : int ) : LToken list =
+    let fun repeatLToken' ( n : int ) ( cnt : int ) ( tok : Token ) ( b : int ) ( e : int ) : LToken list =
+           if n = cnt
+           then []
+           else ( tok, mkLoc b e 1 n ) :: repeatLToken' (n+1) cnt tok b e
+    in repeatLToken' 0 cnt tok b e
+    end
 
     (* Mapping having LTokens as a domain *)
     structure LTokenMap = RedBlackMapFn ( struct type ord_key = LToken

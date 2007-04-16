@@ -434,10 +434,8 @@ struct
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
                  in ( refinedToString refined ) ^ " " ^ stats 
-(* 
 		    ^ " (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
                     ", tot: " ^ LargeInt.toString tot ^ ")" 
-*)
                  end
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
