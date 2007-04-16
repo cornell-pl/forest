@@ -1,80 +1,73 @@
-Pstruct(Id = BTy_91 440, tc: 1689.192b, ac: 632.821b, dc: 275074.863b, raw: 276764.054b)
-        [Enum] {[StringConst] "Fri", [StringConst] "Mon", [StringConst] "Sat", [StringConst] "Sun", [StringConst] "Thu", [StringConst] "Tue", [StringConst] "Wed"
-, } (Id = BTy_0 440, tc: 169.163b, ac: 2.807b, dc: 19.651b, raw: 188.814b);
-        [StringConst] " " (Id = BTy_1 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-        [Date] (Id = BTy_3 440, tc: 5.044b, ac: 161.193b, dc: 70925.039b, raw: 70930.083b);
-        [StringConst] " " (Id = BTy_4 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-        [Time] (Id = BTy_5 440, tc: 5.044b, ac: 220.888b, dc: 97190.891b, raw: 97195.936b);
-        [StringConst] " " (Id = BTy_6 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-        [IntConst] [2006] (Id = BTy_7 440, tc: 17.015b, ac: 0b, dc: 0b, raw: 17.015b);
-        [StringConst] " " (Id = BTy_8 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-        [Enum] {[StringConst] "crashdump", [StringConst] "crashreporterd", } (Id = BTy_9 440, tc: 154.133b, ac: 1b, dc: 2b, raw: 156.133b);
-        [StringConst] "[" (Id = BTy_11 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-        [Int] [120...29874] (Id = BTy_12 440, tc: 26.818b, ac: 14.861b, dc: 6538.772b, raw: 6565.589b);
-        [StringConst] "]: " (Id = BTy_13 440, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b);
-        [Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", [StringConst] "Unable", [StringConst] "crashdump", [StringConst] "mach
-_msg", } (Id = BTy_17 440, tc: 301.896b, ac: 2.585b, dc: 15.510b, raw: 317.405b);
-        Switch(BTy_17)(Id = BTy_63 440, tc: 922.961b, ac: 229.486b, dc: 100383b, raw: 101305.961b):
-        case [Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", [StringConst] "mach_msg", }:
-                Pstruct(Id = BTy_62 293, tc: 485.741b, ac: 343.509b, dc: 100348b, raw: 100833.741b)
-                        Switch(BTy_54)(Id = BTy_29 293, tc: 429.799b, ac: 0.113b, dc: 25b, raw: 454.799b):
-                        case [StringConst] "*":
-                                [StringConst] " writing crash report to: " (Id = BTy_18 290, tc: 161.044b, ac: 0b, dc: 0b, raw: 161.044b);
-                        case [Enum] {[StringConst] "/Applications/iPhoto.app/Contents/MacOS/iPhoto - CGSError", [StringConst] "/send) invalid destination port", 
-}:
-                                Pstruct(Id = BTy_53 3, tc: 262.710b, ac: 11.000b, dc: 25b, raw: 287.710b)
-                                        Poption(Id = BTy_36 3, tc: 23.089b, ac: 1.000b, dc: 1b, raw: 24.089b)
-                                                [StringConst] "()" (Id = BTy_33 2, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b);
-                                        End Poption;
-                                        [White] (Id = BTy_39 3, tc: 5.044b, ac: 2.000b, dc: 6b, raw: 11.044b);
-                                        [Enum] {[StringConst] "reply", [StringConst] "to", } (Id = BTy_40 3, tc: 58.133b, ac: 1b, dc: 2b, raw: 60.133b);
-                                        [White] (Id = BTy_41 3, tc: 5.044b, ac: 2.000b, dc: 6b, raw: 11.044b);
-                                        [Enum] {[StringConst] "failed", [StringConst] "re-launch", } (Id = BTy_42 3, tc: 106.133b, ac: 1b, dc: 2b, raw: 108.133b)
-;
-                                        Poption(Id = BTy_44 3, tc: 17.089b, ac: 1.000b, dc: 1b, raw: 18.089b)
-                                                [StringConst] ":" (Id = BTy_43 2, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-                                        End Poption;
-                                        [White] (Id = BTy_47 3, tc: 5.044b, ac: 2.000b, dc: 6b, raw: 11.044b);
-                                        Poption(Id = BTy_51 3, tc: 35.089b, ac: 1.000b, dc: 1b, raw: 36.089b)
-                                                [StringConst] "(ipc" (Id = BTy_48 2, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b);
-                                        End Poption;
-                                End Pstruct;
-                        End Switch;
-                        [Path] (Id = BTy_54 293, tc: 5.044b, ac: 342.348b, dc: 100308b, raw: 100313.044b);
-                        Poption(Id = BTy_56 293, tc: 44.268b, ac: 1.048b, dc: 15b, raw: 59.268b)
-                                Pstruct(Id = BTy_61 1, tc: 38.223b, ac: 14.000b, dc: 14b, raw: 52.223b)
-                                        [Other](:) (Id = BTy_57 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-                                        [White] (Id = BTy_58 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b);
-                                        [IntConst] [1025] (Id = BTy_59 1, tc: 16.046b, ac: 0b, dc: 0b, raw: 16.046b);
-                                        [Other](!) (Id = BTy_60 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-                                End Pstruct;
-                        End Poption;
-                End Pstruct;
-        case [Enum] {[StringConst] "Unable", [StringConst] "crashdump", }:
-                Pstruct(Id = BTy_90 147, tc: 431.176b, ac: 2.218b, dc: 35b, raw: 466.176b)
-                        [StringConst] " " (Id = BTy_67 147, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-                        [Enum] {[StringConst] "started", [StringConst] "to", } (Id = BTy_68 147, tc: 70.133b, ac: 1b, dc: 2b, raw: 72.133b);
-                        Poption(Id = BTy_70 147, tc: 343.369b, ac: 1.218b, dc: 33b, raw: 376.369b)
-                                Pstruct(Id = BTy_89 2, tc: 337.325b, ac: 16.000b, dc: 32b, raw: 369.325b)
-                                        [White] (Id = BTy_71 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [StringConst] "determine" (Id = BTy_72 2, tc: 59.044b, ac: 0b, dc: 0b, raw: 59.044b);
-                                        [White] (Id = BTy_73 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [StringConst] "task_t" (Id = BTy_74 2, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b);
-                                        [White] (Id = BTy_75 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [StringConst] "for" (Id = BTy_76 2, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b);
-                                        [White] (Id = BTy_77 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [StringConst] "pid:" (Id = BTy_78 2, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b);
-                                        [White] (Id = BTy_80 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [IntConst] [95] (Id = BTy_81 2, tc: 12.614b, ac: 0b, dc: 0b, raw: 12.614b);
-                                        [White] (Id = BTy_82 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [StringConst] "name:" (Id = BTy_83 2, tc: 35.044b, ac: 0b, dc: 0b, raw: 35.044b);
-                                        [White] (Id = BTy_85 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [StringConst] "Exited" (Id = BTy_86 2, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b);
-                                        [White] (Id = BTy_87 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
-                                        [StringConst] "process" (Id = BTy_88 2, tc: 47.044b, ac: 0b, dc: 0b, raw: 47.044b);
-                                End Pstruct;
-                        End Poption;
-                End Pstruct;
-        End Switch;
+Pstruct(Id = BTy_91 440, tc: 1689.192b, ac: 633.487b, dc: 275075.863b, raw: 276765.054b)
+	[Enum] {[StringConst] "Fri", [StringConst] "Mon", [StringConst] "Sat", [StringConst] "Sun", [StringConst] "Thu", [StringConst] "Tue", [StringConst] "Wed", } (Id = BTy_0 440, tc: 169.163b, ac: 2.807b, dc: 19.651b, raw: 188.814b);
+	[StringConst] " " (Id = BTy_1 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+	[Date] (Id = BTy_3 440, tc: 5.044b, ac: 161.193b, dc: 70925.039b, raw: 70930.083b);
+	[StringConst] " " (Id = BTy_4 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+	[Time] (Id = BTy_5 440, tc: 5.044b, ac: 220.888b, dc: 97190.891b, raw: 97195.936b);
+	[StringConst] " " (Id = BTy_6 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+	[IntConst] [2006] (Id = BTy_7 440, tc: 17.015b, ac: 0b, dc: 0b, raw: 17.015b);
+	[StringConst] " " (Id = BTy_8 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+	[Enum] {[StringConst] "crashdump", [StringConst] "crashreporterd", } (Id = BTy_9 440, tc: 154.133b, ac: 1b, dc: 2b, raw: 156.133b);
+	[StringConst] "[" (Id = BTy_11 440, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+	[Int] [120...29874] (Id = BTy_12 440, tc: 26.818b, ac: 14.861b, dc: 6538.772b, raw: 6565.589b);
+	[StringConst] "]: " (Id = BTy_13 440, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b);
+	[Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", [StringConst] "Unable", [StringConst] "crashdump", [StringConst] "mach_msg", } (Id = BTy_17 440, tc: 301.896b, ac: 2.585b, dc: 15.510b, raw: 317.405b);
+	Switch(BTy_17)(Id = BTy_63 440, tc: 922.961b, ac: 230.152b, dc: 100384b, raw: 101306.961b):
+	case [Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", [StringConst] "mach_msg", }:
+		Pstruct(Id = BTy_62 293, tc: 485.741b, ac: 344.509b, dc: 100349b, raw: 100834.741b)
+			Punion(Id = BTy_29 293, tc: 429.799b, ac: 1.113b, dc: 26b, raw: 455.799b)
+				[StringConst] " writing crash report to: " (Id = BTy_18 290, tc: 161.044b, ac: 0b, dc: 0b, raw: 161.044b);
+				Pstruct(Id = BTy_53 3, tc: 262.710b, ac: 11.000b, dc: 25b, raw: 287.710b)
+					Poption(Id = BTy_36 3, tc: 23.089b, ac: 1.000b, dc: 1b, raw: 24.089b)
+						[StringConst] "()" (Id = BTy_33 2, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b);
+					End Poption;
+					[White] (Id = BTy_39 3, tc: 5.044b, ac: 2.000b, dc: 6b, raw: 11.044b);
+					[Enum] {[StringConst] "reply", [StringConst] "to", } (Id = BTy_40 3, tc: 58.133b, ac: 1b, dc: 2b, raw: 60.133b);
+					[White] (Id = BTy_41 3, tc: 5.044b, ac: 2.000b, dc: 6b, raw: 11.044b);
+					[Enum] {[StringConst] "failed", [StringConst] "re-launch", } (Id = BTy_42 3, tc: 106.133b, ac: 1b, dc: 2b, raw: 108.133b);
+					Poption(Id = BTy_44 3, tc: 17.089b, ac: 1.000b, dc: 1b, raw: 18.089b)
+						[StringConst] ":" (Id = BTy_43 2, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+					End Poption;
+					[White] (Id = BTy_47 3, tc: 5.044b, ac: 2.000b, dc: 6b, raw: 11.044b);
+					Poption(Id = BTy_51 3, tc: 35.089b, ac: 1.000b, dc: 1b, raw: 36.089b)
+						[StringConst] "(ipc" (Id = BTy_48 2, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b);
+					End Poption;
+				End Pstruct;
+			End Punion;
+			[Path] (Id = BTy_54 293, tc: 5.044b, ac: 342.348b, dc: 100308b, raw: 100313.044b);
+			Poption(Id = BTy_56 293, tc: 44.268b, ac: 1.048b, dc: 15b, raw: 59.268b)
+				Pstruct(Id = BTy_61 1, tc: 38.223b, ac: 14.000b, dc: 14b, raw: 52.223b)
+					[Other](:) (Id = BTy_57 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+					[White] (Id = BTy_58 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b);
+					[IntConst] [1025] (Id = BTy_59 1, tc: 16.046b, ac: 0b, dc: 0b, raw: 16.046b);
+					[Other](!) (Id = BTy_60 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+	case [Enum] {[StringConst] "Unable", [StringConst] "crashdump", }:
+		Pstruct(Id = BTy_90 147, tc: 431.176b, ac: 2.218b, dc: 35b, raw: 466.176b)
+			[StringConst] " " (Id = BTy_67 147, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+			[Enum] {[StringConst] "started", [StringConst] "to", } (Id = BTy_68 147, tc: 70.133b, ac: 1b, dc: 2b, raw: 72.133b);
+			Poption(Id = BTy_70 147, tc: 343.369b, ac: 1.218b, dc: 33b, raw: 376.369b)
+				Pstruct(Id = BTy_89 2, tc: 337.325b, ac: 16.000b, dc: 32b, raw: 369.325b)
+					[White] (Id = BTy_71 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[StringConst] "determine" (Id = BTy_72 2, tc: 59.044b, ac: 0b, dc: 0b, raw: 59.044b);
+					[White] (Id = BTy_73 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[StringConst] "task_t" (Id = BTy_74 2, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b);
+					[White] (Id = BTy_75 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[StringConst] "for" (Id = BTy_76 2, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b);
+					[White] (Id = BTy_77 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[StringConst] "pid:" (Id = BTy_78 2, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b);
+					[White] (Id = BTy_80 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[IntConst] [95] (Id = BTy_81 2, tc: 12.614b, ac: 0b, dc: 0b, raw: 12.614b);
+					[White] (Id = BTy_82 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[StringConst] "name:" (Id = BTy_83 2, tc: 35.044b, ac: 0b, dc: 0b, raw: 35.044b);
+					[White] (Id = BTy_85 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[StringConst] "Exited" (Id = BTy_86 2, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b);
+					[White] (Id = BTy_87 2, tc: 5.044b, ac: 2.000b, dc: 4b, raw: 9.044b);
+					[StringConst] "process" (Id = BTy_88 2, tc: 47.044b, ac: 0b, dc: 0b, raw: 47.044b);
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+	End Switch;
 End Pstruct
-

@@ -1,14 +1,13 @@
-Pstruct(Id = BTy_90 328, tc: 1835.603b, ac: 471.883b, dc: 152889.680b, raw: 154725.283b)
+Pstruct(Id = BTy_90 328, tc: 1837.188b, ac: 471.418b, dc: 152892.265b, raw: 154729.453b)
 	[Date] (Id = BTy_0 328, tc: 5.044b, ac: 161.193b, dc: 52871.392b, raw: 52876.437b);
 	[StringConst] " " (Id = BTy_1 328, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
 	[Time] (Id = BTy_2 328, tc: 5.044b, ac: 220.888b, dc: 72451.392b, raw: 72456.436b);
 	[StringConst] " " (Id = BTy_3 328, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
 	[Enum] {[StringConst] "Erased", [StringConst] "Installed", [StringConst] "Updated", } (Id = BTy_4 328, tc: 153.763b, ac: 1.585b, dc: 4.755b, raw: 158.517b);
 	[StringConst] ": " (Id = BTy_6 328, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b);
-	Punion(Id = BTy_86 328, tc: 1624.767b, ac: 88.216b, dc: 27562.141b, raw: 29186.908b)
-		Pstruct(Id = BTy_85 317, tc: 1613.678b, ac: 88.482b, dc: 27003.141b, raw: 28616.819b)
-			Switch(BTy_15)(Id = BTy_17 317, tc: 56.896b, ac: 57.858b, dc: 18049b, raw: 18105.896b):
-			case [Enum] {[StringConst] "i386", [StringConst] "i686", [StringConst] "x86_64", }:
+	Punion(Id = BTy_86 328, tc: 1626.352b, ac: 87.752b, dc: 27564.726b, raw: 29191.078b)
+		Pstruct(Id = BTy_85 317, tc: 1615.263b, ac: 88.002b, dc: 27005.726b, raw: 28620.989b)
+			Punion(Id = BTy_17 317, tc: 56.896b, ac: 58.858b, dc: 18050b, raw: 18106.896b)
 				Pstruct(Id = BTy_16 293, tc: 45.807b, ac: 55.942b, dc: 16099b, raw: 16144.807b)
 					[String] (Id = BTy_8 293, tc: 5.044b, ac: 54.942b, dc: 16098b, raw: 16103.044b);
 					Poption(Id = BTy_10 293, tc: 23.089b, ac: 1.000b, dc: 1b, raw: 24.089b)
@@ -16,42 +15,43 @@ Pstruct(Id = BTy_90 328, tc: 1835.603b, ac: 471.883b, dc: 152889.680b, raw: 1547
 					End Poption;
 					[StringConst] "." (Id = BTy_14 293, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
 				End Pstruct;
-			case [StringConst] "arch":
 				[Host] (Id = BTy_18 24, tc: 5.044b, ac: 81.250b, dc: 1950b, raw: 1955.044b);
-			End Switch;
+			End Punion;
 			[Enum] {[StringConst] "arch", [StringConst] "i386", [StringConst] "i686", [StringConst] "x86_64", } (Id = BTy_15 317, tc: 135.222b, ac: 2b, dc: 8b, raw: 143.222b);
 			[StringConst] " " (Id = BTy_21 317, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-			Punion(Id = BTy_24 317, tc: 420.450b, ac: 9.305b, dc: 2273.368b, raw: 2693.817b)
-				[Empty] (Id = BTy_23 282, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b);
-				Pstruct(Id = BTy_29 25, tc: 28.178b, ac: 88.251b, dc: 2182.273b, raw: 2210.450b)
-					[Time] (Id = BTy_25 25, tc: 5.044b, ac: 87.251b, dc: 2181.273b, raw: 2186.317b);
-					Poption(Id = BTy_27 25, tc: 17.089b, ac: 1.000b, dc: 1b, raw: 18.089b)
-						[StringConst] "." (Id = BTy_26 24, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-					End Poption;
-				End Pstruct;
-				Pstruct(Id = BTy_40 9, tc: 358.421b, ac: 7.503b, dc: 47.095b, raw: 405.516b)
-					[Enum] {[StringConst] "1.2.1.2", [StringConst] "1.3.13.3", [StringConst] "1.3.22.0", [StringConst] "2.15.92.0", [StringConst] "6.0.7.1", [StringConst] "6.8.1.1", } (Id = BTy_31 9, tc: 313.896b, ac: 2.585b, dc: 15.510b, raw: 329.405b);
-					Punion(Id = BTy_33 9, tc: 38.481b, ac: 4.918b, dc: 31.585b, raw: 70.066b)
-						[Empty] (Id = BTy_32 7, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b);
-						Pstruct(Id = BTy_37 1, tc: 21.763b, ac: 24.000b, dc: 24b, raw: 45.763b)
-							[Other](.) (Id = BTy_34 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-							[String] (Id = BTy_35 1, tc: 5.044b, ac: 12.000b, dc: 12b, raw: 17.044b);
-							[Other](.) (Id = BTy_36 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-						End Pstruct;
-						[Other](.) (Id = BTy_39 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-					End Punion;
-				End Pstruct;
-				Pstruct(Id = BTy_45 1, tc: 21.763b, ac: 42.000b, dc: 42b, raw: 63.763b)
-					[Host] (Id = BTy_42 1, tc: 5.044b, ac: 24.000b, dc: 24b, raw: 29.044b);
-					[String] (Id = BTy_43 1, tc: 5.044b, ac: 12.000b, dc: 12b, raw: 17.044b);
-					[Other](.) (Id = BTy_44 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-				End Pstruct;
-			End Punion;
+			Poption(Id = BTy_24 317, tc: 421.450b, ac: 8.470b, dc: 2274.368b, raw: 2695.817b)
+				Punion(Id = BTy_95 35, tc: 415.405b, ac: 67.657b, dc: 2273.368b, raw: 2688.773b)
+					Pstruct(Id = BTy_29 25, tc: 28.178b, ac: 88.251b, dc: 2182.273b, raw: 2210.450b)
+						[Time] (Id = BTy_25 25, tc: 5.044b, ac: 87.251b, dc: 2181.273b, raw: 2186.317b);
+						Poption(Id = BTy_27 25, tc: 17.089b, ac: 1.000b, dc: 1b, raw: 18.089b)
+							[StringConst] "." (Id = BTy_26 24, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+						End Poption;
+					End Pstruct;
+					Pstruct(Id = BTy_40 9, tc: 358.836b, ac: 7.141b, dc: 47.510b, raw: 406.346b)
+						[Enum] {[StringConst] "1.2.1.2", [StringConst] "1.3.13.3", [StringConst] "1.3.22.0", [StringConst] "2.15.92.0", [StringConst] "6.0.7.1", [StringConst] "6.8.1.1", } (Id = BTy_31 9, tc: 313.896b, ac: 2.585b, dc: 15.510b, raw: 329.405b);
+						Poption(Id = BTy_33 9, tc: 38.896b, ac: 4.556b, dc: 32b, raw: 70.896b)
+							Punion(Id = BTy_94 2, tc: 32.851b, ac: 16.000b, dc: 31b, raw: 63.851b)
+								Pstruct(Id = BTy_37 1, tc: 21.763b, ac: 24.000b, dc: 24b, raw: 45.763b)
+									[Other](.) (Id = BTy_34 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+									[String] (Id = BTy_35 1, tc: 5.044b, ac: 12.000b, dc: 12b, raw: 17.044b);
+									[Other](.) (Id = BTy_36 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+								End Pstruct;
+								[Other](.) (Id = BTy_39 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+							End Punion;
+						End Poption;
+					End Pstruct;
+					Pstruct(Id = BTy_45 1, tc: 21.763b, ac: 42.000b, dc: 42b, raw: 63.763b)
+						[Host] (Id = BTy_42 1, tc: 5.044b, ac: 24.000b, dc: 24b, raw: 29.044b);
+						[String] (Id = BTy_43 1, tc: 5.044b, ac: 12.000b, dc: 12b, raw: 17.044b);
+						[Other](.) (Id = BTy_44 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+					End Pstruct;
+				End Punion;
+			End Poption;
 			[Pint] (Id = BTy_46 317, tc: 5.044b, ac: 4.636b, dc: 1153.709b, raw: 1158.753b);
 			RArray(Id = BTy_22 317, tc: 534.605b, ac: 11.728b, dc: 5390.845b, raw: 5925.450b)
 				Pstruct(Id = BTy_65 1038, tc: 527.561b, ac: 11.728b, dc: 5390.845b, raw: 5918.406b)
 					Poption(Id = BTy_49 1038, tc: 516.472b, ac: 5.588b, dc: 54.829b, raw: 571.301b)
-						Pstruct(Id = BTy_92 747, tc: 510.427b, ac: 6.375b, dc: 53.829b, raw: 564.256b)
+						Pstruct(Id = BTy_99 747, tc: 510.427b, ac: 6.375b, dc: 53.829b, raw: 564.256b)
 							Poption(Id = BTy_56 747, tc: 187.766b, ac: 2.045b, dc: 13.610b, raw: 201.376b)
 								Pstruct(Id = BTy_55 746, tc: 181.721b, ac: 1.047b, dc: 12.610b, raw: 194.331b)
 									Poption(Id = BTy_52 746, tc: 164.633b, ac: 1.047b, dc: 12.610b, raw: 177.242b)
@@ -74,29 +74,30 @@ Pstruct(Id = BTy_90 328, tc: 1835.603b, ac: 471.883b, dc: 152889.680b, raw: 1547
 					[Pint] (Id = BTy_64 1038, tc: 5.044b, ac: 6.140b, dc: 5336.017b, raw: 5341.061b);
 				End Pstruct;
 			End RArray;
-			Punion(Id = BTy_67 317, tc: 442.565b, ac: 2.955b, dc: 128.219b, raw: 570.784b)
-				[Empty] (Id = BTy_66 246, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b);
-				Pstruct(Id = BTy_68 4, tc: 33.266b, ac: 23.500b, dc: 91b, raw: 124.266b)
-					[String] (Id = BTy_69 4, tc: 5.044b, ac: 16.500b, dc: 66b, raw: 71.044b);
-					Poption(Id = BTy_71 4, tc: 22.178b, ac: 7.000b, dc: 25b, raw: 47.178b)
-						Pstruct(Id = BTy_74 1, tc: 16.133b, ac: 24.000b, dc: 24b, raw: 40.133b)
-							[Other](.) (Id = BTy_72 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-							[String] (Id = BTy_73 1, tc: 5.044b, ac: 18.000b, dc: 18b, raw: 23.044b);
-						End Pstruct;
-					End Poption;
-				End Pstruct;
-				Pstruct(Id = BTy_93 61, tc: 309.988b, ac: 3.322b, dc: 33.219b, raw: 343.207b)
-					[StringConst] "." (Id = BTy_76 61, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-					RArray(Id = BTy_75 61, tc: 292.899b, ac: 3.322b, dc: 33.219b, raw: 326.118b)
-						Separator: [StringConst] "."
-						[Enum] {[StringConst] "EL", [StringConst] "EL-1", [StringConst] "EL4", [StringConst] "RHEL4", [StringConst] "c4", [StringConst] "centos4", [StringConst] "el4", [StringConst] "ent", [StringConst] "kb", [StringConst] "rhel4", } (Id = BTy_77 77, tc: 274.810b, ac: 3.322b, dc: 33.219b, raw: 308.030b);
-					End RArray;
-				End Pstruct;
-				Pstruct(Id = BTy_83 6, tc: 87.222b, ac: 1b, dc: 2b, raw: 89.222b)
-					[StringConst] "_" (Id = BTy_81 6, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-					[Enum] {[StringConst] "EL4", [StringConst] "nonptl", } (Id = BTy_82 6, tc: 70.133b, ac: 1b, dc: 2b, raw: 72.133b);
-				End Pstruct;
-			End Punion;
+			Poption(Id = BTy_67 317, tc: 443.150b, ac: 2.310b, dc: 128.804b, raw: 571.954b)
+				Punion(Id = BTy_103 71, tc: 437.106b, ac: 5.847b, dc: 127.804b, raw: 564.910b)
+					Pstruct(Id = BTy_68 4, tc: 33.266b, ac: 23.500b, dc: 91b, raw: 124.266b)
+						[String] (Id = BTy_69 4, tc: 5.044b, ac: 16.500b, dc: 66b, raw: 71.044b);
+						Poption(Id = BTy_71 4, tc: 22.178b, ac: 7.000b, dc: 25b, raw: 47.178b)
+							Pstruct(Id = BTy_74 1, tc: 16.133b, ac: 24.000b, dc: 24b, raw: 40.133b)
+								[Other](.) (Id = BTy_72 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+								[String] (Id = BTy_73 1, tc: 5.044b, ac: 18.000b, dc: 18b, raw: 23.044b);
+							End Pstruct;
+						End Poption;
+					End Pstruct;
+					Pstruct(Id = BTy_102 61, tc: 309.988b, ac: 3.322b, dc: 33.219b, raw: 343.207b)
+						[StringConst] "." (Id = BTy_76 61, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+						RArray(Id = BTy_75 61, tc: 292.899b, ac: 3.322b, dc: 33.219b, raw: 326.118b)
+							Separator: [StringConst] "."
+							[Enum] {[StringConst] "EL", [StringConst] "EL-1", [StringConst] "EL4", [StringConst] "RHEL4", [StringConst] "c4", [StringConst] "centos4", [StringConst] "el4", [StringConst] "ent", [StringConst] "kb", [StringConst] "rhel4", } (Id = BTy_77 77, tc: 274.810b, ac: 3.322b, dc: 33.219b, raw: 308.030b);
+						End RArray;
+					End Pstruct;
+					Pstruct(Id = BTy_83 6, tc: 87.222b, ac: 1b, dc: 2b, raw: 89.222b)
+						[StringConst] "_" (Id = BTy_81 6, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+						[Enum] {[StringConst] "EL4", [StringConst] "nonptl", } (Id = BTy_82 6, tc: 70.133b, ac: 1b, dc: 2b, raw: 72.133b);
+					End Pstruct;
+				End Punion;
+			End Poption;
 		End Pstruct;
 		[String] (Id = BTy_88 11, tc: 5.044b, ac: 50.727b, dc: 558b, raw: 563.044b);
 	End Punion;
