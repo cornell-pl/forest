@@ -865,11 +865,12 @@ struct
      end 
      fun TyToPADSFile ty =
 	let
+	  val recordLabel = getLabelString (getAuxInfo ty)
 	  val pads = (TyToPADS "" "" true 0 nil ty) ^
-			"Psource Parray entry_t {\n" ^
-		    	"\t" ^ (getLabelString (getAuxInfo ty)) ^ "[];\n" ^
+			"Psource Parray entries_t {\n" ^
+		    	"\t" ^ recordLabel ^ "[];\n" ^
 			"};\n"
 	in
-	  pads
+	  (recordLabel, pads)
 	end  
 end
