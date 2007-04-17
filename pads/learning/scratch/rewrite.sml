@@ -11,8 +11,10 @@ let
   val acomp  = #adc comps
   val datacomp = #dc comps
   val rawcomp = combine tycomp datacomp
+(*
   val _ = print "\nBefore reduction:\n"
   val _ = printTy measuredTy
+*)
 (*phase one *)
 (*
   val _ = print "Phase one ...\n";
