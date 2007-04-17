@@ -106,3 +106,11 @@ RArray
 	End Poption;
 End RArray
 -----
+
+==========================================================================
+ls -l thoughts
+=============================================================================
+
+1. briefly: 
+I started looking at the ls-l data.  it seems that there is not enough data.  It looks over-fit to me.  I wonder if we can define a metric that avoids overfitting by not adding dependencies/enums/switches when there is not a "statistically significant" enum/dependency hypothesis.
+
