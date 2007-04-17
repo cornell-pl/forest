@@ -484,8 +484,9 @@ struct
 		NONE => label 
 		| SOME param => label ^ "(:" ^ param ^ ":)"
    
-    	fun labelToPADS prefix (label:string, paramop) = 
-		prefix ^ (labelToTyString (label, paramop)) ^ " " ^ label ^ "_Name"
+    	fun labelToPADS prefix mode (label:string, paramop) = 
+		prefix ^ (labelToTyString (label, paramop)) ^ 
+		(if (mode = 2) then "" else (" " ^ label ^ "_Name"))
 	fun notInlineTy ty = case ty of 
 		Base _ => false 
 		| RefinedBase (_, Enum _, _) => true 
@@ -494,7 +495,7 @@ struct
 		| Bottom _  => false
 		| Poption (_, t) => notInlineTy t
 		| _ => true
-    	fun tyToInlinePADS prefix ty = labelToPADS prefix (getLabelParam ty)
+    	fun tyToInlinePADS prefix mode ty = labelToPADS prefix mode (getLabelParam ty)
         fun tokenToPADS label token mode =
 	let 
 	  val typedef = if mode =0 then "Ptypedef " else ""
@@ -727,8 +728,8 @@ struct
          ( case ty of
                Base (aux, (t, loc)::ts)  => pRecord ^ (tokenToPADS label t mode) 
 	     | RefinedBase (aux, Enum res, tl) => 
-		if mode = 1 then ((tyToInlinePADS "" ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" ty)
+		if mode = 1 then ((tyToInlinePADS "" mode ty)^";\n")
+		else if mode = 2 then (tyToInlinePADS "" mode ty)
 		else
 		(
 		if allStringConsts res then
@@ -760,8 +761,8 @@ struct
              | Bottom _ =>
                 pRecord ^ "Pstring_ME(:\"/[:print:]/\":) " ^ (if mode=2 then "" else "BTM_" ^ label ^";\n")
              | Pstruct (aux, tys) =>
-		if mode = 1 then ((tyToInlinePADS "" ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" ty)
+		if mode = 1 then ((tyToInlinePADS "" mode ty)^";\n")
+		else if mode = 2 then (tyToInlinePADS "" mode ty)
 		else
 		  let
 		   val nonInlineTys = List.filter notInlineTy tys
@@ -772,8 +773,8 @@ struct
 		   prefix ^ "};\n"
 		  end	
              | Punion (aux, tys)  =>
-		if mode = 1 then ((tyToInlinePADS "" ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" ty)
+		if mode = 1 then ((tyToInlinePADS "" mode ty)^";\n")
+		else if mode = 2 then (tyToInlinePADS "" mode ty)
 		else
 		  let
 		   val nonInlineTys = List.filter notInlineTy tys
@@ -784,8 +785,8 @@ struct
 		   prefix ^ "};\n")
 		  end	
              | Switch(aux ,id, retys) =>
-		if mode = 1 then ((tyToInlinePADS "" ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" ty)
+		if mode = 1 then ((tyToInlinePADS "" mode ty)^";\n")
+		else if mode = 2 then (tyToInlinePADS "" mode ty)
 		else
 		  let
 		   val tys = map #2 retys
@@ -810,8 +811,8 @@ struct
 		   prefix ^ "};\n")
 		  end	
              | RArray (aux, sep, term, body, len, lengths) => 
-		if mode = 1 then ((tyToInlinePADS "" ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" ty)
+		if mode = 1 then ((tyToInlinePADS "" mode ty)^";\n")
+		else if mode = 2 then (tyToInlinePADS "" mode ty)
 		else
 		  let 
 		   val pre = if (notInlineTy body) orelse (isNumConst body) 
