@@ -365,7 +365,6 @@ case ty of
   end
 | _ => ty
 (* rule to convert a normal Parray to a refined RArray *)
-(*TODO: the merging still has a problem Poption, see dibbler.1000 results*)
 and refine_array ty = 
 	case ty of 
 	(* 1st case is looking at the Parray itself *)
@@ -817,9 +816,19 @@ and union_to_optional ty =
 	     in
 		if length tys = length nonPemptyTys then ty (* no Pempty in this list *)
 		else (* some Pemptys exist *)
-		  let
-		    val unionCoverage = sumCoverage nonPemptyTys
-		  in Poption (a, Punion((mkTyAux unionCoverage), nonPemptyTys))
+		  if length nonPemptyTys = 0 (* all Pempty *)
+		  then genEmptyBase a (getCoverage ty)
+		  else
+		    let
+(*
+		      val _ = (print "Before:\n"; printTy (measure ty))
+*)
+		      val unionCoverage = sumCoverage nonPemptyTys
+		      val newTy = Poption (a, Punion((mkTyAux unionCoverage), nonPemptyTys))
+(*
+		      val _ = (print "After:\n"; printTy (measure newTy))
+*)
+		    in newTy
 		  end
 	     end	
 	| _ => ty
@@ -1231,7 +1240,7 @@ let
 	    (* find the minimum cost out of the ones found *)
 	    val ((newcmap, newTy), lowCost) = foldr min ((cmap, ty), cur_cost) pairs
 (*
-	    val _ = (print ("New Ty: \n"); printTy newTy)
+	    val _ = (print ("New Ty: \n"); printTy (measure newTy))
 *)
 	  in
 	  	(* as long as the cost keeps going down, keep iterating *)
