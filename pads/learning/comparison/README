@@ -16,3 +16,93 @@ The results from the golden IRs are saved in files with an extension ".golden";
 the results from the solver IRs are saved in files with an extension ".solver".
 
 This file will be a placeholder for future comments about the comparisons.
+
+==============================================================================
+dibbler.1000 thoughts
+==============================================================================
+(not all these thoughts pertain directly to dibbler.1000)
+
+1. there is a rough structure processing step which should trigger if
+it sees a histogram with a variable number of occurrences of a
+particular token, but that variable number of occurrences is always
+greater than some fixed number, say N.  What it should do is chop the
+the input into two halves -- the first half with the fixed initial N
+tokens and the second half with a variable number of tokens.  This
+does not seem to be happening in the dibbler.1000 example.  Perhaps
+because of the single header record that screws it up? Perhaps the
+decision needs to be done on an approximate basis -- do it if there
+are only one or two records that deviate from the pattern; throw
+the deviant records into another case in a sum?
+
+2. I know Kenny has worked hard at Pempty elimination, but I think the
+following transformation, which uses a Pempty (print as PADS/C Pvoid)
+is a good one:
+
+Poption [ Union [ field1; field2; ...; fieldk ] ]
+
+==>
+
+Union [ field1; field2; ...; fieldk; Pempty fieldname]
+
+It is like flattening nested unions into a single union.
+
+I think that this should have the tiniest decrease in complexity
+because in the first description, a Poption will have a (log 2) factor
++ a (log k) factor (the latter from the number of branches in the
+union; the former from the fact that Poption is a union with two
+branches).  Whereas in the second description, there will only be a
+(log (k+1)) factor which is a tiny bit smaller than (log 2) + (log k).
+
+3. it would be nice to have a compiler flag that did not print out the
+complexity information.
+
+4. my perception of how well the inference algorithm does may be
+influenced by formatting.  a more-compact-looking description gives me
+more satisfaction than a less-compact-looking description, even when the
+descriptions are semantically the same.  in the future, it would be nice to
+be able to print out descriptions in PADS/ML syntax.  In particular,
+the presence of anonymous tuples would decrease the "apparent" complexity
+of types (though making no impact on the "real" complexity) -- since label
+names are meaningless anyway (except where there are dependencies), eliminating
+simplifies the presentation.
+
+Note the beauty of:
+
+-----
+pdatatype elem =
+  Field0 of (Pstring * White) option * Pint
+| Field1 of  Pstring * (White * Pstring) option
+
+ptype record = elem option Plist('\n','|')
+-----
+
+vs this (which isn't PADS/C syntax, but is closer to the PADS/C level of
+ verboseness):
+
+-----
+RArray
+	Separator: [StringConst] "|"
+	Poption
+		Punion
+			Pstruct
+				Poption
+					Pstruct
+						[String] 
+						[White] 
+					End Pstruct;
+				End Poption;
+				[Pint] 
+			End Pstruct;
+			Pstruct
+				[String] 
+				Poption
+					Pstruct
+						[White]
+						[String]
+					End Pstruct;
+				End Poption;
+			End Pstruct;
+		End Punion;
+	End Poption;
+End RArray
+-----
