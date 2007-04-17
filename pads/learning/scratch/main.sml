@@ -24,7 +24,7 @@ structure Main : sig
             val acomp            = #adc comps
             val dcomp            = #dc comps
 	in
-	    ( Printing.dumpTyInfo (!outputDir) measuredTy
+	    ( Printing.dumpTyInfo (!outputDir) (!descName) measuredTy
             , print ( "\nCompleted " ^ (lconcat (!srcFiles)) )
             , print ( "\nOverall type complexity = " ^ showBits tcomp )
             , print ( "\nOverall atomic complexity = " ^ showBits acomp )
@@ -32,29 +32,12 @@ structure Main : sig
             )
 	end
 
-  (*** Another doIt function that invokes the inferencing ***)
-  (*
-  fun doIt1 () =
-	let val fileName = !srcFile
-	    val recordNumber = ref 0
-	    val () = print ("Starting on file "^fileName^"\n");
-	    val records = loadFile fileName
-	    val () = initialRecordCount := (List.length records) 
-	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
-            val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
-	    val () = lengthsToHist rtokens
-	    val ty = ContextListToTy 0 rtokens
-	    val sty = simplifyTy ty
-	    val rewrited_ty = Rewrite.run sty
-	in
-	    Printing.dumpTyInfo (!outputDir) rewrited_ty 
-	end
-*)	
 
     (********************************************************************************)
     structure PCL = ParseCmdLine
 
     fun setOutputDir    s = outputDir  := (s^"/")
+    fun setDescName     n = descName  := n
     fun setDepth        d = depthLimit := d
     fun setHistPer      h = HIST_PERCENTAGE := h
     fun setStructPer    s = STRUCT_PERCENTAGE := s
@@ -68,12 +51,13 @@ structure Main : sig
 
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
+         ("n",        "name of output file (default "^def_descName^")",                                     PCL.String (setDescName,  false)),
          ("maxdepth", "maximum depth for exploration (default "^(Int.toString def_depthLimit)^")",         PCL.Int    (setDepth,     false)),
          ("lineNos",  "print line numbers in output contexts (default "^(Bool.toString def_printLineNos)^")",            PCL.Bool  setPrintLineNos),
          ("ids",      "print ids in type and tokens matching base types (default "^(Bool.toString def_printLineNos)^")", PCL.Bool  setPrintIDs),
          ("h",        "histogram comparison tolerance (percentage, default "^(Real.toString DEF_HIST_PERCENTAGE)^")",    PCL.Float  (setHistPer,   false)),
          ("s",        "struct determination tolerance (percentage, default "^(Real.toString DEF_STRUCT_PERCENTAGE)^")",  PCL.Float  (setStructPer, false)),
-         ("n",        "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),
+         ("noise",    "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),
          ("a",        "minimum array width (default "^(Int.toString DEF_ARRAY_WIDTH_THRESHOLD)^")",        PCL.Int    (setArrayWidth, false)),
          ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false)),
          ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy)

@@ -43,7 +43,25 @@ struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTyInfo (path:string) (ty:Ty) : unit = 
+    fun dumpPADSdesc (fileName:string) (ty:Ty) : unit = 
+	let val strm = TextIO.openOut fileName
+            val () = TextIO.output(strm, TyToPADSFile ty)
+	in
+	    TextIO.closeOut strm
+	end
+
+    fun dumpAccumProgram (path:string) (descName:string) : unit = 
+	let val accumProgram = "#define PADS_TY(suf) entry_t ## suf\n"^
+                               "#include \""^descName^".h\"\n"^
+                               "#include \"template/accum_report.h\"\n"
+
+	    val strm = TextIO.openOut (path^descName^"-accum.c")
+            val () = TextIO.output(strm, accumProgram)
+	in
+	    TextIO.closeOut strm
+	end
+
+    fun dumpTyInfo (path:string) (descName:string) (ty:Ty) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) => if !printIDs then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls) else ()
@@ -64,6 +82,8 @@ struct
             then ( dumpParameters (path ^ "Params") ty
                  ; dumpTBDs ty
                  ; dumpTy (path ^ "Ty") ty
+                 ; dumpPADSdesc(path^descName^".p") ty
+                 ; dumpAccumProgram path descName
                  )
             else print "Output path should specify a directory.\n"
           )
