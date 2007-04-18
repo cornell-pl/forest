@@ -63,10 +63,11 @@ structure Main : sig
          ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy)
         ]
 
-    fun processSwitches args = 
+    fun processSwitches (execDir::args) = 
 	let val banner = PCL.genBanner("learn", "Prototype Learning System", flags)
 	in
 	   (PCL.parseArgs(args, flags, addSourceFile, banner);
+	    executableDir := execDir;
 	    if print_verbose=true then printParameters() else () )
 	end
     (********************************************************************************)

@@ -43,15 +43,17 @@ struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpPADSdesc (fileName:string) (ty:Ty) : unit = 
+    fun dumpPADSdesc (fileName:string) (ty:Ty) : string = 
 	let val strm = TextIO.openOut fileName
-            val () = TextIO.output(strm, TyToPADSFile ty)
+            val (tyName, desc) = TyToPADSFile ty
+            val () = TextIO.output(strm,desc )
+	    val () = TextIO.closeOut strm
 	in
-	    TextIO.closeOut strm
+	    tyName
 	end
 
-    fun dumpAccumProgram (path:string) (descName:string) : unit = 
-	let val accumProgram = "#define PADS_TY(suf) entry_t ## suf\n"^
+    fun dumpAccumProgram (path:string) (descName:string) (tyName:string) : unit = 
+	let val accumProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
                                "#include \""^descName^".h\"\n"^
                                "#include \"template/accum_report.h\"\n"
 
@@ -78,12 +80,22 @@ struct
           ( print "Complexity of inferred type:\n\t";
             printComplexity (complexity ty);
             print "\nOutputing partitions to directory: "; print path; print "\n";
-            if OS.FileSys.isDir path handle SysErr => (OS.FileSys.mkDir path; true)
+            if OS.FileSys.isDir path handle SysErr => 
+		(OS.FileSys.mkDir path; 
+		 let val cpcmd = "cp "^(!executableDir)^"/GNUMakefile.output "^path^"GNUmakefile"
+		 in
+		     print "copy command: "; print cpcmd; print "\n";
+		     OS.Process.system cpcmd 
+		 end;
+		 true)
             then ( dumpParameters (path ^ "Params") ty
                  ; dumpTBDs ty
                  ; dumpTy (path ^ "Ty") ty
-                 ; dumpPADSdesc(path^descName^".p") ty
-                 ; dumpAccumProgram path descName
+                 ; let val tyName = dumpPADSdesc(path^descName^".p") ty
+                   in 
+		       dumpAccumProgram path descName tyName
+		   end;
+		   print "Excutable directory:"; print (!executableDir); print "\n"
                  )
             else print "Output path should specify a directory.\n"
           )
