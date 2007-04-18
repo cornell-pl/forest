@@ -63,6 +63,17 @@ struct
 	    TextIO.closeOut strm
 	end
 
+    fun dumpXMLProgram (path:string) (descName:string) (tyName:string) : unit = 
+	let val accumProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+                               "#include \""^descName^".h\"\n"^
+                               "#include \"template/read_orig_write_xml.h\"\n"
+
+	    val strm = TextIO.openOut (path^descName^"-xml.c")
+            val () = TextIO.output(strm, accumProgram)
+	in
+	    TextIO.closeOut strm
+	end
+
     fun dumpTyInfo (path:string) (descName:string) (ty:Ty) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
@@ -76,26 +87,34 @@ struct
                  | Switch (aux, id, labeledTys) => ()(* to be filled in *)
                  | RArray _ => () (* to be filled in *)
 		 | Poption _ => () (* to be filled in *)
+	    fun cpMkFile () = 
+		let val fileName = path^"GNUmakefile"
+		    in
+			ignore (TextIO.openIn fileName)
+			    handle Io => 
+			     (let val cpcmd = "cp "^(!executableDir)^"/GNUMakefile.output "^fileName
+			      in
+				  print "copy command: "; print cpcmd; print "\n";
+				  OS.Process.system cpcmd;
+				  ()
+			      end)
+		end
     	in  
           ( print "Complexity of inferred type:\n\t";
             printComplexity (complexity ty);
             print "\nOutputing partitions to directory: "; print path; print "\n";
             if OS.FileSys.isDir path handle SysErr => 
-		(OS.FileSys.mkDir path; 
-		 let val cpcmd = "cp "^(!executableDir)^"/GNUMakefile.output "^path^"GNUmakefile"
-		 in
-		     print "copy command: "; print cpcmd; print "\n";
-		     OS.Process.system cpcmd 
-		 end;
-		 true)
+		(OS.FileSys.mkDir path; true)
             then ( dumpParameters (path ^ "Params") ty
                  ; dumpTBDs ty
                  ; dumpTy (path ^ "Ty") ty
                  ; let val tyName = dumpPADSdesc(path^descName^".p") ty
                    in 
-		       dumpAccumProgram path descName tyName
+		       dumpAccumProgram path descName tyName;
+		       dumpXMLProgram path descName tyName
 		   end;
-		   print "Excutable directory:"; print (!executableDir); print "\n"
+		   print "Excutable directory:"; print (!executableDir); print "\n";
+		   cpMkFile()
                  )
             else print "Output path should specify a directory.\n"
           )
