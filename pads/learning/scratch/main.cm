@@ -14,6 +14,7 @@ is
   distribution.sml
   hosts.sml
   tokens.sml
+  options.sml
   types.sml
   model.sml
   parseCmdLine-sig.sml
@@ -28,7 +29,6 @@ is
   matrix.sml
   RatMatrix.sml
   common.sml
-  options.sml
   partition.sml
   rewrite.sml
   table.sml

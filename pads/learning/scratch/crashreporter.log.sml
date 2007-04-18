@@ -25,7 +25,7 @@ structure CRASHREPORTER = struct
     val pid: Ty = Base(aux, [(Pint(95, "95"), loc)])
     val name: Ty = RefinedBase(aux, StringConst " name: Exited process", [(Pstring "name: Exited process", loc)])
     val function: Ty = Base(aux, [(Pstring ("mach_msg()"), loc)])
-    val reply: Ty = RefinedBase(aux, StringConst " reply filaed: ", [(Pstring "srv7", loc)])
+    val reply: Ty = RefinedBase(aux, StringConst " reply failed: ", [(Pstring "srv7", loc)])
     val failedmsg: Ty = Base(aux, [(Pstring ("(ipc/send) invalid destination port"), loc)])
     val failtorelaunch: Ty = RefinedBase(aux, StringConst "Failed to re-launch ", 
 			[(Pstring "Failed to re-launch ", loc)])
