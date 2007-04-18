@@ -514,7 +514,7 @@ struct
 	in
 	  typedef ^
           (case token of 
-		Pstring _ => "Pstring_ME(:\"/[A-Za-z][0-9a-zA-Z_\\-]*/\":) " ^ label'
+		Pstring _ => "MyString " ^ label'
               | Pint _ => "Pint32 " ^ label'
 	      | Pfloat _ => "Pfloat32 " ^ label'
 	      | Ptime _ => "Ptime " ^ label'
@@ -866,7 +866,8 @@ struct
      fun TyToPADSFile ty =
 	let
 	  val recordLabel = getLabelString (getAuxInfo ty)
-	  val pads = (TyToPADS "" "" true 0 nil ty) ^
+	  val pads = "Ptypedef Pstring_ME(:\"/[A-Za-z][0-9a-zA-Z_\\-]*/\":) MyString;\n" ^
+			(TyToPADS "" "" true 0 nil ty) ^
 			"Psource Parray entries_t {\n" ^
 		    	"\t" ^ recordLabel ^ "[];\n" ^
 			"};\n"
