@@ -31,7 +31,8 @@ struct
     fun join ls s =
 	let fun doit l a = 
 	    case l of 
-	      (s::nil)=> s
+	     nil => ""
+	    | (s::nil)=> s
             | (s::ss) => (s^a) ^ (doit ss a)
 	in
 	    doit ls s
