@@ -22,6 +22,8 @@ structure Common = struct
 	exception TyMismatch
 	exception RecordNum
 
+	(*this function converts a given string to lower cases*)        
+	fun toLower(s:string) : string = String.map Char.toLower s
 	(* defines an arbitrary order on tokens	to put it in maps *)
 	(* it overrides some of the ordering in structure.sml *)
 	fun compare(a : Token option,b:Token option) = case (a,b) of
@@ -45,6 +47,8 @@ structure Common = struct
 			| (Phostname(s1), Phostname(s2)) => String.compare(s1, s2)
 			| (Ppath(s1), Ppath(s2)) => String.compare(s1, s2)
 			| (Purl(s1), Purl(s2)) => String.compare(s1, s2)
+			| (Pemail(s1), Pemail(s2)) => String.compare(s1, s2)
+			| (Pmac(s1), Pmac(s2)) => String.compare(toLower s1, toLower s2)
 			| (Pwhite(s1), Pwhite(s2)) => String.compare(s1, s2)
 			| (Other(c1), Other(c2)) => String.compare(Char.toString(c1), Char.toString(c2))
 			| _ => Structure.compToken(a, b)
@@ -96,6 +100,8 @@ structure Common = struct
 	|	Phostname(t)  => t
 	|	Ppath(t)  => t
 	|	Purl(t)  => t
+	|	Pemail(t)  => t
+	|	Pmac(t)  => (toLower t)
 	|	Pstring(str)  => str
 	|	Pwhite (str)  =>  "["^str^"]"  
 	|	Other (c)  => Char.toString(c) 
@@ -115,6 +121,8 @@ structure Common = struct
 	|	Phostname(t)  => StringConst(t)
 	|	Ppath(t)  => StringConst(t)
 	|	Purl(t)  => StringConst(t)
+	|	Pemail(t)  => StringConst(t)
+	|	Pmac(t)  => StringConst((toLower t))
 	|	Pstring(str)  => StringConst(str)
 	|	Pwhite (str)  =>  StringConst(str)  
 	|	Other(c)  =>  StringConst(Char.toString(c))  
@@ -174,6 +182,8 @@ structure Common = struct
 		  | (Phostname(a), Phostname(b)) => (a = b)
 		  | (Ppath(a), Ppath(b)) => (a = b)
 		  | (Purl(a), Purl(b)) => (a = b)
+		  | (Pemail(a), Pemail(b)) => (a = b)
+		  | (Pmac(a), Pmac(b)) => ((toLower a) = (toLower b))
 		  | (Pint(a, s1), Pint(b, s2)) => (a = b andalso s1 = s2)
 		  | (Pfloat(a), Pfloat(b)) => (a = b)
 		  | (Pstring(a), Pstring(b)) => (a = b)
@@ -192,6 +202,8 @@ structure Common = struct
 		  | (Phostname(a), Phostname(b)) => true
 		  | (Ppath(a), Ppath(b)) => true
 		  | (Purl(a), Purl(b)) => true
+		  | (Pemail(a), Pemail(b)) => true
+		  | (Pmac(a), Pmac(b)) => true
 		  | (Pint(_), Pint(_)) => true
 		  | (Pfloat(a), Pfloat(b)) => true
 		  | (Pstring(a), Pstring(b)) => true

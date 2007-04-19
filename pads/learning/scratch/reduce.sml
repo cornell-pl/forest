@@ -920,7 +920,18 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
-
+		| SOME(Pemail(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
+		| SOME(Pmac(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
 		| SOME(Pwhite(x)) => 
 			(
 				newcmos, 

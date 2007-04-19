@@ -29,6 +29,7 @@ structure Tokens = struct
     val numStringChars : LargeInt.int  = numAlphaChars + numDigits + 1 + 1
     val numWhiteChars  : LargeInt.int  = 4 (* Space, tab, \n and \r *)
     val numXMLChars    : LargeInt.int  = numAlphaChars
+    val numHexChars    : LargeInt.int  = 10+6
     val compXML        : Complexity    = int2Comp numXMLChars
 
     (* Some analysis of the structure of tokens from tokens.lex: *)
@@ -71,6 +72,8 @@ structure Tokens = struct
 	             Purl        of string |
 		     Pip         of string |
 		     Phostname   of string |
+	             Pemail      of string |
+	             Pmac        of string |
                      Pint        of LargeInt.int * string |  (* a pair of int and string representations *)
                      Pfloat      of string * string | (*string representations of the integer and fraction parts*) 
 		     Pstring     of string |
@@ -82,7 +85,7 @@ structure Tokens = struct
     withtype LToken = Token * location
 
     (*    Establish an order on Token using the following constraints:
-          Ptime < Pdate < Pip< Phostname < Ppath < Purl < PbXML < PeXML < Pint < Pfloat <  Pstring < Pgroup <
+          Ptime < Pdate < Pip< Phostname < Ppath < Purl < PbXML < PeXML < Pemail < Pmac < Pint < Pfloat <  Pstring < Pgroup <
           Pwhite < Other < Pempty < Error
      *)
     fun compToken (t1:Token, t2:Token):order = 
@@ -93,6 +96,8 @@ structure Tokens = struct
         |  (Purl i1, Purl i2)             => EQUAL
         |  (Pip i1, Pip i2)               => EQUAL
         |  (Phostname i1, Phostname i2)   => EQUAL
+        |  (Pemail i1, Pemail i2)     	  => EQUAL
+        |  (Pmac i1, Pmac i2)             => EQUAL
         |  (PbXML (f1,s1), PbXML (f2,s2)) => String.compare(f1,f2)
         |  (PeXML (f1,s1), PeXML (f2,s2)) => String.compare(f1,f2)
         |  (Pint _, Pint _)             => EQUAL
@@ -139,6 +144,25 @@ structure Tokens = struct
         |  (PeXML _, Purl _)              => GREATER
         |  (PeXML _, PbXML _)             => GREATER
         |  (PeXML _,  _)                  => LESS
+        |  (Pemail _, Ptime _ )            => GREATER
+        |  (Pemail _, Pdate _ )            => GREATER
+        |  (Pemail _, Pip _)               => GREATER
+        |  (Pemail _, Phostname _)         => GREATER
+        |  (Pemail _, Ppath _)             => GREATER
+        |  (Pemail _, Purl _)              => GREATER
+        |  (Pemail _, PbXML _)             => GREATER
+        |  (Pemail _, PeXML _)             => GREATER
+        |  (Pemail _,  _)                  => LESS
+        |  (Pmac _, Ptime _ )            => GREATER
+        |  (Pmac _, Pdate _ )            => GREATER
+        |  (Pmac _, Pip _)               => GREATER
+        |  (Pmac _, Phostname _)         => GREATER
+        |  (Pmac _, Ppath _)             => GREATER
+        |  (Pmac _, Purl _)              => GREATER
+        |  (Pmac _, PbXML _)             => GREATER
+        |  (Pmac _, PeXML _)             => GREATER
+        |  (Pmac _, Pemail _)            => GREATER
+        |  (Pmac _,  _)                  => LESS
         |  (Pint _, Ptime _)              => GREATER
         |  (Pint _, Pdate _)              => GREATER
         |  (Pint _, Pip _)                => GREATER
@@ -147,6 +171,8 @@ structure Tokens = struct
         |  (Pint _, Purl _)               => GREATER
         |  (Pint _, PbXML _)              => GREATER
         |  (Pint _, PeXML _)              => GREATER
+        |  (Pint _, Pemail _)              => GREATER
+        |  (Pint _, Pmac _)              => GREATER
         |  (Pint _, _)                    => LESS
         |  (Pfloat _, Ptime _)            => GREATER
         |  (Pfloat _, Pdate _)            => GREATER
@@ -156,6 +182,8 @@ structure Tokens = struct
         |  (Pfloat _, Purl _)             => GREATER
         |  (Pfloat _, PbXML _)            => GREATER
         |  (Pfloat _, PeXML _)            => GREATER
+        |  (Pfloat _, Pemail _)            => GREATER
+        |  (Pfloat _, Pmac _)            => GREATER
         |  (Pfloat _, Pint _)             => GREATER
         |  (Pfloat _, _)                  => LESS
         |  (Pstring _, Ptime _)           => GREATER
@@ -164,10 +192,12 @@ structure Tokens = struct
         |  (Pstring _, Phostname _)       => GREATER
         |  (Pstring _, Ppath _)           => GREATER
         |  (Pstring _, Purl _)            => GREATER
-        |  (Pstring _, Pint _)            => GREATER
-        |  (Pstring _, Pfloat _)          => GREATER
         |  (Pstring _, PbXML _)           => GREATER
         |  (Pstring _, PeXML _)           => GREATER
+        |  (Pstring _, Pemail _)           => GREATER
+        |  (Pstring _, Pmac _)           => GREATER
+        |  (Pstring _, Pint _)            => GREATER
+        |  (Pstring _, Pfloat _)          => GREATER
         |  (Pstring _,  _)                => LESS
         |  (Pgroup _, Ptime _)            => GREATER
         |  (Pgroup _, Pdate _)            => GREATER
@@ -175,11 +205,13 @@ structure Tokens = struct
         |  (Pgroup _, Phostname _)        => GREATER
         |  (Pgroup _, Ppath _)            => GREATER
         |  (Pgroup _, Purl _)             => GREATER
+        |  (Pgroup _, PbXML _)            => GREATER
+        |  (Pgroup _, PeXML _)            => GREATER
+        |  (Pgroup _, Pemail _)            => GREATER
+        |  (Pgroup _, Pmac _)            => GREATER
         |  (Pgroup _, Pint _)             => GREATER
         |  (Pgroup _, Pfloat _)           => GREATER
         |  (Pgroup _, Pstring _)          => GREATER
-        |  (Pgroup _, PbXML _)            => GREATER
-        |  (Pgroup _, PeXML _)            => GREATER
         |  (Pgroup _,  _)                 => LESS
         |  (Pwhite _, Ptime _)            => GREATER
         |  (Pwhite _, Pdate _)            => GREATER
@@ -187,12 +219,14 @@ structure Tokens = struct
         |  (Pwhite _, Phostname _)        => GREATER
         |  (Pwhite _, Ppath _)            => GREATER
         |  (Pwhite _, Purl _)             => GREATER
+        |  (Pwhite _, PbXML _)            => GREATER
+        |  (Pwhite _, PeXML _)            => GREATER
+        |  (Pwhite _, Pemail _)            => GREATER
+        |  (Pwhite _, Pmac _)            => GREATER
         |  (Pwhite _, Pint _)             => GREATER
         |  (Pwhite _, Pfloat _)           => GREATER
         |  (Pwhite _, Pstring _)          => GREATER
         |  (Pwhite _, Pgroup _)           => GREATER
-        |  (Pwhite _, PbXML _)            => GREATER
-        |  (Pwhite _, PeXML _)            => GREATER
         |  (Pwhite _, _)                  => LESS
         |  (Other _, Ptime _)             => GREATER
         |  (Other _, Pdate _)             => GREATER
@@ -200,13 +234,15 @@ structure Tokens = struct
         |  (Other _, Phostname _)         => GREATER
         |  (Other _, Ppath _)             => GREATER
         |  (Other _, Purl _)              => GREATER
+        |  (Other _, PbXML _)             => GREATER
+        |  (Other _, PeXML _)             => GREATER
+        |  (Other _, Pemail _)             => GREATER
+        |  (Other _, Pmac _)             => GREATER
         |  (Other _, Pint _)              => GREATER
         |  (Other _, Pfloat _)            => GREATER
         |  (Other _, Pstring _)           => GREATER
         |  (Other _, Pgroup _)            => GREATER
         |  (Other _, Pwhite _)            => GREATER
-        |  (Other _, PbXML _)             => GREATER
-        |  (Other _, PeXML _)             => GREATER
         |  (Other _, _)                   => LESS
         |  (Pempty, Ptime _)              => GREATER
         |  (Pempty, Pdate _)              => GREATER
@@ -214,14 +250,16 @@ structure Tokens = struct
         |  (Pempty, Phostname _)          => GREATER
         |  (Pempty, Ppath _)              => GREATER
         |  (Pempty, Purl _)               => GREATER
+        |  (Pempty, PbXML _)              => GREATER
+        |  (Pempty, PeXML _)              => GREATER
+        |  (Pempty, Pemail _)              => GREATER
+        |  (Pempty, Pmac _)              => GREATER
         |  (Pempty, Pint _)               => GREATER
         |  (Pempty, Pfloat _)             => GREATER
         |  (Pempty, Pstring _)            => GREATER
         |  (Pempty, Pgroup _)             => GREATER
         |  (Pempty, Pwhite _)             => GREATER
         |  (Pempty, Other _)              => GREATER
-        |  (Pempty, PbXML _)              => GREATER
-        |  (Pempty, PeXML _)              => GREATER
         |  (Pempty, _)                    => LESS
         |  (Error, _)                     => GREATER
 
@@ -285,8 +323,11 @@ structure Tokens = struct
                            ( Substring.fields isSep ( Substring.full s ) )
                  in if nsep = 0 then size s else size s - nsep
                  end
-               (* URLs are too hard to parse right now *)
+               (* TODO: URLs and emails are too hard to parse right now, 
+		also the issue of case sensitivity *)
              | Purl s         => size s
+             | Pemail s         => size s
+             | Pmac s         => 12  (*6 hex numbers, take away the delimiters *)
              | Pip s          => countCh #"." s + 1
              | Phostname s    =>
                  let val ndot          : int            = countCh #"." s

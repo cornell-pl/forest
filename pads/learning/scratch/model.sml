@@ -120,6 +120,8 @@ structure Model = struct
                   | Pdate s           => mkBaseComp avglen totlen numDate
                   | Ppath s           => mkBaseComp avglen totlen numStringChars
                   | Purl s            => mkBaseComp avglen totlen numStringChars
+                  | Pemail s            => mkBaseComp avglen totlen numStringChars
+                  | Pmac s            => mkBaseComp avglen totlen numHexChars
                   | Pip s             => mkBaseComp avglen totlen numIPTriplet
                   | Phostname s       => mkBaseComp avglen totlen numStringChars
                   | Pint (l, s)            => { tc  = constructorComp

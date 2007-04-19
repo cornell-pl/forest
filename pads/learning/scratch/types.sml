@@ -214,9 +214,7 @@ struct
 	end
 
     fun mkTyAux1 ( coverage : int, id : Id ) : AuxInfo = 
-	let val next = !Tystamp
-            val () = Tystamp := !Tystamp + 1
-            val label = id
+	let val label = id
 	in { coverage = coverage
            , label    = SOME label
            , tycomp   = { tc  = zeroComp
@@ -296,6 +294,8 @@ struct
 	|  Pdate i     => i
 	|  Ppath i     => i
 	|  Purl i      => i
+	|  Pemail i      => i
+	|  Pmac i      => String.map (Char.toLower) i
         |  PbXML (f,s) => "<"^f^" "^s^">"
         |  PeXML (f,s) => "</"^f^" "^s^">"
 	|  Pint (i, s)      =>
@@ -328,6 +328,8 @@ struct
 	|  Phostname i => "[Host]"
 	|  Ppath i     => "[Path]"
 	|  Purl i      => "[URL]"
+	|  Pemail i      => "[Email]"
+	|  Pmac i      => "[MAC]"
         |  PbXML (f,s) => "bXML["^f^"]"
         |  PeXML (f,s) => "eXML["^f^"]"
 (*
@@ -520,9 +522,11 @@ struct
 	      | Pdate _ => "Pdate " ^ label'
 	      | Pip _ => "Pip " ^ label' 
 	      | Phostname _ => "Phostname " ^ label'
-	      | Purl _ => "Pstring_ME(:\"/[:print:]/\":) " ^ label'
-	      | Ppath _ => "Pstring_ME(:\"/[:print:]/\":) " ^ label'
-	      | Pwhite _ => "Pstring_ME(:\"/[:space:]{1}/\":) " ^ label'
+	      | Purl _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
+	      | Ppath _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
+	      | Pemail _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
+	      | Pmac _ => "Pstring_ME(:\"/[:-[:xdigit:]]+:/\":) " ^ label'
+	      | Pwhite _ => "Pstring_ME(:\"/[[:space:]]{1}/\":) " ^ label'
 	      | Other c => "Pchar " ^ label'
 	      | PbXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\-<>]+/\":) " ^ label'
 	      | PeXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\-<>]+/\":) "  ^ label'
@@ -738,7 +742,6 @@ struct
 			in
 			  case indexes of
 				[~1] => "\tPdefault " ^ (TyToPADS "\t" "" false 1 nil targetTy)
-			 	(*TODO: multi ids pointing to the same targetTy may not be correct *)
 				| _ => lconcat (map (fn i => "\tPcase " ^ (Int.toString i) ^ " : " ^
 					(TyToPADS "\t" ("_"^(Int.toString i)) false 1 nil targetTy)) indexes)
 			end
