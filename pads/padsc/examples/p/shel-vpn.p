@@ -5,7 +5,9 @@ Pstruct repeat_t {
   Pre "/s{0,1}/";
 };
 
+
 Ptypedef Pstring(:' ':) SysName_t;
+
 
 Pstruct CSFW_t {
   " [";         Puint8          id1;
@@ -324,7 +326,8 @@ Pstruct Security_t {
 Pstruct FailedLogIn_t{
   Pre "/([.]   Invalid Account)?/";
   ": Username=";  Pstring(:':':)   userName;
-  ": Date/Time="; Pdate(:' ':)     loginDate;
+  /*  ": Date/Time="; Pdate(:' ':)     loginDate; */
+  ": Date/Time="; Pstring(:' ':)     loginDate; 
   ' ';            Ptime_SE(:Peor:) loginTime;
 };
 
@@ -535,7 +538,8 @@ Punion MsgPayload_t(:MsgTy_t ty:){
 
 Pstruct main_t{
   ' '; Puint32 int1;
-  ' '; Pdate(:' ':) date2;
+  ' '; Pstring(:' ':) date2;
+  /*  ' '; Pdate(:' ':) date2; */
   ' '; Ptime(:' ':) time2;
   ' '; Pstring(:' ':) mgr;
   ' '; Puint8 id;
@@ -549,7 +553,8 @@ Punion Body_t{
 };
 
 Precord Pstruct entry_t{
-       Pdate_explicit_ME(:"/[a-zA-Z]+\\s[0-9]+/", "%b %d", P_cstr2timezone("-0400"):) date;
+  /*       Pdate_explicit_ME(:"/[a-zA-Z]+\\s[0-9]+/", "%b %d", P_cstr2timezone("-0400"):) date; */
+       Pstring_ME(:"/Feb 12/":) date;
   ' '; Ptime(:' ':) time;
   ' '; SysName_t    systemName;
   ' '; Body_t       body;
