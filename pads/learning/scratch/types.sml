@@ -502,7 +502,6 @@ struct
 		| RefinedBase _ => false
 		| TBD _ => false
 		| Bottom _  => false
-		| Poption (_, t) => notInlineTy t
 		| _ => true
     	fun tyToInlinePADS prefix mode ty = labelToPADS prefix mode (getLabelParam ty)
         fun tokenToPADS label suffix token mode =
@@ -514,7 +513,7 @@ struct
 	in
 	  typedef ^
           (case token of 
-		Pstring _ => "MyString " ^ label'
+		Pstring _ => "Word " ^ label'
               | Pint _ => "Pint32 " ^ label'
 	      | Pfloat _ => "Pfloat32 " ^ label'
 	      | Ptime _ => "Ptime " ^ label'
@@ -852,12 +851,17 @@ struct
 		      (arrayBodyToInlinePADS body sep term len) ^
 		      prefix ^ "};\n")
 		  end
-             | Poption (aux, ty) =>
-		if (mode = 0)
-		then 
-		  if notInlineTy ty then (TyToPADS prefix "" false 0 nil ty)
-		  else ""
-		else "Popt " ^ (TyToPADS "" "" false 2 nil ty) ^ " v" ^ label ^ ";\n"
+             | Poption (aux, body) =>
+		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
+		else if mode = 2 then (tyToInlinePADS "" mode ty)
+		else
+		  let
+		    val pre = if (notInlineTy body) then 
+				TyToPADS prefix "" false 0 nil body
+			      else ""
+		  in (pre ^ pRecord ^
+		    "Popt " ^ (TyToPADS "" "" false 2 nil body) ^ " " ^ label ^ ";\n")
+		  end
 	     | _ => ""
          )
 	)
@@ -866,7 +870,7 @@ struct
      fun TyToPADSFile ty =
 	let
 	  val recordLabel = getLabelString (getAuxInfo ty)
-	  val pads = "Ptypedef Pstring_ME(:\"/[A-Za-z][0-9a-zA-Z_\\-]*/\":) MyString;\n" ^
+	  val pads = "Ptypedef Pstring_ME(:\"/[A-Za-z][0-9a-zA-Z_\\-]*/\":) Word;\n" ^
 			(TyToPADS "" "" true 0 nil ty) ^
 			"Psource Parray entries_t {\n" ^
 		    	"\t" ^ recordLabel ^ "[];\n" ^
