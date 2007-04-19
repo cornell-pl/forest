@@ -17,6 +17,9 @@ MAKETARGET = $(MAKE) --no-print-directory -C $@ -f $(CURDIR)/GNUmakefile $(MAKEC
 .PHONY: $(AST_ARCH)
 $(AST_ARCH):
 	+@echo "Making $(MAKECMDGOALS) in $@"
+	+@(if [ ! -e .cvsignore ]; then \
+	        touch .cvsignore; \
+	  fi)
 	+@(if [ ! -d $@ ]; then \
 		mkdir -p $@; \
 		if ( grep "$(AST_ARCH)" .cvsignore ); then \
