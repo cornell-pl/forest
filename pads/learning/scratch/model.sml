@@ -100,6 +100,7 @@ structure Model = struct
     (* Complexity of refined option type, assuming multiplier 1 *)
     fun refinedOptionComp ( ro : Refined option ) : TyComp =
     ( case ro of
+	   (*refined type doesn't exist, assume bigger value *)
            NONE   => zeroComps
          | SOME r => refinedComp 1.0 1 1 r (* Probably wrong ***** *)
     )
@@ -297,12 +298,21 @@ structure Model = struct
              let val maxlen           = maxInt (map #1 ls)
                  val mBody            = measure body
                  val { tc = tbody, adc = abody, dc = dbody } = getComps mBody
+		(* Do not count the complexity of len, term and sep as these are desirable info *)
+		(*
                  val { tc = tlen, adc = alen, dc = dlen }    = refinedOptionComp olen
                  val { tc = tterm, adc = aterm, dc = dterm } = refinedOptionComp oterm
                  val { tc = tsep, adc = asep, dc = dsep }    = refinedOptionComp osep
                  val tcomp = sumComps [ constructorComp, tbody, tterm, tsep, unitComp, unitComp ]
                  val acomp = sumComps [ abody, alen, aterm, asep]
                  val dcomp = sumComps [ dbody, dlen, dterm, dsep]
+		*)
+		 val tlen = case olen of NONE => unitComp | _ => zeroComp
+		 val tsep = case osep of NONE => unitComp | _ => zeroComp
+		 val tterm = case oterm of NONE => unitComp | _ => zeroComp
+                 val tcomp = sumComps [ constructorComp, tbody, tlen, tsep, tterm ]
+                 val acomp = abody
+                 val dcomp = dbody
                  val comps = { tc = tcomp, adc = acomp, dc = dcomp }
                  fun updateRArray ( comps : TyComp ) =
                    RArray ( updateComps aux comps, osep, oterm, mBody, olen, ls )
