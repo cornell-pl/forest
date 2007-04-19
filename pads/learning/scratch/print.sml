@@ -1,7 +1,8 @@
 structure Printing = 
 struct
     open Types
-    open Structure
+    open Model
+(*    open Structure*)
    
     fun dumpLToken (strm:TextIO.outstream) (tk:Token,loc:location) : unit =
         TextIO.output(strm, tokenToString tk)
@@ -38,7 +39,8 @@ struct
 	let val strm = TextIO.openOut fileName
             val () = TextIO.output(strm, parametersToString())
 	    val () = TextIO.output(strm, "Complexity of derived type:\n\t")
-	    val () = TextIO.output(strm, complexityToString(complexity ty))
+	    (* remove dependency of this file to the structure.sml *)
+	    val () = TextIO.output(strm, showTyComp(getComps (measure ty)))
 	in
 	    TextIO.closeOut strm
 	end
@@ -100,8 +102,8 @@ struct
 			      end)
 		end
     	in  
-          ( print "Complexity of inferred type:\n\t";
-            printComplexity (complexity ty);
+          ( (*print "Complexity of inferred type:\n\t";
+            printComplexity (complexity ty); *)
             print "\nOutputing partitions to directory: "; print path; print "\n";
             if OS.FileSys.isDir path handle SysErr => 
 		(OS.FileSys.mkDir path; true)
