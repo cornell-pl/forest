@@ -139,8 +139,7 @@ structure Model = struct
                                          }
                   | Pwhite s          => mkBaseComp avglen totlen numWhiteChars
                   | Other c           => mkBaseComp avglen totlen numStringChars
-		   (* need to penalize Pempty here as it's not a PADS type *)
-                  | Pempty            => { tc  = multComp 2 constructorComp
+                  | Pempty            => { tc  = constructorComp
                                          , adc = zeroComp
                                          , dc  = zeroComp
                                          }

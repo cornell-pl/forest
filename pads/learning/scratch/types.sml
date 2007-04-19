@@ -531,6 +531,7 @@ struct
 	      | PbXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\-<>]+/\":) " ^ label'
 	      | PeXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\-<>]+/\":) "  ^ label'
 	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
+	      | Pempty => "Pcompute Pint8 " ^ "v"^ label ^ suffix ^ " = 0;\n" 
 	      | _ => raise InvalidTokenTy (*there should not be any Pempty*)
           )
 	end 

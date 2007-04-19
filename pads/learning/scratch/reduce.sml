@@ -574,7 +574,7 @@ and refine_array ty =
 	| Pstruct(a, tylist) =>
 		let 
 (*
-		  val _ = (print "trying to refine array in struct \n"; printTy ty)
+		  val _ = (print "trying to refine array in struct \n"; printTy (measure ty))
 *)
 		  fun findRefined ty =
 		  (*funtion to find the first base or refine type and convert it to refined type *)
@@ -608,7 +608,7 @@ and refine_array ty =
 
 		  val tylist' = updateArray tylist nil
 (*
-		  val _ = (print "Done refining array in struct to:\n"; printTy (Pstruct(a, tylist')))
+		  val _ = (print "Done refining array in struct to:\n"; printTy (measure (Pstruct(a, tylist'))))
 *)
 		in Pstruct(a, tylist')
 		end
@@ -799,6 +799,7 @@ and to_float ty =
 	  end
 	| _ => ty
 
+(* this rule is used for only one case now: ty1 + Pemty ==> Poption ty1 *)
 and union_to_optional ty =
 	case ty of 
 	Punion (a, tys) =>
@@ -814,6 +815,11 @@ and union_to_optional ty =
 
 		val nonPemptyTys = List.filter isNotPempty tys
 	     in
+		if length nonPemptyTys = 0 
+		  then genEmptyBase a (getCoverage ty)
+		else if length nonPemptyTys = 1 then Poption(a, (hd nonPemptyTys))
+	   	else ty
+(*
 		if length tys = length nonPemptyTys then ty (* no Pempty in this list *)
 		else (* some Pemptys exist *)
 		  if length nonPemptyTys = 0 (* all Pempty *)
@@ -830,6 +836,7 @@ and union_to_optional ty =
 *)
 		    in newTy
 		  end
+*)
 	     end	
 	| _ => ty
 
