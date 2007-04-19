@@ -11,3 +11,5 @@ ai.3000 1 hr
 ai.big    -- same format as ai.3000 but longer
 dibbler.1000 0.5 hr
 dibbler.10001  -- same format as dibbler.1000 but longer
+crashreporter.log 2 hr
+railroad.txt	2 hr
