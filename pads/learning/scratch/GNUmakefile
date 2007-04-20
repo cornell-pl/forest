@@ -19,6 +19,7 @@
 #    a difference or not.
 # 4. To make a new silver version, e.g. for yum.txt, type
 #    make "yum.txt.silver".
+# 5. To run all the outputs, type "make outputs"
 #
 ######################################################################
 
@@ -56,23 +57,29 @@ BUILD_EXEC = build-exec.sml
 all:	learn
 
 tokens.lex.sml: tokens.lex
-	@echo Making learning program
+	@echo Running lexer generator
 	lexgen --ml-lex-mode tokens.lex
 
 learn:  complexity.sml
-learn:  distribution.sml
-learn:  model.sml
 learn:  config.sml
-learn:  utils.sml
-learn:  parseCmdLine-sig.sml
+learn:  distribution.sml
+learn:	main.sml
+learn:  matrix.sml
+learn:  model.sml
+learn:  partition.sml
+learn:  options.sml
 learn:  parseCmdLine.sml
+learn:  parseCmdLine-sig.sml
+learn:  print.sml
+learn:  rat.sml
+learn:  reduce.sml
+learn:  rewrite.sml
+learn:  structure.sml
 learn:  tokens.lex.sml
 learn:  types.sml
-learn:  structure.sml
-learn:  print.sml
-learn:	main.sml
+learn:  utils.sml
 	@echo Making learning program
-	$(SML) < $(BUILD_EXEC)
+	nice -n20 $(SML) < $(BUILD_EXEC)
 	@echo
 
 ######################################################################
@@ -84,10 +91,10 @@ learn:	main.sml
 IND  = data
 OUTD = output
 # Data files, omitting those that take too long
-DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "ijnltif|asl.log|lsof")
-SILVERS = $(addsuffix .ag,$(DATA))
-XS      = $(addsuffix .x,x $(DATA))
-TESTS   = $(addsuffix .test,$(DATA))
+DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG")
+SILVERS  = $(addsuffix .ag,$(DATA))
+XS       = $(addsuffix .x,x $(DATA))
+TESTS    = $(addsuffix .test,$(DATA))
 
 .PHONY: $(DATA)
 .PHONY: x
@@ -98,29 +105,27 @@ $(XS): %.x: %
 silvers: $(SILVERS)
 	echo Making silver version of each data file output
 
-define tosilver
-foreach 
-cp output/$(*F)/Ty silver/$(*F);
-cp output/$(*F)/Params silver/$(*F);
-endef
-
 define silver-it
 @if [ ! -d silver/$(*F) ] ; then mkdir silver/$(*F); fi
 cp output/$(*F)/Ty silver/$(*F);
 cp output/$(*F)/Params silver/$(*F);
+cp output/$(*F)/Complexity silver/$(*F);
+echo "Sleep for four seconds";
+sleep 4;
 endef
 
 # The silver file depends on the corresponding output file.
 $(SILVERS): %.ag: %
+	$(silver-it)
 
 # %.silver :    ; $(silver-it)
 # %.ag     :    ; $(silver-it)
 
 define learn-it
+# if [ -d output/$@ ] ; then rm -f output/$@/*; fi
 ./learn data/$@ -d output/$@ `maxdepth.pl $@`
-touch output/$@;
-echo "Sleep for five seconds";
-sleep 5;
+echo "Sleep for four seconds";
+sleep 4;
 endef
 
 outputs : $(DATA)
@@ -146,7 +151,6 @@ hp-array:                $(IND)/hp-array                ; $(learn-it)
 hp-struct:               $(IND)/hp-struct               ; $(learn-it)
 ijnltif:                 $(IND)/ijnltif                 ; $(learn-it)
 install.log:             $(IND)/install.log             ; $(learn-it)
-# **** Generates error with maxdepth=7
 interactions.txt.small:  $(IND)/interactions.txt.small  ; $(learn-it)
 interface.loop:          $(IND)/interface.loop          ; $(learn-it)
 lsof:                    $(IND)/lsof                    ; $(learn-it)

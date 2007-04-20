@@ -30,7 +30,17 @@ struct
     val zeroComps : TyComp = { tc = zeroComp, adc = zeroComp, dc = zeroComp }
 
     fun showTyComp ( tyc : TyComp ) : string =
-        "{" ^ showComp (#tc tyc) ^ ", " ^ showComp (#adc tyc) ^ ", " ^ showComp (#dc tyc) ^ "}"
+        "{ TC = " ^ showBits (#tc tyc) ^
+        ", ADC = " ^ showBits (#adc tyc) ^
+        ", DC = " ^ showBits (#dc tyc) ^ " }"
+
+    (* A fancier print statement for type complexity *)
+    fun printTyComp ( pre : string ) ( t : TyComp ) : unit =
+        let val () = print ( "\n" ^ pre ^ " type complexity = "   ^ showBits ( #tc t ) )
+            val () = print ( "\n" ^ pre ^ " atomic complexity = " ^ showBits ( #adc t ) )
+            val () = print ( "\n" ^ pre ^ " data complexity = "   ^ showBits ( #dc t ) ^ "\n\n" )
+        in ()
+        end
 
     fun combTyComp ( t1 : TyComp ) ( t2 : TyComp ) : TyComp =
         { tc  = combine (#tc t1) (#tc t2)

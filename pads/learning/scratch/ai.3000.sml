@@ -2,6 +2,7 @@ structure AI = struct
     open Model
     val aiAux: AuxInfo = {coverage = 3000, label = NONE, tycomp = zeroComps }
     val aiLoc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
+
     val ip : Ty = Base(aiAux, [(Pip "135.207.23.32", aiLoc)])
     val host : Ty = Base(aiAux, [(Phostname "www.cnn.com", aiLoc)])
     val client_t : Ty = Punion (aiAux, [ip, host])

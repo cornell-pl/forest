@@ -8,22 +8,22 @@ structure Config = struct
     val DEF_NOISE_PERCENTAGE  =  0.0
     val DEF_ARRAY_WIDTH_THRESHOLD =  2
 
-    val def_depthLimit =  50
-    val def_outputDir  =  "gen/"
-    val def_descName   = "generatedDescription"
-    val def_srcFiles    = [] : string list
+    val def_depthLimit   = 50
+    val def_outputDir    = "gen/"
+    val def_descName     = "generatedDescription"
+    val def_srcFiles     = [] : string list
     val def_printLineNos = false
     val def_printIDs     = true
     val def_entropy      = false
 
-    val depthLimit   = ref def_depthLimit
-    val outputDir    = ref def_outputDir
-    val descName     = ref def_descName
-    val srcFiles     = ref def_srcFiles
-    val printLineNos = ref def_printLineNos
-    val printIDs = ref def_printIDs
-    val printEntropy = ref def_entropy
-    val executableDir = ref ""
+    val depthLimit        = ref def_depthLimit
+    val outputDir         = ref def_outputDir
+    val descName          = ref def_descName
+    val srcFiles          = ref def_srcFiles
+    val printLineNos      = ref def_printLineNos
+    val printIDs          = ref def_printIDs
+    val printEntropy      = ref def_entropy
+    val executableDir     = ref ""
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
@@ -34,7 +34,7 @@ structure Config = struct
     fun histEqTolerance   x = Real.ceil((!HIST_PERCENTAGE)   * Real.fromInt(x)) 
     fun isStructTolerance x = Real.ceil((!STRUCT_PERCENTAGE) * Real.fromInt(x)) 
     fun isJunkTolerance   x = Real.ceil((!JUNK_PERCENTAGE)   * Real.fromInt(x)) 
-    fun isNoiseTolerance  x = Real.ceil((!NOISE_PERCENTAGE)   * Real.fromInt(x)) 
+    fun isNoiseTolerance  x = Real.ceil((!NOISE_PERCENTAGE)  * Real.fromInt(x)) 
 
     fun parametersToString () = 
 	(   ("Source files to process: "^(String.concat (!srcFiles))   ^"\n")^

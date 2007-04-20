@@ -1,33 +1,17 @@
-Pstruct(Id = BTy_27 999, 22b, 308.592b)
-	[Int] [101...103](Id = BTy_0 999, 1b, 4.755b);
-	[StringConst] "      "(Id = BTy_1 999, 1b, 2.585b);
-	[Int] [101...9890](Id = BTy_2 999, 1b, 53.028b);
-	[StringConst] "      "(Id = BTy_3 999, 1b, 2.585b);
-	[Int] [~10...12072](Id = BTy_4 999, 1b, 67.803b);
-	Punion(Id = BTy_6 999, 4b, 4.170b)
-		[StringConst] ""(Id = BTy_5 937, 1b, 0b);
-		Pstruct(Id = BTy_9 62, 2b, 3.170b)
-			[StringConst] "."(Id = BTy_7 62, 1b, 0b);
-			[Int] [1...9](Id = BTy_8 62, 1b, 3.170b);
-		End Pstruct;
-	End Punion;
-	[StringConst] "                   "(Id = BTy_11 999, 1b, 4.248b);
-	[IntConst] [0](Id = BTy_12 999, 1b, 0b);
-	Punion(Id = BTy_14 999, 4b, 79.512b)
-		[StringConst] ""(Id = BTy_13 943, 1b, 0b);
-		Pstruct(Id = BTy_17 56, 2b, 78.512b)
-			[StringConst] "."(Id = BTy_15 56, 1b, 0b);
-			[Int] [2...53321](Id = BTy_16 56, 1b, 78.512b);
-		End Pstruct;
-	End Punion;
-	[StringConst] "                   "(Id = BTy_19 999, 1b, 4.248b);
-	Punion(Id = BTy_24 999, 5b, 84.073b)
-		Pstruct(Id = BTy_23 988, 3b, 83.073b)
-			[Int] [0...1](Id = BTy_20 988, 1b, 1b);
-			[StringConst] "."(Id = BTy_21 988, 1b, 0b);
-			[Int] [1...87353](Id = BTy_22 988, 1b, 82.073b);
-		End Pstruct;
-		[IntConst] [0](Id = BTy_25 11, 1b, 0b);
-	End Punion;
-	[StringConst] "   "(Id = BTy_26 999, 1b, 1.585b);
+Pstruct(Id = BTy_27 999, tc: 1290.728b, ac: 48.173b, dc: 42182.555b, raw: 43473.283b)
+	[Int] [101...103] (Id = BTy_0 999, tc: 18.389b, ac: 1.585b, dc: 1583.378b, raw: 1601.767b) (avg: 4.00, tot: 3996);
+	[StringConst] "      " (Id = BTy_1 999, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b) (avg: 6.00, tot: 5994);
+	[Int] [101...9890] (Id = BTy_2 999, tc: 24.974b, ac: 13.257b, dc: 13243.836b, raw: 13268.810b) (avg: 4.00, tot: 3996);
+	[StringConst] "      " (Id = BTy_3 999, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b) (avg: 6.00, tot: 5994);
+	[Pfloat] (Id = BTy_4 999, tc: 5.044b, ac: 3.731b, dc: 3727.203b, raw: 3732.248b) (avg: 1.12, tot: 1122);
+	[Enum] {[StringConst] "             ", [StringConst] "              ", [StringConst] "               ", [StringConst] "                ", [StringConst] "                 ", [StringConst] "                  ", [StringConst] "                   ", } (Id = BTy_11 999, tc: 715.163b, ac: 2.807b, dc: 19.651b, raw: 734.814b) (avg: 18.81, tot: 18796);
+	[Pfloat] (Id = BTy_12 999, tc: 5.044b, ac: 4.236b, dc: 4232.136b, raw: 4237.181b) (avg: 1.28, tot: 1274);
+	[Enum] {[StringConst] "             ", [StringConst] "              ", [StringConst] "                   ", } (Id = BTy_19 999, tc: 297.763b, ac: 1.585b, dc: 4.755b, raw: 302.517b) (avg: 18.67, tot: 18650);
+	Switch(BTy_2)(Id = BTy_24 999, tc: 16.133b, ac: 19.386b, dc: 19366.841b, raw: 19382.974b):
+	case [StringConst] "*":
+		[Pfloat] (Id = BTy_20 988, tc: 5.044b, ac: 19.602b, dc: 19366.841b, raw: 19371.885b) (avg: 5.90, tot: 5830);
+	case [Enum] {[IntConst] [9100], [IntConst] [9300], [IntConst] [9400], [IntConst] [9710], [IntConst] [9720], [IntConst] [9860], [IntConst] [9870], [IntConst] [9880], [IntConst] [9890], }:
+		[Int] [0...0] (Id = BTy_25 11, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b) (avg: 1.00, tot: 11);
+	End Switch;
+	[Enum] {[StringConst] "   ", [StringConst] "    ", [StringConst] "         ", } (Id = BTy_26 999, tc: 117.763b, ac: 1.585b, dc: 4.755b, raw: 122.517b) (avg: 3.16, tot: 3161);
 End Pstruct

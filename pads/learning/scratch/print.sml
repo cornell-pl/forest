@@ -29,12 +29,22 @@ struct
 
     (* Dump a type to the specified file *)
     fun dumpTy (fileName:string) (ty:Ty) : unit = 
-        let val strm = TextIO.openOut fileName
+        let val ()   = print ( "Opening: " ^ fileName ^ ", length " ^ (Int.toString (size fileName)) ^ "\n" )
+            val strm = TextIO.openOut fileName
             val ()   = TextIO.output(strm, TyToString ty)
         in
             TextIO.closeOut strm
         end
 
+    (* Dump type complexity to the specified file *)
+    fun dumpTyComp ( fileName : string ) ( t : TyComp ) : unit =
+        let val ()   = print ( "opening: " ^ fileName ^ ", length " ^ (Int.toString (size fileName)) ^ "\n" )
+            val strm = TextIO.openOut fileName
+            val ()   = TextIO.output ( strm, showTyComp t )
+        in TextIO.closeOut strm
+        end
+
+    (* Dump learning program parameters to the specified file *)
     fun dumpParameters (fileName:string) (ty:Ty) : unit = 
 	let val strm = TextIO.openOut fileName
             val () = TextIO.output(strm, parametersToString())
@@ -76,12 +86,12 @@ struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTyInfo (path:string) (descName:string) (ty:Ty) : unit = 
+    fun dumpTyInfo ( path : string ) ( descName : string ) ( ty : Ty ) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) => if !printIDs then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls) else ()
-                 | TBD(aux,i, cl)    => dumpCL (path^"TBD_"^(Int.toString i)) cl
-                 | Bottom(aux,i, cl) => dumpCL (path^"BTM_"^(Int.toString i)) cl
+                 | TBD(aux,i, cl)    => dumpCL (path ^ "TBD_"^(Int.toString i)) cl
+                 | Bottom(aux,i, cl) => dumpCL (path ^ "BTM_"^(Int.toString i)) cl
                  | Pstruct (aux,tys) => List.app dumpTBDs tys
                  | Punion (aux,tys) => List.app dumpTBDs tys
                  | Parray (aux,{first=ty1,body=ty2,last=ty3,...}) => List.app dumpTBDs [ty1,ty2,ty3]
@@ -110,6 +120,7 @@ struct
             then ( dumpParameters (path ^ "Params") ty
                  ; dumpTBDs ty
                  ; dumpTy (path ^ "Ty") ty
+                 ; dumpTyComp ( path ^ "Complexity" ) ( getComps ty )
                  ; let val tyName = dumpPADSdesc(path^descName^".p") ty
                    in 
 		       dumpAccumProgram path descName tyName;

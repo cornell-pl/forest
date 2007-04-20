@@ -15,20 +15,16 @@ structure Main : sig
     open Options
 
     fun doIt () = 
-	let val fileNames         = !srcFiles
-	    val ty               = computeStructure fileNames
-	    val rewrittenTy      = Rewrite.run(ty)
-            val measuredTy       = measure rewrittenTy
-            val comps            = getComps measuredTy
-            val tcomp            = #tc comps
-            val acomp            = #adc comps
-            val dcomp            = #dc comps
+	let val fileNames      = !srcFiles
+	    val ty             = computeStructure fileNames
+	    val rewrittenTy    = Rewrite.run(ty)
+            val measuredTy     = measure rewrittenTy
+            val comps          = getComps measuredTy
+            val outDir         = !outputDir
+            val compFile       = outDir ^ "Comp"
 	in
 	    ( Printing.dumpTyInfo (!outputDir) (!descName) measuredTy
-            , print ( "\nCompleted " ^ (lconcat (!srcFiles)) )
-            , print ( "\nOverall type complexity = " ^ showBits tcomp )
-            , print ( "\nOverall atomic complexity = " ^ showBits acomp )
-            , print ( "\nOverall data complexity = " ^ showBits dcomp ^ "\n\n" )
+            , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             )
 	end
 
@@ -37,7 +33,7 @@ structure Main : sig
     structure PCL = ParseCmdLine
 
     fun setOutputDir    s = outputDir  := (s^"/")
-    fun setDescName     n = descName  := n
+    fun setDescName     n = descName   := n
     fun setDepth        d = depthLimit := d
     fun setHistPer      h = HIST_PERCENTAGE := h
     fun setStructPer    s = STRUCT_PERCENTAGE := s
