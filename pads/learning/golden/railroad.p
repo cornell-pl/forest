@@ -5,19 +5,20 @@ Pstruct secHeader {
         "rail";
         ",,,,,,,,,,,,,,,";
 };
-Punion note {
+Punion title {
         Pstring_ME(: "/\"[^\"]\*\"/" :) noteinquotes; 
         Pstring_ME(: "/[^,]\*/" :) noteoutsidequotes; 
 };
 Pstruct comments {
-	note vBTy_12;
+	title vBTy_12;
 	",,,,,,,,,,,,,,,";
 };
+Popt Pstring_ME(: "/\\s/" :) spaceop;
 Pstruct city {
 	'"';
 	Pstring_ME(:"/[^,]\*/":) vBTy_17;
 	',';
-	' ';
+	spaceop spop;
 	Pstring_ME(:"/[A-Z][A-Z]/":) vBTy_20;
 	'"';
 };
@@ -33,7 +34,7 @@ Parray stations {
 	nostations [14] : Psep(',');
 };
 Pstruct record {
-	Pstring_ME(:"/[^,]\*/":) vBTy_32;
+	title vBTy_32;
 	',';
 	city vBTy_35;
 	',';

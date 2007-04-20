@@ -1,8 +1,8 @@
-Ptypedef Pstring(:' ':) FilePath;
+Ptypedef Pstring_SE(:"/ \\-|$/":) FilePath;
 
 Penum Crashdump_t {
-        crashdump,
-        crashreporterd
+        crashdump = 1,
+        crashreporterd = 2
 };
 
 Pstruct StartPath {
@@ -51,10 +51,9 @@ Punion Report_t (:Crashdump_t crash:)
  }
 };
 
+Ptypedef Ptimestamp_explicit_FW(: 24, "%a %b %d %H:%M:%S %Y", P_cstr2timezone("-0500") :) timestamp_t;
 Precord Pstruct entry_t {
-         Pdate(:' ':)   date;          
-   ' ';  Ptime(:' ':)   time;
-   ' ';  Puint32  year;
+         timestamp_t mytime;
    ' ';  Crashdump_t crash;
    '[';  Puint32        dumpid;
    "]: "; Report_t(:crash:) report; 
