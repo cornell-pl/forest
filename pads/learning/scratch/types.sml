@@ -542,10 +542,9 @@ struct
 	      | PeXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\\\-<>]+/\":) "  ^ label'
 	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
 	      | Pempty => "Pcompute Pint8 " ^ "v"^ label ^ suffix ^ " = 0;\n" 
-	      | _ => raise InvalidTokenTy (*there should not be any Pempty*)
+	      | _ => raise InvalidTokenTy
           )
 	end 
-
 	fun allStringConsts relist =
 		foldr myand true (map (fn re => (case re of 
 						StringConst _ => true 
@@ -629,6 +628,15 @@ struct
 	      | LabelRef _ => ""
 	    ) 
 	end
+
+	(*this function returns the type string of a Ty for use in Switches*)
+	fun getTypeString ty =
+	  if notInlineTy ty then getLabelString (getAuxInfo ty)
+	  else case ty of
+		Base (_, (tok, loc)::tl) => tokenToPADS "" "" tok 2
+		| RefinedBase (_, refined, _) => refinedToPADS "" "" "" 2 refined
+		| _ => raise TyMismatch
+
 (*
 	fun refinedToInlineArray prefix refined =
 	    (*only handles a few types of refined here *)
@@ -830,8 +838,7 @@ struct
 		   val tys = map #2 retys
 		   val nonInlineTys = List.filter notInlineTy tys
 		   val pre = lconcat (map (TyToPADS prefix "" false 0 nil) nonInlineTys)
-		   val switch = Atom.toString id
-		   val switchvar = "v" ^ switch
+		   val switchvar = "v" ^ (Atom.toString id)
 		   val switchedTyOp = getTyById siblings id
 	  	   fun indexes n = List.tabulate (n, (fn x => x))
 	           fun getPairs res = ListPair.zip (res, (indexes (length res)))
@@ -843,13 +850,17 @@ struct
 			(lconcat (map (TyToPADS (prefix ^ "\t") "" false 1 nil) tys)) ^
 		   prefix ^ "};\n")
 		  | SOME switchedTy =>
-		   (pre ^ pRecord ^
-		   "Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 
-		   prefix ^ "  Pswitch (" ^ switchvar ^ ") {\n" ^
+		    let 
+			val switch = getTypeString switchedTy
+		    in
+		   	(pre ^ pRecord ^
+		   	"Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 
+		   	prefix ^ "  Pswitch (" ^ switchvar ^ ") {\n" ^
 			(lconcat (map (fn (i, rety) => reToSwitch switchedTy i rety) 
 					(ListPair.zip((indexes (length retys)), retys)))) ^
-		   prefix ^ "  }\n" ^
-		   prefix ^ "};\n")
+		   	prefix ^ "  }\n" ^
+		   	prefix ^ "};\n")
+		    end
 		  end	
              | RArray (aux, sep, term, body, len, lengths) => 
 		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
