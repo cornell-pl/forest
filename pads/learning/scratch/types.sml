@@ -526,10 +526,10 @@ struct
 	      | Ppath _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
 	      | Pemail _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
 	      | Pmac _ => "Pstring_ME(:\"/[:-[:xdigit:]]+:/\":) " ^ label'
-	      | Pwhite _ => "Pstring_ME(:\"/[[:space:]]{1}/\":) " ^ label'
+	      | Pwhite _ => "Pstring_ME(:\"/\\\\s/\":) " ^ label' 
 	      | Other c => "Pchar " ^ label'
-	      | PbXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\-<>]+/\":) " ^ label'
-	      | PeXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\-<>]+/\":) "  ^ label'
+	      | PbXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\\\-<>]+/\":) " ^ label'
+	      | PeXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\\\-<>]+/\":) "  ^ label'
 	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
 	      | Pempty => "Pcompute Pint8 " ^ "v"^ label ^ suffix ^ " = 0;\n" 
 	      | _ => raise InvalidTokenTy (*there should not be any Pempty*)
@@ -874,7 +874,7 @@ struct
      fun TyToPADSFile ty =
 	let
 	  val recordLabel = getLabelString (getAuxInfo ty)
-	  val pads = "Ptypedef Pstring_ME(:\"/[A-Za-z][0-9a-zA-Z_\\-]*/\":) Word;\n" ^
+	  val pads = "Ptypedef Pstring_ME(:\"/[A-Za-z][0-9a-zA-Z_\\\\-]*/\":) Word;\n" ^
 			(TyToPADS "" "" true 0 nil ty) ^
 			"Psource Parray entries_t {\n" ^
 		    	"\t" ^ recordLabel ^ "[];\n" ^
