@@ -75,6 +75,18 @@ struct
 	    TextIO.closeOut strm
 	end
 
+    fun dumpAccumXMLProgram (path:string) (descName:string) (tyName:string) : unit = 
+	let val accumProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+                               "#define PADS_TY_STR \""^descName^"\"\n"^
+                               "#include \""^descName^".h\"\n"^
+                               "#include \"template/accum_report_xml.h\"\n"
+
+	    val strm = TextIO.openOut (path^descName^"-accum_xml.c")
+            val () = TextIO.output(strm, accumProgram)
+	in
+	    TextIO.closeOut strm
+	end
+
     fun dumpXMLProgram (path:string) (descName:string) (tyName:string) : unit = 
 	let val accumProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
                                "#include \""^descName^".h\"\n"^
@@ -124,6 +136,7 @@ struct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") ty
                    in 
 		       dumpAccumProgram path descName tyName;
+		       dumpAccumXMLProgram path descName tyName;
 		       dumpXMLProgram path descName tyName
 		   end;
 		   print "Excutable directory:"; print (!executableDir); print "\n";

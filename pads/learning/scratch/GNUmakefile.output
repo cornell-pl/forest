@@ -35,6 +35,9 @@ VPATH = ..
 %-accum: $(GEN_DIR)/%.c %-accum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
+%-accum_xml: $(GEN_DIR)/%.c %-accum_xml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
 %-filter: $(GEN_DIR)/%.c %-filter.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 

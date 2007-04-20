@@ -15,13 +15,16 @@ structure Main : sig
     open Options
 
     fun doIt () = 
-	let val fileNames      = !srcFiles
-	    val ty             = computeStructure fileNames
-	    val rewrittenTy    = Rewrite.run(ty)
-            val measuredTy     = measure rewrittenTy
-            val comps          = getComps measuredTy
-            val outDir         = !outputDir
-            val compFile       = outDir ^ "Comp"
+	let val fileNames         = !srcFiles
+	    val ty               = computeStructure fileNames
+            val ()               = print "Finished structural analysis.\n"          
+	    val rewrittenTy      = Rewrite.run(ty)
+            val ()               = print "Finished rewriting.\n"          
+            val measuredTy       = measure rewrittenTy
+            val comps            = getComps measuredTy
+            val tcomp            = #tc comps
+            val acomp            = #adc comps
+            val dcomp            = #dc comps
 	in
 	    ( Printing.dumpTyInfo (!outputDir) (!descName) measuredTy
             , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )

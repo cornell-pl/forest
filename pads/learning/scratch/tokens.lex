@@ -63,8 +63,7 @@ username = [a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~][a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~]*[a-z
 	   | [a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~];
 email ={str1}@{hostname};
 url = (http:\/\/)?{hostname}(:{port})?\/?(\/{filename})*\/?(\?)?\&?{query}?(#{str1})? |
-      (http:\/\/)?{ipAddr}(:{port})?\/?(\/{filename})*\/?(\?)?\&?{query}?(#{str1})? |
-      \/?({filename}\/?)+\?{query}(#{str1})?; 
+      (http:\/\/)?{ipAddr}(:{port})?\/?(\/{filename})*\/?(\?)?\&?{query}?(#{str1})? ;
 macaddr = {hexdoublet}:{hexdoublet}:{hexdoublet}:{hexdoublet}:{hexdoublet}:{hexdoublet} |
 	  {hexdoublet}-{hexdoublet}-{hexdoublet}-{hexdoublet}-{hexdoublet}-{hexdoublet};
 xmlb    = \<([a-zA-Z])+\>;
