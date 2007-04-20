@@ -531,7 +531,7 @@ struct
 	      | Ptime _ => "Ptime " ^ label'
 	      | Pdate _ => "Pdate " ^ label'
 	      | Pip _ => "Pip " ^ label' 
-	      | Phostname _ => "Phostname " ^ label'
+	      | Phostname _ => "Pstring_ME(:\"[[:word:]\\\\-\\\\.]+/\":) " ^ label'
 	      | Purl _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
 	      | Ppath _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
 	      | Pemail _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
@@ -618,12 +618,12 @@ struct
 				 if mode = 0 then 
 					("Pchar " ^ label ^ " : " ^ label ^ " x =>  {x == '" ^ s ^ "'};\n")
 			    	 else if mode=1 then ("v" ^ label ^ suffix ^ " Pfrom('" ^ s ^ "');\n")
-			    	 else if mode=2 then (label ^ " ")
+			    	 else if mode=2 then ("Pstring_ME(:\"/" ^ escape(s) ^ "/\":) ")
 				 else ("'" ^ s ^ "';\n")
 				)
 				else if mode = 1 then ("v" ^ label ^ suffix ^ " Pfrom(\"" ^ s ^ "\");\n")
 				     else if mode = 3 then ("\"" ^ s ^ "\";\n")
-				     else ("Pstring_ME(:\"/"^ s ^"/\":) " ^ label')
+				     else ("Pstring_ME(:\"/"^ escape(s) ^"/\":) " ^ label')
 	      | Enum res => ""
 	      | LabelRef _ => ""
 	    ) 
@@ -881,7 +881,7 @@ struct
 		else if mode = 2 then (tyToInlinePADS "" mode ty)
 		else
 		  let
-		    val pre = if (notInlineTy body) then 
+		    val pre = if (notInlineTy body) orelse (isNumConst body) then 
 				TyToPADS prefix "" false 0 nil body
 			      else ""
 		  in (pre ^ pRecord ^

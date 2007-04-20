@@ -48,4 +48,16 @@ struct
     in position' 0 a l
     end
 
+   (* replace reserved char in a string with escapes for use in PADS re *)
+   fun escape s =
+     let
+	fun escapeChar (c:char) : string = case c of
+	  #"." => "\\\\."
+	| #"-" => "\\\\-"
+	| #"/" => "\\\\/"
+	| #"*" => "\\\\*"
+	| _ => Char.toString c
+     in
+        String.translate escapeChar s
+     end
 end
