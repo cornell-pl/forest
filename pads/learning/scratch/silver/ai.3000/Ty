@@ -1,59 +1,72 @@
-Pstruct(Id = BTy_54 3000, 37b, 1712.066b)
-	Punion(Id = BTy_1 3000, 15b, 898.645b)
-		[IP](Id = BTy_0 1704, 1b, 120b);
-		Pstruct(Id = BTy_56 1296, 13b, 777.645b)
-			Punion(Id = BTy_9 1296, 11b, 189.645b)
-				Pstruct(Id = BTy_8 1291, 6b, 151.852b)
-					Switch(BTy_6)(Id = BTy_4 1291, 4b, 31.852b):
-					case [StringConst] "*":
-						[StringConst] ""(Id = BTy_3 1246, 1b, 0b);
-					case [Enum] {[StringConst] "cust108", [StringConst] "cust230", [StringConst] "cust40", [StringConst] "inf121", }:
-						[Int] [1...130](Id = BTy_5 45, 1b, 21.067b);
-					End Switch;
-					[string](Id = BTy_6 1291, 1b, 120b);
-					[StringConst] "."(Id = BTy_7 1291, 1b, 0b);
+Punion(Id = BTy_81 3000, tc: 1239.470b, ac: 613.295b, dc: 1857417.731b, raw: 1858657.202b)
+	Pstruct(Id = BTy_80 2996, tc: 1228.382b, ac: 612.219b, dc: 1854740.731b, raw: 1855969.113b)
+		[URL] (Id = BTy_0 2996, tc: 5.044b, ac: 101.219b, dc: 303252b, raw: 303257.044b) (avg: 16.87, tot: 50542);
+		Poption(Id = BTy_2 2996, tc: 34.178b, ac: 1.051b, dc: 3b, raw: 37.178b)
+			[Enum] {[StringConst] "g", [StringConst] "v", } (Id = BTy_3 152, tc: 28.133b, ac: 1b, dc: 2b, raw: 30.133b) (avg: 1.00, tot: 152);
+		End Poption;
+		[StringConst] " - " (Id = BTy_4 2996, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b) (avg: 3.00, tot: 8988);
+		Punion(Id = BTy_8 2996, tc: 22.133b, ac: 1.014b, dc: 43b, raw: 65.133b)
+			[StringConst] "-" (Id = BTy_7 2995, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 2995);
+			[String] (Id = BTy_9 1, tc: 5.044b, ac: 42.000b, dc: 42b, raw: 47.044b) (avg: 7.00, tot: 7);
+		End Punion;
+		[StringConst] " [" (Id = BTy_10 2996, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b) (avg: 2.00, tot: 5992);
+		[Enum] {[StringConst] "15/Oct/1997", [StringConst] "16/Oct/1997", } (Id = BTy_12 2996, tc: 148.133b, ac: 1b, dc: 2b, raw: 150.133b) (avg: 11.00, tot: 32956);
+		[StringConst] ":" (Id = BTy_13 2996, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 2996);
+		[Time] (Id = BTy_14 2996, tc: 5.044b, ac: 386.555b, dc: 1158117.825b, raw: 1158122.870b) (avg: 14.00, tot: 41944);
+		[StringConst] "] \"" (Id = BTy_15 2996, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b) (avg: 4.00, tot: 11984);
+		[Enum] {[StringConst] "GET", [StringConst] "POST", } (Id = BTy_19 2996, tc: 58.133b, ac: 1b, dc: 2b, raw: 60.133b) (avg: 3.00, tot: 8989);
+		[StringConst] " /" (Id = BTy_20 2996, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b) (avg: 2.00, tot: 5992);
+		RArray(Id = BTy_21 2996, tc: 30.178b, ac: 37.277b, dc: 170988b, raw: 171018.178b)
+			Pstruct(Id = BTy_25 4587, tc: 22.133b, ac: 37.277b, dc: 170988b, raw: 171010.133b)
+				[String] (Id = BTy_23 4587, tc: 5.044b, ac: 37.277b, dc: 170988b, raw: 170993.044b) (avg: 6.21, tot: 28498);
+				[StringConst] "/" (Id = BTy_24 4587, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 4587);
+			End Pstruct;
+		End RArray;
+		Punion(Id = BTy_50 2996, tc: 668.990b, ac: 61.492b, dc: 166218.170b, raw: 166887.160b)
+			Pstruct(Id = BTy_49 2867, tc: 262.280b, ac: 63.129b, dc: 166167.170b, raw: 166429.450b)
+				Punion(Id = BTy_27 2867, tc: 148.118b, ac: 1.593b, dc: 11.585b, raw: 159.703b)
+					[Empty] (Id = BTy_26 2858, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b) (avg: 0.00, tot: 0);
+					Pstruct(Id = BTy_32 8, tc: 116.311b, ac: 2b, dc: 4b, raw: 120.311b)
+						[Enum] {[StringConst] "aimember", [StringConst] "fwq", } (Id = BTy_28 8, tc: 82.133b, ac: 1b, dc: 2b, raw: 84.133b) (avg: 3.62, tot: 29);
+						[Enum] {[StringConst] "&", [StringConst] "@", } (Id = BTy_29 8, tc: 28.133b, ac: 1b, dc: 2b, raw: 30.133b) (avg: 1.00, tot: 8);
+					End Pstruct;
+					Pstruct(Id = BTy_36 1, tc: 20.133b, ac: 6.000b, dc: 6b, raw: 26.133b)
+						[IntConst] [8] (Id = BTy_34 1, tc: 9.044b, ac: 0b, dc: 0b, raw: 9.044b) (avg: 1.00, tot: 1);
+						[Other](') (Id = BTy_35 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+					End Pstruct;
+				End Punion;
+				[URL] (Id = BTy_37 2867, tc: 5.044b, ac: 57.934b, dc: 166098b, raw: 166103.044b) (avg: 9.66, tot: 27683);
+				[Enum] {[StringConst] "f", [StringConst] "g", [StringConst] "ml", [StringConst] "t", } (Id = BTy_38 2867, tc: 57.222b, ac: 2b, dc: 8b, raw: 65.222b) (avg: 1.13, tot: 3242);
+				Punion(Id = BTy_40 2867, tc: 44.851b, ac: 1.602b, dc: 49.585b, raw: 94.436b)
+					[Empty] (Id = BTy_39 2864, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b) (avg: 0.00, tot: 0);
+					[StringConst] "**" (Id = BTy_41 2, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b) (avg: 2.00, tot: 4);
+					Pstruct(Id = BTy_47 1, tc: 16.133b, ac: 48.000b, dc: 48b, raw: 64.133b)
+						[Other](/) (Id = BTy_45 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+						[String] (Id = BTy_46 1, tc: 5.044b, ac: 42.000b, dc: 42b, raw: 47.044b) (avg: 7.00, tot: 7);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
+			Poption(Id = BTy_57 129, tc: 400.666b, ac: 1.899b, dc: 50b, raw: 450.666b)
+				Pstruct(Id = BTy_64 23, tc: 394.622b, ac: 5.043b, dc: 49b, raw: 443.622b)
+					[Enum] {[StringConst] "TRANS", [StringConst] "amnesty", [StringConst] "balkans", [StringConst] "country", [StringConst] "education", [StringConst] "refugee", [StringConst] "urgac", [StringConst] "urgact", } (Id = BTy_58 23, tc: 366.400b, ac: 3b, dc: 24b, raw: 390.400b) (avg: 6.70, tot: 154);
+					Poption(Id = BTy_60 23, tc: 22.178b, ac: 2.043b, dc: 25b, raw: 47.178b)
+						Pstruct(Id = BTy_63 1, tc: 16.133b, ac: 24.000b, dc: 24b, raw: 40.133b)
+							[Other](.) (Id = BTy_61 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+							[String] (Id = BTy_62 1, tc: 5.044b, ac: 18.000b, dc: 18b, raw: 23.044b) (avg: 3.00, tot: 3);
+						End Pstruct;
+					End Poption;
 				End Pstruct;
-				Pstruct(Id = BTy_15 5, 4b, 36.793b)
-					RArray(Id = BTy_10 5, 2b, 22.073b)
-						Terminator: [StringConst] "."
-						[IntConst] [~164](Id = BTy_12 8, 1b, 7.358b);
-					End RArray;
-					[StringConst] "."(Id = BTy_14 5, 1b, 0b);
-					[Int] [142...171](Id = BTy_11 5, 1b, 14.721b);
-				End Pstruct;
-			End Punion;
-			RArray(Id = BTy_2 1296, 2b, 588b)
-				Separator: [StringConst] "."
-				[string](Id = BTy_16 3576, 1b, 84b);
-			End RArray;
-		End Pstruct;
-	End Punion;
-	[StringConst] " - "(Id = BTy_20 3000, 1b, 1.585b);
-	Punion(Id = BTy_24 3000, 3b, 3.807b)
-		[StringConst] "-"(Id = BTy_23 2999, 1b, 0b);
-		[StringConst] "amnesty"(Id = BTy_25 1, 1b, 2.807b);
-	End Punion;
-	[StringConst] " ["(Id = BTy_26 3000, 1b, 1b);
-	[Enum] {[StringConst] "15/Oct/1997", [StringConst] "16/Oct/1997", }(Id = BTy_28 3000, 1b, 6.919b);
-	[StringConst] ":"(Id = BTy_29 3000, 1b, 0b);
-	[Time](Id = BTy_30 3000, 1b, 229.582b);
-	[StringConst] "] \""(Id = BTy_31 3000, 1b, 2b);
-	[Enum] {[StringConst] "GET", [StringConst] "POST", }(Id = BTy_35 3000, 1b, 3.585b);
-	[StringConst] " "(Id = BTy_36 3000, 1b, 0b);
-	[Path](Id = BTy_37 3000, 1b, 456b);
-	Switch(BTy_37)(Id = BTy_39 3000, 4b, 7.267b):
-	case [StringConst] "*":
-		[StringConst] ""(Id = BTy_38 2998, 1b, 0b);
-	case [StringConst] "/whatsnew.html":
-		Pstruct(Id = BTy_45 2, 1b, 3.459b)
-			[StringConst] "** HTTP/1.0"(Id = BTy_40 2, 1b, 3.459b);
-		End Pstruct;
-	End Switch;
-	[StringConst] "\" "(Id = BTy_46 3000, 1b, 1.585b);
-	[Int] [200...404](Id = BTy_49 3000, 1b, 23.038b);
-	[StringConst] " "(Id = BTy_50 3000, 1b, 0b);
-	Punion(Id = BTy_52 3000, 3b, 77.052b)
-		[Int] [35...37947](Id = BTy_51 2651, 1b, 76.052b);
-		[StringConst] "-"(Id = BTy_53 349, 1b, 0b);
-	End Punion;
-End Pstruct
+			End Poption;
+		End Punion;
+		[StringConst] " HTTP/" (Id = BTy_65 2996, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b) (avg: 6.00, tot: 17976);
+		[Enum] {[FloatConst] [1.0], [FloatConst] [1.1], } (Id = BTy_69 2996, tc: 31.421b, ac: 1b, dc: 2b, raw: 33.421b) (avg: 2.00, tot: 5992);
+		[StringConst] "\" " (Id = BTy_72 2996, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b) (avg: 3.00, tot: 8988);
+		[Int] [200...404] (Id = BTy_75 2996, tc: 21.346b, ac: 7.679b, dc: 23007.722b, raw: 23029.069b) (avg: 3.00, tot: 8988);
+		[StringConst] " " (Id = BTy_76 2996, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 2996);
+		Punion(Id = BTy_78 2996, tc: 22.133b, ac: 12.933b, dc: 33105.013b, raw: 33127.147b)
+			[Pint] (Id = BTy_77 2647, tc: 5.044b, ac: 13.506b, dc: 33104.013b, raw: 33109.058b) (avg: 3.76, tot: 9965);
+			[StringConst] "-" (Id = BTy_79 349, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 349);
+		End Punion;
+	End Pstruct;
+	[URL] (Id = BTy_82 4, tc: 5.044b, ac: 669.000b, dc: 2676b, raw: 2681.044b) (avg: 111.50, tot: 446);
+End Punion

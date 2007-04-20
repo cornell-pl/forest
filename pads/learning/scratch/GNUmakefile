@@ -91,7 +91,8 @@ learn:  utils.sml
 IND  = data
 OUTD = output
 # Data files, omitting those that take too long
-DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG")
+# SCESETUP.LOG generates error on Empty
+DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
 SILVERS  = $(addsuffix .ag,$(DATA))
 XS       = $(addsuffix .x,x $(DATA))
 TESTS    = $(addsuffix .test,$(DATA))
@@ -122,8 +123,7 @@ $(SILVERS): %.ag: %
 # %.ag     :    ; $(silver-it)
 
 define learn-it
-# if [ -d output/$@ ] ; then rm -f output/$@/*; fi
-./learn data/$@ -d output/$@ `maxdepth.pl $@`
+nice -n20 ./learn data/$@ -d output/$@ `maxdepth.pl $@`
 echo "Sleep for four seconds";
 sleep 4;
 endef
