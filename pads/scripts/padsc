@@ -175,7 +175,7 @@ if (! (-x $sml_resolved)) {
 }
 my $smltest;
 chomp($smltest = `$sml \@SMLversion 2>&1`);
-if ($smltest !~ /^sml [\d.]+$/) {
+if ($smltest !~ /^sml [\d.]+$/i) {
   print "\n** sml program '$sml' (from $sml_from)"
     . "\n   does not appear to be an sml interpreter --"
     . "\n   it is failing the simple test '$sml \@SMLversion'\n";
