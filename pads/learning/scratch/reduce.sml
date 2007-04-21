@@ -86,6 +86,30 @@ type constraint_map = constraint list LabelMap.map
 type pre_reduction_rule = Ty -> Ty
 type post_reduction_rule = constraint_map -> Ty -> constraint_map*Ty
 
+(*this function clean up the Punion structure so that Pempty if it exists 
+always appear last in a union *)
+fun cleanupUnion unionTy =
+case unionTy of
+  Punion (a, tys) => 
+	let
+	  fun isNotPempty ty =
+	    case ty of
+		  Base (_, ltokens) => 
+		    (case (hd ltokens) of 
+		     (Pempty, _) => false
+		     | _ => true)
+		 | _ => true 
+	  fun isPempty ty = (not (isNotPempty ty))
+	  val nonPemptyTys = List.filter isNotPempty tys
+	  val emptys =List.filter isPempty tys
+	  val emptys' = if (length emptys) = 0 then []
+			else if (length emptys) = 1 then emptys
+			else [foldr mergeTy (hd emptys) (List.drop (emptys, 1))]
+	in
+	  Punion (a, nonPemptyTys@emptys')
+	end
+  | _ => raise TyMismatch
+
 (* reduction rules *)
 (* single member lists are removed*)
 fun remove_degenerate_list ty =
@@ -138,7 +162,7 @@ case ty of
   	| _ => [ty]
   	val result = map lift_sum tylist
   in
-  	Punion(a, List.concat result )
+  	cleanupUnion (Punion(a, List.concat result ))
   end
 | _ => ty
 (* remove nil items from struct*)
@@ -198,13 +222,13 @@ case ty of
 	val unionTys = case length rem_tups of
 			0 => nil
 			| 1 => rem_tups
-			| _ => [union_to_optional (Punion(a, rem_tups))]
+			| _ => [union_to_optional (cleanupUnion(Punion(a, rem_tups)))]
   	val newty = case (cpfx, csfx) of
   	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
   	| (_,h::t) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
-  	| (nil,nil) => Punion (a, tylist)
+  	| (nil,nil) => cleanupUnion(Punion (a, tylist))
   in newty
   end
 | _ => ty
@@ -361,7 +385,7 @@ case ty of
   		used
   	end
   in
-  	Punion (aux, remove_unused())
+  	cleanupUnion(Punion (aux, remove_unused()))
   end
 | _ => ty
 (* rule to convert a normal Parray to a refined RArray *)
@@ -468,8 +492,7 @@ and refine_array ty =
 					| Base (_, tl) => ltokenlToRefinedOp tl
 					| _ => NONE
 		fun isEmpty(ty) = case ty of 
-					RefinedBase(_, StringConst(""), _) => true
-					| Base(_, tkl) =>
+					 Base(_, tkl) =>
 						( 
 						  case (hd tkl) of 
 							(Pempty, _) => true
@@ -810,7 +833,6 @@ and union_to_optional ty =
 		    (case (hd ltokens) of 
 		     (Pempty, _) => false
 		     | _ => true)
-		 | RefinedBase (_, StringConst (""), _) => false 
 		 | _ => true 
 
 		val nonPemptyTys = List.filter isNotPempty tys
@@ -951,12 +973,14 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(Char.toString(x)), tokens)
 			)
+(*
 		| SOME(Pempty) => 
 			(
 				newcmos, 
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(""), tokens)
 			)
+*)
        		| _ => (cmos, ty)
       	end
     | NONE => (cmos, ty)
@@ -1200,7 +1224,7 @@ let
 				end
 			| Punion (a, tylist) => let
 				val (cmap', tylist') = mymap reduce' phase cmap tylist nil
-				in (cmap', Punion(a, tylist'))
+				in (cmap', cleanupUnion(Punion(a, tylist')))
 				end
 			| Parray (a, {tokens, lengths, first, body, last}) => 
 				let

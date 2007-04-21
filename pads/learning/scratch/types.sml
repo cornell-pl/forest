@@ -535,7 +535,7 @@ struct
 	      | Purl _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
 	      | Ppath _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
 	      | Pemail _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
-	      | Pmac _ => "Pstring_ME(:\"/[:-[:xdigit:]]+:/\":) " ^ label'
+	      | Pmac _ => "Pstring_ME(:\"/[\\\\:\\\\-[:xdigit:]]+/\":) " ^ label'
 	      | Pwhite _ => "Pstring_ME(:\"/\\\\s/\":) " ^ label' 
 	      | Other c => "Pchar " ^ label'
 	      | PbXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\\\-<>]+/\":) " ^ label'
