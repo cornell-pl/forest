@@ -3,9 +3,11 @@ open Common
 open Model 
 
 (* runs analysis using a Ty and return a refined Ty *)
-fun run (ty : Ty) =
+fun run (ty : Ty) : ( Ty * Time.time * Time.time * Time.time * Time.time * Time.time * Time.time ) =
 let
+  val start_time : Time.time = Time.now ()
   val measuredTy = measure ty
+  val measure1_time : Time.time = Time.now ()
   val comps = getComps measuredTy
   val tycomp = #tc comps
   val acomp  = #adc comps
@@ -18,6 +20,7 @@ let
   val _ = print "Phase one ...\n";
 *)
   val ty1 = Reduce.reduce 1 ty 
+  val reduce1_time : Time.time = Time.now ()
 (*
   val _ = printTy ty1
 *)
@@ -26,6 +29,7 @@ let
   val _ = print "Phase two ...\n";
 *)
   val ty2 = Reduce.reduce 2 ty1
+  val reduce2_time : Time.time = Time.now ()
 (*
   val _ = printTy ty2
 *)
@@ -34,8 +38,10 @@ let
   val _ = print "Phase three ...\n";
 *)
   val ty3 = Reduce.reduce 3 ty2
+  val reduce3_time : Time.time = Time.now ()
 
   val measured_reduced_ty = measure ty3
+  val measured_reduced_time : Time.time = Time.now ()
   val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty
   val _ = print "\n"
@@ -60,7 +66,14 @@ let
   val _ =  print ("new total comp = "^ (showComp rawcomp') ^"\n");
 *)
 in
-  measured_reduced_ty 
+  ( measured_reduced_ty
+  , start_time
+  , measure1_time
+  , reduce1_time
+  , reduce2_time
+  , reduce3_time
+  , measured_reduced_time
+  )
 end
 
 end

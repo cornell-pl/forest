@@ -123,9 +123,34 @@ $(SILVERS): %.ag: %
 # %.ag     :    ; $(silver-it)
 
 define learn-it
-nice -n20 ./learn data/$@ -d output/$@ `maxdepth.pl $@`
+# Clean the gen directory
+rm -rf gen/BT* gen/Complexity gen/Params gen/Ty gen/GNUmakefile gen/*.c gen/*.p gen/darwin.ppc
+# Clean the output directory
+rm -rf output/$@/*
+# Run the inference algorithm
+nice -n20 ./learn -n $@ data/$@
+make --directory=gen $@-accum
+cp -R gen output/$@
 echo "Sleep for four seconds";
 sleep 4;
+endef
+
+define summary
+# Clean the gen directory
+rm -rf gen/BT* gen/Complexity gen/Params gen/Ty gen/GNUmakefile gen/*.c gen/*.p gen/darwin.ppc
+# Clean the output directory
+rm -rf output/$@/*
+# Run the inference algorithm
+nice -n20 ./learn -n $@ data/$@
+# NOT DONE: compare score of generated silver description with associated golden standard.
+# NOT DONE: compare score of generated silver description with previous generated silver description.
+
+# generate PADS description
+# generate accumulator program
+make --directory=gen $@-accum
+#   preserve the gen directory
+cp -R gen output/$@
+
 endef
 
 outputs : $(DATA)

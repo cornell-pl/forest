@@ -15,22 +15,42 @@ structure Main : sig
     open Options
 
     fun doIt () = 
-	let val fileNames         = !srcFiles
+	let val startT           = Time.now ()
+            val fileNames        = !srcFiles
 	    val ty               = computeStructure fileNames
-            val ()               = print "Finished structural analysis.\n"          
-	    val rewrittenTy      = Rewrite.run(ty)
+            val tokenT'          = Time.now ()
+            val tokenT           = Time.- (tokenT', startT)
+            val ( rewrittenTy
+                , start_time
+                , measure1_time
+                , reduce1_time
+                , reduce2_time
+                , reduce3_time
+                , measured_reduced_time
+                ) = Rewrite.run(ty)
+            val measure1T        = Time.- (measure1_time, start_time)
+            val reduce1T         = Time.- (reduce1_time, measure1_time)
+            val reduce2T         = Time.- (reduce2_time, reduce1_time)
+            val reduce3T         = Time.- (reduce3_time, reduce2_time)
+            val measure2T        = Time.- (measured_reduced_time, reduce3_time)
             val ()               = print "Finished rewriting.\n"          
-            val measuredTy       = measure rewrittenTy
-            val comps            = getComps measuredTy
+            val comps            = getComps rewrittenTy
             val tcomp            = #tc comps
             val acomp            = #adc comps
             val dcomp            = #dc comps
 	in
-	    ( Printing.dumpTyInfo (!outputDir) (!descName) measuredTy
+	    ( print ( "\n====== Timing information ======\n" )
+            , print ( "Tokenization time = " ^ ( Time.toString tokenT ) ^ "\n" )
+            , print ( "Measure1 time = " ^ ( Time.toString measure1T ) ^ "\n" )
+            , print ( "Reduce1 time = " ^ ( Time.toString reduce1T ) ^ "\n" )
+            , print ( "Reduce2 time = " ^ ( Time.toString reduce2T ) ^ "\n" )
+            , print ( "Reduce3 time = " ^ ( Time.toString reduce3T ) ^ "\n" )
+            , print ( "Measure2 time = " ^ ( Time.toString measure2T ) ^ "\n" )
+            , print ( "================================\n" )
+            , Printing.dumpTyInfo (!outputDir) (!descName) rewrittenTy
             , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             )
 	end
-
 
     (********************************************************************************)
     structure PCL = ParseCmdLine
