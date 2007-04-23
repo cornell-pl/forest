@@ -6,7 +6,7 @@ structure Config = struct
     val DEF_STRUCT_PERCENTAGE = 0.1
     val DEF_JUNK_PERCENTAGE   =  0.1
     val DEF_NOISE_PERCENTAGE  =  0.0
-    val DEF_ARRAY_WIDTH_THRESHOLD =  2
+    val DEF_ARRAY_WIDTH_THRESHOLD =  4
 
     val def_depthLimit   = 50
     val def_outputDir    = "gen/"
