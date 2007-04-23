@@ -20,6 +20,9 @@
 # 4. To make a new silver version, e.g. for yum.txt, type
 #    make "yum.txt.silver".
 # 5. To run all the outputs, type "make outputs"
+# 6. To make a summary report on the most recent version, the
+#    silver and golden versions, run the target with a ".rep"
+#    suffix, eg. "make quarterlypersonalincome.rep"
 #
 ######################################################################
 
@@ -94,6 +97,7 @@ OUTD = output
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
 SILVERS  = $(addsuffix .ag,$(DATA))
+REPORTS  = $(addsuffix .rep,$(DATA))
 XS       = $(addsuffix .x,x $(DATA))
 TESTS    = $(addsuffix .test,$(DATA))
 
@@ -106,11 +110,14 @@ $(XS): %.x: %
 silvers: $(SILVERS)
 	echo Making silver version of each data file output
 
+reports: $(REPORTS)
+
 define silver-it
 @if [ ! -d silver/$(*F) ] ; then mkdir silver/$(*F); fi
 cp output/$(*F)/Ty silver/$(*F);
 cp output/$(*F)/Params silver/$(*F);
 cp output/$(*F)/Complexity silver/$(*F);
+cp output/$(*F)/Timing silver/$(*F);
 echo "Sleep for four seconds";
 sleep 4;
 endef
@@ -124,35 +131,45 @@ $(SILVERS): %.ag: %
 
 define learn-it
 # Clean the gen directory
-rm -rf gen/BT* gen/Complexity gen/Params gen/Ty gen/GNUmakefile gen/*.c gen/*.p gen/darwin.ppc
+rm -rf gen/BT* gen/Complexity gen/Timing gen/Params gen/Ty gen/GNUmakefile gen/*.c gen/*.p gen/darwin.ppc
 # Clean the output directory
 rm -rf output/$@/*
-# Run the inference algorithm
-nice -n20 ./learn -n $@ data/$@
-make --directory=gen $@-accum
-cp -R gen output/$@
-echo "Sleep for four seconds";
-sleep 4;
+# 1. Run the inference algorithm
+nice -n20 ./learn -n $@ data/$@ | tee gen/$@.out
+cp -R gen/* output/$@
 endef
 
 define summary
-# Clean the gen directory
-rm -rf gen/BT* gen/Complexity gen/Params gen/Ty gen/GNUmakefile gen/*.c gen/*.p gen/darwin.ppc
-# Clean the output directory
-rm -rf output/$@/*
-# Run the inference algorithm
-nice -n20 ./learn -n $@ data/$@
+# 1. Run the inference algorithm
+#    Already done by "learn-it", owing to dependency on output file
 # NOT DONE: compare score of generated silver description with associated golden standard.
 # NOT DONE: compare score of generated silver description with previous generated silver description.
-
-# generate PADS description
-# generate accumulator program
-make --directory=gen $@-accum
+# 4. generate PADS description
+# 5. generate accumulator program
+make --directory=gen $(*F)-accum
 #   preserve the gen directory
-cp -R gen output/$@
-
+cp -R gen/* output/$(*F)
+# 6. run accumulator program on input data
+gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
+# 7. extract number of records correctly parsed and number of errors
+accum-out.pl gen/$(*F)-accum.out
+# 9. collect in a report file:
+#    a. how large the input file is in bytes and number of records
+@echo "Record count = " `cat data/$(*F) | wc -l`
+@echo "Byte count =   " `cat data/$(*F) | wc -c`
+#    b. score of the new silver
+@cat output/$(*F)/Complexity
+#    c. score of the old silver
+@cat silver/$(*F)/Complexity
 endef
 
+# The summary file depends on the corresponding output file.
+$(REPORTS): %.rep: %
+	$(summary)
+
+######################################################################
+# Target to run just inference algorithm
+######################################################################
 outputs : $(DATA)
 
 1967Transactions.short:  $(IND)/1967Transactions.short  ; $(learn-it)

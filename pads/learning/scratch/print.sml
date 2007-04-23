@@ -2,6 +2,7 @@ structure Printing =
 struct
     open Types
     open Model
+    open Times
 (*    open Structure*)
    
     fun dumpLToken (strm:TextIO.outstream) (tk:Token,loc:location) : unit =
@@ -98,7 +99,7 @@ struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTyInfo ( path : string ) ( descName : string ) ( ty : Ty ) : unit = 
+    fun dumpTyInfo ( path : string ) ( descName : string ) ( ty : Ty ) ( ct : ComputeTimes ) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) => if !printIDs then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls) else ()
@@ -133,6 +134,7 @@ struct
                  ; dumpTBDs ty
                  ; dumpTy (path ^ "Ty") ty
                  ; dumpTyComp ( path ^ "Complexity" ) ( getComps ty )
+                 ; dumpComputeTimes ( path ^ "Timing" ) ct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") ty
                    in 
 		       dumpAccumProgram path descName tyName;

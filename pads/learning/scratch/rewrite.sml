@@ -1,13 +1,13 @@
 structure Rewrite = struct
 open Common
 open Model 
+open Times
 
 (* runs analysis using a Ty and return a refined Ty *)
-fun run (ty : Ty) : ( Ty * Time.time * Time.time * Time.time * Time.time * Time.time * Time.time ) =
+fun run ( et : EndingTimes ) (ty : Ty) : Ty * EndingTimes =
 let
-  val start_time : Time.time = Time.now ()
   val measuredTy = measure ty
-  val measure1_time : Time.time = Time.now ()
+  val measured1_time = Time.now ()
   val comps = getComps measuredTy
   val tycomp = #tc comps
   val acomp  = #adc comps
@@ -41,7 +41,7 @@ let
   val reduce3_time : Time.time = Time.now ()
 
   val measured_reduced_ty = measure ty3
-  val measured_reduced_time : Time.time = Time.now ()
+  val measured2_time : Time.time = Time.now ()
   val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty
   val _ = print "\n"
@@ -65,15 +65,16 @@ let
   val _ =  print ("new data comp = "^ (showComp datacomp') ^"\n");
   val _ =  print ("new total comp = "^ (showComp rawcomp') ^"\n");
 *)
-in
-  ( measured_reduced_ty
-  , start_time
-  , measure1_time
-  , reduce1_time
-  , reduce2_time
-  , reduce3_time
-  , measured_reduced_time
-  )
+  val endingTimes : EndingTimes = { start       = #start et
+                                  , tokenEnd    = #tokenEnd et
+                                  , measure1End = measured1_time
+                                  , reduce1End  = reduce1_time
+                                  , reduce2End  = reduce2_time
+                                  , reduce3End  = reduce3_time
+                                  , measure2End = measured2_time
+                                  }
+
+in ( measured_reduced_ty, endingTimes )
 end
 
 end

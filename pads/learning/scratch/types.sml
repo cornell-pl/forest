@@ -32,7 +32,7 @@ struct
     fun showTyComp ( tyc : TyComp ) : string =
         "{ TC = " ^ showBits (#tc tyc) ^
         ", ADC = " ^ showBits (#adc tyc) ^
-        ", DC = " ^ showBits (#dc tyc) ^ " }"
+        ", DC = " ^ showBits (#dc tyc) ^ " }\n\n"
 
     (* A fancier print statement for type complexity *)
     fun printTyComp ( pre : string ) ( t : TyComp ) : unit =
