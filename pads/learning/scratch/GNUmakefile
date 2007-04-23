@@ -155,12 +155,13 @@ gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 accum-out.pl gen/$(*F)-accum.out
 # 9. collect in a report file:
 #    a. how large the input file is in bytes and number of records
-@echo "Record count = " `cat data/$(*F) | wc -l`
-@echo "Byte count =   " `cat data/$(*F) | wc -c`
+@echo "Record count = " `cat data/$(*F) | wc -l` | tee gen/RecordCount
+@echo "Byte count =   " `cat data/$(*F) | wc -c` | tee gen/ByteCount
 #    b. score of the new silver
 @cat output/$(*F)/Complexity
 #    c. score of the old silver
 @cat silver/$(*F)/Complexity
+# Assemble the report
 endef
 
 # The summary file depends on the corresponding output file.
