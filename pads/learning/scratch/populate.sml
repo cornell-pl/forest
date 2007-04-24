@@ -6,7 +6,7 @@ struct
     open Types
     open Common
     exception TyMismatch
-    structure RegExp = RegExpFn (structure P=AwkSyntax structure E=DfaEngine)
+    structure RegExp = RegExpFn (structure P=AwkSyntax structure E=DfaEngine) : REGEXP
     structure MT = MatchTree
     structure SS = Substring
     
@@ -15,7 +15,7 @@ struct
     and tokenlists in the tree *)
     fun initializeTy ty =
       let
-	val newAux= {coverage = 0, label = SOME getLabel({coverage=0, label = NONE, tycomp=zeroComps}),
+	val newAux= {coverage = 0, label = SOME (getLabel({coverage=0, label = NONE, tycomp=zeroComps})),
 	tycomp=zeroComps}
       in
 	case ty 
@@ -61,75 +61,85 @@ struct
 		| SOME m => if (#len m) = (Substring.size (#pos m)) then true else false
 	  end
 	val matchlist = [(reStr, matchCvt)]
-	val matchOne = RegExp.match matchlist SS.getc s
+	val matchOne = RegExp.match matchlist SS.getc (Substring.full s)
       in
 	case matchOne of
 	NONE => false
 	| SOME(matched, _) => matched
       end      			
    
-    fun matchString s matchedStr tokens =
-      if s == matchedStr then (SOME(Pstring matchedStr), tokens)
+    fun matchString (s:string) (matchedStr:string) loc (tokens: LToken list) =
+      if s = matchedStr then (SOME((Pstring matchedStr, loc)), tokens)
       else if length tokens = 0 then (NONE, tokens)
       else
-	case hd tokens of
+	let 
+	  val (tok, nextloc) = hd tokens
+	  val newloc = combLoc (loc, nextloc)
+	in
+	  case tok of
 		Ptime(t) => if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Pdate(t) => if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Pip(t)  => if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Phostname(t)  => if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Ppath(t)  => if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Purl(t)  => if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Pemail(t)  => if (String.isPrefix (matchedStr^t) s) then  
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Pmac(t)  => if (String.isPrefix (matchedStr^(toLower t)) s) then 
-				matchString s (matchedStr^(toLower t)) (List.drop (tokens, 1))
+				matchString s (matchedStr^(toLower t)) newloc (List.drop (tokens, 1))
 			    else (NONE, tokens)
 	|	Pstring(t)  =>  if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			        else (NONE, tokens)
 	|	Pwhite (t)  => if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			       else (NONE, tokens)
 	|	Other (c)  => let val t = Char.toString(c) 
 			      in if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) (List.drop (tokens, 1))
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			        else (NONE, tokens)
 			      end
 	| 	_ => (NONE, tokens)
+	end
 
-    fun matchREString s matchedStr tokens =
+    fun matchREString (s:string) (matchedStr:string) loc (tokens:LToken list) =
       if matchedStr <> "" andalso (matchRegEx matchedStr s) then 
-	(SOME(Pstring matchedStr), tokens)
+	(SOME((Pstring matchedStr, loc)), tokens)
       else if length tokens = 0 then (NONE, tokens)
       else
-	case hd tokens of
-		Ptime(t) => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Pdate(t) => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Pip(t)  => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Phostname(t) => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Ppath(t)  => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Purl(t)  => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Pemail(t)  => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Pmac(t)  => matchREString s (matchedStr^(toLower t)) (List.drop (tokens, 1))
-	|	Pstring(t)  => matchREString s (matchedStr^t) (List.drop (tokens, 1))
-	|	Pwhite (t)  => matchREString s (matchedStr^t) (List.drop (tokens, 1))
+	let 
+	  val (tok, nextloc) = hd tokens
+	  val newloc = combLoc (loc, nextloc)
+	in
+	case (#1 (hd tokens)) of
+		Ptime(t) => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Pdate(t) => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Pip(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Phostname(t) => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Ppath(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Purl(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Pemail(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Pmac(t)  => matchREString s (matchedStr^(toLower t)) newloc (List.drop (tokens, 1))
+	|	Pstring(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
+	|	Pwhite (t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
 	|	Other (c)  => let val t = Char.toString(c) 
-			      in matchREString s (matchedStr^t) (List.drop (tokens, 1))
+			      in matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			      end
 	| 	_ => (NONE, tokens)
+	end
 
     fun matchEnum res tokens =
       case res of 
@@ -143,11 +153,11 @@ struct
 	    | NONE => matchEnum tail tokens
 	  end
     (*returns (SOME token/NONE, remaining tokens)*)
-    and matchTokens re tokens =
+    and matchTokens (re:Refined) (tokens:LToken list) =
       let 
         val tok = (#1 (hd tokens))
       in
-	case (r, tok) of 
+	case (re, tok) of 
 	  (Int(min,max), Pint (i, s)) =>  
 		if (i>=min andalso i<=max) then (SOME(hd tokens), List.drop(tokens, 1))
 		else (NONE, tokens)
@@ -164,8 +174,8 @@ struct
 		else (NONE, tokens)
 *)
 	| (Enum res, tok) => matchEnum res tokens
-	| (StringConst s, tok) => matchString s "" tokens
-	| (StringME s, tok) => matchREString s "" tokens
+	| (StringConst s, tok) => matchString s "" (#2 (hd tokens)) tokens
+	| (StringME s, tok) => matchREString s "" (#2 (hd tokens)) tokens
 	| _ => (NONE, tokens)
       end
 
@@ -186,7 +196,7 @@ struct
 	| (StringConst "*", ty)::tail => SOME (index, ty)
 	| _::tail => getDefaultBranch (tail, index+1)
     fun matchSwitchBranch (ltoken, branches) =
-	case matchBatch(ltoken, branches, 0) of
+	case matchBranch(ltoken, branches, 0) of
 		SOME (index, ty) => SOME(index, ty)
 		| NONE => (case getDefaultBranch (branches, 0) of
 				SOME (index, ty) => SOME (index, ty)
@@ -195,7 +205,7 @@ struct
 	
     fun updateBranches(branches, index, newTy) =
 	let
-	  val (re, ty) = nth (branches, index)
+	  val (re, ty) = List.nth (branches, index)
 	  val head = List.take (branches, index)
 	  val tail = List.drop (branches, index+1)
 	in (head@[(re, newTy)]@tail)
@@ -207,16 +217,16 @@ struct
 	val (success, env', ltokens', body') = consume (true, env, ltokens, body)
       in
 	if success then 
-	  if len+1 = fixedlen then
+	  if len+1 = fixedLen then
 	    case term of 
 	      SOME termre => 
 		let val (matched, remaining) = matchTokens termre ltokens'
 		in
 		  case matched of 
-		  SOME _ => (success, env', remaining, body', fixedlen)
-		  | NONE => (false, env, ltokens, body, fixedlen)
+		  SOME _ => (success, env', remaining, body', fixedLen)
+		  | NONE => (false, env, ltokens, body, fixedLen)
 		end
-	     | NONE => (success, env', ltokens', body', fixedlen)
+	     | NONE => (success, env', ltokens', body', fixedLen)
 	  else (* haven't reached fixed len or no fixed len *)
 	    case term of 
 	      SOME termre =>
@@ -230,7 +240,7 @@ struct
 			  let val (matched, remaining) = matchTokens sepre ltokens'
 			  in
 			    case matched of 
-			    SOME _ => consumeArray(env', sep, term, body', fixedlen, len+1, remaining)
+			    SOME _ => consumeArray(env', sep, term, body', fixedLen, len+1, remaining)
 			    | NONE => (false, env, ltokens, body, len)
 			  end
 			| NONE => consumeArray(env', sep, term, body', fixedLen, len+1, ltokens')
@@ -242,7 +252,7 @@ struct
 			  let val (matched, remaining) = matchTokens sepre ltokens'
 			  in
 			    case matched of 
-			    SOME _ => consumeArray(env', sep, term, body', fixedlen, len+1, remaining)
+			    SOME _ => consumeArray(env', sep, term, body', fixedLen, len+1, remaining)
 			    | NONE => (false, env, ltokens, body, len)
 			  end
 			| NONE => consumeArray(env', sep, term, body', fixedLen, len+1, ltokens')
@@ -259,7 +269,7 @@ struct
 	(false, env, tokenlist, ty)
       else
       case ty of
-           Base (a, t) => if compToken(hd tokenlist, hd t) = EQUAL then 
+           Base (a, t) => if compToken((#1 (hd tokenlist)), (#1 (hd t))) = EQUAL then 
 			   let
 				val tok = (#1 (hd tokenlist))
 				val label = getLabel a
@@ -268,23 +278,25 @@ struct
 			   in (true, env', List.drop(tokenlist, 1), Base(newaux, t@[(hd t)]))
 			   end
 			  else (*Pempty is special case, matches anything*)
-			    case (hd t) of
+			    (case (hd t) of
 				(Pempty, _) =>
 				  let val loc = (#2 (hd tokenlist))
 				  in (true, env, tokenlist, Base(incCoverage a, t@[(Pempty, loc)]))
 				  end
 				| _ => (false, env, tokenlist, ty)
-	|  TBD (a,i,cl)                 => raise TyMismatch
-        |  Bottom (a, i, cl)            => raise TyMismatch
-        |  Pstruct (a, tys)             => 
+			    )
+	|  TBD (a,i,cl)     => raise TyMismatch
+        |  Bottom (a, i, cl)  => raise TyMismatch
+        |  Pstruct (a, tys)  => 
 		let
-			fun consume_and ((success, env, tokens, tys), ty) =
-			  let
-				val (success', env' tokens', ty') = consume (success, env, tokens, ty)
-			  in  (success', env', tokens', (tys@[ty']))
-			  end
+		  fun consume_and (ty, (success, env, tokens, tylist)) =
+		  let
+			val (success', env', tokens', ty') = consume (success, env, tokens, ty)
+		  in  (success', env', tokens', (tylist@[ty']))
+		  end
+		  val (success', env', tokens', tys') = foldr consume_and (true, env, tokenlist, nil) tys 
 		in
-			foldr consume_and (true, env, tokenlist, nil) tys 
+			(success', env', tokens', Pstruct(incCoverage a, tys'))
 		end
         |  Punion (a, tys) 	        => 
 		let
@@ -294,12 +306,12 @@ struct
 			    val (success', env', tokens', ty') = consume(success, env, tokens, ty)
 			  in
 			    if (success') then (success', env', tokens', previousTys@[ty']@rest)
-			    else consume_or (success, env, tokens, rests, previousTys@[ty])
+			    else consume_or (success, env, tokens, rest, previousTys@[ty])
 			  end
-			val (success', env', tokens', tys') = consume_or(true, env, tokenlist, tys) 
+			val (success', env', tokens', tys') = consume_or(true, env, tokenlist, tys, nil) 
 		in
-			if success' then (success', env', tokens', Punion((incConverage a), tys'))
-			else (success', env, tokens, ty)
+			if success' then (success', env', tokens', Punion((incCoverage a), tys'))
+			else (success', env, tokenlist, ty)
 		end
         |  Parray (a, {tokens, lengths, first, body, last}) =>  raise TyMismatch
         |  RefinedBase (a, r, tl)     => 
@@ -313,11 +325,12 @@ struct
 	     		val env' = LabelMap.insert(env, label, ltoken) 
 	     		val newaux = incCoverage a
 	   	  in
-		    (true, env', tokenlist', RefineBase (incCoverage a, r, (tl@[ltoken])))
+		    (true, env', tokenlist', RefinedBase (incCoverage a, r, (tl@[ltoken])))
 	      	  end
 		| NONE => (false, env, tokenlist, ty)
 	   end
         |  Switch(a, id, branches)     => 
+	     (
 	     case LabelMap.find (env, id) of
 		SOME ltoken=> 
 		(
@@ -329,28 +342,32 @@ struct
 				consume (prevsuccess, env, tokenlist, matchedTy)
 		    in
 			if success' then (success', env', tokenlist', 
-				Switch(incConverage a, id, updateBranches(branches, index, matchedTy')))
+				Switch(incCoverage a, id, updateBranches(branches, index, matchedTy')))
 			else (false, env, tokenlist, ty)
 		    end
 		  | NONE =>  raise TyMismatch
 		)
 		| NONE => raise TyMismatch
+	     )
         |  RArray (a, sep, term, body, len, lengths) => 
 	     let
-		val fixedLen = case len of SOME l => l | NONE => -1
+		val fixedLen = case len of 
+				SOME (IntConst l) => (Int.fromLarge l) 
+				| _ => (~1)
 		val (success', env', tokenlist', body', newlen) = consumeArray (env, sep, term, body, 
 										fixedLen, 0, tokenlist)
-		val lengths' = lengths@[(newlen, !recordNo)]
+		val lengths' = lengths@[(newlen, (!recordNo))]
 	     in 
-		if success' then (true, env', tokenlist', RArray(incCoverage a, sep, term, body', len, length'))
+		if success' then (true, env', tokenlist', 
+				RArray(incCoverage a, sep, term, body', len, lengths'))
 		else (false, env, tokenlist, ty)
 	     end
         |  Poption (a, ty)               => 
 		let
 			val (success', env', tokenlist', ty') = consume (prevsuccess, env, tokenlist, ty)
 		in
-			if success' then (success', env', tokenlist', Poption(incConverage a, ty'))
-			else (prevsuccess, env, tokenlist, Poption (incConverage a, ty))
+			if success' then (success', env', tokenlist', Poption(incCoverage a, ty'))
+			else (prevsuccess, env, tokenlist, Poption (incCoverage a, ty))
 		end
 
     fun populateOneRecord (ltokens:Context, ty:Ty) : Ty = 
@@ -359,14 +376,14 @@ struct
       in
 	if (success = false orelse length ltokens' > 0) then
 		(print "Record not successfully populated\n"; ty)	
-	else (recordNo:=!recordNo+1; ty')
+	else (recordNo:=(!recordNo)+1; ty')
       end
 
     fun populateDataFile datafile ty =
       let 
           val recordNumber = ref 0
           val records = loadFiles [datafile]
-	  val rtokens : Context list = list.map(ltokenizeRecord recordNumber) records
+	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val cleanTy = initializeTy ty
 	  val loadedTy = foldr populateOneRecord cleanTy rtokens
 	  val finalTy = cleanFirstToken loadedTy

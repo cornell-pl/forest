@@ -6,6 +6,9 @@ structure Tokens = struct
     fun mkLoc( b : int ) ( e : int ) ( r : int ) ( ln : int ) : location =
         { lineNo = ln, beginloc = b, endloc = e, recNo = r }
 
+    fun combLoc ({lineNo=l1, beginloc=b1, endloc=e1, recNo = r1}, 
+		    {lineNo=l2, beginloc=b2, endloc=e2, recNo = r2}) =
+		{lineNo=l1, beginloc=b1, endloc=e2, recNo=r1}
     (* Establish an order on locations *)
     fun compLocation (l1:location, l2:location):order =
         let val {lineNo = ln1, beginloc = b1, endloc = e1, ... } = l1
