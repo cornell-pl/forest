@@ -131,7 +131,8 @@ $(SILVERS): %.ag: %
 
 define learn-it
 # Clean the gen directory
-rm -rf gen/BT* gen/Complexity gen/Timing gen/Params gen/Ty gen/GNUmakefile gen/*.c gen/*.p gen/darwin.ppc
+rm -rf gen
+mkdir gen
 # Clean the output directory
 rm -rf output/$@/*
 # 1. Run the inference algorithm
@@ -152,7 +153,7 @@ cp -R gen/* output/$(*F)
 # 6. run accumulator program on input data
 gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 # 7. extract number of records correctly parsed and number of errors
-accum-out.pl gen/$(*F)-accum.out
+accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # 9. collect in a report file:
 #    a. how large the input file is in bytes and number of records
 @echo "Record count = " `cat data/$(*F) | wc -l` | tee gen/RecordCount
@@ -161,7 +162,22 @@ accum-out.pl gen/$(*F)-accum.out
 @cat output/$(*F)/Complexity
 #    c. score of the old silver
 @cat silver/$(*F)/Complexity
+#    e. number of correctly parsed records
+#    f. number of incorrectly parsed records
+#    SEE STEP 7 ABOVE
 # Assemble the report
+echo "DATA FILE: " $(*F) >>gen/Report
+echo >>gen/Report
+cat gen/RecordCount >>gen/Report
+cat gen/ByteCount >>gen/Report
+echo >>gen/Report
+echo "New complexity scores" >>gen/Report
+cat gen/Complexity >>gen/Report
+echo "Silver complexity scores" >>gen/Report
+cat silver/$(*F)/Complexity >>gen/Report
+cat gen/ParseReport >>gen/Report
+echo >>gen/Report
+cat gen/Timing >>gen/Report
 endef
 
 # The summary file depends on the corresponding output file.

@@ -21,8 +21,8 @@ structure Main : sig
             val fileNames        = !srcFiles
 	    val ty               = computeStructure fileNames
             val end3Times        = updateTokenEnd ( Time.now () ) end2Times
-            val ( rewrittenTy, end3Times ) = Rewrite.run end2Times ty
-            val computeTimes     = getComputeTimes end3Times
+            val ( rewrittenTy, end4Times ) = Rewrite.run end3Times ty
+            val computeTimes     = getComputeTimes end4Times
 	in
 	    ( print ( computeTimesToString computeTimes )
             , Printing.dumpTyInfo (!outputDir) (!descName) rewrittenTy computeTimes
