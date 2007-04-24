@@ -243,6 +243,9 @@ struct
 	end
 
     fun getCoverage ( ty : Ty ) : int = #coverage ( getAuxInfo ty )
+    fun incCoverage (a : AuxInfo) : AuxInfo = 
+	case a of 
+	{coverage = c, label = l, tycomp = tc} => {coverage = (c+1), label = l, tycomp = tc}
     fun sumCoverage ( tys : Ty list ) : int =
         foldl ( fn (t:Ty,n:int) => getCoverage t + n ) 0 tys
     fun minCoverage ( tys : Ty list ) : int = 

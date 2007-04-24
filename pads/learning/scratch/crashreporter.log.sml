@@ -26,11 +26,14 @@ structure CRASHREPORTER = struct
     val name: Ty = RefinedBase(aux, StringConst " name: Exited process", [(Pstring "name: Exited process", loc)])
     val function: Ty = RefinedBase(aux, StringME "/[^ ]\\*/", [(Pstring ("mach_msg()"), loc)])
     val reply: Ty = RefinedBase(aux, StringConst " reply failed: ", [(Pstring "srv7", loc)])
-    val failedmsg: Ty = Base(aux, [(Pstring ("(ipc/send) invalid destination port"), loc)])
+    val failedmsg: Ty = RefinedBase(aux, StringME "/\\.\\*\\$/", [(Pstring ("(ipc/send) invalid destination port"), loc)])
     val failtorelaunch: Ty = RefinedBase(aux, StringConst "Failed to re-launch ", 
 			[(Pstring "Failed to re-launch ", loc)])
     val spdashsp: Ty = RefinedBase(aux, StringConst " - ", [(Pstring " - ", loc)])
-    val errormsg: Ty = Base(aux, [(Pstring ("CGSError: 1025!"), loc)])
+    val errorkind: Ty = Base (aux, [(Pstring "CGSError", loc)])
+    val errorcode: Ty = Base(aux, [(Pint (1025, "1025"), loc)])
+    val shriek: Ty = RefinedBase(aux, StringConst "!", [(Other #"!", loc)])
+    val errormsg: Ty = Pstruct(aux, [errorkind, colonsp, errorcode, shriek])
     val dumpreport: Ty = Punion(aux, [started,
 				Pstruct(aux, [start, filepath]),
 				Pstruct(aux, [finish, filepath]),

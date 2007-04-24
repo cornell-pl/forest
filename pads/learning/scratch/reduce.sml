@@ -900,12 +900,14 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				IntConst(x), tokens)
 			)
+(* No float const to be generated for now
 		| SOME(Pfloat(x)) => 
 			(
 				newcmos, 
 				RefinedBase((mkTyAux1(coverage, id)), 
 				FloatConst(x), tokens)
 			)
+*)
 
 		| SOME(Pstring(x)) => 
 			(

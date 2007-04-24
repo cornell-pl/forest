@@ -23,6 +23,7 @@ is
   parseCmdLine.sml
   structure.sml
   print.sml
+  populate.sml
   main.sml
   rat.sml
   matrix.sml
