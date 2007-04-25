@@ -9,6 +9,17 @@ open Types
 open Model
 exception TyMismatch
 
+(* a table to record which base types are Refinable*)
+fun refinableBase token = 
+  case token of 
+	  PbXML _ => true
+	| PeXML _ => true
+	| Pint _ => true
+	| Pstring _ => true
+	| Pwhite _ => true
+	| Other _ => true
+	| _ => false
+	
 (* calculates the complexity of a datatype so that we can try to minimize it*)
 fun cost const_map ty =
   let 
@@ -870,6 +881,7 @@ data labeled *)
 and uniqueness_to_const cmos ty =
 case ty of
   Base({coverage, label=SOME id, ...}, tokens) => 
+  if length tokens>0 andalso refinableBase (#1 (hd tokens)) then
     (case LabelMap.find(cmos, id) of  
       SOME consts => 
         let
@@ -900,15 +912,12 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				IntConst(x), tokens)
 			)
-(* No float const to be generated for now
 		| SOME(Pfloat(x)) => 
 			(
 				newcmos, 
 				RefinedBase((mkTyAux1(coverage, id)), 
 				FloatConst(x), tokens)
 			)
-*)
-
 		| SOME(Pstring(x)) => 
 			(
 				newcmos, 
@@ -987,6 +996,7 @@ case ty of
       	end
     | NONE => (cmos, ty)
     )
+   else (cmos, ty)
 | _ => (cmos, ty)
 
 (* convert a sum into a switched type if a switch constraint is defined *)
@@ -1122,10 +1132,11 @@ case ty of
 	a range refined type *)
 and enum_range_to_refine cmos ty = 
   case ty of                  
-    Base({coverage, label=SOME(id), ...}, b) =>         
-    (case LabelMap.find(cmos,id) of 
-      SOME consts =>    
-        let             
+    Base({coverage, label=SOME(id), ...}, b) => 
+      if length b>0 andalso refinableBase (#1 (hd b)) then
+        (case LabelMap.find(cmos,id) of 
+         SOME consts =>    
+            let             
                 fun check_enum list newconsts=  
                   case list of (EnumC set) :: t =>
                       let
@@ -1149,11 +1160,12 @@ and enum_range_to_refine cmos ty =
 		val (newty, newconsts) = check_enum consts nil
 		val (newcmos, _) = LabelMap.remove(cmos, id)
 	    	val newcmos = LabelMap.insert(newcmos, id, newconsts)
-        in
+            in
 		(newcmos, newty)
-        end
-    | NONE => (cmos, ty)
-    )
+            end
+        | NONE => (cmos, ty)
+       )
+     else (cmos, ty)
   | _ => (cmos, ty)
 
 (* the actual reduce function can either take a SOME(const_map) or
