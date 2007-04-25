@@ -1,7 +1,18 @@
 #!/usr/bin/perl -w
-@files = @ARGV;
+@files = (
+"1967Transactions.short",
+"ai.3000",
+"boot.txt",
+"crashreporter.log",
+"dibbler.1000",
+"ls-l.txt",
+"quarterlypersonalincome.txt",
+"railroad.txt",
+"rpmpkgs.txt",
+"yum.txt"
+);
 foreach $file (@files)
 {
  print "learning $file\n";
- `learn data/$file > refinement/$file.res`;
+ `learn data/$file > refinement/$file.silver`;
 }
