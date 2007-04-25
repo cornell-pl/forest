@@ -1,25 +1,84 @@
-RArray(Id = BTy_0 999, tc: 96.710b, ac: 29.070b, dc: 535658.115b, raw: 535754.825b)
-	Separator: [StringConst] "|"
-	Poption(Id = BTy_11 20996, tc: 78.622b, ac: 29.070b, dc: 535658.115b, raw: 535736.737b)
-		Punion(Id = BTy_26 19998, tc: 72.577b, ac: 29.471b, dc: 535657.115b, raw: 535729.692b)
-			Pstruct(Id = BTy_10 13712, tc: 33.266b, ac: 19.553b, dc: 240693.115b, raw: 240726.381b)
-				Poption(Id = BTy_5 13712, tc: 22.178b, ac: 1.003b, dc: 45b, raw: 67.178b)
-					Pstruct(Id = BTy_8 1, tc: 16.133b, ac: 44.000b, dc: 44b, raw: 60.133b)
-						[String] (Id = BTy_6 1, tc: 5.044b, ac: 42.000b, dc: 42b, raw: 47.044b);
-						[White] (Id = BTy_7 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b);
+Starting on files data/dibbler.1000
+999 records.
+
+Before reduction:
+Parray(Id = BTy_0 999)([Other](|) )
+First:
+	Pstruct(Id = BTy_3 999)
+		[Pint] (Id = BTy_1 999);
+		[Other](|) (Id = BTy_2 999);
+	End Pstruct;
+Body:
+	Pstruct(Id = BTy_22 18998)
+		Punion(Id = BTy_11 18998)
+			Pstruct(Id = BTy_10 11714)
+				Punion(Id = BTy_5 11714)
+					[Empty] (Id = BTy_4 11713);
+					Pstruct(Id = BTy_8 1)
+						[String] (Id = BTy_6 1);
+						[White] (Id = BTy_7 1);
 					End Pstruct;
-				End Poption;
-				[Pint] (Id = BTy_9 13712, tc: 5.044b, ac: 18.550b, dc: 240648.115b, raw: 240653.159b);
+				End Punion;
+				[Pint] (Id = BTy_9 11714);
 			End Pstruct;
-			Pstruct(Id = BTy_18 6286, tc: 33.266b, ac: 47.924b, dc: 294963b, raw: 294996.266b)
-				[String] (Id = BTy_12 6286, tc: 5.044b, ac: 46.922b, dc: 294954b, raw: 294959.044b);
-				Poption(Id = BTy_14 6286, tc: 22.178b, ac: 1.001b, dc: 9b, raw: 31.178b)
-					Pstruct(Id = BTy_17 1, tc: 16.133b, ac: 8.000b, dc: 8b, raw: 24.133b)
-						[White] (Id = BTy_15 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b);
-						[String] (Id = BTy_16 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
+			Pstruct(Id = BTy_18 6286)
+				[String] (Id = BTy_12 6286);
+				Punion(Id = BTy_14 6286)
+					[Empty] (Id = BTy_13 6285);
+					Pstruct(Id = BTy_17 1)
+						[White] (Id = BTy_15 1);
+						[String] (Id = BTy_16 1);
 					End Pstruct;
-				End Poption;
+				End Punion;
 			End Pstruct;
+			[Empty] (Id = BTy_20 998);
 		End Punion;
-	End Poption;
+		[Other](|) (Id = BTy_21 18998);
+	End Pstruct;
+Tail:
+	[Pint] (Id = BTy_23 999);
+End Parray
+
+Refined Ty:
+RArray(Id = BTy_0 999)
+	Separator: [StringConst] "|"
+	Punion(Id = BTy_11 20996)
+		Pstruct(Id = BTy_10 13712)
+			Poption(Id = BTy_5 13712)
+				Pstruct(Id = BTy_8 1)
+					[String] (Id = BTy_6 1);
+					[White] (Id = BTy_7 1);
+				End Pstruct;
+			End Poption;
+			[Pint] (Id = BTy_9 13712);
+		End Pstruct;
+		Pstruct(Id = BTy_18 6286)
+			[String] (Id = BTy_12 6286);
+			Poption(Id = BTy_14 6286)
+				Pstruct(Id = BTy_17 1)
+					[White] (Id = BTy_15 1);
+					[String] (Id = BTy_16 1);
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+		[Empty] (Id = BTy_20 998);
+	End Punion;
 End RArray
+
+====== Timing information ======
+Tokenization time = 1.689
+Measure1 time = 0.046
+Reduce1 time = 1.955
+Reduce2 time = 26.305
+Reduce3 time = 0.892
+Measure2 time = 0.029
+================================
+
+Outputing partitions to directory: gen/
+Opening: gen/Ty, length 6
+opening: gen/Complexity, length 14
+opening: gen/Timing, length 10
+Excutable directory:/Users/kzhu/pads/learning/golden
+copy command: cp /Users/kzhu/pads/learning/golden/GNUMakefile.output gen/GNUmakefile
+
+Completed data/dibbler.1000

@@ -36,7 +36,7 @@ Pstruct(35, tc: 1450.675b, ac: 952.976b, dc: 2036.617b, raw: 3487.292b)
                 End Punion;
         case [StringConst] "crashreporterd":
                 Pstruct(35, tc: 111.763b, ac: 270.000b, dc: 270b, raw: 381.763b)
-                        [String] (35, tc: 5.044b, ac: 60.000b, dc: 60b, raw: 65.044b);
+                        [StringME] "/[^ ]\*/" (35, tc: 5.044b, ac: 60.000b, dc: 60b, raw: 65.044b);
                         [StringConst] " reply filaed: " (35, tc: 95.044b, ac: 0b, dc: 0b, raw: 95.044b);
                         [String] (35, tc: 5.044b, ac: 210.000b, dc: 210b, raw: 215.044b);
                 End Pstruct;

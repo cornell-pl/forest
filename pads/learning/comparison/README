@@ -13,7 +13,7 @@ rpmpkgs.txt
 yum.txt
 
 The results from the golden IRs are saved in files with an extension ".golden";
-the results from the solver IRs are saved in files with an extension ".solver".
+the results from the silver IRs are saved in files with an extension ".solver".
 
 This file will be a placeholder for future comments about the comparisons.
 

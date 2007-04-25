@@ -1,35 +1,74 @@
-Pstruct(Id = BTy_27 999, tc: 1367.219b, ac: 47.807b, dc: 38823.329b, raw: 40190.547b)
-        [Int] [101...103] (Id = BTy_0 999, tc: 18.389b, ac: 1.585b, dc: 1583.378b, raw: 1601.767b);
-        [StringConst] "      " (Id = BTy_1 999, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b);
-        [Int] [101...9890] (Id = BTy_2 999, tc: 24.974b, ac: 13.257b, dc: 13243.836b, raw: 13268.810b);
-        [StringConst] "      " (Id = BTy_3 999, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b);
-        [Pint] (Id = BTy_4 999, tc: 5.044b, ac: 4.525b, dc: 3522.244b, raw: 3527.288b);
-        Poption(Id = BTy_6 999, tc: 31.348b, ac: 1.197b, dc: 197.535b, raw: 228.883b)
-                Pstruct(Id = BTy_9 62, tc: 25.303b, ac: 3.170b, dc: 196.535b, raw: 221.838b)
-                        [StringConst] "." (Id = BTy_7 62, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-                        [Int] [1...9] (Id = BTy_8 62, tc: 8.214b, ac: 3.170b, dc: 196.535b, raw: 204.750b);
-                End Pstruct;
-        End Poption;
-        [Enum] {[StringConst] "             ", [StringConst] "              ", [StringConst] "               ", [StringConst] "                ", 
-[StringConst] "                 ", [StringConst] "                  ", [StringConst] "                   ", } (Id = BTy_11 999, tc: 715.163b, ac: 
-2.807b, dc: 19.651b, raw: 734.814b);
-        [Int] [0...0] (Id = BTy_12 999, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b);
-        Poption(Id = BTy_14 999, tc: 44.880b, ac: 1.880b, dc: 880.334b, raw: 925.214b)
-                Pstruct(Id = BTy_17 56, tc: 38.836b, ac: 15.702b, dc: 879.334b, raw: 918.169b)
-                        [StringConst] "." (Id = BTy_15 56, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-                        [Int] [2...53321] (Id = BTy_16 56, tc: 21.747b, ac: 15.702b, dc: 879.334b, raw: 901.081b);
-                End Pstruct;
-        End Poption;
-        [Enum] {[StringConst] "             ", [StringConst] "              ", [StringConst] "                   ", } (Id = BTy_19 999, tc: 297.76
-3b, ac: 1.585b, dc: 4.755b, raw: 302.517b);
-        Switch(BTy_2)(Id = BTy_24 999, tc: 16.133b, ac: 19.386b, dc: 19366.841b, raw: 19382.974b):
-        case [StringConst] "*":
-                [Pfloat] (Id = BTy_20 988, tc: 5.044b, ac: 19.602b, dc: 19366.841b, raw: 19371.885b);
-        case [Enum] {[IntConst] [9100], [IntConst] [9300], [IntConst] [9400], [IntConst] [9710], [IntConst] [9720], [IntConst] [9860], [IntConst] 
-[9870], [IntConst] [9880], [IntConst] [9890], }:
-                [Int] [0...0] (Id = BTy_25 11, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b);
-        End Switch;
-        [Enum] {[StringConst] "   ", [StringConst] "    ", [StringConst] "         ", } (Id = BTy_26 999, tc: 117.763b, ac: 1.585b, dc: 4.755b, ra
-w: 122.517b);
+Starting on files data/1967Transactions.short
+999 records.
+
+Before reduction:
+Pstruct(Id = BTy_27 999)
+	[Pint] (Id = BTy_0 999);
+	[White] (Id = BTy_1 999);
+	[Pint] (Id = BTy_2 999);
+	[White] (Id = BTy_3 999);
+	[Pint] (Id = BTy_4 999);
+	Punion(Id = BTy_6 999)
+		[Empty] (Id = BTy_5 937);
+		Pstruct(Id = BTy_9 62)
+			[Other](.) (Id = BTy_7 62);
+			[Pint] (Id = BTy_8 62);
+		End Pstruct;
+	End Punion;
+	[White] (Id = BTy_11 999);
+	[Pint] (Id = BTy_12 999);
+	Punion(Id = BTy_14 999)
+		[Empty] (Id = BTy_13 943);
+		Pstruct(Id = BTy_17 56)
+			[Other](.) (Id = BTy_15 56);
+			[Pint] (Id = BTy_16 56);
+		End Pstruct;
+	End Punion;
+	[White] (Id = BTy_19 999);
+	Punion(Id = BTy_24 999)
+		Pstruct(Id = BTy_23 988)
+			[Pint] (Id = BTy_20 988);
+			[Other](.) (Id = BTy_21 988);
+			[Pint] (Id = BTy_22 988);
+		End Pstruct;
+		[Pint] (Id = BTy_25 11);
+	End Punion;
+	[White] (Id = BTy_26 999);
 End Pstruct
 
+Refined Ty:
+Pstruct(Id = BTy_27 999)
+	[Int] [101...103] (Id = BTy_0 999);
+	[StringConst] "      " (Id = BTy_1 999);
+	[Int] [101...9890] (Id = BTy_2 999);
+	[StringConst] "      " (Id = BTy_3 999);
+	[Pfloat] (Id = BTy_4 999);
+	[Enum] {[StringConst] "             ", [StringConst] "              ", [StringConst] "               ", [StringConst] "                ", [StringConst] "                 ", [StringConst] "                  ", [StringConst] "                   ", } (Id = BTy_11 999);
+	[Pfloat] (Id = BTy_12 999);
+	[Enum] {[StringConst] "             ", [StringConst] "              ", [StringConst] "                   ", } (Id = BTy_19 999);
+	Switch(BTy_2)(Id = BTy_24 999):
+	case [StringConst] "*":
+		[Pfloat] (Id = BTy_20 988);
+	case [Enum] {[IntConst] [9100], [IntConst] [9300], [IntConst] [9400], [IntConst] [9710], [IntConst] [9720], [IntConst] [9860], [IntConst] [9870], [IntConst] [9880], [IntConst] [9890], }:
+		[Int] [0...0] (Id = BTy_25 11);
+	End Switch;
+	[Enum] {[StringConst] "   ", [StringConst] "    ", [StringConst] "         ", } (Id = BTy_26 999);
+End Pstruct
+
+====== Timing information ======
+Tokenization time = 0.230
+Measure1 time = 0.015
+Reduce1 time = 0.907
+Reduce2 time = 0.462
+Reduce3 time = 0.135
+Measure2 time = 0.008
+================================
+
+Outputing partitions to directory: gen/
+Opening: gen/Ty, length 6
+opening: gen/Complexity, length 14
+opening: gen/Timing, length 10
+Excutable directory:/Users/kzhu/pads/learning/golden
+copy command: cp /Users/kzhu/pads/learning/golden/GNUMakefile.output gen/GNUmakefile
+
+Completed data/1967Transactions.short

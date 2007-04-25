@@ -1,89 +1,106 @@
-Pstruct(Id = BTy_77 886, tc: 563.303b, ac: 101.615b, dc: 122641.113b, raw: 123204.416b)
-	Punion(Id = BTy_26 886, tc: 188.998b, ac: 80.864b, dc: 68760.117b, raw: 68949.115b)
-		Pstruct(Id = BTy_25 885, tc: 161.191b, ac: 79.879b, dc: 68693.117b, raw: 68854.308b)
-			Poption(Id = BTy_2 885, tc: 48.311b, ac: 16.312b, dc: 13341b, raw: 13389.311b)
-				Punion(Id = BTy_65 107, tc: 42.266b, ac: 126.645b, dc: 13340b, raw: 13382.266b)
-					Pstruct(Id = BTy_7 106, tc: 28.178b, ac: 126.830b, dc: 13339b, raw: 13367.178b)
-						[Host] (Id = BTy_3 106, tc: 5.044b, ac: 125.830b, dc: 13338b, raw: 13343.044b);
-						Poption(Id = BTy_5 106, tc: 17.089b, ac: 1.000b, dc: 1b, raw: 18.089b)
-							[StringConst] "-" (Id = BTy_6 2, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-						End Poption;
+Starting on files data/rpmpkgs.txt
+886 records.
+
+Before reduction:
+Punion(Id = BTy_25 886)
+	Pstruct(Id = BTy_24 885)
+		Punion(Id = BTy_1 885)
+			[Empty] (Id = BTy_0 876);
+			Pstruct(Id = BTy_21 9)
+				[String] (Id = BTy_2 9);
+				Punion(Id = BTy_16 9)
+					Pstruct(Id = BTy_15 8)
+						[Other](+) (Id = BTy_4 8);
+						Punion(Id = BTy_12 8)
+							Pstruct(Id = BTy_11 6)
+								[Other](+) (Id = BTy_5 6);
+								[Pint] (Id = BTy_7 6);
+								Punion(Id = BTy_9 6)
+									[Empty] (Id = BTy_8 4);
+									[Pint] (Id = BTy_10 2);
+								End Punion;
+							End Pstruct;
+							[Pint] (Id = BTy_13 2);
+						End Punion;
+						[Other](.) (Id = BTy_14 8);
 					End Pstruct;
-					[IntConst] [4] (Id = BTy_9 1, tc: 8.044b, ac: 0b, dc: 0b, raw: 8.044b);
+					Pstruct(Id = BTy_20 1)
+						[Other](+) (Id = BTy_17 1);
+						[Other](+) (Id = BTy_18 1);
+						[Other](-) (Id = BTy_19 1);
+					End Pstruct;
 				End Punion;
-			End Poption;
-			[String] (Id = BTy_10 885, tc: 5.044b, ac: 62.414b, dc: 55236b, raw: 55241.044b);
-			Poption(Id = BTy_12 885, tc: 89.747b, ac: 1.154b, dc: 116.117b, raw: 205.864b)
-				Pstruct(Id = BTy_67 9, tc: 83.703b, ac: 15.124b, dc: 115.117b, raw: 198.819b)
-					[StringConst] "+" (Id = BTy_14 9, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-					RArray(Id = BTy_13 9, tc: 18.089b, ac: 0b, dc: 0b, raw: 18.089b)
-						[StringConst] "+" (Id = BTy_15 7, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-					End RArray;
-					Punion(Id = BTy_23 9, tc: 47.940b, ac: 15.124b, dc: 115.117b, raw: 163.057b)
-						Pstruct(Id = BTy_66 8, tc: 25.763b, ac: 9.890b, dc: 66.117b, raw: 91.879b)
-							[Pint] (Id = BTy_17 8, tc: 5.044b, ac: 8.890b, dc: 64.117b, raw: 69.161b);
-							RArray(Id = BTy_16 8, tc: 14.674b, ac: 1b, dc: 2b, raw: 16.674b)
-								[Int] [~3...~2] (Id = BTy_18 2, tc: 7.629b, ac: 1b, dc: 2b, raw: 9.629b);
-							End RArray;
-						End Pstruct;
-						Pstruct(Id = BTy_22 1, tc: 16.133b, ac: 48.000b, dc: 48b, raw: 64.133b)
-							[Other](-) (Id = BTy_20 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-							[String] (Id = BTy_21 1, tc: 5.044b, ac: 42.000b, dc: 42b, raw: 47.044b);
-						End Pstruct;
-					End Punion;
-				End Pstruct;
-			End Poption;
-			[StringConst] "." (Id = BTy_24 885, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-		End Pstruct;
-		Pstruct(Id = BTy_30 1, tc: 21.763b, ac: 66.000b, dc: 66b, raw: 87.763b)
-			[Host] (Id = BTy_27 1, tc: 5.044b, ac: 60.000b, dc: 60b, raw: 65.044b);
-			[Int] [~1...~1] (Id = BTy_28 1, tc: 5.044b, ac: 0b, dc: 0b, raw: 5.044b);
-			[Other](.) (Id = BTy_29 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-		End Pstruct;
-	End Punion;
-	RArray(Id = BTy_0 886, tc: 368.260b, ac: 20.752b, dc: 53880.996b, raw: 54249.257b)
-		Separator: [StringConst] "."
-		Punion(Id = BTy_43 3613, tc: 350.172b, ac: 20.752b, dc: 53880.996b, raw: 54231.168b)
-			Pstruct(Id = BTy_42 1969, tc: 85.203b, ac: 22.354b, dc: 41657.808b, raw: 41743.010b)
-				Poption(Id = BTy_32 1969, tc: 74.114b, ac: 1.344b, dc: 287.808b, raw: 361.922b)
-					Pstruct(Id = BTy_71 54, tc: 68.069b, ac: 12.533b, dc: 286.808b, raw: 354.877b)
-						[Pint] (Id = BTy_34 54, tc: 5.044b, ac: 5.245b, dc: 230.213b, raw: 235.257b);
-						RArray(Id = BTy_33 54, tc: 22.218b, ac: 6.066b, dc: 54.595b, raw: 76.813b)
-							[Int] [~80...~14] (Id = BTy_35 9, tc: 15.174b, ac: 6.066b, dc: 54.595b, raw: 69.768b);
-						End RArray;
-						Poption(Id = BTy_37 54, tc: 34.178b, ac: 1.222b, dc: 2b, raw: 36.178b)
-							Punion(Id = BTy_70 12, tc: 28.133b, ac: 1.000b, dc: 1b, raw: 29.133b)
-								[StringConst] "_" (Id = BTy_38 9, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-								[StringConst] "-" (Id = BTy_40 3, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
-							End Punion;
-						End Poption;
-					End Pstruct;
-				End Poption;
-				[String] (Id = BTy_41 1969, tc: 5.044b, ac: 21.011b, dc: 41370b, raw: 41375.044b);
-			End Pstruct;
-			Pstruct(Id = BTy_76 1644, tc: 258.925b, ac: 16.635b, dc: 12222.188b, raw: 12481.113b)
-				Poption(Id = BTy_50 1644, tc: 141.311b, ac: 7.056b, dc: 6675.432b, raw: 6816.742b)
-					Pstruct(Id = BTy_49 1642, tc: 135.266b, ac: 6.064b, dc: 6674.432b, raw: 6809.698b)
-						Poption(Id = BTy_46 1642, tc: 124.178b, ac: 1.001b, dc: 3b, raw: 127.178b)
-							[Enum] {[StringConst] "15.92.0.2", [StringConst] "4.1.2.90", } (Id = BTy_47 2, tc: 118.133b, ac: 1b, dc: 2b, raw: 120.133b);
-						End Poption;
-						[Pint] (Id = BTy_48 1642, tc: 5.044b, ac: 5.062b, dc: 6671.432b, raw: 6676.476b);
-					End Pstruct;
-				End Poption;
-				RArray(Id = BTy_44 1644, tc: 12.089b, ac: 8.555b, dc: 5508.757b, raw: 5520.846b)
-					[Pint] (Id = BTy_52 729, tc: 5.044b, ac: 8.555b, dc: 5508.757b, raw: 5513.801b);
-				End RArray;
-				Poption(Id = BTy_54 1644, tc: 98.896b, ac: 1.023b, dc: 38b, raw: 136.896b)
-					Punion(Id = BTy_75 2, tc: 92.851b, ac: 19.000b, dc: 37b, raw: 129.851b)
-						[StringConst] "2006.06.28" (Id = BTy_55 1, tc: 65.044b, ac: 0b, dc: 0b, raw: 65.044b);
-						Pstruct(Id = BTy_59 1, tc: 21.763b, ac: 36.000b, dc: 36b, raw: 57.763b)
-							[Other](() (Id = BTy_56 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-							[String] (Id = BTy_57 1, tc: 5.044b, ac: 24.000b, dc: 24b, raw: 29.044b);
-							[Other]()) (Id = BTy_58 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b);
-						End Pstruct;
-					End Punion;
-				End Poption;
 			End Pstruct;
 		End Punion;
-	End RArray;
-End Pstruct
+		[Host] (Id = BTy_22 885);
+		[String] (Id = BTy_23 885);
+	End Pstruct;
+	Pstruct(Id = BTy_34 1)
+		[String] (Id = BTy_26 1);
+		[Other](.) (Id = BTy_27 1);
+		[Other](() (Id = BTy_28 1);
+		[String] (Id = BTy_29 1);
+		[Other]()) (Id = BTy_30 1);
+		[Other](.) (Id = BTy_32 1);
+		[String] (Id = BTy_33 1);
+	End Pstruct;
+End Punion
+
+Refined Ty:
+Punion(Id = BTy_25 886)
+	Pstruct(Id = BTy_24 885)
+		Poption(Id = BTy_1 885)
+			Pstruct(Id = BTy_21 9)
+				[Enum] {[StringConst] "compat-gcc-32-c", [StringConst] "compat-libstdc", [StringConst] "gcc-c", [StringConst] "gcc4-c", [StringConst] "gtk", [StringConst] "libstdc", [StringConst] "memtest86", } (Id = BTy_2 9);
+				Punion(Id = BTy_16 9)
+					Pstruct(Id = BTy_15 8)
+						[StringConst] "+" (Id = BTy_4 8);
+						Punion(Id = BTy_12 8)
+							Pstruct(Id = BTy_11 6)
+								[StringConst] "+" (Id = BTy_5 6);
+								[Pint] (Id = BTy_7 6);
+								Poption(Id = BTy_9 6)
+									[Int] [~3...~2] (Id = BTy_10 2);
+								End Poption;
+							End Pstruct;
+							[Int] [~1...~1] (Id = BTy_13 2);
+						End Punion;
+						[StringConst] "." (Id = BTy_14 8);
+					End Pstruct;
+					RArray(Id = BTy_20 1)
+						[Other](+) (Id = BTy_19 3);
+					End RArray;
+				End Punion;
+			End Pstruct;
+		End Poption;
+		[Host] (Id = BTy_22 885);
+		[StringConst] "m" (Id = BTy_23 885);
+	End Pstruct;
+	Pstruct(Id = BTy_34 1)
+		[String] (Id = BTy_26 1);
+		[Other](.) (Id = BTy_27 1);
+		[Other](() (Id = BTy_28 1);
+		[String] (Id = BTy_29 1);
+		[Other]()) (Id = BTy_30 1);
+		[Other](.) (Id = BTy_32 1);
+		[String] (Id = BTy_33 1);
+	End Pstruct;
+End Punion
+
+====== Timing information ======
+Tokenization time = 0.045
+Measure1 time = 0.032
+Reduce1 time = 1.057
+Reduce2 time = 0.901
+Reduce3 time = 0.602
+Measure2 time = 0.025
+================================
+
+Outputing partitions to directory: gen/
+Opening: gen/Ty, length 6
+opening: gen/Complexity, length 14
+opening: gen/Timing, length 10
+Excutable directory:/Users/kzhu/pads/learning/golden
+copy command: cp /Users/kzhu/pads/learning/golden/GNUMakefile.output gen/GNUmakefile
+
+Completed data/rpmpkgs.txt
