@@ -17,6 +17,85 @@ the results from the silver IRs are saved in files with an extension ".solver".
 
 This file will be a placeholder for future comments about the comparisons.
 
+=======================
+April 25/07
+=======================
+thoughts from discussions with Kenny, Kathleen, Dave:
+
+1.  only create enums/constants from simple types (int/string/xml tag), not
+complex types.  Pwhite has no enums, but does have constants.  (already implemented
+by Kenny).
+
+2.  tokenization of complex items (eg: url, path, filename especially) remains
+difficult since lexemes are ambiguous/overlap.  Some lexemes are also somewhat
+context sensitive and require at least single-character look-ahead (hence
+regular expressions do not work well).
+	-- short-term solution: multiple lex files (Kenny/Dave will explore)
+	-- long-term solution: (1) learn probabilistic model & incorporate with other
+             statistical infrastructure, and/or (2) implement simple tokenization
+             but sophisticated rewriting -- take advantage of the fact that
+             while it may be ambiguous what class a single string of characters
+             falls into, we may be able to accumulate high probability evidence
+             if if we work not with one string/record but with a large collection of
+             strings/records during the rewriting phase.  (ie: note that tokenization
+             can only work one string at a time).
+
+3.  In crashreporter.log one sees several enums and several switches.  
+The "silver" structure chooses the incorrect thing to switch on.  The
+correct enum to switch on is the first enum in the sequence for which
+a dependency arises.  Confusing things perhaps is the fact that
+inside that enum there is a union.  Anyway, when introducing switches,
+we might conjecture that the left-most thing in a file is the best thing
+to switch on to avoid this problem.  However, it is not at all clear whether
+this is a general solution (or to what extent it will fix the crash reporter).
+
+To be specific, here is the following golden structure:
+
+--------------------
+[Enum] {[StringConst] "crashdump", [StringConst] "crashreporterd", }
+...
+Switch(sw)
+case [StringConst] "crashdump":
+  Punion
+    [StringConst] "crashdump started";
+    Pstruct [StringConst] "Started writing crash report to: " [Path] End Pstruct;
+    ...
+  End Punion;
+case [StringConst] "crashreporterd":
+    ...
+End Switch;
+--------------------
+However, what ends up being inferred is:
+--------------------
+[Enum] {[StringConst] "crashdump", [StringConst] "crashreporterd", }
+...
+[Enum] {[StringConst] "Started", [StringConst] "crashdump", ... } (Id = BTy_17)
+
+Switch(BTy_17):
+	case [Enum] {[StringConst] "Started", [StringConst] "crashdump"...):
+--------------------
+Notice that the switch is conditioned on the second enum.  The second enum however,
+is really the first word in an error message.  Separating this first word in the
+error message from the other words results in a suboptimal structure.
+
+4.  A heuristic that may help crash reporter is looking at all of the records
+and finding a common prefix of tokens.  The common initial prefix may not
+be obvious from the histograms if that common prefix contains tokens that
+appear at varying rates in later portions of the records.
+
+5.  We found a concrete example of a case where rewriting hits a local maximum
+score in 1 rewriting step but if 2 rewriting steps were to be combined in sequence,
+one would hit a better global maximum (the first step decreases the score,
+but the second step more than makes up for the decrease).  The example involves
+Pwhite and string constants.  Currently Pwhite in a certain case does not get
+reduced to a string constant because of a score increase.  However, performing
+a reduction to a string constant followed by merging with adjacent string constants
+is a good rule.  I can't remember the details here,but it seems to me as though
+we should be fiddling with the scoring rule to ensure that Pwhite is always
+reduced to a constant string (eg: "  ") where possible.  Perhaps I am
+misremembering the exact context here.
+
+
 ==============================================================================
 dibbler.1000 thoughts
 ==============================================================================
