@@ -129,7 +129,7 @@ Pio_disc_t * P_norec_noseek_make(size_t block_size_hint);
  * 
  * XXX_TODOC: offset, begin, end, etc.
  *
- * There is an extra data fields, disc_ptr, which is optionally used by
+ * There is an extra data field, disc_ptr, which is optionally used by
  * the io discipline and ignored by the main library code.
  */
 

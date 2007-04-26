@@ -847,10 +847,11 @@ do { \
   if (avail >= offset) { \
     remain += offset; \
   } else { \
+    /* search for location in previous elements (records). */ \
     while (1) { \
       offset -= avail; /* note offset still > 0 */ \
       elt = elt->prev; \
-      if (elt == pads->head) break; \
+      if (elt == pads->head) break; /* no more previous records. */	\
       if (!elt->len) { avail = 0; continue; } \
       remain = 1; \
       offset--; \

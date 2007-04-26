@@ -382,6 +382,7 @@ do {
 /* The IOerrorSTMT statement must be/include goto or return; it */
 /* is assumed NOT to fall through.  Further, begin/end/etc are  */
 /* NOT set properly if IOerrorSTMT is used.                     */
+/* Invariant: at exit, begin <= end.*/
 #define PDCI_IO_NEED_BYTES(IOerrorSTMT)
 do {
   while (!(elt->eor|elt->eof) && (soft_goal || !goal_bytes || bytes < goal_bytes)) {
@@ -401,6 +402,10 @@ do {
     elt = elt->next;
     bytes += elt->len;
   }
+  /* Why isn't this line before the while loop? 
+     Can the while loop effect the contents of tp? 
+     -- YHM
+   */
   begin = tp->elt->end - tp->remain;
   /* either we hit eor or eof, or we found >= goal_bytes bytes */
   if (soft_goal && (bytes > goal_bytes)) {
@@ -7795,7 +7800,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.207 2007-01-31 18:11:37 forrest Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.208 2007-04-26 19:45:50 yitzhakm Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -12535,10 +12540,22 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
-  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
-
+  if ((begin == end) || eor){
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+    PDCI_READFN_RET_ERRCODE_WARN("PDCI_string_CME_read", 0, eor ? P_AT_EOR : P_AT_EOF);    
+  } else {    
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    { int k = end-begin-1;
+      if ( k > 0) 
+	PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, k);
+      else {
+	P_WARN(pads->disc, "PDCI_string_CME_read: end < begin");
+	PDCI_READFN_ENDLOC_MINUSK(pads, pd->loc, -k);
+      }
+    }
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
+  }
+  
  fatal_alloc_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
 
@@ -12592,6 +12609,10 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
     /* must be at eof, do not want to match anything (not even /$/) */
     goto not_found;
   }
+  if (end < begin){
+    P_WARN(pads->disc, "PDCI_string_CSE_read: end < begin");
+    goto fatal_nb_io_err;
+  }
   e_flags = 0; /* do not pin left when we do a terminating match */
   if (!bor) {
     e_flags |= REG_NOTBOL;
@@ -12621,9 +12642,21 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
-  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
+  if ((begin == end) || eor){
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+    PDCI_READFN_RET_ERRCODE_WARN("PDCI_string_CSE_read", 0, eor ? P_AT_EOR : P_AT_EOF);    
+  } else {    
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    { int k = end-begin-1;
+      if ( k > 0) 
+	PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, k);
+      else {
+	P_WARN(pads->disc, "PDCI_string_CSE_read: end < begin");
+	PDCI_READFN_ENDLOC_MINUSK(pads, pd->loc, -k);
+      }
+    }
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
+  }
 
  fatal_alloc_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
