@@ -7,6 +7,7 @@ structure Config = struct
     val DEF_JUNK_PERCENTAGE   =  0.1
     val DEF_NOISE_PERCENTAGE  =  0.0
     val DEF_ARRAY_WIDTH_THRESHOLD =  4
+    val DEF_ARRAY_MIN_WIDTH_THRESHOLD =  0
 
     val def_depthLimit   = 50
     val def_outputDir    = "gen/"
@@ -30,6 +31,7 @@ structure Config = struct
     val JUNK_PERCENTAGE   = ref DEF_JUNK_PERCENTAGE
     val NOISE_PERCENTAGE  = ref DEF_NOISE_PERCENTAGE
     val ARRAY_WIDTH_THRESHOLD = ref DEF_ARRAY_WIDTH_THRESHOLD
+    val ARRAY_MIN_WIDTH_THRESHOLD = ref DEF_ARRAY_MIN_WIDTH_THRESHOLD
 
     fun histEqTolerance   x = Real.ceil((!HIST_PERCENTAGE)   * Real.fromInt(x)) 
     fun isStructTolerance x = Real.ceil((!STRUCT_PERCENTAGE) * Real.fromInt(x)) 
@@ -47,7 +49,8 @@ structure Config = struct
 	    ("Histogram comparison tolerance (percentage): "  ^(Real.toString (!HIST_PERCENTAGE))^"\n")^
 	    ("Struct determination tolerance (percentage): "  ^(Real.toString (!STRUCT_PERCENTAGE))^"\n")^
 	    ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n")^
-	    ("Minimum width threshold for array: "            ^( Int.toString (!ARRAY_WIDTH_THRESHOLD))^"\n")^
+	    ("Width threshold for array: "                    ^( Int.toString (!ARRAY_WIDTH_THRESHOLD))^"\n")^
+	    ("Minimum width threshold for array: "            ^( Int.toString (!ARRAY_MIN_WIDTH_THRESHOLD))^"\n")^
 	    ("Junk threshold (percentage): "                  ^(Real.toString (!JUNK_PERCENTAGE))^"\n"))
 
     fun printParameters () = print (parametersToString ())

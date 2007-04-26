@@ -80,7 +80,9 @@ struct
 		     total: int ref,        (* number of occurrences of token in file *)
 		     coverage : int ref,    (* number of records with at least one occurrence of token *)
 		     structScore : int ref, (* structScore metric: weights heavy mass in single column *)
-		     width : int ref}       (* number of columns in histogram *)
+		     width : int ref,              (* number of columns in histogram *)
+		     minOccurrences : int ref (* minimum time token *appears* in any record *)
+                    }
    type freqDist = histogram TokenTable.map
    type cluster  = freqDist list
 
@@ -105,8 +107,9 @@ struct
 	(print "Token: "; 
 	 printTokenTy token; print "\n"; 
          print ("Total number of token occurrences: "^(Int.toString (!(#total h))^".\n"));
-         print ("Number of records with at least one token occurrence: "^(Int.toString (!(#coverage h))^".\n"));
+         print ("Number of records with at least one token occurrence: "^(Int.toString (!(#coverage h)))^".\n");
          print ("StructScore: "^(Int.toString (!(#structScore h))^".\n"));
+         print ("Minimum number of *occurrences* of token: "^(Int.toString(!(#minOccurrences h)))^".\n");
 	 IntMap.appi (printOneFreq numRecords) (!(#hist h)); print "\n")
     
     fun printDist numRecords freqs = (print "Distributions:\n"; TokenTable.appi (printAugHist numRecords) freqs; print "\n")
@@ -194,7 +197,7 @@ struct
    (* Histogram compuations *)
    fun mkHistogram (column:int) : histogram =
        {hist=ref (IntMap.insert(IntMap.empty, column, ref 1)), total=ref column, coverage = ref 1, 
-	structScore = ref 0, width = ref 0}
+	structScore = ref 0, width = ref 0, minOccurrences = ref 0}
 
    fun getSortedHistogramList c = 
        let val cList = List.map (fn(x,y)=>(x,!y)) (IntMap.listItemsi c)
@@ -208,6 +211,9 @@ struct
    (* formula: sum over all columns of columnNumber * (numRemainingRecords - colHeight) *)
    fun histScore numRecords (h:histogram) = 
        let val cSorted = getSortedHistogramList (!(#hist h))
+	   fun findMinimumOccurrences [] a = a
+             | findMinimumOccurrences ((col,height)::rest) a = 
+	        if col < a then findMinimumOccurrences rest col else findMinimumOccurrences rest a 
 	   fun foldNext ((colIndex, colHeight), (structScore, columnNumber, numRemainingRecords)) =
 	       let val mass = colIndex * colHeight
 	       in
@@ -215,7 +221,7 @@ struct
 	       end
 	   val (structScore, colNumber, numRemaining) = List.foldl foldNext (0,1,numRecords) cSorted 
        in
-	   (structScore, List.length cSorted)
+	   (structScore, List.length cSorted, findMinimumOccurrences (tl cSorted) (#1(hd cSorted)) )
        end
 
     fun histScoreCmp threshold ({structScore=score1,...}:histogram,{structScore=score2,...}:histogram) = 
@@ -570,11 +576,12 @@ struct
 	    fun doAllRecords (fd:freqDist) [] = fd
               | doAllRecords fd (c::cs) = doAllRecords (doOneRecord fd c) cs
             val freqs : freqDist = doAllRecords TokenTable.empty countslist
-	    fun scoreHistogram (h as {hist, total, coverage, structScore, width} : histogram) = 
-		let val (s,w) = histScore numRecords h
+	    fun scoreHistogram (h as {hist, total, coverage, structScore, width, minOccurrences} : histogram) = 
+		let val (s,w, minOcc) = histScore numRecords h
 		in
 		    structScore := s;
-		    width := w
+		    width := w;
+		    minOccurrences := minOcc
 		end
 	    val () = TokenTable.app scoreHistogram freqs
 	in
@@ -618,7 +625,7 @@ struct
      *)
     fun analyzeClusters numRecords (clusters : (Token * histogram) list list) = 
 	let fun isStruct (cluster::_) = 
-		let fun getStructInfo((t, {hist, total, coverage, structScore, width}), result) =
+		let fun getStructInfo((t, {hist, total, coverage, structScore, width,minOccurrences}), result) =
 		    let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
 			val sortedHlist = ListMergeSort.sort (fn((i1,c1:int),(i2,c2))=>(c1 < c2)) hList
 			val primary = List.hd sortedHlist
@@ -675,16 +682,18 @@ struct
 		    val () = if print_verbose then print "Clusters sorted by array criteria:\n" else ()
 		    val () = if print_verbose then printClusters numRecords sortedClusters else ()
 		    val cluster = List.hd sortedClusters (* guaranteed by earlier check not to be [] *)
-		    fun getArrayInfo((t, {hist, total, coverage, structScore, width}), result) = 
+		    fun getArrayInfo((t, {hist, total, coverage, structScore, width, minOccurrences}), result) = 
 		    (if print_verbose then (
 		     print "Possible array tokens:\n"; 
 		     printTokenTy t; print "\n";
 		     print ("Records in possible array context:"^(Int.toString numRecords)^"\n");
                      print ("Total:"^(Int.toString (!total))^"\n");
                      print ("Coverage:"^(Int.toString (!coverage))^"\n");
-                     print ("Width:"^(Int.toString (!width))^"\n")) 
+                     print ("Width:"^(Int.toString (!width))^"\n");
+                     print ("minOccurrences:"^(Int.toString (!minOccurrences))^"\n")) 
 		     else ();
 		     if (!width >= !ARRAY_WIDTH_THRESHOLD) andalso 
+                        (!minOccurrences >= !ARRAY_MIN_WIDTH_THRESHOLD) andalso
 			(!coverage > numRecords - (isJunkTolerance numRecords))  andalso
                         (not (isString t))
 			 then (t,1)::result else result)
@@ -1081,7 +1090,13 @@ struct
 		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
 *)
 		in
-		    ((*print "Array context\n"; *)
+		    (print "Array context\n"; 
+                     print "First Context:\n";
+                     print (contextsToString firstContext);
+                     print "body Context:\n";
+                     print (contextsToString mainContext);
+                     print "last Context:\n";
+                     print (contextsToString lastContext);
 		     Parray (mkTyAux numRecords, 
 			     {tokens  = atokens, 
 			      lengths = arrayLengths,
