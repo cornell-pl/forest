@@ -39,7 +39,7 @@ timezone = [+-][0-1][0-9]00;
 ampm = am | AM | pm | PM;
 time    = {doublet}:{doublet}((:{doublet})?)(([ ]*{ampm})?)([ \t]+{timezone})?;
 port = [1-9][0-9]*;
-filename = [^\\/?*:<>" ]+;
+filename = [^\\/?*:<>"\[\] ]+;
 filepath =  (\/{filename}){2}(\/{filename})*\/? | 
 	({filename}\/){2}({filename}\/)*{filename}? | 
 	\\?(\\{filename}){2}(\\{filename})*\\? |
@@ -53,7 +53,7 @@ month   = Jan | jan | Feb | feb | Mar | mar | Apr | apr | May | may | Jun | jun 
 	  October | November | December;
 nummonth = 0?[1-9] | 1[0-2];
 genmonth = {month} | {nummonth};
-domainsuffix = com | edu | net | org | [a-z][a-z];
+domainsuffix = com | edu | net | org;
 year = [0-2][0-9]{3};
 date =  {genmonth}\/{day}\/{year} | {day}\/{genmonth}\/{year} | {year}\/{genmonth}\/{day} |
 	{genmonth}\-{day}\-{year} | {day}\-{genmonth}\-{year} | {year}\-{genmonth}\-{day} |

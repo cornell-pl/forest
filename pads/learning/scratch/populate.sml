@@ -11,26 +11,60 @@ struct
     structure SS = Substring
     
     val recordNo = ref 0
+    fun initTyList labelmap tys =
+	case tys of 
+	  nil => (labelmap, nil)
+	  | ty::tail => 
+	  let
+	    val (labelmap', ty') = initializeTy labelmap ty
+	    val (labelmap'', tail') = initTyList labelmap' tail
+	  in (labelmap'', ty'::tail')
+	  end
    (*function to assign labels to the nodes and clear the coverage
-    and tokenlists in the tree *)
-    fun initializeTy ty =
+    and tokenlists in the tree, returns newlabelmap and newty *)
+    and initializeTy labelmap ty =
       let
-	val newAux= {coverage = 0, label = SOME (getLabel({coverage=0, label = NONE, tycomp=zeroComps})),
-	tycomp=zeroComps}
+	val aux = getAuxInfo ty
+	val newLabel = getLabel({coverage=0, label = NONE, tycomp=zeroComps})
+	val labelmap' = LabelMap.insert(labelmap, (getLabel aux), newLabel)
+	val newAux= {coverage = 0, label = SOME newLabel, tycomp=zeroComps}
       in
 	case ty 
-        of Base (a,t)                   => Base(newAux, t)
+        of Base (a,t)                   => (labelmap', Base(newAux, List.take(t, 1)))
         |  TBD (a,i,cl)                 => raise TyMismatch
         |  Bottom (a, i, cl)              => raise TyMismatch
-        |  Pstruct (a, tys)              => Pstruct(newAux, map initializeTy tys)
-        |  Punion (a, tys)               => Punion(newAux, map initializeTy tys)
+        |  Pstruct (a, tys)              => 
+		let
+		  val (labelmap'', tys') = (initTyList labelmap' tys)
+		in (labelmap'', Pstruct(newAux, tys'))
+		end
+        |  Punion (a, tys)               => 
+		let
+		  val (labelmap'', tys') = initTyList labelmap' tys
+		in (labelmap'', Punion(newAux, tys'))
+		end
         |  Parray (a, {tokens, lengths, first, body, last}) =>  raise TyMismatch
-        |  RefinedBase (a, r, tl)         => RefinedBase(newAux, r, nil)
-        |  Switch(a,id,branches)        => Switch(newAux, id, 
-					map (fn (re, ty) => (re, initializeTy ty)) branches)
-        |  RArray (a,sep,term,body,len,lengths) => RArray (newAux, sep, term, initializeTy body, len, nil)
-        |  Poption (a, ty)               => Poption(a, initializeTy ty)
-      end
+        |  RefinedBase (a, r, tl)         => (labelmap', RefinedBase(newAux, r, nil))
+        |  Switch(a, id, branches)        => 
+		let
+		  val newSwitchId = some(LabelMap.find(labelmap', id))
+		  val (res, tys) = ListPair.unzip branches
+		  val (labelmap'', tys') = initTyList labelmap' tys
+		  val branches' = ListPair.zip (res, tys')
+		in
+		  (labelmap'', Switch(newAux, newSwitchId, branches'))
+		end
+        |  RArray (a,sep,term,body,len,lengths) => 
+		let
+		  val (labelmap'', body') = initializeTy labelmap' body
+		in (labelmap'', RArray (newAux, sep, term, body', len, nil))
+		end
+        |  Poption (a, body)               => 
+		let
+		  val (labelmap'', body') = initializeTy labelmap' body
+		in (labelmap'', Poption(newAux, body'))
+		end
+      end 
     (*function to clean up the first token in all the base types, because the golden IR were
 	rewritten with one fake token in each base type *)
     fun cleanFirstToken ty =
@@ -75,6 +109,10 @@ struct
 	let 
 	  val (tok, nextloc) = hd tokens
 	  val newloc = combLoc (loc, nextloc)
+(*
+	  val _ = print "In matchString ...\n";
+	  val _ = print ("matching " ^ (tokenTyToString tok) ^ "\n");
+*)
 	in
 	  case tok of
 		Ptime(t) => if (String.isPrefix (matchedStr^t) s) then 
@@ -108,6 +146,9 @@ struct
 				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			       else (NONE, tokens)
 	|	Other (c)  => let val t = Char.toString(c) 
+(*
+				val _ = print ("Trying to match " ^ t ^"\n")
+*)
 			      in if (String.isPrefix (matchedStr^t) s) then 
 				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			        else (NONE, tokens)
@@ -154,30 +195,35 @@ struct
 	  end
     (*returns (SOME token/NONE, remaining tokens)*)
     and matchTokens (re:Refined) (tokens:LToken list) =
-      let 
-        val tok = (#1 (hd tokens))
-      in
-	case (re, tok) of 
-	  (Int(min,max), Pint (i, s)) =>  
-		if (i>=min andalso i<=max) then (SOME(hd tokens), List.drop(tokens, 1))
-		else (NONE, tokens)
-	| (IntConst x, Pint (i, s)) =>  
-		if (i = x) then (SOME(hd tokens), List.drop(tokens, 1))
-		else (NONE, tokens)
-(* No FloatConst for now
-	| (FloatConst (x, y), Pfloat(x1, y1)) =>  
-		if x = x1 andalso y = y1 then (SOME(hd tokens), List.drop(tokens, 1))
-		else (NONE, tokens)
-	| (FloatConst (x, y), Int(x1, s)) =>  
-		if (LargeInt.fromString x) = (LargeInt.fromString x1) andalso
-		   (LargeInt.fromString y) = 0 then (SOME(hd tokens), List.drop(tokens, 1))
-		else (NONE, tokens)
+      if length tokens = 0 then (NONE, tokens)
+      else
+        let 
+          val tok = (#1 (hd tokens))
+(*
+       	  val _ = print ("Matching "^(tokenToString tok)^ " with " ^ (refinedToString re) ^ "\n")
 *)
-	| (Enum res, tok) => matchEnum res tokens
-	| (StringConst s, tok) => matchString s "" (#2 (hd tokens)) tokens
-	| (StringME s, tok) => matchREString s "" (#2 (hd tokens)) tokens
-	| _ => (NONE, tokens)
-      end
+        in
+  	case (re, tok) of 
+  	  (Int(min,max), Pint (i, s)) =>  
+  		if (i>=min andalso i<=max) then (SOME(hd tokens), List.drop(tokens, 1))
+  		else (NONE, tokens)
+  	| (IntConst x, Pint (i, s)) =>  
+  		if (i = x) then (SOME(hd tokens), List.drop(tokens, 1))
+  		else (NONE, tokens)
+  (* No FloatConst for now
+  	| (FloatConst (x, y), Pfloat(x1, y1)) =>  
+  		if x = x1 andalso y = y1 then (SOME(hd tokens), List.drop(tokens, 1))
+  		else (NONE, tokens)
+  	| (FloatConst (x, y), Int(x1, s)) =>  
+  		if (LargeInt.fromString x) = (LargeInt.fromString x1) andalso
+  		   (LargeInt.fromString y) = 0 then (SOME(hd tokens), List.drop(tokens, 1))
+  		else (NONE, tokens)
+  *)
+  	| (Enum res, tok) => matchEnum res tokens
+  	| (StringConst s, tok) => matchString s "" (#2 (hd tokens)) tokens
+  	| (StringME s, tok) => matchREString s "" (#2 (hd tokens)) tokens
+  	| _ => (NONE, tokens)
+        end 
 
     fun matchBranch(ltoken, branches, index) =
 	case branches of
@@ -215,6 +261,11 @@ struct
     fun consumeArray (env, sep, term, body, fixedLen, len, ltokens) = 
       let 
 	val (success, env', ltokens', body') = consume (true, env, ltokens, body)
+(*
+	val _ = print ("Consume array body: " ^ (Bool.toString success) ^ "\n")
+	val _ = print ("remaining tokens : " ^ (LTokensToString ltokens'))
+	val _ = print ("fixedLen = " ^ Int.toString(fixedLen) ^ " len = " ^ Int.toString(len) ^ "\n")
+*)
       in
 	if success then 
 	  if len+1 = fixedLen then
@@ -233,7 +284,8 @@ struct
 		let val (matched, remaining) = matchTokens termre ltokens'
 		in
 		  case matched of 
-		  SOME _ => (success, env', remaining, body', len+1)
+		  SOME _ => if (len+1>= !ARRAY_WIDTH_THRESHOLD-2) then (success, env', remaining, body', len+1)
+				else (false, env', ltokens, body, 0)
 		  | NONE => (*haven't reached the term yet, check sep and keep going *)
 		    (case sep of 
 			SOME sepre =>
@@ -247,6 +299,10 @@ struct
 		    )
 		end
 	     | NONE => (* no term, check sep, and keep going *)	
+		if length ltokens' = 0 (*finished with the record *)
+		then if (len+1 >= !ARRAY_WIDTH_THRESHOLD-2) then (true, env', ltokens', body', len+1)
+		     else (false, env, ltokens, body, 0)
+		else
 		    (case sep of 
 			SOME sepre =>
 			  let val (matched, remaining) = matchTokens sepre ltokens'
@@ -260,22 +316,42 @@ struct
 	  else (*consume body failed*)
 	    case term of
 	      SOME _ => (false, env, ltokens, body, len)
-	      | NONE => (true, env, ltokens, body, len)
+	      | NONE => if len+1 >= !ARRAY_WIDTH_THRESHOLD-2 then (true, env, ltokens, body, len)
+			else (false, env, ltokens, body, 0)
 	end
 
     (* returns (success, env', tokenlist', ty'), env is a LabelMap of (id, ltoken) *)
     and consume (prevsuccess, env, tokenlist, ty) = 
-      if not prevsuccess orelse (length tokenlist) = 0 then 
+      if not prevsuccess then 
 	(false, env, tokenlist, ty)
+      else if (length tokenlist) = 0 then
+	case ty of 
+	    (*TODO: the location of the new Pempty is not right here but may not matter *)
+	    Base(a, tl as ((Pempty, loc)::l)) => 
+		(true, env, tokenlist, Base(incCoverage a, tl@[(Pempty, loc)]))  
+	  | Poption (a, ty') =>
+		(true, env, tokenlist, Poption(incCoverage a, ty'))
+	  | _ => (false, env, tokenlist, ty)
       else
+      (* print "Trying to consume ...\n"; printTy ty; *)
       case ty of
-           Base (a, t) => if compToken((#1 (hd tokenlist)), (#1 (hd t))) = EQUAL then 
+           Base (a, t) => (
+(*
+			  print ((ltokenToString (hd tokenlist)) ^ "\n");
+*)
+			  if compToken((#1 (hd tokenlist)), (#1 (hd t))) = EQUAL then 
 			   let
-				val tok = (#1 (hd tokenlist))
+				val tok = hd tokenlist
 				val label = getLabel a
-				val env' = LabelMap.insert(env, label, hd tokenlist) 
+				val env' = LabelMap.insert(env, label, tok) 
 				val newaux = incCoverage a
-			   in (true, env', List.drop(tokenlist, 1), Base(newaux, t@[(hd t)]))
+(*
+				val _ = print "Tokens equal!\n"
+*)
+(*
+				val _ = print ((ltokenToString (hd tokenlist)) ^ "\n")
+*)
+			   in (true, env', List.drop(tokenlist, 1), Base(newaux, (t@[tok])))
 			   end
 			  else (*Pempty is special case, matches anything*)
 			    (case (hd t) of
@@ -283,7 +359,50 @@ struct
 				  let val loc = (#2 (hd tokenlist))
 				  in (true, env, tokenlist, Base(incCoverage a, t@[(Pempty, loc)]))
 				  end
+				(*Pfloat is also a special case, either int.int or int *)
+				| (Pfloat(_, _), _) =>
+				    (case (#1 (hd tokenlist)) of
+					Pint (i, s) =>
+						(*check if the second token and third are dot int*)
+					  if (length tokenlist)>=3 then
+						let
+						  val [int1, dot, int2] = List.take (tokenlist, 3)
+						in 
+						  (case (dot, int2) of
+						    ((Other #".", loc_dot), (Pint(i2, s2), loc_int)) =>
+					   	    let
+						      val label = getLabel a
+						      val floattok = (Pfloat (s, s2), (#2 int1))
+						      val env' = LabelMap.insert(env, label, floattok) 
+						      val newaux = incCoverage a
+					   	    in (true, env', List.drop(tokenlist, 3), 
+							Base(newaux, t@[floattok]))
+					   	    end
+						  | _ => 
+					   	    let
+						      val label = getLabel a
+						      val floattok = (Pfloat (s, "0"), (#2 int1))
+						      val env' = LabelMap.insert(env, label, floattok) 
+						      val newaux = incCoverage a
+					   	    in (true, env', List.drop(tokenlist, 1), 
+							Base(newaux, t@[floattok]))
+					   	    end
+						  )
+						end
+					  else 
+					   	let
+						  val tok = (hd tokenlist)
+						  val label = getLabel a
+						  val floattok = (Pfloat (s, "0"), (#2 tok))
+						  val env' = LabelMap.insert(env, label, floattok) 
+						  val newaux = incCoverage a
+					   	in (true, env', List.drop(tokenlist, 1), Base(newaux, t@[floattok]))
+					   	end
+				  
+					| _ =>  (false, env, tokenlist, ty)
+				    )
 				| _ => (false, env, tokenlist, ty)
+			      )
 			    )
 	|  TBD (a,i,cl)     => raise TyMismatch
         |  Bottom (a, i, cl)  => raise TyMismatch
@@ -294,7 +413,7 @@ struct
 			val (success', env', tokens', ty') = consume (success, env, tokens, ty)
 		  in  (success', env', tokens', (tylist@[ty']))
 		  end
-		  val (success', env', tokens', tys') = foldr consume_and (true, env, tokenlist, nil) tys 
+		  val (success', env', tokens', tys') = foldl consume_and (true, env, tokenlist, nil) tys 
 		in
 			(success', env', tokens', Pstruct(incCoverage a, tys'))
 		end
@@ -322,6 +441,10 @@ struct
 		SOME ltoken => 
 		  let
 	     		val label = getLabel a
+(*
+			val _ = print ("inserting " ^ Atom.toString(label) ^ " with value " ^
+				(ltokenToString ltoken) ^ "\n")
+*)
 	     		val env' = LabelMap.insert(env, label, ltoken) 
 	     		val newaux = incCoverage a
 	   	  in
@@ -351,12 +474,19 @@ struct
 	     )
         |  RArray (a, sep, term, body, len, lengths) => 
 	     let
+(*
+                val _ =  (print "Trying to consume ...\n"; printTy ty) 
+		val _ = printLTokens tokenlist
+*)
 		val fixedLen = case len of 
 				SOME (IntConst l) => (Int.fromLarge l) 
 				| _ => (~1)
 		val (success', env', tokenlist', body', newlen) = consumeArray (env, sep, term, body, 
 										fixedLen, 0, tokenlist)
 		val lengths' = lengths@[(newlen, (!recordNo))]
+(*
+		val _ = print ("Array consume success: " ^ (Bool.toString success') ^ "\n")
+*)
 	     in 
 		if success' then (true, env', tokenlist', 
 				RArray(incCoverage a, sep, term, body', len, lengths'))
@@ -369,23 +499,36 @@ struct
 			if success' then (success', env', tokenlist', Poption(incCoverage a, ty'))
 			else (prevsuccess, env, tokenlist, Poption (incCoverage a, ty))
 		end
-
     fun populateOneRecord (ltokens:Context, ty:Ty) : Ty = 
       let
 	val (success, env, ltokens', ty' ) = consume (true, LabelMap.empty, ltokens, ty)
       in
 	if (success = false orelse length ltokens' > 0) then
-		(print "Record not successfully populated\n"; ty)	
+		(print ("!!! Following Record not successfully populated!!!\n" ^ (LTokensToString ltokens)); ty)	
 	else (recordNo:=(!recordNo)+1; ty')
       end
+
+    (* crack all group tokens in a given context list *)
+    fun crackAllGroups (cl:Context list) : Context list =
+	let fun clg pre [] = pre
+	      | clg pre (hd::tail) = 
+		(case hd of 
+		  (Pgroup(g as {left, body, right}), loc) => clg (pre@(clg nil (groupToTokens g))) tail
+		  | _ => clg (pre@[hd]) tail
+		)
+	in 
+	  map (clg nil) cl
+	end
 
     fun populateDataFile datafile ty =
       let 
           val recordNumber = ref 0
+	  val _ = Tystamp := 0
           val records = loadFiles [datafile]
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
-	  val cleanTy = initializeTy ty
-	  val loadedTy = foldr populateOneRecord cleanTy rtokens
+	  val rtokens = crackAllGroups rtokens
+	  val (newmap, cleanTy) = initializeTy LabelMap.empty ty
+	  val loadedTy = foldl populateOneRecord cleanTy rtokens
 	  val finalTy = cleanFirstToken loadedTy
       in finalTy
       end 

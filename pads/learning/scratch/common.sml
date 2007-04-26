@@ -193,26 +193,8 @@ structure Common = struct
 		  (* ignoring Pgroup for now *)
 		  | _ => false
 	fun ltoken_ty_equal ((tk1, _):LToken, (tk2, _):LToken):bool =
-	  case (tk1, tk2) of 
-		    (PbXML(a,b), PbXML(a1, b1)) => true
-		  | (PeXML(a,b), PeXML(a1, b1)) => true 
-		  | (Ptime(a), Ptime(b)) => true
-		  | (Pdate(a), Pdate(b)) => true
-		  | (Pip(a), Pip(b)) => true
-		  | (Phostname(a), Phostname(b)) => true
-		  | (Ppath(a), Ppath(b)) => true
-		  | (Purl(a), Purl(b)) => true
-		  | (Pemail(a), Pemail(b)) => true
-		  | (Pmac(a), Pmac(b)) => true
-		  | (Pint(_), Pint(_)) => true
-		  | (Pfloat(a), Pfloat(b)) => true
-		  | (Pstring(a), Pstring(b)) => true
-		  | (Pwhite(a), Pwhite(b)) => true
-		  | (Other(a), Other(b)) => true
-		  | (Pempty, Pempty) => true
-		  (* ignoring Pgroup for now *)
-		  | _ => false
-
+	  if compToken (tk1, tk2) = EQUAL then true
+	  else false
 	fun ltokenlToRefinedOp ltokenl=
 		case ltokenl of
 		  h::t =>

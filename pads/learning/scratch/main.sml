@@ -14,6 +14,7 @@ structure Main : sig
     open Model
     open Options
     open Times
+    open Populate
 
     fun doIt () = 
 	let val end1Times        = zeroEndingTimes ()
@@ -23,6 +24,11 @@ structure Main : sig
             val end3Times        = updateTokenEnd ( Time.now () ) end2Times
             val ( rewrittenTy, end4Times ) = Rewrite.run end3Times ty
             val computeTimes     = getComputeTimes end4Times
+	    (*** this is for Population testing  ***
+	    val rewrittenTy = populateDataFile (hd fileNames) rewrittenTy 
+	    val _ = print "After population\n";
+	    val _ = printTy rewrittenTy
+	    **** end of population test ***)
 	in
 	    ( print ( computeTimesToString computeTimes )
             , Printing.dumpTyInfo (!outputDir) (!descName) rewrittenTy computeTimes

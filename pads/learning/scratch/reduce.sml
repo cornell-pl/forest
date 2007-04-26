@@ -740,7 +740,7 @@ and struct_to_array ty =
 		    (* with sep *)
 		    (* get the map of recNos *)
 		    val recNoMap = insertToMap ty IntMap.empty
-		    val len = (length tylist) div ((length tylist') + 1)
+		    val len = (length tylist + 1) div ((length tylist') + 1)
 		    val lens = map (fn (r, _) => (len, r)) (IntMap.listItemsi recNoMap)
 		    val newty = RArray (a, SOME r, NONE, Pstruct(mkTyAux (getCoverage (hd tylist')), 
 			tylist'), 
