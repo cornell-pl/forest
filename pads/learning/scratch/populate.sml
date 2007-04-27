@@ -274,7 +274,7 @@ struct
 		let val (matched, remaining) = matchTokens termre ltokens'
 		in
 		  case matched of 
-		  SOME _ => (success, env', remaining, body', fixedLen)
+		  SOME _ => (success, env', ltokens', body', fixedLen)
 		  | NONE => (false, env, ltokens, body, fixedLen)
 		end
 	     | NONE => (success, env', ltokens', body', fixedLen)
@@ -284,8 +284,7 @@ struct
 		let val (matched, remaining) = matchTokens termre ltokens'
 		in
 		  case matched of 
-		  SOME _ => if (len+1>= !ARRAY_WIDTH_THRESHOLD-2) then (success, env', remaining, body', len+1)
-				else (false, env', ltokens, body, 0)
+		  SOME _ => (success, env', ltokens', body', len+1)
 		  | NONE => (*haven't reached the term yet, check sep and keep going *)
 		    (case sep of 
 			SOME sepre =>
@@ -300,8 +299,7 @@ struct
 		end
 	     | NONE => (* no term, check sep, and keep going *)	
 		if length ltokens' = 0 (*finished with the record *)
-		then if (len+1 >= !ARRAY_WIDTH_THRESHOLD-2) then (true, env', ltokens', body', len+1)
-		     else (false, env, ltokens, body, 0)
+		then (true, env', ltokens', body', len+1)
 		else
 		    (case sep of 
 			SOME sepre =>
@@ -316,8 +314,8 @@ struct
 	  else (*consume body failed*)
 	    case term of
 	      SOME _ => (false, env, ltokens, body, len)
-	      | NONE => if len+1 >= !ARRAY_WIDTH_THRESHOLD-2 then (true, env, ltokens, body, len)
-			else (false, env, ltokens, body, 0)
+	      | NONE => if len>0 then (true, env, ltokens, body, len)
+			else (false, env, ltokens, body, len)
 	end
 
     (* returns (success, env', tokenlist', ty'), env is a LabelMap of (id, ltoken) *)
@@ -472,6 +470,7 @@ struct
 		)
 		| NONE => raise TyMismatch
 	     )
+	(*TODO: RArray is a bit special in that it can be matched or not matched but consume or go on *)
         |  RArray (a, sep, term, body, len, lengths) => 
 	     let
 (*
@@ -490,7 +489,7 @@ struct
 	     in 
 		if success' then (true, env', tokenlist', 
 				RArray(incCoverage a, sep, term, body', len, lengths'))
-		else (false, env, tokenlist, ty)
+		else (false , env, tokenlist, ty)
 	     end
         |  Poption (a, ty)               => 
 		let
