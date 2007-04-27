@@ -30,8 +30,7 @@ struct
 
     (* Dump a type to the specified file *)
     fun dumpTy (fileName:string) (ty:Ty) : unit = 
-        let val ()   = print ( "Opening: " ^ fileName ^ ", length " ^ (Int.toString (size fileName)) ^ "\n" )
-            val strm = TextIO.openOut fileName
+        let val strm = TextIO.openOut fileName
             val ()   = TextIO.output(strm, TyToString ty)
         in
             TextIO.closeOut strm
@@ -39,8 +38,7 @@ struct
 
     (* Dump type complexity to the specified file *)
     fun dumpTyComp ( fileName : string ) ( t : TyComp ) : unit =
-        let val ()   = print ( "opening: " ^ fileName ^ ", length " ^ (Int.toString (size fileName)) ^ "\n" )
-            val strm = TextIO.openOut fileName
+        let val strm = TextIO.openOut fileName
             val ()   = TextIO.output ( strm, showTyComp t )
         in TextIO.closeOut strm
         end
