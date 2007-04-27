@@ -18,7 +18,13 @@ is
   tokens.sml
   options.sml
   types.sml
+  gold/ai.3000.sml
+  gold/crashreporter.log.sml
+  gold/ls-l.txt.sml
+  gold/quarterlypersonalincome.sml
+  gold/yum.txt.sml
   model.sml
+  gold.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
   structure.sml

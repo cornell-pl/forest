@@ -1,5 +1,5 @@
 structure QUARTERLY = struct
-    open Model
+    open Types
     val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
     val quote: Ty = RefinedBase(aux, StringConst ":", [(Other #":", loc)])

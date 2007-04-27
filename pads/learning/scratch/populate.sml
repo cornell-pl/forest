@@ -520,9 +520,8 @@ struct
 	end
 
     fun populateDataFile datafile ty =
-      let 
-          val recordNumber = ref 0
-	  val _ = Tystamp := 0
+      let val recordNumber = ref 0
+          val _ = Tystamp := 0
           val records = loadFiles [datafile]
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val rtokens = crackAllGroups rtokens

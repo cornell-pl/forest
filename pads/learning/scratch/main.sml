@@ -15,6 +15,15 @@ structure Main : sig
     open Options
     open Times
     open Populate
+    open Gold
+
+    fun goldenReport ( descname : string ) : string =
+        if hasGold descname
+        then let val goldenTy : Ty  = getGolden descname
+                 val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
+             in "Golden complexity = " ^ showTyComp ( getComps populated ) ^ "\n"
+             end
+        else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
 
     fun doIt () = 
 	let val end1Times        = zeroEndingTimes ()
@@ -32,6 +41,8 @@ structure Main : sig
 	in
 	    ( print ( computeTimesToString computeTimes )
             , Printing.dumpTyInfo (!outputDir) (!descName) rewrittenTy computeTimes
+            , print ( goldenReport ( !descName ) )
+            , print ( "\nCompleted " ^ !descName ^ "\n" )
             , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             )
 	end
