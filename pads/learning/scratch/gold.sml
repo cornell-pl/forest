@@ -1,8 +1,12 @@
 structure Gold = struct
     open AI
+    open BOOT
     open CRASHREPORTER
     open LS
     open QUARTERLY
+    open RAILROAD
+    open RPMPKGS
+    open Trans
     open Yumtxt
 
     exception Bust
@@ -30,10 +34,14 @@ structure Gold = struct
     end 
 
     val goldens : GoldenMap = buildGold
-        [ ( "ai.3000", ai )
+        [ ( "1967Transactions.short", trans )
+        , ( "ai.3000", ai )
+        , ( "boot.log", boot_entry )
         , ( "crashreporter.log", crashreport )
         , ( "lsof", entry_t )
         , ( "quarterlypersonalincome", quarterly_t )
+        , ( "railroad.txt", railroad )
+        , ( "rpmpkgs", rpmpkgs )
         , ( "yum.txt", yum )
         ]
 

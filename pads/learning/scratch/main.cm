@@ -18,10 +18,14 @@ is
   tokens.sml
   options.sml
   types.sml
+  gold/1967Transactions.short.sml
   gold/ai.3000.sml
+  gold/boot.txt.sml
   gold/crashreporter.log.sml
   gold/ls-l.txt.sml
   gold/quarterlypersonalincome.sml
+  gold/railroad.txt.sml
+  gold/rpmpkgs.sml
   gold/yum.txt.sml
   model.sml
   gold.sml
