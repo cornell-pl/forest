@@ -62,6 +62,7 @@ structure Main : sig
     fun setPrintIDs     b = (if b then  printIDs := b else ())
     fun setEntropy      b = (if b then  printEntropy := b else ())
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
+    fun setLexName	n = lexName := n
 
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
@@ -75,7 +76,8 @@ structure Main : sig
          ("a",        "array width requirement (default "^(Int.toString DEF_ARRAY_WIDTH_THRESHOLD)^")",        PCL.Int    (setArrayWidth, false)),
          ("ma",       "minimum array width (default "^(Int.toString DEF_ARRAY_MIN_WIDTH_THRESHOLD)^")",        PCL.Int    (setMinArrayWidth, false)),
          ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false)),
-         ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy)
+         ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy),
+	 ("lex",	"prefix of the lex config to be used (default \"\")",	PCL.String (setLexName, false))
         ]
 
     fun processSwitches (execDir::args) = 

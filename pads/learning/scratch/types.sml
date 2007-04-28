@@ -487,7 +487,42 @@ struct
          print (TyToStringD prefix longTBDs longBottom suffix ty ) 
 
     fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
+(**************
+    val dateStoppingChar= ref #""
+    val dateStoppingRe = ref ""
+    val timeStoppingChar = ref #""
+    val timeStoppingRe = ref ""
+	(* this function locate date and time in the tylist of a Pstruct 
+	  and their stopping character or patters *)
+	fun updateDateTimeStopping tylist =
+	  (*first clear the existing stopping chars and res *)
+	  let
+            val _ = dateStoppingChar := #""
+    	    val _ = dateStoppingRe := ""
+    	    val _ = timeStoppingChar := #""
+    	    val _ = timeStoppingRe := ""
+	    fun findRefined ty =
+	    (*funtion to find the first base or refine type and convert it to refined type *)
+	      case ty of
+		  Pstruct(_, tylist) => findRefined (hd tylist)
+		| RefinedBase(_, refined, _) => SOME(refined)
+		| Base(_, ltokens) => ltokenlToRefinedOp ltokens
+		| _ => NONE
 
+	    fun getDate tylist =
+		case tylist of
+		Base (a, (Pdate t, loc)::tl)::tlist => 
+			let
+			  val re = findRefined (hd tlist)
+			in
+			  case re of 
+			    StringConst s => s
+			    | _ => ""
+			end
+		_
+		 if size s = 1 then dateStoppingChar := (Char.fromString s)
+						else dateStoppingRe := ("/" ^ s ^ "/")
+*************)
    (**** Function to convert a Ty to a PADS string ***)
    (*suffix is the suffix for variable name*)
     fun TyToPADS (prefix:string) (suffix:string) (isRecord:bool) (mode:int) 
@@ -498,7 +533,9 @@ struct
 	  mode = 3: in struct body (can only be core literals)
 	  these are used for base and refined base types mostly
 	*)
-    let val label = getLabelString (getAuxInfo ty)
+    let 
+
+	val label = getLabelString (getAuxInfo ty)
    	fun getLabelParam ty =
 		case ty of
 		Switch (aux, id, tys) => (getLabelString aux, SOME ("v" ^ (Atom.toString id)))
@@ -528,21 +565,35 @@ struct
 	in
 	  typedef ^
           (case token of 
-		Pstring _ => "Word " ^ label'
+		Pstring _ => "PPstring " ^ label'
               | Pint _ => "Pint32 " ^ label'
 	      | Pfloat _ => "Pfloat32 " ^ label'
-	      | Ptime _ => "Ptime " ^ label'
-	      | Pdate _ => "Pdate " ^ label'
-	      | Pip _ => "Pip " ^ label' 
-	      | Phostname _ => "Pstring_ME(:\"[[:word:]\\\\-\\\\.]+/\":) " ^ label'
-	      | Purl _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
-	      | Ppath _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
-	      | Pemail _ => "Pstring_ME(:\"/[[:print:]]+/\":) " ^ label'
-	      | Pmac _ => "Pstring_ME(:\"/[\\\\:\\\\-[:xdigit:]]+/\":) " ^ label'
+	      | Ptime _ =>  "PPtime " ^ label'
+(********
+			   if !timeStoppingChar<> #"" then 
+			      ("Ptime(:'" ^ (Char.toString !timeStoppingChar) ^ "':) " ^ label')
+			   else if !timeStoppingRe <> "" then
+			      ("Ptime_SE(:\"" ^ !timeStoppingRe ^ "\":) " ^ label')
+			   else ("PPTime " ^ label')
+**********)
+	      | Pdate _ => "PPdate " ^ label'
+(***********
+			   if !dateStoppingChar<> #"" then 
+			      ("Pdate(:'" ^ (Char.toString !dateStoppingChar) ^ "':) " ^ label')
+			   else if !dateStoppingRe <> "" then
+			      ("Pdate_SE(:\"" ^ !dateStoppingRe ^ "\":) " ^ label')
+			   else ("PPDate " ^ label')
+***********)
+	      | Pip _ => "PPip " ^ label' 
+	      | Phostname _ => "PPhostname " ^ label'
+	      | Purl _ => "PPurl " ^ label'
+	      | Ppath _ => "PPpath " ^ label'
+	      | Pemail _ => "PPemail " ^ label'
+	      | Pmac _ => "PPmac " ^ label'
 	      | Pwhite _ => "Pstring_ME(:\"/\\\\s/\":) " ^ label' 
 	      | Other c => "Pchar " ^ label'
-	      | PbXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\\\-<>]+/\":) " ^ label'
-	      | PeXML _ => "Pstring_ME(:\"/[0-9a-zA-Z_\\\\-<>]+/\":) "  ^ label'
+	      | PbXML _ => "PPbXML " ^ label'
+	      | PeXML _ => "PPeXML "  ^ label'
 	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
 	      | Pempty => "Pcompute Pint8 " ^ "v"^ label ^ suffix ^ " = 0;\n" 
 	      | _ => raise InvalidTokenTy
@@ -814,6 +865,9 @@ struct
 		else if mode = 2 then (tyToInlinePADS "" mode ty)
 		else
 		  let
+(*
+		   val _ = updateDateTimeStopping (tys)
+*)
 		   val nonInlineTys = List.filter notInlineTy tys
 		   val pre = lconcat (map (TyToPADS prefix "" false 0 tys) nonInlineTys)
 		  in pre ^ pRecord ^
@@ -895,10 +949,10 @@ struct
 	)
         )
      end 
-     fun TyToPADSFile ty =
+     fun TyToPADSFile ty includeFile =
 	let
 	  val recordLabel = getLabelString (getAuxInfo ty)
-	  val pads = "Ptypedef Pstring_ME(:\"/[A-Za-z][0-9a-zA-Z_\\\\-]*/\":) Word;\n" ^
+	  val pads = "#include \""^ includeFile ^"\"\n" ^
 			(TyToPADS "" "" true 0 nil ty) ^
 			"Psource Parray entries_t {\n" ^
 		    	"\t" ^ recordLabel ^ "[];\n" ^

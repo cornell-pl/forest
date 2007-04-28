@@ -63,6 +63,10 @@ tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
 	lexgen --ml-lex-mode tokens.lex
 
+vanilla.lex.sml: vanilla.lex
+	@echo Running lexer generator
+	lexgen --ml-lex-mode vanilla.lex
+
 learn:  complexity.sml
 learn:  config.sml
 learn:  distribution.sml
@@ -78,6 +82,7 @@ learn:  rat.sml
 learn:  reduce.sml
 learn:  rewrite.sml
 learn:  structure.sml
+learn:  vanilla.lex.sml
 learn:  tokens.lex.sml
 learn:  types.sml
 learn:  utils.sml
@@ -272,7 +277,7 @@ foo:
 .PHONY : clean
 clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
-	$(RM) tokens.lex.sml
+	$(RM) tokens.lex.sml vanilla.lex.sml
 	$(RM) *~
 
 .PHONY : veryclean

@@ -30,9 +30,11 @@ structure.sml
   inference.
 
 tokens.lex
+vanilla.lex
   Lexer file with regular expressions to describe tokens.
 
 tokens.lex.sml
+vanilla.lex.sml
   Generated file for doing tokenization of raw input file.
 
 tokens.sml

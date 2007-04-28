@@ -10,13 +10,21 @@ open Model
 exception TyMismatch
 
 (* a table to record which base types are Refinable*)
-fun refinableBase token = 
+fun refineableBase token = 
   case token of 
 	  PbXML _ => true
 	| PeXML _ => true
 	| Pint _ => true
 	| Pstring _ => true
 	| Pwhite _ => true
+	| Other _ => true
+	| _ => false
+fun enumerableBase token = 
+  case token of 
+	  PbXML _ => true
+	| PeXML _ => true
+	| Pint _ => true
+	| Pstring _ => true
 	| Other _ => true
 	| _ => false
 	
@@ -881,7 +889,7 @@ data labeled *)
 and uniqueness_to_const cmos ty =
 case ty of
   Base({coverage, label=SOME id, ...}, tokens) => 
-  if length tokens>0 andalso refinableBase (#1 (hd tokens)) then
+  if length tokens>0 andalso refineableBase (#1 (hd tokens)) then
     (case LabelMap.find(cmos, id) of  
       SOME consts => 
         let
@@ -1133,7 +1141,7 @@ case ty of
 and enum_range_to_refine cmos ty = 
   case ty of                  
     Base({coverage, label=SOME(id), ...}, b) => 
-      if length b>0 andalso refinableBase (#1 (hd b)) then
+      if length b>0 andalso enumerableBase (#1 (hd b)) then
         (case LabelMap.find(cmos,id) of 
          SOME consts =>    
             let             

@@ -56,7 +56,7 @@ struct
 
     fun dumpPADSdesc (fileName:string) (ty:Ty) : string = 
 	let val strm = TextIO.openOut fileName
-            val (tyName, desc) = TyToPADSFile ty
+            val (tyName, desc) = TyToPADSFile ty ((!lexName)^".p")
             val () = TextIO.output(strm,desc )
 	    val () = TextIO.closeOut strm
 	in

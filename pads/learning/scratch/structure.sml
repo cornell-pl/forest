@@ -518,7 +518,11 @@ struct
 			    cursor := !cursor + n;
 			    s
 			end
-		    val lex = TokenLex.makeLexer feedLex
+		    (* can add more variations here *)
+		    val lex =   if (!lexName) = "vanilla" then
+				  VanillaLex.makeLexer feedLex
+				else
+				  TokenLex.makeLexer feedLex
 		    fun getMatches acc =
                         ( case lex() of 
                                NONE   => List.rev acc

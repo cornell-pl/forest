@@ -11,6 +11,7 @@ sub escape
 {
  ($str) = @_;
  $str =~ s{\\}{\\\\}g;
+# $str =~ s{\/}{\\\/}g;
  $str =~ s{"}{\\"}g;
  return $str
 }
@@ -52,6 +53,7 @@ if (!$configfile) {
 }
 
 ($prefix, $suffix)  = split (/\./, $configfile);
+$structurename = ucfirst($prefix."Lex");
 $lexfile = $prefix.".lex";
 $includefile = $prefix.".p";
 print "Writing to $lexfile and $includefile\n";
@@ -72,7 +74,10 @@ fun getFirst s isBegin =
        result
     end
 
-%%\n
+%%
+
+%structure $structurename
+
 ";
 
 while (<FILE>)
