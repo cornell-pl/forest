@@ -522,7 +522,7 @@ struct
 		    val lex =   if (!lexName) = "vanilla" then
 				  VanillaLex.makeLexer feedLex
 				else
-				  TokenLex.makeLexer feedLex
+				  TokensLex.makeLexer feedLex
 		    fun getMatches acc =
                         ( case lex() of 
                                NONE   => List.rev acc
@@ -1094,13 +1094,15 @@ struct
 		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
 *)
 		in
-		    (print "Array context\n"; 
+		    ((if print_verbose then 
+		     (print "Array context\n"; 
                      print "First Context:\n";
                      print (contextsToString firstContext);
                      print "body Context:\n";
                      print (contextsToString mainContext);
                      print "last Context:\n";
-                     print (contextsToString lastContext);
+                     print (contextsToString lastContext))
+		     else ()); 
 		     Parray (mkTyAux numRecords, 
 			     {tokens  = atokens, 
 			      lengths = arrayLengths,

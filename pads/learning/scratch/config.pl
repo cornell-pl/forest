@@ -84,6 +84,7 @@ while (<FILE>)
 {
  chomp;
  s/\s*$//;
+ s/\s+\|\s+/\|/g;
  next if (/^#.*/);
  if (/^def\s*(\w+)\s*(.*)/)
  {
@@ -111,8 +112,8 @@ foreach $name (@exports)
  }
 }
  print LEX "
--?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
-[ \\t\\n\\r]+    => (SOME (Types.Pwhite yytext,                 getLoc(yypos, yytext) ));
+-?[0-9]{1,9}  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
+[A-Za-z0-9][A-Za-z0-9_\\-]* => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 .         => (SOME (Types.Other (String.sub(yytext,0)),  getLoc(yypos, yytext) )); 
 \\n        => (continue());
 ";
@@ -124,5 +125,6 @@ foreach my $name (@exports)
  $re = escape (expand($name));
  print INCLUDE "Ptypedef Pstring_ME(:\"/$re/\":) P$name;\n\n";
 }
+print INCLUDE "Ptypedef Pstring_ME(:\"/[A-Za-z0-9][A-Za-z0-9_\\\\-]*/\":) PPstring;\n\n";
 close INCLUDE;
 

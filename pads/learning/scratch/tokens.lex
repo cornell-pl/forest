@@ -12,84 +12,48 @@ fun getFirst s isBegin =
        result
     end
 
-(***** commented out from the second part:
-domainsuffix = ac | ad | ae | aero | af | ag | ai | al | am | an | ao | aq | ar | arpa | as | at | au | aw | az | ba | bb | bd | be | bf | bg | bh | bi | biz | bj | bm | bn | bo | br | bs | bt | bv | bw | by | bz | ca | cc | cf | cg | ch | ci | ck | cl | cm | cn | co | com | coop | cr | cs | cu | cv | cx | cy | cz | de | dj | dk | dm | do | dz | ec | edu | ee | eg | eh | er | es | et | eu | fi | firm | fj | fk | fm | fo | fr | fx | ga | gb | gd | ge | gf | gh | gi | gl | gm | gn | gov | gp | gq | gr | gs | gt | gu | gw | gy | hk | hm | hn | hr | ht | hu | id | ie | il | in | info | int | io | iq | ir | is | it | jm | jo | jobs | jp | ke | kg | kh | ki | km | kn | kp | kr | kw | ky | kz | la | lb | lc | li | lk | lr | ls | lt | lu | lv | ly | ma | mc | md | mg | mh | mil | mk | ml | mm | mn | mo | mp | mq | mr | ms | mt | mu | museum | mv | mw | mx | my | mz | na | name | nato | nc | ne | net | nf | ng | ni | nl | no | nom | np | nr | nt | nu | nz | om | org | pa | pe | pf | pg | ph | pk | pl | pm | pn | pr | pro | pt | pw | py | qa | re | ro | ru | rw | sa | sb | sc | sd | se | sg | sh | si | sj | sk | sl | sm | sn | so | sr | st | store | su | sv | sy | sz | tc | td | tf | tg | th | tj | tk | tm | tn | to | tp | tr | travel | tt | tv | tw | tz | ua | ug | uk | um | us | uy | va | vc | ve | vg | vi | vn | vu | web | wf | ws | ye | yt | yu | za | zm | zr | zw; 
-
-filepath =  (\/{filename}){2}(\/{filename})*\/? | 
-	({filename}\/){2}({filename}\/?)* | 
-	\\?(\\{filename}){2}(\\{filename})*\\? |
-	({filename}\\){2}({filename}\\?)* |
-	[a-zA-Z]:(\\{filename})+\\?;
-*****)
-
-(****** commented out from the third part
-{filepath}    => (SOME (Types.Ppath yytext,                  getLoc(yypos, yytext) ));
-{url}    => (SOME (Types.Purl yytext,                  getLoc(yypos, yytext) ));
-*******)
 %%
 
-%structure TokenLex
+%structure TokensLex
 
 triplet = [0-9]{1,3};
-ipAddr  = {triplet}\.{triplet}\.{triplet}\.{triplet};
-
 doublet = [0-9]{1,2};
 hexdoublet = [0-9a-fA-F]{2};
 timezone = [+-][0-1][0-9]00;
-ampm = am | AM | pm | PM;
-time    = {doublet}:{doublet}((:{doublet})?)(([ ]*{ampm})?)([ \t]+{timezone})?;
+ampm = am|AM|pm|PM;
 port = [1-9][0-9]*;
-filename = [^\\/?*:<>"\[\] ]+;
-filepath =  (\/{filename}){2}(\/{filename})*\/? | 
-	({filename}\/){2}({filename}\/)*{filename}? | 
-	\\?(\\{filename}){2}(\\{filename})*\\? |
-	({filename}\\){2}({filename}\\)*{filename}?; 
-day	= [1-9] | [1-2][0-9] | 0[1-9] | 3[0-1];
-weekday = Mon | Monday | Tue | Tuesday | Wed | Wednesday | Thu | Thursday | Fri | Friday | 
-	  Sat | Saturday | Sun | Sunday | mon | tue | wed | thu | fri | sat | sun;
-month   = Jan | jan | Feb | feb | Mar | mar | Apr | apr | May | may | Jun | jun | 
-          Jul | jul | Aug | aug | Sep | sep | Oct | oct | Nov | nov | Dec | dec |
-	  January | February | March | April | May | June | July | August | September |
-	  October | November | December;
-nummonth = 0?[1-9] | 1[0-2];
-genmonth = {month} | {nummonth};
-domainsuffix = com | edu | net | org;
+filename = [^\/\\?*:<>"\[\] ]+;
+day = [1-9]|[1-2][0-9]|0[1-9]|3[0-1];
+weekday = Mon|Monday|Tue|Tuesday|Wed|Wednesday|Thu|Thursday|Fri|Friday|Sat|Saturday|Sun|Sunday|mon|tue|wed|thu|fri|sat|sun;
+month = Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December;
+nummonth = 0?[1-9]|1[0-2];
+genmonth = {month}|{nummonth};
+domainsuffix = com|net|edu|org|[a-z][a-z];
 year = [0-2][0-9]{3};
-date =  {genmonth}\/{day}\/{year} | {day}\/{genmonth}\/{year} | {year}\/{genmonth}\/{day} |
-	{genmonth}\-{day}\-{year} | {day}\-{genmonth}\-{year} | {year}\-{genmonth}\-{day} |
-	{genmonth}\.{day}\.{year} | {day}\.{genmonth}\.{year} | {year}\.{genmonth}\.{day} |
-	({weekday},?[ \t]+)?{month}[ \t]+{day}(,[ \t]+{year})? | 
-	({weekday},?[ \t]+)?{day}[ \t]+{month}(,[ \t]+{year})?;
-str     = [A-Za-z][A-Za-z0-9_\-]*;
-str1     = [0-9A-Za-z][A-Za-z0-9_\-]*;
+str = [A-Za-z][A-Za-z0-9_\-]*;
+str1 = [0-9A-Za-z][A-Za-z0-9_\-]*;
 query = [^&=]+=[^&]*(\&[^&=]+=[^&]*)*\&?;
+username = [a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~][a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~]*[a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~]|[a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~];
 hostname = ({str1}\.)+{domainsuffix};
-username = [a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~][a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~]*[a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~]
-	   | [a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~];
-protocol = http | ftp | https;
-email ={str1}@{hostname};
-url = {protocol}:\/\/{hostname}(:{port})?\/?(\/{filename})*\/?(\?)?\&?{query}?(#{str1})? |
-      {protocol}:\/\/{ipAddr}(:{port})?\/?(\/{filename})*\/?(\?)?\&?{query}?(#{str1})?; 
-macaddr = {hexdoublet}:{hexdoublet}:{hexdoublet}:{hexdoublet}:{hexdoublet}:{hexdoublet} |
-	  {hexdoublet}-{hexdoublet}-{hexdoublet}-{hexdoublet}-{hexdoublet}-{hexdoublet};
-xmlb    = \<([a-zA-Z])+\>;
-oxmlb   = \<[^>]+\>;
-xmle    = \<\/[^>]+\>;
+protocol = http|ftp|https;
+Ptime = {doublet}:{doublet}((:{doublet})?)([ ]*{ampm})?([ \t]+{timezone})?;
+Pip = {triplet}\.{triplet}\.{triplet}\.{triplet};
+Pdate = {genmonth}\/{day}\/{year}|{day}\/{genmonth}\/{year}|{year}\/{genmonth}\/{day}|{genmonth}\-{day}\-{year}|{day}\-{genmonth}\-{year}|{year}\-{genmonth}\-{day}|{genmonth}\.{day}\.{year}|{day}\.{genmonth}\.{year}|{year}\.{genmonth}\.{day}|({weekday},?[ \t]+)?{month}[ \t]+{day}(,[ \t]+{year})?|({weekday},?[ \t]+)?{day}[ \t]+{month}(,[ \t]+{year})?;
+PbXML = \<([a-zA-Z])+\>;
+oxmlb = \<[^>]+\>;
+PeXML = \<\/[^>]+\>;
+Pwhite = [ \t\r\n]+;
 
 %%
 
-{xmlb}    => (SOME (Types.PbXML (getFirst yytext true),  getLoc(yypos, yytext) ));
-{xmle}    => (SOME (Types.PeXML (getFirst yytext false), getLoc(yypos, yytext) ));
-{time}    => (SOME (Types.Ptime yytext,                  getLoc(yypos, yytext) ));
-{date}    => (SOME (Types.Pdate yytext,                  getLoc(yypos, yytext) ));
-{macaddr}    => (SOME (Types.Pmac yytext,                  getLoc(yypos, yytext) ));
-{email}    => (SOME (Types.Pemail yytext,                  getLoc(yypos, yytext) ));
-{hostname}    => (SOME (Types.Phostname yytext,                  getLoc(yypos, yytext) ));
-{filepath}    => (SOME (Types.Ppath yytext,                  getLoc(yypos, yytext) ));
-{url}    => (SOME (Types.Purl yytext,                  getLoc(yypos, yytext) ));
-{ipAddr}  => (SOME (Types.Pip yytext,                    getLoc(yypos, yytext) ));
-{str}     => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
--?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
-[ \t\n\r]+    => (SOME (Types.Pwhite yytext,                 getLoc(yypos, yytext) ));
+{Ptime}	=> (SOME (Types.Ptime yytext, getLoc(yypos, yytext) ));
+{Pip}	=> (SOME (Types.Pip yytext, getLoc(yypos, yytext) ));
+{Pdate}	=> (SOME (Types.Pdate yytext, getLoc(yypos, yytext) ));
+{PbXML}	=> (SOME (Types.PbXML (getFirst yytext true), getLoc(yypos, yytext) ));
+{PeXML}	=> (SOME (Types.PeXML (getFirst yytext false), getLoc(yypos, yytext) ));
+{Pwhite}	=> (SOME (Types.Pwhite yytext, getLoc(yypos, yytext) ));
+
+-?[0-9]{1,9}  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
+[A-Za-z0-9][A-Za-z0-9_\-]* => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 .         => (SOME (Types.Other (String.sub(yytext,0)),  getLoc(yypos, yytext) )); 
 \n        => (continue());

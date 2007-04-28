@@ -567,7 +567,7 @@ struct
           (case token of 
 		Pstring _ => "PPstring " ^ label'
               | Pint _ => "Pint32 " ^ label'
-	      | Pfloat _ => "Pfloat32 " ^ label'
+	      | Pfloat _ => "Pfloat64 " ^ label'
 	      | Ptime _ =>  "PPtime " ^ label'
 (********
 			   if !timeStoppingChar<> #"" then 
@@ -590,7 +590,7 @@ struct
 	      | Ppath _ => "PPpath " ^ label'
 	      | Pemail _ => "PPemail " ^ label'
 	      | Pmac _ => "PPmac " ^ label'
-	      | Pwhite _ => "Pstring_ME(:\"/\\\\s/\":) " ^ label' 
+	      | Pwhite _ => "PPwhite " ^ label' 
 	      | Other c => "Pchar " ^ label'
 	      | PbXML _ => "PPbXML " ^ label'
 	      | PeXML _ => "PPeXML "  ^ label'
