@@ -97,10 +97,13 @@ struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTyInfo ( path : string ) ( descName : string ) ( ty : Ty ) ( ct : ComputeTimes ) : unit = 
+    fun dumpTyInfo ( path : string ) ( descName : string ) ( baseTy : Ty ) ( rewrittenTy : Ty ) ( ct : ComputeTimes ) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
-                of Base (aux,tls) => if !printIDs then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls) else ()
+                of Base (aux,tls) =>
+                     if !printIDs
+                     then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls)
+                     else ()
                  | TBD(aux,i, cl)    => dumpCL (path ^ "TBD_"^(Int.toString i)) cl
                  | Bottom(aux,i, cl) => dumpCL (path ^ "BTM_"^(Int.toString i)) cl
                  | Pstruct (aux,tys) => List.app dumpTBDs tys
@@ -123,17 +126,16 @@ struct
 			      end)
 		end
     	in  
-          ( (*print "Complexity of inferred type:\n\t";
-            printComplexity (complexity ty); *)
-            print "\nOutputing partitions to directory: "; print path; print "\n";
+          ( print "\nOutputing partitions to directory: "; print path; print "\n";
             if OS.FileSys.isDir path handle SysErr => 
 		(OS.FileSys.mkDir path; true)
-            then ( dumpParameters (path ^ "Params") ty
-                 ; dumpTBDs ty
-                 ; dumpTy (path ^ "Ty") ty
-                 ; dumpTyComp ( path ^ "Complexity" ) ( getComps ty )
+            then ( dumpParameters (path ^ "Params") rewrittenTy
+                 ; dumpTBDs rewrittenTy
+                 ; dumpTy (path ^ "Ty") rewrittenTy
+                 ; dumpTyComp ( path ^ "BaseComplexity" ) ( getComps baseTy )
+                 ; dumpTyComp ( path ^ "Complexity" ) ( getComps rewrittenTy )
                  ; dumpComputeTimes ( path ^ "Timing" ) ct
-                 ; let val tyName = dumpPADSdesc(path^descName^".p") ty
+                 ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy
                    in 
 		       dumpAccumProgram path descName tyName;
 		       dumpAccumXMLProgram path descName tyName;

@@ -31,7 +31,7 @@ structure Main : sig
             val fileNames        = !srcFiles
 	    val ty               = computeStructure fileNames
             val end3Times        = updateTokenEnd ( Time.now () ) end2Times
-            val ( rewrittenTy, end4Times ) = Rewrite.run end3Times ty
+            val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
             val computeTimes     = getComputeTimes end4Times
 	    (*** this is for Population testing  ***
 	    val rewrittenTy = populateDataFile (hd fileNames) rewrittenTy 
@@ -40,7 +40,8 @@ structure Main : sig
 	    **** end of population test ***)
 	in
 	    ( print ( computeTimesToString computeTimes )
-            , Printing.dumpTyInfo (!outputDir) (!descName) rewrittenTy computeTimes
+            , Printing.dumpTyInfo
+                 (!outputDir) (!descName) measuredTy rewrittenTy computeTimes
             , print ( goldenReport ( !descName ) )
             , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             )

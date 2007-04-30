@@ -59,6 +59,9 @@ BUILD_EXEC = build-exec.sml
 
 all:	learn
 
+vanilla.lex:
+	config.pl vanilla.config
+
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
 	lexgen --ml-lex-mode tokens.lex
@@ -67,9 +70,13 @@ vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
 	lexgen --ml-lex-mode vanilla.lex
 
+learn:  common.sml
 learn:  complexity.sml
 learn:  config.sml
 learn:  distribution.sml
+learn:  functionaldep.sml
+learn:  gold.sml
+learn:  hosts.sml
 learn:	main.sml
 learn:  matrix.sml
 learn:  model.sml
@@ -77,12 +84,15 @@ learn:  partition.sml
 learn:  options.sml
 learn:  parseCmdLine.sml
 learn:  parseCmdLine-sig.sml
+learn:  populate.sml
 learn:  print.sml
 learn:  rat.sml
 learn:  reduce.sml
 learn:  rewrite.sml
 learn:  structure.sml
 learn:  vanilla.lex.sml
+learn:  table.sml
+learn:  times.sml
 learn:  tokens.lex.sml
 learn:  types.sml
 learn:  utils.sml
@@ -277,7 +287,7 @@ foo:
 .PHONY : clean
 clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
-	$(RM) tokens.lex.sml vanilla.lex.sml
+	$(RM) tokens.lex.sml vanilla.lex.sml vanilla.lex
 	$(RM) *~
 
 .PHONY : veryclean

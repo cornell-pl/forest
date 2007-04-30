@@ -4,15 +4,15 @@ open Model
 open Times
 
 (* runs analysis using a Ty and return a refined Ty *)
-fun run ( et : EndingTimes ) (ty : Ty) : Ty * EndingTimes =
+fun run ( et : EndingTimes ) (ty : Ty) : Ty * Ty * EndingTimes =
 let
   val measuredTy = measure ty
   val measured1_time = Time.now ()
-  val comps = getComps measuredTy
-  val tycomp = #tc comps
-  val acomp  = #adc comps
+  val comps    = getComps measuredTy
+  val tycomp   = #tc comps
+  val acomp    = #adc comps
   val datacomp = #dc comps
-  val rawcomp = combine tycomp datacomp
+  val rawcomp  = combine tycomp datacomp
   val _ = print "\nBefore reduction:\n"
   val _ = printTy measuredTy
 (*phase one *)
@@ -50,11 +50,11 @@ let
   val _ = print (#2 (TyToPADSFile measured_reduced_ty)) 
   val _ = print "\n----- End of PADS description -----\n"
 *)
-  val comps' = getComps measured_reduced_ty
-  val tycomp' = #tc comps'
-  val acomp' = #adc comps'
+  val comps'    = getComps measured_reduced_ty
+  val tycomp'   = #tc comps'
+  val acomp'    = #adc comps'
   val datacomp' = #dc comps'
-  val rawcomp' = combine tycomp' datacomp'
+  val rawcomp'  = combine tycomp' datacomp'
 (*
   val _ =  print ("type comp = "^ (showComp tycomp) ^"\n");
   val _ =  print ("atomic comp = "^ (showComp acomp) ^"\n");
@@ -74,7 +74,7 @@ let
                                   , measure2End = measured2_time
                                   }
 
-in ( measured_reduced_ty, endingTimes )
+in ( measuredTy, measured_reduced_ty, endingTimes )
 end
 
 end

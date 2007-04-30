@@ -9,7 +9,7 @@ is
   $/regexp-lib.cm
 
   tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
-  vanilla.lex.sml (* to regenerate: lexgen --ml-lex-mode vanilla.lex *)
+  vanilla.lex.sml (* to regenerate: lexgen --ml-lex-mode vanilla.lex  *)
   config.sml
   utils.sml
   times.sml
