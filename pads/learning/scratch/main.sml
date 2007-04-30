@@ -77,7 +77,7 @@ structure Main : sig
          ("ma",       "minimum array width (default "^(Int.toString DEF_ARRAY_MIN_WIDTH_THRESHOLD)^")",        PCL.Int    (setMinArrayWidth, false)),
          ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false)),
          ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy),
-	 ("lex",	"prefix of the lex config to be used (default \"\")",	PCL.String (setLexName, false))
+	 ("lex",	"prefix of the lex config to be used (default \"tokens\")",	PCL.String (setLexName, false))
         ]
 
     fun processSwitches (execDir::args) = 

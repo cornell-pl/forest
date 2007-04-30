@@ -17,7 +17,7 @@ fun getFirst s isBegin =
 %structure TokensLex
 
 triplet = [0-9]{1,3};
-doublet = [0-9]{1,2};
+doublet = [0-9]{2};
 hexdoublet = [0-9a-fA-F]{2};
 timezone = [+-][0-1][0-9]00;
 ampm = am|AM|pm|PM;
@@ -36,7 +36,7 @@ query = [^&=]+=[^&]*(\&[^&=]+=[^&]*)*\&?;
 username = [a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~][a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~]*[a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~]|[a-zA-Z0-9!#$%&'*+\-/=?\^_`{|}~];
 hostname = ({str1}\.)+{domainsuffix};
 protocol = http|ftp|https;
-Ptime = {doublet}:{doublet}((:{doublet})?)([ ]*{ampm})?([ \t]+{timezone})?;
+Ptime = {doublet}:{doublet}:{doublet}([ ]*{ampm})?([ \t]+{timezone})?;
 Pip = {triplet}\.{triplet}\.{triplet}\.{triplet};
 Pdate = {genmonth}\/{day}\/{year}|{day}\/{genmonth}\/{year}|{year}\/{genmonth}\/{day}|{genmonth}\-{day}\-{year}|{day}\-{genmonth}\-{year}|{year}\-{genmonth}\-{day}|{genmonth}\.{day}\.{year}|{day}\.{genmonth}\.{year}|{year}\.{genmonth}\.{day}|({weekday},?[ \t]+)?{month}[ \t]+{day}(,[ \t]+{year})?|({weekday},?[ \t]+)?{day}[ \t]+{month}(,[ \t]+{year})?;
 PbXML = \<([a-zA-Z])+\>;
@@ -53,7 +53,7 @@ Pwhite = [ \t\r\n]+;
 {PeXML}	=> (SOME (Types.PeXML (getFirst yytext false), getLoc(yypos, yytext) ));
 {Pwhite}	=> (SOME (Types.Pwhite yytext, getLoc(yypos, yytext) ));
 
--?[0-9]{1,9}  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
-[A-Za-z0-9][A-Za-z0-9_\-]* => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
+-?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
+[A-Za-z][A-Za-z0-9_\-]* => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 .         => (SOME (Types.Other (String.sub(yytext,0)),  getLoc(yypos, yytext) )); 
 \n        => (continue());

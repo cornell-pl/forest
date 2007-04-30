@@ -566,7 +566,7 @@ struct
 	  typedef ^
           (case token of 
 		Pstring _ => "PPstring " ^ label'
-              | Pint _ => "Pint32 " ^ label'
+              | Pint _ => "Pint64 " ^ label'
 	      | Pfloat _ => "Pfloat64 " ^ label'
 	      | Ptime _ =>  "PPtime " ^ label'
 (********

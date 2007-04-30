@@ -25,7 +25,7 @@ structure Config = struct
     val printIDs          = ref def_printIDs
     val printEntropy      = ref def_entropy
     val executableDir     = ref ""
-    val lexName		  = ref ""
+    val lexName		  = ref "tokens"
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
