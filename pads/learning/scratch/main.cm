@@ -29,12 +29,12 @@ is
   gold/rpmpkgs.sml
   gold/yum.txt.sml
   model.sml
-  gold.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
   structure.sml
   print.sml
   populate.sml
+  gold.sml
   main.sml
   rat.sml
   matrix.sml

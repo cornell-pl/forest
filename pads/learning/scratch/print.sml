@@ -3,7 +3,7 @@ struct
     open Types
     open Model
     open Times
-(*    open Structure*)
+    open Gold
    
     fun dumpLToken (strm:TextIO.outstream) (tk:Token,loc:location) : unit =
         TextIO.output(strm, tokenToString tk)
@@ -40,6 +40,13 @@ struct
     fun dumpTyComp ( fileName : string ) ( t : TyComp ) : unit =
         let val strm = TextIO.openOut fileName
             val ()   = TextIO.output ( strm, showTyComp t )
+        in TextIO.closeOut strm
+        end
+
+    (* Dump a string to the specified file *)
+    fun dumpString ( fileName : string ) ( s : string ) : unit =
+        let val strm = TextIO.openOut fileName
+            val ()   = TextIO.output ( strm, s )
         in TextIO.closeOut strm
         end
 
@@ -134,6 +141,7 @@ struct
                  ; dumpTy (path ^ "Ty") rewrittenTy
                  ; dumpTyComp ( path ^ "BaseComplexity" ) ( getComps baseTy )
                  ; dumpTyComp ( path ^ "Complexity" ) ( getComps rewrittenTy )
+                 ; dumpString ( path ^ "GoldComplexity" ) ( goldenReport descName )
                  ; dumpComputeTimes ( path ^ "Timing" ) ct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy
                    in 

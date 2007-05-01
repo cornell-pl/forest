@@ -14,16 +14,7 @@ structure Main : sig
     open Model
     open Options
     open Times
-    open Populate
     open Gold
-
-    fun goldenReport ( descname : string ) : string =
-        if hasGold descname
-        then let val goldenTy : Ty  = getGolden descname
-                 val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
-             in "Golden complexity = " ^ showTyComp ( getComps populated ) ^ "\n"
-             end
-        else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
 
     fun doIt () = 
 	let val end1Times        = zeroEndingTimes ()
@@ -33,6 +24,7 @@ structure Main : sig
             val end3Times        = updateTokenEnd ( Time.now () ) end2Times
             val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
             val computeTimes     = getComputeTimes end4Times
+            val goldReport       = goldenReport ( !descName )
 	in
 	    (
 	     print ( computeTimesToString computeTimes )

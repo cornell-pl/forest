@@ -8,6 +8,7 @@ structure Gold = struct
     open RPMPKGS
     open Trans
     open Yumtxt
+    open Populate
 
     exception Bust
 
@@ -55,5 +56,13 @@ structure Gold = struct
                NONE   => raise Bust
              | SOME t => t
      )
+
+    fun goldenReport ( descname : string ) : string =
+        if hasGold descname
+        then let val goldenTy : Ty  = getGolden descname
+                 val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
+             in "\nGolden complexity =\n" ^ showTyComp ( getComps populated ) ^ "\n"
+             end
+        else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
 
 end

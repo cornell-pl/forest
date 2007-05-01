@@ -193,6 +193,8 @@ echo "New complexity scores" >>gen/Report
 cat gen/Complexity >>gen/Report
 echo "Silver complexity scores" >>gen/Report
 cat silver/$(*F)/Complexity >>gen/Report
+echo >>gen/Report
+cat gen/GoldComplexity >>gen/Report
 cat gen/ParseReport >>gen/Report
 echo >>gen/Report
 cat gen/Timing >>gen/Report
