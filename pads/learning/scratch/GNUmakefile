@@ -148,6 +148,8 @@ define learn-it
 # Clean the gen directory
 rm -rf gen
 mkdir gen
+# Make an output directory if one is needed
+if [ ! -d output/$@ ] ; then mkdir output/$@; fi
 # Clean the output directory
 if [ -e output/$@/* ] ; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
