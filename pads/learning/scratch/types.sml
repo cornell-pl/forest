@@ -737,7 +737,7 @@ struct
 		    let val termstr = getRefStr refterm
 		    in " : Psep(" ^ sepstr ^ ") && Pterm(" ^ termstr ^ ")"
 		    end
-		  | NONE => " : Psep(" ^ sepstr ^ ")"
+		  | NONE => " : Psep(" ^ sepstr ^ ") && Plongest"
 		  )
 		 end
 	     | NONE => 
@@ -750,7 +750,7 @@ struct
 			" : Pterm(" ^ termstr ^ ")"
 		    end
 		    )
-		  | NONE => ""
+		  | NONE => " : Plongest"
 		)
 	    ) ^ ";\n"
 	)
