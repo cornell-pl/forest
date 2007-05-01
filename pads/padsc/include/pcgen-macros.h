@@ -2726,7 +2726,7 @@ do{
 #define PCGEN_ARRAY_CHECKPOINT(ty)
 do{
     /*(pads->inestlev)++;*/
-  if (P_ERR==P_io_checkpoint (pads,0)) 
+  if (P_ERR==P_io_checkpoint (pads,1)) 
     {
       PDCI_report_err (pads,P_LEV_FATAL,0,P_CHKPOINT_ERR, #ty "_read",0);
     }

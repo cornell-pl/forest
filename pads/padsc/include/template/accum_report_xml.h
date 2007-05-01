@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <rbuf-internal.h>
-Puint64 num_recs = 0;
 
 #define TIMESTAMP_EXPLICIT_OUT_FMT "%Y-%m-%dT%H:%M:%S"
 #define TIMESTAMP_OUT_FMT "%Y-%m-%dT%H:%M:%S"
@@ -49,6 +48,7 @@ int main(int argc, char** argv) {
   EXTRA_DECLS;
 #endif
   char *pads_type = PADS_TY_STR;
+  Puint64 num_recs = 0;
 
   int report_good = 0;
   char *accum_good_out = (char *)0;
