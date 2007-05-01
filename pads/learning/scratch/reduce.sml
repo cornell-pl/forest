@@ -1094,7 +1094,17 @@ case ty of
 					else
 						(Enum(refined), head):: gen_ref_ty_list(mappings, tail, index+1)
 			)
-		    val refine_ty_list = gen_ref_ty_list (mappings, tlist, 1)
+		    fun reorder refTyList =
+			let fun isDefault (re, switchedTy) =
+				case re of 
+				  StringConst "*" => true
+				  | _ => false
+			    fun isNotDefault (re, switchedTy) = not (isDefault (re, switchedTy))
+			    val defaultpairs = List.filter isDefault refTyList
+			    val others = List.filter isNotDefault refTyList
+			in (others@defaultpairs)
+			end
+		    val refine_ty_list = reorder(gen_ref_ty_list (mappings, tlist, 1))
 		in
 		    if (length refine_ty_list = length tlist) 
 		    then (Switch (aux, id, refine_ty_list))

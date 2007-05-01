@@ -648,13 +648,14 @@ struct
 	    	end
 	      | IntConst i => 
 	    	let val bits = int2Bits i
+		    val typeName = if (i>=0) then "Puint" else "Pint"
 	    	in
 		  (if (mode <> 2) then
 	    	  (
-	    	  if (bits<=8.0) then "Pint8 "
-	    	  else if bits<=16.0 then "Pint16 "
-	    	  else if bits<=32.0 then "Pint32 "
-	    	  else "Pint64 " 
+	    	  if (bits<=8.0) then typeName ^ "8 "
+	    	  else if bits<=16.0 then typeName ^ "16 "
+	    	  else if bits<=32.0 then typeName ^ "32 "
+	    	  else typeName ^ "64 " 
 	    	  ) else "") ^ 
 		  (if mode=0 then (label ^ " : " ^ label ^ " x => {x == " ^ (LargeInt.toString i) ^ "};\n")
 		   else if mode=1 orelse mode = 3 then 
