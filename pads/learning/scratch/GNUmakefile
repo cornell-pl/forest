@@ -149,7 +149,7 @@ define learn-it
 rm -rf gen
 mkdir gen
 # Clean the output directory
-rm -rf output/$@/*
+if [ -e output/$@/* ] ; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
 nice -n20 ./learn -n $@ data/$@ | tee gen/$@.out
 cp -R gen/* output/$@
@@ -186,6 +186,8 @@ echo >>gen/Report
 cat gen/RecordCount >>gen/Report
 cat gen/ByteCount >>gen/Report
 echo >>gen/Report
+echo "Unrefined complexity scores" >>gen/Report
+cat gen/BaseComplexity >>gen/Report
 echo "New complexity scores" >>gen/Report
 cat gen/Complexity >>gen/Report
 echo "Silver complexity scores" >>gen/Report
@@ -227,6 +229,7 @@ ijnltif:                 $(IND)/ijnltif                 ; $(learn-it)
 install.log:             $(IND)/install.log             ; $(learn-it)
 interactions.txt.small:  $(IND)/interactions.txt.small  ; $(learn-it)
 interface.loop:          $(IND)/interface.loop          ; $(learn-it)
+ls-l.txt:                $(IND)/ls-l.txt                ; $(learn-it)
 lsof:                    $(IND)/lsof                    ; $(learn-it)
 netstat:                 $(IND)/netstat                 ; $(learn-it)
 netstat-an:              $(IND)/netstat-an              ; $(learn-it)

@@ -38,7 +38,7 @@ structure Gold = struct
         , ( "ai.3000", ai )
         , ( "boot.log", boot_entry )
         , ( "crashreporter.log", crashreport )
-        , ( "lsof", entry_t )
+        , ( "ls-l.txt", ls_l )
         , ( "quarterlypersonalincome", quarterly_t )
         , ( "railroad.txt", railroad )
         , ( "rpmpkgs", rpmpkgs )
