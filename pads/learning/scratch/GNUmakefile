@@ -151,7 +151,7 @@ mkdir gen
 # Clean the output directory
 if [ -e output/$@/* ] ; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
-nice -n20 ./learn -n $@ data/$@ | tee gen/$@.out
+nice -n20 ./learn -n $@ -lex vanilla data/$@ | tee gen/$@.out
 cp -R gen/* output/$@
 endef
 
@@ -162,6 +162,7 @@ define summary
 # NOT DONE: compare score of generated silver description with previous generated silver description.
 # 4. generate PADS description
 # 5. generate accumulator program
+cp vanilla.p gen
 make --directory=gen $(*F)-accum
 #   preserve the gen directory
 cp -R gen/* output/$(*F)
