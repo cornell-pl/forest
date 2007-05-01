@@ -87,9 +87,7 @@ structure Common = struct
 	and ordered = Ascend | Descend
 
 	fun tokenToRawString (d:Token):string = 
-	  let fun pad x = if String.size x < 11 
-		then pad (x ^ " ") else x 
-	  in (pad (case d of
+	  case d of
 		PbXML(node, attrib) => "<" ^ node ^ " " ^ attrib ^ ">"
 	|	PeXML(node, attrib) => "</" ^ node ^ " " ^ attrib ^ ">"
 	|	Pint (i, s) => s
@@ -106,8 +104,7 @@ structure Common = struct
 	|	Pwhite (str)  =>  str  
 	|	Other (c)  => str(c) 
 	| 	Pempty => "" 
-	|	_ => raise TyMismatch ))
-	 end
+	|	_ => raise TyMismatch
 
 	fun tokentorefine (d:Token):Refined =
 		case d of

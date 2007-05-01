@@ -100,14 +100,17 @@ struct
   	  in
 		case root of 
 		NONE => false
-		| SOME m => if (#len m) = (Substring.size (#pos m)) then true else false
+		(*must match entirely *)
+		| SOME m => (if (#len m) = (SS.size (#pos m)) then true else false)
 	  end
 	val matchlist = [(reStr, matchCvt)]
 	val matchOne = RegExp.match matchlist SS.getc (Substring.full s)
       in
 	case matchOne of
 	NONE => ((*print "Regex failed!\n";*) false)
-	| SOME(matched, _) => ((*print "Regex succeeded!\n";*) true)
+	| SOME(matched, rest) => if (SS.size rest) = 0 then 
+					((*print "Regex succeeded!\n";*) true)
+				 else ((*print "Regex failed 2!\n";*) false)
       end      			
    
     fun matchString (s:string) (matchedStr:string) loc (tokens: LToken list) =
@@ -150,6 +153,12 @@ struct
 	|	Pstring(t)  =>  if (String.isPrefix (matchedStr^t) s) then 
 				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			        else (NONE, tokens)
+	| 	Pint(i, t) => if (String.isPrefix (matchedStr^t) s) then 
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
+			        else (NONE, tokens)
+	|	Pfloat (i, f) => if (String.isPrefix (matchedStr^i^"."^f) s) then 
+				matchString s (matchedStr^i^"."^f) newloc (List.drop (tokens, 1))
+			        else (NONE, tokens)
 	|	Pwhite (t)  => if (String.isPrefix (matchedStr^t) s) then 
 				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			       else (NONE, tokens)
@@ -166,32 +175,32 @@ struct
 	| 	_ => (NONE, tokens)
 	end
 
-    fun matchREString (s:string) (matchedStr:string) loc (tokens:LToken list) =
-      if matchedStr <> "" andalso (matchRegEx matchedStr s) then 
-	(SOME((Pstring matchedStr, loc)), tokens)
-      else if length tokens = 0 then (NONE, tokens)
-      else
-	let 
-	  val (tok, nextloc) = hd tokens
-	  val newloc = combLoc (loc, nextloc)
-	in
-	case (#1 (hd tokens)) of
-		Ptime(t) => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Pdate(t) => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Pip(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Phostname(t) => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Ppath(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Purl(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Pemail(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Pmac(t)  => matchREString s (matchedStr^(toLower t)) newloc (List.drop (tokens, 1))
-	|	Pstring(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Pwhite (t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Other (c)  => let val t = str(c) 
-			      in matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-			      end
-	| 	_ => (NONE, tokens)
+    (* we want to have a greedy match that returns the longest match *)
+    fun matchREString (s:string) (tokens:LToken list) =
+      if (length tokens) = 0 then (NONE, tokens)
+      else 
+        let
+	  val headLoc = #2 (hd tokens)
+	  val tailLoc = #2 (List.last tokens)
+	  val finalLoc = {lineNo = (#lineNo headLoc), beginloc =(#beginloc headLoc), 
+				endloc = (#endloc tailLoc), recNo = (#recNo headLoc)} 
+          val toMatch = String.concat (map tokenToRawString (map #1 tokens))
+        in
+	  if (matchRegEx toMatch s) then  (SOME((Pstring toMatch, finalLoc)), nil)
+	  else 
+	    let
+	      val myToken = List.last tokens
+(*
+	      val _ = print ("myToken is (" ^ ltokenToString myToken ^")\n")
+*)
+	      val yourTokens = (List.take (tokens, (length tokens) -1))
+	      val (matchedTokenOp, remainingTokens) = matchREString s yourTokens
+	    in
+	      case matchedTokenOp of
+		SOME t => (SOME t, remainingTokens@[myToken])
+		| NONE => (NONE, remainingTokens@[myToken])
+	    end
 	end
-
     fun matchEnum res tokens =
       case res of 
           nil => (NONE, tokens)	
@@ -232,7 +241,7 @@ struct
   	| (Enum res, tok) => matchEnum res tokens
   	| (StringConst s, tok) => matchString s "" (#2 (hd tokens)) tokens
 	(* need to strip off the begining and ending "/" in the regex in StringME*)
-  	| (StringME s, tok) => matchREString s "" (#2 (hd tokens)) tokens
+  	| (StringME s, tok) => matchREString s tokens
   	| _ => (NONE, tokens)
         end 
 
@@ -484,7 +493,7 @@ struct
         |  RArray (a, sep, term, body, len, lengths) => 
 	     let
 (*
-                val _ =  (print "Trying to consume ...\n"; printTy ty) 
+                val _ =  (print "Trying to consume array ...\n"; printTy ty) 
 		val _ = printLTokens tokenlist
 *)
 		val fixedLen = case len of 
@@ -511,11 +520,14 @@ struct
 	)
     fun populateOneRecord (ltokens:Context, ty:Ty) : Ty = 
       let
+(*
+	val _ = print ("*** Record :: " ^ (LTokensToString ltokens) ^ "\n")
+*)
 	val (success, env, ltokens', ty' ) = consume (true, LabelMap.empty, ltokens, ty)
       in
 	if (success = false orelse length ltokens' > 0) then
 		(print ("!!! Following Record not successfully populated!!!\n" ^ (LTokensToString ltokens)); ty)	
-	else (recordNo:=(!recordNo)+1; ty')
+	else ((*print "Recorded successfully populated!!!\n"; *)recordNo:=(!recordNo)+1; ty')
       end
 
     (* crack all group tokens in a given context list *)
@@ -537,10 +549,11 @@ struct
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val rtokens = crackAllGroups rtokens
 	  val (newmap, cleanTy) = initializeTy LabelMap.empty ty
+	  val loadedTy = foldl populateOneRecord cleanTy rtokens
 (*
 	  val _ = printTy cleanTy
 *)
-	  val loadedTy = foldl populateOneRecord cleanTy rtokens
+
 	  val finalTy = (measure (cleanFirstToken loadedTy))
 (*
 	  val _ = printTy finalTy

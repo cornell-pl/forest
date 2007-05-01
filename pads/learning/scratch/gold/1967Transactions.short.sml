@@ -2,11 +2,11 @@ structure Trans = struct
     open Model
     val aux : AuxInfo = { coverage = 999, label = NONE, tycomp = zeroComps }
     val loc: location = { lineNo = 0, beginloc = 0, endloc = 0, recNo = 0 }
-    val sp1 : Ty = RefinedBase (aux, StringME "/\\s*/", [] )
-    val sp2 : Ty = RefinedBase (aux, StringME "/\\s*/", [] )
-    val sp3 : Ty = RefinedBase (aux, StringME "/\\s*/", [] )
-    val sp4 : Ty = RefinedBase (aux, StringME "/\\s*/", [] )
-    val sp5 : Ty = RefinedBase (aux, StringME "/\\s*/", [] )
+    val sp1 : Ty = RefinedBase (aux, StringME "/[ ]+/", [] )
+    val sp2 : Ty = RefinedBase (aux, StringME "/[ ]+/", [] )
+    val sp3 : Ty = RefinedBase (aux, StringME "/[ ]+/", [] )
+    val sp4 : Ty = RefinedBase (aux, StringME "/[ ]+/", [] )
+    val sp5 : Ty = RefinedBase (aux, StringME "/[ ]+/", [] )
     val type_t: Ty = RefinedBase(aux, Enum [IntConst 0101, IntConst 0102, IntConst 0103, IntConst 0104 ], [])
     val id:Ty = Base (aux, [(Pint (2701, "2701"), loc)])
     val value1:Ty = Base (aux, [(Pfloat ("99", "07"), loc)])
