@@ -107,13 +107,14 @@ foreach $name (@exports)
  elsif ($name eq "PeXML") {
    print LEX "{$name}\t=> (SOME (Types.$name (getFirst yytext false), getLoc(yypos, yytext) ));\n"
  }
+ elsif ($name eq "Pint") {
+   print LEX "{$name}\t=> (SOME (Types.$name (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));\n"
+ }	
  else {	
    print LEX "{$name}\t=> (SOME (Types.$name yytext, getLoc(yypos, yytext) ));\n"
  }
 }
  print LEX "
--?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
-[A-Za-z][A-Za-z0-9_\\-]* => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 .         => (SOME (Types.Other (String.sub(yytext,0)),  getLoc(yypos, yytext) )); 
 \\n        => (continue());
 ";
@@ -125,6 +126,4 @@ foreach my $name (@exports)
  $re = escape (expand($name));
  print INCLUDE "Ptypedef Pstring_ME(:\"/$re/\":) P$name;\n\n";
 }
-print INCLUDE "Ptypedef Pstring_ME(:\"/[A-Za-z0-9][A-Za-z0-9_\\\\-]*/\":) PPstring;\n\n";
 close INCLUDE;
-

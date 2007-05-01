@@ -1,10 +1,12 @@
 (*this program contains functions that populate a hand-written Ty structure
-with data from a data file*)
+with data from a data file
+Kenny Zhu 4/20/2007 *)
 structure Populate =
 struct
     open Structure
     open Types
     open Common
+    open Model
     exception TyMismatch
     structure RegExp = RegExpFn (structure P=AwkSyntax structure E=DfaEngine) : REGEXP
     structure MT = MatchTree
@@ -25,8 +27,11 @@ struct
     and initializeTy labelmap ty =
       let
 	val aux = getAuxInfo ty
+   	val oldLabel = (#label aux)
 	val newLabel = getLabel({coverage=0, label = NONE, tycomp=zeroComps})
-	val labelmap' = LabelMap.insert(labelmap, (getLabel aux), newLabel)
+	val labelmap' = case oldLabel of 
+			NONE => labelmap
+			| _ => LabelMap.insert(labelmap, some(oldLabel), newLabel)
 	val newAux= {coverage = 0, label = SOME newLabel, tycomp=zeroComps}
       in
 	case ty 
@@ -86,6 +91,9 @@ struct
     fun matchRegEx (s:string) (re:string) :bool =
       let
         val reStr = String.substring (re, 1, (size re)-2) (*remove the / and / *)
+(*
+	val _ = print ("Match string (" ^ (String.toString s) ^") with regex ("^(String.toString reStr) ^ ")\n")
+*)
         fun matchCvt mtOpt =  
 	  let
 		val (root:mi option) = MT.root mtOpt
@@ -98,8 +106,8 @@ struct
 	val matchOne = RegExp.match matchlist SS.getc (Substring.full s)
       in
 	case matchOne of
-	NONE => false
-	| SOME(matched, _) => matched
+	NONE => ((*print "Regex failed!\n";*) false)
+	| SOME(matched, _) => ((*print "Regex succeeded!\n";*) true)
       end      			
    
     fun matchString (s:string) (matchedStr:string) loc (tokens: LToken list) =
@@ -111,7 +119,7 @@ struct
 	  val newloc = combLoc (loc, nextloc)
 (*
 	  val _ = print "In matchString ...\n";
-	  val _ = print ("matching " ^ (tokenTyToString tok) ^ "\n");
+	  val _ = print ("matching (" ^ (tokenToString tok) ^ ") with (" ^ s ^")\n");
 *)
 	in
 	  case tok of
@@ -145,13 +153,15 @@ struct
 	|	Pwhite (t)  => if (String.isPrefix (matchedStr^t) s) then 
 				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			       else (NONE, tokens)
-	|	Other (c)  => let val t = Char.toString(c) 
+	|	Other (c)  => let val t = str(c) 
 (*
-				val _ = print ("Trying to match " ^ t ^"\n")
+				val _ = print ("Trying to match char (" ^ matchedStr ^ t ^")\n")
 *)
 			      in if (String.isPrefix (matchedStr^t) s) then 
-				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
-			        else (NONE, tokens)
+				((*print "success!\n"; *)
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1)))
+			        else ((*print "failed!\n"; *)
+					(NONE, tokens))
 			      end
 	| 	_ => (NONE, tokens)
 	end
@@ -176,7 +186,7 @@ struct
 	|	Pmac(t)  => matchREString s (matchedStr^(toLower t)) newloc (List.drop (tokens, 1))
 	|	Pstring(t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
 	|	Pwhite (t)  => matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
-	|	Other (c)  => let val t = Char.toString(c) 
+	|	Other (c)  => let val t = str(c) 
 			      in matchREString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			      end
 	| 	_ => (NONE, tokens)
@@ -221,6 +231,7 @@ struct
   *)
   	| (Enum res, tok) => matchEnum res tokens
   	| (StringConst s, tok) => matchString s "" (#2 (hd tokens)) tokens
+	(* need to strip off the begining and ending "/" in the regex in StringME*)
   	| (StringME s, tok) => matchREString s "" (#2 (hd tokens)) tokens
   	| _ => (NONE, tokens)
         end 
@@ -331,7 +342,7 @@ struct
 		(true, env, tokenlist, Poption(incCoverage a, ty'))
 	  | _ => (false, env, tokenlist, ty)
       else
-      (* print "Trying to consume ...\n"; printTy ty; *)
+      ((*print "Trying to consume ...\n"; printTy ty; *)
       case ty of
            Base (a, t) => (
 (*
@@ -345,8 +356,6 @@ struct
 				val newaux = incCoverage a
 (*
 				val _ = print "Tokens equal!\n"
-*)
-(*
 				val _ = print ((ltokenToString (hd tokenlist)) ^ "\n")
 *)
 			   in (true, env', List.drop(tokenlist, 1), Base(newaux, (t@[tok])))
@@ -439,16 +448,17 @@ struct
 		SOME ltoken => 
 		  let
 	     		val label = getLabel a
-(*
+			(*
 			val _ = print ("inserting " ^ Atom.toString(label) ^ " with value " ^
 				(ltokenToString ltoken) ^ "\n")
-*)
+			*)
 	     		val env' = LabelMap.insert(env, label, ltoken) 
 	     		val newaux = incCoverage a
 	   	  in
 		    (true, env', tokenlist', RefinedBase (incCoverage a, r, (tl@[ltoken])))
 	      	  end
-		| NONE => (false, env, tokenlist, ty)
+		| NONE => (* print "matchTokens failed!\n"; *)
+			  (false, env, tokenlist, ty)
 	   end
         |  Switch(a, id, branches)     => 
 	     (
@@ -498,6 +508,7 @@ struct
 			if success' then (success', env', tokenlist', Poption(incCoverage a, ty'))
 			else (prevsuccess, env, tokenlist, Poption (incCoverage a, ty))
 		end
+	)
     fun populateOneRecord (ltokens:Context, ty:Ty) : Ty = 
       let
 	val (success, env, ltokens', ty' ) = consume (true, LabelMap.empty, ltokens, ty)
@@ -526,8 +537,14 @@ struct
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val rtokens = crackAllGroups rtokens
 	  val (newmap, cleanTy) = initializeTy LabelMap.empty ty
+(*
+	  val _ = printTy cleanTy
+*)
 	  val loadedTy = foldl populateOneRecord cleanTy rtokens
-	  val finalTy = cleanFirstToken loadedTy
+	  val finalTy = (measure (cleanFirstToken loadedTy))
+(*
+	  val _ = printTy finalTy
+*)
       in finalTy
       end 
 end

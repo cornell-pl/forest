@@ -299,6 +299,7 @@ struct
 			| _ => s
 
     fun ltokenToString ( t : Token, loc : location ) : string = "("^tokenToString t^") loc: "^locationToString loc^" "
+   (* this function returns a "printable" string format of the token *)
     and tokenToString ( t : Token ) : string = 
 	case t 
         of Ptime i     => i
@@ -426,7 +427,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts))
+                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts) *)
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -452,7 +453,8 @@ struct
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
-                 in ( refinedToString refined ) ^ " " ^ stats ^ 
+                 in ( refinedToString refined ) (*^ (LTokensToString tl)*)
+		      ^ " " ^ stats ^ 
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
                     	", tot: " ^ LargeInt.toString tot ^ ")") 
@@ -637,11 +639,12 @@ struct
 	    	let val minLen = int2Bits min
 	    	    val maxLen = int2Bits max
 	    	    val maxBits = Real.max(minLen, maxLen)
+		    val typeName = if (min>=0) then "Puint" else "Pint"
 	    	in 
-	    	    if (maxBits<= 8.0) then "Pint8 " ^ label'
-	    	    else if maxBits <=16.0 then "Pint16 " ^ label'
-	    	         else if maxBits <=32.0 then "Pint32 " ^ label'
-	    	              else "Pint64 " ^ label'
+	    	    if (maxBits<= 8.0) then typeName ^ "8 " ^ label'
+	    	    else if maxBits <=16.0 then typeName ^ "16 " ^ label'
+	    	         else if maxBits <=32.0 then typeName ^ "32 " ^ label'
+	    	              else typeName ^ "64 " ^ label'
 	    	end
 	      | IntConst i => 
 	    	let val bits = int2Bits i

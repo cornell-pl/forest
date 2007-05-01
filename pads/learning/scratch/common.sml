@@ -50,7 +50,7 @@ structure Common = struct
 			| (Pemail(s1), Pemail(s2)) => String.compare(s1, s2)
 			| (Pmac(s1), Pmac(s2)) => String.compare(toLower s1, toLower s2)
 			| (Pwhite(s1), Pwhite(s2)) => String.compare(s1, s2)
-			| (Other(c1), Other(c2)) => String.compare(Char.toString(c1), Char.toString(c2))
+			| (Other(c1), Other(c2)) => Char.compare(c1, c2)
 			| _ => Structure.compToken(a, b)
 	
 	structure BDSet = RedBlackSetFn(struct
@@ -86,12 +86,12 @@ structure Common = struct
 	| EnumC of BDSet.set (* set of values it takes on *)
 	and ordered = Ascend | Descend
 
-	fun bdtos (d:Token):string = 
+	fun tokenToRawString (d:Token):string = 
 	  let fun pad x = if String.size x < 11 
 		then pad (x ^ " ") else x 
 	  in (pad (case d of
-		PbXML(node, attrib) => "<" ^ node ^ attrib ^ ">"
-	|	PeXML(node, attrib) => "</" ^ node ^ attrib ^ ">"
+		PbXML(node, attrib) => "<" ^ node ^ " " ^ attrib ^ ">"
+	|	PeXML(node, attrib) => "</" ^ node ^ " " ^ attrib ^ ">"
 	|	Pint (i, s) => s
 	|	Pfloat (a, b) =>  a ^"."^ b
 	|	Ptime(t) => t
@@ -103,9 +103,9 @@ structure Common = struct
 	|	Pemail(t)  => t
 	|	Pmac(t)  => (toLower t)
 	|	Pstring(str)  => str
-	|	Pwhite (str)  =>  "["^str^"]"  
-	|	Other (c)  => Char.toString(c) 
-	| 	Pempty => "[]" 
+	|	Pwhite (str)  =>  str  
+	|	Other (c)  => str(c) 
+	| 	Pempty => "" 
 	|	_ => raise TyMismatch ))
 	 end
 
@@ -129,8 +129,8 @@ structure Common = struct
 	| 	_ => StringConst("")
 
 	fun bdoltos (x:Token option list): string = (case x of
-		h :: nil => (case h of SOME a => bdtos a | NONE => "NONE      ")
-	|	h :: t => (case h of SOME a => bdtos a | NONE => "NONE       ") 
+		h :: nil => (case h of SOME a => tokenToString a | NONE => "NONE      ")
+	|	h :: t => (case h of SOME a => tokenToString a | NONE => "NONE       ") 
 				^ "" ^ (bdoltos t)
 	|	nil => "()\n")
 
@@ -147,8 +147,8 @@ structure Common = struct
 	fun ctos(c:constraint):string = (case c of
 		  Length x => "Length " ^ (Int.toString x)
 		| Ordered x => (case x of Ascend => "Ascending" | Descend => "Decending")
-		| Unique x => "Unique: " ^ (bdtos x)
-		| EnumC bdset => "EnumC:\n" ^ ( implode(map bdtos (BDSet.listItems bdset),"\n") )
+		| Unique x => "Unique: " ^ (tokenToString x)
+		| EnumC bdset => "EnumC:\n" ^ ( implode(map tokenToString (BDSet.listItems bdset),"\n") )
 		| Range(l,h) => "Range [" ^ (LargeInt.toString l) ^ "," ^ 
 				(LargeInt.toString h) ^ "]"
 		| Eq(((lb,i) :: idlist), c) => "Equation " ^ (foldl (fn ((lb,i),str) => str ^ " + " ^ (Rat.toString i) ^ Atom.toString(lb)) ((Rat.toString i) ^ Atom.toString(lb)) idlist) ^ " + " ^ (Rat.toString c)

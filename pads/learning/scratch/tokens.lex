@@ -43,6 +43,8 @@ PbXML = \<([a-zA-Z])+\>;
 oxmlb = \<[^>]+\>;
 PeXML = \<\/[^>]+\>;
 Pwhite = [ \t\r\n]+;
+Pint = -?[0-9]+;
+Pstring = [A-Za-z][A-Za-z0-9_\-]*;
 
 %%
 
@@ -52,8 +54,8 @@ Pwhite = [ \t\r\n]+;
 {PbXML}	=> (SOME (Types.PbXML (getFirst yytext true), getLoc(yypos, yytext) ));
 {PeXML}	=> (SOME (Types.PeXML (getFirst yytext false), getLoc(yypos, yytext) ));
 {Pwhite}	=> (SOME (Types.Pwhite yytext, getLoc(yypos, yytext) ));
+{Pint}	=> (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
+{Pstring}	=> (SOME (Types.Pstring yytext, getLoc(yypos, yytext) ));
 
--?[0-9]+  => (SOME (Types.Pint (Option.valOf(LargeInt.fromString yytext), yytext), getLoc(yypos, yytext) ));
-[A-Za-z][A-Za-z0-9_\-]* => (SOME (Types.Pstring yytext,                getLoc(yypos, yytext) ));
 .         => (SOME (Types.Other (String.sub(yytext,0)),  getLoc(yypos, yytext) )); 
 \n        => (continue());

@@ -36,7 +36,7 @@ structure Gold = struct
     val goldens : GoldenMap = buildGold
         [ ( "1967Transactions.short", trans )
         , ( "ai.3000", ai )
-        , ( "boot.logcd ", boot_entry )
+        , ( "boot.log", boot_entry )
         , ( "crashreporter.log", crashreport )
         , ( "lsof", entry_t )
         , ( "quarterlypersonalincome", quarterly_t )

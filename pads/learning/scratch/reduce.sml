@@ -346,7 +346,8 @@ and adjacent_consts cmos ty =
 			| ((Pempty, loc1), (Pempty, loc2)) => 
 				(Pempty, combineloc(loc1, loc2))
 			| ((tk1, loc1), (tk2, loc2)) =>
-				(Pstring(tokenToString(tk1) ^ tokenToString(tk2)), combineloc(loc1, loc2))
+				(Pstring(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
+				combineloc(loc1, loc2))
 	    end
 	 (*the two token lists are supposed to be of equal length*)
 	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
@@ -990,7 +991,7 @@ case ty of
 			(
 				newcmos, 
 				RefinedBase((mkTyAux1(coverage, id)), 
-				StringConst(Char.toString(x)), tokens)
+				StringConst(str(x)), tokens)
 			)
 (*
 		| SOME(Pempty) => 

@@ -33,13 +33,9 @@ structure Main : sig
             val end3Times        = updateTokenEnd ( Time.now () ) end2Times
             val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
             val computeTimes     = getComputeTimes end4Times
-	    (*** this is for Population testing  ***
-	    val rewrittenTy = populateDataFile (hd fileNames) rewrittenTy 
-	    val _ = print "After population\n";
-	    val _ = printTy rewrittenTy
-	    **** end of population test ***)
 	in
-	    ( print ( computeTimesToString computeTimes )
+	    (
+	     print ( computeTimesToString computeTimes )
             , Printing.dumpTyInfo
                  (!outputDir) (!descName) measuredTy rewrittenTy computeTimes
             , print ( goldenReport ( !descName ) )
