@@ -1018,9 +1018,13 @@ fn_name(P_t *pads, const Pbase_m *m,
 
  width_not_avail:
   /* FW field: eat the space whether or not there is an error */
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
-  PDCI_IO_FORWARD(end-begin, goto fatal_forward_err);
+  if (begin == end){ /* Must be at eor or eof. */
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+  } else {
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+    PDCI_IO_FORWARD(end-begin, goto fatal_forward_err);
+  }
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  invalid:
@@ -1195,8 +1199,7 @@ fn_name(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  width_not_avail:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
@@ -1230,8 +1233,12 @@ fn_name(P_t *pads, const Pbase_m *m,
   return P_OK;
 
  width_not_avail:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  if (begin == end){ /* Must be at eor or eof. */
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+  } else {
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  }
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
@@ -1288,8 +1295,12 @@ fn_name(P_t *pads, const Pbase_m *m, Pbase_pd *pd, targ_type *res_out, Puint32 n
   }
 
  width_not_avail:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  if (begin == end){ /* Must be at eor or eof. */
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+  } else {
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  }
   PDCI_READFN_RET_ERRCODE_WARN(PDCI_MacroArg2String(fn_name), 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_nb_io_err:
@@ -7800,7 +7811,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.209 2007-05-02 02:45:34 yitzhakm Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.210 2007-05-02 14:01:58 yitzhakm Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -11472,8 +11483,12 @@ PDCI_str_lit_read(P_t *pads, const Pbase_m *m, const Pstring *s,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  width_not_avail:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  if (begin == end){ /* Must be at eor or eof. */
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+  } else {
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  }
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  not_found:
@@ -11531,16 +11546,20 @@ PDCI_countX_read(P_t *pads, const Pbase_m *m,
     }
   PDCI_IO_NEED_BYTES_SPECIFIC(count_max, goto fatal_nb_io_err);
   p1 = begin;
-  while (!(eor|eof)) {
-    if (p1 == end) goto hit_limit;
+  while (!(eor|eof)) { /* end > begin, otherwise eor|eof would be true. */
+    if (p1 == end) goto hit_limit; 
     if (x == (*p1)) {
       count++;
     }
     p1++;
   }
   if (!eor && eor_required) { /* EOF encountered first, error */
-    PDCI_READFN_BEGINLOC(pads, pd->loc);
-    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
+    if (begin == end){ /* Must be at eof. */
+      PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+    } else {
+      PDCI_READFN_BEGINLOC(pads, pd->loc);
+      PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
+    }
     PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_EOF_BEFORE_EOR);
   }
   (*res_out) = count;
@@ -11629,12 +11648,12 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  if (eor|eof){ 
+  if (begin == p1){ 
     PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
+  } else {
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   }
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_nb_io_err:
@@ -12394,8 +12413,12 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  width_not_avail:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  if (begin == end){ /* Must be at eor or eof. */
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+  } else {
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
+  }
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_WIDTH_NOT_AVAILABLE);
 
  fatal_alloc_err:
@@ -12463,13 +12486,12 @@ PDCI_string_read(P_t *pads, const Pbase_m *m,
  not_found:
   if (begin == p1){ /* Must be at eor or eof. */
     PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
   } else {
     /* p1 must be > begin */
     PDCI_READFN_BEGINLOC(pads, pd->loc);
     PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
   }
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
 
  fatal_alloc_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
@@ -12556,19 +12578,11 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m,
  not_found:
   if (begin == end){ /* Must be at eor or eof. */
     PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
   } else {    
     PDCI_READFN_BEGINLOC(pads, pd->loc);
-    { int k = end-begin-1;
-      if ( k > 0) 
-	PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, k);
-      else {
-	P_WARN(pads->disc, whatfn ## ": end < begin");
-	PDCI_READFN_ENDLOC_MINUSK(pads, pd->loc, -k);
-      }
-    }
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   }
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
   
  fatal_alloc_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
@@ -12658,19 +12672,11 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
  not_found:
   if (begin == end){ /* Must be at eor or eof. */
     PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
   } else {    
     PDCI_READFN_BEGINLOC(pads, pd->loc);
-    { int k = end-begin-1;
-      if ( k > 0) 
-	PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, k);
-      else {
-	P_WARN(pads->disc, whatfn ## ": end < begin");
-	PDCI_READFN_ENDLOC_MINUSK(pads, pd->loc, -k);
-      }
-    }
-    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, end-begin-1);
   }
+  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_REGEXP_NOT_FOUND);
 
  fatal_alloc_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
