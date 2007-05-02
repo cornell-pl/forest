@@ -1,0 +1,509 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf410
+{\fonttbl\f0\fswiss\fcharset77 Helvetica;\f1\fswiss\fcharset77 Helvetica-Bold;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww13420\viewh15260\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 Characterization of raw data files from /pads/learning/scratch/data\
+April 19, 2007\
+\
+
+\f1\b 1967Transactions.short\
+
+\f0\b0 - column oriented\
+- appears to be fixed width separation\
+- Kathleen says this file is from a government web site\
+*Integer (almost always 0101)\
+*Integer (4 digit)\
+*Float (Mostly 0, but some very small, sum in 100's)\
+*Float (Mostly 0, generally very small)\
+*Float (all less than 1)\
+Excel: perfect, as fixed width\
+\
+
+\f1\b MER_T01_01.csv
+\f0\b0 \
+- column oriented\
+- comma-separated\
+- file content related to energy usage\
+- there is a header line: "MSN","YYYYMM","Publication Value","Publication Unit","Column Order"\
+* "TxxBUS"  - a string with xx instantiated\
+* Integer - 6 digits, somewhere in the 200000 or 190's -- apparently 4 digit year, 2 digit month\
+* Float - seems to be less than 100\
+* Quadrillion Btu - fixed string\
+* Integer - from 1 to 5, and the xx in the first column dictate which integer it is.\
+Excel: perfect - but not surprising, seeing as it is a .csv file!\
+\
+\
+
+\f1\b ProfSec.log
+\f0\b0 \
+- line oriented\
+- Many lines indented\
+- Many lines start with 'Configure', and then a path name (and a period!)\
+- Some warning lines, and a message. Each 'warning' line followed by one starting with the word 'Error'\
+- Only 59 lines in this file, 342 words, so there isn't lots of raw material to work with.\
+Excel: garbage, with tab indentation\
+\
+\
+
+\f1\b SCESETUP.LOG
+\f0\b0 \
+- line oriented\
+- Most lines consist of 'Configure' then a path name, and end with a period\
+- Some lines with misc. configuration messages, e.g., 'Guest account is disabled.'\
+- another variant of backup2.log, converted to ascii\
+- 1185 lines in this file.  There are 1099 lines that contain (start with?) 'Configure'.  Hence, over 90% 'Configure'!\
+Excel: garbage, with tab indentation\
+\
+
+\f1\b ai-simple
+\f0\b0 \
+- column oriented\
+- space separated\
+- file appears to be from Amnesty International\
+* IP address\
+* dash ('-')\
+* dash ('-')\
+* datetime & offset, all contained in brackets, e.g. [15/Oct/1997:20:37:06 -0700]\
+* 'GET' followed by pathname and 'HTTP/1.0', all in one quotation\
+* Integer (usually 200?)\
+* Integer (ranging from 100s to 10000s); a few entries contain no number, but a dash instead\
+- line count is 1086 (with 10k words, 100 characters)\
+Excel: nearly perfect - only time offset separated from rest of time\
+\
+
+\f1\b ai.3000
+\f0\b0 \
+- column oriented\
+- space separated\
+- file appears to be from Amnesty International ('amnesty' appears in the URLs)\
+- format very similar to ai-simple, with only first column different\
+* domain name (with periods as separators, e.g., ww-tr03.proxy.aol.com\
+* dash\
+* dash\
+* datetime and offset, all contained in brackets, e.g. [15/Oct/1997:20:37:06 -0700]\
+* 'GET' followed by pathname and 'HTTP/1.0', all in one quotation\
+* Integer (usually 200?)\
+* Integer (ranging from 100s to 30000s); a few entries contain no number, but a dash instead\
+- line count is 3000 (hence the filename!)\
+Excel: nearly perfect - only time offset separated from rest of time\
+\
+
+\f1\b apache.txt\
+
+\f0\b0 - column oriented\
+- space separated\
+- similar to the 'ai' log files, with more fields\
+* IP address\
+* dash\
+* dash\
+* datetime & offset in brackets e.g. [15/Oct/1997:20:37:06 -0700]\
+* command (usually GET, but some POST) pathname and HTTP version, all in quotes\
+* integer (hundreds)\
+* integer (hundreds, thousands)\
+* either a dash (in quotes) or a URL (in quotes)\
+* browser and OS info (all in quotes)\
+- line count: 2087 42097 452859\
+Excel: very good - offset separated from date/time & browser info, OS info not separated (but is there a pattern anyway?)\
+\
+
+\f1\b asl.log
+\f0\b0 \
+- column oriented\
+- space separated\
+- all the entries are contained in brackets\
+* Datetime & offset in brackets, e.g. [Time 2006.11.28 04:32:19 UTC]\
+* '[Facility xx]' where xx is usually 'netinfo', 'user', 'mail', 'daemon', 'auth', 'install'\
+* '[Sender xx]' where xx is 'configd', lookupd', 'cp' and sometimes a pathname\
+* '[PID xx]' where xx is an integer, often -1\
+* '[Message xx]' where xx is a comment that is fairly free-form\
+* '[Level xx]' where xx is a small integer (1 to 5)\
+* '[UID ww]' where ww is a small (always negative?) integer\
+* '[GID yy]' where yy is a small (always negative?) integer; yy = ww seems to hold\
+- line count: 2901   75385  526460\
+Excel: Nearly perfect -- requires the use of only "[" as separator, which loses it from the columns\
+\
+
+\f1\b backup1.log
+\f0\b0 \
+- line or column oriented\
+- each line indented, then 'Configure' then space, and one word followed by a period\
+- e.g.,        Configure ProtectedStorage.\
+- line count: 36 72 781\
+- Kathleen says this is a "Cut down log file from C:WINDOWS/security/logs on Mogilny"\
+Excel: Perfect, but very simple -- two columns -- configure, and something else\
+\
+
+\f1\b backup2.log
+\f0\b0 \
+- line oriented\
+- most of the lines are in the exact format of backup1.log, e.g.,        Configure ProtectedStorage.\
+- There are a few blank lines, and some other text-based messages; some start with ----\
+- line count: 58 129 1375\
+- Kathleen says that this is the "full version of backup1.log" \
+- Hence we have 22 lines of blank text, and one line status messages regarding configuration\
+Excel: garbage, but this is a line oriented file, and there isn't any structure to grab ahold of\
+\
+
+\f1\b boot.log
+\f0\b0 \
+- column oriented\
+- space separated\
+* Date and time, with space separation, no brackets \
+- because of date/time format, could be read as 'month date time'\
+* string constant 'srv7'\
+* string message: who reported and colon (e.g., snortd:), followed by brief text\
+- e.g. haldaemon: haldaemon startup succeeded\
+- easy to see that this file has three fields, but space separation of text would be confusing to machine!\
+Although at least the first two fields are fixed in size; only the last field is free-form.  This is good for interactive\
+guidance.\
+- line count: 261 2349 16240\
+ Excel: Fair to Weak -- falls apart after string constant 'srv7' (left justified)\
+\
+
+\f1\b crashreporter.log
+\f0\b0 \
+- column oriented\
+- space separated\
+- same as boot.log -- it is clear at a glance that there are three fields, but since inside these fields there are\
+spaces, this could be confusing to a machine.\
+* 'Day-of-Week-Abbrev Month Day Time Year' e.g., Thu Nov 23 21:03:15 2006\
+* 'crashdump[xx]:' where xx is a large integer (100s to 10000s)\
+* String message; seems to usually be one of three kinds (in this order):\
+1. 'crashdump started'\
+2. 'Started writing crashdump report to: ' followed by pathname\
+3. 'Finished writing crashdump report to:' followed by pathname\
+I also found a line with "Failed to re-launch" followed by a pathname\
+- line count: 440 4721 50026\
+Excel: Fair; falls apart after "crashdump" column; free form text afterwards gets turned into separate columns\
+\
+
+\f1\b daily.out
+\f0\b0 \
+- multiline oriented\
+- the lines follow a pattern (and each section has blank lines in between)\
+*Date\
+*'Removing...'\
+*'Backing up...'\
+*'Checking...'\
+*'disks:' followed by a couple of lines of disk info\
+*'Last dump...'\
+*'network:' followed by a fixed width table of info\
+* 'ruptime...'\
+* 'Rotating...'\
+- line count: 5788   26176  214573\
+- It appears that this pattern appears exactly 139 times (grep on "network:", "disks:", "mail:")\
+Excel: Garbage -- it is multilined\
+\
+
+\f1\b dibbler.1000
+\f0\b0 \
+- line oriented\
+- '|' as a separator, but variation in number of separators on each line!\
+-line count: 999 1001 142607\
+Excel: Weak or Good? -- '|' works as a separator, but a different number of items on each line, with no clear semantics\
+\
+
+\f1\b dmesg
+\f0\b0 \
+- line oriented\
+- Linux log file from /var/log on tux.cs.Princeton.edu\
+- tremendous variation in the lines; some free text, some more fixed width, \
+e.g., ACPI: RSDT (v001 DELL   PE2650   0x00000001 MSFT 0x0100000a) @ 0x000fdc54\
+- space separated, but not in a meaningful way.  A sample segment:\
+ACPI: PCI interrupt 0000:05:06.1[B] -> GSI 31 (level, low) -> IRQ 209\
+ACPI: PCI interrupt 0000:03:06.0[A] -> GSI 28 (level, low) -> IRQ 217\
+ACPI: PCI interrupt 0000:03:08.0[A] -> GSI 29 (level, low) -> IRQ 225\
+apm: BIOS not found.\
+audit: initializing netlink socket (disabled)\
+audit(1163507616.519:1): initialized\
+highmem bounce pool size: 64 pages\
+Total HugeTLB memory allocated, 0\
+VFS: Disk quotas dquot_6.5.1\
+Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)\
+SELinux:  Registering netfilter hooks\
+- line count: 354 2685 17681\
+Excel: Garbage - line oriented\
+\
+
+\f1\b error_log
+\f0\b0 \
+- column oriented\
+- space separated\
+* 'I'\
+* date/time and offset, all in brackets, e.g., [11/Sep/2006:13:56:57 -0700]\
+* String message in one of three types:\
+1. 'Remote Destination ' followed by name@IPaddress", and 'has timed out; deleting it..." (1049 lines)\
+2. Added remote printer' followed by "name@IPaddress", and "..."  (2406 lines)\
+3. Short free-form message, e.g., "Allowing up to 100 client connections per host." or\
+"Started filter /System/Library/Printers/Libraries/PrintJobMgr/Contents/MacOS/PrintJobMgr (PID 2384) for job 130."\
+(about 1000 lines)\
+- line count: 4510  38724  419095\
+Excel:  Perfect -- left justified, simple file means that fixed width separation works; free form text in rightmost column\
+\
+
+\f1\b hp-array
+\f0\b0 \
+- line oriented\
+- each line is an array, with '|' as a separator (number of separators varies from 2 to 7)\
+each cell in the array is a name.  Sample line: "quirrell|lockhart|lupin|moody|umbridge|snape"\
+- constructed file just for testing purposes?\
+- line count:  6 6 214\
+Excel: Weak or Good? -- '|' is a perfect separator, but each line has different numbers of items\
+\
+
+\f1\b hp-struct\
+
+\f0\b0 - column oriented\
+- comma-separated\
+- each line, though, is totally enclosed in a quote\
+* Integer\
+* Integer or string-name\
+- sample line: "574, Hermione"\
+- small file; constructed just for testing purposes?\
+- line count: 6 12 76\
+Excel: Perfect, even though each line enclosed in quotes -- just use " and , as separators, and you get 3 columns, the first one being a dummy column (empty)\
+\
+
+\f1\b ijnltif
+\f0\b0 \
+- binary file?\
+- "hurt" my computer reading it...\
+-  9    7384  191699\
+- no clue on the semantics here; no meaningful structure w/o domain info, or a targeted question (i.e., does the following character string appear?, etc.)\
+Excel:  Garbage, I'm sure -- didn't even try.\
+\
+
+\f1\b install.log\
+
+\f0\b0 - column oriented\
+- space separated\
+- human would likely see it as three columns\
+* 'Month Day Time" e.g., "Nov 25 11:11:24"\
+* 'Babylon Software Update[xx]:' where xx is an integer (3 or 4 choices in this file, each grouped)\
+* String message - about 1/2 of them constants "Installer allowed sleep." or "System requesting sleep.", the other half very free-form\
+- line count: 1690  16430   133690\
+Excel: Fair to Weak - left justified, so we can get the date, but the "Babylon" and the free form text doesn't work well\
+\
+
+\f1\b interaction.txt.small
+\f0\b0 \
+- column oriented\
+- separator appears to be ';', with some fixed width stuff going on inside cells\
+- the first 36 lines are headers, and describe the 8 columns; the data doesn't start until afterwards\
+* Each cell is either a very large integer, or a string name, or a strong constant\
+- line count:  121 1282   10181\
+Excel:  Fair to weak; even with the ';' as separator, can't see that the import made much sense\
+\
+
+\f1\b interface.loop
+\f0\b0 \
+- column oriented\
+- separated by '|'\
+* data is a mix of string constants ('CBB' in the first column), IP addresses, and regular addresses\
+* blanks are recorded by two separators running against each other:  '||'\
+- line count: 1253 10142  189579\
+Excel: Unclear what the semantics are of the file, and hard to tell whether the import makes much sense\
+\
+
+\f1\b  lsof
+\f0\b0 \
+- column oriented\
+- space separated, but likely fixed width\
+- output of the lsof tool on Kathleen's mac\
+- The first line is a header line explaining the different columns:\
+COMMAND     PID    USER   FD     TYPE     DEVICE   SIZE/OFF     NODE NAME\
+* COMMAND looks like an app name (grouped in bunches)\
+* PID is an integer\
+* USER is string constant "kfisher"\
+* FD is a short sting (alphanumeric)\
+* TYPE is a short alphabetic string\
+* DEVICE is two numbers separated by a comma\
+* SIZE/OFF is an alphanumeric string\
+* NODE is a very large integer\
+* NAME, is a pathname\
+- line count:  2521 22684  339337\
+Excel: Perfect - since the original file appears to be fixed width, this is trivial to import\
+\
+
+\f1\b netstat
+\f0\b0 \
+- column oriented\
+- fixed width separation\
+- this file produced from the netstat tool, and shows open network connections\
+- file has two major sections:\
+First Section has header "Active Internet Connections", followed by header line:\
+Proto Recv-Q Send-Q  Local Address          Foreign Address        (state)\
+* Proto is 'tcp'x or 'ucp'x\
+* Recv-Q is an integer (usually 0)\
+* Send-Q is an integer (usually 0)\
+* Local Address is either an IP address or a localhost.<stuff>\
+* Foreign Address is a domain\
+* (state) is a strong constant, "CLOSE_WAIT" or "ESTABLISHED"\
+- Important -- after well-formed lines, there are a bunch in which data might be missing, and an '*' in place.  Example:\
+udp4       0      0  192.168.15.107.65394   *.*            \
+Second Section has header "Active LOCAL (UNIX) domain sockets" followed by column headers:\
+Address  Type   Recv-Q Send-Q    Inode     Conn     Refs  Nextref Addr\
+* Address is an alphanumeric string\
+* Type is usually the string constant "stream" or "dgram"\
+* Rev-Q is the constant 0\
+* Send-Q is the constant 0\
+* Inode is an alphanumeric character, but mostly 0\
+* Conn is an alphanumeric character, sometimes 0\
+* Refs is the constant 0\
+* Nextref is the constant 0\
+* Addr is often blank, but when it isn't, it is a pathname\
+- line count: 193 1451 13669\
+Excel: Nearly perfect (two parts; you'd have to look over the file, and see that there are two sections), other than that, simple space separation works\
+\
+
+\f1\b netstat-an
+\f0\b0 \
+-column oriented\
+-fixed width separation\
+- essentially the same as netstat file, but with IP addresses instead of domains.  That is, in the first section, in the "Foreign address column", we don't have domain names, but rather IP addresses.\
+- line count: 202 1507 14355\
+Excel: Nearly perfect (two parts; you'd have to look over the file, and see that there are two sections), other than that, simple space separation works\
+\
+\
+
+\f1\b page_log
+\f0\b0 \
+- column oriented\
+- space separated\
+* Name of printer -- one long string.  Examples: "officejet_7100_series(Printer)" or "Andrew_s_printer"\
+* String -- always "kfisher"\
+* Integer - in ascending order (with duplications) up to 130\
+* Date&Time&Offset in brackets, e.g., [22/Nov/2006:14:22:11 -0800]\
+* Integer -- seemed to be low, in two digits at most\
+* Integer - could be the constant '1'\
+* Dash - '-'\
+* String - appeared to be the constant "localhost"\
+- line count: 354  3186  28170\
+Excel: Nearly perfect (offset separated from date/time)  Otherwise, no problem\
+\
+
+\f1\b quarterlypersonalincome
+\f0\b0 \
+- column oriented\
+- comma separated\
+- Only one line in this file?\
+Excel:  Perfect, after dealing with header; Excel makes it into multiple lines, and easily separates based on commas\
+\
+
+\f1\b railroad.txt
+\f0\b0 \
+- column oriented\
+- comma separated\
+- contains a header, which is confusing, since it has too many commas:\
+Table 1-9:  ADA-Accessible Rail Transit Stations by Agency,,,,,,,,,,,,,,,\
+Type of rail transit / agency,Primary city served,Number of stations,,,,,,,Number of ADA-accessible stations,,,,,,\
+,,1996,1997,1998,1999,2000,2001,2002,1996,1997,1998,1999,2000,2001,2002\
+Heavy rail,,,,,,,,,,,,,,,\
+- I think it should read:\
+* Agency - this is a string with spaces, e.g., 'Washington Metropolitan Area Transit Authority'\
+* City Served - quoted string containing "City, State" e.g., "Atlanta, GA"\
+* The next 7 integers are the total number of stations from the years 1996 to 2002\
+* The last 7 integers are the ADA-accessible stations from 1996 to 2002\
+- Important Note -- the last 14 integers will sometimes read 'NA' or 'U' for not applicable, and data not available, respectively.  This information comes from some footer lines in the file!\
+- line count:   67     450    6218\
+Excel: Perfect, as long as header and footer lines are taken out (and the human would have to remove lots of commas inserted into the header, so that it would line up with the right columns)\
+\
+
+\f1\b rpmpkgs
+\f0\b0 \
+- line oriented \
+- appears to have a period as a separator, but this is just because of the nature of the package names.  Examples:\
+"xorg-x11-font-utils-6.8.2-1.EL.13.37.2.i386.rpm" or "perl-XML-Twig-3.13-6.noarch.rpm"\
+- Each line is atomic - a human glancing at the file wouldn't want to split any of the lines; there isn't any other meaningful structure, given the domain.\
+- line count: 886  886  27223\
+Excel: Perfect; only one column -- a trivial file\
+\
+
+\f1\b scesetup2.log\
+
+\f0\b0 - line oriented\
+- based on the line count, it is almost exactly twice the size as SCESETUP (1155 lines).  And it has one fewer word; I'm guessing that it is essentially the same thing, but with lots of blank lines tossed in.  So the same comments apply.\
+- line count: 2368   3034  75109\
+Excel: Garbage; not much structure to understand, anyway.\
+\
+
+\f1\b scrollkeeper.log\
+
+\f0\b0 - column oriented\
+- space separated\
+- the first line is different from all the others. The first line is:\
+Oct 26 05:45:05 AM Installing ScrollKeeper 0.3.14...\
+- The rest of the lines share the date format, and then have a text message that includes a pathname.\
+* Month Day TOD 'AM'\
+* String constant - 'scrollkeeper-update:'\
+* String - often "Registering " followed by path name, but sometimes "scrollkeeper-update:"  <pathname>  "No such file or directory"\
+- line count: 671 5060  66288\
+Excel: Looks essentially right; date does get broken up, but free form string appears to be rightmost in all cases.\
+\
+
+\f1\b simplegroups
+\f0\b0 \
+- column oriented\
+- comma separated\
+- only three lines (file constructed for testing?) Here they are:\
+123,"hello, fred", today\
+12, "helo", tomorrow\
+123, "goodbye, the moon", yesterday\
+Excel:  Perfect, but trivial test file, so that's what you'd expect (although last line is longer)\
+\
+
+\f1\b simplexml\
+
+\f0\b0 - line oriented\
+- complex separator <body> and </body>, for example\
+- fixed fields in this file; each line consists of \
+recordnumber<html><body>xx</body></html>  where xx is a string\
+- only 5 lines/records in this file - constructed for testing purposes?\
+Excel: Weak to Fair; just imported the word "hello" in a text box; didn't let me do the import wizard steps.\
+\
+
+\f1\b windowserver_last.log
+\f0\b0 \
+- column oriented\
+- space separated\
+- A human would immediately want to separate it into three parts: date, bracketed number, text\
+- Comes from a Linux log file /var/log on tux.cs.princeton.edu\
+* Date/Time, with spaces, e.g., "Nov 19 08:51:27"\
+* '[Integer]" - integer in brackets, most of the time the integer is 70 or 71\
+* String - free form text, which often contains a quoted segment, and some hex code.  An example:\
+'"loginwindow" (0x468f) set hot key operating mode to normal'\
+- line count:  680   8640  52394\
+Excel: Fair -- Perfect, if you look over the file, and see there are three parts.  You just used fixed width import, and line up the date/time and integer, and sweep up the rest in the third column\
+\
+
+\f1\b yum.txt
+\f0\b0 \
+- column oriented\
+- space separated\
+- a human would break it into four parts:  Date/time, Action, targetpart1, targetpart2\
+* Date/time - the "usual" space separated format, e.g., "Jul 16 04:20:27"\
+* Action - A string constant, either "Installed:" or "Updated:" or "Erased:"\
+* Targets - often looks like a package name, with lots of periods, e.g., "mysql-bench.x86_64 4.1.20-1.RHEL4.1", but infrequently lacks the period, e.g., "dhcpv6"  Notice the space in the target; each target has a space, which is why I say\
+4 columns, with targetpart1, targetpart2\
+- line count: 327  1957  18220\
+Excel: Nearly perfect -- the date/time does get split (but in a regular fashion), and the rest of the columns line up against the description above.\
+\
+
+\f1\b yum.log
+\f0\b0 \
+- column oriented\
+- space separated\
+- Appears to be the same format as yum.txt\
+- Comes from a Linux log file /var/log on tux.cs.princeton.edu\
+- line count:  41  246  2490\
+Excel: (same as file yum.txt) Nearly perfect -- the date/time does get split (but in a regular fashion), and the rest of the columns line up against the description above.\
+\
+\
+\
+\
+\
+\
+\
+}
