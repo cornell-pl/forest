@@ -7800,7 +7800,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.208 2007-04-26 19:45:50 yitzhakm Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.209 2007-05-02 02:45:34 yitzhakm Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -11595,6 +11595,10 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m,
     }
   PDCI_IO_NEED_BYTES_SPECIFIC(count_max, goto fatal_nb_io_err);
   p1 = begin;
+  /* Looks like this is an abbreviation for "if (!(eor|oef)) while
+     (1){...}", as eor and eof cannot be modified within the loop. 
+     -- YHM
+  */
   while (!(eor|eof)) {
     if (p1 == end) goto hit_limit;
     if (y == (*p1)) { /* success */
@@ -11625,6 +11629,10 @@ PDCI_countXtoY_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
+  if (eor|eof){ 
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
+  }
   PDCI_READFN_BEGINLOC(pads, pd->loc);
   PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
@@ -12453,9 +12461,15 @@ PDCI_string_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  PDCI_READFN_BEGINLOC(pads, pd->loc);
-  PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
-  PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
+  if (begin == p1){ /* Must be at eor or eof. */
+    PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
+  } else {
+    /* p1 must be > begin */
+    PDCI_READFN_BEGINLOC(pads, pd->loc);
+    PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, p1-begin-1);
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_CHAR_LIT_NOT_FOUND);
+  }
 
  fatal_alloc_err:
   PDCI_READFN_RET_ERRCODE_FATAL(whatfn, *m, "Memory alloc error", P_ALLOC_ERR);
@@ -12540,16 +12554,16 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  if ((begin == end) || eor){
+  if (begin == end){ /* Must be at eor or eof. */
     PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN("PDCI_string_CME_read", 0, eor ? P_AT_EOR : P_AT_EOF);    
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
   } else {    
     PDCI_READFN_BEGINLOC(pads, pd->loc);
     { int k = end-begin-1;
       if ( k > 0) 
 	PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, k);
       else {
-	P_WARN(pads->disc, "PDCI_string_CME_read: end < begin");
+	P_WARN(pads->disc, whatfn ## ": end < begin");
 	PDCI_READFN_ENDLOC_MINUSK(pads, pd->loc, -k);
       }
     }
@@ -12642,16 +12656,16 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, P_INVALID_CHARSET);
 
  not_found:
-  if ((begin == end) || eor){
+  if (begin == end){ /* Must be at eor or eof. */
     PDCI_READFN_GETLOC_SPAN0(pads, pd->loc);
-    PDCI_READFN_RET_ERRCODE_WARN("PDCI_string_CSE_read", 0, eor ? P_AT_EOR : P_AT_EOF);    
+    PDCI_READFN_RET_ERRCODE_WARN(whatfn, 0, eor ? P_AT_EOR : P_AT_EOF);    
   } else {    
     PDCI_READFN_BEGINLOC(pads, pd->loc);
     { int k = end-begin-1;
       if ( k > 0) 
 	PDCI_READFN_ENDLOC_PLUSK(pads, pd->loc, k);
       else {
-	P_WARN(pads->disc, "PDCI_string_CSE_read: end < begin");
+	P_WARN(pads->disc, whatfn ## ": end < begin");
 	PDCI_READFN_ENDLOC_MINUSK(pads, pd->loc, -k);
       }
     }
