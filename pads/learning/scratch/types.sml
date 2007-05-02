@@ -195,9 +195,36 @@ struct
             NONE => (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
           | SOME id => id
     end
-
+         
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
 
+    fun getLabelForPADS ty =
+	let
+	  val label = getLabelString (getAuxInfo ty)
+	  val id = String.extract (label, 4, NONE)
+	in
+	  case ty of
+	   Base _                => "Base_"^id
+        |  TBD _                 => "TBD_"^id
+        |  Bottom _              => "BTM_"^id 
+        |  Pstruct _             => "Struct_" ^ id
+        |  Punion _              => "Union_" ^ id
+        |  Parray _              => "Parray_"^id
+        |  RefinedBase (aux, re, l) => 
+		(case re of Enum _ => "Enum_" ^ id
+			| _ => "RBase_"^id
+		)
+        |  Switch _        	 => "Switch_"^id
+        |  RArray _ 		 => "Array_"^id
+        |  Poption _           	 => "Opt_"^id
+	end
+    (*given a pads ty label, return the var name to go with it*)
+    fun getVarName (padslabel:string) = 
+	let val l = Substring.full padslabel
+	    val id = Substring.taker (fn c => c <> #"_") l 
+	in "var_" ^ (Substring.string id)
+	end
+    fun getVarNameFromID id = "var_" ^ (String.extract(id, 4, NONE))
     fun getLabelInt (a: AuxInfo): int =
 	let
 	  val label = getLabelString a
@@ -536,20 +563,24 @@ struct
 	  these are used for base and refined base types mostly
 	*)
     let 
-
-	val label = getLabelString (getAuxInfo ty)
-   	fun getLabelParam ty =
+	val label = getLabelForPADS ty
+	(* returns the label for type, parameter and variable name to be used with it *)
+   	fun getLabelParamVar ty =
+	   let 
+	     val rawLabel = getLabelString (getAuxInfo ty)
+	   in
 		case ty of
-		Switch (aux, id, tys) => (getLabelString aux, SOME ("v" ^ (Atom.toString id)))
-		| _ => (getLabelString (getAuxInfo ty), NONE)
+		Switch (aux, id, tys) => (getLabelForPADS ty, SOME(getVarNameFromID (Atom.toString id)), 
+			getVarNameFromID rawLabel)
+		| _ => (getLabelForPADS ty, NONE, getVarNameFromID rawLabel)
+	   end
     	fun labelToTyString (label:string, paramop) = 
 		case paramop of
 		NONE => label 
 		| SOME param => label ^ "(:" ^ param ^ ":)"
-   
-    	fun labelToPADS prefix mode (label:string, paramop) = 
+    	fun labelToPADS prefix mode (label, paramop, varName) = 
 		prefix ^ (labelToTyString (label, paramop)) ^ 
-		(if (mode = 2) then "" else (" v" ^ label ^ suffix))
+		(if (mode = 2) then "" else (" "^ varName ^ suffix))
 	fun notInlineTy ty = case ty of 
 		Base _ => false 
 		| RefinedBase (_, Enum _, _) => true 
@@ -557,13 +588,13 @@ struct
 		| TBD _ => false
 		| Bottom _  => false
 		| _ => true
-    	fun tyToInlinePADS prefix mode ty = labelToPADS prefix mode (getLabelParam ty)
+    	fun tyToInlinePADS prefix mode ty = labelToPADS prefix mode (getLabelParamVar ty)
         fun tokenToPADS label suffix token mode =
 	let 
 	  val typedef = if mode =0 then "Ptypedef " else ""
 	  val label' = if mode =2 then "" 
 			else if mode = 0 then (label ^ ";\n")
-			else ("v" ^ label ^ suffix ^ ";\n")
+			else ((getVarName label) ^ suffix ^ ";\n")
 	in
 	  typedef ^
           (case token of 
@@ -577,27 +608,27 @@ struct
 			   else if !timeStoppingRe <> "" then
 			      ("Ptime_SE(:\"" ^ !timeStoppingRe ^ "\":) " ^ label')
 			   else ("PPTime " ^ label')
-**********)
+********)
 	      | Pdate _ => "PPdate " ^ label'
-(***********
+(********
 			   if !dateStoppingChar<> #"" then 
 			      ("Pdate(:'" ^ (Char.toString !dateStoppingChar) ^ "':) " ^ label')
 			   else if !dateStoppingRe <> "" then
 			      ("Pdate_SE(:\"" ^ !dateStoppingRe ^ "\":) " ^ label')
 			   else ("PPDate " ^ label')
-***********)
-	      | Pip _ => "PPip " ^ label' 
+********)
+	      | Pip _ => "PPip " ^ label'
 	      | Phostname _ => "PPhostname " ^ label'
 	      | Purl _ => "PPurl " ^ label'
 	      | Ppath _ => "PPpath " ^ label'
 	      | Pemail _ => "PPemail " ^ label'
 	      | Pmac _ => "PPmac " ^ label'
-	      | Pwhite _ => "PPwhite " ^ label' 
+	      | Pwhite _ => "PPwhite " ^ label'
 	      | Other c => "Pchar " ^ label'
 	      | PbXML _ => "PPbXML " ^ label'
 	      | PeXML _ => "PPeXML "  ^ label'
 	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
-	      | Pempty => "Pcompute Pint8 " ^ "v"^ label ^ suffix ^ " = 0;\n" 
+	      | Pempty => "Pcompute Pint8 " ^ (getVarName label) ^ suffix ^ " = 0;\n" 
 	      | _ => raise InvalidTokenTy
           )
 	end 
@@ -629,7 +660,7 @@ struct
 	  val typedef = if mode =0 then "Ptypedef " else ""
 	  val label' = if mode =2 then "" 
 		       else if mode = 0 then (label ^ ";\n")
-		       else ("v" ^ label ^ suffix ^ ";\n")
+		       else ((getVarName label) ^ suffix ^ ";\n")
 	in
 	  typedef ^ 
   	    (
@@ -659,7 +690,7 @@ struct
 	    	  ) else "") ^ 
 		  (if mode=0 then (label ^ " : " ^ label ^ " x => {x == " ^ (LargeInt.toString i) ^ "};\n")
 		   else if mode=1 orelse mode = 3 then 
-			("v" ^ label ^ suffix ^ " : v" ^ label ^ suffix ^ 
+			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
 			" == " ^ (LargeInt.toString i) ^ ";\n")
 		   else (label ^ " ")
 		  )
@@ -668,18 +699,19 @@ struct
 		  (if (mode <> 2) then "Pfloat32 " else "") ^ 
 		  ( if mode = 0 then (label ^ " : " ^ label ^ " x => {x == " ^ (i ^ "." ^ f) ^ "};\n")
 		  else if mode = 1 orelse mode = 3 then 
-			("v" ^ label ^ suffix ^ " : v" ^ label ^ suffix ^ " == " ^ (i ^ "." ^ f) ^ "};\n")
+			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
+				" == " ^ (i ^ "." ^ f) ^ "};\n")
 		  else (label ^ " ")
 		  )
 	      | StringConst s => if (size s) = 1 then 
 				(
 				 if mode = 0 then 
 					("Pchar " ^ label ^ " : " ^ label ^ " x =>  {x == '" ^ s ^ "'};\n")
-			    	 else if mode=1 then ("v" ^ label ^ suffix ^ " Pfrom('" ^ s ^ "');\n")
+			    	 else if mode=1 then ((getVarName label) ^ suffix ^ " Pfrom('" ^ s ^ "');\n")
 			    	 else if mode=2 then ("Pstring_ME(:\"/" ^ escape(s) ^ "/\":) ")
 				 else ("'" ^ s ^ "';\n")
 				)
-				else if mode = 1 then ("v" ^ label ^ suffix ^ " Pfrom(\"" ^ s ^ "\");\n")
+				else if mode = 1 then ((getVarName label) ^ suffix ^ " Pfrom(\"" ^ s ^ "\");\n")
 				     else if mode = 3 then ("\"" ^ s ^ "\";\n")
 				     else ("Pstring_ME(:\"/"^ escape(s) ^"/\":) " ^ label')
 	      | Enum res => ""
@@ -843,7 +875,7 @@ struct
 			  let
 			    val newlabel = (Atom.toString (getLabel 
 					    ({coverage=0, label=NONE, tycomp=zeroComps})))
-			  in ("\tv" ^ newlabel ^ " Pfrom(\"" ^ s ^ "\")")
+			  in ("\t" ^ (getVarName newlabel) ^ " Pfrom(\"" ^ s ^ "\")")
 			  end
 		    	| _ => raise TyMismatch
 		  in (pRecord ^
@@ -899,7 +931,7 @@ struct
 		   val tys = map #2 retys
 		   val nonInlineTys = List.filter notInlineTy tys
 		   val pre = lconcat (map (TyToPADS prefix "" false 0 nil) nonInlineTys)
-		   val switchvar = "v" ^ (Atom.toString id)
+		   val switchvar = (getVarNameFromID (Atom.toString id))
 		   val switchedTyOp = getTyById siblings id
 	  	   fun indexes n = List.tabulate (n, (fn x => x))
 	           fun getPairs res = ListPair.zip (res, (indexes (length res)))
@@ -955,7 +987,7 @@ struct
      end 
      fun TyToPADSFile ty includeFile =
 	let
-	  val recordLabel = getLabelString (getAuxInfo ty)
+	  val recordLabel = getLabelForPADS (ty)
 	  val pads = "#include \""^ includeFile ^"\"\n" ^
 			(TyToPADS "" "" true 0 nil ty) ^
 			"Psource Parray entries_t {\n" ^
