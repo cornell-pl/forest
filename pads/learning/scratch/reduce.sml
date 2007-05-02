@@ -503,8 +503,9 @@ and refine_array ty =
 			| (StringME(s), StringME(t)) => SOME(StringME(substring(s, 0, size(s)-1)^
 						      substring(s, 1, size(s)-1)))
 			| (StringConst(s), StringConst(t)) => SOME(StringConst(s^t))
-			| (StringConst(s), Int(_)) => SOME(StringME("/"^s^"[0-9]*/"))
-			| (StringConst(s), IntConst(_)) => SOME(StringME("/"^s^"[0-9]*/"))
+			| (StringConst(s), Int(_)) => SOME(StringME("/"^ (String.toCString s) ^"[0-9]*/"))
+			| (StringConst(s), IntConst(_)) => SOME(StringME("/"^ (String.toCString s) ^
+								"[0-9]*/"))
 			| (Enum(l1), Enum(l2)) => SOME(Enum(l1@l2))
 			| _ => NONE
 				

@@ -43,7 +43,7 @@ PbXML = \<([a-zA-Z])+\>;
 oxmlb = \<[^>]+\>;
 PeXML = \<\/[^>]+\>;
 Pwhite = [ \t\r\n]+;
-Pint = -?[0-9]+;
+Pint = [0-9]+;
 Pstring = [A-Za-z][A-Za-z0-9_\-]*;
 
 %%

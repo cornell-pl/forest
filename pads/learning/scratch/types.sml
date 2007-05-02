@@ -720,10 +720,10 @@ struct
 					("Pchar " ^ label ^ " : " ^ label ^ " x =>  {x == '" ^ s ^ "'};\n")
 			    	 else if mode=1 then ((getVarName label) ^ suffix ^ " Pfrom('" ^ s ^ "');\n")
 			    	 else if mode=2 then ("Pstring_ME(:\"/" ^ escape(s) ^ "/\":) ")
-				 else ("'" ^ s ^ "';\n")
+				 else ("'" ^ (String.toCString s) ^ "';\n")
 				)
 				else if mode = 1 then ((getVarName label) ^ suffix ^ " Pfrom(\"" ^ s ^ "\");\n")
-				     else if mode = 3 then ("\"" ^ s ^ "\";\n")
+				     else if mode = 3 then ("\"" ^ (String.toCString s) ^ "\";\n")
 				     else ("Pstring_ME(:\"/"^ escape(s) ^"/\":) " ^ label')
 	      | Enum res => ""
 	      | LabelRef _ => ""
@@ -731,8 +731,8 @@ struct
 	end
 
 	(*this function returns the type string of a Ty for use in Switches*)
-	fun getTypeString ty =
-	  if notInlineTy ty then getLabelString (getAuxInfo ty)
+	fun getSwitchTypeString ty =
+	  if notInlineTy ty then getLabelForPADS ty
 	  else case ty of
 		Base (_, (tok, loc)::tl) => tokenToPADS "" "" tok 2
 		| RefinedBase (_, refined, _) => refinedToPADS "" "" "" 2 refined
@@ -955,7 +955,7 @@ struct
 		   prefix ^ "};\n")
 		  | SOME switchedTy =>
 		    let 
-			val switch = getTypeString switchedTy
+			val switch = getSwitchTypeString switchedTy
 		    in
 		   	(pre ^ pRecord ^
 		   	"Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 

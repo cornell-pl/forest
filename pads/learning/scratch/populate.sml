@@ -182,35 +182,20 @@ struct
 *)
       in
  	if matchedStr = "" then (NONE, tokens)
-	else matchString matchedStr "" (#2 (hd tokens)) tokens
+	else 
+	  let
+	    val (matchedTokenOp, restTokens) = matchString matchedStr "" (#2 (hd tokens)) tokens
+(*
+	    val _ = print ("Matched token is " ^ 
+		    (case matchedTokenOp of 
+			SOME t => ltokenToString t
+			| NONE => "none!\n"
+		    ))
+*)
+	  in
+	    (matchedTokenOp, restTokens)
+	  end
       end
-(*
-      if (length tokens) = 0 then (NONE, tokens)
-      else 
-        let
-	  val headLoc = #2 (hd tokens)
-	  val tailLoc = #2 (List.last tokens)
-	  val finalLoc = {lineNo = (#lineNo headLoc), beginloc =(#beginloc headLoc), 
-				endloc = (#endloc tailLoc), recNo = (#recNo headLoc)} 
-          val toMatch = String.concat (map tokenToRawString (map #1 tokens))
-        in
-	  if (matchRegEx toMatch s) then  (SOME((Pstring toMatch, finalLoc)), nil)
-	  else 
-	    let
-	      val myToken = List.last tokens
-(*
-	      val _ = print ("myToken is (" ^ ltokenToString myToken ^")\n")
-*)
-	      val yourTokens = (List.take (tokens, (length tokens) -1))
-	      val (matchedTokenOp, remainingTokens) = matchREString s yourTokens
-	    in
-	      case matchedTokenOp of
-		SOME t => (SOME t, remainingTokens@[myToken])
-		| NONE => (NONE, remainingTokens@[myToken])
-	    end
-	end
-*)
-
     fun matchEnum res tokens =
       case res of 
           nil => (NONE, tokens)	
@@ -557,9 +542,7 @@ struct
           val records = loadFiles [datafile]
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val rtokens = crackAllGroups rtokens
-(*
-	  val _ = printTy ty
-*)
+	  val _ = print ("Populating data file: " ^ datafile ^ "\n")
 	  val (newmap, cleanTy) = initializeTy LabelMap.empty ty
 	  val loadedTy = foldl populateOneRecord cleanTy rtokens
 (*
