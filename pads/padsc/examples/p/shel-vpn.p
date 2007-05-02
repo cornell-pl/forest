@@ -326,8 +326,7 @@ Pstruct Security_t {
 Pstruct FailedLogIn_t{
   Pre "/([.]   Invalid Account)?/";
   ": Username=";  Pstring(:':':)   userName;
-  /*  ": Date/Time="; Pdate(:' ':)     loginDate; */
-  ": Date/Time="; Pstring(:' ':)     loginDate; 
+  ": Date/Time="; Pdate(:' ':)     loginDate; 
   ' ';            Ptime_SE(:Peor:) loginTime;
 };
 
@@ -538,11 +537,10 @@ Punion MsgPayload_t(:MsgTy_t ty:){
 
 Pstruct main_t{
   ' '; Puint32 int1;
-  ' '; Pstring(:' ':) date2;
-  /*  ' '; Pdate(:' ':) date2; */
+  ' '; Pdate(:' ':) date2; 
   ' '; Ptime(:' ':) time2;
   ' '; Pstring(:' ':) mgr;
-  ' '; Puint8 id;
+  ' '; Puint8 id;  // all are zero
   " : "; MsgTy_t msgTy;
        MsgPayload_t(:msgTy:) msg;
 };
@@ -553,8 +551,7 @@ Punion Body_t{
 };
 
 Precord Pstruct entry_t{
-  /*       Pdate_explicit_ME(:"/[a-zA-Z]+\\s[0-9]+/", "%b %d", P_cstr2timezone("-0400"):) date; */
-       Pstring_ME(:"/Feb 12/":) date;
+       Pdate_explicit_ME(:"/[a-zA-Z]+\\s[0-9]+/", "%b %d", P_cstr2timezone("-0400"):) date;
   ' '; Ptime(:' ':) time;
   ' '; SysName_t    systemName;
   ' '; Body_t       body;
