@@ -16,8 +16,10 @@ while (<FILE>)
   close NEW;
   $index++;
   open (NEW, ">$file.$index") or die "Can't open output file for writing";
+  print "Writing to $file.$index...\n";
  }
  print NEW $_;
 }
 close NEW;
+unlink "$file.0";
 print "Finished writing to output files\n";
