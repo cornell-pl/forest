@@ -88,7 +88,7 @@ struct
 
     (* This function checks if a string s matches a regex re *)
     type mi = {pos:substring, len:int}
-    fun matchRegEx (s:string) (re:string) :bool =
+    fun matchRegEx (s:string) (re:string) :string =
       let
         val reStr = String.substring (re, 1, (size re)-2) (*remove the / and / *)
 (*
@@ -99,18 +99,15 @@ struct
 		val (root:mi option) = MT.root mtOpt
   	  in
 		case root of 
-		NONE => false
-		(*must match entirely *)
-		| SOME m => (if (#len m) = (SS.size (#pos m)) then true else false)
+		NONE => SS.full ""
+		| SOME m => SS.slice(#pos m, 0, SOME(#len m))
 	  end
 	val matchlist = [(reStr, matchCvt)]
 	val matchOne = RegExp.match matchlist SS.getc (Substring.full s)
       in
 	case matchOne of
-	NONE => ((*print "Regex failed!\n";*) false)
-	| SOME(matched, rest) => if (SS.size rest) = 0 then 
-					((*print "Regex succeeded!\n";*) true)
-				 else ((*print "Regex failed 2!\n";*) false)
+	NONE => ((*print "Regex failed!\n";*) "")
+	| SOME(matched, rest) => ((*print "Regex succeeded!\n";*) (Substring.string matched))
       end      			
    
     fun matchString (s:string) (matchedStr:string) loc (tokens: LToken list) =
@@ -177,6 +174,17 @@ struct
 
     (* we want to have a greedy match that returns the longest match *)
     fun matchREString (s:string) (tokens:LToken list) =
+      let
+        val toMatch = String.concat (map tokenToRawString (map #1 tokens))
+	val matchedStr = (matchRegEx toMatch s)
+(*
+	val _ = print ("Matched str is ("^matchedStr ^ ")\n")
+*)
+      in
+ 	if matchedStr = "" then (NONE, tokens)
+	else matchString matchedStr "" (#2 (hd tokens)) tokens
+      end
+(*
       if (length tokens) = 0 then (NONE, tokens)
       else 
         let
@@ -201,6 +209,8 @@ struct
 		| NONE => (NONE, remainingTokens@[myToken])
 	    end
 	end
+*)
+
     fun matchEnum res tokens =
       case res of 
           nil => (NONE, tokens)	
@@ -457,17 +467,16 @@ struct
 		SOME ltoken => 
 		  let
 	     		val label = getLabel a
-			(*
-			val _ = print ("inserting " ^ Atom.toString(label) ^ " with value " ^
-				(ltokenToString ltoken) ^ "\n")
-			*)
+			(*val _ = print ("inserting " ^ Atom.toString(label) ^ " with value " ^
+				(ltokenToString ltoken) ^ "\n") *)
 	     		val env' = LabelMap.insert(env, label, ltoken) 
 	     		val newaux = incCoverage a
 	   	  in
 		    (true, env', tokenlist', RefinedBase (incCoverage a, r, (tl@[ltoken])))
 	      	  end
-		| NONE => (* print "matchTokens failed!\n"; *)
-			  (false, env, tokenlist, ty)
+		| NONE => (
+			  (*print "matchTokens failed!\n"; *)
+			  (false, env, tokenlist, ty))
 	   end
         |  Switch(a, id, branches)     => 
 	     (
@@ -548,6 +557,9 @@ struct
           val records = loadFiles [datafile]
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val rtokens = crackAllGroups rtokens
+(*
+	  val _ = printTy ty
+*)
 	  val (newmap, cleanTy) = initializeTy LabelMap.empty ty
 	  val loadedTy = foldl populateOneRecord cleanTy rtokens
 (*
