@@ -30,7 +30,7 @@ structure Main : sig
 	     print ( computeTimesToString computeTimes )
             , Printing.dumpTyInfo
                  (!outputDir) (!descName) measuredTy rewrittenTy computeTimes
-            , print ( goldenReport ( !descName ) )
+            , print ( goldReport )
             , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             )
 	end

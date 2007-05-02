@@ -1,10 +1,9 @@
-structure Printing = 
-struct
+structure Printing = struct
     open Types
     open Model
     open Times
     open Gold
-   
+
     fun dumpLToken (strm:TextIO.outstream) (tk:Token,loc:location) : unit =
         TextIO.output(strm, tokenToString tk)
 
@@ -29,7 +28,7 @@ struct
 	end
 
     (* Dump a type to the specified file *)
-    fun dumpTy (fileName:string) (ty:Ty) : unit = 
+    fun dumpTy ( fileName : string ) ( ty : Ty ) : unit = 
         let val strm = TextIO.openOut fileName
             val ()   = TextIO.output(strm, TyToString ty)
         in
@@ -37,9 +36,12 @@ struct
         end
 
     (* Dump type complexity to the specified file *)
-    fun dumpTyComp ( fileName : string ) ( t : TyComp ) : unit =
-        let val strm = TextIO.openOut fileName
-            val ()   = TextIO.output ( strm, showTyComp t )
+    fun dumpTyComp ( path : string ) ( fileName : string ) ( descName : string )
+                   ( t : TyComp ) : unit =
+        let val strm  = TextIO.openOut ( path ^ fileName )
+            (* WARNING: hard wired path to data file *)
+            val nbits = OS.FileSys.fileSize ( "data/" ^ descName ) * 8
+            val ()    = TextIO.output ( strm, showTyCompNormalized nbits t )
         in TextIO.closeOut strm
         end
 
@@ -124,7 +126,7 @@ struct
 		let val fileName = path^"GNUmakefile"
 		    in
 			ignore (TextIO.openIn fileName)
-			    handle Io => 
+			    handle Iox => 
 			     (let val cpcmd = "cp "^(!executableDir)^"/GNUMakefile.output "^fileName
 			      in
 				  print "copy command: "; print cpcmd; print "\n";
@@ -139,8 +141,8 @@ struct
             then ( dumpParameters (path ^ "Params") rewrittenTy
                  ; dumpTBDs rewrittenTy
                  ; dumpTy (path ^ "Ty") rewrittenTy
-                 ; dumpTyComp ( path ^ "BaseComplexity" ) ( getComps baseTy )
-                 ; dumpTyComp ( path ^ "Complexity" ) ( getComps rewrittenTy )
+                 ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy )
+                 ; dumpTyComp path "Complexity" descName ( getComps rewrittenTy )
                  ; dumpString ( path ^ "GoldComplexity" ) ( goldenReport descName )
                  ; dumpComputeTimes ( path ^ "Timing" ) ct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy

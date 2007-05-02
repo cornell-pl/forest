@@ -61,7 +61,10 @@ structure Gold = struct
         if hasGold descname
         then let val goldenTy : Ty  = getGolden descname
                  val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
-             in "\nGolden complexity =\n" ^ showTyComp ( getComps populated ) ^ "\n"
+                 (* Warning, why does it blow up without this debugging print? *)
+                 val ()             = print ( "Ready to fileSize data/" ^ descname ^ "\n\n" )
+                 val nbits : int    = OS.FileSys.fileSize ( "data/" ^ descname ) * 8
+             in "\nGolden complexity =\n" ^ showTyCompNormalized nbits ( getComps populated ) ^ "\n"
              end
         else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
 

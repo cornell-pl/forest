@@ -32,7 +32,17 @@ struct
     fun showTyComp ( tyc : TyComp ) : string =
         "{ TC = " ^ showBits (#tc tyc) ^
         ", ADC = " ^ showBits (#adc tyc) ^
-        ", DC = " ^ showBits (#dc tyc) ^ " }\n\n"
+        ", DC = " ^ showBits (#dc tyc) ^ " }" ^ "\n\n"
+
+    fun normalizeTyComp ( n : int ) ( tyc : TyComp ) : real =
+        ( ( toReal ( #tc tyc ) ) + ( toReal ( #dc tyc ) ) ) / ( Real.fromInt n )
+
+    fun showTyCompNormalized ( n : int ) ( tyc : TyComp ) : string =
+        "{ TC = " ^ showBits (#tc tyc) ^
+        ", ADC = " ^ showBits (#adc tyc) ^
+        ", DC = " ^ showBits (#dc tyc) ^ " }" ^
+        " normalized by " ^ Int.toString n ^ " is " ^
+        Real.toString ( normalizeTyComp n tyc ) ^ "\n\n"
 
     (* A fancier print statement for type complexity *)
     fun printTyComp ( pre : string ) ( t : TyComp ) : unit =
@@ -53,6 +63,7 @@ struct
         , adc = combine (#adc t1) (#adc t2)
         , dc  = combine (#dc t1) (#dc t2)
         }
+
 
     type AuxInfo = { coverage : int        (* Coverage of
                                                  -- a struct is minimum coverage
