@@ -196,9 +196,9 @@ echo "Unrefined complexity scores" >>gen/Report
 cat gen/BaseComplexity >>gen/Report
 echo "New complexity scores" >>gen/Report
 cat gen/Complexity >>gen/Report
-echo "Silver complexity scores" >>gen/Report
-cat silver/$(*F)/Complexity >>gen/Report
-echo >>gen/Report
+if [ -e silver/$(*F)/Complexity ]; then echo "Silver complexity scores" >>gen/Report; fi
+if [ -e silver/$(*F)/Complexity ]; then cat silver/$(*F)/Complexity >>gen/Report; fi
+if [ -e gen/GoldComplexity ]; then echo >>gen/Report; fi
 if [ -e gen/GoldComplexity ]; then cat gen/GoldComplexity >>gen/Report; fi
 cat gen/ParseReport >>gen/Report
 echo >>gen/Report
