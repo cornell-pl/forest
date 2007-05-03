@@ -154,6 +154,8 @@ if [ ! -d output/$@ ] ; then mkdir output/$@; fi
 if [ -e output/$@/* ] ; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
 nice -n20 ./learn -n $@ -lex vanilla data/$@ | tee gen/$@.out
+# Get the golden complexity (if there is one)
+nice -n20 ./learn -n $@ -lex vanilla -au true data/$@ | tee gen/$@.out
 cp -R gen/* output/$@
 cp vanilla.p gen
 endef
@@ -196,7 +198,7 @@ cat gen/Complexity >>gen/Report
 echo "Silver complexity scores" >>gen/Report
 cat silver/$(*F)/Complexity >>gen/Report
 echo >>gen/Report
-cat gen/GoldComplexity >>gen/Report
+if [ -e gen/GoldComplexity ]; then cat gen/GoldComplexity >>gen/Report; fi
 cat gen/ParseReport >>gen/Report
 echo >>gen/Report
 cat gen/Timing >>gen/Report

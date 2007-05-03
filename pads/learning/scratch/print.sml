@@ -135,24 +135,25 @@ structure Printing = struct
 			      end)
 		end
     	in  
-          ( print "\nOutputing partitions to directory: "; print path; print "\n";
-            if OS.FileSys.isDir path handle SysErr => 
+          ( print "\nOutputing partitions to directory: "; print path; print "\n"
+          ; print ( "descName.1 = " ^ descName ^ "\n")
+          ; if OS.FileSys.isDir path handle SysErr => 
 		(OS.FileSys.mkDir path; true)
             then ( dumpParameters (path ^ "Params") rewrittenTy
                  ; dumpTBDs rewrittenTy
                  ; dumpTy (path ^ "Ty") rewrittenTy
                  ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy )
                  ; dumpTyComp path "Complexity" descName ( getComps rewrittenTy )
-(*                 ; dumpString ( path ^ "GoldComplexity" ) ( goldenReport descName )*)
                  ; dumpComputeTimes ( path ^ "Timing" ) ct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy
                    in 
 		       dumpAccumProgram path descName tyName;
 		       dumpAccumXMLProgram path descName tyName;
 		       dumpXMLProgram path descName tyName
-		   end;
-		   print "Excutable directory:"; print (!executableDir); print "\n";
-		   cpMkFile()
+		   end
+		 ; print "Excutable directory:"; print (!executableDir); print "\n"
+                 ; print ( "descName.2 = " ^ descName ^ "\n")
+                 ; cpMkFile()
                  )
             else print "Output path should specify a directory.\n"
           )

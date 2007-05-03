@@ -16,22 +16,32 @@ structure Main : sig
     open Times
     open Gold
 
-    fun doIt () = 
-	let val end1Times        = zeroEndingTimes ()
-            val end2Times        = updateStart ( Time.now () ) end1Times
-            val fileNames        = !srcFiles
-	    val ty               = computeStructure fileNames
-            val end3Times        = updateTokenEnd ( Time.now () ) end2Times
-            val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
-            val computeTimes     = getComputeTimes end4Times
-	in
-	    (
-	     print ( computeTimesToString computeTimes )
-            , Printing.dumpTyInfo
-                 (!outputDir) (!descName) measuredTy rewrittenTy computeTimes
-            , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
-            )
-	end
+    fun doIt () =
+    let val srcFile = hd ( !srcFiles )
+        val { dir = dataDir, file = dataFile } = OS.Path.splitDirFile srcFile
+    in if ( !goldenRun = true )
+       then let val strm = TextIO.openOut "gen/GoldComplexity"
+                val rep  = goldenReport ( dataFile )
+            in ( print rep
+               ; TextIO.output ( strm, rep )
+               ; TextIO.closeOut strm
+               )
+            end
+       else let val end1Times    = zeroEndingTimes ()
+                val end2Times    = updateStart ( Time.now () ) end1Times
+                val ty           = computeStructure ( !srcFiles )
+                val end3Times    = updateTokenEnd ( Time.now () ) end2Times
+                val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
+                val computeTimes = getComputeTimes end4Times
+                val ()           = print ( computeTimesToString computeTimes )
+                val ()           = Printing.dumpTyInfo (!outputDir)
+                                                       dataFile
+                                                       measuredTy
+                                                       rewrittenTy
+                                                       computeTimes
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+    end
 
     (********************************************************************************)
     structure PCL = ParseCmdLine
@@ -49,8 +59,8 @@ structure Main : sig
     fun setPrintIDs     b = (if b then  printIDs := b else ())
     fun setEntropy      b = (if b then  printEntropy := b else ())
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
-    fun setLexName	n = lexName := n
-
+    fun setLexName	n = lexName    := n
+    fun setGoldenRun    s = goldenRun  := (s = "true")
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("n",        "name of output file (default "^def_descName^")",                                     PCL.String (setDescName,  false)),
@@ -63,8 +73,9 @@ structure Main : sig
          ("a",        "array width requirement (default "^(Int.toString DEF_ARRAY_WIDTH_THRESHOLD)^")",        PCL.Int    (setArrayWidth, false)),
          ("ma",       "minimum array width (default "^(Int.toString DEF_ARRAY_MIN_WIDTH_THRESHOLD)^")",        PCL.Int    (setMinArrayWidth, false)),
          ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false)),
-         ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy),
-	 ("lex",	"prefix of the lex config to be used (default \"tokens\")",	PCL.String (setLexName, false))
+         ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                                  PCL.Bool    setEntropy)
+        , ("lex",	"prefix of the lex config to be used (default \"tokens\")",	PCL.String (setLexName, false))
+        , ("au",	"run only the golden file",	PCL.String (setGoldenRun, true))
         ]
 
     fun processSwitches (execDir::args) = 
