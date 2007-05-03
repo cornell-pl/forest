@@ -155,8 +155,6 @@ if [ ! -d output/$@ ] ; then mkdir output/$@; fi
 if [ -e output/$@/* ] ; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
 nice -n20 ./learn -n $@ -lex vanilla data/$@ | tee gen/$@.out
-# Get the golden complexity (if there is one)
-nice -n20 ./learn -n $@ -lex vanilla -au true data/$@ | tee gen/$@.out
 cp -R gen/* output/$@
 cp vanilla.p gen
 endef
@@ -175,6 +173,8 @@ cp -R gen/* output/$(*F)
 gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 # 7. extract number of records correctly parsed and number of errors
 accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
+# Get the golden complexity (if there is one)
+nice -n20 ./learn -n $@ -lex vanilla -au true data/$@ | tee gen/$@.out
 # 9. collect in a report file:
 #    a. how large the input file is in bytes and number of records
 @echo "Record count = " `cat data/$(*F) | wc -l` | tee gen/RecordCount
