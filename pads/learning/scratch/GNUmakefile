@@ -129,9 +129,10 @@ reports: $(REPORTS)
 
 define silver-it
 @if [ ! -d silver/$(*F) ] ; then mkdir silver/$(*F); fi
+cp output/$(*F)/GoldComplexity silver/$(*F);
+cp output/$(*F)/BaseComplexity silver/$(*F);
 cp output/$(*F)/Ty silver/$(*F);
 cp output/$(*F)/Params silver/$(*F);
-cp output/$(*F)/Complexity silver/$(*F);
 cp output/$(*F)/Timing silver/$(*F);
 echo "Sleep for four seconds";
 sleep 4;
