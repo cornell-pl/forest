@@ -143,7 +143,7 @@ structure Printing = struct
                  ; dumpTy (path ^ "Ty") rewrittenTy
                  ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy )
                  ; dumpTyComp path "Complexity" descName ( getComps rewrittenTy )
-                 ; dumpString ( path ^ "GoldComplexity" ) ( goldenReport descName )
+(*                 ; dumpString ( path ^ "GoldComplexity" ) ( goldenReport descName )*)
                  ; dumpComputeTimes ( path ^ "Timing" ) ct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy
                    in 

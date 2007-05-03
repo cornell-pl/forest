@@ -763,6 +763,75 @@ and struct_to_array ty =
 	  end
     | _ => ty
 
+(* find negative int rule (Phase one rule), this is supposed to be executed before the to_float rule*)
+and find_neg_int ty =
+	case ty of
+	Pstruct (a, tylist) =>
+	let
+	  fun isPunctuation ty =
+		case ty of
+		  Base (_, ((Other (#"-"), _)::_)) => false
+		| Base (_, ((Other (#"+"), _)::_)) => false
+		| Base (_, ((Other _, _)::_)) => true	
+		| Base (_, ((Pwhite _, _)::_)) => true	
+		| _ => false
+	  fun mergetok (t1:LToken, t2:LToken) : LToken =
+	    let
+		fun combineloc (loc1:location, loc2:location) = 
+		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2),
+			recNo=(#recNo loc1)}
+	    in
+		case (t1, t2) of 
+			((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
+			  	(Pwhite(s1 ^ s2), combineloc(loc1, loc2))
+			| ((Pempty, loc1), (Pempty, loc2)) => 
+				(Pempty, combineloc(loc1, loc2))
+			| ((tk1, loc1), (tk2, loc2)) =>
+				(Pstring(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
+				combineloc(loc1, loc2))
+	    end
+	  (*the tl1 represents a subset of records of tl2*)
+	  fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
+	  let
+	    fun insertIntToMap ((Pint(i,s), (loc:location)), recMap) =
+			IntMap.insert (recMap, (#recNo loc), (Pint(i, s), loc))
+	    fun insertSignToMap ((Other x, (loc:location)), recMap) =
+		let
+		  val tokOp = IntMap.find (recMap, (#recNo loc))
+		in
+		  case tokOp of
+			SOME (Pint (i, s), loc1) =>
+				IntMap.insert (recMap, (#recNo loc), (Pint(~i, "-"^s), combLoc(loc, loc1)))
+			| _ => (print "RecNum doesn't match!" ; raise TyMismatch)
+		end
+	    val tokenmap= foldl insertIntToMap IntMap.empty tl2
+	    val tokenmap = foldl insertSignToMap tokenmap tl1
+	  in
+	    IntMap.listItems tokenmap
+	  end
+
+	  fun combineTys (Base (a1, tl1), Base(a2, tl2)) = 
+			Base (a2, mergetoklist (tl1, tl2))  
+	     | combineTys (Poption (_, Base(a1, tl1)), Base(a2, tl2)) =
+			Base (a2, mergetoklist (tl1, tl2))
+		
+	  fun matchPattern pre tys =
+		case tys of 
+		   nil => pre
+		  | (ty1 as Base(a1, (Other (#"-"), _)::_))::((ty2 as Base(a2, (Pint _, _)::_)) :: post) => 
+		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
+		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
+		     else matchPattern (pre@[ty1, ty2]) post
+		  | (ty1 as Poption(_, Base(a1, (Other (#"-"), _)::_)))::
+			((ty2 as Base(a2, (Pint _, _)::_))::post) => 
+		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
+		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
+		     else matchPattern (pre@[ty1, ty2]) post
+		  | x::rest => matchPattern (pre@[x]) rest
+	in Pstruct(a, matchPattern nil tylist)
+	end
+	| _ => ty
+
 (* int to float rule (Phase one rule)
 several scenarios:
 tys = Pint . Pint => Pfloat
@@ -787,14 +856,15 @@ and to_float ty =
 				| _ => (print "Got a different token than Pint for int!"; raise TyMismatch)
 			fun insertFracToMap (ltok, intmap) =
 				case ltok of
-				(Pint (i, s), (loc:location)) => 
+				(Pint (i, s), loc) => 
 				  let
 					val tokOp = IntMap.find (intmap, (#recNo loc))
 				  in
 					case tokOp of
 					  NONE => intmap
-					  | SOME (Pfloat(ipart, _), (loc:location)) => 
-						IntMap.insert(intmap, (#recNo loc), (Pfloat(ipart, s), loc))
+					  | SOME (Pfloat(ipart, _), loc1) => 
+						IntMap.insert(intmap, (#recNo loc), 
+						(Pfloat(ipart, s), combLoc(loc1, loc)))
 					  | _ => raise TyMismatch
 				  end
 				| _ => (print "Got a different token than Pint for frac!"; raise TyMismatch)
@@ -1205,6 +1275,7 @@ let
 *)
 			union_to_optional,
 			struct_to_array,
+			find_neg_int,
 			to_float,
 			refine_array
 		]
