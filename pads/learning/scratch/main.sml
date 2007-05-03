@@ -24,13 +24,11 @@ structure Main : sig
             val end3Times        = updateTokenEnd ( Time.now () ) end2Times
             val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
             val computeTimes     = getComputeTimes end4Times
-            val goldReport       = goldenReport ( !descName )
 	in
 	    (
 	     print ( computeTimesToString computeTimes )
             , Printing.dumpTyInfo
                  (!outputDir) (!descName) measuredTy rewrittenTy computeTimes
-            , print ( goldReport )
             , print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             )
 	end
