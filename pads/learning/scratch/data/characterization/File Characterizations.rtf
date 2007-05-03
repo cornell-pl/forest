@@ -7,10 +7,12 @@
 \f0\fs24 \cf0 Characterization of raw data files from /pads/learning/scratch/data\
 April 19, 2007\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b 1967Transactions.short\
+\f1\b \cf0 1967Transactions.short\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b0 - column oriented\
+\f0\b0 \cf0 - column oriented\
 - appears to be fixed width separation\
 - Kathleen says this file is from a government web site\
 *Integer (almost always 0101)\
@@ -20,8 +22,9 @@ April 19, 2007\
 *Float (all less than 1)\
 Excel: perfect, as fixed width\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b MER_T01_01.csv
+\f1\b \cf0 MER_T01_01.csv
 \f0\b0 \
 - column oriented\
 - comma-separated\
@@ -71,6 +74,7 @@ Excel: garbage, with tab indentation\
 * Integer (ranging from 100s to 10000s); a few entries contain no number, but a dash instead\
 - line count is 1086 (with 10k words, 100 characters)\
 Excel: nearly perfect - only time offset separated from rest of time\
+doesn't dive into structure of request\
 \
 
 \f1\b ai.3000
@@ -88,11 +92,13 @@ Excel: nearly perfect - only time offset separated from rest of time\
 * Integer (ranging from 100s to 30000s); a few entries contain no number, but a dash instead\
 - line count is 3000 (hence the filename!)\
 Excel: nearly perfect - only time offset separated from rest of time\
+doesn't dive into structure of request\
 \
 
 \f1\b apache.txt\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b0 - column oriented\
+\f0\b0 \cf0 - column oriented\
 - space separated\
 - similar to the 'ai' log files, with more fields\
 * IP address\
@@ -106,9 +112,12 @@ Excel: nearly perfect - only time offset separated from rest of time\
 * browser and OS info (all in quotes)\
 - line count: 2087 42097 452859\
 Excel: very good - offset separated from date/time & browser info, OS info not separated (but is there a pattern anyway?)\
+doesn't dive into structure of request\
+doesn't split out list of broswers at end\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b asl.log
+\f1\b \cf0 asl.log
 \f0\b0 \
 - column oriented\
 - space separated\
@@ -254,8 +263,9 @@ Excel: Weak or Good? -- '|' is a perfect separator, but each line has different 
 \
 
 \f1\b hp-struct\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b0 - column oriented\
+\f0\b0 \cf0 - column oriented\
 - comma-separated\
 - each line, though, is totally enclosed in a quote\
 * Integer\
@@ -265,8 +275,9 @@ Excel: Weak or Good? -- '|' is a perfect separator, but each line has different 
 - line count: 6 12 76\
 Excel: Perfect, even though each line enclosed in quotes -- just use " and , as separators, and you get 3 columns, the first one being a dummy column (empty)\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b ijnltif
+\f1\b \cf0 ijnltif
 \f0\b0 \
 - binary file?\
 - "hurt" my computer reading it...\
@@ -276,8 +287,9 @@ Excel:  Garbage, I'm sure -- didn't even try.\
 \
 
 \f1\b install.log\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b0 - column oriented\
+\f0\b0 \cf0 - column oriented\
 - space separated\
 - human would likely see it as three columns\
 * 'Month Day Time" e.g., "Nov 25 11:11:24"\
@@ -286,8 +298,9 @@ Excel:  Garbage, I'm sure -- didn't even try.\
 - line count: 1690  16430   133690\
 Excel: Fair to Weak - left justified, so we can get the date, but the "Babylon" and the free form text doesn't work well\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b interaction.txt.small
+\f1\b \cf0 interaction.txt.small
 \f0\b0 \
 - column oriented\
 - separator appears to be ';', with some fixed width stuff going on inside cells\
@@ -422,16 +435,19 @@ Excel: Perfect; only one column -- a trivial file\
 \
 
 \f1\b scesetup2.log\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b0 - line oriented\
+\f0\b0 \cf0 - line oriented\
 - based on the line count, it is almost exactly twice the size as SCESETUP (1155 lines).  And it has one fewer word; I'm guessing that it is essentially the same thing, but with lots of blank lines tossed in.  So the same comments apply.\
 - line count: 2368   3034  75109\
 Excel: Garbage; not much structure to understand, anyway.\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b scrollkeeper.log\
+\f1\b \cf0 scrollkeeper.log\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b0 - column oriented\
+\f0\b0 \cf0 - column oriented\
 - space separated\
 - the first line is different from all the others. The first line is:\
 Oct 26 05:45:05 AM Installing ScrollKeeper 0.3.14...\
@@ -442,8 +458,9 @@ Oct 26 05:45:05 AM Installing ScrollKeeper 0.3.14...\
 - line count: 671 5060  66288\
 Excel: Looks essentially right; date does get broken up, but free form string appears to be rightmost in all cases.\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b simplegroups
+\f1\b \cf0 simplegroups
 \f0\b0 \
 - column oriented\
 - comma separated\
@@ -455,16 +472,18 @@ Excel:  Perfect, but trivial test file, so that's what you'd expect (although la
 \
 
 \f1\b simplexml\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b0 - line oriented\
+\f0\b0 \cf0 - line oriented\
 - complex separator <body> and </body>, for example\
 - fixed fields in this file; each line consists of \
 recordnumber<html><body>xx</body></html>  where xx is a string\
 - only 5 lines/records in this file - constructed for testing purposes?\
 Excel: Weak to Fair; just imported the word "hello" in a text box; didn't let me do the import wizard steps.\
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f1\b windowserver_last.log
+\f1\b \cf0 windowserver_last.log
 \f0\b0 \
 - column oriented\
 - space separated\

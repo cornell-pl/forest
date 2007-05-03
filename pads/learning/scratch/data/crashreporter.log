@@ -417,6 +417,7 @@ Thu Oct 26 13:55:52 2006 crashdump[852]: crashdump started
 Thu Oct 26 13:56:07 2006 crashdump[852]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/iPhoto.crash.log
 Thu Oct 26 13:56:10 2006 crashdump[852]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/iPhoto.crash.log
 Thu Oct 26 13:56:14 2006 crashdump[852]: Failed to re-launch /Applications/iPhoto.app/Contents/MacOS/iPhoto - CGSError: 1025!
+Thu Oct 26 13:58:14 2006 crashdump[852]: Failed to re-launch /Applications/iPhoto.app/Contents/MacOS/iPhoto - CGSError: 1025!
 Tue Oct 31 07:36:04 2006 crashdump[6133]: crashdump started
 Tue Oct 31 07:36:08 2006 crashdump[6133]: Started writing crash report to: /Library/Logs/CrashReporter/NortonAutoProtect.crash.log
 Tue Oct 31 07:36:10 2006 crashdump[6133]: Finished writing crash report to: /Library/Logs/CrashReporter/NortonAutoProtect.crash.log

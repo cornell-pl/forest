@@ -172,7 +172,7 @@ cp -R gen/* output/$(*F)
 # 6. run accumulator program on input data
 gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 # 7. extract number of records correctly parsed and number of errors
-accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
+./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # Get the golden complexity (if there is one)
 nice -n20 ./learn -n $@ -lex vanilla -au true data/$@ | tee gen/$@.out
 # 9. collect in a report file:
