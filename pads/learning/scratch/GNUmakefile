@@ -24,6 +24,16 @@
 #    silver and golden versions, run the target with a ".rep"
 #    suffix, eg. "make quarterlypersonalincome.rep"
 #
+# Dependencies
+#
+# 1. For running a test case, you need to make the learning program
+#    first
+# 2. Making a silver version will run the test case first, so no
+#    further dependencies.
+# 3. Making a report depends on running the test case, which it
+#    does. It also depends on making the silver version, which
+#    should probably not be an automatically discharged dependency.
+#
 ######################################################################
 
 ######################################################################
@@ -171,6 +181,7 @@ make --directory=gen $(*F)-accum
 cp -R gen/* output/$(*F)
 # 6. run accumulator program on input data
 gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
+@echo "\n\nAccumulator program run\n\n"
 # 7. extract number of records correctly parsed and number of errors
 ./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # Get the golden complexity (if there is one)
@@ -260,6 +271,8 @@ yum.txt:                 $(IND)/yum.txt                 ; $(learn-it)
 ######################################################################
 
 # Test against a silver version
+# *** There are more files involved, so this should be turned into
+# a perl script.
 define test-it
 make $(*F)
 @if ! cmp --quiet output/yum.txt/Ty silver/yum.txt/Ty ; \
@@ -272,8 +285,14 @@ make $(*F)
       diff output/yum.txt/Params silver/yum.txt/Params        ; \
       echo; \
  fi
+@if ! cmp --quiet output/yum.txt/Params silver/yum.txt/Complexity ; \
+ then echo $@/Complexity has changed since the silver version     ; \
+      diff output/yum.txt/Complexity silver/yum.txt/Complexity    ; \
+      echo; \
+ fi
 @if cmp --quiet output/yum.txt/Params silver/yum.txt/Params &&   \
-    cmp --quiet output/yum.txt/Ty silver/yum.txt/Ty             ;\
+    cmp --quiet output/yum.txt/Ty silver/yum.txt/Ty         &&
+    cmp --quiet output/yum.txt/Complexity silver/yum.txt/Complexity ;\
  then echo No changes for test case $@ since the silver version ;\
  fi
 endef
