@@ -1,0 +1,516 @@
+% This file was updated slightly by Prasad Tadepalli and Ricardo Silva
+% for ICML-2007, by Andrew Moore for ICML-2006, and by Kristian Kersting
+% for ICML-2005 from the file made available from the ICML-2004 web site.
+
+% This file was updated by Dale Schuurmans and Jennifer Dy for ICML-2004
+% from a file modifed slightly by Terran Lane for to support/document 
+% the new option to the ``usepackage'' statement that selects between the 
+% review and final version of the paper.
+
+% This file was updated slightly by Tom Fawcett for ICML-2003
+% from the file made available from the ICML-2002 web site.
+
+% This file was modified by Claude Sammut for ICML-2002 from the file
+% made available by Pat Langley, Claude-Nicolas Fiechter, Mehmet Goker,
+% Cynthia Thompson and Andrea Danyluck for ICML-2K and ICLML-2001.
+
+% Use the following line _only_ if you're still using LaTeX 2.09.
+%\documentstyle[icml2006,epsf,mlapa]{article}
+% If you rely on Latex2e packages, replace the above line with: 
+\documentclass{article}
+% Use the following version of the ``usepackage'' statement for
+% submitting the draft version of the paper for review.  This will set
+% the note in the first column to ``Under review.  Do not distribute.''
+\usepackage{icml2007} 
+% Use this version of the ``usepackage'' statement after the paper has
+% been accepted, when creating the final version.  This will set the
+% note in the first column to ``Appearing in''
+%\usepackage[accepted]{icml2007}
+\usepackage{epsf}
+\usepackage{mlapa}
+
+% The \icmltitle is too long. Therefore, a short form for the running title 
+% is supplied just before \begin{document} 
+\icmltitlerunning{Submission and Formatting Instructions for ICML-2007}
+
+\begin{document} 
+
+\twocolumn[
+\icmltitle{Submission and Formatting Instructions for the Twenty-fourth \\ 
+           International Conference on Machine Learning (ICML-2007)}
+
+\icmlauthor{}{}
+\icmladdress{\textbf{ICML2007, format, submission instructions}}
+% The following author list should only appear in the accepted versions. 
+% \icmlauthor{Pat Langley}{langley@isle.org}
+% \icmladdress{Institute for the Study of Learning and Expertise, 
+%             2164 Staunton Court, Palo Alto, CA 94306 USA}
+% \icmlauthor{Claude-Nicolas Fiechter}{fiechter@rtna.daimlerchrysler.com}
+% \icmlauthor{Mehmet G\"{o}ker}{goker@rtna.daimlerchrysler.com}
+% \icmladdress{DaimlerChrysler Research and Technology Center, 
+%             1510 Page Mill Road, Palo Alto, CA 94304 USA}
+% \icmlauthor{Cynthia Thompson}{cthomp@csli.stanford.edu}
+% \icmladdress{Computational Learning Laboratory, 
+%             Center for the Study of Language and Information, 
+%             Stanford University, Stanford, CA 94305 USA}
+% \icmlauthor{Andrea Danyluk}{andrea@cs.williams.edu}
+% \icmladdress{Department of Computer Science, Williams College,
+%             Williamstown, MA 01267 USA}
+% \icmlauthor{Claude Sammut}{claude@cse.unsw.edu.au}
+% \icmladdress{School of Computer Science and Engineering,
+%             University of New South Wales,
+%             Sydney NSW 2052, Australia}
+% \icmlauthor{Tom Fawcett}{tom\_fawcett@hp.com}
+% \icmladdress{HP Laboratories, 1501 Page Mill Road, 
+%             Palo Alto, CA 94304 USA}
+% \icmlauthor{Terran Lane}{terran@cs.unm.edu}
+% \icmladdress{Department of Computer Science, University of New Mexico,
+%             Albuquerque, NM 87131 USA}
+% \icmlauthor{Jennifer Dy}{jdy@ece.neu.edu}
+% \icmladdress{Department of Electrical and Computer Engineering, 
+%             Northeastern University, 
+%             Boston, MA 02115 USA}
+% \icmlauthor{Dale Schuurmans}{dale@cs.ualberta.ca}
+% \icmladdress{Department of Computing Science, University of Alberta, 
+%              Edmonton, AB T6G 2E8 Canada}
+% \icmlauthor{Kristian Kersting}{kersting@informatik.uni-freiburg.de}
+% \icmladdress{Institute for Computer Science, University of Freiburg, 
+%              Georges-Koehler-Allee, Bulding 079, 79110 Freiburg, Germany}
+% \icmlauthor{Codrina Lauth}{Codrina.Lauth@ais.franhofer.de}
+% \icmladdress{Fraunhofer Institute for Autonomous Intelligent Systems,
+% 	     Schloss Birlinghoven, 53754 Sankt Augustin, Germany}
+
+\vskip 0.3in
+]
+
+\begin{abstract} 
+ICML-2007 reviewing will be blind to the identities of the authors,
+and therefore identifying information should not 
+appear in papers submitted for review.
+\end{abstract} 
+
+\section{Electronic Submission}
+\label{submission}
+
+As in the past few years,
+ICML-2007 will rely heavily on electronic formats for submission and 
+review. We assume that nearly all authors will have access to standard
+software for word processing, electronic mail, and ftp file transfer. 
+Authors who do not have such access should send email with their concerns 
+to \texttt{icml07@eecs.oregonstate.edu}.
+
+\subsection{Templates for Papers}
+
+Electronic templates for producing papers for submission are available
+for several major word processors, including \LaTeX\/ and Microsoft Word. 
+Templates will be accessible on the World Wide Web at:\\
+\textbf{\texttt{http://oregonstate.edu/conferences/icml2007}}
+
+\noindent
+Send questions about these electronic templates to
+\texttt{icml07@eecs.oregonstate.edu}.
+
+\subsection{Submitting Papers}
+
+Submission to ICML-2007 will be entirely electronic, via a web site
+(not email).  The URL and information about the submission process
+will appear on the conference web site at:\\
+\textbf{\texttt{http://oregonstate.edu/conferences/icml2007}}
+
+{\bf Abstract Deadline:} To submit a paper to ICML-2007, authors must
+first submit an electronic abstract by Wednesday, February 7, 2007,
+23:59:59 Apia, Samoa time.
+If your abstract does not reach us by this date, then the paper will not be
+considered for publication.
+
+{\bf Paper Deadline:} The deadline for paper submission to ICML-2007 is 
+Friday, February 9, 2007, 23:59:59 Apia, Samoa time. 
+If your submission does not reach us by this date, it will not be
+considered for publication.
+
+To facilitate blind review, no author information should appear on 
+the paper.  
+Section~\ref{author info} will explain the details of how to format this.
+
+To ensure our ability to print submissions, authors must provide their
+manuscripts in \textbf{postscript} or \textbf{pdf} format. If you are
+preparing your paper in Word, please use the Apple LaserWriter
+16/600~PS driver to ensure its printability in other environments.  
+Authors using \textbf{Word} must convert their document to postscript or pdf. 
+Most of the latest versions of Word have the facility to do this automatically.
+Those who use \textbf{latex} to format their accepted papers need to pay close attention to the typefaces used. 
+Specifically, when converting the dvi output of LaTeX to Postscript the default behavior is to use non-scalable Type 3 PostScript 
+bitmap fonts to represent the standard LaTeX fonts. The resulting document is difficult to read in electronic form; 
+the type appears fuzzy. To avoid this problem, dvips must be instructed to use an alternative font map. 
+This can be achieved with the following command:
+\begin{center}
+\textbf{ dvips -Ppdf -tletter -G0 -o paper.ps paper.dvi}
+\end{center}
+
+Note that it is a zero following the ``-G''. This tells dvips to use the
+config.pdf file (and this file refers to a better font
+mapping). Another alternative is to use the \textbf{pdflatex} program instead of straight
+LaTeX. This program avoids the Type 3 font problem, however you
+must ensure that all of the fonts are embedded (use pdffonts). If they
+are not, you need to configure pdflatex to use a font map file that
+specifies that the fonts be embedded. Also you should ensure that
+images are not downsampled or otherwise compressed in a lossy way.
+If you cannot deliver a postscript or pdf file electronically due to
+exceptional conditions, send email to \texttt{icml07@eecs.oregonstate.edu} to
+discuss alternative means of delivery.
+
+ICML will not accept any paper which, at the time of submission, is
+under review for another conference or a journal; is under review
+elsewhere; or has already been published. This policy also applies to
+papers that overlap substantially in technical content with papers
+under review or previously published. Authors are also expected not to
+submit their papers elsewhere during ICML's review period.
+
+\subsection{Reacting to Reviews}
+We will repeat the successful innovation introduced by ICML2005 in
+Bonn, in which the authors will be given the option of providing a
+short reaction to the initial reviews. 
+%Reactions will have to be input
+%in CyberChair between {\bf 18 and 25 April} by the authors. 
+These reactions will be taken into account in the discussion among the
+reviewers and PC-members.
+
+\subsection{Submitting Final Camera-Ready Copy}
+
+Final versions of papers accepted for publication should follow the same
+format and naming convention as initial submissions,
+except of course that the normal author information (names and affiliations)
+should be given. 
+See Section~\ref{final author} for details of how to format this.
+
+The footnote,  ``Preliminary work.  Under review by the International
+Conference on Machine Learning (ICML).  Do not distribute.'' must be modified
+to ``Appearing in \textit{Proceedings of the $\mathit{24}^{th}$ International
+Conference on Machine Learning}, Corvallis, OR, 2007.  Copyright 2007 by 
+the author(s)/owner(s).''
+For those using the LaTeX style file, simply change $\mathtt{\backslash usepackage\{icml2007\}}$
+to $\mathtt{\backslash usepackage[accepted]\{icml2007\}}$.  
+Authors using Word, must edit the footnote on the first page of the document
+themselves.
+
+Camera-ready copies should have the title of the paper as 
+running head on each page except the first one. 
+The running title consists of a single line centered above a horizontal rule which is $1$ point thick.
+The running head should be centered, bold and in $9$ point type.
+The rule should be $10$ points above the main text.
+For those using the LaTeX style file, the original title is automatically set as
+running head using the {\tt fancyhdr} package which can be obtained at the ICML-2007 web site. 
+In case that the original title
+exceeds the size restrictions, a shorter form can be supplied by using
+$$\mathtt{\backslash icmltitlerunning\{\ldots\}}$$
+just before $\mathtt{\backslash begin\{document\}}$.
+Authors using Word, must edit the header of the document themselves.
+
+\section{Format of the Paper} 
+ 
+All submissions should follow the same format to ensure the printer
+can reproduce them without problems and to let readers more easily
+find the information that they desire. 
+
+\subsection{Length and Dimensions}
+
+Papers must not exceed eight (8) pages, including all figures, tables, 
+references, and appendices. We will return to the authors any submissions
+that exceed this page limit or that diverge significantly from the format 
+specified herein.
+
+The text of the paper should be formatted in two columns, with an
+overall width of 6.75 inches, length of 9.0 inches, and 0.25 inches
+between the columns. The left margin should be 0.75 inches and the top
+margin 1.0 inch (2.54~cm). The right and bottom margins will depend on
+whether you print on US letter or A4 paper. 
+
+The paper body should be set in 10~point type with a vertical spacing of 
+11~points. Please use Times Roman typeface throughout the text. 
+
+\subsection{Title}
+
+The paper title should be set in 14~point bold type and centered between 
+two horizontal rules that are 1~point thick, with 1.0~inch between the
+top rule and the top edge of the page. Capitalize the first letter of 
+content words and put the rest of the title in lower case. 
+
+\subsection{Author Information for Submission}
+\label{author info}
+
+To facilitate blind review, author information must not appear.
+In place of the author name(s) and affiliation(s)
+\textbf{keywords} will be given.
+If you are using \LaTeX\/ and the \texttt{icml2007.sty} file,
+simply replace the author name and address by the \textbf{keywords} 
+as follows:
+
+\verb+\icmlauthor{+\verb+}{}+\\
+\verb+\icmladdress{+\textbf{keyword1,...,keywordN}\verb+}+
+
+This is already done in the current latex file. 
+Submissions that inculde the author information
+will not be reviewed.
+
+\subsubsection{Camera-Ready Author Information}
+\label{final author}
+
+If a paper is accepted, a final camera-ready copy must be prepared which
+includes the usual author information.
+
+For camera-ready papers,
+author information should start 0.3~inches below the bottom rule
+surrounding the title. The authors' names should appear in 10~point 
+bold type, electronic mail addresses in 10~point small capitals, and
+physical addresses in ordinary 10~point type.
+Each author's name should be flush left, whereas the email address
+should be flush right on the same line. The author's physical address
+should appear flush left on the ensuing line, on a single line if
+possible. If successive authors have the same affiliation, then give
+their physical address only once.
+
+\subsection{Abstract}
+
+The paper abstract should begin in the left column, 0.4~inches below the
+final address. The heading `Abstract' should be centered, bold, and in
+11~point type. The abstract body should use 10~point type, with a 
+vertical spacing of 11~points, and should be indented 0.25~inches more
+than normal on left-hand and right-hand margins. Insert 0.4~inches 
+of blank space after the body. Keep your abstract brief, limiting it
+to one paragraph and no more than six or seven sentences.
+
+\subsection{Partitioning the Text} 
+
+You should organize your paper into sections and paragraphs to help 
+readers place a structure on the material and understand its contributions. 
+
+% Use \vspace for fine control of spacing above and below headings. 
+\vspace{-0.018in}
+\subsubsection{Sections and Subsections}
+\vspace{-0.015in}
+
+Section headings should be numbered, flush left, and set in 11~pt bold
+type with the content words capitalized. Leave 0.25~inches of space 
+before the heading and 0.15~inches after the heading. 
+
+Similarly, subsection headings should be numbered, flush left, and set
+in 10~pt bold type with the content words capitalized. Leave 0.2~inches 
+of space before the heading and 0.13~inches afterward.
+
+Finally, subsubsection headings should be numbered, flush left, and set
+in 10~pt small caps with the content words capitalized. Leave 0.18~inches 
+of space before the heading and 0.1~inches after the heading. Please 
+use no more than three levels of headings.
+
+\subsubsection{Paragraphs and Footnotes}
+
+Within each section or subsection, you should further partition the
+paper into paragraphs. Do not indent the first line of a given
+paragraph, but insert a blank line between succeeding ones.
+ 
+You can use footnotes\footnote{For the sake of readability, footnotes
+should be complete sentences.} to provide readers with additional
+information about a topic without interrupting the flow of the paper.
+Indicate footnotes with a number in the text where the point is most
+relevant. Place the footnote in 9~point type at the bottom of the
+column in which it appears. Precede the first footnote in a column 
+with a horizontal rule of 0.8~inches.\footnote{Multiple footnotes can
+appear in each column, in the same order as they appear in the text,
+but spread them across columns and pages if possible.}
+
+\begin{figure}[h]
+\vskip 0.2in
+\begin{center}
+\setlength{\epsfxsize}{3.25in}
+\centerline{\epsfbox{role.ps}}
+% \vskip 0.1in
+\caption{Steps in the computational discovery process at which the
+         developer can influence system behavior.}
+\label{process-flow}
+\end{center}
+\vskip -0.2in
+\end{figure} 
+
+\subsection{Figures}
+ 
+You may want to include figures in the paper to help readers visualize
+your approach and your results. Such artwork should be centered,
+legible, and separated from the text. Lines should be dark and at
+least 0.5~points thick for purposes of reproduction, and text should
+not appear on a gray background.
+
+% Use \newpage to insert a page break between paragraphs. 
+
+Label all distinct components of each figure. If the figure takes
+the form of a graph, then give a name for each axis and include a 
+legend that briefly describes each curve. However, do {\it not\/} 
+include a title above the figure, as the caption already serves
+this function. 
+
+Number figures sequentially, placing the figure number and caption 
+{\it after\/} the graphics, with at least 0.1~inches of space before the
+caption and 0.1~inches after it, as in Figure~\ref{process-flow}. 
+The figure caption should be set in 9~point type and centered unless
+it runs two or more lines, in which case it should be flush left. 
+You may float figures to the top or bottom of a column, and you may
+set wide figures across both columns, but always place two-column
+figures at the top or bottom of the page.
+
+\comment{
+% Sample commands to format two figures side by side across the page. 
+\begin{figure*}[t]
+\hbox{\hskip -0.55in
+\setlength{\epsfxsize}{3.25in}
+\epsfbox{irrel.ps}
+\hskip 0.2in
+% \hfill
+\setlength{\epsfxsize}{3.25in}
+\epsfbox{rel.ps}
+}
+\vskip 0.1in
+\caption{Theoretical and experimental learning curves for naive Bayes
+         when (a) the domain involves a `2 of 2' target concept and
+         varying numbers of irrelevant attributes, and (b) for a domain
+         with one irrelevant attribute and a conjunctive target concept
+         with varying numbers of relevant features.}
+\label{bayes-curves}
+\end{figure*}
+}
+
+\subsection{Algorithms}
+
+Please use the ``algorithm'' and ``algorithmic'' 
+environments to format pseudocode. These require 
+the corresponding stylefiles, algorithm.sty and 
+algorithmic.sty, which are supplied with this package. 
+Algorithm~\ref{alg:example} shows an example. 
+
+\begin{algorithm}[tb]
+   \caption{Bubble Sort}
+   \label{alg:example}
+\begin{algorithmic}
+   \STATE {\bfseries Input:} data $x_i$, size $m$
+   \REPEAT
+   \STATE Initialize $noChange = true$.
+   \FOR{$i=1$ {\bfseries to} $m-1$}
+   \IF{$x_i > x_{i+1}$} 
+   \STATE Swap $x_i$ and $x_{i+1}$
+   \STATE $noChange = false$
+   \ENDIF
+   \ENDFOR
+   \UNTIL{$noChange$ is $true$}
+\end{algorithmic}
+\end{algorithm}
+ 
+\subsection{Tables} 
+ 
+You may also want to include tables that summarize material. Like 
+figures, these should be centered, legible, and numbered consecutively. 
+However, place the title {\it above\/} the table with at least 
+0.1~inches of space before the title and the same after it, as in 
+Table~\ref{sample-table}. The table title should be set in 9~point 
+type and centered unless it runs two or more lines, in which case it
+should be flush left.
+
+% Note use of \abovespace and \belowspace to get reasonable spacing 
+% above and below tabular lines. 
+
+\begin{table}[t]
+\caption{Classification accuracies for naive Bayes and flexible 
+Bayes on various data sets.}
+\label{sample-table}
+\vskip 0.15in
+\begin{center}
+\begin{small}
+\begin{sc}
+\begin{tabular}{lcccr}
+\hline
+\abovespace\belowspace
+Data set & Naive & Flexible & Better? \\
+\hline
+\abovespace
+Breast    & 95.9$\pm$ 0.2& 96.7$\pm$ 0.2& $\surd$ \\
+Cleveland & 83.3$\pm$ 0.6& 80.0$\pm$ 0.6& $\times$\\
+Glass2    & 61.9$\pm$ 1.4& 83.8$\pm$ 0.7& $\surd$ \\
+Credit    & 74.8$\pm$ 0.5& 78.3$\pm$ 0.6&         \\
+Horse     & 73.3$\pm$ 0.9& 69.7$\pm$ 1.0& $\times$\\
+Meta      & 67.1$\pm$ 0.6& 76.5$\pm$ 0.5& $\surd$ \\
+Pima      & 75.1$\pm$ 0.6& 73.9$\pm$ 0.5&         \\
+\belowspace
+Vehicle   & 44.9$\pm$ 0.6& 61.5$\pm$ 0.4& $\surd$ \\
+\hline
+\end{tabular}
+\end{sc}
+\end{small}
+\end{center}
+\vskip -0.1in
+\end{table}
+
+Tables contain textual material that can be typeset, as contrasted 
+with figures, which contain graphical material that must be drawn. 
+Specify the contents of each row and column in the table's topmost
+row. Again, you may float tables to a column's top or bottom, and set
+wide tables across both columns, but place two-column tables at the
+top or bottom of the page.
+ 
+\subsection{Citations and References} 
+
+Authors should cite their own work in the third person
+in the initial version of their paper submitted for blind review.
+
+Please use APA reference format regardless of your formatter
+or word processor. If you rely on the \LaTeX\/ bibliographic 
+facility, use {\tt mlapa.sty} and {\tt mlapa.bst} 
+at the ICML-2007 web site to obtain this format.
+
+Citations within the text should include the authors' last names and
+year. If the authors' names are included in the sentence, place only
+the year in parentheses, as in \singleemcite{jones:mlj94}, but otherwise 
+place the entire reference in parentheses with the authors and year
+separated by a comma \cite{jones:mlj94}.
+
+List multiple references alphabetically and separate them by semicolons 
+\cite{jones:mlj94,veloso:bkchapter93}. Use the `et~al.' construct only 
+for citations with four or more authors or after listing all authors
+to a publication in an earlier reference.
+
+Use an unnumbered first-level section heading for the references, and 
+use a hanging indent style, with the first line of the reference flush
+against the left margin and subsequent lines indented by 10 points. 
+The references at the end of this document give examples for journal
+articles, conference publications, book chapters, books, edited volumes, 
+technical reports, and dissertations. 
+
+Alphabetize references by the surnames of the first authors, with
+single author entries preceding multiple author entries. Order
+references for the same authors by year of publication, with the
+earliest first.
+
+
+\section*{Acknowledgments} 
+ 
+\textbf{Do not} include acknowledgements in the initial version of
+the paper submitted for blind review.
+
+If a paper is accepted, the final camera-ready version can (and
+probably should) include acknowledgements. In this case, please
+place such acknowledgements in an unnumbered section at the
+end of the paper. Typically, this will include thanks to reviewers
+who gave useful comments, to colleagues who contributed to the ideas, 
+and to funding agencies and corporate sponsors that provided financial 
+support.  
+
+% The following acknowledgements should only appear in the accepted version. 
+% This document was modified from the file originally made available by
+% Pat Langley and Andrea Danyluk for ICML-2K. This 2007 version was created
+% by Prasad Tadepalli (tadepall@eecs.orst.edu) and is a lightly changed 
+% version of the previous year's version by Andrew Moore, which was in turn 
+% edited from those of Kristian Kersting and Codrina Lauth. Alex Smola 
+% contributed to the algorithmic style files.  
+
+\nocite{aha:thesis90,fisher:aaai89,jones:mlj94,langley:book95,maloof:tr98,shrager:book90}
+
+\bibliography{blindformat}
+\bibliographystyle{mlapa}
+
+\end{document} 

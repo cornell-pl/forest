@@ -1,0 +1,47 @@
+\begin{thebibliography}{}
+
+\bibitem[Aha, 1990][Aha][1990]{aha:thesis90}
+Aha, D.~W. (1990).
+\newblock {\em A study of instance-based algo\-rithms for supervised learning
+  tasks: Mathematical, empirical, and psychological evaluations}.
+\newblock Doctoral dissertation, Department of Information \& Computer Science,
+  University of California, Irvine.
+
+\bibitem[Authors, 1900][Authors][1900]{langley:book95}
+Authors, A. (1900).
+\newblock Hidden for anonymity.
+
+\bibitem[Fisher, 1989][Fisher][1989]{fisher:aaai89}
+Fisher, D.~H. (1989).
+\newblock Noise-tolerant conceptual clustering.
+\newblock {\em Proceedings of the Eleventh International Joint Conference on
+  Artificial Intelligence} (pp.\/ 825--830).
+\newblock San Francisco: Morgan Kaufmann.
+
+\bibitem[Jones \& VanLehn, 1994][Jones and VanLehn][1994]{jones:mlj94}
+Jones, R.~M., \& VanLehn, K. (1994).
+\newblock Acquisition of children's addition strategies: A model of
+  impasse-free, knowledge-level learning.
+\newblock {\em Machine Learning}, {\em 16}, 11--36.
+
+\bibitem[Maloof et~al.\/, 1998][Maloof et~al.\/][1998]{maloof:tr98}
+Maloof, M.~A., Langley, P., Binford, T.~O., \& Sage, S. (1998).
+\newblock {\em Improving rooftop detection in aerial images through machine
+  learning} (Technical Report 98-1).
+\newblock Institute for the Study of Learning and Expertise, Palo Alto, CA.
+
+\bibitem[Shrager \& Langley, 1990][Shrager and Langley][1990]{shrager:book90}
+Shrager, J., \& Langley, P. (Eds.). (1990).
+\newblock {\em Computational models of scientific discovery and theory
+  formation}.
+\newblock San Francisco: Morgan Kaufmann.
+
+\bibitem[Veloso \& Carbonell, 1993][Veloso and
+  Carbonell][1993]{veloso:bkchapter93}
+Veloso, M.~M., \& Carbonell, J.~G. (1993).
+\newblock Toward scaling up machine learning: A case study with derivational
+  analogy in {\sc prodigy}.
+\newblock In S.~Minton (Ed.), {\em Machine learning methods for planning}. San
+  Francisco: Morgan Kaufmann.
+
+\end{thebibliography}

@@ -1,0 +1,22 @@
+\begin{thebibliography}{}
+
+\bibitem[Cortes et~al.\/, 2000][Cortes et~al.\/][2000]{kdd00}
+Cortes, C., Fisher, K., Pregibon, D., Rogers, A., \& Smith, F. (2000).
+\newblock Hancock: {A} language for extracting signatures from data streams.
+\newblock {\em Proceedings of the Sixth International Conference on Knowledge
+  Discovery and Data Mining} (pp.\/ 9--17).
+
+\bibitem[Cortes \& Pregibon, 1998][Cortes and Pregibon][1998]{kdd98}
+Cortes, C., \& Pregibon, D. (1998).
+\newblock Giga mining.
+\newblock {\em Proceedings of the Fourth International Conference on Knowledge
+  Discovery and Data Mining}.
+
+\bibitem[Cortes \& Pregibon, 1999][Cortes and Pregibon][1999]{kdd99}
+Cortes, C., \& Pregibon, D. (1999).
+\newblock Information mining platform: An infrastructure for {KDD} rapid
+  deployment.
+\newblock {\em Proceedings of the Fifth International Conference on Knowledge
+  Discovery and Data Mining}.
+
+\end{thebibliography}
