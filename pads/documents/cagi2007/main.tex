@@ -123,8 +123,8 @@ declarations in \C{}. \padsc{} has built-in base types such as
 ASCII string terminated by space \cd{Pa_string(:' ':)},
 32-bit unsigned integer \cd{Puint32}, date \cd{Pdate} and time \cd{Ptime}.
 It also has \kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s to describe
-record-like structures, as well as a \kw{Pswitch} to represent
-
+record-like structures, as well as a \kw{Pswitch} for structural
+dependencies.
 As an example, consider the common log format for Web server logs.  A
 typical record looks like the following:
 {\small \begin{verbatim}
