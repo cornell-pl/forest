@@ -18,7 +18,7 @@ structure AI = struct
     val method: Ty = RefinedBase (aiAux, Enum ([StringConst "GET", StringConst "PUT", StringConst "POST", 
 			StringConst "HEAD", StringConst "DELETE", StringConst "LINK", StringConst "UNLINK"]), 
 			[(Pstring "GET", aiLoc)]) 
-    val quote: Ty = RefinedBase(aiAux, StringConst ":", [(Pstring ":", aiLoc)])
+    val quote: Ty = RefinedBase(aiAux, StringConst "\"", [(Pstring "\"", aiLoc)])
     val dot: Ty = RefinedBase(aiAux, StringConst ".", [(Pstring ".", aiLoc)])
     val slash: Ty = RefinedBase(aiAux, StringConst "/", [(Pstring "/", aiLoc)])
     val path:Ty = Base(aiAux, [(Ppath "/turkey/amnty1.gif", aiLoc)])
