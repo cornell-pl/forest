@@ -515,7 +515,8 @@ struct
     fun populateOneRecord (ltokens:Context, ty:Ty) : Ty = 
       let
 (*
-	val _ = print ("*** Record :: " ^ (LTokensToString ltokens) ^ "\n")
+	  val toMatch = String.concat (map tokenToRawString (map #1 ltokens))
+	  val _ = print ("Record: " ^ toMatch ^ "\n")
 *)
 	val (success, env, ltokens', ty' ) = consume (true, LabelMap.empty, ltokens, ty)
       in
@@ -543,13 +544,10 @@ struct
           val records = loadFiles [datafile]
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val rtokens = crackAllGroups rtokens
-	  val _ = print ("Populating data file: " ^ datafile ^ "\n")
 	  val (newmap, cleanTy) = initializeTy LabelMap.empty ty
-	  val loadedTy = foldl populateOneRecord cleanTy rtokens
-(*
+	  val _ = print ("Populating data file: " ^ datafile ^ " into:\n")
 	  val _ = printTy cleanTy
-*)
-
+	  val loadedTy = foldl populateOneRecord cleanTy rtokens
 	  val finalTy = (measure (cleanFirstToken loadedTy))
 (*
 	  val _ = printTy finalTy
