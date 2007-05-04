@@ -13,9 +13,11 @@ structure DIBBLER = struct
     val pzip : Ty = Punion(aux, [extended_zip_t, smallZip, largeZip])
     val summary_header_t: Ty = Pstruct(aux, [RefinedBase(aux, StringConst "0|", [(Pstring "0|", loc)]),
 			Base(aux, [(Pint (234255, "234255"), loc)])])
+(*
     val no_ii: Ty = RefinedBase(aux, StringConst "no_ii", [(Pstring "no_ii", loc)])
     val id: Ty = Base(aux, [(Pint (234255, "234255"), loc)])
-    val no_ramp_t : Ty = Pstruct(aux, [no_ii, id])
+*)
+    val no_ramp_t : Ty = RefinedBase(aux, StringME "/no_ii[0-9]*/", [(Pstring "no_ii73644", loc)])
     val ramp: Ty = Base(aux, [(Pint(234255, "234255"), loc)])
     val dib_ramp_t : Ty = Punion(aux, [ramp, no_ramp_t])
     val space : Ty = RefinedBase(aux, StringConst " ", [(Pstring " ", loc)])
@@ -30,7 +32,7 @@ structure DIBBLER = struct
     val zip_code = Poption (aux, pn_t)
     val order_type: Ty = Base(aux, [(Pstring "34232", loc)])
     val order_details: Ty = Base(aux, [(Pint(34232, "34232"), loc)])
-    val unused: Ty = Base(aux, [(Pstring("34232"), loc)])
+    val unused: Ty = RefinedBase (aux, StringME "/[a-zA-Z0-9 ]*/", [(Pstring ("3456"), loc)])
     val stream: Ty = Base(aux, [(Pstring("34232"), loc)])
     val order_header_t: Ty = Pstruct(aux, [
 		     order_num, 
@@ -41,17 +43,16 @@ structure DIBBLER = struct
 		bar, nlp_service_tn, 
 		bar, nlp_billing_tn,
 		bar, zip_code,
-		bar, ramp,
+		bar, dib_ramp_t,
 		bar, order_type,
 		bar, order_details,
 		bar, unused,
 		bar, stream,
 		bar])
-    val state: Ty = Base(aux, [(Pstring("34232"), loc)])
+    val state: Ty = RefinedBase(aux, StringME "/[0-9a-zA-Z_\\-]+/", [(Pstring("34232"), loc)])
     val tstamp: Ty = Base(aux, [(Pint(34232, "34232"), loc)])
     val event_t : Ty = Pstruct(aux, [state, bar, tstamp])
-    val eventSeq: Ty = RArray(aux, SOME(StringConst "|"), 
-			SOME(StringConst "\n"), event_t, NONE, [])
+    val eventSeq: Ty = RArray(aux, SOME(StringConst "|"), NONE, event_t, NONE, [])
     val entry_t = Pstruct(aux, [order_header_t, eventSeq])
     val dibbler_t = Punion(aux, [summary_header_t, entry_t])
 end	
