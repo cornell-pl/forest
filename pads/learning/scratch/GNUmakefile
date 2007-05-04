@@ -138,7 +138,7 @@ silvers: $(SILVERS)
 reports: $(REPORTS)
 
 define silver-it
-@if [ ! -d silver/$(*F) ] ; then mkdir silver/$(*F); fi
+@if [ ! -d silver/$(*F) ]; then mkdir silver/$(*F); fi
 cp output/$(*F)/GoldComplexity silver/$(*F);
 cp output/$(*F)/BaseComplexity silver/$(*F);
 cp output/$(*F)/Ty silver/$(*F);
@@ -160,9 +160,9 @@ define learn-it
 rm -rf gen
 mkdir gen
 # Make an output directory if one is needed
-if [ ! -d output/$@ ] ; then mkdir output/$@; fi
+if [ ! -d output/$@ ]; then mkdir output/$@; fi
 # Clean the output directory
-if [ -e output/$@/* ] ; then rm -rf output/$@/*; fi
+if [ -e output/$@/* ]; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
 nice -n20 ./learn -n $@ -lex vanilla data/$@ | tee gen/$@.out
 cp -R gen/* output/$@
@@ -193,7 +193,7 @@ nice -n20 ./learn -n $@ -lex vanilla -au true data/$@ | tee gen/$@.out
 #    b. score of the new silver
 @cat output/$(*F)/Complexity
 #    c. score of the old silver
-@cat silver/$(*F)/Complexity
+if [ -e silver/$(*F)Complexity ]; then cat silver/$(*F)/Complexity; fi
 #    e. number of correctly parsed records
 #    f. number of incorrectly parsed records
 #    SEE STEP 7 ABOVE
