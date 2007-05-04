@@ -18,14 +18,13 @@
 
 \begin{document} 
 
-\twocolumn[
+%%\twocolumn[
 \icmltitle{Automatic Ad Hoc Data Processing Using PADS}
-
-\icmlauthor{David Burke and Peter White}{\{davidb,peter\}@galois.com}
+\icmlauthor{David Burke and Peter White}{}
 \icmladdress{Galois Connections, Inc, Portland, OR}
-\icmlauthor{Kathleen Fisher}{kfisher@research.att.com}
+\icmlauthor{Kathleen Fisher}{}
 \icmladdress{AT\&T Labs}
-\icmlauthor{David Walker and Kenny Q. Zhu}{\{dpw,kzhu\}@cs.princeton.edu}
+\icmlauthor{David Walker and Kenny Q. Zhu}{}
 \icmladdress{Princeton University, Princeton, NJ}
 % The following author list should only appear in the accepted versions. 
 % \icmlauthor{Pat Langley}{langley@isle.org}
@@ -65,7 +64,7 @@
 % \icmlauthor{Codrina Lauth}{Codrina.Lauth@ais.franhofer.de}
 % \icmladdress{Fraunhofer Institute for Autonomous Intelligent Systems,
 % 	     Schloss Birlinghoven, 53754 Sankt Augustin, Germany}
-]
+%]
 
 %\begin{abstract} 
 %ICML-2007 reviewing will be blind to the identities of the authors,
@@ -79,17 +78,17 @@ Transactional data streams, such as sequences of stock-market buy/sell orders,
 credit-card purchase records, web server entries, and electronic fund
 transfer orders, can be mined very profitably.  As an example,
 researchers at AT\&T have built customer profiles from streams of
-call-detail records to significant financial effect~\cite{kdd98,kdd99,kdd00}.   
-
+call-detail records to significant financial effect~\cite{kdd99}.   
 Often such streams are high-volume: AT\&T's call-detail stream contains
 roughly 300~million calls per day requiring approximately 7GBs of
 storage space.  Typically, such stream data arrives ``as is'' in
 \textit{ad hoc} formats with poor documentation.  In addition, the
 data frequently contains errors.  The appropriate response to such
-errors is application-specific. Some applications can simply discard
-unexpected or erroneous values and continue processing.  For other
-applications, however, errors in the data can be the most interesting
-part of the data.  
+errors is application-specific. 
+%Some applications can simply discard
+%unexpected or erroneous values and continue processing.  For other
+%applications, however, errors in the data can be the most interesting
+%part of the data.  
 
 Understanding a new data stream and producing a suitable parser are
 crucial first steps in any use of stream data.  Unfortunately, writing
@@ -166,7 +165,7 @@ of interest to the users.
 
 Now we would like to automatically generate \padsc{} descriptions base on
 sample data with minimum user intervention. To this end, 
-we propose an architecture to {\em infer} or ``learn'' 
+we propose an architecture to {\em infer} or ``learn'' \cite{higuera01current} 
 formats from ad hoc data samples and convert the formats to \padsc{}. 
 
 \section{Architecture}
@@ -186,7 +185,8 @@ Each record is then broken down into a series of tokens where each
 token can be a number, a date, a time using a regular expression
 based tokenization scheme. In the structure discovery phase,
 frequency distribution of each type of tokens is examined, and
-a rough structure is discovered in a recursive manner. This
+a rough structure is discovered in a recursive manner. The idea here 
+is similar to \cite{arasu+:sigmod03}. This
 rough structure is represented by an intermediate representation or
 IR, which has similar expressive power as the \pads{} language. 
 
@@ -227,7 +227,8 @@ The IR is a tree structure where each if its node is a type.
 We include auxilary information such as labels of the nodes
 and the number of records covered by a node in the IR to assist
 the rewriting. Finally, the refined IR is translated
-by a ``pretty printer'' into a PADS program like this:
+by a ``pretty printer'' into a PADS program like this which will
+then lead to the suite of useful tools:
 
 {\small
 \begin{code}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592-1.40.1 (Web2C 7.5.6) (format=latex 2007.1.25)  4 MAY 2007 00:30
+This is pdfTeX, Version 3.141592-1.40.1 (Web2C 7.5.6) (format=latex 2007.1.25)  4 MAY 2007 13:33
 entering extended mode
 **main.tex
 (./main.tex
@@ -142,45 +142,37 @@ LaTeX Font Info:    Try loading font information for OT1+ptm on input line 19.
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 68.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <14.4> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 68.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 68.
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 68.
-
-(/usr/local/gwTeX/texmf.texlive/tex/latex/psnfss/omsptm.fd
-File: omsptm.fd 
-)
-LaTeX Font Info:    Font shape `OMS/ptm/m/sc' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 68.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 23.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 76.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 75.
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 123.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 122.
 
 
 (/usr/local/gwTeX/texmf.texlive/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <10> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 125.
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 124.
 
-Overfull \hbox (13.52222pt too wide) in paragraph at lines 133--133
+Overfull \hbox (13.52222pt too wide) in paragraph at lines 132--132
 []\OT1/pcr/m/n/9 207.136.97.49 - - [15/Oct/2006:18:46:51 -0700][] 
  []
 
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <9> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 141.
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 140.
 
-Underfull \hbox (badness 10000) in paragraph at lines 151--156
+Underfull \hbox (badness 10000) in paragraph at lines 150--155
 \OT1/ptm/m/n/10 de-scribes the var-i-ous HTTP meth-ods such as
  []
 
 [1
-
 
 
 ]
@@ -200,16 +192,14 @@ Overfull \hbox (18.92221pt too wide) in paragraph at lines 223--223
 []        \OT1/pcr/m/n/9 [StringConst] " HTTP/" (Id = BTy_17 6);[] 
  []
 
-(./main.bbl [2]) [3
-
-] (./main.aux) ) 
+(./main.bbl) [2] (./main.aux) ) 
 Here is how much of TeX's memory you used:
- 1250 strings out of 94076
- 15177 string characters out of 1163552
+ 1232 strings out of 94076
+ 14924 string characters out of 1163552
  2062605 words of memory out of 4513801
- 4539 multiletter control sequences out of 10000+50000
+ 4524 multiletter control sequences out of 10000+50000
  10331 words of font info for 29 fonts, out of 2000000 for 2000
  645 hyphenation exceptions out of 5000
- 32i,10n,45p,214b,282s stack positions out of 5000i,500n,6000p,200000b,50000s
+ 32i,10n,45p,214b,275s stack positions out of 5000i,500n,6000p,200000b,50000s
 
-Output written on main.dvi (3 pages, 12272 bytes).
+Output written on main.dvi (2 pages, 11304 bytes).

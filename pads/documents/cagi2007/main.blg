@@ -4,42 +4,42 @@ The style file: mlapa.bst
 Database file #1: main.bib
 You've used 3 entries,
             2472 wiz_defined-function locations,
-            572 strings with 4891 characters,
-and the built_in function-call counts, 1253 in all, are:
-= -- 123
-> -- 57
+            578 strings with 4917 characters,
+and the built_in function-call counts, 1296 in all, are:
+= -- 137
+> -- 41
 < -- 5
-+ -- 18
-- -- 18
-* -- 98
-:= -- 220
-add.period$ -- 9
++ -- 12
+- -- 12
+* -- 96
+:= -- 217
+add.period$ -- 10
 call.type$ -- 3
-change.case$ -- 24
+change.case$ -- 21
 chr.to.int$ -- 3
 cite$ -- 3
-duplicate$ -- 47
-empty$ -- 78
-format.name$ -- 32
-if$ -- 250
+duplicate$ -- 53
+empty$ -- 87
+format.name$ -- 22
+if$ -- 262
 int.to.chr$ -- 1
 int.to.str$ -- 0
 missing$ -- 3
-newline$ -- 18
+newline$ -- 19
 num.names$ -- 12
-pop$ -- 23
+pop$ -- 16
 preamble$ -- 1
-purify$ -- 24
+purify$ -- 21
 quote$ -- 0
-skip$ -- 35
+skip$ -- 44
 stack$ -- 0
-substring$ -- 48
-swap$ -- 8
+substring$ -- 84
+swap$ -- 13
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 27
 warning$ -- 0
-while$ -- 8
+while$ -- 11
 width$ -- 0
-write$ -- 56
+write$ -- 59
