@@ -763,8 +763,8 @@ and struct_to_array ty =
 	  end
     | _ => ty
 
-(* find negative int rule (Phase one rule), this is supposed to be executed before the to_float rule*)
-and find_neg_int ty =
+(* find negative number (both in and float)  rule (Phase one rule) *)
+and find_neg_num ty =
 	case ty of
 	Pstruct (a, tylist) =>
 	let
@@ -775,26 +775,10 @@ and find_neg_int ty =
 		| Base (_, ((Other _, _)::_)) => true	
 		| Base (_, ((Pwhite _, _)::_)) => true	
 		| _ => false
-	  fun mergetok (t1:LToken, t2:LToken) : LToken =
-	    let
-		fun combineloc (loc1:location, loc2:location) = 
-		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2),
-			recNo=(#recNo loc1)}
-	    in
-		case (t1, t2) of 
-			((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
-			  	(Pwhite(s1 ^ s2), combineloc(loc1, loc2))
-			| ((Pempty, loc1), (Pempty, loc2)) => 
-				(Pempty, combineloc(loc1, loc2))
-			| ((tk1, loc1), (tk2, loc2)) =>
-				(Pstring(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
-				combineloc(loc1, loc2))
-	    end
 	  (*the tl1 represents a subset of records of tl2*)
 	  fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
 	  let
-	    fun insertIntToMap ((Pint(i,s), (loc:location)), recMap) =
-			IntMap.insert (recMap, (#recNo loc), (Pint(i, s), loc))
+	    fun insertNumToMap (ltoken:LToken, recMap) = IntMap.insert (recMap, (#recNo (#2 ltoken)), ltoken)
 	    fun insertSignToMap ((Other x, (loc:location)), recMap) =
 		let
 		  val tokOp = IntMap.find (recMap, (#recNo loc))
@@ -802,9 +786,11 @@ and find_neg_int ty =
 		  case tokOp of
 			SOME (Pint (i, s), loc1) =>
 				IntMap.insert (recMap, (#recNo loc), (Pint(~i, "-"^s), combLoc(loc, loc1)))
+			| SOME (Pfloat (i, f), loc1) =>
+				IntMap.insert (recMap, (#recNo loc), (Pfloat("-"^i, f), combLoc(loc, loc1)))
 			| _ => (print "RecNum doesn't match!" ; raise TyMismatch)
 		end
-	    val tokenmap= foldl insertIntToMap IntMap.empty tl2
+	    val tokenmap= foldl insertNumToMap IntMap.empty tl2
 	    val tokenmap = foldl insertSignToMap tokenmap tl1
 	  in
 	    IntMap.listItems tokenmap
@@ -822,8 +808,17 @@ and find_neg_int ty =
 		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
 		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
 		     else matchPattern (pre@[ty1, ty2]) post
+		  | (ty1 as Base(a1, (Other (#"-"), _)::_))::((ty2 as Base(a2, (Pfloat _, _)::_)) :: post) => 
+		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
+		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
+		     else matchPattern (pre@[ty1, ty2]) post
 		  | (ty1 as Poption(_, Base(a1, (Other (#"-"), _)::_)))::
 			((ty2 as Base(a2, (Pint _, _)::_))::post) => 
+		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
+		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
+		     else matchPattern (pre@[ty1, ty2]) post
+		  | (ty1 as Poption(_, Base(a1, (Other (#"-"), _)::_)))::
+			((ty2 as Base(a2, (Pfloat _, _)::_))::post) => 
 		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
 		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
 		     else matchPattern (pre@[ty1, ty2]) post
@@ -837,6 +832,7 @@ several scenarios:
 tys = Pint . Pint => Pfloat
 tys = Pint  Poption (. Pint) => Pfloat
 [not dot] tys [not dot]
+Pint + Pfloat => Pfloat
 *)
 (*TODO: when checking no dot, we are assuming it's a base, it could be more complex than that,
   also, maybe the second case should rewrite to Pfloat + Pint, instead? *)
@@ -910,6 +906,21 @@ and to_float ty =
 *)
 	  in
 		newty
+	  end
+	| Punion (a, [ty1, ty2]) =>
+	  let
+		fun toFloatTokens ltokens =
+		  case ltokens of
+		  nil => nil
+		  | (Pint (i, s), loc)::tail => (Pfloat (s, "0"), loc)::(toFloatTokens tail)
+		  | _ => raise TyMismatch
+	  in
+		case (ty1, ty2) of 
+		   (Base(a1, toks1 as ((Pint _, _)::_)), Base(a2, toks2 as ((Pfloat _, _)::_))) => 
+			Base(a, (toFloatTokens toks1)@toks2)
+		  | (Base(a1, toks1 as ((Pfloat _, _)::_)), Base(a2, toks2 as ((Pint _, _)::_))) => 
+			Base(a, toks1@(toFloatTokens toks2))
+		  | _ => ty
 	  end
 	| _ => ty
 
@@ -1275,7 +1286,7 @@ let
 *)
 			union_to_optional,
 			struct_to_array,
-			find_neg_int,
+			find_neg_num,
 			to_float,
 			refine_array
 		]

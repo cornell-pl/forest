@@ -76,4 +76,18 @@ struct
      in
         String.translate escapeChar s
      end
+    (* this function checks if a string is a valid C identifier *)
+    fun isCIdentifier s =
+      let
+	fun isWordChar c = (Char.isAlphaNum c) orelse (c = #"_")
+	fun isWord s = if isWordChar (String.sub (s, 0)) then 
+			if size s = 1 then true
+			else isWord (String.extract (s, 1, NONE))
+		       else false
+      in
+	if Char.isAlpha (String.sub (s, 0)) then 
+		if size s = 1 then true
+		else isWord (String.extract (s, 1, NONE))
+	else false
+      end
 end

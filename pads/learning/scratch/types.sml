@@ -208,6 +208,7 @@ struct
     end
          
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
+    fun getIdString ( a : AuxInfo ) : string = String.extract ((getLabelString a), 4, NONE)
 
     fun getLabelForPADS ty =
 	let
@@ -465,7 +466,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts) *)
+                       | _ => (ltokenTyToString (hd ts))(* ^ (LTokensToString ts) *)
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -718,11 +719,17 @@ struct
 				(
 				 if mode = 0 then 
 					("Pchar " ^ label ^ " : " ^ label ^ " x =>  {x == '" ^ s ^ "'};\n")
-			    	 else if mode=1 then ((getVarName label) ^ suffix ^ " Pfrom('" ^ s ^ "');\n")
+			    	 else if mode=1 then 
+				   if isCIdentifier s then "'" ^ s ^ "';\n"
+				   else ((getVarName label) ^ suffix ^ 
+					" Pfrom('" ^ (String.toCString s) ^ "');\n")
 			    	 else if mode=2 then ("Pstring_ME(:\"/" ^ escape(s) ^ "/\":) ")
 				 else ("'" ^ (String.toCString s) ^ "';\n")
 				)
-				else if mode = 1 then ((getVarName label) ^ suffix ^ " Pfrom(\"" ^ s ^ "\");\n")
+				else if mode = 1 then 
+				  if isCIdentifier s then ("\"" ^ s ^ "\";\n")
+				  else ((getVarName label) ^ suffix ^ 
+					" Pfrom(\"" ^ (String.toCString s) ^ "\");\n")
 				     else if mode = 3 then ("\"" ^ (String.toCString s) ^ "\";\n")
 				     else ("Pstring_ME(:\"/"^ escape(s) ^"/\":) " ^ label')
 	      | Enum res => ""
@@ -799,7 +806,7 @@ struct
 	    ) ^ ";\n"
 	)
 
-	fun getIndexes (res, re) =
+	fun getIndexes (res, re, enumIdStr) =
 	  let
 		fun getIndex refinedlist re index =
 		  case refinedlist of 
@@ -809,27 +816,31 @@ struct
 			else getIndex tail re (index+1)
 	  in
 		case re of
-		StringConst _ => 
+		StringConst s => 
 			let
 				val i = getIndex res re 0
 			in 
-			  if (i<>(~1)) then [i] 
+			  if (i<>(~1)) then 
+				if isCIdentifier s then [s^enumIdStr]
+				else [Int.toString i] 
 			  else (case re of
-				StringConst "*" => [(~1)]
+				StringConst "*" => ["P_DEFAULT"]
 				| _ => nil
 			       )
 			 end 
 		| IntConst _ => 
 			let
 				val i = getIndex res re 0
-			in if (i<>(~1)) then [i] else nil
+			in if (i<>(~1)) then [Int.toString i] else nil
 			end
-		| Enum l => 
+		| Enum l => List.concat (map (fn x => getIndexes (res, x, enumIdStr)) l)
+(*
 		  let 
 			val candidates = map (fn x => getIndex res x 0) l
-			val finallist = List.filter (fn x => x <> (~1)) candidates
+			val finallist= List.filter (fn x => x <> (~1)) candidates
 		  in finallist
 		  end
+*)
 		| _ => []
 	  end
 	fun reToSwitch switchedTy branchno (re, targetTy) =
@@ -858,12 +869,12 @@ struct
 		(* we assume the Enum will only contain IntConst or StringConst and not another Enum *)
 		| RefinedBase (aux, Enum res, _) =>
 			let
-			  val indexes = getIndexes (res, re)
+			  val indexes = getIndexes (res, re, (getIdString aux))
 			in
 			  case indexes of
-				[~1] => "\tPdefault " ^ (TyToPADS "\t" "" false 1 nil targetTy)
-				| _ => lconcat (map (fn i => "\tPcase " ^ (Int.toString i) ^ " : " ^
-					(TyToPADS "\t" ("_"^(Int.toString i)) false 1 nil targetTy)) indexes)
+				["P_DEFAULT"] => "\tPdefault : " ^ (TyToPADS "\t" "" false 1 nil targetTy)
+				| _ => lconcat (map (fn i => "\tPcase " ^ i ^ " : " ^
+					(TyToPADS "\t" ("_"^ i) false 1 nil targetTy)) indexes)
 			end
 		| _ => raise TyMismatch
 	    ) 
@@ -881,13 +892,17 @@ struct
 		(
 		if allStringConsts res then
 		  let 
+		    val idStr = getIdString aux
 		    fun strConstToEnumItem re =
 			case re of StringConst s => 
-			  let
-			    val newlabel = (Atom.toString (getLabel 
+			  if isCIdentifier s then 
+			    ("\t"^ s ^ idStr ^ " Pfrom(\"" ^ s ^ "\")")
+			  else
+			    let
+			      val newlabel = (Atom.toString (getLabel 
 					    ({coverage=0, label=NONE, tycomp=zeroComps})))
-			  in ("\t" ^ (getVarName newlabel) ^ " Pfrom(\"" ^ s ^ "\")")
-			  end
+			    in ("\t" ^ (getVarName newlabel) ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")")
+			    end
 		    	| _ => raise TyMismatch
 		  in (pRecord ^
 		    "Penum " ^ label ^ " {\n" ^

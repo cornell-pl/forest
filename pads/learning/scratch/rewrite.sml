@@ -47,7 +47,7 @@ let
   val _ = print "\n"
 (*
   val _ = print "----- The PADS description -----\n\n"
-  val _ = print (#2 (TyToPADSFile measured_reduced_ty)) 
+  val _ = print (#2 (TyToPADSFile measured_reduced_ty (!lexName^".p"))) 
   val _ = print "\n----- End of PADS description -----\n"
 *)
   val comps'    = getComps measured_reduced_ty
