@@ -18,8 +18,9 @@
 
 \begin{document} 
 
-%%\twocolumn[
+\twocolumn[
 \icmltitle{Automatic Ad Hoc Data Processing Using PADS}
+]
 \icmlauthor{David Burke and Peter White}{}
 \icmladdress{Galois Connections, Inc, Portland, OR}
 \icmlauthor{Kathleen Fisher}{}
@@ -232,21 +233,20 @@ then lead to the suite of useful tools:
 
 {\small
 \begin{verbatim}
-#include "vanilla.p"
 Penum Enum_14 {
         GET14 Pfrom("GET"),
         POST14 Pfrom("POST")
 };
 Precord Pstruct Struct_29 {
-        PPip var_0;
+        Pip var_0;
         " - - [";
-        PPdate var_7;
+        Pdate var_7;
         ':';
-        PPtime var_9;
+        Ptime var_9;
         "] \"";
         Enum_14 var_14;
         ' ';
-        PPpath var_16;
+        Ppath var_16;
         " HTTP/";
         Pfloat64 var_20;
         "\" ";
