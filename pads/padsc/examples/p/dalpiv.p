@@ -99,7 +99,7 @@ Penum StateName_t{JSESSIONID,
 Punion StateValue_t(:StateName_t state:){
   Pswitch (state) {
     Pcase JSESSIONID          : Pstring_FW(:23:)      jsession_id;
-    Pcase DYN_USER_ID         : Pstring_FW(:10:)      dyn_user_id;
+    Pcase DYN_USER_ID         : Pstring_SE(:"/;|$/":) dyn_user_id;
     Pcase DYN_USER_CONFIRM    : Pstring_FW(:32:)      dyn_user_confirm;
     Pcase YPC_ANON_ID         : Puint64               ypc_anon_id;
     Pcase YPC_RECENT_SEARCH   : Attributes_t          ypc_recent_search; // name value pairs, separated by #
