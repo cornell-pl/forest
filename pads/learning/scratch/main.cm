@@ -23,6 +23,7 @@ is
   gold/ai.3000.sml
   gold/boot.txt.sml
   gold/crashreporter.log.sml
+  gold/dibbler.1000.sml
   gold/ls-l.txt.sml
   gold/quarterlypersonalincome.sml
   gold/railroad.txt.sml
