@@ -6,6 +6,7 @@ structure LS = struct
     val dirAux: AuxInfo = {coverage = 34, label = SOME dirLabel, tycomp = zeroComps }
     val dashR:Refined = StringConst "-"
     val dR:Refined = StringConst "d"
+(*
     val dir: Ty = RefinedBase(dirAux, Enum([dashR, dR]), [(Pstring "-", loc)])
     val uread: Ty = RefinedBase(aux, Enum([StringConst "-", StringConst "r"]), [(Pstring "-", loc)])
     val uwrite: Ty = RefinedBase(aux, Enum([StringConst "-", StringConst "w"]), [(Pstring "-", loc)])
@@ -18,21 +19,23 @@ structure LS = struct
     val oexe: Ty = RefinedBase(aux, Enum([StringConst "-", StringConst "x"]), [(Pstring "-", loc)])
     val permission: Ty = Pstruct (aux, [dir, uread, uwrite, uexe, gread, gwrite, gexe,
 		oread, owrite, oexe])
-    val space : Ty = RefinedBase(aux, StringME "/[ \t]+/", [(Pstring " ", loc)])
+*)
+    val permission: Ty = RefinedBase(aux, StringME "/(\\-|d)[\\-rwx]+/", [(Pstring "drwxrxwx", loc)])
+    val space : Ty = RefinedBase(aux, StringME "/[ \\t]+/", [(Pstring " ", loc)])
     val date : Ty = Base(aux, [(Pdate "15/Oct/1997", loc)])
-    val time : Ty = Base(aux, [(Ptime "18:46:51 -0700", loc)])
+    val time : Ty = RefinedBase(aux, StringME "/[0-9][0-9]:[0-9][0-9]/", [(Pstring "12:34", loc)])
     val year : Ty = Base(aux, [(Pint (2005, "2005"), loc)])
     val timestamp: Ty = Punion(aux, [Pstruct(aux, [date, space, time]), 
 			Pstruct(aux, [date, space, year])])
-    val total: Ty = Pstruct (aux, [RefinedBase(aux, StringConst "total ", [(Pstring "total ", loc)]),
+    val total: Ty = Pstruct (aux, [RefinedBase(aux, StringConst "total", [(Pstring "total", loc)]),
 		space, Base(aux, [(Pint (235656, "235656"), loc)])])
     val owner: Ty = RefinedBase(aux, StringConst "dpw", [(Pstring "dpw", loc)])
     val group: Ty = RefinedBase(aux, StringConst "fac", [(Pstring "fac", loc)])
-    val filename: Ty = Base(aux, [(Pstring "xyz", loc)])
+    val filename: Ty = RefinedBase(aux, StringME "/[a-zA-Z0-9\\-_ ~.]+/", [(Pstring "xyz", loc)])
     val bytes: Ty = Base(aux, [(Pint (1234, "1234"), loc)])
     val oneBase: Ty = RefinedBase(aux, IntConst 1, [(Pint (1, "1"), loc)])
     val intBase: Ty = Base(aux, [(Pint (5, "5"), loc)])
-    val files: Ty = Switch (aux, dirLabel, [(dashR, oneBase), (dR, intBase)])
+    val files: Ty = Punion(aux, [oneBase, intBase])
     val entry_t : Ty = Pstruct(aux, [permission, space, files, space, owner, space, group, 
 		space, bytes, space, timestamp, space, filename])
     val ls_l : Ty = Punion (aux, [total, entry_t])
