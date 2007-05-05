@@ -1,6 +1,6 @@
 all :
 	latex main.tex
-	bibtex main 
+##	bibtex main 
 	latex main.tex
 	latex main.tex
 	dvipdf main.dvi
