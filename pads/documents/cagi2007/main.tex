@@ -74,7 +74,7 @@
 %appear in papers submitted for review.
 %\end{abstract} 
 
-\section*{Introduction}
+%\paragraph*{Ad Hoc Data and PADS}
 \label{intro}
 
 An {\em ad hoc data source} is any semistructured data source
@@ -107,7 +107,7 @@ no documentation, a common scenario in the world of ad hoc data.
 Consequently, we have begun to study techniques for automatic
 inference of \pads{} descriptions from example data, focusing for now
 on ASCII data sources.   The rest of this 
-short paper describes our preliminary efforts to do so.
+paper describes our efforts to do so.
 
 % Our end
 % goal is to provide users with an end system that allows them to
@@ -158,7 +158,7 @@ short paper describes our preliminary efforts to do so.
 % others nearly impossible.
 
 \section*{The PADS Language}
-Before sketching the structure of our description inference techniques,
+Before outlining the main ideas in description inference,
 we explain the structure of the \pads{} specification language in greater
 detail.  
 % As mentioned in the introduction,
@@ -262,8 +262,7 @@ Each record is then broken down into a series of tokens where each
 token can be a punctuation symbol, a number, a date, a time, or a number of other
 basic types.  Our learning system has a basic tokenization scheme
 skewed toward systems data, but users may specify a different scheme 
-for their own domain through a configuration file that allows definition 
-of new base types using regular expressions.  For example,
+for their own domain through a configuration file.  For example,
 computational biologists may want to specify new base types for DNA strings
 or other common recurring patterns.
 
@@ -277,25 +276,23 @@ chooses a simple type constructor such as a \tkw{Pstruct}, \tkw{Punion}, or
 When a type constructor has been chosen, the data is partitioned accordingly
 and the algorithm recursively analyzes subparts.  This
 rough structure is represented in an intermediate representation (IR)
-that has similar expressive power as the \pads{} language. 
+that has similar expressive power to the \pads{} language. 
 
 The format refinement phase analyzes the IR produced by structure discovery
 and repeatedly applies 
 rewrite rules.  There are two sorts of rewriting rules: 
-value-independent and value-dependent rules.
+value-independent rules and value-dependent rules.
 The value-independent rules examine the inferred description structure
 to find ways to merge or rearrange components to improve the description.
 Value-dependent rules analyze both the inferred description and the underlying
-training data looking for constant fields or those with small
-variation to introduce constants and enumerations.
+training data looking for fields with little or no 
+variation in order to introduce constants and enumerations.
 The value-dependent rules also infer
 inter-field dependency information.
 At any given point during the refinement process,
-many rewriting rules may apply; our algorithm chooses the one 
+many rewriting rules may apply; our algorithm repeatedly chooses the one 
 that optimizes an information-theoretic
 scoring function we have defined.
-The refinement step loops until there is no possible
-improvement in the score. 
 In effect, this refinement phase is equivalent to a greedy, local search
 procedure aimed at improving the quality of the inferred format.
 % The quality is measured by a scoring function which is based on the
@@ -323,13 +320,13 @@ End Pstruct
 Finally, after no more refinement is possible, a pretty printer 
 translates the IR into a working PADS 
 specification,  which can be used to generate
-a suite of useful tools.  In the case of our running example,
-the learning system produces the specification fragment below.
+a suite of useful tools.  Here is the final result for
+our running example.
 
 {\small
 \begin{verbatim}
 Pstruct Struct_29 {
-  Pip var_0; " - - [";
+  Pip        var_0; " - - [";
   Pdate(':') var_7; ':';
   Ptime(']') var_9; "] ";
   ...
@@ -340,6 +337,19 @@ Pstruct Struct_29 {
 Parray entries_t { Struct_29[]; };
 \end{verbatim}
 }
+
+\section*{Conclusions}
+The primary conclusion of our preliminary study 
+is that it is possible to infer useful \pads{} descriptions 
+from a sufficiently large corpus of training data.  Indeed,
+with just a push of a button, we can now automatically generate
+tools that convert raw data into XML and generate statistical reports.
+Where it once took days or weeks to access and transform ad hoc data, it now
+takes seconds.
+%and (2) generate a useful statistical report.  However, 
+%there is still much work to be done as the generated formats
+%often tend to overspecialize and turn out to be more complex than
+%their human-generated counterparts.
 
 \bibliography{main}
 \bibliographystyle{mlapa}
