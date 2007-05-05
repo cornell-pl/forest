@@ -4,4 +4,4 @@ all :
 	latex main.tex
 	latex main.tex
 	dvipdf main.dvi
-	dvips main.dvi
+	dvips -o main.ps main.dvi

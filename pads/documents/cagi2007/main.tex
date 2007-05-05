@@ -189,6 +189,7 @@ As an example, consider the common log format for Web server logs.  A
 typical record looks like the following:
 % I deleted the -700 at the end of the date to make it fit on one line 
 % properly...I assume it's OK to tell a white lie about the format...
+
 {\small \begin{verbatim}
 207.136.97.49 - - [15/Oct/2006:18:46:51] 
 	"GET /tk/p.txt HTTP/1.0" 200 30
@@ -207,17 +208,17 @@ a response code and the number of bytes transmitted.  A fragment of the
   Puint8     code; " "; 
   Puint8     size; " "; \};
 
-\kw{Parray} weblog \{ webRecord[] \};
+\kw{Parray} webLog \{ webRecord[] \};
 \end{code}
 This description gives a definition
-for the {\tt weblog} type, which is a sequence (a {\tt Parray})
-of arbitrarily many {\tt webRecord}s.  It also gives a definition
-for the {\tt webRecord} type which includes an ip address, a date,
-a time and some other items.  Notice, there are two sorts of fields
-in the Web record structure, named fields (such as the field named
+for the {\tt webLog} type, which is a sequence (a {\tt Parray})
+of arbitrarily many {\tt webRecord}s.  The definition
+for the {\tt webRecord} type includes an ip address, a date,
+a time and some other items.  Notice there are two sorts of fields
+in the Web record structure: named fields (such as the field named
 {\tt ip} with type {\tt Pip}) and unnamed fields (such as 
 {\tt  " - - ["}).  The former hold data that programmers or generated
-tools may access; the latter service syntactic separators read by
+tools may access; the latter serve as syntactic separators read by
 generated parsers and printed by generated printers.  The type
 {\tt httpMeth} is another user-defined type not shown here.
 
@@ -250,12 +251,12 @@ generated parsers and printed by generated printers.  The type
 \label{fig-archi}
 \end{center}
 \end{figure}
-Figure \ref{fig-archi} gives an overview of our current format inference
-architecture. The input data, or ``training set'', 
+Figure \ref{fig-archi} gives an overview of our format inference
+architecture. The input data, or ``training set,'' 
 is first ``chunked'' into records where
 each record is a piece of recurrent data such as a line, 
 a paragraph, or a file (if the input consists of multiple files).
-The unit of repetition is specified by the user when invoking our 
+The user specifies the unit of repetition when invoking our 
 learning tool.
 Each record is then broken down into a series of tokens where each
 token can be a punctuation symbol, a number, a date, a time, or a number of other
@@ -271,44 +272,42 @@ scheme inspired in part by the work of Arasu on
 information extraction from web pages~\cite{arasu+:sigmod03}. 
 This scheme calculates
 frequency distributions for tokens within records, and using this information,
-chooses a simple type constructor such as a \kw{Pstruct}, \kw{Punion} or
-\kw{Parray} to describe the top-level structure of the record. 
-When a type is rector has been chosen, the data is partitioned accordingly
+chooses a simple type constructor such as a \tkw{Pstruct}, \tkw{Punion}, or
+\tkw{Parray} to describe the top-level structure of the record. 
+When a type constructor has been chosen, the data is partitioned accordingly
 and the algorithm recursively analyzes subparts.  This
 rough structure is represented in an intermediate representation (IR)
 that has similar expressive power as the \pads{} language. 
 
 The format refinement phase analyzes the IR produced by structure discovery
 and repeatedly applies 
-any one of a number of
-rewrite rules.  There are two sorts of rewriting rules, 
-value-independent rules
-and the value-dependent rules.
-The value-independent rules examine the inferred description structure,
-and find ways to merge or rearrange components to improve the description.
+rewrite rules.  There are two sorts of rewriting rules: 
+value-independent and value-dependent rules.
+The value-independent rules examine the inferred description structure
+to find ways to merge or rearrange components to improve the description.
 Value-dependent rules analyze both the inferred description and the underlying
-training data looking for fields for which the training data is constant
-or one of a small number of values in order to introduce 
-constant fields, enumerations.  The value-dependent rules also infer
-certain kinds of inter-field dependency information.
+training data looking for constant fields or those with small
+variation to introduce constants and enumerations.
+The value-dependent rules also infer
+inter-field dependency information.
 At any given point during the refinement process,
-many rewriting rules may apply -- our algorithm chooses the one 
-that generates the description that optimizes an information-theoretic
+many rewriting rules may apply; our algorithm chooses the one 
+that optimizes an information-theoretic
 scoring function we have defined.
 The refinement step loops until there is no possible
 improvement in the score. 
 In effect, this refinement phase is equivalent to a greedy, local search
-procedure aimming at improving the quality of the inferred format.
+procedure aimed at improving the quality of the inferred format.
 % The quality is measured by a scoring function which is based on the
 % information theory. The objective of this function is to
 % minimize the cost of transmitting the inferred format plus the
 % training set. 
 Below is a fragment of the IR learned from web log data similar to the data
-illustrated above.  In this case, the learning system was quite successful,
-though that is certainly not always the case.  The only mistake it
-made was over specializing the response code 
+illustrated above.  In this case, the learning system was quite successful;  the only mistake it
+made was over-specializing the response code 
 to the specific integer constant 200.  It did so because the 
 records in the training data contained no variation in this field.
+
 {\small
 \begin{verbatim}
 Pstruct
@@ -321,11 +320,12 @@ Pstruct
 End Pstruct
 \end{verbatim}
 }
-Finally, after no more refinement is possible, the IR is translated
-by a ``pretty printer'' into a working PADS 
+Finally, after no more refinement is possible, a pretty printer 
+translates the IR into a working PADS 
 specification,  which can be used to generate
 a suite of useful tools.  In the case of our running example,
 the learning system produces the specification fragment below.
+
 {\small
 \begin{verbatim}
 Pstruct Struct_29 {
