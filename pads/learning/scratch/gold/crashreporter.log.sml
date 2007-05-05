@@ -19,14 +19,16 @@ structure CRASHREPORTER = struct
 			[(Pstring "Started writing crash report to: ", loc)]) 
     val finish: Ty = RefinedBase(aux, StringConst "Finished writing crash report to: ", 
 			[(Pstring "Finished writing crash report to: ", loc)]) 
-    val filepath: Ty = Base(aux, [(Ppath "/Users/kfisher/Library/Logs/CrashReporter/Preview.crash.log", loc)])
+    val path: Ty = Base(aux, [(Ppath "/Users/kfisher/Library/Logs/CrashReporter/Preview.crash.log", loc)])
+    val filename: Ty = RefinedBase(aux, StringME "/[a-zA-Z0-9. ]*/", [(Pstring " ayx", loc)])
+    val filepath: Ty = Pstruct(aux, [path, Poption(aux, filename)])
     val unable: Ty = RefinedBase(aux, StringConst "Unable to determine task_t for pid: ", 
 			[(Pstring "Unable to determine task_t for pid: ", loc)]) 
     val pid: Ty = Base(aux, [(Pint(95, "95"), loc)])
     val name: Ty = RefinedBase(aux, StringConst " name: Exited process", [(Pstring "name: Exited process", loc)])
-    val function: Ty = RefinedBase(aux, StringME "/[^ ]\\*/", [(Pstring ("mach_msg()"), loc)])
+    val function: Ty = RefinedBase(aux, StringME "/[^ ]*/", [(Pstring ("mach_msg()"), loc)])
     val reply: Ty = RefinedBase(aux, StringConst " reply failed: ", [(Pstring "srv7", loc)])
-    val failedmsg: Ty = RefinedBase(aux, StringME "/\\.\\*\\$/", [(Pstring ("(ipc/send) invalid destination port"), loc)])
+    val failedmsg: Ty = RefinedBase(aux, StringME "/.*/", [(Pstring ("(ipc/send) invalid destination port"), loc)])
     val failtorelaunch: Ty = RefinedBase(aux, StringConst "Failed to re-launch ", 
 			[(Pstring "Failed to re-launch ", loc)])
     val spdashsp: Ty = RefinedBase(aux, StringConst " - ", [(Pstring " - ", loc)])
@@ -38,7 +40,7 @@ structure CRASHREPORTER = struct
 				Pstruct(aux, [start, filepath]),
 				Pstruct(aux, [finish, filepath]),
 				Pstruct(aux, [unable, pid, name]),
-				Pstruct(aux, [failtorelaunch, filepath, spdashsp, errormsg])
+				Pstruct(aux, [failtorelaunch, path, spdashsp, errormsg])
 				])
     val reporterreport: Ty = Pstruct(aux, [function, reply, failedmsg])
     val report: Ty = Switch(aux, swLabel, [(StringConst "crashdump", dumpreport), 
