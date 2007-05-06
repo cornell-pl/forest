@@ -20,7 +20,7 @@
 \begin{document} 
 
 \twocolumn[
-\icmltitle{Towards 1-click Tool Generation with PADS}
+\icmltitle{Towards 1-click Tool Generation with PADS\footnotemark[1]}
 ]
 \icmlauthor{David Burke and Peter White}{}
 \icmladdress{Galois Connections}
@@ -74,7 +74,13 @@
 %appear in papers submitted for review.
 %\end{abstract} 
 
-\section*{Ad Hoc Data and PADS}
+\section*{Introduction\footnotetext[1]{$\mbox{}\;$ This material is based upon work 
+supported by DARPA under grant FA8750-07-C-0014
+and the NSF
+   under grants 0612147 and 0615062.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of DARPA or the NSF.}}
 \label{intro}
 
 An {\em ad hoc data source} is any semistructured data source
@@ -83,9 +89,8 @@ have not yet been defined. XML, HTML and CSV are {\em not}
 ad hoc data sources as there are numerous programming libraries,
 query languages, manuals and other resources dedicated to
 helping analysts manipulate data in these formats.
-However, ad hoc data does arise often in many fields including
-computational biology, physics, finance, networking and 
-systems administration.
+However, ad hoc data does arise often in many fields ranging from
+computational biology to finance to networking.
 
 The goal of the \pads{} project~\cite{padsweb} is to improve the
 productivity of data analysts who need to deal with new and evolving
@@ -95,10 +100,9 @@ structure and expected properties of ad hoc data sources, whether they
 be ASCII, binary, Cobol or a mixture of formats.  These
 specifications, which resemble extended type declarations from
 conventional programming languages, are compiled into a suite of
-programming libraries and end-to-end data processing tools.  For
-example, from any \pads{} description, our compiler can automatically
-produce parser and printer libraries, a query engine, a format translator
-and several others.
+programming libraries, such as parsers and printers, and 
+end-to-end data processing tools including a query engine
+and several format translators.
 
 Unfortunately, it often takes substantial time, energy and expertise
 to write a \pads{} description for a new ad hoc data source
@@ -169,7 +173,7 @@ detail.
 % one for \ocaml{}, but we restrict ourselves to discussion of the former.
 As mentioned in the introduction,
 \pads{} specifications are related to conventional type 
-declarations.\footnote{Though there are two versions of \pads{},
+declarations.\footnote[2]{Though there are two versions of \pads{},
 one for \C{} and
 one for \ocaml{}, we restrict ourselves to discussion of the \C{} version,
 which should be more familiar to most readers.}  For example,
@@ -334,7 +338,6 @@ Pstruct Struct_29 {
   Puint8 var_26 : var_26 == 200; ' ';
   Pint64 var_28;
 };
-
 Parray entries_t { Struct_29[]; };
 \end{verbatim}
 }
