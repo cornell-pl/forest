@@ -319,6 +319,8 @@ clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
 	$(RM) tokens.lex.sml vanilla.lex.sml vanilla.lex
 	$(RM) *~
+	$(RM) data/*chunk*
+	$(RM) .DS_Store
 
 .PHONY : veryclean
 veryclean: clean
