@@ -152,9 +152,6 @@ endef
 $(SILVERS): %.ag: %
 	$(silver-it)
 
-# %.silver :    ; $(silver-it)
-# %.ag     :    ; $(silver-it)
-
 define learn-it
 # Clean the gen directory
 rm -rf gen
@@ -172,8 +169,6 @@ endef
 define summary
 # 1. Run the inference algorithm
 #    Already done by "learn-it", owing to dependency on output file
-# NOT DONE: compare score of generated silver description with associated golden standard.
-# NOT DONE: compare score of generated silver description with previous generated silver description.
 # 4. generate PADS description
 # 5. generate accumulator program
 make --directory=gen $(*F)-accum
@@ -185,7 +180,7 @@ gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 # 7. extract number of records correctly parsed and number of errors
 ./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # Get the golden complexity (if there is one)
-nice -n20 ./learn -n $@ -lex vanilla -au true data/$@ | tee gen/$@.out
+nice -n20 ./learn -n $(*F) -lex vanilla -au true data/$(*F) | tee gen/$@.out
 # 9. collect in a report file:
 #    a. how large the input file is in bytes and number of records
 @echo "Record count = " `cat data/$(*F) | wc -l` | tee gen/RecordCount
