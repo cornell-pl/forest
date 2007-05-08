@@ -23,6 +23,24 @@
 # 6. To make a summary report on the most recent version, the
 #    silver and golden versions, run the target with a ".rep"
 #    suffix, eg. "make quarterlypersonalincome.rep"
+# 7. To make training data with a specified percentage of randomly
+#    selected data, use "make xxx.train P=p" where p is the
+#    percentage you want. This training data can be used, for
+#    example, in "make xxx.train.rep" to generate a report
+#    using this training data.
+#
+# Golden files that are available:
+#
+#     1967Transactions.short
+#     ai.3000
+#     boot.log
+#     crashreporter.log
+#     dibbler.1000
+#     ls-l.txt
+#     quarterlypersonalincome
+#     railroad.txt
+#     rpmpkgs
+#     yum.txt
 #
 # Dependencies
 #

@@ -63,6 +63,9 @@ struct
                         , measure2 : time
                         }
 
+    fun sumTimes ( t : ComputeTimes ) : time =
+        #token t + #measure1 t + #reduce1 t + #reduce2 t + #reduce3 t + #measure2 t
+
     fun getComputeTimes ( et : EndingTimes ) : ComputeTimes =
         { token    = #tokenEnd et - #start et
         , measure1 = #measure1End et - #tokenEnd et
@@ -80,15 +83,16 @@ struct
                 , reduce3 = r3
                 , measure2 = m2
                 } = t
-    	    val ln1 = "====== Timing information ======\n"
-            val ln2 = "Tokenization time = " ^ toString tok ^ "\n"
-            val ln3 = "Measure1 time = " ^ toString m1 ^ "\n"
-            val ln4 = "Reduce1 time = " ^ toString r1 ^ "\n"
-            val ln5 = "Reduce2 time = " ^ toString r2 ^ "\n"
-            val ln6 = "Reduce3 time = " ^ toString r3 ^ "\n"
-            val ln7 = "Measure2 time = " ^ toString m2 ^ "\n"
-            val ln8 = "================================\n"
-        in ln1 ^ ln2 ^ ln3 ^ ln4 ^ ln5 ^ ln6 ^ ln7 ^ ln8
+    	    val ln1 = "====== Timing information ==================================\n"
+            val ln2 = "Tokenization and structure inference time = " ^ toString tok ^ "\n"
+            val ln3 = "First measurement time = " ^ toString m1 ^ "\n"
+            val ln4 = "First reduction time = " ^ toString r1 ^ "\n"
+            val ln5 = "Second reduction time = " ^ toString r2 ^ "\n"
+            val ln6 = "Third reduction time = " ^ toString r3 ^ "\n"
+            val ln7 = "Second measurement time = " ^ toString m2 ^ "\n"
+            val ln8 = "Total time = " ^ toString ( sumTimes t ) ^ "\n"
+            val ln9 = "============================================================\n"
+        in ln1 ^ ln2 ^ ln3 ^ ln4 ^ ln5 ^ ln6 ^ ln7 ^ ln8 ^ ln9
         end
 
     (* Dump the computation times to the specified file *)
