@@ -69,6 +69,9 @@ BUILD_EXEC = build-exec.sml
 
 all:	learn
 
+junk:
+	@echo $(P1)
+
 vanilla.lex:
 	config.pl vanilla.config
 
@@ -125,10 +128,12 @@ SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 XS       = $(addsuffix .x,x $(DATA))
 TESTS    = $(addsuffix .test,$(DATA))
+TRAINS   = $(addsuffix .train,$(DATA))
 
 .PHONY: $(DATA)
 .PHONY: x
 
+# For testing
 $(XS): %.x: %
 	echo $^
 
@@ -151,6 +156,11 @@ endef
 # The silver file depends on the corresponding output file.
 $(SILVERS): %.ag: %
 	$(silver-it)
+
+# Make some training data
+$(TRAINS): %.train:
+	chunks.pl -m random -p $(P) -f data/$(*F)
+	mv data/$(*F).chunk0 data/$(*F).train
 
 define learn-it
 # Clean the gen directory
@@ -316,6 +326,7 @@ clean:
 	$(RM) *~
 	$(RM) data/*chunk*
 	$(RM) .DS_Store
+	$(RM) data/*.train
 
 .PHONY : veryclean
 veryclean: clean
