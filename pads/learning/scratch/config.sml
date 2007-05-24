@@ -8,7 +8,8 @@ structure Config = struct
     val DEF_NOISE_PERCENTAGE  =  0.0
     val DEF_ARRAY_WIDTH_THRESHOLD =  4
     val DEF_ARRAY_MIN_WIDTH_THRESHOLD =  0
-
+    val DEF_MAX_TABLE_ROWS = 2000
+    val DEF_MAX_TABLE_COLS = 200
     val def_depthLimit   = 50
     val def_outputDir    = "gen/"
     val def_descName     = "generatedDescription"

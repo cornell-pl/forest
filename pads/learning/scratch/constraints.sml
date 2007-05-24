@@ -360,14 +360,15 @@ structure Map = RedBlackMapFn(struct
 
 (* the main constraining function. Takes a constraint map and a Ty, and returns an updated
 constraint map *)
+	exception TableTooLarge
 	fun constrainTy (ty, cmap) = 
  	let
 		(* make the table *)
-		(*
+(*
 		val _ = print ("Building table for ("^Int.toString (getCoverage ty)^")\n")
 		val _ = printTy ty
-		*)
-		val tytable = Table.genTable (getCoverage(ty)) ty
+*)
+		val (_, tytable) = Table.genTable (getCoverage(ty)) ty
 (*
 		val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n")
 		val _ = if Options.print_tables then 
@@ -376,6 +377,14 @@ constraint map *)
 		val header = #1 tytable
 		val bdocols = #2 tytable
 		val bdolist = transpose(bdocols)
+(*
+		val _ = print ("The number of columns : " ^ Int.toString(length(header)) ^"\n")
+		val _ = print ("The number of rows: " ^ Int.toString(length(bdolist)) ^"\n")
+*)
+		val _ = if (length(bdolist) > DEF_MAX_TABLE_ROWS andalso 
+				length(header)> DEF_MAX_TABLE_COLS) 
+			then (print "Table too large: bailing out...\n"; raise TableTooLarge )
+			else 0
 		val _ = if Options.print_tables then 
 			Table.printTable(header, bdolist) else ()
 
@@ -445,7 +454,7 @@ constraint map *)
 		val consts = foldr (fn (dep, c) => add_to_consts c dep) consts found_deps
 	in foldr (fn ({label,constraints,previous_values},cm) => 
 			LabelMap.insert(cm,label,map #1 constraints)) cmap consts
-	end
+	end handle TableTooLarge => cmap
 
 	fun constrain' ty =
 	let
@@ -455,7 +464,7 @@ constraint map *)
 			|	RArray _ => arrays
 			|	_ => ty::arrays	
 	in
-		foldl constrainTy LabelMap.empty newarrays 
+		foldl constrainTy LabelMap.empty newarrays
 	end
 
 end

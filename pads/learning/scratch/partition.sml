@@ -29,6 +29,7 @@ structure BMap = RedBlackMapFn(struct
 
 (* returns a partition that represents the base data in a particular column *)				
 fun fromData( bdolist : Token option list) : partition = 
+(* TODO: This function is inefficient *)
 let
 	(* create the equivalence classes *)
 	fun update(bdo,(n,bmap)) = 
