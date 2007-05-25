@@ -466,7 +466,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts))(* ^ (LTokensToString ts) *)
+                       | _ => (ltokenTyToString (hd ts))(* ^ (LTokensToString ts)*) 
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -636,7 +636,7 @@ struct
 	      | Pemail _ => "PPemail " ^ label'
 	      | Pmac _ => "PPmac " ^ label'
 	      | Pwhite _ => "PPwhite " ^ label'
-	      | Other c => "Pchar " ^ label'
+	      | Other c => "PPchar " ^ label'
 	      | PbXML _ => "PPbXML " ^ label'
 	      | PeXML _ => "PPeXML "  ^ label'
 	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
@@ -904,9 +904,17 @@ struct
 			    in ("\t" ^ (getVarName newlabel) ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")")
 			    end
 		    	| _ => raise TyMismatch
+		    (*funtion to sort the all string const refined types by the length of the strings
+		      from longest to shortest, this is so as to attemp the longer and more specific
+		      strings first*)
+		    fun shorter (re1, re2) =
+			case (re1, re2) of
+			(StringConst x, StringConst y) => (size x < size y)
+			| _ => raise TyMismatch
+		    val sorted_res = ListMergeSort.sort shorter res
 		  in (pRecord ^
 		    "Penum " ^ label ^ " {\n" ^
-	    	     (join (map strConstToEnumItem res) ",\n") ^
+	    	     (join (map strConstToEnumItem sorted_res) ",\n") ^
 	    	     "\n" ^ prefix ^ "};\n")
 		  end
 	    	else

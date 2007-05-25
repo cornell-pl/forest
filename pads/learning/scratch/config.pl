@@ -126,4 +126,6 @@ foreach my $name (@exports)
  $re = escape (expand($name));
  print INCLUDE "Ptypedef Pstring_ME(:\"/$re/\":) P$name;\n\n";
 }
+#Finally add definition for PPchar
+print INCLUDE "Ptypedef Pstring_ME(:\"/[^0-9A-Za-z_\\\\- \\\\t\\\\r\\\\n]/\":) PPchar;\n\n";
 close INCLUDE;

@@ -521,8 +521,11 @@ struct
 *)
 	val (success, env, ltokens', ty' ) = consume (true, LabelMap.empty, ltokens, ty)
       in
-	if (success = false orelse length ltokens' > 0) then
+	if (success = false andalso length ltokens' > 0) then
 		(print ("Failed at token: " ^ tokenToString (#1 (hd ltokens')) ^ "\n");
+		print ("Record #" ^ (Int.toString (#lineNo (#2 (hd ltokens)))) ^ 
+			" is not successfully populated!!!\n"); ty)	
+	else if (success = false) then (
 		print ("Record #" ^ (Int.toString (#lineNo (#2 (hd ltokens)))) ^ 
 			" is not successfully populated!!!\n"); ty)	
 	else ((*print "Recorded successfully populated!!!\n"; *)recordNo:=(!recordNo)+1; ty')
