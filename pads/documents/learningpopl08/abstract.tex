@@ -1,0 +1,23 @@
+An {\em ad hoc data source} is any semistructured data source for
+which useful data analysis and transformation tools have not yet been
+defined.  Such data must be queried, transformed and displayed by
+systems administrators, computational biologists, financial analysts
+and hosts of others on a regular basis.  The job of doing so is
+normally very tedious and quite time-consuming.  Consequently, we have
+developed a new framework to vastly improve the productivity of data
+analysts and thereby cut the cost of ubiquitous data processing tasks.
+More specifically, we demonstrate it is possible to generate a suite
+of useful data processing tools, including a semi-structured query
+engine, an xml-converter, a statistical analyzer and data
+visualization routines directly from the ad hoc data itself, often
+without any human intervention.  
+
+The key technical contribution of the work is a multi-phase algorithm
+that automatically infers the structure of an ad hoc data source and
+produces a format specification in the \pads{} data description
+language.  These descriptions can then be used to generate printing
+and parser libraries by a programmer wishing to implement custom data
+transformations, or, alternatively, our software infrastructure will
+push these descriptions through the \pads{} compiler and automatically
+generate fully functional tools that are easily invoked on the
+commandline.

@@ -1,0 +1,84 @@
+%\documentclass[fleqn]{article}
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{Fully Automatic Tool Generation for Ad Hoc Data}
+
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@research.att.com}}
+\authorinfo{David Walker}{
+	   Princeton University}
+       {\mono{dpw@CS.Princeton.EDU}}
+\authorinfo{Peter White}{
+	   Galois Connections}
+       {\mono{peter@galois.com}}
+\authorinfo{Kenny Q. Zhu}{
+	   Princeton University}
+       {\mono{kzhu@CS.Princeton.EDU}}
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+\input{abstract}
+\end{abstract}
+
+\section {Introduction}
+\label{sec:intro}
+\input{intro}
+
+\section{Review:  \pads{} Language and Toolchain}
+\label{sec:review}
+\input{review}
+
+\section{The Inference Algorithm}
+\label{sec:inference}
+\input{algorithm}
+
+\section {Discussion}
+\label{sec:discussion}
+\input{discussion}
+
+
+\section{Conclusions}
+\input{conclusion}
+
+\section*{Acknowledgments}
+
+Our work benefited greatly from thoughts and comments by
+Alex Aiken, David Blei, David Burke, John Launchbury, Chris Ramming, 
+and Vikas ...
+
+This material is based upon work 
+supported by DARPA under grant FA8750-07-C-0014
+and the NSF
+   under grants 0612147 and 0615062.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of DARPA or the NSF.
+
+\bibliographystyle{abbrv}
+\bibliography{pads}
+
+\input{appendix}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+
