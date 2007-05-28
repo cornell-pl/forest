@@ -1,3 +1,174 @@
+Our format inference algorithm is implemented as a series of phases that
+generate and transform an internal format description language we
+refer to simply as the \ir.  The \ir{} is very similar to
+the \ipads{} language we developed and formalized in our previous 
+work~\cite{fisher+:popl06}.  Apart from syntax, the main differences 
+are that the \ir{} omits recursion and function declaration; the former
+being beyond the scope of our current inference techniques, and the 
+latter being unnecessary during the course of the inference algorithm.  
+In addition, for convenience during inference, the scope of dependent 
+variable binding is slightly different, as will be explained below.
+
+\subsection{Preliminary Concepts}
+
+Like all languages in the \pads{} family, the \ir{} is a collection of
+type definitions.  These ``types'' define both the external syntax of
+data formatted on disk and the shape of the internal representations
+that result from parsing.  The end goal of this project depends
+crucially on having both interpretations of these types.  The first
+interpretation is necessary to generate a
+parser and printer for the format.  The second interpretation 
+is necessary in order to define and
+implement useful generic algorithms, such as the xml translator, that
+walk over parsed data in memory.  In the following discussion, we focus on
+explaining the first interpretation, counting on the reader's intuition 
+for the second.  Figure~\ref{fig:ir} presents the syntax of
+selected core features of the \ir{}.
+
+The building blocks of any data description are the base types $b$,
+which may be parameterized by some number of arguments $p$.  Arguments
+may either be constants $c$, which include integers $i$, strings
+$s$ and characters $a$, or variables $x$ bound earlier in the description.
+These base types include a wide range of different sorts of
+integers and strings.  In its initial phases, the inference algorithm
+uses general integer (\cd{Pint}), alphanumeric string (\cd{Palpha})
+and punctuation (\cd{Pother(}$a$\cd{)}) for some punctuation 
+character $a$) types.  In later phases,
+these coarse-grained base types are analyzed, merged and refined, producing
+integers with ranges (\cd{PintRanged(min,max)}),
+integers with known size (\cd{Pint32} or \cd{Pint64}), constant integers
+(\cd{PintConst(}$i$\cd{)}) for some integer $i$), or floating-point
+numbers (\cd{Pfloat}).  Likewise, later stages of our algorithm transform
+alphanumeric strings into arbitrary strings with terminating characters
+(\cd{Pstring(}$a$\cd{)} where $a$ terminates the string), fixed width
+strings (\cd{PstringFW(}$i$\cd{)}) or string constants 
+(\cd{PstringConst(}$s$\cd{)}).  
+In addition to these simple base types, the \ir{} includes a collection of
+somewhat higher-level abstractions commonly found in ad hoc data, specified 
+generally in Figure~\ref{fig:ir} as \cd{ComplexB}.  For example, we 
+have implemented
+base types for ip address, email adresses, urls, XML tags, dates, times and 
+a variety of others.
+
+Complex descriptions are built from simpler ones using a variety of
+type constructors.  Type constructors include
+basic struct types (\cd{struct \{T_1 ... T_k\}}), which indicate a file 
+should contain a sequence of items matching \cd{T_1}, ..., \cd{T_k},
+basic array types (\cd{array T}), which indicate a file should contain
+a sequence of items of arbitrary length, each matching \cd{T},
+and union types (\cd{union  \{T_1 ... T_k\}}), which indicate a file
+should match one of \cd{T_1}, ..., \cd{T_k}.  Once again, initial phases
+of the inference algorithm restrict themselves to one of these three
+sorts of type constructors.  However, later phases of the algorithm
+refine, merge and process these simple types in a variety of ways.
+For example, unions may be transformed into 
+enumerations (\cd{enum \{s_1,...,s_k\}}) or options (\cd{option T}).  In
+addition, later phases of the algorithm 
+bind variables to the results of parsing 
+base types ({\em i.e.}, 
+\cd{x:b(p_1,...,p_k)} as opposed to \cd{b(p_1,...,p_k)})
+and then use these variables to express dependencies between different parts
+of a description.\footnote{Every bound variable is assumed to be distinct
+from every other that appears in a description.  The scope of such variables
+extends far as possible through the description.  Hence any part of the 
+description that refers to data later in the file may refer to an earlier
+bound variable.}  For example, the length of a string (\cd{PstringFW(p)})
+or an array (\cd{ParrayFW(p)}) may depend upon either a constant or
+a variable and likewise for any other parameterized base type.  In
+addition, unions may be refined into dependent switch statements
+(\cd{switch x of \{s_1 => T_1 ... s_k => T_k\}}), where the
+data is described by \cd{T_1}, ..., \cd{T_k} depending on the value
+associated with \cd{x}, be it \cd{s_1}, ..., or \cd{s_k}.
+
+
+\begin {figure*}
+\begin {verbatim}
+characters a                 (a ranges over ASCII characters)
+integers i                   (i is an integer)
+strings s                    (s is a sequence of ASCII characters)
+constants c ::= a | i | s
+variables x
+parameters p :: = x | c
+
+base types
+b ::= Pint                  (generic, unrefined integer)
+   | PintRanged             (integer with min/max values)
+   | Pint32                 (32-bit integer)
+   | Pint64                 (64-bit integer)
+   | PintConst              (constant integer)
+   | Pfloat                 (floating point number)
+   | Palpha                 (alpha-numeric string)
+   | Pstring                (arbitrary characters with terminating character)
+   | PstringFW              (arbitrary characters; fixed width)
+   | PstringConst           (constant string)
+   | Pother                 (punctuation character)
+   | ComplexB               (complex base type defined by regexp; eg: date, time, etc.)
+
+types
+T ::= b(p1,...,pk)          (parameterized base type where nothing depends on it)
+   | x:b(p1,...,pk)         (parameterized base type with underlying value named x)     
+   | struct {T1; ... Tk;}   (fixed sequence of items)
+   | array {T;}             (unbounded length repetition)
+   | arrayFW {T;}[p]        (fixed length repetition) 
+   | union {T1; ... Tk;}    (alternatives)
+   | enum {s1; ... sk;}     (enumeration of string constants)
+   | option {T;}            (type T or nothing)
+   | switch x of {s1 => T1; ... sk => Tk;}  (dependent choice amongst alternatives)
+
+representations of parsed data
+d ::= c         (constant)
+   | in_i(d)    (injection into the ith alternative of a union)
+   | (d1...dk)  (sequence of data items)
+
+\end{verbatim}
+\caption {Selected elements of the \ir{}.  Note: formatting needed.}
+\label{fig:ir}
+\end{figure*}
+
+\subsection{Running Examples}
+
+Figure~\ref{fig:example data} presents tiny fragments of three different ad hoc data files
+we have trained our inference algorithm on.  The first, which we call {\em Crashreporter}, is
+is a Macintosh system file that records information concerning process crashes. The second, called {\em Sirius},
+is an internal AT\&T format used to record phone call provisioning information. The third format
+is generated by an Apache web server to record requests received.  Crashreporter
+will be used as our main running example throughout the paper; the other two will be called upon
+periodically to illustrate some particular aspect of the inference algorithm.
+
+\begin{figure*}
+Crashreporter Log File:
+{\small \begin{verbatim}
+Sat Jun 24 06:38:46 2006 crashdump[2164]: Started writing crash report to: /Logs/Crash/Exit/ pro.crash.log
+Sat Jun 24 06:38:46 2006 crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
+\end{verbatim}
+}
+
+Sirius AT\&T Phone Provisioning Data:
+{\small \begin{verbatim}
+9152272|9152272|1|2813640092|2813640092|0|0||no_ii152272|EDTF_6|0|MARVINS1|UNO|10|1000295291
+9152261|9152261|1|0|0|0|0||no_ii152261|EDTF_1|0|jlaird1|UNO|EDTF_6|1001390400|EDTF_OS_10|1001476801
+\end{verbatim}
+}
+
+Apache Web Server Logs:
+{\small \begin{verbatim}
+68.142.249.179 - - [13/Dec/2005:19:41:48 -0800] "GET /bridge-loan.html HTTP/1.0" 404 298 "-" \
+  "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)"
+69.227.61.241 - - [13/Dec/2005:19:44:42 -0800] "GET / HTTP/1.1" 403 4251 "-" \
+  "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8) Gecko/20051111 Firefox/1.5"
+\end{verbatim}
+}
+\caption {Example data. 
+Data records too long to be formatted on a single line are terminated with '\' and extended to the next line.}
+\label{fig:example data}
+\end{figure*}
+
+Figure \ref{fig:crashreporter:ir} presents a hand-writtern description
+of the crashreporter file in the \ir{} syntax.
+
+\input{crashreporter-ir}
+
+\paragraph {notes.}
 this section reviews the pads syntax and semantics; 
 remind about details of how PADS works and PADS toolchain;
 introduces the
