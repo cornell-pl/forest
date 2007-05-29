@@ -28,3 +28,7 @@ yum.log           -- Log files from Linux /var/log on tux.cs.princeton.edu
 netstat           -- produced from netstat tool: shows open network connections 
 netstat -an       -- as above, but with ip addresses rather than domain names
 lsof              -- output of lsof tool (on Kathleen's mac)
+crashreport.log(.kzhu) -- Log files from Mac OS X to record application crashes, located
+			  in /private/var/log/. Each entry consists of date and time of
+			  the crash, daemon name (crashreporterd or crashdump),
+			  the application process that crashed and a short message.
