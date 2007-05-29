@@ -1,0 +1,182 @@
+\documentclass[fleqn]{article}
+\usepackage{code}
+\newcommand{\struct}[1]{{\tt struct}\{#1\}}
+\newcommand{\union}[1]{{\tt union}\{#1\}}
+\newcommand{\enum}[1]{{\tt enum}\{#1\}}
+\newcommand{\parray}[1]{{\tt array}\{#1\}}
+\newcommand{\arrayFW}[2]{{\tt arrayFW}\{#1\}[#2]}
+\newcommand{\switch}[2]{{\tt switch}(#1)\{#2\}}
+\newcommand{\option}[1]{{\tt option}\{#1\}}
+\newcommand{\goto}{\Rightarrow}
+\begin{document}
+\section{Rewriting Rules}
+\subsection*{Data independent rules}
+\begin{enumerate}
+\item Singleton structs and unions.
+\[
+\struct{T} \goto T
+\]
+\[
+\struct{} \goto \bot 
+\]
+\[
+\union{T} \goto T
+\]
+\[
+\union{} \goto \bot 
+\]
+
+\item Struct and union clean-up
+\[
+\struct{T_1; \ldots; T_i; \bot; T_j; \ldots; T_n} \goto
+\struct{T_1; \ldots; T_i; T_j; \ldots; T_n} 
+\] 
+\[
+\struct{T_1; \ldots; T_i; \emptyset; T_j; \ldots; T_n} \goto
+\struct{T_1; \ldots; T_i; T_j; \ldots; T_n} 
+\] 
+
+\[
+\union{T_1; \ldots; T_i; \bot; T_j; \ldots; T_n} \goto
+\union{T_1; \ldots; T_i; T_j; \ldots; T_n} 
+\] 
+\[
+\union{T_1; \ldots; T_i; \emptyset; T_j; \ldots; T_n} \goto
+\union{T_1; \ldots; T_i; T_j; \ldots; T_n; \emptyset} 
+\]
+\noindent where $\emptyset$ means {\tt Pempty}.
+
+\item Union to option
+\[
+\union{T; \emptyset} \goto \option{T}
+\]
+\[
+\union{\emptyset; T} \goto \option{T}
+\]
+
+\item Unnest structs and unions
+\begin{eqnarray*}
+&& \struct{pretypes; \struct{T_1; \ldots; T_n}; posttypes} \goto \\
+&& \struct{pretypes; T_1; \ldots; T_n; posttypes}
+\end{eqnarray*}
+\begin{eqnarray*}
+&&\union{pretypes; \union{T_1; \ldots; T_n}; posttypes} \goto \\
+&&\union{pretypes; T_1; \ldots; T_n; posttypes}
+\end{eqnarray*}
+
+\item Uniform struct to fixed-length array
+\[
+\struct{T_1; \ldots; T_n} \goto \arrayFW{T_1}{n}
+\]
+\noindent if $T_1 = \ldots = T_n$ and $n>=3$.
+
+\item Common prefix or postfix in union branches
+\begin{eqnarray*}
+&&\union{\struct{T; posttypes_1}; \struct{T, posttypes_2}} \goto \\
+&&\struct{T; \union{\struct{posttypes_1}; \struct{posttypes_2}}}
+\end{eqnarray*}
+\begin{eqnarray*}
+&&\union{\struct{T; posttypes}; T} \goto \\
+&&\struct{T; \union{\struct{posttypes}; \emptyset}}
+\end{eqnarray*}
+\begin{eqnarray*}
+&&\union{\struct{pretypes_1; T}; \struct{pretypes_2; T}} \goto \\
+&&\struct{\union{\struct{pretypes_1}; \struct{pretypes_2}}; T}
+\end{eqnarray*}
+\begin{eqnarray*}
+&&\union{\struct{pretypes; T}; T} \goto \\
+&&\struct{\union{\struct{pretypes}; \emptyset}; T}
+\end{eqnarray*}
+
+\item {Get floating number number}
+\[
+\union{{\tt Pint}; {\tt Pfloat}} \goto {\tt Pfloat}
+\]
+
+\end{enumerate}
+
+\subsection*{Data dependent rules}
+\begin{enumerate}
+\item Get floating point number
+\begin{eqnarray*}
+&& \struct{pretypes; {\tt Pint}(x); {\tt PstringConst ('.')}; {\tt Pint}(y); posttypes} \goto \\
+&& \struct{pretypes; {\tt Pfloat}; posttypes}
+\end{eqnarray*}
+\noindent if $y \ge 0$.
+\begin{eqnarray*}
+&& \struct{pretypes; {\tt Pint}(x); \option{\struct{{\tt PstringConst ('.')}; {\tt Pint}(y)}}; posttypes} \goto \\
+&& \struct{pretypes; {\tt Pfloat}; posttypes}
+\end{eqnarray*}
+\noindent if $y \ge 0$.
+
+\item Discover negative numbers
+\begin{eqnarray*}
+&& \struct{pretypes; {\tt Pother}; {\tt PstringConst}('-'); {\tt Pint}(x); posttypes} \goto \\
+&& \struct{pretypes; {\tt Pother}; {\tt Pint}; posttypes}
+\end{eqnarray*}
+\noindent if $x \ge 0$.
+\begin{eqnarray*}
+&& \struct{pretypes; {\tt Pother}; {\tt PstringConst}('-'); {\tt Pfloat}(x); posttypes} \goto \\
+&& \struct{pretypes; {\tt Pother}; {\tt Pfloat}; posttypes}
+\end{eqnarray*}
+\noindent if $x \ge 0$.
+\begin{eqnarray*}
+&& \struct{pretypes; {\tt Pother}; \option{{\tt PstringConst}('-')}; {\tt Pint}(x); posttypes} \goto \\
+&& \struct{pretypes; {\tt Pother}; {\tt Pint}'; posttypes}
+\end{eqnarray*}
+\noindent if $x \ge 0$.
+\begin{eqnarray*}
+&& \struct{pretypes; {\tt Pother}; {\tt \option{PstringConst}('-')}; {\tt Pfloat}(x); posttypes} \goto \\
+&& \struct{pretypes; {\tt Pother}; {\tt Pfloat}'; posttypes}
+\end{eqnarray*}
+\noindent if $x \ge 0$.
+
+\item Unique base types to constant
+\[
+{\tt Pint}(x) \goto {\tt PintConst(c)}~~ {\rm if}~~ x = c.
+\]
+\[
+{\tt Palpha}(x) \goto {\tt PstringConst(c)}~~ {\rm if}~~ x = c.
+\]
+\[
+{\tt Pstring}(x) \goto {\tt PstringConst(c)}~~ {\rm if}~~ x = c.
+\]
+\[
+{\tt Pother}(x) \goto {\tt PstringConst(c)}~~ {\rm if}~~ x = c.
+\]
+
+
+\item Combine adjacent constant strings
+\begin{eqnarray*}
+&& \struct{pretypes; {\tt PstringConst (c_1)}; {\tt PstringConst(c_2)}; posttypes} \goto \\
+&& \struct{pretypes; {\tt PstringConst (c_1 + c_2)}; posttypes} 
+\end{eqnarray*}
+
+\item Refine enums and ranges
+\[
+{\tt Pstring}(x) \goto \enum{s_1; \ldots; s_k} ~~
+{\rm if}~ x~ \in \{s_1, \ldots, s_l\}.
+\]
+\[
+{\tt Pint}(x) \goto {\tt Pint32} ~~
+{\rm if}~ 0 \le x~ < 2^{32}.
+\]
+\[
+{\tt Pint}(x) \goto {\tt Pint64} ~~
+{\rm if}~ 2^{32} \le x~ < 2^{64}.
+\]
+
+\[
+{\tt Pint}(x) \goto {\tt PintRanged}(min,~ max) ~~
+{\rm if}~ min \le x~ \le max.
+\]
+\item Union to switch
+\begin{eqnarray*}
+&&\struct{pretypes; b(x); midtypes; \union{T_1; \ldots; T_n}; posttypes} \goto \\
+&&\struct{pretypes, b(x); midtypes; \switch{x}{s_1 \goto T_1; \ldots; s_n \goto T_n}; posttypes}
+\end{eqnarray*}
+\noindent where $\forall i \in [i,~ n],~ inj_i(\union{T_1; \ldots; T_n}) {\rm implies}~ x = s_i$.
+
+\end{enumerate}
+
+\end{document}
