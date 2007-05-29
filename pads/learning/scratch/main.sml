@@ -20,8 +20,8 @@ structure Main : sig
     let val srcFile = hd ( !srcFiles )
         val { dir = dataDir, file = dataFile } = OS.Path.splitDirFile srcFile
     in if ( !goldenRun = true )
-       then let val strm = TextIO.openOut "gen/GoldComplexity"
-                val rep  = goldenReport ( dataFile )
+       then let val strm      = TextIO.openOut "gen/GoldComplexity"
+                val rep       = goldenReport ( dataFile )
             in ( print rep
                ; TextIO.output ( strm, rep )
                ; TextIO.closeOut strm

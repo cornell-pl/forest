@@ -236,8 +236,9 @@ structure Model = struct
              let val f'     = measure f
                  val b'     = measure b
                  val l'     = measure l
+                 val avglen : real = avgInts ( map #2 ls )
                  val tcomp  = sumComps [ constructorComp (*this is for the Pstruct *)
-				       , constructorComp (*this is for RArray *)
+				       , constructorComp (*this is for PArray *)
 				       , constructorComp (*this is for the sep *)
 				       , constructorComp (*this is for the term *)
 				       , Choices 3 (*card 3 for Pstruct(first, RArray body, last) *)	
@@ -248,7 +249,7 @@ structure Model = struct
                                        , getTypeComp b'
                                        ]
                  val acomp  = sumComps [ getAtomicComp f'
-                                       , getAtomicComp l'
+                                       , multCompR avglen ( getAtomicComp l' )
                                        , getAtomicComp b'
                                        ]
                  val dcomp  = sumComps [ getDataComp f'
@@ -295,6 +296,7 @@ structure Model = struct
          | RArray ( aux, osep, oterm, body, olen, ls ) =>
 	     (*TODO: we are not looking at lengths here now*)
              let val maxlen           = maxInt (map #1 ls)
+                 val avglen : real    = avgInts (map #1 ls)
                  val mBody            = measure body
                  val { tc = tbody, adc = abody, dc = dbody } = getComps mBody
 		(* Do not count the complexity of len, term and sep as these are desirable info *)
@@ -310,7 +312,7 @@ structure Model = struct
 		 val tsep = case osep of NONE => unitComp | _ => zeroComp
 		 val tterm = case oterm of NONE => unitComp | _ => zeroComp
                  val tcomp = sumComps [ constructorComp, tbody, tlen, tsep, tterm ]
-                 val acomp = abody
+                 val acomp = multCompR avglen abody
                  val dcomp = dbody
                  val comps = { tc = tcomp, adc = acomp, dc = dcomp }
                  fun updateRArray ( comps : TyComp ) =

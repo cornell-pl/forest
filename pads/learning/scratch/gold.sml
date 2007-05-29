@@ -10,6 +10,7 @@ structure Gold = struct
     open Trans
     open Yumtxt
     open Populate
+    open Model
 
     exception Bust
 
@@ -63,9 +64,13 @@ structure Gold = struct
         if hasGold descname
         then let val goldenTy : Ty  = getGolden descname
                  val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
+                 val measured : Ty  = measure populated
                  val ()             = print "\n"
                  val nbits : int    = OS.FileSys.fileSize ( "data/" ^ descname ) * 8
-             in "Golden complexity =\n" ^ showTyCompNormalized nbits ( getComps populated )
+                 val goldtystr      = TyToString ( measured )
+             in "Golden complexity =\n" ^
+                showTyCompNormalized nbits ( getComps populated ) ^
+                goldtystr
              end
         else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
 

@@ -76,6 +76,7 @@ struct
      in
         String.translate escapeChar s
      end
+
     (* this function checks if a string is a valid C identifier *)
     fun isCIdentifier s =
       let
@@ -90,4 +91,11 @@ struct
 		else isWord (String.extract (s, 1, NONE))
 	else false
       end
+
+     fun sumInts ( ns : int list ) : LargeInt.int = 
+         foldl ( fn ( x : int, y : LargeInt.int ) => y + Int.toLarge x ) 0 ns
+
+     fun avgInts ( ns : int list ) : real = 
+        ( Real.fromLargeInt ( sumInts ns ) ) / ( Real.fromInt ( length ns ) )
+
 end

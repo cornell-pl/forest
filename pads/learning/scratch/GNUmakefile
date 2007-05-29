@@ -202,9 +202,8 @@ define summary
 make --directory=gen $(*F)-accum
 #   preserve the gen directory
 cp -R gen/* output/$(*F)
-# 6. run accumulator program on input data
-gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
-@echo "\n\nAccumulator program run\n\n"
+# 6. run accumulator program on input data, defend against error return
+runaccum $(*F)
 # 7. extract number of records correctly parsed and number of errors
 ./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # Get the golden complexity (if there is one)
@@ -233,7 +232,7 @@ cat gen/Complexity >>gen/Report
 if [ -e silver/$(*F)/Complexity ]; then echo "Silver complexity scores" >>gen/Report; fi
 if [ -e silver/$(*F)/Complexity ]; then cat silver/$(*F)/Complexity >>gen/Report; fi
 if [ -e gen/GoldComplexity ]; then echo >>gen/Report; fi
-if [ -e gen/GoldComplexity ]; then cat gen/GoldComplexity >>gen/Report; fi
+if [ -e gen/GoldComplexity ]; then head -n 2 gen/GoldComplexity >>gen/Report; fi
 cat gen/ParseReport >>gen/Report
 echo >>gen/Report
 cat gen/Timing >>gen/Report

@@ -8,5 +8,5 @@ val print_report = false (* prints out a report summarizing information in Main.
 val reparse_data = false (* try to reparse the data with the simplified IR *)
 val print_levels = false (* report each level in TANE *)
 val print_verbose = false (* print verbose information *)
-val print_complexity = false (*print complexity info *)
+val print_complexity = true (*print complexity info *)
 end

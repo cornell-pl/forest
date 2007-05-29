@@ -140,6 +140,24 @@ struct
         |  RArray (a,sep,term,body,len,lengths) => a
         |  Poption (a, _)               => a
 
+    exception NotParray
+    fun avgParrayBodyLength ( ty : Ty ) : real =
+        case ty of
+               Parray (a, x) =>
+                 let val lens = map #2 (#lengths x)
+                 in avgInts lens
+                 end
+             | _ => raise NotParray
+
+    exception NotRArray
+    fun avgRArrayBodyLength ( ty : Ty ) : real =
+        case ty of
+               RArray (a, sep, term, body, len, lengths ) =>
+                 let val lens = map #2 lengths
+                 in avgInts lens
+                 end
+             | _ => raise NotRArray
+
     fun setAuxInfo ty aux = 
 	case ty 
         of Base (a,t)                   => Base(aux, t)
