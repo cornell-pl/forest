@@ -196,11 +196,32 @@ case ty of
 			| RefinedBase(_, _, nil) => false
 			| _ => true ) tylist)
 | _ => ty
-
+(* removed unused branches of sums *)
+and unused_branches ty =
+case ty of 
+  Punion(aux, tylist) => 
+  let
+  	fun isUnused(ty) = ( 
+  	  case ty of
+	    Base(_, nil) => true
+	    | RefinedBase(_, _, nil) => true
+  	    | _ => false)
+  	fun remove_unused() = 
+  	let
+  		val (unused,used) = List.partition isUnused tylist
+  		val strs = map TyToString unused
+  		(*val _ = app (fn x=> print ("unused:" ^ x)) strs*)
+  	in
+  		used
+  	end
+  in
+  	cleanupUnion(Punion (aux, remove_unused()))
+  end
+| _ => ty
 (* elements of a sum are check to see if they share a common prefix (ie tuples with
 a common prefix, or a common postfix) these elements are then brought out of a sum
 and a tuple is created *)
-(* the token coverage in the aux info may not be correct after this operation *)
+(* TODO: the token coverage in the aux info may not be correct after this operation *)
 and prefix_postfix_sums ty : Ty =
 case ty of
   Punion (a, tylist) =>
@@ -386,28 +407,6 @@ and adjacent_consts cmos ty =
   	(cmos, Pstruct(a, newtylist))
     end
 | _ => (cmos, ty)
-(* removed unused branches of sums *)
-and unused_branches ty =
-case ty of 
-  Punion(aux, tylist) => 
-  let
-  	fun isUnused(ty) = ( 
-  	  case ty of
-	    Base(_, nil) => true
-	    | RefinedBase(_, _, nil) => true
-  	    | _ => false)
-  	fun remove_unused() = 
-  	let
-  		val (unused,used) = List.partition isUnused tylist
-  		val strs = map TyToString unused
-  		(*val _ = app (fn x=> print ("unused:" ^ x)) strs*)
-  	in
-  		used
-  	end
-  in
-  	cleanupUnion(Punion (aux, remove_unused()))
-  end
-| _ => ty
 (* rule to convert a normal Parray to a refined RArray *)
 and refine_array ty = 
 	case ty of 
@@ -763,7 +762,7 @@ and struct_to_array ty =
 	  end
     | _ => ty
 
-(* find negative number (both in and float)  rule (Phase one rule) *)
+(* find negative number (both int and float)  rule (Phase one rule) *)
 and find_neg_num ty =
 	case ty of
 	Pstruct (a, tylist) =>

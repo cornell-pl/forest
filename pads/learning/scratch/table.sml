@@ -90,16 +90,19 @@ structure Table = struct
 		    let
 			val pairs = map (genTable totalrecords) l
 			val (recNoSets, tables) =  (ListPair.unzip pairs)
+			(*
+			val _ = (print ((Atom.toString (getLabel a)) ^":\n"); 
+				printIntSet (hd recNoSets))
+			val _ = printTy (hd l)
+			*)
 		    in
-			(* the list of recNoSets should be the same at this point as this is a struct *)
-			(hd recNoSets, List.foldr appendtab (nil, nil) tables)
+			List.foldr appendsettab (IntSet.empty, (nil, nil)) pairs
 		    end
 		(* for Punion need to add a col for branching choices *)
 		| Punion (a, l) => 
 			let 
 			  val pairs = (map (genTable totalrecords) l)
 			  val (recNoSets, tables) =  (ListPair.unzip pairs)
-			  (*TODO: exception with take *)
 			  (* given a list of recNoSets and a record number, return
 			  the index of the infertable that contains that record starting from 1 or NONE *)
 			  fun g sets index n = 

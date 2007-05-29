@@ -530,4 +530,14 @@ structure Common = struct
 
 
 	fun mergeTyForArray (ty1, ty2) = mergeTy (ty1, (reIndexRecNo ty2 (getCoverage ty1)))
+
+	fun printIntSet intset =
+	  let
+	    val vals = IntSet.listItems intset
+	    fun listToString l =
+		case l of
+		nil => "\n"
+		| x::tail => ((Int.toString x) ^ " " ^ (listToString tail))
+	  in print (listToString vals)
+	  end
 end
