@@ -33,6 +33,7 @@ structure Tokens = struct
     val numWhiteChars  : LargeInt.int  = 4 (* Space, tab, \n and \r *)
     val numXMLChars    : LargeInt.int  = numAlphaChars
     val numHexChars    : LargeInt.int  = 10+6
+    val numOtherChars  : LargeInt.int  = 256 - numStringChars - numWhiteChars
     val compXML        : Complexity    = int2Comp numXMLChars
 
     (* Some analysis of the structure of tokens from tokens.lex: *)
