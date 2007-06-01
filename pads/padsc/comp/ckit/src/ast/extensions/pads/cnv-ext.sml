@@ -4217,7 +4217,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		       |  (SOME p, NONE) => SOME p
 		       |  (SOME p, SOME q) => (PE.error("Multiple "^which^" clauses"); SOME p)
 
-                 val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt, endedXOpt, skipXOpt,
+                 val (sepXOpt, termXOpt, noSepIsTerm, lastXOpt, endedXOpt, skipXOpt, longestXOpt,
 		      sepTermDynamicCheck, scan2Opt, stdeclSs, stparams, stinitInfo, stcloseSsFun) = 
                       let fun getFuns (which, exp) =
 			   let val (okay, expTy) = getExpEqualTy(exp, CTstring :: CTintTys,
@@ -4242,20 +4242,21 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			       
 			  fun doOne (constr:pcexp PX.PConstraint) = 
                               case constr 
-                              of PX.Sep   exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE, NONE, NONE)
-                              |  PX.Term  (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE, NONE, NONE, NONE)
-                              |  PX.Term  PX.noSep => (NONE, NONE, SOME (), NONE, NONE, NONE)
-                              |  PX.Last  exp => (NONE, NONE, NONE, SOME exp, NONE, NONE)
-                              |  PX.Ended exp => (NONE, NONE, NONE, NONE, SOME exp, NONE)
-                              |  PX.Skip  exp => (NONE, NONE, NONE, NONE, NONE, SOME exp)
-			      |  PX.Longest   => (NONE, NONE, NONE, NONE, SOME PL.longestX, NONE)
+                              of PX.Sep   exp => (SOME (getFuns("Separator", exp)), NONE, NONE, NONE, NONE, NONE, NONE)
+                              |  PX.Term  (PX.Expr exp) =>(NONE, SOME( getFuns("Terminator", exp)), NONE, NONE, NONE, NONE, NONE)
+                              |  PX.Term  PX.noSep => (NONE, NONE, SOME (), NONE, NONE, NONE, NONE)
+                              |  PX.Last  exp => (NONE, NONE, NONE, SOME exp, NONE, NONE, NONE)
+                              |  PX.Ended exp => (NONE, NONE, NONE, NONE, SOME exp, NONE, NONE)
+                              |  PX.Skip  exp => (NONE, NONE, NONE, NONE, NONE, SOME exp, NONE)
+			      |  PX.Longest   => (NONE, NONE, NONE, NONE, SOME PL.longestX, NONE, SOME PL.longestX)
 			  val constrs = List.map doOne constraints
-                          fun mergeAll ((a, b, c, d, e, f), (ra, rb, rc, rd, re, rf)) = 
+                          fun mergeAll ((a, b, c, d, e, f,g), (ra, rb, rc, rd, re, rf, rg)) = 
 			      (mergeOpt "Psep"  (a, ra), mergeOpt "Pterm" (b, rb), 
 			       mergeOpt "Pterm == Pnosep" (c, rc), 
-			       mergeOpt "Plast" (d, rd), mergeOpt "Pended" (e, re), mergeOpt "Pskip" (f, rf))
-			  val (sepXOpt, termXOpt, termNoSepXOpt, lastXOpt, endedXOpt, skipXOpt ) = 
-			           List.foldr mergeAll (NONE, NONE, NONE, NONE, NONE, NONE) constrs
+			       mergeOpt "Plast" (d, rd), mergeOpt "Pended" (e, re), mergeOpt "Pskip" (f, rf),
+			       mergeOpt "Plongest" (g,rg))
+			  val (sepXOpt, termXOpt, termNoSepXOpt, lastXOpt, endedXOpt, skipXOpt, longestXOpt ) = 
+			           List.foldr mergeAll (NONE, NONE, NONE, NONE, NONE, NONE, NONE) constrs
 
 			  val () = case (termXOpt, termNoSepXOpt) of 
 			             (SOME _, SOME _) => PE.error ("Multiple Pterm clauses in array "^name)
@@ -4441,7 +4442,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      |  (_, _) => []
 			      end
 		      in
-			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt, endedXOpt, skipXOpt,
+			  (sepXOpt, termXOpt, isSome termNoSepXOpt, lastXOpt, endedXOpt, skipXOpt, longestXOpt,
 			   sepTermDynamicCheck, scan2Opt, declSs, params, initSs, closeSsFun)
                       end
 		 val _ = popLocalEnv()
@@ -4483,6 +4484,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				in
 				    lastX @ endedX @ skipX @ longestX 
 				end
+		 val isLongest = Option.isSome longestXOpt
 		 val arrayInfo = TyProps.ArrayInfo {baseTy = {tyCon= baseTyName, args = args},
 						    delims = {sep=sepInfo, term=termInfo, preds=predInfo},
 						    size   = sizeInfo,
@@ -4712,6 +4714,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     PT.IfThen(amCheckingBasicE NONE, 
 			      PT.Compound[(* if am checking *)
 			        PT.IfThen(PT.Id "offset",
+				    if isLongest then 
+					  PT.Compound (
+					    PL.restoreS(PT.Id pads, readName)
+					   @ breakSs)
+				    else
 				    BU.recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, 
 						      readName,"", [], false, 
 						      case endedXOpt of SOME(_) => NONE
@@ -4719,9 +4726,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                             PT.Compound([ (* else error in reading separator *)
 			     P.mkCommentS("Error reading separator")]
 			     @(if (Option.isSome endedXOpt)  andalso useChkPts then (PL.commitS(PT.Id pads, readName)) else [])
-			     @(BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, 
-						 "Missing separator", [], true, SOME(esRetX)) ::
-			        breakSs)))])]
+			     @(if isLongest then PL.restoreS(PT.Id pads, readName) (* separator error: array ended *)
+				else [BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, true, readName, 
+							  "Missing separator", [], true, SOME(esRetX))])
+			     @  breakSs ))])]
 		      | (SOME(termX, scan2TermX, _, _, _, _, _, _, _), _) => 
                        [P.mkCommentS("Array not finished; read separator with recovery to terminator"),
                          PT.Compound([
