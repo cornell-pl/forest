@@ -1,10 +1,39 @@
-\subsection*{Data independent rules}
-$T_{punc}$ is any type that describes a punctuation or white space.
-$T\setof{X}$ means a type $T$ where $X$ is a {\em bag} of data representations
+The purpose of the structure refinement is to improve
+the candidate structure produced by the structure discovery phase. We
+formulate the structure refinement problem as an optimization problem. The
+objective of the problem is, given an initial structure (treated as
+an initial solution in some solution space), find best possible structure
+in its neighborhood for which the informational theoretic scoring function
+is optimized.
+
+In order to move around in the solution space, we define a number of structure
+transitions in the form of rewriting rules. The general form of the rule is
+\[T \goto T', ~~ {\rm if~ some~ constraint~} c(T)~ {\rm is~ satisfied,}\]
+where $T$ is a type, or sub-structure, and $T'$ is the type after the
+transition.  Some rules are unconditional and thus free of constraints.
+There are two kinds of rewriting rules: data-independent rules which
+transform a type based on the syntax structure itself; and data-dependent
+rules which transform a type based on some condition of the data values
+parsed by this type. Currently, we only consider unary constraints on a base
+type in $T$ (such as a base type having unique value or an enumeration of constant
+values) or binary constraints on two base types in $T$ (e.g. in the switched
+union case). The data independent rules mainly aim at reducing the complexity
+of the structure while the data dependent rules seek to indentify data
+dependency and establish relationships between different parts 
+of the structure.
+
+In what follows, we present a selection of
+data independent and data dependent rules used in the refinement stage.
+Some of the rules have been omitted or simplified for succinctness.
+We begin with a few definitions and present the rules in various groups.
+
+Let $T_{punc}$ be any type that describes a punctuation or white space.
+Let $T\setof{X}$ be a type $T$ where $X$ is a {\em bag} of data representations
 parsed by $T$.
 
+\subsubsection*{Data independent rules}
 \begin{enumerate}
-\item Singleton structs and unions. \\
+\item Singleton structs and unions \\
 $
 \irstruct{T} \goto T
 $\\ \\
@@ -16,7 +45,7 @@ $
 $\\ \\
 $
 \irunion{} \goto \Pvoid 
-$\\ \\
+$ 
 
 \item Struct and union clean-up\\
 $
@@ -33,7 +62,7 @@ $\\ \\
 $
 \irunion{pre\_types; \Pempty; post\_types} \goto \\
 \sskip \irunion{pre\_types; post\_types; \Pempty} 
-$\\ \\
+$
 
 \item Union to option\\
 $
@@ -41,7 +70,7 @@ $
 $\\ \\
 $
 \irunion{\Pempty; T} \goto \iroption{T}
-$\\ \\
+$
 
 \item Unnest structs and unions\\
 $
@@ -51,14 +80,13 @@ $\\ \\
 $
 \irunion{pre\_types; \irunion{mid\_types}; post\_types} \goto \\
 \sskip \irunion{pre\_types; mid\_types; post\_types}
-$\\ \\
+$
 
 \item Uniform struct to fixed-length array\\
 $
 \irstruct{T_1; \ldots; T_n} \goto \irarrayFW{T_1}{n}
 $\\ 
 \noindent if $n \ge 3$ and $\forall i \in [1,~ n],~ j \in [1,~ n]:~ T_i = T_j$.
-\\
 
 \item Common prefix or postfix in union branches \\
 $
@@ -69,7 +97,7 @@ $
 $\\ \\
 $
 \irunion{\irstruct{T; post\_types}; T} \goto\\
-\sskip \irstruct{T; \irunion{\irstruct{post\_types}; \Pempty}}
+\sskip \irstruct{T; \iroption{\irstruct{post\_types}}}
 $\\ \\
 $
 \irunion{\irstruct{pre\_types_1; T}; \\
@@ -79,8 +107,15 @@ $
 $\\ \\
 $
 \irunion{\irstruct{pre\_types; T}; T} \goto \\
-\sskip \irstruct{\irunion{\irstruct{pre\_types}; \Pempty}; T}
-$\\ \\
+\sskip \irstruct{\iroption{\irstruct{pre\_types}}; T}
+$
+
+\item Combine adjacent constant strings \\
+$
+\irstruct{pre\_types; {\tt PstringConst (c_1)}; \\
+\sskip {\tt PstringConst(c_2)}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; {\tt PstringConst (c_1 \wedge c_2)}; post\_types} 
+$
 
 \item {Get floating number number}\\
 $
@@ -88,7 +123,7 @@ $
 $ 
 \end{enumerate}
 
-\subsection*{Data dependent rules}
+\subsubsection*{Data dependent rules}
 \begin{enumerate}
 \item Get floating point number \\
 $
@@ -104,7 +139,7 @@ $
 \sskip {\tt Pint}\setof{Y}}}; post\_types} \goto \\
 \sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
 $ \\
-\noindent if $\forall y \in Y:~ y \ge 0$. \\
+\noindent if $\forall y \in Y:~ y \ge 0$. 
 
 \item Discover negative numbers\\
 $
@@ -133,7 +168,7 @@ $
 \sskip {\tt Pfloat}(x); post\_types} \goto \\
 \sskip  \irstruct{pre\_types; T_{punc}; {\tt Preal}; post\_types}
 $\\
-\noindent if $\forall x \in X:~ x \ge 0$.\\
+\noindent if $\forall x \in X:~ x \ge 0$.
 
 \item Base type with unique values to constant \\
 $
@@ -155,14 +190,6 @@ $
 {\tt Pother}\setof{X} \goto {\tt PstringConst(c)} \\ 
 $
 {\rm if} $\forall x \in X:~ x = c$.
-\\ \\
-
-\item Combine adjacent constant strings \\
-$
-\irstruct{pre\_types; {\tt PstringConst (c_1)}; \\
-\sskip {\tt PstringConst(c_2)}; post\_types} \goto \\
-\sskip \irstruct{pre\_types; {\tt PstringConst (c_1 \wedge c_2)}; post\_types} 
-$\\ \\
 
 \item Refine enums and ranges \\
 $
@@ -184,7 +211,6 @@ $
 {\tt Pint}\setof{X} \goto {\tt PintRanged}(min,~ max) \\
 $
 {\rm if}~ $\forall x \in X:~ min \le x~ \le max$.
-\\ \\
 
 \item Union to switch \\
 $
@@ -197,5 +223,204 @@ $\\
 \noindent where $z$ is a fresh variable, and there exists a permutation $\Pi$, s.t.
 $\forall i \in [1,~ card(X)]$, $\Pi(tag(X(i)))=tag(Y(i))$, and 
 $tag(in_j(d)) = j$.
-
 \end{enumerate}
+
+The refinement process consists of three sequential phases. Each phase takes
+an input structure and output a new structure to the next phase. In Phase One, 
+only the data independent rules are used to rapidly reduce the initial structure
+to a simpler, manageable sized new structure. In Phase Two, 
+only the data dependent rules are used. At the beginning of the phase, from the
+input structure, a number of data dependency tables are computed where each
+column of the tables represent the data values parsed by a particular base type 
+in the structure with some extra columns representing auxilary informations such as
+array sizes and union branching ids. And we applied the TANE algorithm \cite{TANE-HKPT99}
+to identify unary and binary constraints among the columns and store these constraints
+in a constraint map. A rule is applied if the conditions are validated successfully
+against the constraint map. In Phase Three, a set of the data independent rules
+(such as combining adjacent constant strings) are applied again to 
+further optimize the structure. 
+
+In each phase, a recursive, depth-first, greedy local search descent strategy is used,
+that is, for each type $T$, its children are refined before it is refined. And during
+the refinement of $T$, in each iteration, only the rule that produces a new $T'$ with
+the lowest score is applied to $T$, and the iteration continues until the
+score cannot be reduced any further. At that time, $T$ is said to be {\em stable} with
+respect to this phase. Fig. \ref{fig:refinement} give a generic abstract algorithm 
+for the each of the refinement phase. We write $r(T)$ to mean the result of applying
+rule $r$ to $T$.
+
+\begin{figure}
+\begin{code}
+Refine (T, Rules)
+\{
+  if T is not base type 
+  \{
+    foreach c in children(T)
+      refine (c, Rules)
+  \}
+  let minScore = MAX_INT
+  do \{
+    let minRule = \{\}
+    foreach r in Rules 
+    \{
+      let score(T, r) be the score of r(T) 
+      if score(T, r) < minScore
+      \{
+        minScore = score(T, r)
+        minRule = r
+      \}
+    \}
+    if minRule != \{\} then T = minRule(T)
+  \} while minRule != \{\}
+\}
+\end{code}
+\caption{The generic refinement procedure in a phase}
+\label{fig:refinement}
+\end{figure}
+
+To illustrate the refinement process a bit more concretely, let us look at how
+the system refines a part of the initial structure from crashreporter.log example.
+Let us zoom into a portion of the IR as follows. The information inside the
+parenthese after each node represents the id of the node, number of
+chunks covered by this node, and the score for this node.
+
+\begin{code}
+Pstruct(Id = BTy_57 292, 156487.759b)
+  Punion(Id = BTy_26 292, 56076.537b)
+    Pstruct(Id = BTy_25 290, 55785.983b)
+      [Other](:) (Id = BTy_12 290, 2195.875b);
+      [White] (Id = BTy_13 290, 585.044b);
+      [String] (Id = BTy_14 290, 13055.044b);
+      [White] (Id = BTy_15 290, 585.044b);
+      [String] (Id = BTy_16 290, 12185.044b);
+      [White] (Id = BTy_17 290, 585.044b);
+      [String] (Id = BTy_18 290, 8705.044b);
+      [White] (Id = BTy_19 290, 585.044b);
+      [String] (Id = BTy_20 290, 10445.044b);
+      [White] (Id = BTy_21 290, 585.044b);
+      [String] (Id = BTy_22 290, 3485.044b);
+      [Other](:) (Id = BTy_23 290, 2195.875b);
+      [White] (Id = BTy_24 290, 585.044b);
+    End Pstruct;
+    Pstruct(Id = BTy_35 2, 283.509b)
+    [Other](:) (Id = BTy_27 2, 20.154b);
+      [White] (Id = BTy_28 2, 9.044b);
+      [String] (Id = BTy_29 2, 77.044b);
+      [White] (Id = BTy_30 2, 9.044b);
+      [String] (Id = BTy_31 2, 29.044b);
+      [White] (Id = BTy_32 2, 9.044b);
+      [String] (Id = BTy_33 2, 113.044b);
+      [White] (Id = BTy_34 2, 9.044b);
+    End Pstruct;
+  End Punion;
+  ...
+End Pstruct
+\end{code}
+
+In Phase One, the first node that can be processed is node {\tt BTy\_26}
+where only rule 6 "common prefix in union" can be applied. As a result of that
+rewriting, the new structure with a better score is:
+
+\begin{code}
+Pstruct(Id = BTy_57 292, 156446.2b)
+  Pstruct(Id = BTy_110 292, 56034.973b)
+    [Other](:) (Id = BTy_12 292, 2210.984b);
+    [White] (Id = BTy_13 292, 589.044b);
+    [String] (Id = BTy_14 292, 13127.044b);
+    [White] (Id = BTy_15 292, 589.044b);
+    [String] (Id = BTy_16 292, 12209.044b);
+    [White] (Id = BTy_17 292, 589.044b);
+    [String] (Id = BTy_18 292, 8813.044b);
+    [White] (Id = BTy_19 292, 589.044b);
+    Poption(Id = BTy_26 292, 17310.463b)
+      Pstruct(Id = BTy_25 290, 17303.419b)
+    	[String] (Id = BTy_20 290, 10445.044b);
+    	[White] (Id = BTy_21 290, 585.044b);
+    	[String] (Id = BTy_22 290, 3485.044b);
+    	[Other](:) (Id = BTy_23 290, 2195.875b);
+    	[White] (Id = BTy_24 290, 585.044b);
+      End Pstruct;
+    End Poption;
+  End Pstruct
+  ...
+End Pstruct
+\end{code}
+
+Next, with node {\tt BTy\_110} stable in phase 1, we proceed to
+refine node {\tt BTy\_57}. Here rule 4 "unnest struct" can be applied.
+And the resulting structure is:
+
+\begin{code}
+Pstruct(Id = BTy_57 292, 156439.855b)
+  [Other](:) (Id = BTy_12 292, 2210.984b);
+  [White] (Id = BTy_13 292, 589.044b);
+  [String] (Id = BTy_14 292, 13127.044b);
+  [White] (Id = BTy_15 292, 589.044b);
+  [String] (Id = BTy_16 292, 12209.044b);
+  [White] (Id = BTy_17 292, 589.044b);
+  [String] (Id = BTy_18 292, 8813.044b);
+  [White] (Id = BTy_19 292, 589.044b);
+  Poption(Id = BTy_26 292, 17310.463b)
+    Pstruct(Id = BTy_25 290, 17303.419b)
+      [String] (Id = BTy_20 290, 10445.044b);
+      [White] (Id = BTy_21 290, 585.044b);
+      [String] (Id = BTy_22 290, 3485.044b);
+      [Other](:) (Id = BTy_23 290, 2195.875b);
+      [White] (Id = BTy_24 290, 585.044b);
+    End Pstruct;
+  End Poption;
+  ...
+End Pstruct
+\end{code}
+
+Later, rule 6 is applied to the parent of {\tt BTy\_57} and the first few
+base types, {\tt BTy\_12} through {\tt BTy\_14}, were extracted out. 
+
+In Phase Two, data dependent rules 3 and 4 are applied to all the base types to 
+create a number of constants and enums, and as a result, 
+we have:
+
+\begin{code}
+Pstruct(Id = BTy_57 292, 99716.44b)
+  [StringConst] " " (Id = BTy_15 292, 11.044b);
+  [Enum] {[StringConst] "to", [StringConst] "writing", } 
+		(Id = BTy_16 292, 72.133b);
+  [StringConst] " " (Id = BTy_17 292, 11.044b);
+  [Enum] {[StringConst] "crash", [StringConst] "re-launch", } 
+		(Id = BTy_18 292, 102.133b);
+  [StringConst] " " (Id = BTy_19 292, 11.044b);
+  Poption(Id = BTy_26 292, 103.293b)
+    Pstruct(Id = BTy_25 290, 96.249b)
+      [StringConst] "report" (Id = BTy_20 290, 41.044b)
+      [StringConst] " " (Id = BTy_21 290, 11.044b)
+      [StringConst] "to" (Id = BTy_22 290, 17.044b)
+      [StringConst] ":" (Id = BTy_23 290, 11.044b)
+      [StringConst] " " (Id = BTy_24 290, 11.044b)
+    End Pstruct;
+  End Poption;
+...
+End Pstruct
+\end{code}
+
+Finally in Phase Three, rule 7 is applied to node {\tt BTy\_25} to arrive at the 
+final structure:
+\begin{code}
+Pstruct(Id = BTy_57 292, 99691.235b)
+  [StringConst] " " (Id = BTy_15 292, 11.044b);
+  [Enum] {[StringConst] "to", [StringConst] "writing", } 
+		(Id = BTy_16 292, 72.133b);
+  [StringConst] " " (Id = BTy_17 292, 11.044b);
+  [Enum] {[StringConst] "crash", [StringConst] "re-launch", } 
+		(Id = BTy_18 292, 102.133b);
+  [StringConst] " " (Id = BTy_19 292, 11.044b);
+  Poption(Id = BTy_26 292, 78.089b)
+  	[StringConst] "report to: " (Id = BTy_20 290, 71.044b);
+  End Poption;
+  ...
+End Pstruct
+\end{code}
+
+Comparing this final result with the initial description, one can see that
+refinement significately simplified the structure of the IR; and with
+the explicit constants and enums, the description is a lot more
+informative than before.
