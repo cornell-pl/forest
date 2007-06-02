@@ -1,0 +1,201 @@
+\subsection*{Data independent rules}
+$T_{punc}$ is any type that describes a punctuation or white space.
+$T\setof{X}$ means a type $T$ where $X$ is a {\em bag} of data representations
+parsed by $T$.
+
+\begin{enumerate}
+\item Singleton structs and unions. \\
+$
+\irstruct{T} \goto T
+$\\ \\
+$
+\irstruct{} \goto \Pempty
+$\\ \\
+$
+\irunion{T} \goto T
+$\\ \\
+$
+\irunion{} \goto \Pvoid 
+$\\ \\
+
+\item Struct and union clean-up\\
+$
+\irstruct{pre\_types; \Pvoid; post\_types} \goto \Pvoid
+$\\ \\ 
+$
+\irstruct{pre\_types; \Pempty; post\_types} \goto \\
+\sskip \irstruct{pre\_types; post\_types}
+$\\ \\ 
+$
+\irunion{pre\_types; \Pvoid; post\_types} \goto \\
+\sskip \irunion{pre\_types; post\_types} 
+$\\ \\
+$
+\irunion{pre\_types; \Pempty; post\_types} \goto \\
+\sskip \irunion{pre\_types; post\_types; \Pempty} 
+$\\ \\
+
+\item Union to option\\
+$
+\irunion{T; \Pempty} \goto \iroption{T}
+$\\ \\
+$
+\irunion{\Pempty; T} \goto \iroption{T}
+$\\ \\
+
+\item Unnest structs and unions\\
+$
+\irstruct{pre\_types; \irstruct{mid\_types}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; mid\_types; post\_types}
+$\\ \\
+$
+\irunion{pre\_types; \irunion{mid\_types}; post\_types} \goto \\
+\sskip \irunion{pre\_types; mid\_types; post\_types}
+$\\ \\
+
+\item Uniform struct to fixed-length array\\
+$
+\irstruct{T_1; \ldots; T_n} \goto \irarrayFW{T_1}{n}
+$\\ 
+\noindent if $n \ge 3$ and $\forall i \in [1,~ n],~ j \in [1,~ n]:~ T_i = T_j$.
+\\
+
+\item Common prefix or postfix in union branches \\
+$
+\irunion{\irstruct{T; post\_types_1}; \\
+\sskip \irstruct{T, post\_types_2}} \goto \\
+\sskip \irstruct{T; \irunion{\irstruct{post\_types_1}; \\
+\sskip \irstruct{post\_types_2}}}
+$\\ \\
+$
+\irunion{\irstruct{T; post\_types}; T} \goto\\
+\sskip \irstruct{T; \irunion{\irstruct{post\_types}; \Pempty}}
+$\\ \\
+$
+\irunion{\irstruct{pre\_types_1; T}; \\
+\sskip \irstruct{pre\_types_2; T}} \goto \\
+\sskip \irstruct{\irunion{\irstruct{pre\_types_1}; \\
+\sskip \irstruct{pre\_types_2}}; T}
+$\\ \\
+$
+\irunion{\irstruct{pre\_types; T}; T} \goto \\
+\sskip \irstruct{\irunion{\irstruct{pre\_types}; \Pempty}; T}
+$\\ \\
+
+\item {Get floating number number}\\
+$
+\irunion{{\tt Pint}; {\tt Pfloat}} \goto {\tt Pfloat}
+$ 
+\end{enumerate}
+
+\subsection*{Data dependent rules}
+\begin{enumerate}
+\item Get floating point number \\
+$
+\irstruct{pre\_types; {\tt Pint}\setof{X}; {\tt PstringConst ('.')};  \\
+\sskip {\tt Pint}\setof{Y}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
+$\\ 
+\noindent if $\forall y \in Y:~ y \ge 0$. \\
+\\
+$
+\irstruct{pre\_types; {\tt Pint}\setof{X}; \\
+\sskip \iroption{\irstruct{{\tt PstringConst ('.')};  \\
+\sskip {\tt Pint}\setof{Y}}}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
+$ \\
+\noindent if $\forall y \in Y:~ y \ge 0$. \\
+
+\item Discover negative numbers\\
+$
+\irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-');\\
+\sskip {\tt Pint} \setof{X}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; T_{punc}; {\tt Pint}; post\_types}
+$\\ 
+\noindent if $\forall x \in X:~ x \ge 0$. \\
+\\
+$
+ \irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-'); \\
+\sskip {\tt Pfloat}\setof{X}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; T_{punc}; {\tt Pfloat}; post\_types}
+$\\ 
+\noindent if $\forall x \in X:~ x \ge 0$.\\
+\\
+$
+ \irstruct{pre\_types; T_{punc}; \iroption{{\tt PstringConst}('-')}; \\
+\sskip {\tt Pint}(x); post\_types} \goto \\
+\sskip \irstruct{pre\_types; T_{punc}; {\tt Pnat}; post\_types}
+$\\
+\noindent if $\forall x \in X:~ x \ge 0$.\\
+\\
+$
+\irstruct{pre\_types; T_{punc}; {\tt \iroption{PstringConst}('-')}; \\
+\sskip {\tt Pfloat}(x); post\_types} \goto \\
+\sskip  \irstruct{pre\_types; T_{punc}; {\tt Preal}; post\_types}
+$\\
+\noindent if $\forall x \in X:~ x \ge 0$.\\
+
+\item Base type with unique values to constant \\
+$
+{\tt Pint}\setof{X} \goto {\tt PintConst(c)} \\
+$
+{\rm if} $\forall x \in X:~ x = c$. 
+\\ \\
+$
+{\tt Palpha}\setof{X} \goto {\tt PstringConst(c)} \\
+$
+{\rm if} $\forall x \in X:~ x = c$.
+\\ \\
+$
+{\tt Pstring}\setof{X} \goto {\tt PstringConst(c)} \\
+$
+{\rm if} $\forall x \in X:~ x = c$.
+\\ \\
+$
+{\tt Pother}\setof{X} \goto {\tt PstringConst(c)} \\ 
+$
+{\rm if} $\forall x \in X:~ x = c$.
+\\ \\
+
+\item Combine adjacent constant strings \\
+$
+\irstruct{pre\_types; {\tt PstringConst (c_1)}; \\
+\sskip {\tt PstringConst(c_2)}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; {\tt PstringConst (c_1 \wedge c_2)}; post\_types} 
+$\\ \\
+
+\item Refine enums and ranges \\
+$
+{\tt Pstring}\setof{X} \goto \irenum{s_1; \ldots; s_k} \\
+$
+{\rm if}~ $\forall x \in X:~ x~ \in \{s_1, \ldots, s_k\}$.
+\\ \\
+$
+{\tt Pint}\setof{X} \goto {\tt Pint32} \\
+$
+{\rm if} $\forall x \in X:~ 0 \le x~ < 2^{32}$.
+\\ \\
+$
+{\tt Pint}\setof{X} \goto {\tt Pint64} \\
+$
+{\rm if} $\forall x \in X:~ 2^{32} \le x~ < 2^{64}$.
+\\ \\
+$
+{\tt Pint}\setof{X} \goto {\tt PintRanged}(min,~ max) \\
+$
+{\rm if}~ $\forall x \in X:~ min \le x~ \le max$.
+\\ \\
+
+\item Union to switch \\
+$
+\irstruct{pre\_types; \irenum{c_1; \ldots; c_n}\setof{X}; mid\_types; \\
+\sskip \irunion{T_1; \ldots; T_n}\setof{Y}; post\_types}\\
+\goto \\
+\irstruct{pre\_types, z:\irenum{c_1; \ldots; c_n}; mid\_types; \\
+\sskip \irswitch{z}{c_1 \goto T_{\Pi(1)}; \ldots; c_n \goto T_{\Pi(n)}}; post\_types}
+$\\ 
+\noindent where $z$ is a fresh variable, and there exists a permutation $\Pi$, s.t.
+$\forall i \in [1,~ card(X)]$, $\Pi(tag(X(i)))=tag(Y(i))$, and 
+$tag(in_j(d)) = j$.
+
+\end{enumerate}

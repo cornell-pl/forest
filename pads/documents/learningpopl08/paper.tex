@@ -6,6 +6,18 @@
             verbatim,alltt,multicol,proof,url}
 \usepackage{epsfig}
 \usepackage{code} 
+\newcommand{\irstruct}[1]{{\tt struct}\{#1\}}
+\newcommand{\irunion}[1]{{\tt union}\{#1\}}
+\newcommand{\irenum}[1]{{\tt enum}\{#1\}}
+\newcommand{\irarray}[1]{{\tt array}\{#1\}}
+\newcommand{\irarrayFW}[2]{{\tt arrayFW}\{#1\}[#2]}
+\newcommand{\irswitch}[2]{{\tt switch}(#1)\{#2\}}
+\newcommand{\iroption}[1]{{\tt option}\{#1\}}
+\newcommand{\setof}[1]{\lsem #1 \rsem}
+\newcommand{\goto}{\Rightarrow}
+\newcommand{\Pvoid}{{\tt void}}
+\newcommand{\Pempty}{{\tt empty}}
+\newcommand{\sskip}{\hspace*{5mm}}
 
 %\setlength{\oddsidemargin}{0in}
 %\setlength{\evensidemargin}{0in}
