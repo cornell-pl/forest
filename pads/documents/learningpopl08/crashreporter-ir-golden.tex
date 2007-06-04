@@ -1,0 +1,69 @@
+\begin{figure}
+\begin{code}
+Pstruct
+  [Date];
+  [StringConst] " ";
+  [Time];
+  [StringConst] " ";
+  [Pint];
+  [StringConst] " ";
+  [Enum] {[StringConst] "crashdump", 
+          [StringConst] "crashreporterd", };
+  [StringConst] "[";
+  [Pint];
+  [StringConst] "]";
+  [StringConst] ": ";
+  Switch:
+  case [StringConst] "crashdump":
+    Punion
+      [StringConst] "crashdump started";
+      Pstruct
+        [StringConst] "Started writing crash 
+                       report to: ";
+        Pstruct
+          [Path];
+          Poption
+            [StringME] "/[a-zA-Z0-9. ]*/";
+          End Poption;
+        End Pstruct;
+      End Pstruct;
+      Pstruct
+        [StringConst] "Finished writing crash 
+                       report to: ";
+        Pstruct
+          [Path];
+          Poption
+            [StringME] "/[a-zA-Z0-9. ]*/";
+          End Poption;
+        End Pstruct;
+      End Pstruct;
+      Pstruct
+        [StringConst] "Unable to determine 
+                       task_t for pid: ";
+        [Pint];
+        [StringConst] " name: Exited process";
+      End Pstruct;
+      Pstruct
+        [StringConst] "Failed to re-launch ";
+        [Path];
+        [StringConst] " - ";
+        Pstruct
+                [String];
+                [StringConst] ": ";
+                [Pint];
+                [StringConst] "!";
+        End Pstruct;
+      End Pstruct;
+    End Punion;
+  case [StringConst] "crashreporterd":
+    Pstruct
+      [StringME] "/[^ ]*/";
+      [StringConst] " reply failed: ";
+      [StringME] "/.*/";
+    End Pstruct;
+  End Switch;
+End Pstruct
+\end{code} 
+\caption{Hand-written description of crashreporter in IR format}
+\label{fig:crashreporter:ir}
+\end{figure}

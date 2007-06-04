@@ -1,69 +1,56 @@
-\begin{figure}
-\begin{code}
-Pstruct
-  [Date];
-  [StringConst] " ";
-  [Time];
-  [StringConst] " ";
-  [Pint];
-  [StringConst] " ";
-  [Enum] {[StringConst] "crashdump", 
-          [StringConst] "crashreporterd", };
-  [StringConst] "[";
-  [Pint];
-  [StringConst] "]";
-  [StringConst] ": ";
-  Switch:
-  case [StringConst] "crashdump":
-    Punion
-      [StringConst] "crashdump started";
-      Pstruct
-        [StringConst] "Started writing crash 
-                       report to: ";
-        Pstruct
-          [Path];
-          Poption
-            [StringME] "/[a-zA-Z0-9. ]*/";
-          End Poption;
-        End Pstruct;
-      End Pstruct;
-      Pstruct
-        [StringConst] "Finished writing crash 
-                       report to: ";
-        Pstruct
-          [Path];
-          Poption
-            [StringME] "/[a-zA-Z0-9. ]*/";
-          End Poption;
-        End Pstruct;
-      End Pstruct;
-      Pstruct
-        [StringConst] "Unable to determine 
-                       task_t for pid: ";
-        [Pint];
-        [StringConst] " name: Exited process";
-      End Pstruct;
-      Pstruct
-        [StringConst] "Failed to re-launch ";
-        [Path];
-        [StringConst] " - ";
-        Pstruct
-                [String];
-                [StringConst] ": ";
-                [Pint];
-                [StringConst] "!";
-        End Pstruct;
-      End Pstruct;
-    End Punion;
-  case [StringConst] "crashreporterd":
-    Pstruct
-      [StringME] "/[^ ]*/";
-      [StringConst] " reply failed: ";
-      [StringME] "/.*/";
-    End Pstruct;
-  End Switch;
-End Pstruct
-\end{code} 
-\caption{Hand-written description of crashreporter in IR format}
+\begin{figure*}
+\begin{verbatim}
+dumpreport =
+  union \{
+    struct \{
+      PstringConst("Started writing crash report to: "); 
+      file:Ppath;
+    \};
+    struct \{
+      PstringConst("Finished writing crash report to: "); 
+      file:Ppath;
+    \};
+    struct \{
+      PstringConst("Unable to determine task_t for pid: "); 
+      pid:Pint32; 
+      PstringConst(" name: Exited process");
+    \};
+    struct \{
+      PstringConst("Failed to re-launch "); 
+      file:Ppath; 
+      PstringConst(" - "); 
+      message:Pstring('\n')
+    \};
+  \};
+
+reporterreport =
+  struct \{
+    function:   Ppath; 
+    PstringConst(" reply failed: ");
+    failuremsg: Pstring_(:'\n':); 
+  \};
+
+source =
+  array \{
+    struct \{
+      date:   PDate;  Pother(' ');
+      time:   PTime;  Pother(' ');
+      year:   Pint32; Pother(' ');
+      kind:   enum \{crashdump; crashreporterd;\}; Pother('[');
+      dumpid: Pint32; PstringConst("]: ");
+      report: 
+        switch kind of \{
+          crashdump      => dumpreport
+          crashreporterd => reporterreport
+    \};
+  \};
+\end{verbatim}
+
+\caption{Hand-written \ir{} Crashreporter description.  
+  Note: needs to be checked for correctness.  This was written by hand by Dave
+  using the syntax of the paper, guided by the pads golden description, but deviating
+  slightly by nesting instead of expanding definitions and altering base types to fit the
+  base types available in the IR.  I also replaced Peor with 'backslash-n'...
+can't to produce a backslash in tex.}
 \label{fig:crashreporter:ir}
-\end{figure}
+\end{figure*}
