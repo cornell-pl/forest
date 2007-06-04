@@ -14,26 +14,31 @@ variable binding is slightly different, as will be explained below.
 Like all languages in the \pads{} family, the \ir{} is a collection of
 type definitions.  These ``types'' define both the external syntax of
 data formatted on disk and the shape of the internal representations
-that result from parsing.  The end goal of this project depends
-crucially on having both interpretations of these types.  The first
-interpretation is necessary to generate a
-parser and printer for the format.  The second interpretation 
-is necessary in order to define and
-implement useful generic algorithms, such as the xml translator, that
-walk over parsed data in memory.  In the following discussion, we focus on
+that result from parsing.  In order to generate fully functional tools
+directly from data, we rely upon both aspects of these type definitions
+-- the first is necessary for generating parsers and printers; the
+second is necessary for implementing generic algorithms such as the 
+\xml{} translator.  In the following discussion, we focus on
 explaining the first interpretation, counting on the reader's intuition 
 for the second.  Figure~\ref{fig:ir} presents the syntax of
 selected core features of the \ir{}.
 
-The building blocks of any data description are the base types $b$,
+% The end goal of this project depends
+% crucially on having both interpretations of these types.  The first
+% interpretation is necessary to generate a
+% parser and printer for the format.  The second interpretation 
+% is necessary in order to define and
+% implement useful generic algorithms, such as the xml translator, that
+% walk over parsed data in memory.  
+
+The building blocks of any \ir{} data description are the base types $b$,
 which may be parameterized by some number of arguments $p$.  Arguments
 may either be constants $c$, which include integers $i$, strings
-$s$ and characters $a$, or variables $x$ bound earlier in the description.
+$s$ and characters $a$, or variables $x$, bound earlier in the description.
 These base types include a wide range of different sorts of
 integers and strings.  In its initial phases, the inference algorithm
 uses general integer (\cd{Pint}), alphanumeric string (\cd{Palpha})
-and punctuation (\cd{Pother(}$a$\cd{)}) for some punctuation 
-character $a$) types.  In later phases,
+and punctuation character (\cd{Pother(}$a$\cd{)}) types.  In later phases,
 these coarse-grained base types are analyzed, merged and refined, producing
 integers with ranges (\cd{PintRanged(min,max)}),
 integers with known size (\cd{Pint32} or \cd{Pint64}), constant integers
@@ -41,8 +46,8 @@ integers with known size (\cd{Pint32} or \cd{Pint64}), constant integers
 numbers (\cd{Pfloat}).  Likewise, later stages of our algorithm transform
 alphanumeric strings into arbitrary strings with terminating characters
 (\cd{Pstring(}$a$\cd{)} where $a$ terminates the string), fixed width
-strings (\cd{PstringFW(}$i$\cd{)}) or string constants 
-(\cd{PstringConst(}$s$\cd{)}).  
+strings (\cd{PstringFW(}$i$\cd{)} is a string with a length $i$) 
+or string constants  (\cd{PstringConst(}$s$\cd{)}).  
 In addition to these simple base types, the \ir{} includes a collection of
 somewhat higher-level abstractions commonly found in ad hoc data, specified 
 generally in Figure~\ref{fig:ir} as \cd{ComplexB}.  For example, we 
@@ -62,23 +67,26 @@ of the inference algorithm restrict themselves to one of these three
 sorts of type constructors.  However, later phases of the algorithm
 refine, merge and process these simple types in a variety of ways.
 For example, unions may be transformed into 
-enumerations (\cd{enum \{s_1,...,s_k\}}) or options (\cd{option T}).  In
+enumerations of constants
+(\cd{enum \{c_1,...,c_k\}}) or options (\cd{option T}).  In
 addition, later phases of the algorithm 
 bind variables to the results of parsing 
-base types ({\em i.e.}, 
-\cd{x:b(p_1,...,p_k)} as opposed to \cd{b(p_1,...,p_k)})
-and then use these variables to express dependencies between different parts
+base types.  For example, \cd{x:b(p_1,...,p_k)} expresses the fact that
+variable \cd{x} is bound to the value parsed by base type
+\cd{b(p_1,...,p_k)}.  These variables express dependencies between 
+different parts
 of a description.\footnote{Every bound variable is assumed to be distinct
 from every other that appears in a description.  The scope of such variables
-extends far as possible through the description.  Hence any part of the 
+extends as far as possible through the description.  Rougly speaking,
+any part of the 
 description that refers to data later in the file may refer to an earlier
 bound variable.}  For example, the length of a string (\cd{PstringFW(p)})
 or an array (\cd{ParrayFW(p)}) may depend upon either a constant or
 a variable and likewise for any other parameterized base type.  In
 addition, unions may be refined into dependent switch statements
-(\cd{switch x of \{s_1 => T_1 ... s_k => T_k\}}), where the
-data is described by \cd{T_1}, ..., \cd{T_k} depending on the value
-associated with \cd{x}, be it \cd{s_1}, ..., or \cd{s_k}.
+(\cd{switch x of \{c_1 => T_1 ... c_k => T_k\}}), where the
+data is described by \cd{T_1}, ..., or \cd{T_k} depending on the value
+associated with \cd{x}, be it \cd{c_1}, ..., or \cd{c_k}.
 
 
 \begin {figure*}
@@ -111,9 +119,9 @@ T ::= b(p1,...,pk)          (parameterized base type where nothing depends on it
    | array {T;}             (unbounded length repetition)
    | arrayFW {T;}[p]        (fixed length repetition) 
    | union {T1; ... Tk;}    (alternatives)
-   | enum {s1; ... sk;}     (enumeration of string constants)
+   | enum {c1; ... ck;}     (enumeration of constants)
    | option {T;}            (type T or nothing)
-   | switch x of {s1 => T1; ... sk => Tk;}  (dependent choice amongst alternatives)
+   | switch x of {c1 => T1; ... ck => Tk;}  (dependent choice amongst alternatives)
 
 representations of parsed data
 d ::= c         (constant)
@@ -127,13 +135,19 @@ d ::= c         (constant)
 
 \subsection{Running Examples}
 
-Figure~\ref{fig:example data} presents tiny fragments of three different ad hoc data files
-we have trained our inference algorithm on.  The first, which we call {\em Crashreporter}, is
-is a Macintosh system file that records information concerning process crashes. The second, called {\em Sirius},
-is an internal AT\&T format used to record phone call provisioning information. The third format
-is generated by an Apache web server to record requests received.  Crashreporter
-will be used as our main running example throughout the paper; the other two will be called upon
-periodically to illustrate some particular aspect of the inference algorithm.
+Figure~\ref{fig:example data} presents tiny fragments of three
+different ad hoc data files we have trained our inference algorithm
+on.  The first, which we call {\em Crashreporter}, is a Macintosh
+system file that records information concerning process crashes. The
+second, called {\em Sirius}, is an internal AT\&T format used to
+record phone call provisioning information. The third format is
+a generic system logging file called {\em asl}, again taken from a
+Macintosh.
+Crashreporter will be used as our main running example throughout the
+paper; the other two will be called upon periodically to illustrate
+some particular aspect of the inference algorithm.  In the 
+of evaluation section of the paper, we report on our experience
+with many more examples.
 
 \begin{figure*}
 Crashreporter Log File:
@@ -150,16 +164,26 @@ Sirius AT\&T Phone Provisioning Data:
 \end{verbatim}
 }
 
-Apache Web Server Logs:
-{\small \begin{verbatim}
-68.142.249.179 - - [13/Dec/2005:19:41:48 -0800] "GET /bridge-loan.html HTTP/1.0" 404 298 "-" \
-  "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)"
-69.227.61.241 - - [13/Dec/2005:19:44:42 -0800] "GET / HTTP/1.1" 403 4251 "-" \
-  "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8) Gecko/20051111 Firefox/1.5"
+ASL Log:
+{\small  \begin{verbatim}
+[Time 2006.11.25 16:47:18 UTC] [Facility user] [Sender E_e,] [PID 131] \
+  [Message sleep cancelled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
+[Time 2006.11.25 16:51:23 UTC] [Facility install] [Sender Software Update] [PID 1879] \
+  [Message System requesting sleep.] [Level 5] [UID -2] [GID -2] [Host Babylon]
 \end{verbatim}
 }
+
+% Apache Web Server Logs:
+% {\small \begin{verbatim}
+% 68.142.249.179 - - [13/Dec/2005:19:41:48 -0800] "GET /bridge-loan.html HTTP/1.0" 404 298 "-" \
+%   "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)"
+% 69.227.61.241 - - [13/Dec/2005:19:44:42 -0800] "GET / HTTP/1.1" 403 4251 "-" \
+%   "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8) Gecko/20051111 Firefox/1.5"
+% \end{verbatim}
+% }
+
 \caption {Example data. 
-Data records too long to be formatted on a single line are terminated with '\' and extended to the next line.}
+Data records too long to be formatted on a single line are terminated with '\' and indented two spaces on the next line.}
 \label{fig:example data}
 \end{figure*}
 
