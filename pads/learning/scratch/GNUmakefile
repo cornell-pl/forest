@@ -41,6 +41,7 @@
 #     railroad.txt
 #     rpmpkgs
 #     yum.txt
+#     asl.log
 #
 # Dependencies
 #

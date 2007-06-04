@@ -29,6 +29,7 @@ is
   gold/railroad.txt.sml
   gold/rpmpkgs.sml
   gold/yum.txt.sml
+  gold/asl.log.sml
   model.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml

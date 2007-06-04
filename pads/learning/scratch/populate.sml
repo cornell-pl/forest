@@ -371,6 +371,29 @@ struct
 				  let val loc = (#2 (hd tokenlist))
 				  in (true, env, tokenlist, Base(incCoverage a, t@[(Pempty, loc)]))
 				  end
+				(* Pint can be negative so need to check for "-" *)
+				| (Pint(_, _), _) =>
+					if (length tokenlist<2) then (false, env, tokenlist, ty)
+					else 
+					  let val (minus, loc1) = (hd tokenlist)
+					      val (num, loc2) = List.nth(tokenlist, 1)
+					  in
+					      if (compToken(minus, Other #"-") = EQUAL andalso
+						  compToken(num, Pint (0, "0")) = EQUAL)
+					      then 
+						case num of 
+						  Pint (i, s) => 
+						    let
+						      val label = getLabel a
+						      val intTok = (Pint (~i, "-" ^ s), loc1)
+						      val env' = LabelMap.insert(env, label, intTok)
+						      val newaux = incCoverage a
+						    in (true, env', List.drop(tokenlist, 2),
+							Base(newaux, t@[intTok]))
+						    end
+						  | _ => raise TyMismatch
+					      else (false, env, tokenlist, ty)
+					  end
 				(*Pfloat is also a special case, either int.int or int *)
 				| (Pfloat(_, _), _) =>
 				    (case (#1 (hd tokenlist)) of

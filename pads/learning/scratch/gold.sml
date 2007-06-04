@@ -8,7 +8,8 @@ structure Gold = struct
     open RAILROAD
     open RPMPKGS
     open Trans
-    open Yumtxt
+    open Yumtxt 
+    open ASL
     open Populate
     open Model
 
@@ -47,6 +48,7 @@ structure Gold = struct
         , ( "railroad.txt", railroad )
         , ( "rpmpkgs", rpmpkgs )
         , ( "yum.txt", yum )
+        , ( "asl.log", asl)
         ]
 
     (* Determine if there is a useable golden data file *)
