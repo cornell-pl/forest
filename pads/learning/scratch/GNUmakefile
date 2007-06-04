@@ -142,8 +142,10 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
+GOLDENDATA := rpmpkgs quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
+GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))
 XS       = $(addsuffix .x,x $(DATA))
 TESTS    = $(addsuffix .test,$(DATA))
 TRAINS   = $(addsuffix .train,$(DATA))
@@ -159,6 +161,8 @@ silvers: $(SILVERS)
 	echo Making silver version of each data file output
 
 reports: $(REPORTS)
+goldenReports:	$(GOLDENREPORTS)
+	echo Making reports for golden data files
 
 define silver-it
 @if [ ! -d silver/$(*F) ]; then mkdir silver/$(*F); fi
@@ -200,10 +204,11 @@ define summary
 # 4. generate PADS description
 # 5. generate accumulator program
 make --directory=gen $(*F)-accum
-#   preserve the gen directory
-cp -R gen/* output/$(*F)
+# 6. run accumulator program on input data
+gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
+@echo "\n\nAccumulator program run\n\n"
 # 6. run accumulator program on input data, defend against error return
-runaccum $(*F)
+# old? runaccum $(*F)
 # 7. extract number of records correctly parsed and number of errors
 ./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # Get the golden complexity (if there is one)
@@ -236,11 +241,14 @@ if [ -e gen/GoldComplexity ]; then head -n 2 gen/GoldComplexity >>gen/Report; fi
 cat gen/ParseReport >>gen/Report
 echo >>gen/Report
 cat gen/Timing >>gen/Report
+#   preserve the gen directory
+cp -R gen/* output/$(*F)
 endef
 
 # The summary file depends on the corresponding output file.
 $(REPORTS): %.rep: %
 	$(summary)
+
 
 ######################################################################
 # Target to run just inference algorithm

@@ -29,11 +29,12 @@ structure Printing = struct
 
     (* Dump a type to the specified file *)
     fun dumpTy ( fileName : string ) ( ty : Ty ) : unit = 
-        let val strm = TextIO.openOut fileName
+        let val () = print ("Printing ty to file: "^fileName^"\n")
+	    val strm = TextIO.openOut fileName
             val ()   = TextIO.output(strm, TyToString ty)
         in
-            TextIO.closeOut strm
-        end
+            TextIO.closeOut strm 
+        end 
 
     (* Dump type complexity to the specified file *)
     fun dumpTyComp ( path : string ) ( fileName : string ) ( descName : string )
@@ -141,12 +142,13 @@ structure Printing = struct
 		(OS.FileSys.mkDir path; true)
             then ( dumpParameters (path ^ "Params") rewrittenTy
                  ; dumpTBDs rewrittenTy
-                 ; dumpTy (path ^ "Ty") rewrittenTy
-                 ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy )
+                 ; dumpTy (path ^ "Ty") rewrittenTy 
+                 ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy ) 
                  ; dumpTyComp path "Complexity" descName ( getComps rewrittenTy )
                  ; dumpComputeTimes ( path ^ "Timing" ) ct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy
                    in 
+		       print ("Ty name ="^tyName^"\n");
 		       dumpAccumProgram path descName tyName;
 		       dumpAccumXMLProgram path descName tyName;
 		       dumpXMLProgram path descName tyName

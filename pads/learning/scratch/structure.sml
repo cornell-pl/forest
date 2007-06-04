@@ -208,17 +208,20 @@ struct
 
    fun fuzzyIntEq threshold (i1, i2) = abs(i1 - i2) < threshold
 
+   (* sort histogram by column heights using getSortedHistogramList *)
+   (* only non-zero heights represented in histogram *)
+   (* columns numbered from 1 to n, the number of non-zero columns *)
+   (* column 1 is highest column, column n is lowest non-zero column *)
+   (* column height is number of records with that column's frequency *)
    (* formula: sum over all columns of columnNumber * (numRemainingRecords - colHeight) *)
+   (* higher score for more columns, higher score for records not covered by current column set *)
    fun histScore numRecords (h:histogram) = 
        let val cSorted = getSortedHistogramList (!(#hist h))
 	   fun findMinimumOccurrences [] a = a
              | findMinimumOccurrences ((col,height)::rest) a = 
 	        if col < a then findMinimumOccurrences rest col else findMinimumOccurrences rest a 
 	   fun foldNext ((colIndex, colHeight), (structScore, columnNumber, numRemainingRecords)) =
-	       let val mass = colIndex * colHeight
-	       in
 		   (columnNumber * (numRemainingRecords - colHeight) + structScore, columnNumber +1, numRemainingRecords - colHeight)
-	       end
 	   val (structScore, colNumber, numRemaining) = List.foldl foldNext (0,1,numRecords) cSorted 
        in
 	   (structScore, List.length cSorted, findMinimumOccurrences (tl cSorted) (#1(hd cSorted)) )
@@ -592,7 +595,12 @@ struct
 	    freqs
 	end
 
-    
+    (* threshold = user-specified percentage (HIST_PERCENTAGE, -h, 1%) of number of 'records' in context *)
+    (* histScoreCmp: compares (<) scores of two histograms, ignores threshold *)
+    (* histScoreEq: tests scores of two histograms with fuzzy equality, 
+                    is absolute value of difference of scores within threshold? *)
+    (* sort histograms by score using histScoreCmp.  
+       Compare adjacent histograms for fuzzyEq using histScoreEq, if match, then group *)
     fun findClusters numRecords (freqDist:freqDist) = 
 	let val distList = TokenTable.listItemsi(freqDist)
 	    val threshold = histEqTolerance numRecords
@@ -628,6 +636,15 @@ struct
         | Blob, indicating no match
      *)
     fun analyzeClusters numRecords (clusters : (Token * histogram) list list) = 
+            (* given the cluster with the lowest score, 
+                select each struct-like token from cluster.
+                a token is struct-like if the residual mass of its first column is
+                  less than specified percentage of context chunks. (struct_percentage, -s, 10%)
+                compute the coverage of selected tokens.
+                coverage is min {mass(c(t)(1)} for selected tokens t
+                we identify a struct if we have at least one selected token and the coverage is higher than specified percentage
+                (junk_percentage, -j, default 10%)
+            *)
 	let fun isStruct (cluster::_) = 
 		let fun getStructInfo((t, {hist, total, coverage, structScore, width,minOccurrences}), result) =
 		    let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
@@ -637,7 +654,9 @@ struct
 			    let val rest = List.tl sortedHlist
 				val massOfRest = List.foldl (fn((i,c:int),acc)=> acc + c) 0 rest
 			    in
-				massOfRest < (isStructTolerance numRecords)
+				(massOfRest < (isStructTolerance numRecords))
+				andalso
+				((!coverage) >= (isJunkTolerance numRecords))
 			    end
 		    in
 			if hIsStruct sortedHlist then [(t, #1 primary, #2 primary)]@result  else result
@@ -650,10 +669,10 @@ struct
 			in
 			     (if print_verbose then 
 			     (print "Junk Tolerance Threshold: "; print (Int.toString(isJunkTolerance numRecords)); print "\n";
-			     print "Coverage: ";                 print (Int.toString(coverage)); print "\n";
-			     print "Num Tokens: ";               print (Int.toString(numTokens)); print "\n")
+			      print "Cluster Coverage: ";                 print (Int.toString(coverage)); print "\n";
+			      print "Num Tokens: ";               print (Int.toString(numTokens)); print "\n")
 			     else ();
-			     if (coverage >= (isJunkTolerance numRecords) andalso (numTokens > 0))
+			     if (numTokens > 0)
 				 then (SOME (Struct {numTokensInCluster = numTokens, numRecordsWithCluster = coverage, tokens = tokens}))
 			     else NONE
 				 )
