@@ -1094,7 +1094,7 @@ struct
 		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
 *)
 		in
-		    ((if print_verbose then 
+		    ((*(if print_verbose then 
 		     (print "Array context\n"; 
                      print "First Context:\n";
                      print (contextsToString firstContext);
@@ -1102,7 +1102,7 @@ struct
                      print (contextsToString mainContext);
                      print "last Context:\n";
                      print (contextsToString lastContext))
-		     else ()); 
+		     else ()); *)
 		     Parray (mkTyAux numRecords, 
 			     {tokens  = atokens, 
 			      lengths = arrayLengths,
