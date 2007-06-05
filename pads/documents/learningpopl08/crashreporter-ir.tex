@@ -1,49 +1,49 @@
 \begin{figure*}
 \begin{verbatim}
 dumpreport =
-  union \{
-    struct \{
+  union {
+    struct {
       PstringConst("Started writing crash report to: "); 
       file:Ppath;
-    \};
-    struct \{
+    };
+    struct {
       PstringConst("Finished writing crash report to: "); 
       file:Ppath;
-    \};
-    struct \{
+    };
+    struct {
       PstringConst("Unable to determine task_t for pid: "); 
       pid:Pint32; 
       PstringConst(" name: Exited process");
-    \};
-    struct \{
+    };
+    struct {
       PstringConst("Failed to re-launch "); 
       file:Ppath; 
       PstringConst(" - "); 
       message:Pstring('\n')
-    \};
-  \};
+    };
+  };
 
 reporterreport =
-  struct \{
+  struct {
     function:   Ppath; 
     PstringConst(" reply failed: ");
-    failuremsg: Pstring_(:'\n':); 
-  \};
+    failuremsg: Pstring_('\n'); 
+  };
 
 source =
-  array \{
-    struct \{
-      date:   PDate;  Pother(' ');
-      time:   PTime;  Pother(' ');
-      year:   Pint32; Pother(' ');
-      kind:   enum \{crashdump; crashreporterd;\}; Pother('[');
+  arrayST {
+    struct {
+      date:   PDate;  PstringConst(" ");
+      time:   PTime;  PstringConst(" ");
+      year:   Pint32; PstringConst(" ");
+      kind:   enum {"crashdump"; "crashreporterd";}; PstringConst("[");
       dumpid: Pint32; PstringConst("]: ");
       report: 
-        switch kind of \{
-          crashdump      => dumpreport
-          crashreporterd => reporterreport
-    \};
-  \};
+        switch kind of {
+          "crashdump"      => dumpreport
+          "crashreporterd" => reporterreport
+    };
+  }['\n',EOF];
 \end{verbatim}
 
 \caption{Hand-written \ir{} Crashreporter description.  

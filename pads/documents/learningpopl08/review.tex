@@ -15,13 +15,14 @@ Like all languages in the \pads{} family, the \ir{} is a collection of
 type definitions.  These ``types'' define both the external syntax of
 data formatted on disk and the shape of the internal representations
 that result from parsing.  In order to generate fully functional tools
-directly from data, we rely upon both aspects of these type definitions
--- the first is necessary for generating parsers and printers; the
-second is necessary for implementing generic algorithms such as the 
-\xml{} translator.  In the following discussion, we focus on
-explaining the first interpretation, counting on the reader's intuition 
-for the second.  Figure~\ref{fig:ir} presents the syntax of
-selected core features of the \ir{}.
+directly from data, we rely upon both aspects of these type definitions.
+%-- the first is necessary for generating parsers and printers; the
+%second is necessary for implementing generic algorithms such as the 
+%\xml{} translator.  In the following discussion, we focus on
+%explaining the first interpretation, counting on the reader's intuition 
+%for the second. 
+Figure~\ref{fig:ir} summarizes the syntax of selected core features of 
+the \ir{} and the syntax we use for the generated internal representations.
 
 % The end goal of this project depends
 % crucially on having both interpretations of these types.  The first
@@ -48,12 +49,16 @@ alphanumeric strings into arbitrary strings with terminating characters
 (\cd{Pstring(}$a$\cd{)} where $a$ terminates the string), fixed width
 strings (\cd{PstringFW(}$i$\cd{)} is a string with a length $i$) 
 or string constants  (\cd{PstringConst(}$s$\cd{)}).  
-In addition to these simple base types, the \ir{} includes a collection of
-somewhat higher-level abstractions commonly found in ad hoc data, specified 
-generally in Figure~\ref{fig:ir} as \cd{ComplexB}.  For example, we 
-have implemented
-base types for ip address, email adresses, urls, XML tags, dates, times and 
-a variety of others.
+
+In addition to these simple base types, the \ir{} includes a
+collection of somewhat higher-level abstractions commonly found in ad
+hoc data, specified generally in Figure~\ref{fig:ir} as \cd{ComplexB}.
+For example, we have implemented base types for ip address, email
+adresses, urls, XML tags, dates, times and a variety of
+others. Finally, the types \cd{Pvoid} and \cd{Pempty} are two special
+base types that are introduced at various points in inference process.
+The first fails immediately; the second succeeds immediately.  Neither
+consumes any characters while parsing.
 
 Complex descriptions are built from simpler ones using a variety of
 type constructors.  Type constructors include
@@ -88,6 +93,15 @@ addition, unions may be refined into dependent switch statements
 data is described by \cd{T_1}, ..., or \cd{T_k} depending on the value
 associated with \cd{x}, be it \cd{c_1}, ..., or \cd{c_k}.
 
+The result of parsing according to a description is an internal
+representation of the data. We let metavariable $d$ range over such 
+data representations.  For the purposes of this paper, of data 
+representation may be a constant $c$, an injection into the $i^{th}$
+variant of a union \cd{in}$_i(d)$, or a sequence of data representations
+$(d_1,\ldots,d_k)$.  The injections are used as the representations of
+any sort of union type, be it a union, an enum, an option or a switch.
+The sequences are used as the representations of any sort of sequence
+type, whether it be a struct or one of the array variants.
 
 \begin {figure*}
 \begin {verbatim}
@@ -99,7 +113,7 @@ variables x
 parameters p :: = x | c
 
 base types
-b ::= Pint                  (generic, unrefined integer)
+b ::= Pint                   (generic, unrefined integer)
    | PintRanged             (integer with min/max values)
    | Pint32                 (32-bit integer)
    | Pint64                 (64-bit integer)
@@ -111,13 +125,16 @@ b ::= Pint                  (generic, unrefined integer)
    | PstringConst           (constant string)
    | Pother                 (punctuation character)
    | ComplexB               (complex base type defined by regexp; eg: date, time, etc.)
+   | Pvoid                  (fails immediately)
+   | Pempty                 (parses no characters, but does so successfully)
 
 types
 T ::= b(p1,...,pk)          (parameterized base type where nothing depends on it)
    | x:b(p1,...,pk)         (parameterized base type with underlying value named x)     
    | struct {T1; ... Tk;}   (fixed sequence of items)
-   | array {T;}             (unbounded length repetition)
-   | arrayFW {T;}[p]        (fixed length repetition) 
+   | array {T;}             (array with unbounded repetitions)
+   | arrayFW {T;}[p]        (array with fixed number of repetitions) 
+   | arrayST {T;}[sep,term] (array with separator and terminator characters)
    | union {T1; ... Tk;}    (alternatives)
    | enum {c1; ... ck;}     (enumeration of constants)
    | option {T;}            (type T or nothing)
@@ -126,7 +143,7 @@ T ::= b(p1,...,pk)          (parameterized base type where nothing depends on it
 representations of parsed data
 d ::= c         (constant)
    | in_i(d)    (injection into the ith alternative of a union)
-   | (d1...dk)  (sequence of data items)
+   | (d1,...,dk)  (sequence of data items)
 
 \end{verbatim}
 \caption {Selected elements of the \ir{}.  Note: formatting needed.}
@@ -137,20 +154,20 @@ d ::= c         (constant)
 
 Figure~\ref{fig:example data} presents tiny fragments of three
 different ad hoc data files we have trained our inference algorithm
-on.  The first, which we call {\em Crashreporter}, is a Macintosh
+on.  The first, Crashreporter.log, is a Macintosh
 system file that records information concerning process crashes. The
-second, called {\em Sirius}, is an internal AT\&T format used to
+second, we call Sirius, is an internal AT\&T format used to
 record phone call provisioning information. The third format is
-a generic system logging file called {\em asl}, again taken from a
+a generic system logging file called ASL.log, again taken from a
 Macintosh.
-Crashreporter will be used as our main running example throughout the
+Crashreporter.log will be used as our main running example throughout the
 paper; the other two will be called upon periodically to illustrate
 some particular aspect of the inference algorithm.  In the 
 of evaluation section of the paper, we report on our experience
 with many more examples.
 
 \begin{figure*}
-Crashreporter Log File:
+Crashreporter.log:
 {\small \begin{verbatim}
 Sat Jun 24 06:38:46 2006 crashdump[2164]: Started writing crash report to: /Logs/Crash/Exit/ pro.crash.log
 Sat Jun 24 06:38:46 2006 crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
@@ -164,7 +181,7 @@ Sirius AT\&T Phone Provisioning Data:
 \end{verbatim}
 }
 
-ASL Log:
+ASL.log:
 {\small  \begin{verbatim}
 [Time 2006.11.25 16:47:18 UTC] [Facility user] [Sender E_e,] [PID 131] \
   [Message sleep cancelled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
@@ -188,7 +205,31 @@ Data records too long to be formatted on a single line are terminated with '\' a
 \end{figure*}
 
 Figure \ref{fig:crashreporter:ir} presents a hand-writtern description
-of the crashreporter file in the \ir{} syntax.
+of the crashreporter file in the \ir{} syntax.  This
+description is most easily read bottom to top.  The
+last definition in the figure specifies that \cd{source} is an
+array of structs with separating character being the newline character
+and terminating character being the end of file marker.  Intuitively,
+this means the entire file is a sequence of lines, with the struct
+in question appearing on each line.  The struct itself indicates each line
+is a sequence of \cd{date}, \cd{time}, \cd{year}, \cd{kind}, \cd{dumpid} and 
+\cd{report} fields.  The date field has type \cd{PDate} (one of the
+complex base types our system uses), the time field has type \cd{PTime},
+and so on.  In between each of the first four fields is a space character
+(written \cd{PstringConst(' ')}).  The writer of the description did not
+associate a variable name with the constant fields, but they did with the
+others.  Since only the \cd{kind} field is used later in the description,
+it is the only field that actually needs a variable associated with it;
+the other names are merely an informative bit of documentation.  The
+\cd{report} field provides an example of a switch statement and its
+use of dependency information.  Here, the value associated with the
+\cd{kind} variable (either \cd{"crashdump"} or \cd{"crashreporterd"})
+is used to determine the form of the \cd{report} field.  It may either be
+a \cd{dumpreport} type or a \cd{reporterreport} type.  
+The definition of \cd{reporterreport} is relatively simple -- it is
+a structure containing a file path and a message following 
+\cd{" reply failed: "}.  A \cd{crashdump} message is more complicated --
+it is a union of several different possible message formats.
 
 \input{crashreporter-ir}
 
