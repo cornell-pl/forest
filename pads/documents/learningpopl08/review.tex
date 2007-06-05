@@ -104,49 +104,49 @@ The sequences are used as the representations of any sort of sequence
 type, whether it be a struct or one of the array variants.
 
 \begin {figure*}
-\begin {verbatim}
-characters a                 (a ranges over ASCII characters)
-integers i                   (i is an integer)
-strings s                    (s is a sequence of ASCII characters)
-constants c ::= a | i | s
-variables x
-parameters p :: = x | c
-
-base types
-b ::= Pint                   (generic, unrefined integer)
-   | PintRanged             (integer with min/max values)
-   | Pint32                 (32-bit integer)
-   | Pint64                 (64-bit integer)
-   | PintConst              (constant integer)
-   | Pfloat                 (floating point number)
-   | Palpha                 (alpha-numeric string)
-   | Pstring                (arbitrary characters with terminating character)
-   | PstringFW              (arbitrary characters; fixed width)
-   | PstringConst           (constant string)
-   | Pother                 (punctuation character)
-   | ComplexB               (complex base type defined by regexp; eg: date, time, etc.)
-   | Pvoid                  (fails immediately)
-   | Pempty                 (parses no characters, but does so successfully)
-
-types
-T ::= b(p1,...,pk)          (parameterized base type where nothing depends on it)
-   | x:b(p1,...,pk)         (parameterized base type with underlying value named x)     
-   | struct {T1; ... Tk;}   (fixed sequence of items)
-   | array {T;}             (array with unbounded repetitions)
-   | arrayFW {T;}[p]        (array with fixed number of repetitions) 
-   | arrayST {T;}[sep,term] (array with separator and terminator characters)
-   | union {T1; ... Tk;}    (alternatives)
-   | enum {c1; ... ck;}     (enumeration of constants)
-   | option {T;}            (type T or nothing)
-   | switch x of {c1 => T1; ... ck => Tk;}  (dependent choice amongst alternatives)
-
-representations of parsed data
-d ::= c         (constant)
-   | in_i(d)    (injection into the ith alternative of a union)
-   | (d1,...,dk)  (sequence of data items)
-
-\end{verbatim}
-\caption {Selected elements of the \ir{}.  Note: formatting needed.}
+\begin {tabular}{llll}
+%\multicolumn{4}{l}{
+%\begin {tabular}{llll}
+$c$ & ::= & $a$ \myalt $i$ \myalt $s$ & (constants)\\
+$x$ & & & (variables) \\
+$p$ & :: = & $x$ \myalt $c$ & (parameters) \\
+\\
+%\end{tabular}
+%}
+\multicolumn{4}{l}{base types} \\
+$b$ & ::= & \cd{Pint} &                  (generic, unrefined integer) \\
+   &\myalt &\cd{PintRanged} &             (integer with min/max values) \\
+   &\myalt &\cd{Pint32} &                 (32-bit integer) \\
+   &\myalt &\cd{Pint64} &                (64-bit integer) \\
+   &\myalt &\cd{PintConst} &              (constant integer) \\
+   &\myalt &\cd{Pfloat} &                (floating point number) \\
+   &\myalt &\cd{Palpha} &                (alpha-numeric string) \\
+   &\myalt &\cd{Pstring} &               (arbitrary characters with terminating character) \\
+   &\myalt &\cd{PstringFW} &             (arbitrary characters; fixed width) \\
+   &\myalt &\cd{PstringConst} &          (constant string) \\
+   &\myalt &\cd{Pother} &                (punctuation character) \\
+   &\myalt &\cd{ComplexB} &              (complex base type defined by regexp; eg: date, time, etc.) \\
+   &\myalt &\cd{Pvoid} &                 (parses no characters; fails immediately) \\
+   &\myalt &\cd{Pempty} &                (parses no characters; succeeds immediately) \\
+\\
+\multicolumn{4}{l}{types} \\
+$T$ &::=& $b$($p_1$,...,$p_k$)&          (parameterized base type where nothing depends on it) \\
+   &\myalt & x:$b$($p_1$,...,$p_k$) &         (parameterized base type with underlying value named x)    \\  
+   &\myalt & \cd{struct} \{$T_1$; ... $T_k$;\}&   (fixed sequence of items) \\
+   &\myalt & \cd{array} \{$T$;\} &            (array with unbounded repetitions) \\
+   &\myalt & \cd{arrayFW} \{$T$;\}[$p$]&        (array with fixed number of repetitions)  \\
+   &\myalt & \cd{arrayST} \{$T$;\}[sep,term]& (array with separator and terminator characters) \\
+   &\myalt & \cd{union} \{$T_1$; ... $T_k$;\} &   (alternatives) \\
+   &\myalt & \cd{enum} \{$c_1$; ... $c_k$;\} &    (enumeration of constants) \\
+   &\myalt & \cd{option} \{$T$;\} &           (type T or nothing) \\
+   &\myalt & \cd{switch} $x$ \cd{of} \{$c_1$ \cd{=>} $T_1$; $\ldots$ $c_k$ \cd{=>} $T_k$;\} & (dependent choice amongst alternatives) \\
+\\
+\multicolumn{4}{l}{representations of parsed data} \\
+$d$ & ::= & $c$ &        (constant) \\
+   &\myalt & in$_i$($d$) &    (injection into the ith alternative of a union) \\
+   &\myalt & ($d_1$,$\ldots$,$d_k$) &  (sequence of data items) \\
+\end{tabular}
+\caption {Selected elements of the \ir{}.}
 \label{fig:ir}
 \end{figure*}
 
