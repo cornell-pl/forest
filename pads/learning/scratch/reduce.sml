@@ -493,6 +493,7 @@ and refine_array ty =
 			| RefinedBase(_, refined, _) => SOME(refined)
 			| Base(_, ltokens) => ltokenlToRefinedOp ltokens
 			| _ => NONE
+(*
 		fun combineRefined (ref1, ref2) =
 			case (ref1, ref2) of
 			(StringME(s), Int(_)) => SOME(StringME(substring(s, 0, size(s)-1)
@@ -507,7 +508,7 @@ and refine_array ty =
 								"[0-9]*/"))
 			| (Enum(l1), Enum(l2)) => SOME(Enum(l1@l2))
 			| _ => NONE
-				
+*)				
 		fun getRefine(ty) = case ty of RefinedBase(_, r, _) => SOME(r) 
 					| Base (_, tl) => ltokenlToRefinedOp tl
 					| _ => NONE
@@ -1246,7 +1247,21 @@ and enum_range_to_refine cmos ty =
 				RefinedBase(mkTyAux1(coverage, id), hd refs, b)
 				else
 				(if (length(refs)=0) then ty
-				else RefinedBase(mkTyAux1(coverage, id), Enum refs, b)
+				 else if (allStringConsts refs) then
+				  let
+		                  (*funtion to sort the all string const refined types by 
+				    the length of the strings from longest to shortest, 
+				    this is so as to attemp the longer and more specific
+		      		    strings first*)
+		    			fun shorter (re1, re2) =
+					  case (re1, re2) of
+					  (StringConst x, StringConst y) => (size x < size y)
+					  | _ => raise TyMismatch
+					val sorted_res = ListMergeSort.sort shorter refs
+				  in
+					RefinedBase(mkTyAux1(coverage, id), Enum sorted_res, b)
+				  end
+				 else RefinedBase(mkTyAux1(coverage, id), Enum refs, b)
 				)
 				)
 (*                     	val _ = print ("ENUM: " ^ (TyToString ty')^"\n") *)
@@ -1401,7 +1416,8 @@ let
 *)
 	  in
 	  	(* as long as the cost keeps going down, keep iterating *)
-	  	if lowCost < cur_cost then iterate newcmap newTy
+	  	if lowCost < cur_cost then 
+		((*print "New Ty:\n"; printTy (measure newTy);*) iterate newcmap newTy)
 	  	else (newcmap, newTy) 
 	  end
     in

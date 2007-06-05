@@ -467,14 +467,13 @@ struct
     let val aux = getAuxInfo ty
         val { tc = tcomp, adc = acomp, dc = dcomp } = #tycomp aux
         val stats = ( "(" ^  (covToString aux)  ^
-		      ", score: "^ (showBits (combine tcomp dcomp)) ^
 		      (if print_complexity then (
                       ", tc: " ^ (showBits tcomp)  ^
                       ", ac: " ^ (showBits acomp)  ^
-                      ", dc: " ^ (showBits dcomp)  ^ 
-		      ", raw: "^ (showBits (combine tcomp dcomp))
-		      )
+                      ", dc: " ^ (showBits dcomp) 
+                      )
 		      else "") ^
+		      ", raw: "^ (showBits (combine tcomp dcomp))  ^
 			")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
@@ -547,6 +546,12 @@ struct
          print (TyToStringD prefix longTBDs longBottom suffix ty ) 
 
     fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
+
+    fun allStringConsts relist =
+		foldr myand true (map (fn re => (case re of 
+						StringConst _ => true 
+						| _ => false)
+				     ) relist)
 (**************
     val dateStoppingChar= ref #""
     val dateStoppingRe = ref ""
@@ -663,11 +668,6 @@ struct
 	      | _ => raise InvalidTokenTy
           )
 	end 
-	fun allStringConsts relist =
-		foldr myand true (map (fn re => (case re of 
-						StringConst _ => true 
-						| _ => false)
-				     ) relist)
         fun isNumConst ty =
 		case ty of 
 		RefinedBase (aux, (IntConst x), tl) => true
@@ -923,17 +923,9 @@ struct
 			    in ("\t" ^ (getVarName newlabel) ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")")
 			    end
 		    	| _ => raise TyMismatch
-		    (*funtion to sort the all string const refined types by the length of the strings
-		      from longest to shortest, this is so as to attemp the longer and more specific
-		      strings first*)
-		    fun shorter (re1, re2) =
-			case (re1, re2) of
-			(StringConst x, StringConst y) => (size x < size y)
-			| _ => raise TyMismatch
-		    val sorted_res = ListMergeSort.sort shorter res
 		  in (pRecord ^
 		    "Penum " ^ label ^ " {\n" ^
-	    	     (join (map strConstToEnumItem sorted_res) ",\n") ^
+	    	     (join (map strConstToEnumItem res) ",\n") ^
 	    	     "\n" ^ prefix ^ "};\n")
 		  end
 	    	else
@@ -998,24 +990,11 @@ struct
 		  | SOME switchedTy =>
 		    let 
 			val switch = getSwitchTypeString switchedTy
-			val sw = case switchedTy of
-					RefinedBase(a, Enum res, tl) =>
-						if (allStringConsts res) then
-						  let
-		    				    fun shorter (re1, re2) =
-							case (re1, re2) of
-							(StringConst x, StringConst y) => (size x < size y)
-							| _ => raise TyMismatch
-		    				    val sorted_res = ListMergeSort.sort shorter res
-						  in RefinedBase(a, Enum sorted_res, tl)
-						  end
-						else switchedTy
-					| _ => switchedTy
 		    in
 		   	(pre ^ pRecord ^
 		   	"Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 
 		   	prefix ^ "  Pswitch (" ^ switchvar ^ ") {\n" ^
-			(lconcat (map (fn (i, rety) => reToSwitch sw i rety) 
+			(lconcat (map (fn (i, rety) => reToSwitch switchedTy i rety) 
 					(ListPair.zip((indexes (length retys)), retys)))) ^
 		   	prefix ^ "  }\n" ^
 		   	prefix ^ "};\n")
