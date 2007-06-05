@@ -467,6 +467,7 @@ struct
     let val aux = getAuxInfo ty
         val { tc = tcomp, adc = acomp, dc = dcomp } = #tycomp aux
         val stats = ( "(" ^  (covToString aux)  ^
+		      ", score: "^ (showBits (combine tcomp dcomp)) ^
 		      (if print_complexity then (
                       ", tc: " ^ (showBits tcomp)  ^
                       ", ac: " ^ (showBits acomp)  ^
@@ -997,11 +998,24 @@ struct
 		  | SOME switchedTy =>
 		    let 
 			val switch = getSwitchTypeString switchedTy
+			val sw = case switchedTy of
+					RefinedBase(a, Enum res, tl) =>
+						if (allStringConsts res) then
+						  let
+		    				    fun shorter (re1, re2) =
+							case (re1, re2) of
+							(StringConst x, StringConst y) => (size x < size y)
+							| _ => raise TyMismatch
+		    				    val sorted_res = ListMergeSort.sort shorter res
+						  in RefinedBase(a, Enum sorted_res, tl)
+						  end
+						else switchedTy
+					| _ => switchedTy
 		    in
 		   	(pre ^ pRecord ^
 		   	"Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 
 		   	prefix ^ "  Pswitch (" ^ switchvar ^ ") {\n" ^
-			(lconcat (map (fn (i, rety) => reToSwitch switchedTy i rety) 
+			(lconcat (map (fn (i, rety) => reToSwitch sw i rety) 
 					(ListPair.zip((indexes (length retys)), retys)))) ^
 		   	prefix ^ "  }\n" ^
 		   	prefix ^ "};\n")
