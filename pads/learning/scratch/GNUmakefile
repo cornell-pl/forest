@@ -1,4 +1,4 @@
-######################################################################
+#######################################################################
 # This is a GNU makefile
 #
 # Synopsis:
@@ -23,11 +23,12 @@
 # 6. To make a summary report on the most recent version, the
 #    silver and golden versions, run the target with a ".rep"
 #    suffix, eg. "make quarterlypersonalincome.rep"
-# 7. To make training data with a specified percentage of randomly
-#    selected data, use "make xxx.train P=p" where p is the
-#    percentage you want. This training data can be used, for
-#    example, in "make xxx.train.rep" to generate a report
-#    using this training data.
+# 7. To make 3 sets of training data with a specified percentage of 
+#    randomly selected data, use "make xxx.train P=p" where p is the
+#    percentage you want. Then learn on these three sets, produce the pads
+#    descriptions and parses the three descriptions on the original
+#    data file. Print the error rate of each of the 3 descriptions
+#    and the average error rate. 
 #
 # Golden files that are available:
 #
@@ -75,7 +76,8 @@
 ######################################################################
 
 ifndef SML
-  export SML=sml
+  SML_PATH = $(shell which sml)
+  export SML=$(SML_PATH)
 endif
 
 SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
@@ -143,7 +145,7 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
-GOLDENDATA := rpmpkgs quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv
+GOLDENDATA := rpmpkgs quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv asl.log
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))
@@ -182,8 +184,20 @@ $(SILVERS): %.ag: %
 
 # Make some training data
 $(TRAINS): %.train:
-	chunks.pl -m random -p $(P) -f data/$(*F)
-	mv data/$(*F).chunk0 data/$(*F).train
+	chunks.pl -m random -n 3 -p $(P) -f data/$(*F)
+	rm -rf gen/*
+	cp vanilla.p gen
+	nice -n20 ./learn -n $(*F).chunk0 -lex vanilla data/$(*F).chunk0 
+	nice -n20 ./learn -n $(*F).chunk1 -lex vanilla data/$(*F).chunk1 
+	nice -n20 ./learn -n $(*F).chunk2 -lex vanilla data/$(*F).chunk2 
+	make --directory=gen $(*F).chunk0-accum
+	gen/darwin.ppc/$(*F).chunk0-accum data/$(*F) 2>gen/$(*F).chunk0-accum.out
+	make --directory=gen $(*F).chunk1-accum
+	gen/darwin.ppc/$(*F).chunk1-accum data/$(*F) 2>gen/$(*F).chunk1-accum.out
+	make --directory=gen $(*F).chunk2-accum
+	gen/darwin.ppc/$(*F).chunk2-accum data/$(*F) 2>gen/$(*F).chunk2-accum.out
+	./accum-out.pl gen/$(*F).chunk0-accum.out gen/$(*F).chunk1-accum.out gen/$(*F).chunk2-accum.out
+#	mv data/$(*F).chunk0 data/$(*F).train
 
 define learn-it
 # Clean the gen directory
