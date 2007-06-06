@@ -10,67 +10,114 @@
 \end{figure}
 
 Figure \ref{fig-archi} gives an overview of our format inference
-architecture. The input data, or ``training set,'' is first
-``chunked'' into records where each record is a piece of recurrent
-data such as a line, a paragraph, or a file (if the input consists of
-multiple files).  The user specifies the unit of repetition when
-invoking our learning tool.  Each record is then broken down into a
-series of tokens where each token can be a punctuation symbol, a
-number, a date, a time, or a number of other basic types.  Our
-learning system has a basic tokenization scheme skewed toward systems
+architecture. The input data ({\em i.e.,} training set) is first
+divided into {\em chunks} as specified by the user.  Intuitively, a chunk
+is a unit of repetition in the data source.  Our tool currently supports
+chunking on a line-by-line basis as well as on a file-by-file basis.  
+
+Each chunk is broken down into a
+series of {\em tokens} by a lexer.
+Each token can be a punctuation symbol, a
+number, a date, a time, or a number of other basic items.  Every token
+type has a corresponding base type in the \ir{}, though the 
+converse is not true -- there are
+a number of base types that are not used as tokens.
+
+Our learning system has a default tokenization scheme skewed toward systems
 data, but users may specify a different scheme for their own domain
 through a configuration file.  For example, computational biologists
-may want to specify new base types for DNA strings or other common
-recurring patterns.
+may want to add DNA strings {\tt CATTGTT...} to the default tokenization 
+scheme.  The configuration file is essentially
+a list of name-regular expressions pairs -- see Figure~\ref{fig:configfile}
+for a small example.  The system uses the file to generate 
+part of the system's lexer, a
+collection of new \ir{} base types, and a series of type 
+definitions that are incorporated into the final \pads{} specification.  
 
-In the structure discovery phase, we use a top-down, divide-and-conquer
-scheme inspired in part by the work of Arasu on
-information extraction from web pages~\cite{arasu+:sigmod03}. 
-When a type constructor has been chosen, the data is partitioned accordingly
-and the algorithm recursively analyzes subparts.  This
-rough structure is represented in an intermediate representation (IR)
-that has similar expressive power to the \pads{} language. 
-The format refinement phase analyzes the IR produced by structure discovery
-and repeatedly applies rewrite rules.  
-In effect, this refinement phase is equivalent to a greedy, local search
-procedure aimed at improving the quality of the inferred format.
+After tokenization, the algorithm enters the {\em structure discovery} 
+phase.  This phase uses a top-down, divide-and-conquer
+scheme to guess an approximate, initial format for the data.
+To assess the quality of this initial approximation, the
+algorithm computes an information-theoretic {\em score} for the
+structure.  This score is used in the next phase to guide
+{\em rewriting rules} that iteratively refine the format.  
 
-\subsection {Chunking and Tokenization}
+Once the format has been refined to the extent possible, the resulting
+\ir{} is printed in \pads{} syntax.  Template programs that use the
+new description, including the \xml{}-converter, a simple
+statistics tool we call the {\em accumulator}, a database tool
+based on Oetiker's RRDTool~\cite{rrdtool}, and the \padx{}
+query engine, are also all generated at this point.  Hence, starting
+with data alone, our end-to-end algorithm quickly generates an entire suite
+of fully functional data processing tools, ready to use at the command line.
+
+The following subsections describe the main components of the algorithm
+in more detail, including the structure discovery phase, the 
+information-theoretic scoring function, the structure refinement phase
+and the end products of the algorithm.
 
 \begin{figure}
-\begin{center}
-\begin{tabular}{|l|l|}
-\hline
-Name   &  Description               \\ \hline\hline
-Pint  &   Integer \\ 
-Palpha & Alpha-numeric string including '$\_$' and '$-$' \\
-Pip & IP address \\
-Pemail & Email address \\
-Pmac & Mac address \\
-Pdate & Simple date format \\
-Ptime & Simple time format \\
-Ppath & File system path \\
-Phostname & Hostname \\
-Purl  & URL \\
-PbXML & Beginning XML tag \\
-PeXML & Ending XML tag \\
-Pother & Punctuation character \\\hline
-\end{tabular}
-
-\caption{Basic token types in default configuration.}
-\label{figure:base-types}
-\end{center}
+\begin{verbatim}
+def triplet [0-9]{1,3}
+def doublet [0-9]{1,2}
+def hexdoub [0-9a-fA-F]{2}
+...
+exp Pemail {str1}@{hostname}
+exp Pmac   ({hexdoub}(: | \-)){5}{hexdoub}
+exp PbXML  \<([a-zA-Z])+\>
+exp PeXML  \<\/[^>]+\>
+\end{verbatim}
+\caption{Tiny fragment of the default configuration file. 
+The configuration command {\tt exp} specifies the definition on that
+line should be  ``exported'' to
+the learning tool whereas command {\tt def} implies the definition
+is local and used only in other {\tt exp} or {\tt def} in the
+configuration file.}
+\label {fig:configfile}
 \end{figure}
+
+%% \subsection {Chunking and Tokenization}
+
+
+
+
+%% \begin{figure}
+%% \begin{center}
+%% \begin{tabular}{|l|l|}
+%% \hline
+%% Name   &  Description               \\ \hline\hline
+%% Pint  &   Integer \\ 
+%% Palpha & Alpha-numeric string including '$\_$' and '$-$' \\
+%% Pip & IP address \\
+%% Pemail & Email address \\
+%% Pmac & Mac address \\
+%% Pdate & Simple date format \\
+%% Ptime & Simple time format \\
+%% Ppath & File system path \\
+%% Phostname & Hostname \\
+%% Purl  & URL \\
+%% PbXML & Beginning XML tag \\
+%% PeXML & Ending XML tag \\
+%% Pother & Punctuation character \\\hline
+%% \end{tabular}
+
+%% \caption{Basic token types in default configuration.}
+%% \label{figure:base-types}
+%% \end{center}
+%% \end{figure}
  
 
 
 
-    *  mention system parameterization for multiple tokenizations for different domains
-    * mention current skew towards systems data
-    * ignore problems in this section -- save that for discussion/future work section
-    * mention stream of tokens generated for running example 
+%%     *  mention system parameterization for multiple tokenizations for different domains
+%%     * mention current skew towards systems data
+%%     * ignore problems in this section -- save that for discussion/future work section
+%%     * mention stream of tokens generated for running example 
 
 \subsection {Structure Discovery}
+
+Inspired in part by the work of Arasu on
+information extraction from web pages~\cite{arasu+:sigmod03}. 
 
     *  role = quickly find a description in the "approximate area" of the correct description
     * explain structure of a generic "top-down" inference algorithm -- perhaps give pseudocode
