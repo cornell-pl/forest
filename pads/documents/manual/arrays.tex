@@ -194,9 +194,11 @@ If an array has a \Plast{} constraint, it cannot have a
 
 
 \subsection{\Plongest{}}
-The \Plongest{} specifier indicates that the sequence continues
-until an element is read that contains an error.  The parser returns the
-erroneous value to the input.  If the array declaration includes a
+The \Plongest{} specifier indicates that parsing the sequence continues
+until the parser detects an error, either in parsing a separator for the
+array or in parsing an element. The parser returns the data that
+produced the
+error to the input.  If the array declaration includes a
 separator, the separator preceding the returned element
 is also returned to the input.  The following \pads{} code describes a
 non-empty sequence of even integers separated by the character
