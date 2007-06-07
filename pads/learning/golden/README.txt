@@ -14,6 +14,252 @@ dibbler.10001  -- same format as dibbler.1000 but longer
 crashreporter.log 2 hr
 railroad.txt	2 hr
 
+ai.3000
+boot.txt
+crashreporter.log
+dibbler.1000
+ls-1.txt
+railroad.txt
+rpmpkgs.txt
+quarterly...
+yum.txt
+1967Transactions.short
+
+Current status 5/6
+******************
+Errors
+------
+ai.3000 1 hr
+size: 293460
+ai.p:  good vals:       3000    bad vals:          0    pcnt-bad:    0.000
+number of correctly parsed records = 2673
+number of incorrectly parsed records = 327
+New complexity scores
+{ TC = 970.860b, ADC = 889.349b, DC = 2660405.488b } normalized by 2347680 is 1.13361972168
+
+ai.golden: 63 records incorrectly parsed. 97.9 correct
+{ TC = 970.860b, ADC = 889.349b, DC = 2660405.488b } normalized by 2347680 is 1.13361972168
+====== Timing information ======
+Tokenization time = 3.052
+Measure1 time = 0.200
+Reduce1 time = 21.373
+Reduce2 time = 17.455
+Reduce3 time = 3.780
+Measure2 time = 0.170
+Total time = 46.029
+================================
+
+excel: good
+doesn't dive into data inside quotations
+
+boot.txt 1 hr
+handwritten: boot.p good vals:        261    bad vals:          1    pcnt-bad:    0.382
+number of correctly parsed records = 243
+number of incorrectly parsed records = 19
+{ TC = 2767.071b, ADC = 585.658b, DC = 149874.672b } normalized by 129920 is 1.17489026711
+golden format
+7 good, 2.7% good
+XXX Golden complexity =
+{ TC = 315.732b, ADC = nanb, DC = 2840.215b } normalized by 129920 is 0.02429146743
+
+====== Timing information ======
+Tokenization time = 0.116
+Measure1 time = 0.008
+Reduce1 time = 1.522
+Reduce2 time = 6.850
+Reduce3 time = 0.346
+Measure2 time = 0.008
+Total time = 8.849
+================================
+excel: fair, doesn't dive into semi-structured data at end of each record.
+
+crashreporter.log 2 hr
+handwritten: good vals:        441    bad vals:          0    pcnt-bad:    0.000
+{ TC = 2069.123b, ADC = 736.908b, DC = 321536.070b } normalized by 401216 is 0.806561036533
+number of correctly parsed records = 441
+number of incorrectly parsed records = 0
+golden
+12 not parsed correctly. 97.3% correct
+Golden complexity =
+{ TC = 1490.853b, ADC = nanb, DC = 319271.113b } normalized by 401216 is 0.799474510304
+
+====== Timing information ======
+Tokenization time = 0.254
+Measure1 time = 0.013
+Reduce1 time = 2.122
+Reduce2 time = 4.408
+Reduce3 time = 0.432
+Measure2 time = 0.015
+Total time = 7.244
+================================
+
+excel: fair, doesn't dive into semi-structured data at end of each record.
+
+dibbler.1000 0.5 hr
+dibbler.p: good vals:        998    bad vals:          1    pcnt-bad:    0.100
+New complexity scores
+{ TC = 85.251b, ADC = 28.703b, DC = 535657.700b } normalized by 1140856 is 0.46959734698
+number of correctly parsed records = 999
+number of incorrectly parsed records = 0
+Golden complexity =
+{ TC = 325.150b, ADC = 351.792b, DC = 545463.146b } normalized by 1140856 is 0.478402441579
+100% golden populated correctly
+
+
+====== Timing information ======
+Tokenization time = 3.870
+Measure1 time = 0.062
+Reduce1 time = 3.764
+Reduce2 time = 162.116
+Reduce3 time = 1.336
+Measure2 time = 0.036
+Total time = 171.184
+================================
+excel: weak as data is not tabular
+
+ls-l.txt 1 hr
+ls-l.txt.p good vals:         34    bad vals:          1    pcnt-bad:    2.857
+New complexity scores
+{ TC = 717.651b, ADC = 269.960b, DC = 9120.681b } normalized by 16112 is 0.610621405122
+number of correctly parsed records = 35
+number of incorrectly parsed records = 0
+Golden
+ 0% parsed correctly; golden score meaningless
+
+====== Timing information ======
+Tokenization time = 0.131
+Measure1 time = 0.004
+Reduce1 time = 0.088
+Reduce2 time = 0.094
+Reduce3 time = 0.017
+Measure2 time = 0.004
+Total time = 0.338
+================================
+excel: data not available
+
+railroad.txt	2 hr
+{ TC = 2326.724b, ADC = 300.366b, DC = 23142.838b } normalized by 49744 is 0.512012740177
+Union tag: good vals:         67    bad vals:          0    pcnt-bad:    0.000
+number of correctly parsed records = 6
+number of incorrectly parsed records = 61
+golden:
+64/67 good, 95.5% good
+Golden complexity =
+{ TC = 1982.868b, ADC = 310.963b, DC = 22976.555b } normalized by 49744 is 0.501757459958
+excel: good, comma separated values; some noise in header, trailer, commas to be removed
+
+====== Timing information ======
+Tokenization time = 0.169
+Measure1 time = 0.006
+Reduce1 time = 0.496
+Reduce2 time = 18.769
+Reduce3 time = 0.254
+Measure2 time = 0.008
+Total time = 19.701
+================================
+
+
+rpmpkgs.txt	3 hrs
+good vals:        884    bad vals:          2    pcnt-bad:    0.226
+{ TC = 538.669b, ADC = 111.889b, DC = 119990.514b } normalized by 217784 is 0.553434518124
+number of correctly parsed records = 883
+number of incorrectly parsed records = 3
+golden not really available: no records parse correctly
+====== Timing information ======
+Tokenization time = 0.291
+Measure1 time = 0.019
+Reduce1 time = 3.099
+Reduce2 time = 1.899
+Reduce3 time = 0.635
+Measure2 time = 0.014
+Total time = 5.956
+================================
+excel: perfect: load data into single column
+       weak: doesn't find structure: program name, version info, architecture, file extension
+
+quarterlypersonalincome.txt 2 days
+good vals:         60    bad vals:          2    pcnt-bad:    3.226
+{ TC = 1287.492b, ADC = 510.480b, DC = 28835.789b } normalized by 81424 is 0.369955792544
+number of correctly parsed records = 62
+number of incorrectly parsed records = 0
+gold format parses 100%
+Golden complexity =
+{ TC = 1037.335b, ADC = 84.170b, DC = 28227.742b } normalized by 81424 is 0.359415870193
+
+====== Timing information ======
+Tokenization time = 0.087
+Measure1 time = 0.005
+Reduce1 time = 0.323
+Reduce2 time = 17.642
+Reduce3 time = 0.182
+Measure2 time = 0.006
+Total time = 18.246
+================================
+excel: perfect
+
+yum.txt 5 hrs
+good vals:        327    bad vals:          1    pcnt-bad:    0.305
+{ TC = 1795.481b, ADC = 475.334b, DC = 150080.672b } normalized by 145760 is 1.04196043733
+number of correctly parsed records = 27
+number of incorrectly parsed records = 301
+Golden complexity =
+26 not parsed properly; 92.1 correct
+{ TC = 288.132b, ADC = 538.335b, DC = 162103.416b } normalized by 145760 is 1.11410227653
+====== Timing information ======
+Tokenization time = 0.536
+Measure1 time = 0.095
+Reduce1 time = 2.762
+Reduce2 time = 0.882
+Reduce3 time = 1.185
+Measure2 time = 0.007
+Total time = 5.467
+================================
+excel perfect
+
+1967Transactions.short 4 hrs
+good vals:        999    bad vals:          0    pcnt-bad:    0.000
+{ TC = 175.174b, ADC = 123.491b, DC = 123367.394b } normalized by 567432 is 0.217722243067
+number of correctly parsed records = 999
+number of incorrectly parsed records = 0
+golden
+ 998/999 parsed correctly
+Golden complexity =
+{ TC = 111.705b, ADC = 365.845b, DC = 362128.049b } normalized by 567432 is 0.638384431424
+
+====== Timing information ======
+Tokenization time = 0.582
+Measure1 time = 0.089
+Reduce1 time = 2.022
+Reduce2 time = 0.792
+Reduce3 time = 0.241
+Measure2 time = 0.015
+Total time = 3.741
+================================
+excel perfect
+
+
+******************
+warning: P_open: Installing default IO discipline : newline-terminated records
+warning: Error [in Union_69_read]: record 49 byte 1 : Failed to match any branch of union Union_69
+[record 49]>>><<<at-3.1.8-80_EL4.i386.rpm
+Note [in Union_69_read]: record 49 byte 1 : Resynching at EOR
+[record 49]>>>at-3.1.8-80_EL4.i386.rpm<<<
+read returned error
+warning: Error [in Union_69_read]: record 150 byte 1 : Failed to match any branch of union Union_69
+[record 150]>>><<<dhcpv6_client-0.10-14_EL4.i386.rpm
+Note [in Union_69_read]: record 150 byte 1 : Resynching at EOR
+[record 150]>>>dhcpv6_client-0.10-14_EL4.i386.rpm<<<
+read returned error
+warning: Error [in Union_69_read]: record 356 byte 1 : Failed to match any branch of union Union_69
+[record 356]>>><<<java-1.4.2-gcj-compat-1.4.2.0-27jpp.noarch.rpm
+Note [in Union_69_read]: record 356 byte 1 : Resynching at EOR
+[record 356]>>>java-1.4.2-gcj-compat-1.4.2.0-27jpp.noarch.rpm<<<
+read returned error
+
+
+******************
+
+
 The errors we get so far:
 
 1967Transactions.short:

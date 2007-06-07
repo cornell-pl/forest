@@ -26,6 +26,10 @@
 # pads-1-04-a      pads 1.04    2006-07-11  try, enums can specify base type, mask generation functions
 # pads-1-04-b      pads 1.04b   2006-07-11  enum test files added, manual script fixed?
 # pads-1-04-c      pads 1.04c   2006-08-11  added jpg and gif to manual takelist
+# pads-1-04-d      pads 1.04d   2007-15-03  upgraded to 2007-01-11 ast library
+# pads-1-04-e      pads 1.04e   2007-15-03  fixed bug in manual
+# pads-2-00-a      pads 2.00a   2007-06-06  changed license, fixed bug in plongest
+# pads-2-00-b      pads 2.00b   2007-06-06  various files I forgot to check in previously
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`

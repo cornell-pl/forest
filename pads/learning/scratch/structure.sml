@@ -103,6 +103,7 @@ struct
 	    (print "\t"; print (Int.toString int); print ":\t"; print(Int.toString(!countRef)); 
 	     print "\t"; print (Real.toString percent); ( print "\n"))
 	end
+
     fun printAugHist numRecords (token, (h:histogram)) = 
 	(print "Token: "; 
 	 printTokenTy token; print "\n"; 
@@ -206,7 +207,108 @@ struct
 	   ListMergeSort.sort cmp cList
        end
 
-   fun fuzzyIntEq threshold (i1, i2) = abs(i1 - i2) < threshold
+   fun getHistNormalForm (numRecords, h:histogram) = 
+       let val coverage = !(#coverage h)
+	   val intList = (0,numRecords - coverage) :: (getSortedHistogramList (!(#hist h)))
+       in
+           List.map (fn(x,y) => (x,Real.fromInt y)) intList
+       end
+    
+
+    fun printOneRealFreq numRecords (int, freq) = 
+	let val percent = freq/(Real.fromInt numRecords)
+	in
+	    (print "\t"; print (Int.toString int); print ":\t"; print(Real.toString(freq)); 
+	     print "\t"; print (Real.toString percent); ( print "\n"))
+	end
+
+    fun printHistNormalForm s numRecords hiNorm = 
+        (print ("Normalized histogram: "^s^"\n");
+         List.app (printOneRealFreq numRecords) hiNorm)
+
+    fun avgNormHist(numRecords, h1Norm, h2Norm) = 
+	let fun halve [] a = List.rev a
+              | halve ((f,c)::r) a = halve r ((f,c/(Real.fromInt 2))::a)
+            fun avg [] rs a = (List.rev a) @ (halve rs [])
+              | avg rs [] a = (List.rev a) @ (halve rs [])
+              | avg ((x,xc)::h1s) ((y,yc)::h2s) a = 
+		  avg h1s h2s ((x,(xc + yc)/(Real.fromInt 2)) :: a)
+	    val result = avg h1Norm h2Norm []
+	    val () = if print_verbose then (printHistNormalForm "h1" numRecords h1Norm;
+					    printHistNormalForm "h2" numRecords h2Norm;
+					    printHistNormalForm "avg" numRecords result)
+		     else ()
+	in
+	    result
+	end
+
+    fun avgHist(numRecords, h1:histogram, h2:histogram) = 
+	let val h1Norm = getHistNormalForm(numRecords, h1)
+            val h2Norm = getHistNormalForm(numRecords, h2)
+	in
+	    avgNormHist(numRecords, h1Norm, h2Norm)
+	end
+
+    fun relativeEntropy (numRecords, h1:histogram, h2: histogram) = 
+	let fun isZero r = (Real.abs(r - 0.0)) <= 0.0000001
+	    fun blend (h1i, h2i) = 
+		if isZero h1i then 0.0
+		else let val ph1i = h1i / (Real.fromInt numRecords) (* convert count to probability *)
+		         val ph2i = h2i / (Real.fromInt numRecords) (* convert count to probability *)
+		     in
+			 ph1i * (Math.ln(ph1i/ph2i))
+		     end
+            fun rawre [] h2 a = a
+              | rawre h1 [] a = a
+              | rawre ((x,xc)::h1s) ((y,yc)::h2s) a = rawre h1s h2s (a + (blend(xc,yc)))
+	    fun re (h1, h2) = 
+		let val h1Norm = getHistNormalForm(numRecords, h1)
+		    val h2Norm = getHistNormalForm(numRecords, h2)
+		    val avgNorm = avgNormHist (numRecords, h1Norm, h2Norm)
+		    val h1RE = (rawre h1Norm avgNorm 0.0)
+		    val h2RE = (rawre h2Norm avgNorm 0.0)
+		    val result = 0.5 * h1RE + 0.5 * h2RE
+		    val () = if print_verbose then (print "Relative Entropy: "; (print (Real.toString result)); print "\n") else ()
+		in
+		    result
+		end
+	    
+	in
+	    re (h1,h2)
+	end
+
+    fun getFreqs (t,h) = h
+    fun testAvg (numRecords, cluster) = 
+	let val first = hd cluster
+        in
+	    if List.length first > 1 
+            then  let val firstH = hd first
+		      val firstF = getFreqs firstH
+		      val secondH = hd (tl first)
+		      val secondF = getFreqs secondH
+		  in
+		     (print "Relative entropy of two histograms from same cluster:\n";
+                      print(Real.toString(relativeEntropy( numRecords, firstF, secondF)));
+		      print ".\n")
+		  end
+            else ();
+            if List.length (tl cluster) > 1 
+            then let val firstH = hd first
+		     val firstF = getFreqs firstH
+		     val secondH = hd(hd (tl cluster))
+		     val secondF = getFreqs secondH
+		  in
+		      (print "Relative entropy of two histograms from different clusters:\n";
+		       print(Real.toString(relativeEntropy(numRecords, firstF, secondF)));
+                       print ".\n")
+		 end
+	    else ()
+	end
+
+    fun histDistance (numRecords, h1:histogram, h2:histogram) = ()
+
+
+    fun fuzzyIntEq threshold (i1, i2) = abs(i1 - i2) < threshold
 
    (* sort histogram by column heights using getSortedHistogramList *)
    (* only non-zero heights represented in histogram *)
@@ -594,6 +696,176 @@ struct
 	in
 	    freqs
 	end
+
+    fun TokenPairComp ((t1a,t1b), (t2a,t2b)) = 
+	let val r1 = compToken (t1a, t2a)
+	in
+	    if  r1 = EQUAL then compToken (t1b, t2b) else r1
+	end
+
+    structure TokenPairTable = RedBlackMapFn(
+                     struct type ord_key = Token * Token
+			    val compare = TokenPairComp
+		     end) 
+
+    (* new clustering algorithm based on relative entropy *)
+    (* identify each histogram by the token associated with it. *)
+    (* each cluster is intuitively a set of tokens.
+         We choose the smallest token in the set to represent the cluster.
+         We represent the set as a map from the representative token to the list of tokens in the set, including the representative. *)
+    (* d(h1,h2) = relativeEntropy(h1,h2)
+       d(h, C) = minimum(hi) d(h,h1) where hi in cluster C
+       d(C1,C2) = minimum (hi) d(h,C2) where hi in cluster C1 *)
+    (* Initially, each token forms its own cluster *)
+    (* Build a map from each pair of tokens to the relative entropy (distance) between their associated histograms 
+         because the relative entropy is symmetric, we only need the map to store the distances from the smaller to the larger token.
+         the relative entropy for a pair of equal tokens is zero, so we don't need to store this value either. *)
+    (* This maps forms the intial set of distances between clusters *)
+    (* In each round, we select the pair of clusters with the smallest difference.
+          If that difference is above a given threshold, we terminate the clustering.
+          Otherwise, we merge the two clusters and build a new cluster distance map from the old one. *)
+       
+    fun newFindClusters numRecords (freqDist:freqDist) = 
+	let val distList = TokenTable.listKeys(freqDist)
+            fun buildInitialClusters distList = 
+		let fun doOne (token, clusters) = TokenTable.insert(clusters,token, [token])
+		in List.foldl doOne TokenTable.empty distList end
+	    val Cs_init : (Token list) TokenTable.map = buildInitialClusters distList
+	    fun printClusters s clusters = 
+		let fun doOne (t,tlist) = (print "Rep token: "; printTokenTy t; print "\n"; printTList tlist)
+		in
+		    (print s; print "\n";
+		    TokenTable.appi doOne clusters;
+		     print "\n")
+		end
+	    val () = printClusters "Initial clusters: " Cs_init
+            fun mergeClusters Cs_old t1 t2 = 
+		let val () = (print "Merging clusters: "; printTokenTy t1; print " "; printTokenTy t2; print "\n")
+		    val (Cs_1, c_t1) = TokenTable.remove(Cs_old, t1)
+                    val (Cs_2, c_t2) = TokenTable.remove(Cs_1, t2)
+		    val result = 
+			case compToken (t1,t2)
+ 		        of LESS    => TokenTable.insert(Cs_2, t1, c_t1 @ c_t2)
+                        |  GREATER => TokenTable.insert(Cs_2, t2, c_t1 @ c_t2)
+                        |  EQUAL   => (print "Bug: Unexpected equal tokens in different clusters.\n"; 
+				       TokenTable.insert(Cs_2, t2, c_t1 @ c_t2))
+		in
+		    (printClusters "old" Cs_old;
+		     printClusters "new" result;
+		     result)
+		end
+
+	    fun computeInitialDistances freqDist = 
+		let fun insertDistance t1 (t2, CD)  = 
+		    let fun re(t1,t2) = relativeEntropy (numRecords, TokenTable.lookup(freqDist, t1), TokenTable.lookup(freqDist,t2))
+		    in  case compToken(t1,t2)
+			of LESS    => TokenPairTable.insert(CD, (t1,t2), re(t1,t2))
+                        |  GREATER => TokenPairTable.insert(CD, (t2,t1), re(t2,t1))
+                        |  EQUAL   => CD
+       		    end
+		    fun insertDistances CD [] = CD
+                      | insertDistances CD (t::ts) = 
+			let val tCD = List.foldl (insertDistance t) CD ts
+			in
+			    insertDistances tCD ts
+			end
+		in
+		    insertDistances TokenPairTable.empty distList
+		end
+	    val CD_init = computeInitialDistances freqDist
+
+	    fun printClusterDistance ((t1,t2),d) = (print "("; printTokenTy t1; 
+						print ", "; printTokenTy t2; print "):\t ";
+						print (Real.toString d); 
+						print "\n")
+	    fun printClusterDistances CD = 
+		   ( print "Cluster Distances\n";
+		     TokenPairTable.appi printClusterDistance CD;
+		     print "End Cluster Distances\n")
+
+
+            fun clusterDistance CD (c1,c2) = 
+		case compToken(c1,c2) 
+                   of EQUAL    => 0.0
+                   |  LESS     => (TokenPairTable.lookup(CD, (c1,c2)) handle NotFound => (print "LESS "; printTokenTy c1; print ", "; printTokenTy c2; print " not found.\n"; printClusterDistances CD; raise NotFound))
+                   |  GREATER  => (TokenPairTable.lookup(CD, (c2,c1)) handle NotFound => (print "GREATER "; printTokenTy c2; print ", "; printTokenTy c1; print " not found.\n"; raise NotFound))
+	    fun minMaxToken(t1,t2) = 
+		case compToken(t1,t2) 
+                   of EQUAL    => (t1,t2)
+                   |  LESS     => (t1,t2)
+                   |  GREATER  => (t2,t1)
+
+	    (* Merging t_min and t_max
+	       Require ta < tb
+	       CD_new (ta,tb) = CD_old(ta,tb) if t_min not in {ta, tb}
+               CD_new (ta,tb) = min {clusterDistance CD_old ta t_min, clusterDistance CD_old ta t_max} if tb = t_min
+               CD_new (ta,tb) = min {clusterDistance CD_old tb t_min, clusterDistance CD_old tb t_max} if ta = t_min
+             *)
+            fun updateClusterDistances clusters CD_old t1 t2 = 
+		let val () = print "Starting to update cluster distances\n"
+		    val (t_min,t_max) = minMaxToken(t1, t2)  (* know t_min < t_max, so t_min is representative for new cluster *)
+		    val tokens = TokenTable.listKeys clusters
+		    fun insertDistance ta (tb, CD) =  (* guarantee that ta < tb *)
+			if not (eqToken(ta, t_min)) andalso not (eqToken(tb, t_min))
+			then TokenPairTable.insert(CD, (ta,tb), clusterDistance CD_old (ta, tb))  (* neither cluster is involved in merge *)
+			else if eqToken(ta, t_min) (* a is rep for merge; newD is min of old d from tb to either cluster in merge *)
+                             then let val newDistance = Real.min(clusterDistance CD_old (t_min, tb), clusterDistance CD_old(tb, t_max))
+				  in
+				      TokenPairTable.insert(CD, (ta,tb), newDistance)  
+				  end
+			      else  (* b is rep for merge; newD is min of old d from a to either cluster in merge *)
+				  let val newDistance = Real.min(clusterDistance CD_old (t_min, ta), clusterDistance CD_old(ta, t_max))
+				  in
+				      TokenPairTable.insert(CD, (ta,tb), newDistance)  
+				  end
+		    fun insertDistances CD [] = CD
+		      | insertDistances CD (t::ts) = 
+			let val tCD = List.foldl (insertDistance t) CD ts
+			in 
+			    insertDistances tCD ts
+			end
+		in
+		    insertDistances TokenPairTable.empty tokens
+		end
+
+
+            fun findMinDistance CD = 
+		let val distList = TokenPairTable.listItemsi CD
+                    fun getSmallest ( ((t1,t2),d), c as (smallest,(ta,tb))) = if d < smallest then (d,(t1,t2)) else c
+                    val c as (smallest,_) = List.foldl getSmallest (1.0,(Pempty, Error)) distList
+                    val () = if print_verbose then (print "Smallest cluster distance is: "; print (Real.toString smallest); print "\n") else ()
+		in
+		    c
+		end
+
+	    val initSmallestDistance = findMinDistance CD_init
+	    val threshold = 0.01
+            fun loop clusters CD = 
+		let val (minDistance,(ta,tb)) = findMinDistance CD
+		    val () = (print "Selected tokens:"; printClusterDistance ((ta,tb),minDistance); print "\n")
+		in
+		    if minDistance > threshold then (clusters, CD)
+		    else let val () = printClusterDistances CD
+			     val newClusters = mergeClusters clusters ta tb
+			     val CD_new      = updateClusterDistances newClusters CD ta tb
+			     val () = printClusterDistances CD_new
+			 in
+			     loop newClusters CD_new 
+			 end
+		end
+	    val (Clusters, CD) = loop Cs_init CD_init
+            (* we have a map from tokens to token lists to represent clusters.
+               We need to convert this rep to a (Token * histogram) list list *)
+            fun convertRep (cluster:Token list TokenTable.map) freqDist = 
+		let fun convertOneCluster tlist = List.map (fn t=> (t,TokenTable.lookup(freqDist, t))) tlist
+		    fun doOneToken (tlist,clusters) = (convertOneCluster tlist) :: clusters
+		in
+		    TokenTable.foldl doOneToken [] cluster 
+		end
+	in  
+	    convertRep Clusters freqDist
+	end
+
 
     (* threshold = user-specified percentage (HIST_PERCENTAGE, -h, 1%) of number of 'records' in context *)
     (* histScoreCmp: compares (<) scores of two histograms, ignores threshold *)
@@ -1151,7 +1423,11 @@ struct
 	    val fd: freqDist = buildHistograms numRecordsinContext counts
 	    val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd
 	    val () = if print_verbose then printClusters numRecordsinContext clusters else ()
-            val ty = clustersToTy curDepth context numRecordsinContext clusters
+            val () = print "Starting new clustering\n"          
+	    val newclusters = newFindClusters numRecordsinContext fd
+	    val () = if print_verbose then printClusters numRecordsinContext newclusters else ()
+            val () = print "Ending new clustering\n"          
+            val ty = clustersToTy curDepth context numRecordsinContext newclusters
 	in
 	    ty
 	end

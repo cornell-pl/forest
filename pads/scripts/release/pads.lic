@@ -1,6 +1,8 @@
 #
 # ast default license info
 #
+# ncu for non-commercial use
+# cpl for common public license
 
 message_set=3
 
@@ -18,7 +20,7 @@ contributor=(
 )
 
 license=(
-	type=ncu
+	type=cpl
 	package=pads
 	since=2005
 	author=kfisher+gruber+yitzhak+mff

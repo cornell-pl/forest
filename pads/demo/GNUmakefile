@@ -21,7 +21,7 @@ else
 
  # The following rules are run from the arch directory
 
-GEN_DIR = ../gen
+GEN_DIR = .
 GEN_WRITE = 1
 
 # the following indicates that generated files should not be removed

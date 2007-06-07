@@ -94,7 +94,7 @@ junk:
 	@echo $(P1)
 
 vanilla.lex:
-	config.pl vanilla.config
+	./config.pl vanilla.config
 
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
@@ -145,7 +145,7 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
-GOLDENDATA := rpmpkgs quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv asl.log
+GOLDENDATA :=  quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv asl.log
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))

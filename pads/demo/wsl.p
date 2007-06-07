@@ -28,7 +28,7 @@ Pstruct version_t {
 };
 
 bool chkVersion(version_t v, method_t m) {
-  if ((v.major == 1) && (v.minor == 1)) return true;
+  if ((v.major == 1) && (v.minor == 0)) return true;
   if ((m == LINK) || (m == UNLINK)) return false;
   return true;
 };

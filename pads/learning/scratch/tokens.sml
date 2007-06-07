@@ -267,6 +267,8 @@ structure Tokens = struct
         |  (Pempty, _)                    => LESS
         |  (Error, _)                     => GREATER
 
+    fun eqToken(t1,t2) = case compToken(t1,t2) of EQUAL => true | _ => false
+
     (* Establish an order on LTokens based on the order on Tokens *)
     fun compLToken (ltok1:LToken, ltok2:LToken):order =
         let val (t1,l1) = ltok1
