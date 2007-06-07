@@ -1,12 +1,15 @@
 Researchers have been studying {\em grammar induction}, the process of
-learning the structure of a data source, since the 1960s.  However,
+learning the structure of a data source, since the 1960s; De La Higuera
+surveys some recent trends~\cite{higuera01current}.  However,
 our system is unique in three important ways.  First, our inference
 algorithm does not stand alone: It is part of the more general \pads{}
-programming environment, and hence, it completely automatically allows
-users with data to obtain not one, not two, but entire suite of
-powerful, high-level tools for data processing.  The fusion of the
-\pads{} system, including its automatic data representation generation
-and generic programming environment, together with grammar induction
+programming environment, and hence, it allows
+users to obtain not one or two, but entire suite of
+powerful, high-level tools for data processing, and does so completely 
+automatically.  The fusion of the
+\pads{} system, including its automatic data representation generation,
+its error detection facilities, and its generic programming environment, 
+together with grammar induction
 is one of our key contributions.  Second, many researchers have
 focused either on grammar induction for natural language processing or
 for information extraction from \xml{} or \html{} documents.  In
@@ -36,10 +39,23 @@ while we were forced to developed new techniques for our domain.  For example,
 we use histograms to summarize the contents of data chunks whereas
 Arasu does not.  In addition, a substantial portion of our system
 is a description rewriting engine, which Arasu seems not to need for
-his application.  For further reading on information extraction
-from web pages, Hong's thesis~\cite{hong:thesis} includes an 
-informative survey.  However, Arasu's work appears more closely
-related to our own than any other Hong mentions.
+his application.  
+
+TSIMMIS~\cite{chawathe+:tsimmis} is another information extraction
+system with similar overall goals to the \pads{} project.  It aims to
+allow users to manage and query collections of heterogeneous, ad hoc
+data sources.  TSIMMIS sits on top of the Rufus
+system~\cite{shoens+:rufus}, which supports automatic classification
+of data sources based on features such as the presence of certain
+keywords, magic numbers appearing at the beginning of files and file
+type.  The sources are classified using categories such as ``email''
+and ``C program.''  This sort of categorization is materially
+different from the more detailed structure inference mechanisms we
+have integrated into the \pads{} system.  For further reading on
+information extraction from web pages, Hong's
+thesis~\cite{hong:thesis} includes an informative survey.  Though,
+Arasu's work and TSIMMIS appear more closely related to our work than
+the others Hong mentions.
 
 Another closely related system is Potter's Wheel~\cite{raman+:potterwheel}.
 The goal of Potter's Wheel is to help find and purge errors from
@@ -66,20 +82,18 @@ never exist, making such techniques inapplicable.
 %languages when no negative examples are
 %available~\cite{gold:inference}.  
 However, others, such as Stolcke and
-Omohundro~\cite{stolcke94inducing} and Hong~\cite{hong01using},
- do not assume the existence of negative examples.  These and other
-systems that use bottom-up rewriting to find good grammars may
-suffer from the problem of running into local maxima.  The rewriting component
-of our algorithm can also run into a local maximum, but because we
-start with a relatively good candidate generated from our recursive,
-top-down algorithm, this does not appear to be much of a problem for us.
-We also believe that combining top-down structure discovery with 
-bottom-up rewriting has the potential to deal with larger
-data sources than a pure bottom-up approach.  Our 
-empirical experiments demonstrate that
-the top-down structure discovery phase is extremely efficient when compared 
-with the cost of rewriting.  However, proposals for bottom-up-only
-inference techniques use the (possibly enormous) 
-data source itself as the first 
-description.  We are unaware of other systems that combine two
-techniques similar to ours.
+Omohundro~\cite{stolcke94inducing} and Hong~\cite{hong01using}, do not
+assume the existence of negative examples.  These and other systems
+that use bottom-up rewriting to find good grammars may suffer from the
+problem of running into local maxima.  The rewriting component of our
+algorithm can also run into a local maximum, but because we start with
+a relatively good candidate generated from our recursive, top-down
+algorithm, this does not appear to be much of a problem for us.  We
+also believe that combining top-down structure discovery with
+bottom-up rewriting has the potential to deal with larger data sources
+than a pure bottom-up approach.  Our empirical experiments demonstrate
+that the top-down structure discovery phase is extremely efficient
+when compared with the cost of rewriting.  However, proposals for
+bottom-up-only inference techniques use the (possibly enormous) data
+source itself as the first description.  We are unaware of other
+systems that combine two techniques similar to ours.
