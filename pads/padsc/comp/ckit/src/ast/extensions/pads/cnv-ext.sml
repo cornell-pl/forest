@@ -4751,24 +4751,32 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 							   then (PL.chkPtS'(PT.Id pads, readName)) else []))),
 								  
                               PT.IfThen(amCheckingBasicE NONE, 
+
 	  		       PT.Compound[ (* if am checking *)
 			         PT.IfThenElse(P.andX(PT.Id "f_found", PT.Id "offset"),
-				    BU.recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], 
-						      false,case endedXOpt of SOME(_) => NONE
-									    | NONE => SOME(esRetX)),
-                                    PT.Compound [PT.IfThen(P.notX(PT.Id "f_found"),
-					                   PT.Compound(BU.recordArrayErrorS([locES1], locX,
-											 PL.P_ARRAY_EXTRA_BEFORE_TERM, true,
-											 readName,"", [], false,SOME(esRetX)) ::
-								       breakSs))] )])],
+			             if isLongest then 
+					       PT.Compound(PL.restoreS(PT.Id pads, readName) (* separator error: array ended *)
+							   @ breakSs) 
+				     else
+					       BU.recordArrayErrorS([locES2], locX, PL.P_ARRAY_EXTRA_BEFORE_SEP, true, readName,"", [], 
+								    false,case endedXOpt of SOME(_) => NONE
+								  | NONE => SOME(esRetX)),
+					       PT.Compound [PT.IfThen(P.notX(PT.Id "f_found"),
+							    PT.Compound((if isLongest then PL.restoreS(PT.Id pads, readName)
+									 else
+									 [BU.recordArrayErrorS([locES1], locX,
+											     PL.P_ARRAY_EXTRA_BEFORE_TERM, true,
+											     readName,"", [], false,SOME(esRetX))])
+									 @ breakSs))] )])],
 			    PT.Compound( (* else error in reading separator *)
 			      [P.mkCommentS("Error reading separator")]
 			      @ (if Option.isSome endedXOpt andalso useChkPts 
 				     then (PL.chkPtS'(PT.Id pads, readName)) else [])
-			      @ (BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
-						    true, readName, "Missing separator", [], true,SOME(esRetX)) ::
-			         breakSs)
-			      ))])]
+			      @  (if isLongest then PL.restoreS(PT.Id pads, readName) (* separator error: array ended *)
+				  else [BU.recordArrayErrorS([locES1], locX, PL.P_ARRAY_SEP_ERR, 
+							     true, readName, "Missing separator", [], true,SOME(esRetX)) ])
+			      @  breakSs
+			    ))])]
 
 		 val genSepCheck = genSepCheck' true
 
