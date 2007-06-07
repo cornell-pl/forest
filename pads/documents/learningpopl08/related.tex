@@ -1,0 +1,85 @@
+Researchers have been studying {\em grammar induction}, the process of
+learning the structure of a data source, since the 1960s.  However,
+our system is unique in three important ways.  First, our inference
+algorithm does not stand alone: It is part of the more general \pads{}
+programming environment, and hence, it completely automatically allows
+users with data to obtain not one, not two, but entire suite of
+powerful, high-level tools for data processing.  The fusion of the
+\pads{} system, including its automatic data representation generation
+and generic programming environment, together with grammar induction
+is one of our key contributions.  Second, many researchers have
+focused either on grammar induction for natural language processing or
+for information extraction from \xml{} or \html{} documents.  In
+contrast, we focus on ad hoc data sources such as system logs and
+scientific data sets and our goal is not exclusively information extraction,
+but more generally automatic tool generation.  In terms of comparing domains,
+our ad hoc data is substantially less
+structured than \xml{}, and yet, unlike natural language, it is
+possible assign our data sources accurate, compact descriptions.  Third, from a
+technical standpoint, we developed a new top-down structure discovery
+algorithm and showed how to combine that productively with a
+classic bottom-up rewriting systems based on the minimum description
+length principle.  In what follows, we compare our system more
+specifically to the most closely related work of other researchers.
+
+Perhaps the most closely related work is from Arasu and 
+Garcia-Molina~\cite{arasu+:sigmod03}, who developed a information
+extraction system for sets of similar web pages.  The
+commonalities between web pages are assumed to be a ``template'' structure
+and the differences are assumed to be values drawn from a database
+sitting behind the web site.  Arasu uses a top-down grammar induction
+algorithm somewhat similar to our rough structure inference phase.  
+However, critical ways, Arasu has a much easier task than we do as html
+documents have far more regular structure than ad hoc data sources do.
+Arasu exploits this structure in essential ways in his algorithm,
+while we were forced to developed new techniques for our domain.  For example,
+we use histograms to summarize the contents of data chunks whereas
+Arasu does not.  In addition, a substantial portion of our system
+is a description rewriting engine, which Arasu seems not to need for
+his application.  For further reading on information extraction
+from web pages, Hong's thesis~\cite{hong:thesis} includes an 
+informative survey.  However, Arasu's work appears more closely
+related to our own than any other Hong mentions.
+
+Another closely related system is Potter's Wheel~\cite{raman+:potterwheel}.
+The goal of Potter's Wheel is to help find and purge errors from
+relational data sources.  It does so through the use of a spread-sheet
+style interface, but in the background, a grammar inference algorithm
+infers the structure of the input data, which may be ``ad hoc,'' 
+somewhat like ours.  Potter's Wheel's inference mechanism is a brute-force
+approach that enumerates all possible sequences of base types that appear
+in the training data, although their algorithm is smart enough to
+prune some obviously unpromising sequences.  Like in our work,
+users can specify custom base types and search for a description
+is based on the minimum description length principle.  However,
+their application is aimed
+strictly at relational data, so they only infer \cd{struct} types
+as opposed to enumerations, arrays, switches or unions like we do.  
+
+Other researchers have defined grammar induction algorithms that use
+bottom-up rewriting to search through description space for an optimal
+description.  Some of these techniques assume the availability of both
+positive and negative examples.  In our context, negative examples
+never exist, making such techniques inapplicable.
+% since Gold's early result proved the
+%impossibility of {\em perfect} grammar induction for any useful family of
+%languages when no negative examples are
+%available~\cite{gold:inference}.  
+However, others, such as Stolcke and
+Omohundro~\cite{stolcke94inducing} and Hong~\cite{hong01using},
+ do not assume the existence of negative examples.  These and other
+systems that use bottom-up rewriting to find good grammars may
+suffer from the problem of running into local maxima.  The rewriting component
+of our algorithm can also run into a local maximum, but because we
+start with a relatively good candidate generated from our recursive,
+top-down algorithm, this does not appear to be much of a problem for us.
+We also believe that combining top-down structure discovery with 
+bottom-up rewriting has the potential to deal with larger
+data sources than a pure bottom-up approach.  Our 
+empirical experiments demonstrate that
+the top-down structure discovery phase is extremely efficient when compared 
+with the cost of rewriting.  However, proposals for bottom-up-only
+inference techniques use the (possibly enormous) 
+data source itself as the first 
+description.  We are unaware of other systems that combine two
+techniques similar to ours.
