@@ -1,11 +1,12 @@
-The purpose of the structure refinement is to improve
+The purpose of the structure refinement phase is to improve
 the candidate structure produced by the structure discovery phase. We
 formulate the structure refinement problem as an optimization problem. The
 objective of the problem is, given an initial structure (treated as
 an initial solution in some solution space), find best possible structure
-in its neighborhood for which the informational theoretic scoring function
+in its neighborhood for which the informational-theoretic scoring function
 is optimized.
 
+\paragraph*{Rewriting rules}
 In order to move around in the solution space, we define a number of structure
 transitions in the form of rewriting rules. The general form of the rule is
 \[T \goto T', ~~ {\rm if~ some~ constraint~} c(T)~ {\rm is~ satisfied,}\]
@@ -22,16 +23,25 @@ of the structure while the data dependent rules seek to indentify data
 dependency and establish relationships between different parts 
 of the structure.
 
-In what follows, we present a selection of
-data independent and data dependent rules used in the refinement stage.
+In Figure \ref{fig:rules}, we present a selection of
+data independent and data dependent rules used in the refinement phase.
 Some of the rules have been omitted or simplified for succinctness.
-We begin with a few definitions and present the rules in various groups.
+In these rules,
+let $T_{punc}$ be any type that describes punctuation or white space characters.
+Where $T\setof{X}$ appears in a pattern or the left-hand side of a rewriting
+rule, $X$ is bound to the set of data representations resulting
+from using $T$ to parse the appropriate part of each chunk from the training
+set. Furthermore, let $card(X)$ be the cardinality of the set $X$, 
+and let $X(i)$ be the data representation resulting
+from parsing the $i^{th}$ chunk in the training set. Finally, given a union
+value $in_j(v)$, we define function $tag(in_j(v))$ to be $j$.
 
-Let $T_{punc}$ be any type that describes a punctuation or white space.
-Let $T\setof{X}$ be a type $T$ where $X$ is a {\em bag} of data representations
-parsed by $T$.
-
-\subsubsection*{Data independent rules}
+\begin{figure*}
+\begin{center}
+\framebox{
+\noindent
+\begin{minipage}[t]{\columnwidth}
+\paragraph*{Data independent rules}
 \begin{enumerate}
 \item Singleton structs and unions \\
 $
@@ -122,8 +132,10 @@ $
 \irunion{{\tt Pint}; {\tt Pfloat}} \goto {\tt Pfloat}
 $ 
 \end{enumerate}
-
-\subsubsection*{Data dependent rules}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{\columnwidth}
+\paragraph*{Data dependent rules}
 \begin{enumerate}
 \item Get floating point number \\
 $
@@ -220,83 +232,85 @@ $
 \irstruct{pre\_types, z:\irenum{c_1; \ldots; c_n}; mid\_types; \\
 \sskip \irswitch{z}{c_1 \goto T_{\Pi(1)}; \ldots; c_n \goto T_{\Pi(n)}}; post\_types}
 $\\ 
-\noindent where $z$ is a fresh variable, and there exists a permutation $\Pi$, s.t.
-$\forall i \in [1,~ card(X)]$, $\Pi(tag(X(i)))=tag(Y(i))$, and 
-$tag(in_j(d)) = j$.
+\noindent where $z$ is a fresh variable, and there exists a permutation $\Pi$, s.t.  $\forall i \in [1,~ card(X)]$, $\Pi(tag(X(i)))=tag(Y(i))$.
 \end{enumerate}
+\end{minipage}
+}
+\end{center}
+\caption{List of rewriting rules} \label{fig:rules}
+\end{figure*}
 
-The refinement process consists of three sequential phases. Each phase takes
-an input structure and transforms it to a new structure using 
-a recursive, depth-first, greedy local search descent procedure. The output 
-structure of one phase is used as input to the the next phase. 
-At each node $T$ in the structure, it is refined after all its
-children nodes have been refined. $T$ is refined through a number of
-iteration. In every iteration, an applicable rule which
-gives the biggest reduction in score is used to transform $T$ into
-an updated $T'$.  Iterations stop when no reduction is possible, and at
-this time, structure $T$ is said to be {\em stable}.
-
-Fig. \ref{fig:refinement} gives 
-a generic abstract algorithm of this recursive greedy search procedure. 
-We write $r(T)$ to mean the result of applying
-rule $r$ to $T$.
+\paragraph*{Local search optimization}
+The core of the rewriting system is 
+a recursive, depth-first, greedy local search procedure. The output 
+structure of one phase is used as input to the next phase.
+This procedure begins by refining the children of any structured type before
+the structure itself. When refining a type, it selects a rule that 
+would {\em minimize} the information-theoretic score of the resulting
+structure and applies it to the structure, and iterates.
+Iterations stop when no reduction in the score is possible, and at
+that time, structure $T$ is said to be {\em stable}.
 
 \begin{figure}
 \begin{code}
 Refine(T, Rules)
 \{
-  if T is not base type 
-  \{
-    foreach c in children(T)
-      Refine(c, Rules)
-  \}
-  let minScore = MAX_INT
+  foreach c in children(T)
+    Refine(c, Rules)
+  minScore := score(T)
   do \{
-    let minRule = \{\}
+    minRule := \{\}
     foreach r in Rules 
     \{
-      let score(T, r) be the score of r(T) 
-      if score(T, r) < minScore
+      if score(r(T)) < minScore
       \{
-        minScore = score(T, r)
-        minRule = r
+        minScore := score(r(T))
+        minRule := r
       \}
     \}
-    if minRule != \{\} then T = minRule(T)
+    if minRule != \{\} then T := minRule(T)
   \} while minRule != \{\}
 \}
 \end{code}
-\caption{The generic local descent procedure}
+\caption{The generic greedy local optimization procedure}
 \label{fig:refinement}
 \end{figure}
 
-Phase One aims at quickly reducing the initial structure to 
-a much simpler, manageable sized new structure, and this phase uses only
-data independent rules. 
-
-Before starting Phase Two, 
-a number of data dependency tables are generated from the input structure, where each
+The overall algorithm in Figure \ref{fig:refinement} is applied three
+times in succession. We write $r(T)$ to mean the result of applying
+rule $r$ to $T$, and $score(T)$ to represent the information-thereotic
+score of structure $T$.
+At the first time, the algorithm quickly reduces the initial structure to 
+a much simpler, manageable sized new structure by using
+the data independent rules {\em only}. The second time, data dependent
+rules are used refine the base types to constant values and enumerations, etc,
+and establish structural dependencies such as switched unions. This phase
+requires a value-space analysis described below.
+At the third time, a set of the data independent rules
+(such as combining adjacent constant strings) are applied again. 
+The third time is necessary because certain changes
+to the base types in phase two such as the creation of constants may 
+enable some of data independent rules which will further optimize the structure. 
+\paragraph*{Value-space analysis}
+A value-space analysis is performed as a prerequisite of the second phase.
+Here, a number of data dependency tables are generated from the 
+input structure, where each
 column of the tables represent the data values associated with a particular base type 
 in the structure, with some extra columns representing auxilliary information such as
 array sizes and union branching decisions. Then we applied the TANE algorithm \cite{TANE-HKPT99}
 which can be used to identify functional dependencies in relational databases.
-Because TANE is expensive (exponential on the number of nodes in the structure) in general
-and the sample data we have is often big enough hence result in many false positives,
-we modified TANE to work only a minimum set of binary dependencies. The result of
-this dependency analysis is used to identify switched unions and fixed size arrays.
+Because TANE is expensive (exponential on the number of nodes in the structure) 
+in general and the sample data we have is often not big enough hence 
+result in many false positives, we modified TANE to produce only a minimum set 
+of binary dependencies. The result of this dependency analysis is used to 
+identify switched unions and fixed size arrays.
 In addition, we also discover all the unary constraints on the base types by
 analysizing every single column in the data tables. We store these unary and
-binary constraint in a constraint map, which is a pre-requisite for Phase Two.
-Only data dependent rules are used in Phase Two. 
-A rule can be applied if the conditions are validated successfully
+binary constraint in a constraint map.  A rule can be applied 
+only if the conditions are validated successfully
 against the constraint map. 
 
-In Phase Three, a set of the data independent rules
-(such as combining adjacent constant strings) are applied again. 
-This phase is necessary because certain changes
-to the base types in Phase Two such as the creation of constants may 
-enable some of data independent rules which will further optimize the structure. 
-
+\paragraph*{Running example}
 To illustrate the refinement process a bit more concretely, let us look at how
 the system refines a part of the initial structure from crashreporter.log example.
 Let us zoom into a portion of the IR as follows. The information inside the
