@@ -370,7 +370,7 @@ struct
 	case AtomMap.find(twoGram,context)
         of NONE => 0.0 (* this case should not arise *)
         |  SOME condOneGram => (
-	      let val numContext = !(Option.valOf (AtomMap.find(oneGram,context)))
+	      let val numContext = !(valOf (AtomMap.find(oneGram,context)))
 		  val denominator = numContext + numDistinct (* to account for +1 to solve zero-occurrence problem *)
 		  val numerator = 
 		  case AtomMap.find(!condOneGram, next) 
@@ -740,7 +740,7 @@ struct
 		end
 	    val () = printClusters "Initial clusters: " Cs_init
             fun mergeClusters Cs_old t1 t2 = 
-		let val () = (print "Merging clusters: "; printTokenTy t1; print " "; printTokenTy t2; print "\n")
+		let val () = if print_verbose then (print "Merging clusters: "; printTokenTy t1; print " "; printTokenTy t2; print "\n") else ()
 		    val (Cs_1, c_t1) = TokenTable.remove(Cs_old, t1)
                     val (Cs_2, c_t2) = TokenTable.remove(Cs_1, t2)
 		    val result = 
@@ -749,15 +749,15 @@ struct
                         |  GREATER => TokenTable.insert(Cs_2, t2, c_t1 @ c_t2)
                         |  EQUAL   => (print "Bug: Unexpected equal tokens in different clusters.\n"; 
 				       TokenTable.insert(Cs_2, t2, c_t1 @ c_t2))
+		    val () = if print_verbose then (printClusters "old" Cs_old; printClusters "new" result) else ()
 		in
-		    (printClusters "old" Cs_old;
-		     printClusters "new" result;
-		     result)
+		     result
 		end
 
 	    fun computeInitialDistances freqDist = 
 		let fun insertDistance t1 (t2, CD)  = 
-		    let fun re(t1,t2) = relativeEntropy (numRecords, TokenTable.lookup(freqDist, t1), TokenTable.lookup(freqDist,t2))
+		    let fun re(t1,t2) = relativeEntropy (numRecords, valOf(TokenTable.find(freqDist, t1)), 
+							             valOf(TokenTable.find(freqDist,t2)))
 		    in  case compToken(t1,t2)
 			of LESS    => TokenPairTable.insert(CD, (t1,t2), re(t1,t2))
                         |  GREATER => TokenPairTable.insert(CD, (t2,t1), re(t2,t1))
@@ -787,8 +787,12 @@ struct
             fun clusterDistance CD (c1,c2) = 
 		case compToken(c1,c2) 
                    of EQUAL    => 0.0
-                   |  LESS     => (TokenPairTable.lookup(CD, (c1,c2)) handle NotFound => (print "LESS "; printTokenTy c1; print ", "; printTokenTy c2; print " not found.\n"; printClusterDistances CD; raise NotFound))
-                   |  GREATER  => (TokenPairTable.lookup(CD, (c2,c1)) handle NotFound => (print "GREATER "; printTokenTy c2; print ", "; printTokenTy c1; print " not found.\n"; raise NotFound))
+                   |  LESS     => (valOf(TokenPairTable.find(CD, (c1,c2))) 
+				   handle NotFound => (print "LESS "; printTokenTy c1; print ", "; printTokenTy c2; 
+						       print " not found.\n"; printClusterDistances CD; raise NotFound))
+                   |  GREATER  => (valOf(TokenPairTable.find(CD, (c2,c1))) 
+				   handle NotFound => (print "GREATER "; printTokenTy c2; 
+						       print ", "; printTokenTy c1; print " not found.\n"; raise NotFound))
 	    fun minMaxToken(t1,t2) = 
 		case compToken(t1,t2) 
                    of EQUAL    => (t1,t2)
@@ -802,7 +806,7 @@ struct
                CD_new (ta,tb) = min {clusterDistance CD_old tb t_min, clusterDistance CD_old tb t_max} if ta = t_min
              *)
             fun updateClusterDistances clusters CD_old t1 t2 = 
-		let val () = print "Starting to update cluster distances\n"
+		let val () = if print_verbose then print "Starting to update cluster distances\n" else ()
 		    val (t_min,t_max) = minMaxToken(t1, t2)  (* know t_min < t_max, so t_min is representative for new cluster *)
 		    val tokens = TokenTable.listKeys clusters
 		    fun insertDistance ta (tb, CD) =  (* guarantee that ta < tb *)
@@ -845,10 +849,10 @@ struct
 		    val () = (print "Selected tokens:"; printClusterDistance ((ta,tb),minDistance); print "\n")
 		in
 		    if minDistance > threshold then (clusters, CD)
-		    else let val () = printClusterDistances CD
+		    else let val () = if print_verbose then printClusterDistances CD else ()
 			     val newClusters = mergeClusters clusters ta tb
 			     val CD_new      = updateClusterDistances newClusters CD ta tb
-			     val () = printClusterDistances CD_new
+			     val () = if print_verbose then printClusterDistances CD_new else ()
 			 in
 			     loop newClusters CD_new 
 			 end
@@ -857,7 +861,7 @@ struct
             (* we have a map from tokens to token lists to represent clusters.
                We need to convert this rep to a (Token * histogram) list list *)
             fun convertRep (cluster:Token list TokenTable.map) freqDist = 
-		let fun convertOneCluster tlist = List.map (fn t=> (t,TokenTable.lookup(freqDist, t))) tlist
+		let fun convertOneCluster tlist = List.map (fn t=> (t,valOf(TokenTable.find(freqDist, t)))) tlist
 		    fun doOneToken (tlist,clusters) = (convertOneCluster tlist) :: clusters
 		in
 		    TokenTable.foldl doOneToken [] cluster 
@@ -917,8 +921,21 @@ struct
                 we identify a struct if we have at least one selected token and the coverage is higher than specified percentage
                 (junk_percentage, -j, default 10%)
             *)
-	let fun isStruct (cluster::_) = 
-		let fun getStructInfo((t, {hist, total, coverage, structScore, width,minOccurrences}), result) =
+	let fun isStruct (rawClusters) = 
+		let fun sortClustersByStructScore rawClusters = 
+			let val threshold = histEqTolerance numRecords
+			    fun structCmpHist((k1,h1), (k2,h2)) = histScoreCmp threshold (h1, h2)
+			    fun sortCluster cluster = ListMergeSort.sort structCmpHist cluster
+			    val partClusters = List.map sortCluster rawClusters
+			    fun clusterComp ((k1,h1)::_, (k2,h2)::_) = histScoreCmp threshold (h1,h2)
+			in
+			    List.rev(ListMergeSort.sort clusterComp partClusters)
+			end
+		    val clusters = sortClustersByStructScore rawClusters
+		    val () = if print_verbose then (print "In isStruct, printing clusters sorted by struct criteria.\n";
+						    printClusters numRecords clusters) else ()
+		    val cluster = hd clusters
+		    fun getStructInfo((t, {hist, total, coverage, structScore, width,minOccurrences}), result) =
 		    let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
 			val sortedHlist = ListMergeSort.sort (fn((i1,c1:int),(i2,c2))=>(c1 < c2)) hList
 			val primary = List.hd sortedHlist
@@ -1283,7 +1300,7 @@ struct
 			    val numFound = ref 0
 			    fun resetTable () = 
 				let fun setOne(token,freq) = 
-				    let val freqRef = Option.valOf (TokenTable.find(tTable,token))
+				    let val freqRef = valOf (TokenTable.find(tTable,token))
 				    in
 					freqRef := freq
 				    end
@@ -1421,13 +1438,11 @@ struct
 *)
             val counts : RecordCount list = List.map countFreqs context
 	    val fd: freqDist = buildHistograms numRecordsinContext counts
-	    val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd
+	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)
+	    (* val () = if print_verbose then printClusters numRecordsinContext clusters else () *)
+	    val clusters : (Token * histogram) list list = newFindClusters numRecordsinContext fd
 	    val () = if print_verbose then printClusters numRecordsinContext clusters else ()
-            val () = print "Starting new clustering\n"          
-	    val newclusters = newFindClusters numRecordsinContext fd
-	    val () = if print_verbose then printClusters numRecordsinContext newclusters else ()
-            val () = print "Ending new clustering\n"          
-            val ty = clustersToTy curDepth context numRecordsinContext newclusters
+            val ty = clustersToTy curDepth context numRecordsinContext clusters
 	in
 	    ty
 	end
