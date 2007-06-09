@@ -48,7 +48,9 @@ numbers (\cd{Pfloat}).  Likewise, later stages of our algorithm transform
 alphanumeric strings into arbitrary strings with terminating characters
 (\cd{Pstring(}$a$\cd{)} where $a$ terminates the string), fixed width
 strings (\cd{PstringFW(}$i$\cd{)} is a string with a length $i$) 
-or string constants  (\cd{PstringConst(}$s$\cd{)}).  
+or string constants  (\cd{PstringConst(}$s$\cd{)}).  For brevity in
+our descriptions, we normally just write the constant string $s$
+inline in a description instead of \cd{PstringConst(}$s$\cd{)}.
 
 In addition to these simple base types, the \ir{} includes a
 collection of somewhat higher-level abstractions commonly found in ad
@@ -152,7 +154,7 @@ $d$ & ::= & $c$ &        (constant) \\
 
 \subsection{Running Examples}
 
-Figure~\ref{fig:example data} presents tiny fragments of three
+Figure~\ref{fig:example} presents tiny fragments of three
 different ad hoc data files we have trained our inference algorithm
 on.  The first, Crashreporter.log, is a Macintosh
 system file that records information concerning process crashes. The
@@ -201,7 +203,7 @@ ASL.log:
 
 \caption {Example data. 
 Data records too long to be formatted on a single line are terminated with '\' and indented two spaces on the next line.}
-\label{fig:example data}
+\label{fig:example}
 \end{figure*}
 
 Figure \ref{fig:crashreporter:ir} presents a hand-writtern description

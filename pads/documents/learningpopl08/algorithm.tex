@@ -116,14 +116,144 @@ configuration file.}
 
 \subsection {Structure Discovery}
 
-Inspired in part by the work of Arasu on
-information extraction from web pages~\cite{arasu+:sigmod03}. 
+{\em note: change algorithm so that structs only partition on 1 token
+ in the middle...explain in the magic section or later that this
+ is a simplification and we do many tokens at the same time}
 
-    *  role = quickly find a description in the "approximate area" of the correct description
-    * explain structure of a generic "top-down" inference algorithm -- perhaps give pseudocode
-    * explain our heuristics: generation of histograms, choice of struct, array, union, base type
-    * grouping construct (introduce additional example as needed)
-    * show (part of?) description of running example 
+Given a collection of tokenized chunks, the goal of the structure
+discovery phase is to find a candidate description ``nearby'' the
+final solution.  In the following phase, the rewriting rules transform
+and refine the candidate to produce that final solution.  The overall
+structure of this phase of the algorithm was directly inspired by the
+work of Arasu and Garcia-Molina~\cite{arasu+:sigmod03}.  However, the
+details are quite different as Arasu is trying to extract information
+from \html{} web pages as opposed to describing ad hoc data.
+
+\paragraph*{Algorithm Basics.}
+Our algorithm operates by analyzing the collection of tokenized chunks,
+and guessing what the top-level type constructor is.  Based on this guess,
+it will partition the chunks and recursively analyze each partition.
+Using the guess and the results of recursive application of the
+procedure, the algorithm builds a description for the data.
+We will explain how the magical ``guessing'' works
+in a moment, but for now, Figure~\ref{fig:structure-discovery} 
+presents an outline of how the overall procedure operates.  
+
+As an example, recall the Crashreporter.log data presented in
+Figure~\ref{fig:example}.  After tokenization, assuming a chunk is
+a line of data, the first two chunks contain the following token sequences:
+{\small
+\begin{verbatim}
+   Pdate ' ' Ptime ' ' Pint ' ' Palpha '[' Pint 
+     ']' ':' ...
+
+   Pdate ' ' Ptime ' ' Pint ' ' Palpha '[' Pint 
+     ']' ':' ...
+\end{verbatim}
+}
+\noindent
+Given these token sequences, our inference algorithm might guess that
+the top-level type constructor is a struct:  
+\[
+\mbox{\small
+\cd{struct \{}$T_0$\cd{; Pdate; }$T_1$\cd{; Ptime; }$T_2$\cd{; ':'; }$T_3$\cd{;\}}
+}
+\]
+The types $T_0$, $T_1$, $T_2$ and $T_3$ are not yet known -- they will
+be constructed recursively.  $T_0$ is constructed by recursively applying
+the discovery procedure to the data in the chunks that precedes
+the first occurrence of \cd{Pdate}.  In this case, there is no such
+data, so the inference procedure returns the trivial type \cd{Pempty} for
+$T_0$.  $T_1$ is constructed by applying discovery to the data between
+\cd{Pdate} and \cd{Ptime}.  Each chunk contains one token in this case,
+the space token.  Hence the discovery procedure easily decides
+$T_1$ is \cd{' '}. $T_2$ is discovered by recursively analyzing the following
+two chunks.
+{\small
+\begin{verbatim}
+   ' ' Pint ' ' Palpha '[' Pint ']' 
+   ' ' Pint ' ' Palpha '[' Pint ']'
+\end{verbatim}
+}
+\noindent
+Finally, the structure of $T_3$ is discovered by recursively analyzing 
+all data following the ':' token.
+
+As a second example, consider the Sirius data from Figure~\ref{fig:example}.
+Here the token streams have the following structure:
+{\small
+\begin{verbatim}
+   Pint '|' Pint '|' ... '|' Pint '|' Pint
+   Pint '|' Pint '|' ... '|' Palpha Pint '|' Pint
+\end{verbatim}
+}
+\noindent
+In this case, our algorithm guesses that the top-level structure involves
+an array and hence predicts this shape:
+\[
+\mbox{\small
+\cd{struct \{}$T_{\mathrm{first}}$\cd{; array \{}$T_{\mathrm{body}}$\cd{\};}$T_{\mathrm{last}}$\cd{;\}}
+}
+\]
+\noindent
+At this point in the analysis, predicting exactly where an array
+begins and ends is difficult.  Consequently, the algorithm allows for
+some slop prior to beginning the array ($T_{\mathrm{first}}$) and some
+slop at the end of the array ($T_{\mathrm{last}}$).  If this slop
+turns out to be unnecessary, the rewriting rules will clean up the
+mess in the next phase.  The array itself has elements with type
+$T_{\mathrm{body}}$.  In order to determine the type of the body
+elements, the algorithm examines the following collection of chunks:
+{\small
+\begin{verbatim}
+   Pint '|' 
+   ... 
+   Pint '|' 
+   Pint '|'
+   ...
+   Palpha Pint '|'
+\end{verbatim}
+}
+\noindent
+In this case, the two large initial chunks are partitioned 
+into a series of many small array-element chunks for recursive 
+analysis based on occurrences of the \cd{'|'} token.
+
+So far so good, but how does the guessing work?  Why does the
+algorithm decide the Sirius data is basically an array but the
+Crashreporter.log is a struct? After all, all the Sirius chunks start
+with a Pint, which is similar to all the Crashreporter chunks starting
+with a Pdate.  Likewise, Crashreporter contains many occurrences of
+the \cd{' '} token, which, like the \cd{'|'} in Sirius, might serve as
+an array separator.
+
+\paragraph*{The Magic.}
+In order to make informed guesses about the structure of the chunks
+under consideration, every recursive iteration of the algorithm computes 
+a histogram for each token appearing in the data.
+More specifically, a histogram for token $t$
+plots the number of chunks (on the $y$-axis)
+having a certain number of occurrences of the token (on the $x$-axis). 
+
+\begin {figure*}
+
+histogram for ' '
+histogram for ':'
+
+\caption{Selected Histograms for Crashreporter.log}
+\label{fig:histograms} 
+\end{figure*}
+
+\paragraph*{Additional Tricks.}
+Grouping
+
+\input{discoveryalg.tex}
+
+%%     *  role = quickly find a description in the "approximate area" of the correct description
+%%     * explain structure of a generic "top-down" inference algorithm -- perhaps give pseudocode
+%%     * explain our heuristics: generation of histograms, choice of struct, array, union, base type
+%%     * grouping construct (introduce additional example as needed)
+%%     * show (part of?) description of running example 
 
 \subsection {Information-Theoretic Scoring}
 

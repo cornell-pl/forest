@@ -1,43 +1,44 @@
-\begin{figure*}
+\begin{figure}
 \begin{verbatim}
 dumpreport =
   union {
     struct {
-      PstringConst("Started writing crash report to: "); 
+      "Started writing crash report to: "; 
       file:Ppath;
     };
     struct {
-      PstringConst("Finished writing crash report to: "); 
+      "Finished writing crash report to: "; 
       file:Ppath;
     };
     struct {
-      PstringConst("Unable to determine task_t for pid: "); 
+      "Unable to determine task_t for pid: "; 
       pid:Pint32; 
-      PstringConst(" name: Exited process");
+      " name: Exited process";
     };
     struct {
-      PstringConst("Failed to re-launch "); 
+      "Failed to re-launch "; 
       file:Ppath; 
-      PstringConst(" - "); 
+      " - "; 
       message:Pstring('\n')
     };
   };
 
 reporterreport =
   struct {
-    function:   Ppath; 
-    PstringConst(" reply failed: ");
+    function: Ppath; 
+    " reply failed: ");
     failuremsg: Pstring_('\n'); 
   };
 
 source =
   arrayST {
     struct {
-      date:   PDate;  PstringConst(" ");
-      time:   PTime;  PstringConst(" ");
-      year:   Pint32; PstringConst(" ");
-      kind:   enum {"crashdump"; "crashreporterd";}; PstringConst("[");
-      dumpid: Pint32; PstringConst("]: ");
+      date:   PDate;  " ";
+      time:   PTime;  " ";
+      year:   Pint32; " ";
+      kind:   enum {"crashdump"; 
+                    "crashreporterd";}; "[";
+      dumpid: Pint32; "]: ";
       report: 
         switch kind of {
           "crashdump"      => dumpreport
@@ -53,4 +54,4 @@ source =
   base types available in the IR.  I also replaced Peor with 'backslash-n'...
 can't to produce a backslash in tex.}
 \label{fig:crashreporter:ir}
-\end{figure*}
+\end{figure}
