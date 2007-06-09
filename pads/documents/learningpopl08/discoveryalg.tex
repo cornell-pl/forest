@@ -1,0 +1,48 @@
+\begin{figure}
+\begin{verbatim}
+discover (chunks) {
+  1. Guess the top-level type constructor 
+     by analyzing chunks.
+
+  2a. If Guess is BASE TYPE b then  
+        return b;
+
+  2b. If Guess is a STRUCT with the shape 
+         c0, b1, c1, b2, c2, ..., bk, ck 
+         where b1, b2, ..., bk are base types
+           and c0, c1, c2, ..., ck are the 
+               token sequences found between 
+               b1, b2, ..., bk   
+      then
+        T0 = discover(c0);
+        T1 = discover(c1);
+        ...
+        Tk = discover(ck);
+        return (struct {T0; b1; 
+                        T1; b2; 
+                        T2; ...; bk; Tk;});
+
+  2c. If Guess is an ARRAY with elements
+         c0, c1, ..., ck-1, ck
+      then
+        Tfirst = discover(c0);
+        Tbody  = discover(merge [c1,c2,...,ck-1]);
+        Tlast  = discover(ck);
+        return (struct {Tfirst; 
+                        array {Tbody}; 
+                        Tlast;});
+
+  2d. If Guess is a UNION partitioning chunks into 
+         c0, c1, ..., ck
+      then
+        T0 = discover(c0);
+        T1 = discover(c1);
+        ...
+        Tk = discover(ck);
+        return (union {T0;T1;...;Tk});
+}
+\end{verbatim}
+\caption{The structure discovery algorithm. Needs formatting!!!
+         And maybe rewriting to functional style?}
+\label{fig:structure-discovery}
+\end{figure}
