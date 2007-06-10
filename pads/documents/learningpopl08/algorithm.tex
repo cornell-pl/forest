@@ -234,13 +234,130 @@ a histogram for each token appearing in the data.
 More specifically, a histogram for token $t$
 plots the number of chunks (on the $y$-axis)
 having a certain number of occurrences of the token (on the $x$-axis). 
+Figure~\ref{fig:histograms} presents a number of histograms computed
+from the top-level analysis of Crashreporter.log and Sirius chunks.
+
+Intuitively, histograms with high {\em coverage}, meaning the token appears
+in almost every chunk and has a {\em narrow} distribution, meaning the variation in
+the number of times a token appears in different chunks is low, are
+good candidates for defining structs.  Similarly, histograms with
+high {\em coverage} and wide distribution, are good candidates for defining
+arrays.  Finally, histograms with low coverge or intermediate width
+represent tokens that form part of a union.  For example, histogram (a)
+from Figure~\ref{fig:histograms} ... {\em explain once we have data}
+
+To make the intuitions above precise, we must define a number of
+properties of histograms.  First, a histogram $h$ is a list of pairs
+of natural numbers $(x,y)$ where $x$ denotes the token frequency and
+$y$ denotes the number of records with that frequency.  
+All first elements of pairs in the list must be unique.  
+The {\em width} of a
+histogram ({\em width}($h$)) is the number of elements in the list
+excluding the zero-bar ({i.e.,} excluding element $(0,y)$).  
+A histogram
+$\normal{h}$ is in normal form when the first element of the list is
+the zero column and all subsequent elements are sorted in descending
+order by the $y$ component.  For example, if $h_1$ is the histogram
+$[(0,5), (1,10), (2,25), (3,15)]$ then {\em width}($h_1$) is 3 and its
+normal form $\normal{h_1}$ is $[(0,5), (2, 25), (3,15), (1,10)]$.
+
+We often refer to $y$ as the {\em mass} of the element $(x,y)$
+and given a histogram $h$, we refer to the mass of the $i^{\mathrm th}$
+using the notation $h[i]$.  For instance, $h_1[3] = 15$ and 
+$\bar{h_1}[3] = 10$.  The {\em residual mass} ({\em rm}) of a column $i$ in 
+a normalized histogram $h$ is the mass of all the columns to the right of 
+$i$ plus the mass of the zero-bar.  Mathematically, 
+{\em rm}$(\bar{h},i) = h[0] + \sum_{j=i+1}^{\mathit{width}(h)} h[j]$.
+For example, {\em rm}$(\bar{h_1},1) = 5 + 15 + 10 = 30$.
+The residual mass is the primary characterization of ``narrowness''
+of a histogram.  Those histograms with low residual mass of the first
+column ({\em i.e.,} {\em rm}$(\bar{h_1},1)$ is small) 
+are good candidates for structs.
+
+In order to distinguishing between
+structs, unions and arrays,
+we also need to define the {\em coverage} of a histogram, which
+is simply the sum of the non-zero histogram elements.  Mathematically,
+{\em coverage}$(\bar{h}) = \sum_{j=1}^{\mathit{width}(h)} h[j]$.
+
+Finally, recursive partitioning of the data works better when
+groups of tokens with similar distributions are considered together
+-- when two tokens have the same distribution, it is almost always the 
+case that they form part of the same type constructor.  There are a 
+number of ways to define {\em similarity} of histograms.  We have
+chosen a symmetric form of {\em relative entropy}.\footnote{Suggested
+by Rob Schapire, personal communication, May 2007.}  
+The (plain) relative entropy
+of two normalized histograms $\normal{h_1}$ and $\normal{h_2}$, 
+written \relativee{\normal{h_1}}{\normal{h_2}}, is
+defined as follows.
+\[
+ \relativee{\normal{h_1}}{\normal{h_2}} 
+   = \sum_{j=1}^{\mathit{width}(\normal{h_1})} \normal{h_1}[j]*log(\normal{h_1}[j]/\normal{h_2}[j])
+\]
+To create a symmetric form, we first find the average of the two
+histograms in question (written $\addh{h_1}{h_2}$)
+by summing corresponding columns and dividing by two.  This
+has the effect of preventing the denominator from being zero in the 
+final relative entropy computation.  At last, the symmetric
+relative entropy is:
+\[
+ \srelativee{\normal{h_1}}{\normal{h_2}} 
+   = \frac{1}{2}  \relativee{\normal{h_1}}{\addh{\normal{h_1}}{\normal{h_2}}}
+   +  \frac{1}{2}  \relativee{\normal{h_2}}{\addh{\normal{h_1}}{\normal{h_2}}}
+\]
+
+Now that we have defined the relevant properties of histograms,
+we can explain the method used to recursively guess type constructors.
+
+\begin {enumerate}
+\item Group related histograms into sets as follows.  
+A histogram $h_1$ belongs to
+group $G$ provided there exists another histogram $h_2$ in $G$
+such that $\srelativee{\normal{h_1}}{\normal{h_2}} < 
+\mathrm{ClusterTolerance}$.  We have found a ClusterTolerance
+of 0.01 is effective.  A histogram dissimilar to all others may form 
+its own group.
+
+\item Identify a struct by:
+\begin {enumerate}
+\item  Considering all groups $G$, in descending order by {\em StructScore}.
+The first group $G$ that contains any tokens that satisfy the
+ following minimum criteria will be declared a struct on this 
+iteration of the recursive algorithm:
+\begin {itemize}
+\item maximum residual mass
+\item minimum coverage
+\end{itemize}
+If no tokens in any group satisfies the struct criterion, check for arrays.
+\end{enumerate}
+\item Identify an array by:
+\begin {enumerate}
+\item  Considering all groups $G$, in descending order by {\em ArrayScore}.
+The first group $G$ that contains any tokens that satisfy the
+ following minimum criteria will be declared an array on this 
+iteration of the recursive algorithm:
+\begin {itemize}
+\item minimum coverage
+\end{itemize}
+If no tokens in any group satisfies the array criterion, find a union.
+\end{enumerate}
+\item Identify a union by partitioning the current set of chunks according
+to the first token in each chunk.
+\end{enumerate}
 
 \begin {figure*}
 
-histogram for ' '
+a) histogram for ' '
 histogram for ':'
+...
 
-\caption{Selected Histograms for Crashreporter.log}
+Omit telling the reader which histograms are for which tokens in the figure.
+We'll explain in the text...
+
+May 6 of them 3 each from Crashreporter.log and Sirius?
+We'll pick carefully.
+\caption{Selected Histograms for Crashreporter.log and Sirius}
 \label{fig:histograms} 
 \end{figure*}
 
