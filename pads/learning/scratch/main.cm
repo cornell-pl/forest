@@ -30,6 +30,8 @@ is
   gold/rpmpkgs.sml
   gold/yum.txt.sml
   gold/asl.log.sml
+  gold/page_log.sml
+  gold/windowserver_last.log.sml
   model.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml

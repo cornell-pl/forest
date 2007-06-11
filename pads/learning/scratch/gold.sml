@@ -10,6 +10,8 @@ structure Gold = struct
     open Trans
     open Yumtxt 
     open ASL
+    open PAGE_LOG
+    open WINDOWSERVER_LOG 
     open Populate
     open Model
 
@@ -49,6 +51,8 @@ structure Gold = struct
         , ( "rpmpkgs", rpmpkgs )
         , ( "yum.txt", yum )
         , ( "asl.log", asl)
+        , ( "page_log", page_log)
+        , ( "windowserver_last.log", windowserver_log)
         ]
 
     (* Determine if there is a useable golden data file *)
@@ -72,7 +76,7 @@ structure Gold = struct
                  val goldtystr      = TyToString ( measured )
              in "Golden complexity =\n" ^
                 showTyCompNormalized nbits ( getComps populated ) ^
-                goldtystr
+                goldtystr ^ "\n"
              end
         else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
 
