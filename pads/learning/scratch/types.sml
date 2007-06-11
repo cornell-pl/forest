@@ -484,7 +484,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts) *)
+                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts)*)
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -719,10 +719,10 @@ struct
 	    	  else if bits<=32.0 then typeName ^ "32 "
 	    	  else typeName ^ "64 " 
 	    	  ) else "") ^ 
-		  (if mode=0 then (label ^ " : " ^ label ^ " x => {x == " ^ (LargeInt.toString i) ^ "};\n")
+		  (if mode=0 then (label ^ " : " ^ label ^ " x => {x == " ^ (intToCString i) ^ "};\n")
 		   else if mode=1 orelse mode = 3 then 
 			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
-			" == " ^ (LargeInt.toString i) ^ ";\n")
+			" == " ^ (intToCString i) ^ ";\n")
 		   else (label ^ " ")
 		  )
 	    	end

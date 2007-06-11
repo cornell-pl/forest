@@ -98,4 +98,8 @@ struct
      fun avgInts ( ns : int list ) : real = 
         ( Real.fromLargeInt ( sumInts ns ) ) / ( Real.fromInt ( length ns ) )
 
+     (* convert a large int to C style string form *)
+     fun intToCString (i:LargeInt.int) : string =
+	if (i>=0) then LargeInt.toString i
+	else "-" ^ (LargeInt.toString (~i))
 end

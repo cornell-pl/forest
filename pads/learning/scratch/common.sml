@@ -540,4 +540,66 @@ structure Common = struct
 		| x::tail => ((Int.toString x) ^ " " ^ (listToString tail))
 	  in print (listToString vals)
 	  end
+
+	(*This function sorts of the base type union branches by the order defined in tokens.sml*)
+	(*assume ty is already with complexy info*)
+	fun sortUnionBranches ty =
+		case ty of 
+		  Punion(a, tys) =>
+			let
+			  fun isPriTy ty =
+				case ty of
+					Base(a1, (Ptime _, _)::_) => true
+					| Base(a1, (Pdate _, _)::_) => true
+					| Base(a1, (Pip _, _)::_) => true
+					| Base(a1, (Phostname _, _)::_) => true
+					| Base(a1, (Ppath _, _)::_) => true
+					| Base(a1, (Purl _, _)::_) => true
+					| Base(a1, (Pemail _, _)::_) => true
+					| Base(a1, (Pmac _, _)::_) => true
+					| RefinedBase(_, IntConst x , _) => x > 99
+					| RefinedBase(_, StringConst s , _) => (size s) > 2
+					| _ => false
+			  fun isNotPriTy ty = not (isPriTy ty)
+			  fun lowPriTy ty = 
+				case ty of
+					Base(_, (Pint _, _)::_) => true
+					| Base(_, (Pstring _, _)::_) => true
+					| Base(_, (Other _, _)::_) => true
+					| RefinedBase(_, StringConst s , _) => (size s) = 1
+					| _ => false
+			  fun notLowPriTy ty = not (lowPriTy ty)
+
+			  val priTys = List.filter isPriTy tys
+			  val nonpriTys = List.filter isNotPriTy tys
+			  val lowPriTys = List.filter lowPriTy nonpriTys
+			  val normalTys = List.filter notLowPriTy nonpriTys
+			  fun greater (ty1, ty2) =
+			    let
+				val (cov1, cov2) =(getCoverage ty1, getCoverage ty2)
+				val (comps1, comps2) = (getComps ty1, getComps ty2)
+				val (nc1, nc2) = ((normalizeTyComp cov1 comps1), (normalizeTyComp cov2 comps2))
+			    in
+				case (ty1, ty2) of
+				  (Base(a1, (tok1, _)::t1), Base(a2, (tok2, _)::t2)) => 
+					(compToken(tok1, tok2) = GREATER)
+				  | (RefinedBase (a1, re1, t1), RefinedBase(a2, re2, t2)) =>
+					(case (re1, re2) of
+						(StringConst x, StringConst y) => (size x < size y)
+						| (IntConst x, IntConst y) => x < y
+						| _ => false
+					)
+				  | (Base _, RefinedBase _) => true
+				  | (RefinedBase _, Base _) => false
+				  | (Base (a1, t1), _) => (case hd t1 of (Pstring x, _) => true | _ => false)
+				  | (_, Base(a1, t1)) => (case hd t1 of (Pstring x, _) => false | _ => true)
+				  | (RefinedBase _, _) => (cov1 > cov2) 
+				  | (_, RefinedBase _) => cov1 > cov2
+				  | _ => cov1 > cov2 
+			    end
+			  val sortedPriTys = ListMergeSort.sort greater priTys
+			  val sortedLowPriTys = ListMergeSort.sort greater lowPriTys
+			in Punion(a, sortedPriTys@normalTys@sortedLowPriTys)
+			end
+		  | _ => ty
 end

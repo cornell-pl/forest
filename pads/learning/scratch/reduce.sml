@@ -106,11 +106,14 @@ type pre_reduction_rule = Ty -> Ty
 type post_reduction_rule = constraint_map -> Ty -> constraint_map*Ty
 
 (*this function clean up the Punion structure so that Pempty if it exists 
-always appear last in a union *)
+always appear last in a union*)
 fun cleanupUnion unionTy =
-case unionTy of
-  Punion (a, tys) => 
+let 
+in
+  case unionTy of
+    Punion (a, tys) => 
 	let
+	
 	  fun isNotPempty ty =
 	    case ty of
 		  Base (_, ltokens) => 
@@ -127,7 +130,8 @@ case unionTy of
 	in
 	  Punion (a, nonPemptyTys@emptys')
 	end
-  | _ => raise TyMismatch
+    | _ => raise TyMismatch
+end
 
 (* reduction rules *)
 (* single member lists are removed*)
@@ -1354,7 +1358,7 @@ let
 				end
 			| Punion (a, tylist) => let
 				val (cmap', tylist') = mymap reduce' phase cmap tylist nil
-				in (cmap', cleanupUnion(Punion(a, tylist')))
+				in (cmap', (cleanupUnion (sortUnionBranches (measure (Punion(a, tylist'))))))
 				end
 			| Parray (a, {tokens, lengths, first, body, last}) => 
 				let

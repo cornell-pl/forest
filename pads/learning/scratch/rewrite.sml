@@ -22,7 +22,7 @@ let
   val ty1 = Reduce.reduce 1 ty 
   val reduce1_time : Time.time = Time.now ()
 (*
-  val _ = printTy ty1
+  val _ = printTy (measure ty1)
 *)
 (*phase two*) 
 (*
@@ -31,7 +31,7 @@ let
   val ty2 = Reduce.reduce 2 ty1
   val reduce2_time : Time.time = Time.now ()
 (*
-  val _ = printTy ty2
+  val _ = printTy (measure ty2)
 *)
   (*phase three, redo constraint-free reduction *)
 (*

@@ -738,7 +738,9 @@ struct
 		    TokenTable.appi doOne clusters;
 		     print "\n")
 		end
-	    val () = printClusters "Initial clusters: " Cs_init
+	    val () = if print_verbose then 
+			(printClusters "Initial clusters: " Cs_init) 
+			else ()
             fun mergeClusters Cs_old t1 t2 = 
 		let val () = if print_verbose then (print "Merging clusters: "; printTokenTy t1; print " "; printTokenTy t2; print "\n") else ()
 		    val (Cs_1, c_t1) = TokenTable.remove(Cs_old, t1)
@@ -846,7 +848,7 @@ struct
 	    val threshold = 0.01
             fun loop clusters CD = 
 		let val (minDistance,(ta,tb)) = findMinDistance CD
-		    val () = (print "Selected tokens:"; printClusterDistance ((ta,tb),minDistance); print "\n")
+		    val () = if print_verbose then (print "Selected tokens:"; printClusterDistance ((ta,tb),minDistance); print "\n") else ()
 		in
 		    if minDistance > threshold then (clusters, CD)
 		    else let val () = if print_verbose then printClusterDistances CD else ()
