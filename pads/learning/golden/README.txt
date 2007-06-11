@@ -13,6 +13,9 @@ dibbler.1000 0.5 hr
 dibbler.10001  -- same format as dibbler.1000 but longer
 crashreporter.log 2 hr
 railroad.txt	2 hr
+asl.log		1 hr
+page_log	0.5 hr
+windowserver_last.log	1.5 hr
 
 ai.3000
 boot.txt
