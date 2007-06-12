@@ -2,7 +2,7 @@ The purpose of the structure refinement phase is to improve
 the candidate structure produced by the structure discovery phase. We
 formulate the structure refinement problem as an optimization problem. The
 objective of the problem is, given an initial structure (treated as
-an initial solution in some solution space), find best possible structure
+an initial solution in some solution space), find the best possible structure
 in its neighborhood for which the informational-theoretic scoring function
 is optimized.
 
@@ -291,6 +291,7 @@ At the third time, a set of the data independent rules
 The third time is necessary because certain changes
 to the base types in phase two such as the creation of constants may 
 enable some of data independent rules which will further optimize the structure. 
+
 \paragraph*{Value-space analysis}
 A value-space analysis is performed as a prerequisite of the second phase.
 Here, a number of data dependency tables are generated from the 
@@ -311,149 +312,167 @@ only if the conditions are validated successfully
 against the constraint map. 
 
 \paragraph*{Running example}
-To illustrate the refinement process a bit more concretely, let us look at how
-the system refines a part of the initial structure from crashreporter.log example.
-Let us zoom into a portion of the IR as follows. The information inside the
-parenthese after each node represents the id of the node, number of
-chunks parsed by this node, and the score for this node.
+To illustrate the refinement process a bit more concretely, let us walk through
+a few steps as the system refines the initial structure of the crashreporter.log example.
+Let us zoom into the beginning portion of the IR and omit some of the details as follows. 
+We annotate each type with two pieces of auxiliary information: id of the node which
+can be used as the variable name and the complexity score at this node, 
+enclosed in a pair of parenthese. In addition, for Pother base types,
+we append the character it binds to in parenthese after the type name.
 
-\begin{code}
-Pstruct(Id = BTy_57 292, 156487.759b)
-  Punion(Id = BTy_26 292, 56076.537b)
-    Pstruct(Id = BTy_25 290, 55785.983b)
-      [Other](:) (Id = BTy_12 290, 2195.875b);
-      [White] (Id = BTy_13 290, 585.044b);
-      [String] (Id = BTy_14 290, 13055.044b);
-      [White] (Id = BTy_15 290, 585.044b);
-      [String] (Id = BTy_16 290, 12185.044b);
-      [White] (Id = BTy_17 290, 585.044b);
-      [String] (Id = BTy_18 290, 8705.044b);
-      [White] (Id = BTy_19 290, 585.044b);
-      [String] (Id = BTy_20 290, 10445.044b);
-      [White] (Id = BTy_21 290, 585.044b);
-      [String] (Id = BTy_22 290, 3485.044b);
-      [Other](:) (Id = BTy_23 290, 2195.875b);
-      [White] (Id = BTy_24 290, 585.044b);
-    End Pstruct;
-    Pstruct(Id = BTy_35 2, 283.509b)
-    [Other](:) (Id = BTy_27 2, 20.154b);
-      [White] (Id = BTy_28 2, 9.044b);
-      [String] (Id = BTy_29 2, 77.044b);
-      [White] (Id = BTy_30 2, 9.044b);
-      [String] (Id = BTy_31 2, 29.044b);
-      [White] (Id = BTy_32 2, 9.044b);
-      [String] (Id = BTy_33 2, 113.044b);
-      [White] (Id = BTy_34 2, 9.044b);
-    End Pstruct;
-  End Punion;
-  ...
-End Pstruct
-\end{code}
+\begin{verbatim}
+struct(BTy_109, 435598.632b) {
+  Pdate (BTy_0, 118482.098b);
+  Pwhite (BTy_1, 887.044b);
+  Ptime (BTy_2, 97416.824b);
+  Pwhite (BTy_3, 887.044b);
+  Pint (BTy_4, 5865.926b);
+  Pwhite (BTy_5, 887.044b);
+  Palpha (BTy_6, 23879.044b);
+  Pother([) (BTy_8, 3336.618b);
+  Pint (BTy_9, 6899.045b);
+  Pother(]) (BTy_10, 3336.618b);
+  union(BTy_58, 173712.822b) {
+    struct(BTy_57, 156487.759b) {
+     ...
+    };
+    struct(BTy_108, 17218.019b) {
+     ...
+    };
+  };
+};
+\end{verbatim}
 
-In Phase One, the first node that can be processed is node {\tt BTy\_26}
-where only rule 6 "common prefix in union" can be applied. As a result of that
-rewriting, the new structure with a better score is:
+In Phase One, some common types, namely Pother, Pwhite and Palpha, from union branches
+BTy\_57 and BTy\_108 are extracted out under the "common prefix in union" rule.
+As a result of, the new structure with a better score 435504.687b is:
 
-\begin{code}
-Pstruct(Id = BTy_57 292, 156446.2b)
-  Pstruct(Id = BTy_110 292, 56034.973b)
-    [Other](:) (Id = BTy_12 292, 2210.984b);
-    [White] (Id = BTy_13 292, 589.044b);
-    [String] (Id = BTy_14 292, 13127.044b);
-    [White] (Id = BTy_15 292, 589.044b);
-    [String] (Id = BTy_16 292, 12209.044b);
-    [White] (Id = BTy_17 292, 589.044b);
-    [String] (Id = BTy_18 292, 8813.044b);
-    [White] (Id = BTy_19 292, 589.044b);
-    Poption(Id = BTy_26 292, 17310.463b)
-      Pstruct(Id = BTy_25 290, 17303.419b)
-    	[String] (Id = BTy_20 290, 10445.044b);
-    	[White] (Id = BTy_21 290, 585.044b);
-    	[String] (Id = BTy_22 290, 3485.044b);
-    	[Other](:) (Id = BTy_23 290, 2195.875b);
-    	[White] (Id = BTy_24 290, 585.044b);
-      End Pstruct;
-    End Poption;
-  End Pstruct
-  ...
-End Pstruct
-\end{code}
+\begin{verbatim}
+struct(BTy_109, 435504.687b) {
+  Pdate (BTy_0, 118482.098b);
+  Pwhite (BTy_1, 887.044b);
+  Ptime (BTy_2, 97416.824b);
+  Pwhite (BTy_3, 887.044b);
+  Pint (BTy_4, 5865.926b);
+  Pwhite (BTy_5, 887.044b);
+  Palpha (BTy_6, 23879.044b);
+  Pother([) (BTy_8, 3336.618b);
+  Pint (BTy_9, 6899.045b);
+  Pother(]) (BTy_10, 3336.618b);
+  Pother(:) (BTy_12, 3336.618b);
+  Pwhite (BTy_13, 887.044b);
+  Palpha (BTy_14, 21125.044b);
+  union(BTy_58, 148269.822b) {
+    struct(BTy_57, 140512.323b) {
+     ...
+    };
+    struct(BTy_108, 7750.455b) {
+     ...
+    };
+  };
+};
 
-Next, with node {\tt BTy\_110} stable in phase 1, we proceed to
-refine node {\tt BTy\_57}. Here rule 4 "unnest struct" can be applied.
-And the resulting structure is:
-
-\begin{code}
-Pstruct(Id = BTy_57 292, 156439.855b)
-  [Other](:) (Id = BTy_12 292, 2210.984b);
-  [White] (Id = BTy_13 292, 589.044b);
-  [String] (Id = BTy_14 292, 13127.044b);
-  [White] (Id = BTy_15 292, 589.044b);
-  [String] (Id = BTy_16 292, 12209.044b);
-  [White] (Id = BTy_17 292, 589.044b);
-  [String] (Id = BTy_18 292, 8813.044b);
-  [White] (Id = BTy_19 292, 589.044b);
-  Poption(Id = BTy_26 292, 17310.463b)
-    Pstruct(Id = BTy_25 290, 17303.419b)
-      [String] (Id = BTy_20 290, 10445.044b);
-      [White] (Id = BTy_21 290, 585.044b);
-      [String] (Id = BTy_22 290, 3485.044b);
-      [Other](:) (Id = BTy_23 290, 2195.875b);
-      [White] (Id = BTy_24 290, 585.044b);
-    End Pstruct;
-  End Poption;
-  ...
-End Pstruct
-\end{code}
-
-Later, rule 6 is applied to the parent of {\tt BTy\_57} and the first few
-base types, {\tt BTy\_12} through {\tt BTy\_14}, were extracted out. 
+\end{verbatim}
 
 In Phase Two, data dependent rules 3 and 4 are applied to all the base types to 
-create a number of constants and enums, and as a result, 
-we have:
+create a number of constants and enums, and therefore the structure is
+transformed to: 
 
-\begin{code}
-Pstruct(Id = BTy_57 292, 99716.44b)
-  [StringConst] " " (Id = BTy_15 292, 11.044b);
-  [Enum] {[StringConst] "to", [StringConst] "writing", } 
-		(Id = BTy_16 292, 72.133b);
-  [StringConst] " " (Id = BTy_17 292, 11.044b);
-  [Enum] {[StringConst] "crash", [StringConst] "re-launch", } 
-		(Id = BTy_18 292, 102.133b);
-  [StringConst] " " (Id = BTy_19 292, 11.044b);
-  Poption(Id = BTy_26 292, 103.293b)
-    Pstruct(Id = BTy_25 290, 96.249b)
-      [StringConst] "report" (Id = BTy_20 290, 41.044b)
-      [StringConst] " " (Id = BTy_21 290, 11.044b)
-      [StringConst] "to" (Id = BTy_22 290, 17.044b)
-      [StringConst] ":" (Id = BTy_23 290, 11.044b)
-      [StringConst] " " (Id = BTy_24 290, 11.044b)
-    End Pstruct;
-  End Poption;
-...
-End Pstruct
-\end{code}
+\begin{verbatim}
+struct(BTy_109, 323626.593b) {
+  Pdate (BTy_0, 118482.098b);
+  " " (BTy_1, 11.044b);
+  Ptime (BTy_2, 97416.824b);
+  " " (BTy_3, 11.044b);
+  2006 (BTy_4, 17.015b);
+  " " (BTy_5, 11.044b);
+  enum {"crashreporterd", "crashdump"} 
+       (BTy_6, 156.133b);
+  "[" (BTy_8, 11.044b);
+  PintRanged(120, 29874) (BTy_9, 6580.450b);
+  "]" (BTy_10, 11.044b);
+  ":" (BTy_12, 11.044b);
+  " " (BTy_13, 11.044b);
+  enum {"crashdump", "mach_msg", "Finished", "Started", 
+        "Unable", "Failed", } (BTy_14, 317.405b);
+  union(BTy_58, 100570.505b) {
+    struct(BTy_57, 99696.280b) {
+     ...
+    };
+    struct(BTy_108, 867.181b) {
+     ...
+    };
+  };
+};
+\end{verbatim}
 
-Finally in Phase Three, rule 7 is applied to node {\tt BTy\_25} to arrive at the 
-final structure:
-\begin{code}
-Pstruct(Id = BTy_57 292, 99691.235b)
-  [StringConst] " " (Id = BTy_15 292, 11.044b);
-  [Enum] {[StringConst] "to", [StringConst] "writing", } 
-		(Id = BTy_16 292, 72.133b);
-  [StringConst] " " (Id = BTy_17 292, 11.044b);
-  [Enum] {[StringConst] "crash", [StringConst] "re-launch", } 
-		(Id = BTy_18 292, 102.133b);
-  [StringConst] " " (Id = BTy_19 292, 11.044b);
-  Poption(Id = BTy_26 292, 78.089b)
-  	[StringConst] "report to: " (Id = BTy_20 290, 71.044b);
-  End Poption;
-  ...
-End Pstruct
-\end{code}
+Further, data dependency is discovered between type BTy\_8
+and the union BTy\_58, and thus the latter is converted to
+a switched union as follows.
+
+\begin{verbatim}
+struct(BTy_109, 323625.593b) {
+  Pdate (BTy_0, 118482.098b);
+  " " (BTy_1, 11.044b);
+  Ptime (BTy_2, 97416.824b);
+  " " (BTy_3, 11.044b);
+  2006 (BTy_4, 17.015b);
+  " " (BTy_5, 11.044b);
+  enum {"crashreporterd", "crashdump"} 
+       (BTy_6, 156.133b);
+  "[" (BTy_8, 11.044b);
+  PintRanged(120, 29874) (BTy_9, 6580.450b);
+  "]" (BTy_10, 11.044b);
+  ":" (BTy_12, 11.044b);
+  " " (BTy_13, 11.044b);
+  enum {"crashdump", "mach_msg", "Finished", "Started", 
+        "Unable", "Failed", } (BTy_14, 317.405b);
+  switch BTy_14 of (BTy_58, 100569.505b) {
+    enum {"Failed", "Finished", "Started"}   => 
+      struct(BTy_57, 99696.280b) {
+       ...
+      };
+    enum {"Unable", "crashdump", "mach_msg"} =>
+      struct(BTy_108, 867.181b) {
+       ...
+      };
+  };
+};
+\end{verbatim}
+
+Finally in Phase Three, rule 7 is applied to combine the constants in BTy\_10,
+BTy\_12 and BTy\_13 of struct BTy\_109, which gives 
+
+\begin{verbatim}
+struct(BTy_109, 323615.282b) {
+  Pdate (BTy_0, 118482.098b);
+  " " (BTy_1, 11.044b);
+  Ptime (BTy_2, 97416.824b);
+  " " (BTy_3, 11.044b);
+  2006 (BTy_4, 17.015b);
+  " " (BTy_5, 11.044b);
+  enum {"crashreporterd", "crashdump"} 
+       (BTy_6, 156.133b);
+  "[" (BTy_8, 11.044b);
+  PintRanged(120, 29874) (BTy_9, 6580.450b);
+  "]: " (BTy_10, 23.044b);
+  enum {"crashdump", "mach_msg", "Finished", "Started", 
+        "Unable", "Failed", } (BTy_14, 317.405b);
+  switch BTy_14 of (BTy_58, 100569.505b) {
+    enum {"Failed", "Finished", "Started"}   => 
+      struct(BTy_57, 99696.280b) {
+       ...
+      };
+    enum {"Unable", "crashdump", "mach_msg"} =>
+      struct(BTy_108, 867.181b) {
+       ...
+      };
+  };
+};
+\end{verbatim}
 
 Comparing this final result with the initial description, one can see that
-the structure refinement significately simplified the IR; and with
+the structure refinement significately simplified the IR and lower the
+complexity score; and with
 the explicit constants and enums, the description is a lot more
 informative than before.
