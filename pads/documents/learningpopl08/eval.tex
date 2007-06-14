@@ -1,0 +1,42 @@
+Outline:
+
+\subsection{Objectives}
+
+To show that: the learning engine produces *accurate* and *concise* descriptions compared to a human
+expert's descriptions but costs just a fraction of the time; handles a variety of data formats; the 
+refinement step significantly improves the structure; being able to produce a description that is 
+sufficiently accurate with much smaller training sets (overfitting vs. underfitting); the correlation
+between sample size, execution time and accuracy.
+
+\subsection{Setup}
+
+\begin{enumerate}
+\item Brief intro to 12 golden formats
+
+\item Experiment metrics: data size (num of records and byte count), accuracy (success rate of parsing), 
+timing (human time vs. machine time), structure quality (normalized scores)
+\end{enumerate}
+
+\subsection{Experiments}
+
+\begin{enumerate}
+\item Human expert coded IR for all 12 formats: measure timing, score of the structure and assume 100\% 
+accuracy. This is the control data.
+
+\item Run learning tool on all 12 data files in full length: measure timing for structure discovery, 
+and refinement; initial scores and final scores, parsing rate (should be all 100\%).
+Compare these with the golden numbers from 1 in a big table. Show that the difference in scores
+can be siginificant in some cases hence room for improvement (may go into the discussion section)
+but timing advantage is huge and refinment improves initial struct a lot. Maybe also compare a case or
+two where the score from silver is comparable to golden and the actually description produced is also
+close to golden (to demo that our scoring makes some sense).
+
+\item Select random training sets of 5\%, 10\%, 20\% 30\%, 40\% and 50\% of the original data (3 sets for
+each size) and run learning tool end to end on them and take the average of 3 sets (or the best of the 3?). 
+Plot graph of (timing, accuracy) vs. training size 
+for a few examples, and show that we are doing a good job with reasonable sample size. The diagram should
+show increasing accuracy and execution time as sample size goes up. Point out anomaly
+where the abolute training size is too small (e.g. for ls-l.txt which only has 35 lines) which results
+in overfitting. ls-l.txt is also problematic as it has a header in the first line and if that is not included
+in the training set, the data will not parse.
+\end{enumerate}
