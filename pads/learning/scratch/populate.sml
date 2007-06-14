@@ -394,7 +394,8 @@ struct
 						  | _ => raise TyMismatch
 					      else (false, env, tokenlist, ty)
 					  end
-				(*Pfloat is also a special case, either int.int or int *)
+				(*Pfloat is also a special case, either int.int or int 
+				  and also, need to check for negative number *)
 				| (Pfloat(_, _), _) =>
 				    (case (#1 (hd tokenlist)) of
 					Pint (i, s) =>
@@ -433,12 +434,57 @@ struct
 						  val newaux = incCoverage a
 					   	in (true, env', List.drop(tokenlist, 1), Base(newaux, t@[floattok]))
 					   	end
-				  
-					| _ =>  (false, env, tokenlist, ty)
-				    )
-				| _ => (false, env, tokenlist, ty)
+					| Other #"-" => (* a minus sign *)
+					    if length tokenlist = 1 then (false, env, tokenlist, ty)
+					    else 
+						let
+						  val tokenlist = List.drop (tokenlist, 1)
+					        in	
+					          (case (#1 (hd tokenlist)) of
+						  	Pint (i, s) =>
+							(*check if the second token and third are dot int*)
+					  		if (length tokenlist)>=3 then
+							  let
+						  		val [int1, dot, int2] = List.take (tokenlist, 3)
+							  in 
+						  		(case (dot, int2) of
+						    		  ((Other #".", loc_dot), (Pint(i2, s2), loc_int)) =>
+					   	    		    let
+						      			val label = getLabel a
+						      			val floattok = (Pfloat (("-" ^ s), s2), (#2 int1))
+						      			val env' = LabelMap.insert(env, label, floattok) 
+						      			val newaux = incCoverage a
+					   	    		    in (true, env', List.drop(tokenlist, 3), 
+								        Base(newaux, t@[floattok]))
+					   	    	  	    end
+						  		  | _ => 
+					   	    		    let
+						      			val label = getLabel a
+						      			val floattok = (Pfloat (s, "0"), (#2 int1))
+						      			val env' = LabelMap.insert(env, label, floattok) 
+						      			val newaux = incCoverage a
+					   	    		    in (true, env', List.drop(tokenlist, 1), 
+									Base(newaux, t@[floattok]))
+					   	    		    end
+						  		)
+							  end
+					  		else 
+					   		  let
+						  		val tok = (hd tokenlist)
+								val label = getLabel a
+								val floattok = (Pfloat (s, "0"), (#2 tok))
+								val env' = LabelMap.insert(env, label, floattok) 
+								val newaux = incCoverage a
+							  in (true, env', List.drop(tokenlist, 1), Base(newaux, t@[floattok]))
+					   		  end
+						   	| _ =>  (false, env, tokenlist, ty)
+				    		)
+					      end
+				       | _ => (false, env, tokenlist, ty)
 			      )
+			    | _ => (false, env, tokenlist, ty)
 			    )
+			)
 	|  TBD (a,i,cl)     => raise TyMismatch
         |  Bottom (a, i, cl)  => raise TyMismatch
         |  Pstruct (a, tys)  => 

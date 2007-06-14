@@ -14,6 +14,7 @@ structure Gold = struct
     open WINDOWSERVER_LOG 
     open Populate
     open Model
+    open Types
 
     exception Bust
 
@@ -69,6 +70,10 @@ structure Gold = struct
     fun goldenReport ( descname : string ) : string =
         if hasGold descname
         then let val goldenTy : Ty  = getGolden descname
+		(*
+		 val (_, pads) = TyToPADSFile goldenTy "vanilla.p"
+		 val () = print (pads ^ "\n")
+		*)
                  val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
                  val measured : Ty  = measure populated
                  val ()             = print "\n"
@@ -76,7 +81,7 @@ structure Gold = struct
                  val goldtystr      = TyToString ( measured )
              in "Golden complexity =\n" ^
                 showTyCompNormalized nbits ( getComps populated ) ^
-                goldtystr ^ "\n"
+                goldtystr ^ "\n" 
              end
         else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
 
