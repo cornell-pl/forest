@@ -3,25 +3,66 @@
 \begin{figure}
 \begin{center}
 \epsfig{file=archi.eps, width=\columnwidth}
-\caption{Architecture of the format inference engine}
+\caption{Architecture of the automatic tool generation engine}
 \vspace*{-5mm}
 \label{fig-archi}
 \end{center}
 \end{figure}
 
-Figure \ref{fig-archi} gives an overview of our format inference
-architecture. The input data ({\em i.e.,} training set) is first
+Figure \ref{fig-archi} gives an overview of our automatic
+tool generation architecture. The process of generating a new
+suite of data processing tools 
+begins with raw data, shown in blue at the top left.  The
+raw data is first piped into our format inference engine
+(circumscribed by dotted lines in the picture).  The
+format inference engine is implemented as a series of phases that 
+eventually produce a syntactically correct \pads{} description
+for the data.  Next, the generated \pads{} description is fed into the 
+\pads{} compiler.  The compiler generates libraries that are linked to generic
+programs for various tasks including a data analysis tool
+({\em a.k.a.,} the {\em accumulator}) and an ad-hoc-to-\xml{} translator.
+At this point, the user can apply these generated tools to their original 
+raw data, or to other data with the same format.  
+
+The following subsections describe the main components of the
+inference algorithm in more detail, including chunking and
+tokenization, the structure discovery phase, the information-theoretic
+scoring function and the structure refinement phase.  We also
+illustrate the action of each phase on our running examples and
+present the final end products.
+
+\subsection{Chunking and Tokenization}
+
+The input data, which we also refer to as the {\em training set}, is first
 divided into {\em chunks} as specified by the user.  Intuitively, a chunk
-is a unit of repetition in the data source.  Our tool currently supports
+is a unit of repetition in the data source.  It is primarily by analyzing
+a large number of repeated syntax elements that we are able to infer a usable
+description for a data source.  Our tool currently supports
 chunking on a line-by-line basis as well as on a file-by-file basis.  
 
-Each chunk is broken down into a
-series of {\em tokens} by a lexer.
-Each token can be a punctuation symbol, a
-number, a date, a time, or a number of other basic items.  Every token
-type has a corresponding base type in the \ir{}, though the 
-converse is not true -- there are
-a number of base types that are not used as tokens.
+Each chunk is broken down into a series of {\em simple tokens} by a lexer.
+Each simple token can be a punctuation symbol, a number, a date, a time, or a
+number of other basic items.  Every simple token type has a corresponding
+base type in the \ir{}, though the converse is not true -- there are a
+number of base types that are not used as tokens.  Nevertheless, since
+simple tokens have a very close correspondence with base types,
+we often use the word {\em token} interchangeably with {\em base type}.
+  
+Parenthetical syntax including quotation marks, curly braces, square brackets,
+parentheses and \xml{} tags
+often provides very important hints about the structure
+of an ad hoc data file.  Therefore, whenever the lexer encounters 
+a corresponding pair of parentheses, it 
+creates what we call a {\em meta-token}, which is a single token that
+represents the pair of parentheses and all simple tokens 
+within.\footnote{If parenthetical elements
+are not well-nested, the meta-tokens are discarded and replaced with
+ordinary sequences of simple tokens.}  For example, in Crashreporter.log,
+the syntax \cd{[2164]} will form the meta-token we write \cd{[*]} as
+opposed to the three simple tokens \cd{[}, \cd{Pint}, and \cd{]}.  Meta-tokens
+do not stay intact throughout the inference procedure:  As the structure 
+discovery algorithm encounters each meta-token, it is cracked open and its 
+underlying structure is analyzed.
 
 Our learning system has a default tokenization scheme skewed toward systems
 data, but users may specify a different scheme for their own domain
@@ -34,27 +75,24 @@ part of the system's lexer, a
 collection of new \ir{} base types, and a series of type 
 definitions that are incorporated into the final \pads{} specification.  
 
-After tokenization, the algorithm enters the {\em structure discovery} 
-phase.  This phase uses a top-down, divide-and-conquer
-scheme to guess an approximate, initial format for the data.
-To assess the quality of this initial approximation, the
-algorithm computes an information-theoretic {\em score} for the
-structure.  This score is used in the next phase to guide
-{\em rewriting rules} that iteratively refine the format.  
+%% After tokenization, the algorithm enters the {\em structure discovery} 
+%% phase.  This phase uses a top-down, divide-and-conquer
+%% scheme to guess an approximate, initial format for the data.
+%% To assess the quality of this initial approximation, the
+%% algorithm computes an information-theoretic {\em score} for the
+%% structure.  This score is used in the next phase to guide
+%% {\em rewriting rules} that iteratively refine the format.  
 
-Once the format has been refined to the extent possible, the resulting
-\ir{} is printed in \pads{} syntax.  Template programs that use the
-new description, including the \xml{}-converter, a simple
-statistics tool we call the {\em accumulator}, a database tool
-based on Oetiker's RRDTool~\cite{rrdtool}, and the \padx{}
-query engine, are also all generated at this point.  Hence, starting
-with data alone, our end-to-end algorithm quickly generates an entire suite
-of fully functional data processing tools, ready to use at the command line.
+%% Once the format has been refined to the extent possible, the resulting
+%% \ir{} is printed in \pads{} syntax.  Template programs that use the
+%% new description, including the \xml{}-converter, a simple
+%% statistics tool we call the {\em accumulator}, a database tool
+%% based on Oetiker's RRDTool~\cite{rrdtool}, and the \padx{}
+%% query engine, are also all generated at this point.  Hence, starting
+%% with data alone, our end-to-end algorithm quickly generates an entire suite
+%% of fully functional data processing tools, ready to use at the command line.
 
-The following subsections describe the main components of the algorithm
-in more detail, including the structure discovery phase, the 
-information-theoretic scoring function, the structure refinement phase
-and the end products of the algorithm.
+
 
 \begin{figure}
 \begin{verbatim}
@@ -76,7 +114,7 @@ configuration file.}
 \label {fig:configfile}
 \end{figure}
 
-%% \subsection {Chunking and Tokenization}
+%% 
 
 
 
@@ -116,71 +154,144 @@ configuration file.}
 
 \subsection {Structure Discovery}
 
-{\em note: change algorithm so that structs only partition on 1 token
- in the middle...explain in the magic section or later that this
- is a simplification and we do many tokens at the same time}
-
 Given a collection of tokenized chunks, the goal of the structure
-discovery phase is to find a candidate description ``nearby'' the
-final solution.  In the following phase, the rewriting rules transform
-and refine the candidate to produce that final solution.  The overall
-structure of this phase of the algorithm was directly inspired by the
-work of Arasu and Garcia-Molina~\cite{arasu+:sigmod03}.  However, the
-details are quite different as Arasu is trying to extract information
-from \html{} web pages as opposed to describing ad hoc data.
+discovery phase is to find a candidate description ``nearby'' a good
+final solution.  In a later phase of the algorithm, the rewriting rules 
+analyze, refine
+and transform the candidate to produce that final solution.  The
+high-level structure of the algorithm we use to discover candidate
+descriptions was inspired by the work of Arasu and
+Garcia-Molina on information extraction from web pages~\cite{arasu+:sigmod03}.
+However, the context, goals and algorithmic details involved in our
+work are entirely different.
 
-\paragraph*{Algorithm Basics.}
-Our algorithm operates by analyzing the collection of tokenized chunks,
+%However, the details are
+%entirely different as Arasu's algorithm operates over well-formed
+%\html{} trees whereas our work focuses on the mucky world of ad hoc
+%data.
+
+\paragraph*{Structure Discovery Basics.}
+Our algorithm operates by analyzing the collection of tokenized chunks
 and guessing what the top-level type constructor is.  Based on this guess,
-it will partition the chunks and recursively analyze each partition.
-Using the guess and the results of recursive application of the
-procedure, the algorithm builds a description for the data.
-We will explain how the magical ``guessing'' works
-in a moment, but for now, Figure~\ref{fig:structure-discovery} 
-presents an outline of how the overall procedure operates.  
+it will partition the chunks and recursively analyze each partition
+to determine what the component types are.
+Figure~\ref{fig:structure-discovery} presents an outline of how the
+overall procedure operates.  The \cd{oracle} function,
+whose implementation we leave hidden for now,
+does most of the hard work in the algorithm by conjuring up 
+one of four different sorts of prophecies.  
+
+The \cd{BaseProphecy} simply reports that the top-level type
+constructor is some specified base type.
+
+The \cd{StructProphecy} specifies that the top-level description is a
+struct.  In addition, if the struct is to have $k$ fields then the
+\cd{StructProphecy} will carry a list (call it \cd{css}) with $k$
+elements.  The $i^{\mathrm{th}}$ element in the list is a set of
+chunks used recursively to discover the type of the $i^{\mathrm{th}}$
+field of the struct.  These sets of chunks are derived from the
+original input to the oracle function. More specifically, if the
+oracle guesses there will be $k$ fields in the struct, then each original
+chunk is partitioned into $k$ pieces. The $i^{\mathrm{th}}$ piece of
+each original chunk is used to infer the $i^{\mathrm{th}}$ field of
+the struct.
+
+The \cd{ArrayProphecy} specifies that the top-level structure will
+involve an array.  However, at this point in the inference algorithm,
+predicting exactly where an array begins and ends is difficult, even
+for the magical oracle.  Consequently, the algorithm actually
+generates a three-field struct, where the first field allows for slop
+prior to beginning the array, the middle field is the array itself,
+and the last field allows for slop after the array is over.  If this
+slop turns out to be unnecessary, the rewriting rules will clean up
+the mess in the next phase.
+
+Finally, the \cd{UnionProphecy} specifies that the top-level structure will
+involve a union type.  Like a \cd{StructProphecy}, the \cd{UnionProphecy}
+carries a \cd{chunks list} with it and each element of the list is 
+used recursively to infer a branch of the union.  Merging all elements
+of the list will result in the original input.
 
 As an example, recall the Crashreporter.log data presented in
 Figure~\ref{fig:example}.  After tokenization, assuming a chunk is
-a line of data, the first two chunks contain the following token sequences:
+a line of data, the two chunks from the example contain the following 
+token sequences (recall \cd{[*]} and \cd{(*)} are meta-token encapsulating
+everything within the respective parens):
 {\small
 \begin{verbatim}
-   Pdate ' ' Ptime ' ' Pint ' ' Palpha '[' Pint 
-     ']' ':' ...
+Pdate ' ' Ptime ' ' Pint ' ' Palpha [*] ':' ...
+'-' ' ' Palpha [*] ':' ' ' Palpha (*) ' ' ...
+\end{verbatim}
+}
+\noindent
+Given these token sequences, 
+our oracle will guess that the top-level type constructor is a struct 
+with three fields and divide up our original chunks into three sets
+as follows.
+{\small
+\begin{verbatim}
+Pdate ' ' Ptime ' ' Pint ' ' Palpha        (set 1)       
+'-' ' ' Palpha 
 
-   Pdate ' ' Ptime ' ' Pint ' ' Palpha '[' Pint 
-     ']' ':' ...
+[*]                                        (set 2)       
+[*]
+
+':' ...                                    (set 3)       
+':' ' ' Palpha (*) ' ' ...
 \end{verbatim}
 }
 \noindent
-Given these token sequences, our inference algorithm might guess that
-the top-level type constructor is a struct:  
-\[
-\mbox{\small
-\cd{struct \{}$T_0$\cd{; Pdate; }$T_1$\cd{; Ptime; }$T_2$\cd{; ':'; }$T_3$\cd{;\}}
-}
-\]
-The types $T_0$, $T_1$, $T_2$ and $T_3$ are not yet known -- they will
-be constructed recursively.  $T_0$ is constructed by recursively applying
-the discovery procedure to the data in the chunks that precedes
-the first occurrence of \cd{Pdate}.  In this case, there is no such
-data, so the inference procedure returns the trivial type \cd{Pempty} for
-$T_0$.  $T_1$ is constructed by applying discovery to the data between
-\cd{Pdate} and \cd{Ptime}.  Each chunk contains one token in this case,
-the space token.  Hence the discovery procedure easily decides
-$T_1$ is \cd{' '}. $T_2$ is discovered by recursively analyzing the following
-two chunks.
+On recursive analysis of set 1, the oracle again suggests a struct is the top-level structure,
+generating two more sets of chunks: 
 {\small
 \begin{verbatim}
-   ' ' Pint ' ' Palpha '[' Pint ']' 
-   ' ' Pint ' ' Palpha '[' Pint ']'
+Pdate ' ' Ptime ' ' Pint ' '               (set 4)       
+'-' ' '
+
+Palpha                                     (set 5)       
+Palpha 
 \end{verbatim}
 }
 \noindent
-Finally, the structure of $T_3$ is discovered by recursively analyzing 
-all data following the ':' token.
+Now, since every chunk in set 5 contains exactly one base type
+token, the recursion naturally bottoms out with the oracle claiming it has
+found the base type \cd{Palpha}.  On the other hand, when analyzing set 4, 
+the oracle detects insufficient commonality between chunks and decides
+the top-most type constructor must be a union. It recursively analyzes 
+the first chunk in set 4 to determine the type of one 
+branch of the union and the second chunk in set 4 to determine the type of
+the other branch of the union.  With no variation in either branch,
+the algorithm quickly discovers an accurate type for each.
+
+Backing out of the recursion, having completely discovered the
+type of the data in set 1, we turn our attention to set 2.
+On recursive analysis of this set, the meta-tokens are cracked open
+and this piece of the data is recursively identified as having the type 
+\cd{struct \{'['; Pint; ']';\}}.  Analysis of Set 3 proceeds in a similar 
+fashion to the others.
+
+%% The types $T_0$, $T_1$, $T_2$ and $T_3$ are not yet known -- they will
+%% be constructed recursively.  $T_0$ is constructed by recursively applying
+%% the discovery procedure to the data in the chunks that precedes
+%% the first occurrence of \cd{Pdate}.  In this case, there is no such
+%% data, so the inference procedure returns the trivial type \cd{Pempty} for
+%% $T_0$.  $T_1$ is constructed by applying discovery to the data between
+%% \cd{Pdate} and \cd{Ptime}.  Each chunk contains one token in this case,
+%% the space token.  Hence the discovery procedure easily decides
+%% $T_1$ is \cd{' '}. $T_2$ is discovered by recursively analyzing the following
+%% two chunks.
+%% {\small
+%% \begin{verbatim}
+%%    ' ' Pint ' ' Palpha '[' Pint ']' 
+%%    ' ' Pint ' ' Palpha '[' Pint ']'
+%% \end{verbatim}
+%% }
+%% \noindent
+%% Finally, the structure of $T_3$ is discovered by recursively analyzing 
+%% all data following the ':' token.
 
 As a second example, consider the Sirius data from Figure~\ref{fig:example}.
-Here the token streams have the following structure:
+Here the chunks have the following structure:
 {\small
 \begin{verbatim}
    Pint '|' Pint '|' ... '|' Pint '|' Pint
@@ -189,36 +300,24 @@ Here the token streams have the following structure:
 }
 \noindent
 In this case, our algorithm guesses that the top-level structure involves
-an array and hence predicts this shape:
-\[
-\mbox{\small
-\cd{struct \{}$T_{\mathrm{first}}$\cd{; array \{}$T_{\mathrm{body}}$\cd{\};}$T_{\mathrm{last}}$\cd{;\}}
-}
-\]
-\noindent
-At this point in the analysis, predicting exactly where an array
-begins and ends is difficult.  Consequently, the algorithm allows for
-some slop prior to beginning the array ($T_{\mathrm{first}}$) and some
-slop at the end of the array ($T_{\mathrm{last}}$).  If this slop
-turns out to be unnecessary, the rewriting rules will clean up the
-mess in the next phase.  The array itself has elements with type
-$T_{\mathrm{body}}$.  In order to determine the type of the body
-elements, the algorithm examines the following collection of chunks:
+an array and hence partions the data into sets of chunks for the
+array preamble, the array itself, and the array postamble.  The
+preamble chunks have the form \cd{Pint '|'} and the
+postamble chunks have the form \cd{Pint}, so their types easily discovered.  
+The type for the array elements will be discovered and through analysis of the
+following list of chunks.  The oracle managed to split the two
+large initial chunks into a series of many smaller array-element chunks
+by noticing the \cd{'|'} token might serve as an array separator.
 {\small
 \begin{verbatim}
-   Pint '|' 
-   ... 
-   Pint '|' 
-   Pint '|'
-   ...
-   Palpha Pint '|'
+Pint '|' 
+... 
+Pint '|' 
+Pint '|'
+...
+Palpha Pint '|'
 \end{verbatim}
 }
-\noindent
-In this case, the two large initial chunks are partitioned 
-into a series of many small array-element chunks for recursive 
-analysis based on occurrences of the \cd{'|'} token.
-
 So far so good, but how does the guessing work?  Why does the
 algorithm decide the Sirius data is basically an array but the
 Crashreporter.log is a struct? After all, all the Sirius chunks start
@@ -364,7 +463,7 @@ We'll pick carefully.
 \paragraph*{Additional Tricks.}
 Grouping
 
-\input{discoveryalg.tex}
+\input{discoveryalg2.tex}
 
 %%     *  role = quickly find a description in the "approximate area" of the correct description
 %%     * explain structure of a generic "top-down" inference algorithm -- perhaps give pseudocode

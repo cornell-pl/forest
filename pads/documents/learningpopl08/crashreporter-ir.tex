@@ -1,4 +1,4 @@
-\begin{figure}
+\begin{figure}[t]
 \begin{verbatim}
 dumpreport =
   union {
@@ -12,30 +12,34 @@ dumpreport =
     };
     struct {
       "Unable to determine task_t for pid: "; 
-      pid:Pint32; 
-      " name: Exited process";
+      pid:Pint32; " name: Exited process";
     };
     struct {
       "Failed to re-launch "; 
-      file:Ppath; 
-      " - "; 
-      message:Pstring('\n')
+      file:Ppath; " - "; message:Pstring('\n')
     };
   };
 
 reporterreport =
   struct {
-    function: Ppath; 
-    " reply failed: ");
+    function: Ppath; " reply failed: ");
     failuremsg: Pstring_('\n'); 
+  };
+
+dateoption = 
+  union {
+    "- ";
+    struct {
+      day:    PDate;  " ";
+      time:   PTime;  " ";
+      year:   Pint32; " ";
+    };
   };
 
 source =
   arrayST {
     struct {
-      date:   PDate;  " ";
-      time:   PTime;  " ";
-      year:   Pint32; " ";
+      date:   dateoption;
       kind:   enum {"crashdump"; 
                     "crashreporterd";}; "[";
       dumpid: Pint32; "]: ";
@@ -47,11 +51,6 @@ source =
   }['\n',EOF];
 \end{verbatim}
 
-\caption{Hand-written \ir{} Crashreporter description.  
-  Note: needs to be checked for correctness.  This was written by hand by Dave
-  using the syntax of the paper, guided by the pads golden description, but deviating
-  slightly by nesting instead of expanding definitions and altering base types to fit the
-  base types available in the IR.  I also replaced Peor with 'backslash-n'...
-can't to produce a backslash in tex.}
+\caption{Hand-written \ir{} Crashreporter description.}
 \label{fig:crashreporter:ir}
 \end{figure}

@@ -6,8 +6,8 @@ work~\cite{fisher+:popl06}.  Apart from syntax, the main differences
 are that the \ir{} omits recursion and function declaration; the former
 being beyond the scope of our current inference techniques, and the 
 latter being unnecessary during the course of the inference algorithm.  
-In addition, for convenience during inference, the scope of dependent 
-variable binding is slightly different, as will be explained below.
+%In addition, for convenience during inference, the scope of dependent 
+%variable binding is slightly different, as will be explained below.
 
 \subsection{Preliminary Concepts}
 
@@ -82,12 +82,14 @@ base types.  For example, \cd{x:b(p_1,...,p_k)} expresses the fact that
 variable \cd{x} is bound to the value parsed by base type
 \cd{b(p_1,...,p_k)}.  These variables express dependencies between 
 different parts
-of a description.\footnote{Every bound variable is assumed to be distinct
-from every other that appears in a description.  The scope of such variables
-extends as far as possible through the description.  Rougly speaking,
-any part of the 
-description that refers to data later in the file may refer to an earlier
-bound variable.}  For example, the length of a string (\cd{PstringFW(p)})
+of a description.\footnote{For the purposes of inference, 
+every bound variable is assumed to be distinct
+from every other that appears in a description.  Roughly speaking,
+the scope of such variables
+extends as far as possible to the right through the description.
+Understandng the fine details of the semantics is not important
+for understanding the central material in this paper.}  
+For example, the length of a string (\cd{PstringFW(p)})
 or an array (\cd{ParrayFW(p)}) may depend upon either a constant or
 a variable and likewise for any other parameterized base type.  In
 addition, unions may be refined into dependent switch statements
@@ -97,7 +99,7 @@ associated with \cd{x}, be it \cd{c_1}, ..., or \cd{c_k}.
 
 The result of parsing according to a description is an internal
 representation of the data. We let metavariable $d$ range over such 
-data representations.  For the purposes of this paper, of data 
+data representations.  For the purposes of this paper, data 
 representation may be a constant $c$, an injection into the $i^{th}$
 variant of a union \cd{in}$_i(d)$, or a sequence of data representations
 $(d_1,\ldots,d_k)$.  The injections are used as the representations of
@@ -157,22 +159,25 @@ $d$ & ::= & $c$ &        (constant) \\
 Figure~\ref{fig:example} presents tiny fragments of three
 different ad hoc data files we have trained our inference algorithm
 on.  The first, Crashreporter.log, is a Macintosh
-system file that records information concerning process crashes. The
+system file that records information concerning process crashes.\footnote{For
+expository purposes we have made a minor alteration to the Crashreporter.log
+format.  The evaluation section reports results on both the 
+completely unmodified Crashreporter.log and the modified version
+used to explain concepts in the paper.} The
 second, we call Sirius, is an internal AT\&T format used to
 record phone call provisioning information. The third format is
 a generic system logging file called ASL.log, again taken from a
 Macintosh.
 Crashreporter.log will be used as our main running example throughout the
 paper; the other two will be called upon periodically to illustrate
-some particular aspect of the inference algorithm.  In the 
-of evaluation section of the paper, we report on our experience
-with many more examples.
+some particular aspect of the inference algorithm.  We report on our experience
+with many more examples in the evaluation section of the paper.
 
 \begin{figure*}
 Crashreporter.log:
 {\small \begin{verbatim}
 Sat Jun 24 06:38:46 2006 crashdump[2164]: Started writing crash report to: /Logs/Crash/Exit/ pro.crash.log
-Sat Jun 24 06:38:46 2006 crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
+- crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
 \end{verbatim}
 }
 
@@ -201,54 +206,62 @@ ASL.log:
 % \end{verbatim}
 % }
 
-\caption {Example data. 
-Data records too long to be formatted on a single line are terminated with '\' and indented two spaces on the next line.}
+\caption {Example ad hoc data sources.}
 \label{fig:example}
 \end{figure*}
 
 Figure \ref{fig:crashreporter:ir} presents a hand-writtern description
 of the crashreporter file in the \ir{} syntax.  This
-description is most easily read bottom to top.  The
-last definition in the figure specifies that \cd{source} is an
-array of structs with separating character being the newline character
-and terminating character being the end of file marker.  Intuitively,
-this means the entire file is a sequence of lines, with the struct
-in question appearing on each line.  The struct itself indicates each line
-is a sequence of \cd{date}, \cd{time}, \cd{year}, \cd{kind}, \cd{dumpid} and 
-\cd{report} fields.  The date field has type \cd{PDate} (one of the
-complex base types our system uses), the time field has type \cd{PTime},
-and so on.  In between each of the first four fields is a space character
-(written \cd{PstringConst(' ')}).  The writer of the description did not
-associate a variable name with the constant fields, but they did with the
-others.  Since only the \cd{kind} field is used later in the description,
-it is the only field that actually needs a variable associated with it;
-the other names are merely an informative bit of documentation.  The
-\cd{report} field provides an example of a switch statement and its
-use of dependency information.  Here, the value associated with the
-\cd{kind} variable (either \cd{"crashdump"} or \cd{"crashreporterd"})
-is used to determine the form of the \cd{report} field.  It may either be
-a \cd{dumpreport} type or a \cd{reporterreport} type.  
-The definition of \cd{reporterreport} is relatively simple -- it is
-a structure containing a file path and a message following 
-\cd{" reply failed: "}.  A \cd{crashdump} message is more complicated --
-it is a union of several different possible message formats.
+description is most easily read beginning at the bottom
+with the definition of the \cd{source} type.  This definition specifies that
+the data source is an
+array of structs, each separated by a newline character. The array
+is terminated by the end of file marker.  In other words,
+the data source is a sequence of lines, with the struct
+in question appearing on each line.  
+The struct itself indicates each line is a sequence of
+\cd{dateoption}, \cd{kind}, \cd{dumpid} and \cd{report} fields.  
+The description also specifies that the constant string \cd{"["} 
+will be found in between the \cd{kind} and the \cd{dumpid}, and the
+constant string \cd{"]: "} will be found in between the \cd{dumpid} and 
+the \cd{report}.
+
+%% The reader can
+%% \cd{dateoption} type (appearing above the definition of \cd{source})
+%% is defined as either a dash or a structure containing a \cd{PDate}
+%% (one of the complex base types our system uses), a \cd{PTime} (another
+%% complex base type) and an integer year.  In between each of the three
+%% fields in the \cd{dateoption} struct is a space character (written
+%% \cd{" "}).
+
+Most of the variable names associated with fields ({\em e.g.}
+\cd{date}, \cd{dumpid}, etc.) merely serve as documentation for the reader.
+However, the \cd{kind} field is different -- it is used later in the 
+description and hence illustrates an element of {\em dependency}.  
+To be specific, the form of the
+\cd{report} field depends directly upon the contents of the \cd{kind}
+field.  If the value associated with the
+\cd{kind} field is \cd{"crashdump"}, then the \cd{report} is
+a \cd{dumpreport} type, while if the \cd{kind} field is \cd{"crashreporterd"},
+the \cd{report} is a \cd{reporterreport} type.  
+
+Figure~\ref{fig:crashreporter:ir} contains three other definitions
+aside from \cd{source}.  These definitions specify the
+structure of the  \cd{dumpreport}, \cd{reporterreport} and \cd{dateoption}
+types used by \cd{source}.
+
+%% specify the component parts
+%% The definition of \cd{reporterreport} is relatively simple -- it is
+%% a structure containing a file path 
+%% (\cd{Ppath} is one of the complex base types our system uses) and 
+%% a message following 
+%% \cd{" reply failed: "}.  A \cd{crashdump} message is more complicated --
+%% it is a union of several different possible message formats. Finally, a
+%% \cd{dateoption} type 
+%% is defined as either a dash or a structure containing a \cd{PDate}, 
+%% a \cd{PTime} and an integer year. 
 
 \input{crashreporter-ir}
-
-\paragraph {notes.}
-this section reviews the pads syntax and semantics; 
-remind about details of how PADS works and PADS toolchain;
-introduces the
-notation for the intermediate representation.
-
-
-Introduce main running example:  
-
-    * show example data fragment (if not already done in the intro)
-    * show human description
-    * initial choice: crashreporter
-
-
 
 
 %%% Local Variables: 
