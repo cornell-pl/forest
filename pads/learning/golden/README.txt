@@ -16,6 +16,9 @@ railroad.txt	2 hr
 asl.log		1 hr
 page_log	0.5 hr
 windowserver_last.log	1.5 hr
+MER_T_01_01.csv	0.5 hr
+netstat-an	1 hr
+scrollkeeper.log	1 hr
 
 ai.3000
 boot.txt
