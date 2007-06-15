@@ -12,7 +12,10 @@ structure Gold = struct
     open ASL
     open PAGE_LOG
     open WINDOWSERVER_LOG 
+    open MER
+    open NETSTAT 
     open Populate
+    open ScrollKeeper
     open Model
     open Types
 
@@ -54,6 +57,9 @@ structure Gold = struct
         , ( "asl.log", asl)
         , ( "page_log", page_log)
         , ( "windowserver_last.log", windowserver_log)
+        , ( "MER_T01_01.csv", mer)
+        , ( "netstat-an", netstat)
+        , ( "scrollkeeper.log", scrollkeeper)
         ]
 
     (* Determine if there is a useable golden data file *)
@@ -70,13 +76,11 @@ structure Gold = struct
     fun goldenReport ( descname : string ) : string =
         if hasGold descname
         then let val goldenTy : Ty  = getGolden descname
-		(*
-		 val (_, pads) = TyToPADSFile goldenTy "vanilla.p"
-		 val () = print (pads ^ "\n")
-		*)
                  val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
                  val measured : Ty  = measure populated
                  val ()             = print "\n"
+		 val (_, pads) = TyToPADSFile measured "vanilla.p"
+		 val () = print (pads ^ "\n")
                  val nbits : int    = OS.FileSys.fileSize ( "data/" ^ descname ) * 8
                  val goldtystr      = TyToString ( measured )
              in "Golden complexity =\n" ^

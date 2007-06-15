@@ -1421,7 +1421,9 @@ let
 	  in
 	  	(* as long as the cost keeps going down, keep iterating *)
 	  	if lowCost < cur_cost then 
-		((*print "New Ty:\n"; printTy (measure newTy);*) iterate newcmap newTy)
+		((*print "Old Ty:\n"; printTy (measure ty); 
+		 print "New Ty:\n"; printTy (measure newTy);*) 
+		 iterate newcmap newTy)
 	  	else (newcmap, newTy) 
 	  end
     in

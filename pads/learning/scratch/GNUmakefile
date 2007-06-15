@@ -45,6 +45,9 @@
 #     asl.log
 #     page_log
 #     windowserver_last.log
+#     MER_T01_01.csv
+#     netstat-an
+#     scrollkeeper.log
 #
 # Dependencies
 #
@@ -147,7 +150,7 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
-GOLDENDATA :=  quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log
+GOLDENDATA :=  quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))

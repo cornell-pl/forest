@@ -32,6 +32,9 @@ is
   gold/asl.log.sml
   gold/page_log.sml
   gold/windowserver_last.log.sml
+  gold/MER_T01_01.csv.sml
+  gold/netstat-an.sml
+  gold/scrollkeeper.log.sml
   model.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
