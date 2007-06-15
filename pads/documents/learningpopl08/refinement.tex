@@ -9,7 +9,7 @@ is optimized.
 \paragraph*{Rewriting rules}
 In order to move around in the solution space, we define a number of structure
 transitions in the form of rewriting rules. The general form of the rule is
-\[T \goto T', ~~ {\rm if~ some~ constraint~} c(T)~ {\rm is~ satisfied,}\]
+\[T \goto T', ~~ {\rm if~ some~ constraint~} p(T)~ {\rm is~ satisfied,}\]
 where $T$ is a type, or sub-structure, and $T'$ is the type after the
 transition.  Some rules are unconditional and thus free of constraints.
 There are two kinds of rewriting rules: data-independent rules which
@@ -252,34 +252,50 @@ Iterations stop when no reduction in the score is possible, and at
 that time, structure $T$ is said to be {\em stable}.
 
 \begin{figure}
-\begin{code}
-Refine(T, Rules)
-\{
-  foreach c in children(T)
-    Refine(c, Rules)
-  minScore := score(T)
-  do \{
-    minRule := \{\}
-    foreach r in Rules 
-    \{
-      if score(r(T)) < minScore
-      \{
-        minScore := score(r(T))
-        minRule := r
-      \}
-    \}
-    if minRule != \{\} then T := minRule(T)
-  \} while minRule != \{\}
-\}
-\end{code}
-\caption{The generic greedy local optimization procedure}
+{\small 
+\begin{verbatim}
+(* a rewriting rule *)
+type rule : description -> description  
+
+(* all relevant rules in a list *)
+val rules : rule list 
+
+(* measure the score for a type *)
+fun score : description -> float
+
+(* find the type with best score from a list *)
+fun best: description list -> description
+
+(* improve the given type by one rewriting rule *)
+fun oneStep (T:description) : description =
+ let all = map (fn rule => rule T) rules in
+ let top = best all                      in
+ if (score top) < (score T) then
+   oneStep top
+ else
+   T
+
+(* main function to refine an IR description *) 
+fun refine (T:description) : description =
+  let T' = case T of
+      base b => b
+    | struct { Ts } => struct { map refine Ts }
+    | union { Ts } => union { map refine Ts }
+    | switch x of { vTs } => 
+       switch x of 
+         { map (fn (v, t) => (v, refine t)) vTs }
+    | array { T } => 
+              array { refine T }
+    | option { T } => option { refine T } in
+  oneStep T'
+\end{verbatim}
+}
+\caption{Generic local optimization algorithm in Pseudo-ML}
 \label{fig:refinement}
 \end{figure}
 
 The overall algorithm in Figure \ref{fig:refinement} is applied three
-times in succession. We write $r(T)$ to mean the result of applying
-rule $r$ to $T$, and $score(T)$ to represent the information-thereotic
-score of structure $T$.
+times in succession. 
 At the first time, the algorithm quickly reduces the initial structure to 
 a much simpler, manageable sized new structure by using
 the data independent rules {\em only}. The second time, data dependent
@@ -319,115 +335,140 @@ We annotate each type with two pieces of auxiliary information: id of the node w
 can be used as the variable name and the complexity score at this node, 
 enclosed in a pair of parenthese. In addition, for Pother base types,
 we append the character it binds to in parenthese after the type name.
+The intial IR structure of crash reporter looks like this:
 
+{\small
 \begin{verbatim}
-struct(BTy_109, 435598.632b) {
-  Pdate (BTy_0, 118482.098b);
-  Pwhite (BTy_1, 887.044b);
-  Ptime (BTy_2, 97416.824b);
-  Pwhite (BTy_3, 887.044b);
-  Pint (BTy_4, 5865.926b);
-  Pwhite (BTy_5, 887.044b);
-  Palpha (BTy_6, 23879.044b);
-  Pother([) (BTy_8, 3336.618b);
-  Pint (BTy_9, 6899.045b);
-  Pother(]) (BTy_10, 3336.618b);
-  union(BTy_58, 173712.822b) {
-    struct(BTy_57, 156487.759b) {
-     ...
+struct(BTy_114, 416156.763b) {
+  union(BTy_7, 204984.986b) {
+    struct(BTy_6, 204589.179b) {
+      Pdate (BTy_0, 108004.535b);
+      Pwhite (BTy_1, 809.044b);
+      Ptime (BTy_2, 88802.177b);
+      Pwhite (BTy_3, 809.044b);
+      Pint (BTy_4, 5347.705b);
+      Pwhite (BTy_5, 809.044b);
     };
-    struct(BTy_108, 17218.019b) {
-     ...
+    struct(BTy_10, 388.762b) {
+      Pother (-) (BTy_8, 299.673b);
+      Pwhite (BTy_9, 83.044b);
+    };
+  }
+  Palpha (BTy_11, 23879.044b);
+  Pother ([) (BTy_13, 3336.618b);
+  Pint (BTy_14, 6899.045b);
+  Pother (]) (BTy_15, 3336.618b);
+  union(BTy_63, 173712.822b) {
+    struct(BTy_62, 156487.759b) {
+      ...
+    };
+    struct(BTy_113, 17218.019b) {
+      ...
     };
   };
 };
 \end{verbatim}
+}
 
-In Phase One, some common types, namely Pother, Pwhite and Palpha, from union branches
-BTy\_57 and BTy\_108 are extracted out under the "common prefix in union" rule.
-As a result of, the new structure with a better score 435504.687b is:
+In Phase One, common types such as Pwhite (BTy\_5 and BTy\_9) in union BTy\_7 are
+are extracted out under the "common prefix in union" rule.
+As a result of, the new structure with a slightly better over score 416156.509b is:
 
+{\small
 \begin{verbatim}
-struct(BTy_109, 435504.687b) {
-  Pdate (BTy_0, 118482.098b);
-  Pwhite (BTy_1, 887.044b);
-  Ptime (BTy_2, 97416.824b);
-  Pwhite (BTy_3, 887.044b);
-  Pint (BTy_4, 5865.926b);
-  Pwhite (BTy_5, 887.044b);
-  Palpha (BTy_6, 23879.044b);
-  Pother([) (BTy_8, 3336.618b);
-  Pint (BTy_9, 6899.045b);
-  Pother(]) (BTy_10, 3336.618b);
-  Pother(:) (BTy_12, 3336.618b);
-  Pwhite (BTy_13, 887.044b);
-  Palpha (BTy_14, 21125.044b);
-  union(BTy_58, 148269.822b) {
-    struct(BTy_57, 140512.323b) {
-     ...
-    };
-    struct(BTy_108, 7750.455b) {
-     ...
-    };
-  };
+struct(BTy_114, 416156.509b) {
+  struct(BTy_115, 204984.732b) {
+    union(BTy_7, 204091.634b) {
+      struct(BTy_6, 203779.872b) {
+        Pdate (BTy_0, 108004.535b);
+        Pwhite (BTy_1, 809.044b);
+        Ptime (BTy_2, 88802.177b);
+        Pwhite (BTy_3, 809.044b);
+        Pint (BTy_4, 5347.705b);
+      };
+      struct(BTy_10, 304.718b) {
+        Pother (-) (BTy_8, 299.673b);
+      };
+    }
+    Pwhite (BTy_5, 887.044b);
+  }
+  ...
 };
-
 \end{verbatim}
+}
+
+Note that we end up with an undesirable situation in BTy\_10 where a struct 
+contains just one element. That will be fixed in Phase three as we shall see.
+Next, the "unnest struct and union" rule kicks in to flatten struct BTy\_114 to
+the following.
+
+{\small
+\begin{verbatim}
+struct(BTy_114, 416056.899b) {
+    union(BTy_7, 204091.634b) {
+      struct(BTy_6, 203779.872b) {
+        Pdate (BTy_0, 108004.535b);
+        Pwhite (BTy_1, 809.044b);
+        Ptime (BTy_2, 88802.177b);
+        Pwhite (BTy_3, 809.044b);
+        Pint (BTy_4, 5347.705b);
+      };
+      struct(BTy_10, 304.718b) {
+        Pother (-) (BTy_8, 299.673b);
+      };
+    Pwhite (BTy_5, 887.044b);
+    ...
+  }
+  ...
+};
+\end{verbatim}
+}
 
 In Phase Two, data dependent rules 3 and 4 are applied to all the base types to 
 create a number of constants and enums, and therefore the structure is
 transformed to: 
-
+{\small
 \begin{verbatim}
-struct(BTy_109, 323626.593b) {
-  Pdate (BTy_0, 118482.098b);
-  " " (BTy_1, 11.044b);
-  Ptime (BTy_2, 97416.824b);
-  " " (BTy_3, 11.044b);
-  2006 (BTy_4, 17.015b);
+struct(BTy_114, 304553.986b) {
+  union(BTy_7, 196876.315b) {
+    struct(BTy_6, 196853.182b) {
+      Pdate (BTy_0, 108004.535b);
+      " " (BTy_1, 11.044b);
+      Ptime (BTy_2, 88802.177b);
+      " " (BTy_3, 11.044b);
+      2006 (BTy_4, 17.015b);
+    };
+    struct(BTy_10 39, 16.089b) {
+      "-" (BTy_8 39, 11.044b);
+    };
+  };
   " " (BTy_5, 11.044b);
-  enum {"crashreporterd", "crashdump"} 
-       (BTy_6, 156.133b);
-  "[" (BTy_8, 11.044b);
-  PintRanged(120, 29874) (BTy_9, 6580.450b);
+  enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
+  "[" (BTy_13, 11.044b);
+  Pint [120...29874] (BTy_14, 6580.450b);
   "]" (BTy_10, 11.044b);
   ":" (BTy_12, 11.044b);
   " " (BTy_13, 11.044b);
   enum {"crashdump", "mach_msg", "Finished", "Started", 
-        "Unable", "Failed", } (BTy_14, 317.405b);
-  union(BTy_58, 100570.505b) {
-    struct(BTy_57, 99696.280b) {
-     ...
-    };
-    struct(BTy_108, 867.181b) {
-     ...
-    };
+        "Unable", "Failed"} (BTy_19, 317.405b);
+  union(BTy_63, 100570.505b) {
+    ...
   };
 };
 \end{verbatim}
+}
 
-Further, data dependency is discovered between type BTy\_8
-and the union BTy\_58, and thus the latter is converted to
+Further, data dependency is discovered between type BTy\_19
+and the union BTy\_63, and thus the latter is converted to
 a switched union as follows.
 
+{\small
 \begin{verbatim}
-struct(BTy_109, 323625.593b) {
-  Pdate (BTy_0, 118482.098b);
-  " " (BTy_1, 11.044b);
-  Ptime (BTy_2, 97416.824b);
-  " " (BTy_3, 11.044b);
-  2006 (BTy_4, 17.015b);
-  " " (BTy_5, 11.044b);
-  enum {"crashreporterd", "crashdump"} 
-       (BTy_6, 156.133b);
-  "[" (BTy_8, 11.044b);
-  PintRanged(120, 29874) (BTy_9, 6580.450b);
-  "]" (BTy_10, 11.044b);
-  ":" (BTy_12, 11.044b);
-  " " (BTy_13, 11.044b);
+struct(BTy_114, 304552.986b) {
+  ...
   enum {"crashdump", "mach_msg", "Finished", "Started", 
-        "Unable", "Failed", } (BTy_14, 317.405b);
-  switch BTy_14 of (BTy_58, 100569.505b) {
+        "Unable", "Failed"} (BTy_19, 317.405b);
+  switch BTy_14 of (BTy_63, 100569.505b) {
     enum {"Failed", "Finished", "Started"}   => 
       struct(BTy_57, 99696.280b) {
        ...
@@ -439,26 +480,41 @@ struct(BTy_109, 323625.593b) {
   };
 };
 \end{verbatim}
+}
+
+Note that the switched union BTy\_14 is switching on a different enum 
+than the hand-written IR in Figure \ref{fig:crashreporter:ir}, because
+the inference algorithm has decided on a different way of partitioning
+the chunks that results in union BTy\_63 and hence we arrive at a 
+different switch dependency. Nonetheless, both of these descriptions are
+correct. 
 
 Finally in Phase Three, rule 7 is applied to combine the constants in BTy\_10,
-BTy\_12 and BTy\_13 of struct BTy\_109, which gives 
+BTy\_12 and BTy\_13 of struct BTy\_114, which gives 
 
+{\small
 \begin{verbatim}
-struct(BTy_109, 323615.282b) {
-  Pdate (BTy_0, 118482.098b);
-  " " (BTy_1, 11.044b);
-  Ptime (BTy_2, 97416.824b);
-  " " (BTy_3, 11.044b);
-  2006 (BTy_4, 17.015b);
+struct(BTy_114, 304542.9b) {
+  union(BTy_7, 196876.315b) {
+    struct(BTy_6, 196853.182b) {
+      Pdate (BTy_0, 108004.535b);
+      " " (BTy_1, 11.044b);
+      Ptime (BTy_2, 88802.177b);
+      " " (BTy_3, 11.044b);
+      2006 (BTy_4, 17.015b);
+    };
+    struct(BTy_10 39, 16.089b) {
+      "-" (BTy_8 39, 11.044b);
+    };
+  };
   " " (BTy_5, 11.044b);
-  enum {"crashreporterd", "crashdump"} 
-       (BTy_6, 156.133b);
-  "[" (BTy_8, 11.044b);
-  PintRanged(120, 29874) (BTy_9, 6580.450b);
+  enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
+  "[" (BTy_13, 11.044b);
+  Pint [120...29874] (BTy_14, 6580.450b);
   "]: " (BTy_10, 23.044b);
   enum {"crashdump", "mach_msg", "Finished", "Started", 
-        "Unable", "Failed", } (BTy_14, 317.405b);
-  switch BTy_14 of (BTy_58, 100569.505b) {
+        "Unable", "Failed"} (BTy_19, 317.405b);
+  switch BTy_14 of (BTy_63, 100569.505b) {
     enum {"Failed", "Finished", "Started"}   => 
       struct(BTy_57, 99696.280b) {
        ...
@@ -470,9 +526,10 @@ struct(BTy_109, 323615.282b) {
   };
 };
 \end{verbatim}
+}
 
 Comparing this final result with the initial description, one can see that
-the structure refinement significately simplified the IR and lower the
+the structure refinement significately simplified the IR and improved the
 complexity score; and with
 the explicit constants and enums, the description is a lot more
 informative than before.
