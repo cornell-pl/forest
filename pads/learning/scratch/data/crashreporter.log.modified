@@ -8,9 +8,9 @@ Sat Jun 24 06:38:46 2006 crashdump[2165]: crashdump started
 Sat Jun 24 06:38:46 2006 crashdump[2165]: Unable to determine task_t for pid: 95 name: Exited process
 Sat Jun 24 06:38:46 2006 crashdump[2164]: crashdump started
 Sat Jun 24 06:38:46 2006 crashdump[2164]: Unable to determine task_t for pid: 95 name: Exited process
-Sat Jun 24 06:38:46 2006 crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
+- crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
 Sat Jun 24 06:38:46 2006 crashdump[2164]: Started writing crash report to: /Library/Logs/CrashReporter/Exited process.crash.log
-Sat Jun 24 06:38:46 2006 crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
+- crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
 Sat Jun 24 06:38:46 2006 crashdump[2164]: Finished writing crash report to: /Library/Logs/CrashReporter/Exited process.crash.log
 Sat Jun 24 06:38:46 2006 crashdump[2165]: Started writing crash report to: /Library/Logs/CrashReporter/Exited process.crash.log
 Sat Jun 24 06:38:46 2006 crashdump[2165]: Finished writing crash report to: /Library/Logs/CrashReporter/Exited process.crash.log
@@ -341,40 +341,40 @@ Fri Oct 13 18:01:10 2006 crashdump[17807]: Finished writing crash report to: /Li
 Sat Oct 14 09:05:40 2006 crashdump[18384]: crashdump started
 Sat Oct 14 09:05:47 2006 crashdump[18384]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/Safari.crash.log
 Sat Oct 14 09:05:53 2006 crashdump[18384]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/Safari.crash.log
-Sun Oct 15 14:50:22 - crashdump[19878]: crashdump started
-Sun Oct 15 14:50:26 - crashdump[19878]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/pads_lang_parser.crash.log
-Sun Oct 15 14:50:26 - crashdump[19878]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/pads_lang_parser.crash.log
-Sun Oct 15 14:58:15 - crashdump[19938]: crashdump started
-Sun Oct 15 14:58:16 - crashdump[19938]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 14:58:16 - crashdump[19938]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 14:58:22 - crashdump[19941]: crashdump started
-Sun Oct 15 14:58:23 - crashdump[19941]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 14:58:23 - crashdump[19941]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 14:58:51 - crashdump[19944]: crashdump started
-Sun Oct 15 14:58:52 - crashdump[19944]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 14:58:52 - crashdump[19944]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 14:58:55 - crashdump[19946]: crashdump started
-Sun Oct 15 14:58:55 - crashdump[19946]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 14:58:55 - crashdump[19946]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:08:50 - crashdump[19980]: crashdump started
-Sun Oct 15 15:08:50 - crashdump[19980]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:08:50 - crashdump[19980]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:09:00 - crashdump[19986]: crashdump started
-Sun Oct 15 15:09:00 - crashdump[19986]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:09:00 - crashdump[19986]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:10:14 - crashdump[20008]: crashdump started
-Sun Oct 15 15:10:14 - crashdump[20008]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:10:14 - crashdump[20008]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:11:27 - crashdump[20039]: crashdump started
-Sun Oct 15 15:11:28 - crashdump[20039]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:11:28 - crashdump[20039]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:26:49 - crashdump[1546]: crashdump started
-Sun Oct 15 15:26:49 - crashdump[1546]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:26:49 - crashdump[1546]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:28:18 - crashdump[1571]: crashdump started
-Sun Oct 15 15:28:18 - crashdump[1571]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 15 15:28:18 - crashdump[1571]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Tue Oct 17 09:09:53 - crashdump[9388]: crashdump started
+- crashdump[19878]: crashdump started
+- crashdump[19878]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/pads_lang_parser.crash.log
+- crashdump[19878]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/pads_lang_parser.crash.log
+- crashdump[19938]: crashdump started
+- crashdump[19938]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19938]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19941]: crashdump started
+- crashdump[19941]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19941]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19944]: crashdump started
+- crashdump[19944]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19944]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19946]: crashdump started
+- crashdump[19946]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19946]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19980]: crashdump started
+- crashdump[19980]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19980]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19986]: crashdump started
+- crashdump[19986]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[19986]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[20008]: crashdump started
+- crashdump[20008]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[20008]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[20039]: crashdump started
+- crashdump[20039]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[20039]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[1546]: crashdump started
+- crashdump[1546]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[1546]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[1571]: crashdump started
+- crashdump[1571]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[1571]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
+- crashdump[9388]: crashdump started
 Tue Oct 17 09:09:57 2006 crashdump[9388]: Started writing crash report to: /Library/Logs/CrashReporter/NortonAutoProtect.crash.log
 Tue Oct 17 09:10:00 2006 crashdump[9388]: Finished writing crash report to: /Library/Logs/CrashReporter/NortonAutoProtect.crash.log
 Tue Oct 17 12:48:11 2006 crashdump[12377]: crashdump started
@@ -404,9 +404,9 @@ Sat Oct 21 14:19:21 2006 crashdump[7914]: Finished writing crash report to: /Use
 Sat Oct 21 14:20:53 2006 crashdump[7937]: crashdump started
 Sat Oct 21 14:20:53 2006 crashdump[7937]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
 Sat Oct 21 14:20:53 2006 crashdump[7937]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
-Sun Oct 22 21:23:04 - crashdump[8522]: crashdump started
-Sun Oct 22 21:23:13 - crashdump[8522]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/Safari.crash.log
-Sun Oct 22 21:23:18 - crashdump[8522]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/Safari.crash.log
+- crashdump[8522]: crashdump started
+- crashdump[8522]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/Safari.crash.log
+- crashdump[8522]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/Safari.crash.log
 Wed Oct 25 09:09:01 2006 crashdump[10225]: crashdump started
 Wed Oct 25 09:09:06 2006 crashdump[10225]: Started writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
 Wed Oct 25 09:09:07 2006 crashdump[10225]: Finished writing crash report to: /Users/kfisher/Library/Logs/CrashReporter/LaunchPADS.crash.log
