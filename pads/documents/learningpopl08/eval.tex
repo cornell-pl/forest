@@ -1,20 +1,31 @@
-Outline:
-
 \subsection{Objectives}
 
-To show that: the learning engine produces *accurate* and *concise* descriptions compared to a human
-expert's descriptions but costs just a fraction of the time; handles a variety of data formats; the 
-refinement step significantly improves the structure; being able to produce a description that is 
-sufficiently accurate with much smaller training sets (overfitting vs. underfitting); the correlation
-between sample size, execution time and accuracy.
+The purpose of the experiment is to show the following points:
+\begin{itemize}
+\item the learning engine produces *accurate* and *concise* descriptions compared to a human
+expert's descriptions but costs just a fraction of the time; 
+\item it handles a variety of data formats; 
+\item the refinement step significantly improves the structure; 
+\item it is able to produce a description that is sufficiently accurate with 
+much smaller training sets (overfitting vs. underfitting); 
+\item demonstrate that there exists a correlation between sample size, execution time and accuracy,
+and the min sample size required to achieve certain accuracy correlates with the 
+data complexity.
 
 \subsection{Setup}
 
 \begin{enumerate}
-\item Brief intro to 12 golden formats
+\item Brief intro to 15 golden formats in a big table and possibly group them by
+features
 
-\item Experiment metrics: data size (num of records and byte count), accuracy (success rate of parsing), 
-timing (human time vs. machine time), structure quality (normalized scores)
+\item Machine profile: Apple PowerBook G4, 1.8GHz, 1GB memory running on Mac OS X 10.4 Tiger ...
+
+\item Experiment parameter: data size (num of records and byte count), accuracy (success rate of parsing), 
+timing (human time vs. machine time), structure quality (normalized scores), sample size
+
+\item Different representations: HW IR, HW PADS, Inferred IR, Inferred PADS, we measure
+the accuracy on the HW PADS and inferred PADS, and the time to produce and the MDL scores on
+the HW IR and inferred IR.
 \end{enumerate}
 
 \subsection{Experiments}
@@ -25,14 +36,23 @@ accuracy. This is the control data.
 
 \item Run learning tool on all 12 data files in full length: measure timing for structure discovery, 
 and refinement; initial scores and final scores, parsing rate (should be all 100\%).
-Compare these with the golden numbers from 1 in a big table. Show that the difference in scores
+For accurate timing measurements, run each data format 10 times, and take average after removing the
+best and the worst time.
+Compare these with the golden numbers from (1) in a big table. Show that the difference in scores
 can be siginificant in some cases hence room for improvement (may go into the discussion section)
 but timing advantage is huge and refinment improves initial struct a lot. Maybe also compare a case or
 two where the score from silver is comparable to golden and the actually description produced is also
 close to golden (to demo that our scoring makes some sense).
+Have a discussion here about while the learning tool may produce a longer description than human does,
+it parses all data correctly so the user is getting all these for free which is a tremendous benefit.
+Discuss 1967 where the inference does better than human.
 
-\item Select random training sets of 5\%, 10\%, 20\% 30\%, 40\% and 50\% of the original data (3 sets for
-each size) and run learning tool end to end on them and take the average of 3 sets (or the best of the 3?). 
+\item Select random training sets of 5\%, 10\%, 15\%, 20\% 25\%, 30\%, 35\% and 40\% of 
+the original data (3 sets for each size) and run learning tool end to end on 
+them and take the average of 3 sets. 
+Set a threshhold level of 95\% accuracy and record how much training data (in percentage and
+absolute terms) is needed for each golden format to achieve this accurary. Then relate this
+to the normalized type complexty of the inferred IR of the entire data sets.
 Plot graph of (timing, accuracy) vs. training size 
 for a few examples, and show that we are doing a good job with reasonable sample size. The diagram should
 show increasing accuracy and execution time as sample size goes up. Point out anomaly
