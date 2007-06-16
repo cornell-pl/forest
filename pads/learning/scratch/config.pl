@@ -60,7 +60,8 @@ print "Writing to $lexfile and $includefile\n";
 open (FILE, "<$configfile") or die "Can't open config file for read!\n";
 open (LEX, ">$lexfile") or die "Cannot open lex file $lexfile for write!\n";
 print LEX 
-"fun eof () = NONE
+"type lexresult = (Tokens.Token * {beginloc:int, endloc:int}) option
+fun eof () = NONE
 fun getLoc (yypos, yytext) = {beginloc=yypos, endloc=yypos + size(yytext) -1}
 
 fun getFirst s isBegin = 
