@@ -128,7 +128,7 @@ structure Printing = struct
 		    in
 			ignore (TextIO.openIn fileName)
 			    handle Iox => 
-			     (let val cpcmd = "cp "^(!executableDir)^"/GNUMakefile.output "^fileName
+			     (let val cpcmd = "cp "^(!executableDir)^"/GNUmakefile.output "^fileName
 			      in
 				  print "copy command: "; print cpcmd; print "\n";
 				  OS.Process.system cpcmd;

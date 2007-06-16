@@ -79,8 +79,10 @@ structure Gold = struct
                  val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
                  val measured : Ty  = measure populated
                  val ()             = print "\n"
+		(*
 		 val (_, pads) = TyToPADSFile measured "vanilla.p"
 		 val () = print (pads ^ "\n")
+		*)
                  val nbits : int    = OS.FileSys.fileSize ( "data/" ^ descname ) * 8
                  val goldtystr      = TyToString ( measured )
              in "Golden complexity =\n" ^

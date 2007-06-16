@@ -1415,9 +1415,6 @@ let
 		if b < d then (a, b) else (c, d)
 	    (* find the minimum cost out of the ones found *)
 	    val ((newcmap, newTy), lowCost) = foldr min ((cmap, ty), cur_cost) pairs
-(*
-	    val _ = (print ("New Ty: \n"); printTy (measure newTy))
-*)
 	  in
 	  	(* as long as the cost keeps going down, keep iterating *)
 	  	if lowCost < cur_cost then 

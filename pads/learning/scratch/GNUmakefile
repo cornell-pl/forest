@@ -85,6 +85,10 @@ ifndef SML
   export SML=$(SML_PATH)
 endif
 
+ifndef AST_ARCH
+  export AST_ARCH = $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
+endif
+
 SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
 SML_MINOR_VER = $(shell echo $(SML_VER) | sed -e 's|.*[.]||')
 ifeq ($(SML_VER),$(SML_MINOR_VER))
@@ -196,11 +200,11 @@ $(TRAINS): %.train:
 	nice -n20 ./learn -n $(*F).chunk1 -lex vanilla data/$(*F).chunk1 
 	nice -n20 ./learn -n $(*F).chunk2 -lex vanilla data/$(*F).chunk2 
 	make --directory=gen $(*F).chunk0-accum
-	gen/darwin.ppc/$(*F).chunk0-accum data/$(*F) 2>gen/$(*F).chunk0-accum.out
+	gen/$(AST_ARCH)/$(*F).chunk0-accum data/$(*F) 2>gen/$(*F).chunk0-accum.out
 	make --directory=gen $(*F).chunk1-accum
-	gen/darwin.ppc/$(*F).chunk1-accum data/$(*F) 2>gen/$(*F).chunk1-accum.out
+	gen/$(AST_ARCH)/$(*F).chunk1-accum data/$(*F) 2>gen/$(*F).chunk1-accum.out
 	make --directory=gen $(*F).chunk2-accum
-	gen/darwin.ppc/$(*F).chunk2-accum data/$(*F) 2>gen/$(*F).chunk2-accum.out
+	gen/$(AST_ARCH)/$(*F).chunk2-accum data/$(*F) 2>gen/$(*F).chunk2-accum.out
 	./accum-out.pl gen/$(*F).chunk0-accum.out gen/$(*F).chunk1-accum.out gen/$(*F).chunk2-accum.out
 #	mv data/$(*F).chunk0 data/$(*F).train
 
@@ -225,7 +229,7 @@ define summary
 # 5. generate accumulator program
 make --directory=gen $(*F)-accum
 # 6. run accumulator program on input data
-gen/darwin.ppc/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
+gen/$(AST_ARCH)/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 @echo "\n\nAccumulator program run\n\n"
 # 6. run accumulator program on input data, defend against error return
 # old? runaccum $(*F)
