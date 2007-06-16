@@ -80,13 +80,17 @@
 #
 ######################################################################
 
-ifndef SML
-  SML_PATH = $(shell which sml)
-  export SML=$(SML_PATH)
+ifndef AST_ARCH
+  export AST_ARCH=$(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
 endif
 
-ifndef AST_ARCH
-  export AST_ARCH = $(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
+SML_PATH = $(shell which sml)
+ifeq ("$(AST_ARCH)","linux.i386")
+  SML_PATH = $(shell which sml) @SMLalloc=1M
+endif
+
+ifndef SML
+  export SML=$(shell which sml)
 endif
 
 SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
@@ -107,11 +111,13 @@ vanilla.lex:
 
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
-	lexgen --ml-lex-mode tokens.lex
+	ml-ulex --ml-lex-mode tokens.lex
+	#lexgen --ml-lex-mode tokens.lex
 
 vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
-	lexgen --ml-lex-mode vanilla.lex
+	ml-ulex --ml-lex-mode vanilla.lex
+	#lexgen --ml-lex-mode vanilla.lex
 
 learn:  common.sml
 learn:  complexity.sml
@@ -140,7 +146,7 @@ learn:  tokens.lex.sml
 learn:  types.sml
 learn:  utils.sml
 	@echo Making learning program
-	nice -n20 $(SML) < $(BUILD_EXEC)
+	nice -n20 $(SML_PATH) < $(BUILD_EXEC)
 	@echo
 
 ######################################################################
