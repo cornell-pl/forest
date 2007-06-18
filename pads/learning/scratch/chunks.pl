@@ -93,10 +93,17 @@ for ( $i=0; $i < $num; $i++ )
  $out = $datafile.".chunk".$i;
  open (OUT, ">$out") or die "Can't open $out for output!";
  if ($mode eq "random") #randomly pick $size lines from the input file
+ #notice that random records have to be unique
  {
+  local %usedindices=();
   for ($j=0; $j<$size; $j++)
   {
-   print OUT $lines[int(rand($numrecs))]."\n";
+   do {
+     $newindex=int(rand($numrecs));
+   }
+   while ($usedindices{$newindex}); 
+   $usedindices{$newindex}=1;
+   print OUT $lines[$newindex]."\n";
   }
   print "Written random chunk to $out\n";
  }
