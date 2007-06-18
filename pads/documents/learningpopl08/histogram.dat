@@ -1,0 +1,26 @@
+#crashreporter
+#iteration 1
+#Tokens	0	1	2
+[*]	0	100	0
+Pint	8.9	90.2	0.9
+Date	8.9	91.1	0
+Ptime	8.9	91.1	0
+
+#crashreporter
+#iteration 1
+#Tokens	3	5	6	7	8	9	10	13
+Palpha	32.9	0.45	63.5	0.45	0	2.3	0.45	0
+' '	2.9	29.9	0	5.4	0.45	58	2.7	0.45	
+
+
+#iteration 2
+#Tokens	0	1	2
+Palpha 	0	100	0
+Pint	8.8	91.2	0
+' '	0	8.8	91.2	
+
+
+#Dibbler 
+#iteration 1
+#Tokens	1	14	16	18	20	22	24	26	28	30	32	34	36	38	40
+'|'	0.1	0.1	70.6	8.1	0.9	1.4	0.6	1.5	1.4	1.7	3	2.3	1.9	1	0.9	
