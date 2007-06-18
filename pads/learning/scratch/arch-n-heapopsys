@@ -128,8 +128,8 @@ case `uname -s` in
       *) exit 1;;
     esac
     ;;
-  CYGWIN_NT*)
-    OPSYS=win32
+ CYGWIN_NT*)
+    OPSYS=cygwin
     case `uname -m` in
        i386) ARCH=x86;;
        i486) ARCH=x86;;
