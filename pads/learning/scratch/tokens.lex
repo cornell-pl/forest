@@ -1,3 +1,4 @@
+type lexresult = (Tokens.Token * {beginloc:int, endloc:int}) option
 fun eof () = NONE
 fun getLoc (yypos, yytext) = {beginloc=yypos, endloc=yypos + size(yytext) -1}
 

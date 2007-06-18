@@ -85,7 +85,7 @@ ifndef AST_ARCH
 endif
 
 SML_PATH = $(shell which sml)
-ifeq ("$(AST_ARCH)","linux.i386")
+ifneq ("$(AST_ARCH)","darwin.ppc")
   SML_PATH = $(shell which sml) @SMLalloc=1M
 endif
 
@@ -108,6 +108,9 @@ junk:
 
 vanilla.lex:
 	./config.pl vanilla.config
+
+tokens.lex:
+	./config.pl tokens.config
 
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
@@ -377,7 +380,7 @@ foo:
 .PHONY : clean
 clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
-	$(RM) tokens.lex.sml vanilla.lex.sml vanilla.lex
+	$(RM) tokens.lex.sml vanilla.lex.sml vanilla.lex tokens.lex
 	$(RM) *~
 	$(RM) data/*chunk*
 	$(RM) .DS_Store
