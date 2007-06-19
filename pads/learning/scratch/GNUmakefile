@@ -36,6 +36,7 @@
 #     ai.3000
 #     boot.log
 #     crashreporter.log
+#     crashreporter.log.modified
 #     dibbler.1000
 #     ls-l.txt
 #     quarterlypersonalincome
@@ -163,7 +164,7 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
-GOLDENDATA :=  quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an
+GOLDENDATA :=  quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log crashreporter.log.modified railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))
@@ -245,7 +246,7 @@ gen/$(AST_ARCH)/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 # 7. extract number of records correctly parsed and number of errors
 ./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # Get the golden complexity (if there is one)
- nice -n20 ./learn -n $(*F) -lex vanilla -au true data/$(*F) | tee gen/$@.out
+nice -n20 ./learn -n $(*F) -lex vanilla -au true data/$(*F) | tee gen/$@.out
 # 9. collect in a report file:
 #    a. how large the input file is in bytes and number of records
 @echo "Record count = " `cat data/$(*F) | wc -l` | tee gen/RecordCount
@@ -276,6 +277,7 @@ echo >>gen/Report
 cat gen/Timing >>gen/Report
 #   preserve the gen directory
 cp -R gen/* output/$(*F)
+cat gen/Timing >>output/$(*F).timing
 endef
 
 # The summary file depends on the corresponding output file.
@@ -301,6 +303,7 @@ backup1.log:             $(IND)/backup1.log             ; $(learn-it)
 backup2.log:             $(IND)/backup2.log             ; $(learn-it)
 boot.log:                $(IND)/boot.log                ; $(learn-it)
 crashreporter.log:       $(IND)/crashreporter.log       ; $(learn-it)
+crashreporter.log.modified:       $(IND)/crashreporter.log.modified       ; $(learn-it)
 daily.out:               $(IND)/daily.out               ; $(learn-it)
 dibbler.1000:            $(IND)/dibbler.1000            ; $(learn-it)
 dmesg:                   $(IND)/dmesg                   ; $(learn-it)

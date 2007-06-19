@@ -13,8 +13,10 @@ let
   val acomp    = #adc comps
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
+(*
   val _ = print "\nBefore reduction:\n"
   val _ = printTy measuredTy
+*)
 (*phase one *)
 (*
   val _ = print "Phase one ...\n";
@@ -42,10 +44,10 @@ let
 
   val measured_reduced_ty = measure ty3
   val measured2_time : Time.time = Time.now ()
+(*
   val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty
   val _ = print "\n"
-(*
   val _ = print "----- The PADS description -----\n\n"
   val _ = print (#2 (TyToPADSFile measured_reduced_ty (!lexName^".p"))) 
   val _ = print "\n----- End of PADS description -----\n"

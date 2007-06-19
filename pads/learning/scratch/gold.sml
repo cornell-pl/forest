@@ -2,6 +2,7 @@ structure Gold = struct
     open AI
     open BOOT
     open CRASHREPORTER
+    open CRASHREPORTER_MOD
     open LS
     open DIBBLER
     open QUARTERLY
@@ -48,6 +49,7 @@ structure Gold = struct
         , ( "ai.3000", ai )
         , ( "boot.log", boot_entry )
         , ( "crashreporter.log", crashreport )
+        , ( "crashreporter.log.modified", crashreport_mod )
         , ( "dibbler.1000", dibbler_t )
         , ( "ls-l.txt", ls_l )
         , ( "quarterlypersonalincome", quarterly_t )
