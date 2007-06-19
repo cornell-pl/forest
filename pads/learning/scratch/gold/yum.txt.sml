@@ -20,14 +20,12 @@ structure Yumtxt = struct
            RefinedBase ( swAux, Enum [ StringConst "Installed", StringConst "Updated", StringConst "Erased" ], methodTok )
 
     val colsp : Ty = RefinedBase ( yumAux, StringConst ": ", [] )
-    val packagename : Ty = Base ( yumAux, [(Pstring "util-linux", yumLoc)] )
-    val arch : Ty = Base ( yumAux, [(Pstring "x86_64", yumLoc)] )
-    val major : Ty = RefinedBase ( yumAux, StringME "/[^-]+/", [] )
-    val minor : Ty = RefinedBase ( yumAux, StringME "/[a-zA-Z0-9.]*/", [] )
+    val packagename : Ty = RefinedBase ( yumAux, StringME "/[^.]+/", [(Pstring "util-linux", yumLoc)] )
+    val arch : Ty = Base ( yumAux, [(Pstring "x86_64", yumLoc)])
+    val version: Ty = RefinedBase (yumAux, StringME "/[a-zA-Z0-9.\\-_]+/", [])
     val dot : Ty = RefinedBase ( yumAux, StringConst ".", [] )
-    val dash : Ty = RefinedBase ( yumAux, StringConst "-", [] )
     val ins_update_package : Ty =
-        Pstruct ( yumAux, [ packagename, dot, arch, insupdsp, major, dash, minor ] )
+        Pstruct ( yumAux, [ packagename, dot, arch, insupdsp, version ] )
     val eor : Ty = Base ( yumAux, [(Pstring "ruby", yumLoc)] )
     val erase_package : Ty = Pstruct ( yumAux, [ eor ] )
     val switch : Ty = Switch ( yumAux, swLabel, [ ( installUpdateR, ins_update_package), ( erasedR, erase_package ) ] )

@@ -176,6 +176,9 @@ struct
     fun matchREString (s:string) (tokens:LToken list) =
       let
         val toMatch = String.concat (map tokenToRawString (map #1 tokens))
+	(*
+	val _ = print ("Trying to match " ^ toMatch ^ " with regex " ^ s ^ "\n")
+	*)
 	val matchedStr = (matchRegEx toMatch s)
 (*
 	val _ = print ("Matched str is ("^matchedStr ^ ")\n")
@@ -619,8 +622,10 @@ struct
 	  val rtokens : Context list = map (ltokenizeRecord recordNumber) records
 	  val rtokens = crackAllGroups rtokens
 	  val (newmap, cleanTy) = initializeTy LabelMap.empty ty
+(*
 	  val _ = print ("Populating data file: " ^ datafile ^ " into:\n")
 	  val _ = printTy cleanTy
+*)
 	  val loadedTy = foldl populateOneRecord cleanTy rtokens
 	  val finalTy = (measure (cleanFirstToken loadedTy))
 (*

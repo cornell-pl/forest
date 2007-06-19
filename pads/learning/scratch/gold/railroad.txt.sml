@@ -3,6 +3,7 @@ structure RAILROAD = struct
     val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
     val space= RefinedBase(aux, StringConst " ", [(Pstring " ", loc)])
+    val spaceop = Poption(aux, space);
     val comma= RefinedBase(aux, StringConst ",", [(Pstring ",", loc)])
     val quote = RefinedBase(aux, StringConst "\"", [(Pstring "\"", loc)])
     val noteinQuotes = RefinedBase(aux, StringME "/\\\"[^\"]*\\\"/", [(Pstring "Railtype", loc)])
@@ -19,9 +20,11 @@ structure RAILROAD = struct
     val years = RefinedBase(aux, StringConst ",,1996,1997,1998,1999,2000,2001,2002,1996,1997,1998,1999,2000,2001,2002", 
 			[(Pstring ",,1996,1997,1998,1999,2000,2001,2002,1996,1997,1998,1999,2000,2001,2002", loc)])
     val secHeader: Ty = Pstruct (aux, [railkind, space, rail, commas])
-    val railtype = RefinedBase(aux, StringME "/[^,]*/", [(Pstring "Railtype", loc)])
+    val railtype1 = Pstruct(aux, [quote, RefinedBase(aux, StringME "/[^\"]*/", [(Pstring "Railtype", loc)]), quote])
+    val railtype2 = RefinedBase(aux, StringME "/[^,]*/", [(Pstring "Railtype", loc)])
+    val railtype = Punion(aux, [railtype1, railtype2])
     val cityname = RefinedBase(aux, StringME "/[^,]*/", [(Pstring "San Jose", loc)])
-    val city = Pstruct(aux, [quote, cityname, comma, space, 
+    val city = Pstruct(aux, [quote, cityname, comma, spaceop, 
 				RefinedBase(aux, StringME "/[A-Z][A-Z]/", [(Pstring "CA", loc)]),
 				quote])
     val nostations = Punion(aux, [Base(aux, [(Pint(36, "36"), loc)]), 
