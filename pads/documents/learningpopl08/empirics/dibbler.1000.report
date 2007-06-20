@@ -1,0 +1,26 @@
+DATA FILE:  dibbler.1000
+
+Record count =  999
+Byte count =    142607
+
+Unrefined complexity scores
+{ TC = 144.324b, ADC = 16082.958b, DC = 686728.813b } normalized by 1140856 is 0.602068216717
+
+New complexity scores
+{ TC = 85.251b, ADC = 603.244b, DC = 535657.700b } normalized by 1140856 is 0.46959734698
+
+
+Golden complexity =
+{ TC = 325.150b, ADC = 564.993b, DC = 545463.146b } normalized by 1140856 is 0.478402441579
+gen/dibbler.1000-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 2.202
+First measurement time = 0.051
+First reduction time = 2.465
+Second reduction time = 4.692
+Third reduction time = 1.040
+Second measurement time = 0.032
+Total time = 10.481
+============================================================

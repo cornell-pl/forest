@@ -1,0 +1,26 @@
+DATA FILE:  scrollkeeper.log
+
+Record count =  671
+Byte count =    66288
+
+Unrefined complexity scores
+{ TC = 441.029b, ADC = 908.199b, DC = 606664.548b } normalized by 530304 is 1.14482556603
+
+New complexity scores
+{ TC = 1036.307b, ADC = 694.443b, DC = 462187.233b } normalized by 530304 is 0.873505650136
+
+
+Golden complexity =
+{ TC = 1616.279b, ADC = 689.409b, DC = 460518.122b } normalized by 530304 is 0.871451847615
+gen/scrollkeeper.log-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.108
+First measurement time = 0.013
+First reduction time = 1.241
+Second reduction time = 2.618
+Third reduction time = 0.433
+Second measurement time = 0.015
+Total time = 4.427
+============================================================

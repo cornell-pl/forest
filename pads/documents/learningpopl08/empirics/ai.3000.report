@@ -1,0 +1,27 @@
+DATA FILE:  ai.3000
+
+Record count =  3000
+Byte count =    293460
+
+Unrefined complexity scores
+{ TC = 363.069b, ADC = 1237.244b, DC = 3063486.745b } normalized by 2347680 is 1.30505427248
+
+New complexity scores
+{ TC = 883.920b, ADC = 896.566b, DC = 2661515.734b } normalized by 2347680 is 1.13405560093
+
+Silver complexity scores
+{ TC = 1239.470b, ADC = 613.295b, DC = 1857417.731b }
+Golden complexity =
+{ TC = 588.293b, ADC = 903.765b, DC = 2677954.124b } normalized by 2347680 is 1.14093165016
+gen/ai.3000-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 2.046
+First measurement time = 0.152
+First reduction time = 16.695
+Second reduction time = 8.359
+Third reduction time = 2.842
+Second measurement time = 0.133
+Total time = 30.228
+============================================================

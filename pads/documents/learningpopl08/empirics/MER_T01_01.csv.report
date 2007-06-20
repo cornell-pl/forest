@@ -1,0 +1,27 @@
+DATA FILE:  MER_T01_01.csv
+
+Record count =  491
+Byte count =    21731
+
+Unrefined complexity scores
+{ TC = 242.686b, ADC = 234.888b, DC = 112394.900b } normalized by 173848 is 0.647908439702
+
+New complexity scores
+{ TC = 635.805b, ADC = 41.059b, DC = 18906.046b } normalized by 173848 is 0.112407683394
+
+Silver complexity scores
+{ TC = 612.557b, ADC = 41.193b, DC = 18972.046b }
+Golden complexity =
+{ TC = 884.247b, ADC = 52.415b, DC = 23141.873b } normalized by 173848 is 0.138201875145
+gen/MER_T01_01.csv-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.112
+First measurement time = 0.007
+First reduction time = 0.627
+Second reduction time = 1.890
+Third reduction time = 0.113
+Second measurement time = 0.005
+Total time = 2.755
+============================================================

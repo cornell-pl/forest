@@ -1,0 +1,26 @@
+DATA FILE:  asl.log
+
+Record count =  1500
+Byte count =    279600
+
+Unrefined complexity scores
+{ TC = 1200.941b, ADC = 94934.194b, DC = 2429380.440b } normalized by 2236800 is 1.08663330653
+
+New complexity scores
+{ TC = 2792.449b, ADC = 1238.239b, DC = 1614484.018b } normalized by 2236800 is 0.723031324725
+
+
+Golden complexity =
+{ TC = 901.614b, ADC = 979.418b, DC = 1461632.635b } normalized by 2236800 is 0.653851148727
+gen/asl.log-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 3.263
+First measurement time = 0.151
+First reduction time = 18.909
+Second reduction time = 589.483
+Third reduction time = 2.705
+Second measurement time = 0.088
+Total time = 614.600
+============================================================

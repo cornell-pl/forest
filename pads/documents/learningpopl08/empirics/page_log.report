@@ -1,0 +1,26 @@
+DATA FILE:  page_log
+
+Record count =  354
+Byte count =    28170
+
+Unrefined complexity scores
+{ TC = 138.061b, ADC = 975.066b, DC = 343761.500b } normalized by 225360 is 1.52600089263
+
+New complexity scores
+{ TC = 729.107b, ADC = 697.007b, DC = 245478.249b } normalized by 225360 is 1.09250690507
+
+
+Golden complexity =
+{ TC = 296.269b, ADC = 855.230b, DC = 301339.572b } normalized by 225360 is 1.33846219999
+gen/page_log-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.085
+First measurement time = 0.008
+First reduction time = 0.207
+Second reduction time = 0.186
+Third reduction time = 0.079
+Second measurement time = 0.005
+Total time = 0.570
+============================================================

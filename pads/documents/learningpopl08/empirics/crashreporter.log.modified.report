@@ -1,0 +1,26 @@
+DATA FILE:  crashreporter.log.modified
+
+Record count =  441
+Byte count =    49255
+
+Unrefined complexity scores
+{ TC = 590.557b, ADC = 948.618b, DC = 415566.206b } normalized by 394040 is 1.05612821764
+
+New complexity scores
+{ TC = 2092.993b, ADC = 694.615b, DC = 302444.860b } normalized by 394040 is 0.772860250928
+
+
+Golden complexity =
+{ TC = 1548.989b, ADC = 709.464b, DC = 309846.469b } normalized by 394040 is 0.79026357338
+gen/crashreporter.log.modified-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.125
+First measurement time = 0.011
+First reduction time = 1.395
+Second reduction time = 3.928
+Third reduction time = 0.372
+Second measurement time = 0.013
+Total time = 5.843
+============================================================

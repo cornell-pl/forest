@@ -1,0 +1,26 @@
+DATA FILE:  ls-l.txt
+
+Record count =  35
+Byte count =    1979
+
+Unrefined complexity scores
+{ TC = 233.419b, ADC = 384.669b, DC = 13182.332b } normalized by 15832 is 0.847381909889
+
+New complexity scores
+{ TC = 729.651b, ADC = 269.617b, DC = 9108.681b } normalized by 15832 is 0.621420672014
+
+
+Golden complexity =
+{ TC = 224.743b, ADC = 344.348b, DC = 11878.184b } normalized by 15832 is 0.764459737609
+gen/ls-l.txt-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.008
+First measurement time = 0.001
+First reduction time = 0.027
+Second reduction time = 0.086
+Third reduction time = 0.016
+Second measurement time = 0.001
+Total time = 0.139
+============================================================

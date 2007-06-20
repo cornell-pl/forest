@@ -1,0 +1,26 @@
+DATA FILE:  netstat-an
+
+Record count =  202
+Byte count =    14355
+
+Unrefined complexity scores
+{ TC = 626.028b, ADC = 244.950b, DC = 46832.778b } normalized by 114840 is 0.413260238732
+
+New complexity scores
+{ TC = 1358.024b, ADC = 179.603b, DC = 33513.146b } normalized by 114840 is 0.303650037062
+
+
+Golden complexity =
+{ TC = 2147.681b, ADC = 207.182b, DC = 40064.120b } normalized by 114840 is 0.367570535287
+gen/netstat-an-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.056
+First measurement time = 0.005
+First reduction time = 0.183
+Second reduction time = 3.138
+Third reduction time = 0.135
+Second measurement time = 0.005
+Total time = 3.522
+============================================================

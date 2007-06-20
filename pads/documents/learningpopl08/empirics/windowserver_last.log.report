@@ -1,0 +1,26 @@
+DATA FILE:  windowserver_last.log
+
+Record count =  680
+Byte count =    52394
+
+Unrefined complexity scores
+{ TC = 1065.704b, ADC = 4937.579b, DC = 480751.572b } normalized by 419152 is 1.14950489464
+
+New complexity scores
+{ TC = 3503.606b, ADC = 532.127b, DC = 320169.398b } normalized by 419152 is 0.772209135038
+
+
+Golden complexity =
+{ TC = 1631.099b, ADC = nanb, DC = 329748.520b } normalized by 419152 is 0.790595343705
+gen/windowserver_last.log-accum.out: success rate = 100.00%
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.309
+First measurement time = 0.021
+First reduction time = 1.916
+Second reduction time = 15.843
+Third reduction time = 0.771
+Second measurement time = 0.018
+Total time = 18.878
+============================================================
