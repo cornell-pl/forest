@@ -5,7 +5,7 @@ structure WINDOWSERVER_LOG = struct
 
     val date : Ty = Base(aux, [(Pdate "2006.11.21", loc)])
     val time : Ty = Base(aux, [(Ptime "18:46:51", loc)])
-    val space : Ty = RefinedBase(aux, StringME "/[ \\t]+/", [(Pstring " ", loc)])
+    val space : Ty = Base(aux, [(Pwhite " ", loc)])
     val colon: Ty = RefinedBase(aux, StringConst ":", [(Pstring ":", loc)])
     val id: Ty = Base(aux, [(Pint (4, "4"), loc)])
     val lb: Ty = RefinedBase(aux, StringConst "[", [(Pstring "[", loc)])

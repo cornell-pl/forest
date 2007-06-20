@@ -3,9 +3,10 @@ structure NETSTAT = struct
     val aux: AuxInfo = {coverage = 3000, label = NONE, tycomp = zeroComps }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
 
-    val sp: Ty = RefinedBase(aux, StringME "/[ \t]+/", [(Pstring " ", loc)])
+    val sp: Ty = Base(aux, [(Pwhite " ", loc)])
     val dot: Ty = RefinedBase(aux, StringConst ".", [(Pstring ".", loc)])
     val star: Ty = RefinedBase(aux, StringConst "*", [(Pstring "*", loc)])
+    val stardot: Ty = RefinedBase(aux, StringConst "*.", [(Pstring "*", loc)])
     val num: Ty = Base(aux, [(Pint (37, "37"), loc)])
     val title1: Ty = RefinedBase(aux, StringConst "Active Internet connections (including servers)", 
 			[(Pstring "Active Internet connections (including servers)", loc)])
@@ -23,7 +24,7 @@ structure NETSTAT = struct
     val state: Ty = RefinedBase(aux, Enum[StringConst "CLOSE_WAIT", StringConst "ESTABLISHED", 
 		StringConst "LISTEN", StringConst "CLOSED"], [])
     val stateop: Ty = Poption(aux, state)
-    val otherip : Ty = Pstruct(aux, [star, dot, Punion(aux, [num, star])])
+    val otherip : Ty = Pstruct(aux, [stardot, Punion(aux, [num, star])])
     val ip_field: Ty = Punion(aux, [ip, otherip])
     val entry1: Ty = Pstruct(aux, [proto, sp, recv_q, sp, send_q, sp, ip_field, sp, ip_field, sp, stateop])
 

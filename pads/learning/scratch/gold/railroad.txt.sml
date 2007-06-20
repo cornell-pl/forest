@@ -19,7 +19,9 @@ structure RAILROAD = struct
 
     val years = RefinedBase(aux, StringConst ",,1996,1997,1998,1999,2000,2001,2002,1996,1997,1998,1999,2000,2001,2002", 
 			[(Pstring ",,1996,1997,1998,1999,2000,2001,2002,1996,1997,1998,1999,2000,2001,2002", loc)])
-    val secHeader: Ty = Pstruct (aux, [railkind, space, rail, commas])
+    val sprailcommas : Ty =RefinedBase(aux, StringConst " rail,,,,,,,,,,,,,,,", 
+				[(Pstring ",,,,,,,,,,,,,,,", loc)])
+    val secHeader: Ty = Pstruct (aux, [railkind, sprailcommas])
     val railtype1 = Pstruct(aux, [quote, RefinedBase(aux, StringME "/[^\"]*/", [(Pstring "Railtype", loc)]), quote])
     val railtype2 = RefinedBase(aux, StringME "/[^,]*/", [(Pstring "Railtype", loc)])
     val railtype = Punion(aux, [railtype1, railtype2])

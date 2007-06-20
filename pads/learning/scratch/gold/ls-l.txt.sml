@@ -21,7 +21,7 @@ structure LS = struct
 		oread, owrite, oexe])
 *)
     val permission: Ty = RefinedBase(aux, StringME "/(\\-|d)[\\-rwx]+/", [(Pstring "drwxrxwx", loc)])
-    val space : Ty = RefinedBase(aux, StringME "/[ \\t]+/", [(Pstring " ", loc)])
+    val space : Ty = Base(aux, [(Pwhite " ", loc)])
     val date : Ty = Base(aux, [(Pdate "15/Oct/1997", loc)])
     val time : Ty = RefinedBase(aux, StringME "/[0-9][0-9]:[0-9][0-9]/", [(Pstring "12:34", loc)])
     val year : Ty = Base(aux, [(Pint (2005, "2005"), loc)])

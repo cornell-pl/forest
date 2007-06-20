@@ -14,7 +14,7 @@ structure QUARTERLY = struct
     val incomeseq = RArray(aux, SOME(StringConst ","), NONE, 
 			Base(aux, [(Pint(1998, "1998"), loc)]), NONE, [])
     val code =RefinedBase(aux, StringConst "\"010\",\"", [(Pstring "\"010\",\"", loc)])
-    val areacode = RefinedBase(aux, StringME "/[0-9][0-9]/", [(Pstring "02", loc)])
+    val areacode = Base(aux, [(Pint (02, "02"), loc)])
     val quotecommaquote = RefinedBase(aux, StringConst "\",\"", [(Pstring "\",\"", loc)])
     val areaname = RefinedBase(aux, StringME "/[A-Za-z ]*/", [(Pstring "Colorado", loc)])
     val quotecomma= RefinedBase(aux, StringConst "\",", [(Pstring "\",", loc)])
