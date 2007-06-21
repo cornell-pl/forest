@@ -105,34 +105,6 @@ type constraint_map = constraint list LabelMap.map
 type pre_reduction_rule = Ty -> Ty
 type post_reduction_rule = constraint_map -> Ty -> constraint_map*Ty
 
-(*this function clean up the Punion structure so that Pempty if it exists 
-always appear last in a union*)
-fun cleanupUnion unionTy =
-let 
-in
-  case unionTy of
-    Punion (a, tys) => 
-	let
-	
-	  fun isNotPempty ty =
-	    case ty of
-		  Base (_, ltokens) => 
-		    (case (hd ltokens) of 
-		     (Pempty, _) => false
-		     | _ => true)
-		 | _ => true 
-	  fun isPempty ty = (not (isNotPempty ty))
-	  val nonPemptyTys = List.filter isNotPempty tys
-	  val emptys =List.filter isPempty tys
-	  val emptys' = if (length emptys) = 0 then []
-			else if (length emptys) = 1 then emptys
-			else [foldr mergeTy (hd emptys) (List.drop (emptys, 1))]
-	in
-	  Punion (a, nonPemptyTys@emptys')
-	end
-    | _ => raise TyMismatch
-end
-
 (* reduction rules *)
 (* single member lists are removed*)
 fun remove_degenerate_list ty =
@@ -185,7 +157,7 @@ case ty of
   	| _ => [ty]
   	val result = map lift_sum tylist
   in
-  	cleanupUnion (Punion(a, List.concat result ))
+  	Punion(a, List.concat result )
   end
 | _ => ty
 (* remove nil items from struct*)
@@ -219,7 +191,7 @@ case ty of
   		used
   	end
   in
-  	cleanupUnion(Punion (aux, remove_unused()))
+  	Punion (aux, remove_unused())
   end
 | _ => ty
 (* elements of a sum are check to see if they share a common prefix (ie tuples with
@@ -266,13 +238,13 @@ case ty of
 	val unionTys = case length rem_tups of
 			0 => nil
 			| 1 => rem_tups
-			| _ => [union_to_optional (cleanupUnion(Punion(a, rem_tups)))]
+			| _ => [union_to_optional (Punion(a, rem_tups))]
   	val newty = case (cpfx, csfx) of
   	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
   	| (_,h::t) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
-  	| (nil,nil) => cleanupUnion(Punion (a, tylist))
+  	| (nil,nil) => Punion (a, tylist)
   in newty
   end
 | _ => ty
@@ -1333,7 +1305,7 @@ let
   val cmap = case phase of
 	2 => Constraint.constrain' ty
 	| _ => LabelMap.empty
-(*
+(* Print the constraints 
   val _ = printConstMap cmap
 *)
   (* returns a new cmap after reducing all the tys in the list and a new tylist *)
@@ -1358,7 +1330,7 @@ let
 				end
 			| Punion (a, tylist) => let
 				val (cmap', tylist') = mymap reduce' phase cmap tylist nil
-				in (cmap', (cleanupUnion (sortUnionBranches (measure (Punion(a, tylist'))))))
+				in (cmap', (measure (Punion(a, tylist'))))
 				end
 			| Parray (a, {tokens, lengths, first, body, last}) => 
 				let
@@ -1431,7 +1403,7 @@ let
 (*  val cafter = cost cmap' ty'*)
 (*  val _ = print ("Before:" ^ (Int.toString cbefore) ^ " After:" ^ (Int.toString cafter) ^ "\n") *)
 in
-  ty'
+  sortUnionBranches ty'
 end 
 
 end

@@ -277,6 +277,7 @@ echo >>gen/Report
 cat gen/Timing >>gen/Report
 #   preserve the gen directory
 cp -R gen/* output/$(*F)
+cp gen/Report output/$(*F).report
 cat gen/Timing >>output/$(*F).timing
 endef
 

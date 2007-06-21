@@ -541,12 +541,41 @@ structure Common = struct
 	  in print (listToString vals)
 	  end
 
+	(*this function clean up the Punion structure so that Pempty if it exists 
+	always appear last in a union*)
+	fun cleanupUnion unionTy =
+	let 
+	in
+	  case unionTy of
+	    Punion (a, tys) => 
+		let
+		
+		  fun isNotPempty ty =
+		    case ty of
+			  Base (_, ltokens) => 
+			    (case (hd ltokens) of 
+			     (Pempty, _) => false
+			     | _ => true)
+			 | _ => true 
+		  fun isPempty ty = (not (isNotPempty ty))
+		  val nonPemptyTys = List.filter isNotPempty tys
+		  val emptys =List.filter isPempty tys
+		  val emptys' = if (length emptys) = 0 then []
+				else if (length emptys) = 1 then emptys
+				else [foldr mergeTy (hd emptys) (List.drop (emptys, 1))]
+		in
+		  Punion (a, nonPemptyTys@emptys')
+		end
+	    | _ => raise TyMismatch
+	end
+
 	(*This function sorts of the base type union branches by the order defined in tokens.sml*)
 	(*assume ty is already with complexy info*)
 	fun sortUnionBranches ty =
 		case ty of 
 		  Punion(a, tys) =>
 			let
+			  val sorted_tys = map sortUnionBranches tys
 			  fun isPriTy ty =
 				case ty of
 					Base(a1, (Ptime _, _)::_) => true
@@ -564,14 +593,15 @@ structure Common = struct
 			  fun lowPriTy ty = 
 				case ty of
 					Base(_, (Pint _, _)::_) => true
+					| Base(_, (Pempty, _)::_) => true
 					| Base(_, (Pstring _, _)::_) => true
 					| Base(_, (Other _, _)::_) => true
 					| RefinedBase(_, StringConst s , _) => (size s) = 1
 					| _ => false
 			  fun notLowPriTy ty = not (lowPriTy ty)
 
-			  val priTys = List.filter isPriTy tys
-			  val nonpriTys = List.filter isNotPriTy tys
+			  val priTys = List.filter isPriTy sorted_tys
+			  val nonpriTys = List.filter isNotPriTy sorted_tys
 			  val lowPriTys = List.filter lowPriTy nonpriTys
 			  val normalTys = List.filter notLowPriTy nonpriTys
 			  fun greater (ty1, ty2) =
@@ -601,5 +631,14 @@ structure Common = struct
 			  val sortedLowPriTys = ListMergeSort.sort greater lowPriTys
 			in Punion(a, sortedPriTys@normalTys@sortedLowPriTys)
 			end
+		  | Pstruct(a, tys) => Pstruct(a, map sortUnionBranches tys)
+		  | RArray (a, sep, term, body, len, lengths) => RArray(a, sep, term, sortUnionBranches body, len, lengths)
+		  | Switch (a, id, pairs) => 
+			let
+                          val (refs, tylist) = ListPair.unzip(pairs)
+                          val tylist' = map sortUnionBranches tylist
+                        in Switch (a, id, ListPair.zip(refs, tylist'))
+                        end
+		  | Poption (a, body) => Poption (a, sortUnionBranches body)
 		  | _ => ty
 end
