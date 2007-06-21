@@ -207,15 +207,18 @@ $(TRAINS): %.train:
 	rm -rf gen/*
 	cp vanilla.p gen
 	nice -n20 ./learn -n $(*F).chunk0 -lex vanilla data/$(*F).chunk0 
+	cp gen/Timing gen/$(*F).chunk0.out
 	nice -n20 ./learn -n $(*F).chunk1 -lex vanilla data/$(*F).chunk1 
+	cp gen/Timing gen/$(*F).chunk1.out
 	nice -n20 ./learn -n $(*F).chunk2 -lex vanilla data/$(*F).chunk2 
+	cp gen/Timing gen/$(*F).chunk2.out
 	make --directory=gen $(*F).chunk0-accum
-	gen/$(AST_ARCH)/$(*F).chunk0-accum data/$(*F) 2>gen/$(*F).chunk0-accum.out
+	gen/$(AST_ARCH)/$(*F).chunk0-accum data/$(*F) 2>>gen/$(*F).chunk0.out
 	make --directory=gen $(*F).chunk1-accum
-	gen/$(AST_ARCH)/$(*F).chunk1-accum data/$(*F) 2>gen/$(*F).chunk1-accum.out
+	gen/$(AST_ARCH)/$(*F).chunk1-accum data/$(*F) 2>>gen/$(*F).chunk1.out
 	make --directory=gen $(*F).chunk2-accum
-	gen/$(AST_ARCH)/$(*F).chunk2-accum data/$(*F) 2>gen/$(*F).chunk2-accum.out
-	./accum-out.pl gen/$(*F).chunk0-accum.out gen/$(*F).chunk1-accum.out gen/$(*F).chunk2-accum.out
+	gen/$(AST_ARCH)/$(*F).chunk2-accum data/$(*F) 2>>gen/$(*F).chunk2.out
+	./accum-out.pl gen/$(*F).chunk0.out gen/$(*F).chunk1.out gen/$(*F).chunk2.out > output/$(*F).train.$(P)
 #	mv data/$(*F).chunk0 data/$(*F).train
 
 define learn-it

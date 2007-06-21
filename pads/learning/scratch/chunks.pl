@@ -86,7 +86,7 @@ if ( $percent != 0 ) { $size = int ( $numrecs * $percent / 100 ) }
 
 print "numrecs = $numrecs, num = $num, size = $size\n";
 
-die "Input file size too small for given chunk size and number of chunks!\n" if ($num*$size>$numrecs);
+die "Input file size too small for given chunk size and number of chunks!\n" if ($num*$size>$numrecs && $mode eq "contiguous");
 
 for ( $i=0; $i < $num; $i++ )
 {
