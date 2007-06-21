@@ -1,0 +1,5 @@
+gen/crashreporter.log.chunk0.out: success rate = 98.64%
+gen/crashreporter.log.chunk1.out: success rate = 100.00%
+gen/crashreporter.log.chunk2.out: success rate = 66.21%
+The average time = 1.32
+The average success rate = 88.28%
