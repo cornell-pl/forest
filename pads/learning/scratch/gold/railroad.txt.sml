@@ -6,8 +6,8 @@ structure RAILROAD = struct
     val spaceop = Poption(aux, space);
     val comma= RefinedBase(aux, StringConst ",", [(Pstring ",", loc)])
     val quote = RefinedBase(aux, StringConst "\"", [(Pstring "\"", loc)])
-    val noteinQuotes = RefinedBase(aux, StringME "/\\\"[^\"]*\\\"/", [(Pstring "Railtype", loc)])
-    val noteOutSideQuotes = RefinedBase(aux, StringME "/[^,]*/", [(Pstring "Railtype", loc)])
+    val noteinQuotes = RefinedBase(aux, StringME "/\\\"[^\"]+\\\"/", [(Pstring "Railtype", loc)])
+    val noteOutSideQuotes = RefinedBase(aux, StringME "/[^,]+/", [(Pstring "Railtype", loc)])
     val note: Ty = Punion (aux, [noteinQuotes, noteOutSideQuotes])
     val commas : Ty =RefinedBase(aux, StringConst ",,,,,,,,,,,,,,,", 
 				[(Pstring ",,,,,,,,,,,,,,,", loc)])
@@ -22,10 +22,10 @@ structure RAILROAD = struct
     val sprailcommas : Ty =RefinedBase(aux, StringConst " rail,,,,,,,,,,,,,,,", 
 				[(Pstring ",,,,,,,,,,,,,,,", loc)])
     val secHeader: Ty = Pstruct (aux, [railkind, sprailcommas])
-    val railtype1 = Pstruct(aux, [quote, RefinedBase(aux, StringME "/[^\"]*/", [(Pstring "Railtype", loc)]), quote])
-    val railtype2 = RefinedBase(aux, StringME "/[^,]*/", [(Pstring "Railtype", loc)])
+    val railtype1 = Pstruct(aux, [quote, RefinedBase(aux, StringME "/[^\"]+/", [(Pstring "Railtype", loc)]), quote])
+    val railtype2 = RefinedBase(aux, StringME "/[^,]+/", [(Pstring "Railtype", loc)])
     val railtype = Punion(aux, [railtype1, railtype2])
-    val cityname = RefinedBase(aux, StringME "/[^,]*/", [(Pstring "San Jose", loc)])
+    val cityname = RefinedBase(aux, StringME "/[^,]+/", [(Pstring "San Jose", loc)])
     val city = Pstruct(aux, [quote, cityname, comma, spaceop, 
 				RefinedBase(aux, StringME "/[A-Z][A-Z]/", [(Pstring "CA", loc)]),
 				quote])

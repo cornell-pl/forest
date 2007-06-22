@@ -20,13 +20,31 @@ structure Model = struct
         , dc  = multCompR tot ( int2Comp choices )
         }
 
-    (* this function is a hack to handle only a few special cases *)
-    fun parseRegEx s =
+    (* TODO: this function is a hack to handle only a few special cases *)
+    fun parseRegEx (s:string) : LargeInt.int*int  =
 	case s of 
-	"/.*/" => (256, 0)
-	| "/[^ ]+/" => (255, 0)
+	  "/[^ ]+/" => (numStringChars-1, 0)
+	| "/\\/[^ ]*/" => (numStringChars-1, 1)
+	| "/[^\\]]+/" => (numStringChars-1, 0)
+	| "/[^\\\\]+/" => (numStringChars-1, 0)
+	| "/[^:]+/" => (numStringChars-1, 0)
+	| "/no_ii[0-9]*/" => (10, 5)
 	| "/[0-9a-f]+/" => (16, 0)
+	| "/[0-9a-fx]+/" => (17, 0)
 	| "/[0-9a-zA-Z]+/" => (62, 0)
+	| "/[0-9a-zA-Z ]+/" => (63, 0)
+	| "/[0-9a-zA-Z. ]+/" => (64, 0)
+	| "/[0-9a-zA-Z.\\-_]+/" => (numStringChars+1, 0)
+	| "/[0-9a-zA-Z_\\-]+/" => (numStringChars, 0)
+	| "/(\\-|d)[\\-rwx]+/" => (4, 1)
+	| "/[0-9][0-9]:[0-9][0-9]/" => (10, 0)
+	| "/[0-9a-zA-Z\\-_ ~.]+/" => (numStringChars+3, 0)
+	| "/[a-zA-Z ]+/" => (53, 0)
+	| "/\\\"[^\"]+\\\"/" => (numStringChars-1, 2)
+	| "/[^,]+/" => (numStringChars-1, 0)
+	| "/[^.]+/" => (numStringChars-1, 0)
+	| "/[^\"]+/" => (numStringChars-1, 0)
+	| "/[A-Z][A-Z]/" => (26, 0)
 	| _ => (256, 0)
 
     (* Compute the type and data complexity of a refined type *)
@@ -37,13 +55,14 @@ structure Model = struct
                     ( r : Refined )        (* refined type *)
                      : TyComp =            (* Complexity numbers *)
         ( case r of
-	       (*TODO: StringME is handled as Pstring for now *)
                StringME s     => 
 			let
+		     	  (* val _ = print ("Parsing " ^ s ^".\n") *)
 			  val (choices, numConstChars) = parseRegEx s
+			  (* val _ = print ("Choices = " ^ (LargeInt.toString choices) ^ "\n") *)
 			  fun f (len, c) = combine c 
 					    (multCompS (len-numConstChars) 
-						(int2CompS choices))
+						(int2Comp choices))
 			  val totaldc = foldl f zeroComp lens
 			  val avgdc = divComp num totaldc
 			in
