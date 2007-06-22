@@ -14,14 +14,15 @@ Silver complexity scores
 Golden complexity =
 { TC = 884.247b, ADC = 52.415b, DC = 23141.873b } normalized by 173848 is 0.138201875145
 gen/MER_T01_01.csv-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.112
+Tokenization and structure inference time = 0.124
 First measurement time = 0.007
-First reduction time = 0.627
-Second reduction time = 1.890
-Third reduction time = 0.113
-Second measurement time = 0.005
-Total time = 2.755
+First reduction time = 0.630
+Second reduction time = 2.103
+Third reduction time = 0.205
+Second measurement time = 0.008
+Total time = 3.077
 ============================================================

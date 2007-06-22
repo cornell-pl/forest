@@ -4,23 +4,24 @@ Record count =  354
 Byte count =    28170
 
 Unrefined complexity scores
-{ TC = 138.061b, ADC = 975.066b, DC = 343761.500b } normalized by 225360 is 1.52600089263
+{ TC = 138.061b, ADC = 347.467b, DC = 121591.425b } normalized by 225360 is 0.540155689339
 
 New complexity scores
-{ TC = 729.107b, ADC = 697.007b, DC = 245478.249b } normalized by 225360 is 1.09250690507
+{ TC = 729.107b, ADC = 69.408b, DC = 23308.174b } normalized by 225360 is 0.106661701778
 
 
 Golden complexity =
-{ TC = 296.269b, ADC = 855.230b, DC = 301339.572b } normalized by 225360 is 1.33846219999
+{ TC = 296.269b, ADC = 227.631b, DC = 79169.497b } normalized by 225360 is 0.352616996706
 gen/page_log-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.085
-First measurement time = 0.008
-First reduction time = 0.207
-Second reduction time = 0.186
-Third reduction time = 0.079
-Second measurement time = 0.005
-Total time = 0.570
+Tokenization and structure inference time = 0.111
+First measurement time = 0.014
+First reduction time = 0.228
+Second reduction time = 0.695
+Third reduction time = 0.140
+Second measurement time = 0.009
+Total time = 1.196
 ============================================================

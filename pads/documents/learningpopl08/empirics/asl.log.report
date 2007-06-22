@@ -4,23 +4,24 @@ Record count =  1500
 Byte count =    279600
 
 Unrefined complexity scores
-{ TC = 1200.941b, ADC = 94934.194b, DC = 2429380.440b } normalized by 2236800 is 1.08663330653
+{ TC = 1200.941b, ADC = 94440.320b, DC = 1408712.683b } normalized by 2236800 is 0.630326190646
 
 New complexity scores
-{ TC = 2792.449b, ADC = 1238.239b, DC = 1614484.018b } normalized by 2236800 is 0.723031324725
+{ TC = 2792.449b, ADC = 510.356b, DC = 593816.261b } normalized by 2236800 is 0.266724208839
 
 
 Golden complexity =
-{ TC = 901.614b, ADC = 979.418b, DC = 1461632.635b } normalized by 2236800 is 0.653851148727
+{ TC = 1045.614b, ADC = 542.882b, DC = 806828.511b } normalized by 2236800 is 0.361174054563
 gen/asl.log-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 3.263
-First measurement time = 0.151
-First reduction time = 18.909
-Second reduction time = 589.483
-Third reduction time = 2.705
-Second measurement time = 0.088
-Total time = 614.600
+Tokenization and structure inference time = 3.024
+First measurement time = 0.181
+First reduction time = 21.592
+Second reduction time = 650.715
+Third reduction time = 3.925
+Second measurement time = 0.133
+Total time = 679.570
 ============================================================

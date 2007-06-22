@@ -12,16 +12,17 @@ New complexity scores
 Silver complexity scores
 { TC = 1323.492b, ADC = 510.480b, DC = 28835.789b }
 Golden complexity =
-{ TC = 1037.335b, ADC = 473.582b, DC = 27907.374b } normalized by 81416 is 0.355516227597
+{ TC = 1097.335b, ADC = 471.256b, DC = 27763.172b } normalized by 81416 is 0.354482006325
 gen/quarterlypersonalincome-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.062
+Tokenization and structure inference time = 0.064
 First measurement time = 0.005
-First reduction time = 0.255
-Second reduction time = 15.154
-Third reduction time = 0.139
-Second measurement time = 0.004
-Total time = 15.619
+First reduction time = 0.238
+Second reduction time = 17.486
+Third reduction time = 0.196
+Second measurement time = 0.006
+Total time = 17.996
 ============================================================

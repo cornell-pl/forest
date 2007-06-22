@@ -4,23 +4,24 @@ Record count =  441
 Byte count =    50152
 
 Unrefined complexity scores
-{ TC = 561.625b, ADC = 991.860b, DC = 435037.007b } normalized by 401216 is 1.08569606381
+{ TC = 561.625b, ADC = 556.793b, DC = 243172.352b } normalized by 401216 is 0.607488178152
 
 New complexity scores
-{ TC = 2069.123b, ADC = 736.908b, DC = 321536.070b } normalized by 401216 is 0.806561036533
+{ TC = 2069.123b, ADC = 301.840b, DC = 129671.415b } normalized by 401216 is 0.328353150872
 
 
 Golden complexity =
-{ TC = 1525.119b, ADC = 753.020b, DC = 329455.900b } normalized by 401216 is 0.824944715054
+{ TC = 1735.119b, ADC = 318.269b, DC = 137730.790b } normalized by 401216 is 0.347608044895
 gen/crashreporter.log-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.118
-First measurement time = 0.012
-First reduction time = 1.245
-Second reduction time = 3.804
-Third reduction time = 0.333
-Second measurement time = 0.013
-Total time = 5.525
+Tokenization and structure inference time = 0.500
+First measurement time = 0.016
+First reduction time = 1.861
+Second reduction time = 4.304
+Third reduction time = 0.503
+Second measurement time = 0.020
+Total time = 7.203
 ============================================================

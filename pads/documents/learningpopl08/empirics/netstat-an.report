@@ -11,16 +11,17 @@ New complexity scores
 
 
 Golden complexity =
-{ TC = 2147.681b, ADC = 207.182b, DC = 40064.120b } normalized by 114840 is 0.367570535287
+{ TC = 2417.681b, ADC = 178.301b, DC = 34230.120b } normalized by 114840 is 0.319120517872
 gen/netstat-an-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.056
-First measurement time = 0.005
-First reduction time = 0.183
-Second reduction time = 3.138
-Third reduction time = 0.135
-Second measurement time = 0.005
-Total time = 3.522
+Tokenization and structure inference time = 0.052
+First measurement time = 0.004
+First reduction time = 0.177
+Second reduction time = 2.905
+Third reduction time = 0.167
+Second measurement time = 0.006
+Total time = 3.311
 ============================================================

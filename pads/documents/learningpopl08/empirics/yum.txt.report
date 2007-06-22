@@ -4,24 +4,25 @@ Record count =  328
 Byte count =    18221
 
 Unrefined complexity scores
-{ TC = 626.340b, ADC = 2276.810b, DC = 198254.763b } normalized by 145768 is 1.36436737134
+{ TC = 626.340b, ADC = 1949.205b, DC = 90800.301b } normalized by 145768 is 0.627206530671
 
 New complexity scores
-{ TC = 1808.437b, ADC = 494.871b, DC = 150056.672b } normalized by 145768 is 1.04182748581
+{ TC = 1808.437b, ADC = 167.266b, DC = 42602.211b } normalized by 145768 is 0.30466664514
 
 Silver complexity scores
 {1622.889b, 486.274b, 154871.637b}
 Golden complexity =
-{ TC = 271.558b, ADC = 538.789b, DC = 176207.539b } normalized by 145768 is 1.21068476444
+{ TC = 397.558b, ADC = 211.215b, DC = 68763.535b } normalized by 145768 is 0.474460053112
 gen/yum.txt-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.102
-First measurement time = 0.007
-First reduction time = 0.788
-Second reduction time = 0.822
-Third reduction time = 0.325
-Second measurement time = 0.008
-Total time = 2.051
+Tokenization and structure inference time = 0.115
+First measurement time = 0.009
+First reduction time = 1.270
+Second reduction time = 1.096
+Third reduction time = 0.512
+Second measurement time = 0.012
+Total time = 3.014
 ============================================================

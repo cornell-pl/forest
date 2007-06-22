@@ -11,16 +11,17 @@ New complexity scores
 
 
 Golden complexity =
-{ TC = 325.150b, ADC = 564.993b, DC = 545463.146b } normalized by 1140856 is 0.478402441579
+{ TC = 559.150b, ADC = 518.810b, DC = 499326.425b } normalized by 1140856 is 0.438167108612
 gen/dibbler.1000-accum.out: success rate = 100.00%
+The average time = 0.00
 The average success rate = 100.00%
 
 ====== Timing information ==================================
-Tokenization and structure inference time = 2.202
-First measurement time = 0.051
-First reduction time = 2.465
-Second reduction time = 4.692
-Third reduction time = 1.040
-Second measurement time = 0.032
-Total time = 10.481
+Tokenization and structure inference time = 2.288
+First measurement time = 0.058
+First reduction time = 3.124
+Second reduction time = 4.590
+Third reduction time = 1.098
+Second measurement time = 0.039
+Total time = 11.197
 ============================================================
