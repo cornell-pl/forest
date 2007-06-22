@@ -9,11 +9,11 @@
 @trainpercentages=(5, 10, 15, 20, 25, 30, 35, 40);
 foreach my $gold (@golden)
 {
- for ($i=0; $i<1; $i++)
- {
-  `make $gold.rep`;
- }
-#  foreach my $percentage (@trainpercentages) {
-#   `make $gold.train P=$percentage`;
-#  }
+# for ($i=0; $i<1; $i++)
+# {
+#  `make $gold.rep`;
+# }
+  foreach my $percentage (@trainpercentages) {
+   `make $gold.train P=$percentage`;
+  }
 }

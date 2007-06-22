@@ -596,6 +596,7 @@ struct
 	  mode = 1: in line (not array)
 	  mode = 2: in array body
 	  mode = 3: in struct body (can only be core literals)
+	  mode = 4: the target Ty in a switch branch where there's dup (to use Pfrom to avoid dup)
 	  these are used for base and refined base types mostly
 	*)
     let 
@@ -720,7 +721,7 @@ struct
 	    	  else typeName ^ "64 " 
 	    	  ) else "") ^ 
 		  (if mode=0 then (label ^ " : " ^ label ^ " x => {x == " ^ (intToCString i) ^ "};\n")
-		   else if mode=1 orelse mode = 3 then 
+		   else if mode=1 orelse mode = 3 orelse mode = 4 then 
 			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
 			" == " ^ (intToCString i) ^ ";\n")
 		   else (label ^ " ")
@@ -729,7 +730,7 @@ struct
 	      | FloatConst (i, f) => 
 		  (if (mode <> 2) then "Pfloat32 " else "") ^ 
 		  ( if mode = 0 then (label ^ " : " ^ label ^ " x => {x == " ^ (i ^ "." ^ f) ^ "};\n")
-		  else if mode = 1 orelse mode = 3 then 
+		  else if mode = 1 orelse mode = 3 orelse mode = 4 then 
 			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
 				" == " ^ (i ^ "." ^ f) ^ "};\n")
 		  else (label ^ " ")
@@ -743,14 +744,18 @@ struct
 				   else ((getVarName label) ^ suffix ^ 
 					" Pfrom('" ^ (String.toCString s) ^ "');\n")
 			    	 else if mode=2 then ("Pstring_ME(:\"/" ^ escape(s) ^ "/\":) ")
+				 else if mode=4 then ((getVarName label) ^ suffix ^ 
+					" Pfrom('" ^ (String.toCString s) ^ "');\n")
 				 else ("'" ^ (String.toCString s) ^ "';\n")
 				)
 				else if mode = 1 then 
 				  if isCIdentifier s then ("\"" ^ s ^ "\";\n")
 				  else ((getVarName label) ^ suffix ^ 
 					" Pfrom(\"" ^ (String.toCString s) ^ "\");\n")
-				     else if mode = 3 then ("\"" ^ (String.toCString s) ^ "\";\n")
-				     else ("Pstring_ME(:\"/"^ escape(s) ^"/\":) " ^ label')
+				 else if mode = 3 then ("\"" ^ (String.toCString s) ^ "\";\n")
+				 else if mode=4 then ((getVarName label) ^ suffix ^ 
+					" Pfrom(\"" ^ (String.toCString s) ^ "\");\n")
+				 else ("Pstring_ME(:\"/"^ escape(s) ^"/\":) " ^ label')
 	      | Enum res => ""
 	      | LabelRef _ => ""
 	    ) 
@@ -862,27 +867,29 @@ struct
 *)
 		| _ => []
 	  end
-	fun reToSwitch switchedTy branchno (re, targetTy) =
+	fun reToSwitch switchedTy branchno dup (re, targetTy) =
 	  let
 	  fun indexes n = List.tabulate (n, (fn x => x))
 	  fun getPairs res = ListPair.zip (res, (indexes (length res)))
   	  val suffix = "_" ^ (Int.toString branchno)
+	  val mode = case re of Enum _ => 4
+			| _ => if dup then 4 else 1
   	  in
 	    (case switchedTy of
 		Base (aux, (Pint _, l)::ts) => 
 		  (case re of IntConst x => "\tPcase " ^ (LargeInt.toString x) ^ " : " ^ 
-						(TyToPADS "\t" suffix false 1 nil targetTy)
+						(TyToPADS "\t" suffix false mode nil targetTy)
 		  	   | StringConst "*" => "\tPdefault : " ^ (TyToPADS "\t" "" false 1 nil targetTy)
-			   | Enum res => lconcat (map (fn (re, i) => reToSwitch switchedTy i (re, targetTy))
-					 (getPairs res)) 
+			   | Enum res => lconcat (map (fn (re, i) => 
+						reToSwitch switchedTy i true (re, targetTy)) (getPairs res)) 
 			   | _ => raise TyMismatch
 		  )
 		| RefinedBase (aux, Int _, _) =>
 		  (case re of IntConst x => "\tPcase " ^ (LargeInt.toString x) ^ " : " ^ 
-						(TyToPADS "\t" suffix false 1 nil targetTy) 
+						(TyToPADS "\t" suffix false mode nil targetTy) 
 		  	   | StringConst "*" => "\tPdefault : " ^ (TyToPADS "\t" "" false 1 nil targetTy)
-			   | Enum res => lconcat (map (fn (re, i) => reToSwitch switchedTy i (re, targetTy)) 
-					 (getPairs res)) 
+			   | Enum res => lconcat (map (fn (re, i) => 
+						reToSwitch switchedTy i true (re, targetTy)) (getPairs res)) 
 			   | _ => raise TyMismatch
 		  )
 		(* we assume the Enum will only contain IntConst or StringConst and not another Enum *)
@@ -893,7 +900,7 @@ struct
 			  case indexes of
 				["P_DEFAULT"] => "\tPdefault : " ^ (TyToPADS "\t" "" false 1 nil targetTy)
 				| _ => lconcat (map (fn i => "\tPcase " ^ i ^ " : " ^
-					(TyToPADS "\t" ("_"^ i) false 1 nil targetTy)) indexes)
+					(TyToPADS "\t" ("_"^ i) false mode nil targetTy)) indexes)
 			end
 		| _ => raise TyMismatch
 	    ) 
@@ -905,9 +912,8 @@ struct
          ( case ty of
                Base (aux, (t, loc)::ts)  => pRecord ^ (tokenToPADS label suffix t mode) 
 	     | RefinedBase (aux, Enum res, tl) => 
-		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" mode ty)
-		else
+		if mode = 2 then (tyToInlinePADS "" mode ty)
+		else if mode = 0 then
 		(
 		if allStringConsts res then
 		  let 
@@ -936,15 +942,15 @@ struct
 				    (prefix^"\t") suffix 1 x) res)) ^
 		      prefix ^ "};\n")
 		)
+		else ((tyToInlinePADS "" mode ty)^";\n")
              | RefinedBase (aux, refined, tl) => pRecord ^ (refinedToPADS label prefix suffix mode refined) 
              | TBD _ =>
                 pRecord ^ "Pstring_ME(:\"/[:print:]/\":) " ^ (if mode=2 then "" else "TBD_" ^ label ^";\n")
              | Bottom _ =>
                 pRecord ^ "Pstring_ME(:\"/[:print:]/\":) " ^ (if mode=2 then "" else "BTM_" ^ label ^";\n")
              | Pstruct (aux, tys) =>
-		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" mode ty)
-		else
+		if mode = 2 then (tyToInlinePADS "" mode ty)
+		else if mode = 0 then
 		  let
 (*
 		   val _ = updateDateTimeStopping (tys)
@@ -956,10 +962,10 @@ struct
 			(lconcat (map (TyToPADS (prefix ^ "\t") "" false 3 tys) tys)) ^
 		   prefix ^ "};\n"
 		  end	
+		else ((tyToInlinePADS "" mode ty)^";\n")
              | Punion (aux, tys)  =>
-		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" mode ty)
-		else
+		if mode = 2 then (tyToInlinePADS "" mode ty)
+		else if mode = 0 then
 		  let
 		   val nonInlineTys = List.filter notInlineTy tys
 		   val pre = lconcat (map (TyToPADS prefix "" false 0 nil) nonInlineTys)
@@ -968,10 +974,10 @@ struct
 			(lconcat (map (TyToPADS (prefix ^ "\t") "" false 1 nil) tys)) ^
 		   prefix ^ "};\n")
 		  end	
+		else ((tyToInlinePADS "" mode ty)^";\n")
              | Switch(aux ,id, retys) =>
-		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" mode ty)
-		else
+		if mode = 2 then (tyToInlinePADS "" mode ty)
+		else if mode = 0 then
 		  let
 		   val tys = map #2 retys
 		   val nonInlineTys = List.filter notInlineTy tys
@@ -994,16 +1000,16 @@ struct
 		   	(pre ^ pRecord ^
 		   	"Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 
 		   	prefix ^ "  Pswitch (" ^ switchvar ^ ") {\n" ^
-			(lconcat (map (fn (i, rety) => reToSwitch switchedTy i rety) 
+			(lconcat (map (fn (i, rety) => reToSwitch switchedTy i false rety) 
 					(ListPair.zip((indexes (length retys)), retys)))) ^
 		   	prefix ^ "  }\n" ^
 		   	prefix ^ "};\n")
 		    end
 		  end	
+		else ((tyToInlinePADS "" mode ty)^";\n")
              | RArray (aux, sep, term, body, len, lengths) => 
-		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" mode ty)
-		else
+		if mode = 2 then (tyToInlinePADS "" mode ty)
+		else if mode = 0 then
 		  let 
 		   val pre = if (notInlineTy body) orelse (isNumConst body) 
 			     then (TyToPADS prefix "" false 0 nil body)
@@ -1014,10 +1020,10 @@ struct
 		      (arrayBodyToInlinePADS body sep term len) ^
 		      prefix ^ "};\n")
 		  end
+		else ((tyToInlinePADS "" mode ty)^";\n")
              | Poption (aux, body) =>
-		if mode = 1 orelse mode = 3 then ((tyToInlinePADS "" mode ty)^";\n")
-		else if mode = 2 then (tyToInlinePADS "" mode ty)
-		else
+		if mode = 2 then (tyToInlinePADS "" mode ty)
+		else if mode = 0 then
 		  let
 		    val pre = if (notInlineTy body) orelse (isNumConst body) then 
 				TyToPADS prefix "" false 0 nil body
@@ -1025,6 +1031,7 @@ struct
 		  in (pre ^ pRecord ^
 		    "Popt " ^ (TyToPADS "" "" false 2 nil body) ^ " " ^ label ^ ";\n")
 		  end
+		else ((tyToInlinePADS "" mode ty)^";\n")
 	     | _ => ""
          )
 	)
