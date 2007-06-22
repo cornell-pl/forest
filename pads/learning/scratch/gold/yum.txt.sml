@@ -22,7 +22,7 @@ structure Yumtxt = struct
     val colsp : Ty = RefinedBase ( yumAux, StringConst ": ", [] )
     val packagename : Ty = RefinedBase ( yumAux, StringME "/[^.]+/", [(Pstring "util-linux", yumLoc)] )
     val arch : Ty = Base ( yumAux, [(Pstring "x86_64", yumLoc)])
-    val version: Ty = RefinedBase (yumAux, StringME "/[a-zA-Z0-9.\\-_]+/", [])
+    val version: Ty = RefinedBase (yumAux, StringME "/[0-9a-zA-Z.\\-_]+/", [])
     val dot : Ty = RefinedBase ( yumAux, StringConst ".", [] )
     val ins_update_package : Ty =
         Pstruct ( yumAux, [ packagename, dot, arch, insupdsp, version ] )

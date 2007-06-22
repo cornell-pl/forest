@@ -20,15 +20,40 @@ structure Model = struct
         , dc  = multCompR tot ( int2Comp choices )
         }
 
+    (* this function is a hack to handle only a few special cases *)
+    fun parseRegEx s =
+	case s of 
+	"/.*/" => (256, 0)
+	| "/[^ ]+/" => (255, 0)
+	| "/[0-9a-f]+/" => (16, 0)
+	| "/[0-9a-zA-Z]+/" => (62, 0)
+	| _ => (256, 0)
+
     (* Compute the type and data complexity of a refined type *)
     fun refinedComp ( avg : real )         (* Average length of tokens *)
                     ( tot : LargeInt.int ) (* Sum of length of tokens *)
                     ( num : LargeInt.int ) (* Number of tokens *)
+		    ( lens : int list ) (* list of token lengths *)
                     ( r : Refined )        (* refined type *)
                      : TyComp =            (* Complexity numbers *)
         ( case r of
 	       (*TODO: StringME is handled as Pstring for now *)
-               StringME s     => mkBaseComp avg tot numStringChars
+               StringME s     => 
+			let
+			  val (choices, numConstChars) = parseRegEx s
+			  fun f (len, c) = combine c 
+					    (multCompS (len-numConstChars) 
+						(int2CompS choices))
+			  val totaldc = foldl f zeroComp lens
+			  val avgdc = divComp num totaldc
+			in
+				{ tc = combine constructorComp
+				( multCompS ((size s) - 2) (*exclude / / *)
+				    (int2Comp numStringChars))
+				 , adc = avgdc
+				 , dc = totaldc
+				} 
+			end
              | Int (min, max) => { tc  = sumComps [ constructorComp
                                                   , int2Comp min
                                                   , int2Comp max
@@ -58,7 +83,7 @@ structure Model = struct
                                  , adc = zeroComp
                                  , dc  = zeroComp
                                  }
-             | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot num) rl )
+             | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot num lens) rl )
                                                   , constructorComp
                                                   , int2CompS ( length rl )
                                                   ]
@@ -72,26 +97,29 @@ structure Model = struct
     and refinedTypeComp ( avg : real )         (* Average length of tokens *)
                         ( tot : LargeInt.int ) (* Sum of length of tokens *)
                         ( num : LargeInt.int ) (* Number of tokens *)
+			( lens : int list ) (* lenths of tokens *)
                         ( r : Refined )        (* refined type *)
                          : Complexity =        (* Type complexity *)
-           #tc (refinedComp avg tot num r)
+           #tc (refinedComp avg tot num lens r)
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedDataComp ( avg : real )         (* Average length of tokens *)
                         ( tot : LargeInt.int ) (* Sum of length of tokens *)
                         ( num : LargeInt.int ) (* Number of tokens *)
+			( lens : int list ) (* lenths of tokens *)
                         ( r : Refined )        (* refined type *)
                          : Complexity =        (* Data complexity *)
-          #dc (refinedComp avg tot num r)
+          #dc (refinedComp avg tot num lens r)
 
     (* Measure a refined base type *)
     exception NotRefinedBase (* Should be called only with refined base type *)
-    fun measureRefined ( avg : real )         (* Average length of tokens *)
-                       ( tot : LargeInt.int ) (* Sum of length of tokens *)
-                       ( num : LargeInt.int ) (* Number of tokens *)
-                       ( ty : Ty ) : Ty =
+    fun measureRefined ( ty : Ty ) : Ty =
     ( case ty of
            RefinedBase ( a, r, ts ) =>
-             let val comps = refinedComp avg tot num r
+	     let val avg = avgTokenLength ts
+		 val tot = sumTokenLength ts
+		 val num = length ts
+             	 val comps = refinedComp avg tot (Int.toLarge num) 
+				(map lTokenLength ts) r
              in RefinedBase ( updateComps a comps, r, ts )
              end
          | _ => raise NotRefinedBase
@@ -102,7 +130,7 @@ structure Model = struct
     ( case ro of
 	   (*refined type doesn't exist, assume bigger value *)
            NONE   => zeroComps
-         | SOME r => refinedComp 1.0 1 1 r (* Probably wrong ***** *)
+         | SOME r => refinedComp 1.0 1 1 [1] r (* Probably wrong ***** *)
     )
 
     (* Compute the complexity of a base type *)
@@ -112,13 +140,13 @@ structure Model = struct
          | (t::ts) =>
              let val avglen : real         = avgTokenLength lts
                  val totlen : LargeInt.int = sumTokenLength lts
-                 val numTokens : int       = length lts
-                 val mult : real           = Real.fromInt numTokens * avglen
+                 val numTokens : LargeInt.int = Int.toLarge (length lts)
+                 val mult : real           = Real.fromLargeInt numTokens * avglen
              in ( case tokenOf t of
                     PbXML (s1, s2)    => mkBaseComp avglen totlen numXMLChars
                   | PeXML (s1, s2)    => mkBaseComp avglen totlen numXMLChars
-                  | Ptime s           => mkBaseComp avglen totlen numTime
-                  | Pdate s           => mkBaseComp avglen totlen numDate
+                  | Ptime s           => mkBaseComp 1.0 numTokens numTime
+                  | Pdate s           => mkBaseComp 1.0 numTokens numDate
                   | Ppath s           => mkBaseComp avglen totlen numStringChars
                   | Purl s            => mkBaseComp avglen totlen numStringChars
                   | Pemail s            => mkBaseComp avglen totlen numStringChars
@@ -270,7 +298,7 @@ structure Model = struct
              let val avg = avgTokenLength ts
                  val tot = sumTokenLength ts
                  val num = LargeInt.fromInt ( length ts )
-             in measureRefined avg tot num rb
+             in measureRefined rb
              end
          | Switch ( a, id, bs)      =>
              let val switches         = map #1 bs

@@ -32,7 +32,7 @@ structure DIBBLER = struct
     val zip_code = Poption (aux, pn_t)
     val order_type: Ty = Base(aux, [(Pstring "34232", loc)])
     val order_details: Ty = Base(aux, [(Pint(34232, "34232"), loc)])
-    val unused: Ty = RefinedBase (aux, StringME "/[a-zA-Z0-9 ]*/", [(Pstring ("3456"), loc)])
+    val unused: Ty = RefinedBase (aux, StringME "/[0-9a-zA-Z ]*/", [(Pstring ("3456"), loc)])
     val stream: Ty = Base(aux, [(Pstring("34232"), loc)])
     val order_header_t: Ty = Pstruct(aux, [
 		     order_num, 

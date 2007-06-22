@@ -118,6 +118,15 @@ structure Complexity = struct
              | Choices c => Precise ( r * Real.fromLargeInt c )
              | Precise p => Precise ( r * p )
         )
+    fun divComp (n: LargeInt.int) (c: Complexity) : Complexity =
+        ( case c of
+               Bits b    => Precise ( (Real.fromLargeInt b) / 
+				      (Real.fromLargeInt n) )
+             | Choices c => Precise ( (Real.fromLargeInt c) /
+				      (Real.fromLargeInt n) )
+             | Precise p => Precise ( p / (Real.fromLargeInt n) )
+        )
+
 
     (* Probabilities should be in the interval [0, 1] *)
     type Probability = real

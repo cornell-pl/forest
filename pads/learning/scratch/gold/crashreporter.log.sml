@@ -20,7 +20,7 @@ structure CRASHREPORTER = struct
     val finish: Ty = RefinedBase(aux, StringConst "Finished writing crash report to: ", 
 			[(Pstring "Finished writing crash report to: ", loc)]) 
     val path: Ty = Base(aux, [(Ppath "/Users/kfisher/Library/Logs/CrashReporter/Preview.crash.log", loc)])
-    val filename: Ty = RefinedBase(aux, StringME "/[a-zA-Z0-9. ]*/", [(Pstring " ayx", loc)])
+    val filename: Ty = RefinedBase(aux, StringME "/[0-9a-zA-Z. ]*/", [(Pstring " ayx", loc)])
     val filepath: Ty = Pstruct(aux, [path, Poption(aux, filename)])
     val unable: Ty = RefinedBase(aux, StringConst "Unable to determine task_t for pid: ", 
 			[(Pstring "Unable to determine task_t for pid: ", loc)]) 

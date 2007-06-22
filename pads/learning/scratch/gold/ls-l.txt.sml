@@ -31,7 +31,7 @@ structure LS = struct
 		space, Base(aux, [(Pint (235656, "235656"), loc)])])
     val owner: Ty = RefinedBase(aux, StringConst "dpw", [(Pstring "dpw", loc)])
     val group: Ty = RefinedBase(aux, StringConst "fac", [(Pstring "fac", loc)])
-    val filename: Ty = RefinedBase(aux, StringME "/[a-zA-Z0-9\\-_ ~.]+/", [(Pstring "xyz", loc)])
+    val filename: Ty = RefinedBase(aux, StringME "/[0-9a-zA-Z\\-_ ~.]+/", [(Pstring "xyz", loc)])
     val bytes: Ty = Base(aux, [(Pint (1234, "1234"), loc)])
     val oneBase: Ty = RefinedBase(aux, IntConst 1, [(Pint (1, "1"), loc)])
     val intBase: Ty = Base(aux, [(Pint (5, "5"), loc)])
