@@ -1,5 +1,8 @@
-gen/dibbler.1000.chunk0.out: success rate = 99.80%
+gen/dibbler.1000.chunk0.out: time = 1.11
+gen/dibbler.1000.chunk0.out: success rate = 99.90%
+gen/dibbler.1000.chunk1.out: time = 1.11
 gen/dibbler.1000.chunk1.out: success rate = 99.80%
-gen/dibbler.1000.chunk2.out: success rate = 99.80%
-The average time = 1.09
-The average success rate = 99.80%
+gen/dibbler.1000.chunk2.out: time = 1.60
+gen/dibbler.1000.chunk2.out: success rate = 100.00%
+The average time = 1.27
+The average success rate = 99.90%

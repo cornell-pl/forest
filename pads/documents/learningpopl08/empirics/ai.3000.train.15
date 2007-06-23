@@ -1,5 +1,8 @@
-gen/ai.3000.chunk0.out: success rate = 97.57%
-gen/ai.3000.chunk1.out: success rate = 97.90%
-gen/ai.3000.chunk2.out: success rate = 99.50%
-The average time = 3.01
-The average success rate = 98.32%
+gen/ai.3000.chunk0.out: time = 3.62
+gen/ai.3000.chunk0.out: success rate = 97.40%
+gen/ai.3000.chunk1.out: time = 2.98
+gen/ai.3000.chunk1.out: success rate = 97.80%
+gen/ai.3000.chunk2.out: time = 2.56
+gen/ai.3000.chunk2.out: success rate = 99.57%
+The average time = 3.05
+The average success rate = 98.26%

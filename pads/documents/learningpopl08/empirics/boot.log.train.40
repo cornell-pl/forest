@@ -1,5 +1,8 @@
-gen/boot.log.chunk0.out: success rate = 89.31%
-gen/boot.log.chunk1.out: success rate = 93.89%
-gen/boot.log.chunk2.out: success rate = 92.75%
-The average time = 6.12
-The average success rate = 91.98%
+gen/boot.log.chunk0.out: time = 12.59
+gen/boot.log.chunk0.out: success rate = 84.35%
+gen/boot.log.chunk1.out: time = 79.35
+gen/boot.log.chunk1.out: success rate = 89.31%
+gen/boot.log.chunk2.out: time = 1.18
+gen/boot.log.chunk2.out: success rate = 93.13%
+The average time = 31.04
+The average success rate = 88.93%

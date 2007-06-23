@@ -1,5 +1,8 @@
-gen/quarterlypersonalincome.chunk0.out: success rate = 95.16%
-gen/quarterlypersonalincome.chunk1.out: success rate = 96.77%
-gen/quarterlypersonalincome.chunk2.out: success rate = 100.00%
-The average time = 4.60
+gen/quarterlypersonalincome.chunk0.out: time = 1.38
+gen/quarterlypersonalincome.chunk0.out: success rate = 98.39%
+gen/quarterlypersonalincome.chunk1.out: time = 11.91
+gen/quarterlypersonalincome.chunk1.out: success rate = 98.39%
+gen/quarterlypersonalincome.chunk2.out: time = 0.54
+gen/quarterlypersonalincome.chunk2.out: success rate = 95.16%
+The average time = 4.61
 The average success rate = 97.31%
