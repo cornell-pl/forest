@@ -11,7 +11,7 @@ foreach my $accumFile  (@accumFiles)
   while ($record = <ACCUM>) {
     if ($record =~ /Total time = ([0-9.]+)/)
     {
-#     printf ("$accumFile: total time = %.2f\n", $1);
+     printf ("$accumFile: time = %.2f\n", $1);
      $time += $1;
     }
     elsif ($record =~ /good vals: *([0-9]+) *bad vals: *([0-9]+)/) {
