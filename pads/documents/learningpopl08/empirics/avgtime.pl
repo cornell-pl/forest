@@ -65,3 +65,4 @@ foreach my $gold (@golden)
 		$total1sttime/$num,
 		$total2ndtime/$num, ($total1sttime+$total2ndtime)/$num);
 }
+close FILE;

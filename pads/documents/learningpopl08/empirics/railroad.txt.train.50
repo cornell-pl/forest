@@ -1,0 +1,8 @@
+gen/railroad.txt.chunk0.out: time = 3.88
+gen/railroad.txt.chunk0.out: success rate = 76.12%
+gen/railroad.txt.chunk1.out: time = 4.93
+gen/railroad.txt.chunk1.out: success rate = 70.15%
+gen/railroad.txt.chunk2.out: time = 6.80
+gen/railroad.txt.chunk2.out: success rate = 79.10%
+The average time = 5.21
+The average success rate = 75.12%

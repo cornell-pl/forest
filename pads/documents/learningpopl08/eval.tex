@@ -48,6 +48,31 @@ Have a discussion here about while the learning tool may produce a longer descri
 it parses all data correctly so the user is getting all these for free which is a tremendous benefit.
 Discuss 1967 where the inference does better than human.
 
+\begin{table*}
+\begin{center}
+\begin{tabular}{|l||r|r|r||r|r|r|c|} \hline
+Formats 	& Inf score 	&Ref score	& Man score 	& Inf time 	& Ref time 	& Total time  	& Man time (h)\\ \hline \hline
+1967Transactions.short & 0.295 	&0.218 		&0.268		& 0.22       	& 2.08     	& 2.30  	& 4.0  \\ \hline
+MER\_T01\_01.csv & 0.648 	&0.112		&0.138		& 0.11       	& 2.61       	& 2.72 		& 0.5  \\ \hline
+ai.3000          & 0.503	&0.332		&0.338		& 2.02       	& 27.36      	& 29.38		& 1.0  \\ \hline
+asl.log          & 0.630	&0.267		&0.361		& 2.91       	& 613.01	& 615.92 	& 1.0  \\ \hline
+boot.log         & 0.620	&0.481		&0.703		& 0.12       	& 5.81       	& 5.92 		& 1.0  \\ \hline
+crashreporter.log & 0.607	&0.328		&0.348		& 0.13       	& 5.47       	& 5.59 		& 2.0  \\ \hline
+crashreporter.log.mod & 0.612	&0.329		&0.347		& 0.15       	& 5.76       	& 5.90 		& 2.0  \\ \hline
+dibbler.1000     & 0.602	&0.470		&0.438		& 2.15       	& 8.22       	& 10.36 	& 0.5  \\ \hline
+ls-l.txt         &0.559		&0.333		&0.401		& 0.01       	& 0.14       	& 0.14 		& 1.0  \\ \hline
+netstat-an       &0.413		&0.394		&0.319		& 0.05       	& 3.26       	& 3.32 		& 1.0  \\ \hline
+page\_log        & 0.540	&0.107		&0.353		& 0.12       	& 0.47       	& 0.59 		& 0.5   \\ \hline
+quarterlypersonalincome & 0.544	&0.367		&0.354		& 0.06       	& 15.87      	& 15.93 	& 48  \\ \hline
+railroad.txt     &0.715		&0.506		&0.522		& 0.05       	& 22.70      	& 22.75 	& 2.0  \\ \hline
+scrollkeeper.log & 0.625	&0.354		&0.352		& 0.11       	& 4.46       	& 4.57 		& 1.0  \\ \hline
+windowserver\_last.log &0.618	&0.241		&0.267		& 0.31       	& 18.57      	& 18.88 	& 1.5  \\ \hline
+yum.txt          &0.827		&0.305		&0.474		& 0.10       	& 1.92       	& 2.02 		& 5.0  \\ \hline
+\end{tabular}
+\caption{Golden results (Inf: structure inference, Ref: Refinement, Man: Human export)}
+\end{center}
+\end{table*}
+
 \item Select random training sets of 5\%, 10\%, 15\%, 20\% 25\%, 30\%, 35\% and 40\% of 
 the original data (3 sets for each size) and run learning tool end to end on 
 them and take the average of 3 sets. 
@@ -60,4 +85,14 @@ show increasing accuracy and execution time as sample size goes up. Point out an
 where the abolute training size is too small (e.g. for ls-l.txt which only has 35 lines) which results
 in overfitting. ls-l.txt is also problematic as it has a header in the first line and if that is not included
 in the training set, the data will not parse.
+
+\begin{figure}
+\epsfig{file=successrate.eps, width=\columnwidth}
+\caption{Success rates of training sets}
+\end{figure}
+
+\begin{figure}
+\epsfig{file=traintime.eps, width=\columnwidth}
+\caption{Execution times of training sets}
+\end{figure}
 \end{enumerate}

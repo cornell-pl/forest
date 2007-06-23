@@ -1,0 +1,8 @@
+gen/windowserver_last.log.chunk0.out: time = 12.78
+gen/windowserver_last.log.chunk0.out: success rate = 99.56%
+gen/windowserver_last.log.chunk1.out: time = 11.50
+gen/windowserver_last.log.chunk1.out: success rate = 98.97%
+gen/windowserver_last.log.chunk2.out: time = 11.98
+gen/windowserver_last.log.chunk2.out: success rate = 99.56%
+The average time = 12.09
+The average success rate = 99.36%
