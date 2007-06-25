@@ -159,6 +159,7 @@ if (length($sml) == 0) {
   $sml = "" if ($sml =~ /not/);
   $sml_from = "your path";
 }
+$sml =~ s/^\s+//;  # remove leading spaces
 if (length($sml) == 0) {
   print "\n** No environment variable SML, and no sml in your path.\n";
   exit -1;
