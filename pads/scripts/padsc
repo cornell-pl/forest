@@ -163,10 +163,12 @@ if (length($sml) == 0) {
   print "\n** No environment variable SML, and no sml in your path.\n";
   exit -1;
 }
+my $sml_executable = $sml;
+$sml_executable =~ s/\s.*//;
 my $sml_resolved;
-chomp($sml_resolved = `readlink -f $sml 2>/dev/null`);
+chomp($sml_resolved = `readlink -f $sml_executable 2>/dev/null`);
 if ($sml_resolved eq "") {
-  $sml_resolved = $sml;
+  $sml_resolved = $sml_executable;
 }
 if (! (-x $sml_resolved)) {
   print "\n** sml program '$sml' (from $sml_from)"
