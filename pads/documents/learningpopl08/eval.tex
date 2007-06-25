@@ -14,6 +14,30 @@ data complexity.
 \end{itemize}
 
 \subsection{Setup}
+\begin{table*}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|} \hline
+Title		& Chunks & Bytes	& Mode  &Header	& Array	& Group & Msgs 	& Comments \\ \hline \hline
+1967Transactions.short	& 999	& 70929	& line	& no	& no	& no	& no	& transaction records \\ \hline
+MER\_T01\_01.cvs	& 491	& 21731 & line  & yes	& no	& yes	& no	& comma-separated records\\ \hline
+ai.3000		& 3000		& 293460 & line	& no	& no	& yes	& no	& web log of Amnesty International \\ \hline
+asl.log &	1500	& 279600	& line	& no	& no	& yes	& no	& log file of Mac ASL \\ \hline	
+boot.log	& 262	& 16241		& line	& no	& no	& no	& yes	& Mac OS boot log \\ \hline
+crashreporter.log	& 441	& 50152 & line	& no	& no	& no	& yes	& crashreporter daemon log \\ \hline
+crashreporter.mod & 441	& 49255	& line	& no	& no	& no	& yes	& modified crashreporter daemon log \\ \hline
+dibbler.1000	& 999	& 142607 	& line	& yes	& yes	& no	& no	& AT\&T call log \\ \hline
+ls-l.txt	& 35	& 1979		& line	& yes	& no	& no	& no	& Stdout from Unix command ls -l \\ \hline
+netstat-an	& 202	& 14355		& block	& yes	& no	& no	& no	& output from netstat -an \\ \hline
+page\_log	& 354	& 28170		& line	& no	& no	& no	& no	& printer logs \\ \hline
+quarterlypersonalincome & 62	& 10177	& line	& yes	& no	& yes	& no	& spread sheet \\ \hline
+railrail.txt	& 67	& 6218		& line	& yes	& no	& yes	& no	& US rail road info \\ \hline
+scrollkeeper.log & 671	& 66288		& line	& no	& no	& no	& yes	& log from cataloging system \\ \hline
+windowserver\_last.log & 680	& 52394	& line	& no	& no	& no	& yes	& log from LoginWindow server on Mac \\ \hline
+yum.txt		& 328	& 18221		& line	& no	& no	& no	& no	& log package installer Yum \\ \hline
+\end{tabular}
+\caption{Benchmark profile}
+\end{center}
+\end{table*}
 
 \begin{enumerate}
 \item Brief intro to 15 golden formats in a big table and possibly group them by
@@ -96,3 +120,36 @@ in the training set, the data will not parse.
 \caption{Execution times of training sets}
 \end{figure}
 \end{enumerate}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|r|l|c|c|} \hline
+Title 			& Bytes 	& Ty Comp	& 90\% 		& 95\% \\ \hline \hline
+1967Transactions.short	& 70929		& 0.0003	& 5		& 5 			\\ \hline
+MER\_T01\_01.csv        & 21731 	& 0.0037	& 5		& 5\\ \hline
+ai.3000                 & 293460 	& 0.0004	& 5		& 10\\ \hline
+asl.log                 & 279600	& 0.0012	& 5		& 10\\ \hline
+boot.log                & 16241		& 0.0213	& 40		& 50\\ \hline
+crashreporter.log       & 50152 	& 0.0052	& 5		& 5\\ \hline
+crashreporter.log.mod   & 49255		& 0.0053	& 5		& 5\\ \hline
+dibbler.1000            & 142607 	& 0.0001	& 5		& 5\\ \hline
+ls-l.txt                & 1979		& 0.0461	& 50		& 70\\ \hline
+netstat-an              & 14355		& 0.0118	& 20		& 25\\ \hline
+page\_log               & 28170		& 0.0032	& 5		& 5\\ \hline
+quarterlypersonalincome & 10177		& 0.017		& 10		& 20\\ \hline
+railroad.txt            & 6218		& 0.0485	& 60		& 85\\ \hline
+scrollkeeper.log        & 66288		& 0.002		& 5		& 5\\ \hline
+windowserver\_last.log  & 52394		& 0.0084	& 5		& 10\\ \hline
+yum.txt                 & 18221		& 0.0124	& 30		& 40\\ \hline
+\end{tabular}
+\caption{Training size (\%) vs. min required accuracy}
+\end{center}
+\end{table}
+
+\begin{figure}
+\begin{center}
+\epsfig{file=traintycomp.eps, width=\columnwidth}
+\caption{Correlation between structure complexity of 
+the data and minimum training size required}
+\end{center}
+\end{figure}

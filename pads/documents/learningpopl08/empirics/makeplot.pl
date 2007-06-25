@@ -29,7 +29,7 @@ set ylabel \"Success rate (%)\"
 set output \'successrate.eps\'
 plot ";
 print GNU1 "set key top left
-set ylabel \"Avg Time (secs)
+set ylabel \"Avg Time (secs)\"
 set output \'traintime.eps\'
 plot ";
 $index = 0;
