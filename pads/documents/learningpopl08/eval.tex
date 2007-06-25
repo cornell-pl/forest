@@ -51,6 +51,20 @@ timing (human time vs. machine time), structure quality (normalized scores), sam
 \item Different representations: HW IR, HW PADS, Inferred IR, Inferred PADS, we measure
 the accuracy on the HW PADS and inferred PADS, and the time to produce and the MDL scores on
 the HW IR and inferred IR.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|c|c|c|} \hline
+		& Parsing accuracy 	& MDL score 	&  Time to prod.\\ \hline
+Inferred IR 	& -			& X		& X	\\ \hline
+Inferred PADS	& X			& -		& -	\\ \hline 
+Human IR	& -			& X		& X	\\ \hline	
+Human PADS	& X			& -		& -	\\ \hline	
+\end{tabular}
+\caption{Relationship between representations and measurements}
+\end{center}
+\end{table}
+
 \end{enumerate}
 
 \subsection{Experiments}
@@ -142,7 +156,7 @@ scrollkeeper.log        & 66288		& 0.002		& 5		& 5\\ \hline
 windowserver\_last.log  & 52394		& 0.0084	& 5		& 10\\ \hline
 yum.txt                 & 18221		& 0.0124	& 30		& 40\\ \hline
 \end{tabular}
-\caption{Training size (\%) vs. min required accuracy}
+\caption{Min Training size (\%) vs. required accuracy}
 \end{center}
 \end{table}
 
