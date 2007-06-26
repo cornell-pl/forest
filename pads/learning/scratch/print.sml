@@ -137,18 +137,20 @@ structure Printing = struct
                  | Switch (aux, id, labeledTys) => ()(* to be filled in *)
                  | RArray _ => () (* to be filled in *)
 		 | Poption _ => () (* to be filled in *)
-	    fun cpMkFile () = 
-		let val fileName = path^"GNUmakefile"
+	    fun cpFile src dest = 
+		let val fileName = path^src
 		    in
 			ignore (TextIO.openIn fileName)
 			    handle Iox => 
-			     (let val cpcmd = "cp "^(!executableDir)^"/GNUmakefile.output "^fileName
+			     (let val cpcmd = "cp "^(!executableDir)^"/"^dest^" "^fileName
 			      in
 				  print "copy command: "; print cpcmd; print "\n";
 				  OS.Process.system cpcmd;
 				  ()
 			      end)
 		end
+	    fun cpMkFile () = cpFile "GNUmakefile" "GNUmakefile.output"
+            fun cpTokenFile tokenFileName = cpFile tokenFileName tokenFileName
     	in  
           ( print "\nOutputing partitions to directory: "; print path; print "\n"
           ; print ( "descName.1 = " ^ descName ^ "\n")
@@ -171,6 +173,8 @@ structure Printing = struct
 		 ; print "Excutable directory:"; print (!executableDir); print "\n"
                  ; print ( "descName.2 = " ^ descName ^ "\n")
                  ; cpMkFile()
+                 ; cpFile "vanilla.p" "vanilla.p"
+                 ; cpFile "tokens.p" "tokens.p"
                  )
             else print "Output path should specify a directory.\n"
           )
