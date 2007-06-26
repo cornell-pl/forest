@@ -21,8 +21,11 @@ struct
 			      of PbXML(tag,args)=> PeXML(tag,"")
 			      |  _ => raise Fail "Unexpected beginning tag.\n"))]
 
-
-
+    val delimiterCandidates : Token list = 
+	   let val candidateChars = [#"|", #",", #";", #"!", #"&", #":", #"^", #"%", #"$", #"#", #"~"] 
+	   in
+	       List.map (fn x=> Other x) candidateChars
+	   end
 
     (* Function to compute the "complexity" of a type.
        -- defined to be the depth of the tree, ie, the number of alternations of type constructors
@@ -70,12 +73,30 @@ struct
 			    val compare = compToken
 		     end) 
 
+
    structure IntMap = RedBlackMapFn(
                      struct type ord_key = int
 			    val compare = Int.compare
 		     end) 
 
    type RecordCount = (int ref) TokenTable.map
+   val tokenCount : RecordCount ref = ref TokenTable.empty
+   fun countToken counts t = 
+       case TokenTable.find (counts, t)
+       of NONE =>  TokenTable.insert(counts, t, ref 1)
+       |  SOME iref => (iref := !iref + 1; counts)
+   fun countTokensPerRecord counts [] = counts
+     | countTokensPerRecord counts ((t,loc)::ts) = countTokensPerRecord (countToken counts t) ts
+   fun countTokens counts [] = counts
+     | countTokens counts (ts::tts) = countTokens (countTokensPerRecord counts ts) tts
+   fun updateTokenCounts tokens = tokenCount := countTokens (!tokenCount) tokens
+   fun getSeparator rtokens = 
+       let val () = updateTokenCounts rtokens
+	   fun tokenInFile t = not(Option.isSome (TokenTable.find (!tokenCount,t)))
+       in
+	   List.find tokenInFile delimiterCandidates
+       end
+
    type histogram = {hist : (int ref) IntMap.map ref, 
 		     total: int ref,        (* number of occurrences of token in file *)
 		     coverage : int ref,    (* number of records with at least one occurrence of token *)
@@ -1458,6 +1479,7 @@ file is a record and all of them collectively represent a sample data *)
 	    val records = loadFiles fileNames
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
+	    val separator = getSeparator rtokens  (* for format program: returns some character not in input source *)
 (*
 	    val _ = print (contextsToString rtokens)
 *)
@@ -1466,7 +1488,7 @@ file is a record and all of them collectively represent a sample data *)
 	    val ty = ContextListToTy 0 rtokens
 	    val sty = simplifyTy ty
 	in
-	    sty
+	    (sty, separator)
 	end
 
 

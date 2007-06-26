@@ -97,17 +97,31 @@ structure Printing = struct
 	end
 
     fun dumpXMLProgram (path:string) (descName:string) (tyName:string) : unit = 
-	let val accumProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+	let val xmlProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
                                "#include \""^descName^".h\"\n"^
                                "#include \"template/read_orig_write_xml.h\"\n"
 
 	    val strm = TextIO.openOut (path^descName^"-xml.c")
-            val () = TextIO.output(strm, accumProgram)
+            val () = TextIO.output(strm, xmlProgram)
 	in
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTyInfo ( path : string ) ( descName : string ) ( baseTy : Ty ) ( rewrittenTy : Ty ) ( ct : ComputeTimes ) : unit = 
+    fun dumpFmtProgram (path:string) (descName:string) (tyName:string) (sep): unit = 
+	let val separator = case sep of NONE => "| /*WARNING: separator occurs in data file*/"
+	                    | SOME t => tokenToString t
+	    val FmtProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+                               "#include \""^descName^".h\"\n"^
+                               "#define DELIMS \""^separator^" \"\n"^
+                               "#include \"template/read_format.h\"\n"
+
+	    val strm = TextIO.openOut (path^descName^"-fmt.c")
+            val () = TextIO.output(strm, FmtProgram)
+	in
+	    TextIO.closeOut strm
+	end
+
+    fun dumpTyInfo ( path : string ) ( descName : string ) ( baseTy : Ty ) ( rewrittenTy : Ty ) ( ct : ComputeTimes ) (sep:Token option) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) =>
@@ -151,7 +165,8 @@ structure Printing = struct
 		       print ("Ty name ="^tyName^"\n");
 		       dumpAccumProgram path descName tyName;
 		       dumpAccumXMLProgram path descName tyName;
-		       dumpXMLProgram path descName tyName
+		       dumpXMLProgram path descName tyName;
+		       dumpFmtProgram path descName tyName sep
 		   end
 		 ; print "Excutable directory:"; print (!executableDir); print "\n"
                  ; print ( "descName.2 = " ^ descName ^ "\n")

@@ -29,7 +29,7 @@ structure Main : sig
             end
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
-                val ty           = computeStructure ( !srcFiles )
+                val (ty,sep)     = computeStructure ( !srcFiles )
 (*		val _ 		 = printTy (measure ty) *)
                 val end3Times    = updateTokenEnd ( Time.now () ) end2Times
                 val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
@@ -40,6 +40,7 @@ structure Main : sig
                                                        measuredTy
                                                        rewrittenTy
                                                        computeTimes
+						       sep
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
     end
