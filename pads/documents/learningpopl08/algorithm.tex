@@ -206,16 +206,19 @@ and the last field allows for slop after the array is over.  If this
 slop turns out to be unnecessary, the rewriting rules will clean up
 the mess in the next phase.
 
-Finally, the \cd{UnionProphecy} specifies that the top-level structure will
-involve a union type.  Like a \cd{StructProphecy}, the \cd{UnionProphecy}
-carries a \cd{chunks list} with it and each element of the list is 
-used recursively to infer a branch of the union.  Merging all elements
-of the list will result in the original input.
+Finally, the \cd{UnionProphecy} specifies that the top-level structure
+will involve a union type.  Like a \cd{StructProphecy}, the
+\cd{UnionProphecy} carries a \cd{chunks list} with it and each element
+of the list is used recursively to infer a branch of the union.
+Merging all elements of the list will result in the original input.
+Intuitively, recursive partitioning of union chunks is done
+``horizontally'' or as recursive partitioning of struct chunks is done
+``vertically.''
 
 As an example, recall the Crashreporter.log data presented in
 Figure~\ref{fig:example}.  After tokenization, assuming a chunk is
 a line of data, the two chunks from the example contain the following 
-token sequences (recall \cd{[*]} and \cd{(*)} are meta-token encapsulating
+token sequences (recall \cd{[*]} and \cd{(*)} are meta-tokens encapsulating
 everything within the respective parens):
 {\small
 \begin{verbatim}
@@ -257,10 +260,12 @@ Now, since every chunk in set 5 contains exactly one base type
 token, the recursion naturally bottoms out with the oracle claiming it has
 found the base type \cd{Palpha}.  On the other hand, when analyzing set 4, 
 the oracle detects insufficient commonality between chunks and decides
-the top-most type constructor must be a union. It recursively analyzes 
-the first chunk in set 4 to determine the type of one 
-branch of the union and the second chunk in set 4 to determine the type of
-the other branch of the union.  With no variation in either branch,
+the top-most type constructor must be a union. It partitions set 4 into
+two more sets, with each group containing only 1 chunk (either
+\{\cd{Pdate ' ' ...}\} or \{\cd{'-' ' '}\}).  The first set is analyzed to 
+determine the type of the first branch of the union and the second set 
+is analyzed to determine the second branch of the union.
+With no variation in either branch,
 the algorithm quickly discovers an accurate type for each.
 
 Backing out of the recursion, having completely discovered the
@@ -302,12 +307,14 @@ Here the chunks have the following structure:
 In this case, our algorithm guesses that the top-level structure involves
 an array and hence partions the data into sets of chunks for the
 array preamble, the array itself, and the array postamble.  The
-preamble chunks have the form \cd{Pint '|'} and the
-postamble chunks have the form \cd{Pint}, so their types easily discovered.  
-The type for the array elements will be discovered and through analysis of the
-following list of chunks.  The oracle managed to split the two
-large initial chunks into a series of many smaller array-element chunks
-by noticing the \cd{'|'} token might serve as an array separator.
+preamble chunks all have the form \{\cd{Pint '|'}\} and the
+postamble chunks all have the form \{\cd{Pint}\}, so their 
+types easily discovered.  The algorithm discovers the type of the
+array elements by analyzing the list of chunks below.
+These chunks were created by splitting the two
+large initial chunks into a series of many smaller array-element chunks.
+These smaller chunks are discovered by assuming that the \cd{'|'} token
+appears somewhere in every array element.
 {\small
 \begin{verbatim}
 Pint '|' 
@@ -326,6 +333,8 @@ with a Pdate.  Likewise, Crashreporter contains many occurrences of
 the \cd{' '} token, which, like the \cd{'|'} in Sirius, might serve as
 an array separator.
 
+\input{discoveryalg2.tex}
+
 \paragraph*{The Magic.}
 In order to make informed guesses about the structure of the chunks
 under consideration, every recursive iteration of the algorithm computes 
@@ -336,114 +345,15 @@ having a certain number of occurrences of the token (on the $x$-axis).
 Figure~\ref{fig:histograms} presents a number of histograms computed
 from the top-level analysis of Crashreporter.log and Sirius chunks.
 
-Intuitively, histograms with high {\em coverage}, meaning the token appears
-in almost every chunk and has a {\em narrow} distribution, meaning the variation in
+Intuitively, tokens associated 
+with histograms with high {\em coverage}, meaning the token appears
+in almost every chunk, and {\em narrow} distribution, meaning the variation in
 the number of times a token appears in different chunks is low, are
 good candidates for defining structs.  Similarly, histograms with
-high {\em coverage} and wide distribution, are good candidates for defining
+high coverage and {\em wide} distribution, are good candidates for defining
 arrays.  Finally, histograms with low coverge or intermediate width
-represent tokens that form part of a union.  For example, histogram (a)
-from Figure~\ref{fig:histograms} ... {\em explain once we have data}
+represent tokens that form part of a union.  
 
-To make the intuitions above precise, we must define a number of
-properties of histograms.  First, a histogram $h$ is a list of pairs
-of natural numbers $(x,y)$ where $x$ denotes the token frequency and
-$y$ denotes the number of records with that frequency.  
-All first elements of pairs in the list must be unique.  
-The {\em width} of a
-histogram ({\em width}($h$)) is the number of elements in the list
-excluding the zero-bar ({i.e.,} excluding element $(0,y)$).  
-A histogram
-$\normal{h}$ is in normal form when the first element of the list is
-the zero column and all subsequent elements are sorted in descending
-order by the $y$ component.  For example, if $h_1$ is the histogram
-$[(0,5), (1,10), (2,25), (3,15)]$ then {\em width}($h_1$) is 3 and its
-normal form $\normal{h_1}$ is $[(0,5), (2, 25), (3,15), (1,10)]$.
-
-We often refer to $y$ as the {\em mass} of the element $(x,y)$
-and given a histogram $h$, we refer to the mass of the $i^{\mathrm th}$
-using the notation $h[i]$.  For instance, $h_1[3] = 15$ and 
-$\bar{h_1}[3] = 10$.  The {\em residual mass} ({\em rm}) of a column $i$ in 
-a normalized histogram $h$ is the mass of all the columns to the right of 
-$i$ plus the mass of the zero-bar.  Mathematically, 
-{\em rm}$(\bar{h},i) = h[0] + \sum_{j=i+1}^{\mathit{width}(h)} h[j]$.
-For example, {\em rm}$(\bar{h_1},1) = 5 + 15 + 10 = 30$.
-The residual mass is the primary characterization of ``narrowness''
-of a histogram.  Those histograms with low residual mass of the first
-column ({\em i.e.,} {\em rm}$(\bar{h_1},1)$ is small) 
-are good candidates for structs.
-
-In order to distinguishing between
-structs, unions and arrays,
-we also need to define the {\em coverage} of a histogram, which
-is simply the sum of the non-zero histogram elements.  Mathematically,
-{\em coverage}$(\bar{h}) = \sum_{j=1}^{\mathit{width}(h)} h[j]$.
-
-Finally, recursive partitioning of the data works better when
-groups of tokens with similar distributions are considered together
--- when two tokens have the same distribution, it is almost always the 
-case that they form part of the same type constructor.  There are a 
-number of ways to define {\em similarity} of histograms.  We have
-chosen a symmetric form of {\em relative entropy} \cite{Lin91:divergence}.
-\footnote{Suggested by Rob Schapire, personal communication, May 2007.}  
-The (plain) relative entropy
-of two normalized histograms $\normal{h_1}$ and $\normal{h_2}$, 
-written \relativee{\normal{h_1}}{\normal{h_2}}, is
-defined as follows.
-\[
- \relativee{\normal{h_1}}{\normal{h_2}} 
-   = \sum_{j=1}^{\mathit{width}(\normal{h_1})} \normal{h_1}[j]*log(\normal{h_1}[j]/\normal{h_2}[j])
-\]
-To create a symmetric form, we first find the average of the two
-histograms in question (written $\addh{h_1}{h_2}$)
-by summing corresponding columns and dividing by two.  This
-has the effect of preventing the denominator from being zero in the 
-final relative entropy computation.  At last, the symmetric
-relative entropy is:
-\[
- \srelativee{\normal{h_1}}{\normal{h_2}} 
-   = \frac{1}{2}  \relativee{\normal{h_1}}{\addh{\normal{h_1}}{\normal{h_2}}}
-   +  \frac{1}{2}  \relativee{\normal{h_2}}{\addh{\normal{h_1}}{\normal{h_2}}}
-\]
-
-Now that we have defined the relevant properties of histograms,
-we can explain the method used to recursively guess type constructors.
-
-\begin {enumerate}
-\item Group related histograms into sets as follows.  
-A histogram $h_1$ belongs to
-group $G$ provided there exists another histogram $h_2$ in $G$
-such that $\srelativee{\normal{h_1}}{\normal{h_2}} < 
-\mathrm{ClusterTolerance}$.  We have found a ClusterTolerance
-of 0.01 is effective.  A histogram dissimilar to all others may form 
-its own group.
-
-\item Identify a struct by:
-\begin {enumerate}
-\item  Considering all groups $G$, in descending order by {\em StructScore}.
-The first group $G$ that contains any tokens that satisfy the
- following minimum criteria will be declared a struct on this 
-iteration of the recursive algorithm:
-\begin {itemize}
-\item maximum residual mass
-\item minimum coverage
-\end{itemize}
-If no tokens in any group satisfies the struct criterion, check for arrays.
-\end{enumerate}
-\item Identify an array by:
-\begin {enumerate}
-\item  Considering all groups $G$, in descending order by {\em ArrayScore}.
-The first group $G$ that contains any tokens that satisfy the
- following minimum criteria will be declared an array on this 
-iteration of the recursive algorithm:
-\begin {itemize}
-\item minimum coverage
-\end{itemize}
-If no tokens in any group satisfies the array criterion, find a union.
-\end{enumerate}
-\item Identify a union by partitioning the current set of chunks according
-to the first token in each chunk.
-\end{enumerate}
 
 \begin {figure*}
 \begin{center}
@@ -469,15 +379,166 @@ to the first token in each chunk.
 %
 %May 6 of them 3 each from Crashreporter.log and Sirius?
 %We'll pick carefully.
-\caption{Selected Histograms for Crashreporter.log and Dibbler.1000}
+\caption{Histograms (a), (b), (c), (d), (e), (f) and
+(g) are generated from top-level analysis of Crashreporter.log tokens.
+The corresponding tokens are (a) {\tt [*]}, 
+(b)  {\tt Pint}, (c) {\tt PDate}, (d) {\tt PTime}, (e) {\tt -}, (f) {\tt Palpha} and
+(g) {\tt Pwhite}.  Histograms (h) {\tt Palpha}, (i) {\tt Pint}, and 
+(j) {\tt Pwhite} are generated from analysis of Crashreporter.log from
+set 1 (the second level of recursion).  Histogram (k) is generated from
+top-level analysis of the {\tt |} token from Dibbler.1000.}
 \label{fig:histograms} 
 \end{center}
 \end{figure*}
 
-\paragraph*{Additional Tricks.}
-Grouping
+As a first example, consider histogram (a)
+from Figure~\ref{fig:histograms}.  This is the perfect candidate for a 
+struct --
+it has a single column that covers 100\% of the records.  Indeed,
+this histogram corresponds to the \cd{[*]} token in Crashreporter.log.
+Whenever such a histogram is detected, it will always be chosen
+for immediate creation of a struct and partitioning.  All of the
+other top-level histograms for Crashreporter.log contain variation
+and hence are less certain indicators of data source structure.
 
-\input{discoveryalg2.tex}
+As a second example, consider histograms (h), (i) and (j) and compare
+them with histograms (f), (b) and (g). The histograms (h), (i) and (j)
+are generated from the second level of recursive analysis. They
+correspond to the histograms for chunk set 1, explained in the
+previous subsection.  These histograms have far less variation in them
+than the corresponding top-level histograms.  In particular, notice
+that histogram (h) is a perfect struct histogram whereas histogram (f)
+contains a great deal of variation.  This example illustrates where
+the real power of our divide-and-conquer algorithm comes from -- if
+{\em just one token} in the top-level structure can be identified as a
+good partitioner for the data, it is very often the case that in the
+next level of recursive analysis, the histograms become substantially
+sharper and more amenable to analysis.
+
+As a third example, consider histogram (k).  This histogram illustrates
+the classic pattern for tokens involved in arrays -- it has a very long
+tail.  And indeed, the \cd{|} token in the Dibber.1000
+data does act like a separator for fields of an array.
+
+To make the intuitions discussed above precise, we must define a number of
+properties of histograms.  First, a histogram $h$ is a list of pairs
+of natural numbers $(x,y)$ where $x$ denotes the token frequency and
+$y$ denotes the number of records with that frequency.  
+All first elements of pairs in the list must be unique.  
+The {\em width} of a
+histogram ({\em width}($h$)) is the number of elements in the list
+excluding the zero-bar ({i.e.,} excluding element $(0,y)$).  
+A histogram
+$\normal{h}$ is in normal form when the first element of the list is
+the zero column and all subsequent elements are sorted in descending
+order by the $y$ component.  For example, if $h_1$ is the histogram
+$[(0,5), (1,10), (2,25), (3,15)]$ then {\em width}($h_1$) is 3 and its
+normal form $\normal{h_1}$ is $[(0,5), (2, 25), (3,15), (1,10)]$.
+
+We often refer to $y$ as the {\em mass} of the element $(x,y)$
+and given a histogram $h$, we refer to the mass of the $i^{\mathrm th}$
+element of the list 
+using the notation $h[i]$.  For instance, $h_1[3] = 15$ and 
+$\normal{h_1}[3] = 10$.  The {\em residual mass} ({\em rm}) of a column $i$ in 
+a normalized histogram $h$ is the mass of all the columns to the right of 
+$i$ plus the mass of the zero-bar.  Mathematically, 
+{\em rm}$(\normal{h},i) = \normal{h}[0] + \sum_{j=i+1}^{\mathit{width}(\normal{h})} \normal{h}[j]$.
+For example, {\em rm}$(\normal{h_1},1) = 5 + 15 + 10 = 30$.
+The residual mass is the primary characterization of ``narrowness''
+of a histogram.  Those histograms with low residual mass of the first
+column ({\em i.e.,} {\em rm}$(\normal{h_1},1)$ is small) 
+are good candidates for structs.
+
+In order to distinguishing between
+structs, unions and arrays,
+we also need to define the {\em coverage} of a histogram, which
+is simply the sum of the non-zero histogram elements.  Mathematically,
+{\em coverage}$(\normal{h}) = 
+                  \sum_{j=1}^{\mathit{width}(\normal{h})} \normal{h}[j]$.
+
+Finally, recursive partitioning of the data works better when
+groups of tokens with similar distributions are considered together
+-- when the algorithm has access to a sufficient amount of data and
+two tokens have the same distribution, it is always the 
+case that they form part of the same type constructor.  There are a 
+number of ways to define {\em similarity} of histograms.  We have
+chosen a symmetric form of {\em relative entropy} \cite{Lin91:divergence}.
+%\footnote{Suggested by Rob Schapire, personal communication, May 2007.}  
+The (plain) relative entropy
+of two normalized histograms $\normal{h_1}$ and $\normal{h_2}$, 
+written \relativee{\normal{h_1}}{\normal{h_2}}, is
+defined as follows.
+\[
+ \relativee{\normal{h_1}}{\normal{h_2}} 
+   = \sum_{j=1}^{\mathit{width}(\normal{h_1})} \normal{h_1}[j]*log(\normal{h_1}[j]/\normal{h_2}[j])
+\]
+To create a symmetric form, we first find the average of the two
+histograms in question (written $\addh{h_1}{h_2}$)
+by summing corresponding columns and dividing by two.  This
+has the effect of preventing the denominator from being zero in the 
+final relative entropy computation.  At last, the symmetric
+relative entropy is:
+\[
+ \srelativee{\normal{h_1}}{\normal{h_2}} 
+   = \frac{1}{2}  \relativee{\normal{h_1}}{\addh{\normal{h_1}}{\normal{h_2}}}
+   +  \frac{1}{2}  \relativee{\normal{h_2}}{\addh{\normal{h_1}}{\normal{h_2}}}
+\]
+
+Now that we have defined the relevant properties of histograms,
+we can explain how to guess type constructors.
+
+\begin {enumerate}
+\item Identify a base type when each chunk contains the same single token.
+
+\item Otherwise, group related histograms into sets as follows.  
+A histogram $h_1$ belongs to
+group $G$ provided there exists another histogram $h_2$ in $G$
+such that $\srelativee{\normal{h_1}}{\normal{h_2}} < 
+\mathrm{ClusterTolerance}$.  We have found a ClusterTolerance
+of 0.01 is effective.  A histogram dissimilar to all others may form 
+its own group.
+
+\item Identify a struct by 
+considering all groups $G$, in descending order by residual mass
+of the minimum histogram in the group.
+The first group $G$ that contains any histograms $h$ that satisfy the
+ following minimum criteria will be declared a struct on this 
+iteration of the recursive algorithm:
+\begin {itemize}
+\item $\mathit{rm}(h) < \mathrm{MaxMass}$
+\item $\mathit{coverage}(h) > \mathrm{MinCoverage}$
+\end{itemize}
+If no histograms satisfy the struct criterion, check for arrays.
+If histograms $h_1$, $h_2$, {\em etc.} do satisfy the struct criterion, 
+then partition the current chunks into subsequences separated
+by tokens $t_1$, $t_2$, {\em etc.}  If tokens $t_1$, $t_2$, {\em etc.}
+appear in different orders in different chunks, introduce a union of structs
+instead of a simple struct, with one branch of the union per token 
+ordering.  If some chunks do not contain the appropriate tokens, 
+create a separate branch of the union for those chunks.
+
+\item Identify an array by considering all groups $G$, in descending 
+order by coverage of the highest coverage histogram in the group.
+The first group $G$ that contains any histograms that satisfy the
+ following minimum criteria will be declared an array on this 
+iteration of the recursive algorithm:
+\begin {itemize}
+\item $\mathit{width}(h) > 3$
+\item $\mathit{coverage}(h) > \mathrm{MinCoverage}$
+\end{itemize}
+If no tokens in any group satisfies the array criterion, find a union.
+If histograms $h_1$, $h_2$, {\em etc.}, do satisfy the array criterion, 
+then partition the current chunks into (1) a preamble subsequence 
+that contains 1 occurrence of corresponding tokens $t_1$, $t_2$, {\em etc.},
+(2) a set of element subsequences, with each subsequence containing
+1 occurrence of the corresponding tokens  $t_1$, $t_2$, {\em etc.}, and
+(3) a postamble subsequence that contains the last occurrence of 
+the corresponding tokens $t_1$, $t_2$, {\em etc.}
+
+\item Identify a union by partitioning the current set of chunks according
+to the first token in each chunk.  Create one new set of chunks per first 
+token.
+\end{enumerate}
 
 %%     *  role = quickly find a description in the "approximate area" of the correct description
 %%     * explain structure of a generic "top-down" inference algorithm -- perhaps give pseudocode
@@ -489,7 +550,7 @@ Grouping
 
 \input{scoring}
 
-\subsection {Structure Refinement}
+\section {Structure Refinement}
 
 %\input{rules}
 

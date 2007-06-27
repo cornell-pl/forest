@@ -11,9 +11,10 @@ perfectly precise ({\em e.g.,} the data itself abstracts nothing and
 therefore serves as its own description).  A good scoring function
 carefully balances these two opposing constraints.  As is common
 in machine learning, we have defined a scoring function based on the
-{\em Minimum Description Length} (MDL) principal, which states that
-a good description is one that minimizes the cost in bits of transmitting
-the data in question by minimizing the sum of the cost of transmitting
+{\em Minimum Description Length Principle} (MDL), which states that
+a good description is one that minimizes the cost (in bits) of transmitting
+the data.  This is accomplished by minimizing 
+the sum of the cost of transmitting
 the syntax of the description ($\costdescription{T}$)
 plus the cost of transmitting the data 
 relative to the information known given the description
@@ -28,7 +29,7 @@ total cost in bits is:
 %\paragraph*{The cost of transmitting a type.}
 The cost of transmitting a type, measured in bits, is defined in 
 Figure~\ref{fig:cost-type}.  In general, the cost of transmitting
-of type is the cost of transmitting the sort of type ({\em i.e.,}\cd{struct},
+a type is the cost of transmitting the sort of type ({\em i.e.,}\cd{struct},
 \cd{union}, \cd{enum}, etc.) plus the cost of transmitting all subcomponents
 of the type.  For example, the cost of transmitting any base type
 $b(p_1,\ldots,p_k)$ is $ \cardt + \sum_{i=1}^{k} \costparam{p_i}$,
@@ -63,7 +64,8 @@ the range of values found during the value-space analysis.  During the
 rewriting phase, this range information is used to rewrite \cd{PintRanged}
 into other integer types.  Since the
 cost of encoding \cd{PintRanged} is so high, the appropriate rewriting is 
-guaranteed to be applied.
+guaranteed to be applied.  In the future, we may emit this range information
+as comments in the generated descriptions.
 
 The last section of Figure~\ref{fig:cost-data} presents the cost of
 encoding data relative to selected type constructors.  For example,
