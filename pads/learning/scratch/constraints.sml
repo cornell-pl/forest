@@ -10,6 +10,11 @@ structure Map = RedBlackMapFn(struct
 				type ord_key = Token option
 				val compare = compare
 			end)
+structure BDOSet = RedBlackSetFn(struct
+				type ord_key = Token option
+				val compare = compare
+			end)
+
 	exception Unimplemented
 	exception TyMismatch
 
@@ -278,7 +283,7 @@ structure Map = RedBlackMapFn(struct
 		    h :: t => ((SOME (h ())) handle DetermineFailed => tryEach t)
 		  | nil => NONE
 	in
-		tryEach [toSwitched, toMatrix]
+		tryEach [toSwitched] (*, toMatrix]*)
 	end
 	
 	(* takes a list of columns and a dependency in number form
@@ -377,10 +382,44 @@ constraint map *)
 		val header = #1 tytable
 		val bdocols = #2 tytable
 		val bdolist = transpose(bdocols)
+
+		(* The following is a simple implementation of 1-1 functional dependency analysis*)
+		val (_, bdomap) = foldl (fn ((col:Token option list), (n, mymap)) => 
+				(n+1, IntMap.insert(mymap, n, col))) (0, IntMap.empty) bdocols
+ 	        (* filter out the constant cols *)
+ 		fun nonconst (col:Token option list) = let
+			val myset = BDOSet.addList (BDOSet.empty, col)
+			in if (BDOSet.numItems myset) = 1 then false
+			   else true
+			end
+		val bdomap = IntMap.filter nonconst bdomap
+		val indexed_collist: (int*Token option list) list = IntMap.listItemsi bdomap
+		fun pair (i, col) iclist = map (fn ic => ((i, col), ic)) iclist
+		fun pairall iclist =
+			case iclist of 
+			  nil => nil
+			  | (hd::rest) => (pair hd rest) @ (pairall rest)
+
+		(*function to determine if two token option list are functionally dependent*)
+		fun dependent (map, col1, col2) = 
+		    case (col1, col2) of
+			(nil, nil) => true
+			| (to1::tail1, to2::tail2) =>
+			  (	
+			    case Map.find (map, to1) 
+				of NONE => dependent (Map.insert(map, to1, to2), tail1, tail2)
+				| SOME x => if compare (x, to2) = EQUAL then dependent (map, tail1, tail2)
+					    else false
+			  )
+			
+		val icol_pairs =  pairall indexed_collist
+		val dependent_pairs = List.filter (fn ((i1, col1), (i2, col2)) => 
+					dependent (Map.empty, col1, col2)) icol_pairs
+		val deps = List.foldl (fn (((i1, col1), (i2, col2)), deplist) =>
+			([i1], i2)::(([i2], i1)::deplist)) nil dependent_pairs
 (*
 		val _ = print ("The number of columns : " ^ Int.toString(length(header)) ^"\n")
 		val _ = print ("The number of rows: " ^ Int.toString(length(bdolist)) ^"\n")
-*)
 		val _ = if (length(bdolist) > DEF_MAX_TABLE_ROWS andalso 
 				length(header)> DEF_MAX_TABLE_COLS) 
 			then (print "Table too large: bailing out...\n"; raise TableTooLarge )
@@ -391,6 +430,7 @@ constraint map *)
 		(* take a table entry and run TANE on it, find the constraints that apply *)
 		val partitions = initPartitionMap(bdolist, bdocols)
 		val (deps,keys) = FunctionalDep.tane(partitions)
+*)
 		(* val _ = print (String.concat (map bdoltos bdolist) ) *)
 			
 		(* finds the labels associated with a numbered dep *)
@@ -409,7 +449,6 @@ constraint map *)
 (*
 		val _ = print ("num of dependencies: " ^ Int.toString(length(deps))^ "\n")
 		val _ = print ("num of keys: " ^ Int.toString(length keys) ^ "\n")
-*)
 		val labeled_keys = map (map (fn x => List.nth(header,x))) keys
 	        val _ = if Options.print_functional_deps then print ("Dependencies ("^Int.toString(length(labeled_deps))^"):\n") 
 							else ()
@@ -421,6 +460,7 @@ constraint map *)
 				print ("Key {" ^ implode(idstostrs(l),",")  ^ "}\n") 
 				) labeled_keys
 		         else ()
+*)
 		
 		(* determine what constraints apply *)
 		val dpl = map (dep_cols bdocols) deps
