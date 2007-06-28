@@ -490,11 +490,12 @@ different switch dependency. Nonetheless, both of these descriptions are
 correct. 
 
 Finally in Phase Three, rule 7 is applied to combine the constants in BTy\_10,
-BTy\_12 and BTy\_13 of struct BTy\_114, which gives 
+BTy\_12 and BTy\_13 of struct BTy\_114, and rule 1 is used to flatten
+the singleton struct BTy\_10. The final IR becomes
 
 {\small
 \begin{verbatim}
-struct(BTy_114, 304542.9b) {
+struct(BTy_114, 304537.855b) {
   union(BTy_7, 196876.315b) {
     struct(BTy_6, 196853.182b) {
       Pdate (BTy_0, 108004.535b);
@@ -503,9 +504,7 @@ struct(BTy_114, 304542.9b) {
       " " (BTy_3, 11.044b);
       2006 (BTy_4, 17.015b);
     };
-    struct(BTy_10 39, 16.089b) {
-      "-" (BTy_8 39, 11.044b);
-    };
+    "-" (BTy_8 39, 11.044b);
   };
   " " (BTy_5, 11.044b);
   enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);

@@ -25,7 +25,7 @@ asl.log &	1500	& 279600	& line	& no	& no	& yes	& no	& log file of Mac ASL \\ \hl
 boot.log	& 262	& 16241		& line	& no	& no	& no	& yes	& Mac OS boot log \\ \hline
 crashreporter.log	& 441	& 50152 & line	& no	& no	& no	& yes	& crashreporter daemon log \\ \hline
 crashreporter.mod & 441	& 49255	& line	& no	& no	& no	& yes	& modified crashreporter daemon log \\ \hline
-dibbler.1000	& 999	& 142607 	& line	& yes	& yes	& no	& no	& AT\&T call log \\ \hline
+dibbler.1000	& 999	& 142607 	& line	& yes	& yes	& no	& no	& AT\&T phone provision data \\ \hline
 ls-l.txt	& 35	& 1979		& line	& yes	& no	& no	& no	& Stdout from Unix command ls -l \\ \hline
 netstat-an	& 202	& 14355		& block	& yes	& no	& no	& no	& output from netstat -an \\ \hline
 page\_log	& 354	& 28170		& line	& no	& no	& no	& no	& printer logs \\ \hline
@@ -33,7 +33,7 @@ quarterlypersonalincome & 62	& 10177	& line	& yes	& no	& yes	& no	& spread sheet
 railrail.txt	& 67	& 6218		& line	& yes	& no	& yes	& no	& US rail road info \\ \hline
 scrollkeeper.log & 671	& 66288		& line	& no	& no	& no	& yes	& log from cataloging system \\ \hline
 windowserver\_last.log & 680	& 52394	& line	& no	& no	& no	& yes	& log from LoginWindow server on Mac \\ \hline
-yum.txt		& 328	& 18221		& line	& no	& no	& no	& no	& log package installer Yum \\ \hline
+yum.txt		& 328	& 18221		& line	& no	& no	& no	& no	& log from package installer Yum \\ \hline
 \end{tabular}
 \caption{Benchmark profile}
 \end{center}
@@ -98,7 +98,7 @@ asl.log          & 0.630	&0.267		&0.361		& 2.91       	& 613.01	& 615.92 	& 1.0 
 boot.log         & 0.620	&0.481		&0.703		& 0.12       	& 5.81       	& 5.92 		& 1.0  \\ \hline
 crashreporter.log & 0.607	&0.328		&0.348		& 0.13       	& 5.47       	& 5.59 		& 2.0  \\ \hline
 crashreporter.log.mod & 0.612	&0.329		&0.347		& 0.15       	& 5.76       	& 5.90 		& 2.0  \\ \hline
-dibbler.1000     & 0.602	&0.470		&0.438		& 2.15       	& 8.22       	& 10.36 	& 0.5  \\ \hline
+dibbler.1000     & 0.602	&0.470		&0.438		& 2.15       	& 8.22       	& 10.36 	& 1.5  \\ \hline
 ls-l.txt         &0.559		&0.333		&0.401		& 0.01       	& 0.14       	& 0.14 		& 1.0  \\ \hline
 netstat-an       &0.413		&0.394		&0.319		& 0.05       	& 3.26       	& 3.32 		& 1.0  \\ \hline
 page\_log        & 0.540	&0.107		&0.353		& 0.12       	& 0.47       	& 0.59 		& 0.5   \\ \hline
@@ -112,11 +112,11 @@ yum.txt          &0.827		&0.305		&0.474		& 0.10       	& 1.92       	& 2.02 		& 
 \end{center}
 \end{table*}
 
-\item Select random training sets of 5\%, 10\%, 15\%, 20\% 25\%, 30\%, 35\% and 40\% of 
+\item Select random training sets of 5\%, 10\%, 15\%, ..., 80\% of 
 the original data (3 sets for each size) and run learning tool end to end on 
 them and take the average of 3 sets. 
-Set a threshhold level of 95\% accuracy and record how much training data (in percentage and
-absolute terms) is needed for each golden format to achieve this accurary. Then relate this
+Set threshhold levels of 90\% and 95\% accuracies and record how much training data (in percentage and
+absolute terms) is needed for each golden format to achieve these accurary levels. Then relate this
 to the normalized type complexty of the inferred IR of the entire data sets.
 Plot graph of (timing, accuracy) vs. training size 
 for a few examples, and show that we are doing a good job with reasonable sample size. The diagram should

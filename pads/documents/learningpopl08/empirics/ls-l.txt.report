@@ -19,9 +19,9 @@ The average success rate = 100.00%
 ====== Timing information ==================================
 Tokenization and structure inference time = 0.009
 First measurement time = 0.001
-First reduction time = 0.032
-Second reduction time = 0.087
-Third reduction time = 0.024
+First reduction time = 0.030
+Second reduction time = 0.046
+Third reduction time = 0.023
 Second measurement time = 0.001
-Total time = 0.153
+Total time = 0.110
 ============================================================

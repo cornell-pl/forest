@@ -1,90 +1,90 @@
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.048
+Tokenization and structure inference time = 0.071
 First measurement time = 0.004
-First reduction time = 0.162
-Second reduction time = 2.686
-Third reduction time = 0.129
+First reduction time = 0.166
+Second reduction time = 0.396
+Third reduction time = 0.165
+Second measurement time = 0.006
+Total time = 0.808
+============================================================
+====== Timing information ==================================
+Tokenization and structure inference time = 0.070
+First measurement time = 0.004
+First reduction time = 0.167
+Second reduction time = 0.364
+Third reduction time = 0.162
+Second measurement time = 0.006
+Total time = 0.772
+============================================================
+====== Timing information ==================================
+Tokenization and structure inference time = 0.071
+First measurement time = 0.006
+First reduction time = 0.192
+Second reduction time = 0.372
+Third reduction time = 0.160
+Second measurement time = 0.006
+Total time = 0.807
+============================================================
+====== Timing information ==================================
+Tokenization and structure inference time = 0.068
+First measurement time = 0.006
+First reduction time = 0.186
+Second reduction time = 0.422
+Third reduction time = 0.279
+Second measurement time = 0.017
+Total time = 0.978
+============================================================
+====== Timing information ==================================
+Tokenization and structure inference time = 0.066
+First measurement time = 0.006
+First reduction time = 0.201
+Second reduction time = 0.377
+Third reduction time = 0.149
 Second measurement time = 0.005
-Total time = 3.035
+Total time = 0.804
 ============================================================
 ====== Timing information ==================================
 Tokenization and structure inference time = 0.063
 First measurement time = 0.004
-First reduction time = 0.151
-Second reduction time = 2.782
-Third reduction time = 0.127
-Second measurement time = 0.005
-Total time = 3.132
+First reduction time = 0.190
+Second reduction time = 0.536
+Third reduction time = 0.209
+Second measurement time = 0.006
+Total time = 1.007
 ============================================================
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.053
-First measurement time = 0.004
-First reduction time = 0.159
-Second reduction time = 2.967
-Third reduction time = 0.124
-Second measurement time = 0.005
-Total time = 3.312
+Tokenization and structure inference time = 0.063
+First measurement time = 0.006
+First reduction time = 0.191
+Second reduction time = 0.399
+Third reduction time = 0.151
+Second measurement time = 0.006
+Total time = 0.815
 ============================================================
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.054
+Tokenization and structure inference time = 0.067
+First measurement time = 0.006
+First reduction time = 0.188
+Second reduction time = 0.359
+Third reduction time = 0.154
+Second measurement time = 0.006
+Total time = 0.779
+============================================================
+====== Timing information ==================================
+Tokenization and structure inference time = 0.067
 First measurement time = 0.005
-First reduction time = 0.174
-Second reduction time = 2.929
-Third reduction time = 0.127
-Second measurement time = 0.005
-Total time = 3.295
+First reduction time = 0.189
+Second reduction time = 0.398
+Third reduction time = 0.151
+Second measurement time = 0.006
+Total time = 0.817
 ============================================================
 ====== Timing information ==================================
-Tokenization and structure inference time = 0.054
-First measurement time = 0.005
-First reduction time = 0.171
-Second reduction time = 2.964
-Third reduction time = 0.146
-Second measurement time = 0.005
-Total time = 3.345
-============================================================
-====== Timing information ==================================
-Tokenization and structure inference time = 0.050
-First measurement time = 0.005
-First reduction time = 0.186
-Second reduction time = 2.966
-Third reduction time = 0.130
-Second measurement time = 0.005
-Total time = 3.342
-============================================================
-====== Timing information ==================================
-Tokenization and structure inference time = 0.053
-First measurement time = 0.005
-First reduction time = 0.177
-Second reduction time = 2.944
-Third reduction time = 0.128
-Second measurement time = 0.005
-Total time = 3.312
-============================================================
-====== Timing information ==================================
-Tokenization and structure inference time = 0.055
-First measurement time = 0.004
-First reduction time = 0.168
-Second reduction time = 3.093
-Third reduction time = 0.133
-Second measurement time = 0.005
-Total time = 3.458
-============================================================
-====== Timing information ==================================
-Tokenization and structure inference time = 0.053
-First measurement time = 0.005
-First reduction time = 0.170
-Second reduction time = 3.040
-Third reduction time = 0.136
-Second measurement time = 0.005
-Total time = 3.409
-============================================================
-====== Timing information ==================================
-Tokenization and structure inference time = 0.056
-First measurement time = 0.005
-First reduction time = 0.183
-Second reduction time = 3.138
-Third reduction time = 0.135
-Second measurement time = 0.005
-Total time = 3.522
+Tokenization and structure inference time = 0.068
+First measurement time = 0.007
+First reduction time = 0.167
+Second reduction time = 0.376
+Third reduction time = 0.153
+Second measurement time = 0.006
+Total time = 0.776
 ============================================================
