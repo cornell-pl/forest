@@ -121,7 +121,7 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTyInfo ( path : string ) ( descName : string ) ( baseTy : Ty ) ( rewrittenTy : Ty ) ( ct : ComputeTimes ) (sep:Token option) : unit = 
+    fun dumpTyInfo ( path : string ) ( descName : string ) ( baseTy : Ty ) ( rewrittenTy : Ty ) ( et : EndingTimes) (sep:Token option) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) =>
@@ -161,14 +161,15 @@ structure Printing = struct
                  ; dumpTy (path ^ "Ty") rewrittenTy 
                  ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy ) 
                  ; dumpTyComp path "Complexity" descName ( getComps rewrittenTy )
-                 ; dumpComputeTimes ( path ^ "Timing" ) ct
                  ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy
+		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
 		       print ("Ty name ="^tyName^"\n");
 		       dumpAccumProgram path descName tyName;
 		       dumpAccumXMLProgram path descName tyName;
 		       dumpXMLProgram path descName tyName;
-		       dumpFmtProgram path descName tyName sep
+		       dumpFmtProgram path descName tyName sep;
+                       dumpComputeTimes ( path ^ "Timing" ) ct
 		   end
 		 ; print "Excutable directory:"; print (!executableDir); print "\n"
                  ; print ( "descName.2 = " ^ descName ^ "\n")

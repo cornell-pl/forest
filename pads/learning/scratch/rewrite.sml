@@ -74,6 +74,7 @@ let
                                   , reduce2End  = reduce2_time
                                   , reduce3End  = reduce3_time
                                   , measure2End = measured2_time
+				  , padsEnd = #padsEnd et
                                   }
 
 in ( measuredTy, measured_reduced_ty, endingTimes )

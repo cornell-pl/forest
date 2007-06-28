@@ -39,7 +39,7 @@ structure Main : sig
                                                        dataFile
                                                        measuredTy
                                                        rewrittenTy
-                                                       computeTimes
+                                                       end4Times
 						       sep
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
