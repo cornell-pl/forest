@@ -24,6 +24,65 @@ directly from data, we rely upon both aspects of these type definitions.
 Figure~\ref{fig:ir} summarizes the syntax of selected core features of 
 the \ir{} and the syntax we use for the generated internal representations.
 
+\begin {figure}
+\begin {tabular}{llll}
+%\multicolumn{4}{l}{
+%\begin {tabular}{llll}
+$c$ & ::= & $a$ \myalt $i$ \myalt $s$ & (constants)\\
+$x$ & & & (variables) \\
+$p$ & :: = & $x$ \myalt $c$ & (parameters) \\
+\\
+\end{tabular}
+
+\begin {tabular}{ll}
+\multicolumn{2}{l}{base types $b$  ::=} \\
+\hspace{5pt} \cd{Pint} &                  (generic, unrefined integer) \\
+\myalt \cd{PintRanged} &             (integer with min/max values) \\
+\myalt \cd{Pint32} &                 (32-bit integer) \\
+\myalt \cd{Pint64} &                (64-bit integer) \\
+\myalt \cd{PintConst} &              (constant integer) \\
+\myalt \cd{Pfloat} &                (floating point number) \\
+\myalt \cd{Palpha} &                (alpha-numeric string) \\
+\myalt \cd{Pstring} &               (string; terminating character) \\
+\myalt \cd{PstringFW} &             (string; fixed width) \\
+\myalt \cd{PstringConst} &          (constant string) \\
+\myalt \cd{Pother} &                (punctuation character) \\
+\myalt \cd{ComplexB} &              (complex base type defined by regexp; \\
+                                     & \hspace{5pt} eg: date, time, etc.) \\
+\myalt \cd{Pvoid} &                 (parses no characters; fails immediately) \\
+\myalt \cd{Pempty} &                (parses no characters; succeeds immediately) \\
+\\
+\end {tabular}{ll}
+
+\begin {tabular}{ll}
+\multicolumn{2}{l}{types $T$ ::= } \\ 
+\hspace{5pt} $b$($p_1$,...,$p_k$)&          (parameterized base type) \\
+\myalt  x:$b$($p_1$,...,$p_k$) &         (parameterized base type; \\
+                                & \hspace{5pt} underlying value named x)    \\  
+\myalt  \cd{struct} \{$T_1$; ... $T_k$;\}&   (fixed sequence of items) \\
+\myalt  \cd{array} \{$T$;\} &            (array with unbounded repetitions) \\
+\myalt  \cd{arrayFW} \{$T$;\}[$p$]&        (array; fixed length)  \\
+\myalt  \cd{arrayST} \{$T$;\}[sep,term]& (array; separator and terminator) \\
+\myalt  \cd{union} \{$T_1$; ... $T_k$;\} &   (alternatives) \\
+\myalt  \cd{enum} \{$c_1$; ... $c_k$;\} &    (enumeration of constants) \\
+\myalt  \cd{option} \{$T$;\} &           (type T or nothing) \\
+\myalt  \cd{switch} $x$ \cd{of} \\
+\hspace{6pt} \{$c_1$ \cd{=>} $T_1$; $\ldots$ $c_k$ \cd{=>} $T_k$;\} & (dependent choice) \\
+\\
+\end {tabular}{ll}
+
+\begin {tabular}{ll}
+\multicolumn{2}{l}{representations of parsed data $d$  ::= } \\
+\hspace{5pt} $c$ &        (constant) \\
+\myalt  in$_i$($d$) &    (injection into the ith alternative of a union) \\
+\myalt  ($d_1$,$\ldots$,$d_k$) &  (sequence of data items) \\
+\end{tabular}
+
+\caption {Selected elements of the \ir{}.}
+\label{fig:ir}
+\end{figure}
+
+
 % The end goal of this project depends
 % crucially on having both interpretations of these types.  The first
 % interpretation is necessary to generate a
@@ -107,56 +166,10 @@ any sort of union type, be it a union, an enum, an option or a switch.
 The sequences are used as the representations of any sort of sequence
 type, whether it be a struct or one of the array variants.
 
-\begin {figure*}
-\begin {tabular}{llll}
-%\multicolumn{4}{l}{
-%\begin {tabular}{llll}
-$c$ & ::= & $a$ \myalt $i$ \myalt $s$ & (constants)\\
-$x$ & & & (variables) \\
-$p$ & :: = & $x$ \myalt $c$ & (parameters) \\
-\\
-%\end{tabular}
-%}
-\multicolumn{4}{l}{base types} \\
-$b$ & ::= & \cd{Pint} &                  (generic, unrefined integer) \\
-   &\myalt &\cd{PintRanged} &             (integer with min/max values) \\
-   &\myalt &\cd{Pint32} &                 (32-bit integer) \\
-   &\myalt &\cd{Pint64} &                (64-bit integer) \\
-   &\myalt &\cd{PintConst} &              (constant integer) \\
-   &\myalt &\cd{Pfloat} &                (floating point number) \\
-   &\myalt &\cd{Palpha} &                (alpha-numeric string) \\
-   &\myalt &\cd{Pstring} &               (arbitrary characters with terminating character) \\
-   &\myalt &\cd{PstringFW} &             (arbitrary characters; fixed width) \\
-   &\myalt &\cd{PstringConst} &          (constant string) \\
-   &\myalt &\cd{Pother} &                (punctuation character) \\
-   &\myalt &\cd{ComplexB} &              (complex base type defined by regexp; eg: date, time, etc.) \\
-   &\myalt &\cd{Pvoid} &                 (parses no characters; fails immediately) \\
-   &\myalt &\cd{Pempty} &                (parses no characters; succeeds immediately) \\
-\\
-\multicolumn{4}{l}{types} \\
-$T$ &::=& $b$($p_1$,...,$p_k$)&          (parameterized base type where nothing depends on it) \\
-   &\myalt & x:$b$($p_1$,...,$p_k$) &         (parameterized base type with underlying value named x)    \\  
-   &\myalt & \cd{struct} \{$T_1$; ... $T_k$;\}&   (fixed sequence of items) \\
-   &\myalt & \cd{array} \{$T$;\} &            (array with unbounded repetitions) \\
-   &\myalt & \cd{arrayFW} \{$T$;\}[$p$]&        (array with fixed number of repetitions)  \\
-   &\myalt & \cd{arrayST} \{$T$;\}[sep,term]& (array with separator and terminator characters) \\
-   &\myalt & \cd{union} \{$T_1$; ... $T_k$;\} &   (alternatives) \\
-   &\myalt & \cd{enum} \{$c_1$; ... $c_k$;\} &    (enumeration of constants) \\
-   &\myalt & \cd{option} \{$T$;\} &           (type T or nothing) \\
-   &\myalt & \cd{switch} $x$ \cd{of} \{$c_1$ \cd{=>} $T_1$; $\ldots$ $c_k$ \cd{=>} $T_k$;\} & (dependent choice amongst alternatives) \\
-\\
-\multicolumn{4}{l}{representations of parsed data} \\
-$d$ & ::= & $c$ &        (constant) \\
-   &\myalt & in$_i$($d$) &    (injection into the ith alternative of a union) \\
-   &\myalt & ($d_1$,$\ldots$,$d_k$) &  (sequence of data items) \\
-\end{tabular}
-\caption {Selected elements of the \ir{}.}
-\label{fig:ir}
-\end{figure*}
 
 \subsection{Running Examples}
 
-Figure~\ref{fig:example} presents tiny fragments of three
+Figure~\ref{fig:example} presents tiny fragments of two
 different ad hoc data files we have trained our inference algorithm
 on.  The first, Crashreporter.log, is a Macintosh
 system file that records information concerning process crashes.\footnote{For
@@ -165,12 +178,13 @@ format.  The evaluation section reports results on both the
 completely unmodified Crashreporter.log and the modified version
 used to explain concepts in the paper.} The
 second, we call Sirius, is an internal AT\&T format used to
-record phone call provisioning information. The third format is
-a generic system logging file called ASL.log, again taken from a
-Macintosh.
+record phone call provisioning information. 
+%The third format is
+%a generic system logging file called ASL.log, again taken from a
+%Macintosh.
 Crashreporter.log will be used as our main running example throughout the
-paper; the other two will be called upon periodically to illustrate
-some particular aspect of the inference algorithm.  We report on our experience
+paper; Sirius will be called upon periodically to illustrate
+particular aspects of the inference algorithm.  We report on our experience
 with many more examples in the evaluation section of the paper.
 
 \begin{figure*}
@@ -188,14 +202,14 @@ Sirius AT\&T Phone Provisioning Data:
 \end{verbatim}
 }
 
-ASL.log:
-{\small  \begin{verbatim}
-[Time 2006.11.25 16:47:18 UTC] [Facility user] [Sender E_e,] [PID 131] \
-  [Message sleep cancelled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
-[Time 2006.11.25 16:51:23 UTC] [Facility install] [Sender Software Update] [PID 1879] \
-  [Message System requesting sleep.] [Level 5] [UID -2] [GID -2] [Host Babylon]
-\end{verbatim}
-}
+% ASL.log:
+% {\small  \begin{verbatim}
+% [Time 2006.11.25 16:47:18 UTC] [Facility user] [Sender E_e,] [PID 131] \
+%   [Message sleep cancelled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
+% [Time 2006.11.25 16:51:23 UTC] [Facility install] [Sender Software Update] [PID 1879] \
+%   [Message System requesting sleep.] [Level 5] [UID -2] [GID -2] [Host Babylon]
+% \end{verbatim}
+% }
 
 % Apache Web Server Logs:
 % {\small \begin{verbatim}
