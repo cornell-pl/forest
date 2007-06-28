@@ -1,20 +1,21 @@
 #!/usr/bin/perl 
 
 @golden=("1967Transactions.short", "MER_T01_01.csv", "ai.3000", 
-	 "boot.log", "crashreporter.log", "dibbler.1000",
+	"asl.log", "boot.log", "crashreporter.log", 
+	"crashreporter.log.modified", "dibbler.1000",
 	"ls-l.txt", "netstat-an", "page_log", 
 	"quarterlypersonalincome", "railroad.txt", "scrollkeeper.log",
-	"windowserver_last.log", "yum.txt", "asl.log",
-	"crashreporter.log.modified"
+	"windowserver_last.log", "yum.txt" 
 	);
 foreach my $gold (@golden)
 {
  $total1sttime = 0;
  $total2ndtime = 0;
+ $totalalltime = 0;
  $mintotal = 10000;
  $maxtotal = -1;
- @minpair = (0, 0);
- @maxpair = (0, 0);
+ @mintriple = (0, 0, 0);
+ @maxtriple = (0, 0, 0);
  $num=0;
  open (FILE, "<$gold.timing") or die "Cann't open file for reading";
  while (<FILE>) {
@@ -37,32 +38,39 @@ foreach my $gold (@golden)
    $reduct3 = $1;
    $second = $reduct1 + $reduct2 + $reduct3;
    $total2ndtime += $second;
-   if ($first +$second < $mintotal)
+  }
+  elsif (/Total time = (.*)/)
+  {
+   $total = $1;
+   $totalalltime +=$total;
+   if ($total < $mintotal)
    {
-    $mintotal = $first + $second;
-    @minpair = ($first, $second);
+    $mintotal = $toal;
+    @mintriple = ($first, $second, $total);
    }
-   elsif ($first +$second>= $maxtotal)
+   elsif ($total >= $maxtotal)
    {
-    $maxtotal = $first+ $second;
-    @maxpair = ($first, $second);
+    $maxtotal = $total;
+    @maxtriple = ($first, $second, $total);
    }
   }
  }
- if ($minpair[0] == $maxpair[0] && $minpair[1] == $maxpair[2])
+ if ($mintriple[0] == $maxtriple[0] && $mintriple[1] == $maxtriple[2])
  {
-  $total1sttime -= $minpair[0];
-  $total2ndtime -= $minpair[1];
+  $total1sttime -= $mintriple[0];
+  $total2ndtime -= $mintriple[1];
+  $totalalltime -= $mintriple[2];
   $num--;
  }
  else {
-  $total1sttime -= ($minpair[0]+$maxpair[0]); 
-  $total2ndtime -= ($minpair[1]+$maxpair[1]);
+  $total1sttime -= ($mintriple[0]+$maxtriple[0]); 
+  $total2ndtime -= ($mintriple[1]+$maxtriple[1]);
+  $totalalltime -= ($mintriple[2]+$maxtriple[2]);
   $num-=2;
  }
 
  printf ("$gold: \tinf: %.2f, \tref: %.2f, \ttotal: %.2f\n", 
 		$total1sttime/$num,
-		$total2ndtime/$num, ($total1sttime+$total2ndtime)/$num);
+		$total2ndtime/$num, $totalalltime/$num);
 }
 close FILE;

@@ -1,119 +1,172 @@
-\subsection{Objectives}
+%\subsection{Objectives}
+%
+%The purpose of the experiment is to show the following points:
+%\begin{itemize}
+%\item the learning engine produces *accurate* and *concise* descriptions compared to a human
+%expert's descriptions but costs just a fraction of the time; 
+%\item it handles a variety of data formats; 
+%\item the refinement step significantly improves the structure; 
+%\item it is able to produce a description that is sufficiently accurate with 
+%much smaller training sets (overfitting vs. underfitting); 
+%\item demonstrate that there exists a correlation between sample size, execution time and accuracy,
+%and the min sample size required to achieve certain accuracy correlates with the 
+%data complexity.
+%\end{itemize}
 
-The purpose of the experiment is to show the following points:
+We conducted a series of experiments to study the learning algorithm
+and measure its performance. In this section, we will show that
 \begin{itemize}
-\item the learning engine produces *accurate* and *concise* descriptions compared to a human
-expert's descriptions but costs just a fraction of the time; 
-\item it handles a variety of data formats; 
-\item the refinement step significantly improves the structure; 
-\item it is able to produce a description that is sufficiently accurate with 
-much smaller training sets (overfitting vs. underfitting); 
-\item demonstrate that there exists a correlation between sample size, execution time and accuracy,
-and the min sample size required to achieve certain accuracy correlates with the 
-data complexity.
+\item the learning engine is capable of handing a variety of data formats;
+\item while the initial structure discovery generates a reasonably
+good candidate, the refinemnt phase siginificantly improves the
+quality of the description through rewritings; 
+\item the final output of the learning system is highly competitive
+when compared with descriptions written by a human expert 
+in terms of accuracy and conciseness; 
+\item it is possible to learn from a small training set and produce
+a relatively accurate description at a fraction of the cost;
+\item there exists a positive correlation between the structural complexity
+of the data and the minimum training size required to achieve certain
+accuracy.
 \end{itemize}
 
-
-\subsection{Setup}
+\subsection{Preliminaries}
 \begin{table*}
 \begin{center}
 \begin{tabular}{|l|c|c|c|c|c|c|c|l|} \hline
-Title		& Chunks & Bytes	& Mode  &Header	& Array	& Group & Msgs 	& Comments \\ \hline \hline
+Data source	& Chunks & Bytes	& Mode  &Header	& Array	& Group & Msgs 	& Comments \\ \hline \hline
 1967Transactions.short	& 999	& 70929	& line	& no	& no	& no	& no	& transaction records \\ \hline
 MER\_T01\_01.cvs	& 491	& 21731 & line  & yes	& no	& yes	& no	& comma-separated records\\ \hline
 ai.3000		& 3000		& 293460 & line	& no	& no	& yes	& no	& web log of Amnesty International \\ \hline
 asl.log &	1500	& 279600	& line	& no	& no	& yes	& no	& log file of Mac ASL \\ \hline	
 boot.log	& 262	& 16241		& line	& no	& no	& no	& yes	& Mac OS boot log \\ \hline
-crashreporter.log	& 441	& 50152 & line	& no	& no	& no	& yes	& crashreporter daemon log \\ \hline
-crashreporter.mod & 441	& 49255	& line	& no	& no	& no	& yes	& modified crashreporter daemon log \\ \hline
+crashreporter.log & 441	& 50152 	& line	& no	& no	& no	& yes	& original crashreporter daemon log \\ \hline
+crashreporter.mod & 441	& 49255		& line	& no	& no	& no	& yes	& modified crashreporter daemon log \\ \hline
 dibbler.1000	& 999	& 142607 	& line	& yes	& yes	& no	& no	& AT\&T phone provision data \\ \hline
 ls-l.txt	& 35	& 1979		& line	& yes	& no	& no	& no	& Stdout from Unix command ls -l \\ \hline
 netstat-an	& 202	& 14355		& block	& yes	& no	& no	& no	& output from netstat -an \\ \hline
 page\_log	& 354	& 28170		& line	& no	& no	& no	& no	& printer logs \\ \hline
 quarterlypersonalincome & 62	& 10177	& line	& yes	& no	& yes	& no	& spread sheet \\ \hline
-railrail.txt	& 67	& 6218		& line	& yes	& no	& yes	& no	& US rail road info \\ \hline
+railroad.txt	& 67	& 6218		& line	& yes	& yes	& yes	& no	& US rail road info \\ \hline
 scrollkeeper.log & 671	& 66288		& line	& no	& no	& no	& yes	& log from cataloging system \\ \hline
 windowserver\_last.log & 680	& 52394	& line	& no	& no	& no	& yes	& log from LoginWindow server on Mac \\ \hline
 yum.txt		& 328	& 18221		& line	& no	& no	& no	& no	& log from package installer Yum \\ \hline
 \end{tabular}
-\caption{Benchmark profile}
+\caption{Benchmark profile} \label{tab:benchmarks}
 \end{center}
 \end{table*}
 
-\begin{enumerate}
-\item Brief intro to 15 golden formats in a big table and possibly group them by
-features
+The original data sources we used in the experiments are listed in Table \ref{tab:benchmarks}.
+These range from personal spread sheet, to government records to system logs, and 
+represent vastly different formats. Some benchmarks are large with a few thousand
+chunks or records, while others are small with just a few dozen lines. As we will see later
+that the size of the data source has some implications in the training performance.
+Most of the data files are line based, which means a line represent a data record, with
+the exception of netstat-an in which data come in blocks or multiple lines.
+Many of the formats include headers or footers which may complicate the descriptions.
+From a human point of view, dibbler.1000 and railroad.txt consist of some special
+character separated arrays. The ``Group'' column in the table shows if a data source
+contain groupings delimited by special characters such as [, ], or quotations.
+The ``Msgs'' column indicates whether the data source contains complex English text.
+We include two versions of crashreporter.log: an original file ``crashreporter.log''
+and ``crashreporter.log.mod'' with some of the date information replaced by ``-''. 
+The latter has been used as an example in Section \ref{sec:review}. 
 
-\item Machine profile: Apple PowerBook G4, 1.67 GHz, 512 MB DDR ram running on 
-Mac OS X 10.4 Tiger. 
-
-\item Experiment parameter: data size (num of records and byte count), accuracy (success rate of parsing), 
-timing (human time vs. machine time), structure quality (normalized scores), sample size
-
-\item Different representations: HW IR, HW PADS, Inferred IR, Inferred PADS, we measure
-the accuracy on the HW PADS and inferred PADS, and the time to produce and the MDL scores on
-the HW IR and inferred IR.
+The system that executed the experiments is an 
+Apple PowerBook G4 with a 1.67 GHz Processor and 512 MB DDR RAM 
+running on Mac OS X 10.4 Tiger. 
 
 \begin{table}
 \begin{center}
 \begin{tabular}{|l|c|c|c|} \hline
-		& Parsing accuracy 	& MDL score 	&  Time to prod.\\ \hline
-Inferred IR 	& -			& X		& X	\\ \hline
-Inferred PADS	& X			& -		& -	\\ \hline 
-Human IR	& -			& X		& X	\\ \hline	
-Human PADS	& X			& -		& -	\\ \hline	
+		&  Time to prod.	& MDL score 	& Parsing accuracy 	\\ \hline
+HW IR	& -			& X		& -			\\ \hline	
+HW PADS	& X			& -		& X			\\ \hline	
+INF IR 	& -			& X		& -			\\ \hline
+INF PADS & X			& -		& X			\\ \hline 
 \end{tabular}
-\caption{Relationship between representations and measurements}
+\caption{Measurement for the representations} \label{tab:metrics}
 \end{center}
 \end{table}
 
-\end{enumerate}
+For any of the given data sources, there exists four different representations in 
+our experiments: hand-rewritten PADS by human expert (HW PADS), hand-rewritten IR directly
+translated from the HW PADS (HW IR), inferred IR from the learning engine (INF IR), and
+inferred PADS description which is automatically translated from the INF IR (INF PADS). 
+Note that as IR has a simplified language and is not as powerful as the full-fledged
+PADS, the HW PADS does not use those features not available in IR and hence it is
+not fully optimized. 
+Nonetheless, the HW PADS and HW IR are thought to be ``pretty good'' descriptions of
+the data and are used as control in the comparisons below. 
+In general, we measure the time to produce the descriptions, the MDL scores of
+and the parsing accuracy of the descriptions. 
+Table \ref{tab:metrics} shows what we measure for each of the four representations.
 
 \subsection{Experiments}
-
-\begin{enumerate}
-\item Human expert coded IR for all 12 formats: measure timing, score of the structure and assume 100\% 
-accuracy. This is the control data.
-
-\item Run learning tool on all 12 data files in full length: measure timing for structure discovery, 
-and refinement; initial scores and final scores, parsing rate (should be all 100\%).
-For accurate timing measurements, run each data format 10 times, and take average after removing the
-best and the worst time.
-Compare these with the golden numbers from (1) in a big table. Show that the difference in scores
-can be siginificant in some cases hence room for improvement (may go into the discussion section)
-but timing advantage is huge and refinment improves initial struct a lot. Maybe also compare a case or
-two where the score from silver is comparable to golden and the actually description produced is also
-close to golden (to demo that our scoring makes some sense).
-Have a discussion here about while the learning tool may produce a longer description than human does,
-it parses all data correctly so the user is getting all these for free which is a tremendous benefit.
-Discuss 1967 where the inference does better than human.
-
 \begin{table*}
 \begin{center}
 \begin{tabular}{|l||r|r|r||r|r|r|c|} \hline
-Formats 	& Inf score 	&Ref score	& Man score 	& Inf time 	& Ref time 	& Total time  	& Man time (h)\\ \hline \hline
-1967Transactions.short & 0.295 	&0.218 		&0.268		& 0.22       	& 2.08     	& 2.30  	& 4.0  \\ \hline
-MER\_T01\_01.csv & 0.648 	&0.112		&0.138		& 0.11       	& 2.61       	& 2.72 		& 0.5  \\ \hline
-ai.3000          & 0.503	&0.332		&0.338		& 2.02       	& 27.36      	& 29.38		& 1.0  \\ \hline
-asl.log          & 0.630	&0.267		&0.361		& 2.91       	& 613.01	& 615.92 	& 1.0  \\ \hline
-boot.log         & 0.620	&0.481		&0.703		& 0.12       	& 5.81       	& 5.92 		& 1.0  \\ \hline
-crashreporter.log & 0.607	&0.328		&0.348		& 0.13       	& 5.47       	& 5.59 		& 2.0  \\ \hline
-crashreporter.log.mod & 0.612	&0.329		&0.347		& 0.15       	& 5.76       	& 5.90 		& 2.0  \\ \hline
-dibbler.1000     & 0.602	&0.470		&0.438		& 2.15       	& 8.22       	& 10.36 	& 1.5  \\ \hline
-ls-l.txt         &0.559		&0.333		&0.401		& 0.01       	& 0.14       	& 0.14 		& 1.0  \\ \hline
-netstat-an       &0.413		&0.394		&0.319		& 0.05       	& 3.26       	& 3.32 		& 1.0  \\ \hline
-page\_log        & 0.540	&0.107		&0.353		& 0.12       	& 0.47       	& 0.59 		& 0.5   \\ \hline
-quarterlypersonalincome & 0.544	&0.367		&0.354		& 0.06       	& 15.87      	& 15.93 	& 48  \\ \hline
-railroad.txt     &0.715		&0.506		&0.522		& 0.05       	& 22.70      	& 22.75 	& 2.0  \\ \hline
-scrollkeeper.log & 0.625	&0.354		&0.352		& 0.11       	& 4.46       	& 4.57 		& 1.0  \\ \hline
-windowserver\_last.log &0.618	&0.241		&0.267		& 0.31       	& 18.57      	& 18.88 	& 1.5  \\ \hline
-yum.txt          &0.827		&0.305		&0.474		& 0.10       	& 1.92       	& 2.02 		& 5.0  \\ \hline
+Formats 	& Inf score 	&Ref score	& HW score 	& Inf time (s) 	& Ref time (s) 	& Total time (s) & HW time (h)\\ \hline \hline
+1967Transactions.short & 0.295 	&0.218 		&0.268		& 0.20&      2.32&      2.56 	& 4.0  \\ \hline
+MER\_T01\_01.csv & 0.648 	&0.112		&0.138		& 0.11&      2.80&      2.92 	& 0.5  \\ \hline
+ai.3000          & 0.503	&0.332		&0.338		& 1.97&      26.35&     28.64	& 1.0  \\ \hline
+asl.log          & 0.630	&0.267		&0.361		& 2.90&      52.07&     55.26	& 1.0  \\ \hline
+boot.log         & 0.620	&0.481		&0.703		& 0.11&      2.40&      2.53 	& 1.0  \\ \hline
+crashreporter.log & 0.607	&0.328		&0.348		& 0.12&      3.58&      3.73 	& 2.0  \\ \hline
+crashreporter.log.mod & 0.612	&0.329		&0.347		& 0.15&      3.83&      4.00 	& 2.0  \\ \hline
+dibbler.1000     & 0.602	&0.470		&0.438		& 2.24&      5.69&      8.00 	& 1.5  \\ \hline
+ls-l.txt         &0.559		&0.333		&0.401		& 0.01&      0.10&      0.11 	& 1.0  \\ \hline
+netstat-an       &0.413		&0.394		&0.319		& 0.07&      0.74&      0.82 	& 1.0  \\ \hline
+page\_log        & 0.540	&0.107		&0.353		& 0.08&      0.55&      0.65 	& 0.5   \\ \hline
+quarterlypersonalincome & 0.544	&0.367		&0.354		& 0.07&      5.11&      5.18 	& 48  \\ \hline
+railroad.txt     &0.715		&0.506		&0.522		& 0.06&      2.69&      2.76 	& 2.0  \\ \hline
+scrollkeeper.log & 0.625	&0.354		&0.352		& 0.13&      3.24&      3.40 	& 1.0  \\ \hline
+windowserver\_last.log &0.618	&0.241		&0.267		& 0.37&      9.65&      10.07	& 1.5  \\ \hline
+yum.txt          &0.827		&0.305		&0.474		& 0.11&      1.91&      2.03 	& 5.0  \\ \hline
 \end{tabular}
-\caption{Golden results (Inf: structure inference, Ref: Refinement, Man: Human expert)}
+\caption{Main results (Inf: structure inference, Ref: Refinement, HW: Hand-written)}
+\label{tab:results}
 \end{center}
 \end{table*}
 
-\item Select random training sets of 5\%, 10\%, 15\%, ..., 80\% of 
+We first hand-coded all 16 formats in PADS and IR and measure timings and the scores 
+of supposedly good descriptions (see HW time column in Table \ref{tab:results}). 
+Several formats takes a few hours and up to 2 days(!) to complete because these were the very first 
+PADS descriptions ever written by this person. It is obvious that coding description
+in PADS is a daunting task for a novice despite that he is a computer science PhD!
+After a few attempts and modifications, the HW PADS descritions parses all 
+the original data files with 100\% accuracy.
+
+Next we ran the learning system on all 16 data files in their entirety, 
+measured timings for structure inference, refinement and the total time which includes
+printing out the PADS descriptions and other overhead. 
+For accurate timing measurements, run each data format 10 times, and take the average 
+after removing the best and the worst times.
+We also recorded the scores of both the initial structure and the final structure after refinement.
+All these measurements are included in Table \ref{tab:results} as well.
+The generated PADS descriptions parses all original data files with 100\% accuracy,
+therefore the correctness of the learned formats is guaranteed.
+
+We can see from Table \ref{tab:results} that the learning system
+generates correct descriptions of any given data in matters of seconds as opposed to
+the hours and days taken by human beings. The execution time is roughly proportional
+to the size of input data. For example, the largest data sources, ai.3000 and asl.log,
+take also the longest time. Refinement typically takes more time than initial
+structure discovery, as the functional dependency analysis in this phase is a quadratic
+in the number of nodes in the IR and is the bottleneck of the algorithm. 
+Note that all these timings are achieved with a completely unoptimized prototype system
+with lots of overhead in book-keeping and I/Os.
+
+%Compare these with the golden numbers from (1) in a big table. Show that the difference in scores
+%can be siginificant in some cases hence room for improvement (may go into the discussion section)
+%but timing advantage is huge and refinment improves initial struct a lot. Maybe also compare a case or
+%two where the score from silver is comparable to golden and the actually description produced is also
+%close to golden (to demo that our scoring makes some sense).
+%Have a discussion here about while the learning tool may produce a longer description than human does,
+%it parses all data correctly so the user is getting all these for free which is a tremendous benefit.
+%Discuss 1967 where the inference does better than human.
+
+Select random training sets of 5\%, 10\%, 15\%, ..., 80\% of 
 the original data (3 sets for each size) and run learning tool end to end on 
 them and take the average of 3 sets. 
 Set threshhold levels of 90\% and 95\% accuracies and record how much training data (in percentage and
@@ -135,7 +188,6 @@ in the training set, the data will not parse.
 \epsfig{file=traintime.eps, width=\columnwidth}
 \caption{Execution times of training sets}
 \end{figure}
-\end{enumerate}
 
 \begin{table}
 \begin{center}
