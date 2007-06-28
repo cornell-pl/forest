@@ -1,28 +1,28 @@
 Our format inference algorithm is implemented as a series of phases that
 generate and transform an internal format description language we
 refer to simply as the \ir.  The \ir{} is very similar to
-the \ipads{} language we developed and formalized in our previous 
+the \ipads{} language we developed and formalized in previous 
 work~\cite{fisher+:popl06}.  Apart from syntax, the main differences 
-are that the \ir{} omits recursion and function declaration; the former
-being beyond the scope of our current inference techniques, and the 
+are that the \ir{} omits recursion and function declarations; the former
+being beyond the scope of our current inference techniques and the 
 latter being unnecessary during the course of the inference algorithm.  
 %In addition, for convenience during inference, the scope of dependent 
 %variable binding is slightly different, as will be explained below.
 
-\subsection{Preliminary Concepts}
+\subsection{The Language}
 
 Like all languages in the \pads{} family, the \ir{} is a collection of
 type definitions.  These ``types'' define both the external syntax of
 data formatted on disk and the shape of the internal representations
-that result from parsing.  In order to generate fully functional tools
-directly from data, we rely upon both aspects of these type definitions.
+that result from parsing.  We rely upon both of these aspects of type
+definitions to generate stand-alone tools automatically.
 %-- the first is necessary for generating parsers and printers; the
 %second is necessary for implementing generic algorithms such as the 
 %\xml{} translator.  In the following discussion, we focus on
 %explaining the first interpretation, counting on the reader's intuition 
 %for the second. 
-Figure~\ref{fig:ir} summarizes the syntax of selected core features of 
-the \ir{} and the syntax we use for the generated internal representations.
+Figure~\ref{fig:ir} summarizes the syntax of the \ir{} and of the
+generated internal representations. 
 
 \begin {figure}
 \begin {tabular}{llll}
@@ -30,12 +30,12 @@ the \ir{} and the syntax we use for the generated internal representations.
 %\begin {tabular}{llll}
 $c$ & ::= & $a$ \myalt $i$ \myalt $s$ & (constants)\\
 $x$ & & & (variables) \\
-$p$ & :: = & $x$ \myalt $c$ & (parameters) \\
+$p$ & :: = & $c$ \myalt $x$ & (parameters) \\
 \\
 \end{tabular}
 
 \begin {tabular}{ll}
-\multicolumn{2}{l}{base types $b$  ::=} \\
+\multicolumn{2}{l}{Base types $b$  ::=} \\
 \hspace{5pt} \cd{Pint} &                  (generic, unrefined integer) \\
 \myalt \cd{PintRanged} &             (integer with min/max values) \\
 \myalt \cd{Pint32} &                 (32-bit integer) \\
@@ -48,16 +48,16 @@ $p$ & :: = & $x$ \myalt $c$ & (parameters) \\
 \myalt \cd{PstringConst} &          (constant string) \\
 \myalt \cd{Pother} &                (punctuation character) \\
 \myalt \cd{ComplexB} &              (complex base type defined by regexp; \\
-                                     & \hspace{5pt} eg: date, time, etc.) \\
+                                     & \hspace{5pt} \eg{} date, time, \etc{}) \\
 \myalt \cd{Pvoid} &                 (parses no characters; fails immediately) \\
 \myalt \cd{Pempty} &                (parses no characters; succeeds immediately) \\
 \\
-\end {tabular}{ll}
+\end {tabular}
 
 \begin {tabular}{ll}
-\multicolumn{2}{l}{types $T$ ::= } \\ 
+\multicolumn{2}{l}{Types $T$ ::= } \\ 
 \hspace{5pt} $b$($p_1$,...,$p_k$)&          (parameterized base type) \\
-\myalt  x:$b$($p_1$,...,$p_k$) &         (parameterized base type; \\
+\myalt  $x$:$b$($p_1$,...,$p_k$) &         (parameterized base type; \\
                                 & \hspace{5pt} underlying value named x)    \\  
 \myalt  \cd{struct} \{$T_1$; ... $T_k$;\}&   (fixed sequence of items) \\
 \myalt  \cd{array} \{$T$;\} &            (array with unbounded repetitions) \\
@@ -69,12 +69,12 @@ $p$ & :: = & $x$ \myalt $c$ & (parameters) \\
 \myalt  \cd{switch} $x$ \cd{of} \\
 \hspace{6pt} \{$c_1$ \cd{=>} $T_1$; $\ldots$ $c_k$ \cd{=>} $T_k$;\} & (dependent choice) \\
 \\
-\end {tabular}{ll}
+\end {tabular}
 
 \begin {tabular}{ll}
-\multicolumn{2}{l}{representations of parsed data $d$  ::= } \\
+\multicolumn{2}{l}{Representations of parsed data $d$  ::= } \\
 \hspace{5pt} $c$ &        (constant) \\
-\myalt  in$_i$($d$) &    (injection into the ith alternative of a union) \\
+\myalt  in$_i$($d$) &    (injection into the $i^{th}$ alternative of a union) \\
 \myalt  ($d_1$,$\ldots$,$d_k$) &  (sequence of data items) \\
 \end{tabular}
 
@@ -93,53 +93,56 @@ $p$ & :: = & $x$ \myalt $c$ & (parameters) \\
 
 The building blocks of any \ir{} data description are the base types $b$,
 which may be parameterized by some number of arguments $p$.  Arguments
-may either be constants $c$, which include integers $i$, strings
-$s$ and characters $a$, or variables $x$, bound earlier in the description.
+may either be constants $c$, which include characters $a$, integers
+$i$ and strings $s$, or variables $x$ bound earlier in the description.
 These base types include a wide range of different sorts of
 integers and strings.  In its initial phases, the inference algorithm
-uses general integer (\cd{Pint}), alphanumeric string (\cd{Palpha})
-and punctuation character (\cd{Pother(}$a$\cd{)}) types.  In later phases,
+uses general integer \cd{Pint}, alphanumeric string \cd{Palpha}
+and punctuation character \cd{Pother(}$a$\cd{)} types.  In later phases,
 these coarse-grained base types are analyzed, merged and refined, producing
-integers with ranges (\cd{PintRanged(min,max)}),
-integers with known size (\cd{Pint32} or \cd{Pint64}), constant integers
-(\cd{PintConst(}$i$\cd{)}) for some integer $i$), or floating-point
-numbers (\cd{Pfloat}).  Likewise, later stages of our algorithm transform
+integers with ranges \cd{PintRanged(min,max)},
+integers with known size \cd{Pint32} or \cd{Pint64}, constant integers
+(\cd{PintConst(}$i$\cd{)} for some integer $i$), or floating-point
+numbers \cd{Pfloat}.  Likewise, later stages of our algorithm transform
 alphanumeric strings into arbitrary strings with terminating characters
 (\cd{Pstring(}$a$\cd{)} where $a$ terminates the string), fixed width
-strings (\cd{PstringFW(}$i$\cd{)} is a string with a length $i$) 
-or string constants  (\cd{PstringConst(}$s$\cd{)}).  For brevity in
+strings (\cd{PstringFW(}$i$\cd{)} where $i$ is the length of the string) 
+or string constants \cd{PstringConst(}$s$\cd{)}.  For brevity in
 our descriptions, we normally just write the constant string $s$
 inline in a description instead of \cd{PstringConst(}$s$\cd{)}.
 
 In addition to these simple base types, the \ir{} includes a
-collection of somewhat higher-level abstractions commonly found in ad
-hoc data, specified generally in Figure~\ref{fig:ir} as \cd{ComplexB}.
-For example, we have implemented base types for ip address, email
+collection of higher-level base types commonly found in ad hoc data,
+specified generally in Figure~\ref{fig:ir} as \cd{ComplexB}.  For
+example, we have implemented base types for IP addresses, email
 adresses, urls, XML tags, dates, times and a variety of
 others. Finally, the types \cd{Pvoid} and \cd{Pempty} are two special
-base types that are introduced at various points in inference process.
-The first fails immediately; the second succeeds immediately.  Neither
-consumes any characters while parsing.
+base types that are introduced at various points in the inference
+process.  The first fails immediately; the second succeeds
+immediately.  Neither consumes any characters while parsing.
 
 Complex descriptions are built from simpler ones using a variety of
 type constructors.  Type constructors include
-basic struct types (\cd{struct \{T_1 ... T_k\}}), which indicate a file 
-should contain a sequence of items matching \cd{T_1}, ..., \cd{T_k},
-basic array types (\cd{array T}), which indicate a file should contain
-a sequence of items of arbitrary length, each matching \cd{T},
-and union types (\cd{union  \{T_1 ... T_k\}}), which indicate a file
-should match one of \cd{T_1}, ..., \cd{T_k}.  Once again, initial phases
+basic struct types \cd{struct}\{$T_1$; ... $T_k$;\}, which indicate a
+data source
+should contain a sequence of items matching $T_1$, ..., $T_k$,
+basic array types \cd{array} $T$, which indicate a data source should contain
+a sequence of items of arbitrary length, each matching $T$,
+and union types \cd{union} \{$T_1$; ... $T_k$;\}, which indicate a
+data source
+should match one of $T_1$, ..., $T_k$.  Once again, initial phases
 of the inference algorithm restrict themselves to one of these three
 sorts of type constructors.  However, later phases of the algorithm
 refine, merge and process these simple types in a variety of ways.
 For example, unions may be transformed into 
 enumerations of constants
-(\cd{enum \{c_1,...,c_k\}}) or options (\cd{option T}).  In
+\cd{enum} \{$c_1$; ... $c_k$;\}
+or options \cd{option} \{$T$;\}.  In
 addition, later phases of the algorithm 
 bind variables to the results of parsing 
-base types.  For example, \cd{x:b(p_1,...,p_k)} expresses the fact that
-variable \cd{x} is bound to the value parsed by base type
-\cd{b(p_1,...,p_k)}.  These variables express dependencies between 
+base types.  For example, $x$:$b$($p_1$,...,$p_k$) expresses the fact that
+variable $x$ is bound to the value parsed by base type
+$b$($p_1$,...,$p_k$).  These variables express dependencies between 
 different parts
 of a description.\footnote{For the purposes of inference, 
 every bound variable is assumed to be distinct
@@ -148,21 +151,21 @@ the scope of such variables
 extends as far as possible to the right through the description.
 Understandng the fine details of the semantics is not important
 for understanding the central material in this paper.}  
-For example, the length of a string (\cd{PstringFW(p)})
-or an array (\cd{ParrayFW(p)}) may depend upon either a constant or
+For example, the length of a string \cd{PstringFW}($p$)
+or an array \cd{ParrayFW}($p$) may depend upon either a constant or
 a variable and likewise for any other parameterized base type.  In
 addition, unions may be refined into dependent switch statements
-(\cd{switch x of \{c_1 => T_1 ... c_k => T_k\}}), where the
-data is described by \cd{T_1}, ..., or \cd{T_k} depending on the value
-associated with \cd{x}, be it \cd{c_1}, ..., or \cd{c_k}.
+\cd{switch} $x$ \cd{of} \{$c_1$ \cd{=>} $T_1$; $\ldots$ $c_k$ \cd{=>} $T_k$;\}, where the
+data is described by $T_1$, ..., or $T_k$ depending on the value
+associated with $x$, be it $c_1$, ..., or $c_k$.
 
 The result of parsing according to a description is an internal
 representation of the data. We let metavariable $d$ range over such 
-data representations.  For the purposes of this paper, data 
+data representations.  For the purposes of this paper, a data 
 representation may be a constant $c$, an injection into the $i^{th}$
 variant of a union \cd{in}$_i(d)$, or a sequence of data representations
 $(d_1,\ldots,d_k)$.  The injections are used as the representations of
-any sort of union type, be it a union, an enum, an option or a switch.
+any sort of union type, be it a union, an enumeration, an option or a switch.
 The sequences are used as the representations of any sort of sequence
 type, whether it be a struct or one of the array variants.
 
@@ -174,16 +177,16 @@ different ad hoc data files we have trained our inference algorithm
 on.  The first, Crashreporter.log, is a Macintosh
 system file that records information concerning process crashes.\footnote{For
 expository purposes we have made a minor alteration to the Crashreporter.log
-format.  The evaluation section reports results on both the 
-completely unmodified Crashreporter.log and the modified version
-used to explain concepts in the paper.} The
-second, we call Sirius, is an internal AT\&T format used to
+format to allow us to explain more concepts with a single example.
+The evaluation section reports results on both the  
+completely unmodified Crashreporter.log and the modified version.} 
+The second, which we call Sirius, is an internal AT\&T format used to
 record phone call provisioning information. 
 %The third format is
 %a generic system logging file called ASL.log, again taken from a
 %Macintosh.
-Crashreporter.log will be used as our main running example throughout the
-paper; Sirius will be called upon periodically to illustrate
+We will use the Crashreporter.log data source as our main example throughout the
+paper; we will periodically use the Sirius data source to illustrate 
 particular aspects of the inference algorithm.  We report on our experience
 with many more examples in the evaluation section of the paper.
 
@@ -197,8 +200,8 @@ Sat Jun 24 06:38:46 2006 crashdump[2164]: Started writing crash report to: /Logs
 
 Sirius AT\&T Phone Provisioning Data:
 {\small \begin{verbatim}
-9152272|9152272|1|2813640092|2813640092|0|0||no_ii152272|EDTF_6|0|MARVINS1|UNO|10|1000295291
-9152261|9152261|1|0|0|0|0||no_ii152261|EDTF_1|0|jlaird1|UNO|EDTF_6|1001390400|EDTF_OS_10|1001476801
+8152272|8152272|1|6505551212|6505551212|0|0||no_ii152272|EKRS_6|0|FRED1|DUO|10|1000295291
+8152261|8152261|1|0|0|0|0||no_ii752261|EKRS_1|0|kfeosf2|DUO|EKRS_6|1001390400|EKRS_OS_10|1001476801
 \end{verbatim}
 }
 
@@ -225,7 +228,7 @@ Sirius AT\&T Phone Provisioning Data:
 \end{figure*}
 
 Figure \ref{fig:crashreporter:ir} presents a hand-writtern description
-of the crashreporter file in the \ir{} syntax.  This
+of the Crashreporter.log file in the \ir{} syntax.  This
 description is most easily read beginning at the bottom
 with the definition of the \cd{source} type.  This definition specifies that
 the data source is an
@@ -248,10 +251,10 @@ the \cd{report}.
 %% fields in the \cd{dateoption} struct is a space character (written
 %% \cd{" "}).
 
-Most of the variable names associated with fields ({\em e.g.}
-\cd{date}, \cd{dumpid}, etc.) merely serve as documentation for the reader.
+Most of the variable names associated with fields (\eg{}
+\cd{date}, \cd{dumpid}, \etc{}) merely serve as documentation for the reader.
 However, the \cd{kind} field is different -- it is used later in the 
-description and hence illustrates an element of {\em dependency}.  
+description and hence illustrates a {\em dependency}.  
 To be specific, the form of the
 \cd{report} field depends directly upon the contents of the \cd{kind}
 field.  If the value associated with the
