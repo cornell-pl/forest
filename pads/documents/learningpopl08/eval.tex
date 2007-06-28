@@ -105,24 +105,24 @@ Table \ref{tab:metrics} shows what we measure for each of the four representatio
 \subsection{Experiments}
 \begin{table*}
 \begin{center}
-\begin{tabular}{|l||r|r|r||r|r|r|c|} \hline
-Formats 	& Inf score 	&Ref score	& HW score 	& Inf time (s) 	& Ref time (s) 	& Total time (s) & HW time (h)\\ \hline \hline
-1967Transactions.short & 0.295 	&0.218 		&0.268		& 0.20&      2.32&      2.56 	& 4.0  \\ \hline
-MER\_T01\_01.csv & 0.648 	&0.112		&0.138		& 0.11&      2.80&      2.92 	& 0.5  \\ \hline
-ai.3000          & 0.503	&0.332		&0.338		& 1.97&      26.35&     28.64	& 1.0  \\ \hline
-asl.log          & 0.630	&0.267		&0.361		& 2.90&      52.07&     55.26	& 1.0  \\ \hline
-boot.log         & 0.620	&0.481		&0.703		& 0.11&      2.40&      2.53 	& 1.0  \\ \hline
-crashreporter.log & 0.607	&0.328		&0.348		& 0.12&      3.58&      3.73 	& 2.0  \\ \hline
-crashreporter.log.mod & 0.612	&0.329		&0.347		& 0.15&      3.83&      4.00 	& 2.0  \\ \hline
-dibbler.1000     & 0.602	&0.470		&0.438		& 2.24&      5.69&      8.00 	& 1.5  \\ \hline
-ls-l.txt         &0.559		&0.333		&0.401		& 0.01&      0.10&      0.11 	& 1.0  \\ \hline
-netstat-an       &0.413		&0.394		&0.319		& 0.07&      0.74&      0.82 	& 1.0  \\ \hline
-page\_log        & 0.540	&0.107		&0.353		& 0.08&      0.55&      0.65 	& 0.5   \\ \hline
-quarterlypersonalincome & 0.544	&0.367		&0.354		& 0.07&      5.11&      5.18 	& 48  \\ \hline
-railroad.txt     &0.715		&0.506		&0.522		& 0.06&      2.69&      2.76 	& 2.0  \\ \hline
-scrollkeeper.log & 0.625	&0.354		&0.352		& 0.13&      3.24&      3.40 	& 1.0  \\ \hline
-windowserver\_last.log &0.618	&0.241		&0.267		& 0.37&      9.65&      10.07	& 1.5  \\ \hline
-yum.txt          &0.827		&0.305		&0.474		& 0.11&      1.91&      2.03 	& 5.0  \\ \hline
+\begin{tabular}{|l||r|r|r|r||r|r|c|} \hline
+Formats 	 & Inf time (s) 	& Ref time (s) 	& Total time (s) & HW time (h) & Inf score 	&Ref score	& HW score \\ \hline \hline
+1967Transactions.short & 0.20&      2.32&      2.56 	& 4.0 & 0.295 	&0.218 		&0.268		 \\ \hline
+MER\_T01\_01.csv & 0.11&      2.80&      2.92 	& 0.5 & 0.648 	&0.112		&0.138		 \\ \hline
+ai.3000          & 1.97&      26.35&     28.64	& 1.0 & 0.503	&0.332		&0.338		 \\ \hline
+asl.log          & 2.90&      52.07&     55.26	& 1.0 & 0.630	&0.267		&0.361		 \\ \hline
+boot.log         & 0.11&      2.40&      2.53 	& 1.0 & 0.620	&0.481		&0.703		 \\ \hline
+crashreport.log   & 0.12&      3.58&      3.73 	& 2.0 & 0.607	&0.328		&0.348		 \\ \hline
+crashreport.log.mod & 0.15&      3.83&      4.00 	& 2.0 & 0.612	&0.329		&0.347		 \\ \hline
+dibbler.1000     & 2.24&      5.69&      8.00 	& 1.5 & 0.602	&0.470		&0.438		 \\ \hline
+ls-l.txt         & 0.01&      0.10&      0.11 	& 1.0 & 0.559	&0.333		&0.401		 \\ \hline
+netstat-an       & 0.07&      0.74&      0.82 	& 1.0 & 0.413	&0.394		&0.319		 \\ \hline
+page\_log        & 0.08&      0.55&      0.65 	& 0.5 & 0.540	&0.107		&0.353		  \\ \hline
+quarterlypersonalincome & 0.07&      5.11&      5.18 	& 48  & 0.544	&0.367		&0.354		\\ \hline
+railroad.txt     & 0.06&      2.69&      2.76 	& 2.0 & 0.715	&0.506		&0.522		 \\ \hline
+scrollkeeper.log & 0.13&      3.24&      3.40 	& 1.0 & 0.625	&0.354		&0.352		 \\ \hline
+windowserver\_last.log  & 0.37&      9.65&      10.07	& 1.5 &0.618		&0.241		&0.267		 \\ \hline
+yum.txt          & 0.11&      1.91&      2.03 	& 5.0 &0.827		&0.305		&0.474		 \\ \hline
 \end{tabular}
 \caption{Main results (Inf: structure inference, Ref: Refinement, HW: Hand-written)}
 \label{tab:results}
@@ -134,6 +134,9 @@ of supposedly good descriptions (see HW time column in Table \ref{tab:results}).
 Several formats takes a few hours and up to 2 days(!) to complete because these were the very first 
 PADS descriptions ever written by this person. It is obvious that coding description
 in PADS is a daunting task for a novice despite that he is a computer science PhD!
+To score a given HW IR, we wrote a simple recursive-descent parser with backtracking
+for our IR so that the original data can be populated into the IR structure for
+correct scoring of the data complexity which is the second component of the MDL score.
 After a few attempts and modifications, the HW PADS descritions parses all 
 the original data files with 100\% accuracy.
 
