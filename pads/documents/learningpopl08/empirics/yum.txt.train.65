@@ -1,8 +1,8 @@
-gen/yum.txt.chunk0.out: time = 1.48
-gen/yum.txt.chunk0.out: success rate = 99.39%
-gen/yum.txt.chunk1.out: time = 2.06
-gen/yum.txt.chunk1.out: success rate = 98.48%
-gen/yum.txt.chunk2.out: time = 1.55
-gen/yum.txt.chunk2.out: success rate = 97.87%
-The average time = 1.69
-The average success rate = 98.58%
+gen/yum.txt.chunk0.out: time = 1.27
+gen/yum.txt.chunk0.out: success rate = 96.95%
+gen/yum.txt.chunk1.out: time = 1.44
+gen/yum.txt.chunk1.out: success rate = 97.26%
+gen/yum.txt.chunk2.out: time = 1.47
+gen/yum.txt.chunk2.out: success rate = 99.09%
+The average time = 1.40
+The average success rate = 97.76%

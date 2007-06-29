@@ -1,8 +1,8 @@
-gen/1967Transactions.short.chunk0.out: time = 2.04
+gen/1967Transactions.short.chunk0.out: time = 1.75
 gen/1967Transactions.short.chunk0.out: success rate = 100.00%
-gen/1967Transactions.short.chunk1.out: time = 2.15
+gen/1967Transactions.short.chunk1.out: time = 1.98
 gen/1967Transactions.short.chunk1.out: success rate = 100.00%
-gen/1967Transactions.short.chunk2.out: time = 2.14
+gen/1967Transactions.short.chunk2.out: time = 1.97
 gen/1967Transactions.short.chunk2.out: success rate = 100.00%
-The average time = 2.11
+The average time = 1.90
 The average success rate = 100.00%

@@ -1,8 +1,8 @@
-gen/MER_T01_01.csv.chunk0.out: time = 0.11
+gen/MER_T01_01.csv.chunk0.out: time = 0.10
 gen/MER_T01_01.csv.chunk0.out: success rate = 99.80%
-gen/MER_T01_01.csv.chunk1.out: time = 0.11
+gen/MER_T01_01.csv.chunk1.out: time = 0.10
 gen/MER_T01_01.csv.chunk1.out: success rate = 99.80%
-gen/MER_T01_01.csv.chunk2.out: time = 0.11
+gen/MER_T01_01.csv.chunk2.out: time = 0.10
 gen/MER_T01_01.csv.chunk2.out: success rate = 99.80%
-The average time = 0.11
+The average time = 0.10
 The average success rate = 99.80%

@@ -194,24 +194,24 @@ in the training set, the data will not parse.
 
 \begin{table}
 \begin{center}
-\begin{tabular}{|l|r|l|c|c|} \hline
-Title 			& Bytes 	& Ty Comp	& 90\% 		& 95\% \\ \hline \hline
-1967Transactions.short	& 70929		& 0.0003	& 5		& 5 			\\ \hline
-MER\_T01\_01.csv        & 21731 	& 0.0037	& 5		& 5\\ \hline
-ai.3000                 & 293460 	& 0.0004	& 5		& 10\\ \hline
-asl.log                 & 279600	& 0.0012	& 5		& 10\\ \hline
-boot.log                & 16241		& 0.0213	& 40		& 50\\ \hline
-crashreporter.log       & 50152 	& 0.0052	& 5		& 5\\ \hline
-crashreporter.log.mod   & 49255		& 0.0053	& 5		& 5\\ \hline
-dibbler.1000            & 142607 	& 0.0001	& 5		& 5\\ \hline
-ls-l.txt                & 1979		& 0.0461	& 50		& 70\\ \hline
-netstat-an              & 14355		& 0.0118	& 20		& 25\\ \hline
-page\_log               & 28170		& 0.0032	& 5		& 5\\ \hline
-quarterlypersonalincome & 10177		& 0.017		& 10		& 20\\ \hline
-railroad.txt            & 6218		& 0.0485	& 60		& 85\\ \hline
-scrollkeeper.log        & 66288		& 0.002		& 5		& 5\\ \hline
-windowserver\_last.log  & 52394		& 0.0084	& 5		& 10\\ \hline
-yum.txt                 & 18221		& 0.0124	& 30		& 40\\ \hline
+\begin{tabular}{|l|r|l|r|c|c|} \hline
+Title 			& Bytes 	& Ty Comp	& Var	& 90\% 		& 95\% \\ \hline \hline
+1967Transactions.short	& 70929		& 0.0003	& 1 		& 5		& 5 \\ \hline
+MER\_T01\_01.csv        & 21731 	& 0.0037	& 2		& 5		& 5 \\ \hline
+ai.3000                 & 293460 	& 0.0004	& 11		& 5		& 10 \\ \hline
+asl.log                 & 279600	& 0.0012	& 19		& 5		& 10\\ \hline
+boot.log                & 16241		& 0.0213	& 33		& 45		& 60\\ \hline
+crashreporter.log       & 50152 	& 0.0052	& 15		& 10		& 15\\ \hline
+crashreporter.log.mod   & 49255		& 0.0053	& 17		& 5		& 15\\ \hline
+dibbler.1000            & 142607 	& 0.0001	& 3		& 5		& 10 \\ \hline
+ls-l.txt                & 1979		& 0.0461	& 7		& 50		& 65 \\ \hline
+netstat-an              & 14355		& 0.0118	& 20		& 25		& 35\\ \hline
+page\_log               & 28170		& 0.0032	& 2		& 5		& 5\\ \hline
+quarterlypersonalincome & 10177		& 0.017		& 3		& 10		& 10\\ \hline
+railroad.txt            & 6218		& 0.0485	& 43		& 60		& 75\\ \hline
+scrollkeeper.log        & 66288		& 0.002		& 9		& 5		& 5\\ \hline
+windowserver\_last.log  & 52394		& 0.0084	& 29		& 5		& 15\\ \hline
+yum.txt                 & 18221		& 0.0124	& 23		& 30		& 45\\ \hline
 \end{tabular}
 \caption{Min Training size (\%) vs. required accuracy}
 \end{center}
