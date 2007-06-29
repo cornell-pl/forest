@@ -1,4 +1,3 @@
-set term postscript eps "Helvetica" 35
 set style data histogram
 set style histogram cluster gap 1
 set style fill pattern border 1
@@ -12,6 +11,7 @@ set rmargin 0
 
 unset ytic 
 set border 1
+set term postscript eps "Helvetica" 35 size 5, 2.5
 set boxwidth 0.9 relative
 set xrange[-0.5:0.5]
 set output 'histogram4.eps'
@@ -19,7 +19,7 @@ plot 'histogram4.dat' using 2 notitle, '' u 3 notitle, '' u 4 notitle, '' u 5 no
 
 unset ytic
 set border 1
-set term postscript eps "Helvetica" 40 size 4.5, 3.5
+set term postscript eps "Helvetica" 35 size 4.5, 2.5
 set boxwidth 0.9 relative
 set xrange[-0.5:1.5]
 set output 'histogram2.eps'
@@ -27,7 +27,7 @@ plot 'histogram2.dat' using 2 notitle, '' u 3 notitle, '' u 4:xtic(1) notitle, '
 
 unset ytic
 set border 1
-set term postscript eps "Helvetica" 40 size 2.5, 3.5
+set term postscript eps "Helvetica" 35 size 2.5, 2.5
 set boxwidth 0.9 relative
 set xrange[-0.5:2.5]
 set output 'histogram3.eps'
@@ -35,7 +35,7 @@ plot 'histogram3.dat' using 2 notitle, '' u 3 notitle, '' u 4:xticlabels(1) noti
 
 set ytic nomirror
 set border 3
-set term postscript eps "Helvetica" 40 size 5, 3.5
+set term postscript eps "Helvetica" 35 size 5, 2.5
 set boxwidth 0.9 relative
 set xrange[-0.5:4.5]
 set output 'histogram1.eps'

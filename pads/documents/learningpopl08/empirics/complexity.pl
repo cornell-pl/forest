@@ -20,10 +20,14 @@ foreach my $gold (@golden)
     $dc = $2;
     $bytes = $3;
     $total = $4;
-    printf ("$gold: ntc = %.4f  ndc = %.4f  total = %.4f\n", $tc/$bytes, $dc/$bytes, $total);
-    last;
   }
+  if (/Variance.*is ([0-9.]+)/)
+  {
+   $var = $1;
+   printf ("$gold: ntc = %.4f  ndc = %.4f  total = %.4f var = %.4f\n", $tc/$bytes, $dc/$bytes, $total, $var);
+   last
   }
+ }
  }
 }
 close FILE;

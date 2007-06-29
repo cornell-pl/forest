@@ -25,7 +25,7 @@ when compared with descriptions written by a human expert
 in terms of accuracy and conciseness; 
 \item it is possible to learn from a small training set and produce
 a relatively accurate description at a fraction of the cost;
-\item there exists a positive correlation between the structural complexity
+\item there exists some correlation between the structural complexity
 of the data and the minimum training size required to achieve certain
 accuracy.
 \end{itemize}
@@ -34,10 +34,10 @@ accuracy.
 \begin{table*}
 \begin{center}
 \begin{tabular}{|l|c|c|c|c|c|c|c|l|} \hline
-Data source	& Chunks & Bytes	& Mode  &Header	& Array	& Group & Msgs 	& Comments \\ \hline \hline
+Data source	& Chunks & Bytes	& Mode  &Header	& Array	& Group & Msgs 	& Desc. \\ \hline \hline
 1967Transactions.short	& 999	& 70929	& line	& no	& no	& no	& no	& transaction records \\ \hline
 MER\_T01\_01.cvs	& 491	& 21731 & line  & yes	& no	& yes	& no	& comma-separated records\\ \hline
-ai.3000		& 3000		& 293460 & line	& no	& no	& yes	& no	& web log of Amnesty International \\ \hline
+ai.3000		& 3000		& 293460& line	& no	& no	& yes	& no	& web log of Amnesty International \\ \hline
 asl.log &	1500	& 279600	& line	& no	& no	& yes	& no	& log file of Mac ASL \\ \hline	
 boot.log	& 262	& 16241		& line	& no	& no	& no	& yes	& Mac OS boot log \\ \hline
 crashreporter.log & 441	& 50152 	& line	& no	& no	& no	& yes	& original crashreporter daemon log \\ \hline
@@ -65,9 +65,9 @@ Most of the data files are line based, which means a line represent a data recor
 the exception of netstat-an in which data come in blocks or multiple lines.
 Many of the formats include headers or footers which may complicate the descriptions.
 From a human point of view, dibbler.1000 and railroad.txt consist of some special
-character separated arrays. The ``Group'' column in the table shows if a data source
+character separated arrays. Some data sources such as ai.3000 and asl.log
 contain groupings delimited by special characters such as [, ], or quotations.
-The ``Msgs'' column indicates whether the data source contains complex English text.
+Many contain complex English text as logs or messages.
 We include two versions of crashreporter.log: an original file ``crashreporter.log''
 and ``crashreporter.log.mod'' with some of the date information replaced by ``-''. 
 The latter has been used as an example in Section \ref{sec:review}. 
@@ -76,18 +76,18 @@ The system that executed the experiments is an
 Apple PowerBook G4 with a 1.67 GHz Processor and 512 MB DDR RAM 
 running on Mac OS X 10.4 Tiger. 
 
-\begin{table}
-\begin{center}
-\begin{tabular}{|l|c|c|c|} \hline
-		&  Time to prod.	& MDL score 	& Parsing accuracy 	\\ \hline
-HW IR	& -			& X		& -			\\ \hline	
-HW PADS	& X			& -		& X			\\ \hline	
-INF IR 	& -			& X		& -			\\ \hline
-INF PADS & X			& -		& X			\\ \hline 
-\end{tabular}
-\caption{Measurement for the representations} \label{tab:metrics}
-\end{center}
-\end{table}
+%\begin{table}
+%\begin{center}
+%\begin{tabular}{|l|c|c|c|} \hline
+%		&  Time to prod.	& MDL score 	& Parsing accuracy 	\\ \hline
+%HW IR	& -			& X		& -			\\ \hline	
+%HW PADS	& X			& -		& X			\\ \hline	
+%INF IR 	& -			& X		& -			\\ \hline
+%INF PADS & X			& -		& X			\\ \hline 
+%\end{tabular}
+%\caption{Measurement for the representations} \label{tab:metrics}
+%\end{center}
+%\end{table}
 
 For any of the given data sources, there exists four different representations in 
 our experiments: hand-rewritten PADS by human expert (HW PADS), hand-rewritten IR directly
@@ -98,9 +98,9 @@ PADS, the HW PADS does not use those features not available in IR and hence it i
 not fully optimized. 
 Nonetheless, the HW PADS and HW IR are thought to be ``pretty good'' descriptions of
 the data and are used as control in the comparisons below. 
-In general, we measure the time to produce the descriptions, the MDL scores of
-and the parsing accuracy of the descriptions. 
-Table \ref{tab:metrics} shows what we measure for each of the four representations.
+In general, we measure the time to produce the descriptions and parsing accuracy on
+the HW PADS and INF PADS and the MDL scores on the HW IRs and INF IRs.
+We measure accuracy by feeding the original data into the PADS accumulator tool.
 
 \subsection{Experiments}
 \begin{table*}
@@ -160,6 +160,38 @@ in the number of nodes in the IR and is the bottleneck of the algorithm.
 Note that all these timings are achieved with a completely unoptimized prototype system
 with lots of overhead in book-keeping and I/Os.
 
+It is interesting to see that the learning system generally produces descriptions
+with a better score than the handwritten ones, sometimes even by a large margin, such
+as in boot.log and page\_log. This is often due to the following reasons.
+
+\begin{itemize}
+\item The golden IR were not optimized by the MDL scores but instead
+by the expert's intuition, therefore often more type complexity optmized than
+data complexity optimized but data complexity usually outweight the type
+complexity in the overall scores.
+However, for most of the data sources, the final scores for HW IR and INF IR were so close 
+that we are confident that the scoring function we use here is meaningful.
+
+\item Human expert pay more attention to the semantics of the formats and 
+tries to generalize the structure. For example, in dibbler.1000, the
+HW IR has a zip field, while in the data itself, the zip field is always
+blank. The inferred IR fixed the zip field to be
+blank because it doesn't have the data to infer otherwise. 
+In another example, the HW IR of boot.log describes the log message part 
+as a \verb#StringME /.*/# because the human expert knows anything
+message could have occurred in that position, so \verb#/.*/# is the safest thing
+to do, despite it being more data complex. 
+The inferred description, on the other hand, tend to overfit data,
+and may refine types that should not be refined. Similar things happen
+in the HW IR for page\_log where {\tt Pstring} is used instead of constant strings, 
+which results in higher scores.
+
+\item Due to the restriction of the IR language, certain tweaks, including the
+use of regular expressions in the HW IRs are necessary to enable
+the data population. Such tweaks are often not optimized and introduce
+additional complexity to the HW IR. 
+\end{itemize}
+
 %Compare these with the golden numbers from (1) in a big table. Show that the difference in scores
 %can be siginificant in some cases hence room for improvement (may go into the discussion section)
 %but timing advantage is huge and refinment improves initial struct a lot. Maybe also compare a case or
@@ -169,58 +201,80 @@ with lots of overhead in book-keeping and I/Os.
 %it parses all data correctly so the user is getting all these for free which is a tremendous benefit.
 %Discuss 1967 where the inference does better than human.
 
-Select random training sets of 5\%, 10\%, 15\%, ..., 80\% of 
-the original data (3 sets for each size) and run learning tool end to end on 
-them and take the average of 3 sets. 
-Set threshhold levels of 90\% and 95\% accuracies and record how much training data (in percentage and
-absolute terms) is needed for each golden format to achieve these accurary levels. Then relate this
-to the normalized type complexty of the inferred IR of the entire data sets.
-Plot graph of (timing, accuracy) vs. training size 
-for a few examples, and show that we are doing a good job with reasonable sample size. The diagram should
-show increasing accuracy and execution time as sample size goes up. Point out anomaly
-where the abolute training size is too small (e.g. for ls-l.txt which only has 35 lines) which results
-in overfitting. ls-l.txt is also problematic as it has a header in the first line and if that is not included
-in the training set, the data will not parse.
-
 \begin{figure}
 \epsfig{file=successrate.eps, width=\columnwidth}
-\caption{Success rates of training sets}
+\caption{Success rates of training sets} \label{fig:trainsucc}
 \end{figure}
 
 \begin{figure}
 \epsfig{file=traintime.eps, width=\columnwidth}
-\caption{Execution times of training sets}
+\caption{Execution times of training sets} \label{fig:traintime}
 \end{figure}
+
+To find out what the system can learn from smaller sample data,
+we select random training sets of 5\%, 10\%, 15\%, ..., 80\% of 
+the original data (three sets for each size) and run learning tool end to end on 
+them and take the average values of the three sets for each training size. 
+Figure \ref{fig:trainsucc} and Figure \ref{fig:traintime} plot the average 
+parsing accuracy and execution time against the various training set sizes.
+The intuition that learning accuracy is proportional to the training sizes is
+confirmed here though the relationship is not necessarily linear. Some of the
+data such as ls-l.txt, boot.log and railroad.txt are more difficult to train
+than others. In these cases, the training sets are too small 
+given the complexity and the large variance of data (see Table \ref{tab:correlate}).
+For instance, at 5\% training size, ls-l.txt has just one line of record. 
+Not surprisingly, our system couldn't get anything but this line right, and
+hence produces poor result. There are some dips in the curves in Figure \ref{fig:trainsucc}.
+They exist because some random samples does not provide good coverage of the data.
+These are not anomalies because the lower accuracy is still way higher than the 
+training size. 
+
+The training time is evidently linear to the training size from the plot. Larger
+and more complex data like asl.log and ai.3000 takes more time to learn, which
+is intuitively correct.
 
 \begin{table}
 \begin{center}
-\begin{tabular}{|l|r|l|r|c|c|} \hline
-Title 			& Bytes 	& Ty Comp	& Var	& 90\% 		& 95\% \\ \hline \hline
-1967Transactions.short	& 70929		& 0.0003	& 1 		& 5		& 5 \\ \hline
-MER\_T01\_01.csv        & 21731 	& 0.0037	& 2		& 5		& 5 \\ \hline
-ai.3000                 & 293460 	& 0.0004	& 11		& 5		& 10 \\ \hline
-asl.log                 & 279600	& 0.0012	& 19		& 5		& 10\\ \hline
-boot.log                & 16241		& 0.0213	& 33		& 45		& 60\\ \hline
-crashreporter.log       & 50152 	& 0.0052	& 15		& 10		& 15\\ \hline
-crashreporter.log.mod   & 49255		& 0.0053	& 17		& 5		& 15\\ \hline
-dibbler.1000            & 142607 	& 0.0001	& 3		& 5		& 10 \\ \hline
-ls-l.txt                & 1979		& 0.0461	& 7		& 50		& 65 \\ \hline
-netstat-an              & 14355		& 0.0118	& 20		& 25		& 35\\ \hline
-page\_log               & 28170		& 0.0032	& 2		& 5		& 5\\ \hline
-quarterlypersonalincome & 10177		& 0.017		& 3		& 10		& 10\\ \hline
-railroad.txt            & 6218		& 0.0485	& 43		& 60		& 75\\ \hline
-scrollkeeper.log        & 66288		& 0.002		& 9		& 5		& 5\\ \hline
-windowserver\_last.log  & 52394		& 0.0084	& 29		& 5		& 15\\ \hline
-yum.txt                 & 18221		& 0.0124	& 23		& 30		& 45\\ \hline
+\begin{tabular}{|l|c|c|c|c|} \hline
+Title 			& Ty Comp	& Var		& 90\% 		& 95\% \\ \hline \hline
+dibbler.1000            & 0.0001	& 0.0050	& 5		& 10 \\ \hline
+1967Transactions.short	& 0.0003	& 0.0020	& 5		& 5 \\ \hline
+ai.3000                 & 0.0004	& 0.0037	& 5		& 10 \\ \hline
+asl.log                 & 0.0012	& 0.0133	& 5		& 10\\ \hline
+scrollkeeper.log        & 0.0020	& 0.0089	& 5		& 5\\ \hline
+page\_log               & 0.0032	& 0.0085	& 5		& 5\\ \hline
+MER\_T01\_01.csv        & 0.0037	& 0.0122	& 5		& 5 \\ \hline
+crashreporter.log       & 0.0052	& 0.0181	& 10		& 15\\ \hline
+crashreporter.log.mod   & 0.0053	& 0.0181	& 5		& 15\\ \hline
+windowserver\_last.log  & 0.0084	& 0.0279	& 5		& 15\\ \hline
+netstat-an              & 0.0118	& 0.0693	& 25		& 35\\ \hline
+yum.txt                 & 0.0124	& 0.0732	& 30		& 45\\ \hline
+quarterlypersonalincome & 0.0170	& 0.0806	& 10		& 10\\ \hline
+boot.log                & 0.0213	& 0.0725	& 45		& 60\\ \hline
+ls-l.txt                & 0.0461	& 0.2571	& 50		& 65 \\ \hline
+railroad.txt            & 0.0485	& 0.1940	& 60		& 75\\ \hline
 \end{tabular}
-\caption{Min Training size (\%) vs. required accuracy}
+\caption{Complexity/Variance vs. Min Training size (\%) under required accuracy}
+\label{tab:correlate}
 \end{center}
 \end{table}
 
-\begin{figure}
-\begin{center}
-\epsfig{file=traintycomp.eps, width=\columnwidth}
-\caption{Correlation between structure complexity of 
-the data and minimum training size required}
-\end{center}
-\end{figure}
+Finally, we record the minimum training sizes required to achieve 90\% and 95\% accuracy for
+all the benmarks in Table \ref{tab:correlate}. We also show the normalized type complexity 
+(measuring the complexity the description) and the normalized structural variance (measuring
+how many disjoint paths the original data records take in the structure normalized by number of
+chunks) side-by-side with the
+minimum training sizes. We sort the rows by increasing type complexity and see a rough
+positive correlation between the structural complexity and the minimum training size required,
+with the exception of quarterlypersonalincome.
+Quarterlypersonalincome is special as it has only 62 records, 
+but each record is represented by a very big structure, therefore the normalized
+type complexity is large even though the data are quite uniform and easy to learn.
+
+%\begin{figure}
+%\begin{center}
+%\epsfig{file=traintycomp.eps, width=\columnwidth}
+%\caption{Correlation between structure complexity of 
+%the data and minimum training size required}
+%\end{center}
+%\end{figure}
