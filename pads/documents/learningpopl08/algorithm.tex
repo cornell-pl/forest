@@ -69,9 +69,8 @@ data, but users may specify a different scheme for their own domain
 through a configuration file.  For example, computational biologists
 may want to add DNA strings {\tt CATTGTT...} to the default tokenization 
 scheme.  The configuration file is essentially
-a list of name-regular expressions pairs -- see Figure~\ref{fig:configfile}
-for a small example.  The system uses the file to generate 
-part of the system's lexer, a
+a list of name-regular expressions pairs.  The system uses the 
+file to generate part of the system's lexer, a
 collection of new \ir{} base types, and a series of type 
 definitions that are incorporated into the final \pads{} specification.  
 
@@ -94,25 +93,25 @@ definitions that are incorporated into the final \pads{} specification.
 
 
 
-\begin{figure}
-\begin{verbatim}
-def triplet [0-9]{1,3}
-def doublet [0-9]{1,2}
-def hexdoub [0-9a-fA-F]{2}
-...
-exp Pemail {str1}@{hostname}
-exp Pmac   ({hexdoub}(: | \-)){5}{hexdoub}
-exp PbXML  \<([a-zA-Z])+\>
-exp PeXML  \<\/[^>]+\>
-\end{verbatim}
-\caption{Tiny fragment of the default configuration file. 
-The configuration command {\tt exp} specifies the definition on that
-line should be  ``exported'' to
-the learning tool whereas command {\tt def} implies the definition
-is local and used only in other {\tt exp} or {\tt def} in the
-configuration file.}
-\label {fig:configfile}
-\end{figure}
+% \begin{figure}
+% \begin{verbatim}
+% def triplet [0-9]{1,3}
+% def doublet [0-9]{1,2}
+% def hexdoub [0-9a-fA-F]{2}
+% ...
+% exp Pemail {str1}@{hostname}
+% exp Pmac   ({hexdoub}(: | \-)){5}{hexdoub}
+% exp PbXML  \<([a-zA-Z])+\>
+% exp PeXML  \<\/[^>]+\>
+% \end{verbatim}
+% \caption{Tiny fragment of the default configuration file. 
+% The configuration command {\tt exp} specifies the definition on that
+% line should be  ``exported'' to
+% the learning tool whereas command {\tt def} implies the definition
+% is local and used only in other {\tt exp} or {\tt def} in the
+% configuration file.}
+% \label {fig:configfile}
+% \end{figure}
 
 %% 
 
