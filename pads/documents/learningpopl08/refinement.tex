@@ -426,21 +426,23 @@ struct {
 In the first, value-independent phase of rewriting, 
 the common trailing white space marked {\tt (*) } above is
 pulled out of the unions and flattened inside the surrounding
-struct using the ``common postfix in union'' rules.  This 
+struct using the ``common postfix in union'' rule.  This 
 transformation leaves behind the unnecessarily verbose
 single-element struct on the line marked {\tt (**)}.  However, this
 will be transformed into the more compact constant 
-string {\tt "-"} in phase three of rewriting.
+string {\tt "-"} in phase three of rewriting.  This rewriting
+phase also pulls colon and whitespace characters out of the 
+trailing union (marked {\tt (**)}).
 
 {\small
 \begin{verbatim}
 struct {
   union {
     struct { Pdate; Pwhite; Ptime; Pwhite; Pint; };
-    struct { "-" };          (**)
+    struct { "-" };                 (**)
   }
-  Pwhite;                    (*)
-  Palpha; "["; Pint; "]";
+  Pwhite;                           (*)
+  Palpha; "["; Pint; "]"; ":"; Pwhite; (***)
   union { ... };
 };
 \end{verbatim}
@@ -469,8 +471,14 @@ data-dependent rules 3 and 4 are applied to base types to
 create a number of constants and enums.
 Moreover, a data dependency is discovered between the
 newly introduced enumeration involving {\tt "crashdump"},
-{\tt "mach\_msg"} and the structure of the following message.
-Hence, a switched union is introduced.
+{\tt "mach\_msg"}, {\em etc.}, and the structure of the following message.
+Hence, a switched union is also introduced.
+Notice that the switched union is switching on a different enum 
+than the hand-written IR in Figure \ref{fig:crashreporter:ir}, because
+the inference algorithm has decided on a different way of partitioning
+the chunks. Nonetheless, both of these descriptions are
+correct.
+
 
 {\small
 \begin{verbatim}
@@ -539,12 +547,6 @@ struct {
 % };
 % \end{verbatim}
 % }
-
-Note that the switched union is switching on a different enum 
-than the hand-written IR in Figure \ref{fig:crashreporter:ir}, because
-the inference algorithm has decided on a different way of partitioning
-the chunks. Nonetheless, both of these descriptions are
-correct.
 
 In the third and final phase, 
 data independent rule 5  is applied to combine many constants 
