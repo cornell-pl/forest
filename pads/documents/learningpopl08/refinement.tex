@@ -1,40 +1,40 @@
 The purpose of the structure refinement phase is to improve
 the candidate structure produced by the structure discovery phase. We
-formulate the structure refinement problem as an optimization problem. The
-objective of the problem is, given an initial structure (treated as
-an initial solution in some solution space), find the best possible structure
-in its neighborhood for which the informational-theoretic scoring function
-is optimized.
+formulate the structure refinement problem as a generalized search
+through description space starting with the candidate produced by
+structure discovery. The
+objective of the search is to find the description that minimizes
+the information-theoretic scoring function.
 
 \paragraph*{Rewriting rules}
-In order to move around in the solution space, we define a number of structure
-transitions in the form of rewriting rules. The general form of the rule is
+In order to move around in description space, we define a number of 
+description rewriting rules. The general form of the rule is
 \[T \goto T', ~~ {\rm if~ some~ constraint~} p(T)~ {\rm is~ satisfied,}\]
 where $T$ is a type, or sub-structure, and $T'$ is the type after the
 transition.  Some rules are unconditional and thus free of constraints.
-There are two kinds of rewriting rules: data-independent rules which
-transform a type based on the syntax structure itself; and data-dependent
-rules which transform a type based on some condition of the data values
-parsed by this type. Currently, we only consider unary constraints on a base
-type in $T$ (such as a base type having unique value or an enumeration of constant
-values) or binary constraints on two base types in $T$ (e.g. in the switched
-union case). The data independent rules mainly aim at reducing the complexity
-of the structure while the data dependent rules seek to indentify data
-dependency and establish relationships between different parts 
-of the structure.
+There are two kinds of rewriting rules: (1) data-independent rules which
+transform a type based exclusively on the syntax of the description; 
+and (2) data-dependent
+rules which transform a type based on both the syntax of the description
+and on properties of the training data
+parsed by this type.  In general, 
+the data independent rules aim to rearrange and merge portions
+of the structure while the data dependent rules seek to identify 
+constant fields and enumerations, and to establish relationships 
+between different parts of the structure.
 
-In Figure \ref{fig:rules}, we present a selection of
+In Figure \ref{fig:rules}, we present a selection of the
 data independent and data dependent rules used in the refinement phase.
-Some of the rules have been omitted or simplified for succinctness.
-In these rules,
-let $T_{punc}$ be any type that describes punctuation or white space characters.
-Where $T\setof{X}$ appears in a pattern or the left-hand side of a rewriting
+Many rules have been omitted and some have been simplified for succinctness.
+%In these rules,
+%let $T_{punc}$ be any type that describes punctuation or white space character%s.
+When $T\setof{X}$ appears in a pattern on the left-hand side of a rewriting
 rule, $X$ is bound to the set of data representations resulting
 from using $T$ to parse the appropriate part of each chunk from the training
 set. Furthermore, let $card(X)$ be the cardinality of the set $X$, 
 and let $X(i)$ be the data representation resulting
 from parsing the $i^{th}$ chunk in the training set. Finally, given a union
-value $in_j(v)$, we define function $tag(in_j(v))$ to be $j$.
+value $\mathtt{in}_j(v)$, we define $tag(\mathtt{in}_j(v))$ to be $j$.
 
 \begin{figure*}
 \begin{center}
@@ -45,18 +45,11 @@ value $in_j(v)$, we define function $tag(in_j(v))$ to be $j$.
 \begin{enumerate}
 \item Singleton structs and unions \\
 $
-\irstruct{T} \goto T
+\irstruct{T} \goto T  \qquad\qquad\quad \irunion{T} \goto T
 $\\ \\
 $
-\irstruct{} \goto \Pempty
-$\\ \\
+\irstruct{} \goto \Pempty  \qquad\quad\quad \irunion{} \goto \Pvoid 
 $
-\irunion{T} \goto T
-$\\ \\
-$
-\irunion{} \goto \Pvoid 
-$ 
-
 \item Struct and union clean-up\\
 $
 \irstruct{pre\_types; \Pvoid; post\_types} \goto \Pvoid
@@ -68,47 +61,44 @@ $\\ \\
 $
 \irunion{pre\_types; \Pvoid; post\_types} \goto \\
 \sskip \irunion{pre\_types; post\_types} 
-$\\ \\
 $
-\irunion{pre\_types; \Pempty; post\_types} \goto \\
-\sskip \irunion{pre\_types; post\_types; \Pempty} 
-$
-
-\item Union to option\\
-$
-\irunion{T; \Pempty} \goto \iroption{T}
-$\\ \\
-$
-\irunion{\Pempty; T} \goto \iroption{T}
-$
-
-\item Unnest structs and unions\\
-$
-\irstruct{pre\_types; \irstruct{mid\_types}; post\_types} \goto \\
-\sskip \irstruct{pre\_types; mid\_types; post\_types}
-$\\ \\
-$
-\irunion{pre\_types; \irunion{mid\_types}; post\_types} \goto \\
-\sskip \irunion{pre\_types; mid\_types; post\_types}
-$
-
+%$
+%\irunion{pre\_types; \Pempty; post\_types} \goto \\
+%\sskip \irunion{pre\_types; post\_types; \Pempty} 
+%$
+% \item Union to option\\
+% $
+% \irunion{T; \Pempty} \goto \iroption{T}
+% $\\ \\
+% $
+% \irunion{\Pempty; T} \goto \iroption{T}
+% $
+% \item Unnest structs and unions\\
+% $
+% \irstruct{pre\_types; \irstruct{mid\_types}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; mid\_types; post\_types}
+% $\\ \\
+% $
+% \irunion{pre\_types; \irunion{mid\_types}; post\_types} \goto \\
+% \sskip \irunion{pre\_types; mid\_types; post\_types}
+% $
 \item Uniform struct to fixed-length array\\
 $
 \irstruct{T_1; \ldots; T_n} \goto \irarrayFW{T_1}{n}
 $\\ 
 \noindent if $n \ge 3$ and $\forall i \in [1,~ n],~ j \in [1,~ n]:~ T_i = T_j$.
 
-\item Common prefix or postfix in union branches \\
-$
-\irunion{\irstruct{T; post\_types_1}; \\
-\sskip \irstruct{T, post\_types_2}} \goto \\
-\sskip \irstruct{T; \irunion{\irstruct{post\_types_1}; \\
-\sskip \irstruct{post\_types_2}}}
-$\\ \\
-$
-\irunion{\irstruct{T; post\_types}; T} \goto\\
-\sskip \irstruct{T; \iroption{\irstruct{post\_types}}}
-$\\ \\
+\item Common postfix in union branches \\
+% $
+% \irunion{\irstruct{T; post\_types_1}; \\
+% \sskip \irstruct{T, post\_types_2}} \goto \\
+% \sskip \irstruct{T; \irunion{\irstruct{post\_types_1}; \\
+% \sskip \irstruct{post\_types_2}}}
+% $\\ \\
+% $
+% \irunion{\irstruct{T; post\_types}; T} \goto\\
+% \sskip \irstruct{T; \iroption{\irstruct{post\_types}}}
+% $\\ \\
 $
 \irunion{\irstruct{pre\_types_1; T}; \\
 \sskip \irstruct{pre\_types_2; T}} \goto \\
@@ -124,63 +114,64 @@ $
 $
 \irstruct{pre\_types; {\tt PstringConst (c_1)}; \\
 \sskip {\tt PstringConst(c_2)}; post\_types} \goto \\
-\sskip \irstruct{pre\_types; {\tt PstringConst (c_1 \wedge c_2)}; post\_types} 
+\sskip \irstruct{pre\_types; {\tt PstringConst (c_1 {\makeatletter \tt @} c_2)}; post\_types} 
 $
 
-\item {Get floating number number}\\
-$
-\irunion{{\tt Pint}; {\tt Pfloat}} \goto {\tt Pfloat}
-$ 
+% \item {Get floating number number}\\
+% $
+% \irunion{{\tt Pint}; {\tt Pfloat}} \goto {\tt Pfloat}
+% $ 
+
 \end{enumerate}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{\columnwidth}
 \paragraph*{Data dependent rules}
 \begin{enumerate}
-\item Get floating point number \\
-$
-\irstruct{pre\_types; {\tt Pint}\setof{X}; {\tt PstringConst ('.')};  \\
-\sskip {\tt Pint}\setof{Y}; post\_types} \goto \\
-\sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
-$\\ 
-\noindent if $\forall y \in Y:~ y \ge 0$. \\
-\\
-$
-\irstruct{pre\_types; {\tt Pint}\setof{X}; \\
-\sskip \iroption{\irstruct{{\tt PstringConst ('.')};  \\
-\sskip {\tt Pint}\setof{Y}}}; post\_types} \goto \\
-\sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
-$ \\
-\noindent if $\forall y \in Y:~ y \ge 0$. 
+% \item Get floating point number \\
+% $
+% \irstruct{pre\_types; {\tt Pint}\setof{X}; {\tt PstringConst ('.')};  \\
+% \sskip {\tt Pint}\setof{Y}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
+% $\\ 
+% \noindent if $\forall y \in Y:~ y \ge 0$. \\
+% \\
+% $
+% \irstruct{pre\_types; {\tt Pint}\setof{X}; \\
+% \sskip \iroption{\irstruct{{\tt PstringConst ('.')};  \\
+% \sskip {\tt Pint}\setof{Y}}}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
+% $ \\
+% \noindent if $\forall y \in Y:~ y \ge 0$. 
 
-\item Discover negative numbers\\
-$
-\irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-');\\
-\sskip {\tt Pint} \setof{X}; post\_types} \goto \\
-\sskip \irstruct{pre\_types; T_{punc}; {\tt Pint}; post\_types}
-$\\ 
-\noindent if $\forall x \in X:~ x \ge 0$. \\
-\\
-$
- \irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-'); \\
-\sskip {\tt Pfloat}\setof{X}; post\_types} \goto \\
-\sskip \irstruct{pre\_types; T_{punc}; {\tt Pfloat}; post\_types}
-$\\ 
-\noindent if $\forall x \in X:~ x \ge 0$.\\
-\\
-$
- \irstruct{pre\_types; T_{punc}; \iroption{{\tt PstringConst}('-')}; \\
-\sskip {\tt Pint}(x); post\_types} \goto \\
-\sskip \irstruct{pre\_types; T_{punc}; {\tt Pnat}; post\_types}
-$\\
-\noindent if $\forall x \in X:~ x \ge 0$.\\
-\\
-$
-\irstruct{pre\_types; T_{punc}; {\tt \iroption{PstringConst}('-')}; \\
-\sskip {\tt Pfloat}(x); post\_types} \goto \\
-\sskip  \irstruct{pre\_types; T_{punc}; {\tt Preal}; post\_types}
-$\\
-\noindent if $\forall x \in X:~ x \ge 0$.
+% \item Discover negative numbers\\
+% $
+% \irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-');\\
+% \sskip {\tt Pint} \setof{X}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; T_{punc}; {\tt Pint}; post\_types}
+% $\\ 
+% \noindent if $\forall x \in X:~ x \ge 0$. \\
+% \\
+% $
+%  \irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-'); \\
+% \sskip {\tt Pfloat}\setof{X}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; T_{punc}; {\tt Pfloat}; post\_types}
+% $\\ 
+% \noindent if $\forall x \in X:~ x \ge 0$.\\
+% \\
+% $
+%  \irstruct{pre\_types; T_{punc}; \iroption{{\tt PstringConst}('-')}; \\
+% \sskip {\tt Pint}(x); post\_types} \goto \\
+% \sskip \irstruct{pre\_types; T_{punc}; {\tt Pnat}; post\_types}
+% $\\
+% \noindent if $\forall x \in X:~ x \ge 0$.\\
+% \\
+% $
+% \irstruct{pre\_types; T_{punc}; {\tt \iroption{PstringConst}('-')}; \\
+% \sskip {\tt Pfloat}(x); post\_types} \goto \\
+% \sskip  \irstruct{pre\_types; T_{punc}; {\tt Preal}; post\_types}
+% $\\
+% \noindent if $\forall x \in X:~ x \ge 0$.
 
 \item Base type with unique values to constant \\
 $
@@ -213,16 +204,15 @@ $
 {\tt Pint}\setof{X} \goto {\tt Pint32} \\
 $
 {\rm if} $\forall x \in X:~ 0 \le x~ < 2^{32}$.
-\\ \\
-$
-{\tt Pint}\setof{X} \goto {\tt Pint64} \\
-$
-{\rm if} $\forall x \in X:~ 2^{32} \le x~ < 2^{64}$.
-\\ \\
-$
-{\tt Pint}\setof{X} \goto {\tt PintRanged}(min,~ max) \\
-$
-{\rm if}~ $\forall x \in X:~ min \le x~ \le max$.
+% $
+% {\tt Pint}\setof{X} \goto {\tt Pint64} \\
+% $
+% {\rm if} $\forall x \in X:~ 2^{32} \le x~ < 2^{64}$.
+% \\ \\
+% $
+% {\tt Pint}\setof{X} \goto {\tt PintRanged}(min,~ max) \\
+% $
+% {\rm if}~ $\forall x \in X:~ min \le x~ \le max$.
 
 \item Union to switch \\
 $
@@ -237,18 +227,18 @@ $\\
 \end{minipage}
 }
 \end{center}
-\caption{List of rewriting rules} \label{fig:rules}
+\caption{Selected and simplified rewriting rules} \label{fig:rules}
 \end{figure*}
 
-\paragraph*{Local search optimization}
+\paragraph*{The Search.}
 The core of the rewriting system is 
-a recursive, depth-first, greedy local search procedure. The output 
-structure of one phase is used as input to the next phase.
-This procedure begins by refining the children of any structured type before
+a recursive, depth-first, greedy search procedure. 
+By ``depth-first,'' we mean the algorithm begins by refining the 
+children of any structured type before
 the structure itself. When refining a type, it selects a rule that 
 would {\em minimize} the information-theoretic score of the resulting
-structure and applies it to the structure, and iterates.
-Iterations stop when no reduction in the score is possible, and at
+structure and applies it to the structure.  It iterates this process until
+no further reduction in the score is possible, and at
 that time, structure $T$ is said to be {\em stable}.
 
 \begin{figure}
@@ -296,36 +286,50 @@ fun refine (T:description) : description =
 
 The overall algorithm in Figure \ref{fig:refinement} is applied three
 times in succession. 
-At the first time, the algorithm quickly reduces the initial structure to 
-a much simpler, manageable sized new structure by using
-the data independent rules {\em only}. The second time, data dependent
+The first time, the algorithm quickly reduces the initial structure to 
+a much simpler, more manageably-sized structure by using
+the data-independent rules {\em only}. The second time, data dependent
 rules are used refine the base types to constant values and enumerations, etc,
 and establish structural dependencies such as switched unions. This phase
-requires a value-space analysis described below.
-At the third time, a set of the data independent rules
-(such as combining adjacent constant strings) are applied again. 
-The third time is necessary because certain changes
-to the base types in phase two such as the creation of constants may 
-enable some of data independent rules which will further optimize the structure. 
+requires the value-space analysis described below.
+The third time, the set of the data-independent rules
+are applied again. The third time is necessary because certain changes
+to the base types in phase two, such as the creation of constants, may 
+newly enable some of the data-independent rules. 
 
-\paragraph*{Value-space analysis}
-A value-space analysis is performed as a prerequisite of the second phase.
-Here, a number of data dependency tables are generated from the 
-input structure, where each
-column of the tables represent the data values associated with a particular base type 
-in the structure, with some extra columns representing auxilliary information such as
-array sizes and union branching decisions. Then we applied the TANE algorithm \cite{TANE-HKPT99}
-which can be used to identify functional dependencies in relational databases.
-Because TANE is expensive (exponential on the number of nodes in the structure) 
-in general and the sample data we have is often not big enough hence 
-result in many false positives, we modified TANE to produce only a minimum set 
-of binary dependencies. The result of this dependency analysis is used to 
+\paragraph*{Value-space analysis.}
+A value-space analysis is performed as a prerequisite 
+to applying the data-dependent rules.
+This analysis operates by first generating a set of relational tables
+from the input data.
+Each row of the table corresponds to a chunk and each column of a table
+corresponds to either a particular base type from the inferred description,
+or to a piece of metadata from the description.  Examples of meta-data
+columns include the tag number from union branches and the length of arrays.
+We generate a {\em set} of relational tables as opposed to a single table
+as the elements of an array occupy their own separate table (a description 
+with no arrays will only have one associated table).
+% Here, a number of data dependency tables are generated from the 
+% input structure, where each
+% column of the tables represent the data values associated with a particular base type 
+% in the structure, with some extra columns representing auxilliary information such as
+% array sizes and union branching decisions. 
+Every column of every table is analyzed to determine properties,
+such as constancy and value range, of the data in that column.
+To determine inter-column properties, we have implemented a simplified
+variant of the TANE algorithm \cite{TANE-HKPT99},
+which identifies functional dependencies between columns in 
+relational data.  Because full TANE is too expensive 
+(possibly exponential in the number of columns), 
+and with insufficient data results in many false positives, 
+our simplified algorithm only computes binary dependencies. The 
+result of this dependency analysis is used to 
 identify switched unions and fixed size arrays.
-In addition, we also discover all the unary constraints on the base types by
-analysizing every single column in the data tables. We store these unary and
-binary constraint in a constraint map.  A rule can be applied 
-only if the conditions are validated successfully
-against the constraint map. 
+%In addition, we also discover all the unary constraints on the base types by
+%analysizing every single column in the data tables. We store these unary and
+%binary constraint in a constraint map.  A rule can be applied 
+%only if the conditions are validated successfully
+%against the constraint map. 
 
 \paragraph*{Running example}
 To illustrate the refinement process a bit more concretely, let us walk through
