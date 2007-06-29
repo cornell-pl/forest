@@ -432,16 +432,16 @@ single-element struct on the line marked {\tt (**)}.  However, this
 will be transformed into the more compact constant 
 string {\tt "-"} in phase three of rewriting.  This rewriting
 phase also pulls colon and whitespace characters out of the 
-trailing union (marked {\tt (**)}).
+trailing union (marked {\tt (***)}).
 
 {\small
 \begin{verbatim}
 struct {
   union {
     struct { Pdate; Pwhite; Ptime; Pwhite; Pint; };
-    struct { "-" };                 (**)
+    struct { "-" };                    (**)
   }
-  Pwhite;                           (*)
+  Pwhite;                              (*)
   Palpha; "["; Pint; "]"; ":"; Pwhite; (***)
   union { ... };
 };
@@ -568,6 +568,14 @@ struct {
 };
 \end{verbatim}
 }
+
+The final information-theoretic complexity of the complete structure 
+relative to the data in our training set is 304538 bits. 
+Initially, the output of the structure discovery phase had a 
+complexity of 416156 bits.  The absolute values of these quantities
+are relatively unimportant, but the fact that the final complexity
+is substantially smaller than the original suggests that our search
+procedure has been able to optimize this description effectively.
 
 
 % {\small
