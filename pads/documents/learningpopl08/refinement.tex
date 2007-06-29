@@ -298,14 +298,14 @@ to the base types in phase two, such as the creation of constants, may
 newly enable some of the data-independent rules. 
 
 \paragraph*{Value-space analysis.}
-A value-space analysis is performed as a prerequisite 
+A value-space analysis is performed prior
 to applying the data-dependent rules.
 This analysis operates by first generating a set of relational tables
 from the input data.
-Each row of the table corresponds to a chunk and each column of a table
+Each row of a table corresponds to a chunk and each column of a table
 corresponds to either a particular base type from the inferred description,
 or to a piece of metadata from the description.  Examples of meta-data
-columns include the tag number from union branches and the length of arrays.
+include the tag number from union branches and the length of arrays.
 We generate a {\em set} of relational tables as opposed to a single table
 as the elements of an array occupy their own separate table (a description 
 with no arrays will only have one associated table).
@@ -313,7 +313,8 @@ with no arrays will only have one associated table).
 % input structure, where each
 % column of the tables represent the data values associated with a particular base type 
 % in the structure, with some extra columns representing auxilliary information such as
-% array sizes and union branching decisions. 
+% array sizes and union branching decisions.
+ 
 Every column of every table is analyzed to determine properties,
 such as constancy and value range, of the data in that column.
 To determine inter-column properties, we have implemented a simplified
@@ -324,7 +325,7 @@ relational data.  Because full TANE is too expensive
 and with insufficient data results in many false positives, 
 our simplified algorithm only computes binary dependencies. The 
 result of this dependency analysis is used to 
-identify switched unions and fixed size arrays.
+identify switched unions and fixed-size arrays.
 %In addition, we also discover all the unary constraints on the base types by
 %analysizing every single column in the data tables. We store these unary and
 %binary constraint in a constraint map.  A rule can be applied 
