@@ -344,193 +344,263 @@ The intial IR structure of crash reporter looks like this:
 
 {\small
 \begin{verbatim}
-struct(BTy_114, 416156.763b) {
-  union(BTy_7, 204984.986b) {
-    struct(BTy_6, 204589.179b) {
-      Pdate (BTy_0, 108004.535b);
-      Pwhite (BTy_1, 809.044b);
-      Ptime (BTy_2, 88802.177b);
-      Pwhite (BTy_3, 809.044b);
-      Pint (BTy_4, 5347.705b);
-      Pwhite (BTy_5, 809.044b);
+struct {
+  union {
+    struct {
+      Pdate; Pwhite; Ptime; Pwhite; Pint;  
+      Pwhite;          (*)
     };
-    struct(BTy_10, 388.762b) {
-      Pother (-) (BTy_8, 299.673b);
-      Pwhite (BTy_9, 83.044b);
+    struct { 
+      "-"; 
+      Pwhite;          (*)
     };
   }
-  Palpha (BTy_11, 23879.044b);
-  Pother ([) (BTy_13, 3336.618b);
-  Pint (BTy_14, 6899.045b);
-  Pother (]) (BTy_15, 3336.618b);
-  union(BTy_63, 173712.822b) {
-    struct(BTy_62, 156487.759b) {
-      ...
-    };
-    struct(BTy_113, 17218.019b) {
-      ...
-    };
-  };
+  Palpha; "["; Pint; "]";
+  union { ... };
 };
 \end{verbatim}
 }
 
-In Phase One, common types such as Pwhite (BTy\_5 and BTy\_9) in union BTy\_7 are
-are extracted out under the "common prefix in union" rule.
-As a result of, the new structure with a slightly better over score 416156.509b is:
+
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 416156.763b) {
+%   union(BTy_7, 204984.986b) {
+%     struct(BTy_6, 204589.179b) {
+%       Pdate (BTy_0, 108004.535b);
+%       Pwhite (BTy_1, 809.044b);
+%       Ptime (BTy_2, 88802.177b);
+%       Pwhite (BTy_3, 809.044b);
+%       Pint (BTy_4, 5347.705b);
+%       Pwhite (BTy_5, 809.044b);
+%     };
+%     struct(BTy_10, 388.762b) {
+%       Pother (-) (BTy_8, 299.673b);
+%       Pwhite (BTy_9, 83.044b);
+%     };
+%   }
+%   Palpha (BTy_11, 23879.044b);
+%   Pother ([) (BTy_13, 3336.618b);
+%   Pint (BTy_14, 6899.045b);
+%   Pother (]) (BTy_15, 3336.618b);
+%   union(BTy_63, 173712.822b) {
+%     struct(BTy_62, 156487.759b) {
+%       ...
+%     };
+%     struct(BTy_113, 17218.019b) {
+%       ...
+%     };
+%   };
+% };
+% \end{verbatim}
+% }
+
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 416156.509b) {
+%   struct(BTy_115, 204984.732b) {
+%     union(BTy_7, 204091.634b) {
+%       struct(BTy_6, 203779.872b) {
+%         Pdate (BTy_0, 108004.535b);
+%         Pwhite (BTy_1, 809.044b);
+%         Ptime (BTy_2, 88802.177b);
+%         Pwhite (BTy_3, 809.044b);
+%         Pint (BTy_4, 5347.705b);
+%       };
+%       struct(BTy_10, 304.718b) {
+%         Pother (-) (BTy_8, 299.673b);
+%       };
+%     }
+%     Pwhite (BTy_5, 887.044b);
+%   }
+%   ...
+% };
+% \end{verbatim}
+% }
+
+% Note that we end up with an undesirable situation in BTy\_10 where a struct 
+% contains just one element. That will be fixed in Phase three as we shall see.
+% Next, the "unnest struct and union" rule kicks in to flatten struct BTy\_114 to
+% the following.
+
+In the first, value-independent phase of rewriting, 
+the common trailing white space marked {\tt (*) } above is
+pulled out of the unions and flattened inside the surrounding
+struct using the ``common postfix in union'' rules.  This 
+transformation leaves behind the unnecessarily verbose
+single-element struct on the line marked {\tt (**)}.  However, this
+will be transformed into the more compact constant 
+string {\tt "-"} in phase three of rewriting.
 
 {\small
 \begin{verbatim}
-struct(BTy_114, 416156.509b) {
-  struct(BTy_115, 204984.732b) {
-    union(BTy_7, 204091.634b) {
-      struct(BTy_6, 203779.872b) {
-        Pdate (BTy_0, 108004.535b);
-        Pwhite (BTy_1, 809.044b);
-        Ptime (BTy_2, 88802.177b);
-        Pwhite (BTy_3, 809.044b);
-        Pint (BTy_4, 5347.705b);
-      };
-      struct(BTy_10, 304.718b) {
-        Pother (-) (BTy_8, 299.673b);
-      };
-    }
-    Pwhite (BTy_5, 887.044b);
+struct {
+  union {
+    struct { Pdate; Pwhite; Ptime; Pwhite; Pint; };
+    struct { "-" };          (**)
   }
-  ...
+  Pwhite;                    (*)
+  Palpha; "["; Pint; "]";
+  union { ... };
 };
 \end{verbatim}
 }
 
-Note that we end up with an undesirable situation in BTy\_10 where a struct 
-contains just one element. That will be fixed in Phase three as we shall see.
-Next, the "unnest struct and union" rule kicks in to flatten struct BTy\_114 to
-the following.
+% struct(BTy_114, 416056.899b) {
+%     union(BTy_7, 204091.634b) {
+%       struct(BTy_6, 203779.872b) {
+%         Pdate (BTy_0, 108004.535b);
+%         Pwhite (BTy_1, 809.044b);
+%         Ptime (BTy_2, 88802.177b);
+%         Pwhite (BTy_3, 809.044b);
+%         Pint (BTy_4, 5347.705b);
+%       };
+%       struct(BTy_10, 304.718b) {
+%         Pother (-) (BTy_8, 299.673b);
+%       };
+%     Pwhite (BTy_5, 887.044b);
+%     ...
+%   }
+%   ...
+% };
+
+In the second rewriting phase, 
+data-dependent rules 3 and 4 are applied to base types to 
+create a number of constants and enums.
+Moreover, a data dependency is discovered between the
+newly introduced enumeration involving {\tt "crashdump"},
+{\tt "mach\_msg"} and the structure of the following message.
+Hence, a switched union is introduced.
 
 {\small
 \begin{verbatim}
-struct(BTy_114, 416056.899b) {
-    union(BTy_7, 204091.634b) {
-      struct(BTy_6, 203779.872b) {
-        Pdate (BTy_0, 108004.535b);
-        Pwhite (BTy_1, 809.044b);
-        Ptime (BTy_2, 88802.177b);
-        Pwhite (BTy_3, 809.044b);
-        Pint (BTy_4, 5347.705b);
-      };
-      struct(BTy_10, 304.718b) {
-        Pother (-) (BTy_8, 299.673b);
-      };
-    Pwhite (BTy_5, 887.044b);
-    ...
-  }
-  ...
+struct {
+  union {
+    struct { Pdate; " "; Ptime; " "; 2006; };
+    struct { "-" };
+  };
+  " "; enum {"crashreporterd", "crashdump"};
+  "["; PintRanged [120...29874]; "]"; ":"; " ";
+  x19:enum {"crashdump", "mach_msg", "Finished", 
+            "Started", "Unable", "Failed"};
+  switch x19 of { ... };
 };
 \end{verbatim}
 }
 
-In Phase Two, data dependent rules 3 and 4 are applied to all the base types to 
-create a number of constants and enums, and therefore the structure is
-transformed to: 
-{\small
-\begin{verbatim}
-struct(BTy_114, 304553.986b) {
-  union(BTy_7, 196876.315b) {
-    struct(BTy_6, 196853.182b) {
-      Pdate (BTy_0, 108004.535b);
-      " " (BTy_1, 11.044b);
-      Ptime (BTy_2, 88802.177b);
-      " " (BTy_3, 11.044b);
-      2006 (BTy_4, 17.015b);
-    };
-    struct(BTy_10 39, 16.089b) {
-      "-" (BTy_8 39, 11.044b);
-    };
-  };
-  " " (BTy_5, 11.044b);
-  enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
-  "[" (BTy_13, 11.044b);
-  Pint [120...29874] (BTy_14, 6580.450b);
-  "]" (BTy_10, 11.044b);
-  ":" (BTy_12, 11.044b);
-  " " (BTy_13, 11.044b);
-  enum {"crashdump", "mach_msg", "Finished", "Started", 
-        "Unable", "Failed"} (BTy_19, 317.405b);
-  union(BTy_63, 100570.505b) {
-    ...
-  };
-};
-\end{verbatim}
-}
+% struct(BTy_114, 304553.986b) {
+%   union(BTy_7, 196876.315b) {
+%     struct(BTy_6, 196853.182b) {
+%       Pdate (BTy_0, 108004.535b);
+%       " " (BTy_1, 11.044b);
+%       Ptime (BTy_2, 88802.177b);
+%       " " (BTy_3, 11.044b);
+%       2006 (BTy_4, 17.015b);
+%     };
+%     struct(BTy_10 39, 16.089b) {
+%       "-" (BTy_8 39, 11.044b);
+%     };
+%   };
+%   " " (BTy_5, 11.044b);
+%   enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
+%   "[" (BTy_13, 11.044b);
+%   Pint [120...29874] (BTy_14, 6580.450b);
+%   "]" (BTy_10, 11.044b);
+%   ":" (BTy_12, 11.044b);
+%   " " (BTy_13, 11.044b);
+%   enum {"crashdump", "mach_msg", "Finished", "Started", 
+%         "Unable", "Failed"} (BTy_19, 317.405b);
+%   union(BTy_63, 100570.505b) {
+%     ...
+%   };
+% };
 
-Further, data dependency is discovered between type BTy\_19
-and the union BTy\_63, and thus the latter is converted to
-a switched union as follows.
 
-{\small
-\begin{verbatim}
-struct(BTy_114, 304552.986b) {
-  ...
-  enum {"crashdump", "mach_msg", "Finished", "Started", 
-        "Unable", "Failed"} (BTy_19, 317.405b);
-  switch BTy_14 of (BTy_63, 100569.505b) {
-    enum {"Failed", "Finished", "Started"}   => 
-      struct(BTy_57, 99696.280b) {
-       ...
-      };
-    enum {"Unable", "crashdump", "mach_msg"} =>
-      struct(BTy_108, 867.181b) {
-       ...
-      };
-  };
-};
-\end{verbatim}
-}
+% Further, data dependency is discovered between type BTy\_19
+% and the union BTy\_63, and thus the latter is converted to
+% a switched union as follows.
 
-Note that the switched union BTy\_14 is switching on a different enum 
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 304552.986b) {
+%   ...
+%   enum {"crashdump", "mach_msg", "Finished", "Started", 
+%         "Unable", "Failed"} (BTy_19, 317.405b);
+%   switch BTy_14 of (BTy_63, 100569.505b) {
+%     enum {"Failed", "Finished", "Started"}   => 
+%       struct(BTy_57, 99696.280b) {
+%        ...
+%       };
+%     enum {"Unable", "crashdump", "mach_msg"} =>
+%       struct(BTy_108, 867.181b) {
+%        ...
+%       };
+%   };
+% };
+% \end{verbatim}
+% }
+
+Note that the switched union is switching on a different enum 
 than the hand-written IR in Figure \ref{fig:crashreporter:ir}, because
 the inference algorithm has decided on a different way of partitioning
-the chunks that results in union BTy\_63 and hence we arrive at a 
-different switch dependency. Nonetheless, both of these descriptions are
-correct. 
+the chunks. Nonetheless, both of these descriptions are
+correct.
 
-Finally in Phase Three, rule 7 is applied to combine the constants in BTy\_10,
-BTy\_12 and BTy\_13 of struct BTy\_114, and rule 1 is used to flatten
-the singleton struct BTy\_10. The final IR becomes
+In the third and final phase, 
+data independent rule 5  is applied to combine many constants 
+and rule 1 is used to flatten the singleton struct. The final IR follows.
 
 {\small
 \begin{verbatim}
-struct(BTy_114, 304537.855b) {
-  union(BTy_7, 196876.315b) {
-    struct(BTy_6, 196853.182b) {
-      Pdate (BTy_0, 108004.535b);
-      " " (BTy_1, 11.044b);
-      Ptime (BTy_2, 88802.177b);
-      " " (BTy_3, 11.044b);
-      2006 (BTy_4, 17.015b);
-    };
-    "-" (BTy_8 39, 11.044b);
+struct {
+  union {
+    struct { Pdate; " "; Ptime; " "; 2006; };
+    "-";
   };
-  " " (BTy_5, 11.044b);
-  enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
-  "[" (BTy_13, 11.044b);
-  Pint [120...29874] (BTy_14, 6580.450b);
-  "]: " (BTy_10, 23.044b);
-  enum {"crashdump", "mach_msg", "Finished", "Started", 
-        "Unable", "Failed"} (BTy_19, 317.405b);
-  switch BTy_14 of (BTy_63, 100569.505b) {
-    enum {"Failed", "Finished", "Started"}   => 
-      struct(BTy_57, 99696.280b) {
-       ...
-      };
-    enum {"Unable", "crashdump", "mach_msg"} =>
-      struct(BTy_108, 867.181b) {
-       ...
-      };
+  " "; enum {"crashreporterd", "crashdump"};
+  "["; Pint32; "]: ";
+  x19:enum {"crashdump", "mach_msg", "Finished", 
+        "Started", "Unable", "Failed"};
+  switch x19 of { ... };
   };
 };
 \end{verbatim}
 }
+
+
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 304537.855b) {
+%   union(BTy_7, 196876.315b) {
+%     struct(BTy_6, 196853.182b) {
+%       Pdate (BTy_0, 108004.535b);
+%       " " (BTy_1, 11.044b);
+%       Ptime (BTy_2, 88802.177b);
+%       " " (BTy_3, 11.044b);
+%       2006 (BTy_4, 17.015b);
+%     };
+%     "-" (BTy_8 39, 11.044b);
+%   };
+%   " " (BTy_5, 11.044b);
+%   enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
+%   "[" (BTy_13, 11.044b);
+%   Pint [120...29874] (BTy_14, 6580.450b);
+%   "]: " (BTy_10, 23.044b);
+%   enum {"crashdump", "mach_msg", "Finished", "Started", 
+%         "Unable", "Failed"} (BTy_19, 317.405b);
+%   switch BTy_14 of (BTy_63, 100569.505b) {
+%     enum {"Failed", "Finished", "Started"}   => 
+%       struct(BTy_57, 99696.280b) {
+%        ...
+%       };
+%     enum {"Unable", "crashdump", "mach_msg"} =>
+%       struct(BTy_108, 867.181b) {
+%        ...
+%       };
+%   };
+% };
+% \end{verbatim}
+% }
 
 Comparing this final result with the initial description, one can see that
 the structure refinement significately simplified the IR and improved the
