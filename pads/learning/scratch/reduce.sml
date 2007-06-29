@@ -233,6 +233,7 @@ case ty of
   	val csfx = List.rev csfx_rev
   	val rem_tups = map(fn (a, tys) => case tys of
 				nil => genEmptyBase a (#coverage a)
+				| t::nil => t
 				| _ => Pstruct(a, tys)
 			      ) (ListPair.zip(auxlist, remaining))
 	val unionTys = case length rem_tups of
