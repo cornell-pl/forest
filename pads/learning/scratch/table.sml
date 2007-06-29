@@ -90,11 +90,6 @@ structure Table = struct
 		    let
 			val pairs = map (genTable totalrecords) l
 			val (recNoSets, tables) =  (ListPair.unzip pairs)
-			(*
-			val _ = (print ((Atom.toString (getLabel a)) ^":\n"); 
-				printIntSet (hd recNoSets))
-			val _ = printTy (hd l)
-			*)
 		    in
 			List.foldr appendsettab (IntSet.empty, (nil, nil)) pairs
 		    end
@@ -103,6 +98,11 @@ structure Table = struct
 			let 
 			  val pairs = (map (genTable totalrecords) l)
 			  val (recNoSets, tables) =  (ListPair.unzip pairs)
+			  (*
+			  val _ = printTy (List.last l)
+			  val _ = (print ((Atom.toString (getLabel a)) ^":\n"); 
+				printIntSet (List.last recNoSets))
+			  *)
 			  (* given a list of recNoSets and a record number, return
 			  the index of the infertable that contains that record starting from 1 or NONE *)
 			  fun g sets index n = 
@@ -114,6 +114,9 @@ structure Table = struct
 				    else g tail (index+1) n
 				)
 			  val branchcol = List.tabulate(totalrecords, (g recNoSets 1))
+			  (*
+		 	  val _ = print ((bdoltos branchcol) ^ "\n")
+			  *)
 			in
 		   	  List.foldr appendsettab (IntSet.empty, ([some(#label a)], [branchcol])) pairs
 			end

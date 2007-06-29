@@ -46,6 +46,16 @@ structure Printing = struct
         in TextIO.closeOut strm
         end
 
+    (* Dump variance to the specified file *)
+    fun dumpVariance (fileName:string) (cov:int) (variance:int) =
+        let val strm  = TextIO.openOut ( fileName )
+	    val normVar = (Real.fromInt variance) / (Real.fromInt cov)
+            val ()    = TextIO.output ( strm, "Variance = "^ (Int.toString variance) ^ 
+			" normalized by " ^ (Int.toString cov) ^ " is " ^ 
+			(Real.toString normVar) ^ "\n")
+        in TextIO.closeOut strm
+        end
+	
     (* Dump a string to the specified file *)
     fun dumpString ( fileName : string ) ( s : string ) : unit =
         let val strm = TextIO.openOut fileName
@@ -169,7 +179,8 @@ structure Printing = struct
 		       dumpAccumXMLProgram path descName tyName;
 		       dumpXMLProgram path descName tyName;
 		       dumpFmtProgram path descName tyName sep;
-                       dumpComputeTimes ( path ^ "Timing" ) ct
+                       dumpComputeTimes ( path ^ "Timing" ) ct; 
+		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
 		   end
 		 ; print "Excutable directory:"; print (!executableDir); print "\n"
                  ; print ( "descName.2 = " ^ descName ^ "\n")

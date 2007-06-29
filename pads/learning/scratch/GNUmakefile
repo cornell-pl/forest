@@ -257,7 +257,7 @@ nice -n20 ./learn -n $(*F) -lex vanilla -au true data/$(*F) | tee gen/$@.out
 #    b. score of the new silver
 @cat output/$(*F)/Complexity
 #    c. score of the old silver
-if [ -e silver/$(*F)Complexity ]; then cat silver/$(*F)/Complexity; fi
+#if [ -e silver/$(*F)Complexity ]; then cat silver/$(*F)/Complexity; fi
 #    e. number of correctly parsed records
 #    f. number of incorrectly parsed records
 #    SEE STEP 7 ABOVE
@@ -271,8 +271,9 @@ echo "Unrefined complexity scores" >>gen/Report
 cat gen/BaseComplexity >>gen/Report
 echo "New complexity scores" >>gen/Report
 cat gen/Complexity >>gen/Report
-if [ -e silver/$(*F)/Complexity ]; then echo "Silver complexity scores" >>gen/Report; fi
-if [ -e silver/$(*F)/Complexity ]; then cat silver/$(*F)/Complexity >>gen/Report; fi
+cat gen/Variance >>gen/Report
+#if [ -e silver/$(*F)/Complexity ]; then echo "Silver complexity scores" >>gen/Report; fi
+#if [ -e silver/$(*F)/Complexity ]; then cat silver/$(*F)/Complexity >>gen/Report; fi
 if [ -e gen/GoldComplexity ]; then echo >>gen/Report; fi
 if [ -e gen/GoldComplexity ]; then head -n 2 gen/GoldComplexity >>gen/Report; fi
 cat gen/ParseReport >>gen/Report

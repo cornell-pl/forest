@@ -1047,5 +1047,25 @@ struct
 			"};\n"
 	in
 	  (recordLabel, pads)
-	end  
+	end 
+
+(* Function to measure the variances of the structure by computing the total number of
+  union/option/enum branches in the tree *) 
+    fun variance ty =
+	  case ty of
+	   Base (a, _)           => 1
+        |  TBD (a, _, _)            => 1
+        |  Bottom (a, _, _)         => 1
+        |  Pstruct (a, tys)      => foldl Int.max 1 (map variance tys)
+        |  Punion (a, tys)       => foldl op+ 0 (map variance tys)
+        |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+					foldl Int.max 1 (map variance [f, b, l])
+        |  RefinedBase (aux, re, l) => 
+		(case re of Enum res => length res
+			| _ => 1
+		)
+        |  Switch (a, id, retys)  	 => foldl op+ 0 (map (fn (re, ty) => variance ty) retys)
+        |  RArray (a,sep,term,body,len,lengths) => variance body
+        |  Poption (a, body)     	 => 1+ (variance body)
+
 end

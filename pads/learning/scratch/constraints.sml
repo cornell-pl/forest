@@ -376,8 +376,6 @@ constraint map *)
 		val (_, tytable) = Table.genTable (getCoverage(ty)) ty
 (*
 		val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n")
-		val _ = if Options.print_tables then 
-			Table.printTable(tytable) else ()
 *)
 		val header = #1 tytable
 		val bdocols = #2 tytable
@@ -424,9 +422,10 @@ constraint map *)
 				length(header)> DEF_MAX_TABLE_COLS) 
 			then (print "Table too large: bailing out...\n"; raise TableTooLarge )
 			else 0
+*)
 		val _ = if Options.print_tables then 
 			Table.printTable(header, bdolist) else ()
-
+(*
 		(* take a table entry and run TANE on it, find the constraints that apply *)
 		val partitions = initPartitionMap(bdolist, bdocols)
 		val (deps,keys) = FunctionalDep.tane(partitions)
