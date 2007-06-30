@@ -567,5 +567,29 @@ token.
 
 \subsection {Final Products}
 
-show part of pads syntax of inferred crashreporter as
-well as xml data + gnuplot.
+The previous subsections outline the central technical elements of our
+algorithms.  The main tasks remaining include converting the internal
+representation into a syntactically correct \pads{} description, feeding
+the generated description to the \pads{} compiler and producing a 
+collection of scripts that conveniently package the freshly-generated 
+libraries with the \pads{} run-time system and tools.  At the end of 
+this process, the end user has a number of programming libraries
+and many powerful tools at his or her disposal.
+Perhaps the most powerful tools are the \padx{} query 
+engine~\cite{fernandez+:padx} and \xml{} converter, which allow a 
+user to write arbitrary XQueries over the data source
+or convert to \xml{} and corresponding xschema for use by other software. Other
+useful tools include the accumulator tool, mentioned earlier,
+converters to translate data into a form suitable for
+loading into a relational database or Excel spreadsheet, and
+a custom graphing tool that pushes data into gnuplot for data visualization.
+Snapshots of the output of a couple of these tools are presented in
+Figure~\ref{fig:final-products}.  
+%Of course, the end products of the inference algorithm 
+%also include the generated description and the
+%programming libraries including parser and printer.
+
+\begin {figure}
+\caption {End Products.}
+\label{fig:final-products}
+\end{figure}
