@@ -63,7 +63,8 @@ descriptions may be incorporated directly into an ordinary C program.
 The inference engine is also directly connected to the rest of the
 \pads{} infrastructure, making it possible for first-time users,
 with no knowledge of the \pads{} domain-specific language, 
-to translate the data into a form suitable for loading into a relational database, 
+to translate data into a form suitable for loading into a relational database, 
+to load it into an Excel spreadsheet,
 to convert the data into \xml{},
 to query it in XQuery,
 to detect errors in additional data from the same source,
@@ -83,8 +84,33 @@ generate a toolkit of useful data processing tools,
 without requiring any human intervention.
  
 \item We have evaluated the correctness and performance of
-our system on a range of ASCII data sources.
+our system on a range of ASCII data sources.  For many data
+sources, training on 5\% or less of the data results in
+accuracy rates greater than 95\% (often perfect).  
+In {\em all cases}, additional
+training data elevates accuracy rates above 95\% and
+in {\em no cases} need a user ever be unsure about the
+accuracy rate of generated descriptions -- the automatically
+generated accumulator tool measures both overall accuracy
+and field-by-field accuracy of the description.
+In all cases, after fixing a data source, the 
+inference algorithm scales linearly with the quantity of
+data.
 \end{itemize}
+
+In the next section of this paper, we describe the internal representation
+used during the course of the inference algorithm.  For those
+readers familiar with the \pads{} description language, this is largely a 
+review.  Section~\ref{sec:inference} describes our format inference algorithm
+in depth and illustrates its action on two sample data sources.  
+Section~\ref{sec:exp} evaluates the performance and correctness of our
+system on 15 different ad hoc data sources, drawn mostly from systems
+and networking domains.  Section~\ref{sec:discussion} discusses
+how users can deal with errors
+in generated descriptions and points out weaknesses 
+we plan to address in future work.
+Sections~\ref{sec:related} and \ref{sec:conclusion} present related work
+and conclude respectively.
 
 %% Given the difficulties 
 
