@@ -106,6 +106,31 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
+    fun dumpPADX (path:string) (descName:string) (tyName:string) : unit = 
+	let val padxPrelude =  "#define PADS_TY_ " ^ tyName ^"\n" ^
+                               "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+	                       "#define PPADS_TY(pref) pref ## "^tyName^"\n"^
+			       "#define PADS_TY_STR \""^descName^"\"\n"^
+                               "#include \""^descName^".h\"\n"
+	    val padxLoad =     padxPrelude^
+                               "#include \"template/pglx_load.h\"\n"
+	    val padxBulk =     padxPrelude^
+                               "#include \"template/pglx_bulk_query.h\"\n"
+	    val padxSmart =    padxPrelude^
+                               "#include \"template/pglx_smart_query.h\"\n"
+
+	    val strm1 = TextIO.openOut (path^"load_"^descName^".c")
+            val () = TextIO.output(strm1, padxLoad)
+	    val strm2 = TextIO.openOut (path^"bulk_"^descName^".c")
+            val () = TextIO.output(strm2, padxBulk)
+	    val strm3 = TextIO.openOut (path^"smart_"^descName^".c")
+            val () = TextIO.output(strm3, padxSmart)
+	in
+	    TextIO.closeOut strm1;
+	    TextIO.closeOut strm2;
+	    TextIO.closeOut strm3
+	end
+
     fun dumpXMLProgram (path:string) (descName:string) (tyName:string) : unit = 
 	let val xmlProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
                                "#include \""^descName^".h\"\n"^
@@ -178,6 +203,7 @@ structure Printing = struct
 		       dumpAccumProgram path descName tyName;
 		       dumpAccumXMLProgram path descName tyName;
 		       dumpXMLProgram path descName tyName;
+		       dumpPADX path descName tyName;
 		       dumpFmtProgram path descName tyName sep;
                        dumpComputeTimes ( path ^ "Timing" ) ct; 
 		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
