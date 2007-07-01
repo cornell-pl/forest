@@ -31,30 +31,52 @@ accuracy.
 \end{itemize}
 
 \subsection{Preliminaries}
-\begin{table*}
+\begin{table}
 \begin{center}
-\begin{tabular}{|l|c|c|c|c|c|c|c|l|} \hline
-Data source	& Chunks & Bytes	& Mode  &Header	& Array	& Group & Msgs 	& Desc. \\ \hline \hline
-1967Transactions.short	& 999	& 70929	& line	& no	& no	& no	& no	& transaction records \\ \hline
-MER\_T01\_01.cvs	& 491	& 21731 & line  & yes	& no	& yes	& no	& comma-separated records\\ \hline
-ai.3000		& 3000		& 293460& line	& no	& no	& yes	& no	& web log of Amnesty International \\ \hline
-asl.log &	1500	& 279600	& line	& no	& no	& yes	& no	& log file of Mac ASL \\ \hline	
-boot.log	& 262	& 16241		& line	& no	& no	& no	& yes	& Mac OS boot log \\ \hline
-crashreporter.log & 441	& 50152 	& line	& no	& no	& no	& yes	& original crashreporter daemon log \\ \hline
-crashreporter.mod & 441	& 49255		& line	& no	& no	& no	& yes	& modified crashreporter daemon log \\ \hline
-dibbler.1000	& 999	& 142607 	& line	& yes	& yes	& no	& no	& AT\&T phone provision data \\ \hline
-ls-l.txt	& 35	& 1979		& line	& yes	& no	& no	& no	& Stdout from Unix command ls -l \\ \hline
-netstat-an	& 202	& 14355		& block	& yes	& no	& no	& no	& output from netstat -an \\ \hline
-page\_log	& 354	& 28170		& line	& no	& no	& no	& no	& printer logs \\ \hline
-quarterlypersonalincome & 62	& 10177	& line	& yes	& no	& yes	& no	& spread sheet \\ \hline
-railroad.txt	& 67	& 6218		& line	& yes	& yes	& yes	& no	& US rail road info \\ \hline
-scrollkeeper.log & 671	& 66288		& line	& no	& no	& no	& yes	& log from cataloging system \\ \hline
-windowserver\_last.log & 680	& 52394	& line	& no	& no	& no	& yes	& log from LoginWindow server on Mac \\ \hline
-yum.txt		& 328	& 18221		& line	& no	& no	& no	& no	& log from package installer Yum \\ \hline
+\begin{tabular}{|l|c|l|} \hline
+Data source		& Bytes		& Description \\ \hline \hline
+1967Transactions.short	& 70929		& transaction records \\ \hline
+MER\_T01\_01.cvs	& 21731 	& comma-separated records\\ \hline
+ai.3000			& 293460	& webserver log \\ \hline
+asl.log 		& 279600	& log file of Mac ASL \\ \hline	
+boot.log		& 16241		& Mac OS boot log \\ \hline
+crashreporter.log 	& 50152 	& original crashreporter \\ 
+			&		& daemon log \\ \hline
+crashreporter.mod 	& 49255		& modified crashreporter \\
+			&		& daemon log \\ \hline
+dibbler.1000		& 142607 	& AT\&T phone \\
+			&		& provision data \\ \hline
+ls-l.txt		& 1979		& Stdout from Unix \\
+			&		& command ls -l \\ \hline
+netstat-an		& 14355		& output from netstat \\ \hline
+page\_log		& 28170		& printer logs \\ \hline
+quarterlypersonalincome	& 10177		& spread sheet \\ \hline 
+railroad.txt		& 6218		& US rail road info \\ \hline
+scrollkeeper.log 	& 66288		& log from cataloging \\ \hline
+windowserver\_last.log 	& 52394		& log from LoginWindow \\
+			&		& server on Mac \\ \hline
+yum.txt			& 18221		& log from package installer\\ \hline
 \end{tabular}
 \caption{Benchmark profile} \label{tab:benchmarks}
 \end{center}
-\end{table*}
+\end{table}
+%	& \#  	 & Mode  &Header	& Array	& Group & Msgs 	
+%	& 999	 & line	& no	& no	& no	& no	
+%	& 491	 & line  & yes	& no	& yes	& no	
+%	& 3000	 & line	& no	& no	& yes	& no	
+%	& 1500	 & line	& no	& no	& yes	& no	
+%	& 262	 & line	& no	& no	& no	& yes	
+%	& 441	 & line	& no	& no	& no	& yes	
+%	& 441	 & line	& no	& no	& no	& yes	
+%	& 999	 & line	& yes	& yes	& no	& no	
+%	& 35	 & line	& yes	& no	& no	& no	
+%	& 202	 & block	& yes	& no	& no	& no	
+%	& 354	 & line	& no	& no	& no	& no	
+%	& 62	 & line	& yes	& no	& yes	& no	
+%	& 67	 & line	& yes	& yes	& yes	& no	
+%	& 671	 & line	& no	& no	& no	& yes	
+%	& 680	 & line	& no	& no	& no	& yes	
+%	& 328	 & line	& no	& no	& no	& no	
 
 The original data sources we used in the experiments are listed in Table \ref{tab:benchmarks}.
 These range from personal spread sheet, to government records to system logs, and 
@@ -91,46 +113,73 @@ running on Mac OS X 10.4 Tiger.
 
 For any of the given data sources, there exists four different representations in 
 our experiments: hand-rewritten PADS by human expert (HW PADS), hand-rewritten IR directly
-translated from the HW PADS (HW IR), inferred IR from the learning engine (INF IR), and
-inferred PADS description which is automatically translated from the INF IR (INF PADS). 
+translated from the HW PADS (HW IR), inferred IR from the learning engine (Inf IR), and
+inferred PADS description which is automatically translated from the Inf IR (Inf PADS). 
 Note that as IR has a simplified language and is not as powerful as the full-fledged
 PADS, the HW PADS does not use those features not available in IR and hence it is
 not fully optimized. 
 Nonetheless, the HW PADS and HW IR are thought to be ``pretty good'' descriptions of
 the data and are used as control in the comparisons below. 
 In general, we measure the time to produce the descriptions and parsing accuracy on
-the HW PADS and INF PADS and the MDL scores on the HW IRs and INF IRs.
+the HW PADS and Inf PADS and the MDL scores on the HW IRs and Inf IRs.
 We measure accuracy by feeding the original data into the PADS accumulator tool.
 
 \subsection{Experiments}
-\begin{table*}
+\begin{table}
 \begin{center}
-\begin{tabular}{|l||r|r|r|r||r|r|c|} \hline
-Formats 	 & Inf time (s) 	& Ref time (s) 	& Total time (s) & HW time (h) & Inf score 	&Ref score	& HW score \\ \hline \hline
-1967Transactions.short & 0.20&      2.32&      2.56 	& 4.0 & 0.295 	&0.218 		&0.268		 \\ \hline
-MER\_T01\_01.csv & 0.11&      2.80&      2.92 	& 0.5 & 0.648 	&0.112		&0.138		 \\ \hline
-ai.3000          & 1.97&      26.35&     28.64	& 1.0 & 0.503	&0.332		&0.338		 \\ \hline
-asl.log          & 2.90&      52.07&     55.26	& 1.0 & 0.630	&0.267		&0.361		 \\ \hline
-boot.log         & 0.11&      2.40&      2.53 	& 1.0 & 0.620	&0.481		&0.703		 \\ \hline
-crashreport.log   & 0.12&      3.58&      3.73 	& 2.0 & 0.607	&0.328		&0.348		 \\ \hline
-crashreport.log.mod & 0.15&      3.83&      4.00 	& 2.0 & 0.612	&0.329		&0.347		 \\ \hline
-dibbler.1000     & 2.24&      5.69&      8.00 	& 1.5 & 0.602	&0.470		&0.438		 \\ \hline
-ls-l.txt         & 0.01&      0.10&      0.11 	& 1.0 & 0.559	&0.333		&0.401		 \\ \hline
-netstat-an       & 0.07&      0.74&      0.82 	& 1.0 & 0.413	&0.394		&0.319		 \\ \hline
-page\_log        & 0.08&      0.55&      0.65 	& 0.5 & 0.540	&0.107		&0.353		  \\ \hline
-quarterlypersonalincome & 0.07&      5.11&      5.18 	& 48  & 0.544	&0.367		&0.354		\\ \hline
-railroad.txt     & 0.06&      2.69&      2.76 	& 2.0 & 0.715	&0.506		&0.522		 \\ \hline
-scrollkeeper.log & 0.13&      3.24&      3.40 	& 1.0 & 0.625	&0.354		&0.352		 \\ \hline
-windowserver\_last.log  & 0.37&      9.65&      10.07	& 1.5 &0.618		&0.241		&0.267		 \\ \hline
-yum.txt          & 0.11&      1.91&      2.03 	& 5.0 &0.827		&0.305		&0.474		 \\ \hline
+\begin{tabular}{|l||c|c|c|c|} \hline
+Formats 	 		& Inf(s)     & Ref(s) 	& Total(s)  & HW(h)\\ \hline \hline
+1967Transactions.short          & 0.20&      2.32&      2.56 	& 4.0 	 \\ \hline
+MER\_T01\_01.csv                & 0.11&      2.80&      2.92 	& 0.5 	 \\ \hline
+ai.3000                         & 1.97&      26.35&     28.64	& 1.0 	 \\ \hline
+asl.log                         & 2.90&      52.07&     55.26	& 1.0 	 \\ \hline
+boot.log                        & 0.11&      2.40&      2.53 	& 1.0 	 \\ \hline
+crashreport.log                 & 0.12&      3.58&      3.73 	& 2.0 	 \\ \hline
+crashreport.log.mod             & 0.15&      3.83&      4.00 	& 2.0 	 \\ \hline
+dibbler.1000                    & 2.24&      5.69&      8.00 	& 1.5 	 \\ \hline
+ls-l.txt                        & 0.01&      0.10&      0.11 	& 1.0 	 \\ \hline
+netstat-an                      & 0.07&      0.74&      0.82 	& 1.0 	 \\ \hline
+page\_log                       & 0.08&      0.55&      0.65 	& 0.5 	 \\ \hline
+quarterlypersonalincome         & 0.07&      5.11&      5.18 	& 48  	 \\ \hline
+railroad.txt                    & 0.06&      2.69&      2.76 	& 2.0 	 \\ \hline
+scrollkeeper.log                & 0.13&      3.24&      3.40 	& 1.0 	 \\ \hline
+windowserver\_last.log          & 0.37&      9.65&      10.07	& 1.5 	 \\ \hline
+yum.txt                         & 0.11&      1.91&      2.03 	& 5.0 	 \\ \hline
 \end{tabular}
-\caption{Main results (Inf: structure inference, Ref: Refinement, HW: Hand-written)}
-\label{tab:results}
+\caption{Times (Inf: initially inferenced, Ref: Refined, HW: Hand-written)}
+\label{tab:times}
 \end{center}
-\end{table*}
+\end{table}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l||r|r|r|} \hline
+Formats  			& Inf 		&Ref 		& HW 	 \\ \hline \hline
+1967Transactions.short          & 0.295 	&0.218 		&0.268	 \\ \hline
+MER\_T01\_01.csv                & 0.648 	&0.112		&0.138	 \\ \hline
+ai.3000                         & 0.503		&0.332		&0.338	 \\ \hline
+asl.log                         & 0.630		&0.267		&0.361	 \\ \hline
+boot.log                        & 0.620		&0.481		&0.703	 \\ \hline
+crashreport.log                 & 0.607		&0.328		&0.348	 \\ \hline
+crashreport.log.mod             & 0.612		&0.329		&0.347	 \\ \hline
+dibbler.1000                    & 0.602		&0.470		&0.438	 \\ \hline
+ls-l.txt                        & 0.559		&0.333		&0.401	 \\ \hline
+netstat-an                      & 0.413		&0.394		&0.319	 \\ \hline
+page\_log                       & 0.540		&0.107		&0.353	 \\ \hline
+quarterlypersonalincome         & 0.544		&0.367		&0.354	 \\ \hline
+railroad.txt                    & 0.715		&0.506		&0.522	 \\ \hline
+scrollkeeper.log                & 0.625		&0.354		&0.352	 \\ \hline
+windowserver\_last.log          & 0.618		&0.241		&0.267	 \\ \hline
+yum.txt                         & 0.827		&0.305		&0.474	 \\ \hline
+\end{tabular}
+\caption{Normalized MDL Scores}
+\label{tab:scores}
+\end{center}
+\end{table}
+
 
 We first hand-coded all 16 formats in PADS and IR and measure timings and the scores 
-of supposedly good descriptions (see HW time column in Table \ref{tab:results}). 
+of supposedly good descriptions (see HW column in Table \ref{tab:times}). 
 Several formats takes a few hours and up to 2 days(!) to complete because these were the very first 
 PADS descriptions ever written by this person. It is obvious that coding description
 in PADS is a daunting task for a novice despite that he is a computer science PhD!
@@ -146,11 +195,11 @@ printing out the PADS descriptions and other overhead.
 For accurate timing measurements, run each data format 10 times, and take the average 
 after removing the best and the worst times.
 We also recorded the scores of both the initial structure and the final structure after refinement.
-All these measurements are included in Table \ref{tab:results} as well.
+All these measurements are included in Table \ref{tab:scores}.
 The generated PADS descriptions parses all original data files with 100\% accuracy,
 therefore the correctness of the learned formats is guaranteed.
 
-We can see from Table \ref{tab:results} that the learning system
+We can see from Table \ref{tab:scores} that the learning system
 generates correct descriptions of any given data in matters of seconds as opposed to
 the hours and days taken by human beings. The execution time is roughly proportional
 to the size of input data. For example, the largest data sources, ai.3000 and asl.log,
@@ -165,11 +214,11 @@ with a better score than the handwritten ones, sometimes even by a large margin,
 as in boot.log and page\_log. This is often due to the following reasons.
 
 \begin{itemize}
-\item The golden IR were not optimized by the MDL scores but instead
+\item The HW IR were not optimized by the MDL scores but instead
 by the expert's intuition, therefore often more type complexity optmized than
 data complexity optimized but data complexity usually outweight the type
 complexity in the overall scores.
-However, for most of the data sources, the final scores for HW IR and INF IR were so close 
+However, for most of the data sources, the final scores for HW IR and Inf IR were so close 
 that we are confident that the scoring function we use here is meaningful.
 
 \item Human expert pay more attention to the semantics of the formats and 
