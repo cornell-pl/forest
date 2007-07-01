@@ -496,7 +496,7 @@ relative entropy is:
 \]
 
 Now that we have defined the relevant properties of histograms,
-we can explain how the oracle prophecies.
+we can explain how the oracle prophecies given a list of chunks.
 
 \begin {enumerate}
 \item Prophecy a base type when each chunk contains the same simple
@@ -504,65 +504,67 @@ we can explain how the oracle prophecies.
   with three fields: one for the left paren, one for the body, and one
   for the right paren.
 
-\item Otherwise, group related normalized histograms into clusters as
-  follows.  A histogram $h_1$ belongs to group $G$ provided there
-  exists another histogram $h_2$ in $G$ such that
-  $\srelativee{\normal{h_1}}{\normal{h_2}} <
-  \mathrm{ClusterTolerance}$.  We have found a ClusterTolerance of
-  0.01 is effective.  We do not require all histograms in a cluster to
+\item Otherwise, compute normalized histograms for the input and group
+  related ones into clusters using agglomerative clustering:  A
+  histogram $h_1$ belongs to group $G$ provided there exists another
+  histogram $h_2$ in $G$ such  that
+  $\srelativee{\normal{h_1}}{\normal{h_2}} <  \mathrm{ClusterTolerance}$.  
+  where $\mathrm{ClusterTolerance}$ is a parameter of the algorithm. We do not
+  require all histograms in a cluster to 
   have precisely the same histogram to allow for errors in the data.
   A histogram dissimilar to all others will form its own group.
+  We have found a $\mathrm{ClusterTolerance}$ of 0.01 is effective.  
 
 \item Determine if a struct exists by first ranking the groups by the
-  minimum residual mass of all the histograms in each group. This
-  process gives priority to groups comprised of histograms with high
-  coverage and narrow distribution.  Find the first group in this
+  minimum residual mass of all the histograms in each group. Find the first group in this
   ordering with histograms $h$ satisfying the following criteria:
 \begin {itemize}
 \item $\mathit{rm}(h) < \mathrm{MaxMass}$
 \item $\mathit{coverage}(h) > \mathrm{MinCoverage}$
 \end{itemize}
 where constants $\mathrm{MaxMass}$ and $\mathrm{MinCoverage}$ are
-parameters of the algorithm.  If histograms $h_1$, \ldots, $h_n$ from
+parameters of the algorithm.  
+This process favors groups of histograms with high
+coverage and narrow distribution.  
+If histograms $h_1$, \ldots, $h_n$ from
 group $G$ satisfy the struct criteria, the oracle will prophecy some
 form of struct. It uses the histograms $h_1$, \ldots, $h_n$ and the associated
 tokens $t_1$, \ldots, $t_n$ to calculate the number of fields and the
-corresponding chunk lists.  The number of fields is one more than
-twice the sum of the masses of the first column of each token's
-histogram. 
+corresponding chunk lists.  We call $t_1$, \ldots, $t_n$ the {\em
+  identified} tokens for the input.
+Intuitively, for each input chunk, the oracle puts
+all tokens upto but not including the first token $t$ from the set of
+identifed tokens into the chunk list for the first field.  It puts $t$ in
+the chunk list for the second field. It puts all tokens upto the next
+identified token into the chunk list for the third field and so on. Of
+course, the identified tokens need not appear in the same order in all
+input chunks, nor in fact must they all appear at all.  To handle
+this variation when it occurs, the oracle prophecies a union instead
+of a struct, with one branch per token ordering and one branch for all
+input chunks that do not have the full set of identified tokens.
 
- corresponding to 
-the most common number of occurrences for that token in the input.
-The oracle partitions the input chunks into
-subsequences separated by the tokens $t_1$, \ldots, $t_n$. 
-If the tokens $t_1$,\ldots, $t_n$
-appear in different orders in different chunks, the oracle prophecies
-a union of structs instead of a simple struct, with one branch of the
-union per token  ordering.  If some chunks do not contain the
-appropriate tokens, the oracle creates a separate branch of the union
-for those chunks. 
 
-\item Identify an array by considering all groups $G$, in descending 
+\item Identify an array by sorting all groups in descending 
 order by coverage of the highest coverage histogram in the group.
-The first group $G$ that contains any histograms that satisfy the
- following minimum criteria will be declared an array on this 
-iteration of the recursive algorithm:
+Find the first group in this ordering with any histograms that satisfy
+the following minimum criteria:
 \begin {itemize}
 \item $\mathit{width}(h) > 3$
 \item $\mathit{coverage}(h) > \mathrm{MinCoverage}$
 \end{itemize}
-If no tokens in any group satisfies the array criterion, find a union.
-If histograms $h_1$, $h_2$, {\em etc.}, do satisfy the array criterion, 
-then partition the current chunks into (1) a preamble subsequence 
-that contains 1 occurrence of corresponding tokens $t_1$, $t_2$, {\em etc.},
+This process favors histograms with wide distribution and high coverage.
+If histograms $h_1$, \ldots, $h_n$ with corresponding tokens 
+$t_1$, \ldots, $t_n$ satisfy the array critera, the oracle will
+prophecy an array.   It will 
+partition each input chunk into (1) a preamble subsequence 
+that contains the first occurrence of each identified token, 
 (2) a set of element subsequences, with each subsequence containing
-1 occurrence of the corresponding tokens  $t_1$, $t_2$, {\em etc.}, and
-(3) a postamble subsequence that contains the last occurrence of 
-the corresponding tokens $t_1$, $t_2$, {\em etc.}
+one occurrence of the identified tokens, and
+(3) a postamble subsequence that contains any remaining tokens from
+the input chunk.
 
-\item Identify a union by partitioning the current set of chunks according
-to the first token in each chunk.  Create one new set of chunks per first 
-token.
+\item If no other prophecy applies, identify a union. Partition
+  the input chunks according to the first token in each chunk. 
 \end{enumerate}
 
 %%     *  role = quickly find a description in the "approximate area" of the correct description
@@ -597,18 +599,20 @@ representation into a syntactically correct \pads{} description, feeding
 the generated description to the \pads{} compiler and producing a 
 collection of scripts that conveniently package the freshly-generated 
 libraries with the \pads{} run-time system and tools.  At the end of 
-this process, the end user has a number of programming libraries
-and many powerful tools at his or her disposal.
+this process, users have a number of programming libraries
+and many powerful tools at their disposal.
 Perhaps the most powerful tools are the \padx{} query 
-engine~\cite{fernandez+:padx} and \xml{} converter, which allow a 
-user to write arbitrary XQueries over the data source
-or convert to \xml{} and corresponding xschema for use by other software. Other
+engine~\cite{fernandez+:padx} and the \xml{} converter, which allow  
+users to write arbitrary XQueries over the data source
+or to convert the data to \xml{} for use by other software. Other
 useful tools include the accumulator tool, mentioned earlier,
 converters to translate data into a form suitable for
 loading into a relational database or Excel spreadsheet, and
-a custom graphing tool that pushes data into gnuplot for data visualization.
-Snapshots of the output of a couple of these tools are presented in
-Figure~\ref{fig:final-products}.  
+a custom graphing tool that pushes data into \cd{gnuplot} for data
+visualization.
+\figref{fig:final-products} gives snapshots of the output of a couple
+of these tools. 
+
 %Of course, the end products of the inference algorithm 
 %also include the generated description and the
 %programming libraries including parser and printer.

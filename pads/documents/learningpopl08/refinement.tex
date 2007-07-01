@@ -6,26 +6,26 @@ structure discovery. The
 objective of the search is to find the description that minimizes
 the information-theoretic scoring function.
 
-\paragraph*{Rewriting rules}
-In order to move around in description space, we define a number of 
-description rewriting rules. The general form of the rule is
+\paragraph*{Rewriting rules.}
+To move around in description space, we define a number of 
+rewriting rules, the general form of which is
 \[T \goto T', ~~ {\rm if~ some~ constraint~} p(T)~ {\rm is~ satisfied,}\]
-where $T$ is a type, or sub-structure, and $T'$ is the type after the
-transition.  Some rules are unconditional and thus free of constraints.
+where $T$ is a type in the candidate description and $T'$ is its
+replacement after the
+rewriting.  Some rules are unconditional and thus free of constraints.
 There are two kinds of rewriting rules: (1) data-independent rules which
 transform a type based exclusively on the syntax of the description; 
 and (2) data-dependent
-rules which transform a type based on both the syntax of the description
-and on properties of the training data
-parsed by this type.  In general, 
-the data independent rules aim to rearrange and merge portions
-of the structure while the data dependent rules seek to identify 
-constant fields and enumerations, and to establish relationships 
-between different parts of the structure.
+rules which transform a type based both on the syntax of the description
+and on properties of the training data parsed by type $T$.  In general, 
+the data independent rules try to rearrange and merge portions
+of the description while the data dependent rules seek to identify 
+constant fields and enumerations, and to establish data dependencies
+between different parts of the description.
 
-In Figure \ref{fig:rules}, we present a selection of the
-data independent and data dependent rules used in the refinement phase.
-Many rules have been omitted and some have been simplified for succinctness.
+\figref{fig:rules} presents a selection of the rewriting rules used in
+the refinement phase. We have omitted many rules and have simplified
+others for succinctness.
 %In these rules,
 %let $T_{punc}$ be any type that describes punctuation or white space character%s.
 When $T\setof{X}$ appears in a pattern on the left-hand side of a rewriting
@@ -101,9 +101,9 @@ $\\
 % $\\ \\
 $
 \irunion{\irstruct{pre\_types_1; T}; \\
-\sskip \irstruct{pre\_types_2; T}} \goto \\
+    \sskip \sskip \irstruct{pre\_types_2; T}} \goto \\
 \sskip \irstruct{\irunion{\irstruct{pre\_types_1}; \\
-\sskip \irstruct{pre\_types_2}}; T}
+\sskip \sskip\sskip \sskip \sskip \hspace*{1.5mm} \irstruct{pre\_types_2}}; T}
 $\\ \\
 $
 \irunion{\irstruct{pre\_types; T}; T} \goto \\
@@ -233,21 +233,19 @@ $\\
 \paragraph*{The Search.}
 The core of the rewriting system is 
 a recursive, depth-first, greedy search procedure. 
-By ``depth-first,'' we mean the algorithm begins by refining the 
-children of any structured type before
-the structure itself. When refining a type, it selects a rule that 
+By ``depth-first,'' we mean the algorithm considers the 
+children of each structured type before considering
+the structure itself. When refining a type, the algorithm selects the rule that 
 would {\em minimize} the information-theoretic score of the resulting
-structure and applies it to the structure.  It iterates this process until
-no further reduction in the score is possible, and at
-that time, structure $T$ is said to be {\em stable}.
+type and applies this rule.  This process repeats  until
+no further reduction in the score is possible, at
+which point we say the resulting type $T$ is {\em stable}.
 
 \begin{figure}
 {\small 
 \begin{verbatim}
-(* a rewriting rule *)
+(* rewriting rules *)
 type rule : description -> description  
-
-(* all relevant rules in a list *)
 val rules : rule list 
 
 (* measure the score for a type *)
@@ -260,10 +258,8 @@ fun best: description list -> description
 fun oneStep (T:description) : description =
  let all = map (fn rule => rule T) rules in
  let top = best all                      in
- if (score top) < (score T) then
-   oneStep top
- else
-   T
+ if (score top) < (score T) then oneStep top
+ else T
 
 (* main function to refine an IR description *) 
 fun refine (T:description) : description =
@@ -283,49 +279,47 @@ fun refine (T:description) : description =
 \caption{Generic local optimization algorithm in Pseudo-ML}
 \label{fig:refinement}
 \end{figure}
-
-The overall algorithm in Figure \ref{fig:refinement} is applied three
+The rewriting phase applies the
+algorithm given in \figref{fig:refinement} three
 times in succession. 
-The first time, the algorithm quickly reduces the initial structure to 
-a much simpler, more manageably-sized structure by using
-the data-independent rules {\em only}. The second time, data dependent
-rules are used refine the base types to constant values and enumerations, etc,
-and establish structural dependencies such as switched unions. This phase
-requires the value-space analysis described below.
-The third time, the set of the data-independent rules
-are applied again. The third time is necessary because certain changes
-to the base types in phase two, such as the creation of constants, may 
-newly enable some of the data-independent rules. 
+The first time, the algorithm quickly simplifies the initial candidate
+description using {\em only} data-independent rules. The second time,
+it uses the data-dependent 
+rules to refine base types to constant values and enumerations, \etc{},
+and to introduce dependencies such as switched unions. This stage
+requires the value-space analysis described next.
+The third time, the algorithm reapplies the data-independent rules
+because some stage two rewritings (such as converting a base type to a
+constant) enable further data-independent rewritings.
 
 \paragraph*{Value-space analysis.}
-A value-space analysis is performed prior
+We perform a value-space analysis prior
 to applying the data-dependent rules.
-This analysis operates by first generating a set of relational tables
-from the input data.
-Each row of a table corresponds to a chunk and each column of a table
+This analysis first generates a set of relational tables from the input data.
+Each row in a table corresponds to an input chunk and each column
 corresponds to either a particular base type from the inferred description,
 or to a piece of metadata from the description.  Examples of meta-data
 include the tag number from union branches and the length of arrays.
 We generate a {\em set} of relational tables as opposed to a single table
-as the elements of an array occupy their own separate table (a description 
-with no arrays will only have one associated table).
+as the elements of each array occupy their own separate table (a description 
+with no arrays will have only one associated table).
 % Here, a number of data dependency tables are generated from the 
 % input structure, where each
 % column of the tables represent the data values associated with a particular base type 
 % in the structure, with some extra columns representing auxilliary information such as
 % array sizes and union branching decisions.
- 
-Every column of every table is analyzed to determine properties,
-such as constancy and value range, of the data in that column.
-To determine inter-column properties, we have implemented a simplified
+
+We analyze every column of every table to determine properties of the
+data in that column such as constancy and value range. 
+To find inter-column properties, we have implemented a simplified
 variant of the TANE algorithm \cite{TANE-HKPT99},
 which identifies functional dependencies between columns in 
-relational data.  Because full TANE is too expensive 
+relational data.  Because full TANE is too expensive
 (possibly exponential in the number of columns), 
-and with insufficient data results in many false positives, 
-our simplified algorithm only computes binary dependencies. The 
-result of this dependency analysis is used to 
-identify switched unions and fixed-size arrays.
+and produces many false positives when invoked with insufficient data,
+our simplified algorithm computes only binary dependencies. We use the 
+result of this dependency analysis to identify switched unions and
+fixed-size arrays. 
 %In addition, we also discover all the unary constraints on the base types by
 %analysizing every single column in the data tables. We store these unary and
 %binary constraint in a constraint map.  A rule can be applied 
@@ -333,10 +327,10 @@ identify switched unions and fixed-size arrays.
 %against the constraint map. 
 
 \paragraph*{Running example.}
-To illustrate the refinement process a bit more concretely, 
-we will walk through a few of the steps taken to rewrite the
-crashreporter.log description.  The first part of the
-initial structure generated by the structure discovery algorithm
+To illustrate the refinement process, we walk through a few of the
+steps taken to rewrite the 
+Crashreporter.log description.  The first part of the
+candidate description generated by the structure discovery algorithm
 appears below.
 % as the system refines the initial structure of the crashreporter.log example.
 % Let us zoom into the beginning portion of the IR and omit some of the details as follows. 
@@ -427,16 +421,18 @@ struct {
 % Next, the "unnest struct and union" rule kicks in to flatten struct BTy\_114 to
 % the following.
 
-In the first, value-independent phase of rewriting, 
-the common trailing white space marked {\tt (*) } above is
-pulled out of the unions and flattened inside the surrounding
-struct using the ``common postfix in union'' rule.  This 
-transformation leaves behind the unnecessarily verbose
-single-element struct on the line marked {\tt (**)}.  However, this
-will be transformed into the more compact constant 
-string {\tt "-"} in phase three of rewriting.  This rewriting
-phase also pulls colon and whitespace characters out of the 
-trailing union (marked {\tt (***)}).
+\noindent
+In the first data-independent stage of rewriting, 
+the common trailing white space marked {\tt (*)} is
+pulled out of the union branches into the surrounding
+struct using the ``common postfix in union'' rule.  
+This transformation leaves behind the single-element struct marked
+{\tt (**)} in the result below; rewriting 
+rules in stage 
+three will transform this verbose form into the more compact constant 
+string {\tt "-"}.  This first rewriting
+stage also pulls colon and whitespace characters out of the 
+trailing union (not shown in the candidate description).
 
 {\small
 \begin{verbatim}
@@ -446,11 +442,12 @@ struct {
     struct { "-" };                    (**)
   }
   Pwhite;                              (*)
-  Palpha; "["; Pint; "]"; ":"; Pwhite; (***)
+  Palpha; "["; Pint; "]"; ":"; Pwhite; 
   union { ... };
 };
 \end{verbatim}
 }
+
 
 % struct(BTy_114, 416056.899b) {
 %     union(BTy_7, 204091.634b) {
@@ -470,18 +467,17 @@ struct {
 %   ...
 % };
 
-In the second rewriting phase, 
-data-dependent rules 1 and 2 are applied to base types to 
-create a number of constants and enums.
-Moreover, a data dependency is discovered between the
-newly introduced enumeration involving {\tt "crashdump"},
-{\tt "mach\_msg"}, {\em etc.}, and the structure of the following message.
-Hence, a switched union is also introduced.
-Notice that the switched union is switching on a different enum 
-than the hand-written IR in Figure \ref{fig:crashreporter:ir}, because
-the inference algorithm has decided on a different way of partitioning
-the chunks. Nonetheless, both of these descriptions are
-correct.
+In the second rewriting stage, 
+data-dependent rules~1 and~2 convert appropriate base types into 
+constants and enums.
+Moreover, TANE discovers a data dependency between the
+newly introduced enumeration involving {\tt "crashdump"} and
+{\tt "mach\_msg"}, and the structure of the following message.
+Hence, we introduce a switched union.
+Notice that the switched union branches on a different enum 
+than the hand-written IR in Figure \ref{fig:crashreporter:ir}
+because the inference algorithm found a different way of structuring
+the data. Nonetheless, both of these descriptions are accurate.
 
 
 {\small
@@ -552,9 +548,10 @@ struct {
 % \end{verbatim}
 % }
 
-In the third and final phase, 
-data independent rule 5  is applied to combine many constants 
-and rule 1 is used to flatten the singleton struct. The final IR follows.
+In the third and final stage, 
+data independent rule~5 combines constants 
+and rule~1 flattens the singleton struct, resulting in the final IR
+descrption:
 
 {\small
 \begin{verbatim}
@@ -573,13 +570,13 @@ struct {
 \end{verbatim}
 }
 
-The final information-theoretic complexity of the complete structure 
+The information-theoretic complexity of the final description 
 relative to the data in our training set is 304538 bits. 
-Initially, the output of the structure discovery phase had a 
-complexity of 416156 bits.  The absolute values of these quantities
+The candidate discription produced by the structure discovery phaes
+had a complexity of 416156 bits.  The absolute values of these quantities
 are relatively unimportant, but the fact that the final complexity
 is substantially smaller than the original suggests that our search
-procedure has been able to optimize this description effectively.
+procedure optimized the description effectively.
 
 
 % {\small
