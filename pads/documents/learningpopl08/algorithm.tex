@@ -10,66 +10,68 @@
 \end{figure}
 
 Figure \ref{fig-archi} gives an overview of our automatic
-tool generation architecture. The process of generating a new
-suite of data processing tools 
-begins with raw data, shown in blue at the top left.  The
-raw data is first piped into our format inference engine
-(circumscribed by dotted lines in the picture).  The
-format inference engine is implemented as a series of phases that 
-eventually produce a syntactically correct \pads{} description
-for the data.  Next, the generated \pads{} description is fed into the 
-\pads{} compiler.  The compiler generates libraries that are linked to generic
-programs for various tasks including a data analysis tool
-({\em a.k.a.,} the {\em accumulator}) and an ad-hoc-to-\xml{} translator.
-At this point, the user can apply these generated tools to their original 
-raw data, or to other data with the same format.  
-
+tool generation architecture. The process 
+%of generating a suite of data processing tools 
+begins with raw data, shown in blue at the top left, which we pipe
+into the format inference engine
+(circumscribed by dotted lines in the picture).  
+This engine produces a syntactically correct \pads{}
+description for the data
+through a series of phases:
+chunking and tokenization, structure discovery, information-theoretic
+scoring, and structure refinement.
+The system then feeds the generated \pads{} description into the
+\pads{} compiler.  The compiler generates libraries, which the system
+then links to generic programs for various tasks including a data
+analysis tool ({\em a.k.a.,} the {\em accumulator}) and an
+ad-hoc-to-\xml{} translator.  At this point, users can apply these
+generated tools to their original raw data or to other data with the
+same format.
 The following subsections describe the main components of the
-inference algorithm in more detail, including chunking and
-tokenization, the structure discovery phase, the information-theoretic
-scoring function and the structure refinement phase.  We also
-illustrate the action of each phase on our running examples and
-present the final end products.
+inference algorithm in more detail.  We 
+illustrate the effect of each phase on our running examples and
+present the output of some of the generated tools.
 
 \subsection{Chunking and Tokenization}
-
-The input data, which we also refer to as the {\em training set}, is first
-divided into {\em chunks} as specified by the user.  Intuitively, a chunk
-is a unit of repetition in the data source.  It is primarily by analyzing
-a large number of repeated syntax elements that we are able to infer a usable
-description for a data source.  Our tool currently supports
+The learning system first divides the input data, which we refer
+to as the {\em training set}, into {\em chunks} as specified by the
+user. Intuitively, a chunk is a unit of repetition in the data source.
+It is primarily by analyzing sequences of such chunks for commonalities
+that we are able to infer data descriptions.  Our tool currently supports
 chunking on a line-by-line basis as well as on a file-by-file basis.  
 
-Each chunk is broken down into a series of {\em simple tokens} by a lexer.
-Each simple token can be a punctuation symbol, a number, a date, a time, or a
-number of other basic items.  Every simple token type has a corresponding
-base type in the \ir{}, though the converse is not true -- there are a
-number of base types that are not used as tokens.  Nevertheless, since
+We use a lexer to break each chunk into a series of {\em simple
+tokens}, which are intuitively atomic pieces of data such as
+numbers, dates, times, alpha-strings, or punctuation symbols.
+Every simple token has a corresponding
+base type in the \ir{}, though the converse is not true -- there are 
+base types that are not used as tokens.  Nevertheless, since
 simple tokens have a very close correspondence with base types,
 we often use the word {\em token} interchangeably with {\em base type}.
   
-Parenthetical syntax including quotation marks, curly braces, square brackets,
-parentheses and \xml{} tags
+Parenthetical syntax, including quotation marks, curly braces, square brackets,
+parentheses and \xml{} tags,
 often provides very important hints about the structure
 of an ad hoc data file.  Therefore, whenever the lexer encounters 
-a corresponding pair of parentheses, it 
-creates what we call a {\em meta-token}, which is a single token that
-represents the pair of parentheses and all simple tokens 
+such parentheses, it creates a {\em meta-token}, which is a compound
+token that 
+represents the pair of parentheses and all the tokens 
 within.\footnote{If parenthetical elements
 are not well-nested, the meta-tokens are discarded and replaced with
 ordinary sequences of simple tokens.}  For example, in Crashreporter.log,
-the syntax \cd{[2164]} will form the meta-token we write \cd{[*]} as
-opposed to the three simple tokens \cd{[}, \cd{Pint}, and \cd{]}.  Meta-tokens
-do not stay intact throughout the inference procedure:  As the structure 
-discovery algorithm encounters each meta-token, it is cracked open and its 
-underlying structure is analyzed.
+the syntax \cd{[2164]} will yield the meta-token \cd{[*]} instead of
+the sequence of three simple tokens \cd{[}, \cd{Pint}, and \cd{]}.  
+The structure discovery algorithm eliminates all meta-tokens during
+its analysis; whenever it encounters a context consisting of
+matching meta-tokens, it cracks open the meta-tokens so it can analyze
+the underlying structure.
 
 Our learning system has a default tokenization scheme skewed toward systems
 data, but users may specify a different scheme for their own domain
 through a configuration file.  For example, computational biologists
 may want to add DNA strings {\tt CATTGTT...} to the default tokenization 
 scheme.  The configuration file is essentially
-a list of name-regular expressions pairs.  The system uses the 
+a list of name, regular expressions pairs.  The system uses the configuration
 file to generate part of the system's lexer, a
 collection of new \ir{} base types, and a series of type 
 definitions that are incorporated into the final \pads{} specification.  
@@ -154,14 +156,13 @@ definitions that are incorporated into the final \pads{} specification.
 \subsection {Structure Discovery}
 
 Given a collection of tokenized chunks, the goal of the structure
-discovery phase is to find a candidate description ``nearby'' a good
-final solution.  In a later phase of the algorithm, the rewriting rules 
-analyze, refine
-and transform the candidate to produce that final solution.  The
-high-level structure of the algorithm we use to discover candidate
-descriptions was inspired by the work of Arasu and
-Garcia-Molina on information extraction from web pages~\cite{arasu+:sigmod03}.
-However, the context, goals and algorithmic details involved in our
+discovery phase is to quickly find a candidate description ``close'' to
+a good final solution.  The rewriting phase then analyzes, refines and
+tranforms this candidate to produce the final description.
+The high-level form of our structure discovery algorithm was
+inspired by the work of Arasu and 
+Garcia-Molina on information extraction from web pages~\cite{arasu+:sigmod03};
+however, the context, goals and algorithmic details of our
 work are entirely different.
 
 %However, the details are
@@ -171,65 +172,65 @@ work are entirely different.
 
 \paragraph*{Structure Discovery Basics.}
 Our algorithm operates by analyzing the collection of tokenized chunks
-and guessing what the top-level type constructor is.  Based on this guess,
-it will partition the chunks and recursively analyze each partition
-to determine what the component types are.
-Figure~\ref{fig:structure-discovery} presents an outline of how the
-overall procedure operates.  The \cd{oracle} function,
-whose implementation we leave hidden for now,
-does most of the hard work in the algorithm by conjuring up 
-one of four different sorts of prophecies.  
+and guessing what the top-level type constructor should be.  Based on
+this guess, it partitions the chunks and recursively analyze each partition
+to determine the best description for that partition.
+Figure~\ref{fig:structure-discovery} outlines the
+overall procedure in Pseudo-ML.  The \cd{oracle} function,
+whose implementation we hide for now, does most of the hard work by
+conjuring one of four different sorts of prophecies.  
 
 The \cd{BaseProphecy} simply reports that the top-level type
-constructor is some specified base type.
+constructor is a particular base type.
 
 The \cd{StructProphecy} specifies that the top-level description is a
-struct.  In addition, if the struct is to have $k$ fields then the
-\cd{StructProphecy} will carry a list (call it \cd{css}) with $k$
-elements.  The $i^{\mathrm{th}}$ element in the list is a set of
-chunks used recursively to discover the type of the $i^{\mathrm{th}}$
-field of the struct.  These sets of chunks are derived from the
-original input to the oracle function. More specifically, if the
-oracle guesses there will be $k$ fields in the struct, then each original
-chunk is partitioned into $k$ pieces. The $i^{\mathrm{th}}$ piece of
-each original chunk is used to infer the $i^{\mathrm{th}}$ field of
-the struct.
+struct with $k$ fields.  It also
+specifies a list, call it \cd{css}, with $k$ elements.  The
+$i^{\mathrm{th}}$ element in \cd{css} is the list of chunks
+corresponding to the $i^{\mathrm{th}}$ field of the struct.  The
+oracle derives these chunk lists from its original input. More
+specifically, if the oracle guesses there will be $k$ fields, then
+each original chunk is partitioned into $k$ pieces. The
+$i^{\mathrm{th}}$ piece of each original chunk is used to recursively
+infer the type of the $i^{\mathrm{th}}$ field of the struct.
 
-The \cd{ArrayProphecy} specifies that the top-level structure will
-involve an array.  However, at this point in the inference algorithm,
-predicting exactly where an array begins and ends is difficult, even
-for the magical oracle.  Consequently, the algorithm actually
-generates a three-field struct, where the first field allows for slop
-prior to beginning the array, the middle field is the array itself,
-and the last field allows for slop after the array is over.  If this
-slop turns out to be unnecessary, the rewriting rules will clean up
-the mess in the next phase.
+The \cd{ArrayProphecy} specifies that the top-level structure involves
+an array.  However, predicting exactly where an array begins and ends
+is difficult, even for the magical oracle.  Consequently, the
+algorithm actually generates a three-field struct, where the first
+field allows for slop prior to the array, the middle field is the
+array itself, and the last field allows for slop after the array.  If
+the slop turns out to be unnecessary, the rewriting rules will clean
+up the mess in the next phase.
 
 Finally, the \cd{UnionProphecy} specifies that the top-level structure
-will involve a union type.  Like a \cd{StructProphecy}, the
-\cd{UnionProphecy} carries a \cd{chunks list} with it and each element
-of the list is used recursively to infer a branch of the union.
-Merging all elements of the list will result in the original input.
-Intuitively, recursive partitioning of union chunks is done
-``horizontally'' or as recursive partitioning of struct chunks is done
-``vertically.''
+is a union type with $k$ branches.  Like a \cd{StructProphecy}, the
+\cd{UnionProphecy} carries a chunks list, with one element for each
+branch of the union.  The algorithm uses each element to recursively
+infer a description for the corresponding branch of the union. 
+Intuitively, the oracle produces the union chunks list by ``horizontally''
+partitioning the input chunks, whereas it partitions struct chunks
+``vertically'' along field boundaries. 
 
-As an example, recall the Crashreporter.log data presented in
-Figure~\ref{fig:example}.  After tokenization, assuming a chunk is
-a line of data, the two chunks from the example contain the following 
-token sequences (recall \cd{[*]} and \cd{(*)} are meta-tokens encapsulating
-everything within the respective parens):
+As an example, recall the Crashreporter.log data from
+Figure~\ref{fig:example}.  Assuming a chunk is a line of data, the two
+chunks in the example consist of the token sequences
+(recall \cd{[*]} and \cd{(*)} are meta-tokens):
+
 {\small
 \begin{verbatim}
 Pdate ' ' Ptime ' ' Pint ' ' Palpha [*] ':' ...
 '-' ' ' Palpha [*] ':' ' ' Palpha (*) ' ' ...
 \end{verbatim}
-}
+}%
 \noindent
 Given these token sequences, 
-our oracle will guess that the top-level type constructor is a struct 
-with three fields and divide up our original chunks into three sets
-as follows.
+the oracle will predict that the top-level type constructor is a struct 
+with three fields: one for the tokens before the token \cd{[*]}, one
+for the \cd{[*]} tokens themslves, and one for the tokens after the token
+\cd{[*]}. Based on this determination, the oracle will divide the
+original chunks into three sets as follows.
+
 {\small
 \begin{verbatim}
 Pdate ' ' Ptime ' ' Pint ' ' Palpha        (set 1)       
@@ -241,10 +242,12 @@ Pdate ' ' Ptime ' ' Pint ' ' Palpha        (set 1)
 ':' ...                                    (set 3)       
 ':' ' ' Palpha (*) ' ' ...
 \end{verbatim}
-}
+}%
+
 \noindent
-On recursive analysis of set 1, the oracle again suggests a struct is the top-level structure,
+On recursive analysis of set 1, the oracle again suggests a struct is the top-level type,
 generating two more sets of chunks: 
+
 {\small
 \begin{verbatim}
 Pdate ' ' Ptime ' ' Pint ' '               (set 4)       
@@ -253,26 +256,27 @@ Pdate ' ' Ptime ' ' Pint ' '               (set 4)
 Palpha                                     (set 5)       
 Palpha 
 \end{verbatim}
-}
+}%
+
 \noindent
 Now, since every chunk in set 5 contains exactly one base type
-token, the recursion naturally bottoms out with the oracle claiming it has
-found the base type \cd{Palpha}.  On the other hand, when analyzing set 4, 
+token, the recursion bottoms out with the oracle claiming it has
+found the base type \cd{Palpha}.  When analyzing set 4, 
 the oracle detects insufficient commonality between chunks and decides
-the top-most type constructor must be a union. It partitions set 4 into
+the top-most type constructor is a union. It partitions set 4 into
 two more sets, with each group containing only 1 chunk (either
-\{\cd{Pdate ' ' ...}\} or \{\cd{'-' ' '}\}).  The first set is analyzed to 
-determine the type of the first branch of the union and the second set 
-is analyzed to determine the second branch of the union.
-With no variation in either branch,
-the algorithm quickly discovers an accurate type for each.
+\{\cd{Pdate ' ' ...}\} or \{\cd{'-' ' '}\}).  The algorithm analyzes
+the first set to determine the type of the first branch of the union
+and the second set to determine the second branch of the union.
+With no variation in either branch, the algorithm quickly discovers an
+accurate type for each. 
 
-Backing out of the recursion, having completely discovered the
-type of the data in set 1, we turn our attention to set 2.
-On recursive analysis of this set, the meta-tokens are cracked open
-and this piece of the data is recursively identified as having the type 
-\cd{struct \{'['; Pint; ']';\}}.  Analysis of Set 3 proceeds in a similar 
-fashion to the others.
+Having completely discovered the type of the data in set 1, we turn
+our attention to set 2. 
+To analyze this set, the algorithm cracks open the \cd{[*]} meta-tokens
+to recursively analyze the underlying data, a process which yields 
+\cd{struct \{'['; Pint; ']';\}}. Analysis of Set 3 proceeds in a similar 
+fashion.
 
 %% The types $T_0$, $T_1$, $T_2$ and $T_3$ are not yet known -- they will
 %% be constructed recursively.  $T_0$ is constructed by recursively applying
@@ -296,24 +300,23 @@ fashion to the others.
 
 As a second example, consider the Sirius data from Figure~\ref{fig:example}.
 Here the chunks have the following structure:
+
 {\small
 \begin{verbatim}
    Pint '|' Pint '|' ... '|' Pint '|' Pint
    Pint '|' Pint '|' ... '|' Palpha Pint '|' Pint
 \end{verbatim}
-}
+}%
+
 \noindent
-In this case, our algorithm guesses that the top-level structure involves
-an array and hence partions the data into sets of chunks for the
+In this case, the oracle prophecies that the top-level structure involves
+an array and partitions the data into sets of chunks for the
 array preamble, the array itself, and the array postamble.  The
-preamble chunks all have the form \{\cd{Pint '|'}\} and the
-postamble chunks all have the form \{\cd{Pint}\}, so their 
-types easily discovered.  The algorithm discovers the type of the
-array elements by analyzing the list of chunks below.
-These chunks were created by splitting the two
-large initial chunks into a series of many smaller array-element chunks.
-These smaller chunks are discovered by assuming that the \cd{'|'} token
-appears somewhere in every array element.
+preamble chunks all have the form \{\cd{Pint '|'}\} while the
+postamble chunks all have the form \{\cd{Pint}\}, so the algorithm
+easily determines the corresponding types. The algorithm discovers the
+type of the array elements by analyzing the residual list of chunks
+
 {\small
 \begin{verbatim}
 Pint '|' 
@@ -323,33 +326,41 @@ Pint '|'
 ...
 Palpha Pint '|'
 \end{verbatim}
-}
+}%
+
+\noindent
+The oracle constructs this chunk list by removing the preamble and
+postamble tokens from all input chunks, concatenating the
+remaining tokens, and then splitting the resulting list into one chunk
+per array element. It does this splitting by assuming that the chunk
+for each array element ends with a \cd{'|'} token.  
+
 So far so good, but how does the guessing work?  Why does the
-algorithm decide the Sirius data is basically an array but the
-Crashreporter.log is a struct? After all, all the Sirius chunks start
-with a Pint, which is similar to all the Crashreporter chunks starting
-with a Pdate.  Likewise, Crashreporter contains many occurrences of
-the \cd{' '} token, which, like the \cd{'|'} in Sirius, might serve as
-an array separator.
+algorithm decide the Sirius data is basically an array but 
+Crashreporter.log is a struct? After all, the Sirius chunks all have
+a \cd{Pint}, just as all the Crashreporter.log chunks have a bracket
+meta-token \cd{[*]}. Likewise, Crashreporter.log contains many occurrences of
+the \cd{' '} token, which might serve as
+an array separator as the \cd{'|'} token does in the Sirius data.
 
 \input{discoveryalg2.tex}
 
 \paragraph*{The Magic.}
-In order to make informed guesses about the structure of the chunks
-under consideration, every recursive iteration of the algorithm computes 
-a histogram for each token appearing in the data.
-More specifically, a histogram for token $t$
+To generate the required prophecy for a given list of chunks, the
+oracle computes a histogram of the frequencies of all tokens appearing
+the input.  
+More specifically, the histogram for token $t$
 plots the number of chunks (on the $y$-axis)
 having a certain number of occurrences of the token (on the $x$-axis). 
 Figure~\ref{fig:histograms} presents a number of histograms computed
-from the top-level analysis of Crashreporter.log and Sirius chunks.
+during analysis of the Crashreporter.log and Sirius chunk lists.
 
 Intuitively, tokens associated 
 with histograms with high {\em coverage}, meaning the token appears
 in almost every chunk, and {\em narrow} distribution, meaning the variation in
 the number of times a token appears in different chunks is low, are
 good candidates for defining structs.  Similarly, histograms with
-high coverage and {\em wide} distribution, are good candidates for defining
+high coverage and {\em wide} distribution are good candidates for defining
 arrays.  Finally, histograms with low coverge or intermediate width
 represent tokens that form part of a union.  
 
@@ -388,48 +399,48 @@ The corresponding tokens are (a) {\tt [*]},
 (g) {\tt Pwhite}.  Histograms (h) {\tt Palpha}, (i) {\tt Pint}, and 
 (j) {\tt Pwhite} are generated from analysis of Crashreporter.log from
 set 1 (the second level of recursion).  Histogram (k) is generated from
-top-level analysis of the {\tt |} token from Dibbler.1000.}
+top-level analysis of the {\tt |} token from the Sirius data.}
 \label{fig:histograms} 
 \end{center}
 \end{figure*}
 
-As a first example, consider histogram (a)
-from Figure~\ref{fig:histograms}.  This is the perfect candidate for a 
-struct --
+Concretely, consider histogram (a)
+from Figure~\ref{fig:histograms}.  It is a perfect struct candidate--
 it has a single column that covers 100\% of the records.  Indeed,
 this histogram corresponds to the \cd{[*]} token in Crashreporter.log.
-Whenever such a histogram is detected, it will always be chosen
-for immediate creation of a struct and partitioning.  All of the
-other top-level histograms for Crashreporter.log contain variation
-and hence are less certain indicators of data source structure.
+Whenever the oracle detects such a histogram, it will always prophecy
+a struct and partition the input chunks according to the associated
+token. All of the other top-level histograms for Crashreporter.log
+contain variation and hence are less certain indicators of data source
+structure. 
 
-As a second example, consider histograms (h), (i) and (j) and compare
-them with histograms (f), (b) and (g). The histograms (h), (i) and (j)
-are generated from the second level of recursive analysis. They
-correspond to the histograms for chunk set 1, explained in the
-previous subsection.  These histograms have far less variation in them
+As a second example, consider the top-level histograms (f), (b) and
+(g) for tokens \cd{Palpha}, \cd{Pint} and \cd{Pwhite}, respectively, 
+and compare them with the corresponding histograms (h),
+(i) and (j) computed for the same tokens from chunk set 1, defined in the
+previous subsection.  The histograms for chunk set 1 have far less variation
 than the corresponding top-level histograms.  In particular, notice
-that histogram (h) is a perfect struct histogram whereas histogram (f)
-contains a great deal of variation.  This example illustrates where
-the real power of our divide-and-conquer algorithm comes from -- if
-{\em just one token} in the top-level structure can be identified as a
-good partitioner for the data, it is very often the case that in the
-next level of recursive analysis, the histograms become substantially
-sharper and more amenable to analysis.
+that histogram (h) for token \cd{Palpha} is a perfect struct histogram
+whereas histogram (f) for token \cd{Palpha}
+contains a great deal of variation.  This example illustrates the
+source of the power of our divide-and-conquer algorithm-- if the
+oracle can identify {\em even one token} at a given level as
+defining a good partition for the data, the histograms for the next
+level down become substantially sharper and more amenable to analysis.
 
 As a third example, consider histogram (k).  This histogram illustrates
-the classic pattern for tokens involved in arrays -- it has a very long
-tail.  And indeed, the \cd{|} token in the Dibber.1000
-data does act like a separator for fields of an array.
+the classic pattern for tokens involved in arrays-- it has a very long
+tail.  And indeed, the \cd{|} token in the Sirius data does act like a
+separator for fields of an array. 
 
 To make the intuitions discussed above precise, we must define a number of
-properties of histograms.  First, a histogram $h$ is a list of pairs
+properties of histograms.  First, a histogram $h$ for a token $t$ is a list of pairs
 of natural numbers $(x,y)$ where $x$ denotes the token frequency and
-$y$ denotes the number of records with that frequency.  
+$y$ denotes the number of chunks with that frequency.  
 All first elements of pairs in the list must be unique.  
 The {\em width} of a
 histogram ({\em width}($h$)) is the number of elements in the list
-excluding the zero-bar ({i.e.,} excluding element $(0,y)$).  
+excluding the zero-column (\ie{} excluding element $(0,y)$).  
 A histogram
 $\normal{h}$ is in normal form when the first element of the list is
 the zero column and all subsequent elements are sorted in descending
@@ -437,34 +448,32 @@ order by the $y$ component.  For example, if $h_1$ is the histogram
 $[(0,5), (1,10), (2,25), (3,15)]$ then {\em width}($h_1$) is 3 and its
 normal form $\normal{h_1}$ is $[(0,5), (2, 25), (3,15), (1,10)]$.
 
-We often refer to $y$ as the {\em mass} of the element $(x,y)$
+We often refer to $y$ as the {\em mass} of the element $(x,y)$,
 and given a histogram $h$, we refer to the mass of the $i^{\mathrm th}$
 element of the list 
 using the notation $h[i]$.  For instance, $h_1[3] = 15$ and 
 $\normal{h_1}[3] = 10$.  The {\em residual mass} ({\em rm}) of a column $i$ in 
 a normalized histogram $h$ is the mass of all the columns to the right of 
-$i$ plus the mass of the zero-bar.  Mathematically, 
+$i$ plus the mass of the zero-column.  Mathematically, 
 {\em rm}$(\normal{h},i) = \normal{h}[0] + \sum_{j=i+1}^{\mathit{width}(\normal{h})} \normal{h}[j]$.
 For example, {\em rm}$(\normal{h_1},1) = 5 + 15 + 10 = 30$.
-The residual mass is the primary characterization of ``narrowness''
+The residual mass characterizes the ``narrowness''
 of a histogram.  Those histograms with low residual mass of the first
 column ({\em i.e.,} {\em rm}$(\normal{h_1},1)$ is small) 
 are good candidates for structs.
 
-In order to distinguishing between
-structs, unions and arrays,
+To distinguishing between structs, arrays and unions,
 we also need to define the {\em coverage} of a histogram, which
-is simply the sum of the non-zero histogram elements.  Mathematically,
+intuitively is the number of chunks containing the corresponding token.
+Mathematically, it is simply the sum of the non-zero histogram elements:
 {\em coverage}$(\normal{h}) = 
                   \sum_{j=1}^{\mathit{width}(\normal{h})} \normal{h}[j]$.
 
-Finally, recursive partitioning of the data works better when
-groups of tokens with similar distributions are considered together
--- when the algorithm has access to a sufficient amount of data and
-two tokens have the same distribution, it is always the 
-case that they form part of the same type constructor.  There are a 
-number of ways to define {\em similarity} of histograms.  We have
-chosen a symmetric form of {\em relative entropy} \cite{Lin91:divergence}.
+Finally, our algorithm works better when the oracle considers groups
+of tokens with similar distributions together because with very high
+probability such tokens form part of the same type constructor. 
+To determine when two histograms are {\em similar}, we use
+a symmetric form of {\em relative entropy} \cite{Lin91:divergence}.
 %\footnote{Suggested by Rob Schapire, personal communication, May 2007.}  
 The (plain) relative entropy
 of two normalized histograms $\normal{h_1}$ and $\normal{h_2}$, 
@@ -476,9 +485,9 @@ defined as follows.
 \]
 To create a symmetric form, we first find the average of the two
 histograms in question (written $\addh{h_1}{h_2}$)
-by summing corresponding columns and dividing by two.  This
-has the effect of preventing the denominator from being zero in the 
-final relative entropy computation.  At last, the symmetric
+by summing corresponding columns and dividing by two.  This technique
+prevents the denominator from being zero in the 
+final relative entropy computation.  Using this definition, the symmetric
 relative entropy is:
 \[
  \srelativee{\normal{h_1}}{\normal{h_2}} 
@@ -487,37 +496,51 @@ relative entropy is:
 \]
 
 Now that we have defined the relevant properties of histograms,
-we can explain how to guess type constructors.
+we can explain how the oracle prophecies.
 
 \begin {enumerate}
-\item Identify a base type when each chunk contains the same single token.
+\item Prophecy a base type when each chunk contains the same simple
+  token. If each chunk contains the same meta-token, prophecy a struct
+  with three fields: one for the left paren, one for the body, and one
+  for the right paren.
 
-\item Otherwise, group related histograms into sets as follows.  
-A histogram $h_1$ belongs to
-group $G$ provided there exists another histogram $h_2$ in $G$
-such that $\srelativee{\normal{h_1}}{\normal{h_2}} < 
-\mathrm{ClusterTolerance}$.  We have found a ClusterTolerance
-of 0.01 is effective.  A histogram dissimilar to all others may form 
-its own group.
+\item Otherwise, group related normalized histograms into clusters as
+  follows.  A histogram $h_1$ belongs to group $G$ provided there
+  exists another histogram $h_2$ in $G$ such that
+  $\srelativee{\normal{h_1}}{\normal{h_2}} <
+  \mathrm{ClusterTolerance}$.  We have found a ClusterTolerance of
+  0.01 is effective.  We do not require all histograms in a cluster to
+  have precisely the same histogram to allow for errors in the data.
+  A histogram dissimilar to all others will form its own group.
 
-\item Identify a struct by 
-considering all groups $G$, in descending order by residual mass
-of the minimum histogram in the group.
-The first group $G$ that contains any histograms $h$ that satisfy the
- following minimum criteria will be declared a struct on this 
-iteration of the recursive algorithm:
+\item Determine if a struct exists by first ranking the groups by the
+  minimum residual mass of all the histograms in each group. This
+  process gives priority to groups comprised of histograms with high
+  coverage and narrow distribution.  Find the first group in this
+  ordering with histograms $h$ satisfying the following criteria:
 \begin {itemize}
 \item $\mathit{rm}(h) < \mathrm{MaxMass}$
 \item $\mathit{coverage}(h) > \mathrm{MinCoverage}$
 \end{itemize}
-If no histograms satisfy the struct criterion, check for arrays.
-If histograms $h_1$, $h_2$, {\em etc.} do satisfy the struct criterion, 
-then partition the current chunks into subsequences separated
-by tokens $t_1$, $t_2$, {\em etc.}  If tokens $t_1$, $t_2$, {\em etc.}
-appear in different orders in different chunks, introduce a union of structs
-instead of a simple struct, with one branch of the union per token 
-ordering.  If some chunks do not contain the appropriate tokens, 
-create a separate branch of the union for those chunks.
+where constants $\mathrm{MaxMass}$ and $\mathrm{MinCoverage}$ are
+parameters of the algorithm.  If histograms $h_1$, \ldots, $h_n$ from
+group $G$ satisfy the struct criteria, the oracle will prophecy some
+form of struct. It uses the histograms $h_1$, \ldots, $h_n$ and the associated
+tokens $t_1$, \ldots, $t_n$ to calculate the number of fields and the
+corresponding chunk lists.  The number of fields is one more than
+twice the sum of the masses of the first column of each token's
+histogram. 
+
+ corresponding to 
+the most common number of occurrences for that token in the input.
+The oracle partitions the input chunks into
+subsequences separated by the tokens $t_1$, \ldots, $t_n$. 
+If the tokens $t_1$,\ldots, $t_n$
+appear in different orders in different chunks, the oracle prophecies
+a union of structs instead of a simple struct, with one branch of the
+union per token  ordering.  If some chunks do not contain the
+appropriate tokens, the oracle creates a separate branch of the union
+for those chunks. 
 
 \item Identify an array by considering all groups $G$, in descending 
 order by coverage of the highest coverage histogram in the group.
