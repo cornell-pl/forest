@@ -91,7 +91,10 @@ else {$informat=$format;}
 #}
 #else {$datafile = $path;}
 
-system ("darwin.ppc/$desc-fmt $path $desc.fmt");
+$padshome= $ENV{'PADS_HOME'};
+$arch = `$padshome/ast-ast/bin/package.cvs`;
+chomp $arch;
+system ("$arch/$desc-fmt $path $desc.fmt");
 $gnufile = $desc.".gnu";
 open GNU, ">$gnufile" or die "Can't open gnu file for output";
 print GNU "set datafile separator \"$sep\"\n";
