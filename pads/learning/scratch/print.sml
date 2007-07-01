@@ -156,7 +156,75 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpTyInfo ( path : string ) ( descName : string ) ( baseTy : Ty ) ( rewrittenTy : Ty ) ( et : EndingTimes) (sep:Token option) : unit = 
+    fun dumpGrapher (path:string) (dataDir: string) (descName:string) (ty:Ty) (sep:Token option) : unit =
+	case ty of 
+	Pstruct (_, tys) =>
+		let
+		  fun getBaseTypes (tys : Ty list) (index:int) : string =
+			case tys of
+			  nil =>  ""
+			  | ty::tail => 
+				(
+				  case ty of 
+				    Base (a, (tok, _)::_) =>
+				      let val label = getLabelString a
+				      in
+					(
+					 case tok of
+						Pint _ => label ^ " Col #"^(Int.toString index)^"\t [Int]\n"
+					  |	Pfloat _ => label ^ " Col #"^(Int.toString index)^"\t [Float]\n"
+					  |	Pdate _ => label ^ " Col #"^(Int.toString index)^"\t [Date]\n"
+					  |	Ptime _ => label ^ " Col #"^(Int.toString index)^"\t [Time]\n"
+					  (*|	Pstring _ => label ^ "Col #"^(Int.toString index)^"\t [String]\n"*)
+					  (*|	Other _ => label ^ "Col #"^(Int.toString index)^"\t [Char]\n"*)
+					  |	_ => ""
+					) ^ (getBaseTypes tail (Int.+ (index, 1)))
+				      end
+				  | RefinedBase (a, re, _) =>
+				      let val label = getLabelString a
+				      in
+					(
+					 case re of
+						Int _ => label ^ " Col #"^(Int.toString index)^"\t [Int]\n" ^ 
+							 (getBaseTypes tail (Int.+ (index, 1))) 
+					  |	Enum (r::_) =>
+						(
+						  case r of 
+							IntConst _ => label ^ " Col #"^(Int.toString index)^"\t [Int]\n"
+							(*| StringConst _ => "Col #"^(Int.toString index)^"\t [String]\n"*)
+							| _ => ""
+						) ^ (getBaseTypes tail (Int.+ (index, 1))) 	
+					  | 	StringConst _ => (getBaseTypes tail index)
+					  | _ => (getBaseTypes tail (Int.+ (index, 1))) 
+					)	
+				      end
+				  | _ => (getBaseTypes tail (Int.+ (index, 1)))
+				) 
+		  val graphOutStr:string = getBaseTypes tys 1 
+		  val sepStr = case sep of 
+				SOME tok => tokenToString tok
+				| NONE => "none"
+	    	  val strm = TextIO.openOut (path^descName^".graph")
+            	  val () = TextIO.output(strm, "Sep: "^sepStr^"\n"^graphOutStr)
+	    	  val () = TextIO.closeOut strm
+	    	  val strm = TextIO.openOut (path^descName^"-graph")
+		  val datapath = if OS.Path.isAbsolute dataDir then dataDir
+				 else OS.Path.mkAbsolute {path=dataDir, relativeTo=OS.FileSys.getDir ()}
+		  val () = TextIO.output(strm, "#!/usr/bin/perl\n$desc = \"" ^ descName ^ "\";\n" ^
+			"$datapath = \"" ^ datapath ^"\";\n")
+	    	  val () = TextIO.closeOut strm
+		  val status = OS.Process.system ("cat grapher.template >> " ^ path ^ descName ^ "-graph")
+		  val status = OS.Process.system ("chmod u+x "^ path ^ descName ^ "-graph")
+		in
+			()
+		end
+		  
+	| _ => (* not meaningful for grapher, hence not output anything *)
+		print "Data not suitable for graphing!\n"
+
+
+    fun dumpTyInfo ( path : string ) (dataDir: string) ( descName : string ) ( baseTy : Ty ) 
+			( rewrittenTy : Ty ) ( et : EndingTimes) (sep:Token option) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) =>
@@ -205,6 +273,7 @@ structure Printing = struct
 		       dumpXMLProgram path descName tyName;
 		       dumpPADX path descName tyName;
 		       dumpFmtProgram path descName tyName sep;
+		       dumpGrapher path dataDir descName rewrittenTy sep;
                        dumpComputeTimes ( path ^ "Timing" ) ct; 
 		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
 		   end

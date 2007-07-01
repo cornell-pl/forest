@@ -35,6 +35,7 @@ structure Main : sig
                 val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
                 val computeTimes = getComputeTimes end4Times
                 val ()           = Printing.dumpTyInfo (!outputDir)
+						       dataDir
                                                        dataFile
                                                        measuredTy
                                                        rewrittenTy
