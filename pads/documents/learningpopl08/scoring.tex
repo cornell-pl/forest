@@ -26,18 +26,23 @@ to transmit the data {\em given the description}.
 Intuitively, the cost in bits of transmitting a description
 is the cost of transmitting the sort of description (\ie{}, \cd{struct},
 \cd{union}, \cd{enum}, \etc{}) plus the cost of transmitting all of its
-subcomponents.  Figure~\ref{fig:cost-type} defines this cost function.
-The cost of any base type
-$b(p_1,\ldots,p_k)$ is $ \cardt + \sum_{i=1}^{k} \costparam{p_i}$,
+subcomponents.  
+%Figure~\ref{fig:cost-type} defines this cost function.
+For example, the cost of transmitting a struct type
+$\costdescription{\mathtt{struct \{} T_1;\ldots ;T_k; \mathtt{\}}}$ is 
+$\cardt + \sum_{i=1}^{k} \costdescription{T_i}$
+%$b(p_1,\ldots,p_k)$ is $ \cardt + \sum_{i=1}^{k} \costparam{p_i}$,
 where $\cardt$ is the log of the number of different sorts of type 
-constructors (24 of them in the \ir{} presented in this paper)
-and $\costparam{p}$ is the cost of encoding the parameter $p$.
-\figref{fig:cost-type} does not show the
-cost of encoding variables, constants and parameters, but it is
-straightforward.  For example, the cost of 
-encoding an ASCII character is 8 bits.  The cost of encoding a string
-is the cost of encoding its length (assumed to be a 32-bit quantity)
-plus the cost of encoding each character in turn.
+constructors (24 of them in the \ir{} presented in this paper).
+%and $\costparam{p}$ is the cost of encoding the parameter $p$.
+%% \figref{fig:cost-type} does not show the
+%% cost of encoding variables, constants and parameters, but it is
+%% straightforward.  For example, the cost of 
+%% encoding an ASCII character is 8 bits.  The cost of encoding a string
+%% is the cost of encoding its length (assumed to be a 32-bit quantity)
+%% plus the cost of encoding each character in turn.
+We have defined the recursive cost function mathematically in full,
+but space limitations preclude giving that definition here.
 
 The cost of encoding data relative to selected types is shown in 
 Figure~\ref{fig:cost-data}.  The top of the figure defines
@@ -74,42 +79,42 @@ the underlying data is determined by the type.  The cost of encoding
 a \cd{switch} is the cost of encoding the branch only -- the tag need not
 be encoded because it is determined by the type and earlier data.
 
-\begin{figure}
-Miscellaneous definitions:
-\[
-\begin{array}{@{\,}l@{\,}c@{\,}l}
-\cardt &=& \mbox{log of the number of type constructors in the \ir{}}
-\end{array}
-\]
-Cost of transmitting constants and parameters:
-\[
-\begin {array} {@{}l@{\,}c@{\,}l}
-\costchar{a}  &=& \mbox{Cost of transmitting character } a \\
-\coststring{s}  &=& \mbox{Cost of transmitting string } s \\
-\costint{i}  &=& \mbox{Cost of transmitting integer } i \\
-\costconst{c}  &=& \mbox{Cost of transmitting constant } c \\
-\costvar{x} &=& \mbox{Cost of transmitting variable } \\
-\costparam{p}  &=& \mbox{Cost of transmitting parameter } p \\
-\end{array}
-\]
-Cost of transmitting a type:
-\[
-\begin{array}{@{}l@{\,}c@{\,}l}
-\costdescription{b(p_1,\ldots,p_k)} &=& 
-  \cardt + \sum_{i=1}^{k} \costparam{p_i} \\
-\costdescription{x{:}b(p_1,\ldots,p_k)} &=& 
-  \cardt + \costvar{x} + \sum_{i=1}^{k} \costparam{p_i} \\
-\costdescription{\mathtt{struct \{} T_1;\ldots ;T_k; \mathtt{\}}} &=& 
-  \cardt + \sum_{i=1}^{k} \costdescription{T_i} \\
-\costdescription{\mathtt{union \{} T_1; \ldots ;T_k; \mathtt{\}}} &=& 
-  \cardt + \sum_{i=1}^{k} \costdescription{T_i} \\
-\costdescription{\mathtt{enum \{} c_1,\ldots,c_k \mathtt{\}}} &=& 
-  \cardt + \sum_{i=1}^{k} \costconst{c_i} \\
-\end{array}
-\]
-\caption {Cost of transmitting a type, selected rules}
-\label{fig:cost-type}
-\end{figure}
+%% \begin{figure}
+%% Miscellaneous definitions:
+%% \[
+%% \begin{array}{@{\,}l@{\,}c@{\,}l}
+%% \cardt &=& \mbox{log of the number of type constructors in the \ir{}}
+%% \end{array}
+%% \]
+%% Cost of transmitting constants and parameters:
+%% \[
+%% \begin {array} {@{}l@{\,}c@{\,}l}
+%% \costchar{a}  &=& \mbox{Cost of transmitting character } a \\
+%% \coststring{s}  &=& \mbox{Cost of transmitting string } s \\
+%% \costint{i}  &=& \mbox{Cost of transmitting integer } i \\
+%% \costconst{c}  &=& \mbox{Cost of transmitting constant } c \\
+%% \costvar{x} &=& \mbox{Cost of transmitting variable } \\
+%% \costparam{p}  &=& \mbox{Cost of transmitting parameter } p \\
+%% \end{array}
+%% \]
+%% Cost of transmitting a type:
+%% \[
+%% \begin{array}{@{}l@{\,}c@{\,}l}
+%% \costdescription{b(p_1,\ldots,p_k)} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costparam{p_i} \\
+%% \costdescription{x{:}b(p_1,\ldots,p_k)} &=& 
+%%   \cardt + \costvar{x} + \sum_{i=1}^{k} \costparam{p_i} \\
+%% \costdescription{\mathtt{struct \{} T_1;\ldots ;T_k; \mathtt{\}}} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costdescription{T_i} \\
+%% \costdescription{\mathtt{union \{} T_1; \ldots ;T_k; \mathtt{\}}} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costdescription{T_i} \\
+%% \costdescription{\mathtt{enum \{} c_1,\ldots,c_k \mathtt{\}}} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costconst{c_i} \\
+%% \end{array}
+%% \]
+%% \caption {Cost of transmitting a type, selected rules}
+%% \label{fig:cost-type}
+%% \end{figure}
 
 \begin{figure}
 Cost of encoding all training data relative to a type:

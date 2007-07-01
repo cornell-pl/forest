@@ -29,51 +29,57 @@ replicating the functionality of our automatically generated tool suite.
 
 Perhaps the most closely related work is from Arasu and 
 Garcia-Molina~\cite{arasu+:sigmod03}, who developed a information
-extraction system for sets of similar web pages.  The
-commonalities between web pages are assumed to be a ``template'' structure
-and the differences are assumed to be values drawn from a database
-sitting behind the web site.  Arasu uses a top-down grammar induction
-algorithm somewhat similar to our rough structure inference phase.  
-However, in certain ways, Arasu has a much easier task than we do as html
-documents have far more regular structure than ad hoc data sources do.
-Arasu exploits this structure (particularly the guarantee of a well-formed
-hierarchical nesting structure of \xml{} tags) in essential ways in his 
-algorithm,
-while we were forced to developed new techniques for our domain.  For example,
-we use histograms to summarize the contents of data chunks whereas
-Arasu does not.  In addition, a substantial portion of our system
-is a description rewriting engine, which Arasu seems not to need.  
+extraction system for sets of similar web pages.  
+%The
+%commonalities between web pages are assumed to be a ``template'' structure
+%and the differences are assumed to be values drawn from a database
+%sitting behind the web site.  
+Arasu uses a top-down grammar induction
+algorithm somewhat similar to our rough structure inference phase
+(though it does not use histograms),
+but has no description rewriting engine.  
+%However, in certain ways, Arasu has a much easier task than we do as html
+%documents have far more regular structure than ad hoc data sources do.
+This algorithm exploits the hierchical nesting
+structure of \xml{} documents in essential ways
+and so cannot be applied directly to ad hoc data.  
+%For example,
+%we use histograms to summarize the contents of data chunks whereas
+%Arasu does not.  In addition, a substantial portion of our system
+%is a description rewriting engine, which Arasu seems not to need.  
 
-TSIMMIS~\cite{chawathe+:tsimmis} is another information extraction
-system with similar overall goals to the \pads{} project.  It aims to
+The TSIMMIS project~\cite{chawathe+:tsimmis} aims to
 allow users to manage and query collections of heterogeneous, ad hoc
 data sources.  TSIMMIS sits on top of the Rufus
 system~\cite{shoens+:rufus}, which supports automatic classification
 of data sources based on features such as the presence of certain
 keywords, magic numbers appearing at the beginning of files and file
-type.  The sources are classified using categories such as ``email''
-and ``C program.''  This sort of categorization is materially
-different from the more detailed structure inference mechanisms we
-have integrated into the \pads{} system.  For further reading on
-information extraction from web pages, Hong's
-thesis~\cite{hong:thesis} includes an informative survey.  Though,
-Arasu's work and TSIMMIS appear more closely related to our work than
-the others Hong mentions.
+type.  
+%The sources are classified using categories such as ``email''
+%and ``C program.''  
+This sort of classification is materially
+different from the syntactic analysis we have developed.
+
+%For further reading on
+%information extraction from web pages, Hong's
+%thesis~\cite{hong:thesis} includes an informative survey.  Though,
+%Arasu's work and TSIMMIS appear more closely related to our work than
+%the others Hong mentions.
 
 Potter's Wheel~\cite{raman+:potterwheel} is a system that attempts to
 help users find and purge errors from
 relational data sources.  It does so through the use of a spread-sheet
 style interface, but in the background, a grammar inference algorithm
 infers the structure of the input data, which may be ``ad hoc,'' 
-somewhat like ours.  Potter's Wheel's inference mechanism is a brute-force
-approach that enumerates all possible sequences of base types that appear
-in the training data, although their algorithm is smart enough to
-prune some obviously unpromising sequences.  As in our work,
-users can specify custom base types, and search for a description
-is based on the minimum description length principle.  However,
-their application is aimed
-strictly at relational data, so they only infer \cd{struct} types
-as opposed to enumerations, arrays, switches or unions like we do.  
+somewhat like ours.  This inference algorithm operates by
+enumerating all possible sequences of base types that appear
+in the training data.  
+%As in our work,
+%users can specify custom base types, and search for a description
+%is based on the minimum description length principle.  
+Since Potter's Wheel is aimed at processing
+relational data, they only infer \cd{struct} types
+as opposed to enumerations, arrays, switches or unions.  
 
 Other researchers have defined grammar induction algorithms that use
 bottom-up rewriting to search through description space for an optimal
@@ -93,11 +99,9 @@ state-merging rewriting rules.  One disadvantage of such
 techniques is that the initial state is large (representing
 the entire training data set explicitly) and the search space is 
 enormous.  Nevertheless, bottom-up state-merging is often used because
-it can be difficult to find an effective state-splitting algorithm.
-However, for our domain, the histogram-based state-splitting structure
-discovery procedure appears to be an effective way to generate a candidate
-grammar.  When combined with our rewriting system, the overall
-algorithm has proven effective.
+it has been difficult to find an effective state-splitting algorithm.
+Our histogram-based structure discovery is a new state-splitting
+that appears to work very well on ad hoc data.
 
 % State-merging rewriting rules seem to be
 % more popular than 
