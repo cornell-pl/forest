@@ -43,7 +43,7 @@ asl.log 		& 279/1500	& log file of Mac ASL\\ \hline
 boot.log		& 16/262		& Mac OS boot log\\ \hline
 crashreporter.log 	& 50/441 	& original crash log\\ \hline 
 crashreporter.mod 	& 49/441	& modified crash log\\ \hline
-dibbler.1000		& 142/999 	& AT\&T phone\\
+sirius.1000		& 142/999 	& AT\&T phone\\
 			&		& provision data\\ \hline
 ls-l.txt		& 2/35		& Stdout from Unix\\
 			&		& command ls -l\\ \hline
@@ -72,7 +72,7 @@ and brief description.} \shrink
 %% 			&		& daemon log \\ \hline
 %% crashreporter.mod 	& 49255		& modified crashreporter \\
 %% 			&		& daemon log \\ \hline
-%% dibbler.1000		& 142607 	& AT\&T phone \\
+%% sirius.1000		& 142607 	& AT\&T phone \\
 %% 			&		& provision data \\ \hline
 %% ls-l.txt		& 1979		& Stdout from Unix \\
 %% 			&		& command ls -l \\ \hline
@@ -114,7 +114,7 @@ Most of the data files are ``line based,'' meaning that every line becomes a chu
 for the purposes of learning the format.  One exception is netstat-an, in which
 chunks come in blocks or multiple lines.
 % Many of the formats include headers or footers which may complicate the descriptions.
-% From a human point of view, dibbler.1000 and railroad.txt consist of some special
+% From a human point of view, sirius.1000 and railroad.txt consist of some special
 % character separated arrays. Some data sources such as ai.3000 and asl.log
 % contain groupings delimited by special characters such as [, ], or quotations.
 % Many contain complex English text as logs or messages.
@@ -163,7 +163,7 @@ asl.log                         & 2.90&      52.07&     55.26	& 1.0 	 \\ \hline
 boot.log                        & 0.11&      2.40&      2.53 	& 1.0 	 \\ \hline
 crashreport.log                 & 0.12&      3.58&      3.73 	& 2.0 	 \\ \hline
 crashreport.log.mod             & 0.15&      3.83&      4.00 	& 2.0 	 \\ \hline
-dibbler.1000                    & 2.24&      5.69&      8.00 	& 1.5 	 \\ \hline
+sirius.1000                     & 2.24&      5.69&      8.00 	& 1.5 	 \\ \hline
 ls-l.txt                        & 0.01&      0.10&      0.11 	& 1.0 	 \\ \hline
 netstat-an                      & 0.07&      0.74&      0.82 	& 1.0 	 \\ \hline
 page\_log                       & 0.08&      0.55&      0.65 	& 0.5 	 \\ \hline
@@ -191,7 +191,7 @@ time taken to hand-write the corresponding description.} \shrink
 %% boot.log                        & 0.620		&0.481		&0.703	 \\ \hline
 %% crashreport.log                 & 0.607		&0.328		&0.348	 \\ \hline
 %% crashreport.log.mod             & 0.612		&0.329		&0.347	 \\ \hline
-%% dibbler.1000                    & 0.602		&0.470		&0.438	 \\ \hline
+%% sirius.1000                     & 0.602		&0.470		&0.438	 \\ \hline
 %% ls-l.txt                        & 0.559		&0.333		&0.401	 \\ \hline
 %% netstat-an                      & 0.413		&0.394		&0.319	 \\ \hline
 %% page\_log                       & 0.540		&0.107		&0.353	 \\ \hline
@@ -261,7 +261,7 @@ These experiments suggest that once a format is fixed, the cost of inference
 grows linearly with the amount of data.  However, it is also clear that the raw
 size of the data is not the only factor determining performance.  The nature and complexity
 of the format is also a significant factor.  For instance, widowserver\_last.log
-is only one third the size of dibber.1000, but takes substantially longer longer
+is only one third the size of sirius.1000, but takes substantially longer longer
 for the inference algorithm to process.
 
 \paragraph*{Correctness.}
@@ -308,7 +308,7 @@ high accuracy.  Overall, for 11 of 16 benchmarks, less than
 \begin{center}
 \begin{tabular}{|l||c|c|c|} \hline
 Data source		  & NS  			& 90\% 		& 95\% \\ \hline \hline
-dibbler.1000            & 0.0001		& 5		& 10 \\ \hline
+sirius.1000            & 0.0001		& 5		& 10 \\ \hline
 1967Transactions.short	& 0.0003		& 5		& 5 \\ \hline
 ai.3000                 & 0.0004		& 5		& 10 \\ \hline
 asl.log                 & 0.0012		& 5		& 10\\ \hline
@@ -366,7 +366,7 @@ Min Training size (\%) to obtain required accuracy} \shrink
 %% is intuitively correct.
 
 %% Data source		  & NS  	& Var		& 90\% 		& 95\% \\ \hline \hline
-%% dibbler.1000            & 0.0001	& 0.0050	& 5		& 10 \\ \hline
+%% sirius.1000            & 0.0001	& 0.0050	& 5		& 10 \\ \hline
 %% 1967Transactions.short	& 0.0003	& 0.0020	& 5		& 5 \\ \hline
 %% ai.3000                 & 0.0004	& 0.0037	& 5		& 10 \\ \hline
 %% asl.log                 & 0.0012	& 0.0133	& 5		& 10\\ \hline
@@ -447,7 +447,7 @@ Min Training size (\%) to obtain required accuracy} \shrink
 %% that we are confident that the scoring function we use here is meaningful.
 
 %% \item Human expert pay more attention to the semantics of the formats and 
-%% tries to generalize the structure. For example, in dibbler.1000, the
+%% tries to generalize the structure. For example, in sirius.1000, the
 %% HW IR has a zip field, while in the data itself, the zip field is always
 %% blank. The inferred IR fixed the zip field to be
 %% blank because it doesn't have the data to infer otherwise. 
