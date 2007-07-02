@@ -34,7 +34,7 @@
 %% \subsection{Preliminaries}
 \begin{table}
 \begin{center}
-\begin{tabular}{|l|c|l|} \hline
+\begin{tabular}{|l||c|l|} \hline
 Data source		& KB/Chunks		& Description \\ \hline \hline
 1967Transactions.short	& 70/999		& transaction records \\ \hline
 MER\_T01\_01.cvs	& 22/491 	& comma-separated \\
@@ -158,7 +158,7 @@ demonstrate that our minor modifications are really just for expository purposes
 \begin{table}
 \begin{center}
 \begin{tabular}{|l||c|c|c|c|} \hline
-Formats 	 		& SD(s)     & Ref(s) 	& Tot(s)  & HW(h)\\ \hline \hline
+Data source			& SD(s)     & Ref(s) 	& Tot(s)  & HW(h)\\ \hline \hline
 1967Transactions.short          & 0.20&      2.32&      2.56 	& 4.0 	 \\ \hline
 MER\_T01\_01.csv                & 0.11&      2.80&      2.92 	& 0.5 	 \\ \hline
 ai.3000                         & 1.97&      26.35&     28.64	& 1.0 	 \\ \hline
@@ -186,7 +186,7 @@ time taken to hand-write the corresponding description.}
 %% \begin{table}
 %% \begin{center}
 %% \begin{tabular}{|l||r|r|r|} \hline
-%% Formats  			& Inf 		&Ref 		& HW 	 \\ \hline \hline
+%% Data source 			   & Inf 		&Ref 		& HW 	 \\ \hline \hline
 %% 1967Transactions.short          & 0.295 	&0.218 		&0.268	 \\ \hline
 %% MER\_T01\_01.csv                & 0.648 	&0.112		&0.138	 \\ \hline
 %% ai.3000                         & 0.503		&0.332		&0.338	 \\ \hline
@@ -309,8 +309,8 @@ high accuracy.  Overall, for 11 of 16 benchmarks, less than
 
 \begin{table}
 \begin{center}
-\begin{tabular}{|l|c|c|c|} \hline
-  Title 			& NS  			& 90\% 		& 95\% \\ \hline \hline
+\begin{tabular}{|l||c|c|c|} \hline
+Data source		  & NS  			& 90\% 		& 95\% \\ \hline \hline
 dibbler.1000            & 0.0001		& 5		& 10 \\ \hline
 1967Transactions.short	& 0.0003		& 5		& 5 \\ \hline
 ai.3000                 & 0.0004		& 5		& 10 \\ \hline
@@ -368,7 +368,7 @@ Min Training size (\%) to obtain required accuracy}
 %% and more complex data like asl.log and ai.3000 takes more time to learn, which
 %% is intuitively correct.
 
-%%   Title 			& NS  	& Var		& 90\% 		& 95\% \\ \hline \hline
+%% Data source		  & NS  	& Var		& 90\% 		& 95\% \\ \hline \hline
 %% dibbler.1000            & 0.0001	& 0.0050	& 5		& 10 \\ \hline
 %% 1967Transactions.short	& 0.0003	& 0.0020	& 5		& 5 \\ \hline
 %% ai.3000                 & 0.0004	& 0.0037	& 5		& 10 \\ \hline
