@@ -38,6 +38,7 @@ value $\mathtt{in}_j(v)$, we define $tag(\mathtt{in}_j(v))$ to be $j$.
 
 \begin{figure*}
 \begin{center}
+{\small
 \framebox{
 \noindent
 \begin{minipage}[t]{\columnwidth}
@@ -226,22 +227,12 @@ $\\
 \end{enumerate}
 \end{minipage}
 }
+}
 \end{center}
-\caption{Selected and simplified rewriting rules} \label{fig:rules}
+\caption{Selected and simplified rewriting rules} \label{fig:rules} \shrink
 \end{figure*}
 
-\paragraph*{The Search.}
-The core of the rewriting system is 
-a recursive, depth-first, greedy search procedure. 
-By ``depth-first,'' we mean the algorithm considers the 
-children of each structured type before considering
-the structure itself. When refining a type, the algorithm selects the rule that 
-would {\em minimize} the information-theoretic score of the resulting
-type and applies this rule.  This process repeats  until
-no further reduction in the score is possible, at
-which point we say the resulting type $T$ is {\em stable}.
-
-\begin{figure}
+\begin{figure}[bht]
 {\small 
 \begin{verbatim}
 (* rewriting rules *)
@@ -276,9 +267,21 @@ fun refine (T:description) : description =
   oneStep T'
 \end{verbatim}
 }
-\caption{Generic local optimization algorithm in Pseudo-ML}
+\caption{Generic local optimization algorithm in Pseudo-ML} \shrink
 \label{fig:refinement}
 \end{figure}
+
+\paragraph*{The Search.}
+The core of the rewriting system is 
+a recursive, depth-first, greedy search procedure. 
+By ``depth-first,'' we mean the algorithm considers the 
+children of each structured type before considering
+the structure itself. When refining a type, the algorithm selects the rule that 
+would {\em minimize} the information-theoretic score of the resulting
+type and applies this rule.  This process repeats  until
+no further reduction in the score is possible, at
+which point we say the resulting type $T$ is {\em stable}.
+
 The rewriting phase applies the
 algorithm given in \figref{fig:refinement} three
 times in succession. 

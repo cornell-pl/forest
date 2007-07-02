@@ -3,8 +3,7 @@
 \begin{figure}
 \begin{center}
 \epsfig{file=archi.eps, width=\columnwidth}
-\caption{Architecture of the automatic tool generation engine}
-\vspace*{-5mm}
+\caption{Architecture of the automatic tool generation engine} \shrink
 \label{fig-archi}
 \end{center}
 \end{figure}
@@ -399,7 +398,7 @@ The corresponding tokens are (a) {\tt [*]},
 (g) {\tt Pwhite}.  Histograms (h) {\tt Palpha}, (i) {\tt Pint}, and 
 (j) {\tt Pwhite} are generated from analysis of Crashreporter.log from
 set 1 (the second level of recursion).  Histogram (k) is generated from
-top-level analysis of the {\tt |} token from the Sirius data.}
+top-level analysis of the {\tt |} token from the Sirius data.} \shrink
 \label{fig:histograms} 
 \end{center}
 \end{figure*}
@@ -613,11 +612,45 @@ visualization.
 \figref{fig:final-products} gives snapshots of the output of a couple
 of these tools. 
 
+\begin{figure}
+\begin{center}
+{\small
+\begin{verbatim}
+<Struct_114>
+  <var_7>
+    <var_6>
+      <var_0><val>Wed Jun 21</val></var_0>
+      <var_2><val>10:24:44</val></var_2>
+      <var_4><val>2006</val></var_4>
+    </var_6>
+  </var_7>
+  <var_11><val>crashdump</val></var_11>
+  <var_14><val>1524</val></var_14>
+  <var_19><val>crashdump</val></var_19>
+  <var_63>
+    <var_113_crashdump19>
+      <var_68>
+      </var_68>
+      <var_73><val>started</val></var_73>
+      <var_75>
+      </var_75>
+    </var_113_crashdump19>
+  </var_63>
+</Struct_114>
+\end{verbatim}
+}
+
+(a)
+
+\epsfig{file=ai.3000.eps, width=0.9\columnwidth} 
+
+(b)
+\caption{(a) XML output snipet of crashreporter.log  (b) ai.3000 web transaction volumn 
+during 19:00 - 08:55(+1 day) visualization} \shrink
+\end{center}
+\label{fig:final-products}
+\end{figure}
+
 %Of course, the end products of the inference algorithm 
 %also include the generated description and the
 %programming libraries including parser and printer.
-
-\begin {figure}
-\caption {End Products.}
-\label{fig:final-products}
-\end{figure}

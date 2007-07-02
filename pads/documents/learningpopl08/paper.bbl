@@ -1,0 +1,105 @@
+\begin{thebibliography}{10}
+
+\bibitem{arasu+:sigmod03}
+A.~Arasu and H.~Garcia-Molina.
+\newblock Extracting structured data from web pages.
+\newblock In {\em ACM SIGMOD conference}, pp. 337--348, 2003.
+
+\bibitem{burke+:cagi07}
+D.~Burke, K.~Fisher, D.~Walker, P.~White, and K.~Q. Zhu.
+\newblock Towards 1-click tool generation with {PADS}.
+\newblock In {\em ICML CAGI Workshop}, 2007. 
+
+\bibitem{chawathe+:tsimmis}
+S.~Chawathe, H.~Garcia-Molina, J.~Hammer, K.~Ireland, Y.~Papakonstantinou,
+  J.~D. Ullman, and J.~Widom.
+\newblock The {TSIMMIS} project: Integration of heterogeneous information
+  sources.
+\newblock In {\em 16th Meeting of the Information Processing Society of Japan},
+  pp. 7--18, 1994.
+
+\bibitem{fernandez+:padx}
+M.~F. Fern\'andez, K.~Fisher, R.~Gruber, and Y.~Mandelbaum.
+\newblock {PADX}: Querying large-scale ad hoc data with xquery.
+\newblock In {\em Programming Language Technologies for {XML}}, 2006.
+
+\bibitem{fisher+:pads}
+K.~Fisher and R.~Gruber.
+\newblock Pads: A domain specific language for processing ad hoc data.
+\newblock In {\em PLDI} 2005, pp. 295--304. 
+
+\bibitem{fisher+:popl06}
+K.~Fisher, Y.~Mandelbaum, and D.~Walker.
+\newblock The next 700 data description languages.
+\newblock In {\em {ACM} POPL} 2006.
+
+\bibitem{gold:inference}
+E.~M. Gold.
+\newblock Language identification in the limit.
+\newblock {\em Information and Control}, 10(5):447--474, 1967.
+
+\bibitem{mdlbook}
+P.~D. Gr\"{u}nwald.
+\newblock {\em The Minimum Description Length Principle}.
+\newblock {MIT Press}, May 2007.
+
+\bibitem{higuera01current}
+C.~D.~L. Higuera.
+\newblock Current trends in grammatical inference.
+\newblock {\em LNCS}, 1876:28--31, 2001.
+
+\bibitem{hong01using}
+T.~W. Hong and K.~L. Clark.
+\newblock Using grammatical inference to automate information extraction from
+  the {Web}.
+\newblock {\em LNCS}, 2168:216+, 2001.
+
+\bibitem{TANE-HKPT99}
+Y.~Huhtala, J.~K{\"a}rkk{\"a}inen, P.~Porkka, and H.~Toivonen.
+\newblock {TANE}: An efficient algorithm for discovering functional and
+  approximate dependencies.
+\newblock {\em Comput. J.}, 42(2):100--111, 1999.
+
+\bibitem{hutchens98finding}
+J.~L. Hutchens and M.~D. Alder.
+\newblock Finding structure via compression.
+\newblock In D.~M.~W. Powers, editor, {\em Proceedings of the Joint Conference
+  on New Methods in Language Processing and Computational Natural Language
+  Learning}, pp. 79--82. ACL, 1998.
+
+\bibitem{Lin91:divergence}
+J.~Lin.
+\newblock Divergence measures based on the {Shannon} entropy.
+\newblock {\em IEEE Transactions on Information Theory}, 37(1):145--151, 1991.
+
+\bibitem{mandelbaum+:pads-ml}
+Y.~Mandelbaum, K.~Fisher, D.~Walker, M.~Fernandez, and A.~Gleyzer.
+\newblock {PADS/ML}: {A} functional data description language.
+\newblock In {\em {ACM} POPL 2007}.
+
+\bibitem{rpni}
+J.~Oncina and P.~Garcia.
+\newblock Inferring regular languages in polynomial updated time.
+\newblock {\em Machine Perception and Artificial Intelligence}, 1:29--61, 1992.
+
+\bibitem{padsweb}
+{PADS} project.
+\newblock {\url{http://www.padsproj.org/}}, 2007.
+
+\bibitem{raman+:potterwheel}
+V.~Raman and J.~M. Hellerstein.
+\newblock Potter's wheel: An interactive data cleaning system.
+\newblock In {\em VLDB 2001}, pp. 381--390.
+
+\bibitem{shoens+:rufus}
+K.~A. Shoens, A.~Luniewski, P.~M. Schwarz, J.~W. Stamos, and I.~Joachim~Thomas.
+\newblock The {Rufus} system: Information organization for semi-structured
+  data.
+\newblock In {\em VLDB 1993}, pp. 97--107.
+
+\bibitem{stolcke94inducing}
+A.~Stolcke and S.~Omohundro.
+\newblock Inducing probabilistic grammars by bayesian model merging.
+\newblock In {\em International Conference on Grammatical Inference}, 1994.
+
+\end{thebibliography}

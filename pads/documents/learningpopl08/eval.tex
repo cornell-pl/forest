@@ -35,34 +35,31 @@
 \begin{table}
 \begin{center}
 \begin{tabular}{|l||c|l|} \hline
-Data source		& KB/Chunks		& Description \\ \hline \hline
-1967Transactions.short	& 70/999		& transaction records \\ \hline
-MER\_T01\_01.cvs	& 22/491 	& comma-separated \\
-                                        && records\\ \hline
-ai.3000			& 293/3000	& webserver log \\ \hline
-asl.log 		& 279/1500	& log file of Mac ASL \\ \hline	
-boot.log		& 16/262		& Mac OS boot log \\ \hline
-crashreporter.log 	& 50/441 	& crashreporter log \\ 
-			&		& (original) \\ \hline
-crashreporter.mod 	& 49/441		& crashreporter log \\
-			&		& (modified) \\ \hline
-dibbler.1000		& 142/999 	& AT\&T phone \\
-			&		& provision data \\ \hline
-ls-l.txt		& 2/35		& Stdout from Unix \\
-			&		& command ls -l \\ \hline
-netstat-an		& 14/202		& output from netstat \\ \hline
-page\_log		& 28/354		& printer logs \\ \hline
-quarterlypersonalincome	& 10/62		& spread sheet \\ \hline 
-railroad.txt		& 6/67		& US rail road info \\ \hline
-scrollkeeper.log 	& 66/671		& log from cataloging \\ \hline
-windowserver\_last.log 	& 52/680		& log from  \\
-                        &               & LoginWindow \\
-                        &               & server on Mac \\ \hline
-yum.txt			& 18/328		& log from package \\
-                                           && installer\\ \hline
+Data source		& KB/Chunks		& Description\\ \hline \hline
+1967Transactions.short	& 70/999		& transaction records\\ \hline
+MER\_T01\_01.cvs	& 22/491 	& comma-sep records\\ \hline
+ai.3000			& 293/3000	& webserver log\\ \hline
+asl.log 		& 279/1500	& log file of Mac ASL\\ \hline	
+boot.log		& 16/262		& Mac OS boot log\\ \hline
+crashreporter.log 	& 50/441 	& original crash log\\ \hline 
+crashreporter.mod 	& 49/441	& modified crash log\\ \hline
+dibbler.1000		& 142/999 	& AT\&T phone\\
+			&		& provision data\\ \hline
+ls-l.txt		& 2/35		& Stdout from Unix\\
+			&		& command ls -l\\ \hline
+netstat-an		& 14/202		& output from netstat\\ \hline
+page\_log		& 28/354		& printer logs\\ \hline
+quarterlypersonalincome	& 10/62		& spread sheet\\ \hline 
+railroad.txt		& 6/67		& US rail road info\\ \hline
+scrollkeeper.log 	& 66/671		& log from cataloging\\ \hline
+windowserver\_last.log 	& 52/680		& log from\\
+                        &               & LoginWindow\\
+                        &               & server on Mac\\ \hline
+yum.txt			& 18/328		& log from pkg install\\ \hline
 \end{tabular}
 \caption{Benchmark profile including filename, size in KB, number of chunks
-and brief description.} \label{tab:benchmarks}
+and brief description.} \shrink
+\label{tab:benchmarks} 
 \end{center}
 \end{table}
 
@@ -178,7 +175,7 @@ yum.txt                         & 0.11&      1.91&      2.03 	& 5.0 	 \\ \hline
 \end{tabular}
 \caption{Execution times. SD: time for structure discover phase; Ref: time for scoring and 
 refinement; Tot: end-to-end time for complete inference algorithm; HW: 
-time taken to hand-write the corresponding description.}
+time taken to hand-write the corresponding description.} \shrink
 \label{tab:times}
 \end{center}
 \end{table}
@@ -252,7 +249,7 @@ seconds still has great benefit, even to experts.
 
 \begin{figure}
 \epsfig{file=traintime.eps, width=\columnwidth}
-\caption{Execution times of training sets} \label{fig:traintime}
+\caption{Execution times of training sets} \label{fig:traintime} \shrink
 \end{figure}
 
 In order to understand the scaling behavior of our algorithm, we
@@ -304,7 +301,7 @@ high accuracy.  Overall, for 11 of 16 benchmarks, less than
 
 \begin{figure}
 \epsfig{file=successrate.eps, width=\columnwidth}
-\caption{Success rates of training sets} \label{fig:trainsucc}
+\caption{Success rates of training sets} \label{fig:trainsucc} \shrink
 \end{figure}
 
 \begin{table}
@@ -329,7 +326,7 @@ ls-l.txt                & 0.0461		& 50		& 65 \\ \hline
 railroad.txt            & 0.0485		& 60		& 75\\ \hline
 \end{tabular}
 \caption{Correctness measures.  NS: normalized information theoretic score;
-Min Training size (\%) to obtain required accuracy}
+Min Training size (\%) to obtain required accuracy} \shrink
 \label{tab:correlate}
 \end{center}
 \end{table}
