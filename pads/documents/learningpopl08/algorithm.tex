@@ -590,7 +590,7 @@ the input chunk.
 
 \input{refinement} 
 
-\subsection {Final Products}
+\subsection {End Products}
 
 The previous subsections outline the central technical elements of our
 algorithms.  The main tasks remaining include converting the internal
@@ -613,40 +613,33 @@ visualization.
 of these tools. 
 
 \begin{figure}
+
+Tiny fragment of XML output from crashreporter.log:
+
 \begin{center}
 {\small
 \begin{verbatim}
 <Struct_114>
   <var_7>
     <var_6>
-      <var_0><val>Wed Jun 21</val></var_0>
-      <var_2><val>10:24:44</val></var_2>
+      <var_0><val>Sat Jun 24</val></var_0>
+      <var_2><val>06:38:46</val></var_2>
       <var_4><val>2006</val></var_4>
     </var_6>
   </var_7>
   <var_11><val>crashdump</val></var_11>
-  <var_14><val>1524</val></var_14>
-  <var_19><val>crashdump</val></var_19>
-  <var_63>
-    <var_113_crashdump19>
-      <var_68>
-      </var_68>
-      <var_73><val>started</val></var_73>
-      <var_75>
-      </var_75>
-    </var_113_crashdump19>
-  </var_63>
-</Struct_114>
+  <var_14><val>2164</val></var_14>
+...
+
 \end{verbatim}
 }
 
-(a)
+Graph generated from ai.3000 web transaction volume at different
+times of the day (00:00-8:55 and 19:00-24:00):\vspace{10pt}$\mbox{}$
 
 \epsfig{file=ai.3000.eps, width=0.9\columnwidth} 
 
-(b)
-\caption{(a) XML output snipet of crashreporter.log  (b) ai.3000 web transaction volumn 
-during 19:00 - 08:55(+1 day) visualization} \shrink
+\caption{End products of automatically generated tools.} \shrink
 \end{center}
 \label{fig:final-products}
 \end{figure}
@@ -654,3 +647,15 @@ during 19:00 - 08:55(+1 day) visualization} \shrink
 %Of course, the end products of the inference algorithm 
 %also include the generated description and the
 %programming libraries including parser and printer.
+
+%%   <var_19><val>crashdump</val></var_19>
+%%   <var_63>
+%%     <var_113_crashdump19>
+%%       <var_68>
+%%       </var_68>
+%%       <var_73><val>started</val></var_73>
+%%       <var_75>
+%%       </var_75>
+%%     </var_113_crashdump19>
+%%   </var_63>
+%% </Struct_114>
