@@ -9,21 +9,6 @@ latter being unnecessary during the course of the inference algorithm.
 %In addition, for convenience during inference, the scope of dependent 
 %variable binding is slightly different, as will be explained below.
 
-\subsection{The Language}
-
-Like all languages in the \pads{} family, the \ir{} is a collection of
-type definitions.  These ``types'' define both the external syntax of
-data formatted on disk and the shape of the internal representations
-that result from parsing.  We rely upon both of these aspects of type
-definitions to generate stand-alone tools automatically.
-%-- the first is necessary for generating parsers and printers; the
-%second is necessary for implementing generic algorithms such as the 
-%\xml{} translator.  In the following discussion, we focus on
-%explaining the first interpretation, counting on the reader's intuition 
-%for the second. 
-Figure~\ref{fig:ir} summarizes the syntax of the \ir{} and of the
-generated internal representations. 
-
 \begin {figure}
 \begin {tabular}{llll}
 %\multicolumn{4}{l}{
@@ -83,6 +68,45 @@ $p$ & :: = & $c$ \myalt $x$ & (parameters) \\
 \end{figure}
 
 
+\begin{figure*}
+Crashreporter.log:
+{\small \begin{verbatim}
+Sat Jun 24 06:38:46 2006 crashdump[2164]: Started writing crash report to: /Logs/Crash/Exit/ pro.crash.log
+- crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
+\end{verbatim}
+}
+
+Sirius AT\&T Phone Provisioning Data:
+{\small \begin{verbatim}
+8152272|8152272|1|6505551212|6505551212|0|0||no_ii152272|EKRS_6|0|FRED1|DUO|10|1000295291
+8152261|8152261|1|0|0|0|0||no_ii752261|EKRS_1|0|kfeosf2|DUO|EKRS_6|1001390400|EKRS_OS_10|1001476801
+\end{verbatim}
+}
+
+% ASL.log:
+% {\small  \begin{verbatim}
+% [Time 2006.11.25 16:47:18 UTC] [Facility user] [Sender E_e,] [PID 131] \
+%   [Message sleep cancelled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
+% [Time 2006.11.25 16:51:23 UTC] [Facility install] [Sender Software Update] [PID 1879] \
+%   [Message System requesting sleep.] [Level 5] [UID -2] [GID -2] [Host Babylon]
+% \end{verbatim}
+% }
+
+% Apache Web Server Logs:
+% {\small \begin{verbatim}
+% 68.142.249.179 - - [13/Dec/2005:19:41:48 -0800] "GET /bridge-loan.html HTTP/1.0" 404 298 "-" \
+%   "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)"
+% 69.227.61.241 - - [13/Dec/2005:19:44:42 -0800] "GET / HTTP/1.1" 403 4251 "-" \
+%   "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8) Gecko/20051111 Firefox/1.5"
+% \end{verbatim}
+% }
+
+\caption {Example ad hoc data sources.}
+\label{fig:example}
+\end{figure*}
+
+
+
 % The end goal of this project depends
 % crucially on having both interpretations of these types.  The first
 % interpretation is necessary to generate a
@@ -90,6 +114,21 @@ $p$ & :: = & $c$ \myalt $x$ & (parameters) \\
 % is necessary in order to define and
 % implement useful generic algorithms, such as the xml translator, that
 % walk over parsed data in memory.  
+
+\subsection{The Language}
+
+Like all languages in the \pads{} family, the \ir{} is a collection of
+type definitions.  These ``types'' define both the external syntax of
+data formatted on disk and the shape of the internal representations
+that result from parsing.  We rely upon both of these aspects of type
+definitions to generate stand-alone tools automatically.
+%-- the first is necessary for generating parsers and printers; the
+%second is necessary for implementing generic algorithms such as the 
+%\xml{} translator.  In the following discussion, we focus on
+%explaining the first interpretation, counting on the reader's intuition 
+%for the second. 
+Figure~\ref{fig:ir} summarizes the syntax of the \ir{} and of the
+generated internal representations. 
 
 The building blocks of any \ir{} data description are the base types $b$,
 which may be parameterized by some number of arguments $p$.  Arguments
@@ -169,7 +208,6 @@ any sort of union type, be it a union, an enumeration, an option or a switch.
 The sequences are used as the representations of any sort of sequence
 type, whether it be a struct or one of the array variants.
 
-
 \subsection{Running Examples}
 
 Figure~\ref{fig:example} presents tiny fragments of two
@@ -190,42 +228,7 @@ paper; we will periodically use the Sirius data source to illustrate
 particular aspects of the inference algorithm.  We report on our experience
 with many more examples in the evaluation section of the paper.
 
-\begin{figure*}
-Crashreporter.log:
-{\small \begin{verbatim}
-Sat Jun 24 06:38:46 2006 crashdump[2164]: Started writing crash report to: /Logs/Crash/Exit/ pro.crash.log
-- crashreporterd[120]: mach_msg() reply failed: (ipc/send) invalid destination port
-\end{verbatim}
-}
-
-Sirius AT\&T Phone Provisioning Data:
-{\small \begin{verbatim}
-8152272|8152272|1|6505551212|6505551212|0|0||no_ii152272|EKRS_6|0|FRED1|DUO|10|1000295291
-8152261|8152261|1|0|0|0|0||no_ii752261|EKRS_1|0|kfeosf2|DUO|EKRS_6|1001390400|EKRS_OS_10|1001476801
-\end{verbatim}
-}
-
-% ASL.log:
-% {\small  \begin{verbatim}
-% [Time 2006.11.25 16:47:18 UTC] [Facility user] [Sender E_e,] [PID 131] \
-%   [Message sleep cancelled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
-% [Time 2006.11.25 16:51:23 UTC] [Facility install] [Sender Software Update] [PID 1879] \
-%   [Message System requesting sleep.] [Level 5] [UID -2] [GID -2] [Host Babylon]
-% \end{verbatim}
-% }
-
-% Apache Web Server Logs:
-% {\small \begin{verbatim}
-% 68.142.249.179 - - [13/Dec/2005:19:41:48 -0800] "GET /bridge-loan.html HTTP/1.0" 404 298 "-" \
-%   "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)"
-% 69.227.61.241 - - [13/Dec/2005:19:44:42 -0800] "GET / HTTP/1.1" 403 4251 "-" \
-%   "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8) Gecko/20051111 Firefox/1.5"
-% \end{verbatim}
-% }
-
-\caption {Example ad hoc data sources.}
-\label{fig:example}
-\end{figure*}
+\input{crashreporter-ir}
 
 Figure \ref{fig:crashreporter:ir} presents a hand-writtern description
 of the Crashreporter.log file in the \ir{} syntax.  This
@@ -278,7 +281,7 @@ types used by \cd{source}.
 %% is defined as either a dash or a structure containing a \cd{PDate}, 
 %% a \cd{PTime} and an integer year. 
 
-\input{crashreporter-ir}
+
 
 
 %%% Local Variables: 

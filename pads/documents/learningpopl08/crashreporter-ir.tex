@@ -7,18 +7,7 @@ dumpreport =
       "Started writing crash report to: "; 
       file:Ppath;
     };
-    struct {
-      "Finished writing crash report to: "; 
-      file:Ppath;
-    };
-    struct {
-      "Unable to determine task_t for pid: "; 
-      pid:Pint32; " name: Exited process";
-    };
-    struct {
-      "Failed to re-launch "; 
-      file:Ppath; " - "; message:Pstring('\n')
-    };
+    ...
   };
 
 reporterreport =
@@ -55,3 +44,19 @@ source =
 \caption{Hand-written \ir{} Crashreporter.log description.}
 \label{fig:crashreporter:ir}
 \end{figure}
+
+
+% omitted section of reporter:
+
+%     struct {
+%       "Finished writing crash report to: "; 
+%       file:Ppath;
+%     };
+%     struct {
+%       "Unable to determine task_t for pid: "; 
+%       pid:Pint32; " name: Exited process";
+%     };
+%     struct {
+%       "Failed to re-launch "; 
+%       file:Ppath; " - "; message:Pstring('\n')
+%     };
