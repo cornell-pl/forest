@@ -641,4 +641,36 @@ structure Common = struct
                         end
 		  | Poption (a, body) => Poption (a, sortUnionBranches body)
 		  | _ => ty
+
+(* remove all redundant Pemptys from struct *)
+fun removePempty ty =
+case ty of
+  Pstruct (a, tys) =>
+    let		
+	val tys' = map removePempty tys
+    in
+	case tys' of
+	  nil => ty
+	| _ =>
+	  let
+            fun isNotPempty ty =
+		case ty of
+		  Base (_, ltokens) => 
+		    (case (hd ltokens) of 
+		     (Pempty, _) => false
+		     | _ => true)
+		 | _ => true 
+	    val nonEmpties = List.filter isNotPempty tys' 
+          in
+	    case nonEmpties of
+	      nil => hd tys'
+	    | _ => Pstruct (a, nonEmpties)
+          end
+    end
+  | Punion (a, tys) => Punion (a, map removePempty tys)
+  | Parray (a, {tokens=t, lengths = l, first=f, body=b, last=la}) =>
+	Parray (a, {tokens=t, lengths=l, first=removePempty f, 
+			body=removePempty b, last=removePempty la})
+  | _ => ty
+
 end

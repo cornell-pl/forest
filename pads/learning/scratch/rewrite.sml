@@ -6,7 +6,8 @@ open Times
 (* runs analysis using a Ty and return a refined Ty *)
 fun run ( et : EndingTimes ) (ty : Ty) : Ty * Ty * EndingTimes =
 let
-  val measuredTy = measure ty
+  val cleanTy = removePempty ty
+  val measuredTy = measure cleanTy
   val measured1_time = Time.now ()
   val comps    = getComps measuredTy
   val tycomp   = #tc comps
@@ -21,7 +22,7 @@ let
 (*
   val _ = print "Phase one ...\n";
 *)
-  val ty1 = Reduce.reduce 1 ty 
+  val ty1 = Reduce.reduce 1 measuredTy 
   val reduce1_time : Time.time = Time.now ()
 (*
   val _ = printTy (measure ty1)

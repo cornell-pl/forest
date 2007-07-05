@@ -239,7 +239,10 @@ case ty of
 	val unionTys = case length rem_tups of
 			0 => nil
 			| 1 => rem_tups
+			| _ => [Punion(a, rem_tups)]
+(* 
 			| _ => [union_to_optional (Punion(a, rem_tups))]
+*)
   	val newty = case (cpfx, csfx) of
   	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
@@ -1274,8 +1277,8 @@ let
 		  	unused_branches,
 (*
 			extract_table_header,
-*)
 			union_to_optional,
+*)
 			struct_to_array,
 			find_neg_num,
 			to_float,
