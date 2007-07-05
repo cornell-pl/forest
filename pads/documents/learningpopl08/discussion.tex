@@ -1,5 +1,5 @@
 
-\paragraph*{Dealing with Errors.}  
+\paragraph*{Dealing with errors.}  
 In 1967, Gold~\cite{gold:inference}
 proved that learning a grammar for any remotely
 sophisticated class of languages, such as the regular languages, 
@@ -8,9 +8,9 @@ example data.\footnote{A positive example is a data source
 known to be in the grammar to be learned.  
 A negative example is one known {\em not} to be in the target grammar.
 Learning with positive examples and negative examples is possible.
-Unfortunately, it is difficult to imagine a situation in which a
-data analyst might have access to ad hoc data that they know {\em does not}
-satisfy the format they are interested in learning.  Hence,
+Unfortunately, given that data analysts are unlikely to have access to
+ad hoc data that they know {\em does not} 
+satisfy the format they are interested in learning,
 we are forced to tackle the more difficult problem of learning from 
 positive examples only.}
 Given this negative theoretical result, and the practical fact
@@ -43,7 +43,7 @@ in the fields to be graphed.  If not, there is no reason to edit
 the description at all -- graphing the correct fields may proceed 
 immediately.
 
-\paragraph*{Weaknesses.}  Perhaps the most significant weakness of our current
+\paragraph*{Future work.}  Perhaps the most significant weakness of our current
 system is that its relative effectiveness is somewhat brittle with respect to
 exactly how token processing is performed.
 Discovering tokens like ``ip address'' and ``date'' is highly beneficial
@@ -56,7 +56,7 @@ separated by periods.  At the moment, we disambiguate between them
 in the same way that lex does, by taking the first, longest match 
 in the token list.
 To improve tokenization in the future, we plan to look at learning
-a probabilistic models of a broad range of token types.  We also
+probabilistic models of a broad range of token types.  We also
 intend to explore finding new tokens from the data itself,
 possibly by identifying abrupt changes in entropy~\cite{hutchens98finding}.
 
