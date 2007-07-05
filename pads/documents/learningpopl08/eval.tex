@@ -42,7 +42,7 @@ ai.3000			& 293/3000	& webserver log\\ \hline
 asl.log 		& 279/1500	& log file of Mac ASL\\ \hline	
 boot.log		& 16/262		& Mac OS boot log\\ \hline
 crashreporter.log 	& 50/441 	& original crash log\\ \hline 
-crashreporter.mod 	& 49/441	& modified crash log\\ \hline
+crashreporter.log.mod 	& 49/441	& modified crash log\\ \hline
 sirius.1000		& 142/999 	& AT\&T phone\\
 			&		& provision data\\ \hline
 ls-l.txt		& 2/35		& Stdout from Unix\\
@@ -104,24 +104,26 @@ and brief description.} \shrink
 
 We conducted a series of experiments to study the correctness
 and performance of our format inference algorithm.
-The original data sources we used in the experiments are listed in Table \ref{tab:benchmarks}.
-These range from personal spread sheet, to government records to system logs. Some benchmarks 
-are larger, consisting of a few thousand
-chunks or records, while others are very small with just a few dozen lines. 
+Table \ref{tab:benchmarks}.lists the data sources we used in the experiments;
+they range from system logs to application outputs to government
+statistics. Except for sirius.1000, which is a proprietary format, the files 
+are all available from \url{www.padsproj.org/learning.html}.
+The size of the benchmarks varies from a few thousand lines to just a
+few dozen.
 %As we will see later,
 %the size of the data source has implications in the training performance.
 Most of the data files are ``line based,'' meaning that every line becomes a chunk
 for the purposes of learning the format.  One exception is netstat-an, in which
-chunks come in blocks or multiple lines.
+chunks comprise multiple lines.
 % Many of the formats include headers or footers which may complicate the descriptions.
 % From a human point of view, sirius.1000 and railroad.txt consist of some special
 % character separated arrays. Some data sources such as ai.3000 and asl.log
 % contain groupings delimited by special characters such as [, ], or quotations.
 % Many contain complex English text as logs or messages.
-We include two versions of crashreporter.log: the original, completely unmodified
+We include two versions of crashreporter.log: the original
 ``crashreporter.log'' and the slightly modified ``crashreporter.log.mod'' 
-that we used as a running example in this paper.  We include both to 
-demonstrate that our minor modifications are really just for expository purposes.
+that we used as an example in this paper.  We include both to 
+demonstrate that our minor modifications were simply for expository purposes.
 %The latter has been used as an example in Section \ref{sec:review}. 
 
 %\begin{table}
@@ -171,11 +173,12 @@ quarterlypersonalincome         & 0.07&      5.11&      5.18 	& 48  	 \\ \hline
 railroad.txt                    & 0.06&      2.69&      2.76 	& 2.0 	 \\ \hline
 scrollkeeper.log                & 0.13&      3.24&      3.40 	& 1.0 	 \\ \hline
 windowserver\_last.log          & 0.37&      9.65&      10.07	& 1.5 	 \\ \hline
-yum.txt                         & 0.11&      1.91&      2.03 	& 5.0 	 \\ \hline
+yum.txt                         & 0.11&      1.91&      2.03 	& 5.0     \\ \hline
 \end{tabular}
-\caption{Execution times. SD: time for structure discover phase; Ref: time for scoring and 
+\vskip 0.25ex
+\caption{Execution times. SD: time for structure discovery phase; Ref: time for scoring and 
 refinement; Tot: end-to-end time for complete inference algorithm; HW: 
-time taken to hand-write the corresponding description.} \shrink
+time taken {\em in hours} to hand-write the corresponding description.} \shrink
 \label{tab:times}
 \end{center}
 \end{table}
@@ -207,14 +210,14 @@ time taken to hand-write the corresponding description.} \shrink
 %% \end{table}
 
 \paragraph*{Performance.}
-Our first set of experiments measures the time it takes to infer a description
-from example data.  The system that executed the experiments is an 
-Apple PowerBook G4 with a 1.67 GHz Processor and 512 MB DDR RAM 
-running on Mac OS X 10.4 Tiger. Table \ref{tab:times} presents the execution times
+Our first set of experiments measures the time required to infer a description
+from example data.  In all our experiments, we used an 
+Apple PowerBook G4 with a 1.67~GHz Processor and 512~MB DDR RAM 
+running on Mac OSX 10.4 Tiger. Table \ref{tab:times} presents the execution times
 for the structure discovery phase (SD), the refinement phase (Ref) and the
 total (Tot) end-to-end time of the algorithm including printing \pads{} descriptions and other 
 overhead, all measured in seconds.  For accurate timing measurements, we ran the algorithm
-10 times, and found the average after removing the best and the worst times.
+10~times, and found the average after removing the best and the worst times.
 
 There are two main lessons to take away from this initial set of
 benchmarks.  First, the overall time to infer the structure of any our
@@ -228,9 +231,9 @@ in all cases.  Most of the algorithm's time is spent in format rewriting, which
 often takes a factor of 10 or more time than structure discovery.  Moreover, most of the
 rewriting time is taken in the data analysis phase (numbers not
 shown).  Consequently, if format rewriting (particularly the data analysis phase)
-is taking too long for a programmer's taste, they may truncate it, receiving a 
+is taking too long, the user may abort it to produce a 
 slightly less refined description that may nevertheless be perfectly sufficient
-for the programming task at hand.
+for the task at hand.
 
 To give a very rough idea of how using the inference system compares with programming
 descriptions by hand, we also measured the time it took for a person to write descriptions of
@@ -261,7 +264,7 @@ These experiments suggest that once a format is fixed, the cost of inference
 grows linearly with the amount of data.  However, it is also clear that the raw
 size of the data is not the only factor determining performance.  The nature and complexity
 of the format is also a significant factor.  For instance, widowserver\_last.log
-is only one third the size of sirius.1000, but takes substantially longer longer
+is only one third the size of sirius.1000, but takes substantially longer 
 for the inference algorithm to process.
 
 \paragraph*{Correctness.}
@@ -270,24 +273,22 @@ subsets of each data source, trained our algorithm on that subset and
 measured the error rate of the inferred parser on the remaining data.
 Figure \ref{fig:trainsucc} graphs the percentage of successfully parsed records
 against the percentage of the data trained against.  The reader will notice
-that accuracy does not uniformly improve.  We believe this is simply due to
+that accuracy does not uniformly improve.  This variation is caused by the
 randomness in our data selections, and the fact that in some cases,
 we are dealing with very small absolute quantities of data relative 
 to the underlying complexity of the formats.  
-For instance, at 5\% training size, ls-l.txt is just one line of data, which is
-too little information for the algorithm to be effective, and with that little
-data, the user might as well process the information completely by hand.
+For instance, at 5\% training size, ls-l.txt is just one line of data.
 %In practice, there is no reason why a programmer would attempt to learn
 %a format from such a small amount of data -- he or she might as well train on the entire
 %ls-l.txt file (it only takes a 10th of a second to do so). Nevertheless, we
 %present the results of all experiments uniformly.
 
 To understand the correctness properties of our algorithm from a different angle,
-we record the minimum training sizes required to achieve 90\% and 95\% accuracy for
+we record the minimum training sizes in percentages required to achieve 90\% and 95\% accuracy for
 all the benchmarks in Table \ref{tab:correlate}.  This table also reports the
 normalized score (NS) of the inferred description, which we compute by dividing the
-information-theoretic score in section \ref{sec:score} 
-divided by the number of bits in the data.  This normalized score gives
+information-theoretic score in \secref{sec:score} 
+by the number of bits in the data.  This normalized score gives
 a rough indication of the complexity of the data source.  The higher the
 normalized score, the more complicated the data, and the greater the fraction of data is
 needed to learn an accurate description.  The rows of of Table \ref{tab:correlate}
