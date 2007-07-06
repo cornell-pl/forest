@@ -667,6 +667,7 @@ struct
 	in
 	    if length = 0 then 
 		[(Pempty,{lineNo = (!recordNumberRef), beginloc=0, endloc=0, recNo=(!recordNumberRef)})] 
+		before (recordNumberRef := !recordNumberRef +1)
 	    else doNonEmpty record
 	end
 
@@ -1102,7 +1103,29 @@ struct
 		    SOME(tList) handle TokenMatchFailure => NONE
 		end
 	    fun classifyOneRecordWithMatch (thisRecord:Context) (tokenOrder:TokenOrder)  = 
-		let fun doMatch (tokensToMatch:TokenOrder) (recordTokens: Context)
+		let fun introduceLEmpty (contextList:DerivedContexts) =  (*In progress*)
+		        (* Idea: input is list of token lists, one per field in discovered struct. 
+                                 Some may be empty because nothing was between tokens.
+				 We can replace these empty lists with a list of the single token empty.
+				 At this point, we know the location of the empty token because it is in the 
+				 same input record as all the other tokens in the line.
+				 This function is not called with an empty tokenOrder, so the record is
+				 guaranteed to have at least one located token we can use to fix the location.*)
+		        let fun findRecordNumber [] = (print "XXX: contextList had no located tokens, breaking invariant";  
+						       {lineNo= ~200,beginloc=0,endloc=0,recNo= ~201}) 
+			                              (* This case should never occur.*)
+                              | findRecordNumber ([]::rs) = findRecordNumber rs
+			      | findRecordNumber (((t,loc as {lineNo,...})::ts)::rs) = loc
+(*			          (print "record number: "; print (Int.toString lineNo); (loc:location) ) *)
+										       
+			    val location = findRecordNumber contextList
+			    fun convert [] result = List.rev result
+                              | convert ([]::rest) result = convert rest ([(Pempty,location)]::result)
+			      | convert (cur::rest) result = convert rest (cur::result)
+			in
+			    ((convert contextList []) : DerivedContexts)
+			end
+		    fun doMatch (tokensToMatch:TokenOrder) (recordTokens: Context)
 		                (curContextAcc : Context, contextListAcc : DerivedContexts) = 
 		    case (tokensToMatch, recordTokens) 
 		    of ([],[])   => List.rev ((List.rev curContextAcc) :: contextListAcc)
@@ -1123,8 +1146,13 @@ struct
 			  else doMatch tokens rts (lrtoken :: curContextAcc, contextListAcc)
 			end
 		    val thisRecordContexts = doMatch tokenOrder thisRecord ([],[])
+(*		    val () = print "before adding empty\n"
+		    val () = printContexts thisRecordContexts *)
+		    val recordContextsWithEmpty = introduceLEmpty thisRecordContexts
+(*		    val () = print "after adding empty\n"
+		    val () = printContexts recordContextsWithEmpty *)
 		in
-		    SOME thisRecordContexts handle TokenMatchFailure => NONE
+		    SOME recordContextsWithEmpty handle TokenMatchFailure => NONE
 		end
             (* Given a summary, a token order * DerivedContexts list, and a record,
                 try each token order in list.  
@@ -1198,10 +1226,19 @@ struct
 	let fun cnvEmptyRowsToPempty [] = [(Pempty,{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
+            fun allEmpty cl =
+		let fun isNonEmpty [(Pempty,_)] = false
+		      | isNonEmpty _ = true
+		in
+		    ((*print "Checking for an allempty context\n";*)
+		    not(Option.isSome(List.find isNonEmpty cl))
+		     )
+		end
 	    val cl = crackUniformGroups cl
 	in
-	    if (coverage < isNoiseTolerance(!initialRecordCount))
-	    then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
+	    if allEmpty cl then Base(mkTyAux coverage, List.concat cl)
+	    else if (coverage < isNoiseTolerance(!initialRecordCount))
+		 then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
 	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
                  then TBD ( { coverage=coverage
                             , label=SOME(mkTBDLabel (!TBDstamp))
@@ -1263,13 +1300,14 @@ struct
 			    fun recurse(columns, tokens) result =
 				case (columns, tokens) 
 				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
-				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (~1, curDepth,(List.length last), last)) :: result))
+				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD  (~100, curDepth,(List.length last), last)) :: result))
 				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
 				  |  (col1::coltk::cols, tk::tks) => 
 				       (* col1 is context before tk;
 					  colt is context corresponding to tk
 					  cols is list of contexts following *)
-					let fun borrowLoc col1 colref = 
+					let (* This function should be able to be removed 
+					    fun borrowLoc col1 colref = 
 					        let fun doit ([],[] : LToken list list) (a : LToken list list) = List.rev a
 						    |   doit ([]::r, [(t,{lineNo,beginloc,endloc, recNo})]::s) a = 
 						                 doit (r,s) ([(Pempty,{lineNo=lineNo, beginloc=0,
@@ -1277,10 +1315,10 @@ struct
 						    |   doit (r::rs,t::ts) a = doit (rs,ts) (r ::a)
 						in
 						    doit (col1, colref) []
-						end
+						end*)
 					    val coverage1 = List.length col1
 					    val coveraget = List.length coltk
-					    val col1Ty = if isEmpty col1 then  [] else [(mkTBD (~8, curDepth, coverage1, (borrowLoc col1 coltk)))]
+					    val col1Ty = if isEmpty col1 then  [] else [(mkTBD (~8, curDepth, coverage1, col1 (*(borrowLoc col1 coltk)*)))]
 					    val coltkTy = case tk 
 						          of Pgroup g => [(mkTBD (~3, curDepth, coveraget, coltk))]
 							   | _ =>        [(Base  (mkTyAux coveraget, List.concat coltk))]
@@ -1466,6 +1504,11 @@ struct
 	    val clusters : (Token * histogram) list list = newFindClusters numRecordsinContext fd
 	    val () = if print_verbose then printClusters numRecordsinContext clusters else ()
             val ty = clustersToTy curDepth context numRecordsinContext clusters
+	    (*
+	    val () = (print "Inferred type:\n"; 
+		      print (TyToString ty);
+		      print "\n")
+	    *)
 	in
 	    ty
 	end
