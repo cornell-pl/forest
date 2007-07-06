@@ -50,7 +50,9 @@ structure Complexity = struct
     (* Log base 2 of a positive integer *)
     fun log2 (n:int):real = Math.ln (Real.fromInt n) / Math.ln (Real.fromInt 2)
     fun log2L (n:LargeInt.int):real =
-      Math.ln (Real.fromLargeInt n) / Math.ln (Real.fromInt 2)
+      if n = 0 then 0.0
+      else
+      	Math.ln (Real.fromLargeInt n) / Math.ln (Real.fromInt 2)
 
     (* Log base 2 of a positive real *)
     fun log2r (r:real):real = Math.ln r / Math.ln (Real.fromInt 2)
