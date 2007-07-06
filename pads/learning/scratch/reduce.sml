@@ -165,16 +165,16 @@ case ty of
 and remove_nils ty : Ty = 
 case ty of
   Pstruct (a, nil) => Base(a, nil)
-  | Pstruct (a, tylist) => 
-    let val tylist' =  List.filter (fn x => case x of 
-			Base(_, nil) => false 
-			| Base (_, ((Pempty, _)::_)) => false 
-			| RefinedBase(_, _, nil) => false
-			| _ => true ) tylist
+  | Pstruct (a, tylist) =>
+    let val tylist' =  List.filter (fn x => case x of
+                        Base(_, nil) => false
+                        | Base (_, ((Pempty, _)::_)) => false
+                        | RefinedBase(_, _, nil) => false
+                        | _ => true ) tylist
     in
-	case tylist' of
-	  nil => hd tylist
-	| _ => Pstruct(a, tylist')
+        case tylist' of
+          nil => hd tylist
+        | _ => Pstruct(a, tylist')
     end
 | _ => ty
 (* removed unused branches of sums *)
@@ -244,10 +244,7 @@ case ty of
 	val unionTys = case length rem_tups of
 			0 => nil
 			| 1 => rem_tups
-			| _ => [Punion(a, rem_tups)]
-(* 
 			| _ => [union_to_optional (Punion(a, rem_tups))]
-*)
   	val newty = case (cpfx, csfx) of
   	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
@@ -783,11 +780,8 @@ and find_neg_num ty =
 
 	  fun combineTys (Base (a1, tl1), Base(a2, tl2)) = 
 			Base (a2, mergetoklist (tl1, tl2))  
-	     | combineTys (Punion(_, [Base(a1, tl1), Base(_, (Pempty, _)::_)]), Base(a2, tl2)) =
+	     | combineTys (Poption (_, Base(a1, tl1)), Base(a2, tl2)) =
 			Base (a2, mergetoklist (tl1, tl2))
-	     | combineTys (Punion(_, [Base(_, (Pempty, _)::_), Base(a1, tl1)]), Base(a2, tl2)) =
-			Base (a2, mergetoklist (tl1, tl2))
-	     | combineTys _ = raise TyMismatch
 		
 	  fun matchPattern pre tys =
 		case tys of 
@@ -800,34 +794,12 @@ and find_neg_num ty =
 		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
 		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
 		     else matchPattern (pre@[ty1, ty2]) post
-		(* No Poption in the first phase 
 		  | (ty1 as Poption(_, Base(a1, (Other (#"-"), _)::_)))::
 			((ty2 as Base(a2, (Pint _, _)::_))::post) => 
 		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
 		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
 		     else matchPattern (pre@[ty1, ty2]) post
 		  | (ty1 as Poption(_, Base(a1, (Other (#"-"), _)::_)))::
-			((ty2 as Base(a2, (Pfloat _, _)::_))::post) => 
-		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
-		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
-		     else matchPattern (pre@[ty1, ty2]) post
-		*)
-		  | (ty1 as Punion(_, [Base(a1, (Other (#"-"), _)::_), Base(_, (Pempty, _)::_)]))::
-			((ty2 as Base(a2, (Pint _, _)::_))::post) => 
-		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
-		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
-		     else matchPattern (pre@[ty1, ty2]) post
-		  | (ty1 as Punion(_, [Base(_, (Pempty, _)::_), Base(a1, (Other (#"-"), _)::_)]))::
-			((ty2 as Base(a2, (Pint _, _)::_))::post) => 
-		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
-		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
-		     else matchPattern (pre@[ty1, ty2]) post
-		  | (ty1 as Punion(_, [Base(a1, (Other (#"-"), _)::_), Base(_, (Pempty, _)::_)]))::
-			((ty2 as Base(a2, (Pfloat _, _)::_))::post) => 
-		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
-		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
-		     else matchPattern (pre@[ty1, ty2]) post
-		  | (ty1 as Punion(_, [Base(_, (Pempty, _)::_), Base(a1, (Other (#"-"), _)::_)]))::
 			((ty2 as Base(a2, (Pfloat _, _)::_))::post) => 
 		     if (length pre = 0) then (matchPattern [combineTys (ty1, ty2)] post)
 		     else if isPunctuation (List.last pre) then (matchPattern (pre@[combineTys (ty1, ty2)]) post)
@@ -883,11 +855,7 @@ and to_float ty =
 		  case tys of
 			[Base(a1, intTokList), Base(_, _), Base (_, intTokList1)]=> 
 				Base(a1, getFloatTokens(intTokList, intTokList1))
-		      |  [Base(a1, intTokList), Punion(_, [Pstruct(_, [(Base _), Base(a3, intTokList1)]),
-							Base(_, ((Pempty, _)::_))])] =>
-				Base(a1, getFloatTokens(intTokList, intTokList1))
-		      |  [Base(a1, intTokList), Punion(_, [Base(_, ((Pempty, _)::_)), 
-				Pstruct(_, [(Base _), Base(a3, intTokList1)])])] =>
+		      |  [Base(a1, intTokList), Poption(_, Pstruct(_, [(Base _), Base(a3, intTokList1)]))]=>
 				Base(a1, getFloatTokens(intTokList, intTokList1))
 		      | _ => raise TyMismatch
 		fun matchPattern pre tys =
@@ -896,12 +864,8 @@ and to_float ty =
 			  | (Base(a1, (Pint _, _)::_))::((Base(a2, (Other (#"."), _)::_))::
 				((Base(a3, (Pint _, _)::_)) :: post)) => 
 				SOME (pre, List.take(tys, 3), post)
-			  | (Base(a1, (Pint _, _)::_))::((Punion(_, [Pstruct(_, 
-				[Base(a2, (Other (#"."), _)::_), Base(a3, (Pint _, _)::_)]),
-				Base(_, ((Pempty, _)::_))])):: post) => 
-				SOME (pre, List.take(tys, 2), post)
-			  | (Base(a1, (Pint _, _)::_))::((Punion(_, [Base(_, ((Pempty, _)::_)), 
-				Pstruct(_, [Base(a2, (Other (#"."), _)::_), Base(a3, (Pint _, _)::_)])])):: post) => 
+			  | (Base(a1, (Pint _, _)::_))::((Poption(_, Pstruct(_,
+				[Base(a2, (Other (#"."), _)::_), Base(a3, (Pint _, _)::_)]))):: post) => 
 				SOME (pre, List.take(tys, 2), post)
 			  | (Base(a1, (Other (#"."), _)::_))::(x::rest) => 
 				matchPattern (pre@(List.take(tys, 2))) rest
@@ -1211,13 +1175,25 @@ case ty of
 		    else ty
 		end
 	   | _ => ty
-		    
+
+ 	fun containsPempty tylist =
+	  case tylist of
+		nil => false
+		| Poption(_, _)::_ => true
+		| Base(_, ((Pempty, _)::_))::_ => true
+		| ty::tail => containsPempty tail
+
 	fun rewrite_switch (cmos, tlist) =
 	    case tlist of 
 		h::rest => 
 		(
 		case h of 
-			Punion(a, sumlist) => 
+		  Punion(a, sumlist) => 
+		    if (containsPempty sumlist) then
+		    	let val (newcmos, rest')=rewrite_switch(cmos, rest)
+		       	in (newcmos, h::rest')
+			end
+		    else
 			  let 
 			    val (c, newcmos)  = is_switch(cmos, some(#label a), (length tylist)-(length tlist)) 
 			  in 
@@ -1235,7 +1211,7 @@ case ty of
 					  	(newcmos, h::rest')
 					  end
 			  end
-			| _ => 	let val (newcmos, rest')=rewrite_switch(cmos, rest)
+		  | _ => 	let val (newcmos, rest')=rewrite_switch(cmos, rest)
 		       		in (newcmos, h::rest')
 				end
 		)
@@ -1315,8 +1291,8 @@ let
 		  	unused_branches,
 (*
 			extract_table_header,
-			union_to_optional,
 *)
+			union_to_optional,
 			struct_to_array,
 			find_neg_num,
 			to_float,
@@ -1433,7 +1409,7 @@ let
 	  	(* as long as the cost keeps going down, keep iterating *)
 	  	if lowCost < cur_cost then 
 		((*print "Old Ty:\n"; printTy (measure ty); 
-		 print "New Ty:\n"; printTy (measure newTy); *)
+		 print "New Ty:\n"; printTy (measure newTy);*) 
 		 iterate newcmap newTy)
 	  	else (newcmap, newTy) 
 	  end
