@@ -643,7 +643,6 @@ structure Common = struct
 		  | _ => ty
 
 (* remove all redundant Pemptys from struct *)
-(*
 fun removePempty ty =
 case ty of
   Pstruct (a, tys) =>
@@ -673,5 +672,4 @@ case ty of
 	Parray (a, {tokens=t, lengths=l, first=removePempty f, 
 			body=removePempty b, last=removePempty la})
   | _ => ty
-*)
 end
