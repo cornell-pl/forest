@@ -13,6 +13,11 @@
   RBuf_t       *rbuf; \
   int           sharing
 
+/* 
+ * Set CACHE_REGEX to some non-zero value in order to use the regcache interface 
+ * to AST's regex library as opposed to repeatedly using regcomp/regfree.
+ */
+#define CACHE_REGEX     1
 
 /* private Pregexp_t state */
 

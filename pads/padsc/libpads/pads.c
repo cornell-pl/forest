@@ -7811,7 +7811,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.210 2007-05-02 14:01:58 yitzhakm Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.211 2007-07-06 16:23:52 forrest Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8531,6 +8531,11 @@ P_close_keep_io_disc(P_t *pads, int keep_io_disc)
   if (pads->vm) {
     vmclose(pads->vm); /* frees everything alloc'd using vm */
   }
+#if CACHE_REGEX
+#warning caching REGEX
+  regcache(0, 0, 0);
+#endif
+
   RBUF_DBG_REPORT("At end of P_close");
   IODISC_DBG_REPORT("At end of P_close");
   return P_OK;
@@ -14089,10 +14094,13 @@ PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
   int           cret;
 
   PDCI_DISC_2P_CHECKS(whatfn, regexp_str, regexp);
+#if ! CACHE_REGEX
+#warning not caching REGEX
   if (regexp->valid) { /* cleanup before installing a new compiled regexp */
     regfree(&(regexp->preg));
     regexp->valid = 0;
   }
+#endif
   len = strlen(regexp_str);
   regexp_end = regexp_str + len - 1;
   if (len < 3) {
@@ -14201,7 +14209,13 @@ PDCI_regexp_compile_cstr(P_t *pads, const char *regexp_str, Pregexp_t *regexp,
     cret = 1;
   }
   if (cret) goto any_err;
+#if CACHE_REGEX
+#warning caching REGEX
+  regexp->preg = *regcache(regexp_str, c_flags, &cret);
+#else
+#warning not caching REGEX
   cret = regcomp(&(regexp->preg), regexp_str, c_flags);
+#endif
   if (cret) {
     PDCI_report_err(pads, P_WARN_FLAGS, 0, P_INVALID_REGEXP, whatfn,
 		    "%s regular expression %s: invalid",
@@ -14231,10 +14245,13 @@ Perror_t
 PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn)
 {
   PDCI_DISC_1P_CHECKS(whatfn, regexp);
+#if ! CACHE_REGEX
+#warning not caching REGEX
   if (regexp->valid) {
     regfree(&(regexp->preg));
     regexp->valid = 0;
   }
+#endif
   return P_OK;
 }
 
