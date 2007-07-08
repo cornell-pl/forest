@@ -187,8 +187,8 @@ time taken {\em in hours} to hand-write the corresponding description.} \shrink
 %% \begin{center}
 %% \begin{tabular}{|l||r|r|r|} \hline
 %% Data source 			   & Inf 		&Ref 		& HW 	 \\ \hline \hline
-%% 1967Transactions.short          & 0.295 	&0.218 		&0.268	 \\ \hline
-%% MER\_T01\_01.csv                & 0.648 	&0.112		&0.138	 \\ \hline
+%% 1967Transactions.short          & 0.295 		&0.218 		&0.268	 \\ \hline
+%% MER\_T01\_01.csv                & 0.648 		&0.112		&0.138	 \\ \hline
 %% ai.3000                         & 0.503		&0.332		&0.338	 \\ \hline
 %% asl.log                         & 0.630		&0.267		&0.361	 \\ \hline
 %% boot.log                        & 0.620		&0.481		&0.703	 \\ \hline
@@ -286,10 +286,10 @@ For instance, at 5\% training size, ls-l.txt is just one line of data.
 To understand the correctness properties of our algorithm from a different angle,
 we record the minimum training sizes in percentages required to achieve 90\% and 95\% accuracy for
 all the benchmarks in Table \ref{tab:correlate}.  This table also reports the
-normalized score (NS) of the inferred description, which we compute by dividing the
-information-theoretic score in \secref{sec:score} 
-by the number of bits in the data.  This normalized score gives
-a rough indication of the complexity of the data source.  The higher the
+normalized cost of a description (\normcostdescription), which we compute by dividing the
+first component of the information-thereotic score in \secref{sec:score} 
+by the number of bits in the data.  \normcostdescription~ gives
+a rough indication of the complexity of the data source. The higher the
 normalized score, the more complicated the data, and the greater the fraction of data is
 needed to learn an accurate description.  The rows of of Table \ref{tab:correlate}
 are sorted in ascending NS score.  From the table, one can see that ls-l.txt and
@@ -308,25 +308,25 @@ high accuracy.  Overall, for 11 of 16 benchmarks, less than
 \begin{table}
 \begin{center}
 \begin{tabular}{|l||c|c|c|} \hline
-Data source		  & NS  			& 90\% 		& 95\% \\ \hline \hline
-sirius.1000            & 0.0001		& 5		& 10 \\ \hline
-1967Transactions.short	& 0.0003		& 5		& 5 \\ \hline
-ai.3000                 & 0.0004		& 5		& 10 \\ \hline
-asl.log                 & 0.0012		& 5		& 10\\ \hline
-scrollkeeper.log        & 0.0020		& 5		& 5\\ \hline
-page\_log               & 0.0032		& 5		& 5\\ \hline
-MER\_T01\_01.csv        & 0.0037		& 5		& 5 \\ \hline
-crashreporter.log       & 0.0052		& 10		& 15\\ \hline
-crashreporter.log.mod   & 0.0053		& 5		& 15\\ \hline
-windowserver\_last.log  & 0.0084		& 5		& 15\\ \hline
-netstat-an              & 0.0118		& 25		& 35\\ \hline
-yum.txt                 & 0.0124		& 30		& 45\\ \hline
-quarterlypersonalincome & 0.0170		& 10		& 10\\ \hline
-boot.log                & 0.0213		& 45		& 60\\ \hline
-ls-l.txt                & 0.0461		& 50		& 65 \\ \hline
-railroad.txt            & 0.0485		& 60		& 75\\ \hline
+Data source	        & \normcostdescription  	& 90\% 		& 95\% \\ \hline \hline
+sirius.1000             & 0.0001  	& 5		& 10 \\ \hline
+1967Transactions.short	& 0.0003  	& 5		& 5 \\ \hline
+ai.3000                 & 0.0004  	& 5		& 10 \\ \hline
+asl.log                 & 0.0012  	& 5		& 10\\ \hline
+scrollkeeper.log        & 0.0020  	& 5		& 5\\ \hline
+page\_log               & 0.0032  	& 5		& 5\\ \hline
+MER\_T01\_01.csv        & 0.0037  	& 5		& 5 \\ \hline
+crashreporter.log       & 0.0052  	& 10		& 15\\ \hline
+crashreporter.log.mod   & 0.0053  	& 5		& 15\\ \hline
+windowserver\_last.log  & 0.0084  	& 5		& 15\\ \hline
+netstat-an              & 0.0118  	& 25		& 35\\ \hline
+yum.txt                 & 0.0124  	& 30		& 45\\ \hline
+quarterlypersonalincome & 0.0170  	& 10		& 10\\ \hline
+boot.log                & 0.0213  	& 45		& 60\\ \hline
+ls-l.txt                & 0.0461  	& 50		& 65 \\ \hline
+railroad.txt            & 0.0485  	& 60		& 75\\ \hline
 \end{tabular}
-\caption{Correctness measures.  NS: normalized information theoretic score;
+\caption{Correctness measures.  \normcostdescription: normalized cost of description;
 Min Training size (\%) to obtain required accuracy} \shrink
 \label{tab:correlate}
 \end{center}
