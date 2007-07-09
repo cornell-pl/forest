@@ -12,7 +12,7 @@ focused either on grammar induction for natural language processing or
 for information extraction from \xml{} or \html{} documents.  In
 contrast, we focus on ad hoc data sources such as system logs and
 scientific data sets. Ad hoc data is substantially less
-structured than \xml{}, and yet, unlike natural language, it is
+structured syntactically than \xml{}, and yet, unlike natural language, it is
 possible to assign our data sources accurate, compact descriptions. After
 searching the literature and consulting
 with experts in grammar induction at the CAGI 2007
@@ -20,7 +20,7 @@ workshop, where we presented a two page overview of our system~\cite{burke+:cagi
 we could find no existing work comparable to ours.
 
 % Third, from a
-% technical standpoint, we developed a new top-down structure discovery
+% technical standpoint, we developed a new top-down structure-discovery
 % algorithm and showed how to combine that productively with a
 % classic bottom-up rewriting systems based on the minimum description
 % length principle.  In what follows, we compare our system more
@@ -34,7 +34,7 @@ extraction system for sets of similar web pages.
 %and the differences are assumed to be values drawn from a database
 %sitting behind the web site.  
 Arasu uses a top-down grammar induction
-algorithm somewhat similar to our rough structure inference phase
+algorithm somewhat similar to our rough structure-inference phase
 (though it does not use histograms),
 but has no description rewriting engine.  
 %However, in certain ways, Arasu has a much easier task than we do as html
@@ -99,7 +99,7 @@ techniques is that the initial state is large (representing
 the entire training data set explicitly) and the search space is 
 enormous.  Nevertheless, bottom-up state-merging is often used because
 it has been difficult to find an effective state-splitting algorithm.
-Our histogram-based structure discovery procedure is a new state-splitting
+Our histogram-based structure-discovery procedure is a new state-splitting
 algorithm that appears to work well on ad hoc data when coupled with
 bottom-up rewriting.
 
@@ -110,10 +110,10 @@ bottom-up rewriting.
 % algorithm can also run into a local maximum, but because we start with
 % a relatively good candidate generated from our recursive, top-down
 % algorithm, this does not appear to be much of a problem for us.  We
-% also believe that combining top-down structure discovery with
+% also believe that combining top-down structure-discovery with
 % bottom-up rewriting has the potential to deal with larger data sources
 % than a pure bottom-up approach.  Our empirical experiments demonstrate
-% that the top-down structure discovery phase is extremely efficient
+% that the top-down structure-discovery phase is extremely efficient
 % when compared with the cost of rewriting.  However, proposals for
 % bottom-up-only inference techniques use the (possibly enormous) data
 % source itself as the first description.  We are unaware of other

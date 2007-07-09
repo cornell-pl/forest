@@ -51,6 +51,8 @@ $p$ & :: = & $c$ \myalt $x$ & (parameters) \\
 \myalt  \cd{arrayST} \{$T$;\}[sep,term]& (array; separator and terminator) \\
 \myalt  \cd{union} \{$T_1$; ... $T_k$;\} &   (alternatives) \\
 \myalt  \cd{enum} \{$c_1$; ... $c_k$;\} &    (enumeration of constants) \\
+\myalt  $x$:\cd{enum} \{$c_1$; ... $c_k$;\} &         (parameterized enum type; \\
+                                & \hspace{5pt} underlying value named x)    \\  
 \myalt  \cd{option} \{$T$;\} &           (type T or nothing) \\
 \myalt  \cd{switch} $x$ \cd{of} \\
 \hspace{6pt} \{$c_1$ \cd{=>} $T_1$; $\ldots$ $c_k$ \cd{=>} $T_k$;\} & (dependent choice) \\
@@ -155,7 +157,7 @@ In addition to these simple base types, the \ir{} includes a
 collection of higher-level base types commonly found in ad hoc data,
 specified generally in Figure~\ref{fig:ir} as \cd{ComplexB}.  For
 example, we have implemented base types for IP addresses, email
-adresses, urls, XML tags, dates, times and a variety of
+adresses, URLs, XML tags, dates, times and a variety of
 others. Finally, the types \cd{Pvoid} and \cd{Pempty} are two special
 base types that are introduced at various points in the inference
 process.  The first fails immediately; the second succeeds
@@ -180,7 +182,7 @@ enumerations of constants
 or options \cd{option} \{$T$;\}.  In
 addition, later phases of the algorithm 
 bind variables to the results of parsing 
-base types.  For example, $x$:$b$($p_1$,...,$p_k$) expresses the fact that
+base types and enums.  For example, $x$:$b$($p_1$,...,$p_k$) expresses the fact that
 variable $x$ is bound to the value parsed by base type
 $b$($p_1$,...,$p_k$).  These variables express dependencies between 
 different parts
@@ -212,8 +214,8 @@ type, whether it be a struct or one of the array variants.
 \subsection{Running Examples}
 
 Figure~\ref{fig:example} presents tiny fragments of two
-different ad hoc data files we have trained our inference algorithm
-on.  The first, Crashreporter.log, is a Macintosh
+different ad hoc data files on which we have trained our inference algorithm.
+The first, Crashreporter.log, is a Macintosh
 system file that records information concerning process crashes.\footnote{For
 expository purposes we have made a minor alteration to the Crashreporter.log
 format to allow us to explain more concepts with a single example.
@@ -224,28 +226,29 @@ record phone call provisioning information.
 %The third format is
 %a generic system logging file called ASL.log, again taken from a
 %Macintosh.
-We will use the Crashreporter.log data source as our main example throughout the
-paper; we will periodically use the Sirius data source to illustrate 
-particular aspects of the inference algorithm.  We report on our experience
-with many more examples in the evaluation section of the paper.
+We use the Crashreporter.log data source as our main example throughout the
+paper; periodically we refer to the Sirius data source to illustrate 
+particular aspects of the inference algorithm.  
+%We report on our experience
+%with many more examples in the evaluation section of the paper.
 
 \input{crashreporter-ir}
 
 Figure \ref{fig:crashreporter:ir} presents a hand-writtern description
 of the Crashreporter.log file in the \ir{} syntax.  This
-description is most easily read beginning at the bottom
+description is most easily read from the bottom, starting
 with the definition of the \cd{source} type.  This definition specifies that
 the data source is an
-array of structs, each separated by a newline character. The array
-is terminated by the end of file marker.  In other words,
+array of structs separated by newline characters and
+terminated by the end of file marker.  In other words,
 the data source is a sequence of lines, with the struct
 in question appearing on each line.  
 The struct itself indicates each line is a sequence of
 \cd{dateoption}, \cd{kind}, \cd{dumpid} and \cd{report} fields.  
-The description also specifies that the constant string \cd{"["} 
-will be found in between the \cd{kind} and the \cd{dumpid}, and the
-constant string \cd{"]: "} will be found in between the \cd{dumpid} and 
-the \cd{report}.
+The description also specifies that the delimiter \cd{"["} 
+appears between the \cd{kind} and \cd{dumpid} fields, and the
+delimiter \cd{"]: "} appears between the \cd{dumpid} and 
+\cd{report} fields.
 
 %% The reader can
 %% \cd{dateoption} type (appearing above the definition of \cd{source})
@@ -260,16 +263,15 @@ Most of the variable names associated with fields (\eg{}
 However, the \cd{kind} field is different -- it is used later in the 
 description and hence illustrates a {\em dependency}.  
 To be specific, the form of the
-\cd{report} field depends directly upon the contents of the \cd{kind}
-field.  If the value associated with the
-\cd{kind} field is \cd{"crashdump"}, then the \cd{report} is
-a \cd{dumpreport} type, while if the \cd{kind} field is \cd{"crashreporterd"},
-the \cd{report} is a \cd{reporterreport} type.  
+\cd{report} field depends upon the contents of the \cd{kind}
+field.  If its value is \cd{"crashdump"}, then the \cd{report} is
+a \cd{dumpReport} type, while if the \cd{kind} field is \cd{"crashreporterd"},
+the \cd{report} is a \cd{reporterReport} type.  
 
 Figure~\ref{fig:crashreporter:ir} contains three other definitions
 aside from \cd{source}.  These definitions specify the
-structure of the  \cd{dumpreport}, \cd{reporterreport} and \cd{dateoption}
-types used by \cd{source}.
+structure of the  \cd{dumpReport}, \cd{reporterReport} and \cd{dateOption}
+types.
 
 %% specify the component parts
 %% The definition of \cd{reporterreport} is relatively simple -- it is

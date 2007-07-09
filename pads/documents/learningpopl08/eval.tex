@@ -51,7 +51,7 @@ netstat-an		& 14/202		& output from netstat\\ \hline
 page\_log		& 28/354		& printer logs\\ \hline
 quarterlypersonalincome	& 10/62		& spread sheet\\ \hline 
 railroad.txt		& 6/67		& US rail road info\\ \hline
-scrollkeeper.log 	& 66/671		& log from cataloging\\ \hline
+scrollkeeper.log 	& 66/671		& application log\\ \hline
 windowserver\_last.log 	& 52/680		& log from\\
                         &               & LoginWindow\\
                         &               & server on Mac\\ \hline
@@ -104,7 +104,7 @@ and brief description.} \shrink
 
 We conducted a series of experiments to study the correctness
 and performance of our format inference algorithm.
-Table \ref{tab:benchmarks}.lists the data sources we used in the experiments;
+Table~\ref{tab:benchmarks} lists the data sources we used in the experiments;
 they range from system logs to application outputs to government
 statistics. Except for sirius.1000, which is a proprietary format, the files 
 are all available from \url{www.padsproj.org/learning.html}.
@@ -176,7 +176,7 @@ windowserver\_last.log          & 0.37&      9.65&      10.07	& 1.5 	 \\ \hline
 yum.txt                         & 0.11&      1.91&      2.03 	& 5.0     \\ \hline
 \end{tabular}
 \vskip 0.25ex
-\caption{Execution times. SD: time for structure discovery phase; Ref: time for scoring and 
+\caption{Execution times. SD: time for structure-discovery phase; Ref: time for scoring and 
 refinement; Tot: end-to-end time for complete inference algorithm; HW: 
 time taken {\em in hours} to hand-write the corresponding description.} \shrink
 \label{tab:times}
@@ -214,7 +214,7 @@ Our first set of experiments measures the time required to infer a description
 from example data.  In all our experiments, we used an 
 Apple PowerBook G4 with a 1.67~GHz Processor and 512~MB DDR RAM 
 running on Mac OSX 10.4 Tiger. Table \ref{tab:times} presents the execution times
-for the structure discovery phase (SD), the refinement phase (Ref) and the
+for the structure-discovery phase (SD), the refinement phase (Ref) and the
 total (Tot) end-to-end time of the algorithm including printing \pads{} descriptions and other 
 overhead, all measured in seconds.  For accurate timing measurements, we ran the algorithm
 10~times, and found the average after removing the best and the worst times.
@@ -232,8 +232,7 @@ often takes a factor of 10 or more time than structure discovery.  Moreover, mos
 rewriting time is taken in the data analysis phase (numbers not
 shown).  Consequently, if format rewriting (particularly the data analysis phase)
 is taking too long, the user may abort it to produce a 
-slightly less refined description that may nevertheless be perfectly sufficient
-for the task at hand.
+slightly less refined description that may nevertheless be perfectly sufficient.
 
 To give a very rough idea of how using the inference system compares with programming
 descriptions by hand, we also measured the time it took for a person to write descriptions of
@@ -255,7 +254,7 @@ seconds still has great benefit, even to experts.
 \caption{Execution times of training sets} \label{fig:traintime} \shrink
 \end{figure}
 
-In order to understand the scaling behavior of our algorithm, we
+To understand the scaling behavior of our algorithm, we
 randomly selected 5\%, 10\%, 15\%, ..., 80\% of the chunks in every data source
 and measured the performance of the algorithm on each subset of the data that was
 selected. Figure \ref{fig:traintime}
@@ -268,15 +267,15 @@ is only one third the size of sirius.1000, but takes substantially longer
 for the inference algorithm to process.
 
 \paragraph*{Correctness.}
-In order to evaluate the correctness of our algorithm, we again randomly selected
-subsets of each data source, trained our algorithm on that subset and
+To evaluate the correctness of our algorithm, we again selected
+random subsets of each data source, trained our algorithm on those subsets and
 measured the error rate of the inferred parser on the remaining data.
 Figure \ref{fig:trainsucc} graphs the percentage of successfully parsed records
-against the percentage of the data trained against.  The reader will notice
+versus the percentage of the data used in training.  Note
 that accuracy does not uniformly improve.  This variation is caused by the
-randomness in our data selections, and the fact that in some cases,
-we are dealing with very small absolute quantities of data relative 
-to the underlying complexity of the formats.  
+randomness in our data selection and the fact that in some cases,
+we have very small absolute quantities of data relative to the
+underlying complexity of the formats.   
 For instance, at 5\% training size, ls-l.txt is just one line of data.
 %In practice, there is no reason why a programmer would attempt to learn
 %a format from such a small amount of data -- he or she might as well train on the entire

@@ -1,7 +1,7 @@
 \begin{figure}[t]
 \begin{small}
 \begin{verbatim}
-dumpreport =
+dumpReport =
   union {
     struct {
       "Started writing crash report to: "; 
@@ -10,13 +10,13 @@ dumpreport =
     ...
   };
 
-reporterreport =
+reporterReport =
   struct {
     function: Ppath; " reply failed: ");
     failuremsg: Pstring_('\n'); 
   };
 
-dateoption = 
+dateOption = 
   union {
     "- ";
     struct {
@@ -29,14 +29,14 @@ dateoption =
 source =
   arrayST {
     struct {
-      date:   dateoption;
+      date:   dateOption;
       kind:   enum {"crashdump"; 
                     "crashreporterd";}; "[";
       dumpid: Pint32; "]: ";
       report: 
         switch kind of {
-          "crashdump"      => dumpreport
-          "crashreporterd" => reporterreport
+          "crashdump"      => dumpReport
+          "crashreporterd" => reporterReport
     };
   }['\n',EOF];
 \end{verbatim}

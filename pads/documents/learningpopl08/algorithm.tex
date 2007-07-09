@@ -3,7 +3,7 @@
 \begin{figure}
 \begin{center}
 \epsfig{file=archi.eps, width=\columnwidth}
-\caption{Architecture of the automatic tool generation engine} \shrink
+\caption{Architecture of the automatic tool-generation engine} \shrink
 \label{fig-archi}
 \end{center}
 \end{figure}
@@ -60,7 +60,7 @@ are not well-nested, the meta-tokens are discarded and replaced with
 ordinary sequences of simple tokens.}  For example, in Crashreporter.log,
 the syntax \cd{[2164]} will yield the meta-token \cd{[*]} instead of
 the sequence of three simple tokens \cd{[}, \cd{Pint}, and \cd{]}.  
-The structure discovery algorithm eliminates all meta-tokens during
+The structure-discovery algorithm eliminates all meta-tokens during
 its analysis; whenever it encounters a context consisting of
 matching meta-tokens, it cracks open the meta-tokens so it can analyze
 the underlying structure.
@@ -75,7 +75,7 @@ file to generate part of the system's lexer, a
 collection of new \ir{} base types, and a series of type 
 definitions that are incorporated into the final \pads{} specification.  
 
-%% After tokenization, the algorithm enters the {\em structure discovery} 
+%% After tokenization, the algorithm enters the {\em structure-discovery} 
 %% phase.  This phase uses a top-down, divide-and-conquer
 %% scheme to guess an approximate, initial format for the data.
 %% To assess the quality of this initial approximation, the
@@ -154,11 +154,12 @@ definitions that are incorporated into the final \pads{} specification.
 
 \subsection {Structure Discovery}
 
-Given a collection of tokenized chunks, the goal of the structure
-discovery phase is to quickly find a candidate description ``close'' to
+Given a collection of tokenized chunks, the goal of the
+structure-discovery phase is to quickly find a candidate description
+``close'' to 
 a good final solution.  The rewriting phase then analyzes, refines and
 tranforms this candidate to produce the final description.
-The high-level form of our structure discovery algorithm was
+The high-level form of our structure-discovery algorithm was
 inspired by the work of Arasu and 
 Garcia-Molina on information extraction from web pages~\cite{arasu+:sigmod03};
 however, the context, goals and algorithmic details of our
@@ -222,13 +223,15 @@ Pdate ' ' Ptime ' ' Pint ' ' Palpha [*] ':' ...
 '-' ' ' Palpha [*] ':' ' ' Palpha (*) ' ' ...
 \end{verbatim}
 }%
+
 \noindent
 Given these token sequences, 
 the oracle will predict that the top-level type constructor is a struct 
 with three fields: one for the tokens before the token \cd{[*]}, one
-for the \cd{[*]} tokens themslves, and one for the tokens after the token
-\cd{[*]}. Based on this determination, the oracle will divide the
-original chunks into three sets as follows.
+for the \cd{[*]} tokens themselves, and one for the tokens after the token
+\cd{[*]}. We explain how the oracle makes this prediction in the next
+section. The oracle then divides the original chunks into three sets
+as follows. 
 
 {\small
 \begin{verbatim}
@@ -308,12 +311,15 @@ Here the chunks have the following structure:
 }%
 
 \noindent
-In this case, the oracle prophecies that the top-level structure involves
+The oracle prophecies that the top-level structure involves
 an array and partitions the data into sets of chunks for the
-array preamble, the array itself, and the array postamble.  The
+array preamble, the array itself, and the array postamble.  It does
+this partitioning to cope with ``fence-post'' problems in which 
+the first or the last entry in an array may have slightly different structure.
+In this case, the
 preamble chunks all have the form \{\cd{Pint '|'}\} while the
 postamble chunks all have the form \{\cd{Pint}\}, so the algorithm
-easily determines the corresponding types. The algorithm discovers the
+easily determines their types. The algorithm discovers the
 type of the array elements by analyzing the residual list of chunks
 
 {\small
@@ -398,7 +404,10 @@ The corresponding tokens are (a) {\tt [*]},
 (g) {\tt Pwhite}.  Histograms (h) {\tt Palpha}, (i) {\tt Pint}, and 
 (j) {\tt Pwhite} are generated from analysis of Crashreporter.log from
 set 1 (the second level of recursion).  Histogram (k) is generated from
-top-level analysis of the {\tt |} token from the Sirius data.} \shrink
+top-level analysis of the {\tt |} token from the Sirius data. 
+Note that several of these histograms have many bars of very small height,
+including (f) with 7, (g) with 8, and (k) with 17. 
+}\shrink
 \label{fig:histograms} 
 \end{center}
 \end{figure*}
@@ -441,7 +450,7 @@ The {\em width} of a
 histogram ({\em width}($h$)) is the number of elements in the list
 excluding the zero-column (\ie{} excluding element $(0,y)$).  
 A histogram
-$\normal{h}$ is in normal form when the first element of the list is
+$\normal{h}$ is in our normal form when the first element of the list is
 the zero column and all subsequent elements are sorted in descending
 order by the $y$ component.  For example, if $h_1$ is the histogram
 $[(0,5), (1,10), (2,25), (3,15)]$ then {\em width}($h_1$) is 3 and its
@@ -459,9 +468,10 @@ For example, {\em rm}$(\normal{h_1},1) = 5 + 15 + 10 = 30$.
 The residual mass characterizes the ``narrowness''
 of a histogram.  Those histograms with low residual mass of the first
 column ({\em i.e.,} {\em rm}$(\normal{h_1},1)$ is small) 
-are good candidates for structs.
+are good candidates for structs because the corresponding tokens 
+occur exactly the same number of times in almost all records.
 
-To distinguishing between structs, arrays and unions,
+To distinguish between structs, arrays and unions,
 we also need to define the {\em coverage} of a histogram, which
 intuitively is the number of chunks containing the corresponding token.
 Mathematically, it is simply the sum of the non-zero histogram elements:
@@ -634,14 +644,16 @@ Tiny fragment of XML output from crashreporter.log:
 \end{verbatim}
 }
 
+\end{center}
 Graph generated from ai.3000 web transaction volume at different
-times of the day (00:00-8:55 and 19:00-24:00):\vspace{10pt}$\mbox{}$
+times of the day (00:00-8:55 and 19:00-24:00):
+\begin{center}
+%\vspace{10pt}$\mbox{}$
 
 \epsfig{file=ai.3000.eps, width=0.9\columnwidth} 
-
 \caption{End products of automatically generated tools.} \shrink
-\end{center}
 \label{fig:final-products}
+\end{center}
 \end{figure}
 
 %Of course, the end products of the inference algorithm 

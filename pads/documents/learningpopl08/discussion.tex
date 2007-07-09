@@ -45,16 +45,15 @@ immediately.
 
 \paragraph*{Future work.}  Perhaps the most significant weakness of our current
 system is that its relative effectiveness is somewhat brittle with respect to
-exactly how token processing is performed.
-Discovering tokens like ``ip address'' and ``date'' is highly beneficial
+exactly how we perform token processing.
+Discovering tokens like ``IP address'' and ``date'' is highly beneficial
 as they act as compact, highly 
-descriptive abstractions, but, unfortunately, they are also often 
-mutually ambiguous.  For instance, an ip address, a file name, a 
+descriptive abstractions, but unfortunately, they are also often 
+mutually ambiguous.  For instance, an IP address, a file name, a 
 floating point number, the version number for a software product,
 and a phone number can all be represented as some number of digits 
 separated by periods.  At the moment, we disambiguate between them 
-in the same way that lex does, by taking the first, longest match 
-in the token list.
+in the same way that lex does, by taking the first, longest match. 
 To improve tokenization in the future, we plan to look at learning
 probabilistic models of a broad range of token types.  We also
 intend to explore finding new tokens from the data itself,
