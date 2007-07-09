@@ -772,7 +772,7 @@ read-function flags, which are listed in \figref{figure:read-flags}.
 \cd{\#define P_Do_SynCheck(m)}         & \cd{(m |= P_SynCheck)}\\
 \cd{\#define P_Do_SemCheck(m)}         & \cd{(m |= P_SemCheck)}\\
 \\
-\cd{\#define P_Dont_Set(m)}            & \cd{(m \&= (~P_Set))}\\
+\cd{\#define P_Dont_Set(m)}            & \cd{(m \&= (\textasciitilde P_Set))}\\
 \cd{\#define P_Dont_SynCheck(m)}       & \cd{(m \&= (~P_SynCheck))}\\
 \cd{\#define P_Dont_SemCheck(m)}       & \cd{(m \&= (~P_SemCheck))}\\[1ex]
 \end{tabular}
