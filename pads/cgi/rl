@@ -1,0 +1,24 @@
+#!/bin/bash
+# Expects first parameter to be the data source file
+# Expects the second parameter to be one of (accum, xml, all)
+PATH=$PATH:~/bin:/usr/local/smlnj-110.60/bin
+PADS_HOME='/Users/peterwhite/pads'
+SML='/usr/local/smlnj-110.60/bin/SML'
+export PADS_HOME
+export SML
+. /Users/peterwhite/pads/scripts/Q_DO_SETENV.sh
+echo "Data source = " $1 " processing = " $2
+# Run the learning program
+chmod 0777 /Users/peterwhite/pads/learning/scratch;
+cd /Users/peterwhite/pads/learning/scratch;
+rm -rf gen;
+mkdir -m +rwx gen;
+mkdir -m +rwx gen/darwin.ppc;
+./learn -n $1 -lex vanilla data/$1 2>&1;
+# Run the accumulator
+if [ $2 = accum ] || [ $2 = all ]; then make --directory=gen $1-accum; fi
+if [ $2 = accum ] || [ $2 = all ]; then gen/darwin.ppc/$1-accum data/$1 2>gen/$1-accum.out; fi
+if [ $2 = xml ] || [ $2 = all ]; then make --directory=gen $1-xml; fi
+if [ $2 = xml ] || [ $2 = all ]; then gen/darwin.ppc/$1-xml data/$1 >gen/$1-xml.out 2>junk; fi
+if [ $2 = fmt ] || [ $2 = all ]; then make --directory=gen $1-fmt; fi
+if [ $2 = fmt ] || [ $2 = all ]; then gen/darwin.ppc/$1-fmt data/$1 >gen/$1-fmt.out 2>junk; fi
