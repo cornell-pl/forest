@@ -228,7 +228,7 @@ mkdir gen
 # Make an output directory if one is needed
 if [ ! -d output/$@ ]; then mkdir output/$@; fi
 # Clean the output directory
-if [ -e output/$@/* ]; then rm -rf output/$@/*; fi
+if [ -e output/$@ ]; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
 nice -n20 ./learn -n $@ -lex vanilla data/$@ | tee gen/$@.out
 cp -R gen/* output/$@
@@ -244,7 +244,7 @@ make --directory=gen $(*F)-accum
 # 6. run accumulator program on input data
 gen/$(AST_ARCH)/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 @echo "\n\nAccumulator program run\n\n"
-# 6. run accumulator program on input data, defend against error return
+# 6. run the accumulator program on input data, defend against error return
 # old? runaccum $(*F)
 # 7. extract number of records correctly parsed and number of errors
 ./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
@@ -298,6 +298,7 @@ outputs : $(DATA)
 1967Transactions.short:  $(IND)/1967Transactions.short  ; $(learn-it)
 MER_T01_01.csv:          $(IND)/MER_T01_01.csv          ; $(learn-it)
 ProfSec.log:             $(IND)/ProfSec.log             ; $(learn-it)
+RollYourOwn:             $(IND)/RollYourOwn             ; $(learn-it)
 SCESETUP.LOG:            $(IND)/SCESETUP.LOG            ; $(learn-it)
 access_log:              $(IND)/access_log              ; $(learn-it)
 ai-simple:               $(IND)/ai-simple               ; $(learn-it)
