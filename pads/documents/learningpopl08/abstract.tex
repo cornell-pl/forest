@@ -19,8 +19,10 @@ language.
 Programmers wishing to implement custom data analysis tools
 can use such descriptions to generate printing and parsing libraries
 for the data.  Alternatively,  our software infrastructure will
-push these descriptions through the \pads{} compiler and automatically
-generate fully functional tools.  We evaluate the performance of
+push these descriptions through the \pads{} compiler, creating
+format-dependent modules that, when linked with format-independent
+algorithms for analysis and transformation, result in
+fully functional tools.  We evaluate the performance of
 our inference algorithm, showing it scales linearly
 in the size of the training data --- completing in seconds, as opposed
 to the hours or days it takes to write a description by hand.
