@@ -291,7 +291,7 @@ it uses the data-dependent
 rules to refine base types to constant values and enumerations, \etc{},
 and to introduce dependencies such as switched unions. This stage
 requires the value-space analysis described next.
-The third time, the algorithm reapplies the data-independent rules
+The third time, the algorithm re-applies the data-independent rules
 because some stage two rewritings (such as converting a base type to a
 constant) enable further data-independent rewritings.
 
@@ -301,7 +301,7 @@ to applying the data-dependent rules.
 This analysis first generates a set of relational tables from the input data.
 Each row in a table corresponds to an input chunk and each column
 corresponds to either a particular base type from the inferred description,
-or to a piece of metadata from the description.  Examples of meta-data
+or to a piece of meta-data from the description.  Examples of meta-data
 include the tag number from union branches and the length of arrays.
 We generate a {\em set} of relational tables as opposed to a single table
 as the elements of each array occupy their own separate table (a description 
@@ -309,7 +309,7 @@ with no arrays will have only one associated table).
 % Here, a number of data dependency tables are generated from the 
 % input structure, where each
 % column of the tables represent the data values associated with a particular base type 
-% in the structure, with some extra columns representing auxilliary information such as
+% in the structure, with some extra columns representing auxiliary information such as
 % array sizes and union branching decisions.
 
 We analyze every column of every table to determine properties of the
@@ -339,9 +339,9 @@ appears below.
 % Let us zoom into the beginning portion of the IR and omit some of the details as follows. 
 % We annotate each type with two pieces of auxiliary information: id of the node which
 % can be used as the variable name and the complexity score at this node, 
-% enclosed in a pair of parenthese. In addition, for Pother base types,
-% we append the character it binds to in parenthese after the type name.
-% The intial IR structure of crash reporter looks like this:
+% enclosed in a pair of parentheses. In addition, for Pother base types,
+% we append the character it binds to in parentheses after the type name.
+% The initial IR structure of crash reporter looks like this:
 
 {\small
 \begin{verbatim}
@@ -554,7 +554,7 @@ struct {
 In the third and final stage, 
 data independent rule~5 combines constants 
 and rule~1 flattens the singleton struct, resulting in the final IR
-descrption:
+description:
 
 {\small
 \begin{verbatim}
@@ -575,7 +575,7 @@ struct {
 
 The information-theoretic complexity of the final description 
 relative to the data in our training set is 304538 bits. 
-The candidate discription produced by the structure-discovery phase
+The candidate description produced by the structure-discovery phase
 had a complexity of 416156 bits.  The absolute values of these quantities
 are relatively unimportant, but the fact that the final complexity
 is substantially smaller than the original suggests that our search
@@ -617,7 +617,7 @@ procedure optimized the description effectively.
 % }
 
 % Comparing this final result with the initial description, one can see that
-% the structure refinement significately simplified the IR and improved the
+% the structure refinement significantly simplified the IR and improved the
 % complexity score; and with
 % the explicit constants and enums, the description is a lot more
 % informative than before.

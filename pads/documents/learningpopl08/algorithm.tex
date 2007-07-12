@@ -158,7 +158,7 @@ Given a collection of tokenized chunks, the goal of the
 structure-discovery phase is to quickly find a candidate description
 ``close'' to 
 a good final solution.  The rewriting phase then analyzes, refines and
-tranforms this candidate to produce the final description.
+transforms this candidate to produce the final description.
 The high-level form of our structure-discovery algorithm was
 inspired by the work of Arasu and 
 Garcia-Molina on information extraction from web pages~\cite{arasu+:sigmod03};
@@ -366,7 +366,7 @@ in almost every chunk, and {\em narrow} distribution, meaning the variation in
 the number of times a token appears in different chunks is low, are
 good candidates for defining structs.  Similarly, histograms with
 high coverage and {\em wide} distribution are good candidates for defining
-arrays.  Finally, histograms with low coverge or intermediate width
+arrays.  Finally, histograms with low coverage or intermediate width
 represent tokens that form part of a union.  
 
 
@@ -542,9 +542,9 @@ tokens $t_1$, \ldots, $t_n$ to calculate the number of fields and the
 corresponding chunk lists.  We call $t_1$, \ldots, $t_n$ the {\em
   identified} tokens for the input.
 Intuitively, for each input chunk, the oracle puts
-all tokens upto but not including the first token $t$ from the set of
-identifed tokens into the chunk list for the first field.  It puts $t$ in
-the chunk list for the second field. It puts all tokens upto the next
+all tokens up to but not including the first token $t$ from the set of
+identified tokens into the chunk list for the first field.  It puts $t$ in
+the chunk list for the second field. It puts all tokens up to the next
 identified token into the chunk list for the third field and so on. Of
 course, the identified tokens need not appear in the same order in all
 input chunks, nor in fact must they all appear at all.  To handle
@@ -563,7 +563,7 @@ the following minimum criteria:
 \end{itemize}
 This process favors histograms with wide distribution and high coverage.
 If histograms $h_1$, \ldots, $h_n$ with corresponding tokens 
-$t_1$, \ldots, $t_n$ satisfy the array critera, the oracle will
+$t_1$, \ldots, $t_n$ satisfy the array criteria, the oracle will
 prophecy an array.   It will 
 partition each input chunk into (1) a preamble subsequence 
 that contains the first occurrence of each identified token, 

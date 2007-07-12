@@ -89,7 +89,7 @@ Sirius AT\&T Phone Provisioning Data:
 % ASL.log:
 % {\small  \begin{verbatim}
 % [Time 2006.11.25 16:47:18 UTC] [Facility user] [Sender E_e,] [PID 131] \
-%   [Message sleep cancelled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
+%   [Message sleep canceled time is: Sat Nov 25 08:47:18 2006;;] [Level 1] [UID -2] [GID -2] [Host Babylon]
 % [Time 2006.11.25 16:51:23 UTC] [Facility install] [Sender Software Update] [PID 1879] \
 %   [Message System requesting sleep.] [Level 5] [UID -2] [GID -2] [Host Babylon]
 % \end{verbatim}
@@ -157,7 +157,7 @@ In addition to these simple base types, the \ir{} includes a
 collection of higher-level base types commonly found in ad hoc data,
 specified generally in Figure~\ref{fig:ir} as \cd{ComplexB}.  For
 example, we have implemented base types for IP addresses, email
-adresses, URLs, XML tags, dates, times and a variety of
+addresses, URLs, XML tags, dates, times and a variety of
 others. Finally, the types \cd{Pvoid} and \cd{Pempty} are two special
 base types that are introduced at various points in the inference
 process.  The first fails immediately; the second succeeds
@@ -191,7 +191,7 @@ every bound variable is assumed to be distinct
 from every other that appears in a description.  Roughly speaking,
 the scope of such variables
 extends as far as possible to the right through the description.
-Understandng the fine details of the semantics is not important
+Understanding the fine details of the semantics is not important
 for understanding the central material in this paper.}  
 For example, the length of a string \cd{PstringFW}($p$)
 or an array \cd{ParrayFW}($p$) may depend upon either a constant or
@@ -234,7 +234,7 @@ particular aspects of the inference algorithm.
 
 \input{crashreporter-ir}
 
-Figure \ref{fig:crashreporter:ir} presents a hand-writtern description
+Figure \ref{fig:crashreporter:ir} presents a hand-written description
 of the Crashreporter.log file in the \ir{} syntax.  This
 description is most easily read from the bottom, starting
 with the definition of the \cd{source} type.  This definition specifies that

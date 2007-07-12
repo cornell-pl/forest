@@ -19,7 +19,7 @@
 %% \begin{itemize}
 %% \item the learning engine is capable of handing a variety of data formats;
 %% \item while the initial structure discovery generates a reasonably
-%% good candidate, the refinemnt phase siginificantly improves the
+%% good candidate, the refinement phase significantly improves the
 %% quality of the description through rewritings; 
 %% \item the final output of the learning system is highly competitive
 %% when compared with descriptions written by a human expert 
@@ -286,7 +286,7 @@ To understand the correctness properties of our algorithm from a different angle
 we record the minimum training sizes in percentages required to achieve 90\% and 95\% accuracy for
 all the benchmarks in Table \ref{tab:correlate}.  This table also reports the
 normalized cost of a description (\normcostdescription), which we compute by dividing the
-first component of the information-thereotic score in \secref{sec:score} 
+first component of the information-theoretic score in \secref{sec:score} 
 by the number of bits in the data.  \normcostdescription~ gives
 a rough indication of the complexity of the data source. The higher the
 normalized score, the more complicated the data, and the greater the fraction of data is
@@ -413,7 +413,7 @@ Min Training size (\%) to obtain required accuracy} \shrink
 %% To score a given HW IR, we wrote a simple recursive-descent parser with backtracking
 %% for our IR so that the original data can be populated into the IR structure for
 %% correct scoring of the data complexity which is the second component of the MDL score.
-%% After a few attempts and modifications, the HW PADS descritions parses all 
+%% After a few attempts and modifications, the HW PADS descriptions parses all 
 %% the original data files with 100\% accuracy.
 
 %% Next we ran the learning system on all 16 data files in their entirety, 
@@ -440,8 +440,8 @@ Min Training size (\%) to obtain required accuracy} \shrink
 
 %% \begin{itemize}
 %% \item The HW IR were not optimized by the MDL scores but instead
-%% by the expert's intuition, therefore often more type complexity optmized than
-%% data complexity optimized but data complexity usually outweight the type
+%% by the expert's intuition, therefore often more type complexity optimized than
+%% data complexity optimized but data complexity usually outweigh the type
 %% complexity in the overall scores.
 %% However, for most of the data sources, the final scores for HW IR and Inf IR were so close 
 %% that we are confident that the scoring function we use here is meaningful.
@@ -467,8 +467,8 @@ Min Training size (\%) to obtain required accuracy} \shrink
 %% \end{itemize}
 
 %Compare these with the golden numbers from (1) in a big table. Show that the difference in scores
-%can be siginificant in some cases hence room for improvement (may go into the discussion section)
-%but timing advantage is huge and refinment improves initial struct a lot. Maybe also compare a case or
+%can be significant in some cases hence room for improvement (may go into the discussion section)
+%but timing advantage is huge and refinement improves initial struct a lot. Maybe also compare a case or
 %two where the score from silver is comparable to golden and the actually description produced is also
 %close to golden (to demo that our scoring makes some sense).
 %Have a discussion here about while the learning tool may produce a longer description than human does,
