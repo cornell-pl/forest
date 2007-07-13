@@ -1772,8 +1772,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
               (* int is_foo(foo *rep) *)
               fun genIsFun(funName, cParams:(string *pcty) list, rep, argPCT, bodySs) = 
 		  let val (cNames, cTys) = ListPair.unzip cParams
-		      val paramTys = [P.ptrPCT argPCT] @ cTys
-		      val paramNames = [rep] @ cNames
+		      val paramTys = [P.ptrPCT (P.makeTypedefPCT "P_t"), P.ptrPCT argPCT] @ cTys
+		      val paramNames = ["pads", rep] @ cNames
 		      val formalParams = List.map P.mkParam (ListPair.zip (paramTys, paramNames))
 		      val returnTy =  P.int
 		      val isFunED = 
@@ -3113,9 +3113,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val isName = PN.isPref name
 		      val predX  = case (lookupPred baseTy, modPredXOpt) of 
 			             (NONE, NONE) => P.trueX
-				   | (SOME basePred, NONE) => PT.Call(PT.Id basePred, [PT.Id rep] @ args)
+				   | (SOME basePred, NONE) => PT.Call(PT.Id basePred, [PT.Id pads, PT.Id rep] @ args)
 				   | (NONE, SOME modPredX) => modPredX
-			           | (SOME basePred, SOME modPredX) => P.andX(PT.Call(PT.Id basePred, [PT.Id rep] @ args), modPredX)
+			           | (SOME basePred, SOME modPredX) => P.andX(PT.Call(PT.Id basePred, [PT.Id pads, PT.Id rep] @ args), modPredX)
 		      val bodySs = [PT.Return predX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
@@ -3494,7 +3494,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						  (PT.TypedefName name,true,"rep")],
 						 cParamTuples),
 				   (* verify function *)
-				   genFunDeclBoth(PT.Int,name ^"_verify",[(PT.TypedefName name,true,"rep")],cParamTuples),
+				   genFunDeclBoth(PT.Int,name ^"_verify",[(PT.TypedefName "P_t", true, "pads"),
+				                                          (PT.TypedefName name,true,"rep")],cParamTuples),
 				   (* genPD function *)
 				   genFunDeclBoth(PT.Int,PNames.genPD name,
 						  [(PT.TypedefName "P_t",true,"pads"),
@@ -3682,7 +3683,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val isName = isPref name
 		      val predX  = case lookupPred baseTy of 
 			             NONE => P.trueX
-				   | SOME basePred => PT.Call(PT.Id basePred, [P.starX (PT.Id rep)] @ args)
+				   | SOME basePred => PT.Call(PT.Id basePred, [PT.Id pads, P.starX (PT.Id rep)] @ args)
 		      val bodySs = [PT.Return predX]
 		      val isFunEDs = [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
 
@@ -5901,7 +5902,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 val elemX = P.subX(P.fieldX(rep,elts), indexX)
 			 val elemCXs = 
                              case lookupPred baseTy of NONE => [] 
-		             | SOME elemPred => [PT.Call(PT.Id elemPred, [P.addrX elemX] @ args)]
+		             | SOME elemPred => [PT.Call(PT.Id elemPred, [PT.Id pads, P.addrX elemX] @ args)]
 
 			 val needsConsume = case endedXOpt of SOME(_,_,SOME isPredX) =>
 			                          PTSub.isFreeInExp([PNames.consume], isPredX)
@@ -7124,7 +7125,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					     val fieldXs = case lookupPred pty of NONE           => []
 										| SOME fieldPred => 
 										  [PT.Call(PT.Id fieldPred,
-											   [P.getUnionBranchX(rep, name)] @ args)]
+											   [PT.Id pads, P.getUnionBranchX(rep, name)] @ args)]
 					     val condX = P.andBools(predXs @ fieldXs)
 					 in
 					     P.mkBreakCase(PT.Id name, SOME [setAgg(condX)])
@@ -8372,8 +8373,6 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		      (* Generate is function struct case *)
 		      val isName = PNames.isPref name
-
-
 		      val predX = 
 			  let fun getConFull({pty: PX.Pty, args: pcexp list, name: string, isVirtual: bool, 
 					     isEndian: bool, isRecord, containsRecord, largeHeuristic: bool,
@@ -8387,7 +8386,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 											       "Excluding call to "^fieldPred ^" from "^ isName); [])
 										else let val modArgs = List.map(PTSub.substExps (!postReadSubList)) args
 										     in
-											 [PT.Call(PT.Id fieldPred, [P.getFieldX(rep, name)] @ modArgs)]
+											 [PT.Call(PT.Id fieldPred, [PT.Id pads, P.getFieldX(rep, name)] @ modArgs)]
 										     end
 				       in
 					   fieldXs @ predXs 

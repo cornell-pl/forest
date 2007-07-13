@@ -20,7 +20,7 @@ Perror_t foo_pd_copy (P_t *pads, foo_pd *pd_dst, foo_pd *pd_src);
 /*@END utility.tex*/
 
 /*@BEGIN verify.tex*/
-int foo_verify(foo *rep);
+int foo_verify(P_t *pads, foo *rep);
 /*@END verify.tex*/
 
 /*@BEGIN genPD.tex*/
