@@ -291,6 +291,16 @@ struct
            }
 	end
 
+    fun mkTyAux3 ( coverage : int, comp: TyComp ) : AuxInfo = 
+	let val next = !Tystamp
+            val () = Tystamp := !Tystamp + 1
+            val label = mkTyLabel next
+	in { coverage = coverage
+           , label    = SOME label
+           , tycomp   = comp
+           }
+	end
+
     (*function to get a Ty from a list of Tys by Id *)
     fun getTyById tylist id = 
 	let val filtered = List.filter (fn ty => Atom.same ((getLabel (getAuxInfo ty)), id)) tylist
@@ -1068,4 +1078,64 @@ struct
         |  RArray (a,sep,term,body,len,lengths) => variance body
         |  Poption (a, body)     	 => 1+ (variance body)
 
+(*Function to extract the header and footer from a given ty if available
+  this is currently only used at the top level of the data*)
+    fun extractHeaderFooter ty =
+	case ty of
+	  Punion(aux, tys) =>
+	    let
+		fun isHeader ty = 
+		  if getCoverage ty > def_maxHeaderChunks then false
+		  else false	
+		fun isFooter num ty = 
+			if getCoverage ty > def_maxHeaderChunks then false
+			else false
+		val numChunks = (#coverage aux) 
+		val possibleHeaders = List.filter isHeader tys
+		val possibleFooters = List.filter (isFooter numChunks) tys
+		val headerTyOp = if length possibleHeaders = 0
+			then NONE
+			else if length possibleHeaders = 1
+			then SOME (hd possibleHeaders)
+			else NONE
+		val footerTyOp = if length possibleFooters = 0
+			then NONE
+			else if length possibleFooters = 1
+			then SOME (hd possibleFooters)
+			else NONE
+		fun notLabelEqual headerOp footerOp ty =
+		  let
+			val tyLabel = getLabel (getAuxInfo ty)
+		  in
+			case (headerOp, footerOp) of
+			  (SOME h, SOME f) => not (Atom.same(tyLabel, getLabel (getAuxInfo h)))
+				andalso (not (Atom.same(tyLabel, getLabel (getAuxInfo f))))
+			| (SOME h, NONE) => not (Atom.same(tyLabel, getLabel (getAuxInfo h)))
+		 	| (NONE, SOME f) => not (Atom.same(tyLabel, getLabel (getAuxInfo f)))
+			| _ => true
+		  end
+		fun combAux (ty, (coverage, comp)) =
+		  ((coverage + getCoverage ty), (combTyComp (#tycomp (getAuxInfo ty)) comp))
+            in
+		case (headerTyOp, footerTyOp) of
+		  (NONE, NONE) => (NONE, NONE, NONE, ty)
+		| _ => 
+		  let
+			val bodyTys = List.filter (notLabelEqual headerTyOp footerTyOp) tys
+			val len = length bodyTys
+		  in
+			if len = 1 then
+			  (headerTyOp, footerTyOp, SOME aux, (hd bodyTys))
+			else if len = 0 then raise TyMismatch
+			else 
+			  let 
+			    val (newcov, newcomp) = List.foldl combAux (0, zeroComps) bodyTys
+			    val newUnionAux = mkTyAux3 (newcov, newcomp)
+			  in
+			    (headerTyOp, footerTyOp, SOME aux, Punion(newUnionAux, bodyTys))
+			  end
+		  end
+	    end
+	| _ => (NONE, NONE, NONE, ty)
+		
 end
