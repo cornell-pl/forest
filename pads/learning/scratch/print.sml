@@ -74,9 +74,9 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpPADSdesc (fileName:string) (ty:Ty) : string = 
+    fun dumpPADSdesc (fileName:string) (ty:Ty) (withHeader:bool) (withFooter:bool) : string = 
 	let val strm = TextIO.openOut fileName
-            val (tyName, desc) = TyToPADSFile ty ((!lexName)^".p")
+            val (tyName, desc) = TyToPADSFile ty withHeader withFooter ((!lexName)^".p")
             val () = TextIO.output(strm,desc )
 	    val () = TextIO.closeOut strm
 	in
@@ -224,7 +224,8 @@ structure Printing = struct
 
 
     fun dumpTyInfo ( path : string ) (dataDir: string) ( descName : string ) ( baseTy : Ty ) 
-			( rewrittenTy : Ty ) ( et : EndingTimes) (sep:Token option) : unit = 
+			( rewrittenTy : Ty ) (withHeader: bool) (withFooter: bool)
+			( et : EndingTimes) (sep:Token option) : unit = 
 	let fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) =>
@@ -264,7 +265,7 @@ structure Printing = struct
                  ; dumpTy (path ^ "Ty") rewrittenTy 
                  ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy ) 
                  ; dumpTyComp path "Complexity" descName ( getComps rewrittenTy )
-                 ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy
+                 ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy withHeader withFooter
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
 		       print ("Ty name ="^tyName^"\n");

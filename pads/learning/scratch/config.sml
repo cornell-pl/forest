@@ -10,6 +10,7 @@ structure Config = struct
     val DEF_ARRAY_MIN_WIDTH_THRESHOLD =  0
     val DEF_MAX_TABLE_ROWS = 2000
     val DEF_MAX_TABLE_COLS = 200
+    val DEF_EXTRACT_HEADER_FOOTER = true
     val def_maxHeaderChunks = 2
     val def_depthLimit   = 50
     val def_outputDir    = "gen/"

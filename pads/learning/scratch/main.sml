@@ -32,13 +32,16 @@ structure Main : sig
                 val (ty,sep)     = computeStructure ( !srcFiles )
 (*		val _ 		 = printTy (measure ty) *)
                 val end3Times    = updateTokenEnd ( Time.now () ) end2Times
-                val ( measuredTy, rewrittenTy, end4Times ) = Rewrite.run end3Times ty
+                val ( measuredTy, rewrittenTy, withHeader, withFooter, end4Times) = 
+				   Rewrite.run end3Times ty
                 val computeTimes = getComputeTimes end4Times
                 val ()           = Printing.dumpTyInfo (!outputDir)
 						       dataDir
                                                        dataFile
                                                        measuredTy
                                                        rewrittenTy
+						       withHeader
+						       withFooter
                                                        end4Times
 						       sep
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )

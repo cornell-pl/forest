@@ -1047,14 +1047,46 @@ struct
 	)
         )
      end 
-     fun TyToPADSFile ty includeFile =
+     fun TyToPADSFile ty hasHeader hasFooter includeFile =
+	(* assume that if a ty has header and footer, the body is just one single Ty*)
 	let
 	  val recordLabel = getLabelForPADS (ty)
 	  val pads = "#include \""^ includeFile ^"\"\n" ^
-			(TyToPADS "" "" true 0 nil ty) ^
+		(if hasHeader=false andalso hasFooter=false then
+			((TyToPADS "" "" true 0 nil ty) ^
 			"Psource Parray entries_t {\n" ^
 		    	"\t" ^ recordLabel ^ "[];\n" ^
+			"};\n")
+		else 
+		  case ty of 
+		    Punion (_, tys) =>
+		      let
+		        val (headerOp, body, footerOp) = 
+		      		case (hasHeader, hasFooter) of
+				(true, true) => (SOME (hd tys), (List.nth (tys, 1)), SOME (List.last tys))
+		      		|(true, false) => (SOME (hd tys), (List.last tys), NONE)
+		      		| (false, true) => (NONE, (hd tys), SOME (List.last tys))
+				| _ => raise TyMismatch
+		      in
+			(case headerOp of
+				SOME header => TyToPADS "" "" true 0 nil header
+				| _ => "") ^
+			(TyToPADS "" "" true 0 nil body) ^
+			(case footerOp of
+				SOME footer => TyToPADS "" "" true 0 nil footer
+				| _ => "") ^
+			"Psource Pstruct " ^ recordLabel ^ " {\n" ^
+			(case headerOp of
+				SOME header => "\t" ^ (getLabelForPADS header) ^ " header;\n"
+				| _ => "") ^
+			("\t" ^ (getLabelForPADS body) ^ "[] body;\n") ^
+			(case footerOp of 
+				SOME footer => "\t" ^ (getLabelForPADS footer) ^ " footer;\n"
+				| _ => "") ^
 			"};\n"
+		      end
+		  | _ => raise TyMismatch
+		)
 	in
 	  (recordLabel, pads)
 	end 
@@ -1084,22 +1116,46 @@ struct
 	case ty of
 	  Punion(aux, tys) =>
 	    let
-		fun isHeader ty = 
+	  	(*function to test of all data attached to ty are from
+		  a certain consecutive chunk either in the beginning or the end of
+		  the data*)
+		fun consecChunks atBegin totalChunks ty =
+		  case ty of
+		    Pstruct (_, tys) => consecChunks atBegin totalChunks (hd tys)
+		  | Punion (_, tys) => foldr myand 
+					true (map (consecChunks atBegin totalChunks) tys)
+		  | Parray (_, {tokens=_, lengths=_, first=f, body=b, last=l}) =>
+			consecChunks atBegin totalChunks f
+		  | Base (_, ltokens:LToken list) => 
+			let fun isConsec index targetIndex ltokens =
+				if index > targetIndex then true
+				else ((List.exists (fn (tok, loc):LToken => (#recNo loc) = index) ltokens)
+				     andalso isConsec (index+1) targetIndex ltokens)
+			in
+			  if atBegin = true then
+			    isConsec 0 ((length ltokens)-1) ltokens
+			  else 
+			    ((*print ("start : " ^ (Int.toString (totalChunks-(length ltokens))) ^
+				" target: " ^ (Int.toString (totalChunks-1))); *)
+			    isConsec (totalChunks-(length ltokens)) (totalChunks-1) ltokens)
+			end
+		  | _ => raise TyMismatch
+		fun isHeader num ty = 
 		  if getCoverage ty > def_maxHeaderChunks then false
-		  else false	
+		  else consecChunks true num ty
 		fun isFooter num ty = 
-			if getCoverage ty > def_maxHeaderChunks then false
-			else false
+		  if getCoverage ty > def_maxHeaderChunks then false
+		  else ((* print "check consec for footer...\n";*) consecChunks false num ty)
 		val numChunks = (#coverage aux) 
-		val possibleHeaders = List.filter isHeader tys
+		val possibleHeaders = List.filter (isHeader numChunks) tys
 		val possibleFooters = List.filter (isFooter numChunks) tys
 		val headerTyOp = if length possibleHeaders = 0
-			then NONE
+			then (NONE)
 			else if length possibleHeaders = 1
 			then SOME (hd possibleHeaders)
 			else NONE
 		val footerTyOp = if length possibleFooters = 0
-			then NONE
+			then (NONE)
 			else if length possibleFooters = 1
 			then SOME (hd possibleFooters)
 			else NONE
