@@ -1786,7 +1786,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  let val isName = PN.isPref name
 		      val predX  = case lookupPred basePty of 
 			             NONE => P.trueX
-				   | SOME basePred => PT.Call(PT.Id basePred, [PT.Id rep] @ baseArgs)
+				   | SOME basePred => PT.Call(PT.Id basePred, [PT.Id pads, PT.Id rep] @ baseArgs)
 		      val bodySs = [PT.Return predX]
 		  in
 		      [genIsFun(isName, cParams, rep, canonicalPCT, bodySs) ]
