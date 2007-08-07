@@ -4,7 +4,7 @@ open Model
 open Times
 
 (* runs analysis using a Ty and return a refined Ty with optional header and footer *)
-fun run ( et : EndingTimes ) (ty : Ty) : Ty * Ty * bool * bool * EndingTimes =
+fun run ( et : EndingTimes ) (ty : Ty) : Ty * Ty * int * int * EndingTimes =
 let
   val measuredTy = measure (removePempty ty)
   val measured1_time = Time.now ()
@@ -17,9 +17,9 @@ let
   val _ = printTy measuredTy
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
-  val (headerTyOp, footerTyOp, auxOp, body) = 
+  val (headers, footers, auxOp, body) = 
 	if DEF_EXTRACT_HEADER_FOOTER = true then extractHeaderFooter measuredTy
- 	else (NONE, NONE, NONE, measuredTy)
+ 	else (nil, nil, NONE, measuredTy)
 (*phase one *)
 (*
   val _ = print "Phase one ...\n";
@@ -29,12 +29,8 @@ let
 	  | _ => print "Found a header or footer!\n"
 *)
   val ty1 = Reduce.reduce 1 body
-  val headerTyOp = case headerTyOp of
-		SOME header => SOME (Reduce.reduce 1 header)
-		|_ => NONE
-  val footerTyOp = case footerTyOp of
-		SOME footer => SOME (Reduce.reduce 1 footer)
-		|_ => NONE
+  val headers= map (Reduce.reduce 1) headers
+  val footers= map (Reduce.reduce 1) footers
   val reduce1_time : Time.time = Time.now ()
 (*
   val _ = printTy (measure ty1)
@@ -44,12 +40,8 @@ let
   val _ = print "Phase two ...\n";
 *)
   val ty2 = Reduce.reduce 2 ty1
-  val headerTyOp = case headerTyOp of
-		SOME header => SOME (Reduce.reduce 2 header)
-		|_ => NONE
-  val footerTyOp = case footerTyOp of
-		SOME footer => SOME (Reduce.reduce 2 footer)
-		|_ => NONE
+  val headers= map (Reduce.reduce 2) headers
+  val footers= map (Reduce.reduce 2) footers
   val reduce2_time : Time.time = Time.now ()
 (*
   val _ = printTy (measure ty2)
@@ -59,28 +51,15 @@ let
   val _ = print "Phase three ...\n";
 *)
   val ty3 = Reduce.reduce 3 ty2
-  val headerTyOp = case headerTyOp of
-		SOME header => SOME (Reduce.reduce 3 header)
-		|_ => NONE
-  val footerTyOp = case footerTyOp of
-		SOME footer => SOME (Reduce.reduce 3 footer)
-		|_ => NONE
+  val headers= map (Reduce.reduce 3) headers
+  val footers= map (Reduce.reduce 3) footers
   val reduce3_time : Time.time = Time.now ()
 
   val finalTy = case auxOp of
-	SOME aux =>
-	  (
-	    case (headerTyOp, footerTyOp) of
-		(SOME head, SOME foot) => Punion(aux, [head, ty3, foot])
-	      | (SOME head, NONE) => Punion(aux, [head, ty3])
-	      | (NONE, SOME foot) => Punion(aux, [ty3, foot])
-	      | _ => raise TyMismatch
-	  ) 
+	SOME aux => Punion(aux, headers @ [ty3] @ footers)
 	| NONE => ty3
   val measured_reduced_ty = measure finalTy
   val measured2_time : Time.time = Time.now ()
-  val withHeader = case headerTyOp of NONE => false | _ => true
-  val withFooter = case footerTyOp of NONE => false | _ => true
   val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty
 (*
@@ -114,7 +93,7 @@ let
 				  , padsEnd = #padsEnd et
                                   }
 
-in (measuredTy, measured_reduced_ty, withHeader, withFooter, endingTimes)
+in (measuredTy, measured_reduced_ty, length headers, length footers, endingTimes)
 end
 
 end

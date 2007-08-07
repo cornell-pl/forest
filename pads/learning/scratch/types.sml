@@ -1047,12 +1047,12 @@ struct
 	)
         )
      end 
-     fun TyToPADSFile ty hasHeader hasFooter includeFile =
+     fun TyToPADSFile ty numHeaders numFooters includeFile =
 	(* assume that if a ty has header and footer, the body is just one single Ty*)
 	let
 	  val recordLabel = getLabelForPADS (ty)
 	  val pads = "#include \""^ includeFile ^"\"\n" ^
-		(if hasHeader=false andalso hasFooter=false then
+		(if numHeaders=0 andalso numFooters=0 then
 			((TyToPADS "" "" true 0 nil ty) ^
 			"Psource Parray entries_t {\n" ^
 		    	"\t" ^ recordLabel ^ "[];\n" ^
@@ -1060,31 +1060,41 @@ struct
 		else 
 		  case ty of 
 		    Punion (_, tys) =>
-		      let
-		        val (headerOp, body, footerOp) = 
-		      		case (hasHeader, hasFooter) of
-				(true, true) => (SOME (hd tys), (List.nth (tys, 1)), SOME (List.last tys))
-		      		|(true, false) => (SOME (hd tys), (List.last tys), NONE)
-		      		| (false, true) => (NONE, (hd tys), SOME (List.last tys))
-				| _ => raise TyMismatch
-		      in
-			(case headerOp of
-				SOME header => TyToPADS "" "" true 0 nil header
-				| _ => "") ^
-			(TyToPADS "" "" true 0 nil body) ^
-			(case footerOp of
-				SOME footer => TyToPADS "" "" true 0 nil footer
-				| _ => "") ^
-			"Psource Pstruct " ^ recordLabel ^ " {\n" ^
-			(case headerOp of
-				SOME header => "\t" ^ (getLabelForPADS header) ^ " header;\n"
-				| _ => "") ^
-			("\t" ^ (getLabelForPADS body) ^ "[] body;\n") ^
-			(case footerOp of 
-				SOME footer => "\t" ^ (getLabelForPADS footer) ^ " footer;\n"
-				| _ => "") ^
-			"};\n"
-		      end
+		      if (numHeaders + numFooters + 1) <> length tys then
+			raise Fail "Header Footer incorrect!"
+		      else 
+			      let
+				val headers = List.take (tys, numHeaders)
+				val body = List.nth (tys, numHeaders)
+				val footers = List.drop (tys, (numHeaders+1))
+			      in
+				(case headers of
+					nil => ""
+					| _ => String.concat (map (TyToPADS "" "" true 0 nil) headers)
+				) ^
+				(TyToPADS "" "" true 0 nil body) ^
+				(case footers of
+					nil => ""
+					| _ => String.concat (map (TyToPADS "" "" true 0 nil) footers)
+				) ^
+				"Psource Pstruct " ^ recordLabel ^ " {\n" ^
+				(case headers of
+					nil => ""
+					| _ => String.concat (map 
+					  (fn t => ("\t" ^ (getLabelForPADS t) ^ 
+						" header" ^ getIdString (getAuxInfo t) ^ ";\n")) 
+					  headers)
+				) ^
+				("\t" ^ (getLabelForPADS body) ^ "[] body;\n") ^
+				(case footers of 
+					nil => ""
+					| _ => String.concat (map 
+					  (fn t => ("\t" ^ (getLabelForPADS t) ^ 
+					  " footer" ^ getIdString (getAuxInfo t) ^ ";\n")) 
+					  footers)
+				) ^
+				"};\n"
+			      end
 		  | _ => raise TyMismatch
 		)
 	in
@@ -1116,39 +1126,62 @@ struct
 	case ty of
 	  Punion(aux, tys) =>
 	    let
-	  	(*function to test of all data attached to ty are from
-		  a certain consecutive chunk either in the beginning or the end of
-		  the data*)
-		fun consecChunks atBegin totalChunks ty =
+		fun less (a:int) (b:int) : bool = a < b
+		fun firstLine ty =
 		  case ty of
-		    Pstruct (_, tys) => consecChunks atBegin totalChunks (hd tys)
+		    Pstruct (_, tys) => firstLine (hd tys)
+		  | Punion (_, tys) => min less (map firstLine tys)
+		  | Parray (_, {tokens=_, lengths=_, first=f, body=_, last=_}) =>
+			firstLine f
+		  | Base (_, ltokens:LToken list) => min less (map (fn (t, l)=> (#lineNo l)) ltokens)
+		  | _ => raise TyMismatch
+		
+		fun lineGreater (ty1, ty2) = (firstLine ty1) > (firstLine ty2)
+		val sortedTys = ListMergeSort.sort lineGreater tys
+		(*this function returns the headers as well as the remaining tys *)
+		fun getHeaders tys numLines = 
+			case tys of
+			  nil => (nil, nil)
+			| ty::tail => if numLines>0 andalso getCoverage ty = 1 then
+				      let val (newheaders, newtail) = getHeaders tail (numLines-1)
+				      in (ty::newheaders, newtail)
+				      end
+				      else (nil, tys) (* only allow single line headers *)
+		fun getFooters tys numLines = 
+			let val (rev_footers, rev_tail) = getHeaders (rev tys) numLines
+			in (rev rev_footers, rev rev_tail)
+			end
+		val (headers, tail) = getHeaders sortedTys def_maxHeaderChunks
+		val (footers, bodyTys) = getFooters tail def_maxHeaderChunks
+	  	(* function to test of all data attached to ty are 
+		  consecutive chunks from record b to record e *)
+(*
+		fun consecChunks b e ty =
+		  case ty of
+		    Pstruct (_, tys) => consecChunks b e (hd tys)
 		  | Punion (_, tys) => foldr myand 
-					true (map (consecChunks atBegin totalChunks) tys)
-		  | Parray (_, {tokens=_, lengths=_, first=f, body=b, last=l}) =>
-			consecChunks atBegin totalChunks f
+					true (map (consecChunks b e) tys)
+		  | Parray (_, {tokens=_, lengths=_, first=f, body=_, last=_}) =>
+			consecChunks b e f
 		  | Base (_, ltokens:LToken list) => 
-			let fun isConsec index targetIndex ltokens =
-				if index > targetIndex then true
-				else ((List.exists (fn (tok, loc):LToken => (#recNo loc) = index) ltokens)
-				     andalso isConsec (index+1) targetIndex ltokens)
+			let 
+			    val sorted_ltokens = ListMergeSort.sort 
+				(fn ((t1, l1), (t2, l2)) => ((#recNo l1) > (#recNo l2))) ltokens
 			in
-			  if atBegin = true then
-			    isConsec 0 ((length ltokens)-1) ltokens
-			  else 
-			    ((*print ("start : " ^ (Int.toString (totalChunks-(length ltokens))) ^
-				" target: " ^ (Int.toString (totalChunks-1))); *)
-			    isConsec (totalChunks-(length ltokens)) (totalChunks-1) ltokens)
+ 			    (getCoverage ty = e - b + 1) andalso (#recNo (#2 (hd sorted_ltokens))) = b 
+				andalso (#recNo (#2 (List.last sorted_ltokens))) = e
 			end
 		  | _ => raise TyMismatch
-		fun isHeader num ty = 
+		fun isHeader ty = 
 		  if getCoverage ty > def_maxHeaderChunks then false
-		  else consecChunks true num ty
-		fun isFooter num ty = 
+		  else consecChunks 0 ((getCoverage ty)-1) ty
+		fun isFooter totalChunks ty = 
 		  if getCoverage ty > def_maxHeaderChunks then false
-		  else ((* print "check consec for footer...\n";*) consecChunks false num ty)
-		val numChunks = (#coverage aux) 
-		val possibleHeaders = List.filter (isHeader numChunks) tys
-		val possibleFooters = List.filter (isFooter numChunks) tys
+		  else ((* print "check consec for footer...\n";*) 
+		     consecChunks (totalChunks-(getCoverage ty)) (totalChunks-1) ty)
+		val totalChunks = (#coverage aux) 
+		val possibleHeaders = List.filter isHeader tys
+		val possibleFooters = List.filter (isFooter totalChunks) tys
 		val headerTyOp = if length possibleHeaders = 0
 			then (NONE)
 			else if length possibleHeaders = 1
@@ -1170,28 +1203,28 @@ struct
 		 	| (NONE, SOME f) => not (Atom.same(tyLabel, getLabel (getAuxInfo f)))
 			| _ => true
 		  end
+*)
 		fun combAux (ty, (coverage, comp)) =
 		  ((coverage + getCoverage ty), (combTyComp (#tycomp (getAuxInfo ty)) comp))
             in
-		case (headerTyOp, footerTyOp) of
-		  (NONE, NONE) => (NONE, NONE, NONE, ty)
+		case (headers, footers) of
+		  (nil, nil) => (nil, nil, NONE, ty)
 		| _ => 
 		  let
-			val bodyTys = List.filter (notLabelEqual headerTyOp footerTyOp) tys
 			val len = length bodyTys
 		  in
 			if len = 1 then
-			  (headerTyOp, footerTyOp, SOME aux, (hd bodyTys))
+			  (headers, footers, SOME aux, (hd bodyTys))
 			else if len = 0 then raise TyMismatch
 			else 
 			  let 
 			    val (newcov, newcomp) = List.foldl combAux (0, zeroComps) bodyTys
 			    val newUnionAux = mkTyAux3 (newcov, newcomp)
 			  in
-			    (headerTyOp, footerTyOp, SOME aux, Punion(newUnionAux, bodyTys))
+			    (headers, footers, SOME aux, Punion(newUnionAux, bodyTys))
 			  end
 		  end
 	    end
-	| _ => (NONE, NONE, NONE, ty)
+	| _ => (nil, nil, NONE, ty)
 		
 end
