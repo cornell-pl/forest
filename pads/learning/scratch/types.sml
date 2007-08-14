@@ -1085,7 +1085,7 @@ struct
 						" header" ^ getIdString (getAuxInfo t) ^ ";\n")) 
 					  headers)
 				) ^
-				("\t" ^ (getLabelForPADS body) ^ "[] body;\n") ^
+				("\t" ^ (getLabelForPADS body) ^ "[] body : Plongest;\n") ^
 				(case footers of 
 					nil => ""
 					| _ => String.concat (map 
