@@ -1,0 +1,7 @@
+In system preferences, turn on personal web sharing
+Edit /etc/httpd/httpd.conf to uncomment AddHandler cgi-script .cgi
+Edit /etc/httpd/users/<user>.conf as follows:     Options Indexes MultiViews ExecCGI
+Restart apache as root using: apachectl restart
+Locate cgi stuff in Sites directory
+
+
