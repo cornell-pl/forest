@@ -37,11 +37,11 @@ structure Printing = struct
         end 
 
     (* Dump type complexity to the specified file *)
-    fun dumpTyComp ( path : string ) ( fileName : string ) ( descName : string )
+    fun dumpTyComp ( path : string ) ( fileName : string ) ( dataFile : string )
                    ( t : TyComp ) : unit =
         let val strm  = TextIO.openOut ( path ^ fileName )
             (* WARNING: hard wired path to data file *)
-            val nbits = OS.FileSys.fileSize ( "data/" ^ descName ) * 8
+            val nbits = OS.FileSys.fileSize ( dataFile ) * 8
             val ()    = TextIO.output ( strm, showTyCompNormalized nbits t )
         in TextIO.closeOut strm
         end
@@ -223,10 +223,11 @@ structure Printing = struct
 		print "Data not suitable for graphing!\n"
 
 
-    fun dumpTyInfo ( path : string ) (dataDir: string) ( descName : string ) ( baseTy : Ty ) 
+    fun dumpTyInfo ( path : string ) (dataDir: string) ( inputFileName : string ) ( baseTy : Ty ) 
 			( rewrittenTy : Ty ) (numHeaders: int) (numFooters: int)
 			( et : EndingTimes) (sep:Token option) : unit = 
-	let fun dumpTBDs (ty:Ty):unit = 
+	let val descName = !descName
+	    fun dumpTBDs (ty:Ty):unit = 
 		case ty
                 of Base (aux,tls) =>
                      if !printIDs
@@ -243,10 +244,11 @@ structure Printing = struct
 		 | Poption _ => () (* to be filled in *)
 	    fun cpFile src dest = 
 		let val fileName = path^src
+		    val destName = (!executableDir)^"/"^dest
 		    in
 			ignore (TextIO.openIn fileName)
 			    handle Iox => 
-			     (let val cpcmd = "cp "^(!executableDir)^"/"^dest^" "^fileName
+			     (let val cpcmd = "cp "^destName^" "^fileName
 			      in
 				  print "copy command: "; print cpcmd; print "\n";
 				  OS.Process.system cpcmd;
@@ -257,14 +259,15 @@ structure Printing = struct
             fun cpTokenFile tokenFileName = cpFile tokenFileName tokenFileName
     	in  
           ( print "\nOutputing partitions to directory: "; print path; print "\n"
-          ; print ( "descName.1 = " ^ descName ^ "\n")
+          ; print ( "descName.1 = " ^ (descName) ^ "\n")
           ; if OS.FileSys.isDir path handle SysErr => 
 		(OS.FileSys.mkDir path; true)
             then ( dumpParameters (path ^ "Params") rewrittenTy
                  ; dumpTBDs rewrittenTy
                  ; dumpTy (path ^ "Ty") rewrittenTy 
-                 ; dumpTyComp path "BaseComplexity" descName ( getComps baseTy ) 
-                 ; dumpTyComp path "Complexity" descName ( getComps rewrittenTy )
+                 ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getComps baseTy ) 
+                 ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getComps rewrittenTy )
+                 ; print "Finished printing Complexity\n"
                  ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy numHeaders numFooters
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 

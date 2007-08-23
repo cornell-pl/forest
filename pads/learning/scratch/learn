@@ -1,8 +1,11 @@
 #!/usr/bin/env perl
 my $args=join(" ", @ARGV);
 my $suffix= `arch-n-heapopsys`;
+my $pads_home = $ENV{"PADS_HOME"};
+my $learn_home = "$pads_home/learning/scratch";
 my $workingdirectory = `pwd`;
 chomp $workingdirectory;
 chomp $suffix;
-my $cmd = "sml \@SMLload=lib/learn.$suffix $workingdirectory $args";
+#my $cmd = "sml \@SMLload=lib/learn.$suffix $workingdirectory $args";
+my $cmd = "sml \@SMLload=$learn_home/lib/learn.$suffix $learn_home $args";
 exec $cmd;

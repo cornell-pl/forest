@@ -25,23 +25,23 @@ GEN_DIR = .
 GEN_WRITE = 1
 
 # the following indicates that generated files should not be removed
-.PRECIOUS: %.o $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c %_expanded.c
+.PRECIOUS: %.o $(GEN_DIR)/%.o $(GEN_DIR)/%.c $(GEN_DIR)/%_expanded.c %_expanded.c
 
 include $(PADS_HOME)/mk/rules.mk
 
 VPATH = ..
 
 # simple rules for our demo programs
-%-accum: $(GEN_DIR)/%.c %-accum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+%-accum: $(GEN_DIR)/%.o %-accum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-%-accum_xml: $(GEN_DIR)/%.c %-accum_xml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+%-accum_xml: $(GEN_DIR)/%.o %-accum_xml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 %-filter: $(GEN_DIR)/%.c %-filter.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-%-fmt: $(GEN_DIR)/%.c %-fmt.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+%-fmt: $(GEN_DIR)/%.o %-fmt.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 %-sum: $(GEN_DIR)/%.c %-sum.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
@@ -50,7 +50,7 @@ VPATH = ..
 %-query: $(GEN_DIR)/%.c %-query.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
-%-xml: $(GEN_DIR)/%.c %-xml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
+%-xml: $(GEN_DIR)/%.o %-xml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
 
