@@ -1127,6 +1127,8 @@ struct
 	  Punion(aux, tys) =>
 	    let
 		fun less (a:int) (b:int) : bool = a < b
+		fun greater (a:int) (b:int) : bool = a > b
+		(*get the first line # of a given ty*)
 		fun firstLine ty =
 		  case ty of
 		    Pstruct (_, tys) => firstLine (hd tys)
@@ -1135,9 +1137,20 @@ struct
 			firstLine f
 		  | Base (_, ltokens:LToken list) => min less (map (fn (t, l)=> (#lineNo l)) ltokens)
 		  | _ => raise TyMismatch
-		
+		(*get the last line # of a given ty*)
+		fun lastLine ty =
+		  case ty of
+		    Pstruct (_, tys) => lastLine (hd tys)
+		  | Punion (_, tys) => max greater (map lastLine tys)
+		  | Parray (_, {tokens=_, lengths=_, first=f, body=_, last=_}) =>
+			lastLine f
+		  | Base (_, ltokens:LToken list) => max greater (map (fn (t, l)=> (#lineNo l)) ltokens)
+		  | _ => raise TyMismatch
+
+		(*order of two tys by the first line*)	
 		fun lineGreater (ty1, ty2) = (firstLine ty1) > (firstLine ty2)
-		val sortedTys = ListMergeSort.sort lineGreater tys
+		(*order of two tys by the last line*)	
+		fun lineGreater1 (ty1, ty2) = (lastLine ty1) > (lastLine ty2)
 		(*this function returns the headers as well as the remaining tys *)
 		fun getHeaders tys numLines = 
 			case tys of
@@ -1151,8 +1164,10 @@ struct
 			let val (rev_footers, rev_tail) = getHeaders (rev tys) numLines
 			in (rev rev_footers, rev rev_tail)
 			end
+		val sortedTys = ListMergeSort.sort lineGreater tys
 		val (headers, tail) = getHeaders sortedTys def_maxHeaderChunks
-		val (footers, bodyTys) = getFooters tail def_maxHeaderChunks
+		val sortedTail = ListMergeSort.sort lineGreater1 tail
+		val (footers, bodyTys) = getFooters sortedTail def_maxHeaderChunks
 	  	(* function to test of all data attached to ty are 
 		  consecutive chunks from record b to record e *)
 (*
