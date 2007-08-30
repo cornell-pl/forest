@@ -85,14 +85,17 @@ ifndef AST_ARCH
   export AST_ARCH=$(shell $(PADS_HOME)/ast-ast/bin/package.cvs)
 endif
 
-SML_PATH = $(shell which sml)
-ifneq ("$(AST_ARCH)","darwin.ppc")
-  SML_PATH = $(shell which sml) @SMLalloc=1M
-endif
-
 ifndef SML
   export SML=$(shell which sml)
 endif
+
+ifndef SML_PATH
+  SML_PATH = $(SML)
+endif
+ifneq ("$(AST_ARCH)","darwin.ppc")
+  SML_PATH = $(SML) @SMLalloc=1M
+endif
+
 
 SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
 SML_MINOR_VER = $(shell echo $(SML_VER) | sed -e 's|.*[.]||')
@@ -115,12 +118,12 @@ tokens.lex:
 
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
-	ml-ulex --ml-lex-mode tokens.lex
+	#ml-ulex --ml-lex-mode tokens.lex
 	#lexgen --ml-lex-mode tokens.lex
 
 vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
-	ml-ulex --ml-lex-mode vanilla.lex
+	#ml-ulex --ml-lex-mode vanilla.lex
 	#lexgen --ml-lex-mode vanilla.lex
 
 learn:  common.sml
