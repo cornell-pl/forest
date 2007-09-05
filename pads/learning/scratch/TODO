@@ -1,0 +1,16 @@
+useful to have verbose mode in pretty printing with coverage, if
+coverage is one, emit line number
+
+from railroad.txt:
+
+record when two types are equal, only emit first definition; later
+uses reference name.
+
+in header identification, consider rewriting struct of unions to
+union of structs to search for headers and footers.
+
+from boot.log & yum.txt
+ consider replacing complex structure with high score and low
+coverage with "string"
+ may have to be clever about finding a terminator
+
