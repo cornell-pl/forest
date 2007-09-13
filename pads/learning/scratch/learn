@@ -1,6 +1,17 @@
 #!/usr/bin/env perl
+
+# =========================
+sub cleanupStr
+{
+    my( $txt ) = @_;
+    chomp($txt);
+    $txt =~ s/\s//g;
+    return $txt;
+}
+# =========================
+
 my $args=join(" ", @ARGV);
-my $suffix= `arch-n-heapopsys`;
+
 my $pads_home = $ENV{"PADS_HOME"};
 my $sml;
 my $sml_from = "environment variable SML";
@@ -38,8 +49,11 @@ if ($smltest !~ /^sml [\d.]+$/i) {
   print "... Trying to us it anyway...\n"
 }
 
+my $arch_n_opsys = `$pads_home/scripts/arch-n-opsys` || "";
+$arch_n_opsys = &cleanupStr($arch_n_opsys);
+print "Arch_n_opsys is: $arch_n_opsys\n";
+
 my $learn_home = "$pads_home/learning/scratch";
-chomp $suffix;
-my $cmd = "$sml \@SMLload=$learn_home/lib/learn.$suffix $learn_home $args";
+my $cmd = "$sml \@SMLload=$learn_home/lib/learn.$arch_n_opsys $learn_home $args";
 exec $cmd;
 
