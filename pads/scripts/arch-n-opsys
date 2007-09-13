@@ -61,7 +61,7 @@ case `uname -s` in
     esac
     case `uname -p` in
       powerpc) ARCH=ppc;;
-      i386) ARCH=i386;;
+      i386) ARCH=x86;;
       *) exit 1;;
     esac
     ;;
