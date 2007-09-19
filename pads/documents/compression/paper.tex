@@ -1,0 +1,45 @@
+\documentclass[12pt]{article}
+\usepackage{times,url}
+\usepackage{code}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\voffset             0in    %  top vertical offset
+\hoffset             0in    %  left horizontal offset
+\oddsidemargin       0.25in %  Left margin on odd-numbered pages.
+\evensidemargin      0.25in %  Left margin on even-numbered pages.
+\topmargin           0pt    %  Nominal distance from top of page to top of
+\headheight          0pt    %  Height of box containing running head.
+\headsep             0pt    %  Space between running head and text.
+\textwidth           6in    %  Width of text on page
+\textheight          9in    %  Height of text on page
+\setlength{\parskip}{.05in}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\title{Our title here}
+\author{
+Andrew Forrest \\ AT\&T Labs Research \\ \texttt{forrest@research.att.com}
+\and
+Kathleen Fisher \\ AT\&T Labs Research \\ \texttt{kfisher@research.att.com}
+}
+
+\input{definitions}
+
+\maketitle{}
+\input{abstract}
+\input{intro}
+\input{pads}
+\input{vcodex}
+\input{generated-compression}
+\input{experiments}
+\input{related}
+\input{conclusion}
+\section*{Acknowledgments}
+
+We would like to thank XXX for YYY.
+
+\bibliographystyle{abbrv}
+\bibliography{pads}
+
+\end{document}
