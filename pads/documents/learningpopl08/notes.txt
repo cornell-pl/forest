@@ -88,4 +88,91 @@ from the web page.
 
 =======================================
 
+On schema Discovery
+Miller, et el.
+http://citeseer.ist.psu.edu/miller03schema.html
 
+This paper uses a clustering algorithm based on attributes to have some
+basic mining of constraints on database relations. The purpose of this
+is to discovery new database schema for data with errors. This is obviously
+quite different from what we are doing. No stats analysis is done here.
+The clustering is based on some distance metric defined on the DB attributes.
+
+========================================
+
+@inproceedings{DBLP:conf/webdb/GubanovB06,
+  author    = {Michael Gubanov and
+               Philip A. Bernstein},
+  title     = {Structural text search and comparison using automatically
+               extracted schema},
+  booktitle = {WebDB},
+  year                  = {2006},
+  ee                =
+{http://db.ucsd.edu/webdb2006/camera-ready/paginated/01-161.pdf},
+  crossref  = {DBLP:conf/webdb/2006},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+This paper extracts schema from unstructured text such as instruction
+manuals through the use of natural language processing techniques. In 
+particular, it separate the nouns and verbs from each sentence and
+try to classify the subject or concept of the sentences by the nouns and
+generate attributes of the schema with the verbs or actions used. The
+counting of distinct words here seems analogous to the building of histograms
+of tokens in our paper, but the counting here is to decide the main
+concept of the sentence and not the structure of the sentence. The 
+structure is assumed to be fixed English grammar. And beyond this, the
+techniques used in two papers are very different.
+
+==========================================================
+
+*** Automatic segmentation of text into structured records
+Borkar et al.
+http://portal.acm.org/citation.cfm?doid=375663.375731
+
+This paper describes another natural language processing technique to
+extract records from unstructured text such as addresses, bib entries,etc.
+It learns a Hidden Markov Model which is a probablistic finite state
+automata and a dictionary of elements from a set of training data. The HMM
+describes the possible structure of the text e.g. an address is house
+number followed by road and followed by city with certain probabilities.
+And the dictionary tells which words are likely part of a street name, and
+which words are likely to be a city, etc. The problem they are attacking is
+quite different from ours. We are not trying to give semantics to
+free text like they do.
+
+================================
+
+*** Reconciling schemas of disparate data sources: A machine-learning approach
+Doan et al.
+http://portal.acm.org/citation.cfm?doid=375663.375731
+
+This paper introduces a system called LSD that learns the semantic mapping 
+between between two DB schemas. The input to the learning system is already 
+structured data such as XMLs and DTDs. We are learning from semi-structured
+or unstructured data and we are not trying to identity semantic relations so
+the problems are quite different. 
+
+==============================
+"Learning information extraction rules for semi-structured and free text "
+Soderland
+http://www.cs.washington.edu/homes/soderlan/soderland_ml99.pdf  
+
+This paper again describes a system called WHISK that learns information
+extraction rules from natural language text. The text can be unstructured,
+semi-structured or free text, such as ads from Graigslist. The rules 
+learned are in a form of regular expression. The learning starts with 
+a number of hand-tagged training set and some user-defined semantic classes
+such as what words means bedroom, and some empty rules. Learning and 
+human tagging happen interleavingly in iterations. The empty rules contain
+slots which need to be filled in with semantic terms such as Time, Date,
+Neighborhood, City, Bedroom. The slots are the properties of interest for
+later extraction and the number of slots are fixed a priori. Most of the
+comparison between natural language processing and our paper applies here.
+The technique we are advocating is completely automatic, push-button kind,
+whereas in this paper, human knowledge is require in the training (partly
+because this is a very hard problem). The learning of regular 
+expression could be a userful thing for us to look
+deeper, for discovering new tokens in tokenization.
+
+=================================
