@@ -1,3 +1,91 @@
-Notes on related work.
----------------------
+@inproceedings{1164139,
+ author = {Geert Jan Bex and Frank Neven and Thomas Schwentick and Karl Tuyls},
+ title = {Inference of concise DTDs from XML data},
+ booktitle = {VLDB '06: Proceedings of the 32nd international conference on Very large data bases},
+ year = {2006},
+ pages = {115--126},
+ location = {Seoul, Korea},
+ publisher = {VLDB Endowment},
+ }
+
+[meta-note: even though this is not a directly related paper, it does seem
+pretty cool and merits a deeper read than I gave it.  There may be ideas
+in here that we could exploit at some point.]
+
+This paper describes how to infer a DTD from raw XML data.
+Some of the elements of the problem are similar to our problem.
+In particular, the scheme is inferred without any intervention
+from positive examples only.  However, other elements are quite different:
+
+-- the authors are working with well-structured XML data as opposed to
+ad hoc data. Ad hoc data has tokenization problems and 
+is not a well-structured, tree-shaped collection of tags.
+
+-- We evaluate the effectiveness of our techniques on ad hoc data.
+It is impossible to know how the core ideas in this xml inference
+algorithm might work on ad hoc data.
+
+-- this paper shows how to infer a DTD, but does not show how to use it
+to automatically generate end-to-end tools (accumulator, grapher, query
+engine, xml-transformer).
+
+-- a DTD can be approximated as context-free grammar where the right-hand
+sides are regular expressions.  Consequently, in this context, the core 
+problem solved by the authors is an inference mechanism for two subclasses
+of regular expressions:
+  -- SOREs -- where every atomic element can occur at most once in the 
+                regular expression
+  -- CHAREs -- where every regular expression is a sequence of "factors"
+
+-- even omitting constraints, dependencies and switches, the sorts of
+grammars that we infer are not restricted to SOREs or CHAREs.  It
+would be interesting to investigate what would happen if we try to
+make such a restriction or whether it's simply impossible 
+to come up with any reasonable description in such cases.
+
+-- the algorithms used in our paper are completely different
+
+=========================================
+
+@inproceedings{DBLP:conf/vldb/BexNV07,
+  author    = {Geert Jan Bex and
+               Frank Neven and
+               Stijn Vansummeren},
+  title     = {Inferring XML Schema Definitions from XML Data},
+  booktitle = {VLDB},
+  year                  = {2007},
+  pages     = {998-1009},
+  ee                = {http://www.vldb.org/conf/2007/papers/research/p998-bex.pdf},
+  crossref  = {DBLP:conf/vldb/2007},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+-- this paper builds upon the paper above.  in the previous paper,
+the DTD definition could not depend upon the parent node.  In this work,
+the authors infer "k-local" SOREs where the definition of the SORE can
+depend upon its parent, grant-parent, great-grand-parent, etc. to a maximum of
+k levels up for some fixed constant k.  This allows the authors to infer
+the more powerful XML Schema Definitions (as opposed to just DTDs) for 
+their data.
+
+-- these k-local SOREs include an element of dependency -- dependency on 
+parents and grandparents.  Since ad hoc data doesn't have the same kind of
+nesting structure as XML, we tend to find dependencies between siblings
+and represent those as "switches".
+
+-- most of the comparison with the previous paper also applies...
+
+=======================================
+
+InstanceToSchema tool
+http://www.xmloperator.net/i2s/
+
+this is open source software written in Java and released under a 
+BSD-style license.  It infers RELAX NG schema for xml. 
+I couldn't find any papers describing the inference techniques
+in any detail.  I didn't look too hard.  There were no obvious links 
+from the web page.
+
+=======================================
+
 
