@@ -176,3 +176,83 @@ expression could be a userful thing for us to look
 deeper, for discovering new tokens in tokenization.
 
 =================================
+@Article{DenisLemayTerlutte2004,
+   author="F. Denis and A. Lemay and A. Terlutte",
+   title="Learning regular languages using RFSAs",
+   journal=TCS,
+   year="2004",
+   volume="313",
+   number="2",
+   pages="267-294"
+}
+
+This paper proposes an algorithm DeLeTe2 to learn a subset of 
+regular languages called residual languages by identifying
+inclusion relations among them as opposed to equivalence, from
+only positive samples. The result of that is a residual finite 
+state automaton (RFSA) instead of a DFA. Because learning 
+RFSA is not possible in polynomial time, the paper attempts to 
+learn a language that is larger than minimum instead. 
+Comparison of learning automata with our work above also
+applies here.
+
+==================================
+@InProceedings{fernau02a,
+   booktitle="Proceedings International Workshop on Machine Learning and Data
+Mining in Pattern Recognition (MLDM 2001)",
+   author="H. Fernau",
+   title="Learning XML grammars",
+   publisher=SV,
+   series=LNCS,
+   volume=2123,
+   pages="73-87",
+   year=2001
+}
+
+This paper is an earlier attempt than the Bex et al. above to infer
+DTDs from XMLs. They propose a generalized framework of learning
+a sub-class of regular language (such as XML) by limiting the language
+with a distinguishing function. The algorithm proposed is exponential to
+the size of this function. They claim to generalize over k-reversible
+language by Angluin and the terminal distinguishing languages by 
+Radhakrishnan. I will have to read those two papers to tell more of
+the story. This paper proved some properties about XML and also 
+the biased language that they infer. For comparison between this paper
+and our work, similar argument in the comments on Bex et al. applies
+here. Also notice that our method is more of a heuristic nature.  
+
+====================================
+@InProceedings{RaeymaekersBruynoogheVandenBussche05,
+   series=LNAI,
+   year="2005",
+   booktitle="Proceedings of ECML'2005" ,
+   pages="305--316",
+   volume="3720",
+   author="Stefan Raeymaekers and Maurice Bruynooghe and  Jan {Van den
+Bussche}",
+   title="Learning (k,l)-Contextual Tree Languages for Information Extraction"
+}
+
+This paper is another attempt at learning a wrapper based on a tree
+automaton that represents HTML/XML data. This tree language limits the height
+and the cardinality of the input tree to l and k respective to achieve a
+balanc between expressiveness and generality. The value l and k need to be
+tune with both positive and negative examples. The paper claims to require
+fewer positive and negative examples to learn the grammar compared to
+previous attempts.
+
+======================================
+[2006] Aurélien Lemay and Joachim Niehren and Rémi Gilleron, Learning n-ary
+Node Selecting Tree Transducers from Completely Annotated Examples
+<http://hal.ccsd.cnrs.fr/view_by_stamp.php?label=INRIA&langue=en&action_todo=vi
+ew&id=inria-00088077&version=1>, /International Colloquium on Grammatical
+Inference/, Lecture Notes in Artificial Intelligence *4201*, 253-267
+
+This paper looks at the problem of learning queries from XML or HTML trees. 
+They propose a polynomial time algorithm to learn tree automata that represent
+node queries in the XML trees. The algorithm trains on both positive and negative
+examples. This problem is quite different than our problem which is ad hoc
+data and not in any tree structure to begin with. Our learning systems also only
+trains on positive examples. 
+
+========================================
