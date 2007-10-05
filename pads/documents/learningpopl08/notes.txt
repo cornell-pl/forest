@@ -124,6 +124,12 @@ concept of the sentence and not the structure of the sentence. The
 structure is assumed to be fixed English grammar. And beyond this, the
 techniques used in two papers are very different.
 
+One thing to note is that many of the natural language processing techniques
+require some prior knowledge of the domain (in this case nouns and verbs),
+and the tokenization used in our work also require such knowledge (e.g.
+date, time, url formats). In this sense, there is some similarity between
+our work and NLP.
+
 ==========================================================
 
 *** Automatic segmentation of text into structured records
@@ -256,3 +262,63 @@ data and not in any tree structure to begin with. Our learning systems also only
 trains on positive examples. 
 
 ========================================
+@InProceedings{MusleaMintonKnoblock03,
+   booktitle="IJCAI 2003",
+   year="2003",
+   title= "Active learning with strong and weak views: a case study on wrapper
+induction",
+   pages="415--420",
+   author="Ion Muslea and Steve Minton and Craig Knoblock"
+}
+
+This paper presents a technique to select document samples for human to label
+in "active learning". The technique is called aggressive co-testing
+which is an improvement from their earlier Naive Co-testing method
+which uses two strong views (one forward and one backward) on sample
+data. A view in this context is a set of features from the document
+that is sufficient to learn the exact concept. Co-testing is applicable
+to documents which has multiple disjoint view, each of which sufficient
+for learning. Instead of randomly choose examples to label, the
+Co-testing method pick those example on which the multiple views disagree,
+that is, the concept learned from one view is different from another. 
+This method reduces the number of samples that require labeling effective.
+The Agressive Co-Testing uses a weak view that doesn't give the exact
+concept (but either more general or more specific) when learned on, in
+addition to two strong views used in Naive Co-testing. 
+The difference between this work and our work is, first this is a technique
+that helps labeling samples, which is not even relevant to us; second
+the technique is used for learning features in a document and not the structure
+or grammar of the entire document like what we are doing; and
+finally probability theory is not used here with these techniques. 
+
+==========================================
+@inproceedings{DBLP
+<http://www.informatik.uni-trier.de/%7Eley/db/about/bibtex.html>:conf/icml/Ires 
+onCCFKL05,
+ author    = {Neil Ireson and
+              Fabio Ciravegna and
+              Mary Elaine Califf and
+              Dayne Freitag and
+              Nicholas Kushmerick and
+              Alberto Lavelli},
+ title           = {Evaluating machine learning for information extraction},
+ booktitle = {ICML},
+ year           = {2005},
+ pages           = {345-352},
+ ee           = {http://doi.acm.org/10.1145/1102351.1102395},
+ crossref  = {DBLP:conf/icml/2005},
+ bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+This paper documents an information extraction contest which uses uniform
+comparison among all the participants. The competition asks the participants
+to learn important features from a number of annotated CFP documents, and then
+cross validate on a larger number of test documents. Altogether 18 
+different systems were used in the competition. The paper compared the accuracy
+and learning curves of these systems. Conclusions include that different
+systems implementing the same ML algorithm can perform very differently and
+many systems exhibit over-fitting. Parameterization plays a critical role sometimes
+in the performance of the algorithm. This paper is not directly related to the kind of
+techniques we introduce in our work. However, the empirical methodology is interesting
+and could help us in presenting our data to the ML community.
+
