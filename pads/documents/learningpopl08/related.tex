@@ -1,23 +1,255 @@
 Researchers have been studying {\em grammar induction}, the process of
-learning the structure of a data source, since the 1960s; De La Higuera
-surveys some recent trends~\cite{higuera01current}.  However,
-our system is unique in two important ways.  First, our inference
-algorithm does not stand alone; it is part of the more general \pads{}
-programming environment.  The fusion of the
-\pads{} system, including its automatic data representation generation,
-its error detection facilities, its generic programming environment, 
-and its powerful tool suite, together with grammar induction
-is one of our key contributions.  Second, many researchers have
-focused either on grammar induction for natural language processing or
-for information extraction from \xml{} or \html{} documents.  In
-contrast, we focus on ad hoc data sources such as system logs and
-scientific data sets. Ad hoc data is substantially less
-structured syntactically than \xml{}, and yet, unlike natural language, it is
-possible to assign our data sources accurate, compact descriptions. After
-searching the literature and consulting
-with experts in grammar induction at the CAGI 2007
-workshop, where we presented a two page overview of our system~\cite{burke+:cagi07},
-we could find no existing work comparable to ours.
+learning the structure of a data source, for decades.  Nevertheless,
+the work we present in this paper represents an important and novel 
+contribution to the field for three key reasons:
+
+{\em NOTE: is the last one good?}
+
+\begin{enumerate}
+\item Our system solves {\em a new end-to-end problem} not treated in
+past work --- the problem of generating an extensible suite of fully
+functional data processing tools directly from ad hoc data.  We can
+currently generate an xml translator, a normalizing reformatter, a
+graphing tool, a full query engine allowing users to write arbitrary XQueries
+against the ad hoc data, the accumulator tool, and
+programming libraries for parsing, printing and data validation.
+Generating such a wide variety of powerful tools would be impossible
+without the combination of three elements: grammar induction,
+automatic intermediate representation generation and type-directed
+programming.  A key contribution of this work is the conception,
+development and evaluation of this end-to-end system.  After surveying
+experts at the CAGI 2007 workshop on grammar induction, where we
+presented a two-page overview of our system~\cite{burke+:cagi07}, and
+searching the literature, we could find no existing system that
+provides this end-to-end functionality.
+
+\item Past work on grammar induction has focused primarily on
+either (1) abstract, theoretical problems, (2) natural language processing or
+(3) XML typing.  Our work tackles a new domain, that of complex system
+logs and other {\em ad hoc data sources}. 
+Since ad hoc data has different characteristics from these 
+other domains, na\:{i}ve adaptation of existing algorithms 
+will not necessarily prove to be the most effective.  Our particular
+system is tuned to perform well on ad hoc data, particularly system
+logs and networking data.  Moreover, we have performed the necessary evaluation
+on these sources to prove it.  One of the conclusions of the
+chair of the CAGI 2007 workshop, presented in the final discussion session
+of the workshop, was that ``ad hoc data'' was indeed a new domain for the 
+study of grammar induction and that more research in this area was an
+important future direction for the community.
+
+\item  From a technical standpoint, we developed a new top-down 
+structure-discovery algorithm and showed how to combine that 
+productively with a classic bottom-up rewriting system based on 
+the minimum description length principle. We demonstrate that our
+new algorithm has good practical properties on ad hoc data sources:  
+it usually infers correct descriptions on a small amount of training
+data and its performance scales linearly relative to the amount of training
+data used.
+\end{enumerate}
+
+\noindent
+The following paragraphs analyze
+the most closely related work in the areas of
+traditional grammar induction, information extraction, and XML analysis
+in more depth.
+
+\paragraph*{Traditional Grammar Induction.}
+Classic grammar induction algorithms (see De La Higuera~\cite{higuera01current}
+or Vidal~\cite{vidal:gisurvey} for surveys) can be divided into two classes:
+those that require both positive and negative examples to discover a grammar
+and those that only require positive examples.\footnote{A positive training
+example is an example guaranteed to be in the language in question;
+a negative training example is an example guaranteed {\em not} to be in the 
+language in question.}  The problem our system solves is the latter as
+there is no practical situation in which negative examples of ad hoc 
+data sources are available.  Of course, a programmer might try to create
+negative training examples themselves by hand, but creating a representative
+sample would surely take far longer than simply writing
+the appropriate PADS description itself.  Consequently, effective theoretical
+algorithms for learning from both positive and negative examples, such as
+RPNI and others~\cite{rpni,fill-in-more-references}, are simply not useful 
+in our context.  
+
+Unfortunately, an early result by Gold~\cite{gold:inference} 
+showed that perfect solutions to the 
+grammar induction problem for any superfinite class of languages is 
+impossible in the limit when the algorithm has no access to negative 
+examples.  A {\em super-finite} class of languages is any set of languages
+that includes all finite languages and at least one infinite language. Hence,
+all the most familiar classes of languages, including regular expressions, 
+context free grammars and PADS are superfinite.  There are two
+main tactics one can use to avoid this negative result~\cite{vidal:gisurvey}:
+(1) give up on perfect language identification and instead
+settle for 
+{\em approximate identification}~\cite{wharton:approximate-language-identification} through the use of probabilistic language
+models or (2) use domain knowledge to explicitly limit the class of languages
+to a non-super-finite class.  
+
+Examples of non-trivial, non-superfinite
+language classes with known inference algorithms include
+k-reversible languages~\cite{angluin:revesible-language-inference},
+k-testable regular languages~\cite{garcia+:k-testable-languages},
+SORES~\cite{bex+:dtd-inference} and CHARES~\cite{bex+:dtd-inference}.
+None of these languages and their associated algorithms seem to be 
+a particularly good fit for inferring PADS descriptions (or at least the
+regular subset of PADS without dependency and constraints).  
+For example, ad hoc data
+is not necessarily reversible and hence k-reversible languages
+do not appear relevant.  K-testable regular languages might be somewhat
+more relevant, but algorithms for inferring them
+operate by finding a finite automaton and converting that 
+automaton into a regular expression.  Unfortunately, the conversion process
+often leads to overly verbose regular expressions, sometimes 
+exponential in the size of the 
+automaton~\cite{bex+:dtd-inference}.  SORES are a subset of the k-testable
+regular languages with a linear-size translation from automata to
+regular expressions, but they carry the restriction that each symbol
+in the regular expression appear at most once.  A cursory glance at
+our hand-written PADS descriptions reveals that many such descriptions
+include repeated use of the same symbol.  Finally, it appears that
+CHARES restrict the nesting of regular expression operators too severely to 
+be of much use to us.  For example, when $a$, $b$, and $c$ are atomic symbols,
+even the simple expression $(ab + c)*$ is not a CHARE.
+
+Given the difficulty of finding useful non-superfinite language classes,
+we have given up on perfect algorithms and adopted an approach that
+more closely follows past research on grammar inference
+through the use of probabilistic or information-theoretic
+models.  Classic examples of such procedures include work by Stolcke and
+Omohundro~\cite{stolcke94inducing}, {\em insert other references here -- see Hong thesis related work for other work...} and 
+Hong~\cite{hong01using,hong:thesis}.  These and a number of other algorithms
+operate by repeatedly rewriting a candidate grammar (or set of candidate
+grammars) until an objective function is optimized.
+If the training data is for the learning system is the strings
+$s_1$, $s_2$, $\ldots$, $s_n$, these algorithms normally start their
+process using the grammar $s_1 + s_2 + \cdots + s_n$, which may
+be enormous if there is much training data.  
+Moreover, it may be the case that 
+hundreds or even thousands of different rewrites apply initially.
+Consequently, using such algorithms as is may be extremely expensive.
+Hence, while 
+the overall architecture of our structure-refinement phase is
+quite similar to this prior work, it was a considerable challenge to make
+it effective in practice.  In particular, our structure refinement
+phase only works because it is preceded by a novel and highly efficient
+histogram-based structure-discovery algorithm 
+that identifies a good initial candidate to start the search.  
+The effectiveness of structure-discovery allowed us to 
+simplify our search algorithm and cut down the search space we must
+look at substantially.  In addition to worrying about
+performance considerations, we tuned our structure refinement phase
+specifically for ad hoc data by tweaking our information-theorectic
+scoring function as necessary and including many domain-specific rules.  
+The domain-specific rules include those for finding constraints and 
+dependencies as well as those for introducing constants, enumerations and
+good basic types/tokens that cannot be found effectively at earlier stages.
+Some of these rules are needed in our system, but not other systems
+that work in different domains, because
+tokenization is highly ambiguous in ad hoc data.
+Our initial tokenization and structure-discovery algorithms often 
+over-generalize and this over-generalization must be undone during
+the rewriting phase.
+  
+%% One disadvantage of such
+%% techniques is that the initial state is large (representing
+%% the entire training data set explicitly) and the search space is 
+%% enormous.  Nevertheless, bottom-up state-merging is often used because
+%% it has been difficult to find an effective state-splitting algorithm.
+%% Our histogram-based structure-discovery procedure is a new state-splitting
+%% algorithm that appears to work well on ad hoc data when coupled with
+%% bottom-up rewriting.
+
+
+%% The classic grammar induction problem~\cite{vidal:gisurvey} requires we find an
+%% algorithm that discovers a grammar $G$ given a set of
+%% positive examples $R+$ (example strings in the language to be inferred)
+%% and a set of negative examples $R-$ (example strings {\em not}
+%% in the language to be inferred).  To be more specific, in the limit,
+%% as the sets of positive and negative examples grow, the
+%% algorithm is expected to converge on the language that defines them.  
+%% Unfortunately, very early on,
+%% Gold~\cite{gold:inference} proved a key negative result about this problem:  If
+%% the algorithm is presented with no negative examples, grammar
+%% induction for any super-finite class of languages is impossible.
+%% A {\em super-finite} class of languages is any set of languages
+%% that includes all finite languages and at least one infinite language.
+%% All the most familiar classes of languages, including regular expressions, 
+%% context free grammars and PADS, fall into this class.
+
+%% Traditional
+%% Some traditional grammar induction algorithms assume that
+%% both positive and negative training data
+%% One way to categorize research in traditional
+%% grammar induction is to ask whether the research in question
+%% assumes that both positive and negative training data is available
+%% or whether only positive training data is available.
+
+%% analyze the assumptions made
+%% about the training data.  
+%% Very early in the study of grammar induction, Gold proved a key
+%% negative result:
+
+
+%% Other researchers have defined grammar induction algorithms that use
+%% bottom-up rewriting to search through description space for an optimal
+%% description.  Many of these techniques, such as 
+%% require the availability of both
+%% positive and negative examples.  In our context, negative examples
+%% never exist, making such techniques inapplicable.
+%% % since Gold's early result proved the
+%% %impossibility of {\em perfect} grammar induction for any useful family of
+%% %languages when no negative examples are
+%% %available~\cite{gold:inference}.  
+%% However, others, such as Stolcke and
+%% Omohundro~\cite{stolcke94inducing} and Hong~\cite{hong01using}, do not
+%% assume the existence of negative examples.  These and a number of other systems
+%% search through solution space using
+%% state-merging rewriting rules.  One disadvantage of such
+%% techniques is that the initial state is large (representing
+%% the entire training data set explicitly) and the search space is 
+%% enormous.  Nevertheless, bottom-up state-merging is often used because
+%% it has been difficult to find an effective state-splitting algorithm.
+Our histogram-based structure-discovery procedure is a new state-splitting
+algorithm that appears to work well on ad hoc data when coupled with
+bottom-up rewriting.
+
+% State-merging rewriting rules seem to be
+% more popular than 
+% that use bottom-up rewriting to find good grammars may suffer from the
+% problem of running into local maxima.  The rewriting component of our
+% algorithm can also run into a local maximum, but because we start with
+% a relatively good candidate generated from our recursive, top-down
+% algorithm, this does not appear to be much of a problem for us.  We
+% also believe that combining top-down structure-discovery with
+% bottom-up rewriting has the potential to deal with larger data sources
+% than a pure bottom-up approach.  Our empirical experiments demonstrate
+% that the top-down structure-discovery phase is extremely efficient
+% when compared with the cost of rewriting.  However, proposals for
+% bottom-up-only inference techniques use the (possibly enormous) data
+% source itself as the first description.  We are unaware of other
+% systems that combine two techniques similar to ours.
+
+
+%% ; De La Higuera
+%% surveys some recent trends~\cite{higuera01current}.  However,
+%% our system is unique in two important ways.  First, our inference
+%% algorithm does not stand alone; it is part of the more general \pads{}
+%% programming environment.  The fusion of the
+%% \pads{} system, including its automatic data representation generation,
+%% its error detection facilities, its generic programming environment, 
+%% and its powerful tool suite, together with grammar induction
+%% is one of our key contributions.  Second, many researchers have
+%% focused either on grammar induction for natural language processing or
+%% for information extraction from \xml{} or \html{} documents.  In
+%% contrast, we focus on ad hoc data sources such as system logs and
+%% scientific data sets. Ad hoc data is substantially less
+%% structured syntactically than \xml{}, and yet, unlike natural language, it is
+%% possible to assign our data sources accurate, compact descriptions. After
+%% searching the literature and consulting
+%% with experts in grammar induction at the CAGI 2007
+%% workshop, where we presented a two page overview of our system~\cite{burke+:cagi07},
+%% we could find no existing work comparable to ours.
 
 % Third, from a
 % technical standpoint, we developed a new top-down structure-discovery
@@ -25,6 +257,20 @@ we could find no existing work comparable to ours.
 % classic bottom-up rewriting systems based on the minimum description
 % length principle.  In what follows, we compare our system more
 % specifically to the most closely related work of other researchers.
+
+\paragraph*{Information Extraction Systems.}
+The basic goal of an information extraction system is usually
+to allow users to write various kinds of queries again a data source.
+One of the tools produced by our work
+is a query tool that allows users to write XQueries against an
+ad hoc data source and hence there is overlap in our goals with
+those of information extraction systems.  However, our system 
+also produces many more tools automatically: XML converters, formatters,
+graphers, C programming libraries, etc. so it provides more functionality
+than other information extraction systems we have seen in the literature.
+
+The WHISK system~\cite{soderland:whisk} learns how to extract data
+from snippets of free text such as apartment advertisements.
 
 Perhaps the most closely related work is from Arasu and 
 Garcia-Molina~\cite{arasu+:sigmod03}, who developed an information
@@ -79,42 +325,3 @@ in the training data.
 Since Potter's Wheel is aimed at processing
 relational data, they only infer \cd{struct} types
 as opposed to enumerations, arrays, switches or unions.  
-
-Other researchers have defined grammar induction algorithms that use
-bottom-up rewriting to search through description space for an optimal
-description.  Many of these techniques, such as RPNI~\cite{rpni} 
-require the availability of both
-positive and negative examples.  In our context, negative examples
-never exist, making such techniques inapplicable.
-% since Gold's early result proved the
-%impossibility of {\em perfect} grammar induction for any useful family of
-%languages when no negative examples are
-%available~\cite{gold:inference}.  
-However, others, such as Stolcke and
-Omohundro~\cite{stolcke94inducing} and Hong~\cite{hong01using}, do not
-assume the existence of negative examples.  These and a number of other systems
-search through solution space using
-state-merging rewriting rules.  One disadvantage of such
-techniques is that the initial state is large (representing
-the entire training data set explicitly) and the search space is 
-enormous.  Nevertheless, bottom-up state-merging is often used because
-it has been difficult to find an effective state-splitting algorithm.
-Our histogram-based structure-discovery procedure is a new state-splitting
-algorithm that appears to work well on ad hoc data when coupled with
-bottom-up rewriting.
-
-% State-merging rewriting rules seem to be
-% more popular than 
-% that use bottom-up rewriting to find good grammars may suffer from the
-% problem of running into local maxima.  The rewriting component of our
-% algorithm can also run into a local maximum, but because we start with
-% a relatively good candidate generated from our recursive, top-down
-% algorithm, this does not appear to be much of a problem for us.  We
-% also believe that combining top-down structure-discovery with
-% bottom-up rewriting has the potential to deal with larger data sources
-% than a pure bottom-up approach.  Our empirical experiments demonstrate
-% that the top-down structure-discovery phase is extremely efficient
-% when compared with the cost of rewriting.  However, proposals for
-% bottom-up-only inference techniques use the (possibly enormous) data
-% source itself as the first description.  We are unaware of other
-% systems that combine two techniques similar to ours.
