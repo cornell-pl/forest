@@ -61,19 +61,18 @@ those that require both positive and negative examples to discover a grammar
 and those that only require positive examples.\footnote{A positive training
 example is an example guaranteed to be in the language in question;
 a negative training example is an example guaranteed {\em not} to be in the 
-language in question.}  The problem our system solves is the latter as
-there is no practical situation in which negative examples of ad hoc 
-data sources are available.  Of course, a programmer might try to create
+language in question.}  The problem our system solves is the latter; 
+negative examples of ad hoc data sources are not available in practice.  
+Of course, a programmer might try to create
 negative training examples themselves by hand, but creating a representative
 sample would surely take far longer than simply writing
 the appropriate PADS description itself.  Consequently, effective theoretical
 algorithms for learning from both positive and negative examples, such as
-RPNI and others~\cite{rpni,fill-in-more-references}, are simply not useful 
-in our context.  
+RPNI~\cite{rpni}, are simply not useful in our context.  
 
 Unfortunately, an early result by Gold~\cite{gold:inference} 
-showed that perfect solutions to the 
-grammar induction problem for any superfinite class of languages is 
+showed that perfect solutions to the problem
+are impossible any superfinite class of languages is 
 impossible in the limit when the algorithm has no access to negative 
 examples.  A {\em super-finite} class of languages is any set of languages
 that includes all finite languages and at least one infinite language. Hence,
@@ -84,13 +83,13 @@ main tactics one can use to avoid this negative result~\cite{vidal:gisurvey}:
 settle for 
 {\em approximate identification}~\cite{wharton:approximate-language-identification} through the use of probabilistic language
 models or (2) use domain knowledge to explicitly limit the class of languages
-to a non-super-finite class.  
+to a non-superfinite class.  
 
 Examples of non-trivial, non-superfinite
 language classes with known inference algorithms include
 k-reversible languages~\cite{angluin:revesible-language-inference},
 k-testable regular languages~\cite{garcia+:k-testable-languages},
-SORES~\cite{bex+:dtd-inference} and CHARES~\cite{bex+:dtd-inference}.
+SOREs~\cite{bex+:dtd-inference} and CHAREs~\cite{bex+:dtd-inference}.
 None of these languages and their associated algorithms seem to be 
 a particularly good fit for inferring PADS descriptions (or at least the
 regular subset of PADS without dependency and constraints).  
@@ -101,22 +100,21 @@ more relevant, but algorithms for inferring them
 operate by finding a finite automaton and converting that 
 automaton into a regular expression.  Unfortunately, the conversion process
 often leads to overly verbose regular expressions, sometimes 
-exponential in the size of the 
-automaton~\cite{bex+:dtd-inference}.  SORES are a subset of the k-testable
+exponential in the size of the automaton~\cite{bex+:dtd-inference}. 
+SOREs are a subset of the k-testable
 regular languages with a linear-size translation from automata to
 regular expressions, but they carry the restriction that each symbol
 in the regular expression appear at most once.  A cursory glance at
 our hand-written PADS descriptions reveals that many such descriptions
 include repeated use of the same symbol.  Finally, it appears that
-CHARES restrict the nesting of regular expression operators too severely to 
+CHAREs restrict the nesting of regular expression operators too severely to 
 be of much use to us.  For example, when $a$, $b$, and $c$ are atomic symbols,
 even the simple expression $(ab + c)*$ is not a CHARE.
 
 Given the difficulty of finding useful non-superfinite language classes,
-we have given up on perfect algorithms and adopted an approach that
-more closely follows past research on grammar inference
-through the use of probabilistic or information-theoretic
-models.  Classic examples of such procedures include work by Stolcke and
+it is reasonable to turn to algorithms for approximate
+inference that use probabilistic models.    
+Classic examples of such procedures include work by Stolcke and
 Omohundro~\cite{stolcke94inducing}, {\em insert other references here -- see Hong thesis related work for other work...} and 
 Hong~\cite{hong01using,hong:thesis}.  These and a number of other algorithms
 operate by repeatedly rewriting a candidate grammar (or set of candidate
@@ -125,32 +123,71 @@ If the training data is for the learning system is the strings
 $s_1$, $s_2$, $\ldots$, $s_n$, these algorithms normally start their
 process using the grammar $s_1 + s_2 + \cdots + s_n$, which may
 be enormous if there is much training data.  
-Moreover, it may be the case that 
-hundreds or even thousands of different rewrites apply initially.
-Consequently, using such algorithms as is may be extremely expensive.
-Hence, while 
-the overall architecture of our structure-refinement phase is
-quite similar to this prior work, it was a considerable challenge to make
-it effective in practice.  In particular, our structure refinement
-phase only works because it is preceded by a novel and highly efficient
+Consequently, hundreds or even thousands of different rewrites apply to the
+initial candidate grammar.  Our structure refinement
+phase avoids these problems and works relatively quickly 
+because it is preceded by a novel and highly efficient
 histogram-based structure-discovery algorithm 
-that identifies a good initial candidate to start the search.  
-The effectiveness of structure-discovery allowed us to 
-simplify our search algorithm and cut down the search space we must
-look at substantially.  In addition to worrying about
-performance considerations, we tuned our structure refinement phase
-specifically for ad hoc data by tweaking our information-theorectic
-scoring function as necessary and including many domain-specific rules.  
-The domain-specific rules include those for finding constraints and 
-dependencies as well as those for introducing constants, enumerations and
-good basic types/tokens that cannot be found effectively at earlier stages.
-Some of these rules are needed in our system, but not other systems
-that work in different domains, because
-tokenization is highly ambiguous in ad hoc data.
-Our initial tokenization and structure-discovery algorithms often 
-over-generalize and this over-generalization must be undone during
-the rewriting phase.
+that identifies a good candidate grammar to start the search from.  
+Another interesting, non-standard element of our algorithm is the way 
+it is tuned to include a number of
+rules, such as those that find constraints, specialize and rewrite tokens.
+These rules are very useful in the domain of ad hoc data; different
+considerations are appropriate in other domains such as XML or HTML.
+
+%% is also tuned in a variety of ways to make it effective
+
+%% The effectiveness of structure-discovery allows us to 
+%% simplify our search algorithm and cut down the search space we 
+%% look at substantially.  In addition to worrying about
+%% performance considerations, we tuned our structure refinement phase
+%% specifically for ad hoc data by including domain-specific rules
+%% for finding constraints and 
+%% dependencies as well as those for introducing constants, enumerations and
+%% good basic types/tokens that cannot be found effectively at earlier stages.
+%% Some of these rules are needed in our system, but not other systems
+%% that work in different domains, because
+%% tokenization is highly ambiguous in ad hoc data.
+%% Our initial tokenization and structure-discovery algorithms often 
+%% over-generalize and this over-generalization must be undone during
+%% the rewriting phase.  {\em NOTE: end of that paragraph was highly  run-on}
+
+One final category of algorithm to consider 
+are those that learn various kinds of
+automata as opposed to regular expressions or grammars.
+For instance, Denis {\em et al.}~\cite{denis:learning-regular-language}
+shows how to learn regular languages using a new kind of automaton
+called an RFSA, through a process somewhat related to RPNI.  As another
+example,
+Raeymaekers {\em et al.}~\cite{raeymaekers+:learning-tree-languages,raeymaekers+:wrapper-induction} show how to learn tree automata for
+($k$,$l$)-Contextual Tree Languages.
+One difficulty with adapting these algorithms to our task is that 
+any coverter from automata to regular expressions (or PADS descriptions)
+may produce very large, unnatural descriptions.  This was found to occur 
+when such algorithms were applied to XML data~\cite{bex+:dtd-inference}.
+
+%% developed another system for information extraction from web pages
+%% based on learning ($k$,$l$)-Contextual Tree Languages.  They show that
+%% these tree languages can be learned from positive examples 
+%% (from which one may infer they are not superfinite) and apply
+%% their techniques to the problem of information extraction.  One of the
+%% difficulties they face involves estimating the parameters involved in
+
   
+%% {\em NOTE: I'm leaving out reference to denis:learning-regular-languages (see
+%% pads.bib file).
+%% Vincent Danos mentioned it but it contains no references to any real data.
+%% It's interesting theoretical result that infers a new kind of automaton.
+%% This automaton will likely have the same potential difficulties 
+%% (possibly exponential explosion -- I haven't prove that though) 
+%% when conversion to regular expressions happens. Anyway, I just didn't
+%% want to bother studying the paper because they're so much other stuff
+%% that is more relevant.  basically, I just couldn't figure out how to cram
+%% the reference in elegantly.  I actually couldn't even figure out when I skimmed
+%% the paper whether or not it uses both positive and negative examples.
+%% It gets compared to RPNI, so I think it must use negative examples.
+%% }
+
 %% One disadvantage of such
 %% techniques is that the initial state is large (representing
 %% the entire training data set explicitly) and the search space is 
@@ -259,18 +296,23 @@ bottom-up rewriting.
 % specifically to the most closely related work of other researchers.
 
 \paragraph*{Information Extraction Systems.}
-The basic goal of an information extraction system is usually
-to allow users to write various kinds of queries again a data source.
-One of the tools produced by our work
-is a query tool that allows users to write XQueries against an
-ad hoc data source and hence there is overlap in our goals with
-those of information extraction systems.  However, our system 
-also produces many more tools automatically: XML converters, formatters,
-graphers, C programming libraries, etc. so it provides more functionality
-than other information extraction systems we have seen in the literature.
 
-The WHISK system~\cite{soderland:whisk} learns how to extract data
-from snippets of free text such as apartment advertisements.
+The basic goal of an information extraction system is often
+to find and separate the few interesting and relevant bits of information 
+(needles) from a haystack of data.  Many information extraction
+systems learn rules about the structure of the data that they
+analyze but these rules often do not completely characterize
+the data in question.  In other words, information extraction systems
+often do not learn a description of the data, they only learn enough
+to retrieve key data items and often leave behind extraneous data they
+view as garbage.  Our system, on the other hand, learns complete descriptions,
+which are necessary for generating several of our tools,
+most notably the parsing and printing libraries, as well as the translation
+tools, which seek to {\em preserve} all the data in an ad hoc data file,
+but make it available in a different format.  It is also the case that
+most information extraction systems treat a different domain than we do ---
+they are most commonly applied to either collections of web pages or to 
+free text as opposed to system log files or neworking data.
 
 Perhaps the most closely related work is from Arasu and 
 Garcia-Molina~\cite{arasu+:sigmod03}, who developed an information
@@ -293,6 +335,15 @@ and so cannot be applied directly to ad hoc data.
 %Arasu does not.  In addition, a substantial portion of our system
 %is a description rewriting engine, which Arasu seems not to need.  
 
+
+Earlier work by Kushmerick ...
+
+
+The WHISK system~\cite{soderland:whisk} learns how to extract data
+from snippets of free text such as apartment advertisements.  Also
+structured text...
+
+
 The TSIMMIS project~\cite{chawathe+:tsimmis} aims to
 allow users to manage and query collections of heterogeneous, ad hoc
 data sources.  TSIMMIS sits on top of the Rufus
@@ -305,11 +356,12 @@ type.
 This sort of classification is materially
 different from the syntactic analysis we have developed.
 
-%For further reading on
-%information extraction from web pages, Hong's
-%thesis~\cite{hong:thesis} includes an informative survey.  Though,
-%Arasu's work and TSIMMIS appear more closely related to our work than
-%the others Hong mentions.
+
+For further reading on
+information extraction from web pages, Hong's
+thesis~\cite{hong:thesis} includes an informative survey.  Though,
+Arasu's work and TSIMMIS appear more closely related to our work than
+the others Hong mentions.
 
 Potter's Wheel~\cite{raman+:potterwheel} is a system that attempts to
 help users find and purge errors from
@@ -325,3 +377,56 @@ in the training data.
 Since Potter's Wheel is aimed at processing
 relational data, they only infer \cd{struct} types
 as opposed to enumerations, arrays, switches or unions.  
+
+\paragraph*{XML Type Inference}
+Many researchers have studied the problem of learning
+a schema such as a DTD or XSchema from a collection 
+of XML documents~\cite{fernau:learning-xml,garofalakis+:xtract,bex+:inferring-xml-schema,bex+:dtd-inference}.  At a high level, this task is similar
+to the format inference 
+component of our system, though, of course, there is more
+to our system than just format inference (we produce fully 
+functional tools for parsing, printing and transforming ad hoc data).  
+However, the details differ because
+XML has different characteristics from the ad hoc data we
+work with.  One difference, mentioned earlier in the comparison with
+Arasu's work, is that XML documents come in a well-nested tree
+shape that needs no discovery.  The delimiters that define nesting
+structure in ad hoc data is more difficult to uncover.  On the other hand,
+our informal observations suggest that ad hoc data sources are generally
+less nested than large XML documents.  A second important difference
+is that the token structure of ad hoc data sources is often ambiguous and
+the best token selection is not known in advance.  
+One of our strategies for dealing with
+these ambiguities is to define simple approximate tokens for use
+in the tokenization phase, but then to employ a collection of 
+rules to improve token ({\em i.e.}, base type) choices in the rewriting phase
+when more contextual information is available.  In contrast,
+tokens in XML documents are clearly demarcated using angle bracket syntax.
+A third difference is that XML documents are often organized such that
+the structure of a child node is dependent on its parent or grandparent.
+In contrast, in the flatter ad hoc data we have considered, dependencies
+generally arise between siblings -- some data item to the left influences
+the structure of data to the right.  As a result of these differences,
+XML inference algorithms cannot be used ``off-the-shelf'' for understanding
+the structure of ad hoc data.  They must be modified, tuned and
+empirically evaluated on this new task.
+
+One line of research on schema inference for XML, which we would
+particularly like to highlight makes use of the 
+observation that 99\% of the content models for an XML node are defined as
+SOREs or CHAREs~\cite{martens+:expressiveness-xml-schema} (recall, these
+are heavily restricted forms of regular expressions).  
+This observation allows Bex {\em et al.}~\cite{bex+:dtd-inference} to define
+an efficient algorithm for inferring concise DTDs.  Later 
+Bex {\em et al.}~\cite{bex+:inferring-xml-schema} build on this work 
+by showing how to infer $k$-local XML Schema definitions also based on
+SORES.  A $k$-local definition allows node content to depend on the parent
+tag, grandparent tag, etc. (up to $k$ levels for some fixed $k$).
+As mentioned earlier, hand-written PADS descriptions do not generally obey
+the SOREs or CHAREs restriction, nor are they generally arranged with a nesting
+structure that suggests $k$-local inference will be particularly useful.
+The successful application of these techniques to XML data reinforces 
+the idea that the ad hoc data we analyze has quite different characteristics
+from XML, and therefore the ad hoc data inference problem merits study
+independent of the XML inference problem.
+
