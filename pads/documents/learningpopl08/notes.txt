@@ -256,8 +256,9 @@ Inference/, Lecture Notes in Artificial Intelligence *4201*, 253-267
 
 This paper looks at the problem of learning queries from XML or HTML trees. 
 They propose a polynomial time algorithm to learn tree automata that represent
-node queries in the XML trees. The algorithm trains on both positive and negative
-examples. This problem is quite different than our problem which is ad hoc
+node queries in the XML trees. The algorithm trains on both positive and 
+negative examples. And the examples have to be annotated by human. 
+This problem is quite different than our problem which is ad hoc
 data and not in any tree structure to begin with. Our learning systems also only
 trains on positive examples. 
 
@@ -322,3 +323,24 @@ in the performance of the algorithm. This paper is not directly related to the k
 techniques we introduce in our work. However, the empirical methodology is interesting
 and could help us in presenting our data to the ML community.
 
+========================================================
+
+Xtract: Learning Document Type Descritors from XML Document Collections
+Garofalskis et al.
+
+This is one of the influential papers on XML DTD inferencing. The basic
+idea is to generate one regular expression for each node (element name) in
+the XML, where the symbols in the expression is the sub-element names under
+that node. So at a node level, the DTD inference problem is exactly the 
+same as our problem after our data file is completely tokenized. 
+The tokens are essentially the sub-element names. The paper takes a number of
+positive examples, and starts with a regex which is the union of all
+the positive examplees, and then used some generalization techniques to
+create sequences (Kleene star) and tuples. The resulting grammar is
+more general than the original grammar. Then it uses factoring to simplify the
+grammar. During generalization, a number of possible candidate may result, 
+MDL scores are computed for each candidate and a best is chosen in the end.
+The generalization and factoring are essentially a set of rewriting rules that
+leads to a search problem. This is similar to our approach. However, because
+the initial grammar can be extremely complex, it is questionable how
+effective these rewriting can be. 
