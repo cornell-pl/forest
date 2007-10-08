@@ -1,14 +1,32 @@
 \begin{thebibliography}{10}
 
+\bibitem{angluin:revesible-language-inference}
+D.~Angluin.
+\newblock Inference of reversible languages.
+\newblock {\em J. ACM}, 29(3):741--765, 1982.
+
 \bibitem{arasu+:sigmod03}
 A.~Arasu and H.~Garcia-Molina.
 \newblock Extracting structured data from web pages.
-\newblock In {\em ACM SIGMOD conference}, pp. 337--348, 2003.
+\newblock In {\em ACM SIGMOD International conference on management of data},
+  pages 337--348, 2003.
+
+\bibitem{bex+:dtd-inference}
+G.~J. Bex, F.~Neven, T.~Schwentick, and K.~Tuyls.
+\newblock Inference of concise {DTDs} from {XML} data.
+\newblock In {\em VLDB '06: Proceedings of the 32nd international conference on
+  Very large data bases}, pages 115--126. VLDB Endowment, 2006.
+
+\bibitem{bex+:inferring-xml-schema}
+G.~J. Bex, F.~Neven, and S.~Vansummeren.
+\newblock Inferring {XML} schema definitions from {XML} data.
+\newblock In {\em VLDB}, pages 998--1009, 2007.
 
 \bibitem{burke+:cagi07}
 D.~Burke, K.~Fisher, D.~Walker, P.~White, and K.~Q. Zhu.
 \newblock Towards 1-click tool generation with {PADS}.
-\newblock In {\em ICML CAGI Workshop}, 2007. 
+\newblock In {\em ICML Workshop on Challenges and Applications of Grammar
+  Induction}, Corvallis, OR, June 2007.
 
 \bibitem{chawathe+:tsimmis}
 S.~Chawathe, H.~Garcia-Molina, J.~Hammer, K.~Ireland, Y.~Papakonstantinou,
@@ -16,22 +34,45 @@ S.~Chawathe, H.~Garcia-Molina, J.~Hammer, K.~Ireland, Y.~Papakonstantinou,
 \newblock The {TSIMMIS} project: Integration of heterogeneous information
   sources.
 \newblock In {\em 16th Meeting of the Information Processing Society of Japan},
-  pp. 7--18, 1994.
+  pages 7--18, Tokyo, Japan, 1994.
+
+\bibitem{denis:learning-regular-languages}
+F.~Denis, A.~Lemay, and A.~Terlutte.
+\newblock Learning regular languages using {RFSAs}.
+\newblock {\em Theor. Comput. Sci.}, 313(2):267--294, 2004.
 
 \bibitem{fernandez+:padx}
 M.~F. Fern\'andez, K.~Fisher, R.~Gruber, and Y.~Mandelbaum.
 \newblock {PADX}: Querying large-scale ad hoc data with xquery.
-\newblock In {\em Programming Language Technologies for {XML}}, 2006.
+\newblock In {\em Programming Language Technologies for {XML}}, Jan. 2006.
+
+\bibitem{fernau:learning-xml}
+H.~Fernau.
+\newblock Learning {XML} grammars.
+\newblock In {\em MLDM}, pages 73--87, 2001.
 
 \bibitem{fisher+:pads}
 K.~Fisher and R.~Gruber.
 \newblock Pads: A domain specific language for processing ad hoc data.
-\newblock In {\em PLDI} 2005, pp. 295--304. 
+\newblock In {\em PLDI}, pages 295--304. {ACM} Press, June 2005.
 
 \bibitem{fisher+:popl06}
 K.~Fisher, Y.~Mandelbaum, and D.~Walker.
 \newblock The next 700 data description languages.
-\newblock In {\em {ACM} POPL} 2006.
+\newblock In {\em {ACM} Symposium on Principles of Programming Languages}.
+  {ACM} Press, Jan. 2006.
+
+\bibitem{garcia+:k-testable-languages}
+P.~Garc\'{\i}a and E.~Vidal.
+\newblock Inference of k-testable languages in the strict sense and application
+  to syntactic pattern recognition.
+\newblock {\em IEEE Trans. Pattern Anal. Mach. Intell.}, 12(9):920--925, 1990.
+
+\bibitem{garofalakis+:xtract}
+M.~N. Garofalakis, A.~Gionis, R.~Rastogi, S.~Seshadri, and K.~Shim.
+\newblock {XTRACT}: A system for extracting document type descriptors from
+  {XML} documents.
+\newblock In {\em {SIGMOD} Conference}, pages 165--176, 2000.
 
 \bibitem{gold:inference}
 E.~M. Gold.
@@ -43,16 +84,28 @@ P.~D. Gr\"{u}nwald.
 \newblock {\em The Minimum Description Length Principle}.
 \newblock {MIT Press}, May 2007.
 
+\bibitem{gubanov+:structural-text-search}
+M.~Gubanov and P.~A. Bernstein.
+\newblock Structural text search and comparison using automatically extracted
+  schema.
+\newblock In {\em WebDB}, 2006.
+
 \bibitem{higuera01current}
 C.~D.~L. Higuera.
 \newblock Current trends in grammatical inference.
-\newblock {\em LNCS}, 1876:28--31, 2001.
+\newblock {\em Lecture Notes in Computer Science}, 1876:28--31, 2001.
+
+\bibitem{hong:thesis}
+T.~W. Hong.
+\newblock {\em Grammatical Inference for Information Extraction and
+  Visualisation on the Web}.
+\newblock Ph.D. Thesis, Imperial College London, 2002.
 
 \bibitem{hong01using}
 T.~W. Hong and K.~L. Clark.
 \newblock Using grammatical inference to automate information extraction from
   the {Web}.
-\newblock {\em LNCS}, 2168:216+, 2001.
+\newblock {\em Lecture Notes in Computer Science}, 2168:216+, 2001.
 
 \bibitem{TANE-HKPT99}
 Y.~Huhtala, J.~K{\"a}rkk{\"a}inen, P.~Porkka, and H.~Toivonen.
@@ -65,7 +118,20 @@ J.~L. Hutchens and M.~D. Alder.
 \newblock Finding structure via compression.
 \newblock In D.~M.~W. Powers, editor, {\em Proceedings of the Joint Conference
   on New Methods in Language Processing and Computational Natural Language
-  Learning}, pp. 79--82. ACL, 1998.
+  Learning}, pages 79--82. Association for Computational Linguistics, 1998.
+
+\bibitem{ireson+:ml-evaluation}
+N.~Ireson, F.~Ciravegna, M.~E. Califf, D.~Freitag, N.~Kushmerick, and
+  A.~Lavelli.
+\newblock Evaluating machine learning for information extraction.
+\newblock In {\em ICML}, pages 345--352, 2005.
+
+\bibitem{lemay+:tree-transducers}
+A.~Lemay, J.~Niehren, and R.~Gilleron.
+\newblock Learning n-ary node selecting tree transducers from completely
+  annotated examples.
+\newblock In {\em International Conference on Grammatical Inference}, pages
+  253--267, 2006.
 
 \bibitem{Lin91:divergence}
 J.~Lin.
@@ -75,7 +141,13 @@ J.~Lin.
 \bibitem{mandelbaum+:pads-ml}
 Y.~Mandelbaum, K.~Fisher, D.~Walker, M.~Fernandez, and A.~Gleyzer.
 \newblock {PADS/ML}: {A} functional data description language.
-\newblock In {\em {ACM} POPL 2007}.
+\newblock In {\em {ACM} Symposium on Principles of Programming Languages}.
+  {ACM} Press, Jan. 2007.
+
+\bibitem{martens+:expressiveness-xml-schema}
+W.~Martens, F.~Neven, T.~Schwentick, and G.~J. Bex.
+\newblock Expressiveness and complexity of {XML} schema.
+\newblock {\em ACM Trans. Database Syst.}, 31(3):770--813, 2006.
 
 \bibitem{rpni}
 J.~Oncina and P.~Garcia.
@@ -86,20 +158,52 @@ J.~Oncina and P.~Garcia.
 {PADS} project.
 \newblock {\url{http://www.padsproj.org/}}, 2007.
 
+\bibitem{raeymaekers+:wrapper-induction}
+S.~Raeymaekers and M.~Bruynooghe.
+\newblock Wrapper induction: Learning (k,l)-contextual tree languages directly
+  as unranked tree automata.
+\newblock In {\em Proceedings of the International Workshop on Mining and
+  Learning with Graphs}, pages 197--204, Berlin, Germany, Sept. 2006.
+
+\bibitem{raeymaekers+:learning-tree-languages}
+S.~Raeymaekers, M.~Bruynooghe, and J.~V. den Bussche.
+\newblock Learning (k, l)-contextual tree languages for information extraction.
+\newblock In {\em European Conference on Machine Learning}, pages 305--316,
+  2005.
+
 \bibitem{raman+:potterwheel}
 V.~Raman and J.~M. Hellerstein.
 \newblock Potter's wheel: An interactive data cleaning system.
-\newblock In {\em VLDB 2001}, pp. 381--390.
+\newblock In {\em International Conference on Very Large Data Bases}, pages 381
+  -- 390, 2001.
 
 \bibitem{shoens+:rufus}
 K.~A. Shoens, A.~Luniewski, P.~M. Schwarz, J.~W. Stamos, and I.~Joachim~Thomas.
 \newblock The {Rufus} system: Information organization for semi-structured
   data.
-\newblock In {\em VLDB 1993}, pp. 97--107.
+\newblock In {\em International Conference on Very Large Data Bases}, pages
+  97--107, San Francisco, CA, USA, 1993. Morgan Kaufmann Publishers Inc.
+
+\bibitem{soderland:whisk}
+S.~Soderland.
+\newblock Learning information extraction rules for semi-structured and free
+  text.
+\newblock {\em Machine Learning}, 34(1-3):233--272, 1999.
 
 \bibitem{stolcke94inducing}
 A.~Stolcke and S.~Omohundro.
 \newblock Inducing probabilistic grammars by bayesian model merging.
 \newblock In {\em International Conference on Grammatical Inference}, 1994.
+
+\bibitem{vidal:gisurvey}
+E.~Vidal.
+\newblock Grammatical inference: An introduction survey.
+\newblock In {\em International Conference on Grammatical Inference}, pages
+  1--4, 1994.
+
+\bibitem{wharton:approximate-language-identification}
+R.~M. Wharton.
+\newblock Approximate language identification.
+\newblock {\em Information and Control}, 26(3):236--255, 1974.
 
 \end{thebibliography}

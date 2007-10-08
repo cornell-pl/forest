@@ -68,7 +68,8 @@ negative training examples themselves by hand, but creating a representative
 sample would surely take far longer than simply writing
 the appropriate PADS description itself.  Consequently, effective theoretical
 algorithms for learning from both positive and negative examples, such as
-RPNI~\cite{rpni}, are simply not useful in our context.  
+RPNI~\cite{rpni} and Lemay's work~\cite{lemay+:tree-transducers}, are 
+simply not useful in our context.  
 
 Unfortunately, an early result by Gold~\cite{gold:inference} 
 showed that perfect solutions to the problem
@@ -152,10 +153,10 @@ considerations are appropriate in other domains such as XML or HTML.
 %% over-generalize and this over-generalization must be undone during
 %% the rewriting phase.  {\em NOTE: end of that paragraph was highly  run-on}
 
-One final category of algorithm to consider 
+Another category of algorithms to consider 
 are those that learn various kinds of
 automata as opposed to regular expressions or grammars.
-For instance, Denis {\em et al.}~\cite{denis:learning-regular-language}
+For instance, Denis {\em et al.}~\cite{denis:learning-regular-languages}
 shows how to learn regular languages using a new kind of automaton
 called an RFSA, through a process somewhat related to RPNI.  As another
 example,
@@ -165,6 +166,9 @@ One difficulty with adapting these algorithms to our task is that
 any coverter from automata to regular expressions (or PADS descriptions)
 may produce very large, unnatural descriptions.  This was found to occur 
 when such algorithms were applied to XML data~\cite{bex+:dtd-inference}.
+We would need such a converter to present inferred descriptions to users
+and to funnel the results of inference to our tool-generation infrastructure.
+
 
 %% developed another system for information extraction from web pages
 %% based on learning ($k$,$l$)-Contextual Tree Languages.  They show that
@@ -247,9 +251,9 @@ when such algorithms were applied to XML data~\cite{bex+:dtd-inference}.
 %% the entire training data set explicitly) and the search space is 
 %% enormous.  Nevertheless, bottom-up state-merging is often used because
 %% it has been difficult to find an effective state-splitting algorithm.
-Our histogram-based structure-discovery procedure is a new state-splitting
-algorithm that appears to work well on ad hoc data when coupled with
-bottom-up rewriting.
+%% Our histogram-based structure-discovery procedure is a new state-splitting
+%% algorithm that appears to work well on ad hoc data when coupled with
+%% bottom-up rewriting.
 
 % State-merging rewriting rules seem to be
 % more popular than 
@@ -297,22 +301,38 @@ bottom-up rewriting.
 
 \paragraph*{Information Extraction Systems.}
 
-The basic goal of an information extraction system is often
+The basic goal of an information extraction system is 
 to find and separate the few interesting and relevant bits of information 
-(needles) from a haystack of data.  Many information extraction
-systems learn rules about the structure of the data that they
-analyze but these rules often do not completely characterize
-the data in question.  In other words, information extraction systems
-often do not learn a description of the data, they only learn enough
-to retrieve key data items and often leave behind extraneous data they
-view as garbage.  Our system, on the other hand, learns complete descriptions,
-which are necessary for generating several of our tools,
-most notably the parsing and printing libraries, as well as the translation
-tools, which seek to {\em preserve} all the data in an ad hoc data file,
-but make it available in a different format.  It is also the case that
-most information extraction systems treat a different domain than we do ---
-they are most commonly applied to either collections of web pages or to 
-free text as opposed to system log files or neworking data.
+(needles) from a haystack of data.  These systems often learn partial
+or total information about the structure of the data they are searching
+through.  Most such systems have been developed either for
+deployment over web (HTML) data or free text; only a few have investigated
+information extraction from ad hoc data.  Those that have do not
+provide the same suite of tools as PADS does.
+
+% Many information extraction
+% systems learn rules about the structure of the data that they
+% analyze but these rules often do not completely characterize
+% the data in question.  In other words, information extraction systems
+% often do not learn a description of the data, they only learn enough
+% to retrieve key data items and often leave behind extraneous data they
+% view as garbage.  Our system, on the other hand, learns complete descriptions,
+% which are necessary for generating several of our tools,
+% most notably the parsing and printing libraries, as well as the translation
+% tools, which seek to {\em preserve} all the data in an ad hoc data file,
+% but make it available in a different format.  
+% It is also the case that
+% most information extraction systems treat a different domain than we do ---
+% they are usually applied to either collections of web pages or to 
+% free text.  Both Web pages
+% and free text present different sorts of problems from ad hoc data.
+
+Examples of systems that operate over free text include
+Gubanov's structural text search~\cite{gubanov+:structural-text-search} and 
+Soderland's WHISK system~\cite{soderland:whisk}.  WHISK is particularly
+interesting because it can also be deployed ad hoc data like our system....
+
+
 
 Perhaps the most closely related work is from Arasu and 
 Garcia-Molina~\cite{arasu+:sigmod03}, who developed an information
@@ -324,7 +344,7 @@ extraction system for sets of similar web pages.
 Arasu uses a top-down grammar induction
 algorithm somewhat similar to our rough structure-inference phase
 (though it does not use histograms),
-but has no description rewriting engine.  
+but has no description-rewriting engine.  
 %However, in certain ways, Arasu has a much easier task than we do as html
 %documents have far more regular structure than ad hoc data sources do.
 This algorithm exploits the hierarchical nesting
@@ -339,10 +359,6 @@ and so cannot be applied directly to ad hoc data.
 Earlier work by Kushmerick ...
 
 
-The WHISK system~\cite{soderland:whisk} learns how to extract data
-from snippets of free text such as apartment advertisements.  Also
-structured text...
-
 
 The TSIMMIS project~\cite{chawathe+:tsimmis} aims to
 allow users to manage and query collections of heterogeneous, ad hoc
@@ -356,12 +372,22 @@ type.
 This sort of classification is materially
 different from the syntactic analysis we have developed.
 
+Another approach to learning information extraction rules involves
+having the user manually label documents and then using the labelled
+documents in training.  Muslea {\em et al.}~\cite{muslea+:active-learning} 
+use this idea effectively to extract information from web pages.  Work by 
+Ireson {\em et al.}~\cite{ireson+:ml-evaluation} investigates how systems 
+like this should be evaluated.  Systems that depend upon labeling
+are unlikely to be helpful in our context; rather than spending 
+time explicitly labeling documents, the user might as well write a 
+PADS description by hand.
 
-For further reading on
-information extraction from web pages, Hong's
-thesis~\cite{hong:thesis} includes an informative survey.  Though,
-Arasu's work and TSIMMIS appear more closely related to our work than
-the others Hong mentions.
+
+% For further reading on
+% information extraction from web pages, Hong's
+% thesis~\cite{hong:thesis} includes an informative survey.  Though,
+% Arasu's work and TSIMMIS appear more closely related to our work than
+% the others Hong mentions.
 
 Potter's Wheel~\cite{raman+:potterwheel} is a system that attempts to
 help users find and purge errors from
