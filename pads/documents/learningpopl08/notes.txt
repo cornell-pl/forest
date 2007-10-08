@@ -344,3 +344,46 @@ The generalization and factoring are essentially a set of rewriting rules that
 leads to a search problem. This is similar to our approach. However, because
 the initial grammar can be extremely complex, it is questionable how
 effective these rewriting can be. 
+
+==========================================
+Wrapper Induction for Information Extraction
+Nicholas Kushmerick, IJCAI 1997
+
+This paper (as well as the PhD thesis of the same title) proposed a framework for
+extract information from web pages. A wrapper is a function that returns some 
+tuples of interest from a web page. It is represented by a procedure such as
+"skip everything till first occurrence of h, until an occurence of t, go to next element
+between tag l_i and r_i and extract it as the next attribute in the tuple." 
+The kind of wrapper being induced here is what they called HLRT wrapper which is
+suitable for tabulated content. 
+
+Given a set of sample pages, the framework first use an oracle function to label
+the samples. The oracle function makes use of a collection of pre-defined
+domain-specific reusable heuristics called the "recognizers" to identify things 
+of interest e.g. what constitutes a phone number or what is a country name, etc. 
+The recognizers might not be perfect and a "corroboration" process takes care of
+the errors in recognization attributes. Labels such generated might be ambiguous.
+This is handled by a probablistic model called PAC. The labelling technique is
+the key contribution of this paper. 
+
+The number of samples needed to be confident about the induction result is governed
+by PAC model which defines an error metric over hypothesis. With each sample page
+labeled, a BuiltHLRT algorithm runs through each page, and extract the common
+header and footer as well as the prefixes and suffixes of each labeled attribute, and
+construct the wrapper. 
+
+The techniques introduced here only requires positive samples and the labelling 
+process can be related to the tokenization process of our work. In fact, it will be
+interesting to see if the corroboration algorithm can be applied somehow to
+our tokenization. However there are significant differences between this work and
+ours: 
+
+1. The problem being solved here is information extraction and not learning of
+the entire structure of the documents, so our goals are different;
+2. The technique only works for html/xml pages of tabular format 
+3. the induction used here is really simple which basically constitutes of 
+a conjunction of all the features each sample page pocesses and calls that 
+a generalization. No stats analysis of any kind is used in the induction.
+
+
+=================================
