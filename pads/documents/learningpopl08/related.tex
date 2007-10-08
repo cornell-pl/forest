@@ -67,8 +67,7 @@ Of course, a programmer might try to create
 negative training examples themselves by hand, but creating a representative
 sample would surely take far longer than simply writing
 the appropriate PADS description itself.  Consequently, effective theoretical
-algorithms for learning from both positive and negative examples, such as
-RPNI~\cite{rpni} and Lemay's work~\cite{lemay+:tree-transducers}, are 
+algorithms for learning from both positive and negative examples~\cite{rpni,denis:learning-regular-languages,lemay+:tree-transducers,raeymaekers+:learning-tree-languages}, are 
 simply not useful in our context.  
 
 Unfortunately, an early result by Gold~\cite{gold:inference} 
@@ -131,8 +130,8 @@ because it is preceded by a novel and highly efficient
 histogram-based structure-discovery algorithm 
 that identifies a good candidate grammar to start the search from.  
 Another interesting, non-standard element of our algorithm is the way 
-it is tuned to include a number of
-rules, such as those that find constraints, specialize and rewrite tokens.
+it is tuned to include specialized rules for finding constraints and 
+rewrite tokens.
 These rules are very useful in the domain of ad hoc data; different
 considerations are appropriate in other domains such as XML or HTML.
 
@@ -156,18 +155,15 @@ considerations are appropriate in other domains such as XML or HTML.
 Another category of algorithms to consider 
 are those that learn various kinds of
 automata as opposed to regular expressions or grammars.
-For instance, Denis {\em et al.}~\cite{denis:learning-regular-languages}
-shows how to learn regular languages using a new kind of automaton
-called an RFSA, through a process somewhat related to RPNI.  As another
-example,
-Raeymaekers {\em et al.}~\cite{raeymaekers+:learning-tree-languages,raeymaekers+:wrapper-induction} show how to learn tree automata for
-($k$,$l$)-Contextual Tree Languages.
+For instance, RPNI~\cite{rpni} and Denis's work on learning 
+RFSAs~\cite{denis:learning-regular-languages} fall into this category,
+as do Raeymaekers's algorithms to learn tree automata~\cite{raeymaekers+:learning-tree-languages,raeymaekers+:wrapper-induction}.
 One difficulty with adapting these algorithms to our task is that 
 any coverter from automata to regular expressions (or PADS descriptions)
 may produce very large, unnatural descriptions.  This was found to occur 
 when such algorithms were applied to XML data~\cite{bex+:dtd-inference}.
 We would need such a converter to present inferred descriptions to users
-and to funnel the results of inference to our tool-generation infrastructure.
+or to funnel the results of inference to our tool-generation infrastructure.
 
 
 %% developed another system for information extraction from web pages
@@ -300,15 +296,14 @@ and to funnel the results of inference to our tool-generation infrastructure.
 % specifically to the most closely related work of other researchers.
 
 \paragraph*{Information Extraction Systems.}
-
 The basic goal of an information extraction system is 
 to find and separate the few interesting and relevant bits of information 
-(needles) from a haystack of data.  These systems often learn partial
+(the needles) from a haystack of data.  These systems often learn partial
 or total information about the structure of the data they are searching
 through.  Most such systems have been developed either for
-deployment over web (HTML) data or free text; only a few have investigated
-information extraction from ad hoc data.  Those that have do not
-provide the same suite of tools as PADS does.
+deployment over structured HTML data or free text; only a few have investigated
+information extraction from ad hoc data such as system logs.  Those that have 
+do not provide the same suite of tools as PADS does.
 
 % Many information extraction
 % systems learn rules about the structure of the data that they
@@ -328,11 +323,11 @@ provide the same suite of tools as PADS does.
 % and free text present different sorts of problems from ad hoc data.
 
 Examples of systems that operate over free text include
-Gubanov's structural text search~\cite{gubanov+:structural-text-search} and 
+Gubanov's structural text search~\cite{gubanov+:structural-text-search},
+Borkar's work~\cite{borkar+:text-segmentation} on extracting well-formed
+records and 
 Soderland's WHISK system~\cite{soderland:whisk}.  WHISK is particularly
 interesting because it can also be deployed ad hoc data like our system....
-
-
 
 Perhaps the most closely related work is from Arasu and 
 Garcia-Molina~\cite{arasu+:sigmod03}, who developed an information
@@ -372,7 +367,7 @@ type.
 This sort of classification is materially
 different from the syntactic analysis we have developed.
 
-Another approach to learning information extraction rules involves
+Another approach to learning information extraction tools involves
 having the user manually label documents and then using the labelled
 documents in training.  Muslea {\em et al.}~\cite{muslea+:active-learning} 
 use this idea effectively to extract information from web pages.  Work by 
@@ -404,7 +399,7 @@ Since Potter's Wheel is aimed at processing
 relational data, they only infer \cd{struct} types
 as opposed to enumerations, arrays, switches or unions.  
 
-\paragraph*{XML Type Inference}
+\paragraph*{XML Type Inference.}
 Many researchers have studied the problem of learning
 a schema such as a DTD or XSchema from a collection 
 of XML documents~\cite{fernau:learning-xml,garofalakis+:xtract,bex+:inferring-xml-schema,bex+:dtd-inference}.  At a high level, this task is similar
@@ -416,10 +411,10 @@ However, the details differ because
 XML has different characteristics from the ad hoc data we
 work with.  One difference, mentioned earlier in the comparison with
 Arasu's work, is that XML documents come in a well-nested tree
-shape that needs no discovery.  The delimiters that define nesting
-structure in ad hoc data is more difficult to uncover.  On the other hand,
+shape.  On the one hand, the delimiters that define nesting
+structure in ad hoc data is more difficult to uncover, bu on the other hand,
 our informal observations suggest that ad hoc data sources are generally
-less nested than large XML documents.  A second important difference
+far less nested than large XML documents.  A second important difference
 is that the token structure of ad hoc data sources is often ambiguous and
 the best token selection is not known in advance.  
 One of our strategies for dealing with
@@ -438,7 +433,7 @@ the structure of ad hoc data.  They must be modified, tuned and
 empirically evaluated on this new task.
 
 One line of research on schema inference for XML, which we would
-particularly like to highlight makes use of the 
+particularly like to highlight, makes use of the 
 observation that 99\% of the content models for an XML node are defined as
 SOREs or CHAREs~\cite{martens+:expressiveness-xml-schema} (recall, these
 are heavily restricted forms of regular expressions).  
@@ -456,3 +451,11 @@ the idea that the ad hoc data we analyze has quite different characteristics
 from XML, and therefore the ad hoc data inference problem merits study
 independent of the XML inference problem.
 
+Another related problem of great interest in the XML and databases world
+involves finding a mapping between two data sources with different schema.
+Doan et al.~\cite{doan+:disparate-data-sources} is one example amongst
+many who attempt to solve this problem using a machine learning approach.
+While some of our PADS tools do involve translations between
+different formats, our learning system does not attempt to discover
+translation tools for which the output is guaranteed to match 
+the characteristics of a second data set.

@@ -15,6 +15,6 @@ quick2:  paper.tex
 
 paper:  paper.tex pads.bib discussion.tex definitions.tex intro.tex review.tex algorithm.tex conclusion.tex appendix.tex abstract.tex
 	latex paper.tex; 
-	#bibtex paper.text;
+	bibtex paper;
 	latex paper.tex; latex paper.tex; dvips paper.dvi -o paper.ps -t letter
 	dvipdf paper.dvi

@@ -22,6 +22,12 @@ G.~J. Bex, F.~Neven, and S.~Vansummeren.
 \newblock Inferring {XML} schema definitions from {XML} data.
 \newblock In {\em VLDB}, pages 998--1009, 2007.
 
+\bibitem{borkar+:text-segmentation}
+V.~Borkar, K.~Deshmukh, and S.~Sarawagi.
+\newblock Automatic segmentation of text into structured records.
+\newblock In {\em ACM SIGMOD international conference on Management of data},
+  pages 175--186, New York, NY, USA, 2001. ACM Press.
+
 \bibitem{burke+:cagi07}
 D.~Burke, K.~Fisher, D.~Walker, P.~White, and K.~Q. Zhu.
 \newblock Towards 1-click tool generation with {PADS}.
@@ -41,6 +47,13 @@ F.~Denis, A.~Lemay, and A.~Terlutte.
 \newblock Learning regular languages using {RFSAs}.
 \newblock {\em Theor. Comput. Sci.}, 313(2):267--294, 2004.
 
+\bibitem{doan+:disparate-data-sources}
+A.~Doan, P.~Domingos, and A.~Y. Halevy.
+\newblock Reconciling schemas of disparate data sources: a machine-learning
+  approach.
+\newblock In {\em {ACM SIGMOD} international conference on Management of data},
+  pages 509--520, New York, NY, USA, 2001. ACM Press.
+
 \bibitem{fernandez+:padx}
 M.~F. Fern\'andez, K.~Fisher, R.~Gruber, and Y.~Mandelbaum.
 \newblock {PADX}: Querying large-scale ad hoc data with xquery.
@@ -49,7 +62,8 @@ M.~F. Fern\'andez, K.~Fisher, R.~Gruber, and Y.~Mandelbaum.
 \bibitem{fernau:learning-xml}
 H.~Fernau.
 \newblock Learning {XML} grammars.
-\newblock In {\em MLDM}, pages 73--87, 2001.
+\newblock In {\em International Workshop on Machine Learning and Data Mining in
+  Pattern Recognition}, pages 73--87, 2001.
 
 \bibitem{fisher+:pads}
 K.~Fisher and R.~Gruber.
@@ -124,7 +138,8 @@ J.~L. Hutchens and M.~D. Alder.
 N.~Ireson, F.~Ciravegna, M.~E. Califf, D.~Freitag, N.~Kushmerick, and
   A.~Lavelli.
 \newblock Evaluating machine learning for information extraction.
-\newblock In {\em ICML}, pages 345--352, 2005.
+\newblock In {\em International Conference on Machine Learning}, pages
+  345--352, 2005.
 
 \bibitem{lemay+:tree-transducers}
 A.~Lemay, J.~Niehren, and R.~Gilleron.
@@ -148,6 +163,13 @@ Y.~Mandelbaum, K.~Fisher, D.~Walker, M.~Fernandez, and A.~Gleyzer.
 W.~Martens, F.~Neven, T.~Schwentick, and G.~J. Bex.
 \newblock Expressiveness and complexity of {XML} schema.
 \newblock {\em ACM Trans. Database Syst.}, 31(3):770--813, 2006.
+
+\bibitem{muslea+:active-learning}
+I.~Muslea, S.~Minton, and C.~Knoblock.
+\newblock Active learning with strong and weak views: a case study on wrapper
+  induction.
+\newblock In {\em International Joint Conferences on Artificial Intelligence},
+  pages 415--420, 2003.
 
 \bibitem{rpni}
 J.~Oncina and P.~Garcia.
