@@ -181,6 +181,15 @@ because this is a very hard problem). The learning of regular
 expression could be a userful thing for us to look
 deeper, for discovering new tokens in tokenization.
 
+This paper is targeted at information extraction, rather than at
+learning a description that covers the totality of the data.  It
+requires users to tag the data and select the pieces of information
+that they want to extract. It requires the extracted data form a
+tuple, so it can't produce structured data as output.
+
+It contains a very thorough descrition of related work on information
+extraction that we could refer to as an overview of this kind of work.
+
 =================================
 @Article{DenisLemayTerlutte2004,
    author="F. Denis and A. Lemay and A. Terlutte",
