@@ -350,10 +350,19 @@ and so cannot be applied directly to ad hoc data.
 %Arasu does not.  In addition, a substantial portion of our system
 %is a description rewriting engine, which Arasu seems not to need.  
 
-
-Earlier work by Kushmerick ...
-
-
+Earlier work by Kushmerick et al.~\cite{KushmerickWD97:Wrapper} 
+proposed an
+induction framework which learns a kind of wrappers from
+HTML pages. A wrapper is a procedure that extracts tuples from
+the web pages. The key contribution of their work is 
+the use of a ``corroboration'' process that automatically labels
+web page samples using imperfect reusable heuristics called 
+``recognizers''. While this process may be related to the
+tokenization in our algorithm, the general goal of the work
+is extracting pieces of information from the documents and not
+learning of the entire structure. Moreover, the technique presented
+is only applicable to tabular content which is not
+as general the ad hoc data. 
 
 The TSIMMIS project~\cite{chawathe+:tsimmis} aims to
 allow users to manage and query collections of heterogeneous, ad hoc

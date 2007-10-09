@@ -141,6 +141,11 @@ N.~Ireson, F.~Ciravegna, M.~E. Califf, D.~Freitag, N.~Kushmerick, and
 \newblock In {\em International Conference on Machine Learning}, pages
   345--352, 2005.
 
+\bibitem{KushmerickWD97:Wrapper}
+N.~Kushmerick, D.~S. Weld, and R.~B. Doorenbos.
+\newblock Wrapper induction for information extraction.
+\newblock In {\em IJCAI (1)}, pages 729--737, 1997.
+
 \bibitem{lemay+:tree-transducers}
 A.~Lemay, J.~Niehren, and R.~Gilleron.
 \newblock Learning n-ary node selecting tree transducers from completely
