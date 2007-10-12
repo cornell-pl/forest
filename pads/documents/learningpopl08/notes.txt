@@ -130,22 +130,27 @@ and the tokenization used in our work also require such knowledge (e.g.
 date, time, url formats). In this sense, there is some similarity between
 our work and NLP.
 
-==========================================================
+=================================
+[Rus & Subramanian 97]
+theoretical characterization of information capture and access
+formalize the notion of a document segmenter, identifying
+possibly-relevant fragments of the document, which are then examined
+by structure detectors, which look for pattersn among the segments.
+high-level indexing to help with IR queries
 
-*** Automatic segmentation of text into structured records
-Borkar et al.
-http://portal.acm.org/citation.cfm?doid=375663.375731
-
-This paper describes another natural language processing technique to
-extract records from unstructured text such as addresses, bib entries,etc.
-It learns a Hidden Markov Model which is a probablistic finite state
-automata and a dictionary of elements from a set of training data. The HMM
-describes the possible structure of the text e.g. an address is house
-number followed by road and followed by city with certain probabilities.
-And the dictionary tells which words are likely part of a street name, and
-which words are likely to be a city, etc. The problem they are attacking is
-quite different from ours. We are not trying to give semantics to
-free text like they do.
+@article{239048,
+ author = {Daniela Rus and Devika Subramanian},
+ title = {Customizing information capture and access},
+ journal = {ACM Trans. Inf. Syst.},
+ volume = {15},
+ number = {1},
+ year = {1997},
+ issn = {1046-8188},
+ pages = {67--101},
+ doi = {http://doi.acm.org/10.1145/239041.239048},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
 
 ================================
 
@@ -186,6 +191,8 @@ learning a description that covers the totality of the data.  It
 requires users to tag the data and select the pieces of information
 that they want to extract. It requires the extracted data form a
 tuple, so it can't produce structured data as output.
+
+must choose a priori the things to extract
 
 It contains a very thorough descrition of related work on information
 extraction that we could refer to as an overview of this kind of work.
@@ -302,6 +309,25 @@ or grammar of the entire document like what we are doing; and
 finally probability theory is not used here with these techniques. 
 
 ==========================================
+@article{608666,
+ author = {Ion Muslea and Steven Minton and Craig A. Knoblock},
+ title = {Hierarchical Wrapper Induction for Semistructured Information Sources},
+ journal = {Autonomous Agents and Multi-Agent Systems},
+ volume = {4},
+ number = {1-2},
+ year = {2001},
+ issn = {1387-2532},
+ pages = {93--114},
+ publisher = {Kluwer Academic Publishers},
+ address = {Hingham, MA, USA},
+ }
+STALKER system
+wrapper induction paper from web pages
+user-labeled training set
+can extract tree-structured data, 
+can handle missing values
+uses training data to find surrounding tags
+==========================================
 @inproceedings{DBLP
 <http://www.informatik.uni-trier.de/%7Eley/db/about/bibtex.html>:conf/icml/Ires 
 onCCFKL05,
@@ -389,10 +415,213 @@ ours:
 
 1. The problem being solved here is information extraction and not learning of
 the entire structure of the documents, so our goals are different;
-2. The technique only works for html/xml pages of tabular format 
+2. The technique only works for data in tabular format with formatting
+tags of some kind
 3. the induction used here is really simple which basically constitutes of 
 a conjunction of all the features each sample page pocesses and calls that 
-a generalization. No stats analysis of any kind is used in the induction.
+a generalization. No stats analysis of any kind is used in the
+induction.
+
+extracted data is generally relational, although extends to
+ tree-structured data
+ missing values are not permitted
+don't have to describe extraneous stuff
+does it assume data is xml or html? 
+data required to conform to one of 6 templates,
+ ie, assumes the structure of the data, looks for delimiters
+ labelled data allows system to find payload and the search
+ surroundings for delimiters
+recognizers are chosen by user?
+ corroboration requires one recognizer to be 'perfect' and none to be unreliable
+recognizer categories: perfect, incomplete (false negs), unsound
+ (false +), unreliable (both false - and false +)
+ in chap 6, ignore unreliable recognizers
+chapter 6 uses only tabular recognizers
+what if multiple attributes have the same "type"?
+user provides input pages, ordering, and recognizer library
+
+the pac model is very specific to templates that he uses
+
+@phdthesis{kushmerick-phd1997,
+  author = {N. Kushmerick},
+  year = {1997},
+  title = {Wrapper induction for information extraction},
+  school = {University of Washington},
+  note = {Department of Computer Science and Engineering},
+  psgz = {http://kushmerick.org/nick/research/download/kushmerick-phd.ps.gz},
+  topic = {information extraction; machine learning; data integration},
+  }
+
+=================================
+Shopbot [Doorenbos et al 97, Perkowitz et al 97]
+
+"A scalable comparison shopping agent for the world-wide web"
+Agents-97, Feburayr 1997
+
+
+@inproceedings{267666,
+ author = {Robert B. Doorenbos and Oren Etzioni and Daniel S. Weld},
+ title = {A scalable comparison-shopping agent for the World-Wide Web},
+ booktitle = {AGENTS '97: Proceedings of the first international conference on Autonomous agents},
+ year = {1997},
+ isbn = {0-89791-877-0},
+ pages = {39--48},
+ location = {Marina del Rey, California, United States},
+ doi = {http://doi.acm.org/10.1145/267658.267666},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+
+Primitive version of our techniques, applied to html pages
+divides pages into chunks based on newline html tags
+non-html code abstracted with meta-tokens to produce a template, one
+for each chunk
+each template then measured to see what percentage of page explained
+by template.  Templtes with high hit rate used to extract data
+
+hard-coded to html tags
+Looking for prices and product descritions
+knows the name of various products
+
+
+"standard grammar induction inappropriate because it requires a lot of
+data and it must be supervised"
+
+=================================
+Ariadne [Ashish & Knoblock 97a, 97b]
+specific to html
+extrats data from  hierarchically structured apges
+uses font size and html tag semantics to determine hierarchy
+has fixed templates for page structure.  attempts to match that
+structure
 
 
 =================================
+
+@inproceedings{1007584,
+ author = {Kristina Lerman and Lise Getoor and Steven Minton and Craig Knoblock},
+ title = {Using the structure of Web sites for automatic segmentation of tables},
+ booktitle = {SIGMOD '04: Proceedings of the 2004 ACM SIGMOD international conference on Management of data},
+ year = {2004},
+ isbn = {1-58113-859-8},
+ pages = {119--130},
+ location = {Paris, France},
+ doi = {http://doi.acm.org/10.1145/1007568.1007584},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+automatic extraction from web pages
+uses structure of web site containing pages to help identify relevant information
+assumes data to extract is tabular
+uses HMM techniques to find this data
+=================================
+
+@inproceedings{860479,
+ author = {David Pinto and Andrew McCallum and Xing Wei and W. Bruce Croft},
+ title = {Table extraction using conditional random fields},
+ booktitle = {SIGIR '03: Proceedings of the 26th annual international ACM SIGIR conference on Research and development in informaion retrieval},
+ year = {2003},
+ isbn = {1-58113-646-3},
+ pages = {235--242},
+ location = {Toronto, Canada},
+ doi = {http://doi.acm.org/10.1145/860435.860479},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+extracting tabular data from free-form text
+and to identify payload rows from meta-data
+uses user-labeled data to train
+has features specific to tabular layouts
+compares using conditional random variables (CRF)s with HMMs
+=================================
+[Douglas etal 95, Doughlas & Hurst 96]
+techniques for identifying the tabular structure in plan text documents
+=================================
+
+[H.T.Ng, C.Y.Kim and J.L.T.Koo.  Learning to recognize tables in free text. 
+Proc. of the 37th annual meeting of the assoc. for computational linguistics, pages 443-450, 2002
+@inproceedings{1034746,
+ author = {Hwee Tou Ng and Chung Yong Lim and Jessica Li Teng Koo},
+ title = {Learning to recognize tables in free text},
+ booktitle = {Proceedings of the 37th annual meeting of the Association for Computational Linguistics on Computational Linguistics},
+ year = {1999},
+ isbn = {1-55860-609-3},
+ pages = {443--450},
+ location = {College Park, Maryland},
+ doi = {http://dx.doi.org/10.3115/1034678.1034746},
+ publisher = {Association for Computational Linguistics},
+ address = {Morristown, NJ, USA},
+ }
+
+machine learning techniques to identify rows and colums in table, only interested in finding tables in text.
+==========================================================
+
+*** Automatic segmentation of text into structured records
+Borkar et al.
+http://portal.acm.org/citation.cfm?doid=375663.375731
+
+This paper describes another natural language processing technique to
+extract records from unstructured text such as addresses, bib entries,etc.
+It learns a Hidden Markov Model which is a probablistic finite state
+automata and a dictionary of elements from a set of training data. The HMM
+describes the possible structure of the text e.g. an address is house
+number followed by road and followed by city with certain probabilities.
+And the dictionary tells which words are likely part of a street name, and
+which words are likely to be a city, etc. The problem they are attacking is
+quite different from ours. We are not trying to give semantics to
+free text like they do.
+=================================
+
+[14] P. Pyreddy and W. Croft. Tintin: A system for 
+retrieval in text tables. In Proceedings of the Second 
+International Conference on Digital Libraries, pages 
+193Ð200, 1997. 
+
+@inproceedings{263816,
+ author = {Pallavi Pyreddy and W. Bruce Croft},
+ title = {TINTIN: a system for retrieval in text tables},
+ booktitle = {DL '97: Proceedings of the second ACM international conference on Digital libraries},
+ year = {1997},
+ isbn = {0-89791-868-1},
+ pages = {193--200},
+ location = {Philadelphia, Pennsylvania, United States},
+ doi = {http://doi.acm.org/10.1145/263690.263816},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+uses character alignmet graphs (CAG) to find text tables in documents. the CAG abstracts table to text characters and spaces and attemps to identify titles, captions, and data rows.  No attempt to identify fine elements of table.
+
+=================================
+[13] D. Pinto, W. Croft, M. Branstein, R. Coleman, 
+M. King, W. Li, and X. Wei. Quasm: A system for 
+question answering using semi-structured data. In 
+Proceedings of the JCDL 2002 Joint Conference on 
+Digital Libraries, pages 46Ð55, 2002. 
+
+@inproceedings{544228,
+ author = {David Pinto and Michael Branstein and Ryan Coleman and W. Bruce Croft and Matthew King and Wei Li and Xing Wei},
+ title = {QuASM: a system for question answering using semi-structured data},
+ booktitle = {JCDL '02: Proceedings of the 2nd ACM/IEEE-CS joint conference on Digital libraries},
+ year = {2002},
+ isbn = {1-58113-513-0},
+ pages = {46--55},
+ location = {Portland, Oregon, USA},
+ doi = {http://doi.acm.org/10.1145/544220.544228},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+builds on cag w/ heuristic method to extract individual cells for QA.  
+some lang. proc to distinghish headers from data rows
+ir paper
+=================================
+
+information extraction
+ template extraction
+ whisk : sodorburg
+ kuf thesis
+ record identification

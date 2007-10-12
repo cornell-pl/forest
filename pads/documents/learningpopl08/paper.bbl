@@ -98,12 +98,6 @@ P.~D. Gr\"{u}nwald.
 \newblock {\em The Minimum Description Length Principle}.
 \newblock {MIT Press}, May 2007.
 
-\bibitem{gubanov+:structural-text-search}
-M.~Gubanov and P.~A. Bernstein.
-\newblock Structural text search and comparison using automatically extracted
-  schema.
-\newblock In {\em WebDB}, 2006.
-
 \bibitem{higuera01current}
 C.~D.~L. Higuera.
 \newblock Current trends in grammatical inference.
@@ -140,6 +134,12 @@ N.~Ireson, F.~Ciravegna, M.~E. Califf, D.~Freitag, N.~Kushmerick, and
 \newblock Evaluating machine learning for information extraction.
 \newblock In {\em International Conference on Machine Learning}, pages
   345--352, 2005.
+
+\bibitem{kushmerick-phd1997}
+N.~Kushmerick.
+\newblock {\em Wrapper induction for information extraction}.
+\newblock PhD thesis, University of Washington, 1997.
+\newblock Department of Computer Science and Engineering.
 
 \bibitem{KushmerickWD97:Wrapper}
 N.~Kushmerick, D.~S. Weld, and R.~B. Doorenbos.
