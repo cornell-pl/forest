@@ -164,6 +164,12 @@ structured data such as XMLs and DTDs. We are learning from semi-structured
 or unstructured data and we are not trying to identity semantic relations so
 the problems are quite different. 
 
+source data is assumed to be in XML
+map raw data to "mediated schema"
+mediated and source schemas represented as DTDs
+user maps some raw daw data to source schema, system then infers how to generalize
+
+
 ==============================
 "Learning information extraction rules for semi-structured and free text "
 Soderland
@@ -496,10 +502,21 @@ uses font size and html tag semantics to determine hierarchy
 has fixed templates for page structure.  attempts to match that
 structure
 
-
+@inproceedings{276381,
+ author = {Jos\'{e} Luis Ambite and Naveen Ashish and Greg Barish and Craig A. Knoblock and Steven Minton and Pragnesh J. Modi and Ion Muslea and Andrew Philpot and Sheila Tejada},
+ title = {Ariadne: a system for constructing mediators for Internet sources},
+ booktitle = {SIGMOD '98: Proceedings of the 1998 ACM SIGMOD international conference on Management of data},
+ year = {1998},
+ isbn = {0-89791-995-5},
+ pages = {561--563},
+ location = {Seattle, Washington, United States},
+ doi = {http://doi.acm.org/10.1145/276304.276381},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
 =================================
 
-@inproceedings{1007584,
+@inproceedings{Lerman+:webtables,
  author = {Kristina Lerman and Lise Getoor and Steven Minton and Craig Knoblock},
  title = {Using the structure of Web sites for automatic segmentation of tables},
  booktitle = {SIGMOD '04: Proceedings of the 2004 ACM SIGMOD international conference on Management of data},
@@ -518,7 +535,7 @@ assumes data to extract is tabular
 uses HMM techniques to find this data
 =================================
 
-@inproceedings{860479,
+@inproceedings{Pinto+:texttables,
  author = {David Pinto and Andrew McCallum and Xing Wei and W. Bruce Croft},
  title = {Table extraction using conditional random fields},
  booktitle = {SIGIR '03: Proceedings of the 26th annual international ACM SIGIR conference on Research and development in informaion retrieval},
@@ -543,7 +560,7 @@ techniques for identifying the tabular structure in plan text documents
 
 [H.T.Ng, C.Y.Kim and J.L.T.Koo.  Learning to recognize tables in free text. 
 Proc. of the 37th annual meeting of the assoc. for computational linguistics, pages 443-450, 2002
-@inproceedings{1034746,
+@inproceedings{Ng+:texttables,
  author = {Hwee Tou Ng and Chung Yong Lim and Jessica Li Teng Koo},
  title = {Learning to recognize tables in free text},
  booktitle = {Proceedings of the 37th annual meeting of the Association for Computational Linguistics on Computational Linguistics},
@@ -557,11 +574,12 @@ Proc. of the 37th annual meeting of the assoc. for computational linguistics, pa
  }
 
 machine learning techniques to identify rows and colums in table, only interested in finding tables in text.
+
 ==========================================================
 
 *** Automatic segmentation of text into structured records
 Borkar et al.
-http://portal.acm.org/citation.cfm?doid=375663.375731
+http://portal.acm.org/citation.cfm?doid=375663.375682
 
 This paper describes another natural language processing technique to
 extract records from unstructured text such as addresses, bib entries,etc.
@@ -573,6 +591,15 @@ And the dictionary tells which words are likely part of a street name, and
 which words are likely to be a city, etc. The problem they are attacking is
 quite different from ours. We are not trying to give semantics to
 free text like they do.
+
+Tool called: DataMold
+seeded with training examples
+training example is a pair of:
+ 1. a list of elements to be extracted
+ 2. labeled training data
+does not assume an order to the elements, nor are all elements required to be present
+learns a wrapper from training data to extract these elements
+
 =================================
 
 [14] P. Pyreddy and W. Croft. Tintin: A system for 
@@ -619,9 +646,23 @@ builds on cag w/ heuristic method to extract individual cells for QA.
 some lang. proc to distinghish headers from data rows
 ir paper
 =================================
+@inproceedings{Cresenzi+:roadrunner,
+ author = {Valter Crescenzi and Giansalvatore Mecca and Paolo Merialdo},
+ title = {RoadRunner: Towards Automatic Data Extraction from Large Web Sites},
+ booktitle = {VLDB '01: Proceedings of the 27th International Conference on Very Large Data Bases},
+ year = {2001},
+ isbn = {1-55860-804-4},
+ pages = {109--118},
+ publisher = {Morgan Kaufmann Publishers Inc.},
+ address = {San Francisco, CA, USA},
+ }
+
+roadrunner: finding templates from generated web pages
+
+=================================
 
 information extraction
  template extraction
  whisk : sodorburg
  kuf thesis
- record identification
+ table identification

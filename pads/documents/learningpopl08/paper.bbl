@@ -1,5 +1,13 @@
 \begin{thebibliography}{10}
 
+\bibitem{Ambite+:ariadne}
+J.~L. Ambite, N.~Ashish, G.~Barish, C.~A. Knoblock, S.~Minton, P.~J. Modi,
+  I.~Muslea, A.~Philpot, and S.~Tejada.
+\newblock Ariadne: a system for constructing mediators for internet sources.
+\newblock In {\em SIGMOD '98: Proceedings of the 1998 ACM SIGMOD international
+  conference on Management of data}, pages 561--563, New York, NY, USA, 1998.
+  ACM Press.
+
 \bibitem{angluin:revesible-language-inference}
 D.~Angluin.
 \newblock Inference of reversible languages.
@@ -42,6 +50,13 @@ S.~Chawathe, H.~Garcia-Molina, J.~Hammer, K.~Ireland, Y.~Papakonstantinou,
 \newblock In {\em 16th Meeting of the Information Processing Society of Japan},
   pages 7--18, Tokyo, Japan, 1994.
 
+\bibitem{Cresenzi+:roadrunner}
+V.~Crescenzi, G.~Mecca, and P.~Merialdo.
+\newblock Roadrunner: Towards automatic data extraction from large web sites.
+\newblock In {\em VLDB '01: Proceedings of the 27th International Conference on
+  Very Large Data Bases}, pages 109--118, San Francisco, CA, USA, 2001. Morgan
+  Kaufmann Publishers Inc.
+
 \bibitem{denis:learning-regular-languages}
 F.~Denis, A.~Lemay, and A.~Terlutte.
 \newblock Learning regular languages using {RFSAs}.
@@ -53,6 +68,12 @@ A.~Doan, P.~Domingos, and A.~Y. Halevy.
   approach.
 \newblock In {\em {ACM SIGMOD} international conference on Management of data},
   pages 509--520, New York, NY, USA, 2001. ACM Press.
+
+\bibitem{doorenbos+:shopbot}
+R.~B. Doorenbos, O.~Etzioni, and D.~S. Weld.
+\newblock A scalable comparison-shopping agent for the world-wide web.
+\newblock In {\em AGENTS '97: Proceedings of the first international conference
+  on Autonomous agents}, pages 39--48, New York, NY, USA, 1997. ACM Press.
 
 \bibitem{fernandez+:padx}
 M.~F. Fern\'andez, K.~Fisher, R.~Gruber, and Y.~Mandelbaum.
@@ -97,6 +118,12 @@ E.~M. Gold.
 P.~D. Gr\"{u}nwald.
 \newblock {\em The Minimum Description Length Principle}.
 \newblock {MIT Press}, May 2007.
+
+\bibitem{gubanov+:structural-text-search}
+M.~Gubanov and P.~A. Bernstein.
+\newblock Structural text search and comparison using automatically extracted
+  schema.
+\newblock In {\em WebDB}, 2006.
 
 \bibitem{higuera01current}
 C.~D.~L. Higuera.
@@ -153,6 +180,14 @@ A.~Lemay, J.~Niehren, and R.~Gilleron.
 \newblock In {\em International Conference on Grammatical Inference}, pages
   253--267, 2006.
 
+\bibitem{Lerman+:webtables}
+K.~Lerman, L.~Getoor, S.~Minton, and C.~Knoblock.
+\newblock Using the structure of web sites for automatic segmentation of
+  tables.
+\newblock In {\em SIGMOD '04: Proceedings of the 2004 ACM SIGMOD international
+  conference on Management of data}, pages 119--130, New York, NY, USA, 2004.
+  ACM Press.
+
 \bibitem{Lin91:divergence}
 J.~Lin.
 \newblock Divergence measures based on the {Shannon} entropy.
@@ -176,6 +211,13 @@ I.~Muslea, S.~Minton, and C.~Knoblock.
 \newblock In {\em International Joint Conferences on Artificial Intelligence},
   pages 415--420, 2003.
 
+\bibitem{Ng+:texttables}
+H.~T. Ng, C.~Y. Lim, and J.~L.~T. Koo.
+\newblock Learning to recognize tables in free text.
+\newblock In {\em Proceedings of the 37th annual meeting of the Association for
+  Computational Linguistics on Computational Linguistics}, pages 443--450,
+  Morristown, NJ, USA, 1999. Association for Computational Linguistics.
+
 \bibitem{rpni}
 J.~Oncina and P.~Garcia.
 \newblock Inferring regular languages in polynomial updated time.
@@ -184,6 +226,13 @@ J.~Oncina and P.~Garcia.
 \bibitem{padsweb}
 {PADS} project.
 \newblock {\url{http://www.padsproj.org/}}, 2007.
+
+\bibitem{Pinto+:texttables}
+D.~Pinto, A.~McCallum, X.~Wei, and W.~B. Croft.
+\newblock Table extraction using conditional random fields.
+\newblock In {\em SIGIR '03: Proceedings of the 26th annual international ACM
+  SIGIR conference on Research and development in informaion retrieval}, pages
+  235--242, New York, NY, USA, 2003. ACM Press.
 
 \bibitem{raeymaekers+:wrapper-induction}
 S.~Raeymaekers and M.~Bruynooghe.
@@ -203,6 +252,11 @@ V.~Raman and J.~M. Hellerstein.
 \newblock Potter's wheel: An interactive data cleaning system.
 \newblock In {\em International Conference on Very Large Data Bases}, pages 381
   -- 390, 2001.
+
+\bibitem{rus+:information-capture}
+D.~Rus and D.~Subramanian.
+\newblock Customizing information capture and access.
+\newblock {\em ACM Trans. Inf. Syst.}, 15(1):67--101, 1997.
 
 \bibitem{shoens+:rufus}
 K.~A. Shoens, A.~Luniewski, P.~M. Schwarz, J.~W. Stamos, and I.~Joachim~Thomas.

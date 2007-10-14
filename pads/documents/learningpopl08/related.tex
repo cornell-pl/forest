@@ -3,39 +3,40 @@ inferring descriptions of text-based data, for decades.  Nevertheless,
 the work we present in this paper represents an important and novel 
 contribution to the field for three key reasons:
 
-{\em NOTE: is the last one good?}
-
 \begin{enumerate}
 \item Our system solves {\em a new end-to-end problem} not treated in
 past work --- the problem of generating an extensible suite of fully
-functional data processing tools directly from ad hoc data.  We can
-currently generate an XML translator, a normalizing reformatter, a
-graphing tool, a full query engine allowing users to write arbitrary XQueries
-against the ad hoc data, an accumulator tool, and
-programming libraries for parsing, printing and data validation.
-Generating such a wide variety of powerful tools would be impossible
-without the combination of three elements: grammar induction,
-automatic intermediate representation generation and type-directed
-programming.  A key contribution of this work is the conception,
-development and evaluation of this end-to-end system.  After surveying
-experts at the CAGI 2007 workshop on grammar induction, where we
-presented a two-page overview of our system~\cite{burke+:cagi07}, and
-searching the literature, we could find no existing system that
-provides this end-to-end functionality.
+functional data processing tools directly from ad hoc data.  
+%%We can
+%%currently generate an XML translator, a normalizing reformatter, a
+%%graphing tool, a full query engine allowing users to write arbitrary XQueries
+%%against the ad hoc data, an accumulator tool, and
+%%programming libraries for parsing, printing and data validation.
+Generating this suite requires the combination of three elements:
+grammar induction, automatic intermediate representation generation
+and type-directed programming.  A key contribution of this work is the
+conception, development and evaluation of this end-to-end system.
+
+%%After surveying
+%%experts at the CAGI 2007 workshop on grammar induction, where we
+%%presented a two-page overview of our system~\cite{burke+:cagi07}, and
+%%searching the literature, we could find no existing system that
+%%provides this end-to-end functionality.
 
 \item Past work on grammar induction has focused primarily on
 either (1) theoretical problems, (2) natural language processing, or
-(3) XML typing.  Our work tackles a new domain, that of complex system
+(3) XML typing.  Our work tackles an understudied domain, that of complex system
 logs and other {\em ad hoc data sources}.  Since ad hoc data has
 different characteristics from the previously studied domains, naive
 adaptations of the existing algorithms are unlikely to be the most
 effective.  As the evaluation in this paper shows, our system is tuned
 to perform well on ad hoc data, particularly system logs and
-networking data.  One of the conclusions of the chair of the CAGI 2007
-workshop, presented in the final discussion session of the workshop,
-was that ``ad hoc data'' was indeed a new domain for the study of
-grammar induction and that more research in this area was an important
-future direction for the community.
+networking data.  
+%%One of the conclusions of the chair of the CAGI 2007
+%%workshop, presented in the final discussion session of the workshop,
+%%was that ``ad hoc data'' was indeed a new domain for the study of
+%%grammar induction and that more research in this area was an important
+%%future direction for the community.
 
 \item  From a technical standpoint, we developed a new top-down 
 structure-discovery algorithm and showed how to combine that 
@@ -48,6 +49,8 @@ data used.
 \end{enumerate}
 
 \noindent
+We presented a two-page overview of our system~\cite{burke+:cagi07} at
+the CAGI 2007 workshop on grammar induction. 
 In the rest of this section, we analyze
 the most closely related work in the areas of
 traditional grammar induction, information extraction, and XML analysis
@@ -65,7 +68,7 @@ language in question.}  The problem our system solves is the latter;
 negative examples of ad hoc data sources are not available in
 practice.  Consequently, effective theoretical algorithms for learning
 from both positive and negative
-examples~\cite{rpni,denis:learning-regular-languages,lemay+:tree-transducers,raeymaekers+:learning-tree-languages},
+examples~\cite{denis:learning-regular-languages,lemay+:tree-transducers,rpni,raeymaekers+:learning-tree-languages},
 are not applicable in our context.
 
 Unfortunately, an early result by Gold~\cite{gold:inference} showed
@@ -112,8 +115,11 @@ Given the difficulty of finding useful non-superfinite language classes,
 it is reasonable to turn to algorithms for approximate
 inference that use probabilistic models.    
 Classic examples of such procedures include work by Stolcke and
-Omohundro~\cite{stolcke94inducing}, {\em insert other references here -- see Hong thesis related work for other work...} and 
-Hong~\cite{hong01using,hong:thesis}.  These and a number of other algorithms
+Omohundro~\cite{stolcke94inducing} 
+%%{\em insert other references here -- see Hong thesis related work
+%%for other work...} 
+and 
+Hong~\cite{hong:thesis,hong01using}.  These and a number of other algorithms
 operate by repeatedly rewriting a candidate grammar (or set of candidate
 grammars) until an objective function is optimized.
 If the training data is for the learning system is the strings
@@ -154,7 +160,7 @@ automata as opposed to regular expressions or grammars.  For instance,
 RPNI~\cite{rpni} and Denis's work on learning
 RFSAs~\cite{denis:learning-regular-languages} fall into this category,
 as do Raeymaekers's algorithms to learn tree
-automata~\cite{raeymaekers+:learning-tree-languages,raeymaekers+:wrapper-induction}.
+automata~\cite{raeymaekers+:wrapper-induction,raeymaekers+:learning-tree-languages}.
 One difficulty with adapting these algorithms to our task is that any
 coverter from automata to regular expressions (or PADS descriptions)
 may produce very large, unnatural descriptions.  This was found to
@@ -319,25 +325,25 @@ example of such an extraction system.  It is particularly general, in
 that it makes few assumptions about the form of the source text,
 operating over structured data, stylized text such as Craig's List
 descriptions, or free-form text.  WHISK differs from our system in
-that it requires user labelling and then only extracts a collection of
+that it requires user labeling and then only extracts a collection of
 tuples from the data source rather than returning the complete
 structure of the data source.
 
 
 Kushmerick and
 colleagues~\cite{kushmerick-phd1997,KushmerickWD97:Wrapper} focus on
-more structured data to reduce the amount of labelling required during
+more structured data to reduce the amount of labeling required during
 training.  In particular, this work assumes the labelled pages conform
 to one of six different templates, the most well-developed of which
 has the form of a header, followed by a sequence of K-tuples each of
 which is flanked by a pair of begin and end tags, followed by a
 trailer.  For such documents, the system generates a wrapper to
-extract the K-tuples.  To limit the amount of labelling, the system
+extract the K-tuples.  To limit the amount of labeling, the system
 has provisions to automatically tag the desired tuples using {\it
 recognizers}, which are imperfect, but reusable heuristics for finding
 atomic pieces of data such as country names or phone numbers.  Such
 recognizers mean the user has to select which set of recognizers to
-use for a particular extraction task instead of labelling pages by
+use for a particular extraction task instead of labeling pages by
 hand.  The system requires one recognizer to be {\it perfect}, meaning
 it generates neither false positives nor false negatives.  It then
 uses a process called {\it corroboration} to correct the mistakes of
@@ -351,39 +357,51 @@ whereas our system will return semi-structured data.
 
 
 Muslea {\em et al.}~\cite{muslea+:active-learning} tackle a similar
-problem, but strive to reduce the amount of labelling by having the
+problem, but strive to reduce the amount of labeling by having the
 learning system chose which documents to have the user label,
-selecting documents by their probitive value.  Work by Ireson {\em et
-al.}~\cite{ireson+:ml-evaluation} investigates how information
-extraction systems should be evaluated.  Soderland's WHISK
-paper~\cite{soderland:whisk} and Kushmerick's
+selecting documents by their probitive value.  Borkar {\em et
+al.}~\cite{borkar+:text-segmentation} uses hand-labelled training
+examples and a user-specified set of desired features to train Hidden
+Markov Models to select the desired features from similar documents.
+This work is quite successful at learning to select the relevant
+features of addresses and bibliographic citations from a variety of
+input formats. Various researchers have leveraged the syntactic
+regularity and verbosity of XML/HTML to reduce the amount of user
+annotations required to train information extraction systems targetted
+at web pages~\cite{Ambite+:ariadne,doorenbos+:shopbot}.
+Work by Ireson {\em et al.}~\cite{ireson+:ml-evaluation} investigates
+how information extraction systems should be evaluated.  Soderland's
+WHISK paper~\cite{soderland:whisk} and Kushmerick's
 theis~\cite{kushmerick-phd1997} both contain detailed descriptions of
-other information extraction systems.
+other information extraction systems.  In general, systems that depend
+upon labeling are unlikely to be helpful in our context; rather than
+spending time explicitly labeling documents, the user might as well
+write a PADS description by hand.
 
-%Systems that depend upon labeling
-%are unlikely to be helpful in our context; rather than spending 
-%time explicitly labeling documents, the user might as well write a 
-%PADS description by hand.
+Another type of information extraction system strives to provide a
+high-level semantic characterization of the content of natural
+language documents to guide information retrieval
+queries~\cite{gubanov+:structural-text-search,rus+:information-capture}.
+This work differs from ours in that it is building a semantic rather
+than a syntatic description of the source data.
 
+More closely related are various efforts to identify tabular data 
+either from free-form text~\cite{Ng+:texttables,Pinto+:texttables} or
+from web pages~\cite{Lerman+:webtables}.  These approaches typically
+use hand-labelled examples to train machine learning systems to
+identify the tables.  They then use heuristics specific to tabular
+data to extract the tuples contained within those tables.  The portion
+of this work related to identifying structrued data from within more
+free-form documents is complementary to ours.  The portion responsible
+for deconstructing the identified tables uses more specific
+domain-knowledge related to the form of tables than we do.
 
-
-Records
-Borkar's work~\cite{borkar+:text-segmentation} on extracting well-formed
-records and 
-
-Kushmerick and Soderland cite contain detailed descriptions of a
-variety of other information extraction systems.
-
-High-level structure
-
-Perhaps the most closely related work is from Arasu and 
-Garcia-Molina~\cite{arasu+:sigmod03}, who developed an information
-extraction system for sets of similar web pages.  
-%The
-%commonalities between web pages are assumed to be a ``template'' structure
-%and the differences are assumed to be values drawn from a database
-%sitting behind the web site.  
-Arasu uses a top-down grammar induction
+Web pages generated in response to queries tend to be formed by
+sloting the resulting tuples into a standard template.  Another line
+of work aims to separate such templates from the payload
+data~\cite{arasu+:sigmod03,Cresenzi+:roadrunner}.  
+Arasu and Garcia-Molina~\cite{arasu+:sigmod03}
+use a top-down grammar induction
 algorithm somewhat similar to our rough structure-inference phase
 (though it does not use histograms),
 but has no description-rewriting engine.  
@@ -399,6 +417,9 @@ and so cannot be applied directly to ad hoc data.
 
 
 
+
+
+
 % For further reading on
 % information extraction from web pages, Hong's
 % thesis~\cite{hong:thesis} includes an informative survey.  Though,
@@ -409,38 +430,32 @@ and so cannot be applied directly to ad hoc data.
 \paragraph*{XML Type Inference.}
 Many researchers have studied the problem of learning
 a schema such as a DTD or XSchema from a collection 
-of XML documents~\cite{fernau:learning-xml,garofalakis+:xtract,bex+:inferring-xml-schema,bex+:dtd-inference}.  At a high level, this task is similar
-to the format inference 
-component of our system, though, of course, there is more
-to our system than just format inference (we produce fully 
-functional tools for parsing, printing and transforming ad hoc data).  
-However, the details differ because
-XML has different characteristics from the ad hoc data we
-work with.  One difference, mentioned earlier in the comparison with
-Arasu's work, is that XML documents come in a well-nested tree
-shape.  On the one hand, the delimiters that define nesting
-structure in ad hoc data is more difficult to uncover, bu on the other hand,
-our informal observations suggest that ad hoc data sources are generally
-far less nested than large XML documents.  A second important difference
-is that the token structure of ad hoc data sources is often ambiguous and
-the best token selection is not known in advance.  
-One of our strategies for dealing with
-these ambiguities is to define simple approximate tokens for use
-in the tokenization phase, but then to employ a collection of 
-rules to improve token ({\em i.e.}, base type) choices in the rewriting phase
-when more contextual information is available.  In contrast,
+of XML
+documents~\cite{bex+:dtd-inference,bex+:inferring-xml-schema,fernau:learning-xml,garofalakis+:xtract}.  
+At a high level, this task is similar to the format inference component of our system.  
+However, the details differ because XML has different characteristics
+from ad hoc data.  One difference is that XML documents come in a well-nested tree 
+shape, with obvious delimiters defining the structure.  
+A second important difference is that the appropriate tokenization for
+a given ad hoc data source is often not known in advance.  
+%%One of our strategies for dealing with
+%%these ambiguities is to define simple approximate tokens for use
+%%in the tokenization phase, but then to employ a collection of 
+%%rules to improve token ({\em i.e.}, base type) choices in the rewriting phase
+%%when more contextual information is available.  
+In contrast,
 tokens in XML documents are clearly demarcated using angle bracket syntax.
-A third difference is that XML documents are often organized such that
-the structure of a child node is dependent on its parent or grandparent.
-In contrast, in the flatter ad hoc data we have considered, dependencies
-generally arise between siblings -- some data item to the left influences
-the structure of data to the right.  As a result of these differences,
+%%A third difference is that XML documents are often organized such that
+%%the structure of a child node is dependent on its parent or grandparent.
+%%In contrast, in the flatter ad hoc data we have considered, dependencies
+%%generally arise between siblings -- some data item to the left influences
+%%the structure of data to the right.  
+As a result of these differences,
 XML inference algorithms cannot be used ``off-the-shelf'' for understanding
 the structure of ad hoc data.  They must be modified, tuned and
 empirically evaluated on this new task.
 
-One line of research on schema inference for XML, which we would
-particularly like to highlight, makes use of the 
+One line of research on schema inference for XML makes use of the 
 observation that 99\% of the content models for an XML node are defined as
 SOREs or CHAREs~\cite{martens+:expressiveness-xml-schema} (recall, these
 are heavily restricted forms of regular expressions).  
@@ -458,14 +473,30 @@ the idea that the ad hoc data we analyze has quite different characteristics
 from XML, and therefore the ad hoc data inference problem merits study
 independent of the XML inference problem.
 
-Another related problem of great interest in the XML and databases world
+XTRACT~\cite{garofalakis+:xtract} is another system for inferring DTDs
+for XML documents.  It operates in three phases: generalization,
+factoring and MDL optimization.  The first phase plays a role similar to
+our structure of discovery phase in that it generates a
+collection of candidate structures from a series of XML examples.
+This generalization phase searches for patterns in XML
+data; it is tuned using the authors' knowledge of common DTD
+structures.  Factoring decreases the size of generated candidate DTDs;
+some of the factoring rules resemble our rewriting rules.
+Finally, they tackle the MDL optimization problem by mapping the
+problem into an instance of the NP-complete Facility Location Problem,
+which they solve using a quadratic approximation algorithm.
+Our MDL-guided rewriting problem considers a more general set of
+rewriting rules and hence their technique is not applicable.
+
+Another related problem of great interest in the XML and database world
 involves finding a mapping between two data sources with different schema.
-Doan et al.~\cite{doan+:disparate-data-sources} is one example amongst
-many who attempt to solve this problem using a machine learning approach.
+Doan {\em et al.}~\cite{doan+:disparate-data-sources} is one example amongst
+many which attempts to solve this problem using a machine learning approach.
 While some of our PADS tools do involve translations between
 different formats, our learning system does not attempt to discover
 translation tools for which the output is guaranteed to match 
 the characteristics of a second data set.
+
 
 \paragraph*{Other work}
 Potter's Wheel~\cite{raman+:potterwheel} is a system that attempts to
