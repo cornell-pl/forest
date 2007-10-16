@@ -1,13 +1,5 @@
 \begin{thebibliography}{10}
 
-\bibitem{Ambite+:ariadne}
-J.~L. Ambite, N.~Ashish, G.~Barish, C.~A. Knoblock, S.~Minton, P.~J. Modi,
-  I.~Muslea, A.~Philpot, and S.~Tejada.
-\newblock Ariadne: a system for constructing mediators for internet sources.
-\newblock In {\em SIGMOD '98: Proceedings of the 1998 ACM SIGMOD international
-  conference on Management of data}, pages 561--563, New York, NY, USA, 1998.
-  ACM Press.
-
 \bibitem{angluin:revesible-language-inference}
 D.~Angluin.
 \newblock Inference of reversible languages.
@@ -69,12 +61,6 @@ A.~Doan, P.~Domingos, and A.~Y. Halevy.
 \newblock In {\em {ACM SIGMOD} international conference on Management of data},
   pages 509--520, New York, NY, USA, 2001. ACM Press.
 
-\bibitem{doorenbos+:shopbot}
-R.~B. Doorenbos, O.~Etzioni, and D.~S. Weld.
-\newblock A scalable comparison-shopping agent for the world-wide web.
-\newblock In {\em AGENTS '97: Proceedings of the first international conference
-  on Autonomous agents}, pages 39--48, New York, NY, USA, 1997. ACM Press.
-
 \bibitem{fernandez+:padx}
 M.~F. Fern\'andez, K.~Fisher, R.~Gruber, and Y.~Mandelbaum.
 \newblock {PADX}: Querying large-scale ad hoc data with xquery.
@@ -88,20 +74,15 @@ H.~Fernau.
 
 \bibitem{fisher+:pads}
 K.~Fisher and R.~Gruber.
-\newblock Pads: A domain specific language for processing ad hoc data.
-\newblock In {\em PLDI}, pages 295--304. {ACM} Press, June 2005.
+\newblock {PADS}: A domain specific language for processing ad hoc data.
+\newblock In {\em {ACM} Conference on Programming Language Design and
+  Implementation}, pages 295--304. {ACM} Press, June 2005.
 
 \bibitem{fisher+:popl06}
 K.~Fisher, Y.~Mandelbaum, and D.~Walker.
 \newblock The next 700 data description languages.
 \newblock In {\em {ACM} Symposium on Principles of Programming Languages}.
   {ACM} Press, Jan. 2006.
-
-\bibitem{garcia+:k-testable-languages}
-P.~Garc\'{\i}a and E.~Vidal.
-\newblock Inference of k-testable languages in the strict sense and application
-  to syntactic pattern recognition.
-\newblock {\em IEEE Trans. Pattern Anal. Mach. Intell.}, 12(9):920--925, 1990.
 
 \bibitem{garofalakis+:xtract}
 M.~N. Garofalakis, A.~Gionis, R.~Rastogi, S.~Seshadri, and K.~Shim.
@@ -118,12 +99,6 @@ E.~M. Gold.
 P.~D. Gr\"{u}nwald.
 \newblock {\em The Minimum Description Length Principle}.
 \newblock {MIT Press}, May 2007.
-
-\bibitem{gubanov+:structural-text-search}
-M.~Gubanov and P.~A. Bernstein.
-\newblock Structural text search and comparison using automatically extracted
-  schema.
-\newblock In {\em WebDB}, 2006.
 
 \bibitem{higuera01current}
 C.~D.~L. Higuera.
@@ -155,13 +130,6 @@ J.~L. Hutchens and M.~D. Alder.
   on New Methods in Language Processing and Computational Natural Language
   Learning}, pages 79--82. Association for Computational Linguistics, 1998.
 
-\bibitem{ireson+:ml-evaluation}
-N.~Ireson, F.~Ciravegna, M.~E. Califf, D.~Freitag, N.~Kushmerick, and
-  A.~Lavelli.
-\newblock Evaluating machine learning for information extraction.
-\newblock In {\em International Conference on Machine Learning}, pages
-  345--352, 2005.
-
 \bibitem{kushmerick-phd1997}
 N.~Kushmerick.
 \newblock {\em Wrapper induction for information extraction}.
@@ -172,13 +140,6 @@ N.~Kushmerick.
 N.~Kushmerick, D.~S. Weld, and R.~B. Doorenbos.
 \newblock Wrapper induction for information extraction.
 \newblock In {\em IJCAI (1)}, pages 729--737, 1997.
-
-\bibitem{lemay+:tree-transducers}
-A.~Lemay, J.~Niehren, and R.~Gilleron.
-\newblock Learning n-ary node selecting tree transducers from completely
-  annotated examples.
-\newblock In {\em International Conference on Grammatical Inference}, pages
-  253--267, 2006.
 
 \bibitem{Lerman+:webtables}
 K.~Lerman, L.~Getoor, S.~Minton, and C.~Knoblock.
@@ -234,13 +195,6 @@ D.~Pinto, A.~McCallum, X.~Wei, and W.~B. Croft.
   SIGIR conference on Research and development in informaion retrieval}, pages
   235--242, New York, NY, USA, 2003. ACM Press.
 
-\bibitem{raeymaekers+:wrapper-induction}
-S.~Raeymaekers and M.~Bruynooghe.
-\newblock Wrapper induction: Learning (k,l)-contextual tree languages directly
-  as unranked tree automata.
-\newblock In {\em Proceedings of the International Workshop on Mining and
-  Learning with Graphs}, pages 197--204, Berlin, Germany, Sept. 2006.
-
 \bibitem{raeymaekers+:learning-tree-languages}
 S.~Raeymaekers, M.~Bruynooghe, and J.~V. den Bussche.
 \newblock Learning (k, l)-contextual tree languages for information extraction.
@@ -252,11 +206,6 @@ V.~Raman and J.~M. Hellerstein.
 \newblock Potter's wheel: An interactive data cleaning system.
 \newblock In {\em International Conference on Very Large Data Bases}, pages 381
   -- 390, 2001.
-
-\bibitem{rus+:information-capture}
-D.~Rus and D.~Subramanian.
-\newblock Customizing information capture and access.
-\newblock {\em ACM Trans. Inf. Syst.}, 15(1):67--101, 1997.
 
 \bibitem{shoens+:rufus}
 K.~A. Shoens, A.~Luniewski, P.~M. Schwarz, J.~W. Stamos, and I.~Joachim~Thomas.

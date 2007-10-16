@@ -24,14 +24,16 @@ conception, development and evaluation of this end-to-end system.
 %%provides this end-to-end functionality.
 
 \item Past work on grammar induction has focused primarily on
-either (1) theoretical problems, (2) natural language processing, or
-(3) XML typing.  Our work tackles an understudied domain, that of complex system
+either (1) theoretical problems, (2) natural language processing, 
+(3) web page analysis, or
+(4) XML typing.  Our work tackles an understudied domain, that of complex system
 logs and other {\em ad hoc data sources}.  Since ad hoc data has
 different characteristics from the previously studied domains, naive
-adaptations of the existing algorithms are unlikely to be the most
-effective.  As the evaluation in this paper shows, our system is tuned
-to perform well on ad hoc data, particularly system logs and
-networking data.  
+adaptations of the existing algorithms are unlikely to be %the most
+effective.  
+%%As the evaluation in this paper shows, our system is tuned
+%%to perform well on ad hoc data, particularly system logs and
+%%networking data.  
 %%One of the conclusions of the chair of the CAGI 2007
 %%workshop, presented in the final discussion session of the workshop,
 %%was that ``ad hoc data'' was indeed a new domain for the study of
@@ -49,12 +51,10 @@ data used.
 \end{enumerate}
 
 \noindent
-We presented a two-page overview of our system~\cite{burke+:cagi07} at
-the CAGI 2007 workshop on grammar induction. 
+%We presented a two-page overview of our system~\cite{burke+:cagi07} at
+%the CAGI 2007 workshop on grammar induction. 
 In the rest of this section, we analyze
-the most closely related work in the areas of
-traditional grammar induction, information extraction, and XML analysis
-in more depth.
+the most closely related work in more depth.
 
 \paragraph*{Traditional Grammar Induction.}
 Classic grammar induction algorithms (see De La
@@ -68,39 +68,41 @@ language in question.}  The problem our system solves is the latter;
 negative examples of ad hoc data sources are not available in
 practice.  Consequently, effective theoretical algorithms for learning
 from both positive and negative
-examples~\cite{denis:learning-regular-languages,lemay+:tree-transducers,rpni,raeymaekers+:learning-tree-languages},
+examples such as RPNI~\cite{rpni}
+%~\cite{lemay+:tree-transducers,rpni,raeymaekers+:learning-tree-languages},
 are not applicable in our context.
 
 Unfortunately, an early result by Gold~\cite{gold:inference} showed
 that perfect grammar induction is impossible for any superfinite class
 of languages when the algorithm has no access to negative examples.  A
-{\em super-finite} class of languages is any set of languages that
+{\em superfinite} class of languages is any set of languages that
 includes all finite languages and at least one infinite
 language. Hence, all the most familiar classes of languages, including
 regular expressions, context free grammars and PADS are superfinite.
 There are two main tactics one can use to avoid this negative
 result~\cite{vidal:gisurvey}: 
-(1) give up on perfect language identification and instead settle for {\em approximate
+(1) use domain knowledge to explicitly limit the class of languages to a
+non-superfinite class, or
+(2) give up on perfect language identification and instead settle for {\em approximate
 identification}~\cite{wharton:approximate-language-identification}
-through the use of probabilistic language models or 
-(2) use domain knowledge to explicitly limit the class of languages to a
-non-superfinite class.
+through the use of probabilistic language models.
 
 Examples of non-trivial, non-superfinite
 language classes with known inference algorithms include
 k-reversible languages~\cite{angluin:revesible-language-inference},
-k-testable regular languages~\cite{garcia+:k-testable-languages},
+%k-testable regular languages~\cite{garcia+:k-testable-languages},
 SOREs~\cite{bex+:dtd-inference} and CHAREs~\cite{bex+:dtd-inference}.
 None of these languages and their associated algorithms 
 are a good fit for inferring PADS descriptions (even the
 regular subset of PADS without dependency and constraints).  
 For example, ad hoc data is unlikely to be reversible and hence
-k-reversible languages are not relevant.  K-testable regular languages are
-more relevant, but algorithms for inferring them
-operate by finding a finite automaton and converting that 
-automaton into a regular expression.  Unfortunately, the conversion process
-often leads to overly verbose regular expressions, sometimes 
-exponential in the size of the automaton~\cite{bex+:dtd-inference}. 
+k-reversible languages are not relevant.  
+%K-testable regular languages are
+%more relevant, but algorithms for inferring them
+%operate by finding a finite automaton and converting that 
+%automaton into a regular expression.  Unfortunately, the conversion process
+%often leads to overly verbose regular expressions, sometimes 
+%exponential in the size of the automaton~\cite{bex+:dtd-inference}. 
 SOREs are a subset of the k-testable
 regular languages with a linear-size translation from automata to
 regular expressions, but they carry the restriction that each symbol
@@ -124,14 +126,13 @@ operate by repeatedly rewriting a candidate grammar (or set of candidate
 grammars) until an objective function is optimized.
 If the training data is for the learning system is the strings
 $s_1$, $s_2$, $\ldots$, $s_n$, these algorithms normally start their
-process using the grammar $s_1 + s_2 + \cdots + s_n$, which may
-be enormous if there is much training data.  
-Consequently, hundreds or even thousands of different rewrites apply to the
+process using the grammar $s_1 + s_2 + \cdots + s_n$.  Consequently,  
+an enormous number of different rewrites may apply to the
 initial candidate grammar.  Our structure refinement
-phase avoids these problems and works relatively quickly 
-because it is preceded by a novel and highly efficient
+phase avoids these problems 
+because it is preceded by a highly efficient
 histogram-based structure-discovery algorithm 
-that identifies a good candidate grammar to start the search from.  
+that identifies a good candidate grammar from which to start the search.  
 %%Another interesting, non-standard element of our algorithm is the way 
 %%it is tuned to include specialized rules for finding constraints and 
 %%rewrite tokens.
@@ -156,18 +157,19 @@ that identifies a good candidate grammar to start the search from.
 %% the rewriting phase.  {\em NOTE: end of that paragraph was highly  run-on}
 
 Another category of algorithms are those that learn various kinds of
-automata as opposed to regular expressions or grammars.  For instance,
-RPNI~\cite{rpni} and Denis's work on learning
-RFSAs~\cite{denis:learning-regular-languages} fall into this category,
-as do Raeymaekers's algorithms to learn tree
-automata~\cite{raeymaekers+:wrapper-induction,raeymaekers+:learning-tree-languages}.
-One difficulty with adapting these algorithms to our task is that any
-coverter from automata to regular expressions (or PADS descriptions)
-may produce very large, unnatural descriptions.  This was found to
-occur when such algorithms were applied to XML
-data~\cite{bex+:dtd-inference}.  We would need such a converter to
-present inferred descriptions to users or to funnel the results of
-inference to our tool-generation infrastructure.
+automata as opposed to regular expressions or 
+grammars~\cite{rpni,denis:learning-regular-languages,raeymaekers+:learning-tree-languages}.  
+One difficulty with adapting these algorithms to our task is that 
+we would need to convert the inferred automata into a 
+grammatical representation.  We need a grammatical representation 
+to present the results to users and to funnel the results
+to our tool-generation infrastructure.
+Unfortunately, in theory, conversion from automata into
+regular expressions can result in an exponential blowup in the
+size of the representation.
+Moreover, a substantial blowup appears to be relatively common in
+practice~\cite{bex+:dtd-inference}.  Consequently, using these algorithms
+in our setting is unappealing.
 
 
 %% developed another system for information extraction from web pages
@@ -310,7 +312,7 @@ source, leaving the choice about which pieces are interesting to
 down-stream applications.  Of course, this option is only feasible
 because we target ad hoc data, which is fairly structured and dense in
 useful information, rather than web pages or free text, which are the
-more common target for information extraction systems. 
+usual targets for information extraction systems. 
 
 A common approach to information extraction involves an inductive
 learning process in which a user manually tags the relevant data in sample documents.
@@ -338,23 +340,25 @@ to one of six different templates, the most well-developed of which
 has the form of a header, followed by a sequence of K-tuples each of
 which is flanked by a pair of begin and end tags, followed by a
 trailer.  For such documents, the system generates a wrapper to
-extract the K-tuples.  To limit the amount of labeling, the system
-has provisions to automatically tag the desired tuples using {\it
-recognizers}, which are imperfect, but reusable heuristics for finding
-atomic pieces of data such as country names or phone numbers.  Such
-recognizers mean the user has to select which set of recognizers to
-use for a particular extraction task instead of labeling pages by
-hand.  The system requires one recognizer to be {\it perfect}, meaning
-it generates neither false positives nor false negatives.  It then
-uses a process called {\it corroboration} to correct the mistakes of
-the other recognisers.  The system is not robust in the presence of
-missing data, and it is not clear how it would handle multiple
-instances of the same kind of data within a single tuple. This
-approach differs from ours in that it requires the data to comform to
-one of a fixed collection of templates.  In addition, the 
-templates that support corroboration will only return relational data,
-whereas our system will return semi-structured data.
-
+extract the K-tuples.  
+% To limit the amount of labeling, the system
+% has provisions to automatically tag the desired tuples using {\it
+% recognizers}, which are imperfect, but reusable heuristics for finding
+% atomic pieces of data such as country names or phone numbers.  Such
+% recognizers mean the user has to select which set of recognizers to
+% use for a particular extraction task instead of labeling pages by
+% hand.  The system requires one recognizer to be {\it perfect}, meaning
+% it generates neither false positives nor false negatives.  It then
+% uses a process called {\it corroboration} to correct the mistakes of
+% the other recognisers.  The system is not robust in the presence of
+% missing data, and it is not clear how it would handle multiple
+% instances of the same kind of data within a single tuple. This
+% approach differs from ours in that it requires the data to comform to
+% one of a fixed collection of templates.  In addition, the 
+% templates that support corroboration will only return relational data,
+% whereas our system will return semi-structured data.
+The use of fixed templates and the primary focus on relational data makes this
+work quite different from ours.
 
 Muslea {\em et al.}~\cite{muslea+:active-learning} tackle a similar
 problem, but strive to reduce the amount of labeling by having the
@@ -365,25 +369,27 @@ examples and a user-specified set of desired features to train Hidden
 Markov Models to select the desired features from similar documents.
 This work is quite successful at learning to select the relevant
 features of addresses and bibliographic citations from a variety of
-input formats. Various researchers have leveraged the syntactic
-regularity and verbosity of XML/HTML to reduce the amount of user
-annotations required to train information extraction systems targetted
-at web pages~\cite{Ambite+:ariadne,doorenbos+:shopbot}.
-Work by Ireson {\em et al.}~\cite{ireson+:ml-evaluation} investigates
-how information extraction systems should be evaluated.  Soderland's
-WHISK paper~\cite{soderland:whisk} and Kushmerick's
-theis~\cite{kushmerick-phd1997} both contain detailed descriptions of
-other information extraction systems.  In general, systems that depend
+input formats. 
+% Various researchers have leveraged the syntactic
+% regularity and verbosity of XML/HTML to reduce the amount of user
+% annotations required to train information extraction systems targetted
+% at web pages~\cite{Ambite+:ariadne,doorenbos+:shopbot}.
+% Work by Ireson {\em et al.}~\cite{ireson+:ml-evaluation} investigates
+% how information extraction systems should be evaluated.  Soderland's
+% WHISK paper~\cite{soderland:whisk} and Kushmerick's
+% theis~\cite{kushmerick-phd1997} both contain detailed descriptions of
+% other information extraction systems.  
+In general, systems that depend
 upon labeling are unlikely to be helpful in our context; rather than
 spending time explicitly labeling documents, the user might as well
 write a PADS description by hand.
 
-Another type of information extraction system strives to provide a
-high-level semantic characterization of the content of natural
-language documents to guide information retrieval
-queries~\cite{gubanov+:structural-text-search,rus+:information-capture}.
-This work differs from ours in that it is building a semantic rather
-than a syntatic description of the source data.
+% Another type of information extraction system strives to provide a
+% high-level semantic characterization of the content of natural
+% language documents to guide information retrieval
+% queries~\cite{gubanov+:structural-text-search,rus+:information-capture}.
+% This work differs from ours in that it is building a semantic rather
+% than a syntatic description of the source data.
 
 More closely related are various efforts to identify tabular data 
 either from free-form text~\cite{Ng+:texttables,Pinto+:texttables} or
@@ -391,7 +397,7 @@ from web pages~\cite{Lerman+:webtables}.  These approaches typically
 use hand-labelled examples to train machine learning systems to
 identify the tables.  They then use heuristics specific to tabular
 data to extract the tuples contained within those tables.  The portion
-of this work related to identifying structrued data from within more
+of this work related to identifying structured data from within more
 free-form documents is complementary to ours.  The portion responsible
 for deconstructing the identified tables uses more specific
 domain-knowledge related to the form of tables than we do.
@@ -456,7 +462,7 @@ the structure of ad hoc data.  They must be modified, tuned and
 empirically evaluated on this new task.
 
 One line of research on schema inference for XML makes use of the 
-observation that 99\% of the content models for an XML node are defined as
+observation that 99\% of the content models for XML nodes are defined as
 SOREs or CHAREs~\cite{martens+:expressiveness-xml-schema} (recall, these
 are heavily restricted forms of regular expressions).  
 This observation allows Bex {\em et al.}~\cite{bex+:dtd-inference} to define
@@ -498,7 +504,7 @@ translation tools for which the output is guaranteed to match
 the characteristics of a second data set.
 
 
-\paragraph*{Other work}
+\paragraph*{Other work.}
 Potter's Wheel~\cite{raman+:potterwheel} is a system that attempts to
 help users find and purge errors from
 relational data sources.  It does so through the use of a spread-sheet
