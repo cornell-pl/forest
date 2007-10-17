@@ -173,7 +173,7 @@ work are entirely different.
 \paragraph*{Structure Discovery Basics.}
 Our algorithm operates by analyzing the collection of tokenized chunks
 and guessing what the top-level type constructor should be.  Based on
-this guess, it partitions the chunks and recursively analyze each partition
+this guess, it partitions the chunks and recursively analyzes each partition
 to determine the best description for that partition.
 Figure~\ref{fig:structure-discovery} outlines the
 overall procedure in Pseudo-ML.  The \cd{oracle} function,
@@ -353,7 +353,7 @@ an array separator as the \cd{'|'} token does in the Sirius data.
 \paragraph*{The Magic.}
 To generate the required prophecy for a given list of chunks, the
 oracle computes a histogram of the frequencies of all tokens appearing
-the input.  
+in the input.  
 More specifically, the histogram for token $t$
 plots the number of chunks (on the $y$-axis)
 having a certain number of occurrences of the token (on the $x$-axis). 
@@ -509,7 +509,7 @@ we can explain how the oracle prophecies given a list of chunks.
 
 \begin {enumerate}
 \item Prophecy a base type when each chunk contains the same simple
-  token. If each chunk contains the same meta-token, prophecy a struct
+  token. If each chunk contains the same meta-token, then prophecy a struct
   with three fields: one for the left paren, one for the body, and one
   for the right paren.
 
@@ -614,7 +614,7 @@ Perhaps the most powerful tools are the \padx{} query
 engine~\cite{fernandez+:padx} and the \xml{} converter, which allow  
 users to write arbitrary XQueries over the data source
 or to convert the data to \xml{} for use by other software. Other
-useful tools include the accumulator tool, mentioned earlier,
+useful tools include the accumulator tool mentioned earlier,
 converters to translate data into a form suitable for
 loading into a relational database or Excel spreadsheet, and
 a custom graphing tool that pushes data into \cd{gnuplot} for data
