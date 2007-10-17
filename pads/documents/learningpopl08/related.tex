@@ -92,9 +92,9 @@ language classes with known inference algorithms include
 k-reversible languages~\cite{angluin:revesible-language-inference},
 %k-testable regular languages~\cite{garcia+:k-testable-languages},
 SOREs~\cite{bex+:dtd-inference} and CHAREs~\cite{bex+:dtd-inference}.
-None of these languages and their associated algorithms 
+None of these languages and the associated algorithms 
 are a good fit for inferring PADS descriptions (even the
-regular subset of PADS without dependency and constraints).  
+regular subset of PADS without dependencies and constraints).  
 For example, ad hoc data is unlikely to be reversible and hence
 k-reversible languages are not relevant.  
 %K-testable regular languages are
@@ -124,7 +124,7 @@ and
 Hong~\cite{hong:thesis,hong01using}.  These and a number of other algorithms
 operate by repeatedly rewriting a candidate grammar (or set of candidate
 grammars) until an objective function is optimized.
-If the training data is for the learning system is the strings
+If the training data for the learning system is the strings
 $s_1$, $s_2$, $\ldots$, $s_n$, these algorithms normally start their
 process using the grammar $s_1 + s_2 + \cdots + s_n$.  Consequently,  
 an enormous number of different rewrites may apply to the
@@ -158,18 +158,19 @@ that identifies a good candidate grammar from which to start the search.
 
 Another category of algorithms are those that learn various kinds of
 automata as opposed to regular expressions or 
-grammars~\cite{rpni,denis:learning-regular-languages,raeymaekers+:learning-tree-languages}.  
+grammars~\cite{denis:learning-regular-languages,rpni,raeymaekers+:learning-tree-languages}.  
 One difficulty with adapting these algorithms to our task is that 
 we would need to convert the inferred automata into a 
-grammatical representation.  We need a grammatical representation 
-to present the results to users and to funnel the results
+grammatical representation so that we can
+present the result to users and funnel it
 to our tool-generation infrastructure.
 Unfortunately, in theory, conversion from automata into
 regular expressions can result in an exponential blowup in the
 size of the representation.
 Moreover, a substantial blowup appears to be relatively common in
-practice~\cite{bex+:dtd-inference}.  Consequently, using these algorithms
-in our setting is unappealing.
+practice~\cite{bex+:dtd-inference}.  Consequently, these algorithms
+are not appropriate for our domain.
+
 
 
 %% developed another system for information extraction from web pages
@@ -482,7 +483,7 @@ independent of the XML inference problem.
 XTRACT~\cite{garofalakis+:xtract} is another system for inferring DTDs
 for XML documents.  It operates in three phases: generalization,
 factoring and MDL optimization.  The first phase plays a role similar to
-our structure of discovery phase in that it generates a
+our structure discovery phase in that it generates a
 collection of candidate structures from a series of XML examples.
 This generalization phase searches for patterns in XML
 data; it is tuned using the authors' knowledge of common DTD
@@ -492,7 +493,7 @@ Finally, they tackle the MDL optimization problem by mapping the
 problem into an instance of the NP-complete Facility Location Problem,
 which they solve using a quadratic approximation algorithm.
 Our MDL-guided rewriting problem considers a more general set of
-rewriting rules and hence their technique is not applicable.
+rewriting rules and hence we cannot reuse their technique.
 
 Another related problem of great interest in the XML and database world
 involves finding a mapping between two data sources with different schema.
