@@ -1,0 +1,372 @@
+\begin{figure*}[t]
+\[
+\begin{array}{lrll}
+\multicolumn{4}{l}{\mbox{(host-language base types)}}\\ 
+\basety & ::= & \multicolumn{2}{l}{\boolty \bnfalt \stringty \bnfalt \locty \bnfalt \timety \bnfalt \schedulety} \\
+\\
+\multicolumn{4}{l}{\mbox{(host-language types)}}\\ 
+\ty & ::= & \basety & \mbox{base types} \\
+ & \bnfalt & \ty_1 * \ty_2 & \mbox{pair types} \\
+ & \bnfalt & \optionty{\ty} & \mbox{option types}\\
+ & \bnfalt & \ty_1 + \ty_2 & \mbox{union types} \\
+ & \bnfalt & \listty{\ty} & \mbox{list types}\\
+ & \bnfalt & \feedty{\ty} & \mbox{stream types}\\
+ & \bnfalt & \ty_1 \arrow \ty_2 & \mbox{function types} \\
+\\
+\multicolumn{4}{l}{\mbox{(host-language values)}}\\ 
+\data & ::=     & \constant & \mbox{generic constant} \\
+ & \bnfalt & \parser & \mbox{parser (generated from PADS/ML)} \\
+ & \bnfalt & \loc & \mbox{locations} \\
+ & \bnfalt & \atime & \mbox{times} \\
+ & \bnfalt & \schedule & \mbox{schedules} \\
+ & \bnfalt & \none \bnfalt 
+                           \some{\data} & \mbox{optional values}\\
+ & \bnfalt & (\data_1,\data_2) & \mbox{pairs} \\
+ & \bnfalt & \inl{\data} \bnfalt 
+                           \inr{\data} & \mbox{union values} \\
+& \bnfalt & \lambda x{:}\ty.\expression & \mbox{function values} \\
+\\
+\multicolumn{4}{l}{\mbox{(host-language expressions)}}\\ 
+\expression & ::= & \generalvar & \mbox{variables} \\
+ & \bnfalt & \data & \mbox{data values} \\
+ & \bnfalt & \none \bnfalt 
+              \some{\expression} & \mbox{option expressions}\\
+ & \bnfalt & (\expression_1,\expression_2) \bnfalt e.1 \bnfalt e.2 
+    & \mbox{pair expressions} \\
+% & \bnfalt & \inl{\expression} \bnfalt 
+%             \inr{\expression} & \mbox{union expressions} \\
+% & \bnfalt & \expression_1 \; \expression_2 & \mbox{application expression} \\
+ & \bnfalt & ... & \mbox{more typed lambda expressions} \\
+\end{array}
+\]
+\caption{Host Language Syntax.}
+\label{fig:host-language}
+\end{figure*}
+
+\begin{figure*}[t]
+\[
+\begin{array}{lrll}
+\multicolumn{4}{l}{\mbox{(feed specs)}}\\ 
+\feed & ::=     & x &  \mbox{feed variable} \\
+ & \bnfalt & \emptyfeed & \mbox{empty feed} \\
+ & \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
+ & \bnfalt & \allfeed{e_1}{e_2}{e_3} & \mbox{all locations} \\
+ & \bnfalt & \existsfeed{e_1}{e_2}{e_3} & \mbox{one location} \\
+ & \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
+ & \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
+ & \bnfalt & \feed_1 \spairfeed \feed_2 & \mbox{synchronous pair} \\
+ & \bnfalt & \feed_1 * \feed_2 & \mbox{local pair} \\
+ & \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent local pair} \\
+ & \bnfalt & \foreachfeed{x}{\feed_1}{\feed_2} & \mbox{for each feed} \\
+ & \bnfalt & \filterfeed{\feed}{e} & \mbox{filter out some locations/times} \\
+ & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
+ & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
+ & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
+                                               fill missing entries with ``None''} \\
+ & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
+
+\end{array}
+\]
+\caption{Feed Language Syntax.}
+\label{fig:syntax}
+\end{figure*}
+
+
+\begin{figure*}[t]
+\[
+\infer[(\textit{t-var})]
+{\Gamma \turn x : \Gamma(x)}
+{}
+\]
+
+\[
+\infer[(\textit{t-empty})]
+{\Gamma \turn \emptyfeed : \feedty{\timety * \ty}}
+{}
+\]
+
+\[
+\infer[(\textit{t-compute})]
+{\Gamma \turn \computed{e_1}{x}{e_2} : \feedty{(\timety * \ty)}}
+{
+  \Gamma \turn e_2 : \schedulety &
+  \Gamma,x{:}\timety \turn e_1 : \ty 
+}
+\]
+
+\[
+\infer[(\textit{t-all})]
+{\Gamma \turn \allfeed{e_1}{e_2}{e_3} : \feedty{(\timety * (\locty * \ty))}}
+{
+  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} &
+  \Gamma \turn e_2 : \listty{\locty}
+  \Gamma \turn e_3 : \schedulety
+}
+\]
+
+\[
+\infer[(\textit{t-any})]
+{\Gamma \turn \existsfeed{e_1}{e_2}{e_3} : \feedty{(\timety * (\locty * \ty))}}
+{
+  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} &
+  \Gamma \turn e_2 : \listty{\locty}
+  \Gamma \turn e_3 : \schedulety
+}
+\]
+
+\[
+\infer[(\textit{t-union})]
+{\Gamma \turn \feed_1 \unionfeed \feed_2  : \feedty{\ty}}
+{
+  \Gamma \turn \feed_1 : \feedty{\ty} &
+  \Gamma \turn \feed_2 : \feedty{\ty}
+}
+\]
+
+\[
+\infer[(\textit{t-sum})]
+{\Gamma \turn \feed_1 \sumfeed \feed_2  : \feedty{(\timety * (\ty_1 + \ty_2))}}
+{
+  \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
+  \Gamma \turn \feed_2 : \feedty{(\timety * \ty_2)}
+}
+\]
+
+\[
+\infer[(\textit{t-synch-pair})]
+{\Gamma \turn \feed_1 \spairfeed \feed_2  : \feedty{(\timety * (\ty_1 * \ty_2))}}
+{
+  \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
+  \Gamma \turn \feed_2 : \feedty{(\timety * \ty_2)}
+}
+\]
+
+\[
+\infer[(\textit{t-local-pair})]
+{\Gamma \turn \feed_1 * \feed_2  : \feedty{(\timety * (\ty_1 * \ty_2))}}
+{
+  \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
+  \Gamma \turn \feed_2 : \feedty{(\timety * \ty_2)}
+}
+\]
+
+\[
+\infer[(\textit{t-local-dpair})]
+{\Gamma \turn x{:}\feed_1 * \feed_2  : \feedty{(\timety * (\ty_1 * \ty_2))}}
+{
+  \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
+  \Gamma,x_t{:}\timety,x{:}\ty_1 \turn \feed_2 : \feedty{(\timety * \ty_2)}
+}
+\]
+
+\[
+\infer[(\textit{t-foreach})]
+{\Gamma \turn \foreachfeed{x}{\feed_1}{\feed_2}  : \feedty{(\timety * \ty_2)}}
+{
+  \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
+  \Gamma,x_t{:}\timety,x{:}\ty_1 \turn \feed_2 : \feedty{(\timety * \ty_2)}
+}
+\]
+
+\[
+\infer[(\textit{t-filter})]
+{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\ty}}
+{
+  \Gamma \turn \feed : \feedty{\ty} &
+  \Gamma \turn e : \ty \arrow \boolty
+}
+\]
+
+\[
+\infer[(\textit{t-pp})]
+{\Gamma \turn \ppfeed{\feed}{e} : \feedty{\ty}}
+{
+  \Gamma \turn \feed : \feedty{\ty} &
+  \Gamma \turn e : ((\locty * \timety) * \stringty) \arrow \stringty
+}
+\]
+
+\[
+\infer[(\textit{t-redirect})]
+{\Gamma \turn \remapfeed{\feed}{e} : \feedty{\ty}}
+{
+  \Gamma \turn \feed : \feedty{\ty} &
+  \Gamma \turn e : \locty * \timety \arrow \locty * \timety
+}
+\]
+
+\[
+\infer[(\textit{t-reschedule})]
+{\Gamma \turn \refeed{\feed}{e} : \feedty{\timety * \ty}}
+{
+  \Gamma \turn \feed : \feedty{\timety * (\optionty{\ty})} &
+  \Gamma \turn e : \schedulety
+}
+\]
+
+\[
+\infer[(\textit{t-stutter})]
+{\Gamma \turn \stutterfeed{\feed}{e} : \feedty{\ty}}
+{
+  \Gamma \turn \feed : \feedty{\ty} &
+  \Gamma \turn e : \schedulety
+}
+\]
+
+\caption{Feed Language Typing.}
+\label{fig:typing}
+\end{figure*}
+
+\begin{figure*}[t]
+\[
+\begin{array}{lcl}
+\esemantics{e}{\environment} &=& \mbox{denotation of simply-typed term $e$ in environment $\environment$ mapping variables to values.}
+\\
+\\
+\semantics{\feed}{\environment}{\universe} &=& \mbox{denotation of 
+$\feed$ in environment $\environment$ mapping variables to values.} \\
+ && \mbox{and ``universe'' $\universe$ mapping time $*$ location pairs to string options}
+\\
+\\
+\semantics{x}{\environment}{\universe} 
+ &=& \environment(x) 
+\\\\
+\semantics{\emptyfeed}{\environment}{\universe} 
+ &=& \{\;\}
+\\\\
+\semantics{\computed{e_1}{x}{e_2}}{\environment}{\universe} 
+ &=& \{(\atime, \esemantics{(\lambda x{:}\timety.e_1)}{\environment}\; \atime) 
+          \setalt \atime \in  \esemantics{e_2}{\environment} 
+     \} 
+\\\\
+\semantics{\allfeed{e_1}{e_2}{e_3}}{\environment}{\universe} 
+ &=& \{(\atime, (\loc, \esemantics{e_1}{\environment} \; (\universe(\loc,\atime))))
+          \setalt \atime \in  \esemantics{e_2}{\environment} 
+          \;\mbox{and}\; \loc \in  \esemantics{e_2}{\environment}
+     \} 
+ \\\\
+\semantics{\existsfeed{e_1}{e_2}{e_3}}{\environment}{\universe} 
+ &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
+&&\quad\mbox{where} \\
+%\begin{array}{l}
+&&\qquad
+  f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; (\some{v})\} \\
+&&\qquad\qquad \qquad\qquad 
+  \mbox{for some $\loc \in \esemantics{e_2}{\environment}$ such that
+    $\universe(\atime,\loc) = \some{v}$} \\
+&&\qquad
+  f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; \none\} \\
+&&\qquad\qquad \qquad\qquad 
+  \mbox{if no such $\loc$ exists} \\
+%\end{array}
+\\
+\semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
+ &=& \semantics{\feed_1}{\environment}{\universe} 
+     \bigcup
+     \semantics{\feed_2}{\environment}{\universe} 
+\\\\
+\semantics{\feed_1 \sumfeed \feed_2}{\environment}{\universe} 
+ &=& \{
+      (\atime,\inl{v}) \setalt 
+        (\atime,v) \in \semantics{\feed_1}{\environment}{\universe} 
+     \}
+     \bigcup
+     \{
+      (\atime,\inr{v}) \setalt 
+        (\atime,v) \in \semantics{\feed_2}{\environment}{\universe}
+     \}
+\\\\
+\semantics{\feed_1 \spairfeed \feed_2}{\environment}{\universe} 
+ &=&
+ \{(\atime,(v_1,v_2)) \setalt 
+     (\atime,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+     (\atime,v_2) \in \semantics{\feed_2}{\environment}{\universe}
+  \}
+\\\\
+\semantics{\feed_1 * \feed_2}{\environment}{\universe} 
+ &=&
+ \{(\atime_2,(v_1,v_2)) \setalt 
+     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\&&\qquad\qquad\qquad\ \ \,
+     (\atime_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
+     \; \mbox{and} \;
+\\&&\qquad\qquad\qquad\ \ \,
+     ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+      \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
+  \}
+\\\\
+\semantics{x{:}\feed_1 * \feed_2}{\environment}{\universe} 
+ &=&
+ \{(\atime_2,(v_1,v_2)) \setalt 
+     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\&&\qquad\qquad\qquad\ \ \,
+     (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \;
+\\&&\qquad\qquad\qquad\ \ \,
+     ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+      \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
+  \}
+\\\\
+\semantics{\foreachfeed{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+ &=&
+ \{(\atime_2,v_2) \setalt 
+     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\&&\qquad\qquad\qquad\ \ \,
+     (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \;
+\\&&\qquad\qquad\qquad\ \ \,
+     t_2 > t_1 
+  \}
+\\\\
+\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{v \setalt v \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+            \esemantics{e}{\environment}\; v = \mathtt{true}
+\}
+\\\\
+\semantics{\ppfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\semantics{\feed}{\environment}{
+  (\lambda x{:}\locty * \timety. \esemantics{e}{\environment} (x,\universe(x)))} 
+\\\\
+\semantics{\remapfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\semantics{\feed}{\environment}{(\universe \circ \esemantics{e}{\environment})}
+\\\\
+\semantics{\refeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{(\atime,\some{v}) \setalt 
+   (\atime,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+   \atime \in \esemantics{e}{\environment}
+\} \bigcup
+\\&&
+\{(\atime,\none) \setalt
+   (\atime,\_) \not\in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+   \atime \in \esemantics{e}{\environment}
+\}
+\\\\
+\semantics{\stutterfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{(\atime,v) \setalt 
+   (\atime,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+   \atime \in \esemantics{e}{\environment}
+\} \bigcup
+\\&&
+\{(\atime,v) \setalt 
+   (\atime',v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+   \atime \in \esemantics{e}{\environment}  \; \mbox{and} \;
+\\&&\qquad\qquad\qquad\ \ \,
+    \mbox{for all $\atime''$ such that $\atime' < \atime'' \leq \atime$,} \;
+   (\atime'',\_) \not\in \semantics{\feed}{\environment}{\universe} \; 
+\}
+
+\end{array}
+\]
+\caption{Feed Language Semantics.}
+\label{fig:semantics}
+\end{figure*}
+

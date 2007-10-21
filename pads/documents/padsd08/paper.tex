@@ -1,0 +1,64 @@
+%\documentclass[fleqn]{article}
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+\usepackage{epsfig}
+\usepackage{code} 
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{PADS/D: A system for processing distributed ad hoc data}
+
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@research.att.com}}
+\authorinfo{Yitzhak Mandelbaum}{
+	   AT\&T Labs Research}
+       {\mono{yitzhakm@research.att.com}}
+\authorinfo{David Walker}{
+	   Princeton University}
+       {\mono{dpw@CS.Princeton.EDU}}
+\authorinfo{Kenny Q. Zhu}{
+           Princeton University}
+       {\mono{kzhu@CS.Princeton.EDU}}
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+\input{abstract}
+\end{abstract}
+
+
+\section {Introduction}
+\label{sec:intro}
+
+PADS is great~\cite{fisher+:pads,fisher+:popl06}.
+
+\section{The Data Description Language}
+\label{sec:semantics}
+\input{language}
+
+\section*{Acknowledgments}
+
+This material is based upon work 
+supported by the NSF
+   under grants 0612147 and 0615062.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of the NSF.
+
+\bibliographystyle{abbrv}
+\bibliography{pads}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+
