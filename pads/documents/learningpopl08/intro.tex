@@ -57,7 +57,7 @@ make the \pads{} toolkit accessible to new users with
 little time to learn the specification language,
 we have developed an automatic format inference engine.
 This format inference engine reads arbitrary ASCII data sources
-and produces an accurate, human-readable \pads{} description of the source.
+and produces an accurate, human-readable description of the source.
 These machine-produced descriptions give experts a running start
 in any data analysis task as the libraries generated from these
 descriptions may be incorporated directly into an ordinary C program.
@@ -74,9 +74,11 @@ with just a ``push of a button.''
 
 To summarize, this paper makes three main contributions:
 \begin{itemize}
-\item We have developed a new, multi-phase algorithm 
+\item We have developed a multi-phase algorithm 
 that infers the format of complex, ad hoc data sources,
-producing compact and accurate \pads{} descriptions.
+producing compact and accurate \pads{} descriptions.  This algorithm
+adapts techniques previously used to infer the structure of web pages
+and \xml{} documents to our new problem domain.
 
 \item We have incorporated the inference algorithm into 
 a modular software system that uses sample data to
@@ -87,14 +89,14 @@ without requiring any human intervention.
 our system on a range of ASCII data sources.  For many data
 sources, training on 5\% or less of the data results in
 accuracy rates greater than 95\% (often perfect).  
-In {\em all cases}, additional
-training data elevates accuracy rates above 95\% and
-in {\em no cases} need a user ever be unsure about the
-accuracy rate of generated descriptions -- the automatically
-generated accumulator tool measures both overall accuracy
-and field-by-field accuracy of the description on any new
-data source.
-In all cases, after fixing a data source, the 
+%In {\em all cases}, additional
+%training data elevates accuracy rates above 95\% and
+%in {\em no cases} need a user ever be unsure about the
+%accuracy rate of generated descriptions -- the automatically
+%generated accumulator tool measures both overall accuracy
+%and field-by-field accuracy of the description on any new
+%data source.
+In all our benchmarks, the 
 inference algorithm scales linearly with the quantity of
 data.
 \end{itemize}

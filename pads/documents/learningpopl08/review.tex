@@ -5,7 +5,11 @@ the \ipads{} language we developed and formalized in previous
 work~\cite{fisher+:popl06}.  Apart from syntax, the main differences 
 are that the \ir{} omits recursion and function declarations; the former
 being beyond the scope of our current inference techniques and the 
-latter being unnecessary during the course of the inference algorithm.  
+latter being unnecessary during the course of the inference algorithm.
+Without recursion and function declarations, %from a parsing perspective,
+this core \ir{} is also quite closely related to a standard language
+of regular expressions, albeit with interesting basic symbols and
+a limited form of dependency.
 %In addition, for convenience during inference, the scope of dependent 
 %variable binding is slightly different, as will be explained below.
 
