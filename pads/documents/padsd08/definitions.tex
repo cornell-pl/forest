@@ -156,7 +156,12 @@
     \mathtt{pp} \; #1 \; \mathtt{with}\; #2}}
 \newcommand{\foreachfeed}[3]{
   \ensuremath{
-    \mathtt{foreach}\; #1 \;
+    \mathtt{foreach{*}{*}}\; #1 \;
+    \mathtt{in}\; #2 \;
+    \mathtt{create}\; #3}}
+\newcommand{\foreachlocalfeed}[3]{
+  \ensuremath{
+    \mathtt{foreach*}\; #1 \;
     \mathtt{in}\; #2 \;
     \mathtt{create}\; #3}}
 \newcommand{\remap}[2]{\ensuremath{\mathtt{redirect}\; #1 \; \mathtt{with} \; #2}}
@@ -166,6 +171,7 @@
 \newcommand{\unionfeed}{\ensuremath{\cup}}
 \newcommand{\sumfeed}{\ensuremath{+}}
 \newcommand{\spairfeed}{\; \ensuremath{\mathtt{\&} \; }}
+\newcommand{\allpairfeed}{\; \ensuremath{{*}{*}} \; }
 
 \newcommand{\Time}{\ensuremath{\mathtt{Time}}}
 \newcommand{\Set}{\ensuremath{\mathtt{Set}}}
