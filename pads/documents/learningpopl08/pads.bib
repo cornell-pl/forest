@@ -9,7 +9,23 @@
 @string{sigcomm = "{ACM} Conference of Special Interest Group on Data Communications"}
 @string{oopsla = "{ACM} Conference on Object-oriented Programming, Systems, Languages, and Applications"}
 @string{ijcai = "International Joint Conferences on Artificial Intelligence"}
-@string{icml = "International Conference on Machine Learning"}
+%@string{icml = "International Conference on Machine Learning"}
+@string{icml = "{ICML}"}
+%@string{vldb = "{International Conference on Very Large Data Bases}"}
+@string{vldb = "{VLDB}"}
+@string{sigmod = "{SIGMOD}"}
+%@string{freenix = "Proceedings of the {FREENIX} Track 2000 {U}senix Annual Technical Conference"}
+@string{freenix = "{FREENIX}"}
+
+%@string{mdml = "{International Workshop on Machine Learning and Data Mining in Pattern Recognition}"}
+@string{mdml = "{MDML}"}
+%@string{sigir = "{SIGIR '03: Proceedings of the 26th annual international ACM SIGIR conference on Research and development in informaion retrieval}"}
+@string{sigir = "{SIGIR}"}
+%@string{acl = "{Proceedings of the annual meeting of the Association for Computational Linguistics on Computational Linguistics}"}
+@string{acl = "{ACL}"}
+%@string{cagi = "{ICML Workshop on Challenges and Applications of Grammar Induction}"}
+@string{cagi = "{CAGI}"}
+
 @string{gpce = "Generative Programming and Component Engineering"}
 @string{cade = "International Conference on Automated Deduction"}
 @string{esop = "European Symposium on Programming"}
@@ -22,19 +38,25 @@
 @string{lfp = "{ACM} Conference on {Lisp} and Functional Programming"}
 @string{lics = "{IEEE} Symposium on Logic in Computer Science"}
 @string{mfps = "Mathematical Foundations of Programming Semantics"}
-@string{pldi = "{ACM} Conference on Programming Language Design and Implementation"}
-@string{popl = "{ACM} Symposium on Principles of Programming Languages"}
+%@string{popl = "{ACM} Symposium on Principles of Programming Languages"}
+@string{popl = "{POPL}"}
+%@string{pldi = "{ACM} Conference on Programming Language Design and Implementation"}
+@string{pldi = "{PLDI}"}
 @string{tacs = "Theoretical Aspects of Computer Software"}
 @string{tic = "Workshop on Types in Compilation"}
 @string{tlca = "International Conference on Typed Lambda Calculi and Applications"}
 
 @string{info-comp = "Information and Computation"}
-@string{jacm = "Journal of the {ACM}"}
+%@string{jacm = "Journal of the {ACM}"}
+@string{jacm = "{JACM}"}
 @string{jfp = "Journal of Functional Programming"}
 @string{mscs = "Mathematical Structures in Computer Science"}
-@string{tcs = "Theoretical Computer Science"}
-@string{toplas = "{ACM} Transactions on Programming Languages and Systems"}
-
+%@string{tcs = "Theoretical Computer Science"}
+@string{tcs = "{TCS}"}
+%@string{toplas = "{ACM} Transactions on Programming Languages and Systems"}
+@string{toplas = "{TOPLAS}"}
+%@string{ecml = "European Conference on Machine Learning"}
+@string{ecml = "{ECML}"}
 @string{lncs = "Lecture Notes in Computer Science"}
 @string{encs="Electronic Notes in Computer Science"}
 @string{academic = "Academic Press"}
@@ -81,12 +103,9 @@
 @string{csurv = "Computing Surveys"}
 @string{sicomp="{SIAM} Journal on Computing"}
 @string{polymorphism="Polymorphism: The {ML}/{LCF}/{HOPE} Newsletter"}
-@string{tcs="Theoretical Computer Science"}
 @string{jcss="Journal of Computer and System Sciences"}
 @string{cacm="Communications of the {ACM}"}
-@string{toplas="{ACM} Transactions on Progamming Languages and Systems"}
 @string{loplas="{ACM} Letters on Progamming Languages and Systems"}
-@string{jacm="Journal of the {ACM}"}
 @string{jsl="Journal of Symbolic Logic"}
 @string{zml="Zeitschrift {f\"ur} Mathematische Logik und Grundlagen der Mathematik"}
 @string{icold="Information and Control"}
@@ -107,7 +126,6 @@
 @string{lncs="Lecture Notes in Computer Science"}
 @string{lnm="Lectures Notes in Mathematics"}
 
-@string{popl=" {ACM} Symposium on Principles of Programming Languages"}
 @string{sosp=" {ACM} Symposium on Operating Systems Principles"}
 @string{lics=" Symposium on Logic in Computer Science"}
 @string{cade=" Conference on Automated Deduction"}
@@ -117,8 +135,6 @@
 @string{focs=" Symposium  on the Foundations of Computer Science"}
 @string{icalp=" International Colloquium on Automata, Languages, and
                   Programming"}
-@string{pldi="{ACM} Conference on Programming Language Design and
-                  Implementation"}
 @string{pepm=" {ACM} Conference on Partial Evaluation and Semantics-Based
                 Program Manipulation"}
 @string{lfp=" {ACM} Conference on Lisp and Functional Programming"}
@@ -279,7 +295,6 @@
  issn = {0164-0925},
  pages = {301--338},
  doi = {http://doi.acm.org/10.1145/973097.973100},
- publisher = acmpress,
  }
 
 
@@ -291,7 +306,6 @@
   pages = 	 {295-304},
   year = 	 2005,
   month = 	 jun,
-  publisher =   acmpress
 }
 
 @InProceedings{fisher+:popl06,
@@ -300,7 +314,6 @@
   booktitle =  popl,
   year = 	 {2006},
   month = 	 jan,
-  publisher = acmpress
 }
 
 @InProceedings{mandelbaum+:pads-ml,
@@ -310,7 +323,6 @@
   booktitle =  popl,
   year = 	 {2007},
   month = 	 jan,
-  publisher = acmpress
 }
 
 @Misc{netflow,
@@ -329,7 +341,7 @@
 @InProceedings{ast,
   author="Glenn Fowler and David Korn and Stephen North and Phong Vo",
   title="The {AT\&T} {AST} opensource software collection",
-  booktitle="Proceedings of the {FREENIX} Track 2000 {U}senix Annual Technical Conference",
+  booktitle=freenix,
   pages ="187-195",
   year ="2000"
 }
@@ -364,7 +376,7 @@
 @InProceedings{galax, 
        author="Mary F. Fern\'andez and J\'r\^ome Sim\'eon and Byron Choi and Am\'elie Marian and Gargi Sur",
        title="Implementing {XQ}uery 1.0: {T}he {G}alax Experience.",
-       booktitle="VLDB",
+       booktitle=vldb,
        year="2003",
         pages="1077-1080",
        publisher = acmpress}
@@ -457,7 +469,7 @@ Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
 @InProceedings{quantiles,
 	author = "Anna C. Gilbert and Yannis Kotidis and S. Muthukrishnan and Martin Strauss",
 	title="How to Summarize the Universe: Dynamic Maintenance of Quantiles",
-	booktitle="VLDB",
+	booktitle=vldb,
 	year="2002",
 	pages="454465"
 	}
@@ -572,8 +584,7 @@ Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
 @inproceedings{arasu+:sigmod03long,
 author = {Arvind Arasu and Hector Garcia-Molina},
 title = {Extracting structured data from Web pages},
-booktitle = {SIGMOD '03: Proceedings of the 2003 ACM SIGMOD international
-conference on Management of data},
+booktitle = sigmod,
 year = {2003},
 isbn = {1-58113-634-X},
 pages = {337--348},
@@ -587,7 +598,7 @@ address = {New York, NY, USA},
 @inproceedings{arasu+:sigmod03,
 author = {Arvind Arasu and Hector Garcia-Molina},
 title = {Extracting structured data from Web pages},
-booktitle = {ACM SIGMOD International conference on management of data},
+booktitle = sigmod,
 year = {2003},
 pages = {337--348},
 }
@@ -673,7 +684,7 @@ pages = {337--348},
 @InProceedings{raman+:potterwheel,
   author = 	 {Vijayshankar Raman and Joseph M. Hellerstein},
   title = 	 {Potter's Wheel: An Interactive Data Cleaning System},
-  booktitle = {International Conference on Very Large Data Bases },
+  booktitle = vldb,
   pages = 	 {381 - 390},
   year = 	 {2001},
 }
@@ -690,7 +701,7 @@ pages = {337--348},
 @inproceedings{shoens+:rufus,
  author = {Kurt A. Shoens and Allen Luniewski and Peter M. Schwarz and James W. Stamos and Joachim Thomas, II},
  title = {The {Rufus} System: Information Organization for Semi-Structured Data},
- booktitle = {International Conference on Very Large Data Bases},
+ booktitle = vldb,
  year = {1993},
  isbn = {1-55860-152-X},
  pages = {97--107},
@@ -727,7 +738,7 @@ pages = {337--348},
 @inproceedings{burke+:cagi07,
   author =       {David Burke and Kathleen Fisher and David Walker and Peter White and Kenny Q. Zhu},
   title = {Towards 1-click Tool Generation with {PADS}},
-  booktitle = 	 {ICML Workshop on Challenges and Applications of Grammar Induction},
+  booktitle = 	 cagi,
   year = 	 {2007},
   address = 	 {Corvallis, OR},
   month = 	 jun,
@@ -769,7 +780,6 @@ pages = {337--348},
  issn = {0004-5411},
  pages = {741--765},
  doi = {http://doi.acm.org/10.1145/322326.322334},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -783,18 +793,16 @@ pages = {337--348},
  issn = {0162-8828},
  pages = {920--925},
  doi = {http://dx.doi.org/10.1109/34.57687},
- publisher = {IEEE Computer Society},
  address = {Washington, DC, USA},
  }
 
 @inproceedings{bex+:dtd-inference,
  author = {Geert Jan Bex and Frank Neven and Thomas Schwentick and Karl Tuyls},
  title = {Inference of concise {DTDs} from {XML} data},
- booktitle = {VLDB '06: Proceedings of the 32nd international conference on Very large data bases},
+ booktitle = vldb,
  year = {2006},
  pages = {115--126},
  location = {Seoul, Korea},
- publisher = {VLDB Endowment},
  }
 
 @inproceedings{bex+:inferring-xml-schema,
@@ -802,7 +810,7 @@ pages = {337--348},
                Frank Neven and
                Stijn Vansummeren},
   title     = {Inferring {XML} Schema Definitions from {XML} Data},
-  booktitle = {VLDB},
+  booktitle = vldb,
   year      = {2007},
   pages     = {998-1009},
   ee        = {http://www.vldb.org/conf/2007/papers/research/p998-bex.pdf},
@@ -841,7 +849,7 @@ pages = {337--348},
                Kyuseok Shim},
   title     = {{XTRACT}: A System for Extracting Document Type Descriptors
                from {XML} Documents},
-  booktitle = {{SIGMOD} Conference},
+  booktitle = sigmod,
   year      = {2000},
   pages     = {165-176},
   ee        = {http://doi.acm.org/10.1145/342009.335409, db/conf/sigmod/GarofalakisGRSS00.html},
@@ -852,7 +860,7 @@ pages = {337--348},
                Aur{\'e}lien Lemay and
                Alain Terlutte},
   title     = {Learning regular languages using {RFSAs}},
-  journal   = {Theor. Comput. Sci.},
+  journal   = tcs,
   volume    = {313},
   number    = {2},
   year      = {2004},
@@ -863,7 +871,7 @@ pages = {337--348},
 @inproceedings{fernau:learning-xml,
   author    = {Henning Fernau},
   title     = {Learning {XML} Grammars},
-  booktitle = {International Workshop on Machine Learning and Data Mining in Pattern Recognition},
+  booktitle = mdml,
   year      = {2001},
   pages     = {73-87},
   ee        = {http://link.springer.de/link/service/series/0558/bibs/2123/21230073.htm},
@@ -875,7 +883,7 @@ pages = {337--348},
                Jan Van den Bussche},
   title     = {Learning (k, l)-Contextual Tree Languages for Information
                Extraction},
-  booktitle = {European Conference on Machine Learning},
+  booktitle = ecml,
   year      = {2005},
   pages     = {305-316},
   ee        = {http://dx.doi.org/10.1007/11564096_31},
@@ -965,7 +973,7 @@ pages = {337--348},
 @inproceedings{Ambite+:ariadne,
  author = {Jos\'{e} Luis Ambite and Naveen Ashish and Greg Barish and Craig A. Knoblock and Steven Minton and Pragnesh J. Modi and Ion Muslea and Andrew Philpot and Sheila Tejada},
  title = {Ariadne: a system for constructing mediators for Internet sources},
- booktitle = {SIGMOD '98: Proceedings of the 1998 ACM SIGMOD international conference on Management of data},
+ booktitle = sigmod,
  year = {1998},
  isbn = {0-89791-995-5},
  pages = {561--563},
@@ -1001,7 +1009,7 @@ induction",
 @inproceedings{doan+:disparate-data-sources,
  author = {AnHai Doan and Pedro Domingos and Alon Y. Halevy},
  title = {Reconciling schemas of disparate data sources: a machine-learning approach},
- booktitle = {{ACM SIGMOD} international conference on Management of data},
+ booktitle = sigmod,
  year = {2001},
  isbn = {1-58113-332-4},
  pages = {509--520},
@@ -1013,7 +1021,7 @@ induction",
 @inproceedings{borkar+:text-segmentation,
  author = {Vinayak Borkar and Kaustubh Deshmukh and Sunita Sarawagi},
  title = {Automatic segmentation of text into structured records},
- booktitle = {ACM SIGMOD international conference on Management of data},
+ booktitle = sigmod,
  year = {2001},
  isbn = {1-58113-332-4},
  pages = {175--186},
@@ -1026,7 +1034,7 @@ induction",
 @inproceedings{Lerman+:webtables,
  author = {Kristina Lerman and Lise Getoor and Steven Minton and Craig Knoblock},
  title = {Using the structure of Web sites for automatic segmentation of tables},
- booktitle = {SIGMOD '04: Proceedings of the 2004 ACM SIGMOD international conference on Management of data},
+ booktitle = sigmod,
  year = {2004},
  isbn = {1-58113-859-8},
  pages = {119--130},
@@ -1039,7 +1047,7 @@ induction",
 @inproceedings{Pinto+:texttables,
  author = {David Pinto and Andrew McCallum and Xing Wei and W. Bruce Croft},
  title = {Table extraction using conditional random fields},
- booktitle = {SIGIR '03: Proceedings of the 26th annual international ACM SIGIR conference on Research and development in informaion retrieval},
+ booktitle = {SIGIR},
  year = {2003},
  isbn = {1-58113-646-3},
  pages = {235--242},
@@ -1052,7 +1060,7 @@ induction",
 @inproceedings{Ng+:texttables,
  author = {Hwee Tou Ng and Chung Yong Lim and Jessica Li Teng Koo},
  title = {Learning to recognize tables in free text},
- booktitle = {Proceedings of the 37th annual meeting of the Association for Computational Linguistics on Computational Linguistics},
+ booktitle = acl,
  year = {1999},
  isbn = {1-55860-609-3},
  pages = {443--450},
@@ -1065,7 +1073,7 @@ induction",
 @inproceedings{Cresenzi+:roadrunner,
  author = {Valter Crescenzi and Giansalvatore Mecca and Paolo Merialdo},
  title = {RoadRunner: Towards Automatic Data Extraction from Large Web Sites},
- booktitle = {VLDB '01: Proceedings of the 27th International Conference on Very Large Data Bases},
+ booktitle = vldb,
  year = {2001},
  isbn = {1-55860-804-4},
  pages = {109--118},
