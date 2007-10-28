@@ -8,7 +8,8 @@
 @string{euc5 = "Fifth International {Erlang/OTP} User Conference"}
 @string{sigcomm = "{ACM} Conference of Special Interest Group on Data Communications"}
 @string{oopsla = "{ACM} Conference on Object-oriented Programming, Systems, Languages, and Applications"}
-@string{ijcai = "International Joint Conferences on Artificial Intelligence"}
+%@string{ijcai = "International Joint Conferences on Artificial Intelligence"}
+@string{ijcai = "{IJCAI}"}
 %@string{icml = "International Conference on Machine Learning"}
 @string{icml = "{ICML}"}
 %@string{vldb = "{International Conference on Very Large Data Bases}"}
@@ -16,7 +17,9 @@
 @string{sigmod = "{SIGMOD}"}
 %@string{freenix = "Proceedings of the {FREENIX} Track 2000 {U}senix Annual Technical Conference"}
 @string{freenix = "{FREENIX}"}
-
+%@string{icgi = "International Conference on Grammatical Inference"}
+@string{icgi = "{ICGI}"}
+@string{planx = "{PLANX}"}
 %@string{mdml = "{International Workshop on Machine Learning and Data Mining in Pattern Recognition}"}
 @string{mdml = "{MDML}"}
 %@string{sigir = "{SIGIR '03: Proceedings of the 26th annual international ACM SIGIR conference on Research and development in informaion retrieval}"}
@@ -33,7 +36,6 @@
 @string{fpca = "Conference on Functional Programming Languages and Computer Architecture"}
 @string{icalp = "International Colloquium on Automata, Languages, and Programming"}
 @string{icfp = "{ACM} International Conference on Functional Programming"}
-@string{icgi = "International Conference on Grammatical Inference"}
 @string{icfpca = "{ACM} International Conference on Functional Programming and Computer Architecture"}
 @string{lfp = "{ACM} Conference on {Lisp} and Functional Programming"}
 @string{lics = "{IEEE} Symposium on Logic in Computer Science"}
@@ -184,11 +186,9 @@
  title = {Efficient representations and abstractions for quantifying and exploiting data reference locality},
  booktitle = {Proceedings of the ACM SIGPLAN 2001 conference on Programming language design and implementation},
  year = {2001},
- isbn = {1-58113-414-2},
  pages = {191--202},
  location = {Snowbird, Utah, United States},
  doi = {http://doi.acm.org/10.1145/378795.378840},
- publisher = acmpress,
  }
 
 
@@ -200,7 +200,6 @@
 @Book{asn,
   author="Olivier Dubuisson",
   title="{ASN.1}: {C}ommunication between heterogeneous systems",
-  publisher="Morgan Kaufmann", 
   year=2001}
 
 
@@ -215,10 +214,8 @@
  booktitle = oopsla,
  year = {1999},
  pages = {132--146},
- publisher = acmpress,
  comment-location = {Denver, Colorado, United States},
  comment-doi = {http://doi.acm.org/10.1145/320384.320395},
- comment-isbn = {1-58113-238-7},
  comment-address = {New York, NY, USA},
  }
 
@@ -259,7 +256,6 @@
   month=          "August",
   year=           "2000",
   pages=          "321-333",
-  publisher =     acmpress
 }
 
 
@@ -292,9 +288,7 @@
  volume = {26},
  number = {2},
  year = {2004},
- issn = {0164-0925},
  pages = {301--338},
- doi = {http://doi.acm.org/10.1145/973097.973100},
  }
 
 
@@ -335,7 +329,7 @@
        title="Gigascope: {H}igh Performance Network Monitoring with an {SQL} Interface",
        booktitle="SIGMOD",
        year="2002",
-       publisher = acmpress}
+}
 
 
 @InProceedings{ast,
@@ -357,14 +351,14 @@
        title="On Network-aware clustering of web clients",
        booktitle="Proceedings of SIGCOMM 2000",
        year="2000",
-       publisher = acmpress}
+}
 
 @InProceedings{clf-adaptation, 
        author="Balachander Krishnamurthy and Craig Wills",
        title="Improving web experience by client characterization driven server adaptation",
        booktitle="Proceedings of WWW 2002",
        year="2002",
-       publisher = "ACM"}
+}
 
 
 @Book{xquery,
@@ -379,7 +373,7 @@
        booktitle=vldb,
        year="2003",
         pages="1077-1080",
-       publisher = acmpress}
+}
 
 
 @Misc{dfdl,
@@ -394,8 +388,8 @@
 
 @InProceedings{fernandez+:padx,
   author = 	 {Mary F. Fern\'andez and Kathleen Fisher and Robert Gruber and Yitzhak Mandelbaum.},
-  title = 	 {{PADX}: Querying Large-scale Ad Hoc Data with XQuery},
-  booktitle = 	 {Programming Language Technologies for {XML}},
+  title = 	 {{PADX}: Querying Large-scale Ad Hoc Data with {XQuery}},
+  booktitle = 	 planx,
   year = 	 2006,
   month = 	 jan,
 }
@@ -515,7 +509,6 @@ Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
   year =          2002,
   pages =         {36-47},
   month = oct,
-  publisher = acmpress,
 }
 
 
@@ -526,7 +519,6 @@ Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
   pages =         {111-122},
   year =          2004,
   month = jan,
-  publisher = acmpress,
 }
 
 @TechReport{grimm:packrat,
@@ -565,7 +557,6 @@ Daniela Florescu and Jonathan Robie and J\'er\^ome Sim\'eon",
   booktitle = 	 esop,
   year = 	 2004,
   pages =        {124-139},
-  publisher =    springer,
   month = 	 mar,
 }
 
@@ -586,11 +577,9 @@ author = {Arvind Arasu and Hector Garcia-Molina},
 title = {Extracting structured data from Web pages},
 booktitle = sigmod,
 year = {2003},
-isbn = {1-58113-634-X},
 pages = {337--348},
 location = {San Diego, California},
 doi = {http://doi.acm.org/10.1145/872757.872799},
-publisher = {ACM Press},
 address = {New York, NY, USA},
 }
 
@@ -667,7 +656,8 @@ pages = {337--348},
 @inproceedings{stolcke94inducing,
     author = "Andreas Stolcke and Stephen Omohundro",
     title = "Inducing Probabilistic Grammars by Bayesian Model Merging",
-    booktitle = "International Conference on Grammatical Inference",
+    booktitle = icgi,
+    pages = {106-118},
     year = 1994,
 }
 
@@ -703,9 +693,7 @@ pages = {337--348},
  title = {The {Rufus} System: Information Organization for Semi-Structured Data},
  booktitle = vldb,
  year = {1993},
- isbn = {1-55860-152-X},
  pages = {97--107},
- publisher = {Morgan Kaufmann Publishers Inc.},
  address = {San Francisco, CA, USA},
  }
 
@@ -721,7 +709,6 @@ pages = {337--348},
   journal = "IEEE Transactions on Information Theory",
   volume = "37",
   number = "1",
-  publisher = "IEEE",
   pages = "145--151",
   year = "1991",
 }
@@ -748,7 +735,6 @@ pages = {337--348},
     author = "Jason L. Hutchens and Michael D. Alder",
     title = "Finding Structure Via Compression",
     booktitle = "Proceedings of the Joint Conference on New Methods in Language Processing and Computational Natural Language Learning",
-    publisher = "Association for Computational Linguistics",
     editor = "David M. W. Powers",
     pages = "79--82",
     year = "1998",
@@ -777,9 +763,7 @@ pages = {337--348},
  volume = {29},
  number = {3},
  year = {1982},
- issn = {0004-5411},
  pages = {741--765},
- doi = {http://doi.acm.org/10.1145/322326.322334},
  address = {New York, NY, USA},
  }
 
@@ -790,10 +774,8 @@ pages = {337--348},
  volume = {12},
  number = {9},
  year = {1990},
- issn = {0162-8828},
  pages = {920--925},
- doi = {http://dx.doi.org/10.1109/34.57687},
- address = {Washington, DC, USA},
+  address = {Washington, DC, USA},
  }
 
 @inproceedings{bex+:dtd-inference,
@@ -834,10 +816,7 @@ pages = {337--348},
  volume = {31},
  number = {3},
  year = {2006},
- issn = {0362-5915},
  pages = {770--813},
- doi = {http://doi.acm.org/10.1145/1166074.1166076},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -852,7 +831,6 @@ pages = {337--348},
   booktitle = sigmod,
   year      = {2000},
   pages     = {165-176},
-  ee        = {http://doi.acm.org/10.1145/342009.335409, db/conf/sigmod/GarofalakisGRSS00.html},
 }
 
 @article{denis:learning-regular-languages,
@@ -865,7 +843,6 @@ pages = {337--348},
   number    = {2},
   year      = {2004},
   pages     = {267-294},
-  ee        = {http://dx.doi.org/10.1016/j.tcs.2003.11.008},
 }
 
 @inproceedings{fernau:learning-xml,
@@ -886,7 +863,6 @@ pages = {337--348},
   booktitle = ecml,
   year      = {2005},
   pages     = {305-316},
-  ee        = {http://dx.doi.org/10.1007/11564096_31},
 }
 
 @InProceedings{raeymaekers+:wrapper-induction,
@@ -915,10 +891,7 @@ pages = {337--348},
  volume = {15},
  number = {1},
  year = {1997},
- issn = {1046-8188},
  pages = {67--101},
- doi = {http://doi.acm.org/10.1145/239041.239048},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -951,7 +924,7 @@ pages = {337--348},
                Daniel S. Weld and
                Robert B. Doorenbos},
   title     = {Wrapper Induction for Information Extraction},
-  booktitle = {IJCAI (1)},
+  booktitle = ijcai,
   year      = {1997},
   pages     = {729-737},
   bibsource = {DBLP, http://dblp.uni-trier.de}
@@ -962,11 +935,8 @@ pages = {337--348},
  title = {A scalable comparison-shopping agent for the World-Wide Web},
  booktitle = {AGENTS '97: Proceedings of the first international conference on Autonomous agents},
  year = {1997},
- isbn = {0-89791-877-0},
  pages = {39--48},
  location = {Marina del Rey, California, United States},
- doi = {http://doi.acm.org/10.1145/267658.267666},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -975,11 +945,8 @@ pages = {337--348},
  title = {Ariadne: a system for constructing mediators for Internet sources},
  booktitle = sigmod,
  year = {1998},
- isbn = {0-89791-995-5},
  pages = {561--563},
  location = {Seattle, Washington, United States},
- doi = {http://doi.acm.org/10.1145/276304.276381},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -1011,10 +978,8 @@ induction",
  title = {Reconciling schemas of disparate data sources: a machine-learning approach},
  booktitle = sigmod,
  year = {2001},
- isbn = {1-58113-332-4},
  pages = {509--520},
  location = {Santa Barbara, California, United States},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -1023,11 +988,8 @@ induction",
  title = {Automatic segmentation of text into structured records},
  booktitle = sigmod,
  year = {2001},
- isbn = {1-58113-332-4},
  pages = {175--186},
  location = {Santa Barbara, California, United States},
- doi = {http://doi.acm.org/10.1145/375663.375682},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -1036,11 +998,8 @@ induction",
  title = {Using the structure of Web sites for automatic segmentation of tables},
  booktitle = sigmod,
  year = {2004},
- isbn = {1-58113-859-8},
  pages = {119--130},
  location = {Paris, France},
- doi = {http://doi.acm.org/10.1145/1007568.1007584},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -1049,11 +1008,8 @@ induction",
  title = {Table extraction using conditional random fields},
  booktitle = {SIGIR},
  year = {2003},
- isbn = {1-58113-646-3},
  pages = {235--242},
  location = {Toronto, Canada},
- doi = {http://doi.acm.org/10.1145/860435.860479},
- publisher = {ACM Press},
  address = {New York, NY, USA},
  }
 
@@ -1062,11 +1018,8 @@ induction",
  title = {Learning to recognize tables in free text},
  booktitle = acl,
  year = {1999},
- isbn = {1-55860-609-3},
  pages = {443--450},
  location = {College Park, Maryland},
- doi = {http://dx.doi.org/10.3115/1034678.1034746},
- publisher = {Association for Computational Linguistics},
  address = {Morristown, NJ, USA},
  }
 
@@ -1075,8 +1028,6 @@ induction",
  title = {RoadRunner: Towards Automatic Data Extraction from Large Web Sites},
  booktitle = vldb,
  year = {2001},
- isbn = {1-55860-804-4},
  pages = {109--118},
- publisher = {Morgan Kaufmann Publishers Inc.},
  address = {San Francisco, CA, USA},
  }

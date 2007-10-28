@@ -6,10 +6,10 @@ work~\cite{fisher+:popl06}.  Apart from syntax, the main differences
 are that the \ir{} omits recursion and function declarations; the former
 being beyond the scope of our current inference techniques and the 
 latter being unnecessary during the course of the inference algorithm.
-Without recursion and function declarations, %from a parsing perspective,
-this core \ir{} is also quite closely related to a standard language
-of regular expressions, albeit with interesting basic symbols and
-a limited form of dependency.
+%Without recursion and function declarations, %from a parsing perspective,
+%this core \ir{} is also quite closely related to a standard language
+%of regular expressions, albeit with interesting basic symbols and
+%a limited form of dependency.
 %In addition, for convenience during inference, the scope of dependent 
 %variable binding is slightly different, as will be explained below.
 
@@ -205,15 +205,34 @@ addition, unions may be refined into dependent switch statements
 data is described by $T_1$, ..., or $T_k$ depending on the value
 associated with $x$, be it $c_1$, ..., or $c_k$.
 
-The result of parsing according to a description is an internal
-representation of the data. We let metavariable $d$ range over such 
-data representations.  For the purposes of this paper, a data 
-representation may be a constant $c$, an injection into the $i^{th}$
-variant of a union \cd{in}$_i(d)$, or a sequence of data representations
+Overall, it is important to observe that from a parsing perspective,
+the subset of \pads{} that we consider in this paper is closely connected
+to regular expressions: struct types serve the same purpose as
+concatenation; array types serve the same purpose as Kleene star;
+and union types serve the same purpose as unions.  Some of the dependencies
+may also be translated into regular expressions.  For example, the type
+$T = $
+\cd{struct} \{$x$:\cd{enum} \{$c_1$; $c_2$\}; $T_0$; \cd{switch} $x$ \cd{of} \{$c_1$ \cd{=>} $T_1$; $c_2$ \cd{=>} $T_2$;\};\} may be translated into the
+regular expression 
+$R = (c_1 \cdot T_0 \cdot T_1) + (c_2 \cdot T_0 \cdot T_2)$.  However,
+human \pads{} programmers tend to prefer $T$ over $R$ since $T$
+clearly identifies the
+tag that determines the branch of the union and it avoids
+repetition of $T_0$ (which becomes more and more problematic as 
+the number of alternatives grows).
+
+It is also important to understand that each \pads{} type has an additional
+interpretation, unrelated to parsing, as a set of data structures.
+We let metavariable $d$ range over such 
+data structures.  For the purposes of this paper, $d$
+may be a constant $c$, an injection into the $i^{th}$
+variant of a union \cd{in}$_i(d)$, or a sequence of data items
 $(d_1,\ldots,d_k)$.  The injections are used as the representations of
 any sort of union type, be it a union, an enumeration, an option or a switch.
 The sequences are used as the representations of any sort of sequence
-type, whether it be a struct or one of the array variants.
+type, whether it be a struct or one of the array variants.  Our earlier
+work~\cite{fisher+:popl06} contains a precise treatment of this 
+secondary semantics.
 
 \subsection{Running Examples}
 

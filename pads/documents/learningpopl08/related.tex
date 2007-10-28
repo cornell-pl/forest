@@ -57,9 +57,8 @@ In the rest of this section, we analyze
 the most closely related work in more depth.
 
 \paragraph*{Traditional Grammar Induction.}
-Classic grammar induction algorithms (see De La
-Higuera~\cite{higuera01current} or Vidal~\cite{vidal:gisurvey} for
-surveys) can be divided into two classes: those that require both
+Classic grammar induction algorithms \cite{vidal:gisurvey} 
+can be divided into two classes: those that require both
 positive and negative examples to discover a grammar and those that
 only require positive examples.\footnote{A positive training example
 is an example guaranteed to be in the language in question; a negative
@@ -72,7 +71,7 @@ examples such as RPNI~\cite{rpni}
 %~\cite{lemay+:tree-transducers,rpni,raeymaekers+:learning-tree-languages},
 are not applicable in our context.
 
-Unfortunately, an early result by Gold~\cite{gold:inference} showed
+Unfortunately, an early result by \citet{gold:inference} showed
 that perfect grammar induction is impossible for any superfinite class
 of languages when the algorithm has no access to negative examples.  A
 {\em superfinite} class of languages is any set of languages that
@@ -80,7 +79,7 @@ includes all finite languages and at least one infinite
 language. Hence, all the most familiar classes of languages, including
 regular expressions, context free grammars and PADS are superfinite.
 There are two main tactics one can use to avoid this negative
-result~\cite{vidal:gisurvey}: 
+result: 
 (1) use domain knowledge to explicitly limit the class of languages to a
 non-superfinite class, or
 (2) give up on perfect language identification and instead settle for {\em approximate
@@ -91,7 +90,7 @@ Examples of non-trivial, non-superfinite
 language classes with known inference algorithms include
 k-reversible languages~\cite{angluin:revesible-language-inference},
 %k-testable regular languages~\cite{garcia+:k-testable-languages},
-SOREs~\cite{bex+:dtd-inference} and CHAREs~\cite{bex+:dtd-inference}.
+SOREs and CHAREs~\cite{bex+:dtd-inference}.
 None of these languages and the associated algorithms 
 are a good fit for inferring PADS descriptions (even the
 regular subset of PADS without dependencies and constraints).  
@@ -116,12 +115,11 @@ even the simple expression $(ab + c)*$ is not a CHARE.
 Given the difficulty of finding useful non-superfinite language classes,
 it is reasonable to turn to algorithms for approximate
 inference that use probabilistic models.    
-Classic examples of such procedures include work by Stolcke and
-Omohundro~\cite{stolcke94inducing} 
+Classic examples of such procedures include work by~\citet{stolcke94inducing} 
 %%{\em insert other references here -- see Hong thesis related work
 %%for other work...} 
 and 
-Hong~\cite{hong:thesis,hong01using}.  These and a number of other algorithms
+\citet{hong:thesis}.  These and a number of other algorithms
 operate by repeatedly rewriting a candidate grammar (or set of candidate
 grammars) until an objective function is optimized.
 If the training data for the learning system is the strings
@@ -323,9 +321,9 @@ system then uses these labelled documents in two ways: first, to
 decide which bits of information should be extracted from the page
 (\ie, product names and prices), and second, to construct a
 \textit{wrapper} function to extract those bits of information from
-similar pages.  Soderland's WHISK system~\cite{soderland:whisk} is an
-example of such an extraction system.  It is particularly general, in
-that it makes few assumptions about the form of the source text,
+similar pages.  Soderland's WHISK system (\citeyear{soderland:whisk}) is an
+example of such an extraction system.  It is particularly general as
+it makes few assumptions about the form of the source text,
 operating over structured data, stylized text such as Craig's List
 descriptions, or free-form text.  WHISK differs from our system in
 that it requires user labeling and then only extracts a collection of
@@ -334,7 +332,7 @@ structure of the data source.
 
 
 Kushmerick and
-colleagues~\cite{kushmerick-phd1997,KushmerickWD97:Wrapper} focus on
+colleagues (\citeyear{kushmerick-phd1997,KushmerickWD97:Wrapper}) focus on
 more structured data to reduce the amount of labeling required during
 training.  In particular, this work assumes the labelled pages conform
 to one of six different templates, the most well-developed of which
@@ -361,11 +359,10 @@ extract the K-tuples.
 The use of fixed templates and the primary focus on relational data makes this
 work quite different from ours.
 
-Muslea {\em et al.}~\cite{muslea+:active-learning} tackle a similar
+\citet{muslea+:active-learning} tackle a similar
 problem, but strive to reduce the amount of labeling by having the
 learning system chose which documents to have the user label,
-selecting documents by their probitive value.  Borkar {\em et
-al.}~\cite{borkar+:text-segmentation} uses hand-labelled training
+selecting documents by their probitive value.  \citet{borkar+:text-segmentation} uses hand-labelled training
 examples and a user-specified set of desired features to train Hidden
 Markov Models to select the desired features from similar documents.
 This work is quite successful at learning to select the relevant
@@ -407,7 +404,7 @@ Web pages generated in response to queries tend to be formed by
 sloting the resulting tuples into a standard template.  Another line
 of work aims to separate such templates from the payload
 data~\cite{arasu+:sigmod03,Cresenzi+:roadrunner}.  
-Arasu and Garcia-Molina~\cite{arasu+:sigmod03}
+Arasu and Garcia-Molina %~\cite{arasu+:sigmod03}
 use a top-down grammar induction
 algorithm somewhat similar to our rough structure-inference phase
 (though it does not use histograms),
@@ -464,11 +461,12 @@ empirically evaluated on this new task.
 
 One line of research on schema inference for XML makes use of the 
 observation that 99\% of the content models for XML nodes are defined as
-SOREs or CHAREs~\cite{martens+:expressiveness-xml-schema} (recall, these
-are heavily restricted forms of regular expressions).  
-This observation allows Bex {\em et al.}~\cite{bex+:dtd-inference} to define
+SOREs or CHAREs~\cite{martens+:expressiveness-xml-schema}. 
+%(recall, these
+%are heavily restricted forms of regular expressions).  
+This observation allows \citet{bex+:dtd-inference} to define
 an efficient algorithm for inferring concise DTDs.  Later 
-Bex {\em et al.}~\cite{bex+:inferring-xml-schema} build on this work 
+\citet{bex+:inferring-xml-schema} build on this work 
 by showing how to infer $k$-local XML Schema definitions also based on
 SORES.  A $k$-local definition allows node content to depend on the parent
 tag, grandparent tag, etc. (up to $k$ levels for some fixed $k$).
@@ -495,14 +493,14 @@ which they solve using a quadratic approximation algorithm.
 Our MDL-guided rewriting problem considers a more general set of
 rewriting rules and hence we cannot reuse their technique.
 
-Another related problem of great interest in the XML and database world
-involves finding a mapping between two data sources with different schema.
-Doan {\em et al.}~\cite{doan+:disparate-data-sources} is one example amongst
-many which attempts to solve this problem using a machine learning approach.
-While some of our PADS tools do involve translations between
-different formats, our learning system does not attempt to discover
-translation tools for which the output is guaranteed to match 
-the characteristics of a second data set.
+%% Another related problem of great interest in the XML and database world
+%% involves finding a mapping between two data sources with different schema.
+%% \citet{doan+:disparate-data-sources} is one example amongst
+%% many which attempts to solve this problem using a machine learning approach.
+%% While some of our PADS tools do involve translations between
+%% different formats, our learning system does not attempt to discover
+%% translation tools for which the output is guaranteed to match 
+%% the characteristics of a second data set.
 
 
 \paragraph*{Other work.}

@@ -117,23 +117,30 @@ data.
 \noindent
 For readers interested in seeing our system operate live, 
 there is an online demo illustrating its many features
-(\url{http://www.padsproj.org}).  
-
-
-In the next section of this paper, we describe the internal representation
-used during the course of the inference algorithm.  For those
-readers familiar with the \pads{} description language, this is largely a 
-review.  Section~\ref{sec:inference} describes our format inference algorithm
-in depth and illustrates its action on two sample data sources.  
-Section~\ref{sec:exp} evaluates the performance and correctness of our
-system on 15 different ad hoc data sources, drawn mostly from systems
-and networking domains.  Section~\ref{sec:discussion} discusses
-how users can deal with errors
-in generated descriptions and points out weaknesses 
-we plan to address in future work.
-Sections~\ref{sec:related} and \ref{sec:conclusion} present related work
-and conclude respectively.  This paper is an extended version of the
-2-page summary presented at the CAGI 2007 workshop on grammar induction~\cite{burke+:cagi07}. 
+(\url{http://www.padsproj.org}).  The remainder of this paper
+describes the subset of the \pads{} description language we
+attempt to infer (Section~\ref{sec:review}), the inference
+algorithm itself and generated tools (Section~\ref{sec:inference}), 
+the performance (Section~\ref{sec:exp}), strengths and 
+weaknesses of our approach (Section~\ref{sec:discussion}),
+related work (Section~\ref{sec:related}) and 
+conclusions (Section~\ref{sec:conclusion}).
+%% In the next section of this paper, we describe the internal representation
+%% used during the course of the inference algorithm.  For those
+%% readers familiar with the \pads{} description language, this is largely a 
+%% review.  Section~\ref{sec:inference} describes our format inference algorithm
+%% in depth and illustrates its action on two sample data sources.  
+%% Section~\ref{sec:exp} evaluates the performance and correctness of our
+%% system on 15 different ad hoc data sources, drawn mostly from systems
+%% and networking domains.  Section~\ref{sec:discussion} discusses
+%% how users can deal with errors
+%% in generated descriptions and points out weaknesses 
+%% we plan to address in future work.
+%% Sections~\ref{sec:related} and \ref{sec:conclusion} present related work
+%% and conclude respectively.  
+This paper is an extended version of a 2-page
+summary presented at the CAGI 2007 workshop on grammar 
+induction~\cite{burke+:cagi07}. 
 
 
 %% Given the difficulties 
