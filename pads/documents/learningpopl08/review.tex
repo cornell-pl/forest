@@ -206,25 +206,8 @@ addition, unions may be refined into dependent switch statements
 data is described by $T_1$, ..., or $T_k$ depending on the value
 associated with $x$, be it $c_1$, ..., or $c_k$.
 
-From a parsing perspective, the subset of \pads{} that we consider in
-this paper is closely connected to regular expressions: struct types
-correspond to concatenation, array types to Kleene star 
-and union types to unions.  Some of the dependencies
-may also be translated into regular expressions.  For example, the type
-$T = $
-\cd{struct} \{$x$:\cd{enum} \{$c_1$; $c_2$\}; $T_0$; \cd{switch} $x$ \cd{of} \{$c_1$ \cd{=>} $T_1$; $c_2$ \cd{=>} $T_2$;\};\} may be translated into the
-regular expression 
-$R = (c_1 \cdot T_0 \cdot T_1) + (c_2 \cdot T_0 \cdot T_2)$.  However,
-\pads{} programmers tend to prefer $T$ over $R$ since $T$
-clearly identifies the
-tag that determines the branch of the union and it avoids
-repeating $T_0$ (which becomes increasingly problematic as 
-the number of alternatives grows).  We describe approaches to learning
-regular expressions in \secref{sec:related}.
-
-In addition to parsing, there is a more interesting
-interpretation of \pads{} types in which they are translated
-into a set of data structures. 
+In addition to describing a parser, each 
+\pads{} types may be interpreted as a data structure.
 We let metavariable $d$ range over such 
 data structures.  For the purposes of this paper, $d$
 may be a constant $c$, an injection into the $i^{th}$
@@ -240,7 +223,7 @@ secondary semantics.
 
 Figure~\ref{fig:example} presents tiny fragments of two
 different ad hoc data files on which we have trained our inference algorithm.
-The first, Crashreporter.log, is a Macintosh
+The first, Crashreporter.log, is a Mac
 system file that records information concerning process crashes.\footnote{For
 expository purposes we have made a minor alteration to the Crashreporter.log
 format to allow us to explain more concepts with a single example.
@@ -297,6 +280,44 @@ Figure~\ref{fig:crashreporter:ir} contains three other definitions
 aside from \cd{source}.  These definitions specify the
 structure of the  \cd{dumpReport}, \cd{reporterReport} and \cd{dateOption}
 types.
+
+\subsection{Regular Expressions}
+From a parsing perspective, the subset of \pads{} that we consider in
+this paper is connected to regular expressions: struct types
+roughly correspond to concatenation, array types to Kleene star 
+and union types to unions.  Some dependencies
+may also be translated to regular expressions.  For example, the
+type $T$:
+
+\vskip -10.0ex
+{\small
+\begin{verbatim}
+struct {x: enum {c_1; c_2;}; 
+        T_0; 
+        switch x of {c_1 => T_1; c_2 => T_2;};} 
+\end{verbatim}
+\vskip -0.5ex
+}
+
+%%
+%%{\small
+%%\cd{struct} \{$x$:\cd{enum} \{$c_1$; $c_2$\}; $T_0$; \cd{switch} $x$
+%%\cd{of} \{$c_1$ \cd{=>} $T_1$; $c_2$ \cd{=>} $T_2$;\};\} 
+%%}
+
+\noindent
+may be translated to a
+regular expression 
+$R = (c_1 \cdot T_0 \cdot T_1) + (c_2 \cdot T_0 \cdot T_2)$.  However,
+\pads{} programmers tend to prefer $T$ over $R$ since $T$
+clearly identifies the
+tag that determines the branch of the union and it avoids
+repeating $T_0$ (which becomes increasingly problematic as 
+the number of alternatives grows).  We describe existing approaches to
+learning 
+regular expressions in \secref{sec:related}.
+
+
 
 %% specify the component parts
 %% The definition of \cd{reporterreport} is relatively simple -- it is
