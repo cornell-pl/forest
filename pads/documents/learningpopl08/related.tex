@@ -27,7 +27,7 @@ conception, development and evaluation of this end-to-end system.
 either (1) theoretical problems, (2) natural language processing, 
 (3) web page analysis, or
 (4) XML typing.  Our work tackles an understudied domain, that of complex system
-logs and other {\em ad hoc data sources}.  Since ad hoc data has
+logs and other ad hoc data sources.  Since ad hoc data has
 different characteristics from the previously studied domains, naive
 adaptations of the existing algorithms are unlikely to be %the most
 effective.  
@@ -60,10 +60,7 @@ the most closely related work in more depth.
 Classic grammar induction algorithms \cite{vidal:gisurvey} 
 can be divided into two classes: those that require both
 positive and negative examples to discover a grammar and those that
-only require positive examples.\footnote{A positive training example
-is an example guaranteed to be in the language in question; a negative
-training example is an example guaranteed {\em not} to be in the
-language in question.}  The problem our system solves is the latter;
+only require positive examples. The problem our system solves is the latter;
 negative examples of ad hoc data sources are not available in
 practice.  Consequently, effective theoretical algorithms for learning
 from both positive and negative
@@ -362,7 +359,7 @@ work quite different from ours.
 \citet{muslea+:active-learning} tackle a similar
 problem, but strive to reduce the amount of labeling by having the
 learning system chose which documents to have the user label,
-selecting documents by their probitive value.  \citet{borkar+:text-segmentation} uses hand-labelled training
+selecting documents by their probative value.  \citet{borkar+:text-segmentation} uses hand-labelled training
 examples and a user-specified set of desired features to train Hidden
 Markov Models to select the desired features from similar documents.
 This work is quite successful at learning to select the relevant

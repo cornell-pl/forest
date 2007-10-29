@@ -8,7 +8,7 @@
 \bibitem[Angluin(1982)]{angluin:revesible-language-inference}
 Dana Angluin.
 \newblock Inference of reversible languages.
-\newblock \emph{J. ACM}, 29\penalty0 (3):\penalty0 741--765, 1982.
+\newblock \emph{Journal of the ACM}, 29\penalty0 (3):\penalty0 741--765, 1982.
 
 \bibitem[Arasu and Garcia-Molina(2003)]{arasu+:sigmod03}
 Arvind Arasu and Hector Garcia-Molina.
@@ -57,7 +57,8 @@ Valter Crescenzi, Giansalvatore Mecca, and Paolo Merialdo.
   Terlutte]{denis:learning-regular-languages}
 Fran\c{c}ois Denis, Aur{\'e}lien Lemay, and Alain Terlutte.
 \newblock Learning regular languages using {RFSAs}.
-\newblock \emph{{TCS}}, 313\penalty0 (2):\penalty0 267--294, 2004.
+\newblock \emph{Theoretical Computer Science}, 313\penalty0 (2):\penalty0
+  267--294, 2004.
 
 \bibitem[Fern\'andez et~al.(2006)Fern\'andez, Fisher, Gruber, and
   Mandelbaum.]{fernandez+:padx}
@@ -68,7 +69,7 @@ Mary~F. Fern\'andez, Kathleen Fisher, Robert Gruber, and Yitzhak Mandelbaum.
 \bibitem[Fernau(2001)]{fernau:learning-xml}
 Henning Fernau.
 \newblock Learning {XML} grammars.
-\newblock In \emph{{MDML}}, pages 73--87, 2001.
+\newblock In \emph{{MLDM}}, pages 73--87, 2001.
 
 \bibitem[Fisher and Gruber(2005)]{fisher+:pads}
 Kathleen Fisher and Robert Gruber.
@@ -110,7 +111,8 @@ Theodore~W. Hong.
 Yk{\"a} Huhtala, Juha K{\"a}rkk{\"a}inen, Pasi Porkka, and Hannu Toivonen.
 \newblock {TANE}: An efficient algorithm for discovering functional and
   approximate dependencies.
-\newblock \emph{Comput. J.}, 42\penalty0 (2):\penalty0 100--111, 1999.
+\newblock \emph{The Computer Journal}, 42\penalty0 (2):\penalty0 100--111,
+  1999.
 
 \bibitem[Hutchens and Alder(1998)]{hutchens98finding}
 Jason~L. Hutchens and Michael~D. Alder.
@@ -155,8 +157,8 @@ Yitzhak Mandelbaum, Kathleen Fisher, David Walker, Mary Fernandez, and Artem
   Bex]{martens+:expressiveness-xml-schema}
 Wim Martens, Frank Neven, Thomas Schwentick, and Geert~Jan Bex.
 \newblock Expressiveness and complexity of {XML} schema.
-\newblock \emph{ACM Trans. Database Syst.}, 31\penalty0 (3):\penalty0 770--813,
-  2006.
+\newblock \emph{ACM Transactions on Database Systems}, 31\penalty0
+  (3):\penalty0 770--813, 2006.
 
 \bibitem[Muslea et~al.(2003)Muslea, Minton, and
   Knoblock]{muslea+:active-learning}

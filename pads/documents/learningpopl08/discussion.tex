@@ -2,21 +2,21 @@
 \paragraph*{Dealing with errors.}  
 In 1967, \citet{gold:inference}
 proved that learning a grammar for any remotely
-sophisticated class of languages, such as the regular languages, 
+sophisticated class of languages, including regular languages, 
 is impossible if one is only given positive 
 example data.\footnote{A positive example is a data source
 known to be in the grammar to be learned.  
 A negative example is one known {\em not} to be in the target grammar.
-Learning with positive examples and negative examples is possible.
-Unfortunately, given that data analysts are unlikely to have access to
-ad hoc data that they know {\em does not} 
+Perfect learning with both positive and negative examples is possible.
+Unfortunately, data analysts are unlikely to have access to a
+sufficient collection of relevant ad hoc data that they know {\em does not} 
 satisfy the format they are interested in learning,
 we are forced to tackle the more difficult problem of learning from 
 positive examples only.}
 Given this negative theoretical result, and the practical fact
 that it is hard to be sure that training data
 is sufficiently rich to witness all possible variation in the data,
-errors in inference are inevitable.  Fortunately, however, detecting
+errors in inference are inevitable.  Fortunately, detecting
 and recovering from errors in ad hoc data is one of the primary strengths
 of the \pads{} system.  
 
