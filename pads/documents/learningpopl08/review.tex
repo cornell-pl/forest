@@ -1,4 +1,4 @@
-Our format inference algorithm is implemented as a series of phases that
+Our format inference algorithm comprises a series of phases that
 generate and transform an internal format description language we
 refer to simply as the \ir.  The \ir{} is very similar to
 the \ipads{} language we developed and formalized in previous 
@@ -176,27 +176,28 @@ basic array types \cd{array} $T$, which indicate a data source should contain
 a sequence of items of arbitrary length, each matching $T$,
 and union types \cd{union} \{$T_1$; ... $T_k$;\}, which indicate a
 data source
-should match one of $T_1$, ..., $T_k$.  Once again, initial phases
+should match one of $T_1$, ..., $T_k$.  Initial phases
 of the inference algorithm restrict themselves to one of these three
-sorts of type constructors.  However, later phases of the algorithm
+sorts of type constructors.  Later phases of the algorithm
 refine, merge and process these simple types in a variety of ways.
 For example, unions may be transformed into 
 enumerations of constants
 \cd{enum} \{$c_1$; ... $c_k$;\}
 or options \cd{option} \{$T$;\}.  In
-addition, later phases of the algorithm 
+addition, later phases 
 bind variables to the results of parsing 
 base types and enums.  For example, $x$:$b$($p_1$,...,$p_k$) expresses the fact that
 variable $x$ is bound to the value parsed by base type
 $b$($p_1$,...,$p_k$).  These variables express dependencies between 
 different parts
-of a description.\footnote{For the purposes of inference, 
-every bound variable is assumed to be distinct
+of a description.\footnote{
+We assume every bound variable is distinct
 from every other that appears in a description.  Roughly speaking,
 the scope of such variables
 extends as far as possible to the right through the description.
-Understanding the fine details of the semantics is not important
-for understanding the central material in this paper.}  
+%%Understanding the fine details of the semantics is not important
+%%for understanding the central material in this paper.
+}  
 For example, the length of a string \cd{PstringFW}($p$)
 or an array \cd{ParrayFW}($p$) may depend upon either a constant or
 a variable and likewise for any other parameterized base type.  In
@@ -205,23 +206,23 @@ addition, unions may be refined into dependent switch statements
 data is described by $T_1$, ..., or $T_k$ depending on the value
 associated with $x$, be it $c_1$, ..., or $c_k$.
 
-One can observe that from a parsing perspective,
-the subset of \pads{} that we consider in this paper is closely connected
-to regular expressions: struct types serve the same purpose as
-concatenation; array types serve the same purpose as Kleene star;
-and union types serve the same purpose as unions.  Some of the dependencies
+From a parsing perspective, the subset of \pads{} that we consider in
+this paper is closely connected to regular expressions: struct types
+correspond to concatenation, array types to Kleene star 
+and union types to unions.  Some of the dependencies
 may also be translated into regular expressions.  For example, the type
 $T = $
 \cd{struct} \{$x$:\cd{enum} \{$c_1$; $c_2$\}; $T_0$; \cd{switch} $x$ \cd{of} \{$c_1$ \cd{=>} $T_1$; $c_2$ \cd{=>} $T_2$;\};\} may be translated into the
 regular expression 
 $R = (c_1 \cdot T_0 \cdot T_1) + (c_2 \cdot T_0 \cdot T_2)$.  However,
-human \pads{} programmers tend to prefer $T$ over $R$ since $T$
+\pads{} programmers tend to prefer $T$ over $R$ since $T$
 clearly identifies the
 tag that determines the branch of the union and it avoids
-repetition of $T_0$ (which becomes more and more problematic as 
-the number of alternatives grows).
+repeating $T_0$ (which becomes increasingly problematic as 
+the number of alternatives grows).  We describe approaches to learning
+regular expressions in \secref{sec:related}.
 
-In additional to parsing, there is a more interesting
+In addition to parsing, there is a more interesting
 interpretation of \pads{} types in which they are translated
 into a set of data structures. 
 We let metavariable $d$ range over such 

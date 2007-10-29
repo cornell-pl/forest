@@ -12,7 +12,7 @@ systems administration.  Moreover, engineers and scientists are continuously
 producing new ad hoc formats ---despite the presence of existing 
 standards--- because it is often expedient to do so.  Over time, these
 expedient formats become difficult to work with because of missing
-documentation, a lack of tools, and corruption caused by repeated,
+documentation, a lack of tools, and corruption caused by repeated
 redesign, reuse and extension.
 
 The goal of the \pads{}
@@ -28,12 +28,12 @@ programming libraries, such as parsers and printers, which are then
 linked to generic 
 data processing tools including an XML-translator, a query
 engine~\cite{fernandez+:padx}, a 
-simple statistical analysis tool, and others.  Hence, the most important
+simple statistical analysis tool, and others.  Hence, an important
 benefit of using \pads{} is that  a single declarative description
 may be used to generate many useful end-to-end data processing tools completely
 automatically.
 
-On the other hand, the most important impediment to using \pads{}
+On the other hand, a significant impediment to using \pads{}
 is the time and expertise needed
 to write a \pads{} description for a new ad hoc data source.
 For data experts possessing clear, unambiguous documentation about a
@@ -42,13 +42,13 @@ anywhere from a few minutes to a few hours.  However,
 it is relatively common to encounter ad hoc data sources that 
 contain valuable information, yet have little or no documentation.
 Understanding the structure of the data and creating descriptions for such 
-sources can easily take days or weeks depending upon the complexity
+sources can take days or weeks depending upon the complexity
 and volume of the data in question.  In one specific example, Fisher
 spent approximately three weeks (off and on) attempting to understand
-and describe an important data source used internally at AT\&T.  One
-of the stumbling points in this case was that the data source suddenly 
+and describe an important data source used at AT\&T.  One
+of the difficulties was that the data source suddenly 
 switched formats after approximately 1.5 million entries.  Of course,
-if dealing with the vagaries of ad hoc data sources is
+if dealing with the vagaries of ad hoc data is
 time-consuming and error-prone for experts, it is even worse for
 novice users.
 
@@ -72,16 +72,16 @@ to detect errors in additional data from the same source,
 and to draw graphs of various data components, all
 with just a ``push of a button.''
 
-In designing a format inference engine for \pads{}, we tread on
+In designing a format inference engine for \pads{}, we are in
 territory explored in the past by the machine learning community.  For
 example, there have been many attempts to devise algorithms that learn
 regular expressions, context free grammars and more exotic language
 classes.  These algorithms have been used to perform tasks ranging
 from natural language understanding to type inference for \xml{}
 documents to information extraction from web pages.  One key
-difference between our work and past work is that we are targeting an
-understudied domain (ad hoc systems data) that requires new techniques for
-effective inference.  A second key difference is that we are solving a
+difference in our work is that we target an
+understudied domain (ad hoc systems data) that allows new techniques for
+effective inference.  A second key difference is that we solve a
 new problem by showing how to generate an entire suite of end-to-end
 data processing tools with no human intervention.  
 Section~\ref{sec:related} contains a more in-depth analysis of related
