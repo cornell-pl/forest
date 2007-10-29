@@ -205,7 +205,7 @@ addition, unions may be refined into dependent switch statements
 data is described by $T_1$, ..., or $T_k$ depending on the value
 associated with $x$, be it $c_1$, ..., or $c_k$.
 
-Overall, it is important to observe that from a parsing perspective,
+One can observe that from a parsing perspective,
 the subset of \pads{} that we consider in this paper is closely connected
 to regular expressions: struct types serve the same purpose as
 concatenation; array types serve the same purpose as Kleene star;
@@ -221,8 +221,9 @@ tag that determines the branch of the union and it avoids
 repetition of $T_0$ (which becomes more and more problematic as 
 the number of alternatives grows).
 
-It is also important to understand that each \pads{} type has an additional
-interpretation, unrelated to parsing, as a set of data structures.
+In additional to parsing, there is a more interesting
+interpretation of \pads types in which they are translated
+into a set of data structures. 
 We let metavariable $d$ range over such 
 data structures.  For the purposes of this paper, $d$
 may be a constant $c$, an injection into the $i^{th}$
