@@ -1,0 +1,73 @@
+Things to do for dPADS paper
+ a. Re-review related work (lustre, etc)
+ b. Continue coding a bunch of examples in surface language
+ c. Select running example for paper
+ d. Select other examples to illustrate all features of language
+ e. Get all examples running
+ f. Investigate proving soundness result
+ g. Figure out what experiments to run: latency, throughput, 
+    scaling with multiple machines, failure
+ h. Run those micro experiments
+ i. Figure out how to replace part of CoMon with our tool & measure results
+ j. Run co-mon experiments
+ k. Select set of additional artifacts & implement them
+ l. Investigate whether there are specialized analyses we want to support
+    - schedule inference?  others?  and whether to include them in the paper.
+ m. Investigate whether OSDI would be an appropriate venue.
+
+
+Outline for paper:
+Intro
+ - A description of the kinds of systems we are trying to facilitate
+    - Table of sample applications/uses (b)
+    - what are our assumptions about the domain: errors, latency, missing values, etc.
+ - Why is this kind of task difficult?
+ - Review of other solutions to same task
+    state of practice, existing solutions
+ - What is our solution?
+ - Why is it effective?
+    - short declarative code so easy to see what is being done
+    - boilerplate code managed by the system
+    - lowers level of expertise required to write such code
+    - multiple artifacts
+
+Language Design
+  - Introduce running example (need to pick one)
+  - Explain language constructs by how they appear in running example
+  - Give grammar for surface language
+  - Use other examples as necessary to convey other constructs 
+    (need to make sure we have examples for all constructs)
+  - Give typing rules?  or say they are straightforward and are in a companion paper?
+  - Comparison with other approaches...
+     - How much shorter/better is our code?
+
+Semantics
+  - Define core calculus
+  - Define semantics for core calculus
+  - Tie surface language to core calculus
+  - Soundness wrt the type system?
+
+Implementation
+  - description 
+    - core library, combinator interface
+  
+Experimental Validation
+  // Just to prove that we haven't introduced insurmountable obstacles
+  - throughput
+  - latency
+  - how do we scale with number of remote connections?
+  - fault tolerance: what happens when links fail? 
+  - head to head comparison w/part of Co-mon system
+
+Multiple Artifacts
+  - archiver
+  - RSS (and variants?) generator
+  - accumulator w/alerting for differences
+  - tool to report missing data
+  - time-series graphing?
+  - data visuaization
+  - tool to convert to tuples
+
+Related Work
+
+Conclusions & Future Work
