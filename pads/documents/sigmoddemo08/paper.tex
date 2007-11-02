@@ -1,0 +1,363 @@
+\documentclass{sig-alternate-sigmod08}
+\usepackage{url}
+\usepackage{stmaryrd}
+\usepackage{epsfig}
+\usepackage{alltt}
+\usepackage{times}
+\usepackage{code}
+\usepackage{xspace}
+
+% \pdfpagewidth=8.5in
+% \pdfpageheight=11in
+
+\renewcommand{\floatpagefraction}{0.9}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.9}
+\addtolength{\textfloatsep}{-8pt}
+\addtolength{\dbltextfloatsep}{-8pt}
+
+\include{defs}
+\newcommand{\mono}[1]{\texttt{#1}}
+\newcommand{\dibbler}{Sirius}
+\newcommand{\ningaui}{Altair}
+\newcommand{\darkstar}{Regulus}
+
+\newcommand{\abstractdm}{abstract data model}
+\newcommand{\concretedm}{concrete data model}
+\newcommand{\typeddm}{type-specialized concrete data model}
+
+\title{PADS: An End-to-end System for Processing Ad Hoc Data}
+
+\numberofauthors{4} 
+\author{\alignauthor Kathleen Fisher\\
+\affaddr{AT\&T Labs Research}\\
+\email{kfisher@research.att.com}
+\alignauthor David Walker and Kenny Zhu\\
+\affaddr{Princeton University}\\
+\email{dpw@cs.princeton.edu\\kzhu@cs.princeton.edu}
+\alignauthor Peter White\\
+\affaddr{peter@galois.com}}
+
+\eat{
+\additionalauthors{Robert Gruber (Google, 
+  {\texttt{gruber@google.com}}), while at AT\&T Labs and Xuan Zheng (Univ. of Michigan, 
+  {\texttt{xuanzh@eecs.umich.edu}}), supported by 
+	 AT\&T Labs and NSF DMS 0354600.}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\eat{
+\begin{abstract}
+Enormous amounts of data exist in ``well-behaved'' formats such as
+relational tables and XML, which come equipped with extensive tool
+support.  However, vast amounts of data also exist in non-standard or
+\textit{ad hoc} data formats, which often lack standard or extensible
+tools. This deficiency forces data analysts to implement
+their own tools for parsing, querying, and analyzing their ad hoc
+data.  The resulting tools typically interleave parsing, querying, and
+analysis, obscuring the semantics of the data format and making it
+nearly impossible for others to resuse the tools.
+
+This proposal describes \pads{}, an end-to-end system for processing
+ad hoc data sources.  The core of \pads{} is a declarative
+language for describing ad hoc data sources and a data-description
+compiler that produces customizable libraries for parsing the ad hoc
+data.  A suite of tools built around this core include statistical
+data-profiling tools, a query engine that permits viewing ad hoc
+sources as XML and for querying them with XQuery, and an interactive
+front-end that helps users produce \pads{} descriptions quickly.
+
+Details about the \pads{} system are reported in technical
+papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}.
+An open-source implementation of
+\pads{} is available for download~\cite{padsmanual}.
+\end{abstract}}
+
+An {\em ad hoc data source} is any semistructured data source
+for which useful data analysis and transformation tools
+have not yet been defined. XML, HTML and CSV are {\em not} 
+ad hoc data sources as there are numerous programming libraries,
+query languages, manuals and other resources dedicated to
+helping analysts manipulate data in these formats.
+However, ad hoc data does arise often in many fields ranging from
+computational biology to finance to networking.
+
+The goal of the \pads{} project~\cite{padsweb} is to improve the
+productivity of data analysts who need to deal with new and evolving
+ad hoc data sources on a daily basis.  Our central technology is a
+domain-specific language in which programmers can specify the
+structure and expected properties of ad hoc data sources, whether they
+be ASCII, binary, Cobol or a mixture of formats.  These
+specifications, which resemble extended type declarations from
+conventional programming languages, are compiled into a suite of
+programming libraries, such as parsers and printers, and 
+end-to-end data processing tools including a query engine
+and several format translators.
+
+Unfortunately, it often takes substantial time, energy and expertise
+to write a \pads{} description for a new ad hoc data source
+-- days or even weeks for complex sources that have little or
+no documentation, a common scenario in the world of ad hoc data.
+Consequently, we have begun to study techniques for automatic
+inference of \pads{} descriptions from example data, focusing for now
+on ASCII data sources.   The rest of this 
+paper describes our efforts to do so.
+
+% Our end
+% goal is to provide users with an end system that allows them to
+% automatically generate sufficiently accurate \pads{} descriptions 
+% that these descriptions may be fed into our compiler to generate
+% useful programming libraries and data 
+% processing and visualization tools. 
+
+% The goal of this project is to provide a generic framework that includes
+% languages and tools to seamlessly automate data stream analysis. 
+% Given some samples of the data stream, our prototype system produces 
+% an intermediate
+% representation of the structure of the data through structure discovery
+% and refinement, and translates that representation into a
+% declarative data-description language, \padsc{}. \padsc{} is 
+% expressive enough to describe a variety of data feeds 
+% including ASCII, binary, EBCDIC, Cobol, and mixed data formats.  
+% From \padsc{}, a suite of tools can generated with functions for 
+% parsing, manipulating, and summarizing the data. All these can be 
+% done with a ``push of a button.''   
+
+
+% Transactional data streams, such as sequences of stock-market buy/sell orders,
+% credit-card purchase records, web server entries, and electronic fund
+% transfer orders, can be mined very profitably.  As an example,
+% researchers at AT\&T have built customer profiles from streams of
+% call-detail records to significant financial effect~\cite{kdd99}.   
+% Often such streams are high-volume: AT\&T's call-detail stream contains
+% roughly 300~million calls per day requiring approximately 7GBs of
+% storage space.  Typically, such stream data arrives ``as is'' in
+% \textit{ad hoc} formats with poor documentation.  In addition, the
+% data frequently contains errors.  The appropriate response to such
+% errors is application-specific. 
+% %Some applications can simply discard
+% %unexpected or erroneous values and continue processing.  For other
+% %applications, however, errors in the data can be the most interesting
+% %part of the data.  
+
+% Understanding a new data stream and producing a suitable parser are
+% crucial first steps in any use of stream data.  Unfortunately, writing
+% parsers for such data is a difficult task, both tedious and
+% error-prone. It is complicated by lack of documentation, convoluted
+% encodings designed to save space, the need to handle errors
+% robustly, and the need to produce efficient code to cope with the
+% scale of the stream.  Often, the hard-won understanding of the data
+% ends up embedded in parsing code, making long-term maintenance
+% difficult for the original writer and sharing the knowledge with
+% others nearly impossible.
+
+\section*{The PADS Language}
+Before outlining the main ideas in description inference,
+we explain the structure of the \pads{} specification language in greater
+detail.  
+% As mentioned in the introduction,
+% \pads{} specifications are related to conventional type declarations,
+% but compiled into parser and printer libraries and linked with
+% generic program units that perform higher level tasks.  There
+% actually two different specification languages, one for \C{} and
+% one for \ocaml{}, but we restrict ourselves to discussion of the former.
+As mentioned in the introduction,
+\pads{} specifications are related to conventional type 
+declarations.\footnote[2]{Though there are two versions of \pads{},
+one for \C{} and
+one for \ocaml{}, we restrict ourselves to discussion of the \C{} version,
+which should be more familiar to most readers.}  For example,
+\pads{} has a number built-in base types for atomic items ranging
+from integers of various kinds (\cd{Puint32} for a 32-bit unsigned integer;
+\cd{Pint64} for a signed 64-bit integer), strings with different
+termination conditions (\cd{Pstring(' ')} terminates on seeing a
+space character) and more complex items such as 
+ dates (\cd{Pdate}) and times (\cd{Ptime}).
+To describe complex formats, \pads{} contains a number of type constructors
+including \cd{Pstruct} and \cd{Parray} to describe sequences
+of items in a file, and \cd{Punion}, \cd{Pswitch}, \cd{Penum} to 
+describe various sorts of choices in a file.  Programmers
+can also attach arbitrary constraints to descriptions.
+
+As an example, consider the common log format for Web server logs.  A
+typical record looks like the following:
+% I deleted the -700 at the end of the date to make it fit on one line 
+% properly...I assume it's OK to tell a white lie about the format...
+
+{\small \begin{verbatim}
+207.136.97.49 - - [15/Oct/2006:18:46:51] 
+	"GET /tk/p.txt HTTP/1.0" 200 30
+\end{verbatim}
+}
+This record contains the IP address of the requester, a pair of
+dashes, the date and time of the request, the request string itself, 
+a response code and the number of bytes transmitted.  A fragment of the
+\pads{} description for such a data source follows.  
+\begin{code}
+\kw{Pstruct} webRecord \{
+  Pip        ip;   " - - [";          
+  Pdate(':') date; ":";
+  Ptime(']') time; "]";     
+  httpMeth   meth; " ";
+  Puint8     code; " "; 
+  Puint8     size; " "; \};
+
+\kw{Parray} webLog \{ webRecord[] \};
+\end{code}
+This description gives a definition
+for the {\tt webLog} type, which is a sequence (a {\tt Parray})
+of arbitrarily many {\tt webRecord}s.  The definition
+for the {\tt webRecord} type includes an ip address, a date,
+a time and some other items.  Notice there are two sorts of fields
+in the Web record structure: named fields (such as the field named
+{\tt ip} with type {\tt Pip}) and unnamed fields (such as 
+{\tt  " - - ["}).  The former hold data that programmers or generated
+tools may access; the latter serve as syntactic separators read by
+generated parsers and printed by generated printers.  The type
+{\tt httpMeth} is another user-defined type not shown here.
+
+% The auxiliary types \cd{http_method_t} and \cd{http_v_t} describes the various
+% HTTP methods such as GET/PUT/LINK, and the version formats, respectively.
+% The \cd{version} field is subject to a constraint predicate \cd{checkVersion}
+% to ensure that obsolete methods such as \cd{LINK} and \cd{UNLINK} are only
+% used with version HTTP/1.0.
+
+% A number of tools can be generated in the form of a C library from the
+% \padsc{} description. Some examples are: a parser that allows the user to
+% parse the data stream into structured or semi-structure data such as
+% comma-separated formats or XMLs; an accumulator tool that presents the user with 
+% statistics of input data such as the frequency of each type appearing in
+% the data, the accumulated error rate of each type declaration in the
+% \padsc{} description; or a filter program that allows the users to specify
+% some filtering condition and process the data to return on the information
+% of interest to the users. 
+
+% Now we would like to automatically generate \padsc{} descriptions base on
+% sample data with minimum user intervention. To this end, 
+% we propose an architecture to {\em infer} or ``learn'' \cite{higuera01current} 
+% formats from ad hoc data samples and convert the formats to \padsc{}. 
+
+\section*{The Inference Engine}
+\begin{figure}
+\begin{center}
+\epsfig{file=archi.eps, width=.9\columnwidth}
+\caption{Architecture of the format inference engine}
+\vspace*{-5mm}
+\label{fig-archi}
+\end{center}
+\end{figure}
+Figure \ref{fig-archi} gives an overview of our format inference
+architecture. The input data, or ``training set,'' 
+is first ``chunked'' into records where
+each record is a piece of recurrent data such as a line, 
+a paragraph, or a file (if the input consists of multiple files).
+The user specifies the unit of repetition when invoking our 
+learning tool.
+Each record is then broken down into a series of tokens where each
+token can be a punctuation symbol, a number, a date, a time, or a number of other
+basic types.  Our learning system has a basic tokenization scheme
+skewed toward systems data, but users may specify a different scheme 
+for their own domain through a configuration file.  For example,
+computational biologists may want to specify new base types for DNA strings
+or other common recurring patterns.
+
+In the structure discovery phase, we use a top-down, divide-and-conquer
+scheme inspired in part by the work of Arasu on
+information extraction from web pages~\cite{arasu+:sigmod03}. 
+This scheme calculates
+frequency distributions for tokens within records, and using this information,
+chooses a simple type constructor such as a \tkw{Pstruct}, \tkw{Punion}, or
+\tkw{Parray} to describe the top-level structure of the record. 
+When a type constructor has been chosen, the data is partitioned accordingly
+and the algorithm recursively analyzes subparts.  This
+rough structure is represented in an intermediate representation (IR)
+that has similar expressive power to the \pads{} language. 
+
+The format refinement phase analyzes the IR produced by structure discovery
+and repeatedly applies 
+rewrite rules.  There are two sorts of rewriting rules: 
+value-independent rules and value-dependent rules.
+The value-independent rules examine the inferred description structure
+to find ways to merge or rearrange components to improve the description.
+Value-dependent rules analyze both the inferred description and the underlying
+training data looking for fields with little or no 
+variation in order to introduce constants and enumerations.
+The value-dependent rules also infer
+inter-field dependency information.
+At any given point during the refinement process,
+many rewriting rules may apply; our algorithm repeatedly chooses the one 
+that optimizes an information-theoretic
+scoring function we have defined.
+In effect, this refinement phase is equivalent to a greedy, local search
+procedure aimed at improving the quality of the inferred format.
+% The quality is measured by a scoring function which is based on the
+% information theory. The objective of this function is to
+% minimize the cost of transmitting the inferred format plus the
+% training set. 
+Below is a fragment of the IR learned from web log data similar to the data
+illustrated above.  In this case, the learning system was quite successful;  the only mistake it
+made was over-specializing the response code 
+to the specific integer constant 200.  It did so because the 
+records in the training data contained no variation in this field.
+
+{\small
+\begin{verbatim}
+Pstruct
+  [IP];             [StringConst] " - - [";
+  [Date];           [StringConst] ":";
+  [Time];           [StringConst] "]";
+  ...
+  [IntConst] [200]; [StringConst] " " 
+  [Pint];
+End Pstruct
+\end{verbatim}
+}
+Finally, after no more refinement is possible, a pretty printer 
+translates the IR into a working PADS 
+specification,  which can be used to generate
+a suite of useful tools.  Here is the final result for
+our running example.
+
+{\small
+\begin{verbatim}
+Pstruct Struct_29 {
+  Pip        var_0; " - - [";
+  Pdate(':') var_7; ':';
+  Ptime(']') var_9; "] ";
+  ...
+  Puint8 var_26 : var_26 == 200; ' ';
+  Pint64 var_28;
+};
+Parray entries_t { Struct_29[]; };
+\end{verbatim}
+}
+
+\section*{Conclusions}
+The primary conclusion of our preliminary study 
+is that it is possible to infer useful \pads{} descriptions 
+from a sufficiently large corpus of training data.  Indeed,
+with just a push of a button, we can now automatically generate
+tools that convert raw data into XML and generate statistical reports.
+Where it once took days or weeks to access and transform ad hoc data, it now
+takes seconds.
+%and (2) generate a useful statistical report.  However, 
+%there is still much work to be done as the generated formats
+%often tend to overspecialize and turn out to be more complex than
+%their human-generated counterparts.
+
+
+\noindent
+\textbf{Additional Authors.}
+Robert Gruber ({\small{\texttt{gruber@google.com}}}), Google,
+while at AT\&T Labs.
+Xuan Zheng ({\small{\texttt{xuanzh@eecs.umich.edu}}}), Univ. of Michigan, 
+supported by AT\&T Labs and NSF DMS 0354600.
+
+\bibliographystyle{abbrv}
+\bibliography{../learningpopl08/pads}
+
+\end{document}
+
