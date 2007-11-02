@@ -18,3 +18,8 @@ paper:  paper.tex pads.bib discussion.tex definitions.tex intro.tex review.tex a
 	bibtex paper;
 	latex paper.tex; latex paper.tex; dvips paper.dvi -o paper.ps -t letter
 	dvipdf paper.dvi
+
+final:  popl050-fisher.tex pads.bib discussion.tex definitions.tex intro.tex review.tex algorithm.tex conclusion.tex appendix.tex abstract.tex
+	latex popl050-fisher.tex; 
+	latex popl050-fisher.tex; latex popl050-fisher.tex; dvips popl050-fisher.dvi -o popl050-fisher.ps -t letter 
+	dvipdf popl050-fisher.dvi
