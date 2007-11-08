@@ -118,12 +118,12 @@ tokens.lex:
 
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
-	#ml-ulex --ml-lex-mode tokens.lex
+	ml-ulex --ml-lex-mode tokens.lex
 	#lexgen --ml-lex-mode tokens.lex
 
 vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
-	#ml-ulex --ml-lex-mode vanilla.lex
+	ml-ulex --ml-lex-mode vanilla.lex
 	#lexgen --ml-lex-mode vanilla.lex
 
 learn:  common.sml

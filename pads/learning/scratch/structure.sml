@@ -171,6 +171,29 @@ struct
 	   pC 0 clusters
        end
 
+    fun dumpClusters curDeps numRecords clusters fileName = 
+       let fun oneFreqToStr numRecords (int, countRef) = 
+	     let val percent = (Real.fromInt (!countRef ))/(Real.fromInt numRecords)
+	     in
+	     ("\t" ^ (Int.toString int) ^ ":\t" ^ (Int.toString(!countRef)) ^
+	     "\t" ^ (Real.toString percent) ^ "\n")
+	     end
+           fun histToString numRecords (token, (h:histogram)) = 
+	       	("Token: " ^ (tokenTyToString token) ^ "\n"  ^
+	 	(lconcat (map (oneFreqToStr numRecords) (IntMap.listItemsi (!(#hist h))))) ^ "\n")
+           fun oneClusterToString n c = 
+	       ("Cluster "^(Int.toString n)^":\n" ^
+		(lconcat (map (histToString numRecords) c)) ^ "\n")
+	   fun pC n [] = ""
+             | pC n (c::cs) = (oneClusterToString n c) ^ (pC (n+1) cs)
+	   val clusters = pC 0 clusters
+	   val strm = if curDeps = 0 then TextIO.openOut fileName
+		      else TextIO.openAppend fileName
+	   val () = TextIO.output (strm, ("====================\nITERATION " ^ (Int.toString curDeps) ^ "\n"))
+
+	   val () = TextIO.output (strm, clusters)
+	in TextIO.closeOut strm
+       end
 
     fun printTList tList = (print "tokenOrder:\n";
 			    List.app (fn t => (printTokenTy t; print " ")) tList;
@@ -1252,6 +1275,9 @@ struct
 
     and clustersToTy curDepth rtokens numRecords clusters = 
 	let val analysis = analyzeClusters numRecords clusters
+	    val _ = if output_histograms then 
+			dumpClusters curDepth numRecords clusters (def_outputDir ^ "histogram.dat")
+		    else ()
             (* This function partitions a context into a union. *)
             (* It currently uses the first token in each context to do the partition *)
             fun buildUnionTy (FirstToken, rtokens) = 
@@ -1502,7 +1528,6 @@ struct
 	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)
 	    (* val () = if print_verbose then printClusters numRecordsinContext clusters else () *)
 	    val clusters : (Token * histogram) list list = newFindClusters numRecordsinContext fd
-	    val () = if print_verbose then printClusters numRecordsinContext clusters else ()
             val ty = clustersToTy curDepth context numRecordsinContext clusters
 	    (*
 	    val () = (print "Inferred type:\n"; 
@@ -1529,9 +1554,11 @@ file is a record and all of them collectively represent a sample data *)
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = if print_verbose = true then lengthsToHist rtokens else ()
 	    val ty = ContextListToTy 0 rtokens
+(* Do this in rewriting
 	    val sty = simplifyTy ty
+*)
 	in
-	    (sty, separator)
+	    (ty, separator)
 	end
 
 

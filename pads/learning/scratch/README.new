@@ -70,7 +70,9 @@ of newline-separated ASCII data.
    and then execute
    >crashreporter.log-graph 
 
-   to see detailed usage of the grapher.
+   to see detailed usage of the grapher. And example of use is:
+
+   ai.3000-graph -d ../data/ai.3000 -x 3 -y 8 -s impulses -t "%H:%M:%S"
 
 4. The GNUMakefile included in the learning directory has a few
    targets for running end-to-end scenarios and experimenting with 
