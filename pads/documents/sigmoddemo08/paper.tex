@@ -26,9 +26,9 @@
 \newcommand{\concretedm}{concrete data model}
 \newcommand{\typeddm}{type-specialized concrete data model}
 
-\title{PADS: An End-to-end System for Processing Ad Hoc Data}
+\title{LearnPADS: Inferring Formats from Ad Hoc Data}
 
-\numberofauthors{4} 
+\numberofauthors{3} 
 \author{\alignauthor Kathleen Fisher\\
 \affaddr{AT\&T Labs Research}\\
 \email{kfisher@research.att.com}
@@ -36,46 +36,60 @@
 \affaddr{Princeton University}\\
 \email{dpw@cs.princeton.edu\\kzhu@cs.princeton.edu}
 \alignauthor Peter White\\
-\affaddr{peter@galois.com}}
+\affaddr{Galois Connections}\\
+\email{peter@galois.com}}
 
-\eat{
-\additionalauthors{Robert Gruber (Google, 
-  {\texttt{gruber@google.com}}), while at AT\&T Labs and Xuan Zheng (Univ. of Michigan, 
-  {\texttt{xuanzh@eecs.umich.edu}}), supported by 
-	 AT\&T Labs and NSF DMS 0354600.}}
-
-\date{\today}
+%\eat{
+%\additionalauthors{Robert Gruber (Google, 
+%  {\texttt{gruber@google.com}}), while at AT\&T Labs and Xuan Zheng (Univ. of Michigan, 
+%  {\texttt{xuanzh@eecs.umich.edu}}), supported by 
+%	 AT\&T Labs and NSF DMS 0354600.}}
+%
+%\date{\today}
 
 \begin{document}
 
 \maketitle
-\eat{
 \begin{abstract}
-Enormous amounts of data exist in ``well-behaved'' formats such as
-relational tables and XML, which come equipped with extensive tool
-support.  However, vast amounts of data also exist in non-standard or
-\textit{ad hoc} data formats, which often lack standard or extensible
-tools. This deficiency forces data analysts to implement
-their own tools for parsing, querying, and analyzing their ad hoc
-data.  The resulting tools typically interleave parsing, querying, and
-analysis, obscuring the semantics of the data format and making it
-nearly impossible for others to resuse the tools.
+We demonstrate LearnPADS, a format inference system that automatically
+infers from ad hoc data samples their descriptions in \pads{}
+which is capable of generating a suite of useful tools for processing
+data sources of the same format. This system extends the work on
+\pads{} (\cite{fisher+:pads,fisher+:popl06,daly+:pads-demo}), 
+but eliminates the tedious and error-prone process of 
+hand-coding complex \pads{} descriptions by humans and thus achieves
+the goal of tool generation at ``a push of a button.'' 
+We show how LearnPADS works in end-to-end user scenarios with
+real world data, illustrate the architecture of the system and 
+present the internals of the multi-phase inference algorithm 
+which is at the heart of the system.
 
-This proposal describes \pads{}, an end-to-end system for processing
-ad hoc data sources.  The core of \pads{} is a declarative
-language for describing ad hoc data sources and a data-description
-compiler that produces customizable libraries for parsing the ad hoc
-data.  A suite of tools built around this core include statistical
-data-profiling tools, a query engine that permits viewing ad hoc
-sources as XML and for querying them with XQuery, and an interactive
-front-end that helps users produce \pads{} descriptions quickly.
+%Enormous amounts of data exist in ``well-behaved'' formats such as
+%relational tables and XML, which come equipped with extensive tool
+%support.  However, vast amounts of data also exist in non-standard or
+%\textit{ad hoc} data formats, which often lack standard or extensible
+%tools. This deficiency forces data analysts to implement
+%their own tools for parsing, querying, and analyzing their ad hoc
+%data.  The resulting tools typically interleave parsing, querying, and
+%analysis, obscuring the semantics of the data format and making it
+%nearly impossible for others to reuse the tools.
+%
+%This proposal describes \pads{}, an end-to-end system for processing
+%ad hoc data sources.  The core of \pads{} is a declarative
+%language for describing ad hoc data sources and a data-description
+%compiler that produces customizable libraries for parsing the ad hoc
+%data.  A suite of tools built around this core include statistical
+%data-profiling tools, a query engine that permits viewing ad hoc
+%sources as XML and for querying them with XQuery, and an interactive
+%front-end that helps users produce \pads{} descriptions quickly.
+%
+%Details about the \pads{} system are reported in technical
+%papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}.
+%An open-source implementation of
+%\pads{} is available for download~\cite{padsmanual}.
+\end{abstract}
 
-Details about the \pads{} system are reported in technical
-papers~\cite{fernandez+:padx,fisher+:pldi05,fisher+:popl06}.
-An open-source implementation of
-\pads{} is available for download~\cite{padsmanual}.
-\end{abstract}}
-
+\section{Introduction}
 An {\em ad hoc data source} is any semistructured data source
 for which useful data analysis and transformation tools
 have not yet been defined. XML, HTML and CSV are {\em not} 
@@ -101,10 +115,16 @@ Unfortunately, it often takes substantial time, energy and expertise
 to write a \pads{} description for a new ad hoc data source
 -- days or even weeks for complex sources that have little or
 no documentation, a common scenario in the world of ad hoc data.
-Consequently, we have begun to study techniques for automatic
-inference of \pads{} descriptions from example data, focusing for now
-on ASCII data sources.   The rest of this 
-paper describes our efforts to do so.
+Consequently, We have developed a multi-phase algorithm that automatically
+infers the structure of ASCII data sources and produces descriptions
+in the \pads{} language. From the \pads{} description, a library and a
+set of useful tools are generated. Such tools enable the users to, for example, 
+convert the data source into a relational database or XML which can 
+be queried using conventional methods. Users can also write their 
+own programs to process the data source using
+functions such as parser and printer from the generated libraries.
+The technical details of the inference system can be found in
+\cite{Fisher+:dirttoshovels}.
 
 % Our end
 % goal is to provide users with an end system that allows them to
@@ -154,97 +174,160 @@ paper describes our efforts to do so.
 % difficult for the original writer and sharing the knowledge with
 % others nearly impossible.
 
-\section*{The PADS Language}
-Before outlining the main ideas in description inference,
-we explain the structure of the \pads{} specification language in greater
-detail.  
-% As mentioned in the introduction,
-% \pads{} specifications are related to conventional type declarations,
-% but compiled into parser and printer libraries and linked with
-% generic program units that perform higher level tasks.  There
-% actually two different specification languages, one for \C{} and
-% one for \ocaml{}, but we restrict ourselves to discussion of the former.
-As mentioned in the introduction,
-\pads{} specifications are related to conventional type 
-declarations.\footnote[2]{Though there are two versions of \pads{},
-one for \C{} and
-one for \ocaml{}, we restrict ourselves to discussion of the \C{} version,
-which should be more familiar to most readers.}  For example,
-\pads{} has a number built-in base types for atomic items ranging
-from integers of various kinds (\cd{Puint32} for a 32-bit unsigned integer;
-\cd{Pint64} for a signed 64-bit integer), strings with different
-termination conditions (\cd{Pstring(' ')} terminates on seeing a
-space character) and more complex items such as 
- dates (\cd{Pdate}) and times (\cd{Ptime}).
-To describe complex formats, \pads{} contains a number of type constructors
-including \cd{Pstruct} and \cd{Parray} to describe sequences
-of items in a file, and \cd{Punion}, \cd{Pswitch}, \cd{Penum} to 
-describe various sorts of choices in a file.  Programmers
-can also attach arbitrary constraints to descriptions.
+\section{End User Scenario}
+In this section, we present an end-to-end scenario to demonstrate how
+to use LearnPADS to generate tools from the raw data.
+Let us assume that the sample raw data source is a web server access log
+called ai.3000 with records like this:
 
-As an example, consider the common log format for Web server logs.  A
-typical record looks like the following:
-% I deleted the -700 at the end of the date to make it fit on one line 
-% properly...I assume it's OK to tell a white lie about the format...
-
-{\small \begin{verbatim}
-207.136.97.49 - - [15/Oct/2006:18:46:51] 
-	"GET /tk/p.txt HTTP/1.0" 200 30
+{\small
+\begin{verbatim}
+www.proxy.aol.com - - [16/Oct/1997:08:20:45 -0700] 
+  "GET /tk/pan.gif HTTP/1.0" 200 15944
+24.64.22.142 - - [15/Oct/1997:19:00:35 -0700] 
+  "GET /tk/hrme.jpg HTTP/1.0" 200 24216
 \end{verbatim}
 }
-This record contains the IP address of the requester, a pair of
-dashes, the date and time of the request, the request string itself, 
-a response code and the number of bytes transmitted.  A fragment of the
-\pads{} description for such a data source follows.  
-\begin{code}
-\kw{Pstruct} webRecord \{
-  Pip        ip;   " - - [";          
-  Pdate(':') date; ":";
-  Ptime(']') time; "]";     
-  httpMeth   meth; " ";
-  Puint8     code; " "; 
-  Puint8     size; " "; \};
 
-\kw{Parray} webLog \{ webRecord[] \};
-\end{code}
+As user invokes the command line program:
+
+{\small
+\begin{verbatim}
+kzhu@myhost:~$ learn data/ai.3000 <enter>
+\end{verbatim}
+}
+
+the \pads{} description ai.3000.p will be generated in
+the /gen directory. In addition, the program generates
+the following tool programs for ai.3000:
+ai.3000-accum.c, ai.3000-fmt.c, ai.3000-xml.c and ai.3000-graph.
+ai.3000-accum.c is an accumulator program that produces a
+statistical report about the data source; ai.3000-fmt.c is a
+formatter program that formats the data source into tables;
+ai.3000-xml.c converts the raw data into XMLs and ai.3000-graph is
+a visualization tool that allows the user to plot certain
+columns from the raw data in some styles using GNUPlot.
+
+\eat{ %%%%%%%
+As an illustration, we show here a snippet of the \pads{}
+description generated from the inference system.
+
+{\small
+\begin{verbatim}
+...
+Precord Pstruct Struct_149 {
+        Union_4 var_4;
+        " - ";
+        Union_45 var_45;
+        " [";
+        PPdate var_55;
+        ':';
+        PPtime var_59;
+        "] \"";
+        Enum_70 var_70;
+        ' ';
+        Union_78 var_78;
+        " HTTP/";
+        Pfloat64 var_123;
+        "\" ";
+        Puint16 var_136;
+        ' ';
+        Union_144 var_144;
+};
+Psource Parray entries_t {
+        Struct_149[];
+};
+\end{verbatim}
+} 
+
 This description gives a definition
-for the {\tt webLog} type, which is a sequence (a {\tt Parray})
-of arbitrarily many {\tt webRecord}s.  The definition
-for the {\tt webRecord} type includes an ip address, a date,
-a time and some other items.  Notice there are two sorts of fields
-in the Web record structure: named fields (such as the field named
-{\tt ip} with type {\tt Pip}) and unnamed fields (such as 
-{\tt  " - - ["}).  The former hold data that programmers or generated
-tools may access; the latter serve as syntactic separators read by
-generated parsers and printed by generated printers.  The type
-{\tt httpMeth} is another user-defined type not shown here.
+for the {\tt entries\_t} type, which is a sequence (a {\tt Parray})
+of arbitrarily many entries described by the {\tt Struct\_149} type.  
+{\tt Struct\_149} tells the user that this type is a struct and its
+definition includes a number of other intermediate types such as
+{\tt Union\_4} and {\tt Union\_45}, some base types such as 
+{\tt PPdate}, {\tt PPtime} and some constants. The keyword
+{\tt Precord} in front of the definition of {\tt Struct\_149} declares that
+this type describes a record in the data source.
+}%%%%%%%
 
-% The auxiliary types \cd{http_method_t} and \cd{http_v_t} describes the various
-% HTTP methods such as GET/PUT/LINK, and the version formats, respectively.
-% The \cd{version} field is subject to a constraint predicate \cd{checkVersion}
-% to ensure that obsolete methods such as \cd{LINK} and \cd{UNLINK} are only
-% used with version HTTP/1.0.
+Now let's make the accumulator and the XML converter by
+typing "make ai.3000-accum" and "make ai.3000-xml" in the
+gen/ directory, which produces two executables:
+ai.3000-accum and ai.3000-xml. Invoking the first program on
+the original data source ai.3000 yields the statistics of
+ai.3000 in Fig. \ref{fig-accum-report}.
 
-% A number of tools can be generated in the form of a C library from the
-% \padsc{} description. Some examples are: a parser that allows the user to
-% parse the data stream into structured or semi-structure data such as
-% comma-separated formats or XMLs; an accumulator tool that presents the user with 
-% statistics of input data such as the frequency of each type appearing in
-% the data, the accumulated error rate of each type declaration in the
-% \padsc{} description; or a filter program that allows the users to specify
-% some filtering condition and process the data to return on the information
-% of interest to the users. 
+\begin{figure*}
+\begin{center}
+{\small
+\begin{verbatim}
+*****************************************************************************************************
+<top> : struct Struct_149
+*****************************************************************************************************
+good vals:        300    bad vals:          0    pcnt-bad:    0.000
 
-% Now we would like to automatically generate \padsc{} descriptions base on
-% sample data with minimum user intervention. To this end, 
-% we propose an architecture to {\em infer} or ``learn'' \cite{higuera01current} 
-% formats from ad hoc data samples and convert the formats to \padsc{}. 
+[Describing each field of <top>]
+... OMMITTED ...
+=====================================================================================================
+<top>.var_4.var_1 : typedef PPip [--> Pstring_ME]
+=====================================================================================================
+String lengths: good vals:        163    bad vals:          0    pcnt-bad:    0.000
+  Characterizing string length values:  min 11 max 15 avg 13.239
+    => distribution of top 5 values out of 5 distinct values:
+        val:         13 count:         57  pcnt-of-good-vals:   34.969
+        val:         12 count:         39  pcnt-of-good-vals:   23.926
+        val:         14 count:         36  pcnt-of-good-vals:   22.086
+        val:         15 count:         26  pcnt-of-good-vals:   15.951
+        val:         11 count:          5  pcnt-of-good-vals:    3.067
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:        163  pcnt-of-good-vals:  100.000
 
-\section*{The Inference Engine}
+\end{verbatim}
+}
+\caption{Portions of accumulator report}\label{fig-accum-report}
+\end{center}
+\end{figure*}
+
+The report not only gives number of correct and incorrect parses of
+each \pads{} types in the description, but also details the frequencies
+of identical values in a form of a histogram. For example, Fig. \ref{fig-accum-report}
+includes a distribution of the 5 most frequently occurring IP addresses.
+Information like this can be very useful in network traffic analysis.
+
+We next convert the original ai.3000 into XML using ai.3000-xml tool,
+and the first record in the above example is converted to the following
+XML fragment which can be queried using common XML tool such as XQuery:
+
+{\small
+\begin{verbatim}
+<Struct_149>
+  <var_4>
+    <var_6><val>www.proxy.aol.com</val></var_6>
+  </var_4>
+  <var_45>
+    <var_42><val>var_42</val></var_42>
+  </var_45>
+  <var_55><val>16/Oct/1997</val></var_55>
+  <var_59><val>08:20:45 -0700</val></var_59>
+  <var_70><val>GET</val></var_70>
+  <var_78>
+    <var_75><val>/tk/pan.gif</val></var_75>
+  </var_78>
+  <var_123><val>1.000000</val></var_123>
+  <var_136><val>200</val></var_136>
+  <var_144>
+    <var_141><val>15944</val></var_141>
+  </var_144>
+</Struct_149>
+\end{verbatim}
+}
+
+\section{The Architecture}
 \begin{figure}
 \begin{center}
-\epsfig{file=archi.eps, width=.9\columnwidth}
-\caption{Architecture of the format inference engine}
+\epsfig{file=archi.eps, width=0.9\columnwidth}
+\caption{Architecture of LearnPADS}
 \vspace*{-5mm}
 \label{fig-archi}
 \end{center}
@@ -293,68 +376,265 @@ that optimizes an information-theoretic
 scoring function we have defined.
 In effect, this refinement phase is equivalent to a greedy, local search
 procedure aimed at improving the quality of the inferred format.
+
 % The quality is measured by a scoring function which is based on the
 % information theory. The objective of this function is to
 % minimize the cost of transmitting the inferred format plus the
 % training set. 
-Below is a fragment of the IR learned from web log data similar to the data
-illustrated above.  In this case, the learning system was quite successful;  the only mistake it
-made was over-specializing the response code 
-to the specific integer constant 200.  It did so because the 
-records in the training data contained no variation in this field.
 
-{\small
-\begin{verbatim}
-Pstruct
-  [IP];             [StringConst] " - - [";
-  [Date];           [StringConst] ":";
-  [Time];           [StringConst] "]";
-  ...
-  [IntConst] [200]; [StringConst] " " 
-  [Pint];
-End Pstruct
-\end{verbatim}
-}
-Finally, after no more refinement is possible, a pretty printer 
+%Below is a fragment of the IR learned from web log data similar to the data
+%illustrated above.  In this case, the learning system was quite successful;  the only mistake it
+%made was over-specializing the response code 
+%to the specific integer constant 200.  It did so because the 
+%records in the training data contained no variation in this field.
+%
+%{\small
+%\begin{verbatim}
+%Pstruct
+%  [IP];             [StringConst] " - - [";
+%  [Date];           [StringConst] ":";
+%  [Time];           [StringConst] "]";
+%  ...
+%  [IntConst] [200]; [StringConst] " " 
+%  [Pint];
+%End Pstruct
+%\end{verbatim}
+%}
+
+When no more refinement is possible, a pretty printer 
 translates the IR into a working PADS 
-specification,  which can be used to generate
-a suite of useful tools.  Here is the final result for
-our running example.
+specification,  which can be compiled by a PADS compiler to generate
+a suite of useful tools (only the XML converter and the accumulator are included
+in Fig. \ref{fig-archi}). 
 
-{\small
-\begin{verbatim}
-Pstruct Struct_29 {
-  Pip        var_0; " - - [";
-  Pdate(':') var_7; ':';
-  Ptime(']') var_9; "] ";
-  ...
-  Puint8 var_26 : var_26 == 200; ' ';
-  Pint64 var_28;
-};
-Parray entries_t { Struct_29[]; };
-\end{verbatim}
-}
+%Here is the final result for our running example.
+%
+%{\small
+%\begin{verbatim}
+%Pstruct Struct_29 {
+%  Pip        var_0; " - - [";
+%  Pdate(':') var_7; ':';
+%  Ptime(']') var_9; "] ";
+%  ...
+%  Puint8 var_26 : var_26 == 200; ' ';
+%  Pint64 var_28;
+%};
+%Parray entries_t { Struct_29[]; };
+%\end{verbatim}
+%}
 
-\section*{Conclusions}
-The primary conclusion of our preliminary study 
-is that it is possible to infer useful \pads{} descriptions 
-from a sufficiently large corpus of training data.  Indeed,
-with just a push of a button, we can now automatically generate
-tools that convert raw data into XML and generate statistical reports.
-Where it once took days or weeks to access and transform ad hoc data, it now
-takes seconds.
+%\section*{Conclusions}
+%The primary conclusion of our preliminary study 
+%is that it is possible to infer useful \pads{} descriptions 
+%from a sufficiently large corpus of training data.  Indeed,
+%with just a push of a button, we can now automatically generate
+%tools that convert raw data into XML and generate statistical reports.
+%Where it once took days or weeks to access and transform ad hoc data, it now
+%takes seconds.
 %and (2) generate a useful statistical report.  However, 
 %there is still much work to be done as the generated formats
 %often tend to overspecialize and turn out to be more complex than
 %their human-generated counterparts.
 
 
-\noindent
-\textbf{Additional Authors.}
-Robert Gruber ({\small{\texttt{gruber@google.com}}}), Google,
-while at AT\&T Labs.
-Xuan Zheng ({\small{\texttt{xuanzh@eecs.umich.edu}}}), Univ. of Michigan, 
-supported by AT\&T Labs and NSF DMS 0354600.
+%\noindent
+%\textbf{Additional Authors.}
+%Robert Gruber ({\small{\texttt{gruber@google.com}}}), Google,
+%while at AT\&T Labs.
+%Xuan Zheng ({\small{\texttt{xuanzh@eecs.umich.edu}}}), Univ. of Michigan, 
+%supported by AT\&T Labs and NSF DMS 0354600.
+
+\begin {figure*}[tbh]
+\begin{center}
+\begin{minipage}[t]{0.5\columnwidth} 
+\epsfig{file=histogram0.eps, width=\columnwidth}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\columnwidth}
+\epsfig{file=histogram1.eps, width=\columnwidth}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\columnwidth}
+\epsfig{file=histogram2-1.eps, width=\columnwidth}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\columnwidth}
+\epsfig{file=histogram2-2.eps, width=\columnwidth}
+\end{minipage}
+\caption{Histograms from inferring hp-struct data (from left to right): 
+(a) first iteration, (b) second iteration, (c) third iteration (context 1) 
+and (d) third iteration (context 2)} \label{fig-hist}
+\vspace*{-5mm}
+\end{center}
+\end{figure*}
+
+\section{System Internals}
+In this section, we demonstrate, using a very simple
+example data file called {\tt hp-struct}, 
+how the format inferencing engine works
+from a system internal point of view.
+Below is the content of {\tt hp-struct}.
+{\small
+\begin{verbatim}
+"123, 14"
+"721, Harry"
+"574, Hermione"
+"9378, 56"
+"12, Hogwarts"
+"112, Ron"
+\end{verbatim}
+}
+
+We have the following base tokens definitions in a lex file. 
+
+{\small
+\begin{verbatim}
+Pwhite = [ \t\r\n]+;
+Pint = [0-9]+;
+Pstring = [A-Za-z][A-Za-z0-9_\-]*;
+\end{verbatim}
+}
+
+The chunking and tokenization phases of the engine produce
+chunks of tokens (each line is a chunk) from file hp-struct:
+{\small
+\begin{verbatim}
+["] [Int] [,] [White] [Int]    ["]
+["] [Int] [,] [White] [String] ["]
+["] [Int] [,] [White] [String] ["]
+["] [Int] [,] [White] [Int]    ["]
+["] [Int] [,] [White] [String] ["]
+["] [Int] [,] [White] [String] ["]
+\end{verbatim}
+}
+
+The divide-and-conquer style structure discovery algorithm proceeds
+as follows. In the first iteration, only one token (the group
+token which is everything with the pair of quotes) exists per
+chunk in every chunk, hence, the histogram in Fig.\ref{fig-hist}(a) indicates
+that token {\em group} appears once in all the chunks (100\%).
+In the second iteration, every token within the context of the
+group is analyzed. From Fig.\ref{fig-hist}(b), one can see that
+tokens [White], [''], and [,] have similar histogram
+(all 100\% coverage in one single spike), and hence they are
+grouped in one cluster and identified as a struct. As a result,
+the chunks are partitioned into:
+
+{\small
+\begin{verbatim}
+["] <context 1> [,] <context 2> ["]
+\end{verbatim}
+}
+\noindent where \verb#["]#, \verb#[,]# and \verb#["]# serve as
+boundaries of the partitions.
+
+In the last iteration, histograms of tokens in context 1 and
+context 2 are computed and plotted in Fig.\ref{fig-hist}(c) and Fig.\ref{fig-hist}(d) 
+respectively. We can infer a structure of just one int
+from Context 1 as the [Int] has 100\% coverage. In Context 2,
+histograms for [String] and [Int] are spread out and do not
+show a strong struct characteristics, consequently they are 
+determined to be union. The recursive algorithm ends with
+the following IR that describes hp-struct data. Meta info
+at each node (quoted within parentheses) include a unique id, 
+the coverage of this node in the data, 
+and an information-theoretic score. 
+{\small
+\begin{verbatim}
+Pstruct(Id = BTy_23 6, raw: 437.227b)
+  Pstruct(Id = BTy_21 6, raw: 432.183b)
+    [Other](\") (Id = BTy_2 6, raw: 50.372b);
+    Pstruct(Id = BTy_6 6, raw: 70.883b)
+      [Pint] (Id = BTy_4 6, raw: 65.839b);
+    End Pstruct;
+    [Other](,) (Id = BTy_7 6, raw: 50.372b);
+    [White] (Id = BTy_9 6, raw: 17.044b);
+    Punion(Id = BTy_14 6, raw: 185.510b)
+      Pstruct(Id = BTy_13 4, raw: 154.089b)
+        [String] (Id = BTy_11 4, raw: 149.044b);
+      End Pstruct;
+      Pstruct(Id = BTy_18 2, raw: 24.377b)
+        [Pint] (Id = BTy_16 2, raw: 19.332b);
+      End Pstruct;
+    End Punion;
+    [Other](\") (Id = BTy_19 6, raw: 50.372b);
+  End Pstruct;
+End Pstruct
+\end{verbatim}
+}
+
+The refinement phase simplifies the structure
+and identify constants which results in a better
+description with a lower score as follows.
+
+{\small
+\begin{verbatim}
+Pstruct(Id = BTy_23 6, raw: 287.759b)
+  [StringConst] """ (Id = BTy_2 6, raw: 11.044b);
+  [Pint] (Id = BTy_4 6, raw: 65.839b);
+  [StringConst] ", " (Id = BTy_7 6, raw: 17.044b);
+  Punion(Id = BTy_14 6, raw: 175.421b)
+    [Pint] (Id = BTy_16 2, raw: 19.332b);
+    [String] (Id = BTy_11 4, raw: 149.044b);
+  End Punion;
+  [StringConst] """ (Id = BTy_19 6, raw: 11.044b);
+End Pstruct
+\end{verbatim}
+}
+
+Final \pads{} description after pretty printing
+becomes
+{\small
+\begin{verbatim}
+Punion Union_14 {
+        Pint64 var_16;
+        PPstring var_11;
+};
+Precord Pstruct Struct_23 {
+        '\"';
+        Pint64 var_4;
+        ", ";
+        Union_14 var_14;
+        '\"';
+};
+Psource Parray entries_t {
+        Struct_23[];
+};
+\end{verbatim}
+}
+
+%Intro
+%lots of ad hoc data
+%pads system
+%writing pads descriptions is time consuming
+%inference algorithm to learn data
+%clients: convert into relational or xml or answer queries or write
+%programs
+%
+%User Demo
+%raw data
+%output of running inference system on a variety of formats
+%generated output:
+%   0. accumulator output
+%   1. xml
+%   2. relational
+%
+%Architecture of the system
+%  Figure
+%  chunking, tokenization
+%  structure discovery
+%  mdl scoring
+%  rewriting
+%  pads generation
+%  tool generation
+%
+%Demo of the guts (on hp-struct file)
+%  token definition file
+%  tokenization output
+%  cluster output
+%  structure description plus score
+%  raw description after rewriting
+%  pads description
 
 \bibliographystyle{abbrv}
 \bibliography{../learningpopl08/pads}
