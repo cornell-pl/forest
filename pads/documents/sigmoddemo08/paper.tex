@@ -26,19 +26,21 @@
 \newcommand{\concretedm}{concrete data model}
 \newcommand{\typeddm}{type-specialized concrete data model}
 
-\title{LearnPADS: Inferring Formats from Ad Hoc Data}
+\title{LearnPADS: Automatic Tool Generation from Ad Hoc Data}
 
 \numberofauthors{3} 
-\author{\alignauthor Kathleen Fisher\\
-\affaddr{AT\&T Labs Research}\\
+\author{\alignauthor Kathleen Fisher \\
+\affaddr{AT\&T Labs Research}
 \email{kfisher@research.att.com}
-\alignauthor David Walker and Kenny Zhu\\
+\alignauthor David Walker \\
 \affaddr{Princeton University}\\
-\email{dpw@cs.princeton.edu\\kzhu@cs.princeton.edu}
-\alignauthor Peter White\\
-\affaddr{Galois Connections}\\
-\email{peter@galois.com}}
-
+\email{dpw@cs.princeton.edu}
+\alignauthor Kenny Zhu \\
+\affaddr{Princeton University}\\
+\email{kzhu@cs.princeton.edu}
+%\affaddr{Galois Connections}\\
+%\email{peter@galois.com}}
+}
 %\eat{
 %\additionalauthors{Robert Gruber (Google, 
 %  {\texttt{gruber@google.com}}), while at AT\&T Labs and Xuan Zheng (Univ. of Michigan, 
@@ -51,18 +53,37 @@
 
 \maketitle
 \begin{abstract}
-We demonstrate LearnPADS, a format inference system that automatically
-infers from ad hoc data samples their descriptions in \pads{}
-which is capable of generating a suite of useful tools for processing
-data sources of the same format. This system extends the work on
-\pads{} (\cite{fisher+:pads,fisher+:popl06,daly+:pads-demo}), 
-but eliminates the tedious and error-prone process of 
-hand-coding complex \pads{} descriptions by humans and thus achieves
-the goal of tool generation at ``a push of a button.'' 
-We show how LearnPADS works in end-to-end user scenarios with
-real world data, illustrate the architecture of the system and 
-present the internals of the multi-phase inference algorithm 
-which is at the heart of the system.
+An ad hoc data source is any semistructured data source for which
+useful data analysis and transformation tools are not readily available.
+Such data must be queried, transformed and displayed by
+systems administrators, computational biologists, financial analysts
+and hosts of others on a regular basis.
+In this demonstration, we will present \learnpads, 
+a complete, fully automatic system for generation of
+ad hoc data processing tools.  When presented with a collection of
+ad hoc data sources, the system will (1) analyze the data, (2) infer a 
+\pads{}~\cite{fisher+:pads,fisher+:popl06} description 
+of the data, (3) use that description to generate parser, printer, 
+validation and
+traversal libraries and (4) link these libraries with format-independent
+tool suites.  Hence, we demonstrate that 
+it is possible to generate tools for \xml{} conversion, data
+normalization, reformatting into CSV, querying through the
+Galax XQuery engine, and graphing selected data elements, all
+directly from ASCII ad hoc data and without any human intervention.
+%% a format inference system that automatically
+%% infers from ad hoc data samples their descriptions in \pads{}
+%% which is capable of generating a suite of useful tools for processing
+%% data sources of the same format. This system extends the work on
+%% \pads{} (\cite{fisher+:pads,fisher+:popl06,daly+:pads-demo}), 
+%% but eliminates the tedious and error-prone process of 
+%% hand-coding complex \pads{} descriptions by humans and thus achieves
+%% the goal of tool generation at ``a push of a button.''
+SIGMOD attendees will see (1) how LearnPADS operates in 
+several end-to-end user scenarios with
+real world data, (2) the architecture of the inference engine and
+tool generation system and (3) the internals of the multi-phase 
+inference algorithm, which lies at the heart of the system.
 
 %Enormous amounts of data exist in ``well-behaved'' formats such as
 %relational tables and XML, which come equipped with extensive tool
@@ -123,8 +144,14 @@ convert the data source into a relational database or XML which can
 be queried using conventional methods. Users can also write their 
 own programs to process the data source using
 functions such as parser and printer from the generated libraries.
-The technical details of the inference system can be found in
-\cite{Fisher+:dirttoshovels}.
+The technical details of the inference system can be found in our recent
+paper at the ACM SIGPLAN Conference on Principles of Programming
+Languages\cite{Fisher+:dirttoshovels} and an online demo may be found
+at \url{http://www.padsproj.org/cgi-bin/learning-demo.cgi}.\footnote{This 
+online demo will be used as but one component of our presentation at SIGMOD;  
+it does not consituent our entire presentation, which will also involve looking
+under the covers at how the underlying format inference and tool generation
+technology works.}
 
 % Our end
 % goal is to provide users with an end system that allows them to
@@ -174,11 +201,26 @@ The technical details of the inference system can be found in
 % difficult for the original writer and sharing the knowledge with
 % others nearly impossible.
 
-\section{End User Scenario}
-In this section, we present an end-to-end scenario to demonstrate how
-to use LearnPADS to generate tools from the raw data.
-Let us assume that the sample raw data source is a web server access log
-called ai.3000 with records like this:
+\section{An End-user Scenario}
+
+{\em Kathleen:  you could flesh this out further to tell more of a 
+compelling ``story'' about sys admins dealing with data and the
+questions they ask.}
+
+Individual network administrators, systems researchers and large 
+corporations like AT\&T must monitor the performance,
+reliability and security of their systems on a regular basis.
+In order to do so, they often wind up having to ask various real-time
+questions of all kinds of complex systems logs and also archive the
+data for post-mortem analysis in the case of a security failure.
+The web server log {\tt ai.3000} presented below is a tiny, but
+representative example of such a log file.
+%% For example, if a user wants to collect 
+%% need to 
+%% In this section, we present an end-to-end scenario to demonstrate how
+%% to use LearnPADS to generate tools from the raw data.
+%% Let us assume that the sample raw data source is a web server access log
+%% called ai.3000 with records like this:
 
 {\small
 \begin{verbatim}
@@ -189,7 +231,8 @@ www.proxy.aol.com - - [16/Oct/1997:08:20:45 -0700]
 \end{verbatim}
 }
 
-As user invokes the command line program:
+In order to process this file with our system, the user invokes the 
+following command.
 
 {\small
 \begin{verbatim}
@@ -197,16 +240,35 @@ kzhu@myhost:~$ learn data/ai.3000 <enter>
 \end{verbatim}
 }
 
-the \pads{} description ai.3000.p will be generated in
-the /gen directory. In addition, the program generates
-the following tool programs for ai.3000:
-ai.3000-accum.c, ai.3000-fmt.c, ai.3000-xml.c and ai.3000-graph.
-ai.3000-accum.c is an accumulator program that produces a
-statistical report about the data source; ai.3000-fmt.c is a
-formatter program that formats the data source into tables;
-ai.3000-xml.c converts the raw data into XMLs and ai.3000-graph is
-a visualization tool that allows the user to plot certain
-columns from the raw data in some styles using GNUPlot.
+This command analyzes the web server data and generates series
+of useful artifacts including each of the following.
+
+\begin{itemize}
+\item A fully functional {\em \pads{} description}, {\tt ai.3000.p}, that 
+the programmer can
+examine for syntactic information about their data source.  This description 
+file can be edited, if necessary (or not), and used to regenerate any of the 
+tools listed below or else generate a collection of C language libraries for 
+parsing, printing and data validation.
+\item An {\em accumulator} program, {\tt ai.3000-accum.c},
+that produces a statistical report about the data source.  This
+program may be run on any data source with the same format
+as the original training data.  It (recursively) catalogs the number of errors
+and the distribution of values in all fields of the data source.
+Figure \ref{fig-accum-report} presents the result of applying 
+{\tt ai.3000-accum.c} to {\tt ai.3000}.
+\item A {\em reformatter} program {\tt ai.3000-fmt.c} that can convert 
+the ad hoc data source into a tabular form with user-defined separators
+such as commas or vertical bars for loading data fields into a conventional
+relational database.
+\item An {\em \xml{} translator} {\tt ai.3000-xml.c} that will convert
+any raw data in the original format into \xml{} for archiving in a 
+semi-structured database.  Figure \ref{fig-xml} presents a fragment of
+the \xml{} that results from the conversion process.
+\item A graphing engine {\tt ai.3000-graph} that provides the user with
+an interface that allows them to extract and plot fields of the raw data 
+using GNUPlot.
+\end{itemize}
 
 \eat{ %%%%%%%
 As an illustration, we show here a snippet of the \pads{}
@@ -251,12 +313,12 @@ definition includes a number of other intermediate types such as
 this type describes a record in the data source.
 }%%%%%%%
 
-Now let's make the accumulator and the XML converter by
-typing "make ai.3000-accum" and "make ai.3000-xml" in the
-gen/ directory, which produces two executables:
-ai.3000-accum and ai.3000-xml. Invoking the first program on
-the original data source ai.3000 yields the statistics of
-ai.3000 in Fig. \ref{fig-accum-report}.
+%% Now let's make the accumulator and the XML converter by
+%% typing "make ai.3000-accum" and "make ai.3000-xml" in the
+%% gen/ directory, which produces two executables:
+%% ai.3000-accum and ai.3000-xml. Invoking the first program on
+%% the original data source ai.3000 yields the statistics of
+%% ai.3000 in Fig. \ref{fig-accum-report}.
 
 \begin{figure*}
 \begin{center}
@@ -285,20 +347,22 @@ String lengths: good vals:        163    bad vals:          0    pcnt-bad:    0.
 
 \end{verbatim}
 }
-\caption{Portions of accumulator report}\label{fig-accum-report}
+\caption{A Fragment of the Accumulator Report}\label{fig-accum-report}
 \end{center}
 \end{figure*}
 
-The report not only gives number of correct and incorrect parses of
-each \pads{} types in the description, but also details the frequencies
-of identical values in a form of a histogram. For example, Fig. \ref{fig-accum-report}
-includes a distribution of the 5 most frequently occurring IP addresses.
-Information like this can be very useful in network traffic analysis.
+%% The report not only gives number of correct and incorrect parses of
+%% each \pads{} types in the description, but also details the frequencies
+%% of identical values in a form of a histogram. For example, Fig. \ref{fig-accum-report}
+%% includes a distribution of the 5 most frequently occurring IP addresses.
+%% Information like this can be very useful in network traffic analysis.
 
-We next convert the original ai.3000 into XML using ai.3000-xml tool,
-and the first record in the above example is converted to the following
-XML fragment which can be queried using common XML tool such as XQuery:
+%% We next convert the original ai.3000 into XML using ai.3000-xml tool,
+%% and the first record in the above example is converted to the following
+%% XML fragment which can be queried using common XML tool such as XQuery:
 
+\begin{figure}
+\begin{center}
 {\small
 \begin{verbatim}
 <Struct_149>
@@ -322,6 +386,9 @@ XML fragment which can be queried using common XML tool such as XQuery:
 </Struct_149>
 \end{verbatim}
 }
+\caption{A Fragment of the Generated XML}\label{fig-xml}
+\end{center}
+\end{figure}
 
 \section{The Architecture}
 \begin{figure}

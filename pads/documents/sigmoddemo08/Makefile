@@ -1,17 +1,25 @@
 PSSRC=
 
+#BIB=../learningpopl08/pads.bib 
+BIB=pads.bib
 PDFSRC=$(PSSRC:.ps=.pdf)
 TEXSRC=paper.tex 
-all: paper.pdf
+all: paper.pdf 
 
-paper.bbl: paper.tex ../learningpopl08/pads.bib 
+paper.bbl: paper.tex $(BIB)
 	latex paper.tex
 	bibtex paper
+
+
+quick: paper.tex $(BIB)
+	latex paper.tex
+	dvips paper.dvi
 
 paper.pdf: paper.bbl $(PDFSRC) $(TEXSRC) archi.eps
 	latex paper.tex
 	latex paper.tex
 	dvipdf paper.dvi
+	dvips paper.dvi
 
 clean:
 	rm -f paper.pdf
