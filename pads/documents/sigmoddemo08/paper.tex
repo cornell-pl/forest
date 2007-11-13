@@ -261,11 +261,14 @@ such as commas or vertical bars for loading data fields into a conventional
 relational database.
 \item An {\em \xml{} translator} {\tt ai.3000-xml.c} that will convert
 any raw data in the original format into \xml{} for archiving in a 
-semi-structured database.  Figure \ref{fig-xml} presents a fragment of
-the \xml{} that results from the conversion process.
+semi-structured database.  
+%Figure \ref{fig-xml} presents a fragment of
+%the \xml{} that results from the conversion process.
 \item A graphing engine {\tt ai.3000-graph} that provides the user with
 an interface that allows them to extract and plot fields of the raw data 
-using GNUPlot.
+using GNUPlot. Figure \ref{fig-graph} presents a graph of web
+transaction volume during some time periods in a day, extracted from
+the ai.3000 data.
 \end{itemize}
 In the demo, we will run the format inferencing engine on a variety of
 data formats.  We will show the resulting PADS description and the
@@ -359,32 +362,40 @@ good vals:       3000    bad vals:          0    pcnt-bad:    0.000
 %% and the first record in the above example is converted to the following
 %% XML fragment which can be queried using common XML tool such as XQuery:
 
-\begin{figure}
+%\begin{figure}
+%\begin{center}
+%{\small
+%\begin{verbatim}
+%<Struct_149>
+%  <var_4>
+%    <var_6><val>www.proxy.aol.com</val></var_6>
+%  </var_4>
+%  <var_45>
+%    <var_42><val>var_42</val></var_42>
+%  </var_45>
+%  <var_55><val>16/Oct/1997</val></var_55>
+%  <var_59><val>08:20:45 -0700</val></var_59>
+%  <var_70><val>GET</val></var_70>
+%  <var_78>
+%    <var_75><val>/tk/pan.gif</val></var_75>
+%  </var_78>
+%  <var_123><val>1.000000</val></var_123>
+%  <var_136><val>200</val></var_136>
+%  <var_144>
+%    <var_141><val>15944</val></var_141>
+%  </var_144>
+%</Struct_149>
+%\end{verbatim}
+%}
+%\caption{A Fragment of the Generated XML}\label{fig-xml}
+%\end{center}
+%\end{figure}
+
+\begin{figure}[th]
 \begin{center}
-{\small
-\begin{verbatim}
-<Struct_149>
-  <var_4>
-    <var_6><val>www.proxy.aol.com</val></var_6>
-  </var_4>
-  <var_45>
-    <var_42><val>var_42</val></var_42>
-  </var_45>
-  <var_55><val>16/Oct/1997</val></var_55>
-  <var_59><val>08:20:45 -0700</val></var_59>
-  <var_70><val>GET</val></var_70>
-  <var_78>
-    <var_75><val>/tk/pan.gif</val></var_75>
-  </var_78>
-  <var_123><val>1.000000</val></var_123>
-  <var_136><val>200</val></var_136>
-  <var_144>
-    <var_141><val>15944</val></var_141>
-  </var_144>
-</Struct_149>
-\end{verbatim}
-}
-\caption{A Fragment of the Generated XML}\label{fig-xml}
+\epsfig{file=ai.3000.eps, width=0.9\columnwidth} 
+\caption{A graph generated from ai.3000} \label{fig-graph}
+\vspace*{-5mm}
 \end{center}
 \end{figure}
 
