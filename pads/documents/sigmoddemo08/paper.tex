@@ -1,4 +1,4 @@
-\documentclass{sig-alternate-sigmod08}
+\documentclass[preprint]{sig-alternate-sigmod08}
 \usepackage{url}
 \usepackage{stmaryrd}
 \usepackage{epsfig}
@@ -25,7 +25,7 @@
 \newcommand{\abstractdm}{abstract data model}
 \newcommand{\concretedm}{concrete data model}
 \newcommand{\typeddm}{type-specialized concrete data model}
-
+\toappear{}
 \title{LearnPADS: Automatic Tool Generation from Ad Hoc Data}
 
 \numberofauthors{3} 
@@ -59,18 +59,17 @@ Such data must be queried, transformed and displayed by
 systems administrators, computational biologists, financial analysts
 and hosts of others on a regular basis.
 In this demonstration, we will present \learnpads, 
-a complete, fully automatic system for generation of
+a fully automatic system for generating
 ad hoc data processing tools.  When presented with a collection of
-ad hoc data sources, the system will (1) analyze the data, (2) infer a 
-\pads{}~\cite{fisher+:pads,fisher+:popl06} description 
-of the data, (3) use that description to generate parser, printer, 
-validation and
-traversal libraries and (4) link these libraries with format-independent
-tool suites.  Hence, we demonstrate that 
-it is possible to generate tools for \xml{} conversion, data
-normalization, reformatting into CSV, querying through the
+ad hoc data, the system will (1) analyze the data, (2) infer a 
+\pads{}~\cite{fisher+:pads,fisher+:popl06} description, (3) 
+generate parser, printer, validation and traversal libraries from the
+description and (4) link these libraries with format-independent 
+tool suites to form stand-alone applications.  Hence, we demonstrate that 
+it is possible to generate tools for statistical analysis, \xml{}
+conversion, CSV converstion, querying with the 
 Galax XQuery engine, and graphing selected data elements, all
-directly from ASCII ad hoc data and without any human intervention.
+directly from ASCII ad hoc data without any human intervention.
 %% a format inference system that automatically
 %% infers from ad hoc data samples their descriptions in \pads{}
 %% which is capable of generating a suite of useful tools for processing
@@ -113,42 +112,43 @@ inference algorithm, which lies at the heart of the system.
 \section{Introduction}
 An {\em ad hoc data source} is any semistructured data source
 for which useful data analysis and transformation tools
-have not yet been defined. XML, HTML and CSV are {\em not} 
+are not widely available. XML, HTML and CSV are {\em not} 
 ad hoc data sources as there are numerous programming libraries,
 query languages, manuals and other resources dedicated to
 helping analysts manipulate data in these formats.
-However, ad hoc data does arise often in many fields ranging from
-computational biology to finance to networking.
+Despite the existence of these standard formats, ad hoc data arises
+often in many fields ranging from computational biology to finance to networking.
 
 The goal of the \pads{} project~\cite{padsweb} is to improve the
-productivity of data analysts who need to deal with new and evolving
+productivity of data analysts who must cope with new and evolving
 ad hoc data sources on a daily basis.  Our central technology is a
 domain-specific language in which programmers can specify the
 structure and expected properties of ad hoc data sources, whether they
-be ASCII, binary, Cobol or a mixture of formats.  These
+be ASCII, binary, Cobol or a mixture of formats~\cite{fisher+:pads,fisher+:popl06}.  These
 specifications, which resemble extended type declarations from
 conventional programming languages, are compiled into a suite of
 programming libraries, such as parsers and printers, and 
-end-to-end data processing tools including a query engine
-and several format translators.
+end-to-end data processing tools including a query engine 
+and several format translators~\cite{fernandez+:padl,fernandez+:padx,mandelbaum+:pads-ml}.
 
-Unfortunately, it often takes substantial time, energy and expertise
+Unfortunately, it often takes substantial time and expertise
 to write a \pads{} description for a new ad hoc data source
 -- days or even weeks for complex sources that have little or
 no documentation, a common scenario in the world of ad hoc data.
-Consequently, We have developed a multi-phase algorithm that automatically
+To address this problem, we have developed a multi-phase algorithm that automatically
 infers the structure of ASCII data sources and produces descriptions
-in the \pads{} language. From the \pads{} description, a library and a
-set of useful tools are generated. Such tools enable the users to, for example, 
-convert the data source into a relational database or XML which can 
-be queried using conventional methods. Users can also write their 
-own programs to process the data source using
-functions such as parser and printer from the generated libraries.
+in the \pads{} language. From the \pads{} description, the system
+generates a library and a set of useful tools. Such tools enable the
+users to convert the data source into a relational database or XML,
+for example, which can be queried using conventional methods. Users
+can also write their  own programs to process the data using
+the generated parser and printer.
 The technical details of the inference system can be found in our recent
-paper at the ACM SIGPLAN Conference on Principles of Programming
-Languages\cite{Fisher+:dirttoshovels} and an online demo may be found
-at \url{http://www.padsproj.org/cgi-bin/learning-demo.cgi}.\footnote{This 
-online demo will be used as but one component of our presentation at SIGMOD;  
+paper 
+%at the ACM SIGPLAN Conference on Principles of Programming Languages
+\cite{Fisher+:dirttoshovels}.  The web page
+\url{http://www.padsproj.org/cgi-bin/learning-demo.cgi} has a live demo.\footnote{This 
+online demo will be used as one component of our presentation at SIGMOD;  
 it does not consituent our entire presentation, which will also involve looking
 under the covers at how the underlying format inference and tool generation
 technology works.}
@@ -203,18 +203,18 @@ technology works.}
 
 \section{An End-user Scenario}
 
-{\em Kathleen:  you could flesh this out further to tell more of a 
-compelling ``story'' about sys admins dealing with data and the
-questions they ask.}
-
 Individual network administrators, systems researchers and large 
 corporations like AT\&T must monitor the performance,
 reliability and security of their systems on a regular basis.
-In order to do so, they often wind up having to ask various real-time
-questions of all kinds of complex systems logs and also archive the
-data for post-mortem analysis in the case of a security failure.
-The web server log {\tt ai.3000} presented below is a tiny, but
-representative example of such a log file.
+In the process, they often have to ingest new kinds of data
+sources as new kinds of machines with new log file formats come
+online.  This ingestion process requires understanding the physical
+layout of the data source and properties of the data such as value
+ranges and correlations.  In this paper, we use a tiny
+web server log file {\tt ai.3000} as a simple example of the kinds of
+data sources such analysts must develop tools for. A sample record has
+the form:
+
 %% For example, if a user wants to collect 
 %% need to 
 %% In this section, we present an end-to-end scenario to demonstrate how
@@ -226,12 +226,10 @@ representative example of such a log file.
 \begin{verbatim}
 www.proxy.aol.com - - [16/Oct/1997:08:20:45 -0700] 
   "GET /tk/pan.gif HTTP/1.0" 200 15944
-24.64.22.142 - - [15/Oct/1997:19:00:35 -0700] 
-  "GET /tk/hrme.jpg HTTP/1.0" 200 24216
 \end{verbatim}
 }
 
-In order to process this file with our system, the user invokes the 
+To process this file with our system, the user invokes the 
 following command.
 
 {\small
@@ -245,9 +243,9 @@ of useful artifacts including each of the following.
 
 \begin{itemize}
 \item A fully functional {\em \pads{} description}, {\tt ai.3000.p}, that 
-the programmer can
+analysts can
 examine for syntactic information about their data source.  This description 
-file can be edited, if necessary (or not), and used to regenerate any of the 
+file can be edited, if desired, and used to regenerate any of the 
 tools listed below or else generate a collection of C language libraries for 
 parsing, printing and data validation.
 \item An {\em accumulator} program, {\tt ai.3000-accum.c},
@@ -269,6 +267,10 @@ the \xml{} that results from the conversion process.
 an interface that allows them to extract and plot fields of the raw data 
 using GNUPlot.
 \end{itemize}
+In the demo, we will run the format inferencing engine on a variety of
+data formats.  We will show the resulting PADS description and the
+output of these generated programs when run on data similar to the
+training data.
 
 \eat{ %%%%%%%
 As an illustration, we show here a snippet of the \pads{}
@@ -327,24 +329,20 @@ this type describes a record in the data source.
 *****************************************************************************************************
 <top> : struct Struct_149
 *****************************************************************************************************
-good vals:        300    bad vals:          0    pcnt-bad:    0.000
+good vals:        3000   bad vals:          0    pcnt-bad:    0.000
 
 [Describing each field of <top>]
 ... OMMITTED ...
-=====================================================================================================
-<top>.var_4.var_1 : typedef PPip [--> Pstring_ME]
-=====================================================================================================
-String lengths: good vals:        163    bad vals:          0    pcnt-bad:    0.000
-  Characterizing string length values:  min 11 max 15 avg 13.239
-    => distribution of top 5 values out of 5 distinct values:
-        val:         13 count:         57  pcnt-of-good-vals:   34.969
-        val:         12 count:         39  pcnt-of-good-vals:   23.926
-        val:         14 count:         36  pcnt-of-good-vals:   22.086
-        val:         15 count:         26  pcnt-of-good-vals:   15.951
-        val:         11 count:          5  pcnt-of-good-vals:    3.067
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING         count:        163  pcnt-of-good-vals:  100.000
-
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.var_70 : enum Enum_70
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:       3000    bad vals:          0    pcnt-bad:    0.000
+  Characterizing enum Enum_70 values:  min POST (    0)  max GET (    1)
+    => distribution of top 2 values out of 2 distinct values:
+        val: GET (    1)    count:       2999  pcnt-of-good-vals:   99.967
+        val: POST (    0)   count:          1  pcnt-of-good-vals:    0.033
+. .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING             count:       3000  pcnt-of-good-vals:  100.000
 \end{verbatim}
 }
 \caption{A Fragment of the Accumulator Report}\label{fig-accum-report}
@@ -399,8 +397,9 @@ String lengths: good vals:        163    bad vals:          0    pcnt-bad:    0.
 \label{fig-archi}
 \end{center}
 \end{figure}
-Figure \ref{fig-archi} gives an overview of our format inference
-architecture. The input data, or ``training set,'' 
+After showing the experience of using our tool, we will give an
+overview of the architecture of our system, which appears in \figref{fig-archi}.
+The input data, or ``training set,'' 
 is first ``chunked'' into records where
 each record is a piece of recurrent data such as a line, 
 a paragraph, or a file (if the input consists of multiple files).
@@ -536,11 +535,10 @@ and (d) third iteration (context 2)} \label{fig-hist}
 \end{figure*}
 
 \section{System Internals}
-In this section, we demonstrate, using a very simple
-example data file called {\tt hp-struct}, 
+Finally, we will demonstrate 
 how the format inferencing engine works
-from a system internal point of view.
-Below is the content of {\tt hp-struct}.
+using the following very simple data file:
+
 {\small
 \begin{verbatim}
 "123, 14"
@@ -552,6 +550,7 @@ Below is the content of {\tt hp-struct}.
 \end{verbatim}
 }
 
+\eat{
 We have the following base tokens definitions in a lex file. 
 
 {\small
@@ -560,10 +559,11 @@ Pwhite = [ \t\r\n]+;
 Pint = [0-9]+;
 Pstring = [A-Za-z][A-Za-z0-9_\-]*;
 \end{verbatim}
-}
+}}
 
 The chunking and tokenization phases of the engine produce
 chunks of tokens (each line is a chunk) from file hp-struct:
+
 {\small
 \begin{verbatim}
 ["] [Int] [,] [White] [Int]    ["]
@@ -606,6 +606,7 @@ the following IR that describes hp-struct data. Meta info
 at each node (quoted within parentheses) include a unique id, 
 the coverage of this node in the data, 
 and an information-theoretic score. 
+
 {\small
 \begin{verbatim}
 Pstruct(Id = BTy_23 6, raw: 437.227b)
