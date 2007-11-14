@@ -147,11 +147,13 @@ The technical details of the inference system can be found in our recent
 paper 
 %at the ACM SIGPLAN Conference on Principles of Programming Languages
 \cite{Fisher+:dirttoshovels}.  The web page
-\url{http://www.padsproj.org/cgi-bin/learning-demo.cgi} has a live demo.\footnote{This 
-online demo will be used as one component of our presentation at SIGMOD;  
-it does not consituent our entire presentation, which will also involve looking
-under the covers at how the underlying format inference and tool generation
-technology works.}
+\url{http://www.padsproj.org/cgi-bin/learning-demo.cgi} has a live
+demo, which would constitute a portion of our demonstration at SIGMOD.
+
+Space precludes a discussion of related work here; however, our recent
+paper~\cite{Fisher+:dirttoshovels} contains an overview of related
+work in information extraction, regular expression inference, and
+schema induction.  
 
 % Our end
 % goal is to provide users with an end system that allows them to
@@ -242,33 +244,32 @@ This command analyzes the web server data and generates series
 of useful artifacts including each of the following.
 
 \begin{itemize}
-\item A fully functional {\em \pads{} description}, {\tt ai.3000.p}, that 
-analysts can
+\item A complete {\em \pads{} description} that analysts can
 examine for syntactic information about their data source.  This description 
-file can be edited, if desired, and used to regenerate any of the 
-tools listed below or else generate a collection of C language libraries for 
+can be edited, if desired, and used to regenerate any of the 
+tools listed below or to generate a collection of C language libraries for 
 parsing, printing and data validation.
-\item An {\em accumulator} program, {\tt ai.3000-accum.c},
+\item An {\em accumulator} program
 that produces a statistical report about the data source.  This
 program may be run on any data source with the same format
 as the original training data.  It (recursively) catalogs the number of errors
 and the distribution of values in all fields of the data source.
-Figure \ref{fig-accum-report} presents the result of applying 
-{\tt ai.3000-accum.c} to {\tt ai.3000}.
-\item A {\em reformatter} program {\tt ai.3000-fmt.c} that can convert 
+Figure \ref{fig-accum-report} presents the result of applying the
+accumulator program to {\tt ai.3000}.
+\item A {\em formatting} program that can convert 
 the ad hoc data source into a tabular form with user-defined separators
 such as commas or vertical bars for loading data fields into a conventional
 relational database.
-\item An {\em \xml{} translator} {\tt ai.3000-xml.c} that will convert
+\item An {\em \xml{} translator} to convert
 any raw data in the original format into \xml{} for archiving in a 
 semi-structured database.  
 %Figure \ref{fig-xml} presents a fragment of
 %the \xml{} that results from the conversion process.
-\item A graphing engine {\tt ai.3000-graph} that provides the user with
+\item A graphing engine that provides the user with
 an interface that allows them to extract and plot fields of the raw data 
 using GNUPlot. Figure \ref{fig-graph} presents a graph of web
 transaction volume during some time periods in a day, extracted from
-the ai.3000 data.
+the {\tt ai.3000} data.
 \end{itemize}
 In the demo, we will run the format inferencing engine on a variety of
 data formats.  We will show the resulting PADS description and the
@@ -409,16 +410,16 @@ good vals:       3000    bad vals:          0    pcnt-bad:    0.000
 \end{center}
 \end{figure}
 After showing the experience of using our tool, we will give an
-overview of the architecture of our system, which appears in \figref{fig-archi}.
+overview of the architecture of our system, a picture of which appears
+in \figref{fig-archi}. 
 The input data, or ``training set,'' 
-is first ``chunked'' into records where
-each record is a piece of recurrent data such as a line, 
+is first partitioned into chunks, where
+each chunk is a piece of recurrent data such as a line, 
 a paragraph, or a file (if the input consists of multiple files).
-The user specifies the unit of repetition when invoking our 
-learning tool.
-Each record is then broken down into a series of tokens where each
+The user specifies this unit of repetition when invoking the tool.
+Each chunk is then divided into a series of tokens.  Each
 token can be a punctuation symbol, a number, a date, a time, or a number of other
-basic types.  Our learning system has a basic tokenization scheme
+basic types.  Our learning system has a tokenization scheme
 skewed toward systems data, but users may specify a different scheme 
 for their own domain through a configuration file.  For example,
 computational biologists may want to specify new base types for DNA strings
@@ -437,22 +438,21 @@ rough structure is represented in an intermediate representation (IR)
 that has similar expressive power to the \pads{} language. 
 
 The format refinement phase analyzes the IR produced by structure discovery
-and repeatedly applies 
-rewrite rules.  There are two sorts of rewriting rules: 
-value-independent rules and value-dependent rules.
-The value-independent rules examine the inferred description structure
+and repeatedly applies value-independent and value-dependet
+rewriting rules. 
+The value-independent rules examine the inferred description 
 to find ways to merge or rearrange components to improve the description.
-Value-dependent rules analyze both the inferred description and the underlying
+Value-dependent rules seek to introduce constants and enumerations by
+analyzing the inferred description and the underlying
 training data looking for fields with little or no 
-variation in order to introduce constants and enumerations.
-The value-dependent rules also infer
+variation. The value-dependent rules also infer
 inter-field dependency information.
-At any given point during the refinement process,
+At any point in the refinement process,
 many rewriting rules may apply; our algorithm repeatedly chooses the one 
 that optimizes an information-theoretic
-scoring function we have defined.
-In effect, this refinement phase is equivalent to a greedy, local search
-procedure aimed at improving the quality of the inferred format.
+scoring function based on the minimum description length principle.
+%In effect, this refinement phase is equivalent to a greedy, local search
+%procedure aimed at improving the quality of the inferred format.
 
 % The quality is measured by a scoring function which is based on the
 % information theory. The objective of this function is to
@@ -523,10 +523,10 @@ in Fig. \ref{fig-archi}).
 
 \begin {figure*}[tbh]
 \begin{center}
-\begin{minipage}[t]{0.5\columnwidth} 
-\epsfig{file=histogram0.eps, width=\columnwidth}
-\end{minipage}
-\hfill
+%\begin{minipage}[t]{0.5\columnwidth} 
+%\epsfig{file=histogram0.eps, width=\columnwidth}
+%\end{minipage}
+%\hfill
 \begin{minipage}[t]{0.5\columnwidth}
 \epsfig{file=histogram1.eps, width=\columnwidth}
 \end{minipage}
@@ -539,8 +539,8 @@ in Fig. \ref{fig-archi}).
 \epsfig{file=histogram2-2.eps, width=\columnwidth}
 \end{minipage}
 \caption{Histograms from inferring hp-struct data (from left to right): 
-(a) first iteration, (b) second iteration, (c) third iteration (context 1) 
-and (d) third iteration (context 2)} \label{fig-hist}
+(a) first iteration, (b) second iteration (context 1) 
+and (c) second iteration (context 2)} \label{fig-hist}
 \vspace*{-5mm}
 \end{center}
 \end{figure*}
@@ -552,12 +552,12 @@ using the following very simple data file:
 
 {\small
 \begin{verbatim}
-"123, 14"
-"721, Harry"
-"574, Hermione"
-"9378, 56"
-"12, Hogwarts"
-"112, Ron"
+:123, 14:
+:721, Harry:
+:574, Hermione:
+:9378, 56:
+:12, Hogwarts:
+:112, Ron:
 \end{verbatim}
 }
 
@@ -573,47 +573,43 @@ Pstring = [A-Za-z][A-Za-z0-9_\-]*;
 }}
 
 The chunking and tokenization phases of the engine produce
-chunks of tokens (each line is a chunk) from file hp-struct:
+chunks of tokens (each line is a chunk) from the file \texttt{hp-struct}:
 
 {\small
 \begin{verbatim}
-["] [Int] [,] [White] [Int]    ["]
-["] [Int] [,] [White] [String] ["]
-["] [Int] [,] [White] [String] ["]
-["] [Int] [,] [White] [Int]    ["]
-["] [Int] [,] [White] [String] ["]
-["] [Int] [,] [White] [String] ["]
+[:] [Int] [,] [White] [Int]    [:]
+[:] [Int] [,] [White] [String] [:]
+[:] [Int] [,] [White] [String] [:]
+[:] [Int] [,] [White] [Int]    [:]
+[:] [Int] [,] [White] [String] [:]
+[:] [Int] [,] [White] [String] [:]
 \end{verbatim}
 }
 
 The divide-and-conquer style structure discovery algorithm proceeds
-as follows. In the first iteration, only one token (the group
-token which is everything with the pair of quotes) exists per
-chunk in every chunk, hence, the histogram in Fig.\ref{fig-hist}(a) indicates
-that token {\em group} appears once in all the chunks (100\%).
-In the second iteration, every token within the context of the
-group is analyzed. From Fig.\ref{fig-hist}(b), one can see that
-tokens [White], [''], and [,] have similar histogram
-(all 100\% coverage in one single spike), and hence they are
-grouped in one cluster and identified as a struct. As a result,
-the chunks are partitioned into:
+as follows. In the first iteration, the tokens
+[White], [:], and [,] have similar histograms
+(all 100\% coverage in one single spike), as shown in \figref{fig-hist}(a).
+Hence these tokens are
+grouped into a cluster and identified as a struct. As a result,
+the initial chunks are partitioned into:
 
 {\small
 \begin{verbatim}
-["] <context 1> [,] <context 2> ["]
+[:] <context 1> [,] <context 2> [:]
 \end{verbatim}
 }
-\noindent where \verb#["]#, \verb#[,]# and \verb#["]# serve as
+\noindent where \verb#[:]#, \verb#[,]# and \verb#[:]# serve as
 boundaries of the partitions.
 
-In the last iteration, histograms of tokens in context 1 and
-context 2 are computed and plotted in Fig.\ref{fig-hist}(c) and Fig.\ref{fig-hist}(d) 
+In the second iteration, histograms of tokens in context 1 and
+context 2 are computed and plotted in Fig.\ref{fig-hist}(b) and Fig.\ref{fig-hist}(c) 
 respectively. We can infer a structure of just one int
 from Context 1 as the [Int] has 100\% coverage. In Context 2,
 histograms for [String] and [Int] are spread out and do not
 show a strong struct characteristics, consequently they are 
 determined to be union. The recursive algorithm ends with
-the following IR that describes hp-struct data. Meta info
+the following IR that describes \texttt{hp-struct} data. Meta info
 at each node (quoted within parentheses) include a unique id, 
 the coverage of this node in the data, 
 and an information-theoretic score. 
@@ -622,7 +618,7 @@ and an information-theoretic score.
 \begin{verbatim}
 Pstruct(Id = BTy_23 6, raw: 437.227b)
   Pstruct(Id = BTy_21 6, raw: 432.183b)
-    [Other](\") (Id = BTy_2 6, raw: 50.372b);
+    [Other](:) (Id = BTy_2 6, raw: 50.372b);
     Pstruct(Id = BTy_6 6, raw: 70.883b)
       [Pint] (Id = BTy_4 6, raw: 65.839b);
     End Pstruct;
@@ -636,7 +632,7 @@ Pstruct(Id = BTy_23 6, raw: 437.227b)
         [Pint] (Id = BTy_16 2, raw: 19.332b);
       End Pstruct;
     End Punion;
-    [Other](\") (Id = BTy_19 6, raw: 50.372b);
+    [Other](:) (Id = BTy_19 6, raw: 50.372b);
   End Pstruct;
 End Pstruct
 \end{verbatim}
@@ -649,14 +645,14 @@ description with a lower score as follows.
 {\small
 \begin{verbatim}
 Pstruct(Id = BTy_23 6, raw: 287.759b)
-  [StringConst] """ (Id = BTy_2 6, raw: 11.044b);
+  [StringConst] ":" (Id = BTy_2 6, raw: 11.044b);
   [Pint] (Id = BTy_4 6, raw: 65.839b);
   [StringConst] ", " (Id = BTy_7 6, raw: 17.044b);
   Punion(Id = BTy_14 6, raw: 175.421b)
     [Pint] (Id = BTy_16 2, raw: 19.332b);
     [String] (Id = BTy_11 4, raw: 149.044b);
   End Punion;
-  [StringConst] """ (Id = BTy_19 6, raw: 11.044b);
+  [StringConst] ":" (Id = BTy_19 6, raw: 11.044b);
 End Pstruct
 \end{verbatim}
 }
@@ -670,11 +666,11 @@ Punion Union_14 {
         PPstring var_11;
 };
 Precord Pstruct Struct_23 {
-        '\"';
+        ':';
         Pint64 var_4;
         ", ";
         Union_14 var_14;
-        '\"';
+        ':';
 };
 Psource Parray entries_t {
         Struct_23[];
