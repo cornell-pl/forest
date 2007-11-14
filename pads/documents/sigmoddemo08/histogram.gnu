@@ -42,17 +42,8 @@ set border 3
 set term postscript eps "Helvetica" 35 size 5, 3.5
 set boxwidth 0.9 relative
 set xrange[-2.5:2.5]
-set output 'histogram0.eps'
-plot 'histogram0.dat' using 2 title "0 times", '' u 3 title "1 time", '' u 4:xticlabels(1) title "2 times" 
-
-set ytic nomirror
-#unset y2tic
-set border 3
-set term postscript eps "Helvetica" 35 size 5, 3.5
-set boxwidth 0.9 relative
-set xrange[-2.5:2.5]
-set output 'histogram2-1.eps'
-plot 'histogram2-1.dat' using 2 title "0 times", '' u 3 title "1 time", '' u 4:xticlabels(1) title "2 times" 
+set output 'histogram1-1.eps'
+plot 'histogram1-1.dat' using 2 title "0 times", '' u 3 title "1 time", '' u 4:xticlabels(1) title "2 times" 
 
 set ytic nomirror
 #unset y2tic
@@ -60,8 +51,8 @@ set border 3
 set term postscript eps "Helvetica" 35 size 5, 3.5
 set boxwidth 0.9 relative
 set xrange[-1.5:3.5]
-set output 'histogram2-2.eps'
-plot 'histogram2-2.dat' using 2 title "0 times", '' u 3 title "1 time", '' u 4:xticlabels(1) title "2 times" 
+set output 'histogram1-2.eps'
+plot 'histogram1-2.dat' using 2 title "0 times", '' u 3 title "1 time", '' u 4:xticlabels(1) title "2 times" 
 
 set ytic nomirror
 #unset y2tic
@@ -69,7 +60,7 @@ set border 3
 set term postscript eps "Helvetica" 35 size 5, 3.5
 set boxwidth 0.9 relative
 set xrange[-0.5:4.5]
-set output 'histogram1.eps'
-plot 'histogram1.dat' using 2 title "0 times", '' u 3 title "1 time", '' u 4:xticlabels(1) title "2 times" 
+set output 'histogram0.eps'
+plot 'histogram0.dat' using 2 title "0 times", '' u 3 title "1 time", '' u 4:xticlabels(1) title "2 times" 
 
 
