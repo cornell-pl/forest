@@ -63,7 +63,8 @@ links these libraries with format-independent
 tool suites to form stand-alone applications.  These applications provide
 statistical analysis, \xml{}
 conversion, CSV conversion, the ability to query with the 
-Galax XQuery engine, and the ability to graph selected data elements, all
+Galax XQuery engine~\cite{fernandez+:padx}, and the ability to 
+graph selected data elements, all
 directly from ASCII ad hoc data without human intervention.
 SIGMOD attendees will see both the user experience with \learnpads{} and
 the internals of the multi-phase inference algorithm which lies at
@@ -103,13 +104,13 @@ or write their own programs to process the data using the generated
 parser and printer.  The technical details of the inference system 
 appear in our recent paper
 %at the ACM SIGPLAN Conference on Principles of Programming Languages
-\cite{Fisher+:dirttoshovels}.  The web page
+\cite{fisher+:dirttoshovels}.  The web page
 \url{http://www.padsproj.org/learning-demo.html} has a live
 demo, which would constitute a portion of our demonstration
 % at SIGMOD.
 
 Space precludes a discussion of related work here; however, our recent
-paper~\cite{Fisher+:dirttoshovels} contains an overview of related
+paper~\cite{fisher+:dirttoshovels} contains an overview of related
 work in information extraction, regular expression inference, and
 schema induction.  
 
@@ -144,6 +145,7 @@ kzhu@myhost> learn data/ai.3000
 \end{verbatim}
 }
 
+\noindent
 This command analyzes the web server data and generates a collection
 of useful artifacts including each of the following.
 
@@ -162,7 +164,7 @@ Figure \ref{fig-accum-report} shows the result of applying this
 program to {\tt ai.3000}.
 \item A {\em formatting} program that converts
 the ad hoc data into a tabular form with user-defined delimiters
-such vertical bars for loading the data into a relational database.
+such as commas or vertical bars for loading the data into a relational database.
 \item An {\em \xml{} translator} to convert
 raw data in the original format into a canonical \xml{} representation.  
 %Figure \ref{fig-xml} presents a fragment of
