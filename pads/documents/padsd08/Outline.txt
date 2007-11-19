@@ -1,20 +1,36 @@
 Things to do for dPADS paper
- a. Re-review related work (lustre, etc)
+ a. Re-review related work [itask (icfp 07), lustre, etc]
+
+(Kenny, Yitzhak)
  b. Continue coding a bunch of examples in surface language
- c. Select running example for paper
  d. Select other examples to illustrate all features of language
- e. Get all examples running
- f. Investigate proving soundness result
+ e. Get all examples running 
+
+
+(Kenny, Yitzhak)
  g. Figure out what experiments to run: latency, throughput, 
     scaling with multiple machines, failure
  h. Run those micro experiments
+
+(Kenny, David: defer until b,d, and e are done)
  i. Figure out how to replace part of CoMon with our tool & measure results
  j. Run co-mon experiments
+
  k. Select set of additional artifacts & implement them
+(Kathleen, Dave) accumulator
+(Kenny, Yitzhak) implement
+
  l. Investigate whether there are specialized analyses we want to support
     - schedule inference?  others?  and whether to include them in the paper.
- m. Investigate whether OSDI would be an appropriate venue.
 
+ c. Select running example for paper
+Defer to Mid-February
+
+(Kathleen, Dave)
+ f. Investigate proving soundness result
+
+ m. Investigate whether OSDI would be an appropriate venue.
+Defer: Mid-February: bunch of examples working & tools
 
 Outline for paper:
 Intro
