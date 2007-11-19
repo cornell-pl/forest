@@ -1,5 +1,6 @@
 structure Printing = struct
     open Types
+    open Ast
     open Model
     open Times
     open Gold
@@ -76,6 +77,7 @@ structure Printing = struct
 
     fun dumpPADSdesc (fileName:string) (ty:Ty) (numHeaders:int) (numFooters:int) : string = 
 	let val strm = TextIO.openOut fileName
+	    val irTys = tyToIR nil ty
             val (tyName, desc) = TyToPADSFile ty numHeaders numFooters ((!lexName)^".p")
             val () = TextIO.output(strm,desc )
 	    val () = TextIO.closeOut strm

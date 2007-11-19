@@ -376,4 +376,31 @@ structure Tokens = struct
 
     (* A record is a special kind of list of tokens *)
     type Record = Token list
+
+    fun tokenTyToName ( t : Token ) : string = 
+	case t 
+        of Ptime i     => "time"
+	|  Pdate i     => "date"
+	|  Pip i       => "ip"
+	|  Phostname i => "host"
+	|  Ppath i     => "path"
+	|  Purl i      => "url"
+	|  Pemail i      => "email"
+	|  Pmac i      => "mac"
+        |  PbXML (f,s) => "bXML"
+        |  PeXML (f,s) => "eXML"
+(*
+	|  Pint (i, s)    => " Pint("^(LargeInt.toString i)^")"
+        |  Pstring s => " Pstring("^s^")"
+        |  Pwhite s  => " Pwhite("^s^")" 
+*)
+	|  Pint _    => "int"              (*" Pint("^(LargeInt.toString i)^")"*)
+	|  Pfloat _    => "float"           
+        |  Pstring s => "string"            (*" Pstring("^s^")"*)
+        |  Pwhite s  => "white"             (*" Pwhite("^s^")"*) 
+        |  Pgroup {left, body, right} => "group"
+        |  Other c   => "char"
+        |  Pempty    => "empty"
+        |  Error     => "error"
+
 end

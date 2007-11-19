@@ -742,7 +742,7 @@ struct
 		  ( if mode = 0 then (label ^ " : " ^ label ^ " x => {x == " ^ (i ^ "." ^ f) ^ "};\n")
 		  else if mode = 1 orelse mode = 3 orelse mode = 4 then 
 			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
-				" == " ^ (i ^ "." ^ f) ^ "};\n")
+				" == " ^ (i ^ "." ^ f) ^ ";\n")
 		  else (label ^ " ")
 		  )
 	      | StringConst s => if (size s) = 1 then 

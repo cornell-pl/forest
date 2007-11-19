@@ -152,6 +152,7 @@ learn:  times.sml
 learn:  tokens.lex.sml
 learn:  types.sml
 learn:  utils.sml
+learn:  ast.sml
 	@echo Making learning program
 	nice -n20 $(SML_PATH) < $(BUILD_EXEC)
 	@echo
