@@ -20,6 +20,7 @@ is
   options.sml
   types.sml
   ast.sml
+  padsc_printer.sml
   gold/1967Transactions.short.sml
   gold/ai.3000.sml
   gold/boot.txt.sml

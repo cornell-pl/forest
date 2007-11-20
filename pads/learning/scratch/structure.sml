@@ -1554,11 +1554,9 @@ file is a record and all of them collectively represent a sample data *)
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = if print_verbose = true then lengthsToHist rtokens else ()
 	    val ty = ContextListToTy 0 rtokens
-(* Do this in rewriting
 	    val sty = simplifyTy ty
-*)
 	in
-	    (ty, separator)
+	    (sty, separator)
 	end
 
 

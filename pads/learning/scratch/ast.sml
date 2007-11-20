@@ -96,6 +96,7 @@ open Types
 		| Int _ => IRref ("intrange_" ^ id) 
 		| IntConst _ => IRref ("intconst" ^ id) 
 		| FloatConst _ => IRref ("floatconst" ^ id) 
+		| Enum _ => (print "Enum!\n"; raise TyMismatch)
 		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
 		)
 	  | _ => raise TyMismatch
@@ -116,7 +117,7 @@ open Types
 			| StringConst s => if (size s) = 1 then IRchar
 					   else IRstring
 			| Int (min, max) => IRintrange (min, max)
-			| IntConst _ => IRint
+			| IntConst i => IRintrange (i, i)
 			| FloatConst _ => IRfloat
 			| _ => raise TyMismatch
 		)
@@ -125,6 +126,11 @@ open Types
         |  Poption _           	 => IRref ("opt_"^id)
 	| _ => raise TyMismatch
 	end
+
+  fun getArrayBodyTyName ty : TypeName = 
+	case ty of
+	  RefinedBase(_, StringConst s, _) => IRstringME ("/" ^ escape s ^ "/")
+	  |_ => getTypeName ty
 
   fun getVar ty : VarName = 
         let
@@ -135,6 +141,12 @@ open Types
 	    Base _ => 
 		(
 		case (getBaseTyName ty) of
+		IRref s => ("v_" ^ s)
+		| _ => raise TyMismatch
+		)
+	  | RefinedBase (_, Enum _, _) =>
+		(
+		case (getTypeName ty) of 
 		IRref s => ("v_" ^ s)
 		| _ => raise TyMismatch
 		)
@@ -219,7 +231,7 @@ open Types
     | IntConst i => 
 	let
 	  val var = "int" ^ suffix
-	  val tyName = IRint
+	  val tyName = IRintrange (i, i)
 	in 
 	  FullField (var, tyName, NONE, SOME(var, NONE, NONE, SOME (IntConst i)))
 	end
@@ -313,28 +325,29 @@ open Types
 	  let val basetyName = getBaseTyName ty
 	  in [(basetyName, TyBase(tyname, NONE))]
 	  end
+      | RefinedBase(aux, Enum res, _) =>
+	  let 
+	    val idStr = getIdString aux
+	    val indexes = List.tabulate (length res, (fn x => x))
+	    val indexed_res = ListPair.zip (indexes, res)
+	  in 
+	    if allStringConsts res then
+ 	    let
+	      val fields = map (reToEnumField idStr) indexed_res (*similar to tyToUnionFeields*)
+	    in [(tyname, TyEnum fields)]
+	    end
+	    else 
+	    let val fields = map (reToEnumField idStr) indexed_res 
+	    in [(tyname, TyUnion fields)]
+	    end
+	  end
       | RefinedBase(aux, re, _) =>
 	  let val basetyName = getBaseTyName ty
 	      val idStr = getIdString aux
 	  in
 	  (
 	    case re of 
-	      Enum res => 
-	        let
-		  val indexes = List.tabulate (length res, (fn x => x))
-		  val indexed_res = ListPair.zip (indexes, res)
-		in 
-	          if allStringConsts res then
-	       	    let
-		      val fields = map (reToEnumField idStr) indexed_res (*similar to tyToUnionFeields*)
-		    in [(tyname, TyEnum fields)]
-		    end
-	          else 
-       		    let val fields = map (reToEnumField idStr) indexed_res 
-		    in [(tyname, TyUnion fields)]
-		    end
-	    	end
-	    | StringME _ => [(basetyName, TyBase(tyname, NONE))]
+	      StringME _ => [(basetyName, TyBase(tyname, NONE))]
 	    | Int _ => [(basetyName, TyBase(tyname, NONE))]
 	    | IntConst i =>[(basetyName, TyBase(tyname, SOME("x", NONE, NONE, SOME (IntConst i))))]
 	    | FloatConst x => [(basetyName, 
@@ -348,7 +361,7 @@ open Types
 	  let
 	    val nonInlineTys = List.filter notInlineTy tys
 	    val liftedIRs = List.concat (map (tyToIR tys) nonInlineTys)
-	    val fields = map (tyToStructField siblings) tys
+	    val fields = map (tyToStructField tys) tys
 	  in liftedIRs @[(tyname, TyStruct fields)]	
 	  end
       | Punion (aux, tys) =>
@@ -385,15 +398,14 @@ open Types
 		    val bodyName = getTypeName ty
 		in liftedIRs @ [(tyname, TyArray (bodyName, sep, term, len))]
 		end
-	  else [(tyname, TyArray ((getTypeName ty), sep, term, len))]
+	  else [(tyname, TyArray ((getArrayBodyTyName ty), sep, term, len))]
       | Poption (aux, ty) =>
 	  if not (isArrayBodyTy ty) then 
 		let val liftedIRs = tyToIR nil ty
 		    val bodyName = getTypeName ty
 		in liftedIRs @ [(tyname, TyOption bodyName)]
 		end
-	  else [(tyname, TyOption (getTypeName ty))]
+	  else [(tyname, TyOption (getArrayBodyTyName ty))]
       | _ => raise TyMismatch 
       end
-
 end

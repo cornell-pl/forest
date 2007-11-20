@@ -118,4 +118,23 @@ struct
 	| x::(y::tail) => if greater x y then min greater (x::tail)
 			  else max greater (y::tail)
 	| [] => raise Fail "Empty list"
+
+    (* turn the first char of a string s into upper case *)
+    fun upFirstChar s =
+      let val first = String.substring (s, 0, 1)
+	  val tail = String.extract (s, 1, NONE)
+	  val upped = case (Char.fromString first) of
+		        SOME c => Char.toUpper c
+		      | NONE => raise Fail "Not a character!"
+      in ((String.str upped) ^ tail)
+      end
+    (* turn the first char of a string s into lower case *)
+    fun lowerFirstChar s =
+      let val first = String.substring (s, 0, 1)
+	  val tail = String.extract (s, 1, NONE)
+	  val lowered = case (Char.fromString first) of
+		        SOME c => Char.toLower c
+		      | NONE => raise Fail "Not a character!"
+      in ((String.str lowered) ^ tail)
+      end
 end
