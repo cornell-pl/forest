@@ -598,6 +598,9 @@ struct
 		 if size s = 1 then dateStoppingChar := (Char.fromString s)
 						else dateStoppingRe := ("/" ^ s ^ "/")
 *************)
+
+(***************
+
    (**** Function to convert a Ty to a PADS string ***)
    (*suffix is the suffix for variable name*)
     fun TyToPADS (prefix:string) (suffix:string) (isRecord:bool) (mode:int) 
@@ -1100,6 +1103,8 @@ struct
 	in
 	  (recordLabel, pads)
 	end 
+******************)
+
 
 (* Function to measure the variances of the structure by computing the total number of
   union/option/enum branches in the tree *) 

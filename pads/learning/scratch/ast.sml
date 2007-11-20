@@ -54,6 +54,7 @@ open Types
   datatype Field = 
 	  StringField of VarName option * string
 	| CharField of VarName option * string (*still string because printing needs string anyway*) 
+        | CompField of TypeName * IRConstraint
 	| FullField of VarName * TypeName * VarName option (*param for switch*) * IRConstraint option 
 
   datatype TypeDef = 
@@ -65,7 +66,7 @@ open Types
 	| TyArray of TypeName * Refined option (*sep*) * Refined option (*term*) * Refined option (*len*)
 	| TyOption of TypeName 
 
-  type IRType = TypeName * TypeDef
+  type IRType = bool (*isRecord*) * TypeName * TypeDef
 
   fun notInlineTy ty = case ty of 
 	Base _ => false 
@@ -200,6 +201,7 @@ open Types
 						SOME(var, NONE, NONE, SOME (IntConst i)))
 	| RefinedBase (_, FloatConst x, _) => FullField (var, tyName, NONE, 
 						SOME(var, NONE, NONE, SOME (FloatConst x)))
+	| Base (_, ((Pempty, _)::_)) => CompField (IRintrange (0, 0), (getVar ty, NONE, NONE, SOME (IntConst 0)))
 	| _ => FullField (var, tyName, NONE, NONE) 
     end	
 
@@ -318,12 +320,12 @@ open Types
 
   (*function to translate a Ty to a sequence of IRTypes, 
     the last IRType in the sequence is the name and def of this Ty *)
-  fun tyToIR (siblings: Ty list) (ty: Ty) : IRType list =
+  fun tyToIR (isRecord: bool) (siblings: Ty list) (ty: Ty) : IRType list =
     let val tyname = getTypeName ty in 
       case ty of
 	Base(aux, (t, loc)::_) =>
 	  let val basetyName = getBaseTyName ty
-	  in [(basetyName, TyBase(tyname, NONE))]
+	  in [(isRecord, basetyName, TyBase(tyname, NONE))]
 	  end
       | RefinedBase(aux, Enum res, _) =>
 	  let 
@@ -334,11 +336,11 @@ open Types
 	    if allStringConsts res then
  	    let
 	      val fields = map (reToEnumField idStr) indexed_res (*similar to tyToUnionFeields*)
-	    in [(tyname, TyEnum fields)]
+	    in [(isRecord, tyname, TyEnum fields)]
 	    end
 	    else 
 	    let val fields = map (reToEnumField idStr) indexed_res 
-	    in [(tyname, TyUnion fields)]
+	    in [(isRecord, tyname, TyUnion fields)]
 	    end
 	  end
       | RefinedBase(aux, re, _) =>
@@ -347,12 +349,12 @@ open Types
 	  in
 	  (
 	    case re of 
-	      StringME _ => [(basetyName, TyBase(tyname, NONE))]
-	    | Int _ => [(basetyName, TyBase(tyname, NONE))]
-	    | IntConst i =>[(basetyName, TyBase(tyname, SOME("x", NONE, NONE, SOME (IntConst i))))]
-	    | FloatConst x => [(basetyName, 
+	      StringME _ => [(isRecord, basetyName, TyBase(tyname, NONE))]
+	    | Int _ => [(isRecord, basetyName, TyBase(tyname, NONE))]
+	    | IntConst i =>[(isRecord, basetyName, TyBase(tyname, SOME("x", NONE, NONE, SOME (IntConst i))))]
+	    | FloatConst x => [(isRecord, basetyName, 
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(FloatConst x))))]
-	    | StringConst s => [(basetyName, 
+	    | StringConst s => [(isRecord, basetyName, 
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(StringConst s))))]
 	    | _ => raise TyMismatch
 	   )
@@ -360,16 +362,16 @@ open Types
       | Pstruct (aux, tys) =>
 	  let
 	    val nonInlineTys = List.filter notInlineTy tys
-	    val liftedIRs = List.concat (map (tyToIR tys) nonInlineTys)
+	    val liftedIRs = List.concat (map (tyToIR false tys) nonInlineTys)
 	    val fields = map (tyToStructField tys) tys
-	  in liftedIRs @[(tyname, TyStruct fields)]	
+	  in liftedIRs @[(isRecord, tyname, TyStruct fields)]	
 	  end
       | Punion (aux, tys) =>
 	  let
 	    val nonInlineTys = List.filter notInlineTy tys
-	    val liftedIRs = List.concat (map (tyToIR tys) nonInlineTys)
+	    val liftedIRs = List.concat (map (tyToIR false tys) nonInlineTys)
 	    val fields = map (tyToUnionField "") tys
-	  in liftedIRs @[(tyname, TyUnion fields)]	
+	  in liftedIRs @[(isRecord, tyname, TyUnion fields)]	
 	  end
       | Switch (aux, id, retys) =>
 	  let
@@ -378,34 +380,34 @@ open Types
 	  in
 	    (
 	    case switchedTyOp of 
-	      NONE => tyToIR nil (Punion (aux, tys)) 
+	      NONE => tyToIR false nil (Punion (aux, tys)) 
 	    | SOME switchedTy =>
 		let
 	    	  val nonInlineTys = List.filter notInlineTy tys
-	    	  val liftedIRs = List.concat (map (tyToIR tys) nonInlineTys)
+	    	  val liftedIRs = List.concat (map (tyToIR false tys) nonInlineTys)
 		  val switchTyName = getTypeName switchedTy
 		  val switchVar = getVar switchedTy
 		  val indexes = List.tabulate (length retys, (fn x => x))
 		  val branches = ListPair.zip (indexes, retys)
 		  val irbranches = List.concat (map (toSwitchBranches switchedTy)  branches)
-		in liftedIRs @[(tyname, TySwitch(switchVar, switchTyName, irbranches))] 
+		in liftedIRs @[(isRecord, tyname, TySwitch(switchVar, switchTyName, irbranches))] 
 		end
 	    )
 	  end
       | RArray (aux, sep, term, ty, len, _) =>
 	  if not (isArrayBodyTy ty) then 
-		let val liftedIRs = tyToIR nil ty
+		let val liftedIRs = tyToIR false nil ty
 		    val bodyName = getTypeName ty
-		in liftedIRs @ [(tyname, TyArray (bodyName, sep, term, len))]
+		in liftedIRs @ [(isRecord, tyname, TyArray (bodyName, sep, term, len))]
 		end
-	  else [(tyname, TyArray ((getArrayBodyTyName ty), sep, term, len))]
+	  else [(isRecord, tyname, TyArray ((getArrayBodyTyName ty), sep, term, len))]
       | Poption (aux, ty) =>
 	  if not (isArrayBodyTy ty) then 
-		let val liftedIRs = tyToIR nil ty
+		let val liftedIRs = tyToIR false nil ty
 		    val bodyName = getTypeName ty
-		in liftedIRs @ [(tyname, TyOption bodyName)]
+		in liftedIRs @ [(isRecord, tyname, TyOption bodyName)]
 		end
-	  else [(tyname, TyOption (getArrayBodyTyName ty))]
+	  else [(isRecord, tyname, TyOption (getArrayBodyTyName ty))]
       | _ => raise TyMismatch 
       end
 end

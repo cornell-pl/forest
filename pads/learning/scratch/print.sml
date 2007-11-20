@@ -78,10 +78,12 @@ structure Printing = struct
 
     fun dumpPADSdesc (fileName:string) (ty:Ty) (numHeaders:int) (numFooters:int) : string = 
 	let val strm = TextIO.openOut fileName
-	    val irTys = tyToIR nil ty
-	    val padsc = lconcat (map (irToPADSC false) irTys)
+(*
+	    val irs = tyToIR true nil ty
+	    val padsc = lconcat (map irToPADSC irs)
 	    val () = print padsc
-            val (tyName, desc) = TyToPADSFile ty numHeaders numFooters ((!lexName)^".p")
+*)
+            val (tyName, desc) = tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
             val () = TextIO.output(strm,desc )
 	    val () = TextIO.closeOut strm
 	in

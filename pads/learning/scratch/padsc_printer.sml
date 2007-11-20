@@ -45,6 +45,8 @@ open Ast
     | StringField (NONE, s) => "\t\"" ^ (String.toCString s) ^ "\""
     | CharField (SOME v, s) => "\t" ^ v ^ " Pfrom('" ^ (String.toCString s) ^ "')"
     | CharField (NONE, s) => "\t'" ^ (String.toCString s) ^ "'" 
+    | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
+		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (LargeInt.toString x)
     | FullField (v, t, sw, c) => 
 	let val tyname = tyNameToPADSCString t in
 	"\t" ^ tyname ^ " " ^  
@@ -66,9 +68,10 @@ open Ast
 	 | _ => raise TyMismatch
 	) 
 	end
+     | _ => raise TyMismatch
 
-  fun irToPADSC isRecord irTy = 
-    let val (tyVar, tyDef) = irTy
+  fun irToPADSC irTy = 
+    let val (isRecord, tyVar, tyDef) = irTy
 	val tyVarStr = tyNameToPADSCString tyVar
   	val precord = if isRecord then "Precord " else ""
     in
@@ -151,4 +154,68 @@ open Ast
 		end
       )
     end
+
+     fun tyToPADSC ty numHeaders numFooters includeFile =
+	(* assume that if a ty has header and footer, the body is just one single Ty*)
+	let
+	  val recordLabel = tyNameToPADSCString (getTypeName ty)
+	  val pads = "#include \""^ includeFile ^"\"\n" ^
+		(if numHeaders=0 andalso numFooters=0 then
+		    let val irTys = tyToIR true nil ty
+			val body = (lconcat (map irToPADSC irTys))
+		    in
+			body ^
+			"Psource Parray entries_t {\n" ^
+		    	"\t" ^ recordLabel ^ "[];\n" ^
+			"};\n"
+		    end
+		else 
+		  case ty of 
+		    Punion (_, tys) =>
+		      if (numHeaders + numFooters + 1) <> length tys then
+			raise Fail "Header Footer incorrect!"
+		      else 
+			      let
+				val headers = List.take (tys, numHeaders)
+				val body = List.nth (tys, numHeaders)
+				val footers = List.drop (tys, (numHeaders+1))
+				val headerIRs = List.concat (map (tyToIR true nil) headers)
+				val bodyIRs = tyToIR true nil body
+				val footerIRs = List.concat (map (tyToIR true nil) footers) 
+			      in
+				(case headerIRs of
+					nil => ""
+					| _ => (lconcat (map irToPADSC headerIRs)) 
+				) ^
+				(lconcat (map irToPADSC bodyIRs)) ^
+				(case footerIRs of
+					nil => ""
+					| _ => (lconcat (map irToPADSC footerIRs))
+				) ^
+				"Psource Pstruct " ^ recordLabel ^ " {\n" ^
+				(case headerIRs of
+					nil => ""
+					| _ => String.concat (map 
+					  (fn t => ("\t" ^ tyNameToPADSCString (getTypeName t) ^ " " ^
+						getVar t ^ ";\n")) 
+					  headers)
+				) ^
+				("\t" ^ (tyNameToPADSCString (getTypeName body)) ^ 
+					"[] " ^ (getVar body) ^" : Plongest;\n") ^
+				(case footerIRs of 
+					nil => ""
+					| _ => String.concat (map 
+					  (fn t => ("\t" ^ tyNameToPADSCString (getTypeName t) ^ " " ^
+					  	getVar t ^ ";\n")) 
+					  footers)
+				) ^
+				"};\n"
+			      end
+		  | _ => raise TyMismatch
+		)
+	in
+	  (recordLabel, pads)
+	end 
+
+
 end
