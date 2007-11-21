@@ -43,7 +43,7 @@ open Ast
     case f of
       StringField (SOME v, s) => "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
     | StringField (NONE, s) => "\t\"" ^ (String.toCString s) ^ "\""
-    | CharField (SOME v, s) => "\t" ^ v ^ " Pfrom('" ^ (String.toCString s) ^ "')"
+    | CharField (SOME v, s) => "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
     | CharField (NONE, s) => "\t'" ^ (String.toCString s) ^ "'" 
     | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
 		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (LargeInt.toString x)
@@ -158,7 +158,11 @@ open Ast
      fun tyToPADSC ty numHeaders numFooters includeFile =
 	(* assume that if a ty has header and footer, the body is just one single Ty*)
 	let
-	  val recordLabel = tyNameToPADSCString (getTypeName ty)
+	  val recordLabel = tyNameToPADSCString (
+		case ty of
+		  Base _ => getBaseTyName ty
+		| RefinedBase _ => getBaseTyName ty
+		| _ => getTypeName ty)
 	  val pads = "#include \""^ includeFile ^"\"\n" ^
 		(if numHeaders=0 andalso numFooters=0 then
 		    let val irTys = tyToIR true nil ty

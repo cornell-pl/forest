@@ -2,6 +2,7 @@ structure Printing = struct
     open Types
     open Ast
     open Padsc_printer
+    open Padsml_printer
     open Model
     open Times
     open Gold
@@ -76,16 +77,22 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpPADSdesc (fileName:string) (ty:Ty) (numHeaders:int) (numFooters:int) : string = 
-	let val strm = TextIO.openOut fileName
+    (* This function dumps both pads/c and pads/ml descriptions from a ty *)
+    fun dumpPADSdesc (padscFile:string) (padsmlFile:string) 
+		(ty:Ty) (numHeaders:int) (numFooters:int) : string = 
+	let val strmc = TextIO.openOut padscFile
+	    val strmml = TextIO.openOut padsmlFile
 (*
 	    val irs = tyToIR true nil ty
-	    val padsc = lconcat (map irToPADSC irs)
-	    val () = print padsc
+	    val pads = lconcat (map irToPML irs)
+	    val () = print pads
 *)
             val (tyName, desc) = tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
-            val () = TextIO.output(strm,desc )
-	    val () = TextIO.closeOut strm
+            val descml = tyToPADSML ty numHeaders numFooters ("Build_ins")
+            val () = TextIO.output(strmc,desc )
+            val () = TextIO.output(strmml, descml )
+	    val () = TextIO.closeOut strmc
+	    val () = TextIO.closeOut strmml
 	in
 	    tyName
 	end
@@ -275,7 +282,8 @@ structure Printing = struct
                  ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getComps baseTy ) 
                  ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getComps rewrittenTy )
                  ; print "Finished printing Complexity\n"
-                 ; let val tyName = dumpPADSdesc(path^descName^".p") rewrittenTy numHeaders numFooters
+                 ; let val tyName = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
+						rewrittenTy numHeaders numFooters
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
 		       print ("Ty name ="^tyName^"\n");

@@ -154,6 +154,7 @@ learn:  types.sml
 learn:  utils.sml
 learn:  ast.sml
 learn:  padsc_printer.sml
+learn:  padsml_printer.sml
 
 	@echo Making learning program
 	nice -n20 $(SML_PATH) < $(BUILD_EXEC)

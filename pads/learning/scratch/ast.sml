@@ -81,6 +81,7 @@ open Types
 	| RefinedBase (_, StringME _, _) => true
 	| RefinedBase (_, StringConst _, _) => true
 	| RefinedBase (_, Int _, _) => true	(* convert tp int32/int16, etc*)
+	(*IntConst FloatConst are not inline of array and option*)
 	| _ => false
 
   fun getBaseTyName ty : TypeName =
@@ -397,14 +398,20 @@ open Types
       | RArray (aux, sep, term, ty, len, _) =>
 	  if not (isArrayBodyTy ty) then 
 		let val liftedIRs = tyToIR false nil ty
-		    val bodyName = getTypeName ty
+		    val bodyName = (case ty of 
+				   RefinedBase (_, Enum _, _) => getTypeName ty
+				   | RefinedBase _ => getBaseTyName ty
+				   | _ => getTypeName ty)
 		in liftedIRs @ [(isRecord, tyname, TyArray (bodyName, sep, term, len))]
 		end
 	  else [(isRecord, tyname, TyArray ((getArrayBodyTyName ty), sep, term, len))]
       | Poption (aux, ty) =>
 	  if not (isArrayBodyTy ty) then 
 		let val liftedIRs = tyToIR false nil ty
-		    val bodyName = getTypeName ty
+		    val bodyName = (case ty of 
+				   RefinedBase (_, Enum _, _)  => getTypeName ty
+				   | RefinedBase _ => getBaseTyName ty
+				   | _ => getTypeName ty)
 		in liftedIRs @ [(isRecord, tyname, TyOption bodyName)]
 		end
 	  else [(isRecord, tyname, TyOption (getArrayBodyTyName ty))]
