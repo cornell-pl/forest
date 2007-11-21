@@ -96,7 +96,7 @@ struct
 	  end
     	| TyStruct fields => "ptype " ^ tyVarStr ^ " = {\n\t" ^ 
 				(String.concatWith ";\n\t" (map (fieldToPML true) fields)) ^ "\n} " ^ 
-				precord ^ "\n\n"
+				"\n\n"
 	| TyUnion fields => "ptype " ^ tyVarStr ^ " = \n\t" ^ 
 				(String.concatWith "\n\t| " (map (fieldToPML false) fields)) ^ "\n\n"
 	| TyEnum fields => "ptype " ^ tyVarStr ^ " = \n\t" ^ 
