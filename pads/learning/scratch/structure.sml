@@ -1276,7 +1276,7 @@ struct
     and clustersToTy curDepth rtokens numRecords clusters = 
 	let val analysis = analyzeClusters numRecords clusters
 	    val _ = if output_histograms then 
-			dumpClusters curDepth numRecords clusters (def_outputDir ^ "histogram.dat")
+			dumpClusters curDepth numRecords clusters ((!outputDir) ^ "histogram.dat")
 		    else ()
             (* This function partitions a context into a union. *)
             (* It currently uses the first token in each context to do the partition *)
