@@ -231,6 +231,26 @@ datatype FieldDesc =
          PTArray of string * (expression PX.PSize) option * (expression PX.PConstraint) list
        | PTStruct of string * ConstraintKind
 
+fun updateManifestForDefault r = 
+    let val PX.Manifest{tyname,name,args,isVirtual,expr,pred,comment} = r
+    in
+       PX.Manifest{tyname=tyname,name=name,args=args,isVirtual=true,expr=expr,pred=pred,comment=comment}  
+    end
+
+val defaultName = ref 0;
+fun genDefName () =
+    let val next = !defaultName
+    in
+	defaultName := !defaultName + 1;
+	"Pdefault_"^(Int.toString next)
+    end
+
+fun buildEmptyField () = 
+    let val tyname = {qualifiers=[], specifiers= [TypedefName "Puint8"]}
+    in 
+       PX.Manifest{tyname=tyname,name=genDefName(),args=[],isVirtual=true,
+		   expr=IntConst(IntInf.fromInt 0),pred=NONE,comment=SOME "Empty Field"}  
+    end
 
 fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersOpt, (* isVirtual, isEndian,*) comment) = 
     let val (isVirtual, isEndian, isOpt) = case qualifiersOpt of NONE => (false,false,false)
@@ -299,7 +319,7 @@ fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersO
         | PSELECT | PCHARCLASS (* PADS *)
         | PTYPEDEF | PRECURSIVE | PSTRUCT | PALTERNATES | PUNION 
  	| PARRAY | PENUM | PTRANS | PTRY (* | PDYNAMIC*) (* PADS *)
-	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED (* PADS *)
+	| PSEP | PTERM | PNOSEP | PFORALL | PIN | PPARSECHECK | PLAST | PENDED | PEMPTY (* PADS *)
         | POPT | POMIT | PENDIAN | PCOMPUTE (* PADS *)
         | PFROM  | PSOME | PNONE (*PADS*)
  	| PLONGEST | PRECORD | PSOURCE | PWHERE  (* PADS *)  
@@ -1423,6 +1443,8 @@ pStructField: pStructQualifiers  pName pOptActParams pCompoundField SEMICOLON pC
   | pName pOptActParams pCompoundField SEMICOLON pCommentOpt 
                                       (buildStructFieldRep(pName, pOptActParams, pCompoundField, NONE, pCommentOpt))
   | PCOMPUTE pManifestField           (pManifestField)
+  | PDEFAULT pManifestField           (updateManifestForDefault pManifestField)
+  | PEMPTY SEMICOLON                  (buildEmptyField())
   | pREexpr SEMICOLON                 (PX.Brief (pREexpr, NONE)) 
   | pName PFROM LPAREN pREexpr RPAREN SEMICOLON (PX.Brief (pREexpr, SOME pName))
   

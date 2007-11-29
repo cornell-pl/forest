@@ -74,6 +74,7 @@ struct
                ("Pcharclass", Tokens.PCHARCLASS),
                ("Pcompute",  Tokens.PCOMPUTE),       
                ("Pdefault", Tokens.PDEFAULT),
+               ("Pempty",   Tokens.PEMPTY),       
                ("Pended",   Tokens.PENDED),       
                ("Pendian",   Tokens.PENDIAN),       
                ("Penum", Tokens.PENUM),

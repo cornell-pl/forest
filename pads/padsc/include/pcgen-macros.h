@@ -2546,11 +2546,12 @@ do {
 /*  If last field didn't request output, we need to unwrite the previous separator as well as the last one. */
 #define PCGEN_FMT2BUF_FIX_LAST()
 do{
-    if (!trequestedOut_PCGEN_ && length_PCGEN_ > 0 ) {
-       length_PCGEN_--;
-       buf_cursor_PCGEN_--;
-       buf_len++;
-    };
+  /*    if (!trequestedOut_PCGEN_ && length_PCGEN_ > 0 ) {
+         length_PCGEN_--;
+         buf_cursor_PCGEN_--;
+         buf_len++;
+      };
+  */
     if (length_PCGEN_ > 0) {
       length_PCGEN_--;
       buf_cursor_PCGEN_--;

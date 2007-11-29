@@ -7578,7 +7578,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					   pred, comment,...}:BU.pfieldty) = 
 			  if isVirtual
 			  then
-			      P.mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
+(*			      P.mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE) *)
+			      let val caseSs = [P.assignS(P.starX(PT.Id requestedOut), P.intX 1)]
+			      in
+				  P.mkBreakCase(PT.Id name, SOME caseSs)
+			      end
                           else
 			    let val fmtFieldName = (bufSuf o fmtSuf) (lookupWrite pty) 
 				val caseSs = fmtBranchSs(fmtFieldName,
@@ -7587,25 +7591,25 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			    in
 				P.mkBreakCase(PT.Id name, SOME caseSs)
 			    end
-
+		      fun requestedOutSs name =
+ 			      let val caseSs = [P.assignS(P.starX(PT.Id requestedOut), P.intX 1)]
+			      in
+				  P.mkBreakCase(PT.Id name, SOME caseSs)
+			      end
 		      fun genFmtBrief e =
 			  case getString e of
 			      NONE => [] |
-			      SOME s => let val cmt = "fmt does not output literals"
-					in
-					    P.mkCommentBreakCase(PT.Id s, cmt, NONE)
-					end
+			      SOME s => requestedOutSs s
 
 		      fun genFmtMan {tyname, name, args, isVirtual, expr, pred, comment} = 
-			  if isVirtual then
-			      P.mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)
+			  if isVirtual then requestedOutSs name
                           else
 			    let val pty = isPadsTy tyname
 			    in case isPadsTy tyname
 				of PTys.CTy => 
 				   let val cmt = "Pcompute branch with C type: format for C types not implemented (yet)"
 				   in
-				       P.mkCommentBreakCase(PT.Id name, cmt, NONE)
+				       requestedOutSs name
 				   end
 				 | _ =>
 				   let val fmtFieldName = (bufSuf o fmtSuf) (lookupWrite (getPadsName tyname))
@@ -7628,7 +7632,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		      val writeBranchIOSs = nameBranchIOSs @ errBranchSs
 		      val writeXMLBranchBufSs = nameXMLBranchBufSs @ errBranchSs
 		      val writeXMLBranchIOSs = nameXMLBranchIOSs @ errBranchSs
-		      val fmtBranchSs = nameFmtBranchSs @ errBranchSs
+		      val fmtBranchSs = nameFmtBranchSs @ (requestedOutSs (errSuf name))
 		      fun mkSwitch bdSs = [PT.Switch (P.arrowX(PT.Id rep, PT.Id tag), PT.Compound bdSs)]
                       val writeVariantsBufSs = mkSwitch writeBranchBufSs
                       val writeVariantsIOSs = mkSwitch writeBranchIOSs

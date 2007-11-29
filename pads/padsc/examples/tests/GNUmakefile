@@ -52,11 +52,16 @@ endif
 
 FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 test_struct_regexp test_array_regexp \
                test_array_nosep test_array_pred test_array_pred2 test_array_ended test_array_ended2 test_array_post \
-               test_array_skip test_array_skip2 test_charclass test_me test_me_fooclass
+               test_array_skip test_array_skip2 test_charclass test_me test_me_fooclass rwxml_punion_literal2 test_in_place \
+               test_opt rwxml_alt1 rwxml_2ips rwxml_pfloat  rwxml_ptime rwxml_ptime_explicit rwxml_pdate rwxml_pdate_explicit \
+               rwxml_pdate_explicit_me rwxml_enum rwxml_enum3 rwxml_array_advace rwxml_message_header rwxml_pads-comp rwxml_transform \
+               rwxml_try fmt_format-bug test_punion_manifest rwxml_ptimestamp rwxml_ptimestamp_explicit test_transform fmt_format-bug2 \
+               rwxml_array_advance
+
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct1 test_write_struct_strings
 OTHER_TESTS  = test_array test_array_string test_record_enum test_struct1 test_struct2 \
-               test_punion2 test_punion_manifest test_typedef \
+               test_punion2 test_typedef \
                test_cpygen_crs test_enum test_from test_ai test_readint test_depends \
                test_pswitch test_pswitch2 test_struct3 manifest_union test_dns rw_dns rw_struct_good rw_pendian rwxml_struct1 \
                test_cpyrecgen_rps rwxml_cpyrecgen_rps rwxml_format7 rwxml_newick rw_newick
@@ -134,7 +139,9 @@ regress_o:  sanity_check \
           regress_rwxml_pads-comp_o \
           regress_rwxml_transform_o \
           regress_test_transform_o \
-          regress_rwxml_try_o 
+          regress_rwxml_try_o \
+	  regress_fmt_format-bug_o\
+	  regress_fmt_format-bug2_o
 
 	@echo "DONE"
 
@@ -192,8 +199,9 @@ regress_d:  sanity_check \
           regress_rwxml_pads-comp_d \
           regress_rwxml_transform_d \
           regress_test_transform_d \
-          regress_rwxml_try_d 
-
+          regress_rwxml_try_d \
+	  regress_fmt_format-bug_d \
+	  regress_fmt_format-bug2_d
 	@echo "DONE"
 
 perf_regress_o:  sanity_check \
@@ -433,16 +441,26 @@ perf_regress_test_transform_d: test_transform_d
 
 regress_rwxml_transform_o: rwxml_transform
 	@(args=""; suf=""; $(RegressDef))
-regress_rwxml_transform_d: rwxml_transform
+regress_rwxml_transform_d: rwxml_transform_d
 	@(args=""; suf=""; $(RegressDef))
 perf_regress_rwxml_transform_o: rwxml_transform
 	@(args=""; suf=""; $(PerfRegressDef))
-perf_regress_rwxml_transform_d: rwxml_transform
+perf_regress_rwxml_transform_d: rwxml_transform_d
 	@(args=""; suf=""; $(PerfRegressDef))
 
 regress_rwxml_try_o: rwxml_try
 	@(args=""; suf=""; $(RegressDef))
-regress_rwxml_try_d: rwxml_try
+regress_rwxml_try_d: rwxml_try_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_fmt_format-bug_o: fmt_format-bug
+	@(args=""; suf=""; $(RegressDef))
+regress_fmt_format-bug_d: fmt_format-bug_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_fmt_format-bug2_o: fmt_format-bug2
+	@(args=""; suf=""; $(RegressDef))
+regress_fmt_format-bug2_d: fmt_format-bug2_d
 	@(args=""; suf=""; $(RegressDef))
 
 
