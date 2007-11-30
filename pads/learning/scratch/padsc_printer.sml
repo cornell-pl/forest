@@ -45,7 +45,11 @@ open Ast
     | StringField (NONE, s) => "\t\"" ^ (String.toCString s) ^ "\""
     | CharField (SOME v, s) => "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
     | CharField (NONE, s) => "\t'" ^ (String.toCString s) ^ "'" 
+    (*We currently piggieback Pempty in CompField because there is no
+      Pempty constructor in padsml. When we do have it, we will add an
+      EmptyField in the AST for Pempty*)
     | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
+		if x = 0 then "\tPempty" else
 		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (LargeInt.toString x)
     | FullField (v, t, sw, c) => 
 	let val tyname = tyNameToPADSCString t in
