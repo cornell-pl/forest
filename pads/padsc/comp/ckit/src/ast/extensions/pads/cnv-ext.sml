@@ -2037,6 +2037,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  if isLMatch
 		  then unionDotBranchX(pcgenId("tpd"), name)
 		  else P.unionBranchX(pd, name)
+
 	      fun structRepX (base, name, isVirt) =
 		  if isVirt then tmpId(name) else P.fieldX(rep, name)
 	      fun structPDX (base, name, isVirt) =
@@ -2412,7 +2413,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 
               fun genAssignMan(tyname, name, args, isVirtual, pred, repX, pdX, exp, omitNames, postReadSubList) = 
-		  let val (cty, _) = CTcnvType tyname
+		  let 
+		      val (cty, _) = CTcnvType tyname
 		      val (pdPCT, copyF) = 
 			  case isPadsTy tyname 
 			  of PTys.CTy => (PL.base_pdPCT, P.assignS)
@@ -2443,8 +2445,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			        copyF(repX, exp))
 		      val pdInitS = doPDGenCTy tyname isVirtual name args pred repX pdX omitNames postReadSubList
 		  in
-		      [assignS exp,
-		       PL.bzeroS(P.addrX pdX, P.sizeofX(pdPCT))]
+		      [assignS exp
+                      , PL.bzeroS(P.addrX pdX, P.sizeofX(pdPCT))] 
 		      @ pdInitS
 		  end
 
@@ -6960,7 +6962,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 						   PL.alwaysGetPosS(PT.Id pads, PT.Id pos)]
 					          @ assignS) ]
 				          else assignS
-			     val commentSs = [P.mkCommentS ("Pcompute branch '"^name^"'")]
+			     val commentSs = [P.mkCommentS ("Pcompute branch'"^name^"'")]
 			 in
 			     commentSs @ uReadManPre(name, isVirtual) @ initSs @ uReadManPost(name, modPred)
 			 end
@@ -7009,7 +7011,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     val () = chkManArgs("Punion", unionName, tyname, name, args, (!readSubList))
 			     val modPred = modUnionPred(unionName, name, allVars, pred, (!readSubList))
 			     val repX = unionRepX(rep, name, isVirtual, isLongestMatch)
-			     val pdX = unionRepX(pd, name, isVirtual, isLongestMatch)
+			     val pdX = unionPdX(pd, name, isVirtual, isLongestMatch)
 			     val pos = "ppos"
 			     val needsPosition = PTSub.isFreeInExp([PNames.position], expr)
 			     val () = pushLocalEnv()
