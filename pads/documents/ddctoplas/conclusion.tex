@@ -8,7 +8,7 @@ well-behaved data in standardized relational or \xml{} formats, such
 data has little or no tool support, forcing data analysts and
 scientists to waste valuable time writing brittle custom code, even if
 all they want to do is convert their data into a well-behaved format.
-To improve the situation, various researchers have developed data
+To improve the situation, various researchers have developed type-based data
 description languages such as \pads{}, \datascript{}, and
 \packettypes{}.  Such languages allow analysts to write terse,
 declarative descriptions of ad hoc data.  A compiler then generates a
@@ -21,18 +21,17 @@ specifying a semantics for this class of languages by defining the
 data description calculus \ddc{}.  This calculus, which is a dependent
 type theory with a simple set of orthogonal primitives, is expressive
 enough to describe the features of \pads{}, \datascript{}, and
-\packettypes{}.  In keeping with the spirit of the data description
+\packettypes{}.  In keeping with the spirit of type-based data description
 languages, our semantics is transformational: instead of simply
 recognizing a collection of input strings, we specify how to transform
 those strings into canonical in-memory representations annotated with
 error information.  Furthermore, we prove that the error information
 is meaningful, allowing analysts to rely on the error summaries rather
-than having to re-vet the data by-hand.
+than having to re-vet the data by hand.
 
 We have already used the semantics to identify bugs in the
 implementation of \padsc{} and to highlight areas where \padsc{}
 sacrifices safety for speed.  We have also used the semantics as a guide
-for the design of a whole new language, \padsml{}, designed
-specifically for functional programmers.  In the future, we hope 
+for the design of a whole new language, \padsml{}.  In the future, we hope 
 \ddc{} will serve as a solid foundation for the next 700 data 
 description languages.

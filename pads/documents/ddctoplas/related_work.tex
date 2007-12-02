@@ -8,7 +8,7 @@ family of languages.  Existing theories of regular expressions,
 context-free grammars, parsing expression
 grammars~\cite{birman+:parsing,ford:pegs,ford:packrat,grimm:packrat}
 or even context-sensitive grammars specify what strings can be
-recognized a grammar, but such a specification 
+recognized by a grammar, but such a specification 
 only captures half of the semantics of
 languages like \pads{} or \packettypes{}.  Our new theory gives a
 complete explanation of these languages both in terms of the strings
@@ -48,7 +48,7 @@ generator, and then specify the lexer and the parser separately, in
 addition to the glue code to use them together.  Moreover, \lex{}
 and \yacc{} do not support data-dependent parsing, do not generate
 internal representations automatically, and do not supply a collection
-of valueadded tools.  Consequently, in our experience,
+of value-added tools.  Consequently, in our experience,
 programmers simply do not use tools such as \lex{} and \yacc{}
 for managing ad hoc data.
 
@@ -66,9 +66,7 @@ tool~\cite{sablecc} goes beyond
 quite similar to those of \padsc{}. Also like \padsc{} or \padsml{}, 
 descriptions
 do not contain actions. Instead, actions are only performed on the
-generated ASTs. 
-
-\demeter{}~\cite{lieberherr+:class-dictionaries} is another parser
+generated ASTs. \demeter{}~\cite{lieberherr+:class-dictionaries} is another parser
 generator in the same general tradition as Lex, Yacc, \antlr\ and
 \sablecc{} in that it is based on context-free grammars.  However,
 \demeter{}'s class dictionaries are even more powerful than
@@ -82,24 +80,24 @@ all of the context-free grammar-based tools --- \lex{}, \yacc,
 tools built on the type theory described by \ddc. 
 In particular, none of them include dependent or 
 polymorphic data descriptions directly in their specification language
-(though some forms of dependency can likely be ``hacked,'' at least in
+(though some forms of dependency can be ``hacked,'' at least in
 \lex\ and \yacc, by programming arbitrary host language 
 code in the semantic actions).  Moreover, while the semantics of
 context-free grammars are obviously well understood, the semantics of the
 tools themselves, including the semantic actions that generate 
 internal data structures, have not been as thoroughly studied.
-For instance, we know of no proof that \antlr\ or \sablecc\ 
-generated parsers are type safe.
+For instance, we know of no proof that \antlr{}- or 
+\sablecc{}-generated parsers are type safe.
 Finally, the error handling strategies for conventional
 parser generators are different than
-those of the \pads{} languages.  They do not provide the programmer with
+those of the \pads{} languages.  Traditional parsers 
+do not provide the programmer with
 programmatic access to errors, as \padsml{} or \padsc{} do through the
 use of their parse
 descriptors.  That said, such a laundry list of technical differences risks
-obscuring the more essential point -- that these tools are
-targeted at a different domain and have a far different
-``look and feel'' from type-based data description languages
-like \pads{} or \packettypes{}. 
+obscuring the essential points -- that these tools are based on a 
+completely different semantic foundation and have a far different
+overall ``look and feel.'' 
 %The type-based languages
 %make it  generate tools
 %specificly suited to processing ad hoc data (both binary and ASCII) 
@@ -161,27 +159,30 @@ combinators and \ddc{} descriptions:
 
 \begin{itemize}
 \item As a language of types,
-\ddc{}, and related languages such as \padsc{} and \padsml{}, exploit
-programmer intuitions concerning the meaning of types directly,
-and has a completely different ``look and feel'' from Haskell combinator
-libraries.
+\ddc{}, and related systems such as \pads{} and \packettypes, exploit
+programmer intuitions concerning the meaning of types directly.  
+This makes \pads{} a good fit for users that have not been exposed to
+combinator libraries before.
 \item \ddc{}, with its parse descriptors, 
 has quite a different error reporting mechanism from
-parser combinator libraries.
+parser combinator libraries.  When processing ad hoc data,
+the errors are often the most interesting part.  \ddc{} and \pads{}
+give direct, programmatic access to error representations.
 \item The multi-faceted, nonstandard 
 semantics of dependent \ddc{} types is structured
 entirely differently from the semantics of parser generators given
 in the literature.
-\item A parser combinator library is specifying a \textit{parser},
-  while a term in \ddc{} is \textit{describing a data format}, which
-  means that the \ddc{} term can be used to generate a printer and
-  other analysis tools in addition to a parser.
+%\item A parser combinator library is specifying a \textit{parser},
+%  while a term in \ddc{} is \textit{describing a data format}, which
+%  means that the \ddc{} term can be used to generate a printer and
+%  other analysis tools in addition to a parser.
 \end{itemize}
 
-\paragraph{Marshalling and Unmarshalling}
+\paragraph*{Marshalling and Unmarshalling}
 
-Marshalling libraries such as Java's JXM~\cite{jxm} allow
-or serialize objects on disk in a fixed format.
+Marshalling libraries such as Java's JXM library~\cite{jxm} 
+allow programmers to
+ serialize objects on disk in a fixed format.
 Unmarshalling libraries read this fixed format back 
 into memory.  Although useful for saving or otherwise communicating 
 the state of a program, 
@@ -202,8 +203,8 @@ do not help users who need to parse and process non-standard, ad hoc data.
 \paragraph*{Type-Directed Programming}
 {\em Type-directed} or
 {\em generic} programming techniques~\cite{jansson+:97,jansson+:99,jansson:phdthesis,hinze+:generic-programming,jansson+:02,lammel+:syb} allow users to
-define algorithms based on induction over the structure of a type rather 
-than induction (or recursion) over the structure of a value.  
+define algorithms by induction over the structure of a type rather 
+than by induction (or recursion) over the structure of a value.  
 Of particular interest is the
 elegant work by Jansson and Jeuring on polytypic data 
 conversions~\cite{jansson+:97,jansson+:99,jansson:phdthesis,jansson+:02}.
@@ -224,31 +225,50 @@ themselves serve as the grammar for the language. They also
 investigate applying this approach to other compiler-related analyses,
 like scope checking and type inference.
 
-Languages like \pads{}, \packettypes{}, 
-\datascript{} and Bro
+The parsers defined by \ddc{} are defined by induction over the structure
+of types and hence may be thought of as type-directed programs.  However,
+there are a number of reasons why one might prefer a domain-specific
+language like \pads{} or \ddc{} over a full-blown
+generic programming framework.  
+From a programmer's perspective, the specialized syntax makes writing
+descriptions, particularly descriptions with nested literals, 
+regular expressions, functions and dependencies, relatively easy.
+From an implementer's perspective, \pads{} is a
+relatively simple, light-weight language extension:  Implementing a 
+\pads{}-style language for any standard imperative, functional or 
+object-oriented requires no changes to the underlying host language
+type system or run-time.  In contrast, type-directed
+programming languages normally need sophisticated, non-standard type systems
+or modifications to the run-time to function correctly.  In Hinze's
+paper on ``Generic for the Masses''~\cite{hinze:masses}, he cites these
+complications as his motivation for the design of a new generic programming
+environment for Haskell, but unfortunately, the new design is equally 
+language-specific, as it makes essential use of polymorphic data structures
+and type classes.  
 
-Clearly,
-the parsers defined by \ddc{} are defined by induction over the structure
-of types and hence may be thought of as type-directed programs.  
 
-Likewise, the semantics of generic programming languages clearly does
-not directly serve as a semantics for \padsc{} or \padsml{}.
+%Nevertheless,
+%there are a number of important differences between \ddc{} or a
+%\pads{}-style language and 
 
-The closest connection between \ddc{} and research in
-type-directed programming can likely be found in the work of 
-van Weelden \textit{et al}~\cite{weelden+:polytypic-ast}.
-These authors investigated the use of
-polytypic programming to produce a parser for a language based only on
-the specification of its AST type(s). In this way, the AST types
-themselves serve as the grammar for the language. They also
-investigate applying this approach to other compiler-related analyses,
-like scope checking and type inference.  However, while their
-``types-as-grammar'' approach is clearly related to \padsml{}, they
-use standard (non-dependent) types as parser specifications, and they
-study parsing techniques for programming languages, not ad hoc data.
-Dependent types are very important in the domain of ad hoc data,
-where it is very common for a tag early in data to determine later parsing 
-behavior or an integer to determine the length of some future array.
+%% Likewise, the semantics of generic programming languages clearly does
+%% not directly serve as a semantics for \padsc{} or \padsml{}.
+
+%% The closest connection between \ddc{} and research in
+%% type-directed programming can likely be found in the work of 
+%% van Weelden \textit{et al}~\cite{weelden+:polytypic-ast}.
+%% These authors investigated the use of
+%% polytypic programming to produce a parser for a language based only on
+%% the specification of its AST type(s). In this way, the AST types
+%% themselves serve as the grammar for the language. They also
+%% investigate applying this approach to other compiler-related analyses,
+%% like scope checking and type inference.  However, while their
+%% ``types-as-grammar'' approach is clearly related to \padsml{}, they
+%% use standard (non-dependent) types as parser specifications, and they
+%% study parsing techniques for programming languages, not ad hoc data.
+%% Dependent types are very important in the domain of ad hoc data,
+%% where it is very common for a tag early in data to determine later parsing 
+%% behavior or an integer to determine the length of some future array.
 
 
 \paragraph*{XML-based tools}
@@ -274,22 +294,22 @@ but they must also learn \xml{} and
 the \xml{} conversion tool.  Altogether, this is too heavyweight for
 many simple data processing tasks.
 
-\dfdl\ is a data format specification language with an \xml-based
-syntax and type structure~\cite{dfdl-proposal,dfdl-primer}. \dfdl\ is
-a language \textit{specification}, not an entire system or an
-implementation -- \padsml{} could, perhaps, serve as the basis of a
-robust \dfdl{} implementation. Like the \padsml{} language, \dfdl\ has
-a rich collection of base types and supports a variety of ambient
-codings.  In terms of expressiveness, we believe the \dfdl\ consortium
-has added dependency and semantic constraints to match the
-expressiveness of \padsc{}.  However, because the specification is
-still under development, we cannot give a more detailed comparison at
-this point.  
-
+Two other related \xml{}-based specification languages are
+\dfdl~\cite{dfdl-proposal,dfdl-primer} and XDTM~\cite{xdtm,zhao+:sigmod05}.
+Like \pads{} or \packettypes, \dfdl\ is a language for specifying data 
+formats.  It has a rich collection of base types and supports a 
+variety of ambient codings.  Early versions of \dfdl\ 
+did not allow dependent constraints, but they were later added,
+perhaps because \pads{} had demonstrated how effective they can be.
+%% \dfdl\ is a data format specification language with an \xml-based
+%% syntax and type structure~\cite{dfdl-proposal,dfdl-primer}. \dfdl\ is
+%% a language \textit{specification}, not an entire system or an
+%% implementation -- \padsml{} could, perhaps, serve as the basis of a
+%% robust \dfdl{} implementation. Like the \padsml{} language, 
 XDTM~\cite{xdtm,zhao+:sigmod05} uses \xml{} Schema to describe the
 locations of a collection of sources spread across a local file system
 or distributed across a network of computers.  However, XDTM has no
-means of specifying the contents of files, so XDTM and \padsml{} solve
+means of specifying the contents of files, so XDTM and \pads{} solve
 complementary problems.  The METS schema~\cite{mets} is similar to XDTM as
 it describes metadata for objects in a digital library, including a
 hierarchy such objects.
