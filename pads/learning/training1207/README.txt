@@ -2,12 +2,14 @@ How to define a training description:
 
     1)  Only use base types listed below & literal punctuation.
              -- eg: no Pstring
-    2)  Define the description that you would like the tokenizer to infer (not necessarily the
-          one that is best for a human to read?)
+    2)  Define the description that you would like the tokenizer to infer 
+          (not necessarily the description that you hope the system will
+           eventually output)
 
 question:  what happens to unseparated literals?  eg: " ["
 question: do we need Pignore when you can't figure out what to do?
 question: what happens to array separators (do they get printed?)
+q: should time & date tokens be separated?
 
 Token Definitions 
 from Qian's Email re 11/16/2007 12:56 AM:
