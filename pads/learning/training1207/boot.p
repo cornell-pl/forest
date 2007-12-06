@@ -8,18 +8,9 @@ Pstruct daemon_message_t {
         Popt Pmessage(:Peor:) msg;
 };
 
-/- should the following be Pmessage?
-/- how to deal with string literals?
-
-Pstruct system_message_t {
-	"last message repeated ";
-	Puint32 times;
-	" times";
-};
-
 Punion message_t{
 	daemon_message_t dm;
-	system_message_t sm;
+	Pmessage(:Peor:) sm;
 };
 	
 Precord Pstruct entry_t {
