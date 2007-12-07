@@ -14,7 +14,9 @@ Punion message_t{
 };
 	
 Precord Pstruct entry_t {
-	timestamp_t ts;
+	Pdate(:' ':) ts;
+	' ';
+	Ptime(:' ':) mydate;
 	' ';
 	Pid server;
 	' ';

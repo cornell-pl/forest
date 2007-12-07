@@ -1,4 +1,4 @@
-
+#include <training.p>
 
 Precord Pstruct entry_t {
         Puint16_FW(:4:) type;

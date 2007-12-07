@@ -20,21 +20,23 @@ Meta-Rule:
 
 Pint		|	numbers									
 Pfloat		|	numbers "." numbers 
-Ptimez		|	2 digits ":" 2 digits ":" 2 digits, followed by an option of "am" or "pm", and an option of timezone
+Ptime		|	2 digits ":" 2 digits ":" 2 digits, followed by an option of "am" or "pm", and an option of timezone
+Pdate		|	any strings containing numbers and letters that represent a date
 Pip		|	1-3 digits "." 1-3 digits "." 1-3 digits "." 1-3 digits	
 Phostname	|	a series of labels, with each label being separated by "." (restrictions on valid host names can be found at http://en.wikipedia.org/wiki/Hostname)
 Pemail		|	any strings that may have numbers, letters, "_" and "-", but doesn't begin with "_" or "-", followed by "@", followed by hostname
 Pmac		|	6 2-digit hex numbers separated by ":" or "-"
-Pdate		|	any strings containing numbers and letters that represent a date
 Ppath		|	a series of filename separated by "/" or "\" (filename limitations can be found at http://en.wikipedia.org/wiki/Filename)
 Purl		|	protocal string, hostname, filename or ip separated by various punctuations
-Pword		|	strict English world containing letters and "'"
+Purlbody        |       like path but may contain = ?
+Pword		|	string containing letters and "'" and "-"
 Pid		|	any strings that are composed of numbers, letters, "-", "_" and "."
 PbXML		|	XML data token
 PeXML		|	another XML data token
 Pwhite		|	white spaces
 Pmessage        |       any characters to end of line or delimiting scope like ""?  Takes
                         terminating character as argument.
+Ppermission     |       re = [-rwxds]{10}
 
 Pdot		|	"."
 Pslash		|	"/"

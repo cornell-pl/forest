@@ -1,12 +1,8 @@
 Ptypedef Puint64 pn_t;
 
-/- don't know what to do with this one:
-Ptypedef Pchar zipSep_t : 
-   zipSep_t x => {x == '-' || x == '/' || x == ' '};
-
 Pstruct extended_zip_t{
   Puint32 zip;
-  zipSep_t sep;
+  Pre "|[-/_]|";
   Puint32 suffix;
 };
 
@@ -21,14 +17,9 @@ Precord Pstruct summary_header_t {
   Puint32       tstamp;
 };
 
-Pstruct no_ramp_t {
-  Pid noii : noii == "no_ii";  /- legal Kathleen?
-  Puint64 id;
-};
-
 Punion dib_ramp_t {
   Pint64     ramp;
-  no_ramp_t  genRamp;
+  Pid  genRamp;
 };
 
 Pstruct order_header_t {
