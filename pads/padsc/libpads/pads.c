@@ -12,6 +12,9 @@
 ##    pads-acc-gen.c          : generated accum functions
 ##    pads-misc-gen.c         : generated misc  functions
 ##    pads-gen.c              : the rest of the padsc library
+
+##   Macros in this file need to end with a comment END_MACRO on its own line.
+##
 ##
 /* ********************* BEGIN_MACROS(pads-macros-gen.h) ********************** */
 /*
@@ -34,6 +37,8 @@ do {
 } while (0)
 /* END_MACRO */
 
+
+
 #define PDCI_FINISH_TIMESTAMP_READ(m_IN, format_IN, tzone_IN, errcode_IN, just_time_IN)
 do {
   if (P_Test_Set(*(m_IN))) {
@@ -41,6 +46,7 @@ do {
     Pbyte       *tmp;
     char        *tmp_t;
     time_t       now;
+
 
     PDCI_STR_PRESERVE(s); /* this ensures s.str is null terminated */
     now = (just_time_IN) ? 0 : time(NiL);
@@ -57,7 +63,8 @@ do {
     /* but here for debugging purposes we output using tzone_IN */ 
     P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
 	   whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
-  }
+  };
+  PDCI_ECHO_TOKEN_AS_PSTR(pads, whatfn,s);
   return P_OK;
  } while (0);
  fatal_alloc_err:
@@ -96,6 +103,7 @@ do {
     P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
 	   whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
   }
+  PDCI_ECHO_TOKEN_AS_PSTR(pads, whatfn,s);
   return P_OK;
  } while (0);
  fatal_alloc_err:
@@ -134,6 +142,7 @@ do {
     P_DBG4(pads->disc, "%s: converted string %s => %s (secs = %ld)",
 	   whatfn, P_qfmt_str(s), fmttime("%K", (time_t)tm), (long)tm);
   }
+  PDCI_ECHO_TOKEN_AS_PSTR(pads, whatfn,s);
   return P_OK;
  } while (0);
  fatal_alloc_err:
@@ -930,6 +939,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
     }
     if (errno == ERANGE) goto range_err;
     /* success */
+    PDCI_ECHO_TOKEN(pads, fn_pref,begin,p1);
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
@@ -1006,6 +1016,7 @@ fn_name(P_t *pads, const Pbase_m *m,
     }
     if (errno == ERANGE) goto range_err;
     /* success */
+    PDCI_ECHO_TOKEN(pads, fn_name,begin,p1);
     PDCI_IO_FORWARD(width, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
@@ -1133,6 +1144,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
       goto invalid;
     }
     if (errno == ERANGE) goto range_err;
+    PDCI_ECHO_TOKEN(pads, fn_pref,begin,p1);
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
@@ -1195,6 +1207,7 @@ fn_name(P_t *pads, const Pbase_m *m,
   if (P_Test_Set(*m)) {
     (*res_out) = *begin;
   }
+  PDCI_ECHO_TOKEN(pads, fn_name,begin,end);
   PDCI_IO_FORWARD(1, goto fatal_forward_err);
   return P_OK;
 
@@ -1228,7 +1241,7 @@ fn_name(P_t *pads, const Pbase_m *m,
     } else {
       swapmem(0, begin, res_out, width);
     }
-  }
+  };
   PDCI_IO_FORWARD(width, goto fatal_forward_err);
   return P_OK;
 
@@ -7811,7 +7824,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.211 2007-07-06 16:23:52 forrest Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.212 2007-12-07 23:28:34 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8441,6 +8454,7 @@ PDCI_libopen(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc, int iodisc_requ
    *   path, io_state, top, buf, balloc, bchars, speclev
    */
   (*pads_out) = pads;
+  PDCI_INIT_ECHO_TOKENS(pads);
   P_lib_init();
   if (!(pads->disc->in_time_zone)) {
     P_WARN1(pads->disc, "%s: pads->disc->in_time_zone is null, replacing with 'UTC'", whatfn);
@@ -8544,6 +8558,7 @@ P_close_keep_io_disc(P_t *pads, int keep_io_disc)
 Perror_t
 P_close(P_t *pads)
 {
+  PDCI_CLOSE_ECHO_TOKENS(pads);
   return P_close_keep_io_disc(pads, 0);
 }
 
@@ -9273,6 +9288,7 @@ P_io_checkpoint(P_t *pads, int speculative)
   if (speculative) {
     (pads->speclev)++;
   }
+  PDCI_ECHO_CHKPOINT(pads, "CheckPoint");
   return P_OK;
 }
 
@@ -9289,6 +9305,7 @@ P_io_restore(P_t *pads)
   }
   /* this discards all changes since the latest checkpoint */ 
   (pads->top)--;
+  PDCI_ECHO_CHKPOINT(pads, "Rollback");
   return P_OK;
 }
 
@@ -9312,6 +9329,7 @@ P_io_commit(P_t *pads)
   pads->stack[pads->top - 1].id_gen  = pads->stack[pads->top].id_gen;
 #endif
   (pads->top)--;
+  PDCI_ECHO_CHKPOINT(pads, "Commit");
   return P_OK;
 }
 
@@ -10807,6 +10825,7 @@ PDCI_char_lit_scan1(P_t *pads, Pchar f, int eat_f, int panic,
       (*offset_out) = (p1-begin);
       if (eat_f) {
 	p1++; /* advance beyond char found */
+	PDCI_ECHO_TOKEN(pads, "Char_lit",begin,p1);
       }
       PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
@@ -10855,6 +10874,7 @@ PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic
       (*offset_out) = (p1-begin);
       if (eat_f) {
 	p1++; /* advance beyond char found */
+	PDCI_ECHO_TOKEN(pads, "Char_lit",begin,p1);
       }
       PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
@@ -10864,6 +10884,7 @@ PDCI_char_lit_scan2(P_t *pads, Pchar f, Pchar s, int eat_f, int eat_s, int panic
       (*offset_out) = (p1-begin);
       if (eat_s) {
 	p1++; /* advance beyond char found */
+	PDCI_ECHO_TOKEN(pads, "Char_lit",begin,p1);
       }
       PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
@@ -10925,6 +10946,7 @@ PDCI_str_lit_scan1(P_t *pads, const Pstring *f,
       (*offset_out) = (p1-begin);
       if (eat_f) {
 	p1 += width; /* advance beyond f */
+	PDCI_ECHO_TOKEN(pads, "Str_lit",begin,p1);
       }
       PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
@@ -11001,6 +11023,7 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
       (*offset_out) = (p1-begin);
       if (eat_f) {
 	p1 += fwidth; /* advance beyond f */
+	PDCI_ECHO_TOKEN(pads, "Str_lit",begin,p1);
       }
       PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
@@ -11011,6 +11034,7 @@ PDCI_str_lit_scan2(P_t *pads, const Pstring *f, const Pstring *s,
       (*offset_out) = (p1-begin);
       if (eat_s) {
 	p1 += swidth; /* advance beyond s */
+	PDCI_ECHO_TOKEN(pads, "Str_lit",begin,p1);
       }
       PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
       return P_OK;
@@ -11071,6 +11095,7 @@ PDCI_re_scan1(P_t *pads, Pregexp_t *f,
   (*offset_out) = f->match[0].rm_so;
   if (eat_f) {
     p1 = begin + f->match[0].rm_eo; /* if rm_eo is 1 then last char in match is at begin */
+    PDCI_ECHO_TOKEN(pads, "Re_lit",begin,p1);
   } else {
     p1 = begin + f->match[0].rm_so; /* if rm_so is zero then match occurred at begin */
   }
@@ -11134,6 +11159,7 @@ PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
     (*offset_out) = s->match[0].rm_so;
     if (eat_s) {
       p1 = begin + s->match[0].rm_eo; /* if rm_eo is 1 then last char in match is at begin */
+      PDCI_ECHO_TOKEN(pads, "Re_lit",begin,p1);
     } else {
       p1 = begin + s->match[0].rm_so; /* if rm_so is zero then match occurred at begin */
     }
@@ -11147,6 +11173,7 @@ PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
       (*offset_out) = s->match[0].rm_so;
       if (eat_s) {
 	p1 = begin + s->match[0].rm_eo; /* if rm_eo is 1 then last char in match is at begin */
+        PDCI_ECHO_TOKEN(pads, "Re_lit",begin,p1);
       } else {
 	p1 = begin + s->match[0].rm_so; /* if rm_so is zero then match occurred at begin */
       }
@@ -11156,6 +11183,7 @@ PDCI_re_scan2(P_t *pads, Pregexp_t *f, Pregexp_t *s,
       (*offset_out) = f->match[0].rm_so;
       if (eat_f) {
 	p1 = begin + f->match[0].rm_eo; /* if rm_eo is 1 then last char in match is at begin */
+        PDCI_ECHO_TOKEN(pads, "Re_lit",begin,p1);
       } else {
 	p1 = begin + f->match[0].rm_so; /* if rm_so is zero then match occurred at begin */
       }
@@ -12300,6 +12328,7 @@ PDCI_ip_read(P_t *pads, const Pbase_m *m,
     // The final byte has not been added to addr yet.
     addr = addr << 8;
     addr += byte;
+    PDCI_ECHO_TOKEN(pads,"IP", begin,p1);
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (range_err_start && P_Test_SemCheck(*m)) goto invalid_range;
     if (P_Test_Set(*m)) {
@@ -12520,7 +12549,9 @@ PDCI_string_ME_read(P_t *pads, const Pbase_m *m,
   PDCI_READFN_PD_INIT(pads, pd);
   if (P_ERR == PDCI_regexp_compile_cstr(pads, matchRegexp, &compiled_exp, "Pstring_ME arg", whatfn)) {
     goto bad_exp;
-  }
+  };
+  PDCI_ECHO_TOKEN_PREFIX(pads,whatfn);
+  PDCI_ECHO_TOKEN_PREFIX(pads,matchRegexp);
   res = PDCI_string_CME_read(pads, m, pd, s_out, char_set, whatfn, &compiled_exp);
   PDCI_regexp_cleanup(pads, &compiled_exp, whatfn);
   return res;
@@ -12573,6 +12604,7 @@ PDCI_string_CME_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
+  PDCI_ECHO_TOKEN(pads,whatfn, begin,p1);
   PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
 

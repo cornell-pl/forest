@@ -293,6 +293,7 @@ do {
   P_PS_unsetPanic(pd);
   PDCI_READFN_BEGINLOC(pads, tpd_PCGEN_.loc);
   if (P_OK == P_io_next_rec(pads, &bytes_skipped_PCGEN_)) {
+    PDCI_ECHO_RECORD(pads);
     if (bytes_skipped_PCGEN_) {
       PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
       if (no_panic_PCGEN_) {
@@ -310,6 +311,7 @@ do {
   } else {
     PDCI_READFN_ENDLOC_MINUS1(pads, tpd_PCGEN_.loc);
     PDCI_report_err(pads, P_LEV_WARN, &(tpd_PCGEN_.loc), P_EOF_BEFORE_EOR, fn_nm, "Found EOF when searching for EOR");
+    PDCI_ECHO_EOF(pads);
     (pd->nerr)++;
     if (pd->nerr == 1) {
       pd->errCode = P_EOF_BEFORE_EOR;
@@ -2525,6 +2527,7 @@ do {
 	 PCGEN_TLEN_BUF_UPDATES ();
        };
     };
+    *requestedOut = 1;
 
  } while (0)
 /* END_MACRO */

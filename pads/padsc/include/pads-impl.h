@@ -18,6 +18,97 @@ Perror_t PDCI_regexp_compile(P_t *pads, const Pstring *regexp_str, Pregexp_t *re
 			     const char *err_prefix, const char *whatfn);
 Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 
+/* MACROS USED TO ECHO TOKENS TO FILE FOR LEARNING TRAINING */
+
+#ifdef ECHO_TOKEN
+
+#define PDCI_INIT_ECHO_TOKENS(pads) \
+  do { \
+    const char* fileName = getenv("ECHO_TOKEN"); \
+    if (!fileName) { fileName = "tokenFile"; };		 \
+    error(0, "Opening Echo Token file: %s\n", fileName); \
+    pads->tokenOut5 = sfopen(0, fileName,"w"); \
+    if (!pads->tokenOut5) {error(0, "Error opening %s\n", fileName);}; \
+  } while (0)  
+/* END_MACRO */
+
+#define PDCI_ECHO_TOKEN(pads, token,beginPtr,endPtr) \
+  do { \
+    int dataSize = endPtr - beginPtr;\
+    sfprintf(pads->tokenOut5, "%s:", PDCI_MacroArg2String(token));\
+    sfwrite(pads->tokenOut5, beginPtr, dataSize);\
+    sfprintf(pads->tokenOut5, "\n");\
+  } while (0)   
+/* END_MACRO */
+
+#define PDCI_ECHO_TOKEN_PREFIX(pads, prefix) \
+  do { \
+    sfprintf(pads->tokenOut5, "%s:", prefix);\
+  } while (0)   
+/* END_MACRO */
+
+#define PDCI_ECHO_TOKEN_AS_PSTR(pads, token,pstr) \
+  do { \
+    sfprintf(pads->tokenOut5, "%s:", token);\
+    sfwrite(pads->tokenOut5, pstr->str,  pstr->len);			  \
+    sfprintf(pads->tokenOut5, "\n");\
+  } while (0)   
+/* END_MACRO */
+
+#define PDCI_ECHO_RECORD(pads)\
+  do {\
+    sfprintf(pads->tokenOut5, "EOR\n\n");\
+  } while (0)
+/* END_MACRO */
+
+#define PDCI_ECHO_EOF(pads)\
+  do {\
+    sfprintf(pads->tokenOut5, "EOF\n\n");\
+  } while (0)
+/* END_MACRO */
+
+#define PDCI_ECHO_CHKPOINT(pads,str)		\
+  do {\
+    sfprintf(pads->tokenOut5, "%s\n", str);	\
+  } while (0)
+/* END_MACRO */
+
+#define PDCI_CLOSE_ECHO_TOKENS(pads) \
+  do { \
+    sfclose(pads->tokenOut5);\
+  } while (0)  \
+/* END_MACRO */
+
+
+#else
+
+#define PDCI_INIT_ECHO_TOKENS(pads) 
+/* END_MACRO */
+
+#define PDCI_ECHO_TOKEN(pads, token,beginPtr,endPtr) 
+/* END_MACRO */
+
+#define PDCI_ECHO_TOKEN_PREFIX(pads, prefix) 
+/* END_MACRO */
+
+#define PDCI_ECHO_TOKEN_AS_PSTR(pads, token,s) 
+/* END_MACRO */
+
+#define PDCI_ECHO_RECORD(pads)
+/* END_MACRO */
+
+#define PDCI_ECHO_EOF(pads)
+/* END_MACRO */
+
+#define PDCI_ECHO_CHKPOINT(pads,str)		\
+/* END_MACRO */
+
+#define PDCI_CLOSE_ECHO_TOKENS(pads) 
+/* END_MACRO */
+
+#endif
+
+
 #ifndef FOR_CKIT
 
 /* ================================================================================

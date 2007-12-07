@@ -44,6 +44,7 @@
   Sfio_t           *tmp2;        /* tmp sfprintf area 2 */ \
   Sfio_t           *tmp3;        /* tmp sfprintf area 3: used for base type xml output formatting */ \
   Sfio_t           *tmp4;        /* tmp sfprintf area 4: used for structured type xml output formatting */ \
+  Sfio_t           *tokenOut5;   /* tmp sfprintf area 5: used for echoing tokens */ \
   const char       *tmp1_cstr;   /* C string used in tmp1 construction */ \
   const char       *tmp2_cstr;   /* C string used in tmp2 construction */ \
   Pstring          *tmp1_pstr;   /* Pstring* used in tmp1 construction */ \
