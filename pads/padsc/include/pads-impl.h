@@ -32,13 +32,18 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
   } while (0)  
 /* END_MACRO */
 
+
 #define PDCI_ECHO_TOKEN(pads, token,beginPtr,endPtr) \
   do { \
     int dataSize = endPtr - beginPtr;\
-    sfprintf(pads->tokenOut5, "%s:", PDCI_MacroArg2String(token));\
+    sfprintf(pads->tokenOut5, "%s:", token);\
     sfwrite(pads->tokenOut5, beginPtr, dataSize);\
     sfprintf(pads->tokenOut5, "\n");\
   } while (0)   
+/* END_MACRO */
+
+#define PDCI_ECHO_MACRO_TOKEN(pads, token,beginPtr,endPtr) \
+  PDCI_ECHO_TOKEN(pads,PDCI_MacroArg2String(token), beginPtr,endPtr);
 /* END_MACRO */
 
 #define PDCI_ECHO_TOKEN_PREFIX(pads, prefix) \
@@ -86,6 +91,9 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 /* END_MACRO */
 
 #define PDCI_ECHO_TOKEN(pads, token,beginPtr,endPtr) 
+/* END_MACRO */
+
+#define PDCI_ECHO_MACRO_TOKEN(pads, token,beginPtr,endPtr) 
 /* END_MACRO */
 
 #define PDCI_ECHO_TOKEN_PREFIX(pads, prefix) 

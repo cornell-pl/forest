@@ -85,6 +85,9 @@ rcount:
 
 regress: regress_o regress_d repeat_library_sanity_check
 
+foo: 
+	echo $(PADSC) $(PADSC_REAL)
+
 perf_regress: regress perf_regress_o perf_regress_d repeat_library_sanity_check
 
 regress_o:  sanity_check \

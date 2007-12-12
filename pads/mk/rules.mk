@@ -61,6 +61,7 @@
 # uncomment this to turn off loc setting for (most) reads
 # NOREAD_FLAGS = -DNO_READ_LOCS
 
+
 ifdef USE_GALAX
 ifndef GALAX_HOME
 %: forceabort2
@@ -443,6 +444,11 @@ CDBGFLAGS += -DFOR_CKIT
 COPTFLAGS += -DFOR_CKIT
 endif
 
+ifdef ECHO_TOKEN
+CDBGFLAGS += -DECHO_TOKEN=$(ECHO_TOKEN)
+COPTFLAGS += -DECHO_TOKEN=$(ECHO_TOKEN)
+endif
+
 ifdef USE_GALAX
 PADSC_EXTRA = -x
 CDBGFLAGS += -DUSE_GALAX
@@ -660,8 +666,8 @@ LINK_D = $(LINKER) $(LINKOPTS_D)
 LINK_O = $(LINKER) $(LINKOPTS_O)
 
 PADSC = $(PADS_HOME)/scripts/padsc 
-# PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_HEAPOPSYS)
-PADSC_REAL = $(shell ls $(PADS_HOME)/lib/padsc.* | head -n 1)
+PADSC_REAL = $(PADS_HOME)/lib/padsc.$(ARCH_N_OPSYS)
+# PADSC_REAL = $(shell ls $(PADS_HOME)/lib/padsc.* | head -n 1)
 # ifeq ($(PADSC_REAL),)
 # %: forceabort2
 # 	@echo "ERROR: no padsc compiler found in $(PADS_HOME)/lib."

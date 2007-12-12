@@ -368,6 +368,7 @@ do {
 /* invoke this macro, return (pd->nerr == 0) ? P_OK : P_ERR */
 #define PCGEN_TYPEDEF_READ(fn_nm, base_read_call)
 do {
+  PDCI_ECHO_TOKEN_PREFIX(pads,fn_nm);
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep);
   base_read_call;
 } while (0)
@@ -377,6 +378,7 @@ do {
 #define PCGEN_TYPEDEF_READ_REC(fn_nm, base_read_call)
 do {
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep);
+  PDCI_ECHO_TOKEN_PREFIX(pads,fn_nm);
   base_read_call;
   PCGEN_FIND_EOR(fn_nm);
 } while (0)
@@ -386,6 +388,7 @@ do {
 #define PCGEN_TYPEDEF_READ_CHECK(fn_nm, base_read_call, usercheck)
 do {
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep);
+  PDCI_ECHO_TOKEN_PREFIX(pads,fn_nm);
   if (P_OK == (base_read_call) && P_Test_SemCheck (m->compoundLevel) && (!(usercheck))) {
     PDCI_CONSTRAINT_ERR(fn_nm, P_TYPEDEF_CONSTRAINT_ERR, 0);
   }
@@ -396,6 +399,7 @@ do {
 #define PCGEN_TYPEDEF_READ_CHECK_REC(fn_nm, base_read_call, usercheck)
 do {
   PDCI_IODISC_3P_CHECKS (fn_nm, m, pd, rep);
+  PDCI_ECHO_TOKEN_PREFIX(pads,fn_nm);
   if (P_OK == (base_read_call) && P_Test_SemCheck (m->compoundLevel) && (!(usercheck))) {
     PDCI_CONSTRAINT_ERR(fn_nm, P_TYPEDEF_CONSTRAINT_ERR, 0);
   }

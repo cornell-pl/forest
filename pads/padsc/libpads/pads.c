@@ -939,7 +939,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
     }
     if (errno == ERANGE) goto range_err;
     /* success */
-    PDCI_ECHO_TOKEN(pads, fn_pref,begin,p1);
+    PDCI_ECHO_MACRO_TOKEN(pads, fn_pref,begin,p1);
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
@@ -1016,7 +1016,7 @@ fn_name(P_t *pads, const Pbase_m *m,
     }
     if (errno == ERANGE) goto range_err;
     /* success */
-    PDCI_ECHO_TOKEN(pads, fn_name,begin,p1);
+    PDCI_ECHO_MACRO_TOKEN(pads, fn_name,begin,p1);
     PDCI_IO_FORWARD(width, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
@@ -1144,7 +1144,7 @@ fn_pref ## _read(P_t *pads, const Pbase_m *m,
       goto invalid;
     }
     if (errno == ERANGE) goto range_err;
-    PDCI_ECHO_TOKEN(pads, fn_pref,begin,p1);
+    PDCI_ECHO_MACRO_TOKEN(pads, fn_pref,begin,p1);
     PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
     if (P_Test_Set(*m)) {
       (*res_out) = tmp;
@@ -1207,7 +1207,7 @@ fn_name(P_t *pads, const Pbase_m *m,
   if (P_Test_Set(*m)) {
     (*res_out) = *begin;
   }
-  PDCI_ECHO_TOKEN(pads, fn_name,begin,end);
+  PDCI_ECHO_MACRO_TOKEN(pads, fn_name,begin,end);
   PDCI_IO_FORWARD(1, goto fatal_forward_err);
   return P_OK;
 
@@ -7824,7 +7824,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.212 2007-12-07 23:28:34 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.213 2007-12-12 19:15:04 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -12388,6 +12388,7 @@ PDCI_char_read(P_t *pads, const Pbase_m *m,
 	goto invalid_charset;
       }
   }
+  PDCI_ECHO_TOKEN(pads, "Pchar", begin, begin+1);
   PDCI_IO_FORWARD(1, goto fatal_forward_err);
   return P_OK;
 
@@ -12439,6 +12440,7 @@ PDCI_string_FW_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
+  PDCI_ECHO_TOKEN(pads, whatfn, begin, begin+width);
   PDCI_IO_FORWARD(width, goto fatal_forward_err);
   return P_OK;
 
@@ -12510,6 +12512,7 @@ PDCI_string_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
+  PDCI_ECHO_TOKEN(pads, whatfn, begin, p1);
   PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
 
@@ -12644,6 +12647,8 @@ PDCI_string_SE_read(P_t *pads, const Pbase_m *m,
   if (P_ERR == PDCI_regexp_compile_cstr(pads, stopRegexp, &compiled_exp, "Pstring_SE arg", whatfn)) {
     goto bad_exp;
   }
+  PDCI_ECHO_TOKEN_PREFIX(pads,whatfn);
+  PDCI_ECHO_TOKEN_PREFIX(pads,stopRegexp);
   res = PDCI_string_CSE_read(pads, m, pd, s_out, char_set, whatfn, &compiled_exp);
   PDCI_regexp_cleanup(pads, &compiled_exp, whatfn);
   return res;
@@ -12699,6 +12704,7 @@ PDCI_string_CSE_read(P_t *pads, const Pbase_m *m,
     default:
       goto invalid_charset;
     }
+  PDCI_ECHO_TOKEN(pads, whatfn, begin, p1);
   PDCI_IO_FORWARD(p1-begin, goto fatal_forward_err);
   return P_OK;
 
