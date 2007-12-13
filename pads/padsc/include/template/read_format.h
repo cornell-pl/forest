@@ -28,6 +28,10 @@
 #  define EXTRA_HDR_READ_ARGS
 #endif
 
+#ifndef EXTRA_TRL_READ_ARGS
+#  define EXTRA_TRL_READ_ARGS
+#endif
+
 #ifndef DEF_INPUT_FILE
 #  define DEF_INPUT_FILE "/dev/stdin"
 #endif
@@ -57,6 +61,11 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_pd)  hdr_pd;
   PADS_HDR_TY(_m)   hdr_m;
 #endif /* PADS_HDR_TY */
+#ifdef PADS_TRL_TY
+  PADS_TRL_TY( )    trl_rep;
+  PADS_TRL_TY(_pd)  trl_pd;
+  PADS_TRL_TY(_m)   trl_m;
+#endif /* PADS_TRL_TY */
   Sfio_t           *io;
   char             *inName  = 0;
   char             *outName = 0;
@@ -168,6 +177,17 @@ int main(int argc, char** argv) {
   PADS_HDR_TY(_m_init)(pads, &hdr_m, P_CheckAndSet|FMT_MASK);
 #endif /* PADS_HDR_TY */
 
+#ifdef PADS_TRL_TY
+  if (P_ERR == PADS_TRL_TY(_init)(pads, &trl_rep)) {
+    error(ERROR_FATAL, "*** trailer representation initialization failed ***");
+  }
+  if (P_ERR == PADS_TRL_TY(_pd_init)(pads, &trl_pd)) {
+    error(ERROR_FATAL, "*** trailer parse description initialization failed ***");
+  }
+  /* init mask -- must do this! */
+  PADS_TRL_TY(_m_init)(pads, &trl_m, P_CheckAndSet|FMT_MASK);
+#endif /* PADS_HDR_TY */
+
 
 
 #if defined(FMT_OVERRIDE_TY1) && defined(FMT_OVERRIDE_FN1)
@@ -207,14 +227,24 @@ int main(int argc, char** argv) {
    */
   while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
     P_io_getPos(pads, &bpos, 0);
+#ifdef PADS_TRL_TY
+    P_io_checkpoint(pads,1); /* add error checking */
+#endif
     err = PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS );
     if (err == P_ERR) {
+#ifdef PADS_TRL_TY
+      P_io_restore(pads);  /* add error checking */
+      break;
+#endif
 #ifdef EXTRA_BAD_READ_CODE
       EXTRA_BAD_READ_CODE;
 #else
       error(2, "read returned error");
 #endif
     }
+#ifdef PADS_TRL_TY
+    P_io_commit(pads);
+#endif
     if ((err == P_OK || fmt_error_cases) && (P_ERR == PADS_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &m, &pd, &rep EXTRA_READ_ARGS ))) {
       error(ERROR_FATAL, "*** IO error during format");
     }
@@ -228,6 +258,20 @@ int main(int argc, char** argv) {
       error(ERROR_FATAL, "*** read loop stuck: read call did not advance IO cursor");
     }
   }
+#ifdef PADS_TRL_TY
+  /*
+   * Try to read trailer
+   */
+  if (!P_io_at_eof(pads)) {
+    if (P_OK != PADS_TRL_TY(_read)(pads, &trl_m, &trl_pd, &trl_rep EXTRA_TRL_READ_ARGS )) {
+      error(ERROR_FATAL, "trailer read returned error");
+    }
+    if (P_ERR == PADS_TRL_TY(_fmt2io)(pads, io, &requestedOut, DELIMS, &trl_m,&trl_pd, &trl_rep  EXTRA_TRL_READ_ARGS )) {
+      error(ERROR_FATAL, "*** IO error during trailer write");
+    }
+  }
+#endif /* PADS_TRL_TY */
+
   if (P_ERR == P_io_close(pads)) {
     error(ERROR_FATAL, "*** P_io_close failed ***");
   }
