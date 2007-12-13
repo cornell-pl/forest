@@ -162,7 +162,12 @@ open Ast
      fun tyToPADSC ty numHeaders numFooters includeFile =
 	(* assume that if a ty has header and footer, the body is just one single Ty*)
 	let
-	  val recordLabel = tyNameToPADSCString (
+	  val recordLabel = 
+	    if numHeaders>0 orelse numFooters>0 then
+		let val l = getLabelString (getAuxInfo ty)
+	    	val id = String.extract (l, 4, NONE) in "Struct_" ^ id end
+	    else
+		tyNameToPADSCString (
 		case ty of
 		  Base _ => getBaseTyName ty
 		| RefinedBase _ => getBaseTyName ty
