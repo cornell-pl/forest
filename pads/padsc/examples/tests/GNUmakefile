@@ -56,7 +56,7 @@ FORMAT_TESTS = test_format1 test_format2 test_format3 test_format5 test_format6 
                test_opt rwxml_alt1 rwxml_2ips rwxml_pfloat  rwxml_ptime rwxml_ptime_explicit rwxml_pdate rwxml_pdate_explicit \
                rwxml_pdate_explicit_me rwxml_enum rwxml_enum3 rwxml_array_advace rwxml_message_header rwxml_pads-comp rwxml_transform \
                rwxml_try fmt_format-bug test_punion_manifest rwxml_ptimestamp rwxml_ptimestamp_explicit test_transform fmt_format-bug2 \
-               rwxml_array_advance fmt_union_empty
+               rwxml_array_advance fmt_union_empty fmt_format_array
 
 DIB_TESTS =  test_dibbler1 test_dibbler1_mod test_fast_dib test_fast_dib_mod
 WRITE_TESTS = test_write_struct1 test_write_struct_strings
@@ -145,7 +145,8 @@ regress_o:  sanity_check \
           regress_rwxml_try_o \
 	  regress_fmt_format-bug_o \
 	  regress_fmt_format-bug2_o \
-	  regress_fmt_union_empty_o
+	  regress_fmt_union_empty_o \
+	  regress_fmt_format_array_o 
 
 	@echo "DONE"
 
@@ -205,7 +206,8 @@ regress_d:  sanity_check \
           regress_test_transform_d \
           regress_rwxml_try_d \
 	  regress_fmt_format-bug_d \
-	  regress_fmt_union_empty_d
+	  regress_fmt_union_empty_d \
+	  regress_fmt_format_array_d 	  
 	@echo "DONE"
 
 perf_regress_o:  sanity_check \
@@ -470,6 +472,11 @@ regress_fmt_format-bug2_d: fmt_format-bug2_d
 regress_fmt_union_empty_o: fmt_union_empty
 	@(args=""; suf=""; $(RegressDef))
 regress_fmt_union_empty_d: fmt_union_empty_d
+	@(args=""; suf=""; $(RegressDef))
+
+regress_fmt_format_array_o: fmt_format_array
+	@(args=""; suf=""; $(RegressDef))
+regress_fmt_format_array_d: fmt_format_array_d
 	@(args=""; suf=""; $(RegressDef))
 
 
