@@ -14,7 +14,8 @@ consumes the most input.
 \label{sec:unions-syntax}
 \begin{tabular}{rcl}
 \nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}
-			     \alt{} \nont{array\_field} \alt{} \nont{opt\_field} \\[1ex]
+			     \alt{} \nont{array\_field} \alt{}
+                             \nont{opt\_field} \alt{} \Pempty{} \\[1ex]
 \nont{branch}     & \is{} & \Pcase{} \nont{expression} : \nont{union\_field}
                     \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
 \nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
@@ -75,6 +76,21 @@ exists:
  3
 \end{verbatim}
 
+\subsection{Example: Switched \Punion{}s with \Pempty}
+The \pads{} declarations in \figref{fig:switched-union-default} 
+are similar to those in \figref{fig:switched-union} except that
+instead of computing a default value for the default case, this
+declaration uses the special type \Pempty{}, which indicates that
+there is nothing on disk for this case.  
+%
+\begin{figure}
+\inputCode{code/union.switch.default}
+\caption{Switched \Punion{} with \Pempty{} default.}
+\label{fig:switched-union-default}
+\end{figure}
+%
+
+
 \subsection{Example: In-place \Punion{}s}
 The following in-place \Punion{} describes a data fragment that is
 either a resolved or a symbolic IP address:
@@ -87,6 +103,14 @@ IP addresses, respectively.
 The comments embedded in the description give an example of each of the two
 forms.   With in-place \Punion{}s, the parser tries each of the branches
 in turn until it finds one that matches the data without any errors.
+
+\subsection{Example: In-place \Punion{}s with \Pempty{}}
+The following in-place \Punion{} describes a data fragment that is
+either an integer or nothing using the special type \Pempty{}.
+
+\inputCode{code/union.default}
+%
+\noindent
 
 \subsection{Switched \Punion{}s}
 \subsubsection{\Pswitch{}}
@@ -108,15 +132,16 @@ matches, the \Pdefault{} expression (if present) matches instead.
 The body of each branch in a switched \Punion{} is a \nont{union\_field},
 while the body of each in-place \Punion{} is a non-empty sequence of
 such fields. 
-There are five varieties of union fields: 
+There are six varieties of union fields, five borrowed from \Pstructs{}: 
 full fields (\secref{sec:structs-full-fields}),
 computed fields (\secref{sec:structs-computed-fields}), 
 in-place array declarations (\secref{sec:structs-arrays-inline}),
 in-place option declarations (\secref{sec:structs-options-inline}),
-and literal fields, all borrowed from \Pstruct{}s.
+and literal fields, and \Pempty{}, which is special to \Punion{}s.
 The only semantic change from \Pstruct{}s  is
 that in \Punion{}s, earlier fields are not in scope for later fields
-because only one branch of a union can be active at a time.
+because only one branch of a union can be active at a time.  A
+\Pempty{} branch corresponds to nothing in the physical representation.
 
 The name of a branch in either kind of union is the name of the
 declared identifier for full and computed fields.  For literal fields,
@@ -125,7 +150,7 @@ name using the \Pfrom{} form.  The \Pfrom{} form must be used when the
 literal is not a valid \C{} identifier.  For example, the following
 in-place union uses the \Pfrom{} form to provide names for the
 string literal \literal{\cd{"*"}} and the regular expression literal \cd{\Pre{}
-  \literal{"/a+/"}}.
+  \literal{"/a+/"}}.  
 
 \inputCode{code/union.literal}
 
