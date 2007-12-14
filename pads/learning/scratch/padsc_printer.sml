@@ -192,15 +192,18 @@ open Ast
 		  | _ => raise TyMismatch
 	    else "Footer"
 
-	  val pads = "#include \""^ includeFile ^"\"\n" ^
+	  val incString = "#include \""^ includeFile ^"\"\n" 
+	  val (pads, topLabel) =
 		(if numHeaders=0 andalso numFooters=0 then
 		    let val irTys = tyToIR true nil ty
 			val body = (lconcat (map irToPADSC irTys))
 		    in
+		       (incString ^
 			body ^
-			"Psource Parray entries_t {\n" ^
-		    	"\t" ^ bodyLabel ^ "[];\n" ^
-			"};\n"
+			 "Psource Parray entries_t {\n" ^
+		    	 "\t" ^ bodyLabel ^ "[];\n" ^
+			 "};\n",
+			 "entries_t")
 		    end
 		else 
 		  case ty of 
@@ -218,10 +221,11 @@ open Ast
 				val l = getLabelString (getAuxInfo ty)
 	    			val topLabel = "Struct_" ^ (String.extract (l, 4, NONE))
 			      in
-				(case headerIRs of
+			        (incString ^
+				 (case headerIRs of
 					nil => ""
 					| _ => (lconcat (map irToPADSC headerIRs)) 
-				) ^
+				 ) ^
 				(case headerIRs of
 					nil => ""
 					| [_] => ""
@@ -258,12 +262,13 @@ open Ast
 					| [_] => "\t" ^ footerLabel ^ " " ^ getVar (hd footers) ^ ";\n"
 					| _ => "\tFooter v_footer;\n"
 				) ^
-				"};\n"
+				"};\n",
+				topLabel)
 			      end
 		  | _ => raise TyMismatch
 		)
 	in
-	  (headerLabel, bodyLabel, footerLabel, pads)
+	  (topLabel, headerLabel, bodyLabel, footerLabel, pads)
 	end 
 
 

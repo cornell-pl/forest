@@ -79,7 +79,7 @@ structure Printing = struct
 
     (* This function dumps both pads/c and pads/ml descriptions from a ty *)
     fun dumpPADSdesc (padscFile:string) (padsmlFile:string) 
-		(ty:Ty) (numHeaders:int) (numFooters:int) : (string*string*string) = 
+		(ty:Ty) (numHeaders:int) (numFooters:int) : (string*string*string*string) = 
 	let val strmc = TextIO.openOut padscFile
 	    val strmml = TextIO.openOut padsmlFile
 (*
@@ -87,7 +87,7 @@ structure Printing = struct
 	    val pads = lconcat (map irToPML irs)
 	    val () = print pads
 *)
-            val (headerName, bodyName, footerName, desc) = 
+            val (topName, headerName, bodyName, footerName, desc) = 
 		tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
             val descml = tyToPADSML ty numHeaders numFooters ("Build_ins")
             val () = TextIO.output(strmc,desc )
@@ -95,11 +95,15 @@ structure Printing = struct
 	    val () = TextIO.closeOut strmc
 	    val () = TextIO.closeOut strmml
 	in
-	    (headerName, bodyName, footerName)
+	    (topName, headerName, bodyName, footerName)
 	end
 
-    fun dumpAccumProgram (path:string) (descName:string) (tyName:string) : unit = 
-	let val accumProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+    fun dumpAccumProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName:string) : unit = 
+	let val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
+	    val trlDecl = if trlName = "" then "" else "#define PADS_TRL_TY(suf) "^trlName^" ## suf\n"
+	    val accumProgram = hdrDecl ^
+		               "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+			       trlDecl ^
                                "#include \""^descName^".h\"\n"^
                                "#include \"template/accum_report.h\"\n"
 
@@ -109,8 +113,13 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpAccumXMLProgram (path:string) (descName:string) (tyName:string) : unit = 
-	let val accumProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+    fun dumpAccumXMLProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName) : unit = 
+	let 
+	    val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
+	    val trlDecl = if trlName = "" then "" else "#define PADS_TRL_TY(suf) "^trlName^" ## suf\n"
+	    val accumProgram = hdrDecl ^
+		               "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+			       trlDecl ^
                                "#define PADS_TY_STR \""^descName^"\"\n"^
                                "#include \""^descName^".h\"\n"^
                                "#include \"template/accum_report_xml.h\"\n"
@@ -146,10 +155,12 @@ structure Printing = struct
 	    TextIO.closeOut strm3
 	end
 
-    fun dumpXMLProgram (path:string) (descName:string) (tyName:string) : unit = 
-	let val xmlProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
-                               "#include \""^descName^".h\"\n"^
-                               "#include \"template/read_orig_write_xml.h\"\n"
+    fun dumpXMLProgram (path:string) (descName:string) (topName:string) (hdrName:string) (tyName:string) (trlName:string): unit = 
+	let val (copyStringDecl,readTy) = if hdrName = "" andalso trlName = "" then ("",tyName) else ("#define COPY_STRINGS 1\n",topName)
+	    val xmlProgram = "#define PADS_TY(suf) "^readTy^" ## suf\n"^
+		             copyStringDecl ^
+                             "#include \""^descName^".h\"\n"^
+                             "#include \"template/read_orig_write_xml.h\"\n"
 
 	    val strm = TextIO.openOut (path^descName^"-xml.c")
             val () = TextIO.output(strm, xmlProgram)
@@ -157,12 +168,21 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
-    fun dumpFmtProgram (path:string) (descName:string) (tyName:string) (sep): unit = 
-	let val separator = case sep of NONE => "| /*WARNING: separator occurs in data file*/"
-	                    | SOME t => tokenToString t
-	    val FmtProgram = "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+    fun dumpFmtProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName:string) (sep): unit = 
+	let val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
+	    val trlDecl = if trlName = "" then "" else "#define PADS_TRL_TY(suf) "^trlName^" ## suf\n"
+	    val isUnion = String.isPrefix "Union" tyName 
+	    val (separator,warning) = case (sep,isUnion) of 
+		              (NONE,false) => ("|",  "  /*WARNING: separator occurs in data file*/")
+		            | (NONE,true) =>  ("||", "  /*WARNING: separator occurs in data file*/")  
+	                    | (SOME t,false) => (tokenToString t,"")
+	                    | (SOME t,true) => let val ts = tokenToString t in (ts^ts,"") end
+	    
+	    val FmtProgram =   hdrDecl ^
+		               "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+			       trlDecl ^
                                "#include \""^descName^".h\"\n"^
-                               "#define DELIMS \""^separator^" \"\n"^
+                               "#define DELIMS \""^separator^" \""^warning^"\n"^
                                "#include \"template/read_format.h\"\n"
 
 	    val strm = TextIO.openOut (path^descName^"-fmt.c")
@@ -283,16 +303,16 @@ structure Printing = struct
                  ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getComps baseTy ) 
                  ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getComps rewrittenTy )
                  ; print "Finished printing Complexity\n"
-                 ; let val (_, tyName, _) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
+                 ; let val (topName, hdrName, tyName, trlName) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
 						rewrittenTy numHeaders numFooters
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
 		       print ("Ty name = "^tyName^"\n");
-		       dumpAccumProgram path descName tyName;
-		       dumpAccumXMLProgram path descName tyName;
-		       dumpXMLProgram path descName tyName;
+		       dumpAccumProgram path descName hdrName tyName trlName;
+		       dumpAccumXMLProgram path descName hdrName tyName trlName;
+		       dumpXMLProgram path descName topName hdrName tyName trlName;
 		       dumpPADX path descName tyName;
-		       dumpFmtProgram path descName tyName sep;
+		       dumpFmtProgram path descName hdrName tyName trlName sep;
 		       dumpGrapher path dataDir descName rewrittenTy sep;
                        dumpComputeTimes ( path ^ "Timing" ) ct; 
 		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
