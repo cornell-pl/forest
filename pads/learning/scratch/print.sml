@@ -79,7 +79,7 @@ structure Printing = struct
 
     (* This function dumps both pads/c and pads/ml descriptions from a ty *)
     fun dumpPADSdesc (padscFile:string) (padsmlFile:string) 
-		(ty:Ty) (numHeaders:int) (numFooters:int) : string = 
+		(ty:Ty) (numHeaders:int) (numFooters:int) : (string*string*string) = 
 	let val strmc = TextIO.openOut padscFile
 	    val strmml = TextIO.openOut padsmlFile
 (*
@@ -87,14 +87,15 @@ structure Printing = struct
 	    val pads = lconcat (map irToPML irs)
 	    val () = print pads
 *)
-            val (tyName, desc) = tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
+            val (headerName, bodyName, footerName, desc) = 
+		tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
             val descml = tyToPADSML ty numHeaders numFooters ("Build_ins")
             val () = TextIO.output(strmc,desc )
             val () = TextIO.output(strmml, descml )
 	    val () = TextIO.closeOut strmc
 	    val () = TextIO.closeOut strmml
 	in
-	    tyName
+	    (headerName, bodyName, footerName)
 	end
 
     fun dumpAccumProgram (path:string) (descName:string) (tyName:string) : unit = 
@@ -282,11 +283,11 @@ structure Printing = struct
                  ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getComps baseTy ) 
                  ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getComps rewrittenTy )
                  ; print "Finished printing Complexity\n"
-                 ; let val tyName = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
+                 ; let val (_, tyName, _) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
 						rewrittenTy numHeaders numFooters
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
-		       print ("Ty name ="^tyName^"\n");
+		       print ("Ty name = "^tyName^"\n");
 		       dumpAccumProgram path descName tyName;
 		       dumpAccumXMLProgram path descName tyName;
 		       dumpXMLProgram path descName tyName;
