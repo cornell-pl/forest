@@ -207,9 +207,6 @@ int main(int argc, char** argv) {
       error(2, "read returned error");
 #endif
     }
-#ifdef PADS_TRL_TY
-    P_io_commit(pads);
-#endif
 #ifdef EXTRA_GOOD_READ_CODE
     else {
       if (PADS_TY(_verify)(pads, rep EXTRA_READ_ARGS ) ) {  
@@ -217,6 +214,9 @@ int main(int argc, char** argv) {
       } else {  error(2, "read reported no errors but failed predicate test.");  } 
       EXTRA_GOOD_READ_CODE;
     }
+#endif
+#ifdef PADS_TRL_TY
+    P_io_commit(pads);
 #endif
     P_io_getPos(pads, &epos, 0);
     if (P_POS_EQ(bpos, epos)) {
