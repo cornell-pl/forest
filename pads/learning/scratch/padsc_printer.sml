@@ -7,6 +7,10 @@ open Ast
 			else ("\"" ^ s ^ "\"")
   | _ => ""
 
+  fun largeIntToStr i =
+      if i>=0 then LargeInt.toString i
+	  else "-"^(LargeInt.toString (~i))
+
   fun tyNameToPADSCString tyName =
      case tyName of 
        IRref s => upFirstChar s
@@ -52,7 +56,7 @@ open Ast
       EmptyField in the AST for Pempty*)
     | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
 		if x = 0 then "\tPempty" else
-		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (LargeInt.toString x)
+		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (largeIntToStr x)
     | FullField (v, t, sw, c) => 
 	let val tyname = tyNameToPADSCString t in
 	"\t" ^ tyname ^ " " ^  
@@ -64,7 +68,7 @@ open Ast
 	   SOME (consv, min, max, SOME eq) => 
 		let val consVal = 
 		(case eq of
-		   IntConst i => LargeInt.toString i
+		   IntConst i => largeIntToStr i
 		 | FloatConst (i, f) => i ^ f
 		 | _ => raise TyMismatch
 		)
@@ -91,7 +95,7 @@ open Ast
 	     NONE => "Ptypedef " ^ tyNameStr ^ " " ^ tyVarStr ^";\n"
 	   | SOME (var, NONE, NONE, SOME (IntConst i)) =>
 		     "Ptypedef " ^ tyNameStr ^ " " ^ tyVarStr ^" : " ^ tyVarStr ^ " " ^ var ^ 
-		     " => {" ^ var ^ " == " ^ (LargeInt.toString i) ^ "};\n"
+		     " => {" ^ var ^ " == " ^ (largeIntToStr i) ^ "};\n"
 	   | SOME (var, NONE, NONE, SOME (FloatConst (i, f))) =>
 		     "Ptypedef " ^ tyNameStr ^ " " ^ tyVarStr ^" : " ^ tyVarStr ^ " " ^ var ^ 
 		     " => {" ^ var ^ " == " ^ i ^"." ^ f ^ "};\n"
@@ -108,7 +112,7 @@ open Ast
 		  val swTyNameStr = tyNameToPADSCString swTyName 
 		  fun branchtoStr (e, f) = 
 		  case e of
-		    EnumInt i => "\tPcase " ^ (LargeInt.toString i) ^ ": " ^ (fieldToPADSC true f) ^ ";\n"
+		    EnumInt i => "\tPcase " ^ (largeIntToStr i) ^ ": " ^ (fieldToPADSC true f) ^ ";\n"
 		  | EnumVar v => "\tPcase " ^ v ^ ": " ^ (fieldToPADSC true f) ^ ";\n"
 		  | EnumDefault => "\tPdefault: " ^(fieldToPADSC true f) ^ ";\n"
 		in
@@ -124,7 +128,7 @@ open Ast
 		in "Parray " ^ tyVarStr ^ " {\n\t" ^ tyNameStr ^
 		         ("[" ^ 
 			    ( case len of 
-				SOME (IntConst x) => LargeInt.toString x
+				SOME (IntConst x) => largeIntToStr x
 				| _ => ""
 			    ) ^ "]" ^
 			    ( case sep of 
