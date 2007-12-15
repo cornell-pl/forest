@@ -41,7 +41,9 @@ open Ast
 
   fun fieldToPADSC f =
     case f of
-      StringField (SOME v, s) => "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
+      StringField (SOME v, s) => 
+		if isCIdentifier s then ("\t\"" ^ s ^ "\"")
+		else "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
     | StringField (NONE, s) => "\t\"" ^ (String.toCString s) ^ "\""
     | CharField (SOME v, s) => "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
     | CharField (NONE, s) => "\t'" ^ (String.toCString s) ^ "'" 
