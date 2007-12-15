@@ -39,10 +39,10 @@ open Ast
      | IRchar => "PPchar"
      | IRempty => "PPempty"
 
-  fun fieldToPADSC f =
+  fun fieldToPADSC isEnum f =
     case f of
       StringField (SOME v, s) => 
-		if isCIdentifier s then ("\t\"" ^ s ^ "\"")
+		if not isEnum andalso isCIdentifier s then ("\t\"" ^ s ^ "\"")
 		else "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
     | StringField (NONE, s) => "\t\"" ^ (String.toCString s) ^ "\""
     | CharField (SOME v, s) => "\t" ^ v ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")"
@@ -98,19 +98,19 @@ open Ast
 	   | _ => raise TyMismatch
 	  end
     	| TyStruct fields => "Pstruct " ^ tyVarStr ^ " {\n" ^ 
-				(String.concatWith ";\n" (map fieldToPADSC fields)) ^ ";\n};\n"
+				(String.concatWith ";\n" (map (fieldToPADSC false) fields)) ^ ";\n};\n"
 	| TyUnion fields => "Punion " ^ tyVarStr ^ " {\n" ^ 
-				(String.concatWith ";\n" (map fieldToPADSC fields)) ^ ";\n};\n"
+				(String.concatWith ";\n" (map (fieldToPADSC false) fields)) ^ ";\n};\n"
 	| TyEnum fields => "Penum " ^ tyVarStr ^ " {\n" ^ 
-				(String.concatWith ",\n" (map fieldToPADSC fields)) ^ "\n};\n"
+				(String.concatWith ",\n" (map (fieldToPADSC true) fields)) ^ "\n};\n"
 	| TySwitch (swVar, swTyName, branches) => 
 		let
 		  val swTyNameStr = tyNameToPADSCString swTyName 
 		  fun branchtoStr (e, f) = 
 		  case e of
-		    EnumInt i => "\tPcase " ^ (LargeInt.toString i) ^ ": " ^ (fieldToPADSC f) ^ ";\n"
-		  | EnumVar v => "\tPcase " ^ v ^ ": " ^ (fieldToPADSC f) ^ ";\n"
-		  | EnumDefault => "\tPdefault: " ^(fieldToPADSC f) ^ ";\n"
+		    EnumInt i => "\tPcase " ^ (LargeInt.toString i) ^ ": " ^ (fieldToPADSC true f) ^ ";\n"
+		  | EnumVar v => "\tPcase " ^ v ^ ": " ^ (fieldToPADSC true f) ^ ";\n"
+		  | EnumDefault => "\tPdefault: " ^(fieldToPADSC true f) ^ ";\n"
 		in
 		  "Punion " ^ tyVarStr ^ " (:" ^ swTyNameStr ^ " " ^ swVar ^ ":) {\n" ^
 		  "  Pswitch (" ^ swVar ^ ") {\n" ^
