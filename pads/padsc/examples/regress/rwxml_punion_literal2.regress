@@ -14,7 +14,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
   <f><val>34</val></f>
 </test>
 <test>
-  <star><val>star</val></star>
+  <star><val>*</val></star>
 </test>
 <test>
   <baz><val>baz</val></baz>
@@ -23,7 +23,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
   <f><val>356</val></f>
 </test>
 <test>
-  <star><val>star</val></star>
+  <star><val>*</val></star>
 </test>
 <test>
   <c><val>c</val></c>
@@ -32,7 +32,7 @@ warning: P_open: Installing default IO discipline : newline-terminated records
   <baz><val>baz</val></baz>
 </test>
 <test>
-  <star><val>star</val></star>
+  <star><val>*</val></star>
 </test>
 <test>
   <as><val>as</val></as>

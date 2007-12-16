@@ -61,6 +61,7 @@ structure PadsKeywords : sig
               ("Pended",T.Keyword),
               ("Pendian",T.Keyword),
               ("Penum", T.Keyword),
+              ("Pempty",T.Keyword),
               ("Peor", T.Keyword),
               ("Pforall", T.Keyword),
               ("Pfrom", T.Keyword),

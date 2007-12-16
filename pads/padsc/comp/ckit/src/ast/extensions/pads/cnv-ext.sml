@@ -189,6 +189,11 @@ structure CnvExt : CNVEXT = struct
 	case labelOpt of SOME s => labelOpt 
         | _ => extractString e
 
+    fun getExprAsString(e,labelOpt) = 
+	case extractString e of
+	   SOME s => PT.String s
+         | NONE   => (case labelOpt of SOME s => PT.String s | NONE => PT.String "Anon")
+
 
     fun CTtoString (ct:Ast.ctype) =  
 	let val underscore = !PPL.suppressTidUnderscores
@@ -7458,6 +7463,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			    in
 				P.mkBreakCase(PT.Id name, SOME caseSs)
 			    end
+(* buggy replaced by those below
 		      fun genWriteBriefBuf e = 
 			  case getString e of NONE => [] | 
 			      SOME s => let val writeFieldName = PL.cstrlitWriteBuf
@@ -7469,6 +7475,26 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  case getString e of NONE => [] | 
 			      SOME s => let val writeFieldName = PL.cstrlitWriteIO
 					    val caseSs = writeFieldIOSs(writeFieldName, [PT.String s], true)
+					in
+					    P.mkBreakCase(PT.Id s, SOME caseSs)
+					end
+*)
+		      fun genWriteBriefBuf e = 
+			  case getString e of 
+			       NONE   => [] | 
+			       SOME s => let val writeFieldName = PL.cstrlitWriteBuf
+					     val expArg = getExprAsString e
+					     val caseSs = writeFieldBufSs(writeFieldName, [expArg], true)
+					in
+					    P.mkBreakCase(PT.Id s, SOME caseSs)
+					end
+
+		      fun genWriteBriefIO e = 
+			  case getString e of 
+			      NONE   => [] | 
+			      SOME s => let val writeFieldName = PL.cstrlitWriteIO
+					    val expArg = getExprAsString e
+					    val caseSs = writeFieldIOSs(writeFieldName, [expArg], true)
 					in
 					    P.mkBreakCase(PT.Id s, SOME caseSs)
 					end
@@ -7517,7 +7543,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			    in
 				P.mkBreakCase(PT.Id name, SOME caseSs)
 			    end
-
+(* old & buggy, replaced by those below...
 		      fun genXMLWriteBriefBuf e = 
 			  case getString e of NONE => [] | 
 			      SOME s => let val writeXMLFieldName = PL.cstrlitWriteXMLBuf
@@ -7531,7 +7557,26 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 					    val caseSs = writeXMLFieldIOSs(writeXMLFieldName, [PT.String s], PT.String s, true, true, [])
 					in
 					    P.mkBreakCase(PT.Id s, SOME caseSs)
+					end *)
+		      fun genXMLWriteBriefBuf e  = 
+			  case getString e of 
+			      NONE => [] |
+			      SOME s => let val writeXMLFieldName = PL.cstrlitWriteXMLBuf
+					    val expArg = getExprAsString e
+					    val caseSs = writeXMLFieldBufSs(writeXMLFieldName, [expArg], PT.String s, true, true, [])
+					in
+					    P.mkBreakCase(PT.Id s, SOME caseSs)
 					end
+		      fun genXMLWriteBriefIO e  = 
+			  case getString e of 
+			      NONE => [] |
+			      SOME s => let val writeXMLFieldName = PL.cstrlitWriteXMLIO
+					    val expArg = getExprAsString e
+					    val caseSs = writeXMLFieldIOSs(writeXMLFieldName, [expArg], PT.String s, true, true, [])
+					in
+					    P.mkBreakCase(PT.Id s, SOME caseSs)
+					end
+
 		      fun genXMLWriteManBuf {tyname, name, args, isVirtual, expr, pred, comment} = 
 			  if isVirtual then
 			      P.mkCommentBreakCase(PT.Id name, "Pomit branch: cannot output", NONE)

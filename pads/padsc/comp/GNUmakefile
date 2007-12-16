@@ -4,6 +4,7 @@
 ifndef PADS_HOME
   export PADS_HOME=$(shell cd ../..; pwd)
 endif
+include $(PADS_HOME)/mk/rules.mk
 
 ifndef SML
   export SML=sml
@@ -40,9 +41,10 @@ clean:
 	@(cd ckit; x="`find . -name \*~`"; if [ "$$x"x != x ]; then echo "In ckit, removing:\n$$x"; $(RM) $$x; fi)
 
 veryclean: clean
-	@(echo "Removing .cm .bin files"; if [ -d .cm ]; then cd .cm; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In .cm, removing:\n$$x"; $(RM) $$x; fi; fi)
-	@(echo "Removing ckit .bin files"; cd ckit; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In ckit, removing:\n$$x"; $(RM) $$x; fi)
-	@(echo "Removing util .bin files"; cd util; x="`find . -name \*.bin`"; if [ "$$x"x != x ]; then echo "In util, removing:\n$$x"; $(RM) $$x; fi)
+	@(echo "Removing .cm .bin files"; if [ -d .cm ]; then cd .cm; x="`find . -name .cm`"; if [ "$$x"x != x ]; then echo "In .cm, removing:\n$$x"; $(RM) -rf $$x; fi; fi)
+	@(echo "Removing ckit .bin files"; cd ckit; x="`find . -name .cm`"; if [ "$$x"x != x ]; then echo "In ckit, removing:$$x"; $(RM) -rf $$x; fi)
+	@(echo "Removing util .bin files"; cd util; x="`find . -name .cm`"; if [ "$$x"x != x ]; then echo "In util, removing:$$x"; $(RM) -rf $$x; fi)
+	@(echo "Cleaning parser files"; cd ckit/src/parser/grammar; $(MAKE) -f Makefile clean)
 
 redo_all:
 	+@(for file in examples/p/*.p; do \

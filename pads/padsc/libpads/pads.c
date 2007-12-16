@@ -5281,6 +5281,10 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
     errno = EINVAL;
     return 0;
   }
+  if ((ptr == bytes + 1) && (bytes[0] == '.')){
+    errno = EINVAL;
+    return 0;
+  }
   if ((errno == ERANGE && d < 0) || (d < float_min)) {
     errno = ERANGE;
     return float_min;
@@ -5313,6 +5317,10 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
     errno = EINVAL;
     return 0;
   }
+  if ((ptr == bytes + 1) && (bytes[0] == '.')){
+    errno = EINVAL;
+    return 0;
+  }
   /* ignore all range errors, return potentially bogus wrapped/cast value */
   errno = 0; 
   return (targ_type)d;
@@ -5342,6 +5350,10 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
     (*ptr_out) = (Pbyte*)bytes;
   }
   if (ptr == bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  if ((ptr == bytes + 1) && (bytes[0] == '.')){
     errno = EINVAL;
     return 0;
   }
@@ -5417,6 +5429,10 @@ fn_name(const Pbyte *bytes, Pbyte **ptr_out)
     errno = EINVAL;
     return 0;
   }
+  if ((ascii_ptr == ascii_bytes + 1) && (ascii_bytes[0] == '.')){
+    errno = EINVAL;
+    return 0;
+  }
   if ((errno == ERANGE && d < 0) || (d < float_min)) {
     errno = ERANGE;
     return float_min;
@@ -5460,6 +5476,10 @@ fn_name ## _norange(const Pbyte *bytes, Pbyte **ptr_out)
     errno = EINVAL;
     return 0;
   }
+  if ((ascii_ptr == ascii_bytes + 1) && (ascii_bytes[0] == '.')){
+    errno = EINVAL;
+    return 0;
+  }
   /* ignore all range errors, return potentially bogus wrapped/cast value */
   errno = 0; 
   return (targ_type)d;
@@ -5499,6 +5519,10 @@ fn_name ## _max_bytes(const Pbyte *bytes, size_t max_bytes, Pbyte **ptr_out)
   }
   sfstrclose(tmpstr);
   if (ascii_ptr == ascii_bytes) {
+    errno = EINVAL;
+    return 0;
+  }
+  if ((ascii_ptr == ascii_bytes + 1) && (ascii_bytes[0] == '.')){
     errno = EINVAL;
     return 0;
   }
@@ -7824,7 +7848,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.213 2007-12-12 19:15:04 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.214 2007-12-16 07:42:17 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
