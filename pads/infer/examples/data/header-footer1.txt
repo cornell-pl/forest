@@ -1,0 +1,33 @@
+ * * * The login server table * * *
+ATSServer    78 kfisher  cwd     VDIR       14,2       1360        2 /
+ATSServer    78 kfisher    0r    VCHR        3,2        0t0 42534276 /dev/null
+ATSServer    78 kfisher    1w    VCHR        3,2        0t0 42534276 /dev/null
+ATSServer    78 kfisher    2w    VCHR        3,2   0t366596 42534276 /dev/null
+ATSServer    78 kfisher    3r  PSXSHM 0x02ba3a64       4096          obj=0x02cfd7b8
+ATSServer    78 kfisher    4r  PSXSHM 0x02b8f524       4096          obj=0x02c4ac70
+ATSServer    78 kfisher    5u    VREG       14,2     208896   986301 /Library/Caches/com.apple.ATS/503/filetoken.db
+ATSServer    78 kfisher    6u    VREG       14,2     159744   986302 /Library/Caches/com.apple.ATS/503/fonts.db
+ATSServer    78 kfisher    7u    VREG       14,2      45056   986303 /Library/Caches/com.apple.ATS/503/qdfams.db
+ATSServer    78 kfisher    8u    VREG       14,2      53248   986304 /Library/Caches/com.apple.ATS/503/annex.db
+ATSServer    78 kfisher    9u    VREG       14,2    7240376   986305 /Library/Caches/com.apple.ATS/503/annex_aux
+ATSServer    78 kfisher   10r    VREG       14,2    1135530   223061 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Resources/SynthDB.rsrc
+loginwind    79 kfisher  cwd     VDIR       14,2       1938   605072 /Users/kfisher
+loginwind    79 kfisher    0u    VCHR        3,2        0t0 42534276 /dev/null
+loginwind    79 kfisher    1u    VCHR        0,0      0t139 42535428 /dev/console
+loginwind    79 kfisher    2u    VCHR        0,0      0t139 42535428 /dev/console
+loginwind    79 kfisher    3r  PSXSHM 0x02b8fc24       4096          obj=0x02c4ac70
+loginwind    79 kfisher    4u    unix 0x028df990        0t0          ->0x028e1ad0
+loginwind    79 kfisher    5r  PSXSHM 0x02b8fc44       4096          obj=0x02cfd7b8
+loginwind    79 kfisher    6r    VREG       14,2     137827   223473 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Resources/HIToolbox.rsrc
+loginwind    79 kfisher    7r    VREG       14,2     498430   223409 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Resources/English.lproj/Localized.rsrc
+loginwind    79 kfisher    8w    VREG       14,2   15635145  8360222 /Library/Logs/console/503/console.log
+loginwind    79 kfisher    9u    VCHR        5,0 0t15635081 42533764 /dev/ptyp0
+loginwind    79 kfisher   10u    VCHR        4,0        0t0 42533892 /dev/ttyp0
+loginwind    79 kfisher   11r    VREG       14,2    5425091   223422 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Resources/Extras.rsrc
+pbs         265 kfisher  cwd     VDIR       14,2       1360        2 /
+pbs         265 kfisher  txt     VREG       14,2      55008   221672 /System/Library/CoreServices/pbs
+pbs         265 kfisher  txt     VREG       14,2      81316   221472 /System/Library/CoreServices/CharacterSets/CFUnicodeData-B.mapping
+pbs         265 kfisher  txt     VREG       14,2     352454   221470 /System/Library/CoreServices/CharacterSets/CFCharacterSetBitmaps.bitmap
+pbs         265 kfisher  txt     VREG       14,2      17688   221471 /System/Library/CoreServices/CharacterSets/CFUniCharPropertyDatabase.data
+pbs         265 kfisher  txt     VREG       14,2    1339392  9316730 /Library/Caches/com.apple.LaunchServices-014503.csstore
+--------- END ---------

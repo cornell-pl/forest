@@ -1,0 +1,807 @@
+       ALABAMA
+        Alexander City            32? 57' N     85? 57' W
+        Anniston AP               33? 35' N     85? 51' W
+        Auburn                    32? 36' N     85? 30' W
+        Birmingham AP             33? 34' N     86? 45' W
+        Decatur                   34? 37' N     86? 59' W
+        Dothan AP                 31? 19' N     85? 27' W
+        Florence AP               34? 48' N     87? 40' W
+        Gadsden                   34? 1' N      86? 0' W
+        Huntsville AP             34? 42' N     86? 35' W
+        Mobile AP                 30? 41' N     88? 15' W
+        Mobile Co                 30? 40' N     88? 15' W
+        Montgomery AP             32? 23' N     86? 22' W
+        Selma-Craig AFB           32? 20' N     87? 59' W
+        Talladega                 33? 27' N     86? 6' W
+        Tuscaloosa AP             33? 13' N     87? 37' W
+       ALASKA
+        Anchorage AP              61? 10' N    150? 1' W
+        Barrow (S)                71? 18' N    156? 47' W
+        Fairbanks AP (S)          64? 49' N    147? 52' W
+        Juneau AP                 58? 22' N    134? 35' W
+        Kodiak                    57? 45' N    152? 29' W
+        Nome AP                   64? 30' N    165? 26' W
+       ARIZONA
+        Douglas AP                31? 27' N    109? 36' W
+        Flagstaff AP              35? 8' N     111? 40' W
+        Fort Huachuca AP (S)      31? 35' N    110? 20' W
+        Kingman AP                35? 12' N    114? 1' W
+        Nogales                   31? 21' N    110? 55' W
+        Phoenix AP (S)            33? 26' N    112? 1' W
+        Prescott AP               34? 39' N    112? 26' W
+        Tucson AP (S)             32? 7' N     110? 56' W
+        Winslow AP                35? 1' N     110? 44' W
+        Yuma AP                   32? 39' N    114? 37' W
+       ARKANSAS
+        Blytheville AFB           35? 57' N     89? 57' W
+        Camden                    33? 36' N     92? 49' W
+        El Dorado AP              33? 13' N     92? 49' W
+        Fayetteville AP           36? 0' N      94? 10' W
+        Fort Smith AP             35? 20' N     94? 22' W
+        Hot Springs               34? 29' N     93? 6' W
+        Jonesboro                 35? 50' N     90? 42' W
+        Little Rock AP (S)        34? 44' N     92? 14' W
+        Pine Bluff AP             34? 18' N     92? 5' W
+        Texarkana AP              33? 27' N     93? 59' W
+       CALIFORNIA
+        Bakersfield AP            35? 25' N    119? 3' W
+        Barstow AP                34? 51' N    116? 47' W
+        Blythe AP                 33? 37' N    114? 43' W
+        Burbank AP                34? 12' N    118? 21' W
+        Chico                     39? 48' N    121? 51' W
+        Concord                   37? 58' N    121? 59' W
+        Covina                    34? 5' N     117? 52' W
+        Crescent City AP          41? 46' N    124? 12' W
+        Downey                    33? 56' N    118? 8' W
+        El Cajon                  32? 49' N    116? 58' W
+        El Cerrito AP (S)         32? 49' N    115? 40' W
+        Escondido                 33? 7' N     117? 5' W
+        Eureka/Arcata AP          40? 59' N    124? 6' W
+        Fairfield-Trafis AFB      38? 16' N    121? 56' W
+        Fresno AP (S)             36? 46' N    119? 43' W
+        Hamilton AFB              38? 4' N     122? 30' W
+        Laguna Beach              33? 33' N    117? 47' W
+        Livermore                 37? 42' N    121? 57' W
+        Lompoc, Vandenberg AFB    34? 43' N    120? 34' W
+        Long Beach AP             33? 49' N    118? 9' W
+        Los Angeles AP (S)        33? 56' N    118? 24' W
+        Los Angeles CO (S)        34? 3' N     118? 14' W
+        Merced-Castle AFB         37? 23' N    120? 34' W
+        Modesto                   37? 39' N    121? 0' W
+        Monterey                  36? 36' N    121? 54' W
+        Napa                      38? 13' N    122? 17' W
+        Needles AP                34? 36' N    114? 37' W
+        Oakland AP                37? 49' N    122? 19' W
+        Oceanside                 33? 14' N    117? 25' W
+        Ontario                   34? 3' N     117? 36' W
+        Oxnard                    34? 12' N    119? 11' W
+        Palmdale AP               34? 38' N    118? 6' W
+        Palm Springs              33? 49' N    116? 32' W
+        Pasadena                  34? 9' N     118? 9' W
+        Petaluma                  38? 14' N    122? 38' W
+        Pomona Co                 34? 3' N     117? 45' W
+        Redding AP                40? 31' N    122? 18' W
+        Redlands                  34? 3' N     117? 11' W
+        Richmond                  37? 56' N    122? 21' W
+        Riverside-March AFB (S)   33? 54' N    117? 15' W
+        Sacramento AP             38? 31' N    121? 30' W
+        Salinas AP                36? 40' N    121? 36' W
+        San Bernadino, Norton AFB 34? 8' N     117? 16' W
+        San Diego AP              32? 44' N    117? 10' W
+        San Fernando              34? 17' N    118? 28' W
+        San Francisco AP          37? 37' N    122? 23' W
+        San Francisco Co          37? 46' N    122? 26' W
+        San Jose AP               37? 22' N    121? 56' W
+        San Louis Obispo          35? 20' N    120? 43' W
+        Santa Ana AP              33? 45' N    117? 52' W
+        Santa Barbara MAP         34? 26' N    119? 50' W
+        Santa Cruz                36? 59' N    122? 1' W
+        Santa Maria AP (S)        34? 54' N    120? 27' W
+        Santa Monica CIC          34? 1' N     118? 29' W
+        Santa Paula               34? 21' N    119? 5' W
+        Santa Rosa                38? 31' N    122? 49' W
+        Stockton AP               37? 54' N    121? 15' W
+        Ukiah                     39? 9' N     123? 12' W
+        Visalia                   36? 20' N    119? 18' W
+        Yreka                     41? 43' N    122? 38' W
+        Yuba City                 39? 8' N     121? 36' W
+       COLORADO
+        Alamosa AP                37? 27' N    105? 52' W
+        Boulder                   40? 0' N     105? 16' W
+        Colorado Springs AP       38? 49' N    104? 43' W
+        Denver AP                 39? 45' N    104? 52' W
+        Durango                   37? 17' N    107? 53' W
+        Fort Collins              40? 45' N    105? 5' W
+        Grand Junction AP (S)     39? 7' N     108? 32' W
+        Greeley                   40? 26' N    104? 38' W
+        Lajunta AP                38? 3' N     103? 30' W
+        Leadville                 39? 15' N    106? 18' W
+        Pueblo AP                 38? 18' N    104? 29' W
+        Sterling                  40? 37' N    103? 12' W
+        Trinidad                  37? 15' N    104? 20' W
+       CONNECTICUT
+        Bridgeport AP             41? 11' N     73? 11' W
+        Hartford, Brainard Field  41? 44' N     72? 39' W
+        New Haven AP              41? 19' N     73? 55' W
+        New London                41? 21' N     72? 6' W
+        Norwalk                   41? 7' N      73? 25' W
+        Norwick                   41? 32' N     72? 4' W
+        Waterbury                 41? 35' N     73? 4' W
+        Widsor Locks, Bradley Fld 41? 56' N     72? 41' W
+       DELAWARE
+        Dover AFB                 39? 8' N      75? 28' W
+        Wilmington AP             39? 40' N     75? 36' W
+       DISTRICT OF COLUMBIA
+        Andrews AFB               38? 5' N      76? 5' W
+        Washington, National AP   38? 51' N     77? 2' W
+       FLORIDA
+        Belle Glade               26? 39' N     80? 39' W
+        Cape Kennedy AP           28? 29' N     80? 34' W
+        Daytona Beach AP          29? 11' N     81? 3' W
+        E Fort Lauderdale         26? 4' N      80? 9' W
+        Fort Myers AP             26? 35' N     81? 52' W
+        Fort Pierce               27? 28' N     80? 21' W
+        Gainsville AP (S)         29? 41' N     82? 16' W
+        Jacksonville AP           30? 30' N     81? 42' W
+        Key West AP               24? 33' N     81? 45' W
+        Lakeland Co (S)           28? 2' N      81? 57' W
+        Miami AP (S)              25? 48' N     80? 16' W
+        Miami Beach Co            25? 47' N     80? 17' W
+        Ocala                     29? 11' N     82? 8' W
+        Orlando AP                28? 33' N     81? 23' W
+        Panama City, Tyndall AFB  30? 4' N      85? 35' W
+        Pensacola Co              30? 25' N     87? 13' W
+        St. Augustine             29? 58' N     81? 20' W
+        St. Petersburg            27? 46' N     82? 80' W
+        Stanford                  28? 46' N     81? 17' W
+        Sarasota                  27? 23' N     82? 33' W
+        Tallahassee AP (S)        30? 23' N     84? 22' W
+        Tampa AP (S)              27? 58' N     82? 32' W
+        West Palm Beach AP        26? 41' N     80? 6' W
+       GEORGIA
+        Albany, Turner AFB        31? 36' N     84? 5' W
+        Americus                  32? 3' N      84? 14' W
+        Athens                    33? 57' N     83? 19' W
+        Atlanta AP (S)            33? 39' N     84? 26' W
+        Augusta AP                33? 22' N     81? 58' W
+        Brunswick                 31? 15' N     81? 29' W
+        Columbus, Lawson AFB      32? 31' N     84? 56' W
+        Dalton                    34? 34' N     84? 57' W
+        Dublin                    32? 20' N     82? 54' W
+        Gainsville                34? 11' N     83? 41' W
+        Griffin                   33? 13' N     84? 16' W
+        LaGrange                  33? 1' N      85? 4' W
+        Macon AP                  32? 42' N     83? 39' W
+        Marietta, Dobbins AFB     33? 55' N     84? 31' W
+        Savannah                  32? 8' N      81? 12' W
+        Valdosta-Moody AFB        30? 58' N     83? 12' W
+        Waycross                  31? 15' N     82? 24' W
+       HAWAII
+        Hilo AP (S)               19? 43' N    155? 5' W
+        Honolulu AP               21? 20' N    157? 55' W
+        Kaneohe Bay MCAS          21? 27' N    157? 46' W
+        Wahiawa                   21? 3' N     158? 2' W
+       IDAHO
+        Boise AP (S)              43? 34' N    116? 13' W
+        Burley                    42? 32' N    113? 46' W
+        Coeur D'Alene AP          47? 46' N    116? 49' W
+        Idaho Falls AP            43? 31' N    112? 4' W
+        Lewiston AP               46? 23' N    117? 1' W
+        Moscow                    46? 44' N    116? 58' W
+        Mountain Home AFB         43? 2' N     115? 54' W
+        Pocatello AP              42? 55' N    112? 36' W
+        Twin Falls AP (S)         42? 29' N    114? 29' W
+       ILLINOIS
+        Aurora                    41? 45' N     88? 20' W
+        Belleville, Scott AFB     38? 33' N     89? 51' W
+        Bloomington               40? 29' N     88? 57' W
+        Carbondale                37? 47' N     89? 15' W
+        Champaign/Urbana          40? 2' N      88? 17' W
+        Chicago, Midway AP        41? 47' N     87? 45' W
+        Chicago, O'Hare AP        41? 59' N     87? 54' W
+        Chicago Co                41? 53' N     87? 38' W
+        Danville                  40? 12' N     87? 36' W
+        Decatur                   39? 50' N     88? 52' W
+        Dixon                     41? 50' N     89? 29' W
+        Elgin                     42? 2' N      88? 16' W
+        Freeport                  42? 18' N     89? 37' W
+        Galesburg                 40? 56' N     90? 26' W
+        Greenville                38? 53' N     89? 24' W
+        Joliet                    41? 31' N     88? 10' W
+        Kankakee                  41? 5' N      87? 55' W
+        La Salle/Peru             41? 19' N     89? 6' W
+        Macomb                    40? 28' N     90? 40' W
+        Moline AP                 41? 27' N     90? 31' W
+        Mt Vernon                 38? 19' N     88? 52' W
+        Peoria AP                 40? 40' N     89? 41' W
+        Quincy AP                 39? 57' N     91? 12' W
+        Rantoul, Chanute AFB      40? 18' N     88? 8' W
+        Rockford                  42? 21' N     89? 3' W
+        Springfield AP            39? 50' N     89? 40' W
+        Waukegan                  42? 21' N     87? 53' W
+       INDIANA
+        Anderson                  40? 6' N      85? 37' W
+        Bedford                   38? 51' N     86? 30' W
+        Bloomington               39? 8' N      86? 37' W
+        Columbus, Bakalar AFB     39? 16' N     85? 54' W
+        Crawfordsville            40? 3' N      86? 54' W
+        Evansville AP             38? 3' N      87? 32' W
+        Fort Wayne AP             41? 0' N      85? 12' W
+        Goshen AP                 41? 32' N     85? 48' W
+        Hobart                    41? 32' N     87? 15' W
+        Huntington                40? 53' N     85? 30' W
+        Indianapolis AP           39? 44' N     86? 17' W
+        Jeffersonville            38? 17' N     85? 45' W
+        Kokomo                    40? 25' N     86? 3' W
+        Lafayette                 40? 2' N      86? 5' W
+        La Porte                  41? 36' N     86? 43' W
+        Marion                    40? 29' N     85? 41' W
+        Muncie                    40? 11' N     85? 21' W
+        Peru, Grissom AFB         40? 39' N     86? 9' W
+        Richmond AP               39? 46' N     84? 50' W
+        Shelbyville               39? 31' N     85? 47' W
+        South Bend AP             41? 42' N     86? 19' W
+        Terre Haute AP            39? 27' N     87? 18' W
+        Valparaiso                41? 31' N     87? 2' W
+        Vincennes                 38? 41' N     87? 32' W
+       IOWA
+        Ames (S)                  42? 2' N      93? 48' W
+        Burlington AP             40? 47' N     91? 7' W
+        Cedar Rapids AP           41? 53' N     91? 42' W
+        Clinton                   41? 50' N     90? 13' W
+        Council Bluffs            41? 20' N     95? 49' W
+        Des Moines AP             41? 32' N     93? 39' W
+        Dubuque                   42? 24' N     90? 42' W
+        Fort Dodge                42? 33' N     94? 11' W
+        Iowa City                 41? 38' N     91? 33' W
+        Keokuk                    40? 24' N     91? 24' W
+        Marshalltown              42? 4' N      92? 56' W
+        Mason City AP             43? 9' N      93? 20' W
+        Newton                    41? 41' N     93? 2' W
+        Ottumwa AP                41? 6' N      92? 27' W
+        Sioux City AP             42? 24' N     96? 23' W
+        Waterloo                  42? 33' N     92? 24' W
+       KANSAS
+        Atchison                  39? 34' N     95? 7' W
+        Chanute AP                37? 40' N     95? 29' W
+        Dodge City AP (S)         37? 46' N     99? 58' W
+        El Dorado                 37? 49' N     96? 50' W
+        Emporia                   38? 20' N     96? 12' W
+        Garden City AP            37? 56' N    100? 44' W
+        Goodland AP               39? 22' N    101? 42' W
+        Great Bend                38? 21' N     98? 52' W
+        Hutchinson AP             38? 4' N      97? 52' W
+        Liberal                   37? 3' N     100? 58' W
+        Manhattan, Ft Riley (S)   39? 3' N      96? 46' W
+        Parsons                   37? 20' N     95? 31' W
+        Russell AP                38? 52' N     98? 49' W
+        Salina                    38? 48' N     97? 39' W
+        Topeka AP                 39? 4' N      95? 38' W
+        Wichita AP                37? 39' N     97? 25' W
+       KENTUCKY
+        Ashland                   38? 33' N     82? 44' W
+        Bowling Green AP          35? 58' N     86? 28' W
+        Corbin AP                 36? 57' N     84? 6' W
+        Covington AP              39? 3' N      84? 40' W
+        Hopkinsville, Ft Campbell 36? 40' N     87? 29' W
+        Lexington AP (S)          38? 2' N      84? 36' W
+        Louisville AP             38? 11' N     85? 44' W
+        Madisonville              37? 19' N     87? 29' W
+        Owensboro                 37? 45' N     87? 10' W
+        Paducah AP                37? 4' N      88? 46' W
+       LOUISIANA
+        Alexandria AP             31? 24' N     92? 18' W
+        Baton Rouge AP            30? 32' N     91? 9' W
+        Bogalusa                  30? 47' N     89? 52' W
+        Houma                     29? 31' N     90? 40' W
+        Lafayette AP              30? 12' N     92? 0' W
+        Lake Charles AP (S)       30? 7' N      93? 13' W
+        Minden                    32? 36' N     93? 18' W
+        Monroe AP                 32? 31' N     92? 2' W
+        Natchitoches              31? 46' N     93? 5' W
+        New Orleans AP            29? 59' N     90? 15' W
+        Shreveport AP (S)         32? 28' N     93? 49' W
+       MAINE
+        Augusta AP                44? 19' N     69? 48' W
+        Bangor, Dow AFB           44? 48' N     68? 50' W
+        Caribou AP (S)            46? 52' N     68? 1' W
+        Lewiston                  44? 2' N      70? 15' W
+        Millinocket AP            45? 39' N     68? 42' W
+        Portland (S)              43? 39' N     70? 19' W
+        Waterville                44? 32' N     69? 40' W
+       MARYLAND
+        Baltimore AP              39? 11' N     76? 40' W
+        Baltimore Co              39? 20' N     76? 25' W
+        Cumberland                39? 37' N     78? 46' W
+        Frederick AP              39? 27' N     77? 25' W
+        Hagerstown                39? 42' N     77? 44' W
+        Salisbury (S)             38? 20' N     75? 30' W
+       MASSACHUSETTS
+        Boston AP                 42? 22' N     71? 2' W
+        Clinton                   42? 24' N     71? 41' W
+        Fall River                41? 43' N     71? 8' W
+        Framingham                42? 17' N     71? 25' W
+        Gloucester                42? 35' N     70? 41' W
+        Greenfield                42? 3' N      72? 4' W
+        Lawrence                  42? 42' N     71? 10' W
+        Lowell                    42? 39' N     71? 19' W
+        New Bedford               41? 41' N     70? 58' W
+        Pittsfield AP             42? 26' N     73? 18' W
+        Springfield, Westover AFB 42? 12' N     72? 32' W
+        Taunton                   41? 54' N     71? 4' W
+        Worcester AP              42? 16' N     71? 52' W
+       MICHIGAN
+        Adrian                    41? 55' N     84? 1' W
+        Alpena AP                 45? 4' N      83? 26' W
+        Battle Creek AP           42? 19' N     85? 15' W
+        Benton Harbor AP          42? 8' N      86? 26' W
+        Detroit                   42? 25' N     83? 1' W
+        Escanaba                  45? 44' N     87? 5' W
+        Flint AP                  42? 58' N     83? 44' W
+        Grand Rapids AP           42? 53' N     85? 31' W
+        Holland                   42? 42' N     86? 6' W
+        Jackson AP                42? 16' N     84? 28' W
+        Kalamazoo                 42? 17' N     85? 36' W
+        Lansing AP                42? 47' N     84? 36' W
+        Marquette Co              46? 34' N     87? 24' W
+        Mt Pleasant               43? 35' N     84? 46' W
+        Muskegon AP               43? 10' N     86? 14' W
+        Pontiac                   42? 40' N     83? 25' W
+        Port Huron                42? 59' N     82? 25' W
+        Saginaw AP                43? 32' N     84? 5' W
+        Sault Ste.  Marie AP (S)  46? 28' N     84? 22' W
+        Traverse City AP          44? 45' N     85? 35' W
+        Ypsilanti                 42? 14' N     83? 32' W
+       MINNESOTA
+        Albert Lea                43? 39' N     93? 21' W
+        Alexandria AP             45? 52' N     95? 23' W
+        Bemidji AP                47? 31' N     94? 56' W
+        Brainerd                  46? 24' N     94? 8' W
+        Duluth AP                 46? 50' N     92? 11' W
+        Fairbault                 44? 18' N     93? 16' W
+        Fergus Falls              46? 16' N     96? 4' W
+        International Falls AP    48? 34' N     93? 23' W
+        Mankato                   44? 9' N      93? 59' W
+        Minneapolis/St. Paul AP   44? 53' N     93? 13' W
+        Rochester AP              43? 55' N     92? 30' W
+        St.  Cloud AP (S)         45? 35' N     94? 11' W
+        Virginia                  47? 30' N     92? 33' W
+        Willmar                   45? 7' N      95? 5' W
+        Winona                    44? 3' N      91? 38' W
+       MISSISSIPPI
+        Biloxi--Keesler AFB       30? 25' N     88? 55' W
+        Clarksdale                34? 12' N     90? 34' W
+        Columbus AFB              33? 39' N     88? 27' W
+        Greenville AFB            33? 29' N     90? 59' W
+        Greenwood                 33? 30' N     90? 5' W
+        Hattiesburg               31? 16' N     89? 15' W
+        Jackson AP                32? 19' N     90? 5' W
+        Laurel                    31? 40' N     89? 10' W
+        Mccomb AP                 31? 15' N     90? 28' W
+        Meridian AP               32? 20' N     88? 45' W
+        Natchez                   31? 33' N     91? 23' W
+        Tupelo                    34? 16' N     88? 46' W
+        Vicksburg Co              32? 24' N     90? 47' W
+       MISSOURI
+        Cape Girardeau            37? 14' N     89? 35' W
+        Columbia AP (S)           38? 58' N     92? 22' W
+        Farmington AP             37? 46' N     90? 24' W
+        Hannibal                  39? 42' N     91? 21' W
+        Jefferson City            38? 34' N     92? 11' W
+        Joplin AP                 37? 9' N      94? 30' W
+        Kansas City AP            39? 7' N      94? 35' W
+        Kirksville AP             40? 6' N      92? 33' W
+        Mexico                    39? 11' N     91? 54' W
+        Moberly                   39? 24' N     92? 26' W
+        Poplar Bluff              36? 46' N     90? 25' W
+        Rolla                     37? 59' N     91? 43' W
+        St. Joseph AP             39? 46' N     94? 55' W
+        St. Louis AP              38? 45' N     90? 23' W
+        St. Louis CO              38? 39' N     90? 38' W
+        Sikeston                  36? 53' N     89? 36' W
+        Sedalia--Whiteman AFB     38? 43' N     93? 33' W
+        Sikeston                  36? 53' N     89? 36' W
+        Springfield AP            37? 14' N     93? 23' W
+       MONTANA
+        Billings AP               45? 48' N    108? 32' W
+        Bozeman                   45? 47' N    111? 9' W
+        Butte AP                  45? 57' N    112? 30' W
+        Cut Bank AP               48? 37' N    112? 22' W
+        Glasgow AP (S)            48? 25' N    106? 32' W
+        Glendive                  47? 8' N     104? 48' W
+        Great Falls AP (S)        47? 29' N    111? 22' W
+        Havre                     48? 34' N    109? 40' W
+        Helena AP                 46? 36' N    112? 0' W
+        Kalispell AP              48? 18' N    114? 16' W
+        Lewiston AP               47? 4' N     109? 27' W
+        Livingstown AP            45? 42' N    110? 26' W
+        Miles City AP             46? 26' N    105? 52' W
+        Missoula AP               46? 55' N    114? 5' W
+       NEBRASKA
+        Beatrice                  40? 16' N     96? 45' W
+        Chadron AP                42? 50' N    103? 5' W
+        Columbus                  41? 28' N     97? 20' W
+        Fremont                   41? 26' N     96? 29' W
+        Grand Island AP           40? 59' N     98? 19' W
+        Hastings                  40? 36' N     98? 26' W
+        Kearney                   40? 44' N     99? 1' W
+        Lincoln Co (S)            40? 51' N     96? 45' W
+        McCook                    40? 12' N    100? 38' W
+        Norfolk                   41? 59' N     97? 26' W
+        North Platte AP (S)       41? 8' N     100? 41' W
+        Omaha AP                  41? 18' N     95? 54' W
+        Scottsbluff AP            41? 52' N    103? 36' W
+        Sidney AP                 41? 13' N    103? 6' W
+       NEVADA
+        Carson City               39? 10' N    119? 46' W
+        Elko AP                   40? 50' N    115? 47' W
+        Ely AP (S)                39? 17' N    114? 51' W
+        Las Vegas AP (S)          36? 5' N     115? 10' W
+        Lovelock AP               40? 4' N     118? 33' W
+        Reno AP (S)               39? 30' N    119? 47' W
+        Reno Co                   39? 30' N    119? 47' W
+        Tonopah AP                38? 4' N     117? 5' W
+        Winnemucca AP             40? 54' N    117? 48' W
+       NEW HAMPSHIRE
+        Berlin                    44? 3' N      71? 1' W
+        Claremont                 43? 2' N      72? 2' W
+        Concord AP                43? 12' N     71? 30' W
+        Keene                     42? 55' N     72? 17' W
+        Laconia                   43? 3' N      71? 3' W
+        Manchester, Grenier AFB   42? 56' N     71? 26' W
+        Portsmouth, Pease AFB     43? 4' N      70? 49' W
+       NEW JERSEY
+        Atlantic City CO          39? 23' N     74? 26' W
+        Long Branch               40? 19' N     74? 1' W
+        Newark AP                 40? 42' N     74? 10' W
+        New Brunswick             40? 29' N     74? 26' W
+        Paterson                  40? 54' N     74? 9' W
+        Phillipsburg              40? 41' N     75? 11' W
+        Trenton Co                40? 13' N     74? 46' W
+        Vineland                  39? 29' N     75? 0' W
+       NEW MEXICO
+        Alamagordo?
+        Holloman AFB              32? 51' N    106? 6' W
+        Albuquerque AP (S)        35? 3' N     106? 37' W
+        Artesia                   32? 46' N    104? 23' W
+        Carlsbad AP               32? 20' N    104? 16' W
+        Clovis AP                 34? 23' N    103? 19' W
+        Farmington AP             36? 44' N    108? 14' W
+        Gallup                    35? 31' N    108? 47' W
+        Grants                    35? 10' N    107? 54' W
+        Hobbs AP                  32? 45' N    103? 13' W
+        Las Cruces                32? 18' N    106? 55' W
+        Los Alamos                35? 52' N    106? 19' W
+        Raton AP                  36? 45' N    104? 30' W
+        Roswell, Walker AFB       33? 18' N    104? 32' W
+        Santa Fe CO               35? 37' N    106? 5' W
+        Silver City AP            32? 38' N    108? 10' W
+        Socorro AP                34? 3' N     106? 53' W
+        Tucumcari AP              35? 11' N    103? 36' W
+       NEW YORK
+        Albany AP (S)             42? 45' N     73? 48' W
+        Albany Co                 42? 39' N     73? 45' W
+        Auburn                    42? 54' N     76? 32' W
+        Batavia                   43? 0' N      78? 11' W
+        Binghamton AP             42? 13' N     75? 59' W
+        Buffalo AP                42? 56' N     78? 44' W
+        Cortland                  42? 36' N     76? 11' W
+        Dunkirk                   42? 29' N     79? 16' W
+        Elmira AP                 42? 10' N     76? 54' W
+        Geneva (S)                42? 45' N     76? 54' W
+        Glens Falls               43? 20' N     73? 37' W
+        Gloversville              43? 2' N      74? 21' W
+        Hornell                   42? 21' N     77? 42' W
+        Ithaca (S)                42? 27' N     76? 29' W
+        Jamestown                 42? 7' N      79? 14' W
+        Kingston                  41? 56' N     74? 0' W
+        Lockport                  43? 9' N      79? 15' W
+        Massena AP                44? 56' N     74? 51' W
+        Newburgh, Stewart AFB     41? 30' N     74? 6' W
+        NYC-Central Park (S)      40? 47' N     73? 58' W
+        NYC-Kennedy AP            40? 39' N     73? 47' W
+        NYC-La Guardia AP         40? 46' N     73? 54' W
+        Niagara Falls AP          43? 6' N      79? 57' W
+        Olean                     42? 14' N     78? 22' W
+        Oneonta                   42? 31' N     75? 4' W
+        Oswego Co                 43? 28' N     76? 33' W
+        Plattsburg AFB            44? 39' N     73? 28' W
+        Poughkeepsie              41? 38' N     73? 55' W
+        Rochester AP              43? 7' N      77? 40' W
+        Rome, Griffiss AFB        43? 14' N     75? 25' W
+        Schenectady (S)           42? 51' N     73? 57' W
+        Suffolk County AFB        40? 51' N     72? 38' W
+        Syracuse AP               43? 7' N      76? 7' W
+        Utica                     43? 9' N      75? 23' W
+        Watertown                 43? 59' N     76? 1' W
+       NORTH CAROLINA
+        Asheville AP              35? 26' N     82? 32' W
+        Charlotte AP              35? 13' N     80? 56' W
+        Durham                    35? 52' N     78? 47' W
+        Elizabeth City AP         36? 16' N     76? 11' W
+        Fayetteville, Pope AFB    35? 10' N     79? 1' W
+        Goldsboro,Seymour-Johnson 35? 20' N     77? 58' W
+        Greensboro AP (S)         36? 5' N      79? 57' W
+        Greenville                35? 37' N     77? 25' W
+        Henderson                 36? 22' N     78? 25' W
+        Hickory                   35? 45' N     81? 23' W
+        Jacksonville              34? 50' N     77? 37' W
+        Lumberton                 34? 37' N     79? 4' W
+        New Bern AP               35? 5' N      77? 3' W
+        Raleigh/Durham AP (S)     35? 52' N     78? 47' W
+        Rocky Mount               35? 58' N     77? 48' W
+        Wilmington AP             34? 16' N     77? 55' W
+        Winston-Salem AP          36? 8' N      80? 13' W
+       NORTH DAKOTA
+        Bismarck AP (S)           46? 46' N    100? 45' W
+        Devils Lake               48? 7' N      98? 54' W
+        Dickinson AP              46? 48' N    102? 48' W
+        Fargo AP                  46? 54' N     96? 48' W
+        Grand Forks AP            47? 57' N     97? 24' W
+        Jamestown AP              46? 55' N     98? 41' W
+        Minot AP                  48? 25' N    101? 21' W
+        Williston                 48? 9' N     103? 35' W
+       OHIO
+        Akron-Canton AP           40? 55' N     81? 26' W
+        Ashtabula                 41? 51' N     80? 48' W
+        Athens                    39? 20' N     82? 6' W
+        Bowling Green             41? 23' N     83? 38' W
+        Cambridge                 40? 4' N      81? 35' W
+        Chillicothe               39? 21' N     83? 0' W
+        Cincinnati Co             39? 9' N      84? 31' W
+        Cleveland AP (S)          41? 24' N     81? 51' W
+        Columbus AP (S)           40? 0' N      82? 53' W
+        Dayton AP                 39? 54' N     84? 13' W
+        Defiance                  41? 17' N     84? 23' W
+        Findlay AP                41? 1' N      83? 40' W
+        Fremont                   41? 20' N     83? 7' W
+        Hamilton                  39? 24' N     84? 35' W
+        Lancaster                 39? 44' N     82? 38' W
+        Lima                      40? 42' N     84? 2' W
+        Mansfield AP              40? 49' N     82? 31' W
+        Marion                    40? 36' N     83? 10' W
+        Middletown                39? 31' N     84? 25' W
+        Newark                    40? 1' N      82? 28' W
+        Norwalk                   41? 16' N     82? 37' W
+        Portsmouth                38? 45' N     82? 55' W
+        Sandusky Co               41? 27' N     82? 43' W
+        Springfield               39? 50' N     83? 50' W
+        Steubenville              40? 23' N     80? 38' W
+        Toledo AP                 41? 36' N     83? 48' W
+        Warren                    41? 20' N     80? 51' W
+        Wooster                   40? 47' N     81? 55' W
+        Youngstown AP             41? 16' N     80? 40' W
+        Zanesville AP             39? 57' N     81? 54' W
+       OKLAHOMA
+        Ada                       34? 47' N     96? 41' W
+        Altus AFB                 34? 39' N     99? 16' W
+        Ardmore                   34? 18' N     97? 1' W
+        Bartlesville              36? 45' N     96? 0' W
+        Chickasha                 35? 3' N      97? 55' W
+        Enid, Vance AFB           36? 21' N     97? 55' W
+        Lawton AP                 34? 34' N     98? 25' W
+        McAlester                 34? 50' N     95? 55' W
+        Muskogee AP               35? 40' N     95? 22' W
+        Norman                    35? 15' N     97? 29' W
+        Oklahoma City AP (S)      35? 24' N     97? 36' W
+        Ponca City                36? 44' N     97? 6' W
+        Seminole                  35? 14' N     96? 40' W
+        Stillwater (S)            36? 10' N     97? 5' W
+        Tulsa AP                  36? 12' N     95? 54' W
+        Woodward                  36? 36' N     99? 31' W
+       OREGON
+        Albany                    44? 38' N    123? 7' W
+        Astoria AP (S)            46? 9' N     123? 53' W
+        Baker AP                  44? 50' N    117? 49' W
+        Bend                      44? 4' N     121? 19' W
+        Corvallis (S)             44? 30' N    123? 17' W
+        Eugene AP                 44? 7' N     123? 13' W
+        Grants Pass               42? 26' N    123? 19' W
+        Klamath Falls AP          42? 9' N     121? 44' W
+        Medford AP (S)            42? 22' N    122? 52' W
+        Pendleton AP              45? 41' N    118? 51' W
+        Portland AP               45? 36' N    122? 36' W
+        Portland Co               45? 32' N    122? 40' W
+        Roseburg AP               43? 14' N    123? 22' W
+        Salem AP                  44? 55' N    123? 1' W
+        The Dalles                45? 36' N    121? 12' W
+       PENNSYLVANIA
+        Allentown AP              40? 39' N     75? 26' W
+        Altoona Co                40? 18' N     78? 19' W
+        Butler                    40? 52' N     79? 54' W
+        Chambersburg              39? 56' N     77? 38' W
+        Erie AP                   42? 5' N      80? 11' W
+        Harrisburg AP             40? 12' N     76? 46' W
+        Johnstown                 40? 19' N     78? 50' W
+        Lancaster                 40? 7' N      76? 18' W
+        Meadville                 41? 38' N     80? 10' W
+        New Castle                41? 1' N      80? 22' W
+        Philadelphia AP           39? 53' N     75? 15' W
+        Pittsburgh AP             40? 30' N     80? 13' W
+        Pittsburgh Co             40? 27' N     80? 0' W
+        Reading Co                40? 20' N     75? 38' W
+        Scranton/Wilkes-Barre     41? 20' N     75? 44' W
+        State College (S)         40? 48' N     77? 52' W
+        Sunbury                   40? 53' N     76? 46' W
+        Uniontown                 39? 55' N     79? 43' W
+        Warren                    41? 51' N     79? 8' W
+        West Chester              39? 58' N     75? 38' W
+        Williamsport AP           41? 15' N     76? 55' W
+        York                      39? 55' N     76? 45' W
+       RHODE ISLAND
+        Newport (S)               41? 30' N     71? 20' W
+        Providence AP             41? 44' N     71? 26' W
+       SOUTH CAROLINA
+        Anderson                  34? 30' N     82? 43' W
+        Charleston AFB (S)        32? 54' N     80? 2' W
+        Charleston Co             32? 54' N     79? 58' W
+        Columbia AP               33? 57' N     81? 7' W
+        Florence AP               34? 11' N     79? 43' W
+        Georgetown                33? 23' N     79? 17' W
+        Greenville AP             34? 54' N     82? 13' W
+        Greenwood                 34? 10' N     82? 7' W
+        Orangeburg                33? 30' N     80? 52' W
+        Rock Hill                 34? 59' N     80? 58' W
+        Spartanburg AP            34? 58' N     82? 0' W
+        Sumter, Shaw AFB          33? 54' N     80? 22' W
+       SOUTH DAKOTA
+        Aberdeen AP               45? 27' N     98? 26' W
+        Brookings                 44? 18' N     96? 48' W
+        Huron AP                  44? 23' N     98? 13' W
+        Mitchell                  43? 41' N     98? 1' W
+        Pierre AP                 44? 23' N    100? 17' W
+        Rapid City AP (S)         44? 3' N     103? 4' W
+        Sioux Falls AP            43? 34' N     96? 44' W
+        Watertown AP              44? 55' N     97? 9' W
+        Yankton                   42? 55' N     97? 23' W
+       TENNESSEE
+        Athens                    35? 26' N     84? 35' W
+        Bristol-Tri City AP       36? 29' N     82? 24' W
+        Chattanooga AP            35? 2' N      85? 12' W
+        Clarksville               36? 33' N     87? 22' W
+        Columbia                  35? 38' N     87? 2' W
+        Dyersburg                 36? 1' N      89? 24' W
+        Greenville                36? 4' N      82? 50' W
+        Jackson AP                35? 36' N     88? 55' W
+        Knoxville AP              35? 49' N     83? 59' W
+        Memphis AP                35? 3' N      90? 0' W
+        Murfreesboro              34? 55' N     86? 28' W
+        Nashville AP (S)          36? 7' N      86? 41' W
+        Tullahoma                 35? 23' N     86? 5' W
+       TEXAS
+        Abilene AP                32? 25' N     99? 41' W
+        Alice AP                  27? 44' N     98? 2' W
+        Amarillo AP               35? 14' N    100? 42' W
+        Austin AP                 30? 18' N     97? 42' W
+        Bay City                  29? 0' N      95? 58' W
+        Beaumont                  29? 57' N     94? 1' W
+        Beeville                  28? 22' N     97? 40' W
+        Big Spring AP (S)         32? 18' N    101? 27' W
+        Brownsville AP (S)        25? 54' N     97? 26' W
+        Brownwood                 31? 48' N     98? 57' W
+        Bryan AP                  30? 40' N     96? 33' W
+        Corpus Christi AP         27? 46' N     97? 30' W
+        Corsicana                 32? 5' N      96? 28' W
+        Dallas AP                 32? 51' N     96? 51' W
+        Del Rio, Laughlin AFB     29? 22' N    100? 47' W
+        Denton                    33? 12' N     97? 6' W
+        Eagle Pass                28? 52' N    100? 32' W
+        El Paso AP (S)            31? 48' N    106? 24' W
+        Fort Worth AP (S)         32? 50' N     97? 3' W
+        Galveston AP              29? 18' N     94? 48' W
+        Greenville                33? 4' N      96? 3' W
+        Harlingen                 26? 14' N     97? 39' W
+        Houston AP                29? 58' N     95? 21' W
+        Houston Co                29? 59' N     95? 22' W
+        Huntsville                30? 43' N     95? 33' W
+        Killeen, Robert Gray AAF  31? 5' N      97? 41' W
+        Lamesa                    32? 42' N    101? 56' W
+        Laredo AFB                27? 32' N     99? 27' W
+        Longview                  32? 28' N     94? 44' W
+        Lubbock AP                33? 39' N    101? 49' W
+        Lufkin AP                 31? 25' N     94? 48' W
+        Mcallen                   26? 12' N     98? 13' W
+        Midland AP (S)            31? 57' N    102? 11' W
+        Mineral Wells AP          32? 47' N     98? 4' W
+        Palestine Co              31? 47' N     95? 38' W
+        Pampa                     35? 32' N    100? 59' W
+        Pecos                     31? 25' N    103? 30' W
+        Plainview                 34? 11' N    101? 42' W
+        Port Arthur AP            29? 57' N     94? 1' W
+        San Angelo?
+        Goodfellow AFB            31? 26' N    100? 24' W
+        San Antonio AP (S)        29? 32' N     98? 28' W
+        Sherman, Perrin AFB       33? 43' N     96? 40' W
+        Snyder                    32? 43' N    100? 55' W
+        Temple                    31? 6' N      97? 21' W
+        Tyler AP                  32? 21' N     95? 16' W
+        Vernon                    34? 10' N     99? 18' W
+        Victoria AP               28? 51' N     96? 55' W
+        Waco AP                   31? 37' N     97? 13' W
+        Wichita Falls AP          33? 58' N     98? 29' W
+       UTAH
+        Cedar City AP             37? 42' N    113? 6' W
+        Logan                     41? 45' N    111? 49' W
+        Moab                      38? 36' N    109? 36' W
+        Ogden AP                  41? 12' N    112? 1' W
+        Price                     39? 37' N    110? 50' W
+        Provo                     40? 13' N    111? 43' W
+        Richfield                 38? 46' N    112? 5' W
+        St George Co              37? 2' N     113? 31' W
+        Salt Lake City AP (S)     40? 46' N    111? 58' W
+        Vernal AP                 40? 27' N    109? 31' W
+       VERMONT
+        Barre                     44? 12' N     72? 31' W
+        Burlington AP (S)         44? 28' N     73? 9' W
+        Rutland                   43? 36' N     72? 58' W
+       VIRGINIA
+        Charlottesville           38? 2' N      78? 31' W
+        Danville AP               36? 34' N     79? 20' W
+        Fredericksburg            38? 18' N     77? 28' W
+        Harrisonburg              38? 27' N     78? 54' W
+        Lynchburg AP              37? 20' N     79? 12' W
+        Norfolk AP                36? 54' N     76? 12' W
+        Petersburg                37? 11' N     77? 31' W
+        Richmond AP               37? 30' N     77? 20' W
+        Roanoke AP                37? 19' N     79? 58' W
+        Staunton                  38? 16' N     78? 54' W
+        Winchester                39? 12' N     78? 10' W
+       WASHINGTON
+        Aberdeen                  46? 59' N    123? 49' W
+        Bellingham AP             48? 48' N    122? 32' W
+        Bremerton                 47? 34' N    122? 40' W
+        Ellensburg AP             47? 2' N     120? 31' W
+        Everett, Paine AFB        47? 55' N    122? 17' W
+        Kennewick                 46? 13' N    119? 8' W
+        Longview                  46? 10' N    122? 56' W
+        Moses Lake, Larson AFB    47? 12' N    119? 19' W
+        Olympia AP                46? 58' N    122? 54' W
+        Port Angeles              48? 7' N     123? 26' W
+        Seattle-Boeing Field      47? 32' N    122? 18' W
+        Seattle Co (S)            47? 39' N    122? 18' W
+        Seattle-Tacoma AP (S)     47? 27' N    122? 18' W
+        Spokane AP (S)            47? 38' N    117? 31' W
+        Tacoma, McChord AFB       47? 15' N    122? 30' W
+        Walla Walla AP            46? 6' N     118? 17' W
+        Wenatchee                 47? 25' N    120? 19' W
+        Yakima AP                 46? 34' N    120? 32' W
+       WEST VIRGINIA
+        Beckley                   37? 47' N     81? 7' W
+        Bluefield AP              37? 18' N     81? 13' W
+        Charleston AP             38? 22' N     81? 36' W
+        Clarksburg                39? 16' N     80? 21' W
+        Elkins AP                 38? 53' N     79? 51' W
+        Huntington Co             38? 25' N     82? 30' W
+        Martinsburg AP            39? 24' N     77? 59' W
+        Morgantown AP             39? 39' N     79? 55' W
+        Parkersburg Co            39? 16' N     81? 34' W
+        Wheeling                  40? 7' N      80? 42' W
+       WISCONSIN
+        Appleton                  44? 15' N     88? 23' W
+        Ashland                   46? 34' N     90? 58' W
+        Beloit                    42? 30' N     89? 2' W
+        Eau Claire AP             44? 52' N     91? 29' W
+        Fond Du Lac               43? 48' N     88? 27' W
+        Green Bay AP              44? 29' N     88? 8' W
+        La Crosse AP              43? 52' N     91? 15' W
+        Madison AP (S)            43? 8' N      89? 20' W
+        Manitowoc                 44? 6' N      87? 41' W
+        Marinette                 45? 6' N      87? 38' W
+        Milwaukee AP              42? 57' N     87? 54' W
+        Racine                    42? 43' N     87? 51' W
+        Sheboygan                 43? 45' N     87? 43' W
+        Stevens Point             44? 30' N     89? 34' W
+        Waukesha                  43? 1' N      88? 14' W
+        Wausau AP                 44? 55' N     89? 37' W
+       WYOMING
+        Casper AP                 42? 55' N    106? 28' W
+        Cheyenne                  41? 9' N     104? 49' W
+        Cody AP                   44? 33' N    109? 4' W
+        Evanston                  41? 16' N    110? 57' W
+        Lander AP (S)             42? 49' N    108? 44' W
+        Laramie AP (S)            41? 19' N    105? 41' W
+        Newcastle                 43? 51' N    104? 13' W
+        Rawlins                   41? 48' N    107? 12' W
+        Rock Springs AP           41? 36' N    109? 0' W
+        Sheridan AP               44? 46' N    106? 58' W
+        Torrington                42? 5' N     104? 13' W

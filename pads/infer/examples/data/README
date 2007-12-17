@@ -1,0 +1,34 @@
+Descriptions of files in this directory
+1967Transactions.short -- int*int*float*float*float; from a government web site
+                          has leading zeroes in first field
+                          detect floating point numbers?
+MER_T01_01.csv    -- Energy score, comma separated values, title header
+                     The inference system identifies the header, although not as such.
+       
+backup1.log       -- Cut down log file from C:WINDOWS/security/logs on Mogilny
+backup2.log       -- full version of backup1.log (different kinds of records)
+convert.log       -- same place as backup2.log but may be easier due to
+                      the presence of more core records
+ProfSec.log       -- another variant of backup2.log
+                     can paths end in .?
+		     should be able to further simplify Configure/Warning: array
+                     remaining trouble is related to lines with initial ----, 
+		      which are comment lines.
+SCESETUP.LOG      -- another variant of backup2.log
+                     now converted to ascii
+                     there is a hierarchical structure determined by the outdented lines
+                     is there some way to leverage this structure?
+
+dmesg             -- Log file from Linux /var/log on tux.cs.princeton.edu
+                      -- very hard -- huge record-level variation
+rpmpkgs           -- Log files from Linux /var/log on tux.cs.princeton.edu
+scrollkeeper.log  -- Log files from Linux /var/log on tux.cs.princeton.edu
+yum.log           -- Log files from Linux /var/log on tux.cs.princeton.edu
+
+netstat           -- produced from netstat tool: shows open network connections 
+netstat -an       -- as above, but with ip addresses rather than domain names
+lsof              -- output of lsof tool (on Kathleen's mac)
+crashreport.log(.kzhu) -- Log files from Mac OS X to record application crashes, located
+			  in /private/var/log/. Each entry consists of date and time of
+			  the crash, daemon name (crashreporterd or crashdump),
+			  the application process that crashed and a short message.
