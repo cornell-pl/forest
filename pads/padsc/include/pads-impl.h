@@ -25,8 +25,11 @@ Perror_t PDCI_regexp_cleanup(P_t *pads, Pregexp_t *regexp, const char *whatfn);
 #define PDCI_INIT_ECHO_TOKENS(pads) \
   do { \
     const char* fileName = getenv("ECHO_TOKEN"); \
-    if (!fileName) { fileName = "tokenFile"; };		 \
-    error(0, "Opening Echo Token file: %s\n", fileName); \
+    if (!fileName) {                                        \
+       fileName = "tokenFile";				    \
+    } else {                                                \
+       error(0, "Opening Echo Token file: %s\n", fileName); \
+    };							    \
     pads->tokenOut5 = sfopen(0, fileName,"w"); \
     if (!pads->tokenOut5) {error(0, "Error opening %s\n", fileName);}; \
   } while (0)  
