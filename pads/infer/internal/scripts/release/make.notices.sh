@@ -15,7 +15,7 @@ done
 
 echo inserting notices
 pwd
-insertCR scripts/release/sml.files  '(*)' kfisher+kzhu+white
+insertCR internal/scripts/release/sml.files  '(*)' kfisher+kzhu+white
 
 
     
