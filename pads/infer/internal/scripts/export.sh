@@ -1,5 +1,6 @@
 #!/bin/sh
-# this script should be run from the directory pads/infer
+# this script should be run from the directory pads/infer with tag as argument
+#  pads/infer>export.sh pads-infer-1-00-a
 # it will leave a tar ball at that level, and a directory pads_infer_remove_me
 # that is the source of the tar ball.
 #
@@ -20,13 +21,13 @@ bundlename=`echo $1 | awk -F "-" '{print $1"-"$2"."$3"."$4}'`
 echo $bundlename
 
 
-#in checked-out version oflearning system
+#in checked-out version of learning system
 cd infer 
-
+pwd
 echo Adding licenses
 # should be in infer directory
 # must do this before removing internal directory
-internal/scripts/make.notices.sh
+internal/scripts/release/make.notices.sh
 
 # remove internal directories/files
 rm -rf internal
@@ -41,12 +42,11 @@ for x in `cat data/RELEASE_DATA`; do cp data/$x temp_data; done
 rm -rf data
 mv temp_data data
 
-cd ..
-# now in infer directory
-
-echo taring the desired files
+cd ..  # now in infer directory
 cd ..  # now above checked out infer directory
+echo taring the desired files
+pwd
+
 echo building bundle
 tar cfz $bundlename.tar.gz 
-
 mv infer pads_infer_remove_me
