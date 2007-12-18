@@ -84,7 +84,7 @@ structure Main : sig
         ]
 
     fun processSwitches (execDir::args) = 
-	let val banner = PCL.genBanner("learn", "Prototype Learning System", flags)
+	let val banner = PCL.genBanner("learn", "PADS Learning System 1.0", flags)
 	in
 	   (PCL.parseArgs(args, flags, addSourceFile, banner);
 	    executableDir := execDir;

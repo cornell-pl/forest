@@ -51,9 +51,9 @@ if ($smltest !~ /^sml [\d.]+$/i) {
 
 my $arch_n_opsys = `$pads_home/scripts/arch-n-opsys` || "";
 $arch_n_opsys = &cleanupStr($arch_n_opsys);
-print "Arch_n_opsys is: $arch_n_opsys\n";
+#print "Arch_n_opsys is: $arch_n_opsys\n";
 
-my $learn_home = "$pads_home/learning/scratch";
+my $learn_home = "$pads_home/infer";
 my $cmd = "$sml \@SMLload=$learn_home/lib/learn.$arch_n_opsys $learn_home $args";
 exec $cmd;
 
