@@ -279,7 +279,7 @@ structure Printing = struct
 		 | Poption _ => () (* to be filled in *)
 	    fun cpFile src dest = 
 		let val fileName = path^src
-		    val destName = (!executableDir)^"/"^dest
+		    val destName = (!executableDir)^"/include/"^dest
 		    in
 			ignore (TextIO.openIn fileName)
 			    handle Iox => 
@@ -318,7 +318,6 @@ structure Printing = struct
 		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
 		   end
 		 ; print "Excutable directory:"; print (!executableDir); print "\n"
-                 ; print ( "descName.2 = " ^ descName ^ "\n")
                  ; cpMkFile()
                  ; cpFile "vanilla.p" "vanilla.p"
                  ; cpFile "tokens.p" "tokens.p"

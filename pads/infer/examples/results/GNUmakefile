@@ -1,7 +1,14 @@
+ifndef LEARN_HOME
+%:	forceabort
+	@echo "ERROR: environment variable LEARN_HOME must contain path to root of PADS inference system."
+	@exit 1
+forceabort: ;
+endif
+
 %-learn:
 	@(echo `pwd`)
 	@(if [ ! -d $* ]; then mkdir $*; fi)
-	$(PADS_HOME)/infer/scripts/learn -d $* -n $* -lex vanilla ../data/$*
+	$(LEARN_HOME)/scripts/learn -d $* -n $* -lex vanilla ../data/$*
 	@(echo "Generated PADS description $*.p and supporting files are in `pwd`/$*.")
 
 all:	ai.3000-learn

@@ -13,6 +13,17 @@ sub cleanupStr
 my $args=join(" ", @ARGV);
 
 my $pads_home = $ENV{"PADS_HOME"};
+if (length($pads_home) == 0) {
+  print "\n** Please set the PADS_HOME environment variable to the root of the PADS distribution.\n";
+  exit -1;
+}
+
+my $learn_home = $ENV{"LEARN_HOME"};
+if (length($learn_home) == 0) {
+  print "\n** Please set the LEARN_HOME environment variable to the root of the PADS inference system.\n";
+  exit -1;
+}
+
 my $sml;
 my $sml_from = "environment variable SML";
 chomp($sml = $ENV{'SML'});
@@ -53,7 +64,6 @@ my $arch_n_opsys = `$pads_home/scripts/arch-n-opsys` || "";
 $arch_n_opsys = &cleanupStr($arch_n_opsys);
 #print "Arch_n_opsys is: $arch_n_opsys\n";
 
-my $learn_home = "$pads_home/infer";
 my $cmd = "$sml \@SMLload=$learn_home/lib/learn.$arch_n_opsys $learn_home $args";
 exec $cmd;
 

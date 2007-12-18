@@ -52,9 +52,11 @@ all:	learn
 
 vanilla.lex:
 	../scripts/config.pl ../include/vanilla.config .
+	mv vanilla.p ../include/vanilla.p
 
 tokens.lex:
 	../scripts/config.pl ../include/tokens.config .
+	mv tokens.p ../include/tokens.p
 
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
@@ -91,6 +93,7 @@ versions:
 clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
 	$(RM) tokens.lex tokens.lex.sml vanilla.lex vanilla.lex.sml 
+	$(RM) ../include/tokens.p ../include/vanilla.p
 	$(RM) *~
 	$(RM) .DS_Store
 
