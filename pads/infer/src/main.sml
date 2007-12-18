@@ -83,11 +83,32 @@ structure Main : sig
          ("au",	      "run only the golden file",	                                                   PCL.String (setGoldenRun, true))
         ]
 
+    fun checkOutputDir() =(
+	print ("Output directory:"^(!outputDir)^".\n");
+	if not (OS.FileSys.isDir (!outputDir)) then 
+	    (print ("Specified output directory "^(!outputDir)^" must be a directory.\n") ;
+	     OS.Process.exit(OS.Process.failure))
+	else () )
+	    handle SysErr => ((
+			       print ("Specified output directory "^(!outputDir)^" does not exist. Trying to create it.\n");
+			       OS.FileSys.mkDir (!outputDir);
+			       print ("Succeeded in creating output directory "^(!outputDir)^".\n")
+			       ) handle SysErr => (print "Failed to creat output directory.\n"))
+    fun checkDescName() = 
+	if (!descName) = def_descName then
+	    let val dataFileName = List.hd (!srcFiles)
+		val {dir,file} = OS.Path.splitDirFile dataFileName
+	    in
+		descName := file
+	    end
+	else ()
     fun processSwitches (execDir::args) = 
 	let val banner = PCL.genBanner("learn", "PADS Learning System 1.0", flags)
 	in
 	   (PCL.parseArgs(args, flags, addSourceFile, banner);
 	    executableDir := execDir;
+	    checkOutputDir();
+	    checkDescName();
 	    if print_verbose=true then printParameters() else () )
 	end
     (********************************************************************************)

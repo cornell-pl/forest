@@ -295,7 +295,6 @@ structure Printing = struct
             fun cpTokenFile tokenFileName = cpFile tokenFileName tokenFileName
     	in  
           ( print "\nOutputing partitions to directory: "; print path; print "\n"
-          ; print ( "descName.1 = " ^ (descName) ^ "\n")
           ; if OS.FileSys.isDir path handle SysErr => 
 		(OS.FileSys.mkDir path; true)
             then ( dumpParameters (path ^ "Params") rewrittenTy
@@ -318,7 +317,6 @@ structure Printing = struct
                        dumpComputeTimes ( path ^ "Timing" ) ct; 
 		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
 		   end
-		 ; print "Excutable directory:"; print (!executableDir); print "\n"
                  ; cpMkFile()
                  ; cpFile "vanilla.p" "vanilla.p"
                  ; cpFile "tokens.p" "tokens.p"
