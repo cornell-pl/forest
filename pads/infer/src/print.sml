@@ -248,7 +248,8 @@ structure Printing = struct
 		  val () = TextIO.output(strm, "#!/usr/bin/perl\n$desc = \"" ^ descName ^ "\";\n" ^
 			"$datapath = \"" ^ datapath ^"\";\n")
 	    	  val () = TextIO.closeOut strm
-		  val status = OS.Process.system ("cat grapher.template >> " ^ path ^ descName ^ "-graph")
+		  val templatePath = (!executableDir)^"/scripts/grapher.template"
+		  val status = OS.Process.system ("cat "^templatePath^" >> " ^ path ^ descName ^ "-graph")
 		  val status = OS.Process.system ("chmod u+x "^ path ^ descName ^ "-graph")
 		in
 			()

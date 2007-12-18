@@ -1,6 +1,6 @@
 #!/bin/sh
 # this script should be run from the directory pads/infer with tag as argument
-#  pads/infer>internal/scripts/export.sh pads-infer-1-00-a
+#  pads/infer>internal/scripts/export-learn.sh pads-infer-1-00-a
 # it will leave a tar ball at that level, and a directory pads_infer_remove_me
 # that is the source of the tar ball.
 #

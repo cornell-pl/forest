@@ -16,7 +16,8 @@ generated tools by invoking:
 
 The compiler will put the generated executables into an architecture
 specific directory underneath the "test" directory.  You can then
-invoke any of these tools as follows:
+invoke any of these tools as follows, where "darwin.i386" is replaced
+by a string dependent upon your architecture:
 
  >cd examples/results/test
  >darwin.i386/test-accum ../../data/test
