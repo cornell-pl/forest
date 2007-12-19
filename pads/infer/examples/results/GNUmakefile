@@ -11,7 +11,7 @@ endif
 	$(LEARN_HOME)/scripts/learn -d $* -n $* -lex vanilla ../data/$*
 	@(echo "Generated PADS description $*.p and supporting files are in `pwd`/$*.")
 
-all:	ai.3000-learn
+example: ai.3000-learn
 	@(echo "Making ai.3000 in results/ai.3000")
 
 clean:
@@ -19,5 +19,6 @@ clean:
 	@(dirs=`find * -type d -maxdepth 0`; $(RM) -rf $$dirs)
 	@($(RM) *.~)
 
+default: example
 
 
