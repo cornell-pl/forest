@@ -11,7 +11,12 @@ while (<GRAPH>)
   $cols{$2} = $3;
  }
 }
-close GRAPH; 
+close GRAPH;
+$wheregnu = `which gnuplot`;
+if (!$wheregnu) {
+  print "GNUplot is not installed!\nGet it from http://www.gnuplot.info before running the grapher.\n";
+  exit;
+}
 if (!$params[0]) 
 {
  $sample = `tail -n 1 $datapath/$desc`;

@@ -71,12 +71,14 @@ of newline-separated ASCII data.
    linux.i386.
 
    To run the accumulator, xml-conversion, and formatting programs,
-   >ARCH/crashreporter.log-accum ../../examples/data/crashreporter.log
-   >ARCH/crashreporter.log-xml ../../examples/data/crashreporter.log
-   >ARCH/crashreporter.log-fmt ../../examples/data/crashreporter.log
+   >ARCH/crashreporter.log-accum ../examples/data/crashreporter.log
+   >ARCH/crashreporter.log-xml ../examples/data/crashreporter.log
+   >ARCH/crashreporter.log-fmt ../examples/data/crashreporter.log
 
-   The grapher tool is a generated Perl script. To run the
-   grapher tool, one has to first make the formatting tool by doing:
+   The grapher tool is a generated Perl script. To use the
+   grapher tool, you need to have a working gnuplot (you can get a copy
+   from http://www.gnuplot.info). To run the grapher, you first make 
+   the formatting tool by doing:
    >make crashreporter.log-fmt 
    as above
 
@@ -84,7 +86,7 @@ of newline-separated ASCII data.
    >./crashreporter.log-graph 
 
    to see detailed usage of the grapher. And example of use is:
-   >./crashreporter.log-graph -d ../../examples/data/crashreporter.log \
+   >./crashreporter.log-graph -d ../examples/data/crashreporter.log \
     -x 2 -y 5 -s impulses -t %H:%M:%S
 
 5. The directory examples contains the subdirectory data with many
