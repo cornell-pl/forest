@@ -32,7 +32,7 @@ ifneq ("$(AST_ARCH)","darwin.ppc")
   SML_PATH = $(SML) @SMLalloc=1M
 endif
 
-
+SML_ROOT_PATH=`dirname $(SML)`
 SML_VER = $(shell $(SML) '@SMLversion' | sed -e 's|.* ||')
 SML_MINOR_VER = $(shell echo $(SML_VER) | sed -e 's|.*[.]||')
 ifeq ($(SML_VER),$(SML_MINOR_VER))
@@ -60,11 +60,11 @@ tokens.lex:
 
 tokens.lex.sml: tokens.lex
 	@echo Running lexer generator
-	ml-ulex --ml-lex-mode tokens.lex
+	$(SML_ROOT_PATH)/ml-ulex --ml-lex-mode tokens.lex
 
 vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
-	ml-ulex --ml-lex-mode vanilla.lex
+	$(SML_ROOT_PATH)/ml-ulex --ml-lex-mode vanilla.lex
 
 learn:  tokens.lex.sml vanilla.lex.sml
 	@echo Making learning program
@@ -82,6 +82,7 @@ learn:  tokens.lex.sml vanilla.lex.sml
 versions:
 	@(echo SML = $(SML))
 	@(echo SML_PATH = $(SML_PATH))
+	@(echo SML_ROOT_PATH = $(SML_ROOT_PATH))
 	@(echo SML_VER = $(SML_VER))
 	@(echo SML_MINOR_VER = $(SML_MINOR_VER))
 	@(echo SML_MINOR_VER_TEST = $(SML_MINOR_VER_TEST))
