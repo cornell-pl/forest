@@ -1,4 +1,8 @@
 GNUmakefile 
+fmt_format_array.c
+fmt_format-bug.c
+fmt_format-bug2.c
+fmt_union_empty.c
 rw_pendian.c
 rw_newick.c
 rw_struct_good.c

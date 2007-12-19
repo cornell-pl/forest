@@ -29,6 +29,9 @@ format4.p
 format5.p 
 format6.p 
 format7.p 
+format-array.p
+format-bug.p
+format-bug2.p
 from.p 
 http.p 
 in_place.p 
@@ -83,3 +86,4 @@ transform.p
 try.p
 typedef.p 
 typedef2.p 
+union_empty.p

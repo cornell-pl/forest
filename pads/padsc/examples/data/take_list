@@ -7,6 +7,9 @@ format2
 format3
 format5
 format6
+format_array
+format-bug
+format-bug2
 readint
 punion_manifest
 punion_literal2
@@ -51,4 +54,4 @@ array_advance
 message-header-01
 transform
 try
-
+union_empty
