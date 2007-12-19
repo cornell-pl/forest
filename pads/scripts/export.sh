@@ -9,12 +9,11 @@
 #  . Be sure to update the take_lists in examples/{p,tests,data}
 #  . Make sure compiler is set to generate release version of compiler
 #  . Add tarball to pads-private/dist directory.
+#  . update bin/package.cvs if updated version of ast
 #
 # When you take a new set of tgz files from gsf you should take the
 # latest version of the bin/package script (which gets installed when it
 # unbundles and builds ast) and copy it to 'bin/package.cvs'
-
-
 
 # pads2005-03-07   pads 1.0     2005-03-07  
 # pads-1-01-a      pads 1.01    2006-01-26
@@ -31,6 +30,7 @@
 # pads-2-00-a      pads 2.00a   2007-06-06  changed license, fixed bug in plongest
 # pads-2-00-b      pads 2.00b   2007-06-06  various files I forgot to check in previously
 # pads-2-01-a      pads 2.01a   2007-12-18  upgrade to ast.2007-11-05, fixes to fmt program
+# pads-2-01-b      pads 2.01b   2007-12-18  package.cvs, binary data file added for runtime regression, missed .p file
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`
