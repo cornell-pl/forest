@@ -11,9 +11,10 @@
 #  . Add tarball to pads-private/dist directory.
 
 # pads-infer-1-00-a   pads 1.0  2007-12-17  initial release
+# pads-infer-1-00-b   pads 1.0  2007-12-17  added INSTALL_NOTES re bug in 110.65
 
-#cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads/infer
-cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -DNOW pads/infer
+cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads/infer
+#cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -DNOW pads/infer
 mv pads/infer infer
 rmdir pads
 
