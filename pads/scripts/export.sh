@@ -30,6 +30,7 @@
 # pads-1-04-e      pads 1.04e   2007-15-03  fixed bug in manual
 # pads-2-00-a      pads 2.00a   2007-06-06  changed license, fixed bug in plongest
 # pads-2-00-b      pads 2.00b   2007-06-06  various files I forgot to check in previously
+# pads-2-01-a      pads 2.01a   2007-12-18  upgrade to ast.2007-11-05, fixes to fmt program
 
 cvs -d :ext:cvs-graphviz.research.att.com:/cvsroot export -r $1 pads
 bundlename=`echo $1 | awk -F "-" '{print $1"."$2"."$3}'`
