@@ -377,6 +377,7 @@ struct
 	|  Purl i      => i
 	|  Pemail i      => i
 	|  Pmac i      => String.map (Char.toLower) i
+	|  Ptext i      => i
         |  PbXML (f,s) => "<"^f^" "^s^">"
         |  PeXML (f,s) => "</"^f^" "^s^">"
 	|  Pint (i, s)      =>
@@ -411,6 +412,7 @@ struct
 	|  Purl i      => "[URL]"
 	|  Pemail i      => "[Email]"
 	|  Pmac i      => "[MAC]"
+	|  Ptext i      => "[Text]"
         |  PbXML (f,s) => "bXML["^f^"]"
         |  PeXML (f,s) => "eXML["^f^"]"
 (*
@@ -817,6 +819,7 @@ struct
 	      | Pemail _ => "PPemail " ^ label'
 	      | Pmac _ => "PPmac " ^ label'
 	      | Pwhite _ => "PPwhite " ^ label'
+	      | Ptext _ => "PPtext " ^ label'
 	      | Other c => "PPchar " ^ label'
 	      | PbXML _ => "PPbXML " ^ label'
 	      | PeXML _ => "PPeXML "  ^ label'

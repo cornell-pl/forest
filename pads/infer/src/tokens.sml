@@ -83,14 +83,15 @@ structure Tokens = struct
 		     Pstring     of string |
                      Pgroup      of { left : LToken, body : LToken list, right : LToken } |
 	             Pwhite      of string |
+	             Ptext	 of string |
 		     Other       of char |
 		     Pempty |
 		     Error
     withtype LToken = Token * location
 
     (*    Establish an order on Token using the following constraints:
-          Ptime < Pdate < Pip< Phostname < Purl < Ppath < PbXML < PeXML < Pemail < Pmac < Pfloat < Pint <  Pstring < Pgroup <
-          Pwhite < Other < Pempty < Error
+          Ptime < Pdate < Pip< Phostname < Purl < Ppath < PbXML < PeXML < Pemail < Pmac < Pfloat < 
+	  Pint <  Pstring < Pgroup < Pwhite < Other < Pempty < Ptext < Error
      *)
     fun compToken (t1:Token, t2:Token):order = 
 	case (t1,t2) of
@@ -111,6 +112,7 @@ structure Tokens = struct
         |  (Pgroup g1, Pgroup g2)         => compToken(#1(#left g1), (#1(#left g2)))
         |  (Other c1, Other c2)           => Char.compare (c1, c2)
         |  (Pempty, Pempty)               => EQUAL
+        |  (Ptext _, Ptext _)           => EQUAL
         |  (Error, Error)                 => EQUAL
         |  (Ptime _, _)                   => LESS
         |  (Pdate _, Ptime _)             => GREATER
@@ -248,6 +250,23 @@ structure Tokens = struct
         |  (Other _, Pgroup _)            => GREATER
         |  (Other _, Pwhite _)            => GREATER
         |  (Other _, _)                   => LESS
+        |  (Ptext _, Ptime _)              => GREATER
+        |  (Ptext _, Pdate _)              => GREATER
+        |  (Ptext _, Pip _)                => GREATER
+        |  (Ptext _, Phostname _)          => GREATER
+        |  (Ptext _, Ppath _)              => GREATER
+        |  (Ptext _, Purl _)               => GREATER
+        |  (Ptext _, PbXML _)              => GREATER
+        |  (Ptext _, PeXML _)              => GREATER
+        |  (Ptext _, Pemail _)              => GREATER
+        |  (Ptext _, Pmac _)              => GREATER
+        |  (Ptext _, Pint _)               => GREATER
+        |  (Ptext _, Pfloat _)             => GREATER
+        |  (Ptext _, Pstring _)            => GREATER
+        |  (Ptext _, Pgroup _)             => GREATER
+        |  (Ptext _, Pwhite _)             => GREATER
+        |  (Ptext _, Other _)              => GREATER
+        |  (Ptext _, _)		 	   => LESS
         |  (Pempty, Ptime _)              => GREATER
         |  (Pempty, Pdate _)              => GREATER
         |  (Pempty, Pip _)                => GREATER
@@ -264,7 +283,8 @@ structure Tokens = struct
         |  (Pempty, Pgroup _)             => GREATER
         |  (Pempty, Pwhite _)             => GREATER
         |  (Pempty, Other _)              => GREATER
-        |  (Pempty, _)                    => LESS
+        |  (Pempty, Ptext _)              => GREATER
+        |  (Pempty, _)              	  => LESS
         |  (Error, _)                     => GREATER
 
     fun eqToken(t1,t2) = case compToken(t1,t2) of EQUAL => true | _ => false
@@ -350,6 +370,7 @@ structure Tokens = struct
              | Pint (n, s)    => size s (*ignore the length of the s as it's aux info*)
              | Pfloat (i,f)   => size (i) + size (f) 
              | Pstring s      => size s
+             | Ptext s      => size s
              | Pgroup grp     => 0
              | Pwhite s       => size s
              | Other c        => 1
@@ -398,6 +419,7 @@ structure Tokens = struct
 	|  Pfloat _    => "float"           
         |  Pstring s => "string"            (*" Pstring("^s^")"*)
         |  Pwhite s  => "white"             (*" Pwhite("^s^")"*) 
+        |  Ptext s  => "text"             (*" Pwhite("^s^")"*) 
         |  Pgroup {left, body, right} => "group"
         |  Other c   => "char"
         |  Pempty    => "empty"

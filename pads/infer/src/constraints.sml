@@ -34,6 +34,7 @@ structure BDOSet = RedBlackSetFn(struct
 	|	Pfloat (a, b) => String.size (a) + String.size (b)
 	|	Pstring s => String.size s
 	|	Pwhite c => String.size c
+	| 	Ptext(x) => String.size x
 	|	Other c => 1
 	| 	Pempty => 0
 	| 	_ => 0

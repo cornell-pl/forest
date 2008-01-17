@@ -38,6 +38,7 @@ struct
      | IRstringME s => "pstring_ME(\"" ^ s ^ "\")"
      | IRwhite => "ppwhite"
      | IRchar => "ppchar"
+     | IRtext => "pptext"
      | IRempty => "ppempty"
 
   fun fieldToPML isStruct f =

@@ -159,6 +159,9 @@ struct
 	|	Pwhite (t)  => if (String.isPrefix (matchedStr^t) s) then 
 				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
 			       else (NONE, tokens)
+	|	Ptext(t)  => if (String.isPrefix (matchedStr^t) s) then  
+				matchString s (matchedStr^t) newloc (List.drop (tokens, 1))
+			    else (NONE, tokens)
 	|	Other (c)  => let val t = str(c) 
 (*
 				val _ = print ("Trying to match char (" ^ matchedStr ^ t ^")\n")

@@ -54,6 +54,7 @@ structure Common = struct
 			| (Pemail(s1), Pemail(s2)) => String.compare(s1, s2)
 			| (Pmac(s1), Pmac(s2)) => String.compare(toLower s1, toLower s2)
 			| (Pwhite(s1), Pwhite(s2)) => String.compare(s1, s2)
+			| (Ptext(s1), Ptext(s2)) => String.compare(s1, s2)
 			| (Other(c1), Other(c2)) => Char.compare(c1, c2)
 			| _ => Structure.compToken(a, b)
 	
@@ -106,6 +107,7 @@ structure Common = struct
 	|	Pmac(t)  => (toLower t)
 	|	Pstring(str)  => str
 	|	Pwhite (str)  =>  str  
+	|	Ptext (str)  =>  str  
 	|	Other (c)  => str(c) 
 	| 	Pempty => "" 
 	|	_ => raise TyMismatch
@@ -126,6 +128,7 @@ structure Common = struct
 	|	Pmac(t)  => StringConst((toLower t))
 	|	Pstring(str)  => StringConst(str)
 	|	Pwhite (str)  =>  StringConst(str)  
+	|	Ptext (str)  =>  StringConst(str)  
 	|	Other(c)  =>  StringConst(Char.toString(c))  
 	| 	_ => StringConst("")
 
@@ -190,6 +193,7 @@ structure Common = struct
 		  | (Pstring(a), Pstring(b)) => (a = b)
 		  | (Pwhite(a), Pwhite(b)) => (a = b)
 		  | (Other(a), Other(b)) => (a = b)
+		  | (Ptext(a), Ptext (b)) => (a = b)
 		  | (Pempty, Pempty) => true
 		  (* ignoring Pgroup for now *)
 		  | _ => false
@@ -586,6 +590,7 @@ structure Common = struct
 					| Base(a1, (Purl _, _)::_) => true
 					| Base(a1, (Pemail _, _)::_) => true
 					| Base(a1, (Pmac _, _)::_) => true
+					| Base(a1, (Ptext _, _)::_) => true
 					| RefinedBase(_, IntConst x , _) => x > 99
 					| RefinedBase(_, StringConst s , _) => (size s) > 2
 					| _ => false

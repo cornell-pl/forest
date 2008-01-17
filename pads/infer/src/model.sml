@@ -185,6 +185,7 @@ structure Model = struct
                                          , dc  = unitComp
                                          }
                   | Pwhite s          => mkBaseComp avglen totlen numWhiteChars
+                  | Ptext s           => mkBaseComp avglen totlen numStringChars
                   | Other c           => mkBaseComp avglen totlen numOtherChars
                   | Pempty            => { tc  = constructorComp
                                          , adc = zeroComp

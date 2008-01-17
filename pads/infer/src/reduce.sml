@@ -1051,6 +1051,12 @@ case ty of
 				RefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
+		| SOME(Ptext(x)) => 
+			(
+				newcmos, 
+				RefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
 		| SOME(Other(x)) => 
 			(
 				newcmos, 

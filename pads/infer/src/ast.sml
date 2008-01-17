@@ -20,6 +20,7 @@ open Types
      | IRstringME of string
      | IRwhite 
      | IRchar 
+     | IRtext
      | IRempty 
 
   fun tokenToTypeName (t : Token ) : TypeName = 
@@ -39,6 +40,7 @@ open Types
         |  Pstring _ => IRstring       
         |  Pwhite _  => IRwhite         
         |  Other _   => IRchar
+        |  Ptext _   => IRtext
         |  Pempty    => IRempty
         |  _ => raise TyMismatch
 

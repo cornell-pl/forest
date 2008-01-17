@@ -41,6 +41,7 @@ open Ast
      | IRstringME s => "Pstring_ME(:\"" ^ s ^ "\":)"
      | IRwhite => "PPwhite"
      | IRchar => "PPchar"
+     | IRtext => "PPtext"
      | IRempty => "PPempty"
 
   fun fieldToPADSC isEnum f =
