@@ -77,9 +77,9 @@ struct
      | _ => raise TyMismatch
 
   fun irToPML ir = 
-    let val (isRecord, tyVar, tyDef) = ir
+    let val (levels2Rec, tyVar, tyDef) = ir
 	val tyVarStr = tyNameToPML tyVar
-  	val precord = if isRecord then "precord " else ""
+  	val precord = if levels2Rec = 0 then "precord " else ""
     in
       case tyDef of
         TyBase (tyName, cons_op) =>
@@ -140,6 +140,7 @@ struct
      fun tyToPADSML ty numHeaders numFooters includeFile =
         (* assume that if a ty has header and footer, the body is just one single Ty*)
         let
+	  val _ = tyMapRef := TyMap.empty
           val recordLabel = 
 	    if numHeaders>0 orelse numFooters>0 then
 		let val l = getLabelString (getAuxInfo ty)
@@ -148,11 +149,12 @@ struct
 		tyNameToPML (
                 case ty of
                   Base _ => getBaseTyName ty
+                | RefinedBase (_, Enum _, _) => getTypeName ty
                 | RefinedBase _ => getBaseTyName ty
                 | _ => getTypeName ty)
           val pads = "open "^ includeFile ^"\n" ^
                 (if numHeaders=0 andalso numFooters=0 then
-                    let val irTys = tyToIR true nil ty
+                    let val irTys = tyToIR 0 nil ty
                         val body = (lconcat (map irToPML irTys))
                     in
                         body ^
@@ -170,33 +172,30 @@ struct
                                 val footers = List.drop (tys, (numHeaders+1))
                                 val (headerVars, headerIRss) = ListPair.unzip (map 
 					(fn t => 
-					  let val irs = tyToIR true nil t
-					      val (isR, varTy, _) = List.last irs
-					  in ((isR, varTy), irs) end)  headers)
+					  let val irs = tyToIR 0 nil t
+					      val varTy = case TyMap.find (!tyMapRef, t) of
+							    NONE => raise TyMismatch
+							    | SOME n => tyNameToPML n
+					  in (varTy, irs) end)  headers)
 				val headerIRs = List.concat headerIRss
-                                val bodyIRs = tyToIR true nil body
-				val (isBodyR, bodyVar, _) = List.last bodyIRs
+                                val bodyIRs = tyToIR 0 nil body
+				val bodyVar = case TyMap.find (!tyMapRef, body) of
+						NONE => (print "no body\n"; raise TyMismatch)
+						| SOME n => tyNameToPML n
                                 val (footerVars, footerIRss) = ListPair.unzip (map 
 					(fn t => 
-					  let val irs = tyToIR true nil t
-					      val (isR, varTy, _) = List.last irs
-					  in ((isR, varTy), irs) end)  footers)
+					  let val irs = tyToIR 0 nil t
+					      val varTy = case TyMap.find (!tyMapRef, t) of
+							    NONE => (print "no footer\n"; raise TyMismatch)
+							    | SOME n => tyNameToPML n
+					  in (varTy, irs) end)  footers)
 				val footerIRs = List.concat footerIRss
                               in
-                                (case headerIRs of
-                                        nil => ""
-                                        | _ => (lconcat (map irToPML headerIRs)) 
-                                ) ^
-                                (lconcat (map irToPML bodyIRs)) ^
-                                (case footerIRs of
-                                        nil => ""
-                                        | _ => (lconcat (map irToPML footerIRs))
-                                ) ^
+                                (lconcat (map irToPML (headerIRs @ bodyIRs @ footerIRs))) ^
                                 "ptype " ^ recordLabel ^ " = " ^ 
-				(String.concatWith " * " (map 
-				  (fn (isrec, v) => 
-				      if isrec then "(" ^ (tyNameToPML v) ^ " precord)"
-				      else tyNameToPML v) (headerVars@[(isBodyR, bodyVar)]@footerVars))) ^
+				(lconcat (map (fn v => "(" ^ v ^ " precord) * ") headerVars)) ^ 
+				"(" ^ bodyVar ^ " precord plist (No_sep, No_term))" ^
+				(lconcat (map (fn v => " * (" ^ v ^ " precord)") footerVars)) ^ 
                                 "\n" 
                               end
                   | _ => raise TyMismatch

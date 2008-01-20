@@ -227,7 +227,6 @@ struct
          
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
     fun getIdString ( a : AuxInfo ) : string = String.extract ((getLabelString a), 4, NONE)
-
     fun getLabelForPADS ty =
 	let
 	  val label = getLabelString (getAuxInfo ty)

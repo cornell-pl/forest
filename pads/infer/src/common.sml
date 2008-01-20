@@ -490,11 +490,14 @@ structure Common = struct
     fun ty_equal (comparetype:int, ty1:Ty, ty2:Ty):bool = 
 	let
 		fun check_list(l1:Ty list,l2: Ty list):bool = 
-		let 
-			val bools = ListPair.map (fn (t1, t2) => ty_equal(comparetype, t1, t2)) (l1, l2)
-		in
+		if length l1 <> length l2 then false
+		else
+		  let 
+			val bools = ListPair.map (fn (t1, t2) => ty_equal(comparetype, t1, t2)) 
+			(l1, l2)
+		  in
 			foldr myand true bools
-		end
+		  end
 	in
 		case (ty1,ty2) of
 			(Base(_, tl1), Base (_, tl2)) => 
@@ -528,6 +531,7 @@ structure Common = struct
 				   refine_equal_op1(termop1, termop2) andalso
 				   ty_equal (comparetype, ty1, ty2) andalso
 				   refine_equal_op1(len1, len2)
+			| (Poption (_, ty1), Poption (_, ty2)) => ty_equal (comparetype, ty1, ty2)
 			| _ => false 
 		handle Size => (print "Size in ty_equal!\n" ; false)
 	end
@@ -677,4 +681,19 @@ case ty of
 	Parray (a, {tokens=t, lengths=l, first=removePempty f, 
 			body=removePempty b, last=removePempty la})
   | _ => ty
+
+  (*here we choose an arbitrary measure of type complexity to order the tys 
+  if they are not equal *)
+  fun tycompare (ty1: Ty, ty2: Ty) : order =
+	if ty_equal (1, ty1, ty2) then EQUAL
+	else let val comp1 = getTypeComp ty1
+		 val comp2 = getTypeComp ty2
+	     in if (Complexity.toReal comp1) <(Complexity.toReal comp2) then LESS
+		else GREATER	
+	     end
+  structure TyMap = SplayMapFn(
+    struct type ord_key = Ty
+  	   val compare = tycompare
+    end) 
+
 end

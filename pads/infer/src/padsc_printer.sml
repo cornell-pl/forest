@@ -82,9 +82,9 @@ open Ast
      | _ => raise TyMismatch
 
   fun irToPADSC irTy = 
-    let val (isRecord, tyVar, tyDef) = irTy
+    let val (levels2Rec, tyVar, tyDef) = irTy
 	val tyVarStr = tyNameToPADSCString tyVar
-  	val precord = if isRecord then "Precord " else ""
+  	val precord = if levels2Rec = 0 then "Precord " else ""
     in
       precord ^
       (
@@ -168,49 +168,28 @@ open Ast
 
      fun tyToPADSC ty numHeaders numFooters includeFile =
 	(* assume that if a ty has header and footer, the body is just one single Ty*)
+	(* there can be multiple headers or footers but each header/footer describes just one
+	   record, the headers and footers are all different from each other *)
 	let
-	  val bodyLabel = 
-	    if numHeaders>0 orelse numFooters>0 then
-		case ty of
-		  Punion (_, tys) => 
-		    let
-		      val body = List.nth (tys, numHeaders)
-		    in (tyNameToPADSCString (getTypeName body)) 
-		    end
-		  | _ => raise TyMismatch
-	    else
-		tyNameToPADSCString (
-		case ty of
-		  Base _ => getBaseTyName ty
-		| RefinedBase _ => getBaseTyName ty
-		| _ => getTypeName ty)
-	  val headerLabel = 
-	    if numHeaders = 0 then ""
-	    else if numHeaders = 1 then 
-		case ty of
-		  Punion (_, tys) => (tyNameToPADSCString (getTypeName (List.nth (tys, 0)))) 
-		  | _ => raise TyMismatch
-	    else "Header"
-	  val footerLabel = 
-	    if numFooters = 0 then ""
-	    else if numHeaders = 1 then 
-		case ty of
-		  Punion (_, tys) => (tyNameToPADSCString (getTypeName (List.nth (tys, (numHeaders+1))))) 
-		  | _ => raise TyMismatch
-	    else "Footer"
-
+	  val _ = tyMapRef := TyMap.empty
 	  val incString = "#include \""^ includeFile ^"\"\n" 
-	  val (pads, topLabel) =
-		(if numHeaders=0 andalso numFooters=0 then
-		    let val irTys = tyToIR true nil ty
+	  val (pads, topLabel, headerLabel, bodyLabel, footerLabel) =
+		if numHeaders=0 andalso numFooters=0 then
+		    let val irTys = tyToIR 0 nil ty
 			val body = (lconcat (map irToPADSC irTys))
+			val bodyLabel = tyNameToPADSCString (
+				case ty of
+		  		Base _ => getBaseTyName ty
+				| RefinedBase (_, Enum _, _) => getTypeName ty
+				| RefinedBase _ => getBaseTyName ty
+				| _ => getTypeName ty)
 		    in
 		       (incString ^
 			body ^
 			 "Psource Parray entries_t {\n" ^
 		    	 "\t" ^ bodyLabel ^ "[];\n" ^
 			 "};\n",
-			 "entries_t")
+			 "entries_t", "", bodyLabel, "")
 		    end
 		else 
 		  case ty of 
@@ -218,62 +197,87 @@ open Ast
 		      if (numHeaders + numFooters + 1) <> length tys then
 			raise Fail "Header Footer incorrect!"
 		      else 
-			      let
-				val headers = List.take (tys, numHeaders)
-				val body = List.nth (tys, numHeaders)
-				val footers = List.drop (tys, (numHeaders+1))
-				val headerIRs = List.concat (map (tyToIR true nil) headers)
-				val bodyIRs = tyToIR true nil body
-				val footerIRs = List.concat (map (tyToIR true nil) footers) 
-				val l = getLabelString (getAuxInfo ty)
-	    			val topLabel = "Struct_" ^ (String.extract (l, 4, NONE))
-			      in
+			let
+			val headers = List.take (tys, numHeaders)
+			val body = List.nth (tys, numHeaders)
+			val footers = List.drop (tys, (numHeaders+1))
+                        val l = getLabelString (getAuxInfo ty)
+                        val topLabel = "Struct_" ^ (String.extract (l, 4, NONE))
+			val headerty = case headers of
+					nil => NONE
+					| [h] => SOME h
+					| hdrs => (*create struct with dummy auxinfo*)
+					  let val hdraux = mkTyAux 0 in
+					  SOME (Pstruct (hdraux, hdrs)) end
+			val footerty = case footers of
+					nil => NONE
+					| [f] => SOME f
+					| ftrs => (*create struct with dummy auxinfo*)
+					  let val ftraux = mkTyAux 0 in
+					  SOME (Pstruct (ftraux, ftrs)) end
+			(* header can't be found in the tyMap so use getTypeName for label *)
+			val headerLabel = case headerty of
+					      SOME h => 
+						tyNameToPADSCString (
+						case h of
+		  				Base _ => getBaseTyName h
+						| RefinedBase (_, Enum _, _) => getTypeName h
+						| RefinedBase _ => getBaseTyName h
+						| _ => getTypeName h)
+					      | NONE => ""
+			val hdIRs = case length headers of
+				0 => nil
+				| 1 => tyToIR 0 nil (some headerty) 
+				| _ => tyToIR 1 nil (some headerty)
+			(* body may be found after tyToIR for the header so need to check *)
+			val bodyLabel = tyNameToPADSCString (
+					case TyMap.find (!tyMapRef, body) of
+					SOME n => n
+					| _ => 
+					  (case body of
+		  			  Base _ => getBaseTyName body
+					  | RefinedBase (_, Enum _, _) => getTypeName body
+					  | RefinedBase _ => getBaseTyName body
+					  | _ => getTypeName body)
+					)
+
+			val bodyIRs = tyToIR 0 nil body
+			(* footer may be found after tyToIR for the header and body so need to check *)
+			val footerLabel = case footerty of
+					    SOME f =>
+					      tyNameToPADSCString (
+					      case TyMap.find (!tyMapRef, f) of
+					      SOME n => n
+					      | _ => 
+					      (
+					        case f of
+		  				Base _ => getBaseTyName f
+						| RefinedBase (_, Enum _, _) => getTypeName f
+						| RefinedBase _ => getBaseTyName f
+						| _ => getTypeName f)
+					      )
+					    | NONE => ""
+			val ftIRs = case length footers of
+				0 => nil
+				| 1 => tyToIR 0 nil (some footerty)
+				| _ => tyToIR 1 nil (some footerty)
+			in
 			        (incString ^
-				 (case headerIRs of
-					nil => ""
-					| _ => (lconcat (map irToPADSC headerIRs)) 
-				 ) ^
-				(case headerIRs of
-					nil => ""
-					| [_] => ""
-					| _ => "Pstruct Header {\n" ^
-					  (String.concat (map 
-					  (fn t => ("\t" ^ tyNameToPADSCString (getTypeName t) ^ " " ^
-						getVar t ^ ";\n")) 
-					  headers)) ^ "};\n"
-				) ^
-				(lconcat (map irToPADSC bodyIRs)) ^
-				(case footerIRs of
-					nil => ""
-					| _ => (lconcat (map irToPADSC footerIRs))
-				) ^
-				(case footerIRs of
-					nil => ""
-					| [_] => ""
-					| _ => "Pstruct Footer {\n" ^
-					  (String.concat (map 
-					  (fn t => ("\t" ^ tyNameToPADSCString (getTypeName t) ^ " " ^
-						getVar t ^ ";\n")) 
-					  footers)) ^ "};\n"
-				) ^
+				 lconcat (map irToPADSC (hdIRs @ bodyIRs @ ftIRs)) ^
 				"Psource Pstruct " ^ topLabel ^ " {\n" ^
-				(case headerIRs of
-					nil => ""
-					| [_] => "\t" ^ headerLabel ^ " " ^ getVar (hd headers) ^ ";\n"
-					| _ => "\tHeader v_header;\n"
-				) ^
-				("\t" ^ (tyNameToPADSCString (getTypeName body)) ^ 
-					"[] " ^ (getVar body) ^" : Plongest;\n") ^
-				(case footerIRs of 
-					nil => ""
-					| [_] => "\t" ^ footerLabel ^ " " ^ getVar (hd footers) ^ ";\n"
-					| _ => "\tFooter v_footer;\n"
-				) ^
-				"};\n",
-				topLabel)
+                                (case headerty of
+                                        NONE => ""
+                                        | SOME h => "\t" ^ headerLabel ^ " v_" ^ headerLabel ^ ";\n"
+                                ) ^
+                                ("\t" ^ bodyLabel ^ "[] v_" ^ bodyLabel ^" : Plongest;\n") ^
+                                (case footerty of 
+                                        NONE => ""
+                                        | SOME f => "\t" ^ footerLabel ^ " v_" ^ footerLabel ^ ";\n"
+                                ) ^
+                                "};\n",
+				topLabel, headerLabel, bodyLabel, footerLabel)
 			      end
 		  | _ => raise TyMismatch
-		)
 	in
 	  (topLabel, headerLabel, bodyLabel, footerLabel, pads)
 	end 

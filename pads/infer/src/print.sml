@@ -89,7 +89,7 @@ structure Printing = struct
 *)
             val (topName, headerName, bodyName, footerName, desc) = 
 		tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
-            val descml = tyToPADSML ty numHeaders numFooters ("Build_ins")
+            val descml = tyToPADSML ty numHeaders numFooters ("Build_ins") 
             val () = TextIO.output(strmc,desc )
             val () = TextIO.output(strmml, descml )
 	    val () = TextIO.closeOut strmc
