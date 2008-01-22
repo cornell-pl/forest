@@ -6,6 +6,8 @@
 # 1. To compile the learning program, just type "make".
 #    Note: This will not modify the script "learn". Instead, it
 #          produces an updated file in the subdirectory "lib".
+#    To do a regression test type "make regress"
+#
 # 2. To run a test case, e.g. yum.txt, type "make yum.txt"
 #    This will check if the output in the output/yum.txt directory
 #    is up to date with respect the the input data/yum.txt. If
@@ -104,62 +106,17 @@ SML_MINOR_VER = 0
 endif
 SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT39)
 BUILD_EXEC = build-exec.sml
-
+SRC = $(LEARN_HOME)/src
+INCLUDE = $(LEARN_HOME)/include
+SCRIPTS = $(LEARN_HOME)/scripts
 all:	learn
+
+learn:
+	@(echo "Making the learning tool.")
+	@(cd $(SRC); $(MAKE) -f GNUmakefile all)
 
 junk:
 	@echo $(P1)
-
-vanilla.lex:
-	./config.pl vanilla.config
-
-tokens.lex:
-	./config.pl tokens.config
-
-tokens.lex.sml: tokens.lex
-	@echo Running lexer generator
-	ml-ulex --ml-lex-mode tokens.lex
-	#lexgen --ml-lex-mode tokens.lex
-
-vanilla.lex.sml: vanilla.lex
-	@echo Running lexer generator
-	ml-ulex --ml-lex-mode vanilla.lex
-	#lexgen --ml-lex-mode vanilla.lex
-
-learn:  common.sml
-learn:  complexity.sml
-learn:  config.sml
-learn:  distribution.sml
-learn:  functionaldep.sml
-learn:  gold.sml
-learn:  hosts.sml
-learn:	main.sml
-learn:  matrix.sml
-learn:  model.sml
-learn:  partition.sml
-learn:  options.sml
-learn:  parseCmdLine.sml
-learn:  parseCmdLine-sig.sml
-learn:  populate.sml
-learn:  print.sml
-learn:  rat.sml
-learn:  reduce.sml
-learn:  rewrite.sml
-learn:  structure.sml
-learn:  vanilla.lex.sml
-learn:  table.sml
-learn:  times.sml
-learn:  tokens.lex.sml
-learn:  types.sml
-learn:  utils.sml
-learn:  ast.sml
-learn:  padsc_printer.sml
-learn:  padsml_printer.sml
-
-	@echo Making learning program
-	nice -n20 $(SML_PATH) < $(BUILD_EXEC)
-	@echo
-
 ######################################################################
 #
 # Silver version infrastructure
@@ -171,20 +128,23 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
-GOLDENDATA :=  quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log crashreporter.log.modified railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an
+GOLDENDATA := quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 ai-simple dibbler.1000 crashreporter.log crashreporter.log.modified railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))
-XS       = $(addsuffix .x,x $(DATA))
+XS       = $(addsuffix .x,$(GOLDENDATA))
 TESTS    = $(addsuffix .test,$(DATA))
 TRAINS   = $(addsuffix .train,$(DATA))
 
 .PHONY: $(DATA)
 .PHONY: x
 
-# For testing
-$(XS): %.x: %
-	echo $^
+# The following is for regression testing
+$(XS): %.x: data/% learn
+	$(SCRIPTS)/learn $<
+	@(cd gen; make $(<F)-accum; $(AST_ARCH)/$(<F)-accum ../$<)
+
+regress: $(XS)
 
 silvers: $(SILVERS)
 	echo Making silver version of each data file output
@@ -396,8 +356,6 @@ foo:
 
 .PHONY : clean
 clean:
-	$(RM) lib/learn.$(ARCH_N_OPSYS)
-	$(RM) tokens.lex.sml vanilla.lex.sml vanilla.lex tokens.lex
 	$(RM) *~
 	$(RM) data/*chunk*
 	$(RM) .DS_Store
