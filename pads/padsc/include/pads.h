@@ -1240,6 +1240,8 @@ struct Ploc_s {
 void PD_COMMON_INIT(void *pd);
 void PD_COMMON_INIT_NO_ERR(void *pd);
 void PD_COMMON_READ_INIT(P_t *pads,void *pd);
+
+void PDCI_ECHO_TOKEN_PREFIX (P_t *pads,char *name);
 #endif
 
 /* type Pbase_pd: */

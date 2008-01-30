@@ -7848,7 +7848,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.214 2007-12-16 07:42:17 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.215 2008-01-30 06:50:02 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -11279,6 +11279,7 @@ PDCI_char_lit_match(P_t *pads, Pchar f, int eat_f,
   if (f == (*begin)) {
     if (eat_f) {
       PDCI_IO_FORWARD(1, goto fatal_forward_err);
+      PDCI_ECHO_TOKEN(pads, "Char_lit_match",begin,end);
     }
     return P_OK;
   }
@@ -11335,6 +11336,7 @@ PDCI_str_lit_match(P_t *pads, const Pstring *f, int eat_f,
   if (strncmp((char*)begin, tmp_f->str, width) == 0) {
     if (eat_f) {
       PDCI_IO_FORWARD(width, goto fatal_forward_err);
+      PDCI_ECHO_TOKEN(pads, "Str_lit_match",begin,end);
     }
     return P_OK;
   }

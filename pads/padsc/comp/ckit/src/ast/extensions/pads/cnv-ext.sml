@@ -9102,6 +9102,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val () = ignore (insTempVar(rep, P.ptrPCT canonicalPCT)) (* add modrep to scope *)
 		  val () = ignore (List.map insTempVar cParams)  (* add params for type checking *)
 		  val bodySs = genReadBodySs modifiers
+		  fun wrapTokenPrefix name bodySs = 
+		      PT.Expr(PT.Call(PT.Id "PDCI_ECHO_TOKEN_PREFIX", [PT.Id pads, PT.String name])) :: bodySs
+		  val bodySs = wrapTokenPrefix name bodySs
 		  val _ = popLocalEnv()                                         (* remove scope *)
 
 		  val readFunEDs = genReadFun(readName, cParams, 

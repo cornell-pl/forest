@@ -201,7 +201,7 @@ void PDCI_FMT2IO_USE_FMT2BUF_FN(const char *whatfn, ssize_t fmt2buf_call);
 
 void PDCI_STANDARD_FMT2BUF_INIT(Pbase_m m, int *requestedOut);
 void PDCI_STANDARD_FMT2IO_INIT(Pbase_m m, int *requestedOut);
-
+void PDCI_ECHO_TOKEN_PREFIX(P_t *p, const char *whatfun);
 #else
 /* The actual impls */
 

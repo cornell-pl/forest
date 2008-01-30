@@ -23,3 +23,8 @@ final:  popl050-fisher.tex pads.bib discussion.tex definitions.tex intro.tex rev
 	latex popl050-fisher.tex; 
 	latex popl050-fisher.tex; latex popl050-fisher.tex; dvips popl050-fisher.dvi -o popl050-fisher.ps -t letter 
 	dvipdf popl050-fisher.dvi
+
+xchicago:  fisher-xchicago.tex pads.bib discussion.tex definitions.tex intro.tex review.tex algorithm.tex conclusion.tex appendix.tex abstract.tex
+	latex fisher-xchicago.tex; 
+	latex fisher-xchicago.tex; latex fisher-xchicago.tex; dvips fisher-xchicago.dvi -o fisher-xchicago.ps -t letter 
+	dvipdf fisher-xchicago.dvi

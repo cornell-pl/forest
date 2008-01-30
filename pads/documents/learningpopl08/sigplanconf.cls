@@ -508,10 +508,11 @@
 
 \if \@natbib
 
-\usepackage{natbib}
-\setlength{\bibsep}{3pt plus .5pt minus .25pt}
-\bibpunct{(}{)}{;}{A}{}{,}
-\let \cite = \citep
+%\usepackage{natbib}
+\usepackage{nchicago-citetp}
+%\setlength{\bibsep}{3pt plus .5pt minus .25pt}
+%\bibpunct{(}{)}{;}{A}{}{,}
+%\let \cite = \citep
 
 \fi
 
