@@ -1,0 +1,15 @@
+date date: 170
+date white: 34
+int int: 238
+int blob: 112
+white int: 104
+white white: 234
+white text: 2
+white blob: 3
+text text: 35
+text blob: 3
+blob date: 34
+blob int: 7
+blob white: 75
+blob text: 1
+blob blob: 933
