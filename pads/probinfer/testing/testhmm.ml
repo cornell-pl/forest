@@ -26,4 +26,6 @@ let h = make ~st:ids ~pi:mypi ~a:mya ~b:myb ~aend:myaend ()
 
 let ta = [|2; 1; 1|];;
  
-viterbi h ta
+let (x, a) = viterbi h ta;;
+
+print_float x
