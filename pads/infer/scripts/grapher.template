@@ -21,7 +21,7 @@ if (!$params[0])
 {
  $sample = `tail -n 1 $datapath/$desc`;
  print "This is a graphing tool generated from a description of $desc.
-Usage: grapher -d Datafile -x Col# -y Col# -s Style [-o eps|jpeg|gif|png] [-t TimeFormat]\n\n"; 
+Usage: $desc-graph -d Datafile -x Col# -y Col# -s Style [-o eps|jpeg|gif|png] [-t TimeFormat]\n\n"; 
  print "Possible styles are: points (default), lines, linepoints, impulses, boxes.\n";
  print "Time format is only needed when one of the columns contains time or date
 Only one of the two columns may be time/date\n";
