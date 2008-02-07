@@ -30,7 +30,7 @@ padsc_comp:
 	@(cd comp; $(MAKE) -f GNUmakefile all)
 
 regress:
-	@(cd libpads/tests; $(MAKE) -f GNUmakefile regress; cd ../../examples/tests; $(MAKE) -f GNUmakefile regress) | $(PADS_HOME)/scripts/count_differs.pl
+	@(cd libpads/tests; $(MAKE) -f GNUmakefile regress; echo "Finished runtime regression."; cd ../../examples/tests; $(MAKE) -f GNUmakefile regress; echo "Finished example regression.") | $(PADS_HOME)/scripts/count_differs.pl
 
 pglx_regress:
 	@(cd tests_pglx; $(MAKE) -f GNUmakefile ) | $(PADS_HOME)/scripts/count_differs.pl

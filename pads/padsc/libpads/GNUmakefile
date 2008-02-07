@@ -48,12 +48,13 @@ all :
 
 
 foo:
-	echo $(USE_GALAX)
-	echo $(STATIC_LIBS_O)
-	echo $(STATIC_LIBS_D)
-	echo $(OS_SPEC_XTRA_LIBS)
-	echo $(OPSYS)
-	echo $(ARCH_N_OPSYS)
+	echo USE_GALAX = '$(USE_GALAX)'
+	echo STATIC_LIBS_O = '$(STATIC_LIBS_O)'
+	echo STATIC_LIBS_D = '$(STATIC_LIBS_D)'
+	echo OS_SPEC_XTRA_LIBS = '$(OS_SPEC_XTRA_LIBS)'
+	echo OPSYS = '$(OPSYS)'
+	echo ARCH_N_OPSYS = '$(ARCH_N_OPSYS)'
+	echo LINK_INTO_SHARED_O = '$(LINK_INTO_SHARED_O)'
 
 opt :
 	@$(MAKE) -f ../GNUmakefile dogen

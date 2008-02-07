@@ -142,6 +142,13 @@ ARCH_N_OPSYS = $(shell $(PADS_HOME)/scripts/arch-n-opsys)
 ARCH_N_HEAPOPSYS = $(shell $(PADS_HOME)/scripts/arch-n-heapopsys)
 OPSYS = $(shell $(PADS_HOME)/scripts/opsys)
 
+ifndef OPSYS
+%: forceabort2
+	@echo "ERROR: env variable OPSYS must be defined; set by script $(PADS_HOME)/scripts/opsys"
+	@exit 1
+forceabort2: ;
+endif
+
 LIB_DEP_PATTERN = %$(mam_cc_SUFFIX_ARCHIVE)
 
 STATIC_ASTLIB_NM_O = $(mam_cc_PREFIX_ARCHIVE)ast$(mam_cc_SUFFIX_ARCHIVE)
@@ -332,7 +339,7 @@ LINKER = $(mam_cc_LD)
 LINKOPTS_D = $(CDBGFLAGS) $(mam_cc_LD_ORIGIN)
 LINKOPTS_O = $(COPTFLAGS) $(mam_cc_LD_ORIGIN)
 
-OS_SPEC_XTRA_LIBS = -lm
+OS_SPEC_XTRA_LIBS =  -lm
 
 empty:=
 space:=$(empty) $(empty)
@@ -692,7 +699,7 @@ define LibraryPathSanityCheck
 endef
 else
 define LibraryPathSanityCheck
-( if [ $(LIBRARY_PATH_TEST)x = x ]; then \
+( if [ "$(LIBRARY_PATH_TEST)"x = x ]; then \
     echo "*** WARNING: $(LIBRARY_PATH_TEST_NM) is not set."; \
     echo "*** You probably want it set it, and to include directory"; \
     echo "***     $(INSTALL_LIBDIR)"; \
@@ -733,6 +740,26 @@ define SanityCheck
       echo "UNEXPECTED: library $$file does not exist"; \
       exit 1; \
     fi; \
+  done; \
+)
+endef
+
+define SanityCheckTest
+( echo "if [ ! -e $(PADSC) ]; then \
+      echo \"UNEXPECTED: $(PADSC) not found\"; \
+      exit 1; \
+  fi"; \
+  echo "if [ ! -e $(PADSC_REAL) ]; then \
+      echo \"UNEXPECTED: padsc compiler obj $(PADSC_REAL) not found\"; \
+      echo \"     Have you built the PADS compiler?\"; \
+      echo \"     Try: using 'gmake' in the top-level padsc directory.\"; \
+      exit 1; \
+  fi"; \
+  for file in $(LIB_DEPS_D) $(LIB_DEPS_O); do \
+    echo "if [ ! -e $$file ]; then \
+      echo \"UNEXPECTED: library $$file does not exist\"; \
+      exit 1; \
+    fi"; \
   done; \
 )
 endef
