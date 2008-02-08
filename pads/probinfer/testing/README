@@ -1,5 +1,6 @@
-Before compiling and running the test program, you need to
-first download and compile the ocaml hhl lib from 
-http://connex.lip6.fr/~binsztok/hhld.html. After compiling,
-copy hhl.a hhl.cmxa and *.cm[ix] to $(OCAML_LIB_DIR)/hhl
-(create hhl dir if it's not there yet).
+To make the test program, simply type
+
+make 
+
+in this dir. It will build hhl library in the hhld dir
+and then make the testhmm program.
