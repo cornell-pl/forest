@@ -1,0 +1,59 @@
+-------------------------------------------
+Wednesday, October 06, 2004 10:37:43 PM
+----Configuration engine was initialized successfully.----
+
+----Reading Configuration Template info...
+
+
+----Configure File Security...
+	Configure c:\documents and settings.
+	Configure c:\documents and settings\all users.
+	Configure c:\documents and settings\all users\application data.
+	Configure c:\documents and settings\all users\application data\desktop.ini.
+	Configure c:\documents and settings\all users\application data\microsoft.
+	Configure c:\documents and settings\all users\application data\microsoft\crypto.
+	Configure c:\documents and settings\all users\application data\microsoft\crypto\dss.
+	Configure c:\documents and settings\all users\application data\microsoft\crypto\dss\machinekeys.
+	Configure c:\documents and settings\all users\application data\microsoft\crypto\rsa.
+	Configure c:\documents and settings\all users\application data\microsoft\crypto\rsa\machinekeys.
+	Configure c:\documents and settings\all users\application data\microsoft\html help.
+	Configure c:\documents and settings\all users\application data\microsoft\network.
+	Configure c:\documents and settings\all users\application data\microsoft\network\connections.
+	Configure c:\documents and settings\all users\application data\microsoft\network\connections\pbk\_cmphone.pbk.
+Warning 2: The system cannot find the file specified.
+ 	Error setting security on c:\documents and settings\all users\application data\microsoft\network\connections\pbk\_cmphone.pbk.
+	Configure c:\documents and settings\all users\application data\microsoft\network\connections\pbk\cm.
+Warning 2: The system cannot find the file specified.
+ 	Error setting security on c:\documents and settings\all users\application data\microsoft\network\connections\pbk\cm.
+	Configure c:\documents and settings\all users\application data\microsoft\network\connections\pbk\rasphone.pbk.
+Warning 2: The system cannot find the file specified.
+ 	Error setting security on c:\documents and settings\all users\application data\microsoft\network\connections\pbk\rasphone.pbk.
+	Configure c:\documents and settings\all users\application data\microsoft\network\downloader.
+Warning 2: The system cannot find the file specified.
+ 	Error setting security on c:\documents and settings\all users\application data\microsoft\network\downloader.
+	Configure c:\documents and settings\all users\application data\microsoft\user account pictures.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt\msfax.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt\msfax\activitylog.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt\msfax\common coverpages.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt\msfax\inbox.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt\msfax\queue.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt\msfax\sentitems.
+	Configure c:\documents and settings\all users\application data\microsoft\windows nt\ntbackup.
+Warning 2: The system cannot find the file specified.
+ 	Error setting security on c:\documents and settings\all users\application data\microsoft\windows nt\ntbackup.
+	Configure c:\documents and settings\all users\desktop.
+	Configure c:\documents and settings\all users\documents.
+	Configure c:\documents and settings\all users\documents\desktop.ini.
+	Configure c:\documents and settings\all users\favorites.
+	Configure c:\documents and settings\all users\ntuser.pol.
+Warning 2: The system cannot find the file specified.
+ 	Error setting security on c:\documents and settings\all users\ntuser.pol.
+	Configure c:\documents and settings\all users\start menu.
+	Configure c:\documents and settings\all users\templates.
+	Configure c:\documents and settings\default user.
+
+	File Security configuration was completed successfully.
+
+
+----Un-initialize configuration engine...
