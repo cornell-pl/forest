@@ -1,15 +1,55 @@
-date date: 170
-date white: 34
-int int: 238
-int blob: 112
-white int: 104
-white white: 234
-white text: 2
-white blob: 3
-text text: 35
-text blob: 3
-blob date: 34
-blob int: 7
-blob white: 75
-blob text: 1
-blob blob: 933
+time time=9984
+time white=3328
+date date=63000
+date punctuation::=3000
+ip ip=20705
+ip white=1704
+host host=27055
+host white=1296
+path path=25242
+path blob=886
+float float=6346
+float white=2997
+int int=75622
+int punctuation:|=8982
+int white=1998
+int blob=3571
+word word=15
+word blob=3
+id id=13047
+id punctuation:|=2990
+id white=1
+id blob=2
+punctuation:" white=3000
+punctuation:" blob=3000
+punctuation:, int=40
+punctuation:, message=56
+punctuation:, blob=16
+punctuation:- white=5999
+punctuation:: time=3000
+punctuation:: white=328
+punctuation:[ date=3000
+punctuation:] white=3000
+punctuation:| int=6986
+punctuation:| id=2992
+punctuation:| punctuation:|=998
+punctuation:| blob=1994
+white float=2997
+white int=3650
+white id=1
+white punctuation:"=3000
+white punctuation:-=6348
+white punctuation:[=3000
+white white=47600
+white blob=12657
+message punctuation:,=56
+message message=770
+blob ip=1
+blob path=1
+blob int=5583
+blob punctuation:"=3000
+blob punctuation:,=56
+blob punctuation::=328
+blob punctuation:]=3000
+blob white=9000
+blob blob=156513
