@@ -1,11 +1,13 @@
 open Hmm.D
 
 (* suppose we have 3 states a, b, c and 3 observations 1, 2, 3 *)
-let idfile = "../training/TokenName"
-let pifile = "../training/InitProb"
-let afile = "../training/TransProb"
-let aendfile = "../training/EndProb"
-let bfile = "../training/EmitProb"
+let rootpath= if (Array.length Sys.argv) > 1 then Sys.argv.(1) 
+	      else ".."
+let idfile = rootpath ^ "/training/TokenName"
+let pifile = rootpath ^ "/training/InitProb"
+let afile = rootpath ^ "/training/TransProb"
+let aendfile = rootpath ^ "/training/EndProb"
+let bfile = rootpath ^ "/training/EmitProb"
 let inputfile = "input"
 let outputfile = "output"
 
@@ -132,10 +134,16 @@ let outbuf = open_out outputfile;;
 
 for i = 0 to (Array.length records) - 1 do
   let (x, a) = viterbi h records.(i) in
-  print_float (x); print_string ": ";
-  print_ints outbuf a;
-  print_string "\n";
-  output_string outbuf "\n"
+  if x = 0. then
+    (print_float (x); print_string ": nil\n";
+    output_string outbuf "nil\n")
+  else
+    (
+    print_float (x); print_string ": ";
+    print_ints outbuf a;
+    print_string "\n";
+    output_string outbuf "\n"
+    )
 done;;
 
 let _ = close_out outbuf
