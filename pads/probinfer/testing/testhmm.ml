@@ -6,6 +6,8 @@ let pifile = "../training/InitProb"
 let afile = "../training/TransProb"
 let aendfile = "../training/EndProb"
 let bfile = "../training/EmitProb"
+let inputfile = "input"
+let outputfile = "output"
 
 (*
 let ids = [| Some "a"; Some "b"; Some "c"|] 
@@ -67,6 +69,16 @@ let to_array mylist =
 	)
   in Array.of_list (_to_array mylist [])
 
+let to_intarray mylist = 
+  let rec _to_array _2dlist listofarrays =
+	(
+	match _2dlist with
+	l :: tail -> let a = Array.of_list (List.map int_of_string l) 
+		     in _to_array tail (listofarrays @ [a])
+	| [] -> listofarrays
+	)
+  in Array.of_list (_to_array mylist [])
+
 let to_1darray strlist = 
   let flist = List.map to_float strlist in
   Array.of_list flist
@@ -97,20 +109,34 @@ let test = make ~st:[| None ; None |] ~pi:[| 1. ; 0. |]
   ~b:[| [| 0.6 ; 0.4 ; 0. |] ; [| 0.3 ; 0.4 ; 0.3 |] |]
   ~aend:[| 0.; 0. |]
 *)
+let print_ints buf a = 
+  for i = 0 to (Array.length a) - 1 do
+    print_int a.(i); print_string " ";
+    output_string buf ((string_of_int a.(i))^ " ")
+  done
 
-let _ = print_string "done making the matrices\n"
+let _ = print_string "Done making the matrices!\n"
+
+let _ = close_in idbuf
+let _ = close_in pibuf
+let _ = close_in abuf
+let _ = close_in aendbuf
+let _ = close_in bbuf
 
 let h = make ~st:ids ~pi:mypi ~a:mya ~b:myb ~aend:myaend ()
-
-let ta = [|2; 1; 1; 45; 3; 43; 12|];;
  
-let (x, a) = viterbi h ta;;
+let inbuf = open_in inputfile
+let records = to_intarray (parse (readlines inbuf [])) (*list of lists*)
+let _ = close_in inbuf
+let outbuf = open_out outputfile;;
 
-for i = 0 to (Array.length a) - 1 do
-  print_int a.(i);
-  print_string " "
+for i = 0 to (Array.length records) - 1 do
+  let (x, a) = viterbi h records.(i) in
+  print_float (x); print_string ": ";
+  print_ints outbuf a;
+  print_string "\n";
+  output_string outbuf "\n"
 done;;
 
-print_string "\nProb: ";
-print_float x; 
-print_string "\n";;
+let _ = close_out outbuf
+let _ = print_string ("Output written to " ^ outputfile ^ "\n");;
