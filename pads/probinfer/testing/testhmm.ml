@@ -113,7 +113,7 @@ let test = make ~st:[| None ; None |] ~pi:[| 1. ; 0. |]
 *)
 let print_ints buf a = 
   for i = 0 to (Array.length a) - 1 do
-    print_int a.(i); print_string " ";
+    (*print_int a.(i); print_string " ";*)
     output_string buf ((string_of_int a.(i))^ " ")
   done
 
@@ -135,13 +135,13 @@ let outbuf = open_out outputfile;;
 for i = 0 to (Array.length records) - 1 do
   let (x, a) = viterbi h records.(i) in
   if x = 0. then
-    (print_float (x); print_string ": nil\n";
+    ((* print_float (x); print_string ": nil\n"; *)
     output_string outbuf "nil\n")
   else
     (
-    print_float (x); print_string ": ";
+    (*print_float (x); print_string ": ";*)
     print_ints outbuf a;
-    print_string "\n";
+    (*print_string "\n"; *)
     output_string outbuf "\n"
     )
 done;;
