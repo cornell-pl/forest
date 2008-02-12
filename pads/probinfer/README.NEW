@@ -6,7 +6,8 @@ of newline-separated ASCII data.
    You must have PADS 2.00 or later, available from www.padsproj.org.
 
 2. You must set the LEARN_HOME environment variable to the root of the
-   PADS Inference System distribution.
+   PADS Inference System distribution, which means, you must set it to
+   point to pads/probinfer directory.
 
 3. To compile the learning program, just type "make" in the $LEARN_HOME
    directory. This will compile the source files in the src directory
@@ -27,7 +28,7 @@ of newline-separated ASCII data.
    learn  [-d <string>] [-n <string>] [-maxdepth <int>] [-lineNos] 
    [-ids] [-h <float>] [-s <float>] [-noise <float>] [-a <int>] 
    [-ma <int>] [-j <float>] [-e] [-lex <string>] [-au <string> ...] 
-   [--help] files...
+   [-training <string>] [-testing <string>] [--help] files...
 
    -d      output directory (default gen/)
    -n      name of output file (default generatedDescription)
@@ -43,6 +44,8 @@ of newline-separated ASCII data.
    -e      Print entropy tokens (default false)
    -lex    prefix of the lex config to be used (default "vanilla")
    -au     run only the golden file
+   -training        take a training run
+   -testing         take a testing run 
 
    For example, 
 
@@ -89,9 +92,44 @@ of newline-separated ASCII data.
    >./crashreporter.log-graph -d ../examples/data/crashreporter.log \
     -x 2 -y 5 -s impulses -t %H:%M:%S
 
+
 5. The directory examples contains the subdirectory data with many
    sample data sources.  The example directory contains a README file
    explaining how to run the inference tool on these data source and
    put the results in the results directory, one sub-directory per
    data source.
 
+6. The directory training/log contains the training
+   data. training/log/log.list file lists the names of files that are
+   used by the training run. To make one training run, first set the
+   ECHO_TOKEN environment variable to the path of the token log file
+   you want to generate. And then prepare the description, a tool and
+   the corresponding data file under training/data. Then go to
+   training/data directory, you can generate the token log file by doing:
+   >make ai-fmt
+
+   and then execute
+   >./ARCH/ai-fmt 
+
+   the token log file will be ready to use.
+
+   And then move this token log file into training/log directory. Add
+   the name of this file into training/log/log.list. You can comment
+   out any token log file that you don't want to include in training
+   data by putting a "#" at the beginning of the line.
+
+   Finally, go to $LEARN_HOME and type:
+   $LEARN_HOME> scripts/learn -training true .
+
+   then you can see the outputs of this training run at training directory.
+
+7. The "problearn" program takes a data file input and prints out the
+   tokenization results returned by the HMM library we're testing. For
+   example:
+   
+   $LEARN_HOME> scripts/problearn examples/data/simplegroups
+
+   will print out the records in simplegroups followed by the token
+   sequences returned by the HMM library based on the training data
+   specified in $LEARN_HOME/training/log/log.list. 
+ 
