@@ -8,8 +8,8 @@ let pifile = rootpath ^ "/training/InitProb"
 let afile = rootpath ^ "/training/TransProb"
 let aendfile = rootpath ^ "/training/EndProb"
 let bfile = rootpath ^ "/training/EmitProb"
-let inputfile = "input"
-let outputfile = "output"
+let inputfile = rootpath^"/testing/input"
+let outputfile = rootpath^"/testing/output"
 
 (*
 let ids = [| Some "a"; Some "b"; Some "c"|] 
