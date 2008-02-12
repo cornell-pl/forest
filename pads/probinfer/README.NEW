@@ -28,7 +28,8 @@ of newline-separated ASCII data.
    learn  [-d <string>] [-n <string>] [-maxdepth <int>] [-lineNos] 
    [-ids] [-h <float>] [-s <float>] [-noise <float>] [-a <int>] 
    [-ma <int>] [-j <float>] [-e] [-lex <string>] [-au <string> ...] 
-   [-training <string>] [-testing <string>] [--help] files...
+   [-training <string>] [-testing <string>] [-inctraining <string>]
+   [--help] files...
 
    -d      output directory (default gen/)
    -n      name of output file (default generatedDescription)
@@ -45,7 +46,8 @@ of newline-separated ASCII data.
    -lex    prefix of the lex config to be used (default "vanilla")
    -au     run only the golden file
    -training        take a training run
-   -testing         take a testing run 
+   -testing         take a testing run
+   -inctraining     take an incremental training run 
 
    For example, 
 
@@ -133,3 +135,10 @@ of newline-separated ASCII data.
    sequences returned by the HMM library based on the training data
    specified in $LEARN_HOME/training/log/log.list. 
  
+8. To do an incremental training, put your new training token log
+   files in training/log directory and edit training/log/inc.list to
+   list all new file names. Go to $LEARN_HOME and type:
+   $LEARN_HOME> scripts/learn -inctraining true .
+
+   then your new training data will be included.
+
