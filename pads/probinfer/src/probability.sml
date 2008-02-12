@@ -604,8 +604,6 @@ val _ = print s1
         List.foldl extractOne BTokenTable.empty list
       end
 
-    val tokentable = readTokenTable "../training/"
-
     fun readBoundaryTokenTable path tag =
       let
         val list = 
@@ -630,9 +628,6 @@ val _ = print s1
         List.foldl createNew BTokenTable.empty newlist
       end
 
-    val begintokentable = readBoundaryTokenTable "../training/" 0
-    val endtokentable = readBoundaryTokenTable "../training/" 1
-
     fun readTokenPairTable path =
       let
         val list = loadFile (path^"TokenPairCount")
@@ -650,8 +645,6 @@ val _ = print s1
       in
         List.foldl extractOne BTokenPairTable.empty list
       end
-
-    val tokenpairtable = readTokenPairTable "../training/"
 
     fun readListTokenTable path =
       let
@@ -678,8 +671,6 @@ val _ = print s1
         List.foldl extractOne ListBTokenPairTable.empty list
       end
 
-    val listtokentable = readListTokenTable "../training/"
-    
     fun defaultVal v =
       case v of
           NONE => 0.5 (* a parameter to tune *)
@@ -692,6 +683,11 @@ val _ = print s1
 
     fun computeProb pathgraph : Seqset list = 
       let
+        val tokentable = readTokenTable "../training/"
+        val begintokentable = readBoundaryTokenTable "../training/" 0
+        val endtokentable = readBoundaryTokenTable "../training/" 1
+        val tokenpairtable = readTokenPairTable "../training/"
+        val listtokentable = readListTokenTable "../training/"
         fun transProb tslist =
           let
             fun addOne (((t, s), l), (pre, ret)) = 

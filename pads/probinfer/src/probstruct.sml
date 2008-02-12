@@ -1681,7 +1681,8 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
             if String.compare(record, "nil") = EQUAL then []
             else doOne (Substring.full record)
           end
-        val tokensi = List.map extractIntList tokenss 
+        val tokensi = List.map extractIntList tokenss
+(* 
         fun collapse record : BToken list = 
           let
             fun doOne (t, (pre, ret)) = 
@@ -1694,15 +1695,46 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
                 [] => []
               | hd::tl => let val (junk, list) = List.foldl doOne (hd, [hd]) tl in list end
           end
-        val tokens = List.map collapse tokensi
-        val st : (string * BToken list) list = ListPair.zipEq(records, tokens)
+*)
+        fun collapse (record: string, tks: BToken list) : char list list * BToken list = 
+          let
+            val chars = String.explode record
+            fun doOne (c, t, (pret, (retc, rett))) = 
+              case t of
+                  PPpunc p => (t, (retc@[[c]], rett@[t]))
+                | _ => if compBToken(t, pret)=EQUAL then (t, ((List.take(retc, (List.length retc)-1)@[(List.last retc)@[c]]), rett))
+                       else (t, (retc@[[c]], rett@[t])) 
+          in
+            case tks of
+                [] => ([[]], [])
+              | hd::tl => let val (junk, list) = ListPair.foldlEq doOne (hd, ([[List.hd chars]], [hd])) (List.tl chars, tl) in list end
+          end
+(*        val tokens = List.map collapse tokensi *)
+        val ret = ListPair.mapEq collapse (records, tokensi)
+        fun adjust (charll, blist) : BSToken list =
+          let
+            fun combineOne (charl, bt) = (bt, String.implode charl)
+          in
+            case blist of
+                [] => []
+              | _ => ListPair.mapEq combineOne (charll, blist)
+          end
+        val bsll : BSToken list list = List.map adjust ret
+(*
         fun printOne tk = print ((BTokenToName tk)^" ")
         fun printListPair (re: string, tks: BToken list) = 
           case tks of
               [] => (print (re^"\n"); print "no tokenization result\n")
             | _ => (print (re^"\n"); List.app printOne tks; print "\n")
+*)
+        fun printBSToken (t, s) = print ((BTokenToName t)^"["^s^"]"^" ")
+        fun printListPair (re:string, bslist: BSToken list) =
+          case bslist of
+              [] => (print (re^"\n"); print "no tokenization result\n)")
+            | _ => (print (re^"\n"); List.app printBSToken bslist; print "\n")
 	in
-	    ListPair.appEq printListPair (records, tokens)
+(*	    ListPair.appEq printListPair (records, tokens) *)
+        ListPair.appEq printListPair (records, bsll)
 	end
 
 end
