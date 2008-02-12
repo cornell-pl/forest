@@ -63,7 +63,7 @@ struct
 
     fun extractLog path : (BToken*string) list list = 
       let
-        val files : string list = loadFile "/n/fs/pads/pads/probinfer/training/log/log.list"
+        val files : string list = loadFile "training/log/log.list"
         fun loadOne (str, ret) = 
           if Char.compare(#"#", String.sub(str, 0))=EQUAL then ret
           else ret@(loadFile (path^str))
@@ -422,7 +422,7 @@ val _ = print s1
     fun dumpCCHMM ( path : string ) : unit = 
         let 
           val _ = print ("Printing char-by-char HMM to files under "^path^"\n")
-          val list = extractLog "/n/fs/pads/pads/probinfer/training/log/";
+          val list = extractLog "training/log/";
           val table1 = constrTokenTable list
 (*          val _ = print "1\n" *)
           val table2 = constrTokenPairTable list
@@ -540,10 +540,10 @@ val _ = print s1
                   val num1 = num2-2*bit1
                   val bit0 = if num1-1>=0 then 1 else 0
                 in
-                  if i=0 then [[0,0,0,0,0,0,0,0,0]]
-                  else [bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i-1))
+                  if i=511 then [[1,1,1,1,1,1,1,1,1]]
+                  else [bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i+1))
                 end
-              val wholelist1 = constrList 511
+              val wholelist1 = constrList 0
               val wholelist2 = BTokenMapF.listItemsi btokentable
               fun output l = 
                 let
@@ -559,8 +559,32 @@ val _ = print s1
             in
               TextIO.closeOut strm 
             end
+          fun dumpEndProb t = 
+            let
+	          val strm = TextIO.openOut (path^"EndProb")
+              val outlist = BTokenTable.listItemsi table5
+              fun sumAll ((bt, i), ret) = ret+i
+              val sum = List.foldl sumAll 0 outlist
+              val wholelist = BTokenMapF.listItemsi btokentable
+              fun output (bt, s) = 
+                case BTokenTable.find(table5, bt) of
+                    NONE => TextIO.output(strm, "0.0\n")
+                  | SOME n => TextIO.output(strm, (Real.toString ((Real.fromInt n)/(Real.fromInt sum)))^"\n") 
+              val _ = List.app output wholelist
+            in
+              TextIO.closeOut strm 
+            end
+          fun dumpTokenName t = 
+            let
+	          val strm = TextIO.openOut (path^"TokenName")
+              val wholelist = BTokenMapF.listItemsi btokentable
+              fun output (bt, s) = TextIO.output(strm, (BTokenToName bt)^"\n")
+              val _ = List.app output wholelist
+            in
+              TextIO.closeOut strm 
+            end
           in
-            (dumpToken table1; dumpTokenPair table2; dumpListToken table3; dumpBeginToken table4; dumpEndToken table5; dumpInitProb table4; dumpTransProb table2; dumpEmitProb table3)
+            (dumpToken table1; dumpTokenPair table2; dumpListToken table3; dumpBeginToken table4; dumpEndToken table5; dumpInitProb table4; dumpTransProb table2; dumpEmitProb table3; dumpEndProb table5; dumpTokenName table1)
           end 
 
     exception BadTable
@@ -580,7 +604,7 @@ val _ = print s1
         List.foldl extractOne BTokenTable.empty list
       end
 
-    val tokentable = readTokenTable "/n/fs/pads/pads/probinfer/training/"
+    val tokentable = readTokenTable "../training/"
 
     fun readBoundaryTokenTable path tag =
       let
@@ -606,8 +630,8 @@ val _ = print s1
         List.foldl createNew BTokenTable.empty newlist
       end
 
-    val begintokentable = readBoundaryTokenTable "/n/fs/pads/pads/probinfer/training/" 0
-    val endtokentable = readBoundaryTokenTable "/n/fs/pads/pads/probinfer/training/" 1
+    val begintokentable = readBoundaryTokenTable "../training/" 0
+    val endtokentable = readBoundaryTokenTable "../training/" 1
 
     fun readTokenPairTable path =
       let
@@ -627,7 +651,7 @@ val _ = print s1
         List.foldl extractOne BTokenPairTable.empty list
       end
 
-    val tokenpairtable = readTokenPairTable "/n/fs/pads/pads/probinfer/training/"
+    val tokenpairtable = readTokenPairTable "../training/"
 
     fun readListTokenTable path =
       let
@@ -654,7 +678,7 @@ val _ = print s1
         List.foldl extractOne ListBTokenPairTable.empty list
       end
 
-    val listtokentable = readListTokenTable "/n/fs/pads/pads/probinfer/training/"
+    val listtokentable = readListTokenTable "../training/"
     
     fun defaultVal v =
       case v of

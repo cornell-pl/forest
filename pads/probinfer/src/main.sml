@@ -34,7 +34,7 @@ structure Main : sig
        else if ( !trainingRun = true ) then
          let 
            val _ = print "trainingRun\n"; 
-           val _ = dumpCCHMM "/n/fs/pads/pads/probinfer/training/";
+           val _ = dumpCCHMM "training/";
 (*val (token, str) = List.nth (List.nth (table, 0), 0)
 print token *)
          in
@@ -51,6 +51,26 @@ print token *)
               val sep = []
               val end3Times = updateTokenEnd (Time.now()) end2Times
               val _ = Printing.dumpNewTy (!outputDir^"NewTy") ty              
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
+       else if ( !examHMMPre = true )
+         then
+            let
+              val _ = print "examing HMM library, constructing input...\n"
+              val end1Times = zeroEndingTimes ()
+              val end2Times = updateStart (Time.now()) end1Times
+              val _ = examHmmResultPre (!srcFiles)             
+            in print ( "Input character feature vector lists to HMM library.\n" )
+            end
+
+       else if ( !examHMMPost = true )
+         then
+            let
+              val _ = print "examing HMM returned tokens...\n"
+              val end1Times = zeroEndingTimes ()
+              val end2Times = updateStart (Time.now()) end1Times
+              val _ = examHmmResultPost (!srcFiles)             
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
@@ -94,7 +114,11 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
-    val flags = [
+    fun setTrainingRun  s = trainingRun  := (s = "true")
+    fun setTestingRun   s = testingRun  := (s = "true") 
+    fun setExamHMMPre      s = examHMMPre  := (s = "true")
+    fun setExamHMMPost      s = examHMMPost  := (s = "true")
+   val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("n",        "name of output file (default "^def_descName^")",                                     PCL.String (setDescName,  false)),
          ("maxdepth", "maximum depth for exploration (default "^(Int.toString def_depthLimit)^")",         PCL.Int    (setDepth,     false)),
@@ -108,7 +132,11 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("j",        "junk threshold (percentage, default "^(Real.toString DEF_JUNK_PERCENTAGE)^")",      PCL.Float  (setJunkPer,    false)),
          ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                    PCL.Bool    setEntropy),
          ("lex",      "prefix of the lex config to be used (default \"vanilla\")",	                   PCL.String (setLexName, false)),
-         ("au",	      "run only the golden file",	                                                   PCL.String (setGoldenRun, true))
+         ("au",	      "run only the golden file",	                                                   PCL.String (setGoldenRun, true)),
+         ("training", "training run",	                                                   PCL.String (setTrainingRun, true)),
+         ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
+         ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
+         ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true))
         ]
 
     fun checkOutputDir() =(

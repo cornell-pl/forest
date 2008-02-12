@@ -1634,5 +1634,75 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
 	    SeqsetListToTy 0 rptokens
 	end
 
+    fun examHmmResultPre fileName  = 
+	let
+	    val () = print ("Starting on file "^(lconcat fileName)^"\n");
+	    val records = loadFiles fileName  (* records: string list *)
+        fun doOne record : int list list = List.map charToList (String.explode record)
+        val rtokens : int list list list = List.map doOne records
+        val strm = TextIO.openOut ("testing/input")
+        fun printList list =
+          let
+            fun listToInt (c, (bit, ret)) = if bit = ~1 then (0, ret)
+                                            else (bit-1, c*(Real.toInt IEEEReal.TO_NEAREST (Math.pow(Real.fromInt 2, Real.fromInt bit)))+ret)
+            fun printOneVec v = 
+              let
+                val (bit, ret) = List.foldl listToInt (8,0) v
+              in
+                TextIO.output(strm, ((Int.toString ret)^" "))
+              end
+            fun printOneRecord record = (List.app printOneVec record; TextIO.output(strm, "\n"))
+          in
+            List.app printOneRecord list
+          end
+ 	in
+	    (printList rtokens; TextIO.closeOut strm)
+	end
+
+    fun examHmmResultPost fileName  = 
+	let
+        val records = loadFiles fileName
+	    val tokenss = loadFile "testing/output" 
+        val _ = print "Tokenization by HMM:\n"
+        fun extractIntList record : BToken list = 
+          let
+            fun isSpace c = c = #" "
+            fun doOne s : BToken list = 
+              let
+                val (pre, rest) = Substring.splitl (not o isSpace) s
+                val ret = intToBToken(Option.valOf(Int.fromString(Substring.string pre))) handle Option => (print ("s = "^(Substring.string pre)^"\n"); raise Option)
+                val newrest = Substring.triml 1 rest
+              in
+                if (Substring.size newrest)=0 orelse (isSpace (Substring.sub(newrest, 0))) then [ret]
+                else if (Substring.size pre) = (Substring.size s) then [ret]
+                else ret::(doOne (Substring.triml 1 rest)) 
+              end
+          in
+            if String.compare(record, "nil") = EQUAL then []
+            else doOne (Substring.full record)
+          end
+        val tokensi = List.map extractIntList tokenss 
+        fun collapse record : BToken list = 
+          let
+            fun doOne (t, (pre, ret)) = 
+              case t of
+                  PPpunc p => (t, ret@[t])
+                | _ => if compBToken(t, pre)=EQUAL then (t, ret)
+                       else (t, ret@[t]) 
+          in
+            case record of
+                [] => []
+              | hd::tl => let val (junk, list) = List.foldl doOne (hd, [hd]) tl in list end
+          end
+        val tokens = List.map collapse tokensi
+        val st : (string * BToken list) list = ListPair.zipEq(records, tokens)
+        fun printOne tk = print ((BTokenToName tk)^" ")
+        fun printListPair (re: string, tks: BToken list) = 
+          case tks of
+              [] => (print (re^"\n"); print "no tokenization result\n")
+            | _ => (print (re^"\n"); List.app printOne tks; print "\n")
+	in
+	    ListPair.appEq printListPair (records, tokens)
+	end
 
 end

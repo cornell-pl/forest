@@ -31,8 +31,10 @@ structure Config = struct
     val lexName	          = ref "vanilla"
     val goldenRun         = ref false
 
-    val trainingRun       = ref true
+    val trainingRun       = ref false
     val testingRun        = ref false
+    val examHMMPre        = ref false
+    val examHMMPost       = ref false
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
