@@ -32,6 +32,7 @@ structure Config = struct
     val goldenRun         = ref false
 
     val trainingRun       = ref false
+    val inctrainingRun    = ref false
     val testingRun        = ref false
     val examHMMPre        = ref false
     val examHMMPost       = ref false
