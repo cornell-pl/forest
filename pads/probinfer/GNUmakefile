@@ -8,8 +8,9 @@ endif
 all:
 	@(echo "Making the learning tool.")
 	@(cd src; $(MAKE) -f GNUmakefile all)
-
+	@(cd testing; $(MAKE) -f Makefile all)
 clean:
 	@(echo "Cleaning")
 	cd src; $(MAKE) -f GNUmakefile clean
 	cd examples; $(MAKE) -f GNUmakefile clean
+	cd testing; $(MAKE) -f Makefile clean
