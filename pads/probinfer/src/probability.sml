@@ -167,13 +167,22 @@ struct
                       else (ret, [1])
                     end 
                     )
-                  else ( (*print ((Substring.string tokenName)^"\n");*)
+                  else ( (*print ((Substring.string tokenName)^"["^t^"]""\n");*)
                     let
                       val thiscptag = List.hd cptagl
                       fun addOne i = i+1
+                      fun findLastRead s = if (not (String.isSubstring "read:" s)) then s
+                                           else 
+                                             let
+                                               val (pres, sufs) = Substring.position "read:" (Substring.full s)
+                                             in
+                                               findLastRead (Substring.string(Substring.triml 5 sufs))
+                                             end
+                      val (junk1, dataString) = Substring.splitr (not o isColon) (Substring.full t)
                     (*  val _ = if ((Substring.size dataString)=0) then (print (Int.toString (String.size t));print t; raise CPtagError) else () *) 
                       val newdataString = 
-                        if (Substring.size dataString)=0 then (
+                        if (String.isSubstring "read:" t) then (Substring.full (findLastRead t))
+                        else if (Substring.size dataString)=0 then (
                           let val (s1, s2) = Substring.splitr (not o isColon) junk1 in (Substring.full ((Substring.string s2)^":")) end
                         )
                         else dataString
