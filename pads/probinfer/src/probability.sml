@@ -186,15 +186,16 @@ struct
                           let val (s1, s2) = Substring.splitr (not o isColon) junk1 in (Substring.full ((Substring.string s2)^":")) end
                         )
                         else dataString
+                      val rett = case (tstringToBToken(Substring.string tokenName, Substring.string newdataString)) of
+                                      PPblob => (tstringToBToken((Substring.string junk1), Substring.string newdataString))
+                                    | othert => othert
                     in
                       if (Substring.size newdataString)=0 then (ret, cptagl)
                       else (
                       if thiscptag>0 then  
-                      ((tstringToBToken(Substring.string tokenName, Substring.string newdataString), 
-                        Substring.string newdataString)::ret, List.map addOne cptagl)
+                      ((rett, Substring.string newdataString)::ret, List.map addOne cptagl)
                       else 
-                      ((tstringToBToken(Substring.string tokenName, Substring.string newdataString), 
-                        Substring.string newdataString)::ret, cptagl)
+                      ((rett, Substring.string newdataString)::ret, cptagl)
                       )
                     end
                     )
@@ -624,6 +625,7 @@ val _ = print s1
           case tag of
               0 => loadFile (path^"BeginTokenCount")
             | 1 => loadFile (path^"EndTokenCount")
+            | _ => loadFile (path^"EndTokenCount")
         fun extractOne (t, table) =
           let
             fun isEqual c = c = #"="
@@ -648,6 +650,7 @@ val _ = print s1
           case tag of
               0 => loadFile (path^"BeginTokenCount")
             | 1 => loadFile (path^"EndTokenCount")
+            | _ => loadFile (path^"EndTokenCount")
         fun extractOne (t, table) =
           let
             fun isEqual c = c = #"="
