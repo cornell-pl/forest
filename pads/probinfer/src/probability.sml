@@ -54,6 +54,8 @@ struct
         case s of 
             "," => PPpunc ","
           | "." => PPpunc "."
+          | "/" => PPpunc "/"
+          | ":" => PPpunc ":"
           | " " => PPwhite
           | _ => PPblob
       )
@@ -373,7 +375,7 @@ val _ = print s1
         List.foldl countOne inittable l
       end
 
-(* feature vector: upper-case? lower-case? digit? punc? whitespace? "."? ","? """? *)
+(* feature vector (high-low): upper-case? lower-case? digit? punc? whitespace? "."? ","? """? ":"? *)
     fun charToList c : int list = 
       let
         val upper = if Char.isUpper c then [1] else [0]
@@ -385,8 +387,9 @@ val _ = print s1
         val comma = if Char.compare(c, #",")=EQUAL then 1::dot else 0::dot
         val quest = if Char.compare(c, #"?")=EQUAL then 1::comma else 0::comma
         val quote = if Char.compare(c, #"\"")=EQUAL then 1::quest else 0::quest
+        val colon = if Char.compare(c, #":")=EQUAL then 1::quote else 0::quote
       in
-        List.rev quote
+        List.rev colon
       end
 
     fun constrListTokenTable l inittable = 
@@ -522,8 +525,10 @@ val _ = print s1
 	          val strm = TextIO.openOut (path^"EmitProb")
               fun constrList i =
                 let
-                  val bit8 = if i-256>=0 then 1 else 0
-                  val num8 = i-256*bit8
+                  val bit9 = if i-512>=0 then 1 else 0
+                  val num9 = i-512*bit9 
+                  val bit8 = if num9-256>=0 then 1 else 0
+                  val num8 = num9-256*bit8
                   val bit7 = if num8-128>=0 then 1 else 0
                   val num7 = num8-128*bit7
                   val bit6 = if num7-64>=0 then 1 else 0
@@ -540,8 +545,8 @@ val _ = print s1
                   val num1 = num2-2*bit1
                   val bit0 = if num1-1>=0 then 1 else 0
                 in
-                  if i=511 then [[1,1,1,1,1,1,1,1,1]]
-                  else [bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i+1))
+                  if i=1023 then [[1,1,1,1,1,1,1,1,1,1]]
+                  else [bit9, bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i+1))
                 end
               val wholelist1 = constrList 0
               val wholelist2 = BTokenMapF.listItemsi btokentable
@@ -854,8 +859,10 @@ val _ = print s1
 	          val strm = TextIO.openOut (path^"EmitProb")
               fun constrList i =
                 let
-                  val bit8 = if i-256>=0 then 1 else 0
-                  val num8 = i-256*bit8
+                  val bit9 = if i-512>=0 then 1 else 0
+                  val num9 = i-512*bit9
+                  val bit8 = if num9-256>=0 then 1 else 0
+                  val num8 = num9-256*bit8
                   val bit7 = if num8-128>=0 then 1 else 0
                   val num7 = num8-128*bit7
                   val bit6 = if num7-64>=0 then 1 else 0
@@ -872,8 +879,8 @@ val _ = print s1
                   val num1 = num2-2*bit1
                   val bit0 = if num1-1>=0 then 1 else 0
                 in
-                  if i=511 then [[1,1,1,1,1,1,1,1,1]]
-                  else [bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i+1))
+                  if i=1023 then [[1,1,1,1,1,1,1,1,1,1]]
+                  else [bit9, bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i+1))
                 end
               val wholelist1 = constrList 0
               val wholelist2 = BTokenMapF.listItemsi btokentable

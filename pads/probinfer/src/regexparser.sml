@@ -118,12 +118,14 @@ rest of  the string.
       end
 
 
-    and findPaths (s: string, recNo: int, pos: int) : NewContext list =
+    and findPaths (s: string, recNo: int, pos: int) : NewContext list = gothrough1(s, recNo, pos)
+(*
       case gothrough1(s, recNo, pos) of
           [] => ((*print "before gothrough2\n";*) case gothrough2(s, recNo, pos) of
                     [] => [[((PPblob, s), mkLoc pos (pos+(String.size s)) recNo recNo)]]
                   | l1 => l1)
         | l2 => l2
+*)
 (*
     fun findPaths (s: string, recNo: int, pos: int) : NewContext list =
       let

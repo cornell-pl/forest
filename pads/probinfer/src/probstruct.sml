@@ -1647,7 +1647,7 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
                                             else (bit-1, c*(Real.toInt IEEEReal.TO_NEAREST (Math.pow(Real.fromInt 2, Real.fromInt bit)))+ret)
             fun printOneVec v = 
               let
-                val (bit, ret) = List.foldl listToInt (8,0) v
+                val (bit, ret) = List.foldl listToInt (9,0) v (* this needs to be changed when adding bits *)
               in
                 TextIO.output(strm, ((Int.toString ret)^" "))
               end
@@ -1730,7 +1730,7 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
         fun printBSToken (t, s) = print ((BTokenToName t)^"["^s^"]"^" ")
         fun printListPair (re:string, bslist: BSToken list) =
           case bslist of
-              [] => (print (re^"\n"); print "no tokenization result\n)")
+              [] => (print (re^"\n"); print "no tokenization result\n")
             | _ => (print (re^"\n"); List.app printBSToken bslist; print "\n")
 	in
 (*	    ListPair.appEq printListPair (records, tokens) *)
