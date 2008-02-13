@@ -29,7 +29,10 @@ Punion package_t {
 */
 
 Precord Pstruct entry_t {
-	Ptimestamp_explicit_FW (:15, "%b %d %H:%M:%S", P_cstr2timezone("-0500"):) ts;
+//	Ptimestamp_explicit_FW (:15, "%b %d %H:%M:%S", P_cstr2timezone("-0500"):) ts;
+    PPdate d;
+    PPwhite white3
+    PPtime t;
     PPwhite white1;
 	method m;
     PPpunc_colon colon;
