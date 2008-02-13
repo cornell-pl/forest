@@ -18,7 +18,7 @@ if (length($pads_home) == 0) {
   exit -1;
 }
 
-my $learn_home = $ENV{"LEARN_HOME"};
+my $learn_home = $ENV{"PROBLEARN_HOME"};
 if (length($learn_home) == 0) {
   print "\n** Please set the LEARN_HOME environment variable to the root of the PADS inference system.\n";
   exit -1;
