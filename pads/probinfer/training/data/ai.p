@@ -42,7 +42,8 @@ Pstruct request_t {
           PPpunc_quote   quote1;
           method_t       meth;  
           PPwhite        w1;   
-          Pstring(:' ':) req_uri;
+//          Pstring(:' ':) req_uri;
+          PPpath         req_uri;
           PPwhite        w2;  
 //          version_t      version : 
 //                  chkVersion(version, meth);
