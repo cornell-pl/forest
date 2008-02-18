@@ -1,6 +1,7 @@
 structure Probability = 
 struct
     open Basetokens
+    open Config
 
     fun loadFile path = 
      let 
@@ -432,42 +433,38 @@ val _ = print s1
         List.foldl countOne inittable l
       end
 
-    fun dumpCCHMM ( path : string ) : unit = 
-        let 
-          val _ = print ("Printing char-by-char HMM to files under "^path^"\n")
-          val list = extractLog "training/log/" "training/log/log.list"
-          val table1 = constrTokenTable list BTokenTable.empty
-(*          val _ = print "1\n" *)
-          val table2 = constrTokenPairTable list BTokenPairTable.empty
-(*          val _ = print "2\n" *)
-          val table3 = constrListTokenTable list ListBTokenPairTable.empty
-(*          val _ = print "3\n" *)
-          val table4 = constrBeginTokenTable list BTokenTable.empty
-(*          val _ = print "4\n" *)
-          val table5 = constrEndTokenTable list BTokenTable.empty
-(*          val _ = print "5\n" *)
-          fun dumpToken t = 
+    fun defaultVal v =
+      case v of
+          NONE => 0.0 (* a parameter to tune *)
+        | SOME n => Real.fromInt n
+
+    fun defaultRVal v =
+      case v of
+          NONE => 0.0 (* a parameter to tune *)
+        | SOME n => n
+
+          fun dumpToken path t = 
             let
 	          val strm = TextIO.openOut (path^"TokenCount")
-              val outlist = BTokenTable.listItemsi table1
+              val outlist = BTokenTable.listItemsi t (*table1*)
               fun output (bt, i) = TextIO.output(strm, (BTokenToName bt)^"="^(Int.toString i)^"\n")  
               val _ = List.map output outlist
             in
               TextIO.closeOut strm 
             end
-          fun dumpTokenPair t = 
+          fun dumpTokenPair path t = 
             let
 	          val strm = TextIO.openOut (path^"TokenPairCount")
-              val outlist = BTokenPairTable.listItemsi table2
+              val outlist = BTokenPairTable.listItemsi t (*table2*)
               fun output ((bt1,bt2), i) = TextIO.output(strm, ((BTokenToName bt1)^" "^(BTokenToName bt2)^"="^(Int.toString i)^"\n"))  
               val _ = List.map output outlist
             in
               TextIO.closeOut strm 
             end
-          fun dumpListToken t = 
+          fun dumpListToken path t = 
             let
 	          val strm = TextIO.openOut (path^"CharTokenCount")
-              val outlist = ListBTokenPairTable.listItemsi table3
+              val outlist = ListBTokenPairTable.listItemsi t (*table3*)
               fun listToString il = 
                 let
                   fun foo (i, ret) = ret^(Int.toString i)
@@ -479,49 +476,53 @@ val _ = print s1
             in
               TextIO.closeOut strm 
             end
-          fun dumpBeginToken t = 
+          fun dumpBeginToken path t = 
             let
 	          val strm = TextIO.openOut (path^"BeginTokenCount")
-              val outlist = BTokenTable.listItemsi table4
+              val outlist = BTokenTable.listItemsi t (*table4*)
               fun output (bt, i) = TextIO.output(strm, (BTokenToName bt)^"="^(Int.toString i)^"\n")  
               val _ = List.map output outlist
             in
               TextIO.closeOut strm 
             end
-          fun dumpEndToken t = 
+          fun dumpEndToken path t = 
             let
 	          val strm = TextIO.openOut (path^"EndTokenCount")
-              val outlist = BTokenTable.listItemsi table5
+              val outlist = BTokenTable.listItemsi t (*table5*)
               fun output (bt, i) = TextIO.output(strm, (BTokenToName bt)^"="^(Int.toString i)^"\n")  
               val _ = List.map output outlist
             in
               TextIO.closeOut strm 
             end
-          fun dumpInitProb t = 
+          fun dumpInitProbSmooth path t = 
             let
 	          val strm = TextIO.openOut (path^"InitProb")
-              val outlist = BTokenTable.listItemsi table4
+              val outlist = BTokenTable.listItemsi t (*table4*)
               fun sumAll ((bt, i), ret) = ret+i
               val sum = List.foldl sumAll 0 outlist
               val wholelist = BTokenMapF.listItemsi btokentable
+              val tnum = List.length wholelist
               fun output (bt, s) = 
-                case BTokenTable.find(table4, bt) of
-                    NONE => TextIO.output(strm, "0.0\n")
-                  | SOME n => TextIO.output(strm, (Real.toString ((Real.fromInt n)/(Real.fromInt sum)))^"\n") 
+                let val lookupr = defaultVal(BTokenTable.find(t, bt))
+                in
+                  TextIO.output(strm, (Real.toString((lookupr+(!lambda))/((Real.fromInt sum)+(Real.fromInt tnum)*(!lambda))))^"\n") 
+                end
               val _ = List.app output wholelist
             in
               TextIO.closeOut strm 
             end
-          fun dumpTransProb t = 
+          fun dumpTransProbSmooth path t1 t2 = 
             let
 	          val strm = TextIO.openOut (path^"TransProb")
               val wholelist = BTokenMapF.listItemsi btokentable
+              val tnum = List.length wholelist
               fun output (bt1, s1) = 
                 let
                   fun outputin ((bt2, s2), ret) =
-                    case BTokenPairTable.find(table2, (bt1, bt2)) of
-                        NONE => ret^"0 "
-                      | SOME n => ret^Real.toString((Real.fromInt n)/(Real.fromInt (Option.valOf(BTokenTable.find(table1, bt1)))))^" "
+                    let val lookupr = defaultVal(BTokenPairTable.find(t2, (bt1, bt2)))
+                    in
+                      ret^Real.toString((lookupr+(!lambda))/((defaultVal(BTokenTable.find(t1, bt1)))+(Real.fromInt tnum)*(!lambda)))^" "  
+                    end
                   val outputstrm = List.foldl outputin "" wholelist
                 in
                   TextIO.output(strm, outputstrm^"\n")
@@ -530,7 +531,103 @@ val _ = print s1
             in
               TextIO.closeOut strm 
             end
-          fun dumpEmitProb t = 
+          fun dumpEmitProbSmooth path t1 t3 = 
+            let
+	          val strm = TextIO.openOut (path^"EmitProb")
+              fun constrList i =
+                let
+                  val bit9 = if i-512>=0 then 1 else 0
+                  val num9 = i-512*bit9 
+                  val bit8 = if num9-256>=0 then 1 else 0
+                  val num8 = num9-256*bit8
+                  val bit7 = if num8-128>=0 then 1 else 0
+                  val num7 = num8-128*bit7
+                  val bit6 = if num7-64>=0 then 1 else 0
+                  val num6 = num7-64*bit6
+                  val bit5 = if num6-32>=0 then 1 else 0
+                  val num5 = num6-32*bit5
+                  val bit4 = if num5-16>=0 then 1 else 0
+                  val num4 = num5-16*bit4
+                  val bit3 = if num4-8>=0 then 1 else 0
+                  val num3 = num4-8*bit3
+                  val bit2 = if num3-4>=0 then 1 else 0
+                  val num2 = num3-4*bit2
+                  val bit1 = if num2-2>=0 then 1 else 0
+                  val num1 = num2-2*bit1
+                  val bit0 = if num1-1>=0 then 1 else 0
+                in
+                  if i=1023 then [[1,1,1,1,1,1,1,1,1,1]]
+                  else [bit9, bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i+1))
+                end
+              val wholelist1 = constrList 0
+              val charnum = List.length wholelist1
+              val wholelist2 = BTokenMapF.listItemsi btokentable
+              fun output l = 
+                let
+                  fun outputin ((bt, s), ret) =
+                    let val lookupr = defaultVal(ListBTokenPairTable.find(t3, (l, bt)))
+                    in
+                      ret^Real.toString((lookupr+(!lambda))/((defaultVal(BTokenTable.find(t1, bt)))+(Real.fromInt charnum)*(!lambda)))^" "
+                    end
+                  val outputstrm = List.foldl outputin "" wholelist2
+                in
+                  TextIO.output(strm, outputstrm^"\n")
+                end 
+              val _ = List.app output wholelist1
+            in
+              TextIO.closeOut strm 
+            end
+          fun dumpEndProbSmooth path t = 
+            let
+	          val strm = TextIO.openOut (path^"EndProb")
+              val outlist = BTokenTable.listItemsi t (*table5*)
+              fun sumAll ((bt, i), ret) = ret+i
+              val sum = List.foldl sumAll 0 outlist
+              val wholelist = BTokenMapF.listItemsi btokentable
+              val tnum = List.length wholelist
+              fun output (bt, s) = 
+                let val lookupr = defaultVal(BTokenTable.find(t, bt))
+                in
+                  TextIO.output(strm, (Real.toString ((lookupr+(!lambda))/((Real.fromInt sum)+(Real.fromInt tnum)*(!lambda))))^"\n")
+                end
+              val _ = List.app output wholelist
+            in
+              TextIO.closeOut strm 
+            end
+          fun dumpInitProb path t = 
+            let
+	          val strm = TextIO.openOut (path^"InitProb")
+              val outlist = BTokenTable.listItemsi t
+              fun sumAll ((bt, i), ret) = ret+i
+              val sum = List.foldl sumAll 0 outlist
+              val wholelist = BTokenMapF.listItemsi btokentable
+              fun output (bt, s) = 
+                case BTokenTable.find(t, bt) of
+                    NONE => TextIO.output(strm, "0.0\n")
+                  | SOME n => TextIO.output(strm, (Real.toString ((Real.fromInt n)/(Real.fromInt sum)))^"\n") 
+              val _ = List.app output wholelist
+            in
+              TextIO.closeOut strm 
+            end
+          fun dumpTransProb path t1 t2 = 
+            let
+	          val strm = TextIO.openOut (path^"TransProb")
+              val wholelist = BTokenMapF.listItemsi btokentable
+              fun output (bt1, s1) = 
+                let
+                  fun outputin ((bt2, s2), ret) =
+                    case BTokenPairTable.find(t2, (bt1, bt2)) of
+                        NONE => ret^"0 "
+                      | SOME n => ret^Real.toString((Real.fromInt n)/(Real.fromInt (Option.valOf(BTokenTable.find(t1, bt1)))))^" "
+                  val outputstrm = List.foldl outputin "" wholelist
+                in
+                  TextIO.output(strm, outputstrm^"\n")
+                end 
+              val _ = List.app output wholelist
+            in
+              TextIO.closeOut strm 
+            end
+          fun dumpEmitProb path t1 t3 = 
             let
 	          val strm = TextIO.openOut (path^"EmitProb")
               fun constrList i =
@@ -563,9 +660,9 @@ val _ = print s1
               fun output l = 
                 let
                   fun outputin ((bt, s), ret) =
-                    case ListBTokenPairTable.find(table3, (l, bt)) of
+                    case ListBTokenPairTable.find(t3, (l, bt)) of
                         NONE => ret^"0 "
-                      | SOME n => ret^Real.toString((Real.fromInt n)/(Real.fromInt (Option.valOf(BTokenTable.find(table1, bt)))))^" "
+                      | SOME n => ret^Real.toString((Real.fromInt n)/(Real.fromInt (Option.valOf(BTokenTable.find(t1, bt)))))^" "
                   val outputstrm = List.foldl outputin "" wholelist2
                 in
                   TextIO.output(strm, outputstrm^"\n")
@@ -574,22 +671,22 @@ val _ = print s1
             in
               TextIO.closeOut strm 
             end
-          fun dumpEndProb t = 
+          fun dumpEndProb path t = 
             let
 	          val strm = TextIO.openOut (path^"EndProb")
-              val outlist = BTokenTable.listItemsi table5
+              val outlist = BTokenTable.listItemsi t
               fun sumAll ((bt, i), ret) = ret+i
               val sum = List.foldl sumAll 0 outlist
               val wholelist = BTokenMapF.listItemsi btokentable
               fun output (bt, s) = 
-                case BTokenTable.find(table5, bt) of
+                case BTokenTable.find(t, bt) of
                     NONE => TextIO.output(strm, "0.0\n")
                   | SOME n => TextIO.output(strm, (Real.toString ((Real.fromInt n)/(Real.fromInt sum)))^"\n") 
               val _ = List.app output wholelist
             in
               TextIO.closeOut strm 
             end
-          fun dumpTokenName t = 
+          fun dumpTokenName path t = 
             let
 	          val strm = TextIO.openOut (path^"TokenName")
               val wholelist = BTokenMapF.listItemsi btokentable
@@ -598,8 +695,48 @@ val _ = print s1
             in
               TextIO.closeOut strm 
             end
+
+    fun dumpCCHMM ( path : string ) : unit = 
+        let 
+          val _ = print ("Printing char-by-char HMM to files under "^path^"\n")
+          val list = extractLog "training/log/" "training/log/log.list"
+          val table1 = constrTokenTable list BTokenTable.empty
+(*          val _ = print "1\n" *)
+          val table2 = constrTokenPairTable list BTokenPairTable.empty
+(*          val _ = print "2\n" *)
+          val table3 = constrListTokenTable list ListBTokenPairTable.empty
+(*          val _ = print "3\n" *)
+          val table4 = constrBeginTokenTable list BTokenTable.empty
+(*          val _ = print "4\n" *)
+          val table5 = constrEndTokenTable list BTokenTable.empty
+(*          val _ = print "5\n" *)
           in
-            (dumpToken table1; dumpTokenPair table2; dumpListToken table3; dumpBeginToken table4; dumpEndToken table5; dumpInitProb table4; dumpTransProb table2; dumpEmitProb table3; dumpEndProb table5; dumpTokenName table1)
+            if Real.compare(!lambda, 0.0)=EQUAL then 
+            (
+            dumpToken path table1; (*print "TokenCount generated.\n";*) 
+            dumpTokenPair path table2; (*print "TokenPairCount generated.\n";*)
+            dumpListToken path table3; (*print "CharTokenCount generated.\n";*)
+            dumpBeginToken path table4; (*print "\n";*)
+            dumpEndToken path table5; (*print "5\n";*)
+            dumpInitProb path table4; (*print "6\n";*)
+            dumpTransProb path table1 table2; (*print "7\n";*)
+            dumpEmitProb path table1 table3; (*print "8\n";*)
+            dumpEndProb path table5; (*print "9\n";*)
+            dumpTokenName path table1 (*; print "10\n"*)
+            )
+            else
+            (
+            dumpToken path table1; (*print "TokenCount generated.\n";*) 
+            dumpTokenPair path table2; (*print "TokenPairCount generated.\n";*)
+            dumpListToken path table3; (*print "CharTokenCount generated.\n";*)
+            dumpBeginToken path table4; (*print "\n";*)
+            dumpEndToken path table5; (*print "5\n";*)
+            dumpInitProbSmooth path table4; (*print "6\n";*)
+            dumpTransProbSmooth path table1 table2; (*print "7\n";*)
+            dumpEmitProbSmooth path table1 table3; (*print "8\n";*)
+            dumpEndProbSmooth path table5; (*print "9\n";*)
+            dumpTokenName path table1 (*; print "10\n"*)
+            )
           end 
 
     exception BadTable
@@ -707,16 +844,6 @@ val _ = print s1
         List.foldl extractOne ListBTokenPairTable.empty list
       end
 
-    fun defaultVal v =
-      case v of
-          NONE => 0.5 (* a parameter to tune *)
-        | SOME n => Real.fromInt n
-
-    fun defaultRVal v =
-      case v of
-          NONE => 0.5 (* a parameter to tune *)
-        | SOME n => n
-
     fun computeProb pathgraph : Seqset list = 
       let
         val tokentable = readTokenTable "training/"
@@ -782,160 +909,19 @@ val _ = print s1
 (*          val _ = print "4\n" *)
           val table5 = constrEndTokenTable list endtokentable
 (*          val _ = print "5\n" *)
-          fun dumpToken t = 
-            let
-	          val strm = TextIO.openOut (path^"TokenCount")
-              val outlist = BTokenTable.listItemsi table1
-              fun output (bt, i) = TextIO.output(strm, (BTokenToName bt)^"="^(Int.toString i)^"\n")  
-              val _ = List.map output outlist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpTokenPair t = 
-            let
-	          val strm = TextIO.openOut (path^"TokenPairCount")
-              val outlist = BTokenPairTable.listItemsi table2
-              fun output ((bt1,bt2), i) = TextIO.output(strm, ((BTokenToName bt1)^" "^(BTokenToName bt2)^"="^(Int.toString i)^"\n"))  
-              val _ = List.map output outlist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpListToken t = 
-            let
-	          val strm = TextIO.openOut (path^"CharTokenCount")
-              val outlist = ListBTokenPairTable.listItemsi table3
-              fun listToString il = 
-                let
-                  fun foo (i, ret) = ret^(Int.toString i)
-                in
-                  List.foldl foo "" il
-                end
-              fun output ((l, bt), i) = TextIO.output(strm, (listToString l)^" "^(BTokenToName bt)^"="^(Int.toString i)^"\n")  
-              val _ = List.map output outlist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpBeginToken t = 
-            let
-	          val strm = TextIO.openOut (path^"BeginTokenCount")
-              val outlist = BTokenTable.listItemsi table4
-              fun output (bt, i) = TextIO.output(strm, (BTokenToName bt)^"="^(Int.toString i)^"\n")  
-              val _ = List.map output outlist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpEndToken t = 
-            let
-	          val strm = TextIO.openOut (path^"EndTokenCount")
-              val outlist = BTokenTable.listItemsi table5
-              fun output (bt, i) = TextIO.output(strm, (BTokenToName bt)^"="^(Int.toString i)^"\n")  
-              val _ = List.map output outlist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpInitProb t = 
-            let
-	          val strm = TextIO.openOut (path^"InitProb")
-              val outlist = BTokenTable.listItemsi table4
-              fun sumAll ((bt, i), ret) = ret+i
-              val sum = List.foldl sumAll 0 outlist
-              val wholelist = BTokenMapF.listItemsi btokentable
-              fun output (bt, s) = 
-                case BTokenTable.find(table4, bt) of
-                    NONE => TextIO.output(strm, "0.0\n")
-                  | SOME n => TextIO.output(strm, (Real.toString ((Real.fromInt n)/(Real.fromInt sum)))^"\n") 
-              val _ = List.app output wholelist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpTransProb t = 
-            let
-	          val strm = TextIO.openOut (path^"TransProb")
-              val wholelist = BTokenMapF.listItemsi btokentable
-              fun output (bt1, s1) = 
-                let
-                  fun outputin ((bt2, s2), ret) =
-                    case BTokenPairTable.find(table2, (bt1, bt2)) of
-                        NONE => ret^"0 "
-                      | SOME n => ret^Real.toString((Real.fromInt n)/(Real.fromInt (Option.valOf(BTokenTable.find(table1, bt1)))))^" "
-                  val outputstrm = List.foldl outputin "" wholelist
-                in
-                  TextIO.output(strm, outputstrm^"\n")
-                end 
-              val _ = List.app output wholelist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpEmitProb t = 
-            let
-	          val strm = TextIO.openOut (path^"EmitProb")
-              fun constrList i =
-                let
-                  val bit9 = if i-512>=0 then 1 else 0
-                  val num9 = i-512*bit9
-                  val bit8 = if num9-256>=0 then 1 else 0
-                  val num8 = num9-256*bit8
-                  val bit7 = if num8-128>=0 then 1 else 0
-                  val num7 = num8-128*bit7
-                  val bit6 = if num7-64>=0 then 1 else 0
-                  val num6 = num7-64*bit6
-                  val bit5 = if num6-32>=0 then 1 else 0
-                  val num5 = num6-32*bit5
-                  val bit4 = if num5-16>=0 then 1 else 0
-                  val num4 = num5-16*bit4
-                  val bit3 = if num4-8>=0 then 1 else 0
-                  val num3 = num4-8*bit3
-                  val bit2 = if num3-4>=0 then 1 else 0
-                  val num2 = num3-4*bit2
-                  val bit1 = if num2-2>=0 then 1 else 0
-                  val num1 = num2-2*bit1
-                  val bit0 = if num1-1>=0 then 1 else 0
-                in
-                  if i=1023 then [[1,1,1,1,1,1,1,1,1,1]]
-                  else [bit9, bit8, bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0]::(constrList (i+1))
-                end
-              val wholelist1 = constrList 0
-              val wholelist2 = BTokenMapF.listItemsi btokentable
-              fun output l = 
-                let
-                  fun outputin ((bt, s), ret) =
-                    case ListBTokenPairTable.find(table3, (l, bt)) of
-                        NONE => ret^"0 "
-                      | SOME n => ret^Real.toString((Real.fromInt n)/(Real.fromInt (Option.valOf(BTokenTable.find(table1, bt)))))^" "
-                  val outputstrm = List.foldl outputin "" wholelist2
-                in
-                  TextIO.output(strm, outputstrm^"\n")
-                end 
-              val _ = List.app output wholelist1
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpEndProb t = 
-            let
-	          val strm = TextIO.openOut (path^"EndProb")
-              val outlist = BTokenTable.listItemsi table5
-              fun sumAll ((bt, i), ret) = ret+i
-              val sum = List.foldl sumAll 0 outlist
-              val wholelist = BTokenMapF.listItemsi btokentable
-              fun output (bt, s) = 
-                case BTokenTable.find(table5, bt) of
-                    NONE => TextIO.output(strm, "0.0\n")
-                  | SOME n => TextIO.output(strm, (Real.toString ((Real.fromInt n)/(Real.fromInt sum)))^"\n") 
-              val _ = List.app output wholelist
-            in
-              TextIO.closeOut strm 
-            end
-          fun dumpTokenName t = 
-            let
-	          val strm = TextIO.openOut (path^"TokenName")
-              val wholelist = BTokenMapF.listItemsi btokentable
-              fun output (bt, s) = TextIO.output(strm, (BTokenToName bt)^"\n")
-              val _ = List.app output wholelist
-            in
-              TextIO.closeOut strm 
-            end
           in
-            (dumpToken table1; dumpTokenPair table2; dumpListToken table3; dumpBeginToken table4; dumpEndToken table5; dumpInitProb table4; dumpTransProb table2; dumpEmitProb table3; dumpEndProb table5; dumpTokenName table1)
+            (
+            dumpToken path table1; 
+            dumpTokenPair path table2; 
+            dumpListToken path table3; 
+            dumpBeginToken path table4; 
+            dumpEndToken path table5; 
+            dumpInitProb path table4; 
+            dumpTransProb path table1 table2; 
+            dumpEmitProb path table1 table3; 
+            dumpEndProb path table5; 
+            dumpTokenName path table1
+            )
           end 
 
 end

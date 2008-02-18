@@ -127,8 +127,9 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun setTrainingRun  s = trainingRun  := (s = "true")
     fun setIncTrainingRun  s = inctrainingRun  := (s = "true")
     fun setTestingRun   s = testingRun  := (s = "true") 
-    fun setExamHMMPre      s = examHMMPre  := (s = "true")
-    fun setExamHMMPost      s = examHMMPost  := (s = "true")
+    fun setExamHMMPre   s = examHMMPre  := (s = "true")
+    fun setExamHMMPost  s = examHMMPost  := (s = "true")
+    fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
    val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("n",        "name of output file (default "^def_descName^")",                                     PCL.String (setDescName,  false)),
@@ -148,7 +149,8 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("inctraining", "incremental training run",	                                                   PCL.String (setIncTrainingRun, true)),
          ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
-         ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true))
+         ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
+         ("smooth", "use smoothing in training (default lambda"^(Real.toString defaultLambda)^")",         PCL.Float    (setLambda,     false))
         ]
 
     fun checkOutputDir() =(
