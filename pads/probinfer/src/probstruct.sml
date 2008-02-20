@@ -1625,13 +1625,17 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
 	    val records = loadFiles fileName  (* records: string list *)
 	    val () = initialRecordCount := (List.length records) 
         val rtokens : Seqset list = List.map (pathGraph recordNumber) records
+val _ = print "path graph done.\n"
         val rptokens : Seqset list = computeProb rtokens
+val _ = print "add prob done.\n"
+        val ret = SeqsetListToTy 0 rptokens
+val _ = print "seqset to list done.\n"
         (*    val rtokens = crackUniformGroups rtokens *)(* check if all records have same top level group token *)
 	    (* val () = if print_verbose = true then lengthsToHist rtokens else () *)
 	    (* val ty = SeqsetListToTy 0 rtokens *)
 	    (* val sty = simplifyTy ty *)
 	in
-	    SeqsetListToTy 0 rptokens
+	    ret
 	end
 
     fun examHmmResultPre fileName  = 

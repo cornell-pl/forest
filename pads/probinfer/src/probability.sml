@@ -443,6 +443,16 @@ val _ = print s1
           NONE => 0.0 (* a parameter to tune *)
         | SOME n => n
 
+    fun defaultVal1 v =
+      case v of
+          NONE => 0.1 (* a parameter to tune *)
+        | SOME n => Real.fromInt n
+
+    fun defaultRVal1 v =
+      case v of
+          NONE => 0.1 (* a parameter to tune *)
+        | SOME n => n
+
           fun dumpToken path t = 
             let
 	          val strm = TextIO.openOut (path^"TokenCount")
@@ -857,14 +867,14 @@ val _ = print s1
               let
                 val first = 
                   case pre of
-                      NONE => Math.ln(defaultRVal(BTokenTable.find(begintokentable, t)))
-                    | SOME pret => Math.ln(defaultVal(BTokenPairTable.find(tokenpairtable, (pret, t))))
-                val rest = (Real.fromInt ((String.size s)-1)) * (Math.ln(defaultVal(BTokenPairTable.find(tokenpairtable, (t, t)))))
+                      NONE => Math.ln(defaultRVal1(BTokenTable.find(begintokentable, t)))
+                    | SOME pret => Math.ln(defaultVal1(BTokenPairTable.find(tokenpairtable, (pret, t))))
+                val rest = (Real.fromInt ((String.size s)-1)) * (Math.ln(defaultVal1(BTokenPairTable.find(tokenpairtable, (t, t)))))
               in
                 (SOME t, first+rest+ret)
               end 
             val (lastt, most) = List.foldl addOne (NONE, 0.0) tslist
-            val all = most + (Math.ln(defaultRVal(BTokenTable.find(endtokentable, Option.valOf(lastt)))))
+            val all = most + (Math.ln(defaultRVal1(BTokenTable.find(endtokentable, Option.valOf(lastt)))))
           in
             all
           end 
@@ -874,7 +884,7 @@ val _ = print s1
               let
                 fun addOneChar (c, v) =
                   let
-                    val value = defaultVal(ListBTokenPairTable.find(listtokentable, (charToList c, t)))
+                    val value = defaultVal1(ListBTokenPairTable.find(listtokentable, (charToList c, t)))
                   in
                     (Math.ln value) + v
                   end
