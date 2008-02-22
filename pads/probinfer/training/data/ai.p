@@ -10,6 +10,8 @@ Ptypedef Pstring_ME(:"/[]]/":) PPpunc_rsqu
 Ptypedef Pstring_ME(:"/:/":) PPpunc_colon
 Ptypedef Pstring_ME(:"/[\"]/":) PPpunc_quote
 //Ptypedef Pstring_ME(:"/[0-9A-Za-z/.]+/":) PPblob
+Ptypedef Pstring_ME(:"/[^ ]+/":) PPmypath
+Ptypedef Pstring_ME(:"/./":) PPpunc_slash
 
 Punion client_t {
   PPip       ip;      /- 135.207.23.32
@@ -40,14 +42,18 @@ bool chkVersion(version_t v, method_t m) {
 
 Pstruct request_t {
           PPpunc_quote   quote1;
-          method_t       meth;  
+//          method_t       meth;
+          PPword word2;  
           PPwhite        w1;   
 //          Pstring(:' ':) req_uri;
-          PPpath         req_uri;
+          PPmypath         req_uri;
           PPwhite        w2;  
 //          version_t      version : 
 //                  chkVersion(version, meth);
-          Pstring(:'\"':)         blob; 
+//          Pstring(:'\"':)         blob;
+          PPword word1;
+          PPpunc_slash slash1;
+          PPfloat float1;
           PPpunc_quote   quote2;
 };
 
@@ -72,7 +78,9 @@ Precord Pstruct entry_t {
         PPpunc_colon  colon;
         Ptime(:' ':)    time;  
          PPwhite        white3;   
-       Pstring(:']':) timezone;
+//       Pstring(:']':) timezone;
+         PPpunc_hyphen hyphen7;
+         PPint int7;
          PPpunc_rsqu   rsqu;   
          PPwhite       white7;
          request_t      request;
