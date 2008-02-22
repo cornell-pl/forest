@@ -1,17 +1,17 @@
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
+#include "basetokens.p"
 
 //Ptypedef Pstring_ME(:"/\\s*/":) space_t;
 
 Precord Pstruct entry_t {
-        Puint16_FW(:4:) type;
+        PPint type;
         PPwhite space1;
-        Puint16_FW(:4:) id;
+        PPint id;
         PPwhite space2;
-        Pfloat32 value1;
+        PPfloat value1;
         PPwhite space3;
-        Pfloat32 value2;
+        PPfloat value2;
         PPwhite space4;
-        Pfloat32 value3;
+        PPfloat value3;
         PPwhite space5;
 };
 

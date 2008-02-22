@@ -1,6 +1,5 @@
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
+#include "basetokens.p"
 
-//Ptypedef Pstring_ME(:"/[A-Za-z][0-9a-zA-Z_\-]\*/":) Word;
 Ptypedef Pstring_ME(:"/[,]/":) PPpunc_comma;
 
 Pstruct secHeader {

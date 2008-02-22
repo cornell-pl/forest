@@ -1,4 +1,4 @@
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
+#include "basetokens.p"
 Ptypedef Pstring_ME(:"/-/":) PPpunc_hyphen
 Ptypedef Pstring_ME(:"/:/":) PPpunc_colon
 Ptypedef Pstring_ME(:"/,/":) PPpunc_comma
@@ -6,7 +6,6 @@ Ptypedef Pstring_ME(:"/[\"]/":) PPpunc_quote
 Ptypedef Pstring_ME(:"/[{]/":) PPpunc_lbsqu
 Ptypedef Pstring_ME(:"/[\}]/":) PPpunc_rbsqu
 Ptypedef Pstring_ME(:"/\"[0-9A-Za-z ]+\"/":) PPmymessage
-Ptypedef Pstring_ME(:"/[0-9]+|\-[0-9]+/":) PPmyint
 
 Pstruct arrayBody {
   PPpunc_quote quote7;
@@ -52,7 +51,7 @@ Precord Pstruct entry_t {
          PPint int2;
          PPpunc_comma comma4;
          PPwhite white6;
-         PPmyint int3;
+         PPint int3;
          PPpunc_comma comma9;
          PPwhite white13;
          PPpunc_quote quote5;

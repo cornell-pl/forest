@@ -1,4 +1,4 @@
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
+#include "basetokens.p"
 
 Ptypedef Pstring_ME(:"/[[]/":) PPpunc_lsqu
 Ptypedef Pstring_ME(:"/[]]/":) PPpunc_rsqu

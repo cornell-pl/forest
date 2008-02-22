@@ -1,7 +1,6 @@
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
+#include "basetokens.p"
 Ptypedef Pstring_ME(:"/:/":) PPpunc_colon
 Ptypedef Pstring_ME(:"/,/":) PPpunc_comma
-Ptypedef Pstring_ME(:"/[0-9]+|\-[0-9]+/":) PPmyint
 Ptypedef Pstring_ME(:"/[#]/":) PPpunc_hash
 
 Pstruct arrayBody {
@@ -30,7 +29,7 @@ Precord Pstruct entry_t {
   PPpunc_colon colon2;
   PPint int3;
   PPpunc_hash hash4;
-  PPmyint int4;
+  PPint int4;
   PPpunc_hash hash5;
   eventSeq event1;
 };

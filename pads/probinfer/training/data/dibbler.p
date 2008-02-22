@@ -1,6 +1,5 @@
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
+#include "basetokens.p"
 
-//Ptypedef Puint64 pn_t;
 Ptypedef Pstring_ME(:"/[|]/":) PPpunc_bar;
 Ptypedef Pstring_ME(:"/[-]/":) PPpunc_hyphen;
 Ptypedef Pstring_ME(:"/[/]/":) PPpunc_bslash;

@@ -6,7 +6,6 @@ Ptypedef Pstring_ME(:"/[\"]/":) PPpunc_quote
 Ptypedef Pstring_ME(:"/[{]/":) PPpunc_lbsqu
 Ptypedef Pstring_ME(:"/[\}]/":) PPpunc_rbsqu
 Ptypedef Pstring_ME(:"/\"[0-9A-Za-z ().]+\"|[(][^)]+[)]/":) PPmymessage
-Ptypedef Pstring_ME(:"/[0-9]+|\-[0-9]+/":) PPmyint
 Ptypedef Pstring_ME(:"/[^\"]+/":) PPmyurl
 Ptypedef Pstring_ME(:"/[(]/":) PPpunc_lpar
 Ptypedef Pstring_ME(:"/[)]/":) PPpunc_rpar
@@ -14,7 +13,7 @@ Ptypedef Pstring_ME(:"/[)]/":) PPpunc_rpar
 Pstruct content1 {
          PPpunc_comma comma11;
          PPwhite white11;       
-         PPmyint int7;
+         PPint int7;
 };
 
 Pstruct struct1 {
@@ -64,7 +63,7 @@ Pstruct content4 {
 };
 
 Precord Pstruct entry_t {
-         PPmyint int1; 
+         PPint int1; 
          PPpunc_comma comma1;
          PPwhite white1;
 
@@ -102,15 +101,15 @@ Precord Pstruct entry_t {
          Popt PPpunc_comma comma8;
          Popt PPwhite white8;   
 
-         PPmyint int4;
+         PPint int4;
          PPpunc_comma comma9;
          PPwhite white9;       
 
-         PPmyint int5;
+         PPint int5;
          PPpunc_comma comma10;
          PPwhite white10;       
 
-         PPmyint int6;
+         PPint int6;
 
          Popt content1 con1;
 

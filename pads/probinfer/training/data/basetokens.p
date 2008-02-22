@@ -1,6 +1,6 @@
-Ptypedef Pstring_ME(:"/[0-9]+/":) PPint;
+Ptypedef Pstring_ME(:"/[0-9]+|[\\-][0-9]+|[~][0-9]+/":) PPint;
 
-Ptypedef Pstring_ME(:"/[0-9]+\\.[0-9]+|[0-9]+/":) PPfloat;
+Ptypedef Pstring_ME(:"/[0-9]+\\.[0-9]+|[0-9]+|[-][0-9]+\\.[0-9]+|[0-9]+|[~][0-9]+\\.[0-9]+|[0-9]+/":) PPfloat;
 
 Ptypedef Pstring_ME(:"/([0-9]{2}):([0-9]{2}):([0-9]{2})([ ]*(am|AM|pm|PM))?([#\\t]+([+-][0-1][0-9]00))?/":) PPtime;
 

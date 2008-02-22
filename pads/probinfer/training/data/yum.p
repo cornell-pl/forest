@@ -1,4 +1,4 @@
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
+#include "basetokens.p"
 
 Ptypedef Pstring_ME(:"/:/":) PPpunc_colon
 Ptypedef Pstring_ME(:"/[0-9a-zA-Z\. \-]+/":) PPblob

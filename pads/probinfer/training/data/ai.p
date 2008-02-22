@@ -2,14 +2,12 @@ typedef int bool;
 #define true 1
 #define false 0
 
-#include "/n/fs/pads/pads/probinfer/training/data/basetoken.p"
-//Ptypedef Pstring_ME(:"/[0-9A-Za-z\\-_\\.]+/":) PPid;
+#include "basetokens.p"
 Ptypedef Pstring_ME(:"/-/":) PPpunc_hyphen
 Ptypedef Pstring_ME(:"/[[]/":) PPpunc_lsqu
 Ptypedef Pstring_ME(:"/[]]/":) PPpunc_rsqu
 Ptypedef Pstring_ME(:"/:/":) PPpunc_colon
 Ptypedef Pstring_ME(:"/[\"]/":) PPpunc_quote
-//Ptypedef Pstring_ME(:"/[0-9A-Za-z/.]+/":) PPblob
 Ptypedef Pstring_ME(:"/[^ ]+/":) PPmypath
 Ptypedef Pstring_ME(:"/./":) PPpunc_slash
 
