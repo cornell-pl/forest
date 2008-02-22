@@ -538,13 +538,15 @@ val _ = print ("begint: "^(Int.toString begint)^" endt: "^(Int.toString endt)^"\
     |  "blob" => PPblob
     |  "text" => PPtext
     |  "empty" => PPempty
-    |  s => 
+    |  _ => 
          let
            fun isColon c = c = #":"
-           val (junk, puncs) = Substring.splitr (not o isColon) (Substring.full t) 
+           val (junk, puncs) = Substring.splitl (not o isColon) (Substring.full t)
+           val punc = Substring.triml 1 puncs 
          in
-           PPpunc (Substring.string puncs)
+           PPpunc (Substring.string punc)
          end
+
 
     fun getRegex ( t : BToken ) : string =
 (*

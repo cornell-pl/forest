@@ -1648,11 +1648,12 @@ val _ = print "seqset to list done.\n"
         val strm = TextIO.openOut ("testing/input")
         fun printList list =
           let
-            fun listToInt (c, (bit, ret)) = if bit = ~1 then (0, ret)
-                                            else (bit-1, c*(Real.toInt IEEEReal.TO_NEAREST (Math.pow(Real.fromInt 2, Real.fromInt bit)))+ret)
+(*            fun listToInt (c, (bit, ret)) = if bit = ~1 then (0, ret)
+                                            else (bit-1, c*(Real.toInt IEEEReal.TO_NEAREST (Math.pow(Real.fromInt 2, Real.fromInt bit)))+ret)*)
             fun printOneVec v = 
               let
-                val (bit, ret) = List.foldl listToInt (9,0) v (* this needs to be changed when adding bits *)
+(*                val (bit, ret) = List.foldl listToInt ((fvectorbits-1),0) v  *)
+                  val ret = listToInt v
               in
                 TextIO.output(strm, ((Int.toString ret)^" "))
               end
@@ -1808,7 +1809,7 @@ val _ = print "seqset to list done.\n"
                 | _ => (print (re^"\n"); List.app printBSToken bslist; print "\n")
             end
 (*        val _ = ListPair.appEq printListPair (records, bsll2) *)
-        val _ = printRecordToken (List.length records-1)
+(*        val _ = printRecordToken (List.length records-1) *)
 	in
       evaluate bsll1 bsll2
 	end

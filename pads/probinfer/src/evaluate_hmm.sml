@@ -48,14 +48,18 @@ struct
                   val checkcbl = List.take(List.drop(cbl2, p), len)
                   fun checkOne ((c, b2), result) = if compBToken(b, b2)=EQUAL then result else (result+1)
                   val retwrongc = List.foldl checkOne 0 checkcbl
-                  val retwrongt = if retwrongc=0 then 0 else (print ("wrong token: "^(BTokenToName b)^"\n"); 1) 
+                  val retwrongt = if retwrongc=0 then 0 else 
+                    (print ("this token is not recognized: "^(BTokenToName b)^" ["^s^"]\n"); 1) 
                 in
                   (p+len, rewrongc+retwrongc, rewrongt+retwrongt)
                 end
+              val _ = print ("record "^(Int.toString i)^":\n")
               val (junk, thiswrongc, thiswrongt) = List.foldl compareOneToken (0, 0, 0) bsl1
               val thiswrongr = if thiswrongt=0 then 0 else 1
-              val _ = print ("record "^(Int.toString i)^
-                             ": totalc="^(Int.toString thistotalc)^
+              fun printBSToken (t, s) = print ((BTokenToName t)^"["^s^"]"^" ")
+              val _ = if thiswrongr = 0 then ()
+                      else (print "wrong token sequence :"; List.app printBSToken bsl2; print "\n") 
+              val _ = print ("totalc="^(Int.toString thistotalc)^
                              " wrongc="^(Int.toString thiswrongc)^
                              " totalt="^(Int.toString thistotalt)^
                              " wrongt="^(Int.toString thiswrongt)^"\n")
@@ -64,10 +68,11 @@ struct
               end
             end
         val ((wrongc, totalc),(wrongt, totalt), wrongr) = compareOneRecord ((List.length bsll1)-1)
+        val totalr = List.length bsll1
       in
-        print ("\ntotal records = "^(Int.toString (List.length bsll1))^"\twrong records = "^(Int.toString wrongr)^
-               "\ntotal tokens = "^(Int.toString totalt)^"\twrong tokens = "^(Int.toString wrongt)^
-               "\ntotal characters = "^(Int.toString totalc)^"\twrong characters = "^(Int.toString wrongc)^"\n")
+        print ("\ntotal records = "^(Int.toString totalr)^"\twrong records = "^(Int.toString wrongr)^"\terror rate = "^(Real.toString ((Real.fromInt wrongr)/(Real.fromInt totalr)))^
+               "\ntotal tokens = "^(Int.toString totalt)^"\twrong tokens = "^(Int.toString wrongt)^"\terror rate = "^(Real.toString ((Real.fromInt wrongt)/(Real.fromInt totalt)))^
+               "\ntotal characters = "^(Int.toString totalc)^"\twrong characters = "^(Int.toString wrongc)^"\terror rate = "^(Real.toString ((Real.fromInt wrongc)/(Real.fromInt totalc)))^"\n")
       end
 
 end
