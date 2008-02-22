@@ -84,6 +84,16 @@ print token *)
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
+       else if ( !evaluateHMMPost = true )
+         then
+            let
+              val _ = print "examing HMM returned tokens...\n"
+              val end1Times = zeroEndingTimes ()
+              val end2Times = updateStart (Time.now()) end1Times
+              val _ = evaluateHmmResultPost (!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
                 val (ty,sep)     = computeStructure ( !srcFiles )
@@ -129,6 +139,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun setTestingRun   s = testingRun  := (s = "true") 
     fun setExamHMMPre   s = examHMMPre  := (s = "true")
     fun setExamHMMPost  s = examHMMPost  := (s = "true")
+    fun setEvaluateHMMPost  s = evaluateHMMPost  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
    val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
@@ -150,6 +161,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
          ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
+         ("hmm3",  "evaluating HMM library: 2nd step",	                                                   PCL.String (setEvaluateHMMPost, true)),
          ("smooth", "use smoothing in training (default lambda"^(Real.toString defaultLambda)^")",         PCL.Float    (setLambda,     false))
         ]
 

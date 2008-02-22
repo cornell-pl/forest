@@ -7,6 +7,7 @@ struct
     open Regexparser
     open Basetokens
     open Probability
+    open Evaluate_hmm
     structure SS = Substring
 
     val TBDstamp = ref 0
@@ -1739,6 +1740,77 @@ val _ = print "seqset to list done.\n"
 	in
 (*	    ListPair.appEq printListPair (records, tokens) *)
         ListPair.appEq printListPair (records, bsll)
+	end
+
+    fun evaluateHmmResultPost fileName  = 
+	let
+        val records = loadFiles fileName
+	    val tokenss = loadFile "testing/output" 
+        val _ = print "Tokenization by HMM:\n"
+        fun extractIntList record : BToken list = 
+          let
+            fun isSpace c = c = #" "
+            fun doOne s : BToken list = 
+              let
+                val (pre, rest) = Substring.splitl (not o isSpace) s
+                val ret = intToBToken(Option.valOf(Int.fromString(Substring.string pre))) handle Option => (print ("s = "^(Substring.string pre)^"\n"); raise Option)
+                val newrest = Substring.triml 1 rest
+              in
+                if (Substring.size newrest)=0 orelse (isSpace (Substring.sub(newrest, 0))) then [ret]
+                else if (Substring.size pre) = (Substring.size s) then [ret]
+                else ret::(doOne (Substring.triml 1 rest)) 
+              end
+          in
+            if String.compare(record, "nil") = EQUAL then []
+            else doOne (Substring.full record)
+          end
+        val tokensi = List.map extractIntList tokenss
+        fun collapse (record: string, tks: BToken list) : char list list * BToken list = 
+          let
+            val chars = String.explode record
+            fun doOne (c, t, (pret, (retc, rett))) = 
+              case t of
+                  PPpunc p => (t, (retc@[[c]], rett@[t]))
+                | _ => if compBToken(t, pret)=EQUAL then (t, ((List.take(retc, (List.length retc)-1)@[(List.last retc)@[c]]), rett))
+                       else (t, (retc@[[c]], rett@[t])) 
+          in
+            case tks of
+                [] => ([[]], [])
+              | hd::tl => let val (junk, list) = ListPair.foldlEq doOne (hd, ([[List.hd chars]], [hd])) (List.tl chars, tl) in list end
+          end
+        val ret = ListPair.mapEq collapse (records, tokensi)
+        fun adjust (charll, blist) : BSToken list =
+          let
+            fun combineOne (charl, bt) = (bt, String.implode charl)
+          in
+            case blist of
+                [] => []
+              | _ => ListPair.mapEq combineOne (charll, blist)
+          end
+        val bsll2 : BSToken list list = List.map adjust ret
+        val bsll1 = extractLog "training/log/" "training/log/testname"
+        fun printBSToken (t, s) = print ((BTokenToName t)^"["^s^"]"^" ")
+        fun printListPair (re:string, bslist: BSToken list) =
+          case bslist of
+              [] => (print (re^"\n"); print "no tokenization result\n")
+            | _ => (print (re^"\n"); List.app printBSToken bslist; print "\n")
+        fun printRecordToken i =
+          if i<0 then ()
+          else
+            let
+              val _ = printRecordToken (i-1)
+              val re = List.nth(records, i)
+              val bslist = List.nth(bsll2, i)
+              val _ = print ("record "^(Int.toString i)^":\n")
+            in
+              case bslist of
+                  [] => (print (re^"\n"); print "no tokenization result\n")
+                | _ => (print (re^"\n"); List.app printBSToken bslist; print "\n")
+            end
+(*        val _ = ListPair.appEq printListPair (records, bsll2) *)
+        val _ = printRecordToken (List.length records-1)
+	in
+      evaluate bsll1 bsll2
 	end
 
 end

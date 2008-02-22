@@ -64,7 +64,7 @@ struct
 
     exception CPtagError
 
-    fun extractLog path listfile : (BToken*string) list list = 
+    fun extractLog path listfile : BSToken list list = 
       let
         val files : string list = loadFile listfile
         fun loadOne (str, ret) = 

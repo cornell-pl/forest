@@ -25,6 +25,7 @@ is
   basetokens.sml
   probability.sml
   probstruct.sml
+  evaluate_hmm.sml
   regexparser.sml
   ../examples/gold/ir/1967Transactions.short.sml
   ../examples/gold/ir/MER_T01_01.csv.sml

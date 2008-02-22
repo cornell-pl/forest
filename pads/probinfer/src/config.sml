@@ -38,6 +38,7 @@ structure Config = struct
     val examHMMPost       = ref false
     val lambda            = ref 0.0
     val defaultLambda     = 0.01
+    val evaluateHMMPost   = ref false
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
