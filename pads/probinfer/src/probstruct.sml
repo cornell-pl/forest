@@ -1627,7 +1627,7 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
 	    val () = initialRecordCount := (List.length records) 
         val rtokens : Seqset list = List.map (pathGraph recordNumber) records
 val _ = print "path graph done.\n"
-        val rptokens : Seqset list = computeProb rtokens
+        val rptokens : Seqset list = if ( !character = true ) then  computeProbChar rtokens else computeProb rtokens
 val _ = print "add prob done.\n"
         val ret = SeqsetListToTy 0 rptokens
 val _ = print "seqset to list done.\n"
@@ -1644,7 +1644,7 @@ val _ = print "seqset to list done.\n"
 	    val () = print ("Starting on file "^(lconcat fileName)^"\n");
 	    val records = loadFiles fileName  (* records: string list *)
         fun doOne record : int list list = List.map charToList (String.explode record)
-        val rtokens : int list list list = List.map doOne records
+        fun doOne2 record : int list =  List.map Char.ord (String.explode record)
         val strm = TextIO.openOut ("testing/input")
         fun printList list =
           let
@@ -1661,8 +1661,19 @@ val _ = print "seqset to list done.\n"
           in
             List.app printOneRecord list
           end
+        fun printList2 list =
+          let
+            fun printOneChar i = TextIO.output(strm, ((Int.toString i)^" "))
+            fun printOneRecord record = (List.app printOneChar record; TextIO.output(strm, "\n"))
+          in
+            List.app printOneRecord list
+          end
  	in
-	    (printList rtokens; TextIO.closeOut strm)
+	    (
+         if ( !character = true ) then printList2 (List.map doOne2 records)
+         else printList (List.map doOne records); 
+         TextIO.closeOut strm
+        )
 	end
 
     fun examHmmResultPost fileName  = 

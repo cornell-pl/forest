@@ -303,6 +303,17 @@ val _ = print s1
 			    val compare = ListBTokenPairComp
 		     end)  
 
+    fun CharBTokenPairComp ((t1a,t1b), (t2a,t2b)) = 
+	let val r1 = compBToken (t1b, t2b)
+	in
+	    if  r1 = EQUAL then Char.compare (t1a, t2a) else r1
+	end
+
+    structure CharBTokenPairTable = RedBlackMapFn(
+                     struct type ord_key = char*BToken
+			    val compare = CharBTokenPairComp
+		     end)  
+
 (* char-by-char HMM: there're 3 tables to construct.
    (t1, t2), (c vector, t), t
 *)
@@ -461,6 +472,32 @@ val _ = print s1
         List.foldl countOne inittable l
       end
 
+    fun constrCharTokenTable l inittable = 
+      let
+        fun countOne (tslist, btokentable) = 
+          let
+            fun countOneToken ((btoken, str), btt) =
+              let
+                fun countOneChar (c, btt) =
+                    case CharBTokenPairTable.find(btt, (c, btoken)) of
+                        NONE => CharBTokenPairTable.insert(btt, (c, btoken), 1)
+                      | SOME n => (
+                          let
+                            val (newtable, junk) = CharBTokenPairTable.remove(btt, (c, btoken))
+                          in
+                            CharBTokenPairTable.insert(btt, (c, btoken), n+1)
+                          end
+                        )
+              in
+                List.foldl countOneChar btt (String.explode str) 
+              end
+          in
+            List.foldl countOneToken btokentable tslist
+          end
+      in
+        List.foldl countOne inittable l
+      end
+
     fun defaultVal v =
       case v of
           NONE => 0.0 (* a parameter to tune *)
@@ -501,7 +538,7 @@ val _ = print s1
             end
           fun dumpListToken path t = 
             let
-	          val strm = TextIO.openOut (path^"CharTokenCount")
+	          val strm = TextIO.openOut (path^"VecTokenCount")
               val outlist = ListBTokenPairTable.listItemsi t (*table3*)
               fun listToString il = 
                 let
@@ -510,6 +547,21 @@ val _ = print s1
                   List.foldl foo "" il
                 end
               fun output ((l, bt), i) = TextIO.output(strm, (listToString l)^" "^(BTokenToName bt)^"="^(Int.toString i)^"\n")  
+              val _ = List.map output outlist
+            in
+              TextIO.closeOut strm 
+            end
+          fun dumpCharToken path t = 
+            let
+	          val strm = TextIO.openOut (path^"CharTokenCount")
+              val outlist = CharBTokenPairTable.listItemsi t 
+              fun listToString il = 
+                let
+                  fun foo (i, ret) = ret^(Int.toString i)
+                in
+                  List.foldl foo "" il
+                end
+              fun output ((c, bt), i) = TextIO.output(strm, (Char.toString c)^" "^(BTokenToName bt)^"="^(Int.toString i)^"\n")  
               val _ = List.map output outlist
             in
               TextIO.closeOut strm 
@@ -624,6 +676,30 @@ val _ = print s1
             in
               TextIO.closeOut strm 
             end
+          fun dumpEmitProbSmoothChar path t1 t3 = 
+            let
+	          val strm = TextIO.openOut (path^"EmitProb")
+              fun constrList i =
+                  if i = Char.maxOrd then [i]
+                  else i::(constrList (i+1))
+              val wholelist1 = constrList 0
+              val charnum = List.length wholelist1
+              val wholelist2 = BTokenMapF.listItemsi btokentable
+              fun output l = 
+                let
+                  fun outputin ((bt, s), ret) =
+                    let val lookupr = defaultVal(CharBTokenPairTable.find(t3, ((Char.chr l), bt)))
+                    in
+                      ret^Real.toString((lookupr+(!lambda))/((defaultVal(BTokenTable.find(t1, bt)))+(Real.fromInt charnum)*(!lambda)))^" "
+                    end
+                  val outputstrm = List.foldl outputin "" wholelist2
+                in
+                  TextIO.output(strm, outputstrm^"\n")
+                end 
+              val _ = List.app output wholelist1
+            in
+              TextIO.closeOut strm 
+            end
           fun dumpEndProbSmooth path t = 
             let
 	          val strm = TextIO.openOut (path^"EndProb")
@@ -727,6 +803,28 @@ val _ = print s1
             in
               TextIO.closeOut strm 
             end
+          fun dumpEmitProbChar path t1 t3 = 
+            let
+	          val strm = TextIO.openOut (path^"EmitProb")
+              fun constrList i =
+                  if i = Char.maxOrd then [i]
+                  else i::(constrList (i+1))
+              val wholelist1 = constrList 0
+              val wholelist2 = BTokenMapF.listItemsi btokentable
+              fun output l = 
+                let
+                  fun outputin ((bt, s), ret) =
+                    case CharBTokenPairTable.find(t3, ((Char.chr l), bt)) of
+                        NONE => ret^"0 "
+                      | SOME n => ret^Real.toString((Real.fromInt n)/(Real.fromInt (Option.valOf(BTokenTable.find(t1, bt)))))^" "
+                  val outputstrm = List.foldl outputin "" wholelist2
+                in
+                  TextIO.output(strm, outputstrm^"\n")
+                end 
+              val _ = List.app output wholelist1
+            in
+              TextIO.closeOut strm 
+            end
           fun dumpEndProb path t = 
             let
 	          val strm = TextIO.openOut (path^"EndProb")
@@ -790,6 +888,49 @@ val _ = print s1
             dumpInitProbSmooth path table4; (*print "6\n";*)
             dumpTransProbSmooth path table1 table2; (*print "7\n";*)
             dumpEmitProbSmooth path table1 table3; (*print "8\n";*)
+            dumpEndProbSmooth path table5; (*print "9\n";*)
+            dumpTokenName path table1 (*; print "10\n"*)
+            )
+          end 
+
+    fun dumpCCHMMChar ( path : string ) : unit = 
+        let 
+          val _ = print ("Printing char-by-char HMM to files under "^path^"\n")
+          val list = extractLog "training/log/" "training/log/log.list"
+          val table1 = constrTokenTable list BTokenTable.empty
+(*          val _ = print "1\n" *)
+          val table2 = constrTokenPairTable list BTokenPairTable.empty
+(*          val _ = print "2\n" *)
+          val table3 = constrCharTokenTable list CharBTokenPairTable.empty
+(*          val _ = print "3\n" *)
+          val table4 = constrBeginTokenTable list BTokenTable.empty
+(*          val _ = print "4\n" *)
+          val table5 = constrEndTokenTable list BTokenTable.empty
+(*          val _ = print "5\n" *)
+          in
+            if Real.compare(!lambda, 0.0)=EQUAL then 
+            (
+            dumpToken path table1; (*print "TokenCount generated.\n";*) 
+            dumpTokenPair path table2; (*print "TokenPairCount generated.\n";*)
+            dumpCharToken path table3; (*print "CharTokenCount generated.\n";*)
+            dumpBeginToken path table4; (*print "\n";*)
+            dumpEndToken path table5; (*print "5\n";*)
+            dumpInitProb path table4; (*print "6\n";*)
+            dumpTransProb path table1 table2; (*print "7\n";*)
+            dumpEmitProbChar path table1 table3; (*print "8\n";*)
+            dumpEndProb path table5; (*print "9\n";*)
+            dumpTokenName path table1 (*; print "10\n"*)
+            )
+            else
+            (
+            dumpToken path table1; (*print "TokenCount generated.\n";*) 
+            dumpTokenPair path table2; (*print "TokenPairCount generated.\n";*)
+            dumpCharToken path table3; (*print "CharTokenCount generated.\n";*)
+            dumpBeginToken path table4; (*print "\n";*)
+            dumpEndToken path table5; (*print "5\n";*)
+            dumpInitProbSmooth path table4; (*print "6\n";*)
+            dumpTransProbSmooth path table1 table2; (*print "7\n";*)
+            dumpEmitProbSmoothChar path table1 table3; (*print "8\n";*)
             dumpEndProbSmooth path table5; (*print "9\n";*)
             dumpTokenName path table1 (*; print "10\n"*)
             )
@@ -877,7 +1018,7 @@ val _ = print s1
 
     fun readListTokenTable path =
       let
-        val list = loadFile (path^"CharTokenCount")
+        val list = loadFile (path^"VecTokenCount")
         fun extractOne (t, table) =
           let
             fun isComma c = c = #" "
@@ -898,6 +1039,24 @@ val _ = print s1
           end
       in
         List.foldl extractOne ListBTokenPairTable.empty list
+      end
+
+    fun readCharTokenTable path =
+      let
+        val list = loadFile (path^"CharTokenCount")
+        fun extractOne (t, table) =
+          let
+            val ch = String.sub(t, 0)
+            val newt = Substring.triml 2 (Substring.full t) (* delete char and whitespace *)
+            fun isEqual c = c = #"="
+            val (token, counts) = Substring.splitr (not o isEqual) (Substring.full t) 
+            val newtoken = Substring.trimr 1 token
+            val key = (ch, nameToBToken (Substring.string newtoken))
+          in 
+            CharBTokenPairTable.insert(table, key, Option.valOf(Int.fromString (Substring.string counts)))
+          end
+      in
+        List.foldl extractOne CharBTokenPairTable.empty list
       end
 
     fun computeProb pathgraph : Seqset list = 
@@ -946,6 +1105,52 @@ val _ = print s1
         List.map doOneSeqset pathgraph
       end
 
+    fun computeProbChar pathgraph : Seqset list = 
+      let
+        val tokentable = readTokenTable "training/"
+        val begintokentable = readBoundaryTokenTable "training/" 0
+        val endtokentable = readBoundaryTokenTable "training/" 1
+        val tokenpairtable = readTokenPairTable "training/"
+        val listtokentable = readCharTokenTable "training/"
+        fun transProb tslist =
+          let
+            fun addOne (((t, s), l), (pre, ret)) = 
+              let
+                val first = 
+                  case pre of
+                      NONE => Math.ln(defaultRVal1(BTokenTable.find(begintokentable, t)))
+                    | SOME pret => Math.ln(defaultVal1(BTokenPairTable.find(tokenpairtable, (pret, t))))
+                val rest = (Real.fromInt ((String.size s)-1)) * (Math.ln(defaultVal1(BTokenPairTable.find(tokenpairtable, (t, t)))))
+              in
+                (SOME t, first+rest+ret)
+              end 
+            val (lastt, most) = List.foldl addOne (NONE, 0.0) tslist
+            val all = most + (Math.ln(defaultRVal1(BTokenTable.find(endtokentable, Option.valOf(lastt)))))
+          in
+            all
+          end 
+        fun emitProb tslist =
+          let
+            fun addOne (((t,s),l), ret) = 
+              let
+                fun addOneChar (c, v) =
+                  let
+                    val value = defaultVal1(CharBTokenPairTable.find(listtokentable, (c, t))) 
+                  in
+                    (Math.ln value) + v
+                  end
+              in
+                List.foldl addOneChar ret (String.explode s)
+              end
+          in
+            List.foldl addOne 0.0 tslist
+          end
+        fun doOneTList (tsllist, f) = (tsllist, (transProb tsllist) + (emitProb tsllist))
+        fun doOneSeqset ss = List.map doOneTList ss
+      in
+        List.map doOneSeqset pathgraph
+      end
+
     fun incdumpCCHMM ( path : string ) : unit = 
         let 
           val tokentable = readTokenTable "training/"
@@ -975,6 +1180,40 @@ val _ = print s1
             dumpInitProb path table4; 
             dumpTransProb path table1 table2; 
             dumpEmitProb path table1 table3; 
+            dumpEndProb path table5; 
+            dumpTokenName path table1
+            )
+          end 
+
+    fun incdumpCCHMMChar ( path : string ) : unit = 
+        let 
+          val tokentable = readTokenTable "training/"
+          val begintokentable = readRawBoundaryTokenTable "training/" 0
+          val endtokentable = readRawBoundaryTokenTable "training/" 1
+          val tokenpairtable = readTokenPairTable "training/"
+          val listtokentable = readCharTokenTable "training/"
+          val _ = print ("Printing char-by-char HMM to files under "^path^"\n")
+          val list = extractLog "training/log/" "training/log/inc.list"
+          val table1 = constrTokenTable list tokentable
+(*          val _ = print "1\n" *)
+          val table2 = constrTokenPairTable list tokenpairtable
+(*          val _ = print "2\n" *)
+          val table3 = constrCharTokenTable list listtokentable
+(*          val _ = print "3\n" *)
+          val table4 = constrBeginTokenTable list begintokentable
+(*          val _ = print "4\n" *)
+          val table5 = constrEndTokenTable list endtokentable
+(*          val _ = print "5\n" *)
+          in
+            (
+            dumpToken path table1; 
+            dumpTokenPair path table2; 
+            dumpCharToken path table3; 
+            dumpBeginToken path table4; 
+            dumpEndToken path table5; 
+            dumpInitProb path table4; 
+            dumpTransProb path table1 table2; 
+            dumpEmitProbChar path table1 table3; 
             dumpEndProb path table5; 
             dumpTokenName path table1
             )

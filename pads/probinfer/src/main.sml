@@ -33,8 +33,9 @@ structure Main : sig
 
        else if ( !inctrainingRun = true ) then
          let 
-           val _ = print "Incremental training run.\n"; 
-           val _ = incdumpCCHMM "training/";
+           val _ = print "Incremental training run.\n";
+           val _ = if ( !character = true ) then incdumpCCHMMChar "training/"
+                   else incdumpCCHMM "training/";
 (*val (token, str) = List.nth (List.nth (table, 0), 0)
 print token *)
          in
@@ -44,7 +45,8 @@ print token *)
        else if ( !trainingRun = true ) then
          let 
            val _ = print "trainingRun\n"; 
-           val _ = dumpCCHMM "training/";
+           val _ = if ( !character = true ) then dumpCCHMMChar "training/"
+                   else dumpCCHMM "training/";
 (*val (token, str) = List.nth (List.nth (table, 0), 0)
 print token *)
          in
@@ -140,6 +142,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun setExamHMMPre   s = examHMMPre  := (s = "true")
     fun setExamHMMPost  s = examHMMPost  := (s = "true")
     fun setEvaluateHMMPost  s = evaluateHMMPost  := (s = "true")
+    fun setCharacter  s = character  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
    val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
@@ -162,6 +165,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
          ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
          ("hmm3",  "evaluating HMM library: 2nd step",	                                                   PCL.String (setEvaluateHMMPost, true)),
+         ("char", "use character other than character feature vector for training",                        PCL.String (setCharacter, true)),
          ("smooth", "use smoothing in training (default lambda"^(Real.toString defaultLambda)^")",         PCL.Float    (setLambda,     false))
         ]
 

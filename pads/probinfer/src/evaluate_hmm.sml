@@ -32,8 +32,10 @@ struct
                 end
             in
               case bsl2 of
-                  [] => let
+                  [] => let (* no tokenization result *)
                           val cbl1 = bslToCbl bsl1
+                          val _ = print ("record "^(Int.toString i)^":\n")
+                          val _ = print "no tokenization result\n\n"
                         in
                           ((oldwrongc+(List.length cbl1), oldtotalc+(List.length cbl1)), (oldwrongt+(List.length bsl1), oldtotalt+(List.length bsl1)), oldwrongr+1)
                         end
@@ -62,7 +64,7 @@ struct
               val _ = print ("totalc="^(Int.toString thistotalc)^
                              " wrongc="^(Int.toString thiswrongc)^
                              " totalt="^(Int.toString thistotalt)^
-                             " wrongt="^(Int.toString thiswrongt)^"\n")
+                             " wrongt="^(Int.toString thiswrongt)^"\n\n")
               in
               ((oldwrongc+thiswrongc, oldtotalc+thistotalc), (oldwrongt+thiswrongt, oldtotalt+thistotalt), oldwrongr+thiswrongr)
               end
