@@ -2,51 +2,7 @@ structure Probability =
 struct
     open Basetokens
     open Config
-
-(* feature vector (high-low): upper-case? lower-case? digit? punc? whitespace? "."? ","? """? ":"? *)
-    fun charToList c : int list = 
-      let
-        val upper = if Char.isUpper c then [1] else [0]
-        val lower = if Char.isLower c then 1::upper else 0::upper
-        val digit = if Char.isDigit c then 1::lower else 0::lower
-        val punct = if Char.isPunct c orelse Char.isSpace c then 1::digit else 0::digit
-        val space = if Char.isSpace c then 1::punct else 0::punct
-        val dot = if Char.compare(c, #".")=EQUAL then 1::space else 0::space
-        val comma = if Char.compare(c, #",")=EQUAL then 1::dot else 0::dot
-        val quest = if Char.compare(c, #"?")=EQUAL then 1::comma else 0::comma
-        val quote = if Char.compare(c, #"\"")=EQUAL then 1::quest else 0::quest
-        val colon = if Char.compare(c, #":")=EQUAL then 1::quote else 0::quote
-        val slash = if Char.compare(c, #"/")=EQUAL then 1::colon else 0::colon
-      in
-        List.rev slash
-      end
-
-    fun intToList i =
-      let
-        fun recFn bit = 
-          if bit=fvectorbits then ([], i) 
-          else
-            let
-              val (retlist, remain) = recFn (bit+1)
-              val powv = Real.toInt IEEEReal.TO_NEAREST (Math.pow((Real.fromInt 2), (Real.fromInt bit)))
-              val mybit = if remain-powv>=0 then 1 else 0
-              val newremain = remain-powv*mybit
-            in
-              (retlist@[mybit], newremain)
-            end
-        val (l, junk) = recFn 0
-      in
-        l
-      end
-
-      fun listToInt list =
-        let
-          fun recFn (c, (bit, ret)) = if bit = ~1 then (0, ret)
-                                      else (bit-1, c*(Real.toInt IEEEReal.TO_NEAREST (Math.pow(Real.fromInt 2, Real.fromInt bit)))+ret)
-          val (bit, ret) = List.foldl recFn ((fvectorbits-1),0) list 
-        in
-          ret
-        end
+    open Fvector
 
     fun loadFile path = 
      let 
@@ -97,12 +53,13 @@ struct
       else if String.isSubstring "punc" s then (if (String.size str)=1 then (PPpunc str) else PPblob)
       else if String.isSubstring "text" s then PPtext
       else if String.isSubstring "lit" s then (
-        case s of 
+        case str of 
             "," => PPpunc ","
           | "." => PPpunc "."
           | "/" => PPpunc "/"
           | ":" => PPpunc ":"
           | " " => PPwhite
+          | "|" => PPpunc "|"
           | _ => PPblob
       )
       else PPblob
@@ -655,7 +612,8 @@ val _ = print s1
                 let
                   val thislist = intToList i
                 in
-                  if i+1 = Real.toInt IEEEReal.TO_NEAREST (Math.pow((Real.fromInt 2), (Real.fromInt fvectorbits))) then [thislist]
+(*                  if i+1 = Real.toInt IEEEReal.TO_NEAREST (Math.pow((Real.fromInt 2), (Real.fromInt fvectorbits))) then [thislist]*)
+                  if i = maxFOrd then [thislist] 
                   else thislist::(constrList (i+1))
                 end
               val wholelist1 = constrList 0
@@ -784,7 +742,8 @@ val _ = print s1
                 let
                   val thislist = intToList i
                 in
-                  if i+1 = Real.toInt IEEEReal.TO_NEAREST (Math.pow((Real.fromInt 2), (Real.fromInt fvectorbits))) then [thislist]
+(*                  if i+1 = Real.toInt IEEEReal.TO_NEAREST (Math.pow((Real.fromInt 2), (Real.fromInt fvectorbits))) then [thislist]*)
+                  if i = maxFOrd then [thislist] 
                   else thislist::(constrList (i+1))
                 end
               val wholelist1 = constrList 0

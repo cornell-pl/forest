@@ -27,6 +27,8 @@ is
   probstruct.sml
   evaluate_hmm.sml
   regexparser.sml
+  fvector.sml
+(*  regexp.sml *)
   ../examples/gold/ir/1967Transactions.short.sml
   ../examples/gold/ir/MER_T01_01.csv.sml
   ../examples/gold/ir/ai.3000.sml

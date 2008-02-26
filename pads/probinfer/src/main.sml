@@ -38,6 +38,7 @@ structure Main : sig
                    else incdumpCCHMM "training/";
 (*val (token, str) = List.nth (List.nth (table, 0), 0)
 print token *)
+           val _ = moveIncToList "training/log/"
          in
            ()
          end

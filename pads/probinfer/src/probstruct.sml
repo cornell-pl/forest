@@ -8,6 +8,7 @@ struct
     open Basetokens
     open Probability
     open Evaluate_hmm
+    open Fvector
     structure SS = Substring
 
     val TBDstamp = ref 0
@@ -1653,7 +1654,7 @@ val _ = print "seqset to list done.\n"
             fun printOneVec v = 
               let
 (*                val (bit, ret) = List.foldl listToInt ((fvectorbits-1),0) v  *)
-                  val ret = listToInt v
+                  val ret = listToInt v 
               in
                 TextIO.output(strm, ((Int.toString ret)^" "))
               end
@@ -1824,5 +1825,19 @@ val _ = print "seqset to list done.\n"
 	in
       evaluate bsll1 bsll2
 	end
+
+    fun moveIncToList path =
+      let
+        val infilesraw = loadFile (path^"inc.list")
+        fun loadOne (str, ret) = 
+          if Char.compare(#"#", String.sub(str, 0))=EQUAL then ret
+          else ret@[str]
+        val infiles = List.foldl loadOne [] infilesraw
+        val outstrm = TextIO.openAppend (path^"log.list")
+        fun outputOne file = TextIO.output(outstrm, (file^"\n"))
+        val _ = List.app outputOne infiles
+      in
+        TextIO.closeOut outstrm
+      end
 
 end

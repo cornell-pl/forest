@@ -6,6 +6,7 @@ struct
     structure REParser = RegExpFn (structure P=AwkSyntax structure E=DfaEngine) : REGEXP
     structure MT = MatchTree
     structure SS = Substring
+(*    open Matcher Matcher.RegExps *)
 
 (*    val recNum = ref 0  *)
 
@@ -32,6 +33,12 @@ struct
 
     fun matchRegEx (s:string) (re:string) (*:string*string*int*int*) (* matched, remain, pos, len *)=
       let
+(*
+        val regexp = parse "\/"
+        val matches = match regexp
+        val _ = if matches "/" then print "yes\n" else print "no\n"
+        val _ = raise out
+*)
 (* val _ = print ("Match string (" ^ (String.toString s) ^") with regex ("^(String.toString re) ^ ")\n") *)
         val cregex = REParser.compileString re             
       in
