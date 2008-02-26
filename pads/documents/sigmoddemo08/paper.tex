@@ -114,6 +114,33 @@ paper~\cite{fisher+:dirttoshovels} contains an overview of related
 work in information extraction, regular expression inference, and
 schema induction.  
 
+\begin{figure*}[tbh]
+\begin{center}
+{\small
+\begin{verbatim}
+*****************************************************************************************************
+<top> : struct Struct_149
+*****************************************************************************************************
+good vals:        3000   bad vals:          0    pcnt-bad:    0.000
+
+[Describing each field of <top>]
+... OMMITTED ...
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.var_70 : enum Enum_70
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+good vals:       3000    bad vals:          0    pcnt-bad:    0.000
+  Characterizing enum Enum_70 values:  min POST (    0)  max GET (    1)
+    => distribution of top 2 values out of 2 distinct values:
+        val: GET (    1)    count:       2999  pcnt-of-good-vals:   99.967
+        val: POST (    0)   count:          1  pcnt-of-good-vals:    0.033
+. .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING             count:       3000  pcnt-of-good-vals:  100.000
+\end{verbatim}
+}
+\caption{A Fragment of the Accumulator Report}\label{fig-accum-report}
+\end{center}
+\end{figure*}
+
 \section{User Experience}
 
 Individual network administrators, systems researchers and large 
@@ -178,33 +205,6 @@ In the demo, we will run the format inferencing engine on a variety of
 data formats.  We will show the resulting PADS descriptions and the
 output of these generated programs when run on data similar to the
 training data.
-
-\begin{figure*}
-\begin{center}
-{\small
-\begin{verbatim}
-*****************************************************************************************************
-<top> : struct Struct_149
-*****************************************************************************************************
-good vals:        3000   bad vals:          0    pcnt-bad:    0.000
-
-[Describing each field of <top>]
-... OMMITTED ...
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<top>.var_70 : enum Enum_70
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-good vals:       3000    bad vals:          0    pcnt-bad:    0.000
-  Characterizing enum Enum_70 values:  min POST (    0)  max GET (    1)
-    => distribution of top 2 values out of 2 distinct values:
-        val: GET (    1)    count:       2999  pcnt-of-good-vals:   99.967
-        val: POST (    0)   count:          1  pcnt-of-good-vals:    0.033
-. .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        SUMMING             count:       3000  pcnt-of-good-vals:  100.000
-\end{verbatim}
-}
-\caption{A Fragment of the Accumulator Report}\label{fig-accum-report}
-\end{center}
-\end{figure*}
 
 \begin{figure}[th]
 \begin{center}
@@ -367,6 +367,7 @@ scoring function based on the minimum description length
 principle. The process stops when no further refinements are possible.
 The result of this process on our running example is the following
 refined IR:
+\vspace*{5mm}
 
 {\small
 \begin{verbatim}
