@@ -3,13 +3,6 @@ typedef int bool;
 #define false 0
 
 #include "basetokens.p"
-Ptypedef Pstring_ME(:"/-/":) PPpunc_hyphen
-Ptypedef Pstring_ME(:"/[[]/":) PPpunc_lsqu
-Ptypedef Pstring_ME(:"/[]]/":) PPpunc_rsqu
-Ptypedef Pstring_ME(:"/:/":) PPpunc_colon
-Ptypedef Pstring_ME(:"/[\"]/":) PPpunc_quote
-Ptypedef Pstring_ME(:"/[^ ]+/":) PPmypath
-Ptypedef Pstring_ME(:"/./":) PPpunc_slash
 
 Punion client_t {
   PPip       ip;      /- 135.207.23.32
@@ -39,12 +32,14 @@ bool chkVersion(version_t v, method_t m) {
 };
 
 Pstruct request_t {
-          PPpunc_quote   quote1;
+          PPpunc_dquote   dquote1;
 //          method_t       meth;
           PPword word2;  
           PPwhite        w1;   
 //          Pstring(:' ':) req_uri;
-          PPmypath         req_uri;
+          PPpath         req_uri;
+          Popt PPpunc_star star1;
+          Popt PPpunc_star star2;
           PPwhite        w2;  
 //          version_t      version : 
 //                  chkVersion(version, meth);
@@ -52,7 +47,7 @@ Pstruct request_t {
           PPword word1;
           PPpunc_slash slash1;
           PPfloat float1;
-          PPpunc_quote   quote2;
+          PPpunc_dquote   dquote2;
 };
 
 Ptypedef Puint16_FW(:3:) response_t : 
@@ -71,7 +66,7 @@ Precord Pstruct entry_t {
          PPwhite        white2;        
          auth_id_t      auth;
          PPwhite        white6;
-       PPpunc_lsqu    lsqu;        
+       PPpunc_lsqubrac    lsqubrac;        
         Pdate(:':':)   date;
         PPpunc_colon  colon;
         Ptime(:' ':)    time;  
@@ -79,7 +74,7 @@ Precord Pstruct entry_t {
 //       Pstring(:']':) timezone;
          PPpunc_hyphen hyphen7;
          PPint int7;
-         PPpunc_rsqu   rsqu;   
+         PPpunc_rsqubrac   rsqubrac;   
          PPwhite       white7;
          request_t      request;
          PPwhite        white4;         
