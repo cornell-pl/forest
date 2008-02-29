@@ -31,7 +31,13 @@ struct
       end
 *)
 
-    fun matchRegEx (s:string) (re:string) (*:string*string*int*int*) (* matched, remain, pos, len *)=
+    structure BTokenDFATable = RedBlackMapFn(
+      struct type ord_key = BToken
+			 val compare = compBToken
+	  end) 
+
+
+    fun matchRegEx s btoken cregex(*(s:string) (cregex:REGEXP.regexp)*) (*:string*string*int*int*) (* matched, remain, pos, len *)=
       let
 (*
         val regexp = parse "\/"
@@ -39,22 +45,26 @@ struct
         val _ = if matches "/" then print "yes\n" else print "no\n"
         val _ = raise out
 *)
-(* val _ = print ("Match string (" ^ (String.toString s) ^") with regex ("^(String.toString re) ^ ")\n") *)
-        val cregex = REParser.compileString re             
+(* val _ = print ("Match string (" ^ (String.toString s) ^") with token ("^(BTokenToName btoken) ^ ")\n") *)
+(*        val cregex = REParser.compileString re
+val _ = print "0\n"
+*)             
       in
         case (StringCvt.scanString (REParser.find cregex) s) of
-          NONE => ((*print "Regex failed!\n";*) NONE)
+          NONE => ((*print "1\n";*) NONE)
         | SOME tree => 
+((*print "2\n";*)
         case MatchTree.nth(tree,0) of
-          NONE => ((*print "Regex failed!\n";*) NONE)
-        | SOME {len,pos} => SOME (pos, len)
+          NONE => ((*print "3\n";*) NONE)
+        | SOME {len,pos} => ((*print "4\n";*) SOME (pos, len))
+)
       end
 
-   fun findMatchList (s:string) (re:string) =
+   fun findMatchList s btoken re (*(s:string) (re:REGEXP.regexp)*) =
      let
        val thisend = String.size s
        fun recFn sub thisp = 
-         case matchRegEx sub re of
+         case matchRegEx sub btoken re of
              NONE => []
            | SOME (pos, len) => 
                if (thisp+pos+len) = thisend then ((*print ("find a match at pos: "^Int.toString(thisp+pos)^"\n");*) [(thisp+pos, len)])
@@ -67,13 +77,14 @@ struct
      let
       fun myprint (((b, s), l): BSLToken) = print ((BTokenToName b)^"  ")
        val i = ref 0
-     in
+     in (
        while !i < List.length ss do (
           print ((Int.toString (!i)) ^ ": ");
           let val (tl, f) = List.nth(ss, !i) in List.app myprint tl end;
           print "\n";
           i := !i+1
-       )
+       );
+       print "\n")
      end
 
 
@@ -101,11 +112,14 @@ rest of  the string.
 			    val compare = compBToken
 		     end) 
 
-    fun constrPosBTokenTable s = 
+    fun constrPosBTokenTable s dfatable = 
       let
         val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
         fun matchOneToken ((btoken, str), (r1, r2)) =
-          case (findMatchList s str) of
+        let
+          val re = Option.valOf(BTokenDFATable.find(dfatable, btoken))
+        in
+          case (findMatchList s btoken re) of
               [] => ((*print "2\n";*) (r1, r2))
             | mlist => ((*print "2\n";*) 
                 let
@@ -153,13 +167,22 @@ val _ = (print (BTokenToName btoken^":\n"); List.app printplist mlist)
                 in
                   ((List.foldl extractOne r1 mlist), BTokenTable.insert(r2, btoken, mlist))
                 end)
+           end
       in
         List.foldl matchOneToken (PosBTokenTable.empty, BTokenTable.empty) tokensNoBlob
       end
-                          
-    fun findPaths (s: string, recNo: int) : NewContext list =
+
+    fun constrDFATable tlist =
       let
-        val (pbtable, btable) = constrPosBTokenTable s
+val _ = print "constructing DFAs...\n"
+        fun addOneToken ((t, re), retable) =  (print ((BTokenToName t)^"\n"); BTokenDFATable.insert(retable, t, REParser.compileString re))
+      in
+        List.foldl addOneToken BTokenDFATable.empty tlist
+      end
+                          
+    fun findPaths (s, recNo, dfatable) : NewContext list =
+      let
+        val (pbtable, btable) = constrPosBTokenTable s dfatable
 val _ = print "regexp all found\n"
         val thisendp = (String.size s)-1
         fun recFn p lookuptable  = (
@@ -421,10 +444,10 @@ val _ = print "regexp all found\n"
      end
 *)
 
-    fun pathGraph recNum record : Seqset = 
+    fun pathGraph recNum dfatable record : Seqset = 
       let
 (*val _ = print "before findPaths\n" *)
-        val raw : NewContext list = findPaths (record, !recNum)
+        val raw : NewContext list = findPaths (record, !recNum, dfatable)
 (*val _ = print "after findPaths\n"*)
         fun addProb tokens = (tokens, 0.0)
         val ret : Seqset = List.map addProb raw
@@ -434,7 +457,8 @@ val _ = print "regexp all found\n"
 (*
 print "before printlist\n";
 print ("seqset size: "^(Int.toString (List.length ret))^"\n");*)
-        printlist ret;
+(*        printlist ret;
+        print "\n";*)
 (*print "after printlist\n";*)
         ret
         )
@@ -444,7 +468,8 @@ print ("seqset size: "^(Int.toString (List.length ret))^"\n");*)
     fun selectPath (ss: Seqset) : NewContext =
       let 
         fun search ((bsltl, prob), ret) = if prob>ret then prob else ret
-        val max = List.foldl search 0.0 ss
+        val max = List.foldl search (~Real.maxFinite) ss
+(*val _ = print (Real.toString max) *)
         fun findMax (bsltl:NewContext, prob:real) = if Real.compare(prob, max)=EQUAL then true else false
         val (r, rprob) = Option.valOf(List.find findMax ss)  
       in

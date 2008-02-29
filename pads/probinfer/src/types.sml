@@ -492,7 +492,7 @@ struct
  
     fun bsltokenTyToString ( (bs, l) : BSLToken ) : string = bstokenTyToString bs 
 
-    fun printBSLTokenTy ( t : BSLToken ) : unit = print (bsltokenTyToString t)
+    fun printBSLTokenTy ( t : BSLToken ) : unit = print ((bsltokenTyToString t))
 
     fun printBTokenTy (t: BToken) : unit = print ("["^(BTokenToName t)^"]")
 

@@ -1209,7 +1209,7 @@ struct
 		    fun findFirstMatch [] = (* no existing match succeeded, see if another token order matches *)
 			 (case findTokenOrder tokenfreqs thisRecord
                           of NONE => raise TokenMatchFailure (* tokens don't match this record *)
-                          |  SOME tokenOrder => findFirstMatch [(tokenOrder,[])])
+                          |  SOME tokenOrder => findFirstMatch [(tokenOrder,[])]) (* problem here *)
               | findFirstMatch ((current as (match, matchedContextLists))::rest) = 
 		          (case classifyOneRecordWithMatch thisRecord match
 			   of NONE => current :: (findFirstMatch rest)
@@ -1268,7 +1268,7 @@ struct
 
     fun printColumn (cl: NewContext list) : unit =
       let
-        fun printOne (nc: NewContext) = List.app printBSLTokenTy nc
+        fun printOne (nc: NewContext) = (List.app printBSLTokenTy nc; print "---")
       in
         (print "Column to chop: "; List.app printOne cl; print "\n")
       end
@@ -1276,22 +1276,40 @@ struct
     fun printColumnString (cl: NewContext list) : unit =
       let
         fun printStr ((b,s),l) = print s
-        fun printOne (nc: NewContext) = (List.app printStr nc; print "  ")
+        fun printOne (nc: NewContext) = (List.app printStr nc; print "---")
       in
         (print "String to chop: "; List.app printOne cl; print "\n")
       end    
+
+    exception EmptyColomn
 
     fun columnToLocations (cl: NewContext list) : location list =
       let
         (* pay attention to the PPempty *)
         fun cvtOne (nc: NewContext) = 
           let
-            val (bs1, l1) = List.nth (nc, 0)
-            val {lineNo = ln1, beginloc = bl1, endloc = el1, recNo = rn1} = l1
-            val (bs2, l2) = List.nth (nc, (List.length nc)-1)  
-            val {lineNo = ln2, beginloc = bl2, endloc = el2, recNo = rn2} = l2
-          in
-            {lineNo = ln1, beginloc = bl1, endloc = el2, recNo = rn1}
+            fun findfirstl (((b,s),l), ret) = 
+              case ret of
+                  NONE => if compBToken(b, PPempty)=EQUAL then NONE else SOME l
+                | SOME r => SOME r
+            val l1 = List.foldl findfirstl NONE nc 
+          in 
+            case l1 of
+                NONE => 
+                  let
+                    val (junk, j1) = List.nth(nc, 0)
+                    val {lineNo = ln1, beginloc = bl1, endloc = el1, recNo = rn1} = j1
+                  in 
+                    {lineNo = ln1, beginloc = ~1, endloc = ~1, recNo = rn1}
+                  end
+               | SOME l11 =>
+                   let
+                     val {lineNo = ln1, beginloc = bl1, endloc = el2, recNo = rn1} = l11
+                     val l2 = Option.valOf (List.foldr findfirstl NONE nc)
+                     val {lineNo = ln2, beginloc = bl2, endloc = el2, recNo = rn2} = l2
+                   in
+                     {lineNo = ln1, beginloc = bl1, endloc = el2, recNo = rn1}
+                   end
           end
       in
         List.map cvtOne cl
@@ -1330,12 +1348,15 @@ struct
                  else (
                    let
                      val locList = columnToLocations cl
+
 val _ = printColumn cl
 val _ = printColumnString cl
-val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")
-val _ = List.app printSSLoc ssl
+(*val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")*)
+(*val _ = List.app printSSLoc ssl*)
+(*val _ = (print "Before chopping seqset list: "; List.app printlist ssl; print "\n") *)
+
                      val newSSL = chopSeqsets ssl locList
-val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
+val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") 
                    in 
                      SeqsetListToTy (currentDepth + 1) newSSL
                    end
@@ -1626,7 +1647,9 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
 	    val () = print ("Starting on file "^(lconcat fileName)^"\n");
 	    val records = loadFiles fileName  (* records: string list *)
 	    val () = initialRecordCount := (List.length records) 
-        val rtokens : Seqset list = List.map (pathGraph recordNumber) records
+        val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
+        val dfatable = constrDFATable tokensNoBlob
+        val rtokens : Seqset list = List.map (pathGraph recordNumber dfatable) records
 val _ = print "path graph done.\n"
         val rptokens : Seqset list = if ( !character = true ) then  computeProbChar rtokens else computeProb rtokens
 val _ = print "add prob done.\n"
@@ -1677,18 +1700,31 @@ val _ = print "seqset to list done.\n"
         )
 	end
 
+    fun constrOrdBTokenTable path =
+      let
+        val _ = dumpTokenName path BTokenTable.empty
+        val tokens = loadFile (path^"TokenName")
+        fun recFn i = 
+          if i<0 then OrdBTokenTable.empty
+          else  
+            OrdBTokenTable.insert((recFn (i-1)), i, nameToBToken(List.nth(tokens, i))) 
+      in
+        recFn ((List.length tokens)-1)
+      end
+
     fun examHmmResultPost fileName  = 
 	let
         val records = loadFiles fileName
 	    val tokenss = loadFile "testing/output" 
         val _ = print "Tokenization by HMM:\n"
+        val otable = constrOrdBTokenTable "training/"
         fun extractIntList record : BToken list = 
           let
             fun isSpace c = c = #" "
             fun doOne s : BToken list = 
               let
                 val (pre, rest) = Substring.splitl (not o isSpace) s
-                val ret = intToBToken(Option.valOf(Int.fromString(Substring.string pre))) handle Option => (print ("s = "^(Substring.string pre)^"\n"); raise Option)
+                val ret = intToBToken(Option.valOf(Int.fromString(Substring.string pre)), otable) handle Option => (print ("s = "^(Substring.string pre)^"\n"); raise Option)
                 val newrest = Substring.triml 1 rest
               in
                 if (Substring.size newrest)=0 orelse (isSpace (Substring.sub(newrest, 0))) then [ret]
@@ -1760,13 +1796,14 @@ val _ = print "seqset to list done.\n"
         val records = loadFiles fileName
 	    val tokenss = loadFile "testing/output" 
         val _ = print "Tokenization by HMM:\n"
+        val otable = constrOrdBTokenTable "training/"
         fun extractIntList record : BToken list = 
           let
             fun isSpace c = c = #" "
             fun doOne s : BToken list = 
               let
                 val (pre, rest) = Substring.splitl (not o isSpace) s
-                val ret = intToBToken(Option.valOf(Int.fromString(Substring.string pre))) handle Option => (print ("s = "^(Substring.string pre)^"\n"); raise Option)
+                val ret = intToBToken(Option.valOf(Int.fromString(Substring.string pre)), otable) handle Option => (print ("s = "^(Substring.string pre)^"\n"); raise Option)
                 val newrest = Substring.triml 1 rest
               in
                 if (Substring.size newrest)=0 orelse (isSpace (Substring.sub(newrest, 0))) then [ret]

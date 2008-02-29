@@ -467,12 +467,12 @@ val _ = print s1
 
     fun defaultVal1 v =
       case v of
-          NONE => 0.1 (* a parameter to tune *)
+          NONE => 0.0001 (* a parameter to tune *)
         | SOME n => Real.fromInt n
 
     fun defaultRVal1 v =
       case v of
-          NONE => 0.1 (* a parameter to tune *)
+          NONE => 0.0001 (* a parameter to tune *)
         | SOME n => n
 
           fun dumpToken path t = 
@@ -1020,6 +1020,7 @@ val _ = print s1
 
     fun computeProb pathgraph : Seqset list = 
       let
+(* val _ = print "1\n"*)
         val tokentable = readTokenTable "training/"
         val begintokentable = readBoundaryTokenTable "training/" 0
         val endtokentable = readBoundaryTokenTable "training/" 1
@@ -1027,24 +1028,28 @@ val _ = print s1
         val listtokentable = readListTokenTable "training/"
         fun transProb tslist =
           let
-            fun addOne (((t, s), l), (pre, ret)) = 
+            fun addOne (((t, s), l), (pre, ret)) =
+              if compBToken(t, PPempty)=EQUAL then (pre, ret)
+              else  
               let
                 val first = 
                   case pre of
-                      NONE => Math.ln(defaultRVal1(BTokenTable.find(begintokentable, t)))
+                      NONE => (* Math.ln(defaultRVal1(BTokenTable.find(begintokentable, t))) *) 0.0
                     | SOME pret => Math.ln(defaultVal1(BTokenPairTable.find(tokenpairtable, (pret, t))))
                 val rest = (Real.fromInt ((String.size s)-1)) * (Math.ln(defaultVal1(BTokenPairTable.find(tokenpairtable, (t, t)))))
               in
                 (SOME t, first+rest+ret)
               end 
             val (lastt, most) = List.foldl addOne (NONE, 0.0) tslist
-            val all = most + (Math.ln(defaultRVal1(BTokenTable.find(endtokentable, Option.valOf(lastt)))))
+            val all = most (*+ (Math.ln(defaultRVal1(BTokenTable.find(endtokentable, Option.valOf(lastt)))))*)
           in
             all
           end 
         fun emitProb tslist =
           let
-            fun addOne (((t,s),l), ret) = 
+            fun addOne (((t,s),l), ret) =
+              if compBToken(t, PPempty)=EQUAL then ret
+              else 
               let
                 fun addOneChar (c, v) =
                   let
@@ -1058,10 +1063,19 @@ val _ = print s1
           in
             List.foldl addOne 0.0 tslist
           end
-        fun doOneTList (tsllist, f) = (tsllist, (transProb tsllist) + (emitProb tsllist))
+        fun doOneTList (tsllist, f) = 
+          let
+            val transp = transProb tsllist
+            val emitp = emitProb tsllist
+(*val _ = print (Real.toString (transp+emitp)^"\n") *)
+          in
+            (tsllist, transp+emitp)
+          end
         fun doOneSeqset ss = List.map doOneTList ss
+        val ret = List.map doOneSeqset pathgraph
+(* val _ = print "2\n" *)
       in
-        List.map doOneSeqset pathgraph
+        ret
       end
 
     fun computeProbChar pathgraph : Seqset list = 
@@ -1177,5 +1191,66 @@ val _ = print s1
             dumpTokenName path table1
             )
           end 
+
+    fun chopSeqsets (ssl: Seqset list) (ll: location list) : Seqset list = (* i may not call it chop, but cut inside *) 
+      let
+(*val _ = print "Chopping...\n"*)
+        fun chopOneSS (ss: Seqset, result: Seqset list) = (* chop one seqset *)
+          let
+            val (nc1, f1) = List.nth(ss, 0)
+            val ((b1, s1), l1) = List.nth(nc1, 0)
+            val {beginloc=b1, endloc=e1, recNo=r1, lineNo=l1} = l1
+            fun findPos l =
+              let
+                val {beginloc=b2, endloc=e2, recNo=r2, lineNo=l2}=l
+              in
+                if r1=r2 then true else false
+              end  
+          in
+            case (List.find findPos ll) of (* find the location in location list *)
+                SOME thisl =>
+                  let
+(*val _ = print "Found this line\n"*)
+                    val {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisll} = thisl
+                    fun chopOneTS (ts: Tokenseq, ret: Seqset): Seqset = (* chop one token sequence in the seqset *)
+                      let
+                        val (nc, f) = ts
+                        val headt = ref 0
+                        fun findBegin (((b,s),l), head) = 
+                          let
+                            val {beginloc=thistb, endloc=thiste, recNo=thistr, lineNo=thistl} = l
+                          in
+                            if head <> ~1 then head
+                            else if thisb=thistb then !headt
+                            else (headt := !headt + 1; head)   
+                          end
+                        val begint = List.foldl findBegin ~1 nc 
+                        val tailt = ref 0
+                        fun findEnd (((b,s),l), tail) = 
+                          let
+                            val {beginloc=thistb, endloc=thiste, recNo=thistr, lineNo=thistl} = l
+                          in
+                            if tail <> ~1 then tail
+                            else if thise=thiste then !tailt
+                            else (tailt := !tailt + 1; tail)   
+                          end
+                        val endt = List.foldl findEnd ~1 nc
+(*val _ = print ("begint: "^(Int.toString begint)^" endt: "^(Int.toString endt)^"\n") *)
+                      in
+                        if ((begint <> ~1) andalso (endt <> ~1) andalso (endt >= begint)) then 
+                          [(List.drop(List.take(nc, (endt+1)), begint), 1.0)]@ret
+                        else ret
+                      end
+                    val noprob = if thisb = ~1 then [[([((PPempty, ""),{lineNo=thisr, beginloc=0, endloc=0, recNo=thisll})], 1.0)]]@result 
+                                 else [List.foldl chopOneTS [] ss]@result 
+                  in
+                    noprob
+                  end
+              | NONE => result
+          end
+        val rnoprob = List.foldl chopOneSS [] ssl
+      in
+        if ( !character = true ) then  computeProbChar rnoprob else computeProb rnoprob
+      end
 
 end
