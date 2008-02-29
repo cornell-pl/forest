@@ -1136,14 +1136,14 @@ struct
                                                        end
                         val validSeqset = List.filter testOrder thisSeqset
                         val ret = case validSeqset of
-                                        [] => NONE  (* this is a truly bad record *)
+                                        [] => (NONE, NONE)  (* this is a truly bad record *)
                                        | _ => let val (c, f) = getMax validSeqset in
-                                                getTokenOrder summary c
+                                                (getTokenOrder summary c, SOME c)
                                               end
                       in
                         ret
                       end
-            | SOME t => SOME(t)
+            | SOME t => (SOME(t), NONE)
 
 	    fun classifyOneRecordWithMatch (thisRecord:NewContext) (tokenOrder:NTokenOrder)  = 
 		let fun introduceLEmpty (contextList:NDerivedContexts) =  (*In progress*)
@@ -1204,18 +1204,19 @@ struct
                 if doesn't match, try to infer a different tokenOrder.
                   if matches, add to list of token orders with corresonding derivedContext
                   if doesn't match, add to bad record list *)
-	    fun classifyOneRecord tokenfreqs (thisRecord, (matches, badRecords)) = 
+	    fun classifyOneRecord tokenfreqs (thisRecord, (matches, badRecords)) = (* thisRecord is NewContext *) 
 		let (* convert to accumulator form? *)
-		    fun findFirstMatch [] = (* no existing match succeeded, see if another token order matches *)
-			 (case findTokenOrder tokenfreqs thisRecord
-                          of NONE => raise TokenMatchFailure (* tokens don't match this record *)
-                          |  SOME tokenOrder => findFirstMatch [(tokenOrder,[])]) (* problem here *)
-              | findFirstMatch ((current as (match, matchedContextLists))::rest) = 
-		          (case classifyOneRecordWithMatch thisRecord match
-			   of NONE => current :: (findFirstMatch rest)
+		    fun findFirstMatch ([], record) = (* no existing match succeeded, see if another token order matches *)
+			 (case findTokenOrder tokenfreqs record
+                          of (NONE, _) => raise TokenMatchFailure (* tokens don't match this record *)
+                          |  (SOME tokenOrder, NONE) => findFirstMatch ([(tokenOrder,[])], record) 
+                          |  (SOME tokenOrder, SOME newRecord) => findFirstMatch ([(tokenOrder,[])], newRecord))
+              | findFirstMatch (((current as (match, matchedContextLists))::rest), record) =  (* match: tokenorder *)
+		          (case classifyOneRecordWithMatch record match
+			   of NONE => current :: (findFirstMatch (rest, record))
                            |  SOME contexts => ((match, contexts :: matchedContextLists) :: rest) (* matches are in reverse order *))
 		in
-		    (findFirstMatch matches, badRecords)
+		    (findFirstMatch (matches, thisRecord), badRecords)
 		    handle tokenMatchFailure => (matches, thisRecord :: badRecords) (* bad records are in reverse *)
 		end
 
