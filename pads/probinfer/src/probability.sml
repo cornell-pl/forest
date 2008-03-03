@@ -1192,9 +1192,35 @@ val _ = print s1
             )
           end 
 
+   fun compNewContext (nc1, nc2) = 
+     if (List.length nc1) < (List.length nc2) then LESS
+     else if (List.length nc1) > (List.length nc2) then GREATER 
+     else
+       let
+         fun compOne (((b1, s1), l1), ((b2, s2), l2)) = (* no need to compare strings because of the longest match rule *)
+           if compBToken(b1, b2) = EQUAL then true
+           else false
+       in
+         if ListPair.all compOne (nc1, nc2) then EQUAL
+         else LESS
+       end
+
+   structure NewContextTable = RedBlackMapFn(
+     struct 
+       type ord_key = NewContext
+	   val compare = compNewContext
+	 end
+   ) 
+
     fun chopSeqsets (ssl: Seqset list) (ll: location list) : Seqset list = (* i may not call it chop, but cut inside *) 
       let
 (*val _ = print "Chopping...\n"*)
+val _ = print ("chop "^(Int.toString (List.length ssl))^" seqsets.\n")
+        fun findEmpty {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisl} = if thisb = ~1 then true else false
+        val init = 
+          case List.find findEmpty ll of
+              SOME {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisl} => [[([((PPempty, ""),{lineNo=thisr, beginloc=0, endloc=0, recNo=thisl})], 1.0)]] 
+            | NONE => []
         fun chopOneSS (ss: Seqset, result: Seqset list) = (* chop one seqset *)
           let
             val (nc1, f1) = List.nth(ss, 0)
@@ -1211,8 +1237,9 @@ val _ = print s1
                 SOME thisl =>
                   let
 (*val _ = print "Found this line\n"*)
+val _ = print ("line "^(Int.toString r1)^" found.\n")
                     val {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisll} = thisl
-                    fun chopOneTS (ts: Tokenseq, ret: Seqset): Seqset = (* chop one token sequence in the seqset *)
+                    fun chopOneTS (ts: Tokenseq, (ret: Seqset, rettable)) = (* chop one token sequence in the seqset *)
                       let
                         val (nc, f) = ts
                         val headt = ref 0
@@ -1238,17 +1265,30 @@ val _ = print s1
 (*val _ = print ("begint: "^(Int.toString begint)^" endt: "^(Int.toString endt)^"\n") *)
                       in
                         if ((begint <> ~1) andalso (endt <> ~1) andalso (endt >= begint)) then 
-                          [(List.drop(List.take(nc, (endt+1)), begint), 1.0)]@ret
-                        else ret
+                          let
+                            val thislist = List.drop(List.take(nc, (endt+1)), begint)
+                            val retv =
+                              case NewContextTable.find(rettable, thislist) of
+                                  SOME i => (ret, rettable)          (* such token sequence already exists *)
+                                | NONE => ([(thislist, 1.0)]@ret, NewContextTable.insert(rettable, thislist, 0))  
+                          in
+                            retv
+                          end
+                        else (ret, rettable)
                       end
-                    val noprob = if thisb = ~1 then [[([((PPempty, ""),{lineNo=thisr, beginloc=0, endloc=0, recNo=thisll})], 1.0)]]@result 
-                                 else [List.foldl chopOneTS [] ss]@result 
+                    val noprob = if thisb = ~1 then ([[([((PPempty, ""),{lineNo=thisr, beginloc=0, endloc=0, recNo=thisll})], 1.0)]]@result )
+                                 else 
+                                   let
+                                     val (rl, junk) = List.foldl chopOneTS ([], NewContextTable.empty) ss
+                                   in
+                                     result@[rl]
+                                   end 
                   in
                     noprob
                   end
-              | NONE => result
+              | NONE =>  result
           end
-        val rnoprob = List.foldl chopOneSS [] ssl
+        val rnoprob = List.foldl chopOneSS init ssl
       in
         if ( !character = true ) then  computeProbChar rnoprob else computeProb rnoprob
       end

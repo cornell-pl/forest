@@ -1289,6 +1289,28 @@ struct
         (* pay attention to the PPempty *)
         fun cvtOne (nc: NewContext) = 
           let
+            val ((b1, s1), l1) = List.nth(nc, 0) 
+            val {lineNo = ln1, beginloc = bl1, endloc = el1, recNo = rn1} = l1
+          in 
+            if compBToken(b1, PPempty)=EQUAL then {lineNo = ln1, beginloc = ~1, endloc = ~1, recNo = rn1}
+            else
+                   let
+                     val ((b2, s2), l2) = List.nth(nc, (List.length nc)-1)
+                     val {lineNo = ln2, beginloc = bl2, endloc = el2, recNo = rn2} = l2
+                   in
+                     {lineNo = ln1, beginloc = bl1, endloc = el2, recNo = rn1}
+                   end
+          end
+      in
+        List.map cvtOne cl
+      end   
+
+(*
+    fun columnToLocations (cl: NewContext list) : location list =
+      let
+        (* pay attention to the PPempty *)
+        fun cvtOne (nc: NewContext) = 
+          let
             fun findfirstl (((b,s),l), ret) = 
               case ret of
                   NONE => if compBToken(b, PPempty)=EQUAL then NONE else SOME l
@@ -1301,7 +1323,7 @@ struct
                     val (junk, j1) = List.nth(nc, 0)
                     val {lineNo = ln1, beginloc = bl1, endloc = el1, recNo = rn1} = j1
                   in 
-                    {lineNo = ln1, beginloc = ~1, endloc = ~1, recNo = rn1}
+                    (print ("create PPempty location."^(Int.toString rn1)^"\n"); {lineNo = ln1, beginloc = ~1, endloc = ~1, recNo = rn1})
                   end
                | SOME l11 =>
                    let
@@ -1315,16 +1337,33 @@ struct
       in
         List.map cvtOne cl
       end   
-
+*)
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
     (* coverage is number of records in this context *)
     fun mkTBD (callsite, currentDepth, coverage, cl, ssl) = 
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
            that is either empty or some value gets silently converted to the value only. *)
-	let fun cnvEmptyRowsToPempty [] = [((PPempty, ""),{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
+	let
+ 
+       fun cnvEmptyRowsToPempty [] = [((PPempty, ""),{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
               | cnvEmptyRowsToPempty l  = l
 	    val cl = List.map cnvEmptyRowsToPempty cl
+(*
+        (* assume colomn is in order *)
+        fun cnvEmptyRowsToPempty i =
+          if i=0 then []
+          else
+            let
+              val old = cnvEmptyRowsToPempty (i-1)
+              val l = List.nth(cl, i-1)
+            in
+              case l of
+                 [] => old@[[((PPempty, ""),{lineNo= i-1, beginloc=0, endloc=0, recNo=i-1})]]
+                |_ => old@[l]
+            end
+        val cl = cnvEmptyRowsToPempty (List.length cl)
+*)
             fun allEmpty cl =
 		let fun isNonEmpty [((PPempty, _),_)] = false
 		      | isNonEmpty _ = true
