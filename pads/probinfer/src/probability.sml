@@ -1197,6 +1197,29 @@ val _ = print s1
         List.foldl extractOne CharBTokenPairTable.empty list
       end
 
+    fun readOneListTable filename =
+      let
+        val list = loadFile filename
+        fun convertOne r = Option.valOf(Real.fromString r)
+      in
+        List.map convertOne list
+      end
+
+    fun readTwoListsTable filename =
+      let
+        val list = loadFile filename
+        fun convertOne r = Option.valOf(Real.fromString r)
+        fun isSpace c = c = #" "
+        fun convertOneList l =  
+          let
+            val thislist = String.tokens isSpace l
+          in
+            List.map convertOne thislist
+          end
+      in
+        List.map convertOneList list
+      end
+
     fun computeProb pathgraph : Seqset list = 
       let
 (* val _ = print "1\n"*)
@@ -1370,6 +1393,115 @@ val _ = print s1
             dumpTokenName path table1
             )
           end 
+
+    fun incdumpCCHMMWeights ( path : string ) : unit = 
+        let 
+          val _ = print ("Printing char-by-char HMM to files under "^path^"\n")
+          val filelist = extractLogWeights "training/log/IncTrainingWeightList"
+          val _ = dumpTokenName path BTokenTable.empty 
+          fun dumpOne ((filename, weight), (l1, l2, l3, l4)) =
+            let
+              val strm = TextIO.openOut "training/log/temp"
+              val _ = TextIO.output(strm, filename^"\n")
+              val _ = TextIO.closeOut strm
+              val list = extractLog "training/log/" "training/log/temp"
+              val table1 = constrTokenTable list BTokenTable.empty
+(*          val _ = print "1\n" *)
+              val table2 = constrTokenPairTable list BTokenPairTable.empty
+(*          val _ = print "2\n" *)
+              val table3 = constrListTokenTable list ListBTokenPairTable.empty
+(*          val _ = print "3\n" *)
+              val table4 = constrBeginTokenTable list BTokenTable.empty
+(*          val _ = print "4\n" *)
+              val table5 = constrEndTokenTable list BTokenTable.empty
+(*          val _ = print "5\n" *)
+              val table6 = constrCharTokenTable list CharBTokenPairTable.empty
+              val newpath = path^"gen/"
+              val _ =               
+                (
+                dumpToken (newpath^filename^".") table1; (*print "TokenCount generated.\n";*) 
+                dumpTokenPair (newpath^filename^".") table2; (*print "TokenPairCount generated.\n";*)
+                dumpListToken (newpath^filename^".") table3; (*print "CharTokenCount generated.\n";*)
+                dumpBeginToken (newpath^filename^".") table4; (*print "\n";*)
+                dumpEndToken (newpath^filename^".") table5 (*print "5\n";*)
+                )
+              val (myinitp, myendp, mytransp, myemitp) =
+                if Real.compare(!lambda, 0.0)=EQUAL then (
+                  dumpInitProb (newpath^filename^".") table4,
+                  dumpEndProb (newpath^filename^".") table5, 
+                  dumpTransProb (newpath^filename^".") table1 table2, 
+                  (if ( !character = true ) then dumpEmitProbChar (newpath^filename^".") table1 table6
+                   else dumpEmitProb (newpath^filename^".") table1 table3)
+                 )
+                 else (
+                  dumpInitProbSmooth (newpath^filename^".") table4,
+                  dumpEndProbSmooth (newpath^filename^".") table5, 
+                  dumpTransProbSmooth (newpath^filename^".") table1 table2, 
+                  (if ( !character = true ) then dumpEmitProbSmoothChar (newpath^filename^".") table1 table6
+                   else dumpEmitProbSmooth (newpath^filename^".") table1 table3)
+                 )
+            in
+              (l1@[myinitp], l2@[myendp], l3@[mytransp], l4@[myemitp])
+            end
+          val (initpl, endpl, transpl, emitpl) = List.foldl dumpOne ([], [], [], []) filelist
+          fun recFn i =
+            let
+              val (filename, weight) = List.nth(filelist, i)
+              val myinitp = List.nth(initpl, i)
+              val myendp = List.nth(endpl, i)
+              val mytransp = List.nth(transpl, i)
+              val myemitp = List.nth(emitpl, i)
+              fun oneLevel p = weight*p
+              fun twoLevel l = List.map oneLevel l
+              val myinitp = List.map oneLevel myinitp
+              val myendp = List.map oneLevel myendp
+              val mytransp = List.map twoLevel mytransp
+              val myemitp = List.map twoLevel myemitp
+            in
+              if i=0 then (myinitp, myendp, mytransp, myemitp)
+              else
+                let
+                  val (lastinitp, lastendp, lasttransp, lastemitp) = recFn (i-1)
+                  val initp = ListPair.map Real.+ (lastinitp, myinitp)
+                  val endp = ListPair.map Real.+ (lastendp, myendp)
+                  fun inlistpair (l1, l2) = ListPair.map Real.+ (l1, l2)
+                  val transp = ListPair.map inlistpair (lasttransp, mytransp)
+                  val emitp = ListPair.map inlistpair (lastemitp, myemitp)
+                in
+                  (initp, endp, transp, emitp)
+                end
+            end
+          val (initp, endp, transp, emitp) = recFn ((List.length filelist)-1)
+          val filelist2 = extractLogWeights "training/log/TrainingWeightList"
+          fun dumpOneFile ((filename, weight), (l1, l2, l3, l4)) =
+            let
+              val myinitp = readOneListTable ("training/gen/"^filename^".InitProb")
+              val myendp = readOneListTable ("training/gen/"^filename^".EndProb")
+              val mytransp = readTwoListsTable ("training/gen/"^filename^".TransProb")
+              val myemitp = readTwoListsTable ("training/gen/"^filename^".EmitProb")
+              fun oneLevel p = weight*p
+              fun twoLevel l = List.map oneLevel l
+              val myinitp = List.map oneLevel myinitp
+              val myendp = List.map oneLevel myendp
+              val mytransp = List.map twoLevel mytransp
+              val myemitp = List.map twoLevel myemitp
+              val initp = ListPair.map Real.+ (l1, myinitp)
+              val endp = ListPair.map Real.+ (l2, myendp)
+              fun inlistpair (l11, l22) = ListPair.map Real.+ (l11, l22)
+              val transp = ListPair.map inlistpair (l3, mytransp)
+              val emitp = ListPair.map inlistpair (l4, myemitp)
+            in
+              (initp, endp, transp, emitp)
+            end
+          val (initp, endp, transp, emitp) = List.foldl dumpOneFile (initp, endp, transp, emitp) filelist2
+        in
+          (
+          dumpOneList initp "training/InitProb";
+          dumpOneList endp "training/EndProb";
+          dumpTwoLists transp "training/TransProb";
+          dumpTwoLists emitp "training/EmitProb"
+          )  
+        end 
 
    fun compNewContext (nc1, nc2) = 
      if (List.length nc1) < (List.length nc2) then LESS

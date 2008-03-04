@@ -1903,14 +1903,14 @@ val _ = print "seqset to list done.\n"
       evaluate bsll1 bsll2
 	end
 
-    fun moveIncToList path =
+    fun moveIncToList path file1 file2 =
       let
-        val infilesraw = loadFile (path^"inc.list")
+        val infilesraw = loadFile (path^file1)
         fun loadOne (str, ret) = 
           if Char.compare(#"#", String.sub(str, 0))=EQUAL then ret
           else ret@[str]
         val infiles = List.foldl loadOne [] infilesraw
-        val outstrm = TextIO.openAppend (path^"log.list")
+        val outstrm = TextIO.openAppend (path^file2)
         fun outputOne file = TextIO.output(outstrm, (file^"\n"))
         val _ = List.app outputOne infiles
       in

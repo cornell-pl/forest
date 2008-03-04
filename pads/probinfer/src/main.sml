@@ -38,7 +38,18 @@ structure Main : sig
                    else incdumpCCHMM "training/";
 (*val (token, str) = List.nth (List.nth (table, 0), 0)
 print token *)
-           val _ = moveIncToList "training/log/"
+           val _ = moveIncToList "training/log/" "inc.list" "log.list"
+         in
+           ()
+         end
+
+       else if ( !inctrainingWeightsRun = true ) then
+         let 
+           val _ = print "Incremental training run with weights.\n";
+           val _ = incdumpCCHMMWeights "training/"
+(*val (token, str) = List.nth (List.nth (table, 0), 0)
+print token *)
+           val _ = moveIncToList "training/log/" "IncTrainingWeightList" "TrainingWeightList"
          in
            ()
          end
@@ -150,6 +161,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun setTrainingRun  s = trainingRun  := (s = "true")
     fun setTrainingWeightsRun  s = trainingWeightsRun  := (s = "true")
     fun setIncTrainingRun  s = inctrainingRun  := (s = "true")
+    fun setIncTrainingWeightsRun  s = inctrainingWeightsRun  := (s = "true")
     fun setTestingRun   s = testingRun  := (s = "true") 
     fun setExamHMMPre   s = examHMMPre  := (s = "true")
     fun setExamHMMPost  s = examHMMPost  := (s = "true")
@@ -174,6 +186,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("training", "training run",	                                                   PCL.String (setTrainingRun, true)),
          ("trainingw", "training run with weights",	                                                   PCL.String (setTrainingWeightsRun, true)),
          ("inctraining", "incremental training run",	                                                   PCL.String (setIncTrainingRun, true)),
+         ("inctrainingw", "incremental training run with weights",	                                       PCL.String (setIncTrainingWeightsRun, true)),
          ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
          ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
