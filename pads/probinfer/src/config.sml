@@ -41,6 +41,7 @@ structure Config = struct
     val evaluateHMMPost   = ref false
     val fvectorbits       = 11
     val character         = ref false
+    val trainingWeightsRun = ref false
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE

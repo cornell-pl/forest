@@ -54,6 +54,16 @@ print token *)
            ()
          end
 
+       else if ( !trainingWeightsRun = true ) then
+         let 
+           val _ = print "trainingRun with weights\n"; 
+           val _ = dumpCCHMMWeights "training/";
+(*val (token, str) = List.nth (List.nth (table, 0), 0)
+print token *)
+         in
+           ()
+         end
+
        else if ( !testingRun = true)
          then 
             let 
@@ -138,6 +148,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
     fun setTrainingRun  s = trainingRun  := (s = "true")
+    fun setTrainingWeightsRun  s = trainingWeightsRun  := (s = "true")
     fun setIncTrainingRun  s = inctrainingRun  := (s = "true")
     fun setTestingRun   s = testingRun  := (s = "true") 
     fun setExamHMMPre   s = examHMMPre  := (s = "true")
@@ -161,6 +172,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("lex",      "prefix of the lex config to be used (default \"vanilla\")",	                   PCL.String (setLexName, false)),
          ("au",	      "run only the golden file",	                                                   PCL.String (setGoldenRun, true)),
          ("training", "training run",	                                                   PCL.String (setTrainingRun, true)),
+         ("trainingw", "training run with weights",	                                                   PCL.String (setTrainingWeightsRun, true)),
          ("inctraining", "incremental training run",	                                                   PCL.String (setIncTrainingRun, true)),
          ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
