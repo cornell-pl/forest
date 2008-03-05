@@ -66,8 +66,9 @@ vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
 	$(SML_ROOT_PATH)/ml-ulex --ml-lex-mode vanilla.lex
 
-learn:  tokens.lex.sml vanilla.lex.sml
+learn:  tokens.lex.sml vanilla.lex.sml 
 	@echo Making learning program
+	../scripts/libh.pl
 	nice -n20 $(SML_PATH) < $(BUILD_EXEC)
 	@echo
 
