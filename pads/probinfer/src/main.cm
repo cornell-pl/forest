@@ -1,4 +1,5 @@
 Library
+  structure Regex_c
   structure Main
 is
 
@@ -7,6 +8,11 @@ is
   $/pp-lib.cm
   $smlnj/compiler/compiler.cm
   $/regexp-lib.cm
+
+  $c/c.cm
+  FFI/regex_c.cm : make (-f regex_c.make)
+  regex_c.sml
+
 
   tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
   vanilla.lex.sml (* to regenerate: lexgen --ml-lex-mode vanilla.lex  *)
