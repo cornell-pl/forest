@@ -69,6 +69,8 @@ vanilla.lex.sml: vanilla.lex
 learn:  tokens.lex.sml vanilla.lex.sml 
 	@echo Making learning program
 	../scripts/libh.pl
+	gcc -c regex_c.c
+	ld -shared -o regex_c.so regex_c.o
 	nice -n20 $(SML_PATH) < $(BUILD_EXEC)
 	@echo
 
