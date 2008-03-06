@@ -64,7 +64,22 @@ val _ = print "0\n"
      let
        val thisend = String.size s
        fun recFn sub thisp = 
-         case matchRegEx sub btoken re of
+         case matchRegEx sub btoken re of 
+(*         case Regex_c.match (sub, btoken, re) of  (* using c re lib! *)*)
+             NONE => []
+           | SOME (pos, len) => 
+               if (thisp+pos+len) = thisend then ((*print ("find a match at pos: "^Int.toString(thisp+pos)^"\n");*) [(thisp+pos, len)])
+               else ((*print ("find a match at pos: "^Int.toString(thisp+pos)^"\n");*) (thisp+pos, len)::(recFn (String.extract(sub, pos+len, NONE)) (thisp+pos+len)))
+     in
+       recFn s 0
+     end
+
+   fun findMatchList_c s btoken re (*(s:string) (re:REGEXP.regexp)*) =
+     let
+       val thisend = String.size s
+       fun recFn sub thisp = 
+(*         case matchRegEx sub btoken re of *)
+         case Regex_c.match (sub, btoken, re) of  (* using c re lib! *)
              NONE => []
            | SOME (pos, len) => 
                if (thisp+pos+len) = thisend then ((*print ("find a match at pos: "^Int.toString(thisp+pos)^"\n");*) [(thisp+pos, len)])
@@ -172,6 +187,67 @@ val _ = (print (BTokenToName btoken^":\n"); List.app printplist mlist)
         List.foldl matchOneToken (PosBTokenTable.empty, BTokenTable.empty) tokensNoBlob
       end
 
+    fun constrPosBTokenTableNoDFA s dfatable = 
+      let
+        val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
+        fun matchOneToken ((btoken, str), (r1, r2)) =
+        let
+(*          val re = Option.valOf(BTokenDFATable.find(dfatable, btoken))*)
+            val re = str
+        in
+          case (findMatchList_c s btoken re) of
+              [] => ((*print "2\n";*) (r1, r2))
+            | mlist => ((*print "2\n";*) 
+                let
+(*
+val num = List.length mlist
+val _ = print ((BTokenToName btoken)^" : "^"match num is "^(Int.toString num)^"\n")
+fun printplist (pos, len) = print (Int.toString pos^" "^Int.toString len^"\n")
+val _ = (print (BTokenToName btoken^":\n"); List.app printplist mlist)
+*)
+                  fun extractOne ((pos,len), basetable) = 
+                            case PosBTokenTable.find(basetable, pos) of
+                                NONE => PosBTokenTable.insert(basetable, pos, [(btoken, len)])
+                              | SOME _ => 
+                                  let
+                                    val (newtable, list) = PosBTokenTable.remove(basetable, pos)
+                                  in
+                                    PosBTokenTable.insert(newtable, pos, ((btoken, len)::list))
+                                  end
+(*
+                    case MatchTree.nth(tree,(i-1)) of 
+                        NONE => raise MatchError
+                      | SOME {pos,len} => 
+                          let
+                            val basetable = if (i>1) then extractOne (i-1) else r1
+                          in
+                            case PosBTokenTable.find(basetable, pos) of
+                                NONE => PosBTokenTable.insert(basetable, pos, [(btoken, len)])
+                              | SOME _ => 
+                                  let
+                                    val (newtable, list) = PosBTokenTable.remove(basetable, pos)
+                                  in
+                                    PosBTokenTable.insert(newtable, pos, ((btoken, len)::list))
+                                  end
+                          end
+                  fun consBToken i =
+                    case MatchTree.nth(tree, i) of 
+                        NONE => raise MatchError
+                      | SOME {pos, len} =>
+                          let
+                            val baselist = if (i=(num-1)) then [] else consBToken (i-1) 
+                          in
+                            (pos, len)::baselist
+                          end
+*)
+                in
+                  ((List.foldl extractOne r1 mlist), BTokenTable.insert(r2, btoken, mlist))
+                end)
+           end
+      in
+        List.foldl matchOneToken (PosBTokenTable.empty, BTokenTable.empty) tokensNoBlob
+      end
+
     fun constrDFATable tlist =
       let
 val _ = print "constructing DFAs...\n"
@@ -182,18 +258,18 @@ val _ = print "constructing DFAs...\n"
                           
     fun findPaths (s, recNo, dfatable) : NewContext list =
       let
-        val (pbtable, btable) = constrPosBTokenTable s dfatable
+        val (pbtable, btable) = (* constrPosBTokenTable s dfatable *) constrPosBTokenTableNoDFA s dfatable
 val _ = print "regexp all found\n"
         val thisendp = (String.size s)-1
         fun recFn p lookuptable  = (
-(*print ("inside redFn "^Int.toString p^"\n");*)
+print ("inside redFn "^Int.toString p^"\n");
           case PosBTokenTable.find(lookuptable, p) of
-              SOME nlist => (nlist, lookuptable)
+              SOME nlist => (nlist, lookuptable) (* already have a saved list in the table *)
             | NONE => (
                 case PosBTokenTable.find(pbtable, p) of
                     NONE => ( 
                       let
-(*val _ = print "no tokens at this pos\n"*)
+val _ = print "no tokens at this pos\n"
                         fun constrNearestList table : (BToken*(int*int)) list= 
                           let
                             val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
@@ -224,7 +300,7 @@ val _ = print "regexp all found\n"
                             else (
                               let
                                 val (tl, lookuptable1) = recFn (beginp+lenp) newlookuptable
-(*val _ = print ("return from recFn "^Int.toString (beginp+lenp)^" has "^Int.toString(List.length tl)^" lists\n")*)
+val _ = print ("return from recFn "^Int.toString (beginp+lenp)^" has "^Int.toString(List.length tl)^" lists\n")
                                 fun insert1st (tli: NewContext) = [blobitem, iitem]@tli 
                               in
                                 case tl of
@@ -245,7 +321,7 @@ val _ = print "regexp all found\n"
                     )
                   | SOME bllist => (
                       let
-(*val _ = print ("have "^(Int.toString (List.length bllist))^" tokens at this pos\n")*)
+val _ = print ("have "^(Int.toString (List.length bllist))^" tokens at this pos\n")
                         fun addOneToken ((btoken, lenp), (nclist, newlookuptable)) =
                           let
                             val iitem = ((btoken, String.substring(s, p, lenp)), mkLoc p (p+lenp-1) recNo recNo)
@@ -254,7 +330,7 @@ val _ = print "regexp all found\n"
                             else (
                               let
                                 val (tl, lookuptable1) = recFn (p+lenp) newlookuptable
-(*val _ = print ("return from recFn "^Int.toString (p+lenp)^" has" ^(Int.toString (List.length tl))^" lists\n")*)
+val _ = print ("return from recFn "^Int.toString (p+lenp)^" has " ^(Int.toString (List.length tl))^" lists\n")
                                 fun insert1st (tli: NewContext) = iitem::tli 
                               in
                                 case tl of
@@ -457,8 +533,9 @@ val _ = print "regexp all found\n"
 (*
 print "before printlist\n";
 print ("seqset size: "^(Int.toString (List.length ret))^"\n");*)
-(*        printlist ret;
-        print "\n";*)
+        print "seqset:\n";
+        printlist ret;
+        print "\n";
 (*print "after printlist\n";*)
         ret
         )

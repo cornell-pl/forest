@@ -1688,7 +1688,7 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
 	    val records = loadFiles fileName  (* records: string list *)
 	    val () = initialRecordCount := (List.length records) 
         val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
-        val dfatable = constrDFATable tokensNoBlob
+        val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
         val rtokens : Seqset list = List.map (pathGraph recordNumber dfatable) records
 val _ = print "path graph done.\n"
         val rptokens : Seqset list = if ( !character = true ) then  computeProbChar rtokens else computeProb rtokens
