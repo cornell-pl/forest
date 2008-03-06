@@ -1,0 +1,7 @@
+library
+	structure Regex_c
+is
+	$/basis.cm
+	$c/c.cm
+	FFI/regex_c.cm : make (-f regex_c.make)
+	regex_c.sml
