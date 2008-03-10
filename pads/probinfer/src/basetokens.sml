@@ -495,6 +495,99 @@ structure Basetokens = struct
            PPpunc (Substring.string punc)
          end
 
+    fun charToBToken c =
+            case c of
+                #"." => PPpunc "."
+              | #"/" => PPpunc "/"
+              | #"\\" => PPpunc "\\" 
+              | #";" => PPpunc ";"
+              | #"|" => PPpunc "|"
+              | #"<" => PPpunc "<"
+              | #"~" => PPpunc "~"
+              | #"`" => PPpunc "`"   
+              | #"!" => PPpunc "!"
+              | #"@" => PPpunc "@"
+              | #"#" => PPpunc "#"
+              | #"$" => PPpunc "$"
+              | #"%" => PPpunc "%"
+              | #"^" => PPpunc "^" 
+              | #"&" => PPpunc "&"
+              | #"*" => PPpunc "*"
+              | #"(" => PPpunc "("
+              | #")" => PPpunc ")"
+              | #"-" => PPpunc "-"
+              | #"_" => PPpunc "_"
+              | #"+" => PPpunc "+"
+              | #"=" => PPpunc "="
+              | #"{" => PPpunc "{"
+              | #"}" => PPpunc "}"
+              | #"[" => PPpunc "["
+              | #"]" => PPpunc "]"
+              | #":" => PPpunc ":"
+              | #"\"" => PPpunc "\""
+              | #"'" => PPpunc "'"
+              | #">" => PPpunc ">"
+              | #"," => PPpunc ","
+              | #"?" => PPpunc "?"
+              | _ => PPblob
+
+    fun tokenToBToken t : BToken list = (* a mapping from old tokens to corresponding new tokens *) 
+      case t of    
+          Ptime i => [PPtime]
+	    | Pdate i => [PPdate]
+	    | Pip i => [PPip]
+        | Phostname i => [PPhostname]
+	    | Ppath i => [PPpath]
+	    | Purl i => [PPurl]
+	    | Pemail i => [PPemail]
+	    | Pmac i => [PPmac]
+        | PbXML (f,s) => [PPbXML]
+        | PeXML (f,s) => [PPeXML]
+    	| Pint _  => [PPint]
+	    | Pfloat _ => [PPfloat]           
+        | Pstring s => [PPblob]
+        | Pwhite s  => [PPwhite] 
+        | Pgroup {left=(lt, ll), body=mybody, right=(rt, tl)} =>
+            let
+              val l = tokenToBToken lt
+              val r = tokenToBToken rt
+              fun extractOne ((bt, bl), ret) = (tokenToBToken bt)@ret
+              val b = List.foldl extractOne [] mybody
+            in
+              (l@b)@b
+            end 
+        | Other c  => [charToBToken c]
+        | Pempty    => [PPempty]
+        | Error => [PPblob] 
+
+    fun tokenToBSToken t : BSToken list = (* a mapping from old tokens to corresponding new tokens *) 
+      case t of    
+          Ptime i => [(PPtime, i)]
+	    | Pdate i => [(PPdate, i)]
+	    | Pip i => [(PPip, i)]
+        | Phostname i => [(PPhostname, i)]
+	    | Ppath i => [(PPpath, i)]
+	    | Purl i => [(PPurl, i)]
+	    | Pemail i => [(PPemail, i)]
+	    | Pmac i => [(PPmac, i)]
+        | PbXML (f,s) => [(PPbXML, f^s)]
+        | PeXML (f,s) => [(PPeXML, f^s)]
+    	| Pint (i,s)  => [(PPint, s)]
+	    | Pfloat (i,f) => [(PPfloat, i^"."^f)]           
+        | Pstring s => [(PPblob, s)]
+        | Pwhite s  => [(PPwhite, s)] 
+        | Pgroup {left=(lt, ll), body=mybody, right=(rt, tl)} =>
+            let
+              val l = tokenToBSToken lt
+              val r = tokenToBSToken rt
+              fun extractOne ((bt, bl), ret) = (tokenToBSToken bt)@ret
+              val b = List.foldl extractOne [] mybody
+            in
+              (l@b)@b
+            end 
+        | Other c  => [(charToBToken c, Char.toString c)]
+        | Pempty    => [(PPempty, "")]
+        | Error => [(PPblob, "")] 
 
     fun getRegex ( t : BToken ) : string =
 (*

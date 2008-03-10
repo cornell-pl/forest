@@ -119,6 +119,16 @@ print token *)
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
+       else if ( !evaluateVanilla = true )
+         then
+            let
+              val _ = print "examing old vanilla tokenization result...\n"
+              val end1Times = zeroEndingTimes ()
+              val end2Times = updateStart (Time.now()) end1Times
+              val _ = evaluateVanillaResult (!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
                 val (ty,sep)     = computeStructure ( !srcFiles )
@@ -167,6 +177,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun setExamHMMPre   s = examHMMPre  := (s = "true")
     fun setExamHMMPost  s = examHMMPost  := (s = "true")
     fun setEvaluateHMMPost  s = evaluateHMMPost  := (s = "true")
+    fun setEvaluateVanilla  s = evaluateVanilla  := (s = "true")
     fun setCharacter  s = character  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
    val flags = [
@@ -192,6 +203,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
          ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
          ("hmm3",  "evaluating HMM library: 2nd step",	                                                   PCL.String (setEvaluateHMMPost, true)),
+         ("vanilla1",  "evaluating vanilla tokenization",	                                                   PCL.String (setEvaluateVanilla, true)),
          ("char", "use character other than character feature vector for training",                        PCL.String (setCharacter, true)),
          ("smooth", "use smoothing in training (default lambda"^(Real.toString defaultLambda)^")",         PCL.Float    (setLambda,     false))
         ]

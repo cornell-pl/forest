@@ -39,6 +39,7 @@ structure Config = struct
     val lambda            = ref 0.0
     val defaultLambda     = 0.01
     val evaluateHMMPost   = ref false
+    val evaluateVanilla   = ref false
     val fvectorbits       = 11
     val character         = ref false
     val trainingWeightsRun = ref false

@@ -1903,6 +1903,18 @@ val _ = print "seqset to list done.\n"
       evaluate bsll1 bsll2
 	end
 
+    fun evaluateVanillaResult fileName  = 
+	let
+        val records = loadFiles fileName
+	    val tokenss = loadFile "testing/output"
+	    val recordnum = ref (List.length records) 
+	    val rtokens : Context list = List.map (Structure.ltokenizeRecord recordnum) records 
+        val _ = print "Tokenization by vanilla:\n"
+        val bsll1 = extractLog "training/log/" "training/log/testname"
+	in
+      evaluate_vanilla bsll1 rtokens
+	end
+
     fun moveIncToList path file1 file2 =
       let
         val infilesraw = loadFile (path^file1)
