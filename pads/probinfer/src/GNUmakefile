@@ -41,6 +41,12 @@ endif
 SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT39)
 BUILD_EXEC = build-exec.sml
 
+########################################
+# get all platform/OS
+PLATFORM = $(shell uname -p)
+OS = `uname`
+########################################
+
 ######################################################################
 #
 # Learning tool

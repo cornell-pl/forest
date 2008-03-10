@@ -44,6 +44,7 @@ structure Config = struct
     val character         = ref false
     val trainingWeightsRun = ref false
     val inctrainingWeightsRun = ref false
+    val hmmtokenize       = ref false
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE

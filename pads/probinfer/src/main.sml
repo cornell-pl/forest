@@ -89,10 +89,23 @@ print token *)
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
+       else if ( !hmmtokenize = true)
+         then 
+            let 
+              val _ = print "testingRun\n"
+              val end1Times = zeroEndingTimes ()
+              val end2Times = updateStart (Time.now()) end1Times
+              val ty = removePPempty(computeProbStructure_HMMonly ( !srcFiles ))
+              val sep = []
+              val end3Times = updateTokenEnd (Time.now()) end2Times
+              val _ = Printing.dumpNewTy (!outputDir^"NewTy") ty              
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
        else if ( !examHMMPre = true )
          then
             let
-              val _ = print "examing HMM library, constructing input...\n"
+              val _ = print "examining HMM library, constructing input...\n"
               val end1Times = zeroEndingTimes ()
               val end2Times = updateStart (Time.now()) end1Times
               val _ = examHmmResultPre (!srcFiles)             
@@ -102,7 +115,7 @@ print token *)
        else if ( !examHMMPost = true )
          then
             let
-              val _ = print "examing HMM returned tokens...\n"
+              val _ = print "examining HMM returned tokens...\n"
               val end1Times = zeroEndingTimes ()
               val end2Times = updateStart (Time.now()) end1Times
               val _ = examHmmResultPost (!srcFiles)             
@@ -112,7 +125,7 @@ print token *)
        else if ( !evaluateHMMPost = true )
          then
             let
-              val _ = print "examing HMM returned tokens...\n"
+              val _ = print "examining HMM returned tokens...\n"
               val end1Times = zeroEndingTimes ()
               val end2Times = updateStart (Time.now()) end1Times
               val _ = evaluateHmmResultPost (!srcFiles)             
@@ -122,7 +135,7 @@ print token *)
        else if ( !evaluateVanilla = true )
          then
             let
-              val _ = print "examing old vanilla tokenization result...\n"
+              val _ = print "examining old vanilla tokenization result...\n"
               val end1Times = zeroEndingTimes ()
               val end2Times = updateStart (Time.now()) end1Times
               val _ = evaluateVanillaResult (!srcFiles)             
@@ -178,6 +191,7 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
     fun setExamHMMPost  s = examHMMPost  := (s = "true")
     fun setEvaluateHMMPost  s = evaluateHMMPost  := (s = "true")
     fun setEvaluateVanilla  s = evaluateVanilla  := (s = "true")
+    fun setHMMtokenize  s = hmmtokenize  := (s = "true")
     fun setCharacter  s = character  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
    val flags = [
@@ -203,7 +217,8 @@ val _ = Printing.dumpTy (!outputDir^"OldTy") ty
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
          ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
          ("hmm3",  "evaluating HMM library: 2nd step",	                                                   PCL.String (setEvaluateHMMPost, true)),
-         ("vanilla1",  "evaluating vanilla tokenization",	                                                   PCL.String (setEvaluateVanilla, true)),
+         ("hmmtokenize",  "evaluate descriptions with tokenization by hmm library",	                                                   PCL.String (setHMMtokenize, true)),
+         ("vanilla",  "evaluating vanilla tokenization",	                                                   PCL.String (setEvaluateVanilla, true)),
          ("char", "use character other than character feature vector for training",                        PCL.String (setCharacter, true)),
          ("smooth", "use smoothing in training (default lambda"^(Real.toString defaultLambda)^")",         PCL.Float    (setLambda,     false))
         ]

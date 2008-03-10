@@ -89,7 +89,7 @@ struct
               val ((oldwrongc, oldtotalc),(oldwrongt, oldtotalt), oldwrongr) = compareOneRecord (i-1)
               val bsl1 = List.nth (bsll, i)
               val c = List.nth (cl, i)
-              fun clToCbl thisc : (char*BToken) list =
+              fun contextToCbl thisc : (char*BToken) list =
                 let
                   fun doOne ((token, l), resultcblist) =
                     let
@@ -109,7 +109,7 @@ struct
                   in
                     List.foldl doOne [] thisc
                   end
-              val cbl2 = clToCbl c
+              val cbl2 = contextToCbl c
               val thistotalc = List.length cbl2
               val thistotalt = List.length bsl1
               fun compareOneToken ((b, s), (p, rewrongc, rewrongt)) = 
@@ -127,8 +127,9 @@ struct
               val (junk, thiswrongc, thiswrongt) = List.foldl compareOneToken (0, 0, 0) bsl1
               val thiswrongr = if thiswrongt=0 then 0 else 1
               fun printBSToken (t, s) = print ((BTokenToName t)^"["^s^"]"^" ")
+              fun printContext (t, l) = print ((tokenTyToName t)^" ")
               val _ = if thiswrongr = 0 then ()
-                      else (print "wrong token sequence :"; List.app printLTokens cl; print "\n") 
+                      else (print "wrong token sequence :"; List.app printContext c; print "\n") 
               val _ = print ("totalc="^(Int.toString thistotalc)^
                              " wrongc="^(Int.toString thiswrongc)^
                              " totalt="^(Int.toString thistotalt)^

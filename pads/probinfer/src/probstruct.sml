@@ -641,49 +641,7 @@ struct
 	in
 	    printLenHist fd
 	end
-(*
-    fun ltokenizeRecord recordNumberRef (record:string) = 
-	let val length = String.size record
-	    fun doNonEmpty record = 
-		let val cursor : int ref = ref 0
-		    fun addLineNo (t,{beginloc,endloc}) = (t,
-			{lineNo=(!recordNumberRef),beginloc=beginloc,endloc=endloc, recNo=(!recordNumberRef)})
-		    fun feedLex n = 
-			let val s = if (n > (length - !cursor)) 
-			    then SS.string(SS.extract(record, !cursor, NONE))  handle Subscript => ""
-			    else SS.string(SS.substring(record, !cursor, n))  handle Subscript => ""
-			in
-			    cursor := !cursor + n;
-			    s
-			end
-	
-		    val lex =   if (!lexName) = "vanilla" then
-				  VanillaLex.makeLexer feedLex
-				else
-				  TokensLex.makeLexer feedLex
-		    fun getMatches acc =
-                        ( case lex() of 
-                               NONE   => List.rev acc
-                             | SOME a => getMatches((addLineNo a)::acc)
-                        )
-		    val matches = getMatches []
-		    val groupedMatches = findGroups matches
 
-		    val () = print "printing grouped tokens:\n"
-		    val () = printLTokens groupedMatches 
-
-		    val () = recordNumberRef := !recordNumberRef + 1
-		in
-		    groupedMatches 
-		end
-	in
-	    if length = 0 then 
-		[(Pempty,{lineNo = (!recordNumberRef), beginloc=0, endloc=0, recNo=(!recordNumberRef)})] 
-		before (recordNumberRef := !recordNumberRef +1)
-	    else doNonEmpty record
-	end
-
-*)
     (* This function takes a basetoken sequence and returns an (int ref) BTokenTable.map *)
     (* This map, keyed by the basetoken, stores the count of occurences of the token key in the input list *)
     fun countBFreqs (tokens:NewContext) : BRecordCount = 
@@ -1235,6 +1193,126 @@ struct
 	   partition
 	end
 
+    fun splitRecords_HMM summary (records : NewContext list ) ( seqsetl : Seqset list ): NPartition=
+
+	  let 
+        val {numTokensInCluster=count, numRecordsWithCluster=coverage, tokens=tokenfreqs} = summary
+
+	    fun getTokenOrder summary record = 
+	        let fun insertOne ((token,freq),tTable) = BSTokenTable.insert(tTable, token, ref freq)
+		    val tTable = List.foldl insertOne BSTokenTable.empty summary
+		    val numFound = ref 0
+		    fun doOneToken tTable ((token,loc), acc) = 
+			case BSTokenTable.find(tTable, token)
+			of NONE => acc
+			|  SOME freq => 
+			    if !freq = 0 then raise TokenMatchFailure
+			    else (freq := !freq - 1;
+				  numFound := !numFound + 1;
+				  token::acc)
+		    val tList = List.rev(List.foldl (doOneToken tTable) [] record)
+		    val () = if not ((!numFound) = count) 
+			     then raise TokenMatchFailure
+			     else ()
+		in
+		    SOME(tList)  handle TokenMatchFailure => NONE
+		end
+
+        fun findTokenOrder summary record = 
+          case (getTokenOrder summary record) of
+              NONE => (NONE, NONE)
+            | SOME t => (SOME(t), NONE)
+
+	    fun classifyOneRecordWithMatch (thisRecord:NewContext) (tokenOrder:NTokenOrder)  = 
+		let fun introduceLEmpty (contextList:NDerivedContexts) =  (*In progress*)
+		        (* Idea: input is list of token lists, one per field in discovered struct. 
+                                 Some may be empty because nothing was between tokens.
+				 We can replace these empty lists with a list of the single token empty.
+				 At this point, we know the location of the empty token because it is in the 
+				 same input record as all the other tokens in the line.
+				 This function is not called with an empty tokenOrder, so the record is
+				 guaranteed to have at least one located token we can use to fix the location.*)
+		        let fun findRecordNumber [] = (print "XXX: contextList had no located tokens, breaking invariant";  
+						       {lineNo= ~200,beginloc=0,endloc=0,recNo= ~201}) 
+			                              (* This case should never occur.*)
+                              | findRecordNumber ([]::rs) = findRecordNumber rs
+			      | findRecordNumber (((t,loc as {lineNo,...})::ts)::rs) = loc
+(*			          (print "record number: "; print (Int.toString lineNo); (loc:location) ) *)
+										       
+			    val location = findRecordNumber contextList
+			    fun convert [] result = List.rev result
+                              | convert ([]::rest) result = convert rest ([((PPempty,""),location)]::result)
+			      | convert (cur::rest) result = convert rest (cur::result)
+			in
+			    ((convert contextList []) : NDerivedContexts)
+			end
+		    fun doMatch (tokensToMatch:NTokenOrder) (recordTokens: NewContext)
+		                (curContextAcc : NewContext, contextListAcc : NDerivedContexts) = 
+		    case (tokensToMatch, recordTokens) 
+		    of ([],[])   => List.rev ((List.rev curContextAcc) :: contextListAcc)
+                    |  ([], rts) => List.rev  (rts :: contextListAcc)
+                    |  (tks, []) => raise TokenMatchFailure
+                    |  (tokens as tk::tks, (lrtoken as (rt,loc))::rts) => 
+			let val (rt, loc) = lrtoken : BSLToken
+			in
+			  if BSTokenEq(tk, rt)  (* found next token; push current context *)
+			  then 
+			      let val matchTokens = [lrtoken](*
+				  case rt 
+				  of Pgroup g => (groupToTokens g)
+				  |  _        => [lrtoken]*)
+			      in
+				  doMatch tks rts ([], matchTokens :: (List.rev curContextAcc) :: contextListAcc)
+			      end
+			  else doMatch tokens rts (lrtoken :: curContextAcc, contextListAcc)
+			end
+		    val thisRecordContexts = doMatch tokenOrder thisRecord ([],[])
+(*		    val () = print "before adding empty\n"
+		    val () = printContexts thisRecordContexts *)
+		    val recordContextsWithEmpty = introduceLEmpty thisRecordContexts
+(*		    val () = print "after adding empty\n"
+		    val () = printContexts recordContextsWithEmpty *)
+		in
+		    SOME recordContextsWithEmpty handle TokenMatchFailure => NONE
+		end
+
+            (* Given a summary, a token order * DerivedContexts list, and a record,
+                try each token order in list.  
+                if matches, add to corresponding DerivedContexts list.
+                if doesn't match, try to infer a different tokenOrder.
+                  if matches, add to list of token orders with corresonding derivedContext
+                  if doesn't match, add to bad record list *)
+	    fun classifyOneRecord tokenfreqs (thisRecord, (matches, badRecords)) = (* thisRecord is NewContext *) 
+		let (* convert to accumulator form? *)
+		    fun findFirstMatch ([], record) = (* no existing match succeeded, see if another token order matches *)
+			 (case findTokenOrder tokenfreqs record
+                          of (NONE, _) => raise TokenMatchFailure (* tokens don't match this record *)
+                          |  (SOME tokenOrder, NONE) => findFirstMatch ([(tokenOrder,[])], record) 
+                          |  (SOME tokenOrder, SOME newRecord) => findFirstMatch ([(tokenOrder,[])], newRecord))
+              | findFirstMatch (((current as (match, matchedContextLists))::rest), record) =  (* match: tokenorder *)
+		          (case classifyOneRecordWithMatch record match
+			   of NONE => current :: (findFirstMatch (rest, record))
+                           |  SOME contexts => ((match, contexts :: matchedContextLists) :: rest) (* matches are in reverse order *))
+		in
+		    (findFirstMatch (matches, thisRecord), badRecords)
+		    handle tokenMatchFailure => (matches, thisRecord :: badRecords) (* bad records are in reverse *)
+		end
+
+	    val revPartition : NPartition = List.foldl (classifyOneRecord tokenfreqs) ([],[]) records
+
+        fun reversePartition (matches, badRecords) = 
+		  let fun revMatch (tokenOrder, matchedRecords) = (tokenOrder, List.rev matchedRecords)
+		      fun revMatches [] acc = List.rev acc
+                | revMatches (m::ms) acc = revMatches ms ((revMatch m)::acc)
+		  in  
+		    (revMatches matches [], List.rev badRecords)
+		  end
+	    
+	    val partition : NPartition = reversePartition revPartition
+	in
+	   partition
+	end
+
     (* convert a list of token lists into a list of token lists, 
        expanding group tokens if argument list contains entirely
        single element lists of the same group token; otherwise, 
@@ -1386,6 +1464,10 @@ struct
                           , cl
                           ) before TBDstamp := !TBDstamp    + 1
                  else (
+                   if (List.length ssl) = 0 then 
+                     if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl 
+                     else SeqsetListToTy (currentDepth + 1) []
+                   else
                    let
                      val locList = columnToLocations cl
 
@@ -1398,7 +1480,8 @@ val _ = printColumnString cl
                      val newSSL = chopSeqsets ssl locList
 val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") 
                    in 
-                     SeqsetListToTy (currentDepth + 1) newSSL
+                     if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl
+                     else SeqsetListToTy (currentDepth + 1) newSSL
                    end
                  )
 	end
@@ -1649,7 +1732,8 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
       val ty = case analysis of 
 		        Blob =>     mkBottom (List.length rtokens, rtokens)  (*can we still do sth using lower-prob seq?*)
 		     |  Empty =>    PPBase (mkTyAux 0, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})])
-		     |  Struct s => buildStructTy (splitRecords s rtokens seqsetl) seqsetl (* Can produce union of structs *)
+		     |  Struct s => if (!hmmtokenize = true) then buildStructTy (splitRecords_HMM s rtokens seqsetl) seqsetl
+                            else buildStructTy (splitRecords s rtokens seqsetl) seqsetl (* Can produce union of structs *)
 		     |  Array a =>  buildArrayTy (a, rtokens, seqsetl)
              |  Union u =>  buildUnionTy(u, rtokens, seqsetl)
 
@@ -1678,6 +1762,16 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
 		      print "\n")
 	    *)
         (* val ty = PPBase (mkTyAux 0, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})]) *)
+	in
+	    ty
+	end 
+
+    and SeqsetListToTy_HMM (curDepth:int) (bestProbPaths:NewContext list) : NewTy = 
+	let val numRecordsinSeqsetList = List.length bestProbPaths
+        val counts : BRecordCount list = List.map countBFreqs bestProbPaths    
+	    val fd: freqDist = buildHistograms numRecordsinSeqsetList counts
+	    val clusters : (BSToken * histogram) list list = newFindClusters numRecordsinSeqsetList fd
+        val ty : NewTy = clustersToTy curDepth bestProbPaths [] numRecordsinSeqsetList clusters (* break it *)
 	in
 	    ty
 	end 
@@ -1903,11 +1997,81 @@ val _ = print "seqset to list done.\n"
       evaluate bsll1 bsll2
 	end
 
+    fun computeProbStructure_HMMonly fileName : NewTy = 
+	let
+        val records = loadFiles fileName
+	    val tokenss = loadFile "testing/output" 
+        val _ = print "Tokenization by HMM.\n"
+        val otable = constrOrdBTokenTable "training/"
+        fun extractIntList record : BToken list = 
+          let
+            fun isSpace c = c = #" "
+            fun doOne s : BToken list = 
+              let
+                val (pre, rest) = Substring.splitl (not o isSpace) s
+                val ret = intToBToken(Option.valOf(Int.fromString(Substring.string pre)), otable) handle Option => (print ("s = "^(Substring.string pre)^"\n"); raise Option)
+                val newrest = Substring.triml 1 rest
+              in
+                if (Substring.size newrest)=0 orelse (isSpace (Substring.sub(newrest, 0))) then [ret]
+                else if (Substring.size pre) = (Substring.size s) then [ret]
+                else ret::(doOne (Substring.triml 1 rest)) 
+              end
+          in
+            if String.compare(record, "nil") = EQUAL then []
+            else doOne (Substring.full record)
+          end
+        val tokensi = List.map extractIntList tokenss
+        fun collapse (record: string, tks: BToken list) : char list list * BToken list = 
+          let
+            val chars = String.explode record
+            fun doOne (c, t, (pret, (retc, rett))) = 
+              case t of
+                  PPpunc p => (t, (retc@[[c]], rett@[t]))
+                | _ => if compBToken(t, pret)=EQUAL then (t, ((List.take(retc, (List.length retc)-1)@[(List.last retc)@[c]]), rett))
+                       else (t, (retc@[[c]], rett@[t])) 
+          in
+            case tks of
+                [] => ([[]], [])
+              | hd::tl => let val (junk, list) = ListPair.foldlEq doOne (hd, ([[List.hd chars]], [hd])) (List.tl chars, tl) in list end
+          end
+        val ret = ListPair.mapEq collapse (records, tokensi)
+        fun adjust (charll, blist) : BSToken list =
+          let
+            fun combineOne (charl, bt) = (bt, String.implode charl)
+          in
+            case blist of
+                [] => []
+              | _ => ListPair.mapEq combineOne (charll, blist)
+          end
+        val bsll2 : BSToken list list = List.map adjust ret
+        fun addFakeProb bsll = 
+          let
+            fun bs2bsl (bsl : BSToken list, (bsllist, i)) : NewContext list * int =
+              let
+                fun doOne ((b,s) : BSToken, (oldlist, p)) = 
+                  let
+                    val thisbsl = ((b, s), {lineNo = i, beginloc = p, endloc = p+(String.size s)-1, recNo = i})
+                  in
+                    (oldlist@[thisbsl], p+(String.size s))
+                  end
+                val (retbsl, junk) = List.foldl doOne ([], 0) bsl
+              in
+                (bsllist@[retbsl], i+1)
+              end 
+            val (retcl, junk) = List.foldl bs2bsl ([], 0) bsll
+          in
+            retcl
+          end
+        val rtokens : NewContext list = addFakeProb bsll2
+        val newty = SeqsetListToTy_HMM 0 rtokens 
+	in
+      newty
+	end
+
     fun evaluateVanillaResult fileName  = 
 	let
         val records = loadFiles fileName
-	    val tokenss = loadFile "testing/output"
-	    val recordnum = ref (List.length records) 
+	    val recordnum = ref (List.length records)
 	    val rtokens : Context list = List.map (Structure.ltokenizeRecord recordnum) records 
         val _ = print "Tokenization by vanilla:\n"
         val bsll1 = extractLog "training/log/" "training/log/testname"
