@@ -497,8 +497,8 @@ structure Printing = struct
             then ( dumpNewParameters (path ^ "Params") rewrittenTy
                  ; dumpTBDs rewrittenTy
 (*                 ; dumpNewTy (path ^ "Ty") rewrittenTy *) (* dump ty in main.sml *)
-                 ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getNComps baseTy ) 
-                 ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getNComps rewrittenTy )
+                 ; dumpTyComp path "NewBaseComplexity" (dataDir^"/"^inputFileName) ( getNComps baseTy ) 
+                 ; dumpTyComp path "NewComplexity" (dataDir^"/"^inputFileName) ( getNComps rewrittenTy )
                  ; print "Finished printing Complexity\n"
                  ; let (* val (topName, hdrName, tyName, trlName) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
 						rewrittenTy numHeaders numFooters *)
@@ -513,8 +513,8 @@ structure Printing = struct
 		       dumpFmtProgram path descName hdrName tyName trlName sep;
 		       dumpNewGrapher path dataDir descName rewrittenTy sep;
 *)
-                       dumpComputeTimes ( path ^ "Timing" ) ct; 
-		       dumpVariance ( path ^ "Variance" ) (getNCoverage rewrittenTy) (newvariance rewrittenTy)
+                       dumpComputeTimes ( path ^ "NewTiming" ) ct; 
+		       dumpVariance ( path ^ "NewVariance" ) (getNCoverage rewrittenTy) (newvariance rewrittenTy)
 		   end
                  ; cpMkFile()
                  ; cpFile "vanilla.p" "vanilla.p"
