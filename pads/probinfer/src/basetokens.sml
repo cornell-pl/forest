@@ -617,4 +617,57 @@ structure Basetokens = struct
         ( Real.fromInt ( length ts ) ) 
 
 
+    fun btokenOf (t:BSLToken):BToken = #1 (#1 t)
+
+    fun bstokenOf (t:BSLToken):BSToken = #1 t
+
+    fun btokenLength (t:BSToken):int =
+        ( case t of
+               (PPbXML, s) => size s
+             | (PPeXML, s) => size s
+             | (PPtime, s) => size s
+             | (PPdate, s) => size s
+             | (PPpath, s) => 
+                 let val nsep       : int    = countCh #"/" s
+                     fun isSep ( x : char ) : bool = x = #"/"
+                     val components : string list =
+                       map Substring.string
+                           ( Substring.fields isSep ( Substring.full s ) )
+                 in if nsep = 0 then size s else size s - nsep
+                 end
+               (* TODO: URLs and emails are too hard to parse right now, 
+		also the issue of case sensitivity *)
+             | (PPurl, s)         => size s
+             | (PPurlbody, s) => size s
+             | (PPemail, s)         => size s
+             | (PPmac, s)         => 12  (*6 hex numbers, take away the delimiters *)
+             | (PPip, s)          => countCh #"." s + 1
+             | (PPhostname, s)    =>
+                 let val ndot          : int            = countCh #"." s
+                     fun isDot ( x : char ) : bool = x = #"."
+                     val components    : string list =
+                           map Substring.string ( Substring.fields isDot ( Substring.full s ) )
+                     val lastComponent : string = List.last components
+                 in if ndot = 0
+                    then size s
+                    else if isDomainName lastComponent
+                         then size s - ndot - ( size lastComponent )
+                         else size s - ndot
+                 end
+             | (PPint, s)    => size s (*ignore the length of the s as it's aux info*)
+             | (PPfloat, s)   => size s - 1 
+             | (PPwhite, s)       => size s
+             | (PPempty, s)         => 0
+             | (PPpunc c, s) => 1
+             | (PPword, s) => size s
+             | (PPid, s) => size s
+             | (PPmessage, s) => size s
+             | (PPtext, s) => size s
+             | (PPpermission, s) => size s (* can be compressed *)
+             | (PPblob, s) => size s
+             | (PPError, s) => 0
+        )
+
+    fun bslTokenLength (t:BSLToken):int = btokenLength (bstokenOf t)
+
 end

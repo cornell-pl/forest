@@ -6,9 +6,13 @@ structure Printing = struct
     open Model
     open Times
     open Gold
+    open Probmodel
 
     fun dumpLToken (strm:TextIO.outstream) (tk:Token,loc:location) : unit =
         TextIO.output(strm, tokenToString tk)
+
+    fun dumpBSLToken (strm:TextIO.outstream) (tk:BSToken,loc:location) : unit =
+        TextIO.output(strm, bstokenTyToString tk)
 
     fun dumpCL (fileName:string) (contexts:Context list) : unit = 
 	let val strm = TextIO.openOut fileName
@@ -23,6 +27,26 @@ structure Printing = struct
             fun dumpOneContext (context:Context) : unit =
                 ( TextIO.output(strm, getLineNo context)
                 ; List.app (dumpLToken strm) context
+                ; TextIO.output(strm, "\n")
+                )
+            val () = List.app dumpOneContext contexts
+	in
+	    TextIO.closeOut strm
+	end
+
+    fun dumpNewCL (fileName:string) (contexts:NewContext list) : unit = 
+	let val strm = TextIO.openOut fileName
+	    fun getLineNo (context:NewContext):string = 
+		let fun extractLineNo (t,{lineNo,...}:location) = lineNo
+		in
+		    if !printLineNos then 
+			case context of [] => "No line information."
+                        | (lt::rest) => ((Int.toString (extractLineNo lt)) ^ ": ")
+		    else ""
+		end
+            fun dumpOneContext (context:NewContext) : unit =
+                ( TextIO.output(strm, getLineNo context)
+                ; List.app (dumpBSLToken strm) context
                 ; TextIO.output(strm, "\n")
                 )
             val () = List.app dumpOneContext contexts
@@ -86,6 +110,16 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
+    fun dumpNewParameters (fileName:string) (ty:NewTy) : unit = 
+	let val strm = TextIO.openOut fileName
+            val () = TextIO.output(strm, parametersToString())
+	    val () = TextIO.output(strm, "Complexity of derived type:\n\t")
+	    (* remove dependency of this file to the structure.sml *)
+	    val () = TextIO.output(strm, showTyComp(getNComps (newmeasure ty)))
+	in
+	    TextIO.closeOut strm
+	end
+
     (* This function dumps both pads/c and pads/ml descriptions from a ty *)
     fun dumpPADSdesc (padscFile:string) (padsmlFile:string) 
 		(ty:Ty) (numHeaders:int) (numFooters:int) : (string*string*string*string) = 
@@ -106,7 +140,27 @@ structure Printing = struct
 	in
 	    (topName, headerName, bodyName, footerName)
 	end
-
+(*
+    fun dumpNewPADSdesc (padscFile:string) (padsmlFile:string) 
+		(ty:NewTy) (numHeaders:int) (numFooters:int) : (string*string*string*string) = 
+	let val strmc = TextIO.openOut padscFile
+	    val strmml = TextIO.openOut padsmlFile
+(*
+	    val irs = tyToIR true nil ty
+	    val pads = lconcat (map irToPML irs)
+	    val () = print pads
+*)
+            val (topName, headerName, bodyName, footerName, desc) = 
+		tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
+            val descml = tyToPADSML ty numHeaders numFooters ("Build_ins")
+            val () = TextIO.output(strmc,desc )
+            val () = TextIO.output(strmml, descml )
+	    val () = TextIO.closeOut strmc
+	    val () = TextIO.closeOut strmml
+	in
+	    (topName, headerName, bodyName, footerName)
+	end
+*)
     fun dumpAccumProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName:string) : unit = 
 	let val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
 	    val trlDecl = if trlName = "" then "" else "#define PADS_TRL_TY(suf) "^trlName^" ## suf\n"
@@ -268,6 +322,73 @@ structure Printing = struct
 		print "Data not suitable for graphing!\n"
 
 
+    fun dumpNewGrapher (path:string) (dataDir: string) (descName:string) (ty:NewTy) (sep:Token option) : unit =
+	case ty of 
+	PPstruct (_, tys) =>
+		let
+		  fun getBaseTypes (tys : NewTy list) (index:int) : string =
+			case tys of
+			  nil =>  ""
+			  | ty::tail => 
+				(
+				  case ty of 
+				    PPBase (a, (tok, _)::_) =>
+				      let val label = getLabelString a
+				      in
+					(
+					 case tok of
+						(PPint, _) => label ^ " Col #"^(Int.toString index)^"\t [Int]\n"
+					  |	(PPfloat, _) => label ^ " Col #"^(Int.toString index)^"\t [Float]\n"
+					  |	(PPdate, _) => label ^ " Col #"^(Int.toString index)^"\t [Date]\n"
+					  |	(PPtime, _) => label ^ " Col #"^(Int.toString index)^"\t [Time]\n"
+					  (*|	Pstring _ => label ^ "Col #"^(Int.toString index)^"\t [String]\n"*)
+					  (*|	Other _ => label ^ "Col #"^(Int.toString index)^"\t [Char]\n"*)
+					  |	_ => ""
+					) ^ (getBaseTypes tail (Int.+ (index, 1)))
+				      end
+				  | PPRefinedBase (a, re, _) =>
+				      let val label = getLabelString a
+				      in
+					(
+					 case re of
+						Int _ => label ^ " Col #"^(Int.toString index)^"\t [Int]\n" ^ 
+							 (getBaseTypes tail (Int.+ (index, 1))) 
+					  |	Enum (r::_) =>
+						(
+						  case r of 
+							IntConst _ => label ^ " Col #"^(Int.toString index)^"\t [Int]\n"
+							(*| StringConst _ => "Col #"^(Int.toString index)^"\t [String]\n"*)
+							| _ => ""
+						) ^ (getBaseTypes tail (Int.+ (index, 1))) 	
+					  | 	StringConst _ => (getBaseTypes tail index)
+					  | _ => (getBaseTypes tail (Int.+ (index, 1))) 
+					)	
+				      end
+				  | _ => (getBaseTypes tail (Int.+ (index, 1)))
+				) 
+		  val graphOutStr:string = getBaseTypes tys 1 
+		  val sepStr = case sep of 
+				SOME tok => tokenToString tok
+				| NONE => "none"
+	    	  val strm = TextIO.openOut (path^descName^".graph")
+            	  val () = TextIO.output(strm, "Sep: "^sepStr^"\n"^graphOutStr)
+	    	  val () = TextIO.closeOut strm
+	    	  val strm = TextIO.openOut (path^descName^"-graph")
+		  val datapath = if OS.Path.isAbsolute dataDir then dataDir
+				 else OS.Path.mkAbsolute {path=dataDir, relativeTo=OS.FileSys.getDir ()}
+		  val () = TextIO.output(strm, "#!/usr/bin/perl\n$desc = \"" ^ descName ^ "\";\n" ^
+			"$datapath = \"" ^ datapath ^"\";\n")
+	    	  val () = TextIO.closeOut strm
+		  val templatePath = (!executableDir)^"/scripts/grapher.template"
+		  val status = OS.Process.system ("cat "^templatePath^" >> " ^ path ^ descName ^ "-graph")
+		  val status = OS.Process.system ("chmod u+x "^ path ^ descName ^ "-graph")
+		in
+			()
+		end
+		  
+	| _ => (* not meaningful for grapher, hence not output anything *)
+		print "Data not suitable for graphing!\n"
+
     fun dumpTyInfo ( path : string ) (dataDir: string) ( inputFileName : string ) ( baseTy : Ty ) 
 			( rewrittenTy : Ty ) (numHeaders: int) (numFooters: int)
 			( et : EndingTimes) (sep:Token option) : unit = 
@@ -334,19 +455,19 @@ structure Printing = struct
           )
 	end
 
-(*
-    fun dumpNewTyInfo ( path : string ) (dataDir: string) ( inputFileName : string ) ( baseNewTy : Ty ) 
-			(numHeaders: int) (numFooters: int)
-			( et : EndingTimes) : unit = 
+
+    fun dumpNewTyInfo ( path : string ) (dataDir: string) ( inputFileName : string ) ( baseTy : NewTy ) 
+			( rewrittenTy : NewTy ) (numHeaders: int) (numFooters: int)
+			( et : EndingTimes) (sep:Token option) : unit = 
 	let val descName = !descName
 	    fun dumpTBDs (ty:NewTy):unit = 
 		case ty
                 of PPBase (aux,tls) =>
                      if !printIDs
-                     then dumpCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls)
+                     then dumpNewCL (path^(getLabelString aux)) (List.map (fn ty=>[ty]) tls)
                      else ()
-                 | PPTBD(aux,i, cl)    => dumpCL (path ^ "TBD_"^(Int.toString i)) cl
-                 | PPBottom(aux,i, cl) => dumpCL (path ^ "BTM_"^(Int.toString i)) cl
+                 | PPTBD(aux,i, cl)    => dumpNewCL (path ^ "TBD_"^(Int.toString i)) cl
+                 | PPBottom(aux,i, cl) => dumpNewCL (path ^ "BTM_"^(Int.toString i)) cl
                  | PPstruct (aux,tys) => List.app dumpTBDs tys
                  | PPunion (aux,tys) => List.app dumpTBDs tys
                  | PParray (aux,{first=ty1,body=ty2,last=ty3,...}) => List.app dumpTBDs [ty1,ty2,ty3]
@@ -373,25 +494,27 @@ structure Printing = struct
           ( print "\nOutputing partitions to directory: "; print path; print "\n"
           ; if OS.FileSys.isDir path handle SysErr => 
 		(OS.FileSys.mkDir path; true)
-            then ( dumpParameters (path ^ "Params") rewrittenTy
+            then ( dumpNewParameters (path ^ "Params") rewrittenTy
                  ; dumpTBDs rewrittenTy
-                 ; dumpTy (path ^ "Ty") rewrittenTy 
-                 ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getComps baseTy ) 
-                 ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getComps rewrittenTy )
+(*                 ; dumpNewTy (path ^ "Ty") rewrittenTy *) (* dump ty in main.sml *)
+                 ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getNComps baseTy ) 
+                 ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getNComps rewrittenTy )
                  ; print "Finished printing Complexity\n"
-                 ; let val (topName, hdrName, tyName, trlName) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
-						rewrittenTy numHeaders numFooters
+                 ; let (* val (topName, hdrName, tyName, trlName) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
+						rewrittenTy numHeaders numFooters *)
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
+(*
 		       print ("Ty name = "^tyName^"\n");
 		       dumpAccumProgram path descName hdrName tyName trlName;
 		       dumpAccumXMLProgram path descName hdrName tyName trlName;
 		       dumpXMLProgram path descName topName hdrName tyName trlName;
 		       dumpPADX path descName tyName;
 		       dumpFmtProgram path descName hdrName tyName trlName sep;
-		       dumpGrapher path dataDir descName rewrittenTy sep;
+		       dumpNewGrapher path dataDir descName rewrittenTy sep;
+*)
                        dumpComputeTimes ( path ^ "Timing" ) ct; 
-		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
+		       dumpVariance ( path ^ "Variance" ) (getNCoverage rewrittenTy) (newvariance rewrittenTy)
 		   end
                  ; cpMkFile()
                  ; cpFile "vanilla.p" "vanilla.p"
@@ -400,5 +523,5 @@ structure Printing = struct
             else print "Output path should specify a directory.\n"
           )
 	end
-*)
+
 end

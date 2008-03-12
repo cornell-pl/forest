@@ -76,32 +76,6 @@ print token *)
            ()
          end
 
-       else if ( !testingRun = true)
-         then 
-            let 
-              val _ = print "testingRun\n"
-              val end1Times = zeroEndingTimes ()
-              val end2Times = updateStart (Time.now()) end1Times
-              val ty = removePPempty(computeProbStructure ( !srcFiles ))
-              val sep = []
-              val end3Times = updateTokenEnd (Time.now()) end2Times
-              val _ = Printing.dumpNewTy (!outputDir^"NewTy") ty              
-            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
-            end
-
-       else if ( !hmmtokenize = true)
-         then 
-            let 
-              val _ = print "testingRun\n"
-              val end1Times = zeroEndingTimes ()
-              val end2Times = updateStart (Time.now()) end1Times
-              val ty = removePPempty(computeProbStructure_HMMonly ( !srcFiles ))
-              val sep = []
-              val end3Times = updateTokenEnd (Time.now()) end2Times
-              val _ = Printing.dumpNewTy (!outputDir^"NewTy") ty              
-            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
-            end
-
        else if ( !examHMMPre = true )
          then
             let
@@ -142,15 +116,66 @@ print token *)
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
+       else if ( !testingRun = true)
+         then 
+            let 
+              val _ = print "testingRun\n"
+              val end1Times = zeroEndingTimes ()
+              val end2Times = updateStart (Time.now()) end1Times
+              val ty = computeProbStructure ( !srcFiles )
+              val _ = Printing.dumpNewTy (!outputDir^"BeforeRefine.NewTy") ty
+              val end3Times = updateTokenEnd (Time.now()) end2Times
+              val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
+				   Rewrite.newrun end3Times ty
+              val computeTimes = getComputeTimes end4Times
+              val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.NewTy") ty              
+              val ()           = Printing.dumpNewTyInfo (!outputDir)
+						       dataDir
+                                                       dataFile
+                                                       measuredTy
+                                                       rewrittenTy
+						       numHeaders
+						       numFooters
+                                                       end4Times
+                               NONE
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
+       else if ( !hmmtokenize = true)
+         then 
+            let 
+              val _ = print "testingRun\n"
+              val end1Times = zeroEndingTimes ()
+              val end2Times = updateStart (Time.now()) end1Times
+              val ty = removePPempty(computeProbStructure_HMMonly ( !srcFiles ))
+              val _ = Printing.dumpNewTy (!outputDir^"BeforeRefine.HMMTy") ty
+              val end3Times = updateTokenEnd (Time.now()) end2Times
+              val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
+				   Rewrite.newrun end3Times ty
+              val computeTimes = getComputeTimes end4Times
+              val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.HMMTy") ty              
+              val ()           = Printing.dumpNewTyInfo (!outputDir)
+						       dataDir
+                                                       dataFile
+                                                       measuredTy
+                                                       rewrittenTy
+						       numHeaders
+						       numFooters
+                                                       end4Times
+                               NONE
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
                 val (ty,sep)     = computeStructure ( !srcFiles )
 (*		val _ 		 = printTy (measure ty) *)
-val _ = Printing.dumpTy (!outputDir^"OldTy") ty
+                val _ = Printing.dumpTy (!outputDir^"BeforeRefine.OldTy") ty
                 val end3Times    = updateTokenEnd ( Time.now () ) end2Times
                 val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.run end3Times ty
                 val computeTimes = getComputeTimes end4Times
+                val _ = Printing.dumpTy (!outputDir^"AfterRefine.OldTy") ty
                 val ()           = Printing.dumpTyInfo (!outputDir)
 						       dataDir
                                                        dataFile

@@ -253,6 +253,22 @@ struct
    |  ty                => ty
        end
 
+   fun simplifyNewTy ty = 
+       let fun collapseStruct [] a = a
+	     | collapseStruct ((PPstruct (aux,tys))::tysRest) a = collapseStruct tysRest (a @ (collapseStruct tys []))
+	     | collapseStruct (ty::tysRest) a = collapseStruct tysRest (a @ [simplifyNewTy ty])
+	   fun collapseUnion [] a = a
+	     | collapseUnion ((PPunion (aux,tys))::tysRest) a = collapseUnion tysRest (a @ (collapseUnion tys []))
+	     | collapseUnion (ty::tysRest) a = collapseUnion tysRest (a @ [simplifyNewTy ty])
+       in
+	   case ty 
+	   of PPstruct (aux,tys) => PPstruct (aux, collapseStruct tys [])
+           |  PPunion  (aux,tys) => PPunion  (aux, collapseUnion  tys [])
+           |  PParray  (aux,{tokens=tkns,lengths,first=ty1,body=ty2,last=ty3}) => 
+		     PParray  (aux, {tokens=tkns,lengths=lengths, first=simplifyNewTy ty1, body=simplifyNewTy ty2, last=simplifyNewTy ty3})
+   |  ty                => ty
+       end
+
    (* Histogram compuations *)
    fun mkHistogram (column:int) : histogram =
        {hist=ref (IntMap.insert(IntMap.empty, column, ref 1)), total=ref column, coverage = ref 1, 
@@ -1787,14 +1803,14 @@ val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n")
 val _ = print "path graph done.\n"
         val rptokens : Seqset list = if ( !character = true ) then  computeProbChar rtokens else computeProb rtokens
 val _ = print "add prob done.\n"
-        val ret = SeqsetListToTy 0 rptokens
+        val newty = SeqsetListToTy 0 rptokens
 val _ = print "seqset to list done.\n"
         (*    val rtokens = crackUniformGroups rtokens *)(* check if all records have same top level group token *)
 	    (* val () = if print_verbose = true then lengthsToHist rtokens else () *)
 	    (* val ty = SeqsetListToTy 0 rtokens *)
-	    (* val sty = simplifyTy ty *)
+	    val snewty = simplifyNewTy newty
 	in
-	    ret
+	    snewty
 	end
 
     fun examHmmResultPre fileName  = 
@@ -2064,8 +2080,9 @@ val _ = print "seqset to list done.\n"
           end
         val rtokens : NewContext list = addFakeProb bsll2
         val newty = SeqsetListToTy_HMM 0 rtokens 
+        val snewty = simplifyNewTy newty
 	in
-      newty
+      snewty
 	end
 
     fun evaluateVanillaResult fileName  = 

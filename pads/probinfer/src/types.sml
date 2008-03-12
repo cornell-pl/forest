@@ -219,6 +219,19 @@ struct
         |  RArray (a,sep,term,body,len,lengths) => RArray(aux, sep, term, body, len, lengths)
         |  Poption (a,ty)               => Poption(aux, ty)
 
+    fun setNAuxInfo ty aux = 
+	case ty 
+        of PPBase (a,t)                   => PPBase(aux, t)
+        |  PPTBD (a,i,cl)                 => PPTBD(aux, i, cl)
+        |  PPBottom (a,i,cl)              => PPBottom(aux, i, cl)
+        |  PPstruct (a,tys)              => PPstruct(aux, tys)
+        |  PPunion (a,tys)               => PPunion(aux, tys)
+        |  PParray (a, x)                => PParray(aux, x)
+        |  PPRefinedBase (a,r,tl)         => PPRefinedBase(aux, r, tl)
+        |  PPSwitch(a,id,branches)        => PPSwitch(aux, id, branches)
+        |  PPRArray (a,sep,term,body,len,lengths) => PPRArray(aux, sep, term, body, len, lengths)
+        |  PPoption (a,ty)               => PPoption(aux, ty)
+
     (* Compute the length of an RArray. This function should always be
        passed a Ty value under the RArray constructor, if not, it throws
        an exception
@@ -260,6 +273,26 @@ struct
     (* Sum the atomic complexities of a measured type *)
     fun sumAtomicComps ( tys : Ty list ) : Complexity =
         foldl ( fn (t,c) => combine (getAtomicComp t) c ) zeroComp tys
+
+    fun getNTypeComp ( ty : NewTy ) : Complexity = #tc (#tycomp (getNAuxInfo ty))
+    (* Retrieve computed data complexity from a type *)
+    fun getNDataComp ( ty : NewTy ) : Complexity = #dc (#tycomp (getNAuxInfo ty))
+    (* Retrieve atomic data complexity from a type *)
+    fun getNAtomicComp ( ty : NewTy ) : Complexity = #adc (#tycomp (getNAuxInfo ty))
+    (* Retrieve all complexities from a measured type *)
+    fun getNComps ( ty : NewTy ) : TyComp = #tycomp (getNAuxInfo ty)
+
+    (* Sum the type complexities of a measured type *)
+    fun sumNTypeComps ( tys : NewTy list ) : Complexity =
+        foldl ( fn (t,c) => combine (getNTypeComp t) c ) zeroComp tys
+
+    (* Sum the data complexities of a measured type *)
+    fun sumNDataComps ( tys : NewTy list ) : Complexity =
+        foldl ( fn (t,c) => combine (getNDataComp t) c ) zeroComp tys
+
+    (* Sum the atomic complexities of a measured type *)
+    fun sumNAtomicComps ( tys : NewTy list ) : Complexity =
+        foldl ( fn (t,c) => combine (getNAtomicComp t) c ) zeroComp tys
                  
     fun mkLabel (prefix:string) (i:int) : Id = Atom.atom("BTy_"^(Int.toString i))
     fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i
@@ -717,6 +750,12 @@ struct
 
     fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
 
+    fun printNewTyD (prefix:string) (longTBDs:bool) (longBottom:bool)
+                  (suffix:string) (ty:NewTy) : unit =
+         print (NewTyToStringD prefix longTBDs longBottom suffix ty ) 
+
+    fun printNewTy ( ty : NewTy ) : unit = printNewTyD "" false false "\n" ty
+
     fun allStringConsts relist =
 		foldr myand true (map (fn re => (case re of 
 						StringConst _ => true 
@@ -741,6 +780,23 @@ struct
         |  Switch (a, id, retys)  	 => foldl op+ 0 (map (fn (re, ty) => variance ty) retys)
         |  RArray (a,sep,term,body,len,lengths) => variance body
         |  Poption (a, body)     	 => 1+ (variance body)
+
+    fun newvariance ty =
+	  case ty of
+	   PPBase (a, _)           => 1
+        |  PPTBD (a, _, _)            => 1
+        |  PPBottom (a, _, _)         => 1
+        |  PPstruct (a, tys)      => foldl Int.max 1 (map newvariance tys)
+        |  PPunion (a, tys)       => foldl op+ 0 (map newvariance tys)
+        |  PParray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+					foldl Int.max 1 (map newvariance [f, b, l])
+        |  PPRefinedBase (aux, re, l) => 
+		(case re of Enum res => length res
+			| _ => 1
+		)
+        |  PPSwitch (a, id, retys)  	 => foldl op+ 0 (map (fn (re, ty) => newvariance ty) retys)
+        |  PPRArray (a,sep,term,body,len,lengths) => newvariance body
+        |  PPoption (a, body)     	 => 1+ (newvariance body)
 
 (*Function to extract the header and footer from a given ty if available
   this is currently only used at the top level of the data*)
@@ -859,6 +915,76 @@ struct
 			    val newUnionAux = mkTyAux3 (newcov, newcomp)
 			  in
 			    (headers, footers, SOME aux, Punion(newUnionAux, bodyTys))
+			  end
+		  end
+	    end
+	| _ => (nil, nil, NONE, ty)
+
+
+    fun extractNewHeaderFooter ty =
+	case ty of
+	  PPunion(aux, tys) =>
+	    let
+		fun less (a:int) (b:int) : bool = a < b
+		fun greater (a:int) (b:int) : bool = a > b
+		(*get the first line # of a given ty*)
+		fun firstLine ty =
+		  case ty of
+		    PPstruct (_, tys) => firstLine (hd tys)
+		  | PPunion (_, tys) => min less (map firstLine tys)
+		  | PParray (_, {tokens=_, lengths=_, first=f, body=_, last=_}) =>
+			firstLine f
+		  | PPBase (_, ltokens:BSLToken list) => min less (map (fn (t, l)=> (#lineNo l)) ltokens)
+		  | _ => raise TyMismatch
+		(*get the last line # of a given ty*)
+		fun lastLine ty =
+		  case ty of
+		    PPstruct (_, tys) => lastLine (hd tys)
+		  | PPunion (_, tys) => max greater (map lastLine tys)
+		  | PParray (_, {tokens=_, lengths=_, first=f, body=_, last=_}) =>
+			lastLine f
+		  | PPBase (_, ltokens:BSLToken list) => max greater (map (fn (t, l)=> (#lineNo l)) ltokens)
+		  | _ => raise TyMismatch
+
+		(*order of two tys by the first line*)	
+		fun lineGreater (ty1, ty2) = (firstLine ty1) > (firstLine ty2)
+		(*order of two tys by the last line*)	
+		fun lineGreater1 (ty1, ty2) = (lastLine ty1) > (lastLine ty2)
+		(*this function returns the headers as well as the remaining tys *)
+		fun getHeaders tys numLines = 
+			case tys of
+			  nil => (nil, nil)
+			| ty::tail => if numLines>0 andalso getNCoverage ty = 1 then
+				      let val (newheaders, newtail) = getHeaders tail (numLines-1)
+				      in (ty::newheaders, newtail)
+				      end
+				      else (nil, tys) (* only allow single line headers *)
+		fun getFooters tys numLines = 
+			let val (rev_footers, rev_tail) = getHeaders (rev tys) numLines
+			in (rev rev_footers, rev rev_tail)
+			end
+		val sortedTys = ListMergeSort.sort lineGreater tys
+		val (headers, tail) = getHeaders sortedTys def_maxHeaderChunks
+		val sortedTail = ListMergeSort.sort lineGreater1 tail
+		val (footers, bodyTys) = getFooters sortedTail def_maxHeaderChunks
+		fun combAux (ty, (coverage, comp)) =
+		  ((coverage + getNCoverage ty), (combTyComp (#tycomp (getNAuxInfo ty)) comp))
+            in
+		case (headers, footers) of
+		  (nil, nil) => (nil, nil, NONE, ty)
+		| _ => 
+		  let
+			val len = length bodyTys
+		  in
+			if len = 1 then
+			  (headers, footers, SOME aux, (hd bodyTys))
+			else if len = 0 then raise TyMismatch
+			else 
+			  let 
+			    val (newcov, newcomp) = List.foldl combAux (0, zeroComps) bodyTys
+			    val newUnionAux = mkTyAux3 (newcov, newcomp)
+			  in
+			    (headers, footers, SOME aux, PPunion(newUnionAux, bodyTys))
 			  end
 		  end
 	    end

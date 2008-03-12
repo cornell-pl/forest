@@ -56,10 +56,25 @@ structure Common = struct
 			| (Pwhite(s1), Pwhite(s2)) => String.compare(s1, s2)
 			| (Other(c1), Other(c2)) => Char.compare(c1, c2)
 			| _ => Structure.compToken(a, b)
+
+	fun newcompare(a : BSToken option,b:BSToken option) = case (a,b) of
+			(SOME a', SOME b') => newcompared(a',b')
+		|	(SOME a, _) => GREATER
+		|	(NONE, SOME _) => LESS
+		|	(NONE, NONE) => EQUAL
+		and newcompared((b1, s1), (b2, s2)) = case (Basetokens.compBToken(b1, b2)) of
+            LESS => LESS
+          | GREATER => GREATER
+          | EQUAL => String.compare(s1, s2)
 	
 	structure BDSet = RedBlackSetFn(struct
                                               type ord_key = Token 
                                               val compare = compared
+                                        end)
+
+	structure NewBDSet = RedBlackSetFn(struct
+                                              type ord_key = BSToken 
+                                              val compare = newcompared
                                         end)
 	
 	(* ____ to string functions useful for debugging *)
@@ -89,6 +104,16 @@ structure Common = struct
 	| Eq of (Id * Rat.rat) list * Rat.rat (* lin equation of Id list plus constant *)
 	| EnumC of BDSet.set (* set of values it takes on *)
 	and ordered = Ascend | Descend
+
+	datatype newconstraint =
+	  NLength of int                (* constrains array lengths, string lengths, # of int digits *)
+	| NOrdered of nordered             (* constrains arrays to be in order *)
+	| NUnique of BSToken (* value is always the same when present, and is Token *)
+	| NRange of LargeInt.int * LargeInt.int (* constrains integers to fall in this range, inclusive *)
+	| NSwitched of Id list * (BSToken option list * BSToken option) list (* a mapping between ids in id list, their values in the list of Token options, and the value of this node *)
+	| NEq of (Id * Rat.rat) list * Rat.rat (* lin equation of Id list plus constant *)
+	| NEnumC of NewBDSet.set (* set of values it takes on *)
+	and nordered = NAscend | NDescend
 
 	fun tokenToRawString (d:Token):string = 
 	  case d of
@@ -129,10 +154,48 @@ structure Common = struct
 	|	Other(c)  =>  StringConst(Char.toString(c))  
 	| 	_ => StringConst("")
 
+	fun bstokentorefine (d:BSToken):Refined =
+		case d of
+		(PPbXML, s) => StringConst(s) 
+	|	(PPeXML, s) => StringConst(s) 
+	|	(PPint, i) => IntConst(Option.valOf(LargeInt.fromString i))
+	|	(PPfloat, s) =>
+          let
+            fun isDot c = c = #"." 
+            val (i, junk) = Substring.splitl isDot (Substring.full s)
+            val (junk, f) = Substring.splitr isDot (Substring.full s)
+          in
+            FloatConst(Substring.string i, Substring.string f)
+          end
+	|	(PPtime, t) => StringConst(t)
+	|	(PPdate, t) => StringConst(t)
+	|	(PPip, t)  => StringConst(t)
+	|	(PPhostname, t)  => StringConst(t)
+	|	(PPpath, t)  => StringConst(t)
+	|	(PPurl, t)  => StringConst(t)
+	|	(PPurlbody, t)  => StringConst(t)
+	|	(PPemail, t)  => StringConst(t)
+	|	(PPmac, t)  => StringConst((toLower t))
+	|	(PPwhite, str)  =>  StringConst(str)  
+    |   (PPword, s) => StringConst(s)
+	|	(PPid , s)  => StringConst(s)
+	|	(PPmessage, t)  => StringConst(t)
+	|	(PPtext, t)  => StringConst(t)
+	|	(PPpermission, t)  => StringConst(t)
+	|	(PPblob, t)  => StringConst(t)
+	|	(PPpunc c, t)  => StringConst(t)
+	| 	_ => StringConst("")
+
 	fun bdoltos (x:Token option list): string = (case x of
 		h :: nil => (case h of SOME a => tokenToString a | NONE => "NONE      ")
 	|	h :: t => (case h of SOME a => tokenToString a | NONE => "NONE       ") 
 				^ "" ^ (bdoltos t)
+	|	nil => "()\n")
+
+	fun newbdoltos (x:BSToken option list): string = (case x of
+		h :: nil => (case h of SOME (b, a) => a | NONE => "NONE      ")
+	|	h :: t => (case h of SOME (b, a) => a | NONE => "NONE       ") 
+				^ "" ^ (newbdoltos t)
 	|	nil => "()\n")
 
 	fun idstostrs(idlist: Id list):string list =
@@ -206,6 +269,24 @@ structure Common = struct
 		  end
 		  | nil => NONE
 
+	fun bsltoken_equal((tk1, _):BSLToken, (tk2, _):BSLToken):bool =
+      case (newcompared (tk1, tk2)) of
+          LESS => false
+        | GREATER => false
+        | EQUAL => true
+	fun bsltoken_ty_equal ((tk1, _):BSLToken, (tk2, _):BSLToken):bool =
+	  if compBSToken (tk1, tk2) = EQUAL then true
+	  else false
+	fun bsltokenlToRefinedOp ltokenl=
+		case ltokenl of
+		  h::t =>
+		  let 
+			val not_equal = (List.exists (fn x => not (bsltoken_equal(x, h))) t)
+		  in
+			if not_equal then NONE else SOME (bstokentorefine (#1 (hd ltokenl)))
+		  end
+		  | nil => NONE
+
 
     (*function to merge AuxInfo a1 into a2*)
     fun mergeAux(a1, a2) =
@@ -218,6 +299,13 @@ structure Common = struct
 	let
 	   val ltokens = List.tabulate(nTokens, (fn n => (Pempty, {lineNo=(~1), beginloc=0, endloc=0,recNo=(~1)})))
 	   val emptyBase = Base(aux, ltokens)
+	in emptyBase
+	end
+
+    fun genEmptyPPBase aux nTokens =
+	let
+	   val ltokens = List.tabulate(nTokens, (fn n => ((PPempty, ""), {lineNo=(~1), beginloc=0, endloc=0,recNo=(~1)})))
+	   val emptyBase = PPBase(aux, ltokens)
 	in emptyBase
 	end
     (*function that test if tylist1 in a struct can be described by tylist2 in another struct*)
@@ -276,8 +364,120 @@ structure Common = struct
 	in res
 	end
 
+    fun newlistDescribedBy (tylist1, tylist2) = 
+      let
+	 val (len1, len2) = (length(tylist1), length(tylist2))
+      in
+	(len1 <= len2) andalso
+	let 
+	   val head2 = List.take(tylist2, len1)
+	   val tail2 = List.drop(tylist2, len1)
+	   val emptyBase = genEmptyPPBase (getNAuxInfo (hd tylist1)) 1
+	in
+	   (
+	   (foldr myand true (map newdescribedBy (ListPair.zip (tylist1, head2)))) 
+	   andalso (*the tail2 all describe Pempty *)
+	   (foldr myand true (map (fn x => newdescribedBy (emptyBase, x)) tail2)) 
+	   )
+	   orelse (newdescribedBy(emptyBase, hd tylist2) andalso 
+	   	newlistDescribedBy (tylist1, List.drop(tylist2, 1)))
+	end
+      end
+    (*function that test if ty1 can be described by ty2 *)
+    (*TODO: not considering Parray and RArray for now *)
+    and newdescribedBy(ty1, ty2) =
+	let
+	  val emptyBase = genEmptyPPBase (getNAuxInfo ty1) 1
+	  val res =
+	    case (ty1, ty2) of 
+		(*assume no Pempty in the Pstruct as they have been cleared by remove_nils*)
+		(PPBase(a1, tl1), PPBase(a2, tl2)) => bsltoken_ty_equal(hd tl1, hd tl2)
+		| (PPBase(a1, tl1), PPstruct(a2, tylist2)) => newlistDescribedBy ([PPBase(a1, tl1)], tylist2)
+		(*below is not completely right, haven't considered the case of tylist1 is a subset
+		  of tylist2 and the rest of tylist2 can describe Pempty *) 
+		| (PPstruct(a1, tylist1), PPstruct(a2, tylist2)) => newlistDescribedBy(tylist1, tylist2)
+		| (PPunion(a1, tylist1), PPunion(a2, tylist2)) =>
+			foldr myand true (map 
+				(fn ty => (foldr myor false (map (fn x => newdescribedBy (ty, x)) tylist2))) 
+				tylist1)
+		| (ty1, PPunion(a2, tylist2)) =>
+			foldr myor false (map (fn x => newdescribedBy (ty1, x)) tylist2)
+		| (PPoption(a1, ty), ty2) => newdescribedBy (emptyBase, ty2) andalso newdescribedBy (ty, ty2)
+		| (ty1, PPoption(a2, ty)) => newdescribedBy (ty1, emptyBase) orelse newdescribedBy (ty1, ty)
+		| _ => false
+	in res
+	end
     
     (*merge a ty into a tylist in a union *)
+    fun mergePPUnion (ty, tylist, newlist) = 
+      case tylist of 
+	h::tail => if (newdescribedBy (ty, h)) then newlist@[mergeNewTyInto(ty, h)]@tail
+		   else (mergePPUnion (ty, tail, newlist@[h]))
+	| nil => newlist
+    and describesPPEmpty tylist =
+      case tylist of 
+      nil => true
+      | h::t =>
+	let
+	   val emptyBase = genEmptyPPBase (getNAuxInfo (hd tylist)) 1
+	in
+	   foldr myand true (map (fn x => newdescribedBy (emptyBase, x)) tylist) 
+	end handle Empty => false
+    (*function to merge one list in struct to another list in struct*)
+    and newmergeListInto (tylist1, tylist2, headlist) =
+	let 
+	   val (len1, len2) = (length(tylist1), length(tylist2))
+	   val head2 = List.take(tylist2, len1)
+	   val tail2 = List.drop(tylist2, len1)
+	in
+	   if (describesPPEmpty headlist andalso 
+	       foldr myand true (map newdescribedBy (ListPair.zip (tylist1, head2))) andalso 
+	       describesPPEmpty tail2) (*found the merging point*)
+	   then
+		let
+	          (*here need to push a base with correct number of Pempty tokens into the head and tail lists
+			note that the recNo of those "fake" tokens will be -1 and will not be used in
+			table generation *)
+	   	  val emptyBase = genEmptyPPBase (getNAuxInfo(hd tylist1)) (getNCoverage (hd tylist1))
+		  fun pushInto (ty:NewTy) tylist = map (fn t => mergeNewTyInto (ty, t)) tylist
+		in
+		  (pushInto emptyBase headlist)@(map mergeNewTyInto (ListPair.zip (tylist1, head2)))@
+		  (pushInto emptyBase tail2)	
+		end
+	   else newmergeListInto (tylist1, List.drop(tylist2, 1), headlist@[hd tylist2])
+	end
+    (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
+    (*this function is used in refine_array rewriting rule, the recNo in ty1 
+	is updated so that they are consistent with ty2 *)
+    (*TODO: not considering Parray and RArray for now *)
+    and mergeNewTyInto (ty1:NewTy, ty2:NewTy) =
+		case (ty1, ty2) of 
+		(PPBase(a1, tl1), PPBase(a2, tl2)) => PPBase(mergeAux(a1, a2), tl2@tl1) 
+		| (PPBase(a1, tl1), PPstruct(a2, tylist2)) => PPstruct(mergeAux(a1, a2), 
+			newmergeListInto([PPBase(a1, tl1)], tylist2, nil))
+		(*below is not completely right, haven't considered the case of tylist1 is a subset
+		  of tylist2 and the rest of tylist2 can describe Pempty *) 
+		| (PPstruct(a1, tylist1), PPstruct(a2, tylist2)) => 
+			PPstruct(mergeAux(a1, a2), newmergeListInto(tylist1, tylist2, nil))
+		| (PPunion(a1, tylist1), PPunion(a2, tylist2)) => foldl mergeNewTyInto ty2 tylist1
+		| (ty1, PPunion(a2, tylist2)) => PPunion(mergeAux(getNAuxInfo(ty1), a2), mergePPUnion(ty1, tylist2, nil))
+		| (PPoption (a1, ty), ty2) => 
+			let
+			  val emptyCoverage = getNCoverage ty1 - getNCoverage ty
+			in
+			  mergeNewTyInto ((genEmptyPPBase (mkTyAux emptyCoverage) emptyCoverage), mergeNewTyInto (ty, ty2))
+			end
+		| (ty1, PPoption (a2, ty2)) =>
+			if (describesPPEmpty [ty1]) then PPoption(mergeAux(getNAuxInfo(ty1), a2), ty2)
+			else PPoption(mergeAux(getNAuxInfo(ty1), a2), mergeNewTyInto(ty1, ty2))
+		(*
+		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
+			Atom.same(id1, id2) andalso 
+			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
+		*)
+		| _ => (print "mergeTyInto error!\n"; printNewTy ty1; printNewTy ty2; raise TyMismatch)
+
+
     fun mergeUnion (ty, tylist, newlist) = 
       case tylist of 
 	h::tail => if (describedBy (ty, h)) then newlist@[mergeTyInto(ty, h)]@tail
@@ -375,6 +575,35 @@ structure Common = struct
 		| Switch (a, i, rtl) => foldr (fn ((r, ty), m) => insertToMap ty m) intmap rtl
 		| Poption (a, ty) => insertToMap ty intmap
 	end
+
+	fun newinsertToMap ty intmap =
+	let
+		fun insertTListToMap tl intmap =
+			case tl of
+				nil => intmap
+				| (t, {lineNo, beginloc, endloc, recNo}) :: ts => 
+					insertTListToMap ts (IntMap.insert(intmap, recNo, 0))
+		fun insertLensToMap lens intmap =
+			case lens of 
+				nil => intmap
+				| (l, r) :: ls => insertLensToMap ls (IntMap.insert(intmap, r, 0))
+	in
+	  case ty of
+		PPBase(_, tl)=> insertTListToMap tl intmap
+		| PPRefinedBase (_, _, tl) => insertTListToMap tl intmap
+		| PPTBD _  => intmap
+		| PPBottom _ => intmap
+		| PPunion(_, tylist)=> foldr (fn (x, m) => newinsertToMap x m) intmap tylist
+		| PPstruct(_, tylist)=> foldr (fn (x, m) => newinsertToMap x m) intmap tylist
+		(*inside body is another scope *)
+		| PParray(_, {tokens, lengths, first, body, last}) =>
+			 foldr (fn (x, m) => newinsertToMap x m) 
+				(insertLensToMap lengths intmap) [first,last]
+		(*inside RArray body is another scope*)
+		| PPRArray(_, _, _, ty, _, lens) => insertLensToMap lens intmap 
+		| PPSwitch (a, i, rtl) => foldr (fn ((r, ty), m) => newinsertToMap ty m) intmap rtl
+		| PPoption (a, ty) => newinsertToMap ty intmap
+	end
 	(*this function reindex the recNo by collapsing them in every token of a given ty 
 	and a start index and returns the updated ty *)
 	fun reIndexRecNo ty startindex = 
@@ -440,6 +669,69 @@ structure Common = struct
 		updateTy (updateMap recNoMap) ty	
 	  end
 
+	fun newreIndexRecNo ty startindex = 
+	  let
+(*
+		val _ = print ("startindex = "^(Int.toString startindex)^" and The ty is\n")
+		val _ = printTy ty
+*)
+		fun updateMap intmap =
+		  let
+			val pairs = IntMap.listItemsi intmap
+		    	fun insertPairs pairs index intmap =
+			  case pairs of 
+			    nil => intmap
+			    | (oldRecNo, _)::rest => insertPairs rest (index+1) 
+						(IntMap.insert(intmap, oldRecNo, index))
+		  in
+			insertPairs pairs startindex intmap
+		  end
+		fun updateTL(intmap, tl, newtl) =
+			case tl of 
+			  nil => newtl
+			  | (t, {lineNo, beginloc, endloc, recNo})::ts => 
+				let
+				  val newRecop = IntMap.find(intmap, recNo)
+				in
+				  case newRecop of
+					NONE => (print ("recNum " ^ Int.toString recNo ^
+						" not found!\n"); raise RecordNum)
+					| _ => updateTL(intmap, ts, newtl@[(t, {lineNo=lineNo, beginloc=beginloc, 
+							endloc=endloc, recNo=some(newRecop)})])
+				end
+		fun updateLens intmap lengths =
+			case lengths of
+			  nil => nil
+			  | (l, r)::tail => 
+				let
+				  val newRecOp = IntMap.find (intmap, r)
+				in
+			  	  case newRecOp of
+					NONE => (print ("recNum " ^ Int.toString r ^
+						" not found!\n"); raise RecordNum)
+					| _ => (l, (some newRecOp))::(updateLens intmap tail)
+				end
+		fun updateTy intmap ty =
+		  case ty of
+			PPBase(a, tl)=> (PPBase(a, updateTL(intmap, tl, nil)))
+			| PPRefinedBase (a, r, tl) => (PPRefinedBase(a, r, updateTL(intmap, tl, nil)))
+			| PPunion(a, tylist)=> PPunion(a, map (updateTy intmap) tylist)
+			| PPstruct(a, tylist)=> PPstruct(a, map (updateTy intmap) tylist)
+			| PParray(a, {tokens, lengths, first, body, last}) => PParray(a, {tokens = tokens,
+					lengths = (updateLens intmap lengths), first = updateTy intmap first, 
+					body = body, last = updateTy intmap last})
+			| PPRArray(a, s, t, body, l, lens) => PPRArray(a, s, t, body, l, 
+					(updateLens intmap lens)) 
+			| PPSwitch (a, i, rtl) => PPSwitch(a, i, map (fn (r, t) => (r, updateTy intmap ty)) rtl)
+			| PPoption(a, ty') => PPoption(a, updateTy intmap ty')
+			| _ => ty
+
+		val recNoMap = newinsertToMap ty IntMap.empty
+
+	  in
+		updateTy (updateMap recNoMap) ty	
+	  end
+
     (*function to merge two tys that are equal structurally*)
     (*merge ty1 into ty2, assuming ty1 and ty2 are in the same scope*)
     (*used by refine_array *)
@@ -477,6 +769,42 @@ structure Common = struct
 			(*body is in a different scope so reindex*)
 			=> RArray(mergeAux(a1, a2), sepop1, termop1, 
 				mergeTy((reIndexRecNo ty1 (getCoverage ty2)), ty2), len1, (l1@l2)) 	
+		| _ => raise TyMismatch
+
+    fun mergeNewTy (ty1, ty2) =
+	case (ty1,ty2) of
+		(PPBase(a1, tl1), PPBase (a2, tl2)) => PPBase (mergeAux(a1, a2), tl1@tl2)
+		| (PPRefinedBase (a1, r1, tl1), PPRefinedBase(a2, r2, tl2)) => 
+						PPRefinedBase(mergeAux(a1, a2), r1, tl1@tl2)
+		| (PPTBD (a1, s1, cl1), PPTBD (a2, s2, cl2)) => PPTBD (mergeAux(a1, a2), s1, cl1@cl2)
+		| (PPBottom (a1, s1, cl1), PPBottom (a2, s2, cl2)) => PPBottom (mergeAux(a1, a2), s1, cl1@cl2)
+		| (PPunion(a1, tylist), PPunion(a2, tylist2)) => PPunion(mergeAux(a1, a2), 
+				map mergeNewTy (ListPair.zip(tylist,tylist2)))
+		| (PPstruct(a1, tylist), PPstruct(a2, tylist2)) => PPstruct(mergeAux(a1, a2),
+				map mergeNewTy (ListPair.zip(tylist,tylist2)))
+		| (PParray(a1, {tokens=t1, lengths=len1, first=f1, body=b1, last=l1}), 
+		   PParray(a2, {tokens=t2, lengths=len2, first=f2, body=b2, last=l2})) => 
+			(*body is in a different scope so reindex*)
+			PParray(mergeAux(a1, a2), {tokens = t1@t2, lengths = len1@len2, 
+			first = mergeNewTy(f1, f2),
+			body = mergeNewTy((newreIndexRecNo b1 (getNCoverage b2)), b2),
+			last = mergeNewTy(l1, l2)})
+		| (PPSwitch (a1, id1, rtylist1), PPSwitch(a2, id2, rtylist2)) =>
+			let val (rl1, tylist1) = ListPair.unzip (rtylist1)
+			    val (rl2, tylist2) = ListPair.unzip (rtylist2)
+			in
+			    if (Atom.same(id1, id2) andalso
+					foldr myand true (ListPair.map refine_equal(rl1, rl2)) )
+			    then
+				PPSwitch(mergeAux(a1, a2), id1, 
+					ListPair.zip(rl1, map mergeNewTy (ListPair.zip(tylist1, tylist2))))
+			    else raise TyMismatch
+			end
+		| (PPRArray(a1, sepop1, termop1, ty1, len1, l1), 
+			PPRArray (a2, sepop2, termop2, ty2, len2, l2))
+			(*body is in a different scope so reindex*)
+			=> PPRArray(mergeAux(a1, a2), sepop1, termop1, 
+				mergeNewTy((newreIndexRecNo ty1 (getNCoverage ty2)), ty2), len1, (l1@l2)) 	
 		| _ => raise TyMismatch
 
     (* function to test of two ty's are completely equal minus the labels *)
@@ -528,8 +856,55 @@ structure Common = struct
 		handle Size => (print "Size in ty_equal!\n" ; false)
 	end
 
+    fun newty_equal (comparetype:int, ty1:NewTy, ty2:NewTy):bool = 
+	let
+		fun check_list(l1:NewTy list,l2: NewTy list):bool = 
+		let 
+			val bools = ListPair.map (fn (t1, t2) => newty_equal(comparetype, t1, t2)) (l1, l2)
+		in
+			foldr myand true bools
+		end
+	in
+		case (ty1,ty2) of
+			(PPBase(_, tl1), PPBase (_, tl2)) => 
+				if (comparetype = 0) then
+				foldr myand true (ListPair.map bsltoken_equal (tl1, tl2))
+				else bsltoken_ty_equal(hd tl1, hd tl2)
+			| (PPTBD _, PPTBD _) => true
+			| (PPBottom _, PPBottom _) => true
+			| (PPunion(_, tylist), PPunion(_, tylist2)) => check_list(tylist,tylist2)
+			| (PPstruct(_, tylist), PPstruct(_, tylist2)) => check_list(tylist,tylist2)
+			| (PParray(_, a1), 
+			   PParray(_, a2)) => newty_equal(comparetype, #first a1, #first a2) andalso 
+				newty_equal(comparetype, #body a1, #body a2) andalso 
+				newty_equal(comparetype, #last a1, #last a2) 
+			| (PPRefinedBase (_, r1, tl1), PPRefinedBase(_, r2, tl2)) => 
+				if (comparetype = 0) then
+				(refine_equal(r1, r2) andalso 
+				foldr myand true (ListPair.map bsltoken_equal(tl1, tl2)))
+				else refine_equal(r1, r2)
+			| (PPSwitch (_, id1, rtylist1), PPSwitch(_, id2, rtylist2)) =>
+				let val (rl1, tylist1) = ListPair.unzip (rtylist1)
+				    val (rl2, tylist2) = ListPair.unzip (rtylist2)
+				in
+				        Atom.same(id1, id2) andalso 
+					foldr myand true (ListPair.map refine_equal(rl1, rl2)) 
+					andalso check_list (tylist1, tylist2)
+				end
+			| (PPRArray(_, sepop1, termop1, ty1, len1, _), 
+				PPRArray (_, sepop2, termop2, ty2, len2, _))
+				=> refine_equal_op1(sepop1, sepop2) andalso
+				   refine_equal_op1(termop1, termop2) andalso
+				   newty_equal (comparetype, ty1, ty2) andalso
+				   refine_equal_op1(len1, len2)
+			| _ => false 
+		handle Size => (print "Size in ty_equal!\n" ; false)
+	end
+
 
 	fun mergeTyForArray (ty1, ty2) = mergeTy (ty1, (reIndexRecNo ty2 (getCoverage ty1)))
+
+	fun mergeNewTyForArray (ty1, ty2) = mergeNewTy (ty1, (newreIndexRecNo ty2 (getNCoverage ty1)))
 
 	fun printIntSet intset =
 	  let
@@ -565,6 +940,32 @@ structure Common = struct
 				else [foldr mergeTy (hd emptys) (List.drop (emptys, 1))]
 		in
 		  Punion (a, nonPemptyTys@emptys')
+		end
+	    | _ => raise TyMismatch
+	end
+
+	fun cleanupPPUnion unionTy =
+	let 
+	in
+	  case unionTy of
+	    PPunion (a, tys) => 
+		let
+		
+		  fun isNotPempty ty =
+		    case ty of
+			  PPBase (_, ltokens) => 
+			    (case (hd ltokens) of 
+			     ((PPempty, _), _) => false
+			     | _ => true)
+			 | _ => true 
+		  fun isPempty ty = (not (isNotPempty ty))
+		  val nonPemptyTys = List.filter isNotPempty tys
+		  val emptys =List.filter isPempty tys
+		  val emptys' = if (length emptys) = 0 then []
+				else if (length emptys) = 1 then emptys
+				else [foldr mergeNewTy (hd emptys) (List.drop (emptys, 1))]
+		in
+		  PPunion (a, nonPemptyTys@emptys')
 		end
 	    | _ => raise TyMismatch
 	end
@@ -640,6 +1041,82 @@ structure Common = struct
                         in Switch (a, id, ListPair.zip(refs, tylist'))
                         end
 		  | Poption (a, body) => Poption (a, sortUnionBranches body)
+		  | _ => ty
+
+	fun sortPPUnionBranches ty =
+		case ty of 
+		  PPunion(a, tys) =>
+			let
+			  val sorted_tys = map sortPPUnionBranches tys
+			  fun isPriTy ty =
+				case ty of
+					PPBase(a1, ((PPtime, _), _)::_) => true
+					| PPBase(a1, ((PPdate, _), _)::_) => true
+					| PPBase(a1, ((PPip, _), _)::_) => true
+					| PPBase(a1, ((PPhostname, _), _)::_) => true
+					| PPBase(a1, ((PPpath, _), _)::_) => true
+					| PPBase(a1, ((PPurl, _), _)::_) => true
+					| PPBase(a1, ((PPurlbody, _), _)::_) => true
+					| PPBase(a1, ((PPemail, _), _)::_) => true
+					| PPBase(a1, ((PPmac, _), _)::_) => true
+					| PPBase(a1, ((PPfloat, _), _)::_) => true
+					| PPBase(a1, ((PPpermission, _), _)::_) => true
+					| PPRefinedBase(_, IntConst x , _) => x > 99
+					| PPRefinedBase(_, StringConst s , _) => (size s) > 2
+					| _ => false
+			  fun isNotPriTy ty = not (isPriTy ty)
+			  fun lowPriTy ty = 
+				case ty of
+					PPBase(_, ((PPint, _), _)::_) => true
+					| PPBase(_, ((PPempty, _), _)::_) => true
+					| PPBase(_, ((PPword, _), _)::_) => true
+					| PPBase(_, ((PPtext, _), _)::_) => true
+					| PPBase(_, ((PPid, _), _)::_) => true
+					| PPBase(_, ((PPmessage, _), _)::_) => true
+					| PPBase(_, ((PPblob, _), _)::_) => true
+					| PPRefinedBase(_, StringConst s , _) => (size s) = 1
+					| _ => false
+			  fun notLowPriTy ty = not (lowPriTy ty)
+			  val priTys = List.filter isPriTy sorted_tys
+			  val nonpriTys = List.filter isNotPriTy sorted_tys
+			  val lowPriTys = List.filter lowPriTy nonpriTys
+			  val normalTys = List.filter notLowPriTy nonpriTys
+			  fun greater (ty1, ty2) =
+			    let
+				val (cov1, cov2) =(getNCoverage ty1, getNCoverage ty2)
+				val (comps1, comps2) = (getNComps ty1, getNComps ty2)
+				val (nc1, nc2) = ((normalizeTyComp cov1 comps1), (normalizeTyComp cov2 comps2))
+			    in
+				case (ty1, ty2) of
+				  (PPBase(a1, (tok1, _)::t1), PPBase(a2, (tok2, _)::t2)) => 
+					(compBSToken(tok1, tok2) = GREATER)
+				  | (PPRefinedBase (a1, re1, t1), PPRefinedBase(a2, re2, t2)) =>
+					(case (re1, re2) of
+						(StringConst x, StringConst y) => (size x < size y)
+						| (IntConst x, IntConst y) => x < y
+						| _ => false
+					)
+				  | (PPBase _, PPRefinedBase _) => true
+				  | (PPRefinedBase _, PPBase _) => false
+				  | (PPBase (a1, t1), _) => (case hd t1 of ((PPblob, _), _) => true | _ => false)
+				  | (_, PPBase(a1, t1)) => (case hd t1 of ((PPblob, _), _) => false | _ => true)
+				  | (PPRefinedBase _, _) => (cov1 > cov2) 
+				  | (_, PPRefinedBase _) => cov1 > cov2
+				  | _ => cov1 > cov2 
+			    end
+			  val sortedPriTys = ListMergeSort.sort greater priTys
+			  val sortedLowPriTys = ListMergeSort.sort greater lowPriTys
+			in PPunion(a, sortedPriTys@normalTys@sortedLowPriTys)
+			end
+		  | PPstruct(a, tys) => PPstruct(a, map sortPPUnionBranches tys)
+		  | PPRArray (a, sep, term, body, len, lengths) => PPRArray(a, sep, term, sortPPUnionBranches body, len, lengths)
+		  | PPSwitch (a, id, pairs) => 
+			let
+                          val (refs, tylist) = ListPair.unzip(pairs)
+                          val tylist' = map sortPPUnionBranches tylist
+                        in PPSwitch (a, id, ListPair.zip(refs, tylist'))
+                        end
+		  | PPoption (a, body) => PPoption (a, sortPPUnionBranches body)
 		  | _ => ty
 
 (* remove all redundant Pemptys from struct *)
