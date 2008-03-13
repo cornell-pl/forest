@@ -1,4 +1,5 @@
-\documentclass[preprint]{sig-alternate-sigmod08}
+\documentclass{sig-alt-release2}
+%\pagestyle{empty}
 \usepackage{url}
 \usepackage{stmaryrd}
 \usepackage{epsfig}
@@ -54,6 +55,7 @@
 \conferenceinfo{SIGMOD'08,} {June 9--12, 2008, Vancouver, BC, Canada.} 
 \CopyrightYear{2008}
 \crdata{978-1-60558-102-6/08/06}
+
 \maketitle
 \begin{abstract}
 In this demonstration, we will present \learnpads, 
@@ -145,7 +147,6 @@ good vals:       3000    bad vals:          0    pcnt-bad:    0.000
         SUMMING             count:       3000  pcnt-of-good-vals:  100.000
 \end{verbatim}
 }
-\vspace*{-2mm}
 \caption{A Fragment of the Accumulator Report}\label{fig-accum-report}
 \shrink
 \end{center}
@@ -228,7 +229,6 @@ training data.
 \begin{figure}
 \begin{center}
 \epsfig{file=archi.eps, width=0.9\columnwidth}
-\vspace*{-2mm}
 \caption{Architecture of LearnPADS}
 \shrink
 \label{fig-archi}
@@ -378,6 +378,8 @@ scoring function based on the minimum description length
 principle. The process stops when no further refinements are possible.
 The result of this process on our running example is the following
 refined IR:
+
+\vspace{3mm}
 
 {\small
 \begin{verbatim}
