@@ -18,8 +18,8 @@ quick: paper.tex $(BIB)
 paper.pdf: paper.bbl $(PDFSRC) $(TEXSRC) archi.eps
 	latex paper.tex
 	latex paper.tex
-	dvipdf paper.dvi
-	dvips paper.dvi
+	dvips -t letter -o paper.ps paper.dvi
+	ps2pdf paper.ps
 
 clean:
 	rm -f paper.pdf

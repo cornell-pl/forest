@@ -25,6 +25,7 @@
 \newcommand{\abstractdm}{abstract data model}
 \newcommand{\concretedm}{concrete data model}
 \newcommand{\typeddm}{type-specialized concrete data model}
+\newcommand{\shrink}{\vspace*{-5mm}}
 \toappear{}
 \title{LearnPADS: Automatic Tool Generation from Ad Hoc Data}
 
@@ -50,7 +51,9 @@
 %\date{\today}
 
 \begin{document}
-
+\conferenceinfo{SIGMOD'08,} {June 9--12, 2008, Vancouver, BC, Canada.} 
+\CopyrightYear{2008}
+\crdata{978-1-60558-102-6/08/06}
 \maketitle
 \begin{abstract}
 In this demonstration, we will present \learnpads, 
@@ -70,6 +73,11 @@ SIGMOD attendees will see both the user experience with \learnpads{} and
 the internals of the multi-phase inference algorithm which lies at
 the heart of the system. 
 \end{abstract}
+
+\category{D.3.m}{Programming languages}{Miscellaneous}
+
+\terms
+Languages, Algorithms
 
 \section{Introduction}
 An {\em ad hoc data source} is any semistructured data source
@@ -137,7 +145,9 @@ good vals:       3000    bad vals:          0    pcnt-bad:    0.000
         SUMMING             count:       3000  pcnt-of-good-vals:  100.000
 \end{verbatim}
 }
+\vspace*{-2mm}
 \caption{A Fragment of the Accumulator Report}\label{fig-accum-report}
+\shrink
 \end{center}
 \end{figure*}
 
@@ -210,7 +220,7 @@ training data.
 \begin{center}
 \epsfig{file=ai.3000.eps, width=0.9\columnwidth} 
 \caption{A graph generated from ai.3000} \label{fig-graph}
-\vspace*{-5mm}
+\shrink
 \end{center}
 \end{figure}
 
@@ -218,8 +228,9 @@ training data.
 \begin{figure}
 \begin{center}
 \epsfig{file=archi.eps, width=0.9\columnwidth}
+\vspace*{-2mm}
 \caption{Architecture of LearnPADS}
-\vspace*{-5mm}
+\shrink
 \label{fig-archi}
 \end{center}
 \end{figure}
@@ -280,7 +291,7 @@ and each sequence within brackets is a token:
 \caption{Histograms calculuated from sample data file (from left to right): 
 (a) first iteration, (b) second iteration (context 1) 
 and (c) second iteration (context 2)} \label{fig-hist}
-\vspace*{-5mm}
+\shrink
 \end{center}
 \end{figure*}
 
@@ -367,7 +378,6 @@ scoring function based on the minimum description length
 principle. The process stops when no further refinements are possible.
 The result of this process on our running example is the following
 refined IR:
-\vspace*{5mm}
 
 {\small
 \begin{verbatim}
