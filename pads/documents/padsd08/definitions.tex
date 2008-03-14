@@ -130,20 +130,27 @@
 \newcommand{\inl}[1]{\ensuremath{\mathtt{inl}\; #1}}
 \newcommand{\inr}[1]{\ensuremath{\mathtt{inr}\; #1}}
 \newcommand{\casedata}[2]{{\tt switch}(#1)\{#2\}}
+\newcommand{\nillist}{\ensuremath{\mathtt{nil}}}
+\newcommand{\conslist}[2]{\ensuremath{\mathtt{cons} (#1,#2)}}
+\newcommand{\nilstream}{\ensuremath{\mathtt{done}}}
+\newcommand{\consstream}[2]{\ensuremath{\mathtt{next} (#1,#2)}}
+
 
 % Feeds
 \newcommand{\computed}[3]{\ensuremath{\mathtt{[} #1 \; \mathtt{|}\; #2 \in #3 \mathtt{]}}}
-\newcommand{\allfeed}[3]{
+\newcommand{\allfeed}[4]{
   \ensuremath{
     \mathtt{all \{ format=} #1; 
     \mathtt{locs=} #2;
     \mathtt{sched=} #3;
+    \mathtt{pp=} #4;
   \mathtt{\}}}}
-\newcommand{\existsfeed}[3]{
+\newcommand{\existsfeed}[4]{
   \ensuremath{
     \mathtt{any \{ format=} #1; 
     \mathtt{locs=} #2;
     \mathtt{sched=} #3;
+    \mathtt{pp=} #4;
   \mathtt{\}}}}
 \newcommand{\filterfeed}[2]{
   \ensuremath{
