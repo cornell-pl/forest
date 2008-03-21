@@ -34,10 +34,13 @@
  * Note that there are two versions of each kind of IO discipline:
  *    fwrec and fwrec_noseek
  *    ctrec and ctrec_noseek
+ *    ctrec_eolcmt and ctrec_noseek_eolcmt
  *    vlrec and vlrec_noseek
  *    norec and norec_noseek
  * The noseek versions do not require that the sfio stream
- * be seekable, while the other versions do.  
+ * be seekable, while the other versions do.  The eolcmt versions
+ * strip "to end of line" comments (e.g. "# this is a comment")
+ * from IO elements.
  *
  * In addition, the user should 'unmake' an IO discipline once it
  * is no longer needed.  This can be achieved by using 
@@ -71,6 +74,11 @@ Pio_disc_t * P_fwrec_noseek_make(size_t leader_len, size_t data_len, size_t trai
  * that does not require that the sfio stream is seekable.
  */
 
+Pio_disc_t * P_ctrec_eolcmt_make(Pbyte termChar, Pbyte cmtChar, size_t block_size_hint);
+/* Like P_ctrec_make below but adds a single byte "to-end-of-line" 
+ * comment character and comments are stripped from IO elements.
+ */
+
 Pio_disc_t * P_ctrec_make(Pbyte termChar, size_t block_size_hint);
 /* Instantiates an instance of ctrec, a discipline for
  * character-terminated variable-width records. termChar is the
@@ -84,6 +92,11 @@ Pio_disc_t * P_ctrec_make(Pbyte termChar, size_t block_size_hint);
  * P_EBCDIC_NEWLINE as the term character.
  */
 
+Pio_disc_t * P_ctrec_noseek_eolcmt_make(Pbyte termChar, Pbyte cmtChar, size_t block_size_hint);
+/* Like P_ctrec_noseek_make below but adds a single byte "to-end-of-line" 
+ * comment character and comments are stripped from IO elements.
+ */
+   
 Pio_disc_t * P_ctrec_noseek_make(Pbyte termChar, size_t block_size_hint);
 /* Instantiates an instance of ctrec_noseek, a version of norec
  * that does not require that the sfio stream is seekable.
@@ -118,8 +131,9 @@ Pio_disc_t * P_norec_noseek_make(size_t block_size_hint);
  */
 
 /* Shorthands for calling corresponding ctrec make functions with '\n' as termChar: */
-#define P_nlrec_make(block_size_hint)         P_ctrec_make('\n', block_size_hint)
-#define P_nlrec_noseek_make(block_size_hint)  P_ctrec_noseek_make('\n', block_size_hint)
+#define P_nlrec_make(block_size_hint)         		P_ctrec_make('\n', block_size_hint)
+#define P_nlrec_noseek_make(block_size_hint)  		P_ctrec_noseek_make('\n', block_size_hint)
+#define P_nlrec_noseek_eolcmt_make(block_size_hint)	P_ctrec_noseek_eolcmt_make('\n', '#', block_size_hint)
 
 /* Pio_elt_t: used for list of input records managed by the io
  * discipline.  The io discipline maintains a doubly-linked list of

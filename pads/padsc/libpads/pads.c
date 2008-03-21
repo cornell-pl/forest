@@ -7845,7 +7845,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.216 2008-02-12 23:30:50 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.217 2008-03-21 17:57:08 forrest Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -9005,7 +9005,7 @@ P_io_close(P_t *pads)
   Pio_elt_t     *io_elt;
   size_t           io_remain;
 
-  PDCI_DISC_0P_CHECKS("P_io_close");
+  PDCI_DISC_1P_CHECKS("P_io_close", pads);
   bot        = &(pads->stack[0]);
   io_elt     = bot->elt;
   io_remain  = bot->remain;

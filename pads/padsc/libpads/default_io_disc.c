@@ -9,6 +9,14 @@
  *                   as the term character.  for EBCDIC newline-terminated records, use
  *                   P_EBCDIC_NEWLINE as the term character.
  *
+ *   ctrec_eolcmt: a version of ctrec that adds the stripping of end-of-line comments
+ *		   before passing IO elements to the parsing functions.
+ *		     E.g.	20  # FTP Port 
+ *		     becomes:	20
+ *
+ *                   The comment is assumed to be introduced by a single character which
+ *		     is a parameter to the discipline.
+ *
  *   vlrec:        an IO discipline for IBM style variable length records
  *                 with length specified at front
  *
@@ -18,6 +26,9 @@
  *                 the sfio stream be seekable
  *
  *   ctrec_noseek: a version of ctrec that does not require that
+ *                 the sfio stream be seekable
+ *
+ *   ctrec_noseek_eolcmt: a version of ctrec_eolcmt that does not require that
  *                 the sfio stream be seekable
  *
  *   vlrec_noseek: a version of vlrec that does not require that
@@ -956,6 +967,487 @@ P_norec_noseek_make(size_t block_size_hint)
 
  alloc_err:
   P_WARN(&Pdefault_disc, "P_norec_noseek_make: out of space");
+  if (disc_vm) {
+    vmclose(disc_vm);
+    IODISC_VMCLOSE_CALLED;
+  }
+  return 0;
+}
+
+/* ================================================================================ */
+/* P_ctrec_noseek_eolcmt IMPLEMENTATION */
+
+/* when not specified, use blocks of this size (bytes): */
+#define P_CTREC_NOSEEK_EOLCMT_DEF_BSIZE     512
+/* initial block alloc */
+#define P_CTREC_NOSEEK_EOLCMT_INIT_BLOCKS    16
+/* once we can free at least this many blocks, do so */
+#define P_CTREC_NOSEEK_EOLCMT_GC_AT_BLOCK     8
+/* but only check if there are <= this many blocks left */
+#define P_CTREC_NOSEEK_EOLCMT_GC_BLOCKS_LEFT  4
+/* if growth is necessary, add this many blocks at a time */
+#define P_CTREC_NOSEEK_EOLCMT_ADD_BLOCKS      8
+
+/* private types */
+typedef struct P_ctrec_noseek_eolcmt_data_s {
+  /* configuration fields */
+  Pbyte           cterm;
+  Pbyte           cmtChar;
+  size_t          block_size;
+  /* other fields */
+  Vmalloc_t      *disc_vm;     /* lifetime: make/unmake pairing */
+  Pio_elt_t      *head;        /* head of IO rec list */
+  Pio_elt_t      *f_head;      /* head of free list   */
+  Pio_elt_t      *eof_elt;     /* always keep around an elt to be used as EOF elt */
+  Sfio_t         *io;          /* Sfio stream to read from */
+  int             eof;         /* hit EOF? */
+  size_t          num;         /* unit number */
+  Pbyte          *dbuf;        /* resizable data buffer */
+  Pbyte          *dbuf_end;    /* 1 beyond last byte read */ 
+  size_t          un_bytes;    /* unread bytes: # bytes not yet part of IO rec list */
+  size_t          balloc;      /* # blocks allocated */
+  size_t          btail;       /* idx of last block in use */
+  size_t          gc_point;
+  char            descr[256];  /* description */ 
+  Sfoff_t         tail_off;    /* tail offset (obtained on open + each sfread) */
+} P_ctrec_noseek_eolcmt_data_t;
+
+Perror_t
+P_ctrec_noseek_eolcmt_sfopen(P_t *pads, Pio_disc_t* io_disc, Sfio_t* sfio, Pio_elt_t* head)
+{
+  P_ctrec_noseek_eolcmt_data_t  *data;
+  Pio_elt_t             *elt; 
+
+  if (!pads || !pads->disc) {
+    return P_ERR;
+  }
+  if (!sfio || !head || !io_disc || !io_disc->data) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_sfopen: bad param(s)");
+    return P_ERR;
+  }
+  if (head->next != head || head->prev != head) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_sfopen: head->next and head->prev must both point to head");
+    return P_ERR;
+  }
+  data = (P_ctrec_noseek_eolcmt_data_t*)io_disc->data;
+  if (data->io) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_sfopen: not in a valid closed state");
+    return P_ERR;
+  }
+  IODISC_NEED_AN_ELT("P_ctrec_noseek_eolcmt_sfopen", elt, data->f_head, data->disc_vm);
+  if (!elt) {
+    return P_ERR;
+  }
+
+  data->io           = sfio;
+  data->eof          = 0;
+  data->eof_elt      = elt;
+  data->head         = head;
+  data->num          = 1;
+  data->btail        = 0;
+  data->dbuf_end     = data->dbuf;
+  data->un_bytes     = 0;
+  data->tail_off     = sftell(sfio);
+
+  return P_OK;
+}
+
+Perror_t
+P_ctrec_noseek_eolcmt_sfclose(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, size_t remain)
+{
+  P_ctrec_noseek_eolcmt_data_t  *data;
+  Pio_elt_t              *elt;
+  int                     c, ctr;
+  Pbyte                  *b, *bmin;
+  Pdisc_t                *disc;
+
+  if (!pads || !pads->disc) {
+    disc = &Pdefault_disc;
+  } else {
+    disc = pads->disc;
+  }
+
+  if (!io_disc || !io_disc->data) {
+    P_WARN(disc, "P_ctrec_noseek_eolcmt_sfclose: bad param(s)");
+    return P_ERR;
+  }
+  data = (P_ctrec_noseek_eolcmt_data_t*)io_disc->data;
+  if (!data->io) {
+    P_WARN(disc, "P_ctrec_noseek_eolcmt_sfclose: not in a valid open state");
+    return P_ERR;
+  }
+  if (io_cur_elt == data->head) {
+    P_WARN(disc, "P_ctrec_noseek_eolcmt_sfclose: io_cur_elt == head not a valid elt!");
+    return P_ERR;
+  }
+  if (io_cur_elt && remain > io_cur_elt->len) {
+    P_WARN(disc, "P_ctrec_noseek_eolcmt_sfclose: remain > io_cur_elt->len!");
+    return P_ERR;
+  }
+  if (io_cur_elt) {
+    /* return remaining bytes to Sfio stream using sfungetc */
+    ctr = 0;
+    b = data->dbuf_end - 1;
+    bmin = io_cur_elt->end - remain;
+    for (; b >= bmin; b--, ctr++) {
+      c = *b;
+      if (c != sfungetc(data->io, c)) {
+	P_WARN1(disc, "P_ctrec_noseek_eolcmt_sfclose: sfungetc failed, some bytes not restored -- restored %d bytes", ctr);
+	goto after_restore;
+      }
+    }
+    if (ctr) {
+      P_DBG1(disc, "P_ctrec_noseek_eolcmt_sfclose: restored %d bytes using sfungetc", ctr);
+    }
+  }
+ after_restore:
+
+  /* remove all elts from list -- put them on the free list */
+  IODISC_REMOVE_ALL_ELTS(data->head, data->f_head, elt);
+  if (data->eof_elt) {
+    elt = data->eof_elt;
+    data->eof_elt = 0;
+    P_APPEND_ELT(data->f_head, elt);
+  }
+
+  data->io      = 0;
+  data->head    = 0; 
+
+  return P_OK;
+}
+
+Perror_t
+P_ctrec_noseek_eolcmt_read(P_t *pads, Pio_disc_t* io_disc, Pio_elt_t *io_cur_elt, Pio_elt_t** next_elt_out)
+{
+  P_ctrec_noseek_eolcmt_data_t  *data;
+  Pio_elt_t              *elt, *keepelt;
+  ssize_t                 readlen, keep_len, discard_len, bytes_read;
+  Pbyte                  *tmp;
+  Pbyte                  *found_cterm;
+  Pbyte                  *found_eolcmt;
+  Sfoff_t                 diff, next_elt_off;
+
+  if (!pads || !pads->disc) {
+    return P_ERR;
+  }
+  if (!io_disc || !io_disc->data || !next_elt_out) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_read: bad param(s)");
+    return P_ERR;
+  }
+  (*next_elt_out) = 0;
+  data = (P_ctrec_noseek_eolcmt_data_t*)io_disc->data;
+
+  if (!data->io) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_read: not in a valid open state");
+    return P_ERR;
+  }
+  if (data->eof) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_read: called after returning EOF flag in previous call");
+    return P_ERR;
+  }
+  if (io_cur_elt == data->head) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_read: io_cur_elt == head not a valid elt!");
+    return P_ERR;
+  }
+  keepelt = io_cur_elt ? io_cur_elt : data->head;
+  /* move some elts to the free list */
+  IODISC_REMOVE_SOME_ELTS(data->head, data->f_head, keepelt, elt);
+  /*
+   * garbage collect if <= P_CTREC_NOSEEK_EOLCMT_GC_BLOCKS_LEFT and there is
+   * a good chunk of data to be discarded
+   */
+  if (io_cur_elt) {
+    keep_len = data->dbuf_end - io_cur_elt->begin;
+    if (keep_len % data->block_size) { /* round up to nearest block size */
+      keep_len += (data->block_size - (keep_len % data->block_size));
+    }
+  } else if (data->un_bytes) {
+    keep_len = data->block_size;
+  } else {
+    keep_len = 0;
+  }
+  discard_len = (data->dbuf_end - data->dbuf) - keep_len;
+  if (keep_len) {
+    if (data->balloc - data->btail < P_CTREC_NOSEEK_EOLCMT_GC_BLOCKS_LEFT && discard_len >= data->gc_point) {
+      /* garbage collect */
+      diff = - discard_len; /* data moving down - negative offset */
+      memmove((void*)data->dbuf, (const void*)(data->dbuf_end - keep_len), keep_len);
+      data->btail = keep_len/data->block_size; /* # blocks copied -> index of next block index */
+      data->dbuf_end = data->dbuf + keep_len;
+      /* redo begin/end ptrs */
+      IODISC_RELOC_ELTS("P_ctrec_noseek_eolcmt_read", data->head, diff, elt);
+      *(data->dbuf_end) = 0; /* null-terminate dbuf */
+    } /* keep everything -- postpone the memmove */
+  } else {
+    /* starting from scratch, no io_cur_elt or unread bytes */
+    data->btail = 0;
+    data->dbuf_end = data->dbuf;
+    *(data->dbuf_end) = 0; /* null-terminate dbuf */
+  }
+
+  bytes_read      = 0;
+  found_cterm     = 0;
+  found_eolcmt	  = 0;
+  next_elt_off   = data->tail_off - data->un_bytes;
+  while (1) { /* read blocks until find cterm or EOF */
+    /* choose or alloc block to use */
+    if (data->btail >= data->balloc) {
+      /* need space -- grow dbuf */
+      Pbyte *dbuf_next;
+      size_t balloc_next = data->balloc + P_CTREC_NOSEEK_EOLCMT_ADD_BLOCKS;
+      keep_len = data->dbuf_end - data->dbuf;
+      if (!(dbuf_next = vmcpyoldof(data->disc_vm, data->dbuf, Pbyte, balloc_next * data->block_size, 1))) {
+	P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_read: could not alloc space for input record");
+	readlen = 0;
+	break; /* continue after while to take care of earlier bytes_read, if any */
+      }
+      IODISC_REALLOC(data->balloc * data->block_size, balloc_next * data->block_size);
+      diff           = dbuf_next - data->dbuf;
+      data->balloc   = balloc_next;
+      data->dbuf     = dbuf_next;
+      data->dbuf_end = dbuf_next + keep_len;
+      data->gc_point += (P_CTREC_NOSEEK_EOLCMT_ADD_BLOCKS * data->block_size);
+      if (diff) { /* data moved, redo begin/end pointers */
+	IODISC_RELOC_ELTS("P_ctrec_noseek_eolcmt_read", data->head, diff, elt);
+      }
+    } else {
+      /* dbuf already had space at block index btail */
+    }
+    readlen = sfread(data->io, data->dbuf_end, data->block_size);
+    data->tail_off = sftell(data->io);
+    if (readlen < 0) {
+      P_SYSERR(pads->disc, "P_ctrec_noseek_eolcmt_read: Error reading IO stream");
+      readlen = 0;
+      break;
+    }
+    if (readlen == 0) {
+      break;
+    }
+    (data->btail)++;
+    bytes_read += readlen;
+    tmp = data->dbuf_end;
+    data->dbuf_end += readlen;
+    *(data->dbuf_end) = 0; /* null-terminate dbuf -- note use of extra byte in vmoldof calls */
+    if ((found_cterm = PDCI_findfirst(tmp, data->dbuf_end, data->cterm))) {
+      break;
+    }
+    /* read another block */
+  }
+  /* bytes_read reflects all reads, readlen reflects last read */
+  data->un_bytes += bytes_read;
+  tmp = data->dbuf_end - data->un_bytes;
+  /* first add any EOR-based records */
+  while (found_cterm) {
+    IODISC_NEED_AN_ELT("P_ctrec_noseek_eolcmt_read", elt, data->f_head, data->disc_vm);
+    if (!elt) { /* turn this error into an EOF case */
+      P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_read: internal memory alloc error, entering EOF state");
+      readlen = 0;
+      break;
+    }
+    /* AJF: do the comment scan here */
+    found_eolcmt = PDCI_findfirst(tmp, data->dbuf_end, data->cmtChar);
+
+    elt->begin     = tmp;
+    elt->end       = (found_eolcmt < found_cterm ? (found_eolcmt ? found_eolcmt : found_cterm) : found_cterm);
+    elt->len       = (found_eolcmt < found_cterm ? (found_eolcmt ? found_eolcmt : found_cterm) : found_cterm) - tmp;
+    elt->bor       = 1;
+    elt->eor       = 1;
+    elt->eof       = 0;
+    elt->num       = (data->num)++;
+    elt->unit      = "record";
+    elt->offset = next_elt_off;	/* AJF!!! */
+    next_elt_off += ((found_cterm - tmp) + 1); /* account for cterm */ 
+    data->un_bytes -= ((found_cterm - tmp) + 1); /* acount for cterm */ 
+    elt->begin[elt->len] = 0; /* null-terminate the record, replaces cterm/cmtChar with NULL */
+    P_APPEND_ELT(data->head, elt);
+#if 0
+    if (pads->disc->error_fn) {
+      pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
+    }
+#endif
+    if (!(*next_elt_out)) {
+      (*next_elt_out) = elt;
+    }
+    tmp = data->dbuf_end - data->un_bytes;
+    found_cterm = PDCI_findfirst(tmp, data->dbuf_end, data->cterm);
+  }
+  if (readlen < data->block_size) { /* put rest of bytes in EOF IO rec */
+    elt = data->eof_elt;
+    data->eof_elt  = 0;
+
+    /* AJF: do cmt scan here too */
+    found_eolcmt = PDCI_findfirst(tmp, data->dbuf_end, data->cmtChar);
+
+    elt->bor       = 1;
+    elt->eor       = 0;
+    elt->eof       = 1;
+    data->eof      = 1;
+    elt->begin     = tmp;
+    elt->end       = (found_eolcmt ? found_eolcmt : data->dbuf_end);	/* AJF !!! */
+    elt->len       = (found_eolcmt ? (found_eolcmt - tmp) : data->un_bytes);	/* AJF !!! */
+    elt->offset	   = next_elt_off;
+    data->un_bytes = 0;
+    elt->num  = (data->num)++;
+    if (elt->len == 0) { /* trivial EOF record */
+      elt->unit = "(EOF)";
+    } else { /* partial-read EOF record */
+      //      char* missing = (data->cterm == '\n') ? "newline" : "terminating char";
+      elt->unit = "record";
+      //      PDCI_iodisc_report_partial(pads, elt, 1, elt->len, elt->begin,
+      //			 "P_ctrec_noseek_eolcmt_read", "Final record not terminated properly, missing %s",
+      //			 missing);
+    }
+    elt->begin[elt->len] = 0; /* null-terminate the record */
+    P_APPEND_ELT(data->head, elt);
+#if 0
+    if (pads->disc->error_fn) {
+      pads->disc->error_fn(NiL, 0, "XXX_REMOVE(%s %d)\n[%s]", elt->unit, elt->num, P_fmt_cstr_n(elt->begin, elt->len));
+    }
+#endif
+    if (!(*next_elt_out)) {
+      (*next_elt_out) = elt;
+    }
+  } /* else found cterm in a full block read */
+  return P_OK;
+}
+
+ssize_t
+P_ctrec_noseek_eolcmt_rec_buf_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *rec_start, size_t num_bytes)
+{
+  P_ctrec_noseek_eolcmt_data_t  *data;
+
+  if (!pads || !pads->disc) {
+    return -1;
+  }
+  if (!io_disc || !(data = (P_ctrec_noseek_eolcmt_data_t*)io_disc->data) || !data->io || !rec_start) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_rec_buf_close: bad param(s)");
+    return -1;
+  }
+  data = (P_ctrec_noseek_eolcmt_data_t*)io_disc->data;
+  *buf = data->cterm;
+  return 1;
+}
+
+ssize_t
+P_ctrec_noseek_eolcmt_rec_io_close(P_t *pads, Pio_disc_t* io_disc, Sfio_t *io)
+{
+  P_ctrec_noseek_eolcmt_data_t  *data;
+
+  if (!pads || !pads->disc) {
+    return -1;
+  }
+  if (!io_disc || !(data = (P_ctrec_noseek_eolcmt_data_t*)io_disc->data) || !io ) {
+    P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_rec_io_close: bad param(s)");
+    return -1;
+  }
+  return (-1 != sfprintf(io, "%c", data->cterm) ? 1 : 0);
+}
+
+ssize_t
+P_ctrec_noseek_eolcmt_blk_close(P_t *pads, Pio_disc_t* io_disc, Pbyte *buf, Pbyte *blk_start, size_t num_bytes, Puint32 num_recs)
+{
+  if (!pads || !pads->disc) {
+    return -1;
+  }
+  P_WARN(pads->disc, "P_ctrec_noseek_eolcmt_blk_close: not a record-block-based discipline!");
+  return -1;
+}
+
+Perror_t
+P_ctrec_noseek_eolcmt_unmake(Pio_disc_t* io_disc)
+{
+  P_ctrec_noseek_eolcmt_data_t  *data;
+
+  data = (P_ctrec_noseek_eolcmt_data_t*)io_disc->data;
+  if (data) {
+    if (data->io) {
+      P_WARN(&Pdefault_disc, "P_ctrec_noseek_eolcmt_unmake: sfclose should have been called first, calling it now");
+      P_ctrec_noseek_eolcmt_sfclose(0, io_disc, 0, 0);
+    }
+    if (data->disc_vm) {
+      vmclose(data->disc_vm);
+      IODISC_VMCLOSE_CALLED;
+    }
+  }
+  return P_ERR;
+}
+
+const char *
+P_ctrec_noseek_eolcmt_read_unit(P_t *pads, Pio_disc_t* io_disc)
+{
+  return "record";
+}
+
+Pio_disc_t *
+P_ctrec_noseek_eolcmt_make(Pbyte termChar, Pbyte cmtChar, size_t block_size_hint)
+{
+  Vmalloc_t              *disc_vm = 0;
+  P_ctrec_noseek_eolcmt_data_t  *data;
+  Pio_disc_t             *io_disc;
+  Pio_elt_t              *f_head;
+  Pbyte                  *dbuf;
+  size_t                  block_size;
+
+  block_size = (block_size_hint) ? block_size_hint : P_CTREC_NOSEEK_EOLCMT_DEF_BSIZE;
+
+  if (!(disc_vm = vmopen(Vmdcheap, Vmbest, 0))) {
+    goto alloc_err;
+  }
+  if (!(io_disc = vmnewof(disc_vm, 0, Pio_disc_t, 1, 0))) {
+    goto alloc_err;
+  }
+  IODISC_NEW_ALLOC(sizeof(Pio_disc_t));
+  if (!(data = vmnewof(disc_vm, 0, P_ctrec_noseek_eolcmt_data_t, 1, 0))) {
+    goto alloc_err;
+  }
+  IODISC_NEW_ALLOC(sizeof(P_ctrec_noseek_eolcmt_data_t));
+  if (!(f_head = vmnewof(disc_vm, 0, Pio_elt_t, 1, 0))) {
+    goto alloc_err;
+  }
+  IODISC_NEW_ALLOC(sizeof(Pio_elt_t));
+  if (!(dbuf = vmoldof(disc_vm, 0, Pbyte, P_CTREC_NOSEEK_EOLCMT_INIT_BLOCKS * block_size, 1))) {
+    goto alloc_err;
+  }
+  IODISC_NEW_ALLOC(P_CTREC_NOSEEK_EOLCMT_INIT_BLOCKS * block_size);
+
+  f_head->prev = f_head;
+  f_head->next = f_head;
+
+  data->disc_vm       = disc_vm;
+  data->cterm         = termChar;
+  data->cmtChar       = cmtChar;
+  data->block_size    = block_size;
+  data->f_head        = f_head;
+  data->dbuf          = dbuf;
+  data->gc_point      = P_CTREC_NOSEEK_EOLCMT_GC_AT_BLOCK * block_size;
+  data->balloc        = P_CTREC_NOSEEK_EOLCMT_INIT_BLOCKS;
+  sprintf(data->descr, 
+  "an IO discipline for variable-width records terminated by char %d (ASCII char %s) with eol comments introduced by char %d (ASCII char %s)",
+	  termChar, P_qfmt_char(termChar), cmtChar, P_qfmt_char(cmtChar));
+
+  io_disc->unmake_fn    = P_ctrec_noseek_eolcmt_unmake;
+  io_disc->sfopen_fn    = P_ctrec_noseek_eolcmt_sfopen;
+  io_disc->sfclose_fn   = P_ctrec_noseek_eolcmt_sfclose;
+  io_disc->read_fn      = P_ctrec_noseek_eolcmt_read;
+  io_disc->rec_close_buf_fn = P_ctrec_noseek_eolcmt_rec_buf_close;
+  io_disc->rec_close_io_fn = P_ctrec_noseek_eolcmt_rec_io_close;
+  io_disc->blk_close_fn = P_ctrec_noseek_eolcmt_blk_close;
+  io_disc->read_unit_fn = P_ctrec_noseek_eolcmt_read_unit;
+
+  io_disc->name         = "ctrec_noseek_eolcmt";
+  io_disc->descr        = data->descr;
+  io_disc->rec_based    = 1;
+  io_disc->has_rblks    = 0;
+  io_disc->rec_obytes   = 0;
+  io_disc->rec_cbytes   = 1;
+  io_disc->blk_obytes   = 0;
+  io_disc->blk_cbytes   = 0;
+  io_disc->data         = data;
+
+  return io_disc;
+
+ alloc_err:
+  P_WARN(&Pdefault_disc, "P_ctrec_noseek_eolcmt_make: out of space");
   if (disc_vm) {
     vmclose(disc_vm);
     IODISC_VMCLOSE_CALLED;
@@ -2032,6 +2524,16 @@ P_ctrec_make(Pbyte termChar, size_t block_size_hint)
 {
   /* XXX_TODO */
   return P_ctrec_noseek_make(termChar, block_size_hint);
+}
+
+/* ================================================================================ */
+/* P_ctrec_eolcmt IMPLEMENTATION */
+
+Pio_disc_t *
+P_ctrec_eolcmt_make(Pbyte termChar, Pbyte cmtChar, size_t block_size_hint)
+{
+  /* XXX_TODO */
+  return P_ctrec_noseek_eolcmt_make(termChar, cmtChar, block_size_hint);
 }
 
 /* ================================================================================ */
