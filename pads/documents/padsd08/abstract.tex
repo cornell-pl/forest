@@ -1,6 +1,27 @@
-An {\em ad hoc data source} is any semistructured data source for
-which useful data analysis and transformation tools are not 
-readily available.  Such data must be queried, transformed and displayed by
-systems administrators, computational biologists, financial analysts
-and hosts of others on a regular basis.  
-Sometimes this data is distributed over space and time ...
+{\em Ad hoc data} refers to the untold billions upon billions of bytes
+worth of non-standard, unreliable, and continuously evolving data
+spread across all computer systems.  This paper defines \padsd{}, a
+new domain-specific programming language designed to help programmers
+specify {\em where} their ad hoc data is located, {\em when} to get
+it, {\em how} to obtain it, and {\em what} preprocessing you should do
+when it arrives.  As its name suggests, \padsd{} relies on the \pads{}
+sublanguage, developed in previous research efforts, for specification
+of the {\em format} of the data, which, as we will make clear, is
+just one facet of the definition any ad hoc data source.  
+
+We illustrate the expressiveness of \padsd{} by providing descriptions
+of a number of different data sources ranging from the Safari web
+cache to SDSS star charts {\em [dpw: correct me ... cites]} to
+PlanetLab's CoMon network monitoring system to the log files for the
+Coral content distribution network.  We also provide a denotational
+semantics for the language, which is helpful in understanding the
+language's many features.
+
+Descriptions written in \padsd{} are compiled into O'Caml libraries
+with clean interfaces that support both polymorphic and monomorphic
+programming.  We illustrate how to use the polymorphic interfaces to
+program description-independent applications, including a selector
+tool that can extract key elements of a data source as well as an
+accumulator tool that collects simple statistical information about
+the data.  The monomorphic interfaces allow users to develop
+``one-of'' data source-specific applications.

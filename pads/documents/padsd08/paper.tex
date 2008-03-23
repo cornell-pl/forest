@@ -12,20 +12,33 @@
 %\setlength{\textheight}{8.5in}
 
 \begin{document}
-\title{PADS/D: A system for processing distributed ad hoc data}
+\title{Language Support for Processing Distributed Ad Hoc Data}
 
-\authorinfo{Kathleen Fisher}{
-	   AT\&T Labs Research}
-       {\mono{kfisher@research.att.com}}
-\authorinfo{Yitzhak Mandelbaum}{
-	   AT\&T Labs Research}
-       {\mono{yitzhakm@research.att.com}}
-\authorinfo{David Walker}{
-	   Princeton University}
-       {\mono{dpw@CS.Princeton.EDU}}
-\authorinfo{Kenny Q. Zhu}{
-           Princeton University}
-       {\mono{kzhu@CS.Princeton.EDU}}
+\authorinfo{
+Daniel S. Dantas$^1$ \quad
+Kathleen Fisher$^2$ \quad
+Limin Jia$^1$ \\
+Yitzhak Mandelbaum$^2$ \quad
+David Walker$^1$ \quad
+Kenny Q. Zhu$^1$
+}{
+$^1$ Princeton University \\
+$^2$ AT\&T Labs Research
+}{}
+
+%% \authorinfo{Kathleen Fisher}{
+%% 	   AT\&T Labs Research}
+%%        {\mono{kfisher@research.att.com}}
+%% \authorinfo{Yitzhak Mandelbaum}{
+%% 	   AT\&T Labs Research}
+%%        {\mono{yitzhakm@research.att.com}}
+%% \authorinfo{David Walker}{
+%% 	   Princeton University}
+%%        {\mono{dpw@CS.Princeton.EDU}}
+%% \authorinfo{Kenny Q. Zhu}{
+%%            Princeton University}
+%%        {\mono{kzhu@CS.Princeton.EDU}}
+
 \input{definitions}
 
 \maketitle{}
@@ -38,11 +51,147 @@
 \section {Introduction}
 \label{sec:intro}
 
-PADS is great~\cite{fisher+:pads,fisher+:popl06}.
+An {\em ad hoc data source} is any semistructured data source for
+which useful data analysis and transformation tools are not readily
+available.  The data that constitutes a single, abstract source 
+often comes from many different concrete, physical destinations
+distributed across the Internet.  It may also become available
+over a range of times and in several, evolving formats.
+Before the users can extract the information they need from the data,
+it usually must be fetched, archived locally for historical analysis, 
+compressed, encrypted, and monitored for errors or deviations from the norm.
 
-\section{The Data Description Language}
+There are all kinds of users of such data ranging from scientists to
+system administrators to financial analysts.  To get more of a flavour
+of one sort of distributed ad hoc data source, consider the data
+manipulated by CoMon~\cite{comon}, a system designed to monitor the
+health, performance and security of PlanetLab~\cite{planetlab}.  Every
+five minutes, CoMon attempts to contact each of 842 PlanetLab nodes
+across 416 sites worldwide.\footnote{Data as of writing this manuscript;
+PlanetLab membership varies over time.}  
+When all is running smoothly, which it
+never, ever is, each node responds by sending back a data file
+consisting of a number of valuable bits of information ranging from
+the kernel version to the uptime to the memory usage to the id of the
+user with the greatest CPU utilization.  CoMon archives this data in
+compressed form and its backend processes the information for display
+to PlanetLab users.  It is an invaluable resource for Planet users
+who need to monitor the health and performance of their applications
+or experiments.  Almost all distributed systems have (or should
+have) similar sorts of monitoring infrastructure.  Unfortunately,
+system implementers are often left
+to hack ``one-off'' monitoring tools of their own, which are
+invariably less reliable, unoptimized, insecure, and difficult or
+impossible to evolve when new requirements become known.
+A substantial part of the difficulty simply comes from the diversity, quality,
+and volume of data these systems must often handle. Often, new
+monitoring systems also face the problem of having to interact with legacy
+devices, legacy software and legacy data, leaving implementers in a
+situation where they cannot use robust off-the-shelf data management
+tools built for standard formats like XML.
+
+Somewhat similar problems also appear
+across the natural and social sciences, including biology,
+physics and economics.  For example, systems such as BioPixie~\cite{biopixie}, Grifn~\cite{grifn} and Golem~\cite{golem}, built by
+computational biologists at Princeton,
+routinely obtain data supplied from a number of sources scattered 
+across the net.  The data is often archived and later analyzed or mined 
+for valuable information about gene structure and regulation.  Likewise, 
+cosmologists need access to data uploaded from major telescopes~\cite{sdss}
+and economists can make use of vast data repositories at FedStats.org
+amongst other sources.  These and other selected ad hoc data sources 
+are presented in Figure~\ref{fig:exampledata}.
+
+\begin{figure*}
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline\hline
+Name & Use & Properties 
+\\\hline\hline
+CoMon Data & PlanetLab Host Monitoring & Multiple data sets in mail-header formats\\
+                                       && Archiving every 5 minutes \\
+                                       && From evolving set of ~800 nodes \\\hline
+CoralCDN & Log files from CDN monitoring & Single Format \\
+                                       && Periodic archiving \\
+                                       && From evolving set of ~250 hosts \\\hline
+Safari Web Cache & Cached files        & Local files in nested directories \\\hline
+AT\&T/Lefty 1 & ?? & ?? \\\hline
+AT\&T/Lefty 2 & ?? & ?? \\\hline
+AT\&T/Lefty 3 & ?? & ?? \\\hline
+Gene Ontology DB & Gene Function Information & Multiple Formats \\
+                                             && Uploaded in daily, weekly, monthly intervals \\\hline
+SDSS & Star Chart Data & Multiple Formats \\
+                       && Hourly uploads \\\hline
+More examples & & \\
+\hline\hline
+\end{tabular}
+\end{center}
+\caption{Example ad hoc data sources}
+\label{fig:exampledata}
+\end{figure*}
+
+\section{\padsd{}: An Informal Introduction}
+\label{sec:informal}
+
+\section{\padsd{} Semantics}
 \label{sec:semantics}
 \input{language}
+
+\section{\padsd{}:  Programming Interfaces and Tools}
+\label{sec:programming}
+
+\section{Related Work}
+\label{sec:related}
+
+{\em Note: the following was taken from a grant proposal written with Vivek
+Pai.  The actual text below was likely largely written by Vivek and hence
+we should rewrite it and/or include Vivek as an author.}
+
+One of the oldest and most widely-used protocols for general monitoring
+is SNMP, the simple network management protocol~\cite{snmprfc1157},
+which is supported by commercial tools such as HP's
+OpenView~\cite{openview} and free tools such as MRTG~\cite{mrtg}. It
+provides an open protocol format that can be used to monitor a variety
+of different types of equipment, using a vendor-supplied management
+information base (MIB) that provides the specifics of the kinds of
+monitoring provided by each piece of hardware. SNMP's hierarchical
+MIBs plus associated control software, while flexible, have many of
+the same drawbacks as XML -- space, complexity, and poor support for
+ad hoc data.
+
+For Grid environments, a popular monitoring tool is
+Ganglia~\cite{ganglia}, which has also been adapted for use with
+PlanetLab. It presents much of the system monitoring information
+provided by OS tools like vmstat, iostat, uptime, etc. For data
+transmission, Ganglia uses an XDR wire format, with raw data for all
+of its native fields.  It can be extended by adding XML-encapsulated
+fields for any other node-level measurements. 
+
+What distinguishes this proposal from systems like SNMP or Ganglia is
+that we want to be able to automatically parse and monitor virtually
+any kind of ad hoc data, from node-level information like that
+collected by Ganglia or SNMP, all the way down to application-level
+data as well as protocol-level data. These areas are the ones that are
+not well-served by today's general-purpose monitoring
+systems. Moreover, the ability to use the same data description to
+automatically build parsers, in-situ tools, and monitoring systems
+represents an ease of use that we believe is not available in other
+systems.
+
+Another monitoring system of interest is PsEPR~\cite{psepr} (formerly
+known as Trumpet), which focuses on finding problems via several tests
+to gauge node health. What makes PsEPR interesting to consider is that
+its design is completely decentralized, and all information is pushed
+to all participating nodes via a publish/subscribe mechanism in the
+Jabber protocol~\cite{jabber}. While this approach can be more
+scalable in theory, it currently appears to be hitting the limits of
+Jabber messaging servers. In the event that we decide to support
+fully distributed monitoring (as opposed to replicated monitoring at
+several sites), we will examine the lessons of PsEPR when deciding how
+to proceed.
+
+\section{Conclusions}
+\label{sec:conclusions}
 
 \section*{Acknowledgments}
 
@@ -54,7 +203,7 @@ Any opinions, findings, and conclusions or recommendations
    necessarily reflect the views of the NSF.
 
 \bibliographystyle{abbrv}
-\bibliography{pads}
+\bibliography{pads,vivek}
 
 \end{document}
 
