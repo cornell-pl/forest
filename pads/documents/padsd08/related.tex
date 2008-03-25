@@ -1,0 +1,46 @@
+{\em Note: the following was taken from a grant proposal written with Vivek
+Pai.  The actual text below was likely largely written by Vivek and hence
+we should rewrite it and/or include Vivek as an author.}
+
+One of the oldest and most widely-used protocols for general monitoring
+is SNMP, the simple network management protocol~\cite{snmprfc1157},
+which is supported by commercial tools such as HP's
+OpenView~\cite{openview} and free tools such as MRTG~\cite{mrtg}. It
+provides an open protocol format that can be used to monitor a variety
+of different types of equipment, using a vendor-supplied management
+information base (MIB) that provides the specifics of the kinds of
+monitoring provided by each piece of hardware. SNMP's hierarchical
+MIBs plus associated control software, while flexible, have many of
+the same drawbacks as XML -- space, complexity, and poor support for
+ad hoc data.
+
+For Grid environments, a popular monitoring tool is
+Ganglia~\cite{ganglia}, which has also been adapted for use with
+PlanetLab. It presents much of the system monitoring information
+provided by OS tools like vmstat, iostat, uptime, etc. For data
+transmission, Ganglia uses an XDR wire format, with raw data for all
+of its native fields.  It can be extended by adding XML-encapsulated
+fields for any other node-level measurements. 
+
+What distinguishes this proposal from systems like SNMP or Ganglia is
+that we want to be able to automatically parse and monitor virtually
+any kind of ad hoc data, from node-level information like that
+collected by Ganglia or SNMP, all the way down to application-level
+data as well as protocol-level data. These areas are the ones that are
+not well-served by today's general-purpose monitoring
+systems. Moreover, the ability to use the same data description to
+automatically build parsers, in-situ tools, and monitoring systems
+represents an ease of use that we believe is not available in other
+systems.
+
+Another monitoring system of interest is PsEPR~\cite{psepr} (formerly
+known as Trumpet), which focuses on finding problems via several tests
+to gauge node health. What makes PsEPR interesting to consider is that
+its design is completely decentralized, and all information is pushed
+to all participating nodes via a publish/subscribe mechanism in the
+Jabber protocol~\cite{jabber}. While this approach can be more
+scalable in theory, it currently appears to be hitting the limits of
+Jabber messaging servers. In the event that we decide to support
+fully distributed monitoring (as opposed to replicated monitoring at
+several sites), we will examine the lessons of PsEPR when deciding how
+to proceed.
