@@ -3,6 +3,8 @@ struct
     open Basetokens
     open Config
     open Fvector
+    open Regexparser
+    open Common
 
     fun loadFile path = 
      let 
@@ -234,61 +236,6 @@ val _ = print s1
         data
       end
 
-    fun BTokenPairComp ((t1a,t1b), (t2a,t2b)) = 
-	let val r1 = compBToken (t1a, t2a)
-	in
-	    if  r1 = EQUAL then compBToken (t1b, t2b) else r1
-	end
-
-    structure BTokenPairTable = RedBlackMapFn(
-                     struct type ord_key = BToken * BToken
-			    val compare = BTokenPairComp
-		     end) 
-
-    structure BTokenTable = RedBlackMapFn(
-                     struct type ord_key = BToken
-			    val compare = compBToken
-		     end)  
-
-    fun compList (l1, l2) = 
-      case Int.compare(List.length l1, List.length l2) of
-          GREATER => GREATER
-        | LESS => LESS
-        | EQUAL => let
-                     val len = List.length l1
-                     val concat = l1@l2
-                     fun comp (i, (rest, ord)) = 
-                       case ord of
-                           EQUAL => (List.drop(rest, 1), Int.compare(i, List.nth(rest, len)))
-                         | GREATER => (rest, GREATER)
-                         | LESS => (rest, LESS)
-                     val (junk, order) = List.foldl comp (concat, EQUAL) l1 
-                   in
-                     order
-                   end
-
-    fun ListBTokenPairComp ((t1a,t1b), (t2a,t2b)) = 
-	let val r1 = compBToken (t1b, t2b)
-	in
-	    if  r1 = EQUAL then compList (t1a, t2a) else r1
-	end
-
-    structure ListBTokenPairTable = RedBlackMapFn(
-                     struct type ord_key = (int list)*BToken
-			    val compare = ListBTokenPairComp
-		     end)  
-
-    fun CharBTokenPairComp ((t1a,t1b), (t2a,t2b)) = 
-	let val r1 = compBToken (t1b, t2b)
-	in
-	    if  r1 = EQUAL then Char.compare (t1a, t2a) else r1
-	end
-
-    structure CharBTokenPairTable = RedBlackMapFn(
-                     struct type ord_key = char*BToken
-			    val compare = CharBTokenPairComp
-		     end)  
-
 (* char-by-char HMM: there're 3 tables to construct.
    (t1, t2), (c vector, t), t
 *)
@@ -472,26 +419,6 @@ val _ = print s1
       in
         List.foldl countOne inittable l
       end
-
-    fun defaultVal v =
-      case v of
-          NONE => 0.0 (* a parameter to tune *)
-        | SOME n => Real.fromInt n
-
-    fun defaultRVal v =
-      case v of
-          NONE => 0.0 (* a parameter to tune *)
-        | SOME n => n
-
-    fun defaultVal1 v =
-      case v of
-          NONE => 0.0001 (* a parameter to tune *)
-        | SOME n => Real.fromInt n
-
-    fun defaultRVal1 v =
-      case v of
-          NONE => 0.0001 (* a parameter to tune *)
-        | SOME n => n
 
           fun dumpToken path t = 
             let
@@ -1091,6 +1018,21 @@ val _ = print s1
         List.foldl extractOne BTokenTable.empty list
       end
 
+    fun readTokenName path =
+      let
+        val list = loadFile (path^"TokenName")
+        fun recFn i = 
+          if i=0 then IntMap.insert(IntMap.empty, i, nameToBToken(List.nth(list, i)))
+          else
+            let
+              val oldtable = recFn(i-1)
+            in
+              IntMap.insert(oldtable, i, nameToBToken(List.nth(list, i)))
+            end 
+      in
+        recFn ((List.length list)-1)
+      end
+
     fun readBoundaryTokenTable path tag =
       let
         val list = 
@@ -1220,6 +1162,7 @@ val _ = print s1
         List.map convertOneList list
       end
 
+(*
     fun computeProb pathgraph : Seqset list = 
       let
 (* val _ = print "1\n"*)
@@ -1279,7 +1222,8 @@ val _ = print s1
       in
         ret
       end
-
+*)
+(*
     fun computeProbChar pathgraph : Seqset list = 
       let
         val tokentable = readTokenTable "training/"
@@ -1324,6 +1268,71 @@ val _ = print s1
         fun doOneSeqset ss = List.map doOneTList ss
       in
         List.map doOneSeqset pathgraph
+      end
+*)
+    fun readinHMM path = 
+      let
+        val tokentable = readTokenName path
+        val begintokenlist = readOneListTable (path^"InitProb")
+        val endtokenlist = readOneListTable (path^"EndProb")
+        val tokenpairlist = readTwoListsTable (path^"TransProb")
+        val listtokenlist = readTwoListsTable (path^"EmitProb")
+        fun updateInitTable i = 
+          if i=0 then BTokenTable.insert(BTokenTable.empty, Option.valOf(IntMap.find(tokentable, i)), List.nth(begintokenlist, i))
+          else
+            let
+              val oldtable = updateInitTable (i-1)
+            in
+              BTokenTable.insert(oldtable, Option.valOf(IntMap.find(tokentable, i)), List.nth(begintokenlist, i))
+            end
+        val begintokentable = updateInitTable ((List.length begintokenlist)-1)
+        fun updateEndTable i = 
+          if i=0 then BTokenTable.insert(BTokenTable.empty, Option.valOf(IntMap.find(tokentable, i)), List.nth(endtokenlist, i))
+          else
+            let
+              val oldtable = updateEndTable (i-1)
+            in
+              BTokenTable.insert(oldtable, Option.valOf(IntMap.find(tokentable, i)), List.nth(endtokenlist, i))
+            end
+        val endtokentable = updateEndTable ((List.length endtokenlist)-1)
+        fun updateTransTable i =
+          let
+            val oldtable = if i=0 then BTokenPairTable.empty
+                           else updateTransTable (i-1)
+            val lefttoken = Option.valOf(IntMap.find(tokentable, i))
+            val ilist = List.nth(tokenpairlist, i)
+            fun doOne j oldtable1 = 
+              let
+                val oldtable2 = if j=0 then oldtable1
+                                else doOne (j-1) oldtable1 
+                val righttoken = Option.valOf(IntMap.find(tokentable, j))
+              in
+                BTokenPairTable.insert(oldtable2, (lefttoken, righttoken), List.nth(ilist, j))
+              end
+          in
+            doOne ((List.length ilist)-1) oldtable
+          end
+        val tokenpairtable = updateTransTable ((List.length tokenpairlist)-1)
+        fun updateEmitTable i = (* no character option *)
+          let
+            val oldtable = if i=0 then ListBTokenPairTable.empty
+                           else updateEmitTable (i-1)
+            val left = intToList i
+            val ilist = List.nth(listtokenlist, i)
+            fun doOne j oldtable1 = 
+              let
+                val oldtable2 = if j=0 then oldtable1
+                                else doOne (j-1) oldtable1 
+                val right = Option.valOf(IntMap.find(tokentable, j))
+              in
+                ListBTokenPairTable.insert(oldtable2, (left, right), List.nth(ilist, j))
+              end
+          in
+            doOne ((List.length ilist)-1) oldtable
+          end
+        val listtokentable = updateEmitTable ((List.length listtokenlist)-1)
+      in
+        (tokentable, begintokentable, endtokentable, tokenpairtable, listtokentable)
       end
 
     fun incdumpCCHMM ( path : string ) : unit = 
@@ -1523,6 +1532,7 @@ val _ = print s1
 	 end
    ) 
 
+(*
     fun chopSeqsets (ssl: Seqset list) (ll: location list) : Seqset list = (* i may not call it chop, but cut inside *) 
       let
 (*val _ = print "Chopping...\n"*)
@@ -1602,6 +1612,83 @@ val _ = print ("line "^(Int.toString r1)^" found.\n")
         val rnoprob = List.foldl chopOneSS init ssl
       in
         if ( !character = true ) then  computeProbChar rnoprob else computeProb rnoprob
+      end
+*)
+
+    fun chopSeqsets (ssl: Seqset list) lt : Seqset list = 
+      let
+(*val _ = print "Chopping...\n"*)
+(*val _ = print ("chop "^(Int.toString (List.length ssl))^" seqsets.\n")*)
+        fun findEmpty {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisl} = if thisb = ~1 then true else false
+        val ll = IntMap.listItems lt
+        val init = 
+          case List.find findEmpty ll of
+              SOME {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisl} => [(PosBTokenTable.insert(PosBTokenTable.empty, ~1, [(~1, PPempty)]), "", thisr, ~1, ~1)] (* may be problematic *) 
+            | NONE => []
+        fun chopOneSS (ss: Seqset, result: Seqset list) = (* chop one seqset *)
+          let 
+            val (endptable, s, recNo, sbegin, send) = ss
+          in
+            case IntMap.find(lt, recNo) of
+                NONE => result
+              | SOME thisloc =>
+                  let
+                    val {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisl} = thisloc
+                  in
+                    if thisb = sbegin andalso thise = send then result@[ss]
+                    else
+                    let
+                    fun cutOutBound endptable = 
+                      let
+                        val endplist = PosBTokenTable.listItemsi endptable
+                        fun doOne ((endp, bplist), oldendptable) =
+                          if endp < thisb orelse endp > thise then oldendptable
+                          else 
+                            let
+                              fun cutOne ((beginp, btoken), oldlist) =
+                                if (beginp < thisb orelse beginp > thise) then oldlist
+                                else (beginp, btoken)::oldlist
+                              val newbplist = List.foldl cutOne [] bplist
+                            in
+                              case newbplist of
+                                  [] => oldendptable
+                                | _ => PosBTokenTable.insert(oldendptable, endp, newbplist)
+                            end
+                      in
+                        List.foldl doOne PosBTokenTable.empty endplist
+                      end
+                    val hendptable = cutOutBound endptable
+                    fun deleteDeadEnd endptable1 = 
+                      let
+                        val endplist = PosBTokenTable.listItemsi endptable1
+                        fun doOne ((endp, bplist), oldbeginptable) =
+                          let
+                            fun collectOne ((beginp, btoken), oldbeginptable1) =
+                              case PosBTokenTable.find(oldbeginptable1, beginp) of
+                                  NONE => PosBTokenTable.insert(oldbeginptable1, beginp, true)
+                                | SOME tag => oldbeginptable1
+                          in
+                            List.foldl collectOne oldbeginptable bplist
+                          end
+                        val beginptable = List.foldl doOne (PosBTokenTable.insert(PosBTokenTable.empty, (thise+1), true)) endplist
+                        fun deleteOne ((endp, bplist), (tag, oldendptable)) = 
+                          case PosBTokenTable.find(beginptable, endp+1) of
+                              NONE => (0, #1(PosBTokenTable.remove(oldendptable, endp)))
+                            | SOME t => (tag, oldendptable)
+                        val (mytag, mynewendptable) = List.foldl deleteOne (1, endptable1) endplist (* may have redundant (beginp, btoken) *)
+                        val newendptable = if mytag = 0 then deleteDeadEnd mynewendptable
+                                           else mynewendptable
+                      in
+                        newendptable
+                      end
+                  in
+                    result@[((deleteDeadEnd hendptable), s, recNo, thisb, thise)]
+                  end
+                  end
+          end
+        val rnoprob = List.foldl chopOneSS init ssl
+      in
+        rnoprob
       end
 
 end

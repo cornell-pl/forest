@@ -4,7 +4,7 @@ structure Regex_c = struct
 
     fun match (str, btoken, re) = 
       let
-val _ = print ("Match string (" ^ (String.toString str) ^") with token ("^(BTokenToName btoken) ^ ")\n") 
+(*val _ = print ("Match string (" ^ (String.toString str) ^") with token ("^(BTokenToName btoken) ^ ")\n") *)
         val s1' = ZString.dupML' str
         val s2' = ZString.dupML' re
         val s =     C.Cvt.ml_sint (C.call (F_get_start.fptr (),
@@ -19,8 +19,10 @@ val _ = print ("Match string (" ^ (String.toString str) ^") with token ("^(BToke
                   (s1', s2')))
             val l = MLRep.Signed.toInt l
             val _ = (C.free' s1'; C.free' s2')
-            val _ = print ("find a match starting at pos "^(Int.toString s)^" ")
-            val _ = print ("of length "^(Int.toString l)^"\n")
+(*
+val _ = print ("find a match starting at pos "^(Int.toString s)^" ")
+val _ = print ("of length "^(Int.toString l)^"\n")
+*)
           in
             SOME (s, l)
           end

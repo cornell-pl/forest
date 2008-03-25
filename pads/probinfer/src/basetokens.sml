@@ -26,6 +26,25 @@ structure Basetokens = struct
 
     type NewContext = BSLToken list
 
+    structure PosBTokenTable = RedBlackMapFn
+    (
+      struct type ord_key = int
+			 val compare = Int.compare
+	  end
+    ) 
+
+    type Seqset = (((int*BToken) list) PosBTokenTable.map) * string * int * int * int (* associated with recNo, beginp, endp *)
+
+    fun getSeqset (l:int) (seqsetl: Seqset list) : Seqset = 
+      let
+        fun findLoc (ss:Seqset) = let 
+                                    val (graph, s, recNo, sb, se) = ss
+                                  in (recNo=l) end
+      in
+        Option.valOf(List.find findLoc seqsetl)
+      end
+
+(*
     type Tokenseq = NewContext * real
 
     type Seqset = Tokenseq list
@@ -59,6 +78,7 @@ structure Basetokens = struct
         );
         List.nth (ss, !n)
       end
+*)
 
 (*
     fun chopSeqset (ss: Seqset, ll: location list) : Seqset list = 
@@ -374,27 +394,28 @@ structure Basetokens = struct
     end 
 
     val tokenDefList =
-        [ ( PPint, "[\\-~]?([0-9]+)" )
-        , ( PPfloat, "([\\-~]?([0-9]+))|[\\-~]?([0-9]+)\\.([0-9]+)|[\\-~]?[1-9]\\.([0-9]+)(E|e)[\\-~]?([0-9]+)")
+        [ ( PPint, "[-~]?([0-9]+)" )
+        , ( PPfloat, "([-~]?([0-9]+))|[-~]?([0-9]+)\\.([0-9]+)|[-~]?[1-9]\\.([0-9]+)(E|e)[-~]?([0-9]+)")
         , ( PPtime, "([0-9]{2}):([0-9]{2}):([0-9]{2})([ ]*(am|AM|pm|PM))?([#\\t]+([+-][0-1][0-9]00))?")
         , ( PPdate, "((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\/([1-9]|[1-2][0-9]|0[1-9]|3[0-1])\\/([0-2][0-9]{3})|([1-9]|[1-2][0-9]|0[1-9]|3[0-1])\\/((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\/([0-2][0-9]{3})|([0-2][0-9]{3})\\/((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\/([1-9]|[1-2][0-9]|0[1-9]|3[0-1])|((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\-([1-9]|[1-2][0-9]|0[1-9]|3[0-1])\\-([0-2][0-9]{3})|([1-9]|[1-2][0-9]|0[1-9]|3[0-1])\\-((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\-([0-2][0-9]{3})|([0-2][0-9]{3})\\-((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\-([1-9]|[1-2][0-9]|0[1-9]|3[0-1])|((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\.([1-9]|[1-2][0-9]|0[1-9]|3[0-1])\\.([0-2][0-9]{3})|([1-9]|[1-2][0-9]|0[1-9]|3[0-1])\\.((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\.([0-2][0-9]{3})|([0-2][0-9]{3})\\.((Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)|(0?[1-9]|1[0-2]))\\.([1-9]|[1-2][0-9]|0[1-9]|3[0-1])|((Mon|Monday|Tue|Tuesday|Wed|Wednesday|Thu|Thursday|Fri|Friday|Sat|Saturday|Sun|Sunday|mon|tue|wed|thu|fri|sat|sun),?[ \\t]+)?(Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)[ \\t]+([1-9]|[1-2][0-9]|0[1-9]|3[0-1])(,[ \\t]+([0-2][0-9]{3}))?|((Mon|Monday|Tue|Tuesday|Wed|Wednesday|Thu|Thursday|Fri|Friday|Sat|Saturday|Sun|Sunday|mon|tue|wed|thu|fri|sat|sun),?[ \\t]+)?([1-9]|[1-2][0-9]|0[1-9]|3[0-1])[ \\t]+(Jan|jan|Feb|feb|Mar|mar|Apr|apr|May|may|Jun|jun|Jul|jul|Aug|aug|Sep|sep|Oct|oct|Nov|nov|Dec|dec|January|February|March|April|May|June|July|August|September|October|November|December)(,[ \\t]+([0-2][0-9]{3}))?")  (* slow *) 
        , ( PPip, "([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})")
-       , ( PPhostname, "((([0-9A-Za-z]|[0-9A-Za-z][0-9A-Za-z]|[0-9A-Za-z][A-Za-z0-9_\\-]{1,61}[0-9A-Za-z])\\.)+(com|net|edu|org|gov)(\\.[a-z][a-z])?)")
-       , ( PPemail, "([0-9A-Za-z!#$%&'*+\\-/=?\\^_`{|}~]([.]?[a-zA-Z0-9!#$%&'*+\\-/=?\\^_`{|}~]){1,61}[a-zA-Z0-9!#$%&'*+\\-/=?\\^_`{|}~]|[a-zA-Z0-9!#$%&'*+\\-/=?\\^_`{|}~]|[a-zA-Z0-9!#$%&'*+\\-/=?\\^_`{|}~][a-zA-Z0-9!#$%&'*+\\-/=?\\^_`{|}~])@((([0-9A-Za-z]|[0-9A-Za-z][0-9A-Za-z]|[0-9A-Za-z][A-Za-z0-9_\\-]{1,61}[0-9A-Za-z])\\.)+([0-9A-Za-z]|[0-9A-Za-z][0-9A-Za-z]|[0-9A-Za-z][A-Za-z0-9_\\-]{1,61}[0-9A-Za-z]))")
+       , ( PPhostname, "((([0-9A-Za-z]|[0-9A-Za-z][0-9A-Za-z]|[0-9A-Za-z][A-Za-z0-9_-]{1,61}[0-9A-Za-z])\\.)+(com|net|edu|org|gov)(\\.[a-z][a-z])?)")
+       , ( PPemail, "(([0-9A-Za-z!#$%&'*+/=?\\^_`{|}~]|(\\-))([.]?([a-zA-Z0-9!#$%&'*+/=?\\^_`{|}~]|(\\-))){1,61}([a-zA-Z0-9!#$%&'*+/=?\\^_`{|}~]|(\\-))|([a-zA-Z0-9!#$%&'*+/=?\\^_`{|}~]|(\\-))|([a-zA-Z0-9!#$%&'*+/=?\\^_`{|}~]|(\\-))([a-zA-Z0-9!#$%&'*+/=?\\^_`{|}~]|(\\-)))@((([0-9A-Za-z_\\-]{1,63})\\.)+([0-9A-Za-z_\\-]{1,63}))")
        , ( PPmac, "(([0-9a-fA-F]{2})(:|\\-)){5}([0-9a-fA-F]{2})")
-       , ( PPpath, "(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?|(([^\\/\\\\?*:<>\"\\[\\] ]+)\\/)(([^\\/\\\\?*:<>\"\\[\\] ]+)\\/)*([^\\/\\\\?*:<>\"\\[\\] ]+)?|\\\\?(\\\\([^\\/\\\\?*:<>\"\\[\\] ]+))(\\\\([^\\/\\\\?*:<>\"\\[\\] ]+))*\\\\?|(([^\\/\\\\?*:<>\"\\[\\] ]+)\\\\)(([^\\/\\\\?*:<>\"\\[\\] ]+)\\\\)*([^\\/\\\\?*:<>\"\\[\\] ]+)?|([^\\/\\\\?*:<>\"\\[\\] ]+)|\\/([^\\/\\\\?*:<>\"\\[\\] ]+)|\\\\([^\\/\\\\?*:<>\"\\[\\] ]+)|\\/|\\\\") (* slow *) 
+(*       , ( PPpath, "(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?|(([^\\/\\\\?*:<>\"\\[\\] ]+)\\/)(([^\\/\\\\?*:<>\"\\[\\] ]+)\\/)*([^\\/\\\\?*:<>\"\\[\\] ]+)?|\\\\?(\\\\([^\\/\\\\?*:<>\"\\[\\] ]+))(\\\\([^\\/\\\\?*:<>\"\\[\\] ]+))*\\\\?|(([^\\/\\\\?*:<>\"\\[\\] ]+)\\\\)(([^\\/\\\\?*:<>\"\\[\\] ]+)\\\\)*([^\\/\\\\?*:<>\"\\[\\] ]+)?|([^\\/\\\\?*:<>\"\\[\\] ]+)|\\/([^\\/\\\\?*:<>\"\\[\\] ]+)|\\\\([^\\/\\\\?*:<>\"\\[\\] ]+)|\\/|\\\\") (* slow *) *)
+       , ( PPpath, "(\\/([^][\\/\\\\?*:<>\" ]+))(\\/([^][\\/\\\\?*:<>\" ]+))*\\/?|(([^][\\/\\\\?*:<>\" ]+)\\/)(([^][\\/\\\\?*:<>\" ]+)\\/)*([^][\\/\\\\?*:<>\" ]+)?|\\\\?(\\\\([^][\\/\\\\?*:<>\" ]+))(\\\\([^][\\/\\\\?*:<>\" ]+))*\\\\?|(([^][\\/\\\\?*:<>\" ]+)\\\\)(([^][\\/\\\\?*:<>\" ]+)\\\\)*([^][\\/\\\\?*:<>\" ]+)?|\\\\([^][\\/\\\\?*:<>\" ]+)|\\/|\\\\|([^][\\/\\\\?*:<>\" ]+)")
 (*(*(*(*(*(*(* *)*)*)*)*)*)*)
-       , ( PPurl, "(http|ftp|https):\\/\\/((([0-9A-Za-z_\\-])\\.)+([0-9A-Za-z_\\-]))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_\\-]*))?|(http|ftp|https):\\/\\/(([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3}))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_\\-]*))?")  (* extremely slow *) 
+       , ( PPurl, "(http|ftp|https):\\/\\/((([0-9A-Za-z_-])\\.)+([0-9A-Za-z_-]))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_-]*))?|(http|ftp|https):\\/\\/(([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3}))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_-]*))?")  (* extremely slow *) 
 (*(*(*(*(*(*(* *)*)*)*)*)*)*)
-       , ( PPurlbody, "((([0-9A-Za-z_\\-])\\.)+([0-9A-Za-z_\\-]))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_\\-]*))?|\\/\\/(([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3}))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_\\-]*))?") (* extremely slow *)
-       , ( PPword, "[A-Za-z'\\-]+")
-       , ( PPid, "[0-9A-Za-z\\-_\\.]+")
+       , ( PPurlbody, "((([0-9A-Za-z_-])\\.)+([0-9A-Za-z_-]))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_-]*))?|\\/\\/(([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3}))(:([1-9][0-9]*))?\\/?(\\/([^\\/\\\\?*:<>\"\\[\\] ]+))*\\/?(\\?)?\\&?([^&=]+=[^&]*(\\&[^&=]+=[^&]*)*\\&?)?(#([0-9A-Za-z][A-Za-z0-9_-]*))?") (* extremely slow *)
+       , ( PPword, "[A-Za-z'-]+")
+       , ( PPid, "[-0-9A-Za-z_.]+")
 (*       , ( PPbXML, "\\<([a-zA-Z])+\\>")
-       , ( PPeXML, "\\<\\/[^>]+\\>") *)
+       , ( PPeXML, "\\<\\/[^>]+\\>") *) 
        , ( PPwhite, "[ \\t\\r\\n]+") 
-(*       , ( PPmessage, "\\\".+\\\"|[[].+[]]|[(].+[)]|[{].+[}]|.+\\?")  (* slow *)*)
-       , ( PPtext, "([\"'])([A-Za-z0-9_\\-,;. ])+([\"'])")
-       , ( PPpermission, "(d|\\-)((r|\\-)(w|\\-)(x|-))[3]") 
+       , ( PPmessage, "\\\".+\\\"|[[].+[]]|[(].+[)]|[{].+[}]|.+\\?")  (* slow *)
+       , ( PPtext, "([\"'])([A-Za-z0-9_,;. ]|(\\-))+([\"'])")
+       , ( PPpermission, "(d|\\-)((r|\\-)(w|\\-)(x|-))[3]")  
        , ( PPpunc ".", "[.]")
        , ( PPpunc "/", "[/]")
        , ( PPpunc "\\", "[\\\\]") 

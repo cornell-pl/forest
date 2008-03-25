@@ -990,7 +990,7 @@ struct
 	    end
 	| _ => (nil, nil, NONE, ty)
 
-
+(*
     fun printSSLoc (ss: Seqset) : unit =
       let
         fun printOneBSL (((b,s),l): BSLToken) = printLocation l
@@ -998,7 +998,7 @@ struct
       in
         (print "Seqset loc: "; List.app printOneTS ss; print "\n") 
       end		
-
+*)
 
 (**************
     val dateStoppingChar= ref #""

@@ -1187,7 +1187,7 @@ struct
 		let (* convert to accumulator form? *)
 		    fun findFirstMatch [] = (* no existing match succeeded, see if another token order matches *)
 			 (case getTokenOrder tokenfreqs thisRecord
-                          of NONE => raise TokenMatchFailure (* tokens don't match this record *)
+                          of NONE => ((*print "tokens don't match\n";*) raise TokenMatchFailure) (* tokens don't match this record *)
                           |  SOME tokenOrder => findFirstMatch [(tokenOrder,[])])
                       | findFirstMatch ((current as (match, matchedContextLists))::rest) = 
 		          (case classifyOneRecordWithMatch thisRecord match
