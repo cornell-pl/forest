@@ -44,3 +44,30 @@ Jabber messaging servers. In the event that we decide to support
 fully distributed monitoring (as opposed to replicated monitoring at
 several sites), we will examine the lessons of PsEPR when deciding how
 to proceed.
+
+\subsection{Web Mash Ups}
+There is a lot of recent work in web mash
+ups\cite{ennals+:mashmaker,yahoopipes,swivel.com}.  These differ in
+from our work in that they focus on the task of computing with web
+data as opposed to the task of locating and fetching such data. As a
+consequence, they have limited mechanisms for specifying schedules for
+fetching data or locations other than those accessible from web
+browsers.  Their focus is on end-user programming with relatively
+small amounts of data: data that can be displayed to a user in a web
+browser.  Thus the performance considerations are quite different.
+Archiving the data is not an important consideration.  From the web
+mash up paper:
+
+``MashMaker is not intended to be used for `mission critical'
+applications where data integrity is essential.  Instead, its focus is
+on applications where it is more important to be able to produce
+interesting data than to be certain that the data is correct.''
+
+I think these tools are somewhat complimentary to our approach, in
+that they focus on how to merge data, while we focus on how to get raw
+data.  MashMaker does not have a good way of describing the raw data
+it gets, treating it as a black box or hand writing scraping code, so
+PADS/D could serve as a data feed for MashMaker.
+
+The MashMaker paper contains a nice survey of work in this area that
+we can reference.
