@@ -1069,6 +1069,10 @@ struct
     *)
     exception TokenMatchFailure
 
+    exception ViterbiExit
+
+    exception StructError
+
     fun splitRecords summary (records : NewContext list ) ( seqsetl : Seqset list ) tables : NPartition=
 
 	  let 
@@ -1083,21 +1087,25 @@ struct
 			    case BSTokenTable.find(tTable, token)of 
                      NONE => acc
 			      |  SOME freq => 
-			           if !freq = 0 then raise TokenMatchFailure
+			           if !freq = 0 then (print "raise here\n"; raise TokenMatchFailure)
 			           else (freq := !freq - 1;
 				            numFound := !numFound + 1;
 				            token::acc)
 		      val tList = List.rev(List.foldl (doOneToken tTable) [] record)
 		      val () = if not ((!numFound) = count) 
-			     then raise TokenMatchFailure
+			     then (print "raise here\n"; raise TokenMatchFailure)
 			     else ()
 		in
-		    SOME(tList)  handle TokenMatchFailure => NONE
+		    (print "find a token order\n"; SOME(tList))  handle TokenMatchFailure => (print "handle here\n"; NONE)
 		end
 
-        fun findTokenOrder summary record = 
-          case (getTokenOrder summary record) of
+        fun findTokenOrder summary record =
+        let
+          val tag = getTokenOrder summary record handle TokenMatchFailure => NONE
+        in 
+          case tag of
               NONE => let
+val _ = print "find one without the token order\n"
                         val ((b, s), loc) = List.nth(record, 0)
                         val {lineNo=l, beginloc=bgl, endloc=enl, recNo=recn} = loc
                         val thisSeqset = getSeqset l seqsetl
@@ -1114,13 +1122,14 @@ struct
                                                 (getTokenOrder summary c, SOME c)
                                               end
 *)
-                        val ret = case ViterbiWithSummary thisSeqset tables summary of
-                                      NONE => (NONE, NONE)
-                                    | SOME c => (getTokenOrder summary c, SOME c)
+                        val ret = case (ViterbiWithSummary thisSeqset tables summary handle ViterbiError => (print "ViterbiExit\n"; raise ViterbiExit)) of
+                                      NONE => (print "still no\n"; (NONE, NONE))
+                                    | SOME c => (print "get one new\n"; print (BSLTokensToString c); (getTokenOrder summary c, SOME c))
                       in
                         ret
                       end
             | SOME t => (SOME(t), NONE)
+        end
 
 	    fun classifyOneRecordWithMatch (thisRecord:NewContext) (tokenOrder:NTokenOrder)  = 
 		let fun introduceLEmpty (contextList:NDerivedContexts) =  (*In progress*)
@@ -1150,7 +1159,7 @@ struct
 		    case (tokensToMatch, recordTokens) 
 		    of ([],[])   => List.rev ((List.rev curContextAcc) :: contextListAcc)
                     |  ([], rts) => List.rev  (rts :: contextListAcc)
-                    |  (tks, []) => raise TokenMatchFailure
+                    |  (tks, []) => (print "raise here\n"; raise TokenMatchFailure)
                     |  (tokens as tk::tks, (lrtoken as (rt,loc))::rts) => 
 			let val (rt, loc) = lrtoken : BSLToken
 			in
@@ -1165,14 +1174,17 @@ struct
 			      end
 			  else doMatch tokens rts (lrtoken :: curContextAcc, contextListAcc)
 			end
-		    val thisRecordContexts = doMatch tokenOrder thisRecord ([],[])
+            val tag = ref 0
+		    val thisRecordContexts = doMatch tokenOrder thisRecord ([],[]) handle TokenMatchFailure => (print "handle here\n"; tag := 1; [])
 (*		    val () = print "before adding empty\n"
 		    val () = printContexts thisRecordContexts *)
-		    val recordContextsWithEmpty = introduceLEmpty thisRecordContexts
+(*		    val recordContextsWithEmpty = introduceLEmpty thisRecordContexts*)
 (*		    val () = print "after adding empty\n"
 		    val () = printContexts recordContextsWithEmpty *)
 		in
-		    SOME recordContextsWithEmpty handle TokenMatchFailure => NONE
+          if !tag = 0 then
+		    SOME (*recordContextsWithEmpty*)(introduceLEmpty thisRecordContexts) (* handle TokenMatchFailure => (print "handle here\n"; NONE)*)
+          else NONE
 		end
 
             (* Given a summary, a token order * DerivedContexts list, and a record,
@@ -1183,18 +1195,22 @@ struct
                   if doesn't match, add to bad record list *)
 	    fun classifyOneRecord tokenfreqs (thisRecord, (matches, badRecords)) = (* thisRecord is NewContext *) 
 		let (* convert to accumulator form? *)
+            val tag = ref 0
+            val nr = ref []
 		    fun findFirstMatch ([], record) = (* no existing match succeeded, see if another token order matches *)
-			 (case findTokenOrder tokenfreqs record
-                          of (NONE, _) => raise TokenMatchFailure (* tokens don't match this record *)
-                          |  (SOME tokenOrder, NONE) => findFirstMatch ([(tokenOrder,[])], record) 
-                          |  (SOME tokenOrder, SOME newRecord) => findFirstMatch ([(tokenOrder,[])], newRecord))
+			 (print "1\n"; case findTokenOrder tokenfreqs record
+                          of (NONE, _) => (print "really a bad record\n"; raise TokenMatchFailure (* tokens don't match this record *))
+                          |  (SOME tokenOrder, NONE) => (print "1.1\n"; findFirstMatch ([(tokenOrder,[])], record)) 
+                          |  (SOME tokenOrder, SOME newRecord) => (print "1.2\n"; tag := 1; nr := newRecord; findFirstMatch ([(tokenOrder,[])], newRecord)))
               | findFirstMatch (((current as (match, matchedContextLists))::rest), record) =  (* match: tokenorder *)
-		          (case classifyOneRecordWithMatch record match
-			   of NONE => current :: (findFirstMatch (rest, record))
-                           |  SOME contexts => ((match, contexts :: matchedContextLists) :: rest) (* matches are in reverse order *))
+		          (print "2\n"; case classifyOneRecordWithMatch record match
+			   of NONE => (print "find next\n"; current :: (findFirstMatch (rest, record)))
+                           |  SOME contexts => (print "2.2\n"; ((match, contexts :: matchedContextLists) :: rest)) (* matches are in reverse order *))
+            val firstrun = (findFirstMatch (matches, thisRecord), badRecords) handle TokenMatchFailure => (print "token match failure\n"; (matches, thisRecord :: badRecords)) (* bad records are in reverse *)
 		in
-		    (findFirstMatch (matches, thisRecord), badRecords)
-		    handle tokenMatchFailure => (matches, thisRecord :: badRecords) (* bad records are in reverse *)
+		    if !tag = 0 then firstrun
+		    else 
+              (findFirstMatch (matches, !nr), badRecords) handle TokenMatchFailure => raise StructError
 		end
 
 	    val revPartition : NPartition = List.foldl (classifyOneRecord tokenfreqs) ([],[]) records
@@ -1203,6 +1219,8 @@ struct
 		  let fun revMatch (tokenOrder, matchedRecords) = (tokenOrder, List.rev matchedRecords)
 		      fun revMatches [] acc = List.rev acc
                 | revMatches (m::ms) acc = revMatches ms ((revMatch m)::acc)
+(*val _ = print ("bad records: "^(Int.toString(List.length badRecords))^"\n")*)
+val _ = print ("matches num: "^(Int.toString(List.length matches))^"\n")
 		  in  
 		    (revMatches matches [], List.rev badRecords)
 		  end
@@ -1448,6 +1466,9 @@ val _ = print ("newbegin: "^(Int.toString bl2)^" newend: "^(Int.toString el2)^"\
         List.map cvtOne cl
       end   
 *)
+
+    exception ViterbiError2
+
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
     (* coverage is number of records in this context *)
     fun mkTBD (callsite, currentDepth, coverage, cl, ssl, tables) = 
@@ -1518,6 +1539,74 @@ val _ = printColumn cl
                  )
 	end
 
+    and mkTBDwithContexts (callsite, currentDepth, coverage, cl, ssl, tables) = 
+        (* Columns that have some empty rows must have the empty list representation
+           of the empty row converted to the [Pempty] token.  Otherwise, a column
+           that is either empty or some value gets silently converted to the value only. *)
+	let
+ 
+       fun cnvEmptyRowsToPempty [] = [((PPempty, ""),{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
+              | cnvEmptyRowsToPempty l  = l
+	    val cl = List.map cnvEmptyRowsToPempty cl
+(*
+        (* assume colomn is in order *)
+        fun cnvEmptyRowsToPempty i =
+          if i=0 then []
+          else
+            let
+              val old = cnvEmptyRowsToPempty (i-1)
+              val l = List.nth(cl, i-1)
+            in
+              case l of
+                 [] => old@[[((PPempty, ""),{lineNo= i-1, beginloc=0, endloc=0, recNo=i-1})]]
+                |_ => old@[l]
+            end
+        val cl = cnvEmptyRowsToPempty (List.length cl)
+*)
+            fun allEmpty cl =
+		let fun isNonEmpty [((PPempty, _),_)] = false
+		      | isNonEmpty _ = true
+		in
+		    ((*print "Checking for an allempty context\n";*)
+		    not(Option.isSome(List.find isNonEmpty cl))
+		     )
+		end
+	    (*val cl = crackUniformGroups cl*)  (* ignore groups now *)
+	in
+	    if allEmpty cl then PPBase(mkTyAux coverage, List.concat cl)
+	    else if (coverage < isNoiseTolerance(!initialRecordCount))
+		 then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
+	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
+                 then PPTBD ( { coverage=coverage
+                            , label=SOME(mkTBDLabel (!TBDstamp))
+                            , tycomp = zeroComps
+                            }
+                          , !TBDstamp
+                          , cl
+                          ) before TBDstamp := !TBDstamp    + 1
+                 else (
+                   if (List.length ssl) = 0 then 
+                     if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl 
+                     else SeqsetListToTy (currentDepth + 1) [] tables
+                   else
+                   let
+                     val locList = columnToLocations cl
+val _ = printColumn cl
+(*val _ = printColumnString cl*)
+                     val locTable = locList2locTable locList
+(*val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")*)
+(*val _ = List.app printSSLoc ssl*)
+(*val _ = (print "Before chopping seqset list: "; List.app printlist ssl; print "\n") *)
+
+                     val newSSL = chopSeqsets ssl locTable
+(*val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") *)
+                   in 
+                     if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl
+                     else SeqsetListToTywithContexts (currentDepth + 1) cl newSSL tables
+                   end
+                 )
+	end
+
 
     (* old: clustersToTy curDepth rtokens numRecords clusters *)
     and clustersToTy (curDepth:int) (rtokens:NewContext list) (seqsetl:Seqset list) tables (numRecords:int) clusters : NewTy = 
@@ -1540,25 +1629,77 @@ val _ = printColumn cl
                       | doOneChunk(chunk as ((t,loc)::ts), tTable) = updateBSTable(t,chunk,tTable)
 		        val pTable = List.foldl doOneChunk BSTokenTable.empty rtokens 
 		    (* allSame handles the case where all chunks start with the same, non-Empty token *)
-                fun allSame rtokens = 
+                fun allSame myrtokens = 
 			      let 
                     fun doOne ((lt::lts), (fst,snd)) = ([lt]::fst, lts::snd)
-			        val (fsts,snds) = List.foldl doOne ([],[]) rtokens
+			        val (fsts,snds) = List.foldl doOne ([],[]) myrtokens
 			      in
 			        PPstruct(mkTyAux numRecords, 
 				    [mkTBD(~9, curDepth, numChunks, List.rev fsts, ssl, tables),
 				     mkTBD(~10,curDepth, numChunks, List.rev snds, ssl, tables)])
 			      end
+
+                fun myallSame myrtokens = 
+			      let 
+                    fun doOne ((lt::lts), (fst,snd)) = ([lt]::fst, lts::snd)
+			        val (fsts,snds) = List.foldl doOne ([],[]) myrtokens
+			      in
+			        PPstruct(mkTyAux numRecords, 
+				    [mkTBDwithContexts(~9, curDepth, numChunks, List.rev fsts, ssl, tables),
+				     mkTBDwithContexts(~10,curDepth, numChunks, List.rev snds, ssl, tables)])
+			      end
                     (* allEmpty handles the case where all chunks are the empty chunk *)
 		        fun allEmpty () = PPBase(mkTyAux numRecords, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})])
 		    (* doPartition handles the case where the chunks did not all have the same initial token *)
+(*
 		        fun doPartition pTable = 
 			      let val items = BSTokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
 			        val tys = List.map (fn item => mkTBD(~11, curDepth, List.length (!item), List.rev (!item), ssl, tables) ) items
 			      in
 			        PPunion(mkTyAux numRecords, tys)
 			      end
-			    
+*)	
+		        fun doPartition pTable = 
+			      let
+val _ = print "i'm here\n"
+                    val initTList : BSToken list list = List.map initToken ssl
+                    fun countOne (bsl, iTable) = 
+                      let
+                        fun co (bs, mytable) = case BSTokenTable.find(mytable, bs) of
+                                                   NONE => BSTokenTable.insert(mytable, bs, 1)
+                                                 | SOME i =>
+                                                     let
+                                                       val (rmv, junk) = BSTokenTable.remove(mytable, bs) 
+                                                     in
+                                                       BSTokenTable.insert(rmv, bs, i+1)
+                                                     end
+                      in
+                        List.foldl co iTable bsl
+                      end
+                    val iTable = List.foldl countOne BSTokenTable.empty initTList
+                    val ilist = BSTokenTable.listItemsi iTable
+                    fun findBests ((bstoken, count), blist) = if count = numRecords then bstoken::blist else blist
+                    val bestlist = List.foldl findBests [] ilist
+                    fun getBest ((b, s), (min, best)) = if (BTokenCompleteEnum(b) < min) then (BTokenCompleteEnum(b), (b,s)) else (min, best) 
+                  in
+                    if List.length bestlist > 0 then 
+                      let
+                        val (junk, initt) = List.foldl getBest (Option.valOf(Int.maxInt), (PPblob, "")) bestlist
+                        val newrtokens = List.map (ViterbiWithInitT tables initt) ssl
+		                val newpTable = List.foldl doOneChunk BSTokenTable.empty newrtokens 
+val _ = print ("initt: "^(BTokenToName(#1 initt))^"\n")
+val _ = print (newcontextsToString newrtokens)
+                      in
+                        if BSTokenTable.numItems(newpTable) = 1 then myallSame newrtokens
+                        else raise ViterbiError2
+                      end
+                    else
+			      let val items = BSTokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
+			        val tys = List.map (fn item => mkTBD(~11, curDepth, List.length (!item), List.rev (!item), ssl, tables) ) items
+			      in
+			        PPunion(mkTyAux numRecords, tys)
+			      end
+                  end
 		in
 		        if BSTokenTable.numItems(pTable) = 1 
 			      then if BSTokenTable.inDomain(pTable, (PPempty, "")) then allEmpty () 
@@ -1612,7 +1753,7 @@ val _ = printColumn cl
 
 		    val matchTys = List.map cnvOneMatch matches
 		    val resultTy =
-			case (matchTys, badRecords) (* I'm here *)
+			case (matchTys, badRecords) 
   		        of   ([], [])   => raise Fail "Expected records in struct context."
 			  |  ([], brs)  => (* This case arises if a false cluster is identified: a cluster with one
 					      or more tokens coming from one subset of records, and another group of tokens
@@ -1764,11 +1905,11 @@ val _ = printColumn cl
 
       val ty = case analysis of 
 		        Blob =>     mkBottom (List.length rtokens, rtokens)  (*can we still do sth using lower-prob seq?*)
-		     |  Empty =>    PPBase (mkTyAux 0, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})])
-		     |  Struct s => if (!hmmtokenize = true) then buildStructTy (splitRecords_HMM s rtokens seqsetl) seqsetl tables
-                            else buildStructTy (splitRecords s rtokens seqsetl tables) seqsetl tables (* Can produce union of structs *)
+		     |  Empty =>    PPBase (mkTyAux 0, [((PPempty,""),{lineNo= ~1, beginloc= ~1, endloc= ~1, recNo= ~1})])
+		     |  Struct s => (print "struct here\n"; if (!hmmtokenize = true) then buildStructTy (splitRecords_HMM s rtokens seqsetl) seqsetl tables
+                            else buildStructTy (splitRecords s rtokens seqsetl tables) seqsetl tables (* Can produce union of structs *))
 		     |  Array a =>  buildArrayTy (a, rtokens, seqsetl, tables) 
-             |  Union u =>  buildUnionTy(u, rtokens, seqsetl, tables)
+             |  Union u =>  (print "union here\n"; buildUnionTy(u, rtokens, seqsetl, tables))
 
 	in
 	    ty
@@ -1790,6 +1931,28 @@ val _ = print "basicViterbi done\n"
 	    (* val () = if print_verbose then printClusters numRecordsinContext clusters else () *)
 	    val clusters : (BSToken * histogram) list list = newFindClusters numRecordsinSeqsetList fd
         val ty : NewTy = clustersToTy curDepth bestProbPaths seqsetl tables numRecordsinSeqsetList clusters (* break it *)
+	    (*
+	    val () = (print "Inferred type:\n"; 
+		      print (TyToString ty);
+		      print "\n")
+	    *)
+        (* val ty = PPBase (mkTyAux 0, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})]) *)
+	in
+	    ty
+	end 
+
+    and SeqsetListToTywithContexts (curDepth:int) (rtokens: NewContext list) (seqsetl:Seqset list) tables : NewTy = 
+	let val numRecordsinSeqsetList = List.length seqsetl
+(*
+	    val _ = print ("Number records being considered: "^Int.toString(numRecordsinContext)^"\nThe records are:\n"
+		^(contextsToString context))
+*)
+        val counts : BRecordCount list = List.map countBFreqs rtokens    
+	    val fd: freqDist = buildHistograms numRecordsinSeqsetList counts
+	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)
+	    (* val () = if print_verbose then printClusters numRecordsinContext clusters else () *)
+	    val clusters : (BSToken * histogram) list list = newFindClusters numRecordsinSeqsetList fd
+        val ty : NewTy = clustersToTy curDepth rtokens seqsetl tables numRecordsinSeqsetList clusters (* break it *)
 	    (*
 	    val () = (print "Inferred type:\n"; 
 		      print (TyToString ty);

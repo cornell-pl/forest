@@ -24,6 +24,11 @@ fun enumerableBase (token, s) =
 	  PPbXML => true
 	| PPeXML => true
 	| PPint => true
+    | PPword => true
+    | PPtext => true
+    | PPpermission => true
+    | PPid => true
+    | PPfloat => true
 	| PPblob => true
 	| _ => false
 	
@@ -940,8 +945,8 @@ case ty of
 		| SOME((PPfloat, x)) => 
             let
               fun isDot c = c = #"."
-              val (i, junk) = Substring.splitl isDot (Substring.full x)
-              val (junk, r) = Substring.splitr isDot (Substring.full x) 
+              val (i, junk) = Substring.splitl (not o isDot) (Substring.full x)
+              val (junk, r) = Substring.splitr (not o isDot) (Substring.full x) 
             in
 			(
 				newcmos, 

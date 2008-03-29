@@ -1114,16 +1114,16 @@ struct
 			case TokenTable.find(tTable, token)
 			of NONE => acc
 			|  SOME freq => 
-			    if !freq = 0 then raise TokenMatchFailure
+			    if !freq = 0 then (print "raise1\n"; raise TokenMatchFailure)
 			    else (freq := !freq - 1;
 				  numFound := !numFound + 1;
 				  token::acc)
 		    val tList = List.rev(List.foldl (doOneToken tTable) [] record)
 		    val () = if not ((!numFound) = count) 
-			     then raise TokenMatchFailure
+			     then (print "raise1\n"; raise TokenMatchFailure)
 			     else ()
 		in
-		    SOME(tList) handle TokenMatchFailure => NONE
+		    SOME(tList) handle TokenMatchFailure => (print "handle1\n"; NONE)
 		end
 	    fun classifyOneRecordWithMatch (thisRecord:Context) (tokenOrder:TokenOrder)  = 
 		let fun introduceLEmpty (contextList:DerivedContexts) =  (*In progress*)

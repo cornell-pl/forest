@@ -162,8 +162,8 @@ structure Common = struct
 	|	(PPfloat, s) =>
           let
             fun isDot c = c = #"." 
-            val (i, junk) = Substring.splitl isDot (Substring.full s)
-            val (junk, f) = Substring.splitr isDot (Substring.full s)
+            val (i, junk) = Substring.splitl (not o isDot) (Substring.full s)
+            val (junk, f) = Substring.splitr (not o isDot) (Substring.full s)
           in
             FloatConst(Substring.string i, Substring.string f)
           end

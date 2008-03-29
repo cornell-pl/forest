@@ -204,55 +204,58 @@ structure Basetokens = struct
         |  (_, _) => GREATER
 *)
 
+
     (*    Establish an order on Token using the following constraints:
-          Ptime < Pdate < Pip < Phostname < Purl < Purlbody < Ppath < PbXML < PeXML < Pemail < Ppermission < Pmac < Pfloat < Pint <  Pword < Pid < Ppunc < Pwhite < Ptext < Pmessage < Pblob < Pempty
+          Ptime < Pdate < Pip < Pemail < Ppermission < Pmac < Pfloat < Pint < Phostname < Purl < Purlbody < Ppath < PbXML < PeXML  <  Pword < Pid < Ppunc < Pwhite < Ptext < Pmessage < Pblob < Pempty
      *)
+
+
     fun BTokenEnum (t: BToken) : int =
       case t of
-       PPint => 14
-    |  PPfloat => 13
+       PPint => 8
+    |  PPfloat => 7
     |  PPtime     => 1
 	|  PPdate     => 2
 	|  PPip       => 3
-	|  PPhostname  => 4
-	|  PPpath     => 7
-	|  PPurl      => 5
-    |  PPurlbody => 6
-	|  PPemail      => 10
-	|  PPmac      => 12
+	|  PPhostname  => 9
+	|  PPpath     => 12
+	|  PPurl      => 10
+    |  PPurlbody => 11
+	|  PPemail      => 4
+	|  PPmac      => 6
     |  PPword => 15
     |  PPid => 16
-    |  PPbXML  => 8
-    |  PPeXML  => 9
+    |  PPbXML  => 13
+    |  PPeXML  => 14
     |  PPwhite => 18
     |  PPmessage => 20
     |  PPtext => 19
-    |  PPpermission => 11
+    |  PPpermission => 5
     |  PPpunc s => 17
     |  PPblob => 21
     |  PPempty => 22
 
     fun BTokenCompleteEnum (t: BToken) : int =
       case t of
-       PPint => 14
-    |  PPfloat => 13
+       PPint => 8
+    |  PPfloat => 7
     |  PPtime     => 1
 	|  PPdate     => 2
 	|  PPip       => 3
-	|  PPhostname  => 4
-	|  PPpath     => 7
-	|  PPurl      => 5
-    |  PPurlbody => 6
-	|  PPemail      => 10
-	|  PPmac      => 12
+	|  PPhostname  => 9
+	|  PPpath     => 12
+	|  PPurl      => 10
+    |  PPurlbody => 11
+	|  PPemail      => 4
+	|  PPmac      => 6
     |  PPword => 15
     |  PPid => 16
-    |  PPbXML  => 8
-    |  PPeXML  => 9
+    |  PPbXML  => 13
+    |  PPeXML  => 14
     |  PPwhite => 18
     |  PPmessage => 20
     |  PPtext => 19
-    |  PPpermission => 11
+    |  PPpermission => 5
     |  PPpunc s => 17 + (
          case s of
              "." => 6
@@ -361,7 +364,7 @@ structure Basetokens = struct
         |  _ => Int.compare(BTokenEnum t1, BTokenEnum t2)
 
 
-    fun compBSToken ((t1, s1):BSToken, (t2, s2):BSToken):order = 
+    fun compBSToken ((t1, s1):BSToken, (t2, s2):BSToken):order = (* not really compare the string *) 
 	case (t1,t2) of
           (PPbXML, PPbXML) => String.compare(s1, s2) (* should be some substring *)
         | (PPeXML, PPeXML) => String.compare(s1, s2)

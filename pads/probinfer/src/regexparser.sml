@@ -777,6 +777,10 @@ print ("seqset size: "^(Int.toString (List.length ret))^"\n");*)
 (* use Viterbi to find the best token sequence from the seqset graph *)
       let
         val (endptable, s, recNo, sbegin, send) = ss
+      in
+      if sbegin = ~1 orelse send = ~1 then [((PPempty, ""), mkLoc ~1 ~1 recNo recNo )]
+      else
+      let
 val _ = print ("basicViterbi: "^"sbegin = "^(Int.toString sbegin)^" send = "^(Int.toString send)^"\n")
         val (tokentable, begintokentable, endtokentable, tokenpairtable, listtokentable) = tables
         val reachable = PosBTokenTable.listItemsi endptable
@@ -874,6 +878,121 @@ val _ = print "returned newcontext:\n"
       in
         retbsllist
       end
+      end
+
+
+
+    fun ViterbiWithInitT (tables: BToken IntMap.map * real BTokenTable.map *
+                   real BTokenTable.map * real BTokenPairTable.map *
+                   real ListBTokenPairTable.map) (initT: BSToken) (ss: Seqset) : NewContext = 
+(* use Viterbi to find the best token sequence from the seqset graph *)
+      let
+        val (endptable, s, recNo, sbegin, send) = ss
+      in
+      if sbegin = ~1 andalso send = ~1 then if compBSToken(initT, (PPempty, ""))= EQUAL then [((PPempty, ""), mkLoc ~1 ~1 recNo recNo )] else raise ViterbiError
+      else
+      let
+val _ = print ("ViterbiWithInitT: "^"sbegin = "^(Int.toString sbegin)^" send = "^(Int.toString send)^"\n")
+        val (tokentable, begintokentable, endtokentable, tokenpairtable, listtokentable) = tables
+        val reachable = PosBTokenTable.listItemsi endptable
+        fun forward ((workingpos, bplist), oldtable) =
+          let
+            fun doOne (beginp, btoken) =
+              let
+                val lastlist = PosBTokenTable.find(oldtable, (beginp-1))
+val _ = print ("beginp = "^(Int.toString beginp)^" endp = "^(Int.toString workingpos)^" btoken = "^(BTokenToName btoken)^"\n")
+                fun search (((mybp, mybptoken), (lastbp, prob)), ((maxbp, maxtoken), maxprob)) = 
+                  let
+                    val transprob = Math.ln(defaultRVal(BTokenPairTable.find(tokenpairtable, (mybptoken, btoken))))
+                    val thisprob = prob + transprob
+                  in
+                    if thisprob > maxprob then (print ("forward probability 1 = "^(Real.toString prob)^" "^(Real.toString transprob)^"\n"); ((mybp, mybptoken), thisprob))
+                    else (print ("forward probability 2 = "^(Real.toString prob)^" "^(Real.toString transprob)^"\n"); if Real.compare(maxprob, (~Real.maxFinite))=EQUAL then ((mybp, mybptoken), maxprob) else ((maxbp, maxtoken), maxprob))
+                  end
+                val (mymax, mymaxprob) = 
+                  case lastlist of
+                      SOME table1 => 
+                        let
+                          val prelist = BasicViterbiTable.listItemsi table1 
+                          val ((b, t), mprob) = List.foldl search ((0, PPblob), (~Real.maxFinite)) prelist
+                        in (SOME (b,t), mprob) end
+                    | NONE => if beginp=sbegin then 
+                                if compBSToken(initT, (btoken, ""))=EQUAL then (NONE, 0.0)
+                                else (NONE, (~Real.maxFinite)) 
+                              else (print "1\n"; raise ViterbiError)
+                fun probBToken (mybeginp, myendp) = 
+                  let
+                    fun addOneChar (c, v) =
+                      let
+                        val l = charToList c
+                        val value = defaultRVal(ListBTokenPairTable.find(listtokentable, (l, btoken))) 
+                      in
+                        (Math.ln value) + v
+                      end
+                    val emitprob = List.foldl addOneChar 0.0 (String.explode (String.substring (s, mybeginp, myendp-mybeginp+1)))
+                    val transprob = if (myendp-mybeginp)=0 then 0.0 
+                                    else (Real.fromInt (myendp-mybeginp)) * (Math.ln(defaultRVal(BTokenPairTable.find(tokenpairtable, (btoken, btoken)))))
+val _ = print ("emitprob = "^(Real.toString emitprob)^" transprob = "^(Real.toString transprob)^"\n") 
+                  in
+                    emitprob+transprob
+                  end
+                val newprob = mymaxprob + probBToken(beginp, workingpos)
+val _ = print ("beginp = "^(Int.toString beginp)^" btoken = "^(BTokenToName btoken)^" prob = "^(Real.toString newprob)^" preprob = "^(Real.toString mymaxprob)^"\n")
+              in
+                ((beginp, btoken), mymax, newprob)
+              end
+            val thislist = List.map doOne bplist
+            fun updateTable ((thisbp, lastbp, prob), myoldtable) = BasicViterbiTable.insert(myoldtable, thisbp, (lastbp, prob)) 
+            val newtable = PosBTokenTable.insert(oldtable, workingpos, (List.foldl updateTable BasicViterbiTable.empty thislist))
+          in
+            newtable
+          end
+        val forwardmsg = List.foldl forward PosBTokenTable.empty reachable
+        val fmsglist = PosBTokenTable.listItemsi forwardmsg
+val _ = print ("fmsglist length = "^(Int.toString (List.length fmsglist))^"\n")
+        val (lastpos, lastrcd) = List.nth(fmsglist, (List.length fmsglist)-1)
+        val lastrcdlist = BasicViterbiTable.listItemsi lastrcd
+val _ = print ("last position list length = "^(Int.toString (List.length lastrcdlist))^"\n")
+        fun findlastmax ((thisp, (lastp, prob)), (maxp, maxlastp, maxprob)) =
+          if prob>maxprob then (print ("probability = "^(Real.toString prob)^"\n"); (thisp, lastp, prob))
+          else (print ("probability = "^(Real.toString prob)^"\n"); (maxp, maxlastp, maxprob))
+        val ((lastmaxp, lastmaxt), lastpremaxp, lastmaxprob) = List.foldl findlastmax ((0, PPblob), NONE, (~Real.maxFinite)) lastrcdlist (* lastpremaxp is an option *)
+        fun backward ((prep, pret), thisp) = (* return a bsl list *) 
+          case PosBTokenTable.find(forwardmsg, thisp) of
+              NONE => (print "2\n"; print ((Int.toString thisp)^"\n"); raise ViterbiError)
+            | SOME table => case BasicViterbiTable.find(table, (prep, pret)) of
+                                NONE => (print ("beginp = "^(Int.toString prep)^" endp = "^(Int.toString thisp)^"\n"); raise ViterbiError) 
+                              | SOME (newpre, newprob) => 
+                                  case newpre of
+                                      NONE => if prep=sbegin then (print ("( "^(Int.toString prep)^" "^(Int.toString thisp)^" "^(BTokenToName pret)^")\n"); [((pret, String.substring(s, prep, thisp-prep+1)), mkLoc prep thisp recNo recNo)])
+                                              else (print "3\n"; raise ViterbiError)
+                                    | SOME (newprep, newpret) => if prep = sbegin then (print "6\n"; raise ViterbiError)
+                                  else
+                                  let
+                                    val newbsl = backward((newprep, newpret), (prep-1))
+val _ = print ("( "^(Int.toString prep)^" "^(Int.toString thisp)^" "^(BTokenToName pret)^")\n")
+                                  in
+                                    newbsl@[((pret, String.substring(s, prep, thisp-prep+1)), mkLoc prep thisp recNo recNo)]
+                                  end             
+val _ = print "returned newcontext:\n"
+        val retbsllist = 
+          case lastpremaxp of
+              NONE => if lastmaxp = sbegin then (print ("( "^(Int.toString lastmaxp)^" "^(Int.toString send)^" "^(BTokenToName lastmaxt)^")\n"); [((lastmaxt, String.substring(s, lastmaxp, send-lastmaxp+1)), mkLoc lastmaxp send recNo recNo)])
+                      else (print "4\n"; raise ViterbiError)
+            | SOME pre =>
+                if lastmaxp = sbegin then (*(print "5\n"; raise ViterbiError)*)
+                let
+                  val (prep, pret) = pre
+(*val _ = print ("prep = "^(Int.toString prep)^" pret = "^(BTokenToName pret)^"\n") *)
+                in
+                   (print "5\n"; raise ViterbiError)
+                end
+                else
+                (print ("( "^(Int.toString lastmaxp)^" "^(Int.toString send)^" "^(BTokenToName lastmaxt)^")\n"); backward(pre, (lastmaxp-1))@[((lastmaxt, String.substring(s, lastmaxp, send-lastmaxp+1)), mkLoc lastmaxp send recNo recNo)])
+      in
+        retbsllist
+      end
+      end
 
 
    structure BSTokenTable = RedBlackMapFn(
@@ -881,9 +1000,11 @@ val _ = print "returned newcontext:\n"
 			    val compare = compBSToken
 		     end) 
 
+
+
     fun ViterbiWithSummary (ss: Seqset) tables summary : NewContext option = (* summary: (token, freq) list *)
       let
-val _ = print "i'm here\n"
+val _ = print "ViterbiWithSummary\n"
         fun insertOne ((token,freq), (tTable, index)) = (BSTokenTable.insert(tTable, token, (freq, index)), index+1)
 		val (summaryTable, junk) = List.foldl insertOne (BSTokenTable.empty, 0) summary
         val (endptable, s, recNo, sbegin, send) = ss
@@ -891,7 +1012,7 @@ val _ = print "i'm here\n"
         val reachable = PosBTokenTable.listItemsi endptable
         val sumlist = BSTokenTable.listItems summaryTable
         val sumlength = List.length sumlist
-        fun forward ((workingpos, bplist), oldtable) =
+        fun forward ((workingpos, bplist), thisoldtable) =
           let
             fun doOne ((beginp, btoken), oldtable) =
               let
@@ -911,11 +1032,15 @@ val _ = print "i'm here\n"
                     emitprob+transprob
                   end
               in
+
               case PosBTokenTable.find(oldtable, (beginp-1)) of
-                  NONE => if beginp = sbegin then
-                            case BSTokenTable.find(summaryTable, (btoken, String.substring(s, beginp, workingpos-beginp+1))) of
+
+                  NONE => (print "can't find a pre table\n";
+                          if beginp = sbegin then (print "=begin\n";
+                            case BSTokenTable.find(summaryTable, (btoken, "")) of
                                 NONE => (* this token is not in the summary *)
                                   let
+val _ = print "this token is not in the summary\n"
                                     fun constrIntList i = if i = 1 then [0] else 0::constrIntList (i-1)
                                     val mykey = constrIntList sumlength
                                     val (myoldtable, oldtable1) = case PosBTokenTable.find(oldtable, workingpos) of
@@ -934,9 +1059,10 @@ val _ = print "i'm here\n"
                                     PosBTokenTable.insert(myoldtable, workingpos, mytable1)
                                   end
                               | SOME (myfreq, myindex) =>
-                                  if myfreq < 1 then raise ViterbiError (* assume freq > 0 *)
+                                  if myfreq < 1 then (print "1\n"; raise ViterbiError) (* assume freq > 0 *)
                                   else 
                                   let
+val _ = print "this token is in the summary\n"
                                     fun constrIntList i = if i = 0 then if i=myindex then [1] else [0] 
                                                           else if i=myindex then 1:: constrIntList (i-1) else 0::constrIntList (i-1)
                                     val mykey = constrIntList (sumlength-1)
@@ -952,12 +1078,15 @@ val _ = print "i'm here\n"
                                                 in
                                                   IntListTable.insert(removet, mykey, BasicViterbiTable.insert(oldtable2, (beginp, btoken), (NONE, probBToken(beginp, workingpos))))
                                                 end          
+val _ = print ("insert a table at pos: "^(Int.toString workingpos)^"\n")
                                   in
                                     PosBTokenTable.insert(myoldtable, workingpos, mytable1)
-                                  end
-                          else raise ViterbiError
+                                  end)
+                          else (print ("2: not = begin, beginp = "^(Int.toString beginp)^"\n"); raise ViterbiError))
+
                  | SOME pretable1 =>
                     let
+val _ = print "get a pre table\n"
                       val preslist = IntListTable.listItemsi pretable1
                     in
                       case BSTokenTable.find(summaryTable, (btoken, String.substring(s, beginp, workingpos-beginp+1))) of
@@ -981,7 +1110,7 @@ val _ = print "i'm here\n"
                                         val prelist = BasicViterbiTable.listItemsi table1 
                                         val ((b, t), mprob) = List.foldl search ((0, PPblob), (~Real.maxFinite)) prelist
                                       in (SOME (b,t), mprob) end
-                                  | NONE => raise ViterbiError
+                                  | NONE => (print "3\n"; raise ViterbiError)
                                 in
                                   case IntListTable.find(oldtable1, ilist) of
                                       NONE => IntListTable.insert(oldtable1, ilist, BasicViterbiTable.insert(BasicViterbiTable.empty, (beginp, btoken), (mymax, mymaxprob)))
@@ -1018,7 +1147,7 @@ val _ = print "i'm here\n"
                                         val prelist = BasicViterbiTable.listItemsi table1 
                                         val ((b, t), mprob) = List.foldl search ((0, PPblob), (~Real.maxFinite)) prelist
                                       in (SOME (b,t), mprob) end
-                                  | NONE => raise ViterbiError
+                                  | NONE => (print "4\n"; raise ViterbiError)
                                 in
                                   case IntListTable.find(oldtable1, ilist) of
                                       NONE => IntListTable.insert(oldtable1, ilist, BasicViterbiTable.insert(BasicViterbiTable.empty, (beginp, btoken), (mymax, mymaxprob)))
@@ -1033,12 +1162,16 @@ val _ = print "i'm here\n"
                             end
                     end
               end
-            val thistable = List.foldl doOne PosBTokenTable.empty bplist
+val _ = print ("workingpos = "^(Int.toString workingpos)^"\n")
+            val thistable = List.foldl doOne thisoldtable bplist
+val _ = print "after doOne\n"
           in 
             thistable
           end
-        val forwardmsg = List.foldl forward PosBTokenTable.empty reachable
+        val forwardmsg = List.foldl forward PosBTokenTable.empty reachable 
+val _ = print "still in\n"
         val fmsglist = PosBTokenTable.listItemsi forwardmsg
+val _ = print "forward done\n"
       in 
         if List.length fmsglist = 0 then NONE
         else
@@ -1055,10 +1188,10 @@ val _ = print "i'm here\n"
         fun findlastmax ((thisp, (lastp, prob)), (maxp, maxlastp, maxprob)) =
           if prob>maxprob then (thisp, lastp, prob)
           else (maxp, maxlastp, maxprob)
-        val ((lastmaxp, lastmaxt), lastpremaxp, lastmaxprob) = List.foldl findlastmax ((0, PPblob), SOME (0, PPblob), (~Real.maxFinite)) lastrcdlist (* lastpremaxp is an option *)
+        val ((lastmaxp, lastmaxt), lastpremaxp, lastmaxprob) = List.foldl findlastmax ((0, PPblob), NONE, (~Real.maxFinite)) lastrcdlist (* lastpremaxp is an option *)
         fun backward ((beginp, btoken), endp, ilist) (*((prep, pret), thisp)*) = (* return a bsl list *) 
           case PosBTokenTable.find(forwardmsg, endp) of
-              NONE => raise ViterbiError
+              NONE => (print ("5: endp = "^(Int.toString endp)^" beginp = "^(Int.toString beginp)^"\n"); raise ViterbiError)
             | SOME table1 => 
                 let
                   val myilist = case BSTokenTable.find(summaryTable, (btoken, String.substring(s, beginp, endp-beginp+1))) of
@@ -1073,14 +1206,14 @@ val _ = print "i'm here\n"
                                       end
                 in
                   case IntListTable.find(table1, myilist) of
-                      NONE => raise ViterbiError
+                      NONE => (print "6\n"; raise ViterbiError)
                     | SOME table2 =>
                            case BasicViterbiTable.find(table2, (beginp, btoken)) of
-                               NONE => raise ViterbiError 
+                               NONE => (print "7\n"; raise ViterbiError) 
                              | SOME (newpre, newprob) => 
                                   case newpre of
                                       NONE => if beginp=1 then [((btoken, String.substring(s, beginp, endp-beginp+1)), mkLoc beginp endp recNo recNo)]
-                                              else raise ViterbiError
+                                              else (print "8\n"; raise ViterbiError)
                                     | SOME (newprep, newpret) =>
                                         let
                                           val newbsl = backward((newprep, newpret), (beginp-1), myilist)
@@ -1090,9 +1223,10 @@ val _ = print "i'm here\n"
                 end
         val rest = case lastpremaxp of
                        NONE => if lastmaxp = sbegin then []
-                             else raise ViterbiError
+                             else (print "9\n"; raise ViterbiError)
                      | SOME lastpremaxpp =>
-                   case BSTokenTable.find(summaryTable, (lastmaxt, String.substring(s, lastmaxp, send-lastmaxp+1))) of
+( print ("prep: "^(Int.toString (#1(lastpremaxpp)))^" "^(BTokenToName (#2(lastpremaxpp)))^"\n");
+                   case BSTokenTable.find(summaryTable, (lastmaxt, "")) of
                        NONE => backward(lastpremaxpp, (lastmaxp-1), targetsummary)
                      | SOME (freq, index) =>
                          let
@@ -1102,11 +1236,29 @@ val _ = print "i'm here\n"
                          in
                            backward(lastpremaxpp, (lastmaxp-1), minusOne(List.length targetsummary-1))
                          end
+)
         val retbsllist = rest@[((lastmaxt, String.substring(s, lastmaxp, send-lastmaxp+1)), mkLoc lastmaxp send recNo recNo)]
+val _ = print "backward done\n"
         in
           SOME retbsllist
         end
         end
+      end
+
+    fun initToken (ss: Seqset) (* return a list of init bstokens, but we don't care the string *) = 
+      let
+        val (endptable, s, recNo, sbegin, send) = ss
+        val endplist = PosBTokenTable.listItemsi endptable
+        fun searchOne ((endp, bplist), list) = 
+          let
+            fun so (beginp, btoken) = if beginp = sbegin then true else false 
+          in
+            list@(List.filter so bplist)
+          end
+        val valid = List.foldl searchOne [] endplist
+        fun convert (beginp, btoken) = (btoken, "")
+      in
+        List.map convert valid
       end
 
 (*
