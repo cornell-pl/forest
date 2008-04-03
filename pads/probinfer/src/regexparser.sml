@@ -796,6 +796,8 @@ val _ = print ("beginp = "^(Int.toString beginp)^" endp = "^(Int.toString workin
                     val thisprob = prob + transprob
                   in
                     if thisprob > maxprob then (print ("forward probability 1 = "^(Real.toString prob)^" "^(Real.toString transprob)^"\n"); ((mybp, mybptoken), thisprob))
+                    else if Real.compare(thisprob, maxprob)=EQUAL then 
+                      if (BTokenCompleteEnum(mybptoken) < BTokenCompleteEnum(maxtoken)) then ((mybp, mybptoken), thisprob) else ((maxbp, maxtoken), maxprob)
                     else (print ("forward probability 2 = "^(Real.toString prob)^" "^(Real.toString transprob)^"\n"); if Real.compare(maxprob, (~Real.maxFinite))=EQUAL then ((mybp, mybptoken), maxprob) else ((maxbp, maxtoken), maxprob))
                   end
                 val (mymax, mymaxprob) = 
@@ -907,6 +909,8 @@ val _ = print ("beginp = "^(Int.toString beginp)^" endp = "^(Int.toString workin
                     val thisprob = prob + transprob
                   in
                     if thisprob > maxprob then (print ("forward probability 1 = "^(Real.toString prob)^" "^(Real.toString transprob)^"\n"); ((mybp, mybptoken), thisprob))
+                    else if Real.compare(thisprob, maxprob)=EQUAL then 
+                      if (BTokenCompleteEnum(mybptoken) < BTokenCompleteEnum(maxtoken)) then ((mybp, mybptoken), thisprob) else ((maxbp, maxtoken), maxprob)
                     else (print ("forward probability 2 = "^(Real.toString prob)^" "^(Real.toString transprob)^"\n"); if Real.compare(maxprob, (~Real.maxFinite))=EQUAL then ((mybp, mybptoken), maxprob) else ((maxbp, maxtoken), maxprob))
                   end
                 val (mymax, mymaxprob) = 
@@ -1101,6 +1105,8 @@ val _ = print "get a pre table\n"
                                        val thisprob = prob + transprob
                                     in
                                       if thisprob > maxprob then ((mybp, mybptoken), thisprob)
+                                      else if Real.compare(thisprob, maxprob)=EQUAL then 
+                                        if (BTokenCompleteEnum(mybptoken) < BTokenCompleteEnum(maxtoken)) then ((mybp, mybptoken), thisprob) else ((maxbp, maxtoken), maxprob)
                                       else if Real.compare(maxprob, (~Real.maxFinite))=EQUAL then ((mybp, mybptoken), maxprob) else ((maxbp, maxtoken), maxprob)
                                     end
                                   val (mymax, mymaxprob) = 
@@ -1138,6 +1144,8 @@ val _ = print "get a pre table\n"
                                        val thisprob = prob + transprob
                                     in
                                       if thisprob > maxprob then ((mybp, mybptoken), thisprob)
+                                      else if Real.compare(thisprob, maxprob)=EQUAL then 
+                                        if (BTokenCompleteEnum(mybptoken) < BTokenCompleteEnum(maxtoken)) then ((mybp, mybptoken), thisprob) else ((maxbp, maxtoken), maxprob)
                                       else if Real.compare(maxprob, (~Real.maxFinite))=EQUAL then ((mybp, mybptoken), maxprob) else ((maxbp, maxtoken), maxprob)
                                     end
                                   val (mymax, mymaxprob) = 
@@ -1204,15 +1212,16 @@ val _ = print "forward done\n"
                                       in 
                                         minusOne (List.length ilist-1)
                                       end
+                  fun printilist i = print ((Int.toString i)^" ")
                 in
-                  case IntListTable.find(table1, myilist) of
-                      NONE => (print "6\n"; raise ViterbiError)
+                  case IntListTable.find(table1, ilist) of
+                      NONE => (print "6: "; List.app printilist ilist; print "\n"; raise ViterbiError)
                     | SOME table2 =>
                            case BasicViterbiTable.find(table2, (beginp, btoken)) of
                                NONE => (print "7\n"; raise ViterbiError) 
                              | SOME (newpre, newprob) => 
                                   case newpre of
-                                      NONE => if beginp=1 then [((btoken, String.substring(s, beginp, endp-beginp+1)), mkLoc beginp endp recNo recNo)]
+                                      NONE => if beginp=sbegin then [((btoken, String.substring(s, beginp, endp-beginp+1)), mkLoc beginp endp recNo recNo)]
                                               else (print "8\n"; raise ViterbiError)
                                     | SOME (newprep, newpret) =>
                                         let

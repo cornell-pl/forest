@@ -488,7 +488,7 @@ val _ = print s1
             end
           fun dumpInitProbSmooth path t = 
             let
-	          val strm = TextIO.openOut (path^"InitProb")
+	          val strm = TextIO.openOut (path^"InitProbSmooth")
               val outlist = BTokenTable.listItemsi t (*table4*)
               fun sumAll ((bt, i), ret) = ret+i
               val sum = List.foldl sumAll 0 outlist
@@ -509,7 +509,7 @@ val _ = print s1
             end
           fun dumpTransProbSmooth path t1 t2 = 
             let
-	          val strm = TextIO.openOut (path^"TransProb")
+	          val strm = TextIO.openOut (path^"TransProbSmooth")
               val wholelist = BTokenMapF.listItemsi btokentable
               val tnum = List.length wholelist
               fun output ((bt1, s1), retlist) = 
@@ -533,7 +533,7 @@ val _ = print s1
             end
           fun dumpEmitProbSmooth path t1 t3 = 
             let
-	          val strm = TextIO.openOut (path^"EmitProb")
+	          val strm = TextIO.openOut (path^"EmitProbSmooth")
 (*
               fun constrList i =
                 let
@@ -593,7 +593,7 @@ val _ = print s1
             end
           fun dumpEmitProbSmoothChar path t1 t3 = 
             let
-	          val strm = TextIO.openOut (path^"EmitProb")
+	          val strm = TextIO.openOut (path^"EmitProbSmooth")
               fun constrList i =
                   if i = Char.maxOrd then [i]
                   else i::(constrList (i+1))
@@ -621,7 +621,7 @@ val _ = print s1
             end
           fun dumpEndProbSmooth path t = 
             let
-	          val strm = TextIO.openOut (path^"EndProb")
+	          val strm = TextIO.openOut (path^"EndProbSmooth")
               val outlist = BTokenTable.listItemsi t (*table5*)
               fun sumAll ((bt, i), ret) = ret+i
               val sum = List.foldl sumAll 0 outlist
@@ -1273,10 +1273,76 @@ val _ = print s1
     fun readinHMM path = 
       let
         val tokentable = readTokenName path
+        val begintokenlist = if Real.compare(!lambda, 0.0)=EQUAL then readOneListTable (path^"InitProb") else readOneListTable (path^"InitProbSmooth")   
+        val endtokenlist = if Real.compare(!lambda, 0.0)=EQUAL then readOneListTable (path^"EndProb") else readOneListTable (path^"EndProbSmooth")
+        val tokenpairlist = if Real.compare(!lambda, 0.0)=EQUAL then readTwoListsTable (path^"TransProb") else readTwoListsTable (path^"TransProbSmooth")
+        val listtokenlist = if Real.compare(!lambda, 0.0)=EQUAL then readTwoListsTable (path^"EmitProb") else readTwoListsTable (path^"EmitProbSmooth")
+        fun updateInitTable i = 
+          if i=0 then BTokenTable.insert(BTokenTable.empty, Option.valOf(IntMap.find(tokentable, i)), List.nth(begintokenlist, i))
+          else
+            let
+              val oldtable = updateInitTable (i-1)
+            in
+              BTokenTable.insert(oldtable, Option.valOf(IntMap.find(tokentable, i)), List.nth(begintokenlist, i))
+            end
+        val begintokentable = updateInitTable ((List.length begintokenlist)-1)
+        fun updateEndTable i = 
+          if i=0 then BTokenTable.insert(BTokenTable.empty, Option.valOf(IntMap.find(tokentable, i)), List.nth(endtokenlist, i))
+          else
+            let
+              val oldtable = updateEndTable (i-1)
+            in
+              BTokenTable.insert(oldtable, Option.valOf(IntMap.find(tokentable, i)), List.nth(endtokenlist, i))
+            end
+        val endtokentable = updateEndTable ((List.length endtokenlist)-1)
+        fun updateTransTable i =
+          let
+            val oldtable = if i=0 then BTokenPairTable.empty
+                           else updateTransTable (i-1)
+            val lefttoken = Option.valOf(IntMap.find(tokentable, i))
+            val ilist = List.nth(tokenpairlist, i)
+            fun doOne j oldtable1 = 
+              let
+                val oldtable2 = if j=0 then oldtable1
+                                else doOne (j-1) oldtable1 
+                val righttoken = Option.valOf(IntMap.find(tokentable, j))
+              in
+                BTokenPairTable.insert(oldtable2, (lefttoken, righttoken), List.nth(ilist, j))
+              end
+          in
+            doOne ((List.length ilist)-1) oldtable
+          end
+        val tokenpairtable = updateTransTable ((List.length tokenpairlist)-1)
+        fun updateEmitTable i = (* no character option *)
+          let
+            val oldtable = if i=0 then ListBTokenPairTable.empty
+                           else updateEmitTable (i-1)
+            val left = intToList i
+            val ilist = List.nth(listtokenlist, i)
+            fun doOne j oldtable1 = 
+              let
+                val oldtable2 = if j=0 then oldtable1
+                                else doOne (j-1) oldtable1 
+                val right = Option.valOf(IntMap.find(tokentable, j))
+              in
+                ListBTokenPairTable.insert(oldtable2, (left, right), List.nth(ilist, j))
+              end
+          in
+            doOne ((List.length ilist)-1) oldtable
+          end
+        val listtokentable = updateEmitTable ((List.length listtokenlist)-1)
+      in
+        (tokentable, begintokentable, endtokentable, tokenpairtable, listtokentable)
+      end
+
+    fun readinHMM_smooth path = 
+      let
+        val tokentable = readTokenName path
         val begintokenlist = readOneListTable (path^"InitProb")
         val endtokenlist = readOneListTable (path^"EndProb")
         val tokenpairlist = readTwoListsTable (path^"TransProb")
         val listtokenlist = readTwoListsTable (path^"EmitProb")
+        val tokennum = IntMap.numItems tokentable
         fun updateInitTable i = 
           if i=0 then BTokenTable.insert(BTokenTable.empty, Option.valOf(IntMap.find(tokentable, i)), List.nth(begintokenlist, i))
           else

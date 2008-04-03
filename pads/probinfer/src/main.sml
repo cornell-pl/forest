@@ -122,9 +122,8 @@ print token *)
               val _ = print "testingRun\n"
               val end1Times = zeroEndingTimes ()
               val end2Times = updateStart (Time.now()) end1Times
-              val ty = computeProbStructure ( !srcFiles )
+              val (ty, end3Times) = computeProbStructure ( !srcFiles ) end2Times
               val _ = Printing.dumpNewTy (!outputDir^"BeforeRefine.NewTy") ty
-              val end3Times = updateTokenEnd (Time.now()) end2Times
               val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.newrun end3Times ty
               val computeTimes = getComputeTimes end4Times
@@ -147,9 +146,9 @@ print token *)
               val _ = print "testingRun\n"
               val end1Times = zeroEndingTimes ()
               val end2Times = updateStart (Time.now()) end1Times
-              val ty = removePPempty(computeProbStructure_HMMonly ( !srcFiles ))
+              val (ty, end3Times) = computeProbStructure_HMMonly ( !srcFiles ) end2Times
+(*              val ty = removePPempty(ty) *)
               val _ = Printing.dumpNewTy (!outputDir^"BeforeRefine.HMMTy") ty
-              val end3Times = updateTokenEnd (Time.now()) end2Times
               val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.newrun end3Times ty
               val computeTimes = getComputeTimes end4Times
@@ -168,10 +167,9 @@ print token *)
 
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
-                val (ty,sep)     = computeStructure ( !srcFiles )
+                val (ty,sep, end3Times)     = computeStructure ( !srcFiles ) end2Times
 (*		val _ 		 = printTy (measure ty) *)
                 val _ = Printing.dumpTy (!outputDir^"BeforeRefine.OldTy") ty
-                val end3Times    = updateTokenEnd ( Time.now () ) end2Times
                 val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.run end3Times ty
                 val computeTimes = getComputeTimes end4Times

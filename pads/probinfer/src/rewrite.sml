@@ -85,6 +85,7 @@ let
 *)
   val endingTimes : EndingTimes = { start       = #start et
                                   , tokenEnd    = #tokenEnd et
+                                  , structEnd   = #structEnd et
                                   , measure1End = measured1_time
                                   , reduce1End  = reduce1_time
                                   , reduce2End  = reduce2_time
@@ -175,6 +176,7 @@ let
   val _ =  print ("new total comp = "^ (showComp rawcomp') ^"\n");
 *)
   val endingTimes : EndingTimes = { start       = #start et
+                                  , structEnd   = #structEnd et
                                   , tokenEnd    = #tokenEnd et
                                   , measure1End = measured1_time
                                   , reduce1End  = reduce1_time

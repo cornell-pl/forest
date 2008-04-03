@@ -1541,7 +1541,7 @@ struct
 (* if filenames contains just one file, the whole file is the data source which
 contains multiple records; if filenames contains more than one file, every
 file is a record and all of them collectively represent a sample data *)
-    fun computeStructure fileNames = 
+    fun computeStructure fileNames endingtimes = 
 	let val recordNumber = ref 0
 	    val () = print ("Starting on files "^(lconcat fileNames)^"\n");
 	    val records = loadFiles fileNames
@@ -1551,12 +1551,14 @@ file is a record and all of them collectively represent a sample data *)
 (*
 	    val _ = print (contextsToString rtokens)
 *)
-            val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
+        val end2Times    = Times.updateTokenEnd ( Time.now () ) endingtimes
+        val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = if print_verbose = true then lengthsToHist rtokens else ()
 	    val ty = ContextListToTy 0 rtokens
 	    val sty = simplifyTy ty
+        val end3Times    = Times.updateStructEnd ( Time.now () ) end2Times
 	in
-	    (sty, separator)
+	    (sty, separator, end3Times)
 	end
 
 

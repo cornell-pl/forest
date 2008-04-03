@@ -1661,7 +1661,6 @@ val _ = printColumn cl
 *)	
 		        fun doPartition pTable = 
 			      let
-val _ = print "i'm here\n"
                     val initTList : BSToken list list = List.map initToken ssl
                     fun countOne (bsl, iTable) = 
                       let
@@ -1996,7 +1995,7 @@ val _ = print "seqset to list done.\n"
 	end
 *)
 
-    fun computeProbStructure fileName : NewTy = 
+    fun computeProbStructure fileName endingtimes : NewTy * Times.EndingTimes = 
 	let val recordNumber = ref 0
 	    val () = print ("Starting on file "^(lconcat fileName)^"\n");
 	    val records = loadFiles fileName  (* records: string list *)
@@ -2004,6 +2003,7 @@ val _ = print "seqset to list done.\n"
         val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
         val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
         val rtokens : Seqset list = List.map (pathGraph recordNumber dfatable) records
+        val end2Times = Times.updateTokenEnd (Time.now()) endingtimes
         val hmmtables = readinHMM "training/"
 val _ = print "path graph done.\n"
         val newty = SeqsetListToTy 0 rtokens hmmtables
@@ -2012,8 +2012,9 @@ val _ = print "seqset to list done.\n"
 	    (* val () = if print_verbose = true then lengthsToHist rtokens else () *)
 	    (* val ty = SeqsetListToTy 0 rtokens *)
 	    val snewty = simplifyNewTy newty
+        val end3Times = Times.updateStructEnd (Time.now()) end2Times
 	in
-	    snewty
+	    (snewty, end3Times)
 	end
 
     fun examHmmResultPre fileName  = 
@@ -2216,7 +2217,7 @@ val _ = print "seqset to list done.\n"
       evaluate bsll1 bsll2
 	end
 
-    fun computeProbStructure_HMMonly fileName : NewTy = 
+    fun computeProbStructure_HMMonly fileName endingtimes: NewTy * Times.EndingTimes = 
 	let
         val records = loadFiles fileName
 	    val tokenss = loadFile "testing/output" 
@@ -2282,10 +2283,12 @@ val _ = print "seqset to list done.\n"
             retcl
           end
         val rtokens : NewContext list = addFakeProb bsll2
+        val end2Times = Times.updateTokenEnd (Time.now()) endingtimes
         val newty = SeqsetListToTy_HMM 0 rtokens 
         val snewty = simplifyNewTy newty
+        val end3Times = Times.updateStructEnd (Time.now()) end2Times
 	in
-      snewty
+      (snewty, end3Times)
 	end
 
     fun evaluateVanillaResult fileName  = 
