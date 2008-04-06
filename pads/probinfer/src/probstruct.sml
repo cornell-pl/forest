@@ -1407,6 +1407,7 @@ val _ = print ("matches num: "^(Int.toString(List.length matches))^"\n")
 
     fun columnToLocations (cl: NewContext list) : location list =
       let
+val _ = print "columnToLocations\n"
         (* pay attention to the PPempty *)
         fun cvtOne (nc: NewContext) = 
           let
@@ -1418,7 +1419,7 @@ val _ = print ("matches num: "^(Int.toString(List.length matches))^"\n")
                    let
                      val ((b2, s2), l2) = List.nth(nc, (List.length nc)-1)
                      val {lineNo = ln2, beginloc = bl2, endloc = el2, recNo = rn2} = l2
-val _ = print ("newbegin: "^(Int.toString bl2)^" newend: "^(Int.toString el2)^"\n")
+val _ = print ("recNo = "^(Int.toString rn1)^" lineNo = "^(Int.toString ln1)^" newbegin: "^(Int.toString bl1)^" newend: "^(Int.toString el2)^"\n")
                    in
                      {lineNo = ln1, beginloc = bl1, endloc = el2, recNo = rn1}
                    end
@@ -1525,12 +1526,80 @@ val _ = print ("newbegin: "^(Int.toString bl2)^" newend: "^(Int.toString el2)^"\
                      val locList = columnToLocations cl
 val _ = printColumn cl
 (*val _ = printColumnString cl*)
-                     val locTable = locList2locTable locList
+(*                   val locTable = locList2locTable locList*)
 (*val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")*)
 (*val _ = List.app printSSLoc ssl*)
 (*val _ = (print "Before chopping seqset list: "; List.app printlist ssl; print "\n") *)
 
-                     val newSSL = chopSeqsets ssl locTable
+                     val newSSL = chopSeqsets_notarray ssl locList
+(*val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") *)
+                   in 
+                     if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl
+                     else SeqsetListToTy (currentDepth + 1) newSSL tables
+                   end
+                 )
+	end
+
+    and mkTBD_array (callsite, currentDepth, coverage, cl, ssl, tables) = 
+        (* Columns that have some empty rows must have the empty list representation
+           of the empty row converted to the [Pempty] token.  Otherwise, a column
+           that is either empty or some value gets silently converted to the value only. *)
+	let
+ 
+       fun cnvEmptyRowsToPempty [] = [((PPempty, ""),{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
+              | cnvEmptyRowsToPempty l  = l
+	    val cl = List.map cnvEmptyRowsToPempty cl
+(*
+        (* assume colomn is in order *)
+        fun cnvEmptyRowsToPempty i =
+          if i=0 then []
+          else
+            let
+              val old = cnvEmptyRowsToPempty (i-1)
+              val l = List.nth(cl, i-1)
+            in
+              case l of
+                 [] => old@[[((PPempty, ""),{lineNo= i-1, beginloc=0, endloc=0, recNo=i-1})]]
+                |_ => old@[l]
+            end
+        val cl = cnvEmptyRowsToPempty (List.length cl)
+*)
+            fun allEmpty cl =
+		let fun isNonEmpty [((PPempty, _),_)] = false
+		      | isNonEmpty _ = true
+		in
+		    ((*print "Checking for an allempty context\n";*)
+		    not(Option.isSome(List.find isNonEmpty cl))
+		     )
+		end
+	    (*val cl = crackUniformGroups cl*)  (* ignore groups now *)
+	in
+	    if allEmpty cl then PPBase(mkTyAux coverage, List.concat cl)
+	    else if (coverage < isNoiseTolerance(!initialRecordCount))
+		 then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
+	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
+                 then PPTBD ( { coverage=coverage
+                            , label=SOME(mkTBDLabel (!TBDstamp))
+                            , tycomp = zeroComps
+                            }
+                          , !TBDstamp
+                          , cl
+                          ) before TBDstamp := !TBDstamp    + 1
+                 else (
+                   if (List.length ssl) = 0 then 
+                     if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl 
+                     else SeqsetListToTy (currentDepth + 1) [] tables
+                   else
+                   let
+                     val locList = columnToLocations cl
+val _ = printColumn cl
+(*val _ = printColumnString cl*)
+(*                   val locTable = locList2locTable locList*)
+(*val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")*)
+(*val _ = List.app printSSLoc ssl*)
+(*val _ = (print "Before chopping seqset list: "; List.app printlist ssl; print "\n") *)
+
+                     val newSSL = chopSeqsets ssl locList
 (*val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") *)
                    in 
                      if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl
@@ -1593,12 +1662,12 @@ val _ = printColumn cl
                      val locList = columnToLocations cl
 val _ = printColumn cl
 (*val _ = printColumnString cl*)
-                     val locTable = locList2locTable locList
+(*                   val locTable = locList2locTable locList*)
 (*val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")*)
 (*val _ = List.app printSSLoc ssl*)
 (*val _ = (print "Before chopping seqset list: "; List.app printlist ssl; print "\n") *)
 
-                     val newSSL = chopSeqsets ssl locTable
+                     val newSSL = chopSeqsets ssl locList
 (*val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") *)
                    in 
                      if ( !hmmtokenize = true ) then SeqsetListToTy_HMM (currentDepth + 1) cl
@@ -1651,15 +1720,15 @@ val _ = printColumn cl
                     (* allEmpty handles the case where all chunks are the empty chunk *)
 		        fun allEmpty () = PPBase(mkTyAux numRecords, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})])
 		    (* doPartition handles the case where the chunks did not all have the same initial token *)
-(*
+
 		        fun doPartition pTable = 
 			      let val items = BSTokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
 			        val tys = List.map (fn item => mkTBD(~11, curDepth, List.length (!item), List.rev (!item), ssl, tables) ) items
 			      in
 			        PPunion(mkTyAux numRecords, tys)
 			      end
-*)	
-		        fun doPartition pTable = 
+
+		        fun doPartition2 pTable = 
 			      let
                     val initTList : BSToken list list = List.map initToken ssl
                     fun countOne (bsl, iTable) = 
@@ -1689,21 +1758,24 @@ val _ = printColumn cl
 val _ = print ("initt: "^(BTokenToName(#1 initt))^"\n")
 val _ = print (newcontextsToString newrtokens)
                       in
-                        if BSTokenTable.numItems(newpTable) = 1 then myallSame newrtokens
-                        else raise ViterbiError2
+                        if BSTokenTable.numItems(newpTable) = 1 then (* PPblob? *)
+                          let
+                            val itokenlist = BSTokenTable.listItemsi(newpTable)
+                            fun isBlob [((btoken, s), count)] = (compBToken(btoken, PPblob)=EQUAL)
+                          in
+                            if isBlob itokenlist then doPartition pTable
+                            else myallSame newrtokens
+                          end
+                        else  doPartition pTable (* this is the case when the initT is not an appropriate one *)
                       end
                     else
-			      let val items = BSTokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
-			        val tys = List.map (fn item => mkTBD(~11, curDepth, List.length (!item), List.rev (!item), ssl, tables) ) items
-			      in
-			        PPunion(mkTyAux numRecords, tys)
-			      end
+                      doPartition pTable
                   end
 		in
 		        if BSTokenTable.numItems(pTable) = 1 
 			      then if BSTokenTable.inDomain(pTable, (PPempty, "")) then allEmpty () 
 			      else allSame rtokens
-                else doPartition pTable
+                else doPartition2 pTable
 		end
 
 
@@ -1897,7 +1969,7 @@ val _ = print (newcontextsToString newrtokens)
 			     {tokens  = atokens, 
 			      lengths = arrayLengths,
 			      first   = mkTBD(~5, curDepth, List.length firstContext, firstContext, ssl, tables),
-			      body    = mkTBD(~6, curDepth, List.length mainContext, mainContext, ssl, tables),
+			      body    = mkTBD_array(~6, curDepth, List.length mainContext, mainContext, ssl, tables),
 			      last    = mkTBD(~7, curDepth, List.length lastContext, lastContext, ssl, tables)}))
 		end
 

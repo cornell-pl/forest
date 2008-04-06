@@ -171,11 +171,12 @@ structure Probmodel = struct
                   | PPurl             => mkBaseComp avglen totlen numStringChars
                   | PPurlbody             => mkBaseComp avglen totlen numStringChars
                   | PPemail             => mkBaseComp avglen totlen numStringChars
-                  | PPword             => mkBaseComp avglen totlen numStringChars
-                  | PPid             => mkBaseComp avglen totlen numStringChars
+                  | PPword             => mkBaseComp avglen totlen numWordChars
+                  | PPhstring             => mkBaseComp avglen totlen numHexChars
+                  | PPid             => mkBaseComp avglen totlen numIdChars
                   | PPmessage             => mkBaseComp avglen totlen numStringChars
-                  | PPtext             => mkBaseComp avglen totlen numStringChars
-                  | PPpermission             => mkBaseComp avglen totlen numStringChars
+                  | PPtext             => mkBaseComp avglen totlen numTextChars
+                  | PPpermission             => mkBaseComp avglen totlen numPermissionChars
                   | PPmac            => mkBaseComp avglen totlen numHexChars
                   | PPip              => mkBaseComp avglen totlen numIPTriplet
                   | PPhostname        => mkBaseComp avglen totlen numStringChars
@@ -192,7 +193,7 @@ structure Probmodel = struct
                                          , dc  = zeroComp
                                          }
                   | PPblob             => mkBaseComp avglen totlen numStringChars
-                  | PPpunc c             => mkBaseComp avglen totlen numOtherChars
+                  | PPpunc c             => mkBaseComp avglen totlen 0 (*numPuncChars*)
                   | PPError             => { tc  = constructorComp
                                          , adc = unitComp
                                          , dc  = unitComp

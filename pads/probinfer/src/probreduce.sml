@@ -15,6 +15,7 @@ fun refineableBase (token, s) =
 	  PPbXML => true
 	| PPeXML => true
 	| PPint => true
+    | PPfloat => true
 	| PPwhite => true
 	| PPblob => true
 	| _ => false
@@ -25,6 +26,7 @@ fun enumerableBase (token, s) =
 	| PPeXML => true
 	| PPint => true
     | PPword => true
+    | PPhstring => true
     | PPtext => true
     | PPpermission => true
     | PPid => true
@@ -1026,6 +1028,12 @@ case ty of
 				PPRefinedBase((mkTyAux1(coverage, id)), 
 				StringConst(x), tokens)
 			)
+		| SOME((PPhstring, x)) => 
+			(
+				newcmos, 
+				PPRefinedBase((mkTyAux1(coverage, id)), 
+				StringConst(x), tokens)
+			)
 		| SOME((PPid, x)) => 
 			(
 				newcmos, 
@@ -1072,6 +1080,8 @@ case ty of
 							else existsbase(tail, id)
 			| PPRefinedBase(a, (Int _), _)::tail => if Atom.same(id, getLabel(a)) then true
 							else existsbase(tail, id)
+(*			| PPRefinedBase(a, (Float _), _)::tail => if Atom.same(id, getLabel(a)) then true
+							else existsbase(tail, id) *)
 			| PPRefinedBase(a, (Enum _), _)::tail => if Atom.same(id, getLabel(a)) then true
 							else existsbase(tail, id)
 			| ty::tail => if (Atom.same(getLabel(getNAuxInfo(ty)), id)) then false

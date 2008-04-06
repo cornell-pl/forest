@@ -92,6 +92,7 @@ struct
 
     datatype Refined = StringME of string
 	             | Int of LargeInt.int * LargeInt.int  (* min, max *)
+(*                 | Float of string * string *)
 	             | IntConst of LargeInt.int    (* value *)
 		     | FloatConst of string * string (*value*)
                      | StringConst of string (* string literal *)

@@ -141,7 +141,7 @@ structure Printing = struct
 	    (topName, headerName, bodyName, footerName)
 	end
 (*
-    fun dumpNewPADSdesc (padscFile:string) (padsmlFile:string) 
+    fun newdumpPADSdesc (padscFile:string) (padsmlFile:string) 
 		(ty:NewTy) (numHeaders:int) (numFooters:int) : (string*string*string*string) = 
 	let val strmc = TextIO.openOut padscFile
 	    val strmml = TextIO.openOut padsmlFile
@@ -151,8 +151,8 @@ structure Printing = struct
 	    val () = print pads
 *)
             val (topName, headerName, bodyName, footerName, desc) = 
-		tyToPADSC ty numHeaders numFooters ((!lexName)^".p")
-            val descml = tyToPADSML ty numHeaders numFooters ("Build_ins")
+		newtyToPADSC ty numHeaders numFooters ((!lexName)^".p")
+            val descml = newtyToPADSML ty numHeaders numFooters ("Build_ins")
             val () = TextIO.output(strmc,desc )
             val () = TextIO.output(strmml, descml )
 	    val () = TextIO.closeOut strmc
@@ -161,6 +161,7 @@ structure Printing = struct
 	    (topName, headerName, bodyName, footerName)
 	end
 *)
+
     fun dumpAccumProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName:string) : unit = 
 	let val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
 	    val trlDecl = if trlName = "" then "" else "#define PADS_TRL_TY(suf) "^trlName^" ## suf\n"

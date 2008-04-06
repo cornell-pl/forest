@@ -45,6 +45,7 @@ struct
       else if String.isSubstring "urlbody" s then PPurlbody
       else if String.isSubstring "url" s then PPurl  (* although url is a substring of urlbody, if the above case is true, we won't branch here *)
       else if String.isSubstring "word" s then PPword
+      else if String.isSubstring "hstring" s then PPhstring
       else if String.isSubstring "id" s then PPid
       else if String.isSubstring "bXML" s then PPbXML
       else if String.isSubstring "eXML" s then PPeXML
@@ -211,8 +212,10 @@ val (s1, s2) = List.nth ((List.foldl constrOneToken [] d), 0)
 val _ = print s1 
 *)
             val (revtable, retag) = List.foldl constrOneToken ([], [0]) d     
+            val mylist = if List.length(revtable) = 0 then []
+                         else List.rev(revtable)
           in
-            List.rev(revtable)
+            mylist
           end
       in
         List.map constrOneRecord splitd
@@ -265,8 +268,10 @@ val _ = print s1
                       )
                 )
               end
+            val mytable = if List.length(tslist) = 0 then btokentable 
+                          else List.foldl countOneToken btokentable tslist
           in
-            List.foldl countOneToken btokentable tslist
+            mytable
           end
       in
         List.foldl countOne inittable l
@@ -313,9 +318,11 @@ val _ = print s1
                       )
                 ))
               end
-            val (junk, tableret) = List.foldl countOneToken (NONE, btokenpairtable) tslist
+(*            val (junk, tableret) = *)
+            val mytable = if List.length(tslist) = 0 then btokenpairtable 
+                          else #2(List.foldl countOneToken (NONE, btokenpairtable) tslist)
           in
-            tableret
+(*          tableret*) mytable
           end
       in
         List.foldl countOne inittable l
@@ -324,6 +331,8 @@ val _ = print s1
     fun constrBeginTokenTable l inittable= 
       let
         fun countOne (tslist, btokentable) = 
+          if List.length(tslist) = 0 then btokentable
+          else
           let
 (*            val _ = if List.length tslist = 0 then print "Error\n" else () *)
             val (first, str) = List.nth(tslist, 0)
@@ -345,7 +354,9 @@ val _ = print s1
 
     fun constrEndTokenTable l inittable = 
       let
-        fun countOne (tslist, btokentable) = 
+        fun countOne (tslist, btokentable) =
+          if List.length(tslist) = 0 then btokentable 
+          else 
           let
             val (last, str) = List.nth(tslist, (List.length tslist)-1)
             val pre = BTokenTable.find(btokentable, last)
@@ -367,6 +378,8 @@ val _ = print s1
     fun constrListTokenTable l inittable = 
       let
         fun countOne (tslist, btokentable) = 
+          if List.length(tslist) = 0 then btokentable 
+          else 
           let
             fun countOneToken ((btoken, str), btt) =
               let
@@ -397,6 +410,8 @@ val _ = print s1
     fun constrCharTokenTable l inittable = 
       let
         fun countOne (tslist, btokentable) = 
+          if List.length(tslist) = 0 then btokentable 
+          else 
           let
             fun countOneToken ((btoken, str), btt) =
               let
@@ -1680,7 +1695,7 @@ val _ = print ("line "^(Int.toString r1)^" found.\n")
         if ( !character = true ) then  computeProbChar rnoprob else computeProb rnoprob
       end
 *)
-
+(*
     fun chopSeqsets (ssl: Seqset list) lt : Seqset list = 
       let
 (*val _ = print "Chopping...\n"*)
@@ -1753,6 +1768,184 @@ val _ = print ("line "^(Int.toString r1)^" found.\n")
                   end
           end
         val rnoprob = List.foldl chopOneSS init ssl
+      in
+        rnoprob
+      end
+*)
+
+   fun comp2int ((t11, t12), (t21, t22)) =
+     case Int.compare(t11, t21) of
+         LESS => LESS
+       | GREATER => GREATER
+       | EQUAL => Int.compare(t12, t22)
+
+   structure DoubleIntMap = RedBlackMapFn(
+     struct 
+       type ord_key = int * int
+	   val compare = comp2int
+	 end
+   ) 
+
+(* use lineNo as index maybe problemetic, what if calling chopSeqsets inside an array? *)
+    exception LocationNotExists
+    fun chopSeqsets (ssl: Seqset list) ll : Seqset list = 
+      let
+(*val _ = print "Chopping...\n"*)
+(*val _ = print ("chop "^(Int.toString (List.length ssl))^" seqsets.\n")*)
+        fun ssl2sst (ss as (endptable, s, lineNo, recNo, sbegin, send), oldtable) = IntMap.insert(oldtable, lineNo, ss)
+        val sst = List.foldl ssl2sst IntMap.empty ssl
+        fun chopOneChunk (thisloc : location, result: Seqset list) = (* chop one location *)
+          let 
+            val {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisl} = thisloc
+          in
+            if thisb = ~1 orelse thise = ~1 then  [(PosBTokenTable.insert(PosBTokenTable.empty, ~1, [(~1, PPempty)]), "", thisl, thisr, ~1, ~1)]@result
+            else
+            case IntMap.find(sst, thisl) of
+                NONE => (print ("lineNo = "^(Int.toString thisl)^" recNo = "^(Int.toString thisr)^" ssl doesn't exist. "^(Int.toString (List.length ssl))^" number of seqsets in total"^"\n"); raise LocationNotExists)
+              | SOME ss  =>
+                  let
+val _ = print ("recNo = "^(Int.toString thisl)^"\n")
+                    val (endptable, s, lineNo, recNo, sbegin, send) = ss
+                  in
+                    if thisb = sbegin andalso thise = send then result@[ss]
+                    else
+                    let
+                    fun cutOutBound endptable = 
+                      let
+                        val endplist = PosBTokenTable.listItemsi endptable
+                        fun doOne ((endp, bplist), oldendptable) =
+                          if endp < thisb orelse endp > thise then oldendptable
+                          else 
+                            let
+                              fun cutOne ((beginp, btoken), oldlist) =
+                                if (beginp < thisb orelse beginp > thise) then oldlist
+                                else (beginp, btoken)::oldlist
+                              val newbplist = List.foldl cutOne [] bplist
+                            in
+                              case newbplist of
+                                  [] => oldendptable
+                                | _ => PosBTokenTable.insert(oldendptable, endp, newbplist)
+                            end
+                      in
+                        List.foldl doOne PosBTokenTable.empty endplist
+                      end
+                    val hendptable = cutOutBound endptable
+                    fun deleteDeadEnd endptable1 = 
+                      let
+                        val endplist = PosBTokenTable.listItemsi endptable1
+                        fun doOne ((endp, bplist), oldbeginptable) =
+                          let
+                            fun collectOne ((beginp, btoken), oldbeginptable1) =
+                              case PosBTokenTable.find(oldbeginptable1, beginp) of
+                                  NONE => PosBTokenTable.insert(oldbeginptable1, beginp, true)
+                                | SOME tag => oldbeginptable1
+                          in
+                            List.foldl collectOne oldbeginptable bplist
+                          end
+                        val beginptable = List.foldl doOne (PosBTokenTable.insert(PosBTokenTable.empty, (thise+1), true)) endplist
+                        fun deleteOne ((endp, bplist), (tag, oldendptable)) = 
+                          case PosBTokenTable.find(beginptable, endp+1) of
+                              NONE => (0, #1(PosBTokenTable.remove(oldendptable, endp)))
+                            | SOME t => (tag, oldendptable)
+                        val (mytag, mynewendptable) = List.foldl deleteOne (1, endptable1) endplist (* may have redundant (beginp, btoken) *)
+                        val newendptable = if mytag = 0 then deleteDeadEnd mynewendptable
+                                           else mynewendptable
+                      in
+                        newendptable
+                      end
+                    val retseqset = ((deleteDeadEnd hendptable), s, thisl, thisr, thisb, thise)
+val _ = print "original seqset:\n"
+val _ = printSeqset ss
+val _ = print "chopped seqset:\n"
+val _ = printSeqset retseqset
+val _ = print "\n"
+                  in
+                    result@[retseqset]
+                  end
+                  end
+          end
+        val rnoprob = List.foldl chopOneChunk [] ll
+      in
+        rnoprob
+      end
+
+    fun chopSeqsets_notarray (ssl: Seqset list) ll : Seqset list = 
+      let
+(*val _ = print "Chopping...\n"*)
+(*val _ = print ("chop "^(Int.toString (List.length ssl))^" seqsets.\n")*)
+        fun ssl2sst (ss as (endptable, s, lineNo, recNo, sbegin, send), oldtable) = DoubleIntMap.insert(oldtable, (lineNo, recNo), ss)
+        val sst = List.foldl ssl2sst DoubleIntMap.empty ssl
+        fun chopOneChunk (thisloc : location, result: Seqset list) = (* chop one location *)
+          let 
+            val {beginloc=thisb, endloc=thise, recNo=thisr, lineNo=thisl} = thisloc
+          in
+            if thisb = ~1 orelse thise = ~1 then  [(PosBTokenTable.insert(PosBTokenTable.empty, ~1, [(~1, PPempty)]), "", thisl, thisr, ~1, ~1)]@result
+            else
+            case DoubleIntMap.find(sst, (thisl, thisr)) of
+                NONE => (print ("lineNo = "^(Int.toString thisl)^" recNo = "^(Int.toString thisr)^" ssl doesn't exist. "^(Int.toString (List.length ssl))^" number of seqsets in total"^"\n"); raise LocationNotExists)
+              | SOME ss  =>
+                  let
+val _ = print ("recNo = "^(Int.toString thisl)^"\n")
+                    val (endptable, s, lineNo, recNo, sbegin, send) = ss
+                  in
+                    if thisb = sbegin andalso thise = send then result@[ss]
+                    else
+                    let
+                    fun cutOutBound endptable = 
+                      let
+                        val endplist = PosBTokenTable.listItemsi endptable
+                        fun doOne ((endp, bplist), oldendptable) =
+                          if endp < thisb orelse endp > thise then oldendptable
+                          else 
+                            let
+                              fun cutOne ((beginp, btoken), oldlist) =
+                                if (beginp < thisb orelse beginp > thise) then oldlist
+                                else (beginp, btoken)::oldlist
+                              val newbplist = List.foldl cutOne [] bplist
+                            in
+                              case newbplist of
+                                  [] => oldendptable
+                                | _ => PosBTokenTable.insert(oldendptable, endp, newbplist)
+                            end
+                      in
+                        List.foldl doOne PosBTokenTable.empty endplist
+                      end
+                    val hendptable = cutOutBound endptable
+                    fun deleteDeadEnd endptable1 = 
+                      let
+                        val endplist = PosBTokenTable.listItemsi endptable1
+                        fun doOne ((endp, bplist), oldbeginptable) =
+                          let
+                            fun collectOne ((beginp, btoken), oldbeginptable1) =
+                              case PosBTokenTable.find(oldbeginptable1, beginp) of
+                                  NONE => PosBTokenTable.insert(oldbeginptable1, beginp, true)
+                                | SOME tag => oldbeginptable1
+                          in
+                            List.foldl collectOne oldbeginptable bplist
+                          end
+                        val beginptable = List.foldl doOne (PosBTokenTable.insert(PosBTokenTable.empty, (thise+1), true)) endplist
+                        fun deleteOne ((endp, bplist), (tag, oldendptable)) = 
+                          case PosBTokenTable.find(beginptable, endp+1) of
+                              NONE => (0, #1(PosBTokenTable.remove(oldendptable, endp)))
+                            | SOME t => (tag, oldendptable)
+                        val (mytag, mynewendptable) = List.foldl deleteOne (1, endptable1) endplist (* may have redundant (beginp, btoken) *)
+                        val newendptable = if mytag = 0 then deleteDeadEnd mynewendptable
+                                           else mynewendptable
+                      in
+                        newendptable
+                      end
+                    val retseqset = ((deleteDeadEnd hendptable), s, lineNo, recNo, thisb, thise)
+val _ = print "original seqset:\n"
+val _ = printSeqset ss
+val _ = print "chopped seqset:\n"
+val _ = printSeqset retseqset
+val _ = print "\n"
+                  in
+                    result@[retseqset]
+                  end
+                  end
+          end
+        val rnoprob = List.foldl chopOneChunk [] ll
       in
         rnoprob
       end

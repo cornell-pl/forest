@@ -35,6 +35,12 @@ structure Tokens = struct
     val numHexChars    : LargeInt.int  = 10+6
     val numOtherChars  : LargeInt.int  = 256 - numStringChars - numWhiteChars
     val compXML        : Complexity    = int2Comp numXMLChars
+    val numWordChars   : LargeInt.int  = numAlphaChars + 2
+    val numIdChars     : LargeInt.int  = numAlphaChars + numDigits + 3
+    val numTextChars   : LargeInt.int  = numAlphaChars + numDigits + 6
+    val numPermissionChars : LargeInt.int = 4
+    val numPuncChars   : LargeInt.int  = 32
+
 
     (* Some analysis of the structure of tokens from tokens.lex: *)
     fun powerL ( x : LargeInt.int ) ( y : int ) : LargeInt.int =

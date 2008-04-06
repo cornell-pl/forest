@@ -127,7 +127,7 @@ print token *)
               val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.newrun end3Times ty
               val computeTimes = getComputeTimes end4Times
-              val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.NewTy") ty              
+              val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.NewTy") rewrittenTy              
               val ()           = Printing.dumpNewTyInfo (!outputDir)
 						       dataDir
                                                        dataFile
@@ -152,7 +152,7 @@ print token *)
               val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.newrun end3Times ty
               val computeTimes = getComputeTimes end4Times
-              val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.HMMTy") ty              
+              val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.HMMTy") rewrittenTy              
               val ()           = Printing.dumpNewTyInfo (!outputDir)
 						       dataDir
                                                        dataFile
@@ -173,7 +173,7 @@ print token *)
                 val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.run end3Times ty
                 val computeTimes = getComputeTimes end4Times
-                val _ = Printing.dumpTy (!outputDir^"AfterRefine.OldTy") ty
+                val _ = Printing.dumpTy (!outputDir^"AfterRefine.OldTy") rewrittenTy
                 val ()           = Printing.dumpTyInfo (!outputDir)
 						       dataDir
                                                        dataFile

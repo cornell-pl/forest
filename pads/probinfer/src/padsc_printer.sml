@@ -277,5 +277,117 @@ open Ast
 	  (topLabel, headerLabel, bodyLabel, footerLabel, pads)
 	end 
 
+(*
+     fun newtyToPADSC ty numHeaders numFooters includeFile =
+	(* assume that if a ty has header and footer, the body is just one single Ty*)
+	let
+	  val bodyLabel = 
+	    if numHeaders>0 orelse numFooters>0 then
+		case ty of
+		  PPunion (_, tys) => 
+		    let
+		      val body = List.nth (tys, numHeaders)
+		    in (tyNameToPADSCString (getTypeName body)) 
+		    end
+		  | _ => raise TyMismatch
+	    else
+		tyNameToPADSCString (
+		case ty of
+		  Base _ => getBaseTyName ty
+		| RefinedBase _ => getBaseTyName ty
+		| _ => getTypeName ty)
+	  val headerLabel = 
+	    if numHeaders = 0 then ""
+	    else if numHeaders = 1 then 
+		case ty of
+		  Punion (_, tys) => (tyNameToPADSCString (getTypeName (List.nth (tys, 0)))) 
+		  | _ => raise TyMismatch
+	    else "Header"
+	  val footerLabel = 
+	    if numFooters = 0 then ""
+	    else if numHeaders = 1 then 
+		case ty of
+		  Punion (_, tys) => (tyNameToPADSCString (getTypeName (List.nth (tys, (numHeaders+1))))) 
+		  | _ => raise TyMismatch
+	    else "Footer"
 
+	  val incString = "#include \""^ includeFile ^"\"\n" 
+	  val (pads, topLabel) =
+		(if numHeaders=0 andalso numFooters=0 then
+		    let val irTys = tyToIR true nil ty
+			val body = (lconcat (map irToPADSC irTys))
+		    in
+		       (incString ^
+			body ^
+			 "Psource Parray entries_t {\n" ^
+		    	 "\t" ^ bodyLabel ^ "[];\n" ^
+			 "};\n",
+			 "entries_t")
+		    end
+		else 
+		  case ty of 
+		    Punion (_, tys) =>
+		      if (numHeaders + numFooters + 1) <> length tys then
+			raise Fail "Header Footer incorrect!"
+		      else 
+			      let
+				val headers = List.take (tys, numHeaders)
+				val body = List.nth (tys, numHeaders)
+				val footers = List.drop (tys, (numHeaders+1))
+				val headerIRs = List.concat (map (tyToIR true nil) headers)
+				val bodyIRs = tyToIR true nil body
+				val footerIRs = List.concat (map (tyToIR true nil) footers) 
+				val l = getLabelString (getAuxInfo ty)
+	    			val topLabel = "Struct_" ^ (String.extract (l, 4, NONE))
+			      in
+			        (incString ^
+				 (case headerIRs of
+					nil => ""
+					| _ => (lconcat (map irToPADSC headerIRs)) 
+				 ) ^
+				(case headerIRs of
+					nil => ""
+					| [_] => ""
+					| _ => "Pstruct Header {\n" ^
+					  (String.concat (map 
+					  (fn t => ("\t" ^ tyNameToPADSCString (getTypeName t) ^ " " ^
+						getVar t ^ ";\n")) 
+					  headers)) ^ "};\n"
+				) ^
+				(lconcat (map irToPADSC bodyIRs)) ^
+				(case footerIRs of
+					nil => ""
+					| _ => (lconcat (map irToPADSC footerIRs))
+				) ^
+				(case footerIRs of
+					nil => ""
+					| [_] => ""
+					| _ => "Pstruct Footer {\n" ^
+					  (String.concat (map 
+					  (fn t => ("\t" ^ tyNameToPADSCString (getTypeName t) ^ " " ^
+						getVar t ^ ";\n")) 
+					  footers)) ^ "};\n"
+				) ^
+				"Psource Pstruct " ^ topLabel ^ " {\n" ^
+				(case headerIRs of
+					nil => ""
+					| [_] => "\t" ^ headerLabel ^ " " ^ getVar (hd headers) ^ ";\n"
+					| _ => "\tHeader v_header;\n"
+				) ^
+				("\t" ^ (tyNameToPADSCString (getTypeName body)) ^ 
+					"[] " ^ (getVar body) ^" : Plongest;\n") ^
+				(case footerIRs of 
+					nil => ""
+					| [_] => "\t" ^ footerLabel ^ " " ^ getVar (hd footers) ^ ";\n"
+					| _ => "\tFooter v_footer;\n"
+				) ^
+				"};\n",
+				topLabel)
+			      end
+		  | _ => raise TyMismatch
+		)
+	in
+	  (topLabel, headerLabel, bodyLabel, footerLabel, pads)
+	end 
+*)
 end

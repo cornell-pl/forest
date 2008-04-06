@@ -13,7 +13,7 @@ structure Basetokens = struct
            )
         end
 
-    datatype BToken = PPint | PPfloat | PPtime | PPdate | PPip | PPhostname | PPemail | PPmac | PPpath | PPurl | PPurlbody | PPword | PPid | PPbXML | PPeXML | PPwhite | PPmessage | PPtext | PPpermission | PPpunc of string | PPblob | PPempty | PPError(*| PPgroup of { left : BToken*string*location, body : (BToken*string*location) list, right : BToken*string*location } *) 
+    datatype BToken = PPint | PPfloat | PPtime | PPdate | PPip | PPhostname | PPemail | PPmac | PPpath | PPurl | PPurlbody | PPword | PPhstring | PPid | PPbXML | PPeXML | PPwhite | PPmessage | PPtext | PPpermission | PPpunc of string | PPblob | PPempty | PPError(*| PPgroup of { left : BToken*string*location, body : (BToken*string*location) list, right : BToken*string*location } *) 
 (*Pdot | Pslash | Pbackslash | Psemicolon | Pbar | Pless | Ptilde | Pbquote | Pbang | Pat | Phash | Pdollar | Ppercent | Pcaret | Pand | Pstar | Plpar | Prpar | Pdash | Punderscore | Pplus | Pequa | Plbrac | Prbrac | Plsqubrac | Prsqubrac | Pcolon | Pdquote | Pquote | Pgreater | Pcomma | Pquestion*)
 
     type BSToken = BToken * string
@@ -33,13 +33,13 @@ structure Basetokens = struct
 	  end
     ) 
 
-    type Seqset = (((int*BToken) list) PosBTokenTable.map) * string * int * int * int (* associated with recNo, beginp, endp *)
+    type Seqset = (((int*BToken) list) PosBTokenTable.map) * string * int * int * int * int (* associated with lineNo, recNo, beginp, endp *)
 
     fun getSeqset (l:int) (seqsetl: Seqset list) : Seqset = 
       let
         fun findLoc (ss:Seqset) = let 
-                                    val (graph, s, recNo, sb, se) = ss
-                                  in (recNo=l) end
+                                    val (graph, s, lineNo, recNo, sb, se) = ss
+                                  in (lineNo=l) end
       in
         Option.valOf(List.find findLoc seqsetl)
       end
@@ -206,7 +206,7 @@ structure Basetokens = struct
 
 
     (*    Establish an order on Token using the following constraints:
-          Ptime < Pdate < Pip < Pemail < Ppermission < Pmac < Pfloat < Pint < Phostname < Purl < Purlbody < Ppath < PbXML < PeXML  <  Pword < Pid < Ppunc < Pwhite < Ptext < Pmessage < Pblob < Pempty
+          Ptime < Pdate < Pip < Pemail < Ppermission < Pmac < Pfloat < Pint < Phostname < Purl < Purlbody < Ppath < PbXML < PeXML  <  Pword < Phstring < Pid < Ppunc < Pwhite < Ptext < Pmessage < Pblob < Pempty
      *)
 
 
@@ -224,15 +224,16 @@ structure Basetokens = struct
 	|  PPemail      => 4
 	|  PPmac      => 6
     |  PPword => 15
-    |  PPid => 16
+    |  PPhstring => 16
+    |  PPid => 17
     |  PPbXML  => 13
     |  PPeXML  => 14
-    |  PPwhite => 18
-    |  PPmessage => 20
-    |  PPtext => 19
+    |  PPwhite => 19
+    |  PPmessage => 21
+    |  PPtext => 20
     |  PPpermission => 5
-    |  PPpunc s => 17
-    |  PPblob => 21
+    |  PPpunc s => 18
+    |  PPblob => 23
     |  PPempty => 22
 
     fun BTokenCompleteEnum (t: BToken) : int =
@@ -249,14 +250,15 @@ structure Basetokens = struct
 	|  PPemail      => 4
 	|  PPmac      => 6
     |  PPword => 15
-    |  PPid => 16
+    |  PPhstring => 16
+    |  PPid => 17
     |  PPbXML  => 13
     |  PPeXML  => 14
-    |  PPwhite => 18
-    |  PPmessage => 20
-    |  PPtext => 19
+    |  PPwhite => 50
+    |  PPmessage => 52
+    |  PPtext => 51
     |  PPpermission => 5
-    |  PPpunc s => 17 + (
+    |  PPpunc s => 12 + (
          case s of
              "." => 6
            | "/" => 7
@@ -291,8 +293,8 @@ structure Basetokens = struct
            | "," => 36
            | "?" => 37
        )
-    |  PPblob => 21
-    |  PPempty => 22
+    |  PPblob => 54
+    |  PPempty => 53
 
 
     structure OrdBTokenTable = RedBlackMapFn(
@@ -419,6 +421,7 @@ structure Basetokens = struct
        , ( PPmessage, "\\\".+\\\"|[[].+[]]|[(].+[)]|[{].+[}]|.+\\?|:[^:]+")  (* slow *)
        , ( PPtext, "([\"'])[-A-Za-z0-9_,;. ]+([\"'])|[-A-Za-z0-9_,;. ]+")
        , ( PPpermission, "[-dl]([-r][-w][-xsStT]){3}")  
+       , ( PPhstring, "[0-9a-f]+")
        , ( PPpunc ".", "[.]")
        , ( PPpunc "/", "[/]")
        , ( PPpunc "\\", "[\\\\]") 
@@ -476,6 +479,7 @@ structure Basetokens = struct
 	|  PPemail      => "email"
 	|  PPmac      => "mac"
     |  PPword => "word"
+    |  PPhstring => "hstring"
     |  PPid => "id"
         |  PPbXML  => "bXML"
         |  PPeXML  => "eXML"
@@ -501,6 +505,7 @@ structure Basetokens = struct
 	|  "email" => PPemail     
 	|  "mac" => PPmac      
     |  "word" => PPword 
+    |  "hstring" => PPhstring
     |  "id" => PPid
     |  "bXML" => PPbXML
     |  "eXML" => PPeXML
@@ -685,6 +690,7 @@ structure Basetokens = struct
              | (PPpunc c, s) => 1
              | (PPword, s) => size s
              | (PPid, s) => size s
+             | (PPhstring, s) => size s
              | (PPmessage, s) => size s
              | (PPtext, s) => size s
              | (PPpermission, s) => size s (* can be compressed *)
