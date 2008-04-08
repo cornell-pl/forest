@@ -391,6 +391,13 @@ struct
 		| _ => SOME(hd filtered)
 	end
 
+    fun getNewTyById tylist id = 
+	let val filtered = List.filter (fn ty => Atom.same ((getLabel (getNAuxInfo ty)), id)) tylist
+	in case filtered of
+		nil => NONE
+		| _ => SOME(hd filtered)
+	end
+
     fun getCoverage ( ty : Ty ) : int = #coverage ( getAuxInfo ty )
     fun getNCoverage ( ty : NewTy ) : int = #coverage ( getNAuxInfo ty )
 

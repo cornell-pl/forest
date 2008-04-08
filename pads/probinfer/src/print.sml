@@ -140,7 +140,7 @@ structure Printing = struct
 	in
 	    (topName, headerName, bodyName, footerName)
 	end
-(*
+
     fun newdumpPADSdesc (padscFile:string) (padsmlFile:string) 
 		(ty:NewTy) (numHeaders:int) (numFooters:int) : (string*string*string*string) = 
 	let val strmc = TextIO.openOut padscFile
@@ -151,16 +151,16 @@ structure Printing = struct
 	    val () = print pads
 *)
             val (topName, headerName, bodyName, footerName, desc) = 
-		newtyToPADSC ty numHeaders numFooters ((!lexName)^".p")
-            val descml = newtyToPADSML ty numHeaders numFooters ("Build_ins")
+		newtyToPADSC ty numHeaders numFooters ((!basetokenName)^".p")
+(*            val descml = newtyToPADSML ty numHeaders numFooters ("Build_ins")*)
             val () = TextIO.output(strmc,desc )
-            val () = TextIO.output(strmml, descml )
+(*            val () = TextIO.output(strmml, descml ) *)
 	    val () = TextIO.closeOut strmc
 	    val () = TextIO.closeOut strmml
 	in
 	    (topName, headerName, bodyName, footerName)
 	end
-*)
+
 
     fun dumpAccumProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName:string) : unit = 
 	let val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
@@ -501,14 +501,14 @@ structure Printing = struct
                  ; dumpTyComp path "NewBaseComplexity" (dataDir^"/"^inputFileName) ( getNComps baseTy ) 
                  ; dumpTyComp path "NewComplexity" (dataDir^"/"^inputFileName) ( getNComps rewrittenTy )
                  ; print "Finished printing Complexity\n"
-                 ; let (* val (topName, hdrName, tyName, trlName) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
-						rewrittenTy numHeaders numFooters *)
+                 ; let  val (topName, hdrName, tyName, trlName) = newdumpPADSdesc (path^descName^".p") (path^descName^".pml") 
+						rewrittenTy numHeaders numFooters 
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
-(*
+
 		       print ("Ty name = "^tyName^"\n");
 		       dumpAccumProgram path descName hdrName tyName trlName;
-		       dumpAccumXMLProgram path descName hdrName tyName trlName;
+(*		       dumpAccumXMLProgram path descName hdrName tyName trlName;
 		       dumpXMLProgram path descName topName hdrName tyName trlName;
 		       dumpPADX path descName tyName;
 		       dumpFmtProgram path descName hdrName tyName trlName sep;

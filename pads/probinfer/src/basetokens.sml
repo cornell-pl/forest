@@ -491,6 +491,34 @@ structure Basetokens = struct
     |  PPtext => "text"
     |  PPempty => "empty"
 
+    fun BTokenToName_print ( t : BToken ) : string = 
+	case t of
+       PPint => "int"
+    |  PPfloat => "float"
+    |  PPtime     => "time"
+	|  PPdate     => "date"
+	|  PPip       => "ip"
+	|  PPhostname  => "host"
+	|  PPpath     => "path"
+	|  PPurl      => "url"
+    |  PPurlbody => "urlbody"
+	|  PPemail      => "email"
+	|  PPmac      => "mac"
+    |  PPword => "word"
+    |  PPhstring => "hstring"
+    |  PPid => "id"
+        |  PPbXML  => "bXML"
+        |  PPeXML  => "eXML"
+    |  PPwhite => "white"
+    |  PPmessage => "message"
+    |  PPpermission => "permission"
+    |  PPpunc s => "punc"
+    |  PPblob => "blob"
+    |  PPtext => "text"
+    |  PPempty => "empty"
+
+    fun BSTokenToName_print (b, s) = BTokenToName_print b
+
     fun nameToBToken ( t : string ) : BToken = 
 	case t of
        "int" => PPint
@@ -699,5 +727,39 @@ structure Basetokens = struct
         )
 
     fun bslTokenLength (t:BSLToken):int = btokenLength (bstokenOf t)
-
+   
+    fun stringToPuncName s =
+      case s of
+          "." => "dot"
+        | "/" => "slash"
+        | "\\" => "bslash"
+        | ";" => "scolon"
+        | "|" => "bar"
+        | "<" => "less"
+        | "~" => "tilde"
+        | "`" => "bquote"
+        | "!" => "bang"
+        | "@" => "at"
+        | "#" => "hash"
+        | "$" => "dollar"
+        | "%" => "percent"
+        | "^" => "caret"
+        | "&" => "and"
+        | "*" => "star"
+        | "(" => "lpar"
+        | ")" => "rpar"
+        | "-" => "hyphen"
+        | "_" => "underscore"
+        | "+" => "plus"
+        | "=" => "equa"
+        | "{" => "lbrac"
+        | "}" => "rbrac"
+        | "[" => "lsqubrac"
+        | "]" => "rsqubrac"
+        | ":" => "colon"
+        | "\"" => "dquote"
+        | "'" => "quote"
+        | ">" => "greater"
+        | "," => "comma"
+        | "?" => "question" 
 end

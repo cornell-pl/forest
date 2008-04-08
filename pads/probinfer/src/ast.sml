@@ -16,11 +16,19 @@ open Types
      | IRint   
      | IRintrange of LargeInt.int * LargeInt.int   
      | IRfloat
-     | IRstring 
+     | IRstring (* including blob? *)
      | IRstringME of string
      | IRwhite 
      | IRchar 
      | IRempty 
+     | IRurlbody
+     | IRword
+     | IRhstring
+     | IRid
+     | IRmessage
+     | IRtext
+     | IRpermission
+     | IRpunc of string
 
   fun tokenToTypeName (t : Token ) : TypeName = 
 	case t 
@@ -41,6 +49,35 @@ open Types
         |  Other _   => IRchar
         |  Pempty    => IRempty
         |  _ => raise TyMismatch
+
+  fun btokenToTypeName (t : BToken ) : TypeName = (* not finished *)
+	case t 
+        of PPtime      => IRtime
+	|  PPdate      => IRdate
+	|  PPip      => IRip
+	|  PPhostname  => IRhostname
+	|  PPpath      => IRpath
+	|  PPurl       => IRurl
+	|  PPemail       => IRemail
+	|  PPmac       => IRmac
+        |  PPbXML  => IRbXML
+        |  PPeXML  => IReXML
+	|  PPint     => IRint  
+	|  PPfloat     => IRfloat           
+        |  PPwhite   => IRwhite         
+        |  PPempty    => IRempty
+     | PPurlbody => IRurlbody
+     | PPword => IRword
+     | PPhstring => IRhstring
+     | PPid => IRid
+     | PPmessage => IRmessage
+     | PPtext => IRtext
+     | PPpermission => IRpermission
+     | PPpunc s => IRpunc s
+     | PPblob => IRstring
+        |  _ => raise TyMismatch
+
+  fun bstokenToTypeName (b, s) : TypeName = btokenToTypeName b
 
   type VarName = string
 
@@ -76,11 +113,27 @@ open Types
 	| Bottom _  => false
 	| _ => true
 
+  fun notInlineNewTy ty = case ty of 
+	PPBase _ => false 
+	| PPRefinedBase (_, Enum _, _) => true 
+	| PPRefinedBase _ => false
+	| PPTBD _ => false
+	| PPBottom _  => false
+	| _ => true
+
   fun isArrayBodyTy ty = case ty of 
 	Base _ => true
 	| RefinedBase (_, StringME _, _) => true
 	| RefinedBase (_, StringConst _, _) => true
 	| RefinedBase (_, Int _, _) => true	(* convert tp int32/int16, etc*)
+	(*IntConst FloatConst are not inline of array and option*)
+	| _ => false
+
+  fun isArrayBodyNewTy ty = case ty of 
+	PPBase _ => true
+	| PPRefinedBase (_, StringME _, _) => true
+	| PPRefinedBase (_, StringConst _, _) => true
+	| PPRefinedBase (_, Int _, _) => true	(* convert tp int32/int16, etc*)
 	(*IntConst FloatConst are not inline of array and option*)
 	| _ => false
 
@@ -102,6 +155,51 @@ open Types
 		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
 		)
 	  | _ => raise TyMismatch
+	end
+
+  fun getNewBaseTyName (ty : NewTy) : TypeName =
+        let
+	  val label = getLabelString (getNAuxInfo ty)
+	  val id = String.extract (label, 4, NONE)
+	in
+	  case ty of 
+	    PPBase (_, (t, l)::_) => IRref ((BSTokenToName_print t) ^ "_" ^ id)
+	  | PPRefinedBase(_, re, _) => (
+		case re of 
+		  StringME _ => IRref ("stringME_" ^ id) 
+		| StringConst _ => IRref ("stringconst_" ^ id) 
+		| Int _ => IRref ("intrange_" ^ id) 
+		| IntConst _ => IRref ("intconst" ^ id) 
+		| FloatConst _ => IRref ("floatconst" ^ id) 
+		| Enum _ => (print "Enum!\n"; raise TyMismatch)
+		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
+		)
+	  | _ => raise TyMismatch
+	end
+
+  fun getNewTypeName (ty : NewTy) : TypeName =
+	let
+	  val label = getLabelString (getNAuxInfo ty)
+	  val id = String.extract (label, 4, NONE)
+	in
+	  case ty of
+	   PPBase (_, (t, l)::_) => bstokenToTypeName t 
+        |  PPstruct _             => IRref ("struct_" ^ id)
+        |  PPunion _              => IRref ("union_" ^ id)
+        |  PPRefinedBase (aux, re, ((t, l)::_)) => 
+		(case re of Enum _ => IRref ("enum_" ^ id)
+			| StringME s => IRstringME s
+			| StringConst s => if (size s) = 1 then IRchar
+					   else IRstring
+			| Int (min, max) => IRintrange (min, max)
+			| IntConst i => IRintrange (i, i)
+			| FloatConst _ => IRfloat
+			| _ => raise TyMismatch
+		)
+        |  PPSwitch _        	 => IRref ("switch_"^id)
+        |  PPRArray _ 		 => IRref ("array_"^id)
+        |  PPoption _           	 => IRref ("opt_"^id)
+	| _ => raise TyMismatch
 	end
 
   fun getTypeName ty : TypeName =
@@ -133,6 +231,11 @@ open Types
 	case ty of
 	  RefinedBase(_, StringConst s, _) => IRstringME ("/" ^ escape s ^ "/")
 	  |_ => getTypeName ty
+
+  fun getArrayBodyNewTyName ty : TypeName = 
+	case ty of
+	  PPRefinedBase(_, StringConst s, _) => IRstringME ("/" ^ escape s ^ "/")
+	  |_ => getNewTypeName ty
 
   fun getVar ty : VarName = 
         let
@@ -166,6 +269,38 @@ open Types
 		)
 	end
 
+  fun newgetVar (ty : NewTy) : VarName = 
+        let
+	  val label = getLabelString (getNAuxInfo ty)
+	  val id = String.extract (label, 4, NONE)
+	in
+	  case ty of
+	    PPBase _ => 
+		(
+		case (getNewBaseTyName ty) of
+		IRref s => ("v_" ^ s)
+		| _ => raise TyMismatch
+		)
+	  | PPRefinedBase (_, Enum _, _) =>
+		(
+		case (getNewTypeName ty) of 
+		IRref s => ("v_" ^ s)
+		| _ => raise TyMismatch
+		)
+	  | PPRefinedBase _ =>
+		(
+		case (getNewBaseTyName ty) of
+		IRref s => ("v_" ^ s)
+		| _ => raise TyMismatch
+		)
+	  |  _ => 
+		(
+		case (getNewTypeName ty) of 
+		IRref s => ("v_" ^ s)
+		| _ => raise TyMismatch
+		)
+	end
+
   fun tyToStructField siblings ty = 
     let
  	val tyName = getTypeName ty
@@ -189,6 +324,29 @@ open Types
 	| _ => FullField (var, tyName , NONE, NONE) 
      end
 
+  fun newtyToStructField siblings ty = 
+    let
+ 	val tyName = getNewTypeName ty
+	val var = newgetVar ty
+    in
+    	case ty of
+	  PPRefinedBase (_, StringConst s, _) => 
+		if (size s) = 1 then CharField (NONE, s)
+		else StringField (NONE, s)
+	| PPRefinedBase (_, IntConst i, _) => FullField (var, tyName, NONE, SOME(var, NONE, NONE, SOME (IntConst i)))
+	| PPRefinedBase (_, FloatConst x, _) => FullField (var, tyName, NONE, 
+						SOME(var, NONE, NONE, SOME (FloatConst x)))
+	| PPRefinedBase _ => FullField (var, tyName , NONE, NONE) 
+	| PPSwitch (aux, id, retys) => 
+	    let val switchTyOp = getNewTyById siblings id
+	    in
+		case switchTyOp of
+		  SOME switchTy => FullField (var, tyName, SOME (newgetVar switchTy), NONE)
+		| NONE => newtyToStructField nil (PPunion(aux, nil))
+	    end
+	| _ => FullField (var, tyName , NONE, NONE) 
+     end
+
   fun tyToUnionField var_suffix ty = 
     let
  	val tyName = getTypeName ty
@@ -203,6 +361,23 @@ open Types
 	| RefinedBase (_, FloatConst x, _) => FullField (var, tyName, NONE, 
 						SOME(var, NONE, NONE, SOME (FloatConst x)))
 	| Base (_, ((Pempty, _)::_)) => CompField (IRintrange (0, 0), (getVar ty, NONE, NONE, SOME (IntConst 0)))
+	| _ => FullField (var, tyName, NONE, NONE) 
+    end	
+
+  fun newtyToUnionField var_suffix ty = 
+    let
+ 	val tyName = getNewTypeName ty
+	val var = (newgetVar ty) ^ var_suffix
+    in
+    	case ty of
+	  PPRefinedBase (_, StringConst s, _) => 
+		if (size s) = 1 then CharField (SOME var, s)
+		else StringField (SOME var, s)
+	| PPRefinedBase (_, IntConst i, _) => FullField (var, tyName, NONE, 
+						SOME(var, NONE, NONE, SOME (IntConst i)))
+	| PPRefinedBase (_, FloatConst x, _) => FullField (var, tyName, NONE, 
+						SOME(var, NONE, NONE, SOME (FloatConst x)))
+	| PPBase (_, (((PPempty, _), _)::_)) => CompField (IRintrange (0, 0), (newgetVar ty, NONE, NONE, SOME (IntConst 0)))
 	| _ => FullField (var, tyName, NONE, NONE) 
     end	
 
@@ -319,6 +494,45 @@ open Types
     ) 
     end
 
+  fun newtoSwitchBranches switchedTy (branchno, (re, targetTy)) : (Enumerable * Field) list =
+    let
+      fun indexes n = List.tabulate (n, (fn x => x))
+      fun getPairs res = ListPair.zip (res, (indexes (length res)))
+      val suffix = "_" ^ (Int.toString branchno)
+    in
+    (case switchedTy of
+	PPBase (aux, ((PPint, _), l)::ts) => 
+	  (case re of IntConst x => [(EnumInt x, newtyToUnionField suffix targetTy)]
+	  	   | StringConst "*" => [(EnumDefault, newtyToUnionField suffix targetTy)]
+		   | Enum res => List.concat (map (fn (re, i) => 
+				newtoSwitchBranches switchedTy (i, (re, targetTy))) (getPairs res)) 
+		   | _ => raise TyMismatch
+	  )
+	| PPRefinedBase (aux, Int _, _) =>
+	  (case re of IntConst x => [(EnumInt x, newtyToUnionField suffix targetTy)]
+	  	   | StringConst "*" => [(EnumDefault, newtyToUnionField suffix targetTy)]
+		   | Enum res => List.concat (map (fn (re, i) => 
+					newtoSwitchBranches switchedTy (i, (re, targetTy))) (getPairs res)) 
+		   | _ => raise TyMismatch
+	  )
+	(* we assume the Enum will only contain IntConst or StringConst and not another Enum *)
+	| PPRefinedBase (aux, Enum res, _) =>
+		let
+		  val vars = getVarsFromEnum (res, re, (getIdString aux))
+		  val indexes = List.tabulate (length res, (fn x => x))
+		  val indexed_vars = ListPair.zip (indexes, vars)
+		in
+		  case vars of
+		    ["P_DEFAULT"] => [(EnumDefault, newtyToUnionField suffix targetTy)]
+		  | _ => map (fn (i, v) => 
+			      let val suffix = if (i>0) then "_" ^ (Int.toString i) else ""
+			      in (EnumVar v, newtyToUnionField suffix targetTy)
+			      end) indexed_vars
+		end
+	| _ => raise TyMismatch
+    ) 
+    end
+
   (*function to translate a Ty to a sequence of IRTypes, 
     the last IRType in the sequence is the name and def of this Ty *)
   fun tyToIR (isRecord: bool) (siblings: Ty list) (ty: Ty) : IRType list =
@@ -415,6 +629,103 @@ open Types
 		in liftedIRs @ [(isRecord, tyname, TyOption bodyName)]
 		end
 	  else [(isRecord, tyname, TyOption (getArrayBodyTyName ty))]
+      | _ => raise TyMismatch 
+      end
+
+  fun newtyToIR (isRecord: bool) (siblings: NewTy list) (ty: NewTy) : IRType list =
+    let val tyname = getNewTypeName ty in 
+      case ty of
+	PPBase(aux, (t, loc)::_) =>
+	  let val basetyName = getNewBaseTyName ty
+	  in [(isRecord, basetyName, TyBase(tyname, NONE))]
+	  end
+      | PPRefinedBase(aux, Enum res, _) =>
+	  let 
+	    val idStr = getIdString aux
+	    val indexes = List.tabulate (length res, (fn x => x))
+	    val indexed_res = ListPair.zip (indexes, res)
+	  in 
+	    if allStringConsts res then
+ 	    let
+	      val fields = map (reToEnumField idStr) indexed_res (*similar to tyToUnionFeields*)
+	    in [(isRecord, tyname, TyEnum fields)]
+	    end
+	    else 
+	    let val fields = map (reToEnumField idStr) indexed_res 
+	    in [(isRecord, tyname, TyUnion fields)]
+	    end
+	  end
+      | PPRefinedBase(aux, re, _) =>
+	  let val basetyName = getNewBaseTyName ty
+	      val idStr = getIdString aux
+	  in
+	  (
+	    case re of 
+	      StringME _ => [(isRecord, basetyName, TyBase(tyname, NONE))]
+	    | Int _ => [(isRecord, basetyName, TyBase(tyname, NONE))]
+	    | IntConst i =>[(isRecord, basetyName, TyBase(tyname, SOME("x", NONE, NONE, SOME (IntConst i))))]
+	    | FloatConst x => [(isRecord, basetyName, 
+				TyBase(tyname, SOME("x", NONE, NONE, SOME(FloatConst x))))]
+	    | StringConst s => [(isRecord, basetyName, 
+				TyBase(tyname, SOME("x", NONE, NONE, SOME(StringConst s))))]
+	    | _ => raise TyMismatch
+	   )
+	   end
+      | PPstruct (aux, tys) =>
+	  let
+	    val nonInlineTys = List.filter notInlineNewTy tys
+	    val liftedIRs = List.concat (map (newtyToIR false tys) nonInlineTys)
+	    val fields = map (newtyToStructField tys) tys
+	  in liftedIRs @[(isRecord, tyname, TyStruct fields)]	
+	  end
+      | PPunion (aux, tys) =>
+	  let
+	    val nonInlineTys = List.filter notInlineNewTy tys
+	    val liftedIRs = List.concat (map (newtyToIR false tys) nonInlineTys)
+	    val fields = map (newtyToUnionField "") tys
+	  in liftedIRs @[(isRecord, tyname, TyUnion fields)]	
+	  end
+      | PPSwitch (aux, id, retys) =>
+	  let
+	    val switchedTyOp = getNewTyById siblings id
+	    val tys = map #2 retys
+	  in
+	    (
+	    case switchedTyOp of 
+	      NONE => newtyToIR false nil (PPunion (aux, tys)) 
+	    | SOME switchedTy =>
+		let
+	    	  val nonInlineTys = List.filter notInlineNewTy tys
+	    	  val liftedIRs = List.concat (map (newtyToIR false tys) nonInlineTys)
+		  val switchTyName = getNewTypeName switchedTy
+		  val switchVar = newgetVar switchedTy
+		  val indexes = List.tabulate (length retys, (fn x => x))
+		  val branches = ListPair.zip (indexes, retys)
+		  val irbranches = List.concat (map (newtoSwitchBranches switchedTy)  branches)
+		in liftedIRs @[(isRecord, tyname, TySwitch(switchVar, switchTyName, irbranches))] 
+		end
+	    )
+	  end
+      | PPRArray (aux, sep, term, ty, len, _) =>
+	  if not (isArrayBodyNewTy ty) then 
+		let val liftedIRs = newtyToIR false nil ty
+		    val bodyName = (case ty of 
+				   PPRefinedBase (_, Enum _, _) => getNewTypeName ty
+				   | PPRefinedBase _ => getNewBaseTyName ty
+				   | _ => getNewTypeName ty)
+		in liftedIRs @ [(isRecord, tyname, TyArray (bodyName, sep, term, len))]
+		end
+	  else [(isRecord, tyname, TyArray ((getArrayBodyNewTyName ty), sep, term, len))]
+      | PPoption (aux, ty) =>
+	  if not (isArrayBodyNewTy ty) then 
+		let val liftedIRs = newtyToIR false nil ty
+		    val bodyName = (case ty of 
+				   PPRefinedBase (_, Enum _, _)  => getNewTypeName ty
+				   | PPRefinedBase _ => getNewBaseTyName ty
+				   | _ => getNewTypeName ty)
+		in liftedIRs @ [(isRecord, tyname, TyOption bodyName)]
+		end
+	  else [(isRecord, tyname, TyOption (getArrayBodyNewTyName ty))]
       | _ => raise TyMismatch 
       end
 end

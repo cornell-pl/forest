@@ -29,6 +29,7 @@ structure Config = struct
     val printEntropy      = ref def_entropy
     val executableDir     = ref ""
     val lexName	          = ref "vanilla"
+    val basetokenName	          = ref "basetokens"
     val goldenRun         = ref false
 
     val trainingRun       = ref false
