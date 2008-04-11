@@ -1099,7 +1099,13 @@ struct
 		    (print "find a token order\n"; SOME(tList))  handle TokenMatchFailure => (print "handle here\n"; NONE)
 		end
 
-        fun findTokenOrder summary record =
+        fun findTokenOrder1 summary record = 
+          case (getTokenOrder summary record) of
+              NONE => (NONE, NONE)
+            | SOME t => (SOME(t), NONE)
+
+
+        fun findTokenOrder2 summary record =
         let
           val tag = getTokenOrder summary record handle TokenMatchFailure => NONE
         in 
@@ -1198,7 +1204,7 @@ val _ = print "find one without the token order\n"
             val tag = ref 0
             val nr = ref []
 		    fun findFirstMatch ([], record) = (* no existing match succeeded, see if another token order matches *)
-			 (print "1\n"; case findTokenOrder tokenfreqs record
+			 (print "1\n"; case (if ( !OPTIMAL_STRUCT ) then findTokenOrder2 tokenfreqs record else findTokenOrder1 tokenfreqs record)
                           of (NONE, _) => (print "really a bad record\n"; raise TokenMatchFailure (* tokens don't match this record *))
                           |  (SOME tokenOrder, NONE) => (print "1.1\n"; findFirstMatch ([(tokenOrder,[])], record)) 
                           |  (SOME tokenOrder, SOME newRecord) => (print "1.2\n"; tag := 1; nr := newRecord; findFirstMatch ([(tokenOrder,[])], newRecord)))
@@ -1470,6 +1476,8 @@ val _ = print ("recNo = "^(Int.toString rn1)^" lineNo = "^(Int.toString ln1)^" n
 
     exception ViterbiError2
 
+    exception UnionSetCoverError
+
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
     (* coverage is number of records in this context *)
     fun mkTBD (callsite, currentDepth, coverage, cl, ssl, tables) = 
@@ -1731,22 +1739,23 @@ val _ = printColumn cl
 		        fun doPartition2 pTable = 
 			      let
                     val initTList : BSToken list list = List.map initToken ssl
-                    fun countOne (bsl, iTable) = 
+                    val index = ref ~1
+                    fun countOne (bslist, (iTable, indexTable)) = 
                       let
                         fun co (bs, mytable) = case BSTokenTable.find(mytable, bs) of
-                                                   NONE => BSTokenTable.insert(mytable, bs, 1)
-                                                 | SOME i =>
+                                                   NONE => BSTokenTable.insert(mytable, bs, (1, IntMap.insert(IntMap.empty, !index, true)))
+                                                 | SOME (i, otable) =>
                                                      let
                                                        val (rmv, junk) = BSTokenTable.remove(mytable, bs) 
                                                      in
-                                                       BSTokenTable.insert(rmv, bs, i+1)
+                                                       BSTokenTable.insert(rmv, bs, (i+1, IntMap.insert(otable, !index, true)))
                                                      end
                       in
-                        List.foldl co iTable bsl
+                        ( index := !index + 1; (List.foldl co iTable bslist, IntMap.insert(indexTable, !index, true)))
                       end
-                    val iTable = List.foldl countOne BSTokenTable.empty initTList
+                    val (iTable, indexTable) = List.foldl countOne (BSTokenTable.empty, IntMap.empty) initTList
                     val ilist = BSTokenTable.listItemsi iTable
-                    fun findBests ((bstoken, count), blist) = if count = numRecords then bstoken::blist else blist
+                    fun findBests ((bstoken, (count, table)), blist) = if count = numRecords then bstoken::blist else blist
                     val bestlist = List.foldl findBests [] ilist
                     fun getBest ((b, s), (min, best)) = if (BTokenCompleteEnum(b) < min) then (BTokenCompleteEnum(b), (b,s)) else (min, best) 
                   in
@@ -1769,13 +1778,86 @@ val _ = print (newcontextsToString newrtokens)
                         else  doPartition pTable (* this is the case when the initT is not an appropriate one *)
                       end
                     else
-                      doPartition pTable
+                      if ( !RDC_UNION_BRANCHES ) then 
+                        let
+                          fun findBiggest ((bstoken, (count, table)), (max, maxtoken)) = 
+                            if (count>max) then (count, bstoken)
+                            else if (count=max) then if (BSTokenCompleteEnum(bstoken)<BSTokenCompleteEnum(maxtoken)) then (count, bstoken) else (max, maxtoken)
+                            else (max, maxtoken)
+                          fun greedy (myiTable, myindexTable) =
+                            if IntMap.numItems(myindexTable) = 0 then []
+                            else 
+                              let
+                                val myilist = BSTokenTable.listItemsi myiTable
+                                val (mymax, thistoken) = List.foldl findBiggest (0, (PPempty, "")) myilist 
+                              in
+                                if mymax = 0 then raise UnionSetCoverError
+                                else 
+                                  let
+                                    val (rmvTable, (junk, indexlistt)) = BSTokenTable.remove(myiTable, thistoken) handle NotFound => raise UnionSetCoverError
+                                    val rmvList = BSTokenTable.listItemsi rmvTable
+                                    fun ttolist (i, junk) = i
+                                    val indexlist = List.map ttolist (IntMap.listItemsi indexlistt)
+                                    fun updateTables ((bstoken, (count, table)), (newiTable, newindexTable)) = 
+                                      let
+                                        val preilist = IntMap.listItemsi table
+                                        fun checkOne ((i, junk), postitable) = 
+                                          case IntMap.find(indexlistt, i) of
+                                              SOME _ => #1(IntMap.remove(postitable, i))
+                                            | NONE => postitable
+                                        val newitable = List.foldl checkOne table preilist
+                                        val newcount = IntMap.numItems(newitable)
+                                        val retnewiTable = if newcount = 0 then newiTable
+                                                           else BSTokenTable.insert(newiTable, bstoken, (newcount, newitable))
+                                        fun updateIndex (i, mynewindext) = 
+                                          case IntMap.find(mynewindext, i) of
+                                              SOME _ => #1(IntMap.remove(mynewindext, i))
+                                            | NONE => mynewindext
+                                        val retnewindexTable = List.foldl updateIndex newindexTable indexlist
+                                      in
+                                        (retnewiTable, retnewindexTable)
+                                      end
+                                    val (thisniTable, thisnindexTable) = List.foldl updateTables (BSTokenTable.empty, myindexTable) rmvList
+                                  in
+                                    thistoken :: greedy(thisniTable, thisnindexTable)
+                                  end
+                              end
+                          val newbestlist = greedy (iTable, indexTable)
+                        in
+                          if (List.length newbestlist)*rdc_ratio < BSTokenTable.numItems(pTable) then  
+                            let
+                              fun listtotable (t, table) = BSTokenTable.insert(table, t, true)
+                              val newbesttable = List.foldl listtotable BSTokenTable.empty newbestlist                  
+                              fun getOne ss = 
+                                let
+                                  val myinitlist = initToken ss
+                                  fun getmylist (t, mylist) = 
+                                    case BSTokenTable.find(newbesttable, t) of
+                                        SOME _ => t::mylist
+                                      | NONE => mylist
+                                  val mylist = List.foldl getmylist [] myinitlist
+                                  val (junk, initt) = List.foldl getBest (Option.valOf(Int.maxInt), (PPblob, "")) mylist
+                                  val initt = if compBSToken(initt, (PPblob, ""))=EQUAL then List.nth(myinitlist, 0) else initt
+                                  val newrtoken = ViterbiWithInitT tables initt ss
+                                in
+                                  newrtoken
+                                end
+                              val newrtokens = List.map getOne ssl
+		                      val newpTable = List.foldl doOneChunk BSTokenTable.empty newrtokens 
+(*val _ = print (newcontextsToString newrtokens)*)
+                            in
+                              doPartition newpTable
+                            end
+                          else doPartition pTable
+                        end
+                      else doPartition pTable
                   end
 		in
 		        if BSTokenTable.numItems(pTable) = 1 
 			      then if BSTokenTable.inDomain(pTable, (PPempty, "")) then allEmpty () 
-			      else allSame rtokens
-                else doPartition2 pTable
+			           else allSame rtokens
+                else if ( !OPTIMAL_1ST_TOKEN ) then doPartition2 pTable
+                     else doPartition pTable
 		end
 
 

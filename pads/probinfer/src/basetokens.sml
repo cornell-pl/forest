@@ -296,6 +296,7 @@ structure Basetokens = struct
     |  PPblob => 54
     |  PPempty => 53
 
+    fun BSTokenCompleteEnum ((t, s): BSToken) : int = BTokenCompleteEnum(t)
 
     structure OrdBTokenTable = RedBlackMapFn(
                      struct type ord_key = int

@@ -37,7 +37,7 @@ open Ast
     	              else typeName ^ "64" 
     	end
      | IRfloat => "Pfloat64"
-     | IRstring => "Pstring"
+     | IRstring => "PPstring"
      | IRstringME s => "Pstring_ME(:\"" ^ s ^ "\":)"
      | IRwhite => "PPwhite"
      | IRchar => "PPchar"
