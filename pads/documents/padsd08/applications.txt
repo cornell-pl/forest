@@ -1,0 +1,70 @@
+Descriptions of PADS/D Applications
+-----------------------------------
+
+Coral CDN  04/12/08:
+--------------------
+
+-- a content distribution network that runs on between 250-300 host
+nodes.  The goal of the system is to give web clients faster access to
+data by placing data at nodes that are closer to clients and also
+replicating data across more nodes when there are flash crowds.
+
+-- currently, there is a centralized "collector" node that grabs log
+data from each of the 250 host nodes.  The way this works is that the
+hosts append-write to a log file and then after a certain period of
+time/certain events/certain log size (log size isn't actually
+implemented, but could be), a pointer to the file is copied to a new
+directory.  The host begins writing to a new log file with new data.
+The collector node uses "rsync" unix utility to grab the copied file
+and then when it is done, deletes the copied file.  rsync sounds like
+it might be useful to us for the "extensible" log case because it is a
+utility that allow you to only copy the "new" blocks.
+
+-- on the collector, logs are organized as:
+  * 1 subdirectory/host node
+        * 1 nested subdirectory/timestamp
+               * a file for each different kind of log (I think ...
+notes are sketchy here)
+
+-- applications:  best application is sending the data into a
+"column-oriented" database.  A column-oriented database is one that
+makes it more efficient to implement certain kinds of statistical
+queries like "what is the average bandwidth in this time interval" --
+normally asking about a time interval is a linear pass through all
+data which is too expensive.  Apparently BigTable is such a database
+-- Kathleen should ask Bob about PADS/D --> BigTable for sure.
+Apparently, outside developers were given access to BigTable 2 days
+ago but all accounts are now gone.  If we wanted to perhaps we could
+twist the arm of someone connected to the project?? <hint, hint>
+
+-- doing queries over an SQL database would be useful, but apparently
+Mike used to have a completely separate monitoring system that pumped
+all of his data into a regular database and he stopped doing that
+because it simply did not scale.  Mike is worried that SQL-like things
+in general will not be useful because they want scale (not because the
+functionality wouldn't be useful but just because of the scaling
+problems)
+
+-- Mike also writes scripts over his files, but this is often annoying
+because the directory structure he has set up doesn't match the style
+of query he wants to do -- eg: he wants the query to be over time
+ranges but that means he has to go into every top level directory
+because the top-level structure is per-host not per-time.
+
+-- could also use alerts --> Mike sees performance problem --> how to
+run really fast queries
+
+-- Mike's application's goals:  needs to compute various stats to do
+performance debugging, get performance insights to change architecture
+in the future, to enforce distributed quota management.
+   -- Mike needs things like: time-seres analysis to find out (#users
+or bandwidth or bytes transfered or load per node) per (day or week).
+Needs to generate histograms over last year or 4 years; Needs
+popularity of individual files for quota management
+
+-- related work on column-oriented databases:
+    -- Stream Basis
+    -- Dan Abadi
+    -- Aster Data Systems
+    -- BigTable
+    -- Mike Stonebreake
