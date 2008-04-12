@@ -21,6 +21,22 @@ space.  It also allows engineers to understand the ``normal'' behavior
 for a particular site such as daily or seasonal cycles for a
 particular site. 
 
+At Princeton, Vivek Pai and KyoungSoo Park have developed
+CoMon~\cite{comon}, a system for monitoring the health and status of
+PlanetLab~\cite{planetlab}.  Every five minutes, CoMon attempts to
+fetch data from each of PlanetLab's 850+ nodes.  This data ranges from
+the node uptime to the number of experiments running to the cpu usage
+to the user id of the biggest memory hog.  The CoMon system takes this
+raw data and transforms it into two different forms, one of which is a
+per-node collection of statistics and the other of which is a
+per-slice ({\em i.e.,} per-application) collection of statistics.
+CoMon displays the data to users in tabular form and allows them to
+perform a number of simple queries to find, for instance, lightly
+loaded nodes, nodes with drifting clocks or nodes with little
+remaining disk space.  CoMon also monitors nodes for various different
+sorts of problems and alerts users of deviant machines or slices.
+Finally, the data is archived so PlanetLab users can perform their own
+custom analyses of historical data.
 
 
 
