@@ -34,6 +34,8 @@ is
   evaluate_hmm.sml
   regexparser.sml
   fvector.sml
+  viterbi.sml
+  ghmm_features.sml
   probmodel.sml
   probreduce.sml
   ../examples/gold/ir/1967Transactions.short.sml

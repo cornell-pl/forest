@@ -46,6 +46,17 @@ structure Config = struct
     val trainingWeightsRun = ref false
     val inctrainingWeightsRun = ref false
     val hmmtokenize       = ref false
+    val ghmmtrainingRun   = ref false
+    val ghmmtestingRun    = ref false
+    val evaluatehmmseqset = ref false
+    val evaluateghmmseqset = ref false
+    val dumpseqsets       = ref false
+    val ghmm1             = ref false
+    val ghmm2             = ref false
+    val ghmm3             = ref false
+    val ghmm4             = ref false
+
+    exception GHMMOptionError
 
     (* 4 intenal strategy options *)
     val OPTIMAL_1ST_TOKEN   = ref true

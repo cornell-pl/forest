@@ -32,6 +32,14 @@ structure Main : sig
                )
             end
 
+       else if ( !dumpseqsets = true ) then
+         let 
+           val _ = print "Construct seqsets and print to a file.\n";
+           val _ = dumpSeqsets ( !srcFiles )
+         in
+           ()
+         end
+
        else if ( !inctrainingRun = true ) then
          let 
            val _ = print "Incremental training run.\n";
@@ -66,6 +74,16 @@ print token *)
            ()
          end
 
+       else if ( !ghmmtrainingRun = true )
+         then
+            let
+              val _ = print "generalized HMM training run...\n"
+              val _ = GHMMTraining "training/"             
+            in 
+              ()
+            end
+
+
        else if ( !trainingWeightsRun = true ) then
          let 
            val _ = print "trainingRun with weights\n"; 
@@ -80,8 +98,6 @@ print token *)
          then
             let
               val _ = print "examining HMM library, constructing input...\n"
-              val end1Times = zeroEndingTimes ()
-              val end2Times = updateStart (Time.now()) end1Times
               val _ = examHmmResultPre (!srcFiles)             
             in print ( "Input character feature vector lists to HMM library.\n" )
             end
@@ -90,8 +106,6 @@ print token *)
          then
             let
               val _ = print "examining HMM returned tokens...\n"
-              val end1Times = zeroEndingTimes ()
-              val end2Times = updateStart (Time.now()) end1Times
               val _ = examHmmResultPost (!srcFiles)             
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
@@ -99,9 +113,7 @@ print token *)
        else if ( !evaluateHMMPost = true )
          then
             let
-              val _ = print "examining HMM returned tokens...\n"
-              val end1Times = zeroEndingTimes ()
-              val end2Times = updateStart (Time.now()) end1Times
+              val _ = print "examining HMM tokenization result without seqsets...\n"
               val _ = evaluateHmmResultPost (!srcFiles)             
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
@@ -110,9 +122,23 @@ print token *)
          then
             let
               val _ = print "examining old vanilla tokenization result...\n"
-              val end1Times = zeroEndingTimes ()
-              val end2Times = updateStart (Time.now()) end1Times
               val _ = evaluateVanillaResult (!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
+       else if ( !evaluatehmmseqset = true )
+         then
+            let
+              val _ = print "examining HMM tokenization result with seqsets...\n"
+              val _ = evaluate_HMM_seqset (!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
+       else if ( !evaluateghmmseqset = true )
+         then
+            let
+              val _ = print "examining generalized HMM tokenization result with seqsets...\n"
+              val _ = evaluate_GHMM_seqset (!srcFiles)             
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
@@ -165,6 +191,29 @@ print token *)
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
+       else if ( !ghmmtestingRun = true )
+         then
+           let  val end1Times    = zeroEndingTimes ()
+                val end2Times    = updateStart ( Time.now () ) end1Times
+                val (ty, end3Times)     = computeProbStructure_GHMM ( !srcFiles ) end2Times
+(*		val _ 		 = printTy (measure ty) *)
+                val _ = Printing.dumpNewTy (!outputDir^"BeforeRefine.GHMMTy") ty
+                val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
+				   Rewrite.newrun end3Times ty
+                val computeTimes = getComputeTimes end4Times
+                val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.GHMMTy") rewrittenTy
+                val ()           = Printing.dumpNewTyInfo (!outputDir)
+						       dataDir
+                                                       dataFile
+                                                       measuredTy
+                                                       rewrittenTy
+						       numHeaders
+						       numFooters
+                                                       end4Times
+                               NONE
+           in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+           end
+
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
                 val (ty,sep, end3Times)     = computeStructure ( !srcFiles ) end2Times
@@ -206,15 +255,24 @@ print token *)
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
     fun setTrainingRun  s = trainingRun  := (s = "true")
+    fun setGHMMTrainingRun  s = ghmmtrainingRun  := (s = "true")
     fun setTrainingWeightsRun  s = trainingWeightsRun  := (s = "true")
     fun setIncTrainingRun  s = inctrainingRun  := (s = "true")
     fun setIncTrainingWeightsRun  s = inctrainingWeightsRun  := (s = "true")
     fun setTestingRun   s = testingRun  := (s = "true") 
+    fun setGHMMTestingRun  s = ghmmtestingRun  := (s = "true")
     fun setExamHMMPre   s = examHMMPre  := (s = "true")
     fun setExamHMMPost  s = examHMMPost  := (s = "true")
     fun setEvaluateHMMPost  s = evaluateHMMPost  := (s = "true")
     fun setEvaluateVanilla  s = evaluateVanilla  := (s = "true")
+    fun setEvaluate_hmm_seqset  s = evaluatehmmseqset  := (s = "true")
+    fun setEvaluate_ghmm_seqset  s = evaluateghmmseqset  := (s = "true")
     fun setHMMtokenize  s = hmmtokenize  := (s = "true")
+    fun setGHMM1 s = ghmm1 := (s = "true")
+    fun setGHMM2 s = ghmm2 := (s = "true")
+    fun setGHMM3 s = ghmm3 := (s = "true")
+    fun setGHMM4 s = ghmm4 := (s = "true")
+    fun setDumpSeqsets  s = dumpseqsets  := (s = "true")
     fun setCharacter  s = character  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
    val flags = [
@@ -234,12 +292,21 @@ print token *)
          ("au",	      "run only the golden file",	                                                   PCL.String (setGoldenRun, true)),
          ("training", "training run",	                                                   PCL.String (setTrainingRun, true)),
          ("trainingw", "training run with weights",	                                                   PCL.String (setTrainingWeightsRun, true)),
+         ("dumpseqsets", "dump seqsets and print to file",	                                                   PCL.String (setDumpSeqsets, true)),
+         ("ghmmtraining", "training generalized HMM",	                                                   PCL.String (setGHMMTrainingRun, true)),
          ("inctraining", "incremental training run",	                                                   PCL.String (setIncTrainingRun, true)),
          ("inctrainingw", "incremental training run with weights",	                                       PCL.String (setIncTrainingWeightsRun, true)),
          ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
+         ("ghmmtesting",  "testing generalized HMM",	                                                   PCL.String (setGHMMTestingRun, true)),
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
          ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
          ("hmm3",  "evaluating HMM library: 2nd step",	                                                   PCL.String (setEvaluateHMMPost, true)),
+         ("ghmm1",  "use basicViterbi_GHMM",	                                                   PCL.String (setGHMM1, true)), 
+         ("ghmm2",  "use basicViterbi_GHMM_trans",	                                                   PCL.String (setGHMM2, true)),         
+         ("ghmm3",  "use basicViterbi_GHMM_length",	                                                   PCL.String (setGHMM3, true)),         
+         ("ghmm4",  "use basicViterbi_GHMM_trans_length",	                                                   PCL.String (setGHMM4, true)),         
+         ("evaluate_hmm_ss",  "evaluating HMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_hmm_seqset, true)),
+         ("evaluate_ghmm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_ghmm_seqset, true)),
          ("hmmtokenize",  "evaluate descriptions with tokenization by hmm library",	                                                   PCL.String (setHMMtokenize, true)),
          ("vanilla",  "evaluating vanilla tokenization",	                                                   PCL.String (setEvaluateVanilla, true)),
          ("char", "use character other than character feature vector for training",                        PCL.String (setCharacter, true)),

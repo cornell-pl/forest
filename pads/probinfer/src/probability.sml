@@ -5,32 +5,8 @@ struct
     open Fvector
     open Regexparser
     open Common
-
-    fun loadFile path = 
-     let 
-       val strm = TextIO.openIn path
-	   val data : String.string = TextIO.inputAll strm
-       fun isNewline c = c = #"\n" orelse c = #"\r"
-       fun getLines(ss,l) = 
-         if (Substring.isEmpty ss) then List.rev l
-	     else let 
-                val (ln, rest) = Substring.splitl (not o isNewline) ss
-                val rest = (case Substring.getc rest
-				    of NONE => rest
-				    |  SOME(#"\n", rest) => rest (* UNIX EOR discipline *)
-				    |  SOME(#"\r", rest) => 
-					(case Substring.getc rest 
-					 of SOME(#"\n", rest) => rest (* DOS EOR discipline *)
-                                         |  _ => rest (* Mac OS EOR discipline *))
-			            | _ => rest (* This case is impossible because of the def if isNewline *))
-		       in
-			     getLines(rest, (Substring.string ln)::l)
-		       end
-       val lines = getLines ( Substring.full data, [])
-	   val () = TextIO.closeIn strm
-     in
-	   lines
-     end
+    open Ghmm_features
+    open Viterbi
 
     fun tstringToBToken (s, str) : BToken =
       if String.isSubstring "int" s then PPint
@@ -1949,5 +1925,110 @@ val _ = print "\n"
       in
         rnoprob
       end
+
+
+    fun constrTokenTable_GHMM l inittable = 
+      let
+        fun countOne (tslist, btokentable) = 
+          let
+            fun countOneToken ((btoken, str), btt) =
+              case BTokenTable.find(btt, btoken) of
+                  NONE => BTokenTable.insert(btt, btoken, 1)
+                | SOME i => BTokenTable.insert(#1(BTokenTable.remove(btt, btoken)), btoken, i+1)
+            val mytable = if List.length(tslist) = 0 then btokentable 
+                          else List.foldl countOneToken btokentable tslist
+          in
+            mytable
+          end
+      in
+        List.foldl countOne inittable l
+      end
+
+    fun constrTokenPairTable_GHMM l inittable = 
+      let
+        fun countOne (tslist, btokenpairtable) = 
+          let
+            fun countOneToken ((btoken, str), (pre, btt)) =
+              case pre of
+                  NONE => (SOME btoken, btt)
+                | SOME pret =>
+                    case BTokenPairTable.find(btt, (pret, btoken)) of
+                        NONE => (SOME btoken, BTokenPairTable.insert(btt, (pret, btoken), 1))
+                      | SOME i => (SOME btoken, BTokenPairTable.insert(#1(BTokenPairTable.remove(btt, (pret, btoken))), (pret, btoken), i+1))
+            val mytable = if List.length(tslist) = 0 orelse List.length(tslist) = 1 then btokenpairtable 
+                          else #2(List.foldl countOneToken (NONE, btokenpairtable) tslist)
+          in
+            mytable
+          end
+      in
+        List.foldl countOne inittable l
+      end
+
+          fun dumpToken_GHMM path t = 
+            let
+	          val strm = TextIO.openOut (path^"TokenCount_GHMM")
+              val outlist = BTokenTable.listItemsi t 
+              fun output (bt, i) = TextIO.output(strm, (BTokenToName bt)^"="^(Int.toString i)^"\n")  
+              val _ = List.map output outlist
+            in
+              TextIO.closeOut strm 
+            end
+
+          fun dumpTokenPair_GHMM path t = 
+            let
+	          val strm = TextIO.openOut (path^"TokenPairCount_GHMM")
+              val outlist = BTokenPairTable.listItemsi t 
+              fun output ((bt1,bt2), i) = TextIO.output(strm, ((BTokenToName bt1)^" "^(BTokenToName bt2)^"="^(Int.toString i)^"\n"))  
+              val _ = List.map output outlist
+            in
+              TextIO.closeOut strm 
+            end
+
+          fun dumpTransProbSmooth_GHMM path t1 t2 = 
+            let
+	          val strm = TextIO.openOut (path^"TransProbSmooth_GHMM")
+              val wholelist = BTokenMapF.listItemsi btokentable
+              val tnum = List.length wholelist
+              fun output ((bt1, s1), retlist) = 
+                let
+                  fun outputin ((bt2, s2), (ret1, ret2)) =
+                    let 
+                      val lookupr = defaultVal(BTokenPairTable.find(t2, (bt1, bt2)))
+                      val deno = ((defaultVal(BTokenTable.find(t1, bt1)))+(Real.fromInt tnum)*(!lambda))
+                      val v = if Real.==(deno, 0.0) then 0.0 (* lambda is also 0 *)
+                              else (lookupr+(!lambda))/deno
+                    in
+                      (ret1^(Real.toString v)^" ", ret2@[v])  
+                    end
+                  val (outputstrm, outputlist) = List.foldl outputin ("", []) wholelist
+                  val _ = TextIO.output(strm, outputstrm^"\n")
+                in
+                  retlist@[outputlist]
+                end 
+              val list = List.foldl output [] wholelist
+              val _ = TextIO.closeOut strm 
+            in
+              list
+            end
+
+    fun GHMMTraining ( path : string ) : unit = 
+        let 
+          val _ = print ("Printing generalized HMM training inputs to files under "^path^"\n") 
+          val list = extractLog "training/log/" "training/log/log.list"
+          val tokenpairtable = constrTokenPairTable_GHMM list BTokenPairTable.empty
+          val _ = dumpTokenName path BTokenTable.empty 
+          val _ = dumpTokenPair_GHMM "training/" tokenpairtable
+          val tokentable = constrTokenTable_GHMM list BTokenTable.empty
+          val _ = dumpToken_GHMM "training/" tokentable
+          val _ = dumpTransProbSmooth_GHMM "training/" tokentable tokenpairtable
+          val strm = TextIO.openOut (path^"mytraining")
+          fun printOne r = TextIO.output(strm, BSToken2FeatureStrs r)
+          fun printOneList l = List.app printOne l
+          val _ = List.app printOneList list
+          val _ = TextIO.output(strm, BSToken2FeatureStrs(PPempty, "")) (* make sure we have enough classes *)
+        in
+          TextIO.closeOut strm
+        end
+
 
 end
