@@ -272,6 +272,7 @@ print token *)
     fun setGHMM2 s = ghmm2 := (s = "true")
     fun setGHMM3 s = ghmm3 := (s = "true")
     fun setGHMM4 s = ghmm4 := (s = "true")
+    fun setGHMM5 s = ghmm5 := (s = "true")
     fun setDumpSeqsets  s = dumpseqsets  := (s = "true")
     fun setCharacter  s = character  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
@@ -305,6 +306,7 @@ print token *)
          ("ghmm2",  "use basicViterbi_GHMM_trans",	                                                   PCL.String (setGHMM2, true)),         
          ("ghmm3",  "use basicViterbi_GHMM_length",	                                                   PCL.String (setGHMM3, true)),         
          ("ghmm4",  "use basicViterbi_GHMM_trans_length",	                                                   PCL.String (setGHMM4, true)),         
+         ("ghmm5",  "use token class to compute transition probability",	                                                   PCL.String (setGHMM5, true)),         
          ("evaluate_hmm_ss",  "evaluating HMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_hmm_seqset, true)),
          ("evaluate_ghmm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_ghmm_seqset, true)),
          ("hmmtokenize",  "evaluate descriptions with tokenization by hmm library",	                                                   PCL.String (setHMMtokenize, true)),

@@ -55,6 +55,7 @@ structure Config = struct
     val ghmm2             = ref false
     val ghmm3             = ref false
     val ghmm4             = ref false
+    val ghmm5             = ref false
 
     exception GHMMOptionError
 

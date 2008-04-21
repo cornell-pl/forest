@@ -2730,7 +2730,7 @@ val _ = print "seqset to list done.\n"
 
     fun readinGHMM_tokenpair_smooth path = 
       let
-        val tokentable = readTokenName path
+        val tokentable = if ( !ghmm5 = true ) then readTokenName2 path else readTokenName path
         val tokenpairlist = readTwoListsTable (path^"TransProbSmooth_GHMM")
         val tokennum = IntMap.numItems tokentable
         fun updateTransTable i =
@@ -2754,7 +2754,6 @@ val _ = print "seqset to list done.\n"
       in
         tokenpairtable
       end
-
 
     fun computeProbStructure_GHMM fileName endingtimes : NewTy * Times.EndingTimes = 
 	let val recordNumber = ref 0
@@ -3096,7 +3095,13 @@ val _ = print "seqset to list done.\n"
         val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
         val seqsetl : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
         val ghmmmodel = readinGHMM "training/"
-        val rtokens : NewContext list = List.map (basicViterbi_GHMM ghmmmodel) seqsetl
+        val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
+        val rtokens : NewContext list = 
+          if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
+          else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl
+          else if ( !ghmm3 = true ) then List.map (basicViterbi_GHMM_length ghmmmodel) seqsetl
+          else if ( !ghmm4 = true ) then List.map (basicViterbi_GHMM_trans_length ghmmmodel tokenpairtable) seqsetl
+          else raise GHMMOptionError
         val _ = print "Tokenization by seqset and hmm:\n"
 	in
       evaluate_newcontextlist bsll1 rtokens

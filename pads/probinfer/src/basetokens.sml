@@ -763,4 +763,18 @@ structure Basetokens = struct
         | ">" => "greater"
         | "," => "comma"
         | "?" => "question" 
+
+  (* classify tokens into 3 classes:
+     punctuation: represented by PPpunc "."
+     white: represented by PPwhite
+     other: represented by PPblob
+  *)
+  fun BToken2BTokenClass t =
+    case t of
+        PPwhite => PPwhite
+      | PPpunc _ => PPpunc "."
+      | _ => PPblob
+
+  val BTokenClass = [PPwhite, PPpunc ".", PPblob]
+
 end
