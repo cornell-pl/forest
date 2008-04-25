@@ -149,7 +149,8 @@ struct
 
       fun evaluate_vanilla bsll (cl: Context list) =
       let
-        val _ = if (List.length bsll) <> (List.length cl) then raise InvalidTestFile else () 
+        val _ = if (List.length bsll) <> (List.length cl) then (print ("hand-written data: "^(Int.toString (List.length bsll))^" records, compared data: "^(Int.toString (List.length cl))^" records\n"); raise InvalidTestFile)
+                else ()
         val _ = print "\n"
         fun compareOneRecord i : (int*int)*(int*int)*int = 
           if i<0 then ((0,0),(0,0),0)
