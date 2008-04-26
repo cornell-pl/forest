@@ -56,7 +56,7 @@ open Ast
      | IRhostname => "PPhostname"
      | IRemail => "PPemail"
      | IRmac => "PPmac"  
-     | IRint => "PPint"
+     | IRint => "Pint64"
      | IRintrange (min, max) => 
     	let val minLen = int2Bits min
     	    val maxLen = int2Bits max
@@ -68,7 +68,7 @@ open Ast
     	         else if maxBits <=32.0 then typeName ^ "32"
     	              else typeName ^ "64" 
     	end
-     | IRfloat => "PPfloat"
+     | IRfloat => "Pfloat64"
      | IRstring => "Pstring_SE(:Peor:)"
      | IRstringME s => "Pstring_ME(:\"" ^ s ^ "\":)"
      | IRwhite => "PPwhite"
@@ -147,7 +147,7 @@ open Ast
 		let val consVal = 
 		(case eq of
 		   IntConst i => largeIntToStr i
-		 | FloatConst (i, f) => i ^ f
+		 | FloatConst (i, f) => if String.compare(f, "nan")=EQUAL then i else (i ^ "." ^ f)
 		 | _ => raise TyMismatch
 		)
 		in (" : " ^ consv ^ " == " ^ consVal) 

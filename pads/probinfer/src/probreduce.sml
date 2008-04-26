@@ -948,12 +948,15 @@ case ty of
             let
               fun isDot c = c = #"."
               val (i, junk) = Substring.splitl (not o isDot) (Substring.full x)
-              val (junk, r) = Substring.splitr (not o isDot) (Substring.full x) 
+              val (junk, r) = Substring.splitr (not o isDot) (Substring.full x)
+              val ii = Substring.string i
+              val rr = Substring.string r
+              val floatret = if String.size ii = String.size x then FloatConst(ii, "nan") else FloatConst(ii, rr)
             in
 			(
 				newcmos, 
 				PPRefinedBase((mkTyAux1(coverage, id)), 
-				FloatConst((Substring.string i), (Substring.string r)), tokens)
+				floatret, tokens)
 			)
             end
 		| SOME((PPblob, x)) => 
