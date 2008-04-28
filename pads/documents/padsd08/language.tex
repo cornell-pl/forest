@@ -434,3 +434,164 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
 \label{fig:semantics}
 \end{figure*}
 
+\subsection{Programming Interface}
+{\small 
+\begin{verbatim}
+(* these are interfaces for clean feeds *)
+
+type 'a feed = 'a Feed.ifeed
+type 'a prefeed = 'a Combinators.CreatorTys.feed_rep
+
+type path = string list
+
+type sep = string option
+
+(* create a new feed from a prefeed spec *)
+val to_feed : 'a prefeed -> 'a feed
+
+(* get the next item from the feed *)
+val next : 'a feed -> ('a * 'a feed) option
+
+(* filter a feed *)
+val filter : ('a -> bool) -> 'a feed -> 'a feed
+
+(* iterate a function over a feed *)
+val iter : ('a -> unit) -> 'a feed -> unit
+
+(** Map a function on the feed *)
+val map : ('a -> 'b) -> 'a feed -> 'b feed
+
+(** fold over a feed *)
+val fold : ('a -> 'b -> 'a) -> 'a -> 'b feed -> 'a
+
+(* take the first n elements of a feed *)
+val take : int -> 'a feed  -> 'a feed
+
+(* take elements from the front until f x is true *)
+val takeuntil : ('a -> bool) -> 'a feed -> 'a feed
+
+(* drop the first n elements from a feed *)
+val drop : int -> 'a feed -> 'a feed
+
+(* drop the front elements till f is true *)
+val dropuntil : ('a -> bool) -> 'a feed -> 'a feed 
+
+(* slice a feed at a position *)
+val sliceat : int -> 'a feed -> 'a feed * 'a feed
+
+(* slice the stream when some predicate is true *)
+val sliceuntil : ('a -> bool)  -> 'a feed -> 
+	'a feed * 'a feed
+
+(** Flatten a feed of list into a feed*)
+val flatten : ('a list) feed -> 'a feed
+
+(** Create a feed of one element *)
+val singleton: 'a -> 'a feed
+
+
+(*** The following are some functions for efeed: 
+feeds with network errors ***)
+
+type 'a efeed = 'a Feed.efeed
+type 'a edata = 'a EData.t
+
+val to_efeed : 'a prefeed -> 'a efeed
+
+val next_e : 'a efeed -> ('a edata * 'a efeed) option
+
+val filter_e: ('a edata -> bool) -> 'a efeed -> 'a efeed
+
+val iter_e : ('a edata -> unit) -> 'a efeed -> unit
+
+val map_e: ('a edata -> 'b edata) -> 'a efeed -> 'b efeed
+
+val fold_e: ('a -> 'b edata ->'a) -> 'a -> 
+		'b efeed -> 'a
+\end{verbatim}
+}
+
+\subsection{Tools Interfaces}
+\begin{verbatim}
+
+(* Archiver Tool *)
+
+type arch_spec =
+{
+ arch_dir: string;
+ log_file_name: string;
+(* max num of files before doing compression *)
+ max_file_count: int; 
+ compress_files: bool;
+}
+
+val to_archive : arch_spec -> 
+	'r Feedmain.prefeed -> unit
+
+(* Feed2RRD Tool *)
+
+type 'a rrd_spec =
+{
+  transform : 'a -> float;
+  (** Name of RRD database. *)
+  rrd_db : string;
+  (** Name of data source that will be fed into rrd DB.*)
+  ds_name : string;
+  ds_type : string;
+  (** Number of samples averaged to create each data entry. *)
+  num_samples : int;
+  (** Number of entries (averages) saved in database. *)
+  num_slots : int;
+  create_db : bool;
+  rrd_exec : string
+}
+val default_rrd_exec : string
+
+val to_rrd : 'a rrd_spec -> 'a Feedmain.feed -> unit
+
+(* Accumulator Tool *)
+
+val to_accum : 'r Feedmain.prefeed -> 
+	'r Feedmain.feed -> (bool * bool * bool * bool) -> 
+	('r -> bool) -> Accumulator.acc
+
+val to_string : Accumulator.acc -> string
+
+val to_file : Accumulator.acc -> string -> unit
+
+(* Selector Tool *)
+
+val select : path -> sep -> 'r prefeed -> 
+	'r feed -> string feed
+
+(* Printer Tool *)
+
+(* this returns a feed of pairs, 
+  where the first string in the pair is 
+  dot separated path and second string 
+  is the string rep of the data *)
+
+val to_print_feed : sep -> 'a prefeed -> 
+	'a feed -> ((path * string) list) feed
+val to_file : sep -> 'a prefeed -> 'a feed -> 
+	string -> unit  (* string is the file name *)
+val to_files : sep -> 'a prefeed -> 'a feed 
+	-> unit (* output to files  auto generated from paths *)
+val to_string : sep -> 'a prefeed -> 
+	'a feed -> string (* print whole feed to string *)
+
+(* Feed2RSS Tool *)
+
+type rss_spec = {
+  title : string;
+  link : string;
+  desc : string;
+  schedule : Time.t option;
+  path : Feedmain.path
+}
+
+(* auguments are rss spec and the feed *)
+val to_rss : rss_spec -> 'r Feedmain.prefeed -> 
+	'r Feedmain.feed -> unit
+
+\end{verbatim}
