@@ -1,27 +1,50 @@
-{\em Ad hoc data} refers to the untold billions upon billions of bytes
-worth of non-standard, unreliable, and continuously evolving data
-spread across all computer systems.  This paper defines \padsd{}, a
-new domain-specific programming language designed to help programmers
-specify {\em where} their ad hoc data is located, {\em when} to get
-it, {\em how} to obtain it, and {\em what} preprocessing you should do
-when it arrives.  As its name suggests, \padsd{} relies on the \pads{}
-sublanguage, developed in previous research efforts, for specification
-of the {\em format} of the data, which, as we will make clear, is
-just one facet of the definition any ad hoc data source.  
+The term {\em ad hoc data} refers to the untold billions upon billions of bytes
+of non-standard, unreliable, and continuously evolving data spread
+across all computer systems.  This sort of data includes such varied
+sources as server logs, distributed systems performance and
+debugging data, automated billing systems information, telephone call
+records, financial data and online repositories of scientific data
+including genetic information, cosmology data and global weather
+systems data.
 
-We illustrate the expressiveness of \padsd{} by providing descriptions
-of a number of different data sources ranging from the Safari web
-cache to SDSS star charts {\em [dpw: correct me ... cites]} to
-PlanetLab's CoMon network monitoring system to the log files for the
-Coral content distribution network.  We also provide a denotational
-semantics for the language, which is helpful in understanding the
-language's many features.
+This paper defines a system for automatic generation of monitoring,
+analysis and transformation tools for such distributed ad hoc data.
+Our generated tools include data archiving system, a database loading
+system, a system for tracking the statistical profile of the data and
+generating alerts under customizable error conditions, an RSS feed
+generator, and a simple query tool.  The system also generates a
+number of libraries for application developers, including those for
+parsing, printing, error management, data traversal and
+transformation.  Software developers can use the programming framework
+to create their own new application-specific tools or more general
+generic tools that can be applied to any collection of data sources.
 
-Descriptions written in \padsd{} are compiled into O'Caml libraries
-with clean interfaces that support both polymorphic and monomorphic
-programming.  We illustrate how to use the polymorphic interfaces to
-program description-independent applications, including a selector
-tool that can extract key elements of a data source as well as an
-accumulator tool that collects simple statistical information about
-the data.  The monomorphic interfaces allow users to develop
-``one-of'' data source-specific applications.
+The tool suite is generated from high-level data descriptions
+written in a domain-specific programming language called \padsd{}.  To
+use the language, programmers specify {\em where} their ad hoc data is
+located, {\em when} to get it, {\em how} to obtain it, and {\em what}
+preprocessing the system should do when it arrives.  As its name suggests,
+\padsd{} is layered on top of the \pads{} sublanguage, developed in
+previous research efforts, for specification of the {\em format} of
+the data sources.  We illustrate the expressiveness of \padsd{} by
+providing descriptions for several different distributed systems
+including CoMon, PlanetLab's node and experiment monitoring system,
+and AT\&T's web hosting service.
+
+% CoMon 
+% the Safari web
+% cache to SDSS star charts {\em [dpw: correct me ... cites]} to
+% PlanetLab's CoMon network monitoring system to the log files for the
+% Coral content distribution network.  We also provide a denotational
+% semantics for the language, which is helpful in understanding the
+% language's many features.
+
+% Descriptions written in \padsd{} are compiled into O'Caml libraries
+% with clean interfaces that support both polymorphic and monomorphic
+% programming.  We illustrate how to use the polymorphic interfaces to
+% program description-independent applications, including a selector
+% tool that can extract key elements of a data source as well as an
+% accumulator tool that collects simple statistical information about
+% the data.  The monomorphic interfaces allow users to develop
+% ``one-of'' data source-specific applications.
+

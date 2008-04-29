@@ -12,7 +12,7 @@
 %\setlength{\textheight}{8.5in}
 
 \begin{document}
-\title{Language Support for Processing Distributed Ad Hoc Data}
+\title{Automatic Tool Generation for Monitoring Distributed Systems}
 
 \authorinfo{
 Daniel S. Dantas$^1$ \quad
@@ -59,36 +59,45 @@ distributed across the Internet.  It may also become available
 over a range of times and in several, evolving formats.
 Before the users can extract the information they need from the data,
 it usually must be fetched, archived locally for historical analysis, 
-compressed, encrypted, and monitored for errors or deviations from the norm.
+compressed, perhaps encrypted or anonymized, and monitored for errors 
+or deviations from the norm.
 
-There are all kinds of users of such data ranging from scientists to
-system administrators to financial analysts.  To get more of a flavour
-of one sort of distributed ad hoc data source, consider the data
+Managing ad hoc data 
+is a particular bane of the implementers of distributed systems.
+Depending on the size, these systems may have hundreds or thousands
+of heterogenous, distributed components.  Keeping all these components
+up and running is an enourmous continuous maintenance task.  Consequently,
+each component in a well-designed system will produce endless log files
+that measure its performance and heath.  As an example, consider the data
 manipulated by CoMon~\cite{comon}, a system designed to monitor the
 health, performance and security of PlanetLab~\cite{planetlab}.  Every
 five minutes, CoMon attempts to contact each of 842 PlanetLab nodes
 across 416 sites worldwide.\footnote{Data as of writing this manuscript;
 PlanetLab membership varies over time.}  
 When all is running smoothly, which it
-never, ever is, each node responds by sending back a data file
-consisting of a number of valuable bits of information ranging from
+never is, each node responds by sending back an ASCII data file
+in mail-header format containing information ranging from
 the kernel version to the uptime to the memory usage to the id of the
 user with the greatest CPU utilization.  CoMon archives this data in
 compressed form and its backend processes the information for display
 to PlanetLab users.  It is an invaluable resource for Planet users
 who need to monitor the health and performance of their applications
-or experiments.  Almost all distributed systems have (or should
-have) similar sorts of monitoring infrastructure.  Unfortunately,
-system implementers are often left
-to hack ``one-off'' monitoring tools of their own, which are
-invariably less reliable, unoptimized, insecure, and difficult or
-impossible to evolve when new requirements become known.
-A substantial part of the difficulty simply comes from the diversity, quality,
-and volume of data these systems must often handle. Often, new
-monitoring systems also face the problem of having to interact with legacy
-devices, legacy software and legacy data, leaving implementers in a
-situation where they cannot use robust off-the-shelf data management
-tools built for standard formats like XML.
+or experiments.  
+
+Almost all distributed systems have (or should have) similar sorts of
+monitoring infrastructure.  Unfortunately, system implementers are
+often left to hack ``one-off'' monitoring tools of their own, which
+are invariably less reliable, unoptimized, insecure, and difficult or
+impossible to evolve when new requirements become known.  A
+substantial part of the difficulty simply comes from the diversity,
+quality, and volume of data these systems must often handle. Often,
+new monitoring systems also face the problem of having to interact
+with legacy devices, legacy software and legacy data, leaving
+implementers in a situation where they cannot use robust off-the-shelf
+data management tools built for standard formats like XML.  XML-based
+tools also have the disadvantage of significant bloat (often 8-10 times
+the size of a more natural, even uncompressed representation) caused by
+using a generic reprensentation.
 
 Somewhat similar problems also appear
 across the natural and social sciences, including biology,
@@ -137,6 +146,82 @@ NCBI~\cite{ncbi} & National Center for Biotechnology Information & Links to mult
 \label{fig:exampledata}
 \end{figure*}
 
+The purpose of our research is to develop a system that makes it easier to create,
+maintain, and evolve tools for monitoring such distributed systems.  We propose to
+do so by developing a domain-specific language, called \padsd, in which software developers specify
+a number of key aspects of the data sources they wish to monitor including any of the
+following.
+
+\begin{itemize}
+\item {\bf where} the data is located.  The data may be in some directory
+on the current machine (perhaps placed there by another process) or at some remote location
+or collection of locations.
+\item {\bf when} to get the data.  The data may need to be fetched just once (right now!) or
+according to some repeated schedule in time series indexed by minutes, days or months.
+\item {\bf how} to obtain it.  The data may be accessible through standard protocols such as
+http or ftp or it may be created through remote execution of a non-standard script. 
+\item {\bf what preprocessing} the system should do when it arrives.  The data may be compressed
+or encrypted and therefore need to be decompressed or decrypted before it can be processed.  Privacy 
+considerations may require the data be anonymized in some way.
+\item {\bf what format} the data source arrives in.  The data may be ASCII or binary; it may
+be tab- or comma-separated.  The data may also be represented in some completely ad hoc, non standard 
+format consisting of floating point numbers, integers, strings, vertical bars and curly-q's.  
+\end{itemize}
+
+These rich, high-level specifications are then compiled into a collection of programming libraries and
+end-to-end tools for distributed systems monitoring.  Our current tool suite includes a number of useful
+artifacts, inspired by the common needs we have observed in ad hoc monitoring systems:
+
+\begin{itemize}
+\item {\bf an archiver} that
+collects distributed data on the specified schedule, archives it locally, and maintains a 
+``table of contents.''
+\item {\bf a database loader} that takes the data and extracts specified pieces to load into the
+RRD database tool~\cite{rrdtool}.  The data is indexed by its arrival time and supports time-based
+queries.  For performance, as more recent data arrives, older data is discarded.
+\item {\bf an accumulator tool} that maintains a statistical profile of the data and its error characteristics.
+For numeric data, information about average values and standard deviations are maintained.
+For other kinds of data, such as strings, urls, ip addresses, times, dates, and ad hoc enumerations,
+information counts of the top $N$ most commonly occurring items are maintained.  For all data, error rates
+and information about common errors are maintained.
+\item {\bf an alert system} that generates alerts based on programmable conditions.
+\item {\bf a selector tool} that extracts and records specified subcomponents of a larger data source.
+\item {\bf an RSS feed generator} that wraps data in the appropriate XML headers and creates a single RSS feed
+from possibly multiple diverse ad hoc data sources.
+\end{itemize}
+
+In addition to these standard tools, the system provides support for
+creating new tools by automatically generating a collection of
+libraries.  The libraries include a run-time system for fetching data,
+libraries for parsing data in a specified format and for printing data
+in that format.  There is also infrastructure for type-safe data
+traversal and stream processing using classic functional programming
+paradigms such as map, fold and iterate.  The generated libraries make
+it straightforward for programmers to create their own custom tool
+specific to a single data source or collection of sources.  In
+addition, there is advanced support for creating new, {\em generic}
+programs, where a generic program is one that operates correctly over
+{\em any} well-specified data source.  For example, the RRDtool loader
+is generic, because it is possible to load data from any specified
+source into the RRDtool without doing any substantial additional ``programming.''
+Likewise, the alert system, selector, RSS feed generator, parsers,
+printers and traversal libraries are all generic programs.
+
+In the remainder of the paper, we will explain the design and
+implementation of our system in further detail.  First, in Section~\ref{sec:related}
+we explain the relationship with other research in this area.  Next, in Section~\ref{sec:examples},
+we will outline two running examples we will use for expository purposes throughout the paper, one 
+involving CoMon, a system built at Princeton to monitor PlanetLab, and a second involving
+\ningaui{}, built at AT\&T for monitoring AT\&T's web hosting service.  After introducing the examples,
+we will explain how to specify the attributes of the data sources they depend upon in 
+Section~\ref{sec:informal}.  In the next section, we will explain the architecture of our compiler
+and tool generation system.  Finally, in Section~\ref{sec:conclusions} we will touch upon future work
+and conclude.
+
+\section{Related Work}
+\label{sec:related}
+\input{related}
+
 \section{Running Examples}
 \label{sec:examples}
 \input{examples.tex}
@@ -145,16 +230,12 @@ NCBI~\cite{ncbi} & National Center for Biotechnology Information & Links to mult
 \label{sec:informal}
 \input{informal.tex}
 
-\section{\padsd{} Semantics}
-\label{sec:semantics}
-\input{language}
+%\section{\padsd{} Semantics}
+%\label{sec:semantics}
+%\input{language}
 
 \section{\padsd{}:  Programming Interfaces and Tools}
 \label{sec:programming}
-
-\section{Related Work}
-\label{sec:related}
-\input{related}
 
 \section{Conclusions}
 \label{sec:conclusions}
