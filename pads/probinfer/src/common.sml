@@ -164,8 +164,11 @@ structure Common = struct
             fun isDot c = c = #"." 
             val (i, junk) = Substring.splitl (not o isDot) (Substring.full s)
             val (junk, f) = Substring.splitr (not o isDot) (Substring.full s)
+            val i = Substring.string i
+            val f = Substring.string f
+            val floatret = if String.size s = String.size i then FloatConst(i, "nan") else FloatConst(i, f)
           in
-            FloatConst(Substring.string i, Substring.string f)
+            floatret
           end
 	|	(PPtime, t) => StringConst(t)
 	|	(PPdate, t) => StringConst(t)

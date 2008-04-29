@@ -60,11 +60,11 @@ structure Config = struct
     exception GHMMOptionError
 
     (* 4 intenal strategy options *)
-    val OPTIMAL_1ST_TOKEN   = ref true
+    val OPTIMAL_1ST_TOKEN   = ref false
     val RDC_UNION_BRANCHES  = ref false
     val rdc_ratio           = 2
     val COMBINED_HIST       = ref false
-    val OPTIMAL_STRUCT      = ref true
+    val OPTIMAL_STRUCT      = ref false
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE

@@ -25,6 +25,7 @@ fun enumerableBase (token, s) =
 	  PPbXML => true
 	| PPeXML => true
 	| PPint => true
+(*
     | PPword => true
     | PPhstring => true
     | PPtext => true
@@ -32,6 +33,7 @@ fun enumerableBase (token, s) =
     | PPid => true
     | PPfloat => true
 	| PPblob => true
+*)
 	| _ => false
 	
 (* calculates the complexity of a datatype so that we can try to minimize it*)
@@ -951,7 +953,7 @@ case ty of
               val (junk, r) = Substring.splitr (not o isDot) (Substring.full x)
               val ii = Substring.string i
               val rr = Substring.string r
-              val floatret = if String.size ii = String.size x then FloatConst(ii, "nan") else FloatConst(ii, rr)
+              val floatret = if String.size ii = String.size x orelse String.size rr = String.size x then FloatConst(ii, "nan") else FloatConst(ii, rr)
             in
 			(
 				newcmos, 

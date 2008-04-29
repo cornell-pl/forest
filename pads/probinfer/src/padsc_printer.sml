@@ -260,8 +260,12 @@ open Ast
 		     "Ptypedef " ^ tyNameStr ^ " " ^ tyVarStr ^" : " ^ tyVarStr ^ " " ^ var ^ 
 		     " => {" ^ var ^ " == " ^ (largeIntToStr i) ^ "};\n"
 	   | SOME (var, NONE, NONE, SOME (FloatConst (i, f))) =>
+             let
+               val fret = if String.compare(f, "nan")=EQUAL then i else (i^"."^f)
+             in
 		     "Ptypedef " ^ tyNameStr ^ " " ^ tyVarStr ^" : " ^ tyVarStr ^ " " ^ var ^ 
-		     " => {" ^ var ^ " == " ^ i ^"." ^ f ^ "};\n"
+		     " => {" ^ var ^ " == " ^ fret ^ "};\n"
+             end
 	   | _ => raise TyMismatch
 	  end
     	| TyStruct fields => "Pstruct " ^ tyVarStr ^ " {\n" ^ 

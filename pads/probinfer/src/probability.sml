@@ -1823,23 +1823,39 @@ val _ = print ("recNo = "^(Int.toString thisl)^"\n")
                     val hendptable = cutOutBound endptable
                     fun deleteDeadEnd endptable1 = 
                       let
+                        val tag = ref 1
                         val endplist = PosBTokenTable.listItemsi endptable1
-                        fun doOne ((endp, bplist), oldbeginptable) =
+                        fun doOne ((endp, bplist), (oldbeginptable, updateendptable)) = (* collect all begin positions, and delete unreachable begin positions *)
                           let
-                            fun collectOne ((beginp, btoken), oldbeginptable1) =
-                              case PosBTokenTable.find(oldbeginptable1, beginp) of
-                                  NONE => PosBTokenTable.insert(oldbeginptable1, beginp, true)
-                                | SOME tag => oldbeginptable1
+                            fun collectOne ((beginp, btoken), (oldbeginptable1, newbplist1)) =
+                              let 
+                                val validbegin =
+                                  case PosBTokenTable.find(endptable1, beginp-1) of
+                                      NONE =>
+                                       if beginp = thisb then true else ( tag := 0; false)
+                                    | SOME _ => true
+                              in
+                                if validbegin then (
+                                  (case PosBTokenTable.find(oldbeginptable1, beginp) of
+                                       NONE => PosBTokenTable.insert(oldbeginptable1, beginp, true)
+                                     | SOME _ => oldbeginptable1),
+                                  newbplist1@[(beginp, btoken)])
+                                else (oldbeginptable1, newbplist1)
+                              end
+                            val (mybeginptable, mynewbplist) = List.foldl collectOne (oldbeginptable, []) bplist
                           in
-                            List.foldl collectOne oldbeginptable bplist
+                            (mybeginptable, PosBTokenTable.insert(updateendptable, endp, mynewbplist))
                           end
-                        val beginptable = List.foldl doOne (PosBTokenTable.insert(PosBTokenTable.empty, (thise+1), true)) endplist
-                        fun deleteOne ((endp, bplist), (tag, oldendptable)) = 
+                        val (beginptable, newendptable1) = List.foldl doOne (PosBTokenTable.insert(PosBTokenTable.empty, (thise+1), true), PosBTokenTable.empty) endplist
+                        val newendplist1 = PosBTokenTable.listItemsi newendptable1
+                        fun deleteOne ((endp, bplist), oldendptable) = (* delete unreachable or empty end positions *)
+                          if List.length bplist = 0 then ( tag := 0; #1(PosBTokenTable.remove(oldendptable, endp)))
+                          else
                           case PosBTokenTable.find(beginptable, endp+1) of
-                              NONE => (0, #1(PosBTokenTable.remove(oldendptable, endp)))
-                            | SOME t => (tag, oldendptable)
-                        val (mytag, mynewendptable) = List.foldl deleteOne (1, endptable1) endplist (* may have redundant (beginp, btoken) *)
-                        val newendptable = if mytag = 0 then deleteDeadEnd mynewendptable
+                              NONE => #1(PosBTokenTable.remove(oldendptable, endp))
+                            | SOME t => oldendptable
+                        val mynewendptable = List.foldl deleteOne newendptable1 newendplist1 (* may have redundant (beginp, btoken) *)
+                        val newendptable = if !tag = 0 then deleteDeadEnd mynewendptable
                                            else mynewendptable
                       in
                         newendptable
@@ -1904,23 +1920,39 @@ val _ = print ("recNo = "^(Int.toString thisl)^"\n")
                     val hendptable = cutOutBound endptable
                     fun deleteDeadEnd endptable1 = 
                       let
+                        val tag = ref 1
                         val endplist = PosBTokenTable.listItemsi endptable1
-                        fun doOne ((endp, bplist), oldbeginptable) =
+                        fun doOne ((endp, bplist), (oldbeginptable, updateendptable)) = (* collect all begin positions, and delete unreachable begin positions *)
                           let
-                            fun collectOne ((beginp, btoken), oldbeginptable1) =
-                              case PosBTokenTable.find(oldbeginptable1, beginp) of
-                                  NONE => PosBTokenTable.insert(oldbeginptable1, beginp, true)
-                                | SOME tag => oldbeginptable1
+                            fun collectOne ((beginp, btoken), (oldbeginptable1, newbplist1)) =
+                              let 
+                                val validbegin =
+                                  case PosBTokenTable.find(endptable1, beginp-1) of
+                                      NONE =>
+                                       if beginp = thisb then true else ( tag := 0; false)
+                                    | SOME _ => true
+                              in
+                                if validbegin then (
+                                  (case PosBTokenTable.find(oldbeginptable1, beginp) of
+                                       NONE => PosBTokenTable.insert(oldbeginptable1, beginp, true)
+                                     | SOME _ => oldbeginptable1),
+                                  newbplist1@[(beginp, btoken)])
+                                else (oldbeginptable1, newbplist1)
+                              end
+                            val (mybeginptable, mynewbplist) = List.foldl collectOne (oldbeginptable, []) bplist
                           in
-                            List.foldl collectOne oldbeginptable bplist
+                            (mybeginptable, PosBTokenTable.insert(updateendptable, endp, mynewbplist))
                           end
-                        val beginptable = List.foldl doOne (PosBTokenTable.insert(PosBTokenTable.empty, (thise+1), true)) endplist
-                        fun deleteOne ((endp, bplist), (tag, oldendptable)) = 
+                        val (beginptable, newendptable1) = List.foldl doOne (PosBTokenTable.insert(PosBTokenTable.empty, (thise+1), true), PosBTokenTable.empty) endplist
+                        val newendplist1 = PosBTokenTable.listItemsi newendptable1
+                        fun deleteOne ((endp, bplist), oldendptable) = (* delete unreachable or empty end positions *)
+                          if List.length bplist = 0 then ( tag := 0; #1(PosBTokenTable.remove(oldendptable, endp)))
+                          else
                           case PosBTokenTable.find(beginptable, endp+1) of
-                              NONE => (0, #1(PosBTokenTable.remove(oldendptable, endp)))
-                            | SOME t => (tag, oldendptable)
-                        val (mytag, mynewendptable) = List.foldl deleteOne (1, endptable1) endplist (* may have redundant (beginp, btoken) *)
-                        val newendptable = if mytag = 0 then deleteDeadEnd mynewendptable
+                              NONE => #1(PosBTokenTable.remove(oldendptable, endp))
+                            | SOME t => oldendptable
+                        val mynewendptable = List.foldl deleteOne newendptable1 newendplist1 (* may have redundant (beginp, btoken) *)
+                        val newendptable = if !tag = 0 then deleteDeadEnd mynewendptable
                                            else mynewendptable
                       in
                         newendptable

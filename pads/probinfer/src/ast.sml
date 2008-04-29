@@ -86,7 +86,10 @@ open Types
 			Refined option (*max*) * 
 			Refined option (*eq val*)
 
-  datatype Enumerable = EnumInt of LargeInt.int | EnumVar of string | EnumDefault
+  datatype Enumerable = 
+      EnumInt of LargeInt.int 
+    | EnumVar of string
+    | EnumDefault
 
   datatype Field = 
 	  StringField of VarName option * string
