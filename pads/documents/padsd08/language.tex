@@ -60,11 +60,13 @@
  & \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
  & \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
  & \bnfalt & \feed_1 \spairfeed \feed_2 & \mbox{synchronous pair} \\
- & \bnfalt & \feed_1 * \feed_2 & \mbox{local pair} \\
- & \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent local pair} \\
-% & \bnfalt & x{:}\feed_1 \allpairfeed \feed_2 & \mbox{dependent all pair} \\
- & \bnfalt & \foreachlocalfeed{x}{\feed_1}{\feed_2} & \mbox{for each feed (local)} \\
-% & \bnfalt & \foreachfeed{x}{\feed_1}{\feed_2} & \mbox{for each feed} \\
+% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
+ & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
+ & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
+ & \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
+ & \bnfalt & x{:}\feed_1 {*}{*} \feed_2 & \mbox{dependent local pair} \\
+ & \bnfalt & \foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
+ & \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$ (dpw: was update)} \\
  & \bnfalt & \filterfeed{\feed}{e} & \mbox{filter out some locations/times} \\
 % & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
 % & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
@@ -172,32 +174,32 @@
 }
 \]
 
-% \[
-% \infer[(\textit{t-all-dpair})]
-% {\Gamma \turn x{:}\feed_1 \allpairfeed \feed_2  : \feedty{(\timety * (\ty_1 * \ty_2))}}
-% {
-%   \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
-%   \Gamma,x_t{:}\timety,x{:}\ty_1 \turn \feed_2 : \feedty{(\timety * \ty_2)}
-% }
-% \]
+\[
+\infer[(\textit{t-all-dpair})]
+ {\Gamma \turn x{:}\feed_1 \allpairfeed \feed_2  : \feedty{(\timety * (\ty_1 * \ty_2))}}
+ {
+   \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
+   \Gamma,x_t{:}\timety,x{:}\ty_1 \turn \feed_2 : \feedty{(\timety * \ty_2)}
+ }
+\]
 
 \[
-\infer[(\textit{t-foreach*})]
-{\Gamma \turn \foreachlocalfeed{x}{\feed_1}{\feed_2}  : \feedty{(\timety * \ty_2)}}
+\infer[(\textit{t-foreachcreate})]
+{\Gamma \turn \foreachcreate{x}{\feed_1}{\feed_2}  : \feedty{(\timety * \ty_2)}}
 {
   \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
   \Gamma,x_t{:}\timety,x{:}\ty_1 \turn \feed_2 : \feedty{(\timety * \ty_2)}
 }
 \]
 
-% \[
-% \infer[(\textit{t-foreach{*}{*}})]
-% {\Gamma \turn \foreachfeed{x}{\feed_1}{\feed_2}  : \feedty{(\timety * \ty_2)}}
-% {
-%   \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
-%   \Gamma,x_t{:}\timety,x{:}\ty_1 \turn \feed_2 : \feedty{(\timety * \ty_2)}
-% }
-% \]
+\[
+\infer[(\textit{t-foreachupdate})]
+{\Gamma \turn \foreachupdate{x}{\feed_1}{\feed_2}  : \feedty{(\timety * \ty_2)}}
+{
+  \Gamma \turn \feed_1 : \feedty{(\timety * \ty_1)} &
+  \Gamma,x_t{:}\timety,x{:}\ty_1 \turn \feed_2 : \feedty{(\timety * \ty_2)}
+}
+\]
 
 
 \[
@@ -271,25 +273,32 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
           \setalt \atime \in  \esemantics{e_2}{\environment} 
      \} 
 \\\\
-\semantics{
+
 %  \begin{array}{l}
-    \allfeed{e_1}{e_2}{e_3}{e_4}
+    {\cal F}\lsem\mathtt{all \{ format=} e_1; 
+%    \allfeed{e_1}{e_2}{e_3}{e_4}
 %  \end{array} 
-}{\environment}{\universe} 
+%}{\environment}{\universe} 
  &=& \{(\atime, (\loc, \esemantics{e_1}{\environment} \; (\universe'(\loc,\atime))))
           \setalt \atime \in  \esemantics{e_3}{\environment} 
           \;\mbox{and}\; \loc \in  \esemantics{e_2}{\environment}
      \} 
 \\
+ \qquad\quad\ \,   \mathtt{locs=} e_2;
 &&\quad\mbox{where} \\
-&& \qquad \universe' = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x))
-
+ \qquad\quad\ \,    \mathtt{sched=} e_3;
+&& \qquad \universe' = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
+ \qquad\quad\ \,    \mathtt{pp=} e_4; \}\rsem_{{\environment} \, {\universe}} &&
  \\\\
-\semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
+{\cal F}\lsem\mathtt{exists \{ format=} e_1;
+% \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
+ \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
 &&\quad\mbox{where} \\
 %\begin{array}{l}
-&& \qquad \universe' \, = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
+ \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
+  && \qquad \universe' \, = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
+ \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4; \}\rsem_{{\environment} \, {\universe}}
 &&\qquad
   f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; (\some{v})\} \\
 &&\qquad\qquad \qquad\qquad 
@@ -351,17 +360,17 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
       \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
   \}
 \\\\
-% \semantics{x{:}\feed_1 \allpairfeed \feed_2}{\environment}{\universe} 
-%  &=&
-%  \{(\atime_2,(v_1,v_2)) \setalt 
-%      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-%      \; \mbox{and} \; 
-% \\&&\qquad\qquad\qquad\ \ \,
-%      (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
-%      \; \mbox{and} \; \atime_2 \geq \atime_1
-%   \}
-% \\\\
-\semantics{\foreachlocalfeed{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+\semantics{x{:}\feed_1 \allpairfeed \feed_2}{\environment}{\universe} 
+ &=&
+ \{(\atime_2,(v_1,v_2)) \setalt 
+     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\&&\qquad\qquad\qquad\ \ \,
+     (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \; \atime_2 \geq \atime_1
+  \}
+\\\\
+\semantics{\foreachcreate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
  &=&
  \{(\atime_2,v_2) \setalt 
      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
@@ -374,18 +383,18 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
       \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2))      
   \}
 \\\\
-% \semantics{\foreachfeed{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
-%  &=&
-%  \{(\atime_2,v_2) \setalt 
-%      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-%      \; \mbox{and} \; 
-% \\&&\qquad\qquad\ \,
-%      (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
-%      \; \mbox{and} \;
-% %\\&&\qquad\qquad\ \,
-%      \atime_2 \geq \atime_1 
-%   \}
-% \\\\
+\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+ &=&
+ \{(\atime_2,v_2) \setalt 
+     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\&&\qquad\qquad\ \,
+     (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \;
+%\\&&\qquad\qquad\ \,
+     \atime_2 \geq \atime_1 
+  \}
+\\\\
 \semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
  &=&
 \{v \setalt v \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;

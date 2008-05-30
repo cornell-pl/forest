@@ -164,16 +164,16 @@
 \newcommand{\ppfeed}[2]{
   \ensuremath{
     \mathtt{pp} \; #1 \; \mathtt{with}\; #2}}
-\newcommand{\foreachfeed}[3]{
+\newcommand{\foreachupdate}[3]{
   \ensuremath{
     \mathtt{foreach{*}{*}}\; #1 \;
     \mathtt{in}\; #2 \;
-    \mathtt{create}\; #3}}
-\newcommand{\foreachlocalfeed}[3]{
+    \mathtt{local}\; #3}}
+\newcommand{\foreachcreate}[3]{
   \ensuremath{
     \mathtt{foreach*}\; #1 \;
     \mathtt{in}\; #2 \;
-    \mathtt{create}\; #3}}
+    \mathtt{cont}\; #3}}
 \newcommand{\remap}[2]{\ensuremath{\mathtt{redirect}\; #1 \; \mathtt{with} \; #2}}
 \newcommand{\stutterfeed}[2]{\ensuremath{\mathtt{stutter}\; #1 \; \mathtt{on} \; #2}}
 \newcommand{\refeed}[2]{\ensuremath{\mathtt{reschedule}\; #1 \; \mathtt{to} \; #2}}
