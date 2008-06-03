@@ -141,19 +141,21 @@
 
 % Feeds
 \newcommand{\computed}[3]{\ensuremath{\mathtt{[} #1 \; \mathtt{|}\; #2 \in #3 \mathtt{]}}}
-\newcommand{\allfeed}[4]{
+\newcommand{\allfeed}[5]{
   \ensuremath{
     \mathtt{all \{ format=} #1; 
     \mathtt{locs=} #2;
     \mathtt{sched=} #3;
     \mathtt{pp=} #4;
+    \mathtt{win=} #5;
   \mathtt{\}}}}
-\newcommand{\existsfeed}[4]{
+\newcommand{\existsfeed}[5]{
   \ensuremath{
     \mathtt{any \{ format=} #1; 
     \mathtt{locs=} #2;
     \mathtt{sched=} #3;
     \mathtt{pp=} #4;
+    \mathtt{win=} #5;
   \mathtt{\}}}}
 \newcommand{\filterfeed}[2]{
   \ensuremath{

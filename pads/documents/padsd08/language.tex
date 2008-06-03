@@ -55,8 +55,8 @@
 \feed & ::=     & x &  \mbox{feed variable} \\
  & \bnfalt & \emptyfeed & \mbox{empty feed} \\
  & \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
- & \bnfalt & \allfeed{e_1}{e_2}{e_3}{e_4} & \mbox{all locations} \\
- & \bnfalt & \existsfeed{e_1}{e_2}{e_3}{e_4} & \mbox{one location} \\
+ & \bnfalt & \allfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{all locations} \\
+ & \bnfalt & \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{one location} \\
  & \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
  & \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
  & \bnfalt & \feed_1 \spairfeed \feed_2 & \mbox{synchronous pair} \\
@@ -105,26 +105,28 @@
 
 \[
 \infer[(\textit{t-all})]
-{\Gamma \turn \allfeed{e_1}{e_2}{e_3}{e_4} : \feedty{(\timety * (\locty * \ty))}}
+{\Gamma \turn \allfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{(\timety * (\locty * \ty))}}
 {
  \begin{array}{c}
   \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \qquad
   \Gamma \turn e_2 : \listty{\locty} \\
   \Gamma \turn e_3 : \schedulety \qquad
-  \Gamma \turn e_4 :  ((\locty * \timety) * \stringty) \arrow \stringty
+  \Gamma \turn e_4 :  ((\locty * \timety) * \stringty) \arrow \stringty  \qquad
+  \Gamma \turn e_5 : \timety
  \end{array}
 }
 \]
 
 \[
 \infer[(\textit{t-any})]
-{\Gamma \turn \existsfeed{e_1}{e_2}{e_3}{e_4} : \feedty{(\timety * (\locty * \ty))}}
+{\Gamma \turn \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{(\timety * (\locty * \ty))}}
 {
  \begin{array}{c}
   \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \qquad
   \Gamma \turn e_2 : \listty{\locty} \\
   \Gamma \turn e_3 : \schedulety \qquad
-  \Gamma \turn e_4 :  ((\locty * \timety) * \stringty) \arrow \stringty
+  \Gamma \turn e_4 :  ((\locty * \timety) * \stringty) \arrow \stringty  \qquad
+  \Gamma \turn e_5 : \timety
  \end{array}
 }
 \]
@@ -259,11 +261,12 @@
 \\
 \semantics{\feed}{\environment}{\universe} &=& \mbox{denotation of 
 $\feed$ in environment $\environment$ mapping variables to values.} \\
- && \mbox{and ``universe'' $\universe$ mapping time $*$ location pairs to string options}
+ && \mbox{and ``universe'' $\universe$ mapping schedule time and location to 
+          arrival time and string data}
 \\
 \\
 \semantics{x}{\environment}{\universe} 
- &=& \environment(x) 
+ &=& (\environment(x_t), \environment(x))
 \\\\
 \semantics{\emptyfeed}{\environment}{\universe} 
  &=& \{\;\}
@@ -287,9 +290,42 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
  \qquad\quad\ \,   \mathtt{locs=} e_2;
 &&\quad\mbox{where} \\
  \qquad\quad\ \,    \mathtt{sched=} e_3;
-&& \qquad \universe' = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
- \qquad\quad\ \,    \mathtt{pp=} e_4; \}\rsem_{{\environment} \, {\universe}} &&
- \\\\
+&& \qquad \mathtt{timeout} =  
+     \lambda (x_t,(x_{at},s)).
+        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_5}{\environment} \,
+        \mathtt{then}\,  s \, \mathtt{else} \, \mathtt{None} \\
+ \qquad\quad\ \,    \mathtt{pp=} e_4;
+&& \qquad \universe' =
+     \lambda (x_{\ell}, x_t). 
+           \esemantics{e_4}{\environment}\, 
+                 (\mathtt{timeout}\, (x_t,\universe (x_\ell,x_t))) 
+ \\
+ \qquad\quad\ \,    \mathtt{win=} e_5; \}\rsem_{{\environment} \, {\universe}}
+&& \\
+% \\
+% {\cal F}\lsem\mathtt{exists \{ format=} e_1;
+% % \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
+%  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
+%  \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
+% &&\quad\mbox{where} \\
+% %\begin{array}{l}
+%  \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
+%   && \qquad \universe' \, = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
+%  \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
+% &&\qquad
+%   f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; (\some{v})\} \\
+%  \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
+%  \}\rsem_{{\environment} \, {\universe}}
+% &&\qquad\qquad \qquad\qquad 
+%   \mbox{for some $\loc \in \esemantics{e_2}{\environment}$ such that
+%     $\universe'(\atime,\loc) = \some{v}$} \\
+% &&\qquad
+%   f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; \none\} \\
+% &&\qquad\qquad \qquad\qquad 
+%   \mbox{if no such $\loc$ exists} \\
+% %\end{array}
+% \\
+\\
 {\cal F}\lsem\mathtt{exists \{ format=} e_1;
 % \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
@@ -297,18 +333,24 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
 &&\quad\mbox{where} \\
 %\begin{array}{l}
  \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
-  && \qquad \universe' \, = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
- \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4; \}\rsem_{{\environment} \, {\universe}}
+  && 
+\qquad f\; \atime  = \{(\atime,(\ell,\mathtt{Some} \; s))\}\ \mbox{for some $\ell$ and $s$ such that:}\\
+ \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
+&&\qquad\quad
+ \mbox{$(\atime,(\ell,\mathtt{Some} \; s)) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
+  \\
+ \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
+ \}\rsem_{{\environment} \, {\universe}}
 &&\qquad
-  f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; (\some{v})\} \\
-&&\qquad\qquad \qquad\qquad 
-  \mbox{for some $\loc \in \esemantics{e_2}{\environment}$ such that
-    $\universe'(\atime,\loc) = \some{v}$} \\
-&&\qquad
-  f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; \none\} \\
-&&\qquad\qquad \qquad\qquad 
-  \mbox{if no such $\loc$ exists} \\
+  f\; \atime = \{(\atime,(\loc, \none))\}\  
+  \mbox{for some $\loc \in \esemantics{e2}{\environment}{\universe}$
+if there exists no $\ell$ and $s$ such that:} \\
+&&\qquad\quad 
+ \mbox{$(\atime,(\ell,\mathtt{Some} \; s)) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
+\\
+
 %\end{array}
+\\
 \\
 \semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
  &=& \semantics{\feed_1}{\environment}{\universe} 
