@@ -171,7 +171,7 @@
 % \]
 
 \[
-\infer[(\textit{t-local-pair})]
+\infer[(\textit{t-cont-pair})]
 {\Gamma \turn x{:}\feed_1 * \feed_2  : \feedty{\ty_1 * \ty_2}}
 {
   \Gamma \turn \feed_1 : \feedty{\ty_1} &
@@ -180,7 +180,7 @@
 \]
 
 \[
-\infer[(\textit{t-cont-pair})]
+\infer[(\textit{t-local-pair})]
  {\Gamma \turn x{:}\feed_1 \allpairfeed \feed_2  : \feedty{\ty_1 * \ty_2}}
  {
    \Gamma \turn \feed_1 : \feedty{\ty_1} &
