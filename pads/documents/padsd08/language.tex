@@ -61,8 +61,8 @@
  & \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
  & \bnfalt & \feed_1 \spairfeed \feed_2 & \mbox{synchronous pair} \\
 % & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
- & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
- & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
+% & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
+% & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
  & \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
  & \bnfalt & x{:}\feed_1 {*}{*} \feed_2 & \mbox{dependent local pair} \\
  & \bnfalt & \foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
@@ -264,15 +264,16 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
  && \mbox{and ``universe'' $\universe$ mapping schedule time and location to 
           arrival time and string data}
 \\
+% \\
+% \semantics{x}{\environment}{\universe} 
+%  &=& (\environment(x_t), \environment(x))
+% \\
 \\
-\semantics{x}{\environment}{\universe} 
- &=& (\environment(x_t), \environment(x))
-\\\\
 \semantics{\emptyfeed}{\environment}{\universe} 
  &=& \{\;\}
 \\\\
 \semantics{\computed{e_1}{x}{e_2}}{\environment}{\universe} 
- &=& \{(\atime, \esemantics{(\lambda x{:}\timety.e_1)}{\environment}\; \atime) 
+ &=& \{(\atime, \esemantics{(\lambda x.e_1)}{\environment}\; \atime) 
           \setalt \atime \in  \esemantics{e_2}{\environment} 
      \} 
 \\\\
@@ -320,7 +321,7 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
 %   \mbox{for some $\loc \in \esemantics{e_2}{\environment}$ such that
 %     $\universe'(\atime,\loc) = \some{v}$} \\
 % &&\qquad
-%   f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; \none\} \\
+%   f \; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; \none\} \\
 % &&\qquad\qquad \qquad\qquad 
 %   \mbox{if no such $\loc$ exists} \\
 % %\end{array}
@@ -334,7 +335,7 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
 %\begin{array}{l}
  \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
   && 
-\qquad f\; \atime  = \{(\atime,(\ell,\mathtt{Some} \; s))\}\ \mbox{for some $\ell$ and $s$ such that:}\\
+\qquad f = \lambda \atime. \{(\atime,(\ell,\mathtt{Some} \; s))\}\ \mbox{for some $\ell$ and $s$ such that:}\\
  \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
 &&\qquad\quad
  \mbox{$(\atime,(\ell,\mathtt{Some} \; s)) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
@@ -342,8 +343,8 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
  \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
  \}\rsem_{{\environment} \, {\universe}}
 &&\qquad
-  f\; \atime = \{(\atime,(\loc, \none))\}\  
-  \mbox{for some $\loc \in \esemantics{e2}{\environment}{\universe}$
+  f = \lambda \atime. \{(\atime,(\loc, \none))\}\  
+  \mbox{for some $\loc \in \esemantics{e2}{\environment}$
 if there exists no $\ell$ and $s$ such that:} \\
 &&\qquad\quad 
  \mbox{$(\atime,(\ell,\mathtt{Some} \; s)) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
@@ -376,19 +377,19 @@ if there exists no $\ell$ and $s$ such that:} \\
      (\atime,v_2) \in \semantics{\feed_2}{\environment}{\universe}
   \}
 \\\\
-\semantics{\feed_1 * \feed_2}{\environment}{\universe} 
- &=&
- \{(\atime_2,(v_1,v_2)) \setalt 
-     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-     \; \mbox{and} \; 
-\\&&\qquad\qquad\qquad\ \ \,
-     (\atime_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
-     \; \mbox{and} \;
-\\&&\qquad\qquad\qquad\ \ \,
-     ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
-      \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
-  \}
-\\\\
+% \semantics{\feed_1 * \feed_2}{\environment}{\universe} 
+%  &=&
+%  \{(\atime_2,(v_1,v_2)) \setalt 
+%      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+%      \; \mbox{and} \; 
+% \\&&\qquad\qquad\qquad\ \ \,
+%      (\atime_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
+%      \; \mbox{and} \;
+% \\&&\qquad\qquad\qquad\ \ \,
+%      ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+%       \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
+%   \}
+% \\\\
 \semantics{x{:}\feed_1 * \feed_2}{\environment}{\universe} 
  &=&
  \{(\atime_2,(v_1,v_2)) \setalt 
@@ -396,45 +397,53 @@ if there exists no $\ell$ and $s$ such that:} \\
      \; \mbox{and} \; 
 \\&&\qquad\qquad\qquad\ \ \,
      (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
-     \; \mbox{and} \;
-\\&&\qquad\qquad\qquad\ \ \,
-     ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
-      \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
+     \; \mbox{and} \; \atime_2 > \atime_1
   \}
 \\\\
-\semantics{x{:}\feed_1 \allpairfeed \feed_2}{\environment}{\universe} 
+\semantics{x{:}\feed_1 \, {*}{*} \, \feed_2}{\environment}{\universe} 
  &=&
  \{(\atime_2,(v_1,v_2)) \setalt 
      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
      \; \mbox{and} \; 
 \\&&\qquad\qquad\qquad\ \ \,
      (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
-     \; \mbox{and} \; \atime_2 \geq \atime_1
+     \; \mbox{and} \; \atime_2 > \atime_1
+\\&&\qquad\qquad\qquad\ \ \,
+     ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+      \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
   \}
 \\\\
-\semantics{\foreachcreate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+{\cal F}\lsem
+\mathtt{foreach{*}}\; x \; \mathtt{in}\; \feed_1 
+%\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
  &=&
  \{(\atime_2,v_2) \setalt 
      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
      \; \mbox{and} \; 
-\\&&\qquad\qquad\ \,
+\\
+\qquad\qquad\quad\ \, \mathtt{create}\; \feed_2 \rsem_{{\environment} \, {\universe}}
+&&\qquad\qquad\ \,
+     (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \;
+%\\&&\qquad\qquad\ \,
+     \atime_2 > \atime_1 
+  \}
+\\\\
+{\cal F}\lsem
+\mathtt{foreach{*}{*}}\; x \; \mathtt{in}\; \feed_1 
+%\semantics{\foreachcreate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+ &=&
+ \{(\atime_2,v_2) \setalt 
+     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\
+\qquad\qquad\quad\ \, \mathtt{extend}\; \feed_2 \rsem_{{\environment} \, {\universe}}
+&&\qquad\qquad\ \,
      (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
      \; \mbox{and} \; t_2 > t_1 \; \mbox{and} \;
 \\&&\qquad\qquad\ \,
      ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
       \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2))      
-  \}
-\\\\
-\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
- &=&
- \{(\atime_2,v_2) \setalt 
-     (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-     \; \mbox{and} \; 
-\\&&\qquad\qquad\ \,
-     (\atime_2,v_2) \in \semantics{\feed_2}{(\environment,x_t\mapsto{}\atime_1,x\mapsto{}v_1)}{\universe}
-     \; \mbox{and} \;
-%\\&&\qquad\qquad\ \,
-     \atime_2 \geq \atime_1 
   \}
 \\\\
 \semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
