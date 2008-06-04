@@ -108,7 +108,7 @@
 
 \[
 \infer[(\textit{t-all})]
-{\Gamma \turn \allfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{\locty * \ty}}
+{\Gamma \turn \allfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{(\locty * \optionty{\ty}})}
 {
  \begin{array}{c}
   \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \qquad
@@ -122,7 +122,7 @@
 
 \[
 \infer[(\textit{t-any})]
-{\Gamma \turn \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{\locty * \ty}}
+{\Gamma \turn \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{(\locty * \optionty{\ty}})}
 {
  \begin{array}{c}
   \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \qquad
