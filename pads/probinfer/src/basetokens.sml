@@ -304,62 +304,63 @@ structure Basetokens = struct
 		     end) 
 
     fun intToBToken (i, table) = Option.valOf(OrdBTokenTable.find (table, i)) 
-(*
-    fun intToBToken i =
-      case i of 
-          0 => PPtime
-        | 1 => PPdate
-        | 2 => PPip
-        | 3 => PPhostname
-        | 4 => PPurl
-        | 5 => PPurlbody
-        | 6 => PPpath
-        | 7 => PPbXML
-        | 8 => PPeXML
-        | 9 => PPemail
-        | 10 => PPpermission
-        | 11 => PPmac
-        | 12 => PPfloat
-        | 13 => PPint
-        | 14 => PPword
-        | 15 => PPid
-        | 16 => PPpunc "!"
-        | 17 => PPpunc "\""
-        | 18 => PPpunc "#"
-        | 19 => PPpunc "$"
-        | 20 => PPpunc "%"
-        | 21 => PPpunc "&"
-        | 22 => PPpunc "'"
-        | 23 => PPpunc "("
-        | 24 => PPpunc ")"
-        | 25 => PPpunc "*"
-        | 26 => PPpunc "+"
-        | 27 => PPpunc ","
-        | 28 => PPpunc "-"
-        | 29 => PPpunc "."
-        | 30 => PPpunc "/"
-        | 31 => PPpunc ":"
-        | 32 => PPpunc ";"
-        | 33 => PPpunc "<"
-        | 34 => PPpunc "="
-        | 35 => PPpunc ">"
-        | 36 => PPpunc "?"
-        | 37 => PPpunc "@"
-        | 38 => PPpunc "["
-        | 39 => PPpunc "\\"
-        | 40 => PPpunc "]"
-        | 41 => PPpunc "^"
-        | 42 => PPpunc "_"
-        | 43 => PPpunc "`"
-        | 44 => PPpunc "{"
-        | 45 => PPpunc "|"
-        | 46 => PPpunc "}"
-        | 47 => PPpunc "~"
-        | 48 => PPwhite
-        | 49 => PPtext
-        | 50 => PPmessage
-        | 51 => PPblob
-*)
+
+    fun indexToBToken i =
+      case i+1 of 
+       8 => PPint 
+    |  7 => PPfloat
+    |  1 => PPtime
+	|  2 => PPdate
+	|  3 => PPip
+	|  9 => PPhostname
+	|  12 => PPpath
+	|  10 => PPurl
+    |  11 => PPurlbody
+	|  4 => PPemail
+	|  6 => PPmac
+    |  15 => PPword
+    |  16 => PPhstring
+    |  17 => PPid
+    |  13 => PPbXML
+    |  14 => PPeXML
+    |  50 => PPwhite
+    |  52 => PPmessage 
+    |  51 => PPtext 
+    |  5 => PPpermission 
+    |  18 => PPpunc "." 
+           | 19 => PPpunc "/" 
+           | 20 => PPpunc "\\" 
+           | 21 => PPpunc ";"
+           | 22 => PPpunc "|" 
+           | 23 => PPpunc "<" 
+           | 24 => PPpunc "~" 
+           | 25 => PPpunc "`"
+           | 26 => PPpunc "!" 
+           | 27 => PPpunc "@"
+           | 28 => PPpunc "#" 
+           | 29 => PPpunc "$" 
+           | 30 => PPpunc "%" 
+           | 31 => PPpunc "^"
+           | 32 => PPpunc "&" 
+           | 33 => PPpunc "*" 
+           | 34 => PPpunc "("
+           | 35 => PPpunc ")" 
+           | 36 => PPpunc "-" 
+           | 37 => PPpunc "_" 
+           | 38 => PPpunc "+" 
+           | 39 => PPpunc "=" 
+           | 40 => PPpunc "{" 
+           | 41 => PPpunc "}"
+           | 42 => PPpunc "["
+           | 43 => PPpunc "]" 
+           | 44 => PPpunc ":" 
+           | 45 => PPpunc "\"" 
+           | 46 => PPpunc "'" 
+           | 47 => PPpunc ">" 
+           | 48 => PPpunc "," 
+           | 49 => PPpunc "?" 
+    |  54 => PPblob
+    |  53 => PPempty
 
     fun compBToken (t1:BToken, t2:BToken):order = 
 	case (t1,t2) of
@@ -418,7 +419,7 @@ structure Basetokens = struct
        , ( PPid, "[-0-9A-Za-z_.]+")
 (*       , ( PPbXML, "\\<([a-zA-Z])+\\>")
        , ( PPeXML, "\\<\\/[^>]+\\>") *) 
-       , ( PPwhite, "[ \\t\\r\\n]+") 
+       , ( PPwhite, "[ \t\r\n]+") 
        , ( PPmessage, "\\\".+\\\"|[[].+[]]|[(].+[)]|[{].+[}]|.+\\?|:[^:]+")  (* slow *)
        , ( PPtext, "([\"'])[-A-Za-z0-9_,;. ]+([\"'])|[-A-Za-z0-9_,;. ]+")
        , ( PPpermission, "[-dl]([-r][-w][-xsStT]){3}")  
@@ -772,9 +773,18 @@ structure Basetokens = struct
   fun BToken2BTokenClass t =
     case t of
         PPwhite => PPwhite
-      | PPpunc _ => PPpunc "."
+      | PPpunc "." => PPpunc "."
+      | PPpunc ":" => PPpunc ":"
+      | PPpunc "_" => PPpunc "_"
+      | PPpunc "/" => PPpunc "/"
+      | PPpunc _ => PPwhite
+(*
+      | PPfloat => PPfloat
+      | PPint => PPint
+      | PPtext => PPtext
+*)
       | _ => PPblob
 
-  val BTokenClass = [PPwhite, PPpunc ".", PPblob]
+  val BTokenClass = [PPwhite, PPpunc ".", PPpunc ":", PPpunc "_", PPpunc "/", (*PPfloat, PPint, PPtext,*) PPblob]
 
 end

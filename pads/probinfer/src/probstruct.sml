@@ -1427,6 +1427,14 @@ val _ = print ("recNo = "^(Int.toString rn1)^" lineNo = "^(Int.toString ln1)^" n
       in
         List.foldl doOne IntMap.empty cl
       end
+
+    fun easyprintss ss =
+      let 
+        val (endptable, s, lineNo, recNo, sbegin, send) = ss
+      in
+        print ("recNo = "^(Int.toString recNo)^" lineNo = "^(Int.toString lineNo)^" sbegin = "^(Int.toString sbegin)^" send = "^(Int.toString send)^"\n")
+      end
+
 (*
     fun columnToLocations (cl: NewContext list) : location list =
       let
@@ -1518,6 +1526,9 @@ val _ = print ("recNo = "^(Int.toString rn1)^" lineNo = "^(Int.toString ln1)^" n
                      else SeqsetListToTy (currentDepth + 1) [] tables
                    else
                    let
+val _ = print "mkTBD chop\n"
+val _ = print "chop ssl:\n"
+val _ = List.app easyprintss ssl
                      val locList = columnToLocations cl
 val _ = printColumn cl
 (*val _ = printColumnString cl*)
@@ -1585,6 +1596,9 @@ val _ = printColumn cl
                        SeqsetListToTy_GHMM (currentDepth + 1) [] ghmmmodel tokenpairtable
                    else
                    let
+val _ = print "mkTBD_GHMM chop\n"
+val _ = print "chop ssl:\n"
+val _ = List.app easyprintss ssl
                      val locList = columnToLocations cl
 val _ = printColumn cl
 (*val _ = printColumnString cl*)
@@ -1652,6 +1666,9 @@ val _ = printColumn cl
                      else SeqsetListToTy (currentDepth + 1) [] tables
                    else
                    let
+val _ = print "mkTBD_array chop\n"
+val _ = print "chop ssl:\n"
+val _ = List.app easyprintss ssl
                      val locList = columnToLocations cl
 val _ = printColumn cl
 (*val _ = printColumnString cl*)
@@ -1718,6 +1735,9 @@ val _ = printColumn cl
                    if (List.length ssl) = 0 then SeqsetListToTy_GHMM (currentDepth + 1) [] ghmmmodel tokenpairtable
                    else
                    let
+val _ = print "mkTBD_array_GHMM chop\n"
+val _ = print "chop ssl:\n"
+val _ = List.app easyprintss ssl
                      val locList = columnToLocations cl
 val _ = printColumn cl
 (*val _ = printColumnString cl*)
@@ -3121,4 +3141,76 @@ val _ = print "seqset to list done.\n"
         TextIO.closeOut outstrm
       end
 
+    fun showTokenSeqsVanilla fileName  = 
+	let
+        val records = loadFiles fileName
+	    val recordnum = ref (List.length records)
+	    val rtokens : Context list = List.map (Structure.ltokenizeRecord recordnum) records 
+        fun printBSLToken (str:string) (t, l) = 
+          let
+            val {lineNo=llineNo, beginloc=lbegin, endloc=lend, recNo=lrecNo} = l
+          in
+            case t of   
+              Pgroup g =>
+                let
+                  val {left = lf, body = bd, right = rt} = g
+                in
+                  (printBSLToken str lf; List.app (printBSLToken str) bd; printBSLToken str rt)
+                end
+              | _ => print ((tokenTyToName t)^"["^(String.substring(str, lbegin-2, lend-lbegin+1))^"]"^" ")
+          end
+        fun printListPair (re:string, bslist: Context) =
+          case bslist of
+              [] => (print (re^"\n"); print "no tokenization result\n")
+            | _ => (print (re^"\n"); List.app (printBSLToken re) bslist; print "\n")
+	in
+(*	    ListPair.appEq printListPair (records, tokens) *)
+        ListPair.appEq printListPair (records, rtokens)
+	end
+
+    fun showTokenSeqsHmm fileName =
+      let
+        val records = loadFiles fileName
+	    val recordnum = ref (List.length records)
+        val recordNumber = ref 0
+        val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
+        val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
+        val seqsetl : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
+        val hmmtables = readinHMM "training/"
+        val rtokens : NewContext list = List.map (basicViterbi hmmtables) seqsetl
+        fun printBSLToken ((t, s), l) = print ((BTokenToName t)^"["^s^"]"^" ")
+        fun printListPair (re:string, bslist: NewContext) =
+          case bslist of
+              [] => (print (re^"\n"); print "no tokenization result\n")
+            | _ => (print (re^"\n"); List.app printBSLToken bslist; print "\n")
+	in
+(*	    ListPair.appEq printListPair (records, tokens) *)
+        ListPair.appEq printListPair (records, rtokens)
+	end
+
+    fun showTokenSeqsGhmm fileName = 
+      let
+        val records = loadFiles fileName
+	    val recordnum = ref (List.length records)
+        val recordNumber = ref 0
+        val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
+        val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
+        val seqsetl : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
+        val ghmmmodel = readinGHMM "training/"
+        val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
+        val rtokens : NewContext list = 
+          if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
+          else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl
+          else if ( !ghmm3 = true ) then List.map (basicViterbi_GHMM_length ghmmmodel) seqsetl
+          else if ( !ghmm4 = true ) then List.map (basicViterbi_GHMM_trans_length ghmmmodel tokenpairtable) seqsetl
+          else raise GHMMOptionError
+        fun printBSLToken ((t, s), l) = print ((BTokenToName t)^"["^s^"]"^" ")
+        fun printListPair (re:string, bslist: NewContext) =
+          case bslist of
+              [] => (print (re^"\n"); print "no tokenization result\n")
+            | _ => (print (re^"\n"); List.app printBSLToken bslist; print "\n")
+	in
+(*	    ListPair.appEq printListPair (records, tokens) *)
+        ListPair.appEq printListPair (records, rtokens)
+	end
 end

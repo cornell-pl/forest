@@ -1777,13 +1777,16 @@ val _ = print ("line "^(Int.toString r1)^" found.\n")
 	 end
    ) 
 
-(* use lineNo as index maybe problemetic, what if calling chopSeqsets inside an array? *)
+(* use lineNo as index may be problemetic, what if calling chopSeqsets inside an array? *)
     exception LocationNotExists
     fun chopSeqsets (ssl: Seqset list) ll : Seqset list = 
       let
-(*val _ = print "Chopping...\n"*)
+val _ = print "Chopping inside array...\n"
 (*val _ = print ("chop "^(Int.toString (List.length ssl))^" seqsets.\n")*)
-        fun ssl2sst (ss as (endptable, s, lineNo, recNo, sbegin, send), oldtable) = IntMap.insert(oldtable, lineNo, ss)
+        fun ssl2sst (ss as (endptable, s, lineNo, recNo, sbegin, send), oldtable) = 
+          case IntMap.find(oldtable, lineNo) of
+              NONE => IntMap.insert(oldtable, lineNo, [ss])
+            | SOME l => IntMap.insert(#1(IntMap.remove(oldtable, lineNo)), lineNo, l@[ss])
         val sst = List.foldl ssl2sst IntMap.empty ssl
         fun chopOneChunk (thisloc : location, result: Seqset list) = (* chop one location *)
           let 
@@ -1791,14 +1794,28 @@ val _ = print ("line "^(Int.toString r1)^" found.\n")
           in
             if thisb = ~1 orelse thise = ~1 then  [(PosBTokenTable.insert(PosBTokenTable.empty, ~1, [(~1, PPempty)]), "", thisl, thisr, ~1, ~1)]@result
             else
-            case IntMap.find(sst, thisl) of
+            let
+              val ss = 
+                case IntMap.find(sst, thisl) of
                 NONE => (print ("lineNo = "^(Int.toString thisl)^" recNo = "^(Int.toString thisr)^" ssl doesn't exist. "^(Int.toString (List.length ssl))^" number of seqsets in total"^"\n"); raise LocationNotExists)
-              | SOME ss  =>
-                  let
-val _ = print ("recNo = "^(Int.toString thisl)^"\n")
+              | SOME myssl  => if List.length myssl = 1 then List.nth(myssl, 0)
+                               else
+                                 let
+                                   fun test myss =
+                                     let
+                                       val (endptable, s, lineNo, recNo, sbegin, send) = myss
+                                     in
+                                       if sbegin<=thisb andalso send>=thise then true else false
+                                     end
+                                 in
+                                   case List.find test myssl of
+                                       SOME finds => finds
+                                     | NONE => (print ("lineNo = "^(Int.toString thisl)^" recNo = "^(Int.toString thisr)^" ssl doesn't exist. "^(Int.toString (List.length ssl))^" number of seqsets in total"^"\n"); raise LocationNotExists)
+                                 end
                     val (endptable, s, lineNo, recNo, sbegin, send) = ss
                   in
                     if thisb = sbegin andalso thise = send then result@[ss]
+                    else if thisb < sbegin orelse thise > send then (print ("old begin = "^(Int.toString sbegin)^" old end = "^(Int.toString send)^" new begin = "^(Int.toString thisb)^" new end = "^(Int.toString thise)^"\n"); raise LocationNotExists)
                     else
                     let
                     fun cutOutBound endptable = 
@@ -1861,9 +1878,9 @@ val _ = print ("recNo = "^(Int.toString thisl)^"\n")
                         newendptable
                       end
                     val retseqset = ((deleteDeadEnd hendptable), s, thisl, thisr, thisb, thise)
-val _ = print "original seqset:\n"
+val _ = print ("original seqset: begin = "^(Int.toString sbegin)^" end = "^(Int.toString send)^" s = "^(String.substring(s, sbegin, send-sbegin+1))^"\n")
 val _ = printSeqset ss
-val _ = print "chopped seqset:\n"
+val _ = print ("chopped seqset: begin = "^(Int.toString thisb)^" end = "^(Int.toString thise)^"\n")
 val _ = printSeqset retseqset
 val _ = print "\n"
                   in
@@ -1878,7 +1895,7 @@ val _ = print "\n"
 
     fun chopSeqsets_notarray (ssl: Seqset list) ll : Seqset list = 
       let
-(*val _ = print "Chopping...\n"*)
+val _ = print "Chopping...\n"
 (*val _ = print ("chop "^(Int.toString (List.length ssl))^" seqsets.\n")*)
         fun ssl2sst (ss as (endptable, s, lineNo, recNo, sbegin, send), oldtable) = DoubleIntMap.insert(oldtable, (lineNo, recNo), ss)
         val sst = List.foldl ssl2sst DoubleIntMap.empty ssl
@@ -2155,10 +2172,10 @@ val _ = print "\n"
             in
               List.foldl doOne (0, []) bsl
             end
-          fun printOne r = TextIO.output(strm, BSToken2FeatureStrs r)
+          fun printOne r = TextIO.output(strm, BSToken2FeatureStrs2 r)  (* change here to use binary or real value features *)
           fun printOneList l = List.app printOne (#2(bsl2bsbel l))
           val _ = List.app printOneList list
-          val _ = TextIO.output(strm, BSToken2FeatureStrs(PPempty, "", ~1, ~1)) (* make sure we have enough classes *)
+          val _ = TextIO.output(strm, BSToken2FeatureStrs2(PPempty, "", ~1, ~1)) (* make sure we have enough classes *)
         in
           TextIO.closeOut strm
         end

@@ -738,9 +738,11 @@ print ("seqset size: "^(Int.toString (List.length ret))^"\n");*)
       in
         (
         recNum := !recNum + 1;
+(*
         print "seqset:\n";
         printSeqset raw;
         print "\n";
+*)
         raw
         )
       end

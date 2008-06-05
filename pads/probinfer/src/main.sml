@@ -142,6 +142,30 @@ print token *)
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
+       else if ( !showtokenvanilla = true )
+         then
+            let
+              val _ = print "printing token sequences by lex...\n"
+              val _ =  showTokenSeqsVanilla(!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
+       else if ( !showtokenhmm = true )
+         then
+            let
+              val _ = print "printing token sequences by hmm...\n"
+              val _ =  showTokenSeqsHmm(!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
+       else if ( !showtokenghmm = true )
+         then
+            let
+              val _ = print "printing token sequences by ghmm...\n"
+              val _ =  showTokenSeqsGhmm(!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
        else if ( !testingRun = true)
          then 
             let 
@@ -273,6 +297,9 @@ print token *)
     fun setGHMM3 s = ghmm3 := (s = "true")
     fun setGHMM4 s = ghmm4 := (s = "true")
     fun setGHMM5 s = ghmm5 := (s = "true")
+    fun setShowTokenVanilla s = showtokenvanilla := (s = "true")
+    fun setShowTokenHmm s = showtokenhmm := (s = "true")
+    fun setShowTokenGhmm s = showtokenghmm := (s = "true")
     fun setDumpSeqsets  s = dumpseqsets  := (s = "true")
     fun setCharacter  s = character  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
@@ -307,6 +334,9 @@ print token *)
          ("ghmm3",  "use basicViterbi_GHMM_length",	                                                   PCL.String (setGHMM3, true)),         
          ("ghmm4",  "use basicViterbi_GHMM_trans_length",	                                                   PCL.String (setGHMM4, true)),         
          ("ghmm5",  "use token class to compute transition probability",	                                                   PCL.String (setGHMM5, true)),         
+         ("showtokenvanilla",  "show token sequences by lex",	                                                   PCL.String (setShowTokenVanilla, true)),         
+         ("showtokenhmm",  "show token sequences by hmm",	                                                   PCL.String (setShowTokenHmm, true)),         
+         ("showtokenghmm",  "show token sequences by ghmm",	                                                   PCL.String (setShowTokenGhmm, true)),         
          ("evaluate_hmm_ss",  "evaluating HMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_hmm_seqset, true)),
          ("evaluate_ghmm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_ghmm_seqset, true)),
          ("hmmtokenize",  "evaluate descriptions with tokenization by hmm library",	                                                   PCL.String (setHMMtokenize, true)),
