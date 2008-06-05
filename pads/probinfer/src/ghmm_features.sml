@@ -689,6 +689,9 @@ struct
        )
       then 1.0 else 0.0
 
+  fun has_month_year_date s = 
+    if Real.compare((has_month s), 1.0)=EQUAL orelse Real.compare((has_year s), 1.0)=EQUAL orelse Real.compare((has_date s), 1.0)=EQUAL then 1.0 else 0.0
+
   fun no_alpha s = 
     let 
       val has = List.exists Char.isAlpha (String.explode s)
@@ -742,6 +745,55 @@ struct
       fun check i = if i>=0 andalso i<32 then true else false handle Overflow => false
     in
       if (List.all check intlist) then 1.0 else 0.0
+    end
+
+  fun check_time_range s =
+    let
+      fun collect_digit (c, (thisint, list)) = 
+        if Char.isDigit c then (thisint@[c], list) 
+        else 
+          if List.length thisint = 0 then (thisint, list)
+          else ([], list@[String.implode thisint])
+      val (lastint, intlist) = List.foldl collect_digit ([], []) (String.explode s)
+      val intlist = if List.length lastint = 0 then intlist else intlist@[String.implode lastint]
+      fun str2int str = ((*print (str^" ");*) Option.valOf(Int.fromString str)) handle Overflow => 101 
+      val intlist = List.map str2int intlist 
+      fun check_hour i = if i>=0 andalso i<25 then true else false handle Overflow => false
+      fun check_min i = if i>=0 andalso i<61 then true else false handle Overflow => false
+    in
+      if List.length intlist = 2 then (
+        if check_hour (List.nth(intlist, 0))=true andalso check_min(List.nth(intlist, 1))=true then 1.0 else 0.0
+      )
+      else if List.length intlist > 2 then (
+        if check_hour (List.nth(intlist, 0))=true andalso check_min(List.nth(intlist, 1))=true andalso check_min(List.nth(intlist, 2))=true then 1.0 else 0.0
+      )
+      else 0.0
+    end
+
+  fun check_date_range s =
+    let
+      fun collect_digit (c, (thisint, twolist, fourlist)) = 
+        if Char.isDigit c then (thisint@[c], twolist, fourlist) 
+        else 
+          if List.length thisint = 2 orelse List.length thisint = 1 then ([], twolist@[String.implode thisint], fourlist)
+          else if List.length thisint = 4 then ([], twolist, fourlist@[String.implode thisint])
+          else ([], twolist, fourlist)
+      val (lastint, twointlist, fourintlist) = List.foldl collect_digit ([], [], []) (String.explode s)
+      val twointlist = if List.length lastint = 2 orelse List.length lastint = 1 then twointlist@[String.implode lastint] else twointlist
+      val fourintlist = if List.length lastint = 4 then fourintlist@[String.implode lastint] else fourintlist
+      fun str2int str = ((*print (str^" ");*) Option.valOf(Int.fromString str)) handle Overflow => 20000 
+      val twointlist = List.map str2int twointlist 
+      val fourintlist = List.map str2int fourintlist 
+      fun check_year i = if i>1989 andalso i<2050 then true else false handle Overflow => false
+      fun check_date i = if i>0 andalso i<32 then true else false handle Overflow => false
+      fun check_month i = if i>0 andalso i<13 then true else false handle Overflow => false
+    in
+      if List.length fourintlist > 1 then 0.0
+      else if List.length fourintlist = 1 then (if check_year (List.nth(fourintlist, 0)) then 1.0 else 0.0)
+      else if List.length twointlist = 1 then (if check_date (List.nth(twointlist, 0)) then 1.0 else 0.0)
+      else if List.length twointlist = 2 then (if (check_month (List.nth(twointlist, 0)) andalso check_date (List.nth(twointlist, 1))) orelse
+                                                 (check_month (List.nth(twointlist, 1)) andalso check_date (List.nth(twointlist, 0))) then 1.0 else 0.0)
+      else 0.0
     end
 
   fun all_alpha_space s = 
@@ -861,7 +913,7 @@ struct
       if intnum = 3 then 1.0 else 0.0
     end
 
-  fun int_num_2_3_4 s =
+  fun int_num_1_2_3 s =
     let
       fun collect_digit (c, (thisint, list)) = 
         if Char.isDigit c then (thisint@[c], list) 
@@ -876,7 +928,25 @@ struct
 *)
       val intnum = List.length intlist
     in
-      if intnum = 2 orelse intnum = 3 then 1.0 else 0.0
+      if intnum = 1 orelse intnum = 2 orelse intnum = 3 then 1.0 else 0.0
+    end
+
+  fun int_num_3_4 s =
+    let
+      fun collect_digit (c, (thisint, list)) = 
+        if Char.isDigit c then (thisint@[c], list) 
+        else 
+          if List.length thisint = 0 then (thisint, list)
+          else ([], list@[String.implode thisint])
+      val (lastint, intlist) = List.foldl collect_digit ([], []) (String.explode s)
+      val intlist = if List.length lastint = 0 then intlist else intlist@[String.implode lastint]
+(*
+      fun str2int str =  Option.valOf(Int.fromString str)) handle Overflow => 1 
+      val intlist = List.map str2int intlist 
+*)
+      val intnum = List.length intlist
+    in
+      if intnum = 4 orelse intnum = 3 then 1.0 else 0.0
     end
 
   fun int_num_4 s =
@@ -1047,9 +1117,11 @@ struct
   ]
 
   val binaryfeatureList = [
+(*
     ("token_length_5", token_length_5),
     ("token_length_10", token_length_10),
     ("token_length_20", token_length_20),
+*)
     ("token_length_30", token_length_30),
     ("dot_num_no", dot_num_no), 
     ("dot_num_1", dot_num_1),
@@ -1063,6 +1135,7 @@ struct
     ("slash_num_5", slash_num_5),
     ("slash_num_10", slash_num_10),
     ("slash_num_20", slash_num_20),
+(*
     ("bslash_num_no", bslash_num_no),
     ("bslash_num_1", bslash_num_1),
     ("bslash_num_5", bslash_num_5),
@@ -1090,21 +1163,25 @@ struct
     ("tilde_num_5", tilde_num_5),
     ("tilde_num_10", tilde_num_10),
     ("tilde_num_20", tilde_num_20),
+*)
     ("bquote_num_no", bquote_num_no),
     ("bquote_num_1", bquote_num_1),
     ("bquote_num_5", bquote_num_5),
     ("bquote_num_10", bquote_num_10),
     ("bquote_num_20", bquote_num_20),
+(*
     ("bang_num_no", bang_num_no),
     ("bang_num_1", bang_num_1),
     ("bang_num_5", bang_num_5),
     ("bang_num_10", bang_num_10),
     ("bang_num_20", bang_num_20),
+*)
     ("at_num_no", at_num_no),
     ("at_num_1", at_num_1),
     ("at_num_5", at_num_5),
     ("at_num_10", at_num_10),
     ("at_num_20", at_num_20),
+(*  
     ("hash_num_no", hash_num_no),
     ("hash_num_1", hash_num_1),
     ("hash_num_5", hash_num_5),
@@ -1135,6 +1212,7 @@ struct
     ("star_num_5", star_num_5),
     ("star_num_10", star_num_10),
     ("star_num_20", star_num_20),
+*)
     ("lpar_num_no", lpar_num_no),
     ("lpar_num_1", lpar_num_1),
     ("lpar_num_5", lpar_num_5),
@@ -1164,11 +1242,13 @@ struct
     ("add_num_5", add_num_5),
     ("add_num_10", add_num_10),
     ("add_num_20", add_num_20),
+(*
     ("equal_num_no", equal_num_no),
     ("equal_num_1", equal_num_1),
     ("equal_num_5", equal_num_5),
     ("equal_num_10", equal_num_10),
     ("equal_num_20", equal_num_20),
+*)
     ("lbrac_num_no", lbrac_num_no),
     ("lbrac_num_1", lbrac_num_1),
     ("lbrac_num_5", lbrac_num_5),
@@ -1206,11 +1286,13 @@ struct
     ("quote_num_5", quote_num_5),
     ("quote_num_10", quote_num_10),
     ("quote_num_20", quote_num_20),
+(*
     ("greater_num_no", greater_num_no),
     ("greater_num_1", greater_num_1),
     ("greater_num_5", greater_num_5),
     ("greater_num_10", greater_num_10),
     ("greater_num_20", greater_num_20),
+*)
     ("comma_num_no", comma_num_no),
     ("comma_num_1", comma_num_1),
     ("comma_num_2", comma_num_2),
@@ -1218,11 +1300,13 @@ struct
     ("comma_num_5", comma_num_5),
     ("comma_num_10", comma_num_10),
     ("comma_num_20", comma_num_20),
+(*
     ("question_num_no", question_num_no),
     ("question_num_1", question_num_1),
     ("question_num_5", question_num_5),
     ("question_num_10", question_num_10),
     ("question_num_20", question_num_20),
+*)
     ("white_num_no", white_num_no),
     ("white_num_1", white_num_1),
     ("white_num_2", white_num_2),
@@ -1230,11 +1314,13 @@ struct
     ("white_num_5", white_num_5),
     ("white_num_10", white_num_10),
     ("white_num_20", white_num_20),
+(*
     ("tab_num_no", tab_num_no),
     ("tab_num_1", tab_num_1),
     ("tab_num_5", tab_num_5),
     ("tab_num_10", tab_num_10),
     ("tab_num_20", tab_num_20),
+*)
     ("first_digit", first_digit),
     ("first_alpha", first_alpha),
     ("first_punct", first_punct),
@@ -1247,6 +1333,7 @@ struct
     ("last_alpha", last_alpha),
     ("last_punct", last_punct),
     ("only_hex", only_hex),
+(*
     ("num_digit_no", num_digit_no),
     ("num_digit_1", num_digit_1),
     ("num_digit_2", num_digit_2),
@@ -1261,6 +1348,7 @@ struct
     ("num_alpha_5", num_alpha_5),
     ("num_alpha_10", num_alpha_10),
     ("num_alpha_20", num_alpha_20),
+*)
     ("num_punc_no", num_punc_no),
     ("num_punc_1", num_punc_1),
     ("num_punc_2", num_punc_2),
@@ -1271,23 +1359,27 @@ struct
     ("has_ampm", has_ampm),
     ("has_month", has_month),
     ("has_date", has_date),
-(*
+    ("has_month_year_date", has_month_year_date),
     ("no_alpha", no_alpha),
     ("no_colon", no_colon),
-*)
     ("has_hostsuffix", has_hostsuffix),
     ("has_docname_suffix", has_docname_suffix),
     ("all_digit", all_digit),
     ("not_all_digit", not_all_digit),
     ("all_alpha_space", all_alpha_space),
+(*
     ("digit_all_below24", digit_all_below24),
     ("digit_all_below31", digit_all_below31),
+*)
+    ("check_time_range", check_time_range),
+    ("check_date_range", check_date_range),
     ("int_num_0", int_num_0),
     ("int_num_1", int_num_1),
     ("int_num_2", int_num_2),
     ("int_num_3", int_num_3),
-    ("int_num_2_3_4", int_num_2_3_4),
+    ("int_num_1_2_3", int_num_1_2_3),
     ("int_num_4", int_num_4),
+    ("int_num_3_4", int_num_3_4),
     ("int_num_5", int_num_5),
     ("int_less_colon_1", int_less_colon_1),
     ("int_less_dot_1", int_less_dot_1),
