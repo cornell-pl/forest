@@ -1,0 +1,248 @@
+
+\begin{figure*}[t]
+\[
+\begin{array}{lcl}
+\esemantics{e}{\environment} &=& \mbox{denotation of simply-typed term $e$ in environment $\environment$ mapping variables to values.}
+\\
+\\
+\semantics{\feed}{\environment}{\universe} &=& \mbox{denotation of 
+$\feed$ in environment $\environment$ mapping variables to values.} \\
+ && \mbox{and ``universe'' $\universe$ mapping schedule time and location to 
+          arrival time and string data}
+\\
+% \\
+% \semantics{x}{\environment}{\universe} 
+%  &=& (\environment(x_t), \environment(x))
+% \\
+\\
+\semantics{\emptyfeed}{\environment}{\universe} 
+ &=& \{\;\}
+\\\\
+\semantics{\computed{e_1}{x}{e_2}}{\environment}{\universe} 
+ &=& \{((\atime,\generatedloc), \esemantics{(\lambda x.e_1)}{\environment}\; \atime) 
+          \setalt \atime \in  \esemantics{e_2}{\environment} 
+     \} 
+\\\\
+\semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
+ &=& \semantics{\feed_2}{(\environment,x\mapsto\esemantics{e_1}{\environment})}{\universe} 
+\\\\
+
+%  \begin{array}{l}
+    {\cal F}\lsem\mathtt{all \{ format=} e_1; 
+%    \allfeed{e_1}{e_2}{e_3}{e_4}
+%  \end{array} 
+%}{\environment}{\universe} 
+ &=& \{((\atime,\loc), \esemantics{e_1}{\environment} \; (\universe'(\loc,\atime))))
+          \setalt \atime \in  \esemantics{e_3}{\environment} 
+          \;\mbox{and}\; \loc \in  \esemantics{e_2}{\environment}
+     \} 
+\\
+ \qquad\quad\ \,   \mathtt{locs=} e_2;
+&&\quad\mbox{where} \\
+ \qquad\quad\ \,    \mathtt{sched=} e_3;
+&& \qquad \mathtt{timeout} =  
+     \lambda (x_t,(x_{at},s)).
+        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_5}{\environment} \,
+        \mathtt{then}\,  s \, \mathtt{else} \, \mathtt{None} \\
+ \qquad\quad\ \,    \mathtt{pp=} e_4;
+&& \qquad \universe' =
+     \lambda (x_{\ell}, x_t). 
+           \esemantics{e_4}{\environment}\, 
+                 (\mathtt{timeout}\, (x_t,\universe (x_\ell,x_t))) 
+ \\
+ \qquad\quad\ \,    \mathtt{win=} e_5; \}\rsem_{{\environment} \, {\universe}}
+&& \\
+% \\
+% {\cal F}\lsem\mathtt{exists \{ format=} e_1;
+% % \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
+%  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
+%  \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
+% &&\quad\mbox{where} \\
+% %\begin{array}{l}
+%  \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
+%   && \qquad \universe' \, = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
+%  \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
+% &&\qquad
+%   f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; (\some{v})\} \\
+%  \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
+%  \}\rsem_{{\environment} \, {\universe}}
+% &&\qquad\qquad \qquad\qquad 
+%   \mbox{for some $\loc \in \esemantics{e_2}{\environment}$ such that
+%     $\universe'(\atime,\loc) = \some{v}$} \\
+% &&\qquad
+%   f \; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; \none\} \\
+% &&\qquad\qquad \qquad\qquad 
+%   \mbox{if no such $\loc$ exists} \\
+% %\end{array}
+% \\
+\\
+{\cal F}\lsem\mathtt{exists \{ format=} e_1;
+% \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
+ &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
+ \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
+&&\quad\mbox{where} \\
+%\begin{array}{l}
+ \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
+  && 
+\qquad f = \lambda \atime. \{((\atime,\ell),\mathtt{Some} \; s)\}\ \mbox{for some $\ell$ and $s$ such that:}\\
+ \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
+&&\qquad\quad
+ \mbox{$((\atime,\ell),\mathtt{Some} \; s) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
+  \\
+ \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
+ \}\rsem_{{\environment} \, {\universe}}
+&&\qquad
+  f = \lambda \atime. \{((\atime,\loc), \none)\}\  
+  \mbox{for some $\loc \in \esemantics{e2}{\environment}$
+if there exists no $\ell$ and $s$ such that:} \\
+&&\qquad\quad 
+ \mbox{$((\atime,\ell),\mathtt{Some} \; s) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
+\\
+
+%\end{array}
+\\
+\\
+\semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
+ &=& \semantics{\feed_1}{\environment}{\universe} 
+     \bigcup
+     \semantics{\feed_2}{\environment}{\universe} 
+\\\\
+\semantics{\feed_1 \sumfeed \feed_2}{\environment}{\universe} 
+ &=& \{
+      ((\mytime{\meta},\inl{\meta}),\inl{v}) \setalt 
+        (\meta,v) \in \semantics{\feed_1}{\environment}{\universe} 
+     \}
+     \bigcup
+     \{
+      ((\mytime{\meta},\inr{\meta}),\inr{v}) \setalt 
+        (\meta,v) \in \semantics{\feed_2}{\environment}{\universe}
+     \}
+\\\\
+\semantics{\feed_1 \spairfeed \feed_2}{\environment}{\universe} 
+ &=&
+ \{((\mytime{\meta_1},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
+     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+     (\meta_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
+     \; \mbox{and} \; 
+     \mytime{\meta_1} = \mytime{\meta_2}
+  \}
+\\\\
+% \semantics{\feed_1 * \feed_2}{\environment}{\universe} 
+%  &=&
+%  \{(\atime_2,(v_1,v_2)) \setalt 
+%      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+%      \; \mbox{and} \; 
+% \\&&\qquad\qquad\qquad\ \ \,
+%      (\atime_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
+%      \; \mbox{and} \;
+% \\&&\qquad\qquad\qquad\ \ \,
+%      ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+%       \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
+%   \}
+% \\\\
+\semantics{x{:}\feed_1 * \feed_2}{\environment}{\universe} 
+ &=&
+ \{(\mytime{\meta_2},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
+     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\&&\qquad\qquad\qquad\ \ \,
+     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1}
+  \}
+\\\\
+\semantics{x{:}\feed_1 \, {*}{*} \, \feed_2}{\environment}{\universe} 
+ &=&
+ \{(\mytime{\meta_2},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
+     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\&&\qquad\qquad\qquad\ \ \,
+     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1}
+\\&&\qquad\qquad\qquad\ \ \,
+     ((\meta_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+      \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
+            \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2})) 
+  \}
+\\\\
+{\cal F}\lsem
+\mathtt{foreach{*}}\; x \; \mathtt{in}\; \feed_1 
+%\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+ &=&
+ \{(\meta_2,v_2) \setalt 
+     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\
+\qquad\qquad\quad\ \, \mathtt{create}\; \feed_2 \rsem_{{\environment} \, {\universe}}
+&&\qquad\qquad\ \,
+     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \;
+%\\&&\qquad\qquad\ \,
+     \mytime{\meta_2} > \mytime{\meta_1} 
+  \}
+\\\\
+{\cal F}\lsem
+\mathtt{foreach{*}{*}}\; x \; \mathtt{in}\; \feed_1 
+%\semantics{\foreachcreate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+ &=&
+ \{(\meta_2,v_2) \setalt 
+     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+\\
+\qquad\qquad\quad\ \, \mathtt{extend}\; \feed_2 \rsem_{{\environment} \, {\universe}}
+&&\qquad\qquad\ \,
+     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
+     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1} \; \mbox{and} \;
+\\&&\qquad\qquad\ \,
+     ((\meta_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+      \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
+           \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2}))      
+  \}
+\\\\
+\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+            \esemantics{e}{\environment}\; v = \mathtt{true}
+\}
+\\\\
+% \semantics{\ppfeed{\feed}{e}}{\environment}{\universe} 
+%  &=&
+% \semantics{\feed}{\environment}{
+%   (\lambda x{:}\locty * \timety. \esemantics{e}{\environment} (x,\universe(x)))} 
+% \\\\
+% \semantics{\remapfeed{\feed}{e}}{\environment}{\universe} 
+%  &=&
+% \semantics{\feed}{\environment}{(\universe \circ \esemantics{e}{\environment})}
+% \\\\
+%% \semantics{\refeed{\feed}{e}}{\environment}{\universe} 
+%%  &=&
+%% \{(\atime,\some{v}) \setalt 
+%%    (\atime,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+%%    \atime \in \esemantics{e}{\environment}
+%% \} \bigcup
+%% \\&&
+%% \{(\atime,\none) \setalt
+%%    (\atime,\_) \not\in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+%%    \atime \in \esemantics{e}{\environment}
+%% \}
+%% \\\\
+%% \semantics{\stutterfeed{\feed}{e}}{\environment}{\universe} 
+%%  &=&
+%% \{(\atime,v) \setalt 
+%%    (\atime,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+%%    \atime \in \esemantics{e}{\environment}
+%% \} \bigcup
+%% \\&&
+%% \{(\atime,v) \setalt 
+%%    (\atime',v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+%%    \atime \in \esemantics{e}{\environment}  \; \mbox{and} \;
+%% \\&&\qquad\qquad\qquad\ \ \,
+%%     \mbox{for all $\atime''$ such that $\atime' < \atime'' \leq \atime$,} \;
+%%    (\atime'',\_) \not\in \semantics{\feed}{\environment}{\universe} \; 
+%% \}
+
+\end{array}
+\]
+\caption{Feed Language Semantics.}
+\label{fig:semantics}
+\end{figure*}
