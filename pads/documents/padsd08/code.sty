@@ -109,9 +109,9 @@
 % If the "\leavevmode" is included, the blank lines are not compressed out
 % but you will end up with extra space at the bottom of your code if you
 % put the "\end{code}" on a new line.
-%\def\cd@cr{\par\penalty10000\leavevmode} 	% TeX magicness
-%\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
-%\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
+\def\cd@cr{\par\penalty10000\leavevmode} 	% TeX magicness
+\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
+\def\cd@cr{\par\penalty10000\mbox{}}		% LaTeX
 
 
 % \codeallowbreaks
@@ -160,6 +160,30 @@
 % \def\={\discretionary{}{}{}} %optional break
 % FOO-\=BAR.
 
+% setupscriptlcode added by YHM
+%
+% for some papers, need very small code size
+%
+\def\setupscriptcode{\parsep=0pt\parindent=0pt%
+  \renewcommand{\baselinestretch}{1.0}%
+  \normalfont\ttfamily\scriptsize\frenchspacing\catcode``=13\@noligs%
+  \def\\{\char`\\}\def\_{\char`\_}%
+  \def\{{\char`\{}\def\}{\char`\}}%
+  \let\dcd=\cd@dcd\let\cddollar=\cd@dollarspecial\let\cdmath=\cd@mathspecial%
+  \@makeother\$\@makeother\&\@makeother\#%
+  \@makeother\^\@makeother\_\@makeother\~%
+  \@makeother\%\cd@obeytabs\cd@obeyspaces}
+
+\def\setupftntcode{\parsep=0pt\parindent=0pt%
+  \renewcommand{\baselinestretch}{1.0}%
+  \normalfont\ttfamily\footnotesize\frenchspacing\catcode``=13\@noligs%
+  \def\\{\char`\\}\def\_{\char`\_}%
+  \def\{{\char`\{}\def\}{\char`\}}%
+  \let\dcd=\cd@dcd\let\cddollar=\cd@dollarspecial\let\cdmath=\cd@mathspecial%
+  \@makeother\$\@makeother\&\@makeother\#%
+  \@makeother\^\@makeother\_\@makeother\~%
+  \@makeother\%\cd@obeytabs\cd@obeyspaces}
+
 % setupsmallcode added by JHR
 %
 % for the CML book, I'm using \footnotesize (9/10) for small code
@@ -186,15 +210,15 @@
 % left special: \{}
 % unnecessary: @`'"
 
-
-%% codebox, centercode
+%% codebox, fcodebox, scodebox, centercode
 %%=============================================================================
 %% The codebox env makes a box exactly as wide as it needs to be
 %% (i.e., as wide as the longest line of code is). This is useful
 %% if you want to center a chunk of code, or flush it right, or
 %% something like that. The optional argument to the environment,
 %% [t], [c], or [b], specifies how to vertically align the codebox,
-%% just as with arrays or other boxes. Default is [c].
+%% just as with arrays or other boxes. Default is [c]. scodebox is
+%% codebox with smaller text.
 
 %% Must be a newline immediately after "\begin{codebox}[t]"!
 
@@ -214,6 +238,29 @@
    \halign\bgroup##\hfil\span}
 
 \def\endcodebox{\crcr\egroup\egroup\m@th$\egroup}
+
+% If there is a [<letter>] option, then the following newline will
+% be read *after* ^M is bound to \cr, so we're cool. If there isn't
+% an option given (i.e., default to [c]), then the @\ifnextchar will
+% gobble up the newline as it gobbles whitespace. So we insert the
+% \cr explicitly. Isn't TeX fun?
+\def\scodebox{\leavevmode\@ifnextchar[{\@scodebox}{\@scodebox[c]\cr}} %]
+
+\def\@scodebox[#1]%
+  {\hbox\bgroup$\if #1t\vtop \else \if#1b\vbox \else \vcenter \fi\fi\bgroup%
+   \tabskip\z@\setupscriptcode\cd@obeycr% just before cd@obey
+   \halign\bgroup##\hfil\span}
+
+\def\endscodebox{\crcr\egroup\egroup\m@th$\egroup}
+
+\def\fcodebox{\leavevmode\@ifnextchar[{\@fcodebox}{\@fcodebox[c]\cr}} %]
+
+\def\@fcodebox[#1]%
+  {\hbox\bgroup$\if #1t\vtop \else \if#1b\vbox \else \vcenter \fi\fi\bgroup%
+   \tabskip\z@\setupftntcode\cd@obeycr% just before cd@obey
+   \halign\bgroup##\hfil\span}
+
+\def\endfcodebox{\crcr\egroup\egroup\m@th$\egroup}
 
 % Center the box on the page:
 \newenvironment{centercode}%

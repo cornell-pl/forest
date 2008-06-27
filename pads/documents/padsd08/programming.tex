@@ -1,0 +1,51 @@
+\subsection{Programming with Feeds}
+
+\begin{itemize}
+\item Review of model/abstraction. Brief comparison/connection to lists, lazy lists and streams.
+\item interface excerpt
+\item SImple example
+\item Discussion of {\it xxx}\cd{i} functions.
+\item Example of such a function
+\end{itemize}
+
+In addition to the built in tools, \padsd provides the user with an API for accessing feeds described in a description. The feed abstraction, representing a potentiallyÊinfinite series of elements, is conceptually quite close to that of a lazy list. However, feeds are more than just lazy lists, differing, most notably, in their inclusion of provenance for every data element. Therefore, the API provided for feeds is modeled on the list APIs of common functional languages, like \ocaml and \haskell, but provides two different levels of abstraction. One level allows the user to manipulate feeds as any other lazy list of data elements (never mind where they come from), while the other exposes the meta data along with the data, allowing the user to fully exploit the power of feeds.
+
+For example, consider a \planetlab user looking for a desirable set of nodes on which to run their experiments. Based on the \comon description, they can use our API to monitor \planetlab for a few minutes to find the least loaded nodes.
+
+% Need a new name for Feedmain module. I vote Feed and then Feed_core for the lower-level module.
+
+\begin{figure}[tb]
+\centering
+\begin{codebox}
+\kw{let} deadline = Time.now() +. 600. \kw{in}\kw{let} past_deadline () = Time.now() > deadline \kw{in}\kw{let} (sample, remainder) = 
+   \textit{Feed.split_when} (past_deadline) comon_feed \kw{in}\kw{let} select_load = \kw{function}    Some {Monall.loads = (_, load::_)} -> Some load  | None -> None \kw{in}\kw{let} sample_loads = \textit{Feed.map} select_load sample \kw{in}\kw{let} top_10_table = ... \kw{in}
+\kw{let} load_table = \textit{Feed.fold} update_top_10 
+   top_10_table sample_loads 
+\kw{in} print_top_10 load_table\end{codebox}
+  \caption{Code fragment for sampling \planetlab loads for 10 minutes. Function \texttt{print\_top\_10} selects the $10$ lowest loads from load table.}
+\label{fig:sample-loads}
+%\vskip -2ex
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\begin{codebox}
+\kw{let} update_top_10 top_10 idata =  \kw{let} meta = IData.get_meta idata \kw{in}  \kw{let} data = IData.get_contents idata \kw{in}  \kw{match} meta, data \kw{with}     (h, Some basemeta), Some load ->      \kw{let} location = Meta.get_link basemeta \kw{in}      update top_10 location data  | _ -> top_10 \textit{ (* no change to top_10 *)}\kw{in}
+   ...
+\kw{let} top_10_table = ... \kw{in}
+\kw{let} load_table = \textit{\textbf{Feed.fold_p}} update_top_10 
+   top_10_table sample_loads
+\kw{in} print_top_10 load_table\end{codebox}
+  \caption{}
+\label{fig:sample-loads-prov}
+%\vskip -2ex
+\end{figure}
+
+In \figref{fig:sample-loads} we show an example fragment of \ocaml code collects a list of the lowest loads over $10$ minutes, and then prints them. We leave out the exact details on maintaining the table of top values, as it is orthogonal to our 
+discussion. In Line 3, we use \cd{Feed.split_when} to split the feed when the supplied predicate is satisfied. In this case, the predicate compares the current time to the end of the sampling period. In Line 8, we use \cd{Feed.map} to map the sample of \comon elements into a feed of loads options. Finally, on Line 10, we use \cd{Feed.fold} collect the top $10$ values into the table created for that purpose.
+
+Unfortunately, this solution is not enough. The \monall data format does not include the host name in the data itself, so the code in \figref{fig:sample-loads} will only be able to return the lowest loads, but not the machines associate with them. In situations like this, the provenance data is essential.  In \figref{fig:sample-loads-prov}, we  replace the last three lines of \figref{fig:sample-loads-prov} with a call to the lower-level \cd{fold}, \cd{fold_p}, which provides both the data and meta data to the folding function [{\it what's the proper name for this? --yhm}]. We also sketch the new \cd{update_top_10} function.
+
+%  \kw{let} load_table = Feedmain.foldi add_to_table emptytable sample_loads \kw{in}
+
+\subsection{Developing all-purpose tools}
