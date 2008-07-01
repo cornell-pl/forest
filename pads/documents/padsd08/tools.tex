@@ -1,0 +1,34 @@
+
+Figure~\ref{fig:toolconfigs} presents an example tool specification file.
+
+
+\begin{figure}[tb]
+\centering
+\begin{codebox}
+feed comon.fml/monall
+
+tool feedaccum
+\{
+  minalert  = true;
+  maxalert  = true;
+  lesssig   = Some 3;
+  moresig   = Some 3;
+  useralert = (fun x -> false);
+  slicesize = Some 10;
+  slicefile = Some "slice.acc";
+  totalfile = Some "total.acc"
+\}
+
+tool rss
+\{
+  title = "Comon RSS";
+  link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
+  desc  = "Memory Info of Monall";
+  sched = None; 
+  path  = ["mem_info"];
+  rssfile = None; 
+\}
+\end{codebox}
+\caption{Example Tool Specification File}
+\label{fig:toolconfigs}
+\end{figure}
