@@ -96,8 +96,9 @@ NCBI~\cite{ncbi} & National Center for Biotechnology Information & Links to mult
 \end{figure*}
 
 The purpose of our research is to develop a system that makes it
-easier to create, maintain, and evolve tools for monitoring such
-distributed systems.  We propose to do so by developing a
+easier to create, maintain, and evolve tools for processing ad hoc data
+generated from a wide array of data sources over periods of time.    
+We propose to do so by developing a
 domain-specific language, called \padsd, in which software developers
 specify a number of key aspects of the data sources they wish to
 monitor including any of the following.
@@ -131,6 +132,8 @@ observed in ad hoc monitoring systems:
 \begin{itemize}
 \item {\bf an archiver} that collects distributed data on the specified 
 schedule, archives it locally, and maintains a ``table of contents.''
+\item {\bf a printing tool} and {\bf performance monitor tool} that helps
+debug specifications and easily measure what is going on in the system
 \item {\bf a database loader} that takes the data and extracts specified 
 pieces to load into the RRD database tool~\cite{rrdtool}.  The data is 
 indexed by its arrival time and supports time-based queries.  For 
@@ -151,6 +154,11 @@ XML headers and creates a single RSS feed from possibly multiple diverse
 ad hoc data sources.
 \end{itemize}
 
+These generated end-to-end tools can
+be used off-the-shelf by editing (or not) a short configuration file.
+Conveniently, any user in a rush need never do any real ``programming,''
+if they do not choose to.  
+
 In addition to these standard tools, the system provides support for
 creating new tools by automatically generating a collection of
 libraries.  The libraries include a run-time system for fetching data,
@@ -159,8 +167,9 @@ in that format.  There is also infrastructure for type-safe data
 traversal and stream processing using classic functional programming
 paradigms such as map, fold and iterate.  The generated libraries make
 it straightforward for programmers to create their own custom tool
-specific to a single data source or collection of sources.  In
-addition, there is advanced support for creating new, {\em generic}
+specific to a single data source or collection of sources.  
+
+There is also advanced support for creating new, {\em generic}
 programs, where a generic program is one that operates correctly over
 {\em any} well-specified data source.  For example, the RRDtool loader
 is generic, because it is possible to load data from any specified
@@ -169,17 +178,75 @@ source into the RRDtool without doing any substantial additional
 generator, parsers, printers and traversal libraries are all generic
 programs.
 
+A key result of our overall language and system design is that it
+readily support three sorts of users, or perhaps more accurately, {\em
+three modes of use}.  The first mode of use might be of use to the
+{\em quick-and-dirty hacker}.  In quick-and-dirty mode, a user need
+only specify the relevant properties of their data, edit the simple
+tool configuration file, and watch the results pour in.  There is no
+need to learn any interfaces or stitch together any boilerplate code
+-- a real advantage of our domain-specific language design.  On the
+other hand, the quick-and-dirty user is limited to the tools that
+others have designed and while these tools are useful and relatively
+flexible, they are by no means a silver bullet.  The second mode is
+for the {\em single-minded implementer }, who needs to build a new
+application on top of a {\em specific} collection of distributed data
+sources.  This user has found they need more functionality than what
+is provided directly through our generic tools so he or she writes a
+specification for their data sources and uses the
+specification-specific generated interfaces to implement their
+application.  Since the application is specific to a particular
+collection of sources, it cannot be directly reused by others.  The
+third mode is for the {\em generic programmer}.  The generic
+programmer observes that they (or their colleagues or fellow domain
+experts) need to perform some task over and over again on different
+data sets.  Examples such as xml-conversion, database loading, web
+page generation, domain-specific search or querying abound.  Rather
+than writing a program specific to a particular data set, they use a
+separate set of interfaces we supply to write a single generic program
+to complete the task.
+
+\paragraph*{Contributions.}  To summarize, this paper makes a number of 
+important contributions:
+
+\begin{itemize}
+\item It outlines the design of a language for specifying the 
+spatial, temporal and auxiliary properties of distributed ad hoc data
+sources.  We are aware of no other research effort that has attempted
+to design, implement or analyze such a language.
+
+\item It provides a mechanism for automatic generation of 6 different
+data processing tools directly from high-level specifications with no
+programming required.
+
+\item It supports three modes of use and different sorts of interfaces
+for three different kinds of users, 
+the quick-and-dirty hacker, the single-minded implementer and the generic 
+programmer, thereby optimizing both flexibility and ease-of-use.
+
+\item It provides a formal denotational semantics for the domain-specific
+language.
+
+\item It reports on the implementation experience and performance.
+\end{itemize}
+
+\paragraph{Outline.}
 In the remainder of the paper, we will explain the design and
-implementation of our system in further detail.  First, in
-Section~\ref{sec:related} we explain the relationship with other
-research in this area.  Next, in Section~\ref{sec:examples}, we will
+implementation of our system in further detail.  First, 
+in Section~\ref{sec:examples}, we will
 outline two running examples we will use for expository purposes
-throughout the paper, one involving CoMon, a system built at Princeton
-to monitor PlanetLab, and a second involving \ningaui{}, built at
+throughout the paper, one involving CoMon~\cite{comon}, a system built at Princeton
+to monitor PlanetLab~\cite{planetlab}, 
+and a second involving \ningaui{}, built at
 AT\&T for monitoring AT\&T's web hosting service.  After introducing
 the examples, we will explain how to specify the attributes of the
-data sources they depend upon in Section~\ref{sec:informal}.  In the
-next section, we will explain the architecture of our compiler and
-tool generation system.  Finally, in Section~\ref{sec:conclusions} we
+data sources they depend upon in Section~\ref{sec:informal}. 
+The follow section explains the three modes of use of our system
+once a specification has been written.  In Section~\ref{sec:language},
+we describe the formal semantics of the language and now that helped guide
+us in building our implementation.  Section~\ref{sec:implementation}
+evaluates the performance of our system.
+Section~\ref{sec:related} we explain the relationship with other
+research in this area and, finally, in Section~\ref{sec:conclusions} we
 will touch upon future work and conclude.
 
