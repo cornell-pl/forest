@@ -1,11 +1,16 @@
+\subsection{Using Tool Configurations}
+\label{sec:tools}
 
-Figure~\ref{fig:toolconfigs} presents an example tool specification file.
-
+The most straight-forward use of the \padsd{} system is to create a feed based on a \padsd{}
+description, and then apply a number of built-in tools such as archiver and
+accumulator on the feed. \padsd{} provides a very easy-to-use interface, a tool configuration, 
+to accomplish this simple task. 
+Figure~\ref{fig:toolconfigs} presents an example tool config file.
 
 \begin{figure}[tb]
 \centering
 \begin{codebox}
-feed comon.fml/monall
+feed comon.fml/comon
 
 tool feedaccum
 \{
@@ -25,10 +30,39 @@ tool rss
   link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
   desc  = "Memory Info of Monall";
   sched = None; 
-  path  = ["mem_info"];
+  path  = ["[?]"; "Mem_info"];
   rssfile = None; 
 \}
 \end{codebox}
-\caption{Example Tool Specification File}
+\caption{Example Tool Configuration File}
 \label{fig:toolconfigs}
 \end{figure}
+
+A tool configuration includes a feed declaration header (the first line in the config),
+and a sequence of tool specifications. The header specifies the path to the 
+feed description file (comon.fml) and the name of the feed (described in the fml file) 
+to be created (comon).
+Each tool specification starts with the the keyword {\tt tool} followed by the
+name of the tool (feedaccum and rss for example). Only system built-in tools may be 
+included in the tool config file. The body of each tool specification is essentially
+an O'Caml record. The exact syntax and meanings of these tool specs can be found in
+the \padsd{} library. 
+
+Once the tool config is edited, it can be compiled into an O'Caml user program
+that calls the \padsd{} tools library properly. The program can then be built with the the
+fml description and (optionally) \padsml{} descriptions into the final executable
+code. At runtime, the specified feed will be created and archived, and then the
+configured tools will be applied to the feed in parallel. This is possible because feeds in
+\padsd{} are functional and immutable. Typically the tools process the data items
+in the feed, produce an output, and return unit type. We apply the tools in parallel to
+achieve maximum throughput and also because some of the tools, such as feedaccum,
+operate on a per feed basis, rather than a per item basis. And thus running the tools
+in pipeline is not optimal.
+
+In summary, the tool configuration in \padsd{} is a very simple programming 
+paradigm where minimum O'Caml language knowledge is required. Feed designers
+and system administrators who know little function programming can still 
+do a lot with the feeds. For users who do know O'Caml programming, more control
+is available by programming directly against the \padsd{} tools library, which
+will be discussed in the next section.
+
