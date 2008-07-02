@@ -1,22 +1,80 @@
-\begin{verbatim}
-Introduce running examples
-  Ace satellite data?
-  comon application?
-  visigems application?
+To give an intuition for our feed declaration language, we work
+through a series of examples of increasing sophistication. We start by
+defining a simple CoMon statistics feed in \figref{fig:simplecomon}.
+This version of the CoMon program specifies that the \cd{comon} feed
+is a simple feed using the \kw{base} feed constructor.  The
+\kw{sources} field indicates that data
+for the feed comes from all of the locations listed in \cd{sites}.
+The \kw{schedule} field indicates that the system should fetch data
+from each source every minute, starting as soon as the program is
+initiated.  In addition, the schedule specifies that the system should
+try to collect the data from each source for 10 seconds before giving
+up.  Finally, the \kw{format} field indicates that the fetched data
+conforms to the \padsml{}~\cite{mandelbaum+:pads-ml}  descrition named
+\cd{Source} defined in the file \cd{comon_format}.
 
-Base feeds
-  description, locations, frequency
-  Description
-    PADS/ML
-  Locations
-    local, http, ftp, shell commands
-  Frequency
-    time data type
 
-Simple Compound Feed
 
-Dependent Compound Feed
-  list comprehension syntax
-  comon example
+\begin{figure}
+\begin{code}
+(* comon distributed data description *)
+let sites = 
+  [
+    "http://pl1.csl.utoronto.ca:3121";
+    "http://plab1-c703.uibk.ac.at:3121";
+    "http://planet-lab1.cs.princeton.edu:3121"
+  ] 
+\kw{feed} comon =
+  \kw{base} \{|
+    \kw{sources}  = all sites;
+    \kw{schedule} = every 1 min, starting now, 
+               timeout 10.0 sec; 
+    \kw{format}   = Comon_format.Source;  
+  |\}
+\end{code}
+\vskip -2ex
+\caption{Simple comon program.}
+\label{fig:simplecomon}
+\end{figure}
 
-\end{verbatim}
+
+\begin{figure*}
+\begin{code}
+(* comon distributed data description *)
+(* helper values and functions *)
+
+let nodelist_locations = ["http://summer.cs.princeton.edu/status/tabulator.cgi?table=slices \\
+                           /table_princeton_comon&format=nameonly"]
+
+let makeURL (Nodelist.Data x) = "http://" ^ x ^ ":3121"
+
+let old_locs = ref []
+let current list_opt =
+  match list_opt with
+    Some l ->  old_locs := l; l
+  | None   -> !old_locs
+
+
+(* Feed of nodes to query *)
+\kw{feed} nodes =  
+  \kw{base} \{|
+    \kw{sources}  = all nodelist_locations;
+    \kw{schedule} = every 2 min, starting now, lasting 2 hour; 
+    \kw{format}   = Nodelist.Source;
+  |\}
+
+(* Dependent feed of node statistics *)
+\kw{feed} comon =
+  \kw{foreach} nodelist \kw{in} nodes 
+  \kw{create}
+    \kw{base} \{|
+      \kw{sources}  = all (List.map makeURL (List.filter Nodelist.isNode (current nodelist)));
+      \kw{schedule} = once, timeout 60.0 sec; 
+      \kw{format}   = Comon_format.Source;
+    |\}
+\end{code}
+\caption{Comon program that uses a feed of node locations to drive
+  data collection.}
+\label{fig:feedcomon}
+\end{figure*}
+
