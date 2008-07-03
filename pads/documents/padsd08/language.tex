@@ -1,4 +1,77 @@
-\begin{figure*}[t]
+Development of a formal semantics for \padsd{} has been an integral
+part of our language design process.  It has been a medium through
+which we have communicated our ideas to one another precisely. It has also
+allowed us to experiment with the nuanced consequences of our decisions in the
+small before implementing them.  Its purpose in this paper is to
+provide system users with a way to calculate the expected contents of
+any feed they would specify, including subtle details of the effects
+of timeouts and errors.
+
+The abstract syntax for our core calculus of feeds appears in
+Figure~\ref{fig:syntax}.  The calculus of feeds depends upon a {\em
+host language}, in which one may compute locations, schedules,
+and constraints.  For the purposes of the
+formalization, the host language is the simply-typed lambda calculus.
+Figure~\ref{fig:host-language} presents the syntax we will use to
+write down host language expressions.  To simplify the semantics,
+the host language contains a collection of special constants 
+including parsers ($\parser$), locations ($\loc$), times ($\atime$),
+and schedules ($\schedule$).  It naturally also includes structured types
+such as pairs, sums, lists, streams and functions, all of which are 
+completely standard.
+
+\begin{figure}[t]
+\[
+\begin{array}{lll}
+\multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
+\multicolumn{3}{l}{\feed \ ::=}   \\  
+% & x &  \mbox{feed variable} \\ %% no feed variables now
+% & \bnfalt 
+& \emptyfeed & \mbox{empty feed} \\
+ \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
+ \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
+ \bnfalt &     \mathtt{all \{ format=} e_1; & \mbox{all locations}\\ 
+& \qquad     \mathtt{locs=} e_2; & \\
+& \qquad     \mathtt{sched=} e_3; & \\
+& \qquad     \mathtt{pp=} e_4; & \\
+& \qquad     \mathtt{win=} e_5; \}  & \\
+%\allfeed{e_1}{e_2}{e_3}{e_4}{e_5} &  \\
+ \bnfalt &     \mathtt{any \{ format=} e_1; & \mbox{one of several locations}\\ 
+& \qquad     \mathtt{locs=} e_2; & \\
+& \qquad     \mathtt{sched=} e_3; & \\
+& \qquad     \mathtt{pp=} e_4; & \\
+& \qquad     \mathtt{win=} e_5; \}  & \\
+% \bnfalt & \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{one of several location} \\
+ \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
+ \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
+ \bnfalt & (\feed_1, \feed_2) & \mbox{synchronous pair} \\
+% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
+% & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
+% & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
+ \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
+ \bnfalt & x{:}\feed_1\, {*}{*} \, \feed_2 & \mbox{dependent local pair} \\
+ \bnfalt &     \mathtt{foreach{*}}\; x \; 
+    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create continuous $\feed_2$} \\
+ &   \quad \mathtt{create}\; \feed_2 \\
+ \bnfalt &     \mathtt{foreach{*}{*}}\; x \; 
+    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create local $\feed_2$}\\
+ &   \quad \mathtt{extend}\; \feed_2 \\
+%\foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
+% \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$} \\
+ \bnfalt & \filterfeed{\feed}{e} & \mbox{filter out some elements} \\
+% & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
+% & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
+% & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
+%                                               fill missing entries with ``None''} \\
+% & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
+\end{array}
+\]
+\caption{Feed Language Syntax.}
+\label{fig:syntax}
+\end{figure}
+
+
+\begin{figure}[t]
 \[
 \begin{array}{lrll}
 \multicolumn{4}{l}{\mbox{(host-language base types)}}\\ 
@@ -42,8 +115,9 @@
 %             \inr{\expression} & \mbox{union expressions} \\
 % & \bnfalt & \expression_1 \; \expression_2 & \mbox{application expression} \\
  & \bnfalt & ... & \mbox{more typed lambda expressions} \\
-\multicolumn{4}{l}{\mbox{(a subset of host language values are used as meta-data)}}\\ 
-\multicolumn{4}{l}{\mbox{(a special location (\generatedloc) is used when data is created artificially)}}\\ 
+\\
+\multicolumn{4}{l}{\mbox{(feed meta-data:  a subset of host language values)}}\\ 
+%\multicolumn{4}{l}{\mbox{(a special location (\generatedloc) is used when data is created artificially)}}\\ 
 \meta & ::=     
 & (\atime,\loc) & \mbox{base metadata} \\
 & \bnfalt & (\atime,(\meta,\meta)) & \mbox{pair metadata} \\
@@ -53,42 +127,7 @@
 \]
 \caption{Host Language Syntax.}
 \label{fig:host-language}
-\end{figure*}
-
-\begin{figure*}[t]
-\[
-\begin{array}{lrll}
-\multicolumn{4}{l}{\mbox{(feed specs)}}\\ 
-\feed & ::=     
-% & x &  \mbox{feed variable} \\ %% no feed variables now
-% & \bnfalt 
-& \emptyfeed & \mbox{empty feed} \\
- & \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
- & \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
- & \bnfalt & \allfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{all locations} \\
- & \bnfalt & \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{one location} \\
- & \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
- & \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
- & \bnfalt & \feed_1 \spairfeed \feed_2 & \mbox{synchronous pair} \\
-% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
-% & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
-% & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
- & \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
- & \bnfalt & x{:}\feed_1\, {*}{*} \, \feed_2 & \mbox{dependent local pair} \\
- & \bnfalt & \foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
- & \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$} \\
- & \bnfalt & \filterfeed{\feed}{e} & \mbox{filter out some locations/times} \\
-% & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
-% & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
- & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
-                                               fill missing entries with ``None''} \\
- & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
-
-\end{array}
-\]
-\caption{Feed Language Syntax.}
-\label{fig:syntax}
-\end{figure*}
+\end{figure}
 
 
 \begin{figure*}[t]
