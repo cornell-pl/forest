@@ -1,80 +1,132 @@
-To give an intuition for our feed declaration language, we work
-through a series of examples of increasing sophistication. We start by
-defining a simple CoMon statistics feed in \figref{fig:simplecomon}.
-This version of the CoMon program specifies that the \cd{comon} feed
-is a simple feed using the \kw{base} feed constructor.  The
-\kw{sources} field indicates that data
-for the feed comes from all of the locations listed in \cd{sites}.
-The \kw{schedule} field indicates that the system should fetch data
-from each source every minute, starting as soon as the program is
-initiated.  In addition, the schedule specifies that the system should
-try to collect the data from each source for 10 seconds before giving
-up.  Finally, the \kw{format} field indicates that the fetched data
-conforms to the \padsml{}~\cite{mandelbaum+:pads-ml}  descrition named
+To give a feel for our feed declaration language, we work through a
+series of examples of increasing sophistication. We start by defining
+a simple CoMon statistics feed in \figref{fig:simplecomon}.  This
+version of the CoMon description specifies the \cd{simple\_comon} feed
+using the \kw{base} feed constructor.  The \kw{sources} field
+indicates that data for the feed comes from all of the locations
+listed in \cd{sites}.  The \kw{schedule} field specifies that relevant
+data is available from each source every minute, starting immediately.
+When trying to fetch such data, the system may occasionally fail,
+either because a remote machine is down or because of network
+problems. To manage such errors, the schedule specifies that the
+system should try to collect the data from each source for 10 seconds.
+If the data does not arrive within that window, the system should give
+up. Finally, the \kw{format} field indicates that the fetched data
+conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} descrition named
 \cd{Source} defined in the file \cd{comon_format}.
-
-
 
 \begin{figure}
 \begin{code}
-(* comon distributed data description *)
+(* Simple CoMon distributed data description *)
 let sites = 
   [
     "http://pl1.csl.utoronto.ca:3121";
     "http://plab1-c703.uibk.ac.at:3121";
     "http://planet-lab1.cs.princeton.edu:3121"
   ] 
-\kw{feed} comon =
+\kw{feed} simple_comon =
   \kw{base} \{|
-    \kw{sources}  = all sites;
+    \kw{sources}  = \kw{all} sites;
     \kw{schedule} = every 1 min, starting now, 
                timeout 10.0 sec; 
     \kw{format}   = Comon_format.Source;  
   |\}
 \end{code}
 \vskip -2ex
-\caption{Simple comon program.}
+\caption{Simple CoMon feed that fetches data from all sites every minute.}
 \label{fig:simplecomon}
 \end{figure}
 
-
-\begin{figure*}
+In contrast to the \cd{simple\_comon} feed, which returns data from
+all sites, the \cd{comon\_1} feed defined in \figref{fig:comon_1}
+returns only a single value per time slice: that of the first site to
+supply a complete set of data.
+%
+\begin{figure}
 \begin{code}
-(* comon distributed data description *)
-(* helper values and functions *)
+\kw{feed} comon_1 =
+  \kw{base} \{|
+    \kw{sources}  = \kw{any} sites;
+    \kw{schedule} = every 1 min, lasting 2 hours;
+    \kw{format}   = Comon_format.Source;
+  |\}
+\end{code}
+\vskip -2ex
+\caption{CoMon feed fragment that fetches data from a single source.}
+\label{fig:comon_1}
+\end{figure}
+%
+This feature is particularly useful when monitoring the
+behavior of replicated systems, such as those using
+state machine replication, consensus protocols, or even
+loosely-coupled ones such as Distributed Hash Tables (DHTs).
+In these systems, the same data will be available from any
+of the functioning nodes, so receiving results from the first
+available node is sufficient. These kinds of monitoring systems
+are useful in the face of partial network unreachability or
+machine failure. Specifying this behavior at the language level
+provides a simpler implementation than network-centric approaches such
+as anycast. 
 
-let nodelist_locations = ["http://summer.cs.princeton.edu/status/tabulator.cgi?table=slices \\
-                           /table_princeton_comon&format=nameonly"]
+The schedule for \cd{comon\_1} indicates the system should fetch data
+every minute for two hours.  It omits the \cd{starting} and
+\cd{timeout} specifications, in which case the system uses default
+settings of \cd{now} for the start time and 30 seconds for the
+timeout.  
 
-let makeURL (Nodelist.Data x) = "http://" ^ x ^ ":3121"
+The \cd{simple\_comon} example hard-codes the set of locations from
+which to gather performance data.  In reality, the CoMon system has an
+internet-addressable configuration file that contains a list of hosts
+to be queried, one per non-comment line. \figref{fig:feedcomon}
+uses this configuration information to define the \cd{comon} feed as a
+\textit{dependent} feed: dependent upon the auxiliary feed \cd{nodes}
+that fetches data conforming to the \padsml{} description
+\cd{Nodelist.Source} from \cd{config\_locations} every two minutes.   
 
-let old_locs = ref []
-let current list_opt =
-  match list_opt with
+
+\begin{figure}
+\begin{code}
+(* CoMon distributed data description *)
+
+(* Helper values and functions *)
+\kw{let} config_locations = 
+  ["http://summer.cs.princeton.edu/status/ \\
+    tabulator.cgi?table=slices/ \\
+    table_princeton_comon&format=nameonly"]
+
+\kw{let} makeURL (Nodelist.Data x) = 
+     "http://" ^ x ^ ":3121"
+
+\kw{let} old_locs = ref []
+\kw{let} current list_opt =
+  \kw{match} list_opt \kw{with}
     Some l ->  old_locs := l; l
   | None   -> !old_locs
-
 
 (* Feed of nodes to query *)
 \kw{feed} nodes =  
   \kw{base} \{|
-    \kw{sources}  = all nodelist_locations;
-    \kw{schedule} = every 2 min, starting now, lasting 2 hour; 
+    \kw{sources}  = \kw{all} config_locations;
+    \kw{schedule} = every 2 min, starting now, 
+               lasting 2 hour; 
     \kw{format}   = Nodelist.Source;
   |\}
 
-(* Dependent feed of node statistics *)
+(* Dependent CoMon feed of node statistics *)
 \kw{feed} comon =
   \kw{foreach} nodelist \kw{in} nodes 
   \kw{create}
     \kw{base} \{|
-      \kw{sources}  = all (List.map makeURL (List.filter Nodelist.isNode (current nodelist)));
+      \kw{sources}  = \kw{all} (List.map makeURL 
+                     (List.filter Nodelist.isNode 
+                     (current nodelist)));
       \kw{schedule} = once, timeout 60.0 sec; 
       \kw{format}   = Comon_format.Source;
     |\}
 \end{code}
+\vskip -2ex
 \caption{Comon program that uses a feed of node locations to drive
   data collection.}
 \label{fig:feedcomon}
-\end{figure*}
+\end{figure}
 
