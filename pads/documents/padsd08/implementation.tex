@@ -1,3 +1,42 @@
+\begin{itemize}
+\item Compiler
+  \begin{itemize}
+  \item Camlp4, toolconfigc, and fmlc (generate typedefs and prefeed defs) 
+  \end{itemize}
+
+\item Runtime system
+  \begin{itemize}
+  \item data structure of feed items: iData, meta data, etc
+  \item implementation of feed/stream: lazy list
+  \item fetching mechanism: eager fetching vs. lazy consumption, 
+    http\_client library, batch fetching
+  \item concurrency
+  \item discussion of selected combinators: local pairing, 
+    dependent pairing (separate thread/queue)
+  \end{itemize}
+
+\item Tools library
+  \begin{itemize}
+  \item use of generic tool framework and feeds runtime lib
+  \item use of several external ocaml libs: rrdtools, xml\_light
+  \end{itemize}
+
+\item Future work (shall we include???)
+  \begin{itemize}
+  \item expose meta data to the surface language
+  \item a second (simplified) prefeed def with type defs only
+  \end{itemize}
+
+\item Experiments
+  \begin{itemize}
+  \item performance metrics: throughput, network/system latency
+  \item setup (mac powerbook g4, 100Mb ethernet connection, 
+    comon spec, comon nodes, random selection of nodes)
+  \item two tables and graphs: throughput peaks at 
+    200 nodes (chunk size), sys latency almost constant,
+    system is scalable to comon (842 nodes)
+  \end{itemize}
+\end{itemize}
 
 \begin{table*}
 \begin{center}
