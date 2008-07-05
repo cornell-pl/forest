@@ -1,5 +1,8 @@
 To give a feel for our feed declaration language, we work through a
-series of examples of increasing sophistication. We start by defining
+series of examples of increasing sophistication. 
+
+\subsection{CoMon Feeds}
+We start by defining
 a simple CoMon statistics feed in \figref{fig:simplecomon}.  This
 version of the CoMon description specifies the \cd{simple\_comon} feed
 using the \kw{base} feed constructor.  The \kw{sources} field
@@ -189,35 +192,75 @@ format of data fetched from each node matches the description
 \label{fig:nodepml}
 \end{figure}
 
+\subsection{\vizGems{} Example}
+We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
+the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse}
+monitors a collection of machines described in a configuration file.
+The \cd{hostList} description has the same form as the \cd{nodes} feed
+we saw earlier, except it draws the data from a local file and only
+once a day.  Unlike the earlier example, we use a \textit{feed
+comprehension} to clean up this feed before creating the \cd{stats} feed.
+The comprehension filters
+the list of hosts to remove comments using the \cd{isNode} function
+and we use the built-in \cd{flatten} function to convert the feed of
+lists of hosts into a simple feed of hosts.  We use the \cd{mk\_host}
+function to remove the \cd{Data} constructor around the hostnames to
+simplify down-stream processing.
+
+The \cd{stats} feed depends upon the \cd{hosts} feed.  For each host
+\cd{h} in \cd{hosts}, it creates a schedule consisting of a single
+time corresponding to ``now'' with a timeout of one minute.  It uses
+this schedule \cd{s} to describe a compound feed, which pairs two base
+feeds: the first uses the Unix command \cd{ping} to collect network
+statistics about the remote machine while the second performs a remote
+shell invocation using \cd{ssh} to find out statistics about how long
+the machine has been up.  Both of these feeds use the \kw{proc}
+constructor in the \kw{sources} field to compute the data on the fly,
+rather than reading it from a file.  The argument to \kw{proc} is a
+string that is executed in a freshly constructed shell.  The pairing
+constructor for feeds takes a pair of feeds and returns a feed of
+pairs, with elements sharing the same scheduled fetch time being
+paired. This semantics is very convenient in this case, as it produces
+a feed that for each host returns a pair of its ping and uptime
+statistics, grouping together the information for each host. 
+Of course, the full \vizGems{} monitoring application
+uses many more tools than just ping and uptime to probe the remote
+machine; the corresponding feed description has many more branches than this simplified version.
+
 
 \begin{figure}
 \begin{code}
+\kw{let} config_location = 
+    [("file:///arrakis/config/machine_list")];
+
 \kw{feed} hostList =  
   \kw{base} \{|
-   \kw{sources}  = \kw{all} [("file:///" ^ Sys.getcwd ()  ^ "/machine_list")];
+   \kw{sources}  = \kw{all} config_location;
    \kw{schedule} = every 1 day;
-   \kw{format}   = Hosts.Source;
+   \kw{format}   = Nodelist.Source;
  |\}
 
-\kw{let} mk_host (Hosts.Data h) = h
+\kw{let} mk_host (Nodelist.Data h) = h
 
-\kw{feed} hosts = {| mk_host n | n <- (flatten hostList), Hosts.isNode n |}
+\kw{feed} hosts = 
+    \{| mk_host n | n <- (flatten hostList), 
+                   Nodelist.isNode n |\}
 
 \kw{feed} stats =
-  \kw{foreach} h in hosts \kw{create}
+  \kw{foreach} h \kw{in} hosts \kw{create}
+  \kw{let} s = once, timeout 1 min \kw{in}
   (
    \kw{base} \{| 
-      \kw{sources} = proc ("ping -c 1 " ^ h);   
-      \kw{format} = Ping.Source;  
-      \kw{schedule} = every 5 min, timeout 1 min; |\},
+      \kw{sources}  = \kw{proc} ("ping -c 1 " ^ h);   
+      \kw{format}   = Ping.Source;  
+      \kw{schedule} = s; |\},
    \kw{base} \{| 
-      \kw{sources}  = proc ("ssh " ^ h ^ " uptime");  
-      \kw{format}   = Unix_formats.Line;  
-      \kw{schedule} = every 5 min, timeout 1 min; |\}
+      \kw{sources}  = \kw{proc} ("ssh " ^ h ^ " uptime");  
+      \kw{format}   = Uptime.Source;  
+      \kw{schedule} = s; |\}
   ) 
 \end{code}
 \vskip -2ex
-\caption{\padsml{} description of CoMon configuration files, which
-  contain one host name per non-commented line.}
+\caption{Simplified version of \vizGems{} feed.}
 \label{fig:pulse}
 \end{figure}

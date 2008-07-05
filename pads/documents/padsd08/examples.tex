@@ -18,25 +18,27 @@ sorts of problems and alerts users of deviant machines or slices.
 Finally, the data is archived so PlanetLab users can perform their own
 custom analyses of historical data.
 
-AT\&T provides a web hosting service.  AT\&T's infrastructure for this
-service includes a variety of components including routers, firewalls,
-load balanacing machines, actual web servers, and databases,
-replicated and geographically distributed.  Hence, a given web site
-may be distributed across a variety of machines running a variety of
-operating systems in a variety of locations.  When a customer signs up
-for AT\&T's hosting service, part of the contract specifies what kinds
-of monitoring AT\&T will provide for site.  The monitoring includes a
-variety of resources, including network bandwidth, packet loss, cpu
-utilization, disk utilization, memory usage, load averages, \etc{}. For
-each machine in the hosting service and each such resource, the
-monitoring system archives the values at regular intervals and issues
-alerts when the values exceed resource- and contract-specific levels.
-The archive is used to track long-term behavior of the service,
-allowing engineers to determine when more resources need to be
-provisioned, for example, adding additional cpus, memory, or disk
-space.  It also allows engineers to understand the ``normal'' behavior
-for a particular site such as daily or seasonal cycles for a
-particular site. 
+AT\&T provides a web hosting service.  The infrastructure for this
+service includes a variety of hardware components including routers,
+firewalls, load balanacing machines, actual web servers, and
+databases, replicated and geographically distributed.  Hence, a given
+web site may be distributed across a variety of machines running a
+variety of operating systems in a variety of locations.  When a
+customer signs up for AT\&T's hosting service, part of the contract
+specifies what kinds of monitoring AT\&T will provide for the site.
+The \vizGems{} infrastructure provides this monitoring
+service.  It tracks a variety of resources using a wide array of
+measures, including network
+bandwidth, packet loss, cpu utilization, disk utilization, memory
+usage, load averages, \etc{} For each machine in the hosting service
+and each such resource, the monitoring system archives the values at
+regular intervals and issues alerts when the values exceed resource-
+and contract-specific levels.  The archive is used to track long-term
+behavior of the service, allowing engineers to determine when more
+resources need to be provisioned, for example, adding additional cpus,
+memory, or disk space.  It also allows engineers to understand the
+``normal'' behavior for a particular site such as daily or seasonal
+cycles for a particular site.
 
 
 %% Notes on the visgems example.
