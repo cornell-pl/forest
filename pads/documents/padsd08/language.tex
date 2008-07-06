@@ -7,8 +7,7 @@ provide system users with a way to calculate the expected contents of
 any feed they would specify, including subtle details of the effects
 of timeouts and errors.
 
-The abstract syntax for our core calculus of feeds appears in
-Figure~\ref{fig:syntax}.  The calculus of feeds depends upon a {\em
+The calculus of feeds we will define depends upon a {\em
 host language}, in which one may compute locations, schedules,
 and constraints.  For the purposes of the
 formalization, the host language is the simply-typed lambda calculus.
@@ -19,57 +18,6 @@ including parsers ($\parser$), locations ($\loc$), times ($\atime$),
 and schedules ($\schedule$).  It naturally also includes structured types
 such as pairs, sums, lists, streams and functions, all of which are 
 completely standard.
-
-\begin{figure}[t]
-\[
-\begin{array}{lll}
-\multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
-\multicolumn{3}{l}{\feed \ ::=}   \\  
-% & x &  \mbox{feed variable} \\ %% no feed variables now
-% & \bnfalt 
-& \emptyfeed & \mbox{empty feed} \\
- \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
- \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
- \bnfalt &     \mathtt{all \{ format=} e_1; & \mbox{all locations}\\ 
-& \qquad     \mathtt{locs=} e_2; & \\
-& \qquad     \mathtt{sched=} e_3; & \\
-& \qquad     \mathtt{pp=} e_4; & \\
-& \qquad     \mathtt{win=} e_5; \}  & \\
-%\allfeed{e_1}{e_2}{e_3}{e_4}{e_5} &  \\
- \bnfalt &     \mathtt{any \{ format=} e_1; & \mbox{one of several locations}\\ 
-& \qquad     \mathtt{locs=} e_2; & \\
-& \qquad     \mathtt{sched=} e_3; & \\
-& \qquad     \mathtt{pp=} e_4; & \\
-& \qquad     \mathtt{win=} e_5; \}  & \\
-% \bnfalt & \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{one of several location} \\
- \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
- \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
- \bnfalt & (\feed_1, \feed_2) & \mbox{synchronous pair} \\
-% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
-% & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
-% & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
- \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
- \bnfalt & x{:}\feed_1\, {*}{*} \, \feed_2 & \mbox{dependent local pair} \\
- \bnfalt &     \mathtt{foreach{*}}\; x \; 
-    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create continuous $\feed_2$} \\
- &   \quad \mathtt{create}\; \feed_2 \\
- \bnfalt &     \mathtt{foreach{*}{*}}\; x \; 
-    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create local $\feed_2$}\\
- &   \quad \mathtt{extend}\; \feed_2 \\
-%\foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
-% \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$} \\
- \bnfalt & \filterfeed{\feed}{e} & \mbox{filter out some elements} \\
-% & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
-% & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
-% & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
-%                                               fill missing entries with ``None''} \\
-% & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
-\end{array}
-\]
-\caption{Feed Language Syntax.}
-\label{fig:syntax}
-\end{figure}
-
 
 \begin{figure}[t]
 \[
@@ -118,11 +66,6 @@ completely standard.
 \\
 \multicolumn{4}{l}{\mbox{(feed meta-data:  a subset of host language values)}}\\ 
 %\multicolumn{4}{l}{\mbox{(a special location (\generatedloc) is used when data is created artificially)}}\\ 
-\meta & ::=     
-& (\atime,\loc) & \mbox{base metadata} \\
-& \bnfalt & (\atime,(\meta,\meta)) & \mbox{pair metadata} \\
-& \bnfalt & (\atime,\inl{\meta}) & \mbox{sum metadata} \\
-& \bnfalt & (\atime,\inr{\meta}) & \mbox{sum metadata} \\
 \end{array}
 \]
 \caption{Host Language Syntax.}
@@ -130,7 +73,134 @@ completely standard.
 \end{figure}
 
 
-\begin{figure*}[t]
+\subsection{Feed Syntax and Typing}
+
+The abstract syntax for our core calculus of feeds appears in
+Figure~\ref{fig:syntax} and its typing rules appear in 
+Figure~\ref{fig:typing}.  The feed typing judgment has the form
+$\Gamma \turn \feed : \tau$, where $\Gamma$ is a context that maps
+variables to types.  This judgment depends upon an auxiliary judgment
+defining the well-typed host language expressions, which is not shown.
+
+Many of the elements of the calculus should look familiar from
+discussions in previous sections.  We touch on some highlights here.
+The empty feed ($\emptyset$) contains no elements and serves as
+the unit for the union feed ($\feed_1 \union \feed_2$).  The
+computed feed ($\computed{e_1}{x}{e_2}$) allows programmers to
+generate a feed with schedule $e_2$ and elements $\lambda x.e_1\; \atime$,
+where $\atime$ is drawn from the schedule. The filter feed
+$\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
+$e\; v$ is $\boolf$.  Together computed feeds and filter feeds
+model the feed comprehensions shown in
+Section~\ref{sec:informal}. Let feeds $\letfeed{x}{e_1}{\feed_2}$
+provide a convenient mechanism for binding intermediate computations.
+
+The base forms $\mathtt{all \{ \cdots \}}$ and $\mathtt{any \{ \cdots \}}$
+are similar to what we have seen before, except they have five components:
+file format ($\mathtt{format}$), source locations ($\mathtt{locs}$), 
+schedule ($\mathtt{sched}$), preprocessing function ($\mathtt{pp}$) 
+and window ($\mathtt{win}$).
+File format, schedule and preprocessing function are self-explanatory.
+The location field may contain pseudo-locations that 
+model the $\mathtt{proc}$ form found in the implementation.
+Instead of expressing time out conditions in the schedule,
+the calculus requires such conditions be specified in the window 
+field.\footnote{A separate window field simplifies the semantics slightly,
+but combining window and schedule together is slightly more
+pleasant for the programmer.  These minor syntactic differences
+have no semantic importance.} Notice that the preprocessor
+and parser both map values with option type to option type.
+The {\tt None} option is used to represent networking or data format
+errors.  We do not model the variety of different error codes that
+the implementation supports. 
+
+The calculus contains a number of binary operators for combining
+feeds.  The union takes feeds with the same type and merges them
+into a single feed.  On the other hand, the sum feed takes feeds
+with (possibly) different types, injects the elements of each feed into
+a sum and merges them.  
+
+The calculus also contains three different
+sorts of pairs, each providing a slightly different way of
+combining elements from the subcomponent feeds.  The first pair, 
+written $(\feed_1, \feed_2)$ is a {\em synchronous pair} -- 
+elements of $\feed_1$ are paired with elements of $\feed_2$
+that are {\em scheduled} at the same time (regardless of when those elements
+actually {\em arrive}).  Synchronous pairs are most useful when the underlying
+subcomponent feeds share the same schedule, as in the Arrakis example
+from Section~\ref{sec:informal}.  However, synchronous pairs lack a
+dependent variant --- it is not sensible to schedule acquisition of an element
+that depends upon another element scheduled at the same time.
+There are two forms of dependent pair, {\em continuous} and {\em local}.
+In the the continuous variant, each element $x$ of $\feed_1$ is paired 
+with all elements of the feed $\feed_2$ that depends on $x$.  In the
+local variant, each element $x$ of $\feed_1$
+is paired with all elements of the feed $\feed_2$ {\em until the next
+element $y$ of $\feed_1$ is scheduled}.  The formal semantics, presented
+in the next subsection, makes this idea precise.  The local feed
+enables a paradigm in which a programmer defines an infinite feed $\feed_2$
+that gets truncated and regenerated whenever a new element in $\feed_1$
+is scheduled.
+
+The final elements of the calculus are the $\mathtt{foreach}$ feeds.
+Intuitively, a $\mathtt{foreach}$ is identical to a dependent pair in
+which the first element of the pair is omitted from the data representation.
+Consequently, there are two forms of $\mathtt{foreach}$ -- one for
+each sort of dependent pair.  The notation ${*}$ or ${**}$ serves as
+a syntactic mnemonic to remind readers of the connection.
+
+\begin{figure}[t]
+\[
+\begin{array}{lll}
+\multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
+\multicolumn{3}{l}{\feed \ ::=}   \\  
+% & x &  \mbox{feed variable} \\ %% no feed variables now
+% & \bnfalt 
+& \emptyfeed & \mbox{empty feed} \\
+ \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
+ \bnfalt & \filterfeed{\feed}{e} & \mbox{filter feed} \\
+ \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
+ \bnfalt &     \mathtt{all \{ format=} e_1; & \mbox{all locations}\\ 
+& \qquad     \mathtt{locs=} e_2; & \\
+& \qquad     \mathtt{sched=} e_3; & \\
+& \qquad     \mathtt{pp=} e_4; & \\
+& \qquad     \mathtt{win=} e_5; \}  & \\
+%\allfeed{e_1}{e_2}{e_3}{e_4}{e_5} &  \\
+ \bnfalt &     \mathtt{any \{ format=} e_1; & \mbox{one of several locations}\\ 
+& \qquad     \mathtt{locs=} e_2; & \\
+& \qquad     \mathtt{sched=} e_3; & \\
+& \qquad     \mathtt{pp=} e_4; & \\
+& \qquad     \mathtt{win=} e_5; \}  & \\
+% \bnfalt & \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{one of several location} \\
+ \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
+ \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
+ \bnfalt & (\feed_1, \feed_2) & \mbox{synchronous pair} \\
+% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
+% & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
+% & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
+ \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
+ \bnfalt & x{:}\feed_1\, {*}{*} \, \feed_2 & \mbox{dependent local pair} \\
+ \bnfalt &     \mathtt{foreach{*}}\; x \; 
+    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create continuous $\feed_2$} \\
+ &   \quad \mathtt{create}\; \feed_2 \\
+ \bnfalt &     \mathtt{foreach{*}{*}}\; x \; 
+    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create local $\feed_2$}\\
+ &   \quad \mathtt{extend}\; \feed_2 \\
+%\foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
+% \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$} \\
+% & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
+% & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
+% & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
+%                                               fill missing entries with ``None''} \\
+% & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
+\end{array}
+\]
+\caption{Feed Language Syntax.}
+\label{fig:syntax}
+\end{figure}
+
+
+\begin{figure}[th]
 
 % \[
 % \infer[(\textit{t-var})]
@@ -154,6 +224,15 @@ completely standard.
 \]
 
 \[
+\infer[(\textit{t-filter})]
+{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\ty}}
+{
+  \Gamma \turn \feed : \feedty{\ty} &
+  \Gamma \turn e : \ty \arrow \boolty
+}
+\]
+
+\[
 \infer[(\textit{t-let})]
 {\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\ty_2}}
 {
@@ -164,13 +243,21 @@ completely standard.
 
 \[
 \infer[(\textit{t-all})]
-{\Gamma \turn \allfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{\optionty{\ty}}}
+{ \begin{array}{l}
+  \Gamma \turn 
+    \mathtt{all \{ format=} e_1; 
+      \mathtt{locs=} e_2;
+      \mathtt{sched=} e_3; \\ \qquad\qquad
+    \mathtt{pp=} e_4;
+    \mathtt{win=} e_5; \} : \feedty{\optionty{\ty}}
+ \end{array}
+}
 {
  \begin{array}{c}
-  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \qquad
-  \Gamma \turn e_2 : \listty{\locty} \\
-  \Gamma \turn e_3 : \schedulety \qquad
-  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \qquad
+  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \\
+  \Gamma \turn e_2 : \listty{\locty} \qquad
+  \Gamma \turn e_3 : \schedulety \\
+  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
   \Gamma \turn e_5 : \timety
  \end{array}
 }
@@ -178,13 +265,22 @@ completely standard.
 
 \[
 \infer[(\textit{t-any})]
-{\Gamma \turn \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} : \feedty{\optionty{\ty}}}
+{ \begin{array}{l}
+    \Gamma \turn 
+      \mathtt{any \{ format=} e_1; 
+      \mathtt{locs=} e_2;
+      \mathtt{sched=} e_3; \\ \qquad\qquad
+    \mathtt{pp=} e_4;
+    \mathtt{win=} e_5; \}
+ : \feedty{\optionty{\ty}}
+  \end{array}
+}
 {
  \begin{array}{c}
-  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \qquad
-  \Gamma \turn e_2 : \listty{\locty} \\
-  \Gamma \turn e_3 : \schedulety \qquad
-  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \qquad
+  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \\
+  \Gamma \turn e_2 : \listty{\locty} \qquad
+  \Gamma \turn e_3 : \schedulety \\
+  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
   \Gamma \turn e_5 : \timety
  \end{array}
 }
@@ -210,7 +306,7 @@ completely standard.
 
 \[
 \infer[(\textit{t-synch-pair})]
-{\Gamma \turn \feed_1 \spairfeed \feed_2  : \feedty{\ty_1 * \ty_2}}
+{\Gamma \turn (\feed_1, \feed_2)  : \feedty{\ty_1 * \ty_2}}
 {
   \Gamma \turn \feed_1 : \feedty{\ty_1} &
   \Gamma \turn \feed_2 : \feedty{\ty_2}
@@ -263,15 +359,6 @@ completely standard.
 \]
 
 
-\[
-\infer[(\textit{t-filter})]
-{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\ty}}
-{
-  \Gamma \turn \feed : \feedty{\ty} &
-  \Gamma \turn e : \ty \arrow \boolty
-}
-\]
-
 % \[
 % \infer[(\textit{t-pp})]
 % {\Gamma \turn \ppfeed{\feed}{e} : \feedty{\ty}}
@@ -290,29 +377,162 @@ completely standard.
 % }
 % \]
 
-\[
-\infer[(\textit{t-reschedule})]
-{\Gamma \turn \refeed{\feed}{e} : \feedty{\optionty{\ty}}}
-{
-  \Gamma \turn \feed : \feedty{\ty} &
-  \Gamma \turn e : \schedulety
-}
-\]
+%% \[
+%% \infer[(\textit{t-reschedule})]
+%% {\Gamma \turn \refeed{\feed}{e} : \feedty{\optionty{\ty}}}
+%% {
+%%   \Gamma \turn \feed : \feedty{\ty} &
+%%   \Gamma \turn e : \schedulety
+%% }
+%% \]
 
-\[
-\infer[(\textit{t-stutter})]
-{\Gamma \turn \stutterfeed{\feed}{e} : \feedty{\ty}}
-{
-  \Gamma \turn \feed : \feedty{\ty} &
-  \Gamma \turn e : \schedulety
-}
-\]
+%% \[
+%% \infer[(\textit{t-stutter})]
+%% {\Gamma \turn \stutterfeed{\feed}{e} : \feedty{\ty}}
+%% {
+%%   \Gamma \turn \feed : \feedty{\ty} &
+%%   \Gamma \turn e : \schedulety
+%% }
+%% \]
 
 \caption{Feed Language Typing.}
 \label{fig:typing}
-\end{figure*}
+\end{figure}
 
 %\input{semantics1}
+
+\subsection{Feed Semantics}
+
+The calculus of feeds has a denotational semantics that allows
+programmers to calculate the contents of their feeds relative to
+the unreliability present in the networking environment.  The
+principal semantic function is written
+$\semantics{\feed}{\environment}{\universe}$,
+where  $\environment$ is an {\em environment} mapping variables to values
+and $\universe$ is a {\em universe} mapping pairs of
+schedule time and location to a rival time and string option.
+Intuitively, the universe models network unreliability.
+When $\universe (\atime_1, \ell) = (\atime_2, \mathtt{Some} \; \astring)$,
+ the interpretation is that if the run-time system requests data
+from location $\ell$ at time $\atime_1$ then string data $\astring$
+will be returned at time $\atime_2$.  The time $\atime_2$ must be
+later than $\atime_1$.
+When $\universe (\atime_1, \ell) = (\infty, \mathtt{None})$,
+networking errors have simply made location $\ell$ unreachable.
+
+The result of the semantic function 
+$\semantics{\feed}{\environment}{\universe}$
+is a set of metadata/data pairs.  The metadata 
+we model is somewhat simplified relative to the implementation.
+The metadata for base feeds includes both the scheduled time of the
+associated data item and its location of origin -- such 
+information is also often referred to as the data's 
+{\em provenance}~\cite{provenancestuff}.  As shown
+below, the metadata for pair 
+and sum feeds is structured similarly to the data items themselves.  
+
+\[
+\begin{array}{lcll} 
+\meta & ::=     
+& (\atime,\loc) & \mbox{base metadata} \\
+& \bnfalt & (\atime,(\meta,\meta)) & \mbox{pair metadata} \\
+& \bnfalt & (\atime,\inl{\meta}) & \mbox{sum metadata} \\
+& \bnfalt & (\atime,\inr{\meta}) & \mbox{sum metadata} \\
+\end{array}
+\]  
+
+Since every metadata item contains a top-level time $\atime$, that
+time can be used to take the set of metadata/data pairs that
+defines the semantics of a feed and serialize it as a stream.
+Our implementation does just that.  Items scheduled at the
+same time may appear in any order in the implementation's
+serialized stream.  To refer to the top-level time in any metadata
+item $\meta$, we write $\mytime{\meta}$.
+
+The semantics also depends upon an auxiliary semantics function
+for the host language:  When $e$ is a host language expression
+with free variables in the domain of $\environment$ then
+$\esemantics{e}{\environment}$ is the denotation of the value.
+
+Figure~\ref{fig:semantics} presents the semantic definitions themselves.
+The first definition shows that the empty feed is the empty set. The
+second gives the definition of a computed feed.  Notice that a
+dummy location ($\generatedloc$) occupies the position of location
+metadata.  In the definition of the filter feed (and elsewhere), 
+we use conventional set-theoretic notation to define the elements
+that inhabit the feed.
+
+The semantics of {\tt all} and {\tt any} feeds are somewhat complex
+because they describe the consequences of networking errors and time outs.
+In the case for {\tt all}, a function {\tt timeout} is defined.  This
+function checks the item arrival time $x_{at}$ and compares it to its
+scheduled time plus window ($\esemantics{e_5}{\environment}$).  If
+the arrival time exceeds its window, {\tt None} is returned. Otherwise,
+its data argument ($x_s$, which may, due to other networking errors be 
+{\tt None}) is returned.  The {\tt timeout} is used in definition of an 
+alternate universe $\universe'$, that retrieves data from the outside world,
+checks for timeout, and applies the preprocessor 
+($\esemantics{e_4}{\environment}$) before returning its final result.
+The elements of the feed itself are pairs of base metadata $(\atime,\ell)$
+with defined by $\esemantics{e_1}{\environment} \; (\universe'(\loc,\atime))$
+where $e_1$ is the \pads{}-generated parser.
+The semantics of an {\tt any} feed are defined by selecting one of the
+good (non-error) elements of the corresponding {\tt all} feed at the same time,
+if any exist.  If there are no good elements in 
+ the corresponding {\tt all} feed, the {\tt any} feed will contain a
+{\tt None} item at the given time, and the dummy location $\generatedloc$
+occupies the location slot in the metadata.
+
+The two forms of disjunctive feed are easy to define.  The
+union feed is simply the set-theorectic union of
+its constituent feeds.  The sum feed injects the elements of its constituent
+feeds into a sum and likewise takes their union.
+
+Defining pairs requires care is taken with subtle aspects of timing.
+The synchronous pair $(\feed_1,\feed_2)$
+is formed by finding all elements of $\feed_1$
+at a given time (including erroneous elements) 
+and all elements of  $\feed_2$ (again including erroneous elements) 
+at that time and
+generating their Cartesian product.  Notice that if schedules 
+do not intersect, a synchronous pair will wind up isomorphic to the
+empty feed.  Metadata from constituent feeds is paired together.
+The scheduled time of the composite item is noncontroversial in this case --
+it is the same as the scheduled times of the two underlying feeds.
+
+The elements of the continuous dependent pair ($x{:}\feed_1 * \feed_2$)
+are calculated by first determining the elements of $\feed_1$. 
+For each element $v$ in $\feed_1$, it is possible to calculate
+the elements of $\feed_2$ by binding $x$ to $v$ in $\feed_2$'s definition.
+From this point, the elements of the composite feed include all elements
+$x$ of $\feed_1$ paired with the corresponding elements of $\feed_2$ scheduled
+later than $x$.  Like in the case for synchronous pairs, metadata from 
+constitute feeds is paired together in the composite feed.  {\em Unlike}
+in the case for synchronous pairs, the two elements of the pair do
+not share common schedule time.  We adopt the later time ({\em i.e.,}
+the time of the element from $\feed_2$ as the schedule time for the
+composite feed element.
+
+The difference between the continuous pair and the local pair
+comes in the third line of the definition of the local pair.
+Here, the existence of another element $(\meta_1',v_1')$
+in $\feed_1$ in addition to $(\meta_1,v_1)$ implies that the 
+scheduled time for the item under consideration in $feed_2$
+should fall between the scheduled times for $v_1$ and $v_1$
+(otherwise that item from $\feed_2$ is not included in the
+final composite feed). 
+
+As discussed earlier, the semantics of the two variants of $\mathtt{foreach}$
+follows the semantics of dependent pairs closely.  Notice, for instance,
+the similarity between the conditions on the local {\tt foreach} with those
+for the local dependent pair.
+
+As a sanity check on our semantic definitions, one can easily prove
+that the values contained in each feed may be given the simple types
+required by our feed typing rules.
+
+\begin {theorem} theorem about feeds goes here...
+\end{theorem}
 
 \input{semantics2}
 

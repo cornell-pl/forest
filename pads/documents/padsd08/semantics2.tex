@@ -2,14 +2,14 @@
 \begin{figure*}[t]
 \[
 \begin{array}{lcl}
-\esemantics{e}{\environment} &=& \mbox{denotation of simply-typed term $e$ in environment $\environment$ mapping variables to values.}
-\\
-\\
-\semantics{\feed}{\environment}{\universe} &=& \mbox{denotation of 
-$\feed$ in environment $\environment$ mapping variables to values.} \\
- && \mbox{and ``universe'' $\universe$ mapping schedule time and location to 
-          arrival time and string data}
-\\
+%\esemantics{e}{\environment} &=& \mbox{denotation of simply-typed term $e$ in environment $\environment$ mapping variables to values.}
+%\\
+%\\
+%\semantics{\feed}{\environment}{\universe} &=& \mbox{denotation of 
+%$\feed$ in environment $\environment$ mapping variables to values.} \\
+% && \mbox{and ``universe'' $\universe$ mapping schedule time and location to 
+%          arrival time and string data}
+%\\
 % \\
 % \semantics{x}{\environment}{\universe} 
 %  &=& (\environment(x_t), \environment(x))
@@ -22,6 +22,12 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
  &=& \{((\atime,\generatedloc), \esemantics{(\lambda x.e_1)}{\environment}\; \atime) 
           \setalt \atime \in  \esemantics{e_2}{\environment} 
      \} 
+\\\\
+\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+            \esemantics{e}{\environment}\; v = \mathtt{true}
+\}
 \\\\
 \semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
  &=& \semantics{\feed_2}{(\environment,x\mapsto\esemantics{e_1}{\environment})}{\universe} 
@@ -41,9 +47,9 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
 &&\quad\mbox{where} \\
  \qquad\quad\ \,    \mathtt{sched=} e_3;
 && \qquad \mathtt{timeout} =  
-     \lambda (x_t,(x_{at},s)).
+     \lambda (x_t,(x_{at},x_s)).
         \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_5}{\environment} \,
-        \mathtt{then}\,  s \, \mathtt{else} \, \mathtt{None} \\
+        \mathtt{then}\,  x_s \, \mathtt{else} \, \mathtt{None} \\
  \qquad\quad\ \,    \mathtt{pp=} e_4;
 && \qquad \universe' =
      \lambda (x_{\ell}, x_t). 
@@ -53,7 +59,7 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
  \qquad\quad\ \,    \mathtt{win=} e_5; \}\rsem_{{\environment} \, {\universe}}
 && \\
 % \\
-% {\cal F}\lsem\mathtt{exists \{ format=} e_1;
+% {\cal F}\lsem\mathtt{any \{ format=} e_1;
 % % \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
 %  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
 %  \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
@@ -76,7 +82,7 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
 % %\end{array}
 % \\
 \\
-{\cal F}\lsem\mathtt{exists \{ format=} e_1;
+{\cal F}\lsem\mathtt{any \{ format=} e_1;
 % \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
  \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
@@ -84,19 +90,19 @@ $\feed$ in environment $\environment$ mapping variables to values.} \\
 %\begin{array}{l}
  \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
   && 
-\qquad f = \lambda \atime. \{((\atime,\ell),\mathtt{Some} \; s)\}\ \mbox{for some $\ell$ and $s$ such that:}\\
+\qquad f = \lambda \atime. \{((\atime,\ell),\mathtt{Some} \; \astring)\}\ \mbox{for some $\ell$ and $\astring$ such that:}\\
  \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
 &&\qquad\quad
- \mbox{$((\atime,\ell),\mathtt{Some} \; s) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
+ \mbox{$((\atime,\ell),\mathtt{Some} \; \astring) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
   \\
  \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
  \}\rsem_{{\environment} \, {\universe}}
 &&\qquad
-  f = \lambda \atime. \{((\atime,\loc), \none)\}\  
-  \mbox{for some $\loc \in \esemantics{e2}{\environment}$
-if there exists no $\ell$ and $s$ such that:} \\
+  f = \lambda \atime. \{((\atime,\generatedloc), \none)\}\  
+  \mbox{%for some $\loc \in \esemantics{e2}{\environment}$
+if there exists no $\ell$ and $\astring$ such that:} \\
 &&\qquad\quad 
- \mbox{$((\atime,\ell),\mathtt{Some} \; s) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
+ \mbox{$((\atime,\ell),\mathtt{Some} \; \astring) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
 \\
 
 %\end{array}
@@ -118,7 +124,7 @@ if there exists no $\ell$ and $s$ such that:} \\
         (\meta,v) \in \semantics{\feed_2}{\environment}{\universe}
      \}
 \\\\
-\semantics{\feed_1 \spairfeed \feed_2}{\environment}{\universe} 
+\semantics{(\feed_1, \feed_2)}{\environment}{\universe} 
  &=&
  \{((\mytime{\meta_1},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
      (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
@@ -198,12 +204,6 @@ if there exists no $\ell$ and $s$ such that:} \\
       \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
            \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2}))      
   \}
-\\\\
-\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
- &=&
-\{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-            \esemantics{e}{\environment}\; v = \mathtt{true}
-\}
 \\\\
 % \semantics{\ppfeed{\feed}{e}}{\environment}{\universe} 
 %  &=&
