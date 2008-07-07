@@ -10,9 +10,9 @@ Figure~\ref{fig:toolconfigs} presents an example tool config file.
 \begin{figure}[tb]
 \centering
 \begin{codebox}
-feed comon.fml/comon
+\kw{feed} comon.fml/comon
 
-tool feedaccum
+\kw{tool} feedaccum
 \{
   minalert  = true;
   maxalert  = true;
@@ -24,7 +24,7 @@ tool feedaccum
   totalfile = Some "total.acc"
 \}
 
-tool rss
+\kw{tool} rss
 \{
   title = "Comon RSS";
   link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
