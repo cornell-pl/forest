@@ -146,7 +146,16 @@ the throughput and avoiding overwhelming the operating system
 with too many open sockets. If the system fails to fetch an
 item due to network or system error, an idata is still created
 with the appropriate error code written in the meta data and
-{\em None} set as the data value. The \padsd{} system does not 
+{\em None} set as the data value. Examples of error codes used
+in the system include:
+{\small \begin{verbatim}
+1: Misc HTTP error
+2: Late arrival
+3: Ssh host required
+4: Remote command required for ssh
+5: Bad message
+\end{verbatim}}
+The \padsd{} system does not 
 automatically filter out erroneous items because errors often 
 provides very important information to users who monitors 
 distributed systems. Users could optional choose to filter
