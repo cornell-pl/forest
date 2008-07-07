@@ -106,20 +106,23 @@ populated with data, \cd{None} if the data was unavailable at the
 given time-slice.
 
 Using the \cd{nodes} specification, we define the \cd{comon} feed as a
-\textit{dependent} feed.  Each item in the \cd{nodes} feed defines a
+\textit{dependent} feed: each item in the \cd{nodes} feed defines a
 possible source for the \cd{comon} feed.  The \cd{comon} \kw{source}
-specification processes the \cd{nodelist} to handle errors and strip out
-comment fields.  The \cd{current} function checks if the \cd{nodelist}
-is \cd{None}, signalling a fetching error, in which case it uses
-the most recently cached list of nodes instead.  The \kw{source}
-specification filters out comment fields, and then converts the domain
-names to URLs with the required port using the auxiliary function
-\cd{makeURL}.  The \kw{schedule} for this CoMon feed is \cd{once}
-(with a timeout of sixty seconds) because the feed gets created once
-for each nodelist.  Hence, each nodelist contributes a single set
-of CoMon statistics to the overall \cd{comon} feed. As before, the
-format of data fetched from each node matches the description
-\cd{Comon\_format.Source}.
+specification processes the \cd{nodelist} to handle errors and strip
+out comment fields.  The code that handles this processing illustrates
+that the \padsd{} domain-specific language is embedded in \ocaml{}.
+We use \ocaml{} terms where necessary to specify simple
+transformations.  In particular, the \cd{current} function checks if
+the \cd{nodelist} is \cd{None}, signalling a fetching error, in which
+case it uses the most recently cached list of nodes instead.  The
+\kw{source} specification filters out comment fields, and then
+converts the domain names to URLs with the required port using the
+auxiliary function \cd{makeURL}.  The \kw{schedule} for this CoMon
+feed is \cd{once} (with a timeout of sixty seconds) because the feed
+gets created once for each nodelist.  Hence, each nodelist contributes
+a single set of CoMon statistics to the overall \cd{comon} feed. As
+before, the format of data fetched from each node matches the
+description \cd{Comon\_format.Source}.
 
 
 
