@@ -273,11 +273,39 @@ machine; the corresponding feed description has many more branches than this sim
 We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
 the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse}
 monitors a collection of machines described in a configuration file.
-The \cd{rawHostList} description has the same form as the \cd{nodes} feed
-we saw earlier, except it draws the data from a local file and only
-once a day.  Unlike the earlier example, we use a \textit{feed
-comprehension} to clean up this feed before creating the \cd{stats} feed.
-The comprehension filters the list of hosts to remove...
+Before we can explain the \cd{stats} feed itself, we need to first
+explain some auxiliary feeds.  
+
+The \cd{rawHostList} description has the same form as the \cd{nodes}
+feed we saw earlier, except it draws the data from a local file just
+once a day.  We then use a \textit{feed comprehension} to select only
+lists of host names not containing any errors, forming the clean feed
+\cd{hostLists}.  
+
+We next define a feed generator \cd{gen_stats} that yields an
+integrated feed of performance statistics for each supplied host.  In
+more detail, when given a host \cd{h}, \cd{gen_stats} creates a five
+minute schedule with a one minute timeout. It then uses this schedule
+to describe a compound feed, which pairs two base feeds feeds: the
+first uses the Unix command \cd{ping} to collect network statistics
+about the route to \cd{h} while the second performs a remote shell
+invocation using \cd{ssh} to find out statistics about how long the
+machine has been up.  Both of these feeds use the \kw{proc}
+constructor in the \kw{sources} field to compute the data on the fly,
+rather than reading it from a file.  The argument to \kw{proc} is a
+string that is executed in a freshly constructed shell.  The pairing
+constructor for feeds takes a pair of feeds and returns a feed of
+pairs, with elements sharing the same scheduled fetch-time being
+paired. This semantics conveniently produces a compound feed that for
+each host returns a pair of its ping and uptime statistics, grouping
+together the information for each host.  Of course, the full
+\vizGems{} monitoring application uses many more tools than just ping
+and uptime to probe the remote machine; the corresponding feed
+description has many more branches than this simplified version.
+
+Finally, we define the feed \cd{stats}.  For each list of hosts in the
+\cd{hostLists} feed, we filter the list using the \cd{isNode} function
+to remove ...
 
 the list of hosts to remove comments using the \cd{isNode} function
 and we use the built-in \cd{flatten} function to convert the feed of
@@ -289,21 +317,6 @@ The \cd{stats} feed depends upon the \cd{hosts} feed.  For each host
 \cd{h} in \cd{hosts}, it creates a schedule consisting of a single
 time corresponding to ``now'' with a timeout of one minute.  It uses
 this schedule \cd{s} to describe a compound feed, which pairs two base
-feeds: the first uses the Unix command \cd{ping} to collect network
-statistics about the remote machine while the second performs a remote
-shell invocation using \cd{ssh} to find out statistics about how long
-the machine has been up.  Both of these feeds use the \kw{proc}
-constructor in the \kw{sources} field to compute the data on the fly,
-rather than reading it from a file.  The argument to \kw{proc} is a
-string that is executed in a freshly constructed shell.  The pairing
-constructor for feeds takes a pair of feeds and returns a feed of
-pairs, with elements sharing the same scheduled fetch time being
-paired. This semantics is very convenient in this case, as it produces
-a feed that for each host returns a pair of its ping and uptime
-statistics, grouping together the information for each host. 
-Of course, the full \vizGems{} monitoring application
-uses many more tools than just ping and uptime to probe the remote
-machine; the corresponding feed description has many more branches than this simplified version.
 
 
 \begin{figure}
@@ -314,7 +327,7 @@ machine; the corresponding feed description has many more branches than this sim
 \kw{feed} rawHostLists =  
   \kw{base} \{|
    \kw{sources}  = \kw{all} config_location;
-   \kw{schedule} = every 24 hours, starting now; 
+   \kw{schedule} = every 24 hours; 
    \kw{format}   = Hosts.Source;   |\}
 
 \kw{feed} hostLists = 
