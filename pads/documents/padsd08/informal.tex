@@ -21,7 +21,7 @@ conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} descrition named
 \begin{figure}
 \begin{code}
 (* Simple CoMon distributed data description *)
-let sites = 
+\kw{let} sites = 
   [
     "http://pl1.csl.utoronto.ca:3121";
     "http://plab1-c703.uibk.ac.at:3121";
@@ -266,4 +266,82 @@ machine; the corresponding feed description has many more branches than this sim
 \vskip -2ex
 \caption{Simplified version of \vizGems{} feed.}
 \label{fig:pulse}
+\end{figure}
+
+
+\subsection{\vizGems{} Example, Version 2}
+We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
+the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse}
+monitors a collection of machines described in a configuration file.
+The \cd{rawHostList} description has the same form as the \cd{nodes} feed
+we saw earlier, except it draws the data from a local file and only
+once a day.  Unlike the earlier example, we use a \textit{feed
+comprehension} to clean up this feed before creating the \cd{stats} feed.
+The comprehension filters the list of hosts to remove...
+
+the list of hosts to remove comments using the \cd{isNode} function
+and we use the built-in \cd{flatten} function to convert the feed of
+lists of hosts into a simple feed of hosts.  We use the \cd{mk\_host}
+function to remove the \cd{Data} constructor around the hostnames to
+simplify down-stream processing.
+
+The \cd{stats} feed depends upon the \cd{hosts} feed.  For each host
+\cd{h} in \cd{hosts}, it creates a schedule consisting of a single
+time corresponding to ``now'' with a timeout of one minute.  It uses
+this schedule \cd{s} to describe a compound feed, which pairs two base
+feeds: the first uses the Unix command \cd{ping} to collect network
+statistics about the remote machine while the second performs a remote
+shell invocation using \cd{ssh} to find out statistics about how long
+the machine has been up.  Both of these feeds use the \kw{proc}
+constructor in the \kw{sources} field to compute the data on the fly,
+rather than reading it from a file.  The argument to \kw{proc} is a
+string that is executed in a freshly constructed shell.  The pairing
+constructor for feeds takes a pair of feeds and returns a feed of
+pairs, with elements sharing the same scheduled fetch time being
+paired. This semantics is very convenient in this case, as it produces
+a feed that for each host returns a pair of its ping and uptime
+statistics, grouping together the information for each host. 
+Of course, the full \vizGems{} monitoring application
+uses many more tools than just ping and uptime to probe the remote
+machine; the corresponding feed description has many more branches than this simplified version.
+
+
+\begin{figure}
+\begin{code}
+\kw{let} config_location =
+  [("file:///arrakis/config/machine_list")];
+
+\kw{feed} rawHostLists =  
+  \kw{base} \{|
+   \kw{sources}  = \kw{all} config_location;
+   \kw{schedule} = every 24 hours, starting now; 
+   \kw{format}   = Hosts.Source;   |\}
+
+\kw{feed} hostLists = 
+  \{| get_good hl | hl <- rawHostLists, 
+  is_good hl |\}
+
+\kw{feed} gen_stats (h) = 
+  \kw{let} s = every 5 mins, timeout 1 min \kw{in}
+  (
+   \kw{base} \{| 
+     \kw{sources}  =  \kw{proc} ("ping -c 1 " ^ h);   
+     \kw{format}   = Ping.Source;  
+     \kw{schedule} = s; |\},
+   \kw{base} \{| 
+     \kw{sources}  = \kw{proc} ("ssh " ^ h ^ " uptime");  
+     \kw{format}   = Uptime.Source;  
+     \kw{schedule} = s; |\}
+  )
+
+\kw{let} get_host (Hosts.Data h) = h
+
+\kw{feed} stats =
+  \kw{foreach} hl \kw{in} hostLists \kw{update}
+  [ gen_stats (get_host h) | 
+          h <- List.filter Hosts.isNode hl ]
+\end{code}
+\vskip -2ex
+\caption{Simplified version of \vizGems{} feed.}
+\label{fig:pulse2}
 \end{figure}
