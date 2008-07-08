@@ -1,39 +1,37 @@
-The term {\em ad hoc data} refers to the untold billions upon billions of bytes
-of non-standard, unreliable, and continuously evolving data spread
-across all computer systems.  This sort of data includes such varied
-sources as server logs, distributed systems performance and
-debugging data, automated billing systems information, telephone call
-records, financial data and online repositories of scientific data
-including genetic information, cosmology data and global weather
-systems data.
+The term {\em ad hoc data} refers to the billions of bytes of
+non-standard and continuously evolving data spread across all computer
+systems.  Such data includes server logs, distributed system
+performance and debugging data, automated billing information,
+telephone call records, financial data and online repositories of
+scientific data including genetic information, cosmology data and
+global weather systems.
 
-This paper defines a system for automatic generation of monitoring,
-analysis and transformation tools for such distributed ad hoc data.
-Our generated tools include a data archiving system, a database loading
-system, a simply query tool, systems for tracking the statistical profile of the data and
-generating alerts under customizable error conditions, an RSS feed
-generator, and debugging tools.  The system also generates a
-number of libraries for application developers, including those for
-parsing, printing, error management, data traversal and
-transformation.  Software developers can use the programming framework
-to create their own new application-specific tools.  They can also build
-generic tools that can be applied to any collection of data sources.
+This paper presents \padsd{}, a system that generates monitoring,
+analysis and transformation tools for distributed ad hoc data from
+declarative specifications.  The generated tools include an archiver,
+a database loading system, a simple query tool, a statistical
+analyzer, a profile-based alerting system, an RSS feed generator, and
+debugging tools.  In addition, the system generates libraries for
+application developers, including modules for parsing, printing, error
+management, data traversal and transformation which developers can use
+to create their own application-specific tools.  Advanced users can
+build generic tools applicable to any collection of data sources.
 
-The tool suite is generated from high-level data descriptions
-written in a domain-specific programming language called \padsd{}.  To
-use the language, programmers specify {\em where} their ad hoc data is
-located, {\em how} to obtain it, {\em when} to get it and when
-to give up trying, and {\em what}
-preprocessing the system should do when it arrives.  As its name suggests,
-\padsd{} is layered on top of the \pads{} sublanguage, developed in
-previous research efforts, for specification of the {\em format} of
-the data sources.  We illustrate the expressiveness of \padsd{} by
-providing descriptions for several different distributed systems
-including CoMon, PlanetLab's node and experiment monitoring system,
-and AT\&T's web hosting service.  We also provide a formal semantics for
-our language and evaluate its performance.  We show our system is
-easily capable of scaling to distributed systems the size of CoMon,
-the current monitor for Planetlab's geographically distributed 800+ nodes.
+The \padsd{} data description language allows data analysts to specify
+{\em where} their ad hoc data is located, {\em how} to obtain it, {\em
+when} to get it and when to give up trying, and {\em what}
+preprocessing the system should do when it arrives.  As its name
+suggests, \padsd{} is layered on top of the \pads{} sublanguage,
+developed in previous research efforts, for specifying the {\em
+format} of the data sources.  We illustrate the expressiveness of
+\padsd{} by giving descriptions for several different distributed
+systems including CoMon, the monitoring system for PlanetLab, and a
+monitoring system for a web hosting service provided by AT\&T.  We
+define a formal semantics for the language, describe our
+implementation, and evaluate its performance.  We show our system is
+capable of scaling to distributed systems the size of CoMon,
+the current monitor for Planetlab's geographically distributed 800+
+nodes.
 
 % CoMon 
 % the Safari web
