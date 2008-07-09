@@ -1,10 +1,128 @@
-\subsection{Using Tool Configurations}
+\subsection{Using the Tools Library}
 \label{sec:tools}
+The \padsd{} system comes with a suite of useful tools that help users 
+cope with standard data adminstration needs. A tool is typically an
+O'caml module with a standard interface: a tool specification, a
+feed representation or prefeed compiled from the feed description,
+and a feed of interest. We now briefly introduce them and discuss their uses. 
 
-The most straight-forward use of the \padsd{} system is to create a feed based on a \padsd{}
-description, and then apply a number of built-in tools such as archiver and
-accumulator on the feed. \padsd{} provides a very easy-to-use interface, a tool configuration, 
-to accomplish this simple task. 
+\begin{figure*}[th]
+\centering
+\begin{codebox}
+===========================================================================
+Summary of network transmission errors
+===========================================================================
+ErrCode: 1      ErrMsg: Misc HTTP error Count: 12
+ErrCode: 5      ErrMsg: Bad message     Count: 27
+ErrCode: 6      ErrMsg: No reply        Count: 2
+
+===========================================================================
+Top 10 locations with most network errors
+===========================================================================
+Loc: http://planetlab01.cnds.unibe.ch:3121    Count: 2
+Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
+Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2
+... omitted ...
+===========================================================================
+<top>.<listitem>.Cpu_hog.elt1.Some.elt2 : string
+===========================================================================
+good vals:      554     bad vals:       0       pcnt-bad:       0.00%
+min val: 4      max val: 22     avg val: 11     std dev: 5.29   
+
+=> Distribution of the top 10 values out of 47 distinct values:
+    Val: "nyu_d"                    Count: 111     pcnt-of-good-vals: 20.04%
+    Val: "ethzcs_q"                 Count: 86      pcnt-of-good-vals: 15.52%
+    Val: "princeton_coblitz"        Count: 68      pcnt-of-good-vals: 12.27%
+    ... omitted ...
+    Val: "root"                     Count: 12      pcnt-of-good-vals: 2.17%
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+    SUMMING                         Count: 434     pcnt-of-good-vals: 78.34%
+\end{codebox}
+\caption{Portion of an accumulator output} \label{fig:acc}
+\end{figure*} 
+
+\begin{itemize}
+\item {\em Archiver.} The archiver takes a feed, and archives all the files
+remotely fetched by this feed into the local file system. The archive
+is organized by the structure of the feed, one directory per base feed,
+where each directory stores all the files fetched by a base feed. 
+It also keeps a catalog file in each directory that documents where 
+the data come from, when the data was scheduled to arrive and when
+the data actually arrived. The user has the option of compressing
+the files in each directory when they reach certain number. 
+
+\item {\em Printer.} The printer prints the content of a feed to a file or
+multiple files. When it prints to a single file, all data from a feed is
+concatenated with an optional separator. When it is configured to print
+to multiple files, it outputs the content of each base feed into a separate
+file.
+
+\item {\em Profiler.} The profiler is a performance monitor of the feeds which
+provides the user with the throughputs, the average network and system latencies
+of the feed over a period of time. Users can specify when to profile the feed and
+for how long using the tool's specification. This tool has been used to produce
+some of the experimental results in section \ref{sec:experiments}.
+
+\item {\em Accumulator.} The accumulator is one of the most useful tools to system
+adminstrators. It maintains a statistical profile of the feed and
+its error characteristics. For numerical data, aggregated information such as 
+average values, max/min values and standard deviations are maintained. For other
+types of data such as strings, URL's and ip addresses, the counts of the top N
+most frequently seen values are presented. Error rates and most common errors
+and where they come from are also maintained. The tool can be configured to
+accumulate the information over the entire feed or its slices. The latter is
+useful if the feed is infinite so the user can constantly monitor the 
+current situation and compare with historical statistics. 
+The output the tool can be either plain text and XML with an
+accompanying DTD file. Figure \ref{fig:acc} shows portions of an accumulator
+output for the Comon example in text format.
+
+\item {\em Alerter.} The alerter allows the user to specify certain conditions
+upon which an alert will be raised. The library has several predefined
+conditions such as value exceeding the max/min or $n$ standard deviation away. 
+Users can also define custom conditions by specifying an arbitrary predicate. 
+This tool has been integrated with the accumulator above. Alerts are sent by
+appending to a file which can then be piped to other tools such as email
+client.
+
+\item {\em Database loader.} The DB loader allows the user to load numerical
+data from a feed into a round robin database (RRD tool). User needs to specify
+a custom function that transform the feed items into numerical values
+and also some other parameters required by the rrdtools, such as datasource
+type, sampling rate. The data is indexed by arrival time in the RRD and
+older data is discarded to make space for new data.
+
+\item {\em Selector.} The selector is a simple query tool that selects
+into the data source in a feed, and returns a feed of the subcomponents 
+such as a field of a record. The query language is a path similar to XPath
+and defined as follows.
+
+{\small
+\begin{verbatim}
+path :: =  
+  "top"
+| path.ID  (field/variant name)
+| path.INT (branch number (from 1) of a tuple)
+| path.[?] (any one elements of array/table) 
+| path.[*] (all elements of array/table) 
+| path.[INT] (nth element of array (from 0))
+| path.[Key] (a table entry indexed by the Key)
+\end{verbatim}
+}
+
+\item {\em RSS feed generator.} The RSS feed generator converts a given
+\padsd{} feed into properly formatted RSS feed in XML. User specifies
+the title, link, description as well as update schedule of this RSS feed.
+The content of the RSS feed is specified by a selection path into
+the data source. The tool uses the selector tool to
+select into the data source and returns the subcomponent which is then
+wrapped in XML and presented as an RSS feed.
+\end{itemize}
+
+The most straight-forward use of the \padsd{} system is to create a feed 
+based on a \padsd{} description, and then apply one or more of built-in tools 
+to the feed. \padsd{} provides a very 
+easy-to-use interface, a tool configuration, to accomplish this simple task. 
 Figure~\ref{fig:toolconfigs} presents an example tool config file.
 
 \begin{figure}[tb]
@@ -38,10 +156,11 @@ Figure~\ref{fig:toolconfigs} presents an example tool config file.
 \label{fig:toolconfigs}
 \end{figure}
 
-A tool configuration includes a feed declaration header (the first line in the config),
+A tool configuration includes a feed declaration header 
+(the first line in the config),
 and a sequence of tool specifications. The header specifies the path to the 
-feed description file (comon.fml) and the name of the feed (described in the fml file) 
-to be created (comon).
+feed description file (comon.fml) and the name of the feed 
+(described in the fml file) to be created (comon).
 Each tool specification starts with the the keyword {\tt tool} followed by the
 name of the tool (feedaccum and rss for example). Only system built-in tools may be 
 included in the tool config file. The body of each tool specification is essentially
@@ -62,7 +181,7 @@ in pipeline is not optimal.
 In summary, the tool configuration in \padsd{} is a very simple programming 
 paradigm where minimum O'Caml language knowledge is required. Feed designers
 and system administrators who hardly know any functional programming can still 
-do a lot with the feeds. For users who do know O'Caml programming, more control
-is available by programming directly against the \padsd{} tools library, which
-will be discussed in the next section.
+perform day-to-day data management tasks. For users who do know O'Caml programming, 
+more control is available by programming directly against the \padsd{} 
+tools library, which will be discussed in the next section.
 
