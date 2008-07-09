@@ -240,7 +240,17 @@ if there exists no $\ell$ and $\astring$ such that:} \\
 %%     \mbox{for all $\atime''$ such that $\atime' < \atime'' \leq \atime$,} \;
 %%    (\atime'',\_) \not\in \semantics{\feed}{\environment}{\universe} \; 
 %% \}
-
+\semantics{[\feed \bnfalt x \leftarrow e]}{\environment}{\universe} 
+ &=&
+ \{((\atime,[\meta_1,\ldots,\meta_k]),[v_1,\ldots,v_k]) \setalt 
+    \exists \atime.\forall i:1\ldots k.
+     (\meta_i,v_i) \in \semantics{\feed}{\environment[x\mapsto z_i]}{\universe} 
+     \; \mbox{and} \; 
+     \mytime{\meta_i} =\atime
+  \} \\
+&&\quad\mbox{where} \\
+&& \qquad\mbox{$[z_1,\ldots,z_k] = \esemantics{e}{\environment}$}
+\\\\
 \end{array}
 \]
 \caption{Feed Language Semantics.}

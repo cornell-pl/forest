@@ -148,12 +148,14 @@ enables a paradigm in which a programmer defines an infinite feed $\feed_2$
 that gets truncated and regenerated whenever a new element in $\feed_1$
 is scheduled.
 
-The final elements of the calculus are the $\mathtt{foreach}$ feeds.
+The final elements of the calculus include the $\mathtt{foreach}$ feeds
+and the list comprehension feed.
 Intuitively, a $\mathtt{foreach}$ is identical to a dependent pair in
 which the first element of the pair is omitted from the data representation.
 Consequently, there are two forms of $\mathtt{foreach}$ -- one for
 each sort of dependent pair.  The notation ${*}$ or ${**}$ serves as
-a syntactic mnemonic to remind readers of the connection.
+a syntactic mnemonic to remind readers of the connection.  The list comprehension
+feed generates a feed of lists where each element of the list is scheduled at the same time.
 
 \begin{figure}[t]
 \[
@@ -161,7 +163,9 @@ a syntactic mnemonic to remind readers of the connection.
 \multicolumn{3}{l}{\mbox{(feed types)}}\\ 
 \multicolumn{3}{l}{\sigma \ ::= \optionty{\tau} 
   \bnfalt \sigma_1 * \sigma_2
-  \bnfalt \sigma_1 + \sigma_2}   \\  
+  \bnfalt \sigma_1 + \sigma_2
+  \bnfalt \listty{\sigma}
+}   \\  
 \\
 \multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
 \multicolumn{3}{l}{\feed \ ::=}   \\  
@@ -204,6 +208,7 @@ a syntactic mnemonic to remind readers of the connection.
 % & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
 %                                               fill missing entries with ``None''} \\
 % & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
+ \bnfalt & [\feed \bnfalt x \leftarrow e ] & \mbox{list comprehension feed} \\
 \end{array}
 \]
 \caption{Feed Language Syntax.}
@@ -406,6 +411,16 @@ a syntactic mnemonic to remind readers of the connection.
 %% }
 %% \]
 
+
+\[
+\infer[(\textit{t-listf})]
+{\Gamma \turn [\feed \bnfalt x \leftarrow e ]  : \feedty{\listty{\sigma}}}
+{
+  \Gamma,x{:}\tau \turn \feed : \feedty{\sigma} &
+  \Gamma \turn e : \listty{\tau}
+}
+\]
+
 \caption{Feed Language Typing.}
 \label{fig:typing}
 \end{figure}
@@ -451,6 +466,7 @@ metadata is coded as follows.
 & \bnfalt & (\atime,(\meta,\meta)) & \mbox{pair metadata} \\
 & \bnfalt & (\atime,\inl{\meta}) & \mbox{sum metadata} \\
 & \bnfalt & (\atime,\inr{\meta}) & \mbox{sum metadata} \\
+& \bnfalt & (\atime,[\meta_1,\ldots,\meta_k]) & \mbox{list metadata} \\
 \end{array}
 \]  
 
@@ -539,7 +555,11 @@ final composite feed).
 As discussed earlier, the semantics of the two variants of $\mathtt{foreach}$
 follows the semantics of dependent pairs closely.  Notice, for instance,
 the similarity between the conditions on the local {\tt foreach} with those
-for the local dependent pair.
+for the local dependent pair.  
+
+The semantics of the list comprehension feeds are closely connected to the semantics of
+the synchronous pairs in that each list in the generated feed of lists contains elements
+scheduled for the same time.
 
 As a sanity check on our semantic definitions, we have proven
 that the values contained in each feed are pairs of meta-data and data
@@ -551,7 +571,8 @@ defined as follows.
 \begin {array} {lcl}
 \metatype{\optionty{\ty}} & = & \timety * \locty \\
 \metatype{\sigma_1 * \sigma_2} & = & \timety * (\metatype{\sigma_1} * \metatype{\sigma_2}) \\
-\metatype{\sigma_1 + \sigma_2} & = & \timety * (\metatype{\sigma_1} + \metatype{\sigma_2}) 
+\metatype{\sigma_1 + \sigma_2} & = & \timety * (\metatype{\sigma_1} + \metatype{\sigma_2}) \\
+\metatype{\listty{\sigma}} & = & \timety * (\listty{\metatype{\sigma}}) \\
 \end{array}
 \]
 %We state this property formally as follows.
