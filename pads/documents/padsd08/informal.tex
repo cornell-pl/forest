@@ -96,7 +96,7 @@ new-line terminated records, each containing a \cd{nodeitem}.  In
 turn, a \cd{nodeitem} is either a \cd{'#'} character followed by a
 comment string, which should be tagged with the \cd{Comment}
 constructor, or a domain-name, which should be tagged as
-\cd{Data}. The description also defines a helper function \cd{isNode},
+\cd{Data}. The description also defines a helper function \cd{is_node},
 which returns true if the data item in question is a domain-name
 rather than a comment.  Given this specification, the \cd{nodes} feed
 logically yields a list of host names and comments every two minutes.
@@ -163,7 +163,7 @@ description \cd{Comon\_format.Source}.
   \kw{create}
     \kw{base} \{|
       \kw{sources}  = \kw{all} (List.map makeURL 
-                     (List.filter Nodelist.isNode 
+                     (List.filter Nodelist.is_node 
                      (current nodelist)));
       \kw{schedule} = once, timeout 60.0 sec; 
       \kw{format}   = Comon_format.Source;
@@ -181,7 +181,7 @@ description \cd{Comon\_format.Source}.
   Comment of '#' * pstring_SE(peor)
 | Data of pstring_SE(peor)
 
-\kw{let} isNode item = 
+\kw{let} is_node item = 
   \kw{match} item \kw{with}
   Data _ -> true
   | _ -> false
@@ -204,7 +204,7 @@ we saw earlier, except it draws the data from a local file and only
 once a day.  Unlike the earlier example, we use a \textit{feed
 comprehension} to clean up this feed before creating the \cd{stats} feed.
 The comprehension filters
-the list of hosts to remove comments using the \cd{isNode} function
+the list of hosts to remove comments using the \cd{is_node} function
 and we use the built-in \cd{flatten} function to convert the feed of
 lists of hosts into a simple feed of hosts.  We use the \cd{mk\_host}
 function to remove the \cd{Data} constructor around the hostnames to
@@ -247,7 +247,7 @@ machine; the corresponding feed description has many more branches than this sim
 
 \kw{feed} hosts = 
     \{| mk_host n | n <- (flatten hostList), 
-                   Nodelist.isNode n |\}
+                   Nodelist.is_node n |\}
 
 \kw{feed} stats =
   \kw{foreach} h \kw{in} hosts \kw{create}
@@ -271,68 +271,77 @@ machine; the corresponding feed description has many more branches than this sim
 
 \subsection{\vizGems{} Example, Version 2}
 We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
-the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse}
+the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse2}
 monitors a collection of machines described in a configuration file.
-Before we can explain the \cd{stats} feed itself, we need to first
-explain some auxiliary feeds.  
+Before we discuss the \cd{stats} feed itself, we first explain some
+auxiliary feeds that we use in the definition of the \cd{stats} feed.   
 
-The \cd{rawHostList} description has the same form as the \cd{nodes}
-feed we saw earlier, except it draws the data from a local file just
-once a day.  We then use a \textit{feed comprehension} to select only
-lists of host names not containing any errors, forming the clean feed
-\cd{hostLists}.  
+The \cd{raw\_hostLists} description has the same form as the \cd{nodes}
+feed we saw earlier, except it draws the data from a local file every
+two hours.  We use a \textit{feed comprehension} to define a clean
+version of the feed, \cd{host\_lists}.  In the comprehension, the
+built-in predicate \cd{is\_good} verifies that no errors occured in
+fetching the current list of machines \cd{hl}, as would be expected
+for a local file.  The function \cd{get\_hosts} takes \cd{hl} and uses
+the built-in function \cd{get\_good} to unwrap the payload data from
+the error infrastructure, an operation that is guaranteed to succeed
+because of the \cd{is\_good} guard. The function \cd{get_hosts} then
+selects the host name entries and unwraps them to produce a list of
+unadorned host names.   
 
 We next define a feed generator \cd{gen_stats} that yields an
 integrated feed of performance statistics for each supplied host.  In
 more detail, when given a host \cd{h}, \cd{gen_stats} creates a five
 minute schedule with a one minute timeout. It then uses this schedule
-to describe a compound feed, which pairs two base feeds feeds: the
-first uses the Unix command \cd{ping} to collect network statistics
-about the route to \cd{h} while the second performs a remote shell
-invocation using \cd{ssh} to find out statistics about how long the
+to describe a compound feed, which pairs two base feeds: the first
+uses the Unix command \cd{ping} to collect network statistics about
+the route to \cd{h} while the second performs a remote shell
+invocation using \cd{ssh} to gather statistics about how long the
 machine has been up.  Both of these feeds use the \kw{proc}
 constructor in the \kw{sources} field to compute the data on the fly,
 rather than reading it from a file.  The argument to \kw{proc} is a
-string that is executed in a freshly constructed shell.  The pairing
-constructor for feeds takes a pair of feeds and returns a feed of
-pairs, with elements sharing the same scheduled fetch-time being
+string that the system executes in a freshly constructed shell.  The
+pairing constructor for feeds takes a pair of feeds and returns a feed
+of pairs, with elements sharing the same scheduled fetch-time being
 paired. This semantics conveniently produces a compound feed that for
 each host returns a pair of its ping and uptime statistics, grouping
 together the information for each host.  Of course, the full
 \vizGems{} monitoring application uses many more tools than just ping
-and uptime to probe the remote machine; the corresponding feed
-description has many more branches than this simplified version.
+and uptime to probe remote machines; the full feed description has
+many more branches than this simplified version. 
 
 Finally, we define the feed \cd{stats}.  For each list of hosts in the
-\cd{hostLists} feed, we filter the list using the \cd{isNode} function
-to remove ...
+\cd{host_lists} feed, we generate a list of statistics feeds using a
+list comprehension and the feed generator \cd{gen\_stats}.  Each item
+in this list of feeds corresponds to the statistics feed for a single
+host. The \kw{foreach...update} construct then merges this list of
+feeds into a single feed with data for all the hosts.  This merged
+feed delivers values for a given host list \cd{hl} until the next host
+list \cd{hl}' arrives from the feed \cd{host\_lists}, at which point
+it stops collecting data from the feeds generated from \cd{hl} and
+starts gathering data from the machines in \cd{hl}'.
 
-the list of hosts to remove comments using the \cd{isNode} function
-and we use the built-in \cd{flatten} function to convert the feed of
-lists of hosts into a simple feed of hosts.  We use the \cd{mk\_host}
-function to remove the \cd{Data} constructor around the hostnames to
-simplify down-stream processing.
-
-The \cd{stats} feed depends upon the \cd{hosts} feed.  For each host
-\cd{h} in \cd{hosts}, it creates a schedule consisting of a single
-time corresponding to ``now'' with a timeout of one minute.  It uses
-this schedule \cd{s} to describe a compound feed, which pairs two base
 
 
 \begin{figure}
 \begin{code}
-\kw{let} config_location =
+\kw{let} config_locations =
   [("file:///arrakis/config/machine_list")];
 
-\kw{feed} rawHostLists =  
+\kw{feed} raw_hostLists =  
   \kw{base} \{|
-   \kw{sources}  = \kw{all} config_location;
-   \kw{schedule} = every 24 hours; 
+   \kw{sources}  = \kw{all} config_locations;
+   \kw{schedule} = every 2 hours; 
    \kw{format}   = Hosts.Source;   |\}
 
-\kw{feed} hostLists = 
-  \{| get_good hl | hl <- rawHostLists, 
-  is_good hl |\}
+\kw{let} get_host (Hosts.Data h) = h
+\kw{let} get_hosts hl =
+    List.map get_host 
+     (List.filter Hosts.is_node (get_good hl))
+
+\kw{feed} host_lists = 
+  \{| get_hosts hl | hl <- raw_hostLists, 
+                    is_good hl |\}
 
 \kw{feed} gen_stats (h) = 
   \kw{let} s = every 5 mins, timeout 1 min \kw{in}
@@ -347,12 +356,9 @@ this schedule \cd{s} to describe a compound feed, which pairs two base
      \kw{schedule} = s; |\}
   )
 
-\kw{let} get_host (Hosts.Data h) = h
-
 \kw{feed} stats =
-  \kw{foreach} hl \kw{in} hostLists \kw{update}
-  [ gen_stats (get_host h) | 
-          h <- List.filter Hosts.isNode hl ]
+  \kw{foreach} hl \kw{in} host_lists \kw{update}
+     [ gen_stats h | h <- hl ]
 \end{code}
 \vskip -2ex
 \caption{Simplified version of \vizGems{} feed.}
