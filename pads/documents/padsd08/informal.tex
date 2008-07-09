@@ -1,4 +1,4 @@
-To give a feel for our feed declaration language, we work through a
+To introduce our feed declaration language, we work through a
 series of examples of increasing sophistication. 
 
 \subsection{CoMon Feeds}
@@ -42,7 +42,8 @@ conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} descrition named
 
 In contrast to the \cd{simple\_comon} feed, which returns data from
 all sites, the \cd{comon\_1} feed defined in \figref{fig:comon_1}
-returns only a single value per time slice: that of the first site to
+uses the \kw{any} constructor in the \kw{sources} field to 
+return only a single value per time slice: that of the first site to
 supply a complete set of data.
 %
 \begin{figure}
@@ -69,11 +70,11 @@ available node is sufficient. These kinds of monitoring systems
 are useful in the face of partial network unreachability or
 machine failure. Specifying this behavior at the language level
 provides a simpler implementation than network-centric approaches such
-as anycast. 
+as anycast \cite{anycast}. 
 
 The schedule for \cd{comon\_1} indicates the system should fetch data
-every minute for two hours, using the \cd{lasting} field do indicate
-the desired duration of the feed.  It omits the \cd{starting} and
+every minute for two hours, using the \cd{lasting} field to indicate
+the duration of the feed.  It omits the \cd{starting} and
 \cd{timeout} specifications, in which case the system uses default
 settings of \cd{now} for the start time and 30 seconds for the
 timeout.  
@@ -90,14 +91,14 @@ description includes an auxiliary feed \cd{nodes} that describes the
 configuration information: it is available from the
 \cd{config_location}, it should be fetched every two minutes, and its
 format is described by the \padsml{} description \cd{source} given in
-the file \cd{Comon\_format}, which appears in \figref{fig:nodepml}.
+the file \cd{nodelist}, which appears in \figref{fig:nodepml}.
 This \padsml{} description specifies that \cd{source} is a list of
 new-line terminated records, each containing a \cd{nodeitem}.  In
 turn, a \cd{nodeitem} is either a \cd{'#'} character followed by a
 comment string, which should be tagged with the \cd{Comment}
-constructor, or a domain-name, which should be tagged as
+constructor, or a host name, which should be tagged as
 \cd{Data}. The description also defines a helper function \cd{is_node},
-which returns true if the data item in question is a domain-name
+which returns true if the data item in question is a host name
 rather than a comment.  Given this specification, the \cd{nodes} feed
 logically yields a list of host names and comments every two minutes.
 In fact, because of the possibility of errors, the feed actually
@@ -106,9 +107,9 @@ populated with data, \cd{None} if the data was unavailable at the
 given time-slice.
 
 Using the \cd{nodes} specification, we define the \cd{comon} feed as a
-\textit{dependent} feed: each item in the \cd{nodes} feed defines a
-possible source for the \cd{comon} feed.  The \cd{comon} \kw{source}
-specification processes the \cd{nodelist} to handle errors and strip
+\textit{dependent} feed: each \cd{nodelist} in the \cd{nodes} feed defines a
+collection of sources for the \cd{comon} feed.  The \cd{comon} \kw{source}
+specification processes the \cd{nodelist} to manage errors and strip
 out comment fields.  The code that handles this processing illustrates
 that the \padsd{} domain-specific language is embedded in \ocaml{}.
 We use \ocaml{} terms where necessary to specify simple
@@ -116,13 +117,19 @@ transformations.  In particular, the \cd{current} function checks if
 the \cd{nodelist} is \cd{None}, signalling a fetching error, in which
 case it uses the most recently cached list of nodes instead.  The
 \kw{source} specification filters out comment fields, and then
-converts the domain names to URLs with the required port using the
+converts the host names to URLs with the required port using the
 auxiliary function \cd{makeURL}.  The \kw{schedule} for this CoMon
-feed is \cd{once} (with a timeout of sixty seconds) because the feed
-gets created once for each nodelist.  Hence, each nodelist contributes
-a single set of CoMon statistics to the overall \cd{comon} feed. As
+feed is \cd{once} (with a timeout of sixty seconds) because we want to
+collect the data for each host in a given \cd{hostlist} just once.
+The \kw{foreach ... create} construct merges the resulting data from
+each machine into a single feed.  As
 before, the format of data fetched from each node matches the
-description \cd{Comon\_format.Source}.
+description \cd{Comon\_format.Source}.  
+
+With this specification, we
+expect to get data from all the active machines listed in the
+configuration file every two minutes.  We further expect the system to
+notices changes in the configuration file within two minutes.
 
 
 
@@ -132,9 +139,7 @@ description \cd{Comon\_format.Source}.
 
 \begin{figure}
 \begin{code}
-(* CoMon distributed data description *)
-
-(* Helper values and functions *)
+(* Ocaml helper values and functions *)
 \kw{let} config_location = 
   ["http://summer.cs.princeton.edu/status/ \\
     tabulator.cgi?table=slices/ \\
@@ -277,8 +282,8 @@ Before we discuss the \cd{stats} feed itself, we first explain some
 auxiliary feeds that we use in the definition of the \cd{stats} feed.   
 
 The \cd{raw\_hostLists} description has the same form as the \cd{nodes}
-feed we saw earlier, except it draws the data from a local file every
-two hours.  We use a \textit{feed comprehension} to define a clean
+feed we saw earlier, except it draws the data from a local file once a
+day.  We use a \textit{feed comprehension} to define a clean
 version of the feed, \cd{host\_lists}.  In the comprehension, the
 built-in predicate \cd{is\_good} verifies that no errors occured in
 fetching the current list of machines \cd{hl}, as would be expected
@@ -321,7 +326,9 @@ list \cd{hl}' arrives from the feed \cd{host\_lists}, at which point
 it stops collecting data from the feeds generated from \cd{hl} and
 starts gathering data from the machines in \cd{hl}'.
 
-
+With this specification, we expect the system to return data for each
+machine listed in the configuration file every five minutes.  We will
+notice changes in the configuration file once a day.
 
 \begin{figure}
 \begin{code}
@@ -331,7 +338,7 @@ starts gathering data from the machines in \cd{hl}'.
 \kw{feed} raw_hostLists =  
   \kw{base} \{|
    \kw{sources}  = \kw{all} config_locations;
-   \kw{schedule} = every 2 hours; 
+   \kw{schedule} = every 24 hours; 
    \kw{format}   = Hosts.Source;   |\}
 
 \kw{let} get_host (Hosts.Data h) = h
