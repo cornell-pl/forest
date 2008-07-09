@@ -83,13 +83,6 @@ where \cd{'a feed_rep} is an AST of a feed description, where feed elements have
 
 % Tools as interpreters
 
-This limitation of datatypes has been widely discussed in the literature, and various solutions have been proposed~\cite{various, our-padl-paper}. Given that \ocaml is our target language, we follow the method used to encode type representations in \padsml~cite{padsml-padl}. Because of space limitations, we do not provide details here.  The essential point is that developers can interpret feed-description ASTs with case analysis on the AST structure, while still achieving the desired static guarantees. Moreover, we have successfully used this framework to develop *all* of the tools presented in this paper, including the feed creator. The only role of the compiler is infer type declarations from feed descriptions, and compile the syntax into our special ASTs.
+This limitation of datatypes has been widely discussed in the literature, and various solutions have been proposed~\cite{various, our-padl-paper}. Given that \ocaml is our target language, we follow the method used in \padsml to encode type representations~cite{padsml-padl}. Because of space limitations, we do not provide details here.  The essential point is that developers can interpret feed-description ASTs by case analysis on the AST structure, while still achieving the desired static guarantees. Moreover, we have successfully used this framework to develop *all* of the tools presented in this paper, including the feed creator. The only role of the compiler is to infer appropriate type declarations from feed descriptions, and compile the feed syntax into our ASTs.
 
 %There, we represent our AST using a Scott-encoded datatype, and leverage \ocaml's module system to, in essence, type the Scott encodings in $F_\omega$. However, in \padsml we only sought to encode the \ocaml type of data, not entire \padsml descriptions. To effectively encode the dependency present in feeds descriptions, we instead use a variant of Mogensen-Scott encodings~\cite{mogensen}, employing HOAS to encode variable binding in feed descriptions.
- 
-
-
-% Challenges: structure and types.
-
-% Explain: typed ast. scott encoding. 
-% Demonstrate: accumulator
