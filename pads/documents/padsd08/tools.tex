@@ -75,7 +75,7 @@ useful if the feed is infinite so the user can constantly monitor the
 current situation and compare with historical statistics. 
 The output the tool can be either plain text and XML with an
 accompanying DTD file. Figure \ref{fig:acc} shows portions of an accumulator
-output for the Comon example in text format.
+output for the CoMon example in text format.
 
 \item {\em Alerter.} The alerter allows the user to specify certain conditions
 upon which an alert will be raised. The library has several predefined
@@ -144,7 +144,7 @@ Figure~\ref{fig:toolconfigs} presents an example tool config file.
 
 \kw{tool} rss
 \{
-  title = "Comon RSS";
+  title = "CoMon RSS";
   link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
   desc  = "Memory Info of Monall";
   sched = None; 
@@ -164,8 +164,9 @@ feed description file (comon.fml) and the name of the feed
 Each tool specification starts with the the keyword {\tt tool} followed by the
 name of the tool (feedaccum and rss for example). Only system built-in tools may be 
 included in the tool config file. The body of each tool specification is essentially
-an O'Caml record. The exact syntax and meanings of these tool specs can be found in
-the \padsd{} library. 
+an O'Caml record of attributes. Some of the attributes have option type because
+the system provides default values. The exact syntax and meanings of these tool specs 
+can be found in the \padsd{} library. 
 
 Once the tool config is edited, it can be compiled into an O'Caml user program
 that calls the \padsd{} tools library properly. The program can then be built with the the

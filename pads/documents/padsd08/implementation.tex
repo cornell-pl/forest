@@ -52,10 +52,10 @@ to the size of PlanetLab type applications.
 
 \subsection{Compiler}
 There are two parts to the \padsd{} compiler: tcc and fmlc.
-tcc is the tool configuration (.tc) compiler, while fmlc is the
-compiler of the feed declarations (.fml). Both of them
+tcc is the tool configuration compiler for .tc files, while fmlc is the
+compiler of the feed declarations (.fml files). Both of them
 compiles the source files into O'Caml programs which will
-then be compiled with relevant run-time libraries into 
+then be compiled with the run-time libraries into 
 binary code. 
 
 \begin{figure}[th]
@@ -87,7 +87,7 @@ preprocessor.
 In the case of fmlc, the code generation is done in two steps.
 In the first step, it generates type declarations for the feeds in a
 lazy fashion (that is, only generate the declaration if the
-feed is used in the rest of the program).
+feed is used in the rest of the description).
 In the second step, it generates the feed representation,
 also known as the ``prefeed''. Schedules which are
 definite times such as ``2008/09/30:12:00:00'' or ``5 mins'' are
@@ -96,21 +96,22 @@ to make the code more efficient.
 All O'Caml expressions embeded in the fml file are
 included without change in the compiled code. 
 Figure \ref{fig:compiledcomon} shows the compiled code for
-the simple comon feed in Figure \ref{fig:simplecomon}.
+the simple CoMon feed in Figure \ref{fig:simplecomon}.
 
 \subsection{Runtime System}
 A feed in \padsd{} is implemented as a lazy list of feed
-items (known as idata). This means the feed (also known as a stream) 
-is actually a function {\em next}. It is evaluated into
-a item value only when the user program attempts to take an
-item from the feed. The function {\em next} returns an
-item plus another {\em next} function. 
+items (known as idata). This means the feed 
+is actually a function {\tt next}. It is evaluated 
+only when the user program attempts to take an
+item from the feed. The function {\tt next} returns an
+item plus a new {\tt next} function which represents
+the tail of the feed.
 
-An idata is a pair: a data item of polymorphic type 'a and 
+An idata is a pair of a data item of polymorphic type 'a and 
 a meta data structure that corresponds 'a. 
 %The type of a feed is also the type of its data item. 
 %The type of a base feed has an option type. 
-The meta data is a recursive tree structure in which
+The meta data is a tree structure in which
 each node is tagged with a meta header. 
 The tree structure (also known as the meta body) resembles 
 the structure of the data item, i.e.  if the data item is a pair, 
@@ -137,7 +138,7 @@ the worker thread is {\em eager}, while the master thread is {\em lazy}.
 The concurrency control is implemented by the O'Caml threads
 library using standard mutex and condition variables.
 
-The fetching of data is implemented by
+The fetching engine is implemented using
 the Ocamlnet 2 library which is capable of concurrent fetches. 
 Given a list of locations to fetch from at any one time, 
 we convert the list into batches and fetch up to 200 locations
@@ -146,8 +147,7 @@ the throughput and avoiding overwhelming the operating system
 with too many open sockets. If the system fails to fetch an
 item due to network or system error, an idata is still created
 with the appropriate error code written in the meta data and
-{\em None} set as the data value. Examples of error codes used
-in the system include:
+{\em None} set as the data value. Some of error codes include:
 {\small \begin{verbatim}
 1: Misc HTTP error
 2: Late arrival
@@ -198,7 +198,7 @@ Total fetch time (secs)&	9&	5&	4&	5&	23&	9&	22&	23&	26&	14&	27&	28 \\ \hline
 Throughput (items/sec)&	5.6&	20&	37.5&	40&	10.9&	33.3&	15.9&	17.4&	17.3&	35.7&	20.4&	21.4 \\ \hline
 \end{tabular}
 \end{center}
-\caption{Performance of Comon without archiving}
+\caption{Performance of CoMon without archiving}
 \label{tab:comon-noarch}
 \end{table*}
 
@@ -214,7 +214,7 @@ Total fetch time (secs)&	17&	6&	7&	7&	27&	12&	27&	30&	19&	33&	43&	43 \\ \hline
 Throughput (items/sec)&	2.9&	16.7&	21.4&	28.6&	9.3&	25&	13&	13.3&	23.7&	15.2&	12.8&	14 \\ \hline
 \end{tabular}
 \end{center}
-\caption{Performance of Comon with archiving}
+\caption{Performance of CoMon with archiving}
 \label{tab:comon-arch}
 \end{table*}
 
@@ -223,7 +223,7 @@ As a preliminary performance evaluation,
 we measure the average network latency
 to fetch a data item, the average system latency 
 to produce a data item
-and the total throughput of the system using the comon feed
+and the total throughput of the system using the CoMon feed
 description in Figure \ref{fig:feedcomon}. 
 The throughput measures the average
 number of locations fetched per second. We picked
@@ -236,20 +236,19 @@ All the experiments were conducted on a Mac Powerbook G4 computer
 with a 1.67GHz CPU and 2GB memory running Mac OS X 10.4. It is
 connected to the internet through a 100Mb/s ethernet. 
 We randomly select 50, 100, and up to 600 nodes from the 
-original comon node list, 
+real CoMon node list, 
 \footnote{List taken from http://www.cs.princeton.edu/~vivek/node\_list\_all. 
 Not all nodes are up at the same time.}
-and use these smaller node lists as 12 test cases. 
+and use these smaller node lists as a total of 12 test cases. 
 
 Tables \ref{tab:comon-noarch} and \ref{tab:comon-arch}
-documents the results from two different scenarios:
+shows the results from two different scenarios:
 one in which the user program simply creates the comon feed without applying
 any tools on it, and one in which the comon feed is created
 and archived. In both scenarios, the system was
-able to fetch from up to 600 nodes within one minute.
-Since the Comon system fetches from all the Planetlab nodes every
-5 minutes, our system is more than capable of handling such fetching
-task and performing basic operation such as archiving.
+able to fetch from up to 600 nodes within one minute, which is
+significantly shorter than the 5-minute turnaround time in the real
+CoMon system.
 
 \begin{figure}[th]
 \begin{center}
@@ -276,11 +275,11 @@ at 200 nodes, the concurrent fetching engine is maximally utilized.
 The experiment for 450 nodes exhibits an anomaly as the archived
 experiment takes less time than the un-archived experiment.
 This is probably due to sudden delays in some of the nodes when the
-no-archiving experiment is run. One obvious take-home from
+no-archiving experiment is run. One obvious take-away from
 Figure \ref{fig:latency} is that while the network latency may
 vary greatly depending on the network condition, the system latency
 stays almost constant at relatively low levels. This shows that
-the \padsd{} system runtime adds very little overhead to the 
-inevitable network fetching cost, which means the system could scale to
-very large applications. 
+the \padsd{} system runtime adds little overhead to the 
+inevitable network cost, which means the system could scale to
+large applications. 
 
