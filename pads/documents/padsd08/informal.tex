@@ -56,7 +56,7 @@ supply a complete set of data.
   |\}
 \end{code}
 \vskip -2ex
-\caption{CoMon feed fragment that fetches data from a single source.}
+\caption{Feed fragment that fetches data from a single source.}
 \label{fig:comon_1}
 \end{figure}
 %
@@ -175,7 +175,7 @@ notices changes in the configuration file within two minutes.
     |\}
 \end{code}
 \vskip -2ex
-\caption{Comon program that uses a feed of node locations to drive
+\caption{CoMon program that uses a feed of node locations to drive
   data collection.}
 \label{fig:feedcomon}
 \end{figure}
@@ -199,6 +199,22 @@ notices changes in the configuration file within two minutes.
   contain one host name per non-commented line.}
 \label{fig:nodepml}
 \end{figure}
+
+The previous examples all showcased feeds that contained a single type
+of data.  \padsd{} also provides a datatype mechanism that allows us
+to construct compound feeds containing data of different sorts.  For
+example, if \cd{sites\_mime} is a feed of XXXs and
+\cd{sites\_keyscan\_mime} is a feed of YYYs, then the declaration 
+
+\begin{code}
+\kw{feed} sites = 
+    Locale \kw{of} sites_mime
+  | Keyscan \kw{of} sites_keyscan_mime
+\end{code}
+%
+creates a feed with elements drawn from each of the constituent
+feeds.  The constructors \cd{Locale} and \cd{Keyscan} tag each item in
+the compound feed to indicate its source. 
 
 \subsection{\vizGems{} Example}
 We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
