@@ -202,9 +202,18 @@ notices changes in the configuration file within two minutes.
 
 The previous examples all showcased feeds that contained a single type
 of data.  \padsd{} also provides a datatype mechanism that allows us
-to construct compound feeds containing data of different sorts.  For
-example, if \cd{sites\_mime} is a feed of XXXs and
-\cd{sites\_keyscan\_mime} is a feed of YYYs, then the declaration 
+to construct compound feeds containing data of different sorts.  As an
+example where such a construct is useful, the CoMon system includes a
+number of administrative data sources.  One example is a collection of
+node profiles, collecting the domain name, IP address, physical
+location, \etc, for each node in the cluster.  A second example is a
+list of authentication information for logging into the machines.
+These two data sources have different formats, locations, and update
+schedules, but system administrators want to keep a combined archive
+of the administrative information present in these sources.  If
+\cd{sites\_mime} is a feed description of the profile
+information and \cd{sites\_keyscan\_mime} is a feed of authentication
+information, then the declaration
 
 \begin{code}
 \kw{feed} sites = 
@@ -212,7 +221,7 @@ example, if \cd{sites\_mime} is a feed of XXXs and
   | Keyscan \kw{of} sites_keyscan_mime
 \end{code}
 %
-creates a feed with elements drawn from each of the constituent
+creates a feed with elements drawn from each of the two 
 feeds.  The constructors \cd{Locale} and \cd{Keyscan} tag each item in
 the compound feed to indicate its source. 
 
