@@ -115,6 +115,7 @@
 \newcommand{\semantics}[3]{{\cal F}\lsem #1 \rsem_{{#2} \, {#3}}}
 % expression semantics
 \newcommand{\esemantics}[2]{{\cal E}\lsem #1 \rsem_{{#2}}}
+%\newcommand{\esemantics}[2]{#2(#1)}
 
 % Host language types
 \newcommand{\ty}{\ensuremath{\tau}}
@@ -128,6 +129,9 @@
 \newcommand{\locty}{\ensuremath{\mathtt{loc}}}
 \newcommand{\boolty}{\ensuremath{\mathtt{bool}}}
 \newcommand{\stringty}{\ensuremath{\mathtt{string}}}
+\newcommand{\metatype}[1]{\ensuremath{\mathsf{meta}(#1)}}
+
+\newcommand{\dom}{\ensuremath{\mathsf{dom}}}
 
 % Expressions
 \newcommand{\expression}{e}

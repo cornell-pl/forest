@@ -1,8 +1,8 @@
 Development of a formal semantics for \padsd{} has been an integral
 part of our language design process.  It has been a medium through
-which we have communicated our ideas to one another precisely. It has also
-allowed us to experiment with the nuanced consequences of our decisions in the
-small before implementing them.  Its purpose in this paper is to
+which we have communicated our ideas to one another precisely and it has 
+allowed us to experiment with the nuanced consequences of our decisions.
+Its purpose in this paper is to
 provide system users with a way to calculate the expected contents of
 any feed they would specify, including subtle details of the effects
 of timeouts and errors.
@@ -14,10 +14,16 @@ formalization, the host language is the simply-typed lambda calculus.
 Figure~\ref{fig:host-language} presents the syntax we will use to
 write down host language expressions.  To simplify the semantics,
 the host language contains a collection of special constants 
-including parsers ($\parser$), locations ($\loc$), times ($\atime$),
-and schedules ($\schedule$).  It naturally also includes structured types
-such as pairs, sums, lists, streams and functions, all of which are 
-completely standard.
+including strings ($\astring$), locations ($\loc$), times ($\atime$),
+and schedules ($\schedule$).  We assume times may be added and compared
+and let $\infty$ represent a time later than all others.
+We treat schedules as sets of times and
+often use the notation $\atime \in \schedule$ to refer to a time $\atime$
+drawn from the set $\schedule$.  We use a similar notation to refer to elements of a list.
+The host language also includes structured types
+such as options, pairs, sums, lists and functions, all of which are 
+completely standard.  We often omit the typing annoation from the lambda
+expression when it can be reconstructed from the context easily.
 
 \begin{figure}[t]
 \[
@@ -27,16 +33,17 @@ completely standard.
 \\
 \multicolumn{4}{l}{\mbox{(host-language types)}}\\ 
 \ty & ::= & \basety & \mbox{base types} \\
- & \bnfalt & \ty_1 * \ty_2 & \mbox{pair types} \\
  & \bnfalt & \optionty{\ty} & \mbox{option types}\\
+ & \bnfalt & \ty_1 * \ty_2 & \mbox{pair types} \\
  & \bnfalt & \ty_1 + \ty_2 & \mbox{union types} \\
  & \bnfalt & \listty{\ty} & \mbox{list types}\\
- & \bnfalt & \feedty{\ty} & \mbox{stream types}\\
+% & \bnfalt & \feedty{\ty} & \mbox{stream types}\\
  & \bnfalt & \ty_1 \arrow \ty_2 & \mbox{function types} \\
 \\
 \multicolumn{4}{l}{\mbox{(host-language values)}}\\ 
 \data & ::=     & \constant & \mbox{generic constant} \\
- & \bnfalt & \parser & \mbox{parser (generated from PADS/ML)} \\
+ & \bnfalt & \boolf \bnfalt \boolt & \mbox{booleans} \\
+ & \bnfalt & \astring & \mbox{strings} \\
  & \bnfalt & \loc & \mbox{locations} \\
  & \bnfalt & \atime & \mbox{times} \\
  & \bnfalt & \schedule & \mbox{schedules} \\
@@ -47,8 +54,8 @@ completely standard.
                            \inr{\data} & \mbox{union values} \\
  & \bnfalt & \nillist \bnfalt 
                            \conslist{\data_1}{\data_2} & \mbox{list values} \\
- & \bnfalt & \nilstream \bnfalt 
-                           \consstream{\data_1}{\data_2} & \mbox{stream values} \\
+% & \bnfalt & \nilstream \bnfalt 
+%                           \consstream{\data_1}{\data_2} & \mbox{stream values} \\
 
 & \bnfalt & \lambda x{:}\ty.\expression & \mbox{function values} \\
 \\
@@ -63,8 +70,8 @@ completely standard.
 %             \inr{\expression} & \mbox{union expressions} \\
 % & \bnfalt & \expression_1 \; \expression_2 & \mbox{application expression} \\
  & \bnfalt & ... & \mbox{more typed lambda expressions} \\
-\\
-\multicolumn{4}{l}{\mbox{(feed meta-data:  a subset of host language values)}}\\ 
+%\\
+%\multicolumn{4}{l}{\mbox{(feed meta-data:  a subset of host language values)}}\\ 
 %\multicolumn{4}{l}{\mbox{(a special location (\generatedloc) is used when data is created artificially)}}\\ 
 \end{array}
 \]
@@ -78,21 +85,19 @@ completely standard.
 The abstract syntax for our core calculus of feeds appears in
 Figure~\ref{fig:syntax} and its typing rules appear in 
 Figure~\ref{fig:typing}.  The feed typing judgment has the form
-$\Gamma \turn \feed : \tau$, where $\Gamma$ is a context that maps
-variables to types.  This judgment depends upon an auxiliary judgment
-defining the well-typed host language expressions, which is not shown.
+$\Gamma \turn \feed : \feedty{\sigma}$, where $\Gamma$ is a context that maps
+variables to host language types $\tau$.  Notice that $\sigma$ is a subset of the
+host language types.  Feed typing depends upon a standard judgment for
+simple typing of lambda calculus expressions:  $\Gamma \turn e : \ty$.
 
-Many of the elements of the calculus should look familiar from
-discussions in previous sections.  We touch on some highlights here.
-The empty feed ($\emptyset$) contains no elements and serves as
+The elements of the feed language include
+the empty feed ($\emptyset$), which contains no elements and serves as
 the unit for the union feed ($\feed_1 \union \feed_2$).  The
 computed feed ($\computed{e_1}{x}{e_2}$) allows programmers to
 generate a feed with schedule $e_2$ and elements $\lambda x.e_1\; \atime$,
 where $\atime$ is drawn from the schedule. The filter feed
 $\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
-$e\; v$ is $\boolf$.  Together computed feeds and filter feeds
-model the feed comprehensions shown in
-Section~\ref{sec:informal}. Let feeds $\letfeed{x}{e_1}{\feed_2}$
+$e\; v$ is $\boolf$.  Let feeds $\letfeed{x}{e_1}{\feed_2}$
 provide a convenient mechanism for binding intermediate computations.
 
 The base forms $\mathtt{all \{ \cdots \}}$ and $\mathtt{any \{ \cdots \}}$
@@ -106,26 +111,27 @@ model the $\mathtt{proc}$ form found in the implementation.
 Instead of expressing time out conditions in the schedule,
 the calculus requires such conditions be specified in the window 
 field.\footnote{A separate window field simplifies the semantics slightly,
-but combining window and schedule together is slightly more
-pleasant for the programmer.  These minor syntactic differences
-have no semantic importance.} Notice that the preprocessor
+but combining window and schedule together is more appealing to
+programmers.  These minor syntactic differences are semantically unimportant.} 
+Notice that the preprocessor
 and parser both map values with option type to option type.
 The {\tt None} option is used to represent networking or data format
-errors.  We do not model the variety of different error codes that
+errors.  For the sake of simplicity, 
+we do not model the variety of different error codes that
 the implementation supports. 
 
 The calculus contains a number of binary operators for combining
 feeds.  The union takes feeds with the same type and merges them
 into a single feed.  On the other hand, the sum feed takes feeds
 with (possibly) different types, injects the elements of each feed into
-a sum and merges them.  
+a sum before merging.  
 
 The calculus also contains three different
 sorts of pairs, each providing a slightly different way of
 combining elements from the subcomponent feeds.  The first pair, 
 written $(\feed_1, \feed_2)$ is a {\em synchronous pair} -- 
 elements of $\feed_1$ are paired with elements of $\feed_2$
-that are {\em scheduled} at the same time (regardless of when those elements
+that are {\em scheduled} at exactly the same time (regardless of when those elements
 actually {\em arrive}).  Synchronous pairs are most useful when the underlying
 subcomponent feeds share the same schedule, as in the Arrakis example
 from Section~\ref{sec:informal}.  However, synchronous pairs lack a
@@ -152,6 +158,11 @@ a syntactic mnemonic to remind readers of the connection.
 \begin{figure}[t]
 \[
 \begin{array}{lll}
+\multicolumn{3}{l}{\mbox{(feed types)}}\\ 
+\multicolumn{3}{l}{\sigma \ ::= \optionty{\tau} 
+  \bnfalt \sigma_1 * \sigma_2
+  \bnfalt \sigma_1 + \sigma_2}   \\  
+\\
 \multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
 \multicolumn{3}{l}{\feed \ ::=}   \\  
 % & x &  \mbox{feed variable} \\ %% no feed variables now
@@ -210,7 +221,7 @@ a syntactic mnemonic to remind readers of the connection.
 
 \[
 \infer[(\textit{t-empty})]
-{\Gamma \turn \emptyfeed : \feedty{\ty}}
+{\Gamma \turn \emptyfeed : \feedty{\sigma}}
 {}
 \]
 
@@ -225,19 +236,19 @@ a syntactic mnemonic to remind readers of the connection.
 
 \[
 \infer[(\textit{t-filter})]
-{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\ty}}
+{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\sigma}}
 {
-  \Gamma \turn \feed : \feedty{\ty} &
-  \Gamma \turn e : \ty \arrow \boolty
+  \Gamma \turn \feed : \feedty{\sigma} &
+  \Gamma \turn e : \sigma \arrow \boolty
 }
 \]
 
 \[
 \infer[(\textit{t-let})]
-{\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\ty_2}}
+{\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\sigma_2}}
 {
   \Gamma \turn e_1 : \ty_1 & 
-  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\ty_2} 
+  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\sigma_2} 
 }
 \]
 
@@ -288,73 +299,73 @@ a syntactic mnemonic to remind readers of the connection.
 
 \[
 \infer[(\textit{t-union})]
-{\Gamma \turn \feed_1 \unionfeed \feed_2  : \feedty{\ty}}
+{\Gamma \turn \feed_1 \unionfeed \feed_2  : \feedty{\sigma}}
 {
-  \Gamma \turn \feed_1 : \feedty{\ty} &
-  \Gamma \turn \feed_2 : \feedty{\ty}
+  \Gamma \turn \feed_1 : \feedty{\sigma} &
+  \Gamma \turn \feed_2 : \feedty{\sigma}
 }
 \]
 
 \[
 \infer[(\textit{t-sum})]
-{\Gamma \turn \feed_1 \sumfeed \feed_2  : \feedty{\ty_1 + \ty_2}}
+{\Gamma \turn \feed_1 \sumfeed \feed_2  : \feedty{\sigma_1 + \sigma_2}}
 {
-  \Gamma \turn \feed_1 : \feedty{\ty_1} &
-  \Gamma \turn \feed_2 : \feedty{\ty_2}
+  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+  \Gamma \turn \feed_2 : \feedty{\sigma_2}
 }
 \]
 
 \[
 \infer[(\textit{t-synch-pair})]
-{\Gamma \turn (\feed_1, \feed_2)  : \feedty{\ty_1 * \ty_2}}
+{\Gamma \turn (\feed_1, \feed_2)  : \feedty{\sigma_1 * \sigma_2}}
 {
-  \Gamma \turn \feed_1 : \feedty{\ty_1} &
-  \Gamma \turn \feed_2 : \feedty{\ty_2}
+  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+  \Gamma \turn \feed_2 : \feedty{\sigma_2}
 }
 \]
 
 % \[
 % \infer[(\textit{t-local-pair})]
-% {\Gamma \turn \feed_1 * \feed_2  : \feedty{\ty_1 * \ty_2}}
+% {\Gamma \turn \feed_1 * \feed_2  : \feedty{\sigma_1 * \sigma_2}}
 % {
-%   \Gamma \turn \feed_1 : \feedty{\ty_1} &
-%   \Gamma \turn \feed_2 : \feedty{\ty_2}
+%   \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+%   \Gamma \turn \feed_2 : \feedty{\sigma_2}
 % }
 % \]
 
 \[
 \infer[(\textit{t-cont-pair})]
-{\Gamma \turn x{:}\feed_1 * \feed_2  : \feedty{\ty_1 * \ty_2}}
+{\Gamma \turn x{:}\feed_1 * \feed_2  : \feedty{\sigma_1 * \sigma_2}}
 {
-  \Gamma \turn \feed_1 : \feedty{\ty_1} &
-  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\ty_2}
+  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
 }
 \]
 
 \[
 \infer[(\textit{t-local-pair})]
- {\Gamma \turn x{:}\feed_1 \allpairfeed \feed_2  : \feedty{\ty_1 * \ty_2}}
+ {\Gamma \turn x{:}\feed_1 \allpairfeed \feed_2  : \feedty{\sigma_1 * \sigma_2}}
  {
-   \Gamma \turn \feed_1 : \feedty{\ty_1} &
-   \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\ty_2}
+   \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+   \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
  }
 \]
 
 \[
 \infer[(\textit{t-foreachcont})]
-{\Gamma \turn \foreachcreate{x}{\feed_1}{\feed_2}  : \feedty{\ty_2}}
+{\Gamma \turn \foreachcreate{x}{\feed_1}{\feed_2}  : \feedty{\sigma_2}}
 {
-  \Gamma \turn \feed_1 : \feedty{\ty_1} &
-  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\ty_2}
+  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
 }
 \]
 
 \[
 \infer[(\textit{t-foreachlocal})]
-{\Gamma \turn \foreachupdate{x}{\feed_1}{\feed_2}  : \feedty{\ty_2}}
+{\Gamma \turn \foreachupdate{x}{\feed_1}{\feed_2}  : \feedty{\sigma_2}}
 {
-  \Gamma \turn \feed_1 : \feedty{\ty_1} &
-  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\ty_2}
+  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
 }
 \]
 
@@ -405,13 +416,13 @@ a syntactic mnemonic to remind readers of the connection.
 
 The calculus of feeds has a denotational semantics that allows
 programmers to calculate the contents of their feeds relative to
-the unreliability present in the networking environment.  The
+the uncertainty present in the networking environment.  The
 principal semantic function is written
 $\semantics{\feed}{\environment}{\universe}$,
 where  $\environment$ is an {\em environment} mapping variables to values
 and $\universe$ is a {\em universe} mapping pairs of
-schedule time and location to a rival time and string option.
-Intuitively, the universe models network unreliability.
+schedule time and location to arrival time and string option.
+Intuitively, the universe models the network.
 When $\universe (\atime_1, \ell) = (\atime_2, \mathtt{Some} \; \astring)$,
  the interpretation is that if the run-time system requests data
 from location $\ell$ at time $\atime_1$ then string data $\astring$
@@ -422,14 +433,16 @@ networking errors have simply made location $\ell$ unreachable.
 
 The result of the semantic function 
 $\semantics{\feed}{\environment}{\universe}$
-is a set of metadata/data pairs.  The metadata 
-we model is somewhat simplified relative to the implementation.
-The metadata for base feeds includes both the scheduled time of the
-associated data item and its location of origin -- such 
-information is also often referred to as the data's 
-{\em provenance}~\cite{provenancestuff}.  As shown
-below, the metadata for pair 
-and sum feeds is structured similarly to the data items themselves.  
+is a set of metadata/data pairs, where the 
+metadata is coded as follows.
+%   The metadata 
+% we model is somewhat simplified relative to the implementation.
+% The metadata for base feeds includes both the scheduled time of the
+% associated data item and its location of origin -- such 
+% information is also often referred to as the data's 
+% {\em provenance}~\cite{provenancestuff}.  As shown
+% below, the metadata for pair 
+% and sum feeds is structured similarly to the data items themselves.  
 
 \[
 \begin{array}{lcll} 
@@ -442,19 +455,20 @@ and sum feeds is structured similarly to the data items themselves.
 \]  
 
 Since every metadata item contains a top-level time $\atime$, that
-time can be used to take the set of metadata/data pairs that
-defines the semantics of a feed and serialize it as a stream.
-Our implementation does just that.  Items scheduled at the
+time can be used to serialize the set of items as a stream, and 
+our implementation does just that.  Items scheduled at the
 same time may appear in any order in the implementation's
 serialized stream.  To refer to the top-level time in any metadata
-item $\meta$, we write $\mytime{\meta}$.
+item $\meta$, we write $\mytime{\meta}$. 
 
-The semantics also depends upon an auxiliary semantics function
-for the host language:  When $e$ is a host language expression
-with free variables in the domain of $\environment$ then
-$\esemantics{e}{\environment}$ is the denotation of the value.
+Our semantics for feeds depends upon a semantics for the simply-typed
+host language, which we write $\esemantics{e}{\environment}$. We assume that
+given environment $\environment$ with type $\Gamma$ 
+and expression $e$ with type $\tau$ in $\Gamma$, 
+$\esemantics{e}{\environment} = v$
+and $\turn v : \tau$.
 
-Figure~\ref{fig:semantics} presents the semantic definitions themselves.
+Figure~\ref{fig:semantics} presents the semantic definitions for feeds themselves.
 The first definition shows that the empty feed is the empty set. The
 second gives the definition of a computed feed.  Notice that a
 dummy location ($\generatedloc$) occupies the position of location
@@ -462,24 +476,24 @@ metadata.  In the definition of the filter feed (and elsewhere),
 we use conventional set-theoretic notation to define the elements
 that inhabit the feed.
 
-The semantics of {\tt all} and {\tt any} feeds are somewhat complex
+The semantics of {\tt all} and {\tt any} feeds are somewhat more complex
 because they describe the consequences of networking errors and time outs.
 In the case for {\tt all}, a function {\tt timeout} is defined.  This
 function checks the item arrival time $x_{at}$ and compares it to its
-scheduled time plus window ($\esemantics{e_5}{\environment}$).  If
+scheduled time ($x_t$) plus its window ($\esemantics{e_5}{\environment}$).  If
 the arrival time exceeds its window, {\tt None} is returned. Otherwise,
-its data argument ($x_s$, which may, due to other networking errors be 
-{\tt None}) is returned.  The {\tt timeout} is used in definition of an 
+its data argument ($x_s$, which may be {\tt None} due to other networking 
+errors) is returned.  The {\tt timeout} is used in definition of an 
 alternate universe $\universe'$, that retrieves data from the outside world,
 checks for timeout, and applies the preprocessor 
 ($\esemantics{e_4}{\environment}$) before returning its final result.
 The elements of the feed itself are pairs of base metadata $(\atime,\ell)$
-with defined by $\esemantics{e_1}{\environment} \; (\universe'(\loc,\atime))$
+with data defined by $\esemantics{e_1 \; (\universe'(\loc,\atime))}{\environment}$
 where $e_1$ is the \pads{}-generated parser.
-The semantics of an {\tt any} feed are defined by selecting one of the
+The semantics of an {\tt any} feed is defined by selecting one of the
 good (non-error) elements of the corresponding {\tt all} feed at the same time,
 if any exist.  If there are no good elements in 
- the corresponding {\tt all} feed, the {\tt any} feed will contain a
+ the corresponding {\tt all} feed, then the {\tt any} feed will contain a
 {\tt None} item at the given time, and the dummy location $\generatedloc$
 occupies the location slot in the metadata.
 
@@ -488,7 +502,7 @@ union feed is simply the set-theorectic union of
 its constituent feeds.  The sum feed injects the elements of its constituent
 feeds into a sum and likewise takes their union.
 
-Defining pairs requires care is taken with subtle aspects of timing.
+More care must be taken when defining the semantics of pairs.
 The synchronous pair $(\feed_1,\feed_2)$
 is formed by finding all elements of $\feed_1$
 at a given time (including erroneous elements) 
@@ -509,16 +523,16 @@ $x$ of $\feed_1$ paired with the corresponding elements of $\feed_2$ scheduled
 later than $x$.  Like in the case for synchronous pairs, metadata from 
 constitute feeds is paired together in the composite feed.  {\em Unlike}
 in the case for synchronous pairs, the two elements of the pair do
-not share common schedule time.  We adopt the later time ({\em i.e.,}
-the time of the element from $\feed_2$ as the schedule time for the
+not share a common schedule time.  We adopt the later time ({\em i.e.,}
+the time of the element from $\feed_2$) as the schedule time for the
 composite feed element.
 
 The difference between the continuous pair and the local pair
 comes in the third line of the definition of the local pair.
 Here, the existence of another element $(\meta_1',v_1')$
 in $\feed_1$ in addition to $(\meta_1,v_1)$ implies that the 
-scheduled time for the item under consideration in $feed_2$
-should fall between the scheduled times for $v_1$ and $v_1$
+schedule time for the item under consideration in $\feed_2$
+must fall between the schedule times for $v_1$ and $v_1'$
 (otherwise that item from $\feed_2$ is not included in the
 final composite feed). 
 
@@ -527,13 +541,29 @@ follows the semantics of dependent pairs closely.  Notice, for instance,
 the similarity between the conditions on the local {\tt foreach} with those
 for the local dependent pair.
 
-As a sanity check on our semantic definitions, one can easily prove
-that the values contained in each feed may be given the simple types
-required by our feed typing rules.
-
-\begin {theorem} theorem about feeds goes here...
+As a sanity check on our semantic definitions, we have proven
+that the values contained in each feed are pairs of meta-data and data
+values with the appropriate type.  More specifically, if the feed typing
+rules give feed $\feed$ type $\sigma$, then its data has type $\sigma$ and
+its meta data has type $\metatype{\sigma}$ where $\metatype{\sigma}$ is
+defined as follows.
+\[
+\begin {array} {lcl}
+\metatype{\optionty{\ty}} & = & \timety * \locty \\
+\metatype{\sigma_1 * \sigma_2} & = & \timety * (\metatype{\sigma_1} * \metatype{\sigma_2}) \\
+\metatype{\sigma_1 + \sigma_2} & = & \timety * (\metatype{\sigma_1} + \metatype{\sigma_2}) 
+\end{array}
+\]
+%We state this property formally as follows.
+\begin{theorem}[Semantic Soundness]
+If $\Gamma \turn \feed : \feedty{\sigma}$ and
+for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
+and $\turn \universe : \timety * \locty \arrow \timety * (\optionty{\stringty})$
+then
+for all $v \in \semantics{\feed}{\environment}{\universe}$,
+$\turn v : \metatype{\sigma} * \sigma$. 
 \end{theorem}
-
+The proof follows by induction on the structure of $\feed$.
 \input{semantics2}
 
 

@@ -19,14 +19,14 @@
  &=& \{\;\}
 \\\\
 \semantics{\computed{e_1}{x}{e_2}}{\environment}{\universe} 
- &=& \{((\atime,\generatedloc), \esemantics{(\lambda x.e_1)}{\environment}\; \atime) 
+ &=& \{((\atime,\generatedloc), \esemantics{(\lambda x.e_1) \; \atime}{\environment}) 
           \setalt \atime \in  \esemantics{e_2}{\environment} 
      \} 
 \\\\
 \semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
  &=&
 \{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-            \esemantics{e}{\environment}\; v = \mathtt{true}
+            \esemantics{e \; v}{\environment} = \mathtt{true}
 \}
 \\\\
 \semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
@@ -38,7 +38,7 @@
 %    \allfeed{e_1}{e_2}{e_3}{e_4}
 %  \end{array} 
 %}{\environment}{\universe} 
- &=& \{((\atime,\loc), \esemantics{e_1}{\environment} \; (\universe'(\loc,\atime))))
+ &=& \{((\atime,\loc), \esemantics{e_1\; (\universe'(\loc,\atime))}{\environment}))
           \setalt \atime \in  \esemantics{e_3}{\environment} 
           \;\mbox{and}\; \loc \in  \esemantics{e_2}{\environment}
      \} 
