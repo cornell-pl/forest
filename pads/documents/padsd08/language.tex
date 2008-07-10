@@ -94,8 +94,11 @@ The elements of the feed language include
 the empty feed ($\emptyset$), which contains no elements and serves as
 the unit for the union feed ($\feed_1 \union \feed_2$).  The
 computed feed ($\computed{e_1}{x}{e_2}$) allows programmers to
-generate a feed with schedule $e_2$ and elements $\lambda x.e_1\; \atime$,
-where $\atime$ is drawn from the schedule. The filter feed
+generate a feed with schedule $e_2$ and elements $(\lambda x.e_1)\; \atime$,
+where $\atime$ is drawn from the schedule. Likewise, the feed 
+comprehension ($\comprehensionfeed{e}{x}{\feed}$) allows creation of a 
+feed with elements $(\lambda x.e)\; v$ when $v$ is an element of $\feed$.
+The filter feed
 $\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
 $e\; v$ is $\boolf$.  Let feeds $\letfeed{x}{e_1}{\feed_2}$
 provide a convenient mechanism for binding intermediate computations.
@@ -161,7 +164,7 @@ feed generates a feed of lists where each element of the list is scheduled at th
 \[
 \begin{array}{lll}
 \multicolumn{3}{l}{\mbox{(feed types)}}\\ 
-\multicolumn{3}{l}{\sigma \ ::= \optionty{\tau} 
+\multicolumn{3}{l}{\sigma \ ::= \tau \bnfalt \optionty{\tau} 
   \bnfalt \sigma_1 * \sigma_2
   \bnfalt \sigma_1 + \sigma_2
   \bnfalt \listty{\sigma}
@@ -173,6 +176,7 @@ feed generates a feed of lists where each element of the list is scheduled at th
 % & \bnfalt 
 & \emptyfeed & \mbox{empty feed} \\
  \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
+ \bnfalt & \comprehensionfeed{e}{x}{\feed} & \mbox{feed comprehension} \\
  \bnfalt & \filterfeed{\feed}{e} & \mbox{filter feed} \\
  \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
  \bnfalt &     \mathtt{all \{ format=} e_1; & \mbox{all locations}\\ 
@@ -236,6 +240,15 @@ feed generates a feed of lists where each element of the list is scheduled at th
 {
   \Gamma \turn e_2 : \schedulety &
   \Gamma,x{:}\timety \turn e_1 : \optionty{\ty} 
+}
+\]
+
+\[
+\infer[(\textit{t-comph})]
+{\Gamma \turn \comprehensionfeed{e}{x}{\feed} : \feedty{\ty}}
+{
+  \Gamma \turn \feed :  \feedty{\sigma} &
+  \Gamma,x{:}\sigma \turn e : \ty 
 }
 \]
 
@@ -484,13 +497,16 @@ and expression $e$ with type $\tau$ in $\Gamma$,
 $\esemantics{e}{\environment} = v$
 and $\turn v : \tau$.
 
-Figure~\ref{fig:semantics} presents the semantic definitions for feeds themselves.
+Figure~\ref{fig:semantics} presents the semantic definitions for feeds themselves.  In these definitions,
+we use conventional set-theoretic notation to define the elements
+that inhabit the feed.
 The first definition shows that the empty feed is the empty set. The
 second gives the definition of a computed feed.  Notice that a
 dummy location ($\generatedloc$) occupies the position of location
-metadata.  In the definition of the filter feed (and elsewhere), 
-we use conventional set-theoretic notation to define the elements
-that inhabit the feed.
+metadata.  The feed comprehensions are defined in a similar way. 
+The filter feed and the feed comprehensions together serve to model
+the full power of the feed comprehensions found in our implementation.
+
 
 The semantics of {\tt all} and {\tt any} feeds are somewhat more complex
 because they describe the consequences of networking errors and time outs.
@@ -569,6 +585,7 @@ its meta data has type $\metatype{\sigma}$ where $\metatype{\sigma}$ is
 defined as follows.
 \[
 \begin {array} {lcl}
+\metatype{\ty} & = & \timety * \locty \\
 \metatype{\optionty{\ty}} & = & \timety * \locty \\
 \metatype{\sigma_1 * \sigma_2} & = & \timety * (\metatype{\sigma_1} * \metatype{\sigma_2}) \\
 \metatype{\sigma_1 + \sigma_2} & = & \timety * (\metatype{\sigma_1} + \metatype{\sigma_2}) \\
@@ -581,8 +598,8 @@ If $\Gamma \turn \feed : \feedty{\sigma}$ and
 for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
 and $\turn \universe : \timety * \locty \arrow \timety * (\optionty{\stringty})$
 then
-for all $v \in \semantics{\feed}{\environment}{\universe}$,
-$\turn v : \metatype{\sigma} * \sigma$. 
+for all $(\meta,v) \in \semantics{\feed}{\environment}{\universe}$,
+$\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
 \end{theorem}
 The proof follows by induction on the structure of $\feed$.
 \input{semantics2}

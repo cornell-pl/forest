@@ -23,6 +23,11 @@
           \setalt \atime \in  \esemantics{e_2}{\environment} 
      \} 
 \\\\
+\semantics{\comprehensionfeed{e}{x}{\feed}}{\environment}{\universe} 
+ &=& \{((\mytime{\meta},\generatedloc), \esemantics{(\lambda x.e_1) \; v}{\environment}) 
+          \setalt (\meta,v) \in  \semantics{\feed}{\environment}{\universe}  
+     \} 
+\\\\
 \semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
  &=&
 \{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
