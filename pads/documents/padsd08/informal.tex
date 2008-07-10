@@ -1,5 +1,6 @@
 To introduce our feed declaration language, we work through a
-series of examples of increasing sophistication. 
+series of examples of increasing sophistication, based around CoMon and
+AT\&T's web hosting monitors. 
 
 \subsection{CoMon Feeds}
 We start by defining
@@ -8,14 +9,14 @@ version of the CoMon description specifies the \cd{simple\_comon} feed
 using the \kw{base} feed constructor.  The \kw{sources} field
 indicates that data for the feed comes from all of the locations
 listed in \cd{sites}.  The \kw{schedule} field specifies that relevant
-data is available from each source every minute, starting immediately.
+data is available from each source every five minutes, starting immediately.
 When trying to fetch such data, the system may occasionally fail,
 either because a remote machine is down or because of network
 problems. To manage such errors, the schedule specifies that the
-system should try to collect the data from each source for 10 seconds.
+system should try to collect the data from each source for 60 seconds.
 If the data does not arrive within that window, the system should give
 up. Finally, the \kw{format} field indicates that the fetched data
-conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} descrition named
+conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} description named
 \cd{Source} defined in the file \cd{comon_format}.
 
 \begin{figure}
@@ -30,8 +31,8 @@ conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} descrition named
 \kw{feed} simple_comon =
   \kw{base} \{|
     \kw{sources}  = \kw{all} sites;
-    \kw{schedule} = every 1 min, starting now, 
-               timeout 10.0 sec; 
+    \kw{schedule} = every 5 min, starting now, 
+               timeout 60.0 sec; 
     \kw{format}   = Comon_format.Source;  
   |\}
 \end{code}
