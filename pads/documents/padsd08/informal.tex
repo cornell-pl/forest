@@ -345,34 +345,42 @@ many more branches than this simplified version.
 
 %% For each list of hosts in the
 %% \cd{host_lists} feed, we generate a {\em feed of lists} using 
-Finally, we define the feed \cd{stats}.  The most interesting element
-of this declaration is the use of a
-{\em list feed comprehension} to generate a {\em feed of lists}.
-The list feed comprehension, given in square
-brackets, specifies a list of feeds (one feed per host \cd{h} in the
-current host list \cd{hl} in this case)
-and then converts the result back into a feed of lists, with one
-list per time instant in the declared schedule.  
-Hence, for every time $\atime$, the list feed comprehension 
-declared here packages all statistics for all hosts into a single list.
-Generating such a structure makes it easy for a programmer to iterate over the
-resulting stream, performing one action over all data gathered at
-each time step.  It is a great relief to be able to avoid having to
-implement one's own multi-way synchronization.
+Finally, we define the feed \cd{stats}.  The most interesting piece
+of this declaration is the {\em list feed comprehension}, given in
+square brackets, that we use to generate a feed of lists. 
+Given a host list \cd{hl}, the right-hand side of the comprehension
+considers each host \cd{h} from \cd{hl} in turn.  The left-hand side of
+the comprehension uses the \cd{gen_stats} feed generator to construct
+a feed of the statistics for \cd{h}.  The list feed comprehension then
+takes this collection of statistics feeds and converts them into a
+single feed, where each entry is a list of the statistics for
+the machines in \cd{hl} at a particular scheduled fetch-time.  
+We call each such entry a \textit{snapshot} of the system.
+The resulting feed makes it easy for down-stream users to perform
+actions over snapshots, relieving them of the burden of having to
+implement their own multi-way synchronization.
 
-Once the list feed comprehension is defined, 
-the \kw{foreach...} \kw{update} is just gravy -- it generates one feed 
-of lists from the first host list \cd{hl} until the next host
-list \cd{hl}' scheduled, at which point it terminates the \cd{hl} feed
-and switches over generating
-a feed from \cd{hl}'.  Notice the subtle difference between
-\kw{foreach...create}, which generates a collection of feeds and
-merges all contents of all generated feeds, and \kw{foreach...update}
-which generates a collection of feeds but truncates one as the next
-appears.  Such details are somewhat difficult to describe completely
-precisely in words, but eager readers may skip ahead to
-Section~\ref{sec:semantics} to find such details in our formal
-semantics.
+Given the list feed comprehension, the \kw{foreach...update} construct
+generates a feed of snapshots from the feed of host lists.  Whenever a
+new host list arrives, the \kw{foreach...update} construct
+terminates the snapshot feed from the old host list and starts
+generating a new snapshot feed from the new host list.  
+
+Note the difference between the \kw{foreach...create} construct 
+from the CoMon example and the \kw{foreach...update} construct.  The
+create form generates a collection of feeds and merges their
+contents into a single all-inclusive feed.  The update form
+generates a collection of feeds and produces a single feed by
+concatenating the collection, stopping one feed as soon as the next is
+generated. 
+We have found the create form to be useful when the actual arrival
+times of the argument feed are regular because the regularity means we
+can give a finite schedule for the dependent feed.  In contrast, the
+update form is useful when the argument feed is irregular and we must
+give an infinite schedule for the dependent feed to ensure we get the
+desired values.  We define precise semantics for the create and update
+forms in \secref{sec:semantics}.
+
 
 % construct then merges this list of
 % feeds into a single feed with data for all the hosts.  This merged
