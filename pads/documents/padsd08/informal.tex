@@ -3,9 +3,9 @@ series of examples of increasing sophistication, based around CoMon and
 AT\&T's web hosting monitors. 
 
 \subsection{CoMon Feeds}
-We start by defining
-a simple CoMon statistics feed in \figref{fig:simplecomon}.  This
-version of the CoMon description specifies the \cd{simple\_comon} feed
+\figref{fig:simplecomon} presents our first attempt to define
+a simple CoMon statistics feed.  This description
+specifies the \cd{simple\_comon} feed
 using the \kw{base} feed constructor.  The \kw{sources} field
 indicates that data for the feed comes from all of the locations
 listed in \cd{sites}.  The \kw{schedule} field specifies that relevant
@@ -77,8 +77,9 @@ The schedule for \cd{comon\_1} indicates the system should fetch data
 every minute for two hours, using the \cd{lasting} field to indicate
 the duration of the feed.  It omits the \cd{starting} and
 \cd{timeout} specifications, in which case the system uses default
-settings of \cd{now} for the start time and 30 seconds for the
-timeout.  
+%settings of \cd{now} for the start time and 30 seconds for the
+%timeout.  
+settings for the start time and timeout window.  
 
 The \cd{simple\_comon} example hard-codes the set of locations from
 which to gather performance data.  In reality, the CoMon system has an
@@ -103,7 +104,7 @@ which returns true if the data item in question is a host name
 rather than a comment.  Given this specification, the \cd{nodes} feed
 logically yields a list of host names and comments every two minutes.
 In fact, because of the possibility of errors, the feed actually
-delivers a list option every two minutes: \cd{Some} if the list is
+delivers a {\em list option} every two minutes: \cd{Some} if the list is
 populated with data, \cd{None} if the data was unavailable at the
 given time-slice.
 
@@ -226,81 +227,81 @@ creates a feed with elements drawn from each of the two
 feeds.  The constructors \cd{Locale} and \cd{Keyscan} tag each item in
 the compound feed to indicate its source. 
 
+% \subsection{\vizGems{} Example}
+% We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
+% the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse}
+% monitors a collection of machines described in a configuration file.
+% The \cd{hostList} description has the same form as the \cd{nodes} feed
+% we saw earlier, except it draws the data from a local file and only
+% once a day.  Unlike the earlier example, we use a \textit{feed
+% comprehension} to clean up this feed before creating the \cd{stats} feed.
+% The comprehension filters
+% the list of hosts to remove comments using the \cd{is_node} function
+% and we use the built-in \cd{flatten} function to convert the feed of
+% lists of hosts into a simple feed of hosts.  We use the \cd{mk\_host}
+% function to remove the \cd{Data} constructor around the hostnames to
+% simplify down-stream processing.
+
+% The \cd{stats} feed depends upon the \cd{hosts} feed.  For each host
+% \cd{h} in \cd{hosts}, it creates a schedule consisting of a single
+% time corresponding to ``now'' with a timeout of one minute.  It uses
+% this schedule \cd{s} to describe a compound feed, which pairs two base
+% feeds: the first uses the Unix command \cd{ping} to collect network
+% statistics about the remote machine while the second performs a remote
+% shell invocation using \cd{ssh} to find out statistics about how long
+% the machine has been up.  Both of these feeds use the \kw{proc}
+% constructor in the \kw{sources} field to compute the data on the fly,
+% rather than reading it from a file.  The argument to \kw{proc} is a
+% string that is executed in a freshly constructed shell.  The pairing
+% constructor for feeds takes a pair of feeds and returns a feed of
+% pairs, with elements sharing the same scheduled fetch time being
+% paired. This semantics is very convenient in this case, as it produces
+% a feed that for each host returns a pair of its ping and uptime
+% statistics, grouping together the information for each host. 
+% Of course, the full \vizGems{} monitoring application
+% uses many more tools than just ping and uptime to probe the remote
+% machine; the corresponding feed description has many more branches than this simplified version.
+
+
+% \begin{figure}
+% \begin{code}
+% \kw{let} config_location = 
+%     [("file:///arrakis/config/machine_list")];
+
+% \kw{feed} hostList =  
+%   \kw{base} \{|
+%    \kw{sources}  = \kw{all} config_location;
+%    \kw{schedule} = every 1 day;
+%    \kw{format}   = Nodelist.Source;
+%  |\}
+
+% \kw{let} mk_host (Nodelist.Data h) = h
+
+% \kw{feed} hosts = 
+%     \{| mk_host n | n <- (flatten hostList), 
+%                    Nodelist.is_node n |\}
+
+% \kw{feed} stats =
+%   \kw{foreach} h \kw{in} hosts \kw{create}
+%   \kw{let} s = once, timeout 1 min \kw{in}
+%   (
+%    \kw{base} \{| 
+%       \kw{sources}  = \kw{proc} ("ping -c 1 " ^ h);   
+%       \kw{format}   = Ping.Source;  
+%       \kw{schedule} = s; |\},
+%    \kw{base} \{| 
+%       \kw{sources}  = \kw{proc} ("ssh " ^ h ^ " uptime");  
+%       \kw{format}   = Uptime.Source;  
+%       \kw{schedule} = s; |\}
+%   ) 
+% \end{code}
+% \vskip -2ex
+% \caption{Simplified version of \vizGems{} feed.}
+% \label{fig:pulse}
+% \end{figure}
+
+
 \subsection{\vizGems{} Example}
-We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
-the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse}
-monitors a collection of machines described in a configuration file.
-The \cd{hostList} description has the same form as the \cd{nodes} feed
-we saw earlier, except it draws the data from a local file and only
-once a day.  Unlike the earlier example, we use a \textit{feed
-comprehension} to clean up this feed before creating the \cd{stats} feed.
-The comprehension filters
-the list of hosts to remove comments using the \cd{is_node} function
-and we use the built-in \cd{flatten} function to convert the feed of
-lists of hosts into a simple feed of hosts.  We use the \cd{mk\_host}
-function to remove the \cd{Data} constructor around the hostnames to
-simplify down-stream processing.
-
-The \cd{stats} feed depends upon the \cd{hosts} feed.  For each host
-\cd{h} in \cd{hosts}, it creates a schedule consisting of a single
-time corresponding to ``now'' with a timeout of one minute.  It uses
-this schedule \cd{s} to describe a compound feed, which pairs two base
-feeds: the first uses the Unix command \cd{ping} to collect network
-statistics about the remote machine while the second performs a remote
-shell invocation using \cd{ssh} to find out statistics about how long
-the machine has been up.  Both of these feeds use the \kw{proc}
-constructor in the \kw{sources} field to compute the data on the fly,
-rather than reading it from a file.  The argument to \kw{proc} is a
-string that is executed in a freshly constructed shell.  The pairing
-constructor for feeds takes a pair of feeds and returns a feed of
-pairs, with elements sharing the same scheduled fetch time being
-paired. This semantics is very convenient in this case, as it produces
-a feed that for each host returns a pair of its ping and uptime
-statistics, grouping together the information for each host. 
-Of course, the full \vizGems{} monitoring application
-uses many more tools than just ping and uptime to probe the remote
-machine; the corresponding feed description has many more branches than this simplified version.
-
-
-\begin{figure}
-\begin{code}
-\kw{let} config_location = 
-    [("file:///arrakis/config/machine_list")];
-
-\kw{feed} hostList =  
-  \kw{base} \{|
-   \kw{sources}  = \kw{all} config_location;
-   \kw{schedule} = every 1 day;
-   \kw{format}   = Nodelist.Source;
- |\}
-
-\kw{let} mk_host (Nodelist.Data h) = h
-
-\kw{feed} hosts = 
-    \{| mk_host n | n <- (flatten hostList), 
-                   Nodelist.is_node n |\}
-
-\kw{feed} stats =
-  \kw{foreach} h \kw{in} hosts \kw{create}
-  \kw{let} s = once, timeout 1 min \kw{in}
-  (
-   \kw{base} \{| 
-      \kw{sources}  = \kw{proc} ("ping -c 1 " ^ h);   
-      \kw{format}   = Ping.Source;  
-      \kw{schedule} = s; |\},
-   \kw{base} \{| 
-      \kw{sources}  = \kw{proc} ("ssh " ^ h ^ " uptime");  
-      \kw{format}   = Uptime.Source;  
-      \kw{schedule} = s; |\}
-  ) 
-\end{code}
-\vskip -2ex
-\caption{Simplified version of \vizGems{} feed.}
-\label{fig:pulse}
-\end{figure}
-
-
-\subsection{\vizGems{} Example, Version 2}
 We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
 the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse2}
 monitors a collection of machines described in a configuration file.
@@ -341,20 +342,48 @@ together the information for each host.  Of course, the full
 and uptime to probe remote machines; the full feed description has
 many more branches than this simplified version. 
 
-Finally, we define the feed \cd{stats}.  For each list of hosts in the
-\cd{host_lists} feed, we generate a list of statistics feeds using a
-list comprehension and the feed generator \cd{gen\_stats}.  Each item
-in this list of feeds corresponds to the statistics feed for a single
-host. The \kw{foreach...update} construct then merges this list of
-feeds into a single feed with data for all the hosts.  This merged
-feed delivers values for a given host list \cd{hl} until the next host
-list \cd{hl}' arrives from the feed \cd{host\_lists}, at which point
-it stops collecting data from the feeds generated from \cd{hl} and
-starts gathering data from the machines in \cd{hl}'.
 
-With this specification, we expect the system to return data for each
-machine listed in the configuration file every five minutes.  We will
-notice changes in the configuration file once a day.
+%% For each list of hosts in the
+%% \cd{host_lists} feed, we generate a {\em feed of lists} using 
+Finally, we define the feed \cd{stats}.  The most interesting element
+of this declaration is the use of a
+{\em list feed comprehension} to generate a {\em feed of lists}.
+The list feed comprehension, given in square
+brackets, specifies a list of feeds (one feed per host \cd{h} in the
+current host list \cd{hl} in this case)
+and then converts the result back into a feed of lists, with one
+list per time instant in the declared schedule.  
+Hence, for every time $\atime$, the list feed comprehension 
+declared here packages all statistics for all hosts into a single list.
+Generating such a structure makes it easy for a programmer to iterate over the
+resulting stream, performing one action over all data gathered at
+each time step.  It is a great relief to be able to avoid having to
+implement one's own multi-way synchronization.
+
+Once the list feed comprehension is defined, 
+the \kw{foreach...} \kw{update} is just gravy -- it generates one feed 
+of lists from the first host list \cd{hl} until the next host
+list \cd{hl}' scheduled, at which point it terminates the \cd{hl} feed
+and switches over generating
+a feed from \cd{hl}'.  Notice the subtle difference between
+\kw{foreach...create}, which generates a collection of feeds and
+merges all contents of all generated feeds, and \kw{foreach...update}
+which generates a collection of feeds but truncates one as the next
+appears.  Such details are somewhat difficult to describe completely
+precisely in words, but eager readers may skip ahead to
+Section~\ref{sec:semantics} to find such details in our formal
+semantics.
+
+% construct then merges this list of
+% feeds into a single feed with data for all the hosts.  This merged
+% feed delivers values for a given host list \cd{hl} until the next host
+% list \cd{hl}' arrives from the feed \cd{host\_lists}, at which point
+% it stops collecting data from the feeds generated from \cd{hl} and
+% starts gathering data from the machines in \cd{hl}'.
+
+% With this specification, we expect the system to return data for each
+% machine listed in the configuration file every five minutes.  We will
+% notice changes in the configuration file once a day.
 
 \begin{figure}
 \begin{code}
