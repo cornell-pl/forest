@@ -4,61 +4,68 @@ An {\em ad hoc data source} is any semistructured data source for
 which useful data analysis and transformation tools are not readily
 available.  The data that constitutes a single, abstract source 
 often comes from many different concrete, physical destinations
-distributed across the Internet.  It may also become available
+distributed across the Internet.  It often becomes available
 over a range of times and in several, evolving formats.
-Before the users can extract the information they need from the data,
-it usually must be fetched, archived locally for historical analysis, 
+Before users can extract the information they need from the data,
+it must be fetched, archived locally for historical analysis, 
 compressed, perhaps encrypted or anonymized, and monitored for errors 
 or deviations from the norm.
 
-Managing ad hoc data is a particular bane of the implementers of
-distributed systems.  Depending on the size, these systems may have
-hundreds or thousands of heterogenous, distributed components.
-Keeping all these components up and running is an enourmous continuous
-maintenance task.  Consequently, each component in a well-designed
-system will produce endless log files that measure its performance and
-heath.  As an example, consider the data manipulated by
-CoMon~\cite{comon}, a system designed to monitor the health,
-performance and security of PlanetLab~\cite{planetlab}.  Every five
-minutes, CoMon attempts to contact each of 842 PlanetLab nodes across
-416 sites worldwide.\footnote{Data as of writing this manuscript;
-PlanetLab membership varies over time.}  When all is running smoothly,
-which it never is, each node responds by sending back an ASCII data
-file in mail-header format containing information ranging from the
-kernel version to the uptime to the memory usage to the id of the user
-with the greatest CPU utilization.  CoMon archives this data in
-compressed form and its backend processes the information for display
-to PlanetLab users.  It is an invaluable resource for Planet users who
-need to monitor the health and performance of their applications or
-experiments.
+Managing ad hoc data is a bane of the implementers of distributed
+systems.  These systems may have hundreds or thousands of
+heterogenous, distributed components.  Keeping these components
+running smoothly is a continuous maintenance task of significant
+complexity.  Consequently, each component in a well-designed
+distributed system produces a continuous stream of log files that
+measure its performance and health.  As an example, consider the data
+manipulated by CoMon~\cite{comon}, a system designed to monitor the
+health, performance and security of PlanetLab~\cite{planetlab}.  Every
+five minutes, CoMon attempts to contact each of 842 PlanetLab nodes
+across 416 sites worldwide.%
+\footnote{Current data; PlanetLab membership varies over time.} %
+% 
+When all is well, which it never is, each node responds with
+an ASCII data file in mail-header format containing information
+ranging from the kernel version to the uptime to the memory usage to
+the ID of the user with the greatest CPU utilization.  CoMon archives
+this data in compressed form and processes the information
+for display to PlanetLab users.  CoMon is an invaluable resource for
+PlanetLab users who need to monitor the health and performance of their
+applications or experiments.
 
-Almost all distributed systems have (or should have) similar sorts of
-monitoring infrastructure.  Unfortunately, system implementers are
-often left to hack ``one-off'' monitoring tools of their own, which
-are invariably less reliable, unoptimized, insecure, and difficult or
-impossible to evolve when new requirements become known.  A
-substantial part of the difficulty simply comes from the diversity,
-quality, and volume of data these systems must often handle. Often,
-new monitoring systems also face the problem of having to interact
-with legacy devices, legacy software and legacy data, leaving
-implementers in a situation where they cannot use robust off-the-shelf
-data management tools built for standard formats like XML.  XML-based
-tools also have the disadvantage of significant bloat (often 8-10 times
-the size of a more natural, even uncompressed representation) caused by
-using a generic reprensentation.
+Almost all distributed systems have (or should have) similar
+monitoring infrastructure.  Currently, the implementors of each new
+distributed system usually have to build ``one-off'' monitoring tools,
+which takes an enormous amount of time and expertise to do well.  A
+substantial part of the difficulty comes from the diversity, quality,
+and quantity of data these systems must handle.  Implementors cannot
+ignore errors: they must properly handle network errors and partial
+disconnects of the network.  They cannot ignore performance issues:
+data must be fetched before it vanishes from remote sites and it must
+be archived efficiently in ways that do not burn-out hard drives by
+causing them to overheat.  In addition, new monitoring systems also
+must interact with legacy devices, legacy software and legacy data,
+prevening implementers from using robust off-the-shelf data management
+tools built for standard formats like XML. 
+% I don't think this sentence really fits here...
+% XML-based tools also have
+%the disadvantage of significant bloat (often 8-10 times the size of a
+%more natural, even uncompressed representation) caused by using a
+%generic reprensentation.
 
-Somewhat similar problems also appear across the natural and social
-sciences, including biology, physics and economics.  For example,
-systems such as BioPixie~\cite{biopixie}, Grifn~\cite{grifn} and
+Similar problems appear in the natural and social sciences,
+including biology, physics and economics.  For example, systems such
+as BioPixie~\cite{biopixie}, Grifn~\cite{grifn} and
 Golem~\cite{golem}, built by computational biologists at Princeton,
-routinely obtain data supplied from a number of sources scattered
-across the net.  The data is often archived and later analyzed or
-mined for valuable information about gene structure and regulation.
-Likewise, cosmologists need access to data uploaded from major
-telescopes~\cite{sdss} and economists can make use of vast data
-repositories at FedStats.org amongst other sources.  These and other
-selected ad hoc data sources are presented in
-Figure~\ref{fig:exampledata}.
+routinely obtain data from a number of sources scattered
+across the net.  Often, the data is archived and later analyzed or
+mined for information about gene structure and regulation.
+Likewise, cosmologists access data uploaded from major
+telescopes~\cite{sdss}. Economists make use of the vast data
+repositories at \url{FedStats.org} amongst other sources.  
+Figure~\ref{fig:exampledata} summarizes 
+selected ad hoc data sources.
+
 
 \begin{figure*}
 \begin{center}
@@ -76,9 +83,11 @@ CoralCDN~\cite{coral} & Log files from CDN monitoring & Single Format \\
                                        && Periodic archiving \\
                                        && From evolving set of ~250 hosts \\\hline
 \vizGems{}       & Website Host Monitoring & Many and varied machines \\
-                 &                         & Execute programs remotely\\
-                 &                         & to collect data\\\hline
-\darkstar{}      & AT\&T network monitoring & Archiving for future analysis \\\hline
+                 &                         & Execute programs remotely to collect data\\
+                 &                         & Varied fetch frequencies \\\hline
+\darkstar{}      & AT\&T network monitoring & Diverse data sources\\
+                                           && Archiving for future analysis \\
+                                           && Per minute, hour, and day fetches\\\hline
 \ningaui{}       & AT\&T billing auditing   & Thousands of data sources\\
                  &                          & Archiving and error analysis\\\hline
 GO DB (Gene Ontology)~\cite{geneontology} & Gene Function Information & Multiple Formats \\
@@ -95,119 +104,112 @@ NCBI~\cite{ncbi} & National Center for Biotechnology Information & Links to mult
 \label{fig:exampledata}
 \end{figure*}
 
-The purpose of our research is to develop a system that makes it
-easier to create, maintain, and evolve tools for processing ad hoc data
-generated from a wide array of data sources over periods of time.    
-We propose to do so by developing a
-domain-specific language, called \padsd, in which software developers
-specify a number of key aspects of the data sources they wish to
-monitor including any of the following.
+This paper describes a system that facilitates the creation,
+maintainance, and evolution of tools for processing ad hoc data from a
+wide array of distributed data sources over varying periods of
+time. The system, called \padsd{}, is a domain-specific language in
+which software developers describe key aspects of the data sources
+they wish to monitor, including any of the following.
 
 \begin{itemize}
-\item {\bf where} the data is located.  The data may be in some directory
-on the current machine (perhaps placed there by another process) or at some 
-remote location or collection of locations.
-\item {\bf when} to get the data.  The data may need to be fetched just 
-once (right now!) or according to some repeated schedule in time series 
-indexed by minutes, days or months.
-\item {\bf how} to obtain it.  The data may be accessible through standard 
-protocols such as http or ftp or it may be created through remote execution 
-of a non-standard script. 
-\item {\bf what preprocessing} the system should do when it arrives.  The 
-data may be compressed or encrypted and therefore need to be decompressed 
-or decrypted before it can be processed.  Privacy considerations may require 
-the data be anonymized in some way.
-\item {\bf what format} the data source arrives in.  The data may be ASCII 
-or binary; it may be tab- or comma-separated.  The data may also be 
-represented in some completely ad hoc, non standard format consisting of 
-floating point numbers, integers, strings, vertical bars and curly-q's.  
+\item {\bf Where} the data is located.  The data may be in a directory
+on the current machine (perhaps written by another process), at some 
+remote location, or at a collection of locations.
+\item {\bf When} to get the data.  The data may need to be fetched just 
+once (right now!) or according to some schedule.
+\item {\bf How} to obtain it.  The data may be accessible through standard 
+protocols such as \cd{http} or \cd{ftp} or it may be created via a
+local or remote computation. 
+\item {\bf What preprocessing} the system should do when the data arrives.  The 
+data may be compressed or encrypted;  privacy considerations may require 
+the data be anonymized.
+\item {\bf What format} the data source arrives in.  The data may be
+  in ASCII, binary, or EBCDIC; It may be tab- or comma-separated, or
+  it may be in the kind non-standard format that
+  \pads{}~\cite{fisher+:pads} was designed to describe.
 \end{itemize}
 
-These rich, high-level specifications are then compiled into a
-collection of programming libraries and end-to-end tools for
+The \padsd{} system then compiles these high-level specifications into
+a collection of programming libraries and end-to-end tools for
 distributed systems monitoring.  Our current tool suite includes a
-number of useful artifacts, inspired by the common needs we have
-observed in ad hoc monitoring systems:
+number of useful artifacts, inspired by the needs we have observed in
+a variety of ad hoc monitoring systems:
 
 \begin{itemize}
-\item {\bf an archiver} that collects distributed data on the specified 
-schedule, archives it locally, and maintains a ``table of contents.''
-\item {\bf a printing tool} and {\bf performance monitor tool} that helps
-debug specifications and easily measure what is going on in the system
-\item {\bf a database loader} that takes the data and extracts specified 
-pieces to load into the RRD database tool~\cite{rrdtool}.  The data is 
-indexed by its arrival time and supports time-based queries.  For 
-performance, as more recent data arrives, older data is discarded.
-\item {\bf an accumulator tool} that maintains a statistical profile of the 
-data and its error characteristics.  For numeric data, information about 
-average values and standard deviations are maintained.  For other kinds 
-of data, such as strings, urls, ip addresses, times, dates, and ad hoc 
-enumerations, information counts of the top $N$ most commonly occurring 
-items are maintained.  For all data, error rates and information about 
-common errors are maintained.
-\item {\bf an alert system} that generates alerts based on programmable 
+\item {\bf An archiver} that collects distributed data on the specified 
+schedule, archives it, and maintains a ``table of contents.''
+\item {\bf A performance monitor} that measures fetch times and helps
+debug specifications.
+\item {\bf A RRD database loader} that takes the data and extracts specified 
+pieces to load into an RRD database~\cite{rrdtool}.  The data is 
+indexed by its arrival time and supports time-based queries.  
+\cut{
+This information should be in section 4
+For performance, as more recent data arrives, older data is discarded.}
+\item {\bf An accumulator} that maintains a statistical profile of the 
+data and its error characteristics.  
+\cut{This information should be in section 4
+For numeric data, the system
+tracks average values and standard deviations.  For other 
+data, such as strings, urls, ip addresses, times, dates, and ad hoc 
+enumerations, the system maintains information counts of the top $N$ most commonly occurring 
+items.  For all data, the system tracks error rates and information about 
+common errors.}
+\item {\bf An alert system} that generates alerts based on programmable 
 conditions.
-\item {\bf a selector tool} that extracts and records specified 
+\item {\bf A selector} that extracts and records specified 
 subcomponents of a larger data source.
-\item {\bf an RSS feed generator} that wraps data in the appropriate 
-XML headers and creates a single RSS feed from possibly multiple diverse 
-ad hoc data sources.
+\item {\bf An RSS feed generator} that wraps raw data in the appropriate 
+headers to create an RSS feed from diverse ad hoc data sources.
 \end{itemize}
 
-These generated end-to-end tools can
-be used off-the-shelf by editing (or not) a short configuration file.
-Conveniently, any user in a rush need never do any real ``programming,''
-if they do not choose to.  
+The system can generate all of these tools from \padsd{} descriptions
+and declaritive tool configuration specifications.  Thus for common
+tasks, users can manage distributed data sources simply by writing
+declarative specifications.
 
 In addition to these standard tools, the system provides support for
-creating new tools by automatically generating a collection of
-libraries.  The libraries include a run-time system for fetching data,
-libraries for parsing data in a specified format and for printing data
-in that format.  There is also infrastructure for type-safe data
-traversal and stream processing using classic functional programming
-paradigms such as map, fold and iterate.  The generated libraries make
-it straightforward for programmers to create their own custom tool
-specific to a single data source or collection of sources.  
+creating new tools by automatically generating libraries for fetching
+data, for parsing and printing, for performing type-safe data
+traversal, and for stream processing using classic functional
+programming paradigms such as \cd{map}, \cd{fold} and \cd{iterate}.
+The generated libraries make it straightforward to create custom tools
+specific to particular data sources.
 
-There is also advanced support for creating new, {\em generic}
+The system also provides support for creating new, {\em generic}
 programs, where a generic program is one that operates correctly over
-{\em any} well-specified data source.  For example, the RRDtool loader
-is generic, because it is possible to load data from any specified
-source into the RRDtool without doing any substantial additional
-``programming.''  Likewise, the alert system, selector, RSS feed
-generator, parsers, printers and traversal libraries are all generic
-programs.
+{\em any} well-specified data source.  For example, the RRD database
+loader is generic, because it is possible to load data from any
+specified source into the RRD tool without additional ``programming.''
+We used the generic support to build the various tools described earlier.
 
-A key result of our overall language and system design is that it
-readily support three sorts of users, or perhaps more accurately, {\em
-three modes of use}.  The first mode of use might be of use to the
-{\em quick-and-dirty hacker}.  In quick-and-dirty mode, a user need
-only specify the relevant properties of their data, edit the simple
-tool configuration file, and watch the results pour in.  There is no
-need to learn any interfaces or stitch together any boilerplate code
--- a real advantage of our domain-specific language design.  On the
-other hand, the quick-and-dirty user is limited to the tools that
-others have designed and while these tools are useful and relatively
-flexible, they are by no means a silver bullet.  The second mode is
-for the {\em single-minded implementer }, who needs to build a new
-application on top of a {\em specific} collection of distributed data
-sources.  This user has found they need more functionality than what
-is provided directly through our generic tools so he or she writes a
-specification for their data sources and uses the
-specification-specific generated interfaces to implement their
-application.  Since the application is specific to a particular
+The \padsd{} system supports three sorts of users, or perhaps more
+accurately, {\em three modes of use}.  We might term the first mode of
+use {\em quick-and-dirty}.  In this mode, users need only specify
+the relevant properties of their data, edit the simple tool
+configuration files, and watch the results pour in.  Such users do not
+have to learn programming interfaces or stitch together boilerplate
+code, which makes it very easy to get started.  On
+the other hand, the quick-and-dirty user is limited to the tools that
+others have built.   The second mode is
+for the {\em single-minded implementer}, who needs to build a new
+application for a {\em specific} collection of distributed data
+sources.  Such users need more than the built-in set of tools, 
+so they write specifications of their data sources and use the
+description-specific libraries generated by the system to implement
+their application. Since the application is specific to a particular
 collection of sources, it cannot be directly reused by others.  The
-third mode is for the {\em generic programmer}.  The generic
-programmer observes that they (or their colleagues or fellow domain
+third mode is for the {\em generic programmer}.  Generic
+programmers may observe that they (or their colleagues or fellow domain
 experts) need to perform some task over and over again on different
-data sets.  Examples such as xml-conversion, database loading, web
-page generation, domain-specific search or querying abound.  Rather
-than writing a program specific to a particular data set, they use a
-separate set of interfaces we supply to write a single generic program
-to complete the task.
+data sets.  Rather than writing a program specific to a particular
+data set, they use a 
+separate set of interfaces supplied by the \padsd{} system to write a
+single generic program to complete the task.
 
-\paragraph*{Contributions.}  To summarize, this paper makes a number of 
-important contributions:
+\paragraph*{Contributions.}  To summarize, this paper makes the
+following contributions:
+
 
 \begin{itemize}
 \item It outlines the design of a language for specifying the 
@@ -215,38 +217,26 @@ spatial, temporal and auxiliary properties of distributed ad hoc data
 sources.  We are aware of no other research effort that has attempted
 to design, implement or analyze such a language.
 
-\item It provides a mechanism for automatic generation of 6 different
-data processing tools directly from high-level specifications with no
-programming required.
+\item It provides a mechanism for automatic generation of six different
+data processing tools directly from high-level specifications.
 
-\item It supports three modes of use and different sorts of interfaces
-for three different kinds of users, 
+\item It supports three modes of use:
 the quick-and-dirty hacker, the single-minded implementer and the generic 
 programmer, thereby optimizing both flexibility and ease-of-use.
 
-\item It provides a formal denotational semantics for the domain-specific
-language.
+\item It provides a formal denotational semantics for the language.
 
 \item It reports on the implementation experience and performance.
 \end{itemize}
 
 \paragraph{Outline.}
-In the remainder of the paper, we will explain the design and
-implementation of our system in further detail.  First, 
-in Section~\ref{sec:examples}, we will
-outline two running examples we will use for expository purposes
-throughout the paper, one involving CoMon~\cite{comon}, a system built at Princeton
-to monitor PlanetLab~\cite{planetlab}, 
-and a second involving \ningaui{}, built at
-AT\&T for monitoring AT\&T's web hosting service.  After introducing
-the examples, we will explain how to specify the attributes of the
-data sources they depend upon in Section~\ref{sec:informal}. 
-The follow section explains the three modes of use of our system
-once a specification has been written.  In Section~\ref{sec:language},
-we describe the formal semantics of the language and now that helped guide
-us in building our implementation.  Section~\ref{sec:implementation}
-evaluates the performance of our system.
-Section~\ref{sec:related} we explain the relationship with other
-research in this area and, finally, in Section~\ref{sec:conclusions} we
-will touch upon future work and conclude.
+In the remainder of the paper, we describe the two examples we will
+use throughout the paper (\secref{sec:examples}), show how to describe
+these data sources in \padsd{} (\secref{sec:informal}), describe
+the generated tool infrastructure and its different modes of use
+(\secref{sec:programming}), define a denotational semantics for the
+language (\secref{sec:semantics}), discuss the implementation and
+evaluate its performance (\secref{sec:implementation}), describe
+related work (\secref{sec:related}), and conclude
+(\secref{sec:conclusions}). 
 
