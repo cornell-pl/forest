@@ -4,12 +4,12 @@ the paper to motivate and explain our system.
 At Princeton, Vivek Pai and KyoungSoo Park have developed
 CoMon~\cite{comon}, a system for monitoring the health and status of
 PlanetLab~\cite{planetlab}.  Every five minutes, CoMon attempts to
-fetch data from each of PlanetLab's 850+ nodes.  This data ranges from
-the node uptime to the number of experiments running to the cpu usage
-to the user id of the biggest memory hog.  The CoMon system takes this
-raw data and transforms it into two different forms, one of which is a
-per-node collection of statistics and the other of which is a
-per-slice ({\em i.e.,} per-application) collection of statistics.
+fetch data from each of PlanetLab's 800+ nodes.  This data ranges from
+the node uptime to memory usage to kernel version.  
+%The CoMon system takes this
+%raw data and transforms it into two different forms, one of which is a
+%per-node collection of statistics and the other of which is a
+%per-slice ({\em i.e.,} per-application) collection of statistics.
 CoMon displays the data to users in tabular form and allows them to
 perform a number of simple queries to find, for instance, lightly
 loaded nodes, nodes with drifting clocks or nodes with little
@@ -31,7 +31,7 @@ service.  It tracks a variety of resources using a wide array of
 measures, including network
 bandwidth, packet loss, cpu utilization, disk utilization, memory
 usage, load averages, \etc{} For each machine in the hosting service
-and each such resource, the monitoring system archives the values at
+and for each such resource, the monitoring system archives the values at
 regular intervals and issues alerts when the values exceed resource-
 and contract-specific levels.  The archive is used to track long-term
 behavior of the service, allowing engineers to determine when more
