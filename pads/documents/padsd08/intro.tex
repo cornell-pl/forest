@@ -75,13 +75,13 @@ Name & Use & Properties
 \\\hline\hline
 CoMon~\cite{comon} & PlanetLab host monitoring & Multiple data sets in mail-header formats\\
                                        && Archiving every 5 minutes \\
-                                       && From evolving set of ~800 nodes \\\hline
+                                       && From evolving set of 800+ nodes \\\hline
 CoBlitz~\cite{coblitz} & File transfer system monitoring & Multiple data sets \\
                                        && Archiving every 5 minutes \\
-                                       && From evolving set of ~800 nodes \\\hline
+                                       && From evolving set of 800+ nodes \\\hline
 CoralCDN~\cite{coral} & Log files from CDN monitoring & Single Format \\
                                        && Periodic archiving \\
-                                       && From evolving set of ~250 hosts \\\hline
+                                       && From evolving set of 250+ hosts \\\hline
 \vizGems{}       & Website Host Monitoring & Many and varied machines \\
                  &                         & Execute programs remotely to collect data\\
                  &                         & Varied fetch frequencies \\\hline
@@ -138,7 +138,9 @@ a variety of ad hoc monitoring systems:
 \begin{itemize}
 \item {\bf An archiver} that collects distributed data on the specified 
 schedule, archives it, and maintains a ``table of contents.''
-\item {\bf A performance monitor} that measures fetch times and helps
+\item {\bf A printer} that fetches, prints, and helps debug
+specifications.
+\item {\bf A performance monitor} that measures fetch times and also helps
 debug specifications.
 \item {\bf A RRD database loader} that takes the data and extracts specified 
 pieces to load into an RRD database~\cite{rrdtool}.  The data is 
@@ -164,51 +166,99 @@ headers to create an RSS feed from diverse ad hoc data sources.
 \end{itemize}
 
 The system can generate all of these tools from \padsd{} descriptions
-and declaritive tool configuration specifications.  Thus for common
+and declarative tool configuration specifications.  Thus for common
 tasks, users can manage distributed data sources simply by writing
-declarative specifications.
+high-level declarative specifications.  It is quick and it is easy. There
+are relatively few concepts to learn, no complex interfaces and no
+tricky boilerplate a programmer needs to master to initialize 
+the system or thread together tool libraries.  Because it's so
+easy to use, we refer to the act of writing simple specifications
+and using pre-defined tools as the {\em quick-and-dirty} \padsd{} programming
+mode.  However, to avoid sacrificing flexibility and to support extensibility,
+\padsd{} supports two other {\em modes of use} in addition to the 
+quick-and-dirty.
 
-In addition to these standard tools, the system provides support for
+The second mode is
+for the {\em single-minded implementer}, who needs to build a new
+application for a {\em specific} collection of distributed data
+sources.  Such users need more than the built-in set of tools, 
+and consequently, the system provides support for
 creating new tools by automatically generating libraries for fetching
 data, for parsing and printing, for performing type-safe data
 traversal, and for stream processing using classic functional
 programming paradigms such as \cd{map}, \cd{fold} and \cd{iterate}.
-The generated libraries make it straightforward to create custom tools
-specific to particular data sources.
+These generated libraries make it straightforward to create custom tools
+specific to particular data sources.  However, there is a steeper learning
+curve in this mode than in the quick-and-dirty because a variety of
+interfaces must be learned.  The average functional programmer may find
+these interfaces relatively intuitive, but the computational scientist
+who is not interested in functional programming may prefer to stick with
+the quick-and-dirty. 
 
-The system also provides support for creating new, {\em generic}
-programs, where a generic program is one that operates correctly over
-{\em any} well-specified data source.  For example, the RRD database
-loader is generic, because it is possible to load data from any
-specified source into the RRD tool without additional ``programming.''
-We used the generic support to build the various tools described earlier.
-
-The \padsd{} system supports three sorts of users, or perhaps more
-accurately, {\em three modes of use}.  We might term the first mode of
-use {\em quick-and-dirty}.  In this mode, users need only specify
-the relevant properties of their data, edit the simple tool
-configuration files, and watch the results pour in.  Such users do not
-have to learn programming interfaces or stitch together boilerplate
-code, which makes it very easy to get started.  On
-the other hand, the quick-and-dirty user is limited to the tools that
-others have built.   The second mode is
-for the {\em single-minded implementer}, who needs to build a new
-application for a {\em specific} collection of distributed data
-sources.  Such users need more than the built-in set of tools, 
-so they write specifications of their data sources and use the
-description-specific libraries generated by the system to implement
-their application. Since the application is specific to a particular
-collection of sources, it cannot be directly reused by others.  The
-third mode is for the {\em generic programmer}.  Generic
+The third mode is for the {\em generic programmer}.  Generic
 programmers may observe that they (or their colleagues or fellow domain
 experts) need to perform some task over and over again on different
 data sets.  Rather than writing a program specific to a particular
 data set, they use a 
 separate set of interfaces supplied by the \padsd{} system to write a
-single generic program to complete the task.
+single generic program to complete the task.  For example, the RRD database
+loader is generic, because it is possible to load data from any
+specified source into the RRD tool without additional ``programming.''
+The generic programming mode is the most difficult to use as it involves
+learning the relatively complex set of interfaces involving encodings
+of Generalized Algebraic Datatypes (GADTs) and Higher-Order Abstract Syntax 
+(HOAS).  These complexities are required to encode \padsd{}'s dependent features and make up for O'Caml's lack of built-in generic programming support.
+Still the reward for building generic tools is very high:
+as more and more such tools are built, the life of the quick-and-dirty
+hacker becomes easier and easier.  We have already built eight useful
+generic tools ourselves and will continue to build more as we see fit.
+
+% The system can generate all of these tools from \padsd{} descriptions
+% and declaritive tool configuration specifications.  Thus for common
+% tasks, users can manage distributed data sources simply by writing
+% declarative specifications.
+
+% In addition to these standard tools, the system provides support for
+% creating new tools by automatically generating libraries for fetching
+% data, for parsing and printing, for performing type-safe data
+% traversal, and for stream processing using classic functional
+% programming paradigms such as \cd{map}, \cd{fold} and \cd{iterate}.
+% The generated libraries make it straightforward to create custom tools
+% specific to particular data sources.
+
+% The system also provides support for creating new, {\em generic}
+% programs, where a generic program is one that operates correctly over
+% {\em any} well-specified data source.  For example, the RRD database
+% loader is generic, because it is possible to load data from any
+% specified source into the RRD tool without additional ``programming.''
+% We used the generic support to build the various tools described earlier.
+
+% The \padsd{} system supports three sorts of users, or perhaps more
+% accurately, {\em three modes of use}.  We might term the first mode of
+% use {\em quick-and-dirty}.  In this mode, users need only specify
+% the relevant properties of their data, edit the simple tool
+% configuration files, and watch the results pour in.  Such users do not
+% have to learn programming interfaces or stitch together boilerplate
+% code, which makes it very easy to get started.  On
+% the other hand, the quick-and-dirty user is limited to the tools that
+% others have built.   The second mode is
+% for the {\em single-minded implementer}, who needs to build a new
+% application for a {\em specific} collection of distributed data
+% sources.  Such users need more than the built-in set of tools, 
+% so they write specifications of their data sources and use the
+% description-specific libraries generated by the system to implement
+% their application. Since the application is specific to a particular
+% collection of sources, it cannot be directly reused by others.  The
+% third mode is for the {\em generic programmer}.  Generic
+% programmers may observe that they (or their colleagues or fellow domain
+% experts) need to perform some task over and over again on different
+% data sets.  Rather than writing a program specific to a particular
+% data set, they use a 
+% separate set of interfaces supplied by the \padsd{} system to write a
+% single generic program to complete the task.
 
 \paragraph*{Contributions.}  To summarize, this paper makes the
-following contributions:
+following key contributions:
 
 
 \begin{itemize}
@@ -217,7 +267,7 @@ spatial, temporal and auxiliary properties of distributed ad hoc data
 sources.  We are aware of no other research effort that has attempted
 to design, implement or analyze such a language.
 
-\item It provides a mechanism for automatic generation of six different
+\item It provides a mechanism for automatic generation of eight different
 data processing tools directly from high-level specifications.
 
 \item It supports three modes of use:
