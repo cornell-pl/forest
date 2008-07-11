@@ -8,7 +8,35 @@ The \padsd{} system comes with a suite of useful tools that help users cope with
 \begin{figure}[th]
 \centering
 \begin{scodebox}
-======================================================Summary of network transmission errors======================================================ErrCode: 1      ErrMsg: Misc HTTP error Count: 12ErrCode: 5      ErrMsg: Bad message     Count: 27ErrCode: 6      ErrMsg: No reply        Count: 2======================================================Top 10 locations with most network errors======================================================Loc: http://planetlab01.cnds.unibe.ch:3121    Count: 2Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2... omitted ...======================================================<top>.<listitem>.Cpu_hog.elt1.Some.elt2 : string======================================================good vals: 554        bad vals: 0      pcnt-bad: 0.00%min val: 4   max val: 22   avg val: 11   std dev: 5.29   Distribution of top 10 values of 47 distinct values:  Val                Count        Percent of good vals"nyu_d"              111                        20.04%"ethzcs_q"           86                         15.52%"princeton_coblitz"  68                         12.27%... omitted ..."root"               12                          2.17%. . . . . . . . . . . . . . . . . . . . . . . . . . . SUMMING              434                        78.34%
+======================================================
+Summary of network transmission errors
+======================================================
+ErrCode: 1      ErrMsg: Misc HTTP error Count: 12
+ErrCode: 5      ErrMsg: Bad message     Count: 27
+ErrCode: 6      ErrMsg: No reply        Count: 2
+
+======================================================
+Top 10 locations with most network errors
+======================================================
+Loc: http://planetlab01.cnds.unibe.ch:3121    Count: 2
+Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
+Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2
+... omitted ...
+======================================================
+<top>.<listitem>.Cpu_hog.elt1.Some.elt2 : string
+======================================================
+good vals: 554        bad vals: 0      pcnt-bad: 0.00%
+min val: 4   max val: 22   avg val: 11   std dev: 5.29   
+
+Distribution of top 10 values of 47 distinct values:
+  Val                Count        Percent of good vals
+"nyu_d"              111                        20.04%
+"ethzcs_q"           86                         15.52%
+"princeton_coblitz"  68                         12.27%
+... omitted ...
+"root"               12                          2.17%
+. . . . . . . . . . . . . . . . . . . . . . . . . . . 
+SUMMING              434                        78.34%
 \end{scodebox}
 \caption{Portion of an accumulator output} \label{fig:acc}
 \end{figure} 
@@ -137,7 +165,7 @@ Figure~\ref{fig:toolconfigs} presents an example config.
   title = "CoMon RSS";
   link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
   desc  = "Memory Info of Monall";
-  path  = "[?].Mem_info";
+  path  = "top.[?].Mem_info";
 \}
 \end{codebox}
 \caption{Example tool configuration file}
