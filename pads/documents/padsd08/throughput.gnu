@@ -1,6 +1,7 @@
 set term postscript eps "Helvetica" 14
 set style data lp
 set xlabel "Number of nodes"
+set xrange [0:650]
 #set key top left
 set ylabel "Thoughput (items per sec)"
 set output 'throughput.eps'
