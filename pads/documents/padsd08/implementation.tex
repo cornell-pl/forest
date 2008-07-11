@@ -45,18 +45,20 @@
 The implementation of the \padsd{} system comes in
 three parts: the compiler, the runtime system, and the
 built-in tools library. In this section, we briefly
-discuss these three parts, and present some preliminary
-results in the evaluation of the system performance. 
-We will show that the system is robust enough and scalable to
-to the size of PlanetLab type applications. 
+discuss these three parts, and present 
+an evaluation of the system performance. 
+We will show that the system can easily scale
+to support PlanetLab-sized applications with 
+hundreds of nodes. 
 
-\subsection{Compiler}
-There are two parts to the \padsd{} compiler: tcc and fmlc.
-tcc is the tool configuration compiler for .tc files, while fmlc is the
-compiler of the feed declarations (.fml files). Both of them
-compiles the source files into O'Caml programs which will
-then be compiled with the run-time libraries into 
-binary code. 
+\subsection{The Compiler}
+There are two parts to the \padsd{} compiler:
+(1) \cd{tcc}, the tool configuration compiler for .tc files, 
+and (2) \cd{fmlc}, the
+compiler of the feed declarations (.fml files). Both compilers
+convert their sources into O'Caml, which is compiled and
+linked to the run-time libraries.  Each tool was implemented using 
+Camlp4, the O'Caml preprocessor. 
 
 \begin{figure}[th]
 \centering
@@ -79,113 +81,146 @@ let simple_comon =
 \caption{Code snipet of compiled simple\_comon feed}\label{fig:compiledcomon}
 \end{figure}
 
-The compilers were implemented using the Camlp4, the O'Caml
-preprocessor. 
 %A source program is parsed into an abstract
 %syntax tree defined by the Camlp4 extended syntax, and the
 %code generation is done through the quotation system. 
-In the case of fmlc, the code generation is done in two steps.
-In the first step, it generates type declarations for the feeds in a
-lazy fashion (that is, only generate the declaration if the
-feed is used in the rest of the description).
-In the second step, it generates the feed representation,
-also known as the ``prefeed''. Schedules which are
-definite times such as ``2008/09/30:12:00:00'' or ``5 mins'' are
-converted to floating point number of seconds at compile time
-to make the code more efficient.
-All O'Caml expressions embeded in the fml file are
-included without change in the compiled code. 
-Figure \ref{fig:compiledcomon} shows the compiled code for
+In the case of \cd{fmlc}, code generation is performed in two steps.
+In the first step, the code generator emits a collection of
+necessary type declarations for each feeds, while in the second step
+it generates representations of the feed descriptions.  These representations
+are coded by extracting various elements from the concurrently
+compiled \padsml{} libraries,
+and using a collection of polymorphic combinators to build structured 
+descriptions.  Figure \ref{fig:compiledcomon} shows a fragment of
+the compiled code for
 the simple CoMon feed in Figure \ref{fig:simplecomon}.
+While a programmer could use our combinator library directly, the
+surface syntax provides a simple veneer that reduces the barrier to
+entry substantially.
+% in a
+%lazy fashion (that is, only generate the declaration if the
+%feed is used in the rest of the description).
+%In the second step, 
+%,
+%also known as the ``prefeed''. Schedules which are
+%definite times such as ``2008/09/30:12:00:00'' or ``5 mins'' are
+%converted to floating point number of seconds at compile time
+%to make the code more efficient.
+%All O'Caml expressions embeded in the fml file are
+%included without change in the compiled code. 
 
-\subsection{Runtime System}
+\subsection{The Run-time System}
 A feed in \padsd{} is implemented as a lazy list of feed
-items (known as idata). This means the feed 
-is actually a function {\tt next}. It is evaluated 
-only when the user program attempts to take an
-item from the feed. The function {\tt next} returns an
-item plus a new {\tt next} function which represents
-the tail of the feed.
+items. 
+Following the semantics presented in Section~\ref{sec:semantics}, 
+a feed item is a metadata/data pair,
+though the implementation's meta-data records contain additional information
+such as data arrival times and more detailed error codes. 
+Some of these error codes include miscellaneous HTTP error, late item
+arrival, parse error, etc.
 
-An idata is a pair of a data item of polymorphic type 'a and 
-a meta data structure that corresponds 'a. 
-%The type of a feed is also the type of its data item. 
-%The type of a base feed has an option type. 
-The meta data is a tree structure in which
-each node is tagged with a meta header. 
-The tree structure (also known as the meta body) resembles 
-the structure of the data item, i.e.  if the data item is a pair, 
-then the meta body is also a pair of meta data. Each leaf
-of the meta body corresponds to a base feed. Meta information
-such as the scheduled time, arrival time, location and 
-errors is stored in the leaves. The header records the summary 
-of meta information within the subtree. 
+% Late arrival, (3)
+% %{{\small{ 
+% \begin{verbatim}
+% 1: Misc HTTP error
+% 2: Late arrival
+% 3: Ssh host required
+% 4: Remote command required for ssh
+% 5: Bad message
+% \end{verbatim}
+% %}}} \normalsize
+
+% % This means the feed 
+% % is actually a function {\tt next}. It is evaluated 
+% % only when the user program attempts to take an
+% % item from the feed. The function {\tt next} returns an
+% % item plus a new {\tt next} function which represents
+% % the tail of the feed.
+% %a data item of polymorphic type 'a and 
+% %a meta data structure that corresponds 'a. 
+% %The type of a feed is also the type of its data item. 
+% %The type of a base feed has an option type.
+% The meta data is a tree structure in which
+% each node is tagged with a meta header. 
+% The tree structure (also known as the meta body) resembles 
+% the structure of the data item, i.e.  if the data item is a pair, 
+% then the meta body is also a pair of meta data. Each leaf
+% of the meta body corresponds to a base feed. Meta information
+% such as the scheduled time, arrival time, location and 
+% errors is stored in the leaves. The header records the summary 
+% of meta information within the subtree. 
 
 The \padsd{} runtime system is a multi-threaded concurrent
-system. Each base feed is created and maintained by a separate 
-worker thread, and a master thread drives the combination of 
-base feeds into compound feeds. Each worker thread and the 
-master thread communicate through a concurrent queue.
-Basically, each worker thread fetches data from the specified
-location , parses the data into internal representation 
-(known as the {\em rep})
-using the \padsml parser, or synthesize data by calling a function.
-And then it generates the idata from the rep and the meta data,
-and pushes the idata into the concurrent queue.
-The master thread pops the idata from the queue {\em on demand}, that is,
+system composed that uses a master-worker implementation strategy. 
+%Each base feed is created and maintained by a separate 
+%worker thread, and a master thread drives the combination of 
+%base feeds into compound feeds.  
+Each worker thread either fetches data from the specified
+location and parses the data into an internal representation (the {\em rep})
+%(known as the {\em rep})
+using the \padsml{} parser, or synthesizes its data by calling some 
+generator function.  Using error conditions, location, scheduled
+and arrival times, the worker generates the appropriately shaped metadata,
+pairs it with the rep and pushes the feed item onto a queue. 
+%And then it generates the idata from the rep and the meta data,
+%and pushes the idata into the concurrent queue.
+%The workers communicated with
+%the master through a concurrent queue.
+The master thread pops the feed item from the queue on demand --- that is,
 when the data is requested by the user program. In other words,
-the worker thread is {\em eager}, while the master thread is {\em lazy}.
-The concurrency control is implemented by the O'Caml threads
-library using standard mutex and condition variables.
+the worker thread is {\em eager}, which guarantees all potentially 
+necessary data will be fetched and archived, but the master thread is 
+{\em lazy}, allowing application programs to process only the data they
+need at their whim.
+%The concurrency control is implemented by the O'Caml threads
+%library using standard mutex and condition variables.
 
 The fetching engine is implemented using
-the Ocamlnet 2 library which is capable of concurrent fetches. 
+the Ocamlnet 2 library~\cite{ocamlnet2}. 
+%which is capable of concurrent fetches. 
 Given a list of locations to fetch from at any one time, 
-we convert the list into batches and fetch up to 200 locations
+the system converts the list into batches and fetches up to 200 locations
 per batch. The choice of 200 is a trade-off between maximizing
 the throughput and avoiding overwhelming the operating system
-with too many open sockets. If the system fails to fetch an
-item due to network or system error, an idata is still created
-with the appropriate error code written in the meta data and
-{\em None} set as the data value. Some of error codes include:
-{\small \begin{verbatim}
-1: Misc HTTP error
-2: Late arrival
-3: Ssh host required
-4: Remote command required for ssh
-5: Bad message
-\end{verbatim}}
-The \padsd{} system does not 
-automatically filter out erroneous items because errors often 
-provides very important information to users who monitors 
-distributed systems. Users could optional choose to filter
-out bad feed items using the Feed library functions.
+with too many open sockets. 
+%If the system fails to fetch an
+%item due to network or system error, a feed item is still created
+%with the appropriate error code written in the metadata. 
 
-Compound feeds are created within the generic tool framework by
-combining base feeds using various combinator functions.
-These functions takes idatas from two feeds and creates a new idata often
-by comparing the timestamps in the two idatas. While this is done
-lazily in most of the combinators, it is not the case for
-dependent pairs. This is because the dependent feed needs to be
-created {\em eagerly} when each item from the {\em depending}
-feed arrives. Therefore we add another layer of ``pseudo-fetching"
-for the dependent feed. Here a separate thread is created for each
-dependent feed, which actively takes data from the depending
-feed, creates dependent items, and push to another concurrent
-queue of its own.  
+% The \padsd{} system does not 
+% automatically filter out erroneous items because errors often 
+% provides very important information to users who monitors 
+% distributed systems. Users could optional choose to filter
+% out bad feed items using the Feed library functions.
+
+% Compound feeds are created within the generic tool framework by
+% combining base feeds using various combinator functions.
+% These functions takes idatas from two feeds and creates a new idata often
+% by comparing the timestamps in the two idatas. While this is done
+% lazily in most of the combinators, it is not the case for
+% dependent pairs. This is because the dependent feed needs to be
+% created {\em eagerly} when each item from the {\em depending}
+% feed arrives. Therefore we add another layer of ``pseudo-fetching"
+% for the dependent feed. Here a separate thread is created for each
+% dependent feed, which actively takes data from the depending
+% feed, creates dependent items, and push to another concurrent
+% queue of its own.  
  
 \subsection{Tools Library}
-Most of the built-in tools were implemented under the
-generic tools framework with the prefeed as the traversal
-function. The feed selector relies on a selector tool
-for \padsml{} which selects into a \padsml{} type following
-a certain path. The feed2rrd tool requires the installation
-of the rrdtool package which is a round-robin database. 
-The feed2rss tool uses the XML-Light package which
-is a minimum XML parser and printer for O'Caml.
-The system also provides an Feed interface to a number of
-useful runtime functions such as map and fold for advanced
-users to program against the feeds.
+As explained in Section~\ref{sec:programming},
+the quick-and-dirty tool suite was implemented using the
+generic tools framework.  Many of the tools rely upon
+format-specific library is generated at compile time by the underlying
+\padsml{} compiler.  For instance, the feed selector relies upon 
+a selector generated by type-directed compilation of the \padsml{}
+description.  Other tools depend upon auxiliary libraries.
+For instance, the feed2rrd tool requires the RRD round-robin 
+database~\cite{rrdtool}
+and the feed2rss tool uses the XML-Light package for parsing
+and printing~\cite{xmllight}.
+%The system also provides an Feed interface to a number of
+%useful runtime functions such as map and fold for advanced
+%users to program against the feeds.
 
 \begin{table*}[th]
 \begin{center}
