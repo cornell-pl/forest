@@ -1,6 +1,69 @@
 \subsection{Quick and Dirty}
 \label{sec:tools}
-The \padsd{} system comes with a suite of useful tools that help users cope with standard data adminstration needs. We now briefly introduce them and discuss their uses. 
+The \padsd{} system comes with a suite of useful tools that help users cope with standard data 
+adminstration needs.  Once a \padsd{} description has been written, the quick-and-dirty
+hacker can use any tool by writing a very simple {\em configuration file}, as shown in
+Figure~\ref{fig:toolconfigs}.  
+The tools we have implemented so far include all of the following.
+
+
+A configuration file includes a feed declaration header 
+(the first line in the config),
+and a sequence of tool specifications. The header specifies the path to the 
+feed description file (\cd{comon.fml}) and the name of the feed to be created (\cd{comon}).
+Each tool specification starts with the the keyword \cd{tool} followed by the
+name of the tool (\cd{feedaccum} and \cd{rss} for example). The body of each tool specification 
+is a list of name-value pairs, where values are \ocaml{} expressions. Some attributes are 
+optional, with the system providing default values as needed. 
+\padsd{} compiles a config into an \ocaml{} program that will create and archive the specified 
+feed, configure the specified tools, and apply those tools to the feed in parallel.
+% Multiple 
+%tools can simultaneously consume the same feed possible because feeds in
+%\padsd{} are functional and immutable. 
+
+
+\begin{figure}[tb]
+\centering
+\begin{codebox}
+\kw{feed} comon.fml/comon
+
+\kw{tool} feedaccum
+\{
+  minalert  = true;
+  maxalert  = true;
+  lesssig   = 3;
+  moresig   = 3;
+  slicesize = 10;
+  slicefile = "slice.acc";
+  totalfile = "total.acc"
+\}
+
+\kw{tool} rss
+\{
+  title = "CoMon Memory RSS";
+  link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
+  desc  = "CoMon Memory Usage Information";
+  path  = "top.[?].Mem_info";
+\}
+\end{codebox}
+\caption{Example tool configuration file}
+\label{fig:toolconfigs}
+\end{figure}
+
+%  path  = ["[?]"; "Mem_info"];
+
+
+% The most straightforward use of \padsd{} is to create a feed 
+% based on a \padsd{} description, and then apply one or more built-in tools 
+% to the feed. \padsd{} provides a {\it tool configurations} ({\it configs} for short) to accomplish this task. 
+% Figure~\ref{fig:toolconfigs} presents an example config.
+
+
+
+ 
+
+%without any further programming.
+%We now briefly introduce them and discuss their uses. 
 
 %\edcom{Move this bit somewhere?}
 %A tool is typically an \ocaml{} module with a standard interface: a tool specification, a feed representation or prefeed compiled from the feed description, and a feed of interest. 
@@ -87,14 +150,16 @@ path :: =
 \label{fig:selector-lang}
 \end{figure}
 
+
 \begin{itemize}
-\item {\em Archiver.} The archiver saves the files fetched by a feed into the local file system, organizing the archived files
+\item {\em Archiver.} The archiver saves the files fetched by a feed 
+in the local file system, organizing the archived files
 according to the structure of the feed, with one directory per base feed. 
 %One directory is created per base feed, in which the archiver stores all the files fetched by that feed. 
 It places a catalog in each directory documenting the source of 
 the data in the directory, its scheduled arrival time and
-actually arrival time. The user may specify that the archiver compress
-the files in each directory after their quantity passes a certain threshold. 
+actually arrival time. The archiver will optionally compress
+files if desired.
 
 \item {\em Printer.} The printer prints the content of a feed to a file or
 multiple files. When it prints to a single file, all data from a feed is
@@ -102,10 +167,12 @@ concatenated with an optional separator. When it is configured to print
 to multiple files, it outputs the content of each base feed into a separate
 file.
 
-\item {\em Profiler.} The profiler monitors the performance of the feeds, reporting the throughputs \edcom{What throughputs?  yhm},  and the average network and system latencies
-of the feed over a period of time. Users can specify when to profile the feed and
-for how long, using the tool's specification. This tool has been used to produce
-some of the experimental results in section \ref{sec:experiments}.
+\item {\em Profiler.} The profiler monitors the performance of the feeds, reporting
+throughput, average network latency and average system latencies
+over a period of time. Users can specify when to profile the feed and
+for how long, using the tool's configuration specification. 
+This tool has been used to produce some of the experimental 
+results in Section \ref{sec:experiments}.
 
 \item {\em Accumulator.} The accumulator builds and maintains a statistical profile of the feed, including its error characteristics. For numerical data, the accumulator maintains aggregated information such as 
 average values, max/min values and standard deviations. For other
@@ -118,70 +185,38 @@ The accumulator can output either plain text or XML with an
 accompanying DTD file. Figure \ref{fig:acc} shows portions of an accumulator
 output for the CoMon example, in text format.
 
-\item {\em Alerter.} The alerter allows the user to specify conditions on the data for which, if violated, the user should be notified. The library has several predefined conditions such as value exceeding a max/min or \edcom{missing verb here} $n$ standard deviations away. 
-Users can define custom conditions by specifying an arbitrary \ocaml{} predicate. 
-This tool has been integrated with the accumulator above. The alerter notifies users of violated conditions by
-appending to a file, which can then be piped to other tools such as an email
-client.
+\item {\em Alerter.} A programmable alerter tool allows the user to register boolean 
+functions which, when false, generate notifications.  These notifications are appended to
+a file, which can then be piped into other tools such as an email
+client.  The system provides a library of 
+common alerters such as max/min thresholds and monitors for deviations from the norm
+({\em i.e.,} an alert can be signal when a selected value strays more than $k$
+standard deviations from its historical value). 
+Users can also program their own conditions by supply an arbitrary \ocaml{} predicate
+in the config file.  
+%This tool has also been integrated with the accumulator described above. 
+%The alerter notifies users of violated conditions by
+%appending to a file, which can then be piped to other tools such as an email
+%client.
 
 \item {\em Database loader.} The DB loader allows the user to load numerical
-data from a feed into a round robin database (RRD tool). The user specifies
+data from a feed into a Round Robin Database (RRD)~\cite{rrdtool}. The user specifies
 a custom function to transform feed items into numerical values together with other parameters required by the RRD tools, such as datasource
 type and sampling rate. The data is indexed in the RRD by arrival time and
-older data is discarded to make space for new data.
+older data is discarded to make space for new data.  This application supports
+time-indexed queries and will display historical data as a graph.
 
-\item {\em Selector.} The selector allows the user to specify subcomponents of feed elements using a path expression and returns a feed of the selected subcomponents. The path expression language, similar to \xpath{}~\cite{xpath}, is shown in \figref{fig:selector-lang}.
+\item {\em Selector.} The selector allows the user to specify subcomponents of feed elements 
+using a path expression and returns a feed of the selected subcomponents, which may then
+subsequently be printed or otherwise processed. The path expression 
+language, partly inspired by \xpath{}~\cite{xpath}, is shown in \figref{fig:selector-lang}.
 
 \item {\em RSS feed generator.} The RSS feed generator formats a
 \padsd{} feed as an RSS feed. The user specifies
 the title, link (source), description, and update schedule of the RSS feed.
-The content of the RSS feed is specified by a path expression. The tool uses the selector tool to
-project data from the feed based on the path expression and wraps the result in XML for inclusion in the RSS feed.
+The content of the RSS feed is specified using the selector's language of path 
+expressions. 
 \end{itemize}
-
-The most straightforward use of \padsd{} is to create a feed 
-based on a \padsd{} description, and then apply one or more built-in tools 
-to the feed. \padsd{} provides a {\it tool configurations} ({\it configs} for short) to accomplish this task. 
-Figure~\ref{fig:toolconfigs} presents an example config.
-
-\begin{figure}[tb]
-\centering
-\begin{codebox}
-\kw{feed} comon.fml/comon
-
-\kw{tool} feedaccum
-\{
-  minalert  = true;
-  maxalert  = true;
-  lesssig   = 3;
-  moresig   = 3;
-  slicesize = 10;
-  slicefile = "slice.acc";
-  totalfile = "total.acc"
-\}
-
-\kw{tool} rss
-\{
-  title = "CoMon RSS";
-  link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
-  desc  = "Memory Info of Monall";
-  path  = "top.[?].Mem_info";
-\}
-\end{codebox}
-\caption{Example tool configuration file}
-\label{fig:toolconfigs}
-\end{figure}
-%  path  = ["[?]"; "Mem_info"];
-
-A tool configuration includes a feed declaration header 
-(the first line in the config),
-and a sequence of tool specifications. The header specifies the path to the 
-feed description file (comon.fml) and the name of the feed to be created (comon).
-Each tool specification starts with the the keyword \cd{tool} followed by the
-name of the tool (\cd{feedaccum} and \cd{rss} for example). The body of each tool specification is a list of name-value pairs, where values are \ocaml{} expressions. Some attributes are optional, with the system providing default values as needed. 
-
-\padsd{} compiles a config into an \ocaml{} program that will create and archive the specified feed, configure the specified tools, and apply those tools to the feed in parallel. Multiple tools can simultaneously consume the same feed possible because feeds in
-\padsd{} are functional and immutable. 
 
 %We apply the tools in parallel to
 %achieve maximum throughput and also because some of the tools, such as feedaccum,

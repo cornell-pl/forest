@@ -2,7 +2,17 @@
 
 \subsection{The Single-Minded Implementer}
 
-In addition to the built-in tools, \padsd{} includes an API for manipulating feeds created from a description. The API provides the user with a feed abstraction representing a potentially infinite series of elements. This abstraction is related to that of a lazy list, but extends it with support for data timing and provenance. Therefore, the API provided for feeds is modeled on the list APIs of common functional languages, like \ocaml and \haskell, but provides two levels of abstraction. One level allows the user to manipulate feeds like any other lazy list of data elements (ignoring where they come from), while the other exposes the metadata along with the data.
+In addition to the built-in tools, \padsd{} includes an API for
+manipulating feeds created from a description. The API provides the
+user with a feed abstraction representing a potentially infinite
+series of elements. This abstraction is related to that of a lazy
+list, but extends it with support for data timing and provenance
+information. Therefore, the API provided for feeds is modeled on the
+list APIs of common functional languages, like \ocaml and \haskell,
+but provides two levels of abstraction. One level allows the user to
+manipulate feeds like any other lazy list of data elements (ignoring
+where they come from), while the other exposes the metadata along with
+the data. 
 
 % Need a new name for Feedmain module. I vote Feed and then Feed_core for the lower-level module.
 
@@ -46,25 +56,113 @@ In addition to the built-in tools, \padsd{} includes an API for manipulating fee
 %\vskip -2ex
 \end{figure}
 
-For example, consider a \planetlab user looking for a desirable set of nodes on which to run their experiments. Based on the \comon description, they can use our API to monitor \planetlab for a few minutes to find the least loaded nodes. In \figref{fig:sample-loads}, we show an \ocaml code fragment that collects a list of nodes with lowest average loads over $10$ minutes, and then prints them. We leave out the exact details on maintaining the table of top values, as it is orthogonal to our 
-discussion. First, we use \cd{Feed.split_when} to split the feed when 600 seconds (10 minutes) have elapsed. Then, we use \cd{Feed.map} to project the loads data from the\comon elements. Finally, we use \cd{Feed.fold} to collect the load values into a table after which we can average the data on a per node basis and extract the $10$ lowest values.
+For example, consider a \planetlab user looking for a desirable set of
+nodes on which to run their experiments. Based on the \comon
+description, they can use our API to monitor \planetlab for a few
+minutes to find the least loaded nodes. In \figref{fig:sample-loads},
+we show an \ocaml code fragment that collects a list of nodes with
+lowest average loads over $10$ minutes, and then prints them. We leave
+out the exact details on maintaining the table of top values, as it is
+orthogonal to our discussion. First, we use \cd{Feed.split_when} to
+split the feed when 600 seconds (10 minutes) have elapsed. Then, we
+use \cd{Feed.map} to project the loads data from the\comon
+elements. Finally, we use \cd{Feed.fold} to collect the load values
+into a table after which we can average the data on a per node basis
+and extract the $10$ lowest values.
 
-However, this solution is not quite enough. The \comon data format does not include the host name in the data itself, so the code in \figref{fig:sample-loads} will only be able to return the lowest average loads, but not the names of the machines associated with them. In situations like this, the provenance data is essential.  In \figref{fig:sample-loads-prov}, we  replace the last three lines of \figref{fig:sample-loads} with a call to the lower-level fold, \cd{fold_p}, which provides both the data and metadata to the folding function [{\it what's the proper name for this? --yhm}]. We also sketch an \cd{update} function which makes use of the metadata.
+However, this solution is not quite enough. The \comon data format
+does not include the host name in the data itself, so the code in
+\figref{fig:sample-loads} will only be able to return the lowest
+average loads, but not the names of the machines associated with
+them. In situations like this, the provenance data is essential.  In
+\figref{fig:sample-loads-prov}, we replace the last three lines of
+\figref{fig:sample-loads} with a call to the lower-level fold,
+\cd{fold_p}, which provides both the data and metadata to the folding
+function. We also sketch an \cd{update} function which makes use of 
+the metadata.   Notice the use of the lower level \cd{IData} and
+\cd{Meta} interfaces to facilitate mangement of both data and 
+metadata from the feed. 
+
+It should be clear from these examples that the single-minded implementer
+has a number of new interfaces to master relative to the quick-and-dirty
+hacker, but gains a correspondingly higher degree of flexibilty and can
+still write relatively concise programs.
 
 \subsection{The Generic Programmer}
 
 % Motivate
 
-Occasionally, a user might want to develop a function that can manipulate {\it any} feed. This desire might arise because the user has a number of different feeds to process in the same way, or simply because the user wishes to provide a new tool for other \padsd{} users. Some such functions can be written simply by designing them to be parametric in the type of the feed element, much like the feed library functions discussed above. However, the behavior of many feeds functions will depend on the structure of the feed and its elements. Such functions can be viewed as {\it interpretations} of feed descriptions, so, to support their development, we provide a framework for writing feed interpreters.
+Occasionally, a user might want to develop a function that can
+manipulate {\it any} feed. This desire might arise because the user
+has a number of different feeds to process in the same way, or simply
+because the user wishes to provide a new tool for other \padsd{}
+users. Some such functions can be written simply by designing them to
+be parametric in the type of the feed element, much like the feed
+library functions discussed above. However, the behavior of many feeds
+functions will depends on the structure of the feed and its
+elements. Such functions can be viewed as {\it interpretations} of
+feed descriptions, so, to support their development, we provide a
+framework for writing feed interpreters.
 
 % Examples
-Two core examples of feed interpretations are the feed creator and the feed accumulator. The behavior of both of these tools depend essentially on the structure of the feed. These functions, and others like them, require as input a runtime representation of the feed, complete with all of the details included in the feed description that they represent. The obvious choice for representing feed description in \ocaml is a datatype. However, standard \ocaml datatypes are not sufficiently typeful to express the types of many generic feed functions. For example, the feed creation function has the type: 
+
+Two core examples of feed interpretations are the feed creator and the
+feed accumulator. The behavior of both of these tools depend
+essentially on the structure of the feed. These functions, and others
+like them, require as input a runtime representation of the feed,
+complete with all of the details included in the feed description that
+they represent. The obvious choice for representing feed descriptions
+in \ocaml is a datatype. However, standard \ocaml datatypes are not
+sufficiently typeful to express the types of many generic feed
+functions. For example, the feed creation function has the type:
 \begin{code}
 feed_create : 'a feed_rep -> 'a feed
 \end{code} where \cd{'a feed_rep} is an AST of a feed description and feed elements have type \cd{'a}.
-
+%
 % Tools as interpreters
+%
+This limitation of datatypes has been widely discussed in the
+literature, and various solutions have been 
+proposed~\cite{yang:icfp98,weirich:encodingtypecase,hinz:icfp04,padsml-padl}. We have 
+chosen to represent our AST using a variant of the Mogensen-Scott
+encoding in which higher-order abstract syntax is exploited 
+to encode variable binding in feed descriptions.  This implementation strategy 
+exploits \ocaml's module system to type the encodings in $F_\omega$. 
+A similar strategy is exploited in our earlier work on \padsml~\cite{padsml-padl}, 
+but there we only sought to encode the \ocaml type of data, not entire \padsml
+description, which is where the higher-order abstract syntax enters the picture.
+% To effectively encode the dependency present in feeds
+% descriptions, we instead 
+% encodings~\cite{mogensen}, employing HOAS to encode variable binding
+% in feed descriptions.
+% Given that \ocaml is our target language, we follow
+% the method used in \padsml{} to encode type
+% representations~\cite{padsml-padl}. Because of space limitations, we
+% do not provide details here.  
 
-This limitation of datatypes has been widely discussed in the literature, and various solutions have been proposed~\cite{various, our-padl-paper}. Given that \ocaml is our target language, we follow the method used in \padsml{} to encode type representations~\cite{padsml-padl}. Because of space limitations, we do not provide details here.  The essential point is that developers can interpret feed-description representations by case analysis on their structure, while still achieving the desired static guarantees. Moreover, we have successfully used this framework to develop {\it all} of the tools presented in this paper, including the feed creator. The only role of the compiler is to infer appropriate type declarations from feed descriptions, and compile the feed syntax into our representations.
+The result of our work is that developers
+can interpret feed-description representations by case analysis on
+their structure, while still achieving the desired static
+guarantees. Moreover, we have successfully used this framework to
+develop {\it all} of the tools presented in this paper, including the
+feed creator. The only role of the compiler is to infer appropriate
+type declarations from feed descriptions, and compile the feed syntax
+into our representations.  However, as one might expect, interfaces using
+higher-order abstract syntax and Mogensen-Scott encodings are one step more
+complex than those involving the more familiar maps and folds.  Consequently, the
+learning curve for the generic programmer is one step steeper than
+the curve for the single-minded implementor, and two (or perhaps ten) steps steeper
+than the curve for the quick-and-dirty hacker.
 
-%There, we represent our AST using a Scott-encoded datatype, and leverage \ocaml's module system to, in essence, type the Scott encodings in $F_\omega$. However, in \padsml we only sought to encode the \ocaml type of data, not entire \padsml descriptions. To effectively encode the dependency present in feeds descriptions, we instead use a variant of Mogensen-Scott encodings~\cite{mogensen}, employing HOAS to encode variable binding in feed descriptions.
+% There, we represent our AST using a
+% Scott-encoded datatype, and leverage \ocaml's module system to, in
+% essence, type the Scott encodings in $F_\omega$. However, in \padsml
+% we only sought to encode the \ocaml type of data, not entire \padsml
+% descriptions. To effectively encode the dependency present in feeds
+% descriptions, we instead use a variant of Mogensen-Scott
+% encodings~\cite{mogensen}, employing HOAS to encode variable binding
+% in feed descriptions.
+
+
+
+
