@@ -71,10 +71,10 @@ the data.
       update tbl location data
   | _ -> tbl \textit{ (* no change to tbl *)}
 \kw{in} ...
-\kw{let} load_table = \textit{\textbf{Feed.fold_p}} update empty_tbl loads
-\kw{in} print_top_10 load_table
+\kw{let} load_tbl = \textit{\textbf{Feed.fold_p}} update empty_tbl loads
+\kw{in} print_top 10 load_tbl
 \end{codebox}
-  \caption{Revised code fragment which exploits provenance metadata. }
+  \caption{Revised code fragment that exploits provenance metadata. }
 \label{fig:sample-loads-prov}
 %\vskip -2ex
 \end{figure}
@@ -86,7 +86,7 @@ minutes to find the least loaded nodes. In \figref{fig:sample-loads},
 we show an \ocaml code fragment that collects a list of nodes with
 lowest average loads over $10$ minutes, and then prints them. We leave
 out the exact details on maintaining the table of top values, as it is
-orthogonal to our discussion. First, we use \cd{Feed.split_when} to
+orthogonal to our discussion. First, we use \cd{Feed.split_every} to
 split the feed when 600 seconds (10 minutes) have elapsed. Then, we
 use \cd{Feed.map} to project the loads data from the\comon
 elements. Finally, we use \cd{Feed.fold} to collect the load values
