@@ -16,25 +16,48 @@ the data.
 
 % Need a new name for Feedmain module. I vote Feed and then Feed_core for the lower-level module.
 
+
 \begin{figure}[tb]
 \begin{codebox}
-\kw{let} deadline = Time.now() +. 600. \kw{in}
-\kw{let} (sample, remainder) = \textit{Feed.split_when} 
-   (fun () -> Time.now() > deadline) comon_feed \kw{in}
+\kw{let} (sample, \_) = \textit{Feed.split_every} 600. comon \kw{in}
 \kw{let} select_load = \kw{function}
     Some \{Comon_format.Source.
           loads = (_, load::_)\} -> Some load
   | None -> None \kw{in}
-\kw{let} loads = \textit{Feed.map} select_load sample \kw{in}
-\kw{let} empty_tbl = create () \kw{in}
-\kw{let} load_table = \textit{Feed.fold} update empty_tbl loads 
-\kw{in} print_top_10 load_table
+\kw{let} loads    = \textit{Feed.map} select_load sample \kw{in}
+\kw{let} load_tbl = \textit{Feed.fold} update (create ()) loads 
+\kw{in}  print_top 10 load_tbl
 \end{codebox}
-  \caption{Code fragment for sampling \planetlab loads for 10 minutes. Function
-  \texttt{print\_top\_10} selects the $10$ lowest loads from the table.}
+  \caption{Code fragment for finding \planetlab nodes with low load
+  over the last 10 minutes (600 seconds).  \texttt{Feed.split\_every n}
+  extracts the first \texttt{n} seconds of any feed. 
+  Function \texttt{create} constructs an empty hash table; function 
+  \texttt{update} adds
+  an entry to the hash table; function
+  \texttt{print\_top k} prints the \texttt{k} lowest loads from the table.}
 \label{fig:sample-loads}
 %\vskip -2ex
 \end{figure}
+
+
+%% \begin{figure}[tb]
+%% \begin{codebox}
+%% \kw{let} deadline = Time.now() +. 600. \kw{in}
+%% \kw{let} (sample, remainder) = \textit{Feed.split_when} 
+%%    (fun () -> Time.now() > deadline) comon_feed \kw{in}
+%% \kw{let} select_load = \kw{function}
+%%     Some \{Comon_format.Source.
+%%           loads = (_, load::_)\} -> Some load
+%%   | None -> None \kw{in}
+%% \kw{let} loads = \textit{Feed.map} select_load sample \kw{in}
+%% \kw{let} load_tbl = \textit{Feed.fold} update (create ()) loads 
+%% \kw{in}  print_top 10 load_tbl
+%% \end{codebox}
+%%   \caption{Code fragment for sampling \planetlab loads for 10 minutes. Function
+%%   \texttt{print\_top k} selects the \texttt{k} lowest loads from the table.}
+%% \label{fig:sample-loads}
+%% %\vskip -2ex
+%% \end{figure}
 
 \begin{figure}[tb]
 
