@@ -43,7 +43,7 @@ feed, configure the specified tools, and apply those tools to the feed in parall
   title = "CoMon Memory RSS";
   link  = "http://www.cs.princeton.edu/~kzhu/rss.xml";
   desc  = "CoMon Memory Usage Information";
-  path  = "top.[?].Mem_info";
+  path  = "<top>.[?].Mem_info";
 \}
 \end{codebox}
 \caption{Example tool configuration file}
@@ -137,7 +137,7 @@ SUMMING              434                        78.34%
 {\small
 \begin{verbatim}
 path :: =  
-  "top"
+  "<top>"
 | path.ID  (field/variant name)
 | path.INT (branch number (from 1) of a tuple)
 | path.[?] (any one elements of array/table) 
@@ -174,11 +174,10 @@ for how long, using the tool's configuration specification.
 This tool has been used to produce some of the experimental 
 results in Section \ref{sec:experiments}.
 
-\item {\em Accumulator.} The accumulator builds and maintains a statistical profile of the feed, including its error characteristics. For numerical data, the accumulator maintains aggregated information such as 
+\item {\em Accumulator.} The accumulator maintains a statistical profile of the feed, including its error characteristics. For numerical data, the accumulator maintains aggregated information such as 
 average values, max/min values and standard deviations. For other
 types of data, like strings, URL's and IP addresses, it maintains the frequency of the top $N$
 most common values. For all data, it maintains the error rates and most common errors values and their source.
-
 The user can configure the accumulator to profile the entire feed at once, or in sections. The latter are
 useful if the feed is infinite, because they allow the user to continuously monitor the data and compare with historical statistics. 
 The accumulator can output either plain text or XML with an

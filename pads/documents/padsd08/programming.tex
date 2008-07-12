@@ -116,8 +116,9 @@ in \ocaml is a datatype. However, standard \ocaml datatypes are not
 sufficiently typeful to express the types of many generic feed
 functions. For example, the feed creation function has the type:
 \begin{code}
-feed_create : 'a feed_rep -> 'a feed
-\end{code} where \cd{'a feed_rep} is an AST of a feed description and feed elements have type \cd{'a}.
+feed_create : 'a prefeed -> 'a feed
+\end{code} where \cd{'a prefeed} is an AST of a feed description and feed 
+elements have type \cd{'a}.
 %
 % Tools as interpreters
 %
