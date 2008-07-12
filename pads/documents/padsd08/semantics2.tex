@@ -1,4 +1,6 @@
 
+\newcommand{\rb}[1]{\raisebox{6ex}[0pt]{#1}}
+
 \begin{figure*}[t]
 \[
 \begin{array}{lcl}
@@ -24,7 +26,7 @@
      \} 
 \\\\
 \semantics{\comprehensionfeed{e}{x}{\feed}}{\environment}{\universe} 
- &=& \{((\mytime{\meta},\generatedloc), \esemantics{(\lambda x.e_1) \; v}{\environment}) 
+ &=& \{((\mytime{\meta},\generatedloc), \esemantics{(\lambda x.e) \; v}{\environment}) 
           \setalt (\meta,v) \in  \semantics{\feed}{\environment}{\universe}  
      \} 
 \\\\
@@ -48,7 +50,7 @@
           \;\mbox{and}\; \loc \in  \esemantics{e_2}{\environment}
      \} 
 \\
- \qquad\quad\ \,   \mathtt{locs=} e_2;
+ \qquad\quad\ \,   \mathtt{src=} e_2;
 &&\quad\mbox{where} \\
  \qquad\quad\ \,    \mathtt{sched=} e_3;
 && \qquad \mathtt{timeout} =  
@@ -67,7 +69,7 @@
 % {\cal F}\lsem\mathtt{any \{ format=} e_1;
 % % \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
 %  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
-%  \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
+%  \qquad\qquad\ \ \ \,   \mathtt{src=} e_2;
 % &&\quad\mbox{where} \\
 % %\begin{array}{l}
 %  \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
@@ -87,32 +89,30 @@
 % %\end{array}
 % \\
 \\
-{\cal F}\lsem\mathtt{any \{ format=} e_1;
-% \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
- &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
- \qquad\qquad\ \ \ \,   \mathtt{locs=} e_2;
-&&\quad\mbox{where} \\
-%\begin{array}{l}
- \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
-  && 
-\qquad f = \lambda \atime. \{((\atime,\ell),\mathtt{Some} \; \astring)\}\ \mbox{for some $\ell$ and $\astring$ such that:}\\
- \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
-&&\qquad\quad
- \mbox{$((\atime,\ell),\mathtt{Some} \; \astring) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
-  \\
- \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
- \}\rsem_{{\environment} \, {\universe}}
-&&\qquad
-  f = \lambda \atime. \{((\atime,\generatedloc), \none)\}\  
-  \mbox{%for some $\loc \in \esemantics{e2}{\environment}$
-if there exists no $\ell$ and $\astring$ such that:} \\
-&&\qquad\quad 
- \mbox{$((\atime,\ell),\mathtt{Some} \; \astring) \in \semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}$}
-\\
 
-%\end{array}
-\\
-\\
+%New version: any rule
+{\cal F}\lsem\mathtt{any \{ format=} e_1; & = & \{ i_t\ |\ \atime \in \esemantics{e_3}{\environment}\}\\
+
+\begin{array}{l}
+    \qquad\quad   \mathtt{src=} e_2;\\
+    \qquad\quad   \mathtt{sched=} e_3;\\
+    \qquad\quad   \mathtt{pp=} e_4;\\
+    \qquad\quad   \mathtt{win=} e_5;  \}\rsem_{{\environment} \, {\universe}}\\[2ex]
+\end{array} 
+ &&
+\begin{array}{l}
+\quad\mbox{where} \\
+ \begin{array}{l@{\hspace{.5ex}}c@{\hspace{.5ex}}l}
+ \qquad A & = &\semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}\\
+ \qquad A_\atime & = & \{(\meta,v)\ | \ (\meta,v) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+ \qquad   i_\atime & = & \left\{ \begin{array}{lll}
+                         \mbox{select\_one}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
+                         ((\atime,\generatedloc), \none) & \mbox{if} & |A_\atime| = 0 \\
+                       \end{array} \right.\\
+ \end{array}
+\end{array} 
+%%End New version: any rule
+\\\\
 \semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
  &=& \semantics{\feed_1}{\environment}{\universe} 
      \bigcup
@@ -157,7 +157,7 @@ if there exists no $\ell$ and $\astring$ such that:} \\
  \{(\mytime{\meta_2},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
      (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
      \; \mbox{and} \; 
-\\&&\qquad\qquad\qquad\ \ \,
+\\&&\qquad\qquad\qquad\qquad\qquad\qquad\ \ \,
      (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
      \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1}
   \}
@@ -167,49 +167,82 @@ if there exists no $\ell$ and $\astring$ such that:} \\
  \{(\mytime{\meta_2},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
      (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
      \; \mbox{and} \; 
-\\&&\qquad\qquad\qquad\ \ \,
+\\&&\qquad\qquad\qquad\qquad\qquad\qquad\ \ \,
      (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
      \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1}
-\\&&\qquad\qquad\qquad\ \ \,
+\\&&\qquad\qquad\qquad\qquad\qquad\qquad\ \ \,
      ((\meta_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
       \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
             \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2})) 
   \}
 \\\\
+%%OLD foreach update
+%%{\cal F}\lsem
+%%\mathtt{foreach{*}}\; x \; \mathtt{in}\; \feed_1 
+%%%\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+%% &=&
+%% \{(\meta_2,v_2) \setalt 
+%%     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+%%     \; \mbox{and} \; 
+%%\\
+%%\qquad\qquad\ \ \mathtt{create}\; \feed_2 \rsem_{{\environment} \, {\universe}}
+%%&&\qquad\qquad\ \,
+%%     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
+%%     \; \mbox{and} \;
+%%%\\&&\qquad\qquad\ \,
+%%     \mytime{\meta_2} > \mytime{\meta_1} 
+%%  \}
+%%\\\\
+
+
+
+
+%% New foreach *
 {\cal F}\lsem
 \mathtt{foreach{*}}\; x \; \mathtt{in}\; \feed_1 
 %\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
  &=&
- \{(\meta_2,v_2) \setalt 
-     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-     \; \mbox{and} \; 
+   \{(\meta_2,v_2) \setalt (\atime,(\meta_1,\meta_2)),(v_1,v_2)) \in 
+       \semantics{x{:}\feed_1 * \feed_2}{\environment}{\universe} \}
+%% \{(\meta_2,v_2) \setalt 
+%%     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+%%     \; \mbox{and} \; 
 \\
-\qquad\qquad\quad\ \, \mathtt{create}\; \feed_2 \rsem_{{\environment} \, {\universe}}
-&&\qquad\qquad\ \,
-     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
-     \; \mbox{and} \;
-%\\&&\qquad\qquad\ \,
-     \mytime{\meta_2} > \mytime{\meta_1} 
-  \}
+\qquad\qquad\ \ \mathtt{create}\; \feed_2 \rsem_{{\environment} \, {\universe}}
+%% End New foreach *
 \\\\
+
+%% Old foreach **
+%%{\cal F}\lsem
+%%\mathtt{foreach{*}{*}}\; x \; \mathtt{in}\; \feed_1 
+%%%\semantics{\foreachcreate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
+%% &=&
+%% \{(\meta_2,v_2) \setalt 
+%%     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+%%     \; \mbox{and} \; 
+%%\\
+%%\qquad\qquad\ \ \ \mathtt{update}\; \feed_2 \rsem_{{\environment} \, {\universe}}
+%%&&\qquad\qquad\ \,
+%%     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
+%%     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1} \; \mbox{and} \;
+%%\\&&\qquad\qquad\ \,
+%%     ((\meta_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
+%%      \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
+%%           \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2}))      
+%%  \}
+%%\\\\
+%% End Old foreach **
+
+%% New Foreach **
 {\cal F}\lsem
 \mathtt{foreach{*}{*}}\; x \; \mathtt{in}\; \feed_1 
-%\semantics{\foreachcreate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
  &=&
- \{(\meta_2,v_2) \setalt 
-     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-     \; \mbox{and} \; 
-\\
-\qquad\qquad\quad\ \, \mathtt{extend}\; \feed_2 \rsem_{{\environment} \, {\universe}}
-&&\qquad\qquad\ \,
-     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
-     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1} \; \mbox{and} \;
-\\&&\qquad\qquad\ \,
-     ((\meta_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
-      \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
-           \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2}))      
-  \}
+   \{(\meta_2,v_2) \setalt (\atime,(\meta_1,\meta_2)),(v_1,v_2)) \in 
+       \semantics{x{:}\feed_1\, **\, \feed_2}{\environment}{\universe} \}\\
+\qquad\qquad\ \ \ \mathtt{update}\; \feed_2 \rsem_{{\environment} \, {\universe}}
 \\\\
+%% end new foreach **
+
 % \semantics{\ppfeed{\feed}{e}}{\environment}{\universe} 
 %  &=&
 % \semantics{\feed}{\environment}{

@@ -142,6 +142,7 @@
 \newcommand{\boolt}{\ensuremath{\mathtt{true}}}
 \newcommand{\loc}{\ensuremath{\ell}}
 \newcommand{\feed}{\ensuremath{F}}
+\newcommand{\corefeed}{\ensuremath{C}}
 \newcommand{\generalvar}{\ensuremath{x}}
 \newcommand{\feedvar}{\ensuremath{x}}
 \newcommand{\itemvar}{\ensuremath{x}}
@@ -168,7 +169,7 @@
 \newcommand{\allfeed}[5]{
   \ensuremath{
     \mathtt{all \{ format=} #1; 
-    \mathtt{locs=} #2;
+    \mathtt{src=} #2;
     \mathtt{sched=} #3;
     \mathtt{pp=} #4;
     \mathtt{win=} #5;
@@ -176,7 +177,7 @@
 \newcommand{\existsfeed}[5]{
   \ensuremath{
     \mathtt{any \{ format=} #1; 
-    \mathtt{locs=} #2;
+    \mathtt{src=} #2;
     \mathtt{sched=} #3;
     \mathtt{pp=} #4;
     \mathtt{win=} #5;
@@ -194,7 +195,7 @@
   \ensuremath{
     \mathtt{foreach{*}{*}}\; #1 \;
     \mathtt{in}\; #2 \;
-    \mathtt{extend}\; #3}}
+    \mathtt{update}\; #3}}
 \newcommand{\foreachcreate}[3]{
   \ensuremath{
     \mathtt{foreach*}\; #1 \;

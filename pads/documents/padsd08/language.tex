@@ -1,29 +1,24 @@
-Development of a formal semantics for \padsd{} has been an integral
-part of our language design process.  It has been a medium through
-which we have communicated our ideas to one another precisely and it has 
-allowed us to experiment with the nuanced consequences of our decisions.
-Its purpose in this paper is to
-provide system users with a way to calculate the expected contents of
-any feed they would specify, including subtle details of the effects
-of timeouts and errors.
+Developing a formal semantics for \padsd{} has been an
+integral part of our language design process.  We have used the semantics to
+communicate our ideas precisely and to explore the nuances of design
+decisions. Furthermore, it provides users with a way to reason about the feeds
+resulting from \padsd{} descriptions, including subtleties related to
+timeouts and errors.
 
-The calculus of feeds we will define depends upon a {\em
-host language}, in which one may compute locations, schedules,
-and constraints.  For the purposes of the
-formalization, the host language is the simply-typed lambda calculus.
-Figure~\ref{fig:host-language} presents the syntax we will use to
-write down host language expressions.  To simplify the semantics,
-the host language contains a collection of special constants 
-including strings ($\astring$), locations ($\loc$), times ($\atime$),
-and schedules ($\schedule$).  We assume times may be added and compared
-and let $\infty$ represent a time later than all others.
-We treat schedules as sets of times and
-often use the notation $\atime \in \schedule$ to refer to a time $\atime$
-drawn from the set $\schedule$.  We use a similar notation to refer to elements of a list.
-The host language also includes structured types
-such as options, pairs, sums, lists and functions, all of which are 
-completely standard.  We often omit the typing annoation from the lambda
-expression when it can be reconstructed from the context easily.
+The feed calculus we define depends upon a {\em host language} for
+computing locations, schedules, and constraints, which we take to be
+the simply-typed lambda calculus.  Figure~\ref{fig:host-language}
+presents its syntax, which includes a collection of constants to
+simplify the semantics: strings ($\astring$), locations ($\loc$),
+times ($\atime$), and schedules ($\schedule$).  We assume times may be
+added and compared and we let $\infty$ represent a time later than all
+others.  We treat schedules as sets of times and often use the
+notation $\atime \in \schedule$ to refer to a time $\atime$ drawn from
+the set $\schedule$.  We use a similar notation to refer to elements
+of a list.  The host language also includes structured types such as
+options, pairs, sums, lists and functions, all of which are standard.
+We omit the typing annotations from lambda expressions when they
+can be reconstructed from the context.
 
 \begin{figure}[t]
 \[
@@ -82,18 +77,21 @@ expression when it can be reconstructed from the context easily.
 
 \subsection{Feed Syntax and Typing}
 
-The abstract syntax for our core calculus of feeds appears in
-Figure~\ref{fig:syntax} and its typing rules appear in 
-Figure~\ref{fig:typing}.  The feed typing judgment has the form
-$\Gamma \turn \feed : \feedty{\sigma}$, where $\Gamma$ is a context that maps
-variables to host language types $\tau$.  Notice that $\sigma$ is a subset of the
+The abstract syntax for our feed calculus and its typing rules appear
+in Figures~\ref{fig:syntax} and~\ref{fig:typing}, respectively.  The
+feed typing judgment has the form 
+$\Gamma \turn \feed : \feedty{\sigma}$, 
+which means that under context 
+$\Gamma$, mapping variables to host language types $\tau$, feed
+$\feed$ produces a sequence of values of type $\sigma$.  As shown in
+\figref{fig:syntax}, type $\sigma$ ranges over a subset of the
 host language types.  Feed typing depends upon a standard judgment for
-simple typing of lambda calculus expressions:  $\Gamma \turn e : \ty$.
+simply typing lambda calculus expressions:  $\Gamma \turn e : \ty$.
+We discuss the syntax and typing for each construct in turn.
 
-The elements of the feed language include
-the empty feed ($\emptyset$), which contains no elements and serves as
-the unit for the union feed ($\feed_1 \union \feed_2$).  The
-computed feed ($\computed{e_1}{x}{e_2}$) allows programmers to
+The simplest feed is the empty feed ($\emptyset$), which contains no
+elements and has polymorphic type. 
+The computed feed ($\computed{e_1}{x}{e_2}$) allows programmers to
 generate a feed with schedule $e_2$ and elements $(\lambda x.e_1)\; \atime$,
 where $\atime$ is drawn from the schedule. Likewise, the feed 
 comprehension ($\comprehensionfeed{e}{x}{\feed}$) allows creation of a 
@@ -105,7 +103,7 @@ provide a convenient mechanism for binding intermediate computations.
 
 The base forms $\mathtt{all \{ \cdots \}}$ and $\mathtt{any \{ \cdots \}}$
 are similar to what we have seen before, except they have five components:
-file format ($\mathtt{format}$), source locations ($\mathtt{locs}$), 
+file format ($\mathtt{format}$), source locations ($\mathtt{src}$), 
 schedule ($\mathtt{sched}$), preprocessing function ($\mathtt{pp}$) 
 and window ($\mathtt{win}$).
 File format, schedule and preprocessing function are self-explanatory.
@@ -170,6 +168,14 @@ feed generates a feed of lists where each element of the list is scheduled at th
   \bnfalt \listty{\sigma}
 }   \\  
 \\
+\multicolumn{3}{l}{\mbox{(core feed spec)}}\\ 
+\multicolumn{3}{l}{\corefeed \ ::= }\\
+& \{ \mathtt{format=}\ e_1; & \mbox{format specification}\\ 
+& \ \ \mathtt{src=}\ e_2;   & \mbox{source specification} \\
+& \ \ \mathtt{sched=}\ e_3;  & \mbox{schedule specification}\\
+& \ \ \mathtt{pp=}\ e_4;     & \mbox{pre-processor} \\
+& \ \ \mathtt{win=}\ e_5; \} & \mbox{time-out window} \\
+\\
 \multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
 \multicolumn{3}{l}{\feed \ ::=}   \\  
 % & x &  \mbox{feed variable} \\ %% no feed variables now
@@ -179,18 +185,9 @@ feed generates a feed of lists where each element of the list is scheduled at th
  \bnfalt & \comprehensionfeed{e}{x}{\feed} & \mbox{feed comprehension} \\
  \bnfalt & \filterfeed{\feed}{e} & \mbox{filter feed} \\
  \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
- \bnfalt &     \mathtt{all \{ format=} e_1; & \mbox{all locations}\\ 
-& \qquad     \mathtt{locs=} e_2; & \\
-& \qquad     \mathtt{sched=} e_3; & \\
-& \qquad     \mathtt{pp=} e_4; & \\
-& \qquad     \mathtt{win=} e_5; \}  & \\
+ \bnfalt &     \mathtt{all}\ \corefeed & \mbox{all sources}\\ 
 %\allfeed{e_1}{e_2}{e_3}{e_4}{e_5} &  \\
- \bnfalt &     \mathtt{any \{ format=} e_1; & \mbox{one of several locations}\\ 
-& \qquad     \mathtt{locs=} e_2; & \\
-& \qquad     \mathtt{sched=} e_3; & \\
-& \qquad     \mathtt{pp=} e_4; & \\
-& \qquad     \mathtt{win=} e_5; \}  & \\
-% \bnfalt & \existsfeed{e_1}{e_2}{e_3}{e_4}{e_5} & \mbox{one of several location} \\
+ \bnfalt &     \mathtt{any}\ \corefeed & \mbox{one of multiple sources}\\ 
  \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
  \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
  \bnfalt & (\feed_1, \feed_2) & \mbox{synchronous pair} \\
@@ -203,8 +200,8 @@ feed generates a feed of lists where each element of the list is scheduled at th
     \mathtt{in}\; \feed_1 & \mbox{for each $x$ create continuous $\feed_2$} \\
  &   \quad \mathtt{create}\; \feed_2 \\
  \bnfalt &     \mathtt{foreach{*}{*}}\; x \; 
-    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create local $\feed_2$}\\
- &   \quad \mathtt{extend}\; \feed_2 \\
+    \mathtt{in}\; \feed_1 & \mbox{for each $x$ updatee local $\feed_2$}\\
+ &   \quad \mathtt{update}\; \feed_2 \\
 %\foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
 % \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$} \\
 % & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
@@ -229,6 +226,29 @@ feed generates a feed of lists where each element of the list is scheduled at th
 % \]
 
 \[
+\infer[(\textit{t-core})]
+{ \begin{array}{l}
+  \Gamma \turn 
+    \mathtt{\{ format=} e_1; 
+      \mathtt{src=} e_2;
+      \mathtt{sched=} e_3; \\ \qquad\qquad
+    \mathtt{pp=} e_4;
+    \mathtt{win=} e_5; \} : \feedty{\optionty{\ty}}
+ \end{array}
+}
+{
+ \begin{array}{c}
+  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \\
+  \Gamma \turn e_2 : \listty{\locty} \qquad
+  \Gamma \turn e_3 : \schedulety \\
+  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
+  \Gamma \turn e_5 : \timety
+ \end{array}
+}
+\]
+
+
+\[
 \infer[(\textit{t-empty})]
 {\Gamma \turn \emptyfeed : \feedty{\sigma}}
 {}
@@ -236,10 +256,10 @@ feed generates a feed of lists where each element of the list is scheduled at th
 
 \[
 \infer[(\textit{t-compute})]
-{\Gamma \turn \computed{e_1}{x}{e_2} : \feedty{\optionty{\ty}}}
+{\Gamma \turn \computed{e_1}{x}{e_2} : \feedty{\ty}}
 {
   \Gamma \turn e_2 : \schedulety &
-  \Gamma,x{:}\timety \turn e_1 : \optionty{\ty} 
+  \Gamma,x{:}\timety \turn e_1 : \ty 
 }
 \]
 
@@ -273,21 +293,12 @@ feed generates a feed of lists where each element of the list is scheduled at th
 \[
 \infer[(\textit{t-all})]
 { \begin{array}{l}
-  \Gamma \turn 
-    \mathtt{all \{ format=} e_1; 
-      \mathtt{locs=} e_2;
-      \mathtt{sched=} e_3; \\ \qquad\qquad
-    \mathtt{pp=} e_4;
-    \mathtt{win=} e_5; \} : \feedty{\optionty{\ty}}
+  \Gamma \turn \mathtt{all}\ \corefeed{} : \feedty{\optionty{\ty}}
  \end{array}
 }
 {
  \begin{array}{c}
-  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \\
-  \Gamma \turn e_2 : \listty{\locty} \qquad
-  \Gamma \turn e_3 : \schedulety \\
-  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
-  \Gamma \turn e_5 : \timety
+  \Gamma \turn \corefeed{} : \feedty{\optionty{\ty}}
  \end{array}
 }
 \]
@@ -295,22 +306,12 @@ feed generates a feed of lists where each element of the list is scheduled at th
 \[
 \infer[(\textit{t-any})]
 { \begin{array}{l}
-    \Gamma \turn 
-      \mathtt{any \{ format=} e_1; 
-      \mathtt{locs=} e_2;
-      \mathtt{sched=} e_3; \\ \qquad\qquad
-    \mathtt{pp=} e_4;
-    \mathtt{win=} e_5; \}
- : \feedty{\optionty{\ty}}
-  \end{array}
+  \Gamma \turn \mathtt{any}\ \corefeed{} : \feedty{\optionty{\ty}}
+ \end{array}
 }
 {
  \begin{array}{c}
-  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \\
-  \Gamma \turn e_2 : \listty{\locty} \qquad
-  \Gamma \turn e_3 : \schedulety \\
-  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
-  \Gamma \turn e_5 : \timety
+  \Gamma \turn \corefeed{} : \feedty{\optionty{\ty}}
  \end{array}
 }
 \]
@@ -429,8 +430,8 @@ feed generates a feed of lists where each element of the list is scheduled at th
 \infer[(\textit{t-listf})]
 {\Gamma \turn [\feed \bnfalt x \leftarrow e ]  : \feedty{\listty{\sigma}}}
 {
-  \Gamma,x{:}\tau \turn \feed : \feedty{\sigma} &
-  \Gamma \turn e : \listty{\tau}
+  \Gamma \turn e : \listty{\tau} &
+  \Gamma,x{:}\tau \turn \feed : \feedty{\sigma} 
 }
 \]
 
@@ -476,7 +477,7 @@ metadata is coded as follows.
 \begin{array}{lcll} 
 \meta & ::=     
 & (\atime,\loc) & \mbox{base metadata} \\
-& \bnfalt & (\atime,(\meta,\meta)) & \mbox{pair metadata} \\
+& \bnfalt & (\atime,(\meta_1,\meta_2)) & \mbox{pair metadata} \\
 & \bnfalt & (\atime,\inl{\meta}) & \mbox{sum metadata} \\
 & \bnfalt & (\atime,\inr{\meta}) & \mbox{sum metadata} \\
 & \bnfalt & (\atime,[\meta_1,\ldots,\meta_k]) & \mbox{list metadata} \\
