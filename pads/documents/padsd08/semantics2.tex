@@ -104,9 +104,9 @@
 \quad\mbox{where} \\
  \begin{array}{l@{\hspace{.5ex}}c@{\hspace{.5ex}}l}
  \qquad A & = &\semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}\\
- \qquad A_\atime & = & \{(\meta,v)\ | \ (\meta,v) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+ \qquad A_\atime & = & \{(\meta,v)\ | \ (\meta, \some{v}) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
  \qquad   i_\atime & = & \left\{ \begin{array}{lll}
-                         \mbox{select\_one}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
+                         \mbox{\selectOne}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
                          ((\atime,\generatedloc), \none) & \mbox{if} & |A_\atime| = 0 \\
                        \end{array} \right.\\
  \end{array}

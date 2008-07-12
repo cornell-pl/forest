@@ -79,15 +79,15 @@ can be reconstructed from the context.
 
 The abstract syntax for our feed calculus and its typing rules appear
 in Figures~\ref{fig:syntax} and~\ref{fig:typing}, respectively.  The
-feed typing judgment has the form 
-$\Gamma \turn \feed : \feedty{\sigma}$, 
-which means that under context 
-$\Gamma$, mapping variables to host language types $\tau$, feed
-$\feed$ produces a sequence of values of type $\sigma$.  As shown in
-\figref{fig:syntax}, type $\sigma$ ranges over a subset of the
-host language types.  Feed typing depends upon a standard judgment for
-simply typing lambda calculus expressions:  $\Gamma \turn e : \ty$.
-We discuss the syntax and typing for each construct in turn.
+feed typing judgment has the form $\Gamma \turn \feed :
+\feedty{\sigma}$, which means that under context $\Gamma$, mapping
+variables to host language types $\tau$, feed $\feed$ produces a
+sequence of values of type $\sigma$.  As shown in \figref{fig:syntax},
+we define $\sigma$ in terms of host language types, stratified to
+facilitate the proof of semantic soundness.  Feed typing depends upon
+a standard judgment for simply typing lambda calculus expressions:
+$\Gamma \turn e : \ty$.  We discuss the syntax and typing for each
+construct in turn.
 
 The simplest feed is the empty feed ($\emptyset$), which contains no
 elements and has polymorphic type. 
