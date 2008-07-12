@@ -113,7 +113,9 @@
 \newcommand{\generatedloc}{\ensuremath{\mathsf{nowhere}}}
 \newcommand{\environment}{E}
 \newcommand{\universe}{U}
-\newcommand{\selectOne}{select\_one}
+\newcommand{\selectOne}{\ensuremath{\mathsf{select\_one}}}
+% core feed semantics
+\newcommand{\csemantics}[3]{{\cal C}\lsem #1 \rsem_{{#2} \, {#3}}}
 % feed semantics
 \newcommand{\semantics}[3]{{\cal F}\lsem #1 \rsem_{{#2} \, {#3}}}
 % expression semantics
@@ -157,8 +159,10 @@
 \newcommand{\inl}[1]{\ensuremath{\mathtt{inl}\; #1}}
 \newcommand{\inr}[1]{\ensuremath{\mathtt{inr}\; #1}}
 \newcommand{\casedata}[2]{{\tt switch}(#1)\{#2\}}
-\newcommand{\nillist}{\ensuremath{\mathtt{nil}}}
-\newcommand{\conslist}[2]{\ensuremath{\mathtt{cons} (#1,#2)}}
+%\newcommand{\nillist}{\ensuremath{\mathtt{nil}}}
+\newcommand{\nillist}{\ensuremath{[\,]}}
+%\newcommand{\conslist}[2]{\ensuremath{\mathtt{cons} (#1,#2)}}
+\newcommand{\conslist}[2]{\ensuremath{[#1,\ldots,#2]}}
 \newcommand{\nilstream}{\ensuremath{\mathtt{done}}}
 \newcommand{\consstream}[2]{\ensuremath{\mathtt{next} (#1,#2)}}
 

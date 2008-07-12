@@ -1,24 +1,24 @@
 Developing a formal semantics for \padsd{} has been an
 integral part of our language design process.  We have used the semantics to
 communicate our ideas precisely and to explore the nuances of design
-decisions. Furthermore, it provides users with a way to reason about the feeds
+decisions. Furthermore, the semantics provides users with a tool to reason about the feeds
 resulting from \padsd{} descriptions, including subtleties related to
 timeouts and errors.
 
-The feed calculus we define depends upon a {\em host language} for
-computing locations, schedules, and constraints, which we take to be
-the simply-typed lambda calculus.  Figure~\ref{fig:host-language}
-presents its syntax, which includes a collection of constants to
-simplify the semantics: strings ($\astring$), locations ($\loc$),
-times ($\atime$), and schedules ($\schedule$).  We assume times may be
-added and compared and we let $\infty$ represent a time later than all
-others.  We treat schedules as sets of times and often use the
-notation $\atime \in \schedule$ to refer to a time $\atime$ drawn from
-the set $\schedule$.  We use a similar notation to refer to elements
-of a list.  The host language also includes structured types such as
-options, pairs, sums, lists and functions, all of which are standard.
-We omit the typing annotations from lambda expressions when they
-can be reconstructed from the context.
+To express locations, schedules, and constraints, the feed calculus
+depends upon a {\em host language}, which we take to be the
+simply-typed lambda calculus.  Figure~\ref{fig:host-language} presents
+its syntax, which includes a collection of constants to simplify the
+semantics: strings ($\astring$), locations ($\loc$), times ($\atime$),
+and schedules ($\schedule$).  We assume times may be added and
+compared and we let $\infty$ represent a time later than all others.
+We treat schedules as sets of times and use the notation $\atime
+\in \schedule$ to refer to a time $\atime$ drawn from the set
+$\schedule$.  We use a similar notation to refer to elements of a
+list.  The host language also includes standard structured types such as
+options, pairs, sums, lists and functions.
+We omit the typing annotations from lambda expressions when they can
+be reconstructed from the context.
 
 \begin{figure}[t]
 \[
@@ -30,25 +30,22 @@ can be reconstructed from the context.
 \ty & ::= & \basety & \mbox{base types} \\
  & \bnfalt & \optionty{\ty} & \mbox{option types}\\
  & \bnfalt & \ty_1 * \ty_2 & \mbox{pair types} \\
- & \bnfalt & \ty_1 + \ty_2 & \mbox{union types} \\
+ & \bnfalt & \ty_1 + \ty_2 & \mbox{sum types} \\
  & \bnfalt & \listty{\ty} & \mbox{list types}\\
 % & \bnfalt & \feedty{\ty} & \mbox{stream types}\\
  & \bnfalt & \ty_1 \arrow \ty_2 & \mbox{function types} \\
 \\
 \multicolumn{4}{l}{\mbox{(host-language values)}}\\ 
-\data & ::=     & \constant & \mbox{generic constant} \\
- & \bnfalt & \boolf \bnfalt \boolt & \mbox{booleans} \\
- & \bnfalt & \astring & \mbox{strings} \\
- & \bnfalt & \loc & \mbox{locations} \\
- & \bnfalt & \atime & \mbox{times} \\
- & \bnfalt & \schedule & \mbox{schedules} \\
+\data & ::= & \boolf \bnfalt \boolt & \mbox{booleans} \\
+ & \bnfalt & \astring \bnfalt \loc \bnfalt \atime \bnfalt \schedule &
+ \mbox{strings, locations, times, schedules} \\
  & \bnfalt & \none \bnfalt 
                            \some{\data} & \mbox{optional values}\\
  & \bnfalt & (\data_1,\data_2) & \mbox{pairs} \\
  & \bnfalt & \inl{\data} \bnfalt 
-                           \inr{\data} & \mbox{union values} \\
+                           \inr{\data} & \mbox{sum values} \\
  & \bnfalt & \nillist \bnfalt 
-                           \conslist{\data_1}{\data_2} & \mbox{list values} \\
+                           \conslist{\data_1}{\data_n} & \mbox{list values} \\
 % & \bnfalt & \nilstream \bnfalt 
 %                           \consstream{\data_1}{\data_2} & \mbox{stream values} \\
 
@@ -62,7 +59,7 @@ can be reconstructed from the context.
  & \bnfalt & (\expression_1,\expression_2) \bnfalt e.1 \bnfalt e.2 
     & \mbox{pair expressions} \\
 % & \bnfalt & \inl{\expression} \bnfalt 
-%             \inr{\expression} & \mbox{union expressions} \\
+%             \inr{\expression} & \mbox{sum expressions} \\
 % & \bnfalt & \expression_1 \; \expression_2 & \mbox{application expression} \\
  & \bnfalt & ... & \mbox{more typed lambda expressions} \\
 %\\
@@ -80,7 +77,7 @@ can be reconstructed from the context.
 The abstract syntax for our feed calculus and its typing rules appear
 in Figures~\ref{fig:syntax} and~\ref{fig:typing}, respectively.  The
 feed typing judgment has the form $\Gamma \turn \feed :
-\feedty{\sigma}$, which means that under context $\Gamma$, mapping
+\feedty{\sigma}$, which means that in context $\Gamma$ mapping
 variables to host language types $\tau$, feed $\feed$ produces a
 sequence of values of type $\sigma$.  As shown in \figref{fig:syntax},
 we define $\sigma$ in terms of host language types, stratified to
@@ -89,63 +86,68 @@ a standard judgment for simply typing lambda calculus expressions:
 $\Gamma \turn e : \ty$.  We discuss the syntax and typing for each
 construct in turn.
 
-The simplest feed is the empty feed ($\emptyset$), which contains no
-elements and has polymorphic type. 
+Core feeds express the underlying structure of base feeds, describing
+the data sources ($\mathtt{src}$), schedule ($\mathtt{sched}$), window
+($\mathtt{win}$), preprocessing function ($\mathtt{pp}$), and file
+format ($\mathtt{format}$).  The source field may contain
+pseudo-locations that model the $\mathtt{proc}$ form found in the
+implementation.  Instead of expressing time-out conditions in the
+schedule as we did in the source language, the calculus requires such
+conditions be specified in the window field, which slightly simplifies
+the semantics.  The preprocessor and the format parser both map values
+with option type to option type, where the value \texttt{None}
+indicates a networking or data formatting error. (For the sake of
+simplicity, we do not model the variety of error codes that the
+implementation supports.)  Consequently, if the format intuitively
+describes values of type $\tau$, the feed will return a sequence of
+values of type $\optionty{\tau}$, allowing for the possibility of
+errors.  The typing for core feeds reflects our choice to have their
+semantics be a pair of the underlying schedule and the actual feed
+elements.
+
+The feed $\mathtt{all}\ \corefeed$ selects all the data from the core
+feed \corefeed, while $\mathtt{any}\ \corefeed$ selects a
+representative good value for each time in the schedule for \corefeed{}.
+It inserts a \texttt{None} if no such value exists.  
+
+
+The empty feed ($\emptyset$) contains no elements and has polymorphic
+type a l\`a the empty list.  
 The computed feed ($\computed{e_1}{x}{e_2}$) allows programmers to
 generate a feed with schedule $e_2$ and elements $(\lambda x.e_1)\; \atime$,
 where $\atime$ is drawn from the schedule. Likewise, the feed 
-comprehension ($\comprehensionfeed{e}{x}{\feed}$) allows creation of a 
+comprehension ($\comprehensionfeed{e}{x}{\feed}$) creates a
 feed with elements $(\lambda x.e)\; v$ when $v$ is an element of $\feed$.
-The filter feed
+The feed
 $\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
 $e\; v$ is $\boolf$.  Let feeds $\letfeed{x}{e_1}{\feed_2}$
-provide a convenient mechanism for binding intermediate computations.
-
-The base forms $\mathtt{all \{ \cdots \}}$ and $\mathtt{any \{ \cdots \}}$
-are similar to what we have seen before, except they have five components:
-file format ($\mathtt{format}$), source locations ($\mathtt{src}$), 
-schedule ($\mathtt{sched}$), preprocessing function ($\mathtt{pp}$) 
-and window ($\mathtt{win}$).
-File format, schedule and preprocessing function are self-explanatory.
-The location field may contain pseudo-locations that 
-model the $\mathtt{proc}$ form found in the implementation.
-Instead of expressing time out conditions in the schedule,
-the calculus requires such conditions be specified in the window 
-field.\footnote{A separate window field simplifies the semantics slightly,
-but combining window and schedule together is more appealing to
-programmers.  These minor syntactic differences are semantically unimportant.} 
-Notice that the preprocessor
-and parser both map values with option type to option type.
-The {\tt None} option is used to represent networking or data format
-errors.  For the sake of simplicity, 
-we do not model the variety of different error codes that
-the implementation supports. 
-
-The calculus contains a number of binary operators for combining
-feeds.  The union takes feeds with the same type and merges them
-into a single feed.  On the other hand, the sum feed takes feeds
-with (possibly) different types, injects the elements of each feed into
-a sum before merging.  
+provide a convenient mechanism for binding intermediate values.
+The union feed merges two feeds with the same type
+into a single feed.  In contrast, the sum feed takes two feeds
+with (possibly) different types and injects the elements of each feed
+into a sum before merging the results into a single feed.  
 
 The calculus also contains three different
-sorts of pairs, each providing a slightly different way of
-combining elements from the subcomponent feeds.  The first pair, 
-written $(\feed_1, \feed_2)$ is a {\em synchronous pair} -- 
-elements of $\feed_1$ are paired with elements of $\feed_2$
-that are {\em scheduled} at exactly the same time (regardless of when those elements
-actually {\em arrive}).  Synchronous pairs are most useful when the underlying
+pair constructors, each providing a different way to
+combine elements from the subcomponent feeds.  The first pair, 
+written $(\feed_1, \feed_2)$, is a {\em synchronous pair}.
+Elements of $\feed_1$ are paired with elements of $\feed_2$
+that are {\em scheduled} at exactly the same time, regardless of when those elements
+actually {\em arrive}.  Synchronous pairs are most useful when the underlying
 subcomponent feeds share the same schedule, as in the Arrakis example
-from Section~\ref{sec:informal}.  However, synchronous pairs lack a
-dependent variant --- it is not sensible to schedule acquisition of an element
-that depends upon another element scheduled at the same time.
-There are two forms of dependent pair, {\em continuous} and {\em local}.
-In the the continuous variant, each element $x$ of $\feed_1$ is paired 
-with all elements of the feed $\feed_2$ that depends on $x$.  In the
+from Section~\ref{sec:informal}.  Synchronous pairs lack a
+dependent variant, however, because in our domain it is not sensible
+to schedule the acquisition of an element that depends upon another
+element scheduled at the same time.  To express dependencies, we 
+use two forms of dependent pair, {\em continuous} and {\em local}.
+In the continuous variant, each element $x$ of $\feed_1$ is paired 
+with all elements of the feed $\feed_2$ that depend on $x$.  In the
 local variant, each element $x$ of $\feed_1$
 is paired with all elements of the feed $\feed_2$ {\em until the next
-element $y$ of $\feed_1$ is scheduled}.  The formal semantics, presented
-in the next subsection, makes this idea precise.  The local feed
-enables a paradigm in which a programmer defines an infinite feed $\feed_2$
+element $y$ of $\feed_1$ is scheduled}.  
+The denotational semantics, presented
+in the next subsection, makes this idea precise.  Local pairing
+enables a paradigm in which programmers define an infinite feed $\feed_2$
 that gets truncated and regenerated whenever a new element in $\feed_1$
 is scheduled.
 
@@ -154,9 +156,11 @@ and the list comprehension feed.
 Intuitively, a $\mathtt{foreach}$ is identical to a dependent pair in
 which the first element of the pair is omitted from the data representation.
 Consequently, there are two forms of $\mathtt{foreach}$ -- one for
-each sort of dependent pair.  The notation ${*}$ or ${**}$ serves as
-a syntactic mnemonic to remind readers of the connection.  The list comprehension
-feed generates a feed of lists where each element of the list is scheduled at the same time.
+each form of dependent pair.  The notation ${*}$ or ${**}$ serves as
+a syntactic mnemonic for the connection.  The list comprehension
+feed generates a feed of lists where each element of the list is
+scheduled at the same time.  It is akin to the synchronous pair
+operation. 
 
 \begin{figure}[t]
 \[
@@ -170,24 +174,23 @@ feed generates a feed of lists where each element of the list is scheduled at th
 \\
 \multicolumn{3}{l}{\mbox{(core feed spec)}}\\ 
 \multicolumn{3}{l}{\corefeed \ ::= }\\
-& \{ \mathtt{format=}\ e_1; & \mbox{format specification}\\ 
-& \ \ \mathtt{src=}\ e_2;   & \mbox{source specification} \\
-& \ \ \mathtt{sched=}\ e_3;  & \mbox{schedule specification}\\
-& \ \ \mathtt{pp=}\ e_4;     & \mbox{pre-processor} \\
-& \ \ \mathtt{win=}\ e_5; \} & \mbox{time-out window} \\
+& \{ \ \mathtt{src=}\    e_1;    & \mbox{source specification} \\
+& \ \ \ \mathtt{sched=}\  e_2;    & \mbox{schedule specification}\\
+& \ \ \ \mathtt{win=}\    e_3;    & \mbox{time-out window specification} \\
+& \ \ \ \mathtt{pp=}\     e_4;    & \mbox{pre-processor} \\
+& \ \ \ \mathtt{format=}\ e_5; \} & \mbox{format specification}\\ 
 \\
 \multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
 \multicolumn{3}{l}{\feed \ ::=}   \\  
 % & x &  \mbox{feed variable} \\ %% no feed variables now
 % & \bnfalt 
-& \emptyfeed & \mbox{empty feed} \\
+         & \mathtt{all}\ \corefeed & \mbox{all sources}\\ 
+ \bnfalt & \mathtt{any}\ \corefeed & \mbox{one of multiple sources}\\ 
+ \bnfalt & \emptyfeed & \mbox{empty feed} \\
  \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
  \bnfalt & \comprehensionfeed{e}{x}{\feed} & \mbox{feed comprehension} \\
  \bnfalt & \filterfeed{\feed}{e} & \mbox{filter feed} \\
  \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
- \bnfalt &     \mathtt{all}\ \corefeed & \mbox{all sources}\\ 
-%\allfeed{e_1}{e_2}{e_3}{e_4}{e_5} &  \\
- \bnfalt &     \mathtt{any}\ \corefeed & \mbox{one of multiple sources}\\ 
  \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
  \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
  \bnfalt & (\feed_1, \feed_2) & \mbox{synchronous pair} \\
@@ -229,24 +232,52 @@ feed generates a feed of lists where each element of the list is scheduled at th
 \infer[(\textit{t-core})]
 { \begin{array}{l}
   \Gamma \turn 
-    \mathtt{\{ format=} e_1; 
-      \mathtt{src=} e_2;
-      \mathtt{sched=} e_3; \\ \qquad\qquad
-    \mathtt{pp=} e_4;
-    \mathtt{win=} e_5; \} : \feedty{\optionty{\ty}}
+   \{
+      \mathtt{src=} e_1;\
+      \mathtt{sched=} e_2; \
+      \mathtt{win=} e_3;\\ \qquad \ \ 
+      \mathtt{pp=} e_4;\
+      \mathtt{ format=} e_5; 
+   \} 
+   : \schedulety * (\feedty{\optionty{\ty}})
  \end{array}
 }
 {
  \begin{array}{c}
-  \Gamma \turn e_1 : \optionty{\stringty} \arrow \optionty{\ty} \\
-  \Gamma \turn e_2 : \listty{\locty} \qquad
-  \Gamma \turn e_3 : \schedulety \\
+  \Gamma \turn e_1 : \listty{\locty} \quad \
+  \Gamma \turn e_2 : \schedulety \quad \
+  \Gamma \turn e_3 : \timety\\
   \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
-  \Gamma \turn e_5 : \timety
+  \Gamma \turn e_5 : \optionty{\stringty} \arrow \optionty{\ty} \\
  \end{array}
 }
 \]
 
+\[
+\infer[(\textit{t-all})]
+{ \begin{array}{l}
+  \Gamma \turn \mathtt{all}\ \corefeed{} : \feedty{\sigma}
+ \end{array}
+}
+{
+ \begin{array}{c}
+  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+ \end{array}
+}
+\]
+
+\[
+\infer[(\textit{t-any})]
+{ \begin{array}{l}
+  \Gamma \turn \mathtt{any}\ \corefeed{} : \feedty{\sigma}
+ \end{array}
+}
+{
+ \begin{array}{c}
+  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+ \end{array}
+}
+\]
 
 \[
 \infer[(\textit{t-empty})]
@@ -287,32 +318,6 @@ feed generates a feed of lists where each element of the list is scheduled at th
 {
   \Gamma \turn e_1 : \ty_1 & 
   \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\sigma_2} 
-}
-\]
-
-\[
-\infer[(\textit{t-all})]
-{ \begin{array}{l}
-  \Gamma \turn \mathtt{all}\ \corefeed{} : \feedty{\optionty{\ty}}
- \end{array}
-}
-{
- \begin{array}{c}
-  \Gamma \turn \corefeed{} : \feedty{\optionty{\ty}}
- \end{array}
-}
-\]
-
-\[
-\infer[(\textit{t-any})]
-{ \begin{array}{l}
-  \Gamma \turn \mathtt{any}\ \corefeed{} : \feedty{\optionty{\ty}}
- \end{array}
-}
-{
- \begin{array}{c}
-  \Gamma \turn \corefeed{} : \feedty{\optionty{\ty}}
- \end{array}
 }
 \]
 

@@ -4,19 +4,54 @@
 \begin{figure*}[t]
 \[
 \begin{array}{lcl}
-%\esemantics{e}{\environment} &=& \mbox{denotation of simply-typed term $e$ in environment $\environment$ mapping variables to values.}
-%\\
-%\\
-%\semantics{\feed}{\environment}{\universe} &=& \mbox{denotation of 
-%$\feed$ in environment $\environment$ mapping variables to values.} \\
-% && \mbox{and ``universe'' $\universe$ mapping schedule time and location to 
-%          arrival time and string data}
-%\\
-% \\
-% \semantics{x}{\environment}{\universe} 
-%  &=& (\environment(x_t), \environment(x))
-% \\
+
+    {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
+ &=& (S, \{((\atime,\loc), \esemantics{e_f\; (\universe'(\loc,\atime))}{\environment}))
+          \setalt \atime \in S
+          \;\mbox{and}\; \loc \in  \esemantics{e_{src}}{\environment}
+     \})
 \\
+ \quad\ \   \mathtt{sched=} e_{sched};
+&&\quad\mbox{where} \\
+ \quad\ \  \mathtt{win=} e_{win};
+&& \qquad S = \esemantics{e_{sched}}{\environment} \\
+ \quad\ \  \mathtt{pp=} e_{pp};
+&& 
+\qquad \mathtt{timeout} =  
+     \lambda (x_t,(x_{at},x_s)).
+        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_{win}}{\environment} \,
+        \mathtt{then}\,  x_s \, \mathtt{else} \, \mathtt{None} 
+ \\
+ \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \, {\universe}}
+&& \qquad \universe' =
+     \lambda (x_{\ell}, x_t). 
+           \esemantics{e_{pp}}{\environment}\, 
+                 (\mathtt{timeout}\, (x_t,\universe (x_\ell,x_t))) 
+\\\\
+
+\semantics{\mathtt{all}\ \corefeed}{\universe}{\environment} 
+&=& 
+A\ \ \ \mbox{where}\ (S,A) = \csemantics{C}{\universe}{\environment}
+\\\\
+
+
+%New version: any rule
+\semantics{\mathtt{any}\ \corefeed}{\universe}{\environment} 
+& = & \{ i_t\ |\ \atime \in S\}\\
+&&
+\begin{array}{l}
+ \begin{array}{ll@{\hspace{1ex}}c@{\hspace{1ex}}l}
+ \mbox{where} & (S,A)   & = &\csemantics{C}{\environment}{\universe}\\
+              & A_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+              & i_\atime & = & \left\{ \begin{array}{lll}
+                                           \mbox{\selectOne}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
+                                           ((\atime,\generatedloc), \none) & \mbox{if} & |A_\atime| = 0 \\
+                                           \end{array} \right.\\
+ \end{array}
+\end{array} 
+%%End New version: any rule
+\\\\
+
 \semantics{\emptyfeed}{\environment}{\universe} 
  &=& \{\;\}
 \\\\
@@ -40,79 +75,6 @@
  &=& \semantics{\feed_2}{(\environment,x\mapsto\esemantics{e_1}{\environment})}{\universe} 
 \\\\
 
-%  \begin{array}{l}
-    {\cal F}\lsem\mathtt{all \{ format=} e_1; 
-%    \allfeed{e_1}{e_2}{e_3}{e_4}
-%  \end{array} 
-%}{\environment}{\universe} 
- &=& \{((\atime,\loc), \esemantics{e_1\; (\universe'(\loc,\atime))}{\environment}))
-          \setalt \atime \in  \esemantics{e_3}{\environment} 
-          \;\mbox{and}\; \loc \in  \esemantics{e_2}{\environment}
-     \} 
-\\
- \qquad\quad\ \,   \mathtt{src=} e_2;
-&&\quad\mbox{where} \\
- \qquad\quad\ \,    \mathtt{sched=} e_3;
-&& \qquad \mathtt{timeout} =  
-     \lambda (x_t,(x_{at},x_s)).
-        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_5}{\environment} \,
-        \mathtt{then}\,  x_s \, \mathtt{else} \, \mathtt{None} \\
- \qquad\quad\ \,    \mathtt{pp=} e_4;
-&& \qquad \universe' =
-     \lambda (x_{\ell}, x_t). 
-           \esemantics{e_4}{\environment}\, 
-                 (\mathtt{timeout}\, (x_t,\universe (x_\ell,x_t))) 
- \\
- \qquad\quad\ \,    \mathtt{win=} e_5; \}\rsem_{{\environment} \, {\universe}}
-&& \\
-% \\
-% {\cal F}\lsem\mathtt{any \{ format=} e_1;
-% % \semantics{\existsfeed{e_1}{e_2}{e_3}{e_4}}{\environment}{\universe} 
-%  &=& \bigcup_{\atime \in \esemantics{e_2}{\environment}} f\; \atime \\
-%  \qquad\qquad\ \ \ \,   \mathtt{src=} e_2;
-% &&\quad\mbox{where} \\
-% %\begin{array}{l}
-%  \qquad\qquad\ \ \ \,    \mathtt{sched=} e_3;
-%   && \qquad \universe' \, = \lambda x{:}\locty * \timety. \esemantics{e_4}{\environment} (x,\universe(x)) \\
-%  \qquad\qquad\ \ \ \,    \mathtt{pp=} e_4;
-% &&\qquad
-%   f\; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; (\some{v})\} \\
-%  \qquad\qquad\ \ \ \,   \mathtt{win=} e_5;
-%  \}\rsem_{{\environment} \, {\universe}}
-% &&\qquad\qquad \qquad\qquad 
-%   \mbox{for some $\loc \in \esemantics{e_2}{\environment}$ such that
-%     $\universe'(\atime,\loc) = \some{v}$} \\
-% &&\qquad
-%   f \; \atime = \{(\atime,(\loc,\esemantics{e_1}{\environment}\; \none\} \\
-% &&\qquad\qquad \qquad\qquad 
-%   \mbox{if no such $\loc$ exists} \\
-% %\end{array}
-% \\
-\\
-
-%New version: any rule
-{\cal F}\lsem\mathtt{any \{ format=} e_1; & = & \{ i_t\ |\ \atime \in \esemantics{e_3}{\environment}\}\\
-
-\begin{array}{l}
-    \qquad\quad   \mathtt{src=} e_2;\\
-    \qquad\quad   \mathtt{sched=} e_3;\\
-    \qquad\quad   \mathtt{pp=} e_4;\\
-    \qquad\quad   \mathtt{win=} e_5;  \}\rsem_{{\environment} \, {\universe}}\\[2ex]
-\end{array} 
- &&
-\begin{array}{l}
-\quad\mbox{where} \\
- \begin{array}{l@{\hspace{.5ex}}c@{\hspace{.5ex}}l}
- \qquad A & = &\semantics{\allfeed{e_1}{e_2}{e_3}{e_4}{e_5}}{\environment}{\universe}\\
- \qquad A_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
- \qquad   i_\atime & = & \left\{ \begin{array}{lll}
-                         \mbox{\selectOne}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
-                         ((\atime,\generatedloc), \none) & \mbox{if} & |A_\atime| = 0 \\
-                       \end{array} \right.\\
- \end{array}
-\end{array} 
-%%End New version: any rule
-\\\\
 \semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
  &=& \semantics{\feed_1}{\environment}{\universe} 
      \bigcup
@@ -238,7 +200,7 @@
 \mathtt{foreach{*}{*}}\; x \; \mathtt{in}\; \feed_1 
  &=&
    \{(\meta_2,v_2) \setalt (\atime,(\meta_1,\meta_2)),(v_1,v_2)) \in 
-       \semantics{x{:}\feed_1\, **\, \feed_2}{\environment}{\universe} \}\\
+       \semantics{x{:}\feed_1\, {**}\, \feed_2}{\environment}{\universe} \}\\
 \qquad\qquad\ \ \ \mathtt{update}\; \feed_2 \rsem_{{\environment} \, {\universe}}
 \\\\
 %% end new foreach **
