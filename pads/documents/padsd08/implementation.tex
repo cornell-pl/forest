@@ -222,6 +222,7 @@ and printing~\cite{xmllight}.
 %useful runtime functions such as map and fold for advanced
 %users to program against the feeds.
 
+\cut{
 \begin{table*}[th]
 \begin{center}
 \begin{tabular}{|l|r|r|r|r|r|r|r|r|r|r|r|r|}\hline
@@ -252,55 +253,85 @@ Throughput (items/sec)&	2.9&	16.7&	21.4&	28.6&	9.3&	25&	13&	13.3&	23.7&	15.2&	12
 \caption{Performance of CoMon with archiving}
 \label{tab:comon-arch}
 \end{table*}
+}
 
 \subsection{Experiments} \label{sec:experiments}
+
+\begin{figure}[th]
+\begin{center}
+\epsfig{file=throughput.eps, width=\columnwidth}
+\epsfig{file=latency.eps, width=\columnwidth}
+\caption{Average throughput and latencies per node}
+\label{fig:throughput}
+\end{center}
+\end{figure}
+
 As a preliminary performance evaluation, 
 we measure the average network latency
 to fetch a data item, the average system latency 
 to produce a data item
-and the total throughput of the system using the CoMon feed
+and the throughput of the system using the CoMon feed
 description in Figure \ref{fig:feedcomon}. 
 The throughput measures the average
 number of locations fetched per second. We picked
 the comon example because it is a real life
 application that involves fetching from large number of 
-nodes (up to 842 nodes at the time of writing)
-at the same time, which can be viewed as a stress test. 
+nodes (800+) at the same time, which can be viewed as a stress test. 
 
 All the experiments were conducted on a Mac Powerbook G4 computer
 with a 1.67GHz CPU and 2GB memory running Mac OS X 10.4. It is
-connected to the internet through a 100Mb/s ethernet. 
-We randomly select 50, 100, and up to 600 nodes from the 
-real CoMon node list, 
+connected to the internet via a 11Mb/s wireless ethernet.
+In each experiment, We randomly selected 50 nodes,
+100 nodes, up to 800 nodes from the real CoMon node list 
 \footnote{List taken from http://www.cs.princeton.edu/~vivek/node\_list\_all. 
-Not all nodes are up at the same time.}
-and use these smaller node lists as a total of 12 test cases. 
+Nodes could come and go sporadically.} to form
+16 node sets. For each node set,
+we applied the profiler tool on the comon feed twice, one without
+archiving and one with archiving, and measured the throughput
+and latencies as the system fetched from these node lists. 
+We then repeat the experiment ten times and calculate the average values.
 
-Tables \ref{tab:comon-noarch} and \ref{tab:comon-arch}
-shows the results from two different scenarios:
-one in which the user program simply creates the comon feed without applying
-any tools on it, and one in which the comon feed is created
-and archived. In both scenarios, the system was
-able to fetch from up to 600 nodes within one minute, which is
-significantly shorter than the 5-minute turnaround time in the real
-CoMon system.
+Figure \ref{fig:throughput} shows the average throughtput
+and the average network and system latencies measured.
+Generally, the throughtput goes up with the number of nodes
+until 200 and then starts declining and saturating
+as it approaches 800. Locally, the throughput peaks at
+multiples of 200 nodes because 200 is the size of the
+fetching batch. At multiples of 200, the concurrent
+fetching is maximally utilized. The exception is
+at 400 nodes, where the node sets contain a number of
+unreachable nodes due to DNS failures. It is also noted that
+archiving adds to the overhead of the system and hence
+reduces the throughput. 
+In the latency graph, the main take-away message is that
+while network latency goes up with the number of nodes,
+the system latency remains almost constant and relatively
+small. This shows that the \padsd{} runtime system adds
+very little overhead to the inevitable network fetching
+cost. It also worth noting that the network latency is
+almost linear with the number of nodes. Overall, the system
+could fetch up to 800 nodes and archive all the data in under 
+40 secs, compared to the 5-minute turnaround time in the 
+CoMon system. All these suggest that the system is practical
+and could scale to PlanetLab size applications. 
 
-\begin{figure}[th]
-\begin{center}
-\epsfig{file=throughput.eps, width=\columnwidth}
-\caption{Average throughput}
-\label{fig:throughput}
-\end{center}
-\end{figure}
+%Tables \ref{tab:comon-noarch} and \ref{tab:comon-arch}
+%shows the results from two different scenarios:
+%one in which the user program simply creates the comon feed without applying
+%any tools on it, and one in which the comon feed is created
+%and archived. In both scenarios, the system was
+%able to fetch from up to 600 nodes within one minute, which is
+%significantly shorter than the 5-minute turnaround time in the real
+%CoMon system.
+%\begin{figure}[th]
+%\begin{center}
+%\epsfig{file=latency.eps, width=\columnwidth}
+%\caption{Average latencies per node}
+%\label{fig:latency}
+%\end{center}
+%\end{figure}
 
-\begin{figure}[th]
-\begin{center}
-\epsfig{file=latency.eps, width=\columnwidth}
-\caption{Average latencies per node}
-\label{fig:latency}
-\end{center}
-\end{figure}
-
+\cut{
 We plot the average throughput in Figure \ref{fig:throughput}
 and the system and network latencies in Figure \ref{fig:latency}. 
 As expected, both the thoughput and latency suffer a little with 
@@ -317,4 +348,4 @@ stays almost constant at relatively low levels. This shows that
 the \padsd{} system runtime adds little overhead to the 
 inevitable network cost, which means the system could scale to
 large applications. 
-
+}

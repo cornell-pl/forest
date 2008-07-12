@@ -1,5 +1,5 @@
 set term postscript eps size 5,2.5 "Helvetica" 14
-set key top left
+set key top right
 set style data lp
 set xlabel "Number of nodes"
 set xrange [0:850]
