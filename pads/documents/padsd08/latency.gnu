@@ -1,6 +1,7 @@
 set term postscript eps size 5, 2.5 "Helvetica" 14
 set style data lp
 set key top left
+set xrange [0:850]
 set xlabel "Number of nodes"
 set ylabel "Average Latency (secs)"
 set output 'latency.eps'
