@@ -22,7 +22,7 @@ manipulated by CoMon~\cite{comon}, a system designed to monitor the
 health, performance and security of PlanetLab~\cite{planetlab}.  Every
 five minutes, CoMon attempts to contact each of 842 PlanetLab nodes
 across 416 sites worldwide.%
-\footnote{Current data; PlanetLab membership varies over time.} %
+%\footnote{Current data; PlanetLab membership varies over time.} %
 % 
 When all is well, which it never is, each node responds with
 an ASCII data file in mail-header format containing information
@@ -60,11 +60,12 @@ Golem~\cite{golem}, built by computational biologists at Princeton,
 routinely obtain data from a number of sources scattered
 across the net.  Often, the data is archived and later analyzed or
 mined for information about gene structure and regulation.
-Likewise, cosmologists access data uploaded from major
-telescopes~\cite{sdss}. Economists make use of the vast data
-repositories at \url{FedStats.org} amongst other sources.  
+%Likewise, cosmologists access data from
+%telescopes~\cite{sdss}. 
+%Economists make use of the vast data
+%repositories at \url{FedStats.org} amongst other sources.  
 Figure~\ref{fig:exampledata} summarizes 
-selected ad hoc data sources.
+selected distributed ad hoc data sources.
 
 
 \begin{figure*}
@@ -182,7 +183,7 @@ The second mode is
 for the {\em single-minded implementer}, who needs to build a new
 application for a {\em specific} collection of distributed data
 sources.  Such users need more than the built-in set of tools, 
-and consequently, the system provides support for
+and consequently the system provides support for
 creating new tools by automatically generating libraries for fetching
 data, for parsing and printing, for performing type-safe data
 traversal, and for stream processing using classic functional
@@ -196,8 +197,8 @@ who is not interested in functional programming may prefer to stick with
 the quick-and-dirty. 
 
 The third mode is for the {\em generic programmer}.  Generic
-programmers may observe that they (or their colleagues or fellow domain
-experts) need to perform some task over and over again on different
+programmers may observe that they (or their colleagues) 
+need to perform some task over and over again on different
 data sets.  Rather than writing a program specific to a particular
 data set, they use a 
 separate set of interfaces supplied by the \padsd{} system to write a
@@ -256,6 +257,30 @@ generic tools ourselves and will continue to build more as we see fit.
 % data set, they use a 
 % separate set of interfaces supplied by the \padsd{} system to write a
 % single generic program to complete the task.
+
+
+\begin{figure}[t]
+\begin{code}
+(* Simple CoMon distributed data description *)
+\kw{let} sites = 
+  [
+    "http://pl1.csl.utoronto.ca:3121";
+    "http://plab1-c703.uibk.ac.at:3121";
+    "http://planet-lab1.cs.princeton.edu:3121"
+  ] 
+\kw{feed} simple_comon =
+  \kw{base} \{|
+    \kw{sources}  = \kw{all} sites;
+    \kw{schedule} = every 5 min, starting now, 
+               timeout 60.0 sec; 
+    \kw{format}   = Comon_format.Source;  
+  |\}
+\end{code}
+\vskip -2ex
+\caption{Simple CoMon feed that fetches data from all sites every minute.}
+\label{fig:simplecomon}
+\end{figure}
+
 
 \paragraph*{Contributions.}  To summarize, this paper makes the
 following key contributions:

@@ -19,35 +19,13 @@ up. Finally, the \kw{format} field indicates that the fetched data
 conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} description named
 \cd{Source} defined in the file \cd{comon_format}.
 
-\begin{figure}
-\begin{code}
-(* Simple CoMon distributed data description *)
-\kw{let} sites = 
-  [
-    "http://pl1.csl.utoronto.ca:3121";
-    "http://plab1-c703.uibk.ac.at:3121";
-    "http://planet-lab1.cs.princeton.edu:3121"
-  ] 
-\kw{feed} simple_comon =
-  \kw{base} \{|
-    \kw{sources}  = \kw{all} sites;
-    \kw{schedule} = every 5 min, starting now, 
-               timeout 60.0 sec; 
-    \kw{format}   = Comon_format.Source;  
-  |\}
-\end{code}
-\vskip -2ex
-\caption{Simple CoMon feed that fetches data from all sites every minute.}
-\label{fig:simplecomon}
-\end{figure}
-
 In contrast to the \cd{simple\_comon} feed, which returns data from
 all sites, the \cd{comon\_1} feed defined in \figref{fig:comon_1}
 uses the \kw{any} constructor in the \kw{sources} field to 
 return only a single value per time slice: that of the first site to
 supply a complete set of data.
 %
-\begin{figure}
+\begin{figure}[t]
 \begin{code}
 \kw{feed} comon_1 =
   \kw{base} \{|
@@ -81,11 +59,59 @@ the duration of the feed.  It omits the \cd{starting} and
 %timeout.  
 settings for the start time and timeout window.  
 
+
+
 The \cd{simple\_comon} example hard-codes the set of locations from
 which to gather performance data.  In reality, the CoMon system has an
 internet-addressable configuration file that contains a list of hosts
 to be queried, one per non-comment line. This list is periodically
 updated to reflect the set of active nodes in PlanetLab. 
+
+
+
+\begin{figure}
+\begin{code}
+(* Ocaml helper values and functions *)
+\kw{let} config_location = 
+  ["http://summer.cs.princeton.edu/status/ \\
+    tabulator.cgi?table=slices/ \\
+    table_princeton_comon&format=nameonly"]
+
+\kw{let} makeURL (Nodelist.Data x) = 
+     "http://" ^ x ^ ":3121"
+
+\kw{let} old_locs = ref []
+\kw{let} current list_opt =
+  \kw{match} list_opt \kw{with}
+    Some l ->  old_locs := l; l
+  | None   -> !old_locs
+
+(* Feed of nodes to query *)
+\kw{feed} nodes =  
+  \kw{base} \{|
+    \kw{sources}  = \kw{all} config_location;
+    \kw{schedule} = every 2 min;
+    \kw{format}   = Nodelist.Source;
+  |\}
+
+(* Dependent CoMon feed of node statistics *)
+\kw{feed} comon =
+  \kw{foreach} nodelist \kw{in} nodes 
+  \kw{create}
+    \kw{base} \{|
+      \kw{sources}  = \kw{all} (List.map makeURL 
+                     (List.filter Nodelist.is_node 
+                     (current nodelist)));
+      \kw{schedule} = once, timeout 60.0 sec; 
+      \kw{format}   = Comon_format.Source;
+    |\}
+\end{code}
+\vskip -2ex
+\caption{CoMon program that uses a feed of node locations to drive
+  data collection.}
+\label{fig:feedcomon}
+\end{figure}
+
 
 \figref{fig:feedcomon} specifies a version of the \cd{comon} feed that
 depends upon this configuration information.  To do so, the
@@ -137,50 +163,6 @@ notices changes in the configuration file within two minutes.
 
 
 
-
-
-\begin{figure}
-\begin{code}
-(* Ocaml helper values and functions *)
-\kw{let} config_location = 
-  ["http://summer.cs.princeton.edu/status/ \\
-    tabulator.cgi?table=slices/ \\
-    table_princeton_comon&format=nameonly"]
-
-\kw{let} makeURL (Nodelist.Data x) = 
-     "http://" ^ x ^ ":3121"
-
-\kw{let} old_locs = ref []
-\kw{let} current list_opt =
-  \kw{match} list_opt \kw{with}
-    Some l ->  old_locs := l; l
-  | None   -> !old_locs
-
-(* Feed of nodes to query *)
-\kw{feed} nodes =  
-  \kw{base} \{|
-    \kw{sources}  = \kw{all} config_location;
-    \kw{schedule} = every 2 min;
-    \kw{format}   = Nodelist.Source;
-  |\}
-
-(* Dependent CoMon feed of node statistics *)
-\kw{feed} comon =
-  \kw{foreach} nodelist \kw{in} nodes 
-  \kw{create}
-    \kw{base} \{|
-      \kw{sources}  = \kw{all} (List.map makeURL 
-                     (List.filter Nodelist.is_node 
-                     (current nodelist)));
-      \kw{schedule} = once, timeout 60.0 sec; 
-      \kw{format}   = Comon_format.Source;
-    |\}
-\end{code}
-\vskip -2ex
-\caption{CoMon program that uses a feed of node locations to drive
-  data collection.}
-\label{fig:feedcomon}
-\end{figure}
 
 \begin{figure}
 \begin{code}

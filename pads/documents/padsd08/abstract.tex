@@ -1,21 +1,22 @@
 The term {\em ad hoc data} refers to the billions of bytes of
 non-standard and continuously evolving data spread across all computer
 systems.  Such data includes server logs, distributed system
-performance and debugging data, automated billing information,
+performance and debugging data, 
 telephone call records, financial data and online repositories of
-scientific data including genetic information, cosmology data and
-global weather systems.
+scientific data.
+% including genetic information, cosmology data and
+%global weather systems.
 
 This paper presents \padsd{}, a system that generates monitoring,
 analysis and transformation tools for distributed ad hoc data from
 declarative specifications.  The generated tools include an archiver,
-a database loading system, a simple query tool, a statistical
-analyzer, a profile-based alerting system, an RSS feed generator, and
+a database loading system, a statistical analyzer, an alert system, 
+an RSS feed generator, and
 debugging tools.  In addition, the system generates libraries for
 application developers, including modules for parsing, printing, error
 management, data traversal and transformation which developers can use
 to create their own application-specific tools.  Advanced users can
-build generic tools applicable to any collection of data sources.
+build new generic tools applicable to any collection of data sources.
 
 The \padsd{} data description language allows data analysts to specify
 {\em where} their ad hoc data is located, {\em how} to obtain it, {\em
@@ -30,8 +31,7 @@ monitoring system for a web hosting service provided by AT\&T.  We
 define a formal semantics for the language, describe our
 implementation, and evaluate its performance.  We show our system is
 capable of scaling to distributed systems the size of CoMon,
-the current monitor for Planetlab's geographically distributed 800+
-nodes.
+the current monitor for Planetlab's 800+ nodes.
 
 % CoMon 
 % the Safari web
