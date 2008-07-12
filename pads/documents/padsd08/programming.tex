@@ -29,16 +29,17 @@ the data.
 \kw{in}  print_top 10 load_tbl
 \end{codebox}
   \caption{Code fragment for finding \planetlab nodes with low load
-  over the last 10 minutes (600 seconds).  \texttt{Feed.split\_every n}
-  extracts the first \texttt{n} seconds of any feed. 
-  Function \texttt{create} constructs an empty hash table; function 
-  \texttt{update} adds
-  an entry to the hash table; function
-  \texttt{print\_top k} prints the \texttt{k} lowest loads from the table.}
+  over the last 10 minutes (600 seconds).  }
 \label{fig:sample-loads}
 %\vskip -2ex
 \end{figure}
 
+%% \texttt{Feed.split\_every n}
+%%   extracts the first \texttt{n} seconds of any feed. 
+%%   Function \texttt{create} constructs an empty hash table; function 
+%%   \texttt{update} adds
+%%   an entry to the hash table; function
+%%   \texttt{print\_top k} prints the \texttt{k} lowest loads from the table.
 
 %% \begin{figure}[tb]
 %% \begin{codebox}
@@ -90,8 +91,12 @@ orthogonal to our discussion. First, we use \cd{Feed.split_every} to
 split the feed when 600 seconds (10 minutes) have elapsed. Then, we
 use \cd{Feed.map} to project the loads data from the\comon
 elements. Finally, we use \cd{Feed.fold} to collect the load values
-into a table after which we can average the data on a per node basis
-and extract the $10$ lowest values.
+into a table. Function \texttt{create} (defined elsewhere)
+constructs an empty table; function 
+\texttt{update} adds an entry to the table.
+After filling the table, \texttt{print\_top 10}
+processes the data on a per-node basis
+and prints the ten lowest average loads.
 
 However, this solution is not quite enough. The \comon data format
 does not include the host name in the data itself, so the code in
