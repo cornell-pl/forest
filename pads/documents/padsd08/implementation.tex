@@ -62,7 +62,7 @@ convert their sources into O'Caml, which is compiled and
 linked to the run-time libraries.  Each tool was implemented using 
 Camlp4, the O'Caml preprocessor. 
 
-\begin{figure}[th]
+\begin{figure}[t]
 \centering
 \begin{codebox}
 let simple_comon =
@@ -259,7 +259,7 @@ Throughput (items/sec)&	2.9&	16.7&	21.4&	28.6&	9.3&	25&	13&	13.3&	23.7&	15.2&	12
 
 \subsection{Experiments} \label{sec:experiments}
 
-\begin{figure}[th]
+\begin{figure}[t]
 \begin{center}
 \epsfig{file=throughput.eps, width=\columnwidth}
 \epsfig{file=latency.eps, width=\columnwidth}
@@ -268,25 +268,27 @@ Throughput (items/sec)&	2.9&	16.7&	21.4&	28.6&	9.3&	25&	13&	13.3&	23.7&	15.2&	12
 \end{center}
 \end{figure}
 
-As a preliminary performance evaluation, 
+To assess system performance,
 we measure the average network latency
 to fetch a data item, the average system latency 
 to produce a data item
 and the throughput of the system using the CoMon feed
 description in Figure \ref{fig:feedcomon}. 
 The throughput measures the average
-number of locations fetched per second. We picked
-the comon example because it is a real life
-application that involves fetching from large number of 
-nodes (800+) at the same time, which can be viewed as a stress test. 
+number of items fetched per second. 
+%We picked
+%the comon example because it is a real life
+%application that involves fetching from large number of 
+%nodes (800+) at the same time, which can be viewed as a stress test. 
 
 All the experiments were conducted on a Mac Powerbook G4 computer
 with a 1.67GHz CPU and 2GB memory running Mac OS X 10.4. It is
 connected to the internet via a 11Mb/s wireless ethernet.
 In each experiment, We randomly selected 50 nodes,
-100 nodes, up to 800 nodes from the real CoMon node list 
-\footnote{List taken from http://www.cs.princeton.edu/~vivek/node\_list\_all. 
-Nodes could come and go sporadically.} to form
+100 nodes, up to 800 PlanetLab nodes
+%\footnote{List taken from http://www.cs.princeton.edu/~vivek/node\_list\_all. 
+%Nodes could come and go sporadically.} 
+to form
 16 node sets. For each node set,
 we applied the profiler tool on the comon feed twice, one without
 archiving and one with archiving, and measured the throughput
@@ -295,27 +297,38 @@ We then repeat the experiment ten times and calculate the average values.
 
 Figure \ref{fig:throughput} shows the average throughtput
 and the average network and system latencies measured.
-Generally, the throughtput goes up with the number of nodes
-until 200 and then starts declining and saturating
-as it approaches 800. Locally, the throughput peaks at
-multiples of 200 nodes because 200 is the size of the
-fetching batch. At multiples of 200, the concurrent
-fetching is maximally utilized. The exception is
-at 400 nodes, where the node sets contain a number of
-unreachable nodes due to DNS failures. It is also noted that
-archiving adds to the overhead of the system and hence
-reduces the throughput. 
-In the latency graph, the main take-away message is that
+Generally, 
+%the throughtput goes up with the number of nodes
+%until 200 and then starts declining and saturating
+%as it approaches 800. Locally, 
+the throughput hits peaks at
+multiples of 200 nodes since the system supports 
+200 concurrent fetches at one time.
+%is the size of the
+%fetching batch. At multiples of 200, the concurrent
+%fetching is maximally utilized. 
+An anomaly occurred 
+%The exception is
+at 400 nodes, as 
+%the node sets contain 
+a number nodes were unreachable due to DNS failures.
+% at the time of
+%the experiment. 
+%It is also noted that
+%archiving adds to the overhead of the system and hence
+%reduces the throughput. 
+When analyzing latency, the main message is that
 while network latency goes up with the number of nodes,
 the system latency remains almost constant and relatively
 small. This shows that the \padsd{} runtime system adds
 very little overhead to the inevitable network fetching
 cost. It also worth noting that the network latency is
 almost linear with the number of nodes. Overall, the system
-could fetch up to 800 nodes and archive all the data in under 
-40 secs, compared to the 5-minute turnaround time in the 
-CoMon system. All these suggest that the system is practical
-and could scale to PlanetLab size applications. 
+could fetch from up to 800 nodes and archive all the data in under 
+40 secs, which provides ample breathing room inside the 
+5-minute turnaround time currently supported by 
+CoMon. Taken together, these results suggest that the system is 
+perfectly capable of supporting PlanetLab-scale monitoring applications. 
 
 %Tables \ref{tab:comon-noarch} and \ref{tab:comon-arch}
 %shows the results from two different scenarios:

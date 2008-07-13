@@ -1,3 +1,7 @@
+
+\input{syntax}
+
+
 Developing a formal semantics for \padsd{} has been an
 integral part of our language design process.  We have used the semantics to
 communicate our ideas precisely and to explore the nuances of design
@@ -20,57 +24,6 @@ options, pairs, sums, lists and functions.
 We omit the typing annotations from lambda expressions when they can
 be reconstructed from the context.
 
-\begin{figure}[t]
-\[
-\begin{array}{lrll}
-\multicolumn{4}{l}{\mbox{(host-language base types)}}\\ 
-\basety & ::= & \multicolumn{2}{l}{\boolty \bnfalt \stringty \bnfalt \locty \bnfalt \timety \bnfalt \schedulety} \\
-\\
-\multicolumn{4}{l}{\mbox{(host-language types)}}\\ 
-\ty & ::= & \basety & \mbox{base types} \\
- & \bnfalt & \optionty{\ty} & \mbox{option types}\\
- & \bnfalt & \ty_1 * \ty_2 & \mbox{pair types} \\
- & \bnfalt & \ty_1 + \ty_2 & \mbox{sum types} \\
- & \bnfalt & \listty{\ty} & \mbox{list types}\\
-% & \bnfalt & \feedty{\ty} & \mbox{stream types}\\
- & \bnfalt & \ty_1 \arrow \ty_2 & \mbox{function types} \\
-\\
-\multicolumn{4}{l}{\mbox{(host-language values)}}\\ 
-\data & ::= & \boolf \bnfalt \boolt & \mbox{booleans} \\
- & \bnfalt & \astring \bnfalt \loc \bnfalt \atime \bnfalt \schedule &
- \mbox{strings, locations, times, schedules} \\
- & \bnfalt & \none \bnfalt 
-                           \some{\data} & \mbox{optional values}\\
- & \bnfalt & (\data_1,\data_2) & \mbox{pairs} \\
- & \bnfalt & \inl{\data} \bnfalt 
-                           \inr{\data} & \mbox{sum values} \\
- & \bnfalt & \nillist \bnfalt 
-                           \conslist{\data_1}{\data_n} & \mbox{list values} \\
-% & \bnfalt & \nilstream \bnfalt 
-%                           \consstream{\data_1}{\data_2} & \mbox{stream values} \\
-
-& \bnfalt & \lambda x{:}\ty.\expression & \mbox{function values} \\
-\\
-\multicolumn{4}{l}{\mbox{(host-language expressions)}}\\ 
-\expression & ::= & \generalvar & \mbox{variables} \\
- & \bnfalt & \data & \mbox{data values} \\
- & \bnfalt & \none \bnfalt 
-              \some{\expression} & \mbox{option expressions}\\
- & \bnfalt & (\expression_1,\expression_2) \bnfalt e.1 \bnfalt e.2 
-    & \mbox{pair expressions} \\
-% & \bnfalt & \inl{\expression} \bnfalt 
-%             \inr{\expression} & \mbox{sum expressions} \\
-% & \bnfalt & \expression_1 \; \expression_2 & \mbox{application expression} \\
- & \bnfalt & ... & \mbox{more typed lambda expressions} \\
-%\\
-%\multicolumn{4}{l}{\mbox{(feed meta-data:  a subset of host language values)}}\\ 
-%\multicolumn{4}{l}{\mbox{(a special location (\generatedloc) is used when data is created artificially)}}\\ 
-\end{array}
-\]
-\caption{Host Language Syntax.}
-\label{fig:host-language}
-\end{figure}
-
 
 \subsection{Feed Syntax and Typing}
 
@@ -85,6 +38,9 @@ facilitate the proof of semantic soundness.  Feed typing depends upon
 a standard judgment for simply typing lambda calculus expressions:
 $\Gamma \turn e : \ty$.  We discuss the syntax and typing for each
 construct in turn.
+
+\input{typing}
+
 
 Core feeds express the underlying structure of base feeds, describing
 the data sources ($\mathtt{src}$), schedule ($\mathtt{sched}$), window
@@ -151,6 +107,7 @@ enables a paradigm in which programmers define an infinite feed $\feed_2$
 that gets truncated and regenerated whenever a new element in $\feed_1$
 is scheduled.
 
+
 The final elements of the calculus include the $\mathtt{foreach}$ feeds
 and the list comprehension feed.
 Intuitively, a $\mathtt{foreach}$ is identical to a dependent pair in
@@ -162,289 +119,10 @@ feed generates a feed of lists where each element of the list is
 scheduled at the same time.  It is akin to the synchronous pair
 operation. 
 
-\begin{figure}[t]
-\[
-\begin{array}{lll}
-\multicolumn{3}{l}{\mbox{(feed types)}}\\ 
-\multicolumn{3}{l}{\sigma \ ::= \tau \bnfalt \optionty{\tau} 
-  \bnfalt \sigma_1 * \sigma_2
-  \bnfalt \sigma_1 + \sigma_2
-  \bnfalt \listty{\sigma}
-}   \\  
-\\
-\multicolumn{3}{l}{\mbox{(core feed spec)}}\\ 
-\multicolumn{3}{l}{\corefeed \ ::= }\\
-& \{ \ \mathtt{src=}\    e_1;    & \mbox{source specification} \\
-& \ \ \ \mathtt{sched=}\  e_2;    & \mbox{schedule specification}\\
-& \ \ \ \mathtt{win=}\    e_3;    & \mbox{time-out window specification} \\
-& \ \ \ \mathtt{pp=}\     e_4;    & \mbox{pre-processor} \\
-& \ \ \ \mathtt{format=}\ e_5; \} & \mbox{format specification}\\ 
-\\
-\multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
-\multicolumn{3}{l}{\feed \ ::=}   \\  
-% & x &  \mbox{feed variable} \\ %% no feed variables now
-% & \bnfalt 
-         & \mathtt{all}\ \corefeed & \mbox{all sources}\\ 
- \bnfalt & \mathtt{any}\ \corefeed & \mbox{one of multiple sources}\\ 
- \bnfalt & \emptyfeed & \mbox{empty feed} \\
- \bnfalt & \computed{e_1}{x}{e_2} & \mbox{computed feed} \\
- \bnfalt & \comprehensionfeed{e}{x}{\feed} & \mbox{feed comprehension} \\
- \bnfalt & \filterfeed{\feed}{e} & \mbox{filter feed} \\
- \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
- \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
- \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
- \bnfalt & (\feed_1, \feed_2) & \mbox{synchronous pair} \\
-% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
-% & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
-% & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
- \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
- \bnfalt & x{:}\feed_1\, {*}{*} \, \feed_2 & \mbox{dependent local pair} \\
- \bnfalt &     \mathtt{foreach{*}}\; x \; 
-    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create continuous $\feed_2$} \\
- &   \quad \mathtt{create}\; \feed_2 \\
- \bnfalt &     \mathtt{foreach{*}{*}}\; x \; 
-    \mathtt{in}\; \feed_1 & \mbox{for each $x$ updatee local $\feed_2$}\\
- &   \quad \mathtt{update}\; \feed_2 \\
-%\foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
-% \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$} \\
-% & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
-% & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
-% & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
-%                                               fill missing entries with ``None''} \\
-% & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
- \bnfalt & [\feed \bnfalt x \leftarrow e ] & \mbox{list comprehension feed} \\
-\end{array}
-\]
-\caption{Feed Language Syntax.}
-\label{fig:syntax}
-\end{figure}
-
-
-\begin{figure}[th]
-
-% \[
-% \infer[(\textit{t-var})]
-% {\Gamma \turn x : \Gamma(x)}
-% {}
-% \]
-
-\[
-\infer[(\textit{t-core})]
-{ \begin{array}{l}
-  \Gamma \turn 
-   \{
-      \mathtt{src=} e_1;\
-      \mathtt{sched=} e_2; \
-      \mathtt{win=} e_3;\\ \qquad \ \ 
-      \mathtt{pp=} e_4;\
-      \mathtt{ format=} e_5; 
-   \} 
-   : \schedulety * (\feedty{\optionty{\ty}})
- \end{array}
-}
-{
- \begin{array}{c}
-  \Gamma \turn e_1 : \listty{\locty} \quad \
-  \Gamma \turn e_2 : \schedulety \quad \
-  \Gamma \turn e_3 : \timety\\
-  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
-  \Gamma \turn e_5 : \optionty{\stringty} \arrow \optionty{\ty} \\
- \end{array}
-}
-\]
-
-\[
-\infer[(\textit{t-all})]
-{ \begin{array}{l}
-  \Gamma \turn \mathtt{all}\ \corefeed{} : \feedty{\sigma}
- \end{array}
-}
-{
- \begin{array}{c}
-  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
- \end{array}
-}
-\]
-
-\[
-\infer[(\textit{t-any})]
-{ \begin{array}{l}
-  \Gamma \turn \mathtt{any}\ \corefeed{} : \feedty{\sigma}
- \end{array}
-}
-{
- \begin{array}{c}
-  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
- \end{array}
-}
-\]
-
-\[
-\infer[(\textit{t-empty})]
-{\Gamma \turn \emptyfeed : \feedty{\sigma}}
-{}
-\]
-
-\[
-\infer[(\textit{t-compute})]
-{\Gamma \turn \computed{e_1}{x}{e_2} : \feedty{\ty}}
-{
-  \Gamma \turn e_2 : \schedulety &
-  \Gamma,x{:}\timety \turn e_1 : \ty 
-}
-\]
-
-\[
-\infer[(\textit{t-comph})]
-{\Gamma \turn \comprehensionfeed{e}{x}{\feed} : \feedty{\ty}}
-{
-  \Gamma \turn \feed :  \feedty{\sigma} &
-  \Gamma,x{:}\sigma \turn e : \ty 
-}
-\]
-
-\[
-\infer[(\textit{t-filter})]
-{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\sigma}}
-{
-  \Gamma \turn \feed : \feedty{\sigma} &
-  \Gamma \turn e : \sigma \arrow \boolty
-}
-\]
-
-\[
-\infer[(\textit{t-let})]
-{\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\sigma_2}}
-{
-  \Gamma \turn e_1 : \ty_1 & 
-  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\sigma_2} 
-}
-\]
-
-\[
-\infer[(\textit{t-union})]
-{\Gamma \turn \feed_1 \unionfeed \feed_2  : \feedty{\sigma}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma} &
-  \Gamma \turn \feed_2 : \feedty{\sigma}
-}
-\]
-
-\[
-\infer[(\textit{t-sum})]
-{\Gamma \turn \feed_1 \sumfeed \feed_2  : \feedty{\sigma_1 + \sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-\[
-\infer[(\textit{t-synch-pair})]
-{\Gamma \turn (\feed_1, \feed_2)  : \feedty{\sigma_1 * \sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-% \[
-% \infer[(\textit{t-local-pair})]
-% {\Gamma \turn \feed_1 * \feed_2  : \feedty{\sigma_1 * \sigma_2}}
-% {
-%   \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-%   \Gamma \turn \feed_2 : \feedty{\sigma_2}
-% }
-% \]
-
-\[
-\infer[(\textit{t-cont-pair})]
-{\Gamma \turn x{:}\feed_1 * \feed_2  : \feedty{\sigma_1 * \sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-\[
-\infer[(\textit{t-local-pair})]
- {\Gamma \turn x{:}\feed_1 \allpairfeed \feed_2  : \feedty{\sigma_1 * \sigma_2}}
- {
-   \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-   \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
- }
-\]
-
-\[
-\infer[(\textit{t-foreachcont})]
-{\Gamma \turn \foreachcreate{x}{\feed_1}{\feed_2}  : \feedty{\sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-\[
-\infer[(\textit{t-foreachlocal})]
-{\Gamma \turn \foreachupdate{x}{\feed_1}{\feed_2}  : \feedty{\sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-
-% \[
-% \infer[(\textit{t-pp})]
-% {\Gamma \turn \ppfeed{\feed}{e} : \feedty{\ty}}
-% {
-%   \Gamma \turn \feed : \feedty{\ty} &
-%   \Gamma \turn e : ((\locty * \timety) * \stringty) \arrow \stringty
-% }
-% \]
-
-% \[
-% \infer[(\textit{t-redirect})]
-% {\Gamma \turn \remapfeed{\feed}{e} : \feedty{\ty}}
-% {
-%   \Gamma \turn \feed : \feedty{\ty} &
-%   \Gamma \turn e : \locty * \timety \arrow \locty * \timety
-% }
-% \]
-
-%% \[
-%% \infer[(\textit{t-reschedule})]
-%% {\Gamma \turn \refeed{\feed}{e} : \feedty{\optionty{\ty}}}
-%% {
-%%   \Gamma \turn \feed : \feedty{\ty} &
-%%   \Gamma \turn e : \schedulety
-%% }
-%% \]
-
-%% \[
-%% \infer[(\textit{t-stutter})]
-%% {\Gamma \turn \stutterfeed{\feed}{e} : \feedty{\ty}}
-%% {
-%%   \Gamma \turn \feed : \feedty{\ty} &
-%%   \Gamma \turn e : \schedulety
-%% }
-%% \]
-
-
-\[
-\infer[(\textit{t-listf})]
-{\Gamma \turn [\feed \bnfalt x \leftarrow e ]  : \feedty{\listty{\sigma}}}
-{
-  \Gamma \turn e : \listty{\tau} &
-  \Gamma,x{:}\tau \turn \feed : \feedty{\sigma} 
-}
-\]
-
-\caption{Feed Language Typing.}
-\label{fig:typing}
-\end{figure}
 
 %\input{semantics1}
+
+\input{semantics2}
 
 \subsection{Feed Semantics}
 We give the semantics of our formal feed language in 
@@ -517,6 +195,8 @@ timeout, and applies the preprocessor
 is then pairs of base metadata $(\atime,\ell)$ with data defined by
 $\esemantics{e_{f} \; (\universe'(\loc,\atime))}{\environment}$ where
 $e_f$ is the \pads{}-generated parser.
+
+
 
 The semantics of both the $\mathtt{all}\ \corefeed$ and the
 $\mathtt{any}\ \corefeed$ feeds first computes the meaning $(S,A)$ of the
@@ -603,6 +283,7 @@ for all $(\meta,v) \in \semantics{\feed}{\environment}{\universe}$,
 $\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
 \end{theorem}
 The proof follows by induction on the structure of $\feed$.
-\input{semantics2}
+
+
 
 

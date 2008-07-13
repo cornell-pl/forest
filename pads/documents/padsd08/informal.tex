@@ -2,6 +2,43 @@ To introduce our feed declaration language, we work through a
 series of examples of increasing sophistication, based around CoMon and
 AT\&T's web hosting monitors. 
 
+
+\begin{figure}[t]
+\begin{code}
+\kw{let} sites = 
+  [
+    "http://pl1.csl.utoronto.ca:3121";
+    "http://plab1-c703.uibk.ac.at:3121";
+    "http://planet-lab1.cs.princeton.edu:3121"
+  ] 
+\kw{feed} simple_comon =
+  \kw{base} \{|
+    \kw{sources}  = \kw{all} sites;
+    \kw{schedule} = every 5 min, starting now, 
+               timeout 60.0 sec; 
+    \kw{format}   = Comon_format.Source;  
+  |\}
+\end{code}
+\vskip -2ex
+\caption{Simple CoMon feed.}
+\label{fig:simplecomon}
+\end{figure}
+
+\begin{figure}[t]
+\begin{code}
+\kw{feed} comon_1 =
+  \kw{base} \{|
+    \kw{sources}  = \kw{any} sites;
+    \kw{schedule} = every 1 min, lasting 2 hours;
+    \kw{format}   = Comon_format.Source;
+  |\}
+\end{code}
+\vskip -2ex
+\caption{Feed fragment that fetches data from a single source.}
+\label{fig:comon_1}
+\end{figure}
+
+
 \subsection{CoMon Feeds}
 \figref{fig:simplecomon} presents our first attempt to define
 a simple CoMon statistics feed.  This description
@@ -25,19 +62,6 @@ uses the \kw{any} constructor in the \kw{sources} field to
 return only a single value per time slice: that of the first site to
 supply a complete set of data.
 %
-\begin{figure}[t]
-\begin{code}
-\kw{feed} comon_1 =
-  \kw{base} \{|
-    \kw{sources}  = \kw{any} sites;
-    \kw{schedule} = every 1 min, lasting 2 hours;
-    \kw{format}   = Comon_format.Source;
-  |\}
-\end{code}
-\vskip -2ex
-\caption{Feed fragment that fetches data from a single source.}
-\label{fig:comon_1}
-\end{figure}
 %
 This feature is particularly useful when monitoring the
 behavior of replicated systems, such as those using
@@ -113,6 +137,28 @@ updated to reflect the set of active nodes in PlanetLab.
 \end{figure}
 
 
+
+\begin{figure}
+\begin{code}
+\kw{ptype} nodeitem =
+  Comment of '#' * pstring_SE(peor)
+| Data of pstring_SE(peor)
+
+\kw{let} is_node item = 
+  \kw{match} item \kw{with}
+  Data _ -> true
+  | _ -> false
+
+\kw{ptype} source = 
+    nodeitem precord plist (No_sep, No_term)
+\end{code}
+\vskip -2ex
+\caption{\padsml{} description of CoMon configuration files, which
+  contain one host name per non-commented line.}
+\label{fig:nodepml}
+\end{figure}
+
+
 \figref{fig:feedcomon} specifies a version of the \cd{comon} feed that
 depends upon this configuration information.  To do so, the
 description includes an auxiliary feed \cd{nodes} that describes the
@@ -162,27 +208,6 @@ notices changes in the configuration file within two minutes.
 
 
 
-
-
-\begin{figure}
-\begin{code}
-\kw{ptype} nodeitem =
-  Comment of '#' * pstring_SE(peor)
-| Data of pstring_SE(peor)
-
-\kw{let} is_node item = 
-  \kw{match} item \kw{with}
-  Data _ -> true
-  | _ -> false
-
-\kw{ptype} source = 
-    nodeitem precord plist (No_sep, No_term)
-\end{code}
-\vskip -2ex
-\caption{\padsml{} description of CoMon configuration files, which
-  contain one host name per non-commented line.}
-\label{fig:nodepml}
-\end{figure}
 
 The previous examples all showcased feeds that contained a single type
 of data.  \padsd{} also provides a datatype mechanism that allows us
