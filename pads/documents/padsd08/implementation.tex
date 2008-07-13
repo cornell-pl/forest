@@ -45,11 +45,13 @@
 The implementation of the \padsd{} system comes in
 three parts: the compiler, the runtime system, and the
 built-in tools library. In this section, we briefly
-discuss these three parts, and present 
-an evaluation of the system performance. 
-We will show that the system can easily scale
-to support PlanetLab-sized applications with 
-hundreds of nodes. 
+analyze these three parts, and present 
+an evaluation of the system performance.  We conclude
+with a discussion of our choice to design a language
+extension to O'Caml as opposed to just a library.
+%We will show that the system can easily scale
+%to support PlanetLab-sized applications with 
+%hundreds of nodes. 
 
 \subsection{The Compiler}
 There are two parts to the \padsd{} compiler:
@@ -349,3 +351,45 @@ the \padsd{} system runtime adds little overhead to the
 inevitable network cost, which means the system could scale to
 large applications. 
 }
+
+\subsection{Language or Library?}
+
+% reason (4) managing functors & modules?
+
+Our language of feeds is a relatively thin veneer on top of O'Caml
+implemented by the Camlp4 preprocessor.  
+Hence, a natural question to ask is whether the system would be better
+implemented as a library as opposed to a language extension with its
+own syntax and code generator.  There are three main reasons we chose
+to present our work as a language.
+\begin{enumerate}
+\item {\bf Automatic elimination of boilerplate code.} Much of the boilerplate 
+elimination is achieved by parsing fml and config files, filling in 
+defaults and automatically generating driver programs for the naive 
+user that string together generic tools.  Other boilerplate is avoided
+by generating both types and values automatically from descriptions
+(particularly datatype descriptions) and packaging them inside modules.
+\item {\bf Simplicity of coding style for the quick-and-dirty user.}  Our
+Mogensen-Scott encodings, for example, while 
+palatable for the advanced functional programmer, involve {\em very}
+higher-order interfaces with unusually complicated types and heavy
+use of the module system.  It simply seems more involved than the 
+average computational biologist is willing to stomach.
+\item {\bf Lack of convenient support for generic programming in O'Caml.} As mentioned
+previously, many of the tools and libraries are type-directed programs, 
+the implementation of which requires set up of complex higher-order 
+data structures with unusual types more easily generated automatically
+than programmed directly. 
+\end{enumerate}
+Having made our case for a language extension, the bulk of our implementation
+{\em is} a collection of libraries.  Hence, the intrepid hacker may eschew our
+surface syntax and program directly against the interfaces underneith.
+Whatever the programmer chooses, the central contribution of this work
+are the abstractions we provide.  Moreover
+by defining a compact calculus of feeds with a precise formal
+semantics, we believe the ideas presented in this paper can transcend
+their current implementation.  We would be thrilled if others would
+take our abstractions and embed them directly in another language,
+such as Haskell, that provides superior generic programming support
+and the ability to automatically derive implementations from appropriately
+specified type classes.
