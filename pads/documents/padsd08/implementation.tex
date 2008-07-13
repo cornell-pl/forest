@@ -370,39 +370,56 @@ large applications.
 % reason (4) managing functors & modules?
 
 Our language of feeds is a relatively thin veneer on top of O'Caml
-implemented by the Camlp4 preprocessor.  
+implemented using the Camlp4 preprocessor.  
 Hence, a natural question to ask is whether the system would be better
 implemented as a library as opposed to a language extension with its
 own syntax and code generator.  There are three main reasons we chose
 to present our work as a language.
 \begin{enumerate}
-\item {\bf Automatic elimination of boilerplate code.} Much of the boilerplate 
-elimination is achieved by parsing fml and config files, filling in 
-defaults and automatically generating driver programs for the naive 
-user that string together generic tools.  Other boilerplate is avoided
-by generating both types and values automatically from descriptions
-(particularly datatype descriptions) and packaging them inside modules.
-\item {\bf Simplicity of coding style for the quick-and-dirty user.}  Our
-Mogensen-Scott encodings, for example, while 
-palatable for the advanced functional programmer, involve {\em very}
-higher-order interfaces with unusually complicated types and heavy
-use of the module system.  It simply seems more involved than the 
-average computational biologist is willing to stomach.
-\item {\bf Lack of convenient support for generic programming in O'Caml.} As mentioned
-previously, many of the tools and libraries are type-directed programs, 
-the implementation of which requires set up of complex higher-order 
-data structures with unusual types more easily generated automatically
-than programmed directly. 
+\item {\bf Automatic elimination of boilerplate code.} 
+The compiler eliminates several sources of boilerplate by
+(a) generating both type declarations and values simultaneously from 
+descriptions (particularly record types and datatypes), something
+that cannot be done in a library, (b) packaging definitions
+in modules for name-space management and use of functors, 
+(c) filling in defaults of various types omitted from config 
+files automatically, and (d) generating complete, stand-alone 
+executables from just descriptions and config files.
+%Much of the boilerplate 
+%elimination is achieved by parsing fml and config files, filling in 
+%defaults and automatically generating driver programs for the naive 
+%user that string together generic tools.  Other boilerplate is avoided
+%by generating both types and values automatically from descriptions
+%(particularly datatype descriptions) and packaging them inside modules.
+\item {\bf Syntax and simplicity of coding style.}  The underlying
+interfaces are {\em very} higher-order, which, without surface sugar,
+would force a more complex coding style on the naive quick-and-dirty user.
+For instance, almost every line of a description would be translated
+into an increasingly nested combinator application and every variable binding
+would additionally induce a use of higher-order abstract syntax. 
+\item {\bf Generic programming.} O'Caml has no direct support for
+the generic programming needed to implement the tool suite.  After considerable
+study, the most effective way we have found so far to support the required 
+generic programming interface involves judicious use of unsafe casts
+under the covers.  By generating type representations using the compiler,
+we guarantee these casts cannot go wrong.
+\item {\bf Compile-time schedule analysis.} Combinators such as the synchronous
+pair and list feed comprehensions are designed for use with subfeeds that
+share the same schedule.  The programmer has very likely made an error
+if they use these combinators with subfeeds that have different schedules.
+Hence we anticipate future work on schedule analysis to detect such errors
+and to help us optimize our implementation. 
 \end{enumerate}
-Having made our case for a language extension, the bulk of our implementation
-{\em is} a collection of libraries.  Hence, the intrepid hacker may eschew our
-surface syntax and program directly against the interfaces underneith.
-Whatever the programmer chooses, the central contribution of this work
-are the abstractions we provide.  Moreover
-by defining a compact calculus of feeds with a precise formal
-semantics, we believe the ideas presented in this paper can transcend
-their current implementation.  We would be thrilled if others would
-take our abstractions and embed them directly in another language,
+%Having made our case for a language extension, the bulk of our implementation
+%{\em is} a collection of libraries.  Hence, the intrepid hacker may eschew our
+%surface syntax and program directly against the interfaces underneith.
+%Whatever the programmer chooses, the central contribution of this work
+%are the abstractions we provide.  Moreover
+Though we believe our current design decisions are well-justified,
+we also believe the ideas presented in this paper can transcend
+their current implementation.  By defining a compact calculus of feeds 
+with a precise formal semantics, we leave open the possibility for
+others to embed our abstractions directly into another language,
 such as Haskell, that provides superior generic programming support
-and the ability to automatically derive implementations from appropriately
-specified type classes.
+and the ability to avoid boilerplate by automatically deriving 
+key implementation ingredients from type classes.
