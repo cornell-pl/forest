@@ -447,15 +447,15 @@ operation.
 %\input{semantics1}
 
 \subsection{Feed Semantics}
-
-The calculus of feeds has a denotational semantics that allows
-programmers to calculate the contents of their feeds relative to
-the uncertainty present in the networking environment.  The
-principal semantic function is written
-$\semantics{\feed}{\environment}{\universe}$,
-where  $\environment$ is an {\em environment} mapping variables to values
+We give the semantics of our formal feed language in 
+a denotational style.  The principal semantic functions are
+$\csemantics{\corefeed}{\environment}{\universe}$ and
+$\semantics{\feed}{\environment}{\universe}$, defining core feeds and
+feeds, respectively.  In these definitions,
+$\environment$ is an {\em environment} mapping variables to values
 and $\universe$ is a {\em universe} mapping pairs of
-schedule time and location to arrival time and string option.
+schedule time and location to arrival time and a string option
+representing the actual data.
 Intuitively, the universe models the network.
 When $\universe (\atime_1, \ell) = (\atime_2, \mathtt{Some} \; \astring)$,
  the interpretation is that if the run-time system requests data
@@ -463,11 +463,9 @@ from location $\ell$ at time $\atime_1$ then string data $\astring$
 will be returned at time $\atime_2$.  The time $\atime_2$ must be
 later than $\atime_1$.
 When $\universe (\atime_1, \ell) = (\infty, \mathtt{None})$,
-networking errors have simply made location $\ell$ unreachable.
+networking errors have made location $\ell$ unreachable.
 
-The result of the semantic function 
-$\semantics{\feed}{\environment}{\universe}$
-is a set of metadata/data pairs, where the 
+The semantic functions yield a set of metadata/data pairs, where the 
 metadata is coded as follows.
 %   The metadata 
 % we model is somewhat simplified relative to the implementation.
@@ -488,7 +486,7 @@ metadata is coded as follows.
 & \bnfalt & (\atime,[\meta_1,\ldots,\meta_k]) & \mbox{list metadata} \\
 \end{array}
 \]  
-
+%
 Since every metadata item contains a top-level time $\atime$, that
 time can be used to serialize the set of items as a stream, and 
 our implementation does just that.  Items scheduled at the
@@ -496,95 +494,92 @@ same time may appear in any order in the implementation's
 serialized stream.  To refer to the top-level time in any metadata
 item $\meta$, we write $\mytime{\meta}$. 
 
-Our semantics for feeds depends upon a semantics for the simply-typed
-host language, which we write $\esemantics{e}{\environment}$. We assume that
-given environment $\environment$ with type $\Gamma$ 
-and expression $e$ with type $\tau$ in $\Gamma$, 
-$\esemantics{e}{\environment} = v$
-and $\turn v : \tau$.
+Figure~\ref{fig:semantics} presents the semantic definitions for ${\cal
+  C}$ and ${\cal F}$, using conventional set-theoretic notations.
+The semantics depends upon a semantics for the simply-typed host
+language, written $\esemantics{e}{\environment}$, whose definition we
+omit. We assume that given environment $\environment$ with type
+$\Gamma$ and expression $e$ with type $\tau$ in $\Gamma$,
+$\esemantics{e}{\environment} = v$ and $\turn v : \tau$.
 
-Figure~\ref{fig:semantics} presents the semantic definitions for feeds themselves.  In these definitions,
-we use conventional set-theoretic notation to define the elements
-that inhabit the feed.
-The first definition shows that the empty feed is the empty set. The
-second gives the definition of a computed feed.  Notice that a
-dummy location ($\generatedloc$) occupies the position of location
-metadata.  The feed comprehensions are defined in a similar way. 
-The filter feed and the feed comprehensions together serve to model
-the full power of the feed comprehensions found in our implementation.
+The meaning of core feed \corefeed{} is a pair consisting of the
+meaning of the schedule of \corefeed{} (written $S$) and the set of
+metadata/data pairs for the feed. To calculate this data, the
+\texttt{timeout} function checks whether the item arrival time
+$x_{at}$ is within the window ($\esemantics{e_{win}}{\environment}$)
+of the scheduled time ($x_t \in S$), returning \texttt{None} if
+not. Otherwise, \texttt{timeout} returns its data argument ($x_s$),
+which may be {\tt None} because of other networking errors.  Using the
+\texttt{timeout} function, we define an alternate universe
+$\universe'$ that retrieves data from the outside world, checks for a
+timeout, and applies the preprocessor
+($\esemantics{e_{pp}}{\environment}$) before returning.  The feed data
+is then pairs of base metadata $(\atime,\ell)$ with data defined by
+$\esemantics{e_{f} \; (\universe'(\loc,\atime))}{\environment}$ where
+$e_f$ is the \pads{}-generated parser.
 
+The semantics of both the $\mathtt{all}\ \corefeed$ and the
+$\mathtt{any}\ \corefeed$ feeds first computes the meaning $(S,A)$ of the
+core feed $\corefeed{}$.  The \texttt{all} feed simply returns the
+data component $A$.  The \texttt{any} feed returns a set with one
+element for each time $\atime$ in the schedule $S$.  If the data $A$
+contains at least one good value at time $t$, the \texttt{any} feed
+picks an arbitrary member of this set, using the function
+$\selectOne{}$.  Otherwise, the feed adds  
+error value $((\atime,\generatedloc), \none)$ for $\atime$.
 
-The semantics of {\tt all} and {\tt any} feeds are somewhat more complex
-because they describe the consequences of networking errors and time outs.
-In the case for {\tt all}, a function {\tt timeout} is defined.  This
-function checks the item arrival time $x_{at}$ and compares it to its
-scheduled time ($x_t$) plus its window ($\esemantics{e_5}{\environment}$).  If
-the arrival time exceeds its window, {\tt None} is returned. Otherwise,
-its data argument ($x_s$, which may be {\tt None} due to other networking 
-errors) is returned.  The {\tt timeout} is used in definition of an 
-alternate universe $\universe'$, that retrieves data from the outside world,
-checks for timeout, and applies the preprocessor 
-($\esemantics{e_4}{\environment}$) before returning its final result.
-The elements of the feed itself are pairs of base metadata $(\atime,\ell)$
-with data defined by $\esemantics{e_1 \; (\universe'(\loc,\atime))}{\environment}$
-where $e_1$ is the \pads{}-generated parser.
-The semantics of an {\tt any} feed is defined by selecting one of the
-good (non-error) elements of the corresponding {\tt all} feed at the same time,
-if any exist.  If there are no good elements in 
- the corresponding {\tt all} feed, then the {\tt any} feed will contain a
-{\tt None} item at the given time, and the dummy location $\generatedloc$
-occupies the location slot in the metadata.
+The meaning of the empty feed is the empty set.  Computed fields yield
+one value per time in the given schedule.  The dummy location
+($\generatedloc$) in the metadata indicates the value had no physical
+source.  Feed comprehensions are similar.  The filter feed and feed
+comprehensions together model the full power of the feed
+comprehensions found in our implementation. The semantics for
+\texttt{let}, union and sum feeds are all straightforward.  The union
+feed is simply the set-theorectic union of its constituent feeds.  The
+sum feed injects the elements of its constituent feeds into a sum and
+likewise takes their union.
 
-The two forms of disjunctive feed are easy to define.  The
-union feed is simply the set-theorectic union of
-its constituent feeds.  The sum feed injects the elements of its constituent
-feeds into a sum and likewise takes their union.
+We must take more care when defining the semantics of pairs.  The
+synchronous pair $(\feed_1,\feed_2)$ is formed by finding all elements
+of $\feed_1$ at a given time (including erroneous elements) and all
+elements of $\feed_2$ at that time (again including erroneous
+elements) and generating their Cartesian product.  Notice that if
+the schedules do not intersect, a synchronous pair will empty.
+%Metadata from constituent feeds is paired together.
+The scheduled time of the composite item is the same as the scheduled
+times of the two underlying feeds. 
 
-More care must be taken when defining the semantics of pairs.
-The synchronous pair $(\feed_1,\feed_2)$
-is formed by finding all elements of $\feed_1$
-at a given time (including erroneous elements) 
-and all elements of  $\feed_2$ (again including erroneous elements) 
-at that time and
-generating their Cartesian product.  Notice that if schedules 
-do not intersect, a synchronous pair will wind up isomorphic to the
-empty feed.  Metadata from constituent feeds is paired together.
-The scheduled time of the composite item is noncontroversial in this case --
-it is the same as the scheduled times of the two underlying feeds.
+The elements of the continuous dependent pair ($x{:}\feed_1 *
+\feed_2$) are calculated by first determining the elements of
+$\feed_1$.  For each element $v$ in $\feed_1$, we calculate the
+elements of $\feed_2$ by binding $x$ to $v$ in $\feed_2$'s definition.
+The elements of the composite feed include all elements $x$ of
+$\feed_1$ paired with the corresponding elements of $\feed_2$
+scheduled later than $x$.  As with synchronous pairs, we pair the
+metadata from the constituent feeds in the compositie feed. Unlike 
+synchronous pairs, the two elements of the pair
+do not share a schedule time.  We adopt the later time ({\em
+  i.e.,} the time of the element from $\feed_2$) as the schedule time
+for the composite feed element.
 
-The elements of the continuous dependent pair ($x{:}\feed_1 * \feed_2$)
-are calculated by first determining the elements of $\feed_1$. 
-For each element $v$ in $\feed_1$, it is possible to calculate
-the elements of $\feed_2$ by binding $x$ to $v$ in $\feed_2$'s definition.
-From this point, the elements of the composite feed include all elements
-$x$ of $\feed_1$ paired with the corresponding elements of $\feed_2$ scheduled
-later than $x$.  Like in the case for synchronous pairs, metadata from 
-constitute feeds is paired together in the composite feed.  {\em Unlike}
-in the case for synchronous pairs, the two elements of the pair do
-not share a common schedule time.  We adopt the later time ({\em i.e.,}
-the time of the element from $\feed_2$) as the schedule time for the
-composite feed element.
-
-The difference between the continuous pair and the local pair
-comes in the third line of the definition of the local pair.
-Here, the existence of another element $(\meta_1',v_1')$
-in $\feed_1$ in addition to $(\meta_1,v_1)$ implies that the 
-schedule time for the item under consideration in $\feed_2$
+Continuous and local dependent pairs differ in that local dependent
+pairs suppress further data dependent upon item $v_1$ from $\feed_1$
+when the next item $v_1'$ from feed $\feed_1$ arrives.  In the
+semantics, the existence of another element $(\meta_1',v_1')$
+in $\feed_1$ after $(\meta_1,v_1)$ implies that the 
+schedule time for the item under consideration in $\feed_2$ ($v_2$) 
 must fall between the schedule times for $v_1$ and $v_1'$
-(otherwise that item from $\feed_2$ is not included in the
-final composite feed). 
+(otherwise $v_2$ is not included in the final composite feed). 
 
-As discussed earlier, the semantics of the two variants of $\mathtt{foreach}$
-follows the semantics of dependent pairs closely.  Notice, for instance,
-the similarity between the conditions on the local {\tt foreach} with those
-for the local dependent pair.  
+The semantics for the two variants of $\mathtt{foreach}$ are defined
+in terms of the two variants of dependent pairs, simply dropping the
+first component of item in the pair feed in both cases.  The semantics
+of the list comprehension feed extends the semantics of sychronous
+pairs to lists: each list in the resulting feed contains the elements
+of the generated list with the same scheduled time.
 
-The semantics of the list comprehension feeds are closely connected to the semantics of
-the synchronous pairs in that each list in the generated feed of lists contains elements
-scheduled for the same time.
-
-As a sanity check on our semantic definitions, we have proven
-that the values contained in each feed are pairs of meta-data and data
+We have proven a soundness theorem for the semantics: the values
+contained in each feed are pairs of meta-data and data 
 values with the appropriate type.  More specifically, if the feed typing
 rules give feed $\feed$ type $\sigma$, then its data has type $\sigma$ and
 its meta data has type $\metatype{\sigma}$ where $\metatype{\sigma}$ is
