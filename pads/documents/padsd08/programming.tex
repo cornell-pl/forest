@@ -25,11 +25,10 @@ the data.
           loads = (_, load::_)\} -> Some load
   | None -> None \kw{in}
 \kw{let} loads    = \textit{Feed.map} select_load sample \kw{in}
-\kw{let} load_tbl = \textit{Feed.fold} update (create ()) loads 
+\kw{let} load_tbl = \textit{Feed.fold} update empty_tbl loads 
 \kw{in}  print_top 10 load_tbl
 \end{codebox}
-  \caption{Code fragment for finding \planetlab nodes with low load
-  over the last 10 minutes (600 seconds).  }
+  \caption{Code snipet: finding least loaded \planetlab nodes}
 \label{fig:sample-loads}
 %\vskip -2ex
 \end{figure}
@@ -63,19 +62,18 @@ the data.
 \begin{figure}[tb]
 
 \begin{codebox}
-\kw{let} update tbl idata =
+\kw{let} update_l tbl idata =
   \kw{let} meta = IData.get_meta idata \kw{in}
   \kw{let} data = IData.get_contents idata \kw{in}
   \kw{match} meta, data \kw{with} 
     (h, Some basemeta), Some load ->
       \kw{let} location = Meta.get_link basemeta \kw{in}
-      update tbl location data
-  | _ -> tbl \textit{ (* no change to tbl *)}
-\kw{in} ...
-\kw{let} load_tbl = \textit{\textbf{Feed.fold_p}} update empty_tbl loads
-\kw{in} print_top 10 load_tbl
+      update tbl (location, data)
+  | _ -> tbl \textit{ (* no change to tbl *)} \kw{in}
+\kw{let} load_tbl = \textit{\textbf{Feed.fold_p}} update_l empty_tbl loads
+\kw{in} print_top_with_loc 10 load_tbl
 \end{codebox}
-  \caption{Revised code fragment that exploits provenance metadata. }
+  \caption{Revised code snipet: with provenance metadata. }
 \label{fig:sample-loads-prov}
 %\vskip -2ex
 \end{figure}
@@ -91,29 +89,31 @@ orthogonal to our discussion. First, we use \cd{Feed.split_every} to
 split the feed when 600 seconds (10 minutes) have elapsed. Then, we
 use \cd{Feed.map} to project the loads data from the\comon
 elements. Finally, we use \cd{Feed.fold} to collect the load values
-into a table. Function \texttt{create} (defined elsewhere)
-constructs an empty table; function 
-\texttt{update} adds an entry to the table.
+into a table. Function \texttt{update} adds an entry to the table.
+\cd{empty_tbl} is the initially empty table.
 After filling the table, \texttt{print\_top 10}
 processes the data on a per-node basis
 and prints the ten lowest average loads.
 
-However, this solution is not quite enough. The \comon data format
+However, this solution might not be enough. The \comon data format
 does not include the host name in the data itself, so the code in
 \figref{fig:sample-loads} will only be able to return the lowest
 average loads, but not the names of the machines associated with
 them. In situations like this, the provenance data is essential.  In
-\figref{fig:sample-loads-prov}, we replace the last three lines of
+\figref{fig:sample-loads-prov}, we replace the last two lines of
 \figref{fig:sample-loads} with a call to the lower-level fold,
 \cd{fold_p}, which provides both the data and metadata to the folding
-function. We also sketch an \cd{update} function which makes use of 
-the metadata.   Notice the use of the lower level \cd{IData} and
-\cd{Meta} interfaces to facilitate mangement of both data and 
+function. We also sketch an \cd{update_l} function which makes use of 
+the metadata and adds both the location and the load to the table. 
+Function \texttt{print\_top\_with\_loc 10} prints the ten lowest average loads
+with their locations.
+Notice the use of the lower level \cd{IData} and
+\cd{Meta} interfaces to facilitate management of both data and 
 metadata from the feed. 
 
 It should be clear from these examples that the single-minded implementer
-has a number of new interfaces to master relative to the quick-and-dirty
-hacker, but gains a correspondingly higher degree of flexibilty and can
+has a number of new interfaces to master relative to the off-the-shelf
+user, but gains a correspondingly higher degree of flexibilty and can
 still write relatively concise programs.
 
 
@@ -184,7 +184,7 @@ higher-order abstract syntax and Mogensen-Scott encodings are one step more
 complex than those involving the more familiar maps and folds.  Consequently, the
 learning curve for the generic programmer is one step steeper than
 the curve for the single-minded implementor, and two (or perhaps ten) steps steeper
-than the curve for the quick-and-dirty hacker.
+than the curve for the off-the-shelf user.
 
 % There, we represent our AST using a
 % Scott-encoded datatype, and leverage \ocaml's module system to, in
@@ -194,7 +194,5 @@ than the curve for the quick-and-dirty hacker.
 % descriptions, we instead use a variant of Mogensen-Scott
 % encodings~\cite{mogensen}, employing HOAS to encode variable binding
 % in feed descriptions.
-
-
 
 

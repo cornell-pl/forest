@@ -1,11 +1,9 @@
-\subsection{Quick and Dirty}
+\subsection{Off the Shelf}
 \label{sec:tools}
 The \padsd{} system comes with a suite of useful tools that help users cope with standard data 
-adminstration needs.  Once a \padsd{} description has been written, the quick-and-dirty
-hacker can use any tool by writing a very simple {\em configuration file}, as shown in
-Figure~\ref{fig:toolconfigs}.  
-The tools we have implemented so far include all of the following.
-
+adminstration needs.  Once a \padsd{} description has been written, the ``off-the-shelf''
+user can use any tool by writing a very simple {\em configuration file}, as shown in
+Figure~\ref{fig:toolconfigs}. The tools we have implemented so far include all of the following.
 
 A configuration file includes a feed declaration header 
 (the first line in the config),
@@ -142,7 +140,7 @@ path :: =
   "<top>"
 | path.ID  (field/variant name)
 | path.INT (branch number (from 1) of a tuple)
-| path.[?] (any one elements of array/table) 
+| path.[?] (any one element of array/table) 
 | path.[*] (all elements of array/table) 
 | path.[INT] (nth element of array (from 0))
 | path.[Key] (a table entry indexed by the Key)
