@@ -372,7 +372,7 @@ large applications.
 % reason (4) managing functors & modules?
 Our feed language is a veneer on \ocaml{} built with the \camlp{}
 preprocessor.   
-Hence, a natural question is whether the system would be better
+A natural question is whether the system would be better
 implemented as a library rather than a language extension.  For the reasons
 described in the following paragraphs, we chose to present our work as a
 language. 
@@ -400,19 +400,36 @@ For instance, almost every line of a description would be translated
 to an increasingly nested combinator application, and every variable binding
 would induce a use of higher-order abstract syntax. 
 
-\textbf{\textit{Generic programming.}} \ocaml{} has no direct support for
+\textbf{\textit{Generic programming.}} \ocaml{} (and most other 
+potential host languages)
+has no direct support for
 the generic programming needed to implement the tool suite.  After considerable
 study, the most effective way we have found to provide the required 
 generic programming interface involves judicious use of unsafe casts
 under the covers.  By generating type representations using the compiler,
 we guarantee these casts cannot go wrong.
 
-\textbf{\textit{Compile-time schedule analysis.}} The synchronous
-pair and list feed comprehension combinators are intended for subfeeds
-that share the same schedule.  Using them otherwise is likely an error.
-We anticipate future work on schedule analysis to detect such errors 
-and to help us optimize our implementation.  
-%Such analysis is easier in language framework.  
+% \textbf{\textit{Compile-time schedule analysis.}} The synchronous
+% pair and list feed comprehension combinators are intended for subfeeds
+% that share the same schedule.  Using them otherwise is likely an error.
+% We anticipate future work on schedule analysis to detect such errors 
+% and to help us optimize our implementation.  
+% %Such analysis is easier in language framework.  
+
+
+\textbf{\textit{Integration with \pads{}.}}  Core
+\pads{}~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml-long,fisher+:dirttoshovels} has had success as a language extension on top of C as well as
+\ocaml{}.  Its purpose is to describe and document properties of ad hoc
+data sources as well as to facilitate generation of local, single-source 
+tools.  Extending such descriptions to include source location, 
+availability and 
+access mode helps complete the documentation in a single centralized 
+specification and through a uniform notation.  It gives the off-the-shelf
+user everything they need in a single language.  Forcing a division 
+of the specification into part library/part language would ruin its
+cohesiveness, particularly in the context of
+dependent feeds where there is tight interplay between access mode, location,
+schedule and format.
 
 
 %Having made our case for a language extension, the bulk of our implementation
@@ -424,7 +441,7 @@ Though we believe our current design is well motivated,
 we also believe the ideas presented here can transcend
 their current implementation.  By defining a compact feed calculus 
 with a precise semantics, we allow the possibility for
-others to embed our abstractions directly in language
+others to embed our abstractions directly in a language
 such as Haskell that provides superior support for generic programming. 
 %%and the ability to avoid boilerplate by automatically deriving 
 %%implementations from type classes.
