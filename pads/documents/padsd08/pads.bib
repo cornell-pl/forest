@@ -204,9 +204,8 @@
  }
 
 @Misc{geneontology,
-  author = 	 {Gene Ontology Consortium},
   title = 	 {Gene Ontology Project},
-  howpublished = {http://www.geneontology.org/},
+  note  =       {\\ \url{http://www.geneontology.org/}},
 }
 
 @Unpublished{fisher+:pads-semantics-ext,
@@ -283,7 +282,15 @@
 
 @InProceedings{fisher+:pads,
   author = 	 {Kathleen Fisher and Robert Gruber},
-  title = 	 {PADS: A domain specific language for processing ad hoc data},
+  title = 	 {{PADS}: {A} domain specific language for processing ad hoc data},
+  booktitle = 	 {PLDI},
+  pages = 	 {295-304},
+  year = 	 2005,
+}
+
+@InProceedings{fisher+:pads-long,
+  author = 	 {Kathleen Fisher and Robert Gruber},
+  title = 	 {{PADS}: {A} domain specific language for processing ad hoc data},
   booktitle = 	 {PLDI},
   pages = 	 {295-304},
   year = 	 2005,
@@ -310,7 +317,7 @@
   publisher = acmpress
 }
 
-@InProceedings{mandelbaum+:pads-ml,
+@InProceedings{mandelbaum+:pads-ml-long,
   author = 	 {Yitzhak Mandelbaum and Kathleen Fisher and David Walker and Mary
               Fernandez and Artem Gleyzer},
   title = 	 {{PADS/ML}: {A} Functional Data Description Language},
@@ -318,6 +325,14 @@
   year = 	 {2007},
   month = 	 jan,
   publisher = acmpress
+}
+
+@InProceedings{mandelbaum+:pads-ml,
+  author = 	 {Yitzhak Mandelbaum and Kathleen Fisher and David Walker and Mary
+              Fernandez and Artem Gleyzer},
+  title = 	 {{PADS/ML}: {A} Functional Data Description Language},
+  booktitle =   {POPL},
+  year = 	 {2007},
 }
 
 @Misc{netflow,
@@ -799,7 +814,7 @@ pages = {337--348},
 
 @inproceedings{bex+:dtd-inference,
  author = {Geert Jan Bex and Frank Neven and Thomas Schwentick and Karl Tuyls},
- title = {Inference of concise DTDs from XML data},
+ title = {Inference of concise {DTD}s from {XML} data},
  booktitle = {VLDB '06: Proceedings of the 32nd international conference on Very large data bases},
  year = {2006},
  pages = {115--126},
@@ -811,7 +826,7 @@ pages = {337--348},
   author    = {Geert Jan Bex and
                Frank Neven and
                Stijn Vansummeren},
-  title     = {Inferring XML Schema Definitions from XML Data},
+  title     = {Inferring {XML} Schema Definitions from {XML} Data},
   booktitle = {VLDB},
   year      = {2007},
   pages     = {998-1009},
@@ -834,7 +849,7 @@ pages = {337--348},
 
 @article{martens+:expressiveness-xml-schema,
  author = {Wim Martens and Frank Neven and Thomas Schwentick and Geert Jan Bex},
- title = {Expressiveness and complexity of XML Schema},
+ title = {Expressiveness and complexity of {XML} Schema},
  journal = {ACM Trans. Database Syst.},
  volume = {31},
  number = {3},
@@ -852,8 +867,8 @@ pages = {337--348},
                Rajeev Rastogi and
                S. Seshadri and
                Kyuseok Shim},
-  title     = {XTRACT: A System for Extracting Document Type Descriptors
-               from XML Documents},
+  title     = {{XTRACT}: {A} System for Extracting Document Type Descriptors
+               from {XML} Documents},
   booktitle = {SIGMOD Conference},
   year      = {2000},
   pages     = {165-176},
@@ -878,7 +893,7 @@ pages = {337--348},
 
 @inproceedings{fernau:learning-xml,
   author    = {Henning Fernau},
-  title     = {Learning XML Grammars},
+  title     = {Learning {XML} Grammars},
   booktitle = {MLDM},
   year      = {2001},
   pages     = {73-87},
@@ -924,7 +939,7 @@ pages = {337--348},
 
 @Article{golem,
   author = 	 {Sealfon RSG and Hibbs M and Huttenhower C and Myers CL and Troyanskaya OG},
-  title = 	 {{GOLEM}: an interactive graph-based gene ontology navigation and analysis tool},
+  title = 	 {{GOLEM}: {A}n interactive graph-based gene ontology navigation and analysis tool},
   journal = 	 {BMC Bioinformatics},
   year = 	 {2006},
   volume = 	 {7},
@@ -945,17 +960,15 @@ pages = {337--348},
 @InProceedings{ennals+:mashmaker,
   author = 	 {Rob Ennals and David Gay},
   title = 	 {User-Friendly Functional Programming for Web Mashups},
-  booktitle = {Proceedings of the International Conference on Functional Programming},
+  booktitle =    {ICFP},
   pages = 	 {223-233},
   year = 	 2007,
-  address = 	 {Freiburg, Germany},
-  month = 	 oct,
 }
 
 @Misc{yahoopipes,
   key = 	 {YahooPipes},
   title = 	 {Yahoo Pipes},
-  howpublished = {\url{pipes.yahoo.com}},
+  howpublished = {\url{http://pipes.yahoo.com}},
   year = {2007},
 }
 
@@ -991,7 +1004,7 @@ pages = {337--348},
 
 @article{biogrid,
 author = {Stark, Chris and Breitkreutz, Bobby-Joe and Reguly, Teresa and Boucher, Lorrie and Breitkreutz, Ashton and Tyers, Mike},
-title = {{BioGRID: a general repository for interaction datasets}},
+title = {{BioGRID}: {A} general repository for interaction datasets},
 journal = {Nucl. Acids Res.},
 volume = {34},
 pages = {D535-539},
@@ -1022,22 +1035,22 @@ year = {2006},
 
 @Misc{xmllight,
   author = 	 {Motion-Twin},
-  title = 	 {Xml-Light},
+  title = 	 {{XML}-{L}ight},
   howpublished = {\url{http://tech.motion-twin.com/xmllight.html}},
   year = 	 {2001},
 }
 
 @Misc{xpath,
   author = 	 {James Clark and Steve DeRose},
-  title = 	 {XML Path Language (XPath), Version 1.0},
+  title = 	 {{XML} Path Language ({XPath}), Version 1.0},
   howpublished = {\url{http://www.w3.org/TR/xpath}},
   year = 	 1999,
 }
 
 
-@InProceedings{padsml-padl,
+@InProceedings{padsml-padl-long,
   author = 	 {M. Fernandez and K. Fisher and J.N. Foster and M. Greenberg and Y. Mandelbaum},
-  title = 	 {A Generic Programming Toolkit for PADS/ML: First-Class Upgrades for Third-Party Developers },
+  title = 	 {A Generic Programming Toolkit for {PADS/ML}: {F}irst-Class Upgrades for Third-Party Developers },
   booktitle = 	 {Practical Aspects of Declarative Languages},
   pages = 	 {133-149},
   year = 	 2008,
@@ -1047,10 +1060,18 @@ year = {2006},
   month = 	 jan,
 }
 
+@InProceedings{padsml-padl,
+  author = 	 {M. Fernandez and K. Fisher and J.N. Foster and M. Greenberg and Y. Mandelbaum},
+  title = 	 {A Generic Programming Toolkit for {PADS/ML}: {F}irst-Class Upgrades for Third-Party Developers },
+  booktitle = 	 {PADL},
+  pages = 	 {133-149},
+  year = 	 2008,
+}
+
 @InProceedings{hinz:icfp04,
   author = 	 {Ralf Hinze},
   title = 	 {Generics for the masses},
-  booktitle = 	 icfp,
+  booktitle = 	 {ICFP},
   pages = 	 {19-22},
   year = 	 1998,
 }
@@ -1060,13 +1081,13 @@ year = {2006},
   title = "Encoding intensional type analysis",
   year = "2001",
   pages = {92-106},
-  booktitle = esop,
+  booktitle = {ESOP},
 }
 
 @InProceedings{yang:icfp98,
   author = 	 {Zhe Yang},
-  title = 	 {Encoding types in ML-like languages},
-  booktitle = 	 icfp,
+  title = 	 {Encoding types in {ML}-like languages},
+  booktitle = 	 {ICFP},
   pages = 	 {},
   year = 	 1998,
 }
