@@ -28,7 +28,7 @@ where they come from), while the other exposes the metadata as well.
 \kw{let} load_tbl = \textit{Feed.fold} update empty_tbl loads 
 \kw{in}  print_top 10 load_tbl
 \end{codebox}
-  \caption{Code fragment for finding least loaded \planetlab nodes.}
+  \caption{Code fragment finding least loaded \planetlab nodes.}
 \label{fig:sample-loads}
 %\vskip -2ex
 \end{figure}
@@ -62,15 +62,15 @@ where they come from), while the other exposes the metadata as well.
 \begin{figure}[tb]
 
 \begin{codebox}
-\kw{let} update tbl adata =
+\kw{let} update_m  tbl adata =
   \kw{let} meta = Feed.get_meta adata \kw{in}
   \kw{let} data = Feed.get_contents adata \kw{in}
   \kw{match} meta, data \kw{with} 
     (h, Some basemeta), Some load ->
       \kw{let} location = Meta.get_link basemeta \kw{in}
-      (* ... Update tbl with (location, data) pair *)
+      update tbl (location, data)
   | _ -> tbl \textit{ (* no change to tbl *)} \kw{in}
-\kw{let} load_tbl = \textit{\textbf{Feed.fold_p}} update empty_tbl loads
+\kw{let} load_tbl = \textit{\textbf{Feed.fold_m}} update_m empty_tbl loads
 \kw{in} print_top_with_loc 10 load_tbl
 \end{codebox}
   \caption{Revised code fragment involving provenance metadata. }
@@ -103,9 +103,12 @@ does not include the host name in the data, so the code in
 average loads.
 In such situations, provenance metadata is essential. We therefore replace the last two lines of
 \figref{fig:sample-loads} with the code in
-\figref{fig:sample-loads-prov}, to exploit metadata. First, we sketch an \cd{update} function that uses
-metadata to associate a location with every load in the table. It relies on the \cd{Meta} module, which we provide to facilitate management of metadata from the feed. Next, we show a call to the lower-level fold,
-\cd{fold_wm} (fold with meta), which passes the data with its metadata to the folding
+\figref{fig:sample-loads-prov}, to exploit metadata. First, we sketch an 
+\cd{update_m} (update with meta) function that uses
+metadata to associate a location with every load in the table. It relies on the \cd{Meta} module, 
+which we provide to facilitate management of metadata from the feed. Next, 
+we show a call to the lower-level fold, \cd{fold_m} (fold with meta), which passes the 
+data with its metadata to the folding
 function.  Last, the call \cd{print_top_with_loc 10} prints the ten lowest average loads
 with their locations.
 
