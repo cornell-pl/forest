@@ -157,9 +157,9 @@ elements have type \cd{'a}.
 %%won't work.
 This limitation of datatypes has been widely discussed in the
 literature, and various solutions have been 
-proposed~\cite{padsml-padl,xi:icfp03,weirich:encodingtypecase,yang:icfp98}. We have 
+proposed~\cite{padsml-padl,xi:popl03,weirich:encodingtypecase,yang:icfp98}. We have 
 chosen to represent our AST using a variant of the Mogensen-Scott
-encoding  which exploits higher-order abstract syntax 
+encoding~\cite{mogensen:jfp} which exploits higher-order abstract syntax 
 to encode variable binding in feed descriptions.  This implementation strategy 
 exploits \ocaml's module system to type the encodings in $F_\omega$. 
 Our earlier work on \padsml~\cite{padsml-padl} 
