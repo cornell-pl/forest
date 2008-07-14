@@ -1,6 +1,9 @@
 %{\em Note: the following was taken from a grant proposal written with Vivek
 %Pai....  }
 
+Due to space considerations, we survey only the most closely related work.
+
+\paragraph*{Systems monitoring.}
 One early and widely-used protocol for system monitoring is SNMP, the
 simple network management protocol~\cite{snmprfc1157}, which is
 supported by commercial tools such as HP's OpenView~\cite{openview}
@@ -31,18 +34,19 @@ ad-hoc data, from node-level information like that collected by
 Ganglia or SNMP, all the way down to application-level data as well as
 protocol-level data. These areas are the ones that are not well-served
 by today's general-purpose monitoring systems. Moreover, the ability
-to use the same data description to automatically build parsers,
-in-situ tools, and monitoring systems represents an ease of use that
+to use the same data description to automatically build parsers, 
+in-situ tools, and monitoring systems directly from declarative
+descriptions represents an ease of use that
 we believe is not available in other systems.
 
-With the growth of distributed systems, research interest in building
-scalable monitoring systems has followed, with tools such as
-AVMON~\cite{avmon} and PSePR~\cite{psepr}. Both of these tools can
-distribute the monitoring function itself, eliminating the need for a
-centralized monitoring location. PADS can be interoperate with these
-systems in two ways -- either by serving as the mechanism to manage
-their ad-hoc data formats, or by providing late-binding to allow users
-to query multiple locations in these monitoring systems.
+% With the growth of distributed systems, research interest in building
+% scalable monitoring systems has followed, with tools such as
+% AVMON~\cite{avmon} and PSePR~\cite{psepr}. Both of these tools can
+% distribute the monitoring function itself, eliminating the need for a
+% centralized monitoring location. PADS can interoperate with these
+% systems in two ways -- either by serving as the mechanism to manage
+% their ad-hoc data formats, or by providing late-binding to allow users
+% to query multiple locations in these monitoring systems.
 
 %Another monitoring system of interest is PsEPR~\cite{psepr} (formerly
 %known as Trumpet), which focuses on finding problems via several tests
@@ -56,28 +60,66 @@ to query multiple locations in these monitoring systems.
 %several sites), we will examine the lessons of PsEPR when deciding how
 %to proceed.
 
-\subsection{Web Mash Ups}
-There is a lot of recent work in web mash
-ups\cite{ennals+:mashmaker,yahoopipes,swivel.com}.  These differ in
-from our work in that they focus on the task of computing with web
-data as opposed to the task of locating and fetching such data. As a
-consequence, they have limited mechanisms for specifying schedules for
-fetching data or locations other than those accessible from web
-browsers.  Their focus is on end-user programming with relatively
-small amounts of data: data that can be displayed to a user in a web
-browser.  Thus the performance considerations are quite different.
-Archiving the data is not an important consideration.  From the web
-mash up paper:
+\paragraph*{Web Mashups.}
+Web Mashup languages such as MashMaker~\cite{ennals+:mashmaker} 
+and Yahoo Pipes~\cite{yahoopipes} allow naive web programmers to
+extract data from web sites and RSS feeds and recombine them,
+often using conventional functional programming paradigms such as
+map and filter.  The focus is on end-user programming with relatively
+small amounts of data that can be displayed to a user in a web
+browser. Errors are generally ignored as completeness or absolute 
+correctness
+of information is not necessarily important in the domains of interest.
+Unlike \padsd{}, which allows users to write rich descriptions
+expressing the location, format, schedule and access mode, acquisition of 
+data in Yahoo Pipes, for instance, occurs through a fixed collection of 
+black boxes.  For this reason, \padsd{} and mashup languages have the 
+potential to be superb complementary technologies, with \padsd{} descriptions
+serving to define new ad hoc data sources for mashups.  In fact, this
+idea motivated us to implement our \padsd{} ad hoc-to-RSS conversion tool.
+%One can only hope Yahoo decides to add \padsd{} as an auxiliary interface
+%to their system.
+%and \padsd{} generic programming
+%tools serving to define generic programs over entire classes of mashups.
 
-``MashMaker is not intended to be used for `mission critical'
-applications where data integrity is essential.  Instead, its focus is
-on applications where it is more important to be able to produce
-interesting data than to be certain that the data is correct.''
+% These differ in
+% from our work in that they focus on the task of computing with web
+% data as opposed to the task of locating and fetching such data. As a
+% consequence, they have limited mechanisms for specifying schedules for
+% fetching data or locations other than those accessible from web
+% browsers.  Their focus is on end-user programming with relatively
+% small amounts of data: data that can be displayed to a user in a web
+% browser.  Thus the performance considerations are quite different.
+% Archiving the data is not an important consideration.  From the web
+% mash up paper:
 
-I think these tools are somewhat complimentary to our approach, in
-that they focus on how to merge data, while we focus on how to get raw
-data.  MashMaker does not have a good way of describing the raw data
-it gets, treating it as a black box or hand writing scraping code, so
-PADS/D could serve as a data feed for MashMaker.
-The MashMaker paper contains a nice survey of work in this area that
-we can reference.
+% ``MashMaker is not intended to be used for `mission critical'
+% applications where data integrity is essential.  Instead, its focus is
+% on applications where it is more important to be able to produce
+% interesting data than to be certain that the data is correct.''
+
+% I think these tools are somewhat complimentary to our approach, in
+% that they focus on how to merge data, while we focus on how to get raw
+% data.  MashMaker does not have a good way of describing the raw data
+% it gets, treating it as a black box or hand writing scraping code, so
+% PADS/D could serve as a data feed for MashMaker.
+% The MashMaker paper contains a nice survey of work in this area that
+% we can reference.
+
+\paragraph*{Functional Programming.}
+The implementation of \padsd{} depends upon a tremendous body of past research
+in both functional stream processing and generic programming.  Rather than
+competing with these technologies, \padsd{} builds upon them and makes them
+highly accessible to off-the-shelf users
+in an extremely important new domain -- that of distributed ad hoc
+data processing.
+
+\paragraph*{Reactive Functional Programming.}
+FRP~\cite{elliot+:frp} shares a tenuous relationship to work on \padsd{}
+in that both technologies arise from the need to perform processing
+on a schedule over time-indexed values.  However, the central novelty
+of FRP involves the definition and implementation of {\em continuous} 
+time-varying values.  So far, we have not found use for such
+values in our domain, only for discrete time-indexed
+sequences of events.
+
