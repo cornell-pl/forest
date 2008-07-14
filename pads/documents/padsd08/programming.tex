@@ -28,7 +28,7 @@ where they come from), while the other exposes the metadata as well.
 \kw{let} load_tbl = \textit{Feed.fold} update empty_tbl loads 
 \kw{in}  print_top 10 load_tbl
 \end{codebox}
-  \caption{Code fragment: finding least loaded \planetlab nodes.}
+  \caption{Code fragment for finding least loaded \planetlab nodes.}
 \label{fig:sample-loads}
 %\vskip -2ex
 \end{figure}
@@ -62,18 +62,18 @@ where they come from), while the other exposes the metadata as well.
 \begin{figure}[tb]
 
 \begin{codebox}
-\kw{let} update_l tbl idata =
-  \kw{let} meta = IData.get_meta idata \kw{in}
-  \kw{let} data = IData.get_contents idata \kw{in}
+\kw{let} update tbl adata =
+  \kw{let} meta = Feed.get_meta adata \kw{in}
+  \kw{let} data = Feed.get_contents adata \kw{in}
   \kw{match} meta, data \kw{with} 
     (h, Some basemeta), Some load ->
       \kw{let} location = Meta.get_link basemeta \kw{in}
-      update tbl (location, data)
+      (* ... Update tbl with (location, data) pair *)
   | _ -> tbl \textit{ (* no change to tbl *)} \kw{in}
-\kw{let} load_tbl = \textit{\textbf{Feed.fold_p}} update_l empty_tbl loads
+\kw{let} load_tbl = \textit{\textbf{Feed.fold_p}} update empty_tbl loads
 \kw{in} print_top_with_loc 10 load_tbl
 \end{codebox}
-  \caption{Revised code fragment: with provenance metadata. }
+  \caption{Revised code fragment involving provenance metadata. }
 \label{fig:sample-loads-prov}
 %\vskip -2ex
 \end{figure}
@@ -94,24 +94,20 @@ elements. Finally, we use \cd{Feed.fold} to collect the data
 into a table. Function \cd{update} adds an entry to the table, and
 \cd{empty_tbl} is the initially empty table.
 After filling the table, \cd{print\_top 10}
-processes the each node
+processes each node's loads
 and prints the ten lowest average loads.
 
-However, this solution might not be enough. The \comon data format
+However, this solution is not enough -- the \comon data format
 does not include the host name in the data, so the code in
-\figref{fig:sample-loads} can only return the lowest
-average loads, not the names of the associated machines.
-In such situations, provenance data is essential.  In
-\figref{fig:sample-loads-prov}, we replace the last two lines of
-\figref{fig:sample-loads} with a call to the lower-level fold,
-\cd{fold_p}, which provides both the data and metadata to the folding
-function. We also sketch an \cd{update_l} function which uses
-metadata to add the location and the load to the table. 
-Function \cd{print\_top\_with\_loc} \cd{10} prints the ten lowest average loads
+\figref{fig:sample-loads} cannot report the names of the nodes with the lowest
+average loads.
+In such situations, provenance metadata is essential. We therefore replace the last two lines of
+\figref{fig:sample-loads} with the code in
+\figref{fig:sample-loads-prov}, to exploit metadata. First, we sketch an \cd{update} function that uses
+metadata to associate a location with every load in the table. It relies on the \cd{Meta} module, which we provide to facilitate management of metadata from the feed. Next, we show a call to the lower-level fold,
+\cd{fold_wm} (fold with meta), which passes the data with its metadata to the folding
+function.  Last, the call \cd{print_top_with_loc 10} prints the ten lowest average loads
 with their locations.
-Notice the use of the lower level \cd{IData} and
-\cd{Meta} interfaces to facilitate management of both data and 
-metadata from the feed. 
 
 It should be clear from these examples that the single-minded implementer
 has a number of new interfaces to master relative to the off-the-shelf
@@ -124,10 +120,12 @@ still write relatively concise programs.
 % Motivate
 
 Occasionally, users might want to develop functions that can
-manipulate {\it any} feed. This desire might arise because they
-have a number of different feeds to process in the same way, or 
-because they wish to provide a new tool for other \padsd{}
-users. Some such functions can be written by making them
+manipulate {\it any} feed. 
+%This desire might arise because they
+%have a number of different feeds to process in the same way, or 
+%because they wish to provide a new tool for other \padsd{}
+%users. 
+Often, such functions can be written as
 parametric in the type of the feed element, much like the feed
 library functions discussed above. However, the behavior of many feed
 functions depends on the structure of the feed and its
@@ -147,7 +145,7 @@ in \ocaml is a datatype. However, standard \ocaml datatypes are not
 sufficiently typeful to express the types of many generic feed
 functions. For example, the feed creation function has the type:
 %\begin{code}
-\cd{feed\_create : 'a prefeed -> 'a feed}
+\cd{feed\_create : 'a prefeed ->} \cd{'a feed}
 %\end{code} 
 where the type \cd{'a prefeed} is an AST of a feed description and feed 
 elements have type \cd{'a}.
@@ -159,7 +157,7 @@ elements have type \cd{'a}.
 %%won't work.
 This limitation of datatypes has been widely discussed in the
 literature, and various solutions have been 
-proposed~\cite{padsml-padl,hinz:icfp04,weirich:encodingtypecase,yang:icfp98}. We have 
+proposed~\cite{padsml-padl,xi:icfp03,weirich:encodingtypecase,yang:icfp98}. We have 
 chosen to represent our AST using a variant of the Mogensen-Scott
 encoding  which exploits higher-order abstract syntax 
 to encode variable binding in feed descriptions.  This implementation strategy 
