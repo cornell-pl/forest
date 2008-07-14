@@ -1,43 +1,43 @@
 %{\em Note: the following was taken from a grant proposal written with Vivek
 %Pai....  }
 
-Due to space considerations, we survey only the most closely related work.
+Because of space considerations, we survey only the most closely related work.
 
 \paragraph*{Systems monitoring.}
 One early and widely-used protocol for system monitoring is SNMP, the
 simple network management protocol~\cite{snmprfc1157}, which is
 supported by commercial tools such as HP's OpenView~\cite{openview}
 and free tools such as MRTG~\cite{mrtg}. It provides an open protocol
-format, where vendors supply  management information bases (MIBs)
+format, where vendors supply management information bases (MIBs)
 that provide a hierarchical description of the hardware's monitoring
 information. By separating the data description into the MIB, SNMP
-can be more concise than XML, but it has poor support for ad-hoc
-data, and is more difficult to update with new data types or even
+can be more concise than XML, but it has poor support for ad hoc
+data, and it is more difficult to update with new data types or even 
 changes to the data format.
 
-For Grid or cluster environments, two popular monitoring tool are
+For Grid or cluster environments, two popular monitoring tools are
 Ganglia~\cite{ganglia} and Nagios~\cite{nagios}.  Ganglia focuses more
-on continuous monitoring of usage information, and consolidates
+on continuous monitoring of usage information and consolidates
 information provided by OS tools like vmstat, iostat, uptime,
-etc. Nagios focuses more on availability information, and logs (or
+\etc{} Nagios focuses more on availability information, and logs (or
 delivers) failure and recovery events. Ganglia uses raw data in XDR
-for its native fields, and XML-encapsulated fields for extensions.
+for its native fields and XML-encapsulated fields for extensions.
 Nagios has no standard data format, but instead gathers all data by
 periodically executing user-specified commands described in a
 configuration file. The commands use standardized return values to
-express status, and are typically restricted to no more than 4KB of
+express status and are typically restricted to no more than 4KB of
 monitoring data.
 
 What distinguishes \padsd{} from systems like SNMP or Ganglia is the
 ability to automatically parse and monitor virtually any kind of
-ad-hoc data, from node-level information like that collected by
-Ganglia or SNMP, all the way down to application-level data as well as
-protocol-level data. These areas are the ones that are not well-served
+ad hoc data, from node-level information like that collected by
+Ganglia or SNMP, all the way down to application-level or even
+protocol-level data. These areas are the ones that are not well served
 by today's general-purpose monitoring systems. Moreover, the ability
 to use the same data description to automatically build parsers, 
-in-situ tools, and monitoring systems directly from declarative
-descriptions represents an ease of use that
-we believe is not available in other systems.
+in situ tools, and monitoring systems directly from declarative
+descriptions represents an ease of use that we believe is not
+available in other systems. 
 
 % With the growth of distributed systems, research interest in building
 % scalable monitoring systems has followed, with tools such as
@@ -60,6 +60,22 @@ we believe is not available in other systems.
 %several sites), we will examine the lessons of PsEPR when deciding how
 %to proceed.
 
+\paragraph*{Functional Programming.}
+The implementation of \padsd{} depends upon a tremendous body of past research
+in both functional stream processing and generic programming.  Rather than
+competing with these technologies, \padsd{} builds upon them and makes them
+highly accessible to off-the-shelf users in an extremely important new
+domain -- that of distributed ad hoc data processing.
+
+\paragraph*{Reactive Functional Programming.}
+FRP~\cite{elliot+:frp} shares a tenuous relationship to work on \padsd{}
+in that both technologies arise from the need to perform processing
+on a schedule over time-indexed values.  However, the central novelty
+of FRP involves the definition and implementation of {\em continuous} 
+time-varying values.  So far, we have not found use for such
+values in our domain, only for discrete time-indexed
+sequences of events.
+
 \paragraph*{Web Mashups.}
 Web Mashup languages such as MashMaker~\cite{ennals+:mashmaker} 
 and Yahoo Pipes~\cite{yahoopipes} allow naive web programmers to
@@ -68,15 +84,15 @@ often using conventional functional programming paradigms such as
 map and filter.  The focus is on end-user programming with relatively
 small amounts of data that can be displayed to a user in a web
 browser. Errors are generally ignored as completeness or absolute 
-correctness
-of information is not necessarily important in the domains of interest.
+correctness of information is not critical in the domains of interest.
 Unlike \padsd{}, which allows users to write rich descriptions
-expressing the location, format, schedule and access mode, acquisition of 
-data in Yahoo Pipes, for instance, occurs through a fixed collection of 
+expressing the location, format, schedule and access mode of the data, 
+Yahoo Pipes, for instance, acquires data through a fixed collection of 
 black boxes.  For this reason, \padsd{} and mashup languages have the 
-potential to be superb complementary technologies, with \padsd{} descriptions
+potential to be complementary technologies, with \padsd{} descriptions
 serving to define new ad hoc data sources for mashups.  In fact, this
-idea motivated us to implement our \padsd{} ad hoc-to-RSS conversion tool.
+idea motivated the design and implementation of the \padsd{} ad
+hoc-to-RSS conversion tool. 
 %One can only hope Yahoo decides to add \padsd{} as an auxiliary interface
 %to their system.
 %and \padsd{} generic programming
@@ -106,20 +122,4 @@ idea motivated us to implement our \padsd{} ad hoc-to-RSS conversion tool.
 % The MashMaker paper contains a nice survey of work in this area that
 % we can reference.
 
-\paragraph*{Functional Programming.}
-The implementation of \padsd{} depends upon a tremendous body of past research
-in both functional stream processing and generic programming.  Rather than
-competing with these technologies, \padsd{} builds upon them and makes them
-highly accessible to off-the-shelf users
-in an extremely important new domain -- that of distributed ad hoc
-data processing.
-
-\paragraph*{Reactive Functional Programming.}
-FRP~\cite{elliot+:frp} shares a tenuous relationship to work on \padsd{}
-in that both technologies arise from the need to perform processing
-on a schedule over time-indexed values.  However, the central novelty
-of FRP involves the definition and implementation of {\em continuous} 
-time-varying values.  So far, we have not found use for such
-values in our domain, only for discrete time-indexed
-sequences of events.
 
