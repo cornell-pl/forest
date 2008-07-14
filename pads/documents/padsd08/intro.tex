@@ -173,12 +173,12 @@ tasks, users can manage distributed data sources simply by writing
 high-level declarative specifications.  It is quick and it is easy. There
 are relatively few concepts to learn, no complex interfaces and no
 tricky boilerplate a programmer needs to master to initialize 
-the system or thread together tool libraries.  Because it's so
-easy to use, we refer to the act of writing simple specifications
-and using pre-defined tools as the {\em quick-and-dirty} \padsd{} programming
-mode.  However, to avoid sacrificing flexibility and to support extensibility,
-\padsd{} supports two other {\em modes of use} in addition to the 
-quick-and-dirty.
+the system or thread together tool libraries.  Because there is
+so little ``programming'' involved, we refer to the act 
+of writing simple specifications
+and using pre-defined tools as the {\em off-the-shelf} 
+mode of use.  However, to avoid sacrificing flexibility and to support extensibility,
+\padsd{} supports two other {\em modes of use} in addition to off-the-shelf.
 
 The second mode is
 for the {\em single-minded implementer}, who needs to build a new
@@ -191,11 +191,11 @@ traversal, and for stream processing using classic functional
 programming paradigms such as \cd{map}, \cd{fold} and \cd{iterate}.
 These generated libraries make it straightforward to create custom tools
 specific to particular data sources.  However, there is a steeper learning
-curve in this mode than in the quick-and-dirty because a variety of
+curve in this mode than in off-the-shelf mode because a variety of
 interfaces must be learned.  The average functional programmer may find
 these interfaces relatively intuitive, but the computational scientist
 who is not interested in functional programming may prefer to stick with
-the quick-and-dirty. 
+off-the-shelf. 
 
 The third mode is for the {\em generic programmer}.  Generic
 programmers may observe that they (or their colleagues) 
@@ -211,8 +211,8 @@ learning the relatively complex set of interfaces involving encodings
 of Generalized Algebraic Datatypes (GADTs) and Higher-Order Abstract Syntax 
 (HOAS).  These complexities are required to encode \padsd{}'s dependent features and make up for \ocaml{}'s lack of built-in generic programming support.
 Still the reward for building generic tools is very high:
-as more and more such tools are built, the life of the quick-and-dirty
-hacker becomes easier and easier.  We have already built eight useful
+as more and more such tools are built, the life of the off-the-shelf
+user becomes easier and easier.  We have already built eight useful
 generic tools ourselves and will continue to build more as we see fit.
 
 % The system can generate all of these tools from \padsd{} descriptions
@@ -275,7 +275,7 @@ to design, implement or analyze such a language.
 data processing tools directly from high-level specifications.
 
 \item It supports three modes of use:
-the quick-and-dirty hacker, the single-minded implementer and the generic 
+off-the-shelf, single-minded implementer and generic 
 programmer, thereby optimizing both flexibility and ease-of-use.
 
 \item It provides a formal denotational semantics for the language.
