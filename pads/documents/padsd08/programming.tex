@@ -98,7 +98,7 @@ processes each node's loads
 and prints the ten lowest average loads.
 
 However, this solution is not enough -- the \comon data format
-does not include the host name in the data, so the code in
+does not include the node location in the data, so the code in
 \figref{fig:sample-loads} cannot report the names of the nodes with the lowest
 average loads.
 In such situations, provenance metadata is essential. We therefore replace the last two lines of
@@ -109,12 +109,12 @@ metadata to associate a location with every load in the table. It relies on the 
 which we provide to facilitate management of metadata from the feed. Next, 
 we show a call to the lower-level fold, \cd{fold_m} (fold with meta), which passes the 
 data with its metadata to the folding
-function.  Last, the call \cd{print_top_with_loc 10} prints the ten lowest average loads
-with their locations.
+function.  Last, the call \cd{print_top_with_loc 10} prints the ten 
+lowest average loads with their locations.
 
 It should be clear from these examples that the single-minded implementer
 has a number of new interfaces to master relative to the off-the-shelf
-user, but gains a correspondingly higher degree of flexibilty and can
+user, but gains a correspondingly higher degree of flexibility and can
 still write relatively concise programs.
 
 
@@ -162,7 +162,7 @@ This limitation of datatypes has been widely discussed in the
 literature, and various solutions have been 
 proposed~\cite{padsml-padl,xi:popl03,weirich:encodingtypecase,yang:icfp98}. We have 
 chosen to represent our AST using a variant of the Mogensen-Scott
-encoding~\cite{mogensen:jfp} which exploits higher-order abstract syntax 
+encoding~\cite{wand98} which exploits higher-order abstract syntax 
 to encode variable binding in feed descriptions.  This implementation strategy 
 exploits \ocaml's module system to type the encodings in $F_\omega$. 
 Our earlier work on \padsml~\cite{padsml-padl} 

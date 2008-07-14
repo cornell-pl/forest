@@ -1,7 +1,7 @@
 \subsection{The ``Off the Shelf'' User}
 \label{sec:tools}
 The \padsd{} system provides a suite of ``off-the-shelf'' tools to
-help users cope with standard data adminstration needs.  After writing
+help users cope with standard data administration needs.  After writing
 a \padsd{} description, users can customize these tools by
 writing simple {\em configuration files}, such as shown in
 \figref{fig:toolconfigs}.   
@@ -160,7 +160,7 @@ actual arrival time. The archiver will optionally compress
 files.
 
 \textbf{\textit{Printer.}} The printer outputs the contents of a
-feed.  If configured to print to a single file, the tool concantenates
+feed.  If configured to print to a single file, the tool concatenates
 successive items with a specified separator. If configured to print to
 multiple files, it outputs the contents of each base feed into a
 separate file. 
@@ -194,7 +194,7 @@ be piped into other tools.  The system provides a library of
 common alerters such as exceeding max/min thresholds or deviating from the norm
 ({\em i.e.,} trigger an alert when a selected value strays more than $k$
 standard deviations from its historical value). 
-Users can supply their own conditions by giving arbitrrary \ocaml{} predicates
+Users can supply their own conditions by giving arbitrary \ocaml{} predicates
 in the configuration file.
 %This tool has also been integrated with the accumulator described above. 
 %The alerter notifies users of violated conditions by

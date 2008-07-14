@@ -66,7 +66,8 @@ supply a complete set of data.
 This feature is particularly useful when monitoring the
 behavior of replicated systems, such as those using
 state machine replication, consensus protocols, or even
-loosely-coupled ones such as Distributed Hash Tables (DHTs).
+loosely-coupled ones such as Distributed Hash Tables (DHTs) 
+\cite{Balakrishnan+03:dht}.
 In these systems, the same data will be available from any
 of the functioning nodes, so receiving results from the first
 available node is sufficient. These kinds of monitoring systems
@@ -188,7 +189,7 @@ out comment fields.  The code that handles this processing illustrates
 that the \padsd{} domain-specific language is embedded in \ocaml{}.
 We use \ocaml{} terms where necessary to specify simple
 transformations.  In particular, the \cd{current} function checks if
-the \cd{nodelist} is \cd{None}, signalling a fetching error, in which
+the \cd{nodelist} is \cd{None}, signaling a fetching error, in which
 case it uses the most recently cached list of nodes instead.  The
 \kw{source} specification filters out comment fields, and then
 converts the host names to URLs with the required port using the
@@ -319,7 +320,7 @@ The \cd{raw\_hostLists} description has the same form as the \cd{nodes}
 feed we saw earlier, except it draws the data from a local file once a
 day.  We use a \textit{feed comprehension} to define a clean
 version of the feed, \cd{host\_lists}.  In the comprehension, the
-built-in predicate \cd{is\_good} verifies that no errors occured in
+built-in predicate \cd{is\_good} verifies that no errors occurred in
 fetching the current list of machines \cd{hl}, as would be expected
 for a local file.  The function \cd{get\_hosts} takes \cd{hl} and uses
 the built-in function \cd{get\_good} to unwrap the payload data from

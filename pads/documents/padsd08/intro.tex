@@ -13,7 +13,7 @@ or deviations from the norm.
 
 Managing ad hoc data is a bane of the implementers of distributed
 systems.  These systems may have hundreds or thousands of
-heterogenous, distributed components.  Keeping these components
+heterogeneous, distributed components.  Keeping these components
 running smoothly is a continuous maintenance task of significant
 complexity.  Consequently, each component in a well-designed
 distributed system produces a continuous stream of log files that
@@ -45,13 +45,13 @@ data must be fetched before it vanishes from remote sites and it must
 be archived efficiently in ways that do not burn-out hard drives by
 causing them to overheat.  In addition, new monitoring systems also
 must interact with legacy devices, legacy software and legacy data,
-prevening implementers from using robust off-the-shelf data management
+preventing implementers from using robust off-the-shelf data management
 tools built for standard formats like XML. 
 % I don't think this sentence really fits here...
 % XML-based tools also have
 %the disadvantage of significant bloat (often 8-10 times the size of a
 %more natural, even uncompressed representation) caused by using a
-%generic reprensentation.
+%generic representation.
 
 Similar problems appear in the natural and social sciences,
 including biology, physics and economics.  For example, systems such
@@ -72,34 +72,34 @@ selected distributed ad hoc data sources.
 \begin{figure}
 \begin{center}
 \begin{tabular}{|l|l|}
-\hline\hline
-Name/Use & Properties 
+\hline
+{\bf Name/{\em Use}} & {\bf Properties} 
 \\\hline\hline
 CoMon~\cite{comon} & Multiple data sets \\
-PlanetLab host              & Archiving every 5 minutes \\
-monitoring                              & From evolving set of 800+ nodes \\\hline
+{\em ~~ PlanetLab host}              & Archiving every 5 minutes \\
+{\em ~~ monitoring}                              & From evolving set of 800+ nodes \\\hline
 CoBlitz~\cite{coblitz}   & Multiple data sets \\
-File transfer         & Archiving every 3 minutes \\
-system monitoring                                       & From evolving set of 800+ nodes \\\hline
+{\em ~~ File transfer}        & Archiving every 3 minutes \\
+{\em ~~ system monitoring}                                      & From evolving set of 800+ nodes \\\hline
 CoralCDN~\cite{coral}         & Single Format \\
-Log files from  & Periodic archiving \\
-CDN monitoring                  & From evolving set of 250+ hosts \\\hline
+{\em ~~ Log files from}  & Periodic archiving \\
+{\em ~~ CDN monitoring}                  & From evolving set of 250+ hosts \\\hline
 AT\&T \vizGems{}                    & Execute programs remotely to \\
- website host                 & collect data \\
- monitoring                   & Varied fetch frequencies \\\hline
+{\em ~~ Website host}                 & collect data \\
+{\em ~~  monitoring}                   & Varied fetch frequencies \\\hline
 AT\&T \darkstar{}                   & Diverse data sources\\
-network       & Archiving for future analysis \\
-monitoring                              & Per minute, hour, and day fetches\\\hline
+{\em ~~ Network monitoring}       & Archiving for future analysis \\
+				& Per minute, hour, and day fetches\\\hline
 AT\&T \ningaui{}                    & Thousands of data sources\\
-billing auditing        & Archiving and error analysis\\\hline
+{\em ~~ Billing auditing}        & Archiving and error analysis\\\hline
 GO DB~\cite{geneontology} & Multiple Formats \\
-Gene function info.     & Uploads daily, weekly, monthly \\\hline
+{\em ~~ Gene function info.}     & Uploads daily, weekly, monthly \\\hline
 BioGrid~\cite{biogrid}        & XML and Tab-separated Formats \\
-Curated gene and  & multiple data sets $<=$ 50MB each \\
-protein data                              & Monthly data releases \\\hline
+{\em ~~ Curated gene and}  & multiple data sets $<=$ 50MB each \\
+{\em ~~ protein data}                              & Monthly data releases \\\hline
 NCBI~\cite{ncbi} & Links to multiple bioinformatics  \\
-Biotechnology info. & datasets\\
-\hline\hline
+{\em ~~ Biotechnology info.} & datasets\\
+\hline
 \end{tabular}
 \end{center}
 \caption{Example distributed ad hoc data sources}
@@ -107,7 +107,7 @@ Biotechnology info. & datasets\\
 \end{figure}
 
 This paper describes a system that facilitates the creation,
-maintainance, and evolution of tools for processing ad hoc data from a
+maintenance, and evolution of tools for processing ad hoc data from a
 wide array of distributed data sources over varying periods of
 time. The system, called \padsd{}, is a domain-specific language in
 which software developers describe key aspects of the data sources
@@ -127,7 +127,7 @@ data may be compressed or encrypted;  privacy considerations may require
 the data be anonymized.
 \item {\bf What format} the data source arrives in.  The data may be
   in ASCII, binary, or EBCDIC; It may be tab- or comma-separated, or
-  it may be in the kind non-standard format that
+  it may be in the kind of non-standard format that
   \pads{}~\cite{fisher+:pads,mandelbaum+:pads-ml} was designed to describe.
 \end{itemize}
 
@@ -208,8 +208,11 @@ loader is generic, because it is possible to load data from any
 specified source into the RRD tool without additional ``programming.''
 The generic programming mode is the most difficult to use as it involves
 learning the relatively complex set of interfaces involving encodings
-of Generalized Algebraic Datatypes (GADTs) and Higher-Order Abstract Syntax 
-(HOAS).  These complexities are required to encode \padsd{}'s dependent features and make up for \ocaml{}'s lack of built-in generic programming support.
+of Generalized Algebraic Datatypes (GADTs)
+%\cite{xi:popl03} 
+and Higher-Order Abstract Syntax (HOAS). 
+These complexities are required to encode \padsd{}'s 
+dependent features and make up for \ocaml{}'s lack of built-in generic programming support.
 Still the reward for building generic tools is very high:
 as more and more such tools are built, the life of the off-the-shelf
 user becomes easier and easier.  We have already built eight useful

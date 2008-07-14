@@ -236,7 +236,7 @@ elements of $\feed_2$ by binding $x$ to $v$ in $\feed_2$'s definition.
 The elements of the composite feed include all elements $x$ of
 $\feed_1$ paired with the corresponding elements of $\feed_2$
 scheduled later than $x$.  As with synchronous pairs, we pair the
-metadata from the constituent feeds in the compositie feed. Unlike 
+metadata from the constituent feeds in the composite feed. Unlike 
 synchronous pairs, the two elements of the pair
 do not share a schedule time.  We adopt the later time ({\em
   i.e.,} the time of the element from $\feed_2$) as the schedule time
@@ -254,14 +254,15 @@ must fall between the schedule times for $v_1$ and $v_1'$
 The semantics for the two variants of $\mathtt{foreach}$ are defined
 in terms of the two variants of dependent pairs, simply dropping the
 first component of item in the pair feed in both cases.  The semantics
-of the list comprehension feed extends the semantics of sychronous
+of the list comprehension feed extends the semantics of synchronous
 pairs to lists: each list in the resulting feed contains the elements
 of the generated list with the same scheduled time.
 
 We have proven a soundness theorem for the semantics: the values
 contained in each feed are pairs of meta-data and data 
 values with the appropriate type.  More specifically, if the feed typing
-rules give feed $\feed$ type $\sigma$, then its data has type $\sigma$ and
+rules give feed $\feed$ type $\feedty{\sigma}$, 
+then its data has type $\sigma$ and
 its meta data has type $\metatype{\sigma}$ where $\metatype{\sigma}$ is
 defined as follows.
 \[

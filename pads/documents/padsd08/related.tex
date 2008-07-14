@@ -28,7 +28,7 @@ configuration file. The commands use standardized return values to
 express status, and are typically restricted to no more than 4KB of
 monitoring data.
 
-What distinguishes PADS from systems like SNMP or Ganglia is the
+What distinguishes \padsd{} from systems like SNMP or Ganglia is the
 ability to automatically parse and monitor virtually any kind of
 ad-hoc data, from node-level information like that collected by
 Ganglia or SNMP, all the way down to application-level data as well as
@@ -43,7 +43,7 @@ we believe is not available in other systems.
 % scalable monitoring systems has followed, with tools such as
 % AVMON~\cite{avmon} and PSePR~\cite{psepr}. Both of these tools can
 % distribute the monitoring function itself, eliminating the need for a
-% centralized monitoring location. PADS can interoperate with these
+% centralized monitoring location. \padsd{} can interoperate with these
 % systems in two ways -- either by serving as the mechanism to manage
 % their ad-hoc data formats, or by providing late-binding to allow users
 % to query multiple locations in these monitoring systems.
@@ -102,7 +102,7 @@ idea motivated us to implement our \padsd{} ad hoc-to-RSS conversion tool.
 % that they focus on how to merge data, while we focus on how to get raw
 % data.  MashMaker does not have a good way of describing the raw data
 % it gets, treating it as a black box or hand writing scraping code, so
-% PADS/D could serve as a data feed for MashMaker.
+% \padsd{} could serve as a data feed for MashMaker.
 % The MashMaker paper contains a nice survey of work in this area that
 % we can reference.
 
