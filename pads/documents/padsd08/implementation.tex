@@ -55,10 +55,10 @@ parts in turn and evaluate the overall system performance and design.
 %hundreds of nodes. 
 
 \subsection{The Compiler}
-The \padsd{} compiler consists of:
-(1) \cd{tcc}, the tool configuration compiler for .tc files, 
+The \padsd{} compiler consists of
+\cd{tcc}, the tool configuration compiler for .tc files, 
 and 
-(2) \cd{fmlc}, the compiler for feed declarations (.fml files). 
+\cd{fmlc}, the compiler for feed declarations (.fml files). 
 Both compilers convert their sources into \ocaml{}, which is compiled
 and linked to the runtime libraries.  We implemented both tools with
 \camlp{}, the \ocaml{} preprocessor. 
@@ -119,8 +119,8 @@ We implement each \padsd{} feed as a lazy list of feed items.
 Following the semantics in \secref{sec:semantics}, 
 a feed item is a metadata/data pair, 
 although the meta-data in the implementation is richer, 
-adding data arrival times and more detailed error codes for 
-HTTP errors, late item arrivals, parse errors, \etc{}
+adding data arrival times and more detailed error information.
+% for HTTP errors, late item arrivals, parse errors, \etc{}
 
 % Late arrival, (3)
 % %{{\small{ 
@@ -159,9 +159,9 @@ system that follows the  master-worker implementation strategy.
 %worker thread, and a master thread drives the combination of 
 %base feeds into compound feeds.  
 Each worker thread either fetches data from a specified
-location and parses the data into an internal representation (the {\em rep})
+location and parses the data into an internal representation (the {\em rep}),
 %(known as the {\em rep})
-using the \padsml{} parser, or synthesizes its data by calling a
+or synthesizes its data by calling a
 generator function.  Using error conditions, location, scheduled
 and arrival times, the worker generates the appropriate metadata,
 pairs it with the rep and pushes the feed item onto a queue. 
@@ -304,7 +304,7 @@ throughput and latencies as the system fetched from these node lists.
 We repeated the experiment ten times and calculated the average values.
 
 \figref{fig:throughput} shows the average throughtput
-and the average network and system latencies measured.
+and the average network and system latencies.
 Generally, 
 %the throughtput goes up with the number of nodes
 %until 200 and then starts declining and saturating
@@ -322,10 +322,10 @@ because of DNS failures.
 %archiving adds to the overhead of the system and hence
 %reduces the throughput. 
 Note that while network latency increases with the number of nodes,  
-the system latency remains almost constant and relatively
-small, showing that the \padsd{} runtime system adds
-very little overhead to the inevitable network fetching
-cost. It is also worth noting that the network latency is
+system latency remains almost constant and relatively
+low, showing that the \padsd{} runtime system adds
+little overhead to the inevitable network fetching
+cost. Also note that the network latency is
 almost linear in the number of nodes. The experiments show that
 the system can fetch from 800~nodes and archive the
 resulting data in under 40~seconds, well under the
