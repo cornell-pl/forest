@@ -67,43 +67,44 @@ mined for information about gene structure and regulation.
 Figure~\ref{fig:exampledata} summarizes 
 selected distributed ad hoc data sources.
 
+% \vizGems: Many and varied machines \\
 
-\begin{figure*}
+\begin{figure}
 \begin{center}
-\begin{tabular}{|l|l|l|}
+\begin{tabular}{|l|l|}
 \hline\hline
-Name & Use & Properties 
+Name/Use & Properties 
 \\\hline\hline
-CoMon~\cite{comon} & PlanetLab host monitoring & Multiple data sets in mail-header formats\\
-                                       && Archiving every 5 minutes \\
-                                       && From evolving set of 800+ nodes \\\hline
-CoBlitz~\cite{coblitz} & File transfer system monitoring & Multiple data sets \\
-                                       && Archiving every 5 minutes \\
-                                       && From evolving set of 800+ nodes \\\hline
-CoralCDN~\cite{coral} & Log files from CDN monitoring & Single Format \\
-                                       && Periodic archiving \\
-                                       && From evolving set of 250+ hosts \\\hline
-\vizGems{}       & Website Host Monitoring & Many and varied machines \\
-                 &                         & Execute programs remotely to collect data\\
-                 &                         & Varied fetch frequencies \\\hline
-\darkstar{}      & AT\&T network monitoring & Diverse data sources\\
-                                           && Archiving for future analysis \\
-                                           && Per minute, hour, and day fetches\\\hline
-\ningaui{}       & AT\&T billing auditing   & Thousands of data sources\\
-                 &                          & Archiving and error analysis\\\hline
-GO DB (Gene Ontology)~\cite{geneontology} & Gene Function Information & Multiple Formats \\
-                                             && Uploaded in daily, weekly, monthly intervals \\\hline
-BioGrid~\cite{biogrid} & Curated Gene and Protein Data & XML and Tab-separated Formats \\
-          & & multiple data sets $<=$ 50MB each \\
-          & & monthly data releases \\\hline
-NCBI~\cite{ncbi} & National Center for Biotechnology Information & Links to multiple bioinformatics datasets \\
-                                                     && and online databases\\
+CoMon~\cite{comon} & Multiple data sets \\
+PlanetLab host              & Archiving every 5 minutes \\
+monitoring                              & From evolving set of 800+ nodes \\\hline
+CoBlitz~\cite{coblitz}   & Multiple data sets \\
+File transfer         & Archiving every 5 minutes \\
+system monitoring                                       & From evolving set of 800+ nodes \\\hline
+CoralCDN~\cite{coral}         & Single Format \\
+Log files from  & Periodic archiving \\
+CDN monitoring                  & From evolving set of 250+ hosts \\\hline
+AT\&T \vizGems{}                    & Execute programs remotely to \\
+ website host                 & collect data \\
+ monitoring                   & Varied fetch frequencies \\\hline
+AT\&T \darkstar{}                   & Diverse data sources\\
+network       & Archiving for future analysis \\
+monitoring                              & Per minute, hour, and day fetches\\\hline
+AT\&T \ningaui{}                    & Thousands of data sources\\
+billing auditing        & Archiving and error analysis\\\hline
+GO DB~\cite{geneontology} & Multiple Formats \\
+Gene function info.     & Uploads daily, weekly, monthly \\\hline
+BioGrid~\cite{biogrid}        & XML and Tab-separated Formats \\
+Curated gene and  & multiple data sets $<=$ 50MB each \\
+protein data                              & Monthly data releases \\\hline
+NCBI~\cite{ncbi} & Links to multiple bioinformatics  \\
+Biotechnology info. & datasets\\
 \hline\hline
 \end{tabular}
 \end{center}
-\caption{Example ad hoc data sources}
+\caption{Example distributed ad hoc data sources}
 \label{fig:exampledata}
-\end{figure*}
+\end{figure}
 
 This paper describes a system that facilitates the creation,
 maintainance, and evolution of tools for processing ad hoc data from a
@@ -260,8 +261,8 @@ generic tools ourselves and will continue to build more as we see fit.
 
 
 
-\paragraph*{Contributions.} To summarize, we contribute the
-following:
+\paragraph*{Contributions.} The paper makes the following
+contributions:
 
 
 \begin{itemize}
