@@ -3,10 +3,11 @@
 %In this section, we describe two examples that we will use throughout
 %the paper to motivate and explain our system.
 
-At Princeton, Vivek Pai and KyoungSoo Park have developed
-CoMon~\cite{comon}, a system for monitoring the health and status of
-PlanetLab~\cite{planetlab}.  Every five minutes, CoMon attempts to
-fetch data from each of PlanetLab's 800+ nodes.  This data ranges from
+The CoMon~\cite{comon} system, developed at Princeton, 
+monitors the health and status of
+PlanetLab~\cite{planetlab} by attempting to
+fetch data from each of PlanetLab's 800+ nodes every 5 minutes.  
+This data ranges from
 the node uptime to memory usage to kernel version.  
 %The CoMon system takes this
 %raw data and transforms it into two different forms, one of which is a
@@ -16,7 +17,8 @@ CoMon displays the data to users in tabular form and allows them to
 perform a number of simple queries to find, for instance, lightly
 loaded nodes, nodes with drifting clocks or nodes with little
 remaining disk space.  CoMon also monitors nodes for various different
-sorts of problems and alerts users of deviant machines or slices.
+sorts of problems and generates reports of deviant machines or user
+programs.
 Finally, the data is archived so PlanetLab users can perform their own
 custom analyses of historical data.
 
