@@ -7,7 +7,7 @@ integral part of our language design process.  We have used the semantics to
 communicate our ideas precisely and to explore the nuances of design
 decisions. Furthermore, the semantics provides users with a tool to reason about the feeds
 resulting from \padsd{} descriptions, including subtleties related to
-timeouts and errors.
+synchronization, timeouts and errors.
 
 To express locations, schedules, and constraints, the feed calculus
 depends upon a {\em host language}, which we take to be the
@@ -39,7 +39,6 @@ a standard judgment for simply typing lambda calculus expressions:
 $\Gamma \turn e : \ty$.  We discuss the syntax and typing for each
 construct in turn.
 
-\input{typing}
 
 
 Core feeds express the underlying structure of base feeds, describing
@@ -82,6 +81,9 @@ The union feed merges two feeds with the same type
 into a single feed.  In contrast, the sum feed takes two feeds
 with (possibly) different types and injects the elements of each feed
 into a sum before merging the results into a single feed.  
+
+\input{typing}
+
 
 The calculus also contains three different
 pair constructors, each providing a different way to
@@ -253,7 +255,7 @@ must fall between the schedule times for $v_1$ and $v_1'$
 
 The semantics for the two variants of $\mathtt{foreach}$ are defined
 in terms of the two variants of dependent pairs, simply dropping the
-first component of item in the pair feed in both cases.  The semantics
+first component of each item in the pair feed in both cases.  The semantics
 of the list comprehension feed extends the semantics of synchronous
 pairs to lists: each list in the resulting feed contains the elements
 of the generated list with the same scheduled time.

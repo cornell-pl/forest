@@ -142,7 +142,7 @@ Two core examples of feed interpretations are the feed creator and the
 feed accumulator. The behavior of these tools depends
 essentially on the structure of the feed.  Functions like these
 require as input a runtime representation of the feed,
-complete with the details of feed description that
+complete with the details of the feed description that
 they represent. The obvious choice for representing feed descriptions
 in \ocaml is a datatype. However, standard \ocaml datatypes are not
 sufficiently typeful to express the types of many generic feed
@@ -160,7 +160,7 @@ elements have type \cd{'a}.
 %%won't work.
 This limitation of datatypes has been widely discussed in the
 literature, and various solutions have been 
-proposed~\cite{padsml-padl,xi:popl03,weirich:encodingtypecase,yang:icfp98}. We have 
+proposed~\cite{padsml-padl,weirich:encodingtypecase,xi:popl03,yang:icfp98}. We have 
 chosen to represent our AST using a variant of the Mogensen-Scott
 encoding~\cite{mogensen:jfp,wand98} which exploits higher-order abstract syntax 
 to encode variable binding in feed descriptions.  This implementation strategy 

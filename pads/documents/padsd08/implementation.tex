@@ -59,7 +59,8 @@ The \padsd{} compiler consists of
 \cd{tcc}, the tool configuration compiler for .tc files, 
 and 
 \cd{fmlc}, the compiler for feed declarations (.fml files). 
-Both compilers convert their sources into \ocaml{}, which is compiled
+Both compilers convert their sources into \ocaml{} code, which is then
+compiled
 and linked to the runtime libraries.  We implemented both tools with
 \camlp{}, the \ocaml{} preprocessor. 
 
@@ -162,8 +163,8 @@ Each worker thread either fetches data from a specified
 location and parses the data into an internal representation (the {\em rep}),
 %(known as the {\em rep})
 or synthesizes its data by calling a
-generator function.  Using error conditions, location, scheduled
-and arrival times, the worker generates the appropriate metadata,
+generator function.  Using error conditions, location, scheduled time
+and arrival time, the worker generates the appropriate metadata,
 pairs it with the rep and pushes the feed item onto a queue. 
 %And then it generates the idata from the rep and the meta data,
 %and pushes the idata into the concurrent queue.
@@ -290,8 +291,8 @@ number of items fetched per second.
 %nodes (800+) at the same time, which can be viewed as a stress test. 
 
 All the experiments were conducted on a Mac Powerbook G4 computer
-with a 1.67GHz CPU and 2GB memory running Mac OS X 10.4.
-%connected to the internet via 11Mb/s wireless ethernet.
+with a 1.67GHz CPU and 2GB memory running Mac OS X 10.4
+connected to the Internet via 11Mb/s wireless ethernet.
 In each experiment, we randomly selected 16 subsets of PlanetLab
 nodes, with increasing size from 50 to 800 in increments of 50.
 %%In each experiment, we randomly selected 50 nodes,
@@ -315,7 +316,7 @@ up to 200 concurrent fetches.
 %is the size of the
 %fetching batch. At multiples of 200, the concurrent
 %fetching is maximally utilized. 
-An anomaly occurred at 400 nodes, as a number nodes were unreachable
+An anomaly occurred at 400 nodes, as a number of nodes were unreachable
 because of DNS failures.
 % at the time of
 %the experiment. 
@@ -383,10 +384,10 @@ The compiler eliminates boilerplate code by
 (a) generating both type declarations and values from 
 descriptions (particularly record types and datatypes), something
 that cannot be done in a library, (b) packaging definitions
-in modules for name-space management and functors usage, 
-(c) automatically filling in defaults for values omitted from config 
-files, and (d) generating complete, stand-alone executables from
-declarative descriptions and config files. 
+in modules for name-space management and functor usage, 
+(c) automatically filling in defaults for values omitted from
+configuration files, and (d) generating complete, stand-alone executables from
+declarative descriptions and configurations. 
 %Much of the boilerplate 
 %elimination is achieved by parsing fml and config files, filling in 
 %defaults and automatically generating driver programs for the naive 
@@ -419,14 +420,14 @@ we guarantee these casts cannot go wrong.
 
 
 \textbf{\textit{Integration with \pads{}.}}  Core
-\pads{}~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml,fisher+:dirttoshovels} has had success as a language extension on top of C as well as
+\pads{}~\cite{fisher+:pads,fisher+:popl06,fisher+:dirttoshovels,mandelbaum+:pads-ml} has had success as a language extension on top of C as well as
 \ocaml{}.  Its purpose is to describe and document properties of ad hoc
 data sources as well as to facilitate generation of local, single-source 
 tools.  Extending such descriptions to include source location, 
 availability and 
 access mode helps complete the documentation in a single centralized 
-specification and through a uniform notation.  It gives the off-the-shelf
-user everything they need in a single language.  Forcing a division 
+specification and through a uniform notation.  It gives off-the-shelf
+users everything they need in a single language.  Forcing a division 
 of the specification into part library/part language would ruin its
 cohesiveness, particularly in the context of
 dependent feeds where there is tight interplay between access mode, location,

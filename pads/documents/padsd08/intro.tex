@@ -102,7 +102,7 @@ NCBI~\cite{ncbi} & Links to multiple bioinformatics  \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Example distributed ad hoc data sources}
+\caption{Example distributed ad hoc data sources.}
 \label{fig:exampledata}
 \end{figure}
 
@@ -126,7 +126,7 @@ local or remote computation.
 data may be compressed or encrypted;  privacy considerations may require 
 the data be anonymized.
 \item {\bf What format} the data source arrives in.  The data may be
-  in ASCII, binary, or EBCDIC; It may be tab- or comma-separated, or
+  in ASCII, binary, or EBCDIC. It may be tab- or comma-separated, or
   it may be in the kind of non-standard format that
   \pads{}~\cite{fisher+:pads,mandelbaum+:pads-ml} was designed to describe.
 \end{itemize}
@@ -172,13 +172,13 @@ and declarative tool configuration specifications.  Thus for common
 tasks, users can manage distributed data sources simply by writing
 high-level declarative specifications.  It is quick and it is easy. There
 are relatively few concepts to learn, no complex interfaces and no
-tricky boilerplate a programmer needs to master to initialize 
+tricky boilerplate to master to initialize 
 the system or thread together tool libraries.  Because there is
 so little ``programming'' involved, we refer to the act 
 of writing simple specifications
 and using pre-defined tools as the {\em off-the-shelf} 
 mode of use.  However, to avoid sacrificing flexibility and to support extensibility,
-\padsd{} supports two other {\em modes of use} in addition to off-the-shelf.
+\padsd{} supports two other modes of use.
 
 The second mode is
 for the {\em single-minded implementer}, who needs to build a new
@@ -195,7 +195,7 @@ curve in this mode than in off-the-shelf mode because a variety of
 interfaces must be learned.  The average functional programmer may find
 these interfaces relatively intuitive, but the computational scientist
 who is not interested in functional programming may prefer to stick with
-off-the-shelf. 
+off-the-shelf uses. 
 
 The third mode is for the {\em generic programmer}.  Generic
 programmers may observe that they (or their colleagues) 
@@ -204,19 +204,19 @@ data sets.  Rather than writing a program specific to a particular
 data set, they use a 
 separate set of interfaces supplied by the \padsd{} system to write a
 single generic program to complete the task.  For example, the RRD database
-loader is generic, because it is possible to load data from any
+loader is generic because it is possible to load data from any
 specified source into the RRD tool without additional ``programming.''
 The generic programming mode is the most difficult to use as it involves
-learning the relatively complex set of interfaces involving encodings
-of Generalized Algebraic Datatypes (GADTs)
-%\cite{xi:popl03} 
+learning a relatively complex set of interfaces for encoding
+Generalized Algebraic Datatypes (GADTs)~\cite{xi:popl03} 
 and Higher-Order Abstract Syntax (HOAS). 
-These complexities are required to encode \padsd{}'s 
-dependent features and make up for \ocaml{}'s lack of built-in generic programming support.
+These complexities are required to encode 
+the dependent features of \padsd{} and to compensate for the lack of
+built-in generic programming support in \ocaml{}. 
 Still the reward for building generic tools is very high:
 as more and more such tools are built, the life of the off-the-shelf
 user becomes easier and easier.  We have already built eight useful
-generic tools ourselves and will continue to build more as we see fit.
+generic tools ourselves and will continue to build more as demand requires.
 
 % The system can generate all of these tools from \padsd{} descriptions
 % and declaritive tool configuration specifications.  Thus for common
@@ -274,8 +274,8 @@ spatial, temporal and auxiliary properties of distributed ad hoc data
 sources.  We are aware of no other research effort that has attempted
 to design, implement or analyze such a language.
 
-\item It provides a mechanism for automatic generation of eight different
-data processing tools directly from high-level specifications.
+\item It provides a mechanism for the automatic generation of eight different
+data processing tools from high-level specifications.
 
 \item It supports three modes of use:
 off-the-shelf, single-minded implementer and generic 

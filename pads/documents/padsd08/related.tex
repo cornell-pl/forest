@@ -36,7 +36,7 @@ protocol-level data. These areas are the ones that are not well served
 by today's general-purpose monitoring systems. Moreover, the ability
 to use the same data description to automatically build parsers, 
 in situ tools, and monitoring systems directly from declarative
-descriptions represents an ease of use that we believe is not
+descriptions represents an ease of use not
 available in other systems. 
 
 % With the growth of distributed systems, research interest in building
@@ -64,14 +64,14 @@ available in other systems.
 The implementation of \padsd{} depends upon a tremendous body of past research
 in both functional stream processing and generic programming.  Rather than
 competing with these technologies, \padsd{} builds upon them and makes them
-highly accessible to off-the-shelf users in an extremely important new
+highly accessible to off-the-shelf users in an important new
 domain -- that of distributed ad hoc data processing.
 
 \paragraph*{Reactive Functional Programming.}
 FRP~\cite{elliot+:frp} shares a tenuous relationship to work on \padsd{}
 in that both technologies arise from the need to perform processing
-on a schedule over time-indexed values.  However, the central novelty
-of FRP involves the definition and implementation of {\em continuous} 
+on a schedule over time-indexed values.  However, 
+FRP focuses on the definition and implementation of {\em continuous} 
 time-varying values.  So far, we have not found use for such
 values in our domain, only for discrete time-indexed
 sequences of events.

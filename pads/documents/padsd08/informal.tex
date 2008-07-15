@@ -1,7 +1,6 @@
 To introduce our feed declaration language, we work through a
-series of examples of increasing sophistication, based around CoMon and
-AT\&T's web hosting monitors. 
-
+series of examples of increasing sophistication, drawn from the CoMon
+and \vizGems{} monitoring systems.
 
 \begin{figure}[t]
 \begin{code}
@@ -19,7 +18,7 @@ AT\&T's web hosting monitors.
     \kw{format}   = Comon_format.Source;  
   |\}
 \end{code}
-\vskip -2ex
+\vskip -1.5ex
 \caption{Simple CoMon feed.}
 \label{fig:simplecomon}
 \end{figure}
@@ -79,16 +78,16 @@ as anycast \cite{anycast}.
 The schedule for \cd{comon\_1} indicates the system should fetch data
 every minute for two hours, using the \cd{lasting} field to indicate
 the duration of the feed.  It omits the \cd{starting} and
-\cd{timeout} specifications, in which case the system uses default
+\cd{timeout} specifications, causing the system to use default
 %settings of \cd{now} for the start time and 30 seconds for the
 %timeout.  
-settings for the start time and timeout window.  
+settings for the start time and the timeout window.  
 
 
 
 The \cd{simple\_comon} example hard-codes the set of locations from
 which to gather performance data.  In reality, the CoMon system has an
-internet-addressable configuration file that contains a list of hosts
+Internet-addressable configuration file that contains a list of hosts
 to be queried, one per non-comment line. This list is periodically
 updated to reflect the set of active nodes in PlanetLab. 
 
@@ -183,7 +182,7 @@ given time-slice.
 
 Using the \cd{nodes} specification, we define the \cd{comon} feed as a
 \textit{dependent} feed: each \cd{nodelist} in the \cd{nodes} feed defines a
-collection of sources for the \cd{comon} feed.  The \cd{comon} \kw{source}
+collection of sources for the \cd{comon} feed.  The \cd{comon} \kw{sources}
 specification processes the \cd{nodelist} to manage errors and strip
 out comment fields.  The code that handles this processing illustrates
 that the \padsd{} domain-specific language is embedded in \ocaml{}.
