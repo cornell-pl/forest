@@ -1,6 +1,8 @@
-To introduce our feed declaration language, we work through a
-series of examples of increasing sophistication, drawn from the CoMon
-and \vizGems{} monitoring systems.
+The \padsd{} language allows users to describe streams of data and
+meta-data that we refer to as {\em feeds}.  
+To introduce the central features of the language,
+we work through a series of examples 
+drawn from the CoMon and \vizGems{} monitoring systems.
 
 \begin{figure}[t]
 \begin{code}
@@ -19,7 +21,7 @@ and \vizGems{} monitoring systems.
   |\}
 \end{code}
 \vskip -1.5ex
-\caption{Simple CoMon feed.}
+\caption{\texttt{simple\_comon.fml}:  Simple CoMon feed.}
 \label{fig:simplecomon}
 \end{figure}
 
@@ -33,7 +35,7 @@ and \vizGems{} monitoring systems.
   |\}
 \end{code}
 \vskip -2ex
-\caption{Feed fragment that fetches data from a single source.}
+\caption{\texttt{sites.fml}:  Code fragment for data from one of many sites.}
 \label{fig:comon_1}
 \end{figure}
 
@@ -131,7 +133,7 @@ updated to reflect the set of active nodes in PlanetLab.
     |\}
 \end{code}
 \vskip -2ex
-\caption{CoMon program that uses a feed of node locations to drive
+\caption{\texttt{comon.fml}: Uses feed of node locations to drive
   data collection.}
 \label{fig:feedcomon}
 \end{figure}
@@ -153,8 +155,8 @@ updated to reflect the set of active nodes in PlanetLab.
     nodeitem precord plist (No_sep, No_term)
 \end{code}
 \vskip -2ex
-\caption{\padsml{} description of CoMon configuration files, which
-  contain one host name per non-commented line.}
+\caption{\texttt{nodelist.pml}: \padsml{} description for CoMon configuration 
+  files, which contain one host name per non-commented line.}
 \label{fig:nodepml}
 \end{figure}
 
@@ -303,7 +305,7 @@ the compound feed to indicate its source.
 %   ) 
 % \end{code}
 % \vskip -2ex
-% \caption{Simplified version of \vizGems{} feed.}
+% \caption{\texttt{arrakis.fml} Simplified version of \vizGems{} feed.}
 % \label{fig:pulse}
 % \end{figure}
 
@@ -438,6 +440,6 @@ forms in \secref{sec:semantics}.
      [ gen_stats h | h <- hl ]
 \end{code}
 \vskip -2ex
-\caption{Simplified version of \vizGems{} feed.}
+\caption{\texttt{arrakis.fml}: Simplified version of \vizGems{} feed.}
 \label{fig:pulse2}
 \end{figure}

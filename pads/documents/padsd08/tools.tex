@@ -8,7 +8,7 @@ writing simple {\em configuration files}, such as shown in
 Each configuration file includes a feed declaration header 
 and a sequence of tool specifications. The header specifies the path to the 
 feed description file (\cd{comon.fml}) and the name of the feed to be created (\cd{comon}).
-Each tool specification starts with the the keyword \cd{tool} followed by the
+Each tool specification starts with the keyword \cd{tool} followed by the
 name of the tool (\eg{}, \cd{feedaccum} and \cd{rss}). The body of each tool specification 
 lists name-value pairs, where values are \ocaml{} expressions. Some attributes are 
 optional, and the compiler fills in a default value for every omitted attribute.
@@ -19,7 +19,7 @@ feed, configures the specified tools, and applies them to the feed in parallel.
 %\padsd{} are functional and immutable. 
 In the following paragraphs, we describe the tools we have implemented.
 
-\begin{figure}[tb]
+\begin{figure}[t]
 \centering
 \begin{codebox}
 \kw{feed} comon.fml/comon
@@ -43,7 +43,7 @@ In the following paragraphs, we describe the tools we have implemented.
   path  = "<top>.[?].Mem_info";
 \}
 \end{codebox}
-\caption{Example tool configuration file.}
+\caption{\texttt{comon.tc}: Example tool configuration file.}
 \label{fig:toolconfigs}
 \end{figure}
 
@@ -65,7 +65,7 @@ In the following paragraphs, we describe the tools we have implemented.
 %\edcom{Move this bit somewhere?}
 %A tool is typically an \ocaml{} module with a standard interface: a tool specification, a feed representation or prefeed compiled from the feed description, and a feed of interest. 
 
-\begin{figure}[th]
+\begin{figure}[t]
 \centering
 \begin{scodebox}
 ======================================================
@@ -83,7 +83,7 @@ Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
 Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2
 ... omitted ...
 \end{scodebox}
-\caption{Portion of an accumulator output.} \label{fig:acc}
+\caption{\texttt{comon.acc}: Fragment of accumulator output.} \label{fig:acc}
 \end{figure} 
 
 %===========================================================================

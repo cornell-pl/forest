@@ -210,10 +210,10 @@ picks an arbitrary member of this set, using the function
 $\selectOne{}$.  Otherwise, the feed adds  
 error value $((\atime,\generatedloc), \none)$ for $\atime$.
 
-The meaning of the empty feed is the empty set.  Computed fields yield
+The meaning of the empty feed is the empty set.  Computed feeds yield
 one value per time in the given schedule.  The dummy location
-($\generatedloc$) in the metadata indicates the value had no physical
-source.  Feed comprehensions are similar.  The filter feed and feed
+($\generatedloc$) in the computed feed metadata indicates the value had no physical
+source.  Feed comprehensions also use the dummy location.  The filter feed and feed
 comprehensions together model the full power of the feed
 comprehensions found in our implementation. The semantics for
 \texttt{let}, union and sum feeds are all straightforward.  The union
