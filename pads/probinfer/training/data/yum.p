@@ -1,45 +1,24 @@
 #include "basetokens.p"
-
-Ptypedef Pstring_ME(:"/:/":) PPpunc_colon
-Ptypedef Pstring_ME(:"/[0-9a-zA-Z\. \-]+/":) PPblob
-
-Punion method {
-	"Installed";
-	"Updated";
-	"Erased";
-};
-
-/*
-Pstruct ins_update_package_t {
-	Pstring(:'.':) packagename;
-	'.';
-	Pstring(:' ':) arch;
-	' ';
-	Pstring(:'-':) major;
-	'-';
-	Pstring_SE(:Peor:) minor;
-};
-
-Ptypedef Pstring_SE(:Peor:) erase_package_t;
-
-Punion package_t {
-		erase_package_t erased_package;
-		ins_update_package_t ins_update_package;
-};
-*/
+Ptypedef Pstring_ME(:"/[-0-9A-Za-z_.:+]+/":) PPmyid;
 
 Precord Pstruct entry_t {
-//	Ptimestamp_explicit_FW (:15, "%b %d %H:%M:%S", P_cstr2timezone("-0500"):) ts;
     PPdate d;
-    PPwhite white3
+    PPwhite white3;
     PPtime t;
     PPwhite white1;
-	method m;
+    PPword word1;
+
     PPpunc_colon colon;
     PPwhite white2;
-	//package_t package;
-    //PPblob      package;
-    Pstring_SE(:Peor:) package;
+    PPmyid id1;
+    Popt PPwhite white4;
+//    Popt PPint int1;
+//    Popt PPpunc_colon colon1;
+    Popt PPmyid id2;
+/*
+    PPmessage message;
+    Popt PPmessage message2;
+*/
 };
 
 Psource Parray yum {

@@ -1,18 +1,8 @@
-Ptypedef Pstring_ME(:"/\\s*/":) space_t;
+//#include "/n/fs/pads/qian/pads/probinfer/training/data/basetokens.p"
 
-Pstruct permission_t
-{
- Pchar dir: dir== '-' || dir== 'd';
- Pchar uread: uread == '-' || uread == 'r';
- Pchar uwrite: uwrite == '-' || uwrite == 'w';
- Pchar uexe:uexe == '-' || uexe == 'x';
- Pchar gread: gread == '-' || gread == 'r';
- Pchar gwrite: gwrite == '-' || gwrite == 'w';
- Pchar gexe:gexe == '-' || gexe == 'x';
- Pchar oread: oread == '-' || oread == 'r';
- Pchar owrite: owrite == '-' || owrite == 'w';
- Pchar oexe:oexe == '-' || oexe == 'x';
-};
+#include "basetokens.p"
+
+Ptypedef Pstring_ME(:"/\\s*/":) space_t;
 
 Ptypedef Ptimestamp_explicit_FW(: 12, "%b %d %H:%M", P_cstr2timezone("-0500"):) this_year_timestamp_t;
 Ptypedef Ptimestamp_explicit_FW(: 12, "%b %d  %Y", P_cstr2timezone("-0500"):) prev_year_timestamp_t;
@@ -23,26 +13,33 @@ Punion timestamp_t {
 };
 
 Precord Pstruct header_t {
-  "total ";
-  Puint32 dirsize; 
-  '\r'; 
+  PPword total;
+  PPwhite white6;                       
+  PPint dirsize; 
+};
+
+Punion my_time_t {
+ PPtime time1;
+ PPint year;
 };
 
 Precord Pstruct entry_t
 {
- permission_t permissions;
- space_t sp1;
- Puint32 nfiles;
- ' ';
- Pstring(:' ':) owner;
- ' ';
- Pstring(:' ':) group;
- space_t sp2;
- Puint32 bytes;
- ' ';
- timestamp_t timestamp;
- ' ';
- Pstring_SE(:"/$/":) filename;
+ PPpermission permissions;
+ PPwhite sp1;
+ PPint nfiles;
+ PPwhite white2;
+ PPid owner;
+ PPwhite white3;
+ PPid group;
+ PPwhite sp2;
+ PPint bytes;
+ PPwhite white4;
+ PPdate date1;
+ PPwhite white6;
+ my_time_t mytime;
+ PPwhite white5;
+ PPpath filename;
 };
 
 Psource Pstruct ls_l_t {

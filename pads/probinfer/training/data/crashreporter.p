@@ -1,3 +1,5 @@
+#include "basetokens.p"
+
 Ptypedef Pstring_SE(:"/ \\-|$/":) FilePath;
 
 Penum Crashdump_t {
@@ -6,57 +8,76 @@ Penum Crashdump_t {
 };
 
 Pstruct StartPath {
-  "Started writing crash report to: ";
-  FilePath file1;
+  PPtext text1;
+  PPpunc_colon colon1;
+  PPwhite white5;                
+  PPpath file1;
 };
 
 Pstruct FinishPath {
   "Finished writing crash report to: ";
-  FilePath file2;
+  PPpath file2;
 };
 
 Pstruct Unable_t {
-  "Unable to determine task_t for pid: ";
-  Puint32 pid;
-  " name: Exited process";
+  PPtext text2;
+  PPpunc_colon colon2;
+  PPwhite white6;                
+  PPint pid;
+  PPwhite white7;
+  PPword word1;
+  PPpunc_colon colon3;
+  PPwhite white8;
+  PPtext text3;
+//  " name: Exited process";
 };
  
 Pstruct Failed {
-  "Failed to re-launch ";
-  FilePath file3;
-  " - ";
+//  "Failed to re-launch ";
+  PPtext text4;
+  PPpath file3;
+  PPwhite white9;
+  PPpunc_hyphen hyphen1;
+  PPwhite white10;
+//  " - ";
   Pstring_SE(:Peor:) errormsg;
 };
 
 Punion Dumpreport_t
 {
   started Pfrom ("crashdump started");
-  StartPath sp;
-  FinishPath fp;
   Unable_t unable;
   Failed fail;
+  StartPath sp;
+  StartPath fp;
 };
 
 Pstruct Reporterreport_t {
-  Pstring_ME (: "/[^ ]\*/" :) function;
-  " reply failed: ";
+//  Pstring_ME (: "/[^ ]\*/" :) function;
+//  " reply failed: ";
   Pstring_SE(:Peor:) failedmsg;
 };
 
-Punion Report_t (:Crashdump_t crash:)
+Punion Report_t 
 {
- Pswitch (crash) {
-        Pcase 1 : Dumpreport_t dumpreport;
-        Pcase 2: Reporterreport_t reporterreport;
- }
+  Dumpreport_t dumpreport;
+  Reporterreport_t reporterreport;
 };
 
-Ptypedef Ptimestamp_explicit_FW(: 24, "%a %b %d %H:%M:%S %Y", P_cstr2timezone("-0500") :) timestamp_t;
 Precord Pstruct entry_t {
-         timestamp_t mytime;
-   ' ';  Crashdump_t crash;
-   '[';  Puint32        dumpid;
-   "]: "; Report_t(:crash:) report; 
+   PPdate date1;
+   PPwhite white1;
+   PPtime time1;
+   PPwhite white2;
+   PPint date2;
+   PPwhite white3;  
+   PPword crash;
+   PPpunc_lsqubrac lsqubrac1;
+   PPint        dumpid;
+   PPpunc_rsqubrac rsqubrac2;
+   PPpunc_colon colon1;
+   PPwhite white4;
+   Report_t report; 
 };
 
 Psource Parray entries_t {

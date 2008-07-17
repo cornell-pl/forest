@@ -1,4 +1,4 @@
-#include "vanilla.p"
+#include "basetokens.p"
 Penum Enum_4 {
 	tcp44 Pfrom("tcp4"),
 	tcp64 Pfrom("tcp6"),
@@ -48,18 +48,32 @@ Penum Enum_35 {
 	CLOSED35 Pfrom("CLOSED")
 };
 Popt Enum_35 Opt_34;
+Punion ipoption {
+    PPip ip1;
+    PPpunc_star star1;
+};
+Punion portoption {
+    PPint int3;
+    PPpunc_star star2;
+};
 Pstruct Struct_3 {
-	Enum_4 var_4;
-	Pstring_ME(:"/[ 	]+/":) var_5;
-	Pint64 var_6;
-	Pstring_ME(:"/[ 	]+/":) var_7;
-	Pint64 var_8;
-	Pstring_ME(:"/[ 	]+/":) var_9;
-	Union_10 var_10;
-	Pstring_ME(:"/[ 	]+/":) var_21;
-	Union_22 var_22;
-	Pstring_ME(:"/[ 	]+/":) var_33;
-	Opt_34 var_34;
+    PPid id1;
+    PPwhite white1;
+    PPint int1;
+    PPwhite white2;
+    PPint int2;
+    PPwhite white3;
+    ipoption myipoption;
+    PPpunc_dot dot1;
+    portoption myportoption;
+    PPwhite white4;
+    ipoption myipoption1;
+    PPpunc_dot dot2;
+    portoption myportoption1;
+    PPwhite white5;
+    Popt PPword word1;
+    Popt PPpunc_underscore underscore;
+    Popt PPword word5;
 };
 Penum Enum_42 {
 	stream42 Pfrom("stream"),
@@ -68,24 +82,24 @@ Penum Enum_42 {
 Popt Pstring_ME(:"/[ 	]+/":)  Opt_55;
 Popt PPpath  Opt_57;
 Pstruct Struct_38 {
-	Pstring_ME(:"/[ 	]+/":) var_39;
-	Pstring_ME(:"/[0-9a-f]+/":) var_40;
-	Pstring_ME(:"/[ 	]+/":) var_41;
-	Enum_42 var_42;
-	Pstring_ME(:"/[ 	]+/":) var_43;
-	Pint64 var_44;
-	Pstring_ME(:"/[ 	]+/":) var_45;
-	Pint64 var_46;
-	Pstring_ME(:"/[ 	]+/":) var_47;
-	Pstring_ME(:"/[0-9a-f]+/":) var_48;
-	Pstring_ME(:"/[ 	]+/":) var_49;
-	Pstring_ME(:"/[0-9a-f]+/":) var_50;
-	Pstring_ME(:"/[ 	]+/":) var_51;
-	Pstring_ME(:"/[0-9a-f]+/":) var_52;
-	Pstring_ME(:"/[ 	]+/":) var_53;
-	Pstring_ME(:"/[0-9a-f]+/":) var_54;
-	Opt_55 var_55;
-	Opt_57 var_57;
+    PPwhite white14;
+    PPid id2;
+    PPwhite white6;
+    PPword word2;
+    PPwhite white7;
+    PPint int3;
+    PPwhite white8;
+    PPint int4;
+    PPwhite white9;
+    PPid id3;
+    PPwhite white10;
+    PPid id4;
+    PPwhite white11;
+    PPid id5;
+    PPwhite white12;
+    PPid id6;
+    Popt PPwhite white13;
+    Popt PPpath path1;
 };
 Precord Punion Union_0 {
 	var_1 Pfrom("Active Internet connections (including servers)");

@@ -1,4 +1,4 @@
-#include "vanilla.p"
+#include "basetokens.p"
 Penum Enum_3 {
 	var_12 Pfrom("\"TEAJBUS\""),
 	var_13 Pfrom("\"TEEXBUS\""),
@@ -7,15 +7,17 @@ Penum Enum_3 {
 	var_16 Pfrom("\"TETCBUS\"")
 };
 Pstruct Struct_2 {
-	Enum_3 var_3;
-	',';
-	Pint64 var_5;
-	',';
-	Pfloat64 var_7;
-	',';
-	"Quadrillion Btu";
-	',';
-	Pint64 var_11;
+	PPmessage message1;
+	PPpunc_comma comma1;
+	PPint var_5;
+	PPpunc_comma comma2;
+	PPfloat var_7;
+	PPpunc_comma comma3;
+    PPword word1;
+    PPwhite white1;
+    PPword word2;             
+	PPpunc_comma comma4;
+	PPint var_11;
 };
 Precord Punion Union_0 {
 	var_1 Pfrom("\"MSN\",\"YYYYMM\",\"Publication Value\",\"Publication Unit\",\"Column Order\"");

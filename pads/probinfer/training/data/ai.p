@@ -67,6 +67,7 @@ Precord Pstruct entry_t {
          auth_id_t      auth;
          PPwhite        white6;
        PPpunc_lsqubrac    lsqubrac;        
+/*
         Pdate(:':':)   date;
         PPpunc_colon  colon;
         Ptime(:' ':)    time;  
@@ -74,6 +75,10 @@ Precord Pstruct entry_t {
 //       Pstring(:']':) timezone;
          PPpunc_hyphen hyphen7;
          PPint int7;
+*/
+        PPdate date;
+        PPpunc_colon colon;
+        PPtime time;
          PPpunc_rsqubrac   rsqubrac;   
          PPwhite       white7;
          request_t      request;

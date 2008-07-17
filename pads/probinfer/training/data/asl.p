@@ -1,58 +1,64 @@
-#include "vanilla.p"
+#include "./basetokens.p"
+
 Pstruct Struct_2 {
-        '[';
-        "Time";
-        ' ';
+        PPpunc_lsqubrac lsqubrac1;
+        PPword word1;
+        PPwhite white9;
         PPdate var_6;
-        ' ';
+        PPwhite white10;
         PPtime var_8;
-        ' ';
-        "UTC";
-        ']';
+        PPwhite white11;
+        PPword word2;
+        PPpunc_rsqubrac rsqubrac2;
 };
 Pstruct Struct_12 {
-        '[';
-        "Facility";
-        ' ';
-        PPstring var_16;
-        ']';
+        PPmessage message1;
 };
+
 Pstruct Struct_18 {
-        '[';
-        "Sender";
-        ' ';
-        Pstring_ME(:"/[^\]]+/":) var_22;
-        ']';
+        PPpunc_lsqubrac lsqubrac2;
+        PPword word3;
+        PPwhite white12;
+        PPpath path1;
+        PPpunc_rsqubrac rsqubrac2;
+};
+Punion union1 {
+       Struct_18 var_18;
+       Struct_12 var_12;
 };
 Pstruct Struct_24 {
-        '[';
-        "PID";
-        ' ';
-        Pint64 var_28;
-        ']';
+        PPpunc_lsqubrac lsqubrac3;
+        PPword word4;
+        PPwhite white13;
+        PPint var_28;
+        PPpunc_rsqubrac rsqubrac3;
 };
 Pstruct Struct_32 {
-        Pstring_ME(:"/[^\\]+/":) var_33;
+        Pstring_ME(:"/[^\\\\]+/":) var_33;
         "\\]";
-        Pstring_ME(:"/[^\]]+/":) var_35;
+        Pstring_ME(:"/[^]]+/":) var_35;
+};
+Pstruct Struct_33 {
+        PPpunc_lsqubrac lsqubrac8;
+        PPword word9;
+        PPwhite white20;
+        Struct_32 var_44;
+        PPpunc_rsqubrac rsqubrac8;
 };
 Punion Union_31 {
-        Struct_38 var_37;
-        Pstring_ME(:"/[^\]]+/":) var_39;
+        Struct_33 var_37;
+//        Pstring_ME(:"/[^\]]+/":) var_39;
+        PPmessage message5;
 };
 Pstruct Struct_30 {
-        '[';
-        "Message";
-        ' ';
-        Union_45 var_44;
-        ']';
+        PPmessage message2;
 };
 Pstruct Struct_47 {
-        '[';
-        "Level";
-        ' ';
-        Pint64 var_51;
-        ']';
+        PPpunc_lsqubrac lsqubrac4;
+        PPword word5;
+        PPwhite white13;
+        PPint var_51;
+        PPpunc_rsqubrac rsqubrac4;
 };
 Pstruct Struct_53 {
         '[';
@@ -69,32 +75,52 @@ Pstruct Struct_59 {
         ']';
 };
 Pstruct Struct_65 {
-        '[';
-        "Host";
-        ' ';
-        PPstring var_69;
-        ']';
-};
-Precord Pstruct Struct_1 {
-        Struct_73 var_72;
-        ' ';
-        Struct_77 var_76;
-        ' ';
-        Struct_81 var_80;
-        ' ';
-        Struct_85 var_84;
-        ' ';
-        Struct_89 var_88;
-        ' ';
-        Struct_93 var_92;
-        ' ';
-        Struct_97 var_96;
-        ' ';
-        Struct_101 var_100;
-        ' ';
-        Struct_105 var_104;
-};
-Psource Parray entries_t {
-        Struct_0[];
+        PPpunc_lsqubrac lsqubrac5;
+        PPtext text1;
+        PPpunc_rsqubrac rsqubrac5;
 };
 
+Pstruct Struct_67 {
+        PPpunc_lpar lsqubrac11;
+        PPtext text2;
+        PPpunc_rpar rbrac1;
+        PPwhite white11;
+        PPpunc_lpar lbrac2;
+        PPtext text3;
+        PPpunc_rpar rbrac2;
+};
+
+Punion Union_2 {
+       Struct_67 struct67;
+       PPhostname hostname1;
+};
+
+Pstruct Struct_66 {
+        PPpunc_lsqubrac lsqubrac5;
+        PPtext text1;
+        Popt Union_2 union2;
+        PPpunc_rsqubrac rsqubrac5;
+};
+
+Precord Pstruct Struct_1 {
+        Struct_2 var_72;
+        PPwhite white1;
+        Struct_65 var_76;
+        PPwhite white2;
+        Struct_18 var_80;
+        PPwhite white3;
+        Struct_24 var_84;
+        PPwhite white4;
+        Struct_66 var_88;
+        PPwhite white5;
+        Struct_47 var_92;
+        PPwhite white6;
+        Struct_47 var_96;
+        PPwhite white7;
+        Struct_47 var_100;
+        PPwhite white8;
+        Struct_65 var_104;
+};
+Psource Parray entries_t {
+        Struct_1[];
+};

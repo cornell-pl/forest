@@ -1,20 +1,15 @@
 #include "basetokens.p"
 
-Ptypedef Pstring_ME(:"/[,]/":) PPpunc_comma;
-
 Pstruct secHeader {
-        PPword vBTy_3;
-        ' ';
-        "rail";
-        ",,,,,,,,,,,,,,,";
+        PPtext text1;
 };
 Punion title {
         Pstring_ME(: "/\"[^\"]\*\"/" :) noteinquotes; 
         Pstring_ME(: "/[^,]\*/" :) noteoutsidequotes; 
 };
 Pstruct comments {
-	title vBTy_12;
-	",,,,,,,,,,,,,,,";
+	PPmessage message1;
+	PPtext text2;
 };
 Popt Pstring_ME(: "/\\s/" :) spaceop;
 Pstruct city {
@@ -30,27 +25,45 @@ Penum na {
 	vBTy_26 Pfrom("NA")
 };
 Punion nostations {
-	Pint32 vBTy_27;
-	na vBTy_29;
+	PPint vBTy_27;
+	PPword word2;
 };
 Parray stations {
    	nostations [14] : Psep(',');
-//	nostations [14] : Psep(PPpunc_comma comma3);
+};
+Pstruct abbrev_t {
+    PPpunc_lpar lpar1;
+    PPword word3;
+    PPpunc_rpar rpar1;
+    PPpunc_comma comma2;
+};
+Pstruct Struct_1 {
+    PPmessage message3;
+    PPpunc_comma comma3;
+};
+Punion Union_1 {
+    Struct_1 struct1;
+    PPtext text3;
 };
 Pstruct record {
-	title vBTy_32;
+    Union_1 union1;
+    Popt abbrev_t abbrev;
+    PPtext text4;
 	PPpunc_comma comma1;
-	PPmessage vBTy_35;
-	PPpunc_comma comma2;
 	stations vBTy_38;
+};
+Pstruct my_key_t {
+    PPword word4;
+    PPmessage message5;
 };
 Precord Punion entry_t{
 	tableheader Pfrom("Type of rail transit / agency,Primary city served,Number of stations,,,,,,,Number of ADA-accessible stations,,,,,,");
 	thecolumns Pfrom("Table 1-9:  ADA-Accessible Rail Transit Stations by Agency,,,,,,,,,,,,,,,");
 	years Pfrom(",,1996,1997,1998,1999,2000,2001,2002,1996,1997,1998,1999,2000,2001,2002");
-	secHeader vBTy_43;
-	comments vBTy_45;
 	record vBTy_47;
+    my_key_t key;
+	comments vBTy_45;
+	secHeader vBTy_43;
 };
 Psource Parray entries_t {
 	entry_t[];

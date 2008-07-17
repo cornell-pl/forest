@@ -1,11 +1,6 @@
 #include "basetokens.p"
 
-Ptypedef Pstring_ME(:"/[|]/":) PPpunc_bar;
-Ptypedef Pstring_ME(:"/[-]/":) PPpunc_hyphen;
-Ptypedef Pstring_ME(:"/[/]/":) PPpunc_bslash;
-
-Ptypedef Pchar zipSep_t : 
-   zipSep_t x => {x == '-' || x == '/' || x == ' '};
+Ptypedef Pstring_ME(:"/[-0-9A-Za-z_. ]+/":) PPmyid;
 
 Punion zipSep {
   PPpunc_hyphen h1;
@@ -26,18 +21,20 @@ Punion Pzip{
 };
 
 Precord Pstruct summary_header_t {
-  "0|";
-  Puint32       tstamp;
+  PPint int1;
+  PPpunc_bar bar14;                               
+  PPint       tstamp;
 };
 
 Pstruct no_ramp_t {
-  "no_ii";
+  PPid id1;
   Puint64 id;
 };
 
 Punion dib_ramp_t {
   Pint64     ramp;
-  no_ramp_t  genRamp;
+//  no_ramp_t  genRamp;
+  PPid genRamp;
 };
 
 Pstruct order_header_t {
@@ -52,13 +49,15 @@ Pstruct order_header_t {
  PPpunc_bar bar8;  dib_ramp_t          ramp;
  PPpunc_bar bar9;  PPid      order_type;
  PPpunc_bar bar10;  Puint32             order_details;
- PPpunc_bar bar11;  PPid      unused;
+ PPpunc_bar bar11;  PPmyid      unused;
  PPpunc_bar bar12;  PPid      stream;
  PPpunc_bar bar13;
 };
 
 Pstruct event_t {
-  Pstring(:'|':) state;   '|';
+//  Pstring(:'|':) state;
+  PPid id2;   
+  PPpunc_bar bar15;   
   Puint32        tstamp;
 };
 
