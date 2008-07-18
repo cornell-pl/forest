@@ -7,7 +7,7 @@ Penum Enum_3 {
 	var_16 Pfrom("\"TETCBUS\"")
 };
 Pstruct Struct_2 {
-	PPmessage message1;
+	PPtext id;
 	PPpunc_comma comma1;
 	PPint var_5;
 	PPpunc_comma comma2;
@@ -19,10 +19,10 @@ Pstruct Struct_2 {
 	PPpunc_comma comma4;
 	PPint var_11;
 };
-Precord Punion Union_0 {
+Precord Punion entry_t {
 	var_1 Pfrom("\"MSN\",\"YYYYMM\",\"Publication Value\",\"Publication Unit\",\"Column Order\"");
 	Struct_2 var_2;
 };
 Psource Parray entries_t {
-	Union_0[];
+	entry_t[];
 };
