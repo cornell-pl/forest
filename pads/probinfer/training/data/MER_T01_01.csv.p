@@ -7,7 +7,9 @@ Penum Enum_3 {
 	var_16 Pfrom("\"TETCBUS\"")
 };
 Pstruct Struct_2 {
-	PPtext id;
+	'\"';
+ 	PPword word;
+	'\"';
 	PPpunc_comma comma1;
 	PPint var_5;
 	PPpunc_comma comma2;

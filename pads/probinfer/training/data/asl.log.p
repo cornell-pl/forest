@@ -11,27 +11,35 @@ Pstruct Struct_2 {
         PPword word2;
         PPpunc_rsqubrac rsqubrac2;
 };
-Pstruct Struct_12 {
-        PPmessage message1;
-};
+Punion myword {
+        PPword w;
+        PPid id;
+}
 
+Parray stuff {
+        myword [] : Psep(' ') && Pterm('\]');
+}
+
+Pstruct printer {
+        PPid id;
+        '(';
+        PPword w;
+        ')';
+}
+
+Punion Union_3 {
+        PPpath path;
+        ee Pfrom ("E_e,");
+        printer p;
+        stuff s;
+}
+   
 Pstruct Struct_18 {
         PPpunc_lsqubrac lsqubrac2;
         PPword word3;
         PPwhite white12;
-        PPpath path1;
+        Union_3 union3;
         PPpunc_rsqubrac rsqubrac2;
-};
-Punion union1 {
-       Struct_18 var_18;
-       Struct_12 var_12;
-};
-Pstruct Struct_24 {
-        PPpunc_lsqubrac lsqubrac3;
-        PPword word4;
-        PPwhite white13;
-        PPint var_28;
-        PPpunc_rsqubrac rsqubrac3;
 };
 Pstruct Struct_32 {
         Pstring_ME(:"/[^\\\\]+/":) var_33;
@@ -45,14 +53,6 @@ Pstruct Struct_33 {
         Struct_32 var_44;
         PPpunc_rsqubrac rsqubrac8;
 };
-Punion Union_31 {
-        Struct_33 var_37;
-//        Pstring_ME(:"/[^\]]+/":) var_39;
-        PPmessage message5;
-};
-Pstruct Struct_30 {
-        PPmessage message2;
-};
 Pstruct Struct_47 {
         PPpunc_lsqubrac lsqubrac4;
         PPword word5;
@@ -64,41 +64,45 @@ Pstruct Struct_53 {
         '[';
         "UID";
         ' ';
-        Pint64 var_57;
+        PPint var_57;
         ']';
 };
 Pstruct Struct_59 {
         '[';
         "GID";
         ' ';
-        Pint64 var_63;
+        PPint var_63;
         ']';
 };
 Pstruct Struct_65 {
         PPpunc_lsqubrac lsqubrac5;
-        PPtext text1;
+        PPword w1;
+        PPwhite whitesp;
+        PPword w2;
         PPpunc_rsqubrac rsqubrac5;
 };
 
-Pstruct Struct_67 {
-        PPpunc_lpar lsqubrac11;
-        PPtext text2;
-        PPpunc_rpar rbrac1;
-        PPwhite white11;
-        PPpunc_lpar lbrac2;
-        PPtext text3;
-        PPpunc_rpar rbrac2;
-};
-
 Punion Union_2 {
-       Struct_67 struct67;
-       PPhostname hostname1;
+        PPtime myt;
+        PPdate myd;
+        PPip myip;
+        PPword my_w;
+        PPid myid;
+        PPint myint;
+        PPhostname myhostname1;
+        PPpunc_scolon sc;
+        PPpunc_colon colon;
+        PPwhite wh_sp;
+        Pstring(:'\]':) anystring;
 };
 
+Parray mystuff1 {
+        Union_2 [] : Pterm('\]');
+}
+ 
 Pstruct Struct_66 {
         PPpunc_lsqubrac lsqubrac5;
-        PPtext text1;
-        Popt Union_2 union2;
+        mystuff1 stuff1;
         PPpunc_rsqubrac rsqubrac5;
 };
 
@@ -109,7 +113,7 @@ Precord Pstruct Struct_1 {
         PPwhite white2;
         Struct_18 var_80;
         PPwhite white3;
-        Struct_24 var_84;
+        Struct_47 var_84;
         PPwhite white4;
         Struct_66 var_88;
         PPwhite white5;
