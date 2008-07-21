@@ -2,6 +2,25 @@
 
 Ptypedef Pstring_SE(:"/ \\-|$/":) FilePath;
 
+Punion word_t {
+  PPpath path1;
+  PPint int1;
+  PPword w1;
+  PPid id1;
+  PPpunc_lpar lpar;
+  PPpunc_rpar rpar;
+  PPpunc_colon colon1;
+  PPpunc_slash slash; 
+  PPpunc_hyphen dash1;
+  PPpunc_bang   bang1; 
+  PPwhite white1;
+}
+  
+Parray text_t {
+  word_t[] : Pterm (Peor);
+}
+
+/*****
 Penum Crashdump_t {
         crashdump = 1,
         crashreporterd = 2
@@ -51,16 +70,19 @@ Punion Dumpreport_t
   StartPath sp;
   StartPath fp;
 };
+****/
 
 Pstruct Reporterreport_t {
-//  Pstring_ME (: "/[^ ]\*/" :) function;
-//  " reply failed: ";
-  Pstring_SE(:Peor:) failedmsg;
+  PPid fun;
+  PPpunc_lpar lpar;
+  PPpunc_rpar rpar;
+  ' ';
+  text_t t1;
 };
 
 Punion Report_t 
 {
-  Dumpreport_t dumpreport;
+  text_t dumpreport;
   Reporterreport_t reporterreport;
 };
 

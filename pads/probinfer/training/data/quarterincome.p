@@ -1,5 +1,23 @@
 #include "basetokens.p"
 
+Punion word_t {
+  PPint int1;
+  PPword w1;
+  PPpunc_colon colon1;
+  PPpunc_comma comma1;
+  PPwhite white1;
+}
+
+Parray text_t {
+  word_t[] : Pterm('"');
+}
+
+Pstruct quoted_text {
+  PPpunc_dquote q1;
+  text_t text1;
+  PPpunc_dquote q2;
+}
+
 Pstruct quarter_t {
         PPpunc_dquote dquote1;
         PPint myyear;
@@ -14,12 +32,12 @@ Parray quarters_t {
 
 Precord Ptypedef Pstring_SE(:Peor:) Eor_t;
 
-Precord Pstruct table_header_t {
-        PPmessage message1;
+Pstruct table_header_t {
+        quoted_text message1;
         PPpunc_comma comma1;
-        PPmessage message2;
+        quoted_text message2;
         PPpunc_comma comma2;
-        PPmessage message3;
+        quoted_text message3;
         PPpunc_comma comma3;
         quarters_t my_quarters;
 };
@@ -37,9 +55,7 @@ Pstruct my_entry_t {
         PPint int2;
         PPpunc_dquote dquote4;
         PPpunc_comma comma5;
-        PPpunc_dquote dquote5;
-        PPtext text11;
-        PPpunc_dquote dquote6;
+        quoted_text text11;
         PPpunc_comma comma6;
         incomeseq incomes;
 };
