@@ -1,0 +1,671 @@
+Oct 26 05:45:05 AM Installing ScrollKeeper 0.3.14...
+Oct 26 05:45:05 AM scrollkeeper-rebuilddb: Rebuilding ScrollKeeper database...
+Oct 26 05:45:05 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:45:05 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:45:05 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:45:05 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:45:05 AM scrollkeeper-update: Registering /usr/share/omf/scrollkeeper/writing_scrollkeeper_omf_files-C.omf
+Oct 26 05:45:05 AM scrollkeeper-rebuilddb: Done rebuilding ScrollKeeper database.
+Oct 26 05:45:29 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:45:29 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:45:29 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:45:29 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:45:35 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:45:35 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:45:35 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:45:35 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:45:36 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-zh_CN.omf
+Oct 26 05:45:36 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-es.omf
+Oct 26 05:45:36 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-fr.omf
+Oct 26 05:45:36 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-C.omf
+Oct 26 05:45:36 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-sv.omf
+Oct 26 05:45:37 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-it.omf
+Oct 26 05:45:37 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-ko.omf
+Oct 26 05:45:37 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-zh_TW.omf
+Oct 26 05:45:37 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-ja.omf
+Oct 26 05:45:37 AM scrollkeeper-update: Registering /usr/share/omf/ggv/ggv-de.omf
+Oct 26 05:45:47 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:45:47 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:45:47 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:45:47 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:45:47 AM scrollkeeper-update: Registering /usr/share/omf/gnome-pilot/gnome-pilot-C.omf
+Oct 26 05:45:47 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-zh_TW.omf
+Oct 26 05:45:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-zh_CN.omf
+Oct 26 05:45:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-C.omf
+Oct 26 05:45:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-zh_TW.omf
+Oct 26 05:45:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-de.omf
+Oct 26 05:45:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-sv.omf
+Oct 26 05:45:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-ko.omf
+Oct 26 05:45:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-ja.omf
+Oct 26 05:45:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-es.omf
+Oct 26 05:45:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-es.omf
+Oct 26 05:45:51 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-de.omf
+Oct 26 05:45:51 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-C.omf
+Oct 26 05:45:51 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-zh_CN.omf
+Oct 26 05:45:51 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-C.omf
+Oct 26 05:45:51 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-C.omf
+Oct 26 05:45:51 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-ja.omf
+Oct 26 05:45:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-zh_CN.omf
+Oct 26 05:45:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-ko.omf
+Oct 26 05:45:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-de.omf
+Oct 26 05:45:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-ja.omf
+Oct 26 05:45:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-zh_TW.omf
+Oct 26 05:45:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-zh_CN.omf
+Oct 26 05:45:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-sv.omf
+Oct 26 05:45:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-it.omf
+Oct 26 05:45:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-ko.omf
+Oct 26 05:45:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-es.omf
+Oct 26 05:45:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-fr.omf
+Oct 26 05:45:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-de.omf
+Oct 26 05:45:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-ko.omf
+Oct 26 05:45:54 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-it.omf
+Oct 26 05:45:54 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-sv.omf
+Oct 26 05:45:54 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-it.omf
+Oct 26 05:45:54 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-fr.omf
+Oct 26 05:45:54 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-it.omf
+Oct 26 05:45:54 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/workspace-switcher-sv.omf
+Oct 26 05:45:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-fr.omf
+Oct 26 05:45:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-ja.omf
+Oct 26 05:45:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/fish-applet-2-zh_TW.omf
+Oct 26 05:45:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/clock-es.omf
+Oct 26 05:45:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-panel/window-list-fr.omf
+Oct 26 05:45:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:45:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-C.omf
+Oct 26 05:45:56 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-C.omf
+Oct 26 05:45:56 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:45:56 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-C.omf
+Oct 26 05:45:56 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:45:56 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-C.omf
+Oct 26 05:45:56 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:47:26 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:47:26 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:47:26 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:47:26 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:47:26 AM scrollkeeper-update: Registering /usr/share/omf/gnomemeeting/gnomemeeting-C.omf
+Oct 26 05:47:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:47:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:47:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:47:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:47:41 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:47:41 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:47:41 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:47:41 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:47:41 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:47:41 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:47:41 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:47:41 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:47:41 AM scrollkeeper-update: Registering /usr/share/omf/gpdf/gpdf-de.omf
+Oct 26 05:47:41 AM scrollkeeper-update: Registering /usr/share/omf/gpdf/gpdf-C.omf
+Oct 26 05:47:41 AM scrollkeeper-update: Registering /usr/share/omf/gpdf/gpdf-es.omf
+Oct 26 05:47:48 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:47:48 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:47:48 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:47:48 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:47:48 AM scrollkeeper-update: Registering /usr/share/omf/evolution/evolution-2.0-C.omf
+Oct 26 05:47:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:47:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:47:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:47:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:47:51 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:47:51 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:47:51 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:47:51 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:47:51 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-fr.omf
+Oct 26 05:47:52 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-de.omf
+Oct 26 05:47:52 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_CN.omf
+Oct 26 05:47:52 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-ja.omf
+Oct 26 05:47:52 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-sv.omf
+Oct 26 05:47:52 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-es.omf
+Oct 26 05:47:52 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-ko.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-it.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-C.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_TW.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:47:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:48:07 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:48:07 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:48:07 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:48:07 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:48:07 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:48:08 AM scrollkeeper-update: Registering /usr/share/omf/planner/planner-C.omf
+Oct 26 05:48:08 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:48:08 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:48:08 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:48:08 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:50:37 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:50:37 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:50:37 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:50:37 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:50:37 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:50:37 AM scrollkeeper-update: Registering /usr/share/omf/gnome2-user-docs/gnome-access-guide-C.omf
+Oct 26 05:50:38 AM scrollkeeper-update: Registering /usr/share/omf/gnome2-user-docs/system-admin-guide-C.omf
+Oct 26 05:50:38 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:50:38 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:50:38 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:50:38 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:50:38 AM scrollkeeper-update: Registering /usr/share/omf/user-guide/user-guide-C.omf
+Oct 26 05:50:53 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:50:53 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:50:53 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:50:53 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-ko.omf
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_TW.omf
+Oct 26 05:50:53 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-ru.omf
+Oct 26 05:50:54 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_CN.omf
+Oct 26 05:50:54 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-ja.omf
+Oct 26 05:50:54 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-it.omf
+Oct 26 05:50:54 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-sv.omf
+Oct 26 05:50:54 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-uk.omf
+Oct 26 05:50:55 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-fr.omf
+Oct 26 05:50:55 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-C.omf
+Oct 26 05:50:55 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-es.omf
+Oct 26 05:50:55 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-de.omf
+Oct 26 05:50:55 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:50:58 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:50:58 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:50:58 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:50:58 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:50:58 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:50:58 AM scrollkeeper-update: Registering /usr/share/omf/gconf-editor/gconf-editor-C.omf
+Oct 26 05:50:58 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-de.omf
+Oct 26 05:50:59 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-zh_TW.omf
+Oct 26 05:50:59 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-C.omf
+Oct 26 05:50:59 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gstreamer-properties-C.omf
+Oct 26 05:50:59 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-ja.omf
+Oct 26 05:50:59 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-es.omf
+Oct 26 05:50:59 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-fr.omf
+Oct 26 05:51:00 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-volume-control-C.omf
+Oct 26 05:51:00 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-ko.omf
+Oct 26 05:51:00 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-zh_CN.omf
+Oct 26 05:51:00 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-es.omf
+Oct 26 05:51:00 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-C.omf
+Oct 26 05:51:00 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-de.omf
+Oct 26 05:51:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-fr.omf
+Oct 26 05:51:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-zh_CN.omf
+Oct 26 05:51:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-zh_TW.omf
+Oct 26 05:51:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-ko.omf
+Oct 26 05:51:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-it.omf
+Oct 26 05:51:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-it.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-sv.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/gnome-cd-sv.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/gnome-media/grecord-ja.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:51:02 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:51:09 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:51:09 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:51:09 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:51:09 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:51:09 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:51:09 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:51:09 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:51:09 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:51:10 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:51:10 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-fr.omf
+Oct 26 05:51:10 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-fr.omf
+Oct 26 05:51:10 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-it.omf
+Oct 26 05:51:10 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-ja.omf
+Oct 26 05:51:10 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-sv.omf
+Oct 26 05:51:11 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-fr.omf
+Oct 26 05:51:11 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-ko.omf
+Oct 26 05:51:11 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-es.omf
+Oct 26 05:51:11 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_TW.omf
+Oct 26 05:51:11 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-es.omf
+Oct 26 05:51:11 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-sv.omf
+Oct 26 05:51:12 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_CN.omf
+Oct 26 05:51:12 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-sv.omf
+Oct 26 05:51:12 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-es.omf
+Oct 26 05:51:12 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-ko.omf
+Oct 26 05:51:12 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-it.omf
+Oct 26 05:51:12 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-eu.omf
+Oct 26 05:51:12 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-ko.omf
+Oct 26 05:51:13 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-C.omf
+Oct 26 05:51:13 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-de.omf
+Oct 26 05:51:13 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_CN.omf
+Oct 26 05:51:13 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_TW.omf
+Oct 26 05:51:13 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-es.omf
+Oct 26 05:51:13 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-it.omf
+Oct 26 05:51:14 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gswitchit-C.omf
+Oct 26 05:51:14 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-ko.omf
+Oct 26 05:51:14 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-es.omf
+Oct 26 05:51:14 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-C.omf
+Oct 26 05:51:14 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-C.omf
+Oct 26 05:51:14 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_HK.omf
+Oct 26 05:51:14 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_CN.omf
+Oct 26 05:51:15 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-de.omf
+Oct 26 05:51:15 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_CN.omf
+Oct 26 05:51:15 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-fr.omf
+Oct 26 05:51:15 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-es.omf
+Oct 26 05:51:15 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-sv.omf
+Oct 26 05:51:15 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-es.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-fr.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-C.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_HK.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-de.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_TW.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-sv.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-it.omf
+Oct 26 05:51:16 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_HK.omf
+Oct 26 05:51:17 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-es.omf
+Oct 26 05:51:17 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-ko.omf
+Oct 26 05:51:17 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-C.omf
+Oct 26 05:51:17 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-fr.omf
+Oct 26 05:51:17 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-es.omf
+Oct 26 05:51:17 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-eu.omf
+Oct 26 05:51:17 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-it.omf
+Oct 26 05:51:18 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-ko.omf
+Oct 26 05:51:18 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-C.omf
+Oct 26 05:51:18 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-fr.omf
+Oct 26 05:51:18 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/accessx-status-eu.omf
+Oct 26 05:51:18 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-it.omf
+Oct 26 05:51:18 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_TW.omf
+Oct 26 05:51:18 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_TW.omf
+Oct 26 05:51:19 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-C.omf
+Oct 26 05:51:19 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_CN.omf
+Oct 26 05:51:19 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-de.omf
+Oct 26 05:51:19 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_TW.omf
+Oct 26 05:51:19 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-sv.omf
+Oct 26 05:51:19 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-it.omf
+Oct 26 05:51:20 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-de.omf
+Oct 26 05:51:20 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-eu.omf
+Oct 26 05:51:20 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-it.omf
+Oct 26 05:51:20 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-ko.omf
+Oct 26 05:51:20 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-it.omf
+Oct 26 05:51:20 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_CN.omf
+Oct 26 05:51:20 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-C.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-sv.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-ko.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-eu.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-ja.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-fr.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_TW.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_HK.omf
+Oct 26 05:51:21 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-ko.omf
+Oct 26 05:51:22 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-ja.omf
+Oct 26 05:51:22 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-ja.omf
+Oct 26 05:51:22 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-ko.omf
+Oct 26 05:51:22 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-ja.omf
+Oct 26 05:51:22 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-eu.omf
+Oct 26 05:51:22 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-ja.omf
+Oct 26 05:51:22 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-it.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-es.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-eu.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-de.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_CN.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_HK.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_HK.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-fr.omf
+Oct 26 05:51:23 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-it.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-sv.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-de.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-eu.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_HK.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_TW.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-sv.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_TW.omf
+Oct 26 05:51:24 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-ko.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-it.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-sv.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-eu.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/modemlights-eu.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-sv.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-ja.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-fr.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-de.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-eu.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_HK.omf
+Oct 26 05:51:25 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_HK.omf
+Oct 26 05:51:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-ja.omf
+Oct 26 05:51:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/accessx-status-C.omf
+Oct 26 05:51:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-ja.omf
+Oct 26 05:51:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_CN.omf
+Oct 26 05:51:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_HK.omf
+Oct 26 05:51:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-C.omf
+Oct 26 05:51:26 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-fr.omf
+Oct 26 05:51:27 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-sv.omf
+Oct 26 05:51:27 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-C.omf
+Oct 26 05:51:27 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_TW.omf
+Oct 26 05:51:27 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-de.omf
+Oct 26 05:51:27 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_TW.omf
+Oct 26 05:51:27 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/modemlights-C.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-de.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-de.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-ja.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-fr.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-eu.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-eu.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_HK.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_CN.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-ko.omf
+Oct 26 05:51:28 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_HK.omf
+Oct 26 05:51:29 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-ja.omf
+Oct 26 05:51:29 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-it.omf
+Oct 26 05:51:29 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-ja.omf
+Oct 26 05:51:29 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_CN.omf
+Oct 26 05:51:29 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-eu.omf
+Oct 26 05:51:29 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-C.omf
+Oct 26 05:51:29 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-sv.omf
+Oct 26 05:51:30 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_CN.omf
+Oct 26 05:51:30 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-es.omf
+Oct 26 05:51:30 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-ko.omf
+Oct 26 05:51:30 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-C.omf
+Oct 26 05:51:30 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-de.omf
+Oct 26 05:51:30 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-es.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-es.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-C.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_HK.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_CN.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-eu.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_CN.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-fr.omf
+Oct 26 05:51:31 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_TW.omf
+Oct 26 05:51:32 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-de.omf
+Oct 26 05:51:32 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_TW.omf
+Oct 26 05:51:32 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-ja.omf
+Oct 26 05:51:32 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:51:32 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-ja.omf
+Oct 26 05:51:32 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-it.omf
+Oct 26 05:51:32 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-ko.omf
+Oct 26 05:51:33 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-es.omf
+Oct 26 05:51:33 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_TW.omf
+Oct 26 05:51:33 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-C.omf
+Oct 26 05:51:33 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_CN.omf
+Oct 26 05:51:33 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-fr.omf
+Oct 26 05:51:33 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-de.omf
+Oct 26 05:51:34 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_HK.omf
+Oct 26 05:51:34 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-sv.omf
+Oct 26 05:51:41 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:51:41 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:51:41 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:51:41 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:51:41 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:51:42 AM scrollkeeper-update: Registering /usr/share/omf/zenity/zenity-C.omf
+Oct 26 05:51:42 AM scrollkeeper-update: Registering /usr/share/omf/zenity/zenity-sr.omf
+Oct 26 05:51:42 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gfloppy-ja.omf
+Oct 26 05:51:42 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-it.omf
+Oct 26 05:51:42 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-dictionary-C.omf
+Oct 26 05:51:42 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-sv.omf
+Oct 26 05:51:43 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-es.omf
+Oct 26 05:51:43 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-dictionary-ja.omf
+Oct 26 05:51:43 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-zh_CN.omf
+Oct 26 05:51:43 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-ja.omf
+Oct 26 05:51:43 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-C.omf
+Oct 26 05:51:43 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-zh_HK.omf
+Oct 26 05:51:43 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-ko.omf
+Oct 26 05:51:44 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-fr.omf
+Oct 26 05:51:44 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-zh_TW.omf
+Oct 26 05:51:44 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gfloppy-C.omf
+Oct 26 05:51:44 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-C.omf
+Oct 26 05:51:44 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-zh_TW.omf
+Oct 26 05:51:45 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-zh_CN.omf
+Oct 26 05:51:45 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-fr.omf
+Oct 26 05:51:45 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-ja.omf
+Oct 26 05:51:45 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-ko.omf
+Oct 26 05:51:45 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-de.omf
+Oct 26 05:51:45 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-es.omf
+Oct 26 05:51:46 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-sv.omf
+Oct 26 05:51:46 AM scrollkeeper-update: Registering /usr/share/omf/gucharmap/gucharmap-it.omf
+Oct 26 05:51:46 AM scrollkeeper-update: Registering /usr/share/omf/gnome-system-monitor/gnome-system-monitor-C.omf
+Oct 26 05:51:46 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-C.omf
+Oct 26 05:51:46 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-zh_HK.omf
+Oct 26 05:51:47 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-es.omf
+Oct 26 05:51:47 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-zh_CN.omf
+Oct 26 05:51:47 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-it.omf
+Oct 26 05:51:47 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-ja.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-fr.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-ko.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-de.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-zh_TW.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-sv.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_HK.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_HK.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_HK.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/accessx-status-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-eu.omf
+Oct 26 05:51:48 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/modemlights-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-eu.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_HK.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-C.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-fr.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-es.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-it.omf
+Oct 26 05:51:49 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-de.omf
+Oct 26 05:51:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-ja.omf
+Oct 26 05:51:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-ko.omf
+Oct 26 05:51:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-sv.omf
+Oct 26 05:51:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-zh_TW.omf
+Oct 26 05:51:50 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-zh_CN.omf
+Oct 26 05:51:51 AM scrollkeeper-update: Registering /usr/share/omf/gnome-terminal/gnome-terminal-ro.omf
+Oct 26 05:51:51 AM scrollkeeper-update: Registering /usr/share/omf/gok/gok-C.omf
+Oct 26 05:51:52 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:51:52 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:51:52 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:51:52 AM scrollkeeper-update: /usr/bin/scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:51:52 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:51:52 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-zh_HK.omf
+Oct 26 05:51:52 AM scrollkeeper-update: Registering /usr/share/omf/gnopernicus/brlmonitor-es.omf
+Oct 26 05:51:52 AM scrollkeeper-update: Registering /usr/share/omf/gnopernicus/gnopernicus-es.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnopernicus/brlmonitor-C.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnopernicus/gnopernicus-C.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/accessx-status-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/modemlights-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-eu.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:51:53 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:51:55 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:51:55 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:51:55 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gthumb/gthumb-C.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/accessx-status-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/modemlights-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-eu.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:51:55 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_HK.omf
+Oct 26 05:51:57 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:51:57 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:51:57 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:51:57 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:51:57 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-eu.omf
+Oct 26 05:51:58 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-es.omf
+Oct 26 05:51:58 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-C.omf
+Oct 26 05:51:58 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-it.omf
+Oct 26 05:51:58 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-ko.omf
+Oct 26 05:51:58 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-zh_TW.omf
+Oct 26 05:51:58 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-ja.omf
+Oct 26 05:51:59 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-de.omf
+Oct 26 05:51:59 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-sv.omf
+Oct 26 05:51:59 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-zh_CN.omf
+Oct 26 05:51:59 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-fr.omf
+Oct 26 05:51:59 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:51:59 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-sv.omf
+Oct 26 05:51:59 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-es.omf
+Oct 26 05:52:00 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-zh_CN.omf
+Oct 26 05:52:00 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-ko.omf
+Oct 26 05:52:00 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-it.omf
+Oct 26 05:52:00 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-zh_TW.omf
+Oct 26 05:52:00 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-ja.omf
+Oct 26 05:52:00 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-de.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-fr.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-ro.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-C.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/accessx-status-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/modemlights-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-eu.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:52:01 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: scrollkeeper-update: /usr/local/share/omf: No such file or directory
+Oct 26 05:52:04 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome/share/omf: No such file or directory
+Oct 26 05:52:04 AM scrollkeeper-update: scrollkeeper-update: /opt/gnome-2.0/share/omf: No such file or directory
+Oct 26 05:52:04 AM scrollkeeper-update: scrollkeeper-update: /opt/kde/omf: No such file or directory
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/eog/eog-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gdm/gdm-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gedit/gedit-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-utils/gnome-search-tool-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gcalctool/gcalctool-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gpl-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/gnome-feedback-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/lgpl-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-desktop/fdl-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/accessx-status-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gweather-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mixer_applet2-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gtik2_applet2-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/drivemount-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/gkb-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/modemlights-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/multiload-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/geyes-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/cdplayer-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/battstat-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/mailcheck-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/command-line-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/char-palette-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-applets/stickynotes_applet-eu.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/file-roller/file-roller-zh_HK.omf
+Oct 26 05:52:04 AM scrollkeeper-update: Registering /usr/share/omf/gnome-netstatus/gnome-netstatus-zh_HK.omf

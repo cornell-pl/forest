@@ -5,6 +5,7 @@ Punion word_t {
   PPword w1;
   PPpunc_colon colon1;
   PPpunc_comma comma1;
+  PPpunc_dot dot1;
   PPwhite white1;
 }
 
@@ -30,7 +31,7 @@ Parray quarters_t {
         quarter_t [] : Psep(',');
 };
 
-Precord Ptypedef Pstring_SE(:Peor:) Eor_t;
+//Precord Ptypedef Pstring_SE(:Peor:) Eor_t;
 
 Pstruct table_header_t {
         quoted_text message1;
@@ -61,7 +62,7 @@ Pstruct my_entry_t {
 };
 
 Pstruct tail_t {
-       PPmessage message1;       
+       quoted_text message1;       
 };
 
 Precord Punion entry_t {
@@ -72,7 +73,7 @@ Precord Punion entry_t {
 
 Psource Pstruct quarter_income_t {
 //        table_header_t h;
-        entry_t[] es: Pterm("\"Source:");
+        entry_t[] es;
 //        tail_t mytail;
 //        Eor_t eor;
 };
