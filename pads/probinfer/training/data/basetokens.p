@@ -38,6 +38,8 @@ Ptypedef Pstring_ME(:"/[\\\"'][-A-Za-z0-9_,;. ]+[\\\"']|[-A-Za-z0-9_,;. ]/":) PP
 
 Ptypedef Pstring_ME(:"/[0-9a-f]+/":) PPhstring;
 
+Ptypedef Pstring_ME(:"/[.\\/\\\\;|<>~`!@#$%\\^&*()-_+={}[]:\"',?]/":) PPpunc;
+
 Ptypedef Pstring_ME(:"/[.]/":) PPpunc_dot;
 
 Ptypedef Pstring_ME(:"/[\\/]/":) PPpunc_slash;
