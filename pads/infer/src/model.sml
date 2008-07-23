@@ -284,7 +284,7 @@ structure Model = struct
              let val f'     = measure f
                  val b'     = measure b
                  val l'     = measure l
-                 val avglen : real = avgInts ( map #2 ls )
+                 val avglen : real = avgInts ( map (fn (len, _) => len -2) ls )
                  val tcomp  = sumComps [ constructorComp (*this is for the Pstruct *)
 				       , constructorComp (*this is for PArray *)
 				       , constructorComp (*this is for the sep *)
@@ -297,8 +297,8 @@ structure Model = struct
                                        , getTypeComp b'
                                        ]
                  val acomp  = sumComps [ getAtomicComp f'
-                                       , multCompR avglen ( getAtomicComp l' )
-                                       , getAtomicComp b'
+                                       , multCompR avglen ( getAtomicComp b' )
+                                       , getAtomicComp l'
                                        ]
                  val dcomp  = sumComps [ getDataComp f'
                                        , getDataComp l'

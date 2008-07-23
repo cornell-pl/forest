@@ -53,6 +53,7 @@ VPATH = ..
 %-xml: $(GEN_DIR)/%.o %-xml.c $(INCLUDE_DEPS) $(LIB_DEPS_O)
 	@$(CCExec_DYNAMIC_O)
 
+# ai.3000-tools: ai.3000-fmt ai.3000-xml ai.3000-accum
 
 all: 
 
