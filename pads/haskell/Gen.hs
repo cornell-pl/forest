@@ -8,7 +8,7 @@ import Data.Typeable
 import System.Random
 
 import Types
-import Aux
+import Utilities
 import Parser
 
 

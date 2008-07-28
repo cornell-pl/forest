@@ -7,7 +7,7 @@ module Regexp where
 import Data.Array.IArray
 
 import Types
-import Aux
+import Utilities
 
 
 

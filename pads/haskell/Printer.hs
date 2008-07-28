@@ -5,7 +5,7 @@
 module Printer where
 
 import Types
-import Aux
+import Utilities
 
 
 

@@ -6,7 +6,7 @@ import System.Random
 import Data.Typeable
 
 import Types
-import Aux
+import Utilities
 import Parser
 import Printer
 import Gen

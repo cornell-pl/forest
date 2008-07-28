@@ -7,7 +7,7 @@ module Parser where
 import Data.Typeable
 
 import Types
-import Aux
+import Utilities
 import qualified Regexp
 
 
