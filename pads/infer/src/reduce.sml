@@ -8,6 +8,8 @@ open Common
 open Types
 open Model
 exception TyMismatch
+exception InvalidToken
+exception Unexpected
 
 (* a table to record which base types are Refinable*)
 fun refineableBase token = 
@@ -67,6 +69,7 @@ fun cost const_map ty =
 				| StringConst _ => 1
 				| Enum l => length(l)
 				| LabelRef _ => 1
+				| Blob _ => 1
 			)
 		| Base _ => 3 
 		| TBD _ => 1
@@ -244,6 +247,7 @@ case ty of
 	val unionTys = case length rem_tups of
 			0 => nil
 			| 1 => rem_tups
+			(* | _ => [Punion(a, rem_tups)] *)
 			| _ => [union_to_optional (Punion(a, rem_tups))]
   	val newty = case (cpfx, csfx) of
   	  (h::t, _) => Pstruct (mkTyAux (#coverage a), 
@@ -338,20 +342,14 @@ and adjacent_consts cmos ty =
   case ty of Pstruct(a, tylist) => 
     let
 	 fun mergetok (t1:LToken, t2:LToken) : LToken =
-	    let
-		fun combineloc (loc1:location, loc2:location) = 
-		  {lineNo=(#lineNo loc1), beginloc=(#beginloc loc1), endloc=(#endloc loc2),
-			recNo=(#recNo loc1)}
-	    in
 		case (t1, t2) of 
 			((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
-			  	(Pwhite(s1 ^ s2), combineloc(loc1, loc2))
+			  	(Pwhite(s1 ^ s2), combLoc(loc1, loc2))
 			| ((Pempty, loc1), (Pempty, loc2)) => 
-				(Pempty, combineloc(loc1, loc2))
+				(Pempty, combLoc(loc1, loc2))
 			| ((tk1, loc1), (tk2, loc2)) =>
 				(Pstring(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
-				combineloc(loc1, loc2))
-	    end
+				combLoc(loc1, loc2))
 	 (*the two token lists are supposed to be of equal length*)
 	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
 			case tl2 of 
@@ -494,15 +492,6 @@ and refine_array ty =
 		fun getRefine(ty) = case ty of RefinedBase(_, r, _) => SOME(r) 
 					| Base (_, tl) => ltokenlToRefinedOp tl
 					| _ => NONE
-		fun isEmpty(ty) = case ty of 
-					 Base(_, tkl) =>
-						( 
-						  case (hd tkl) of 
-							(Pempty, _) => true
-							| _ => false
-						)
-					| _=> false
-
 		(* if the firsttail = body tail, then this is a possible separator.
 		   if the stripped first is part of body and last is part of body, then
 		   the separator is confirmed, and the first and last can be obsorbed
@@ -516,6 +505,7 @@ and refine_array ty =
 		(*the separator should be a refinedbase ty in the last position
 		 of the first and body tys, or no separator if the two elements are not
 		 equal, or if the body is the same as the tail or the tail is empty *)
+		(* returns (sep option, term option, newfirst, newbody, newlast) *)
 		fun getSepTerm(first, body, last)=
 		let
 			val bodyhd = getRefine(firstEle(body))	
@@ -547,22 +537,21 @@ and refine_array ty =
 *)
 			  in
 			     case (firsteqbody, lasteqbody, withSep) of 
-				(true, true, true) => 
+				(true, true, true) =>
 					let 
 					  val first' = reIndexRecNo (droplast first) (getCoverage body)
 					  val body' = mergeTyInto(first', droplast(body))
 					  val last' = reIndexRecNo last (getCoverage body')
 					  val body'' = mergeTyInto(last', body')
 					in
-					(bodytail, NONE, NONE, SOME(body''), NONE)
+					  (bodytail, NONE, NONE, SOME(body''), NONE)
 					end
 				| (true, true, false) => 
 					let
 					  val first' = reIndexRecNo (droplast first) (getCoverage body)
 					  val body' = mergeTyInto(first', (droplast body))
-					  val last' = reIndexRecNo last (getCoverage body')
 					in
-					  (NONE, NONE, NONE, SOME(mergeTyInto(last', body')), NONE)
+					  (NONE, NONE, NONE, SOME body', SOME last)
 					end
 				| (true, false, _) => (NONE, NONE, NONE, 
 					SOME(mergeTyInto((reIndexRecNo first (getCoverage body)), body)), 
@@ -577,12 +566,16 @@ and refine_array ty =
 		  let 
 		    val (sepop, termop, firstop, bodyop, lastop) = getSepTerm(first, body, last)
 		    val newty = 
+			(* NOTE: update of the lengths only gives a safe upper bound, i.e.
+			the length of each record cannot be longer than the updated length, 
+			it's actually not accurate *)
 			case (firstop, bodyop, lastop) of 
 			 (NONE, SOME(body'), NONE) => 
 				RArray(aux, sepop, termop, body', lenop, lengths)
 			|(NONE, SOME(body'), SOME(last')) =>
 			  	Pstruct(mkTyAux(#coverage aux), 
-				[RArray(aux, sepop, termop, body', lenop, lengths), last'])
+				[RArray(aux, sepop, termop, body', lenop, lengths), 
+					last'])
 			|(SOME(first'), SOME(body'), NONE) =>
 			  	Pstruct(mkTyAux(#coverage aux), 
 				[first', RArray(aux, sepop, NONE, body', lenop, lengths)])
@@ -1283,9 +1276,498 @@ and enum_range_to_refine cmos ty =
      else (cmos, ty)
   | _ => (cmos, ty)
 
+
+(* check if a given ty is a blob we use Ptext to stand for blob *)
+(* NOTE: if might the case that we should check by variance first before checking
+  components of a ty 
+and isBlob ty = 
+  case ty of
+	  (* a base type of blob is a blob *)
+	  Base(a, ((Ptext _, l)::ltl)) => true
+	  (* if a struct contains only blobs and then it is also a blob *)
+	| Pstruct (a, tys) => foldl myand true (map isBlob tys)
+	| Punion (a, tys) => 
+	  let val allblobs =  foldl myand true (map isBlob tys)
+	  in
+	  (* if all branches of a union are blob then it is also a blob *)
+	  allblobs orelse (check_by_variance ty) end
+	| Parray (a, {tokens = t, lengths = lens, first = f, body = b, last = l}) =>
+		if (isBlob f andalso isBlob b andalso isBlob l) then true
+		else check_by_variance ty
+	| RefinedBase (a,  Enum _, _) => check_by_variance ty
+	| Switch (a, id, retys) => 
+	  let val allblobs =  foldl myand true (map (fn (re, t) => isBlob t) retys) in
+	  allblobs  orelse check_by_variance ty end
+	| RArray (a, _, _, t, _, _) =>
+		isBlob t orelse check_by_variance ty
+	| Poption (a, t) => 
+		isBlob t orelse check_by_variance ty
+	| _ => false
+*******************)
+(* check if a ty is a blob by dividing the variance of this ty by the number of
+   tokens per record associated with this ty *)
+
+fun mergeAdjPtexts (t1, l1)  (t2, l2) =
+	if adjacent (t1, l1) (t2, l2) then
+	  case (t1, t2) of
+	    (Ptext s1, Ptext s2) => (Ptext (s1 ^ s2), combLoc (l1, l2))
+	  | _ => raise InvalidToken
+	else ((* print "While merging ty: \n"; printTy ty; *)
+		print ((ltokenToString (t1, l1)) ^ "\n" ^ (ltokenToString (t2, l2))); 
+		raise InvalidToken)
+      (* merge all ptext within a token list into one ptext token *)
+(*
+      fun mergeAllTokens tl = 
+	case tl of
+	  nil => raise InvalidToken
+	| [(Ptext s, l)] => (Ptext s, l)
+	| t::ts => mergeAdjPtexts t (mergeAllTokens ts)
+	(* append tl1's element to tl2's elements *)
+*)
+fun merge_tls (tl1, tl2) =
+(*
+	let 
+	  val _ = print ("TL1 : " ^ (LTokensToString tl1) ^ "\n")
+	  val _ = print ("TL2 : " ^ (LTokensToString tl2) ^ "\n")
+	in
+*)
+	  if tl1 = nil then tl2
+	  else if tl2 = nil then tl1
+	  else
+	   (* we take one element from tl1 and check against
+		every element in tl2 in order and find the
+		element in tl2 whose location immediately precedes
+		the element in tl1 and stick these two element together,
+		if not found, put this element in tl2 *)
+	   let fun appendto backl (t, outputl) =
+		case List.find 
+		  (fn t' => adjacent t t') backl of
+		  SOME ltoken => outputl @ [mergeAdjPtexts t ltoken]
+		| NONE =>  (outputl @ [t])
+	       fun prepend frontl (t, outputl) =
+		case List.find 
+		  (fn t' => adjacent t' t) frontl of
+		  SOME ltoken => outputl @ [mergeAdjPtexts ltoken t]
+		| NONE =>  (outputl @ [t])
+	   in	
+	   if length tl2 >= length tl1 (* tl1 is subset of tl2*)
+	   then	foldl (appendto tl1) [] tl2
+	   else foldl (prepend tl2) [] tl1 
+	   end
+(*
+	end
+*)
+
+(* merge all the tokens belonging to a ty to one single token list *)
+(* invarants are that the token list are ordered by their line no and
+   and the two corresponding tokens in lists are adjacent to each other*)
+fun mergeTokens ty =
+  let 
+      fun mysort tl = 
+	    let fun gt ((t1, l1), (t2, l2)) = (compLocation (l1, l2) = GREATER)
+	    in
+	    ListMergeSort.sort gt tl
+	    end
+      fun tos (t, l) = (Ptext (tokenToOrigString t), l)
+      fun collapse (tl : LToken list) sep =
+	let fun col_helper tl cur_tok newtl =
+	  case tl of
+	    nil => 
+		(
+		  case cur_tok of
+		    NONE => newtl
+		  | SOME t => newtl @ [t]
+		)
+	  | t :: tl => 
+		(
+		  case cur_tok of
+		    NONE => col_helper tl (SOME t) newtl
+		  | SOME (ct as (Ptext s, loc)) => 
+			if adjacent ct t then 
+			  col_helper tl (SOME (mergeAdjPtexts ct t)) newtl
+			else 
+			  let val newloc = {lineNo = (#lineNo loc), beginloc = (#beginloc loc),
+				endloc = (#endloc loc) + (size sep), recNo = (#recNo loc)} 
+		  	      val ct_sep = (Ptext (s ^ sep), newloc) 
+		          in
+			     col_helper (t :: tl) NONE (newtl @ [ct_sep])
+			  end
+		 | _ => raise InvalidToken
+		)
+	in col_helper tl NONE nil
+	end
+
+(*
+      fun collapse (tl : LToken list)  sep lengths =
+	case lengths of
+	  nil => nil
+	| (l, recNo)::lengths => 
+	  if l < 1 then collapse tl sep lengths
+	  else 
+	  let val subtl = List.take (tl, l) 
+	      val _ = print ("Len = " ^ (Int.toString l) ^ " RecNo = " ^ (Int.toString recNo) ^ "\n")
+	      val _ = print ("subtl = " ^ (LTokensToString subtl))
+	      val (Ptext s, loc) = mergeAllTokens subtl
+	      val ptokens = collapse (List.drop (tl, l)) sep lengths
+	  in
+	      case ptokens of
+		nil => [(Ptext s, loc)]
+	      | _ => 
+		let val newloc = {lineNo = (#lineNo loc), beginloc = (#beginloc loc),
+			endloc = (#endloc loc) + (size sep), recNo = (#recNo loc)} in
+		  (Ptext (s ^ sep), newloc) :: ptokens
+		end
+	  end
+*)
+  in
+    let val final_tl = 
+      case ty of
+	   Base (a, l) => 
+		if isEmpty ty then nil else map tos (mysort l)
+        |  TBD (a, _, l) => raise TyMismatch
+        |  Bottom (a, _, l) => raise TyMismatch
+        |  Pstruct (a, tys) => 
+		(* assume none of the tys are empty ty *)
+		let val ltl_list = map mergeTokens tys
+		in
+		  foldl merge_tls nil ltl_list
+		end
+        |  Punion (a, tys)       => 
+		let val nonEmptyTys = List.filter (fn ty => not (isEmpty ty)) tys
+		    val tls = map mergeTokens nonEmptyTys
+		in mysort (List.concat tls) end
+        |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+		raise TyMismatch
+		(*
+		merge_tls ((merge_tls ((mergeTokens f), (mergeTokens b))), (mergeTokens l))
+		*)
+        |  RefinedBase (aux, re, l) => map tos (mysort l)
+        |  Switch (a, id, retys) => 
+		let val nonEmptyReTys = List.filter (fn (_, ty) => not (isEmpty ty)) retys
+		    val tls = map (fn (_, ty) => mergeTokens ty) nonEmptyReTys
+		in mysort (List.concat tls)
+		end
+        |  RArray (a,sep,term,body,len,lengths) => 
+		let val tl = mergeTokens body
+		val sepstr = case sep of 
+			SOME (IntConst a) => LargeInt.toString a
+			| SOME (FloatConst (a, b)) => a ^ "." ^ b
+			| SOME (StringConst s) => s
+			| _ => ""
+		in
+		   ((*print "Collapsing array:\n";
+		   printTy ty; *)
+		   collapse tl sepstr)
+		end 
+        |  Poption (a, body)  => mergeTokens body
+     in
+       final_tl
+(*
+       if getCoverage ty = length final_tl then final_tl
+       else (print ("Coverage : " ^ (Int.toString (getCoverage ty)) ^ "Lengths : " ^ 
+		(Int.toString (length final_tl)) ^ "\n" ^
+		(LTokensToString final_tl));  raise Unexpected)
+*)
+     end
+  end
+
+(*
+fun mergeTokens records ty =
+	let fun mysort locs = 
+	    let fun gt (l1, l2) = (compLocation (l1, l2) = GREATER)
+	    in
+	    ListMergeSort.sort gt locs
+	    end
+	fun unique_lines better (tl: LToken list) =
+	  let val map = 
+	    foldl (fn ((token, loc), intmap) =>
+	      let val _ = if (#lineNo loc) < 0 then
+		print (ltokenToString (token, loc))
+		else ()
+	      in
+		case (IntMap.find (intmap, (#lineNo loc))) of
+		SOME exist_loc => 
+		  if better loc exist_loc then 
+			let val (newmap, _) = IntMap.remove (intmap, (#lineNo loc))
+			in IntMap.insert (newmap, (#lineNo loc), loc)
+			end
+		  else intmap
+		| None => IntMap.insert (intmap, (#lineNo loc), loc)
+	       end
+	    ) IntMap.empty tl
+	  in IntMap.listItems map
+	  end
+	fun get_left_most_locs ty = 
+	  let fun b l1 l2 = (compLocation (l1, l2) = LESS)
+	  in
+	  case ty of
+    	      Base (a, l)           => unique_lines b l
+            | TBD (a, _, cl)            => unique_lines b (map hd cl)
+            | Bottom (a, _, cl)         => unique_lines b (map hd cl)
+            | Pstruct (a, tys)      => 
+    		if length tys = 0 then raise TyMismatch
+    		else get_left_most_locs (hd tys)
+            | Punion (a, tys)       => mysort (List.concat (map get_left_most_locs tys))
+            | Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+    		get_left_most_locs f
+            | RefinedBase (aux, re, l) => unique_lines b l
+            | Switch (a, id, retys) => mysort (List.concat 
+    			(map (fn (r, t) => get_left_most_locs t) retys))
+            | RArray (a,sep,term,body,len,lengths) => get_left_most_locs body
+            | Poption (a, body) => raise NoOption (* doesn't allow Poption for now *)
+	  end
+
+	fun get_right_most_locs ty = 
+	  let fun b l1 l2 = (compLocation (l1, l2) = GREATER)
+	  in
+	  case ty of
+    	    Base (a, l)           => unique_lines b l
+            | TBD (a, _, l)            => unique_lines b (map List.last l)
+            | Bottom (a, _, l)         => unique_lines b (map List.last l)
+            | Pstruct (a, tys)      => 
+    		if length tys = 0 then raise TyMismatch
+    		else get_right_most_locs (List.last tys)
+            | Punion (a, tys)       => mysort(List.concat (map get_right_most_locs tys))
+            | Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+    		get_right_most_locs l
+            | RefinedBase (aux, re, l) => unique_lines b l
+            | Switch (a, id, retys) => mysort(List.concat 
+    			(map (fn (r, t) => get_right_most_locs t) retys))
+            | RArray (a,sep,term,body,len,lengths) => get_right_most_locs body
+            | Poption (a, body) => raise NoOption (* doesn't allow Poption for now *)
+	  end
+	val _ = print "getleft\n"
+	val blocs = get_left_most_locs ty
+	val _ = print "getright\n"
+	val elocs = get_right_most_locs ty
+	fun myzip bls els = 
+	      case (bls, els) of
+		(nil, nil) => nil
+	      | (bloc::bls, eloc::els) =>
+		  if (#lineNo bloc) = (#lineNo eloc) andalso 
+			(#beginloc bloc) <= (#endloc eloc) then 
+		    (combLoc (bloc, eloc)) :: (myzip bls els)
+	          else raise LocMismatch
+	      | _ => raise LocMismatch
+	val _ = print "zip\n"
+	val newlocs = myzip blocs elocs
+	fun formPtext records (loc : location) =
+		let 
+		    val _ = print ("Getting from line #" ^ (Int.toString (#lineNo loc)) ^ "\n")
+		    val r = List.nth (records, (#lineNo loc)) 
+		    val substr = String.substring (r, #beginloc loc, 
+					(#endloc loc) - (#beginloc loc) + 1)
+		in
+		   (Ptext substr, loc)
+		end
+	val _ = print "map\n"
+	in
+	  map (formPtext records) newlocs
+	end
+*)
+
+fun isBlob ty =
+  case ty of
+    Base _ => false
+  | RefinedBase _ => false
+  | Poption _ => false
+  (* | Pstruct _ => false *)
+  | _ =>
+	let val avgNumTokensPerRec = (Real.fromInt (getNumTokens ty)) / 
+			(Real.fromInt (getCoverage ty)) 
+	    val tyc = toReal (getTypeComp ty)
+	    val adc = toReal (getAtomicComp ty) 
+	    val var = variance ty
+	    val ratio = var / avgNumTokensPerRec 
+	    val ratio1 = tyc / adc
+(*
+	    val _ = print "For Ty .....\n"
+	    val _ = printTy ty
+	    val _ = print ("AvgNumTokensPerRec = " ^ (Real.toString avgNumTokensPerRec) ^ "\n")
+	    val _ = print ("Variance = " ^ Real.toString var ^ "\n")
+*)
+	    val _ = print ((getLabelString (getAuxInfo ty)) ^ ":\t")
+	    val _ = print ("Ratio = " ^ Real.toString ratio ^ "\t")
+	    val _ = print ("Comp Ratio = " ^ Real.toString ratio1 ^ "\n")
+	in
+	  ratio > 1.0 andalso (ratio + ratio1 > 5.0)
+	end
+(* TODO: augment this function to search for more patterns by merging
+  all tokens in the ty and then do string matching *)
+fun getStoppingPatt ty =
+  case ty of
+    RefinedBase (a, StringME regex, _) => (NONE, SOME regex)
+  | RefinedBase (a, IntConst i, _) => (SOME (LargeInt.toString i), NONE)
+  | RefinedBase (a, FloatConst (i, d), _) => (SOME (i ^ "." ^ d), NONE)
+  | RefinedBase (a, StringConst s, _) => (SOME s, NONE)
+  | _ => (NONE, NONE)
+
+fun containString ltokens str =
+	case ltokens of
+	  nil => false
+	| (t, loc)::rest => 
+	  (
+	    case t of
+	      Ptext s => if String.isSubstring str s then true
+			 else containString rest str
+	    | _ => raise InvalidToken
+	  )
+	
+fun containPatt ltokens patt = true (* assume true for now as we don't have regex yet *)
+
+
+(* update the current ty to a possible ty if the sibling contains legit stopping pattern *)	
+(* NOTE: we don't go inside array for now *)	
+fun updateWithBlobs s_opt ty =
+(*
+  let fun f tys =
+    case tys of
+	nil => nil
+      | [ty] => [mkBlob NONE ty]
+      | ty::(sib::x) => (mkBlob (SOME sib) ty):: (f (sib::x))
+  in
+*)
+  let fun f tys s_opt = 
+	case tys of
+	  nil => nil
+	| ty::tys => 
+	    let val newty = updateWithBlobs s_opt ty 
+	    in
+		case newty of
+		  RefinedBase (a, Blob _, _) => newty::(f tys NONE)
+		| _ => newty::(f tys (SOME newty))
+	    end
+  fun mergeAdjBlobs curBlob tys newtys =
+   let fun mergeBlobs b1 b2 = 
+	case (b1, b2) of
+	(RefinedBase (a1, Blob _, tl1), RefinedBase (a2, Blob x, tl2)) =>
+	  RefinedBase (a1, Blob x, merge_tls (tl1, tl2))
+	| _ => raise TyMismatch
+   in
+     case tys of
+	(b as RefinedBase (a, Blob _, tl)) :: tys => 
+		(
+		case curBlob of
+		  SOME cb =>
+		    let val newb = mergeBlobs cb b in
+		      mergeAdjBlobs (SOME newb) tys newtys
+		    end
+		| NONE => mergeAdjBlobs (SOME b) tys newtys
+		)
+	| t :: tys => 
+		(
+		case curBlob of 
+		  SOME cb => mergeAdjBlobs NONE tys (newtys@[cb, t])
+		| _ => mergeAdjBlobs NONE tys (newtys @ [t])
+		)
+	| nil => 
+		(
+		case curBlob of 
+		  SOME cb => (newtys@[cb])
+		| _ => newtys
+		)
+    end
+  fun isBlobTy ty =
+	case ty of
+	  RefinedBase (_, Blob _, _) => true
+	| _ => false
+  in
+  case ty of
+	  Pstruct(a, tys) => 
+	   let val newtys = List.rev (f (List.rev tys) s_opt)
+(*
+	       val _ = print "**** BEGIN ****************\n"
+	       val _ = map printTy newtys
+	       val _ = print "**** END ****************\n"
+*)
+	       in mkBlob s_opt (Pstruct (a, mergeAdjBlobs NONE newtys nil))
+	   end
+   	| Punion(a, tys) =>
+	    let val newtys = map (updateWithBlobs s_opt) tys 
+	        val blobtys = List.filter isBlobTy newtys
+		val newblob = List.foldl (fn (blob, l) =>
+				case l of
+				  nil => [blob]
+				| [oldblob] => [mergeTy (oldblob, blob)]
+				| _ => raise Unexpected) nil blobtys
+		val nonblobtys = List.filter (fn x => not (isBlobTy x)) newtys
+	    in
+	      mkBlob s_opt (Punion (a, (nonblobtys @ newblob)))
+	    end
+	| RArray (a, sep, term, body, fixed, lengths) =>
+	   (
+	    case (sep, term) of
+	    (SOME s, SOME t) => 
+		if refine_equal (s, t) then
+		  (* use a dummy refinedbase type as righthand side sibling *)
+		  let val sib_opt = SOME (RefinedBase (a, s, nil)) in
+	    	    mkBlob s_opt (RArray(a, sep, term, updateWithBlobs sib_opt body, fixed, lengths))
+		  end
+		else mkBlob s_opt (RArray (a, sep, term, body, fixed, lengths))
+	    | _ => mkBlob s_opt (RArray (a, sep, term, body, fixed, lengths))
+	   )
+	| Switch(aux, id, retys) =>
+	    let val newretys = map (fn (re, t) => (re, updateWithBlobs s_opt t)) retys in
+	      mkBlob s_opt (Switch(aux, id, newretys))
+	    end
+	| Poption (aux, ty) => mkBlob s_opt (Poption(aux, updateWithBlobs s_opt ty))
+	| _ => ty
+  end	
+
+and mkBlob sibling_opt ty = 
+  if isBlob (measure ty) then
+    let val ltokens = mergeTokens ty 
+	(* val _ = printTy ty  *)
+	(* val _ = print (LTokensToString ltokens)  *)
+    in 
+    case sibling_opt of
+	  NONE => 
+		let val newty = RefinedBase(getAuxInfo ty, Blob(NONE, NONE), ltokens)
+		    val _ = print "******* FOUND BLOB ABOVE ******\n"
+		in newty 
+(*
+		if score newty < score ty then newty 
+		else updateWithBlobs sibling_opt ty
+*)
+		end
+	| SOME sibty =>
+	  (
+		let
+		  (* val _ = print "Getting stopping patt\n" *)
+		  val pair = getStoppingPatt sibty in
+		case pair of 
+		  (SOME str, NONE) => 
+		    if containString ltokens str then ty
+		    else 
+			let val newty = RefinedBase(getAuxInfo ty, Blob pair, ltokens)
+		            val _ = print "******* FOUND BLOB ABOVE ******\n"
+			in newty
+	(*
+			if score newty < score ty then newty 
+			else updateWithBlobs sibling_opt ty
+	*)
+			end
+		| (NONE, SOME str ) => 
+		    if containPatt ltokens str then ty
+		    else 
+			let val newty = RefinedBase(getAuxInfo ty, Blob pair , ltokens)
+		            val _ = print "******* FOUND BLOB ABOVE ******\n"
+			in newty
+	(*
+			if score newty < score ty then newty 
+			else updateWithBlobs sibling_opt ty
+	*)
+			end
+		| _ => ty
+		end
+	)
+    end
+  else ty
+
+	
 (* the actual reduce function can either take a SOME(const_map) or
 NONE.  It will use the constraints that it can apply. *)
-and reduce phase ty = 
+fun reduce phase ty = 
 let
   val phase_one_rules : pre_reduction_rule list = 
 		[ 	

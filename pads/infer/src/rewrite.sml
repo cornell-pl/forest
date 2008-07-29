@@ -13,7 +13,7 @@ let
   val acomp    = #adc comps
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
-  val _ = (print "Before Reduction:\n"; printTy measuredTy)
+  (* val _ = (print "Before Reduction:\n"; printTy measuredTy) *)
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
   val (headers, footers, auxOp, body) = 
@@ -38,13 +38,10 @@ let
 (*
   val _ = print "Phase two ...\n";
 *)
-  val ty2 = Reduce.reduce 2 ty1
+  val ty2 = measure (Reduce.reduce 2 ty1)
   val headers= map (Reduce.reduce 2) headers
   val footers= map (Reduce.reduce 2) footers
   val reduce2_time : Time.time = Time.now ()
-(*
-  val _ = printTy (measure ty2)
-*)
   (*phase three, redo constraint-free reduction *)
 (*
   val _ = print "Phase three ...\n";
@@ -53,6 +50,11 @@ let
   val headers= map (Reduce.reduce 3) headers
   val footers= map (Reduce.reduce 3) footers
   val reduce3_time : Time.time = Time.now ()
+  val _ = print "Before mkBlob ...\n"
+  val _ = printTy ty3
+  val ty3 = Reduce.updateWithBlobs NONE ty3
+  val _ = print "After mkBlob ...\n"
+  val _ = printTy ty3
 
   val finalTy = case auxOp of
 	SOME aux => Punion(aux, headers @ [ty3] @ footers)

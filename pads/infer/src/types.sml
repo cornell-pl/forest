@@ -9,6 +9,8 @@ struct
     exception InvalidId
     exception TyMismatch
     exception InvalidTokenTy
+    exception LocMismatch
+    exception NoOption
 
     type TokenOrder = Token list
     type Context    = LToken list
@@ -91,6 +93,7 @@ struct
                      | StringConst of string (* string literal *)
                      | Enum of Refined list  
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
+		     | Blob of string option * string option (* stopping string or stopping regex *)
 
     val numTy : LargeInt.int = 10 (* Number of constructors in datatype Ty *)
     datatype Ty = Base    of AuxInfo * LToken list (* list will never be empty *)
@@ -118,6 +121,7 @@ struct
 	                             * Ty             (* body type *)
                                      * Refined option (* fixed length *) 
                                      * (int*int) list (* (length, linenumber) list*)
+		(* TODO: Poption should not throw away Pempty tokens *)
                 | Poption of AuxInfo * Ty (* a Ty which is optional *)
 
     (* Number of kinds of tree nodes in Ty *)
@@ -351,8 +355,10 @@ struct
 	        of [] => ""
 	        |  indexes => "Array Slots: "^(slotsToString indexes)
 	in
-*)
 	    "Line #"^(Int.toString lineNo) ^" Rec #"^(Int.toString recNo)
+*)
+	    "Line #"^(Int.toString lineNo) ^ " RecNo " ^ (Int.toString recNo) ^ 
+		" ("^(Int.toString beginloc) ^ ":" ^ (Int.toString endloc) ^ ")"
 (*
 	end
 *)
@@ -398,7 +404,14 @@ struct
         | StringConst s =>  "[StringConst] \""^(stringToPrintable s) ^ "\"" 
         | Enum rel      => "[Enum] {"^ String.concat(map (fn x => (refinedToString x) ^
                            ", ") rel) ^ "}"
-        | LabelRef id   => "[Label] id="^ Atom.toString(id)    
+        | LabelRef id   => "[Label] id="^ Atom.toString(id) 
+	| Blob (str, patt) => 
+	   (
+	     case (str, patt) of
+	     (SOME s, _) => "[Blob] (" ^ s ^ ")"
+	     | (_, SOME s) => "[Blob] (" ^ s ^ ")"
+	     | _ => "[Blob] (Peor)"
+	   )
 
     fun ltokenTyToString ( t : Token, loc : location ) : string = tokenTyToString t 
     and tokenTyToString ( t : Token ) : string = 
@@ -495,7 +508,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts)*)
+                       | _ => (ltokenTyToString (hd ts)) (* ^ (LTokensToString ts) *)
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -516,6 +529,7 @@ struct
              | Parray (aux, {tokens=tkns, lengths, first=ty1,body=ty2,last=ty3}) =>
                 "Parray" ^ stats ^ 
                 "("^(lconcat(List.map (fn (t,loc) => (tokenTyToString t) ^" ")tkns)) ^")\n"^
+		(* prefix ^ (lengthsToString lengths) ^ *)
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
              | RefinedBase (aux, refined, tl) =>
@@ -542,6 +556,7 @@ struct
                        SOME termtok =>
                          prefix ^ "\tTerminator: "^ refinedToString(termtok) ^ "\n"
                      | _ => "" ) ^
+		(* prefix ^ (lengthsToString lengths) ^ *)
                 ( partialD body ) ^ prefix ^ "End RArray" 
              | Poption (aux, ty) =>
                 "Poption" ^ stats ^ "\n" ^
@@ -568,20 +583,53 @@ struct
   union/option/enum branches in the tree *) 
     fun variance ty =
 	  case ty of
-	   Base (a, _)           => 1
-        |  TBD (a, _, _)            => 1
-        |  Bottom (a, _, _)         => 1
-        |  Pstruct (a, tys)      => foldl Int.max 1 (map variance tys)
-        |  Punion (a, tys)       => foldl op+ 0 (map variance tys)
+	   Base (a, _)           => 1.0
+        |  TBD (a, _, _)            => 1.0
+        |  Bottom (a, _, _)         => 1.0
+        |  Pstruct (a, tys)      => foldl Real.max 1.0 (map variance tys)
+        |  Punion (a, tys)       => foldl op+ 0.0 (map variance tys)
         |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
-					foldl Int.max 1 (map variance [f, b, l])
+		let val fv = variance f
+		    val bv = variance b
+		    val lv = variance l
+		    val avglen = avgInts (#1 (ListPair.unzip len))
+		    val bv' = bv * avglen 
+		in
+		    foldl Real.max 1.0 [bv, bv', lv]
+		end
         |  RefinedBase (aux, re, l) => 
-		(case re of Enum res => length res
-			| _ => 1
+		(case re of Enum res => Real.fromInt (length res)
+			| _ => 1.0
 		)
-        |  Switch (a, id, retys)  	 => foldl op+ 0 (map (fn (re, ty) => variance ty) retys)
+        |  Switch (a, id, retys)  	 => foldl op+ 0.0 (map (fn (re, ty) => variance ty) retys)
         |  RArray (a,sep,term,body,len,lengths) => variance body
-        |  Poption (a, body)     	 => 1+ (variance body)
+        |  Poption (a, body)     	 => 1.0 + (variance body)
+
+(* Function to test of a ty is empty *)
+  fun isEmpty(ty) = case ty of 
+	 Base(_, tkl) =>
+		( 
+		  case (hd tkl) of 
+			(Pempty, _) => true
+			| _ => false
+		)
+	| _=> false
+
+(* Function to compute the total number of tokens associated with this Ty,
+   excluding Pemptys *)
+    fun getNumTokens ty =
+	  case ty of
+	   Base (a, l)           => if isEmpty ty then 0 else length l
+        |  TBD (a, _, l)            => 0
+        |  Bottom (a, _, l)         => 0
+        |  Pstruct (a, tys)      => sumSmallInts (map getNumTokens tys)
+        |  Punion (a, tys)       => sumSmallInts (map getNumTokens tys)
+        |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+		getNumTokens f + getNumTokens b + getNumTokens l
+        |  RefinedBase (aux, re, l) => length l
+        |  Switch (a, id, retys)  	 => sumSmallInts (map (fn (r, t) => getNumTokens t) retys)
+        |  RArray (a,sep,term,body,len,lengths) => getNumTokens body
+        |  Poption (a, body)     	 => getNumTokens body
 
 (*Function to extract the header and footer from a given ty if available
   this is currently only used at the top level of the data*)

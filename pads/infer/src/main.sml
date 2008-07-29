@@ -29,6 +29,7 @@ structure Main : sig
             end
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
+		(* records stores the original records from the file(s) *)
                 val (ty,sep)     = computeStructure ( !srcFiles )
 (*		val _ 		 = printTy (measure ty) *)
                 val end3Times    = updateTokenEnd ( Time.now () ) end2Times

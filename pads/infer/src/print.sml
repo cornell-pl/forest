@@ -50,10 +50,10 @@ structure Printing = struct
         end
 
     (* Dump variance to the specified file *)
-    fun dumpVariance (fileName:string) (cov:int) (variance:int) =
+    fun dumpVariance (fileName:string) (cov:int) (variance:real) =
         let val strm  = TextIO.openOut ( fileName )
-	    val normVar = (Real.fromInt variance) / (Real.fromInt cov)
-            val ()    = TextIO.output ( strm, "Variance = "^ (Int.toString variance) ^ 
+	    val normVar = variance / (Real.fromInt cov)
+            val ()    = TextIO.output ( strm, "Variance = "^ (Real.toString variance) ^ 
 			" normalized by " ^ (Int.toString cov) ^ " is " ^ 
 			(Real.toString normVar) ^ "\n")
         in TextIO.closeOut strm

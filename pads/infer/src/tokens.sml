@@ -425,4 +425,33 @@ structure Tokens = struct
         |  Pempty    => "empty"
         |  Error     => "error"
 
+    fun tokenToOrigString ( t : Token ) : string = 
+	case t 
+        of Ptime i     => i
+	|  Pip i       => i
+	|  Phostname i => i
+	|  Pdate i     => i
+	|  Ppath i     => i
+	|  Purl i      => i
+	|  Pemail i      => i
+	|  Pmac i      => i
+	|  Ptext i      => i
+        |  PbXML (f,s) => "<"^f^" "^s^">"
+        |  PeXML (f,s) => "</"^f^" "^s^">"
+	|  Pint (i, s) => s
+	|  Pfloat (a, b) => a ^ "." ^ b
+        |  Pstring s   => s
+        |  Pgroup {left, body, right} => (tokenToOrigString (#1 left)) ^ 
+		(String.concat (List.map (fn (b, l) => tokenToOrigString b) body)) 
+		^ (tokenToOrigString (#1 right))
+        |  Pwhite s => s
+        |  Other c  => Char.toString c
+        |  Pempty   => ""
+        |  Error    => ""
+
+   (* test of two tokens are adjacent to each other assuming none of them are Pempty *)
+   fun adjacent ((t1, l1):LToken) ((t2, l2):LToken) : bool =
+	if (#lineNo l1) = (#lineNo l2) 
+	   andalso ((#endloc l1) + 1) = (#beginloc l2) 
+	then true else false
 end
