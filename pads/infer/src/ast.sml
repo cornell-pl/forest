@@ -21,6 +21,7 @@ open Common
      | IRwhite 
      | IRchar 
      | IRtext
+     | IRblob of string
      | IRempty 
 
   val tmap = TyMap.empty
@@ -89,6 +90,7 @@ open Common
   fun isArrayBodyTy ty = case ty of 
 	Base _ => true
 	| RefinedBase (_, StringME _, _) => true
+	| RefinedBase (_, Blob _, _) => true
 	| RefinedBase (_, StringConst _, _) => true
 	| RefinedBase (_, Int _, _) => true	(* convert tp int32/int16, etc*)
 	(*IntConst FloatConst are not inline of array and option*)
@@ -106,8 +108,9 @@ open Common
 		  StringME _ => IRref ("stringME_" ^ id) 
 		| StringConst _ => IRref ("stringconst_" ^ id) 
 		| Int _ => IRref ("intrange_" ^ id) 
-		| IntConst _ => IRref ("intconst" ^ id) 
-		| FloatConst _ => IRref ("floatconst" ^ id) 
+		| IntConst _ => IRref ("intconst_" ^ id) 
+		| FloatConst _ => IRref ("floatconst_" ^ id) 
+		| Blob _ => IRref ("blob_" ^ id) 
 		| Enum _ => (print "Enum!\n"; raise TyMismatch)
 		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
 		)
@@ -131,6 +134,15 @@ open Common
 			| Int (min, max) => IRintrange (min, max)
 			| IntConst i => IRintrange (i, i)
 			| FloatConst _ => IRfloat
+			| Blob (x, y)  => 
+			    let
+	  			val s = case (x, y) of
+		    		  (SOME str, NONE) => str
+		  		| (NONE, SOME p) =>  p 
+		  		| _ => "" 
+			    in
+				IRblob s
+			    end
 			| _ => raise TyMismatch
 		)
         |  Switch _        	 => IRref ("switch_"^id)
@@ -261,6 +273,17 @@ open Common
 	in 
 	  FullField (var, tyName, NONE, SOME(var, NONE, NONE, SOME (FloatConst x)))
 	end
+    | Blob (x, y)  => 
+	let
+	  val var = "blob" ^ suffix
+	  val s = case (x, y) of
+		    (SOME str, NONE) => str
+		  | (NONE, SOME p) => p 
+		  | _ => "" 
+	  val tyName = IRblob s
+	in FullField (var, tyName, NONE, NONE)
+	end
+
     | _ => raise TyMismatch
     end
 
@@ -381,6 +404,7 @@ open Common
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(FloatConst x))))]
 	    | StringConst s => [(levels2Rec, basetyName, 
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(StringConst s))))]
+	    | Blob _ => [(levels2Rec, basetyName, TyBase(tyname, NONE))]
 	    | _ => raise TyMismatch
 	   )
 	   end

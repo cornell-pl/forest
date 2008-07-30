@@ -300,11 +300,13 @@ structure Printing = struct
             then ( dumpParameters (path ^ "Params") rewrittenTy
                  ; dumpTBDs rewrittenTy
                  ; dumpTy (path ^ "Ty") rewrittenTy 
+		(*
                  ; dumpTyComp path "BaseComplexity" (dataDir^"/"^inputFileName) ( getComps baseTy ) 
                  ; dumpTyComp path "Complexity" (dataDir^"/"^inputFileName) ( getComps rewrittenTy )
                  ; print "Finished printing Complexity\n"
-                 ; let val (topName, hdrName, tyName, trlName) = dumpPADSdesc (path^descName^".p") (path^descName^".pml") 
-						rewrittenTy numHeaders numFooters
+		*)
+                 ; let val (topName, hdrName, tyName, trlName) = dumpPADSdesc (path^descName^".p") 
+				(path^descName^".pml") rewrittenTy numHeaders numFooters
 		      val ct = getComputeTimes (updatePadsEnd (Time.now()) et)
                    in 
 		       print ("Ty name = "^tyName^"\n");
