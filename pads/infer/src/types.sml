@@ -333,6 +333,7 @@ struct
     	       |(Enum(l1), Enum(l2)) => foldr myand true 
     			(ListPair.map refine_equal(l1, l2))
     	       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
+    	       |(Blob x, Blob y) => (x = y)
     	       | _ => false
     fun refine_equal_op (a:Refined option, b:Refined option):bool =
     	case (a,b) of 
