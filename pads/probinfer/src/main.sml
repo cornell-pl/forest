@@ -334,6 +334,7 @@ print token *)
     fun setIncTrainingWeightsRun  s = inctrainingWeightsRun  := (s = "true")
     fun setTestingRun   s = testingRun  := (s = "true") 
     fun setGHMMTestingRun  s = ghmmtestingRun  := (s = "true")
+    fun setSVMTestingRun  s = svmtestingRun  := (s = "true")
     fun setExamHMMPre   s = examHMMPre  := (s = "true")
     fun setExamHMMPost  s = examHMMPost  := (s = "true")
     fun setEvaluateHMMPost  s = evaluateHMMPost  := (s = "true")
@@ -378,6 +379,7 @@ print token *)
          ("inctrainingw", "incremental training run with weights",	                                       PCL.String (setIncTrainingWeightsRun, true)),
          ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
          ("ghmmtesting",  "testing generalized HMM",	                                                   PCL.String (setGHMMTestingRun, true)),
+         ("svmtesting",  "testing Support Vector Machine",	                                                   PCL.String (setGHMMTestingRun, true)),
          ("hmm1",  "testing HMM library: 1st step",	                                                   PCL.String (setExamHMMPre, true)),
          ("hmm2",  "testing HMM library: 2nd step",	                                                   PCL.String (setExamHMMPost, true)),
          ("hmm3",  "evaluating HMM library: 2nd step",	                                                   PCL.String (setEvaluateHMMPost, true)),

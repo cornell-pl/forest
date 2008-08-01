@@ -49,6 +49,7 @@ structure Config = struct
     val ghmmtrainingRun   = ref false
     val svmtrainingRun   = ref false
     val ghmmtestingRun    = ref false
+    val svmtestingRun    = ref false
     val evaluatehmmseqset = ref false
     val evaluateghmmseqset = ref false
     val evaluatesvmseqset = ref false
@@ -70,7 +71,7 @@ structure Config = struct
     val RDC_UNION_BRANCHES  = ref false
     val rdc_ratio           = 2
     val COMBINED_HIST       = ref false
-    val OPTIMAL_STRUCT      = ref false
+    val OPTIMAL_STRUCT      = ref true
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE

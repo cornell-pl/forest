@@ -1824,6 +1824,74 @@ val _ = printColumn cl
                  )
 	end
 
+    and mkTBD_array_SVM (callsite, currentDepth, coverage, cl, ssl, svmmodel, tokenpairtable) = 
+        (* Columns that have some empty rows must have the empty list representation
+           of the empty row converted to the [Pempty] token.  Otherwise, a column
+           that is either empty or some value gets silently converted to the value only. *)
+	let
+ 
+       fun cnvEmptyRowsToPempty [] = [((PPempty, ""),{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
+              | cnvEmptyRowsToPempty l  = l
+	    val cl = List.map cnvEmptyRowsToPempty cl
+(*
+        (* assume colomn is in order *)
+        fun cnvEmptyRowsToPempty i =
+          if i=0 then []
+          else
+            let
+              val old = cnvEmptyRowsToPempty (i-1)
+              val l = List.nth(cl, i-1)
+            in
+              case l of
+                 [] => old@[[((PPempty, ""),{lineNo= i-1, beginloc=0, endloc=0, recNo=i-1})]]
+                |_ => old@[l]
+            end
+        val cl = cnvEmptyRowsToPempty (List.length cl)
+*)
+            fun allEmpty cl =
+		let fun isNonEmpty [((PPempty, _),_)] = false
+		      | isNonEmpty _ = true
+		in
+		    ((*print "Checking for an allempty context\n";*)
+		    not(Option.isSome(List.find isNonEmpty cl))
+		     )
+		end
+	    (*val cl = crackUniformGroups cl*)  (* ignore groups now *)
+	in
+	    if allEmpty cl then PPBase(mkTyAux coverage, List.concat cl)
+	    else if (coverage < isNoiseTolerance(!initialRecordCount))
+		 then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
+	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
+                 then PPTBD ( { coverage=coverage
+                            , label=SOME(mkTBDLabel (!TBDstamp))
+                            , tycomp = zeroComps
+                            }
+                          , !TBDstamp
+                          , cl
+                          ) before TBDstamp := !TBDstamp    + 1
+                 else (
+                   if (List.length ssl) = 0 then SeqsetListToTy_SVM (currentDepth + 1) [] svmmodel tokenpairtable
+                   else
+                   let
+val _ = print "mkTBD_array_SVM chop\n"
+val _ = print "chop ssl:\n"
+val _ = List.app easyprintss ssl
+                     val locList = columnToLocations cl
+val _ = printColumn cl
+(*val _ = printColumnString cl*)
+(*                   val locTable = locList2locTable locList*)
+(*val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")*)
+(*val _ = List.app printSSLoc ssl*)
+(*val _ = (print "Before chopping seqset list: "; List.app printlist ssl; print "\n") *)
+
+                     val newSSL = chopSeqsets ssl locList
+(*val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") *)
+                   in 
+                     SeqsetListToTy_SVM (currentDepth + 1) newSSL svmmodel tokenpairtable
+                   end
+                 )
+	end
+
     and mkTBDwithContexts (callsite, currentDepth, coverage, cl, ssl, tables) = 
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
@@ -2315,12 +2383,219 @@ val _ = print (newcontextsToString newrtokens)
 			      in
 			        PPunion(mkTyAux numRecords, tys)
 			      end
+
 		in
 		        if BSTokenTable.numItems(pTable) = 1 
 			      then if BSTokenTable.inDomain(pTable, (PPempty, "")) then allEmpty () 
 			           else allSame rtokens
                 else doPartition pTable
 		end
+
+           (* This function takes a Struct Partition and returns a Ty describing that partition *)
+	    fun buildStructTy partitions ssl svmmodel tokenpairtable = 
+		let val (matches, badRecords) = partitions
+		    fun isEmpty column = not (List.exists (not o null) column)  (* ??? *)
+
+		    fun cnvOneMatch (tokenOrder, dclist) = 
+			let val columns = doTranspose dclist
+			    fun recurse(columns, tokens) result =
+				case (columns, tokens) 
+				  of ([],[])      => raise Fail "token and column numbers didn't match (2)"
+				  |  ([last], []) => List.rev (if isEmpty last then result else ((mkTBD_SVM  (~100, curDepth,(List.length last), last, ssl, svmmodel, tokenpairtable)) :: result))
+				  |  ([], tks)    => raise Fail "token and column numbers didn't match (3)"
+				  |  (col1::coltk::cols, tk::tks) => 
+				       (* col1 is context before tk;
+					  colt is context corresponding to tk
+					  cols is list of contexts following *)
+					let (* This function should be able to be removed 
+					    fun borrowLoc col1 colref = 
+					        let fun doit ([],[] : LToken list list) (a : LToken list list) = List.rev a
+						    |   doit ([]::r, [(t,{lineNo,beginloc,endloc, recNo})]::s) a = 
+						                 doit (r,s) ([(Pempty,{lineNo=lineNo, beginloc=0,
+									       endloc=beginloc,recNo=recNo})]::a)
+						    |   doit (r::rs,t::ts) a = doit (rs,ts) (r ::a)
+						in
+						    doit (col1, colref) []
+						end*)
+					    val coverage1 = List.length col1
+					    val coveraget = List.length coltk
+					    val col1Ty = if isEmpty col1 then  [] else [(mkTBD_SVM (~8, curDepth, coverage1, col1, ssl, svmmodel, tokenpairtable (*(borrowLoc col1 coltk)*)))]
+					    val coltkTy = [(PPBase  (mkTyAux coveraget, List.concat coltk))](*case tk 
+						          of Pgroup g => [(mkTBD (~3, curDepth, coveraget, coltk))]
+							   | _ =>        [(PPBase  (mkTyAux coveraget, List.concat coltk))] *)
+					in
+					    recurse(cols, tks) (coltkTy @ col1Ty @ result)
+					end
+			         |  (cols,[]) => raise Fail "Unexpected case in recurse function."
+			in
+			    case recurse (columns, tokenOrder) []
+			    of   []   => raise Fail "Expected at least one field."
+			      |  [ty] => ty
+			      |  tys  => PPstruct (mkTyAux (minNCoverage tys), tys)
+			end
+
+		    val matchTys = List.map cnvOneMatch matches
+		    val resultTy =
+			case (matchTys, badRecords) 
+  		        of   ([], [])   => raise Fail "Expected records in struct context."
+			  |  ([], brs)  => (* This case arises if a false cluster is identified: a cluster with one
+					      or more tokens coming from one subset of records, and another group of tokens
+					      coming from a disjoint subset. So we should introduce a union.*)
+(*			                   (print "in mkbottom case\n"; mkBottom (List.length brs,brs))       *)
+					   ((*print "converting false struct into union\n";*) buildUnionTy(FirstBSToken, brs, ssl, svmmodel, tokenpairtable))
+			  |  ([ty], []) => ty
+			  |  (tys, brs) => if isEmpty brs 
+					   then PPunion (mkTyAux(sumNCoverage tys), tys) 
+					   else let val badCoverage = List.length brs
+						in 
+						    PPunion (mkTyAux(badCoverage + sumNCoverage tys), 
+							    (tys @ [(mkTBD_SVM (~4, curDepth, badCoverage, brs, ssl, svmmodel, tokenpairtable))]))
+						end
+		in
+		    resultTy
+		end
+
+
+	    fun buildArrayTy ({tokens=atokens}, rtokens, ssl, svmmodel, tokenpairtable) = 
+		let val numTokens = List.foldl (fn((token,freq),sum) => sum + freq) 0 atokens
+		    val recIndex = ref 0
+		    fun partitionOneRecord tlist = 
+		        let fun insertOne ((token,freq),tTable) = BSTokenTable.insert(tTable, token, ref freq)
+			    val tTable = List.foldl insertOne BSTokenTable.empty atokens
+			    val numFound = ref 0
+			    fun resetTable () = 
+				let fun setOne(token,freq) = 
+				    let val freqRef = valOf (BSTokenTable.find(tTable,token))
+				    in
+					freqRef := freq
+				    end
+				in
+				    List.app setOne atokens;
+				    numFound := 0
+				end
+			    (* Return three contexts: 
+			       one for all tokens in first slot,
+			       one for all tokens in array slots except for the first or last one,
+			       and one for the tokens in the last slot; this partition is to avoid confusion
+			       with the separator not being in the last slot *)
+
+
+			    fun doNextToken isFirst [] (current, first, main) = 
+				 let fun getLen [] = 0
+				       | getLen _ = 1
+				     val length = (getLen current) + (* list of tokens in current context: if present, length is 1 *)
+						  (getLen first) +   (* list of tokens in first context: if present, length is 1 *)
+						  (List.length main) (* a list of matched tokens, so no need to compute div*)
+				     fun getLoc [] = (print "WARNING: ARRAY first context empty!"; ~1)
+				       | getLoc ((tok,loc:location)::ltocs) = #recNo loc
+				 in
+				     ((length, !recIndex), first, main, List.rev current)
+				 end
+                              | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
+				 let 
+				     val rt = (lrt,loc) 
+				 in
+				  case BSTokenTable.find(tTable, lrt)
+				  of NONE => doNextToken isFirst rts (rt::current, first, main)
+                                  |  SOME freq => 
+				      if !freq <= 0 
+				      then (freq := !freq - 1; 
+					    doNextToken isFirst rts (rt::current, first, main))
+				      else (freq := !freq - 1;
+					    numFound := !numFound + 1;
+					    if !numFound = numTokens 
+					    then (resetTable(); 
+						  if isFirst 
+						    then doNextToken false   rts ([], List.rev (rt::current),  main)
+						    else doNextToken isFirst rts ([], first, (List.rev (rt::current) :: main)))
+					    else doNextToken isFirst rts (rt::current, first, main))
+				 end
+			in
+			    doNextToken true tlist ([],[],[])
+			end
+		    fun partitionRecords rtokens = 
+			let fun pR [] (numTokenA, firstA, mainA,lastA) = 
+					(List.rev numTokenA, List.rev firstA, List.rev mainA, List.rev lastA)
+                              | pR (t::ts) (numTokenA, firstA, mainA, lastA) = 
+			            let 
+					val (numTokens, first, main,last) = partitionOneRecord t 
+				        val _ = recIndex := (!recIndex)+1
+				    in 
+					pR ts (numTokens::numTokenA, first::firstA, main@mainA, last::lastA)
+				    end
+			in
+			    pR rtokens ([],[],[],[])
+			end
+
+		    val (arrayLengths, firstContext,mainContext,lastContext) = partitionRecords rtokens
+		    fun pushRecNo contexts index=
+		    	let 
+				fun f ltoken index =
+					case ltoken of 
+					 (t, {lineNo, beginloc, endloc, recNo}) => 
+						(t, {lineNo=lineNo, beginloc=beginloc, endloc=endloc, 
+							recNo=index})
+				fun pushRecNo' tl index =
+(*
+				  let
+		    			val _ = print ("Printing main context: ("^(Int.toString index)^")\n" ^ LTokensToString tl) 
+				  in
+*)
+					case tl of
+					  t :: rest => 
+					  (  
+                        (f t index)::(pushRecNo' rest index)
+					    (*case t of (Pgroup {left=lt, body=bts, right=rt}, loc) =>
+					        (f (Pgroup {left=(f lt index), body=pushRecNo' bts index,
+						    right= (f rt index)}, loc) index)::
+						    (pushRecNo' rest index)
+					    | _ => (f t index)::(pushRecNo' rest index)*)
+					  )
+					| nil => nil
+(*
+				  end
+*)
+			in 
+				case contexts of 
+				  c::rest => (pushRecNo' c index) :: pushRecNo rest (index+1)
+				  | nil => nil
+			end
+(*
+		    val _ = print ("Before pushing contexts:\n"^(contextsToString mainContext))
+*)
+		    val mainContext = pushRecNo mainContext 0
+(*
+		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
+*)
+		in
+		    ((*(if print_verbose then 
+		     (print "Array context\n"; 
+                     print "First Context:\n";
+                     print (contextsToString firstContext);
+                     print "body Context:\n";
+                     print (contextsToString mainContext);
+                     print "last Context:\n";
+                     print (contextsToString lastContext))
+		     else ()); *)
+		     PParray (mkTyAux numRecords, 
+			     {tokens  = atokens, 
+			      lengths = arrayLengths,
+			      first   = mkTBD_SVM(~5, curDepth, List.length firstContext, firstContext, ssl, svmmodel, tokenpairtable),
+			      body    = mkTBD_array_SVM(~6, curDepth, List.length mainContext, mainContext, ssl, svmmodel, tokenpairtable),
+			      last    = mkTBD_SVM(~7, curDepth, List.length lastContext, lastContext, ssl, svmmodel, tokenpairtable)}))
+		end
+
+
+      val ty = case analysis of 
+		        Blob =>     mkBottom (List.length rtokens, rtokens)  (*can we still do sth using lower-prob seq?*)
+		     |  Empty =>    PPBase (mkTyAux 0, [((PPempty,""),{lineNo= ~1, beginloc= ~1, endloc= ~1, recNo= ~1})])
+		     |  Struct s => buildStructTy (splitRecords_HMM s rtokens seqsetl) seqsetl svmmodel tokenpairtable (* if optimizing options are allowed in ghmm, should re-write splitRecords function instead of using this dumb splitRecords_HMM with no opzimizing options *)
+		     |  Array a =>  buildArrayTy (a, rtokens, seqsetl, svmmodel, tokenpairtable) 
+             |  Union u =>  (print "union here\n"; buildUnionTy(u, rtokens, seqsetl, svmmodel, tokenpairtable))
+
+	in
+	    ty
+	end
 
     and clustersToTy_GHMM (curDepth:int) (rtokens:NewContext list) (seqsetl:Seqset list) ghmmmodel tokenpairtable (numRecords:int) clusters : NewTy = 
 	let val analysis = analyzeClusters numRecords clusters
@@ -2780,7 +3055,7 @@ val _ = print "SVMViterbi done\n"
 	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)
 	    (* val () = if print_verbose then printClusters numRecordsinContext clusters else () *)
 	    val clusters : (BSToken * histogram) list list = newFindClusters numRecordsinSeqsetList fd
-        val ty : NewTy = clustersToTy_SVM curDepth bestProbPaths seqsetl ghmmmodel tokenpairtable numRecordsinSeqsetList clusters (* break it *)
+        val ty : NewTy = clustersToTy_SVM curDepth bestProbPaths seqsetl svmmodel tokenpairtable numRecordsinSeqsetList clusters (* break it *)
 	    (*
 	    val () = (print "Inferred type:\n"; 
 		      print (TyToString ty);
@@ -3168,10 +3443,14 @@ val _ = print "seqset to list done.\n"
       evaluate bsll1 bsll2
 	end
 
+    exception InvalidHMMResults
+
     fun computeProbStructure_HMMonly fileName endingtimes: NewTy * Times.EndingTimes = 
 	let
         val records = loadFiles fileName
 	    val tokenss = loadFile "testing/output" 
+        val _ = if (List.length records <> List.length tokenss) then (print ("records: "^(Int.toString (List.length records))^" hmm results: "^(Int.toString (List.length tokenss))^"\n"); raise InvalidHMMResults) 
+                else () 
         val _ = print "Tokenization by HMM.\n"
         val otable = constrOrdBTokenTable "training/"
         fun extractIntList record : BToken list = 

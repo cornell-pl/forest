@@ -184,17 +184,22 @@ struct
               val thistotalt = List.length bsl1
               fun compareOneToken ((b, s), (p, rewrongc, rewrongt)) = 
                 let
+val _ = print "i'm here1\n"
                   val len = String.size s
                   val checkcbl = List.take(List.drop(cbl2, p), len)
                   fun checkOne ((c, b2), result) = if compBToken(b, b2)=EQUAL then result else (result+1)
                   val retwrongc = List.foldl checkOne 0 checkcbl
                   val retwrongt = if retwrongc=0 then 0 else 
                     (print ("this token is not recognized: "^(BTokenToName b)^" ["^s^"]\n"); 1) 
+val _ = print "i'm here2\n"
                 in
                   (p+len, rewrongc+retwrongc, rewrongt+retwrongt)
                 end
               val _ = print ("record "^(Int.toString i)^":\n")
+val _ = print "i'm here3\n"
+val _ = print ("bsl1 length: "^(Int.toString (List.length bsl1))^"\n")
               val (junk, thiswrongc, thiswrongt) = List.foldl compareOneToken (0, 0, 0) bsl1
+val _ = print "i'm here4\n"
               val thiswrongr = if thiswrongt=0 then 0 else 1
               fun printBSToken (t, s) = print ((BTokenToName t)^"["^s^"]"^" ")
               fun printContext (t, l) = print ((tokenTyToName t)^" ")

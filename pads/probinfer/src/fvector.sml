@@ -17,6 +17,7 @@ struct
         val quote = if Char.compare(c, #"\"")=EQUAL then 1::quest else 0::quest
         val colon = if Char.compare(c, #":")=EQUAL then 1::quote else 0::quote
         val slash = if Char.compare(c, #"/")=EQUAL then 1::colon else 0::colon
+(*val _ = if slash = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] then print ((Char.toString c)^"\n") else ()*)
       in
         slash
       end
@@ -39,7 +40,8 @@ struct
         | [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0] => 8 (* quote *)
         | [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0] => 9 (* colon *)
         | [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0] => 10 (*slash *)
-        | _ => raise WrongFeatureVector  
+        | [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] => 3 (* there're some weird chars in asl.log: \142, \153, \128, \226 *)
+        | _ => (List.app printList l; print "\n"; raise WrongFeatureVector)  
 
    exception WrongIntForFVector
 
@@ -56,7 +58,8 @@ struct
         | 8 => [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0] 
         | 9 => [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0] 
         | 10 => [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0] 
-        | _ => raise WrongIntForFVector
+(*        | 11 => [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] *)
+        | _ => (print ((Int.toString i)^"\n"); raise WrongIntForFVector)
 
     val maxFOrd = 10
 

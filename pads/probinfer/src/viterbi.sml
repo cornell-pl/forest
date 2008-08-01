@@ -132,6 +132,7 @@ struct
         val reachable = PosBTokenTable.listItemsi endptable
         fun forward ((workingpos, bplist), oldtable) =
           let
+val _ = print ("workingpos = "^(Int.toString workingpos)^"\n")
             fun doOne (beginp, btoken) =
               let
                 val lastlist = PosBTokenTable.find(oldtable, (beginp-1))
@@ -153,7 +154,7 @@ struct
                           val prelist = BasicViterbiTable.listItemsi table1 
                           val ((b, t), mprob) = List.foldl search ((sbegin, PPblob), (~Real.maxFinite)) prelist
                         in (SOME (b,t), mprob) end
-                    | NONE => if beginp=sbegin then (NONE, 0.0) else (print "1\n"; raise ViterbiError)
+                    | NONE => if beginp=sbegin then (NONE, 0.0) else (print ("beginp ="^(Int.toString beginp)^" endp = "^(Int.toString workingpos)^"\n"); raise ViterbiError)
                 fun probBToken (mybeginp, myendp) = 
                   let
                     fun addOneChar (c, v) =
