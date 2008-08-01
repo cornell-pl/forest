@@ -111,6 +111,20 @@ structure Probmodel = struct
                                                    ( int2CompS ( length rl ) )
                                  }
              | LabelRef i     => { tc =  unitComp, adc = unitComp, dc = unitComp }
+	     | Blob (str, patt) =>
+		let val strlen = 
+		  (case (str, patt) of
+		    (SOME s, _) => size s
+		   | (_, SOME s) => size s - 2 (* exclusing / and / *)
+		   | _ => 0 
+		  )
+		in
+		{ tc = combine constructorComp
+			(multCompS strlen (int2Comp numStringChars)),
+		  adc = multCompR avg (int2Comp numStringChars),
+		  dc = multComp tot (int2Comp numStringChars)
+		} end
+
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedTypeComp ( avg : real )         (* Average length of tokens *)
@@ -288,7 +302,7 @@ structure Probmodel = struct
              let val f'     = newmeasure f
                  val b'     = newmeasure b
                  val l'     = newmeasure l
-                 val avglen : real = avgInts ( map #2 ls )
+                 val avglen : real = avgInts ( map (fn (len, _) => len -2 ) ls )
                  val tcomp  = sumComps [ constructorComp (*this is for the Pstruct *)
 				       , constructorComp (*this is for PArray *)
 				       , constructorComp (*this is for the sep *)
@@ -301,8 +315,8 @@ structure Probmodel = struct
                                        , getNTypeComp b'
                                        ]
                  val acomp  = sumComps [ getNAtomicComp f'
-                                       , multCompR avglen ( getNAtomicComp l' )
-                                       , getNAtomicComp b'
+                                       , multCompR avglen ( getNAtomicComp b' )
+                                       , getNAtomicComp l'
                                        ]
                  val dcomp  = sumComps [ getNDataComp f'
                                        , getNDataComp l'

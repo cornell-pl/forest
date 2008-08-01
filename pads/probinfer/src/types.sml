@@ -10,6 +10,8 @@ struct
     exception InvalidId
     exception TyMismatch
     exception InvalidTokenTy
+    exception LocMismatch
+    exception NoOption
 
     type TokenOrder = Token list
     type Context    = LToken list
@@ -97,6 +99,7 @@ struct
 		     | FloatConst of string * string (*value*)
                      | StringConst of string (* string literal *)
                      | Enum of Refined list  
+		     | Blob of string option * string option (* stopping string or stopping regex *)
                      | LabelRef of Id     (* for synthetic nodes: lengths, branch tags*)
 
     val numTy : LargeInt.int = 10 (* Number of constructors in datatype Ty *)
@@ -427,6 +430,7 @@ struct
     	       |(StringConst(x), StringConst(y)) => (x = y)
     	       |(Enum(l1), Enum(l2)) => foldr myand true 
     			(ListPair.map refine_equal(l1, l2))
+	       |(Blob x, Blob y) => (x = y)
     	       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
     	       | _ => false
     fun refine_equal_op (a:Refined option, b:Refined option):bool =
@@ -496,7 +500,14 @@ struct
         | StringConst s =>  "[StringConst] \""^(stringToPrintable s) ^ "\"" 
         | Enum rel      => "[Enum] {"^ String.concat(map (fn x => (refinedToString x) ^
                            ", ") rel) ^ "}"
-        | LabelRef id   => "[Label] id="^ Atom.toString(id)    
+        | LabelRef id   => "[Label] id="^ Atom.toString(id)
+	| Blob (str, patt) => 
+	   (
+	     case (str, patt) of
+	     (SOME s, _) => "[Blob] (" ^ s ^ ")"
+	     | (_, SOME s) => "[Blob] (" ^ s ^ ")"
+	     | _ => "[Blob] (Peor)"
+	   )
 
     fun ltokenTyToString ( t : Token, loc : location ) : string = tokenTyToString t 
     and tokenTyToString ( t : Token ) : string = 
@@ -774,37 +785,78 @@ struct
   union/option/enum branches in the tree *) 
     fun variance ty =
 	  case ty of
-	   Base (a, _)           => 1
-        |  TBD (a, _, _)            => 1
-        |  Bottom (a, _, _)         => 1
-        |  Pstruct (a, tys)      => foldl Int.max 1 (map variance tys)
-        |  Punion (a, tys)       => foldl op+ 0 (map variance tys)
+	   Base (a, _)           => 1.0
+        |  TBD (a, _, _)            => 1.0
+        |  Bottom (a, _, _)         => 1.0
+        |  Pstruct (a, tys)      => foldl Real.max 1.0 (map variance tys)
+        |  Punion (a, tys)       => foldl op+ 0.0 (map variance tys)
         |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
-					foldl Int.max 1 (map variance [f, b, l])
+		let val fv = variance f
+		    val bv = variance b
+		    val lv = variance l
+		    val avglen = avgInts (#1 (ListPair.unzip len))
+		    val bv' = bv * avglen 
+		in
+		    foldl Real.max 1.0 [bv, bv', lv]
+		end
         |  RefinedBase (aux, re, l) => 
-		(case re of Enum res => length res
-			| _ => 1
+		(case re of Enum res => Real.fromInt (length res)
+			| _ => 1.0
 		)
-        |  Switch (a, id, retys)  	 => foldl op+ 0 (map (fn (re, ty) => variance ty) retys)
+        |  Switch (a, id, retys)  	 => foldl op+ 0.0 (map (fn (re, ty) => variance ty) retys)
         |  RArray (a,sep,term,body,len,lengths) => variance body
-        |  Poption (a, body)     	 => 1+ (variance body)
+        |  Poption (a, body)     	 => 1.0 + (variance body)
 
     fun newvariance ty =
 	  case ty of
-	   PPBase (a, _)           => 1
-        |  PPTBD (a, _, _)            => 1
-        |  PPBottom (a, _, _)         => 1
-        |  PPstruct (a, tys)      => foldl Int.max 1 (map newvariance tys)
-        |  PPunion (a, tys)       => foldl op+ 0 (map newvariance tys)
+	   PPBase (a, _)           => 1.0
+        |  PPTBD (a, _, _)            => 1.0
+        |  PPBottom (a, _, _)         => 1.0
+        |  PPstruct (a, tys)      => foldl Real.max 1.0 (map newvariance tys)
+        |  PPunion (a, tys)       => foldl op+ 0.0 (map newvariance tys)
         |  PParray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
-					foldl Int.max 1 (map newvariance [f, b, l])
+		let val fv = newvariance f
+		    val bv = newvariance b
+		    val lv = newvariance l
+		    val avglen = avgInts (#1 (ListPair.unzip len))
+		    val bv' = bv * avglen 
+		in
+		    foldl Real.max 1.0 [bv, bv', lv]
+		end
         |  PPRefinedBase (aux, re, l) => 
-		(case re of Enum res => length res
-			| _ => 1
+		(case re of Enum res => Real.fromInt (length res)
+			| _ => 1.0
 		)
-        |  PPSwitch (a, id, retys)  	 => foldl op+ 0 (map (fn (re, ty) => newvariance ty) retys)
+        |  PPSwitch (a, id, retys)  	 => foldl op+ 0.0 (map (fn (re, ty) => newvariance ty) retys)
         |  PPRArray (a,sep,term,body,len,lengths) => newvariance body
-        |  PPoption (a, body)     	 => 1+ (newvariance body)
+        |  PPoption (a, body)     	 => 1.0 + (newvariance body)
+
+(* Function to test of a ty is empty *)
+  fun isEmpty(ty) = case ty of 
+	 PPBase(_, tkl) =>
+		( 
+		  case (hd tkl) of 
+			((PPempty, _), _) => true
+			| _ => false
+		)
+	| _=> false
+
+(* Function to compute the total number of tokens associated with this Ty,
+   excluding Pemptys *)
+    fun getNumTokens ty =
+	  case ty of
+	   PPBase (a, l)           => if isEmpty ty then 0 else length l
+        |  PPTBD (a, _, l)            => 0
+        |  PPBottom (a, _, l)         => 0
+        |  PPstruct (a, tys)      => sumSmallInts (map getNumTokens tys)
+        |  PPunion (a, tys)       => sumSmallInts (map getNumTokens tys)
+        |  PParray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+		getNumTokens f + getNumTokens b + getNumTokens l
+        |  PPRefinedBase (aux, re, l) => length l
+        |  PPSwitch (a, id, retys)  	 => sumSmallInts (map (fn (r, t) => getNumTokens t) retys)
+        |  PPRArray (a,sep,term,body,len,lengths) => getNumTokens body
+        |  PPoption (a, body)     	 => getNumTokens body
+
 
 (*Function to extract the header and footer from a given ty if available
   this is currently only used at the top level of the data*)

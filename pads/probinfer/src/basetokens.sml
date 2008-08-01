@@ -421,7 +421,7 @@ structure Basetokens = struct
        , ( PPeXML, "\\<\\/[^>]+\\>") *) 
        , ( PPwhite, "[ \t\r\n]+") 
        , ( PPmessage, "\\\".+\\\"|[[].+[]]|[(].+[)]|[{].+[}]|.+\\?|:[^:]+")  (* slow *)
-       , ( PPtext, "([\"'])[-A-Za-z0-9_,;. ]+([\"'])|[-A-Za-z0-9_,;. ]+")
+       , ( PPtext, "([\"'])[-A-Za-z0-9_,:;. ]+([\"'])|[-A-Za-z0-9_,:;. ]+")
        , ( PPpermission, "[-dl]([-r][-w][-xsStT]){3}")  
        , ( PPhstring, "[0-9a-f]+")
        , ( PPpunc ".", "[.]")
@@ -777,14 +777,16 @@ structure Basetokens = struct
       | PPpunc ":" => PPpunc ":"
       | PPpunc "_" => PPpunc "_"
       | PPpunc "/" => PPpunc "/"
-      | PPpunc _ => PPwhite
-(*
-      | PPfloat => PPfloat
-      | PPint => PPint
-      | PPtext => PPtext
-*)
+      | PPpunc _ => PPpunc "|"   (* "|" represents all other punctuations *)
+(*      | PPword => PPword *)
       | _ => PPblob
 
-  val BTokenClass = [PPwhite, PPpunc ".", PPpunc ":", PPpunc "_", PPpunc "/", (*PPfloat, PPint, PPtext,*) PPblob]
+  val BTokenClass = [PPwhite, PPpunc ".", PPpunc ":", PPpunc "_", PPpunc "/", PPpunc "|", (*PPword,*) PPblob]
+
+ (* test of two tokens are adjacent to each other assuming none of them are Pempty *)
+ fun adjacent ((t1, l1):BSLToken) ((t2, l2):BSLToken) : bool =
+      if (#lineNo l1) = (#lineNo l2) 
+         andalso ((#endloc l1) + 1) = (#beginloc l2) 
+      then true else false
 
 end

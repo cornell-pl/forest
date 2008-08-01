@@ -8,6 +8,8 @@ open Common
 open Types
 open Probmodel
 exception TyMismatch
+exception InvalidToken
+exception Unexpected
 
 (* a table to record which base types are Refinable*)
 fun refineableBase (token, s) = 
@@ -75,6 +77,7 @@ fun cost const_map ty =
 				| StringConst _ => 1
 				| Enum l => length(l)
 				| LabelRef _ => 1
+				| Blob _ => 1
 			)
 		| PPBase _ => 3 
 		| PPTBD _ => 1
@@ -1276,6 +1279,333 @@ and enum_range_to_refine cmos ty =
        )
      else (cmos, ty)
   | _ => (cmos, ty)
+
+
+(* check if a ty is a blob by dividing the variance of this ty by the number of
+   tokens per record associated with this ty *)
+
+fun mergeAdjPPblobs (t1, l1)  (t2, l2) =
+	if adjacent (t1, l1) (t2, l2) then
+	  case (t1, t2) of
+	    ((PPblob, s1), (PPblob, s2)) => ((PPblob, (s1 ^ s2)), combLoc (l1, l2))
+	  | _ => raise InvalidToken
+	else raise InvalidToken
+fun merge_tls (tl1, tl2) =
+(*
+	let 
+	  val _ = print ("TL1 : " ^ (LTokensToString tl1) ^ "\n")
+	  val _ = print ("TL2 : " ^ (LTokensToString tl2) ^ "\n")
+	in
+*)
+	  if tl1 = nil then tl2
+	  else if tl2 = nil then tl1
+	  else
+	   (* we take one element from tl1 and check against
+		every element in tl2 in order and find the
+		element in tl2 whose location immediately precedes
+		the element in tl1 and stick these two element together,
+		if not found, put this element in tl2 *)
+	   let fun appendto backl (t, outputl) =
+		case List.find 
+		  (fn t' => adjacent t t') backl of
+		  SOME ltoken => outputl @ [mergeAdjPPblobs t ltoken]
+		| NONE =>  (outputl @ [t])
+	       fun prepend frontl (t, outputl) =
+		case List.find 
+		  (fn t' => adjacent t' t) frontl of
+		  SOME ltoken => outputl @ [mergeAdjPPblobs ltoken t]
+		| NONE =>  (outputl @ [t])
+	   in	
+	   if length tl2 >= length tl1 (* tl1 is subset of tl2*)
+	   then	foldl (appendto tl1) [] tl2
+	   else foldl (prepend tl2) [] tl1 
+	   end
+(*
+	end
+*)
+
+(* merge all the tokens belonging to a ty to one single token list *)
+(* invarants are that the token list are ordered by their line no and
+   and the two corresponding tokens in lists are adjacent to each other*)
+fun mergeTokens ty =
+  let 
+      fun mysort tl = 
+	    let fun gt ((t1, l1), (t2, l2)) = (compLocation (l1, l2) = GREATER)
+	    in
+	    ListMergeSort.sort gt tl
+	    end
+      fun tos ((t : BSToken), l) = ((PPblob, (#2 t)), l)
+      fun collapse (tl : BSLToken list) sep =
+	let fun col_helper tl cur_tok newtl =
+	  case tl of
+	    nil => 
+		(
+		  case cur_tok of
+		    NONE => newtl
+		  | SOME t => newtl @ [t]
+		)
+	  | t :: tl => 
+		(
+		  case cur_tok of
+		    NONE => col_helper tl (SOME t) newtl
+		  | SOME (ct as ((PPblob, s), loc)) => 
+			if adjacent ct t then 
+			  col_helper tl (SOME (mergeAdjPPblobs ct t)) newtl
+			else 
+			  let val newloc = {lineNo = (#lineNo loc), beginloc = (#beginloc loc),
+				endloc = (#endloc loc) + (size sep), recNo = (#recNo loc)} 
+		  	      val ct_sep = ((PPblob, (s ^ sep)), newloc) 
+		          in
+			     col_helper (t :: tl) NONE (newtl @ [ct_sep])
+			  end
+		 | _ => raise InvalidToken
+		)
+	in col_helper tl NONE nil
+	end
+
+  in
+    let val final_tl = 
+      case ty of
+	   PPBase (a, l) => 
+		if isEmpty ty then nil else map tos (mysort l)
+        |  PPTBD (a, _, l) => raise TyMismatch
+        |  PPBottom (a, _, l) => raise TyMismatch
+        |  PPstruct (a, tys) => 
+		(* assume none of the tys are empty ty *)
+		let val ltl_list = map mergeTokens tys
+		in
+		  foldl merge_tls nil ltl_list
+		end
+        |  PPunion (a, tys)       => 
+		let val nonEmptyTys = List.filter (fn ty => not (isEmpty ty)) tys
+		    val tls = map mergeTokens nonEmptyTys
+		in mysort (List.concat tls) end
+        |  PParray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+		raise TyMismatch
+		(*
+		merge_tls ((merge_tls ((mergeTokens f), (mergeTokens b))), (mergeTokens l))
+		*)
+        |  PPRefinedBase (aux, re, l) => map tos (mysort l)
+        |  PPSwitch (a, id, retys) => 
+		let val nonEmptyReTys = List.filter (fn (_, ty) => not (isEmpty ty)) retys
+		    val tls = map (fn (_, ty) => mergeTokens ty) nonEmptyReTys
+		in mysort (List.concat tls)
+		end
+        |  PPRArray (a,sep,term,body,len,lengths) => 
+		let val tl = mergeTokens body
+		val sepstr = case sep of 
+			SOME (IntConst a) => LargeInt.toString a
+			| SOME (FloatConst (a, b)) => a ^ "." ^ b
+			| SOME (StringConst s) => s
+			| _ => ""
+		in
+		   ((*print "Collapsing array:\n";
+		   printTy ty; *)
+		   collapse tl sepstr)
+		end 
+        |  PPoption (a, body)  => mergeTokens body
+     in
+       final_tl
+     end
+  end
+
+fun isBlob ty =
+  case ty of
+    PPBase _ => false
+  | PPRefinedBase _ => false
+  | PPoption _ => false
+  (* | PPstruct _ => false *)
+  | _ =>
+	let val avgNumTokensPerRec = (Real.fromInt (getNumTokens ty)) / 
+			(Real.fromInt (getNCoverage ty)) 
+	    val tyc = toReal (getNTypeComp ty)
+	    val adc = toReal (getNAtomicComp ty) 
+	    val var = newvariance ty
+	    val ratio = var / avgNumTokensPerRec 
+	    val ratio1 = tyc / adc
+(*
+	    val _ = print "For Ty .....\n"
+	    val _ = printTy ty
+	    val _ = print ("AvgNumTokensPerRec = " ^ (Real.toString avgNumTokensPerRec) ^ "\n")
+	    val _ = print ("Variance = " ^ Real.toString var ^ "\n")
+*)
+	    val _ = print ((getLabelString (getNAuxInfo ty)) ^ ":\t")
+	    val _ = print ("Ratio = " ^ Real.toString ratio ^ "\t")
+	    val _ = print ("Comp Ratio = " ^ Real.toString ratio1 ^ "\n")
+	in
+	  ratio > 1.0 andalso (ratio + ratio1 > 4.0)
+	end
+(* TODO: augment this function to search for more patterns by merging
+  all tokens in the ty and then do string matching *)
+fun getStoppingPatt ty =
+  case ty of
+    PPRefinedBase (a, StringME regex, _) => (NONE, SOME regex)
+  | PPRefinedBase (a, IntConst i, _) => (SOME (LargeInt.toString i), NONE)
+  | PPRefinedBase (a, FloatConst (i, d), _) => (SOME (i ^ "." ^ d), NONE)
+  | PPRefinedBase (a, StringConst s, _) => (SOME s, NONE)
+  | _ => (NONE, NONE)
+
+fun containString ltokens str =
+	case ltokens of
+	  nil => false
+	| (t, loc)::rest => 
+	  (
+	    case t of
+	      (PPblob, s) => if String.isSubstring str s then true
+			 else containString rest str
+	    | _ => raise InvalidToken
+	  )
+	
+fun containPatt ltokens patt = true (* assume true for now as we don't have regex yet *)
+
+
+(* update the current ty to a possible ty if the sibling contains legit stopping pattern *)	
+(* NOTE: we don't go inside array for now *)	
+fun updateWithBlobs s_opt ty =
+(*
+  let fun f tys =
+    case tys of
+	nil => nil
+      | [ty] => [mkBlob NONE ty]
+      | ty::(sib::x) => (mkBlob (SOME sib) ty):: (f (sib::x))
+  in
+*)
+  let fun f tys s_opt = 
+	case tys of
+	  nil => nil
+	| ty::tys => 
+	    let val newty = updateWithBlobs s_opt ty 
+	    in
+		case newty of
+		  PPRefinedBase (a, Blob _, _) => newty::(f tys NONE)
+		| _ => newty::(f tys (SOME newty))
+	    end
+  fun mergeAdjBlobs curBlob tys newtys =
+   let fun mergeBlobs b1 b2 = 
+	case (b1, b2) of
+	(PPRefinedBase (a1, Blob _, tl1), PPRefinedBase (a2, Blob x, tl2)) =>
+	  PPRefinedBase (a1, Blob x, merge_tls (tl1, tl2))
+	| _ => raise TyMismatch
+   in
+     case tys of
+	(b as PPRefinedBase (a, Blob _, tl)) :: tys => 
+		(
+		case curBlob of
+		  SOME cb =>
+		    let val newb = mergeBlobs cb b in
+		      mergeAdjBlobs (SOME newb) tys newtys
+		    end
+		| NONE => mergeAdjBlobs (SOME b) tys newtys
+		)
+	| t :: tys => 
+		(
+		case curBlob of 
+		  SOME cb => mergeAdjBlobs NONE tys (newtys@[cb, t])
+		| _ => mergeAdjBlobs NONE tys (newtys @ [t])
+		)
+	| nil => 
+		(
+		case curBlob of 
+		  SOME cb => (newtys@[cb])
+		| _ => newtys
+		)
+    end
+  fun isBlobTy ty =
+	case ty of
+	  PPRefinedBase (_, Blob _, _) => true
+	| _ => false
+  in
+  case ty of
+	  PPstruct(a, tys) => 
+	   let val newtys = List.rev (f (List.rev tys) s_opt)
+(*
+	       val _ = print "**** BEGIN ****************\n"
+	       val _ = map printTy newtys
+	       val _ = print "**** END ****************\n"
+*)
+	       in mkBlob s_opt (PPstruct (a, mergeAdjBlobs NONE newtys nil))
+	   end
+   	| PPunion(a, tys) =>
+	    let val newtys = map (updateWithBlobs s_opt) tys 
+	        val blobtys = List.filter isBlobTy newtys
+		val newblob = List.foldl (fn (blob, l) =>
+				case l of
+				  nil => [blob]
+				| [oldblob] => [mergeNewTy (oldblob, blob)]
+				| _ => raise Unexpected) nil blobtys
+		val nonblobtys = List.filter (fn x => not (isBlobTy x)) newtys
+	    in
+	      mkBlob s_opt (PPunion (a, (nonblobtys @ newblob)))
+	    end
+	| PPRArray (a, sep, term, body, fixed, lengths) =>
+	   (
+	    case (sep, term) of
+	    (SOME s, SOME t) => 
+		if refine_equal (s, t) then
+		  (* use a dummy refinedbase type as righthand side sibling *)
+		  let val sib_opt = SOME (PPRefinedBase (a, s, nil)) in
+	    	    mkBlob s_opt (PPRArray(a, sep, term, updateWithBlobs sib_opt body, fixed, lengths))
+		  end
+		else mkBlob s_opt (PPRArray (a, sep, term, body, fixed, lengths))
+	    | _ => mkBlob s_opt (PPRArray (a, sep, term, body, fixed, lengths))
+	   )
+	| PPSwitch(aux, id, retys) =>
+	    let val newretys = map (fn (re, t) => (re, updateWithBlobs s_opt t)) retys in
+	      mkBlob s_opt (PPSwitch(aux, id, newretys))
+	    end
+	| PPoption (aux, ty) => mkBlob s_opt (PPoption(aux, updateWithBlobs s_opt ty))
+	| _ => ty
+  end	
+
+and mkBlob sibling_opt ty = 
+  if isBlob (newmeasure ty) then
+    let val ltokens = mergeTokens ty 
+	(* val _ = printTy ty  *)
+	(* val _ = print (LTokensToString ltokens)  *)
+    in 
+    case sibling_opt of
+	  NONE => 
+		let val newty = PPRefinedBase(getNAuxInfo ty, Blob(NONE, NONE), ltokens)
+		    val _ = print "******* FOUND BLOB ABOVE ******\n"
+		in newty 
+(*
+		if score newty < score ty then newty 
+		else updateWithBlobs sibling_opt ty
+*)
+		end
+	| SOME sibty =>
+	  (
+		let
+		  (* val _ = print "Getting stopping patt\n" *)
+		  val pair = getStoppingPatt sibty in
+		case pair of 
+		  (SOME str, NONE) => 
+		    if containString ltokens str then ty
+		    else 
+			let val newty = PPRefinedBase(getNAuxInfo ty, Blob pair, ltokens)
+		            val _ = print "******* FOUND BLOB ABOVE ******\n"
+			in newty
+	(*
+			if score newty < score ty then newty 
+			else updateWithBlobs sibling_opt ty
+	*)
+			end
+		| (NONE, SOME str ) => 
+		    if containPatt ltokens str then ty
+		    else 
+			let val newty = PPRefinedBase(getNAuxInfo ty, Blob pair , ltokens)
+		            val _ = print "******* FOUND BLOB ABOVE ******\n"
+			in newty
+	(*
+			if score newty < score ty then newty 
+			else updateWithBlobs sibling_opt ty
+	*)
+			end
+		| _ => ty
+		end
+	)
+    end
+  else ty
 
 (* the actual reduce function can either take a SOME(const_map) or
 NONE.  It will use the constraints that it can apply. *)

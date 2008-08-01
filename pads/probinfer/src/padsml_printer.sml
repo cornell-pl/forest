@@ -37,8 +37,17 @@ struct
      | IRstring => "ppstring"
      | IRstringME s => "pstring_ME(\"" ^ s ^ "\")"
      | IRwhite => "ppwhite"
+     | IRtext => "pptext"
      | IRchar => "ppchar"
+     | IRblob s => 
+        if size s = 0 then
+          "pstring_SE(Peor)"
+        else if size s = 1 then
+          "pstring('" ^ escape s ^ "')"
+        else
+          "pstring_SE(\"/" ^ escape s ^ "/\")"
      | IRempty => "ppempty"
+     | _ => "others"
 
   fun fieldToPML isStruct f =
     case f of

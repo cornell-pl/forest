@@ -11,6 +11,7 @@ struct
     open Fvector
     open Common
     open Viterbi
+    open Svm
     structure SS = Substring
 
     val TBDstamp = ref 0
@@ -1615,6 +1616,75 @@ val _ = printColumn cl
                  )
 	end
 
+    and mkTBD_SVM (callsite, currentDepth, coverage, cl, ssl, svmmodel, tokenpairtable) = 
+        (* Columns that have some empty rows must have the empty list representation
+           of the empty row converted to the [Pempty] token.  Otherwise, a column
+           that is either empty or some value gets silently converted to the value only. *)
+	let
+ 
+       fun cnvEmptyRowsToPempty [] = [((PPempty, ""),{lineNo= callsite, beginloc=0, endloc=0, recNo=callsite})] (* XXX fix line number *)
+              | cnvEmptyRowsToPempty l  = l
+	    val cl = List.map cnvEmptyRowsToPempty cl
+(*
+        (* assume colomn is in order *)
+        fun cnvEmptyRowsToPempty i =
+          if i=0 then []
+          else
+            let
+              val old = cnvEmptyRowsToPempty (i-1)
+              val l = List.nth(cl, i-1)
+            in
+              case l of
+                 [] => old@[[((PPempty, ""),{lineNo= i-1, beginloc=0, endloc=0, recNo=i-1})]]
+                |_ => old@[l]
+            end
+        val cl = cnvEmptyRowsToPempty (List.length cl)
+*)
+            fun allEmpty cl =
+		let fun isNonEmpty [((PPempty, _),_)] = false
+		      | isNonEmpty _ = true
+		in
+		    ((*print "Checking for an allempty context\n";*)
+		    not(Option.isSome(List.find isNonEmpty cl))
+		     )
+		end
+	    (*val cl = crackUniformGroups cl*)  (* ignore groups now *)
+	in
+	    if allEmpty cl then PPBase(mkTyAux coverage, List.concat cl)
+	    else if (coverage < isNoiseTolerance(!initialRecordCount))
+		 then mkBottom(coverage,cl)  (* not enough data here to be worth the trouble...*)
+	    else if (currentDepth >= !depthLimit)  (* we've gone far enough...*)
+                 then PPTBD ( { coverage=coverage
+                            , label=SOME(mkTBDLabel (!TBDstamp))
+                            , tycomp = zeroComps
+                            }
+                          , !TBDstamp
+                          , cl
+                          ) before TBDstamp := !TBDstamp    + 1
+                 else (
+                   if (List.length ssl) = 0 then 
+                       SeqsetListToTy_SVM (currentDepth + 1) [] svmmodel tokenpairtable
+                   else
+                   let
+val _ = print "mkTBD_SVM chop\n"
+val _ = print "chop ssl:\n"
+val _ = List.app easyprintss ssl
+                     val locList = columnToLocations cl
+val _ = printColumn cl
+(*val _ = printColumnString cl*)
+(*                   val locTable = locList2locTable locList*)
+(*val _ = (print "Location to chop: "; List.app printLocation locList; print "\n")*)
+(*val _ = List.app printSSLoc ssl*)
+(*val _ = (print "Before chopping seqset list: "; List.app printlist ssl; print "\n") *)
+
+                     val newSSL = chopSeqsets_notarray ssl locList
+(*val _ = (print "Chopped seqset list: "; List.app printlist newSSL; print "\n") *)
+                   in 
+                     SeqsetListToTy_SVM (currentDepth + 1) newSSL svmmodel tokenpairtable
+                   end
+                 )
+	end
+
     and mkTBD_array (callsite, currentDepth, coverage, cl, ssl, tables) = 
         (* Columns that have some empty rows must have the empty list representation
            of the empty row converted to the [Pempty] token.  Otherwise, a column
@@ -2206,6 +2276,52 @@ val _ = print (newcontextsToString newrtokens)
 	    ty
 	end
 
+    and clustersToTy_SVM (curDepth:int) (rtokens:NewContext list) (seqsetl:Seqset list) svmmodel tokenpairtable (numRecords:int) clusters : NewTy = 
+	let val analysis = analyzeClusters numRecords clusters
+	    val _ = if output_histograms then 
+			dumpClusters curDepth numRecords clusters ((!outputDir) ^ "histogram.dat")
+		    else ()
+            (* This function partitions a context into a union. *)
+            (* It currently uses the first token in each context to do the partition *)
+
+        fun buildUnionTy (FirstBSToken, rtokens, ssl, svmmodel, tokenpairtable) = 
+		      let (*val () = print "BUILDING UNION TY\n"*)
+		        val numChunks = List.length rtokens
+		        fun updateBSTable(token,chunk,tTable) = 
+		          case BSTokenTable.find(tTable, token) of 
+                           NONE => BSTokenTable.insert(tTable, token, ref [chunk])
+                        |  SOME chunkList => (chunkList := chunk::(!chunkList);   (* note that chunks end up in reverse order *)
+					      tTable)
+		        fun doOneChunk([], tTable) = updateBSTable((PPempty, ""),[], tTable)
+                      | doOneChunk(chunk as ((t,loc)::ts), tTable) = updateBSTable(t,chunk,tTable)
+		        val pTable = List.foldl doOneChunk BSTokenTable.empty rtokens 
+		    (* allSame handles the case where all chunks start with the same, non-Empty token *)
+                fun allSame myrtokens = 
+			      let 
+                    fun doOne ((lt::lts), (fst,snd)) = ([lt]::fst, lts::snd)
+			        val (fsts,snds) = List.foldl doOne ([],[]) myrtokens
+			      in
+			        PPstruct(mkTyAux numRecords, 
+				    [mkTBD_SVM(~9, curDepth, numChunks, List.rev fsts, ssl, svmmodel, tokenpairtable),
+				     mkTBD_SVM(~10,curDepth, numChunks, List.rev snds, ssl, svmmodel, tokenpairtable)])
+			      end
+                    (* allEmpty handles the case where all chunks are the empty chunk *)
+		        fun allEmpty () = PPBase(mkTyAux numRecords, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})])
+		    (* doPartition handles the case where the chunks did not all have the same initial token *)
+
+		        fun doPartition pTable = 
+			      let val items = BSTokenTable.listItems pTable (* list of chunks, one per intital token, in reverse order *)
+			        val tys = List.map (fn item => mkTBD_SVM(~11, curDepth, List.length (!item), List.rev (!item), ssl, svmmodel, tokenpairtable) ) items
+			      in
+			        PPunion(mkTyAux numRecords, tys)
+			      end
+		in
+		        if BSTokenTable.numItems(pTable) = 1 
+			      then if BSTokenTable.inDomain(pTable, (PPempty, "")) then allEmpty () 
+			           else allSame rtokens
+                else doPartition pTable
+		end
+
     and clustersToTy_GHMM (curDepth:int) (rtokens:NewContext list) (seqsetl:Seqset list) ghmmmodel tokenpairtable (numRecords:int) clusters : NewTy = 
 	let val analysis = analyzeClusters numRecords clusters
 	    val _ = if output_histograms then 
@@ -2381,7 +2497,6 @@ val _ = print (newcontextsToString newrtokens)
 			           else allSame rtokens
                 else doPartition pTable
 		end
-
 
            (* This function takes a Struct Partition and returns a Ty describing that partition *)
 	    fun buildStructTy partitions ssl ghmmmodel tokenpairtable = 
@@ -2644,6 +2759,38 @@ val _ = print "GHMMViterbi done\n"
 	    ty
 	end 
 
+    and SeqsetListToTy_SVM (curDepth:int) (seqsetl:Seqset list) svmmodel tokenpairtable : NewTy = 
+	let val numRecordsinSeqsetList = List.length seqsetl
+(*
+	    val _ = print ("Number records being considered: "^Int.toString(numRecordsinContext)^"\nThe records are:\n"
+		^(contextsToString context))
+*)
+        val bestProbPaths : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl
+(*
+          if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
+          else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl
+          else if ( !ghmm3 = true ) then List.map (basicViterbi_GHMM_length ghmmmodel) seqsetl
+          else if ( !ghmm4 = true ) then List.map (basicViterbi_GHMM_trans_length ghmmmodel tokenpairtable) seqsetl
+          else raise GHMMOptionError
+*)
+val _ = print "SVMViterbi done\n" 
+        (* val context : Context list = List.map TokenseqToContext bestProbPaths *)
+        val counts : BRecordCount list = List.map countBFreqs bestProbPaths    
+	    val fd: freqDist = buildHistograms numRecordsinSeqsetList counts
+	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)
+	    (* val () = if print_verbose then printClusters numRecordsinContext clusters else () *)
+	    val clusters : (BSToken * histogram) list list = newFindClusters numRecordsinSeqsetList fd
+        val ty : NewTy = clustersToTy_SVM curDepth bestProbPaths seqsetl ghmmmodel tokenpairtable numRecordsinSeqsetList clusters (* break it *)
+	    (*
+	    val () = (print "Inferred type:\n"; 
+		      print (TyToString ty);
+		      print "\n")
+	    *)
+        (* val ty = PPBase (mkTyAux 0, [((PPempty,""),{lineNo= ~1, beginloc=0, endloc=0, recNo= ~1})]) *)
+	in
+	    ty
+	end 
+
     and SeqsetListToTywithContexts (curDepth:int) (rtokens: NewContext list) (seqsetl:Seqset list) tables : NewTy = 
 	let val numRecordsinSeqsetList = List.length seqsetl
 (*
@@ -2788,6 +2935,29 @@ val _ = print "seqset to list done.\n"
         val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
 val _ = print "path graph done.\n"
         val newty = SeqsetListToTy_GHMM 0 rtokens ghmmmodel tokenpairtable
+val _ = print "seqset to list done.\n"
+        (*    val rtokens = crackUniformGroups rtokens *)(* check if all records have same top level group token *)
+	    (* val () = if print_verbose = true then lengthsToHist rtokens else () *)
+	    (* val ty = SeqsetListToTy 0 rtokens *)
+	    val snewty = simplifyNewTy newty
+        val end3Times = Times.updateStructEnd (Time.now()) end2Times
+	in
+	    (snewty, end3Times)
+	end
+
+    fun computeProbStructure_SVM fileName endingtimes : NewTy * Times.EndingTimes = 
+	let val recordNumber = ref 0
+	    val () = print ("Starting on file "^(lconcat fileName)^"\n");
+	    val records = loadFiles fileName  (* records: string list *)
+	    val () = initialRecordCount := (List.length records) 
+        val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
+        val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
+        val rtokens : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
+        val end2Times = Times.updateTokenEnd (Time.now()) endingtimes
+        val svmmodel = readinSVM "training/"
+        val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
+val _ = print "path graph done.\n"
+        val newty = SeqsetListToTy_SVM 0 rtokens svmmodel tokenpairtable
 val _ = print "seqset to list done.\n"
         (*    val rtokens = crackUniformGroups rtokens *)(* check if all records have same top level group token *)
 	    (* val () = if print_verbose = true then lengthsToHist rtokens else () *)
@@ -3127,6 +3297,33 @@ val _ = print "seqset to list done.\n"
       evaluate_newcontextlist bsll1 rtokens
 	end
 
+    fun evaluate_SVM_seqset fileName  = 
+	let
+        val records = loadFiles fileName
+        val bsll1 = extractLog "training/log/" "training/log/testname"
+        val _ = if (List.length bsll1) <> (List.length records) then 
+                  (print ("hand-written data: "^(Int.toString (List.length bsll1))^" records, compared data: "^(Int.toString (List.length records))^" records\n"); raise InvalidTestFile) 
+                else () 
+	    val recordnum = ref (List.length records)
+        val recordNumber = ref 0
+        val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
+        val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
+        val seqsetl : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
+        val svmmodel = readinSVM "training/"
+        val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
+        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl
+(* 
+          if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
+          else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl
+          else if ( !ghmm3 = true ) then List.map (basicViterbi_GHMM_length ghmmmodel) seqsetl
+          else if ( !ghmm4 = true ) then List.map (basicViterbi_GHMM_trans_length ghmmmodel tokenpairtable) seqsetl
+          else raise GHMMOptionError
+*)
+        val _ = print "Tokenization by seqset and hmm:\n"
+	in
+      evaluate_newcontextlist bsll1 rtokens
+	end
+
     fun moveIncToList path file1 file2 =
       let
         val infilesraw = loadFile (path^file1)
@@ -3188,6 +3385,34 @@ val _ = print "seqset to list done.\n"
         ListPair.appEq printListPair (records, rtokens)
 	end
 
+    fun showTokenSeqsSvm fileName = 
+      let
+        val records = loadFiles fileName
+	    val recordnum = ref (List.length records)
+        val recordNumber = ref 0
+        val tokensNoBlob = List.take(tokenDefList, (List.length tokenDefList)-1)
+        val dfatable = (* constrDFATable tokensNoBlob *) BTokenDFATable.empty
+        val seqsetl : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
+        val svmmodel = readinSVM "training/"
+        val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
+        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl
+(* 
+          if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
+          else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl
+          else if ( !ghmm3 = true ) then List.map (basicViterbi_GHMM_length ghmmmodel) seqsetl
+          else if ( !ghmm4 = true ) then List.map (basicViterbi_GHMM_trans_length ghmmmodel tokenpairtable) seqsetl
+          else raise GHMMOptionError
+*)
+        fun printBSLToken ((t, s), l) = print ((BTokenToName t)^"["^s^"]"^" ")
+        fun printListPair (re:string, bslist: NewContext) =
+          case bslist of
+              [] => (print (re^"\n"); print "no tokenization result\n")
+            | _ => (print (re^"\n"); List.app printBSLToken bslist; print "\n")
+	in
+(*	    ListPair.appEq printListPair (records, tokens) *)
+        ListPair.appEq printListPair (records, rtokens)
+	end
+
     fun showTokenSeqsGhmm fileName = 
       let
         val records = loadFiles fileName
@@ -3213,4 +3438,5 @@ val _ = print "seqset to list done.\n"
 (*	    ListPair.appEq printListPair (records, tokens) *)
         ListPair.appEq printListPair (records, rtokens)
 	end
+
 end

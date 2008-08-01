@@ -1,6 +1,6 @@
 structure Ast = 
 struct
-open Types
+open Common
   datatype TypeName = 
        IRref of string (*string is name of a non-base type*)
      | IRbXML   
@@ -20,13 +20,14 @@ open Types
      | IRstringME of string
      | IRwhite 
      | IRchar 
-     | IRempty 
+     | IRempty
      | IRurlbody
      | IRword
      | IRhstring
      | IRid
      | IRmessage
      | IRtext
+     | IRblob of string
      | IRpermission
      | IRpunc of string
 
@@ -129,6 +130,7 @@ open Types
 	| RefinedBase (_, StringME _, _) => true
 	| RefinedBase (_, StringConst _, _) => true
 	| RefinedBase (_, Int _, _) => true	(* convert tp int32/int16, etc*)
+	| RefinedBase (_, Blob _, _) => true
 	(*IntConst FloatConst are not inline of array and option*)
 	| _ => false
 
@@ -137,6 +139,7 @@ open Types
 	| PPRefinedBase (_, StringME _, _) => true
 	| PPRefinedBase (_, StringConst _, _) => true
 	| PPRefinedBase (_, Int _, _) => true	(* convert tp int32/int16, etc*)
+	| PPRefinedBase (_, Blob _, _) => true
 	(*IntConst FloatConst are not inline of array and option*)
 	| _ => false
 
@@ -155,6 +158,7 @@ open Types
 		| IntConst _ => IRref ("intconst" ^ id) 
 		| FloatConst _ => IRref ("floatconst" ^ id) 
 		| Enum _ => (print "Enum!\n"; raise TyMismatch)
+		| Blob _ => IRref ("blob_" ^ id) 
 		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
 		)
 	  | _ => raise TyMismatch
@@ -175,6 +179,7 @@ open Types
 		| IntConst _ => IRref ("intconst" ^ id) 
 		| FloatConst _ => IRref ("floatconst" ^ id) 
 		| Enum _ => (print "Enum!\n"; raise TyMismatch)
+		| Blob _ => IRref ("blob_" ^ id) 
 		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
 		)
 	  | _ => raise TyMismatch
@@ -197,6 +202,15 @@ open Types
 			| Int (min, max) => IRintrange (min, max)
 			| IntConst i => IRintrange (i, i)
 			| FloatConst _ => IRfloat
+			| Blob (x, y)  => 
+			    let
+	  			val s = case (x, y) of
+		    		  (SOME str, NONE) => str
+		  		| (NONE, SOME p) =>  p 
+		  		| _ => "" 
+			    in
+				IRblob s
+			    end
 			| _ => raise TyMismatch
 		)
         |  PPSwitch _        	 => IRref ("switch_"^id)
@@ -222,6 +236,15 @@ open Types
 			| Int (min, max) => IRintrange (min, max)
 			| IntConst i => IRintrange (i, i)
 			| FloatConst _ => IRfloat
+			| Blob (x, y)  => 
+			    let
+	  			val s = case (x, y) of
+		    		  (SOME str, NONE) => str
+		  		| (NONE, SOME p) =>  p 
+		  		| _ => "" 
+			    in
+				IRblob s
+			    end
 			| _ => raise TyMismatch
 		)
         |  Switch _        	 => IRref ("switch_"^id)
@@ -423,6 +446,16 @@ open Types
 	in 
 	  FullField (var, tyName, NONE, SOME(var, NONE, NONE, SOME (FloatConst x)))
 	end
+    | Blob (x, y)  => 
+	let
+	  val var = "blob" ^ suffix
+	  val s = case (x, y) of
+		    (SOME str, NONE) => str
+		  | (NONE, SOME p) => p 
+		  | _ => "" 
+	  val tyName = IRblob s
+	in FullField (var, tyName, NONE, NONE)
+	end
     | _ => raise TyMismatch
     end
 
@@ -574,6 +607,7 @@ open Types
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(FloatConst x))))]
 	    | StringConst s => [(isRecord, basetyName, 
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(StringConst s))))]
+	    | Blob _ => [(isRecord, basetyName, TyBase(tyname, NONE))]
 	    | _ => raise TyMismatch
 	   )
 	   end
@@ -671,6 +705,7 @@ open Types
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(FloatConst x))))]
 	    | StringConst s => [(isRecord, basetyName, 
 				TyBase(tyname, SOME("x", NONE, NONE, SOME(StringConst s))))]
+	    | Blob _ => [(isRecord, basetyName, TyBase(tyname, NONE))]
 	    | _ => raise TyMismatch
 	   )
 	   end

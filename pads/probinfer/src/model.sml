@@ -111,6 +111,19 @@ structure Model = struct
                                                    ( int2CompS ( length rl ) )
                                  }
              | LabelRef i     => { tc =  unitComp, adc = unitComp, dc = unitComp }
+	     | Blob (str, patt) =>
+		let val strlen = 
+		  (case (str, patt) of
+		    (SOME s, _) => size s
+		   | (_, SOME s) => size s - 2 (* exclusing / and / *)
+		   | _ => 0 
+		  )
+		in
+		{ tc = combine constructorComp
+			(multCompS strlen (int2Comp numStringChars)),
+		  adc = multCompR avg (int2Comp numStringChars),
+		  dc = multComp tot (int2Comp numStringChars)
+		} end
         )
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedTypeComp ( avg : real )         (* Average length of tokens *)

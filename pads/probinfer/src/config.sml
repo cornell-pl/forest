@@ -47,9 +47,11 @@ structure Config = struct
     val inctrainingWeightsRun = ref false
     val hmmtokenize       = ref false
     val ghmmtrainingRun   = ref false
+    val svmtrainingRun   = ref false
     val ghmmtestingRun    = ref false
     val evaluatehmmseqset = ref false
     val evaluateghmmseqset = ref false
+    val evaluatesvmseqset = ref false
     val dumpseqsets       = ref false
     val ghmm1             = ref false
     val ghmm2             = ref false
@@ -59,6 +61,7 @@ structure Config = struct
     val showtokenvanilla         = ref false
     val showtokenhmm         = ref false
     val showtokenghmm         = ref false
+    val showtokensvm         = ref false
 
     exception GHMMOptionError
 

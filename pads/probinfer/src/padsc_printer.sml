@@ -41,7 +41,16 @@ open Ast
      | IRstringME s => "Pstring_ME(:\"" ^ s ^ "\":)"
      | IRwhite => "PPwhite"
      | IRchar => "PPchar"
+     | IRtext => "pptext"
+     | IRblob s =>
+        if size s = 0 then
+          "Pstring_SE(:Peor:)"
+        else if size s = 1 then
+          "Pstring(:'" ^ escape s ^ "':)"
+        else
+          "Pstring_SE(:\"/" ^ escape s ^ "/\":)"
      | IRempty => "PPempty"
+     | _ => "Others"
 
   fun newtyNameToPADSCString tyName =
      case tyName of 
@@ -80,6 +89,13 @@ open Ast
      | IRid => "PPid"
      | IRmessage => "PPmessage"
      | IRtext => "PPtext"
+     | IRblob s => 
+        if size s = 0 then
+          "Pstring_SE(:Peor:)"
+        else if size s = 1 then
+          "Pstring(:'" ^ escape s ^ "':)"
+        else
+          "Pstring_SE(:\"/" ^ escape s ^ "/\":)"
      | IRpermission => "PPpermission"
      | IRpunc s => "PPpunc_"^(stringToPuncName s)
 

@@ -95,6 +95,9 @@ struct
      fun sumInts ( ns : int list ) : LargeInt.int = 
          foldl ( fn ( x : int, y : LargeInt.int ) => y + Int.toLarge x ) 0 ns
 
+     fun sumSmallInts ( ns : int list ) : int =
+         foldl ( fn ( x : int, y : int ) => y + x ) 0 ns
+
      fun avgInts ( ns : int list ) : real = 
         ( Real.fromLargeInt ( sumInts ns ) ) / ( Real.fromInt ( length ns ) )
 

@@ -94,6 +94,15 @@ print token *)
            ()
          end
 
+       else if ( !svmtrainingRun = true )
+         then
+            let
+              val _ = print "Support Vector Machine training run...\n"
+              val _ = SVMTraining "training/"             
+            in 
+              ()
+            end
+
        else if ( !examHMMPre = true )
          then
             let
@@ -142,6 +151,14 @@ print token *)
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
+       else if ( !evaluatesvmseqset = true )
+         then
+            let
+              val _ = print "examining SVM tokenization result with seqsets...\n"
+              val _ = evaluate_SVM_seqset (!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
        else if ( !showtokenvanilla = true )
          then
             let
@@ -163,6 +180,14 @@ print token *)
             let
               val _ = print "printing token sequences by ghmm...\n"
               val _ =  showTokenSeqsGhmm(!srcFiles)             
+            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+            end
+
+       else if ( !showtokensvm = true )
+         then
+            let
+              val _ = print "printing token sequences by svm...\n"
+              val _ =  showTokenSeqsSvm(!srcFiles)             
             in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
             end
 
@@ -238,6 +263,29 @@ print token *)
            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
            end
 
+       else if ( !svmtestingRun = true )
+         then
+           let  val end1Times    = zeroEndingTimes ()
+                val end2Times    = updateStart ( Time.now () ) end1Times
+                val (ty, end3Times)     = computeProbStructure_SVM ( !srcFiles ) end2Times
+(*		val _ 		 = printTy (measure ty) *)
+                val _ = Printing.dumpNewTy (!outputDir^"BeforeRefine.GHMMTy") ty
+                val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
+				   Rewrite.newrun end3Times ty
+                val computeTimes = getComputeTimes end4Times
+                val _ = Printing.dumpNewTy (!outputDir^"AfterRefine.GHMMTy") rewrittenTy
+                val ()           = Printing.dumpNewTyInfo (!outputDir)
+						       dataDir
+                                                       dataFile
+                                                       measuredTy
+                                                       rewrittenTy
+						       numHeaders
+						       numFooters
+                                                       end4Times
+                               NONE
+           in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+           end
+
        else let val end1Times    = zeroEndingTimes ()
                 val end2Times    = updateStart ( Time.now () ) end1Times
                 val (ty,sep, end3Times)     = computeStructure ( !srcFiles ) end2Times
@@ -281,6 +329,7 @@ print token *)
     fun setTrainingRun  s = trainingRun  := (s = "true")
     fun setGHMMTrainingRun  s = ghmmtrainingRun  := (s = "true")
     fun setTrainingWeightsRun  s = trainingWeightsRun  := (s = "true")
+    fun setSVMTrainingRun  s = svmtrainingRun  := (s = "true")
     fun setIncTrainingRun  s = inctrainingRun  := (s = "true")
     fun setIncTrainingWeightsRun  s = inctrainingWeightsRun  := (s = "true")
     fun setTestingRun   s = testingRun  := (s = "true") 
@@ -291,6 +340,7 @@ print token *)
     fun setEvaluateVanilla  s = evaluateVanilla  := (s = "true")
     fun setEvaluate_hmm_seqset  s = evaluatehmmseqset  := (s = "true")
     fun setEvaluate_ghmm_seqset  s = evaluateghmmseqset  := (s = "true")
+    fun setEvaluate_svm_seqset  s = evaluatesvmseqset  := (s = "true")
     fun setHMMtokenize  s = hmmtokenize  := (s = "true")
     fun setGHMM1 s = ghmm1 := (s = "true")
     fun setGHMM2 s = ghmm2 := (s = "true")
@@ -300,6 +350,7 @@ print token *)
     fun setShowTokenVanilla s = showtokenvanilla := (s = "true")
     fun setShowTokenHmm s = showtokenhmm := (s = "true")
     fun setShowTokenGhmm s = showtokenghmm := (s = "true")
+    fun setShowTokenSvm s = showtokensvm := (s = "true")
     fun setDumpSeqsets  s = dumpseqsets  := (s = "true")
     fun setCharacter  s = character  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
@@ -323,6 +374,7 @@ print token *)
          ("dumpseqsets", "dump seqsets and print to file",	                                                   PCL.String (setDumpSeqsets, true)),
          ("ghmmtraining", "training generalized HMM",	                                                   PCL.String (setGHMMTrainingRun, true)),
          ("inctraining", "incremental training run",	                                                   PCL.String (setIncTrainingRun, true)),
+         ("svmtraining", "training Support Vector Machine",	                                                   PCL.String (setSVMTrainingRun, true)),
          ("inctrainingw", "incremental training run with weights",	                                       PCL.String (setIncTrainingWeightsRun, true)),
          ("testing",  "testing run",	                                                   PCL.String (setTestingRun, true)),
          ("ghmmtesting",  "testing generalized HMM",	                                                   PCL.String (setGHMMTestingRun, true)),
@@ -337,8 +389,10 @@ print token *)
          ("showtokenvanilla",  "show token sequences by lex",	                                                   PCL.String (setShowTokenVanilla, true)),         
          ("showtokenhmm",  "show token sequences by hmm",	                                                   PCL.String (setShowTokenHmm, true)),         
          ("showtokenghmm",  "show token sequences by ghmm",	                                                   PCL.String (setShowTokenGhmm, true)),         
+         ("showtokensvm",  "show token sequences by svm",	                                                   PCL.String (setShowTokenSvm, true)),         
          ("evaluate_hmm_ss",  "evaluating HMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_hmm_seqset, true)),
          ("evaluate_ghmm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_ghmm_seqset, true)),
+         ("evaluate_svm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_ghmm_seqset, true)),
          ("hmmtokenize",  "evaluate descriptions with tokenization by hmm library",	                                                   PCL.String (setHMMtokenize, true)),
          ("vanilla",  "evaluating vanilla tokenization",	                                                   PCL.String (setEvaluateVanilla, true)),
          ("char", "use character other than character feature vector for training",                        PCL.String (setCharacter, true)),

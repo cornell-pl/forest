@@ -7,6 +7,7 @@ struct
     open Common
     open Ghmm_features
     open Viterbi
+    open Svm
 
     fun tstringToBToken (s, str) : BToken =
       if String.isSubstring "int" s then PPint
@@ -2180,5 +2181,31 @@ val _ = print "\n"
           TextIO.closeOut strm
         end
 
+    fun SVMTraining ( path : string ) : unit = (* assume using ghmm5 settings *)
+        let 
+          val _ = print ("Printing SVM training inputs to files under "^path^"\n") 
+          val list = extractLog "training/log/" "training/log/log.list"
+          val tokenpairtable = constrTokenPairTable_GHMM2 list BTokenPairTable.empty 
+          val _ = dumpTokenName path BTokenTable.empty 
+          val _ = dumpTokenPair_GHMM "training/" tokenpairtable 
+          val tokentable = constrTokenTable_GHMM2 list BTokenTable.empty
+          val _ = dumpToken_GHMM "training/" tokentable
+          val _ = dumpTransProbSmooth_GHMM2 "training/" tokentable tokenpairtable
+          val strm = TextIO.openOut (path^"mytraining_svm")
+          fun bsl2bsbel bsl = 
+            let
+              fun flatten ((b, s), rets) = rets^s
+              val str = List.foldl flatten "" bsl
+              fun doOne ((b, s), (index, retl)) = (index+(String.size s), retl@[(b, str, index, index+(String.size s)-1)])
+            in
+              List.foldl doOne (0, []) bsl
+            end
+          fun printOne r = TextIO.output(strm, BSToken2FeatureStrs2_svm r)  (* change here to use binary or real value features *)
+          fun printOneList l = List.app printOne (#2(bsl2bsbel l))
+          val _ = List.app printOneList list
+          val _ = TextIO.output(strm, BSToken2FeatureStrs2_svm(PPempty, "", ~1, ~1)) (* make sure we have enough classes *)
+        in
+          TextIO.closeOut strm
+        end
 
 end

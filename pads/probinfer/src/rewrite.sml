@@ -143,6 +143,13 @@ let
   val _ = print "Phase three ...\n";
 *)
   val ty3 = Probreduce.reduce 3 ty2
+
+  val _ = print "Before mkBlob ...\n"
+  val _ = printNewTy ty3
+  val ty3 = Probreduce.updateWithBlobs NONE ty3
+  val _ = print "After mkBlob ...\n"
+  val _ = printNewTy ty3
+
   val headers= map (Probreduce.reduce 3) headers
   val footers= map (Probreduce.reduce 3) footers
   val reduce3_time : Time.time = Time.now ()
