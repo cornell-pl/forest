@@ -881,7 +881,7 @@ val _ = print "\n"
           let
             fun doOne ((beginp, btoken), oldtable2) =
               let
-                val thisprob = Math.ln(tokenProbSVM(btoken, s, beginp, workingpos, svmmodel))
+                val thisprob = Math.ln(tokenProbSVM_callc(btoken, s, beginp, workingpos, svmmodel))
               in
               case PosBTokenTable.find(oldtable1, (beginp-1)) of
                   NONE => ((*print "can't find a pre table\n";*)
@@ -915,8 +915,9 @@ val _ = print "\n"
                             let
                               val mybptokenc = BToken2BTokenClass mybptoken
                               val btokenc = BToken2BTokenClass btoken
-                              val transprob = if ( !ghmm5 = true ) then Math.ln(defaultRVal(BTokenPairTable.find(tokenpairtable, (mybptokenc, btokenc))))
-                                              else Math.ln(defaultRVal(BTokenPairTable.find(tokenpairtable, (mybptoken, btoken))))
+                              val transprob = Math.ln(defaultRVal(BTokenPairTable.find(tokenpairtable, (mybptokenc, btokenc))))
+(*if ( !ghmm5 = true ) then Math.ln(defaultRVal(BTokenPairTable.find(tokenpairtable, (mybptokenc, btokenc))))
+                                              else Math.ln(defaultRVal(BTokenPairTable.find(tokenpairtable, (mybptoken, btoken)))) *)
 (*val _ = print ("transprob = "^(Real.toString(transprob))^"\n")*)
                               val newthisprob = (prob * Real.fromInt(tlength) + transprob + thisprob) / Real.fromInt(newlength)
                             in

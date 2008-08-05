@@ -35,6 +35,36 @@ struct
 
   exception readinSVMexp
 
+  fun readinSVM_predict path = (* return label and prob list *)
+    let
+	  val lines = loadFile "training/svmoutput"
+      fun isSpace c = c = #" "
+      fun extractInt str = (* str : Substring *)
+        let
+          val (thisint, junk) = Substring.splitl (not o isSpace) str
+          val after = if Substring.size thisint = 0 orelse Substring.size junk = 0 orelse Substring.size junk = 1 then []
+                      else extractInt(Substring.triml 1 junk)
+        in
+           [Option.valOf(Int.fromString(Substring.string(thisint)))]@after handle Option => (print ((Substring.string thisint)); raise readinSVMexp)
+        end
+      fun extractFloat str = (* str : Substring *)
+        let
+          val (thisfloat, junk) = Substring.splitl (not o isSpace) str
+          val after = if Substring.size thisfloat = 0 orelse Substring.size junk = 0 orelse Substring.size junk = 1 then []
+                      else extractFloat(Substring.triml 1 junk)
+        in
+          if Substring.size thisfloat = 0 then after
+          else [Option.valOf(Real.fromString(Substring.string(thisfloat)))]@after handle Option => raise readinSVMexp
+        end
+      val (junk, label) = Substring.splitl (not o isSpace) (Substring.full (List.nth(lines, 0)))
+      val label = extractInt(Substring.triml 1 label) handle readinSVMexp => raise readinSVMexp
+      val (junk, prob) = Substring.splitl (not o isSpace) (Substring.full (List.nth(lines, 1)))
+      val prob = extractFloat(Substring.triml 1 prob)
+    in
+      (label, prob)
+    end
+
+
   fun readinSVM path = 
     let
 	  val lines = loadFile "training/mymodel_svm"
@@ -90,15 +120,18 @@ struct
           val (wlist, rest) = extract1(str, nr_class-1)
           fun extract2 str2 = 
             let
+(*val _ = print ((Substring.string str2)^"\n")*)
               val (thisrec, junk) = Substring.splitl (not o isSpace) str2
               val (after1, after2) = if Substring.size thisrec = 0 orelse Substring.size junk=0 orelse Substring.size junk = 1 then ([], [])
                                      else extract2(Substring.triml 1 junk)
               val (thisind, thisfloat) = Substring.splitl (not o isColon) thisrec
               val thisfloat = Substring.triml 1 thisfloat
+              val thisind = Option.valOf(Int.fromString(Substring.string(thisind))) handle Option => (print ((Substring.string thisind)^"\n"); raise readinSVMexp)
+              val thisfloat = Option.valOf(Real.fromString(Substring.string(thisfloat))) handle Option => raise readinSVMexp
             in
-              ([Option.valOf(Int.fromString(Substring.string(thisind)))]@after1, [Option.valOf(Real.fromString(Substring.string(thisfloat)))]@after2) handle Option => raise readinSVMexp
+              (thisind::after1, thisfloat::after2) 
             end
-          val (indlist, svlist) = extract2(Substring.triml 1 rest)
+          val (indlist, svlist) = extract2 rest
         in
           (wlist, (indlist, svlist))
         end
@@ -138,6 +171,7 @@ struct
                            val sv1 = List.nth(svlist1, i)
                            val sv2 = List.nth(svlist2, j)
                            val diff = sv1 - sv2
+(*val _ = print("i = "^(Int.toString i)^" j = "^(Int.toString j)^"\n")*)
                          in
                            diff * diff + compute(i+1, j+1)
                          end
@@ -158,14 +192,19 @@ struct
           end
         )
       val sum = compute(0, 0)
+      val ret = Math.exp(~gamma*sum)
+val _ = print ((Real.toString sum)^" "^(Real.toString ret)^"\n")
     in
-      Math.exp(~gamma*sum)
+      ret
     end
 
   fun svm_predict_values (model, x) = 
     let
       val (gamma, nr_class, total_sv, rho, label, probA, probB, nr_sv, coeflist, nodelist) = model
+(*val _ = print((Int.toString (List.length nodelist))^"\n")*)
+val _ = print "1\n"
       val kvalues = List.map (k_function (x, gamma)) nodelist
+val _ = print "2\n"
       fun getStart (last, i) = 
         if i = nr_class then []
         else 
@@ -320,7 +359,7 @@ struct
                 let
                   val (afterlist, newk1) = innerloop(j+1, k1)
                 in
-                  ((1.0-List.nth(List.nth(prepair, j), i))::afterlist, newk1)
+                  ((1.0-List.nth(List.nth(prepair, j), i))::afterlist, newk1) handle Subscript => raise Subscript
                 end
               else if j = i then 
                 let
@@ -332,14 +371,17 @@ struct
                 let 
                   val (afterlist, newk1) = innerloop(j+1, k1+1)
                 in
-                  (Real.min(Real.max(sigmoid_predict(List.nth(dec_values, k1), List.nth(probA, k1), List.nth(probB, k1)), min_prob), 1.0-min_prob)::afterlist, newk1)
+                  (Real.min(Real.max(sigmoid_predict(List.nth(dec_values, k1), List.nth(probA, k1), List.nth(probB, k1)), min_prob), 1.0-min_prob)::afterlist, newk1) handle Subscript => raise Subscript
                 end
             val (innerlist, newk) = innerloop(0, k)
           in
             innerlist::pairprob(i+1, newk, prepair@[innerlist])
           end
+val _ = print "1\n"
       val pairwise_prob = pairprob(0, 0, [])
+val _ = print "2\n"
       val prob_estimates = multiclass_probability(nr_class, pairwise_prob)
+val _ = print "3\n"
     in
       prob_estimates
     end

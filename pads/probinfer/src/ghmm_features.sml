@@ -1631,8 +1631,8 @@ struct
 (*val _ = print (str^" "^(Int.toString sbegin)^" "^(Int.toString send)^"\n")*)
       val s = if sbegin = ~1 orelse send = ~1 then "" else String.substring(str, sbegin, send-sbegin+1)
 (*val _ = print (s^"\n")*)
-      fun mymap1 ((fname, f, ind), rets) = rets^Int.toString(ind)^":"^Real.toString(f s)
-      fun mymap2 ((fname, f, ind), rets) = rets^Int.toString(ind)^":"^Real.toString(f str sbegin send)
+      fun mymap1 ((fname, f, ind), rets) = rets^Int.toString(ind)^":"^Real.toString(f s)^" "
+      fun mymap2 ((fname, f, ind), rets) = rets^Int.toString(ind)^":"^Real.toString(f str sbegin send)^" "
       val featureStr = (List.foldl mymap1 "" binaryfeatureList)^" "^(List.foldl mymap2 "" otherFeatures)
     in
       Int.toString(BTokenCompleteEnum(b)-1)^"\t"^featureStr^"\n"
@@ -1721,6 +1721,31 @@ val _ = if compBToken(b, PPid)=EQUAL orelse compBToken(b, PPhostname)=EQUAL then
     in
       prob
     end
+    end
+
+  fun tokenProbSVM_callc (b, str, sbegin, send, svmmodel) : real = 
+    let
+      val strm = TextIO.openOut ("training/mytesting_svm")
+      val _ = TextIO.output(strm, BSToken2FeatureStrs2_svm (b, str, sbegin, send))
+      val _ = TextIO.closeOut strm
+      val _ = OS.Process.system "libsvm/libsvm-2.86/svm-predict -b 1 training/mytesting_svm training/mymodel_svm training/svmoutput"
+(*val _ = OS.Process.exit OS.Process.success*)
+      val (label, probs) = readinSVM_predict "training"
+(*
+fun printprobs i = print ((Real.toString i)^" ")
+val _ = List.app printprobs probs
+val _ = print "\n"
+*)
+      val tindex = BTokenCompleteEnum(b)-1
+      fun findlable i = if i = List.length label then ~1 
+                        else if List.nth(label, i) = tindex then i
+                        else findlable(i+1)
+      val thisindex = findlable 0
+    in
+      if thisindex = ~1 then 0.0000007 (* no such token in training data *)
+      else
+(print((BTokenToName b)^" ----------- "^String.substring(str, sbegin, send-sbegin+1)^" ------------ "^(Real.toString(List.nth(probs, thisindex)))^"\n");
+        List.nth(probs, thisindex))
     end
 
 (*
