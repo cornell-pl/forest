@@ -1,0 +1,48 @@
+\documentclass{llncs}
+
+\usepackage{xspace,times, pads,verbatim,alltt,multicol}
+% \usepackage{xspace,pads,math-cmds,
+%             math-envs,inference-rules,times,
+%             verbatim,alltt,multicol,proof}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+% magic to force text on page with figure
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\floatpagefraction}{0.9}
+\renewcommand{\textfraction}{0.0}
+%
+\begin{document}
+\title{A Probablistic Approach to Format Inference of Ad Hoc Data}
+
+\author{Kathleen Fisher\inst{1} \and David Walker\inst{2} \and
+  Qian Xi\inst{2} \and Kenny Q. Zhu\inst{2}}
+
+\institute{AT\&T Research \and Princeton University}
+
+\input{definitions}
+
+\maketitle{}
+
+\input{abstract}
+\input{intro}
+\input{examples}
+\input{algorithm}
+\input{stats}
+\input{evaluation}
+\input{related}
+\input{conclusion}
+
+\bibliographystyle{plainnat}
+%\bibliographystyle{abbrv}
+\bibliography{pads}
+
+%\input{appendix}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+

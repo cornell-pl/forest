@@ -1,0 +1,18 @@
+\section{Introduction}\label{sec:intro}
+
+\begin{verbatim}
+
+- problem in general : tools
+- problem specified in POPL paper : Token Ambiguity Problem
+- solution
+  - statistical methods to deal with it
+  - re-work to build algorithm
+    - multiple token sequences: DAG
+    - most likely sequences (with certain constraints to make sure 
+      the token sequences are legal) 
+       => histograms
+    - subdivision algorithm
+      - to select less likely sequences if the most likely sequence 
+        doesn't satisfy some constraints, or it's broken by cutting the DAG
+    - blob finding
+\end{verbatim}

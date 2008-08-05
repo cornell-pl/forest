@@ -1,0 +1,17 @@
+\section{High-level Algorithm}\label{sec:algo}
+\begin{verbatim}
+1. (way ahead of time) train a statistical model over the training data
+2. (at inference time) coarse-grain tokenization (i.e. finding Seqsets)
+3a. run the statistical model over the user data, and use the (modified) 
+    viterbi algorithm to find the most likely sequences
+3b. populate histograms based on the most likely sequences
+3c select candidate histograms + structure, according to heuristics
+3d. break down Seqsets using not just the most likely sequences
+3e. recursively repeat, go to 3a.
+4. apply rewriting involving blob finding to maximize the information 
+   theoretic complexity score
+5. print description & construct resulting tools
+
+We'll compose this algorithm by figure and explain it with running examples 
+in Section 2.
+\end{verbatim}
