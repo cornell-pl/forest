@@ -1,18 +1,128 @@
 \section{Introduction}\label{sec:intro}
 
-\begin{verbatim}
+% \begin{verbatim}
 
-- problem in general : tools
-- problem specified in POPL paper : Token Ambiguity Problem
-- solution
-  - statistical methods to deal with it
-  - re-work to build algorithm
-    - multiple token sequences: DAG
-    - most likely sequences (with certain constraints to make sure 
-      the token sequences are legal) 
-       => histograms
-    - subdivision algorithm
-      - to select less likely sequences if the most likely sequence 
-        doesn't satisfy some constraints, or it's broken by cutting the DAG
-    - blob finding
-\end{verbatim}
+% - problem in general : tools
+% - problem specified in POPL paper : Token Ambiguity Problem
+% - solution
+%   - statistical methods to deal with it
+%   - re-work to build algorithm
+%     - multiple token sequences: DAG
+%     - most likely sequences (with certain constraints to make sure 
+%       the token sequences are legal) 
+%        => histograms
+%     - subdivision algorithm
+%       - to select less likely sequences if the most likely sequence 
+%         doesn't satisfy some constraints, or it's broken by cutting the DAG
+%     - blob finding
+% \end{verbatim}
+
+An {\em ad hoc data format} is any data format for which useful data processing
+tools do not exist.  Examples of ad hoc data formats include web server logs,
+genomic data sets, astronomical readings, financial transaction reports, 
+agricultural data and more.  Almost everywhere you look, there is some new, 
+semistructured data file someone has created to store or communicate
+information about their domain.
+
+\pads~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml} is a declarative 
+language that describes the syntax and semantics properties of ad hoc data
+formats.  The \pads{} compiler reads these declarative descriptions
+and produces a series of programming libraries (parser, printer, validator
+and visitor) and end-to-end tools (xml translator, query engine, reformatter,
+error monitor, etc.).  By doing so, \pads{} can dramatically improve the 
+productivity of data analysts who work with ad hoc data.
+
+However, \pads{} is not (yet) a silver bullet.  It takes time for new users
+to learn the language syntax and even experienced users can take hours or 
+days to develop descriptions for complex formats.  Hence, to further improve
+programmer productivity, we have developed a system called \learnpads{}
+to infer descriptions automatically from example 
+data~\cite{fisher+:dirttoshovels,fisher+:sigmod08}.  
+\learnpads{} helps users with
+one of the most common applications of the \pads system --- the task of
+taking a huge pile of unknown data, understanding its structure and 
+translating it into a known format
+such as \xml{} or CVS for further analysis.
+
+Our past experiments have shown that \learnpads{} is highly effective
+when the set of tokens it uses matches the tokens used in the unknown
+data set.  For instance, when the unknown data set contains 
+urls, dates and messages the inference system will work very well when
+its tokenizer contains the correct corresponding definitions
+for urls, dates and messages used in the file.  If the
+tokenizer does not contain these elements, inference is still possible,
+but the inferred descriptions are generally much, much more complex
+than they would be otherwise.  The excessive complexity interferes with
+the overall goal of using the system to understand the data, analyze and 
+transform it.
+
+This observation sounds completely obvious, but, unfortunately,
+that does not make it any easier to develop a general-purpose tokenizer
+with a wide variety of abstractions like urls, dates, messages,
+phone numbers, file paths and more.  The key problem is that
+when one uses the conventional approach ({\em i.e.,} regular expressions)
+to building a tokenizer, as we did in our previous work, one finds
+that definitions of basic tokens overlap tremendously.  For example,
+``{\tt January 24, 2008}'' includes a word made up of letters, a couple 
+of numbers,
+some spaces and English-like punctuation such as the ``{\tt ,}''.  Does that mean 
+this string should be treated as an arbitrary text fragment or 
+is it a date? Perhaps ``{\tt January}'' an element of an string-based enumeration 
+unconnected to integers {\tt 24} and {\tt 2008}?  Perhaps the entire phrase
+should be merged with surrounding characters rather than treated
+in isolation?  Doing a good job of format
+inference involves identifying that the string of characters
+{\tt J-a-n-...-0-8} should be treated as an indivisible token and that it is
+in fact a date.  More generally, an effective format inference engine
+for ad hoc data has a good solution to the {\em Token Ambiguity Problem}
+-- the problem of determining which substrings of a data file correspond
+to which token definitions in the presence of syntactic 
+ambiguity.
+
+In this paper, we describe our attempts to solve the token ambiguity problem.
+In particular, we make the following contributions:
+\begin{itemize}
+\item We redesign our format inference algorithm~\cite{fisher+:dirttoshovels} 
+so that it can take advantage of information 
+generated from an arbitrary statistical token model.
+This advance allows the algorithm to process a set of
+ambiguous parses, selecting the most highly probably parses that 
+match global criteria.
+\item We instantiate the arbitrary statistical token model with
+Hidden Markov Models (HMMs), Hierarchical Maximum Entropy Models
+(HMEMs) and Support Vector Machines (SVMs) and evaluate 
+their relative effectiveness empirically.  We also compare the effectiveness of
+these models to our previous approach, which used regular expressions
+and conventional prioritized, longest match for disambiguation.
+\item We augment our algorithm with an additional phase to
+analyze the complexity of inferred descriptions and to simplify
+them when description complexity exceeds a threshold relative to
+the underlying data complexity.
+\end{itemize}
+
+Statistical models like the ones mentioned above are commonly
+used to perform tasks such as natural language understanding,
+inference of \xml{} schema and information extraction from the
+web.  However, most of these tasks do not suffer from the
+Token Ambiguity Problem:  Natural language words are separated
+by spaces and a priori, known punctuation symbols while \xml{} 
+and web-based data is cleanly divided up by tags.  In contrast,
+the separators and token types found in ad hoc data sources such as
+web logs and financial records are far more variable and 
+ambiguous.  We contribute to the literature on statistical 
+data processing by analyzing the effectiveness of statistical models
+in a new application area, that of ad hoc data, which contains 
+markedly different characteristics from the most frequently studied
+data processing domains.
+
+\paragraph*{Outline.}
+The following section helps further define the problem we seek
+to solve introducing examples of real ad hoc data formats of the
+sort we hope to be able to analyze.  Section~\ref{sec:algo}
+describes a new algorithm for ad hoc format inference that
+incorporates a generic statistical token model.  Section~\ref{sec:stats}
+describes the three statistical models we have instantiated our
+algorithm with.  Section~\ref{sec:eval} evaluates the effectiveness
+of each statistical model using several different metrics.  
+Section~\ref{sec:related} discusses related work in further detail
+and Section~\ref{sec:conclude} concludes.

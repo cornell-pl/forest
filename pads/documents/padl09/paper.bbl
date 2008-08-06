@@ -1,5 +1,5 @@
 \newcommand{\etalchar}[1]{$^{#1}$}
-\begin{thebibliography}{PMWC03}
+\begin{thebibliography}{MFW{\etalchar{+}}07}
 
 \bibitem[AGM03]{arasu+:sigmod03}
 Arvind Arasu and Hector Garcia-Molina.
@@ -10,6 +10,27 @@ Arvind Arasu and Hector Garcia-Molina.
 Vinayak Borkar, Kaustubh Deshmukh, and Sunita Sarawagi.
 \newblock Automatic segmentation of text into structured records.
 \newblock In {\em {SIGMOD}}, pages 175--186, New York, NY, USA, 2001.
+
+\bibitem[FG05]{fisher+:pads}
+Kathleen Fisher and Robert Gruber.
+\newblock {PADS}: A domain specific language for processing ad hoc data.
+\newblock In {\em {PLDI}}, pages 295--304, June 2005.
+
+\bibitem[FMW06]{fisher+:popl06}
+Kathleen Fisher, Yitzhak Mandelbaum, and David Walker.
+\newblock The next 700 data description languages.
+\newblock In {\em {POPL}}, January 2006.
+
+\bibitem[FWZ08]{fisher+:sigmod08}
+Kathleen Fisher, David Walker, and Kenny Zhu.
+\newblock Learnpads: {A}utomatic tool generation from ad hoc data.
+\newblock In {\em {SIGMOD}}, June 2008.
+
+\bibitem[FWZW08]{fisher+:dirttoshovels}
+Kathleen Fisher, David Walker, Kenny Zhu, and Peter White.
+\newblock From dirt to shovels: {F}ully automatic tool generation from ad hoc
+  data.
+\newblock In {\em {POPL}}, January 2008.
 
 \bibitem[GGR{\etalchar{+}}00]{garofalakis+:xtract}
 Minos~N. Garofalakis, Aristides Gionis, Rajeev Rastogi, S.~Seshadri, and
@@ -36,6 +57,12 @@ N.~Kushmerick.
 \newblock {\em Wrapper induction for information extraction}.
 \newblock PhD thesis, University of Washington, 1997.
 \newblock Department of Computer Science and Engineering.
+
+\bibitem[MFW{\etalchar{+}}07]{mandelbaum+:pads-ml}
+Yitzhak Mandelbaum, Kathleen Fisher, David Walker, Mary Fern\'andez, and Artem
+  Gleyzer.
+\newblock {PADS/ML}: {A} functional data description language.
+\newblock In {\em {POPL}}, January 2007.
 
 \bibitem[PMWC03]{Pinto+:texttables}
 David Pinto, Andrew McCallum, Xing Wei, and W.~Bruce Croft.
