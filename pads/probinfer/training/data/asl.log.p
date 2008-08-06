@@ -14,10 +14,12 @@ Pstruct Struct_2 {
 Punion myword {
         PPword w;
         PPid id;
+        PPpunc_lpar paren;
+        PPwhite wh23;
 }
 
 Parray stuff {
-        myword [] : Psep(' ') && Pterm('\]');
+        myword [] : Pterm('\]');
 }
 
 Pstruct printer {
@@ -27,16 +29,25 @@ Pstruct printer {
         ')';
 }
 
+Pstruct postfix {
+  PPword w1;
+  PPpunc_slash slash;
+  PPword w2;
+}
+
 Punion Union_3 {
+        Pstring_ME(:"/Ej[^Q]+Q/":) ej;
+        postfix pf;
         PPpath path;
         ee Pfrom ("E_e,");
         printer p;
         stuff s;
+        PPid compath;
 }
    
 Pstruct Struct_18 {
         PPpunc_lsqubrac lsqubrac2;
-        PPword word3;
+        PPword sender;
         PPwhite white12;
         Union_3 union3;
         PPpunc_rsqubrac rsqubrac2;
@@ -82,18 +93,34 @@ Pstruct Struct_65 {
         PPpunc_rsqubrac rsqubrac5;
 };
 
+Pstruct brac_number {
+        '[';
+        PPint anum;
+        "\\]";
+}
+
+Pstruct paren_stuff {
+        '(';
+        Pstring (:')':) stuffinparents;
+        ')';
+}
+        
 Punion Union_2 {
+        brac_number bnum;
         PPtime myt;
         PPdate myd;
         PPip myip;
         PPword my_w;
+        PPpath filepath;
         PPid myid;
         PPint myint;
         PPhostname myhostname1;
+        paren_stuff ps;
         PPpunc_scolon sc;
         PPpunc_colon colon;
+        PPpunc_dquote quote;
         PPwhite wh_sp;
-        Pstring(:'\]':) anystring;
+        Pstring_SE(:"/[\\]\\[]/":) anystring;
 };
 
 Parray mystuff1 {
