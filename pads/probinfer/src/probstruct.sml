@@ -3040,7 +3040,13 @@ val _ = print "GHMMViterbi done\n"
 	    val _ = print ("Number records being considered: "^Int.toString(numRecordsinContext)^"\nThe records are:\n"
 		^(contextsToString context))
 *)
-        val bestProbPaths : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl
+(*        val bestProbPaths : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl *)
+          val strm =  TextIO.openOut "training/mypredict_svm"
+          val (junk1, totalrec, indextable)  = List.foldl constructSVMPredict (strm, 0, BTokenLocTable.empty) seqsetl
+          val _ = TextIO.closeOut strm
+          val _ = OS.Process.system "libsvm/libsvm-2.86/svm-predict -b 1 training/mypredict_svm training/mymodel_svm training/svmoutput_predict"
+          val (label, probs) = readinSVM_predict2 "training"
+        val bestProbPaths : NewContext list = List.map (basicViterbi_SVM_trans_length_fast indextable label probs svmmodel tokenpairtable) seqsetl 
 (*
           if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
           else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl
@@ -3548,7 +3554,7 @@ val _ = print "seqset to list done.\n"
         val rtokens : NewContext list = List.map (basicViterbi hmmtables) seqsetl
         val _ = print "Tokenization by seqset and hmm:\n"
 	in
-      evaluate_newcontextlist bsll1 rtokens
+      (evaluate_newcontextlist bsll1 rtokens; evaluate_newcontextlist_rough bsll1 rtokens; evaluate_newcontextlist_group bsll1 rtokens)
 	end
 
     fun evaluate_GHMM_seqset fileName  = 
@@ -3573,7 +3579,7 @@ val _ = print "seqset to list done.\n"
           else raise GHMMOptionError
         val _ = print "Tokenization by seqset and hmm:\n"
 	in
-      evaluate_newcontextlist bsll1 rtokens
+      (evaluate_newcontextlist bsll1 rtokens; evaluate_newcontextlist_rough bsll1 rtokens; evaluate_newcontextlist_group bsll1 rtokens)
 	end
 
     fun evaluate_SVM_seqset fileName  = 
@@ -3590,7 +3596,14 @@ val _ = print "seqset to list done.\n"
         val seqsetl : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
         val svmmodel = readinSVM "training/"
         val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
-        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl
+(*        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl*)
+          val strm =  TextIO.openOut "training/mypredict_svm"
+          val (junk1, totalrec, indextable)  = List.foldl constructSVMPredict (strm, 0, BTokenLocTable.empty) seqsetl
+          val _ = TextIO.closeOut strm
+          val _ = OS.Process.system "libsvm/libsvm-2.86/svm-predict -b 1 training/mypredict_svm training/mymodel_svm training/svmoutput_predict"
+          val (label, probs) = readinSVM_predict2 "training"
+        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length_fast indextable label probs svmmodel tokenpairtable) seqsetl 
+
 (* 
           if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
           else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl
@@ -3600,7 +3613,7 @@ val _ = print "seqset to list done.\n"
 *)
         val _ = print "Tokenization by seqset and hmm:\n"
 	in
-      evaluate_newcontextlist bsll1 rtokens
+      (evaluate_newcontextlist bsll1 rtokens; evaluate_newcontextlist_rough bsll1 rtokens; evaluate_newcontextlist_group bsll1 rtokens)
 	end
 
     fun moveIncToList path file1 file2 =
@@ -3674,7 +3687,18 @@ val _ = print "seqset to list done.\n"
         val seqsetl : Seqset list = readinPathGraph records fileName handle InvalidSSFile => List.map (pathGraph recordNumber dfatable) records
         val svmmodel = readinSVM "training/"
         val tokenpairtable = readinGHMM_tokenpair_smooth "training/"
-        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl
+(*        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length svmmodel tokenpairtable) seqsetl*)
+(*val _ = print "1\n"*)
+          val strm =  TextIO.openOut "training/mypredict_svm"
+          val (junk1, totalrec, indextable)  = List.foldl constructSVMPredict (strm, 0, BTokenLocTable.empty) seqsetl
+          val _ = TextIO.closeOut strm
+(*val _ = print "2\n"*)
+          val _ = OS.Process.system "libsvm/libsvm-2.86/svm-predict -b 1 training/mypredict_svm training/mymodel_svm training/svmoutput_predict"
+(*val _ = print "3\n"*)
+          val (label, probs) = readinSVM_predict2 "training"
+(*val _ = print "4\n"*)
+        val rtokens : NewContext list = List.map (basicViterbi_SVM_trans_length_fast indextable label probs svmmodel tokenpairtable) seqsetl 
+(*val _ = print "5\n"*)
 (* 
           if ( !ghmm1 = true ) then List.map (basicViterbi_GHMM ghmmmodel) seqsetl
           else if ( !ghmm2 = true ) then List.map (basicViterbi_GHMM_trans ghmmmodel tokenpairtable) seqsetl

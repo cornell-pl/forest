@@ -354,6 +354,7 @@ print token *)
     fun setShowTokenSvm s = showtokensvm := (s = "true")
     fun setDumpSeqsets  s = dumpseqsets  := (s = "true")
     fun setCharacter  s = character  := (s = "true")
+    fun setModelExist  s = modelexist  := (s = "true")
     fun setLambda       l = (if Real.compare(l, 0.0)=EQUAL then lambda := defaultLambda else lambda := l)
    val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
@@ -398,6 +399,7 @@ print token *)
          ("hmmtokenize",  "evaluate descriptions with tokenization by hmm library",	                                                   PCL.String (setHMMtokenize, true)),
          ("vanilla",  "evaluating vanilla tokenization",	                                                   PCL.String (setEvaluateVanilla, true)),
          ("char", "use character other than character feature vector for training",                        PCL.String (setCharacter, true)),
+         ("modelexist", "svm model already exists in the training dir",                        PCL.String (setModelExist, true)),
          ("smooth", "use smoothing in training (default lambda"^(Real.toString defaultLambda)^")",         PCL.Float    (setLambda,     false))
         ]
 

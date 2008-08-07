@@ -33,6 +33,11 @@ struct
 	   lines
      end
 
+   structure IntMap = RedBlackMapFn(
+                     struct type ord_key = int
+			    val compare = Int.compare
+		     end) 
+
   exception readinSVMexp
 
   fun readinSVM_predict path = (* return label and prob list *)
@@ -62,6 +67,42 @@ struct
       val prob = extractFloat(Substring.triml 1 prob)
     in
       (label, prob)
+    end
+
+  fun readinSVM_predict2 path = (* return label table and prob list list *)
+    let
+	  val lines = loadFile "training/svmoutput_predict"
+      fun isSpace c = c = #" "
+      fun extractInt (str, index) = (* str : Substring *)
+        let
+          val (thisint, junk) = Substring.splitl (not o isSpace) str
+          val after = if Substring.size thisint = 0 orelse Substring.size junk = 0 orelse Substring.size junk = 1 then IntMap.empty
+                      else extractInt((Substring.triml 1 junk), index+1)
+        in
+           IntMap.insert(after, Option.valOf(Int.fromString(Substring.string(thisint))), index) handle Option => (print ((Substring.string thisint)); raise readinSVMexp)
+        end
+      fun extractFloat str = (* str : Substring *)
+        let
+          val (thisfloat, junk) = Substring.splitl (not o isSpace) str
+          val after = if Substring.size thisfloat = 0 orelse Substring.size junk = 0 orelse Substring.size junk = 1 then []
+                      else extractFloat(Substring.triml 1 junk)
+        in
+          if Substring.size thisfloat = 0 then after
+          else [Option.valOf(Real.fromString(Substring.string(thisfloat)))]@after handle Option => raise readinSVMexp
+        end
+      val (junk, label) = Substring.splitl (not o isSpace) (Substring.full (List.nth(lines, 0)))
+      val label = extractInt((Substring.triml 1 label), 0) handle readinSVMexp => raise readinSVMexp
+      val lines = List.drop(lines, 1)
+      fun doOne line =
+        let
+          val (junk, prob) = Substring.splitl (not o isSpace) (Substring.full line)
+          val prob = extractFloat(Substring.triml 1 prob)
+        in
+          prob
+        end
+      val probs = List.map doOne lines
+    in
+      (label, probs)
     end
 
 

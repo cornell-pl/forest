@@ -151,34 +151,6 @@ structure Basetokens = struct
              else EQUAL
 
 (*
-    fun compBToken (t1:BToken, t2:BToken):order = 
-	case (t1,t2) of
-           (PPint, PPint) => EQUAL
-        |  (PPfloat, PPfloat) => EQUAL
-        |  (PPtime, PPtime)           => EQUAL
-        |  (PPdate, PPdate)           => EQUAL
-        |  (PPurl, PPurl)             => EQUAL
-        |  (PPurlbody, PPurlbody) => EQUAL
-        |  (PPpath, PPpath)           => EQUAL
-        |  (PPip, PPip)               => EQUAL
-        |  (PPhostname, PPhostname)   => EQUAL
-        |  (PPemail, PPemail)     	  => EQUAL
-        |  (PPmac, PPmac)             => EQUAL
-        |  (PPbXML, PPbXML) => EQUAL
-        |  (PPeXML, PPeXML) => EQUAL
-        |  (PPword, PPword) => EQUAL
-        |  (PPid, PPid) => EQUAL
-        |  (PPwhite, PPwhite) => EQUAL
-        |  (PPmessage, PPmessage) => EQUAL
-        |  (PPpermission, PPpermission) => EQUAL
-        |  (PPpunc s1, PPpunc s2) => compStr(s1, s2)
-        |  (PPblob, PPblob) => EQUAL
-(*
-        |  (PPint, _ ) => LESS
-        |  (PPfloat, PPint) => 
-*)
-        |  (_, _) => GREATER
-
     fun compBSToken ((t1, s1):BSToken, (t2, s2):BSToken):order = 
 	case (t1,t2) of
            (PPint, PPint) => EQUAL
@@ -373,6 +345,22 @@ structure Basetokens = struct
           (PPbXML, PPbXML) => String.compare(s1, s2) (* should be some substring *)
         | (PPeXML, PPeXML) => String.compare(s1, s2)
         |  _ => compBToken(t1, t2)
+
+    fun compBToken_rough (t1:BToken, t2:BToken):order = 
+	case (t1,t2) of
+           (PPint, PPfloat) => EQUAL
+        |  (PPfloat, PPint) => EQUAL
+        |  (PPid, PPfloat) => EQUAL
+        |  (PPfloat, PPid) => EQUAL
+        |  (PPint, PPid) => EQUAL
+        |  (PPid, PPint) => EQUAL
+        |  (PPhstring, id) => EQUAL
+        |  (PPid, PPhstring) => EQUAL
+        |  (PPword, PPid) => EQUAL
+        |  (PPid, PPword) => EQUAL
+        |  (PPhostname, PPid) => EQUAL
+        |  (PPid, PPhostname) => EQUAL
+        |  (_, _) => compBToken(t1, t2)
 
 
     fun eqBToken(t1,t2) = case compBToken(t1,t2) of EQUAL => true | _ => false

@@ -63,7 +63,8 @@ structure Config = struct
     val showtokenhmm         = ref false
     val showtokenghmm         = ref false
     val showtokensvm         = ref false
-
+    val modelexist           = ref false
+                           
     exception GHMMOptionError
 
     (* 4 intenal strategy options *)

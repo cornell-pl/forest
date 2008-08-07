@@ -1678,9 +1678,11 @@ struct
       fun addAll (p, mysum) = p+mysum
       val sum = List.foldl addAll 0.0 problist
       val prob = List.nth(problist, tindex)/sum
+(*
 val i = ref 0
 fun printproblist thisprob = (print (BTokenToName(indexToBToken (!i))^" "^(Real.toString thisprob)^" "); i:= !i + 1)
 val _ = if compBToken(b, PPid)=EQUAL orelse compBToken(b, PPhostname)=EQUAL then (print ((BTokenToName b)^" ----------- "^s^" ------------- "^(Real.toString prob)^"\n"); List.app printproblist problist; print "\n") else ()
+*)
     in
       prob
     end
@@ -1725,12 +1727,26 @@ val _ = if compBToken(b, PPid)=EQUAL orelse compBToken(b, PPhostname)=EQUAL then
 
   fun tokenProbSVM_callc (b, str, sbegin, send, svmmodel) : real = 
     let
+(*val time1 = Time.now()*)
       val strm = TextIO.openOut ("training/mytesting_svm")
       val _ = TextIO.output(strm, BSToken2FeatureStrs2_svm (b, str, sbegin, send))
       val _ = TextIO.closeOut strm
+(*
+val time2 = Time.now()
+val elap1 = Time.-(time2, time1)
+*)
       val _ = OS.Process.system "libsvm/libsvm-2.86/svm-predict -b 1 training/mytesting_svm training/mymodel_svm training/svmoutput"
 (*val _ = OS.Process.exit OS.Process.success*)
+(*
+val time3 = Time.now()
+val elap2 = Time.-(time3, time2)
+*)
       val (label, probs) = readinSVM_predict "training"
+(*
+val time4 = Time.now()
+val elap3 = Time.-(time4, time3)
+val elap4 = Time.-(time4, time1)
+*)
 (*
 fun printprobs i = print ((Real.toString i)^" ")
 val _ = List.app printprobs probs
@@ -1741,10 +1757,11 @@ val _ = print "\n"
                         else if List.nth(label, i) = tindex then i
                         else findlable(i+1)
       val thisindex = findlable 0
+(*val _ = print ((Time.toString elap1)^"------"^(Time.toString elap2)^"------"^(Time.toString elap3)^"------"^(Time.toString elap4)^"\n")*)
     in
       if thisindex = ~1 then 0.0000007 (* no such token in training data *)
       else
-(print((BTokenToName b)^" ----------- "^String.substring(str, sbegin, send-sbegin+1)^" ------------ "^(Real.toString(List.nth(probs, thisindex)))^"\n");
+((*print((BTokenToName b)^" ----------- "^String.substring(str, sbegin, send-sbegin+1)^" ------------ "^(Real.toString(List.nth(probs, thisindex)))^"\n");*)
         List.nth(probs, thisindex))
     end
 

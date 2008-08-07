@@ -2181,16 +2181,8 @@ val _ = print "\n"
           TextIO.closeOut strm
         end
 
-    fun SVMTraining ( path : string ) : unit = (* assume using ghmm5 settings *)
-        let 
-          val _ = print ("Printing SVM training inputs to files under "^path^"\n") 
-          val list = extractLog "training/log/" "training/log/log.list"
-          val tokenpairtable = constrTokenPairTable_GHMM2 list BTokenPairTable.empty 
-          val _ = dumpTokenName path BTokenTable.empty 
-          val _ = dumpTokenPair_GHMM "training/" tokenpairtable 
-          val tokentable = constrTokenTable_GHMM2 list BTokenTable.empty
-          val _ = dumpToken_GHMM "training/" tokentable
-          val _ = dumpTransProbSmooth_GHMM2 "training/" tokentable tokenpairtable
+    fun write2file path list = 
+      let
           val strm = TextIO.openOut (path^"mytraining_svm")
           fun bsl2bsbel bsl = 
             let
@@ -2206,6 +2198,20 @@ val _ = print "\n"
           val _ = TextIO.output(strm, BSToken2FeatureStrs2_svm(PPempty, "", ~1, ~1)) (* make sure we have enough classes *)
         in
           TextIO.closeOut strm
+        end
+
+    fun SVMTraining ( path : string ) : unit = (* assume using ghmm5 settings *)
+        let 
+          val _ = print ("Printing SVM training inputs to files under "^path^"\n") 
+          val list = extractLog "training/log/" "training/log/log.list"
+          val tokenpairtable = constrTokenPairTable_GHMM2 list BTokenPairTable.empty 
+          val _ = dumpTokenName path BTokenTable.empty 
+          val _ = dumpTokenPair_GHMM "training/" tokenpairtable 
+          val tokentable = constrTokenTable_GHMM2 list BTokenTable.empty
+          val _ = dumpToken_GHMM "training/" tokentable
+          val _ = dumpTransProbSmooth_GHMM2 "training/" tokentable tokenpairtable
+        in
+          if ( !modelexist ) then () else write2file path list
         end
 
 end
