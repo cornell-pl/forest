@@ -46,12 +46,37 @@ struct
 
     exception CPtagError
 
+    fun loadFile_slow path = 
+     let 
+       val strm = TextIO.openIn path
+       fun getlines s = 
+         let
+           val thisline = TextIO.inputLine strm
+         in
+           case thisline of
+               NONE => []
+             | SOME dat => dat::(getlines s)
+         end
+       val lines = getlines []
+       fun isNewline c = c = #"\n" orelse c = #"\r"
+       fun delnline s =
+         let 
+           val (ln, rest) = Substring.splitl (not o isNewline) (Substring.full s)
+         in
+           Substring.string ln
+         end
+       val lines = List.map delnline lines
+	   val () = TextIO.closeIn strm
+     in
+	   lines
+     end
+
     fun extractLog path listfile : BSToken list list = 
       let
         val files : string list = loadFile listfile
         fun loadOne (str, ret) = 
           if Char.compare(#"#", String.sub(str, 0))=EQUAL then ret
-          else ret@(loadFile (path^str))
+          else ((*print (str^"\n");*) ret@(loadFile_slow (path^str)))
         val data : string list = List.foldl loadOne [] files
 (*  val _ = List.app print data *)
         fun splitRec (d, l): string list list =
@@ -169,8 +194,13 @@ struct
                           let val (s1, s2) = Substring.splitr (not o isColon) junk1 in (Substring.full ((Substring.string s2)^":")) end
                         )
                         else dataString
+                      fun all_alpha mystr = List.all Char.isAlpha (String.explode mystr)
+                      fun all_digit mystr = List.all Char.isDigit (String.explode mystr)
                       val rett = case (tstringToBToken(Substring.string tokenName, Substring.string newdataString)) of
                                       PPblob => (tstringToBToken((Substring.string junk1), Substring.string newdataString))
+                                    | PPid => if (all_digit (Substring.string newdataString)) then PPint
+                                        else if (all_alpha (Substring.string newdataString)) then PPword
+                                        else PPid
                                     | othert => othert
                     in
                       if (Substring.size newdataString)=0 then (ret, cptagl)

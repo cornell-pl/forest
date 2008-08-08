@@ -36,7 +36,9 @@ struct
     fun loadFile path = 
      let 
        val strm = TextIO.openIn path
+(*val _ = print "3\n"*)
 	   val data : String.string = TextIO.inputAll strm
+(*val _ = print "4\n"*)
        fun isNewline c = c = #"\n" orelse c = #"\r"
        fun getLines(ss,l) = 
          if (Substring.isEmpty ss) then List.rev l
