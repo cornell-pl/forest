@@ -1,4 +1,5 @@
-\section{Motivating Examples} \label{sec:examples}
+\section{Token Ambiguity Problem} \label{sec:examples}
+\cut{
 \begin{verbatim}
 - example text
 - describe where the examples come from, what the data is 
@@ -8,3 +9,176 @@
   and bad
   - explain why it's verbose and bad
 \end{verbatim}
+}
+\begin{figure}[t]
+\begin{center}
+{\small
+\begin{verbatim}
+May 02 06:19:57 Updated: openssl.i686 0.9.7a-43.8
+Jul 16 12:37:13 Erased: dhcp-devel
+Jul 16 12:37:13 Erased: dhcpv6_client
+Dec 10 04:07:51 Updated: openldap.x86_64 2.2.13-4
+Dec 10 04:07:52 Updated: util-linux.x86_64 2.12a-16.EL4.12
+Dec 10 04:07:58 Updated: nss_ldap.x86_64 226-10
+Dec 10 04:11:17 Installed: postgresql-libs.x86_64 7.4.8-1.RHEL4.1
+Dec 10 04:11:27 Installed: fonts-xorg-75dpi.noarch 6.8.1.1-1.EL.1
+\end{verbatim}
+}
+\end{center}
+\caption{Fragment of {\tt yum.txt} log file} \label{fig:yum}
+\end{figure}
+
+\begin{figure}[t]
+\begin{minipage}[t]{0.5\columnwidth}
+\begin{code}
+\kw{Penum} action \{
+  install \kw{Pfrom}("Installed");
+  update \kw{Pfrom}("Updated");
+  erase \kw{Pfrom}("Erased");
+\};
+\end{code}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\columnwidth}
+\begin{code}
+\kw{Precord Pstruct} entry_t \{
+  \kw{Pdate} date;
+  ' ';
+  \kw{Ptime} time;
+  ' ';
+  action m;
+  ": ";
+  \kw{Pid} package;
+  " "
+  \kw{Pid} version;
+\};
+\end{code}
+\end{minipage}
+\caption{Ideal \pads{} description of {\tt yum.txt}}\label{fig:yum-gold}
+\end{figure}
+
+
+In this section, we introduce the token ambiguity problem through
+a real-life ad hoc data source, and motivate a new probablistic approach
+to solve this problem. Many other ad hoc data sources with similar
+problem exist and more examples can be found on the \pads{} web site \cite{padsweb}.
+
+Fig. \ref{fig:yum} shows a fragment from a log file, {\tt yum.txt},
+which is written by a software package manager called {\tt yum}. {\tt yum} 
+is a tool for installing, updating and removing packages and dependencies
+on RPM-based systems. Each line in {\tt yum.txt} is a data record
+which consists of several distinct fields: date, time, action taken,
+package name and version. The fields are separated by single spaces.
+This file is used by system administrators to keep track of the
+software updates on the system.
+Fig.\ref{fig:yum-gold} shows an {\em ideal} \pads{} description of
+{\tt yum.txt} written by a human expert.
+The {\tt entry\_t} type describes one record line in the data source.
+{\tt Pdate} stands for a date type, {\tt Ptime} stands for a time type,
+action type is defined to an enumeration of three different actions,
+and {\tt Pid} is any tokens that constitutes a system identifier such as a file
+name, a MAC address, etc.
+
+\begin{figure}[t]
+\begin{centercode}
+\kw{Penum} Enum_10 \{
+  Installed10 \kw{Pfrom}("Installed"),
+  Updated10 \kw{Pfrom}("Updated"),
+  Erased10 \kw{Pfrom}("Erased")
+\};
+\kw{Popt Pstring_ME}(:"/\\+\\+/":) Opt_22;
+\kw{Penum} Enum_31 \{
+  x86_6431 \kw{Pfrom}("x86_64"),
+  noarch31 \kw{Pfrom}("noarch"),
+  i68631 \kw{Pfrom}("i686"),
+  i38631 \kw{Pfrom}("i386")
+\};
+
+... /* Complex definition of Struct_154 and Struct_233 
+       (141 lines of code) ommitted */
+
+\kw{Punion} Union_155 \{
+  Struct_154  v_struct_154;
+  Struct_223  v_struct_223;
+\};
+\kw{Pstruct} Struct_205 \{
+  Opt_22  v_opt_22;
+  '.';
+  Enum_31  v_enum_31;
+  ' ';
+  Union_155  v_union_155;
+\};
+\kw{Popt} Struct_205 Opt_206;
+\kw{Precord Pstruct} entry_t \{
+  \kw{Pdate}  v_date_1;
+  ' ';
+  \kw{Ptime}  v_time_6;
+  ' ';
+  Enum_10  v_enum_10;
+  ": ";
+  \kw{Pword} v_string_17;
+  Opt_206  v_opt_206;
+\};
+\end{centercode}
+\caption{Inferred \pads{} description of {\tt yum.txt} by \learnpads}\label{fig:yum-bad}
+\end{figure}
+
+ 
+To infer a \pads{} description for {\tt yum.txt},
+we input the data file to the \learnpads{} system 
+\cite{fisher+:dirttoshovels,fisher+:sigmod08}, and we obtain
+a description in Fig.\ref{fig:yum-bad}.
+This description, despite being able to correctly parse the original data,
+is very verbose and un-intuitive. It is whopping 176 line long compared 
+to the neat 16-liner written by human expert.
+
+The main problem with the inferred description is that it was not
+able to take advantage of the {\tt Pid} token type, but instead chose
+to use finer-grained tokens such as {\tt Pword}, {\tt Pint}, etc,
+to represent the package names and version numbers. This introduced the
+complex structure within the package names and versions into the
+description. This is because the tokenization in \learnpads{} is done by
+a lexer generated from a series of regular expression token definitions.
+At runtime, the lexer attempts the defined tokens, one at
+a time, for a given input string, and uses the first match to parse the
+string.  In other words, the order of the token definitions in the lexer
+is significant, and given a string such as ``{\tt 2.2.13-4}'', the parsed
+token sequence is unique and fixed. While such an arrangement is simple
+and effective for some data sources, it severely restricted the types of
+tokens that can be included in the lexer. In particular, tokens that are
+heavily overlapping in their definitions cannot be included together in the lexer.
+For example, because the definition of {\tt Pid} includes that of
+{\tt Pword} and  {\tt Pint}, it is excluded from the lexer. 
+When such overlapping or ambiguous tokens do co-exist in the lexer, such as
+{\tt Pint} and {\tt Pfloat},
+the choice made by the lexer could very well be wrong.
+
+There are numerous sources of such token ambiguity 
+in {\tt yum.txt}. For instance, the string ``{\tt Dec 10 04:07:51}'' 
+can be interpreted as, among other choices, any of these
+token sequences:
+
+{\small
+\begin{verbatim}
+Option 1: [Pword] [' '] [Pint] [' '] [Pint] [:] [Pint] [:] [Pint]
+Option 2: [Pmonth] [' '] [Pint] [' '] [Ptime]
+Option 3: [Pdate] [' '] [Ptime]
+\end{verbatim}
+}
+
+The string ``{\tt 2.2.13-4}'' can be parsed into one of 
+these possible sequences:
+{\small
+\begin{verbatim}
+Option 1: [Pint] [.] [Pint] [.] [Pint] [-] [Pint]
+Option 2: [Pfloat] [.] [Pint] [-] [Pint]
+Option 3: [Pint] [.] [Pfloat] [-] [Pint]
+Option 4: [Pid]
+\end{verbatim}
+}
+
+Depending on the context, any of these options might be better than
+the rest.  The fixed tokenization scheme used in \learnpads{} is simply
+not good enough to produce all these possibilities. What is needed
+is a probablistic approach that weighs the likelyhood of all the ambiguous
+tokens and picks the best option.
