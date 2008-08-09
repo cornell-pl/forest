@@ -31,17 +31,17 @@ Dec 10 04:11:27 Installed: fonts-xorg-75dpi.noarch 6.8.1.1-1.EL.1
 \begin{figure}[t]
 \begin{minipage}[t]{0.5\columnwidth}
 \begin{code}
-\kw{Penum} action \{
-  install \kw{Pfrom}("Installed");
-  update \kw{Pfrom}("Updated");
-  erase \kw{Pfrom}("Erased");
+Penum action \{
+  install Pfrom("Installed");
+  update Pfrom("Updated");
+  erase Pfrom("Erased");
 \};
 \end{code}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.5\columnwidth}
 \begin{code}
-\kw{Precord Pstruct} entry_t \{
+Precord Pstruct entry_t \{
   \kw{Pdate} date;
   ' ';
   \kw{Ptime} time;
@@ -66,50 +66,60 @@ problem exist and more examples can be found on the \pads{} web site \cite{padsw
 Fig. \ref{fig:yum} shows a fragment from a log file, {\tt yum.txt},
 which is written by a software package manager called {\tt yum}. {\tt yum} 
 is a tool for installing, updating and removing packages and dependencies
-on RPM-based systems. Each line in {\tt yum.txt} is a data record
-which consists of several distinct fields: date, time, action taken,
+on RPM-based systems. 
+Each line in yum.txt is a unit of
+repetition in the data source and we call it a {\em chunk} or
+a {\em record}. A data chunk could be a line of data, a block of data or
+even a file, depending on the data source.
+The data chunk in {\tt yum.txt} consists of several distinct fields: 
+date, time, action taken,
 package name and version. The fields are separated by single spaces.
 This file is used by system administrators to keep track of the
-software updates on the system.
+software updates on the system. 
 Fig.\ref{fig:yum-gold} shows an {\em ideal} \pads{} description of
 {\tt yum.txt} written by a human expert.
-The {\tt entry\_t} type describes one record line in the data source.
+The {\tt entry\_t} type describes one chunk in the data source, and is
+denoted with the keyword {\tt Precord}.
 {\tt Pdate} stands for a date type, {\tt Ptime} stands for a time type,
 action type is defined to an enumeration of three different actions,
-and {\tt Pid} is any tokens that constitutes a system identifier such as a file
-name, a MAC address, etc.
-
+and {\tt Pid} is matches a system identifier such as a file
+name, a MAC address, etc. Types such as {\tt Pdate} and {\tt Pid}
+are called {\em base types} that represent a single token 
+in \pads{}; types such as {\tt Pstruct}, {\tt Penum} and {\tt Punion} are 
+intermediate types that represent
+structures. We highlight all the base types in the \pads{} descriptions. 
+ 
 \begin{figure}[t]
 \begin{centercode}
-\kw{Penum} Enum_10 \{
-  Installed10 \kw{Pfrom}("Installed"),
-  Updated10 \kw{Pfrom}("Updated"),
-  Erased10 \kw{Pfrom}("Erased")
+Penum Enum_10 \{
+  Installed10 Pfrom("Installed"),
+  Updated10 Pfrom("Updated"),
+  Erased10 Pfrom("Erased")
 \};
-\kw{Popt Pstring_ME}(:"/\\+\\+/":) Opt_22;
-\kw{Penum} Enum_31 \{
-  x86_6431 \kw{Pfrom}("x86_64"),
-  noarch31 \kw{Pfrom}("noarch"),
-  i68631 \kw{Pfrom}("i686"),
-  i38631 \kw{Pfrom}("i386")
+Popt \kw{Pstring_ME}(:"/\\+\\+/":) Opt_22;
+Penum Enum_31 \{
+  x86_6431 Pfrom("x86_64"),
+  noarch31 Pfrom("noarch"),
+  i68631 Pfrom("i686"),
+  i38631 Pfrom("i386")
 \};
 
 ... /* Complex definition of Struct_154 and Struct_233 
        (141 lines of code) ommitted */
 
-\kw{Punion} Union_155 \{
+Punion Union_155 \{
   Struct_154  v_struct_154;
   Struct_223  v_struct_223;
 \};
-\kw{Pstruct} Struct_205 \{
+Pstruct Struct_205 \{
   Opt_22  v_opt_22;
   '.';
   Enum_31  v_enum_31;
   ' ';
   Union_155  v_union_155;
 \};
-\kw{Popt} Struct_205 Opt_206;
-\kw{Precord Pstruct} entry_t \{
+Popt Struct_205 Opt_206;
+Precord Pstruct entry_t \{
   \kw{Pdate}  v_date_1;
   ' ';
   \kw{Ptime}  v_time_6;
@@ -132,12 +142,17 @@ This description, despite being able to correctly parse the original data,
 is very verbose and un-intuitive. It is whopping 176 line long compared 
 to the neat 16-liner written by human expert.
 
-The main problem with the inferred description is that it was not
-able to take advantage of the {\tt Pid} token type, but instead chose
-to use finer-grained tokens such as {\tt Pword}, {\tt Pint}, etc,
-to represent the package names and version numbers. This introduced the
-complex structure within the package names and versions into the
-description. This is because the tokenization in \learnpads{} is done by
+The main problem with the inferred description is that it 
+did not take advantage of the {\tt id} token type, but instead chose
+to use finer-grained tokens such as {\tt word}, {\tt int}, etc,
+to represent the package names and version numbers (variables
+\verb#v_string_17# and \verb#v_opt_206# in Fig.\ref{fig:yum-bad}). 
+This introduced the
+complex structure such as types \verb#Struct_205# and \verb#Union_155#
+within the package names and versions into the description. 
+
+The \learnpads{} system does this because 
+the tokenization is done by
 a lexer generated from a series of regular expression token definitions.
 At runtime, the lexer attempts the defined tokens, one at
 a time, for a given input string, and uses the first match to parse the
@@ -147,10 +162,10 @@ token sequence is unique and fixed. While such an arrangement is simple
 and effective for some data sources, it severely restricted the types of
 tokens that can be included in the lexer. In particular, tokens that are
 heavily overlapping in their definitions cannot be included together in the lexer.
-For example, because the definition of {\tt Pid} includes that of
-{\tt Pword} and  {\tt Pint}, it is excluded from the lexer. 
+For example, because the definition of {\tt id} includes that of
+{\tt word} and  {\tt int}, it is excluded from the lexer. 
 When such overlapping or ambiguous tokens do co-exist in the lexer, such as
-{\tt Pint} and {\tt Pfloat},
+{\tt int} and {\tt float},
 the choice made by the lexer could very well be wrong.
 
 There are numerous sources of such token ambiguity 
@@ -160,9 +175,9 @@ token sequences:
 
 {\small
 \begin{verbatim}
-Option 1: [Pword] [' '] [Pint] [' '] [Pint] [:] [Pint] [:] [Pint]
-Option 2: [Pmonth] [' '] [Pint] [' '] [Ptime]
-Option 3: [Pdate] [' '] [Ptime]
+Option 1: [word] [' '] [int] [' '] [int] [:] [int] [:] [int]
+Option 2: [month] [' '] [int] [' '] [time]
+Option 3: [date] [' '] [time]
 \end{verbatim}
 }
 
@@ -170,10 +185,10 @@ The string ``{\tt 2.2.13-4}'' can be parsed into one of
 these possible sequences:
 {\small
 \begin{verbatim}
-Option 1: [Pint] [.] [Pint] [.] [Pint] [-] [Pint]
-Option 2: [Pfloat] [.] [Pint] [-] [Pint]
-Option 3: [Pint] [.] [Pfloat] [-] [Pint]
-Option 4: [Pid]
+Option 1: [int] [.] [int] [.] [int] [-] [int]
+Option 2: [float] [.] [int] [-] [int]
+Option 3: [int] [.] [float] [-] [int]
+Option 4: [id]
 \end{verbatim}
 }
 
