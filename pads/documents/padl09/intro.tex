@@ -24,7 +24,7 @@ agricultural data and more.  Almost everywhere you look, there is some new,
 semistructured data file someone has created to store or communicate
 information about their domain.
 
-\pads~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml} is a declarative 
+\pads~\cite{fisher+:pads,padsweb} is a declarative 
 language that describes the syntax and semantics properties of ad hoc data
 formats.  The \pads{} compiler reads these declarative descriptions
 and produces a series of programming libraries (parser, printer, validator
@@ -100,12 +100,19 @@ them when description complexity exceeds a threshold relative to
 the underlying data complexity.
 \end{itemize}
 
-Statistical models like the ones mentioned above are commonly
-used to perform tasks such as natural language understanding,
-inference of \xml{} schema and information extraction from the
-web.  However, most of these tasks do not suffer from the
-Token Ambiguity Problem:  Natural language words are separated
-by spaces and a priori, known punctuation symbols while \xml{} 
+\paragraph*{Related Work.}
+Statistical methods have been used in all sorts of
+grammar induction problems in the 
+past.
+The most common practical applications of grammar induction
+include natural language understanding~\cite{Chen95bayesiangrammar},
+inference of \xml{} schema~\cite{bex+:dtd-inference} and 
+information extraction from the
+web~\cite{hong:thesis,arasu+:sigmod03long}.  However, most of these 
+tasks do not suffer from the
+token ambiguity problem we see in ad hoc data:  
+Natural language words are separated
+by spaces and known punctuation symbols while \xml{} 
 and web-based data is cleanly divided up by tags.  In contrast,
 the separators and token types found in ad hoc data sources such as
 web logs and financial records are far more variable and 
@@ -115,6 +122,16 @@ in a new application area, that of ad hoc data, which contains
 markedly different characteristics from the most frequently studied
 data processing domains.
 
+Technically, our algorithm is a variant of the algorithm described in
+our earlier research~\cite{fisher+:dirttoshovels}.  However, it has
+been modified substantially to be able to incorporate probabilistic
+parsing information in the tokenization and structure discovery
+phases.  Our new algorithm also includes a highly effective additional
+phase that simplifies overly complex descriptions.  Our previous
+report contains an extensive related work section explaining many
+differences between our grammar induction algorithm and others that
+have appeared in the literature.
+
 \paragraph*{Outline.}
 The following section helps further define the problem we seek
 to solve introducing examples of real ad hoc data formats of the
@@ -123,6 +140,5 @@ describes a new algorithm for ad hoc format inference that
 incorporates a generic statistical token model.  Section~\ref{sec:stats}
 describes the three statistical models we have instantiated our
 algorithm with.  Section~\ref{sec:eval} evaluates the effectiveness
-of each statistical model using several different metrics.  
-Section~\ref{sec:related} discusses related work in further detail
-and Section~\ref{sec:conclude} concludes.
+of each statistical model using several different metrics and
+Section~\ref{sec:conclude} concludes.

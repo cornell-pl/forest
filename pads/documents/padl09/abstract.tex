@@ -1,3 +1,20 @@
 \begin{abstract}
-Our abstract goes here...
+This paper attacks the problem of automatically generating
+data processing tools such as parsers, printers and xml-transformers
+for ad hoc text data.  It does so by showing how to
+infer a representation of the data's format 
+in \pads{}, a declarative format description language, and to run this
+description through the \pads{} compiler to generate
+the useful tools.  A key subproblem in this process
+is the {\em token ambiguity problem} --- the
+problem of determining which substrings in the example data
+correspond to complex tokens such as dates, urls, or comments.
+In order to solve the token ambiguity problem, the paper studies the
+relative effectiveness of three different statistical
+models, Hidden Markov Models, Hierarchical Maximum Entropy Models,
+and Support Vector Machines, in tokenizing ad hoc data.  It also shows 
+how to incorporate probabilistic parsing information into 
+the LearnPADS system developed in previous research.  Finally,
+it describes an effective new heuristic for simplifying formats inferred
+by the system.
 \end{abstract}
