@@ -42,15 +42,14 @@ Penum action \{
 \begin{minipage}[t]{0.5\columnwidth}
 \begin{code}
 Precord Pstruct entry_t \{
-  \kw{Pdate} date;
-  ' ';
-  \kw{Ptime} time;
-  ' ';
-  action m;
-  ": ";
-  \kw{Pid} package;
-  " "
-  \kw{Pid} version;
+        \kw{Pdate} date;	
+  ' ';  \kw{Ptime} time;	
+  ' ';  action m; 	
+  ": "; \kw{Pid} package;	
+  ' ';  \kw{Pid} version;
+\};
+Psource Parray yum \{
+        entry_t[];
 \};
 \end{code}
 \end{minipage}
@@ -79,10 +78,10 @@ software updates on the system.
 Fig.\ref{fig:yum-gold} shows an {\em ideal} \pads{} description of
 {\tt yum.txt} written by a human expert.
 The {\tt entry\_t} type describes one chunk in the data source, and is
-denoted with the keyword {\tt Precord}.
+denoted with the keyword {\tt Precord}. 
 {\tt Pdate} stands for a date type, {\tt Ptime} stands for a time type,
 action type is defined to an enumeration of three different actions,
-and {\tt Pid} is matches a system identifier such as a file
+and {\tt Pid} matches a system identifier such as a file
 name, a MAC address, etc. Types such as {\tt Pdate} and {\tt Pid}
 are called {\em base types} that represent a single token 
 in \pads{}; types such as {\tt Pstruct}, {\tt Penum} and {\tt Punion} are 
@@ -112,76 +111,48 @@ Punion Union_155 \{
   Struct_223  v_struct_223;
 \};
 Pstruct Struct_205 \{
-  Opt_22  v_opt_22;
-  '.';
-  Enum_31  v_enum_31;
-  ' ';
-  Union_155  v_union_155;
+       Opt_22  v_opt_22;
+  '.'; Enum_31  v_enum_31;
+  ' '; Union_155  v_union_155;
 \};
 Popt Struct_205 Opt_206;
 Precord Pstruct entry_t \{
-  \kw{Pdate}  v_date_1;
-  ' ';
-  \kw{Ptime}  v_time_6;
-  ' ';
-  Enum_10  v_enum_10;
-  ": ";
-  \kw{Pword} v_string_17;
-  Opt_206  v_opt_206;
+        \kw{Pdate}  v_date_1;
+  ' ';  \kw{Ptime}  v_time_6;
+  ' ';  Enum_10  v_enum_10;
+  ": "; \kw{Pword} v_string_17;
+        Opt_206  v_opt_206;
 \};
+Psource Parray entries_t \{
+        entry_t[];
+\};
+
 \end{centercode}
-\caption{Inferred \pads{} description of {\tt yum.txt} by \learnpads}\label{fig:yum-bad}
+\caption{\pads{} description of {\tt yum.txt} inferred by the original \learnpads}\label{fig:yum-bad}
 \end{figure}
 
- 
-To infer a \pads{} description for {\tt yum.txt},
-we input the data file to the \learnpads{} system 
-\cite{fisher+:dirttoshovels,fisher+:sigmod08}, and we obtain
-a description in Fig.\ref{fig:yum-bad}.
+In comparison, we show the description of {\tt yum.txt} infered by
+the original \learnpads{} system \cite{fisher+:dirttoshovels,fisher+:sigmod08}
+in Fig. \ref{fig:yum-bad}. 
 This description, despite being able to correctly parse the original data,
 is very verbose and un-intuitive. It is whopping 176 line long compared 
-to the neat 16-liner written by human expert.
+to the neat 15-liner written by human expert.
 
 The main problem with the inferred description is that it 
-did not take advantage of the {\tt id} token type, but instead chose
-to use finer-grained tokens such as {\tt word}, {\tt int}, etc,
-to represent the package names and version numbers (variables
-\verb#v_string_17# and \verb#v_opt_206# in Fig.\ref{fig:yum-bad}). 
-This introduced the
-complex structure such as types \verb#Struct_205# and \verb#Union_155#
-within the package names and versions into the description. 
+did not take advantage of the {\tt id} token, but instead 
+use simpler tokens such as {\tt word}, {\tt int}, etc,
+to represent the package names and version numbers. 
+This introduced the complex structure within the package names 
+and versions into the description. 
 
-The \learnpads{} system does this because 
-the tokenization is done by
-a lexer generated from a series of regular expression token definitions.
-At runtime, the lexer attempts the defined tokens, one at
-a time, for a given input string, and uses the first match to parse the
-string.  In other words, the order of the token definitions in the lexer
-is significant, and given a string such as ``{\tt 2.2.13-4}'', the parsed
-token sequence is unique and fixed. While such an arrangement is simple
-and effective for some data sources, it severely restricted the types of
-tokens that can be included in the lexer. In particular, tokens that are
-heavily overlapping in their definitions cannot be included together in the lexer.
-For example, because the definition of {\tt id} includes that of
-{\tt word} and  {\tt int}, it is excluded from the lexer. 
-When such overlapping or ambiguous tokens do co-exist in the lexer, such as
-{\tt int} and {\tt float},
-the choice made by the lexer could very well be wrong.
-
-There are numerous sources of such token ambiguity 
-in {\tt yum.txt}. For instance, the string ``{\tt Dec 10 04:07:51}'' 
-can be interpreted as, among other choices, any of these
-token sequences:
-
-{\small
-\begin{verbatim}
-Option 1: [word] [' '] [int] [' '] [int] [:] [int] [:] [int]
-Option 2: [month] [' '] [int] [' '] [time]
-Option 3: [date] [' '] [time]
-\end{verbatim}
-}
-
-The string ``{\tt 2.2.13-4}'' can be parsed into one of 
+The question is, why didn't the old inference algorithm use
+the {\tt id} token? It turns out that the definition of a complex token
+like {\tt id} includes that of other simple tokens in the system such as 
+{\tt word} and {\tt int}. This gives rise to the 
+{\em token ambiguity problem} (TAP), which is, given an input
+string, there are multiple ways of parsing it.
+TAP occurs in numerous places in {\tt yum.txt}. 
+For instance, the string ``{\tt 2.2.13-4}'' can be parsed into one of 
 these possible sequences:
 {\small
 \begin{verbatim}
@@ -192,8 +163,36 @@ Option 4: [id]
 \end{verbatim}
 }
 
-Depending on the context, any of these options might be better than
-the rest.  The fixed tokenization scheme used in \learnpads{} is simply
-not good enough to produce all these possibilities. What is needed
-is a probablistic approach that weighs the likelyhood of all the ambiguous
-tokens and picks the best option.
+Similarly, the string ``{\tt Dec 10 04:07:51}'' can be interpreted as, 
+among other choices, any of these token sequences:
+
+{\small
+\begin{verbatim}
+Option 1: [word] [' '] [int] [' '] [int] [:] [int] [:] [int]
+Option 2: [month] [' '] [int] [' '] [time]
+Option 3: [date] [' '] [time]
+\end{verbatim}
+}
+
+The original inference algorithm disambiguates the overlapping
+tokens by attempting each defined tokens in some order 
+and picking the {\em first} matched token to parse the string. 
+While effective for some data sources, this simple policy 
+is not ideal because
+\begin{itemize}
+\item it makes a black-and-white decision for the tokenization up front;
+\item it does not take into account of contextual information when picking
+      a token to parse a substring; and
+\item it restricts the use of some complex tokens because they ``overshadows''
+	some of the simpler tokens.
+\end{itemize}
+
+To tackle the above limitations, in the next section, we will propose
+a revised inference algorithm that 
+\begin{itemize}
+\item assigns probability to each possible token sequences;
+\item defers the decision of tokenization, and makes the decision 
+      incrementally as the structure is constructed; and
+\item takes the context into account when deciding which tokens to use.
+\end{itemize}
+
