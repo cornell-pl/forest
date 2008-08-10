@@ -395,7 +395,7 @@ print token *)
          ("showtokensvm",  "show token sequences by svm",	                                                   PCL.String (setShowTokenSvm, true)),         
          ("evaluate_hmm_ss",  "evaluating HMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_hmm_seqset, true)),
          ("evaluate_ghmm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_ghmm_seqset, true)),
-         ("evaluate_svm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_ghmm_seqset, true)),
+         ("evaluate_svm_ss",  "evaluating GHMM tokenization result with seqsets",	                                                   PCL.String (setEvaluate_svm_seqset, true)),
          ("hmmtokenize",  "evaluate descriptions with tokenization by hmm library",	                                                   PCL.String (setHMMtokenize, true)),
          ("vanilla",  "evaluating vanilla tokenization",	                                                   PCL.String (setEvaluateVanilla, true)),
          ("char", "use character other than character feature vector for training",                        PCL.String (setCharacter, true)),
