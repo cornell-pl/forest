@@ -4,7 +4,7 @@
 3a. run the statistical model over the user data, and use the (modified) 
     viterbi algorithm to find the most likely sequences
 3b. populate histograms based on the most likely sequences
-3c select candidate histograms + structure, according to heuristics
+3c. select candidate histograms + structure, according to heuristics
 3d. break down Seqsets using not just the most likely sequences
 3e. recursively repeat, go to 3a.
 4. apply rewriting involving blob finding to maximize the information 
@@ -36,14 +36,13 @@ structure of the data at each level of the recursion.
 \begin{centercode}
 (1) train a statistical model from the labeled training data;
 (2) tokenize the test data into \seqset's, one \seqset{} per chunk;
-(3a) if the \seqset{} of every chunk contains only 1 or 0 edges then 
-      return
-    else 
-      find the most probable token sequence for each chunk 
+(3a) find the most probable token sequence for each chunk, and 
+     if that sequence of every chunk contains only 1 or 0 edges 
+     then return else go to (3b)
 (3b) construct histograms from the most probably sequences and 
-    predict a top-level structure;
-(3c) break down the \seqset's and assign sub-\seqset's to each 
-    sub-component of the structure;
+     predict a top-level structure;
+(3c) populate sub-components of the predicated structure with \seqset's
+     or sub-\seqset's;
 (3d) for each sub-component, recurse to (3a);
 (4) apply rewriting rules to improve the overall structure;
 (5) print description and generate tools.
@@ -90,7 +89,43 @@ The edges of the \seqset{} are tokens and the vertices are the end locations
 of the preceding tokens, with an exception of the leftmost vertex which
 is the begin location of first character of the string.
 The construction of the \seqset, though expensive, is done only once.
-The \seqset{} is used as an input to the recursive structure discovery procedure
-and gets updated during each recursion.
+The \seqset{} is used subsequently as input to the recursive 
+structure discovery procedure and gets updated during each recursion.
 
 \subsection{Structure discovery}
+This is a recursive phase that has several steps.
+In (3a), we run the statistical model over the test data
+which assigns probabilities to all the edges of the \seqset's.
+We then compute the most probable token sequence, among all alternatives,
+for each chunk using a modified {\em Viterbi} algorithm. This algorithm
+will be discussed in detail in Section \ref{sec:stats}.
+If the most probable sequences contain only 1 or 0 tokens, we have come to
+the end of recursion, and return.
+
+Otherwise, in (3b), the histograms are constructed for
+all the tokens involved in the most probable token sequence, and we
+make a predication of whether the current token context is a {\em struct},
+{\em union} or {\em array} using the heuristics in \cite{fisher+:dirttoshovels}. 
+In the case of yum.txt, during the first
+recursion, (3b) would make a prediction that, the top level structure is
+a {\tt struct} of
+
+{\small 
+\begin{verbatim}
+Pdate  ' '  Ptime  ' '  Pword  ':'  ' '  Pid  TBD
+\end{verbatim}
+}
+
+where {\tt TBD} is a context of tokens whose structure is to be determined.
+
+In (3c), \seqset's are modified if necessary and populated into the components of
+the predicated structure. If the structure is 
+{\small
+\begin{verbatim}
+  Punion{
+    T1;
+    T2;
+  }
+\end{verbatim}
+}
+then 
