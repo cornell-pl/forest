@@ -23,14 +23,12 @@ The main components of
 this algorithm are {\em tokenization} of raw data, 
 a top-down, divide-and-conquer {\em structure discovery} procedure,
 and a format {\em refinement} phase. This is similar to 
-the algorithm proposed in the \learnpads{} system. 
-The key difference is, instead of tokenizing the input data into 
-fixed, definite tokens and using these tokens as the input to the top-down
-procedure, we produce {\em all possible} token sequences for each 
-data record and use all these sequences as input to the 
-recursive procedure. The goal is to compute the {\em most likely}
-sequence (or subsequence) for each chunk and use these sequences to predict the 
-structure of the data at each level of the recursion.
+the algorithm proposed in our earlier work \cite{fisher+:dirttoshovels}. 
+The key difference is, instead of making definitive decisions about 
+tokenizing up front, we defer such decision well into the structure
+discovery phase. In particular, we produce {\em all possible} token 
+sequences for each data chunk and make choices among these possible 
+sequences as the structure is being constructed in an incremental fashion.
 
 \begin{figure}[t]
 \begin{centercode}
@@ -51,7 +49,11 @@ structure of the data at each level of the recursion.
 \end{figure}
 
 Fig. \ref{fig:algo} presents this high-level algorithm. We now explain
-this algorithm step-by-step with the help of {\tt yum.txt} example.
+it step-by-step with the help of {\tt yum.txt} example.
+Because this algorithm shares the general structure and many details with
+the original algorithm, we only highlight the differences and
+refer the reader to \cite{fisher+:dirttoshovels} for complete discussion of
+the original algorithm.
 
 \subsection{Training models}
 Well ahead of time, a statistical model is trained with
@@ -72,11 +74,11 @@ the string ``43'' alone can be represented by a float.
 
 \subsection{Tokenization}
 At runtime, each chunk of test data is parsed into a set of all possible 
-token sequences using a modified lexer. Because these sequences have
+token sequences. Because these sequences have
 common subsequences, we organize them in a directed acyclic graph
 called \seqset. Fig.\ref{fig:seqset} shows the \seqset{} after parsing 
-the substring ``2.2.13-4'' from a chunk in Fig.\ref{fig:yum}. It will
-form a small part of the \seqset{} from parsing the entire chunk.
+the substring ``2.2.13-4'' from a chunk in Fig.\ref{fig:yum}. It 
+forms a small part of the \seqset{} from parsing the entire chunk.
 
 \begin{figure}[th]
 \begin{center}
@@ -96,7 +98,7 @@ structure discovery procedure and gets updated during each recursion.
 This is a recursive phase that has several steps.
 In (3a), we run the statistical model over the test data
 which assigns probabilities to all the edges of the \seqset's.
-We then compute the most probable token sequence, among all alternatives,
+We then compute the {\em most probable} token sequence, among all alternatives,
 for each chunk using a modified {\em Viterbi} algorithm. This algorithm
 will be discussed in detail in Section \ref{sec:stats}.
 If the most probable sequences contain only 1 or 0 tokens, we have come to
@@ -106,8 +108,8 @@ Otherwise, in (3b), the histograms are constructed for
 all the tokens involved in the most probable token sequence, and we
 make a predication of whether the current token context is a {\em struct},
 {\em union} or {\em array} using the heuristics in \cite{fisher+:dirttoshovels}. 
-In the case of yum.txt, during the first
-recursion, (3b) would make a prediction that, the top level structure is
+For example, during the first recursion for {\tt yum.txt}, 
+(3b) would make a prediction that, the top level structure is
 a {\tt struct} of
 
 {\small 
@@ -115,11 +117,12 @@ a {\tt struct} of
 Pdate  ' '  Ptime  ' '  Pword  ':'  ' '  Pid  TBD
 \end{verbatim}
 }
-
+\noindent
 where {\tt TBD} is a context of tokens whose structure is to be determined.
 
-In (3c), \seqset's are modified if necessary and populated into the components of
-the predicated structure. If the structure is 
+In (3c), \seqset's are modified and populated into the components of
+the predicated structure. Suppose at in the next recursion, 
+we discover that the {\tt TBD} can be represented by
 {\small
 \begin{verbatim}
   Punion{
@@ -128,4 +131,61 @@ the predicated structure. If the structure is
   }
 \end{verbatim}
 }
-then 
+\noindent 
+where {\tt T1} and {\tt T2} are two sub-contexts (whose structures are unknown at this
+point) differ by only the first token, 
+say {\tt float} vs. {\tt int}. We associate all 
+\seqset's whose most likely sequence starts with {\tt float} to {\tt T1} and others with
+{\tt T2}. In addition, we break up every \seqset{} in {\tt T1} and {\tt T2} into two sub-contexts:
+one that contains just the first token ({\tt float} or {\tt int}) and the other with the rest 
+of the tokens.  This amounts to {\em cutting} all the \seqset's into two pieces, 
+with the cutting point being the end location of the first token. Edges that are across
+the cutting point are removed from the \seqset. Now assume that the statistical
+model tells us that the most probable sequence in Fig \ref{fig:seqset} is 
+{\small
+\begin{verbatim}
+[float] [dot] [int] [int]
+\end{verbatim}
+}
+\noindent
+then a cut made after the first token will produce two new \seqset's in
+Fig \ref{fig:cut}, with the {\tt id}~ edge and the {\tt float} edge between
+vertices 42 and 46 removed. \seqset{} on the left will be associated with
+the first sub-context and \seqset{} on the right will be associated with the
+second sub-context.
+
+\begin{figure}[th]
+\begin{center}
+\epsfig{file=cut.eps, width=\columnwidth}
+\end{center}
+\caption{Cutting a \seqset{} after the first float token} \label{fig:cut}
+\end{figure}
+
+If the predicated structure is a struct or an array, similar cuts are
+made to all the \seqset's at the boundaries of the contexts.
+
+In step (3d), the procedure recurses to (3a) for each sub-context.
+
+\subsection{Refinement with blob-finding and the rest}
+The refinement phase from the original algorithm is augmented with
+a ``blob-finding'' step. The purpose of this step is to identify
+``message-like'' structures in the intermediate structure and rewrite them into
+a single token called {\em blob}, and thus reduce the overall complexity
+of the description and increase readability. The blob-finding algorithm
+updates the description from bottom up and converts each sub-structure that is
+determined to be overly complex and has a terminating pattern into a
+blob. The \pads{} parser needs the terminating pattern to
+know where the blob ends. Adjacent blobs are merged together. 
+
+A heuristic is used to determine whether a given structure is
+a blob. The main idea is to compute a parameter called {\em variance}
+for the structure, which measures the total number of union/switch/enum
+branches and different array lengths in the given 
+structure. When the ratio between the variance and the size of the data
+this structure represents exceeds certain threshold, the structure is
+determined to be a possible blob. We omit the details of this
+heuristics due to space limitations.
+
+After the structure is refined, a \pads{} description is printed out
+and a series of tools and libraries can be generated from the description
+like in the original algorithm.
