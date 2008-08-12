@@ -38,7 +38,7 @@ Penum action \{
   erase Pfrom("Erased");
 \};
 Pstruct version_hdr \{
-  Pint major; ':';
+  \kw{Pint} major; ':';
 \}
 Pstruct sp_version \{
   ' ';  
@@ -62,40 +62,52 @@ Psource Parray yum \{
 \};
 \end{code}
 \end{minipage}
+\vskip -2ex
 \caption{Ideal \pads{} description of {\tt yum.txt}}\label{fig:yum-gold}
 \end{figure}
 
 
-In this section, we introduce the token ambiguity problem through
-a real-life ad hoc data source, and motivate a new probablistic approach
-to solve this problem. Many other ad hoc data sources with similar
-problem exist and more examples can be found on the \pads{} web site \cite{padsweb}.
+In this section, we describe a real-world ad hoc data source to
+develop intuition for the token ambiguity problem, and we motivate
+using a probabilistic approach to solve it. Although we
+focus on a single format, many other ad hoc data sources share the
+token ambiguity problem, \eg{}, many of the examples listed on the
+\pads{} web site~\cite{padsweb}.
 
-Fig. \ref{fig:yum} shows a fragment from a log file, {\tt yum.txt},
-which is written by a software package manager called {\tt yum}. {\tt yum} 
-is a tool for installing, updating and removing packages and dependencies
-on RPM-based systems. 
-Each line in yum.txt is a unit of
-repetition in the data source and we call it a {\em chunk} or
-a {\em record}. A data chunk could be a line of data, a block of data or
-even a file, depending on the data source.
-The data chunk in {\tt yum.txt} consists of several distinct fields: 
-date, time, action taken,
-package name and version. The fields are separated by single spaces.
-This file is used by system administrators to keep track of the
-software updates on the system. 
-Fig.\ref{fig:yum-gold} shows an {\em ideal} \pads{} description of
+The {\tt yum} software package manager is a tool for installing,
+updating and removing packages and dependencies in RPM-based systems.   
+During normal operation, {\tt yum} generates a log file describing its
+actions, a fragment of which appears in \figref{fig:yum}. 
+%
+\cut{  I don't think this material belongs here. We would need to
+  explain why chunks are important, which is really an artifact of the
+  algorithm, whereas here we are talking about the data.
+The lines in \texttt{yum.txt} constitute a {\em unit of
+repetition} in the data source, which we call a {\em chunk}.
+%% We should only use one term, and record is ambiguous.
+%% or a {\em record}
+Depending upon the data source, the largest unit of repetition could
+be an input line, as in \texttt{yum.txt}, or a collection of lines if
+the data is grouped into blocks, or even full files if the data is
+spread across multiple files.
+}
+%
+Each line in {\tt yum.txt} consists of several distinct fields: 
+date, time, action taken, package name and version. 
+Single spaces separate the fields.
+%This file is used by system administrators to keep track of the software updates on the system. 
+\figref{fig:yum-gold} shows an {\em ideal} \pads{} description of
 {\tt yum.txt} written by a human expert.
-The {\tt entry\_t} type describes one chunk in the data source, and is
-denoted with the keyword {\tt Precord}. 
-{\tt Pdate} stands for a date type, {\tt Ptime} stands for a time type,
-action type is defined to an enumeration of three different actions,
-and {\tt Pid} matches a system identifier such as a file
-name, a MAC address, etc. Types such as {\tt Pdate} and {\tt Pid}
-are called {\em base types} that represent a single token 
+The \cd{entry\_t} type describes each line in the data source.
+The keyword \kw{Precord} denotes that a newline follows each \cd{entry\_t}.
+\cd{Pdate} describes dates, \cd{Ptime} describes times, 
+\cd{action} enumerates three different actions,
+and \cd{Pid} matches a system identifier such as a file
+name, a MAC address, \etc{} We call types such as \cd{Pdate} and \cd{Pid}
+call {\em base types} because they represent a single token 
 in \pads{}; types such as {\tt Pstruct}, {\tt Penum} and {\tt Popt} are 
-intermediate types that represent
-structures. We highlight all the base types in the \pads{} description. 
+compound types that represent
+structures. We highlight the base types in the \pads{} description. 
 
 \begin{figure}[t]
 {\tiny
@@ -336,30 +348,29 @@ Psource Parray entries_t \{
 \caption{\pads{} description of {\tt yum.txt} inferred by the original \learnpads}\label{fig:yum-bad}
 \end{figure}
 
-In comparison, we show the description of {\tt yum.txt} infered by
-the original \learnpads{} system \cite{fisher+:dirttoshovels,fisher+:sigmod08}
-in Fig. \ref{fig:yum-bad}. 
-This description, despite being able to correctly parse the original data,
-is very verbose and un-intuitive. It is whopping 179 line long compared 
-to the neat 23-liner written by the human expert.
+In comparison, \figref{fig:yum-bad} shows the description of {\tt
+  yum.txt} infered by the original \learnpads{} system
+\cite{fisher+:dirttoshovels,fisher+:sigmod08}.  This description,
+which does correctly parse \texttt{yum.txt} data, is verbose, taking
+179~lines compared to the 23~lines required by the human expert.
 
 The main problem with the inferred description is that it 
-did not take advantage of the {\tt id} token, but instead 
-use simpler tokens such as {\tt word}, {\tt int}, etc,
+did not take advantage of the \cd{id} token, which describes any
+sequence of letters, numbers, and punctuation starting with a letter
+and ending with a space. It instead 
+used simpler tokens such as \cd{word}, \cd{int}, \etc,
 to represent the package names and version numbers. 
-This introduced the complex structure within the package names 
+This choice reflected the complex structure within the package names 
 and versions into the description. 
 
-The question is, why didn't the old inference algorithm use
-the {\tt id} token? It turns out that the definition of a complex token
-like {\tt id} includes that of other simple tokens in the system such as 
-{\tt word} and {\tt int}. This gives rise to the 
-{\em token ambiguity problem} (TAP), which is, given an input
-string, there are multiple ways of parsing it.
-TAP occurs in numerous places in {\tt yum.txt}. 
-For instance, the string ``{\tt 2.2.13-4}'' can be parsed into one of 
-these possible sequences:
-{\small
+Why did the old inference algorithm avoid the \cd{id} token? 
+The definition of a complex token like \cd{id} includes that
+of other simple tokens in the system such as \cd{word} and
+\cd{int}. This situation leads to the {\em token ambiguity problem} (TAP): 
+given an input string, there are multiple ways to map it into tokens.
+TAP occurs in numerous places in {\tt yum.txt}.  For instance,
+the string ``{\tt 2.2.13-4}'' can correspond to any the following
+token sequences: {\small
 \begin{verbatim}
 Option 1: [int] [.] [int] [.] [int] [-] [int]
 Option 2: [float] [.] [int] [-] [int]
@@ -368,8 +379,8 @@ Option 4: [id]
 \end{verbatim}
 }
 
-Similarly, the string ``{\tt Dec 10 04:07:51}'' can be interpreted as, 
-among other choices, any of these token sequences:
+Similarly, the string ``{\tt Dec 10 04:07:51}'' can be interpreted 
+as any of these token sequences, among others:
 
 {\small
 \begin{verbatim}
@@ -379,25 +390,18 @@ Option 3: [date] [' '] [time]
 \end{verbatim}
 }
 
-The original inference algorithm disambiguates the overlapping
-tokens by attempting each defined tokens in some order 
-and picking the {\em first} matched token to parse the string. 
+The original inference algorithm disambiguates overlapping
+tokens by trying each token in a predefined order 
+and picking the {\em first} token that leads to a successful
+tokenization of the full input.
 While effective for some data sources, this simple policy 
-is not ideal because
-\begin{itemize}
-\item it makes a black-and-white decision for the tokenization up front;
-\item it does not take into account of contextual information when picking
-      a token to parse a substring; and
-\item it restricts the use of some complex tokens because they ``overshadows''
-	some of the simpler tokens.
-\end{itemize}
+is not ideal because it makes greedy decisions that may be sub-optimal,
+it does not take contextual information into account, and 
+it restricts the use of complex tokens that ``shadow'' simpler ones.
 
-To tackle the above limitations, in the next section, we will propose
-a revised inference algorithm that 
-\begin{itemize}
-\item assigns probability to each possible token sequence;
-\item defers the decision of tokenization, and makes the decision 
-      incrementally as the structure is constructed; and
-\item takes the context into account when deciding which tokens to use.
-\end{itemize}
-
+In the next section, we propose a revised inference algorithm
+that addresses these limitations by
+assigning a probability to each possible token sequence,
+defering tokenization decisions, making them
+incrementally as the structure is constructed, and
+taking the context into account when deciding which tokens to use.
