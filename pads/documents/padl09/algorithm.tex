@@ -88,8 +88,9 @@ forms a small part of the \seqset{} from parsing the entire chunk.
 \end{figure}
 
 The edges of the \seqset{} are tokens and the vertices are the end locations
-of the preceding tokens, with an exception of the leftmost vertex which
-is the begin location of first character of the string.
+of the preceding token. If there is no preceding token (e.g. the leftmost
+vertex of the entire \seqset), then the vertex is the begin location 
+of first character of next token.
 The construction of the \seqset, though expensive, is done only once.
 The \seqset{} is used subsequently as input to the recursive 
 structure discovery procedure and gets updated during each recursion.
@@ -105,16 +106,16 @@ If the most probable sequences contain only 1 or 0 tokens, we have come to
 the end of recursion, and return.
 
 Otherwise, in (3b), the histograms are constructed for
-all the tokens involved in the most probable token sequence, and we
-make a predication of whether the current token context is a {\em struct},
+all the tokens involved in the most probable token sequences, and we
+make a predication of whether the current context is a {\em struct},
 {\em union} or {\em array} using the heuristics in \cite{fisher+:dirttoshovels}. 
-For example, during the first recursion for {\tt yum.txt}, 
-(3b) would make a prediction that, the top level structure is
-a {\tt struct} of
+For example, during the first recursion, 
+(3b) would make a prediction that the top level structure of
+{\tt yum.txt} is 
 
 {\small 
 \begin{verbatim}
-Pdate  ' '  Ptime  ' '  Pword  ':'  ' '  Pid  TBD
+struct {date;  ' '; time; ' '; word; ':'; ' '; id; TBD}
 \end{verbatim}
 }
 \noindent
@@ -123,16 +124,14 @@ where {\tt TBD} is a context of tokens whose structure is to be determined.
 In (3c), \seqset's are modified and populated into the components of
 the predicated structure. Suppose at in the next recursion, 
 we discover that the {\tt TBD} can be represented by
-{\small
+{\small 
 \begin{verbatim}
-  Punion{
-    T1;
-    T2;
-  }
+union{T1; T2}
 \end{verbatim}
 }
-\noindent 
-where {\tt T1} and {\tt T2} are two sub-contexts (whose structures are unknown at this
+\noindent
+where {\tt T1} and {\tt T2} are two sub-contexts 
+(whose structures are unknown at this
 point) differ by only the first token, 
 say {\tt float} vs. {\tt int}. We associate all 
 \seqset's whose most likely sequence starts with {\tt float} to {\tt T1} and others with
@@ -184,7 +183,7 @@ branches and different array lengths in the given
 structure. When the ratio between the variance and the size of the data
 this structure represents exceeds certain threshold, the structure is
 determined to be a possible blob. We omit the details of this
-heuristics due to space limitations.
+heuristic due to space limitations.
 
 After the structure is refined, a \pads{} description is printed out
 and a series of tools and libraries can be generated from the description
