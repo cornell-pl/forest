@@ -1692,7 +1692,10 @@ fun updateWithBlobs s_opt ty =
 				| _ => raise Unexpected) nil blobtys
 		val nonblobtys = List.filter (fn x => not (isBlobTy x)) newtys
 	    in
-	      mkBlob s_opt (Punion (a, (nonblobtys @ newblob)))
+		if (List.length nonblobtys) = 0 andalso (List.length newblob) = 1 
+		then (hd newblob)
+		else 
+	          mkBlob s_opt (Punion (a, (nonblobtys @ newblob)))
 	    end
 	| RArray (a, sep, term, body, fixed, lengths) =>
 	   (
@@ -1707,7 +1710,17 @@ fun updateWithBlobs s_opt ty =
 	    | _ => mkBlob s_opt (RArray (a, sep, term, body, fixed, lengths))
 	   )
 	| Switch(aux, id, retys) =>
-	    let val newretys = map (fn (re, t) => (re, updateWithBlobs s_opt t)) retys in
+	    let val newretys = map (fn (re, t) => (re, updateWithBlobs s_opt t)) retys 
+		val blobretys = List.filter (fn (re, t) => isBlobTy t) retys in
+	    if (length retys = length blobretys andalso length retys > 0) then (* all blobs *)
+	      let val newblob = List.foldl (fn ((r, blob), l) =>
+			case l of
+			  nil => [blob]
+			| [oldblob] => [mergeTy (oldblob, blob)]
+			| _ => raise Unexpected) nil blobretys in
+	        hd newblob
+	      end
+	    else
 	      mkBlob s_opt (Switch(aux, id, newretys))
 	    end
 	| Poption (aux, ty) => mkBlob s_opt (Poption(aux, updateWithBlobs s_opt ty))
