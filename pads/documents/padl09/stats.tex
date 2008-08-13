@@ -243,7 +243,7 @@ equation is modified as follows:
 
 \begin{equation}
 log \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \\
-= \frac{log \mathbf{P}(T_1|begin) +
+\propto \frac{log \mathbf{P}(T_1|begin) +
 \sum_{i=2}^{l}log \mathbf{P}(T_i|T_{i-1}) + \sum_{i=1}^{l}log
 \mathbf{P}(T_i|S_i)}{l}
 \end{equation}
@@ -252,7 +252,56 @@ This average log likelihood guarantees the shorter token sequences
 will not always be selected, unless the average of all conditional
 probabilities $\mathbf{P}(T_i|S_i)$ exceeds certain shreshold.
 
-(modified Viterbi, complicated math formula, not update yet)
+If we take the number of tokens in the sequence into account, the original
+Viterbi algorithm must be modified to fit this constraint. When
+explaining the modified Viterbi algorithm, the notation is slightly
+different from what is stated before. Suppose the number of characters
+in the chunk is $n$ and the number of tokens is $l$. Let's use $C_i$
+to denote the the character at
+position $i$, and use $PT_i$ to denote the corresponding partial
+token. Note that if position $i$ is the destination end of an edge in
+the \seqset{}, there must be a token whose ending position is
+$i$ in a legal token sequence. Let's use $T_i$ to denote the token
+that ends at position $i$ and
+use $S_i$ to denote the associated substring. 
+
+$\mathbf{P}(PT_1, PT_2, ..., PT_i|C_1, C_2, ..., C_i, k)$ denotes the
+probability of partial token sequence $PT_1, PT_2, ..., PT_i$
+conditioned on substring $C_1, C_2, ..., C_i$, in which the token
+sequence length is $k$. The recursive function of forward messages is
+divided into 2 cases:
+
+$\\ \displaystyle{\max_{PT_1, PT_2, ..., PT_i}}\log\mathbf{P}(PT_1, PT_2, ..., PT_i,
+PT_{i+1}|C_1, C_2, ..., C_{i+1}, k+1) \propto$
+
+$\left\{
+  \begin{array}{ll}
+    \log \mathbf{P}(S_{i+1}|T_{i+1}) + \\
+\displaystyle{\max_{T_{i+1-\delta}}}(\log\mathbf{P}(T_{i+1}|T_{i+1-\delta})
++ \displaystyle{\max_{PT_1, ...,
+  PT_{i-1}}}\log\mathbf{P}(PT_1, ..., PT_i|C_1, ..., C_i, k)), 
+& \\ \qquad
+  \hbox{if $i+1$ is the destination end of an edge in \seqset{},
+  $\delta$ is the length of token $T_{i+1}$;} \\
+    \displaystyle{\max_{PT1, ..., PT_i}}\log\mathbf{P}(PT_1, ..., PT_i|C1, ...,
+  C_i, k+1)
+\qquad \qquad \qquad \qquad \qquad \hbox{otherwise.}
+  \end{array}
+\right. $
+
+$\\$
+ 
+At each position $i$, the forward messages store not only token
+sequences with different last tokens, but also the ones with different
+length. At the last position $n$, compute 
+
+$\displaystyle{\max_{l}}\log \frac{\mathbf{P}(TP_1, TP_2, ...,
+TP_n|C_1, C_2, ..., C_n,l)}{l}$,
+
+and select $l$ as well as the last token in the most likely token
+sequences. After tracing backwards through the forward message chain,
+the most likely token sequences is obtained. The modified Viterbi
+algorithm is still linear to the length of the substring.
 
 When testing the accuracy of HMEM, we found an empirical
 disadvantage of this model. Training data are collected from their
