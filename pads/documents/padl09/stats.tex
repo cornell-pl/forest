@@ -51,13 +51,20 @@ one by one in the following subsections.
 
 \subsection{Character-by-character Hidden Markov Model (HMM)}\label{subsec:hmm}
 
-(note: figure hasn't been added.)
+\begin{figure}[th]
+\begin{center}
+\epsfig{file=hmm.eps, width=0.9\columnwidth}
+\end{center}
+\caption{HMM of a partial token sequence from string ``2.2.13-4''}\label{fig:hmm}
+\end{figure}
 
-Fig. ? shows a first-order Markov chain~\cite{rabiner89:hmm} of one
-chunk in {\tt yum.txt}. In the Hidden Markov Model, each observation
+Fig. \ref{fig:hmm} shows a first-order Markov
+chain~\cite{rabiner89:hmm} of a fragment in {\tt yum.txt}. In the Hidden Markov Model, each observation,
+shaded node in the graph,
 is a single character. We'll use $\mathbf{C}_i$ to denote the
 observable evidence variables, i.e. character feature vectors, and
-$\mathbf{T}_i$ to denote the unobservable state variables, i.e.
+$\mathbf{T}_i$ to denote the unobservable state variables which are
+solid nodes in the graph, i.e.
 partial tokens annotating characters. Note that we use character
 feature vectors as opposed to plain characters as observations,
 because in many cases, we don't want the model biased towards
@@ -136,7 +143,12 @@ infer the token sequence? To answer this question, we propose a
 hierarchical model whose upper level model is still a Hidden Markove
 Model while lower level token model is a Maximum Entropy model.
 
-(fig not added yet)
+\begin{figure}[th]
+\begin{center}
+\epsfig{file=hmem.eps, width=0.9\columnwidth}
+\end{center}
+\caption{HMEM of a token sequence from string ``2.2.13-4''}\label{fig:hmem}
+\end{figure}
 
 We can see that the graph of Hierarchical Maximum Entropy Model is
 similar to the one in Subsection \ref{subsec:hmm}, because the upper
@@ -282,7 +294,7 @@ $\left\{
   PT_{i-1}}}\log\mathbf{P}(PT_1, ..., PT_i|C_1, ..., C_i, k)), 
 & \\ \qquad
   \hbox{if $i+1$ is the destination end of an edge in \seqset{},
-  $\delta$ is the length of token $T_{i+1}$;} \\
+  $\delta$ is the length of token $T_{i+1}$;} \\\\
     \displaystyle{\max_{PT1, ..., PT_i}}\log\mathbf{P}(PT_1, ..., PT_i|C1, ...,
   C_i, k+1)
 \qquad \qquad \qquad \qquad \qquad \hbox{otherwise.}
