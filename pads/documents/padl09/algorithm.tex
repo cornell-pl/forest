@@ -17,18 +17,29 @@ in Section 2.
 \section{Description Inference Algorithm}\label{sec:algo}
 
 We propose a multi-phase algorithm to attack the problem of
-format inference for ad hoc data. 
-The main components of
-this algorithm are {\em training of statistical model}, 
-{\em probablistic tokenization} of raw data, 
-a recursive {\em structure discovery} procedure,
-and a {\em format refinement} phase. This is similar to 
-the algorithm proposed in our earlier work \cite{fisher+:dirttoshovels}. 
-The key difference is, instead of making definitive decisions about 
-tokenization up front, we defer such decision well into the structure
-discovery phase. In particular, we produce {\em all possible} token 
-sequences for each data chunk and make choices among these possible 
-sequences as the structure is being constructed in an incremental fashion.
+format inference for ad hoc data. The basic approach is to break the
+input into units of repetition, called {\em chunks}, and then to
+analyze these chunks for patterns that reveal the structure
+of the data.  Depending upon the data source, the unit of repetition
+might be a file, a collection of lines within a file that constitute
+some notion of ``paragraph,'' a new-line terminated line, characters
+terminated by pipes, \etc{}
+
+The algorithm includes four main phases:
+{\em training the statistical model}, 
+{\em probablistically tokenizing} the raw data, 
+performing recursive {\em structure discovery},
+and using rewriting rules to do {\em format refinement}. 
+This algorithm is similar to the one proposed in our earlier work
+\cite{fisher+:dirttoshovels}.  
+The new algorithm differs in that it defers decisions about
+tokenization until structure discovery. 
+In particular, the tokenization phase produces the set of {\em all
+possible} token sequences for each data chunk in a data structure
+called a \seqset{}.  The structure
+discovery phase then incrementally selects the appropriate sequence from
+the \seqset{} as it builds a description of the data.
+
 
 %(3a) find the most probable token sequence for each chunk, and 
 %     if that sequence of every chunk contains only 1 or 0 edges 
@@ -41,34 +52,43 @@ sequences as the structure is being constructed in an incremental fashion.
 
 \begin{figure}[t]
 \begin{centercode}
-(1) Train a statistical model from the labeled training data;
-(2) Tokenize the test data into \seqset's, one \seqset{} per chunk;
-(3) Discover an initial structure of the data based on the \seqset's;
+(1) Train a statistical model from labeled training data
+(2) Tokenize raw data into \seqset{}s, one \seqset{} per chunk
+(3) Discover initial structure using the \seqset{}s
 (4) Apply rewriting rules to improve the overall structure
 \end{centercode}
 \caption{High-level Inference Algorithm}\label{fig:algo}
 \end{figure}
 
-Fig. \ref{fig:algo} presents this high-level algorithm. We now explain
-it step-by-step with the help of the {\tt yum.txt} example.
-Because this algorithm shares the general structure and many details with
-the original algorithm, we only highlight the differences and
-refer the reader to \cite{fisher+:dirttoshovels} for complete discussion of
-the original algorithm.
+\figref{fig:algo} summarizes the high-level algorithm.  In the
+following sections, we explain the pieces in more detail using the
+\texttt{yum.txt} format as a running example.
+Because this algorithm shares the general structure of
+the original algorithm, we only highlight the differences here, 
+refering the reader to the earlier paper~\cite{fisher+:dirttoshovels}
+for complete discussion of the original algorithm.
 
 \subsection{Model training}
-Well ahead of time, a statistical model is trained with
-a large pool of sample data formats. Section \ref{sec:stats} has more details
-about the various models we experimented with in this algorithm. To train the models,
-we first label the data using a set of predefined tokens. The labeling
-is done with a built-in tool that automatically labels all the tokens
-given a \pads{} description of the data. The set of tokens
-used are primarily system oriented, which include
+
+Before attempting to discover the structure of any particular format,
+we train a statistical model to tokenize ad hoc data using a large
+pool of sample data formats.  Intuitively, we can then use the
+resulting model to infer formats for any ad hoc data source that uses
+the tokens found in the training data.  Hence, we only need to
+rerun this phase of the algorithm when given ad hoc data with
+fundamentally different kinds of tokens.  
+
+To train the statistical model, we label training data using a \pads{}
+tool that takes a \pads{} description of a data source and labels each
+atomic piece of data in the source with the \pads{} type used to parse
+it.  By controlling the types in the supplied \pads{} description, we
+control the set of tokens used to label the data.   Currently, we use
+a set of tokens biased towards systems data, including
 integer, float, time, date, ip address, hostname, file path, URL, 
-word, id, white space and punctuations. 
+word, id, white space and punctuation. 
 %A given substring may be parsed by more than one of the token
 %types, and we pick a token that best represent the meaning of the data.
-We assume that parsing of tokens is {\em greedy}, i.e.
+We assume that parsing of tokens is {\em greedy}, \ie{},
 each token matches the longest possible substring, hence
 the string ``43.8'' can be parsed by sequences 
 {\tt [int] [.] [int]}, {\tt [int] [.] [float]}, or {\tt [float]},
@@ -76,14 +96,18 @@ but not by {\tt [float] [.] [int]} or {\tt [float] [.] [float]},
 because the token {\tt float} would parse the entire string, even though
 the string ``43'' alone can be represented by a {\tt [float]}.
 
+We have experimented with a number of different statistical models for
+tokenization.  We defer a discussion of the particulars of these
+models to \secref{sec:stats}.
+
 \subsection{Probablistic tokenization}
-When the user tries to infer a description, each chunk of the data 
-is parsed into the set of all possible token sequences. 
-Because these sequences have
-common subsequences, we organize them in a directed acyclic graph
-called \seqset. Fig.\ref{fig:seqset} shows the \seqset{} after parsing 
-the substring ``2.2.13-4'' from a chunk in Fig.\ref{fig:yum}. It 
-forms a small part of the \seqset{} for the entire chunk.
+
+When inferring a description, the algorithm computes the set of all
+possible token sequences each data chunk.  Because these sequences
+share subsequences, we organize them into a directed acyclic graph
+called a \seqset{}. \figref{fig:seqset} shows the \seqset{} for the
+substring ``2.2.13-4'' from a chunk in \figref{fig:yum}. It forms a
+small part of the \seqset{} for the entire chunk.
 
 \begin{figure}[th]
 \begin{center}
@@ -91,14 +115,17 @@ forms a small part of the \seqset{} for the entire chunk.
 \end{center}
 \caption{\seqset{} from parsing string ``2.2.13-4''}\label{fig:seqset}
 \end{figure}
-
-The edges of the \seqset{} are tokens and the vertices are the end locations
-of the preceding token. If there is no preceding token (e.g. the leftmost
-vertex of the entire \seqset), then the vertex is the begin location 
-of first character of next token.
-The construction of the \seqset, though expensive, is done only once.
-The \seqset{} is used subsequently as input to the recursive 
-structure discovery procedure and gets updated during each recursion.
+\noindent
+Each edge in the \seqset{} represents an occurence of a token in the
+data, while each vertex marks a location in the input.  If a token
+edge ends at a vertex $v$, then $v$ indicates the position immediately
+after the last character in the token.  The first vertex in a
+\seqset{} marks the position before the first character in its
+outgoing edges. 
+The construction of the \seqset, though expensive, is done only once
+per token training session.  The algorithm subsequently uses the
+\seqset{} as input to the recursive structure discovery phase, which
+updates the \seqset{} during each recursive call.
 
 \begin{figure}[t]
 \begin{centercode}
@@ -140,19 +167,17 @@ fun discover (sqs:seqsets) : description =
 \end{figure}
 
 \subsection{Structure discovery}
-This is a {\em top-down}, {\em divide-and-conquer} algorithm outlined in
-Fig.\ref{fig:structure-discovery} in pseudo-ML code. 
-During each recursive call
-of the function {\tt discover}, which is the main procedure in
-this algorithm, an {\tt oracle} function is invoked to
-make a ``magical'' guess about the structure of the data represented by
-the current list of \seqset's. The structure can be 
+The structure discover phase uses a {\em top-down}, {\em
+divide-and-conquer} algorithm outlined in 
+\figref{fig:structure-discovery} in the pseudo-ML function
+\cd{discover}.  Each invocation of the \cd{discover} function
+calls the \cd{oracle} function to guess the structure of the data represented
+by the current set of \seqset{}s.  The oracle can prophecy
 either a {\em base type}, a {\em struct}, an {\em array} or a {\em union}.
-The {\tt oracle} function also breaks up the input \seqset's into
-sets of sub-\seqset's, each of which corresponds to a component in
-the guessed structure.
-After that, the procedure goes into each set of sub-\seqset's and 
-recursively discover its structure.
+The {\tt oracle} function also partitions the input \seqset{}s into
+sets of sub-\seqset{}s, each of which corresponds to a component in
+the guessed structure.  The \cd{discover} function then recursively 
+constructs the structure of each set of sub-\seqset{}s.
 
 The {\tt oracle} function, which is the key to this magic does the
 following. 
