@@ -170,7 +170,7 @@ fun discover (sqs:seqsets) : description =
 The structure discover phase uses a {\em top-down}, {\em
 divide-and-conquer} algorithm outlined in 
 \figref{fig:structure-discovery} in the pseudo-ML function
-\cd{discover}.  Each invocation of the \cd{discover} function
+\cd{discover}.  Each invocation of \cd{discover}
 calls the \cd{oracle} function to guess the structure of the data represented
 by the current set of \seqset{}s.  The oracle can prophecy
 either a {\em base type}, a {\em struct}, an {\em array} or a {\em union}.
@@ -179,61 +179,72 @@ sets of sub-\seqset{}s, each of which corresponds to a component in
 the guessed structure.  The \cd{discover} function then recursively 
 constructs the structure of each set of sub-\seqset{}s.
 
-The {\tt oracle} function, which is the key to this magic does the
-following. 
+How does the \cd{oracle} produce its prophecy?
+First, it uses the trained statistical model to assign probabilities
+to the edges in the input \seqset{}s.
+Next, it computes for each \seqset{} the {\em most probable token
+sequence} (MPTS) among all the possible paths 
+using a modified {\em Viterbi} algorithm \cite{rabiner89:hmm},
+which we discuss in detail in \secref{sec:stats}.
+Then, based on the statistics of the tokens in the MPTSs,
+the oracle predicts the structure of the current collection of
+\seqset{}s using the heuristics designed for our earlier
+algorithm~\cite{fisher+:dirttoshovels}. 
 
-First, it runs the trained statistical model over the 
-input \seqset's and assigns probabilities to all the edges of the \seqset's.
-Next it computes the {\em most probable token sequence}, or MPTS, among all alternatives,
-for each \seqset{} using a modified {\em Viterbi} algorithm \cite{rabiner89:hmm},
-which will be discussed in detail in Section \ref{sec:stats}.
-Then, based on the statistics of the tokens that appeared in the MPTSs,
-it makes a predication about the structure of current set of
-\seqset's, using the heuristics in \cite{fisher+:dirttoshovels}.
-For example, during the first recursion, 
-{\tt oracle} would predict that the top level structure of
-a line in {\tt yum.txt} is 
-
+As an example, consider applying the oracle to determine the top-level
+structure of the first line in \texttt{yum.txt}.  It would predict the
+following: 
 \begin{centercode}
 struct \{date;  ' '; time; ' '; word; ':'; ' '; id; TBD\}
 \end{centercode}
-which is a {\tt struct} containing 9 sub-structures and {\tt TBD} is a sub-structure
-whose form is to be determined. At this point, the {\tt oracle} cuts
-every \seqset{} in the input into 9 parts at the boundaries of the sub-structures,
-i.e. at the vertices after tokens {\tt date}, {\tt space}, {\tt time}, etc. 
-Sometimes, a cut at a particular location goes across existing edges of a
-\seqset, then those edges are deemed irrelevant for next recurssion and removed.
-For example, if we make a cut after the first {\tt float} token in the \seqset{}
-in Fig. \ref{fig:seqset}, then the {\tt id}~ edge and the {\tt float} edge between
-vertices 42 and 46 are removed, creating two new \seqset's in Fig. \ref{fig:cut}.
-
+\ie{}, a \cd{struct} containing nine sub-structures including \cd{TBD}, which is
+a sub-structure whose form will be determined recursively.
+At this point, the {\tt oracle} partitions
+every \seqset{} in the input into nine parts, corresponding to
+sub-structure boundaries,
+\ie{}, at the vertices after tokens \cd{date}, \cd{space}, \cd{time},
+\etc{}
+During partitioning, the oracle removes \seqset{} edges that cross partition
+boundaries because such edges are irrelevant for the next round
+of structure discovery.
+For example, if the oracle cuts after the first {\tt float} token in the \seqset{}
+in \figref{fig:seqset}, then it removes the \cd{id}~edge and the \cd{float} edge between
+vertices~42 and~46, creating the two new \seqset{}s in \figref{fig:cut}.
+%
 \begin{figure}[th]
 \begin{center}
 \epsfig{file=cut.eps, width=\columnwidth}
 \end{center}
 \caption{Cutting \seqset{} for ``2.2.13-4'' after the first float token} \label{fig:cut}
 \end{figure}
-
+%
 Finally, the {\tt oracle} function returns the predicated structure as a ``prophecy''
-along with the cut up \seqset's. 
+along with the partitioned \seqset{}s. 
 
 \subsection{Format refinement with blob-finding}
-The refinement phase follows the structure discovery phase to
+The refinement phase, which follows structure discovery, tries to
 improve the initial rough structure by applying a series of
-rewriting rules. Here a new ``blob-finding'' rule is added to
-the original algorithm. The purpose of this rule is to identify
-``message-like'' structures in the intermediate structure and rewrite them into
-a single token called {\em blob}, and thus reduce the overall complexity
-of the description and increase readability. The blob-finding rule is applied
-from bottom up and converts each sub-structure that is
-determined to be overly complex and has a terminating pattern into a
-blob. The \pads{} parser needs the terminating pattern to
-know where the blob ends. Adjacent blobs are merged together. 
+rewriting rules.  We have modified the earlier algorithm to use a 
+``blob-finding'' rule which tries to identify data segments that have
+little structure and to describe such segments using a single
+\textem{blob} token rather than a complicated structure that describes
+each variation in excruciating detail.  A typical example of this kind
+of data is free-form text comments that often appear at the end of
+each line in a log file.  The blob-finding rule reduces the overall
+complexity of the resulting description and hence makes it more
+readable.
 
-To determine whether a given structure is a blob, 
-we compute a parameter called {\em variance} for the structure. 
-It measures the total number of union/switch/enum
-branches and different array lengths in the given 
+The format refinement algorithm applies the blob-finding rule 
+in a bottom-up fashion. It converts into a blob each sub-structure
+that it deems overly complex and for which it can find a terminating pattern. 
+The \pads{} parser uses the terminating pattern to
+find the extent of the blob. The algorithm merges adjacent blobs.
+
+To decide whether a given structure is a blob, 
+the algorithm computes the {\em variance} of the structure, which
+measures the total number of union/switch/enum
+branches and different array lengths in the 
 structure. When the ratio between the variance and the amount of the data
-this structure represents exceeds a threshold, the structure is
-determined to be a possible blob. 
+described by the structure exceeds a threshold, the algorithm decides
+the decides to convert the structure to a blob if it can find a
+termating sequence.
