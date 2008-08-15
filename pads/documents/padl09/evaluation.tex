@@ -1,2 +1,63 @@
 \section{Evaluation}\label{sec:eval}
 
+We completed a variety of experiments to evaluate the success of
+statistical models in helping \learnpads{} generate data processing
+tools. Our experiment data come from 20 different sources, ranging
+from a few thousand lines to a few dozen. At each round, we picked 1
+data source for testing end results and trained our model with the
+remaining 19 sources. 2 level experiments were conducted:
+
+\begin{itemize}
+\item Token level: compare the token sequences after tokenization
+phase with the ideal token sequences.
+\item Description level: evaluate the compactness and preciseness
+of descriptions.
+\end{itemize}
+
+\paragraph*{Error rates.}
+
+(Define 3 different kinds of error rates, show tables, elaborate with
+highlight examples.)
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l||l|l|l|l|} \hline
+Data source                & lex   & HMM   & HMEM  & HSVM \\\hline\hline
+1967Transactions.short     & 30    & 30    & 18.93 & 18.93 \\ \hline
+ai.3000                    & 70.58 & 15.79 & 18.98 & 11.20 \\ \hline
+yum.txt                    & 29.41 & 13.33 & 21.80 & 0     \\ \hline
+rpmpkgs.txt                & 100   & 2.71  & 15.01 & 0.32  \\ \hline
+railroad.txt               & 67.51 & 9.47  & 6.48  & ?     \\ \hline
+dibbler.1000               & 15.72 & ?     & ?     & ?     \\ \hline
+asl.log                    & 94.79 & 98.91 & 8.94  & 5.83  \\ \hline
+scrollkeeper.log           & 31.29 & 28.48 & 18.67 & 9.86  \\ \hline
+page\_log                  & 82.69 & 15.29 & 0     & 7.52  \\ \hline
+MER\_T01\_01.csv           & 84.56 & 23.09 & 31.32 & ?     \\ \hline
+crashreporter.log          & 59.73 & ?     & 4.99  & 0.19  \\ \hline 
+ls-l.txt                   & 33.73 & 18.70 & 19.96 & 6.65  \\ \hline
+windowserver\_last.log     & 77.31 & 14.98 & 10.16 & 3.24  \\ \hline
+netstat-an                 & 19.75 & 17.83 & 9.61  & 9.01  \\ \hline
+boot.txt                   & 34.04 & 25.40 & 9.37  & 2.77  \\ \hline
+quarterlypersonalincome    & 83.37 & 5.52  & 1.98  & ?     \\ \hline
+corald.log.head            & 90.96 & 100   & 5.67  & ?     \\ \hline
+coraldnssrv.log.head       & 91.04 & 18.17 & 10.64 & 5.23  \\ \hline
+probed.log.head            & 1.74  & 27.99 & 16.50 & 16.50 \\ \hline
+coralwebsrv.log.head       & 86.73 & 100   & 8.75  & 23.99 \\ \hline
+  
+\end{tabular}
+\caption{Error rates 1}
+\label{tab:error1}
+\end{center}
+\end{table}
+
+\paragraph*{Complexity scores.}
+
+(First show table that lists the percentage of increase and decrease in type
+complexity and data complexity. Then state the comparison of old and
+new descriptions in plain text.)
+
+\paragraph*{Execution times.}
+
+\cut{
+\paragraph*{Success rates.}
+}

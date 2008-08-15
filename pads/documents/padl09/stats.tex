@@ -131,8 +131,6 @@ difficulty detecting the string. Rather than naively increasing the
 order of Markov Model, we propose more flexible models in the
 following two subsections.
 
-(need an example in which hmm is bad but hmem is good?)
-
 \subsection{Hierarchical Maximum Entropy Model (HMEM)}\label{subsec:hmem}
 
 The problem in our Character-by-character Hidden Markov Model, as
@@ -141,7 +139,7 @@ classification in the Machine Learning research, raises a question:
 if we build separate models of each token, will it be helpful to
 infer the token sequence? To answer this question, we propose a
 hierarchical model whose upper level model is still a Hidden Markove
-Model while lower level token model is a Maximum Entropy model.
+Model while lower level token model is a Maximum Entropy model~\cite{Berger96:ME}\cite{megaweb}.
 
 \begin{figure}[th]
 \begin{center}
@@ -337,11 +335,11 @@ tokens. We'll propose another statistical model, the Hierarchical
 Support Vector Machine (HSVM), with a discriminative model as the
 lower level model, that can avoid token bias in cases where HMEM has problems. 
 
-\subsection{Hierarchical Support Vector Machine (HSVM)}\label{subsec:hsvm}
+\subsection{Hierarchical Support Vector Machines (HSVM)}\label{subsec:hsvm}
 
 The graph of HSVM is exactly the same as that of HMEM, shown in
 Subsection \ref{subsec:hmem}. The only difference is HSVM's lower
-level employs Support Vector Machine (SVM). Basically, SVM measures the target
+level employs Support Vector Machines (SVM)~\cite{CC01a}. Basically, SVM measures the target
 conditional probability $\mathbf{P}(T_i|S_i)$ by generating
 hyperplanes to divide the feature vector space, according to the
 positions of training examples.
