@@ -165,9 +165,48 @@ few wrong token sequences can cause a difference at the description
 level.
 
 A more effective approach to assess the inferred descriptions is to
-have a human expert to compare them. The following Table ? reflects
-the judges by the human expert.
+have a human expert to compare them. Table \ref{tab:expert} reflects
+the judges by the human expert. Although the original \learnpads{}
+system is uncapable of identifying tokens as well as \learnpads{} with
+statistical models, the structure discovery and refinement phases are
+still quite effective. The new \learnpads{} system doesn't rely on the
+refinement rules that much. For data sources in which the original
+system can produce good descriptions, the new system is usually also
+able to produce descriptions as good as the old one. But there're many 
+data sources of which the descriptions from the original system are
+messy and not understandable, and the new system has an obvious advantage
+on these data sources. 
 
+\begin{table}
+\begin{center}
+\begin{tabular}{|l||c|c|c|}\hline
+Data source & HMM & HMEM & HSVM \\ \hline 
+1967Transactions & no difference & no difference & no difference   \\\hline 
+ai.3000 & better & better & better \\ \hline
+yum.txt & better &  better & better \\ \hline
+rpmpkgs.txt & better & better & better\\ \hline
+railroad.txt & slightly better & both complicated & both complicated  \\ \hline
+dibbler.1000 & slightly worse & no much difference & no much difference   \\ \hline
+asl.log & too concise & both complicated & both complicated \\ \hline
+scrollkeeper.log  &  better & better & better \\ \hline
+page\_log  & slightly worse & no much difference & no much difference \\ \hline
+MER\_T01\_01.csv & too concise & no much difference & no much difference \\ \hline
+crashreporter & slightly better & no much difference & better \\ \hline
+ls-l.txt & better & better & better \\ \hline
+windowserver\_last & slightly better & slightly better & better \\ \hline
+netstat-an & better & better & better \\ \hline
+boot.txt & better &  better & better \\ \hline
+quarterlyincome & slightly better & slightly better & slightly better   \\ \hline
+corald.log & better &  better & better \\ \hline
+coraldnssrv.log  & no much difference &  no much difference & no much difference\\ \hline
+probed.log & worse & no much difference & no much difference \\ \hline
+coralwebsrv.log & worse & worse & worse \\\hline
+\end{tabular}
+\caption{Qualitative judge of descriptions by a human expert: compared
+to descriptions by original \learnpads{}}
+\label{tab:expert}
+\end{center}
+\end{table}
 
 \paragraph*{Execution times.}
 
