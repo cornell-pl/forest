@@ -7,7 +7,7 @@
 }
 
 
-\section{Comparisons of Statistical Models}\label{sec:stats}
+\section{Statistical Models}\label{sec:stats}
 
 \cut{As discussed in Section \ref{sec:algo}, our new algorithm considers all possible
 token sequences rather than the only one defined by a fixed set of
@@ -277,12 +277,11 @@ equation is modified as follows:
 The average log likelihood guarantees the shorter token sequences
 will not always be selected, unless the average of all conditional
 probabilities $\mathbf{P}(T_i|S_i)$ exceeds a threshold.
-The above change gives rise to a {\em modified Viterbi Algorithm}.
+The above change gives rise to a {\em modified Viterbi Algorithm},
+which take into account the number of tokens in the sequence.
+The modified algorithm has a slightly revised notation. 
 
-If we take the number of tokens in the sequence into account, the original
-Viterbi algorithm must be modified to fit this constraint. When
-explaining the modified Viterbi algorithm, the notation is slightly
-different from what is stated before. Suppose the number of characters
+Suppose the number of characters
 in the chunk is $n$ and the number of tokens is $l$. Let's use $C_i$
 to denote the the character at
 position $i$, and use $PT_i$ to denote the corresponding partial
