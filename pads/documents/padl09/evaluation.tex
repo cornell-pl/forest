@@ -126,27 +126,27 @@ descriptions from the original \learnpads{} system.
 Data source & \multicolumn{3}{|c||}{Type Cost} &
 \multicolumn{3}{|c|}{Data Cost}\\ \hline & HMM & HMEM & HSVM & HMM &
 HMEM & HSVM \\ \hline 
-1967Transactions & -15.99 & -27.03 &  & -2.97
-& -2.80 &     \\\hline 
-ai.3000 & -40.22 & +12.40 & & +15.34 & +4.91 & \\ \hline
-yum.txt & -90.54 & +50.93 & & +6.06 & -7.93 &   \\ \hline
-rpmpkgs.txt & -40.82 & -79.12 & & +0.73 & -0.04 & \\ \hline
-railroad.txt & -14.89 & +28.77 & & -18.42 & -26.36 &    \\ \hline
-dibbler.1000 & +155.50 & +17.83 & & +66.13 & -22.11 &     \\ \hline
-asl.log & -69.32 & +69.72 & & +9.13 & -14.27 & \\ \hline
-scrollkeeper.log & -20.73 & -9.71 & & +12.32 & +2.24 &  \\ \hline
-page\_log & -8.46 & 0 & & -9.42 & -11.67 & \\ \hline
-MER\_T01\_01.csv & -8.59 & -12.74 & & -25.59 & -24.15 & \\ \hline
-crashreporter & -36.81 & +35.19 &  & +5.74 & -4.36 &  \\ \hline
-ls-l.txt & -70.55 & -51.32 & & +13.20 & -7.26 &  \\ \hline
-windowserver\_last & -31.54 & +4.10 & & +3.41 & -9.25 &   \\ \hline
-netstat-an & +37.48 & -49.94 & & -9.97 & +9.51 &  \\ \hline
-boot.txt & -40.85 & -19.49 & & +4.39 & -5.70 &  \\ \hline
-quarterlyincome & -32.27 & +94.64 & & -30.64 & -30.50 &     \\ \hline
-corald.log & -40.32 & -33.86 & & -5.71 & -29.64 &    \\ \hline
-coraldnssrv.log  & -1.86 & -2.95 & & +40.13 & +463.88 &  \\ \hline
-probed.log & -14.61 & -33.48 & & +59.53 & +63.18 & \\ \hline
-coralwebsrv.log & -15.39 & +89.54 & & -3.07 & +53.62 &    \\
+1967Transactions & -15.99 & -27.03 & -27.03 & -2.97
+& -2.80 & -62.51    \\\hline 
+ai.3000 & -40.22 & +12.40 & -18.49 & +15.34 & +4.91 & -0.29 \\ \hline
+yum.txt & -90.54 & +50.93 & -76.27 & +6.06 & -7.93 & -0.01  \\ \hline
+rpmpkgs.txt & -40.82 & -79.12 & -91.86 & +0.73 & -0.04 & 1.47 \\ \hline
+railroad.txt & -14.89 & +28.77 & -43.82 & -18.42 & -26.36 & -2.90   \\ \hline
+dibbler.1000 & +155.50 & +17.83 & -74.35 & +66.13 & -22.11 & +23.72    \\ \hline
+asl.log & -69.32 & +69.72 & +23.76 & +9.13 & -14.27 & -15.00 \\ \hline
+scrollkeeper.log & -20.73 & -9.71 & -15.61 & +12.32 & +2.24 & +2.44  \\ \hline
+page\_log & -8.46 & 0 & -8.51 & -9.42 & -11.67 & -10.21 \\ \hline
+MER\_T01\_01.csv & -8.59 & -12.74 & -23.21 & -25.59 & -24.15 & +1.46 \\ \hline
+crashreporter & -36.81 & +35.19 & -40.03 & +5.74 & -4.36 & -2.35 \\ \hline
+ls-l.txt & -70.55 & -51.32 & -39.30 & +13.20 & -7.26 & -2.18 \\ \hline
+windowserver\_last & -31.54 & +4.10 & -62.61 & +3.41 & -9.25 & -9.78  \\ \hline
+netstat-an & +37.48 & -49.94 & -57.00 & -9.97 & +9.51 & +10.44 \\ \hline
+boot.txt & -40.85 & -19.49 & -57.82 & +4.39 & -5.70 & -5.24 \\ \hline
+quarterlyincome & -32.27 & +94.64 & +54.14 & -30.64 & -30.50 & +33.71    \\ \hline
+corald.log & -40.32 & -33.86 & -5.53 & -5.71 & -29.64 & -29.81   \\ \hline
+coraldnssrv.log  & -1.86 & -2.95 & -6.78 & +40.13 & +463.88 & +4.56 \\ \hline
+probed.log & -14.61 & -33.48 & -33.48 & +59.53 & +63.18 & +63.18 \\ \hline
+coralwebsrv.log & -15.39 & +89.54 & +45.73 & -3.07 & +53.62 & +68.92   \\
                \hline
 \end{tabular}
 \caption{Increase (+\%) or decrease (-\%) in type cost and data cost}
@@ -201,7 +201,7 @@ quarterlyincome & 9.586 & 130.903 & 363.634   \\ \hline
 corald.log & 188.036 &  881.527 & 329.826 \\ \hline
 coraldnssrv.log  & 63.085 &  1553.705 & 6402.181\\ \hline
 probed.log & 298.278 & 1647.448 & 4433.592 \\ \hline
-coralwebsrv.log & 112.372 & 1175.747 &  \\\hline
+coralwebsrv.log & 112.372 & 1175.747 & 4020.109 \\\hline
 \end{tabular}
 \caption{Execution times in seconds}
 \label{tab:time}
