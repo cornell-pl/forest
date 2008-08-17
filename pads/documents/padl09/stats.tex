@@ -9,78 +9,94 @@
 
 \section{Comparisons of Statistical Models}\label{sec:stats}
 
-As discussed in Section \ref{sec:algo}, our new algorithm considers all possible
+\cut{As discussed in Section \ref{sec:algo}, our new algorithm considers all possible
 token sequences rather than the only one defined by a fixed set of
 regular expressions. Therefore a seqset that contains all legal token
 sequences is constructed for each chunk. But, the histogram-computing
 module afterwards requires one single token sequence from each chunk
 and uses these tokens as the basic units to extract structure
-information. We need to find a technique to pick up the best token
-sequence from the \seqset.
-
-Researches in the past has proved that Machine Learning approaches
-are effective to resolve many problems in Natural Language
-Processing and Speech Recognition. Those approaches are also
-suitable for the TAP problem described in Section
-\ref{sec:examples}, because:
-
-
+information.}
+The key to solving the TAP is selecting the best token sequence 
+from a \seqset{} based on probability.
+Research in the past 
+\cite{Seymore99learninghidden,Pinto+:texttables,borkar+:text-segmentation,rabiner89:hmm}  
+has shown that machine learning approaches
+are effective in resolving many problems in areas such as
+information retrieval, natural language processing and 
+speech recognition. Those approaches are also
+suitable for the TAP because:
 \begin{itemize}
-\item Training corpus can be construct efficiently. Instead of
-assigning tags token by token, system designers
-only need to write the correct descriptions by hand for the data
-formats selected as training sources. We've devised a tagging tool to
-label the tokens automatically given the data source and the
-corresponding description.
-\item Although our data come from different sources, they follow some
-common rules. For example, URLs usually start from ``{\tt
-http://}'', and if there's ``{\tt 04:12:59}'' nearby, ``{\tt
-March}'' is highly likely part of a date.
-\item Efficient algorithms, such as Viterbi, are designed for finding
+%\item Training corpus can be construct efficiently. Instead of
+%assigning tags token by token, system designers
+%only need to write the correct descriptions by hand for the data
+%formats selected as training sources. We've devised a tagging tool to
+%label the tokens automatically given the data source and the
+%corresponding description;
+\item labeling training data is easy with the built-in tool in \pads{};
+\item although data come from different sources, they follow some
+simple patterns, e.g. URLs usually start with ``{\tt http://}'', 
+and if there's ``{\tt 04:12:59}'' nearby, ``{\tt March}'' is highly likely 
+a part of a date;
+\item efficient algorithms, such as Viterbi, are readily available for finding
 the most likely sequences.
 \end{itemize}
 
+\cut{
 In the training corpus, examples are chunks annotated with token
 sequences, each token with its associated substring. A statistical
 model is trained ahead of time. In the structure discovery phase of
 \learnpads{}, the goal is to label the chunks with token sequences.
+}
 
-Three Machine Learning approaches are integrated into our learning
-system to train the model. They'll be introduced and further discussed
-one by one in the following subsections.
+To train a probablistic model for the data, we experimented with three machine learning approaches
+which will be introduced in the following subsections.
 
 \subsection{Character-by-character Hidden Markov Model (HMM)}\label{subsec:hmm}
 
 \begin{figure}[th]
 \begin{center}
-\epsfig{file=hmm.eps, width=0.9\columnwidth}
+\epsfig{file=hmm.eps, width=0.7\columnwidth}
 \end{center}
 \caption{HMM of a partial token sequence from string ``2.2.13-4''}\label{fig:hmm}
 \end{figure}
 
-Fig. \ref{fig:hmm} shows a first-order Markov
-chain~\cite{rabiner89:hmm} of a fragment in {\tt yum.txt}. In the Hidden Markov Model, each observation,
-shaded node in the graph,
-is a single character. We'll use $\mathbf{C}_i$ to denote the
-observable evidence variables, i.e. character feature vectors, and
-$\mathbf{T}_i$ to denote the unobservable state variables which are
-solid nodes in the graph, i.e.
-partial tokens annotating characters. Note that we use character
-feature vectors as opposed to plain characters as observations,
-because in many cases, we don't want the model biased towards
-certain characters. For example, if most {\em time} tokens in the
-training corpus are drawn from the software running in a certain
-range of time, some digits will never appear to be the first
-character in {\em time}. To avoid this bias, we define a mapping
-from characters to fix-length vectors and use these vectors to
-represent features of characters. Examples of features are:
-
+Fig. \ref{fig:hmm} shows a first-order Hidden Markov
+Model \cite{rabiner89:hmm} representation of a substring in {\tt yum.txt}. 
+By first-order, we mean the current state is only dependent on the 
+immediately previous state and nothing else.
+Each observation, indicated as a shaded node in the diagram, is a single character. 
+Each hidden state, indicated as a white node, 
+is the name of a token that describes the substring containing the 
+corresponding observable character.
+Both the dependence among the hidden states and the emission of
+observations by the hidden states are denoted by arrows.
+The hidden state in the character-by-character HMM is also known as
+a {\em partial token} because the character it emits is often just
+part of a token.
+ 
+We use $\mathbf{C}_i$ to denote an observable evidence variable, 
+and $\mathbf{T}_i$ to denote an unobservable state variable, i.e. the
+token name. 
+To avoid bias toward certain characters in the model, we use
+a fixed-length character feature vector instead of the character itself
+as the observable evidence variable. Each feature vector contains a
+fixed number of boolean features about a single character, such as
+%Note that we use character
+%feature vectors as opposed to plain characters as observations,
+%because in many cases, we don't want the model biased towards
+%certain characters. For example, if most {\em time} tokens in the
+%training corpus are drawn from the software running in a certain
+%range of time, some digits will never appear to be the first
+%character in {\em time}. To avoid this bias, we define a mapping
+%from characters to fix-length vectors and use these vectors to
+%represent features of characters. Examples of features are:
 \begin{itemize}
-\item Is an upper-case alphabetic letter.
-\item Is white space.
-\item Is a special punctuation, ``{\tt .}''.
-\item Is a punctuation other than ``{\tt .}'', ``{\tt
-,}'', ``{\tt ?}'', ``{\tt /}'', ``{\tt $\backslash$}" and ``{\tt :}''.
+\item is a numeric digit
+\item is an upper-case alphabetic letter
+\item is white space
+\item is a special punctuation, ``{\tt .}''
+\item is a punctuation other than ``{\tt .}'', ``{\tt
+,}'', ``{\tt ?}'', ``{\tt /}'', ``{\tt $\backslash$}" and ``{\tt :}''
 \end{itemize}
 
 The model contains the transition matrix $\mathbf{P}(T_i|T_{i-1})$,
@@ -88,7 +104,7 @@ the sensor matrix $\mathbf{P}(C_i|T_i)$, and the initial
 probabilities $\mathbf{P}(T_i|begin)$. These parameters are obtained
 from the training data by the following formula:
 
-\begin{eqnarray}
+\begin{eqnarray*}
 \mathbf{P}(T_i|T_{i-1}) & = & \frac{\textrm{number of token }T_i\textrm{
 following token }T_{i-1}}{\textrm{number of token }T_{i-1}} \label{eqn:1}\\
 \mathbf{P}(C_i|T_i) & = & \frac{\textrm{number of character feature
@@ -97,7 +113,7 @@ annotated with token }T_i}{\textrm{number of token }T_i} \\
 \mathbf{P}(T_1|begin) & = & \frac{\textrm{number of token
 }T_1\textrm{ begin the first token}}{\textrm{number of training
 chunks}} \label{eqn:2}
-\end{eqnarray}
+\end{eqnarray*}
 
 Therefore, suppose the number of characters in the chunk is $n$, our
 goal is to compare $\mathbf{P}(T_1, T_2, ..., T_n|C_1, C_2, ..., C_n)$
@@ -111,6 +127,7 @@ calculated by:
 \prod_{i=2}^{n}{\mathbf{P}(T_i|T_{i-1})}
 \end{eqnarray*}
 
+\cut{
 To guarantee linear-time efficiency, the Viterbi algorithm to compute
 the most likely sequence is employed. In our problem, not every
 combination of tokens as a sequence is a legal parse given a chunk. So
@@ -121,48 +138,51 @@ variety of modified Viterbi algorithms are deployed in the
 \learnpads{} system to satisfy corresponding constraints at different
 places. Due to the space limitation, we'll show only one of them in
 Subsection \ref{subsec:hmem}.
+}
 
-This HMM assumes every partial token is only dependent on its previous
-partial token. So the first-order Markov Model is a simple model that
-is unable to catch
-complicated features. For instance, ``{\tt http://}'' is a strong
-signal to begin token {\em url}, but first-order Markov Model has
-difficulty detecting the string. Rather than naively increasing the
-order of Markov Model, we propose more flexible models in the
-following two subsections.
+The original Viterbi algorithm for HMM is modified slightly here 
+to ensure that the most probably token sequence returned forms a legal
+parse of the data chunk. 
+
+Because the character-by-character HMM is first order and employs only 
+single character features, it is not able to capture complex features
+in the data such as  
+a substring ``{\tt http://}'' which indicates a strong likelihood 
+of being part of an URL.
+%This HMM assumes every partial token is only dependent on its previous
+%partial token. So the first-order Markov Model is a simple model that
+%is unable to catch complicated features. 
+One obvious solution is
+increasing the order of HMM but since the token length is variable in
+our application, it is not clear what the order should be, not to mention
+increasing the order also increases the complexity exponentially. 
+In stead, in the next two subsections, we propose two new hybrid
+methods that combine existing classification techniques within the
+HMM framework.
 
 \subsection{Hierarchical Maximum Entropy Model (HMEM)}\label{subsec:hmem}
 
-The problem in our Character-by-character Hidden Markov Model, as
-well as the availability of many state-of-art techniques for
-classification in the Machine Learning research, raises a question:
-if we build separate models of each token, will it be helpful to
-infer the token sequence? To answer this question, we propose a
-hierarchical model whose upper level model is still a Hidden Markove
-Model while lower level token model is a Maximum Entropy model~\cite{Berger96:ME}\cite{megaweb}.
-
 \begin{figure}[th]
 \begin{center}
-\epsfig{file=hmem.eps, width=0.9\columnwidth}
+\epsfig{file=hmem.eps, width=0.6\columnwidth}
 \end{center}
 \caption{HMEM of a token sequence from string ``2.2.13-4''}\label{fig:hmem}
 \end{figure}
 
-We can see that the graph of Hierarchical Maximum Entropy Model is
-similar to the one in Subsection \ref{subsec:hmm}, because the upper
-level of this hierarchical model is still an HMM. The differences
-are:
+The upper level mode of a Hierarchical Maximum Entropy Model 
+is an HMM while a lower level token model 
+is a Maximum Entropy model~\cite{Berger96:ME}\cite{megaweb}.
+Fig.\ref{fig:hmem} shows an example of HMEM.
+%We can see that the graph of Hierarchical Maximum Entropy Model is
+%similar to the one in Subsection \ref{subsec:hmm}, because the upper
+%level of this hierarchical model is still an HMM. 
+The main difference between HMEM and HMM is
+that the observable evidence variables are not single character feature vectors, 
+but substrings representing the entire tokens.
+As such, there is no need to concatenate consecutive hidden state
+variables to form a token as in the case of HMM.
 
-\begin{itemize}
-\item The observable evidence variables in the graph are no longer
-character feature vectors, but substrings representing the entire
-tokens.
-\item In HMM, we need to concatenate conjunctive hidden state
-variables to make a token, while in HMEM, one hidden state is enough
-to describe a token.
-\end{itemize}
-
-So compared to HMM, we use $\mathbf{S}_i$ to denote substrings
+We use $\mathbf{S}_i$ to denote substrings
 inside the same token, and $\mathbf{T}_i$ to denote tokens annotating
 substrings. Suppose the number of tokens in the chunk is $l$, the
 target probability is computed by:
@@ -184,8 +204,8 @@ By Bayes rule,
 \mathbf{P}(S_i)}{\mathbf{P}(T_i)}
 \end{eqnarray*}.
 
-We construct our training corpus by crawling data sources from real
-world applications. The two priors $\mathbf{P}(S_i)$ and
+Because we construct our training corpus by gathering data sources 
+from real world applications, the two priors $\mathbf{P}(S_i)$ and
 $\mathbf{P}(T_i)$ can be quite different between the training and
 testing data so that they're not good parameters for prediction. As
 a result, we use Maximum Entropy method to compute
@@ -198,42 +218,38 @@ $\mathbf{P}(S_i|T_i)$ directly, e.g.:
 \cdot \prod_{i=1}^{l}\mathbf{P}(T_i|S_i)
 \end{eqnarray*}
 
-Examples are shown below as the token features used to estimate
+Below are examples of token features used to estimate
 $P(T_i|S_i)$:
 
 \begin{itemize}
-\item Number of punctuation "{\tt .}".
-\item Number of total characters in the token.
-\item Number of all punctuations in the token.
-\item Has substring "{\tt am}", "{\tt pm}", etc.
-\item Has substring "{\tt January}", "{\tt Jan}", "{\tt january}",
-"{\tt jan}", etc.
-\item Is a sequence of integers separated by "{\tt .}".
-\item Previous character is a punctuation.
+\item number of punctuation "{\tt .}"
+\item number of total characters in the token
+\item number of all punctuations in the token
+\item has substring "{\tt am}", "{\tt pm}", etc
+\item has substring "{\tt January}", "{\tt Jan}", "{\tt january}",
+"{\tt jan}", etc
+\item is a sequence of integers separated by "{\tt .}"
+\item previous character is a punctuation
 \end{itemize}
 
 Note that in this equation, the number of terms in the product is
-controlled by the number of tokens, instead of the number of
-characters. So sequences with more tokens will have more terms than
-sequences with less tokens, which makes the algorithm in favor of
-shorter token sequences. Let's explain it with a make-up example.
-Suppose the target chunk {\tt s} and the probabilities are as
+controlled by the number of tokens, as opposed to the number of
+characters in HMM. So sequences with more tokens will produce more terms, 
+which makes the algorithm bias towards shorter token sequences. 
+This is evident from the example below.
+Suppose the data chunk {\tt s} and the probabilities are as
 follows:
 
 \begin{figure}[t]
-\begin{flushleft}
-{\small
-\begin{verbatim}
-s  = ``foo foo@princeton.edu 1.63''
-P( id | ``foo'' ) = 0.8
+\begin{centercode}
+s  = ``Dec 10 04:07:51 Updated''
+P( date | ``Dec 10'' ) = 0.8
 P( white | `` `` ) = 1.0
-P( email | ``foo@princeton.edu'' ) = 0.9
-P( float | ``1.63'' ) = 0.9
+P( time | ``04:07:51'' ) = 0.9
+P( word | ``Updated'') = 0.8
 P( white | others ) = 0.7
 P( others | white ) = 0.8
-\end{verbatim}
-}
-\end{flushleft}
+\end{centercode}
 \caption{Probability assumptions of a simple example}
 \end{figure}
 
@@ -241,26 +257,27 @@ Suppose {\tt others} is short for tokens other than white space and
 punctuations. Under this configuration, the conditional probability
 of
 \begin{verbatim}
-P( id white email white float | ``foo foo@princeton.edu 1.63'')
+P( date white time white word | ``Dec 10 04:07:51 Updated'' ) 
 \end{verbatim}
-is 0.203.
+is 0.181.
 
-If we have a token {\tt message} that can parse the entire chunk,
+If we had a token {\tt message} that can parse the entire chunk,
 even though the probability of token {\tt message} given the entire
 string is small, for example, 0.3, the shorter token sequence {\tt
-message} is still selected. In order to avoid the unfairness, the
+message} would still be selected. In order to avoid such bias, the
 equation is modified as follows:
 
-\begin{equation}
-log \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \\
-\propto \frac{log \mathbf{P}(T_1|begin) +
+\begin{eqnarray*}
+&& log \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \\ 
+& \propto & \frac{log \mathbf{P}(T_1|begin) +
 \sum_{i=2}^{l}log \mathbf{P}(T_i|T_{i-1}) + \sum_{i=1}^{l}log
 \mathbf{P}(T_i|S_i)}{l}
-\end{equation}
+\end{eqnarray*}
 
-This average log likelihood guarantees the shorter token sequences
+The average log likelihood guarantees the shorter token sequences
 will not always be selected, unless the average of all conditional
-probabilities $\mathbf{P}(T_i|S_i)$ exceeds certain shreshold.
+probabilities $\mathbf{P}(T_i|S_i)$ exceeds a threshold.
+The above change gives rise to a {\em modified Viterbi Algorithm}.
 
 If we take the number of tokens in the sequence into account, the original
 Viterbi algorithm must be modified to fit this constraint. When
@@ -291,7 +308,7 @@ $\left\{
 + \displaystyle{\max_{PT_1, ...,
   PT_{i-1}}}\log\mathbf{P}(PT_1, ..., PT_i|C_1, ..., C_i, k)), 
 & \\ \qquad
-  \hbox{if $i+1$ is the destination end of an edge in \seqset{},
+  \hbox{if $i+1$ is the end of an edge in \seqset{},
   $\delta$ is the length of token $T_{i+1}$;} \\\\
     \displaystyle{\max_{PT1, ..., PT_i}}\log\mathbf{P}(PT_1, ..., PT_i|C1, ...,
   C_i, k+1)
@@ -305,47 +322,52 @@ At each position $i$, the forward messages store not only token
 sequences with different last tokens, but also the ones with different
 length. At the last position $n$, compute 
 
-$\displaystyle{\max_{l}}\log \frac{\mathbf{P}(TP_1, TP_2, ...,
-TP_n|C_1, C_2, ..., C_n,l)}{l}$,
-
+\[\displaystyle{\max_{l}}\log \frac{\mathbf{P}(TP_1, TP_2, ...,
+TP_n|C_1, C_2, ..., C_n,l)}{l}\]
+\noindent
 and select $l$ as well as the last token in the most likely token
 sequences. After tracing backwards through the forward message chain,
 the most likely token sequences is obtained. The modified Viterbi
 algorithm is still linear to the length of the substring.
 
-When testing the accuracy of HMEM, we found an empirical
-disadvantage of this model. Training data are collected from their
-original sources without many extra efforts except running the
-automatic token tagging tool. In order to make sure there're
-sufficient data to train the models, every record is directly put into
-the training corpus. But on the other hand, much more work needs to be
-done to find a perfect training corpus that can reflect the true
-distribution of tokens needs. For example, in the training data,
-suppose we have only 1\% {\tt url} tokens, it doesn't mean the
-chance {\tt url} tokens appear in the testing data source is also
-small. However, the lower level model, Maximum Entropy model, is a
+
+%When testing the accuracy of HMEM, we found an empirical
+%disadvantage of this model. Training data are collected from their
+%original sources without many extra efforts except running the
+%automatic token tagging tool. In order to make sure there're
+%sufficient data to train the models, every record is directly put into
+%the training corpus. But on the other hand, much more work needs to be
+%done to find a perfect training corpus that can reflect the true
+%distribution of tokens needs. For example, in the training data,
+%suppose we have only 1\% {\tt url} tokens, it doesn't mean the
+%chance {\tt url} tokens appear in the testing data source is also
+%small. 
+Then Maximum Entropy model used in HMEM is a
 generative model that simulates the procedure of generating the data, and
 estimates the target conditional probability by a joint
-probability. This model has a bias towards tokens with more
-occurrences in the training data. In some cases, the learning system
-suffers from this disadvantage. For instance, when there're not enough
+probability. Therefore it biases towards tokens with more
+occurrences in the training data which affects the accuracy of inferencing. 
+For instance, when there're not enough
 {\tt hostname} tokens in the training data, HMEM can't identify {\tt
-hostname} tokens effectively and mess them up with {\tt id}
-tokens. We'll propose another statistical model, the Hierarchical
+hostname} tokens effectively and confuses them with {\tt id}
+tokens. We will show next that the Hierarchical
 Support Vector Machine (HSVM), with a discriminative model as the
-lower level model, that can avoid token bias in cases where HMEM has problems. 
+lower level model, solves this problem.
 
 \subsection{Hierarchical Support Vector Machines (HSVM)}\label{subsec:hsvm}
 
-The graph of HSVM is exactly the same as that of HMEM, shown in
-Subsection \ref{subsec:hmem}. The only difference is HSVM's lower
-level employs Support Vector Machines (SVM)~\cite{CC01a}. Basically, SVM measures the target
-conditional probability $\mathbf{P}(T_i|S_i)$ by generating
-hyperplanes to divide the feature vector space, according to the
-positions of training examples.
+HSVM is exactly the same as HMEM except its lower
+level employs Support Vector Machines (SVM)~\cite{CC01a} to classify
+the tokens. 
+Basically, SVM measures the target conditional probability $\mathbf{P}(T_i|S_i)$ 
+by generating hyperplanes that divide the feature vector space according to the
+positions of training data points. The hyperplanes are positioned such that the
+data points (feature vectors in our case) are separated into classes with
+the maximum margin between any two classes. The data points that lie on
+the margins (or boundaries) of each class are called {\em support vectors}. 
 
-The empirical evaluation in the next section proves HSVM is effective
-in detecting less occurring tokens. The efficiency of SVM method
-depends on the number of support vectors produced at training
-step. Generally speaking, in our \learnpads{} system, we have a large
-number of support vectors and HSVM is usually more time-consuming than HMEM.
+The empirical evaluation in the next section shows that HSVM is effective
+in detecting less occurring tokens. The time complexity of SVM 
+is roughly proportional to the number of support vectors produced at training
+step. Our system generally requires a large number of support vectors 
+and thus HSVM is usually more time-consuming than HMEM.
