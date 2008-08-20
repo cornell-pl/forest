@@ -16,15 +16,13 @@ sequences is constructed for each chunk. But, the histogram-computing
 module afterwards requires one single token sequence from each chunk
 and uses these tokens as the basic units to extract structure
 information.}
-The key to solving the TAP is selecting the best token sequence 
-from a \seqset{} based on probability.
-Research in the past 
-\cite{Seymore99learninghidden,Pinto+:texttables,borkar+:text-segmentation,rabiner89:hmm}  
-has shown that machine learning approaches
-are effective in resolving many problems in areas such as
-information retrieval, natural language processing and 
-speech recognition. Those approaches are also
-suitable for the TAP because:
+
+The key to solving the token ambiguity problem is to select the best
+token sequence from the many possible sequences represented by a
+\seqset{}. Machine learning techniques,
+which build probabilistic models from labeled training data,
+are applicable to the token ambiguity problem for the following reasons.
+
 \begin{itemize}
 %\item Training corpus can be construct efficiently. Instead of
 %assigning tags token by token, system designers
@@ -32,15 +30,19 @@ suitable for the TAP because:
 %formats selected as training sources. We've devised a tagging tool to
 %label the tokens automatically given the data source and the
 %corresponding description;
-\item labeling training data is easy with the built-in tool in \pads{};
-\item although data come from different sources, they follow some
-simple patterns, e.g. URLs usually start with ``{\tt http://}'', 
-and if there's ``{\tt 04:12:59}'' nearby, ``{\tt March}'' is highly likely 
-a part of a date;
-\item efficient algorithms, such as Viterbi, are readily available for finding
-the most likely sequences.
+\item Large amounts of ad hoc data exist from which we can learn token models.
+\item The \pads{} infrastructure allows us to label large amounts of training data quickly.
+\item Common tokens with distinctive features appear frequently in
+  multiple sources.  For example, URLs usually start with  ``\texttt{http://}'',
+  and items that look like times, such as ``\texttt{04:12:59},'' make
+  certain strings more likely to be parts of dates, such as
+  ``{\tt March}''.  This observation means that we can build a
+  model of various tokens based on training data and then apply those
+  models to new data sources.
+\item We can use efficient procedures from machine learning, such as
+  the Viterbi algorithm~\cite{rabiner89:hmm}, to find the most likely token
+  sequences from learned models.
 \end{itemize}
-
 \cut{
 In the training corpus, examples are chunks annotated with token
 sequences, each token with its associated substring. A statistical
@@ -48,10 +50,36 @@ model is trained ahead of time. In the structure discovery phase of
 \learnpads{}, the goal is to label the chunks with token sequences.
 }
 
-To train a probablistic model for the data, we experimented with three machine learning approaches
-which will be introduced in the following subsections.
+Many different machine learning algorithms
+exist~\cite{Seymore99learninghidden,Pinto+:texttables,borkar+:text-segmentation,rabiner89:hmm}.
+We have experimented with three different techniques for 
+building probabilistic models of tokens, which
+we describe in the following subsections.
 
 \subsection{Character-by-character Hidden Markov Model (HMM)}\label{subsec:hmm}
+
+The first technique, called the Hidden Markov Model
+(HMM)~\cite{rabiner89:hmm}, represents the true state of a system as a
+finite collection of ``hidden states.''  The states are hidden because
+we cannot directly detect which state the system is in, and instead
+must try to infer the state from observing what it emits.  
+Furthermore, the hidden 
+state is allowed to change upon each observation.  In our setting,
+each token type corresponds to a hidden state, and each character to
+an observation.
+\figref{fig:hmm} shows a first-order HMM representation of a substring
+from {\tt yum.txt}.  The qualifier ``first-order'' indicates that the
+current state depends only upon the previous state. 
+Each observation, indicated as a shaded node, is a single character. 
+Each hidden state, indicated as a white node, 
+is the name of the token that describes the
+corresponding observable character. We use arrows to denote
+both the dependence among the hidden states and the emission of
+observations by the hidden states.
+We call the hidden state in the character-by-character HMM 
+a {\em partial token} because the corresponding character is often
+only a part of a full token.
+
 
 \begin{figure}[th]
 \begin{center}
@@ -60,19 +88,6 @@ which will be introduced in the following subsections.
 \caption{HMM of a partial token sequence from string ``2.2.13-4''}\label{fig:hmm}
 \end{figure}
 
-Fig. \ref{fig:hmm} shows a first-order Hidden Markov
-Model \cite{rabiner89:hmm} representation of a substring in {\tt yum.txt}. 
-By first-order, we mean the current state is only dependent on the 
-immediately previous state and nothing else.
-Each observation, indicated as a shaded node in the diagram, is a single character. 
-Each hidden state, indicated as a white node, 
-is the name of a token that describes the substring containing the 
-corresponding observable character.
-Both the dependence among the hidden states and the emission of
-observations by the hidden states are denoted by arrows.
-The hidden state in the character-by-character HMM is also known as
-a {\em partial token} because the character it emits is often just
-part of a token.
  
 We use $\mathbf{C}_i$ to denote an observable evidence variable, 
 and $\mathbf{T}_i$ to denote an unobservable state variable, i.e. the
