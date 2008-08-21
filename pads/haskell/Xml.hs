@@ -9,7 +9,7 @@ import Text.XML.HaXml
 
 import Types
 import Printer
-import Aux
+import Utilities
 
 
 data XmlAnnot where
