@@ -89,12 +89,12 @@ only a part of a full token.
 \end{figure}
 
  
-We use $\mathbf{C}_i$ to denote an observable evidence variable, 
-and $\mathbf{T}_i$ to denote an unobservable state variable, i.e. the
-token name. 
+Let $\mathbf{T}_i$ denote the $i^{th}$ hidden state whose value ranges over
+the set of all token names.
+Let $\mathbf{C}_i$ denote the observation emitted by the $\mathbf{T}_i$.
 To avoid bias toward certain characters in the model, we use
 a fixed-length character feature vector instead of the character itself
-as the observable evidence variable. Each feature vector contains a
+as the observation. Each feature vector contains a
 fixed number of boolean features about a single character, such as
 %Note that we use character
 %feature vectors as opposed to plain characters as observations,
@@ -114,21 +114,20 @@ fixed number of boolean features about a single character, such as
 ,}'', ``{\tt ?}'', ``{\tt /}'', ``{\tt $\backslash$}" and ``{\tt :}''
 \end{itemize}
 
-The model contains the transition matrix $\mathbf{P}(T_i|T_{i-1})$,
-the sensor matrix $\mathbf{P}(C_i|T_i)$, and the initial
-probabilities $\mathbf{P}(T_i|begin)$. These parameters are obtained
-from the training data by the following formula:
+The model is determined by three parameters: 
+the transition matrix $\mathbf{P}(T_i|T_{i-1})$,
+the sensor matrix $\mathbf{P}(C_i|T_i)$ and the initial
+probabilities $\mathbf{P}(T_i|begin)$. These parameters are calculated
+from the training data as follows:
 
-\begin{eqnarray*}
-\mathbf{P}(T_i|T_{i-1}) & = & \frac{\textrm{number of token }T_i\textrm{
-following token }T_{i-1}}{\textrm{number of token }T_{i-1}} \label{eqn:1}\\
-\mathbf{P}(C_i|T_i) & = & \frac{\textrm{number of character feature
-vector }C_i\textrm{
-annotated with token }T_i}{\textrm{number of token }T_i} \\
-\mathbf{P}(T_1|begin) & = & \frac{\textrm{number of token
-}T_1\textrm{ begin the first token}}{\textrm{number of training
-chunks}} \label{eqn:2}
-\end{eqnarray*}
+\begin{eqnarray}
+\mathbf{P}(T_i|T_{i-1}) & = & \frac{\textrm{occurrences where}~ T_i\textrm{
+follows}~ T_{i-1}}{\textrm{occurrences of}~ T_{i-1}} \label{eqn:1}\\
+\mathbf{P}(C_i|T_i) & = & \frac{\textrm{occurrences of}~ C_i \textrm{
+annotated with} T_i}{\textrm{occurrences of}~ T_i} \\
+\mathbf{P}(T_1|begin) & = & \frac{\textrm{occurrences of}~ T_1~ \textrm{being first token}}
+{\textrm{number of training chunks}} \label{eqn:2}
+\end{eqnarray}
 
 Therefore, suppose the number of characters in the chunk is $n$, our
 goal is to compare $\mathbf{P}(T_1, T_2, ..., T_n|C_1, C_2, ..., C_n)$
@@ -136,11 +135,11 @@ with respect to different token sequences $T_1, T_2, ..., T_n$ for the
 same $C_1, C_2, ..., C_n$ characters. This probability can be
 calculated by:
 
-\begin{eqnarray*}
-\mathbf{P}(T_1, T_2, ..., T_n|C_1, C_2, ..., C_n) & \propto & \mathbf{P}(T_1, T_2, ..., T_n, C_1, C_2, ..., C_n)\\
+\begin{eqnarray}
+\mathbf{P}(T_1, T_2, ..., T_n|C_1, C_2, ..., C_n) & \propto & \mathbf{P}(T_1, T_2, ..., T_n, C_1, C_2, ..., C_n) \nonumber \\
 & = & \mathbf{P}(T_1|begin) \cdot
 \prod_{i=2}^{n}{\mathbf{P}(T_i|T_{i-1})}
-\end{eqnarray*}
+\end{eqnarray}
 
 \cut{
 To guarantee linear-time efficiency, the Viterbi algorithm to compute
@@ -167,12 +166,12 @@ of being part of an URL.
 %This HMM assumes every partial token is only dependent on its previous
 %partial token. So the first-order Markov Model is a simple model that
 %is unable to catch complicated features. 
-One obvious solution is
-increasing the order of HMM but since the token length is variable in
+One obvious solution is increasing the order of HMM. 
+However, since the token length is variable in
 our application, it is not clear what the order should be, not to mention
 increasing the order also increases the complexity exponentially. 
 In stead, in the next two subsections, we propose two new hybrid
-methods that combine existing classification techniques within the
+methods that combine existing classification techniques into the
 HMM framework.
 
 \subsection{Hierarchical Maximum Entropy Model (HMEM)}\label{subsec:hmem}
@@ -183,58 +182,58 @@ HMM framework.
 \end{center}
 \caption{HMEM of a token sequence from string ``2.2.13-4''}\label{fig:hmem}
 \end{figure}
-
-The upper level mode of a Hierarchical Maximum Entropy Model 
-is an HMM while a lower level token model 
-is a Maximum Entropy model~\cite{Berger96:ME}\cite{megaweb}.
+The character-by-character HMM models a chunk of data as a sequence of
+characters. The Hierarchical Maximum Entropy Model (HMEM) models a chunk as
+a sequence of tokens with variable lengths.
+The top level of HMEM is an HMM while the lower level 
+is a Maximum Entropy Model~\cite{Berger96:ME}\cite{megaweb}.
 Fig.\ref{fig:hmem} shows an example of HMEM.
 %We can see that the graph of Hierarchical Maximum Entropy Model is
 %similar to the one in Subsection \ref{subsec:hmm}, because the upper
 %level of this hierarchical model is still an HMM. 
 The main difference between HMEM and HMM is
-that the observable evidence variables are not single character feature vectors, 
-but substrings representing the entire tokens.
-As such, there is no need to concatenate consecutive hidden state
-variables to form a token as in the case of HMM.
+that an observations is not a single character feature vector, 
+but a substring corresponding to a whole token.
+As such, there is no need to concatenate consecutive partial tokens
+to form a whole token as in the case of HMM.
 
-We use $\mathbf{S}_i$ to denote substrings
-inside the same token, and $\mathbf{T}_i$ to denote tokens annotating
-substrings. Suppose the number of tokens in the chunk is $l$, the
-target probability is computed by:
+Let $\mathbf{T}_i$ be the $i^{th}$ hidden state or token (denoted by
+a white node in Fig. \ref{fig:hmem}) in the sequence and
+let $\mathbf{S}_i$ be the substring annotated by $\mathbf{T}_i$. 
+Suppose the number of tokens in the chunk is $l$, then
+target probability is
 
-\begin{eqnarray*}
-& \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l)  \propto &
+\begin{equation}
+\mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l)  \propto
 \mathbf{P}(T_1|begin) \cdot \prod_{i=2}^{l}{\mathbf{P}(T_i|T_{i-1})}
 \cdot \prod_{i=1}^{l}\mathbf{P}(S_i|T_i)
-\end{eqnarray*}
+\end{equation}
 
-The transition matrix and initial probability are calculated in the
-same way as shown in Equation \ref{eqn:1} and Equation \ref{eqn:2}
-in Subsection \ref{subsec:hmm}. Then the question comes to how to
-estimate $\mathbf{P}(S_i|T_i)$.
-
+The transition matrix and initial probability are calculated
+by (\ref{eqn:1}) and (\ref{eqn:2}).
+%Then the question comes to how to estimate $\mathbf{P}(S_i|T_i)$.
 By Bayes rule,
-\begin{eqnarray*}
+\begin{eqnarray} \label{eqn:bayes}
 \mathbf{P}(S_i|T_i) = \frac{\mathbf{P}(T_i|S_i) \cdot
 \mathbf{P}(S_i)}{\mathbf{P}(T_i)}
-\end{eqnarray*}.
+\end{eqnarray}.
 
-Because we construct our training corpus by gathering data sources 
-from real world applications, the two priors $\mathbf{P}(S_i)$ and
-$\mathbf{P}(T_i)$ can be quite different between the training and
-testing data so that they're not good parameters for prediction. As
-a result, we use Maximum Entropy method to compute
+Because the training corpus comes from real world applications, 
+$\mathbf{P}(S_i)$ and $\mathbf{P}(T_i)$ in (\ref{eqn:bayes})
+can be quite different between the training and
+testing data which means they are not good enough parameters for 
+the prediction. As a result, we use Maximum Entropy (ME) method to compute
 $\mathbf{P}(T_i|S_i)$ and use this probability to estimate
-$\mathbf{P}(S_i|T_i)$ directly, e.g.:
+$\mathbf{P}(S_i|T_i)$ as:
 
-\begin{eqnarray*}
+\begin{eqnarray}\label{eqn:est-bayes}
 \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \propto
 \mathbf{P}(T_1|begin) \cdot \prod_{i=2}^{l}\mathbf{P}(T_i|T_{i-1})
 \cdot \prod_{i=1}^{l}\mathbf{P}(T_i|S_i)
-\end{eqnarray*}
+\end{eqnarray}
 
 Below are examples of token features used to estimate
-$P(T_i|S_i)$:
+$P(T_i|S_i)$ in ME:
 
 \begin{itemize}
 \item number of punctuation "{\tt .}"
@@ -247,9 +246,9 @@ $P(T_i|S_i)$:
 \item previous character is a punctuation
 \end{itemize}
 
-Note that in this equation, the number of terms in the product is
-controlled by the number of tokens, as opposed to the number of
-characters in HMM. So sequences with more tokens will produce more terms, 
+Note in (\ref{eqn:est-bayes}), the number of terms in the product is
+decided by the number of tokens, as opposed to the number of
+characters in HMM. A sequence with more tokens will produce more terms, 
 which makes the algorithm bias towards shorter token sequences. 
 This is evident from the example below.
 Suppose the data chunk {\tt s} and the probabilities are as
@@ -270,79 +269,76 @@ P( others | white ) = 0.8
 
 Suppose {\tt others} is short for tokens other than white space and
 punctuations. Under this configuration, the conditional probability
-of
-\begin{verbatim}
-P( date white time white word | ``Dec 10 04:07:51 Updated'' ) 
-\end{verbatim}
-is 0.181.
+\[\mathbf{P}(\mbox{date white time white word}~ | \mbox{``Dec 10 04:07:51 Updated''}) = 0.181 \]
 
 If we had a token {\tt message} that can parse the entire chunk,
 even though the probability of token {\tt message} given the entire
 string is small, for example, 0.3, the shorter token sequence {\tt
 message} would still be selected. In order to avoid such bias, the
-equation is modified as follows:
+Equation (\ref{eqn:est-bayes}) is modified as follows:
 
-\begin{eqnarray*}
-&& log \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \\ 
-& \propto & \frac{log \mathbf{P}(T_1|begin) +
-\sum_{i=2}^{l}log \mathbf{P}(T_i|T_{i-1}) + \sum_{i=1}^{l}log
-\mathbf{P}(T_i|S_i)}{l}
-\end{eqnarray*}
+\begin{eqnarray}
+&& \log \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \nonumber \\ 
+& \propto & \frac{\log \mathbf{P}(T_1|begin) +
+\sum_{i=2}^{l}\log \mathbf{P}(T_i|T_{i-1}) + 
+\sum_{i=1}^{l}\log \mathbf{P}(T_i|S_i)}{l}\label{eqn:mod-viterbi}
+\end{eqnarray}
 
-The average log likelihood guarantees the shorter token sequences
-will not always be selected, unless the average of all conditional
+The use of average log likelihood in (\ref{eqn:mod-viterbi}) 
+guarantees that shorter token sequences
+will not always be selected, unless the average value of all conditional
 probabilities $\mathbf{P}(T_i|S_i)$ exceeds a threshold.
 The above change gives rise to a {\em modified Viterbi Algorithm},
 which take into account the number of tokens in the sequence.
-The modified algorithm has a slightly revised notation. 
+The modified algorithm has a slightly revised notation as follows. 
 
-Suppose the number of characters
-in the chunk is $n$ and the number of tokens is $l$. Let's use $C_i$
-to denote the the character at
-position $i$, and use $PT_i$ to denote the corresponding partial
-token. Note that if position $i$ is the destination end of an edge in
-the \seqset{}, there must be a token whose ending position is
-$i$ in a legal token sequence. Let's use $T_i$ to denote the token
-that ends at position $i$ and
-use $S_i$ to denote the associated substring. 
+Let the number of characters in the chunk be $n$ and the number of tokens be $l$. 
+Let $C_i$ be the character at position $i$ in the chunk, and 
+$PT_i$ be the partial token that emits the character $C_i$. 
+Note that if position $i$ is a non-start vertex in the \seqset{}, 
+there must be a token whose ending position is
+$i$ in a legal token sequence. Let $T_i$ be the token
+that ends at position $i$ and let $S_i$ be the corresponding substring. 
 
-$\mathbf{P}(PT_1, PT_2, ..., PT_i|C_1, C_2, ..., C_i, k)$ denotes the
-probability of partial token sequence $PT_1, PT_2, ..., PT_i$
-conditioned on substring $C_1, C_2, ..., C_i$, in which the token
-sequence length is $k$. The recursive function of forward messages is
-divided into 2 cases:
+$\mathbf{P}(PT_1, PT_2, ..., PT_i|C_1, C_2, ..., C_i, k)$ is the
+probability of a partial token sequence $PT_1, PT_2, ..., PT_i$
+conditioned on a substring of characters $C_1, C_2, ..., C_i$,
+collectively emitted by a sequence of $k$ tokens.
+The recursive function of forward messages in the Viterbi algorithm 
+has two cases:
 
-$\\ \displaystyle{\max_{PT_1, PT_2, ..., PT_i}}\log\mathbf{P}(PT_1, PT_2, ..., PT_i,
-PT_{i+1}|C_1, C_2, ..., C_{i+1}, k+1) \propto$
-
-$\left\{
+\begin{eqnarray} 
+&&\displaystyle{\max_{PT_1, ..., PT_i}}\log\mathbf{P}(PT_1, PT_2, ..., PT_i,
+PT_{i+1}|C_1, C_2, ..., C_{i+1}, k+1) \propto \nonumber \\
+&& \nonumber \\
+&&\left\{
   \begin{array}{ll}
-    \log \mathbf{P}(S_{i+1}|T_{i+1}) + \\
-\displaystyle{\max_{T_{i+1-\delta}}}(\log\mathbf{P}(T_{i+1}|T_{i+1-\delta})
-+ \displaystyle{\max_{PT_1, ...,
-  PT_{i-1}}}\log\mathbf{P}(PT_1, ..., PT_i|C_1, ..., C_i, k)), 
-& \\ \qquad
-  \hbox{if $i+1$ is the end of an edge in \seqset{},
+    \log \mathbf{P}(S_{i+1}|T_{i+1}) + 
+    \displaystyle{\max_{T_{i+1-\delta}}}(\log\mathbf{P}(T_{i+1}|T_{i+1-\delta}) + \\
+    \qquad \displaystyle{\max_{PT_1, ..., PT_{i-1}}}\log\mathbf{P}(PT_1, ..., PT_i|C_1, ..., C_i, k)), 
+& \\ 
+  \qquad \hbox{if $i+1$ is the end of an edge in \seqset{},
   $\delta$ is the length of token $T_{i+1}$;} \\\\
     \displaystyle{\max_{PT1, ..., PT_i}}\log\mathbf{P}(PT_1, ..., PT_i|C1, ...,
-  C_i, k+1)
-\qquad \qquad \qquad \qquad \qquad \hbox{otherwise.}
+  C_i, k+1) \\
+\qquad \hbox{otherwise.}
   \end{array}
-\right. $
+\right. \label{eqn-forward}
+\end{eqnarray}
 
-$\\$
- 
 At each position $i$, the forward messages store not only token
-sequences with different last tokens, but also the ones with different
-length. At the last position $n$, compute 
+sequences ending with different tokens, but also the sequences of different
+lengths. At the last position $n$, we compute $l$ from 
 
-\[\displaystyle{\max_{l}}\log \frac{\mathbf{P}(TP_1, TP_2, ...,
-TP_n|C_1, C_2, ..., C_n,l)}{l}\]
+\begin{equation}
+\max_{l}~ \log \frac{\mathbf{P}(TP_1, TP_2, ...,
+TP_n|C_1, C_2, ..., C_n,l)}{l}
+\end{equation}
 \noindent
-and select $l$ as well as the last token in the most likely token
+and select the last token in the most likely token
 sequences. After tracing backwards through the forward message chain,
 the most likely token sequences is obtained. The modified Viterbi
-algorithm is still linear to the length of the substring.
+algorithm is linear to the number of characters $n$ in the chunk.
 
 
 %When testing the accuracy of HMEM, we found an empirical
@@ -359,7 +355,7 @@ algorithm is still linear to the length of the substring.
 Then Maximum Entropy model used in HMEM is a
 generative model that simulates the procedure of generating the data, and
 estimates the target conditional probability by a joint
-probability. Therefore it biases towards tokens with more
+probability. Therefore, it biases towards tokens with more
 occurrences in the training data which affects the accuracy of inferencing. 
 For instance, when there're not enough
 {\tt hostname} tokens in the training data, HMEM can't identify {\tt
