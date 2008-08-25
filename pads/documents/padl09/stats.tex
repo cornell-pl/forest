@@ -156,7 +156,7 @@ Subsection \ref{subsec:hmem}.
 }
 We have modified the original Viterbi algorithm for HMMs slightly
 to ensure that the most probable token sequence returned forms a legal
-parse of the data chunk. {\textbf Is the above formula an instance of
+parse of the data chunk. {\bf Is the above formula an instance of
   the viterbi algorithm?  If so, we should say so. If not, this last
   sentence needs to be linked in better.}
 
@@ -187,7 +187,7 @@ The character-by-character HMM models a chunk of data as a sequence of
 characters. The Hierarchical Maximum Entropy Model (HMEM) models a chunk as
 a sequence of tokens with variable lengths.
 The top level of HMEM is an HMM while the lower level 
-is a Maximum Entropy Model~\cite{Berger96:ME,megaweb}.
+is a Maximum Entropy (ME) Model ~\cite{Berger96:ME,megaweb}.
 \figref{fig:hmem} shows an example of HMEM.
 %We can see that the graph of Hierarchical Maximum Entropy Model is
 %similar to the one in Subsection \ref{subsec:hmm}, because the upper
@@ -223,7 +223,7 @@ Because the training corpus comes from real world applications,
 the terms $\mathbf{P}(S_i)$ and $\mathbf{P}(T_i)$ in (\ref{eqn:bayes})
 can differ substantially between the training and
 testing data, making them poor parameters for 
-the prediction. To compensate, we use the Maximum Entropy (ME)~\cite{??} method
+the prediction. To compensate, we use ME 
 to compute 
 $\mathbf{P}(T_i|S_i)$ and use this probability to estimate
 $\mathbf{P}(S_i|T_i)$:
@@ -253,7 +253,7 @@ determines the number of terms in the products, in contrast to the
 number of characters in HMM. A sequence with more tokens will produce
 more terms, which biases the algorithm towards shorter token
 sequences, which is evident in the following example.  Suppose we are
-given the data chunk {\tt s} and the probabilities in \figref{fig:me},
+given the data chunk {\tt s} and the probabilities in \figref{fig:ME},
 \begin{figure}[t]
 \begin{centercode}
 s  = ``Dec 10 04:07:51 Updated''
@@ -303,9 +303,8 @@ $\mathbf{P}(PT_1, PT_2, ..., PT_i|C_1, C_2, ..., C_i, k)$ is the
 probability of a partial token sequence $PT_1, PT_2, ..., PT_i$
 conditioned on a substring of characters $C_1, C_2, ..., C_i$,
 collectively emitted by a sequence of $k$ tokens.
-The recursive function of forward messages in the Viterbi algorithm 
-has two cases: {\textbf kf: what are forward messages?}
-
+The probability of the most likely partial token sequence up to position 
+$i$ is
 \begin{eqnarray} 
 &&\displaystyle{\max_{PT_1, ..., PT_i}}\log\mathbf{P}(PT_1, PT_2, ..., PT_i,
 PT_{i+1}|C_1, C_2, ..., C_{i+1}, k+1) \propto \nonumber \\
@@ -325,9 +324,13 @@ PT_{i+1}|C_1, C_2, ..., C_{i+1}, k+1) \propto \nonumber \\
 \right. \label{eqn-forward}
 \end{eqnarray}
 
-At each position $i$, the forward messages store not only token
-sequences ending with different tokens, but also the sequences of different
-lengths. At the last position $n$, we compute $l$ from 
+The left-hand-side of (\ref{eqn-forward}), known as a ``forward message'',
+contains the token sequence up to a position $i$ in the chunk as well as the lengths of
+the tokens. 
+%At each position $i$, the forward messages store not only token
+%sequences ending with different tokens, but also the sequences of different
+%lengths. 
+At the last position $n$, we compute $l$ from 
 
 \begin{equation}
 \max_{l}~ \log \frac{\mathbf{P}(TP_1, TP_2, ...,
@@ -335,8 +338,8 @@ TP_n|C_1, C_2, ..., C_n,l)}{l}
 \end{equation}
 \noindent
 and select the last token in the most likely token
-sequences. After tracing backwards through the forward message chain,
-we obtin the most likely token sequences. The modified Viterbi
+sequences. After tracing backwards through the chain of messages,
+we obtain the most likely token sequences. The modified Viterbi
 algorithm is linear to the number of characters $n$ in the chunk.
 
 
