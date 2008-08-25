@@ -18,7 +18,7 @@ type Priority = Int
 type NTrans = (NState, [Symbol], Maybe Tag, Priority, NState)
 type TNFA = (S.Set NState, S.Set Tag, S.Set Symbol, S.Set NTrans, NState, S.Set NState)
 
-{--- Some helper functions ---}
+{--- TNFA helper functions ---}
 getNTrans :: TNFA -> S.Set NTrans
 getNTrans (states, tags, alphabet, trans, start, finish) = trans
 
@@ -49,6 +49,40 @@ exampleTNFA :: TNFA
            exampleTrans,         {--- transitions ---}
            0,                    {--- start state ---}
            S.fromList[3])        {--- final states ---}
+
+{-- Routines for printing a TNFA in dot format --}
+fsmStringTemplate :: [String] -> [String] -> String
+fsmStringTemplate finishStates transitions = 
+  let l1 = "digraph finite_state_machine {\n"
+      l2 = "\trankdir=LR;\n"
+      l3 = "\tsize=\"8,5\"\n"
+      states = (foldl (\saccum state-> saccum++" "++state) "" finishStates)
+      l4 = "\tnode [shape = doublecircle];" ++ states ++ "\n"
+      l5 = "\tnode [shape = circle];\n"
+      body = foldl (\saccum trans-> saccum++"\t"++trans++";\n") "" transitions
+      l6 = "}\n"
+  in l1 ++ l2 ++ l3 ++ l4 ++ l5 ++ body ++ l6
+
+convertNTransToDString :: NTrans -> String
+convertNTransToDString  (src, input, tagopt, priority, dst) = 
+  let s = show src
+      d = show dst
+      l = case input of "" -> "\\epsilon" ; _ -> input
+      tagS = case tagopt of Nothing -> ""; Just t -> "/ t_"++(show t)
+  in s++" -> "++d++" [ label = \""++l++"^"++(show priority)++tagS++"\" ];"
+
+convertTNFAtoDString :: TNFA -> String
+convertTNFAtoDString (states,tags,symbols,trans,startState,finishStates) = 
+  let finishS = S.fold (\state accum -> (show state):accum) [] finishStates
+      transS  = S.fold (\t accum -> (convertNTransToDString t):accum ) [] trans
+      startTrans = "Start"++" -> "++ (show startState)
+  in fsmStringTemplate finishS (startTrans:transS)
+
+outputTNFA :: FilePath -> TNFA -> IO ()
+outputTNFA filepath tnfa = writeFile filepath (convertTNFAtoDString tnfa)
+
+exampleTNFADot = convertTNFAtoDString exampleTNFA
+{-- End: Routines for printing a TNFA in dot format --}
 
 type TagIndex = Int
 type TagPair = (Tag, TagIndex)
@@ -87,8 +121,6 @@ getAllTagPairs dState = (S.toList(getAllTagPairsSet dState))
       for each transtion (u,a,_,_,u') in nTrans of nMachine,
         add (u',k) to result 
 Note that a more efficient implementation is possible if avoid fold/select
-As written, this code does not follow epsilon transitions.  Should it?
-No, I think the epsilons are covered in te_closure.
 ---}
 reach' :: (TNFA, DState, [Symbol], [TaggedNState]) -> [TaggedNState]
 reach' (nMachine, dState, input, accum) = 
@@ -104,21 +136,16 @@ reach (tnfa,dstate,input) = S.fromList(reach'(tnfa,dstate,input,[]))
 test = reach(exampleTNFA,S.fromList[(0,S.empty)], "a")
 
 type ClosureItem = (NState, Priority, TagSet)
---teClosure :: TNFA -> DState -> DState
-teClosure nMachine dState = 
-   let nTrans = getNTrans nMachine
-       (initialStack :: [ClosureItem]) = S.fold (\(u,k) accum -> (u,0,k):accum) [] dState
-       initialClosure = S.fromList initialStack
-       -- For each tag, build nextTagIndex function to compute the next "fresh" index for argument tag
-       allTagPairsList = getAllTagPairs dState
-       insertOne map (tag,index) = M.insertWith max tag index map
-       mergedTagSets :: M.Map Tag TagIndex = foldl insertOne M.empty allTagPairsList
-       nextTagIndex tag = if M.member tag mergedTagSets then (mergedTagSets M.! tag) + 1 else 0
-       -- Compute closure of state
-       computeClosure :: [ClosureItem] -> S.Set ClosureItem -> S.Set ClosureItem
-       computeClosure [] closure = closure
-       computeClosure ((s,p,k):stack) closure =  
+
+computeClosure :: DState -> S.Set NTrans -> [ClosureItem] -> S.Set ClosureItem -> S.Set ClosureItem
+computeClosure dState nTrans [] closure = closure
+computeClosure dState nTrans ((s,p,k):stack) closure =  
          let eTrans = select nTrans s ""  -- Select epsilon transitions fromList
+                -- For each tag, build nextTagIndex function to compute the next "fresh" index for argument tag
+             allTagPairsList = getAllTagPairs dState
+             insertOne map (tag,index) = M.insertWith max tag index map
+             mergedTagSets :: M.Map Tag TagIndex = foldl insertOne M.empty allTagPairsList
+             nextTagIndex tag = if M.member tag mergedTagSets then (mergedTagSets M.! tag) + 1 else 0
              processETransition (src,label,edgeTagOpt,edgePri,dst) (lstack,lclosure) = 
                let k' = case edgeTagOpt of
                           Nothing -> (k::TagSet)
@@ -128,9 +155,9 @@ teClosure nMachine dState =
                                in S.insert newPair rest
                    {-- Remove edges with low priority: this part is not well-spec'd in paper.  --}
                    (dstClosure,otherClosure) = S.partition (\(nstate,prior,tagset)->nstate==dst) lclosure
-                   {-- newly discovered target state shoud replace worseDstStates, but shouldn't be added
+                   {-- newly discovered target state should replace worseDstStates, but shouldn't be added
                         if any betterDstStates already exist. --}
-                   (betterDstStates, worseDstStates) = S.partition (\(nstate,prior,tagset)->prior<edgePri) lclosure
+                   (betterDstStates, worseDstStates) = S.partition (\(nstate,prior,tagset)->prior<edgePri) dstClosure
                    {-- find betterDstStates with same item map --}
                    (betterDstKStates, betterDstDifferentKStates) = S.partition (\(nstate,prior,tagset)->tagset==k') betterDstStates
                    {-- If we've discovered a new closureItem, update closure and stack --}
@@ -140,18 +167,26 @@ teClosure nMachine dState =
                                        else (lstack, residualClosure)
                in updates 
              (rstack,rclosure) = S.fold processETransition (stack,closure) eTrans 
-          in computeClosure rstack rclosure
-       finalClosure = computeClosure initialStack initialClosure 
-       result = S.fromList (S.fold (\(s,p,k) accum ->(s,k):accum) [] finalClosure)
-   in --finalClosure
-      result
+          in computeClosure dState nTrans rstack rclosure
 
+
+teClosure :: TNFA -> DState -> DState
+teClosure nMachine dState = 
+   let nTrans = getNTrans nMachine
+       (initialStack :: [ClosureItem]) = S.fold (\(u,k) accum -> (u,0,k):accum) [] dState
+       initialClosure = S.fromList initialStack
+       finalClosure = computeClosure dState nTrans initialStack initialClosure 
+       result = S.fromList (S.fold (\(s,p,k) accum ->(s,k):accum) [] finalClosure)
+   in result
+
+{-- Test code --}
 dStart = teClosure exampleTNFA (S.fromList[(0,S.empty)])
 -- = fromList [(0,fromList []),(1,fromList [(0,0)])]
 dStart' = reach(exampleTNFA, dStart, "a")
 -- = fromList [(0,fromList []),(2,fromList [(0,0)])]
 dTwo = teClosure exampleTNFA (S.fromList [(0,S.fromList []),(2,S.fromList [(0,0)])])
 -- fromList [(0,fromList []),(1,fromList [(0,1)]),(2,fromList [(0,0)])]
+{-- End test code --}
 
 type MarkedState = (DState,Bool) -- true indicates a "marked" state
 
@@ -166,7 +201,6 @@ computeInitializer srcState dstState =
 
 type TagPairMap = M.Map TagPair TagPair
 
--- tagPairMaptoDInit reorder = M.foldWithKey (\tp1 tp2 accum -> (tp1,FromTag tp2):accum) [] reorder
 tagPairMaptoDInit reorder = M.foldWithKey (\tp1 tp2 accum -> (tp2,FromTag tp1):accum) [] reorder
 
 tagPairMatchwithReorder :: Tag -> TagIndex -> TagIndex -> TagPairMap -> Maybe TagPairMap
@@ -280,15 +314,17 @@ computeFinalizer nMachine dState =
        
 processOneStateInput :: TNFA -> DState -> [Symbol] -> ([MarkedState],[DTrans],[DState],DFinish) -> ([MarkedState], [DTrans],[DState],DFinish)
 processOneStateInput nMachine dState input (oldStates,oldTrans,oldFinalStates,oldFinalizers) = 
-    let u = teClosure nMachine (reach(nMachine,dState,input))   -- u is state reachable from dState on input followed by epsilon transitions
-        inits = computeInitializer dState u                     -- record need to set all fresh tags of u from current position
-        (dst,commands,newStates) =                              -- find dst state: either u or existing state with rewrites commands
-            case getMatchingState u oldStates of   
-               Nothing -> (u, inits, (u,False):oldStates)                           -- add u as unmarked state to set of states
-               Just (oldState,rewrites) -> (oldState, inits ++ rewrites,oldStates)  -- state set remains the same in this case.
-        newTrans = (dState,input,dst,commands)
-        (newFinalStates,newFinalizers) = computeFinalizer nMachine dState
-    in (newStates,newTrans:oldTrans,newFinalStates++oldFinalStates,newFinalizers++oldFinalizers)  
+    let (newFinalStates,newFinalizers) = computeFinalizer nMachine dState
+        u = teClosure nMachine (reach(nMachine,dState,input))   -- u is state reachable from dState on input followed by epsilon transitions
+        (newStates,newTrans) =
+                   if S.null u then ([],[])   -- No transitions out of current state
+                   else let inits = computeInitializer dState u                     -- record need to set all fresh tags of u from current position
+                            (dst,commands,newStatesM) =                              -- find dst state: either u or existing state with rewrites commands
+                               case getMatchingState u oldStates of   
+                                 Nothing -> (u, inits, [(u,False)])                           -- add u as unmarked state to set of states
+                                 Just (oldState,rewrites) -> (oldState, inits ++ rewrites,[])  -- state set remains the same in this case.
+                        in (newStatesM,[(dState,input,dst,commands)])
+      in (newStates++oldStates,newTrans++oldTrans,newFinalStates++oldFinalStates,newFinalizers++oldFinalizers)  
 
 testOneStateInput = processOneStateInput exampleTNFA dStart "a" ([(dStart,True)],[],[],[]) 
 
@@ -304,9 +340,9 @@ stateClosure' tnfa (dStates@((dState,False):rest),trans,finals,finishes) =
    let (newMarkedStates,newTrans,newFinals,newFinishes) = processOneState tnfa dState (rest++[(dState,True)],trans,finals,finishes)
    in stateClosure' tnfa (newMarkedStates, newTrans,newFinals,newFinishes)
 
-stateClosure :: TNFA -> [DState] -> ([DState],[DTrans],[DState],DFinish)
-stateClosure tnfa dStates =
-  let markedInputStates = map (\dstate -> (dstate,False)) dStates
+stateClosure :: TNFA -> DState -> ([DState],[DTrans],[DState],DFinish)
+stateClosure tnfa dState =
+  let markedInputStates = [(dState,False)]
       (markedOutputStates, trans,finals,finishers) =  stateClosure' tnfa (markedInputStates,[],[],[])
       outputStates = map (\(dstate,mark) -> dstate) markedOutputStates
   in (outputStates, trans,finals,finishers)
@@ -315,23 +351,12 @@ convertTNFAtoTDFA :: TNFA -> TDFA
 convertTNFAtoTDFA nMachine @ (nStates,nTags,nAlphabet,nTrans,nStart,nFinish) = 
   let dStart = teClosure nMachine (S.fromList[(nStart,S.empty)])
       dInit  = [ (tp,Current) | tp <- getAllTagPairs dStart]
-      (dStates,dTrans,dFinals,dFinishers) = stateClosure nMachine [dStart]
+      (dStates,dTrans,dFinals,dFinishers) = stateClosure nMachine dStart
   in (dStates, nAlphabet, dTrans, dStart, dFinals, dInit, dFinishers)  
 
 testDFA = convertTNFAtoTDFA exampleTNFA
 
 {-- Functions related to outputting TDFA to .gv format for graphviz to view --}
-fsmStringTemplate :: [String] -> [String] -> String
-fsmStringTemplate finishStates transitions = 
-  let l1 = "digraph finite_state_machine {\n"
-      l2 = "\trankdir=LR;\n"
-      l3 = "\tsize=\"8,5\"\n"
-      states = (foldl (\saccum state-> saccum++" "++state) "" finishStates)
-      l4 = "\tnode [shape = doublecircle];" ++ states ++ "\n"
-      l5 = "\tnode [shape = circle];\n"
-      body = foldl (\saccum trans-> saccum++"\t"++trans++";\n") "" transitions
-      l6 = "}\n"
-  in l1 ++ l2 ++ l3 ++ l4 ++ l5 ++ body ++ l6
 
 convertDStateToDString :: M.Map DState () -> DState -> String
 convertDStateToDString stateMap dstate = 
@@ -402,6 +427,7 @@ convertTDFAtoDString (dStates,dAlphabet,dTrans,dStart,dFinish,inits,finishes) =
 
 outputTDFA :: FilePath -> TDFA -> IO ()
 outputTDFA filepath tdfa = writeFile filepath (convertTDFAtoDString tdfa)
+{-- End: Functions related to outputting TDFA to .gv format for graphviz to view --}
 
 {-- Functions related to executing the TDFA --}
 stripPrefix :: Eq a => [a] -> [a] -> Maybe [a]
@@ -477,5 +503,113 @@ runTDFA tdfa input =
 
 dfarun_a = runTDFA testDFA "a"      -- Nothing
 dfarun_aa = runTDFA testDFA "aa"    -- Just (fromList [(0,0)])
-dfarun_aaa = runTDFA testDFA "aaa"  -- XXX Just (fromList [(0,0)])
+dfarun_aaa = runTDFA testDFA "aaa"  -- Just (fromList [(0,1)])
 dfarun_b = runTDFA testDFA "b"      -- Nothing
+
+{-- Data structure for representing a tagged regular expression --}
+data TRegExp where
+  Literal :: Char -> TRegExp
+  Sum     :: TRegExp -> TRegExp -> TRegExp
+  Concat  :: TRegExp -> TRegExp -> TRegExp
+  Star    :: TRegExp -> TRegExp
+  Tag     :: TRegExp -> Int -> TRegExp
+  deriving Show
+{-- End: Data structure for representing a tagged regular expression --}
+
+newEdges :: Priority -> S.Set NState -> NState -> (Priority, S.Set NTrans)
+newEdges nextPriority fromStates toState =
+   let addTran fs (np,trans) = (np + 1, S.insert (fs,[],Nothing,np,toState) trans)
+   in  S.fold addTran (nextPriority,S.empty) fromStates
+
+cnvTREtoTNFA' :: NState -> Priority -> TRegExp -> (NState,Priority,TNFA)
+cnvTREtoTNFA' nextState nextPriority regexp =
+  case regexp of
+   Literal c -> 
+     let 
+        startState = nextState
+        finalState = nextState + 1
+        states = S.fromList [startState, finalState]
+        trans = (startState, [c], Nothing, nextPriority,finalState)
+     in (nextState + 2, nextPriority + 1, 
+        (states, S.empty, S.singleton c, S.singleton trans, startState, S.singleton finalState))
+   Sum r1 r2 -> 
+     let (ns1,np1,(r1States,r1Tags,r1Symbols,r1Trans,r1Start,r1Finish)) = cnvTREtoTNFA' nextState nextPriority r1
+         (ns2,np2,(r2States,r2Tags,r2Symbols,r2Trans,r2Start,r2Finish)) = cnvTREtoTNFA' ns1 np1 r2
+         newStart = ns2
+         initTrans1 = (newStart,[],Nothing,np2,r1Start)
+         initTrans2 = (newStart,[],Nothing,np2 + 1,r2Start)
+     in 
+        (ns2 + 1, np2 + 2,
+        (S.unions [r1States,r2States,S.singleton newStart],   -- states
+         S.union r1Tags r2Tags,                               -- tags
+         S.union r1Symbols r2Symbols,                         -- symbols
+         S.unions [r1Trans,r2Trans,S.singleton initTrans1, S.singleton initTrans2], -- transitions
+         newStart,
+         S.union r1Finish r2Finish))
+   Concat r1 r2 ->   
+     let (ns1,np1,(r1States,r1Tags,r1Symbols,r1Trans,r1Start,r1Finish)) = cnvTREtoTNFA' nextState nextPriority r1
+         (ns2,np2,(r2States,r2Tags,r2Symbols,r2Trans,r2Start,r2Finish)) = cnvTREtoTNFA' ns1 np1 r2
+         (resPriority, newTrans) = newEdges np2 r1Finish r2Start
+         resTrans = S.unions [r1Trans, r2Trans, newTrans]
+     in (ns2, resPriority,
+         (S.union r1States r2States, S.union r1Tags r2Tags, S.union r1Symbols r2Symbols, resTrans, r1Start, r2Finish))
+   Star r ->  
+     let (ns1,np1,(rStates,rTags,rSymbols,rTrans,rStart,rFinish)) = cnvTREtoTNFA' nextState nextPriority r
+         newFinish = ns1
+         (np,  emptyTran) = (ns1 + 1, (rStart, [], Nothing, np1, newFinish))
+         (np',  newTrans) = newEdges np rFinish newFinish
+         (np'', loopTran) = (np' + 1, (newFinish, [], Nothing, np', rStart))
+         trans = S.unions[S.singleton emptyTran, newTrans, S.singleton loopTran, rTrans]
+     in (ns1 + 1, np'',
+        (S.insert newFinish rStates, rTags, rSymbols, trans, rStart, S.singleton newFinish))
+   Tag r i -> 
+     let (ns1,np1,(rStates,rTags,rSymbols,rTrans,rStart,rFinish)) = cnvTREtoTNFA' nextState nextPriority r
+         midState = ns1
+         (midPriority, newTrans) = newEdges np1 rFinish midState
+         newFinish = ns1 + 1
+         (np,newTran) = (midPriority + 1, (midState,[],Just i,midPriority,newFinish))
+     in (ns1 + 2, np,
+        (S.unions [rStates, S.singleton midState, S.singleton newFinish],
+         S.union rTags (S.singleton i), 
+         rSymbols, 
+         S.unions [rTrans,newTrans,S.singleton newTran],
+         rStart,
+         S.singleton newFinish))
+
+cnvTREtoTNFA :: TRegExp -> TNFA
+cnvTREtoTNFA tregexp = 
+  let (ns,np,res) = cnvTREtoTNFA' 0 0 tregexp
+  in res
+
+r_a = Literal 'a'
+r_b = Literal 'b'
+r_aorb = Sum r_a r_b
+r_ab = Concat r_a r_b
+r_as = Star r_a
+r_aorbs = Star r_aorb
+r_abs = Star r_ab
+r_astag = Tag r_abs 0
+r_astaga = Star r_astag
+
+tnfa_r_a = cnvTREtoTNFA r_a
+tnfa_r_b = cnvTREtoTNFA r_b
+tnfa_r_aorb = cnvTREtoTNFA r_aorb
+tnfa_r_ab =  cnvTREtoTNFA r_ab
+tnfa_r_as =  cnvTREtoTNFA r_as
+tnfa_r_aorbs =  cnvTREtoTNFA r_aorbs
+tnfa_r_abs =  cnvTREtoTNFA r_abs
+tnfa_r_astag =  cnvTREtoTNFA r_astag
+tnfa_r_astaga =  cnvTREtoTNFA r_astaga
+
+tdfa_r_a = convertTNFAtoTDFA tnfa_r_a 
+tdfa_r_b = convertTNFAtoTDFA tnfa_r_b 
+tdfa_r_aorb = convertTNFAtoTDFA tnfa_r_aorb 
+tdfa_r_ab = convertTNFAtoTDFA  tnfa_r_ab 
+tdfa_r_as = convertTNFAtoTDFA  tnfa_r_as 
+tdfa_r_aorbs = convertTNFAtoTDFA tnfa_r_aorbs 
+tdfa_r_abs = convertTNFAtoTDFA  tnfa_r_abs 
+tdfa_r_astag = convertTNFAtoTDFA  tnfa_r_astag 
+tdfa_r_astaga = convertTNFAtoTDFA tnfa_r_astaga 
+
+-- outputTDFA "tdfa_r_a.gv" tdfa_r_a
+-- outputTDFA "tdfa_r_aorb.gv" tdfa_r_aorb
