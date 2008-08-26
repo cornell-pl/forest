@@ -4,11 +4,16 @@ Implemented by Kathleen Fisher based on the paper
  "NFAs with Tagged Transitions, their Conversion to Determinitic Automata
   and Applications to Regular Expressions"
 by  Ville Laurikari  (fl@iki.fi)
+
+ghci -fglasgow-exts -package parsec
 --}
 import qualified Data.Set as S
 import qualified Data.Map as M
 import Maybe
 import List
+import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec.Expr
+
 
 {--- Declarations related to TNFA  ---}
 type NState = Int
@@ -153,18 +158,20 @@ computeClosure dState nTrans ((s,p,k):stack) closure =
                                let (match,rest) = S.partition (\(tag,index)->tag==edgeTag) k
                                    newPair = (edgeTag, nextTagIndex edgeTag)
                                in S.insert newPair rest
+                   newDstPriority = max p edgePri  -- priority is higher of new edge priority and src state priority
                    {-- Remove edges with low priority: this part is not well-spec'd in paper.  --}
                    (dstClosure,otherClosure) = S.partition (\(nstate,prior,tagset)->nstate==dst) lclosure
                    {-- newly discovered target state should replace worseDstStates, but shouldn't be added
                         if any betterDstStates already exist. --}
-                   (betterDstStates, worseDstStates) = S.partition (\(nstate,prior,tagset)->prior<edgePri) dstClosure
+                   (betterDstStates, worseDstStates) = S.partition (\(nstate,prior,tagset)->prior<=newDstPriority) dstClosure
                    {-- find betterDstStates with same item map --}
                    (betterDstKStates, betterDstDifferentKStates) = S.partition (\(nstate,prior,tagset)->tagset==k') betterDstStates
                    {-- If we've discovered a new closureItem, update closure and stack --}
-                   residualClosure = S.union otherClosure betterDstDifferentKStates
-                   updates = if (S.size betterDstKStates) == 0 then  
-                                          ((dst,edgePri,k'):lstack, S.insert (dst,edgePri,k') residualClosure)
-                                       else (lstack, residualClosure)
+                   residualClosure = S.union otherClosure betterDstStates
+                   updates = if (S.size betterDstKStates) == 0 
+                             then let newItem = (dst,newDstPriority,k')
+                                  in (newItem:lstack, S.insert newItem residualClosure)
+                             else (lstack, residualClosure)
                in updates 
              (rstack,rclosure) = S.fold processETransition (stack,closure) eTrans 
           in computeClosure dState nTrans rstack rclosure
@@ -312,10 +319,9 @@ computeFinalizer nMachine dState =
            in ([dState],[(dState, finalizers)])
       
        
-processOneStateInput :: TNFA -> DState -> [Symbol] -> ([MarkedState],[DTrans],[DState],DFinish) -> ([MarkedState], [DTrans],[DState],DFinish)
-processOneStateInput nMachine dState input (oldStates,oldTrans,oldFinalStates,oldFinalizers) = 
-    let (newFinalStates,newFinalizers) = computeFinalizer nMachine dState
-        u = teClosure nMachine (reach(nMachine,dState,input))   -- u is state reachable from dState on input followed by epsilon transitions
+processOneStateInput :: TNFA -> DState -> [Symbol] -> ([MarkedState],[DTrans]) -> ([MarkedState], [DTrans])
+processOneStateInput nMachine dState input (oldStates,oldTrans) = 
+    let u = teClosure nMachine (reach(nMachine,dState,input))   -- u is state reachable from dState on input followed by epsilon transitions
         (newStates,newTrans) =
                    if S.null u then ([],[])   -- No transitions out of current state
                    else let inits = computeInitializer dState u                     -- record need to set all fresh tags of u from current position
@@ -324,14 +330,16 @@ processOneStateInput nMachine dState input (oldStates,oldTrans,oldFinalStates,ol
                                  Nothing -> (u, inits, [(u,False)])                           -- add u as unmarked state to set of states
                                  Just (oldState,rewrites) -> (oldState, inits ++ rewrites,[])  -- state set remains the same in this case.
                         in (newStatesM,[(dState,input,dst,commands)])
-      in (newStates++oldStates,newTrans++oldTrans,newFinalStates++oldFinalStates,newFinalizers++oldFinalizers)  
+      in (newStates++oldStates,newTrans++oldTrans)
 
-testOneStateInput = processOneStateInput exampleTNFA dStart "a" ([(dStart,True)],[],[],[]) 
+testOneStateInput = processOneStateInput exampleTNFA dStart "a" ([(dStart,True)],[]) 
 
 processOneState :: TNFA -> DState -> ([MarkedState],[DTrans],[DState],DFinish) -> ([MarkedState], [DTrans],[DState],DFinish)
 processOneState nMachine dState (allStates,allTrans,allFinalStates,allFinalizers) = 
     let inputs = usedSymbols nMachine
-    in S.fold (processOneStateInput nMachine dState) (allStates,allTrans,allFinalStates,allFinalizers) inputs
+        (updatedStates,updatedTrans) = S.fold (processOneStateInput nMachine dState) (allStates,allTrans) inputs
+        (newFinalStates,newFinalizers) = computeFinalizer nMachine dState
+    in  (updatedStates,updatedTrans,newFinalStates++allFinalStates,newFinalizers++allFinalizers)
 
 stateClosure' :: TNFA -> ([MarkedState],[DTrans],[DState],DFinish) -> ([MarkedState],[DTrans],[DState],DFinish)
 stateClosure' tnfa (dStates@((dState,True):rest),trans,finals,finishes) = (dStates,trans,finals, finishes) 
@@ -491,8 +499,8 @@ isAccepted finalMap mms =
          Nothing -> Nothing  -- lastState was not a final state, so input not accepted.
          Just finishCommands -> Just (doFinishCommands finishCommands ms)  -- accepted, set tag values from offsetMap
 
-runTDFA :: TDFA -> String -> Maybe ResultMap
-runTDFA tdfa input = 
+runTDFA' :: TDFA -> String -> Maybe ResultMap
+runTDFA' tdfa input = 
   let (states,alphabet,trans,startState,finishStates,initializers,finishers) = tdfa
       transMap = List.foldl (\map (src,input,dst,init)->mapUpdateList src (input,dst,init) map) M.empty trans
       initMachineState = (0,input,startState,doTagCommands 0 M.empty initializers)
@@ -500,6 +508,14 @@ runTDFA tdfa input =
       result = isAccepted (M.fromList finishers) finalMachineStateM
   in 
       result
+
+type AugResultMap = M.Map Tag (Int,(String,String))
+runTDFA :: TDFA -> String -> Maybe AugResultMap
+runTDFA tdfa input = 
+  case runTDFA' tdfa input of
+   Nothing -> Nothing
+   Just rmap -> Just(M.map (\offset->(offset,splitAt offset input)) rmap)
+
 
 dfarun_a = runTDFA testDFA "a"      -- Nothing
 dfarun_aa = runTDFA testDFA "aa"    -- Just (fromList [(0,0)])
@@ -588,8 +604,9 @@ r_ab = Concat r_a r_b
 r_as = Star r_a
 r_aorbs = Star r_aorb
 r_abs = Star r_ab
-r_astag = Tag r_abs 0
-r_astaga = Star r_astag
+r_atag = Tag r_a 0
+r_abstag = Tag r_abs 0
+r_abtags = Star (Tag r_ab 1)
 
 tnfa_r_a = cnvTREtoTNFA r_a
 tnfa_r_b = cnvTREtoTNFA r_b
@@ -598,8 +615,17 @@ tnfa_r_ab =  cnvTREtoTNFA r_ab
 tnfa_r_as =  cnvTREtoTNFA r_as
 tnfa_r_aorbs =  cnvTREtoTNFA r_aorbs
 tnfa_r_abs =  cnvTREtoTNFA r_abs
-tnfa_r_astag =  cnvTREtoTNFA r_astag
-tnfa_r_astaga =  cnvTREtoTNFA r_astaga
+tnfa_r_atag =  cnvTREtoTNFA r_atag
+tnfa_r_abstag =  cnvTREtoTNFA r_abstag
+tnfa_r_abtags =  cnvTREtoTNFA r_abtags
+
+-- outputTNFA "tnfa_r_ab.gv" tnfa_r_ab
+-- outputTNFA "tnfa_r_as.gv" tnfa_r_as
+-- outputTNFA "tnfa_r_aorbs.gv" tnfa_r_aorbs
+-- outputTNFA "tnfa_r_abs.gv" tnfa_r_abs
+-- outputTNFA "tnfa_r_atag.gv" tnfa_r_atag
+-- outputTNFA "tnfa_r_abstag.gv" tnfa_r_abstag
+-- outputTNFA "tnfa_r_abtags.gv" tnfa_r_abtags
 
 tdfa_r_a = convertTNFAtoTDFA tnfa_r_a 
 tdfa_r_b = convertTNFAtoTDFA tnfa_r_b 
@@ -608,8 +634,63 @@ tdfa_r_ab = convertTNFAtoTDFA  tnfa_r_ab
 tdfa_r_as = convertTNFAtoTDFA  tnfa_r_as 
 tdfa_r_aorbs = convertTNFAtoTDFA tnfa_r_aorbs 
 tdfa_r_abs = convertTNFAtoTDFA  tnfa_r_abs 
-tdfa_r_astag = convertTNFAtoTDFA  tnfa_r_astag 
-tdfa_r_astaga = convertTNFAtoTDFA tnfa_r_astaga 
+tdfa_r_atag = convertTNFAtoTDFA  tnfa_r_atag 
+tdfa_r_abstag = convertTNFAtoTDFA  tnfa_r_abstag 
+tdfa_r_abtags = convertTNFAtoTDFA tnfa_r_abtags 
 
 -- outputTDFA "tdfa_r_a.gv" tdfa_r_a
 -- outputTDFA "tdfa_r_aorb.gv" tdfa_r_aorb
+-- outputTDFA "tdfa_r_ab.gv" tdfa_r_ab
+-- outputTDFA "tdfa_r_as.gv" tdfa_r_as
+-- outputTDFA "tdfa_r_aorbs.gv" tdfa_r_aorbs
+-- outputTDFA "tdfa_r_abs.gv" tdfa_r_abs
+-- outputTDFA "tdfa_r_atag.gv" tdfa_r_atag
+-- outputTDFA "tdfa_r_abtags.gv" tdfa_r_abtags
+
+dfarun_abtags= runTDFA tdfa_r_abtags "abababab"
+
+{-- Routines for parsing a string into a regular expression --}
+
+re_expr :: Parser TRegExp
+re_expr = buildExpressionParser table factor
+          <?> "regular expression"
+
+table = [[postfix "*" Star],               -- higher position indicates higher precedence.
+         [binary ""   Concat AssocRight],   -- sequence
+         [binary "+"  Sum AssocLeft]]      
+        where
+          binary s f assoc
+             = Infix (do{string s; return f}) assoc
+          postfix s f
+             = Postfix (do{string s; return f})
+
+factor = do{ char '('
+           ; x <-re_expr
+           ; char ')'
+           ; return x
+           }
+         <|>
+         do{ char '{'
+           ; x <-re_expr
+           ; char '}'
+           ; ds <- many1 digit
+           ; return (Tag x (read ds))
+           } 
+         <|> charLit
+         <?> "simple expression"
+
+charLit :: Parser TRegExp
+charLit = do { c <- alphaNum
+             ; return (Literal c)
+             }
+          <?> "literal"
+
+re_abc = parseTest re_expr "abc"     -- Concat (Literal 'a') (Concat (Literal 'b') (Literal 'c'))
+re_abpde = parseTest re_expr "ab+de" -- Sum (Concat (Literal 'a') (Literal 'b')) (Concat (Literal 'd') (Literal 'e'))
+re_abs = parseTest re_expr "ab*"     -- Concat (Literal 'a') (Star (Literal 'b'))
+re_pabqs = parseTest re_expr "(ab)*" -- Star (Concat (Literal 'a') (Literal 'b'))
+re_stars = parseTest re_expr "a*aa*"   -- Concat (Star (Literal 'a')) (Concat (Literal 'a') (Star (Literal 'a')))
+re_tag = parseTest re_expr "{a*}0a{a*}1"  --Concat (Tag (Star (Literal 'a')) 0) (Concat (Literal 'a') (Tag (Star (Literal 'a')) 1))
+
+parseRE :: String -> Either ParseError TRegExp
+parseRE s = parse re_expr "" s
