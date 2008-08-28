@@ -13,6 +13,7 @@ import Maybe
 import List
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
+import Text.ParserCombinators.Parsec.Error
 
 
 {--- Declarations related to TNFA  ---}
@@ -597,6 +598,10 @@ cnvTREtoTNFA tregexp =
   let (ns,np,res) = cnvTREtoTNFA' 0 0 tregexp
   in res
 
+cnvTREtoTDFA :: TRegExp -> TDFA
+cnvTREtoTDFA tregexp = convertTNFAtoTDFA (cnvTREtoTNFA tregexp)
+
+
 r_a = Literal 'a'
 r_b = Literal 'b'
 r_aorb = Sum r_a r_b
@@ -649,33 +654,37 @@ tdfa_r_abtags = convertTNFAtoTDFA tnfa_r_abtags
 
 dfarun_abtags= runTDFA tdfa_r_abtags "abababab"
 
+
 {-- Routines for parsing a string into a regular expression --}
 
 re_expr :: Parser TRegExp
 re_expr = buildExpressionParser table factor
           <?> "regular expression"
 
-table = [[postfix "*" Star],               -- higher position indicates higher precedence.
-         [binary ""   Concat AssocRight],   -- sequence
-         [binary "+"  Sum AssocLeft]]      
+table = [[postfix "*" Star],                -- higher position indicates higher precedence.
+         [posttag "%" Tag ],
+         [binary  ""  Concat AssocLeft],   -- sequence
+         [binary  "+" Sum AssocLeft]]      
         where
-          binary s f assoc
-             = Infix (do{string s; return f}) assoc
           postfix s f
              = Postfix (do{string s; return f})
+          binary s f assoc
+             = Infix (do{string s; return f}) assoc
+          posttag s f
+             = Postfix (do{string s; ds <- many1 digit; return (\tre->Tag tre (read ds))})
 
 factor = do{ char '('
            ; x <-re_expr
            ; char ')'
            ; return x
            }
-         <|>
+{--         <|>
          do{ char '{'
            ; x <-re_expr
            ; char '}'
            ; ds <- many1 digit
            ; return (Tag x (read ds))
-           } 
+           } --}
          <|> charLit
          <?> "simple expression"
 
@@ -685,12 +694,31 @@ charLit = do { c <- alphaNum
              }
           <?> "literal"
 
+
 re_abc = parseTest re_expr "abc"     -- Concat (Literal 'a') (Concat (Literal 'b') (Literal 'c'))
 re_abpde = parseTest re_expr "ab+de" -- Sum (Concat (Literal 'a') (Literal 'b')) (Concat (Literal 'd') (Literal 'e'))
 re_abs = parseTest re_expr "ab*"     -- Concat (Literal 'a') (Star (Literal 'b'))
 re_pabqs = parseTest re_expr "(ab)*" -- Star (Concat (Literal 'a') (Literal 'b'))
 re_stars = parseTest re_expr "a*aa*"   -- Concat (Star (Literal 'a')) (Concat (Literal 'a') (Star (Literal 'a')))
-re_tag = parseTest re_expr "{a*}0a{a*}1"  --Concat (Tag (Star (Literal 'a')) 0) (Concat (Literal 'a') (Tag (Star (Literal 'a')) 1))
+re_tag = parseTest re_expr "a*%0aa*%1"  --Concat (Tag (Star (Literal 'a')) 0) (Concat (Literal 'a') (Tag (Star (Literal 'a')) 1))
 
 parseRE :: String -> Either ParseError TRegExp
 parseRE s = parse re_expr "" s
+
+cnvREtoTDFA' :: String -> Maybe TDFA
+cnvREtoTDFA' input = 
+  case parseRE input of
+    Left _ -> Nothing
+    Right tregexp -> Just(cnvTREtoTDFA tregexp)
+
+cnvREtoTDFA :: String -> TDFA = \s->fromJust (cnvREtoTDFA' s)
+
+{--
+cnvREtoTDFA :: String -> TDFA
+cnvREtoTDFA input = 
+  case parseRE input of
+    Left s -> let errorMes :: [Message] = errorMessages s
+                  errorStr :: String = showErrorMessages errorMes
+              in fail errorStr
+    Right tregexp -> cnvTREtoTDFA tregexp
+--}
