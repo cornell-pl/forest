@@ -573,11 +573,11 @@ cnvTREtoTNFA' nextState nextPriority regexp =
    Star r ->  
      let (ns1,np1,(rStates,rTags,rSymbols,rTrans,rStart,rFinish)) = cnvTREtoTNFA' nextState nextPriority r
          newFinish = ns1
-         (np,  emptyTran) = (ns1 + 1, (rStart, [], Nothing, np1, newFinish))
-         (np',  newTrans) = newEdges np rFinish newFinish
-         (np'', loopTran) = (np' + 1, (newFinish, [], Nothing, np', rStart))
+         (np2,  newTrans) = newEdges np1 rFinish newFinish
+         (np3, loopTran) = (np2 + 1, (newFinish, [], Nothing, np2, rStart))
+         (np4,  emptyTran) = (np3 + 1, (rStart, [], Nothing, np3, newFinish))
          trans = S.unions[S.singleton emptyTran, newTrans, S.singleton loopTran, rTrans]
-     in (ns1 + 1, np'',
+     in (ns1 + 1, np4,
         (S.insert newFinish rStates, rTags, rSymbols, trans, rStart, S.singleton newFinish))
    Tag r i -> 
      let (ns1,np1,(rStates,rTags,rSymbols,rTrans,rStart,rFinish)) = cnvTREtoTNFA' nextState nextPriority r
@@ -704,6 +704,14 @@ re_tag = parseTest re_expr "a*%0aa*%1"  --Concat (Tag (Star (Literal 'a')) 0) (C
 
 parseRE :: String -> Either ParseError TRegExp
 parseRE s = parse re_expr "" s
+
+cnvREtoTNFA' :: String -> Maybe TNFA
+cnvREtoTNFA' input = 
+  case parseRE input of
+    Left _ -> Nothing
+    Right tregexp -> Just(cnvTREtoTNFA tregexp)
+
+cnvREtoTNFA :: String -> TNFA = \s->fromJust (cnvREtoTNFA' s)
 
 cnvREtoTDFA' :: String -> Maybe TDFA
 cnvREtoTDFA' input = 
