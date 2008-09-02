@@ -324,51 +324,52 @@ probabilistic
 %\end{table}
 
 \subsection{Execution time}
-\begin{table}[th]
-\begin{center}
-\begin{tabular}{|l||c|c|c|}\hline
-Data source & HMM & HMEM & HSVM \\ \hline
-1967Transactions & 72.96 & 678.373 & 1390.881   \\\hline
-ai.3000 & 1112.978 & 7565.64 & 27191.87 \\ \hline
-yum.txt & 47.381 &  819.373 & 835.01\\ \hline
-rpmpkgs.txt & 156.817 & 476.41 & 1489.92\\ \hline
-railroad.txt & 19.873 & 209.927 & 527.549  \\ \hline
-dibbler.1000 & 546.953 & 3431.927 & 5417.374   \\ \hline
-asl.log & 2021.906 & 14245.55 & 52296.55 \\ \hline
-scrollkeeper.log  &  50.062 & 565.278 & 1733.855 \\ \hline
-page\_log  & 23.69 & 312.321 & 999.72 \\ \hline
-MER\_T01\_01.csv & 10.931 & 351.63 & 516.667 \\ \hline
-crashreporter & 499.632 & 39.572 & 1849.967 \\ \hline
-ls-l.txt & 54.608 & 60.52 & 245.936 \\ \hline
-windowserver\_last & 276.393 & 1354.663 & 3685.615 \\ \hline
-netstat-an & 54.315 & 422.74 & 1192.808 \\ \hline
-boot.txt & 42.012 &  767.893 & 1547.052 \\ \hline
-quarterlyincome & 9.586 & 130.903 & 363.634   \\ \hline
-corald.log & 188.036 &  881.527 & 329.826 \\ \hline
-coraldnssrv.log  & 63.085 &  1553.705 & 6402.181\\ \hline
-probed.log & 298.278 & 1647.448 & 4433.592 \\ \hline
-coralwebsrv.log & 112.372 & 1175.747 & 4020.109 \\\hline
-\end{tabular}
-\caption{Time to produce inferred description in seconds}
-\label{tab:time}
-\end{center}
-\end{table}
+%\begin{table}[th]
+%\begin{center}
+%\begin{tabular}{|l||c|c|c|}\hline
+%Data source & HMM & HMEM & HSVM \\ \hline
+%1967Transactions & 72.96 & 678.373 & 1390.881   \\\hline
+%ai.3000 & 1112.978 & 7565.64 & 27191.87 \\ \hline
+%yum.txt & 47.381 &  819.373 & 835.01\\ \hline
+%rpmpkgs.txt & 156.817 & 476.41 & 1489.92\\ \hline
+%railroad.txt & 19.873 & 209.927 & 527.549  \\ \hline
+%dibbler.1000 & 546.953 & 3431.927 & 5417.374   \\ \hline
+%asl.log & 2021.906 & 14245.55 & 52296.55 \\ \hline
+%scrollkeeper.log  &  50.062 & 565.278 & 1733.855 \\ \hline
+%page\_log  & 23.69 & 312.321 & 999.72 \\ \hline
+%MER\_T01\_01.csv & 10.931 & 351.63 & 516.667 \\ \hline
+%crashreporter & 499.632 & 39.572 & 1849.967 \\ \hline
+%ls-l.txt & 54.608 & 60.52 & 245.936 \\ \hline
+%windowserver\_last & 276.393 & 1354.663 & 3685.615 \\ \hline
+%netstat-an & 54.315 & 422.74 & 1192.808 \\ \hline
+%boot.txt & 42.012 &  767.893 & 1547.052 \\ \hline
+%quarterlyincome & 9.586 & 130.903 & 363.634   \\ \hline
+%corald.log & 188.036 &  881.527 & 329.826 \\ \hline
+%coraldnssrv.log  & 63.085 &  1553.705 & 6402.181\\ \hline
+%probed.log & 298.278 & 1647.448 & 4433.592 \\ \hline
+%coralwebsrv.log & 112.372 & 1175.747 & 4020.109 \\\hline
+%\end{tabular}
+%\caption{Time to produce inferred description in seconds}
+%\label{tab:time}
+%\end{center}
+%\end{table}
 
 Compared to the original \learnpads{} system, inference using
 statistical models requires extra time to construct \seqset{}s and
-compute probabilities. \tblref{tab:time} summarizes the times required
-to produce inferred descriptions for the twenty data sources.
-{\bf kf: can we include a column for learnpads?}
-We ran our experiments on a dual, dual-core 2.2GHz Opteron 275
-processor with 8GB RAM.
-It takes anywhere from a few seconds to several hours to
-infer a description depending on the amount of test data
+compute probabilities. 
+%\tblref{tab:time} summarizes the times required
+%to produce inferred descriptions for the twenty data sources.
+%{\bf kf: can we include a column for learnpads?}
+We ran our experiments on a 2.2 GHz Intel Xeon processor with 5
+GB of memory. The original \learnpads{} algorithm takes from less than
+10 seconds to 25 minutes ({\tt asl.log}) to infer a description, while applying statistical models
+takes anywhere from a few seconds to several hours, depending on the amount of test data
 and the statistical model used. In general, the character-by-character
 HMM model is the least time-consuming, while HSVM costs the most.
 %Long execution times are the main disadvantage of \learnpads{} with
 %statistical models.
 
-Because excution time is linear in the
+Because execution time is linear in the
 number of lines in the data source, we can reduce the time by
 running the inferencing algorithm on only a small portion of the raw
 data.
@@ -379,3 +380,25 @@ parse 95\% of records correctly.
 For the data sources with fewer than 500 records,
 only 35\% of the data is needed to infer a description that parses
 95\% of the data correctly.
+Figure \ref{fig:ai_1} shows the change of execution time using HMEM of {\tt
+  ai.3000} while the size of data used to infer description is
+going up. The increase of execution time is almost linear. In Figure
+\ref{fig:ai_2}, we randomly select 0.33\%, 0.67\%, ..., 50\% of chunks in {\tt ai.3000}
+and use them to infer descriptions, the graph shows percentages of the
+entire data source that can be parsed by these descriptions. It's
+proved that only 60 chunks (2\%) can infer a description that parses 98.53\%
+of the data.
+
+\begin{figure}[th]
+\begin{center}
+\epsfig{file=ai_1.eps, width=1.0\columnwidth}
+\end{center}
+\caption{Execution time of ai.3000}\label{fig:ai_1}
+\end{figure}
+
+\begin{figure}[th]
+\begin{center}
+\epsfig{file=ai_2.eps, width=1.0\columnwidth}
+\end{center}
+\caption{Success rates of ai.3000}\label{fig:ai_2}
+\end{figure}
