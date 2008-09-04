@@ -20,9 +20,10 @@
 An {\em ad hoc data format} is any data format for which useful data processing
 tools do not exist.  Examples of ad hoc data formats include web server logs,
 genomic data sets, astronomical readings, financial transaction reports, 
-agricultural data and more.  Almost everywhere you look, there is some new, 
-semistructured data file someone has created to store or communicate
-information about their domain.
+agricultural data and more.  
+%Almost everywhere you look, there is some new, 
+%semistructured data file someone has created to store or communicate
+%information about their domain.
 
 \pads~\cite{fisher+:pads,padsweb} is a declarative 
 language that describes the syntax and semantics properties of ad hoc data
@@ -31,18 +32,17 @@ and produces a series of programming libraries (parser, printer, validator
 and visitor) and end-to-end tools (xml translator, query engine, reformatter,
 error monitor, etc.).  By doing so, \pads{} can dramatically improve the 
 productivity of data analysts who work with ad hoc data.
-
 However, \pads{} is not (yet) a silver bullet.  It takes time for new users
 to learn the language syntax and even experienced users can take hours or 
 days to develop descriptions for complex formats.  Hence, to further improve
 programmer productivity, we have developed a system called \learnpads{}
 to infer descriptions automatically from example 
 data~\cite{fisher+:dirttoshovels,fisher+:sigmod08}.  
-\learnpads{} helps users with
-one of the most common applications of the \pads{} system --- the task of
-taking a huge pile of unknown data, understanding its structure and 
-translating it into a known format
-such as \xml{} or CVS for further analysis.
+%\learnpads{} helps users with
+%one of the most common applications of the \pads{} system --- the task of
+%taking a huge pile of unknown data, understanding its structure and 
+%translating it into a known format
+%such as \xml{} or CVS for further analysis.
 
 Our past experiments have shown that \learnpads{} is highly effective
 when the set of tokens it uses matches the tokens used in the unknown
@@ -52,9 +52,10 @@ its tokenizer contains the correct corresponding definitions
 for urls, dates and messages used in the file.  If the
 tokenizer does not contain these elements, inference is still possible,
 but the inferred descriptions are generally much, much more complex
-than they would be otherwise.  The excessive complexity interferes with
-the overall goal of using the system to understand the data, analyze and 
-transform it.
+than they would be otherwise. 
+% The excessive complexity interferes with
+% the overall goal of using the system to understand the data, analyze and 
+% transform it.
 
 This observation sounds completely obvious, but, unfortunately,
 that does not make it any easier to develop a general-purpose tokenizer
@@ -132,13 +133,14 @@ report contains an extensive related work section explaining many
 differences between our grammar induction algorithm and others that
 have appeared in the literature.
 
-\paragraph*{Outline.}
-The following section further defines the problem we seek to solve
-by introducing examples of relevant, real-world ad hoc data formats.
-Section~\ref{sec:algo} describes a new algorithm for ad hoc format
-inference that incorporates a generic statistical token model.
-Section~\ref{sec:stats} describes the three statistical models with
-which we have
-instantiated our algorithm.  Section~\ref{sec:eval} evaluates the
-effectiveness of each statistical model using several different
-metrics and Section~\ref{sec:conclude} concludes.
+% \paragraph*{Outline.}
+% The following section further defines the problem we seek to solve
+% by introducing examples of relevant, real-world ad hoc data formats.
+% Section~\ref{sec:algo} describes a new algorithm for ad hoc format
+% inference that incorporates a generic statistical token model.
+% Section~\ref{sec:stats} describes the three statistical models with
+% which we have
+% instantiated our algorithm.  Section~\ref{sec:eval} evaluates the
+% effectiveness of each statistical model using several different
+% metrics and Section~\ref{sec:conclude} concludes.
+
