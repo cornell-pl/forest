@@ -7,6 +7,18 @@ by  Ville Laurikari  (fl@iki.fi)
 
 ghci -fglasgow-exts -package parsec
 --}
+{--
+Entry functions:
+
+outputTNFA :: FilePath -> TNFA -> IO ()
+outputTDFA :: FilePath -> TDFA -> IO ()
+
+cnvREtoTNFA :: String -> TNFA
+cnvREtoTDFA :: String -> TDFA
+cnvTNFAtoTDFA :: TNFA -> TDFA
+
+runTDFA :: TDFA -> String -> Maybe AugResultMap
+--}
 import qualified Data.Set as S
 import qualified Data.Map as M
 import Maybe
@@ -55,6 +67,79 @@ exampleTNFA :: TNFA
            exampleTrans,         {--- transitions ---}
            0,                    {--- start state ---}
            S.fromList[3])        {--- final states ---}
+
+{-- optimized TNFA for a*%0a* --}
+{-- violates invariant that multiple incoming edges to same node must all be epsilon edges --}
+{-- This breaks the disbiguity check because the node targeted by non-epsilon edge may falsely --
+    end up with higher priority (ie, 0), which is why this automata chooses rightmost longest rather 
+    than left-most longest match --}
+ex2Trans :: S.Set NTrans
+   = S.fromList [(0,['a'],Nothing,0,0),
+                 (0,[],   Just 0, 1,1),
+                 (1,['a'],Nothing,2,1)]
+
+ex2TNFA :: TNFA
+        = (S.fromList [0,1],     {--- states ---}
+           S.fromList[0],        {--- tags   ---}
+           S.fromList['a'],      {--- alphabet ---}
+           ex2Trans,             {--- transitions ---}
+           0,                    {--- start state ---}
+           S.fromList[1])        {--- final states ---}
+
+{-- slightly less optimized TNFA for a*%0a* --}
+ex3Trans :: S.Set NTrans
+   = S.fromList [(0,['a'],Nothing,0,1),
+                 (1,[],Nothing,2,2),
+                 (2,[],Nothing,1,0),
+                 (0,[],Nothing,3,2),
+                 (2,[],Just 0,4,3),
+                 (3,['a'],Nothing,5,4),
+                 (4,[],Nothing,6,3)]
+
+ex3TNFA :: TNFA 
+     = (S.fromList [0,1,2,3,4],
+        S.fromList [0],
+        S.fromList ['a'],
+        ex3Trans,
+        0,
+        S.fromList[3])
+
+{-- a different, slightly less optimized TNFA for a*%0a* --}
+ex4Trans :: S.Set NTrans
+  = S.fromList [(0,"",Nothing,0,1),
+                (1,"a",Nothing,1,0),
+                (4,"",Just 0,2,2),
+                (1,"a", Nothing,5,4),
+                (2,"a",Nothing,3,3),
+                (3,"",Nothing,4,2)]
+ex4TNFA :: TNFA
+    = (S.fromList[0,1,2,3,4],
+       S.fromList [0],
+       S.fromList ['a'],
+       ex4Trans,
+       0,
+       S.fromList[2])
+
+{-- a different, slightly less optimized TNFA for a*%0aa* --}
+ex4Trans :: S.Set NTrans
+  = S.fromList [(0,"",Nothing,0,1),
+                (1,"a",Nothing,1,0),
+                (1,"",Just 0, 2,2),
+                (2,"a",Nothing,3,3),
+                (3,"",Nothing,4,4),
+                (4,"a",Nothing,5,5),
+                (5,"",Nothing,6,6),
+                (6,"",Nothing,7,4),
+                (4,"",Nothing,8,6)]
+
+ex4TNFA :: TNFA
+    = (S.fromList[0,1,2,3,4,5,6],
+       S.fromList [0],
+       S.fromList ['a'],
+       ex4Trans,
+       0,
+       S.fromList[6])
+      
 
 {-- Routines for printing a TNFA in dot format --}
 fsmStringTemplate :: [String] -> [String] -> String
@@ -141,7 +226,11 @@ reach (tnfa,dstate,input) = S.fromList(reach'(tnfa,dstate,input,[]))
 
 test = reach(exampleTNFA,S.fromList[(0,S.empty)], "a")
 
+
 type ClosureItem = (NState, Priority, TagSet)
+
+-- processETransition :: (Tag->TagIndex) -> NTrans -> ([ClosureItem],S.Set ClosureItem) -> ([ClosureItem],S.Set ClosureItem)
+
 
 computeClosure :: DState -> S.Set NTrans -> [ClosureItem] -> S.Set ClosureItem -> S.Set ClosureItem
 computeClosure dState nTrans [] closure = closure
@@ -159,19 +248,13 @@ computeClosure dState nTrans ((s,p,k):stack) closure =
                                let (match,rest) = S.partition (\(tag,index)->tag==edgeTag) k
                                    newPair = (edgeTag, nextTagIndex edgeTag)
                                in S.insert newPair rest
-                   newDstPriority = max p edgePri  -- priority is higher of new edge priority and src state priority
-                   {-- Remove edges with low priority: this part is not well-spec'd in paper.  --}
-                   (dstClosure,otherClosure) = S.partition (\(nstate,prior,tagset)->nstate==dst) lclosure
-                   {-- newly discovered target state should replace worseDstStates, but shouldn't be added
-                        if any betterDstStates already exist. --}
-                   (betterDstStates, worseDstStates) = S.partition (\(nstate,prior,tagset)->prior<=newDstPriority) dstClosure
-                   {-- find betterDstStates with same item map --}
-                   (betterDstKStates, betterDstDifferentKStates) = S.partition (\(nstate,prior,tagset)->tagset==k') betterDstStates
-                   {-- If we've discovered a new closureItem, update closure and stack --}
-                   residualClosure = S.union otherClosure betterDstStates
-                   updates = if (S.size betterDstKStates) == 0 
-                             then let newItem = (dst,newDstPriority,k')
-                                  in (newItem:lstack, S.insert newItem residualClosure)
+                   newCandidate = (dst,edgePri,k')
+                   {-- Remove states reached via lower priority edge; this part is not well-spec'd in paper.  --}
+                   (worseDstStates, residualClosure) = S.partition (\(nstate,prior,tagset)->nstate==dst && edgePri<prior) lclosure
+                   (betterDstStates,_) = S.partition (\(nstate,prior,tagset)->nstate==dst && prior<=edgePri) residualClosure
+                   updates = if S.size betterDstStates == 0 
+-- S.notMember newCandidate residualClosure  -- Wrong test. If (dst,prior<=edgePri, any k) in residual, don't add
+                             then (newCandidate:lstack, S.insert newCandidate residualClosure)
                              else (lstack, residualClosure)
                in updates 
              (rstack,rclosure) = S.fold processETransition (stack,closure) eTrans 
@@ -356,14 +439,15 @@ stateClosure tnfa dState =
       outputStates = map (\(dstate,mark) -> dstate) markedOutputStates
   in (outputStates, trans,finals,finishers)
 
-convertTNFAtoTDFA :: TNFA -> TDFA
-convertTNFAtoTDFA nMachine @ (nStates,nTags,nAlphabet,nTrans,nStart,nFinish) = 
+cnvTNFAtoTDFA :: TNFA -> TDFA
+cnvTNFAtoTDFA nMachine @ (nStates,nTags,nAlphabet,nTrans,nStart,nFinish) = 
   let dStart = teClosure nMachine (S.fromList[(nStart,S.empty)])
       dInit  = [ (tp,Current) | tp <- getAllTagPairs dStart]
       (dStates,dTrans,dFinals,dFinishers) = stateClosure nMachine dStart
   in (dStates, nAlphabet, dTrans, dStart, dFinals, dInit, dFinishers)  
 
-testDFA = convertTNFAtoTDFA exampleTNFA
+testDFA = cnvTNFAtoTDFA exampleTNFA
+tdfa_ex3= cnvTNFAtoTDFA ex3TNFA
 
 {-- Functions related to outputting TDFA to .gv format for graphviz to view --}
 
@@ -573,9 +657,9 @@ cnvTREtoTNFA' nextState nextPriority regexp =
    Star r ->  
      let (ns1,np1,(rStates,rTags,rSymbols,rTrans,rStart,rFinish)) = cnvTREtoTNFA' nextState nextPriority r
          newFinish = ns1
-         (np2,  newTrans) = newEdges np1 rFinish newFinish
-         (np3, loopTran) = (np2 + 1, (newFinish, [], Nothing, np2, rStart))
-         (np4,  emptyTran) = (np3 + 1, (rStart, [], Nothing, np3, newFinish))
+         (np2, loopTran) = (np1 + 1, (newFinish, [], Nothing, np1, rStart))
+         (np3, newTrans) = newEdges np2 rFinish newFinish
+         (np4, emptyTran) = (np3 + 1, (rStart, [], Nothing, np3, newFinish))
          trans = S.unions[S.singleton emptyTran, newTrans, S.singleton loopTran, rTrans]
      in (ns1 + 1, np4,
         (S.insert newFinish rStates, rTags, rSymbols, trans, rStart, S.singleton newFinish))
@@ -599,7 +683,7 @@ cnvTREtoTNFA tregexp =
   in res
 
 cnvTREtoTDFA :: TRegExp -> TDFA
-cnvTREtoTDFA tregexp = convertTNFAtoTDFA (cnvTREtoTNFA tregexp)
+cnvTREtoTDFA tregexp = cnvTNFAtoTDFA (cnvTREtoTNFA tregexp)
 
 
 r_a = Literal 'a'
@@ -632,16 +716,16 @@ tnfa_r_abtags =  cnvTREtoTNFA r_abtags
 -- outputTNFA "tnfa_r_abstag.gv" tnfa_r_abstag
 -- outputTNFA "tnfa_r_abtags.gv" tnfa_r_abtags
 
-tdfa_r_a = convertTNFAtoTDFA tnfa_r_a 
-tdfa_r_b = convertTNFAtoTDFA tnfa_r_b 
-tdfa_r_aorb = convertTNFAtoTDFA tnfa_r_aorb 
-tdfa_r_ab = convertTNFAtoTDFA  tnfa_r_ab 
-tdfa_r_as = convertTNFAtoTDFA  tnfa_r_as 
-tdfa_r_aorbs = convertTNFAtoTDFA tnfa_r_aorbs 
-tdfa_r_abs = convertTNFAtoTDFA  tnfa_r_abs 
-tdfa_r_atag = convertTNFAtoTDFA  tnfa_r_atag 
-tdfa_r_abstag = convertTNFAtoTDFA  tnfa_r_abstag 
-tdfa_r_abtags = convertTNFAtoTDFA tnfa_r_abtags 
+tdfa_r_a = cnvTNFAtoTDFA tnfa_r_a 
+tdfa_r_b = cnvTNFAtoTDFA tnfa_r_b 
+tdfa_r_aorb = cnvTNFAtoTDFA tnfa_r_aorb 
+tdfa_r_ab = cnvTNFAtoTDFA  tnfa_r_ab 
+tdfa_r_as = cnvTNFAtoTDFA  tnfa_r_as 
+tdfa_r_aorbs = cnvTNFAtoTDFA tnfa_r_aorbs 
+tdfa_r_abs = cnvTNFAtoTDFA  tnfa_r_abs 
+tdfa_r_atag = cnvTNFAtoTDFA  tnfa_r_atag 
+tdfa_r_abstag = cnvTNFAtoTDFA  tnfa_r_abstag 
+tdfa_r_abtags = cnvTNFAtoTDFA tnfa_r_abtags 
 
 -- outputTDFA "tdfa_r_a.gv" tdfa_r_a
 -- outputTDFA "tdfa_r_aorb.gv" tdfa_r_aorb
@@ -720,6 +804,17 @@ cnvREtoTDFA' input =
     Right tregexp -> Just(cnvTREtoTDFA tregexp)
 
 cnvREtoTDFA :: String -> TDFA = \s->fromJust (cnvREtoTDFA' s)
+
+
+-- outputTNFA "tnfa_ex4.gv" ex4TNFA
+tdfa_ex4 = cnvTNFAtoTDFA ex4TNFA
+-- outputTDFA "tdfa_ex4.gv" tdfa_ex4
+
+tnfa_ambig = cnvREtoTNFA "a*%0aa*"
+-- outputTNFA "tnfa_ambig.gv" tnfa_ambig
+tdfa_ambig = cnvTNFAtoTDFA tnfa_ambig
+-- outputTDFA "tdfa_ambig.gv" tdfa_ambig
+result_ambig = runTDFA tdfa_ambig "aaaaaaa"
 
 {--
 cnvREtoTDFA :: String -> TDFA
