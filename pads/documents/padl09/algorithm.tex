@@ -123,13 +123,16 @@ called a \seqset{}.  For example, the \seqset{} for the substring
 %substring ``2.2.13-4'' from a chunk in \figref{fig:yum}. It forms a
 %small part of the \seqset{} for the entire chunk.
 
-%\begin{figure}[th]
+\begin{figure}[th]
 \begin{center}
-\epsfig{file=seqset.eps, width=0.9\columnwidth}
+\shrink
+\epsfig{file=seqset.eps, width=0.7\columnwidth}
 \end{center}
-%\caption{\seqset{} from parsing string ``2.2.13-4''}\label{fig:seqset}
-%\end{figure}
-%\noindent
+\caption{\seqset{} from parsing string ``2.2.13-4''}\label{fig:seqset}
+\shrink
+\end{figure}
+
+\noindent
 Each edge in the \seqset{} represents an occurence of a token in the
 data, while each vertex marks a location in the input.  If a token
 edge ends at a vertex $v$, then $v$ indicates the position immediately
@@ -227,9 +230,10 @@ vertices~42 and~46, creating the two new \seqset{}s in \figref{fig:cut}.
 %
 \begin{figure}[th]
 \begin{center}
-\epsfig{file=cut.eps, width=\columnwidth}
+\epsfig{file=cut.eps, width=0.8\columnwidth}
 \end{center}
 \caption{Cutting \seqset{} for ``2.2.13-4'' after the first float token} \label{fig:cut}
+\shrink
 \end{figure}
 %
 Finally, the {\tt oracle} function returns the predicated structure as a ``prophecy''

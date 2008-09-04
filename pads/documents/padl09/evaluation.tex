@@ -89,13 +89,21 @@ coralwebsrv.log       & 86.67 & 100   & 8.75  & 23.99 & 86.67 &
                100   & 8.75  & 23.99     & 81.90 & 98.33 & 8.75  & 23.81     \\
                \hline
 \end{tabular}
-\caption{Tokenization errors}
+\sk
+\caption{Tokenization errors} \shrink 
 \label{tab:error}
 \end{center}
 \end{table}
 The token error rate measures the number of times a token appears in
 $S$ but the same token does not appear in the same place in $S_m$.
-
+A {\em token group} is a set of token types that have similar
+feature vectors and hence are hard to distinguish, e.g.
+{\tt hex string} and {\tt id} which both consist of alpha-numeric
+characters. The token group error rate measures the percentage of 
+token groups in $S$ that do not exist in $S_m$ at the same locations.
+Correct identification of token group is more desirable than confusing
+with unrelated token types.
+\cut{%%%%%%%%%%%%%%%%%%%
 To define the token group error rate, we must first explain token
 groups.  Some tokens have feature vectors that make them difficult to
 distinguish, for example, the tokens {\tt hex string} and {\tt id}
@@ -104,15 +112,15 @@ model misclassifies a {\tt hex string} as an {\tt id}, it is doing
 better than if it predicts an unrelated token, such as a {\tt date}.
 Each token group collects tokens with similar feature vectures, so the
 tokens {\tt hex string} and {\tt id} belong to the same token group,
-but not {\tt date}.  The token group error rate then measures the
+but not {\tt date}.  
 number of times the model predicts a token outside of the token group
 in the corresponding position in $S$.  More concretely, it measures the number of times a
 token from a particular token group appears in $S$ but no token from
 the same group appears in the same location in $S_m$.  Note that by
 definition the token group error rate will always be lower than the
 token error rate.
-
-Finally, the token boundary error rate measures the number of times
+}%%%%%%%%%%%
+The {\em token boundary} error rate measures the number of times
 there is a boundary between tokens in $S$ but no corresponding
 boundary in $S_m$.  This relatively coarse measure is interesting
 because boundaries are important to structure discovery. Even if the
@@ -120,7 +128,20 @@ tokens are incorrectly identified, if the boundaries are correct, the
 correct structure can be still discovered.
 
 \tblref{tab:error} lists the token error, token group error, and token
-boundary error rates of the twenty benchmarks.  The {\tt lex} column
+boundary error rates of the twenty benchmarks. The results from
+the original \learnpads{} system are presented in columns marked by 
+{\tt lex}. It is evident that the original system produces high
+error rates for many same files, because the lexer was unable to
+use overlapping tokens effectively. HMM relies heavily on the transition
+probabilities which requires more training samples than we have.
+Therefore it does not perform as well as HMEM and HSVM in general.
+In the case of {\tt asl.log}, {\tt corald.log} and {\tt coralwebsrv.log},
+HMM's failure to detect some punctuation characters causes the
+entire token sequences to be misaligned and hence gives very high
+error rates.
+
+\cut{ %%%%%%%%%%%
+The {\tt lex} column
 represents the results for the original \learnpads{} system.
 The error rates are
 high for the original system because the ideal \pads{} descriptions are
@@ -134,6 +155,7 @@ For every data source except {\tt probed.log}, the
 statistical models, especially HMEM and HSVM, substantially decrease token errors.
 {\bf ksf: this is meaningless unless we fix the lex column.  We should
 add a more meaningful summary of the data in the table.}
+}%%%%%%%%%%%%
 
 \subsection{Quality of description}
 We use the {\em Minimum Description Length Principle}
@@ -145,79 +167,79 @@ type cost) and the cost in bits of transmitting the data
 type cost measures the complexity of the description, while the data
 cost measures how loosely a given description explains the data.
 Increasing the type cost generally reduces the data cost, and
-\textit{vice versa}, so the challenge is to minimize their sum.
-\tblref{tab:complexity1} and \tblref{tab:complexity2} shows the
-percentage change before and after refinement phase respectively in
-the type and data costs of the descriptions inferred using
-probibalistic tokenization over the costs of the descriptions
-learned using the original \learnpads{} system.
+\textit{vice versa}. The objective is to minimize both.
+\tblref{tab:complexity1} shows the
+percentage changes in the two costs of intermediate descriptions learned by
+the new algorithm before refinement phase over that of the original \learnpads{} system.
 
 \begin{table}[th]
 \begin{center}
 \begin{tabular}{|l||c|c|c||c|c|c|}\hline
-Data source & \multicolumn{3}{|c||}{Type Cost} &
-\multicolumn{3}{|c|}{Data Cost}\\ \hline & HMM & HMEM & HSVM & HMM &
-HMEM & HSVM \\ \hline 1967Transactions & -39.661 & -27.03 & -27.03 &
--2.80 & -2.80 & -2.80    \\\hline ai.3000 & -26.27 & +4.44 & -19.27
-& -3.16 & -6.85 & -12.68 \\ \hline yum.txt & -57.60 & +50.93 &
--76.27 & -1.55 & -7.93 & -1.05  \\ \hline rpmpkgs.txt & -92.03 &
--76.29 & -91.86 & +1.47 & -0.00 & +1.47 \\ \hline railroad.txt &
--31.86 & -20.88 & -22.93 & -29.54 & -29.22 & -29.16   \\ \hline
-dibbler.1000 & +611.22 & +17.83 & +7.03 & -19.88 & -22.11 & -22.10
-\\ \hline asl.log & -75.71 & -22.33 & -25.54 & +8.57 & -15.13 &
--17.53 \\ \hline scrollkeeper.log & -14.55 & -58.86 & -21.18 & -7.77
-& -9.98 & -11.36  \\ \hline page\_log & 0 & 0 & 0 & -11.46 & -11.67
-& -11.67 \\ \hline MER\_T01\_01.csv & -8.59 & -12.74 & -12.74 &
--25.59 & -24.15 & -24.14 \\ \hline crashreporter & +4.03 & -8.66 &
--12.73 & -9.38 & -9.41 & -12.45 \\ \hline ls-l.txt & -74.61 & -51.32
-& -39.30 & +0.10 & -7.26 & -2.18 \\ \hline windowserver\_last &
--62.84 & -33.29 & -56.18 & +6.93 & -11.12 & -9.87
-\\ \hline netstat-an & +147.07 & -12.00 & -21.63 & +14.18 & +6.74 &
-+7.65 \\ \hline boot.txt & -72.60 & -38.95 & -71.29 & +5.26 & -6.54
-& -5.03 \\ \hline quarterlyincome & -18.36 & -18.36 & -18.36 &
--32.04 & -32.51 & -32.51    \\ \hline corald.log & -4.75 & -5.53 &
--5.53 & -27.28 & -29.81 & -29.81   \\ \hline coraldnssrv.log  &
--1.86 & -2.03 & -5.86 & +59.53 & +59.53 & +59.53 \\ \hline
-probed.log & -14.61 & -33.48 & -33.48 & +59.53 & +63.18 & +63.18 \\
-\hline
-coralwebsrv.log & -8.75 & +94.58 & -71.55 & -49.30 & -15.91 & +13.36   \\
-               \hline
+Data source & \multicolumn{3}{|c||}{Type Cost} & \multicolumn{3}{|c|}{Data Cost}\\ \cline{2-7} 
+& HMM & HMEM & HSVM & HMM & HMEM & HSVM \\ \hline 
+1967Transactions & -39.661 & -27.03 & -27.03 & -2.80 & -2.80 & -2.80  \\ \hline
+ai.3000 & -26.27 & +4.44 & -19.27 & -3.16 & -6.85 & -12.68            \\ \hline
+yum.txt & -57.60 & +50.93 & -76.27 & -1.55 & -7.93 & -1.05            \\ \hline
+rpmpkgs.txt & -92.03 & -76.29 & -91.86 & +1.47 & -0.00 & +1.47        \\ \hline
+railroad.txt & -31.86 & -20.88 & -22.93 & -29.54 & -29.22 & -29.16    \\ \hline
+dibbler.1000 & +611.22 & +17.83 & +7.03 & -19.88 & -22.11 & -22.10    \\ \hline
+asl.log & -75.71 & -22.33 & -25.54 & +8.57 & -15.13 & -17.53          \\ \hline
+scrollkeeper.log & -14.55 & -58.86 & -21.18 & -7.77 & -9.98 & -11.36  \\ \hline
+page\_log & 0 & 0 & 0 & -11.46 & -11.67 & -11.67                      \\ \hline
+MER\_T01\_01.csv & -8.59 & -12.74 & -12.74 & -25.59 & -24.15 & -24.14 \\ \hline
+crashreporter & +4.03 & -8.66 & -12.73 & -9.38 & -9.41 & -12.45       \\ \hline
+ls-l.txt & -74.61 & -51.32 & -39.30 & +0.10 & -7.26 & -2.18           \\ \hline
+windowserver\_last & -62.84 & -33.29 & -56.18 & +6.93 & -11.12 & -9.87 \\ \hline
+netstat-an & +147.07 & -12.00 & -21.63 & +14.18 & +6.74 & +7.65       \\ \hline
+boot.txt & -72.60 & -38.95 & -71.29 & +5.26 & -6.54 & -5.03           \\ \hline
+quarterlyincome & -18.36 & -18.36 & -18.36 & -32.04 & -32.51 & -32.51 \\ \hline
+corald.log & -4.75 & -5.53 & -5.53 & -27.28 & -29.81 & -29.81         \\ \hline
+coraldnssrv.log  & -1.86 & -2.03 & -5.86 & +59.53 & +59.53 & +59.53   \\ \hline
+probed.log & -14.61 & -33.48 & -33.48 & +59.53 & +63.18 & +63.18      \\ \hline
+coralwebsrv.log & -8.75 & +94.58 & -71.55 & -49.30 & -15.91 & +13.36  \\ \hline
 \end{tabular}
+\sk
 \caption{Increase (+\%) or decrease (-\%) in type cost and data
-cost: before refinement} \label{tab:complexity1}
+cost before refinement} \label{tab:complexity1} \shrink
 \end{center}
 \end{table}
 
+We can see that for most of the data sources, the probablistic tokenization
+scheme improved the quality of the description by reducing both the type and
+the data costs. In a few exceptional cases, a few misidentified tokens in
+{\tt dibbler.1000}, {\tt netstat-an} and {\tt coralwebsrv.log} cause the 
+entire descriptions to be drastically different from the ones produced by
+the original system.
+
+
+\cut{%%%%%%%%%%%
 \begin{table}[th]
 \begin{center}
 \begin{tabular}{|l||c|c|c||c|c|c|}\hline
 Data source & \multicolumn{3}{|c||}{Type Cost} &
-\multicolumn{3}{|c|}{Data Cost}\\ \hline & HMM & HMEM & HSVM & HMM &
-HMEM & HSVM \\ \hline 1967Transactions & -6.33 & -6.33 & -6.33 &
-+3.01 & +3.01 & +3.01    \\\hline ai.3000 & -44.64 & -35.85 & -52.00
-& +34.81 & +20.05 & +25.91 \\ \hline yum.txt & -81.66 & -76.41 &
--84.37 & +57.57 & -52.70 & -70.02  \\ \hline rpmpkgs.txt & -93.94 &
--99.08 & -87.54 & +32.42 & +32.93 & +32.39 \\ \hline railroad.txt &
--81.4 & -65.12 & -71.10 & +47.74 & +48.67 & +49.53   \\ \hline
-dibbler.1000 & +177.60 & +180.90 & +6.40 & -27.46 & -0.22 & -0.13
-\\ \hline asl.log & -89.66 & -23.68 & -23.96 & -76.44 & -10.86 &
--13.16 \\ \hline scrollkeeper.log & -22.15 & +105.25 & +5.76 & +9.72
-& -57.08 & +2.90  \\ \hline page\_log & +1.76 & +1.76 & +1.76 & 0 &
-0 & 0 \\ \hline MER\_T01\_01.csv & -8.38 & -10.01 & -10.01 & -0.06 &
-+8.54 & +8.54 \\ \hline crashreporter & -61.48 & -8.37 & -26.57 &
-+573.61 & +11.51 & +19.50 \\ \hline ls-l.txt & -69.41 & -49.15 &
--43.09 & +26.03 & +10.22 & +42.13 \\ \hline windowserver\_last &
--76.75 & -60.52 & -83.20 & +73.91 & +3.39 & +9.30
-\\ \hline netstat-an & -99.76 & -77.10 & -80.19 & +17.35 & +28.31 &
-+29.49 \\ \hline boot.txt & -96.55 & -86.66 & -91.16 & +49.50 &
-+32.54 & +47.95 \\ \hline quarterlyincome & +3.86 & +2.85 & +2.85 &
--1.70 & -1.98 & -1.98    \\ \hline corald.log & +12.28 & +2.69 &
-+2.69 & -1.04 & -1.08 & -1.08   \\ \hline coraldnssrv.log  & -5.27 &
-+89.91 & -5.98 & +28.91 & -35.50 & +43.90 \\ \hline
-probed.log & -31.41 & -31.41 & -31.41 & +28.92 & +28.92 & +28.92 \\
-\hline
-coralwebsrv.log & -36.21 & +35.98 & -52.08 & -25.04 & -14.33 & +69.42   \\
-               \hline
+\multicolumn{3}{|c|}{Data Cost}\\ \cline{2-7} 
+& HMM & HMEM & HSVM & HMM &
+HMEM & HSVM \\ \hline 
+1967Transactions 	& -6.33 & -6.33 & -6.33 & +3.01 & +3.01 & +3.01 \\ \hline 
+ai.3000 		& -44.64 & -35.85 & -52.00 & +34.81 & +20.05 & +25.91 \\ \hline 
+yum.txt 		& -81.66 & -76.41 & -84.37 & +57.57 & -52.70 & -70.02  \\ \hline 
+rpmpkgs.txt 		& -93.94 & -99.08 & -87.54 & +32.42 & +32.93 & +32.39 \\ \hline 
+railroad.txt 		& -81.4 & -65.12 & -71.10 & +47.74 & +48.67 & +49.53 \\ \hline
+dibbler.1000 		& +177.60 & +180.90 & +6.40 & -27.46 & -0.22 & -0.13 \\ \hline 
+asl.log 		& -89.66 & -23.68 & -23.96 & -76.44 & -10.86 & -13.16 \\ \hline 
+scrollkeeper.log 	& -22.15 & +105.25 & +5.76 & +9.72 & -57.08 & +2.90 \\ \hline 
+page\_log 		& +1.76 & +1.76 & +1.76 & 0 & 0 & 0 \\ \hline 
+MER\_T01\_01.csv 	& -8.38 & -10.01 & -10.01 & -0.06 & +8.54 & +8.54 \\ \hline 
+crashreporter 		& -61.48 & -8.37 & -26.57 & +573.61 & +11.51 & +19.50 \\ \hline 
+ls-l.txt 		& -69.41 & -49.15 & -43.09 & +26.03 & +10.22 & +42.13 \\ \hline 
+windowserver\_last 	& -76.75 & -60.52 & -83.20 & +73.91 & +3.39 & +9.30 \\ \hline 
+netstat-an 		& -99.76 & -77.10 & -80.19 & +17.35 & +28.31 & +29.49 \\ \hline 
+boot.txt 		& -96.55 & -86.66 & -91.16 & +49.50 & +32.54 & +47.95 \\ \hline 
+quarterlyincome 	& +3.86 & +2.85 & +2.85 & -1.70 & -1.98 & -1.98    \\ \hline 
+corald.log 		& +12.28 & +2.69 & +2.69 & -1.04 & -1.08 & -1.08   \\ \hline 
+coraldnssrv.log  	& -5.27 & +89.91 & -5.98 & +28.91 & -35.50 & +43.90 \\ \hline
+probed.log 		& -31.41 & -31.41 & -31.41 & +28.92 & +28.92 & +28.92 \\ \hline
+coralwebsrv.log 	& -36.21 & +35.98 & -52.08 & -25.04 & -14.33 & +69.42 \\ \hline
 \end{tabular}
 \caption{Increase (+\%) or decrease (-\%) in type cost and data
 cost: after refinement} \label{tab:complexity2}
@@ -226,67 +248,66 @@ cost: after refinement} \label{tab:complexity2}
 
 In practise, better tokenization schemes usually result in simpler
 descriptions (lower type costs), but looser fits (higher data
-costs). This trend is more clear in \tblref{tab: complexity1}, because
+costs). This trend is more clear in \tblref{tab:complexity1}, because
 in the refinement phase, rules are coded particularly in favor of
 descriptions generated by original \learnpads{} system. \tblref{tab:complexity1} shows that in all benchmarks except
 {\tt dibbler.1000}, {\tt coraldnssrv.log} and {\tt probed.log}, at
 least one of the statistical models significantly reduces the type
 cost while keeping the data cost stable.
+}%%%%%%%%%%%%%
 %This is not exactly consistent with the error rate
 %evaluation, because even if most token sequences are correct, only a
 %few wrong token sequences can cause a difference at the description
 %level.
 
-\tblref{tab:expert} shows the results of a qualitative assessment of
-description quality, in which one of the authors judged how each
+In another experiment, a human expert visually judged how each
 description compared to the original \learnpads{} results. The
 judgements focus on the readability of the descriptions, i.e.
 whether the descriptions can present the structure of the data
 sources clearly. In this experiment, the judge is asked to rate the
-descriptions one by one, ranging from -2 (meaning the description is
+descriptions one by one, in a scale from -2 (meaning the description is
 too concise and it loses much useful information) to 2 (meaning the
-description is too precise and the structure is unclear). So the
-scores of good descriptions will be close to 0, which means the
+description is too precise and the structure is unclear). The
+score of a good description is therefore close to 0, which means the
 description provides sufficient information for the user to
 understand the data source and meanwhile the user can easily tell
-the structure from the description.
+the structure from the description. \tblref{tab:expert} shows that
+on average, HMEM and HSVM clearly outperforms the original system
+denoted by {\tt lex}.
+
 %Although the original \learnpads{}
 %system is incapable of identifying tokens as well as \learnpads{} with
 %statistical models, the structure discovery and refinement phases are
 %still quite effective.
 %The new \learnpads{} system doesn't rely on the refinement rules that much.
+\cut{%%%%%%%%%%%%%%
 For benchmarks where the original system produces good descriptions,
 the new system outputs similarly good descriptions. For
 data sources for which the original system did poorly,
 the new system offers improvements.
 {\bf kf This claim does not seem to be supported by the data in the
   table. }
+}
 
 \begin{table}[th]
 \begin{center}
-\begin{tabular}{|l||c|c|c|c|}\hline
-Data source & lex & HMM & HMEM & HSVM \\ \hline 1967Transactions &
-0& 0 & 0 & 0   \\\hline ai.3000 & 1 &
-1 & 1 & 0 \\ \hline yum.txt & 2 &  -1 & 1 & 0 \\
-\hline rpmpkgs.txt & 2 & -1 & -2 & 0 \\ \hline railroad.txt & 2 & 1
-& 1 & 1
-\\ \hline dibbler.1000 & 0 & 2 & 0 & 0   \\ \hline asl.log & 2 & -2
-& 2 & 2 \\ \hline scrollkeeper.log  &  1 & 2 & 1 & 1 \\
-\hline page\_log  & 0 & 0 & 0 & 0 \\
-\hline MER\_T01\_01.csv & 0 & 1 & 0 & 0 \\ \hline crashreporter & 2
-& 0 & 1 & 1 \\ \hline ls-l.txt & 2 & 0 & 1 & 1 \\
-\hline windowserver\_last & 2 & 0 & 1 & 1 \\ \hline netstat-an & 2 &
--2 & 0 & 0 \\ \hline boot.txt & 2 & -1 & 1 & 1 \\
-\hline quarterlyincome & 1 & 1 & 1 & 1   \\
-\hline corald.log & 0 & 1 & 1 & 0
-\\ \hline coraldnssrv.log  & 0 &  1 & 1 & -1 \\ \hline probed.log & 0 & 0 & 0 & 0 \\ \hline coralwebsrv.log &
-0 & 1 & 1 & -1 \\\hline
+\begin{tabular}{|l|c|c|c|c||l|c|c|c|c||}\hline
+Data source & lex & HMM & HMEM & HSVM & Data source & lex & HMM & HMEM & HSVM \\ \hline 
+1967Transactions & 0& 0 & 0 & 0 &   crashreporter & 2 & 0 & 1 & 1 \\ \hline 
+ai.3000 & 1 & 1 & 1 & 0   &         ls-l.txt & 2 & 0 & 1 & 1 \\ \hline 
+yum.txt & 2 &  -1 & 1 & 0   &       windowserver\_last & 2 & 0 & 1 & 1 \\ \hline 
+rpmpkgs.txt & 2 & -1 & -2 & 0 &     netstat-an & 2 & -2 & 0 & 0 \\ \hline 
+railroad.txt & 2 & 1 & 1 & 1 &      boot.txt & 2 & -1 & 1 & 1 \\ \hline 
+dibbler.1000 & 0 & 2 & 0 & 0 &      quarterlyincome & 1 & 1 & 1 & 1   \\ \hline 
+asl.log & 2 & -2 & 2 & 2 &          corald.log & 0 & 1 & 1 & 0 \\ \hline 
+scrollkeeper.log  &  1 & 2 & 1 & 1 &coraldnssrv.log  & 0 &  1 & 1 & -1 \\ \hline 
+page\_log  & 0 & 0 & 0 & 0 &        probed.log & 0 & 0 & 0 & 0 \\ \hline 
+MER\_T01\_01.csv & 0 & 1 & 0 & 0 &  coralwebsrv.log & 0 & 1 & 1 & -1 \\\hline
 \end{tabular}
+\sk
 \caption{Qualitative comparison of descriptions learned using
-probabilistic
-  tokenization to descriptions learned by original \learnpads{}
-  algorithm.}
-\label{tab:expert}
+probabilistic tokenization to descriptions learned by original \learnpads{} algorithm.}
+\label{tab:expert}\shrink
 \end{center}
 \end{table}
 
@@ -324,6 +345,22 @@ probabilistic
 %\end{table}
 
 \subsection{Execution time}
+
+\begin{figure}[th]
+\begin{minipage}[t]{0.4\columnwidth}
+\begin{center}
+\epsfig{file=ai_1.eps, width=\columnwidth}
+\end{center}
+\caption{Execution time of ai.3000}\label{fig:ai_1}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.6\columnwidth}
+\begin{center}
+\epsfig{file=ai_2.eps, width=\columnwidth}
+\end{center}
+\caption{Success rates of ai.3000}\label{fig:ai_2}
+\end{minipage}
+\end{figure}
 %\begin{table}[th]
 %\begin{center}
 %\begin{tabular}{|l||c|c|c|}\hline
@@ -354,51 +391,36 @@ probabilistic
 %\end{center}
 %\end{table}
 
-Compared to the original \learnpads{} system, inference using
-statistical models requires extra time to construct \seqset{}s and
+Compared to the original system, 
+statistical inference requires extra time to construct \seqset{}s and
 compute probabilities. 
 %\tblref{tab:time} summarizes the times required
 %to produce inferred descriptions for the twenty data sources.
 %{\bf kf: can we include a column for learnpads?}
 We ran our experiments on a 2.2 GHz Intel Xeon processor with 5
-GB of memory. The original \learnpads{} algorithm takes from less than
-10 seconds to 25 minutes ({\tt asl.log}) to infer a description, while applying statistical models
-takes anywhere from a few seconds to several hours, depending on the amount of test data
+GB of memory. The original algorithm takes anywhere from 
+under 10 seconds to 25 minutes to infer a description, while the new system
+requires a few seconds to several hours, depending on the amount of test data
 and the statistical model used. In general, the character-by-character
-HMM model is the least time-consuming, while HSVM costs the most.
+HMM model is the fastest, while HSVM is most time-consuming.
 %Long execution times are the main disadvantage of \learnpads{} with
 %statistical models.
 
-Because execution time is linear in the
+Because execution time is proportional to the
 number of lines in the data source, we can reduce the time by
-running the inferencing algorithm on only a small portion of the raw
-data.
-Preliminary experiments show that of the twenty benchmarks, seven data sources
-have more than 500 records.  Of these, we can generate
-descriptions from just 10\% of the data that can
+learning from a fraction of the raw data. 
+Out of the twenty benchmarks we have, seven data sources
+have more than 500 records.  Preliminary results show that for these
+seven data sources, we can generate descriptions from just 10\% of the data that can
 parse 95\% of records correctly.
 For the data sources with fewer than 500 records,
 only 35\% of the data is needed to infer a description that parses
 95\% of the data correctly.
-Figure \ref{fig:ai_1} shows the change of execution time using HMEM of {\tt
-  ai.3000} while the size of data used to infer description is
-going up. The increase of execution time is almost linear. In Figure
+Figure \ref{fig:ai_1} shows the execution times using HMEM of {\tt
+  ai.3000} as the sample sizes increases, which is almost linear. In Figure
 \ref{fig:ai_2}, we randomly select 0.33\%, 0.67\%, ..., 50\% of chunks in {\tt ai.3000}
 and use them to infer descriptions, the graph shows percentages of the
 entire data source that can be parsed by these descriptions. It's
 proved that only 60 chunks (2\%) can infer a description that parses 98.53\%
 of the data.
 
-\begin{figure}[th]
-\begin{center}
-\epsfig{file=ai_1.eps, width=1.0\columnwidth}
-\end{center}
-\caption{Execution time of ai.3000}\label{fig:ai_1}
-\end{figure}
-
-\begin{figure}[th]
-\begin{center}
-\epsfig{file=ai_2.eps, width=1.0\columnwidth}
-\end{center}
-\caption{Success rates of ai.3000}\label{fig:ai_2}
-\end{figure}
