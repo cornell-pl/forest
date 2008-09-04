@@ -17,32 +17,39 @@ module afterwards requires one single token sequence from each chunk
 and uses these tokens as the basic units to extract structure
 information.}
 
-The key to solving the token ambiguity problem is to select the best
-token sequence from the many possible sequences represented by a
-\seqset{}. Machine learning techniques,
-which build probabilistic models from labeled training data,
-are applicable to the token ambiguity problem for the following reasons.
+A key component of the format inference algorithm described in the 
+previous section is a selection of the best token sequence from
+each \seqset{}.  In order to prioritize sequences, the algorithm 
+assigns probabilities using a statistical token model.  This
+section describes three such models we have experimented with.
 
-\begin{itemize}
-%\item Training corpus can be construct efficiently. Instead of
-%assigning tags token by token, system designers
-%only need to write the correct descriptions by hand for the data
-%formats selected as training sources. We've devised a tagging tool to
-%label the tokens automatically given the data source and the
-%corresponding description;
-\item Large amounts of ad hoc data exist from which we can learn token models.
-\item The \pads{} infrastructure allows us to label large amounts of training data quickly.
-\item Common tokens with distinctive features appear frequently in
-  multiple sources.  For example, URLs usually start with  ``\texttt{http://}'',
-  and items that look like times, such as ``\texttt{04:12:59},'' make
-  certain strings more likely to be parts of dates, such as
-  ``{\tt March}''.  This observation means that we can build a
-  model of various tokens based on training data and then apply those
-  models to new data sources.
-\item We can use efficient procedures from machine learning, such as
-  the Viterbi algorithm~\cite{rabiner89:hmm}, to find the most likely token
-  sequences from learned models.
-\end{itemize}
+
+%% to solving the token ambiguity problem is to select the best
+%% token sequence from the many possible sequences represented by a
+%% \seqset{}. Machine learning techniques,
+%% which build probabilistic models from labeled training data,
+%% ar%% e applicable to the token ambiguity problem for the following reasons.
+
+%% \begin{itemize}
+%% %\item Training corpus can be construct efficiently. Instead of
+%% %assigning tags token by token, system designers
+%% %only need to write the correct descriptions by hand for the data
+%% %formats selected as training sources. We've devised a tagging tool to
+%% %label the tokens automatically given the data source and the
+%% %corresponding description;
+%% \item Large amounts of ad hoc data exist from which we can learn token models.
+%% \item The \pads{} infrastructure allows us to label large amounts of training data quickly.
+%% \item Common tokens with distinctive features appear frequently in
+%%   multiple sources.  For example, URLs usually start with  ``\texttt{http://}'',
+%%   and items that look like times, such as ``\texttt{04:12:59},'' make
+%%   certain strings more likely to be parts of dates, such as
+%%   ``{\tt March}''.  This observation means that we can build a
+%%   model of various tokens based on training data and then apply those
+%%   models to new data sources.
+%% \item We can use efficient procedures from machine learning, such as
+%%   the Viterbi algorithm~\cite{rabiner89:hmm}, to find the most likely token
+%%   sequences from learned models.
+%% \end{itemize}
 \cut{
 In the training corpus, examples are chunks annotated with token
 sequences, each token with its associated substring. A statistical
@@ -50,52 +57,79 @@ model is trained ahead of time. In the structure discovery phase of
 \learnpads{}, the goal is to label the chunks with token sequences.
 }
 
-Many different machine learning algorithms
-exist~\cite{Seymore99learninghidden,Pinto+:texttables,borkar+:text-segmentation,rabiner89:hmm}.
-We have experimented with three different techniques for 
-building probabilistic models of tokens, which
-we describe in the following subsections.
+%% Many different machine learning algorithms
+%% exist~\cite{Seymore99learninghidden,Pinto+:texttables,borkar+:text-segmentation,rabiner89:hmm}.
+%% We have experimented with three different techniques for 
+%% building probabilistic models of tokens, which
+%% we describe in the following subsections.
 
-\subsection{Character-by-character Hidden Markov Model (HMM)}\label{subsec:hmm}
+\paragraph*{Character-by-character Hidden Markov Model (HMM)}\label{subsec:hmm}
 
-The first technique, called the Hidden Markov Model
-(HMM)~\cite{rabiner89:hmm}, represents the true state of a system as a
-finite collection of ``hidden states.''  The states are hidden because
-we cannot directly detect which state the system is in, and instead
-must try to infer the state from observing what it emits.  
-Furthermore, the hidden 
-state is allowed to change upon each observation.  In our setting,
-each token type corresponds to a hidden state, and each character to
-an observation.
-\figref{fig:hmm} shows a first-order HMM representation of a substring
-from {\tt yum.txt}.  The qualifier ``first-order'' indicates that the
-current state depends only upon the previous state. 
-Each observation, indicated as a shaded node, is a single character. 
-Each hidden state, indicated as a white node, 
-is the name of the token that describes the
-corresponding observable character. We use arrows to denote
-both the dependence among the hidden states and the emission of
-observations by the hidden states.
-We call the hidden state in the character-by-character HMM 
-a {\em partial token} because the corresponding character is often
-only a part of a full token.
+The first model we investigate is the classic first-order,
+character-by-character Hidden Markov Model (HMM)~\cite{rabiner89:hmm}.
+Recall that an HMM is a statistical model that includes one set of
+states whose values we can observe and a second set whose values are
+{\em hidden} and we wish to infer.  The hidden states determine, with
+some probability, the values of the observable states.  In our case,
+we can observe the sequence of characters in the input string and wish
+to infer the token that is associated with each character.  
+The model assumes the probability we see a particular character 
+depends upon its associated token and moreover, since the
+HMM is first-order, the probability of observing a
+particular token depends upon the previous token but no other
+earlier tokens.  The picture below illustrates the process of
+generating the character sequence ``2.2.13-4'' from a token
+sequence.  Hidden HMM states are white and observables are shaded.  
+Notice particularly that the adjacent digits ``1'' and ``3'' are 
+generated from two consecutive instances of the token {\tt [int]},
+when in a true token sequence, both characters are generated from 
+a single int token.  A postpass will clean this up, but such 
+situations are dealt with more effectively by the HMEMs described in
+the following subsection.
+
+%% %% , represents the true state of a system as a
+%% %% finite collection of ``hidden states.''  The states are hidden because
+%% %% we cannot directly detect which state the system is in, and instead
+%% %% must try to infer the state from observing what it emits.  
+%% %% Furthermore, the hidden 
+%% %% state is allowed to change upon each observation.  In our setting,
+%% %% each token type corresponds to a hidden state, and each character to
+%% %% an observation.
+%% \figref{fig:hmm} shows a first-order HMM representation of a substring
+%% from {\tt yum.txt}.  
+%% The qualifier ``first-order'' indicates that the
+%% current state depends only upon the previous state. 
+%% Each observation, indicated as a shaded node, is a single character. 
+%% Each hidden state, indicated as a white node, 
+%% is the name of the token that describes the
+%% corresponding observable character. We use arrows to denote
+%% both the dependence among the hidden states and the emission of
+%% observations by the hidden states.
+%% We call the hidden state in the character-by-character HMM 
+%% a {\em partial token} because the corresponding character is often
+%% only a part of a full token.
 
 
-\begin{figure}[th]
+%\begin{figure}[th]
 \begin{center}
 \epsfig{file=hmm.eps, width=0.7\columnwidth}
 \end{center}
-\caption{HMM of a partial token sequence from string ``2.2.13-4''}\label{fig:hmm}
-\end{figure}
+%\caption{HMM of a partial token sequence from string ``2.2.13-4''}\label{fig:hmm}
+%\end{figure}
 
- 
-Let $\mathbf{T}_i$ denote the $i^{th}$ hidden state whose value ranges over
-the set of all token names.
-Let $\mathbf{C}_i$ denote the observation emitted by the $\mathbf{T}_i$.
-To avoid bias toward certain characters, we use
-a fixed-length \textit{feature vector} instead of the character itself
-as the observation. Each feature vector contains a
-fixed number of boolean features about a single character, such as
+Finally, since our training data is limited, we employ one further
+approximation in our model -- instead of modelling every individual
+character separately, we classify characters using a set of boolean features
+including features for whether the character is (a) a digit, (b) an
+upper-case alphabetic letter, (c) white space, or (d) a particular
+punctuation characters such as a period.  We call the feature vectors
+involving a-d our {\em observations}.
+
+%
+% To avoid bias toward certain characters, we use
+% a fixed-length \textit{feature vector} instead of the character itself
+% as the observation. Each feature vector contains a
+% fixed number of boolean features about a single character, such as
 %Note that we use character
 %feature vectors as opposed to plain characters as observations,
 %because in many cases, we don't want the model biased towards
@@ -105,14 +139,18 @@ fixed number of boolean features about a single character, such as
 %character in {\em time}. To avoid this bias, we define a mapping
 %from characters to fix-length vectors and use these vectors to
 %represent features of characters. Examples of features are:
-\begin{itemize}
-\item is a numeric digit
-\item is an upper-case alphabetic letter
-\item is white space
-\item is a special punctuation, ``{\tt .}''
-\item is a punctuation other than ``{\tt .}'', ``{\tt
-,}'', ``{\tt ?}'', ``{\tt /}'', ``{\tt $\backslash$}" and ``{\tt :}''
-\end{itemize}
+%% \begin{itemize}
+%% \item is a numeric digit
+%% \item is an upper-case alphabetic letter
+%% \item is white space
+%% \item is a special punctuation, ``{\tt .}''
+%% \item is a punctuation other than ``{\tt .}'', ``{\tt
+%% ,}'', ``{\tt ?}'', ``{\tt /}'', ``{\tt $\backslash$}" and ``{\tt :}''
+%% \end{itemize}
+
+Let $\mathbf{T}_i$ denote the $i^{th}$ hidden state whose value ranges over
+the set of all token names.
+Let $\mathbf{C}_i$ denote the observation emitted by the $\mathbf{T}_i$.
 Three parameters determine the model:
 the transition matrix $\mathbf{P}(T_i|T_{i-1})$,
 the sensor matrix $\mathbf{P}(C_i|T_i)$ and the initial
@@ -134,7 +172,7 @@ $C_1, C_2, ..., C_n$, we want to find the token sequence
 $T_1, T_2, ..., T_n$ 
 that maximizes the conditional probability
 $\mathbf{P}(T_1, T_2, ..., T_n|C_1, C_2, ..., C_n)$.
-We can calculate this probability using the formula:
+This probability is defined as usual:
 
 \begin{eqnarray}
 \mathbf{P}(T_1, T_2, ..., T_n|C_1, C_2, ..., C_n) & \propto & \mathbf{P}(T_1, T_2, ..., T_n, C_1, C_2, ..., C_n) \nonumber \\
@@ -154,11 +192,14 @@ variety of modified Viterbi algorithms are deployed in the
 places. Due to the space limitation, we'll show only one of them in
 Subsection \ref{subsec:hmem}.
 }
-We have modified the original Viterbi algorithm for HMMs slightly
-to ensure that the most probable token sequence returned forms a legal
-parse of the data chunk. {\bf Is the above formula an instance of
-  the viterbi algorithm?  If so, we should say so. If not, this last
-  sentence needs to be linked in better.}
+To calculate the highest probability token sequence from this
+model, we run a slightly modified variant of the Viterbi 
+algorithm over the \seqset.
+%to ensure that the most probable token sequence returned forms a legal
+%parse of the data chunk. 
+%{\bf Is the above formula an instance of
+%  the viterbi algorithm?  If so, we should say so. If not, this last
+%  sentence needs to be linked in better.}
 
 Because the character-by-character HMM is first order and employs only 
 single character features, it cannot capture complex features
@@ -171,38 +212,43 @@ of being part of an URL.
 One obvious solution is increasing the order of HMM.  However, since
 the token length is variable in our application, it is not clear what
 the order should be.  In addition, increasing the order also increases
-the complexity exponentially.  Instead, in the next sections we pursue
+the complexity exponentially.  Instead, in the next sections, we pursue
 two hybrid methods that incorporate existing classification techniques
 into the HMM framework.
 
-\subsection{Hierarchical Maximum Entropy Model (HMEM)}\label{subsec:hmem}
+\paragraph*{Hierarchical Maximum Entropy Model (HMEM)}\label{subsec:hmem}
 
-\begin{figure}[th]
+The character-by-character HMM models a chunk of data as a sequence of
+characters. The Hierarchical Maximum Entropy Model (HMEM) models a chunk as
+a sequence of strings with variable lengths.
+More precisely, an HMEM is two-level structure involving
+an HMM positioned on top of 
+a Maximum Entropy (ME) Model ~\cite{Berger96:ME,megaweb}.  Again,
+using the sequence ``2.2.13-4'' as our example, the corresponding
+HMEM may be drawn as follows.
+
+%\begin{figure}[th]
 \begin{center}
 \epsfig{file=hmem.eps, width=0.6\columnwidth}
 \end{center}
-\caption{HMEM of a token sequence from string ``2.2.13-4''}\label{fig:hmem}
-\end{figure}
-The character-by-character HMM models a chunk of data as a sequence of
-characters. The Hierarchical Maximum Entropy Model (HMEM) models a chunk as
-a sequence of tokens with variable lengths.
-The top level of HMEM is an HMM while the lower level 
-is a Maximum Entropy (ME) Model ~\cite{Berger96:ME,megaweb}.
-\figref{fig:hmem} shows an example of HMEM.
+%\caption{HMEM of a token sequence from string ``2.2.13-4''}\label{fig:hmem}
+%\end{figure}
+
+%\figref{fig:hmem} shows an example of HMEM.
 %We can see that the graph of Hierarchical Maximum Entropy Model is
 %similar to the one in Subsection \ref{subsec:hmm}, because the upper
 %level of this hierarchical model is still an HMM. 
-The main difference between HMEM and HMM is
-that an observations is not a single character feature vector, 
-but a substring corresponding to a whole token.
-As such, there is no need to concatenate consecutive partial tokens
-to form a whole token as in the case of HMM.
+%The main difference between HMEM and HMM is
+%that an observations is not a single character feature vector, 
+%but a substring corresponding to a whole token.
+%As such, there is no need to concatenate consecutive partial tokens
+%to form a whole token as in the case of HMM.
 
-Let $\mathbf{T}_i$ be the $i^{th}$ hidden state or token in the
-sequence (denoted by a white node in \figref{fig:hmem}) and
+Formally, let $\mathbf{T}_i$ be the $i^{th}$ hidden state or token in the
+sequence (denoted by a white node in picture above) and
 let $\mathbf{S}_i$ be the substring annotated by $\mathbf{T}_i$. 
 Suppose the number of tokens in the chunk is $l$; then the
-target probability is
+target probability is as follows.
 
 \begin{equation}
 \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l)  \propto
