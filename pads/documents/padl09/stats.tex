@@ -218,13 +218,14 @@ into the HMM framework.
 
 \paragraph*{Hierarchical Maximum Entropy Model (HMEM)}\label{subsec:hmem}
 
-The character-by-character HMM models a chunk of data as a sequence of
-characters. The Hierarchical Maximum Entropy Model (HMEM) models a chunk as
-a sequence of strings with variable lengths.
-More precisely, an HMEM is two-level structure involving
-an HMM positioned on top of 
-a Maximum Entropy (ME) Model ~\cite{Berger96:ME,megaweb}.  Again,
-using the sequence ``2.2.13-4'' as our example, the corresponding
+The character-by-character HMM extracts a set of features from each character
+to create an observation and then runs a standard HMM over these observations.
+In contrast, the Hierarchical Maximum Entropy Model (HMEM), which we
+will explore next, extracts a set of features from each substring, uses
+the Maximum Entropy (ME) procedure~\cite{Berger96:ME,megaweb}
+to produce an observation and runs a standard HMM over these new kinds
+of observations.  
+Using the sequence ``2.2.13-4'' as our example again, the corresponding
 HMEM may be drawn as follows.
 
 %\begin{figure}[th]
@@ -265,14 +266,27 @@ We can compute $\mathbf{P}(S_i|T_i)$ using Bayes Rule,
 \mathbf{P}(S_i)}{\mathbf{P}(T_i)}
 \end{eqnarray}
 
-Because the training corpus comes from real world applications, 
-the terms $\mathbf{P}(S_i)$ and $\mathbf{P}(T_i)$ in (\ref{eqn:bayes})
-can differ substantially between the training and
-testing data, making them poor parameters for 
-the prediction. To compensate, we use ME 
-to compute 
-$\mathbf{P}(T_i|S_i)$ and use this probability to estimate
-$\mathbf{P}(S_i|T_i)$:
+Finally, since obtaining accurate estimates of 
+$\mathbf{P}(S_i)$ and $\mathbf{P}(T_i)$ appears to require more training
+data than we currently have, we have further approximated by simply
+using
+%Because the training corpus comes from real world applications, 
+%the terms $\mathbf{P}(S_i)$ and $\mathbf{P}(T_i)$ in (\ref{eqn:bayes})
+%can differ substantially between the training and
+%testing data, making them poor parameters for 
+%the prediction. To compensate, we use ME 
+%to compute 
+$\mathbf{P}(T_i|S_i)$ to estimate $\mathbf{P}(S_i|T_i)$.
+Estimation of $P(T_i|S_i)$ through the ME procedure involves using
+the following features (among others):
+(a) total number of characters in the string,
+(b) the number of occurrences of certain punctuation characters,
+(c) the total number of punctuation characters in the string,
+(d) the presence of certain substrings such as "{\tt am}", "{\tt pm}", 
+"{\tt January}", "{\tt Jan}", "{\tt january}", and
+(e) the presence of digits sequences.
+When $\mathbf{P}(T_i|S_i)$ is substituted for
+ $\mathbf{P}(S_i|T_i)$ in equation (5), we obtain the following.
 
 \begin{eqnarray}\label{eqn:est-bayes}
 \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \propto
@@ -280,48 +294,35 @@ $\mathbf{P}(S_i|T_i)$:
 \cdot \prod_{i=1}^{l}\mathbf{P}(T_i|S_i)
 \end{eqnarray}
 
-Below are examples of the token features we use to estimate
-$P(T_i|S_i)$ in ME:
-
-\begin{itemize}
-\item number of occurrences of particular characters, \ie{}, "{\tt .}"
-\item total number of characters in the token
-\item total number of punctuation characters in the token
-\item has substring "{\tt am}", "{\tt pm}", \etc{}
-\item has substring "{\tt January}", "{\tt Jan}", "{\tt january}",
-"{\tt jan}", \etc{}
-\item is a sequence of integers separated by "{\tt .}"
-\item previous character is punctuation
-\end{itemize}
-
-Note that in equation (\ref{eqn:est-bayes}), the number of tokens
-determines the number of terms in the products, in contrast to the
-number of characters in HMM. A sequence with more tokens will produce
-more terms, which biases the algorithm towards shorter token
-sequences, which is evident in the following example.  Suppose we are
-given the data chunk {\tt s} and the probabilities in \figref{fig:ME},
-\begin{figure}[t]
-\begin{centercode}
-s  = ``Dec 10 04:07:51 Updated''
-P( date | ``Dec 10'' ) = 0.8
-P( white | `` `` ) = 1.0
-P( time | ``04:07:51'' ) = 0.9
-P( word | ``Updated'') = 0.8
-P( white | others ) = 0.7
-P( others | white ) = 0.8
-\end{centercode}
-\caption{Probability assumptions of a simple example}\label{fig:ME}
-\end{figure}
-%
-where {\tt others} represents tokens other than white space and
-punctuation. With these assumptions, we compute the conditional probability
-\[\mathbf{P}(\mbox{date white time white word}~ | \mbox{``Dec 10 04:07:51 Updated''}) = 0.181 \]
-
-If we had a token {\tt message} that can parse the entire chunk,
-the algorithm would select the shorter token sequence {\tt message}
-even if the probability of the token {\tt message} given the entire
-string is small, \eg{} 0.3.  To avoid such bias, we modify
-Equation (\ref{eqn:est-bayes}) as follows:
+Finally, notice that in equation (\ref{eqn:est-bayes}), the number of tokens
+in a sequence will determine the number of terms in the product. 
+Consequently, a sequence with more tokens will produce
+more terms, which our experiments have shown produces a significant 
+bias towards shorter token sequences.  
+%% Suppose we are
+%% given the data chunk {\tt s} and the probabilities in \figref{fig:ME},
+%% \begin{figure}[t]
+%% \begin{centercode}
+%% s  = ``Dec 10 04:07:51 Updated''
+%% P( date | ``Dec 10'' ) = 0.8
+%% P( white | `` `` ) = 1.0
+%% P( time | ``04:07:51'' ) = 0.9
+%% P( word | ``Updated'') = 0.8
+%% P( white | others ) = 0.7
+%% P( others | white ) = 0.8
+%% \end{centercode}
+%% \caption{Probability assumptions of a simple example}\label{fig:ME}
+%% \end{figure}
+%% %
+%% where {\tt others} represents tokens other than white space and
+%% punctuation. With these assumptions, we compute the conditional probability
+%% \[\mathbf{P}(\mbox{date white time white word}~ | \mbox{``Dec 10 04:07:51 Updated''}) = 0.181 \]
+%% If we had a token {\tt message} that can parse the entire chunk,
+%% the algorithm would select the shorter token sequence {\tt message}
+%% even if the probability of the token {\tt message} given the entire
+%% string is small, \eg{} 0.3.  
+To avoid such bias, we modify
+Equation (\ref{eqn:est-bayes}) to use the average log likelihood.
 
 \begin{eqnarray}
 && \log \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \nonumber \\ 
@@ -329,26 +330,29 @@ Equation (\ref{eqn:est-bayes}) as follows:
 \sum_{i=2}^{l}\log \mathbf{P}(T_i|T_{i-1}) + 
 \sum_{i=1}^{l}\log \mathbf{P}(T_i|S_i)}{l}\label{eqn:mod-viterbi}
 \end{eqnarray}
-
-Using average log likelihood in (\ref{eqn:mod-viterbi}) 
+\noindent
+Using average log likelihood 
 guarantees that the algorithm will not select shorter token sequences
 unless the average value of all conditional
 probabilities $\mathbf{P}(T_i|S_i)$ exceeds a threshold.
-This change yeilds a {\em modified Viterbi Algorithm},
+
+In order to find the highest probability sequence under this model,
+we implemented a modified Viterbi Algorithm
 which takes into account the number of tokens in the sequence.
-The modified algorithm has a slightly revised notation.
-Let the number of characters in the chunk be $n$ and the number of tokens be $l$. 
-Let $C_i$ be the character at position $i$, and 
+For what follows,
+let the number of characters in the chunk be $n$ and the number 
+of tokens be $l$.  Let $C_i$ be the character at position $i$, and 
 $PT_i$ be the partial token that emits the character $C_i$. 
-Note that if position $i$ is a non-start vertex in the \seqset{}, 
-there must be a token whose ending position is
-$i$ in a legal token sequence. Let $T_i$ be the token
-that ends at position $i$ and let $S_i$ be the corresponding substring. 
+%Note that if position $i$ is a non-start vertex in the \seqset{}, 
+%there must be a token whose ending position is
+%$i$ in a legal token sequence. 
 Then
 $\mathbf{P}(PT_1, PT_2, ..., PT_i|C_1, C_2, ..., C_i, k)$ is the
 probability of a partial token sequence $PT_1, PT_2, ..., PT_i$
 conditioned on a substring of characters $C_1, C_2, ..., C_i$,
 collectively emitted by a sequence of $k$ tokens.
+Now, let $T_i$ be a token
+that ends at position $i$ and let $S_i$ be the corresponding substring. 
 The probability of the most likely partial token sequence up to position 
 $i$ is
 \begin{eqnarray} 
@@ -370,8 +374,9 @@ PT_{i+1}|C_1, C_2, ..., C_{i+1}, k+1) \propto \nonumber \\
 \right. \label{eqn-forward}
 \end{eqnarray}
 
-The left-hand-side of (\ref{eqn-forward}), known as a ``forward message'',
-contains the token sequence up to a position $i$ in the chunk as well as the lengths of
+The left-hand-side of (\ref{eqn-forward}), known as a {\em forward message},
+contains the token sequence up to a position $i$ in the chunk as well as the 
+lengths of
 the tokens. 
 %At each position $i$, the forward messages store not only token
 %sequences ending with different tokens, but also the sequences of different
@@ -388,7 +393,6 @@ sequences. After tracing backwards through the chain of messages,
 we obtain the most likely token sequences. The modified Viterbi
 algorithm is linear to the number of characters $n$ in the chunk.
 
-
 %When testing the accuracy of HMEM, we found an empirical
 %disadvantage of this model. Training data are collected from their
 %original sources without many extra efforts except running the
@@ -400,33 +404,40 @@ algorithm is linear to the number of characters $n$ in the chunk.
 %suppose we have only 1\% {\tt url} tokens, it doesn't mean the
 %chance {\tt url} tokens appear in the testing data source is also
 %small. 
-Then Maximum Entropy model used in HMEM is a
+We saw there were some problems with the basic HMM model that motivated
+the use of the HMEM model.  What further problems plague the HMEMs?
+The most worrisome problem is that the HMEM is a
 generative model that simulates the procedure of generating the data, and
 estimates the target conditional probability by a joint
-probability. Therefore, it biases towards tokens with more
-occurrences in the training data, which affects the accuracy of inferencing. 
-For instance, when there are not enough
-{\tt hostname} tokens in the training data, HMEM cannot identify {\tt
-hostname} tokens effectively and confuses them with {\tt id}
-tokens. We will show next that the Hierarchical
-Support Vector Machine (HSVM), which uses a discriminative model as the
-lower level model, solves this problem.
+probability. Therefore, it is biased towards tokens with more
+occurrences in the training data.  In practice, we found that
+when particular tokens appear infrequently in our training data,
+the algorithm would never identify them, even when they had
+clear distinguishing features. 
+%For instance, when there are not enough
+%{\tt hostname} tokens in the training data, HMEM cannot identify {\tt
+%hostname} tokens effectively and confuses them with {\tt id}
+%tokens. 
+These difficulties motivated us to explore the effectiveness of Hierarchical
+Support Vector Machines (HSVM), which use a discriminative model as 
+opposed to a generative one.
 
 \subsection{Hierarchical Support Vector Machines (HSVM)}\label{subsec:hsvm}
 
-HSVM is exactly the same as HMEM except its lower
-level employs Support Vector Machines (SVM)~\cite{CC01a} to classify
-the tokens. 
-Basically, SVM measures the target conditional probability $\mathbf{P}(T_i|S_i)$ 
+An HSVM is exactly the same as an HMEM except it uses 
+a Support Vector Machine (SVM) \cite{CC01a} as opposed to Maximum Entropy
+to classify tokens. 
+Basically, an SVM measures the target conditional probability 
+$\mathbf{P}(T_i|S_i)$ 
 by generating hyperplanes that divide the feature vector space according to the
 positions of training data points. The hyperplanes are positioned so that the
 data points (feature vectors in our case) are separated into classes with
 the maximum margin between any two classes. The data points that lie on
 the margins (or boundaries) of each class are called {\em support vectors}. 
 
-The empirical evaluation in the next section shows that HSVM is
-effective in detecting less frequently occurring tokens. The time
-complexity of SVM is roughly proportional to the number of support
-vectors produced in the training step. Our system generally requires a
-large number of support vectors and thus HSVM is usually more
-time-consuming than HMEM.
+%Though HSVMs can is that they
+%effective in detecting less frequently occurring tokens. However, the time
+%complexity of SVM is roughly proportional to the number of support
+%vectors produced in the training step. Our system generally requires a
+%large number of support vectors and thus HSVMs are usually more
+%computationally expensive than HMEMs.
