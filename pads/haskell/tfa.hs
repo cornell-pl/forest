@@ -18,6 +18,7 @@ cnvREtoTDFA :: String -> TDFA
 cnvTNFAtoTDFA :: TNFA -> TDFA
 
 runTDFA :: TDFA -> String -> Maybe AugResultMap
+match :: String -> String -> Maybe AugResultMap
 --}
 import qualified Data.Set as S
 import qualified Data.Map as M
@@ -121,24 +122,29 @@ ex4TNFA :: TNFA
        S.fromList[2])
 
 {-- a different, slightly less optimized TNFA for a*%0aa* --}
-ex4Trans :: S.Set NTrans
+ex5Trans :: S.Set NTrans
   = S.fromList [(0,"",Nothing,0,1),
                 (1,"a",Nothing,1,0),
                 (1,"",Just 0, 2,2),
                 (2,"a",Nothing,3,3),
                 (3,"",Nothing,4,4),
                 (4,"a",Nothing,5,5),
-                (5,"",Nothing,6,6),
+                (5,"",Nothing,8,6),
                 (6,"",Nothing,7,4),
-                (4,"",Nothing,8,6)]
+                (4,"",Nothing,6,6)]
 
-ex4TNFA :: TNFA
+ex5TNFA :: TNFA
     = (S.fromList[0,1,2,3,4,5,6],
        S.fromList [0],
        S.fromList ['a'],
-       ex4Trans,
+       ex5Trans,
        0,
        S.fromList[6])
+
+-- outputTNFA "tnfa_ex5.gv" ex5TNFA
+ex5TDFA = cnvTNFAtoTDFA ex5TNFA
+-- outputTDFA "tdfa_ex5.gv" ex5TDFA
+res_ex5TDFA = runTDFA ex5TDFA "aaaaaaaa"
       
 
 {-- Routines for printing a TNFA in dot format --}
@@ -657,9 +663,9 @@ cnvTREtoTNFA' nextState nextPriority regexp =
    Star r ->  
      let (ns1,np1,(rStates,rTags,rSymbols,rTrans,rStart,rFinish)) = cnvTREtoTNFA' nextState nextPriority r
          newFinish = ns1
-         (np2, loopTran) = (np1 + 1, (newFinish, [], Nothing, np1, rStart))
-         (np3, newTrans) = newEdges np2 rFinish newFinish
-         (np4, emptyTran) = (np3 + 1, (rStart, [], Nothing, np3, newFinish))
+         (np2, emptyTran) = (np1 + 1, (rStart, [], Nothing, np1, newFinish))
+         (np3, loopTran) = (np2 + 1, (newFinish, [], Nothing, np2, rStart))
+         (np4, newTrans) = newEdges np3 rFinish newFinish
          trans = S.unions[S.singleton emptyTran, newTrans, S.singleton loopTran, rTrans]
      in (ns1 + 1, np4,
         (S.insert newFinish rStates, rTags, rSymbols, trans, rStart, S.singleton newFinish))
@@ -816,12 +822,7 @@ tdfa_ambig = cnvTNFAtoTDFA tnfa_ambig
 -- outputTDFA "tdfa_ambig.gv" tdfa_ambig
 result_ambig = runTDFA tdfa_ambig "aaaaaaa"
 
-{--
-cnvREtoTDFA :: String -> TDFA
-cnvREtoTDFA input = 
-  case parseRE input of
-    Left s -> let errorMes :: [Message] = errorMessages s
-                  errorStr :: String = showErrorMessages errorMes
-              in fail errorStr
-    Right tregexp -> cnvTREtoTDFA tregexp
---}
+match :: String -> String -> Maybe AugResultMap
+match regexp input = 
+   let tdfa = cnvREtoTDFA regexp 
+   in runTDFA tdfa input
