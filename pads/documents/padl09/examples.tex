@@ -112,19 +112,46 @@ Dec 10 04:07:51 Updated: openldap.x86_64 2.2.13-4
 %This file is used by system administrators to keep track of the software updates on the system. 
 
 \figref{fig:yum-gold} shows an {\em ideal} \pads{} description of
-{\tt yum.txt} written by a human expert.
-The \cd{entry\_t} type describes each line in the data source.
-The keyword \kw{Precord} denotes that a newline follows each \cd{entry\_t}.
-\cd{Pdate} describes dates, \cd{Ptime} describes times, 
-\cd{action} enumerates three different actions,
-and \cd{Pid} matches a system identifier such as a file
-name, a MAC address, \etc{} We call types such as \cd{Pdate} and \cd{Pid}
-call {\em base types} because they represent a single token 
-in \pads{}; types such as {\tt Pstruct}, {\tt Penum} and {\tt Popt} are 
-compound types that represent
-structures. 
-%We highlight the base types in the \pads{} description. 
+{\tt yum.txt} written by a human expert.  The description is
+structured as a series of C-like type declarations.  There
+are {\em base types} like \cd{Pdate} (a date),
+\cd{Ptime} (a time) and \cd{Pint} (an integer).
+There are also {\em structured types} such as
+\cd{Penum} (one of several strings), \cd{Pstruct}
+(a sequence of items with different types, 
+separated by punctuation symbols), \cd{Popt} 
+(a optional type) and \cd{Parray} (a sequence of
+items with the same type).  \pads{} descriptions
+are often easiest read from bottom to top,
+so the best place to start examining the figure
+is the last declaration in the right-hand column.
+There, the declarations says that the entire
+source file (as indicated by the \cd{Psource} 
+annotation) is an array type called \cd{yum}.
+The elements of the array are items with
+type \cd{entry\_t}.  Next, we can examine
+the type \cd{entry\_t} and observe that it
+is a new-line terminated 
+record (as indicated by the \cd{Precord}
+annotation) and it contains a series of fields
+including a date, followed by a space, followed
+by a time, followed by an action (which is another
+user-defined type), followed by a colon and a
+space, etc. We leave the reader to peruse the
+rest of the figure.
+%% The \cd{entry\_t} type describes each line in the data source.
+%% The keyword \kw{Precord} denotes that a newline follows each \cd{entry\_t}.
+%% \cd{Pdate} describes dates, \cd{Ptime} describes times, 
+%% \cd{action} enumerates three different actions,
+%% and \cd{Pid} matches a system identifier such as a file
+%% name, a MAC address, \etc{} We call types such as \cd{Pdate} and \cd{Pid}
+%% call {\em base types} because they represent a single token 
+%% in \pads{}; types such as {\tt Pstruct}, {\tt Penum} and {\tt Popt} are 
+%% compound types that represent
+%% structures. 
+%% %We highlight the base types in the \pads{} description. 
 
+\cut{
 \begin{figure}[t]
 {\tiny
 \begin{minipage}[t]{0.33\columnwidth}
@@ -363,13 +390,22 @@ Psource Parray entries_t \{
 }%%%%%%%%%%%%%%%%%%%%%%%
 \caption{\pads{} description of {\tt yum.txt} inferred by the original \learnpads}\label{fig:yum-bad}
 \end{figure}
+}
 
-In comparison, \figref{fig:yum-bad} shows the description of {\tt
-  yum.txt} infered by the original \learnpads{} system
-\cite{fisher+:dirttoshovels,fisher+:sigmod08}.  This description,
-though it correctly parses the \texttt{yum} data, is incredibly
-verbose, taking 179~lines compared to the 23~lines required by the 
-human expert.  The main problem the inference engine faced was that there were
+%In contrast to the compact -defined description, 
+%\figref{fig:yum-bad} shows the description of {\tt
+%  yum.txt} inferred by the original \learnpads{} system
+Unfortunately, when we ran our original format
+inference algorithm~\cite{fisher+:dirttoshovels}
+on this simple data source, rather than inferring a compact 23-line
+description, our algorithm returned a whopping {\em 179-line monstrosity},
+that was difficult to understand and even harder to work with.
+%.  This description,
+%though it correctly parses the \texttt{yum} data, is incredibly
+%verbose, taking 179~lines compared to the 23~lines required by the 
+%human expert.  
+After investigation and tuning our algorithm,
+we discovered the main problem the inference engine faced was that there were
 many different ways to tokenize the input, and unfortunately, 
 the tokenization choices
 made in advance by the system's designers were a terrible match 

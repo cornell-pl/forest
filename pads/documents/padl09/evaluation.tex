@@ -17,7 +17,7 @@ sample files.  We use three metrics described in the following
 sections to evaluate the results: {\em token accuracy},
 {\em quality of description} and {\em execution time}.
 
-\subsection{Token accuracy}
+\paragraph*{Token accuracy.}
 To evaluate tokenization accuracy for a model $M$ on a given sample
 file, we compare the most likely sequence of tokens predicted by $M$,
 denoted $S_m$, with the ideal token sequence, denoted $S$.  We define
@@ -34,7 +34,7 @@ normalized by $|S|$, the total number of tokens in $S$:
     {|S|}
 \end{eqnarray*}
 
-\begin{table}[th]
+\begin{table}[t]
 \begin{center}
 \begin{tabular}{|l||c|c|c|c||c|c|c|c||c|c|c|c|} \hline
 Data source        & \multicolumn{4}{|c||}{Token Error (\%)} &
@@ -157,7 +157,7 @@ statistical models, especially HMEM and HSVM, substantially decrease token error
 add a more meaningful summary of the data in the table.}
 }%%%%%%%%%%%%
 
-\subsection{Quality of description}
+\paragraph*{Quality of description.}
 We use the {\em Minimum Description Length Principle}
 (MDL)~\cite{mdlbook} to quantitatively assess description quality.
 This principle says that a useful measure of description quality is
@@ -172,7 +172,7 @@ Increasing the type cost generally reduces the data cost, and
 percentage changes in the two costs of intermediate descriptions learned by
 the new algorithm before refinement phase over that of the original \learnpads{} system.
 
-\begin{table}[th]
+\begin{table}[t]
 \begin{center}
 \begin{tabular}{|l||c|c|c||c|c|c|}\hline
 Data source & \multicolumn{3}{|c||}{Type Cost} & \multicolumn{3}{|c|}{Data Cost}\\ \cline{2-7} 
@@ -344,9 +344,8 @@ probabilistic tokenization to descriptions learned by original \learnpads{} algo
 %\end{center}
 %\end{table}
 
-\subsection{Execution time}
 
-\begin{figure}[th]
+\begin{figure}[t]
 \begin{minipage}[t]{0.5\columnwidth}
 \begin{center}
 \epsfig{file=ai_1.eps, width=\columnwidth}
@@ -391,6 +390,8 @@ probabilistic tokenization to descriptions learned by original \learnpads{} algo
 %\end{center}
 %\end{table}
 
+
+\paragraph*{Execution time.}
 Compared to the original system, 
 statistical inference requires extra time to construct \seqset{}s and
 compute probabilities. 
