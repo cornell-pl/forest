@@ -27,7 +27,8 @@ agricultural data and more.
 
 \pads~\cite{fisher+:pads,padsweb} is a declarative 
 language that describes the syntax and semantics properties of ad hoc data
-formats.  The \pads{} compiler reads these declarative descriptions
+formats.  The \pads{} compiler, developed in ML,
+reads these declarative descriptions
 and produces a series of programming libraries (parser, printer, validator
 and visitor) and end-to-end tools (xml translator, query engine, reformatter,
 error monitor, etc.).  By doing so, \pads{} can dramatically improve the 
@@ -35,14 +36,20 @@ productivity of data analysts who work with ad hoc data.
 However, \pads{} is not (yet) a silver bullet.  It takes time for new users
 to learn the language syntax and even experienced users can take hours or 
 days to develop descriptions for complex formats.  Hence, to further improve
-programmer productivity, we have developed a system called \learnpads{}
-to infer descriptions automatically from example 
+programmer productivity, we have developed a system 
+called \learnpads{} that can automatically generate end-to-end data
+processing tools directly from example 
 data~\cite{fisher+:dirttoshovels,fisher+:sigmod08}.  
 %\learnpads{} helps users with
 %one of the most common applications of the \pads{} system --- the task of
 %taking a huge pile of unknown data, understanding its structure and 
 %translating it into a known format
 %such as \xml{} or CVS for further analysis.
+It does so by using machine learning techniques to infer 
+a \pads{} description and then it passes that description on to the
+\pads{} compiler.  The compiler will in turn produce its suite of 
+custom data processing tools.  Hence \pads{} now serves as a declarative
+intermediate language in the tool generation process.
 
 Our past experiments have shown that \learnpads{} is highly effective
 when the set of tokens it uses matches the tokens used in the unknown

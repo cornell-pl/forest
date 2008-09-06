@@ -289,7 +289,7 @@ the new system offers improvements.
   table. }
 }
 
-\begin{table}[th]
+\begin{table}[t]
 \begin{center}
 \begin{tabular}{|l|c|c|c|c||l|c|c|c|c||}\hline
 Data source & lex & HMM & HMEM & HSVM & Data source & lex & HMM & HMEM & HSVM \\ \hline 
@@ -344,7 +344,7 @@ probabilistic tokenization to descriptions learned by original \learnpads{} algo
 %\end{center}
 %\end{table}
 
-
+\cut{
 \begin{figure}[t]
 \begin{minipage}[t]{0.5\columnwidth}
 \begin{center}
@@ -360,6 +360,7 @@ probabilistic tokenization to descriptions learned by original \learnpads{} algo
 \caption{Success rates of ai.3000}\label{fig:ai_2}
 \end{minipage}
 \end{figure}
+}
 %\begin{table}[th]
 %\begin{center}
 %\begin{tabular}{|l||c|c|c|}\hline
@@ -407,21 +408,27 @@ HMM model is the fastest, while HSVM is most time-consuming.
 %Long execution times are the main disadvantage of \learnpads{} with
 %statistical models.
 
-Because execution time is proportional to the
-number of lines in the data source, we can reduce the time by
-learning from a fraction of the raw data. 
-Out of the twenty benchmarks we have, seven data sources
+We have performed a number of experiments (not shown due to space 
+constraints) that demonstrate that execution time is proportional
+to the number of lines in the data source.  Moreover, we have
+found that for most descriptions, a relatively small representative
+sample of the data is sufficient for learning its structure with
+high accuracy.
+%Because execution time is proportional to the
+%number of lines in the data source, we can reduce the time by
+%learning from a fraction of the raw data. 
+For instance, out of the twenty benchmarks we have, seven data sources
 have more than 500 records.  Preliminary results show that for these
-seven data sources, we can generate descriptions from just 10\% of the data that can
-parse 95\% of records correctly.
-For the data sources with fewer than 500 records,
-only 35\% of the data is needed to infer a description that parses
-95\% of the data correctly.
-Figure \ref{fig:ai_1} shows the execution times using HMEM of {\tt
-  ai.3000} as the sample sizes increases, which is almost linear. In Figure
-\ref{fig:ai_2}, we randomly select 0.33\%, 0.67\%, ..., 50\% of chunks in {\tt ai.3000}
-and use them to infer descriptions, the graph shows percentages of the
-entire data source that can be parsed by these descriptions. It's
-proved that only 60 chunks (2\%) can infer a description that parses 98.53\%
-of the data.
+seven data sources, we can generate descriptions from just 10\% 
+of the data that can parse 95\% of records correctly.
+%For the data sources with fewer than 500 records,
+%only 35\% of the data is needed to infer a description that parses
+%95\% of the data correctly.
+%Figure \ref{fig:ai_1} shows the execution times using HMEM of {\tt
+%  ai.3000} as the sample sizes increases, which is almost linear. In Figure
+%\ref{fig:ai_2}, we randomly select 0.33\%, 0.67\%, ..., 50\% of chunks in {\tt ai.3000}
+%and use them to infer descriptions, the graph shows percentages of the
+%entire data source that can be parsed by these descriptions. It's
+%proved that only 60 chunks (2\%) can infer a description that parses 98.53\%
+%of the data.
 
