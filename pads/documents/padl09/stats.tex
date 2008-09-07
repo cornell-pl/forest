@@ -19,9 +19,9 @@ information.}
 
 A key component of the format inference algorithm described in the 
 previous section is a selection of the best token sequence from
-each \seqset{}.  In order to prioritize sequences, the algorithm 
+each \seqset{}.  To prioritize sequences, the algorithm 
 assigns probabilities using a statistical token model.  This
-section describes three such models we have experimented with.
+section describes three such models that we have experimented with.
 
 
 %% to solving the token ambiguity problem is to select the best
@@ -67,13 +67,13 @@ model is trained ahead of time. In the structure discovery phase of
 
 The first model we investigate is the classic first-order,
 character-by-character Hidden Markov Model (HMM)~\cite{rabiner89:hmm}.
-Recall that an HMM is a statistical model that includes one set of
+An HMM is a statistical model that includes one set of
 states whose values we can observe and a second set whose values are
 {\em hidden} and we wish to infer.  The hidden states determine, with
 some probability, the values of the observable states.  In our case,
 we can observe the sequence of characters in the input string and wish
 to infer the token that is associated with each character.  
-The model assumes the probability we see a particular character 
+The model assumes the probability that we see a particular character 
 depends upon its associated token and moreover, since the
 HMM is first-order, the probability of observing a
 particular token depends upon the previous token but no other
@@ -81,9 +81,9 @@ earlier tokens.  The picture below illustrates the process of
 generating the character sequence ``2.2.13-4'' from a token
 sequence.  Hidden HMM states are white and observables are shaded.  
 Notice particularly that the adjacent digits ``1'' and ``3'' are 
-generated from two consecutive instances of the token {\tt [int]},
+generated from two consecutive instances of the token {\tt int},
 when in a true token sequence, both characters are generated from 
-a single int token.  A postpass will clean this up, but such 
+a single {\tt int} token.  A postpass will clean this up, but such 
 situations are dealt with more effectively by the HMEMs described in
 the following subsection.
 
@@ -118,12 +118,12 @@ the following subsection.
 %\end{figure}
 
 Finally, since our training data is limited, we employ one further
-approximation in our model -- instead of modelling every individual
+approximation in our model. Instead of modelling every individual
 character separately, we classify characters using a set of boolean features
 including features for whether the character is (a) a digit, (b) an
 upper-case alphabetic letter, (c) white space, or (d) a particular
-punctuation characters such as a period.  We call the feature vectors
-involving a-d our {\em observations}.
+punctuation character such as a period.  We call the feature vectors
+involving (a)-(d) {\em observations}.
 
 %
 % To avoid bias toward certain characters, we use
@@ -148,9 +148,9 @@ involving a-d our {\em observations}.
 %% ,}'', ``{\tt ?}'', ``{\tt /}'', ``{\tt $\backslash$}" and ``{\tt :}''
 %% \end{itemize}
 
-Let $\mathbf{T}_i$ denote the $i^{th}$ hidden state whose value ranges over
+Let $\mathbf{T}_i$ denote the $i^{th}$ hidden state; its value ranges over
 the set of all token names.
-Let $\mathbf{C}_i$ denote the observation emitted by the $\mathbf{T}_i$.
+Let $\mathbf{C}_i$ denote the observation emitted by hidden state $\mathbf{T}_i$.
 Three parameters determine the model:
 the transition matrix $\mathbf{P}(T_i|T_{i-1})$,
 the sensor matrix $\mathbf{P}(C_i|T_i)$ and the initial
@@ -205,11 +205,11 @@ Because the character-by-character HMM is first order and employs only
 single character features, it cannot capture complex features
 in the data such as  
 a substring ``{\tt http://}'' which indicates a strong likelihood 
-of being part of an URL.
+of being part of a URL.
 %This HMM assumes every partial token is only dependent on its previous
 %partial token. So the first-order Markov Model is a simple model that
 %is unable to catch complicated features. 
-One obvious solution is increasing the order of HMM.  However, since
+One obvious solution is increasing the order of the HMM.  However, since
 the token length is variable in our application, it is not clear what
 the order should be.  In addition, increasing the order also increases
 the complexity exponentially.  Instead, in the next sections, we pursue
@@ -284,9 +284,9 @@ the following features (among others):
 (c) the total number of punctuation characters in the string,
 (d) the presence of certain substrings such as "{\tt am}", "{\tt pm}", 
 "{\tt January}", "{\tt Jan}", "{\tt january}", and
-(e) the presence of digits sequences.
-When $\mathbf{P}(T_i|S_i)$ is substituted for
- $\mathbf{P}(S_i|T_i)$ in equation (5), we obtain the following.
+(e) the presence of digit sequences.
+When we substitute $\mathbf{P}(T_i|S_i)$ for
+ $\mathbf{P}(S_i|T_i)$ in equation (5), we obtain the following:
 
 \begin{eqnarray}\label{eqn:est-bayes}
 \mathbf{P}(T_1, T_2, ..., T_n|S_1, S_2, ..., S_l) \propto
@@ -336,10 +336,10 @@ guarantees that the algorithm will not select shorter token sequences
 unless the average value of all conditional
 probabilities $\mathbf{P}(T_i|S_i)$ exceeds a threshold.
 
-In order to find the highest probability sequence under this model,
-we implemented a modified Viterbi Algorithm
-which takes into account the number of tokens in the sequence.
-For what follows,
+To find the highest probability sequence for a chunk under this model,
+we implemented a modified Viterbi algorithm
+that takes into account the number of tokens in the sequence.
+In what follows,
 let the number of characters in the chunk be $n$ and the number 
 of tokens be $l$.  Let $C_i$ be the character at position $i$, and 
 $PT_i$ be the partial token that emits the character $C_i$. 

@@ -5,12 +5,13 @@ approaches to probabilistic tokenization.
 These data sources, many of which are published on the
 web~\cite{padsweb}, are mostly system-generated log files of various
 kinds and a few ASCII spreadsheets describing business transactions.
-The size of these input files ranges from a few dozen lines to a few
+These files range in size from a few dozen lines to a few
 thousand.
 
 To test a given tokenization approach on a particular sample file, we
-first construct a statistical model using the given approach from the
-other nineteen sample files.  We then use the resulting model to infer a
+first construct a statistical model from the
+other nineteen sample files using the given approach.  We then use the
+resulting model to infer a 
 description for the selected file.  We repeat this process for all
 three tokenization approaches (HMM, HMEM, and HSVM) and all twenty
 sample files.  We use three metrics described in the following
@@ -97,12 +98,14 @@ coralwebsrv.log       & 86.67 & 100   & 8.75  & 23.99 & 86.67 &
 The token error rate measures the number of times a token appears in
 $S$ but the same token does not appear in the same place in $S_m$.
 A {\em token group} is a set of token types that have similar
-feature vectors and hence are hard to distinguish, e.g.
-{\tt hex string} and {\tt id} which both consist of alpha-numeric
-characters. The token group error rate measures the percentage of 
-token groups in $S$ that do not exist in $S_m$ at the same locations.
-Correct identification of token group is more desirable than confusing
-with unrelated token types.
+feature vectors and hence are hard to distinguish, \eg{},
+{\tt hex string} and {\tt id}, which both consist of alpha-numeric
+characters. The token group error rate measures the number of times a
+token from a particular token group appears in $S$ but no token from
+the same group appears in the same location in $S_m$.  
+Intuitively, if the algorithm mistakes a token for another token in
+the same token group, it is doing better than choosing a completely
+unrelated token type.
 \cut{%%%%%%%%%%%%%%%%%%%
 To define the token group error rate, we must first explain token
 groups.  Some tokens have feature vectors that make them difficult to
@@ -110,7 +113,7 @@ distinguish, for example, the tokens {\tt hex string} and {\tt id}
 which both contain digits and alphabetic letters.  Intuitively, if the
 model misclassifies a {\tt hex string} as an {\tt id}, it is doing
 better than if it predicts an unrelated token, such as a {\tt date}.
-Each token group collects tokens with similar feature vectures, so the
+Each token group collects tokens with similar feature vectors, so the
 tokens {\tt hex string} and {\tt id} belong to the same token group,
 but not {\tt date}.  
 number of times the model predicts a token outside of the token group
@@ -130,11 +133,12 @@ correct structure can be still discovered.
 \tblref{tab:error} lists the token error, token group error, and token
 boundary error rates of the twenty benchmarks. The results from
 the original \learnpads{} system are presented in columns marked by 
-{\tt lex}. It is evident that the original system produces high
-error rates for many same files, because the lexer was unable to
-use overlapping tokens effectively. HMM relies heavily on the transition
-probabilities which requires more training samples than we have.
-Therefore it does not perform as well as HMEM and HSVM in general.
+{\tt lex}. The original system produces high
+error rates for many files because the lexer is unable to
+resolve overlapping tokens effectively. HMM relies heavily on transition
+probabilities, which require a lot of data to compute to a useful
+precision.  Because we currently have insufficient data, 
+HMM generally does not perform as well as HMEM and HSVM.
 In the case of {\tt asl.log}, {\tt corald.log} and {\tt coralwebsrv.log},
 HMM's failure to detect some punctuation characters causes the
 entire token sequences to be misaligned and hence gives very high
@@ -158,9 +162,10 @@ add a more meaningful summary of the data in the table.}
 }%%%%%%%%%%%%
 
 \paragraph*{Quality of description.}
-We use the {\em Minimum Description Length Principle}
-(MDL)~\cite{mdlbook} to quantitatively assess description quality.
-This principle says that a useful measure of description quality is
+To assess description quality quantitatively, we use the {\em Minimum
+  Description Length Principle} 
+(MDL)~\cite{mdlbook}, which postulates that a useful measure of
+description quality is 
 the sum of the cost in bits of transmitting the description (the
 type cost) and the cost in bits of transmitting the data
 \textit{given the description} (the data cost).  In general, the
@@ -168,9 +173,11 @@ type cost measures the complexity of the description, while the data
 cost measures how loosely a given description explains the data.
 Increasing the type cost generally reduces the data cost, and
 \textit{vice versa}. The objective is to minimize both.
-\tblref{tab:complexity1} shows the
-percentage changes in the two costs of intermediate descriptions learned by
-the new algorithm before refinement phase over that of the original \learnpads{} system.
+\tblref{tab:complexity1} shows the percentage change in the type and data costs
+of the descriptions produced by the new algorithm using
+each of the three tokenization schemes when compared to the same costs
+produced by the original \learnpads{} system.   In both cases, the
+measurements were taken before the refinement case.
 
 \begin{table}[t]
 \begin{center}
@@ -200,15 +207,15 @@ coralwebsrv.log & -8.75 & +94.58 & -71.55 & -49.30 & -15.91 & +13.36  \\ \hline
 \end{tabular}
 \sk
 \caption{Increase (+\%) or decrease (-\%) in type cost and data
-cost before refinement} \label{tab:complexity1} \shrink
+cost before refinement.} \label{tab:complexity1} \shrink
 \end{center}
 \end{table}
 
-We can see that for most of the data sources, the probablistic tokenization
+For most of the data sources, the probabilistic tokenization
 scheme improved the quality of the description by reducing both the type and
-the data costs. In a few exceptional cases, a few misidentified tokens in
-{\tt dibbler.1000}, {\tt netstat-an} and {\tt coralwebsrv.log} cause the 
-entire descriptions to be drastically different from the ones produced by
+the data costs. In the files {\tt dibbler.1000}, {\tt netstat-an} and {\tt
+  coralwebsrv.log}, a few misidentified tokens cause the 
+resulting descriptions to differ significantly from the ones produced by
 the original system.
 
 
@@ -260,19 +267,19 @@ cost while keeping the data cost stable.
 %few wrong token sequences can cause a difference at the description
 %level.
 
-In another experiment, a human expert visually judged how each
-description compared to the original \learnpads{} results. The
-judgements focus on the readability of the descriptions, i.e.
-whether the descriptions can present the structure of the data
-sources clearly. In this experiment, the judge is asked to rate the
-descriptions one by one, in a scale from -2 (meaning the description is
+In another experiment, a human expert judged how each
+description compared to the original \learnpads{} results,
+focusing on the readability of the descriptions, \ie{},
+whether the descriptions present the structure of the data
+sources clearly. In this experiment, the judge rated the
+descriptions one by one, on a scale from -2 (meaning the description is
 too concise and it loses much useful information) to 2 (meaning the
 description is too precise and the structure is unclear). The
 score of a good description is therefore close to 0, which means the
 description provides sufficient information for the user to
-understand the data source and meanwhile the user can easily tell
+understand the data source and the user can easily understand
 the structure from the description. \tblref{tab:expert} shows that
-on average, HMEM and HSVM clearly outperforms the original system
+on average, HMEM and HSVM outperform the original system
 denoted by {\tt lex}.
 
 %Although the original \learnpads{}
@@ -399,9 +406,9 @@ compute probabilities.
 %\tblref{tab:time} summarizes the times required
 %to produce inferred descriptions for the twenty data sources.
 %{\bf kf: can we include a column for learnpads?}
-We ran our experiments on a 2.2 GHz Intel Xeon processor with 5
-GB of memory. The original algorithm takes anywhere from 
-under 10 seconds to 25 minutes to infer a description, while the new system
+We measured the execution times on a 2.2~GHz Intel Xeon processor with
+5~GB of memory. The original algorithm takes anywhere from 
+under 10~seconds to 25~minutes to infer a description, while the new system
 requires a few seconds to several hours, depending on the amount of test data
 and the statistical model used. In general, the character-by-character
 HMM model is the fastest, while HSVM is most time-consuming.

@@ -26,18 +26,19 @@ agricultural data and more.
 %information about their domain.
 
 \pads~\cite{fisher+:pads,padsweb} is a declarative 
-language that describes the syntax and semantics properties of ad hoc data
-formats.  The \pads{} compiler, developed in ML,
+language that describes the syntax and semantics of ad hoc data
+formats.  The \pads{} compiler, developed in \ml{},
 reads these declarative descriptions
 and produces a series of programming libraries (parser, printer, validator
-and visitor) and end-to-end tools (xml translator, query engine, reformatter,
-error monitor, etc.).  By doing so, \pads{} can dramatically improve the 
+and visitor) and end-to-end tools (\xml{} translator, query engine, reformatter,
+error monitor, \etc{}).  Consequently, \pads{} can
+dramatically improve the  
 productivity of data analysts who work with ad hoc data.
 However, \pads{} is not (yet) a silver bullet.  It takes time for new users
 to learn the language syntax and even experienced users can take hours or 
 days to develop descriptions for complex formats.  Hence, to further improve
 programmer productivity, we have developed a system 
-called \learnpads{} that can automatically generate end-to-end data
+called \learnpads{} that automatically generates end-to-end data
 processing tools directly from example 
 data~\cite{fisher+:dirttoshovels,fisher+:sigmod08}.  
 %\learnpads{} helps users with
@@ -45,7 +46,7 @@ data~\cite{fisher+:dirttoshovels,fisher+:sigmod08}.
 %taking a huge pile of unknown data, understanding its structure and 
 %translating it into a known format
 %such as \xml{} or CVS for further analysis.
-It does so by using machine learning techniques to infer 
+It uses machine learning techniques to infer 
 a \pads{} description and then it passes that description on to the
 \pads{} compiler.  The compiler will in turn produce its suite of 
 custom data processing tools.  Hence \pads{} now serves as a declarative
@@ -54,23 +55,23 @@ intermediate language in the tool generation process.
 Our past experiments have shown that \learnpads{} is highly effective
 when the set of tokens it uses matches the tokens used in the unknown
 data set.  For instance, when the unknown data set contains 
-urls, dates and messages the inference system will work very well when
+URLs, dates and messages the inference system will work very well when
 its tokenizer contains the correct corresponding definitions
-for urls, dates and messages used in the file.  If the
+for URLs, dates and messages used in the file.  If the
 tokenizer does not contain these elements, inference is still possible,
-but the inferred descriptions are generally much, much more complex
+but the inferred descriptions are generally much more complex
 than they would be otherwise. 
 % The excessive complexity interferes with
 % the overall goal of using the system to understand the data, analyze and 
 % transform it.
 
-This observation sounds completely obvious, but, unfortunately,
-that does not make it any easier to develop a general-purpose tokenizer
-with a wide variety of abstractions like urls, dates, messages,
+The challenge then is to develop a general-purpose tokenizer containing
+a wide variety of abstractions like URLs, dates, messages,
 phone numbers, file paths and more.  The key problem is that
-when one uses the conventional approach ({\em i.e.,} regular expressions)
-to building a tokenizer, as we did in our previous work, one finds
-that definitions of basic tokens overlap tremendously.  For example,
+when using the conventional approach 
+to building a tokenizer ({\em i.e.,} regular expressions), as we did
+in our previous work, the definitions of basic tokens overlap
+tremendously.  For example, 
 ``{\tt January 24, 2008}'' includes a word made up of letters, a couple 
 of numbers,
 some spaces and English-like punctuation such as the ``{\tt ,}''.  Does that mean 
@@ -82,7 +83,7 @@ in isolation?  Doing a good job of format
 inference involves identifying that the string of characters
 {\tt J-a-n-...-0-8} should be treated as an indivisible token and that it is
 in fact a date.  More generally, an effective format inference engine
-for ad hoc data has a good solution to the {\em Token Ambiguity Problem}
+for ad hoc data solves the {\em Token Ambiguity Problem}
 -- the problem of determining which substrings of a data file correspond
 to which token definitions in the presence of syntactic 
 ambiguity.
@@ -91,10 +92,10 @@ In this paper, we describe our attempts to solve the token ambiguity problem.
 In particular, we make the following contributions:
 \begin{itemize}
 \item We redesign our format inference algorithm~\cite{fisher+:dirttoshovels} 
-so that it can take advantage of information 
+to take advantage of information 
 generated from an arbitrary statistical token model.
 This advance allows the algorithm to process a set of
-ambiguous parses, selecting the most highly probably parses that 
+ambiguous parses, selecting the most likely parses that 
 match global criteria.
 \item We instantiate the arbitrary statistical token model with
 Hidden Markov Models (HMMs), Hierarchical Maximum Entropy Models
@@ -109,19 +110,18 @@ the underlying data complexity.
 \end{itemize}
 
 \paragraph*{Related Work.}
-Statistical methods have been used in all sorts of
-grammar induction problems in the 
-past.
-The most common practical applications of grammar induction
-include natural language understanding~\cite{Chen95bayesiangrammar},
-inference of \xml{} schema~\cite{bex+:dtd-inference} and 
-information extraction from the
-web~\cite{hong:thesis,arasu+:sigmod03long}.  However, most of these 
-tasks do not suffer from the
-token ambiguity problem we see in ad hoc data:  
-Natural language words are separated
-by spaces and known punctuation symbols while \xml{} 
-and web-based data is cleanly divided up by tags.  In contrast,
+Statistical methods have been used in many grammar induction problems,
+including 
+\xml{} schema inference~\cite{bex+:dtd-inference}, 
+information extraction from the web~\cite{hong:thesis,arasu+:sigmod03long}  
+and 
+natural language understanding~\cite{Chen95bayesiangrammar}.
+These areas do not typically suffer from the
+token ambiguity problem that we see in ad hoc data, however:  
+tags cleanly divide 
+\xml{} and web-based data, while spaces and known punctuation symbols
+separate natural language words.
+In contrast,
 the separators and token types found in ad hoc data sources such as
 web logs and financial records are far more variable and 
 ambiguous.  We contribute to the literature on statistical 
@@ -130,15 +130,14 @@ in a new application area, that of ad hoc data, which contains
 markedly different characteristics from the most frequently studied
 data processing domains.
 
-Technically, our algorithm is a variant of the algorithm described in
-our earlier research~\cite{fisher+:dirttoshovels}.  However, it has
-been modified substantially to be able to incorporate probabilistic
-parsing information in the tokenization and structure discovery
-phases.  Our new algorithm also includes a highly effective additional
-phase that simplifies overly complex descriptions.  Our previous
-report contains an extensive related work section explaining many
-differences between our grammar induction algorithm and others that
-have appeared in the literature.
+The algorithm we present here is a variant of the algorithm described
+in our earlier paper~\cite{fisher+:dirttoshovels}.  We have made
+substantial modifications, however, to incorporate probabilistic
+parsing information into the tokenization and structure discovery
+phases.  We have also added a new phase to the algorithm that
+simplifies overly complex descriptions.  Our earlier paper contains an
+extensive comparison of our basic grammar induction
+algorithm to others that have appeared in the literature.
 
 % \paragraph*{Outline.}
 % The following section further defines the problem we seek to solve

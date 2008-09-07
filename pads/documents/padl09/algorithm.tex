@@ -16,16 +16,16 @@ in Section 2.
 
 \section{The Format Inference Algorithm}\label{sec:algo}
 
-Our new format inference algorithm consists of four key stages:
-(1) training a statistical token model from labeled training data;
+Our new format inference algorithm consists of four stages:
+(1) building a statistical token model from labeled training data;
 (2) dividing the text into newline-separated {\em chunks} of data 
-and find all possible tokenizations of each chunk; (3)
-infering a {\em candidate structure} using the statistical model
+and finding all possible tokenizations of each chunk; (3)
+inferring a {\em candidate structure} using the statistical model
 and the tokenizations; and (4) applying rewriting rules to improve 
 the candidate structure.
 %\end{enumerate}
 Because this algorithm shares the general structure of
-our earlier work~\cite{fisher+:dirttoshovels}, we focus on the most 
+our earlier work~\cite{fisher+:dirttoshovels}, we focus on the 
 salient differences here.
 
 
@@ -90,15 +90,15 @@ salient differences here.
 % rerun this phase of the algorithm when given ad hoc data with
 % fundamentally different kinds of tokens.  
 
-In order to speed up the training cycle, we created a tool
+To speed up the training cycle, we created a tool
 capable of reading any \pads{} description and labelling the
-described data with the correct tokens.  This way,
-all data for which we already had pads descriptions could serve as a training
-suite and as we add more descriptions over time, our training data will 
-continuously improve.  This training suite is biased towards systems 
+described data with the tokens specified in the description.  This way,
+all data for which we have \pads{} descriptions can serve as a training
+suite. As we add more descriptions, our training data
+improves.  Currently, the training suite is biased towards systems 
 data, and includes
-tokens for integers, floats, times, dates, ip addresses, hostnames, 
-file pathes, URLs, words, ids and punctuation. 
+tokens for integers, floats, times, dates, IP addresses, hostnames, 
+file paths, URLs, words, ids and punctuation. 
 %A given substring may be parsed by more than one of the token
 %types, and we pick a token that best represent the meaning of the data.
 Parsing of tokens continues to use longest match semantics
@@ -107,17 +107,16 @@ and hence the string ``43.8'' can be parsed by sequences such as
 but not by {\tt [float] [.] [int]} or {\tt [float] [.] [float]}.
 %because the token {\tt float} would parse the entire string, even though
 %the string ``43'' alone can be represented by a {\tt [float]}.
-We have experimented with a number of different statistical models for
-tokenization.  We defer a discussion of the particulars of these
-models to \secref{sec:stats}.
+We have experimented with a number of statistical models for
+tokenization, which we discuss in \secref{sec:stats}.
 
 \paragraph*{Tokenization.}
 
 When inferring a description, the algorithm computes the set of all
 possible tokenizations of each data chunk.  Because these sequences
 share subsequences, we organize them into a directed acyclic graph
-called a \seqset{}.  For example, the \seqset{} for the substring 
-``2.2.13-4'' is shown below.
+called a \seqset{}.  For example, \figref{fig:seqset} shows the \seqset{} for the substring 
+``2.2.13-4''. 
 
 %\figref{fig:seqset} shows the \seqset{} for the
 %substring ``2.2.13-4'' from a chunk in \figref{fig:yum}. It forms a
@@ -128,12 +127,12 @@ called a \seqset{}.  For example, the \seqset{} for the substring
 \shrink
 \epsfig{file=seqset.eps, width=0.7\columnwidth}
 \end{center}
-\caption{\seqset{} from parsing string ``2.2.13-4''}\label{fig:seqset}
+\caption{\seqset{} from parsing string ``2.2.13-4''.}\label{fig:seqset}
 \shrink
 \end{figure}
 
 \noindent
-Each edge in the \seqset{} represents an occurence of a token in the
+Each edge in the \seqset{} represents an occurrence of a token in the
 data, while each vertex marks a location in the input.  If a token
 edge ends at a vertex $v$, then $v$ indicates the position immediately
 after the last character in the token.  The first vertex in a
@@ -202,7 +201,7 @@ to the edges in the input \seqset{}s.
 Next, it computes for each \seqset{} the {\em most probable token
 sequence} (MPTS) among all the possible paths 
 using a modified {\em Viterbi} algorithm \cite{rabiner89:hmm},
-which we discuss in detail in \secref{sec:stats}.
+which we discuss in \secref{sec:stats}.
 Then, based on the statistics of the tokens in the MPTSs,
 the oracle predicts the structure of the current collection of
 \seqset{}s using the heuristics designed for our earlier
@@ -232,7 +231,7 @@ vertices~42 and~46, creating the two new \seqset{}s in \figref{fig:cut}.
 \begin{center}
 \epsfig{file=cut.eps, width=0.8\columnwidth}
 \end{center}
-\caption{Cutting \seqset{} for ``2.2.13-4'' after the first float token} \label{fig:cut}
+\caption{Cutting \seqset{} for ``2.2.13-4'' after the first float token.} \label{fig:cut}
 \shrink
 \end{figure}
 %
@@ -243,11 +242,16 @@ along with the partitioned \seqset{}s.
 The refinement phase, which follows structure discovery, tries to
 improve the initial rough structure by applying a series of
 rewriting rules.  We have modified the earlier algorithm to use a 
-``blob-finding'' rule which tries to identify data segments that have
-little structure and to describe such segments using a single
-\textit{blob} token rather than a complicated structure that describes
-each variation in excruciating detail.  A typical example of this kind
-of data is free-form text comments that often appear at the end of
+``blob-finding'' rule.  This rule tries to identify data segments 
+with highly complex, structured descriptions where none of the 
+individual pieces of the description describe much of the data.
+Intuitively, such occurrences correspond to places where the data
+contained a high degree of variation, and the inference algorithm
+built a description that enumerated all the possible variations in
+painstaking detail. 
+The blob rule replaces such complexity with a single \textit{blob} token.
+A typical example of this kind
+of data is free-form text comments that sometimes appear at the end of
 each line in a log file.  The blob-finding rule reduces the overall
 complexity of the resulting description and hence makes it more
 readable.
@@ -264,5 +268,5 @@ measures the total number of union/switch/enum
 branches and different array lengths in the 
 structure. When the ratio between the variance and the amount of the data
 described by the structure exceeds a threshold, the algorithm decides
-the decides to convert the structure to a blob if it can find a
-termating sequence.
+to convert the structure to a blob if it can find a
+terminating sequence.
