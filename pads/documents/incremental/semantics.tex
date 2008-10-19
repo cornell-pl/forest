@@ -1,0 +1,155 @@
+\documentclass[11pt]{article}
+
+\usepackage{xspace,amsmath,math-cmds,
+            math-envs,times,
+            verbatim,multicol,proof,url}
+\usepackage{code} 
+\usepackage{epsfig}
+\renewcommand{\bar}[1]{\overline #1}
+\newcommand{\base}{{\tt Base}}
+\newcommand{\sync}{{\tt Sync}}
+\newcommand{\mystruct}{{\tt Struct}}
+\newcommand{\myunion}{{\tt Union}}
+\newcommand{\myarray}{{\tt Array}}
+\newcommand{\D}{{\mathbb D}}
+\input{definitions}
+\begin{document}
+
+\section{Preliminary Definitions}
+
+\noindent
+$s$: a character string \\
+$s_1 s_2$: concatenation of strings $s_1$ and $s_2$\\
+$s_1 - s_2$: prefix of $s_1$ that is not a substring of $s_2$ \\
+$\D$: an annotated description \\
+$e$: error code \\
+$d$: (error code, string) pair\\
+$\bar x$: a list of $x$ \\
+$L(B)$: language accepted by $B$\\
+$\oplus$: binary operators on two error codes\\
+$l_1 @ l_2$: concatenation of two lists\\
+$l[x'/x]$: substitution of $x'$ for $x$ in list $l$
+
+\begin{eqnarray*}
+e &::=& G \bnfalt F \bnfalt P ~~~ {\rm (Good,~ Fail~ or~ Partial)}\\
+\D &::=& nil \bnfalt \base~ \bar{d} \bnfalt \sync~ \bar{d} \bnfalt \mystruct~ \bar{d}~  \bar{\D} \bnfalt 
+\myunion~ \bar{d}~ \bar{\D} \bnfalt \myarray~ \bar{d}~ (\D, \D_s, \D_t)
+\end{eqnarray*}
+
+\begin{eqnarray*}
+G \oplus G &=& G\\
+G \oplus F &=& P\\
+G \oplus P &=& P\\
+F \oplus F &=& F\\
+F \oplus P &=& P\\
+P \oplus P &=& P
+\end{eqnarray*}
+
+\section{Operational Semantics}
+Main judgement (consumption of string data):
+
+\noindent
+\[s,~ \D \leadsto s',~ \D',~ e'\]
+
+\noindent
+where $e'$ is the is the error code of the last data item in $\D'$.
+
+\[
+\infer[\rm{(Base-G)}]{s_1 s_2,~ \base~ \bar{d} \leadsto s_2,~ \base~ \bar{d}@[(G,~ s_1)],~ G}
+{s_1 \in L(\base)} 
+\]
+
+\[
+\infer[\rm{(Base-F)}]{s,~ \base~ \bar{d} \leadsto s,~ \base~ \bar{d} @ [(F,~ "")],~ F}
+{{\rm prefix}(s) \cap L(\base) \neq \emptyset}
+\]
+
+\[
+\infer[\rm{(Sync-G)}]{s_1 s_2,~ \sync~ \bar{d} \leadsto s_2,~ \sync~ \bar{d}@[(G,~ s_1)],~ G}
+{s_1 \in L(\base)} 
+\]
+
+\[
+\infer[\rm{(Sync-F)}]{s,~ \sync~ \bar{d} \leadsto s,~ \sync~ \bar{d} @ [(F,~ "")],~ F}
+{{\rm substring}(s) \cap L(\sync) \neq \emptyset}
+\]
+
+\[
+\infer[\rm{(Sync-P)}]{s_1 s_2 s_3,~ \sync~ \bar{d} \leadsto 
+s_3,~ \sync~ \bar{d} @ [(P,~ s_1 s_2)],~ P}
+{{\rm substring}(s_1) \cap L(\sync) \neq \emptyset  & s_2 \in L(\sync)}
+\]
+
+\[
+\infer[\rm{(Struct)}]{s_1,~ \mystruct~ \bar{d}~ [\D_1, \ldots, \D_n] \leadsto 
+s_{n+1},~ \mystruct~ \bar{d} @ [(e',~ s_1 - s_{n+1})]~ [\D_1', \ldots, \D_n'],~ e'}
+{
+\forall i \in [1,~ n]:~ s_i,~ \D_i \leadsto
+s_{i+1},~ \D_i',~ e_i'~~~~~~~  e' = e_1' \oplus \ldots \oplus e_n'
+}
+\]
+
+\[
+\infer[\rm{(Union-G)}]
+{
+\begin{array}{c}
+s,~ \myunion~ \bar{d}~ [\D_1, \ldots, \D_{m-1}, \D_m, \D_{m+1}, \ldots, \D_n] \leadsto \\
+s_m',~ \myunion~ \bar{d} @ [(G, s - s_m')]~ , [\D_1, \ldots, \D_{m-1}, \D_m', \D_{m+1},\ldots, \D_n], G
+\end{array}}
+{
+\begin{array}{c}
+\forall i \in [1, m-1], 1 \le m \le n-1 :~ s, \D_i \leadsto s_i', \D_i', e_i' ~~~~ e_i' \in \{F,~ P\} \\
+s,~ \D_m \leadsto s_m',~ \D_m', G\\
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Union-Last)}]
+{
+\begin{array}{c}
+s,~ \myunion~ \bar{d}~ [\D_1, \ldots, \D_{n-1}, \D_n] \leadsto \\ 
+s_n',~ \myunion~ \bar{d} @ [(e_n', s - s_n')]~ [\D_1, \ldots, \D_{n-1}, \D_n'], e_n'
+\end{array}}
+{
+\begin{array}{c}
+\forall i \in [1, n-1]:~ s_i, \D_i \leadsto s_i', \D_i', e_i' ~~~~ e_i' \in \{F,~ P\} \\
+s,~ \D_n \leadsto s_n',~ \D_n', e_n'\\
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Array-1)}]{
+\begin{array}{c}
+s_1 \cdots s_{n+2},~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
+s_{n+2},~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_n, s_1 \cdots s_{n+1})]~ 
+(\D_{n+1},~ \D_{s, n+1},~ \D_t'),~ e_1 \oplus \ldots \oplus e_n
+\end{array}}
+{
+\begin{array}{c}
+\forall i \in [1,~ n-1]: s_i \cdots s_{n+2},~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
+s_{i+1} \cdots s_{n+1},~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
+s_n s_{n+1} s_{n+2}, \D_n \leadsto s_{n+1} s_{n+2}, \D_{n+1}, e_n ~~~~ e_n  \in \{G,~ P\} \\
+s_{n+1} s_{n+2}, \D_t \leadsto s_{n+2}, \D_t', G
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Array-2)}]{
+\begin{array}{c}
+s_1 \cdots s_n,~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
+s_n,~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_{n-1}, s_1 \cdots s_{n-1})]~ 
+(\D_n,~ \D_{s, n},~ \D_t),~ e_1 \oplus \ldots \oplus e_{n-1}
+\end{array}}
+{
+\begin{array}{c}
+\forall i \in [1,~ n-1]: s_i \cdots s_n,~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
+s_{i+1} \cdots s_n,~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
+s_n,~ \mystruct~ nil~ [\D_n,~ \D_{s,n}] \leadsto s_n,~ \mystruct~ d_n~ [\D_n',~ \D_{s,n}'],~ F \\ 
+\end{array}
+}
+\]
+
+\end{document}
