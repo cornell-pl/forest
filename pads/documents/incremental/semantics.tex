@@ -61,7 +61,7 @@ where $e'$ is the is the error code of the last data item in $\D'$.
 
 \[
 \infer[\rm{(Base-F)}]{s,~ \base~ \bar{d} \leadsto s,~ \base~ \bar{d} @ [(F,~ "")],~ F}
-{{\rm prefix}(s) \cap L(\base) \neq \emptyset}
+{{\rm prefix}(s) \cap L(\base) = \emptyset}
 \]
 
 \[
@@ -71,13 +71,13 @@ where $e'$ is the is the error code of the last data item in $\D'$.
 
 \[
 \infer[\rm{(Sync-F)}]{s,~ \sync~ \bar{d} \leadsto s,~ \sync~ \bar{d} @ [(F,~ "")],~ F}
-{{\rm substring}(s) \cap L(\sync) \neq \emptyset}
+{{\rm substring}(s) \cap L(\sync) = \emptyset}
 \]
 
 \[
 \infer[\rm{(Sync-P)}]{s_1 s_2 s_3,~ \sync~ \bar{d} \leadsto 
 s_3,~ \sync~ \bar{d} @ [(P,~ s_1 s_2)],~ P}
-{{\rm substring}(s_1) \cap L(\sync) \neq \emptyset  & s_2 \in L(\sync)}
+{{\rm substring}(s_1) \cap L(\sync) = \emptyset  & s_2 \in L(\sync)}
 \]
 
 \[
