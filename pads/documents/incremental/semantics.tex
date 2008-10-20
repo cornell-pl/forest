@@ -12,6 +12,7 @@
 \newcommand{\myunion}{{\tt Union}}
 \newcommand{\myarray}{{\tt Array}}
 \newcommand{\D}{{\mathbb D}}
+\newcommand{\pa}{{\mapsto^*}}
 \input{definitions}
 \begin{document}
 
@@ -28,7 +29,7 @@ $\bar x$: a list of $x$ \\
 $L(B)$: language accepted by $B$\\
 $\oplus$: binary operators on two error codes\\
 $l_1 @ l_2$: concatenation of two lists\\
-$l[x'/x]$: substitution of $x'$ for $x$ in list $l$
+append\_data($\D$, $d$): append $d$ to the data list of $\D$
 
 \begin{eqnarray*}
 e &::=& G \bnfalt F \bnfalt P ~~~ {\rm (Good,~ Fail~ or~ Partial)}\\
@@ -48,11 +49,17 @@ P \oplus P &=& P
 \section{Operational Semantics}
 Main judgement (consumption of string data):
 
-\noindent
-\[s,~ \D \leadsto s',~ \D',~ e'\]
-
+\[s,~ \D \leadsto s',~ \D',~ e'
+\]
 \noindent
 where $e'$ is the is the error code of the last data item in $\D'$.
+
+\noindent
+Secondary judgement (consumption of multiple array elements):
+
+\[
+s, ~\D_e,~ \D_s,~ \D_t~ \pa s',~ \D_e',~ \D_s',~ \D_t',~ e'
+\]
 
 \[
 \infer[\rm{(Base-G)}]{s_1 s_2,~ \base~ \bar{d} \leadsto s_2,~ \base~ \bar{d}@[(G,~ s_1)],~ G}
@@ -114,42 +121,109 @@ s_n',~ \myunion~ \bar{d} @ [(e_n', s - s_n')]~ [\D_1, \ldots, \D_{n-1}, \D_n'], 
 {
 \begin{array}{c}
 \forall i \in [1, n-1]:~ s_i, \D_i \leadsto s_i', \D_i', e_i' ~~~~ e_i' \in \{F,~ P\} \\
-s,~ \D_n \leadsto s_n',~ \D_n', e_n'\\
+s,~ \D_n \leadsto s_n',~ \D_n', e_n'
 \end{array}
 }
 \]
 
 \[
-\infer[\rm{(Array-1)}]{
-\begin{array}{c}
-s_1 \cdots s_{n+2},~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
-s_{n+2},~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_n, s_1 \cdots s_{n+1})]~ 
-(\D_{n+1},~ \D_{s, n+1},~ \D_t'),~ e_1 \oplus \ldots \oplus e_n
-\end{array}}
+\infer[\rm{(Array)}]
+{
+s, \myarray~ \bar{d}~ (\D_e,~ \D_s,~ \D_t~) \leadsto
+s', \myarray~ \bar{d} @ [(e,~ s - s')]~ (\D_e',~ \D_s', ~ \D_t'), e
+}
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e 
+}
+\]
+
+
+\[
+\infer[\rm{(Elem-Id)}]
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa s,~ \D_e,~ \D_s,~ \D_t,~ G 
+}
+{
+}
+\]
+
+\[
+\infer[\rm{(Elem-Sep)}]
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa s'',~ \D_e'',~ \D_s'',~ \D_t',~ e \oplus e' \oplus e''
+}
 {
 \begin{array}{c}
-\forall i \in [1,~ n-1]: s_i \cdots s_{n+2},~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
-s_{i+1} \cdots s_{n+1},~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
-s_n s_{n+1} s_{n+2}, \D_n \leadsto s_{n+1} s_{n+2}, \D_{n+1}, e_n ~~~~ e_n  \in \{G,~ P\} \\
-s_{n+1} s_{n+2}, \D_t \leadsto s_{n+2}, \D_t', G
+s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e\\
+s',~ \D_e' \leadsto s'',~ \D_e'',~ e' ~~~~ s'',~ \D_s' \leadsto s''',~ \D_s'',~ e'' \\
+e'' \in \{G,~ P\} ~~~~
+{\rm substring}(s'' - s''') \cap L(D_t) = \emptyset 
 \end{array}
 }
 \]
 
 \[
-\infer[\rm{(Array-2)}]{
-\begin{array}{c}
-s_1 \cdots s_n,~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
-s_n,~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_{n-1}, s_1 \cdots s_{n-1})]~ 
-(\D_n,~ \D_{s, n},~ \D_t),~ e_1 \oplus \ldots \oplus e_{n-1}
-\end{array}}
+\infer[\rm{(Elem-Term)}]
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa s'',~ \D_e'',~ \D_s',~ \D_t'',~ e \oplus e' \oplus e''
+}
 {
 \begin{array}{c}
-\forall i \in [1,~ n-1]: s_i \cdots s_n,~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
-s_{i+1} \cdots s_n,~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
-s_n,~ \mystruct~ nil~ [\D_n,~ \D_{s,n}] \leadsto s_n,~ \mystruct~ d_n~ [\D_n',~ \D_{s,n}'],~ F \\ 
+s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e\\
+s',~ \D_e' \leadsto s'',~ \D_e'',~ e' ~~~~ s'',~ \D_t' \leadsto s''',~ \D_t'',~ e''  \\
+e'' \in \{G,~ P\} ~~~~
+{\rm substring}(s'' - s''') \cap L(D_s) = \emptyset 
 \end{array}
 }
 \]
 
+\[
+\infer[\rm{(Elem-NonTerm)}]
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa~ "",~ \D_e'',~ \D_s',~ {\rm append\_data}(\D_t', (P, s'')),~ 
+e \oplus e' \oplus P
+}
+{
+\begin{array}{c}
+s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e\\
+s',~ \D_e' \leadsto s'',~ \D_e'',~ e' ~~~~ s'',~ \D_s' \leadsto s'',~ \D_s'',~ F ~~~~ 
+s'',~ \D_t' \leadsto s'',~ \D_t'',~ F  
+\end{array}
+}
+\]
+
+%
+%\[
+%\infer[\rm{(Array-1)}]{
+%\begin{array}{c}
+%s_1 \cdots s_{n+2},~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
+%s_{n+2},~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_n, s_1 \cdots s_{n+1})]~ 
+%(\D_{n+1},~ \D_{s, n+1},~ \D_t'),~ e_1 \oplus \ldots \oplus e_n
+%\end{array}}
+%{
+%\begin{array}{c}
+%\forall i \in [1,~ n-1]: s_i \cdots s_{n+2},~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
+%s_{i+1} \cdots s_{n+1},~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
+%s_n s_{n+1} s_{n+2}, \D_n \leadsto s_{n+1} s_{n+2}, \D_{n+1}, e_n ~~~~ e_n  \in \{G,~ P\} \\
+%s_{n+1} s_{n+2}, \D_t \leadsto s_{n+2}, \D_t', G
+%\end{array}
+%}
+%\]
+%
+%\[
+%\infer[\rm{(Array-2)}]{
+%\begin{array}{c}
+%s_1 \cdots s_n,~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
+%s_n,~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_{n-1}, s_1 \cdots s_{n-1})]~ 
+%(\D_n,~ \D_{s, n},~ \D_t),~ e_1 \oplus \ldots \oplus e_{n-1}
+%\end{array}}
+%{
+%\begin{array}{c}
+%\forall i \in [1,~ n-1]: s_i \cdots s_n,~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
+%s_{i+1} \cdots s_n,~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
+%s_n,~ \mystruct~ nil~ [\D_n,~ \D_{s,n}] \leadsto s_n,~ \mystruct~ d_n~ [\D_n',~ \D_{s,n}'],~ F \\ 
+%\end{array}
+%}
+%\]
+%
 \end{document}
