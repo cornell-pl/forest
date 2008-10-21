@@ -21,7 +21,7 @@
 \noindent
 $s$: a character string \\
 $s_1 s_2$: concatenation of strings $s_1$ and $s_2$\\
-$s_1 - s_2$: prefix of $s_1$ that is not a substring of $s_2$ \\
+$s_1 - s_2$: $(s_1 - s_2) s_2 = s_1$ \\
 $\D$: an annotated description \\
 $e$: error code \\
 $d$: (error code, string) pair\\
@@ -83,7 +83,7 @@ s, ~\D_e,~ \D_s,~ \D_t~ \pa s',~ \D_e',~ \D_s',~ \D_t',~ e'
 
 \[
 \infer[\rm{(Sync-P)}]{s_1 s_2 s_3,~ \sync~ \bar{d} \leadsto 
-s_3,~ \sync~ \bar{d} @ [(P,~ s_1 s_2)],~ P}
+s_3,~ \sync~ \bar{d} @ [(P s_1,~ s_1 s_2)],~ P}
 {{\rm substring}(s_1) \cap L(\sync) = \emptyset  & s_2 \in L(\sync)}
 \]
 
@@ -137,15 +137,15 @@ s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e
 }
 \]
 
-
-\[
-\infer[\rm{(Elem-Id)}]
-{
-s,~ \D_e,~ \D_s,~ \D_t \pa s,~ \D_e,~ \D_s,~ \D_t,~ G 
-}
-{
-}
-\]
+%
+%\[
+%\infer[\rm{(Elem-Id)}]
+%{
+%s,~ \D_e,~ \D_s,~ \D_t \pa s,~ \D_e,~ \D_s,~ \D_t,~ G 
+%}
+%{
+%}
+%\]
 
 \[
 \infer[\rm{(Elem-Sep)}]
@@ -154,10 +154,10 @@ s,~ \D_e,~ \D_s,~ \D_t \pa s'',~ \D_e'',~ \D_s'',~ \D_t',~ e \oplus e' \oplus e'
 }
 {
 \begin{array}{c}
-s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e\\
-s',~ \D_e' \leadsto s'',~ \D_e'',~ e' ~~~~ s'',~ \D_s' \leadsto s''',~ \D_s'',~ e'' \\
-e'' \in \{G,~ P\} ~~~~
-{\rm substring}(s'' - s''') \cap L(D_t) = \emptyset 
+s,~ \D_e \leadsto s',~ \D_e',~ e ~~~~ s',~ \D_s \leadsto s'',~ \D_s',~ e' \\
+e' \in \{G,~ P\} ~~~~
+{\rm substring}(s' - s'') \cap L(D_t) = \emptyset \\ 
+s'',~ \D_e',~ \D_s',~ \D_t \pa s''',~ \D_e'',~ \D_s'',~ \D_t',~ e''
 \end{array}
 }
 \]
@@ -169,10 +169,9 @@ s,~ \D_e,~ \D_s,~ \D_t \pa s'',~ \D_e'',~ \D_s',~ \D_t'',~ e \oplus e' \oplus e'
 }
 {
 \begin{array}{c}
-s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e\\
-s',~ \D_e' \leadsto s'',~ \D_e'',~ e' ~~~~ s'',~ \D_t' \leadsto s''',~ \D_t'',~ e''  \\
-e'' \in \{G,~ P\} ~~~~
-{\rm substring}(s'' - s''') \cap L(D_s) = \emptyset 
+s,~ \D_e \leadsto s',~ \D_e',~ e ~~~~ s',~ \D_t \leadsto s'',~ \D_t',~ e'  \\
+e' \in \{G,~ P\} ~~~~
+{\rm substring}(s' - s'') \cap L(D_s) = \emptyset 
 \end{array}
 }
 \]
@@ -180,14 +179,13 @@ e'' \in \{G,~ P\} ~~~~
 \[
 \infer[\rm{(Elem-NonTerm)}]
 {
-s,~ \D_e,~ \D_s,~ \D_t \pa~ "",~ \D_e'',~ \D_s',~ {\rm append\_data}(\D_t', (P, s'')),~ 
-e \oplus e' \oplus P
+s,~ \D_e,~ \D_s,~ \D_t \pa~ "",~ \D_e',~ \D_s,~ {\rm append\_data}(\D_t, (P, s')),~ 
+e \oplus P
 }
 {
 \begin{array}{c}
-s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e\\
-s',~ \D_e' \leadsto s'',~ \D_e'',~ e' ~~~~ s'',~ \D_s' \leadsto s'',~ \D_s'',~ F ~~~~ 
-s'',~ \D_t' \leadsto s'',~ \D_t'',~ F  
+s,~ \D_e \leadsto s',~ \D_e',~ e ~~~~ s',~ \D_s \leadsto s',~ \D_s',~ F ~~~~ 
+s',~ \D_t \leadsto s',~ \D_t',~ F  
 \end{array}
 }
 \]
