@@ -201,7 +201,7 @@ algorithm over the \seqset.
 %  the viterbi algorithm?  If so, we should say so. If not, this last
 %  sentence needs to be linked in better.}
 
-Because the character-by-character HMM is first order and employs only 
+Because the character-by-character HMM is first-order and employs only 
 single character features, it cannot capture complex features
 in the data such as  
 a substring ``{\tt http://}'' which indicates a strong likelihood 
@@ -226,7 +226,7 @@ the Maximum Entropy (ME) procedure~\cite{Berger96:ME,megaweb}
 to produce an observation and runs a standard HMM over these new kinds
 of observations.  
 Using the sequence ``2.2.13-4'' as our example again, the corresponding
-HMEM may be drawn as follows.
+HMEM may be drawn as follows:
 
 %\begin{figure}[th]
 \begin{center}
@@ -282,8 +282,8 @@ the following features (among others):
 (a) total number of characters in the string,
 (b) the number of occurrences of certain punctuation characters,
 (c) the total number of punctuation characters in the string,
-(d) the presence of certain substrings such as "{\tt am}", "{\tt pm}", 
-"{\tt January}", "{\tt Jan}", "{\tt january}", and
+(d) the presence of certain substrings such as ``{\tt am}'', ``{\tt pm}'', 
+``{\tt January}'', ``{\tt Jan}'', ``{\tt january}'', and
 (e) the presence of digit sequences.
 When we substitute $\mathbf{P}(T_i|S_i)$ for
  $\mathbf{P}(S_i|T_i)$ in equation (5), we obtain the following:
