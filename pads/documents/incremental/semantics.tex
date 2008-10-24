@@ -122,9 +122,8 @@ s_i',~ \myunion~ \gamma'~ \bar{d} @ [(G, s - s_i')]~ , [\D_1, \ldots, \D_{i-1}, 
 \end{array}}
 {
 \begin{array}{c}
-\forall i \in [1, n]:~ s_i, \D_i \leadsto s_i',~ \D_i',~ e_i \land \gamma_i = {\rm gamma}(\D_i) \\
-\exists j \in [1, n]:~ s, \D_j \leadsto s_j', \D_j',~ G \land \gamma_j' ={\rm gamma}(\D_j') \\
-\gamma' = \gamma_j'+ \Sigma_{i=1, i \ne j}^n \gamma_i \\
+\exists i \in [1, n]:~ s, \D_i \leadsto s_i', \D_i',~ G \land \gamma_i' ={\rm gamma}(\D_i') \\
+\gamma' = \gamma - \gamma_i + \gamma_i' 
 \end{array}
 }
 \]
