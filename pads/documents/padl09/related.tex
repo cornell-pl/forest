@@ -1,4 +1,23 @@
 \section{Related Work}\label{sec:related}
+Statistical methods have been used in many grammar induction problems,
+including
+\xml{} schema inference~\cite{bex+:dtd-inference},
+information extraction from the web~\cite{hong:thesis,arasu+:sigmod03long}
+and
+natural language understanding~\cite{Chen95bayesiangrammar}.
+These areas do not typically suffer from the
+token ambiguity problem that we see in ad hoc data, however:
+tags cleanly divide
+\xml{} and web-based data, while spaces and known punctuation symbols
+separate natural language words.
+In contrast,
+the separators and token types found in ad hoc data sources such as
+web logs and financial records are far more variable and
+ambiguous.  We contribute to the literature on statistical
+data processing by analyzing the effectiveness of statistical models
+in a new application area, that of ad hoc data, which contains
+markedly different characteristics from the most frequently studied
+data processing domains.
 
 \begin{itemize}
 \item Grammar induction \& structure discovery without token ambiguity problem
