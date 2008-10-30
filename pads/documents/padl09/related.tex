@@ -1,10 +1,25 @@
 \section{Related Work}\label{sec:related}
-Statistical methods have been used in many grammar induction problems,
-including
-\xml{} schema inference~\cite{bex+:dtd-inference},
-information extraction from the web~\cite{hong:thesis,arasu+:sigmod03long}
-and
-natural language understanding~\cite{Chen95bayesiangrammar}.
+Classic grammar induction and structure discovery problems have been
+studied for decades. \xml{}-documents are a typical source of
+text-based data that possibily adheres to some structures represented by a
+schema. ~\cite{garofalakis+:xtract} and ~\cite{bex+:inferring-xml-schema}
+infers two \xml{} schema formalisms respectively -
+\em{Document Type Definitions} (DTDs) and \em{XML Schema Definitions}
+(XSDs). ~\cite{bex+:dtd-inference} is focused on inferring
+concise DTDs by considering two class of DTDs with special
+properties. In recent researches, statistical methods have been widely
+used in grammar induction. ~\cite{kushmerick-phd1997} automatically learns the procedure
+for extracting content from the web in the context of inductive
+learning and accesses its learnability by
+fitting the problem into PAC learning model. ~\cite{hong:thesis}
+resolves a similar problem by explicit domain rules and a
+hill-climbing inference algorithm. ~\cite{soderland:whisk} tackles
+both semi-structured and free-text data, and uses covering algorithms.
+It also shares a methodology with inductive learning. For free-text,
+some syntactic and semantic pre-processing analysis is conducted in
+addition to text extraction rules. ~\cite{Chen95bayesiangrammar}
+employs a greedy heuristic search algorithm within a Bayesian
+framework for probabilistic context-free grammar induction. 
 These areas do not typically suffer from the
 token ambiguity problem that we see in ad hoc data, however:
 tags cleanly divide
@@ -13,30 +28,30 @@ separate natural language words.
 In contrast,
 the separators and token types found in ad hoc data sources such as
 web logs and financial records are far more variable and
-ambiguous.  We contribute to the literature on statistical
+ambiguous.  
+
+Besides grammar induction, researchers have also witnessed successes of
+statistical and machine learning methods in a variety of other areas.
+~\cite{borkar+:text-segmentation} extracts certain fields in records
+from text using nested HMMs. ~\cite{Pinto+:texttables} utilizes
+Conditional Random Fields (CRFs) to dig rich and overlapping features
+with the purpose of identifying row positions and types in text-based
+tables. Computational biology and natural language processing are also
+two areas in which statistical methods play an important
+role. ~\cite{kulp96generalized} predicts exons and introns in DNA
+sequences by generalized HMMs. An early step of natural language
+understanding is to assign part-of-speech (POS) tags to segments of
+speech sentences and ~\cite{Heeman99:speech} employs decision tree
+algorithms to address this task. These problems typically deal with
+sequencial data, extract features from parts of the data and apply
+machine learning methods to predict certain properties of these
+parts. The data in our token ambiguity problem is different from these
+data, and the learning methods in our system must achieve high
+precision, while still only costs tolerable execution time for large
+amount of data.
+
+In this paper, we contribute to the literature on statistical
 data processing by analyzing the effectiveness of statistical models
 in a new application area, that of ad hoc data, which contains
 markedly different characteristics from the most frequently studied
 data processing domains.
-
-\begin{itemize}
-\item Grammar induction \& structure discovery without token ambiguity problem
-Arasu \& Garcia-Molina '03 \cite{arasu+:sigmod03},
-Garofalakis et al. '00 \cite{garofalakis+:xtract},
-Kushmerick et al. '97 \cite{kushmerick-phd1997}.
-
-\item Detect row table components by Hidden Markov Model \& Conditional Random Fields:
-Pinto et al. '03 \cite{Pinto+:texttables}.
-
-\item  Extract certain fields in records from text:
-Borkar et al.'01 \cite{borkar+:text-segmentation}.
-
-\item Predict exons and introns in DNA sequences using generalized HMM:
-Kulp '96 \cite{kulp96generalized}
-
-\item  Part-of-speech tagging in natural language processing:
-Heeman '99 (Decision Tree) \cite{Heeman99:speech}
-
-\item Speech Recognition: Rabiner '89 \cite{rabiner89:hmm}
-
-\end{itemize}
