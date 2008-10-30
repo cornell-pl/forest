@@ -1,0 +1,191 @@
+Judgement for pushing data into an annotated description:
+----------------------------------------------------------
+
+s, i, D ==> D', b
+
+s is a string, i is the child index starting from 1 (0 means the top node of D), 
+D is the annotated description, D' the modified annotated description,
+b is a boolean.
+data (D, s): magic function that returns the data associated with D that is 
+	     in the same chunk as s
+data_ds(ds, s): return the data from ds which comes from the same chunk as s
+concat_data(D, s): concat the data in D in the same chunk as s with s 
+drop_data (D, s): drop the data in D that is in the same chunk as s 
+merge_ds dss: merge a list of data lists into a new data list by concatenating
+corresponding elements
+ds(D): returns the data list of D
+p2f ds: convert all the P in a ds to F by doing (P(s1), s2) ==> (F, s2)
+replace_ds (D, ds'): replace the ds in D with ds'
+ 
+ data(D, s) = (G, _)
+---------------------  (push-top-fail)
+s, 0, D ==> D, false
+
+
+data(D, s) = (F, _)   D' = concat_data(D, s)
+--------------------------------------------  (push-top-succ}
+	s, 0, D ==> D', true
+
+
+data_ds(ds, s) = (P, _)   s, |Ds|, Struct g ds Ds ==> D', b
+--------------------------------------------------------------------- (push-struct-down)
+        	 s, 0, Struct g ds Ds => D', b
+
+
+   i != 0    data(D_i, s) = (G, _)  
+--------------------------------------------------------------------- (push-struct-fail)
+s, i, Struct g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ...] ==>
+Struct g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ...], false
+
+
+   i != 0    data(D_i, s) = (P, _)   s, 0, D_i ==> D_i', b
+--------------------------------------------------------------------- (push-struct-down)
+s, i, Struct g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ...] ==>
+Struct g ds [D_1, ..., D_{i-1}, D_i', D_{i+1}, ...], b
+
+
+\forall k \in [i, j]: j > i and D_k != Sync _ _ 
+	  and data(D_k, s)=(F, _) and  D_k' = drop_data (D_k, s) 
+          ds' = (merge_ds [D_i', ..., D_j']) @ [(F, s)]
+---------------------------------------------------------------------- (push-struct-multi-succ)
+s, j, Struct g ds [D_1, ..., D_i, ..., D_j, D_{j+1}, ...,D_n] ==>
+Struct g ds [D_1,...,D_{i-1}, Struct g' ds' [Di',...,Dj'],
+		D_{j+1}, ..., D_n], true
+
+
+   i != 0    data(D_{i-1}, s) != (F, _)    data(D_i, s) = (F, s_i) 
+   D_i != Sync _ _     D_i' = concat_data(D_i, s)
+--------------------------------------------------------------------- (push-struct-single-succ1)
+s, i, Struct g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ...,D_n] ==>
+Struct g ds [D_1, ..., D_{i-1}, D_i', D_{i+1}, ..., D_n], true
+
+
+   i != 0    data(D_{i-1}, s) = (F, _)    D_{i-1} = Sync _ _
+   data(D_i, s) = (F, s_i)   D_i != Sync _ _    
+   D_i' = concat_data(D_i, s)
+--------------------------------------------------------------------- (push-struct-single-succ2)
+s, i, Struct g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ...,D_n] ==>
+Struct g ds [D_1, ..., D_{i-1}, D_i', D_{i+1}, ..., D_n], true
+
+
+data_ds(ds, s) = (P s1, s2)
+\exist i \in [1, n]: (P s1, s2) \in ds(D_i) and s, 0, D_i ==> D_i', b
+---------------------------------------------------------------------- (push-union-down)
+s, 0, Union g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ..., D_n] => 
+Union g ds [D_1, ..., D_{i-1}, D_i', D_{i+1}, ..., D_n], b => 
+
+
+        	data_ds(ds, s) = (P _, _)
+---------------------------------------------------------------------- (push-array-fail)
+s, 0, Array g ds (D_e, D_s, D_t) ==> Array g ds (D_e, D_s, D_t), false
+
+
+Judgement for transforming annotated description: 
+-------------------------------------------------
+
+D |--> D'
+
+ 
+-------------------------   (base-no-change)
+Base g ds |--> Base g ds
+
+
+    ds' = p2f ds
+-------------------------  (sync-not-in-struct) 
+Sync g ds |--> Sync g ds'
+
+
+\forall i \in [1, n] where D_i != Sync _ _: D_i |--> D_i'
+\exists i \in [1, n]: D_i' = Sync g ds \and 
+\exists d  in ds: d = (P(s), x) \and 
+D_i'' = replace_d (D_i', d, (G, x - s))
+s, (i-1), Struct g ds [D_1', ..., D_{i-1}', D_i'', 
+	D_{i+1}', ..., D_n'] ==> D', true
+D' |--> D''
+-----------------------------------------------------------------  (struct-success)
+Struct g ds [D_1, ..., D_n] |--> D''
+
+
+\forall i \in [1, n] where D_i != Sync _ _: D_i |--> D_i'
+\exists i \in [1, n]: D_i' = Sync g ds \and 
+\exists d  in ds: d = (P(s), x) \and 
+D_i'' = replace_d (D_i', d, (F, x))
+s, (i-1), Struct g ds [D_1', ..., D_{i-1}', D_i'', 
+	D_{i+1}', ..., D_n'] ==> D', false          
+D' |--> D''
+------------------------------------------------------------- (struct-fail)
+Struct g ds [D_1, ..., D_n] |--> D''
+
+
+\forall i \in [1, n] where D_1 != Sync _ _: D_i |--> D_i'
+\not \exists d in ds(D_i') s.t. d = (P(s), _))
+--------------------------------------------------------------  (struct-done)
+Struct g ds [D_1, ..., D_n] |--> Struct g ds [D_1', ..., D_n']
+
+
+        \forall i \in [1, n]: Di |--> Di'
+--------------------------------------------------------  (union)
+Union g ds [D1, ..., Dn] |--> Union g ds [D1', ..., Dn']
+
+
+D_e |--> D_e'  
+\exists d in ds(D_s): d = (P(s), x) \and s, 0, D_e' ==> D_e'', true  
+D_s' = replace_d (D_s, d, (G, x - s))
+Array g ds (D_e'', D_s', D_t) |--> D'
+------------------------------------------------ (array-success)
+Array g ds (D_e, D_s, D_t) |--> D'
+
+
+D_e |--> D_e'  
+\exists d in ds(D_s): d = (P(s), x) \and s, 0, D_e' ==> D_e', false
+D_s' = replace_d (D_s, d, (F, x))    
+Array g ds (D_e', D_s', D_t) |--> D'
+-------------------------------------------------------------------- (array-fail)
+Array g ds (D_e, D_s, D_t) |--> D'
+
+
+D_e |--> D_e'      
+\not \exists d in ds(D_s): d = (P, _)
+ds_t = ds(D_t)   ds_t' = p2f ds_t  D_t' = replace_ds (D_t, ds_t')
+--------------------------------------------------------------------- (array-done)
+Array g ds (D_e, D_s, D_t) |--> Array g ds (D_e', D_s, D_t')
+
+
+
+The judgement to learn new descriptions for various parts of a description:
+
+D ++> D'
+
+err_data = { s | d in ds where d = (F, s)} 
+D' = learn (err_data)
+-----------------------------------------  (base-learn)
+Base g ds ++> Union g' [] [Base g ds, D']
+
+err_data = { s | d in ds where d = (F, s)} 
+D' = learn (err_data)
+-----------------------------------------  (sync-learn)
+Sync g ds ++> Union g' [] [Sync g ds, D']
+
+(* we do the same thing for sync as for base, and the later rewriting phase can fix
+   duplicated literals in the sync case *)
+
+
+\forall i in [1, n]: D_i ++> D_i'
+err_data = { s | d in ds where d = (F, s)} 
+D' = learn (err_data)
+-----------------------------------------------  (struct-learn)
+Struct g ds [D_1, ..., D-n] ++> 
+Union g' [] [Struct g ds [D1', ..., D_n'], D']
+
+
+\forall i in [1, n]: D_i ++> D_i'
+err_data = { s | d in ds where d = (F, s)}   D' = learn (err_data)
+-------------------------------------------------------------------  (union-learn)
+Union g ds [D_1, ..., D-n] ++> Union g [] [D1', ..., D_n', D']
+
+
+D_e ++> D_e'   D_s ++> D_s'   D_t ++> D_t'
+err_data = { s | d in ds where d = (F, s)}   D' = learn (err_data)
+--------------------------------------------------------------------- (array-learn)
+Array g ds (D_e, D_s, D_t) ++> 
+Union g [] [Array g ds (D_e', D_s', D_t'), D']
