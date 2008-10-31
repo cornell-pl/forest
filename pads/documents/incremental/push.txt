@@ -95,30 +95,29 @@ Base g ds |--> Base g ds
 Sync g ds |--> Sync g ds'
 
 
-\forall i \in [1, n] where D_i != Sync _ _: D_i |--> D_i'
-\exists i \in [1, n]: D_i' = Sync g ds \and 
-\exists d  in ds: d = (P(s), x) \and 
-D_i'' = replace_d (D_i', d, (G, x - s))
-s, (i-1), Struct g ds [D_1', ..., D_{i-1}', D_i'', 
-	D_{i+1}', ..., D_n'] ==> D', true
+\forall j \in [1, n], D_j != Sync _ _: D_j |--> D_j'
+\exists i \in [1, n]: D_i = Sync g ds_i and 
+\exists d  in ds_i: 
+d = (P(s), x) and D_i' = replace_d (D_i, d, (G, x - s))
+s, (i-1), Struct g ds [D_1', ..., D_n'] ==> D', true
 D' |--> D''
------------------------------------------------------------------  (struct-success)
+-------------------------------------------------------------  (struct-success)
 Struct g ds [D_1, ..., D_n] |--> D''
 
 
-\forall i \in [1, n] where D_i != Sync _ _: D_i |--> D_i'
-\exists i \in [1, n]: D_i' = Sync g ds \and 
-\exists d  in ds: d = (P(s), x) \and 
-D_i'' = replace_d (D_i', d, (F, x))
-s, (i-1), Struct g ds [D_1', ..., D_{i-1}', D_i'', 
-	D_{i+1}', ..., D_n'] ==> D', false          
+\forall j \in [1, n], D_j != Sync _ _: D_j |--> D_j'
+\exists i \in [1, n]: D_i = Sync g ds_i and 
+\exists d \in ds_i: 
+d = (P(s), x) and D_i' = replace_d (D_i, d, (F, x))
+s, (i-1), Struct g ds [D_1', ..., D_n'] ==> D', false          
 D' |--> D''
 ------------------------------------------------------------- (struct-fail)
 Struct g ds [D_1, ..., D_n] |--> D''
 
 
-\forall i \in [1, n] where D_1 != Sync _ _: D_i |--> D_i'
-\not \exists d in ds(D_i') s.t. d = (P(s), _))
+\forall j \in [1, n], D_j != Sync _ _: D_j |--> D_j'
+\forall i \in [1, n], D_i = Sync _ _:
+\not \exists d \in ds(D_i) s.t. d = (P(s), _))
 --------------------------------------------------------------  (struct-done)
 Struct g ds [D_1, ..., D_n] |--> Struct g ds [D_1', ..., D_n']
 
@@ -129,7 +128,7 @@ Union g ds [D1, ..., Dn] |--> Union g ds [D1', ..., Dn']
 
 
 D_e |--> D_e'  
-\exists d in ds(D_s): d = (P(s), x) \and s, 0, D_e' ==> D_e'', true  
+\exists d in ds(D_s): d = (P(s), x) and s, 0, D_e' ==> D_e'', true  
 D_s' = replace_d (D_s, d, (G, x - s))
 Array g ds (D_e'', D_s', D_t) |--> D'
 ------------------------------------------------ (array-success)
@@ -137,7 +136,7 @@ Array g ds (D_e, D_s, D_t) |--> D'
 
 
 D_e |--> D_e'  
-\exists d in ds(D_s): d = (P(s), x) \and s, 0, D_e' ==> D_e', false
+\exists d in ds(D_s): d = (P(s), x) and s, 0, D_e' ==> D_e', false
 D_s' = replace_d (D_s, d, (F, x))    
 Array g ds (D_e', D_s', D_t) |--> D'
 -------------------------------------------------------------------- (array-fail)
