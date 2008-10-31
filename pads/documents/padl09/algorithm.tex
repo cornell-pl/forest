@@ -122,13 +122,11 @@ called a \seqset{}.  For example, \figref{fig:seqset} shows the \seqset{} for th
 %substring ``2.2.13-4'' from a chunk in \figref{fig:yum}. It forms a
 %small part of the \seqset{} for the entire chunk.
 
-\begin{figure}[th]
+\begin{figure}[tb]
 \begin{center}
-\shrink
 \epsfig{file=seqset.eps, width=0.7\columnwidth}
 \end{center}
 \caption{\seqset{} from parsing string ``2.2.13-4''.}\label{fig:seqset}
-\shrink
 \end{figure}
 
 \noindent
@@ -227,12 +225,11 @@ For example, if the oracle cuts after the first {\tt float} token in the \seqset
 in \figref{fig:seqset}, then it removes the \cd{id}~edge and the \cd{float} edge between
 vertices~42 and~46, creating the two new \seqset{}s in \figref{fig:cut}.
 %
-\begin{figure}[th]
+\begin{figure}[tb]
 \begin{center}
 \epsfig{file=cut.eps, width=0.8\columnwidth}
 \end{center}
 \caption{Cutting \seqset{} for ``2.2.13-4'' after the first float token.} \label{fig:cut}
-\shrink
 \end{figure}
 %
 Finally, the {\tt oracle} function returns the predicted structure as a ``prophecy''
