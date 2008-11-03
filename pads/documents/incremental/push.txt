@@ -131,7 +131,7 @@ D_e |--> D_e'
 \exists d in ds(D_s): d = (P(s), x) and s, 0, D_e' ==> D_e'', true  
 D_s' = replace_d (D_s, d, (G, x - s))
 Array g ds (D_e'', D_s', D_t) |--> D'
------------------------------------------------- (array-success)
+------------------------------------------------ (array-sep-success)
 Array g ds (D_e, D_s, D_t) |--> D'
 
 
@@ -139,15 +139,31 @@ D_e |--> D_e'
 \exists d in ds(D_s): d = (P(s), x) and s, 0, D_e' ==> D_e', false
 D_s' = replace_d (D_s, d, (F, x))    
 Array g ds (D_e', D_s', D_t) |--> D'
--------------------------------------------------------------------- (array-fail)
+-------------------------------------------------------------------- (array-sep-fail)
+Array g ds (D_e, D_s, D_t) |--> D'
+
+
+D_e |--> D_e'  
+\exists d in ds(D_t): d = (P(s), x) and s, 0, D_e' ==> D_e', true
+D_t' = replace_d (D_t, d, (G, x - s))    
+Array g ds (D_e', D_s, D_t') |--> D'
+------------------------------------------------------------------ (array-term-success)
+Array g ds (D_e, D_s, D_t) |--> D'
+
+
+D_e |--> D_e'  
+\exists d in ds(D_t): d = (P(s), x) and s, 0, D_e' ==> D_e', false
+D_t' = replace_d (D_t, d, (F, x))    
+Array g ds (D_e', D_s, D_t') |--> D'
+------------------------------------------------------------------ (array-term-fail)
 Array g ds (D_e, D_s, D_t) |--> D'
 
 
 D_e |--> D_e'      
 \not \exists d in ds(D_s): d = (P, _)
-ds_t = ds(D_t)   ds_t' = p2f ds_t  D_t' = replace_ds (D_t, ds_t')
---------------------------------------------------------------------- (array-done)
-Array g ds (D_e, D_s, D_t) |--> Array g ds (D_e', D_s, D_t')
+\not \exists d in ds(D_t): d = (P, _)
+-------------------------------------------------------------- (array-done)
+Array g ds (D_e, D_s, D_t) |--> Array g ds (D_e', D_s, D_t)
 
 
 
