@@ -47,8 +47,9 @@ Struct g ds [D_1, ..., D_{i-1}, D_i', D_{i+1}, ...], b
 \forall k \in [i, j]: j > i and D_k != Sync _ _ 
 	  and data(D_k, s)=(F, _) and  D_k' = drop_data (D_k, s) 
           ds' = (merge_ds [D_i', ..., D_j']) @ [(F, s)]
----------------------------------------------------------------------- (push-struct-multi-succ)
-s, j, Struct g ds [D_1, ..., D_i, ..., D_j, D_{j+1}, ...,D_n] ==>
+---------------------------------------------------------------- (push-struct-multi-succ)
+s, j, Struct g ds [D_1, ..., D_{i-1}, D_i, ..., D_j, 
+	D_{j+1}, ..., D_n] ==>
 Struct g ds [D_1,...,D_{i-1}, Struct g' ds' [Di',...,Dj'],
 		D_{j+1}, ..., D_n], true
 
@@ -60,10 +61,9 @@ s, i, Struct g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ...,D_n] ==>
 Struct g ds [D_1, ..., D_{i-1}, D_i', D_{i+1}, ..., D_n], true
 
 
-   i != 0    data(D_{i-1}, s) = (F, _)    D_{i-1} = Sync _ _
-   data(D_i, s) = (F, s_i)   D_i != Sync _ _    
-   D_i' = concat_data(D_i, s)
---------------------------------------------------------------------- (push-struct-single-succ2)
+i != 0    data(D_{i-1}, s) = (F, _)    D_{i-1} = Sync _ _
+data(D_i, s) = (F, s_i)   D_i != Sync _ _    D_i' = concat_data(D_i, s)
+----------------------------------------------------------------------- (push-struct-single-succ2)
 s, i, Struct g ds [D_1, ..., D_{i-1}, D_i, D_{i+1}, ...,D_n] ==>
 Struct g ds [D_1, ..., D_{i-1}, D_i', D_{i+1}, ..., D_n], true
 
