@@ -1,31 +1,101 @@
 \section{Related Work}\label{sec:related}
 
-Format inference of ad hoc data is related to three main areas: 
-{\em classic grammar induction}, {\em XML schema inference},
-and {\em information extraction}. Classic gramma induction aims at
-discovering a grammar for a language using both positive and
-negative examples or positive examples only \cite{vidal:gisurvey}. 
-Since there is no negative examples in our application, only the latter
-is relevant to this paper. However, because learning a perfect
-grammar using positive examples only is impossible for any superfinite class 
-of languages \cite{gold:inference}
-which includes regular expressions and context-free grammar (and also
-\pads), previous research has focused on (1) limiting the class of
-languages to non-superfinite class 
-\cite{angluin:revesible-language-inference,bex+:dtd-inference}, or 
-(2) learning an approximation using heuristics or 
-probablistic models \cite{hong:thesis,Chen95bayesiangrammar}.
-XML schema inference involves learning a schema such as DTD or XSD
-from a collection of XML documents \cite{bex+:dtd-inference,garofalakis+:xtract}.
-In information extraction, the goal is to find interesting and relevant
-bits of information from large amount of data such as 
-web pages \cite{kushmerick-phd1997,arasu+:sigmod03} and 
-free text \cite{soderland:whisk,Pinto+:texttables,borkar+:text-segmentation}.
-These areas do not typically suffer from the token ambiguity problem that 
+In the recent twenty years, there has been a lot of work related to
+format inference and structure discovery in all application domains,
+such as structured data like \xml{} documents
+\cite{bex+:dtd-inference,garofalakis+:xtract} and web pages
+\cite{kushmerick-phd1997,arasu+:sigmod03,hong:thesis}, semi-structured data
+\cite{soderland:whisk,Pinto+:texttables}, free-text including natural
+language sentences, \cite{borkar+:text-segmentation,Heeman99:speech,Chen95bayesiangrammar}, and
+genomics data \cite{kulp96generalized}. In particular, compared to classic grammar induction work
+\cite{vidal:gisurvey,gold:inference,angluin:revesible-language-inference},
+machine learning methods have become an attractive option for handling
+data showing more variety and complexity. Our earlier paper contains an
+extensive comparison of our basic grammar induction
+algorithm to others that have appeared in the literature.
+
+Information extraction (IE) is a research field that is closely related to
+our work in this paper. In a typical information extraction procedure,
+the user is presentd with a few training data records, such as
+some stylized Craig's List apartment rental ads,and asked to label
+which bits of information to extract. Then the IE system learns
+extraction rules from labeled data and uses them to get more wanted
+information from a much larger collection of data. Soderland's WHISK
+system \cite{soderland:whisk} is a successful example to address such
+tasks. This system and other IE systems differ from ours in three aspects. Firstly and
+most importantly, IE systems ususally have a clear, fixed token set, defined by
+words, numbers, punctuations, HTML tags and users' pre-specified
+semantic classes etc, which is similar to our earlier paper
+\cite{fisher+:dirttoshovels} but with simpler tokens. By this
+definition, IE systems' parsers are free from any ambiguity that by contrast we
+encounter in ours. Secondly, IE systems only focus on certain bits of
+information, namely, single or multiple slots in records, while we not
+only identify useful fields, but also obtain the organization and
+relations of these fields by generating the complete description of
+the entire data file. Last but not least, our labeling efforts are
+much less than theirs. For example, suppose an IE system has had some
+training data of apartment rental ads and built a good model over
+them. But then, the user wants to change searching topic and is
+interested to know car purchase information. He has to re-label some
+car selling ads and re-build the learning model, because he can hardly
+do anything using the old training pool and extraction rules for
+apartment locations and sizes are no longer suitable to dig
+information from new data collection. While in our system, when a new
+data source requires analysis, the user doesn't need to label any single records in
+the new data, but simply relies on the training pool and model already
+built ahead of time. By using 20 different data sources from various
+application domains in our experiments, we've demonstrated we can
+still achieve good precision in this more general learning scenario. Moreover, the
+\pads{} framework reduces the amount of labeling work by generating
+labels for hundreds of records from only one single hand-written description.
+
+Table extraction is also a related area worth discussion. Tables can
+be viewed as special ad hoc data with clearer separators between
+fields and less variety between records. David Pinto et
+al. \cite{Pinto+:texttables} apply
+Conditional Random Fields (CRFs) to dig rich and overlapping features
+with the purpose of identifying row positions and types in text-based
+tables. An entire row is the basic learning unit in their
+problem. They extract features from white space characters,
+text between space gaps and punctuations. Although not explicitly
+stated, words, numbers and punctuations are used as tokens. Another
+difference distinguishing this paper from their work is that, their
+learning task only deals with dozens of lines in one table while we are
+facing over thousands of tokens in one data file. Therefore,
+complexity is an important factor when we choose machine learning algorithms. 
+
+To summerize, all these related areas do not typically suffer from the token ambiguity problem that 
 we see in ad hoc data, because tags cleanly divide \xml{} and web-based data, 
 while spaces and known punctuation symbols separate natural language text.
 In contrast, the separators and token types found in ad hoc data sources such as
 web logs and financial records are far more variable and ambiguous.  
+
+%Format inference of ad hoc data is related to three main areas: 
+%{\em classic grammar induction}, {\em XML schema inference},
+%and {\em information extraction}. Classic gramma induction aims at
+%discovering a grammar for a language using both positive and
+%negative examples or positive examples only \cite{vidal:gisurvey}. 
+%Since there is no negative examples in our application, only the latter
+%is relevant to this paper. However, because learning a perfect
+%grammar using positive examples only is impossible for any superfinite class 
+%of languages \cite{gold:inference}
+%which includes regular expressions and context-free grammar (and also
+%\pads), previous research has focused on (1) limiting the class of
+%languages to non-superfinite class 
+%\cite{angluin:revesible-language-inference,bex+:dtd-inference}, or 
+%(2) learning an approximation using heuristics or 
+%probablistic models \cite{hong:thesis,Chen95bayesiangrammar}.
+%XML schema inference involves learning a schema such as DTD or XSD
+%from a collection of XML documents \cite{bex+:dtd-inference,garofalakis+:xtract}.
+%In information extraction, the goal is to find interesting and relevant
+%bits of information from large amount of data such as 
+%web pages \cite{kushmerick-phd1997,arasu+:sigmod03} and 
+%free text \cite{soderland:whisk,Pinto+:texttables,borkar+:text-segmentation}.
+%These areas do not typically suffer from the token ambiguity problem that 
+%we see in ad hoc data, because tags cleanly divide \xml{} and web-based data, 
+%while spaces and known punctuation symbols separate natural language text.
+%In contrast, the separators and token types found in ad hoc data sources such as
+%web logs and financial records are far more variable and ambiguous.  
 
 %Classic grammar induction and structure discovery problems have been
 %studied for decades. \xml{}-documents are a typical source of
@@ -50,25 +120,25 @@ web logs and financial records are far more variable and ambiguous.
 %framework for probabilistic context-free grammar induction. 
 %
 
-In addition to applying statisitical models such as HMMs and Conditional
-Random Fields (CRFs) to grammar induction problems 
-\cite{borkar+:text-segmentation,Pinto+:texttables}, researchers have also
-used these models extensively in other areas such as bioinformatics 
-\cite{kulp96generalized} and natural language processing \cite{Heeman99:speech}.  
-In this paper, we contribute to the literature on statistical
-data processing by analyzing the effectiveness of statistical models
-in a new application area, that of ad hoc data, which contains
-markedly different characteristics from the most frequently studied
-data processing domains.
+%In addition to applying statisitical models such as HMMs and Conditional
+%Random Fields (CRFs) to grammar induction problems 
+%\cite{borkar+:text-segmentation,Pinto+:texttables}, researchers have also
+%used these models extensively in other areas such as bioinformatics 
+%\cite{kulp96generalized} and natural language processing \cite{Heeman99:speech}.  
+%In this paper, we contribute to the literature on statistical
+%data processing by analyzing the effectiveness of statistical models
+%in a new application area, that of ad hoc data, which contains
+%markedly different characteristics from the most frequently studied
+%data processing domains.
 
-The algorithm presented in this paper is a variant of the algorithm described
-in our earlier paper~\cite{fisher+:dirttoshovels}.  We have made
-substantial modifications, however, to incorporate probabilistic
-parsing information into the tokenization and structure discovery
-phases.  We have also added a new phase to the algorithm that
-simplifies overly complex descriptions. Our earlier paper contains an
-extensive comparison of our basic grammar induction
-algorithm to others that have appeared in the literature.
+%The algorithm presented in this paper is a variant of the algorithm described
+%in our earlier paper~\cite{fisher+:dirttoshovels}.  We have made
+%substantial modifications, however, to incorporate probabilistic
+%parsing information into the tokenization and structure discovery
+%phases.  We have also added a new phase to the algorithm that
+%simplifies overly complex descriptions. Our earlier paper contains an
+%extensive comparison of our basic grammar induction
+%algorithm to others that have appeared in the literature.
 
 %
 %Besides grammar induction, researchers have also witnessed successes of
