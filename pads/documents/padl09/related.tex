@@ -1,65 +1,91 @@
 \section{Related Work}\label{sec:related}
 
-In the last two decades, there has been a lot of work on
-grammar induction and structure discovery in many domains,
-such as structured data like \xml{} documents
-\cite{bex+:dtd-inference,garofalakis+:xtract} and web pages
-\cite{kushmerick-phd1997,arasu+:sigmod03,hong:thesis}, semi-structured data
-\cite{soderland:whisk,Pinto+:texttables}, free-text 
-\cite{borkar+:text-segmentation,Heeman99:speech,Chen95bayesiangrammar}, and
-bioinformatics \cite{kulp96generalized}. In particular, compared to classic 
-grammar induction techniques
-\cite{vidal:gisurvey,gold:inference,angluin:revesible-language-inference},
-machine learning methods have become an attractive option for handling
-heterogeneous and complex data. Our earlier paper \cite{fisher+:dirttoshovels}
+In the last two decades, there has been extensive work on 
+classic grammar induction problems
+\cite{vidal:gisurvey,gold:inference,bex+:dtd-inference,angluin:revesible-language-inference,Chen95bayesiangrammar},
+XML schema inference \cite{bex+:dtd-inference,garofalakis+:xtract}, 
+information extraction \cite{kushmerick-phd1997,hong:thesis,arasu+:sigmod03},
+and other related areas such as natural language processing 
+\cite{borkar+:text-segmentation,Heeman99:speech} and bioinformatics 
+\cite{kulp96generalized}. Machine learning techniques have played a
+very important role in these areas. 
+Our earlier paper \cite{fisher+:dirttoshovels}
 contains an extensive comparison of our basic format inference
 algorithm to others that have appeared in the literature.
+
+%
+%
+%
+%\cite{kushmerick-phd1997,arasu+:sigmod03,hong:thesis}, semi-structured data
+%\cite{soderland:whisk,Pinto+:texttables}, free-text 
+%\cite{borkar+:text-segmentation,Heeman99:speech,Chen95bayesiangrammar}, and
+%bioinformatics \cite{kulp96generalized}. In particular, compared to classic 
+%grammar induction techniques
+%\cite{angluin:revesible-language-inference},
+%machine learning methods have become an attractive option for handling
+%heterogeneous and complex data. Our earlier paper \cite{fisher+:dirttoshovels}
+%contains an extensive comparison of our basic format inference
+%algorithm to others that have appeared in the literature.
+%
 
 One of the most closely related pieces of work to this paper is Soderland's WHISK
 system \cite{soderland:whisk}, which extracts useful information from
 semi-structured text such as stylized advertisements from an online community
-service called Graig's List \cite{craigslist}.
+service called Craig's List \cite{craigslist}.
 %Information extraction (IE) is a research field that is closely related to
 %our work in this paper. 
 In the WHISK system, the user is presented with a few online ads as training data 
 and is asked to label which bits of information to extract. Then the system learns
 extraction rules from labeled data and uses them to retrieve more wanted
 information from a much larger collection of data. 
-The WHISK system differs from our system in three aspects. 
-First and foremost, WHISK, as well as other information extraction systems,
+The WHISK system differs from our system in several ways. 
+First, WHISK, as well as other information extraction systems,
 have a clear and fixed token set, defined by words, numbers, punctuations, 
 HTML tags and user pre-specified semantic classes, etc. 
-Therefore, the WHISK system is not faced with the token ambiguity that 
-by contrast we encounter in our system. Second, WHISK only focuses on certain bits of
+Second, WHISK only focuses on certain bits of
 information, namely, single or multiple fields in records, 
 whereas we not only identify useful fields, but also obtain the 
 organization and relations of these fields by generating the complete 
 description of the entire data file. 
-Last, there is significantly less labeling efforts to use our system than 
-the WHISK system. Our system exploits an automatic labeling 
-infrastructure using \pads{} to generate
-labels for hundreds of records from only a single hand-written description.
-This is in contrast with having users hand label all training samples
-in WHISK.
+Last, in WHISK, the extraction rules learned from a particular domain can only
+be used on data from the same domain. For example, rules learned from sample apartment
+ads are only relevant to other apartment ads, and cannot be applied to
+car purchase ads. But the statistical models we learned in our system can be
+applied to many different types of data, as shown in the experiments we
+have done in Section \ref{sec:eval}.  
+
+%Last, there is significantly less labeling efforts to use our system than 
+%the WHISK system. Our system exploits an automatic labeling 
+%infrastructure using \pads{} to generate
+%labels for hundreds of records from only a single hand-written description.
+%This is in contrast with having users hand label all training samples
+%in WHISK.
 
 Also closely related is the work on text table extraction by
 Pinto and others \cite{Pinto+:texttables}. Text tables can
-be viewed as special ad hoc data with relatively clear separators between
-fields and less variety among records. Pinto et al. apply
-Conditional Random Fields (CRFs) to extract rich and overlapping features
-with the purpose of identifying row positions and types in text
-tables. A row in the table is a basic unit to learn in this
-problem. They extract features from white space characters,
-text between space gaps and punctuations. Although not explicitly
-stated, words, numbers and punctuations are used as tokens. Another
-difference with their work is that, the
-learning task there only deals with dozens of lines in one table while 
-we deal with thousands of tokens in one data file. 
-Therefore, computational complexity is an important factor in 
-the selection of machine learning algorithms. 
+be viewed as special ad hoc data with a tabular layout. There are
+often clear delimiters between columns in the table, and table rows
+are well defined with new line characters as their boundaries.
+Because of its tabular nature, the data studied has less variation in general. 
+The goal of their work  
+is to identify tables embeded in free text and the types of table rows 
+such as header, sub-header and data row, etc, whereas we are learning the entire
+structure of the data. 
+To this end, Pinto et al. use Conditional Random Fields (CRFs) \cite{LaffertyMP01:CRF},
+a statistical model that is useful in learning from sequence data with overlapping features.
+This paper extracts features from white space characters,
+text between white spaces and punctuations. Although not explicitly
+stated, words, numbers and punctuations are used as fixed set of tokens. 
+ 
+%Anotherdifference with their work is that, the
+%learning task there only deals with dozens of lines in one table while 
+%we deal with thousands of tokens in one data file. 
+%Therefore, computational complexity is an important factor in 
+%the selection of machine learning algorithms. 
 
-To summarize, grammar induction and information extraction do not 
-typically suffer from the token ambiguity problem that 
+To summarize, problems studied by previous efforts 
+in grammar induction and information extraction do not 
+typically suffer from token ambiguities that 
 we see in ad hoc data, because tags cleanly divide \xml{} and web-based data, 
 while spaces and known punctuation symbols separate natural language text.
 In contrast, the separators and token types found in ad hoc data sources such as
