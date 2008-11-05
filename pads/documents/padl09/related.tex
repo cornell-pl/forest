@@ -11,8 +11,8 @@ bioinformatics \cite{kulp96generalized}. In particular, compared to classic
 grammar induction techniques
 \cite{vidal:gisurvey,gold:inference,angluin:revesible-language-inference},
 machine learning methods have become an attractive option for handling
-data of more variety and complexity. Our earlier paper contains an
-extensive comparison of our basic format inference
+heterogeneous and complex data. Our earlier paper \cite{fisher+:dirttoshovels}
+contains an extensive comparison of our basic format inference
 algorithm to others that have appeared in the literature.
 
 One of the most closely related pieces of work to this paper is Soderland's WHISK
@@ -21,12 +21,12 @@ semi-structured text such as stylized advertisements from an online community
 service called Graig's List \cite{craigslist}.
 %Information extraction (IE) is a research field that is closely related to
 %our work in this paper. 
-In the WHISK system, the user is presentd with a few online ads as training data 
+In the WHISK system, the user is presented with a few online ads as training data 
 and is asked to label which bits of information to extract. Then the system learns
 extraction rules from labeled data and uses them to retrieve more wanted
 information from a much larger collection of data. 
 The WHISK system differs from our system in three aspects. 
-Firstly and foremost, WHISK, as well as other information extraction systems,
+First and foremost, WHISK, as well as other information extraction systems,
 have a clear and fixed token set, defined by words, numbers, punctuations, 
 HTML tags and user pre-specified semantic classes, etc. 
 Therefore, the WHISK system is not faced with the token ambiguity that 
@@ -39,12 +39,12 @@ Last, there is significantly less labeling efforts to use our system than
 the WHISK system. Our system exploits an automatic labeling 
 infrastructure using \pads{} to generate
 labels for hundreds of records from only a single hand-written description.
-This is in contrast with having users hand labeling all training samples
+This is in contrast with having users hand label all training samples
 in WHISK.
 
-Another closely related piece of work is text table extraction by
+Also closely related is the work on text table extraction by
 Pinto and others \cite{Pinto+:texttables}. Text tables can
-be viewed as special ad hoc data with clearer separators between
+be viewed as special ad hoc data with relatively clear separators between
 fields and less variety among records. Pinto et al. applied
 Conditional Random Fields (CRFs) to extract rich and overlapping features
 with the purpose of identifying row positions and types in text
@@ -52,13 +52,13 @@ tables. A row in the table is a basic unit to learn in this
 problem. They extract features from white space characters,
 text between space gaps and punctuations. Although not explicitly
 stated, words, numbers and punctuations are used as tokens. Another
-difference distinguishing this paper from their work is that, their
-learning task only deals with dozens of lines in one table while 
+difference with their work is that, the
+learning task there only deals with dozens of lines in one table while 
 we deal with thousands of tokens in one data file. 
 Therefore, computational complexity is an important factor in 
 the selection of machine learning algorithms. 
 
-To summerize, grammar induction and information extraction do not 
+To summarize, grammar induction and information extraction do not 
 typically suffer from the token ambiguity problem that 
 we see in ad hoc data, because tags cleanly divide \xml{} and web-based data, 
 while spaces and known punctuation symbols separate natural language text.
@@ -67,7 +67,7 @@ web logs and financial records are far more variable and ambiguous.
 
 %Format inference of ad hoc data is related to three main areas: 
 %{\em classic grammar induction}, {\em XML schema inference},
-%and {\em information extraction}. Classic gramma induction aims at
+%and {\em information extraction}. Classic grammar induction aims at
 %discovering a grammar for a language using both positive and
 %negative examples or positive examples only \cite{vidal:gisurvey}. 
 %Since there is no negative examples in our application, only the latter
@@ -79,7 +79,7 @@ web logs and financial records are far more variable and ambiguous.
 %languages to non-superfinite class 
 %\cite{angluin:revesible-language-inference,bex+:dtd-inference}, or 
 %(2) learning an approximation using heuristics or 
-%probablistic models \cite{hong:thesis,Chen95bayesiangrammar}.
+%probabilistic models \cite{hong:thesis,Chen95bayesiangrammar}.
 %XML schema inference involves learning a schema such as DTD or XSD
 %from a collection of XML documents \cite{bex+:dtd-inference,garofalakis+:xtract}.
 %In information extraction, the goal is to find interesting and relevant
@@ -94,7 +94,7 @@ web logs and financial records are far more variable and ambiguous.
 
 %Classic grammar induction and structure discovery problems have been
 %studied for decades. \xml{}-documents are a typical source of
-%text-based data that possibily adheres to some structures represented by a
+%text-based data that possibly adheres to some structures represented by a
 %schema. ~\cite{garofalakis+:xtract} and ~\cite{bex+:inferring-xml-schema}
 %infers two \xml{} schema formalisms respectively -
 %\em{Document Type Definitions} (DTDs) and \em{XML Schema Definitions}
@@ -115,7 +115,7 @@ web logs and financial records are far more variable and ambiguous.
 %framework for probabilistic context-free grammar induction. 
 %
 
-%In addition to applying statisitical models such as HMMs and Conditional
+%In addition to applying statistical models such as HMMs and Conditional
 %Random Fields (CRFs) to grammar induction problems 
 %\cite{borkar+:text-segmentation,Pinto+:texttables}, researchers have also
 %used these models extensively in other areas such as bioinformatics 
