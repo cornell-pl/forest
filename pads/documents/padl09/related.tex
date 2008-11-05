@@ -1,70 +1,65 @@
 \section{Related Work}\label{sec:related}
 
-In the recent twenty years, there has been a lot of work related to
-format inference and structure discovery in all application domains,
+In the last two decades, there has been a lot of work on
+grammar induction and structure discovery in many domains,
 such as structured data like \xml{} documents
 \cite{bex+:dtd-inference,garofalakis+:xtract} and web pages
 \cite{kushmerick-phd1997,arasu+:sigmod03,hong:thesis}, semi-structured data
-\cite{soderland:whisk,Pinto+:texttables}, free-text including natural
-language sentences, \cite{borkar+:text-segmentation,Heeman99:speech,Chen95bayesiangrammar}, and
-genomics data \cite{kulp96generalized}. In particular, compared to classic grammar induction work
+\cite{soderland:whisk,Pinto+:texttables}, free-text 
+\cite{borkar+:text-segmentation,Heeman99:speech,Chen95bayesiangrammar}, and
+bioinformatics \cite{kulp96generalized}. In particular, compared to classic 
+grammar induction techniques
 \cite{vidal:gisurvey,gold:inference,angluin:revesible-language-inference},
 machine learning methods have become an attractive option for handling
-data showing more variety and complexity. Our earlier paper contains an
-extensive comparison of our basic grammar induction
+data of more variety and complexity. Our earlier paper contains an
+extensive comparison of our basic format inference
 algorithm to others that have appeared in the literature.
 
-Information extraction (IE) is a research field that is closely related to
-our work in this paper. In a typical information extraction procedure,
-the user is presentd with a few training data records, such as
-some stylized Craig's List apartment rental ads,and asked to label
-which bits of information to extract. Then the IE system learns
-extraction rules from labeled data and uses them to get more wanted
-information from a much larger collection of data. Soderland's WHISK
-system \cite{soderland:whisk} is a successful example to address such
-tasks. This system and other IE systems differ from ours in three aspects. Firstly and
-most importantly, IE systems ususally have a clear, fixed token set, defined by
-words, numbers, punctuations, HTML tags and users' pre-specified
-semantic classes etc, which is similar to our earlier paper
-\cite{fisher+:dirttoshovels} but with simpler tokens. By this
-definition, IE systems' parsers are free from any ambiguity that by contrast we
-encounter in ours. Secondly, IE systems only focus on certain bits of
-information, namely, single or multiple slots in records, while we not
-only identify useful fields, but also obtain the organization and
-relations of these fields by generating the complete description of
-the entire data file. Last but not least, our labeling efforts are
-much less than theirs. For example, suppose an IE system has had some
-training data of apartment rental ads and built a good model over
-them. But then, the user wants to change searching topic and is
-interested to know car purchase information. He has to re-label some
-car selling ads and re-build the learning model, because he can hardly
-do anything using the old training pool and extraction rules for
-apartment locations and sizes are no longer suitable to dig
-information from new data collection. While in our system, when a new
-data source requires analysis, the user doesn't need to label any single records in
-the new data, but simply relies on the training pool and model already
-built ahead of time. By using 20 different data sources from various
-application domains in our experiments, we've demonstrated we can
-still achieve good precision in this more general learning scenario. Moreover, the
-\pads{} framework reduces the amount of labeling work by generating
-labels for hundreds of records from only one single hand-written description.
+One of the most closely related pieces of work to this paper is Soderland's WHISK
+system \cite{soderland:whisk}, which extracts useful information from
+semi-structured text such as stylized advertisements from an online community
+service called Graig's List \cite{craigslist}.
+%Information extraction (IE) is a research field that is closely related to
+%our work in this paper. 
+In the WHISK system, the user is presentd with a few online ads as training data 
+and is asked to label which bits of information to extract. Then the system learns
+extraction rules from labeled data and uses them to retrieve more wanted
+information from a much larger collection of data. 
+The WHISK system differs from our system in three aspects. 
+Firstly and foremost, WHISK, as well as other information extraction systems,
+have a clear and fixed token set, defined by words, numbers, punctuations, 
+HTML tags and user pre-specified semantic classes, etc. 
+Therefore, the WHISK system is not faced with the token ambiguity that 
+by contrast we encounter in our system. Second, WHISK only focuses on certain bits of
+information, namely, single or multiple fields in records, 
+whereas we not only identify useful fields, but also obtain the 
+organization and relations of these fields by generating the complete 
+description of the entire data file. 
+Last, there is significantly less labeling efforts to use our system than 
+the WHISK system. Our system exploits an automatic labeling 
+infrastructure using \pads{} to generate
+labels for hundreds of records from only a single hand-written description.
+This is in contrast with having users hand labeling all training samples
+in WHISK.
 
-Table extraction is also a related area worth discussion. Tables can
+Another closely related piece of work is text table extraction by
+Pinto and others \cite{Pinto+:texttables}. Text tables can
 be viewed as special ad hoc data with clearer separators between
-fields and less variety between records. David Pinto et
-al. \cite{Pinto+:texttables} apply
-Conditional Random Fields (CRFs) to dig rich and overlapping features
-with the purpose of identifying row positions and types in text-based
-tables. An entire row is the basic learning unit in their
+fields and less variety among records. Pinto et al. applied
+Conditional Random Fields (CRFs) to extract rich and overlapping features
+with the purpose of identifying row positions and types in text
+tables. A row in the table is a basic unit to learn in this
 problem. They extract features from white space characters,
 text between space gaps and punctuations. Although not explicitly
 stated, words, numbers and punctuations are used as tokens. Another
 difference distinguishing this paper from their work is that, their
-learning task only deals with dozens of lines in one table while we are
-facing over thousands of tokens in one data file. Therefore,
-complexity is an important factor when we choose machine learning algorithms. 
+learning task only deals with dozens of lines in one table while 
+we deal with thousands of tokens in one data file. 
+Therefore, computational complexity is an important factor in 
+the selection of machine learning algorithms. 
 
-To summerize, all these related areas do not typically suffer from the token ambiguity problem that 
+To summerize, grammar induction and information extraction do not 
+typically suffer from the token ambiguity problem that 
 we see in ad hoc data, because tags cleanly divide \xml{} and web-based data, 
 while spaces and known punctuation symbols separate natural language text.
 In contrast, the separators and token types found in ad hoc data sources such as
