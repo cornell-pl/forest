@@ -1,0 +1,44 @@
+
+The system can generate all of these tools from \padsd{} descriptions
+and declarative tool configuration specifications.  Thus for common
+tasks, users can manage distributed data sources simply by writing
+high-level declarative specifications.  It is quick and it is easy. There
+are relatively few concepts to learn, no complex interfaces and no
+tricky boilerplate a programmer needs to master to initialize 
+the system or thread together tool libraries.  Because it's so
+easy to use, we refer to the act of writing simple specifications
+and using pre-defined tools as the {\em quick-and-dirty} \padsd{} programming
+mode.  However, to avoid sacrificing flexibility and to support extensibility,
+\padsd{} supports two other {\em modes of use} in addition to the 
+quick-and-dirty.
+
+The second mode is
+for the {\em single-minded implementer}, who needs to build a new
+application for a {\em specific} collection of distributed data
+sources.  Such users need more than the built-in set of tools, 
+and consequently, the system provides support for
+creating new tools by automatically generating libraries for fetching
+data, for parsing and printing, for performing type-safe data
+traversal, and for stream processing using classic functional
+programming paradigms such as \cd{map}, \cd{fold} and \cd{iterate}.
+These generated libraries make it straightforward to create custom tools
+specific to particular data sources.  However, there is a steeper learning
+curve in this mode than in the quick-and-dirty because a variety of
+interfaces must be learned.  The average functional programmer may find
+these interfaces relatively intuitive, but the computational scientist
+who is not interested in functional programming may prefer to stick with
+the quick-and-dirty. 
+
+The third mode is for the {\em generic programmer}.  Generic
+programmers may observe that they (or their colleagues or fellow domain
+experts) need to perform some task over and over again on different
+data sets.  Rather than writing a program specific to a particular
+data set, they use a 
+separate set of interfaces supplied by the \padsd{} system to write a
+single generic program to complete the task.  For example, the RRD database
+loader is generic, because it is possible to load data from any
+specified source into the RRD tool without additional ``programming.''
+We used the generic support to build the various tools described earlier.
+As more and more generic tools are built, the life of the quick-and-dirty
+hacker becomes easier and easier.
+
