@@ -7,9 +7,9 @@ we work through a series of examples drawn from the CoMon monitoring system.
 \begin{code}
 \kw{let} sites = 
   [
-    "http://pl1.csl.utoronto.ca:3121";
-    "http://plab1-c703.uibk.ac.at:3121";
-    "http://planet-lab1.cs.princeton.edu:3121"
+  "http://pl1.csl.utoronto.ca:3121";
+  "http://plab1-c703.uibk.ac.at:3121";
+  "http://pl1.csl.utoronto.ca:3121"
   ] 
 \kw{feed} simple_comon =
   \kw{base} \{|
@@ -19,8 +19,8 @@ we work through a series of examples drawn from the CoMon monitoring system.
     \kw{format}   = Comon_format.Source;  
   |\}
 \end{code}
-\vskip -1.5ex
-\caption{\texttt{simple\_comon.fml}:  Simple CoMon feed.}
+\shrink
+\caption{\texttt{simple\_comon.fml}:  Simple CoMon feed.} 
 \label{fig:simplecomon}
 \end{figure}
 
@@ -29,11 +29,12 @@ we work through a series of examples drawn from the CoMon monitoring system.
 \kw{feed} comon_1 =
   \kw{base} \{|
     \kw{sources}  = \kw{any} sites;
-    \kw{schedule} = every 1 min, lasting 2 hours;
+    \kw{schedule} = every 1 min, 
+              lasting 2 hours;
     \kw{format}   = Comon_format.Source;
   |\}
 \end{code}
-\vskip -2ex
+\shrink
 \caption{\texttt{sites.fml}:  Code fragment for data from one of many sites.}
 \label{fig:comon_1}
 \end{figure}
@@ -68,13 +69,13 @@ behavior of replicated systems, such as those using
 state machine replication, consensus protocols, or even
 loosely-coupled ones such as Distributed Hash Tables (DHTs) 
 \cite{Balakrishnan+03:dht}.
-In these systems, the same data will be available from any
-of the functioning nodes, so receiving results from the first
-available node is sufficient. These kinds of monitoring systems
-are useful in the face of partial network unreachability or
-machine failure. Specifying this behavior at the language level
-provides a simpler implementation than network-centric approaches such
-as anycast \cite{anycast}. 
+%In these systems, the same data will be available from any
+%of the functioning nodes, so receiving results from the first
+%available node is sufficient. These kinds of monitoring systems
+%are useful in the face of partial network unreachability or
+%machine failure. Specifying this behavior at the language level
+%provides a simpler implementation than network-centric approaches such
+%as anycast \cite{anycast}. 
 
 The schedule for \cd{comon\_1} indicates the system should fetch data
 every minute for two hours, using the \cd{lasting} field to indicate
@@ -94,17 +95,15 @@ updated to reflect the set of active nodes in PlanetLab.
 
 
 
-\begin{figure}
+\begin{figure}[t]
 \begin{code}
 (* Ocaml helper values and functions *)
 \kw{let} config_location = 
-  ["http://summer.cs.princeton.edu/status/ \\
-    tabulator.cgi?table=slices/ \\
-    table_princeton_comon&format=nameonly"]
-
+ ["http://summer.cs.princeton.edu/status/ \\
+   tabulator.cgi?table=slices/ \\
+   table_princeton_comon&format=nameonly"]
 \kw{let} makeURL (Nodelist.Data x) = 
      "http://" ^ x ^ ":3121"
-
 \kw{let} old_locs = ref []
 \kw{let} current list_opt =
   \kw{match} list_opt \kw{with}
@@ -119,27 +118,26 @@ updated to reflect the set of active nodes in PlanetLab.
     \kw{format}   = Nodelist.Source;
   |\}
 
-(* Dependent CoMon feed of node statistics *)
+(* Dependent CoMon feed of nodes feed *)
 \kw{feed} comon =
   \kw{foreach} nodelist \kw{in} nodes 
   \kw{create}
     \kw{base} \{|
-      \kw{sources}  = \kw{all} (List.map makeURL 
-                     (List.filter Nodelist.is_node 
-                     (current nodelist)));
+      \kw{sources}  = \kw{all} 
+          (List.map makeURL 
+          (List.filter Nodelist.is_node 
+          (current nodelist)));
       \kw{schedule} = once, timeout 60.0 sec; 
       \kw{format}   = Comon_format.Source;
     |\}
 \end{code}
-\vskip -2ex
+\shrink
 \caption{\texttt{comon.fml}: Uses feed of node locations to drive
-  data collection.}
+  data collection.} \shrink
 \label{fig:feedcomon}
 \end{figure}
 
-
-
-\begin{figure}
+\begin{figure}[t]
 \begin{code}
 \kw{ptype} nodeitem =
   Comment of '#' * pstring_SE(peor)
@@ -151,11 +149,12 @@ updated to reflect the set of active nodes in PlanetLab.
   | _ -> false
 
 \kw{ptype} source = 
-    nodeitem precord plist (No_sep, No_term)
+  nodeitem precord plist (No_sep, No_term)
 \end{code}
-\vskip -2ex
+\shrink
+\shrink
 \caption{\texttt{nodelist.pml}: \padsml{} description for CoMon configuration 
-  files, which contain one host name per non-commented line.}
+  files.}\shrink
 \label{fig:nodepml}
 \end{figure}
 
@@ -166,7 +165,7 @@ description includes an auxiliary feed \cd{nodes} that describes the
 configuration information: it is available from the
 \cd{config_location}, it should be fetched every two minutes, and its
 format is described by the \padsml{} description \cd{source} given in
-the file \cd{nodelist}, which appears in \figref{fig:nodepml}.
+the file \cd{nodelist.pml}, which appears in \figref{fig:nodepml}.
 This \padsml{} description specifies that \cd{source} is a list of
 new-line terminated records, each containing a \cd{nodeitem}.  In
 turn, a \cd{nodeitem} is either a \cd{'#'} character followed by a
@@ -206,24 +205,21 @@ expect to get data from all the active machines listed in the
 configuration file every two minutes.  We further expect the system to
 notices changes in the configuration file within two minutes.
 
-
-
-
-
 The previous examples all showcased feeds that contained a single type
 of data.  \padsd{} also provides a datatype mechanism that allows us
-to construct compound feeds containing data of different sorts.  As an
-example where such a construct is useful, the CoMon system includes a
-number of administrative data sources.  One example is a collection of
-node profiles, collecting the domain name, IP address, physical
-location, \etc, for each node in the cluster.  A second example is a
-list of authentication information for logging into the machines.
-These two data sources have different formats, locations, and update
-schedules, but system administrators want to keep a combined archive
-of the administrative information present in these sources.  If
-\cd{sites\_mime} is a feed description of the profile
-information and \cd{sites\_keyscan\_mime} is a feed of authentication
-information, then the declaration
+to construct compound feeds containing data of different sorts.  
+As an example where such a construct is useful, the CoMon system includes a
+number of administrative data sources.  
+%One example is a collection of
+%node profiles, collecting the domain name, IP address, physical
+%location, \etc, for each node in the cluster.  A second example is a
+%list of authentication information for logging into the machines.
+%These two data sources have different formats, locations, and update
+%schedules, but system administrators want to keep a combined archive
+%of the administrative information present in these sources.  
+If \cd{sites\_mime} is a feed description of the profile
+information of all the nodes on CoMon, and \cd{sites\_keyscan\_mime} is 
+a feed of authentication information for each node, then the declaration
 %
 \begin{code}
 \kw{feed} sites = 

@@ -24,9 +24,7 @@ In the following paragraphs, we describe the tools we have implemented.
 \centering
 \begin{codebox}
 \kw{feed} comon.fml/comon
-
-\kw{tool} feedaccum
-\{
+\kw{tool} feedaccum \{
   minalert  = true;
   maxalert  = true;
   lesssig   = 3;
@@ -35,14 +33,7 @@ In the following paragraphs, we describe the tools we have implemented.
   slicefile = "slice.acc";
   totalfile = "total.acc";
 \}
-
-\kw{tool} rss
-\{
-  title = "CoMon Memory RSS";
-  link  = "http://www.comon.org/memory-rss.xml";
-  desc  = "CoMon Memory Usage Information";
-  path  = "<top>.[?].Mem_info";
-\}
+... configs for other tools ...
 \end{codebox}
 \caption{\texttt{comon.tc}: Example tool configuration file.}
 \label{fig:toolconfigs}
@@ -66,6 +57,7 @@ In the following paragraphs, we describe the tools we have implemented.
 %\edcom{Move this bit somewhere?}
 %A tool is typically an \ocaml{} module with a standard interface: a tool specification, a feed representation or prefeed compiled from the feed description, and a feed of interest. 
 
+\cut{%%%%%%%%%%
 \begin{figure}[t]
 \centering
 \begin{scodebox}
@@ -84,8 +76,9 @@ Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
 Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2
 ... omitted ...
 \end{scodebox}
-\caption{\texttt{comon.acc}: Fragment of accumulator output.} \label{fig:acc}
+\caption{Fragment of accumulator output.} \label{fig:acc}
 \end{figure} 
+}%%%%%%%%%
 
 %===========================================================================
 %Summary of network transmission errors
@@ -186,8 +179,8 @@ feeds at once, or incrementally. The latter option
 allows users to continuously monitor feeds
 and compare their current behavior with historical statistics.  The
 accumulator can output either plain text or XML. 
-\figref{fig:acc} shows portions of text-based accumulator output
-for the CoMon example.
+%\figref{fig:acc} shows portions of text-based accumulator output
+%for the CoMon example.
 
 \textbf{\textit{Alerter.}} The alerter allows users to register boolean 
 functions which generate notifications when they evaluate to false on
@@ -230,10 +223,10 @@ specifications are written in the path expression language.
 %operate on a per feed basis, rather than a per item basis. And thus running the tools
 %in pipeline is not optimal.
 
-In summary, the tool configuration in \padsd{} is a very simple
-programming paradigm where minimum \ocaml{} language knowledge is
-required. Feed designers and system administrators who hardly know any
-functional programming can still perform day-to-day data management
-tasks. For users who do know \ocaml{} programming, more control is
-available by programming directly against the \padsd{} tools library.
+%In summary, the tool configuration in \padsd{} is a very simple
+%programming paradigm where minimum \ocaml{} language knowledge is
+%required. Feed designers and system administrators who hardly know any
+%functional programming can still perform day-to-day data management
+%tasks. For users who do know \ocaml{} programming, more control is
+%available by programming directly against the \padsd{} tools library.
 

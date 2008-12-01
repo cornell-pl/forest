@@ -25,6 +25,7 @@ for display to PlanetLab users.  CoMon is an invaluable resource for
 PlanetLab users who need to monitor the health and performance of their
 applications or experiments.
 
+\cut{ %%%%%% 
 Almost all distributed systems have (or should have) similar
 monitoring infrastructure.  Currently, the implementors of each new
 distributed system usually have to build ``one-off'' monitoring tools,
@@ -39,6 +40,7 @@ causing them to overheat.  In addition, new monitoring systems also
 must interact with legacy devices, legacy software and legacy data,
 preventing implementers from using robust off-the-shelf data management
 tools built for standard formats like XML. 
+}%%%%%%
 % I don't think this sentence really fits here...
 % XML-based tools also have
 %the disadvantage of significant bloat (often 8-10 times the size of a
@@ -61,40 +63,42 @@ selected distributed ad hoc data sources.
 
 % \vizGems: Many and varied machines \\
 
-\begin{figure}
+\begin{figure}[t]
 \begin{center}
 \begin{tabular}{|l|l|}
 \hline
-{\bf Name/{\em Use}} & {\bf Properties} 
+{\small {\bf Name/{\em Use}} } & {\small  {\bf Properties}} 
 \\\hline\hline
-CoMon~\cite{comon} & Multiple data sets \\
-{\em ~~ PlanetLab host}              & Archiving every 5 minutes \\
-{\em ~~ monitoring}                              & From evolving set of 800+ nodes \\\hline
-CoBlitz~\cite{coblitz}   & Multiple data sets \\
-{\em ~~ File transfer}        & Archiving every 3 minutes \\
-{\em ~~ system monitoring}                                      & From evolving set of 800+ nodes \\\hline
-CoralCDN~\cite{coral}         & Single Format \\
-{\em ~~ Log files from}  & Periodic archiving \\
-{\em ~~ CDN monitoring}                  & From evolving set of 250+ hosts \\\hline
-AT\&T \vizGems{}                    & Execute programs remotely to \\
-{\em ~~ Website host}                 & collect data \\
-{\em ~~  monitoring}                   & Varied fetch frequencies \\\hline
-AT\&T \darkstar{}                   & Diverse data sources\\
-{\em ~~ Network monitoring}       & Archiving for future analysis \\
-				& Per minute, hour, and day fetches\\\hline
-AT\&T \ningaui{}                    & Thousands of data sources\\
-{\em ~~ Billing auditing}        & Archiving and error analysis\\\hline
-GO DB~\cite{geneontology} & Multiple Formats \\
-{\em ~~ Gene function info.}     & Uploads daily, weekly, monthly \\\hline
-BioGrid~\cite{biogrid}        & XML and Tab-separated Formats \\
-{\em ~~ Curated gene and}  & multiple data sets $<=$ 50MB each \\
-{\em ~~ protein data}                              & Monthly data releases \\\hline
-NCBI~\cite{ncbi} & Links to multiple bioinformatics  \\
-{\em ~~ Biotechnology info.} & datasets\\
+{\small CoMon~\cite{comon} } & {\small  Multiple data sets} \\
+{\small {\em  PlanetLab host}              } & {\small  Archiving every 5 minutes} \\
+{\small {\em  monitoring}} & {\small  From evolving set of 800+ nodes} \\\hline
+{\small CoBlitz~\cite{coblitz}   } & {\small  Multiple data sets } \\
+{\small {\em  File transfer}        } & {\small  Archiving every 3 minutes } \\
+{\small {\em  system monitoring}                                      } & {\small  From evolving set of 800+ nodes } \\\hline
+{\small CoralCDN~\cite{coral}         } & {\small  Single Format } \\
+{\small {\em  Log files from}  } & {\small  Periodic archiving } \\
+{\small {\em  CDN monitoring}                  } & {\small  From evolving set of 250+ hosts } \\\hline
+{\small AT\&T \vizGems{}                    } & {\small  Execute programs remotely to } \\
+{\small {\em  Website host}                 } & {\small  collect data } \\
+{\small {\em   monitoring}                   } & {\small  Varied fetch frequencies } \\\hline
+{\small AT\&T \darkstar{}                   } & {\small  Diverse data sources} \\
+{\small {\em  Network}       } & {\small  Archiving for future analysis } \\
+{\small {\em  monitoring}	} & {\small  Per minute, hour, and day fetches} \\\hline
+{\small AT\&T \ningaui{}                    } & {\small  Thousands of data sources} \\
+{\small {\em  Billing auditing}        } & {\small  Archiving and error analysis} \\\hline
+{\small GO DB~\cite{geneontology} } & {\small  Multiple Formats } \\
+{\small {\em  Gene function info.}     } & {\small  Uploads daily, weekly, monthly } \\\hline
+{\small BioGrid~\cite{biogrid}        } & {\small  XML and Tab-separated Formats } \\
+{\small {\em  Curated gene and}  } & {\small  multiple data sets $\leq$ 50MB each } \\
+{\small {\em  protein data}                              } & {\small  Monthly data releases } \\\hline
+{\small NCBI~\cite{ncbi} } & {\small  Links to multiple bioinformatics  } \\
+{\small {\em  Biotechnology info.} } & {\small  datasets} \\
 \hline
 \end{tabular}
 \end{center}
+\shrink 
 \caption{Example distributed ad hoc data sources.}
+\shrink 
 \label{fig:exampledata}
 \end{figure}
 
@@ -102,46 +106,57 @@ This paper presents a declarative specification language, called
 \padsd{}, that allows users to
 describe a collection of distributed data sources they wish to
 gather and archive.  More specifically, the \padsd{} programmer will
-specify each of the following.
+specify: {\bf where} the data is located; {\bf when} to get the data;      
+{\bf how} to obtain it; {\bf what preprocessing} the system should do when the data arrives;
+{\bf what preprocessing} the system should do when the data arrives; and 
+{\bf what format} the data source arrives in.
 
+\cut{%%%%%  
 \begin{itemize}
-\item {\bf Where} the data is located.  The data may be in a directory
+\item {\bf Where} the data is located.  
+The data may be in a directory
 on the current machine (perhaps written by another process), at some 
 remote location, or at a collection of locations.
-\item {\bf When} to get the data.  The data may need to be fetched just 
+\item {\bf When} to get the data.  
+The data may need to be fetched just 
 once (right now!) or according to some schedule.
-\item {\bf How} to obtain it.  The data may be accessible through standard 
+\item {\bf How} to obtain it.  
+The data may be accessible through standard 
 protocols such as \cd{http} or \cd{ftp} or it may be created via a
 local or remote computation. 
-\item {\bf What preprocessing} the system should do when the data arrives.  The 
-data may be compressed or encrypted;  privacy considerations may require 
+\item {\bf What preprocessing} the system should do when the data arrives.  
+The data may be compressed or encrypted;  privacy considerations may require 
 the data be anonymized.
-\item {\bf What format} the data source arrives in.  The data may be
+\item {\bf What format} the data source arrives in.  
+The data may be
   in ASCII, binary, or EBCDIC. It may be tab- or comma-separated, or
   it may be in the kind of non-standard format that
   \pads{}~\cite{fisher+:pads,mandelbaum+:pads-ml} was designed to describe.
 \end{itemize}
+}%%%% 
 
 The \padsd{} system then compiles these high-level specifications into
 a collection of tools for archiving the data along with provenance metadata.
-Our current tool suite includes the following components:
-
-\begin{itemize}
-\item {\bf A fetching engine} that collects distributed data on the specified 
+Our current tool suite includes an archiver, a printer,  a performance
+monitor, an database loader, an accumulator, an alerter, a selector and an
+RSS feed generator.  
+\cut{ %%%%%%%%%%
+\noindent
+{\bf - A fetching engine} that collects distributed data on the specified 
 schedule, archives it, and maintains a ``table of contents'' including
-information about location of origin and time.
-\item {\bf A printer} that fetches, prints, and helps debug
-specifications.
-\item {\bf A performance monitor} that measures fetch times and also helps
-debug specifications.
-\item {\bf An RRD database loader} that takes the data and extracts specified 
+information about location of origin and time.\\
+{\bf - A printer} that fetches, prints, and helps debug
+specifications.\\
+{\bf - A performance monitor} that measures fetch times and also helps
+debug specifications. \\
+{\bf - An RRD database loader} that takes the data and extracts specified 
 pieces to load into an RRD database~\cite{rrdtool}.  The data is 
-indexed by its arrival time and supports time-based queries.  
+indexed by its arrival time and supports time-based queries. \\ 
 \cut{
 This information should be in section 4
 For performance, as more recent data arrives, older data is discarded.}
-\item {\bf An accumulator} that maintains a statistical profile of the 
-data and its error characteristics.  
+{\bf - An accumulator} that maintains a statistical profile of the 
+data and its error characteristics.  \\
 \cut{This information should be in section 4
 For numeric data, the system
 tracks average values and standard deviations.  For other 
@@ -149,21 +164,21 @@ data, such as strings, urls, ip addresses, times, dates, and ad hoc
 enumerations, the system maintains information counts of the top $N$ most commonly occurring 
 items.  For all data, the system tracks error rates and information about 
 common errors.}
-\item {\bf An alert system} that generates alerts based on programmable 
-conditions.
-\item {\bf A selector} that extracts and records specified 
-subcomponents of a larger data source.
-\item {\bf An RSS feed generator} that wraps raw data in the appropriate 
+{\bf - An alert system} that generates alerts based on programmable 
+conditions. \\
+{\bf - A selector} that extracts and records specified 
+subcomponents of a larger data source.\\
+{\bf - An RSS feed generator} that wraps raw data in the appropriate 
 headers to create an RSS feed from diverse ad hoc data sources.
-\end{itemize}
-
+}%%%%%%%%%%%%
 The system can generate all of these tools from \padsd{} descriptions
-and declarative tool configuration specifications.  Thus for common
-tasks, users can manage distributed data sources simply by writing
-high-level declarative specifications.  There
-are relatively few concepts to learn, no complex interfaces and no
-tricky boilerplate to master to initialize 
-the system or thread together tool libraries.  
+and declarative tool configuration specifications.  
+%Thus for common
+%tasks, users can manage distributed data sources simply by writing
+%high-level declarative specifications.  There
+%are relatively few concepts to learn, no complex interfaces and no
+%tricky boilerplate to master to initialize 
+%the system or thread together tool libraries.  
 
 \cut{
 Because there is
@@ -256,23 +271,24 @@ generic tools ourselves and will continue to build more as demand requires.
 % single generic program to complete the task.
 
 In the remainder of this short paper, we describe our language and system
-by using Princeton's CoMon~\cite{comon} system as an example.
-CoMon~\cite{comon} monitors the health and status of
-PlanetLab~\cite{planetlab} by attempting to
-fetch data from each of PlanetLab's 800+ nodes every 5 minutes.  
-This data ranges from
-the node uptime to memory usage to kernel version.  
+using Princeton's CoMon~\cite{comon} system as an example.
+%CoMon~\cite{comon} monitors the health and status of
+%PlanetLab~\cite{planetlab} by attempting to
+%fetch data from each of PlanetLab's 800+ nodes every 5 minutes.  
+%This data ranges from
+%the node uptime to memory usage to kernel version.  
 %The CoMon system takes this
 %raw data and transforms it into two different forms, one of which is a
 %per-node collection of statistics and the other of which is a
 %per-slice ({\em i.e.,} per-application) collection of statistics.
-Researchers use CoMon to set up and diagnose their PlanetLab 
-experiments, querying the data to find lightly
-loaded nodes, nodes with drifting clocks or nodes with little
-remaining disk space or other conditions.  CoMon also monitors 
-nodes for various sorts of problems and generates reports of deviant 
-machines or user programs.  Readers interested in further examples
-and a semantics for the language should refer to our technical 
-report~\cite{zhu+:padsdtr}.
+%Researchers use CoMon to set up and diagnose their PlanetLab 
+%experiments, querying the data to find lightly
+%loaded nodes, nodes with drifting clocks or nodes with little
+%remaining disk space or other conditions.  CoMon also monitors 
+%nodes for various sorts of problems and generates reports of deviant 
+%machines or user programs.  
+Readers interested in further examples,
+a semantics for the language as well as comprehensive related work
+should refer to our technical report~\cite{zhu+:padsdtr}.
 
 

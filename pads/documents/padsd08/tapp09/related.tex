@@ -1,10 +1,10 @@
 %{\em Note: the following was taken from a grant proposal written with Vivek
 %Pai....  }
 
-\padsd{} was primarily inspired by and builds past research in 
+\padsd{} was primarily inspired by the past research in 
 data description languages such as Demeter~\cite{lieberherr:demeter}, 
 DataScript~\cite{gpce02} or
-\pads{}~\cite{fisher+:pads,mandelbaum+:pads-ml} and work on functional reactive 
+\pads{}~\cite{fisher+:pads,mandelbaum+:pads-ml} and the work on functional reactive 
 programming~\cite{elliot+:frp}.  In contrast to the work on previous
 data description languages, \padsd{} treats the problem of bringing together
 collections of {\em distributed} source made available over time.  In
@@ -21,7 +21,8 @@ map and filter.  The focus is on end-user programming with relatively
 small amounts of data that can be displayed to a user in a web
 browser. Errors and facilities for long term archiving, analysis and monitoring
 are largely ignored as are facilities for processing data that arrives
-in non-standard formats.
+in non-standard formats. Readers are referred to our technical report~\cite{zhu+:padsdtr}
+for more comprehensive coverage of related work.
 %
 %completeness or absolute 
 %correctness of information is not critical in the domains of interest.
@@ -40,6 +41,7 @@ in non-standard formats.
 
 
 %\paragraph*{Systems monitoring.}
+\cut{%%%%%%%%%
 There are a number of tools availale for system monitoring such
 as SNMP~\cite{snmprfc1157}, HP's OpenView~\cite{openview}
 and MRTG~\cite{mrtg}. These tools are typically focused on systems-oriented
@@ -56,6 +58,7 @@ ad hoc data, from node-level information like that collected by
 Ganglia or SNMP, all the way down to application-level or even
 protocol-level data. These areas are the ones that are not well served
 by today's general-purpose monitoring systems. 
+}%%%%%%%%%%
 
 % With the growth of distributed systems, research interest in building
 % scalable monitoring systems has followed, with tools such as
@@ -103,4 +106,11 @@ by today's general-purpose monitoring systems.
 % The MashMaker paper contains a nice survey of work in this area that
 % we can reference.
 
+In this paper, we describe \padsd{}, a specification
+language for archiving distributed ad hoc data sources.  Our language
+allows users to specify where, when and how their data sources are
+to be acquired.  From these specifications,
+a wide-variety of tools to archive data and provenance metadata.  
+Overall, we hope the system will substantially improve the productivity of
+the modern data analyst.
 

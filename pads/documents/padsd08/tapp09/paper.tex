@@ -1,7 +1,6 @@
 %\documentclass[fleqn]{article}
-\documentclass[nocopyrightspace]{sigplanconf}
-
-\usepackage{xspace,amsmath,math-cmds,
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix,endnotes,xspace,amsmath,math-cmds,
             math-envs,inference-rules,times,
             verbatim,alltt,multicol,proof,url}
 \usepackage{epsfig}
@@ -15,22 +14,31 @@
 %\setlength{\evensidemargin}{0in}
 %\setlength{\textwidth}{6.5in}
 %\setlength{\textheight}{8.5in}
-
 \begin{document}
-\title{Functional Specifications for Archiving Distributed Data}
+\title{\Large \bf Functional Specifications for Archiving Distributed Data}
 
-\authorinfo{
-Kenny Q. Zhu$^1$ \quad
-Daniel S. Dantas$^1$ \quad
-Kathleen Fisher$^2$ \quad
-Limin Jia$^1$ \\
-Yitzhak Mandelbaum$^2$ \quad
-Vivek Pai$^1$ \quad
-David Walker$^1$
-}{
-$^1$ Princeton University \\
-$^2$ AT\&T Labs Research
-}{}
+\author{
+{\rm Kenny Q. Zhu} \\
+Princeton University 
+\and
+{\rm Daniel S. Dantas}\\
+Princeton University 
+\and
+{\rm Kathleen Fisher} \\
+AT\&T Labs Research
+\and
+{\rm Limin Jia}\\
+University of Pennsylvania
+\and
+{\rm Yitzhak Mandelbaum} \\
+AT\&T Labs Research
+\and
+{\rm Vivek Pai} \\
+Princeton University 
+\and
+{\rm David Walker} \\
+Princeton University 
+}
 
 %% \authorinfo{Kathleen Fisher}{
 %% 	   AT\&T Labs Research}
@@ -65,7 +73,7 @@ $^2$ AT\&T Labs Research
 \label{sec:informal}
 \input{informal.tex}
 
-\section{\padsd{}:  Tool Generation}
+\section{\padsd{}: Tool Generation}
 \label{sec:programming}
 \input{tools}
 %\input{programming}
@@ -78,22 +86,20 @@ $^2$ AT\&T Labs Research
 %\label{sec:implementation}
 %\input{implementation}
 
-\section{Related Work}
-\label{sec:related}
-\input{related}
+%\section{Related Work}
+%\label{sec:related}
+%\input{related}
 
 \section{Conclusions}
 \label{sec:conclusions}
 \input{conclusion}
 
-\section*{Acknowledgments}
-
+{\em Acknowledgments.}
 This material is based upon work 
-supported by the NSF
-   under grants 0612147 and 0615062.
-Any opinions, findings, and conclusions or recommendations
-   expressed in this material are those of the authors and do not
-   necessarily reflect the views of the NSF.
+supported by the NSF under grants 0612147 and 0615062.
+Any opinions, findings, and conclusions or recommendations expressed in 
+this material are those of the authors and do not necessarily reflect 
+the views of the NSF.
 
 \bibliographystyle{abbrv}
 \bibliography{pads,vivek}
