@@ -1,13 +1,13 @@
 
-Modern data analysis tasks increasingly involve drawing information from
-a wide variety of distributed data sources, processing that data locally
-and analyzing ther results.  Consequently,
-computational biologists, cosmologists, financial analysts, systems
-adminstrators and distributed systems engineers (among others) are constantly building
-new, ad hoc systems for gathering data from distributed sources and
-archiving it locally along with provenance meta-data.  If the process
-is to be robust, auxiliary subsystems are also required to monitor the
-data acquisition process and to detect and catalogue errors.
+Modern data analysis tasks increasingly involve drawing information
+from a wide variety of distributed data sources, processing that data
+locally and analyzing the results.  Consequently, computational
+biologists, cosmologists, financial analysts, systems adminstrators,
+distributed systems engineers and others are continually
+building new ad hoc systems for gathering data from distributed
+sources and archiving it locally along with provenance meta-data.  To
+make the process robust, auxiliary subsystems must monitor the data
+acquisition process to detect and catalogue errors.
 
 As an example, consider the data
 manipulated by CoMon~\cite{comon}, a system designed to monitor the
@@ -18,12 +18,14 @@ across 416 sites worldwide.%
 % 
 When all is well, which it never is, each node responds with
 an ASCII data file in mail-header format containing information
-ranging from the kernel version to the uptime to the memory usage to
+including the kernel version, the uptime, the memory usage, and
 the ID of the user with the greatest CPU utilization.  CoMon archives
 this data in compressed form and processes the information
-for display to PlanetLab users.  CoMon is an invaluable resource for
+for display to PlanetLab users.  
+\cut{%%%%%% 
+CoMon is an invaluable resource for
 PlanetLab users who need to monitor the health and performance of their
-applications or experiments.
+applications or experiments.}
 
 \cut{ %%%%%% 
 Almost all distributed systems have (or should have) similar
@@ -107,7 +109,7 @@ This paper presents a declarative specification language, called
 describe a collection of distributed data sources they wish to
 gather and archive.  More specifically, the \padsd{} programmer will
 specify: {\bf where} the data is located; {\bf when} to get the data;      
-{\bf how} to obtain it; {\bf what preprocessing} the system should do when the data arrives;
+{\bf how} to obtain it; 
 {\bf what preprocessing} the system should do when the data arrives; and 
 {\bf what format} the data source arrives in.
 
@@ -135,8 +137,9 @@ The data may be
 \end{itemize}
 }%%%% 
 
-The \padsd{} system then compiles these high-level specifications into
-a collection of tools for archiving the data along with provenance metadata.
+The \padsd{} system compiles these high-level specifications into
+a collection of tools for archiving the data and maintaining
+provenance metadata. 
 Our current tool suite includes an archiver, a printer,  a performance
 monitor, an database loader, an accumulator, an alerter, a selector and an
 RSS feed generator.  
@@ -288,7 +291,7 @@ using Princeton's CoMon~\cite{comon} system as an example.
 %nodes for various sorts of problems and generates reports of deviant 
 %machines or user programs.  
 Readers interested in further examples,
-a semantics for the language as well as comprehensive related work
+a semantics for the language and comprehensive related work
 should refer to our technical report~\cite{zhu+:padsdtr}.
 
 

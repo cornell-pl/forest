@@ -1,7 +1,7 @@
-The \padsd{} language allows users to describe streams of data and
-meta-data that we refer to as {\em feeds}.  
-To introduce the central features of the language,
-we work through a series of examples drawn from the CoMon monitoring system.
+The \padsd{} language allows users to describe {\em feeds}, which is
+the term we use for streams of data and meta-data.
+To introduce the features of the language,
+we present a series of examples drawn from the CoMon monitoring system.
 
 \begin{figure}[t]
 \begin{code}
@@ -41,10 +41,10 @@ we work through a series of examples drawn from the CoMon monitoring system.
 
 
 %\subsection{CoMon Feeds}
-\figref{fig:simplecomon} presents our first attempt to define
-a simple CoMon statistics feed.  This description
-specifies the \cd{simple\_comon} feed
-using the \kw{base} feed constructor.  The \kw{sources} field
+The \padsd{} specification in \figref{fig:simplecomon} describes a
+simple CoMon statistics feed \cd{simple\_comon}
+using the \kw{base} feed constructor.  This constructor contains three fields.
+The \kw{sources} field 
 indicates that data for the feed comes from all of the locations
 listed in \cd{sites}.  The \kw{schedule} field specifies that relevant
 data is available from each source every five minutes, starting immediately.
@@ -57,6 +57,22 @@ up. Finally, the \kw{format} field indicates that the fetched data
 conforms to the \padsml{}~\cite{mandelbaum+:pads-ml} description named
 \cd{Source} defined in the file \cd{comon_format}.
 
+With replicated distributed systems, many sites may contain all the
+desired information.   
+For efficiency, monitors for such
+systems typically ask for data from all sites in parallel but stop 
+polling as soon as one site returns the required information.  The
+\cd{comon\_1} feed defined in \figref{fig:comon_1} specifies this behavior
+by using the \kw{any} constructor in the \kw{sources} field.
+The schedule for \cd{comon\_1} indicates the system should fetch data
+every minute for two hours, using the \cd{lasting} clause to indicate
+the duration of the feed.  It omits the \cd{starting} and
+\cd{timeout} specifications, causing the system to use default
+%settings of \cd{now} for the start time and 30 seconds for the
+%timeout.  
+settings for the start time and the timeout window.  
+
+\cut{ %%%%%%%%%%%
 In contrast to the \cd{simple\_comon} feed, which returns data from
 all sites, the \cd{comon\_1} feed defined in \figref{fig:comon_1}
 uses the \kw{any} constructor in the \kw{sources} field to 
@@ -65,10 +81,12 @@ supply a complete set of data.
 %
 %
 This feature is particularly useful when monitoring the
-behavior of replicated systems, such as those using
+behavior of replicated systems.
+\cut{%%%%%%%%
+, such as those using
 state machine replication, consensus protocols, or even
 loosely-coupled ones such as Distributed Hash Tables (DHTs) 
-\cite{Balakrishnan+03:dht}.
+\cite{Balakrishnan+03:dht}.}
 %In these systems, the same data will be available from any
 %of the functioning nodes, so receiving results from the first
 %available node is sufficient. These kinds of monitoring systems
@@ -76,15 +94,14 @@ loosely-coupled ones such as Distributed Hash Tables (DHTs)
 %machine failure. Specifying this behavior at the language level
 %provides a simpler implementation than network-centric approaches such
 %as anycast \cite{anycast}. 
-
 The schedule for \cd{comon\_1} indicates the system should fetch data
-every minute for two hours, using the \cd{lasting} field to indicate
+every minute for two hours, using the \cd{lasting} clause to indicate
 the duration of the feed.  It omits the \cd{starting} and
 \cd{timeout} specifications, causing the system to use default
 %settings of \cd{now} for the start time and 30 seconds for the
 %timeout.  
 settings for the start time and the timeout window.  
-
+}
 
 
 The \cd{simple\_comon} example hard-codes the set of locations from

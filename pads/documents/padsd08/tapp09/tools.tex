@@ -189,8 +189,10 @@ be piped into other tools.  The system provides a library of
 common alerters such as exceeding max/min thresholds or deviating from the norm
 ({\em i.e.,} trigger an alert when a selected value strays more than $k$
 standard deviations from its historical value). 
-Users can supply their own conditions by giving arbitrary \ocaml{} predicates
-in the configuration file.
+Users can supply their own conditions by giving \ocaml{} predicates
+in the configuration file.  These predicates can consider both feed values 
+and meta-data about the feed when determining whether to
+trigger an alert.
 %This tool has also been integrated with the accumulator described above. 
 %The alerter notifies users of violated conditions by
 %appending to a file, which can then be piped to other tools such as an email
