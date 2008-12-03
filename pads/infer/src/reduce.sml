@@ -1222,6 +1222,72 @@ case ty of
   end
   | _ => (cmos, ty)
 
+and to_dependent_array_len cmos ty =
+  let fun findLenDeps id =
+	case LabelMap.find(cmos, id) of
+	SOME consts =>
+	  (
+	   let fun f consts =
+		case consts of
+	 	nil => nil
+		| (Eq x) :: rest => (Eq x) :: (f rest)
+		| _ :: rest => f rest
+	   in f consts
+	   end
+	  )
+	| NONE => nil
+
+  (* function to find a list of int types and the first RArray that 
+	hasn't had a lens defined *)
+  fun findIntTypesAndArray tylist intlist = 
+    case tylist of
+	(t as RefinedBase (a, Int x, tlist))::l => findIntTypesAndArray l (t::intlist)
+	| (t as (Base (a, (Pint _, _)::_))) :: l => findIntTypesAndArray l (t::intlist)
+	| ((t as RArray (a, sep, term, body, None, lens)) :: _ ) => (intlist, SOME t)
+	| _::l => findIntTypesAndArray l intlist
+	| nil => (nil, NONE)
+
+  fun in_list tys id =
+	case tys of
+	  t::tys => 
+	   if Atom.toString id = Atom.toString (getLabel(getAuxInfo t)) then true
+	   else in_list tys id
+	| nil => false
+
+  fun replace_array tys (RArray (a, sep, term, body, lenop, lens))=
+	(
+	case tys of
+	  (RArray(a, _, _, _, _, _))::tys => (RArray (a, sep, term, body, lenop, lens))::tys
+	| ty::tys => ty::replace_array tys (RArray (a, sep, term, body, lenop, lens))
+	| nil => nil
+	)
+    | replace_array tys _ = tys
+  fun get_one_const consts tys =
+	case consts of
+	(c as Eq ([(id, _)], _))::consts => if in_list tys id then SOME c
+					    else get_one_const consts tys
+	| _::consts => get_one_const consts tys
+	| nil => NONE
+  in
+  case ty of
+    Pstruct(aux, tylist) =>
+	let val (intTypes, arrayop) = findIntTypesAndArray tylist nil in
+	case arrayop of
+	  SOME (RArray (a, sep, term, body, None, lens)) =>
+		let val lensConsts = findLenDeps (some(#label a))
+		in
+		  case get_one_const lensConsts intTypes of
+		    SOME (Eq ([(id, _)], _)) =>
+		      let val newarray = RArray(a, sep, term, body, SOME (LabelRef id), lens) in
+		       (cmos, Pstruct(aux, replace_array tylist newarray))
+		      end
+		  | _ => (cmos, ty)
+		end
+	| _ => (cmos, ty)
+	end
+  | _ => (cmos, ty)
+  end
+ 
 (*convert an enum constraint to a Enum refined type or a range constraint to 
 	a range refined type *)
 and enum_range_to_refine cmos ty = 
@@ -1804,7 +1870,8 @@ let
 		  uniqueness_to_const, 
 		  adjacent_consts,
 		  enum_range_to_refine,
-		  sum_to_switch
+		  sum_to_switch,
+		  to_dependent_array_len
 		]
   val phase_three_rules : pre_reduction_rule list = 
 		[ 	
@@ -1824,9 +1891,10 @@ let
   val cmap = case phase of
 	2 => Constraint.constrain' ty
 	| _ => LabelMap.empty
-(* Print the constraints 
+(* Print the constraints  
   val _ = printConstMap cmap
 *)
+
   (* returns a new cmap after reducing all the tys in the list and a new tylist *)
   fun mymap f phase cmap tylist newlist =
 	case tylist of 

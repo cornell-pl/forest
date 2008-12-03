@@ -32,6 +32,12 @@ open Common
 	in ref tmap
 	end
 
+  val varMapRef = 
+	let val vmap = LabelMap.insert (LabelMap.empty, (Atom.atom ""), "")
+	in ref vmap
+	end
+
+
   fun tokenToTypeName (t : Token ) : TypeName = 
 	case t 
         of Ptime _     => IRtime
@@ -67,6 +73,7 @@ open Common
 	| CharField of VarName option * string (*still string because printing needs string anyway*) 
         | CompField of TypeName * IRConstraint
 	| FullField of VarName * TypeName * VarName option (*param for switch*) * IRConstraint option 
+	| ArrayField of TypeName * Refined option (*sep*) * Refined option (*term*) * Refined option (*len*)
 
   datatype TypeDef = 
 	  TyBase of TypeName * IRConstraint option
@@ -86,6 +93,10 @@ open Common
 	| TBD _ => false
 	| Bottom _  => false
 	| _ => true
+
+  fun isArray ty = case ty of
+	RArray _ => true
+	| _ => false
 
   fun isArrayBodyTy ty = case ty of 
 	Base _ => true
@@ -151,6 +162,11 @@ open Common
 	| _ => raise TyMismatch
 	end
 
+  fun getArrayBody ty  =
+	case ty of
+	RArray (_, _, _, ty, _, _) => ty
+	| _ => raise TyMismatch
+
   fun getArrayBodyTyName ty : TypeName = 
 	case ty of
 	  RefinedBase(_, StringConst s, _) => IRstringME ("/" ^ escape s ^ "/")
@@ -158,9 +174,8 @@ open Common
 
   fun getVar ty : VarName = 
         let
-	  val label = getLabelString (getAuxInfo ty)
-	  val id = String.extract (label, 4, NONE)
-	in
+	  val label = getLabel(getAuxInfo ty)
+	  val var =
 	  case ty of
 	    Base _ => 
 		(
@@ -186,6 +201,8 @@ open Common
 		IRref s => ("v_" ^ s)
 		| _ => raise TyMismatch
 		)
+	  val _ = varMapRef := LabelMap.insert (!varMapRef, label, var)
+	in var
 	end
 
   fun tyToStructField siblings ty = 
@@ -211,6 +228,22 @@ open Common
 		  SOME switchTy => FullField (var, tyName, SOME (getVar switchTy), NONE)
 		| NONE => tyToStructField nil (Punion(aux, nil))
 	    end
+	| RArray (a, sep, term, body, len, lens) =>
+	  if not (isArrayBodyTy body) then 
+		let
+		    val bodyName = (case body of 
+				   RefinedBase (_, Enum _, _) => getTypeName body
+				   | RefinedBase _ => getBaseTyName body
+				   | _ => 
+					(
+     					  case TyMap.find (!tyMapRef, body) of
+     					    SOME n => n
+					  | NONE => getTypeName body)
+				   )
+		in ArrayField (bodyName, sep, term, len)
+		end
+	  else ArrayField ((getArrayBodyTyName body), sep, term, len)
+
 	| _ => FullField (var, tyName , NONE, NONE) 
      end
 
@@ -409,9 +442,15 @@ open Common
 	   )
 	   end
       | Pstruct (aux, tys) =>
+	(* if one or more of a struct's elements are arrays, we will include them
+	   inline *)
 	  let
-	    val nonInlineTys = List.filter notInlineTy tys
-	    val liftedIRs = List.concat (map (tyToIR (levels2Rec - 1) tys) nonInlineTys)
+	    val nonInlineTys = List.filter (fn x => not (isArray x) andalso (notInlineTy x)) tys
+	    val arrayTys = List.filter isArray tys
+	    val nonArrayBodyTys = List.filter (fn x => not (isArrayBodyTy x)) 
+				(map getArrayBody arrayTys)
+	    val liftedIRs = List.concat (map (tyToIR (levels2Rec - 1) tys) 
+				(nonInlineTys @ nonArrayBodyTys))
 	    val fields = map (tyToStructField tys) tys
 	  in liftedIRs @[(levels2Rec, tyname, TyStruct fields)]	
 	  end

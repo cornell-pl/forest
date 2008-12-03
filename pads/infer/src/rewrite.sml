@@ -13,7 +13,7 @@ let
   val acomp    = #adc comps
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
-  (* val _ = (print "Before Reduction:\n"; printTy measuredTy) *)
+  val _ = (print "Before Reduction:\n"; printTy measuredTy) 
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
   val (headers, footers, auxOp, body) = 
@@ -50,10 +50,10 @@ let
   val headers= map (Reduce.reduce 3) headers
   val footers= map (Reduce.reduce 3) footers
   val reduce3_time : Time.time = Time.now ()
-(*
+
   val _ = print "Before mkBlob ...\n"
   val _ = printTy ty3
-*)
+
   val ty3 = if Options.do_blob_finding then
 		Reduce.updateWithBlobs NONE ty3
 	    else ty3

@@ -51,6 +51,48 @@ open Ast
 	  "Pstring_SE(:\"/" ^ escape s ^ "/\":)"
      | IRempty => "PPempty"
 
+  fun arrayFieldToPADSC (tyName, sep, term, len) =
+	let val tyNameStr = tyNameToPADSCString tyName
+	in "\t" ^ tyNameStr ^
+	         "[" ^ 
+		    ( case len of 
+			SOME (IntConst x) => largeIntToStr x
+			| SOME (LabelRef id) =>
+			   (
+			   case LabelMap.find (!varMapRef, id) of
+			     SOME v => v
+			   | _ => ""
+			   )
+			| _ => ""
+		    ) ^ "]" ^
+		    ( case sep of 
+		     SOME refsep => 
+			let val sepstr = getRefStr refsep
+			in
+			  (case term of
+			  SOME refterm => 
+			    let val termstr = getRefStr refterm
+			    in " : Psep(" ^ sepstr ^ ") && Pterm(" ^ termstr ^ ")"
+			    end
+			  | NONE => " : Psep(" ^ sepstr ^ ") && Plongest"
+			  )
+			 end
+		     | NONE => 
+			(case term of
+			  SOME refterm => 
+			    (
+			    let 
+				val termstr = getRefStr refterm
+			    in 
+				" : Pterm(" ^ termstr ^ ")"
+			    end
+			    )
+			  | NONE => " : Plongest"
+			)
+		    ) 
+	end
+
+
   fun fieldToPADSC isEnum f =
     case f of
       StringField (SOME v, s) => 
@@ -65,6 +107,7 @@ open Ast
     | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
 		if x = 0 then "\tPempty" else
 		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (largeIntToStr x)
+    | ArrayField (tyName, sep, term, len) => arrayFieldToPADSC (tyName, sep, term, len)
     | FullField (v, t, sw, c) => 
 	let val tyname = tyNameToPADSCString t in
 	"\t" ^ tyname ^ " " ^  
@@ -133,38 +176,8 @@ open Ast
 		
 	| TyArray (tyName, sep, term, len) =>
 		let val tyNameStr = tyNameToPADSCString tyName
-		in "Parray " ^ tyVarStr ^ " {\n\t" ^ tyNameStr ^
-		         ("[" ^ 
-			    ( case len of 
-				SOME (IntConst x) => largeIntToStr x
-				| _ => ""
-			    ) ^ "]" ^
-			    ( case sep of 
-			     SOME refsep => 
-				let val sepstr = getRefStr refsep
-				in
-				  (case term of
-				  SOME refterm => 
-				    let val termstr = getRefStr refterm
-				    in " : Psep(" ^ sepstr ^ ") && Pterm(" ^ termstr ^ ")"
-				    end
-				  | NONE => " : Psep(" ^ sepstr ^ ") && Plongest"
-				  )
-				 end
-			     | NONE => 
-				(case term of
-				  SOME refterm => 
-				    (
-				    let 
-					val termstr = getRefStr refterm
-				    in 
-					" : Pterm(" ^ termstr ^ ")"
-				    end
-				    )
-				  | NONE => " : Plongest"
-				)
-			    ) ^ ";\n"
-			  ) ^ "};\n"
+		    val arrayStr = arrayFieldToPADSC (tyName, sep, term, len)
+		in "Parray " ^ tyVarStr ^ " {\n" ^ arrayStr ^ ";\n};\n"
 		end
 	| TyOption tyName => 
 		let val tyNameStr = tyNameToPADSCString tyName
@@ -179,6 +192,7 @@ open Ast
 	   record, the headers and footers are all different from each other *)
 	let
 	  val _ = tyMapRef := TyMap.empty
+	  val _ = varMapRef := LabelMap.empty
 	  val incString = "#include \""^ includeFile ^"\"\n" 
 	  val (pads, topLabel, headerLabel, bodyLabel, footerLabel) =
 		if numHeaders=0 andalso numFooters=0 then

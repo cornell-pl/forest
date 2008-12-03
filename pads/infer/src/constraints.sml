@@ -281,10 +281,13 @@ structure BDOSet = RedBlackSetFn(struct
 		
 		fun tryEach flist =
 		  case flist of
-		    h :: t => ((SOME (h ())) handle DetermineFailed => tryEach t)
-		  | nil => NONE
+		    h :: t => 
+			let val p = (SOME (h ()) handle DetermineFailed => NONE) in
+			p :: (tryEach t) 
+			end
+		  | nil => nil
 	in
-		tryEach [toSwitched] (*, toMatrix]*)
+		tryEach [toMatrix, toSwitched]
 	end
 	
 	(* takes a list of columns and a dependency in number form
@@ -446,28 +449,31 @@ constraint map *)
 					(ListPair.zip(labeled_deps,deps)))
 			
 		(* label and print the deps and keys *)
-(*
+		(*
 		val _ = print ("num of dependencies: " ^ Int.toString(length(deps))^ "\n")
 		val _ = print ("num of keys: " ^ Int.toString(length keys) ^ "\n")
 		val labeled_keys = map (map (fn x => List.nth(header,x))) keys
+		*)
 	        val _ = if Options.print_functional_deps then print ("Dependencies ("^Int.toString(length(labeled_deps))^"):\n") 
 							else ()
 	        val _ = if Options.print_functional_deps 
 	              then app printDep labeled_deps
 	              else ()
+		(*
 		val _ = if Options.print_functional_deps 
 		         then app (fn l => 
 				print ("Key {" ^ implode(idstostrs(l),",")  ^ "}\n") 
 				) labeled_keys
 		         else ()
-*)
-		
+		*)
+	
 		(* determine what constraints apply *)
 		val dpl = map (dep_cols bdocols) deps
 		val labl:(Id list * Id) list = map (dep_cols header) deps
 		val dpl = map (fn (y,x) => (y,map (fn z => [z]) x)) dpl
-		val found_deps: (Id*constraint) option list = 
-			map determine_dep (ListPair.zip(labl,dpl) )
+		val found_deps: (Id*constraint) option list =
+			foldr (fn (l, dep_opts) => l @ dep_opts) nil 
+			(map determine_dep (ListPair.zip(labl,dpl)))
 		val found_deps = List.filter (fn x => case x of 
 			SOME _ => true | NONE => false) found_deps
 		val found_deps:(Id* constraint) list = map some found_deps

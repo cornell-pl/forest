@@ -557,6 +557,11 @@ struct
                        SOME termtok =>
                          prefix ^ "\tTerminator: "^ refinedToString(termtok) ^ "\n"
                      | _ => "" ) ^
+		( case len of
+                       SOME r  =>
+                         prefix ^ "\tLens: "^ refinedToString(r) ^ "\n"
+                     | _ => "" ) ^
+
 		(* prefix ^ (lengthsToString lengths) ^ *)
                 ( partialD body ) ^ prefix ^ "End RArray" 
              | Poption (aux, ty) =>

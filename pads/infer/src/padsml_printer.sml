@@ -57,6 +57,19 @@ struct
     | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
                 "with pdefault " ^ (upFirstChar v) ^ " of " ^ (tyNameToPML t) ^ " = " ^ 
 		(LargeInt.toString x)
+    | ArrayField (tyName, sep, term, len) =>
+		let val tyNameStr = tyNameToPML tyName
+		val sep_str = 
+		  case sep of
+		    SOME refsep => getRefStr "sep" refsep
+		  | NONE => "No_sep"
+		val term_str = 
+		  case term of
+		    SOME refterm => getRefStr "term" refterm
+		  | NONE => "No_term"
+		in tyNameStr ^ " plist (" ^ sep_str ^ ", " ^ term_str ^ ")"
+		end
+
     | FullField (v, t, sw, c) => 
         let val tyname = tyNameToPML t in
 	(if isStruct then
