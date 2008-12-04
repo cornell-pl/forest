@@ -3,6 +3,7 @@ Metavariables:
 
 e ::= x | R        (host language expressions)
 c ::= a | b | ...  (characters)
+EOR                (special end-of-record character)
 s ::= c1,...,cn    (strings)
 i ::= 0 | 1 | ...  (integers)
 re ::= epsilon | re1 . re2 | ... (regular expressions)
@@ -11,6 +12,9 @@ re ::= epsilon | re1 . re2 | ... (regular expressions)
 Notation:
 
 s1.s2   (concatenation of strings)
+
+prefix(s)  (set of prefixes of s)
+sprefix(s) (set of strict prefixes of s)
 
 ***********************************************
 Descriptions:
@@ -64,52 +68,62 @@ Environment:
 E : name -> R 
 
 Main judgement:
-	(R, m) \in L(D, E, s)
+	(R, m) \in L(D, E, s, s')
+
+-- s is the string parsed by D
+-- s' is the look-ahead
 
 -- Generalize this to each base type having a reg exp pattern and a
    function to embed it with the right type.
-(Int (int_of_string s), (0, 1)) \in L(Pint, E, s), if s \in L((+|-)?[0-9]+)
-(Error, (1, 1)) \in L(Pint, E, "")
+-- Modified functions below to have longest match semantics for base types
 
-(Str s, (0, 1)) \in L(PstringME(re), E, s),  if s \in L(re)
-(Error, (1, 1)) \in L(PstringME(re), E, ""), if "" \not \in L(re)
+(Int (int_of_string s), (0, 1)) \in L(Pint, E, s, s'), 
+    if s \in L((+|-)?[0-9]+) and (L([0-9]) \intersect prefix(s') = {})
+(Error, (1, 1)) \in L(Pint, E, "", s')
 
-(Str s, (0, 1)) \in L(PstringFW(e), E, s),  if E(e) = Int k and s = c1...ck 
-(Error, (1, 1)) \in L(PstringFW(e), E, ""), if E(e) not= Int k for any k.
-(Error, (1, 1)) \in L(PstringFW(e), E, ""), if E(e) = Int k and k > 0.
+(Str s, (0, 1)) \in L(PstringME(re), E, s, s'),  
+    if s \in L(re) and s.s'' \not\in L(re) and s'' \in prefix(s')
+(Error, (1, 1)) \in L(PstringME(re), E, "", s'), if "" \not \in L(re)
 
-(Good, (0, 1)) \in L(Sync(s), E, s)
-(Recovered s1, (1, 1)) \in L(Sync(s2), E, s), if
-                        s=s1.s2 and no strict prefix of s that contains s2
-(Fail, (1, 1)) \in L(Sync(s2), E, "")
+(Str s, (0, 1)) \in L(PstringFW(e), E, s, s'), if E(e) = Int k and s = c1...ck 
+(Error, (1, 1)) \in L(PstringFW(e), E, "", s'), if E(e) not= Int k for any k.
+(Error, (1, 1)) \in L(PstringFW(e), E, "", s'), if E(e) = Int k and k > 0.
+
+(Good, (0, 1)) \in L(Sync(s), E, s, s')
+(Recovered s1, (1, 1)) \in L(Sync(s2), E, s, s'), if
+                        s=s1.s2 and s2 \not\in sprefix(s1.s2)
+(Fail, (1, 1)) \in L(Sync(s2), E, "", s')
 
 ((R1, R2), (m1 + m2)) \in L(D1 * D2, E, s1.s2) 
-  	if (R1, m1) \in L(D1, E, s1),
-     	   (R2, m2) \in L(D2, E, s2)
+  	if (R1, m1) \in L(D1, E, s1, s2.s'),
+     	   (R2, m2) \in L(D2, E, s2, s')
 
-((R1, R2), (m1 + m2)) \in L(x:D1 . D2, E, s1.s2)
-	if (R1, m1) \in L(D1, E, s1), 
-	   (R2, m2) \in L(D2, E[x->R1], s2)
+((R1, R2), (m1 + m2)) \in L(x:D1 . D2, E, s1.s2, s')
+	if (R1, m1) \in L(D1, E, s1, s2.s'), 
+	   (R2, m2) \in L(D2, E[x->R1], s2, s')
 
-(inl R, m) \in L(D1 + D2, E, s) 
-	if (R, m) \in L(D1, E, s)
+(inl R, m) \in L(D1 + D2, E, s, s') 
+	if (R, m) \in L(D1, E, s, s')
 
-(inr R, m) \in L(D1 + D2, E, s) 
-	if (R, m) \in L(D2, E, s)
+(inr R, m) \in L(D1 + D2, E, s, s') 
+	if (R, m) \in L(D2, E, s, s')
 
-
--- Modify judgment to have look ahead so terminator isn't parsed by array.
 (array([R1,...,Rn], [SyncR1,...,SyncR(n-1)], SyncR_term), m) 
-    \in L(D array (s_sep, s_term), E, s)
+    \in L(D array (s_sep, s_term), E, s, s')
 	if  
-	s = s1.s(sep,1).s2.s(sep,2)...s(n-1).s(sep, n-1).sn.s_term,
+	s = s1.s(sep,1).s2.s(sep,2)...s(n-1).s(sep, n-1).sn.s',
+        lookaheadfori = s(sep,i).s(i+1).....sn.s'
+        lookaheadforsepi = s(i+1)....sn.s'              
+        s' = s1'.lookaheadforterm
+
 	forall i \in [1, n]:
-	  (Ri, mi) \in L(D, E, si),
+	  (Ri, mi) \in L(D, E, si, lookaheadfori),
 	forall i \in [1, n-1]:
-	  (SyncRi, m(s,i)) \in L(Sync(s_sep), E, s_(sep,i)),
-	(SyncR_term, m_term) \in L(Sync(s_term), E, s_term),
+	  (SyncRi, m(s,i)) \in L(Sync(s_sep), E, s_(sep,i), lookaheadforsepi),
+
+	(SyncR_term, m_term) \in L(Sync(s_term), E, s1', lookaheadforterm),
 	m = (\sum_(i= 1 to n) mi) + (\sum(i=1 to n-1) m(s,i)) + m_term
 
 R \in L(D, s) iff 
-  (R, m) \in L(D, ., s) and for all (R',m') \in L(D, ., s), m <= m'
+  (R, m) \in L(D, ., s, "") and for all (R',m') \in L(D, ., s, ""), m <= m'
 
