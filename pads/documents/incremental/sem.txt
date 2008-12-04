@@ -94,7 +94,7 @@ Main judgement:
                         s=s1.s2 and s2 \not\in sprefix(s1.s2)
 (Fail, (1, 1)) \in L(Sync(s2), E, "", s')
 
-((R1, R2), (m1 + m2)) \in L(D1 * D2, E, s1.s2) 
+((R1, R2), (m1 + m2)) \in L(D1 * D2, E, s1.s2, s') 
   	if (R1, m1) \in L(D1, E, s1, s2.s'),
      	   (R2, m2) \in L(D2, E, s2, s')
 
@@ -111,7 +111,7 @@ Main judgement:
 (array([R1,...,Rn], [SyncR1,...,SyncR(n-1)], SyncR_term), m) 
     \in L(D array (s_sep, s_term), E, s, s')
 	if  
-	s = s1.s(sep,1).s2.s(sep,2)...s(n-1).s(sep, n-1).sn.s',
+	s = s1.s(sep,1).s2.s(sep,2)...s(n-1).s(sep, n-1).sn,
         lookaheadfori = s(sep,i).s(i+1).....sn.s'
         lookaheadforsepi = s(i+1)....sn.s'              
         s' = s1'.lookaheadforterm
