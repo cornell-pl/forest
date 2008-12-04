@@ -12,10 +12,6 @@ Notation:
 
 s1.s2   (concatenation of strings)
 
-(n1,n1') + (n2,n2') = (n1 + n2, n1' + n2')    (metric addition)
-
-(n1,n1') <= (n2,n2') iff n1/n1' <= n2/n2'
-
 ***********************************************
 Descriptions:
 
@@ -24,23 +20,24 @@ Base ::= Pint | PstringME(re) | PstringFW(e)
 D ::=
   Base 
 | Sync(s)                 (* constraint: s must not be the empty string *)
-| D1 * D2 
+| D1 * D2                 -- consider unifying with dependent down-stream
 | x:D1 . D2 
 | D1 + D2 
 | D array(s_sep, s_term)  (* constraint: s_sep, s_term must not be empty *)
-
+    		 	  -- consider adding switched unions, 
+			  -- fixed length arrays
 ***********************************************
 Metric:
-m ::= int * int  (* number of errors, total tokens parsed *)
+m ::= int * int  (* number of tokens with errors, total tokens parsed  *)
 
+(n1,n1') + (n2,n2') = (n1 + n2, n1' + n2')    (metric addition)
+
+(n1,n1') <= (n2,n2') iff n1/n1' <= n2/n2'
+
+-- other candidate metric: edit distance
+-- good(D) = #insertions, deletions, substitutions in string needed to parse
 ***********************************************
 Data Representation:
-
-Synchronizing Token Parse Descriptor:
-SyncR ::= 
-  Good 
-| Recovered s    (* string up to, not including good parse of synch token *)
-| Fail s         (* unable to parse synch token; string s is consumed *)
 
 Representations for Base Types
 BaseR ::= 
@@ -48,6 +45,12 @@ BaseR ::=
 | Int i 
 | Error          (* Base tokens either parse completely correctly or
                     not at all.  The not at all case being error. *) 
+
+Synchronizing Token Parse Descriptor:
+SyncR ::=        
+  Good 
+| Recovered s    (* string up to, not including good parse of synch token *)
+| Fail           (* unable to parse synch token; no data is consumed *)
 
 Representations for Complex Descriptions
 R ::=
@@ -63,20 +66,22 @@ E : name -> R
 Main judgement:
 	(R, m) \in L(D, E, s)
 
+-- Generalize this to each base type having a reg exp pattern and a
+   function to embed it with the right type.
 (Int (int_of_string s), (0, 1)) \in L(Pint, E, s), if s \in L((+|-)?[0-9]+)
 (Error, (1, 1)) \in L(Pint, E, "")
 
-(Str s, (0, 1)) \in L(PstringME(re), E, s), if s \in L(re)
+(Str s, (0, 1)) \in L(PstringME(re), E, s),  if s \in L(re)
 (Error, (1, 1)) \in L(PstringME(re), E, ""), if "" \not \in L(re)
 
-(Str s, (0, 1)) \in L(PstringFW(e), E, s), if E(e) = Int k and s = c1...ck 
+(Str s, (0, 1)) \in L(PstringFW(e), E, s),  if E(e) = Int k and s = c1...ck 
 (Error, (1, 1)) \in L(PstringFW(e), E, ""), if E(e) not= Int k for any k.
 (Error, (1, 1)) \in L(PstringFW(e), E, ""), if E(e) = Int k and k > 0.
 
 (Good, (0, 1)) \in L(Sync(s), E, s)
-(Recovered s1, (1, 1)) \in L(Sync(s2), E, s1.s2)
-(Fail (s1.EOR), (1, 1)) \in L(Sync(s2), E, s1.EOR)
-(Fail "", (1, 1)) \in L(Sync(s2), E, "")
+(Recovered s1, (1, 1)) \in L(Sync(s2), E, s), if
+                        s=s1.s2 and no strict prefix of s that contains s2
+(Fail, (1, 1)) \in L(Sync(s2), E, "")
 
 ((R1, R2), (m1 + m2)) \in L(D1 * D2, E, s1.s2) 
   	if (R1, m1) \in L(D1, E, s1),
@@ -92,6 +97,8 @@ Main judgement:
 (inr R, m) \in L(D1 + D2, E, s) 
 	if (R, m) \in L(D2, E, s)
 
+
+-- Modify judgment to have look ahead so terminator isn't parsed by array.
 (array([R1,...,Rn], [SyncR1,...,SyncR(n-1)], SyncR_term), m) 
     \in L(D array (s_sep, s_term), E, s)
 	if  
