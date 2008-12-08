@@ -368,7 +368,7 @@ structure Tokens = struct
                          else size s - ndot
                  end
              | Pint (n, s)    => size s (*ignore the length of the s as it's aux info*)
-             | Pfloat (i,f)   => size (i) + size (f) 
+             | Pfloat (i,f)   => size (i) + size (f) + 1
              | Pstring s      => size s
              | Ptext s      => size s
              | Pgroup grp     => 0

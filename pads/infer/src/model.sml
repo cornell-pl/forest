@@ -8,16 +8,18 @@ structure Model = struct
 
     (* Make a base complexity from a multiplier (often maximum length of token)
        and a number of choices. *)
-    fun mkBaseComp ( avg : real ) ( tot : LargeInt.int ) ( choices : LargeInt.int ) : TyComp =
+    fun mkBaseComp numTokens ( avg : real ) ( tot : LargeInt.int ) ( choices : LargeInt.int ) : TyComp =
         { tc  = constructorComp
-        , adc = multCompR avg (int2Comp choices )
-        , dc  = multComp tot ( int2Comp choices )
+        , adc = multCompR (avg + 1.0) (int2Comp choices ) 
+        , dc  = combine (multComp numTokens (int2Comp choices)) 
+		(multComp tot ( int2Comp choices ))
         }
 
-    fun mkBaseCompR ( avg : real ) ( tot : real ) ( choices : LargeInt.int ) : TyComp =
+    fun mkBaseCompR numTokens ( avg : real ) ( tot : real ) ( choices : LargeInt.int ) : TyComp =
         { tc  = constructorComp
-        , adc = multCompR avg ( int2Comp choices )
-        , dc  = multCompR tot ( int2Comp choices )
+        , adc = multCompR (avg + 1.0) ( int2Comp choices )
+        , dc  = combine (multComp numTokens (int2Comp choices)) 
+		(multCompR tot ( int2Comp choices ))
         }
 
     (* TODO: this function is a hack to handle only a few special cases *)
@@ -175,31 +177,28 @@ structure Model = struct
                  val numTokens : LargeInt.int = Int.toLarge (length lts)
                  val mult : real           = Real.fromLargeInt numTokens * avglen
              in ( case tokenOf t of
-                    PbXML (s1, s2)    => mkBaseComp avglen totlen numXMLChars
-                  | PeXML (s1, s2)    => mkBaseComp avglen totlen numXMLChars
-                  | Ptime s           => mkBaseComp 1.0 numTokens numTime
-                  | Pdate s           => mkBaseComp 1.0 numTokens numDate
-                  | Ppath s           => mkBaseComp avglen totlen numStringChars
-                  | Purl s            => mkBaseComp avglen totlen numStringChars
-                  | Pemail s            => mkBaseComp avglen totlen numStringChars
-                  | Pmac s            => mkBaseComp avglen totlen numHexChars
-                  | Pip s             => mkBaseComp avglen totlen numIPTriplet
-                  | Phostname s       => mkBaseComp avglen totlen numStringChars
-                  | Pint (l, s)            => { tc  = constructorComp
-                                         , adc = combine ( int2Comp 2 )
-                                                         ( multCompR avglen ( int2Comp numDigits ) )
-                                         , dc  = combine ( int2Comp 2 )
-                                                         ( multComp totlen ( int2Comp numDigits ) )
-                                         }
-                  | Pfloat (i,f)      => mkBaseComp avglen totlen numDigits
-                  | Pstring s         => mkBaseComp avglen totlen numStringChars
+                    PbXML (s1, s2)    => mkBaseComp numTokens avglen totlen (numXMLChars+1)
+                  | PeXML (s1, s2)    => mkBaseComp numTokens avglen totlen (numXMLChars+1)
+                  | Ptime s           => mkBaseComp 0 1.0 numTokens numTime
+                  | Pdate s           => mkBaseComp 0 1.0 numTokens numDate
+                  | Ppath s           => mkBaseComp numTokens avglen totlen (numStringChars+1)
+                  | Purl s            => mkBaseComp numTokens avglen totlen (numStringChars+1)
+                  | Pemail s  	      => mkBaseComp numTokens avglen totlen (numStringChars+1)
+                  | Pmac s            => mkBaseComp 0 avglen totlen numHexChars
+                  | Pip s             => mkBaseComp 0 avglen totlen numIPTriplet
+                  | Phostname s       => mkBaseComp numTokens avglen totlen (numStringChars+1)
+		   (* assume max 64 bit integer, encode number of digits for each int to be
+			transmitted, max 20 digits. *)
+                  | Pint (l, s)            => mkBaseComp numTokens avglen totlen (numDigits+1)
+                  | Pfloat (i,f)      => mkBaseComp numTokens avglen totlen (numDigits+2)
+                  | Pstring s         => mkBaseComp numTokens avglen totlen (numStringChars+1)
                   | Pgroup x          => { tc  = constructorComp
                                          , adc = unitComp
                                          , dc  = unitComp
                                          }
-                  | Pwhite s          => mkBaseComp avglen totlen numWhiteChars
-                  | Ptext s           => mkBaseComp avglen totlen numStringChars
-                  | Other c           => mkBaseComp avglen totlen numOtherChars
+                  | Pwhite s          => mkBaseComp numTokens avglen totlen (numWhiteChars+1)
+                  | Ptext s           => mkBaseComp numTokens avglen totlen (numStringChars+1)
+                  | Other c           => mkBaseComp 0 avglen totlen numOtherChars
                   | Pempty            => { tc  = constructorComp
                                          , adc = zeroComp
                                          , dc  = zeroComp

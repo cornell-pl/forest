@@ -104,6 +104,7 @@ struct
 		     width : int ref,              (* number of columns in histogram *)
 		     minOccurrences : int ref (* minimum time token *appears* in any record *)
                     }
+
    type freqDist = histogram TokenTable.map
    type cluster  = freqDist list
 
@@ -143,7 +144,7 @@ struct
 		(printTokenTy t; print "\t";
 		 print "Occurrences:"; print (Int.toString count);  print "\n")
 	    in
-		(print "Struct"; print "\n";
+		(print "Struct Kind"; print "\n";
 		 print "Coverage:";    print (Int.toString coverage);  print "\n";
 		 print "Token count:"; print (Int.toString count);     print "\n";
 		 List.app printOne tinfos)
@@ -153,12 +154,12 @@ struct
 		(printTokenTy t; print "\t";
 		 print "Occurrences:"; print (Int.toString count);  print "\n")
 	    in
-		(print "Array"; print "\t";
+		(print "Array Kind"; print "\t";
 		 List.app printOne tokens)
 	    end
-	| Union _ => (print  "Union"; print "\n")
-        | Blob => (print  "Blob"; print "\n")
-        | Empty => (print  "Empty"; print "\n")
+	| Union _ => (print  "Union Kind"; print "\n")
+        | Blob => (print  "Blob Kind"; print "\n")
+        | Empty => (print  "Empty Kind"; print "\n")
 
     fun printClusters numRecords clusters = 
        let fun printOne n c = 
@@ -601,6 +602,10 @@ struct
     fun isString (Pstring s) = true
       | isString _ = false
 
+    fun isSeparator (Other c) = true
+      | isSeparator (Pwhite s) = true
+      | isSeparator _ = false
+
     (*given a list of LTokens, find groupings in them and return the list of groups, or if no groupings are found,
 	return the original list *)
     fun findGroups (tokens : LToken list) : LToken list = 
@@ -704,7 +709,7 @@ struct
 	    fun doTokens counts [] = counts
 	      | doTokens counts ((t,loc)::ts) = doTokens (doToken counts t) ts
             val counts = doTokens TokenTable.empty tokens
-(*	    val () = printFreqs counts *)
+	    val () = if print_verbose then printFreqs counts else ()
 	in
            counts
 	end
@@ -730,7 +735,8 @@ struct
 	    fun doAllRecords (fd:freqDist) [] = fd
               | doAllRecords fd (c::cs) = doAllRecords (doOneRecord fd c) cs
             val freqs : freqDist = doAllRecords TokenTable.empty countslist
-	    fun scoreHistogram (h as {hist, total, coverage, structScore, width, minOccurrences} : histogram) = 
+	    fun scoreHistogram (h as 
+		{hist, total, coverage, structScore, width, minOccurrences} : histogram) = 
 		let val (s,w, minOcc) = histScore numRecords h
 		in
 		    structScore := s;
@@ -889,7 +895,7 @@ struct
 		    c
 		end
 
-	    val initSmallestDistance = findMinDistance CD_init
+	    (* val initSmallestDistance = findMinDistance CD_init *)
 	    val threshold = 0.01
             fun loop clusters CD = 
 		let val (minDistance,(ta,tb)) = findMinDistance CD
@@ -1018,7 +1024,9 @@ struct
 		end
 
                 
-	    fun getArrayScore (h:histogram) = !(#coverage h)
+	    fun getArrayScore (h:histogram) = 
+		if !(#coverage h) < numRecords then (!(#width h) + 1)
+		else !(#width h)
 	    (* For tokens with fuzzy-equal array scores, gives preference to punctuation tokens according
              * to token order, ie, "other" characters, and then white space, etc. *)
             fun lessArrayHist((t1,h1),(t2,h2)) = 
@@ -1036,30 +1044,47 @@ struct
                 |  (_,[]) => false
                 |  (th1::_, th2::_) => lessArrayHist(th1,th2)
 
+	    fun with_sep_tok cluster =
+		case cluster of
+		  nil => false
+		| (t, h)::c => (isSeparator t) orelse (with_sep_tok c)
+
             fun isArray clusters = 
-		let val sortedClusters = ListMergeSort.sort lessArrayCluster clusters
+		let 
+		    val clusters_with_sep = List.filter with_sep_tok clusters 
+		    val sortedClusters = ListMergeSort.sort lessArrayCluster clusters_with_sep
 		    val () = if print_verbose then print "Clusters sorted by array criteria:\n" else ()
 		    val () = if print_verbose then printClusters numRecords sortedClusters else ()
 		    val cluster = List.hd sortedClusters (* guaranteed by earlier check not to be [] *)
-		    fun getArrayInfo((t, {hist, total, coverage, structScore, width, minOccurrences}), result) = 
+		    fun getArrayInfo((t, 
+			(h as {hist, total, coverage, structScore, width, minOccurrences})), result) = 
 		    (if print_verbose then (
 		     print "Possible array tokens:\n"; 
 		     printTokenTy t; print "\n";
 		     print ("Records in possible array context:"^(Int.toString numRecords)^"\n");
+                     print ("Array Score: "^(Int.toString (getArrayScore h))^"\n");
                      print ("Total:"^(Int.toString (!total))^"\n");
                      print ("Coverage:"^(Int.toString (!coverage))^"\n");
                      print ("Width:"^(Int.toString (!width))^"\n");
-                     print ("minOccurrences:"^(Int.toString (!minOccurrences))^"\n")) 
+                     print ("minOccurrences:"^(Int.toString (!minOccurrences))^"\n"); 
+		     print ("Required coverage is: " ^ 
+			Int.toString (numRecords - isJunkTolerance numRecords) ^ "\n"))  
 		     else ();
 		     if (!width >= !ARRAY_WIDTH_THRESHOLD) andalso 
                         (!minOccurrences >= !ARRAY_MIN_WIDTH_THRESHOLD) andalso
-			(!coverage > numRecords - (isJunkTolerance numRecords))  andalso
-                        (not (isString t))
+			(!coverage > numRecords - (isJunkTolerance numRecords))  
+			andalso (isSeparator t)
+			(*
+			andalso 
+			(not (isString t))
+			*)
 			 then (t,1)::result else result)
 		    (* we probably want to compute the number of times the token appears in the cluster...*)
 		    val arrayTokenAnalysis = List.foldl getArrayInfo [] cluster 
 		in
-		    case arrayTokenAnalysis of [] => ((*print "ARRAY NOT CHOSEN\n";*) NONE) | a => SOME(Array {tokens = a})
+		    case arrayTokenAnalysis of [] => 
+			(if print_verbose then print "ARRAY NOT CHOSEN\n" else (); NONE) | 
+			a => SOME(Array {tokens = a})
 		end
 	    val unionFirst = false
 	    fun isUnion clusters = SOME (Union FirstToken)
@@ -1408,15 +1433,14 @@ struct
 				     val length = (getLen current) + (* list of tokens in current context: if present, length is 1 *)
 						  (getLen first) +   (* list of tokens in first context: if present, length is 1 *)
 						  (List.length main) (* a list of matched tokens, so no need to compute div*)
+				     (*
 				     fun getLoc [] = (print "WARNING: ARRAY first context empty!"; ~1)
 				       | getLoc ((tok,loc:location)::ltocs) = #recNo loc
+				     *)
 				 in
 				     ((length, !recIndex), first, main, List.rev current)
 				 end
                               | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
-				 let 
-				     val rt = (lrt,loc) 
-				 in
 				  case TokenTable.find(tTable, lrt)
 				  of NONE => doNextToken isFirst rts (rt::current, first, main)
                                   |  SOME freq => 
@@ -1431,7 +1455,6 @@ struct
 						    then doNextToken false   rts ([], List.rev (rt::current),  main)
 						    else doNextToken isFirst rts ([], first, (List.rev (rt::current) :: main)))
 					    else doNextToken isFirst rts (rt::current, first, main))
-				 end
 			in
 			    doNextToken true tlist ([],[],[])
 			end
@@ -1519,10 +1542,10 @@ struct
 
     and ContextListToTy curDepth context = 
 	let val numRecordsinContext = List.length context
-(*
-	    val _ = print ("Number records being considered: "^Int.toString(numRecordsinContext)^"\nThe records are:\n"
-		^(contextsToString context))
-*)
+	    val _ = if print_verbose then 
+		print ("Number records being considered: "^Int.toString(numRecordsinContext)^
+			"\nThe records are:\n" ^(contextsToString context)) 
+		else ()
             val counts : RecordCount list = List.map countFreqs context
 	    val fd: freqDist = buildHistograms numRecordsinContext counts
 	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)

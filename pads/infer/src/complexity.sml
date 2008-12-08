@@ -117,15 +117,15 @@ structure Complexity = struct
     fun multCompR ( r : real ) ( c : Complexity ) : Complexity =
         ( case c of
                Bits b    => Precise ( r * Real.fromLargeInt b )
-             | Choices c => Precise ( r * Real.fromLargeInt c )
+             | Choices c => Precise (log2r ( r * Real.fromLargeInt c ))
              | Precise p => Precise ( r * p )
         )
     fun divComp (n: LargeInt.int) (c: Complexity) : Complexity =
         ( case c of
                Bits b    => Precise ( (Real.fromLargeInt b) / 
 				      (Real.fromLargeInt n) )
-             | Choices c => Precise ( (Real.fromLargeInt c) /
-				      (Real.fromLargeInt n) )
+             | Choices c => Precise (log2r ( (Real.fromLargeInt c) /
+				      (Real.fromLargeInt n) ))
              | Precise p => Precise ( p / (Real.fromLargeInt n) )
         )
 
