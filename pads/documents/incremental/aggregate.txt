@@ -1,0 +1,159 @@
+***********************************************
+Metavariables:
+
+e ::= x | R        (host language expressions)
+c ::= a | b | ...  (characters)
+EOR                (special end-of-record character)
+s ::= c1,...,cn    (strings)
+i ::= 0 | 1 | ...  (integers)
+re ::= epsilon | re1 . re2 | ... (regular expressions)
+
+***********************************************
+Descriptions:
+
+Base ::= Pint | PstringME(re) | PstringFW(e) 
+
+D ::=
+  Base 
+| Sync(s)                 (* constraint: s must not be the empty string *)
+| D1 * D2                 -- consider unifying with dependent down-stream
+| x:D1 . D2 
+| D1 + D2 
+| D array(D_sep, D_term)  (* note: generalized from simple strings *)
+
+***********************************************
+Data Representation:
+
+Representations for Base Types
+BaseR ::= 
+  Str s 
+| Int i 
+| Error          (* Base tokens either parse completely correctly or
+                    not at all.  The not at all case being error. *) 
+
+Synchronizing Token Parse Descriptor:
+SyncR ::=        
+  Good 
+| Recovered s    (* string up to, not including good parse of synch token *)
+| Fail           (* unable to parse synch token; no data is consumed *)
+
+Representations for Complex Descriptions
+R ::=
+  BaseR
+| SyncR 
+| (R1, R2)
+| inl R | inr R
+| array (R list, SyncR list, SyncR)
+
+***********************************************
+Type of Aggregation
+
+A ::= [ Base ] 
+   |  [ Sync s ]
+   |  A_1 * A_2
+   |  Union(A_l, A_r)
+   |  Array(A_elem, A_sep, A_term) 
+   |  Opt A
+   |  L                (* Denotes to be learned *)
+
+Representation of Aggregation
+
+a ::= [Str s]          (* : [ BaseR ] *)
+    | [Int i]          (* : [ BaseR ] *)
+    | [Good]           (* : [ SyncR ] *)
+    | (a_1, a_2)                   
+    | union(a_l, a_r)              
+    | array(a_elem, a_sep, a_term) 
+    | opt a          (* Constraint: a will always be in list form *)
+    | l([s])         (* : L, denotes list of strings to be learned. *)
+
+Judgement forms:
+  A + R -> A'    (* Aggregate A plus representation R rewrites to A'  *)
+  A + Rs -> A'   (* Aggregate A plus list of reps R rewrites to A'   *)
+
+(* Note, all these rules can be written in a typed form *)
+
+Definition of A + R -> A'
+by cases on form of Description D from which A and R both arose.
+
+Note the result type can change depending upon the value being merged in.
+
+[Base]
+[[ opt a : Opt [Base] ]]
+   opt a + Error -> opt a
+   opt a + b     -> opt b::a    
+[[ a : [Base] ]]
+   a + Error -> opt a
+   a + b     -> b::a        
+
+[Sync]
+[[a : [Sync s] ]]
+  a + Good -> Good :: a
+  a + Fail -> opt a
+  a + Recovered s' -> (opt(l [s'], Good :: a)
+[[ opt a : Opt [Sync s] ]]
+   opt a + Good -> opt (Good :: a)
+   opt a + Fail -> opt a
+   opt a + Recovered s' -> (opt (l [s]), opt (Good :: a))
+[[ (opt(l Ss), a) : opt L * [Sync s] ]]
+   (opt(l Ss), a) + Good -> (opt(l Ss), Good::a)
+   (opt(l Ss), a) + Fail -> (opt(l Ss), opt a)
+   (opt(l Ss), a) + Recovered s' -> (opt(l s'::Ss), Good::a)
+[[ (opt(l Ss), opt a) : opt L * opt [Sync s] ]]
+   (opt(l Ss), opt a) + Good -> (opt(l Ss), opt Good::a)
+   (opt(l Ss), opt a) + Fail -> (opt(l Ss), opt a)
+   (opt(l Ss), opt a) + Recovered s' -> (opt(l s'::Ss), opt Good :: a)
+
+[D_1 * D_2 or x:D_1 * D_2]
+ a_1 + r_1 -> a'_1
+ a_2 + r_2 -> a'_2
+---------------------------------------
+ (a_1,a_2) + (r_1, r_2) -> (a'_1, a'_2)
+
+
+[D_1 + D_2]
+ a_l + r_l -> a'_l
+--------------------------------------------
+ union(a_l,a_r) + inl r_l -> union(a'_l, a_r)
+
+ a_r + r_r -> a'_r
+--------------------------------------------
+ union(a_l,a_r) + inr r_r -> union(a_l, a'_r)
+
+
+[ D array (D_sep, D_term) ]
+ a_e ++ elems -> a'_e
+ a_s ++ seps  -> a'_s
+ a_t +  term  -> a'_t
+----------------------------------------------------------------------
+array(a_e,a_s,a_t) + array(elems,seps,term) -> array(a'_e, a'_s, a'_t)
+
+
+a + r -> a'
+a ++ rs -> a''
+------------------
+a ++ (r:rs) -> a''
+
+a ++ [] -> a
+
+Empty Aggregate (a0)
+*******************************************************************
+  a0_Base    = []
+  a0_Sync(s) = []
+  a0_(D1 * D2)   = (a0_D1, a0_D2)
+  a0_(x:D1 * D2) = (a0_D1, a0_D2)
+  a0_(D1 + D2)   = union(a0_D1, a0_D2)
+  a0_(Delem Array(Dsep, Dterm)) = array(a0_Delem, a0_Dsep, a0_Dterm)
+  
+Note that with this formulation, all changes are at the leaves of the
+initial description.  The only possible changes are:
+
+1. Replacing a base type with an option base type.
+2. Replacing a sync with an option sync  (a fail)
+3. Replacing a sync with a (option learn, sync)  (a recovered)
+4. Replacing a sync with a (option learn, option sync) (fail and recovered)
+
+So, we could measure the "cost" of an aggregate as the number of
+option and learn nodes in the aggregate.
+
+We could use this metric to search for the best solution.
