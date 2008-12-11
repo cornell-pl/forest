@@ -73,7 +73,8 @@ open Common
 	| CharField of VarName option * string (*still string because printing needs string anyway*) 
         | CompField of TypeName * IRConstraint
 	| FullField of VarName * TypeName * VarName option (*param for switch*) * IRConstraint option 
-	| ArrayField of TypeName * Refined option (*sep*) * Refined option (*term*) * Refined option (*len*)
+	| ArrayField of VarName * TypeName * 
+		Refined option (*sep*) * Refined option (*term*) * Refined option (*len*)
 
   datatype TypeDef = 
 	  TyBase of TypeName * IRConstraint option
@@ -240,9 +241,9 @@ open Common
      					    SOME n => n
 					  | NONE => getTypeName body)
 				   )
-		in ArrayField (bodyName, sep, term, len)
+		in ArrayField (var, bodyName, sep, term, len)
 		end
-	  else ArrayField ((getArrayBodyTyName body), sep, term, len)
+	  else ArrayField (var, (getArrayBodyTyName body), sep, term, len)
 
 	| _ => FullField (var, tyName , NONE, NONE) 
      end

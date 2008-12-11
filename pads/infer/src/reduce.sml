@@ -533,9 +533,11 @@ and refine_array ty =
 				  | _ => describedBy(first, body)
 			     val lasteqbody = describedBy(last, droplast(body)) 
 			     val withSep = refine_equal_op(firsttail, bodytail)
+			    (*
 			     val _ = (if firsteqbody then print "true " else print "false ";
 				   	if lasteqbody then print "true " else print "false ";
 				   	if withSep then print "true\n" else print "false\n")
+			    *)
 			  in
 			     case (firsteqbody, lasteqbody, withSep) of 
 				(true, true, true) =>
@@ -584,7 +586,9 @@ and refine_array ty =
 			  	Pstruct(mkTyAux(#coverage aux), 
 			    	[first', RArray(aux, sepop, termop, body', lenop, lengths), last'])
 			| _ => ty
+	(*
 		    val _ = (print "Done refining array to:\n"; printTy (measure newty))  
+	*)
 		  in
 		 	newty
 		  end

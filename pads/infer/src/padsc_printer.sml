@@ -46,14 +46,14 @@ open Ast
 	if size s = 0 then
 	  "Pstring_SE(:Peor:)"
 	else if size s = 1 then
-	  "Pstring(:'" ^ escape s ^ "':)"
+	  "Pstring(:'" ^ s ^ "':)"
 	else
 	  "Pstring_SE(:\"/" ^ escape s ^ "/\":)"
      | IRempty => "PPempty"
 
-  fun arrayFieldToPADSC (tyName, sep, term, len) =
+  fun arrayFieldToPADSC (var_opt, tyName, sep, term, len) =
 	let val tyNameStr = tyNameToPADSCString tyName
-	in "\t" ^ tyNameStr ^
+	in "\t" ^ tyNameStr ^ 
 	         "[" ^ 
 		    ( case len of 
 			SOME (IntConst x) => largeIntToStr x
@@ -65,6 +65,9 @@ open Ast
 			   )
 			| _ => ""
 		    ) ^ "]" ^
+		    (case var_opt of
+		      SOME v => " " ^ v 
+		     | _ => "") ^
 		    ( case sep of 
 		     SOME refsep => 
 			let val sepstr = getRefStr refsep
@@ -107,7 +110,7 @@ open Ast
     | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
 		if x = 0 then "\tPempty" else
 		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (largeIntToStr x)
-    | ArrayField (tyName, sep, term, len) => arrayFieldToPADSC (tyName, sep, term, len)
+    | ArrayField (v, tyName, sep, term, len) => arrayFieldToPADSC (SOME v, tyName, sep, term, len)
     | FullField (v, t, sw, c) => 
 	let val tyname = tyNameToPADSCString t in
 	"\t" ^ tyname ^ " " ^  
@@ -176,7 +179,7 @@ open Ast
 		
 	| TyArray (tyName, sep, term, len) =>
 		let val tyNameStr = tyNameToPADSCString tyName
-		    val arrayStr = arrayFieldToPADSC (tyName, sep, term, len)
+		    val arrayStr = arrayFieldToPADSC (NONE, tyName, sep, term, len)
 		in "Parray " ^ tyVarStr ^ " {\n" ^ arrayStr ^ ";\n};\n"
 		end
 	| TyOption tyName => 

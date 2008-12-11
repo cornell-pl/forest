@@ -43,7 +43,7 @@ struct
         if size s = 0 then
           "pstring_SE(Peor)"
         else if size s = 1 then
-          "pstring('" ^ escape s ^ "')"
+          "pstring('" ^ s ^ "')"
         else
           "pstring_SE(\"/" ^ escape s ^ "/\")"
      | IRempty => "ppempty"
@@ -57,7 +57,7 @@ struct
     | CompField (t, (v, NONE, NONE, SOME (IntConst x))) => 
                 "with pdefault " ^ (upFirstChar v) ^ " of " ^ (tyNameToPML t) ^ " = " ^ 
 		(LargeInt.toString x)
-    | ArrayField (tyName, sep, term, len) =>
+    | ArrayField (v, tyName, sep, term, len) =>
 		let val tyNameStr = tyNameToPML tyName
 		val sep_str = 
 		  case sep of
