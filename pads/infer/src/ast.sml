@@ -95,8 +95,8 @@ open Common
 	| Bottom _  => false
 	| _ => true
 
-  fun isArray ty = case ty of
-	RArray _ => true
+  fun isInlineArray ty = case ty of
+	  RArray (_, _, _, _, SOME (LabelRef x), _)  => true
 	| _ => false
 
   fun isArrayBodyTy ty = case ty of 
@@ -209,9 +209,11 @@ open Common
   fun tyToStructField siblings ty = 
     let
  	val tyName = 
-     	  case TyMap.find (!tyMapRef, ty) of
-     	    SOME n => n
+          if notInlineTy ty andalso (not (isInlineArray ty)) then 
+     	  case (TyMap.find (!tyMapRef, ty)) of
+     	    (SOME n) => n
      	  | _ => getTypeName ty
+	  else getTypeName ty
 	val var = getVar ty
     in
     	case ty of
@@ -229,7 +231,7 @@ open Common
 		  SOME switchTy => FullField (var, tyName, SOME (getVar switchTy), NONE)
 		| NONE => tyToStructField nil (Punion(aux, nil))
 	    end
-	| RArray (a, sep, term, body, len, lens) =>
+	| RArray (a, sep, term, body, (len as SOME (LabelRef id)), lens) =>
 	  if not (isArrayBodyTy body) then 
 		let
 		    val bodyName = (case body of 
@@ -396,12 +398,18 @@ open Common
     the last IRType in the sequence is the name and def of this Ty,
     if the ty already appears in the tyMap then return empty list *)
   fun tyToIR (levels2Rec: int) (siblings: Ty list) (ty: Ty) : IRType list =
-    let val tyname = getTypeName ty in 
-     case TyMap.find (!tyMapRef, ty) of
-     SOME _ => nil
-     |_ => 
+    let val tyname = getTypeName ty 
+        fun foundTy ty = 
+       if notInlineTy ty andalso (not (isInlineArray ty)) then 
+         case TyMap.find (!tyMapRef, ty) of
+     	   SOME (IRref x) => true
+         |_ => false
+       else false
+    in
+    if foundTy ty then nil
+    else
      (
-      if notInlineTy ty then 
+      if notInlineTy ty andalso (not (isInlineArray ty)) then 
 	tyMapRef := TyMap.insert (!tyMapRef, ty, tyname)
       else (); 
       case ty of
@@ -443,11 +451,14 @@ open Common
 	   )
 	   end
       | Pstruct (aux, tys) =>
-	(* if one or more of a struct's elements are arrays, we will include them
-	   inline *)
 	  let
-	    val nonInlineTys = List.filter (fn x => not (isArray x) andalso (notInlineTy x)) tys
-	    val arrayTys = List.filter isArray tys
+	    val nonInlineTys = List.filter (fn t => (not (isInlineArray t)) andalso notInlineTy t) tys
+(*
+	    val _ = print "Noninline tys:\n"
+	    val _ = List.map printTy nonInlineTys
+	    val _ = print "Noninline tys end\n"
+*)
+	    val arrayTys = List.filter isInlineArray tys
 	    val nonArrayBodyTys = List.filter (fn x => not (isArrayBodyTy x)) 
 				(map getArrayBody arrayTys)
 	    val liftedIRs = List.concat (map (tyToIR (levels2Rec - 1) tys) 
