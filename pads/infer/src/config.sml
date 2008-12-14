@@ -30,7 +30,7 @@ structure Config = struct
     val executableDir     = ref ""
     val lexName	          = ref "vanilla"
     val goldenRun         = ref false
-
+    val blobRatio	  = ref 1.0
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE
     val JUNK_PERCENTAGE   = ref DEF_JUNK_PERCENTAGE

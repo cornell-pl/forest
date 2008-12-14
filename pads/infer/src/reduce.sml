@@ -1659,7 +1659,7 @@ fun isBlob ty =
 	    val _ = print ("Ratio = " ^ Real.toString ratio ^ "\t")
 	    val _ = print ("Comp Ratio = " ^ Real.toString ratio1 ^ "\n")
 	in
-	  ratio > 1.0 andalso (ratio + ratio1 > 4.0)
+	  ratio > !blobRatio andalso (ratio + ratio1 > 4.0)
 	end
 (* TODO: augment this function to search for more patterns by merging
   all tokens in the ty and then do string matching *)
