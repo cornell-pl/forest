@@ -211,7 +211,8 @@ structure BDOSet = RedBlackSetFn(struct
 			   if we can't invert the matrix of unique values, then there is no
 			   linear equation
 			*)
-			val inv_cm = RatMatrix.inv cm handle notInvertable => (print "INVERT\n"; print (RatMatrix.toString cm);  raise DetermineFailed)
+			val inv_cm = RatMatrix.inv cm handle notInvertable => 
+				(print "INVERT\n"; print (RatMatrix.toString cm);  raise DetermineFailed)
 			val x = RatMatrix.*(inv_cm,vm) 
 			(*val _ = print (RatMatrix.toString x)*)
 			
@@ -369,7 +370,6 @@ structure BDOSet = RedBlackSetFn(struct
 
 (* the main constraining function. Takes a constraint map and a Ty, and returns an updated
 constraint map *)
-	exception TableTooLarge
 	fun constrainTy (ty, cmap) = 
  	let
 		(* make the table *)
@@ -419,6 +419,12 @@ constraint map *)
 					dependent (Map.empty, col1, col2)) icol_pairs
 		val deps = List.foldl (fn (((i1, col1), (i2, col2)), deplist) =>
 			([i1], i2)::(([i2], i1)::deplist)) nil dependent_pairs
+		val found_deps : (Id * constraint) list = 
+		  if (length deps > DEF_MAX_TABLE_ROWS) then 
+			(print "Too many 1-to-1 dependencies! Not generating any binary constraints!\n";
+			 nil) 
+		  else 
+		  let
 (*
 		val _ = print ("The number of columns : " ^ Int.toString(length(header)) ^"\n")
 		val _ = print ("The number of rows: " ^ Int.toString(length(bdolist)) ^"\n")
@@ -427,15 +433,17 @@ constraint map *)
 			then (print "Table too large: bailing out...\n"; raise TableTooLarge )
 			else 0
 *)
-		val _ = if Options.print_tables then 
-			Table.printTable(header, bdolist) else ()
+			val _ = if Options.print_tables then 
+				Table.printTable(header, bdolist) else ()
 (*
 		(* take a table entry and run TANE on it, find the constraints that apply *)
 		val partitions = initPartitionMap(bdolist, bdocols)
 		val (deps,keys) = FunctionalDep.tane(partitions)
 *)
 		(* val _ = print (String.concat (map bdoltos bdolist) ) *)
-			
+		
+
+		(************** Not needed *************	
 		(* finds the labels associated with a numbered dep *)
 		(*returns Id list * Id *)
 		fun depToLabel( alist : int list, a : int):Id list*Id = 
@@ -459,6 +467,7 @@ constraint map *)
 	        val _ = if Options.print_functional_deps 
 	              then app printDep labeled_deps
 	              else ()
+		********************************************)
 		(*
 		val _ = if Options.print_functional_deps 
 		         then app (fn l => 
@@ -468,15 +477,18 @@ constraint map *)
 		*)
 	
 		(* determine what constraints apply *)
-		val dpl = map (dep_cols bdocols) deps
-		val labl:(Id list * Id) list = map (dep_cols header) deps
-		val dpl = map (fn (y,x) => (y,map (fn z => [z]) x)) dpl
-		val found_deps: (Id*constraint) option list =
-			foldr (fn (l, dep_opts) => l @ dep_opts) nil 
-			(map determine_dep (ListPair.zip(labl,dpl)))
-		val found_deps = List.filter (fn x => case x of 
-			SOME _ => true | NONE => false) found_deps
-		val found_deps:(Id* constraint) list = map some found_deps
+			val dpl = map (dep_cols bdocols) deps
+			val labl:(Id list * Id) list = map (dep_cols header) deps
+			val dpl = map (fn (y,x) => (y,map (fn z => [z]) x)) dpl
+			val found_deps: (Id*constraint) option list =
+				foldr (fn (l, dep_opts) => l @ dep_opts) nil 
+				(map determine_dep (ListPair.zip(labl,dpl)))
+			val found_deps = List.filter (fn x => case x of 
+				SOME _ => true | NONE => false) found_deps
+		    in
+			map some found_deps
+		    end
+
 
  		(* find the single column constraints *)
 		val a = (Int.toLarge(some(Int.maxInt)), Int.toLarge(some(Int.minInt)))
@@ -489,6 +501,7 @@ constraint map *)
 			constraints = consts:(constraint*Token option) list, 
 			previous_values= BDSet.empty}) header
 		val consts:constraint_record = foldr update depstart bdolist (* returns a constraint_record *)
+		
 
 		(* combine the constraints found through dep analysis with the single column constraints *)
 		fun add_to_consts consts (lab, dep) = 
@@ -500,7 +513,7 @@ constraint map *)
 		val consts = foldr (fn (dep, c) => add_to_consts c dep) consts found_deps
 	in foldr (fn ({label,constraints,previous_values},cm) => 
 			LabelMap.insert(cm,label,map #1 constraints)) cmap consts
-	end handle TableTooLarge => cmap
+	end 
 
 	fun constrain' ty =
 	let

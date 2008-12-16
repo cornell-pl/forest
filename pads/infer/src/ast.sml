@@ -160,7 +160,7 @@ open Common
         |  Switch _        	 => IRref ("switch_"^id)
         |  RArray _ 		 => IRref ("array_"^id)
         |  Poption _           	 => IRref ("opt_"^id)
-	| _ => raise TyMismatch
+	| _ => (printTy ty; raise TyMismatch)
 	end
 
   fun getArrayBody ty  =

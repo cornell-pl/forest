@@ -22,8 +22,6 @@ let
 (*phase one *)
 (*
   val _ = print "Phase one ...\n";
-*)
-(*
   val _ = case (headerTyOp, footerTyOp) of (NONE, NONE) => ()
 	  | _ => print "Found a header or footer!\n"
 *)
