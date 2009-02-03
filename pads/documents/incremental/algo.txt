@@ -1,0 +1,186 @@
+***********************************************************************
+
+Judgement form:
+
+    parse_all(D, E, i) = (R, m, j) set
+    parse(D, E, i) = (R, m, j) set
+
+(*** 
+Note: i is the begin loc and j is the end loc.
+
+invariant for parse: for any (R, m, j) in the set, there doesn't exist
+any other (R', m', j) where m' < m
+***)
+
+*********************************************************************** 
+
+Some helper functions:
+
+clean S = {(R, m, j) | (R, m, j) in S and 
+		forall (R', m', j) in S: m <= m'}
+
+merge_s(elms, seps) (eleR, sepR) = (elms@[eleR], seps@[sepR])
+
+merge_t(elms, seps) termR = array(elms, seps, termR)
+
+*********************************************************************** 
+
+(** m will be 1 if a base type fails to parse (for the opt node)
+or 0 otherwise **)
+ (R, m) \in L(Base, E, substring(input, i, j)) 
+-----------------------------------------------
+ parse_all(Base, E, i) = {(R, m, j)}
+
+ parse_all(Base, E, i) = S
+-----------------------------------------------
+ parse(Base, E, i) = S
+
+(** m will be 1 if a sync type fails to parse (for the opt node), 
+2 if there is recovered data (one for learn node and one of the opt node),
+or 0 otherwise **)
+
+ (R, m) \in L(Sync, E, substring(input, i, j)) 
+-----------------------------------------------
+  parse_all(Sync, E, i) = {(R, m, j)}
+
+  parse_all(Sync, E, i) = S
+-----------------------------------------------
+  parse(Sync, E, i) = S
+
+
+parse_all(D1, E, n) = S  and l = |S|
+forall (Ri, mi, ji) in S: 
+parse_all(D2, E[x->R_i], j_i) = Si and
+forall (R_ik, m_ik, j_ik) in Si:
+R_i' = (Ri, R_ik) and m_i' = mi + m_ik and j_i' = j_ik
+S' = {(R_i', m_i', j_i') | forall i in [1, l]}
+---------------------------------------------------------
+   parse_all(x:D1.D2, E, n) = S'
+
+
+parse_all(D1, E, n) = S  and l = |S|
+forall (Ri, mi, ji) in S: 
+parse(D2, E[x->R_i], j_i) = Si and
+forall (R_ik, m_ik, j_ik) in Si:
+R_i' = (Ri, R_ik) and m_i' = mi + m_ik and j_i' = j_ik
+S' = {(R_i', m_i', j_i') | forall i in [1, l]}
+---------------------------------------------------------
+   parse(x:D1.D2, E, n) = clean S'
+
+
+
+parse_all(D1, E, n) = S1 and parse_all(D2, E, n) = S2
+----------------------------------------------
+  parse_all(D1 + D2, E, n) = (S1 + S2)
+
+parse(D1, E, n) = S1 and parse(D2, E, n) = S2
+----------------------------------------------
+  parse(D1 + D2, E, n) = clean (S1 + S2)
+
+
+forall (Ri, mi, start_i) in S_init:
+  parse_all(x:D.Sync(sep), E, start_i) = S_sep_i
+  parse_all(x:D.Sync(term), E, start_i) = S_term_i
+  S_sep_i' = {(concat Ri R_ik, mi + m_ik, j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_sep_i}
+  S_term_i' = {(concat Ri R_ik, mi + m_ik, j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_term_i}
+S_sep = (\sum_i S_sep_i')
+S_term = (\sum_i S_term_i')
+S_sep' = parse_array_all(D array (sep, term), E, S_sep)
+----------------------------------------------------------------------
+parse_array_all (D array (sep, term), E, S_init) = (S_term + S_sep')
+
+
+forall (Ri, mi, start_i) in S_init:
+  parse(x:D.Sync(sep), E, start_i) = S_sep_i
+  parse(x:D.Sync(term), E, start_i) = S_term_i
+  S_sep_i' = {(merge_s Ri R_ik, mi + m_ik, j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_sep_i}
+  S_term_i' = {(merge_t Ri R_ik, mi + m_ik, j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_term_i}
+S_sep = clean (\sum_i S_sep_i')
+S_term = clean (\sum_i S_term_i')
+S_sep' = parse_array(D array (sep, term), E, S_sep)
+----------------------------------------------------------------------
+parse_array (D array (sep, term), E, S_init) = clean (S_term + S_sep')
+
+
+parse_array_all(D array (sep, term), E, {(([], []), (0, 0), n)})
+-----------------------------------------------------------------
+	parse_all (D array (sep, term), E, n)
+
+ 
+parse_array(D array (sep, term), E, {(([], []), (0, 0), n)})
+-----------------------------------------------------------------
+	parse (D array (sep, term), E, n)
+
+
+
+
+
+************ Ignore the following **************************
+ 
+<D> ::= o D | D o | x: D1 o . D2 
+        | Array o D (sep, term)   (before parsing D)
+        | Array D o (sep, term)	  (after parsing D but before sep or term)
+
+<R> ::= [] | R | (R1, []) 
+        | lnl [] | lnr []
+        | Array ([R1,...,Rn], [SyncR1,...,SyncR_{n-1}, []], [])
+        | Array ([R1,...,Rn, []], [SyncR1,...,SyncR_n])
+
+*****************************************************************
+
+input(i, j) = substring of input from loc i to loc j
+
+A state: k: (<D>, <R>, E, m, i)
+where 
+E is environment to use to evaluate <D>, 
+m is the metric for parsing chars i to k using <D>
+i is the begin loc and k is the end loc
+
+S: set of all states
+
+*****************************************************************
+
+A Step (changes to the set of states which is initially empty):
+
+i: (o Base, [], E, (0, 0), i) in S
+(R, m) \in L(Base, E, input(i, j)) 
+------------------------------------
+ S = S + {j: (Base o, R, E, m, i)}
+
+i: (o Sync(s), [], E, (0, 0), i) in S
+(R, m) \in L(Sync(s), E, input(i, j)) 
+--------------------------------------
+  S = S + {j: (Sync o, R, E, m, i)}
+
+i: (o x:D1 . D2, [], E, (0, 0), i) in S
+----------------------------------------
+  S = S + {i: (o D1, [], E, (0, 0), i)}
+
+i: (o D1 + D2, [], E, (0, 0), i) in S
+------------------------------------------
+S = S + {i: (o D1, lnl [], E, (0, 0), i)}
+
+i: (o D1 + D2, [], E, (0, 0), i) in S
+------------------------------------------
+S = S + {i: (o D2, lnr [], E, (0, 0), i)}
+
+	i: (o D array(sep, term), [], E, (0, 0), i) in S
+---------------------------------------------------------------------
+S = S + {i: (Array o D (sep, term), Array([[]], [.]), E, (0, 0), i)}
+
+i: (Array o D (sep, term), Array([R1,...,Rn, []], [SyncR1,...,SyncR_n]), E, m, i)
+---------------------------------------------------------------------------------
+		        S = S + {i: (D, E, (0, 0), i)}
+
+i: (D array o (sep, term), Array(R, [Sync1,..., Syncn, []], []), E, m, i) in S
+--------------------------------------------------------------------------------
+		S = S + {i: (Sync sep, E, (0, 0), i)}
+
+i: (D array o (sep, term), Array(R, [Sync1,..., Syncn, []], []), E, m, i) in S
+--------------------------------------------------------------------------------
+		S = S + {i: (Sync term, E, (0, 0), i)}
+
