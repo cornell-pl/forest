@@ -317,7 +317,10 @@ structure Common = struct
 		  (pushInto emptyBase headlist)@(map mergeTyInto (ListPair.zip (tylist1, head2)))@
 		  (pushInto emptyBase tail2)	
 		end
-	   else mergeListInto (tylist1, List.drop(tylist2, 1), headlist@[hd tylist2])
+	   else 
+		if len2 <= 1 then
+		  (print "Two tylists don't match!\n"; raise TyMismatch)
+		else mergeListInto (tylist1, List.drop(tylist2, 1), headlist@[hd tylist2])
 	end
     (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
     (*this function is used in refine_array rewriting rule, the recNo in ty1 
@@ -333,7 +336,6 @@ structure Common = struct
 		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => 
 			Pstruct(mergeAux(a1, a2), mergeListInto(tylist1, tylist2, nil))
 		| (Punion(a1, tylist1), Punion(a2, tylist2)) => foldl mergeTyInto ty2 tylist1
-		| (ty1, Punion(a2, tylist2)) => Punion(mergeAux(getAuxInfo(ty1), a2), mergeUnion(ty1, tylist2, nil))
 		| (Poption (a1, ty), ty2) => 
 			let
 			  val emptyCoverage = getCoverage ty1 - getCoverage ty
@@ -343,6 +345,8 @@ structure Common = struct
 		| (ty1, Poption (a2, ty2)) =>
 			if (describesEmpty [ty1]) then Poption(mergeAux(getAuxInfo(ty1), a2), ty2)
 			else Poption(mergeAux(getAuxInfo(ty1), a2), mergeTyInto(ty1, ty2))
+		| (ty1, Punion (a2, tys)) =>
+			Punion (mergeAux (getAuxInfo ty1, a2), mergeUnion (ty1, tys, nil))
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 

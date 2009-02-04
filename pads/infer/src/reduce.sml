@@ -516,21 +516,27 @@ and refine_array ty =
 					else getRefine(last)
 		in
 			if (isEmpty(last)) (*no sep and terminator is outside*)
-			then if describedBy(first, body) then
+			then 
+			  let val first' = case first of 
+			    		Poption (a, t) => t
+					| _ => first
+		          in
+				if describedBy(first', body) then
 				  let
-					val first' = reIndexRecNo first (getCoverage body)
+					val first' = reIndexRecNo first' (getCoverage body)
 				  in
 					(NONE, NONE, NONE, SOME(mergeTyInto(first', body)), NONE)
 				  end
 				else
 					(NONE, NONE, SOME first, SOME body, NONE)
+			  end
 			else (* with possible sep and possible term inside last *)
 			     (* two cases: first = body or first != body *)
 			  let
-			     val firsteqbody = 
+			     val (first', firsteqbody) = 
 				  case first of
-				    Poption (a, t) =>  describedBy(t, body)
-				  | _ => describedBy(first, body)
+				    Poption (a, t) =>  (t, describedBy(t, body))
+				  | _ => (first, describedBy(first, body))
 			     val lasteqbody = describedBy(last, droplast(body)) 
 			     val withSep = refine_equal_op(firsttail, bodytail)
 			    (*
@@ -542,7 +548,7 @@ and refine_array ty =
 			     case (firsteqbody, lasteqbody, withSep) of 
 				(true, true, true) =>
 					let 
-					  val first' = reIndexRecNo (droplast first) (getCoverage body)
+					  val first' = reIndexRecNo (droplast first') (getCoverage body)
 					  val body' = mergeTyInto(first', droplast(body))
 					  val last' = reIndexRecNo last (getCoverage body')
 					  val body'' = mergeTyInto(last', body')
@@ -551,13 +557,13 @@ and refine_array ty =
 					end
 				| (true, true, false) => 
 					let
-					  val first' = reIndexRecNo (droplast first) (getCoverage body)
+					  val first' = reIndexRecNo (droplast first') (getCoverage body)
 					  val body' = mergeTyInto(first', (droplast body))
 					in
 					  (NONE, NONE, NONE, SOME body', SOME last)
 					end
 				| (true, false, _) => (NONE, NONE, NONE, 
-					SOME(mergeTyInto((reIndexRecNo first (getCoverage body)), body)), 
+					SOME(mergeTyInto((reIndexRecNo first' (getCoverage body)), body)), 
 					SOME last)
 				| (false, true, _) => (bodytail, NONE, SOME first,
 					SOME(mergeTyInto((reIndexRecNo last (getCoverage body)), 
@@ -1754,17 +1760,22 @@ fun updateWithBlobs s_opt ty =
    	| Punion(a, tys) =>
 	    let val newtys = map (updateWithBlobs s_opt) tys 
 	        val blobtys = List.filter isBlobTy newtys
-		val newblob = List.foldl (fn (blob, l) =>
+	    in
+		if length blobtys > 1 then
+		  let 
+		  	val newblob = List.foldl (fn (blob, l) =>
 				case l of
 				  nil => [blob]
 				| [oldblob] => [mergeTy (oldblob, blob)]
 				| _ => raise Unexpected) nil blobtys
-		val nonblobtys = List.filter (fn x => not (isBlobTy x)) newtys
-	    in
-		if (List.length nonblobtys) = 0 andalso (List.length newblob) = 1 
-		then (hd newblob)
+			val nonblobtys = List.filter (fn x => not (isBlobTy x)) newtys
+		  in
+		        if (List.length nonblobtys) = 0 andalso (List.length newblob) = 1 
+			then (hd newblob)
+	          	else mkBlob s_opt (Punion (a, (nonblobtys @ newblob)))
+		  end
 		else 
-	          mkBlob s_opt (Punion (a, (nonblobtys @ newblob)))
+	          mkBlob s_opt (Punion (a, newtys))
 	    end
 	| RArray (a, sep, term, body, fixed, lengths) =>
 	   (
@@ -1999,7 +2010,7 @@ let
 (*  val cafter = cost cmap' ty'*)
 (*  val _ = print ("Before:" ^ (Int.toString cbefore) ^ " After:" ^ (Int.toString cafter) ^ "\n") *)
 in
-  sortUnionBranches ty'
+  ty'
 end 
 
 end

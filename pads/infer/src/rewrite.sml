@@ -53,8 +53,8 @@ let
   val _ = printTy ty3
 
   val ty3 = if Options.do_blob_finding then
-		Reduce.updateWithBlobs NONE ty3
-	    else ty3
+		sortUnionBranches (Reduce.updateWithBlobs NONE ty3)
+	    else sortUnionBranches ty3
 (*
   val _ = print "After mkBlob ...\n"
   val _ = printTy ty3
