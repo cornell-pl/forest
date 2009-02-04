@@ -577,6 +577,23 @@ structure Common = struct
 	    | _ => raise TyMismatch
 	end
 
+        (* this function checks if the given ty can parse an empty string *)
+	fun parseEmpty ty = 
+	  case ty of 
+	    Base (_, (Pempty, _)::_) => true
+	  | RefinedBase (_, StringConst "", _) => true
+	  | RefinedBase(_, Blob _, _) => true
+	  | Pstruct (_, tys) =>  
+	      foldr myand true (map (fn ty => parseEmpty ty) tys) 
+	  | Punion (_, tys) => 
+	      foldr myor false (map (fn ty => parseEmpty ty) tys) 
+	  | Switch (a, id, pairs) => 
+	      foldr myor false (map (fn (_, ty) => parseEmpty ty) pairs) 
+	  | Parray _ => true
+	  | RArray _ => true
+	  | Poption _ => true
+	  | _ => false
+
 	(*This function sorts of the base type union branches by the order defined in tokens.sml*)
 	(*assume ty is already with complexy info*)
 	fun sortUnionBranches ty =
@@ -595,18 +612,20 @@ structure Common = struct
 					| Base(a1, (Pemail _, _)::_) => true
 					| Base(a1, (Pmac _, _)::_) => true
 					| Base(a1, (Ptext _, _)::_) => true
-					| RefinedBase(_, IntConst x , _) => x > 99
+(*					| RefinedBase(_, IntConst x , _) => x > 99 *)
 					| RefinedBase(_, StringConst s , _) => (size s) > 2
 					| _ => false
 			  fun isNotPriTy ty = not (isPriTy ty)
 			  fun lowPriTy ty = 
+				(parseEmpty ty) orelse
+				(
 				case ty of
 					Base(_, (Pint _, _)::_) => true
-					| Base(_, (Pempty, _)::_) => true
 					| Base(_, (Pstring _, _)::_) => true
 					| Base(_, (Other _, _)::_) => true
 					| RefinedBase(_, StringConst s , _) => (size s) = 1
 					| _ => false
+				)
 			  fun notLowPriTy ty = not (lowPriTy ty)
 
 			  val priTys = List.filter isPriTy sorted_tys
@@ -616,8 +635,10 @@ structure Common = struct
 			  fun greater (ty1, ty2) =
 			    let
 				val (cov1, cov2) =(getCoverage ty1, getCoverage ty2)
+				(*
 				val (comps1, comps2) = (getComps ty1, getComps ty2)
 				val (nc1, nc2) = ((normalizeTyComp cov1 comps1), (normalizeTyComp cov2 comps2))
+				*)
 			    in
 				case (ty1, ty2) of
 				  (Base(a1, (tok1, _)::t1), Base(a2, (tok2, _)::t2)) => 
@@ -628,6 +649,8 @@ structure Common = struct
 						| (IntConst x, IntConst y) => x < y
 						| _ => false
 					)
+				  | (Base (_, (Pempty, _)::_), _) => true
+				  | (_, Base (_, (Pempty, _)::_)) => false
 				  | (Base _, RefinedBase _) => true
 				  | (RefinedBase _, Base _) => false
 				  | (Base (a1, t1), _) => (case hd t1 of (Pstring x, _) => true | _ => false)

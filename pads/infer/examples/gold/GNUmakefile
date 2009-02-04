@@ -172,12 +172,11 @@ $(SILVERS): %.ag: %
 $(TRAINS): %.train:
 	chunks.pl -m random -n 3 -p $(P) -f data/$(*F)
 	rm -rf gen/*
-	cp vanilla.p gen
-	nice -n20 ./learn -n $(*F).chunk0 -lex vanilla data/$(*F).chunk0 
+	nice -n20 learn -n $(*F).chunk0 -lex vanilla data/$(*F).chunk0 
 	cp gen/Timing gen/$(*F).chunk0.out
-	nice -n20 ./learn -n $(*F).chunk1 -lex vanilla data/$(*F).chunk1 
+	nice -n20 learn -n $(*F).chunk1 -lex vanilla data/$(*F).chunk1 
 	cp gen/Timing gen/$(*F).chunk1.out
-	nice -n20 ./learn -n $(*F).chunk2 -lex vanilla data/$(*F).chunk2 
+	nice -n20 learn -n $(*F).chunk2 -lex vanilla data/$(*F).chunk2 
 	cp gen/Timing gen/$(*F).chunk2.out
 	make --directory=gen $(*F).chunk0-accum
 	gen/$(AST_ARCH)/$(*F).chunk0-accum data/$(*F) 2>>gen/$(*F).chunk0.out
@@ -197,9 +196,8 @@ if [ ! -d output/$@ ]; then mkdir output/$@; fi
 # Clean the output directory
 if [ -e output/$@ ]; then rm -rf output/$@/*; fi
 # 1. Run the inference algorithm
-nice -n20 ./learn -n $@ -lex vanilla data/$@ | tee gen/$@.out
+nice -n20 learn -n $@ -lex vanilla data/$@ | tee gen/$@.out
 cp -R gen/* output/$@
-cp vanilla.p gen
 endef
 
 define summary
@@ -216,7 +214,7 @@ gen/$(AST_ARCH)/$(*F)-accum data/$(*F) 2>gen/$(*F)-accum.out
 # 7. extract number of records correctly parsed and number of errors
 ./accum-out.pl gen/$(*F)-accum.out | tee gen/ParseReport
 # Get the golden complexity (if there is one)
-nice -n20 ./learn -n $(*F) -lex vanilla -au true data/$(*F) | tee gen/$@.out
+nice -n20 learn -n $(*F) -lex vanilla -au true data/$(*F) | tee gen/$@.out
 # 9. collect in a report file:
 #    a. how large the input file is in bytes and number of records
 @echo "Record count = " `cat data/$(*F) | wc -l` | tee gen/RecordCount
@@ -295,7 +293,7 @@ netstat-an:              $(IND)/netstat-an              ; $(learn-it)
 page_log:                $(IND)/page_log                ; $(learn-it)
 quarterlypersonalincome: $(IND)/quarterlypersonalincome ; $(learn-it)
 railroad.txt:            $(IND)/railroad.txt            ; $(learn-it)
-rpmpkgs:                 $(IND)/rpmpkgs                 ; $(learn-it)
+rpmpkgs.txt:                 $(IND)/rpmpkgs.txt             ; $(learn-it)
 scesetup2.log:           $(IND)/scesetup2.log           ; $(learn-it)
 scrollkeeper.log:        $(IND)/scrollkeeper.log        ; $(learn-it)
 simplegroups:            $(IND)/simplegroups            ; $(learn-it)

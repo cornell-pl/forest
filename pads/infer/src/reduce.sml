@@ -1654,10 +1654,10 @@ fun isBlob ty =
 	    val _ = printTy ty
 	    val _ = print ("AvgNumTokensPerRec = " ^ (Real.toString avgNumTokensPerRec) ^ "\n")
 	    val _ = print ("Variance = " ^ Real.toString var ^ "\n")
-*)
 	    val _ = print ((getLabelString (getAuxInfo ty)) ^ ":\t")
 	    val _ = print ("Ratio = " ^ Real.toString ratio ^ "\t")
 	    val _ = print ("Comp Ratio = " ^ Real.toString ratio1 ^ "\n")
+*)
 	in
 	  ratio > !blobRatio andalso (ratio + ratio1 > 4.0)
 	end
@@ -1805,7 +1805,9 @@ and mkBlob sibling_opt ty =
     case sibling_opt of
 	  NONE => 
 		let val newty = RefinedBase(getAuxInfo ty, Blob(NONE, NONE), ltokens)
+		    (*
 		    val _ = print "******* FOUND BLOB ABOVE ******\n"
+		    *)
 		in newty 
 (*
 		if score newty < score ty then newty 
@@ -1822,7 +1824,9 @@ and mkBlob sibling_opt ty =
 		    if containString ltokens str then ty
 		    else 
 			let val newty = RefinedBase(getAuxInfo ty, Blob pair, ltokens)
+		    (*
 		            val _ = print "******* FOUND BLOB ABOVE ******\n"
+		    *)
 			in newty
 	(*
 			if score newty < score ty then newty 
@@ -1833,7 +1837,9 @@ and mkBlob sibling_opt ty =
 		    if containPatt ltokens str then ty
 		    else 
 			let val newty = RefinedBase(getAuxInfo ty, Blob pair , ltokens)
+			   (*
 		            val _ = print "******* FOUND BLOB ABOVE ******\n"
+			   *)
 			in newty
 	(*
 			if score newty < score ty then newty 
