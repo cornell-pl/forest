@@ -78,31 +78,33 @@ parse(D1, E, n) = S1 and parse(D2, E, n) = S2
   parse(D1 + D2, E, n) = clean (S1 + S2)
 
 
+(* notice here if parsing of body + sep  or body + term doesn't make any progress
+   in input, then the result is not added to the set *)
 forall (Ri, mi, start_i) in S_init:
   parse_all(x:D.Sync(sep), E, start_i) = S_sep_i
   parse_all(x:D.Sync(term), E, start_i) = S_term_i
-  S_sep_i' = {(concat Ri R_ik, mi + m_ik, j_ik) | 
-		forall (R_ik, m_ik, j_ik) in S_sep_i}
-  S_term_i' = {(concat Ri R_ik, mi + m_ik, j_ik) | 
-		forall (R_ik, m_ik, j_ik) in S_term_i}
+  S_sep_i' = {(merge_s Ri R_ik, sum_metric(Ri, R_ik, mi, m_ik), j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_sep_i where j_ik > start_i}
+  S_term_i' = {(merge_t Ri R_ik, sum_metric(Ri, R_ik, mi, m_ik), j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_term_i where j_ik > start_i}
 S_sep = (\sum_i S_sep_i')
 S_term = (\sum_i S_term_i')
 S_sep' = parse_array_all(D array (sep, term), E, S_sep)
-----------------------------------------------------------------------
+----------------------------------------------------------------------------
 parse_array_all (D array (sep, term), E, S_init) = (S_term + S_sep')
 
 
 forall (Ri, mi, start_i) in S_init:
   parse(x:D.Sync(sep), E, start_i) = S_sep_i
   parse(x:D.Sync(term), E, start_i) = S_term_i
-  S_sep_i' = {(merge_s Ri R_ik, mi + m_ik, j_ik) | 
-		forall (R_ik, m_ik, j_ik) in S_sep_i}
-  S_term_i' = {(merge_t Ri R_ik, mi + m_ik, j_ik) | 
-		forall (R_ik, m_ik, j_ik) in S_term_i}
+  S_sep_i' = {(merge_s Ri R_ik, sum_metric(Ri, R_ik, mi, m_ik), j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_sep_i where j_ik > start_i}
+  S_term_i' = {(merge_t Ri R_ik, sum_metric(Ri, R_ik, mi, m_ik), j_ik) | 
+		forall (R_ik, m_ik, j_ik) in S_term_i where j_ik > start_i}
 S_sep = clean (\sum_i S_sep_i')
 S_term = clean (\sum_i S_term_i')
 S_sep' = parse_array(D array (sep, term), E, S_sep)
-----------------------------------------------------------------------
+----------------------------------------------------------------------------
 parse_array (D array (sep, term), E, S_init) = clean (S_term + S_sep')
 
 
@@ -114,6 +116,11 @@ parse_array_all(D array (sep, term), E, {(([], []), (0, 0), n)})
 parse_array(D array (sep, term), E, {(([], []), (0, 0), n)})
 -----------------------------------------------------------------
 	parse (D array (sep, term), E, n)
+
+
+
+
+
 
 
 
