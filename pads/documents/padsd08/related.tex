@@ -3,6 +3,35 @@
 
 Because of space considerations, we survey only the most closely related work.
 
+\paragraph*{Stream Processing.}
+There has been a large body of work in data stream processing and work flow
+management \cite{Golab03}. Languages such as Lustre \cite{CaspiPHP87}, 
+SIGNAL  \cite{AmagbegnonBG95} and FRP \cite{ElliottH97,WanH00}
+are designed to implement synchronous systems that react to continuous
+or discrete signals. These signals are time-indexed values that can be
+composed or decomposed using various combinators. 
+While the some of the combinators in \padsd~ offers 
+additional expressiveness and convenience in the context of 
+distributed system monitoring and are hence novel in their own right, 
+the most fundamental differences between \padsd{} and the work in 
+stream processing, most notably FRP are as follows.
+First, the key contribution of the \padsd{} language is its ability to create
+feeds of various kinds based on user specification.  
+Therefore, \padsd{} provides a connection between the ``messy'' outside
+world and the elegant abstraction of events/behaviors/signals which are inputs
+to systems like FRP. In that sense, the \padsd{} system
+can be used as a front-end to FRP.
+Second, while most stream processing system operate on time-indexed values,
+\padsd{} values are indexed both on time and location. As a result, there are
+some interesting properties about our system which are absent in systems like FRP.
+Third, the structured meta data propagated with the streams is valuable
+information for data management and error handling. In fact, our generated tools
+make extensive use of the meta data as provenance information. To the best of
+our knowledge, the existing stream processing systems do not emphasize on
+the use of meta data, perhaps because they more or less assume the sanity 
+of the data whereas our feeds are created from the ``wild''. 
+
+
 \paragraph*{Systems monitoring.}
 One early and widely-used protocol for system monitoring is SNMP, the
 simple network management protocol~\cite{snmprfc1157}, which is
@@ -67,14 +96,14 @@ competing with these technologies, \padsd{} builds upon them and makes them
 highly accessible to off-the-shelf users in an important new
 domain -- that of distributed ad hoc data processing.
 
-\paragraph*{Reactive Functional Programming.}
-FRP~\cite{elliot+:frp} shares a tenuous relationship to work on \padsd{}
-in that both technologies arise from the need to perform processing
-on a schedule over time-indexed values.  However, 
-FRP focuses on the definition and implementation of {\em continuous} 
-time-varying values.  So far, we have not found use for such
-values in our domain, only for discrete time-indexed
-sequences of events.
+%\paragraph*{Reactive Functional Programming.}
+%FRP~\cite{elliot+:frp} shares a tenuous relationship to work on \padsd{}
+%in that both technologies arise from the need to perform processing
+%on a schedule over time-indexed values.  However, 
+%FRP focuses on the definition and implementation of {\em continuous} 
+%time-varying values.  So far, we have not found use for such
+%values in our domain, only for discrete time-indexed
+%sequences of events.
 
 \paragraph*{Web Mashups.}
 Web Mashup languages such as MashMaker~\cite{ennals+:mashmaker} 
