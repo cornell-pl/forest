@@ -1,0 +1,515 @@
+\section{Semantics Rewrite -- dpw -- Feb 18, 2009}
+
+A {\em dependency set} is a set of time-location pairs.
+Let type $\dsty$ be $\setty{\timety * \locty}$. 
+Let $\ds$ range over objects with type $\dsty$.
+A {\em schedule} is a set of times.  Let
+$\schedulety$ be $\setty{\timety}$.  Let
+$\schedule$ range over objects with type $\schedulety$.
+({\em Previously, $\schedule$ was an atomic, uninterpreted set of constants in the language.
+Previously, sets were not included as a type.}).
+Figure~\ref{fig:syntax-revised} contains the revised language 
+syntax.
+
+\begin{figure}[t]
+\[
+\begin{array}{lll}
+\multicolumn{3}{l}{\mbox{(host-language base types)}}\\ 
+\multicolumn{3}{l}{\basety \ ::= \boolty \bnfalt \stringty \bnfalt \locty \bnfalt \timety} \\
+\\
+\multicolumn{3}{l}{\mbox{(host-language types)}}\\ 
+\multicolumn{3}{l}{\ty \ ::=\ \basety
+\bnfalt \optionty{\ty}
+\bnfalt \ty_1 * \ty_2
+\bnfalt \ty_1 + \ty_2
+\bnfalt \listty{\ty}
+\bnfalt \setty{\ty}
+\bnfalt \ty_1 \arrow \ty_2
+} \\
+\\
+\multicolumn{3}{l}{\mbox{(host-language values)}}\\ 
+\multicolumn{3}{l}{\data \ ::=} \\
+& \boolf \bnfalt \boolt & \mbox{booleans} \\
+\bnfalt & \astring \bnfalt \loc \bnfalt \atime &
+ \mbox{strings, locations, times} \\
+\bnfalt & \none \bnfalt 
+                           \some{\data} & \mbox{optional values}\\
+\bnfalt & (\data_1,\data_2) & \mbox{pairs} \\
+\bnfalt & \inl{\data} \bnfalt 
+                           \inr{\data} & \mbox{sum values} \\
+\bnfalt & 
+%\nillist \bnfalt 
+                           \conslist{\data_1}{\data_n} & \mbox{list values} \\
+% & \bnfalt & \nilstream \bnfalt 
+%                           \consstream{\data_1}{\data_2} & \mbox{stream values} \\
+
+\bnfalt & \lambda x{:}\ty.\expression & \mbox{function values} \\
+\\
+\multicolumn{3}{l}{\mbox{(host-language expressions)}}\\ 
+\multicolumn{3}{l}{\expression \ ::=}\\ 
+& \generalvar & \mbox{variables} \\
+\bnfalt & \data & \mbox{data values} \\
+\bnfalt & \none \bnfalt 
+              \some{\expression} & \mbox{option expressions}\\
+%\bnfalt & (\expression_1,\expression_2) \bnfalt e.1 \bnfalt e.2 
+%    & \mbox{pair expressions} \\
+% & \bnfalt & \inl{\expression} \bnfalt 
+%             \inr{\expression} & \mbox{sum expressions} \\
+% & \bnfalt & \expression_1 \; \expression_2 & \mbox{application expression} \\
+\bnfalt & ... & \mbox{more typed lambda expressions} \\
+%\\
+%\multicolumn{4}{l}{\mbox{(feed meta-data:  a subset of host language values)}}\\ 
+%\multicolumn{4}{l}{\mbox{(a special location (\generatedloc) is used when data is created artificially)}}\\ 
+\end{array}
+\]
+\caption{Host Language Syntax.}
+\label{fig:host-language}
+\end{figure}
+
+
+\begin{figure}[t]
+\[
+\begin{array}{lll}
+\multicolumn{3}{l}{\mbox{(feed types)}}\\ 
+\multicolumn{3}{l}{\sigma \ ::= \tau \bnfalt \optionty{\tau} 
+  \bnfalt \sigma_1 * \sigma_2
+  \bnfalt \sigma_1 + \sigma_2
+  \bnfalt \listty{\sigma}
+}   \\  
+\\
+\multicolumn{3}{l}{\mbox{(core feed spec)}}\\ 
+\multicolumn{3}{l}{\corefeed \ ::= }\\
+& \{ \ \mathtt{src=}\    e_1;    & \mbox{source specification} \\
+& \ \ \ \mathtt{sched=}\  e_2;    & \mbox{schedule specification}\\
+& \ \ \ \mathtt{win=}\    e_3;    & \mbox{time-out window specification} \\
+& \ \ \ \mathtt{pp=}\     e_4;    & \mbox{pre-processor} \\
+& \ \ \ \mathtt{format=}\ e_5; \} & \mbox{format specification}\\ 
+\\
+\multicolumn{3}{l}{\mbox{(feed specs)}}\\ 
+\multicolumn{3}{l}{\feed \ ::=}   \\  
+% & x &  \mbox{feed variable} \\ %% no feed variables now
+% & \bnfalt 
+         & \mathtt{all}\ \corefeed & \mbox{all sources}\\ 
+ \bnfalt & \mathtt{any}\ \corefeed & \mbox{one of multiple sources}\\ 
+ \bnfalt & \emptyfeed & \mbox{empty feed} \\
+ \bnfalt & \onefeed{e_1}{e_2} & \mbox{singleton feed} \\
+ \bnfalt & \sfeed{e} & \mbox{schedule to feed} \\
+% \bnfalt & \lfeed{e} & \mbox{list to feed} \\
+ \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
+ \bnfalt & \feed_1 \sumfeed \feed_2 & \mbox{sum feed} \\
+ \bnfalt & (\feed_1, \feed_2) & \mbox{pair feed} \\
+ \bnfalt & [\feed \bnfalt x \leftarrow e ] & \mbox{list comprehension feed} \\
+ \bnfalt & \comprehensionfeed{\feed_2}{x}{\feed_1} & \mbox{feed comprehension} \\
+ \bnfalt & \filterfeed{\feed}{e} & \mbox{filter feed} \\
+ \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
+% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
+% & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
+% & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
+% \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
+% \bnfalt & x{:}\feed_1\, {*}{*} \, \feed_2 & \mbox{dependent local pair} \\
+% \bnfalt &     \mathtt{foreach{*}}\; x \; 
+%    \mathtt{in}\; \feed_1 & \mbox{for each $x$ create continuous $\feed_2$} \\
+% &   \quad \mathtt{create}\; \feed_2 \\
+% \bnfalt &     \mathtt{foreach{*}{*}}\; x \; 
+%    \mathtt{in}\; \feed_1 & \mbox{for each $x$ update local $\feed_2$}\\
+% &   \quad \mathtt{update}\; \feed_2 \\
+%\foreachcreate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create continuous $F_2$} \\
+% \bnfalt & \foreachupdate{x}{\feed_1}{\feed_2} & \mbox{for each $x$ create local $F_2$} \\
+% & \bnfalt & \ppfeed{\feed}{e} & \mbox{preprocess (eg, unzip) data} \\
+% & \bnfalt & \remap{\feed}{e} & \mbox{direct feed to different locations/times} \\
+% & \bnfalt & \refeed{\feed}{e} & \mbox{adapt feed to new schedule; 
+%                                               fill missing entries with ``None''} \\
+% & \bnfalt & \stutterfeed{\feed}{e} & \mbox{stutter on new schedule} \\
+\end{array}
+\]
+\caption{Revised Feed Language Syntax.}
+\label{fig:syntax-revised}
+\end{figure}
+
+Having talked to Amal on
+the phone, I believe the theorem I intend to prove 
+is called dependency correctness and
+is very, very similar to what James Cheny, Amal Ahmed and Umut Acar
+proved in their paper ``Provenance as Dependency Analysis.''
+It requires a rewrite of the semantics to fully track the set of time-location
+pairs upon which the values in a feed depend. Here is the modified metadata 
+definition.  Let $\nested$ range over ``nested'' meta-data and $\meta$ range over
+a complete meta-data data structure.
+
+\[
+\begin{array}{lcll} 
+\nested & ::=     
+          & (\atime,\loc,\mathtt{None}) & \mbox{base metadata (timeout)} \\
+& \bnfalt & (\atime,\loc,\mathtt{Some}\; \atime) & \mbox{base metadata (success)} \\
+& \bnfalt & (\nested_1,\nested_2) & \mbox{pair metadata} \\
+& \bnfalt & \inl{\nested} & \mbox{sum metadata} \\
+& \bnfalt & \inr{\nested} & \mbox{sum metadata} \\
+& \bnfalt & [\nested_1,\ldots,\nested_k] & \mbox{list metadata} \\
+\\
+\meta & ::= & (\atime,\ds,\nested) & \mbox{complete metadata} \\  
+\end{array}
+\] 
+
+Given meta-data $\meta$, we write $\mytime{\meta}$, $\myds{\meta}$ and
+$\myval{\meta}$ for the first, second and third projections (respectively) of $\meta$.
+Note the base metadata is a triple of scheduled time, location of origin 
+and optional arrival time where {\tt None} indicates the data did not arrive
+in a timely manner.
+
+If the feed typing rules give feed $\feed$ type $\feedty{\sigma}$, 
+then its data has type $\sigma$ and
+its meta data has type $\metatype{\sigma}$ where $\metatype{\sigma}$ is
+defined as follows.
+
+\[
+\begin {array} {lcl}
+\nestedtype{\ty} & = & \timety * \locty * (\optionty{\timety}) \\
+\nestedtype{\optionty{\ty}} & = & \timety * \locty * (\optionty{\timety}) \\
+\nestedtype{\sigma_1 * \sigma_2} & = & \nestedtype{\sigma_1} * \nestedtype{\sigma_2} \\
+\nestedtype{\sigma_1 + \sigma_2} & = & \nestedtype{\sigma_1} + \nestedtype{\sigma_2} \\
+\nestedtype{\listty{\sigma}} & = & \listty{\nestedtype{\sigma}} \\
+\\
+\metatype{\sigma} & = & \timety * \dsty * \nestedtype{\sigma} \\
+\end{array}
+\]
+
+
+The theorem to prove goes as follows.
+
+\begin{definition}[Equal Universes Relative to a Dependency Set]
+$\ueq{\universe_1}{\ds}{\universe_2}$ if and only if for all
+$(\atime,\loc) \in \ds$, $\universe_1(\atime,\loc) = \universe_2(\atime,\loc)$.
+\end{definition}
+
+Let $S_1$, $S_2$ range over denotations of feeds.
+
+\begin{definition}[Feed Subset Relative to a Dependency Set]
+$\fsubset{S_1}{\ds}{S_2}$ if and only if for all
+$(\meta,v) \in S_1$ such that
+$\myds{\meta} \subseteq \ds$, $(\meta,v) \in S_2$.
+\end{definition}
+
+\begin{definition}[Feed Equality Relative to a Dependency Set]
+$\feq{S_1}{\ds}{S_2}$ if and only if 
+$\fsubset{S_1}{\ds}{S_2}$ and
+$\fsubset{S_2}{\ds}{S_1}$
+\end{definition}
+
+\begin{theorem}[Dependency Correctness]
+If $\ueq{\universe_1}{\ds}{\universe_2}$ then
+$\feq{\semantics{\feed}{\environment}{\universe_1}}{\ds}{\semantics{\feed}{\environment}{\universe_2}}$
+\end{theorem}
+
+The proof of dependency correctness is by induction on the structure of feeds.  I
+checked out a couple of cases to see how the proof goes and it seemed plausible to
+me that I would be able to prove it completely.   
+Then I fleshed out all the rules.  I need to proof-read the rules and then go back
+and do the full proof start-to-finish.  However, the proof could definitely
+fail for the cases of pairs and lists -- I think those cases will need to be revised,
+but as of writing this note (1pm feb 19) I haven't had a chance to go back.  
+
+%Figure~\ref{fig:typing-revised} contains 
+We'll naturally also want to keep our type safety theorem, hence we need a slight rewrite of
+the typing rules.  Here follows the revised definition of feed typing.
+
+%\begin{figure}[t]
+
+% \[
+% \infer[(\textit{t-var})]
+% {\Gamma \turn x : \Gamma(x)}
+% {}
+% \]
+
+\[
+\infer[(\textit{t-core})]
+{ \begin{array}{l}
+  \Gamma \turn 
+   \{
+      \mathtt{src=} e_1;\
+      \mathtt{sched=} e_2; \
+      \mathtt{win=} e_3;\\ \qquad \ \ 
+      \mathtt{pp=} e_4;\
+      \mathtt{ format=} e_5; 
+   \} 
+   : \schedulety * (\feedty{\optionty{\ty}})
+ \end{array}
+}
+{
+ \begin{array}{c}
+  \Gamma \turn e_1 : \listty{\locty} \quad \
+  \Gamma \turn e_2 : \schedulety \quad \
+  \Gamma \turn e_3 : \timety\\
+  \Gamma \turn e_4 : \optionty{\stringty} \arrow \optionty{\stringty}  \\
+  \Gamma \turn e_5 : \optionty{\stringty} \arrow \optionty{\ty} \\
+ \end{array}
+}
+\]
+
+\[
+\infer[(\textit{t-all})]
+{ \begin{array}{l}
+  \Gamma \turn \mathtt{all}\ \corefeed{} : \feedty{\sigma}
+ \end{array}
+}
+{
+ \begin{array}{c}
+  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+ \end{array}
+}
+\]
+
+\[
+\infer[(\textit{t-any})]
+{ \begin{array}{l}
+  \Gamma \turn \mathtt{any}\ \corefeed{} : \feedty{\sigma}
+ \end{array}
+}
+{
+ \begin{array}{c}
+  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+ \end{array}
+}
+\]
+
+\[
+\infer[(\textit{t-empty})]
+{\Gamma \turn \emptyfeed : \feedty{\sigma}}
+{}
+\]
+
+\[
+\infer[(\textit{t-one})]
+{\Gamma \turn \onefeed{e_1}{e_2} : \feedty{\tau}}
+{\Gamma \turn e_1 : \tau
+ \qquad
+ \Gamma \turn e_2 : \timety
+}
+\]
+
+\[
+\infer[(\textit{t-schedule})]
+{\Gamma \turn \sfeed{e} : \feedty{\timety}}
+{\Gamma \turn e : \schedulety
+}
+\]
+
+
+%% \[
+%% \infer[(\textit{t-list})]
+%% {\Gamma \turn \lfeed{e} : \feedty{\tau}}
+%% {\Gamma \turn e : \listty{\tau}
+%% }
+%% \]
+
+\[
+\infer[(\textit{t-union})]
+{\Gamma \turn \feed_1 \unionfeed \feed_2  : \feedty{\sigma}}
+{
+  \Gamma \turn \feed_1 : \feedty{\sigma} &
+  \Gamma \turn \feed_2 : \feedty{\sigma}
+}
+\]
+
+\[
+\infer[(\textit{t-sum})]
+{\Gamma \turn \feed_1 \sumfeed \feed_2  : \feedty{\sigma_1 + \sigma_2}}
+{
+  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+  \Gamma \turn \feed_2 : \feedty{\sigma_2}
+}
+\]
+
+\[
+\infer[(\textit{t-pair})]
+{\Gamma \turn (\feed_1, \feed_2)  : \feedty{\sigma_1 * \sigma_2}}
+{
+  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
+  \Gamma \turn \feed_2 : \feedty{\sigma_2}
+}
+\]
+
+\[
+\infer[(\textit{t-listf})]
+{\Gamma \turn [\feed \bnfalt x \leftarrow e ]  : \feedty{\listty{\sigma}}}
+{
+  \Gamma \turn e : \listty{\tau} &
+  \Gamma,x{:}\tau \turn \feed : \feedty{\sigma} 
+}
+\]
+
+\[
+\infer[(\textit{t-comph})]
+{\Gamma \turn \comprehensionfeed{\feed_2}{x}{\feed_1} : \feedty{\sigma}}
+{
+  \Gamma \turn \feed_1 :  \feedty{\sigma} &
+  \Gamma,x{:}\metatype{\sigma} * \sigma \turn \feed_2 : \feedty{\sigma} 
+}
+\]
+
+\[
+\infer[(\textit{t-filter})]
+{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\sigma}}
+{
+  \Gamma \turn \feed : \feedty{\sigma} &
+  \Gamma \turn e : \sigma \arrow \boolty
+}
+\]
+
+\[
+\infer[(\textit{t-let})]
+{\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\sigma_2}}
+{
+  \Gamma \turn e_1 : \ty_1 & 
+  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\sigma_2} 
+}
+\]
+
+%\caption{Feed Language Typing.}
+%\label{fig:typing-revised}
+%\end{figure}
+
+
+Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
+
+
+\begin{figure*}[t]
+\[
+\begin{array}{lcl}
+
+    {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
+ &=& (S, \{((\atime,\{(\atime,\loc)\}, (\atime,\loc,\mathtt{arrival}(\atime,\universe(\atime,\loc))), \esemantics{e_f\; (\universe'(\loc,\atime))}{\environment}))
+          \setalt \atime \in S
+          \;\mbox{and}\; \loc \in  \esemantics{e_{src}}{\environment}
+     \})
+\\
+ \quad\ \   \mathtt{sched=} e_{sched};
+&&\quad\mbox{where} \\
+ \quad\ \  \mathtt{win=} e_{win};
+&& \qquad S = \esemantics{e_{sched}}{\environment} \\
+ \quad\ \  \mathtt{pp=} e_{pp};
+&& 
+\qquad \mathtt{timeout} =  
+     \lambda (x_t,(x_{at},x_s)).
+        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_{win}}{\environment} \,
+        \mathtt{then}\,  x_s \, \mathtt{else} \, \mathtt{None} 
+ \\
+ \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \, {\universe}}
+&& \qquad \universe' =
+     \lambda (x_{\ell}, x_t). 
+           \esemantics{e_{pp}}{\environment}\, 
+                 (\mathtt{timeout}\, (x_t,\universe (x_\ell,x_t))) 
+\\
+&& 
+\qquad \mathtt{arrival} =  
+     \lambda (x_t,(x_{at},x_s)).
+        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_{win}}{\environment} \,
+        \mathtt{then}\,  \mathtt{Some}(x_{at}) \, \mathtt{else} \, \mathtt{None} 
+ \\
+
+\\\\
+
+\semantics{\mathtt{all}\ \corefeed}{\universe}{\environment} 
+&=& 
+A\ \ \ \mbox{where}\ (S,A) = \csemantics{C}{\universe}{\environment}
+\\\\
+
+
+%New version: any rule
+\semantics{\mathtt{any}\ \corefeed}{\universe}{\environment} 
+& = & \{ i_t\ |\ \atime \in S\}\\
+&&
+\begin{array}{l}
+ \begin{array}{ll@{\hspace{1ex}}c@{\hspace{1ex}}l}
+ \mbox{where} & (S,A)   & = &\csemantics{C}{\environment}{\universe}\\
+              & A_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+              & i_\atime & = & \left\{ \begin{array}{lll}
+                                           \mbox{\selectOne}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
+                                           ((\atime,\generatedloc), \none) & \mbox{if} & |A_\atime| = 0 \\
+                                           \end{array} \right.\\
+ \end{array}
+\end{array} 
+%%End New version: any rule
+\\\\
+
+\semantics{\emptyfeed}{\environment}{\universe} 
+ &=& \{\;\}
+\\\\
+\semantics{\onefeed{e_1}{e_2}}{\environment}{\universe} 
+ &=& \{
+   ((\esemantics{e_2}{\environment},
+    \{\;\}, 
+       (\esemantics{e_2}{\environment},\generatedloc,
+         \mathtt{Some}\;\esemantics{e_2}{\environment})),
+    \mathtt{Some}(\esemantics{e_1}{\environment}))\}
+\\\\
+\semantics{\sfeed{e}}{\environment}{\universe} 
+ &=& \{((\atime,\{\;\},(\atime,\generatedloc,\mathtt{Some}\; \atime)), \atime) 
+          \setalt \atime \in  \esemantics{e}{\environment} 
+     \}
+\\\\
+%% \semantics{\lfeed{e}}{\environment}{\universe} 
+%%  &=& \{((\atime,\{\},\generatedloc), \atime) 
+%%           \setalt \atime \in  \esemantics{e}{\environment} 
+%%      \}
+%% \\\\
+\semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
+ &=& \semantics{\feed_1}{\environment}{\universe} 
+     \bigcup
+     \semantics{\feed_2}{\environment}{\universe} 
+\\\\
+\semantics{\feed_1 \sumfeed \feed_2}{\environment}{\universe} 
+ &=& \{
+      ((\mytime{\meta},\myds{\meta},\inl{\myval{\meta}}),\inl{v}) \setalt 
+        (\meta,v) \in \semantics{\feed_1}{\environment}{\universe} 
+     \} \bigcup
+ \\
+&&
+     \{
+      ((\mytime{\meta},\myds{\meta},\inr{\myval{\meta}}),\inr{v}) \setalt 
+        (\meta,v) \in \semantics{\feed_2}{\environment}{\universe}
+     \}
+\\\\
+\semantics{(\feed_1, \feed_2)}{\environment}{\universe} 
+ &=&
+ \{((\mytime{\meta_1},\myds{\meta_1}\cup\myds{\meta_2}, (\myval{\meta_1},\myval{\meta_2})),(v_1,v_2)) 
+  \setalt 
+\\
+&& \quad
+     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+     (\meta_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
+     \; \mbox{and} \; 
+     \mytime{\meta_1} = \mytime{\meta_2}
+  \}
+\\\\
+\semantics{[\feed \bnfalt x \leftarrow e]}{\environment}{\universe} 
+ &=&
+ \{((\atime,\bigcup_{i=1..k} \myds{\meta_i}, [\myval{\meta_1},\ldots,\myval{\meta_k}]),[v_1,\ldots,v_k]) \setalt 
+\\ && \quad
+    \exists \atime.\forall i:1\ldots k.
+     (\meta_i,v_i) \in \semantics{\feed}{\environment[x\mapsto z_i]}{\universe} 
+     \; \mbox{and} \; 
+     \mytime{\meta_i} =\atime
+  \} \\
+&&\quad\mbox{where} \quad\mbox{$[z_1,\ldots,z_k] = \esemantics{e}{\environment}$}
+\\\\
+\semantics{\comprehensionfeed{\feed_2}{x}{\feed_1}}{\environment}{\universe} 
+ &=& \{((\mytime{\meta_2},\myds{\meta_1} \cup \myds{\meta_2}, \myval{\meta_2}),v_2) 
+          \setalt (\meta_1, v_1) \in  \semantics{\feed_1}{\environment}{\universe} \; \mbox{and} \;
+          (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto(\meta,v_1))}{\universe}  
+     \} 
+\\\\
+\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+            \esemantics{e \; v}{\environment} = \mathtt{true}
+\}
+\\\\
+\semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
+ &=& \semantics{\feed_2}{(\environment,x\mapsto\esemantics{e_1}{\environment})}{\universe} 
+\\
+\end{array}
+\]
+\caption{Feed Language Semantics.}
+\label{fig:semantics-revised}
+\end{figure*}
