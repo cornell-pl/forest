@@ -377,50 +377,60 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 \begin{array}{lcl}
 
     {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
- &=& (S, \{((\atime,\{(\atime,\loc)\}, (\atime,\loc,\mathtt{arrival}(\atime,\universe(\atime,\loc))), \esemantics{e_f\; (\universe'(\loc,\atime))}{\environment}))
+ &=& \{( \mathtt{meta} (\atime,\loc),
+             \esemantics{e_f\; (\universe'(\atime, \loc))}{\environment})
           \setalt \atime \in S
           \;\mbox{and}\; \loc \in  \esemantics{e_{src}}{\environment}
-     \})
+     \}
 \\
  \quad\ \   \mathtt{sched=} e_{sched};
 &&\quad\mbox{where} \\
  \quad\ \  \mathtt{win=} e_{win};
 && \qquad S = \esemantics{e_{sched}}{\environment} \\
  \quad\ \  \mathtt{pp=} e_{pp};
-&& 
-\qquad \mathtt{timeout} =  
+&& \qquad W = \esemantics{e_{win}}{\environment}\\
+ \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \,
+   {\universe}}
+&& \qquad \mathtt{timeout} =  
      \lambda (x_t,(x_{at},x_s)).
-        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_{win}}{\environment} \,
+        \mathtt{if}\, x_{at} \leq x_t + W \,
         \mathtt{then}\,  x_s \, \mathtt{else} \, \mathtt{None} 
- \\
- \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \, {\universe}}
-&& \qquad \universe' =
-     \lambda (x_{\ell}, x_t). 
-           \esemantics{e_{pp}}{\environment}\, 
-                 (\mathtt{timeout}\, (x_t,\universe (x_\ell,x_t))) 
 \\
 && 
 \qquad \mathtt{arrival} =  
      \lambda (x_t,(x_{at},x_s)).
-        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_{win}}{\environment} \,
+        \mathtt{if}\, x_{at} \leq x_t + W \,
         \mathtt{then}\,  \mathtt{Some}(x_{at}) \, \mathtt{else} \, \mathtt{None} 
  \\
+&& 
+\qquad \mathtt{meta} =  
+      \lambda (\atime,\loc).
+       (\atime,\{(\atime,\loc)\}, (\atime,\loc,\mathtt{arrival}(\atime,\universe(\atime,\loc))))
+ \\
+&& \qquad \universe' =
+     \lambda (\atime, \loc). 
+           \esemantics{e_{pp}}{\environment}\, 
+                 (\mathtt{timeout}\, (\atime,\universe (\atime,\loc))) 
+\\
+
+
 
 \\\\
 
-\semantics{\mathtt{all}\ \corefeed}{\universe}{\environment} 
+\semantics{\mathtt{all}\ \corefeed}{\environment}{\universe} 
 &=& 
-A\ \ \ \mbox{where}\ (S,A) = \csemantics{C}{\universe}{\environment}
+\csemantics{C}{\environment}{\universe}
 \\\\
 
 
 %New version: any rule
-\semantics{\mathtt{any}\ \corefeed}{\universe}{\environment} 
+\semantics{\mathtt{any}\ \corefeed}{\environment}{\universe}
 & = & \{ i_t\ |\ \atime \in S\}\\
 &&
 \begin{array}{l}
  \begin{array}{ll@{\hspace{1ex}}c@{\hspace{1ex}}l}
- \mbox{where} & (S,A)   & = &\csemantics{C}{\environment}{\universe}\\
+ \mbox{where} & A        & = &\csemantics{C}{\environment}{\universe}\\
+              & S        & = & \{\mytime{\meta}\ |\ (\meta, v) \in A\}\\
               & A_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
               & i_\atime & = & \left\{ \begin{array}{lll}
                                            \mbox{\selectOne}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
