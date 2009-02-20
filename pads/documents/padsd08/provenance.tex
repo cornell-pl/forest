@@ -329,7 +329,7 @@ the typing rules.  Here follows the revised definition of feed typing.
 \]
 
 \[
-\infer[(\textit{t-listf})]
+\infer[(\textit{t-list})]
 {\Gamma \turn [\feed \bnfalt x \leftarrow e ]  : \feedty{\listty{\sigma}}}
 {
   \Gamma \turn e : \listty{\tau} &
@@ -351,7 +351,7 @@ the typing rules.  Here follows the revised definition of feed typing.
 {\Gamma \turn \filterfeed{\feed}{e} : \feedty{\sigma}}
 {
   \Gamma \turn \feed : \feedty{\sigma} &
-  \Gamma \turn e : \sigma \arrow \boolty
+  \Gamma \turn e : (\metatype{\sigma} * \sigma) \arrow \boolty
 }
 \]
 
@@ -377,10 +377,9 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 \begin{array}{lcl}
 
     {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
- &=& \{( \mathtt{meta} (\atime,\loc),
-             \esemantics{e_f\; (\universe'(\atime, \loc))}{\environment})
+ &=& \{( \mathtt{meta} (\atime,\loc), \mathtt{val} (\atime,\loc))
           \setalt \atime \in S
-          \;\mbox{and}\; \loc \in  \esemantics{e_{src}}{\environment}
+          \;\mbox{and}\; \loc \in  L
      \}
 \\
  \quad\ \   \mathtt{sched=} e_{sched};
@@ -391,6 +390,8 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 && \qquad W = \esemantics{e_{win}}{\environment}\\
  \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \,
    {\universe}}
+&& \qquad L = \esemantics{e_{src}}{\environment}
+\\
 && \qquad \mathtt{timeout} =  
      \lambda (x_t,(x_{at},x_s)).
         \mathtt{if}\, x_{at} \leq x_t + W \,
@@ -400,17 +401,22 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 \qquad \mathtt{arrival} =  
      \lambda (x_t,(x_{at},x_s)).
         \mathtt{if}\, x_{at} \leq x_t + W \,
-        \mathtt{then}\,  \mathtt{Some}(x_{at}) \, \mathtt{else} \, \mathtt{None} 
+        \mathtt{then}\,  \mathtt{Some}\, x_{at} \, \mathtt{else} \, \mathtt{None} 
  \\
 && 
 \qquad \mathtt{meta} =  
       \lambda (\atime,\loc).
        (\atime,\{(\atime,\loc)\}, (\atime,\loc,\mathtt{arrival}(\atime,\universe(\atime,\loc))))
+\\
+ && \qquad \mathtt{val} =
+      \lambda (\atime, \loc).
+             \esemantics{e_f\; (\universe'(\atime, \loc))}{\environment}
  \\
 && \qquad \universe' =
      \lambda (\atime, \loc). 
            \esemantics{e_{pp}}{\environment}\, 
                  (\mathtt{timeout}\, (\atime,\universe (\atime,\loc))) 
+
 \\
 
 
@@ -494,9 +500,9 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 \\\\
 \semantics{[\feed \bnfalt x \leftarrow e]}{\environment}{\universe} 
  &=&
- \{((\atime,\bigcup_{i=1..k} \myds{\meta_i}, [\myval{\meta_1},\ldots,\myval{\meta_k}]),[v_1,\ldots,v_k]) \setalt 
+ \{((\atime,\bigcup_{i=1\ldots{}k} \myds{\meta_i}, [\myval{\meta_1},\ldots,\myval{\meta_k}]),[v_1,\ldots,v_k]) \setalt 
 \\ && \quad
-    \exists \atime.\forall i:1\ldots k.
+    \forall i:1\ldots k.
      (\meta_i,v_i) \in \semantics{\feed}{\environment[x\mapsto z_i]}{\universe} 
      \; \mbox{and} \; 
      \mytime{\meta_i} =\atime
@@ -506,13 +512,13 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 \semantics{\comprehensionfeed{\feed_2}{x}{\feed_1}}{\environment}{\universe} 
  &=& \{((\mytime{\meta_2},\myds{\meta_1} \cup \myds{\meta_2}, \myval{\meta_2}),v_2) 
           \setalt (\meta_1, v_1) \in  \semantics{\feed_1}{\environment}{\universe} \; \mbox{and} \;
-          (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto(\meta,v_1))}{\universe}  
+          (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto(\meta_1,v_1))}{\universe}  
      \} 
 \\\\
 \semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
  &=&
 \{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-            \esemantics{e \; v}{\environment} = \mathtt{true}
+            \esemantics{e \; (\meta,v)}{\environment} = \mathtt{true}
 \}
 \\\\
 \semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
