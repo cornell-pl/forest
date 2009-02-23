@@ -127,7 +127,7 @@ updated to reflect the set of active nodes in PlanetLab.
     \kw{base} \{|
       \kw{sources}  = \kw{all} (List.map makeURL 
                      (List.filter Nodelist.is_node 
-                     (current nodelist)));
+                     (current (value nodelist))));
       \kw{schedule} = once, timeout 60.0 sec; 
       \kw{format}   = Comon_format.Source;
     |\}
@@ -419,14 +419,16 @@ forms in \secref{sec:semantics}.
      (List.filter Hosts.is_node (get_good hl))
 
 \kw{feed} host_lists = 
-  \{| get_hosts hl | hl <- raw_hostLists, 
-                    is_good hl |\}
+  \{| get_hosts (value hl) | hl <- raw_hostLists, 
+                            is_good hl |\}
 
 \kw{feed} gen_stats (h) = 
-  \kw{let} s = every 5 mins, timeout 1 min \kw{in}
+  \kw{let} s = every 5 mins, 
+          timeout 1 min, 
+          lasting 24 hours \kw{in}
   (
    \kw{base} \{| 
-     \kw{sources}  =  \kw{proc} ("ping -c 1 " ^ h);   
+     \kw{sources}  = \kw{proc} ("ping -c 1 " ^ h);   
      \kw{format}   = Ping.Source;  
      \kw{schedule} = s; |\},
    \kw{base} \{| 
@@ -436,8 +438,8 @@ forms in \secref{sec:semantics}.
   )
 
 \kw{feed} stats =
-  \kw{foreach} hl \kw{in} host_lists \kw{update}
-     [ gen_stats h | h <- hl ]
+  \kw{foreach} hl \kw{in} host_lists \kw{create}
+     [ gen_stats h | h <- value hl ]
 \end{code}
 \vskip -2ex
 \caption{\texttt{arrakis.fml}: Simplified version of \vizGems{} feed.}
