@@ -439,10 +439,10 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
               & S        & = & \{\mytime{\meta}\ |\ (\meta, v) \in A\}\\
               & A_\atime & = & \{(\meta,v)\ | \ (\meta, v) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
               & DS_\atime & = & \bigcup_{(\meta,v) \in A_\atime} \myds{\meta} \\
-              & V_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A_\atime\}\\
+              & G_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A_\atime\}\\
               & i_\atime & = & \left\{ \begin{array}{lll}
-                                           \mbox{\selectOne}(V_\atime) \; \mbox{with} \; \myds{\meta} = DS_\atime& \mbox{if} & |V_\atime| > 0\\
-                                           ((\atime, DS_\atime, (\atime,\generatedloc,\none)), \none) & \mbox{if} & |V_\atime| = 0 \\
+                                           \mbox{\selectOne}(G_\atime) \; \mbox{with} \; \myds{\meta} = DS_\atime& \mbox{if} & |G_\atime| > 0\\
+                                           ((\atime, DS_\atime, (\atime,\generatedloc,\none)), \none) & \mbox{if} & |G_\atime| = 0 \\
                                            \end{array} \right.
  \end{array}
 \end{array} 

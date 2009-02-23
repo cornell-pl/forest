@@ -206,7 +206,7 @@ core feed $\corefeed{}$.  The \texttt{all} feed simply returns the
 data component $A$.  The \texttt{any} feed returns a set with one
 element for each time $\atime$ in the schedule $S$.  If the data $A$
 contains at least one good value at time $t$, the \texttt{any} feed
-picks an arbitrary member of this set, using the function
+picks the earliest arriving member of this set, using the function
 $\selectOne{}$.  Otherwise, the feed adds  
 error value $((\atime,\generatedloc), \none)$ for $\atime$.
 
