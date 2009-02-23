@@ -231,7 +231,7 @@ the typing rules.  Here follows the revised definition of feed typing.
       \mathtt{pp=} e_4;\
       \mathtt{ format=} e_5; 
    \} 
-   : \schedulety * (\feedty{\optionty{\ty}})
+   : \corety{\optionty{\ty}}
  \end{array}
 }
 {
@@ -253,7 +253,7 @@ the typing rules.  Here follows the revised definition of feed typing.
 }
 {
  \begin{array}{c}
-  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+  \Gamma \turn \corefeed{} : \corety{\sigma}
  \end{array}
 }
 \]
@@ -266,7 +266,7 @@ the typing rules.  Here follows the revised definition of feed typing.
 }
 {
  \begin{array}{c}
-  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+  \Gamma \turn \corefeed{} : \corety{\sigma}
  \end{array}
 }
 \]
@@ -437,11 +437,13 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
  \begin{array}{ll@{\hspace{1ex}}c@{\hspace{1ex}}l}
  \mbox{where} & A        & = &\csemantics{C}{\environment}{\universe}\\
               & S        & = & \{\mytime{\meta}\ |\ (\meta, v) \in A\}\\
-              & A_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+              & A_\atime & = & \{(\meta,v)\ | \ (\meta, v) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+              & DS_\atime & = & \bigcup_{(\meta,v) \in A_\atime} \myds{\meta} \\
+              & V_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A_\atime\}\\
               & i_\atime & = & \left\{ \begin{array}{lll}
-                                           \mbox{\selectOne}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
-                                           ((\atime,\generatedloc), \none) & \mbox{if} & |A_\atime| = 0 \\
-                                           \end{array} \right.\\
+                                           \mbox{\selectOne}(V_\atime) \; \mbox{with} \; \myds{\meta} = DS_\atime& \mbox{if} & |V_\atime| > 0\\
+                                           ((\atime, DS_\atime, (\atime,\generatedloc,\none)), \none) & \mbox{if} & |V_\atime| = 0 \\
+                                           \end{array} \right.
  \end{array}
 \end{array} 
 %%End New version: any rule
@@ -456,7 +458,7 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
     \{\;\}, 
        (\esemantics{e_2}{\environment},\generatedloc,
          \mathtt{Some}\;\esemantics{e_2}{\environment})),
-    \mathtt{Some}(\esemantics{e_1}{\environment}))\}
+    \esemantics{e_1}{\environment})\}
 \\\\
 \semantics{\sfeed{e}}{\environment}{\universe} 
  &=& \{((\atime,\{\;\},(\atime,\generatedloc,\mathtt{Some}\; \atime)), \atime) 
@@ -503,7 +505,7 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
  \{((\atime,\bigcup_{i=1\ldots{}k} \myds{\meta_i}, [\myval{\meta_1},\ldots,\myval{\meta_k}]),[v_1,\ldots,v_k]) \setalt 
 \\ && \quad
     \forall i:1\ldots k.
-     (\meta_i,v_i) \in \semantics{\feed}{\environment[x\mapsto z_i]}{\universe} 
+     (\meta_i,v_i) \in \semantics{\feed}{(\environment,x\mapsto z_i)}{\universe} 
      \; \mbox{and} \; 
      \mytime{\meta_i} =\atime
   \} \\

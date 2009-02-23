@@ -141,7 +141,7 @@ When $\universe (\atime_1, \ell) = (\atime_2, \mathtt{Some} \; \astring)$,
  the interpretation is that if the run-time system requests data
 from location $\ell$ at time $\atime_1$ then string data $\astring$
 will be returned at time $\atime_2$.  The time $\atime_2$ must be
-later than $\atime_1$.
+no earlier than $\atime_1$.
 When $\universe (\atime_1, \ell) = (\infty, \mathtt{None})$,
 networking errors have made location $\ell$ unreachable.
 
