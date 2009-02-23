@@ -98,7 +98,7 @@ updated to reflect the set of active nodes in PlanetLab.
 \begin{figure}
 \begin{code}
 (* Ocaml helper values and functions *)
-\kw{let} config_location = 
+\kw{let} config_locations = 
   ["http://summer.cs.princeton.edu/status/ \\
     tabulator.cgi?table=slices/ \\
     table_princeton_comon&format=nameonly"]
@@ -115,7 +115,7 @@ updated to reflect the set of active nodes in PlanetLab.
 (* Feed of nodes to query *)
 \kw{feed} nodes =  
   \kw{base} \{|
-    \kw{sources}  = \kw{all} config_location;
+    \kw{sources}  = \kw{all} config_locations;
     \kw{schedule} = every 2 min;
     \kw{format}   = Nodelist.Source;
   |\}
@@ -274,7 +274,7 @@ the compound feed to indicate its source.
 
 % \begin{figure}
 % \begin{code}
-% \kw{let} config_location = 
+% \kw{let} config_locations = 
 %     [("file:///arrakis/config/machine_list")];
 
 % \kw{feed} hostList =  
@@ -419,8 +419,8 @@ forms in \secref{sec:semantics}.
      (List.filter Hosts.is_node (get_good hl))
 
 \kw{feed} host_lists = 
-  \{| get_hosts (value hl) | hl <- raw_hostLists, 
-                            is_good hl |\}
+  \{| get_hosts hl | hl <- raw_hostLists, 
+                    is_good hl |\}
 
 \kw{feed} gen_stats (h) = 
   \kw{let} s = every 5 mins, 
@@ -439,7 +439,7 @@ forms in \secref{sec:semantics}.
 
 \kw{feed} stats =
   \kw{foreach} hl \kw{in} host_lists \kw{create}
-     [ gen_stats h | h <- value hl ]
+     [ gen_stats (h) | h <- value hl ]
 \end{code}
 \vskip -2ex
 \caption{\texttt{arrakis.fml}: Simplified version of \vizGems{} feed.}
