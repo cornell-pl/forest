@@ -115,7 +115,7 @@ updated to reflect the set of active nodes in PlanetLab.
 (* Feed of nodes to query *)
 \kw{feed} nodes =  
   \kw{base} \{|
-    \kw{sources}  = \kw{all} config_locations;
+    \kw{sources}  = \kw{all} config_locatiois;
     \kw{schedule} = every 2 min;
     \kw{format}   = Nodelist.Source;
   |\}
@@ -416,11 +416,11 @@ forms in \secref{sec:semantics}.
 \kw{let} get_host (Hosts.Data h) = h
 \kw{let} get_hosts hl =
     List.map get_host 
-     (List.filter Hosts.is_node (get_good hl))
+     (List.filter Hosts.is_node hl)
 
 \kw{feed} host_lists = 
-  \{| get_hosts hl | hl <- raw_hostLists, 
-                    is_good hl |\}
+  \{| get_hosts (get_good hl) | hl <- raw_hostLists, 
+                       is_good hl |\}
 
 \kw{feed} gen_stats (h) = 
   \kw{let} s = every 5 mins, 
