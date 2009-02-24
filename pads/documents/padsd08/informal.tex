@@ -103,6 +103,14 @@ updated to reflect the set of active nodes in PlanetLab.
     tabulator.cgi?table=slices/ \\
     table_princeton_comon&format=nameonly"]
 
+(* Feed of nodes to query *)
+\kw{feed} nodes =  
+  \kw{base} \{|
+    \kw{sources}  = \kw{all} config_locations;
+    \kw{schedule} = every 2 min;
+    \kw{format}   = Nodelist.Source;
+  |\}
+
 \kw{let} makeURL (Nodelist.Data x) = 
      "http://" ^ x ^ ":3121"
 
@@ -111,14 +119,6 @@ updated to reflect the set of active nodes in PlanetLab.
   \kw{match} list_opt \kw{with}
     Some l ->  old_locs := l; l
   | None   -> !old_locs
-
-(* Feed of nodes to query *)
-\kw{feed} nodes =  
-  \kw{base} \{|
-    \kw{sources}  = \kw{all} config_locatiois;
-    \kw{schedule} = every 2 min;
-    \kw{format}   = Nodelist.Source;
-  |\}
 
 (* Dependent CoMon feed of node statistics *)
 \kw{feed} comon =
@@ -419,8 +419,8 @@ forms in \secref{sec:semantics}.
      (List.filter Hosts.is_node hl)
 
 \kw{feed} host_lists = 
-  \{| get_hosts (get_good hl) | hl <- raw_hostLists, 
-                       is_good hl |\}
+  \{| get_hosts (get_good hl) | 
+     hl <- raw_hostLists, is_good hl |\}
 
 \kw{feed} gen_stats (h) = 
   \kw{let} s = every 5 mins, 
