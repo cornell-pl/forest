@@ -10,7 +10,7 @@ SIGNAL  \cite{AmagbegnonBG95} and FRP \cite{ElliottH97,WanH00}
 are designed to implement synchronous systems that react to continuous
 or discrete signals. These signals are time-indexed values that can be
 composed or decomposed using various combinators. 
-While the some of the combinators in \padsd~ offers 
+While the some of the combinators in \padsd{} offers 
 additional expressiveness and convenience in the context of 
 distributed system monitoring and are hence novel in their own right, 
 the most fundamental differences between \padsd{} and the work in 
@@ -150,5 +150,20 @@ hoc-to-RSS conversion tool.
 % \padsd{} could serve as a data feed for MashMaker.
 % The MashMaker paper contains a nice survey of work in this area that
 % we can reference.
+
+
+\paragraph*{Provenance.}  The meta-data that tracks the source location,
+arrival time, and error status of data in \padsd{} can be seen as an
+instance of provenance information, a topic of increasing interest
+in the database community.  Cheney~\etal{}~\cite{cheney-dbpl07} showed
+how the programming langauge idea of dependency analysis leads to a
+formal theory for tracking provenence.  Indeed, our Dependency Correctness
+Theorem reuses the definition of dependency correctness developed in
+their work.  Our system differs from theirs in the level of
+granularity: we track provenance at the level of files while they
+track individual tuples in a relational calculus.  The coarser
+granularity means reduced overhead.  In addition, we permit programmer
+code to view and respond to provenence information, while the earlier
+work simply tracks it. 
 
 
