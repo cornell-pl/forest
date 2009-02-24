@@ -92,7 +92,7 @@ syntax.
          & \mathtt{all}\ \corefeed & \mbox{all sources}\\ 
  \bnfalt & \mathtt{any}\ \corefeed & \mbox{one of multiple sources}\\ 
  \bnfalt & \emptyfeed & \mbox{empty feed} \\
- \bnfalt & \onefeed{e_1}{e_2} & \mbox{singleton feed} \\
+ \bnfalt & \onefeed{e_v}{e_t} & \mbox{singleton feed} \\
  \bnfalt & \sfeed{e} & \mbox{schedule to feed} \\
 % \bnfalt & \lfeed{e} & \mbox{list to feed} \\
  \bnfalt & \feed_1 \unionfeed \feed_2 & \mbox{union feed} \\
@@ -279,10 +279,10 @@ the typing rules.  Here follows the revised definition of feed typing.
 
 \[
 \infer[(\textit{t-one})]
-{\Gamma \turn \onefeed{e_1}{e_2} : \feedty{\tau}}
-{\Gamma \turn e_1 : \tau
+{\Gamma \turn \onefeed{e_v}{e_t} : \feedty{\tau}}
+{\Gamma \turn e_v : \tau
  \qquad
- \Gamma \turn e_2 : \timety
+ \Gamma \turn e_t : \timety
 }
 \]
 
@@ -431,7 +431,7 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 
 %New version: any rule
 \semantics{\mathtt{any}\ \corefeed}{\environment}{\universe}
-& = & \{ i_t\ |\ \atime \in S\}\\
+& = & \{ ((\atime, DS_\atime, {nest}_\atime), v_\atime)\ |\ \atime \in S\}\\
 &&
 \begin{array}{l}
  \begin{array}{ll@{\hspace{1ex}}c@{\hspace{1ex}}l}
@@ -440,9 +440,9 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
               & A_\atime & = & \{(\meta,v)\ | \ (\meta, v) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
               & DS_\atime & = & \bigcup_{(\meta,v) \in A_\atime} \myds{\meta} \\
               & G_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A_\atime\}\\
-              & i_\atime & = & \left\{ \begin{array}{lll}
-                                           \mbox{\selectOne}(G_\atime) \; \mbox{with} \; \myds{\meta} = DS_\atime& \mbox{if} & |G_\atime| > 0\\
-                                           ((\atime, DS_\atime, (\atime,\generatedloc,\none)), \none) & \mbox{if} & |G_\atime| = 0 \\
+              & ({nest}_\atime,v_\atime) & = & \left\{ \begin{array}{lll}
+                                           (\myval{\meta},v)\; \mbox{where} \; (\meta,v) = \mbox{\selectOne}(G_\atime)  & \mbox{if} & |G_\atime| > 0\\
+                                           ((\atime,\generatedloc,\none), \none) & \mbox{if} & |G_\atime| = 0 \\
                                            \end{array} \right.
  \end{array}
 \end{array} 
@@ -452,13 +452,13 @@ Figure~\ref{fig:semantics-revised} contains revised definitions of feeds.
 \semantics{\emptyfeed}{\environment}{\universe} 
  &=& \{\;\}
 \\\\
-\semantics{\onefeed{e_1}{e_2}}{\environment}{\universe} 
+\semantics{\onefeed{e_v}{e_t}}{\environment}{\universe} 
  &=& \{
-   ((\esemantics{e_2}{\environment},
+   ((\esemantics{e_t}{\environment},
     \{\;\}, 
-       (\esemantics{e_2}{\environment},\generatedloc,
-         \mathtt{Some}\;\esemantics{e_2}{\environment})),
-    \esemantics{e_1}{\environment})\}
+       (\esemantics{e_t}{\environment},\generatedloc,
+         \mathtt{Some}\;\esemantics{e_t}{\environment})),
+    \esemantics{e_v}{\environment})\}
 \\\\
 \semantics{\sfeed{e}}{\environment}{\universe} 
  &=& \{((\atime,\{\;\},(\atime,\generatedloc,\mathtt{Some}\; \atime)), \atime) 
