@@ -152,18 +152,20 @@ hoc-to-RSS conversion tool.
 % we can reference.
 
 
-\paragraph*{Provenance.}  The meta-data that tracks the source location,
-arrival time, and error status of data in \padsd{} can be seen as an
-instance of provenance information, a topic of increasing interest
+\paragraph*{Provenance.}  The \padsd{} meta-data that tracks the
+source location, arrival time and error status of data can be seen as
+an instance of provenance information, a topic of increasing interest
 in the database community.  Cheney~\etal{}~\cite{cheney-dbpl07} showed
 how the programming langauge idea of dependency analysis leads to a
-formal theory for tracking provenence.  Indeed, our Dependency Correctness
-Theorem reuses the definition of dependency correctness developed in
-their work.  Our system differs from theirs in the level of
-granularity: we track provenance at the level of files while they
-track individual tuples in a relational calculus.  The coarser
-granularity means reduced overhead.  In addition, we permit programmer
-code to view and respond to provenence information, while the earlier
-work simply tracks it. 
+formal theory for tracking provenence.  Indeed, our Dependency
+Correctness Theorem reuses the definition of dependency correctness
+developed in their work.  Our system differs from theirs in several
+ways, however.  They treat provenance abstractly, as a collection of
+colors; we treat it concretely, as attestations of time, source
+location and error-freeness.  They track provenance at the level of
+individual tuples in a relational calculus; we track it at the level
+of files, leading to reduced overhead.  They simply track the
+provenance information; we permit programmer code to view and
+respond to such information.
 
 
