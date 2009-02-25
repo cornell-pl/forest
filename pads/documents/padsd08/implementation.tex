@@ -119,8 +119,8 @@ the simple CoMon feed in Figure \ref{fig:simplecomon}.
 We implement each \padsd{} feed as a lazy list of feed items. 
 Following the semantics in \secref{sec:semantics}, 
 a feed item is a metadata/data pair, 
-although the meta-data in the implementation is richer, 
-adding data arrival times and more detailed error information.
+although the meta-data is refined in the implementation to include
+more detailed error information.
 % for HTTP errors, late item arrivals, parse errors, \etc{}
 
 % Late arrival, (3)
@@ -228,7 +228,7 @@ the \padsml{} generic tools framework \cite{padsml-padl} for base feeds.
 Other tools depend upon external libraries. For instance, the
 \cd{feed2rrd} tool requires the RRD round-robin database~\cite{rrdtool} and
 the \cd{feed2rss} tool uses the XML-Light package~\cite{xmllight} for
-parsing and printing.
+parsing and printing XML.
 %The system also provides an Feed interface to a number of
 %useful runtime functions such as map and fold for advanced
 %users to program against the feeds.
@@ -278,13 +278,13 @@ Throughput (items/sec)&	2.9&	16.7&	21.4&	28.6&	9.3&	25&	13&	13.3&	23.7&	15.2&	12
 \end{figure}
 
 To assess performance, we measure 
-the average network latency to fetch a data item, 
-the average system latency to return a data item after receiving it
-from the network
+the average time to fetch a data item (termed {\em network latency}), 
+the average time to prepare the data item for consumption
+after fetching it from the network (termed {\em system latency}),
 and the throughput of the system using the CoMon feed
 description in \figref{fig:feedcomon}. 
-The throughput measures the average
-number of items fetched per second. 
+The {\em throughput} measures the average
+number of items fetched and processed per second. 
 %We picked
 %the comon example because it is a real life
 %application that involves fetching from large number of 
@@ -307,33 +307,34 @@ We repeated the experiment ten times and calculated the average values.
 
 \figref{fig:throughput} shows the average throughput
 and the average network and system latencies.
-Generally, 
+The throughput hits maximum when fetching from 200 nodes because
+the system supports up to 200 concurrent fetches.
+%Generally, 
 %the throughput goes up with the number of nodes
 %until 200 and then starts declining and saturating
 %as it approaches 800. Locally, 
-the throughput hits peaks at multiples of 200 since the system supports 
-up to 200 concurrent fetches.
+%the throughput hits peaks at multiples of 200 since the system supports 
+%up to 200 concurrent fetches.
 %is the size of the
 %fetching batch. At multiples of 200, the concurrent
 %fetching is maximally utilized. 
-An anomaly occurred at 400 nodes, as a number of nodes were unreachable
-because of DNS failures.
+%An anomaly occurred at 400 nodes, as a number of nodes were unreachable
+%because of DNS failures.
 % at the time of
 %the experiment. 
-%It is also noted that
-%archiving adds to the overhead of the system and hence
-%reduces the throughput. 
+Archiving adds to the overhead of the system and hence
+reduces the throughput and increases network and system latencies. 
 Note that while network latency increases with the number of nodes,  
 system latency remains almost constant and relatively
 low, showing that the \padsd{} runtime system adds
 little overhead to the inevitable network fetching
-cost. Also note that the network latency is
-almost linear in the number of nodes. The experiments show that
-the system can fetch from 800~nodes and archive the
-resulting data in under 40~seconds, well under the
+cost. Despite the random network delays in these experiments,
+the network latency is generally linear in the number of nodes. 
+The system, even with a suboptimal implementation, was able to fetch from 
+800~nodes and archive the resulting data in under 70~seconds, well under the
 5 minute turnaround time currently supported by CoMon. 
-Taken together, these results suggest that \padsd{} is  
-capable of supporting PlanetLab-scale monitoring applications. 
+Taken together, these results suggest that \padsd{} is perfectly 
+capable of PlanetLab-scale monitoring applications. 
 
 %Tables \ref{tab:comon-noarch} and \ref{tab:comon-arch}
 %shows the results from two different scenarios:
