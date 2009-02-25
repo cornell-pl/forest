@@ -6,8 +6,8 @@ In addition to the off-the-shelf tools, \padsd{} includes an API for
 manipulating generated feeds. The API provides 
 users with a feed abstraction representing a potentially infinite
 series of elements. This abstraction is related to that of a lazy
-list, but extends it with support for data timing and provenance
-information. Therefore, we model the feed API on the
+list, but extends it with support for provenance information. 
+Therefore, we model the feed API on the
 list APIs of functional languages
 %, like \ocaml{} and \haskell{},
 but provide two levels of abstraction. One level allows users to
@@ -70,7 +70,7 @@ where they come from), while the other exposes the metadata as well.
       \kw{let} location = Meta.get_link basemeta \kw{in}
       update tbl (location, data)
   | _ -> tbl \textit{ (* no change to tbl *)} \kw{in}
-\kw{let} load_tbl = \textit{\textbf{Feed.fold_m}} update_m empty_tbl loads
+\kw{let} load_tbl = \textit{Feed.fold_m} update_m empty_tbl loads
 \kw{in} print_top_with_loc 10 load_tbl
 \end{codebox}
   \caption{Revised code fragment involving provenance metadata. }
@@ -97,11 +97,11 @@ After filling the table, \cd{print\_top 10}
 processes each node's loads
 and prints the ten lowest average loads.
 
-However, this solution is not enough -- the \comon data format
-does not include the node location in the data, so the code in
-\figref{fig:sample-loads} cannot report the names of the nodes with the lowest
-average loads.
-In such situations, provenance metadata is essential. We therefore replace the last two lines of
+However, if we want a report of the names of the nodes that have 
+the lowest average loads, the above solution is not good enough
+because the \comon data format does not include the node location in the data.
+In such situations, provenance metadata is essential. 
+We therefore replace the last two lines of
 \figref{fig:sample-loads} with the code in
 \figref{fig:sample-loads-prov}, to exploit metadata. First, we sketch an 
 \cd{update_m} (update with meta) function that uses
@@ -139,7 +139,7 @@ framework for writing feed interpreters.
 % Examples
 
 Two core examples of feed interpretations are the feed creator and the
-feed accumulator. The behavior of these tools depends
+provenance tracker. The behavior of these tools depends
 essentially on the structure of the feed.  Functions like these
 require as input a runtime representation of the feed,
 complete with the details of the feed description that
