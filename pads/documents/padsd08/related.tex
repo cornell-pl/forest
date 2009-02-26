@@ -3,34 +3,77 @@
 
 Because of space considerations, we survey only the most closely related work.
 
-\paragraph*{Stream Processing.}
-There has been a large body of work in data stream processing and work flow
-management \cite{Golab03}. Languages such as Lustre \cite{CaspiPHP87}, 
-SIGNAL  \cite{AmagbegnonBG95} and FRP \cite{ElliottH97,WanH00}
-are designed to implement synchronous systems that react to continuous
-or discrete signals. These signals are time-indexed values that can be
-composed or decomposed using various combinators. 
-While the some of the combinators in \padsd{} offers 
-additional expressiveness and convenience in the context of 
-distributed system monitoring and are hence novel in their own right, 
-the most fundamental differences between \padsd{} and the work in 
-stream processing, most notably FRP are as follows.
-First, the key contribution of the \padsd{} language is its ability to create
-feeds of various kinds based on user specification.  
-Therefore, \padsd{} provides a connection between the ``messy'' outside
-world and the elegant abstraction of events/behaviors/signals which are inputs
-to systems like FRP. In that sense, the \padsd{} system
-can be used as a front-end to FRP.
-Second, while most stream processing system operate on time-indexed values,
-\padsd{} values are indexed both on time and location. As a result, there are
-some interesting properties about our system which are absent in systems like FRP.
-Third, the structured meta data propagated with the streams is valuable
-information for data management and error handling. In fact, our generated tools
-make extensive use of the meta data as provenance information. To the best of
-our knowledge, the existing stream processing systems do not emphasize on
-the use of meta data, perhaps because they more or less assume the sanity 
-of the data whereas our feeds are created from the ``wild''. 
+\paragraph*{Provenance.}  The \padsd{} meta-data that tracks the
+source location, arrival time and error status of data can be seen as
+an instance of provenance information, a topic of increasing interest
+in the database community.  Cheney~\etal{}~\cite{cheney-dbpl07} showed
+how the programming language idea of dependency analysis leads to a
+formal theory for tracking provenence.  Indeed, our Dependency
+Correctness Theorem reuses the definition of dependency correctness
+developed in their work.  Our system differs from theirs in several
+ways, however.  They treat provenance abstractly, as a collection of
+colors; we treat it concretely, as attestations of time, source
+location and error-freeness.  They track provenance at the level of
+individual tuples in a relational calculus; we track it at the level
+of files, leading to reduced overhead.  They simply track the
+provenance information; we permit programmer code to view and
+respond to such information.
 
+\paragraph*{Stream Processing.}
+There has been a large body of work in data stream processing and work
+flow management \cite{Golab03}. For instance, languages such as Lustre
+\cite{CaspiPHP87}, SIGNAL \cite{AmagbegnonBG95} and Functional
+Reactive Programmaing (FRP) \cite{ElliottH97,WanH00} are designed to
+implement synchronous systems that react to continuous or discrete
+signals. These signals are time-indexed values that can be composed or
+decomposed using various combinators.  Our work on \padsd{} is
+complimentary to these efforts in the sense that its primary purpose
+is to provide a bridge between such systems and the messy, outside
+world.  \padsd{} provides a way to internalize external, distributed
+data and to handle various error conditions and provenance information
+in comprehensive manner so that programmers can subsequently use, for
+example, the elegant abstractions of events, behaviors and signals
+drawn from FRP.
+
+
+%While the some of the combinators in \padsd{} offers 
+%additional expressiveness and convenience in the context of 
+%distributed system monitoring and are hence novel in their own right, 
+% The most fundamental difference between \padsd{} and the work in 
+% stream processing, most notably FRP are as follows.
+% First, the key contribution of the \padsd{} language is its ability to create
+% feeds of various kinds based on user specification.  
+% Therefore, \padsd{} provides a connection between the ``messy'' outside
+% world and the elegant abstraction of events/behaviors/signals which are inputs
+% to systems like FRP. In that sense, the \padsd{} system
+% can be used as a front-end to FRP.
+% Second, while most stream processing system operate on time-indexed values,
+% \padsd{} values are indexed both on time and location. As a result, there are
+% some interesting properties about our system which are absent in systems like FRP.
+% Third, the structured meta data propagated with the streams is valuable
+% information for data management and error handling. In fact, our generated tools
+% make extensive use of the meta data as provenance information. To the best of
+% our knowledge, the existing stream processing systems do not emphasize on
+% the use of meta data, perhaps because they more or less assume the sanity 
+% of the data whereas our feeds are created from the ``wild''. 
+
+\paragraph*{Web Mashups.}
+Web Mashup languages such as MashMaker~\cite{ennals+:mashmaker} 
+and Yahoo Pipes~\cite{yahoopipes} allow web programmers to
+extract data from web sites and RSS feeds and recombine them,
+often using conventional functional programming paradigms such as
+map and filter.  The focus is on end-user programming with relatively
+small amounts of data that can be displayed to a user in a web
+browser. Errors are generally ignored as completeness or absolute 
+correctness of information is not critical in the domains of interest.
+Unlike \padsd{}, which allows users to write rich descriptions
+expressing the location, format, schedule and access mode of the data, 
+Yahoo Pipes, for instance, acquires data through a fixed collection of 
+black boxes.  For this reason, \padsd{} and mashup languages also have the 
+potential to be complementary technologies, with \padsd{} descriptions
+serving to define new ad hoc data sources for mashups.  In fact, this
+idea motivated the design and implementation of the \padsd{} ad
+hoc-to-RSS conversion tool. 
 
 \paragraph*{Systems monitoring.}
 One early and widely-used protocol for system monitoring is SNMP, the
@@ -89,12 +132,12 @@ available in other systems.
 %several sites), we will examine the lessons of PsEPR when deciding how
 %to proceed.
 
-\paragraph*{Functional Programming.}
-The implementation of \padsd{} depends upon a tremendous body of past research
-in both functional stream processing and generic programming.  Rather than
-competing with these technologies, \padsd{} builds upon them and makes them
-highly accessible to off-the-shelf users in an important new
-domain -- that of distributed ad hoc data processing.
+%\paragraph*{Functional Programming.}
+%The implementation of \padsd{} depends upon a tremendous body of past research
+%in both functional stream processing and generic programming.  Rather than
+%competing with these technologies, \padsd{} builds upon them and makes them
+%highly accessible to off-the-shelf users in an important new
+%domain -- that of distributed ad hoc data processing.
 
 %\paragraph*{Reactive Functional Programming.}
 %FRP~\cite{elliot+:frp} shares a tenuous relationship to work on \padsd{}
@@ -105,23 +148,6 @@ domain -- that of distributed ad hoc data processing.
 %values in our domain, only for discrete time-indexed
 %sequences of events.
 
-\paragraph*{Web Mashups.}
-Web Mashup languages such as MashMaker~\cite{ennals+:mashmaker} 
-and Yahoo Pipes~\cite{yahoopipes} allow naive web programmers to
-extract data from web sites and RSS feeds and recombine them,
-often using conventional functional programming paradigms such as
-map and filter.  The focus is on end-user programming with relatively
-small amounts of data that can be displayed to a user in a web
-browser. Errors are generally ignored as completeness or absolute 
-correctness of information is not critical in the domains of interest.
-Unlike \padsd{}, which allows users to write rich descriptions
-expressing the location, format, schedule and access mode of the data, 
-Yahoo Pipes, for instance, acquires data through a fixed collection of 
-black boxes.  For this reason, \padsd{} and mashup languages have the 
-potential to be complementary technologies, with \padsd{} descriptions
-serving to define new ad hoc data sources for mashups.  In fact, this
-idea motivated the design and implementation of the \padsd{} ad
-hoc-to-RSS conversion tool. 
 %One can only hope Yahoo decides to add \padsd{} as an auxiliary interface
 %to their system.
 %and \padsd{} generic programming
@@ -151,21 +177,5 @@ hoc-to-RSS conversion tool.
 % The MashMaker paper contains a nice survey of work in this area that
 % we can reference.
 
-
-\paragraph*{Provenance.}  The \padsd{} meta-data that tracks the
-source location, arrival time and error status of data can be seen as
-an instance of provenance information, a topic of increasing interest
-in the database community.  Cheney~\etal{}~\cite{cheney-dbpl07} showed
-how the programming langauge idea of dependency analysis leads to a
-formal theory for tracking provenence.  Indeed, our Dependency
-Correctness Theorem reuses the definition of dependency correctness
-developed in their work.  Our system differs from theirs in several
-ways, however.  They treat provenance abstractly, as a collection of
-colors; we treat it concretely, as attestations of time, source
-location and error-freeness.  They track provenance at the level of
-individual tuples in a relational calculus; we track it at the level
-of files, leading to reduced overhead.  They simply track the
-provenance information; we permit programmer code to view and
-respond to such information.
 
 
