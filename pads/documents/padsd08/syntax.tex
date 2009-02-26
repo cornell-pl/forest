@@ -3,7 +3,7 @@
 \begin{array}{lll}
 \multicolumn{3}{l}{\mbox{(host-language base types)}}\\ 
 \multicolumn{3}{l}{\basety \ ::= \boolty \bnfalt \stringty \bnfalt
-  \timety \bnfalt \locty \bnfalt \unitty} \\
+  \timety \bnfalt \locty} \\
 \\
 \multicolumn{3}{l}{\mbox{(host-language types)}}\\ 
 \multicolumn{3}{l}{\ty \ ::=\ \basety
@@ -18,8 +18,8 @@
 \multicolumn{3}{l}{\mbox{(host-language values)}}\\ 
 \multicolumn{3}{l}{\data \ ::=} \\
 & \boolf \bnfalt \boolt & \mbox{booleans} \\
-\bnfalt & \astring \bnfalt \atime \bnfalt \loc \bnfalt \unit &
- \mbox{strings, times, locations, unit} \\
+\bnfalt & \astring \bnfalt \atime \bnfalt \loc &
+ \mbox{strings, times, locations} \\
 \bnfalt & \none \bnfalt 
                            \some{\data} & \mbox{optional values}\\
 \bnfalt & (\data_1,\data_2) & \mbox{pairs} \\
