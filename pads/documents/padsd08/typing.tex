@@ -144,10 +144,10 @@
 
 \[
 \infer[(\textit{t-let})]
-{\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\sigma_2}}
+{\Gamma \turn \letfeed{x}{e}{\feed} : \feedty{\sigma}}
 {
-  \Gamma \turn e_1 : \ty_1 & 
-  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\sigma_2} 
+  \Gamma \turn e : \ty & 
+  \Gamma,x{:}\ty \turn \feed : \feedty{\sigma} 
 }
 \]
 \caption{Feed Language Typing.}

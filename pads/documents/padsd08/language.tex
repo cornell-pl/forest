@@ -36,6 +36,8 @@ The core typing judgment, which has the form
 $\Gamma \turn \corefeed{} : \corety{\sigma}$, conveys the same
 information for core feeds.
 
+\input{typing}
+
 Intuitively, a feed carrying values of type $\sigma$ is a sequence of
 payload values of type $\sigma$.  However, to record provenance
 information, we pair each payload value with meta-data, so a feed is
@@ -91,109 +93,68 @@ Feed typing depends upon a standard judgment for
 typing lambda calculus expressions: $\Gamma \turn e : \ty$.  
 
 With these preliminaries, we can now discuss the syntax and typing for
-each feed construct in \figref{fig:syntax} in turn. 
+each of the feed constructs in \figref{fig:syntax}. 
 Core feeds express the structure of base feeds, describing
 the data sources ($\mathtt{src}$), schedule ($\mathtt{sched}$), window
-($\mathtt{win}$), preprocessing function ($\mathtt{pp}$), and file
-format ($\mathtt{format}$).  The source field may contain
+($\mathtt{win}$), preprocessing function ($\mathtt{pp}$) and file
+format ($\mathtt{format}$).  The source field describes the set of
+locations from which to fetch data.  It may contain
 pseudo-locations that model the $\mathtt{proc}$ form found in the
-implementation.  Instead of expressing time-out conditions in the
-schedule as we did in the source language, the calculus requires such
-conditions be specified separately in the window field, which simplifies
-the semantics.  The preprocessor and the format parser both map values
-with option type to option type, where the value \texttt{None}
-indicates a networking or data formatting error. (For the sake of
-simplicity, we do not model the variety of error codes that the
-implementation supports.)  Consequently, if a core feed intuitively
-describes values of type $\sigma$, the feed will actually return a
-sequence of values of type $\optionty{\sigma}$, allowing for the
-possibility of errors.  
+implementation.  Instead of having timeouts specified as part of
+schedules, as we did in the surface language, the calculus separates
+these two concepts into distinct fields, which simplifies the semantics.
+If an item specified to arrive at time $\atime$ by schedule $e_2$ fails
+to arrive within the window $e_3$, the feed pretends it received the
+value \texttt{None}.  Otherwise, it wraps the received data string in
+an option. As a result, the preprocessor $e_4$ maps a $\optionty{\stringty}$
+to a $\optionty{\stringty}$, where a result of \texttt{None} indicates
+either a network or preprocessing error.  Finally, the formatting
+function $e_5$ parses the output of the preprocessor to produce a 
+value of type $\optionty{\tau}$, where a \texttt{None} result
+indicates a network, preprocessing or formatting error. (For the sake
+of simplicity, we do not model the variety of error codes that the
+implementation supports.)  
 
 The feed $\mathtt{all}\ \corefeed$ selects all the data from the core
-feed \corefeed, while $\mathtt{any}\ \corefeed$ selects the first
-good value to arrive for each time in the schedule for \corefeed{}.
-It returns a \texttt{None} paired with appropriate meta-data if no
-such value exists.   
+feed \corefeed.  The feed $\mathtt{any}\ \corefeed$ selects the first
+good value to arrive from any location for each time in the schedule
+for \corefeed{}, returning \texttt{None} paired with appropriate
+meta-data if no such good value exists.    
 
 The empty feed ($\emptyset$) contains no elements and has polymorphic
 type a l\`a the empty list.  The singleton feed $\onefeed{e_v}{e_t}$
 constructs a feed containing a single value $e_v$ at a single time
-$e_t$.  The schedule feed $\sfeed{e}$ builds a stream of
-time values, one for each time on the schedule $e$.
+$e_t$.  The schedule feed $\sfeed{e}$ builds a feed whose elements 
+are the times in the schedule $e$.
 The union feed merges two feeds with the same type
 into a single feed.  In contrast, the sum feed takes two feeds
 with (possibly) different types and injects the elements of each feed
 into a sum before merging the results into a single feed.  
-The pair feed, written $(\feed_1, \feed_2)$, combines elements from
-the two nested feeds synchronously.  
+The pair feed, written $(\feed_1, \feed_2)$, combines the elements of
+the two nested feeds synchronously, matching elements that have the
+same {\em scheduled} time, regardless of when those elements
+actually {\em arrive}.
 The list feed $[\feed \bnfalt x \leftarrow e ]$, in contrast, provides
 $n$-way synchronization, where $n$ is the length of the input list
 $e$.  Each element $e_i$ in $e$ defines a feed $\feed_i = \feed[x \mapsto e_i]$.
-The list feed returns lists of elements, one element from each
-$\feed_i$, synchronized on the scheduled time.  The feed comprehension
-$\comprehensionfeed{\feed_2}{x}{\feed_1}$ computes a feed $\feed_2$
-for each entry $x$ in the source feed $\feed_1$.
-
-
-
-
-The computed feed ($\computed{e_1}{x}{e_2}$) allows programmers to
-generate a feed with schedule $e_2$ and elements $(\lambda x.e_1)\; \atime$,
-where $\atime$ is drawn from the schedule. Likewise, the feed 
-comprehension ($\comprehensionfeed{e}{x}{\feed}$) creates a
-feed with elements $(\lambda x.e)\; v$ when $v$ is an element of $\feed$.
-The feed
-$\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
-$e\; v$ is $\boolf$.  Let feeds $\letfeed{x}{e_1}{\feed_2}$
+For each time $\atime$ with a value $v_i$ in each feed $\feed_i$, the
+list feed returns the list $[v_1, \ldots, v_n]$.  Note that if the
+$\feed_i$ feeds share a schedule $s$, then each feed will have a value
+for every time in the schedule $s$, even in the presence of errors, so
+the synchronization will succeeed at each time in the schedule $s$.
+The feed comprehension $\comprehensionfeed{\feed_2}{x}{\feed_1}$
+creates a feed with elements $\feed_2[x \mapsto v]$ when $v$ is an
+element of $\feed_1$. Note that the entry $v$ is a pair of meta-data
+(with type $\metatype{\sigma}$) and payload data (with type $\sigma$).
+The feed $\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
+$e\; v$ is $\boolf$.  Let feeds $\letfeed{x}{e}{\feed}$
 provide a convenient mechanism for binding intermediate values. 
-
-\input{typing}
-
-
-The calculus also contains three different
-pair constructors, each providing a different way to
-combine elements from the subcomponent feeds.  The first pair, 
-written $(\feed_1, \feed_2)$, is a {\em synchronous pair}.
-Elements of $\feed_1$ are paired with elements of $\feed_2$
-that are {\em scheduled} at exactly the same time, regardless of when those elements
-actually {\em arrive}.  Synchronous pairs are most useful when the underlying
-subcomponent feeds share the same schedule, as in the Arrakis example
-from Section~\ref{sec:informal}.  Synchronous pairs lack a
-dependent variant, however, because in our domain it is not sensible
-to schedule the acquisition of an element that depends upon another
-element scheduled at the same time.  To express dependencies, we 
-use two forms of dependent pair, {\em continuous} and {\em local}.
-In the continuous variant, each element $x$ of $\feed_1$ is paired 
-with all elements of the feed $\feed_2$ that depend on $x$.  In the
-local variant, each element $x$ of $\feed_1$
-is paired with all elements of the feed $\feed_2$ {\em until the next
-element $y$ of $\feed_1$ is scheduled}.  
-The denotational semantics, presented
-in the next subsection, makes this idea precise.  Local pairing
-enables a paradigm in which programmers define an infinite feed $\feed_2$
-that gets truncated and regenerated whenever a new element in $\feed_1$
-is scheduled.
-
-
-The final elements of the calculus include the $\mathtt{foreach}$ feeds
-and the list comprehension feed.
-Intuitively, a $\mathtt{foreach}$ is identical to a dependent pair in
-which the first element of the pair is omitted from the data representation.
-Consequently, there are two forms of $\mathtt{foreach}$ -- one for
-each form of dependent pair.  The notation ${*}$ or ${**}$ serves as
-a syntactic mnemonic for the connection.  The list comprehension
-feed generates a feed of lists where each element of the list is
-scheduled at the same time.  It is akin to the synchronous pair
-operation. 
-
-
-%\input{semantics1}
 
 \input{semantics2}
 
 \subsection{Feed Semantics}
 We give the semantics of our formal feed language in 
-a denotational style.  The principal semantic functions are
+a denotational style in \figref{fig:semantics}.  The principal semantic functions are
 $\csemantics{\corefeed}{\environment}{\universe}$ and
 $\semantics{\feed}{\environment}{\universe}$, defining core feeds and
 feeds, respectively.  In these definitions,
@@ -202,158 +163,155 @@ and $\universe$ is a {\em universe} mapping pairs of
 schedule time and location to arrival time and a string option
 representing the actual data.
 Intuitively, the universe models the network.
-When $\universe (\atime_1, \ell) = (\atime_2, \mathtt{Some} \; \astring)$,
+When $\universe (\atime_s, \ell) = (\atime_a, \mathtt{Some} \; \astring)$,
  the interpretation is that if the run-time system requests data
-from location $\ell$ at time $\atime_1$ then string data $\astring$
-will be returned at time $\atime_2$.  The time $\atime_2$ must be
-no earlier than $\atime_1$.
-When $\universe (\atime_1, \ell) = (\infty, \mathtt{None})$,
+from location $\ell$ at time $\atime_s$ then string data $\astring$
+will be returned at time $\atime_a$.  The time $\atime_a$ must be
+no earlier than $\atime_s$.
+When $\universe (\atime_s, \ell) = (\infty, \mathtt{None})$,
 networking errors have made location $\ell$ unreachable.
 
-The semantic functions yield a set of meta-data/data pairs, where the 
-meta-data is coded as follows.
-\textbf{begin new}
-
-\textbf{end new}
-%   The meta-data 
-% we model is somewhat simplified relative to the implementation.
-% The meta-data for base feeds includes both the scheduled time of the
-% associated data item and its location of origin -- such 
-% information is also often referred to as the data's 
-% {\em provenance}~\cite{provenancestuff}.  As shown
-% below, the meta-data for pair 
-% and sum feeds is structured similarly to the data items themselves.  
-%
-\[
-\begin{array}{lcll} 
-\meta & ::=     
-& (\atime,\loc) & \mbox{base meta-data} \\
-& \bnfalt & (\atime,(\meta_1,\meta_2)) & \mbox{pair meta-data} \\
-& \bnfalt & (\atime,\inl{\meta}) & \mbox{sum meta-data} \\
-& \bnfalt & (\atime,\inr{\meta}) & \mbox{sum meta-data} \\
-& \bnfalt & (\atime,[\meta_1,\ldots,\meta_k]) & \mbox{list meta-data} \\
-\end{array}
-\]  
-%
-Since every meta-data item contains a top-level time $\atime$, that
+\cut{
+Both semantic functions yield a set of (meta-data, payload) pairs,
+as we saw in the previous section.
+Every meta-data item contains a top-level time $\atime$ that
 time can be used to serialize the set of items as a stream, and 
 our implementation does just that.  Items scheduled at the
 same time may appear in any order in the implementation's
-serialized stream.  To refer to the top-level time in any meta-data
-item $\meta$, we write $\mytime{\meta}$. 
+serialized stream.  }
 
-Figure~\ref{fig:semantics} presents the semantic definitions for ${\cal
-  C}$ and ${\cal F}$, using conventional set-theoretic notations.
-The semantics depends upon a semantics for the simply-typed host
-language, written $\esemantics{e}{\environment}$, whose definition we
-omit. We assume that given environment $\environment$ with type
-$\Gamma$ and expression $e$ with type $\tau$ in $\Gamma$,
+The semantic definitions for ${\cal C}$ and ${\cal F}$ use
+conventional set-theoretic notations.  They depend upon a
+semantics for the simply-typed host language, written
+$\esemantics{e}{\environment}$, whose definition we omit. We assume
+that given environment $\environment$ with type $\Gamma$ and
+expression $e$ with type $\tau$ in $\Gamma$,
 $\esemantics{e}{\environment} = v$ and $\turn v : \tau$.
 
-The meaning of core feed \corefeed{} is a pair consisting of the
-meaning of the schedule of \corefeed{} (written $S$) and the set of
-meta-data/data pairs for the feed. To calculate this data, the
-\texttt{timeout} function checks whether the item arrival time
-$x_{at}$ is within the window ($\esemantics{e_{win}}{\environment}$)
+The meaning of core feed \corefeed{} is the set of
+(meta-data, payload) pairs for the feed.  To construct this set, the
+function first computes the set of times in the schedule $S$, the
+length of the window $W$, and the set of source locations $L$.  It
+uses the \texttt{timeout} function to check whether the item arrival time
+$x_{at}$ is within the window $W$
 of the scheduled time ($x_t \in S$), returning \texttt{None} if
 not. Otherwise, \texttt{timeout} returns its data argument ($x_s$),
-which may be {\tt None} because of other networking errors.  Using the
+which may be {\tt None} because of other networking errors.  
+Similarly, the \texttt{arrival} function returns the arrival time
+$\texttt{Some}\ x_{at}$ if the item arrived within the window and 
+\texttt{None} otherwise. The function \texttt{meta} uses the 
+\texttt{arrival} function to construct the meta-data for the item,
+consisting of the scheduled time $\atime$, the dependency set of the scheduled
+time and  source location $\{(\atime, \loc)\}$, and the nested
+meta-data, which includes the scheduled 
+time $\atime$, the source location $\loc$, and the actual arrival time
+$\texttt{arrival(\atime,\universe(\atime,\loc)}$. (This apparent
+redundancy in the meta-data goes away with non-core feeds.) 
+Using the
 \texttt{timeout} function, we define an alternate universe
-$\universe'$ that retrieves data from the outside world, checks for a
+$\universe'$ that retrieves data from the outside world using the
+original universe $\universe$, checks for a
 timeout, and applies the preprocessor
-($\esemantics{e_{pp}}{\environment}$) before returning.  The feed data
-is then pairs of base meta-data $(\atime,\ell)$ with data defined by
-$\esemantics{e_{f} \; (\universe'(\loc,\atime))}{\environment}$ where
-$e_f$ is the \pads{}-generated parser.
+($\esemantics{e_{pp}}{\environment}$) before returning.  
+The \texttt{val} function applies the formating function 
+$\esemantics{e_{f}}{\environment}$ to the entry returned at time
+$\atime$ for location $\loc$ in alternative universe $\universe'$.
+Finally, the result is the set of all pairs of meta-data and payload
+produced from each time $\atime$ in the schedule $S$ and location $\loc$
+in the set $L$.
 
+The semantics of the $\mathtt{all}\ \corefeed$ is simply the semantics
+of the underlying core feed.
+The semantics of the $\mathtt{any}\ \corefeed$ feed selects for each
+time $\atime$ in the schedule $S$ of the core feed $\corefeed$ the
+earliest good payload value from any location if one exists, or
+\texttt{None} otherwise.  It then returns the set of all such values
+$v_t$, paired with the appropriate meta-data.  
+To compute this set, the function first computes
+the meaning $A$ of the core feed $\corefeed{}$.  It extracts the
+schedule $S$ from the meta data in $A$.  For each time $\atime$ in the
+schedule, it computes the set $A_t$ of (meta-data, payload) pairs
+fetched at time $\atime$.  For each such set, it computes the
+dependency set $DS_t$, which collects the dependencies of all the
+items fetched at time $\atime$.  The set $G_t$ collects all the good
+items from $A_t$. If this set is non-empty, we use the function 
+$\selectOne$ to choose the (meta-data, payload) pair $(m,v)$ with the
+earliest arrival time from $G_t$.  (We assume that there is always one
+such earliest item.)  In this case, we set the nested
+meta-data $nest_t$ to be the nested meta-data of $m$, and the payload
+value $v_t$ to be $v$.  If the set of good values is empty, then we set the nested
+meta-data to indicate that at time $\atime$, we created (location =
+$\generatedloc$) a payload value that had no actual
+arrival time \texttt{None}.  In this case, the payload value $v_t$ is
+just \texttt{None}. 
 
+The meaning of the empty feed is the empty set.  
+The meaning of the singleton feed $\onefeed{e_v}{e_t}$ is a single
+pair, the payload portion of which is the meaning of $e_v$.  The
+meta-data indicates $e_t$ is the scheduled time, the dependency
+set is empty, the data came from $\generatedloc$ (a dummy location
+indicating that the value was generated internally), and the arrival time
+matched the scheduled time. 
+A schedule feed $\sfeed{e}$ yields a feed with one payload value for
+each $\atime$ in the meaning of the schedule $e$.  The corresponding
+meta-data follows the same pattern as for the singleton feed.  
+The union feed is simply the set-theorectic union of its constituent
+feeds. The sum feed injects the elements of its constituent
+feeds into a sum and likewise takes their union.  It also constructs
+compound meta-data from the meta-data of the consituent feeds in the
+obvious way.
 
-The semantics of both the $\mathtt{all}\ \corefeed$ and the
-$\mathtt{any}\ \corefeed$ feeds first computes the meaning $(S,A)$ of the
-core feed $\corefeed{}$.  The \texttt{all} feed simply returns the
-data component $A$.  The \texttt{any} feed returns a set with one
-element for each time $\atime$ in the schedule $S$.  If the data $A$
-contains at least one good value at time $t$, the \texttt{any} feed
-picks the earliest arriving member of this set, using the function
-$\selectOne{}$.  Otherwise, the feed adds  
-error value $((\atime,\generatedloc), \none)$ for $\atime$.
+The pair feed $(\feed_1,\feed_2)$ is formed by finding for each time
+$\atime$ all elements
+of $\feed_1$ at a time $\atime$ (including erroneous elements) and all
+elements of $\feed_2$ at time $\atime$ (again including erroneous
+elements) and generating their Cartesian product.  Notice that 
+if the schedules do not intersect, the pair feed will empty.  The
+meta-data is constructed by combining the meta-data for the paired
+feeds.
+The semantics of the list feed $[\feed \bnfalt x \leftarrow e ]$ is
+similar to that of the pair feed except the synchronization is $n$-way
+instead of pairwise, where $n$ is the length of the list $e$. 
 
-The meaning of the empty feed is the empty set.  Computed feeds yield
-one value per time in the given schedule.  The dummy location
-($\generatedloc$) in the computed feed meta-data indicates the value had no physical
-source.  Feed comprehensions also use the dummy location.  The filter feed and feed
-comprehensions together model the full power of the feed
-comprehensions found in our implementation. The semantics for
-\texttt{let}, union and sum feeds are all straightforward.  The union
-feed is simply the set-theorectic union of its constituent feeds.  The
-sum feed injects the elements of its constituent feeds into a sum and
-likewise takes their union.
+The feed comprehension $\comprehensionfeed{\feed_2}{x}{\feed_1}$
+contains payload values $v_2$ taken from the meaning of feed $\feed_2$
+when $x$ is mapped to (meta-data, payload) pairs drawn from the meaning
+of feed $\feed_1$.  The dependency set for the feed
+comprehension includes the dependency sets of {\em both} $\feed_1$ and
+$\feed_2$. 
+The filter feed $\filterfeed{\feed}{e}$ selects those
+(meta-data, payload) pairs from 
+the meaning of $\feed$  that satisfy the predicate $e$.
+Finally, the let feed $\letfeed{x}{e}{\feed}$ returns the meaning
+of feed $\feed$ when $x$ is mapped to the meaning of $e$. 
 
-We must take more care when defining the semantics of pairs.  The
-synchronous pair $(\feed_1,\feed_2)$ is formed by finding all elements
-of $\feed_1$ at a given time (including erroneous elements) and all
-elements of $\feed_2$ at that time (again including erroneous
-elements) and generating their Cartesian product.  Notice that if
-the schedules do not intersect, a synchronous pair will empty.
-%Meta-Data from constituent feeds is paired together.
-The scheduled time of the composite item is the same as the scheduled
-times of the two underlying feeds. 
-
-The elements of the continuous dependent pair ($x{:}\feed_1 *
-\feed_2$) are calculated by first determining the elements of
-$\feed_1$.  For each element $v$ in $\feed_1$, we calculate the
-elements of $\feed_2$ by binding $x$ to $v$ in $\feed_2$'s definition.
-The elements of the composite feed include all elements $x$ of
-$\feed_1$ paired with the corresponding elements of $\feed_2$
-scheduled later than $x$.  As with synchronous pairs, we pair the
-meta-data from the constituent feeds in the composite feed. Unlike 
-synchronous pairs, the two elements of the pair
-do not share a schedule time.  We adopt the later time ({\em
-  i.e.,} the time of the element from $\feed_2$) as the schedule time
-for the composite feed element.
-
-Continuous and local dependent pairs differ in that local dependent
-pairs suppress further data dependent upon item $v_1$ from $\feed_1$
-when the next item $v_1'$ from feed $\feed_1$ arrives.  In the
-semantics, the existence of another element $(\meta_1',v_1')$
-in $\feed_1$ after $(\meta_1,v_1)$ implies that the 
-schedule time for the item under consideration in $\feed_2$ ($v_2$) 
-must fall between the schedule times for $v_1$ and $v_1'$
-(otherwise $v_2$ is not included in the final composite feed). 
-
-The semantics for the two variants of $\mathtt{foreach}$ are defined
-in terms of the two variants of dependent pairs, simply dropping the
-first component of each item in the pair feed in both cases.  The semantics
-of the list comprehension feed extends the semantics of synchronous
-pairs to lists: each list in the resulting feed contains the elements
-of the generated list with the same scheduled time.
-
+\subsection{Soundness}
 We have proven a soundness theorem for the semantics: the values
-contained in each feed are pairs of meta-data and data 
-values with the appropriate type.  More specifically, if the feed typing
+contained in the semantics of each feed are (meta-data, payload) pairs
+with the appropriate type.  More specifically, if the feed typing
 rules give feed $\feed$ type $\feedty{\sigma}$, 
-then its data has type $\sigma$ and
-its meta data has type $\metatype{\sigma}$ where $\metatype{\sigma}$ is
-defined as follows.
-\[
-\begin {array} {lcl}
-\metatype{\ty} & = & \timety * \locty \\
-\metatype{\optionty{\ty}} & = & \timety * \locty \\
-\metatype{\sigma_1 * \sigma_2} & = & \timety * (\metatype{\sigma_1} * \metatype{\sigma_2}) \\
-\metatype{\sigma_1 + \sigma_2} & = & \timety * (\metatype{\sigma_1} + \metatype{\sigma_2}) \\
-\metatype{\listty{\sigma}} & = & \timety * (\listty{\metatype{\sigma}}) \\
-\end{array}
-\]
-%We state this property formally as follows.
+then its data has type $\sigma$ and its meta data has type $\metatype{\sigma}$.
+We state this property formally as follows.
+
 \begin{theorem}[Semantic Soundness]
-If $\Gamma \turn \feed : \feedty{\sigma}$ and
+\begin{itemize}
+\item If $\Gamma \turn \feed : \feedty{\sigma}$ and
 for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
 and $\turn \universe : \timety * \locty \arrow \timety * (\optionty{\stringty})$
 then
 for all $(\meta,v) \in \semantics{\feed}{\environment}{\universe}$,
 $\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
+\item If $\Gamma \turn \corefeed : \corety{\sigma}$ and
+for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
+and $\turn \universe : \timety * \locty \arrow \timety * (\optionty{\stringty})$
+then
+for all $(\meta,v) \in \csemantics{\corefeed}{\environment}{\universe}$,
+$\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
+\end{itemize}
 \end{theorem}
 The proof follows by induction on the structure of $\feed$.
+
+\textbf{We need to add text here explaining these defintions and why they are important.}
 
 \begin{definition}[Equal Universes Relative to a Dependency Set]
 $\ueq{\universe_1}{\ds}{\universe_2}$ if and only if for all
@@ -379,14 +337,7 @@ If $\ueq{\universe_1}{\ds}{\universe_2}$ then
 $\feq{\semantics{\feed}{\environment}{\universe_1}}{\ds}{\semantics{\feed}{\environment}{\universe_2}}$
 \end{theorem}
 
-The proof of dependency correctness is by induction on the structure of feeds.  I
-checked out a couple of cases to see how the proof goes and it seemed plausible to
-me that I would be able to prove it completely.   
-Then I fleshed out all the rules.  I need to proof-read the rules and then go back
-and do the full proof start-to-finish.  However, the proof could definitely
-fail for the cases of pairs and lists -- I think those cases will need to be revised,
-but as of writing this note (1pm feb 19) I haven't had a chance to go back.  
-
+The proof of dependency correctness is by induction on the structure of feeds.  
 
 
 

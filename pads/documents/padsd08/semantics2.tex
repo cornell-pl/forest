@@ -37,14 +37,14 @@
       \lambda (\atime,\loc).
        (\atime,\{(\atime,\loc)\}, (\atime,\loc,\mathtt{arrival}(\atime,\universe(\atime,\loc))))
 \\
- && \qquad \mathtt{val} =
-      \lambda (\atime, \loc).
-             \esemantics{e_f\; (\universe'(\atime, \loc))}{\environment}
- \\
 && \qquad \universe' =
      \lambda (\atime, \loc). 
            \esemantics{e_{pp}}{\environment}\, 
                  (\mathtt{timeout}\, (\atime,\universe (\atime,\loc))) 
+ \\
+ && \qquad \mathtt{val} =
+      \lambda (\atime, \loc).
+             \esemantics{e_f}{\environment}\; (\universe'(\atime, \loc))
 
 \\
 
@@ -152,8 +152,8 @@
             \esemantics{e \; (\meta,v)}{\environment} = \mathtt{true}
 \}
 \\\\
-\semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
- &=& \semantics{\feed_2}{(\environment,x\mapsto\esemantics{e_1}{\environment})}{\universe} 
+\semantics{\letfeed{x}{e}{\feed}}{\environment}{\universe} 
+ &=& \semantics{\feed}{(\environment,x\mapsto\esemantics{e}{\environment})}{\universe} 
 \\
 \end{array}
 \]
