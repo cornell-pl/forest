@@ -18,7 +18,7 @@
       \mathtt{pp=} e_4;\
       \mathtt{ format=} e_5; 
    \} 
-   : \schedulety * (\feedty{\optionty{\ty}})
+   : \corety{\optionty{\ty}}
  \end{array}
 }
 {
@@ -40,7 +40,7 @@
 }
 {
  \begin{array}{c}
-  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+  \Gamma \turn \corefeed{} : \corety{\sigma}
  \end{array}
 }
 \]
@@ -53,7 +53,7 @@
 }
 {
  \begin{array}{c}
-  \Gamma \turn \corefeed{} : \schedulety * (\feedty{\sigma})
+  \Gamma \turn \corefeed{} : \corety{\sigma}
  \end{array}
 }
 \]
@@ -65,40 +65,28 @@
 \]
 
 \[
-\infer[(\textit{t-compute})]
-{\Gamma \turn \computed{e_1}{x}{e_2} : \feedty{\ty}}
-{
-  \Gamma \turn e_2 : \schedulety &
-  \Gamma,x{:}\timety \turn e_1 : \ty 
+\infer[(\textit{t-one})]
+{\Gamma \turn \onefeed{e_v}{e_t} : \feedty{\tau}}
+{\Gamma \turn e_v : \tau
+ \qquad
+ \Gamma \turn e_t : \timety
 }
 \]
 
 \[
-\infer[(\textit{t-comph})]
-{\Gamma \turn \comprehensionfeed{e}{x}{\feed} : \feedty{\ty}}
-{
-  \Gamma \turn \feed :  \feedty{\sigma} &
-  \Gamma,x{:}\sigma \turn e : \ty 
+\infer[(\textit{t-schedule})]
+{\Gamma \turn \sfeed{e} : \feedty{\timety}}
+{\Gamma \turn e : \schedulety
 }
 \]
 
-\[
-\infer[(\textit{t-filter})]
-{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\sigma}}
-{
-  \Gamma \turn \feed : \feedty{\sigma} &
-  \Gamma \turn e : \sigma \arrow \boolty
-}
-\]
 
-\[
-\infer[(\textit{t-let})]
-{\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\sigma_2}}
-{
-  \Gamma \turn e_1 : \ty_1 & 
-  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\sigma_2} 
-}
-\]
+%% \[
+%% \infer[(\textit{t-list})]
+%% {\Gamma \turn \lfeed{e} : \feedty{\tau}}
+%% {\Gamma \turn e : \listty{\tau}
+%% }
+%% \]
 
 \[
 \infer[(\textit{t-union})]
@@ -119,7 +107,7 @@
 \]
 
 \[
-\infer[(\textit{t-synch-pair})]
+\infer[(\textit{t-pair})]
 {\Gamma \turn (\feed_1, \feed_2)  : \feedty{\sigma_1 * \sigma_2}}
 {
   \Gamma \turn \feed_1 : \feedty{\sigma_1} &
@@ -127,91 +115,8 @@
 }
 \]
 
-% \[
-% \infer[(\textit{t-local-pair})]
-% {\Gamma \turn \feed_1 * \feed_2  : \feedty{\sigma_1 * \sigma_2}}
-% {
-%   \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-%   \Gamma \turn \feed_2 : \feedty{\sigma_2}
-% }
-% \]
-
 \[
-\infer[(\textit{t-cont-pair})]
-{\Gamma \turn x{:}\feed_1 * \feed_2  : \feedty{\sigma_1 * \sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-\[
-\infer[(\textit{t-local-pair})]
- {\Gamma \turn x{:}\feed_1 \allpairfeed \feed_2  : \feedty{\sigma_1 * \sigma_2}}
- {
-   \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-   \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
- }
-\]
-
-\[
-\infer[(\textit{t-foreachcont})]
-{\Gamma \turn \foreachcreate{x}{\feed_1}{\feed_2}  : \feedty{\sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-\[
-\infer[(\textit{t-foreachlocal})]
-{\Gamma \turn \foreachupdate{x}{\feed_1}{\feed_2}  : \feedty{\sigma_2}}
-{
-  \Gamma \turn \feed_1 : \feedty{\sigma_1} &
-  \Gamma,x{:}\sigma_1 \turn \feed_2 : \feedty{\sigma_2}
-}
-\]
-
-
-% \[
-% \infer[(\textit{t-pp})]
-% {\Gamma \turn \ppfeed{\feed}{e} : \feedty{\ty}}
-% {
-%   \Gamma \turn \feed : \feedty{\ty} &
-%   \Gamma \turn e : ((\locty * \timety) * \stringty) \arrow \stringty
-% }
-% \]
-
-% \[
-% \infer[(\textit{t-redirect})]
-% {\Gamma \turn \remapfeed{\feed}{e} : \feedty{\ty}}
-% {
-%   \Gamma \turn \feed : \feedty{\ty} &
-%   \Gamma \turn e : \locty * \timety \arrow \locty * \timety
-% }
-% \]
-
-%% \[
-%% \infer[(\textit{t-reschedule})]
-%% {\Gamma \turn \refeed{\feed}{e} : \feedty{\optionty{\ty}}}
-%% {
-%%   \Gamma \turn \feed : \feedty{\ty} &
-%%   \Gamma \turn e : \schedulety
-%% }
-%% \]
-
-%% \[
-%% \infer[(\textit{t-stutter})]
-%% {\Gamma \turn \stutterfeed{\feed}{e} : \feedty{\ty}}
-%% {
-%%   \Gamma \turn \feed : \feedty{\ty} &
-%%   \Gamma \turn e : \schedulety
-%% }
-%% \]
-
-
-\[
-\infer[(\textit{t-listf})]
+\infer[(\textit{t-list})]
 {\Gamma \turn [\feed \bnfalt x \leftarrow e ]  : \feedty{\listty{\sigma}}}
 {
   \Gamma \turn e : \listty{\tau} &
@@ -219,6 +124,32 @@
 }
 \]
 
+\[
+\infer[(\textit{t-comp})]
+{\Gamma \turn \comprehensionfeed{\feed_2}{x}{\feed_1} : \feedty{\sigma}}
+{
+  \Gamma \turn \feed_1 :  \feedty{\sigma} &
+  \Gamma,x{:}\metatype{\sigma} * \sigma \turn \feed_2 : \feedty{\sigma} 
+}
+\]
+
+\[
+\infer[(\textit{t-filter})]
+{\Gamma \turn \filterfeed{\feed}{e} : \feedty{\sigma}}
+{
+  \Gamma \turn \feed : \feedty{\sigma} &
+  \Gamma \turn e : (\metatype{\sigma} * \sigma) \arrow \boolty
+}
+\]
+
+\[
+\infer[(\textit{t-let})]
+{\Gamma \turn \letfeed{x}{e_1}{\feed_2} : \feedty{\sigma_2}}
+{
+  \Gamma \turn e_1 : \ty_1 & 
+  \Gamma,x{:}\ty_1 \turn \feed_2 : \feedty{\sigma_2} 
+}
+\]
 \caption{Feed Language Typing.}
 \label{fig:typing}
 \end{figure}

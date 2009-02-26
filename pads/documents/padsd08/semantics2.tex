@@ -6,47 +6,73 @@
 \begin{array}{lcl}
 
     {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
- &=& (S, \{((\atime,\loc), \esemantics{e_f\; (\universe'(\loc,\atime))}{\environment}))
+ &=& \{( \mathtt{meta} (\atime,\loc), \mathtt{val} (\atime,\loc))
           \setalt \atime \in S
-          \;\mbox{and}\; \loc \in  \esemantics{e_{src}}{\environment}
-     \})
+          \;\mbox{and}\; \loc \in  L
+     \}
 \\
  \quad\ \   \mathtt{sched=} e_{sched};
 &&\quad\mbox{where} \\
  \quad\ \  \mathtt{win=} e_{win};
 && \qquad S = \esemantics{e_{sched}}{\environment} \\
  \quad\ \  \mathtt{pp=} e_{pp};
-&& 
-\qquad \mathtt{timeout} =  
+&& \qquad W = \esemantics{e_{win}}{\environment}\\
+ \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \,
+   {\universe}}
+&& \qquad L = \esemantics{e_{src}}{\environment}
+\\
+&& \qquad \mathtt{timeout} =  
      \lambda (x_t,(x_{at},x_s)).
-        \mathtt{if}\, x_{at} \leq x_t + \esemantics{e_{win}}{\environment} \,
+        \mathtt{if}\, x_{at} \leq x_t + W \,
         \mathtt{then}\,  x_s \, \mathtt{else} \, \mathtt{None} 
+\\
+&& 
+\qquad \mathtt{arrival} =  
+     \lambda (x_t,(x_{at},x_s)).
+        \mathtt{if}\, x_{at} \leq x_t + W \,
+        \mathtt{then}\,  \mathtt{Some}\, x_{at} \, \mathtt{else} \, \mathtt{None} 
  \\
- \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \, {\universe}}
+&& 
+\qquad \mathtt{meta} =  
+      \lambda (\atime,\loc).
+       (\atime,\{(\atime,\loc)\}, (\atime,\loc,\mathtt{arrival}(\atime,\universe(\atime,\loc))))
+\\
+ && \qquad \mathtt{val} =
+      \lambda (\atime, \loc).
+             \esemantics{e_f\; (\universe'(\atime, \loc))}{\environment}
+ \\
 && \qquad \universe' =
-     \lambda (x_{\ell}, x_t). 
+     \lambda (\atime, \loc). 
            \esemantics{e_{pp}}{\environment}\, 
-                 (\mathtt{timeout}\, (x_t,\universe (x_\ell,x_t))) 
+                 (\mathtt{timeout}\, (\atime,\universe (\atime,\loc))) 
+
+\\
+
+
+
 \\\\
 
-\semantics{\mathtt{all}\ \corefeed}{\universe}{\environment} 
+\semantics{\mathtt{all}\ \corefeed}{\environment}{\universe} 
 &=& 
-A\ \ \ \mbox{where}\ (S,A) = \csemantics{C}{\universe}{\environment}
+\csemantics{C}{\environment}{\universe}
 \\\\
 
 
 %New version: any rule
-\semantics{\mathtt{any}\ \corefeed}{\universe}{\environment} 
-& = & \{ i_t\ |\ \atime \in S\}\\
+\semantics{\mathtt{any}\ \corefeed}{\environment}{\universe}
+& = & \{ ((\atime, DS_\atime, {nest}_\atime), v_\atime)\ |\ \atime \in S\}\\
 &&
 \begin{array}{l}
  \begin{array}{ll@{\hspace{1ex}}c@{\hspace{1ex}}l}
- \mbox{where} & (S,A)   & = &\csemantics{C}{\environment}{\universe}\\
-              & A_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
-              & i_\atime & = & \left\{ \begin{array}{lll}
-                                           \mbox{\selectOne}(A_\atime) & \mbox{if} & |A_\atime| > 0\\
-                                           ((\atime,\generatedloc), \none) & \mbox{if} & |A_\atime| = 0 \\
-                                           \end{array} \right.\\
+ \mbox{where} & A        & = &\csemantics{C}{\environment}{\universe}\\
+              & S        & = & \{\mytime{\meta}\ |\ (\meta, v) \in A\}\\
+              & A_\atime & = & \{(\meta,v)\ | \ (\meta, v) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+              & DS_\atime & = & \bigcup_{(\meta,v) \in A_\atime} \myds{\meta} \\
+              & G_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A_\atime\}\\
+              & ({nest}_\atime,v_\atime) & = & \left\{ \begin{array}{lll}
+                                           (\myval{\meta},v)\; \mbox{where} \; (\meta,v) = \mbox{\selectOne}(G_\atime)  & \mbox{if} & |G_\atime| > 0\\
+                                           ((\atime,\generatedloc,\none), \none) & \mbox{if} & |G_\atime| = 0 \\
+                                           \end{array} \right.
  \end{array}
 \end{array} 
 %%End New version: any rule
@@ -55,26 +81,24 @@ A\ \ \ \mbox{where}\ (S,A) = \csemantics{C}{\universe}{\environment}
 \semantics{\emptyfeed}{\environment}{\universe} 
  &=& \{\;\}
 \\\\
-\semantics{\computed{e_1}{x}{e_2}}{\environment}{\universe} 
- &=& \{((\atime,\generatedloc), \esemantics{(\lambda x.e_1) \; \atime}{\environment}) 
-          \setalt \atime \in  \esemantics{e_2}{\environment} 
-     \} 
+\semantics{\onefeed{e_v}{e_t}}{\environment}{\universe} 
+ &=& \{
+   ((\esemantics{e_t}{\environment},
+    \{\;\}, 
+       (\esemantics{e_t}{\environment},\generatedloc,
+         \mathtt{Some}\;\esemantics{e_t}{\environment})),
+    \esemantics{e_v}{\environment})\}
 \\\\
-\semantics{\comprehensionfeed{e}{x}{\feed}}{\environment}{\universe} 
- &=& \{((\mytime{\meta},\generatedloc), \esemantics{(\lambda x.e) \; v}{\environment}) 
-          \setalt (\meta,v) \in  \semantics{\feed}{\environment}{\universe}  
-     \} 
+\semantics{\sfeed{e}}{\environment}{\universe} 
+ &=& \{((\atime,\{\;\},(\atime,\generatedloc,\mathtt{Some}\; \atime)), \atime) 
+          \setalt \atime \in  \esemantics{e}{\environment} 
+     \}
 \\\\
-\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
- &=&
-\{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-            \esemantics{e \; v}{\environment} = \mathtt{true}
-\}
-\\\\
-\semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
- &=& \semantics{\feed_2}{(\environment,x\mapsto\esemantics{e_1}{\environment})}{\universe} 
-\\\\
-
+%% \semantics{\lfeed{e}}{\environment}{\universe} 
+%%  &=& \{((\atime,\{\},\generatedloc), \atime) 
+%%           \setalt \atime \in  \esemantics{e}{\environment} 
+%%      \}
+%% \\\\
 \semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
  &=& \semantics{\feed_1}{\environment}{\universe} 
      \bigcup
@@ -82,18 +106,22 @@ A\ \ \ \mbox{where}\ (S,A) = \csemantics{C}{\universe}{\environment}
 \\\\
 \semantics{\feed_1 \sumfeed \feed_2}{\environment}{\universe} 
  &=& \{
-      ((\mytime{\meta},\inl{\meta}),\inl{v}) \setalt 
+      ((\mytime{\meta},\myds{\meta},\inl{\myval{\meta}}),\inl{v}) \setalt 
         (\meta,v) \in \semantics{\feed_1}{\environment}{\universe} 
-     \}
-     \bigcup
+     \} \bigcup
+ \\
+&&
      \{
-      ((\mytime{\meta},\inr{\meta}),\inr{v}) \setalt 
+      ((\mytime{\meta},\myds{\meta},\inr{\myval{\meta}}),\inr{v}) \setalt 
         (\meta,v) \in \semantics{\feed_2}{\environment}{\universe}
      \}
 \\\\
 \semantics{(\feed_1, \feed_2)}{\environment}{\universe} 
  &=&
- \{((\mytime{\meta_1},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
+ \{((\mytime{\meta_1},\myds{\meta_1}\cup\myds{\meta_2}, (\myval{\meta_1},\myval{\meta_2})),(v_1,v_2)) 
+  \setalt 
+\\
+&& \quad
      (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
      \; \mbox{and} \; 
      (\meta_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
@@ -101,154 +129,31 @@ A\ \ \ \mbox{where}\ (S,A) = \csemantics{C}{\universe}{\environment}
      \mytime{\meta_1} = \mytime{\meta_2}
   \}
 \\\\
-% \semantics{\feed_1 * \feed_2}{\environment}{\universe} 
-%  &=&
-%  \{(\atime_2,(v_1,v_2)) \setalt 
-%      (\atime_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-%      \; \mbox{and} \; 
-% \\&&\qquad\qquad\qquad\ \ \,
-%      (\atime_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
-%      \; \mbox{and} \;
-% \\&&\qquad\qquad\qquad\ \ \,
-%      ((\atime_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
-%       \; \mbox{implies} \; (t_1' \leq t_1 \; \mbox{or} \; t_1' > t_2)) 
-%   \}
-% \\\\
-\semantics{x{:}\feed_1 * \feed_2}{\environment}{\universe} 
- &=&
- \{(\mytime{\meta_2},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
-     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-     \; \mbox{and} \; 
-\\&&\qquad\qquad\qquad\qquad\qquad\qquad\ \ \,
-     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
-     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1}
-  \}
-\\\\
-\semantics{x{:}\feed_1 \, {*}{*} \, \feed_2}{\environment}{\universe} 
- &=&
- \{(\mytime{\meta_2},(\meta_1,\meta_2)),(v_1,v_2)) \setalt 
-     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-     \; \mbox{and} \; 
-\\&&\qquad\qquad\qquad\qquad\qquad\qquad\ \ \,
-     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
-     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1}
-\\&&\qquad\qquad\qquad\qquad\qquad\qquad\ \ \,
-     ((\meta_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
-      \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
-            \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2})) 
-  \}
-\\\\
-%%OLD foreach update
-%%{\cal F}\lsem
-%%\mathtt{foreach{*}}\; x \; \mathtt{in}\; \feed_1 
-%%%\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
-%% &=&
-%% \{(\meta_2,v_2) \setalt 
-%%     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-%%     \; \mbox{and} \; 
-%%\\
-%%\qquad\qquad\ \ \mathtt{create}\; \feed_2 \rsem_{{\environment} \, {\universe}}
-%%&&\qquad\qquad\ \,
-%%     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
-%%     \; \mbox{and} \;
-%%%\\&&\qquad\qquad\ \,
-%%     \mytime{\meta_2} > \mytime{\meta_1} 
-%%  \}
-%%\\\\
-
-
-
-
-%% New foreach *
-{\cal F}\lsem
-\mathtt{foreach{*}}\; x \; \mathtt{in}\; \feed_1 
-%\semantics{\foreachupdate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
- &=&
-   \{(\meta_2,v_2) \setalt (\atime,(\meta_1,\meta_2)),(v_1,v_2)) \in 
-       \semantics{x{:}\feed_1 * \feed_2}{\environment}{\universe} \}
-%% \{(\meta_2,v_2) \setalt 
-%%     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-%%     \; \mbox{and} \; 
-\\
-\qquad\qquad\ \ \mathtt{create}\; \feed_2 \rsem_{{\environment} \, {\universe}}
-%% End New foreach *
-\\\\
-
-%% Old foreach **
-%%{\cal F}\lsem
-%%\mathtt{foreach{*}{*}}\; x \; \mathtt{in}\; \feed_1 
-%%%\semantics{\foreachcreate{x}{\feed_1}{\feed_2}}{\environment}{\universe} 
-%% &=&
-%% \{(\meta_2,v_2) \setalt 
-%%     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
-%%     \; \mbox{and} \; 
-%%\\
-%%\qquad\qquad\ \ \ \mathtt{update}\; \feed_2 \rsem_{{\environment} \, {\universe}}
-%%&&\qquad\qquad\ \,
-%%     (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto{}v_1)}{\universe}
-%%     \; \mbox{and} \; \mytime{\meta_2} > \mytime{\meta_1} \; \mbox{and} \;
-%%\\&&\qquad\qquad\ \,
-%%     ((\meta_1',v_1') \in \semantics{\feed_1}{\environment}{\universe} 
-%%      \; \mbox{implies} \; (\mytime{\meta_1'} \leq \mytime{\meta_1} 
-%%           \; \mbox{or} \; \mytime{\meta_1'} > \mytime{\meta_2}))      
-%%  \}
-%%\\\\
-%% End Old foreach **
-
-%% New Foreach **
-{\cal F}\lsem
-\mathtt{foreach{*}{*}}\; x \; \mathtt{in}\; \feed_1 
- &=&
-   \{(\meta_2,v_2) \setalt (\atime,(\meta_1,\meta_2)),(v_1,v_2)) \in 
-       \semantics{x{:}\feed_1\, {**}\, \feed_2}{\environment}{\universe} \}\\
-\qquad\qquad\ \ \ \mathtt{update}\; \feed_2 \rsem_{{\environment} \, {\universe}}
-\\\\
-%% end new foreach **
-
-% \semantics{\ppfeed{\feed}{e}}{\environment}{\universe} 
-%  &=&
-% \semantics{\feed}{\environment}{
-%   (\lambda x{:}\locty * \timety. \esemantics{e}{\environment} (x,\universe(x)))} 
-% \\\\
-% \semantics{\remapfeed{\feed}{e}}{\environment}{\universe} 
-%  &=&
-% \semantics{\feed}{\environment}{(\universe \circ \esemantics{e}{\environment})}
-% \\\\
-%% \semantics{\refeed{\feed}{e}}{\environment}{\universe} 
-%%  &=&
-%% \{(\atime,\some{v}) \setalt 
-%%    (\atime,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-%%    \atime \in \esemantics{e}{\environment}
-%% \} \bigcup
-%% \\&&
-%% \{(\atime,\none) \setalt
-%%    (\atime,\_) \not\in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-%%    \atime \in \esemantics{e}{\environment}
-%% \}
-%% \\\\
-%% \semantics{\stutterfeed{\feed}{e}}{\environment}{\universe} 
-%%  &=&
-%% \{(\atime,v) \setalt 
-%%    (\atime,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-%%    \atime \in \esemantics{e}{\environment}
-%% \} \bigcup
-%% \\&&
-%% \{(\atime,v) \setalt 
-%%    (\atime',v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
-%%    \atime \in \esemantics{e}{\environment}  \; \mbox{and} \;
-%% \\&&\qquad\qquad\qquad\ \ \,
-%%     \mbox{for all $\atime''$ such that $\atime' < \atime'' \leq \atime$,} \;
-%%    (\atime'',\_) \not\in \semantics{\feed}{\environment}{\universe} \; 
-%% \}
 \semantics{[\feed \bnfalt x \leftarrow e]}{\environment}{\universe} 
  &=&
- \{((\atime,[\meta_1,\ldots,\meta_k]),[v_1,\ldots,v_k]) \setalt 
-    \exists \atime.\forall i:1\ldots k.
-     (\meta_i,v_i) \in \semantics{\feed}{\environment[x\mapsto z_i]}{\universe} 
+ \{((\atime,\bigcup_{i=1\ldots{}k} \myds{\meta_i}, [\myval{\meta_1},\ldots,\myval{\meta_k}]),[v_1,\ldots,v_k]) \setalt 
+\\ && \quad
+    \forall i:1\ldots k.
+     (\meta_i,v_i) \in \semantics{\feed}{(\environment,x\mapsto z_i)}{\universe} 
      \; \mbox{and} \; 
      \mytime{\meta_i} =\atime
   \} \\
 &&\quad\mbox{where} \quad\mbox{$[z_1,\ldots,z_k] = \esemantics{e}{\environment}$}
+\\\\
+\semantics{\comprehensionfeed{\feed_2}{x}{\feed_1}}{\environment}{\universe} 
+ &=& \{((\mytime{\meta_2},\myds{\meta_1} \cup \myds{\meta_2}, \myval{\meta_2}),v_2) 
+          \setalt (\meta_1, v_1) \in  \semantics{\feed_1}{\environment}{\universe} \; \mbox{and} \;
+          (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto(\meta_1,v_1))}{\universe}  
+     \} 
+\\\\
+\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+            \esemantics{e \; (\meta,v)}{\environment} = \mathtt{true}
+\}
+\\\\
+\semantics{\letfeed{x}{e_1}{\feed_2}}{\environment}{\universe} 
+ &=& \semantics{\feed_2}{(\environment,x\mapsto\esemantics{e_1}{\environment})}{\universe} 
 \\
 \end{array}
 \]
