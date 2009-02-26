@@ -6,38 +6,32 @@
 % including genetic information, cosmology data and
 %global weather systems.
 
-This paper presents the theory, design and implementation of
-\padsd{}, a novel domain-specific language that allows users to
+This paper presents the design, theory and implementation of
+\padsd{}, a  domain-specific language that allows users to
 specify the provenance, syntax and semantic properties of 
-collections of distributed 
-data sources.  In particular, \padsd{} specifications indicate
-{\em where} the given data is located, {\em how} to obtain it, {\em
+collections of distributed data sources.  In particular, \padsd{}
+specifications indicate 
+{\em where} to locate desired data, {\em how} to obtain it, {\em
 when} to get it or to give up trying, and {\em what}
-format it will be in on arrival or what preprocessing 
-needs to be done.  Any such specification can be compiled into
-a power suite of data-processing tools including 
+format it will be in on arrival.  The \padsd{} system compiles such
+specification into a suite of data-processing tools including 
 an archiver, a provenance tracking system, a database loading tool, 
-an alert system, an RSS feed generator, and a
-debugging tool.  In addition, the system generates libraries for
-application developers, including modules for parsing, printing, error
-management, data traversal and transformation, which developers can use
-to create their own application-specific tools.  Advanced users can
-build new generic, description-directed tools applicable to any 
-collection of data sources.
-
-To elucidate the finer points of our design, we show how \padsd{} may
-be used to specify properties of the data used in 
-CoMon, a monitoring system for PlanetLab, and in Arrakis, a monitoring
-system for a web hosting service provided by AT\&T.  
-To demonstrate the practicality of our implementation, we show our system is
-capable of scaling to distributed systems the size of CoMon,
-the current monitor for Planetlab's 800+ nodes and we evaluate its
-performance on such workloads.  To clarify the
-meaning and soundness of our language, we provide a
-denotational semantics for it and use this semantics to prove two important
-theorems.  The first theorem shows that our denotational semantics respects the
-typing rules for the language, while the second theorem demonstrates that our 
-system correctly maintains provenance metadata.
+an alert system, an RSS feed generator and a
+debugging tool.  In addition, the system generates description-specific
+libraries so that developers can create their
+own applications. \padsd{} also provides a generic infrastructure
+so that advanced users can build new tools applicable to any 
+data source with a \padsd{} description.
+We show how \padsd{} may be used to specify data sources from two domains:
+CoMon, a monitoring system for PlanetLab's 800+ nodes, and Arrakis, a monitoring
+system for an AT\&T web hosting service.  
+We show experimentally that our system can scale to distributed
+systems the size of CoMon.  
+Finally, we provide a
+denotational semantics for \padsd{} and use this semantics to prove two important
+theorems.  The first shows that our denotational semantics respects the
+typing rules for the language, while the second demonstrates that our 
+system correctly maintains provenance meta-data.
 
 
 
