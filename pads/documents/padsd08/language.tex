@@ -138,7 +138,7 @@ The list feed $[\feed \bnfalt x \leftarrow e ]$, in contrast, provides
 $n$-way synchronization, where $n$ is the length of the input list
 $e$.  Each element $e_i$ in $e$ defines a feed $\feed_i = \feed[x \mapsto e_i]$.
 For each time $\atime$ with a value $v_i$ in each feed $\feed_i$, the
-list feed returns the list $[v_1, \ldots, v_n]$.  Note that if the
+list feed returns the list $[v_1, \ldots, v_n]$ (and appropriate meta-data).  Note that if the
 $\feed_i$ feeds share a schedule $s$, then each feed will have a value
 for every time in the schedule $s$, even in the presence of errors, so
 the synchronization will succeeed at each time in the schedule $s$.
@@ -205,7 +205,7 @@ consisting of the scheduled time $\atime$, the dependency set of the scheduled
 time and  source location $\{(\atime, \loc)\}$, and the nested
 meta-data, which includes the scheduled 
 time $\atime$, the source location $\loc$, and the actual arrival time
-$\texttt{arrival(\atime,\universe(\atime,\loc)}$. (This apparent
+$\texttt{arrival}(\atime,\universe(\atime,\loc))$. (This apparent
 redundancy in the meta-data goes away with non-core feeds.) 
 Using the
 \texttt{timeout} function, we define an alternate universe
@@ -220,7 +220,7 @@ Finally, the result is the set of all pairs of meta-data and payload
 produced from each time $\atime$ in the schedule $S$ and location $\loc$
 in the set $L$.
 
-The semantics of the $\mathtt{all}\ \corefeed$ is simply the semantics
+The semantics of the $\mathtt{all}\ \corefeed$ feed is simply the semantics
 of the underlying core feed.
 The semantics of the $\mathtt{any}\ \corefeed$ feed selects for each
 time $\atime$ in the schedule $S$ of the core feed $\corefeed$ the
@@ -291,7 +291,7 @@ The first property, {\em Type Soundness}, serves as an important check
 on the basic structure of our definitions:  Do the sets of values given
 by the denotational semantics have the types ascribed by our typing rules?
 The second property, {\em Dependency Correctness}, guarantees the semantics
-adequately captures provenance metadata.  To be more specific, it demonstrates
+adequately captures provenance meta-data.  To be more specific, it demonstrates
 that a feed item depends exclusively on the locations and times mentioned
 in its dependency set.  This theorem is crucial for users who need to
 track down problems in their distributed system -- when they find their
