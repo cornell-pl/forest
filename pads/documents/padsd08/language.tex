@@ -4,7 +4,7 @@ of our language design process.  We have used the semantics to
 communicate our ideas precisely and to explore the nuances of design
 decisions. Furthermore, the semantics provides users with a tool to
 reason about the feeds resulting from \padsd{} descriptions, including
-subtleties related to synchronization, timeouts and errors.
+subtleties related to synchronization, timeouts, errors and provenance.
 
 To express locations, times, schedules and constraints, the feed calculus
 depends upon a {\em host language}, which we take to be the
@@ -285,15 +285,28 @@ the meaning of $\feed$  that satisfy the predicate $e$.
 Finally, the let feed $\letfeed{x}{e}{\feed}$ returns the meaning
 of feed $\feed$ when $x$ is mapped to the meaning of $e$. 
 
-\subsection{Soundness}
-We have proven a soundness theorem for the semantics: the values
+\subsection{Feed Properties}
+We have used our semantics to prove two key properties of our calculus.
+The first property, {\em Type Soundness}, serves as an important check
+on the basic structure of our definitions:  Do the sets of values given
+by the denotational semantics have the types ascribed by our typing rules?
+The second property, {\em Dependency Correctness}, guarantees the semantics
+adequately captures provenance metadata.  To be more specific, it demonstrates
+that a feed item depends exclusively on the locations and times mentioned
+in its dependency set.  This theorem is crucial for users who need to
+track down problems in their distributed system -- when they find their
+incoming data is bad, they need to know exactly where (and when) to look 
+to find malfunctioning equipment or software.
+
+\paragraph*{Type Soundness.}
+The type soundness theorem states that values
 contained in the semantics of each feed are (meta-data, payload) pairs
 with the appropriate type.  More specifically, if the feed typing
 rules give feed $\feed$ type $\feedty{\sigma}$, 
 then its data has type $\sigma$ and its meta data has type $\metatype{\sigma}$.
-We state this property formally as follows.
+A similar statement is true of core feeds.
 
-\begin{theorem}[Semantic Soundness]
+\begin{theorem}[Type Soundness]
 \begin{itemize}
 \item If $\Gamma \turn \feed : \feedty{\sigma}$ and
 for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
@@ -309,16 +322,25 @@ for all $(\meta,v) \in \csemantics{\corefeed}{\environment}{\universe}$,
 $\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
 \end{itemize}
 \end{theorem}
-The proof follows by induction on the structure of $\feed$.
+\noindent
+We have proven the theorem by induction on the structure of $\feed$.
 
-\textbf{We need to add text here explaining these defintions and why they are important.}
+\paragraph*{Dependency Correctness.}  The {\em Dependency Correctness}
+theorem states that feed elements depend exclusively on the times and
+locations mentioned in their dependency set.  In order to make this
+notion precise, we first need to define what it means for two universes
+to be equal relative to a dependency set $\ds$.  Intuitively,
+this definition simply states that the universes are equal at the
+times and locations in $\ds$ and unconstrained elsewhere.
 
 \begin{definition}[Equal Universes Relative to a Dependency Set]
 $\ueq{\universe_1}{\ds}{\universe_2}$ if and only if for all
 $(\atime,\loc) \in \ds$, $\universe_1(\atime,\loc) = \universe_2(\atime,\loc)$.
 \end{definition}
 
-Let $S_1$, $S_2$ range over denotations of feeds.
+\noindent
+Now, we need a similar definition of feed equality.  In the following
+definitions, let $S_1$, $S_2$ range over denotations of core feeds and feeds.
 
 \begin{definition}[Feed Subset Relative to a Dependency Set]
 $\fsubset{S_1}{\ds}{S_2}$ if and only if for all
@@ -332,11 +354,26 @@ $\fsubset{S_1}{\ds}{S_2}$ and
 $\fsubset{S_2}{\ds}{S_1}$
 \end{definition}
 
+\noindent
+Finally, {\em Dependency Correctness} states that if two universes
+$\universe_1$ and $\universe_2$ are identical at locations and times in $\ds$
+(but arbitrarily different elsewhere) then the elements of any feed $\feed$
+that depend upon the locations and times in $\ds$ do not change when
+$\feed$ is interpreted in universe $\universe_1$ 
+as opposed to in $\universe_2$.
+
 \begin{theorem}[Dependency Correctness]
+\begin{itemize}
+\item
 If $\ueq{\universe_1}{\ds}{\universe_2}$ then
-$\feq{\semantics{\feed}{\environment}{\universe_1}}{\ds}{\semantics{\feed}{\environment}{\universe_2}}$
+$\feq{\csemantics{\corefeed}{\environment}{\universe_1}}{\ds}{\csemantics{\corefeed}{\environment}{\universe_2}}$.
+\item 
+If $\ueq{\universe_1}{\ds}{\universe_2}$ then
+$\feq{\semantics{\feed}{\environment}{\universe_1}}{\ds}{\semantics{\feed}{\environment}{\universe_2}}$.
+\end{itemize}
 \end{theorem}
 
+\noindent
 The proof of dependency correctness is by induction on the structure of feeds.  
 
 
