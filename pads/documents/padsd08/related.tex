@@ -86,20 +86,20 @@ information. By separating the data description into the MIB, SNMP
 can be more concise than XML, but it has poor support for ad hoc
 data, and it is more difficult to update with new data types or even 
 changes to the data format.
-
 For Grid or cluster environments, two popular monitoring tools are
-Ganglia~\cite{ganglia} and Nagios~\cite{nagios}.  Ganglia focuses more
-on continuous monitoring of usage information and consolidates
-information provided by OS tools like vmstat, iostat, uptime,
-\etc{} Nagios focuses more on availability information, and logs (or
-delivers) failure and recovery events. Ganglia uses raw data in XDR
+Ganglia~\cite{ganglia} and Nagios~\cite{nagios}.  
+%Ganglia focuses more
+%on continuous monitoring of usage information and consolidates
+%information provided by OS tools like vmstat, iostat, uptime,
+%\etc{} Nagios focuses more on availability information, and logs (or
+%delivers) failure and recovery events. 
+Ganglia uses raw data in XDR
 for its native fields and XML-encapsulated fields for extensions.
 Nagios has no standard data format, but instead gathers all data by
 periodically executing user-specified commands described in a
 configuration file. The commands use standardized return values to
 express status and are typically restricted to no more than 4KB of
 monitoring data.
-
 What distinguishes \padsd{} from systems like SNMP or Ganglia is the
 ability to automatically parse and monitor virtually any kind of
 ad hoc data, from node-level information like that collected by
