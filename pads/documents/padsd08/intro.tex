@@ -154,39 +154,40 @@ The \padsd{} system compiles these high-level specifications into
 a collection of programming libraries and end-to-end tools for
 distributed systems monitoring.  Our current tool suite includes a
 number of useful artifacts, inspired by the needs we have observed in
-a variety of ad hoc monitoring systems:
+a variety of ad hoc monitoring systems including an archiver, provenance
+tracking system, database loader and a number of others.
 
-\begin{itemize}
-\item {\bf An archiver} that collects distributed data on the specified 
-schedule, archives it, and maintains a ``table of contents.''
-\item {\bf A provenance tracking system} that maintains a profile of the 
-data, its error characteristics and its provenance, including its
-originating location, its time of arrival and the other sources upon which it depends.  
-\item {\bf A RRD database loader} that extracts specified 
-pieces of the data and loads them into an Round-Robin
-Database~\cite{rrdtool}.  The database indexes the data by its
-arrival time and supports time-based querying.  
-\cut{
-This information should be in section 4
-For performance, as more recent data arrives, older data is discarded.}
-\cut{This information should be in section 4
-For numeric data, the system
-tracks average values and standard deviations.  For other 
-data, such as strings, urls, ip addresses, times, dates, and ad hoc 
-enumerations, the system maintains information counts of the top $N$ most commonly occurring 
-items.  For all data, the system tracks error rates and information about 
-common errors.}
-\item {\bf An alert system} that generates alarms based on programmable 
-conditions.
-\item {\bf An RSS feed generator} that wraps raw data in the appropriate 
-headers to create an RSS feed.
-\item {\bf A selector} that extracts specified 
-subcomponents of a data source.
-\item {\bf A printer} that fetches, prints and helps debug
-specifications.
-\item {\bf A performance monitor} that measures fetch times and also helps
-debug specifications.
-\end{itemize}
+% \begin{itemize}
+% \item {\bf An archiver} that collects distributed data on the specified 
+% schedule, archives it, and maintains a ``table of contents.''
+% \item {\bf A provenance tracking system} that maintains a profile of the 
+% data, its error characteristics and its provenance, including its
+% originating location, its time of arrival and the other sources upon which it depends.  
+% \item {\bf A RRD database loader} that extracts specified 
+% pieces of the data and loads them into an Round-Robin
+% Database~\cite{rrdtool}.  The database indexes the data by its
+% arrival time and supports time-based querying.  
+% \cut{
+% This information should be in section 4
+% For performance, as more recent data arrives, older data is discarded.}
+% \cut{This information should be in section 4
+% For numeric data, the system
+% tracks average values and standard deviations.  For other 
+% data, such as strings, urls, ip addresses, times, dates, and ad hoc 
+% enumerations, the system maintains information counts of the top $N$ most commonly occurring 
+% items.  For all data, the system tracks error rates and information about 
+% common errors.}
+% \item {\bf An alert system} that generates alarms based on programmable 
+% conditions.
+% \item {\bf An RSS feed generator} that wraps raw data in the appropriate 
+% headers to create an RSS feed.
+% \item {\bf A selector} that extracts specified 
+% subcomponents of a data source.
+% \item {\bf A printer} that fetches, prints and helps debug
+% specifications.
+% \item {\bf A performance monitor} that measures fetch times and also helps
+% debug specifications.
+% \end{itemize}
 
 The \padsd{} system can generate all of these tools from declarative descriptions
 and tool configuration specifications.  Thus for common
