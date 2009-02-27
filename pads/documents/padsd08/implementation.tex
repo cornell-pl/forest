@@ -70,26 +70,26 @@ compiled
 and linked to the runtime libraries.  We implemented both tools with
 \camlp{}, the \ocaml{} preprocessor. 
 
-\begin{figure}[t]
-\centering
-\begin{codebox}
-let simple_comon =
-\{\kw{frep} = fun ff ->
- ff.\kw{all}
- \{Combinators.\kw{format} = Comon_format.Source.parse;
-  \kw{print} = Comon_format.Source.print;
-  \kw{format_rep} = Comon_format.Source.tyrep; 
-  \kw{incremental} = false;
-  \kw{header_format} = None; 
-  \kw{locations} = sites;
-  \kw{schedule} =
-    Schedule.{\kw every} (Time.now (), 10., 
-                    Schedule.default_duration, 60.);
-  \kw{has_records} = Comon_format.__PML__has_records; 
-  \kw{pp} = None\}\}
-\end{codebox}
-\caption{Code fragment of compiled simple\_comon feed}\label{fig:compiledcomon}
-\end{figure}
+% \begin{figure}[t]
+% \centering
+% \begin{codebox}
+% let simple_comon =
+% \{\kw{frep} = fun ff ->
+%  ff.\kw{all}
+%  \{Combinators.\kw{format} = Comon_format.Source.parse;
+%   \kw{print} = Comon_format.Source.print;
+%   \kw{format_rep} = Comon_format.Source.tyrep; 
+%   \kw{incremental} = false;
+%   \kw{header_format} = None; 
+%   \kw{locations} = sites;
+%   \kw{schedule} =
+%     Schedule.{\kw every} (Time.now (), 10., 
+%                     Schedule.default_duration, 60.);
+%   \kw{has_records} = Comon_format.__PML__has_records; 
+%   \kw{pp} = None\}\}
+% \end{codebox}
+% \caption{Code fragment of compiled simple\_comon feed}\label{fig:compiledcomon}
+% \end{figure}
 
 %A source program is parsed into an abstract
 %syntax tree defined by the Camlp4 extended syntax, and the
@@ -103,9 +103,10 @@ The compiler constructs these representations
 by extracting elements from the concurrently
 generated \padsml{} libraries
 and using polymorphic combinators to build structured 
-descriptions.  Figure \ref{fig:compiledcomon} shows a fragment of
-the compiled code for
-the simple CoMon feed in Figure \ref{fig:simplecomon}.
+descriptions.  
+%Figure \ref{fig:compiledcomon} shows a fragment of
+%the compiled code for
+%the simple CoMon feed in Figure \ref{fig:simplecomon}.
 %%While a programmer could use our combinator library directly, the
 %%surface syntax provides a simple veneer that reduces the barrier to
 %%entry substantially.
