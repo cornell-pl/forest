@@ -12,7 +12,7 @@ list APIs of functional languages
 %, like \ocaml{} and \haskell{},
 but provide two levels of abstraction. One level allows users to
 manipulate feeds like any lazy list of data elements (ignoring
-where they come from), while the other exposes the metadata as well. 
+where they come from), while the other exposes the meta-data as well. 
 
 % Need a new name for Feedmain module. I vote Feed and then Feed_core for the lower-level module.
 
@@ -73,7 +73,7 @@ where they come from), while the other exposes the metadata as well.
 \kw{let} load_tbl = \textit{Feed.fold_m} update_m empty_tbl loads
 \kw{in} print_top_with_loc 10 load_tbl
 \end{codebox}
-  \caption{Revised code fragment involving provenance metadata. }
+  \caption{Revised code fragment with provenance meta-data. }
 \label{fig:sample-loads-prov}
 %\vskip -2ex
 \end{figure}
@@ -100,17 +100,18 @@ and prints the ten lowest average loads.
 However, if we want a report of the names of the nodes that have 
 the lowest average loads, the above solution is not good enough
 because the \comon data format does not include the node location in the data.
-In such situations, provenance metadata is essential. 
+In such situations, provenance meta-data is essential. 
 We therefore replace the last two lines of
 \figref{fig:sample-loads} with the code in
-\figref{fig:sample-loads-prov}, to exploit metadata. First, we sketch an 
+\figref{fig:sample-loads-prov} that exploits the meta-data. First, we
+give the
 \cd{update_m} (update with meta) function that uses
-metadata to associate a location with every load in the table. It relies on the \cd{Meta} module, 
-which we provide to facilitate management of metadata from the feed. Next, 
-we show a call to the lower-level fold, \cd{fold_m} (fold with meta), which passes the 
-data with its metadata to the folding
+meta-data to associate a location with every load in the table. It relies on the \cd{Meta} module, 
+which \padsd{} provides to facilitate management of meta-data. Next, 
+we show a call to the meta-aware fold \cd{fold_m}, which passes the 
+payload and its meta-data to the folding
 function.  Last, the call \cd{print_top_with_loc 10} prints the ten 
-lowest average loads with their locations.
+lowest average loads and their locations.
 
 It should be clear from these examples that the single-minded implementer
 has a number of new interfaces to master relative to the off-the-shelf
@@ -128,8 +129,8 @@ manipulate {\it any} feed.
 %have a number of different feeds to process in the same way, or 
 %because they wish to provide a new tool for other \padsd{}
 %users. 
-Often, such functions can be written as
-parametric in the type of the feed element, much like the feed
+Often, such functions can be written parametrically
+in the type of the feed element, much like the feed
 library functions discussed above. However, the behavior of many feed
 functions depends on the structure of the feed and its
 elements. Such functions can be viewed as {\it interpretations} of
@@ -138,7 +139,7 @@ framework for writing feed interpreters.
 
 % Examples
 
-Two core examples of feed interpretations are the feed creator and the
+Two core examples of feed interpretation are the feed creator and the
 provenance tracker. The behavior of these tools depends
 essentially on the structure of the feed.  Functions like these
 require as input a runtime representation of the feed,
