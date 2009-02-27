@@ -287,10 +287,10 @@ build the off-the-shelf tools described earlier.
 To guide the design and implementation of \padsd{}, we have developed
 an idealized, first-order calculus and associated type system to model
 its core elements.  We have equipped this calculus with a denotational
-semantics that specifies for each feed expression the set of
-(meta-data, data) pairs that constitute the feed. 
-The semantics
-allows users to calculate the data that should appear in any feed.
+semantics that specifies for each data source description the set of
+(meta-data, data) pairs that it should produce. 
+The semantics allows users to calculate and reason about the data that
+they should be receiving.
 We have
 proven the type system sound with respect to the semantics.
 Moreover, we have used the
@@ -304,8 +304,8 @@ In addition to being of theoretical interest, the calculus and its meta-theory
 have served as a guide for our implementation infrastructure.  In particular,
 the compilation strategy for our surface-level language was influenced by
 observations about how higher-level constructs could be compiled into
-combinators from our calculus.   In addition, we have reorganized the way 
-earlier versions of our system process and propagate provenance meta-data
+combinators from our calculus.   We also reorganized the way 
+earlier versions of our system processed and propagated provenance meta-data
 in order to obey the principle of dependency correctness. 
 
 \paragraph*{Contributions.} The paper makes the following
@@ -321,8 +321,8 @@ sources.
 and proves the key properties of Type Soundness
 and Dependency Correctness.
 
-\item It describes the architecture of the system we have built to 
-enable multiple modes of use.
+\item It describes the architecture of the system and how it
+enables multiple modes of use.
 
 \item It demonstrates the practicality of our architecture and its
   implementation by showing the infrastructure will scale to handle
@@ -338,6 +338,6 @@ the generated tool infrastructure and its modes of use
 our key correctness properties (\secref{sec:semantics}),  
 discuss the implementation and
 evaluate its performance (\secref{sec:implementation}), describe
-related work (\secref{sec:related}), and conclude
+related work (\secref{sec:related}) and conclude
 (\secref{sec:conclusions}). 
 
