@@ -22,7 +22,9 @@ $\schedule$.  We use a similar notation to refer to elements of a
 list.  The host language also includes standard structured types such as
 options, pairs, sums, lists and functions.
 We omit the typing annotations from lambda expressions when they can
-be reconstructed from the context.
+be reconstructed from the context and we use pattern matching 
+where convenient ({\em e.g.,} $\lambda (x,y).e$ is a function
+over pairs).
 
 
 \subsection{Feed Syntax and Typing}
@@ -92,7 +94,8 @@ meta-data associated with payload of type $\sigma$:
 Feed typing depends upon a standard judgment for
 typing lambda calculus expressions: $\Gamma \turn e : \ty$.  
 
-With these preliminaries, we can now discuss the syntax and typing for
+Having covered these preliminaries, 
+we can now discuss the syntax and typing for
 each of the feed constructs in \figref{fig:syntax}. 
 Core feeds express the structure of base feeds, describing
 the data sources ($\mathtt{src}$), schedule ($\mathtt{sched}$), window
@@ -121,8 +124,8 @@ good value to arrive from any location for each time in the schedule
 for \corefeed{}, returning \texttt{None} paired with appropriate
 meta-data if no such good value exists.    
 
-The empty feed ($\emptyset$) contains no elements and has polymorphic
-type a l\`a the empty list.  The singleton feed $\onefeed{e_v}{e_t}$
+The empty feed ($\emptyset$) contains no elements and may be ascribed
+any feed type.  The singleton feed $\onefeed{e_v}{e_t}$
 constructs a feed containing a single value $e_v$ at a single time
 $e_t$.  The schedule feed $\sfeed{e}$ builds a feed whose elements 
 are the times in the schedule $e$.
@@ -213,7 +216,7 @@ $\universe'$ that retrieves data from the outside world using the
 original universe $\universe$, checks for a
 timeout, and applies the preprocessor
 ($\esemantics{e_{pp}}{\environment}$) before returning.  
-The \texttt{val} function applies the formating function 
+The \texttt{val} function applies the formatting function 
 $\esemantics{e_{f}}{\environment}$ to the entry returned at time
 $\atime$ for location $\loc$ in alternative universe $\universe'$.
 Finally, the result is the set of all pairs of meta-data and payload
@@ -291,7 +294,7 @@ The first property, {\em Type Soundness}, serves as an important check
 on the basic structure of our definitions:  Do the sets of values given
 by the denotational semantics have the types ascribed by our typing rules?
 The second property, {\em Dependency Correctness}, guarantees the semantics
-adequately captures provenance meta-data.  To be more specific, it demonstrates
+adequately maintains provenance meta-data.  To be more specific, it demonstrates
 that a feed item depends exclusively on the locations and times mentioned
 in its dependency set.  This theorem is crucial for users who need to
 track down problems in their distributed system -- when they find their
@@ -308,17 +311,17 @@ A similar statement is true of core feeds.
 
 \begin{theorem}[Type Soundness]
 \begin{itemize}
-\item If $\Gamma \turn \feed : \feedty{\sigma}$ and
-for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
-and $\turn \universe : \timety * \locty \arrow \timety * (\optionty{\stringty})$
-then
-for all $(\meta,v) \in \semantics{\feed}{\environment}{\universe}$,
-$\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
 \item If $\Gamma \turn \corefeed : \corety{\sigma}$ and
 for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
 and $\turn \universe : \timety * \locty \arrow \timety * (\optionty{\stringty})$
 then
 for all $(\meta,v) \in \csemantics{\corefeed}{\environment}{\universe}$,
+$\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
+\item If $\Gamma \turn \feed : \feedty{\sigma}$ and
+for all $x$ in $\dom(\Gamma)$, $\turn \environment(x) : \Gamma(x)$
+and $\turn \universe : \timety * \locty \arrow \timety * (\optionty{\stringty})$
+then
+for all $(\meta,v) \in \semantics{\feed}{\environment}{\universe}$,
 $\turn (\meta,v) : \metatype{\sigma} * \sigma$. 
 \end{itemize}
 \end{theorem}

@@ -126,10 +126,10 @@
 
 \[
 \infer[(\textit{t-comp})]
-{\Gamma \turn \comprehensionfeed{\feed_2}{x}{\feed_1} : \feedty{\sigma}}
+{\Gamma \turn \comprehensionfeed{\feed_2}{x}{\feed_1} : \feedty{\sigma_2}}
 {
-  \Gamma \turn \feed_1 :  \feedty{\sigma} &
-  \Gamma,x{:}\metatype{\sigma} * \sigma \turn \feed_2 : \feedty{\sigma} 
+  \Gamma \turn \feed_1 :  \feedty{\sigma_1} &
+  \Gamma,x{:}\metatype{\sigma_1} * \sigma_1 \turn \feed_2 : \feedty{\sigma_2} 
 }
 \]
 
