@@ -45,12 +45,6 @@
 The \padsd{} implementation has three parts: the compiler, the runtime
 system, and the built-in tools library. We describe these
 parts in turn and evaluate the overall system performance and design.
-There is the natural question of whether the system is better
-implemented as a library than a language extension. We chose
-to present our work as a language because: (1) the compiler automatically
-eliminates boilerplate code; (2) the surface syntax simplifies the coding of
-the underlying higher-order interfaces; and (3) a language approach allows
-smooth integration with \padsml which is a successful language extension.
 
 %%In this section, we describe
 %%these parts and evaluate the performance of the system. We conclude
@@ -377,6 +371,16 @@ the \padsd{} system runtime adds little overhead to the
 inevitable network cost, which means the system could scale to
 large applications. 
 }
+
+\paragraph*{Language or Library.}
+There is the natural question of whether the system is better
+implemented as a library than a language extension. We chose
+to present our work as a language because: (1) the compiler automatically
+eliminates boilerplate code; (2) the surface syntax simplifies the coding of
+the underlying higher-order interfaces; and (3) a language approach allows
+smooth integration with \padsml which itself is a successful 
+language extension.
+
 
 \cut{%%%%%%%%%%%%%%%%%%
 
