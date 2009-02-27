@@ -132,22 +132,22 @@ Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2
 %% SUMMING              434                        78.34%
 
     
-\begin{figure}
-{\small
-\begin{verbatim}
-path :: =  
-  "<top>"
-| path.ID  (field/variant name)
-| path.INT (branch number (from 1) of a tuple)
-| path.[?] (any one element of array/table) 
-| path.[*] (all elements of array/table) 
-| path.[INT] (nth element of array (from 0))
-| path.[Key] (a table entry indexed by the Key)
-\end{verbatim}
-}
-\caption{Selector path language.}
-\label{fig:selector-lang}
-\end{figure}
+% \begin{figure}
+% {\small
+% \begin{verbatim}
+% path :: =  
+%   "<top>"
+% | path.ID  (field/variant name)
+% | path.INT (branch number (from 1) of a tuple)
+% | path.[?] (any one element of array/table) 
+% | path.[*] (all elements of array/table) 
+% | path.[INT] (nth element of array (from 0))
+% | path.[Key] (a table entry indexed by the Key)
+% \end{verbatim}
+% }
+% \caption{Selector path language.}
+% \label{fig:selector-lang}
+% \end{figure}
 
 
 \textbf{\textit{Archiver.}} The archiver saves the data fetched by a feed 
@@ -212,8 +212,9 @@ supports time-indexed queries and displays historical data as graphs.
 \textbf{\textit{Selector.}} The selector allows users to choose
 subcomponents of feed elements using path expressions. It returns a
 feed of the selected subcomponents, which may then be fed into other
-tools. \figref{fig:selector-lang} shows the path expression language,
-partly inspired by \xpath{}~\cite{xpath}.
+tools. 
+%\figref{fig:selector-lang} shows the path expression language,
+%partly inspired by \xpath{}~\cite{xpath}.
 
 
 \textbf{\textit{RSS feed generator.}} The RSS feed generator converts a
