@@ -19,37 +19,36 @@
 % Many modern applications depend upon ad hoc collections of distributed
 % data sources.  For instance, o
 One of the primary tasks in developing
-a distributed system is keeping it healthy and running smoothly over
+a distributed system is keeping it  running smoothly over
 long periods of time.  
 % Doing so is a continuous maintenance task of significant
 % complexity.  
-Consequently, a well-designed distributed system always includes
+Consequently, well-designed distributed systems include
 a subsystem responsible for monitoring the health, security and
 performance of its constituent parts.
-CoMon~\cite{comon}, designed to monitor the well-being of 
-PlanetLab~\cite{planetlab},
-is an illustrative example of just such a monitoring subsystem.  CoMon
+CoMon~\cite{comon}, designed to monitor PlanetLab~\cite{planetlab},
+is an illustrative example.  CoMon
 %
 %\footnote{Current data; PlanetLab membership varies over time.} %
 % 
 operates by
 attempting to gather a log file from each of 800+ PlanetLab nodes every
-five minutes, all day and all night long.
+five minutes.
 When all is well (which it never is) each node responds with
-an ASCII data file in mail-header format containing information
-ranging from the node's kernel version to uptime to memory usage to
-ID of the user with the greatest CPU utilization.  CoMon archives
+an ASCII data file in mail-header format containing 
+the node's kernel version, its uptime, its memory usage, the
+ID of the user with the greatest CPU utilization, \etc{}  CoMon archives
 this data in compressed form and processes the information
-for display to PlanetLab users.  CoMon also keeps track of various
-networking problems as they occur, maintains several different lists 
-of ``nodes with problems'' and supports on-going time-indexed 
-queries on the data.  All in all, CoMon is an invaluable resource for
-users who need to monitor the health and performance of their
+for display to PlanetLab users.  CoMon also tracks various
+networking problems, maintains lists 
+of ``problem nodes'' and  supports on-going time-indexed 
+queries on the data.  These features make CoMon an invaluable resource
+for users who need to monitor the health and performance of their
 PlanetLab applications or experiments.
 
 Almost all distributed systems should have similar
-monitoring infrastructure.  However, currently, the implementors of each new
-distributed system usually have to build ``one-off'' monitoring tools,
+monitoring infrastructure.  However, the implementors of each new
+distributed system currently have to build ``one-off'' monitoring tools,
 which takes an enormous amount of time and expertise to do well.  A
 substantial part of the difficulty comes from the diversity, quality,
 and quantity of data these systems must handle.  In addition,
@@ -124,16 +123,16 @@ NCBI~\cite{ncbi} & Links to multiple bioinformatics  \\
 \label{fig:exampledata}
 \end{figure}
 
-%\paragraph*{\padsd{}: A specification language for distributed data sources.}
-In order to support the creation, maintenance, and evolution of tools
-for processing ad hoc data from a wide array of distributed data
-sources, we have developed a new domain-specific language and system
-called \padsd{}.  The language allows software developers describe key
-properties of the provenance, syntax and semantics of the data sources
-they wish to monitor, including:
+%\paragraph*{\padsd{}: A specification language for distributed data
+%sources.}
+We have developed a new domain-specific language and system called
+\padsd{} to facilitate the creation, maintenance and evolution of tools
+for processing ad hoc data from distributed sources.  The language
+allows developers to describe the provenance, syntax and
+semantics of data sources they wish to monitor, including:
 
 \begin{itemize}
-\item {\bf Where} the data is located.  The data may be in a directory
+\item {\bf Where} the data is located.  The data may be in a file
 on the current machine (perhaps written by another process), at some 
 remote location, or at a collection of locations.
 \item {\bf When} to get the data.  The data may need to be fetched just 
@@ -142,16 +141,16 @@ once (right now!) or according to some repeating schedule.
 protocols such as \cd{http} or \cd{ftp} or it may be created via a
 local or remote computation. 
 \item {\bf What preprocessing} the system should do when the data arrives.  
-The data may be compressed or encrypted;  privacy considerations may require 
+The data may be compressed or encrypted.  Privacy considerations may require 
 the data be anonymized.
 \item {\bf What format} the data source arrives in.  The data may be
-  in ASCII, binary, or EBCDIC. It may be tab- or comma-separated.
-  It may be in any kind of non-standard format that
+  in ASCII, binary, or EBCDIC. It may be tab- or comma-separated or it
+  may be in XML.  It may be in the kind of non-standard format that
   \pads{}~\cite{fisher+:pads,mandelbaum+:pads-ml} was designed to 
   describe or for which the user has a well-typed parser.
 \end{itemize}
 
-The \padsd{} system then compiles these high-level specifications into
+The \padsd{} system compiles these high-level specifications into
 a collection of programming libraries and end-to-end tools for
 distributed systems monitoring.  Our current tool suite includes a
 number of useful artifacts, inspired by the needs we have observed in
@@ -161,11 +160,12 @@ a variety of ad hoc monitoring systems:
 \item {\bf An archiver} that collects distributed data on the specified 
 schedule, archives it, and maintains a ``table of contents.''
 \item {\bf A provenance tracking system} that maintains a profile of the 
-data, its error characteristics and its provenance including its location of
-origin, its time of arrival and the other sources upon which it depends.  
-\item {\bf A RRD database loader} that takes the data and extracts specified 
-pieces to load into an Round-Robin Database~\cite{rrdtool}.  The data is 
-indexed by its time and supports time-based queries.  
+data, its error characteristics and its provenance, including its
+originating location, its time of arrival and the other sources upon which it depends.  
+\item {\bf A RRD database loader} that extracts specified 
+pieces of the data and loads them into an Round-Robin
+Database~\cite{rrdtool}.  The database indexes the data by its
+arrival time and supports time-based querying.  
 \cut{
 This information should be in section 4
 For performance, as more recent data arrives, older data is discarded.}
@@ -176,47 +176,47 @@ data, such as strings, urls, ip addresses, times, dates, and ad hoc
 enumerations, the system maintains information counts of the top $N$ most commonly occurring 
 items.  For all data, the system tracks error rates and information about 
 common errors.}
-\item {\bf An alert system} that generates alerts based on programmable 
+\item {\bf An alert system} that generates alarms based on programmable 
 conditions.
 \item {\bf An RSS feed generator} that wraps raw data in the appropriate 
-headers to create an RSS feed from diverse ad hoc data sources.
-\item {\bf A selector} that extracts and records specified 
-subcomponents of a larger data source.
-\item {\bf A printer} that fetches, prints, and helps debug
+headers to create an RSS feed.
+\item {\bf A selector} that extracts specified 
+subcomponents of a data source.
+\item {\bf A printer} that fetches, prints and helps debug
 specifications.
 \item {\bf A performance monitor} that measures fetch times and also helps
 debug specifications.
 \end{itemize}
 
-The system can generate all of these tools from \padsd{} descriptions
-and declarative tool configuration specifications.  Thus for common
+The \padsd{} system can generate all of these tools from declarative descriptions
+and tool configuration specifications.  Thus for common
 tasks, users can manage distributed data sources simply by writing
-high-level declarative specifications.  It is quick and it is easy. There
+high-level declarative specifications.  There
 are relatively few concepts to learn, no complex interfaces and no
 tricky boilerplate to master to initialize 
 the system or thread together tool libraries.  Because there is
 so little ``programming'' involved, we refer to the act 
 of writing simple specifications
 and using pre-defined tools as the {\em off-the-shelf} 
-mode of use.  However, to avoid sacrificing flexibility and to support extensibility,
-\padsd{} supports two other modes of use.
+mode of use.  
 
+To provide extensibility, \padsd{} supports two other
+modes of use. 
 The second mode is
 for the {\em single-minded implementer}, who needs to build a new
 application for a {\em specific} collection of distributed data
-sources.  Such users need more than the built-in set of tools, 
-and consequently the system provides support for
-creating new tools by automatically generating libraries for fetching
+sources.  Such users need more than the built-in set of tools. To meet
+this need, the system provides support for
+creating new tools by generating libraries for fetching
 data, for parsing and printing, for performing type-safe data
 traversal, and for stream processing using classic functional
 programming paradigms such as \cd{map}, \cd{fold} and \cd{iterate}.
 These generated libraries make it straightforward to create custom tools
-specific to particular data sources.  However, there is a steeper learning
-curve in this mode than in off-the-shelf mode because a variety of
-interfaces must be learned.  The average functional programmer may find
-these interfaces relatively intuitive, but the computational scientist
-who is not interested in functional programming may prefer to stick with
-off-the-shelf uses. 
+specific to particular data sources.  The cost of this flexibility is
+a steeper learning curve because the programmer must learn a variety
+of interfaces. Functional programmers may find
+these interfaces intuitive, but computational scientists
+may prefer to stick with off-the-shelf uses. 
 
 The third mode is for the {\em generic programmer}.  Generic
 programmers may observe that they (or their colleagues) 
@@ -236,9 +236,8 @@ the dependent features of \padsd{} and to compensate for the lack of
 built-in generic programming support in \ocaml{}. 
 Still, the reward for building generic tools is very high:
 as more and more such tools are built, the life of the off-the-shelf
-user becomes easier and easier.  We have already built eight useful
-generic tools ourselves and will continue to build more as demand requires
-them.
+user becomes easier and easier.  We used this infrastructure to
+build the off-the-shelf tools described earlier.
 
 % The system can generate all of these tools from \padsd{} descriptions
 % and declaritive tool configuration specifications.  Thus for common
@@ -284,19 +283,21 @@ them.
 % separate set of interfaces supplied by the \padsd{} system to write a
 % single generic program to complete the task.
 
-To aid in the design and implementation of \padsd{}, we have developed
-an idealized, first-order calculus to model its core elements.  
-This idealized calculus is equipped with a denotational
-semantics that specifies the set of metadata-data pairs that should
-inhabit any data feed generated from a specification.  This semantics
-gives users a way to calculate what data should appear in any feed
-they specify.  Moreover, we have used the
+To guide the design and implementation of \padsd{}, we have developed
+an idealized, first-order calculus and associated type system to model
+its core elements.  We have equipped this calculus with a denotational
+semantics that specifies for each feed expression the set of
+(meta-data, data) pairs that constitute the feed. 
+The semantics
+allows users to calculate the data that should appear in any feed.
+We have
+proven the type system sound with respect to the semantics.
+Moreover, we have used the
 semantics to prove {\em dependency correctness}, a key theorem
 inspired by earlier work on provenance in databases by 
-Cheney {\em et al.}~\cite{cheney-dbpl07}.  This theorem
-guarantees the correct provenance meta data is associated with
-every data item.  We have also proven a type soundness result
-to further justify our semantics.
+Cheny {\em et al.}~\cite{cheney-dbpl07}.  This theorem
+guarantees the correct provenance meta-data is associated with
+every data item.  
 
 In addition to being of theoretical interest, the calculus and its meta-theory
 have served as a guide for our implementation infrastructure.  In particular,
@@ -307,35 +308,33 @@ earlier versions of our system process and propagate provenance meta-data
 in order to obey the principle of dependency correctness. 
 
 \paragraph*{Contributions.} The paper makes the following
-important contributions:
+contributions:
 
 \begin{itemize}
-\item It describes the design of a novel 
+\item It describes the design of a
 domain-specific language for specifying provenance, syntax and
 semantic properties of distributed ad hoc data
 sources.  
 
 \item It provides a formal denotational semantics for our language
-and proves the semantics obeys key properties including Dependency Correctness
-and Type Soundness.
+and proves the key properties of Type Soundness
+and Dependency Correctness.
 
-\item It explains and justifies the architecture of the system we have built,
-including the many interconnected pieces needed to enable  
-generation of general-purpose data processing tools 
-from high-level specifications.
+\item It describes the architecture of the system we have built to 
+enable multiple modes of use.
 
-\item It demonstrates our architecture and its implementation is practical 
-by showing our infrastructure will scale up to handle systems the size of 
-PlanetLab.
+\item It demonstrates the practicality of our architecture and its
+  implementation by showing the infrastructure will scale to handle
+  systems the size of PlanetLab.
 \end{itemize}
 
 \paragraph{Outline.}
-In the remainder of the paper, we describe the illustrative examples we will
+In the rest of the paper, we describe the examples we will
 use throughout the paper (\secref{sec:examples}), show how to describe
 these data sources in \padsd{} (\secref{sec:informal}), describe
-the generated tool infrastructure and its different modes of use
-(\secref{sec:programming}), define a denotational semantics for the
-language and prove our key correctness properties (\secref{sec:semantics}), 
+the generated tool infrastructure and its modes of use
+(\secref{sec:programming}), define a denotational semantics and prove
+our key correctness properties (\secref{sec:semantics}),  
 discuss the implementation and
 evaluate its performance (\secref{sec:implementation}), describe
 related work (\secref{sec:related}), and conclude
