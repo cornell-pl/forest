@@ -7,20 +7,19 @@
 
     {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
  &=& \{( \mathtt{meta} (\atime,\loc), \mathtt{val} (\atime,\loc))
-          \setalt \atime \in S
-          \;\mbox{and}\; \loc \in  L
+          \setalt \loc \in  L
+          \;\mbox{and}\; \atime \in S
      \}
 \\
  \quad\ \   \mathtt{sched=} e_{sched};
 &&\quad\mbox{where} \\
  \quad\ \  \mathtt{win=} e_{win};
-&& \qquad S = \esemantics{e_{sched}}{\environment} \\
+&& \qquad L = \esemantics{e_{src}}{\environment}\\
  \quad\ \  \mathtt{pp=} e_{pp};
-&& \qquad W = \esemantics{e_{win}}{\environment}\\
+&& \qquad S = \esemantics{e_{sched}}{\environment} \\
  \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \,
    {\universe}}
-&& \qquad L = \esemantics{e_{src}}{\environment}
-\\
+&& \qquad W = \esemantics{e_{win}}{\environment}\\
 && \qquad \mathtt{timeout} =  
      \lambda (x_t,(x_{at},x_s)).
         \mathtt{if}\, x_{at} \leq x_t + W \,
