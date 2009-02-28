@@ -1,10 +1,9 @@
 %{\em Note: the following was taken from a grant proposal written with Vivek
 %Pai....  }
 
-Due to space constraints, we survey only the most closely related work.
+Because of space constraints, we survey only the most closely related work.
 
-\paragraph*{Provenance.}  The \padsd{} meta-data that tracks the
-source location, arrival time and error status of data can be seen as
+\paragraph*{Provenance.}  \padsd{} meta-data can be seen as
 an instance of provenance information, a topic of increasing interest
 in the database community.  Cheney~\etal{}~\cite{cheney-dbpl07} showed
 how the programming language idea of dependency analysis leads to a
@@ -27,13 +26,14 @@ Reactive Programmaing (FRP) \cite{ElliottH97,WanH00} are designed to
 implement synchronous systems that react to continuous or discrete
 signals. These signals are time-indexed values that can be composed or
 decomposed using various combinators.  Our work on \padsd{} is
-complimentary to these efforts in the sense that its primary purpose
-is to provide a bridge between such systems and the messy, outside
-world.  \padsd{} provides a way to internalize external, distributed
-data and to handle various error conditions and provenance information
-in comprehensive manner so that programmers can subsequently use, for
+complementary to these efforts in that the primary purpose of \padsd{}
+is to bridge between such systems and the messy, outside
+world.  \padsd{} provides a way to robustly internalize external,
+distributed data while tracking error conditions and maintaining
+provenance in a comprehensive manner so that programmers can
+subsequently use, for 
 example, the elegant abstractions of events, behaviors and signals
-drawn from FRP.
+from FRP.
 
 
 %While the some of the combinators in \padsd{} offers 
@@ -70,7 +70,7 @@ Unlike \padsd{}, which allows users to write rich descriptions
 expressing the location, format, schedule and access mode of the data, 
 Yahoo Pipes, for instance, acquires data through a fixed collection of 
 black boxes.  For this reason, \padsd{} and mashup languages also have the 
-potential to be complementary technologies, with \padsd{} descriptions
+potential to be complementary, with \padsd{} descriptions
 serving to define new ad hoc data sources for mashups.  In fact, this
 idea motivated the design and implementation of the \padsd{} ad
 hoc-to-RSS conversion tool. 
