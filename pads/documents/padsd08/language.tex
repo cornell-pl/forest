@@ -151,8 +151,16 @@ The feed comprehension $\comprehensionfeed{\feed_2}{x}{\feed_1}$
 creates a feed with elements $\feed_2[x \mapsto v]$ when $v$ is an
 element of $\feed_1$. Note that the entry $v$ is a pair of meta-data
 (with type $\metatype{\sigma}$) and payload data (with type $\sigma$).
+The surface language ``\kw{foreach} $x$ in $\feed_1$ \kw{create} $\feed_2$'' 
+can be translated to the abstract syntax as 
+$\comprehensionfeed{\feed_2}{x}{\feed_1}$. 
 The feed $\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
-$e\; v$ is $\boolf$.  Let feeds $\letfeed{x}{e}{\feed}$
+$e\; v$ is $\boolf$.  
+The alternate feed comprehension
+syntax in Section \ref{sec:vizgems}, 
+$\comprehensionfeed{e_2}{x}{\feed_1,~ e_1}$, can be modeled as
+$\comprehensionfeed{\onefeed{e_2}{x.1.t}}{x}{\filterfeed{\feed_1}{e_1}}$. 
+Let feeds $\letfeed{x}{e}{\feed}$
 provide a convenient mechanism for binding intermediate values. 
 
 \input{semantics2}
