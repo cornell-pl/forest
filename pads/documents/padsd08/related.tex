@@ -7,11 +7,11 @@ Because of space constraints, we survey only the most closely related work.
 an instance of provenance information, a topic of increasing interest
 in the database community.  Cheney~\etal{}~\cite{cheney-dbpl07} showed
 how the programming language idea of dependency analysis leads to a
-formal theory for tracking provenence.  Indeed, our Dependency
+formal theory for tracking provenance.  Indeed, our Dependency
 Correctness Theorem reuses the definition of dependency correctness
 developed in their work.  Our system differs from theirs in several
 ways, however.  They treat provenance abstractly, as a collection of
-colors; we treat it concretely, as attestations of time, source
+colors; we treat it concretely, as attestation of time, source
 location and error-freeness.  They track provenance at the level of
 individual tuples in a relational calculus; we track it at the level
 of files, leading to reduced overhead.  They simply track the
@@ -22,7 +22,7 @@ respond to such information.
 There has been a large body of work in data stream processing and work
 flow management \cite{Golab03}. For instance, languages such as Lustre
 \cite{CaspiPHP87}, SIGNAL \cite{AmagbegnonBG95} and Functional
-Reactive Programmaing (FRP) \cite{ElliottH97,WanH00} are designed to
+Reactive Programming (FRP) \cite{ElliottH97,WanH00} are designed to
 implement synchronous systems that react to continuous or discrete
 signals. These signals are time-indexed values that can be composed or
 decomposed using various combinators.  Our work on \padsd{} is

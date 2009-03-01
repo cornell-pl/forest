@@ -102,7 +102,7 @@ syntax.
  \bnfalt & \comprehensionfeed{\feed_2}{x}{\feed_1} & \mbox{feed comprehension} \\
  \bnfalt & \filterfeed{\feed}{e} & \mbox{filter feed} \\
  \bnfalt & \letfeed{x}{e_1}{\feed_2} & \mbox{let feed} \\
-% & \bnfalt & \feed_1 cartesian \feed_2 & \mbox{cartesian pair -- use a symbol different from *} \\
+% & \bnfalt & \feed_1 Cartesian \feed_2 & \mbox{Cartesian pair -- use a symbol different from *} \\
 % & \bnfalt & \feed_1 * \feed_2 & \mbox{continuous pair} \\
 % & \bnfalt & \feed_1 {*}{*} \feed_2 & \mbox{local pair} \\
 % \bnfalt & x{:}\feed_1 * \feed_2 & \mbox{dependent continuous pair} \\
@@ -129,10 +129,10 @@ syntax.
 Having talked to Amal on
 the phone, I believe the theorem I intend to prove 
 is called dependency correctness and
-is very, very similar to what James Cheny, Amal Ahmed and Umut Acar
+is very, very similar to what James Cheney, Amal Ahmed and Umut Acar
 proved in their paper ``Provenance as Dependency Analysis.''
 It requires a rewrite of the semantics to fully track the set of time-location
-pairs upon which the values in a feed depend. Here is the modified metadata 
+pairs upon which the values in a feed depend. Here is the modified meta-data 
 definition.  Let $\nested$ range over ``nested'' meta-data and $\meta$ range over
 a complete meta-data data structure.
 

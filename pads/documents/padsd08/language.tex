@@ -146,7 +146,7 @@ For each time $\atime$ with a value $v_i$ in each feed $\feed_i$, the
 list feed returns the list $[v_1, \ldots, v_n]$ (and appropriate meta-data).  Note that if the
 $\feed_i$ feeds share a schedule $s$, then each feed will have a value
 for every time in the schedule $s$, even in the presence of errors, so
-the synchronization will succeeed at each time in the schedule $s$.
+the synchronization will succeed at each time in the schedule $s$.
 
 The feed comprehension $\comprehensionfeed{\feed_2}{x}{\feed_1}$
 creates a feed with elements $\feed_2[x \mapsto v]$ when $v$ is an
@@ -156,14 +156,14 @@ The feed $\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
 $e\; v$ is $\boolf$.  Finally, let feeds $\letfeed{x}{e}{\feed}$
 provide a convenient mechanism for binding intermediate values. 
 
-Several of the surface language constructs presented in Section \ref{sec:informal} may be modelled as derived constructs in the calculus.  For instance,
+Several of the surface language constructs presented in Section \ref{sec:informal} may be modeled as derived constructs in the calculus.  For instance,
 (\kw{foreach} $x$ in $\feed_1$ \kw{create} $\feed_2$) 
-can be modelled as a  $\comprehensionfeed{\feed_2}{x}{\feed_1}$. 
+can be modeled as a  $\comprehensionfeed{\feed_2}{x}{\feed_1}$. 
 Likewise, the surface language comprehension
 $\comprehensionfeed{e_2}{x}{\feed_1,~ e_1}$ can be modeled as
 $\comprehensionfeed{\onefeed{e_2}{x.1.t}}{x}{\filterfeed{\feed_1}{e_1}}$. 
 When $e_s$ is a schedule and $e_t$ is a function over times, purely artificial 
-``computed'' feeds may be modelled as 
+``computed'' feeds may be modeled as 
 $\comprehensionfeed{\onefeed{e_t\; x.1.t}{x.1.t}}{x}{\sfeed{e_s}}$.
 
 \input{semantics2}
@@ -273,10 +273,10 @@ matched the scheduled time.
 A schedule feed $\sfeed{e}$ yields a feed with one payload value for
 each $\atime$ in the meaning of the schedule $e$.  The corresponding
 meta-data follows the same pattern as for the singleton feed.  
-The union feed is the set-theorectic union of its constituent
+The union feed is the set-theoretic union of its constituent
 feeds. The sum feed injects the elements of its constituent
 feeds into a sum and likewise takes their union.  It constructs
-compound meta-data from the meta-data of the consituent feeds in the
+compound meta-data from the meta-data of the constituent feeds in the
 obvious way.
 
 The pair feed $(\feed_1,\feed_2)$ is formed by finding for each time
@@ -347,7 +347,7 @@ We have proven the theorem by induction on the structure of feeds.
 %The {\em Dependency Correctness}
 %theorem states that feed elements depend exclusively on the times and
 %locations mentioned in their dependency set.  
-In order to make the priciple of Dependency Correctness
+In order to make the principle of Dependency Correctness
 precise, we must define what it means for two universes
 to be equal relative to a dependency set $\ds$.  Intuitively,
 this definition simply states that the universes are equal at the
