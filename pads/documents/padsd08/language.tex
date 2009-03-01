@@ -147,21 +147,24 @@ list feed returns the list $[v_1, \ldots, v_n]$ (and appropriate meta-data).  No
 $\feed_i$ feeds share a schedule $s$, then each feed will have a value
 for every time in the schedule $s$, even in the presence of errors, so
 the synchronization will succeeed at each time in the schedule $s$.
+
 The feed comprehension $\comprehensionfeed{\feed_2}{x}{\feed_1}$
 creates a feed with elements $\feed_2[x \mapsto v]$ when $v$ is an
 element of $\feed_1$. Note that the entry $v$ is a pair of meta-data
 (with type $\metatype{\sigma}$) and payload data (with type $\sigma$).
-The surface language ``\kw{foreach} $x$ in $\feed_1$ \kw{create} $\feed_2$'' 
-can be translated to the abstract syntax as 
-$\comprehensionfeed{\feed_2}{x}{\feed_1}$. 
 The feed $\filterfeed{\feed}{e}$ eliminates elements $v$ from $\feed$ when
-$e\; v$ is $\boolf$.  
-The alternate feed comprehension
-syntax in Section \ref{sec:vizgems}, 
-$\comprehensionfeed{e_2}{x}{\feed_1,~ e_1}$, can be modeled as
-$\comprehensionfeed{\onefeed{e_2}{x.1.t}}{x}{\filterfeed{\feed_1}{e_1}}$. 
-Let feeds $\letfeed{x}{e}{\feed}$
+$e\; v$ is $\boolf$.  Finally, let feeds $\letfeed{x}{e}{\feed}$
 provide a convenient mechanism for binding intermediate values. 
+
+Several of the surface language constructs presented in Section \ref{sec:informal} may be modelled as derived constructs in the calculus.  For instance,
+(\kw{foreach} $x$ in $\feed_1$ \kw{create} $\feed_2$) 
+can be modelled as a  $\comprehensionfeed{\feed_2}{x}{\feed_1}$. 
+Likewise, the surface language comprehension
+$\comprehensionfeed{e_2}{x}{\feed_1,~ e_1}$ can be modeled as
+$\comprehensionfeed{\onefeed{e_2}{x.1.t}}{x}{\filterfeed{\feed_1}{e_1}}$. 
+When $e_s$ is a schedule and $e_t$ is a function over times, purely artificial 
+``computed'' feeds may be modelled as 
+$\comprehensionfeed{\onefeed{e_t\; x.1.t}{x.1.t}}{x}{\sfeed{e_s}}$.
 
 \input{semantics2}
 
@@ -340,10 +343,12 @@ $\turn (\meta,v) : \metatype{\sigma} * \sigma$.
 \noindent
 We have proven the theorem by induction on the structure of feeds.
 
-\paragraph*{Dependency Correctness.}  The {\em Dependency Correctness}
-theorem states that feed elements depend exclusively on the times and
-locations mentioned in their dependency set.  In order to make this
-notion precise, we first need to define what it means for two universes
+\paragraph*{Dependency Correctness.}  
+%The {\em Dependency Correctness}
+%theorem states that feed elements depend exclusively on the times and
+%locations mentioned in their dependency set.  
+In order to make the priciple of Dependency Correctness
+precise, we must define what it means for two universes
 to be equal relative to a dependency set $\ds$.  Intuitively,
 this definition simply states that the universes are equal at the
 times and locations in $\ds$ and unconstrained elsewhere.
@@ -375,7 +380,8 @@ $\universe_1$ and $\universe_2$ are identical at locations and times in $\ds$
 (but arbitrarily different elsewhere) then the elements of any feed $\feed$
 that depend upon the locations and times in $\ds$ do not change when
 $\feed$ is interpreted in universe $\universe_1$ 
-as opposed to in $\universe_2$.
+as opposed to in $\universe_2$.  We prove Dependency Correctness
+by induction on the structure of feeds.  
 
 \begin{theorem}[Dependency Correctness]
 \begin{itemize}
@@ -388,8 +394,8 @@ $\feq{\semantics{\feed}{\environment}{\universe_1}}{\ds}{\semantics{\feed}{\envi
 \end{itemize}
 \end{theorem}
 
-\noindent
-We have proven this theorem by induction on the structure of feeds.  
+%\noindent
+
 
 
 

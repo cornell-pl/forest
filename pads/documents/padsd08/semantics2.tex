@@ -6,7 +6,7 @@
 \begin{array}{lcl}
 
     {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
- &=& \{( \mathtt{meta} (\atime,\loc), \mathtt{val} (\atime,\loc))
+ &=& \{( \mathtt{meta} (\atime,\loc), \mathtt{payload} (\atime,\loc))
           \setalt \loc \in  L
           \;\mbox{and}\; \atime \in S
      \}
@@ -41,7 +41,7 @@
            \esemantics{e_{pp}}{\environment}\, 
                  (\mathtt{timeout}\, (\atime,\universe (\atime,\loc))) 
  \\
- && \qquad \mathtt{val} =
+ && \qquad \mathtt{payload} =
       \lambda (\atime, \loc).
              \esemantics{e_f}{\environment}\; (\universe'(\atime, \loc))
 
