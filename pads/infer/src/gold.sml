@@ -74,7 +74,6 @@ structure Gold = struct
                NONE   => raise Bust
              | SOME t => t
      )
-
     fun goldenReport ( descname : string ) : string =
         if hasGold descname
         then let val goldenTy : Ty  = getGolden descname
@@ -92,5 +91,6 @@ structure Gold = struct
                 goldtystr ^ "\n" 
              end
         else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"
+
 
 end

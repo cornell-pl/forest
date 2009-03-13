@@ -40,6 +40,7 @@ SML_MINOR_VER = 0
 endif
 SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT39)
 BUILD_EXEC = build-exec.sml
+BUILD_INC = build-inc.sml
 
 ######################################################################
 #
@@ -69,6 +70,10 @@ vanilla.lex.sml: vanilla.lex
 learn:  tokens.lex.sml vanilla.lex.sml
 	@echo Making learning program
 	nice -n20 $(SML_PATH) < $(BUILD_EXEC)
+	@echo
+increment: tokens.lex.sml vanilla.lex.sml
+	@echo Making the increment program
+	nice -n20 $(SML_PATH) < $(BUILD_INC)
 	@echo
 
 ######################################################################
