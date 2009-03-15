@@ -35,6 +35,7 @@ is
   ../examples/gold/ir/scrollkeeper.log.sml
   ../examples/gold/ir/windowserver_last.log.sml
   ../examples/gold/ir/yum.txt.sml
+  ../examples/gold/ir/test-inc.txt.sml
   print.sml
   gold.sml
   model.sml

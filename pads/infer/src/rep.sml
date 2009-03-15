@@ -8,14 +8,66 @@ datatype BaseData =
 | ErrorB
 
 datatype SyncData =
-  Good of string
-| Recovered of (string * string)  (* recovered string, actual matched string pair *)
+  Good of Refined
+| Recovered of (string * Refined)  (* recovered string, actual matched Refined pair *)
 | Fail
+
+fun refined_comp (r1, r2) =
+  case (r1, r2) of
+    (StringME s1, StringME s2) => String.compare (s1, s2)
+  | (Int(min1, max1), Int(min2, max2)) => 
+	if (min1 < min2) then LESS
+	else if (min1 > min2) then GREATER
+	else if max1 < max2 then LESS
+	else if max1 > max2 then GREATER
+	else EQUAL
+  | (IntConst a, IntConst b) => LargeInt.compare (a, b)
+  | (FloatConst (a1, b1), FloatConst (a2, b2)) => String.compare ((a1 ^ b1), (a2 ^ b2))
+  | (StringConst s1, StringConst s2) => String.compare (s1, s2)
+  | (Enum _, Enum _) => EQUAL
+  | (LabelRef id1, LabelRef id2) => Atom.compare (id1, id2)
+  | (Blob _, Blob _) => EQUAL
+  | (StringME _, _) => LESS
+  | (Int _, StringME _) => GREATER
+  | (Int _, _) => LESS
+  | (IntConst _, StringME _) => GREATER
+  | (IntConst _, Int _) => GREATER
+  | (IntConst _, _) => LESS
+  | (FloatConst _, StringME _) => GREATER
+  | (FloatConst _, Int _) => GREATER
+  | (FloatConst _, IntConst _) => GREATER
+  | (FloatConst _, _) => LESS
+  | (StringConst _, StringME _) => GREATER
+  | (StringConst _, Int _) => GREATER
+  | (StringConst _, IntConst _) => GREATER
+  | (StringConst _, FloatConst _) => GREATER
+  | (StringConst _, _) => LESS
+  | (Enum _, StringME _) => GREATER
+  | (Enum _, Int _) => GREATER
+  | (Enum _, IntConst _) => GREATER
+  | (Enum _, FloatConst _) => GREATER
+  | (Enum _, StringConst _) => GREATER
+  | (Enum _, _) => LESS
+  | (LabelRef _, StringME _) => GREATER
+  | (LabelRef _, Int _) => GREATER
+  | (LabelRef _, IntConst _) => GREATER
+  | (LabelRef _, FloatConst _) => GREATER
+  | (LabelRef _, StringConst _) => GREATER
+  | (LabelRef _, Enum _) => GREATER
+  | (LabelRef _, _) => LESS
+  | (Blob _, _) => GREATER
+
 
 fun sync_comp (syn1, syn2) = 
   case (syn1, syn2) of
-    (Good s1, Good s2) => String.compare (s1, s2)
-  | (Recovered (s1, t1), Recovered (s2, t2)) => String.compare (s1 ^ t1, s2 ^ t2)
+    (Good s1, Good s2) => refined_comp (s1, s2)
+  | (Recovered (s1, t1), Recovered (s2, t2)) => 
+	(
+	case String.compare(s1, s2) of
+	  GREATER => GREATER
+	| LESS => LESS
+	| _ => refined_comp (t1, t2) 
+	)
   | (Fail, Fail) => EQUAL
   | (Good _, _) => LESS
   | (Recovered _, Good _) => GREATER
@@ -131,8 +183,8 @@ fun repToString prefix r =
   case r of
     BaseR (GoodB t) => prefix ^ "GoodB(" ^ tokenToString t ^ ")\n"
   | BaseR (ErrorB) => prefix ^ "ErrorB\n"
-  | SyncR (Good s) => prefix ^ "Good(" ^ s ^ ")\n"
-  | SyncR (Recovered (s1, s2)) => prefix ^ "Rec(" ^ s1 ^")(" ^ s2 ^ ")\n"
+  | SyncR (Good s) => prefix ^ "Good(" ^ refinedToString s ^ ")\n"
+  | SyncR (Recovered (s1, s2)) => prefix ^ "Rec(" ^ s1 ^")(" ^ refinedToString s2 ^ ")\n"
   | SyncR (Fail) => prefix ^ "Fail\n" 
   | TupleR reps => 
 	let val ss = map (repToString (prefix ^ "    ")) reps 

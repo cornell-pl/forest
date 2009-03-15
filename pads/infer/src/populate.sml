@@ -96,11 +96,8 @@ struct
 *)
         fun matchCvt mtOpt =  
 	  let
-		val (root:mi option) = MT.root mtOpt
-  	  in
-		case root of 
-		NONE => SS.full ""
-		| SOME m => SS.slice(#pos m, 0, SOME(#len m))
+		val (root:mi) = MT.root mtOpt
+  	  in SS.slice(#pos root, 0, SOME(#len root))
 	  end
 	val matchlist = [(reStr, matchCvt)]
 	val matchOne = RegExp.match matchlist SS.getc (Substring.full s)

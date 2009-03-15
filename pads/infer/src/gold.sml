@@ -14,7 +14,8 @@ structure Gold = struct
     open PAGE_LOG
     open WINDOWSERVER_LOG 
     open MER
-    open NETSTAT 
+    open NETSTAT
+    open TEST_INC 
     open Populate
     open ScrollKeeper
     open Model
@@ -62,6 +63,7 @@ structure Gold = struct
         , ( "MER_T01_01.csv", mer)
         , ( "netstat-an", netstat)
         , ( "scrollkeeper.log", scrollkeeper)
+        , ( "test-inc.txt", test_inc)
         ]
 
     (* Determine if there is a useable golden data file *)
