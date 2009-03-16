@@ -99,6 +99,51 @@ struct
 	| UnionA l => foldl (fn (a, c) => (cost a) + c) 0 l
 	| ArrayA (e, s, t) => foldl (fn (a, c) => (cost a) + c) 0 [e, s, t]
 	| OptionA a => cost a
+
+fun aggrToString prefix r =
+  case r of
+    BaseA l => prefix ^ "BaseA\n"
+  | SyncA l => prefix ^ "SyncA\n"
+  | Opt agg =>
+	prefix ^ "Opt {\n" ^
+	  aggrToString (prefix ^ "    ") agg
+	^ prefix ^ "}\n"
+  | TupleA aggs => 
+	let val ss = map (aggrToString (prefix ^ "    ")) aggs 
+	in
+	   prefix ^ "TupleA {\n" ^
+	   (String.concat ss) ^ 
+	   prefix ^ "}\n"
+	end
+  | UnionA branches =>
+	let val ss = map (aggrToString (prefix ^ "    ")) branches
+	in
+	   prefix ^ "UnionA {\n" ^
+	   (String.concat ss) ^ 
+	   prefix ^ "}\n"
+	end
+  | ArrayA (elemA, sepA, termA) =>
+      let 
+	val elem_string = prefix ^ "ELEM:\n" ^ (aggrToString (prefix ^ "    ") elemA) 
+	val sep_string = prefix ^ "SEP:\n" ^ (aggrToString (prefix ^ "    ") sepA) 
+	val term_string = prefix ^ "TERM:\n" ^ (aggrToString (prefix ^ "    ") termA) 
+      in 
+	prefix ^ "Array {\n" ^
+	elem_string ^
+	sep_string ^
+	term_string ^
+	prefix ^ "}\n"
+      end
+  | OptionA agg =>
+	prefix ^ "OptionA {\n" ^
+	  aggrToString (prefix ^ "    ") agg
+	^ prefix ^ "}\n"
+  | Ln (strings, a) =>
+	prefix ^ "Learn {\n" ^
+	(String.concat (map (fn s => prefix ^ "\t\"" ^ s ^ "\"\n") strings)) ^
+	aggrToString (prefix ^ "    ") a
+	^ prefix ^ "}\n"
+
 end
 
 	
