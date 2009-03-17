@@ -89,6 +89,8 @@ struct
 	| _ => raise TyMismatch	
 
   (* function to measure the cost of an aggregate by counting the number of opt and learn nodes *)
+  (* NOTE: this may not be adequate as it doesn't take into account the erroneous data being accumulated
+     at learn nodes *)
   fun cost a = 
 	case a of
 	  BaseA _ => 0

@@ -6,5 +6,6 @@ structure TEST_INC = struct
     val dirAux: AuxInfo = {coverage = 34, label = SOME dirLabel, tycomp = zeroComps }
     val dashR:Refined = StringConst "-"
     val dR:Refined = StringConst "d"
-    val test_inc : Ty = RefinedBase (aux, StringConst "abc", [])
+    val word = Base(aux, [(Pstring("abc"), loc)])
+    val test_inc : Ty = RArray(aux, SOME (StringConst "|"), NONE, word, NONE, [])
 end	

@@ -38,7 +38,7 @@ structure Incremental: sig
 	    let 
 		val _ = print (line ^ "\n")
          	val set = Parse.parse_all(goldenTy, LabelMap.empty, 0, line)
-		val _ = print "Parse complete\n"
+		(* val _ = print "Parse complete\n" *)
 		val list_parses = Parse.ParseSet.listItems set
 		val num_parses = 
 			let val len = length list_parses 
@@ -54,7 +54,9 @@ structure Incremental: sig
 		val all_aggregates = List.concat (map (fn a => map 
 					(fn (r, m, j) => (Aggregate.merge a r))
 					top_parses) aggregates)
+		(*
 		val _ = print ("After all aggr: " ^ Int.toString (length all_aggregates) ^ "\n")
+		*)
 		val sorted_aggregates = ListMergeSort.sort
 			(fn (a1, a2) => Aggregate.cost a1 > Aggregate.cost a2) all_aggregates
 		val num_to_take = 

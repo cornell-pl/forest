@@ -72,14 +72,14 @@ struct
 	      *)
 	  in
 	     case result_opt of
-	       NONE =>  (print "match not found\n"; (BaseR ErrorB, 1, start))
+	       NONE =>  ((* print "match not found\n";*) (BaseR ErrorB, 1, start))
 	     | SOME (match_tree, s') =>
 		(
 		  let 
 		    val pair = MT.root match_tree
 		    val matched_ss = SS.slice(#pos pair, 0, SOME(#len pair))
 		    val outs = SS.string matched_ss
-		    val _ = print ("found match (" ^ outs ^ ")\n")
+		    (* val _ = print ("found match (" ^ outs ^ ")\n") *)
 		    val j = start + (#len pair)
 		    val tok = case t of
 				   Ptime i     => Ptime outs
@@ -174,7 +174,7 @@ struct
         val result_opt = (RegExp.find regex reader (0, s))
     in
    	case result_opt of
-	  NONE => (print "no match!\n"; (NONE, NONE, start))
+	  NONE => ((* print "no match!\n";*) (NONE, NONE, start))
 	| SOME (matched, (counter, remainder)) =>
 	  (
 	      let 
@@ -324,7 +324,10 @@ struct
 			  	case idop of
 				  SOME id => 
 				  (
-					print ("Inserting " ^ Atom.toString id ^ ": " ^ (repToString "" r) ^ "\n");
+					(*
+					print ("Inserting " ^ Atom.toString id ^ ": " ^ 
+						(repToString "" r) ^ "\n");
+					*)
 					LabelMap.insert(env, id, r)
 				  )
 				| _ => env
@@ -384,24 +387,32 @@ struct
 	end
     | RArray (a, sep, term, body, len, lengths) => 
      (
-      let fun merge_s ((r, m, j), set) =
+      let fun merge_s ((r, m, j), set, has_sep) =
 		case r of
 		  ArrayR(elems, seps, termop) =>
-		    ParseSet.map (fn (body_sep, m', j') =>
+		    if has_sep then
+		      ParseSet.map (fn (body_sep, m', j') =>
 				   case body_sep of
 				     TupleR ([elemR, sepR]) => 
 					(ArrayR(elems@[elemR], seps@[sepR], termop), m + m', j')
 				   | _ => raise TyMismatch) set
+		    else 
+		      ParseSet.map (fn (elemR, m', j') =>
+				(ArrayR(elems@[elemR], seps, termop), m + m', j')) set
 		| _ => raise TyMismatch
 
-          fun merge_t ((r, m, j),  set) = 
+          fun merge_t ((r, m, j), set, has_term) = 
 		case r of
 		  ArrayR(elems, seps, termop) =>
-		    ParseSet.map (fn (body_term, m', j') =>
+		    if has_term then
+		      ParseSet.map (fn (body_term, m', j') =>
 				   case body_term of
 				     TupleR ([elemR, termR]) => 
 					(ArrayR(elems@[elemR], seps, SOME termR), m + m', j')
 				   | _ => raise TyMismatch) set
+		    else 
+		      ParseSet.map (fn (elemR, m', j') =>
+				(ArrayR(elems@[elemR], seps, termop), m + m', j')) set
 		| _ => raise TyMismatch
           fun pair (b, r) = Pstruct (mkTyAux 0, [b, RefinedBase (mkTyAux 0, r, nil)])
       in
@@ -409,47 +420,53 @@ struct
         NONE =>	
 	(
 	  (* NOTE: for now we assume both sep and term must be present *)
-	  case (sep, term) of
-	    (NONE, _) => raise TyMismatch 
-	  | (_, NONE) => raise TyMismatch
-	  | _ =>
-	    let
-	      val body_sep = pair (body, some(sep))
-	      val body_term = pair (body, some(term))
-	      fun parse_array (e, parse_set) =
-		let val sepmap = IntMap.empty	
-		    val termmap = IntMap.empty	
-		    fun f ((prev_r, m, start), (seprs, termrs, sepmap, termmap)) =
-			let val (sep_set, sepmap)  = 
-				case IntMap.find(sepmap, start) of
-				  SOME s => (merge_s ((prev_r, m, start), s), sepmap)
-				| NONE =>
-				  let val s = ParseSet.filter (fn (r, m, j) => j > start)
-						(parse_all (body_sep, e, start, input))
-				      val sepmap = IntMap.insert(sepmap, start, s)
-				  in (merge_s ((prev_r, m, start), s), sepmap)
-				  end
-			    val (term_set, termmap) = 
-				case IntMap.find(termmap, start) of
-				  SOME s => (merge_t ((prev_r, m, start), s), termmap)
-				| NONE =>
-				  let val s = ParseSet.filter (fn (r, m, j) => j > start)
-						(parse_all (body_term, e, start, input))
-				      val termmap = IntMap.insert(termmap, start, s)
-				  in (merge_t ((prev_r, m, start), s), termmap)
-				  end
-			in (ParseSet.union(seprs, sep_set), ParseSet.union(termrs, term_set),
-			    sepmap, termmap)
-			end
-		    val (seps, terms, sepmap, termmap) = ParseSet.foldl f 
-				(ParseSet.empty, ParseSet.empty, sepmap, termmap) parse_set
-		    val sep' = parse_array (e, seps) 
-		in
-		    ParseSet.union (sep', terms)
-		end
-	     in
-	       parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), 0, i))
-	     end  
+	 let
+	   val (body_sep, has_sep) = case sep of
+	     	        NONE => (body, false)
+	     	     | SOME sep => (pair (body, sep), true)
+	   val (body_term, has_term) = case term of
+	     		NONE => (body, false)
+	     	      | SOME term => (pair (body, term), true)
+	   fun parse_array (e, parse_set) =
+	     if ParseSet.numItems parse_set = 0 then parse_set
+	     else
+	       let 
+		 val sepmap = IntMap.empty	
+	         val termmap = IntMap.empty	
+		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n")
+	         fun f ((prev_r, m, start), (seprs, termrs, sepmap, termmap)) =
+	     	   let
+		    val _ = print ("Start = " ^ Int.toString start ^ "\n") 
+		    val (sep_set, sepmap)  = 
+	     		case IntMap.find(sepmap, start) of
+	     		  SOME s => (merge_s ((prev_r, m, start), s, has_sep), sepmap)
+	     		| NONE =>
+	     		  let val s = ParseSet.filter (fn (r, m, j) => j > start)
+	     				(parse_all (body_sep, e, start, input))
+	     		      val sepmap = IntMap.insert(sepmap, start, s)
+	     		  in (merge_s ((prev_r, m, start), s, has_sep), sepmap)
+	     		  end
+	     	    val (term_set, termmap) = 
+	     		case IntMap.find(termmap, start) of
+	     		  SOME s => (merge_t ((prev_r, m, start), s, has_term), termmap)
+	     		| NONE =>
+	     		  let val s = ParseSet.filter (fn (r, m, j) => j > start)
+	     				(parse_all (body_term, e, start, input))
+	     		      val termmap = IntMap.insert(termmap, start, s)
+	     		  in (merge_t ((prev_r, m, start), s, has_term), termmap)
+	     		  end
+	     	   in (ParseSet.union(seprs, sep_set), ParseSet.union(termrs, term_set),
+	     	       sepmap, termmap)
+	     	   end
+	         val (seps, terms, sepmap, termmap) = ParseSet.foldl f 
+	     		(ParseSet.empty, ParseSet.empty, sepmap, termmap) parse_set
+	         val sep' = parse_array (e, seps) 
+	       in
+	         ParseSet.union (sep', terms)
+	       end
+	  in
+	    parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), 0, i))
+	  end  
        )	
      | SOME x => 
 	(* assume index starts from 0 *)
@@ -468,15 +485,18 @@ struct
 	fun parse_fixed_len_array (e, parse_set, index) =
 	  if index = len - 1 then
 	    let fun f ((r, m, start), (set, map)) = 
-	        let val body_term = pair (body, some(term))
+	        let val (body_term, has_term) = 
+			case term of 
+			  NONE => (body, false)
+			| SOME term => (pair (body, term), true)
 		    val (term_set, termmap) = 
 			case IntMap.find(map, start) of
-			  SOME s => (merge_t ((r, m, start), s), map)
+			  SOME s => (merge_t ((r, m, start), s, has_term), map)
 			| NONE =>
 			  let val s = ParseSet.filter (fn (r, m, j) => j > start)
 					(parse_all (body_term, e, start, input))
 			      val map = IntMap.insert(map, start, s)
-			  in (merge_t ((r, m, start), s), map)
+			  in (merge_t ((r, m, start), s, has_term), map)
 			  end
 		in (ParseSet.union(set, term_set), termmap)
 		end
@@ -486,15 +506,18 @@ struct
 	    end
 	  else 
 	    let fun f ((r, m, start), (set, map)) = 
-	        let val body_sep = pair (body, some(sep))
+	        let val (body_sep, has_sep) = 
+			case sep of
+			  NONE => (body, false)
+			| SOME sep => (pair (body, sep), true)
 		    val (sep_set, sepmap) = 
 			case IntMap.find(map, start) of
-			  SOME s => (merge_s ((r, m, start), s), map)
+			  SOME s => (merge_s ((r, m, start), s, has_sep), map)
 			| NONE =>
 			  let val s = ParseSet.filter (fn (r, m, j) => j > start)
 					(parse_all (body_sep, e, start, input))
 			      val map = IntMap.insert(map, start, s)
-			  in (merge_t ((r, m, start), s), map)
+			  in (merge_t ((r, m, start), s, has_sep), map)
 			  end
 		in (ParseSet.union(set, sep_set), sepmap)
 		end
