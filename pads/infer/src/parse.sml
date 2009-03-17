@@ -419,7 +419,6 @@ struct
       case len of
         NONE =>	
 	(
-	  (* NOTE: for now we assume both sep and term must be present *)
 	 let
 	   val (body_sep, has_sep) = case sep of
 	     	        NONE => (body, false)
@@ -433,10 +432,11 @@ struct
 	       let 
 		 val sepmap = IntMap.empty	
 	         val termmap = IntMap.empty	
+		(*
 		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n")
+		*)
 	         fun f ((prev_r, m, start), (seprs, termrs, sepmap, termmap)) =
 	     	   let
-		    val _ = print ("Start = " ^ Int.toString start ^ "\n") 
 		    val (sep_set, sepmap)  = 
 	     		case IntMap.find(sepmap, start) of
 	     		  SOME s => (merge_s ((prev_r, m, start), s, has_sep), sepmap)
