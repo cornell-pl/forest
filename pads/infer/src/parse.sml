@@ -11,11 +11,11 @@ struct
   structure SS = Substring
 
   structure ParseSet = SplaySetFn(struct
-	type ord_key = Rep * int * int  (* (rep, metric, pos) triplet, metric smaller => better *)
+	type ord_key = Rep * metric_type * int  (* (rep, metric, pos) triplet, metric smaller => better *)
 	val compare = 
 		fn((r1, m1, j1), (r2, m2, j2)) =>
-		if m1<m2 then LESS
-		else if m1 > m2 then GREATER
+		if better_metric m1 m2 then LESS
+		else if better_metric m2 m1 then GREATER
 		else if j1 > j2 then LESS
 		else if j1 < j2 then GREATER
 		else Rep.compare(r1, r2)
@@ -72,15 +72,16 @@ struct
 	      *)
 	  in
 	     case result_opt of
-	       NONE =>  ((* print "match not found\n";*) (BaseR ErrorB, 1, start))
+	       NONE =>  ((* print "match not found\n";*) (BaseR ErrorB, (1, 0, 0), start))
 	     | SOME (match_tree, s') =>
 		(
 		  let 
 		    val pair = MT.root match_tree
-		    val matched_ss = SS.slice(#pos pair, 0, SOME(#len pair))
+		    val len = #len pair
+		    val matched_ss = SS.slice(#pos pair, 0, SOME len)
 		    val outs = SS.string matched_ss
 		    (* val _ = print ("found match (" ^ outs ^ ")\n") *)
-		    val j = start + (#len pair)
+		    val j = start + len
 		    val tok = case t of
 				   Ptime i     => Ptime outs
 			        |  Pdate i     => Pdate outs
@@ -94,8 +95,8 @@ struct
 			        |  PeXML (f,s) => PeXML(outs, "")
 			        |  Pint _    => 
 				       (
-					case (Int.fromString outs) of
-					  SOME i => Pint(Int.toLarge i, outs)
+					case (LargeInt.fromString outs) of
+					  SOME i => Pint(i, outs)
 					| _ => raise TyMismatch
 				       )
 			        |  Pfloat _    => 
@@ -111,7 +112,7 @@ struct
 		  (*
 		  val _ = print ("Token is " ^ (tokenTyToString tok) ^ "\n")
 		  *)
-		  in (BaseR (GoodB tok), 0, j)
+		  in (BaseR (GoodB tok), (0, 0, len), j)
 		  end
 		)
 	  end
@@ -119,7 +120,7 @@ struct
     	| _ => 
 	  (
 	    case t of
-	      Pempty => (BaseR (GoodB Pempty), 0, start)
+	      Pempty => (BaseR (GoodB Pempty), (0, 0, 0), start)
 	    | _ => raise TyMismatch
 	  )
     end
@@ -207,9 +208,10 @@ struct
 	        val (recovered, matched, j) = parse_regex (re_str, start, input)
 	    in
 		case (recovered, matched) of
-		  (NONE, SOME s) => [(SyncR(Good (StringConst s)), 0, j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, StringConst s)), 2, j)]
-		| _ => [(SyncR Fail, 1, start)]
+		  (NONE, SOME s) => [(SyncR(Good (StringConst s)), (0, 0, String.size s), j)]
+		| (SOME r, SOME s) => [(SyncR(Recovered (r, StringConst s)), 
+					(2, String.size r, String.size s), j)]
+		| _ => [(SyncR Fail, (1, 0, 0), start)]
 	    end
 	| IntConst li => 
 	    let val str = 
@@ -218,9 +220,10 @@ struct
 	        val (recovered, matched, j) = parse_regex (str, start, input)
 	    in
 		case (recovered, matched) of
-		  (NONE, SOME s) => [(SyncR(Good (IntConst li)), 0, j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, IntConst li)), 2, j)]
-		| _ => [(SyncR Fail, 1, start)]
+		  (NONE, SOME s) => [(SyncR(Good (IntConst li)), (0, 0, String.size s), j)]
+		| (SOME r, SOME s) => [(SyncR(Recovered (r, IntConst li)), 
+					(2, String.size r, String.size s), j)]
+		| _ => [(SyncR Fail, (1, 0, 0), start)]
 
 		end
 	| Int (min, max) => 
@@ -242,7 +245,7 @@ struct
 		      let val result_opt = (RegExp.find regex reader (index, s))
 		      in
 		  	case result_opt of
-		    	  NONE => [(SyncR Fail, 1, start)]
+		    	  NONE => [(SyncR Fail, (1, 0, 0), start)]
 		  	| SOME (matched, (index, remainder)) =>
 			  (
 			      let
@@ -260,9 +263,10 @@ struct
 				  else if matched_index > 0 then (* there's recovered data *)
 		  		    let val recovered_s = SS.string 
 						(SS.slice(mystring, 0, SOME matched_index))
-		  		    in [(SyncR (Recovered (recovered_s, IntConst outint)), 2, start+index+matched_len)]
+		  		    in [(SyncR (Recovered (recovered_s, IntConst outint)), 
+					(2, matched_index-start, matched_len), start+index+matched_len)]
 		  		    end
-				  else [(SyncR (Good (IntConst outint)), 0, start+index+matched_len)] 
+				  else [(SyncR (Good (IntConst outint)), (0, 0, matched_len), start+matched_len)] 
 			      end
 			  )
 		      end
@@ -272,17 +276,19 @@ struct
 	    let val (recovered, matched, j) = parse_regex (escapeRE (i ^ "." ^ f), start, input)
 	    in
 		case (recovered, matched) of
-		  (NONE, SOME s) => [(SyncR(Good (FloatConst (i, f))), 0, j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, FloatConst (i, f))), 2, j)]
-		| _ => [(SyncR Fail, 1, start)]
+		  (NONE, SOME s) => [(SyncR(Good (FloatConst (i, f))), (0, 0, String.size s), j)]
+		| (SOME r, SOME s) => [(SyncR(Recovered (r, FloatConst (i, f))), 
+					(2, String.size r, String.size s), j)]
+		| _ => [(SyncR Fail, (1, 0, 0), start)]
 	    end
 	| StringConst s => 
 	    let val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
 	    in
 		case (recovered, matched) of
-		  (NONE, SOME s) => [(SyncR(Good (StringConst s)), 0, j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, StringConst s)), 2, j)]
-		| _ => [(SyncR Fail, 1, start)]
+		  (NONE, SOME s) => [(SyncR(Good (StringConst s)), (0, 0, String.size s), j)]
+		| (SOME r, SOME s) => [(SyncR(Recovered (r, StringConst s)), 
+					(2, String.size r, String.size s), j)]
+		| _ => [(SyncR Fail, (1, 0, 0), start)]
 	    end
 
 	| Enum res => List.foldl (fn (r, l) => l@ (parse_sync(r, start, input))) nil res
@@ -304,7 +310,7 @@ struct
     | Pstruct(a, tys) => 
 	let fun parse_struct tys env start =
 	    case tys of
-	      nil => ParseSet.singleton((TupleR nil, 0, start))
+	      nil => ParseSet.singleton((TupleR nil, (0, 0, 0), start))
 	    | ty::tys =>
 		let
 		(* 
@@ -333,7 +339,7 @@ struct
 				| _ => env
 			    val news = parse_struct tys newe j
 		  	    val newset = ParseSet.map
-			      (fn (TupleR rlist, m', j') => (TupleR (r::rlist), m + m', j')) news
+			      (fn (TupleR rlist, m', j') => (TupleR (r::rlist), add_metric m  m', j')) news
 		  	in	
 			   ParseSet.union (set, newset)
 			end
@@ -353,7 +359,6 @@ struct
 	in #1 (foldl g (ParseSet.empty, 0) tys)
 	end
     | Switch (a, id, retys) => 
-	(* TODO: right now we delete all parses under switch if no branch of switch can be taken *)
 	let fun select retys re branchno =
 		case retys of
 		  nil => NONE
@@ -361,9 +366,9 @@ struct
 		  (
 		    case r of
 		      Enum l =>
-			  if List.exists (fn r => refine_equal(r, re)) l then SOME (branchno, t)
+			  if List.exists (fn r => refine_equal(r, re)) l then SOME (branchno, Enum l, t)
 			  else select retys re (branchno+1)
-		    | _ => if refine_equal (r, re) then SOME (branchno, t)
+		    | _ => if refine_equal (r, re) then SOME (branchno, re, t)
 			   else select retys re (branchno+1)
 		  )
 	     val re_to_search = 
@@ -377,11 +382,17 @@ struct
 	     val search_result = select retys re_to_search 0
 	     val newset =
 		case search_result of
-		  NONE => ParseSet.empty
-		| SOME (branchno, selected_ty) =>
+		  NONE => 
+		    let val recovered_string = String.extract (input, i, NONE) 
+		        val len = String.size recovered_string
+		    in
+			ParseSet.singleton (SwitchR (re_to_search, 
+			SyncR (Recovered (recovered_string, StringME ("/$/")))), (2, len, 0), i+len)
+		    end
+		| SOME (branchno, re, selected_ty) =>
 		  let  
  	     		val set = parse_all (selected_ty, e, i, input) 
-	     	  in ParseSet.map (fn (r, m, j) => (UnionR (branchno, r), m, j)) set
+	     	  in ParseSet.map (fn (r, m, j) => (SwitchR (re, r), m, j)) set
 		  end
 	in newset
 	end
@@ -394,11 +405,11 @@ struct
 		      ParseSet.map (fn (body_sep, m', j') =>
 				   case body_sep of
 				     TupleR ([elemR, sepR]) => 
-					(ArrayR(elems@[elemR], seps@[sepR], termop), m + m', j')
+					(ArrayR(elems@[elemR], seps@[sepR], termop), add_metric m  m', j')
 				   | _ => raise TyMismatch) set
 		    else 
 		      ParseSet.map (fn (elemR, m', j') =>
-				(ArrayR(elems@[elemR], seps, termop), m + m', j')) set
+				(ArrayR(elems@[elemR], seps, termop), add_metric m  m', j')) set
 		| _ => raise TyMismatch
 
           fun merge_t ((r, m, j), set, has_term) = 
@@ -408,11 +419,11 @@ struct
 		      ParseSet.map (fn (body_term, m', j') =>
 				   case body_term of
 				     TupleR ([elemR, termR]) => 
-					(ArrayR(elems@[elemR], seps, SOME termR), m + m', j')
+					(ArrayR(elems@[elemR], seps, SOME termR), add_metric m  m', j')
 				   | _ => raise TyMismatch) set
 		    else 
 		      ParseSet.map (fn (elemR, m', j') =>
-				(ArrayR(elems@[elemR], seps, termop), m + m', j')) set
+				(ArrayR(elems@[elemR], seps, termop), add_metric m  m', j')) set
 		| _ => raise TyMismatch
           fun pair (b, r) = Pstruct (mkTyAux 0, [b, RefinedBase (mkTyAux 0, r, nil)])
       in
@@ -465,7 +476,7 @@ struct
 	         ParseSet.union (sep', terms)
 	       end
 	  in
-	    parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), 0, i))
+	    parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i))
 	  end  
        )	
      | SOME x => 
@@ -526,15 +537,15 @@ struct
 	    in parse_fixed_len_array (e, new_parse_set, index+1)
 	    end
 	in
-	  parse_fixed_len_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), 0, i), 0)
+	  parse_fixed_len_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i), 0)
 	end
-      end 
+      end  
       )
     | Poption (a, ty) => 
 	let val set = parse_all (ty, e, i, input) 
 	    val newset = ParseSet.map (fn (r, m, j) => (OptionR(SOME r), m, j)) set
 	in
-	    ParseSet.add (newset, (OptionR NONE, 0, i))
+	    ParseSet.add (newset, (OptionR NONE, (0, 0, 0), i))
 	end
     | _ => raise TyMismatch
 	

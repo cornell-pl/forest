@@ -7,7 +7,7 @@ structure Incremental: sig
 
     val anyErrors = ref false
     val max_int = 10000000
-    val max_parses_per_line = 2
+    val max_parses_per_line =5 
     val max_aggregates = 10
     exception Exit of OS.Process.status
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
@@ -40,19 +40,42 @@ structure Incremental: sig
          	val set = Parse.parse_all(goldenTy, LabelMap.empty, 0, line)
 		(* val _ = print "Parse complete\n" *)
 		val list_parses = Parse.ParseSet.listItems set
-		val num_parses = 
-			let val len = length list_parses 
-			in if len > max_parses_per_line then max_parses_per_line
-			   else  len
-			end
-		val top_parses = List.take ((ListMergeSort.sort 
-			(fn ((_, m1, _), (_, m2, _)) => m1 > m2) list_parses), num_parses)
-		val _ = print ("The top " ^ Int.toString max_parses_per_line ^ " parses: \n")
+		val list_parses = map (fn (r, m, j) => 
+			let val len = String.size line 
+			in if j < len then (r, Rep.add_metric m (2, len-j, 0), j)
+			   else (r, m, j)
+			end) list_parses
+		(* if there are some perfect parses, only take those *)
+		val perfect_parses = List.filter (fn (r, m, j) => (#1 m) = 0) list_parses
+		val top_parses =
+			if List.length perfect_parses > 0 then
+				if List.length perfect_parses <= max_parses_per_line then
+				  perfect_parses
+				else List.take (perfect_parses, max_parses_per_line)
+			else
+			  let 
+			    val num_parses =  
+			        let val len = length list_parses 
+			        in if len > max_parses_per_line then max_parses_per_line
+			           else len
+				end
+			  in
+			     List.take ((ListMergeSort.sort 
+			     (fn ((_, m1, _), (_, m2, _)) => Rep.better_metric m2 m1) list_parses), num_parses)
+			  end
+		val _ = print ("The top " ^ Int.toString (length top_parses) ^ " parses: \n")
 	 	val _ = List.app (fn (rep, m, j) => 
-			print (Rep.repToString "" rep ^ "Metric = " ^ Int.toString m ^ "\n\n")) 
+			print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 			top_parses
 		val all_aggregates = List.concat (map (fn a => map 
-					(fn (r, m, j) => (Aggregate.merge a r))
+				(fn (r, m, j) => 
+				  let val newa = (Aggregate.merge a r)
+		(*	
+				      val _ = print (Aggregate.aggrToString "" newa)
+				      val _ = print ("Cost = " ^ Real.toString (Aggregate.cost newa) ^ "\n")
+		*)
+				  in newa
+				  end)
 					top_parses) aggregates)
 		(*
 		val _ = print ("After all aggr: " ^ Int.toString (length all_aggregates) ^ "\n")
@@ -84,7 +107,7 @@ structure Incremental: sig
        in
 	 print "The Best Aggregate:\n";
 	 print (Aggregate.aggrToString "" final_aggr);
-	 print ("Cost of Best Aggregation = " ^ Int.toString (Aggregate.cost final_aggr) ^ "\n")
+	 print ("Cost of Best Aggregation = " ^ Real.toString (Aggregate.cost final_aggr) ^ "\n")
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
 		          " [", exnMessage e, "]\n"

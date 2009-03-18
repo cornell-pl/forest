@@ -12,7 +12,38 @@ datatype SyncData =
 | Recovered of (string * Refined)  (* recovered string, actual matched Refined pair *)
 | Fail
 
-fun refined_comp (r1, r2) =
+type metric_type = int * int * int (* (number of error nodes, recovered chars, total chars parsed ) *)
+
+fun add_metric (e1, r1, t1) (e2, r2, t2) = (e1 + e2, r1 + r2, t1 + t2) 
+
+fun better_metric (e1, r1, t1) (e2, r2, t2) =
+	case (t1, t2) of
+	  (0, 0) => e1 < e2
+	| (0, _) => false
+	| (_, 0) => true
+	| _ => 
+	  let val n1 = (Real.fromInt r1) / (Real.fromInt (r1 + t1))
+	      val n2 = (Real.fromInt r2) / (Real.fromInt (r2 + t2))
+	  in if n1 < n2 then true
+	     else if n1 > n2 then false
+	     else e1 < e2
+	  end
+
+fun metricToString (e, r, parsed) = "(" ^ Int.toString e ^ ", " ^ Int.toString r ^ ", " 
+			^ Int.toString parsed ^ ")"
+
+fun comp_refines (l1, l2) =
+  case (l1, l2) of
+    (nil, nil) => EQUAL
+  | (nil, _) => LESS
+  | (_, nil) => GREATER
+  | (re1::l1, re2::l2) => 
+	let val res = refined_comp (re1, re2) 
+	in if res = EQUAL then comp_refines (l1, l2)
+	   else res
+	end
+
+and refined_comp (r1, r2) =
   case (r1, r2) of
     (StringME s1, StringME s2) => String.compare (s1, s2)
   | (Int(min1, max1), Int(min2, max2)) => 
@@ -24,7 +55,7 @@ fun refined_comp (r1, r2) =
   | (IntConst a, IntConst b) => LargeInt.compare (a, b)
   | (FloatConst (a1, b1), FloatConst (a2, b2)) => String.compare ((a1 ^ b1), (a2 ^ b2))
   | (StringConst s1, StringConst s2) => String.compare (s1, s2)
-  | (Enum _, Enum _) => EQUAL
+  | (Enum l1, Enum l2) => comp_refines (l1, l2)
   | (LabelRef id1, LabelRef id2) => Atom.compare (id1, id2)
   | (Blob _, Blob _) => EQUAL
   | (StringME _, _) => LESS
@@ -81,6 +112,7 @@ datatype Rep =
 | UnionR of int * Rep  (* int is branch number *)
 | ArrayR of (Rep list * Rep list * Rep option)
 | OptionR of (Rep option) 
+| SwitchR of Refined * Rep
 
 fun compTokenDetail (t1, t2) =
   let val result = compToken (t1, t2) 
@@ -161,6 +193,11 @@ and compare (r1 : Rep, r2 : Rep) : order =
 	| (SOME _, NONE) => GREATER
 	| (SOME x, SOME y) => compare (x, y)
 	)
+ | (SwitchR (re1, rep1), SwitchR (re2, rep2)) =>
+	let val re_comp = refined_comp (re1, re2)
+	in if re_comp = EQUAL then compare (rep1, rep2)
+	   else re_comp
+	end
  | (BaseR _, _) => LESS
  | (SyncR _ , BaseR _) => GREATER
  | (SyncR _, _ ) => LESS
@@ -176,7 +213,13 @@ and compare (r1 : Rep, r2 : Rep) : order =
  | (ArrayR _, TupleR _) => GREATER
  | (ArrayR _, UnionR _) => GREATER
  | (ArrayR _, _) => LESS
- | (OptionR _, _) => GREATER
+ | (OptionR _, BaseR _) => GREATER
+ | (OptionR _, SyncR _ ) => GREATER
+ | (OptionR _, TupleR _) => GREATER
+ | (OptionR _, UnionR _) => GREATER
+ | (OptionR _, ArrayR _) => GREATER
+ | (OptionR _, _) => LESS
+ | (SwitchR _, _) => GREATER
 
 (* function to display a rep *)
 fun repToString prefix r =
@@ -219,5 +262,9 @@ fun repToString prefix r =
 	  NONE => prefix ^ "    " ^ "Empty\n"
 	| SOME r => repToString (prefix ^ "    ") r 
 	) ^ prefix ^ "}\n"
- 
+
+  | SwitchR (re, rep) =>
+	   prefix ^ "Switch (" ^ refinedToString re ^") {\n" ^
+	   (repToString (prefix ^ "    ") rep) ^
+	   prefix ^ "}\n"
 end
