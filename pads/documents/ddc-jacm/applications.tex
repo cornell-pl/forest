@@ -1,0 +1,106 @@
+\section{Applications of the Semantics}
+\label{sec:applications}
+
+The development of \ddc{} and definition of a semantics for \ipads{}
+has had a substantial impact on the \padsc{} and \padsml{}
+implementations. It has helped improve the implementations in a number
+of distinct ways, which we now discuss.
+
+\subsection{Bug Hunting}
+
+The \ddc\ was developed, in part, through a line-by-line analysis of key
+portions of the \padsc{} implementation, to uncover implicit invariants in
+the code.  In the process of trying to understand and formalize these
+invariants we realized that our error accounting methodology was
+inconsistent, particularly in the case of arrays.  When we realized
+the problem, we were able to formulate a clear rule to apply
+universally: each subcomponent adds 1 to the error count of its parent
+if and only if it has errors.  If we had not tried to formalize our
+semantics, it is unlikely we would have made the error accounting rule
+precise, leaving our implementation buggy and inconsistent.
+
+The semantics also helped us avoid potential nontermination of array
+parsers. In the original implementation of \padsc{} arrays, it was
+possible to write nonterminating arrays, a bug that was only
+uncovered when it hung a real program.  We have fixed the bug and used
+the semantics to verify our fix.~\footnote{The type {\tt nothing
+    array(nothing,eof)} where type {\tt nothing} consumes no input,
+  would not terminate in the orignal system.  A careful read of the
+  \ddc{} semantics of arrays, which has now been implemented in
+  \padsc{}, shows that array parsing terminates after an iteration in
+  which the array parser reads nothing.}
+
+% \subsection{Challenging Assumptions}
+
+% Next, we present a number of \padsc\ design choices that are
+% challenged by the semantics. The \padsc{} implementation includes a
+% number of optimizations that are undesirable.  For example, \padsc{}
+% does not record an ending offset in a parse descriptor unless the
+% parse contained an error. Yet, from the semantics of we
+% realized see that recording the entire span of an element is desirable even for
+% error-free values.
+% %\edcom{M: Explain rationale behind previous sentence.} 
+
+% A second example is the semantics of \Pomit{}
+% with respect to field scope. Currently, \padsc\ allows omitted fields to be
+% accessed just as other fields during parsing, by saving their values
+% in temporary variables.  They are not available otherwise, however, as
+% they are not saved in the output representation. While this semantics
+% can be very useful, it discourages any simple understanding of
+% \Pomit{}. Instead, the \ddc{} makes the value unavailable anywhere,
+% returning the $\iunitty$ value for the $\pabsorbn$ type.
+
+\subsection{Principled Language Implementation}
+
+Unlike the rest of \padsc{}, the semantics of recursive types preceded
+the implementation. We used the semantics to guide our design
+decisions in the implementation. Perhaps more significantly, the
+semantics was used in its entirety to guide the implementation of
+\padsml{}. The semantics of type abstractions were particularly
+helpful, as they are a new feature not found in \padsc{}. Before
+working through the formal semantics, we struggled to disentangle the
+invariants related to polymorphism. After we had defined the calculus,
+we were able to implement type abstractions as \ocaml{} functors in
+approximately a week.  We hope the calculus will serve as a guide for
+implementations of \pads{} in other host languages.
+
+\subsection{Distinguishing the Essential from the Accidental}
+
+In his 1965 paper, P.J. Landin asks ``Do the idiosyncracies [of a
+language] reflect basic logical properties of the situations that are
+being catered for?  Or are they accidents of history and personal
+background that may be obscuring fruitful developments?''  
+
+The semantics helped us answer this question with regard to the
+\Pomit{} and \Pcompute{} qualifiers of \padsc{}.  Originally, these
+qualifiers were only intended to be used on fields within \Pstruct{}s.
+By an accident of the implementation, they appeared in \Punion{}s as
+well, but spread no further. However, when designing \ddc{}, we
+followed the {\em principle of orthogonality}, which suggests that
+every linguistic concept be defined independently of every other.  In
+particular, we observed that ``omitting'' data from, or including
+(``computing'') data in, the internal representation is not dependent
+upon the idea of structures or unions.  Furthermore, we found that
+developing these concepts as first-class constructors $\pabsorbn$ and
+$\pcomputen$ in \ddc{} allowed us to encode the semantics of other
+\padsc{} features elegantly (literals, for example).  In this case, then, the
+\ddc{} highlighed that the restriction of \Pomit{} and \Pcompute{} to
+mere type qualifers for \Punion{} and \Pstruct{} fields was an
+``accident of history,'' rather than a ``basic logical property'' of
+data description.
+
+We conclude with an example of another feature to which Landin's
+question applies, but for which we do not yet know the answer. The \Punion{}
+construct chooses between branches by searching for the first one
+without errors. However, this semantics ignores situations in which
+the correct branch in fact has errors. Often, this behavior will lead
+to parsing nothing and flagging a failure, rather than parsing the
+correct branch to the best of its ability.  The process of
+developing a semantics brought this fact to our attention and
+it now seems clear we would like a more robust
+\Punion, but we are not currently sure how to design one. 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "semantics"
+%%% End: 
