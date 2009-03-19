@@ -18,6 +18,8 @@ structure Incremental: sig
     open Options
     open Common
 
+    structure AG = Aggregate
+
     fun main (cmd, args) = 
      (
      if length args <> 2 then
@@ -30,7 +32,7 @@ structure Incremental: sig
 	 val _ = print "loadFile complete \n"
 	 val goldenTy : Ty  = Gold.getGolden descname
 	 val _ = printTy goldenTy
-	 val init_aggr = Aggregate.initialize goldenTy
+	 val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
 	 val _ = print "Aggregate initialization complete \n"
 
 	 (* invariant: number of aggregates <= max_aggregates *)
@@ -67,12 +69,17 @@ structure Incremental: sig
 	 	val _ = List.app (fn (rep, m, j) => 
 			print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 			top_parses
-		val all_aggregates = List.concat (map (fn a => map 
+		val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln ss]) => map 
 				(fn (r, m, j) => 
-				  let val newa = (Aggregate.merge a r)
+				  let 
+					val remainder = String.extract (line, j, NONE)
+					val newa = if remainder = "" then 
+							AG.TupleA [(AG.merge a r), AG.Ln ss]
+						   else 
+							AG.TupleA [(AG.merge a r), AG.Ln (ss@[remainder])]
 		(*	
-				      val _ = print (Aggregate.aggrToString "" newa)
-				      val _ = print ("Cost = " ^ Real.toString (Aggregate.cost newa) ^ "\n")
+				      val _ = print (AG.aggrToString "" newa)
+				      val _ = print ("Cost = " ^ Real.toString (AG.cost newa) ^ "\n")
 		*)
 				  in newa
 				  end)
@@ -81,7 +88,7 @@ structure Incremental: sig
 		val _ = print ("After all aggr: " ^ Int.toString (length all_aggregates) ^ "\n")
 		*)
 		val sorted_aggregates = ListMergeSort.sort
-			(fn (a1, a2) => Aggregate.cost a1 > Aggregate.cost a2) all_aggregates
+			(fn (a1, a2) => AG.cost a1 > AG.cost a2) all_aggregates
 		val num_to_take = 
 			let val len = length sorted_aggregates 
 			in if len > max_aggregates then max_aggregates
@@ -92,12 +99,12 @@ structure Incremental: sig
 		val (min_a, min_c) = Parse.ParseSet.foldl 
 				(fn ((r, m, j), (mina, minc: int)) => 
 				  let 
-					val newaggr = Aggregate.merge a r 
-					val newcost = Aggregate.cost newaggr
+					val newaggr = AG.merge a r 
+					val newcost = AG.cost newaggr
 				  in 
 				    if newcost < minc then (newaggr, newcost)
 				    else (mina, minc)
-				  end) (Aggregate.BaseA nil, max_int) set 
+				  end) (AG.BaseA nil, max_int) set 
 *)
 					(* use a dummy aggregate to start *)
 	     in
@@ -106,8 +113,8 @@ structure Incremental: sig
 	     val final_aggr = hd (foldl add [init_aggr] lines)
        in
 	 print "The Best Aggregate:\n";
-	 print (Aggregate.aggrToString "" final_aggr);
-	 print ("Cost of Best Aggregation = " ^ Real.toString (Aggregate.cost final_aggr) ^ "\n")
+	 print (AG.aggrToString "" final_aggr);
+	 print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n")
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
 		          " [", exnMessage e, "]\n"
