@@ -23,15 +23,18 @@ structure Incremental: sig
     fun main (cmd, args) = 
      (
      if length args <> 2 then
-	(print "Usage: increment DESC FILENAME\n";
+	(print "Usage: increment FILE_TO_LEARN FILE_TO_PARSE\n";
 	anyErrors := true)
      else
        let 
-	 val [descname, filename] = args
+	 val [file2learn, filename] = args
+         val (ty, sep) = computeStructure [file2learn]
+	 val ( measuredTy, goldenTy, numHeaders, numFooters, _) = 
+                                   Rewrite.run (Times.zeroEndingTimes()) ty
+	 (* val goldenTy : Ty  = Gold.getGolden descname 
+	 val _ = printTy goldenTy *)
 	 val lines = loadFile filename
 	 val _ = print "loadFile complete \n"
-	 val goldenTy : Ty  = Gold.getGolden descname
-	 val _ = printTy goldenTy
 	 val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
 	 val _ = print "Aggregate initialization complete \n"
 

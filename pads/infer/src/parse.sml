@@ -292,6 +292,34 @@ struct
 	    end
 
 	| Enum res => List.foldl (fn (r, l) => l@ (parse_sync(r, start, input))) nil res
+	| Blob (str, patt) =>
+	  (
+	  case (str, patt) of
+	    (SOME s, NONE) =>
+	    	let val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
+		in
+		  case (recovered, matched) of
+		    (NONE, SOME s) => [(SyncR(Good (StringConst "")), (0, 0, 0), start)]
+		  | (SOME r, SOME s) => [(SyncR(Good (StringConst r)), 
+					(0, 0, String.size r), j - (String.size s))]
+		  | _ => [(SyncR Fail, (1, 0, 0), start)]
+		end
+	  | (NONE, SOME re) => 
+	    	let 
+		  val re_str = String.substring (re, 1, (size re)-2) (*remove the / and / *)
+	          val (recovered, matched, j) = parse_regex (re_str, start, input)
+		in
+		  case (recovered, matched) of
+		    (NONE, SOME s) => [(SyncR(Good (StringConst "")), (0, 0, 0), start)]
+		  | (SOME r, SOME s) => [(SyncR(Good (StringConst r)), 
+					(0, 0, String.size r), j - (String.size s))]
+		  | _ => [(SyncR Fail, (1, 0, 0), start)]
+		end
+	  | _ => (* blob to the end of line *)
+		let val s = String.extract (input, start, NONE)
+		in [(SyncR(Good (StringConst s)), (0, 0, String.size s), start + (String.size s))]
+		end
+	  )
 	| _ => raise TyMismatch
 	)		       	 
   
