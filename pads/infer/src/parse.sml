@@ -52,9 +52,7 @@ struct
       case TokenMap.find (tmap, t) of
 	SOME re_str =>
 	  let 
-	      (*
-	      val _ = print ("matching \n" ^ re_str ^ "\nagainst (" ^ SS.string s ^ ")\n")
-	      *)
+	      (* val _ = print ("matching \n" ^ re_str ^ "\nagainst (" ^ SS.string s ^ ")\n") *)
 	      val regex = 
 			case TokenMap.find (!tokenRegexMap, t) of
 			SOME r => r
@@ -80,7 +78,7 @@ struct
 		    val len = #len pair
 		    val matched_ss = SS.slice(#pos pair, 0, SOME len)
 		    val outs = SS.string matched_ss
-		    (* val _ = print ("found match (" ^ outs ^ ")\n") *)
+		    (* val _ = print ("found match (" ^ outs ^ ")\n")  *)
 		    val j = start + len
 		    val tok = case t of
 				   Ptime i     => Ptime outs
@@ -109,9 +107,7 @@ struct
 			        |  Other c   => Other (SS.sub (matched_ss, 0)) 
 			        |  Pempty    => Pempty
 				|  _ => raise TyMismatch
-		  (*
-		  val _ = print ("Token is " ^ (tokenTyToString tok) ^ "\n")
-		  *)
+		  (* val _ = print ("Token is " ^ (tokenTyToString tok) ^ "\n") *)
 		  in (BaseR (GoodB tok), (0, 0, len), j)
 		  end
 		)
@@ -157,9 +153,7 @@ struct
   fun parse_regex (re_str, start, input) =
     let
         val s = SS.extract (input, start, NONE) 
-	(*
-	val _ = print ("against (" ^ (SS.string s) ^ ")\n")
-	*)
+	(* val _ = print ("against (" ^ (SS.string s) ^ ")\n")*)
         val regex = 
 			case StringMap.find (!strRegexMap, re_str) of
 			  SOME r => r
@@ -175,7 +169,7 @@ struct
         val result_opt = (RegExp.find regex reader (0, s))
     in
    	case result_opt of
-	  NONE => ((* print "no match!\n";*) (NONE, NONE, start))
+	  NONE => ((* print "no match!\n"; *) (NONE, NONE, start))
 	| SOME (matched, (counter, remainder)) =>
 	  (
 	      let 
@@ -192,7 +186,7 @@ struct
 		  in ((* print ("recovered (" ^ recovered_s ^")(" ^ outs ^")!\n"); *)
 			(SOME recovered_s, SOME outs, j))
 		  end
-		else ( (* print ("matched ("^ outs ^ ")!\n"); *)
+		else ((* print ("matched ("^ outs ^ ")!\n"); *)
 			(NONE, SOME outs, j))
 	      end
 	  )
@@ -200,7 +194,7 @@ struct
 
   fun parse_sync (refined, start, input) =
 	(
-	(* print ("Parsing: " ^ refinedToString refined ^ "\n"); *)
+	(* print ("Parsing: " ^ refinedToString refined ^ "\n");  *)
 	case refined of
 	  StringME re =>
 	    let 
@@ -243,6 +237,7 @@ struct
         	    val mystring = SS.extract (input, start, NONE) 
 		    fun find_next (s, index) =
 		      let val result_opt = (RegExp.find regex reader (index, s))
+			  val _ = print ("matching " ^ SS.string s ^ " index = " ^ Int.toString index ^ "\n")
 		      in
 		  	case result_opt of
 		    	  NONE => [(SyncR Fail, (1, 0, 0), start)]
@@ -259,7 +254,11 @@ struct
 	   				    NONE => raise Unexpected
 					  | SOME n => n
 			      in
-				  if num < min orelse num > max then find_next (remainder, index)
+				  if num < min orelse num > max then 
+				     let val remaining = SS.slice(remainder, matched_len, NONE)
+				     in
+					find_next (remaining, index)
+				     end
 				  else if matched_index > 0 then (* there's recovered data *)
 		  		    let val recovered_s = SS.string 
 						(SS.slice(mystring, 0, SOME matched_index))
@@ -316,7 +315,9 @@ struct
 		  | _ => [(SyncR Fail, (1, 0, 0), start)]
 		end
 	  | _ => (* blob to the end of line *)
-		let val s = String.extract (input, start, NONE)
+		let 
+		  val s = String.extract (input, start, NONE)
+		  (* val _ = print ("Blob is " ^ s ^ "\n") *)
 		in [(SyncR(Good (StringConst s)), (0, 0, String.size s), start + (String.size s))]
 		end
 	  )
@@ -471,9 +472,7 @@ struct
 	       let 
 		 val sepmap = IntMap.empty	
 	         val termmap = IntMap.empty	
-		(*
 		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n")
-		*)
 	         fun f ((prev_r, m, start), (seprs, termrs, sepmap, termmap)) =
 	     	   let
 		    val (sep_set, sepmap)  = 
@@ -517,6 +516,7 @@ struct
 			(
 			case LabelMap.find(e, id) of
 			  SOME (BaseR (GoodB (Pint(i, _)))) => Int.fromLarge i
+			| SOME (SyncR (Good (IntConst i))) => Int.fromLarge i
 			| _ => raise TyMismatch
 			)
 		| _ => raise TyMismatch
@@ -556,7 +556,7 @@ struct
 			  let val s = ParseSet.filter (fn (r, m, j) => j > start)
 					(parse_all (body_sep, e, start, input))
 			      val map = IntMap.insert(map, start, s)
-			  in (merge_t ((r, m, start), s, has_sep), map)
+			  in (merge_s ((r, m, start), s, has_sep), map)
 			  end
 		in (ParseSet.union(set, sep_set), sepmap)
 		end
