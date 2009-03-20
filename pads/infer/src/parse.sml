@@ -142,7 +142,13 @@ struct
 	  (
 	    case t of
 	      Pempty => (BaseR (GoodB Pempty), (0, 0, 0), start)
-	    | _ => raise TyMismatch
+	    | Other c => (case SS.first s of
+			   SOME c' => 
+				if c = c' then (BaseR (GoodB t), (0, 0, 1), start+1)
+				else (BaseR ErrorB, (1, 0, 0), start)
+			 | NONE =>  (BaseR ErrorB, (1, 0, 0), start)
+			 )
+	    | _ => (print (tokenToString t); raise TyMismatch)
 	  )
     end
 
@@ -262,7 +268,9 @@ struct
         	    val mystring = SS.extract (input, start, NONE) 
 		    fun find_next (s, index) =
 		      let val result_opt = (RegExp.find regex reader (index, s))
+			  (*
 			  val _ = print ("matching " ^ SS.string s ^ " index = " ^ Int.toString index ^ "\n")
+			  *)
 		      in
 		  	case result_opt of
 		    	  NONE => [(SyncR Fail, (1, 0, 0), start)]
