@@ -31,6 +31,31 @@ struct
                  val compare = String.compare
         end)
 
+  fun clean s = 
+	let 
+(*
+	    val items = ParseSet.listItems s
+	    fun f ((r1, m1, j1), (r2, m2, j2)) =
+		if j1 > j2 the true
+		else if j1 < j2 then false
+		else if better_metric m2 m1 then true
+		else false
+	    val sorted_items = ListMergeSort.sort f items
+*)
+	    fun g ((r, m, j), map) =
+		case IntMap.find (map, j) of
+		  SOME nil => IntMap.insert (map, j, [(r, m, j)])
+		| SOME ((r', m', j')::l) =>
+			if better_metric m m' then IntMap.insert (map, j, [(r, m, j)])
+			else if equal_metric m m' then IntMap.insert (map, j, ((r, m, j)::(r', m', j')::l))
+			else map
+		| NONE =>  IntMap.insert (map, j, [(r, m, j)])
+	    val map = ParseSet.foldl g IntMap.empty s
+	in
+	    ParseSet.addList (ParseSet.empty, List.concat (IntMap.listItems map))
+	end
+	    		
+	
   val tmap = 
 	let fun add ((t, re), map) = TokenMap.insert (map, t, re)
 	in foldl add TokenMap.empty TokenDefs.tokenDefList
@@ -472,15 +497,17 @@ struct
 	       let 
 		 val sepmap = IntMap.empty	
 	         val termmap = IntMap.empty	
+		 (*
 		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n")
+		 *)
 	         fun f ((prev_r, m, start), (seprs, termrs, sepmap, termmap)) =
 	     	   let
 		    val (sep_set, sepmap)  = 
 	     		case IntMap.find(sepmap, start) of
 	     		  SOME s => (merge_s ((prev_r, m, start), s, has_sep), sepmap)
 	     		| NONE =>
-	     		  let val s = ParseSet.filter (fn (r, m, j) => j > start)
-	     				(parse_all (body_sep, e, start, input))
+	     		  let val s = clean (ParseSet.filter (fn (r, m, j) => j > start)
+	     				(parse_all (body_sep, e, start, input)))
 	     		      val sepmap = IntMap.insert(sepmap, start, s)
 	     		  in (merge_s ((prev_r, m, start), s, has_sep), sepmap)
 	     		  end
@@ -488,8 +515,8 @@ struct
 	     		case IntMap.find(termmap, start) of
 	     		  SOME s => (merge_t ((prev_r, m, start), s, has_term), termmap)
 	     		| NONE =>
-	     		  let val s = ParseSet.filter (fn (r, m, j) => j > start)
-	     				(parse_all (body_term, e, start, input))
+	     		  let val s = clean (ParseSet.filter (fn (r, m, j) => j > start)
+	     				(parse_all (body_term, e, start, input)))
 	     		      val termmap = IntMap.insert(termmap, start, s)
 	     		  in (merge_t ((prev_r, m, start), s, has_term), termmap)
 	     		  end
@@ -532,8 +559,8 @@ struct
 			case IntMap.find(map, start) of
 			  SOME s => (merge_t ((r, m, start), s, has_term), map)
 			| NONE =>
-			  let val s = ParseSet.filter (fn (r, m, j) => j > start)
-					(parse_all (body_term, e, start, input))
+			  let val s = clean (ParseSet.filter (fn (r, m, j) => j > start)
+					(parse_all (body_term, e, start, input)))
 			      val map = IntMap.insert(map, start, s)
 			  in (merge_t ((r, m, start), s, has_term), map)
 			  end
@@ -553,8 +580,8 @@ struct
 			case IntMap.find(map, start) of
 			  SOME s => (merge_s ((r, m, start), s, has_sep), map)
 			| NONE =>
-			  let val s = ParseSet.filter (fn (r, m, j) => j > start)
-					(parse_all (body_sep, e, start, input))
+			  let val s = clean(ParseSet.filter (fn (r, m, j) => j > start)
+					(parse_all (body_sep, e, start, input)))
 			      val map = IntMap.insert(map, start, s)
 			  in (merge_s ((r, m, start), s, has_sep), map)
 			  end

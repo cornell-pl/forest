@@ -29,6 +29,9 @@ fun better_metric (e1, r1, t1) (e2, r2, t2) =
 	     else e1 < e2
 	  end
 
+fun equal_metric  (e1: int, r1: int, t1: int) (e2: int, r2: int, t2: int) : bool =
+	(e1 = e2 andalso r1 = r2 andalso t1 = t2)
+
 fun metricToString (e, r, parsed) = "(" ^ Int.toString e ^ ", " ^ Int.toString r ^ ", " 
 			^ Int.toString parsed ^ ")"
 
