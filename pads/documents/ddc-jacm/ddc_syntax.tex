@@ -42,7 +42,8 @@ from their {\em host language} -- the programming language in which
 their generated software artifacts are encoded.  The host language of
 \padsc{}, for example, is C and therefore the \padsc{} constraint
 language is also C.  We mimic this design in
-\ddc{} and choose a single language -- a variant of \fomega -- for
+\ddc{} and choose a single language -- a variant of the polymorphic 
+lambda calculus \fomega\cite{girard:SystemF,reynolds:SystemF} -- for
 expressing both the expressions embedded in types and the
 interpretations of \ddc. This host language is discussed further in
 \secref{sec:host-lang}.
@@ -51,28 +52,50 @@ interpretations of \ddc. This host language is discussed further in
 \label{sec:ddc-syntax}
 
 \figref{fig:ddca-syntax} shows the syntax of \ddc{}. Expressions $e$
-and types $\ity$ belong to the host language.  
-%\edcom{M: reword to not be specific to parsing semantics: }
-We use kinds $\kind$ to classify types so that we can ensure their
-well-formedness. Kind $\kty$ classifies types that describe data.
-Kinds $\ity \iarrowi \kind$ and $\kty \iarrowi \kind$ describe
-functions from values to types and type to types, respectively.
-%\edcom{Mention why no kinds $\kind \iarrowi \kind$.}
+and types $\ity$ belong to the host language, which we define in \secref{sec:host-lang}.  
+We use kinds $\kind$ to classify types. 
+In particular, kind $\kty$ classifies types that directly describe
+data.  Types with this kind include integers, 
+pairs of IP addresses and strings of length ten, \etc{}
+Kind $\ity \iarrowi \kind$ describes
+functions from values with type $\ity$ to types with arbitrary kind
+$\kind$.  An example of a type with such a kind is base type
+constructor \cd{Pstring_FW} that takes as an argument an integer
+expression $e$ and returns a string with length $e$.
+Finally, kind $\kty \iarrowi \kind$ classifies
+functions from first-order types (those having kind $\kty$) to
+arbitrary types (those having kind $\kind$).  
+A useful type with such a kind is a function that takes any
+first-order type $\tau$ as an argument and returns the type that
+describes data corresponding to either $\tau$ or the string
+\texttt{``N/A''}, indicating a missing value.
+This kinding system disallows types that take type functions as
+arguments.  Such types add complexity to the system, and we have not
+encountered a compelling need for them in practice. 
 
-The most basic types are $\ptrue$ and $\pfalse$. The former describes
-the empty string while the latter describes no string, failing on all input.
-\edcom{S: explain why need both unit and bottom.}
+The most basic types are $\ptrue$ and $\pfalse$.  Type $\ptrue$
+describes the empty string; it succeeds on all input.  While vacuous
+by itself, the type $\ptrue$ is useful when combined with 
+other type constructors.  For example, a type that unions an integer
+type with $\ptrue$ corresponds to an optional integer.  In contrast,
+the type $\pfalse$ describes no strings; it fails on all input.  
+When used within a compound type containing choices, $\pfalse$
+indicates that the choice leading to $\pfalse$ fails and an
+alternative branch must be chosen.  We will see another use of
+$\pfalse$ when we discuss array types.
+
 The syntax $\pbase e$ denotes a base type $C$ parameterized by 
-expression $e$.
+expression $e$.  
 % An instance of the \ddc{} will provide a set of base types $C$.
-% Base types recognize and transform atomic values within the data
-% source; typical examples include various kinds of integers and
-% strings.  The parameter expression plays a type-dependent role,
-% specifying, for example, digit lengths for integers or terminating
-% conditions for strings.
+ Such a base type recognizes and transforms atomic values within the data
+ source; typical examples include strings, various kinds of integers,
+ dates, times, \etc{} The parameter expression plays a type-dependent role,
+ specifying, for example, digit lengths for integers or terminating
+ conditions for strings.
 
 We provide abstraction $\plam x {} \ty$ and application
 $\papp \ty e$ so that we may parameterize types by expressions.
+
 Dependent sum types $\psig x {\ty_1} {\ty_2}$ describe a sequence
 of values in which the second type may refer to the value of the first.
 Sum types $\psum {\ty_1} {} {\ty_2}$
