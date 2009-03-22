@@ -509,7 +509,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts)*) 
+                       | _ => (ltokenTyToString (hd ts)) (* ^ (LTokensToString ts) *)
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -536,7 +536,7 @@ struct
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
-                 in ( refinedToString refined ) (*^ (LTokensToString tl)*)
+                 in ( refinedToString refined ) (* ^ (LTokensToString tl)*)
 		      ^ " " ^ stats ^ 
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -1303,5 +1303,29 @@ struct
 	  (recordLabel, pads)
 	end 
 ******************)
-
+fun getSmallestRecNo ty = 
+  let 
+	fun less x y = x < y
+  in
+        case ty 
+        of Base (a,t) => 
+		let val recNos = map (fn (_, loc) => #recNo loc) t
+		in min less recNos
+		end
+        |  Pstruct (a,tys) => getSmallestRecNo (hd tys)
+        |  Punion (a,tys) => 
+		min less (map getSmallestRecNo tys)
+        |  Parray (a, t)                => getSmallestRecNo (#first t)
+        |  RefinedBase (a,r,tl)=> 
+		let val recNos = map (fn (_, loc) => #recNo loc) tl
+		in min less recNos
+		end
+        |  Switch(a,id,branches)        => 
+		let val tys = (map #2 branches)
+		in min less (map getSmallestRecNo tys)
+		end
+        |  RArray (a,sep,term,body,len,lengths) => getSmallestRecNo body
+        |  Poption (a, ty) => getSmallestRecNo ty
+        |  _      => raise TyMismatch
+  end
 end

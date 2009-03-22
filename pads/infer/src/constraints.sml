@@ -71,7 +71,7 @@ structure BDOSet = RedBlackSetFn(struct
 						case oldConst of
 						Length x => if bdlength bdata = x orelse lastbdata = NONE then Length (bdlength bdata) else  raise InvalidConst
 					|	Range(a,b) => ( case bdata of
-								  Pint (d, _) => Range(LargeInt.min(d,a),LargeInt.max(d,b))
+								  Pint (d, _) => Range(LargeInt.min(d,a), LargeInt.max(d,b))
 								  |	_ => raise InvalidConst )
 					|	Ordered a => (case lastbdata of SOME lastbdata => 
 						  if (compared(lastbdata,bdata) = (if a = Ascend then GREATER else LESS) 
@@ -373,18 +373,18 @@ constraint map *)
 	fun constrainTy (ty, cmap) = 
  	let
 		(* make the table *)
-(*
+		(*
 		val _ = print ("Building table for ("^Int.toString (getCoverage ty)^")\n")
 		val _ = printTy ty
-*)
-		val (_, tytable) = Table.genTable (getCoverage(ty)) ty
+		*)
+		val startRecNo = getSmallestRecNo ty
+		val (_, tytable) = Table.genTable startRecNo (getCoverage(ty)) ty
 (*
 		val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n")
 *)
 		val header = #1 tytable
 		val bdocols = #2 tytable
 		val bdolist = transpose(bdocols)
-
 		(* The following is a simple implementation of 1-1 functional dependency analysis*)
 		val (_, bdomap) = foldl (fn ((col:Token option list), (n, mymap)) => 
 				(n+1, IntMap.insert(mymap, n, col))) (0, IntMap.empty) bdocols

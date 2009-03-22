@@ -13,9 +13,8 @@ let
   val acomp    = #adc comps
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
-(*
-  val _ = (print "Before Reduction:\n"; printTy measuredTy) 
-*)
+(*  val _ = (print "Before Reduction:\n"; printTy measuredTy)
+*) 
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
   val (headers, footers, auxOp, body) = 

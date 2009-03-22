@@ -43,7 +43,7 @@ structure Table = struct
 		a Token list and fill NONEs to empty cells
 	   if the Token list is longer than the stipulated size of the column
 	   it will truncate the extra tokens from the list *)
-	fun gencolumn (ltokens, columnsize) = 
+	fun gencolumn (ltokens, start, columnsize) = 
 	  let
 		fun insertTok (ltoken:LToken, (map, set)) = 
 			let
@@ -51,34 +51,35 @@ structure Table = struct
 			in (IntMap.insert (map, recNo, (#1 ltoken)), IntSet.add (set, recNo))
 			end
 		val (recNoMap, recNoSet) = List.foldr insertTok (IntMap.empty, IntSet.empty) ltokens
-		fun getTokenfromMap map recnum = IntMap.find (map, recnum)
+		fun getTokenfromMap map index = IntMap.find (map, start+index)
 	  in (recNoSet, List.tabulate(columnsize, (getTokenfromMap recNoMap)))
 	  end
 
 	fun intToToken (i:int):Token = Pint(Int.toLarge i, Int.toString i)
 
-	fun genintcolumn(lints, columnsize) =
+	fun genintcolumn(lints, start, columnsize) =
 		(*get a token from a specfic record no from the int list
 		  if that record no doesn't exist, return NONE*)
-		let fun getIntfromList tlist recnum= 
-			case tlist of 
-			  [] => NONE
-			| (arraysize:int, recordnum:int) :: tail =>
-				if recordnum = recnum then 
+		let fun getIntfromList tlist index = 
+			case List.find (fn (arraysize, recno) =>
+						(recno = start + index)) tlist of
+			  NONE => NONE
+			| SOME(arraysize, recno) => 
 				  SOME (intToToken(arraysize)) 
-				else getIntfromList tail recnum
 		in List.tabulate(columnsize, (getIntfromList lints))
 		end
 
 	(* returns a set of recNos under this Ty and an infertable *)
-	fun genTable totalrecords ty = 
+	fun genTable startrec totalrecords ty = 
 	case ty of
 		Base (a, ltokenl) =>
 			let 
 (*
 				val _ = print ("Gen column for "^ (getLabelString a) ^ "... ")
+				val _ = print ("totalrecords = " ^ (Int.toString totalrecords) ^ "\n")
+				val _ = print ((LTokensToString ltokenl) ^ "\n")
 *)
-				val (recNoSet, col) = gencolumn(ltokenl, totalrecords)
+				val (recNoSet, col) = gencolumn(ltokenl, startrec, totalrecords)
 (*
 				val _ = print ("done.\n")
 *)
@@ -88,15 +89,17 @@ structure Table = struct
 		| Bottom _ => (IntSet.empty, (nil, nil): infertable)
 		| Pstruct (a, l) => 
 		    let
-			val pairs = map (genTable totalrecords) l
+			val pairs = map (genTable startrec totalrecords) l
+			(*
 			val (recNoSets, tables) =  (ListPair.unzip pairs)
+			*)
 		    in
 			List.foldr appendsettab (IntSet.empty, (nil, nil)) pairs
 		    end
 		(* for Punion need to add a col for branching choices *)
 		| Punion (a, l) => 
 			let 
-			  val pairs = (map (genTable totalrecords) l)
+			  val pairs = (map (genTable startrec totalrecords) l)
 			  val (recNoSets, tables) =  (ListPair.unzip pairs)
 			  (*
 			  val _ = printTy (List.last l)
@@ -110,7 +113,7 @@ structure Table = struct
 				case sets of 
 				  [] => NONE
 				  | s::tail => 
-				    if IntSet.member(s, n) = true then SOME (intToToken(index))
+				    if IntSet.member(s, n + startrec) = true then SOME (intToToken(index))
 				    else g tail (index+1) n
 				)
 			  val branchcol = List.tabulate(totalrecords, (g recNoSets 1))
@@ -123,11 +126,11 @@ structure Table = struct
 		| Parray (a, {tokens=_, 
 			lengths= lens, first = fty, body=bty, last=lty}) =>
 			List.foldr appendsettab (IntSet.empty, (nil, nil)) 
-				[(IntSet.empty, ([some(#label a)], [genintcolumn(lens, totalrecords)])),
-				 genTable totalrecords fty, genTable totalrecords lty]
+				[(IntSet.empty, ([some(#label a)], [genintcolumn(lens, startrec, totalrecords)])),
+				 genTable startrec totalrecords fty, genTable startrec totalrecords lty]
 		| RArray (a, _, _, _, _, lens) => 
-			(IntSet.empty, ([some(#label a)], [genintcolumn(lens, totalrecords)]))
-		| Poption (a, ty') => genTable totalrecords ty'
+			(IntSet.empty, ([some(#label a)], [genintcolumn(lens, startrec, totalrecords)]))
+		| Poption (a, ty') => genTable startrec totalrecords ty'
 		| _ => (IntSet.empty, (nil, nil):infertable)
 
 	fun parseArrays ty =
