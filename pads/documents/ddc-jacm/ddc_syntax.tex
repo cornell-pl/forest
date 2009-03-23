@@ -67,8 +67,8 @@ functions from first-order types (those having kind $\kty$) to
 arbitrary types (those having kind $\kind$).  
 A useful type with such a kind is a function that takes any
 first-order type $\tau$ as an argument and returns the type that
-describes data corresponding to either $\tau$ or the string
-\texttt{``N/A''}, indicating a missing value.
+describes data corresponding to either $\tau$ or the character
+$\mathtt{'-'}$, indicating a missing value.
 This kinding system disallows types that take type functions as
 arguments.  Such types add complexity to the system, and we have not
 encountered a compelling need for them in practice. 
@@ -91,27 +91,66 @@ expression $e$.
  source; typical examples include strings, various kinds of integers,
  dates, times, \etc{} The parameter expression plays a type-dependent role,
  specifying, for example, digit lengths for integers or terminating
- conditions for strings.
+ conditions for strings. If the parameter is not needed for a
+ particular base type, we often omit it from the syntax for
+ clarity. Concretely, we use the base type $\mathtt{Pstring(s)}$
+ to denote strings terminated by the string $\mathtt{s}$
+ and $\mathtt{Puint}$ to denote sequences of digits of arbitrary
+ length.  We adopt the convention that base types start with a
+ capital $\mathtt{P}$.
 
 We provide abstraction $\plam x {} \ty$ and application
-$\papp \ty e$ so that we may parameterize types by expressions.
+$\papp \ty e$ so that we may parameterize types by expressions.  For
+example, if we had a fragment of a data format that was terminated in some
+circumstances by a vertical bar and in others by a semi-colon, we 
+can use abstraction to parameterize the description of the format by
+the terminating character, yielding a description of the form
+$\plam c {} {\tau_d} $, where $\tau_d$ is a description of the
+fragment in terms of terminating character $c$.  We can then
+apply the function to either a vertical bar or a semi-colon as
+circumstances require; \ie{},  the application $(\plam c {} {\tau_d})
+\ \mathtt{'|'}$  specializes the description to the vertical bar case.
 
 Dependent sum types $\psig x {\ty_1} {\ty_2}$ describe a sequence
-of values in which the second type may refer to the value of the first.
+of values in which the second type may refer to the value of the
+first.  A common idiom for which such sums are useful is an integer
+field followed by a string of the corresponding length, for example: 
+$\psig {\mathtt{x}} {\mathtt{Pint}} {\mathtt{Pstring\_FW(x)}}$.
+
 Sum types $\psum {\ty_1} {} {\ty_2}$
 express flexibility in the data format, as they describe
-data matching either $\ty_1$ or $\ty_2$. Unlike regular expressions or
+data matching either $\ty_1$ or $\ty_2$.  For example, the type
+$\psum{\mathtt{Puint32}}{}{\mathtt{Pstring\_FW(3)}}$ describes a format that
+is either an unsigned, 32-bit integer or a string of length three.
+Unlike regular expressions or
 context-free grammars, which allow nondeterministic choice,
 sum-type parsers
 are deterministic, transforming the data according to $\ty_1$
 when possible and {\it only} attempting to
-use $\ty_2$ if there is an error in $\ty_1$. Intersection types
+use $\ty_2$ if there is an error in $\ty_1$. 
+
+Intersection types
 $\pand {\ty_1} {\ty_2}$ describe data that match both $\ty_1$ and
 $\ty_2$. They transform a single set of bits to produce
-a pair of values, one from each type. Constrained types $\pset x \ty e$
-transform data according to the underlying type $\ty$ and
-then check that the constraint $e$ holds when $x$ is bound to the parsed value.
+a pair of values, one from each type.  Examples that use this
+construct arise in various Cobol data formats and in processing
+internet packets, which can be viewed at multiple levels of
+abstraction, \eg{}, as a header and an uninterpreted collection of
+bytes or as a header followed by a packet in the format of the next
+level of the communication stack. 
 
+Constrained types $\pset x \ty e$ transform data according to the
+underlying type $\ty$ and then check that the constraint $e$ holds
+when $x$ is bound to the parsed value. For example, the type 
+$\pset {\mathtt{x}} {\mathtt{Pint}} {\mathtt{x > 100}}$ checks that the integer 
+$\mathtt{x}$ is greater than 100.  As another example,  the constrained type
+$\pset{\mathtt{x}}{\mathtt{Pstring\_FW(1)}}{\mathtt{x = ','}}$
+describes exactly the comma character. Because such ``singleton
+types'' arise frequently, we
+introduce a short-hand notation for them.  In particular, we use
+``$\mathtt{S_,}$'' as an abbreviation for the type above. Similarly,
+``$\mathtt{S_;}$''  abbreviates the corresponding description of precisely
+the semi-colon character, \etc
 
 \begin{figure}
 \begin{bnf}
@@ -135,17 +174,23 @@ separator found between elements of the sequence. For sequences
 without separators, we use $\ptrue$ as the separator type.  Expression
 $e$ is a boolean-valued function that examines the parsed sequence
 after each element is read to determine if the sequence has completed.
-For example, a function that checks if the sequence has $100$ elements
-would terminate a sequence when it reaches length $100$.  The type
+For example, a function $\mathtt{len_{10}}$ defined to be 
+$\mathtt{ \plam {s}{}{len\ s \ = 10}}$ that 
+checks if the sequence $\mathtt{s}$ has $10$ elements 
+would terminate a sequence when it reaches length $10$.  The type
 $\ty_t$ is used when data following the array will signal termination.
-%\edcom{M: explain singleton types or reword. Reword until end of
-%  paragraph.}  
-Commonly, constrained types are used to specify that a particular
-value terminates the sequence.  For example, the type
-$\pset{x}{\Pchar}{x = ';'}$ specifies that a semicolon terminates the
+Commonly, constrained singleton types are used to specify that a particular
+value terminates the sequence.  For example, when used as a
+terminator, the type $\mathtt{S_;}$ specifies
+that a semicolon ends the 
 array. However, if no particular value or set of values terminates the
-array, then a type that never succeeds (like $\pfalse$) could be used
-to ensure that the array is not terminated based on $\ty_t$.
+array, then we can use $\pfalse$
+to ensure that the array is not terminated based on the terminating
+type $\ty_t$.  
+As an example, the type  
+$\pseq {\mathtt{Pint32\ }} {\mathtt{S_,}} {\pterm {\mathtt{len_{10}}} {{\mathtt{S_;}}}}$
+describes a sequence of ten 32-bit integers separated by commas and 
+terminated by a semi-colon.
 
 Type variables $\ptyvar$ are abstract descriptions; they are
 introduced by recursive types and type abstractions. Recursive types
@@ -155,12 +200,18 @@ $\ptyapp{\ty}{\ty}$ allow us to parameterize types by other types.
 Type variables $\ptyvar$ always have kind $\kty$. Note that we call
 functions from types to types {\em type abstractions} in contrast to
 {\em value abstractions}, which are functions from values to types.
+As an example,
+the type abstraction 
+$\ptylam{\ptyvar}{\kty}{\psum \mathtt{S_-} {\ptyvar} }$ 
+takes any (first-order) type as an argument and 
+constructs a type that describes either the
+singleton string $\mathtt{'-'}$, denoting a missing value, or the argument type.
 
 \ddc{} also has a number of ``active'' types.  These types describe
 actions to be taken during parsing rather than strictly describing the
 data format. Type $\pcompute e \ity$ allows us to include an element
 in the parsed output that does not appear in the data stream (although
-it is likely dependent on elements that do), based on the value of
+it is likely to depend on elements that do), based on the value of
 expression $e$.  In contrast, type $\pabsorb \ty$ parses data
 according to type $\ty$ but does not return its result. This behavior
 is useful for data that is important for parsing, but uninteresting to
