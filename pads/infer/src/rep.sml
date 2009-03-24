@@ -8,8 +8,8 @@ datatype BaseData =
 | ErrorB
 
 datatype SyncData =
-  Good of Refined
-| Recovered of (string * Refined)  (* recovered string, actual matched Refined pair *)
+  Good of (string * Refined)	   (* the actual matched string plus the refined type *) 
+| Recovered of (string * string * Refined)  (* recovered string, actual matched string and the Refined type *)
 | Fail
 
 type metric_type = int * int * int (* (number of error nodes, recovered chars, total chars parsed ) *)
@@ -94,14 +94,17 @@ and refined_comp (r1, r2) =
 
 fun sync_comp (syn1, syn2) = 
   case (syn1, syn2) of
-    (Good s1, Good s2) => refined_comp (s1, s2)
-  | (Recovered (s1, t1), Recovered (s2, t2)) => 
+    (Good (s1, r1) , Good (s2, r2)) => String.compare (s1, s2)
+  | (Recovered (r1, s1, t1), Recovered (r2, s2, t2)) => 
+	String.compare (r1 ^ s1, r2 ^ s2)
+(*
 	(
 	case String.compare(s1, s2) of
 	  GREATER => GREATER
 	| LESS => LESS
 	| _ => refined_comp (t1, t2) 
 	)
+*)
   | (Fail, Fail) => EQUAL
   | (Good _, _) => LESS
   | (Recovered _, Good _) => GREATER
@@ -229,8 +232,8 @@ fun repToString prefix r =
   case r of
     BaseR (GoodB t) => prefix ^ "GoodB(" ^ tokenToString t ^ ")\n"
   | BaseR (ErrorB) => prefix ^ "ErrorB\n"
-  | SyncR (Good s) => prefix ^ "Good(" ^ refinedToString s ^ ")\n"
-  | SyncR (Recovered (s1, s2)) => prefix ^ "Rec(" ^ s1 ^")(" ^ refinedToString s2 ^ ")\n"
+  | SyncR (Good (s,t)) => prefix ^ "Good(" ^ s ^ ")\n"
+  | SyncR (Recovered (r1, s1, s2)) => prefix ^ "Rec(" ^ r1 ^")(" ^ s1 ^ ")\n"
   | SyncR (Fail) => prefix ^ "Fail\n" 
   | TupleR reps => 
 	let val ss = map (repToString (prefix ^ "    ")) reps 
@@ -251,11 +254,20 @@ fun repToString prefix r =
 	  case term of 
 	 	NONE => prefix ^ "TERM: Empty\n"
 		| SOME term => prefix ^ "TERM:\n" ^ (repToString (prefix ^ "    ") term)
+	fun gen elems seps term =
+	  case elems of
+	    nil => term
+	  | e::elems => 
+		(
+		  case seps of
+		    nil => e ^ (gen elems seps term)
+		  | s::seps => e ^ s ^ (gen elems seps term)
+		)
 	val total_string = ListPair.foldl (fn (a, b, s) => s ^ a ^ b) 
 			"" (elem_strings, sep_strings @ [term_string])
       in 
 	prefix ^ "Array {\n" ^
-	total_string
+	(gen elem_strings sep_strings term_string)
 	^ prefix ^ "}\n"
       end
   | OptionR rep_opt =>

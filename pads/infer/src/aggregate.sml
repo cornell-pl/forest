@@ -77,20 +77,20 @@ fun aggrToString prefix r =
 
     | (SyncA ss, SyncR (Good s)) => SyncA ((Good s)::ss)
     | (SyncA ss, SyncR (Fail)) => Opt (SyncA ss)
-    | (SyncA ss, SyncR (Recovered(r, m))) => TupleA [Ln [r], SyncA ((Good m)::ss)]
+    | (SyncA ss, SyncR (Recovered(r, s, m))) => TupleA [Ln [r], SyncA ((Good (s, m))::ss)]
 
     | (Opt (SyncA ss), SyncR (Good s)) => Opt (SyncA ((Good s)::ss))
     | (Opt (SyncA ss), SyncR Fail) => Opt (SyncA ss)
-    | (Opt (SyncA ss), SyncR (Recovered(r, m))) => TupleA [Ln [r], Opt(SyncA ((Good m)::ss))]
+    | (Opt (SyncA ss), SyncR (Recovered(r, s, m))) => TupleA [Ln [r], Opt(SyncA ((Good (s, m))::ss))]
 
     | (TupleA [Ln l, SyncA ss], SyncR (Good s)) => TupleA [Ln l, SyncA ((Good s)::ss)]
     | (TupleA [Ln l, SyncA ss], SyncR Fail) => TupleA [Ln l, Opt (SyncA ss)]
-    | (TupleA [Ln l, SyncA ss], SyncR (Recovered(r, m))) => TupleA [Ln (r::l), SyncA ((Good m)::ss)]
+    | (TupleA [Ln l, SyncA ss], SyncR (Recovered(r, s, m))) => TupleA [Ln (r::l), SyncA ((Good (s, m))::ss)]
 
     | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Good s)) => TupleA [Ln l, Opt (SyncA ((Good s)::ss))]
     | (TupleA [Ln l, Opt (SyncA ss)], SyncR Fail) => TupleA [Ln l, Opt (SyncA ss)]
-    | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Recovered(r, m))) => 
-		TupleA [Ln (r::l), Opt(SyncA ((Good m)::ss))]
+    | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Recovered(r, s, m))) => 
+		TupleA [Ln (r::l), Opt(SyncA ((Good (s, m))::ss))]
 
     | (TupleA ags, TupleR reps) =>
 	if length ags <> length reps then raise MergeFailed
@@ -110,7 +110,7 @@ fun aggrToString prefix r =
 	    SOME (r, Ln ss) =>  (* this is a previously added recovered branch *)
 	     (
 		case rep of 	
-		  SyncR (Recovered (s, StringME("/$/"))) =>
+		  SyncR (Recovered (s, "", StringME("/$/"))) =>
 		    let val newpair = (r, Ln (ss@[s]))
 		        val new_re_ags = map (fn (re, a) => 
 				if refine_equal (r, re) then newpair 
@@ -131,7 +131,7 @@ fun aggrToString prefix r =
 	  | NONE => 
 	     (
 		case rep of
-		  SyncR (Recovered (s, StringME _)) =>
+		  SyncR (Recovered (s, _, StringME _)) =>
 			SwitchA (re_ags@[(re, Ln [s])])
 		| _ => raise TyMismatch
 	     )
@@ -194,5 +194,3 @@ fun aggrToString prefix r =
 
 end
     
-
-      

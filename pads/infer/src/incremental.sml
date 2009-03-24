@@ -6,8 +6,7 @@ structure Incremental: sig
   end = struct
 
     val anyErrors = ref false
-    val max_int = 10000000
-    val max_parses_per_line =5 
+    val max_parses_per_line = Parse.max_parses_per_line
     val max_aggregates = 10
     exception Exit of OS.Process.status
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
@@ -107,7 +106,7 @@ structure Incremental: sig
 				  in 
 				    if newcost < minc then (newaggr, newcost)
 				    else (mina, minc)
-				  end) (AG.BaseA nil, max_int) set 
+				  end) (AG.BaseA nil, some(Int.maxInt)) set 
 *)
 					(* use a dummy aggregate to start *)
 	     in
