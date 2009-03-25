@@ -1571,9 +1571,7 @@ file is a record and all of them collectively represent a sample data *)
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
 	    val separator = getSeparator rtokens  (* for format program: returns some character not in input source *)
-(*
-	    val _ = print (contextsToString rtokens)
-*)
+	    (* val _ = print (contextsToString rtokens) *)
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = if print_verbose = true then lengthsToHist rtokens else ()
 	    val ty = ContextListToTy 0 rtokens

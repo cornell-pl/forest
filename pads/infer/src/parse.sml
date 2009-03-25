@@ -131,7 +131,7 @@ struct
 				       )
 			        |  Pfloat _    => 
 				  let val (d,f) = SS.splitl (fn c => c <> #".") matched_ss
-				  in Pfloat(SS.string d, SS.string f)
+				  in Pfloat(SS.string d, SS.string (SS.triml 1 f))
 				  end
 			        |  Pstring s => Pstring outs
 			        |  Pwhite s  => Pwhite outs

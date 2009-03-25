@@ -173,7 +173,7 @@ fun aggrToString prefix r =
 		  ArrayA (eleA, SyncA nil, SyncA nil)
 		end
 	| Poption (a, ty) => OptionA (initialize ty)
-	| _ => raise TyMismatch	
+	| _ => (printTy ty; raise TyMismatch)
 
   (* function to measure the cost of an aggregate by counting the number of opt and learn nodes *)
   (* NOTE: this may not be adequate as it doesn't take into account the erroneous data being accumulated
