@@ -441,6 +441,8 @@ struct
 		      Enum l =>
 			  if List.exists (fn r => refine_equal(r, re)) l then SOME (branchno, Enum l, t)
 			  else select retys re (branchno+1)
+		    | StringConst "*" (* default case *)
+			=> SOME (branchno, r, t)
 		    | _ => if refine_equal (r, re) then SOME (branchno, re, t)
 			   else select retys re (branchno+1)
 		  )
