@@ -1,4 +1,4 @@
-(* Defines utility functions common to all modules *)
+(*l Defines utility functions common to all modules *)
 structure Common = struct
 	open Types (* defined in types.sml *)
 
@@ -167,13 +167,18 @@ structure Common = struct
 		end)) ^ "\n"
 	fun printConstMap (cmap:constraint list LabelMap.map):unit =
             LabelMap.appi (fn (lab,clist) => print (Atom.toString(lab) ^ ":\n" ^ (String.concat(map ctos clist))^ "\n")) cmap
+	(*
 	fun isIn(ch:char,str:string):bool =
             List.exists (fn x => x = ch) (String.explode str)
 	fun escapeRegex(str:string):string =
             String.translate (fn x => if isIn(x ,"^$.[]|()*+?" )
                                       then "\\" ^ (String.str x) 
                                       else String.str x) str
-
+	*)
+	(* function to escape the backslashes in a re string *)
+	fun escapeRegex (re:string) = 
+		String.translate (fn x => if x = #"\\" then "\\\\" else String.str x) re
+ 
 	fun myand(a,b) = a andalso b
 	fun myor(a,b) = a orelse b
 	fun ltoken_equal((tk1, _):LToken, (tk2, _):LToken):bool =
@@ -206,7 +211,12 @@ structure Common = struct
 		  let 
 			val not_equal = (List.exists (fn x => not (ltoken_equal(x, h))) t)
 		  in
-			if not_equal then NONE else SOME (tokentorefine (#1 (hd ltokenl)))
+			if not_equal then 
+			  case h of 
+			    (Pwhite _, _) => SOME (StringME ("/[ \\t\\r\\n]+/"))
+			  | (Pint _, _) => SOME (StringME ("/\\-?[0-9]+/"))
+			  | _ => NONE 
+			else SOME (tokentorefine (#1 (hd ltokenl)))
 		  end
 		  | nil => NONE
 

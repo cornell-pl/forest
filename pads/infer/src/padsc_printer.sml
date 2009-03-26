@@ -2,10 +2,10 @@ structure Padsc_printer =
 struct
 open Ast
   fun getRefStr refined = case refined of
-    StringME s => "\"" ^ s ^"\""
+    StringME s => "Pre \"" ^ escapeRegex s ^"\""
   | StringConst s => if (size s) = 1 then ("'" ^ s ^ "'")
 			else ("\"" ^ s ^ "\"")
-  | _ => ""
+  | _ => (print "Refined type not supported!\n"; raise TyMismatch) 
 
   fun largeIntToStr i =
       if i>=0 then LargeInt.toString i

@@ -393,9 +393,7 @@ and refine_array ty =
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
-(*
-		val _ = (print "trying to refine array \n"; printTy (measure ty)) 
-*)
+		(* val _ = (print "trying to refine array \n"; printTy (measure ty)) *)
 		fun getlen (lens, x) = 
 			case lens of 
 			l::tail => if (l = x) then getlen(tail, x)
@@ -413,21 +411,21 @@ and refine_array ty =
 			| _ => false
 		fun firstEle(ty) = 
 		  case ty of 
-		  Pstruct(aux, tylist) => List.hd tylist
+		  Pstruct(aux, tylist) => SOME (List.hd tylist)
 		  | Poption(_, ty') => firstEle ty'
-		  | _ => raise TyMismatch
+		  | _ => NONE
 		fun lastEle(ty) = 
 		  case ty of 
-		  Pstruct(aux, tylist) => List.last tylist
+		  Pstruct(aux, tylist) => SOME (List.last tylist)
 		  | Poption(_, ty') => lastEle ty'
-		  | _ => raise TyMismatch
+		  | _ => NONE
 		fun droplast(ty) = 
 		  case ty of 
 		  Pstruct({label=SOME(id),... }, tylist) => 
 			(case (length tylist) of 
 			 0 => raise Size
 			| 1 => Base(mkTyAux1(0, id), nil)
-			| 2 => (hd tylist)
+			| 2 => hd tylist
 			| _ => let
 				val newtylist = List.take(tylist, (length tylist) -1)	
 			       in
@@ -463,7 +461,6 @@ and refine_array ty =
 		  |RefinedBase(aux, _, _) => Pstruct(aux, [ty, newty])
 		  |Base(aux, _) => Pstruct(aux, [ty, newty])
 		  | _ => raise TyMismatch
-*)
 
 	  	fun findRefined ty =
 		  (*funtion to find the first base or refine type and convert it to refined type *)
@@ -473,7 +470,6 @@ and refine_array ty =
 			| RefinedBase(_, refined, _) => SOME(refined)
 			| Base(_, ltokens) => ltokenlToRefinedOp ltokens
 			| _ => NONE
-(*
 		fun combineRefined (ref1, ref2) =
 			case (ref1, ref2) of
 			(StringME(s), Int(_)) => SOME(StringME(substring(s, 0, size(s)-1)
@@ -508,12 +504,9 @@ and refine_array ty =
 		(* returns (sep option, term option, newfirst, newbody, newlast) *)
 		fun getSepTerm(first, body, last)=
 		let
-			val bodyhd = getRefine(firstEle(body))	
-			val bodytail = getRefine(lastEle(body))
-			val firsttail = if (isStruct(first)) then getRefine(lastEle(first))
-					else getRefine(first) (*assume it's a base itself*)
-			val lasthd= if (isStruct(last)) then getRefine(firstEle(last))
-					else getRefine(last)
+			val bodytail = lastEle(body)
+			val firsttail = if (isStruct(first)) then (lastEle(first))
+					else SOME first (*assume it's a base itself*)
 		in
 			if (isEmpty(last)) (*no sep and terminator is outside*)
 			then 
@@ -537,13 +530,27 @@ and refine_array ty =
 				  case first of
 				    Poption (a, t) =>  (t, describedBy(t, body))
 				  | _ => (first, describedBy(first, body))
-			     val lasteqbody = describedBy(last, droplast(body)) 
-			     val withSep = refine_equal_op(firsttail, bodytail)
-			    (*
+			     val lasteqbody = describedBy(last, droplast body) 
+			     val (sep_opt, withSep) = 
+				if firsteqbody andalso lasteqbody then
+				  case (firsttail, bodytail) of
+				  (SOME _, SOME _) => 
+				        let 
+					  val ltokens = (getLTokens (some(firsttail))) @ 
+							  (getLTokens (some(bodytail)))
+					in 
+					  case ltokenlToRefinedOp ltokens of
+					  SOME x => (SOME x, true)
+					 | _ => (NONE, false)
+				  	end
+				  | _ => (NONE, false)
+				else (NONE, false)
+			(*
 			     val _ = (if firsteqbody then print "true " else print "false ";
 				   	if lasteqbody then print "true " else print "false ";
 				   	if withSep then print "true\n" else print "false\n")
-			    *)
+			*)
+			  
 			  in
 			     case (firsteqbody, lasteqbody, withSep) of 
 				(true, true, true) =>
@@ -553,19 +560,20 @@ and refine_array ty =
 					  val last' = reIndexRecNo last (getCoverage body')
 					  val body'' = mergeTyInto(last', body')
 					in
-					  (bodytail, NONE, NONE, SOME(body''), NONE)
+					  (sep_opt, NONE, NONE, SOME(body''), NONE)
 					end
 				| (true, true, false) => 
 					let
-					  val first' = reIndexRecNo (droplast first') (getCoverage body)
-					  val body' = mergeTyInto(first', (droplast body))
+					  val first' = reIndexRecNo first' (getCoverage body)
+					  val body' = mergeTyInto(first', body)
 					in
 					  (NONE, NONE, NONE, SOME body', SOME last)
 					end
 				| (true, false, _) => (NONE, NONE, NONE, 
 					SOME(mergeTyInto((reIndexRecNo first' (getCoverage body)), body)), 
 					SOME last)
-				| (false, true, _) => (bodytail, NONE, SOME first,
+				(* TODO: I think there is a problem with the following rule *)
+				| (false, true, _) => (getRefine (some bodytail), NONE, SOME first,
 					SOME(mergeTyInto((reIndexRecNo last (getCoverage body)), 
 					droplast(body))), NONE)
 				| (_, _, _) => (NONE, NONE, SOME first, SOME body, SOME last)
@@ -592,9 +600,8 @@ and refine_array ty =
 			  	Pstruct(mkTyAux(#coverage aux), 
 			    	[first', RArray(aux, sepop, termop, body', lenop, lengths), last'])
 			| _ => ty
-	(*
-		    val _ = (print "Done refining array to:\n"; printTy (measure newty))  
-	*)
+
+		    (* val _ = (print "Done refining array to:\n"; printTy (measure newty)) *) 
 		  in
 		 	newty
 		  end

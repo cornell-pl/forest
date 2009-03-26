@@ -536,7 +536,7 @@ struct
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
-                 in ( refinedToString refined ) (* ^ (LTokensToString tl)*)
+                 in ( refinedToString refined ) (* ^ (LTokensToString tl) *)
 		      ^ " " ^ stats ^ 
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -1328,4 +1328,11 @@ fun getSmallestRecNo ty =
         |  Poption (a, ty) => getSmallestRecNo ty
         |  _      => raise TyMismatch
   end
+
+fun getLTokens ty =
+  case ty of
+    Base (a, t) => t
+  | RefinedBase (a, r, tl) => tl
+  | _ => raise TyMismatch
+
 end

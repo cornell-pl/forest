@@ -3,7 +3,7 @@ struct
   open Ast
 
   fun getRefStr sep_term refined = case refined of
-    StringME s => "Regexp_" ^ sep_term ^ " \"" ^ escape(s) ^"\""
+    StringME s => "Regexp_" ^ sep_term ^ " \"" ^ escapeRegex s ^"\""
   | StringConst s => if (size s) = 1 then ("Char_" ^ sep_term ^ " '" ^ s ^ "'")
 			else ("String_" ^ sep_term ^ " \"" ^ s ^ "\"")
   | _ => raise TyMismatch
