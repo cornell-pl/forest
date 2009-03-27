@@ -604,6 +604,7 @@ struct
 
     fun isSeparator (Other c) = true
       | isSeparator (Pwhite s) = true
+      | isSeparator (Pgroup x) = isSeparator (#1 (#left x))
       | isSeparator _ = false
 
     (*given a list of LTokens, find groupings in them and return the list of groups, or if no groupings are found,
@@ -1055,7 +1056,6 @@ struct
 		    val sortedClusters = ListMergeSort.sort lessArrayCluster clusters_with_sep
 		    val () = if print_verbose then print "Clusters sorted by array criteria:\n" else ()
 		    val () = if print_verbose then printClusters numRecords sortedClusters else ()
-		    val cluster = List.hd sortedClusters (* guaranteed by earlier check not to be [] *)
 		    fun getArrayInfo((t, 
 			(h as {hist, total, coverage, structScore, width, minOccurrences})), result) = 
 		    (if print_verbose then (
@@ -1080,7 +1080,10 @@ struct
 			*)
 			 then (t,1)::result else result)
 		    (* we probably want to compute the number of times the token appears in the cluster...*)
-		    val arrayTokenAnalysis = List.foldl getArrayInfo [] cluster 
+		    val arrayTokenAnalysis = 
+			case sortedClusters of
+			  cluster::_ => List.foldl getArrayInfo [] cluster 
+			| _ => []
 		in
 		    case arrayTokenAnalysis of [] => 
 			(if print_verbose then print "ARRAY NOT CHOSEN\n" else (); NONE) | 
@@ -1571,7 +1574,7 @@ file is a record and all of them collectively represent a sample data *)
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
 	    val separator = getSeparator rtokens  (* for format program: returns some character not in input source *)
-	    (* val _ = print (contextsToString rtokens) *)
+	    (* val _ = print (contextsToString rtokens)  *)
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = if print_verbose = true then lengthsToHist rtokens else ()
 	    val ty = ContextListToTy 0 rtokens
