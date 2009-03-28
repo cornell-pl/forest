@@ -18,6 +18,7 @@ fun add_metric (e1, r1, t1) (e2, r2, t2) = (e1 + e2, r1 + r2, t1 + t2)
 
 fun better_metric (e1, r1, t1) (e2, r2, t2) =
 	case (t1, t2) of
+	
 	  (0, 0) => e1 < e2
 	| (0, _) => false
 	| (_, 0) => true
@@ -31,6 +32,8 @@ fun better_metric (e1, r1, t1) (e2, r2, t2) =
 
 fun equal_metric  (e1: int, r1: int, t1: int) (e2: int, r2: int, t2: int) : bool =
 	(e1 = e2 andalso r1 = r2 andalso t1 = t2)
+
+fun is_good_metric (e, r, t) = (e = 0)
 
 fun metricToString (e, r, parsed) = "(" ^ Int.toString e ^ ", " ^ Int.toString r ^ ", " 
 			^ Int.toString parsed ^ ")"

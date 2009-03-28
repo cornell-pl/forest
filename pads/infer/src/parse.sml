@@ -32,6 +32,9 @@ struct
                  val compare = String.compare
         end)
 
+  fun parseItemToString (r, m, j) =
+	(repToString "" r) ^ (metricToString m) ^ " Ending pos = " ^ Int.toString j ^ "\n"
+
   fun clean s = 
 	let 
 (*
@@ -54,10 +57,16 @@ struct
 		| NONE =>  IntMap.insert (map, j, [(r, m, j)])
 	    val map = ParseSet.foldl g IntMap.empty s
 	    val mylist = List.concat (IntMap.listItems map)
-	    val mylist = if length mylist > max_parses_per_line then 
-			 List.take ((ListMergeSort.sort 
-			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) mylist), max_parses_per_line)
-			 else mylist
+	    val (goodlist, badlist) = List.partition (fn (r, m, j) => is_good_metric m) mylist
+	    val mylist = if (length goodlist) < max_parses_per_line then 
+			 let val len = if max_parses_per_line -(length goodlist) > length badlist
+				       then length badlist
+				       else max_parses_per_line - (length goodlist)
+			 in
+			  List.take ((ListMergeSort.sort 
+			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
+			 end
+			 else goodlist
 	in
 	    ParseSet.addList (ParseSet.empty, mylist)
 	end
@@ -420,7 +429,7 @@ struct
 		  ParseSet.foldl gg ParseSet.empty this_set
 		end
 	in 
-	  parse_struct tys e i
+	  clean (parse_struct tys e i)
 	end
     | Punion (a, tys) =>
 	(* branch number starts from 0 *)
@@ -429,7 +438,16 @@ struct
 		    val newset = ParseSet.map (fn (r, m, j) => (UnionR (branchno, r), m, j)) set
 		in (ParseSet.union (parse_set, newset), branchno+1)
 		end
-	in #1 (foldl g (ParseSet.empty, 0) tys)
+	    val s = clean (#1 (foldl g (ParseSet.empty, 0) tys))
+	(*
+	    val _ = print ("Finished parsing:\n") 
+	    val _ = printTy ty 
+	    val _ = print ("number of parses = " ^ (Int.toString (ParseSet.numItems s)) ^ "\n")
+	    val _ = print "**** Start ***\n"
+	    val _ = ParseSet.app (fn x => print (parseItemToString x)) s
+	    val _ = print "**** end ***\n"
+	*)
+	in clean s
 	end
     | Switch (a, id, retys) => 
 	let fun select retys re branchno =
@@ -469,7 +487,7 @@ struct
  	     		val set = parse_all (selected_ty, e, i, input) 
 	     	  in ParseSet.map (fn (r, m, j) => (SwitchR (re, r), m, j)) set
 		  end
-	in newset
+	in clean newset
 	end
     | RArray (a, sep, term, body, len, lengths) => 
      (
@@ -521,6 +539,7 @@ struct
 	   val (body_term, has_term) = case term of
 	     		NONE => (body, false)
 	     	      | SOME term => (pair (body, term), true)
+	   (* val _ = (print ("Begin parsing:\n"); printTy ty) *)
 	   fun parse_array (e, parse_set) =
 	     if ParseSet.numItems parse_set = 0 then parse_set
 	     else
@@ -529,9 +548,12 @@ struct
 	         val termmap = IntMap.empty	
 		 (*
 		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n")
+		 val _ = print "*** Begin \n"
+		 val _ = ParseSet.app (fn x => print (parseItemToString x)) parse_set
+		 val _ = print "*** End \n"
 		 val _ = print "Parsing element:\n"
 		 val _ = printTy body_sep
-		 *)
+		*)
 	         fun f ((prev_r, m, start), (seprs, termrs, sepmap, termmap)) =
 	     	   let
 		    (*
@@ -547,16 +569,15 @@ struct
 			      val s = parse_all (body_sep, e, start, input)
 			      (*
 			      val _ = print "Before clean:\n"
-			      val _ = ParseSet.app (fn (r, m, j) => print ((repToString "" r) ^ "Metric = " ^ (metricToString m) ^ "\n")) s
+			      val _ = ParseSet.app (fn x => print (parseItemToString x)) s
 			      *)
 			      val s = clean (ParseSet.filter 
 					     (fn (r, m, j) => (j > start)) s)
 			      (*
-			      val _ = print "After clean:\n"
-			      val _ = ParseSet.app (fn (r, m, j) => print ((repToString "" r) ^ "Metric = " ^ (metricToString m) ^ "\n")) s
+			      val _ = ParseSet.app (fn x => print (parseItemToString x)) s
 			      *)
 	     		      val sepmap = IntMap.insert(sepmap, start, s)
-	     		  in (clean (merge_s ((prev_r, m, start), s, has_sep)), sepmap)
+	     		  in (merge_s ((prev_r, m, start), s, has_sep), sepmap)
 	     		  end
 	     	    val (term_set, termmap) = 
 	     		case IntMap.find(termmap, start) of
@@ -565,7 +586,7 @@ struct
 	     		  let val s = clean (ParseSet.filter (fn (r, m, j) => j > start)
 	     				(parse_all (body_term, e, start, input)))
 	     		      val termmap = IntMap.insert(termmap, start, s)
-	     		  in (clean (merge_t ((prev_r, m, start), s, has_term)), termmap)
+	     		  in (merge_t ((prev_r, m, start), s, has_term), termmap)
 	     		  end
 	     	   in (ParseSet.union(seprs, sep_set), ParseSet.union(termrs, term_set),
 	     	       sepmap, termmap)
@@ -577,9 +598,17 @@ struct
 	         ParseSet.union (sep', terms)
 	       end
 	   val non_empty_set = parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i))
+	   (* we have to add a parse that is an zero-length array *)
+	   val final_set = clean (ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0), i)))
+	  (*
+	   val _ = (print ("Finished parsing: \n"); printTy ty;  
+			print ("number of parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n"))
+	   val _ = print "**** Begin \n"
+	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
+	   val _ = print "**** End \n" 
+	  *)
 	  in
-		(* we have to add a parse that is an zero-length array *)
-		ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0), i))
+		final_set	
 	  end  
        )	
      | SOME x => 
@@ -642,7 +671,7 @@ struct
 	    in parse_fixed_len_array (e, new_parse_set, index+1)
 	    end
 	in
-	  parse_fixed_len_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i), 0)
+	  clean (parse_fixed_len_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i), 0))
 	end
       end  
       )
@@ -650,7 +679,7 @@ struct
 	let val set = parse_all (ty, e, i, input) 
 	    val newset = ParseSet.map (fn (r, m, j) => (OptionR(SOME r), m, j)) set
 	in
-	    ParseSet.add (newset, (OptionR NONE, (0, 0, 0), i))
+	    clean (ParseSet.add (newset, (OptionR NONE, (0, 0, 0), i)))
 	end
     | _ => raise TyMismatch
 	
