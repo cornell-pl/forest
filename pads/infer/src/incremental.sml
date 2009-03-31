@@ -112,7 +112,10 @@ structure Incremental: sig
 	     in
 		top_aggregates
 	     end 	  
-	     val final_aggr = hd (foldl add [init_aggr] lines)
+	     val final_aggrs = (foldl add [init_aggr] lines)
+	     val final_aggr = if length final_aggrs = 0 then
+				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
+			      else hd final_aggrs
        in
 	 print "The Best Aggregate:\n";
 	 print (AG.aggrToString "" final_aggr);
