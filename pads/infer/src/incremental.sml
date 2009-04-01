@@ -21,26 +21,48 @@ structure Incremental: sig
 
     fun main (cmd, args) = 
      (
-     if length args <> 2 then
-	(print "Usage: increment FILE_TO_LEARN FILE_TO_PARSE\n";
+     if length args <> 4 then
+	(print "Usage: increment [-l FILE_TO_LEARN | -g GOLDEN_DESC] -p FILE_TO_PARSE\n";
 	anyErrors := true)
      else
        let 
-	 val [file2learn, filename] = args
-         val (ty, sep) = computeStructure [file2learn]
-	 val ( measuredTy, goldenTy, numHeaders, numFooters, _) = 
-                                   Rewrite.run (Times.zeroEndingTimes()) ty
+	 val [flag1, value1, flag2, value2] = args
+         val (goldenTy, filename) = 
+		if (flag1 = "-l" andalso flag2 = "-p") then 
+			let val (ty, _) = computeStructure [value1]
+			    val (_, ty, _, _, _) = 
+                                 Rewrite.run (Times.zeroEndingTimes()) ty
+			in (ty, value2)
+			end
+		 else if (flag2 = "-l" andalso flag1 = "-p") then 
+			let val (ty, _) = computeStructure [value2]
+			    val (_, ty, _, _, _) = 
+                                 Rewrite.run (Times.zeroEndingTimes()) ty
+			in (ty, value1)
+			end
+		 else if (flag1 = "-g" andalso flag2 = "-p") then
+			case Gold.getGold value1 of
+			  NONE => raise (Fail "Golden description not found!")
+			| SOME ty => (ty, value2)
+		 else if (flag2 = "-g" andalso flag1 = "-p") then
+			case Gold.getGold value2 of
+			  NONE => raise (Fail "Golden description not found!")
+			| SOME ty => (ty, value1)
+		 else (print "Usage: increment [-l FILE_TO_LEARN | -g GOLDEN_DESC] -p FILE_TO_PARSE\n"; 
+			raise (Fail "Parameter error!"))
+			    
 	 (* val goldenTy : Ty  = Gold.getGolden descname 
 	 val _ = printTy goldenTy *)
 	 val lines = loadFile filename
 	 val _ = print "loadFile complete \n"
+	 val start_time = Time.now()
 	 val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
 	 val _ = print "Aggregate initialization complete \n"
 
 	 (* invariant: number of aggregates <= max_aggregates *)
 	 fun add (line, aggregates) =
 	    let 
-		val _ = print (line ^ "\n")
+		val _ = print (line ^ "\n") 
          	val set = Parse.parse_all(goldenTy, LabelMap.empty, 0, line)
 		(* val _ = print "Parse complete\n" *)
 		val list_parses = Parse.ParseSet.listItems set
@@ -67,10 +89,12 @@ structure Incremental: sig
 			     List.take ((ListMergeSort.sort 
 			     (fn ((_, m1, _), (_, m2, _)) => Rep.better_metric m2 m1) list_parses), num_parses)
 			  end
+		(*
 		val _ = print ("The top " ^ Int.toString (length top_parses) ^ " parses: \n")
 	 	val _ = List.app (fn (rep, m, j) => 
 			print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 			top_parses
+		*)
 		val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln ss]) => map 
 				(fn (r, m, j) => 
 				  let 
@@ -116,10 +140,12 @@ structure Incremental: sig
 	     val final_aggr = if length final_aggrs = 0 then
 				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
 			      else hd final_aggrs
+	     val elapse = Time.- (Time.now(), start_time)
        in
 	 print "The Best Aggregate:\n";
 	 print (AG.aggrToString "" final_aggr);
-	 print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n")
+	 print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n");
+	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
 		          " [", exnMessage e, "]\n"
