@@ -19,5 +19,9 @@ $(PaperName).ps:  paper.dvi
 $(PaperName).pdf : paper.dvi
 	dvipdf paper.dvi $@
 
-.PHONY: all paper clean quick $(PaperName)
+pdfquick:
+	latex paper.tex
+	dvipdf paper.dvi $(PaperName).pdf
+
+.PHONY: all paper clean pdfquick $(PaperName) 
 

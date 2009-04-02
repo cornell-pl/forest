@@ -2,48 +2,7 @@
 \section{Extended Metatheory}
 \label{app:ddc-meta-theory}
 
-One of the most difficult, and perhaps most interesting, challenges of our
-work on \ddc{} was determining what
-properties we wanted to hold. What are the ``correct''
-invariants of data description languages? While there are many
-well-known desirable invariants for programming languages, the
-metatheory of data description languages has been
-uncharted.
-
-We present the following two properties as critical invariants of
-our theory.  Just like the classic Progress and Preservation theorems
-should hold for any conventional typed programming language,
-we feel that the following properties should hold, in some form, for any data
-description language.
-\begin{itemize}
-\item {\bf Parser Type Correctness}: For a \ddc{} type $\ty$, the
-  representation and PD output by the parsing function of $\ty$ will
-  have the types specified by $\itsem[\ty]$ and
-  $\itpdsem[\ty]$, respectively.
-  
-\item {\bf Canonical Forms of Parsed Data}: We give a precise
-  characterization of the results of parsers by defining the {\em
-    canonical forms} of representation-parse descriptor pairs
-  associated with a dependent \ddc{} type. Of particular relevance to
-  data description, we show that the errors reported in the parse
-  descriptor will accurately reflect the errors present in the
-  representation.
-\end{itemize}
-
-The aim of this section is to formally state and prove that these
-critical properties hold for our \ddc\ theory. However, before we can
-do so, we must establish some basic properties of our semantics. We
-begin with a number of properties that we expect to hold for variable
-names. First, all variable names introduced by the parsing semantics
-function should be considered taken from a separate syntactic domain
-than variables that may appear in ordinary expressions.  Therefore,
-they are by definition ``fresh'' with respect to any expressions that
-can be written by the user.  Second, for those types with bound
-variables, the potential alpha-conversion when performing a
-substitution on the type exactly parallels any alpha-conversion of the
-same variable where it appears in the translation of the type. Last,
-all constructors, support functions and base-type parsers are closed
-with respect to user-defined variable names.
+The aim of this appendix is to formally state and prove the theorems of \secref{sec:ddc-meta-theory}. To start, we establish some basic properties of our semantics. First, all variable names introduced by the parsing semantics function should be considered taken from a separate syntactic domain than variables that may appear in ordinary expressions.  Therefore, they are by definition ``fresh'' with respect to any expressions that can be written by the user.  Second, for those types with bound variables, the potential alpha-conversion when performing a substitution on the type exactly parallels any alpha-conversion of the same variable where it appears in the translation of the type. Last, all constructors, support functions and base-type parsers are closed with respect to user-defined variable names.
 
 Next, we require that \ddc{} base types satisfy the properties that we
 desire to hold of the rest of the calculus.  Below is a formal
@@ -373,10 +332,7 @@ reason about the semantics of \ddc{} functions directly in terms of
 the stated normalization rules, rather than indirectly through
 semantic interpretation and the evaluation/equivalence rules of the
 semantic domain. Note that the premise of the lemma involves parser
-evaluation because that is what is needed for later use. We posit without
-proof that this lemma would be equally true if the second
-premise were switched with the first conclusion.
-\edcom{TP: say more: how would it be useful.}
+evaluation because that is what is needed for later use.
 
 \begin{lemma}[Commutativity of Evaluation and Semantic Interpretation]
   If $\; \ddck[\ty,,\kind,]$ and $\trans[\ty,,] \kstepsto \ivaln$ then
@@ -623,13 +579,6 @@ $\stsem[{\trans[\ty,,]},{\fotyc \pctxt, \ctxt,\ptyc \pctxt},
   $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.
 \end{theorem}
 
-A practical implication of this theorem is that it is sufficient to
-check data descriptions (\ie{}, \ddca{} types) for well-formedness to
-ensure that the generated types and functions are well formed. This
-property is sorely lacking in many common implementations of Lex and
-YACC, for which users must examine generated code to debug
-compile-time errors in specifications.
-
 \subsection{Canonical Forms}
 
 \ddc{} parsers generate pairs of representations and parse descriptors
@@ -777,15 +726,15 @@ In addition, we require that base-type parsers produce values in canonical form:
   $\corr {\pbase v} r p $.
 \end{condition}
 
-Lemma~\ref{lem:err-corr-at-T} states that the parsers for
+Theorem~\ref{thm:app-err-corr-at-T} states that the parsers for
 well-formed types (of base kind) will produce a canonical pair of
 representation and parse descriptor, if they produce anything at all.
 
-\begin{lemma}[Parsing to Canonical Forms]
-\label{lem:err-corr-at-T}
+\begin{theorem}[Parsing to Canonical Forms]
+\label{thm:app-err-corr-at-T}
 If $\; \ddck[\ty,,\kty,]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
   \spair<\off',r,p>$ then $\corrkl \ty r p$.
-\end{lemma}
+\end{theorem}
 
 \begin{proof}
   By induction on the height of the second derivation -- that is, the
@@ -823,15 +772,6 @@ If $\; \ddck[\ty,,\kty,]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
 %   By induction on the structure of r.
 % \end{proof}
 
-\begin{corollary}
-  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then there are no syntactic
-  or semantic errors in the representation data structure $r$.
-\end{corollary}
-
-This corollary is important as it ensures that a single check is
-sufficient to verify the validity of a data structure. Only if the
-data structure is not valid will further checking of substructures be
-required.
 
 %%% Local Variables: 
 %%% mode: latex
