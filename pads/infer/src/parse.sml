@@ -11,7 +11,7 @@ struct
   structure SS = Substring
   val max_parses_per_line = 1
 
-  structure ParseSet = SplaySetFn(struct
+  structure ParseSet = ListSetFn(struct
 	type ord_key = Rep * metric_type * int  (* (rep, metric, pos) triplet, metric smaller => better *)
 	val compare = 
 		fn((r1, m1, j1), (r2, m2, j2)) =>

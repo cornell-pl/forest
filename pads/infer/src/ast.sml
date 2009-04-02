@@ -38,6 +38,14 @@ open Common
 	end
 
 
+  fun printTyMap map = 
+	(
+	TyMap.appi
+	(fn (ty, tyname) => case (ty, tyname) of 
+			(Poption _, IRref s) => (print (s ^ "==>\n"); printTy ty)
+			| _ => ()
+	) map; print "\n")
+	
   fun tokenToTypeName (t : Token ) : TypeName = 
 	case t 
         of Ptime _     => IRtime
@@ -211,8 +219,8 @@ open Common
  	val tyName = 
           if notInlineTy ty andalso (not (isInlineArray ty)) then 
      	  case (TyMap.find (!tyMapRef, ty)) of
-     	    (SOME n) => n
-     	  | _ => getTypeName ty
+     	    SOME n => n
+     	  | NONE => getTypeName ty
 	  else getTypeName ty
 	val var = getVar ty
     in
@@ -453,11 +461,6 @@ open Common
       | Pstruct (aux, tys) =>
 	  let
 	    val nonInlineTys = List.filter (fn t => (not (isInlineArray t)) andalso notInlineTy t) tys
-(*
-	    val _ = print "Noninline tys:\n"
-	    val _ = List.map printTy nonInlineTys
-	    val _ = print "Noninline tys end\n"
-*)
 	    val arrayTys = List.filter isInlineArray tys
 	    val nonArrayBodyTys = List.filter (fn x => not (isArrayBodyTy x)) 
 				(map getArrayBody arrayTys)
@@ -511,7 +514,8 @@ open Common
 	  else [(levels2Rec, tyname, TyArray ((getArrayBodyTyName ty), sep, term, len))]
       | Poption (aux, ty) =>
 	  if not (isArrayBodyTy ty) then 
-		let val liftedIRs = tyToIR (levels2Rec-1) nil ty
+		let 
+		    val liftedIRs = tyToIR (levels2Rec-1) nil ty
 		    val bodyName = (case ty of 
 				   RefinedBase (_, Enum _, _)  => getTypeName ty
 				   | RefinedBase _ => getBaseTyName ty
@@ -523,7 +527,8 @@ open Common
 				   )
 		in liftedIRs @ [(levels2Rec, tyname, TyOption bodyName)]
 		end
-	  else [(levels2Rec, tyname, TyOption (getArrayBodyTyName ty))]
+	  else 
+		[(levels2Rec, tyname, TyOption (getArrayBodyTyName ty))]
       | _ => raise TyMismatch 
       )
       end

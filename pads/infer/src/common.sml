@@ -56,7 +56,7 @@ structure Common = struct
 			| (Pwhite(s1), Pwhite(s2)) => String.compare(s1, s2)
 			| (Ptext(s1), Ptext(s2)) => String.compare(s1, s2)
 			| (Other(c1), Other(c2)) => Char.compare(c1, c2)
-			| _ => Structure.compToken(a, b)
+			| _ => compToken(a, b)
 	
 	structure BDSet = RedBlackSetFn(struct
                                               type ord_key = Token 
@@ -545,7 +545,8 @@ structure Common = struct
 				   refine_equal_op1(termop1, termop2) andalso
 				   ty_equal (comparetype, ty1, ty2) andalso
 				   refine_equal_op1(len1, len2)
-			| (Poption (_, ty1), Poption (_, ty2)) => ty_equal (comparetype, ty1, ty2)
+			| (Poption (_, t1), Poption (_, t2)) => 
+				ty_equal (comparetype, t1, t2)
 			| _ => false 
 		handle Size => (print "Size in ty_equal!\n" ; false)
 	end
@@ -728,7 +729,7 @@ case ty of
 	     in if (Complexity.toReal comp1) <(Complexity.toReal comp2) then LESS
 		else GREATER	
 	     end
-  structure TyMap = SplayMapFn(
+  structure TyMap = ListMapFn(
     struct type ord_key = Ty
   	   val compare = tycompare
     end) 
