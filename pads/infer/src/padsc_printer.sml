@@ -5,7 +5,9 @@ open Ast
     StringME s => "Pre \"" ^ escapeRegex s ^"\""
   | StringConst s => if (size s) = 1 then ("'" ^ s ^ "'")
 			else ("\"" ^ s ^ "\"")
-  | _ => (print "Refined type not supported!\n"; raise TyMismatch) 
+  | IntConst i => "Pre \"/0*" ^ LargeInt.toString i ^ "/\""
+  | _ => (print ("Refined type " ^ (refinedToString refined) ^ 
+		" not supported!\n"); raise TyMismatch) 
 
   fun largeIntToStr i =
       if i>=0 then LargeInt.toString i

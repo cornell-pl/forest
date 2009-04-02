@@ -401,6 +401,11 @@ struct
 		  val _ = printTy ty
 		*)
 		  val this_set = parse_all(ty, env, start, input)
+		  (*
+		  val _ = print "Result from parsing struct field\n"
+		  val _ = printTy ty
+		  val _ = ParseSet.app (fn x => print (parseItemToString x)) this_set
+		  *)
 		  val idop = case ty of
 				Base (a, ((Pint _), _)::_) => SOME (getLabel a)
 			      | Base (a, ((Pstring _), _)::_) => SOME (getLabel a)

@@ -6,6 +6,7 @@ struct
     StringME s => "Regexp_" ^ sep_term ^ " \"" ^ escapeRegex s ^"\""
   | StringConst s => if (size s) = 1 then ("Char_" ^ sep_term ^ " '" ^ s ^ "'")
 			else ("String_" ^ sep_term ^ " \"" ^ s ^ "\"")
+  | IntConst i => "Regexp_" ^ sep_term ^ " \"/0*" ^ LargeInt.toString i ^ "/\""
   | _ => raise TyMismatch
 
   fun tyNameToPML tyName =
