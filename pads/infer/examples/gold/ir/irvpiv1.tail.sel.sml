@@ -1,4 +1,4 @@
-structure TEST_INC = struct
+structure IRV = struct
     open Model
     val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
@@ -29,5 +29,37 @@ structure TEST_INC = struct
 				[Base (aux, [(Pempty, loc)]),
 				 quad_dash,
 				 pair])
-    val test_inc : Ty = intnum
+    val irv: Ty = Pstruct (aux, 
+	[ip, 
+	RefinedBase (aux, StringConst " - - [", []),
+	date,
+	RefinedBase (aux, StringConst ":", []),
+	time,
+	RefinedBase (aux, StringConst "] \"GET ", []),
+	Punion (aux, [url, path]),
+	RefinedBase (aux, StringConst " HTTP/", []),
+    	Base(aux, [(Pfloat("1", "0"), loc)]),
+	RefinedBase (aux, StringConst "\" ", []),
+	intnum,
+	RefinedBase (aux, StringConst " ", []),
+	intnum,
+	RefinedBase (aux, StringConst " \"", []),
+	Punion(aux, [url, RefinedBase (aux, dashR, [])]),
+	RefinedBase (aux, StringConst "\" \"", []),
+	word,
+	RefinedBase (aux, StringConst "/", []),
+    	Base(aux, [(Pfloat("1", "0"), loc)]),
+	Poption (aux, Pstruct(aux, [
+			RefinedBase (aux, StringConst " (", []),
+			array1,
+			RefinedBase (aux, StringConst ")", [])])),
+	RefinedBase (aux, StringConst "\" ", []),
+	word,
+	sp,
+	intnum,
+	sp,
+	RArray(aux, SOME (sep), NONE, arraybody, NONE, []),
+	Poption (aux, RefinedBase (aux, StringConst ";", []))
+	])
+	
 end	

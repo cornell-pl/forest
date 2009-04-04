@@ -4,7 +4,11 @@ structure Incremental: sig
     val emit : unit -> unit
 
   end = struct
-
+(*
+    val _ = Compiler.Profile.setProfMode true
+    val _ = Compiler.Profile.setTimingMode true
+    val _ = SMLofNJ.Internals.ProfControl.spaceProfiling:= true
+*)
     val anyErrors = ref false
     val max_parses_per_line = Parse.max_parses_per_line
     val max_aggregates = 10
@@ -43,11 +47,11 @@ structure Incremental: sig
 		 else if (flag1 = "-g" andalso flag2 = "-p") then
 			case Gold.getGold value1 of
 			  NONE => raise (Fail "Golden description not found!")
-			| SOME ty => (ty, value2)
+			| SOME ty => (#2 (Populate.initializeTy LabelMap.empty ty), value2)
 		 else if (flag2 = "-g" andalso flag1 = "-p") then
 			case Gold.getGold value2 of
 			  NONE => raise (Fail "Golden description not found!")
-			| SOME ty => (ty, value1)
+			| SOME ty => (#2 (Populate.initializeTy LabelMap.empty ty), value1)
 		 else (print "Usage: increment [-l FILE_TO_LEARN | -g GOLDEN_DESC] -p FILE_TO_PARSE\n"; 
 			raise (Fail "Parameter error!"))
 			    
@@ -62,10 +66,21 @@ structure Incremental: sig
 	 (* invariant: number of aggregates <= max_aggregates *)
 	 fun add (line, aggregates) =
 	    let 
-		val _ = print (line ^ "\n") 
+		(*
+		val _ = print (line ^ "\n")  
+		val tm = Time.now() 
+		*)
+		(*
+		val _ = print ("size of tokenMap = " ^ Int.toString (Parse.TokenMap.numItems (!Parse.tokenRegexMap)) ^ "\n")
+		val _ = print ("size of strMap = " ^ Int.toString (Parse.StringMap.numItems (!Parse.strRegexMap)) ^ "\n")
+		*)
+		val _ = Parse.memo:=Parse.MemoMap.empty
          	val set = Parse.parse_all(goldenTy, LabelMap.empty, 0, line)
+		(* val _ = print ("Time to parse: " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") *)
 		(* val _ = print "Parse complete\n" *)
+		(* val _ = print ("Number of parses: " ^ Int.toString (Parse.ParseSet.numItems set) ^ "\n") *)
 		val list_parses = Parse.ParseSet.listItems set
+		(* val _ = print ("Num of parses: " ^ Int.toString (length list_parses) ^ "\n") *)
 		val list_parses = map (fn (r, m, j) => 
 			let val len = String.size line 
 			in if j < len then (r, Rep.add_metric m (2, len-j, 0), j)
@@ -73,6 +88,7 @@ structure Incremental: sig
 			end) list_parses
 		(* if there are some perfect parses, only take those *)
 		val perfect_parses = List.filter (fn (r, m, j) => (#1 m) = 0) list_parses
+		(* val _ = print ("Num of perfect parses: " ^ Int.toString (length perfect_parses) ^ "\n") *)
 		val top_parses =
 			if List.length perfect_parses > 0 then
 				if List.length perfect_parses <= max_parses_per_line then
@@ -95,6 +111,7 @@ structure Incremental: sig
 			print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 			top_parses
 		*)
+		(* val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  *)
 		val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln ss]) => map 
 				(fn (r, m, j) => 
 				  let 
@@ -110,9 +127,8 @@ structure Incremental: sig
 				  in newa
 				  end)
 					top_parses) aggregates)
-		(*
-		val _ = print ("After all aggr: " ^ Int.toString (length all_aggregates) ^ "\n")
-		*)
+		(* val _ = print ("After all aggr: " ^ Int.toString (length all_aggregates) ^ "\n") *)
+
 		val sorted_aggregates = ListMergeSort.sort
 			(fn (a1, a2) => AG.cost a1 > AG.cost a2) all_aggregates
 		val num_to_take = 
@@ -133,6 +149,7 @@ structure Incremental: sig
 				  end) (AG.BaseA nil, some(Int.maxInt)) set 
 *)
 					(* use a dummy aggregate to start *)
+		(* val _ = print ("Time to aggregate : " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") *)
 	     in
 		top_aggregates
 	     end 	  
@@ -146,6 +163,7 @@ structure Incremental: sig
 	 print (AG.aggrToString "" final_aggr);
 	 print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n");
 	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
+	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
 		          " [", exnMessage e, "]\n"

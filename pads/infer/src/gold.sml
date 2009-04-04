@@ -15,6 +15,7 @@ structure Gold = struct
     open WINDOWSERVER_LOG 
     open MER
     open NETSTAT
+    open IRV
     open TEST_INC 
     open Populate
     open ScrollKeeper
@@ -63,6 +64,7 @@ structure Gold = struct
         , ( "MER_T01_01.csv", mer)
         , ( "netstat-an", netstat)
         , ( "scrollkeeper.log", scrollkeeper)
+        , ( "irvpiv1.tail.sel", irv)
         , ( "test-inc.txt", test_inc)
         ]
 
