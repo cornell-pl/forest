@@ -26,7 +26,8 @@ $DEFAULT_PERCENT = 0;
 sub printusage()
 {
  print "\nUsage: chunks.pl [-h] [-m <random>|<contiguous>] [-s <size of chunk>] 
-		[-n <number of chunks to produce>]  [-p <percentage>] -f datafile\n";
+		[-n <number of chunks to produce>]  [-p <percentage>] 
+		[-learn] -f datafile\n";
  print "Note: datafile must be a line-based record file.\n";
 }
 
@@ -63,6 +64,15 @@ else {
 $num = $DEFAULT_NUM;
 if ($arg =~ /-n:([^:]*)/) { $num = $1 }
 
+#parse the learn mode
+if ($arg =~ /-learn/)
+{ 
+ $learn = 1;
+}
+else {
+ $learn = 0;
+}
+
 # Parse out the percentage parameter
 $percent = $DEFAULT_PERCENT;
 if ($arg =~ /-p:([^:]*)/) { $percent = $1 };
@@ -86,8 +96,36 @@ if ( $percent != 0 ) { $size = int ( $numrecs * $percent / 100 ) }
 
 print "numrecs = $numrecs, num = $num, size = $size\n";
 
-die "Input file size too small for given chunk size and number of chunks!\n" if ($num*$size>$numrecs && $mode eq "contiguous");
+die "Input file size too small for given chunk size and number of chunks!\n" 
+if ($num*$size>$numrecs && $mode eq "contiguous");
 
+# if -learn is specified, out the learn chunk first
+# we get the learn chunk by taking 1/3 of contiguous lines from top
+# 1/3 contiguous lines from bottom and 1/3 randomly from middle
+if ($learn)
+{
+ open (OUT, ">$datafile.learn") or die "Can't open learn file for output!";
+ for ($i=0; $i<($size/3.0); $i++)
+ {
+  print OUT $lines[$i]."\n";
+ }
+ local %usedindices=();
+ for ($j=0; $j<$size/3.0; $j++)
+ {
+  do {
+     $newindex=int(rand($numrecs-2.0*$size/3.0));
+  }
+  while ($usedindices{$newindex}); 
+  $usedindices{$newindex}=1;
+  print OUT $lines[int($size/3.0)+$newindex]."\n";
+ }
+ for ($i=$numrecs-($size/3.0); $i<$numrecs; $i++)
+ {
+  print OUT $lines[$i]."\n";
+ }
+ print "Written the learn chunk to $datafile.learn\n";
+ close OUT;
+}
 for ( $i=0; $i < $num; $i++ )
 {
  $out = $datafile.".chunk".$i;

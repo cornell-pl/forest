@@ -576,8 +576,8 @@ struct
 	     if ParseSet.numItems parse_set = 0 then parse_set
 	     else
 	       let 
-		 (* val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n") *)
 		 (*
+		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n") 
 		 val _ = print "*** Begin \n"
 		 val _ = ParseSet.app (fn x => print (parseItemToString x)) parse_set
 		 val _ = print "*** End \n"

@@ -70,6 +70,29 @@ fun aggrToString prefix r =
   (* function to merge a rep into an aggregate *)
   fun merge a rep =
     case (a, rep) of
+      (BaseA bs, BaseR (GoodB x)) => BaseA bs
+    | (BaseA bs, BaseR (ErrorB)) => Opt (BaseA bs)
+    | (Opt (BaseA bs), BaseR (GoodB x)) => Opt (BaseA bs)
+    | (Opt (BaseA bs), BaseR (ErrorB)) => Opt (BaseA bs)
+
+    | (SyncA ss, SyncR (Good s)) => SyncA ss
+    | (SyncA ss, SyncR (Fail)) => Opt (SyncA ss)
+    | (SyncA ss, SyncR (Recovered(r, s, m))) => TupleA [Ln [r], SyncA ss]
+
+    | (Opt (SyncA ss), SyncR (Good s)) => Opt (SyncA ss)
+    | (Opt (SyncA ss), SyncR Fail) => Opt (SyncA ss)
+    | (Opt (SyncA ss), SyncR (Recovered(r, s, m))) => TupleA [Ln [r], Opt(SyncA ss)]
+
+    | (TupleA [Ln l, SyncA ss], SyncR (Good s)) => TupleA [Ln l, SyncA ss]
+    | (TupleA [Ln l, SyncA ss], SyncR Fail) => TupleA [Ln l, Opt (SyncA ss)]
+    | (TupleA [Ln l, SyncA ss], SyncR (Recovered(r, s, m))) => TupleA [Ln (r::l), SyncA ss]
+
+    | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Good s)) => TupleA [Ln l, Opt (SyncA ss)]
+    | (TupleA [Ln l, Opt (SyncA ss)], SyncR Fail) => TupleA [Ln l, Opt (SyncA ss)]
+    | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Recovered(r, s, m))) => 
+		TupleA [Ln (r::l), Opt(SyncA ss)]
+
+(* The following accumulate the good data on the leaves as well!
       (BaseA bs, BaseR (GoodB x)) => BaseA ((GoodB x)::bs)
     | (BaseA bs, BaseR (ErrorB)) => Opt (BaseA bs)
     | (Opt (BaseA bs), BaseR (GoodB x)) => Opt (BaseA ((GoodB x)::bs))
@@ -91,6 +114,7 @@ fun aggrToString prefix r =
     | (TupleA [Ln l, Opt (SyncA ss)], SyncR Fail) => TupleA [Ln l, Opt (SyncA ss)]
     | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Recovered(r, s, m))) => 
 		TupleA [Ln (r::l), Opt(SyncA ((Good (s, m))::ss))]
+*)
 
     | (TupleA ags, TupleR reps) =>
 	if length ags <> length reps then raise MergeFailed

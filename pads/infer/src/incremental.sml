@@ -4,11 +4,13 @@ structure Incremental: sig
     val emit : unit -> unit
 
   end = struct
+
 (*
     val _ = Compiler.Profile.setProfMode true
     val _ = Compiler.Profile.setTimingMode true
     val _ = SMLofNJ.Internals.ProfControl.spaceProfiling:= true
 *)
+
     val anyErrors = ref false
     val max_parses_per_line = Parse.max_parses_per_line
     val max_aggregates = 10
@@ -58,10 +60,10 @@ structure Incremental: sig
 	 (* val goldenTy : Ty  = Gold.getGolden descname 
 	 val _ = printTy goldenTy *)
 	 val lines = loadFile filename
-	 val _ = print "loadFile complete \n"
+	 (* val _ = print "loadFile complete \n" *)
 	 val start_time = Time.now()
 	 val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
-	 val _ = print "Aggregate initialization complete \n"
+	 (* val _ = print "Aggregate initialization complete \n" *)
 
 	 (* invariant: number of aggregates <= max_aggregates *)
 	 fun add (line, aggregates) =
@@ -152,18 +154,38 @@ structure Incremental: sig
 		(* val _ = print ("Time to aggregate : " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") *)
 	     in
 		top_aggregates
-	     end 	  
-	     val final_aggrs = (foldl add [init_aggr] lines)
+	     end 
+
+(*
+	     fun wrapper n line aggrs =
+		if n = 250001 then aggrs
+		else 
+		  let val new_aggrs = add (line, aggrs)
+		      val _ = if n mod 5000 = 0 then 
+	     			let val elapse = Time.- (Time.now(), start_time)
+				in 
+				  print (Int.toString n ^ " Records - Time elapsed: " ^ 
+					Time.toString  elapse ^ " secs\n")
+				end
+			      else ()
+		  in wrapper (n+1) line new_aggrs
+		  end
+	     val final_aggrs = wrapper 1 (hd lines) [init_aggr]
+*)
+
+	     val final_aggrs = (foldl add [init_aggr] lines) 
 	     val final_aggr = if length final_aggrs = 0 then
 				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
 			      else hd final_aggrs
 	     val elapse = Time.- (Time.now(), start_time)
        in
+
 	 print "The Best Aggregate:\n";
 	 print (AG.aggrToString "" final_aggr);
 	 print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n");
 	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
+
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
 		          " [", exnMessage e, "]\n"
