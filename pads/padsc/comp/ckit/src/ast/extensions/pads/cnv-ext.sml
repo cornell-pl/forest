@@ -2450,8 +2450,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			        copyF(repX, exp))
 		      val pdInitS = doPDGenCTy tyname isVirtual name args pred repX pdX omitNames postReadSubList
 		  in
-		      [assignS exp
-                      , PL.bzeroS(P.addrX pdX, P.sizeofX(pdPCT))] 
+		      [assignS exp]
+                      @ (if isVirtual then [] else [PL.bzeroS(P.addrX pdX, P.sizeofX(pdPCT))])
 		      @ pdInitS
 		  end
 
