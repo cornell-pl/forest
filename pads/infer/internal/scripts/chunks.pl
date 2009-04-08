@@ -104,13 +104,15 @@ if ($num*$size>$numrecs && $mode eq "contiguous");
 # 1/3 contiguous lines from bottom and 1/3 randomly from middle
 if ($learn)
 {
+ $head = int($size/3.0);
+ $middle = $size - 2*$head;
  open (OUT, ">$datafile.learn") or die "Can't open learn file for output!";
- for ($i=0; $i<($size/3.0); $i++)
+ for ($i=0; $i<$head; $i++)
  {
   print OUT $lines[$i]."\n";
  }
  local %usedindices=();
- for ($j=0; $j<$size/3.0; $j++)
+ for ($j=0; $j<$middle; $j++)
  {
   do {
      $newindex=int(rand($numrecs-2.0*$size/3.0));
@@ -119,13 +121,14 @@ if ($learn)
   $usedindices{$newindex}=1;
   print OUT $lines[int($size/3.0)+$newindex]."\n";
  }
- for ($i=$numrecs-($size/3.0); $i<$numrecs; $i++)
+ for ($i=$numrecs-$head; $i<$numrecs; $i++)
  {
   print OUT $lines[$i]."\n";
  }
  print "Written the learn chunk to $datafile.learn\n";
  close OUT;
 }
+
 for ( $i=0; $i < $num; $i++ )
 {
  $out = $datafile.".chunk".$i;
