@@ -56,12 +56,12 @@ and types $\ity$ belong to the host language, which we define in \secref{sec:hos
 We use kinds $\kind$ to classify types. 
 In particular, kind $\kty$ classifies types that directly describe
 data.  Types with this kind include integers, 
-pairs of IP addresses and strings of length ten, \etc{}
+pairs of IP addresses and strings of length ten, among others.
 Kind $\ity \iarrowi \kind$ describes
 functions from values with type $\ity$ to types with arbitrary kind
 $\kind$.  An example of a type with such a kind is base type
 constructor \cd{Pstring_FW} that takes as an argument an integer
-expression $e$ and returns a string with length $e$.
+expression $e$ and returns a type for strings with length $e$.
 Finally, kind $\kty \iarrowi \kind$ classifies
 functions from first-order types (those having kind $\kty$) to
 arbitrary types (those having kind $\kind$).  
@@ -73,7 +73,7 @@ This kinding system disallows types that take type functions as
 arguments.  Such types add complexity to the system, and we have not
 encountered a compelling need for them in practice. 
 
-The most basic types are $\ptrue$ and $\pfalse$.  Type $\ptrue$
+The most basic types of kind $\kty$ are $\ptrue$ and $\pfalse$.  Type $\ptrue$
 describes the empty string; it succeeds on all input.  While vacuous
 by itself, the type $\ptrue$ is useful when combined with 
 other type constructors.  For example, a type that unions an integer
@@ -148,9 +148,9 @@ $\pset{\mathtt{x}}{\mathtt{Pstring\_FW(1)}}{\mathtt{x = ','}}$
 describes exactly the comma character. Because such ``singleton
 types'' arise frequently, we
 introduce a short-hand notation for them.  In particular, we use
-``$\mathtt{S_,}$'' as an abbreviation for the type above. Similarly,
-``$\mathtt{S_;}$''  abbreviates the corresponding description of precisely
-the semi-colon character, \etc
+$\mathtt{S(``,")}$ as an abbreviation for the type above. Similarly,
+$\mathtt{S(``;")}$  abbreviates the corresponding description of precisely
+the semi-colon character.
 
 \begin{figure}
 \begin{bnf}
@@ -181,14 +181,14 @@ would terminate a sequence when it reaches length $10$.  The type
 $\ty_t$ is used when data following the array will signal termination.
 Commonly, constrained singleton types are used to specify that a particular
 value terminates the sequence.  For example, when used as a
-terminator, the type $\mathtt{S_;}$ specifies
+terminator, the type $\mathtt{S(``;")}$ specifies
 that a semicolon ends the 
 array. However, if no particular value or set of values terminates the
 array, then we can use $\pfalse$
 to ensure that the array is not terminated based on the terminating
 type $\ty_t$.  
 As an example, the type  
-$\pseq {\mathtt{Pint32\ }} {\mathtt{S_,}} {\pterm {\mathtt{len_{10}}} {{\mathtt{S_;}}}}$
+$\pseq {\mathtt{Pint32\ }} {\mathtt{S(``,")}} {\pterm {\mathtt{len_{10}}} {{\mathtt{S(``;")}}}}$
 describes a sequence of ten 32-bit integers separated by commas and 
 terminated by a semi-colon.
 
@@ -202,10 +202,10 @@ functions from types to types {\em type abstractions} in contrast to
 {\em value abstractions}, which are functions from values to types.
 As an example,
 the type abstraction 
-$\ptylam{\ptyvar}{\kty}{\psum \mathtt{S_-} {\ptyvar} }$ 
+$\ptylam{\ptyvar}{\kty}{\psum{\mathtt{S}(``{-}")}{}{\ptyvar} }$ 
 takes any (first-order) type as an argument and 
 constructs a type that describes either the
-singleton string $\mathtt{'-'}$, denoting a missing value, or the argument type.
+singleton string $``\mathtt{-}"$, denoting a missing value, or the argument type.
 
 \ddc{} also has a number of ``active'' types.  These types describe
 actions to be taken during parsing rather than strictly describing the
@@ -357,7 +357,7 @@ in the form $\mathtt{name} = \ty$ before giving the type that describes the data
   {\mathtt{Pstring\_FW(1)}} {\mathtt{s = str}}}\\
 \\
 \mathtt{authid\_t} = 
-\psum {\mathtt{S(``-")}} {} {\mathtt{Pstring(``\;")}}\\
+\psum {\mathtt{S(``{-}")}} {} {\mathtt{Pstring(``\;")}}\\
 \\
 \mathtt{response\_t} = \plam {\mathtt x} {} {
       \pset {\mathtt y} {\mathtt{Puint16\_FW(x)}} 
@@ -382,11 +382,10 @@ in the form $\mathtt{name} = \ty$ before giving the type that describes the data
 \end{array}
 \]}%
 \noindent
-In the example, we define type constructor $\mathtt{S}$ to encode literals
-with a constrained type. We also use the following
+In the example, we use the following
 informal translations: \Pwhere{} becomes a set-type, \Pstruct{} a
 series of dependent sums, \Punion{} a series of sums, and
-\Parray{} a sequence. As the array terminates at the end of the file, we
+\Parray{} a sequence.  As the array terminates at the end of the file, we
 use $\ilam {\mathtt x} {} \ifalse$ and $\pfalse$ to indicate the
 absence of termination condition and terminator, respectively.
 
