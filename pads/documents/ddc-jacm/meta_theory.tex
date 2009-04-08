@@ -183,16 +183,23 @@ $\corr \tyval r p$ iff exactly one of the following is true:
 $\corrkl \ty r p$ iff $\ty \kstepsto \tyval$ and $\corr \tyval r p$.
 \end{definition}
 
-First, we note that base-type parsers must produce values in canonical form:
+Having defined what the Canonical Forms are, we can proceed to prove that
+our generated parsers actually produce them.
+This is the content of Theorem~\ref{thm:err-corr-at-T}, stated below. 
+However, in order for the theorem to be true, we must also require
+that base-type parsers produce values in canonical form, as
+specified in Condition~\ref{condition:bt-canon}.
+%that the parsers for
+%well-formed types (of base kind) will produce a canonical pair of
+%representation and parse descriptor, if they produce anything at all.
+%First, we note that base-type parsers must produce values in canonical form:
+
 \begin{condition}[Base Type Parsers Produce Values in Canonical Form]
+\label{condition:bt-canon}
   If $\;\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and $\Iimp(C)
   \sapp v \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$ then
   $\corr {\pbase v} r p $.
 \end{condition}
-
-Theorem~\ref{thm:err-corr-at-T} states that the parsers for
-well-formed types (of base kind) will produce a canonical pair of
-representation and parse descriptor, if they produce anything at all.
 
 \begin{theorem}[Parsing to Canonical Forms]
 \label{thm:err-corr-at-T}
@@ -200,15 +207,17 @@ If $\; \ddck[\ty,,\kty,]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
   \spair<\off',r,p>$ then $\corrkl \ty r p$.
 \end{theorem}
 
+Our theorem also has a useful corollary, stated below.  It ensures
+that a single check of the top level parse descriptor 
+is sufficient to verify the validity of an entire data 
+representation in canonical form. 
+%Only if the data structure is not valid will further 
+%checking of substructures be required.
+
 \begin{corollary}
   If $\corrkl \ty r p$ and $p.h.nerr = 0$ then there are no syntactic
   or semantic errors in the representation data structure $r$.
 \end{corollary}
-
-This corollary is important as it ensures that a single check is
-sufficient to verify the validity of a data structure. Only if the
-data structure is not valid will further checking of substructures be
-required.
 
 %%% Local Variables: 
 %%% mode: latex
