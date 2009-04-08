@@ -2,12 +2,13 @@
 \label{sec:ddc-meta-theory}
 
 One of the most difficult, and perhaps most interesting, challenges of our
-work on \ddc{} was determining what
-properties we wanted to hold. What are the ``correct''
-invariants of data description languages? While there are many
-well-known desirable invariants for programming languages, the
-metatheory of data description languages has been
-uncharted.
+work on \ddc{} was determining what general
+meta-theoretic properties should hold of the language. What are the ``correct''
+invariants of data description languages?  While the languages
+community has a good understanding of the
+desirable invariants for conventional programming languages, the
+corresponding properties of data description languages have not been
+studied.
 
 We present the following two properties as critical invariants of
 our theory.  Just like the classic Progress and Preservation theorems
@@ -28,13 +29,15 @@ description language.
   descriptor will accurately reflect the errors present in the
   representation.
 \end{itemize}
+\noindent
+The aim of this section is to formally state these
+critical properties and sketch the proof that they hold for 
+our \ddc\ theory. A full proof can be found in \appref{app:ddc-meta-theory}. 
 
-The aim of this section is to formally state and prove that these
-critical properties hold for our \ddc\ theory. We do so only briefly, however, bringing out the essential elements of the metatheory.  An extended treatment of this material can be found in \appref{app:ddc-meta-theory}. First, we require that \ddc{} base types satisfy the properties that we
-desire to hold of the rest of the calculus.  Below is a formal
-statement of these requirements. Note that by
-condition~\ref{cond:s-closed-op}, base type parsers must be closed.
-\begin{condition}[Conditions on Base-types]
+Before proceeding to the main elements of our meta-theory, 
+we state a few simple requirements
+of \ddc{} base types. 
+\begin{condition}[Conditions on Base Types]
 \label{cond:s-base-types}
   \begin{enumerate}
   \item $\dom {\Ikind} = \dom {\Iimp}$.
@@ -44,15 +47,18 @@ condition~\ref{cond:s-closed-op}, base type parsers must be closed.
     \label{cond:s-closed-op}
   \end{enumerate}
 \end{condition}
+\noindent
+Note that by
+condition~\ref{cond:s-closed-op}, base type parsers must be closed.
 
-The following result, while serving as a lemma for other results, also has inherent value for reasoning about \ddc{}. In essence, it says that evaluation (aka. normalization,
+The first interesting lemma we prove of the \ddc\ itself
+is that that evaluation (aka. normalization,
 type equivalence) commutes with semantic interpretation.
-This property  allows one to
+This property allows one to
 reason about the semantics of \ddc{} functions directly in terms of
 the stated normalization rules, rather than indirectly through
 semantic interpretation and the evaluation/equivalence rules of the
 semantic domain. 
-
 Note that the premise of the lemma involves parser
 evaluation because that is what is needed for later use. We posit without
 proof that this lemma would be equally true if the second
@@ -73,7 +79,7 @@ premise were switched with the first conclusion.
 \end{lemma}
 
 \subsection{Type Correctness}
-Our first key theoretical result is that the various semantic
+Our first key theorem is that the various semantic
 functions we have defined are coherent.  In particular, we show that
 for any well-kinded \ddca{} type $\tau$, the corresponding parser is
 well typed, returning a pair of the corresponding representation and
