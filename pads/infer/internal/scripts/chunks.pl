@@ -31,6 +31,29 @@ sub printusage()
  print "Note: datafile must be a line-based record file.\n";
 }
 
+sub getlines 
+{
+  my ($filename, $start, $num) = @_;
+  open (FILE, "<$filename") or die "Can't open input file $filename for reading!\n";
+  $count = 0;
+  @lines = ();
+  while (<FILE>)
+  {
+   if ($count >= $start && $count <$start+$num)
+   {
+    push (@lines, $_);
+   }
+   elsif ($count>=$start+$num)
+   {
+     last;
+   }
+   $count++;
+  }
+  close FILE;
+  return @lines
+}
+
+
 $arg=join (':', @ARGV);
 if ($arg =~ /-h/ || $arg !~ /-f/)
 { printusage(); exit;}
@@ -83,13 +106,16 @@ die "Negative percentage ($percent)\n" if ($percent < 0 );
 die "Percentage too big ($percent)\n" if ($percent > 100 );
 
 # Slurp the data file
-open(INF,$datafile) or die "Can't open $datafile for reading\n";
-@lines = <INF>;  #Read the file into an array
-chomp(@lines);
-close(INF);
+#open(INF,$datafile) or die "Can't open $datafile for reading\n";
+#@lines = <INF>;  #Read the file into an array
+#chomp(@lines);
+#close(INF);
 
 # Calculate the number of lines in the file
-$numrecs = $#lines+1;
+open(FILE, "<$datafile") or die "Can't open input file $datafile for read!\n";
+$numrecs = 0;
+$numrecs++ while <FILE>;
+close FILE;
 
 # If percentage was specified, recalculate the size
 if ( $percent != 0 ) { $size = int ( $numrecs * $percent / 100 ) }
@@ -107,9 +133,10 @@ if ($learn)
  $head = int($size/3.0);
  $middle = $size - 2*$head;
  open (OUT, ">$datafile.learn") or die "Can't open learn file for output!";
+ my @lines = getlines($datafile, 0, $head);
  for ($i=0; $i<$head; $i++)
  {
-  print OUT $lines[$i]."\n";
+  print OUT $lines[$i];
  }
  local %usedindices=();
  for ($j=0; $j<$middle; $j++)
@@ -119,11 +146,13 @@ if ($learn)
   }
   while ($usedindices{$newindex}); 
   $usedindices{$newindex}=1;
-  print OUT $lines[int($size/3.0)+$newindex]."\n";
+  (my $line) = getlines($datafile, $newindex, 1);
+  print OUT $line;
  }
- for ($i=$numrecs-$head; $i<$numrecs; $i++)
+ @lines = getlines($datafile, $numrecs-$head, $head);
+ foreach $line (@lines)
  {
-  print OUT $lines[$i]."\n";
+  print OUT $line;
  }
  print "Written the learn chunk to $datafile.learn\n";
  close OUT;
@@ -144,16 +173,18 @@ for ( $i=0; $i < $num; $i++ )
    }
    while ($usedindices{$newindex}); 
    $usedindices{$newindex}=1;
-   print OUT $lines[$newindex]."\n";
+   (my $line) = getlines($datafile, $newindex, 1);
+   print OUT $line;
   }
   print "Written random chunk to $out\n";
  }
  else #contiguous mode
  {
   $startline = int(rand($numrecs-$size+1));
-  for ($j=0; $j<$size; $j++)
+  my @lines = getlines($datafile, $startline, $size);
+  foreach $line (@lines) 
   {
-   print OUT $lines[$startline+$j]."\n";
+   print OUT $line;
   }
   print "Written contiguous chunk to $out\n";
  }

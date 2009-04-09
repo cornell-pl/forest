@@ -59,11 +59,9 @@ structure Incremental: sig
 			    
 	 (* val goldenTy : Ty  = Gold.getGolden descname 
 	 val _ = printTy goldenTy *)
-	 val lines = loadFile filename
+	 val fstream = TextIO.openIn filename
 	 (* val _ = print "loadFile complete \n" *)
 	 val start_time = Time.now()
-	 val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
-	 (* val _ = print "Aggregate initialization complete \n" *)
 
 	 (* invariant: number of aggregates <= max_aggregates *)
 	 fun add (line, aggregates) =
@@ -173,11 +171,25 @@ structure Incremental: sig
 	     val final_aggrs = wrapper 1 (hd lines) [init_aggr]
 *)
 
-	     val final_aggrs = (foldl add [init_aggr] lines) 
-	     val final_aggr = if length final_aggrs = 0 then
+	 val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
+	 val aggrs = ref [init_aggr]
+	 (* val _ = print "Aggregate initialization complete \n" *)
+	 (* val final_aggrs = (foldl add [init_aggr] lines) *)
+	 fun remove_newline line =
+		let val s_line = Substring.full line
+		    val s_line' = Substring.dropr (fn c => c = #"\n" orelse c = #"\r") s_line
+		in Substring.string s_line'
+		end
+	 val eof = ref false
+	 val _ = 
+	    while (not (!eof)) do
+	     case TextIO.inputLine fstream of
+	       SOME line => aggrs:= add (remove_newline line, !aggrs)
+	     | NONE => (eof:=true)
+	 val final_aggr = if length (!aggrs) = 0 then
 				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
-			      else hd final_aggrs
-	     val elapse = Time.- (Time.now(), start_time)
+			      else hd (!aggrs)
+	 val elapse = Time.- (Time.now(), start_time)
        in
 
 	 print "The Best Aggregate:\n";
