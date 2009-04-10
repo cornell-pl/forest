@@ -4,8 +4,8 @@ struct
   exception MergeFailed
 
   datatype Aggr =
-	  BaseA of BaseData list
-	| SyncA of SyncData list
+	  BaseA of Token
+	| SyncA of Refined option
 	| TupleA of Aggr list
 	| UnionA of Aggr list  (* one per branch *)
 	| SwitchA of (Refined * Aggr) list  (* one per branch plus additional new branches *)
@@ -17,8 +17,9 @@ struct
 
 fun aggrToString prefix r =
   case r of
-    BaseA l => prefix ^ "BaseA\n"
-  | SyncA l => prefix ^ "SyncA\n"
+    BaseA t => prefix ^ "BaseA (" ^ tokenTyToString t ^ ")\n"
+  | SyncA (SOME re) => prefix ^ "SyncA (" ^ refinedToString re ^ ")\n"
+  | SyncA NONE => prefix ^ "SyncA (None)\n"
   | Opt agg =>
 	prefix ^ "Opt {\n" ^
 	  aggrToString (prefix ^ "    ") agg
@@ -77,18 +78,36 @@ fun aggrToString prefix r =
 
     | (SyncA ss, SyncR (Good s)) => SyncA ss
     | (SyncA ss, SyncR (Fail)) => Opt (SyncA ss)
+    | (SyncA ss, SyncR (Partial (s, re))) =>
+	(
+	case (ss, re) of
+	  (SOME (IntConst i), IntConst j) => 
+		SyncA (SOME (Int (LargeInt.min(i, j), LargeInt.max(i, j)))) 
+		(* change int const to ranged int *)
+	| (SOME (Int (min, max)), IntConst new) => 
+		if new < min then SyncA(SOME (Int (new, max)))
+		else SyncA(SOME (Int(min, new)))
+	| (SOME (FloatConst _), FloatConst _) => (* reduce to Pfloat *) 
+		SyncA NONE	
+	| (NONE, _) => SyncA NONE
+	| _ => raise MergeFailed
+	)
     | (SyncA ss, SyncR (Recovered(r, s, m))) => TupleA [Ln [r], SyncA ss]
 
     | (Opt (SyncA ss), SyncR (Good s)) => Opt (SyncA ss)
     | (Opt (SyncA ss), SyncR Fail) => Opt (SyncA ss)
+    | (Opt (SyncA ss), SyncR (Partial x)) => Opt (merge (SyncA ss) (SyncR (Partial x)))
     | (Opt (SyncA ss), SyncR (Recovered(r, s, m))) => TupleA [Ln [r], Opt(SyncA ss)]
 
     | (TupleA [Ln l, SyncA ss], SyncR (Good s)) => TupleA [Ln l, SyncA ss]
     | (TupleA [Ln l, SyncA ss], SyncR Fail) => TupleA [Ln l, Opt (SyncA ss)]
+    | (TupleA [Ln l, SyncA ss], SyncR (Partial x)) => TupleA [Ln l, merge (SyncA ss) (SyncR (Partial x))]
     | (TupleA [Ln l, SyncA ss], SyncR (Recovered(r, s, m))) => TupleA [Ln (r::l), SyncA ss]
 
     | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Good s)) => TupleA [Ln l, Opt (SyncA ss)]
     | (TupleA [Ln l, Opt (SyncA ss)], SyncR Fail) => TupleA [Ln l, Opt (SyncA ss)]
+    | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Partial x)) => 
+		TupleA [Ln l, Opt (merge (SyncA ss) (SyncR (Partial x)))]
     | (TupleA [Ln l, Opt (SyncA ss)], SyncR (Recovered(r, s, m))) => 
 		TupleA [Ln (r::l), Opt(SyncA ss)]
 
@@ -177,8 +196,8 @@ fun aggrToString prefix r =
 (* function that takes a Ty and generates an initial empty aggregate structure *)
   fun initialize ty = 
     case ty of
-	Base _ => BaseA nil
-	| RefinedBase _ => SyncA nil
+	Base (aux, tl) => BaseA (#1 (hd tl))
+	| RefinedBase (aux, re, _) => SyncA (SOME re)
 	| Pstruct (a, tys) =>
 		let val inits = map initialize tys in
 		  TupleA inits
@@ -194,7 +213,7 @@ fun aggrToString prefix r =
 	| RArray (a, sep, term, body, len, lengths) => 
 	  	let val eleA = initialize body
 		in
-		  ArrayA (eleA, SyncA nil, SyncA nil)
+		  ArrayA (eleA, SyncA sep, SyncA term)
 		end
 	| Poption (a, ty) => OptionA (initialize ty)
 	| _ => (printTy ty; raise TyMismatch)

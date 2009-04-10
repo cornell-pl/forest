@@ -270,18 +270,28 @@ struct
 		| _ => [(SyncR Fail, (1, 0, 0), start)]
 	    end
 	| IntConst li => 
-	    let val str = 
-		  if li >= 0 then "0*" ^ (LargeInt.toString li)
-		  else ("\\-0*" ^ LargeInt.toString (~li))
-	        val (recovered, matched, j) = parse_regex (str, start, input)
-	    in
-		case (recovered, matched) of
-		  (NONE, SOME s) => [(SyncR(Good (s, IntConst li)), (0, 0, String.size s), j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, s, IntConst li)), 
-					(2, String.size r, String.size s), j)]
-		| _ => [(SyncR Fail, (1, 0, 0), start)]
-
-		end
+	  (
+	    case parse_base (Pint (0, "0"), start, input) of
+	      (BaseR(ErrorB), _, _) =>
+		    let val str = 
+			  if li >= 0 then "0*" ^ (LargeInt.toString li)
+			  else ("\\-0*" ^ LargeInt.toString (~li))
+		        val (recovered, matched, j) = parse_regex (str, start, input)
+		    in
+			case (recovered, matched) of
+			  (NONE, SOME s) => [(SyncR(Good (s, IntConst li)), (0, 0, String.size s), j)]
+			| (SOME r, SOME s) => [(SyncR(Recovered (r, s, IntConst li)), 
+						(2, String.size r, String.size s), j)]
+			| _ => [(SyncR Fail, (1, 0, 0), start)]
+	
+			end
+	    | (BaseR (GoodB(Pint (x, s))), (_, _, len), j) => 
+		if x = li then
+		  [(SyncR (Good(s, IntConst x)), (0, 0, len), j)]
+		else
+		  [(SyncR (Partial(s, IntConst x)), (0, 0, len), j)]
+	    | _ => raise Unexpected
+	  )
 	| Int (min, max) => 
 		let val s = "[\\-~]?([0-9]+)" 
 		    val regex = 
@@ -320,7 +330,10 @@ struct
 					  | SOME n => n
 				val skipped_len = index + matched_index
 			      in
-				  if num < min orelse num > max then 
+				  if skipped_len = 0 andalso (num < min orelse num > max) then 
+				    (* no skipped data - treat it as partially correct *)
+				      [(SyncR (Partial(outs, IntConst num)), (0, 0, matched_len), start+matched_len)]
+				  else if (num < min orelse num > max) then
 				     let val remaining = SS.slice(remainder, matched_len, NONE)
 				     in
 					find_next (remaining, skipped_len + matched_len)
@@ -338,14 +351,27 @@ struct
 		in find_next (mystring, 0) 
 		end
 	| FloatConst (i, f) => 
-	    let val (recovered, matched, j) = parse_regex (escapeRE ("0*" ^ i ^ "." ^ f ^ "0*"), start, input)
-	    in
-		case (recovered, matched) of
-		  (NONE, SOME s) => [(SyncR(Good (s, FloatConst (i, f))), (0, 0, String.size s), j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, s, FloatConst (i, f))), 
-					(2, String.size r, String.size s), j)]
-		| _ => [(SyncR Fail, (1, 0, 0), start)]
-	    end
+	  (
+	    case parse_base (Pfloat ("", ""), start, input) of
+	      (BaseR(ErrorB), _, _) =>
+		    let val (recovered, matched, j) = parse_regex (escapeRE ("0*" ^ i ^ "." ^ f ^ "0*"), start, input)
+		    in
+			case (recovered, matched) of
+			  (NONE, SOME s) => [(SyncR(Good (s, FloatConst (i, f))), (0, 0, String.size s), j)]
+			| (SOME r, SOME s) => [(SyncR(Recovered (r, s, FloatConst (i, f))), 
+						(2, String.size r, String.size s), j)]
+			| _ => [(SyncR Fail, (1, 0, 0), start)]
+		    end
+	    | (BaseR(GoodB(Pfloat(i1, f1))), (_, _, len), j) =>
+		let val s = i1 ^ "." ^ f1
+		in
+		   if Real.compare(valOf(Real.fromString(i ^ "." ^ f)), valOf(Real.fromString(s))) = EQUAL then
+		     [(SyncR(Good (s, FloatConst (i1, f1))), (0, 0, len), j)]
+		   else 
+		     [(SyncR(Partial(s, FloatConst (i1, f1))), (0, 0, len), j)]
+		end
+	    | _ => raise Unexpected
+	  )
 	| StringConst s => 
 	    let val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
 	    in
@@ -637,13 +663,13 @@ struct
 	   val non_empty_set = parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i))
 	   (* we have to add a parse that is an zero-length array *)
 	   val final_set = clean (ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0), i)))
-	  (*
+	   (*
 	   val _ = (print ("Finished parsing: \n"); printTy ty;  
 			print ("number of parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n"))
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
 	   val _ = print "**** End \n" 
-	  *)
+	   *)
 	  in
 		final_set	
 	  end  

@@ -10,6 +10,7 @@ datatype BaseData =
 datatype SyncData =
   Good of (string * Refined)	   (* the actual matched string plus the refined type *) 
 | Recovered of (string * string * Refined)  (* recovered string, actual matched string and the Refined type *)
+| Partial of (string * Refined) (* partially matched string - it matches the basic type of the refined but the refined itself *)
 | Fail
 
 type metric_type = int * int * int (* (number of error nodes, recovered chars, total chars parsed ) *)
@@ -100,6 +101,7 @@ fun sync_comp (syn1, syn2) =
     (Good (s1, r1) , Good (s2, r2)) => String.compare (s1, s2)
   | (Recovered (r1, s1, t1), Recovered (r2, s2, t2)) => 
 	String.compare (r1 ^ s1, r2 ^ s2)
+  | (Partial (s1, r1), Partial (s2, r2)) => String.compare (s1, s2)
 (*
 	(
 	case String.compare(s1, s2) of
@@ -112,6 +114,9 @@ fun sync_comp (syn1, syn2) =
   | (Good _, _) => LESS
   | (Recovered _, Good _) => GREATER
   | (Recovered _, _) => LESS
+  | (Partial _, Good _) => GREATER
+  | (Partial _, Recovered _) => GREATER
+  | (Partial _, _) => LESS
   | (Fail, _) => GREATER
 
 datatype Rep = 
@@ -237,6 +242,7 @@ fun repToString prefix r =
   | BaseR (ErrorB) => prefix ^ "ErrorB\n"
   | SyncR (Good (s,t)) => prefix ^ "Good(" ^ s ^ ")\n"
   | SyncR (Recovered (r1, s1, s2)) => prefix ^ "Rec(" ^ r1 ^")(" ^ s1 ^ ")\n"
+  | SyncR (Partial(s,t)) => prefix ^ "Part(" ^ s ^ ")\n"
   | SyncR (Fail) => prefix ^ "Fail\n" 
   | TupleR reps => 
 	let val ss = map (repToString (prefix ^ "    ")) reps 
