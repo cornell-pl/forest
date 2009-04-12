@@ -373,6 +373,7 @@ struct
 	    | _ => raise Unexpected
 	  )
 	| StringConst s => 
+	(*TODO: maybe we should introduce Partial here as well? *)
 	    let val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
 	    in
 		case (recovered, matched) of

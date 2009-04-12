@@ -1583,5 +1583,20 @@ file is a record and all of them collectively represent a sample data *)
 	    (sty, separator)
 	end
 
+(* this is another version of the above computeStructure function with records as input *)
+  fun computeStructurefromRecords records =
+	let
+	    val recordNumber = ref 0
+	    val () = initialRecordCount := (List.length records) 
+	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
+	    val separator = getSeparator rtokens  (* for format program: returns some character not in input source *)
+	    (* val _ = print (contextsToString rtokens)  *)
+            val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
+	    val () = if print_verbose = true then lengthsToHist rtokens else ()
+	    val ty = ContextListToTy 0 rtokens
+	    val sty = simplifyTy ty
+	in
+	    (sty, separator)
+	end
 
 end

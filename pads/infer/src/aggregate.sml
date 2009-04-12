@@ -235,5 +235,82 @@ fun aggrToString prefix r =
 	| OptionA a => cost a
 	| SwitchA l => foldl (fn ((r, a), c) => (cost a) + c) 0.0 l
 
+ fun learn lines sibling_opt =
+  let val (ty, _) = Structure.computeStructurefromRecords lines
+      val ty = Reduce.reduce 1 ty
+      val ty = Reduce.reduce 2 ty
+      val ty = Reduce.reduce 3 ty
+      val finalty= 
+	   if Options.do_blob_finding then
+                sortUnionBranches (Reduce.updateWithBlobs sibling_opt ty)
+           else sortUnionBranches ty
+  in finalty 
+  end
+
+ (* TODO: here we reset all coverage to 0, we may need to keep track of coverage in aggregates we
+   grow the aggregate *)
+ fun updateTy ty aggr =
+	case (ty, aggr) of
+	  (_, TupleA [a, Ln ss]) => 
+	    if length ss > 0 then
+	      let 
+		val extra_ty = learn ss NONE
+	      in
+		Pstruct(mkTyAux 0, [updateTy ty a, Poption(mkTyAux 0, extra_ty)])
+	      end
+	    else updateTy ty a
+	| (_, TupleA [Ln ss, a]) => 
+	    if length ss > 0 then
+	      let 
+		val sib_ty = updateTy ty a
+		val extra_ty = learn ss (SOME sib_ty)
+	      in
+		Pstruct(mkTyAux 0, [Poption(mkTyAux 0, extra_ty), sib_ty])
+	      end
+	    else updateTy ty a
+	| (_, Opt a) => Poption (mkTyAux 0, updateTy ty a)
+	| (Base (a, tl), BaseA _) => ty
+	| (RefinedBase (a, re, tl), SyncA (SOME newre)) => RefinedBase (a, newre, tl)
+	| (RefinedBase (a, re, tl), SyncA NONE) => Base (a, tl) (* resetting to Base type *)
+	| (Pstruct(a, tys), TupleA aggrs) => 
+		if (length tys = length aggrs) then
+		  Pstruct(a, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs))
+		else raise TyMismatch
+ 	| (Punion(a, tys), UnionA aggrs) =>
+		if (length tys = length aggrs) then
+		  Punion(a, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs))
+		else raise TyMismatch
+	| (Switch(a, id, retys) , SwitchA re_ags) => (* re_ags maybe longer than retys *)
+		let val retys' =
+			ListPair.map (fn ((re, ty), (re1, ag)) =>
+			  if refine_equal (re, re1) then 
+				(re, updateTy ty ag) 
+			  else raise TyMismatch) (retys, re_ags)
+		    val extra_re_ags = List.drop (re_ags, length retys)
+		    val extras = map (fn (re, ag) =>
+					case ag of
+					  Ln ss => (re, learn ss NONE)
+					| _ => raise TyMismatch) extra_re_ags
+		in Switch (a, id, (retys' @ extras))
+		end
+	| (RArray (a, sep, term, body, len, lengths), ArrayA (e, s, t)) =>
+	(* TODO: we don't have a way of modifying the len and lengths yet *)
+		let
+		  val newbody = updateTy body e
+		  val sep = case (sep, s) of
+			(SOME sep, SyncA (SOME re)) => SOME re
+			| (NONE, SyncA NONE) => NONE
+			| _ => raise TyMismatch
+		  val term = case (term, t) of
+			(SOME term, SyncA (SOME re)) => SOME re
+			| (NONE, SyncA NONE) => NONE
+			| _ => raise TyMismatch
+	    	in RArray(a, sep, term, newbody, len, lengths)
+		end
+	| (Poption (a, ty), OptionA ag) => Poption (a, updateTy ty ag)
+	| _ => (print "updateTy failed!\n"; printTy ty; 
+		print (aggrToString "" aggr); 
+		raise TyMismatch)
+			
 end
     

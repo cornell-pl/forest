@@ -195,7 +195,9 @@ structure Incremental: sig
 	 print "The Best Aggregate:\n";
 	 print (AG.aggrToString "" final_aggr);
 	 print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n");
-	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
+	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n");
+	 print "Newly updated Ty: \n";
+	 printTy (AG.updateTy goldenTy final_aggr)
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
 
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
