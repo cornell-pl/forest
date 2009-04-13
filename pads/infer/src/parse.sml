@@ -74,9 +74,9 @@ struct
 			  List.take ((ListMergeSort.sort 
 			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
 			 end
-			 else goodlist
+			 else nil
 	in
-	    ParseSet.addList (ParseSet.empty, mylist)
+	    ParseSet.addList (ParseSet.empty, (goodlist@mylist))
 	end
 	    		
 	
@@ -373,14 +373,29 @@ struct
 	    | _ => raise Unexpected
 	  )
 	| StringConst s => 
-	(*TODO: maybe we should introduce Partial here as well? *)
 	    let val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
 	    in
 		case (recovered, matched) of
 		  (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
 		| (SOME r, SOME s) => [(SyncR(Recovered (r, s, StringConst s)), 
 					(2, String.size r, String.size s), j)]
-		| _ => [(SyncR Fail, (1, 0, 0), start)]
+		| _ => 
+		    (* also attempt o parse a Pstring token right here to 
+		    generate a possible partial result, but we have to ensure that
+		    the string s itself is a word first *)
+		    (
+		      case parse_base (Pstring (""), 0, s) of
+			(BaseR(ErrorB), _, _) => [(SyncR Fail, (1, 0, 0), start)]
+		      | (BaseR(GoodB (Pstring _)),  (_, _, len), _) =>
+			  if len = String.size s then (* s matches a word *)
+				case parse_base (Pstring (""), start, input) of
+				  (BaseR(ErrorB), _, _) => [(SyncR Fail, (1, 0, 0), start)]
+		      		| (BaseR(GoodB (Pstring s')),  (_, _, len), j) =>
+				   [(SyncR(Partial(s', StringConst(s'))), (0, 0, len), j)]
+				| _ => raise Unexpected
+			  else [(SyncR Fail, (1, 0, 0), start)]
+		      | _ => raise Unexpected
+		    )
 	    end
 
 	| Enum res => List.foldl (fn (r, l) => l@ (parse_sync(r, start, input))) nil res

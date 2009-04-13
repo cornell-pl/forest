@@ -14,6 +14,7 @@ structure Incremental: sig
     val anyErrors = ref false
     val max_parses_per_line = Parse.max_parses_per_line
     val max_aggregates = 10
+    val dir_name = "inc_output"
     exception Exit of OS.Process.status
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
     open Config
@@ -27,11 +28,24 @@ structure Incremental: sig
 
     fun main (cmd, args) = 
      (
-     if length args <> 4 then
-	(print "Usage: increment [-l FILE_TO_LEARN | -g GOLDEN_DESC] -p FILE_TO_PARSE\n";
+     if length args <> 1 then
+	(print "Usage: increment ORIG_DATA_FILE\n";
 	anyErrors := true)
      else
-       let 
+       let
+	 val file_prefix = hd args
+	 (* create a directory to store the .p files *)
+	 val _ = if (OS.FileSys.isDir dir_name handle SysErr => (OS.FileSys.mkDir dir_name; true))
+		 then () else () 
+	 val subdir = (dir_name ^ "/" ^ file_prefix)
+	 val _ = if (OS.FileSys.isDir subdir handle SysErr => (OS.FileSys.mkDir subdir; true))
+		 then () else ()
+	 val init_file = file_prefix ^ ".learn"
+	 val otherfiles = List.tabulate (10, (fn n => file_prefix ^ ".chunk" ^ Int.toString n))
+	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 
+		(#1 (computeStructure [init_file]))
+
+(* 
 	 val [flag1, value1, flag2, value2] = args
          val (goldenTy, filename) = 
 		if (flag1 = "-l" andalso flag2 = "-p") then 
@@ -56,16 +70,20 @@ structure Incremental: sig
 			| SOME ty => (#2 (Populate.initializeTy LabelMap.empty ty), value1)
 		 else (print "Usage: increment [-l FILE_TO_LEARN | -g GOLDEN_DESC] -p FILE_TO_PARSE\n"; 
 			raise (Fail "Parameter error!"))
+*)
 			    
 	 (* val goldenTy : Ty  = Gold.getGolden descname 
 	 val _ = printTy goldenTy *)
-	 val fstream = TextIO.openIn filename
-	 (* val _ = print "loadFile complete \n" *)
+
+	 
 	 val start_time = Time.now()
 
-	 (* invariant: number of aggregates <= max_aggregates *)
-	 fun add (line, aggregates) =
-	    let 
+	 fun inc_learn (filename, goldenTy) =
+	   let
+	     (* invariant: number of aggregates <= max_aggregates *)
+	     val _ = print ("\n**** Incrementally learning datafile: " ^ filename ^ "...\n")
+	     fun add (line, aggregates) =
+	      let 
 		(*
 		val _ = print (line ^ "\n")  
 		val tm = Time.now() 
@@ -150,9 +168,9 @@ structure Incremental: sig
 *)
 					(* use a dummy aggregate to start *)
 		(* val _ = print ("Time to aggregate : " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") *)
-	     in
-		top_aggregates
-	     end 
+	       in
+		  top_aggregates
+	       end 
 
 (*
 	     fun wrapper n line aggrs =
@@ -171,35 +189,45 @@ structure Incremental: sig
 	     val final_aggrs = wrapper 1 (hd lines) [init_aggr]
 *)
 
-	 val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
-	 val aggrs = ref [init_aggr]
-	 (* val _ = print "Aggregate initialization complete \n" *)
-	 (* val final_aggrs = (foldl add [init_aggr] lines) *)
-	 fun remove_newline line =
+	     val fstream = TextIO.openIn filename
+	     (* val _ = print "loadFile complete \n" *)
+	     val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
+	     val aggrs = ref [init_aggr]
+	     (* val _ = print "Aggregate initialization complete \n" *)
+	     (* val final_aggrs = (foldl add [init_aggr] lines) *)
+	     fun remove_newline line =
 		let val s_line = Substring.full line
 		    val s_line' = Substring.dropr (fn c => c = #"\n" orelse c = #"\r") s_line
 		in Substring.string s_line'
 		end
-	 val eof = ref false
-	 val _ = 
-	    while (not (!eof)) do
-	     case TextIO.inputLine fstream of
-	       SOME line => aggrs:= add (remove_newline line, !aggrs)
-	     | NONE => (eof:=true)
-	 val final_aggr = if length (!aggrs) = 0 then
+	     val eof = ref false
+	     val _ = 
+	       while (not (!eof)) do
+	         case TextIO.inputLine fstream of
+	           SOME line => aggrs:= add (remove_newline line, !aggrs)
+	         | NONE => (eof:=true)
+	     val final_aggr = if length (!aggrs) = 0 then
 				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
 			      else hd (!aggrs)
-	 val elapse = Time.- (Time.now(), start_time)
+	     val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" final_aggr);
+	 	      print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n"))
+	     val newTy = AG.updateTy goldenTy final_aggr
+	     val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
+	     val padscFile = subdir ^ "/" ^ filename ^ ".p"
+	     val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
+	     val padsstrm = TextIO.openOut padscFile
+	     val desc = #5 (Padsc_printer.tyToPADSC newTy numHeaders numFooters ((!lexName)^ ".p"))
+	     val _ = TextIO.output (padsstrm, desc)
+	     val _ = TextIO.closeOut padsstrm
+	   in
+	     newTy
+	   end
+	   val finalTy = foldl inc_learn initTy otherfiles
+	   val elapse = Time.- (Time.now(), start_time)
        in
 
-	 print "The Best Aggregate:\n";
-	 print (AG.aggrToString "" final_aggr);
-	 print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n");
-	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n");
-	 print "Newly updated Ty: \n";
-	 printTy (AG.updateTy goldenTy final_aggr)
+	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
-
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
 		          " [", exnMessage e, "]\n"

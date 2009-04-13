@@ -88,7 +88,12 @@ fun aggrToString prefix r =
 		if new < min then SyncA(SOME (Int (new, max)))
 		else SyncA(SOME (Int(min, new)))
 	| (SOME (FloatConst _), FloatConst _) => (* reduce to Pfloat *) 
-		SyncA NONE	
+		SyncA NONE
+	| (SOME (Enum res), StringConst s) => 
+		if List.exists (fn re => case re of StringConst s => true | _ => false) res then
+		  SyncA ss
+		else SyncA(SOME (Enum (res@[re])))
+	| (SOME (StringConst s'), StringConst s) =>  SyncA(SOME (Enum [StringConst s', re]))
 	| (NONE, _) => SyncA NONE
 	| _ => raise MergeFailed
 	)
