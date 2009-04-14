@@ -241,7 +241,10 @@ fun aggrToString prefix r =
 	| SwitchA l => foldl (fn ((r, a), c) => (cost a) + c) 0.0 l
 
  fun learn lines sibling_opt =
-  let val (ty, _) = Structure.computeStructurefromRecords lines
+  let 
+      (* val _ = (print "Learning these lines:\n"; List.app (fn s => print (s ^ "\n")) lines) *)
+      val (ty, _) = Structure.computeStructurefromRecords lines
+      val ty = removePempty ty
       val ty = Reduce.reduce 1 ty
       val ty = Reduce.reduce 2 ty
       val ty = Reduce.reduce 3 ty

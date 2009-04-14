@@ -494,8 +494,11 @@ structure Common = struct
 			RArray (a2, sepop2, termop2, ty2, len2, l2))
 			(*body is in a different scope so reindex*)
 			=> RArray(mergeAux(a1, a2), sepop1, termop1, 
-				mergeTy((reIndexRecNo ty1 (getCoverage ty2)), ty2), len1, (l1@l2)) 	
-		| _ => raise TyMismatch
+				mergeTy((reIndexRecNo ty1 (getCoverage ty2)), ty2), len1, (l1@l2)) 
+		| (Poption(a1, ty1), Poption (a2, ty2)) =>
+		    	Poption (mergeAux(a1, a2), mergeTy (ty1, ty2))	
+		| _ => (print "The following tys don't match!!\n"; printTy ty1; 
+			printTy ty2; raise TyMismatch)
 
     (* function to test of two ty's are completely equal minus the labels *)
     (* if comparetype = 0, compare everything, otherwise compare down to 
