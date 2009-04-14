@@ -25,25 +25,70 @@ structure Incremental: sig
     open Common
 
     structure AG = Aggregate
+    fun remove_newline line =
+	let val s_line = Substring.full line
+	    val s_line' = Substring.dropr (fn c => c = #"\n" orelse c = #"\r") s_line
+	in Substring.string s_line'
+	end
 
+    fun get_num_lines file =
+	let val strm = TextIO.openIn file 
+	    val eof = ref false
+	    val count = ref 0
+	    val _ = while not (!eof) do
+			case TextIO.inputLine strm of
+			  SOME x => count:=(!count) + 1
+			| _ => eof := true
+	    val _ = TextIO.closeIn strm
+	in (!count)
+	end
+
+    fun get_cont_lines file start num =
+	let val strm = TextIO.openIn file 
+	    val count = ref 0
+	    val lines = ref nil
+	    val _ = while !count < start + num do
+			case TextIO.inputLine strm of
+			  SOME x => (if !count >= start then
+					lines:= (!lines @ [remove_newline x])
+				    else ();
+				    count:=(!count) + 1)
+			| NONE => ()
+	    val _ = TextIO.closeIn strm
+	in  !lines
+	end
+		
+    fun get_learn_chunk (file, size) =
+	let val hd_sz = size div 2
+	    val tail_sz = size - hd_sz
+	    val total_sz = get_num_lines file
+	    val hdr_lines = get_cont_lines file 0 hd_sz
+	    val tail_lines = get_cont_lines file (total_sz - tail_sz) tail_sz
+	in hdr_lines @ tail_lines
+	end
+	
     fun main (cmd, args) = 
      (
-     if length args <> 1 then
-	(print "Usage: increment ORIG_DATA_FILE\n";
+     if length args <> 2 then
+	(print "Usage: increment ORIG_DATA_FILE CHUNK_SIZE\n";
 	anyErrors := true)
      else
        let
-	 val file_prefix = hd args
+	 val [file_prefix, cs] = args
+	 val chunksize = valOf (Int.fromString cs)
 	 (* create a directory to store the .p files *)
 	 val _ = if (OS.FileSys.isDir dir_name handle SysErr => (OS.FileSys.mkDir dir_name; true))
-		 then () else () 
+		 then () else ()
 	 val subdir = (dir_name ^ "/" ^ file_prefix)
 	 val _ = if (OS.FileSys.isDir subdir handle SysErr => (OS.FileSys.mkDir subdir; true))
 		 then () else ()
-	 val init_file = file_prefix ^ ".learn"
+	 val learn_lines = get_learn_chunk (file_prefix, chunksize)
+	 (*
 	 val otherfiles = List.tabulate (10, (fn n => file_prefix ^ ".chunk" ^ Int.toString n))
+	 *)
+	 
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 
-		(#1 (computeStructure [init_file]))
+		(#1 (computeStructurefromRecords learn_lines))
 
 (* 
 	 val [flag1, value1, flag2, value2] = args
@@ -78,10 +123,11 @@ structure Incremental: sig
 	 
 	 val start_time = Time.now()
 
-	 fun inc_learn (filename, goldenTy) =
+	 fun inc_learn (chunk, index, goldenTy) =
 	   let
 	     (* invariant: number of aggregates <= max_aggregates *)
-	     val _ = print ("\n**** Incrementally learning datafile: " ^ filename ^ "...\n")
+	     val _ = print ("\n**** Incrementally learning from chunk No. " ^ 
+		Int.toString index ^ "...\n")
 	     fun add (line, aggregates) =
 	      let 
 		(*
@@ -189,31 +235,28 @@ structure Incremental: sig
 	     val final_aggrs = wrapper 1 (hd lines) [init_aggr]
 *)
 
-	     val fstream = TextIO.openIn filename
 	     (* val _ = print "loadFile complete \n" *)
 	     val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
-	     val aggrs = ref [init_aggr]
 	     (* val _ = print "Aggregate initialization complete \n" *)
-	     (* val final_aggrs = (foldl add [init_aggr] lines) *)
-	     fun remove_newline line =
-		let val s_line = Substring.full line
-		    val s_line' = Substring.dropr (fn c => c = #"\n" orelse c = #"\r") s_line
-		in Substring.string s_line'
-		end
+	     val final_aggrs = (foldl add [init_aggr] chunk)
+	     (*
+	     val fstream = TextIO.openIn filename
+	     val aggrs = ref [init_aggr]
 	     val eof = ref false
 	     val _ = 
 	       while (not (!eof)) do
 	         case TextIO.inputLine fstream of
 	           SOME line => aggrs:= add (remove_newline line, !aggrs)
 	         | NONE => (eof:=true)
-	     val final_aggr = if length (!aggrs) = 0 then
+	     *)
+	     val final_aggr = if length final_aggrs = 0 then
 				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
-			      else hd (!aggrs)
+			      else hd (final_aggrs)
 	     val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" final_aggr);
 	 	      print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n"))
 	     val newTy = AG.updateTy goldenTy final_aggr
 	     val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
-	     val padscFile = subdir ^ "/" ^ filename ^ ".p"
+	     val padscFile = subdir ^ "/" ^ file_prefix ^ ".chunk" ^ Int.toString index ^ ".p"
 	     val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
 	     val padsstrm = TextIO.openOut padscFile
 	     val desc = #5 (Padsc_printer.tyToPADSC newTy numHeaders numFooters ((!lexName)^ ".p"))
@@ -222,8 +265,28 @@ structure Incremental: sig
 	   in
 	     newTy
 	   end
-	   val finalTy = foldl inc_learn initTy otherfiles
+
+	   val strm = TextIO.openIn file_prefix
+	   val index = ref 0 
+	   val count = ref 0
+	   val lines = ref nil
+	   val eof = ref false
+	   val myTy = ref initTy
+	   val _ = while not (!eof) do
+		(
+		if (!count) = chunksize then
+		  (myTy := inc_learn (!lines, !index, !myTy); 
+		   count:=0; lines := nil; index := (!index) + 1)
+		else ();
+		case TextIO.inputLine strm of
+		  SOME x => (lines:= (!lines @ [remove_newline x]);
+			     count:=(!count) + 1)
+		| NONE => (eof:=true; myTy := inc_learn (!lines, !index, !myTy))
+		)
+
+	   (* val finalTy = foldl inc_learn initTy otherfiles *)
 	   val elapse = Time.- (Time.now(), start_time)
+	   val _ = TextIO.closeIn strm
        in
 
 	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
