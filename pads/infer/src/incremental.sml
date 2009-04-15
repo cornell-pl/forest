@@ -83,6 +83,10 @@ structure Incremental: sig
 	 val subdir = (dir_name ^ "/" ^ file_prefix)
 	 val _ = if (OS.FileSys.isDir subdir handle SysErr => (OS.FileSys.mkDir subdir; true))
 		 then () else ()
+	 val timestamp= Date.fmt "%Y-%m-%d_%H-%M-%S" (Date.fromTimeLocal (Time.now()))
+	 val timedir = subdir ^ "/" ^ timestamp
+	 val _ = if (OS.FileSys.isDir timedir handle SysErr => (OS.FileSys.mkDir timedir; true))
+		 then () else ()
 	 val learn_lines = get_learn_chunk (file_prefix, learnsize)
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => file_prefix ^ ".chunk" ^ Int.toString n))
@@ -90,13 +94,13 @@ structure Incremental: sig
 	 
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 
 		(#1 (computeStructurefromRecords learn_lines))
-	 val padscFile = subdir ^ "/" ^ file_prefix ^ ".init.p"
+	 val padscFile = timedir ^ "/" ^ file_prefix ^ ".init.p"
 	 val _ = print ("Output initial PADS description to " ^ padscFile ^ "\n")
 	 val padsstrm = TextIO.openOut padscFile
 	 val desc = #5 (Padsc_printer.tyToPADSC initTy numHeaders numFooters ((!lexName)^ ".p"))
 	 val _ = TextIO.output (padsstrm, desc)
 	 val _ = TextIO.closeOut padsstrm
-	 val logFile = subdir ^ "/" ^ file_prefix ^ ".log"
+	 val logFile = timedir ^ "/" ^ file_prefix ^ ".log"
 	 val logstrm = TextIO.openOut logFile
 	 val _ = TextIO.output (logstrm, "Learn Chunk = " ^ Int.toString learnsize ^ 
 			" lines\nParse Chunk = " ^ Int.toString chunksize ^ " lines\n\n")
@@ -275,7 +279,7 @@ structure Incremental: sig
 		  let  
 	     	    val newTy = AG.updateTy goldenTy final_aggr
 	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
-	     	    val padscFile = subdir ^ "/" ^ file_prefix ^ ".chunk" ^ Int.toString index ^ ".p"
+	     	    val padscFile = timedir ^ "/" ^ file_prefix ^ ".chunk" ^ Int.toString index ^ ".p"
 	     	    val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
 	     	    val padsstrm = TextIO.openOut padscFile
 	     	    val desc = #5 (Padsc_printer.tyToPADSC newTy numHeaders numFooters 
