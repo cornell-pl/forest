@@ -82,9 +82,11 @@ struct
 			 end
 			 else nil
 	    *)
+	    val len = if length badlist < max_parses_per_line then length badlist
+		      else max_parses_per_line
 	    val mylist = if length goodlist > 0 then goodlist
 			 else List.take ((ListMergeSort.sort 
-			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), max_parses_per_line) 
+			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
 	in
 	    ParseSet.addList (ParseSet.empty, (goodlist@mylist))
 	end
