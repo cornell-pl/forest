@@ -185,12 +185,12 @@ structure Incremental: sig
 			     List.take ((ListMergeSort.sort 
 			     (fn ((_, m1, _), (_, m2, _)) => Rep.better_metric m2 m1) list_parses), num_parses)
 			  end
-		(*
+(*
 		val _ = print ("The top " ^ Int.toString (length top_parses) ^ " parses: \n")
 	 	val _ = List.app (fn (rep, m, j) => 
 			print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 			top_parses
-		*)
+*)
 		(* val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  *)
 		val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln ss]) => map 
 				(fn (r, m, j) => 
@@ -314,7 +314,9 @@ structure Incremental: sig
 		case TextIO.inputLine strm of
 		  SOME x => (lines:= (!lines @ [remove_newline x]);
 			     count:=(!count) + 1)
-		| NONE => (eof:=true; myTy := inc_learn (!lines, !index, !myTy))
+		| NONE => (eof:=true; 
+			if length (!lines) >0 then myTy := inc_learn (!lines, !index, !myTy)
+			else ())
 		)
 
 	   (* val finalTy = foldl inc_learn initTy otherfiles *)

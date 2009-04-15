@@ -305,7 +305,7 @@ struct
 		if x = li then
 		  [(SyncR (Good(s, IntConst x)), (0, 0, len), j)]
 		else
-		  [(SyncR (Partial(s, IntConst x)), (0, 0, len), j)]
+		  [(SyncR (Partial(s, IntConst x)), (1, 0, len), j)]
 	    | _ => raise Unexpected
 	  )
 	| Int (min, max) => 
@@ -348,7 +348,7 @@ struct
 			      in
 				  if skipped_len = 0 andalso (num < min orelse num > max) then 
 				    (* no skipped data - treat it as partially correct *)
-				      [(SyncR (Partial(outs, IntConst num)), (0, 0, matched_len), start+matched_len)]
+				      [(SyncR (Partial(outs, IntConst num)), (1, 0, matched_len), start+matched_len)]
 				  else if (num < min orelse num > max) then
 				     let val remaining = SS.slice(remainder, matched_len, NONE)
 				     in
@@ -384,7 +384,7 @@ struct
 		   if Real.compare(valOf(Real.fromString(i ^ "." ^ f)), valOf(Real.fromString(s))) = EQUAL then
 		     [(SyncR(Good (s, FloatConst (i1, f1))), (0, 0, len), j)]
 		   else 
-		     [(SyncR(Partial(s, FloatConst (i1, f1))), (0, 0, len), j)]
+		     [(SyncR(Partial(s, FloatConst (i1, f1))), (1, 0, len), j)]
 		end
 	    | _ => raise Unexpected
 	  )
@@ -407,7 +407,7 @@ struct
 				case parse_base (Pstring (""), start, input) of
 				  (BaseR(ErrorB), _, _) => [(SyncR Fail, (1, 0, 0), start)]
 		      		| (BaseR(GoodB (Pstring s')),  (_, _, len), j) =>
-				   [(SyncR(Partial(s', StringConst(s'))), (0, 0, len), j)]
+				   [(SyncR(Partial(s', StringConst(s'))), (1, 0, len), j)]
 				| _ => raise Unexpected
 			  else [(SyncR Fail, (1, 0, 0), start)]
 		      | _ => raise Unexpected
