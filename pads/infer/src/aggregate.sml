@@ -228,17 +228,17 @@ fun aggrToString prefix r =
      at learn nodes *)
   fun cost a = 
 	case a of
-	  BaseA _ => 0.0
-	| SyncA _ => 0.0
-	| Opt _ => 1.0
-	| Ln ss => (foldl (fn (s, len) => Real.fromInt (String.size s) + len) 0.0 ss) 
+	  BaseA _ => 0
+	| SyncA _ => 0
+	| Opt _ => 1
+	| Ln ss => (foldl (fn (s, len) => (String.size s) + len) 0 ss) 
 		(*	/ (Real.fromInt(List.length ss)) *) 
 		(* TODO: This may need to be fixed! *)
-	| TupleA l => foldl (fn (a, c) => (cost a) + c) 0.0 l
-	| UnionA l => foldl (fn (a, c) => (cost a) + c) 0.0 l
-	| ArrayA (e, s, t) => foldl (fn (a, c) => (cost a) + c) 0.0 [e, s, t]
+	| TupleA l => foldl (fn (a, c) => (cost a) + c) 0 l
+	| UnionA l => foldl (fn (a, c) => (cost a) + c) 0 l
+	| ArrayA (e, s, t) => foldl (fn (a, c) => (cost a) + c) 0 [e, s, t]
 	| OptionA a => cost a
-	| SwitchA l => foldl (fn ((r, a), c) => (cost a) + c) 0.0 l
+	| SwitchA l => foldl (fn ((r, a), c) => (cost a) + c) 0 l
 
  fun learn lines sibling_opt =
   let 

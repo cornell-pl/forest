@@ -303,7 +303,7 @@ open Ast
                                 "};\n",
 				topLabel, headerLabel, bodyLabel, footerLabel)
 			      end
-		  | _ => raise TyMismatch
+		  | _ => tyToPADSC ty 0 0 includeFile 
 	in
 	  (topLabel, headerLabel, bodyLabel, footerLabel, pads)
 	end 

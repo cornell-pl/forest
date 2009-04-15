@@ -69,12 +69,13 @@ structure Incremental: sig
 	
     fun main (cmd, args) = 
      (
-     if length args <> 2 then
-	(print "Usage: increment ORIG_DATA_FILE CHUNK_SIZE\n";
+     if length args <> 3 then
+	(print "Usage: increment ORIG_DATA_FILE LEARN_SIZE PARSE_SIZE\nSizes are in # of lines\n";
 	anyErrors := true)
      else
        let
-	 val [file_prefix, cs] = args
+	 val [file_prefix, ls, cs] = args
+	 val learnsize = valOf (Int.fromString ls)
 	 val chunksize = valOf (Int.fromString cs)
 	 (* create a directory to store the .p files *)
 	 val _ = if (OS.FileSys.isDir dir_name handle SysErr => (OS.FileSys.mkDir dir_name; true))
@@ -82,13 +83,24 @@ structure Incremental: sig
 	 val subdir = (dir_name ^ "/" ^ file_prefix)
 	 val _ = if (OS.FileSys.isDir subdir handle SysErr => (OS.FileSys.mkDir subdir; true))
 		 then () else ()
-	 val learn_lines = get_learn_chunk (file_prefix, chunksize)
+	 val learn_lines = get_learn_chunk (file_prefix, learnsize)
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => file_prefix ^ ".chunk" ^ Int.toString n))
 	 *)
 	 
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 
 		(#1 (computeStructurefromRecords learn_lines))
+	 val padscFile = subdir ^ "/" ^ file_prefix ^ ".init.p"
+	 val _ = print ("Output initial PADS description to " ^ padscFile ^ "\n")
+	 val padsstrm = TextIO.openOut padscFile
+	 val desc = #5 (Padsc_printer.tyToPADSC initTy numHeaders numFooters ((!lexName)^ ".p"))
+	 val _ = TextIO.output (padsstrm, desc)
+	 val _ = TextIO.closeOut padsstrm
+	 val logFile = subdir ^ "/" ^ file_prefix ^ ".log"
+	 val logstrm = TextIO.openOut logFile
+	 val _ = TextIO.output (logstrm, "Learn Chunk = " ^ Int.toString learnsize ^ 
+			" lines\nParse Chunk = " ^ Int.toString chunksize ^ " lines\n\n")
+	 val _ = TextIO.closeOut logstrm
 
 (* 
 	 val [flag1, value1, flag2, value2] = args
@@ -121,10 +133,10 @@ structure Incremental: sig
 	 val _ = printTy goldenTy *)
 
 	 
-	 val start_time = Time.now()
 
 	 fun inc_learn (chunk, index, goldenTy) =
 	   let
+	     val start_time = Time.now()
 	     (* invariant: number of aggregates <= max_aggregates *)
 	     val _ = print ("\n**** Incrementally learning from chunk No. " ^ 
 		Int.toString index ^ "...\n")
@@ -252,16 +264,33 @@ structure Incremental: sig
 	     val final_aggr = if length final_aggrs = 0 then
 				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
 			      else hd (final_aggrs)
+	     val final_cost = AG.cost final_aggr
 	     val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" final_aggr);
-	 	      print ("Cost of Best Aggregation = " ^ Real.toString (AG.cost final_aggr) ^ "\n"))
-	     val newTy = AG.updateTy goldenTy final_aggr
-	     val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
-	     val padscFile = subdir ^ "/" ^ file_prefix ^ ".chunk" ^ Int.toString index ^ ".p"
-	     val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
-	     val padsstrm = TextIO.openOut padscFile
-	     val desc = #5 (Padsc_printer.tyToPADSC newTy numHeaders numFooters ((!lexName)^ ".p"))
-	     val _ = TextIO.output (padsstrm, desc)
-	     val _ = TextIO.closeOut padsstrm
+	 	      print ("Cost of Best Aggregation = " ^ Int.toString final_cost ^ "\n"))
+	     val newTy = 
+		if final_cost = 0 then (* no change to the description *)
+		  (print "**** No Change to Description!\n";
+		   goldenTy)
+		else 
+		  let  
+	     	    val newTy = AG.updateTy goldenTy final_aggr
+	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
+	     	    val padscFile = subdir ^ "/" ^ file_prefix ^ ".chunk" ^ Int.toString index ^ ".p"
+	     	    val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
+	     	    val padsstrm = TextIO.openOut padscFile
+	     	    val desc = #5 (Padsc_printer.tyToPADSC newTy numHeaders numFooters 
+				((!lexName)^ ".p"))
+	     	    val _ = TextIO.output (padsstrm, desc)
+	     	    val _ = TextIO.closeOut padsstrm
+		  in newTy
+		  end
+	     val elapse = Time.- (Time.now(), start_time)
+	     val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
+	     val msg = "Chunk " ^ Int.toString index ^ ": Aggregate Cost = " ^ 
+		(Int.toString final_cost) ^ "\tTime elapsed = " ^ Time.toString elapse ^ " secs\n"
+	     val logstrm = TextIO.openAppend logFile
+	     val _ = TextIO.output (logstrm, msg)
+	     val _ = TextIO.closeOut logstrm
 	   in
 	     newTy
 	   end
@@ -285,11 +314,10 @@ structure Incremental: sig
 		)
 
 	   (* val finalTy = foldl inc_learn initTy otherfiles *)
-	   val elapse = Time.- (Time.now(), start_time)
 	   val _ = TextIO.closeIn strm
+	   val _ = TextIO.closeOut logstrm
        in
-
-	 print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
+	 ()
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
