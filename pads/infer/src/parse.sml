@@ -54,6 +54,7 @@ struct
 		else false
 	    val sorted_items = ListMergeSort.sort f items
 *)
+
 	    fun g ((r, m, j), map) =
 		case IntMap.find (map, j) of
 		  SOME nil => IntMap.insert (map, j, [(r, m, j)])
@@ -66,6 +67,11 @@ struct
 	    val map = ParseSet.foldl g IntMap.empty s
 	    val mylist = List.concat (IntMap.listItems map)
 	    val (goodlist, badlist) = List.partition (fn (r, m, j) => is_good_metric m) mylist
+	    (* NOTE: because PADS parser is deterministic, there is no point of keeping
+		bad parses if a good parse is found. However, if and when PADS
+		parser is changed to parse non-deterministically, 
+		we need to return both good and bad sets of parses *)
+	    (*
 	    val mylist = if (length goodlist) < max_parses_per_line then 
 			 let val len = if max_parses_per_line -(length goodlist) > length badlist
 				       then length badlist
@@ -75,10 +81,18 @@ struct
 			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
 			 end
 			 else nil
+	    *)
+	    val mylist = if length goodlist > 0 then goodlist
+			 else List.take ((ListMergeSort.sort 
+			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), max_parses_per_line) 
 	in
 	    ParseSet.addList (ParseSet.empty, (goodlist@mylist))
 	end
-	    		
+
+  fun has_good_parse s = 
+	let fun f (r, m, j) = is_good_metric m 
+	in ParseSet.exists f s
+	end 
 	
   val tmap = 
 	let fun add ((t, re), map) = TokenMap.insert (map, t, re)
@@ -398,7 +412,22 @@ struct
 		    )
 	    end
 
-	| Enum res => List.foldl (fn (r, l) => l@ (parse_sync(r, start, input))) nil res
+	| Enum res => 
+		(* List.foldl (fn (r, l) => l@ (parse_sync(r, start, input))) nil res *)
+		(* we are making committed choice here *)
+		let fun f res l =
+			case res of
+			  re::tail =>
+			  let val parses = parse_sync(re, start, input)
+			      fun g (r, m, j) = is_good_metric m	
+			  in
+			      if List.exists g parses then parses
+			      else f tail (l@parses)
+			  end
+			| nil => l
+		in
+		   f res nil
+		end
 	| Blob (str, patt) =>
 	  (
 	  case (str, patt) of
@@ -450,7 +479,7 @@ struct
 	      | (t, l)::_ => ParseSet.singleton (parse_base (t, i, input))
 	)
     | RefinedBase(a, r, ts) => 
-	ParseSet.addList(ParseSet.empty, parse_sync (r, i, input))
+	clean (ParseSet.addList(ParseSet.empty, parse_sync (r, i, input)))
     | Pstruct(a, tys) => 
 	let fun parse_struct tys env start =
 	    case tys of
@@ -500,13 +529,24 @@ struct
 	end
     | Punion (a, tys) =>
 	(* branch number starts from 0 *)
+	let fun f tys branchno prev_set =
+	  case tys of
+	    ty::tys =>
+		let val set = parse_all (ty, e, i, input)
+		    val newset = ParseSet.map (fn (r, m, j) => (UnionR (branchno, r), m, j)) set
+		in
+		  if has_good_parse newset then newset
+		  else f tys (branchno+1) (ParseSet.union (prev_set, newset))
+		end
+	  | nil => prev_set
+	in clean (f tys 0 ParseSet.empty)
+	(*
 	let fun g (ty, (parse_set, branchno)) =
 		let val set = parse_all (ty, e, i, input) 
 		    val newset = ParseSet.map (fn (r, m, j) => (UnionR (branchno, r), m, j)) set
 		in (ParseSet.union (parse_set, newset), branchno+1)
 		end
 	    val s = clean (#1 (foldl g (ParseSet.empty, 0) tys))
-	(*
 	    val _ = print ("Finished parsing:\n") 
 	    val _ = printTy ty 
 	    val _ = print ("number of parses = " ^ (Int.toString (ParseSet.numItems s)) ^ "\n")
@@ -514,7 +554,6 @@ struct
 	    val _ = ParseSet.app (fn x => print (parseItemToString x)) s
 	    val _ = print "**** end ***\n"
 	*)
-	in clean s
 	end
     | Switch (a, id, retys) => 
 	let fun select retys re branchno =
@@ -761,9 +800,11 @@ struct
       )
     | Poption (a, ty) => 
 	let val set = parse_all (ty, e, i, input) 
-	    val newset = ParseSet.map (fn (r, m, j) => (OptionR(SOME r), m, j)) set
+	    val newset = if has_good_parse set then
+	 	 ParseSet.map (fn (r, m, j) => (OptionR(SOME r), m, j)) set
+		else ParseSet.singleton  (OptionR NONE, (0, 0, 0), i)
 	in
-	    clean (ParseSet.add (newset, (OptionR NONE, (0, 0, 0), i)))
+	   newset
 	end
     | _ => raise TyMismatch
     val _ = memo:= MemoMap.insert(!memo, (mylabel, i), finalset)
