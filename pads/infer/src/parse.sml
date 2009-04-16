@@ -427,8 +427,14 @@ struct
 			      else f tail (l@parses)
 			  end
 			| nil => l
+		    val final_parses = f res nil
+		(*
+	 	    val _ = List.app (fn (rep, m, j) => 
+			print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
+			final_parses
+		*)
 		in
-		   f res nil
+		   final_parses
 		end
 	| Blob (str, patt) =>
 	  (

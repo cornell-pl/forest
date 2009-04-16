@@ -89,8 +89,8 @@ fun aggrToString prefix r =
 		else SyncA(SOME (Int(min, new)))
 	| (SOME (FloatConst _), FloatConst _) => (* reduce to Pfloat *) 
 		SyncA NONE
-	| (SOME (Enum res), StringConst s) => 
-		if List.exists (fn re => case re of StringConst s => true | _ => false) res then
+	| (SOME (Enum res), re) => 
+		if List.exists (fn re' => refine_equal (re, re')) res then
 		  SyncA ss
 		else SyncA(SOME (Enum (res@[re])))
 	| (SOME (StringConst s'), StringConst s) =>  SyncA(SOME (Enum [StringConst s', re]))
