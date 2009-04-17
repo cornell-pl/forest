@@ -269,15 +269,16 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
 			      else hd (final_aggrs)
 	     val final_cost = AG.cost final_aggr
-	     val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" final_aggr);
-	 	      print ("Cost of Best Aggregation = " ^ Int.toString final_cost ^ "\n"))
-	     val newTy = 
-		if final_cost = 0 then (* no change to the description *)
+	     val (newTy, changed) = 
+		if final_cost = 0 andalso AG.equal_aggr(init_aggr, final_aggr) then 
+		(* no change to the description *)
 		  (print "**** No Change to Description!\n";
-		   goldenTy)
+		   (goldenTy, false))
 		else 
 		  let  
-	     	    val newTy = AG.updateTy goldenTy final_aggr
+	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" final_aggr)) 
+	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString final_cost ^ "\n")
+	     	    val newTy = Reduce.reduce 3 (AG.updateTy goldenTy final_aggr)
 	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
 	     	    val padscFile = timedir ^ "/" ^ file_prefix ^ ".chunk" ^ Int.toString index ^ ".p"
 	     	    val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
@@ -286,12 +287,15 @@ structure Incremental: sig
 				((!lexName)^ ".p"))
 	     	    val _ = TextIO.output (padsstrm, desc)
 	     	    val _ = TextIO.closeOut padsstrm
-		  in newTy
+		  in (newTy, true)
 		  end
 	     val elapse = Time.- (Time.now(), start_time)
 	     val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
 	     val msg = "Chunk " ^ Int.toString index ^ ": Aggregate Cost = " ^ 
-		(Int.toString final_cost) ^ "\tTime elapsed = " ^ Time.toString elapse ^ " secs\n"
+		(Int.toString final_cost) ^ 
+		(if changed then "\t(desc changed!)" else 
+				 "\t(*************)") ^
+		"\tTime elapsed = " ^ Time.toString elapse ^ " secs\n"
 	     val logstrm = TextIO.openAppend logFile
 	     val _ = TextIO.output (logstrm, msg)
 	     val _ = TextIO.closeOut logstrm
@@ -305,6 +309,7 @@ structure Incremental: sig
 	   val lines = ref nil
 	   val eof = ref false
 	   val myTy = ref initTy
+	   val begin_time = Time.now()
 	   val _ = while not (!eof) do
 		(
 		if (!count) = chunksize then
@@ -318,10 +323,15 @@ structure Incremental: sig
 			if length (!lines) >0 then myTy := inc_learn (!lines, !index, !myTy)
 			else ())
 		)
-
+	   val total_elapse = Time.- (Time.now(), begin_time)
+	   val logstrm = TextIO.openAppend logFile
+	   val msg = "Total time elapsed = " ^ Time.toString total_elapse ^ " secs\n"
+	   val _ = print msg
+	   val _ = TextIO.output (logstrm, msg)
+	   val _ = TextIO.closeOut logstrm
+	   val _ = (print "**** Final Ty: \n"; printTy (!myTy))
 	   (* val finalTy = foldl inc_learn initTy otherfiles *)
 	   val _ = TextIO.closeIn strm
-	   val _ = TextIO.closeOut logstrm
        in
 	 ()
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)

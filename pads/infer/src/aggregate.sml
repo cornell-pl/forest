@@ -15,8 +15,8 @@ struct
 	| Ln of (string list) (* learn node combines the strings to be learned with
 					the good stuff in an aggregate of the orig node *)
 
-fun aggrToString prefix r =
-  case r of
+  fun aggrToString prefix r =
+    case r of
     BaseA t => prefix ^ "BaseA (" ^ tokenTyToString t ^ ")\n"
   | SyncA (SOME re) => prefix ^ "SyncA (" ^ refinedToString re ^ ")\n"
   | SyncA NONE => prefix ^ "SyncA (None)\n"
@@ -66,6 +66,23 @@ fun aggrToString prefix r =
 	prefix ^ "Learn {\n" ^
 	(String.concat (map (fn s => prefix ^ "    \"" ^ s ^ "\"\n") strings)) ^
 	prefix ^ "}\n"
+
+  fun equal_aggr (ag1, ag2) =
+     case (ag1, ag2) of
+       (BaseA t1, BaseA t2) => compToken (t1, t2) = EQUAL
+     | (SyncA r1, SyncA r2) => refine_equal_op1(r1, r2)
+     | (TupleA ags1, TupleA ags2) => ListPair.allEq equal_aggr (ags1, ags2)
+     | (UnionA ags1, UnionA ags2) => ListPair.allEq equal_aggr (ags1, ags2)
+     | (SwitchA re_ags1, SwitchA re_ags2) =>
+		ListPair.allEq (fn ((re1, ag1), (re2, ag2)) => 
+				refine_equal(re1, re2) andalso equal_aggr(ag1, ag2))
+		(re_ags1, re_ags2)
+     | (ArrayA (e1, s1, t1), ArrayA (e2, s2, t2)) =>
+	equal_aggr(e1, e2) andalso equal_aggr(s1, s2) andalso equal_aggr(t1, t2)
+     | (OptionA ag1, OptionA ag2) => equal_aggr (ag1, ag2)
+     | (Opt ag1, Opt ag2) => equal_aggr (ag1, ag2)
+     | (Ln ss1, Ln ss2) => ListPair.allEq (fn (s1, s2) => s1 = s2) (ss1, ss2)
+     | _ => false
 
 
   (* function to merge a rep into an aggregate *)
@@ -255,8 +272,8 @@ fun aggrToString prefix r =
   in finalty 
   end
 
- (* TODO: here we reset all coverage to 0, we may need to keep track of coverage in aggregates we
-   grow the aggregate *)
+ (* TODO: here we reset all coverage to 0, we may need to keep track of coverage in aggregates 
+    when we grow the aggregate *)
  fun updateTy ty aggr =
 	case (ty, aggr) of
 	  (_, TupleA [a, Ln ss]) => 
