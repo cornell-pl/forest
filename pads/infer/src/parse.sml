@@ -389,29 +389,35 @@ struct
 	    | _ => raise Unexpected
 	  )
 	| StringConst s => 
-	    let val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
-	    in
-		case (recovered, matched) of
-		  (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, s, StringConst s)), 
+	    (* attempt o parse a Pstring token right here to 
+	    generate a possible partial result, but we have to ensure that
+	    the string s itself is a word first *)
+	    let 
+	      val match_word = 
+	          case parse_base (Pstring (""), 0, s) of
+		    (BaseR(ErrorB), _, _) => false
+	          | (BaseR(GoodB (Pstring _)),  (_, _, len), _) =>
+		    if len = String.size s then true (* s matches a word *)
+		    else false
+		  | _ => raise Unexpected
+	       fun match_const_str () =
+		  let
+		     val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
+	    	  in
+		     case (recovered, matched) of
+		       (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
+		     | (SOME r, SOME s) => [(SyncR(Recovered (r, s, StringConst s)), 
 					(2, String.size r, String.size s), j)]
-		| _ => 
-		    (* also attempt o parse a Pstring token right here to 
-		    generate a possible partial result, but we have to ensure that
-		    the string s itself is a word first *)
-		    (
-		      case parse_base (Pstring (""), 0, s) of
-			(BaseR(ErrorB), _, _) => [(SyncR Fail, (1, 0, 0), start)]
-		      | (BaseR(GoodB (Pstring _)),  (_, _, len), _) =>
-			  if len = String.size s then (* s matches a word *)
-				case parse_base (Pstring (""), start, input) of
-				  (BaseR(ErrorB), _, _) => [(SyncR Fail, (1, 0, 0), start)]
-		      		| (BaseR(GoodB (Pstring s')),  (_, _, len), j) =>
-				   [(SyncR(Partial(s', StringConst(s'))), (1, 0, len), j)]
-				| _ => raise Unexpected
-			  else [(SyncR Fail, (1, 0, 0), start)]
-		      | _ => raise Unexpected
-		    )
+		     | _ => [(SyncR Fail, (1, 0, 0), start)]
+		  end
+	    in
+		if match_word then 
+			case parse_base (Pstring (""), start, input) of
+			  (BaseR(ErrorB), _, _) => match_const_str ()
+	      		| (BaseR(GoodB (Pstring s')),  (_, _, len), j) =>
+			   [(SyncR(Partial(s', StringConst(s'))), (1, 0, len), j)]
+			| _ => raise Unexpected
+		else match_const_str ()
 	    end
 
 	| Enum res => 

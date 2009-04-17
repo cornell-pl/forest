@@ -1895,7 +1895,7 @@ let
   val phase_two_rules : post_reduction_rule list =
 		[ 
 		  uniqueness_to_const, 
-		  adjacent_consts,
+		  adjacent_consts, 
 		  enum_range_to_refine,
 		  sum_to_switch,
 		  to_dependent_array_len
@@ -1912,6 +1912,12 @@ let
 (*
 			, extract_table_header
 *)
+		]
+
+  val phase_four_rules : post_reduction_rule list =
+		[ 
+		  adjacent_consts,
+		  remove_degenerate_list1
 		]
 
   (* generate the list of rules *)
@@ -1992,6 +1998,7 @@ let
 			1 => map(fn x => (cmap, x ty)) phase_one_rules
 		|	2 => map (fn x => x cmap ty) phase_two_rules
 		|	3 => map(fn x => (cmap, x ty)) phase_three_rules
+		|	4 => map (fn x => x cmap ty) phase_four_rules
 		| 	_ => (print "Wrong phase!\n"; raise TyMismatch)
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> score t) cmap_ty_pairs 
