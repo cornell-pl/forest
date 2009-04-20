@@ -1,0 +1,147 @@
+- need lookahead, recovered string may contain legal tokens which is further down the road
+- not all const strings can be used as sync tokens - maybe long ones only, spaces?
+- consider using special base types as sync tokens like url, date, time, etc - these not likely to go wrong
+- problem with not merging adjacent const strings:
+  1. more option nodes created
+  2. too many single char or short const strings (confusing the partial and recovered mode)
+  3. maybe we can't use const string as sync token any more 
+
+- problem with merging adjacent const strings:
+  1. difficulty with finding the partial tokens
+  2. need lookahead also
+  3. most single-char const strings can't be used as sync token, maybe only white space can.
+
+smaller initial chunk size can produce bigger and more complex init description?
+
+We may want to decrease the learn chunk size so that description can be updated more
+frequently and more up to date. This will decrease of time to parse because parsing good
+data is faster than parsing bad ones.
+
+
+Example:
+
+ppp31.igc.org - amnesty [16/Oct/1997:08:40:11 -0700] "GET /members/afreport.html HTTP/1.0" 200 450
+
+Pstruct(Id = BTy_103 400, raw: 100551.077b)
+        Poption(Id = BTy_116 0, raw: 0b)
+                [IP] (Id = BTy_1 400, raw: 12805.044b);
+        End Poption;
+        Poption(Id = BTy_122 0, raw: 0b)
+                [Host] (Id = BTy_118 682, raw: 0b);
+        End Poption;
+        [StringConst] " - " (Id = BTy_3 400, raw: 11.044b);
+        Poption(Id = BTy_146 0, raw: 0b)
+                Pstruct(Id = BTy_144 1, raw: 0b)
+                        [StringConst] "amnesty" (Id = BTy_130 1, raw: 0b);
+                        [White] (Id = BTy_132 1, raw: 0b);
+                        [StringConst] "[" (Id = BTy_134 1, raw: 0b);
+                        [Date] (Id = BTy_136 1, raw: 0b);
+                        [StringConst] ":" (Id = BTy_138 1, raw: 0b);
+                        [Time] (Id = BTy_140 1, raw: 0b);
+                        [White] (Id = BTy_142 1, raw: 0b);
+                End Pstruct;
+        End Poption;
+        [StringConst] "-" (Id = BTy_10 400, raw: 11.044b);
+...
+
+        Poption(Id = BTy_188 0, raw: 0b)
+                [StringConst] "HTTP" (Id = BTy_72 400, raw: 29.044b);
+        End Poption;
+        Poption(Id = BTy_189 0, raw: 0b)
+                [StringConst] "/" (Id = BTy_74 400, raw: 11.044b);
+        End Poption;
+        [Pfloat] (Id = BTy_77 400, raw: 5740.984b);
+        Poption(Id = BTy_190 0, raw: 0b)
+                [StringConst] """ (Id = BTy_84 400, raw: 11.044b);
+        End Poption;
+        Poption(Id = BTy_191 0, raw: 0b)
+                [StringConst] " " (Id = BTy_88 400, raw: 11.044b);
+        End Poption;
+        Poption(Id = BTy_192 0, raw: 0b)
+                [Int] [200...404] (Id = BTy_90 400, raw: 3093.139b);
+        End Poption;
+        Poption(Id = BTy_193 0, raw: 0b)
+                [StringConst] " " (Id = BTy_93 400, raw: 11.044b);
+        End Poption;
+        [Blob] (Peor) (Id = BTy_98 400, raw: 8429.044b);
+
+Example 2: 
+polux.entelchile.net - - [15/Oct/1997:21:08:38 -0700] "GET /ainews.html HTTP/1.0" 200 13435
+
+Using the old metric:
+
+The top 1 parses: 
+Tuple {
+    ErrorB
+    Fail
+    Fail
+    Fail
+    Fail
+    Fail
+    Fail
+    ErrorB
+    Fail
+    ErrorB
+    Fail
+    Fail
+    Fail
+    Part(polux)
+    Fail
+    Union (1) {
+        Tuple {
+            Fail
+            Union (0) {
+                Good(.entelchile.net)
+            }
+        }
+    }
+    Good( )
+    Fail
+    Fail
+    ErrorB
+    Fail
+    Fail
+    Fail
+    Fail
+    Good(- - [15/Oct/1997:21:08:38 -0700] "GET /ainews.html HTTP/1.0" 200 13435)
+}
+Metric = (23, 0, 91)
+
+Using the new metric:
+
+Tuple {
+    ErrorB
+    Rec(polux.entelchile.net)( )
+    Good(-)
+    Good( )
+    Good(-)
+    Good( )
+    Good([)
+    GoodB(15/Oct/1997)
+    Good(:)
+    GoodB(21:08:38 -0700)
+    Good(])
+    Good( )
+    Good(")
+    Good(GET)
+    Good( )
+    Union (1) {
+        Tuple {
+            Good(/)
+            Union (0) {
+                Good(ainews.html)
+            }
+        }
+    }
+    Good( )
+    Good(HTTP)
+    Good(/)
+    GoodB(1.0)
+    Good(")
+    Good( )
+    Good(200)
+    Good( )
+    Good(13435)
+}
+Metric = (3, 20, 71)
+

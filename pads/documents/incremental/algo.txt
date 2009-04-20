@@ -21,7 +21,7 @@ clean S = {(R, m, j) | (R, m, j) in S and
 
 merge_s(elms, seps) (eleR, sepR) = (elms@[eleR], seps@[sepR])
 
-merge_t(elms, seps) termR = array(elms, seps, termR)
+merge_t(elms, seps) (eleR, termR) = array(elms@[eleR], seps, termR)
 
 *********************************************************************** 
 
@@ -50,7 +50,7 @@ or 0 otherwise **)
 
 parse_all(D1, E, n) = S  and l = |S|
 forall (Ri, mi, ji) in S: 
-parse_all(D2, E[x->R_i], j_i) = Si and
+parse_all(D2, E[x->R_i], ji) = Si and
 forall (R_ik, m_ik, j_ik) in Si:
 R_i' = (Ri, R_ik) and m_i' = mi + m_ik and j_i' = j_ik
 S' = {(R_i', m_i', j_i') | forall i in [1, l]}
@@ -60,7 +60,7 @@ S' = {(R_i', m_i', j_i') | forall i in [1, l]}
 
 parse_all(D1, E, n) = S  and l = |S|
 forall (Ri, mi, ji) in S: 
-parse(D2, E[x->R_i], j_i) = Si and
+parse(D2, E[x->R_i], ji) = Si and
 forall (R_ik, m_ik, j_ik) in Si:
 R_i' = (Ri, R_ik) and m_i' = mi + m_ik and j_i' = j_ik
 S' = {(R_i', m_i', j_i') | forall i in [1, l]}
@@ -70,12 +70,16 @@ S' = {(R_i', m_i', j_i') | forall i in [1, l]}
 
 
 parse_all(D1, E, n) = S1 and parse_all(D2, E, n) = S2
+S1' = {(inl R, m, j) | forall (R, m, j) in S1
+S2' = {(inr R, m, j) | forall (R, m, j) in S2
 ----------------------------------------------
-  parse_all(D1 + D2, E, n) = (S1 + S2)
+  parse_all(D1 + D2, E, n) = (S1' + S2')
 
 parse(D1, E, n) = S1 and parse(D2, E, n) = S2
+S1' = {(inl R, m, j) | forall (R, m, j) in S1
+S2' = {(inr R, m, j) | forall (R, m, j) in S2
 ----------------------------------------------
-  parse(D1 + D2, E, n) = clean (S1 + S2)
+  parse(D1 + D2, E, n) = S1 + S2
 
 
 (* notice here if parsing of body + sep  or body + term doesn't make any progress
@@ -108,14 +112,14 @@ S_sep' = parse_array(D array (sep, term), E, S_sep)
 parse_array (D array (sep, term), E, S_init) = clean (S_term + S_sep')
 
 
-parse_array_all(D array (sep, term), E, {(([], []), (0, 0), n)})
+S = parse_array_all(D array (sep, term), E, {(([], []), 0, n)})
 -----------------------------------------------------------------
-	parse_all (D array (sep, term), E, n)
+	parse_all (D array (sep, term), E, n) = S
 
  
-parse_array(D array (sep, term), E, {(([], []), (0, 0), n)})
+S = parse_array(D array (sep, term), E, {(([], []), 0, n)})
 -----------------------------------------------------------------
-	parse (D array (sep, term), E, n)
+	parse (D array (sep, term), E, n) = S
 
 
 
