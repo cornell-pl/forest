@@ -234,13 +234,14 @@ structure Incremental: sig
 			val tyFile = dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString (!index) ^ ".ty"
 	   		val _ = print ("Output IR to " ^ tyFile ^ "\n")
 			val tystrm = TextIO.openOut tyFile
-			val _ = TextIO.output (tystrm, TyToStringD "" false false  "\n" newTy)
+			val refinedTy = Reduce.reduce 4 newTy
+			val _ = TextIO.output (tystrm, TyToStringD "" false false  "\n" refinedTy)
 			val _ = TextIO.closeOut tystrm
 
 			val padscFile = dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString (!index) ^ ".p"
 	   		val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
 	   		val padsstrm = TextIO.openOut padscFile
-	   		val desc = #5 (Padsc_printer.tyToPADSC newTy numHeaders numFooters 
+	   		val desc = #5 (Padsc_printer.tyToPADSC refinedTy numHeaders numFooters 
 				((!lexName)^ ".p"))
 	   		val _ = TextIO.output (padsstrm, desc)
 	   		val _ = TextIO.closeOut padsstrm
