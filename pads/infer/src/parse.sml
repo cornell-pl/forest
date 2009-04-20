@@ -87,8 +87,9 @@ struct
 	    val mylist = if length goodlist > 0 then goodlist
 			 else List.take ((ListMergeSort.sort 
 			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
+
 	in
-	    ParseSet.addList (ParseSet.empty, (goodlist@mylist))
+	    ParseSet.addList (ParseSet.empty, mylist)
 	end
 
   fun has_good_parse s = 
@@ -268,6 +269,8 @@ struct
 	  )
     end
 
+  (* NOTE: a potential policy is if the recovered data is longer than the parsed data
+     then return a fail as well, but right now we always return fail along with recovered data *)
   fun parse_sync (refined, start, input) =
 	(
 	(*
@@ -282,7 +285,8 @@ struct
 		case (recovered, matched) of
 		  (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
 		| (SOME r, SOME s) => [(SyncR(Recovered (r, s, StringConst s)), 
-					(2, String.size r, String.size s), j)]
+					(2, String.size r, String.size s), j),
+					(SyncR Fail, (1, 0, 0), start)]
 		| _ => [(SyncR Fail, (1, 0, 0), start)]
 	    end
 	| IntConst li => 
@@ -297,7 +301,7 @@ struct
 			case (recovered, matched) of
 			  (NONE, SOME s) => [(SyncR(Good (s, IntConst li)), (0, 0, String.size s), j)]
 			| (SOME r, SOME s) => [(SyncR(Recovered (r, s, IntConst li)), 
-						(2, String.size r, String.size s), j)]
+						(2, String.size r, String.size s), j), (SyncR Fail, (1, 0, 0), start)]
 			| _ => [(SyncR Fail, (1, 0, 0), start)]
 	
 			end
@@ -358,7 +362,8 @@ struct
 		  		    let val recovered_s = SS.string 
 						(SS.slice(mystring, 0, SOME skipped_len))
 		  		    in [(SyncR (Recovered (recovered_s, outs, IntConst outint)), 
-					(2, skipped_len, matched_len), start + skipped_len + matched_len)]
+					(2, skipped_len, matched_len), start + skipped_len + matched_len),
+					(SyncR Fail, (1, 0, 0), start)]
 		  		    end
 				  else [(SyncR (Good (outs, IntConst outint)), (0, 0, matched_len), start+matched_len)] 
 			      end
@@ -375,7 +380,8 @@ struct
 			case (recovered, matched) of
 			  (NONE, SOME s) => [(SyncR(Good (s, FloatConst (i, f))), (0, 0, String.size s), j)]
 			| (SOME r, SOME s) => [(SyncR(Recovered (r, s, FloatConst (i, f))), 
-						(2, String.size r, String.size s), j)]
+						(2, String.size r, String.size s), j),
+						(SyncR Fail, (1, 0, 0), start)]
 			| _ => [(SyncR Fail, (1, 0, 0), start)]
 		    end
 	    | (BaseR(GoodB(Pfloat(i1, f1))), (_, _, len), j) =>
@@ -407,7 +413,8 @@ struct
 		     case (recovered, matched) of
 		       (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
 		     | (SOME r, SOME s) => [(SyncR(Recovered (r, s, StringConst s)), 
-					(2, String.size r, String.size s), j)]
+					(2, String.size r, String.size s), j),
+					(SyncR Fail, (1, 0, 0), start)]
 		     | _ => [(SyncR Fail, (1, 0, 0), start)]
 		  end
 	    in
@@ -495,7 +502,11 @@ struct
 	      | (t, l)::_ => ParseSet.singleton (parse_base (t, i, input))
 	)
     | RefinedBase(a, r, ts) => 
-	clean (ParseSet.addList(ParseSet.empty, parse_sync (r, i, input)))
+	let val set = ParseSet.addList(ParseSet.empty, parse_sync (r, i, input))
+	in case r of 
+	  Enum _  => clean set
+	| _ => set
+	end
     | Pstruct(a, tys) => 
 	let fun parse_struct tys env start =
 	    case tys of

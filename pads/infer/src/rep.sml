@@ -17,6 +17,7 @@ type metric_type = int * int * int (* (number of error nodes, recovered chars, t
 
 fun add_metric (e1, r1, t1) (e2, r2, t2) = (e1 + e2, r1 + r2, t1 + t2) 
 
+(*
 fun better_metric (e1, r1, t1) (e2, r2, t2) =
 	case (t1, t2) of
 	
@@ -30,6 +31,19 @@ fun better_metric (e1, r1, t1) (e2, r2, t2) =
 	     else if n1 > n2 then false
 	     else e1 < e2
 	  end
+*)
+
+fun better_metric (e1, r1, t1) (e2, r2, t2) =
+	if e1 = 0 andalso e2 = 0 then 
+	  let val n1 = (Real.fromInt r1) / (Real.fromInt (r1 + t1))
+	      val n2 = (Real.fromInt r2) / (Real.fromInt (r2 + t2))
+	  in n1 < n2 
+	  end
+	else if e1 = 0 then true
+	else if e2 = 0 then false
+	else 
+	 (Real.fromInt (r1 + t1)) / (Real.fromInt e1) > 
+	 (Real.fromInt (r2 + t2)) / (Real.fromInt e2)
 
 fun equal_metric  (e1: int, r1: int, t1: int) (e2: int, r2: int, t2: int) : bool =
 	(e1 = e2 andalso r1 = r2 andalso t1 = t2)

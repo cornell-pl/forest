@@ -114,6 +114,7 @@ structure Incremental: sig
 		print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 		top_parses
 *)
+
 	(* val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  *)
 	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln ss]) => map 
 			(fn (r, m, j) => 
@@ -272,8 +273,8 @@ structure Incremental: sig
 	   val _ = TextIO.output (logstrm, msg)
 	   val _ = TextIO.closeOut logstrm
 		   
-	   (* val finalTy = Reduce.reduce 4 (!myTy)  *)
-	   val finalTy = (!myTy) 
+	   val finalTy = Reduce.reduce 4 (!myTy)  
+	   (* val finalTy = (!myTy)*) 
 
 	   val _ = (print "**** Final Ty: \n"; printTy finalTy)
 	   val _ = print msg

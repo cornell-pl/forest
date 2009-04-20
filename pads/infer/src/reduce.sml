@@ -1892,14 +1892,16 @@ let
 			to_float,
 			refine_array
 		]
+
   val phase_two_rules : post_reduction_rule list =
 		[ 
 		  uniqueness_to_const, 
-		  adjacent_consts, 
+		  (* adjacent_consts, *)
 		  enum_range_to_refine,
 		  sum_to_switch,
 		  to_dependent_array_len
 		]
+
   val phase_three_rules : pre_reduction_rule list = 
 		[ 	
 			remove_degenerate_list,
