@@ -272,7 +272,8 @@ structure Incremental: sig
 	   val _ = TextIO.output (logstrm, msg)
 	   val _ = TextIO.closeOut logstrm
 		   
-	   val finalTy = Reduce.reduce 4 (!myTy) 
+	   (* val finalTy = Reduce.reduce 4 (!myTy)  *)
+	   val finalTy = (!myTy) 
 
 	   val _ = (print "**** Final Ty: \n"; printTy finalTy)
 	   val _ = print msg

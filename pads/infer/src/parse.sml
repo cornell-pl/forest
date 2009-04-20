@@ -415,6 +415,8 @@ struct
 			case parse_base (Pstring (""), start, input) of
 			  (BaseR(ErrorB), _, _) => match_const_str ()
 	      		| (BaseR(GoodB (Pstring s')),  (_, _, len), j) =>
+			  if s = s' then [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
+			  else
 			   [(SyncR(Partial(s', StringConst(s'))), (1, 0, len), j)]
 			| _ => raise Unexpected
 		else match_const_str ()
