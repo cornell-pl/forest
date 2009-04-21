@@ -15,21 +15,8 @@ complete explanation of these languages both in terms of the strings
 that are recognized and the properties of internal datastructures that
 are generated.
 
-% Begin new
-That said, the formal specification of the parsing dimension of the data description languages allows us to more easily compare
-% End new
+That said, the formal specification of the parsing dimension of the data description languages allows us to more easily compare data description languages to related programming technologies ranging from traditional grammar-based parser generators to parser combinator libraries to type-directed programming techniques.  In the following paragraphs, we compare and contrast these technologies with languages like \pads{} when it comes to the goal of managing ad hoc data.
 
-
-
-In the introduction of this article, we explained why a type-based data 
-description
-language like \pads{} is an attractive tool for processing ad hoc data
-sources.  However, there are a number of competing programming 
-technologies ranging from traditional grammar-based
-parser generators to parser combinator libraries to 
-type-directed programming techniques.  In the following paragraphs, 
-we compare and contrast these tools with languages like \pads{}
-when it comes to the goal of managing ad hoc data.
 % This is the first work to show how to interpret a 
 % language of dependent types, as opposed to context free grammars or
 % regular expressions, as type-safe parsers.  A critical component
@@ -111,23 +98,23 @@ overall ``look and feel.''
 %analysis of programs.
 
 
-% \paragraph*{Parsing Theory}
-% To the best of our knowledge, our work on \ddc{} is the first to
-% provide a formal interpretation of dependent types as parsers and to
-% study the properties of these parsers including error correctness and
-% type safety. Of course, there are other formalisms for defining
-% parsers, most famously, regular expressions and contex-free grammars.
-% In terms of recognition power, these formalisms differ from our type
-% theory in that they have nondeterministic choice, but do not have
-% dependency or constraints.  We have found that dependency and
-% constraints are absolutely essential for describing most of the ad hoc
-% data sources we have studied.  Perhaps more importantly though, unlike
-% standard theories of context-free grammars, we do not treat our type
-% theory merely as a recognizer for a collection of strings.  Our
-% type-based descriptions define {\em both} external data formats {\em
-%   and} rich invariants on the internal parsed data structures.  This
-% dual interpretation of types lies at the heart of tools such as \pads,
-% \datascript{} and \packettypes{}.
+\paragraph*{Parsing Theory}
+To the best of our knowledge, our work on \ddc{} is the first to
+provide a formal interpretation of dependent types as parsers and to
+study the properties of these parsers including error correctness and
+type safety. Of course, there are other formalisms for defining
+parsers, most famously, regular expressions and contex-free grammars.
+In terms of recognition power, these formalisms differ from our type
+theory in that they have nondeterministic choice, but do not have
+dependency or constraints.  We have found that dependency and
+constraints are absolutely essential for describing most of the ad hoc
+data sources we have studied.  Perhaps more importantly though, unlike
+standard theories of context-free grammars, we do not treat our type
+theory merely as a recognizer for a collection of strings.  Our
+type-based descriptions define {\em both} external data formats {\em
+  and} rich invariants on the internal parsed data structures.  This
+dual interpretation of types lies at the heart of tools such as \pads,
+\datascript{} and \packettypes{}.
 % %\pads{} programmers, for instance, demand that
 % %representations produced by their \pads{} parsers have the expected type and 
 % %count on the fact that the associated PD is accurately correlated
@@ -190,7 +177,7 @@ programmer intuitions concerning the meaning of types directly.
 This makes \pads{} a good fit for users that have not been exposed to
 combinator libraries before.
 
-Moreover, the purpose of the semantics presented in this paper is not to propose a new parsing technique, but to understand the and explain the workings of existing data description languages. Indeed, the similarity between \ddc{} parsers and parser combinators provides a convenient basis on which to compare and contrast the parsing techniques in data description languages with other approaches. We briefly undertake such a comparison now.
+Moreover, the purpose of the semantics presented in this paper is not to propose a new parsing technique, but to understand and explain the workings of existing data description languages. Indeed, the similarity between \ddc{} parsers and parser combinators provides a convenient basis on which to compare and contrast the parsing techniques in data description languages with other approaches. We briefly undertake such a comparison now.
 
 We begin by noting the salient distinguishing characteristics of many parser combinator libraries and then note where \ddc{} fits with regard to these characteristics. 
 \begin{enumerate}
@@ -203,27 +190,21 @@ We begin by noting the salient distinguishing characteristics of many parser com
 \item Does the library support context-sensitive parsing?
 \end{enumerate}
 
-The first two questions are closely related, because lookahead is often integrated with the parsing process by speculatively continuing parsing at each branch point. Therefore, the question becomes: is lookahead performed breadth-first or depth-first?  \ddc{} is among those which take this joint approach. In particular, \ddc{} uses a depth first approach to parsing alternatives -- it tries the branches of each alternative in order, choosing the first branch to parse succesfully. Therefore, it supports unlimited lookahead, because each branch can consume arbitrary quantities of input. The depth-first approach to alternatives is quite common in parser combinators [Cite: wadler:successes, hutton:higher-order-parsing, hutton+:monadic-parsing, fokker:functional-parsers]. Some libraries support a combination of these approaches. Parsec, for example, employs a breadth-first, single-token lookahead as standard, but also allows explicit invocation of depth-first, arbitrary-length lookahead through the \cd{try} combinator [Cite: parsec]. Swierstra et al. explore more sophisticated breadth-first parsing, based on continuations, in a series of papers [Cite: fast-error-correcting, swierstra: toys-parsing, hughes+:polish-parsing].
+The first two questions are closely related, because lookahead is often integrated with the parsing process by speculatively continuing parsing at each branch point. Therefore, the question becomes: is lookahead performed breadth-first or depth-first? \ddc{} uses a depth first approach to parsing alternatives -- it tries the branches of each alternative in order, choosing the first branch to parse succesfully. Therefore, it supports unlimited lookahead, because each branch can consume arbitrary quantities of input. The depth-first approach to alternatives is quite common in parser combinators~\cite{wadler:failure-successes,hutton:higher-order-parsing,hutton+:monadic-parsing,fokker:functional-parsers}. Some libraries support a combination of these approaches. Parsec, for example, employs a breadth-first, single-token lookahead as standard, but also allows explicit invocation of depth-first, arbitrary-length lookahead through the \cd{try} combinator~\cite{leijen+:parsec}. Swierstra et al. explore more sophisticated breadth-first parsing, based on continuations, in a series of papers~\cite{swierstra+:fast-error-correcting,swierstra:toys-parsing,hughes+:polish-parsing}.
 
 The third question to consider is the semantics of the choice operator. In \ddc{}, the choice operator is deterministic and greedy: it accepts the first branch that succeeds, even if accepting a later branch might ultimately lead to a longer total parse. While this form of choice is limiting, it reflects the reality of what is supported by existing data description languages. Other approaches support both deterministic and nondeterministic choice. For example \cd{try p <|> q} in Parsec and \cd{p +++ q} in Hutton and Meijer's combinators\cite{hutton+:monadic-parsing}, both behave likes \ddc{}'s choice operator.
 
-Regarding the question of support for ambiguity, \ddc{}'s support for only deterministic choice, removes the possibility of ambiguous grammars. In contrast, many of the basic parser combinator formulations since Wadler~\cite{wadler:successes} support ambiguity and return all possible parses. However, given the efficiency impacts of such an approach, later work tries to limite the amount of ambiguity supported [Cite: swierstra+:det-parsers, parsec], provide the user with more fine grained control over its use [Cite: hughes+:polish-parsing], or generally improve the efficiency of ambiguous parsers [Cite: peake+:earley-cps, frost+:padl-pcombs].
+Regarding the question of support for ambiguity, \ddc{}'s support for only deterministic choice, removes the possibility of ambiguous grammars. In contrast, many of the basic parser combinator formulations since Wadler~\cite{wadler:failure-successes} support ambiguity and return all possible parses. However, given the efficiency impacts of such an approach, later work tries to limite the amount of ambiguity supported~\cite{swierstra+:deterministic-error-correcting,leijen+:parsec}, provide the user with more fine grained control over its use~\cite{hughes+:polish-parsing}, or generally improve the efficiency of ambiguous parsers~\cite{peake+:earley-cps,frost+:padl-pcombs}.
 
-Left-recursion is not supported by most parser combinators, and \ddc{} is no exception. The standard "excuse" for this shortcoming is that most instances of left recursion can be elegantly rewritten using some form of repetition operator, like \ddc{}'s $\kwd{seq}$ type or
+Left-recursion is not supported by most parser combinators, and \ddc{} is no exception. Yet, this shortcoming is mitigated by the fact that most instances of left recursion can be elegantly rewritten using some form of repetition operator, like \ddc{}'s $\kwd{seq}$ type or
 Fokker's \cd{listOf} and \cd{chainl} combinators~\cite{fokker:functional-parsers}. However, there are new techniques for directly supporting left recursion in parser combinators~\cite{frost+:padl-pcombs}.
 
 One of the essential features of \ddc{} parsers are their detailed error reporting through the parse descriptor, and their robustness to errors. The various parser combinator libraries take a variety of approaches to error handling and reporting, none of them quite like \ddc{}'
-s. The Parsec library uses predictive parsing to ensure that when an error is encountered, it is clear exactly where in the input the error occurred. However, this advantage comes at the cost of requiring the ``grammar'' to be in (almost) LL(1) form. Moreover, when an error occurs, parsing stops. Swierstra, et al. [Deterministic], similarly rely on predictive parsing to pinpoint errors, but add error correction -- through token insertion and deletion -- to increase parser robustness. All corrective actions are reported to the user via error messages. Later variations of this approach [Fast, Toys] eliminate the requirement of predictive parsing by performing a breadth first search of all possible parses (including error correcting parses). These combinators also go beyond earlier ones by reporting all errors, with corresponding corrections, in a special ``Errors'' data structure, rather than simple strings.
+s. The Parsec library uses predictive parsing to ensure that when an error is encountered, it is clear exactly where in the input the error occurred. However, this advantage comes at the cost of requiring the ``grammar'' to be in (almost) LL(1) form. Moreover, when an error occurs, parsing stops. Swierstra, et al.~\cite{swierstra+:deterministic-error-correcting}, similarly rely on predictive parsing to pinpoint errors, but add error correction -- through token insertion and deletion -- to increase parser robustness. All corrective actions are reported to the user via error messages. Later variations of this approach~\cite{swierstra+:fast-error-correcting,swierstra:toys-parsing} eliminate the requirement of predictive parsing by performing a breadth first search of all possible parses (including error correcting parses). These combinators also go beyond earlier ones by reporting all errors, with corresponding corrections, in a special ``Errors'' data structure, rather than simple strings.
 
 The approach to error correction taken by Swierstra et al. is, in essence, closely related to that of \ddc{}. Both attempt to recover from errors via a combination of terminal and nonterminal insertion and terminal deletion; and both provide detailed reports as to the nature and location of errors and the corresponding corrective actions. Nevertheless, their differences are significant. First, they differ in their approach to choosing particular insertions and deletions. In \ddc{}, insertions happen implicitly and for any type -- when a parser returns data with errors and parsing continues, an insertion has implicitly occured. Deletion points, however, must be marked explicitly, through the $\kwd{scan}$ type. In contrast, Swierstra et al. completely automate the choice of insertion and deletion, relying, in part, on an analysis of the input grammar. The second difference lies in the nature of the error-reporting data structure. In \ddc{}, that data structure is the parse descriptor, and is specialized to the input grammar. As a result, the error data structure reflects the shape of the output data. In contrast, Swierstra et al. employ a single data structure for all error reporting, and relate errors to the input data, rather than the output data structure. This difference is necessary, in part, because parse combinators abstract over the particular semantic actions used to build the output data strucutre. At a deeper level, this difference reflects the difference in the domains targeted by \ddc{} and parser combinators.
 
-\cut{
-Parsec - limit to predictive parsing; so, when error occurs, stops and lets you know exactly where error is. Swierstra [Deteministic] -- limit to predictive, deterministic, but use error correction; also, since not monadic, can do LL(1) style static analysis. Swierstra [Cite: fast, toys, polish], use breadth first search. Track insertions and deletions internally. Get ist of error messages. More sophisticated algorithm for choosing insertion/deletion. In [Deterministic], they only return error messages. In [Fast, Toys], their report is input-centric, describing symbols (terms and nonterms) inserted -- goal is to provide error message pinpointing (most-likely) source of problem; 
-
-we are datastructure-centric, with direct correlation b/w rep and pd which is possible because of our choice to build data structures for user rather than abstracting over semantic actions . Error-repair (deletion) is left as combinator, rather than being built in; insertion is built-in and default. Also, our insertion is by data structure (implicit ``insertion'' through marking parse descriptor), while deletion is by byte (with scan); as opposed to insertion \& deletion of symbols. Part of implicitness of insertion is due to abstraction over base types -- in Swierstra, the insertion action happens in Symbol; so too for use, but the reader never sees that. I think the difference reflects the different domains.
-}
-
-The final distinguishing characteristic of parser-combinator libraries is support for context sensitive parsing. Leijen and Meijer [Parsec] distinguish between \textit{monadic-style} combinators, like Parsec and those of Hutton and Meijer [Monadic Parsing], which support context sensitive parsing, and \textit{arrow-style} combinators, like those of Swierstra et al., which do not. Interestingly, the conventional wisdom is that monadic-style combinators are not amenable to the analyses employed for arrow-style combinators [Parsec, Deterministic].
+The final distinguishing characteristic of parser-combinator libraries is support for context sensitive parsing. Leijen and Meijer~\cite{leijen+:parsec} distinguish between \textit{monadic-style} combinators, like Parsec and those of Hutton and Meijer~\cite{hutton+:monadic-parsing}, which support context sensitive parsing, and \textit{arrow-style} combinators, like those of Swierstra et al., which do not. Interestingly, the conventional wisdom is that monadic-style combinators are not amenable to the analyses employed for arrow-style combinators~\cite{leijen+:parsec,swierstra+:deterministic-error-correcting}.
 
 In some sense, the similarity between \ddc{} parsers and parser combinators is another confirmation of the elegance of parser combinators. They provide an effective vehicle for expressing the parsing semantics of data description languages.
 
