@@ -10,6 +10,7 @@ struct
   structure MT = MatchTree
   structure SS = Substring
   val max_parses_per_line = 1
+  val recover_factor = 10
 
   structure ParseSet = ListSetFn(struct
 	type ord_key = Rep * metric_type * int  (* (rep, metric, pos) triplet, metric smaller => better *)
@@ -284,9 +285,17 @@ struct
 	    in
 		case (recovered, matched) of
 		  (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
-		| (SOME r, SOME s) => [(SyncR(Recovered (r, s, StringConst s)), 
-					(2, String.size r, String.size s), j),
-					(SyncR Fail, (1, 0, 0), start)]
+		| (SOME r, SOME s) => 
+			let 
+			  val recover_len = String.size r
+			  val parse_len = String.size s
+			  val failed = if recover_len > recover_factor * parse_len then
+					[(SyncR Fail, (1, 0, 0), start)]
+				     else nil
+			in
+			[(SyncR(Recovered (r, s, StringConst s)), 
+					(2, recover_len, parse_len), j)] @ failed
+			end
 		| _ => [(SyncR Fail, (1, 0, 0), start)]
 	    end
 	| IntConst li => 
@@ -300,8 +309,17 @@ struct
 		    in
 			case (recovered, matched) of
 			  (NONE, SOME s) => [(SyncR(Good (s, IntConst li)), (0, 0, String.size s), j)]
-			| (SOME r, SOME s) => [(SyncR(Recovered (r, s, IntConst li)), 
-						(2, String.size r, String.size s), j), (SyncR Fail, (1, 0, 0), start)]
+			| (SOME r, SOME s) => 
+			  let 
+			    val recover_len = String.size r
+			    val parse_len = String.size s
+			    val failed = if recover_len > recover_factor * parse_len then
+					[(SyncR Fail, (1, 0, 0), start)]
+				     else nil
+			  in
+				[(SyncR(Recovered (r, s, IntConst li)), 
+				(2, recover_len, parse_len), j)] @ failed
+			  end
 			| _ => [(SyncR Fail, (1, 0, 0), start)]
 	
 			end
@@ -361,9 +379,12 @@ struct
 				  else if skipped_len > 0 then (* there's recovered data *)
 		  		    let val recovered_s = SS.string 
 						(SS.slice(mystring, 0, SOME skipped_len))
+					val failed = if skipped_len > recover_factor * matched_len then
+						[(SyncR Fail, (1, 0, 0), start)]
+						else nil
 		  		    in [(SyncR (Recovered (recovered_s, outs, IntConst outint)), 
-					(2, skipped_len, matched_len), start + skipped_len + matched_len),
-					(SyncR Fail, (1, 0, 0), start)]
+					(2, skipped_len, matched_len), start + skipped_len + matched_len)] @
+					failed
 		  		    end
 				  else [(SyncR (Good (outs, IntConst outint)), (0, 0, matched_len), start+matched_len)] 
 			      end
@@ -379,9 +400,17 @@ struct
 		    in
 			case (recovered, matched) of
 			  (NONE, SOME s) => [(SyncR(Good (s, FloatConst (i, f))), (0, 0, String.size s), j)]
-			| (SOME r, SOME s) => [(SyncR(Recovered (r, s, FloatConst (i, f))), 
-						(2, String.size r, String.size s), j),
-						(SyncR Fail, (1, 0, 0), start)]
+			| (SOME r, SOME s) => 
+			  let 
+			    val r_len = String.size r
+			    val s_len = String.size s
+			    val failed = if r_len > recover_factor * s_len then
+					[(SyncR Fail, (1, 0, 0), start)]
+				     else nil
+			  in
+			    [(SyncR(Recovered (r, s, FloatConst (i, f))), 
+				(2, r_len, s_len), j)] @ nil
+			  end
 			| _ => [(SyncR Fail, (1, 0, 0), start)]
 		    end
 	    | (BaseR(GoodB(Pfloat(i1, f1))), (_, _, len), j) =>
@@ -412,9 +441,16 @@ struct
 	    	  in
 		     case (recovered, matched) of
 		       (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 0, String.size s), j)]
-		     | (SOME r, SOME s) => [(SyncR(Recovered (r, s, StringConst s)), 
-					(2, String.size r, String.size s), j),
-					(SyncR Fail, (1, 0, 0), start)]
+		     | (SOME r, SOME s) => 
+			let val rlen = String.size r
+			    val slen = String.size s
+			    val failed = if rlen > recover_factor * slen then
+					[(SyncR Fail, (1, 0, 0), start)]
+					 else nil
+			in
+				[(SyncR(Recovered (r, s, StringConst s)), 
+					(2, String.size r, String.size s), j)] @ failed
+			end
 		     | _ => [(SyncR Fail, (1, 0, 0), start)]
 		  end
 	    in
