@@ -10,7 +10,7 @@ clean:
 
 paper.dvi:  paper.tex pads.bib related_work.tex definitions.tex encoding.tex ddc_sem.tex \
             ddc_syntax.tex intro.tex ipads.tex conclusion.tex appendix.tex \
-            meta_theory.tex abstract.tex
+            meta_theory.tex abstract.tex applications.tex
 	latex paper.tex; bibtex paper; latex paper.tex; latex paper.tex
 
 $(PaperName).ps:  paper.dvi
