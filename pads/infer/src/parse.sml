@@ -370,7 +370,8 @@ struct
 			      in
 				  if skipped_len = 0 andalso (num < min orelse num > max) then 
 				    (* no skipped data - treat it as partially correct *)
-				      [(SyncR (Partial(outs, IntConst num)), (1, 0, matched_len), start+matched_len)]
+				    (* NOTE: treat partial token as no error *)
+				      [(SyncR (Partial(outs, IntConst num)), (0, 0, matched_len), start+matched_len)]
 				  else if (num < min orelse num > max) then
 				     let val remaining = SS.slice(remainder, matched_len, NONE)
 				     in

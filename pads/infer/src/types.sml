@@ -221,7 +221,7 @@ struct
     fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i
     fun mkTBDLabel (i:int) : Id = mkLabel "TBD_" i
     fun mkBOTLabel (i:int) : Id = mkLabel "BOT_" i
-
+    fun mkNextTyLabel () = (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
     fun getLabel ( a : AuxInfo ) : Id =
     let val { coverage = c, label = l, ... } = a
     in case l of

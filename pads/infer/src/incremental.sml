@@ -67,6 +67,7 @@ structure Incremental: sig
 	in hdr_lines @ tail_lines
 	end
 
+    (* each aggregate is actually a pair: (aggr, OptsTable) *)
     fun add (ty, line, aggregates) =
       let 
 	(*
@@ -117,25 +118,35 @@ structure Incremental: sig
 *)
 
 	(* val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  *)
-	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln ss]) => map 
+	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln(id, ss)], table) => map 
 			(fn (r, m, j) => 
 			  let 
+				(*
+				val _ = print (AG.aggrToString "" a)
+				val _ = print (Rep.repToString "" r)
+				*)
+				val (a', pairs) = (AG.merge a r)
 				val remainder = String.extract (line, j, NONE)
-				val newa = if remainder = "" then 
-						AG.TupleA [(AG.merge a r), AG.Ln ss]
-					   else 
-						AG.TupleA [(AG.merge a r), AG.Ln (ss@[remainder])]
+				val (newa, newpairs) = 
+				  if remainder = "" then 
+					(AG.TupleA [a', AG.Ln(id, ss)], (id, 0)::pairs)
+				  else 
+					(AG.TupleA [a', AG.Ln (id, ss@[remainder])], (id, 1)::pairs)
+				val sorted_pairs = ListMergeSort.sort (
+				  fn ((id1, _), (id2, _)) => (Atom.compare (id1, id2) = GREATER))
+				  newpairs
+				val table' = AG.addToTable table sorted_pairs
 	(*	
 			      val _ = print (AG.aggrToString "" newa)
 			      val _ = print ("Cost = " ^ Real.toString (AG.cost newa) ^ "\n")
 	*)
-			  in newa
+			  in (newa, table')
 			  end)
 				top_parses) aggregates)
 	(* val _ = print ("After all aggr: " ^ Int.toString (length all_aggregates) ^ "\n") *)
 
 	val sorted_aggregates = ListMergeSort.sort
-		(fn (a1, a2) => AG.cost a1 > AG.cost a2) all_aggregates
+		(fn ((a1, _), (a2, _)) => AG.cost a1 > AG.cost a2) all_aggregates
 	val num_to_take = 
 		let val len = length sorted_aggregates 
 		in if len > max_aggregates then max_aggregates
@@ -222,18 +233,28 @@ structure Incremental: sig
 	   val eof = ref false
 	   val myTy = ref initTy
 	   val begin_time = Time.now()
-	   val init_aggr = AG.TupleA [AG.initialize initTy, AG.Ln nil]
-	   val aggrs = ref [init_aggr]
+	   val init_aggr = AG.TupleA [AG.initialize initTy, AG.Ln(mkNextTyLabel(), nil)]
+	   val init_table = AG.initTable()
+	   val aggrs = ref [(init_aggr, init_table)]
 	   val start_time = ref begin_time
 	   fun output aggrs ty start_time index count =
 		  let 
-	     	    val chunk_aggr = if length aggrs = 0 then
-				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
+	     	    val (chunk_aggr, table) = if length aggrs = 0 then
+				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-	     	    val newTy = Reduce.reduce 3 (AG.updateTy ty chunk_aggr)
+		    (* val _ = AG.printTable table *)
+		    val trans_map = AG.transpose table
+(*
+		    val _ = LabelMap.appi (fn (id, l) => (print ((Atom.toString id) ^ ": " ^
+				(String.concat (map (Int.toString) l))); print "\n")) trans_map
+*)
+	     	    val newTy = Reduce.reduce 5 (AG.updateTy ty chunk_aggr)
+		    val newTy = AG.merge_adj_options trans_map newTy
+		    val newTy = AG.alt_options_to_unions trans_map newTy
+		    val newTy = Reduce.reduce 5 newTy
 		    val elapse = Time.- (Time.now(), start_time)
 		    val refinedTy = Reduce.reduce 4 newTy
 	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
@@ -255,7 +276,7 @@ structure Incremental: sig
 	   	    val msg = "Chunk " ^ Int.toString index ^ 
 			" (" ^ Int.toString(count) ^ " lines): Aggregate Cost = " ^ 
 			(Int.toString chunk_cost) ^ 
-			"\tTime elapsed = " ^ Time.toString elapse ^ " secs\n" 
+			"\tTime elapsed = " ^ Time.toString elapse ^ " secs\n"
 	   	    val logstrm = TextIO.openAppend logFile
 	   	    val _ = TextIO.output (logstrm, msg)
 	   	    val _ = TextIO.closeOut logstrm
@@ -269,7 +290,8 @@ structure Incremental: sig
 		    in
 		     myTy := newTy; count := 0; badcount := 0; index := (!index) + 1;
 		     start_time:=Time.now();
-	     	     aggrs := [AG.TupleA [AG.initialize newTy, AG.Ln nil]]
+	     	     aggrs := [(AG.TupleA [AG.initialize newTy, AG.Ln(mkNextTyLabel(), nil)], 
+				AG.initTable())]
 		    end 
 		else ();
 		case TextIO.inputLine strm of
