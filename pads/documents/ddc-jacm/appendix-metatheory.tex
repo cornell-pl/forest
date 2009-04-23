@@ -1,13 +1,23 @@
 \appendix
 \section{Extended Metatheory}
 \label{app:ddc-meta-theory}
-
-The aim of this appendix is to formally state and prove the theorems of \secref{sec:ddc-meta-theory}. To start, we establish some basic properties of our semantics. First, all variable names introduced by the parsing semantics function should be considered taken from a separate syntactic domain than variables that may appear in ordinary expressions.  Therefore, they are by definition ``fresh'' with respect to any expressions that can be written by the user.  Second, for those types with bound variables, the potential alpha-conversion when performing a substitution on the type exactly parallels any alpha-conversion of the same variable where it appears in the translation of the type. Last, all constructors, support functions and base-type parsers are closed with respect to user-defined variable names.
+In this appendix, we formally state and prove the theorems
+of \secref{sec:ddc-meta-theory}. To start, we state some basic
+assumptions.  First, we assume that all variable names
+introduced by the parsing semantics function come from a separate
+syntactic domain from the variables that appear in ordinary
+expressions. These names are therefore by definition ``fresh'' with respect
+to any expressions that can be written by the user.  Second, for those
+types with bound variables, the potential alpha-conversion when
+performing a substitution on the type exactly parallels any
+alpha-conversion of the same variable where it appears in the
+translation of the type. Last, all constructors, support functions and
+base-type parsers are closed with respect to user-defined variable
+names.
 
 Next, we require that \ddc{} base types satisfy the properties that we
-desire to hold of the rest of the calculus.  Below is a formal
-statement of these requirements. Note that by
-condition~\ref{cond:closed-op}, base type parsers must be closed.
+desire to hold of the rest of the calculus. 
+
 \begin{condition}[Conditions on Base-types]
 \label{cond:base-types}
   \begin{enumerate}
@@ -43,7 +53,7 @@ The evaluation of \fomega{} terms and the normalization of \ddc{}
 types are both defined with a small-step semantics. However, it is
 useful to be able to reason about terms and types that are related by
 arbitrarily many ($k$) steps in these semantics, rather than just one.
-To this end, in \figref{fig:k-steps-norm-eval}, we define two
+To this end,  we define in \figref{fig:k-steps-norm-eval} two
 judgments that respectively generalize evaluation and normalization to
 $k$ steps. Next, we state some properties of these judgments.
 

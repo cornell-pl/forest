@@ -255,8 +255,8 @@ Regarding the question of support for ambiguity, \ddc{}'s support for only deter
 Left-recursion is not supported by most parser combinators, and the \ddc{} is no exception. This shortcoming is mitigated by the fact that most instances of left recursion can be elegantly rewritten using some form of repetition operator, like \ddc{}'s $\kwd{seq}$ type or
 Fokker's $\kwd{listOf}$ and $\kwd{chainl}$ combinators~\cite{fokker:functional-parsers}. However, there are new techniques for directly supporting left recursion in parser combinators~\cite{frost+:padl-pcombs}.
 
-One of the essential features of \ddc{} parsers is their detailed
-error reporting through the parse descriptor, and their robustness to
+Two of the essential features of \ddc{} parsers are the detailed
+error reporting through parse descriptors and the robustness to
 errors. The various parser combinator libraries take a variety of
 approaches to error handling and reporting, none of them quite like
 \ddc{}'s. The Parsec library uses predictive parsing to ensure that
@@ -276,7 +276,7 @@ correcting parses). These combinators also go beyond earlier ones by
 reporting all errors, with corresponding corrections, in a
 special-purpose data structure, rather than simple strings.
 
-The approach to error correction taken by Swierstra \etal{} is, in essence, closely related to that of \ddc{}. Both attempt to recover from errors via a combination of terminal and nonterminal insertion and terminal deletion; and both provide detailed reports as to the nature and location of errors and the corresponding corrective actions. Nevertheless, their differences are significant. First, they differ in their approach to choosing particular insertions and deletions. In \ddc{}, insertions happen implicitly and for any type -- when a parser returns data with errors and parsing continues, an insertion has implicitly occured. Deletion points, however, must be marked explicitly, through the $\kwd{scan}$ type. In contrast, Swierstra \etal{} completely automate the choice of insertion and deletion, relying, in part, on an analysis of the input grammar. The second difference lies in the nature of the error-reporting data structure. In \ddc{}, that data structure is the parse descriptor, and is specialized to the input grammar. As a result, the error data structure reflects the shape of the output data. In contrast, Swierstra \etal{} employ a single data structure for all error reporting, and relate errors to the raw input data, rather than the structured output data. This difference in error reporting is necessary, in part, because parse combinators abstract over the structure of the output data. 
+The approach to error correction taken by Swierstra \etal{} is, in essence, closely related to that of \ddc{}. Both attempt to recover from errors via a combination of terminal and nonterminal insertion and terminal deletion; and both provide detailed reports as to the nature and location of errors and the corresponding corrective actions. Nevertheless, the differences are significant. First, they differ in their approach to choosing particular insertions and deletions. In \ddc{}, insertions happen implicitly and for any type -- when a parser returns data with errors and parsing continues, an insertion has implicitly occured. Deletion points, however, must be marked explicitly, through the $\kwd{scan}$ type. In contrast, Swierstra \etal{} completely automate the choice of insertion and deletion, relying, in part, on an analysis of the input grammar. The second difference lies in the nature of the error-reporting data structure. In \ddc{}, that data structure is the parse descriptor, and is specialized to the input grammar. As a result, the error data structure reflects the shape of the output data. In contrast, Swierstra \etal{} employ a single data structure for all error reporting, and relate errors to the raw input data, rather than the structured output data. This difference in error reporting is necessary, in part, because parse combinators abstract over the structure of the output data. 
 
 The final distinguishing characteristic of parser-combinator libraries is support for context sensitive parsing. Leijen and Meijer~\cite{leijen+:parsec} distinguish between \textit{monadic-style} combinators, like Parsec and those of Hutton and Meijer~\cite{hutton+:monadic-parsing}, which support context sensitive parsing, and \textit{arrow-style} combinators, like those of Swierstra \etal{}, which do not. The conventional wisdom is that monadic-style combinators are not amenable to the analyses employed for arrow-style combinators~\cite{leijen+:parsec,swierstra+:deterministic-error-correcting}. \ddc{} is most similiar to monadic-style combinators.
 
@@ -296,8 +296,9 @@ the state of a program,
 this technology does not help solve the problem of how to interpret
 data that arrives in a non-standard, ad hoc format.
 
-Somewhat related to marshalers are languages such as
-\textsc{ASDL}~\cite{asdl} and \textsc{ASN.1}~\cite{asn}.  Both of
+Languages such as
+\textsc{ASDL}~\cite{asdl} and \textsc{ASN.1}~\cite{asn}
+are somewhat related to marshalers.  Both of
 these languages specify the {\em logical\/} in-memory representation of
 data and then automatically generate a {\em physical\/} on-disk
 representation.  Another language in this category is the Hierarchical Data
@@ -315,7 +316,7 @@ than by induction (or recursion) over the structure of a value.
 Of particular interest is the
 elegant work by Jansson and Jeuring on polytypic data 
 conversions~\cite{jansson+:97,jansson+:99,jansson:phdthesis,jansson+:02}.
-These authors demonstrate how to program a variety of different data 
+These authors demonstrate how to program a variety of data 
 transformation functions together with their inverses in PolyP, a 
 type-directed extension of Haskell. For instance, they describe a 
 generic compressing printing/parsing algorithm, a generic 
@@ -346,12 +347,12 @@ relatively simple, light-weight language extension:  Implementing a
 object-oriented requires no changes to the underlying host language
 type system or run-time.  In contrast, type-directed
 programming languages normally need sophisticated, non-standard type systems
-or modifications to the run-time to function correctly.  In Hinze's
-paper on ``Generic for the Masses''~\cite{hinze:masses}, he cites these
+or modifications to the run-time to function correctly.  In the
+paper ``Generics for the Masses''~\cite{hinze:masses}, Hinze cites these
 complications as his motivation for the design of a new generic programming
-environment for Haskell, but unfortunately, the new design is equally 
-language-specific, as it makes essential use of polymorphic data structures
-and type classes.  
+environment for Haskell, but unfortunately, the new design is still
+Haskell-specific, as it makes essential use of polymorphic data
+structures and type classes.  
 
 
 %Nevertheless,
@@ -380,7 +381,7 @@ and type classes.
 
 \paragraph*{XML-based tools}
 Rather than programming directly with data in its ad hoc format,
-it may be useful to first convert it to \xml.  Once in \xml,
+it may be useful to convert it first to \xml.  Once in \xml,
 any one of hundreds of \xml-based tools may be used to manipulate the data.
 XSugar~\cite{brabrand+:xsugar2005} is one tool that
 allows users to specify an
@@ -394,12 +395,12 @@ data into \xml{}-tagged data where it can then be
 processed using \xml{}-processing tools.  While both these tools are
 useful for many tasks, conversion to \xml{} is not always the answer.
 Such conversion often results in an 8-10 times blowup in data size
-over the native form.  Moreover, when the programmer is not familiar with
+over the native form.  Moreover, for programmers not familiar with
 \xml, there is a high barrier to entry --- not 
-only does the programmer have to learn the ad hoc format, 
+only do they have to learn the ad hoc format, 
 but they must also learn \xml{} and
-the \xml{} conversion tool.  Altogether, this is too heavyweight for
-many simple data processing tasks.
+the \xml{} conversion tool.  Altogether, this overhead is too heavy
+for many simple data processing tasks.
 
 Two other related \xml{}-based specification languages are
 \dfdl~\cite{dfdl-proposal,dfdl-primer} and XDTM~\cite{xdtm,zhao+:sigmod05}.
@@ -599,10 +600,10 @@ semantics of these languages.
 \paragraph*{Databases}
 Commercial database products provide support for
 parsing data in external formats so the data can be imported into
-their database systems, but they typically support a limited number of
-formats.  Also, no declarative description of the
-original format is exposed to the user for their own use, and they
-have fixed methods for coping with erroneous data.  For these reasons,
+database systems, but these products typically support only a limited number of
+formats.  Also, they do not expose a declarative description of the
+original format for use apart from the database, and they
+provide only fixed methods for coping with erroneous data.  For these reasons,
 type-based data description languages are complementary to database systems.  We strongly believe that
 in the future, commercial database systems could and should support a 
 \pads{}-like description language that allows users to import information from
