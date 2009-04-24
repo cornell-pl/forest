@@ -54,6 +54,7 @@ is
   table.sml
   ast.sml
   padsc_printer.sml
+  padsml_printer.sml
   tokenDefs.sml
   rep.sml
   parse.sml

@@ -4,7 +4,8 @@ open Model
 open Times
 
 (* runs analysis using a Ty and return a refined Ty with optional header and footer *)
-fun run ( et : EndingTimes ) (ty : Ty) : Ty * Ty * int * int * EndingTimes =
+(* mode 0 is for normal learn program, mode 1 is for incremental learning *)
+fun run ( et : EndingTimes ) (mode : int) (ty : Ty) : Ty * Ty * int * int * EndingTimes =
 let
   val measuredTy = measure (removePempty ty)
   val measured1_time = Time.now ()
@@ -38,9 +39,12 @@ let
 (*
   val _ = print "Phase two ...\n";
 *)
-  val ty2 = measure (Reduce.reduce 2 ty1)
+  val ty2 = (Reduce.reduce 2 ty1)
+  val ty2 = measure (if mode = 0 then Reduce.reduce 4 ty2 else ty2)
   val headers= map (Reduce.reduce 2) headers
+  val headers = if mode = 0 then map (Reduce.reduce 4) headers else headers
   val footers= map (Reduce.reduce 2) footers
+  val footers = if mode = 0 then map (Reduce.reduce 4) footers else footers 
   val reduce2_time : Time.time = Time.now ()
   (*phase three, redo constraint-free reduction *)
 (*

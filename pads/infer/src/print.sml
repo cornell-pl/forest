@@ -258,6 +258,19 @@ structure Printing = struct
 	| _ => (* not meaningful for grapher, hence not output anything *)
 		print "Data not suitable for graphing!\n"
 
+    fun cpFile path src dest = 
+	let val fileName = path ^ src
+	    val destName = (!executableDir)^"/include/"^dest
+	    in
+		ignore (TextIO.openIn fileName)
+		    handle Iox => 
+		     (let val cpcmd = "cp "^destName^" "^fileName
+		      in
+			  print "copy command: "; print cpcmd; print "\n";
+			  OS.Process.system cpcmd;
+			  ()
+		      end)
+	end
 
     fun dumpTyInfo ( path : string ) (dataDir: string) ( inputFileName : string ) ( baseTy : Ty ) 
 			( rewrittenTy : Ty ) (numHeaders: int) (numFooters: int)
@@ -278,21 +291,8 @@ structure Printing = struct
                  | Switch (aux, id, labeledTys) => ()(* to be filled in *)
                  | RArray _ => () (* to be filled in *)
 		 | Poption _ => () (* to be filled in *)
-	    fun cpFile src dest = 
-		let val fileName = path^src
-		    val destName = (!executableDir)^"/include/"^dest
-		    in
-			ignore (TextIO.openIn fileName)
-			    handle Iox => 
-			     (let val cpcmd = "cp "^destName^" "^fileName
-			      in
-				  print "copy command: "; print cpcmd; print "\n";
-				  OS.Process.system cpcmd;
-				  ()
-			      end)
-		end
-	    fun cpMkFile () = cpFile "GNUmakefile" "GNUmakefile.output"
-            fun cpTokenFile tokenFileName = cpFile tokenFileName tokenFileName
+	    fun cpMkFile () = cpFile path "GNUmakefile" "GNUmakefile.output"
+            fun cpTokenFile tokenFileName = cpFile path tokenFileName tokenFileName
     	in  
           ( print "\nOutputing partitions to directory: "; print path; print "\n"
           ; if OS.FileSys.isDir path handle SysErr => 
@@ -320,8 +320,8 @@ structure Printing = struct
 		       dumpVariance ( path ^ "Variance" ) (getCoverage rewrittenTy) (variance rewrittenTy)
 		   end
                  ; cpMkFile()
-                 ; cpFile "vanilla.p" "vanilla.p"
-                 ; cpFile "tokens.p" "tokens.p"
+                 ; cpFile path "vanilla.p" "vanilla.p"
+                 ; cpFile path "tokens.p" "tokens.p"
                  )
             else print "Output path should specify a directory.\n"
           )

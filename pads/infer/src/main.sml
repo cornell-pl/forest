@@ -34,7 +34,7 @@ structure Main : sig
 (*		val _ 		 = printTy (measure ty) *)
                 val end3Times    = updateTokenEnd ( Time.now () ) end2Times
                 val ( measuredTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
-				   Rewrite.run end3Times ty
+				   Rewrite.run end3Times 0 ty
                 val computeTimes = getComputeTimes end4Times
                 val ()           = Printing.dumpTyInfo (!outputDir)
 						       dataDir

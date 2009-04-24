@@ -312,15 +312,23 @@ structure Incremental: sig
 	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = TextIO.closeIn strm
 	   val logstrm = TextIO.openAppend logFile
-	   val msg = "\nTotal time elapsed = " ^ Time.toString total_elapse ^ " secs\n"
+	   val msg = "Total time elapsed = " ^ Time.toString total_elapse ^ " secs\n"
 	   val _ = TextIO.output (logstrm, msg)
 	   val _ = TextIO.closeOut logstrm
+	   val _ = print msg
 		   
 	   val finalTy = Reduce.reduce 4 (!myTy)  
 	   (* val finalTy = (!myTy)*) 
 
 	   val _ = (print "**** Final Ty: \n"; printTy finalTy)
-	   val _ = print msg
+	   val padscFile = dir ^  "/" ^ filename ^ ".p"
+	   val pmlFile = dir ^  "/" ^ filename ^ ".pml"
+	   val _ = print ("\nOutput final PADS description to " ^ padscFile ^ "\n")
+	   val (topName, hdrName, tyName, trlName) = Printing.dumpPADSdesc padscFile 
+				pmlFile finalTy numHeaders numFooters
+	   val _ = Printing.dumpAccumProgram (dir ^ "/") filename hdrName tyName trlName
+	   val _ = Printing.cpFile (dir ^ "/") "GNUmakefile" "GNUmakefile.output"
+	   val _ = Printing.cpFile (dir ^ "/") "vanilla.p" "vanilla.p"
 	   val _ = print ("Log written to " ^ logFile ^ ".\n")
 	   (* val finalTy = foldl inc_learn initTy otherfiles *)
 (*
@@ -351,6 +359,10 @@ structure Incremental: sig
 			  else learn_file
 	 val learnsize = valOf (Int.fromString ls)
 	 val chunksize = valOf (Int.fromString cs)
+         val _ = executableDir :=
+		(case (OS.Process.getEnv "LEARN_HOME") of
+		  SOME x => x
+		| NONE => "")
 	 (* create a directory to store the .p files *)
 	 val _ = if (OS.FileSys.isDir dir_name handle SysErr => (OS.FileSys.mkDir dir_name; true))
 		 then () else ()
@@ -366,7 +378,7 @@ structure Incremental: sig
 	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
 	 *)
 	 
-	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 
+	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 1 
 		(#1 (computeStructurefromRecords learn_lines))
 
          val padscFile = timedir ^ "/" ^ learn_file ^ ".init.p"
