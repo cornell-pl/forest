@@ -588,6 +588,10 @@ struct
 		in 
 		  ParseSet.foldl gg ParseSet.empty this_set
 		end
+	    (* val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Begins \n") 
+	    val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Ends \n")
+	    val _ = print ("Number of parses in struct: " ^ Int.toString (ParseSet.numItems finalset) ^ "\n")
+	    *)
 	in 
 	  clean (parse_struct tys e i)
 	end
@@ -716,7 +720,7 @@ struct
         NONE =>	
 	(
 	 let
-	   (* val _ = (print ("Begin parsing:\n"); printTy ty) *)
+	   (* val _ = print ("Begin parsing Array " ^ getLabelString (getAuxInfo ty) ^ "\n") *)
 	   fun parse_array (e, parse_set) =
 	     if ParseSet.numItems parse_set = 0 then parse_set
 	     else
@@ -757,6 +761,8 @@ struct
 			  in merge_s ((prev_r, m, start), pairset, true)
 			  end
 		    val term_set = 
+			if has_good_parse sep_set then ParseSet.empty
+			else
 			case term of
 			  NONE => 
 				let val body_set = ParseSet.filter 
@@ -782,13 +788,13 @@ struct
 	   val non_empty_set = parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i))
 	   (* we have to add a parse that is an zero-length array *)
 	   val final_set = clean (ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0), i)))
-	   (*
-	   val _ = (print ("Finished parsing: \n"); printTy ty;  
-			print ("number of parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n"))
+(*
+	   val _ = print ("Finished parsing array : " ^ getLabelString (getAuxInfo ty) ^ "\n")
+	   val _ = print ("number of parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n")
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
 	   val _ = print "**** End \n" 
-	   *)
+*)
 	  in
 		final_set	
 	  end  
