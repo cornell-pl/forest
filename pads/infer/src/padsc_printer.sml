@@ -40,7 +40,7 @@ open Ast
     	end
      | IRfloat => "Pfloat64"
      | IRstring => "PPstring"
-     | IRstringME s => "Pstring_ME(:\"" ^ s ^ "\":)"
+     | IRstringME s => "Pstring_ME(:\"" ^ escapeRegex s ^ "\":)"
      | IRwhite => "PPwhite"
      | IRchar => "PPchar"
      | IRtext => "PPtext"

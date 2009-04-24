@@ -1896,7 +1896,6 @@ let
   val phase_two_rules : post_reduction_rule list =
 		[ 
 		  uniqueness_to_const, 
-		  adjacent_consts,
 		  enum_range_to_refine,
 		  sum_to_switch,
 		  to_dependent_array_len

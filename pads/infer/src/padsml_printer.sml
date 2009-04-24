@@ -36,7 +36,7 @@ struct
         end
      | IRfloat => "pfloat64"
      | IRstring => "ppstring"
-     | IRstringME s => "pstring_ME(\"" ^ s ^ "\")"
+     | IRstringME s => "pstring_ME(\"" ^ escapeRegex s ^ "\")"
      | IRwhite => "ppwhite"
      | IRchar => "ppchar"
      | IRtext => "pptext"

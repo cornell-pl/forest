@@ -18,15 +18,12 @@ structure AI = struct
     val datetime : Ty = Pstruct(aiAux, [RefinedBase(aiAux, StringConst "[", [(Pstring "[", aiLoc)]),
 		date, RefinedBase(aiAux, StringConst ":", [(Pstring ":", aiLoc)]), time,
 		RefinedBase(aiAux, StringConst "]", [(Pstring "]", aiLoc)])])
-    val method: Ty = RefinedBase (aiAux, Enum ([StringConst "GET", StringConst "PUT", StringConst "POST", 
-			StringConst "HEAD", StringConst "DELETE", StringConst "LINK", StringConst "UNLINK"]), 
+    val method: Ty = RefinedBase (aiAux, Enum ([StringConst "GET", StringConst "POST", StringConst "PUT", StringConst "HEAD", StringConst "DELETE", StringConst "LINK", StringConst "UNLINK"]), 
 			[(Pstring "GET", aiLoc)]) 
     val quote: Ty = RefinedBase(aiAux, StringConst "\"", [(Pstring "\"", aiLoc)])
     val dot: Ty = RefinedBase(aiAux, StringConst ".", [(Pstring ".", aiLoc)])
     val slash: Ty = RefinedBase(aiAux, StringConst "/", [(Pstring "/", aiLoc)])
-    val longpath:Ty = Base(aiAux, [(Ppath "/turkey/amnty1.gif", aiLoc)])
-    val shortpath:Ty = RefinedBase(aiAux, StringME "/\\/[^ ]*/", [(Pstring "/", aiLoc)])
-    val path: Ty = Punion(aiAux, [longpath, shortpath])
+    val path:Ty = RefinedBase(aiAux, StringME "/\\/[^ ]*/", [(Pstring "/", aiLoc)])
     val intbase:Ty = Base(aiAux, [(Pint (1, "1"), aiLoc)])
     val length:Ty = Punion (aiAux, [intbase, dash])
     val http:Ty = RefinedBase(aiAux, StringConst "HTTP", [(Pstring "HTTP", aiLoc)])

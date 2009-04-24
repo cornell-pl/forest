@@ -377,9 +377,12 @@ structure Incremental: sig
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
 	 *)
-	 
+
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 1 
 		(#1 (computeStructurefromRecords learn_lines))
+(*
+	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0)
+*)
 
          val padscFile = timedir ^ "/" ^ learn_file ^ ".init.p"
          val _ = print ("\nOutput initial PADS description to " ^ padscFile ^ "\n")
