@@ -18,7 +18,7 @@ frequently and more up to date. This will decrease of time to parse because pars
 data is faster than parsing bad ones.
 
 
-Example:
+Example 1:
 
 ppp31.igc.org - amnesty [16/Oct/1997:08:40:11 -0700] "GET /members/afreport.html HTTP/1.0" 200 450
 
@@ -144,4 +144,171 @@ Tuple {
     Good(13435)
 }
 Metric = (3, 20, 71)
+
+**** Rewriting (e stands for epsilon, S is struct and U is union): 
+
+          S
+       /     \
+      U      OPT
+     / \     / \
+    A   B   C   e
+
+We can't say anything about the dependency between Union(A, B) and C because Union(A, B) was there
+before the OPT node was added. Suppose B always appears with e, then the above structure
+can be rewritten to: 
+
+         U
+       /   \
+      S     S
+    /   \  /  \
+   U    C  B   e
+  / \
+ A   B
+
+But notice that the first structure has only 7 nodes and the second structure has 9 nodes. So
+in this case the rewriting is not very helpful.
+
+We may need to keep the OptsTable from chunk to chunk. Imagine the following scenario:
+
+After chunk 1:
+
+        S
+     /  |  \
+    A  Opt1 B
+       
+
+Because the Opt1 node is alone, no rewriting is applied to it.
+
+After chunk 2:
+
+          S 
+     /  /   \    \ 
+    A  Opt1 Opt2  B
+
+Another opt node is added. If we don't have info about Opt1, we can't do rewriting on these 
+two opt nodes.
+      
+Potentially
+
+     S
+   /   \
+  Opt  Opt
+   |    |
+   A    B
+
+Can be rewritten to
+
+      U
+    /   \
+   Opt   B
+    |
+    A
+
+The disadvantage of doing this kind of rewrite is that it 
+can overfit the data and breaks down when we see more data 
+
+****************************************************
+Current state of incremental learning system
+as on Apr 24, 2009
+****************************************************
+
+The increment program takes an initial chunk of data
+file, learns an initial description, and then parses
+another data file line by line into an aggregate data
+structure, while recording the decisions made at newly
+created Opt nodes into a bit-array table. Opt nodes are
+created when a base type failed to parse, or if some
+data is recovered at refined base type, in which case
+a learn node is created. A learn node is essentially
+an Opt node wrapped around new description learned from
+the failed data. Also if we have a refined base type 
+and in the input, we see some data that doesn't comform
+to the refined type but belong to the same base type,
+such as "35" when we try to parse Int (0, 10), we create
+a partial token. Note that in all of the refined base
+types except for int ranges, a partial token carry 
+an error count of 1, but int range partial token
+is assumed to be error free. I'm not quite sure how
+to handle the metric for these partial tokens yet.  
+The above decision is made because I think int ranges
+tend to over fit a lot so if we see an int that's out
+of range, chances of it being a current parse is very
+high.
+
+When all lines were parsed into the aggregate, the 
+previous description is updated using the aggregate
+by turning some of the base types into option nodes, 
+learn new descriptions at the learn nodes, and relaxing
+refined types when we have created some partial tokens at
+these types. Note the previous description before learning any 
+given chunk doesn't have adjacent constant strings merged. 
+This has the effect of keeping all the tokens separate. 
+Merging the tokens will make discovering partial tokens difficult.
+A number of data independent rewriting rules are applied at
+this stage to unnest structs and unions, and remove degenerated
+lists. After that, using the bit-array table we create during
+aggregation process, we rewrite adjacent options into a single
+option, and convert adjacent options into unions. Note that
+to do these rewritings, we introduce a couple of new rewriting
+phases in the original reduce.sml. 
+
+At the very end of parsing the entire data file (after multiple
+chunks where the chunk size is defined by the number of bad lines
+we see), we apply the merge const string rewriting rule to compact
+the description. Descriptions updated after each chunk is written 
+an output directory inc_output/datafile/TIMESTAMP/ with also
+the Makefile and .c file to generate a PADS accumulator. 
+
+I did some preliminary evaluation on the system. The system works
+reasonably well for the web server logs such as ai.big, apache.txt.
+But slow with more complex data such as irvpiv1.tail.sel.
+The incrementally learned description is very sensitive to the 
+initial description. So it seems that we need to trade off between
+producing good initial description from learning large initial
+chunk which takes longer, and using a less optimal initial
+description but then incrementally improving this
+description at a higher cost.
+
+
+TODO:
+
+Our current parsing algorithm is optmized from a brute force
+version of the initially proposed "parse_all" function, in which
+we memoize parses we have generated before for each 
+(begin, end) location pair. It is also optimized to do 
+deterministic branch selection (committed choice) when parsing
+unions. In addition, it uses the "longest match" principle when
+parsing arrays, i.e. it returns the longest parse as long as there
+is no errors in the parses. The above two optimizations coincide
+with the parsing semantics of PADS. Another heuristic we use
+to produce better description is to prevent recovered token to
+skip too many characters. If the skipped data is a certain
+factor longer than the recovered data itself, we say this is a
+dubious parse, and we include with it a failure parse. Exactly
+which one of these two parses are better will be resolved at
+the end of parsing the entire struct. This method proves to be
+very successful in avoiding false recovered parsing. However,
+it increases the state space of the parser program. 
+Dave suggested killing a parse if it has more than three consecutive
+failure within a struct. I think there is a problem with this
+because we may not return any parse for input that doesn't
+match any of the base types. But maybe some tweaks can be made
+to make this work.
+
+Another possible data dependent rewriting rule is to merge
+adjacent unions with options. We don't have data summary for
+unions that were learned from the previous chunk or iteration.
+But we can certain record the branching decisions made for
+unions in addition to options into the table and pass it along
+from chunk to chunk. One issue is that the table will grow so
+we may have to cap the size of it and throw away old entries.
+However, I have the feeling that any of such data dependent 
+analysis could have a down side of overfitting. So we need 
+to also define rewriting rules that would "undo" the merging
+if we find the dependency is broken when we see more data.
+
+Currently no blob finding is done in the incremental learning.
+Also the blob finding might need to be normalized to the
+data size. Currently it seems that when data size is small
+less blob finding is done.
 
