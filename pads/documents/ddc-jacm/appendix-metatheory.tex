@@ -31,31 +31,30 @@ desire to hold of the rest of the calculus.
 %\edcom{M: canon is not defined yet. Either define it informally now or move it to
 %  later where it is needed.}
 
-\begin{figure}[t]
-\[ 
-\begin{array}{ll}
-  \infer{\ty \stepstok 0 \ty}{} \qquad
-  &
-  \infer{\ty \stepstok {k+1} \ty''}
-  {\ty \stepsto \ty' \quad \ty' \stepstok k \ty''}
-\\[2ex]
-  \infer{\iexpn \stepstok 0 \iexpn}{} 
-&
- \infer{\iexpn \stepstok {k+1} \iexpn''}
-  {\iexpn \stepsto \iexpn' \quad \iexpn' \stepstok k \iexpn''}
-\end{array}
-\]
-\caption{K-steps normalization and evaluation judgments}
-\label{fig:k-steps-norm-eval}
-\end{figure}
-
 The evaluation of \fomega{} terms and the normalization of \ddc{}
 types are both defined with a small-step semantics. However, it is
 useful to be able to reason about terms and types that are related by
 arbitrarily many ($k$) steps in these semantics, rather than just one.
-To this end,  we define in \figref{fig:k-steps-norm-eval} two
-judgments that respectively generalize evaluation and normalization to
-$k$ steps. Next, we state some properties of these judgments.
+To this end,  we define in two
+judgments that respectively generalize evaluation 
+($\iexpn \stepstok k \iexpn'$) and normalization 
+($\ty \stepstok k \ty'$) to $k$ steps: 
+
+\[ 
+\begin{array}{ll}
+  \infer{\iexpn \stepstok 0 \iexpn}{} 
+&
+ \infer{\iexpn \stepstok {k+1} \iexpn''}
+  {\iexpn \stepsto \iexpn' \quad \iexpn' \stepstok k \iexpn''}
+\\[2ex]
+  \infer{\ty \stepstok 0 \ty}{} \qquad
+  &
+  \infer{\ty \stepstok {k+1} \ty''}
+  {\ty \stepsto \ty' \quad \ty' \stepstok k \ty''}
+\end{array}
+\]
+
+Some useful properties of these judgments follow.
 
 \begin{lemma}[Properties of K-step Evaluation]
   \begin{enumerate}
@@ -171,8 +170,9 @@ some of its properties.
   of expression equality and type equivalence.
 \end{proof}
 
-Next, we state two properties of \fomega\ type equivalence that are
-needed later.
+We will also require the following two standard
+properties of \fomega\ type equivalence.
+
 \begin{lemma}[Properties of \fomega\ Type Equivalence]
   \begin{enumerate}
   \item If $\;\wfty{\ctxt} {\ity} {\kind}$ and $\ity \equiv \ity'$ then
@@ -235,7 +235,8 @@ then $\trans[{\ty[\ty'/\ptyvar]},,] \iexpreq
   in the translation.
 \end{proof}
 
-Next, we prove a similar commutativity result for the $\kTrans[\cdot,\cdot]$ function.
+We also require a similar commutativity result for the 
+$\kTrans[\cdot,\cdot]$ function.
 %\edcom{M: Use new subst. abbreviation.}
 \begin{lemma}
  If $\ \exists\,\ity$ \suchthat\ $\itpdsem[\ty] = \ity$ and
@@ -257,8 +258,9 @@ then  $\kTrans[{\kind\xsubabbrev {\ty'} \ptyvar},{\ty[\ty'/\ptyvar]}] =
   By induction on the structure of types.
 \end{proof}
 
-Next we present some standard type-theoretic results for \ddc{}
-kinding and normalization.
+We are now in a position to 
+present some standard type-theoretic results for \ddc{}
+kinding and normalization, as well as key substitution lemmas.
 
 \begin{lemma}[\ddc{} Preservation]
   If $\; \ddck[\ty,,\kind,]$ and $\ty \kstepsto \tyval$ then $\ddck[\tyval,,\kind,]$.
@@ -289,9 +291,9 @@ kinding and normalization.
   By kinding rules and grammar of normalized types $\tyval$.
 \end{proof}
 
-Finally, we state the substitution lemmas that we assume to hold of
-the various underlying \fomega\ judgments followed by a substitution
-lemma for \ddc{}.
+%Finally, we state the substitution lemmas that we assume to hold of
+%the various underlying \fomega\ judgments followed by a substitution
+%lemma for \ddc{}.
 
 \begin{lemma}[\fomega{} Substitution]
   \begin{enumerate}
@@ -335,8 +337,8 @@ lemma for \ddc{}.
 % \edcom{State and prove progress?}
 
 Finally, we state another commutativity property for the semantic
-functions. In essence, it says that evaluation (aka. normalization,
-type equivalence) commutes with semantic interpretation. This result
+functions. In essence, it says that evaluation
+commutes with semantic interpretation. This result
 has inherent value for reasoning about \ddc{}, as it allows one to
 reason about the semantics of \ddc{} functions directly in terms of
 the stated normalization rules, rather than indirectly through
@@ -377,7 +379,6 @@ the generated code expects parse descriptors to have a particular shape,
 and it is not completely obvious they do in the presence of polymorphism.
 Hence, to prove type correctness, we first need to characterize the shape of
 parse descriptors for arbitrary \ddc{} types.   
-
 The particular shape required is that every parse descriptor be a pair
 of a header and an (arbitrary) body. The most straightforward
 characterization of this property is too weak to prove directly, so we
@@ -736,7 +737,8 @@ In addition, we require that base-type parsers produce values in canonical form:
   $\corr {\pbase v} r p $.
 \end{condition}
 
-Theorem~\ref{thm:app-err-corr-at-T} states that the parsers for
+Theorem~\ref{thm:app-err-corr-at-T} is our final result. It 
+states that the parsers for
 well-formed types (of base kind) will produce a canonical pair of
 representation and parse descriptor, if they produce anything at all.
 
