@@ -543,18 +543,44 @@ encodings in \ddc{}:
 
 %\edcom{M: what's the second one?}
 We know of a couple of features from data description languages that
-we cannot implement in \ddc{} as it stands.  First, we cannot support
-a label construct that permits the user to rewind the input. Second,
-\datascript{} allows the element type of an array to reference the
-representation of the array itself~\cite{gpce02} (see, in particular,
-the example in Figure 5). This feature can be useful, for example, if
-the element type needs the index of the array element that is
-currently being processed.  \ddc{} does not support this kind of
-element-type parameterization. However, we do not view such
-limitations as particularly troublesome. Like the $\lambda$-calculus
-or $\pi$-calculus, \ddc{} is intended to capture many common language
-features, while providing a convenient and effective basis for
-extension with new features.
+the \ddc{} does not support in a straightforward manner.  One such feature is 
+a label construct that permits the user to specify the form of data
+at computed offsets.  A second
+such feature is a {\bf forall} construct that
+allows users to express constraints between different
+elements of an array.  
+%Datascript uses these
+%features to describe the ELF file format~\cite{gpce02}.
+While the \ddc{} does not currently support these important
+features directly, we believe it provides a solid semantic framework
+in which such variations might be analyzed, explored and 
+modelled in the future.  
+For instance, one could investigate adding the  {\bf forall}
+constraint found in both \datascript{} and \padsc{}
+to the \ddc{} host language (or perhaps coding forall directly as a fold)
+and using it in conjunction with \ddc{} set types
+to try to express the kind of array constraints Back shows are useful
+in a number of binary formats~\cite{gpce02}.  However, we leave such
+investigations to future work:  Like the basic $\lambda$-calculus
+or $\pi$-calculus, \ddc{} is intended to capture the most common language
+features, while remaining simple enough that it can be extended
+with new features relatively easily.
+
+% and likely with the
+% help of various extensions to the basic primitives.  For example,
+
+%This feature can be 
+%useful, for example, if
+%the element type needs the index of the array element that is
+%currently being processed.  Back~\cite{gpce02} illustrates the importance
+%of this feature in describing the ELF file format.
+%\ddc{} does not support this kind of
+%element-type parameterization. However, we do not view such
+%limitations as particularly troublesome. 
+%Like the $\lambda$-calculus
+%or $\pi$-calculus, \ddc{} is intended to capture many common language
+%features, while providing a convenient and effective basis for
+%extension with new features.
 
 % Indeed, the two main features of \datascript{} that cannot currently
 % be encoded in \ddc{}, require only straightforward modifications or
