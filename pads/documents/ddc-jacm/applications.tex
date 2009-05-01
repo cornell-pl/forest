@@ -55,15 +55,12 @@ We have since fixed the bug and verified the revised implementation using the se
 
 Unlike the rest of \padsc{}, the semantics of recursive types preceded
 the implementation. We used the semantics to guide our design
-decisions in the implementation. Perhaps more significantly, the
-semantics was used in its entirety to guide the implementation of
-\padsml{}. The semantics of type abstractions were particularly
-helpful, as they are a new feature not found in \padsc{}. Before
-working through the formal semantics, we struggled to disentangle the
-invariants related to polymorphism. After we had defined the calculus,
-we were able to implement type abstractions as \ocaml{} functors in
-approximately a week.  We hope the calculus will serve as a guide for
-implementations of \pads{} in other host languages.
+decisions in the implementation, particularly as related to the structure of parse descriptors for recursive types. When we started, it was not obvious whether recursive-type parse descriptors should have their own headers, or whether they could use the header available through a single unfolding of the type. Ultimately, we chose the latter, but were required to statically enforce a so-called \textit{contractiveness} condition to ensure that said header would be available. 
+
+When we added polymorphic types to \ddc{}, we found it necessary to revisit the treatment of parse-descriptor type variables. The contractiveness condition was unsuited to polymorphism, specialized, as it was, to recursive types\footnote{The condition was overly restrictive; extended naively to type functions it would have disallowed many useful functions, including, for example, the identity function.}. We therefore revisited the treatment of type variables and devised a uniform treatment that was appropriate for both recursive and polymorphic types. Specifically, we limited type abstraction for parse descriptors to abstraction over the \textit{body} of the descriptors, and included the header explicitly in the PD-tranlsation of type variables. This subtle interaction between type abstraction and parse descriptor structure would have been very difficult both to notice and to reason in about in the context of a full implementation. The abstraction provided by the semantics was critical in enabling us to effectively redesign this element of the system and to subsequently be confident in its correctness.
+
+Perhaps more significantly, the semantics was used in its entirety to guide the implementation of \padsml{}. The semantics of type abstractions were particularly helpful, as they are a new feature not found in \padsc{}. Before working through the formal semantics, we struggled to disentangle the invariants related to polymorphism, as discussed. After we had defined the calculus, we were able to implement type abstractions as \ocaml{} functors in approximately a week.  Additionally, the implementation of \padsml{}'s \texttt{plist} type is an almost literal translation of the semantics of $\kwd{pseq}$ into \ocaml{}.
+We hope the calculus will serve as a guide for implementations of \pads{} in other host languages.
 
 \subsection{Distinguishing the Essential from the Accidental}
 
