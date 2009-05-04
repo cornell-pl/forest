@@ -9,14 +9,16 @@ context-free grammars, parsing expression
 grammars~\cite{birman+:parsing,ford:pegs,ford:packrat,grimm:packrat}
 or even context-sensitive grammars specify what strings can be
 recognized by a grammar, but such a specification only captures half
-of the semantics of languages like \pads{} or \packettypes{}.  Our new
-theory gives a complete explanation of these languages both in terms
+of the semantics of languages like \pads{} or \packettypes{}.  
+On the other hand, algebraic specification languages \textit{do} capture both the concrete syntax of a language and other properties, yet  target a very different domain than data description.
+Our new
+theory gives a complete explanation of data description languages both in terms
 of the strings that are recognized and the properties of internal
-datastructures that are generated.  That said, in the following
+datastructures that are generated in a manner appropriate to data formats.  That said, in the following
 paragraphs, we compare and contrast our semantics and the design
 of data description languages like \pads{} to more
 traditional
-grammar-based parser generators as well as other related technologies
+grammar-based parser generators, algebraic specification languages, and other related technologies
 such as parser combinator libraries, 
 type-directed programming techniques, and \xml{}-based tools.
 % we com
@@ -110,7 +112,6 @@ overall ``look and feel.''
 %whereas the others generate tools suited to the processing and
 %analysis of programs.
 
-
 \paragraph*{Parsing Theory}
 To the best of our knowledge, our work on \ddc{} is the first to
 provide a formal interpretation of dependent types as parsers and to
@@ -150,6 +151,10 @@ operators and may be parsed in linear time through the use of
 Once again, however, the multiple interpretations of types in \ddc{} makes our
 theory substantially different from the theory of PEGs.
 
+\paragraph*{Algebraic Specification Languages}
+From the semantic perspective, algebraic specification languages are closer to \ddc{} than other parser generator languages, given their formal underpinnings. We briefly discuss one recent such formalism: the Syntax Defintion Formalism SDF2~\cite{visser:thesis} and its companion system ASF, the Algebraic Specification Formalism~\cite{asfchapter}. For a more detailed discussion of other, earlier such systems, we refer the reader to Visser's Thesis~\cite{visser:thesis}. SDF2 differs from most parser generator systems in both its scope and its feature set. SDF2+ASF provide extensive support for specifying algebraic systems and their properties, including their syntax and semantics. As with \ddc{}, elements defined in SDF2 have both concrete (raw) and abstract (parsed) interpretations, a property common to algebraic specification languages. Moreover, SDF2 provides a language designer with a variety of tools based on a declarative SDF2 specification. Additionally, SDF2 specifications, like \ddc{} types, are scannerless -- that is, do not require a separate lexer -- and support polymorphic syntax definitions~\cite{Vis98.psd}.
+
+Yet, for all of SDF2's power and overlap with \ddc{} features, it still lacks some of the essential features that make \ddc{} uniquely suited to data description languages: support for dependency, an explicit specification of the connection between \ddc{} types and the underlying host language, and an explicit accounting of the error-handling features of generated parsers.
 
 \paragraph*{Parser Combinators}
 % There are many parallels between \ddc{} and {\it parser

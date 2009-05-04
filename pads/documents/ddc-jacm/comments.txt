@@ -111,7 +111,7 @@ In 6.2, page 39. "We know of a couple of features, ".  It's not clear what the c
 
 Section 7.2 should be expanded, for instance, by including examples.
 
--- YHM: Are we sure it is okay to ignore this comment?
+-- done.
 
 In 8. I recommend that the authors cite and discuss
 
