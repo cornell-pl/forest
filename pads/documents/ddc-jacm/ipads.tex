@@ -46,7 +46,7 @@ characters terminated by a space.
 it will be part of the next object.)
 Similarly, \padskw{Puint16$\_$FW}{\tt (3)} is an unsigned 16-bit
 integer described in exactly {\tt 3} characters in the data source.
-In general, we write $\pbase{e}$ for a base type parameterized by a
+In general, we write $\pbase{e}$ for a base type $C$ parameterized by a
 (host language) expression $e$.
 
 When interpreted as a parser, each of these base types reads
@@ -193,14 +193,14 @@ tj62.aol.com - - [16/Oct/1997:14:32:22 -0700]
 Figure~\ref{fig:ipads-newick} presents a second \ipads{} example.
 In this example, \ipads{} describes the Newick Standard format, a flat
 representation of tree-structured data.  The leaves of the trees
-are names that describe an ``entity''.   In our variant of Newick Standard, 
+are names that describe an ``entity.''   In our variant of Newick Standard, 
 leaf names may be omitted.  If the leaf name does appear,
 it is followed by a colon and a number.  The number describes the ``distance''
 from the parent node.  Microbiologists often use
 distances to describe the
 number of genetic mutations that have to occur to move from the parent 
 to the child.  An internal tree node may have any number of (comma-separated)
-children within parentheses.  Distances follow the closed-paren
+children within parentheses.  Distances follow the closing parenthesis
 of the internal tree node.
 
 The Newick Standard format and other formats that describe tree-shaped 

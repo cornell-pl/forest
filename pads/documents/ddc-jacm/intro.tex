@@ -373,7 +373,7 @@ we have had to define and formalize a new correctness criterion
 for the language. 
 In a nutshell, rather than requiring input data be error-free, we require
 that the internal data structures produced by parsing 
-satisfy their specification whereever the parse descriptor says they
+satisfy their specification wherever the parse descriptor says they
 will.  Our invariant allows
 data consumers to rely on the integrity of the internal data structures
 marked as error-free. 
@@ -409,8 +409,8 @@ was a useful guide in all aspects of the \padsml{} implementation, but
 particularly so in the development of polymorphic descriptions, a new
 feature in \padsml{}.  The compilation invariants required for correct
 code generation in the presence of polymorphism are quite subtle.  However,
-using \ddc{}, we were able to work out the details in an clean, elegant
-setting and prove our implementation technique was correct.
+using \ddc{}, we were able to work out the details in a clean, elegant
+setting and prove our implementation technique correct.
 
 In summary, this article makes the following theoretical and practical
 contributions:
@@ -491,7 +491,7 @@ kinding rules. Second, we
 added polymorphism to the calculus to elucidate
 the semantics of \padsml{}'s polymorphic, recursive and dependent
 data types.  The addition of polymorphism led to
-a number of technical challenges in the proof of correctness.
+a number of technical challenges in the proof of correctness. Note that we call the new version of our calculus \ddc{}, to distinguish it from the previous version, \ddcold{}.
 Finally, this article differs from our previously published work as 
 it explains the proof techniques and all intermediate lemmas needed 
 to achieve our formal results.  We have omitted the line-by-line 

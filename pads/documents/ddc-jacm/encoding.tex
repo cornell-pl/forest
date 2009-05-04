@@ -307,7 +307,7 @@ between two types conditionally:
 \noindent
 The computed value $c$ records which branch of the conditional is
 selected.  If the condition $e$ is true, $c$ will be 1, the left-hand
-side of the intesection will parse $\ty_1$ and the right will parse nothing.
+side of the intersection will parse $\ty_1$ and the right will parse nothing.
 Otherwise, $c$ will be 2, the left-hand side will parse nothing and the
 right $\ty_2$.
 % The computed value $c$ indicates which branch is to be taken and the
@@ -347,7 +347,7 @@ host language is pure.
 We have also developed an encoding of \padsml{}'s polymorphic,
 recursive datatypes. We present this encoding in two steps. First, we
 extend \ipads{} with type abstraction and application, and specify
-their elobaration into \ddc{}. Notice that \ipads{} type abstractions
+their elaboration into \ddc{}. Notice that \ipads{} type abstractions
 can have multiple parameters.
 \begin{bnf}
   \name{Types} \meta{\itmv} \::= ... \| 
@@ -373,7 +373,7 @@ can have multiple parameters.
 Next, we extend \ipads{} programs to include datatype bindings.
 Datatype bindings include the name of the type, $\ga$, a list of type
 parameters ($\overrightarrow \ga$), a single value parameter $\var$, and a body
-that consists of a list of named variants. As with $\Prec$ bindings,
+that consists of a list of named variants ($\var_{v1},\var_{v2}, \ldots$). As with $\Prec$ bindings,
 we do not specify the meaning of datatype bindings in \ddc{} directly.
 Rather, we decompose a given datatype into a compound \ipads{} type,
 which is then substituted into the remainder of the program.
@@ -381,15 +381,15 @@ which is then substituted into the remainder of the program.
 \begin{bnf}
   \name{Programs} \meta{p} \::= ... \|   
   \Pdatatype{}\; \alpha\;  \; (\overrightarrow{\alpha}) (\var:\ity) = 
-  \{\overrightarrow {\var{:}\itmv}\};\,\nont {p}
+  \{\overrightarrow {\var_v{:}\itmv}\};\,\nont {p}
 \end{bnf}
 \[
   \infer{ 
   \Pdatatype{} \; \ga \;  (\overrightarrow{\ga})\;(\var:\ity) =
-  \{\overrightarrow {\var{:}\itmv}\}; \;\mathit{p} \cipads \ty \; \text{prog}
+  \{\overrightarrow {\var_v{:}\itmv}\}; \;\mathit{p} \cipads \ty \; \text{prog}
   }{
      \mathit{p}[\itmv'/\ga] \cipads \ty \; \text{prog} \qquad 
-     (\itmv' = \PFun{}\;(\overrightarrow \ga) = \;\Pfun{}(\var:\ity) = \Prec{}\; \ga.\,\Punion{}\{\overrightarrow {\var{:}\itmv}\})
+     (\itmv' = \PFun{}\;(\overrightarrow \ga) = \;\Pfun{}(\var:\ity) = \Prec{}\; \ga.\,\Punion{}\{\overrightarrow {\var_v{:}\itmv}\})
   }
 \]
 
@@ -397,7 +397,7 @@ There are two important points to notice about the decomposition.
 First, a datatype is decomposed into no less than four \ipads\ (and,
 by extension, \ddc{}) types. Second, and more subtly, the recursive
 type is nested inside of the abstractions, thereby preventing the
-definition of nonuniform datatypes. Indeed, the name of the bound
+definition of nonuniform, or \textit{nested}, datatypes~\cite{bird+:nested-datatypes}. Indeed, the name of the bound
 datatype, $\ga$, plays two distinct roles -- within the recursive
 type, it is a monomorphic type referring only to the recursive type
 itself, while within the rest of the program it is a polymorphic type
@@ -419,7 +419,7 @@ $\itmv\;[\mathit{length}]$, used to describe binary data. They are
 parameterized by an optional length field, instead of a separator and
 terminator. If the user supplies the length of the sequence, the array
 parser reads exactly that number of elements. Arrays with the length
-field specfied can be encoded in a straightforward manner with \ddc{}
+field specified can be encoded in a straightforward manner with \ddc{}
 sequences:
 \[
   \infer{
@@ -427,7 +427,7 @@ sequences:
     \pseq \ty {\ptrue{}} {\pterm {f} {\pfalse{}}}
   }{ 
     \itmv \cipads \ty & 
-    (f = \ilam {((len,elts),p)} {} {\codefont{len} = \mathit{length}})
+    (f = \ilam {((len,\_),\_)} {} {(\codefont{len} = \mathit{length}}))
   }
 \]
 As these arrays have neither separators nor terminators, we use
@@ -435,7 +435,7 @@ $\ptrue$ (always succeeds, parsing nothing)
 and $\pfalse$ (always fails, parsing nothing), 
 respectively, for separator and terminator. The
 function $f$ takes a pair of array representation and PD and compares
-the sequence length recorded in the representation to
+the sequence length recorded in the representation ($\codefont{len}$) to
 $\mathit{length}$.
 
 Arrays of unspecified length are more difficult to encode as they must

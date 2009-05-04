@@ -288,7 +288,7 @@ well-formedness of contexts $\ctxt$ and types $\ity$ with open type
 variables.
 
 As the rules are mostly straightforward, we highlight just a few of
-them. In rule \textsc{Base}, we use the function $\Ikind$ to assign
+them. In rule \textsc{Const}, we use the function $\Ikind$ to assign
 kinds to base types.  Base types must be fully applied to arguments of
 the right type.  Once fully applied, all base types have kind $\kty$.
 Rule \textsc{DepSum}, for dependent sums, shows that the name of the first component is
@@ -547,9 +547,7 @@ introduce an abbreviation for array PD body types, $\iaptyname \; \ity
 = \iintty \iprodi \iintty \iprodi (\iseq \ity)$.  The $\pcomputen$
 parse descriptors have no subelements because the data they describe
 is not parsed from the data source.  The $\pabsorbn$ PD type is
-$\iunitty$ as with its representation. We assume that just as the user
-does not want the representation to be kept, so too the parse
-descriptor.  The $\pscann{}$ parse descriptor is either $\iunitty$, in
+$\iunitty$ just like its representation. We assume that the user wants the parser to discard the parse descriptor just as it discards the representation.  The $\pscann{}$ parse descriptor is either $\iunitty$, in
 case no match was found, or records the number of bits skipped before
 the type was matched along with the type's corresponding parse
 descriptor.
@@ -693,7 +691,7 @@ all types; for example, $\lambda \ptyvar.\ty$.
           \ilet {\itup{\off_s,r_s,p_s}}{\trans[\ty_s,,] \sapp \spair<\idata,\off'>}}\\
         \qquad \ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp \ictup{\idata,\off_s}}\\
         \qquad \mathtt{continue} \sapp \ictup{
-            \off,\off_e,\newrep {seq} {r,r_e}, \newpd {seq} {p, p_s, p_e}
+            \off',\off_e,\newrep {seq} {r,r_e}, \newpd {seq} {p, p_s, p_e}
         }}\\
       \quad \iin
    \end{array}\\
@@ -703,7 +701,7 @@ all types; for example, $\lambda \ptyvar.\ty$.
       \quad \iif {\isdone{\off,r,p}} \; \ithen {\itup{\off,\codefont{r,p}}}\\
       \quad \ielse {\ilet {\itup{\off_e,r_e,p_e}}{\trans[\ty,,] \sapp
           \spair<\idata,\off>}} \\
-      \quad \mathtt{continue} \sapp \ictup{\off',\off_e,
+      \quad \mathtt{continue} \sapp \ictup{\off,\off_e,
         \newrep {seq} {r,r_e}, \newpd {seq} {p, \newpd {unit} \off, p_e}}      
   \end{array}  
 \\
@@ -875,7 +873,7 @@ to well-formed \ddc{} types.
       \itup{p_1.h, p_2.h},\itup{p_1,p_2}}}$
  \end{itemize}
 
-\caption{Constructor functions, part 1.  The type of parse descriptor headers is $\iintty
+\caption{Constructor functions, part 1.  Parse descriptor headers are sometimes referenced using dot notation as $\codefont{h}$. Their type is $\iintty
   \iprodi \iecty \iprodi \ispty$.  We refer to the projections using
   dot notation as $\codefont{nerr}$, $\codefont{ec}$ and
   $\codefont{sp}$, respectively. A span is a pair of offsets, referred
@@ -962,7 +960,7 @@ representation and PD constructors for $\ptrue$ are $\newrepf {unit}$
 and $\newpdf {unit}$, respectively, and the header constructor for
 dependent sums is ${\codefont{H_{\gS}}}$. The constructor functions are shown in
 \figref{fig:cons-funs} and \figref{fig:cons-funs-cont}. We have also
-factored out some commonly occuring code into auxiliary functions,
+factored out some commonly occurring code into auxiliary functions,
 explained as needed and defined formally in~\figref{fig:aux-funs}.
 
 The PD constructors determine the error code and calculate the error
@@ -1110,7 +1108,7 @@ factors reduce the running time of scanning to $O(1)$. However, the
 second factor implies that \padsc{} and \padsml{}, unlike \ddc{}, do
 not guarantee to find the targets of scans, even if they are present
 in the data source. This difference between \ddc{} and the \pads{}
-languages could have a significant impact an any guarantees we might
+languages could have a significant impact on any guarantees we might
 make about error recovery based on \ddc{} alone. We leave for future
 work the development of a more sophisticated semantics for $\pscann$
 that accounts for the unreliable nature of scans in \padsc{} and
@@ -1123,7 +1121,7 @@ computed by $e$, while the PD records no errors and reports a span of
 length 0, as no data is consumed by the computation. The $\pabsorbn$
 parser first parses the underlying type and then calls the absorb
 constructors, passing only the PD, which is needed by the rep
-constructor to determine whether an error occured while parsing the
+constructor to determine whether an error occurred while parsing the
 underlying type.  If so, the value returned is a $\ierr$. Otherwise,
 it is $\iunitty$.  The absorb parse descriptor duplicates the error
 information of its underlying type.

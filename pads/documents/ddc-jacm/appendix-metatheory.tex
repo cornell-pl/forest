@@ -16,7 +16,7 @@ base-type parsers are closed with respect to user-defined variable
 names.
 
 Next, we require that \ddc{} base types satisfy the properties that we
-desire to hold of the rest of the calculus. 
+desire to hold of the rest of the calculus.  Note that that the interface $\Iopty$ specifies the types of base-type parsers.
 
 \begin{condition}[Conditions on Base-types]
 \label{cond:base-types}
@@ -197,7 +197,7 @@ two substitution-related abbreviations:
   \begin{enumerate}
   \item $\itsem[{\ty[\ty'/\ptyvar]}] = \itsem[\ty]\xsubabbrev {\ty'} \ptyvar$.
   \item If $\ddck[\ty,\pctxt;\ctxt,\gk,]$ then $\itsem[{\ty[\ty'/\ptyvar]}] = 
-    \itsem[\ty][\itsem[\pmu \ptyvar \gk \ty]/\ptyvar_\repname]$.
+    \itsem[\ty][\itsem[\ty']/\ptyvar_\repname]$.
   \item If $\ \exists\,\ity$ \suchthat\ $\itpdsem[\ty] = \ity$ and
     $\ \exists\,\ity$ \suchthat\ $\itpdsem[\ty'] \equiv {\ipty \ity}$
 then $\itpdsem[{\ty[\ty'/\ptyvar]}] \equiv
@@ -225,12 +225,12 @@ then $\trans[{\ty[\ty'/\ptyvar]},,] \iexpreq
   the form $\ptyvar_\pdbname$ might appear. However, as the type is
   well-formed, we know from the kinding rules that the only type
   variables allowed in $\ity$ are of the form $\tyvar_\repname$.
-  For part 4, note that variables of the form $\parsenamecd_\repname$
+  For part 4, note that variables of the form $\parsenamecd_\ptyvar$
   cannot appear in any $\ty$ -- they can only be introduced by the
   parsing semantics function. 
 %A number of the more challenging cases
 %  are shown in detail in \appref{app:extended-proofs}. 
-  For part 6, note that the open variables in $\trans[\ty,,]$ are
+  For part 7, note that the open variables in $\trans[\ty,,]$ are
   exactly those that are open in $\ty$ itself, as none are introduced
   in the translation.
 \end{proof}
@@ -271,19 +271,19 @@ kinding and normalization, as well as key substitution lemmas.
 \end{proof}
 
 \begin{lemma}[\ddc{} Inversion]
-  All kinding rules are invertable.
+  All kinding rules are invertable. That is, given a proof of any rule's conclusion we have a proof of the rule's premises.
   \label{lemma:inversion}
 \end{lemma}
 \begin{proof}
-  By inspection of the kinding rules.
+  By inspection of the kinding rules; in particular, the fact that they are syntax directed.
 \end{proof}
 
 \begin{lemma}[\ddc{} Canonical Forms]
   If $\; \ddck[\tyval,,\kind,]$ then either
   \begin{itemize}
   \item $\kind = \kty$, or
-  \item $\kind = \ity \iarrowi \gk$ and $\ty = \plam \ivarn {} {\ty'}$, or
-  \item $\kind = \kty \iarrowi \gk$ and $\ty = \plam \ptyvar {} {\ty'}$.
+  \item $\kind = \ity \iarrowi \gk$ and $\tyval = \plam \ivarn {} {\ty'}$, or
+  \item $\kind = \kty \iarrowi \gk$ and $\tyval = \plam \ptyvar {} {\ty'}$.
   \end{itemize}
 \label{lemma:norm-canon-form}
 \end{lemma}
@@ -394,8 +394,8 @@ characterization follows as a corollary.
 \item $\hhpred \ty \kty$ iff $\ \exists\,\ity$ s.t. $\itpdsem[\ty] \equiv
   {\ipty \ity}$.
 \item $\hhpred \ty {\kty \iarrowi \kind}$ iff $\ \exists\,\ity$
-  s.t. $\itpdsem[\ty] \equiv \ity$ and whenever $\hhpred
-  {\ty'}{\kty}$, we have $\hhpred {\papp \ty {\ty'}}{\kind}$.
+  s.t. $\itpdsem[\ty] \equiv \ity$ and $\forall\,\ty'.\,\hhpred
+  {\ty'}{\kty}$ implies $\hhpred {\papp \ty {\ty'}}{\kind}$.
 \item $\hhpred \ty {\ity \iarrowi \kind}$ iff $\ \exists\,\ity'$
   s.t. $\itpdsem[\ty] \equiv \ity'$ and $\hhpred{\papp \ty e}{\kind}$
   for any expression $e$.
@@ -627,7 +627,7 @@ $\corr \tyval r p$ iff exactly one of the following is true:
   \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1} {p_2}}$ 
     and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
-    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
+    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r_1,p_2)/x]} {r_2} {p_2}$.
   \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
     and $p = \ipair h {\iinld {\ity}{p'}}$
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
@@ -688,7 +688,7 @@ conditions, produce values in canonical form.
   \begin{itemize}
   \item $\corr \ptrue {\newrep {true} {}} {\newpd {true} \off}$.
   \item $\corr \pfalse {\newrep {false} {}} {\newpd {false} \off}$.
-  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$
+  \item If $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r_1,p_1)/x]} {r_2} {p_2}$
     then\\ $\corr {\psig x {\ty_1} {\ty_2}}
     {\newrep {\gS} {r_1,r_2}}{\newpd {\gS} {p_1,p_2}}$.
   \item If $\corrkl \ty r p$ then $\corr {\psum \ty e {\ty'}} 
