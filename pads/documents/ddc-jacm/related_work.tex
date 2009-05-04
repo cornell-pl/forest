@@ -10,18 +10,19 @@ grammars~\cite{birman+:parsing,ford:pegs,ford:packrat,grimm:packrat}
 or even context-sensitive grammars specify what strings can be
 recognized by a grammar, but such a specification only captures half
 of the semantics of languages like \pads{} or \packettypes{}.  
-In contrast, algebraic specification languages \textit{do} capture both the concrete syntax of a language and other properties, yet  target a very different domain than data description.
+In contrast, there exist formalisms for specifying programming languages as algebras, in which a single language specification captures both the concrete and abstract syntax of the language being specified.
+Yet, these systems target programming languages (and the like), not data formats.
 Our new
 theory gives a complete explanation of data description languages both in terms
 of the strings that are recognized and the properties of internal
-data structures that are generated in a manner appropriate to data
+data structures that are generated, and in a manner appropriate to data
 formats.  
 
 In the following
 paragraphs, we compare and contrast our semantics and the design
 of data description languages like \pads{} to more
 traditional
-grammar-based parser generators, algebraic specification languages, and other related technologies
+grammar-based parser generators, algebraic specification formalisms, and other related technologies
 such as parser combinator libraries, 
 type-directed programming techniques, and \xml{}-based tools.
 % we com
@@ -154,11 +155,11 @@ operators and may be parsed in linear time through the use of
 Once again, however, the multiple interpretations of types in \ddc{} makes our
 theory substantially different from the theory of PEGs.
 
-\paragraph*{Algebraic Specification Languages}
+\paragraph*{Algebraic Specification Formalisms}
 
-From a semantic perspective, algebraic specification languages are
-closer to \ddc{} than other parser generator languages. We briefly
-discuss one such formalism: the Syntax Defintion Formalism
+Early results demonstrating a correspondence between algebras and languages (for example, Rus~\cite{rus:algebra}) led to the development of a number of systems for specifying languages based on algebraic principles. From a semantic perspective, these \textit{algebraic specification formalisms} are
+closer to \ddc{} than parser generator languages. We briefly
+discuss one such system: the Syntax Defintion Formalism
 SDF2~\cite{visser:thesis} and its companion system ASF, the Algebraic
 Specification Formalism~\cite{asfchapter}. For a more detailed discussion of 
 earlier systems, we refer the reader to Visser's
