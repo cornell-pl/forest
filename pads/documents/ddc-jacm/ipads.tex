@@ -2,19 +2,19 @@
 \label{sec:ipads}
 
 In this section, we define \ipads{}, an idealized data description
-language.  \ipads{} captures the essence of \padsc{} in a fashion
-similar to the way that MinML~\cite{harper:plbook} captures the essence of ML or Featherweight
-Java~\cite{igarasi+:featherweight} captures the essence of Java.  The main goal of this section is to introduce
-the reader to the form and function of \ipads{} by giving its syntax
-and walking through a couple of examples.  Though the syntax differs,
-the structure of \padsc{}'s relatives \padsml{}, \packettypes{}, and
-\datascript{} are similar.  Later sections will show how to give a
-formal semantics to \ipads{}.
+language.  \ipads{} captures the essence of \padsc{} and related data
+description languages such as \padsml{}, \packettypes{}, and
+\datascript{} in a fashion similar to the way that
+MinML~\cite{harper:plbook} captures the essence of ML or Featherweight
+Java~\cite{igarasi+:featherweight} captures the essence of Java.  The
+main goal of this section is to introduce the form and function of
+\ipads{} by giving its syntax and explaining several examples.  Later
+sections show how to give a formal semantics to \ipads{}.
 
 \paragraph*{Preliminary Concepts}
-Like \padsc{}, \padsml{}, 
-\packettypes{}, and \datascript{}, \ipads{} data
-descriptions are types.  These types specify both the external data
+As in \padsc{}, \padsml{}, 
+\packettypes{}, and \datascript{}, the  data
+descriptions in \ipads{} are types.  These types specify both the external data
 format (a sequence of bits or characters) and a mapping into a
 data structure in the host programming language.  In \padsc{},
 the host language is C; in \ipads, the host language is an extension

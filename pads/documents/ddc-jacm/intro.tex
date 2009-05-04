@@ -479,20 +479,20 @@ recursive-descent parsers.  The novelty of our contribution comes entirely
 from establishing the connection between these traditional parsers and
 modern type theory.
 
-Most of the basic ideas mentioned above were presented at the ACM 
+Many of the basic ideas mentioned above were presented at the ACM 
 Symposium on Principles of Programming Languages in 2006,
 in a paper with the same title~\cite{fisher+:popl06}.  However,
-there are two important differences.  First, we have found several 
-ways to improve the structure of the semantics of the
-\ddc{} since we first introduced it in 2006.  In particular,
-we were able to eliminate the ``contractiveness'' constraint, which
-allowed us to simplify our earlier kinding rules substantially.  They now 
-take on a much more standard format.  Second, we have
-added polymorphism to the calculus so that we may use it to understand
+this article makes two important additional contributions.
+First, we have improved the structure of the semantics of the
+\ddc{} in several ways.  In particular,
+we eliminated the ``contractiveness'' constraint, which
+allowed us to substantially simplify and standardize the earlier
+kinding rules. Second, we 
+added polymorphism to the calculus to elucidate
 the semantics of \padsml{}'s polymorphic, recursive and dependent
 data types.  The addition of polymorphism led to
-a number of technical challenges in the proof of correctness of our 
-system.  Finally, this article differs from our previously published work as
+a number of technical challenges in the proof of correctness.
+Finally, this article differs from our previously published work as 
 it explains the proof techniques and all intermediate lemmas needed 
 to achieve our formal results.  We have omitted the line-by-line 
 details of the proofs, but key cases of the most challenging
