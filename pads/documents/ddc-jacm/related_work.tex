@@ -10,13 +10,14 @@ grammars~\cite{birman+:parsing,ford:pegs,ford:packrat,grimm:packrat}
 or even context-sensitive grammars specify what strings can be
 recognized by a grammar, but such a specification only captures half
 of the semantics of languages like \pads{} or \packettypes{}.  
-In contrast, there exist formalisms for specifying programming languages as algebras, in which a single language specification captures both the concrete and abstract syntax of the language being specified.
-Yet, these systems target programming languages (and the like), not data formats.
-Our new
-theory gives a complete explanation of data description languages both in terms
-of the strings that are recognized and the properties of internal
-data structures that are generated, and in a manner appropriate to data
-formats.  
+In contrast, there exist formalisms for specifying programming
+languages as algebras, in which a single language specification
+captures both the concrete and abstract syntax of the language being
+specified.  However, these systems target programming languages (and
+the like), not data formats.  Our new theory gives a complete
+explanation of data description languages both in terms of the strings
+that are recognized and the properties of internal data structures
+that are generated, and in a manner appropriate to data formats.
 
 In the following
 paragraphs, we compare and contrast our semantics and the design
@@ -175,12 +176,12 @@ specifications, like \ddc{} types, are scannerless -- that is, they do not
 require a separate lexer -- and support polymorphic syntax
 definitions~\cite{Vis98.psd}.
 
-Yet, for all of SDF2's power and overlap with \ddc{} features, it
+For all of SDF2's power and overlap with \ddc{} features, it
 lacks some of the essential features that make \ddc{} uniquely
 suited to data description languages: support for dependency, an
 explicit specification of the connection between \ddc{} types and the
-underlying host language, and an explicit accounting of the
-error-handling features of generated parsers.
+underlying host language, and an explicit accounting of 
+error-handling.
 
 \paragraph*{Parser Combinators}
 % There are many parallels between \ddc{} and {\it parser
@@ -307,7 +308,28 @@ correcting parses). These combinators also go beyond earlier ones by
 reporting all errors, with corresponding corrections, in a
 special-purpose data structure, rather than simple strings.
 
-The approach to error correction taken by Swierstra \etal{} is, in essence, closely related to that of \ddc{}. Both attempt to recover from errors via a combination of terminal and nonterminal insertion and terminal deletion; and both provide detailed reports as to the nature and location of errors and the corresponding corrective actions. Nevertheless, the differences are significant. First, they differ in their approach to choosing particular insertions and deletions. In \ddc{}, insertions happen implicitly and for any type -- when a parser returns data with errors and parsing continues, an insertion has implicitly occured. Deletion points, however, must be marked explicitly, through the $\kwd{scan}$ type. In contrast, Swierstra \etal{} completely automate the choice of insertion and deletion, relying, in part, on an analysis of the input grammar. The second difference lies in the nature of the error-reporting data structure. In \ddc{}, that data structure is the parse descriptor, and is specialized to the input grammar. As a result, the error data structure reflects the shape of the output data. In contrast, Swierstra \etal{} employ a single data structure for all error reporting, and relate errors to the raw input data, rather than the structured output data. This difference in error reporting is necessary, in part, because parse combinators abstract over the structure of the output data. 
+The approach to error correction taken by Swierstra \etal{} is closely
+related to that of \ddc{}. Both attempt to recover 
+from errors via a combination of terminal and nonterminal insertion
+and terminal deletion. Both provide detailed reports as to the
+nature and location of errors and the corresponding corrective
+actions. Nevertheless, the differences are significant. First, they
+differ in their approach to choosing particular insertions and
+deletions. In \ddc{}, insertions happen implicitly and for any type --
+when a parser returns data with errors and parsing continues, an
+insertion has implicitly occured. Deletion points, however, must be
+marked explicitly, through the $\kwd{scan}$ type. In contrast,
+Swierstra \etal{} completely automate the choice of insertion and
+deletion, relying, in part, on an analysis of the input grammar. The
+second difference lies in the nature of the error-reporting data
+structure. In \ddc{}, that data structure is the parse descriptor, and
+is specialized to the input grammar. As a result, the error data
+structure reflects the shape of the output data. In contrast,
+Swierstra \etal{} employ a single data structure for all error
+reporting, and relate errors to the raw input data, rather than the
+structured output data. This difference in error reporting is
+necessary, in part, because parse combinators abstract over the
+structure of the output data.
 
 The final distinguishing characteristic of parser-combinator libraries is support for context sensitive parsing. Leijen and Meijer~\cite{leijen+:parsec} distinguish between \textit{monadic-style} combinators, like Parsec and those of Hutton and Meijer~\cite{hutton+:monadic-parsing}, which support context sensitive parsing, and \textit{arrow-style} combinators, like those of Swierstra \etal{}, which do not. The conventional wisdom is that monadic-style combinators are not amenable to the analyses employed for arrow-style combinators~\cite{leijen+:parsec,swierstra+:deterministic-error-correcting}. \ddc{} is most similiar to monadic-style combinators.
 
