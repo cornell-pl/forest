@@ -163,21 +163,21 @@ void P_FATAL7(Pdisc_t *t, char * fmt,...);
 #define P_FATAL7(disc,fmt,a1,a2,a3,a4,a5,a6,a7)  P_FMT_ERR_MSG7((disc),("FATAL: " fmt),P_FATAL_FLAGS,(a1),(a2),(a3),(a4),(a5),(a6),(a7))
 
 #define P_FMT_ERR_MSG(disc,fmt,erlev) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt);} } while (0)
 #define P_FMT_ERR_MSG1(disc,fmt,erlev,a1) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1);} } while (0)
 #define P_FMT_ERR_MSG2(disc,fmt,erlev,a1,a2) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2);} } while (0)
 #define P_FMT_ERR_MSG3(disc,fmt,erlev,a1,a2,a3) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3);} } while (0)
 #define P_FMT_ERR_MSG4(disc,fmt,erlev,a1,a2,a3,a4) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4);} } while (0)
 #define P_FMT_ERR_MSG5(disc,fmt,erlev,a1,a2,a3,a4,a5) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4, a5);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4, a5);} } while (0)
 #define P_FMT_ERR_MSG6(disc,fmt,erlev,a1,a2,a3,a4,a5,a6) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4, a5, a6);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4, a5, a6);} } while (0)
 #define P_FMT_ERR_MSG7(disc,fmt,erlev,a1,a2,a3,a4,a5,a6,a7) \
-  do { if (disc && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4, a5, a6, a7);} } while (0)
+  do { if (disc != NULL && disc->error_fn) {disc->error_fn(NiL, erlev, fmt, a1, a2, a3, a4, a5, a6, a7);} } while (0)
 
 #endif /* ! FOR_CKIT */
 

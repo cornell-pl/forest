@@ -38,13 +38,18 @@
 
 // we need some _ast_foo types
 #define _AST_STD_H
+#define _STDARG_H
 #include <ast_common.h>
+
+typedef struct{int x;} va_list;
+
 
 #ifndef HAVE_VA_LIST
 // map some _ast_foo types to corresponding normal types
 // This may no longer be necessary with new ast-ast.2007-06-28 and later.
 // typedef _ast_va_list va_list;
 #endif
+
 
 // some common types
 #ifndef HAVE_SIZE
