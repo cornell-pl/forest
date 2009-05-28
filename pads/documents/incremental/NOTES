@@ -232,13 +232,13 @@ is assumed to be error free. I'm not quite sure how
 to handle the metric for these partial tokens yet.  
 The above decision is made because I think int ranges
 tend to over fit a lot so if we see an int that's out
-of range, chances of it being a current parse is very
+of range, chances of it being a correct parse is very
 high.
 
 When all lines were parsed into the aggregate, the 
 previous description is updated using the aggregate
 by turning some of the base types into option nodes, 
-learn new descriptions at the learn nodes, and relaxing
+learning new descriptions at the learn nodes, and relaxing
 refined types when we have created some partial tokens at
 these types. Note the previous description before learning any 
 given chunk doesn't have adjacent constant strings merged. 
@@ -298,7 +298,7 @@ to make this work.
 Another possible data dependent rewriting rule is to merge
 adjacent unions with options. We don't have data summary for
 unions that were learned from the previous chunk or iteration.
-But we can certain record the branching decisions made for
+But we can certainly record the branching decisions made for
 unions in addition to options into the table and pass it along
 from chunk to chunk. One issue is that the table will grow so
 we may have to cap the size of it and throw away old entries.
