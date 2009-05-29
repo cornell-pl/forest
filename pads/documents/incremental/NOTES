@@ -212,6 +212,8 @@ Current state of incremental learning system
 as on Apr 24, 2009
 ****************************************************
 
+OVERVIEW:
+
 The increment program takes an initial chunk of data
 file, learns an initial description, and then parses
 another data file line by line into an aggregate data
@@ -290,10 +292,7 @@ the end of parsing the entire struct. This method proves to be
 very successful in avoiding false recovered parsing. However,
 it increases the state space of the parser program. 
 Dave suggested killing a parse if it has more than three consecutive
-failure within a struct. I think there is a problem with this
-because we may not return any parse for input that doesn't
-match any of the base types. But maybe some tweaks can be made
-to make this work.
+failure within a struct. I haven't tried this yet.
 
 Another possible data dependent rewriting rule is to merge
 adjacent unions with options. We don't have data summary for
