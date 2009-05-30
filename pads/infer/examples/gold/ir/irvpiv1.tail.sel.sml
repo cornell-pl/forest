@@ -14,9 +14,13 @@ structure IRV = struct
     val path = Base(aux, [(Ppath("68.63.10.255"), loc)])
     val url = Base(aux, [(Purl("68.63.10.255"), loc)])
     val intnum = Base (aux, [(Pint(0, "0"), loc)])
-    val stuff = RefinedBase (aux, Blob(NONE, SOME "/(; )|(\\)\")/"), []) 
-    val array1 = RArray (aux, SOME (StringConst "; "), SOME (StringConst ")\""), stuff, NONE, [])
+    val stuff = RefinedBase (aux, Blob(NONE, SOME "/; |\\)\"|\\) /"), []) 
+    val array1 = RArray (aux, SOME (StringConst "; "), SOME (StringConst ")"), stuff, NONE, [])
     val sep : Refined = StringME "/[;#][ ]?/"
+    val browsers = Pstruct(aux, [RefinedBase(aux, StringConst " Gecko/", []),
+				 Base(aux, [(Pint (0, "0"), loc)]),
+				RefinedBase(aux, StringConst " Firefox/", []),
+				RefinedBase (aux, StringME("/[0-9.]+/"), [])])
     val quad_dash = RefinedBase(aux, StringConst "____", [])
     val equal = RefinedBase(aux, StringConst "=", [])
     val pair = Pstruct(aux, [
@@ -26,9 +30,11 @@ structure IRV = struct
 		Poption (aux, RefinedBase (aux, StringME("/[^;#]+/"), []))
 		])
     val arraybody : Ty = Punion (aux, 
-				[Base (aux, [(Pempty, loc)]),
+				[
+				 pair,
 				 quad_dash,
-				 pair])
+				 Base (aux, [(Pempty, loc)])
+				])
     val irv: Ty = Pstruct (aux, 
 	[ip, 
 	RefinedBase (aux, StringConst " - - [", []),
@@ -52,14 +58,14 @@ structure IRV = struct
 	Poption (aux, Pstruct(aux, [
 			RefinedBase (aux, StringConst " (", []),
 			array1,
-			RefinedBase (aux, StringConst ")", [])])),
+			RefinedBase (aux, StringConst ")", []),
+			Poption(aux, browsers)])),
 	RefinedBase (aux, StringConst "\" ", []),
 	word,
 	sp,
 	intnum,
 	sp,
-	RArray(aux, SOME (sep), NONE, arraybody, NONE, []),
-	Poption (aux, RefinedBase (aux, StringConst ";", []))
+	RArray(aux, SOME (sep), NONE, arraybody, NONE, [])
 	])
 	
 end	

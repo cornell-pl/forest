@@ -146,7 +146,7 @@ open Common
 	   Base (_, (t, l)::_) => tokenToTypeName t
         |  Pstruct _             => IRref ("struct_" ^ id)
         |  Punion _              => IRref ("union_" ^ id)
-        |  RefinedBase (aux, re, ((t, l)::_)) => 
+        |  RefinedBase (aux, re, _) => 
 		(case re of Enum _ => IRref ("enum_" ^ id)
 			| StringME s => IRstringME s
 			| StringConst s => if (size s) = 1 then IRchar

@@ -116,7 +116,6 @@ structure Incremental: sig
 		print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 		top_parses
 *)
-
 	(* val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  *)
 	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln(id, ss)], table) => map 
 			(fn (r, m, j) => 
@@ -380,9 +379,11 @@ structure Incremental: sig
 
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 1 
 		(#1 (computeStructurefromRecords learn_lines))
+
 (*
-	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0)
+	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0)
 *)
+
 
          val padscFile = timedir ^ "/" ^ learn_file ^ ".init.p"
          val _ = print ("\nOutput initial PADS description to " ^ padscFile ^ "\n")

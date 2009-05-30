@@ -725,7 +725,7 @@ struct
 	     if ParseSet.numItems parse_set = 0 then parse_set
 	     else
 	       let 
-		 (*
+		(*
 		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n") 
 		 val _ = print "*** Begin \n"
 		 val _ = ParseSet.app (fn x => print (parseItemToString x)) parse_set
@@ -748,11 +748,7 @@ struct
 		    val sep_set = 
 			case sep of
 			  NONE => 
-				let val body_set = ParseSet.filter 
-					(fn (r, m, j) => (j > start)) body_set
-				in
 				  merge_s((prev_r, m, start), body_set, false)
-				end
 			| SOME sep => 
 			  let
 			    val pairset = pair_parse body_set sep 
@@ -765,11 +761,7 @@ struct
 			else
 			case term of
 			  NONE => 
-				let val body_set = ParseSet.filter 
-					(fn (r, m, j) => (j > start)) body_set
-				in
 				  merge_t((prev_r, m, start), body_set, false)
-				end
 			| SOME term => 
 			  let
 			    val pairset = pair_parse body_set term 
@@ -788,13 +780,12 @@ struct
 	   val non_empty_set = parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i))
 	   (* we have to add a parse that is an zero-length array *)
 	   val final_set = clean (ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0), i)))
-(*
-	   val _ = print ("Finished parsing array : " ^ getLabelString (getAuxInfo ty) ^ "\n")
+	   (*
 	   val _ = print ("number of parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n")
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
 	   val _ = print "**** End \n" 
-*)
+	   *)
 	  in
 		final_set	
 	  end  
