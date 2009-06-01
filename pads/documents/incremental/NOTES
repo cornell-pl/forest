@@ -311,3 +311,38 @@ Also the blob finding might need to be normalized to the
 data size. Currently it seems that when data size is small
 less blob finding is done.
 
+
+On Performance:
+
+1. Gold description to parse irviprv.tail.sel (21 lines) parses in 0.5 secs.
+   However when I create a new file irviprv.tail.sel.2100 which contains 2100 lines
+   of the same data, and use the gold description to parse it, it takes increasingly
+   longer to parse a line - an apparent performance degradation is noted.
+   A prelim investigation showed that the OptsTable and aggregate structure is not growing. 
+   So exact reason for this degradation is unknown.
+
+2. Learned description of irviprv.tail.sel takes a long time to parse even one line.
+   The description doesn't really have very deep structures but very large structs with 
+   many StringConst fields of punctuation and strings. The learned description doesn't
+   capture the main array in the orig data well but instead, create unions for different
+   variations. Each union branch contains one of these very large structs. 
+   The main problem, as my prelim investigation shows, is the parse space for the long
+   structs is getting very large. This is because I add an alternative of Failure parse
+   when a refined base type is recovered after skipping too many chars. And this happens
+   quite often in this data. So two choices get multiplied a number of times in a long
+   struct and produce large number of alternatives to parse.
+
+3. I also noticed a long pause (around 2-5 mins) at some point after parsing the last field of a long
+   struct BTy_1039. The reason for that is unknown for now.
+
+3. Because of the way union branches are ordered, the parsing process can get stuck 
+   (very slow) in one wrong branch, without trying the correct branch (I expect parsing
+   the correct branch will be faster since no skipping chars).
+
+   Possible fixes: 
+   - improve the learned description - try to discover the arrays correctly
+   - merge adjacent constant punctuations - this may reduce the number of failure parses 
+     introduced
+   - some sort of concurrent parsing of unions to kill the other attempts when one branch
+     succeed (same idea as the GCC). 
+
