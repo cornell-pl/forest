@@ -70,21 +70,20 @@ structure Incremental: sig
     (* each aggregate is actually a pair: (aggr, OptsTable) *)
     fun add (ty, line, aggregates) =
       let 
-	(*
-	val _ = print (line ^ "\n")  
+	(* val _ = print (line ^ "\n")  *) 
 	val tm = Time.now() 
-	*)
-	(*
-	val _ = print ("size of tokenMap = " ^ Int.toString (Parse.TokenMap.numItems (!Parse.tokenRegexMap)) ^ "\n")
-	val _ = print ("size of strMap = " ^ Int.toString (Parse.StringMap.numItems (!Parse.strRegexMap)) ^ "\n")
-	*)
 	val _ = Parse.memo:=Parse.MemoMap.empty
  	val set = Parse.parse_all(ty, LabelMap.empty, 0, line)
-	(* val _ = print ("Time to parse: " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") *)
+	(*
+	val _ = print ("Time to parse: " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") 
+        val _ = print ("Size of tMap = " ^ Int.toString (Parse.TokenMap.numItems Parse.tmap) ^ "\n")
+        val _ = print ("Size of tokenRegexMap = " ^ Int.toString (Parse.TokenMap.numItems (!Parse.tokenRegexMap)) ^ "\n")
+        val _ = print ("Size of strRegexMap = " ^ Int.toString (Parse.StringMap.numItems (!Parse.strRegexMap)) ^ "\n")
+        val _ = print ("Size of memo = " ^ Int.toString (Parse.MemoMap.numItems (!Parse.memo)) ^ "\n")
+	*)
 	(* val _ = print "Parse complete\n" *)
 	(* val _ = print ("Number of parses: " ^ Int.toString (Parse.ParseSet.numItems set) ^ "\n") *)
 	val list_parses = Parse.ParseSet.listItems set
-	(* val _ = print ("Num of parses: " ^ Int.toString (length list_parses) ^ "\n") *)
 	val list_parses = map (fn (r, m, j) => 
 		let val len = String.size line 
 		in if j < len then (r, Rep.add_metric m (2, len-j, 0), j)
@@ -116,6 +115,7 @@ structure Incremental: sig
 		print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 		top_parses
 *)
+
 	(* val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  *)
 	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln(id, ss)], table) => map 
 			(fn (r, m, j) => 
@@ -136,13 +136,14 @@ structure Incremental: sig
 				  newpairs
 				val table' = AG.addToTable table sorted_pairs
 	(*	
+			        val _ = AG.printTableSize table'
 			      val _ = print (AG.aggrToString "" newa)
 			      val _ = print ("Cost = " ^ Real.toString (AG.cost newa) ^ "\n")
 	*)
 			  in (newa, table')
 			  end)
 				top_parses) aggregates)
-	(* val _ = print ("After all aggr: " ^ Int.toString (length all_aggregates) ^ "\n") *)
+	(* val _ = print ("# of all_aggregates = " ^ Int.toString (length all_aggregates) ^ "\n") *)
 
 	val sorted_aggregates = ListMergeSort.sort
 		(fn ((a1, _), (a2, _)) => AG.cost a1 > AG.cost a2) all_aggregates
@@ -376,14 +377,14 @@ structure Incremental: sig
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
 	 *)
-
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 1 
 		(#1 (computeStructurefromRecords learn_lines))
-
-(*
-	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0)
-*)
-
+	 
+	 (* 
+	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0) 
+	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0) 
+	 val (_, initTy) = Populate.initializeTy LabelMap.empty initTy
+	 *)
 
          val padscFile = timedir ^ "/" ^ learn_file ^ ".init.p"
          val _ = print ("\nOutput initial PADS description to " ^ padscFile ^ "\n")

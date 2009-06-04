@@ -29,5 +29,7 @@ structure TEST_INC = struct
 				[Base (aux, [(Pempty, loc)]),
 				 quad_dash,
 				 pair])
-    val test_inc : Ty = intnum
+    val test_inc : Ty = Pstruct (aux, [intnum, RefinedBase(aux, StringConst " ", []),
+				       intnum])
+(*    val test_inc : Ty = intnum *)
 end	

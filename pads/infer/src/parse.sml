@@ -526,15 +526,17 @@ struct
   fun parse_all (ty:Ty, e: Rep LabelMap.map, i: int, input: string) : ParseSet.set =
     let 
       val mylabel = getLabel (getAuxInfo ty)
+
       (* val _ = print ("Parsing " ^ (Atom.toString mylabel) ^ " at Pos " ^ Int.toString i ^"\n") *)
-      val finalset = 
-	case MemoMap.find (!memo, (mylabel, i)) of
-	  SOME s => s (* print ("Found " ^ getLabelString (getAuxInfo ty) ^ " in memo!\n"); *)
-	| NONE => 
+    in
+      case MemoMap.find (!memo, (mylabel, i)) of
+        SOME s => ((* print ("Found " ^ Atom.toString mylabel ^ " in memo!\n");*) s )
+      |	NONE => 
+    let val finalset = 	
     case ty of
       Base (a, ts) => 
 	(
-	  case ts of
+	    case ts of
 		nil => raise TyMismatch
 	      | (t, l)::_ => ParseSet.singleton (parse_base (t, i, input))
 	)
@@ -545,6 +547,39 @@ struct
 	| _ => set
 	end
     | Pstruct(a, tys) => 
+	let fun parse_struct (r, m, j) tys env =
+	  case r of 
+	    TupleR reps =>
+	    (
+	    case tys of
+	      nil => ParseSet.singleton (r, m, j)
+	    | ty::tys =>
+		let
+		  val idop = case ty of
+				Base (a, ((Pint _), _)::_) => SOME (getLabel a)
+			      | Base (a, ((Pstring _), _)::_) => SOME (getLabel a)
+			      | Base (a, ((Other _), _)::_) => SOME (getLabel a)
+			      | RefinedBase (a, Enum _, _) => SOME (getLabel a)
+			      | RefinedBase (a, Int _, _) => SOME (getLabel a)
+			      | _ => NONE
+		  val this_set = parse_all(ty, env, j, input)
+	  	  fun gg ((r', m', j'), set) = 
+			let val newe = 
+			  	case idop of
+				  SOME id => 
+				  (
+				     	LabelMap.insert(env, id, r)
+				  )
+				| _ => env
+			    val news = parse_struct (TupleR (reps @ [r']), add_metric m m', j') tys newe
+			in ParseSet.union (set, news)
+			end
+                in
+		  ParseSet.foldl gg ParseSet.empty this_set
+		end
+	     )
+	   | _ => raise TyMismatch
+(*********
 	let fun parse_struct tys env start =
 	    case tys of
 	      nil => ParseSet.singleton((TupleR nil, (0, 0, 0), start))
@@ -555,11 +590,11 @@ struct
 		  val _ = printTy ty
 		*)
 		  val this_set = parse_all(ty, env, start, input)
-		  (*
+		(*
 		  val _ = print "Result from parsing struct field\n"
 		  val _ = printTy ty
 		  val _ = ParseSet.app (fn x => print (parseItemToString x)) this_set
-		  *)
+		*)
 		  val idop = case ty of
 				Base (a, ((Pint _), _)::_) => SOME (getLabel a)
 			      | Base (a, ((Pstring _), _)::_) => SOME (getLabel a)
@@ -580,6 +615,7 @@ struct
 				  )
 				| _ => env
 			    val news = parse_struct tys newe j
+			    (* val _ = print ("Size of news = " ^ Int.toString (ParseSet.numItems news) ^ "\n") *)
 		  	    val newset = ParseSet.map
 			      (fn (TupleR rlist, m', j') => (TupleR (r::rlist), add_metric m  m', j')) news
 		  	in	
@@ -588,12 +624,16 @@ struct
 		in 
 		  ParseSet.foldl gg ParseSet.empty this_set
 		end
+**************)
+
+	  (* val finalset = parse_struct tys e i *) 
+	  val finalset = parse_struct (TupleR nil, (0, 0, 0), i) tys e  
 	    (* val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Begins \n") 
 	    val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Ends \n")
 	    val _ = print ("Number of parses in struct: " ^ Int.toString (ParseSet.numItems finalset) ^ "\n")
 	    *)
 	in 
-	  clean (parse_struct tys e i)
+	  clean finalset
 	end
     | Punion (a, tys) =>
 	(* branch number starts from 0 *)
@@ -748,7 +788,12 @@ struct
 		    val sep_set = 
 			case sep of
 			  NONE => 
+				let val body_set = 
+				  ParseSet.filter (fn (r, m, j) => 
+					is_good_metric m orelse j> start) body_set
+				in 	
 				  merge_s((prev_r, m, start), body_set, false)
+				end
 			| SOME sep => 
 			  let
 			    val pairset = pair_parse body_set sep 
@@ -761,13 +806,40 @@ struct
 			else
 			case term of
 			  NONE => 
-				  merge_t((prev_r, m, start), body_set, false)
+				let val body_set = 
+				  ParseSet.filter (fn (r, m, j) => 
+					is_good_metric m orelse j> start) body_set
+				    val cur_term_set = merge_t((prev_r, m, start), body_set, false)
+				in
+				    (* the following step is to add a parse which terminates the prev rep *)
+				    case sep of
+					  NONE => if is_good_metric m then
+						   ParseSet.add (cur_term_set, (prev_r, m, start))
+						  else cur_term_set
+					| SOME sep => cur_term_set
+				end
 			| SOME term => 
 			  let
 			    val pairset = pair_parse body_set term 
 			    val pairset = clean (ParseSet.filter 
 					(fn (r, m, j) => (j > start)) pairset)
-			  in merge_t ((prev_r, m, start), pairset, true) 
+			    val cur_term_set = merge_t ((prev_r, m, start), pairset, true) 
+			    val parse_term_set = 
+				case sep of
+				  NONE => if is_good_metric m then 
+					    parse_all (RefinedBase (mkTyAux 0, term, nil), e, start, input)
+					  else ParseSet.empty
+				| SOME sep => ParseSet.empty
+			    (* the following step is to add a parse which terminates the prev rep *)
+			    val prev_term_set =
+				case prev_r of
+		  		  ArrayR(elems, seps, termop) =>
+					ParseSet.map (fn (term_r, term_m, term_j) => 
+						 	(ArrayR(elems, seps, SOME term_r), add_metric m term_m, start))
+						     parse_term_set
+				| _ => raise TyMismatch
+			  in
+			    ParseSet.union (cur_term_set, prev_term_set)
 			  end
 	     	   in (ParseSet.union(seprs, sep_set), ParseSet.union(termrs, term_set))
 	     	   end
@@ -780,12 +852,12 @@ struct
 	   val non_empty_set = parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0), i))
 	   (* we have to add a parse that is an zero-length array *)
 	   val final_set = clean (ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0), i)))
-	   (*
+(*
 	   val _ = print ("number of parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n")
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
 	   val _ = print "**** End \n" 
-	   *)
+*)
 	  in
 		final_set	
 	  end  
@@ -869,7 +941,12 @@ struct
 	end
     | _ => raise TyMismatch
     val _ = memo:= MemoMap.insert(!memo, (mylabel, i), finalset)
+(*
+    val _ = print ("Finished parsing " ^ (Atom.toString mylabel) ^ " at Pos " ^ Int.toString i ^"\n")
+    val _ = print ("Size of returning set = " ^ (Int.toString (ParseSet.numItems finalset)) ^ "\n")
+*)
     in 
 	finalset	
     end	
+  end
 end 

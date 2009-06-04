@@ -24,6 +24,14 @@ struct
 		 print "\n")) (#rows table)
 	)
 
+  fun printTableSize (table: OptsTable) =
+    let val numcols = length (#header table)
+	val numrows = IntListSet.numItems (#rows table)
+    in 
+        print ("OptsTable: numcols = " ^ (Int.toString numcols) ^ " numrows = " ^
+		(Int.toString numrows) ^ "\n")
+    end
+
   datatype Aggr =
 	  BaseA of Token
 	| SyncA of Refined option

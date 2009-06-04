@@ -386,7 +386,71 @@ and adjacent_consts cmos ty =
     in
   	(cmos, Pstruct(a, newtylist))
     end
-| _ => (cmos, ty)
+  | _ => (cmos, ty)
+
+(* merge the adjacent punctuation const strings (including spaces) *)
+and adjacent_punc_consts cmos ty = 
+  case ty of Pstruct(a, tylist) => 
+    let
+	 fun mergetok (t1:LToken, t2:LToken) : LToken =
+		case (t1, t2) of 
+			((Pwhite(s1), loc1), (Pwhite(s2), loc2)) => 
+			  	(Pwhite(s1 ^ s2), combLoc(loc1, loc2))
+			| ((Pempty, loc1), (Pempty, loc2)) => 
+				(Pempty, combLoc(loc1, loc2))
+			| ((tk1, loc1), (tk2, loc2)) =>
+				(Pstring(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
+				combLoc(loc1, loc2))
+	 (*the two token lists are supposed to be of equal length*)
+	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
+			case tl2 of 
+			nil => tl1
+			| _ => ListPair.mapEq mergetok (tl1, tl2)
+			handle UnequalLengths => (ListPair.map mergetok (tl1, tl2))
+
+  	 fun for_const while_const t x tl = 
+  	 let
+       		val (clist,rest, resttl) = while_const(t)
+     	 in
+	  	(x :: clist, rest, mergetoklist(tl, resttl))
+         end
+
+         fun get_punc ty =
+		case ty of
+		  RefinedBase(aux, StringConst(x), tlist as ((Pempty, _)::_))  => SOME (x, tlist)
+		| RefinedBase(aux, StringConst(x), tlist as ((Pwhite w, _)::_)) => SOME (x, tlist)
+		| RefinedBase(aux, StringConst(x), tlist as ((Other c, _)::_)) => SOME (x, tlist)
+		| _ => NONE
+
+  	 fun while_const tylist = case tylist of 
+  		h::t => 
+		  (
+		    case get_punc h of 
+		      SOME (x, tl) => for_const while_const t x tl
+  		    | _ => (nil,tylist, nil)
+		  )
+  	   	| nil => (nil, nil, nil)
+
+  	 fun find_adj tylist = case tylist of
+  	  	h::t => 
+		  (case get_punc h of
+		     SOME (x, l) =>
+			let
+  				val (clist, rest, tlists) = while_const(t)
+    			in
+    				RefinedBase(getAuxInfo h, StringConst(String.concat(x :: clist)), 
+				 mergetoklist(l, tlists)) 
+				:: find_adj rest
+    			end
+  	    	  | _ => h :: find_adj t)
+  		| nil => nil
+  	val newtylist = find_adj tylist
+    in
+  	(cmos, Pstruct(a, newtylist))
+    end
+  | _ => (cmos, ty)
+
+
 (* rule to convert a normal Parray to a refined RArray *)
 and refine_array ty = 
 	case ty of 
@@ -1343,7 +1407,11 @@ and enum_range_to_refine cmos ty =
                       in
                         (ty', newconsts@t)
                       end
-		  | (Range(min,max)):: t => (RefinedBase(mkTyAux1(coverage, id), 
+		  | (Range(min,max)):: t => 
+			if min = max then
+				(RefinedBase(mkTyAux1(coverage, id), 
+				IntConst min, b), newconsts@t)
+			else (RefinedBase(mkTyAux1(coverage, id), 
 				Int(min, max), b), newconsts@t)
                   | h :: t => check_enum t (newconsts@[h])
                   | nil => (ty, newconsts) 
@@ -1927,6 +1995,11 @@ let
 			unnest_sums,
 			remove_nils
 		]
+  val phase_six_rules : post_reduction_rule list =
+		[ 
+		  adjacent_punc_consts
+		]
+
 
   (* generate the list of rules *)
   val cmap = case phase of
@@ -2008,6 +2081,7 @@ let
 		|	3 => map(fn x => (cmap, x ty)) phase_three_rules
 		|	5 => map(fn x => (cmap, x ty)) phase_five_rules
 		|	4 => map (fn x => x cmap ty) phase_four_rules
+		|	6 => map (fn x => x cmap ty) phase_six_rules
 		| 	_ => (print "Wrong phase!\n"; raise TyMismatch)
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> score t) cmap_ty_pairs 
