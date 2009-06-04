@@ -320,6 +320,9 @@ On Performance:
    longer to parse a line - an apparent performance degradation is noted.
    A prelim investigation showed that the OptsTable and aggregate structure is not growing. 
    So exact reason for this degradation is unknown.
+   *** this has been solved: reason is the Ty was not initialized with proper labels
+   for the golden description. And when labels are not available, it is generated on
+   the fly and takes up memory.
 
 2. Learned description of irviprv.tail.sel takes a long time to parse even one line.
    The description doesn't really have very deep structures but very large structs with 
@@ -332,10 +335,11 @@ On Performance:
    quite often in this data. So two choices get multiplied a number of times in a long
    struct and produce large number of alternatives to parse.
 
-3. I also noticed a long pause (around 2-5 mins) at some point after parsing the last field of a long
+3. I also noticed a long pause (around 2-5 mins) at some point after parsing the 
+   last field of a long
    struct BTy_1039. The reason for that is unknown for now.
 
-3. Because of the way union branches are ordered, the parsing process can get stuck 
+4. Because of the way union branches are ordered, the parsing process can get stuck 
    (very slow) in one wrong branch, without trying the correct branch (I expect parsing
    the correct branch will be faster since no skipping chars).
 
@@ -343,6 +347,8 @@ On Performance:
    - improve the learned description - try to discover the arrays correctly
    - merge adjacent constant punctuations - this may reduce the number of failure parses 
      introduced
+     *** try this but doesn't help much - it doesn't reduce the number of const strings
+         a lot, so the space is still big.
    - some sort of concurrent parsing of unions to kill the other attempts when one branch
      succeed (same idea as the GCC). 
 
