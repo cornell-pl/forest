@@ -10,6 +10,7 @@ struct
   structure MT = MatchTree
   structure SS = Substring
   val max_parses_per_line = 1
+  val max_consecutive_fails = 3
   val recover_factor = 10
 
   structure ParseSet = ListSetFn(struct
@@ -523,7 +524,10 @@ struct
   
 (* environment e is Label -> Rep map, currently the env stores rep for only three base types:
    Pint, Pstring and Other, and some refined base types *)
-  fun parse_all (ty:Ty, e: Rep LabelMap.map, i: int, input: string) : ParseSet.set =
+(* cutoff is a boolean argument that indicate if parses cut-off will be executed when parsing a
+   struct. parses cut-off is an optimization that reduces the number of viable parses during the
+   parsing process *)
+  fun parse_all (ty:Ty, e: Rep LabelMap.map, i: int, input: string, cutoff: bool) : ParseSet.set =
     let 
       val mylabel = getLabel (getAuxInfo ty)
 
@@ -547,13 +551,15 @@ struct
 	| _ => set
 	end
     | Pstruct(a, tys) => 
-	let fun parse_struct (r, m, j) tys env =
-	  case r of 
-	    TupleR reps =>
-	    (
-	    case tys of
-	      nil => ParseSet.singleton (r, m, j)
-	    | ty::tys =>
+	let fun parse_struct (r, m, j) tys env last_fails =
+	  if cutoff andalso last_fails >= max_consecutive_fails then ParseSet.empty
+	  else
+	    case r of 
+	      TupleR reps =>
+	      (
+	      case tys of
+	        nil => ParseSet.singleton (TupleR (List.rev reps), m, j)
+	      | ty::tys =>
 		let
 		  val idop = case ty of
 				Base (a, ((Pint _), _)::_) => SOME (getLabel a)
@@ -562,7 +568,7 @@ struct
 			      | RefinedBase (a, Enum _, _) => SOME (getLabel a)
 			      | RefinedBase (a, Int _, _) => SOME (getLabel a)
 			      | _ => NONE
-		  val this_set = parse_all(ty, env, j, input)
+		  val this_set = parse_all(ty, env, j, input, cutoff)
 	  	  fun gg ((r', m', j'), set) = 
 			let val newe = 
 			  	case idop of
@@ -571,14 +577,16 @@ struct
 				     	LabelMap.insert(env, id, r)
 				  )
 				| _ => env
-			    val news = parse_struct (TupleR (reps @ [r']), add_metric m m', j') tys newe
+			    val lf = if no_progress m' then last_fails + 1
+				     else 0
+			    val news = parse_struct (TupleR (r'::reps), add_metric m m', j') tys newe lf
 			in ParseSet.union (set, news)
 			end
                 in
 		  ParseSet.foldl gg ParseSet.empty this_set
 		end
-	     )
-	   | _ => raise TyMismatch
+	       )
+	     | _ => raise TyMismatch
 (*********
 	let fun parse_struct tys env start =
 	    case tys of
@@ -627,7 +635,7 @@ struct
 **************)
 
 	  (* val finalset = parse_struct tys e i *) 
-	  val finalset = parse_struct (TupleR nil, (0, 0, 0), i) tys e  
+	  val finalset = parse_struct (TupleR nil, (0, 0, 0), i) tys e 0 
 	    (* val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Begins \n") 
 	    val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Ends \n")
 	    val _ = print ("Number of parses in struct: " ^ Int.toString (ParseSet.numItems finalset) ^ "\n")
@@ -640,7 +648,7 @@ struct
 	let fun f tys branchno prev_set =
 	  case tys of
 	    ty::tys =>
-		let val set = parse_all (ty, e, i, input)
+		let val set = parse_all (ty, e, i, input, cutoff)
 		    val newset = ParseSet.map (fn (r, m, j) => (UnionR (branchno, r), m, j)) set
 		in
 		  if has_good_parse newset then newset
@@ -698,7 +706,7 @@ struct
 		    end
 		| SOME (branchno, re, selected_ty) =>
 		  let  
- 	     		val set = parse_all (selected_ty, e, i, input) 
+ 	     		val set = parse_all (selected_ty, e, i, input, cutoff) 
 	     	  in ParseSet.map (fn (r, m, j) => (SwitchR (re, r), m, j)) set
 		  end
 	in clean newset
@@ -746,7 +754,7 @@ struct
 		  val rety = RefinedBase (mkTyAux 0, re, nil)
 		  fun gg ((r, m, j), set) =
 			let
-			    val news = parse_all (rety, e, j, input)
+			    val news = parse_all (rety, e, j, input, cutoff)
 		  	    val newset = ParseSet.map
 			      (fn (r', m', j') => (TupleR [r, r'], add_metric m  m', j')) news
 		  	in	
@@ -780,7 +788,7 @@ struct
 				 print (repToString "" prev_r))
 		    *) 
 
-		    val body_set = parse_all (body, e, start, input)
+		    val body_set = parse_all (body, e, start, input, cutoff)
 			  (*
 			      val _ = print "After clean:\n"
 			      val _ = ParseSet.app (fn x => print (parseItemToString x)) s
@@ -826,9 +834,11 @@ struct
 			    val cur_term_set = merge_t ((prev_r, m, start), pairset, true) 
 			    val parse_term_set = 
 				case sep of
-				  NONE => if is_good_metric m then 
-					    parse_all (RefinedBase (mkTyAux 0, term, nil), e, start, input)
-					  else ParseSet.empty
+				  NONE => 
+				    if is_good_metric m then 
+				      parse_all (RefinedBase (mkTyAux 0, term, nil), 
+						e, start, input, cutoff)
+				    else ParseSet.empty
 				| SOME sep => ParseSet.empty
 			    (* the following step is to add a parse which terminates the prev rep *)
 			    val prev_term_set =
@@ -881,7 +891,7 @@ struct
 	  if len = 0 then parse_set
 	  else if index = len - 1 then
 	    let fun f ((r, m, start), set) = 
-		 let val body_set = parse_all (body, e, start, input)
+		 let val body_set = parse_all (body, e, start, input, cutoff)
 			(*
 			      val _ = print "After clean:\n"
 			      val _ = ParseSet.app (fn x => print (parseItemToString x)) s
@@ -910,7 +920,7 @@ struct
 	  else 
 	    let 
 		fun f ((r, m, start), set) = 
-		 let val body_set = parse_all (body, e, start, input)
+		 let val body_set = parse_all (body, e, start, input, cutoff)
 		     val sep_set = 
 			case sep of
 			  NONE => merge_s((r, m, start), body_set, false)
@@ -932,7 +942,7 @@ struct
       end  
       )
     | Poption (a, ty) => 
-	let val set = parse_all (ty, e, i, input) 
+	let val set = parse_all (ty, e, i, input, cutoff) 
 	    val newset = if has_good_parse set then
 	 	 ParseSet.map (fn (r, m, j) => (OptionR(SOME r), m, j)) set
 		else ParseSet.singleton  (OptionR NONE, (0, 0, 0), i)

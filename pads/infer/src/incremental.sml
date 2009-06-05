@@ -73,7 +73,11 @@ structure Incremental: sig
 	(* val _ = print (line ^ "\n")  *) 
 	val tm = Time.now() 
 	val _ = Parse.memo:=Parse.MemoMap.empty
- 	val set = Parse.parse_all(ty, LabelMap.empty, 0, line)
+ 	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, true)
+        val set = if Parse.ParseSet.numItems set = 0 then
+		  (Parse.memo:=Parse.MemoMap.empty;
+		  Parse.parse_all(ty, LabelMap.empty, 0, line, false))
+		  else set
 	(*
 	val _ = print ("Time to parse: " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") 
         val _ = print ("Size of tMap = " ^ Int.toString (Parse.TokenMap.numItems Parse.tmap) ^ "\n")
@@ -114,9 +118,8 @@ structure Incremental: sig
  	val _ = List.app (fn (rep, m, j) => 
 		print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 		top_parses
+	val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  
 *)
-
-	(* val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  *)
 	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln(id, ss)], table) => map 
 			(fn (r, m, j) => 
 			  let 
@@ -379,11 +382,10 @@ structure Incremental: sig
 	 *)
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 1 
 		(#1 (computeStructurefromRecords learn_lines))
-	 
-	 (* 
-	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0) 
+	 (*  
+	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0)
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0) 
-	 val (_, initTy) = Populate.initializeTy LabelMap.empty initTy
+	 val (_, initTy) = Populate.initializeTy LabelMap.empty initTy 
 	 *)
 
          val padscFile = timedir ^ "/" ^ learn_file ^ ".init.p"

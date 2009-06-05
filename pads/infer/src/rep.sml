@@ -50,6 +50,8 @@ fun equal_metric  (e1: int, r1: int, t1: int) (e2: int, r2: int, t2: int) : bool
 
 fun is_good_metric (e, r, t) = (e = 0)
 
+fun no_progress (e, r, t) = e > 0 andalso r = 0 andalso t = 0
+
 fun metricToString (e, r, parsed) = "(" ^ Int.toString e ^ ", " ^ Int.toString r ^ ", " 
 			^ Int.toString parsed ^ ")"
 
