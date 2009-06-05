@@ -349,6 +349,11 @@ On Performance:
      introduced
      *** try this but doesn't help much - it doesn't reduce the number of const strings
          a lot, so the space is still big.
+   - Added "parses cut-off", a feature that cuts a parse which contains
+        a number of consecutive failures when parsing a struct. Because
+        introducing this feature may produce an empty parse set, our
+        heuristics is to re-parse the line with no cut-off enabled if
+        we see an empty set.
    - some sort of concurrent parsing of unions to kill the other attempts when one branch
      succeed (same idea as the GCC). 
 

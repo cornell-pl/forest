@@ -1,0 +1,60 @@
+                Incremental Learning of Ad Hoc Data Formats
+
+1. Introduction
+ - what is ad hoc data (e.g. system logs, financial data, scientific repositories)?
+ - why are they important?
+ - difficulty with ad hoc data (conversion to XML is not the solution!)
+ - what we would like to do with ad hoc data: examples of tools, info extraction,
+   data mining, loading into DB, etc.
+ - previous state of the art (perl, python scripts, one-off parsers)
+ - our approach: automatic learning of formats in PADS, and then generate tools and
+   libraries, also documents the data
+ - outline of the paper  
+
+2. PADS and the LearnPADS System
+ - PADS: high level declarative specifications of physical formats
+ - generates processing tools and programatic libraries and interfaces
+ - Tedious and error prone to hand-write PADS specs
+ - LearnPADS: automatically learn PADS specs from samples
+ - problems: 
+	1) main-memory algo can't handle very large data sources
+	2) can't handle continuous data
+	3) formats learned can be un-intuitive (needs some human guidance)
+ - solution: incrementally learn a PADS spec!
+
+3. The Algorithm
+ - problem definition (as close to the previous description as possible) (but we don't
+   have a metric to measure how close yet, do we want to mention tree edit distance??)
+ - overview of algorithm: parsing + aggregating + rewriting
+ - semantics of parsing (parse rep, score metric)
+ - semantics of aggregating
+ - selection of top aggregates
+ - update original description
+ - rewriting rules (data independent, data dependent, OptsTable)
+
+4. Implementation and Evaluation
+ - parse metric
+ - initial learn size and chunk size - these can affect results
+ - update chunk by chunk 
+ - optimizations/heuristics
+   - memoization
+   - the clean function (to reduce the number of parses)
+   - merge adjacent const strings (only punctuation and white spaces)
+   - control of aggregate size
+   - deterministic unions
+   - longest match in arrays
+   - error recovery
+   - parses cut-off: kill a parse if it has more than n consecutive failures in a struct
+
+ - Experiments:
+	1) comparison with old LearnPADS on several large datasets (ai.3000, asl.log, etc)
+	   compare exec time and output quality (use the old cost metric)
+	2) experiments on a few very large files to give audience an idea how practical the
+ 	   the system is
+
+5. Future Work
+  - efficiency in parsing
+  - concurrent parsing (GCC)
+  - quality of initial description
+
+6. Conclusion
