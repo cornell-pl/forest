@@ -1,33 +1,29 @@
-                Incremental Learning of Ad Hoc Data Formats
+                Incremental Learning of Data Formats for System Logs
 
 1. Introduction
- - what is ad hoc data (e.g. system logs, financial data, scientific repositories)?
- - why are they important?
- - difficulty with ad hoc data (conversion to XML is not the solution!)
- - what we would like to do with ad hoc data: examples of tools, info extraction,
-   data mining, loading into DB, etc.
- - previous state of the art (perl, python scripts, one-off parsers)
- - our approach: automatic learning of formats in PADS, and then generate tools and
-   libraries, also documents the data
- - outline of the paper  
-
-2. PADS and the LearnPADS System
+ - system implementers and admins need tools to help them manage, query, extract info from,
+   detect errors in, and program with a variety of system logs. 
  - PADS: high level declarative specifications of physical formats
  - generates processing tools and programatic libraries and interfaces
- - Tedious and error prone to hand-write PADS specs
- - LearnPADS: automatically learn PADS specs from samples
- - problems: 
+ - automatically, incrementally learn PADS specs from sample data
+
+2. Review 
+ - ai.3000 example
+ - PADS description
+ - How LearnPADS works
+ - LearnPADS Limitations: 
 	1) main-memory algo can't handle very large data sources
-	2) can't handle continuous data
-	3) formats learned can be un-intuitive (needs some human guidance)
- - solution: incrementally learn a PADS spec!
+        2) formats learned from a subset of data may not be correct (ai.3000 with a POST)
+	3) can't handle continuous data
+	4) formats learned can be un-intuitive (needs some human guidance)
+ - hence we developed the incremental learning algorithm
 
 3. The Algorithm
  - problem definition (as close to the previous description as possible) (but we don't
    have a metric to measure how close yet, do we want to mention tree edit distance??)
  - overview of algorithm: parsing + aggregating + rewriting
- - semantics of parsing (parse rep, score metric)
- - semantics of aggregating
+ - parsing algo (parse rep, score metric, pseudo-code)
+ - aggregating algo (in pseudo code)
  - selection of top aggregates
  - update original description
  - rewriting rules (data independent, data dependent, OptsTable)
