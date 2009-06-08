@@ -1,0 +1,63 @@
+\section{Introduction}
+\label{sec:intro}
+
+System implementers and adminstrators deal with a large variety of system logs on a
+daily basis. The common tasks they need to perform on these logs include: querying,
+analysis, information extraction, error detection and data transformation.
+Because many of these logs are in non-standard, semi-structured formats,
+there is often no ready-made tools to help them process or manage these logs.
+More than often, system engineers have to resort writing one-off
+Perl or Python parser to parser these data sources, which is tedious,
+error-prone and uneconomical. 
+
+To improve the productivity of system engineers, we developed \pads
+\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml,padsweb},
+a high level declarative specification language for describing the
+physical formats of these system logs. A \pads{} description for a data
+source not only documents the data format in a formal way, but also
+compiles into a suite of useful processing tools such as an XML-translator,
+a query engine and a statistical analyzer, and programmatic
+libraries and interfaces. The users can then either manage the logs using
+any of these tools, or write their own custom tools using the provided 
+library functions. 
+
+However, a significant impediment to using \pads{} is the time and 
+expertise required to write a \pads{} description for a new data source.
+With clear and unambiguous documentation about a data source, it takes a data 
+expert anywhere from a few minutes to several hours to produce a description. 
+Unfortunately, many system logs come with very little documentation or none at all.
+In such cases, understanding the structure of the data and creating a correct
+description can take days or weeks, especially when the logs are complex and in
+very large volume. To solve this problem, we developed the \learnpads{} system
+\cite{Fisher+:dirttoshovels,fisher+:sigmod08,xi08:tokenization}, which automatically
+learns a \pads{} description from sample data, and thus eliminates the need
+for the data users to hand-write the description. The \learnpads{} system,
+while producing correct descriptions for a range of small to medium size data sources,
+cannot handle very large data sources, because at the heart of the system is a
+main memory algorithm which analyzes the statistics of the data in its entirety. 
+Furthermore, because of the algorithm is completely automatic without any user
+intervention, it does not always capture the intuitive structures of the logs
+correctly, and as a result, produces overly verbose descriptions at times.
+
+In this paper, we take one step further to improve the \learnpads{} system
+such that it incrementally learns a format from a large data source,
+while allowing the user to either provide an initial description to begin with,
+or to interact with the learning process by modifying the learned description
+at various iterations of the incremental learning.
+
+The following is an outline of the remainder of the paper. In section \ref{sec:review},
+we will review the \pads{} and \learnpads{} systems with the help of a simple web server
+log example. In section \ref{sec:algo}, we will introduce the main incremental
+algorithm. This is followed by a discussion on the implementation details and
+some experimental results in section \ref{sec:imp}. We then present a few interesting
+ideas which might further improve our system in section \ref{sec:future} and conclude
+the paper in section \ref{sec:conclusion}.
+
+% - system implementers and admins need tools to help them manage, query, extract info from,
+%   detect errors in, and program with a variety of system logs. 
+%
+% - PADS: high level declarative specifications of physical formats
+%
+% - generates processing tools and programatic libraries and interfaces
+%
+% - automatically, incrementally learn PADS specs from sample data

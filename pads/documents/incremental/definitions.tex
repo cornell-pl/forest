@@ -14,6 +14,7 @@
 \newcommand{\eg}{{\em e.g.}}
 \newcommand{\cf}{{\em cf.}}
 \newcommand{\ie}{{\em i.e.}}
+\newcommand{\etal}{{\em et al}}
 \newcommand{\etc}{{\em etc.\/}}
 \newcommand{\naive}{na\"{\i}ve}
 \newcommand{\role}{r\^{o}le}
@@ -28,7 +29,9 @@
 \newcommand{\ir}{\textsc{IR}}
 \newcommand{\padsl}{\textsc{padsl}}
 \newcommand{\padsml}{\textsc{pads/ml}}
-\newcommand{\padsd}{\textsc{pads/d}}
+%\newcommand{\padsd}{\textsc{pads/d}}
+\newcommand{\learnpads}{{\sc{LearnPADS}}}
+\newcommand{\padsd}{\textsc{Gloves}}
 \newcommand{\blt}{\textsc{blt}}
 \newcommand{\ddc}{\textsc{ddc}}
 \newcommand{\ddl}{\textsc{ddl}}
@@ -111,11 +114,14 @@
 \newcommand{\rsem}{{]\!]}}
 \newcommand{\turn}{\vdash}
 \newcommand{\meta}{m}
+\newcommand{\nested}{n}
 \newcommand{\mytime}[1]{#1.t}
-\newcommand{\generatedloc}{\ensuremath{\mathsf{nowhere}}}
+\newcommand{\myds}[1]{#1.ds}
+\newcommand{\myval}[1]{#1.nest}
+\newcommand{\generatedloc}{\ensuremath{\mathtt{nowhere}}}
 \newcommand{\environment}{E}
 \newcommand{\universe}{U}
-\newcommand{\selectOne}{\ensuremath{\mathsf{select\_one}}}
+\newcommand{\selectOne}{\ensuremath{\mathsf{earliest}}}
 % core feed semantics
 \newcommand{\csemantics}[3]{{\cal C}\lsem #1 \rsem_{{#2} \, {#3}}}
 % feed semantics
@@ -128,21 +134,30 @@
 \newcommand{\ty}{\ensuremath{\tau}}
 \newcommand{\basety}{\ensuremath{b}}
 \newcommand{\arrow}{\rightarrow}
-\newcommand{\optionty}[1]{\ensuremath{#1 \; \mathtt{option}}}
-\newcommand{\listty}[1]{\ensuremath{#1 \; \mathtt{list}}}
-\newcommand{\feedty}[1]{\ensuremath{#1 \; \mathtt{feed}}}
-\newcommand{\schedulety}{\ensuremath{\mathtt{sched}}}
-\newcommand{\timety}{\ensuremath{\mathtt{time}}}
-\newcommand{\locty}{\ensuremath{\mathtt{loc}}}
-\newcommand{\boolty}{\ensuremath{\mathtt{bool}}}
-\newcommand{\stringty}{\ensuremath{\mathtt{string}}}
+\newcommand{\optionty}[1]{\ensuremath{#1 \; \mathsf{option}}}
+\newcommand{\listty}[1]{\ensuremath{#1 \; \mathsf{list}}}
+\newcommand{\setty}[1]{\ensuremath{#1 \; \mathsf{set}}}
+\newcommand{\feedty}[1]{\ensuremath{#1 \; \mathsf{feed}}}
+\newcommand{\corety}[1]{\ensuremath{#1 \; \mathsf{core}}}
+\newcommand{\schedulety}{\ensuremath{\mathsf{sched}}}
+\newcommand{\timety}{\ensuremath{\mathsf{time}}}
+\newcommand{\locty}{\ensuremath{\mathsf{loc}}}
+\newcommand{\boolty}{\ensuremath{\mathsf{bool}}}
+\newcommand{\unitty}{\ensuremath{\mathsf{unit}}}
+\newcommand{\stringty}{\ensuremath{\mathsf{string}}}
 \newcommand{\metatype}[1]{\ensuremath{\mathsf{meta}(#1)}}
+\newcommand{\nestedtype}[1]{\ensuremath{\mathsf{nest}(#1)}}
+\newcommand{\dsty}{\ensuremath{\mathsf{ds}}}
 
 \newcommand{\dom}{\ensuremath{\mathsf{dom}}}
+\newcommand{\ueq}[3]{\ensuremath{#1 =_{#2} #3}}
+\newcommand{\fsubset}[3]{\ensuremath{#1 \subseteq_{#2} #3}}
+\newcommand{\feq}[3]{\ensuremath{#1 =_{#2} #3}}
 
 % Expressions
 \newcommand{\expression}{e}
 \newcommand{\constant}{c}
+\newcommand{\ds}{\ensuremath{ds}}
 \newcommand{\boolf}{\ensuremath{\mathtt{false}}}
 \newcommand{\boolt}{\ensuremath{\mathtt{true}}}
 \newcommand{\loc}{\ensuremath{\ell}}
@@ -154,6 +169,7 @@
 \newcommand{\data}{\ensuremath{v}}
 \newcommand{\atime}{\ensuremath{t}}
 \newcommand{\astring}{\ensuremath{w}}
+\newcommand{\unit}{\ensuremath{()}}
 \newcommand{\schedule}{\ensuremath{s}}
 \newcommand{\parser}{\ensuremath{p}}
 \newcommand{\none}{\ensuremath{\mathtt{None}}}
@@ -212,6 +228,9 @@
 \newcommand{\stutterfeed}[2]{\ensuremath{\mathtt{stutter}\; #1 \; \mathtt{on} \; #2}}
 \newcommand{\refeed}[2]{\ensuremath{\mathtt{reschedule}\; #1 \; \mathtt{to} \; #2}}
 \newcommand{\emptyfeed}{\ensuremath{\emptyset}}
+\newcommand{\onefeed}[2]{\ensuremath{\mathtt{One}}(#1,#2)}
+\newcommand{\sfeed}[1]{\ensuremath{\mathtt{SchedF}}(#1)}
+\newcommand{\lfeed}[1]{\ensuremath{\mathtt{ListF}}(#1)}
 \newcommand{\unionfeed}{\ensuremath{\cup}}
 \newcommand{\sumfeed}{\ensuremath{+}}
 \newcommand{\spairfeed}{\; \ensuremath{\mathtt{\&} \; }}

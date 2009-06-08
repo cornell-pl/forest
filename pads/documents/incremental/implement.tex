@@ -1,0 +1,22 @@
+\section{Implementation and Evaluation}
+\label{sec:imp}
+
+ - parse metric
+ - initial learn size and chunk size - these can affect results
+ - update chunk by chunk 
+ - optimizations/heuristics
+   - memoization
+   - the clean function (to reduce the number of parses)
+   - merge adjacent const strings (only punctuation and white spaces)
+   - control of aggregate size
+   - deterministic unions
+   - longest match in arrays
+   - error recovery
+   - parses cut-off: kill a parse if it has more than n consecutive failures in a struct
+
+ - Experiments:
+	1) comparison with old LearnPADS on several large datasets (ai.3000, asl.log, etc)
+	   compare exec time and type complexity
+	2) use ai format, do a table with 1000 5000 10000,...,1M miles
+	   using orig learning system and the new system with various optimization turned on and off.
+
