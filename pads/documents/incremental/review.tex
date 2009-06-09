@@ -83,9 +83,9 @@ in Figure \ref{fig:ai} are:
 
 {\small
 \begin{verbatim}
-[ip] [ ] [-] [ ] [-] [ ] [[] [date] [:] [time] 
-   [ ] ["] [str] [ ] [path] [ ] [str] [/] 
-   [float] ["] [ ] [int] [ ] [int]
+[ip] [ ] [-] [ ] [-] [ ] [[] [date] [:] 
+   [time] [ ] ["] [str] [ ] [path] [ ] [str] 
+   [/] [float] ["] [ ] [int] [ ] [int]
 
 [host] [ ] [-] [ ] [str] [ ] [[] [date] [:] 
    [time] [ ] ["] [str] [ ] [path] [ ] [str] 
@@ -109,13 +109,13 @@ a particular token. For the above tokenized data, the histograms for
 \end{center}
 \end{figure}
 
-The algorithm then group the tokens by the similarity of their histograms,
-and select a group of tokens that exhibits the strongest signal of being
-either struct, union or array separators. Then these tokens are used 
+The algorithm then groups the tokens by the similarity of their histograms,
+and selects a group of tokens that exhibits the strongest signal of being
+either struct, union or array separators. These tokens are used 
 to partition the tokens into sub-contexts. For each of the sub-context,
 we repeat the above procedure of computing histograms and grouping
 tokens, etc in a recursive manner. At the end of phase two, we will have
-a candidate structure that describes the original data records.
+a relatively good candidate structure that describes the original data records.
 
 In the third and last phase, known as {\em format refinement} phase,
 we improve the candidate structure through the application of a series of
@@ -124,24 +124,24 @@ making it more precise and accurate by transforming the structures and
 adding data dependencies among sub-structures and constraints on base types.
 The procedure resembles a greedy local search process which optimizes a
 score. We pick the cost of transmitting the data and the description as our
-scoring function, following the Minimum Description Length (MDL) principle.
-The phase stops when the search reaches a local optimal description.
+scoring function, following the Minimum Description Length (MDL) \cite{mdlbook} 
+principle. The phase stops when the search reaches a local optimal description.
 
 While the above inference algorithm produces some good results for the
 set of small log files that we experimented with, it has some serious
 limitations. First, the algorithm requires loading all the data into main
 memory at once to analyze it. This means it cannot learn the format for a log
-file that is larger than the size of the memory. To make matters worse, the
-data dependency analysis in the format refinement phase suffers from a space
-blow-up quite frequently. So this algorithm simple cannot handle real-world
-system logs which are easily a few hundred megabytes to a few gigabytes. 
+file that is larger than the size of the usable memory. To make matters worse, the
+data dependency analysis in the format refinement phase uses quadratic space. 
+Therefore the algorithm simply cannot scale to real-world
+system logs which are easily a few hundred megabytes to several gigabytes. 
 Second, even though we could learn a description from a subset of the original
 raw data, depending on the generality of the sample data, such a description
 may or may not be general enough to describe all the rest of the data.
-For example, if we pick sample data containing only the HTTP method "GET", 
-the description we learned from this sample will be not general enough to 
+For example, if we pick sample data from an \ai{} log containing only the HTTP 
+method "GET", the description we learned from this sample will be not general enough to 
 describe another line with the method "POST", buried somewhere else in the
-raw data. Third, system logs often grow over time. And the format can evolve 
+raw data. Last, system logs often grow over time. And the format can evolve 
 over time, too. The learning algorithm we present so far is not able to adapt to 
 these changes in continuously arriving data. 
 
