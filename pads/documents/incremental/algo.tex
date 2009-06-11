@@ -1,12 +1,218 @@
 \section{The Algorithm}
 \label{sec:algo}
+Intuitively, the incremental learning of a description from a large data source works
+as follows. We first divide the data source into a sequence of smaller, manageable chunks.
+For the first chunk, we learn a description $d_0$ using the format inference
+algorithm descripted in section \ref{sec:review}. Then for each of the remaining chunk,
+an {\em incremental learning step}, defined below, is performed.  
 
- - problem definition (as close to the previous description as possible) (but we don't
-   have a metric to measure how close yet, do we want to mention tree edit distance??)
- - overview of algorithm: parsing + aggregating + rewriting
- - parsing algo (parse rep, score metric, pseudo-code)
- - aggregating algo (in pseudo code)
- - selection of top aggregates
- - update original description
- - rewriting rules (data independent, data dependent, OptsTable)
+\begin{definition}[Incremental learning step]
+Given an initial description $d$, and some new data lines $xs$, infer a new description $d'$ 
+which is as similar to $d$ as possible such that $d'$ subsumes $d$ and describes $xs$.
+\end{definition}
+
+The new description $d'$ has to describe both the new data $xs$ and
+all the old data which was described by $d$. 
+In addition, we prefer $d'$ to be as similar to $d$ as possible because, 
+first, the whole learning process could begin with a presumably higher quality description 
+initially written by a human expert. We would like to retain the its shape as much as possible.
+Second, descriptions often serve as documentation of the data sources, and they are
+read and modified by users from time to time. Keeping the documentation relatively stable increases
+the ease of management. The rest of the section will focus on an algorithm that
+performs one incremental learning step.
+We first give the inductive definitions of
+a description $D$, a data representation $R$, and an aggregate structure $A$. 
+
+{\small 
+\begin{verbatim}
+Descriptions:
+Base ::= Pint | PstringME(re)
+D ::=   
+  Base           (Base token)
+| Sync s         (Synchronizing token) 
+| x:D1 * D2      (Dependent pair)
+| D1 + D2        (Union)
+| D array(s, t)  (Array)
+
+Data representation:
+BaseR ::= Str s | Int i | Error
+SyncR ::= Good | Fail | Recovered s 
+R ::=
+  BaseR
+| SyncR
+| (R1, R2)
+| inl R | inr R
+| arrayR (R list, SyncR list, SyncR)
+
+Aggregation structure:
+A :: = 
+  Base
+| Sync s
+| (A1, A2)
+| unionA(A_l, A_r)
+| arrayA (A_elem, A_sep, A_term)
+| opt A
+| l [s]
+\end{verbatim}
+}
+
+For ease of presentation, we present the description language as a simplified abstract
+syntax tree that resembles a subset of \pads{} features. We assume just two types of base tokens: 
+an integer token, and a string token that matches a
+regular expression. Synchronizing tokens, or sync token in short, are constant strings. 
+Synchronization tokens often
+serves as delimiters in the data, such as white spaces or punctuations.
+A dependent pair binds
+the first component to variable $x$, and then usess $x$ in its second component. It is 
+straight-forward to extend the pairs and binary unions to n-ary structs and unions.
+A array has a element which is described by $D$, and a separator string $s$ and a
+terminator string $t$. 
+
+The data representation is the result of parsing an input string using a description $d$.
+For example, parsing a base token can result in a string, an integer or an error.
+Besides {\tt Good} and {\tt Fail}, parsing a sync token can also result in 
+a recovered mode, where $s$ is the string up to, but not including the good parse of the
+sync token. In other words, $s$ is the ``skipped'' data when trying to parse a sync token.
+The parse of a dependent pair is a pair of representations, and the
+parse of a union is the left or right injection of the represention of parsing the left or
+right branch of the union. The parse of an array includes a list of parses for the element,
+a list of parses for the separator and a parse for the terminator which appears at the end of
+the array.
+
+The aggregation structure is the {\em accumulation} of the parsed data over data lines.
+It ressembles the structure of the description AST, with two additional nodes: an option
+node, and a learn node. The option node indicates that the description underneath this node is
+optional, while the learn node $l$ accumulates all the ``skipped'' data in the recovered mode.
+The data strings associated with the learn nodes are ``extraneous'' data that need be learned to
+get its description. And such additional descriptions will be added to the original description
+to get a new description. Essentially, the aggregate contains all the necessary information
+to update the previous description.
+
+\begin{figure}[t]
+\begin{codebox}
+incremental_step(d, xs) =
+  as := [\kw{init_aggregate}(d)];
+  foreach x in xs \{
+    rs := \kw{parse_all}(d, x);
+    as' := [];
+    foreach r in rs \{
+      foreach a in as \{
+        a' := \kw{aggregate}(a, r); 
+        as' := as' @ [a']
+      \}
+    \}
+    as := as'
+  \} 
+  best_a := \kw{select_best}(as);
+  d' = \kw{update_desc}(d, best_a);  
+  return d'
+\end{codebox}
+\caption{A pseudo-code for the incremental learning step}
+\label{fig:inc-learning}
+\end{figure}
+
+Figure \ref{fig:inc-learning} shows the overall algorithm for the incremental step in
+pseudo-code. The {\tt init\_aggregate} function initializes an empty aggregate
+structure according to a description $d$. The two tree structures are essentially the
+same. Then for each data line $x$, we parse it into a list of data representations $rs$
+using the {\tt parse\_all} function. We then call the {\tt aggregate} function to merge
+each parse in $rs$ with each $a$ in the current list of aggregates. We use `@' to denote
+concatenation of two lists. When we finish
+parsing all the data lines and obtain a final list of aggregates $as$, we select
+the best aggregate according to some criterion, and finally update the previous description
+$d$ into $d'$ using the best aggregate. Next, we discuss the {\tt parse\_all},
+{\tt aggregate}, {\tt select\_best} and {\tt update\_desc} function in more details.
+
+%\begin{codebox}
+%parse_all (d, x) =
+%  switch (d) \{
+%    case Pint =>  
+%      (s, remainder) := match_prefix(x, "[0-9+\-]+");
+%      if s != "" then return (Int s, remainder)
+%      else return [(Error, x)];
+%    case PstringME(re) => 
+%      (s, remainder) := match_prefix(x, re);
+%      if s != "" then return (Str s, remainder)
+%      else return [(Error, x)];
+%    case Sync s => 
+%      (s', prefix, remainder) := match(x, s);
+%      if s' = s and prefix = "" then return (Good, remainder)
+%      elseif s' = "" then return (Fail, remainder)
+%      else return [(Recovered prefix, remainder)]
+%    case (x:d1, d2) =>
+%      rs1 := parse_all (d1, x);
+%      rs2 := [];
+%      foreach (r1, remainder) in rs1 \{
+%        (r2, remainder2) := parse_all (d2, remainder);
+%        rs2 := rs2 + [((r1, r2), remainder2)]
+%      \}
+%    case (d1 + d2) => 
+%	parse_all(d1, x) @ parse_all(d2, x)
+%    case d array(sep, term) =>
+%  \} 
+%\end{codebox}    
+%
+The {\tt parse\_all} function takes a description $d$ and an input string $x$, and returns
+a list of all possible parses along with their respective ending position in the input. 
+This function implements a standard recursive descent parser which recursively matches the
+description structure (and sub-structures) with the input. Figure \ref{fig:parse_base}
+shows the {\tt parse\_base} function which parses a base token. The {\tt match\_prefix}
+function matches the prefix of an input string with a regular expression and returns
+the matched string and the remainder in the input.
+
+\begin{figure}[t]
+\begin{codebox}
+parse_base (b, x) =
+  switch (b) \{
+    case Pint => 
+      (s, suffix) := match_prefix(x, "[0-0+\-]+");
+      if s <> "" then return [(Int s, suffix)];
+      else return [(Error, x)]
+    case PstringME(re) => 
+      (s, suffix) := match_prefix(x, re);
+      if s <> "" then return [(Str s, suffix)];
+      else return [(Error, x)];
+  \}
+\end{codebox}
+\caption{Function to parse a base token} \label{fig:parse_base}
+\end{figure}
+
+As an example, let $d$ be {\tt (Pint, Sync "|") + (PstringME "[a-z]+", Sync "|")}, 
+and $x$ be ``\verb#abc|#''. {\tt parse\_all(d, x)} gives the following two possible parses:
+{\small
+\begin{verbatim}
+  inl (Error, Recovered "abc")
+  inr (Str "abc", Good)
+\end{verbatim}
+}
+
+The {\tt aggregate} function adds a parse into an existing aggregate structure. When there is
+no errors in the parse, it makes no changes to the aggregate. If the parse contains 
+an error or failure for parsing token $b$, then the aggregate component 
+$b$ is transformed to $opt b$, to indicate that $b$ node is optional. 
+If a parse contains a recovered data $Recovered~ r$, then
+a optional learn node will be created before the sync node. And the new aggregate component will be
+$(opt (l [r]),~ Sync~ s)$. If the aggregate structure already contains the learn node before this
+sync node, then recovered data $r$ will be added to the list under $l$.
+
+The {\tt select\_best} function computes a score by counting the total number of $opt$ and $l$ nodes
+in each of the aggregates, and returns the one with the smallest number. The idea is that the
+aggregate with the smallest number of added nodes is more likely to represent a new description
+that is the closest to the original description. 
+
+Finally, the {\tt update\_desc} function does two things. First, it invokes the format inference
+algorithm to learn a sub-description for the data strings collected at each of the learn nodes
+and replace the learn nodes with these new sub-descriptions. Then, it uses a number of rewriting
+rules into improve the overall structure. We will discuss some of these rewriting rules in more
+details in section \ref{sec:imp}.
+
+
+% - problem definition (as close to the previous description as possible) (but we don't
+%   have a metric to measure how close yet, do we want to mention tree edit distance??)
+% - overview of algorithm: parsing + aggregating + rewriting
+% - parsing algo (parse rep, score metric, pseudo-code)
+% - aggregating algo (in pseudo code)
+% - selection of top aggregates
+% - update original description
+% - rewriting rules (data independent, data dependent, OptsTable)
 

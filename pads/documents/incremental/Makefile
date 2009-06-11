@@ -6,6 +6,8 @@ all: *.tex
 	latex paper.tex
 	dvipdf paper.dvi
 
+clean:
+	rm -f *.aux *.dvi *.bbl
 semantics: semantics.tex
 	latex semantics.tex
 	latex semantics.tex
