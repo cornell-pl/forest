@@ -33,6 +33,7 @@ D ::=
 | x:D1 * D2      (Dependent pair)
 | D1 + D2        (Union)
 | D array(s, t)  (Array)
+| D option       (Option)
 
 Data representation:
 BaseR ::= Str s | Int i | Error
@@ -43,6 +44,7 @@ R ::=
 | (R1, R2)
 | inl R | inr R
 | arrayR (R list, SyncR list, SyncR)
+| optionR R
 
 Aggregation structure:
 A :: = 
@@ -51,6 +53,7 @@ A :: =
 | (A1, A2)
 | unionA(A_l, A_r)
 | arrayA (A_elem, A_sep, A_term)
+| optionA A
 | opt A
 | l [s]
 \end{verbatim}
@@ -67,7 +70,7 @@ A dependent pair binds
 the first component to variable $x$, and then usess $x$ in its second component. It is 
 straight-forward to extend the pairs and binary unions to n-ary structs and unions.
 A array has a element which is described by $D$, and a separator string $s$ and a
-terminator string $t$. 
+terminator string $t$. {\tt D option} indicates $D$ is optional.
 
 The data representation is the result of parsing an input string using a description $d$.
 For example, parsing a base token can result in a string, an integer or an error.
@@ -81,9 +84,11 @@ a list of parses for the separator and a parse for the terminator which appears 
 the array.
 
 The aggregation structure is the {\em accumulation} of the parsed data over data lines.
-It ressembles the structure of the description AST, with two additional nodes: an option
-node, and a learn node. The option node indicates that the description underneath this node is
-optional, while the learn node $l$ accumulates all the ``skipped'' data in the recovered mode.
+It ressembles the structure of the description AST, with two additional nodes: 
+an {\tt opt} node, and a {\tt learn} node. 
+The opt node indicates that the description underneath this node is
+optional, while the learn node $l$ accumulates all the ``skipped'' data in the recovered mode. Note the difference between opt nodes and optionA nodes which
+just corresponds to the description {\tt D option}. 
 The data strings associated with the learn nodes are ``extraneous'' data that need be learned to
 get its description. And such additional descriptions will be added to the original description
 to get a new description. Essentially, the aggregate contains all the necessary information
@@ -209,7 +214,7 @@ and $x$ be ``\verb#abc|#''. {\tt parse\_all(d, x)} gives the following two possi
 The {\tt aggregate} function adds a parse into an existing aggregate structure. When there is
 no errors in the parse, it makes no changes to the aggregate. If the parse contains 
 an error or failure for parsing token $b$, then the aggregate component 
-$b$ is transformed to $opt b$, to indicate that $b$ node is optional. 
+$b$ is transformed to $opt~ b$, to indicate that $b$ node is optional. 
 If a parse contains a recovered data $Recovered~ r$, then
 a optional learn node will be created before the sync node. And the new aggregate component will be
 $(opt (l [r]),~ Sync~ s)$. If the aggregate structure already contains the learn node before this
