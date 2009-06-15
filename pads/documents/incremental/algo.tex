@@ -3,7 +3,7 @@
 Intuitively, the incremental learning of a description from a large data source works
 as follows. We first divide the data source into a sequence of smaller, manageable chunks.
 For the first chunk, we learn a description $d_0$ using the format inference
-algorithm descripted in section \ref{sec:review}. Then for each of the remaining chunk,
+algorithm descripted in section \ref{sec:review}. Then for each of the remaining chunks,
 an {\em incremental learning step}, defined below, is performed.  
 
 \begin{definition}[Incremental learning step]
@@ -57,7 +57,8 @@ A :: =
 }
 
 For ease of presentation, we present the description language as a simplified abstract
-syntax tree that resembles a subset of \pads{} features. We assume just two types of base tokens: 
+syntax tree that includes a main subset of \pads{} features. 
+We assume just two types of base tokens: 
 an integer token, and a string token that matches a
 regular expression. Synchronizing tokens, or sync token in short, are constant strings. 
 Synchronization tokens often
@@ -155,26 +156,45 @@ $d$ into $d'$ using the best aggregate. Next, we discuss the {\tt parse\_all},
 The {\tt parse\_all} function takes a description $d$ and an input string $x$, and returns
 a list of all possible parses along with their respective ending position in the input. 
 This function implements a standard recursive descent parser which recursively matches the
-description structure (and sub-structures) with the input. Figure \ref{fig:parse_base}
+description structure (and sub-structures) with the input. To parse a pair $x: d_1 * d_2$, 
+we first call {\tt parse\_all} on $d_1$ and get a list of parses. 
+And then for each of the parse $r_1$ and corresponding end position, we bind $x$ to $r_1$ in
+a private environment and  parse $d_2$ to get parses $l_2$. 
+Finally for each parse $r_2$ in $l_2$ and each parse $r_1$ in $l_1$, 
+construct a representation $(r_1, r_2)$, and return a list of all such pairs.
+To parse a union $d_1 + d_2$, we simply return the concatenation of list of parses from
+parsing $d_1$ and the list of parses from parsing $d_2$. To parse $d~ array(s, t)$,
+we repeatedly attemp to parse $d$ until there's no more progress in the input.
+And in each iteration, we also add parses generated from parsing $t$ as well, as if
+the array has been terminated at this iteration. Figure \ref{fig:parse_base}
 shows the {\tt parse\_base} function which parses a base token. The {\tt match\_prefix}
 function matches the prefix of an input string with a regular expression and returns
-the matched string and the remainder in the input.
+the matched string and the remainder in the input. The {\tt match} function looks for
+the first match of $s$ in input $x$, and returns the matched string $s'$, the prefix string
+in $x$ before $s'$, and the remainder in the input.
 
 \begin{figure}[t]
 \begin{codebox}
 parse_base (b, x) =
   switch (b) \{
-    case Pint => 
-      (s, suffix) := match_prefix(x, "[0-0+\-]+");
-      if s <> "" then return [(Int s, suffix)];
-      else return [(Error, x)]
-    case PstringME(re) => 
-      (s, suffix) := match_prefix(x, re);
-      if s <> "" then return [(Str s, suffix)];
-      else return [(Error, x)];
+  case Pint => 
+    (s, suffix) := match_prefix(x, "[0-0+\-]+");
+    if s <> "" then return [(Int s, suffix)];
+    else return [(Error, x)]
+  case PstringME(re) => 
+    (s, suffix) := match_prefix(x, re);
+    if s <> "" then return [(Str s, suffix)];
+    else return [(Error, x)];
+  case Sync s => 
+    (s', prefix, remainder) := match(x, s);
+    if s' = s and prefix = "" then 
+      return (Good, remainder)
+    elseif s' = "" then 
+      return (Fail, remainder)
+    else return [(Recovered prefix, remainder)]
   \}
 \end{codebox}
-\caption{Function to parse a base token} \label{fig:parse_base}
+\caption{Function to parse a base token or a sync token} \label{fig:parse_base}
 \end{figure}
 
 As an example, let $d$ be {\tt (Pint, Sync "|") + (PstringME "[a-z]+", Sync "|")}, 

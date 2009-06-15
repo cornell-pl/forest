@@ -1,22 +1,113 @@
 \section{Implementation and Evaluation}
 \label{sec:imp}
+The algorithm presented in the last section is idealized.
+For example, the semantics of the {\tt parse\_all} function does not
+exactly corresponds to the semantics of union and array parsing in \pads 
+\cite{fisher+:popl06}. The algorithm is also not optimized.
+Parsing unions and arrays both cause the number of parses to 
+grow exponentially. Furthermore, the number of aggregates is of 
+$O(m ^ n)$, where $m$ is the largest
+number of parses for a given data line, and $n$ is the number of lines to aggregate.
+Computing at these scales is certainly not practical.
+Next, we will discuss some implementation issues in three areas: the correctness of the
+learned description, the quality of the learned description and the performance of
+the system. And at the end, we will present some preliminary experimental results.
+
+\subsection{Correctness}
+\pads{} implements deterministic unions. In other words, the \pads~ parser
+only attempts the second branch if the first branch fails to parse. As
+such, in the implementation of the incremental learning system, when parsing
+$d_1 + d_2$, we first parse $d_1$, and attempt $d_2$ only if there is no
+successful parse in the result of parsing $d_1$. This ensures that
+updated description, when translated to \pads{} is correct. 
+\pads{} also has a ``longest-match'' array semantics, which means when parsing
+an array, it repeatedly parsing the body of the array until no progress can be made 
+in the input. We adopt a similar strategy in our implementation.
+The above two strategies reduces the number of parses to be produced and 
+effectively improves the efficiency of the system. 
+
+\subsection{Quality}
+In the algorithm presented in section \ref{sec:algo}, parsing a sync token results
+in one of three modes: {\tt Good}, {\tt Fail} and {\tt Recovered}. 
+In the implementation, a sync token can be not only a constant string, but also
+a constant integer, an integer range or an enumeration of the above.
+Then a situation arises when the sync token we want to parse is {\tt Sync (Str "GET")},
+and the prefix of the current input string is ``POST''. According to the
+definition of {\tt parse\_base} function, the result would be {\tt Fail}.
+In reality, the input ``POST'' has the same class as ``GET'', i.e. an English word,
+and it may very well be the case that this sync token should have been 
+an an enumerations of words, instead of a constant word.
+To handle such cases, we created a fourth mode, {\tt Partial} to indicate that. 
+the input contains some data that has the same {\em class} as the description,
+but there is no exact match. During aggregation, such partial nodes in the parse
+tree will be noted and treated specially. In the above example, the aggregate 
+function will change the description to {\tt sync (Enum [Word "Get", Word "POST"])}.
+The introduction of partial nodes can avoid a lot of unnecessary parsing errors
+and produce a description that is more compact and meaningful. 
+
+However, there is an issue which could undermine the benefits of partial nodes.
+We mentioned earlier that our initial description can be obtained by learning
+from an initial chunk of data using the \learnpads{} algorithm. In addition,
+the {\tt update\_desc} function uses the \learnpads{} algorithm to learn 
+sub-descriptions from all the accumulated data at the various learn nodes 
+in the aggregate structure. One of the rewriting rules used in \learnpads{}
+merges adjacent constant strings together into one string. As a result, we
+could end up with constant strings like ``$\backslash$"GET '' 
+(see Fig \ref{fig:ai.p}), instead of just ``GET''. Once multiple words are
+concatenated together, it is difficult to categorize its class, or to
+produce a partial node based on the class. We therefore delay the application of
+this rewriting rule until the every end of the entire incremental learning process.
+
+Another related issue concerns the introduction of {\tt Recovered} nodes 
+during parsing. We implement a heuristics that if a sync token is recovered
+after skipped too many characters (as a factor of the number of characters in
+the sync token itself), we also introduce a {\tt Fail} parse for this sync
+token as if this sync token cannot parse at all, and then continue parsing the 
+remaining descriptions. This heuristics delayed a decision to commit to
+either the recovery or failure. Such decision will be made by comparing the 
+``goodness'' of the different parses which will be discussed in the next
+subsection.
+ 
+\subsection{Performance}
+
+
+\subsection{Experiments}
+\begin{table}[th]
+\begin{tabular}{|c|c|c|c|c|c|}\hline
+& & \multicolumn{2}{|c|}{\learnpads} & \multicolumn{2}{|c|}{incremental} \\ \cline{3-6}
+\raisebox{1.5ex}[0pt]{Formats} & \raisebox{1.5ex}[0pt]{Lines} &
+	Time & CT & Time & CT \\ \hline \hline
+ai.3000	&	3000	& 27.5	& 412.6	& 2.1	& 571.0	\\ \hline
+asl.log  &	1500	& 31.9	& 960.1	& 23.9 	& 1393.3 \\ \hline
+apache.txt  &	2087	& 104.2 & 6111.4& 6.6 	& 2339.5 \\ \hline
+access\_log  &	8188 	& 134.5	& 351.2	& 2.9	& 321.2	\\ \hline
+error\_log  &	4510	& 101.7	& 101.9	& 0.9	& 107.9 \\ \hline
+interface.loop & 1253	& 54.0	& 741.4	& 1.9	& 1053.7 \\ \hline
+\end{tabular}
+\caption{Execution times (secs) and type complexity} \label{tab:results}
+\end{table}
+
 
  - parse metric
  - initial learn size and chunk size - these can affect results
  - update chunk by chunk 
  - optimizations/heuristics
+   due to performance concerns:
    - memoization
    - the clean function (to reduce the number of parses)
-   - merge adjacent const strings (only punctuation and white spaces)
    - control of aggregate size
+   - parses cut-off: kill a parse if it has more than n consecutive failures in a struct
+   due to quality of description concerns (and also performance)
    - deterministic unions
    - longest match in arrays
+   - merge adjacent const strings (only punctuation and white spaces)
    - error recovery
-   - parses cut-off: kill a parse if it has more than n consecutive failures in a struct
 
- - Experiments:
-	1) comparison with old LearnPADS on several large datasets (ai.3000, asl.log, etc)
-	   compare exec time and type complexity
+- Experiments
+	1) comparison with old LearnPADS on several large datasets (ai.3000, asl.log, apache.txt, access\_log, error\_log, interface.loop)
+	   compare exec time and type complexity. For increment, use
+	   initial learn chunk of 100 and incremental error chunks of 100
 	2) use ai format, do a table with 1000 5000 10000,...,1M miles
 	   using orig learning system and the new system with various optimization turned on and off.
+
 
