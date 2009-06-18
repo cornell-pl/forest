@@ -13,6 +13,11 @@ struct
   val max_consecutive_fails = 3
   val recover_factor = 10
 
+  (* default optimization settings *)
+  val do_clean = ref true
+  val do_parse_cutoff = ref true
+  val do_memo = ref true
+
   structure ParseSet = ListSetFn(struct
 	type ord_key = Rep * metric_type * int  (* (rep, metric, pos) triplet, metric smaller => better *)
 	val compare = 
@@ -46,6 +51,7 @@ struct
 	(repToString "" r) ^ (metricToString m) ^ " Ending pos = " ^ Int.toString j ^ "\n"
 
   fun clean s = 
+    if !do_clean = true then
 	let 
 (*
 	    val items = ParseSet.listItems s
@@ -93,6 +99,7 @@ struct
 	in
 	    ParseSet.addList (ParseSet.empty, mylist)
 	end
+     else s
 
   fun has_good_parse s = 
 	let fun f (r, m, j) = is_good_metric m 
@@ -950,7 +957,8 @@ struct
 	   newset
 	end
     | _ => raise TyMismatch
-    val _ = memo:= MemoMap.insert(!memo, (mylabel, i), finalset)
+    val _ = if !do_memo then memo:= MemoMap.insert(!memo, (mylabel, i), finalset)
+	    else ()
 (*
     val _ = print ("Finished parsing " ^ (Atom.toString mylabel) ^ " at Pos " ^ Int.toString i ^"\n")
     val _ = print ("Size of returning set = " ^ (Int.toString (ParseSet.numItems finalset)) ^ "\n")

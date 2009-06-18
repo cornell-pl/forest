@@ -45,7 +45,10 @@ structure Main : sig
 						       numFooters
                                                        end4Times
 						       sep
-            in print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" )
+		val end5Times = updatePadsEnd (Time.now()) end4Times
+                val computeTimes = getComputeTimes end5Times
+            in (print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" );
+		print (computeTimesToString computeTimes))
             end
     end
 

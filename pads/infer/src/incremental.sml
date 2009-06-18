@@ -73,7 +73,7 @@ structure Incremental: sig
 	(* val _ = print (line ^ "\n")  *) 
 	val tm = Time.now() 
 	val _ = Parse.memo:=Parse.MemoMap.empty
- 	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, true)
+ 	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, !Parse.do_parse_cutoff)
         val set = if Parse.ParseSet.numItems set = 0 then
 		  (Parse.memo:=Parse.MemoMap.empty;
 		  Parse.parse_all(ty, LabelMap.empty, 0, line, false))
@@ -246,8 +246,10 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
+		(*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
+		*)
 		    (* val _ = AG.printTable table *)
 		    val trans_map = AG.transpose table
 (*
@@ -260,14 +262,14 @@ structure Incremental: sig
 		    val newTy = Reduce.reduce 5 newTy
 		    val elapse = Time.- (Time.now(), start_time)
 		    val refinedTy = Reduce.reduce 4 newTy
-	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
+(*
+	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy) 
 
 		    val tyFile = (dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString index ^ ".ty") 
 		    val tystrm = TextIO.openOut tyFile
 	   	    val _ = print ("Output IR to " ^ tyFile ^ "\n")
 		    val _ = TextIO.output (tystrm, TyToStringD "" false false  "\n" refinedTy)
 		    val _ = TextIO.closeOut tystrm
-
 		    val padscFile = dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString index ^ ".p"
 	   	    val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
 	   	    val padsstrm = TextIO.openOut padscFile
@@ -275,6 +277,7 @@ structure Incremental: sig
 				((!lexName)^ ".p"))
 	   	    val _ = TextIO.output (padsstrm, desc)
 	   	    val _ = TextIO.closeOut padsstrm
+*)
 	   	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
 	   	    val msg = "Chunk " ^ Int.toString index ^ 
 			" (" ^ Int.toString(count) ^ " lines): Aggregate Cost = " ^ 
@@ -315,15 +318,15 @@ structure Incremental: sig
 	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = TextIO.closeIn strm
 	   val logstrm = TextIO.openAppend logFile
+	   val finalTy = Reduce.reduce 4 (!myTy)  
+	   val _ = (print "**** Final Ty: \n"; printTy (measure finalTy))
 	   val msg = "Total time elapsed = " ^ Time.toString total_elapse ^ " secs\n"
 	   val _ = TextIO.output (logstrm, msg)
 	   val _ = TextIO.closeOut logstrm
 	   val _ = print msg
 		   
-	   val finalTy = Reduce.reduce 4 (!myTy)  
 	   (* val finalTy = (!myTy)*) 
 
-	   val _ = (print "**** Final Ty: \n"; printTy finalTy)
 	   val padscFile = dir ^  "/" ^ filename ^ ".p"
 	   val pmlFile = dir ^  "/" ^ filename ^ ".pml"
 	   val _ = print ("\nOutput final PADS description to " ^ padscFile ^ "\n")
@@ -353,12 +356,35 @@ structure Incremental: sig
     fun main (cmd, args) = 
      (
      if length args < 3 then
-	(print "Usage: increment ORIG_DATA_FILE LEARN_SIZE PARSE_SIZE [FILE_TO_PARSE]\nSizes are in # of lines\n";
+	(print "Usage: increment ORIG_DATA_FILE LEARN_SIZE PARSE_SIZE [OPT_LEVEL] [FILE_TO_PARSE]\nSizes are in # of lines\n";
 	anyErrors := true)
      else
        let
 	 val [learn_file, ls, cs] = List.take (args, 3)
-	 val parse_file = if length args = 4 then (List.last args)
+	 val opt_level  = if length args > 3 then valOf (Int.fromString 
+			(List.nth (args, 3)))
+		          else 3 (* highest optimization level*)
+	 val _ = if opt_level = 0 then
+			(
+			Parse.do_clean:=false;
+			Parse.do_parse_cutoff:=false;
+			Parse.do_memo:=false
+			)
+		 else if opt_level = 1 then
+			(
+			Parse.do_clean:=true;
+			Parse.do_parse_cutoff:=false;
+			Parse.do_memo:=false
+			)
+		 else if opt_level = 2 then
+			(
+			Parse.do_clean:=true;
+			Parse.do_parse_cutoff:=true;
+			Parse.do_memo:=false
+			)
+		 else () 
+
+	 val parse_file = if length args = 5 then (List.last args)
 			  else learn_file
 	 val learnsize = valOf (Int.fromString ls)
 	 val chunksize = valOf (Int.fromString cs)
