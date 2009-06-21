@@ -1,97 +1,103 @@
-\section{The Algorithm}
+\section{The Incremental Algorithm}
 \label{sec:algo}
 Intuitively, the incremental learning of a description from a large data source works
 as follows. We first divide the data source into a sequence of smaller, manageable chunks.
 For the first chunk, we learn a description $d_0$ using the format inference
-algorithm descripted in section \ref{sec:review}. Then for each of the remaining chunks,
+algorithm described in section \ref{sec:review}. Then for each of the remaining chunks,
 an {\em incremental learning step}, defined below, is performed.  
 
 \begin{definition}[Incremental learning step]
-Given an initial description $d$, and some new data lines $xs$, infer a new description $d'$ 
+Given an initial description $d$, and some new data $xs$, infer a new description $d'$ 
 which is as similar to $d$ as possible such that $d'$ subsumes $d$ and describes $xs$.
 \end{definition}
 
 The new description $d'$ has to describe both the new data $xs$ and
 all the old data which was described by $d$. 
-In addition, we prefer $d'$ to be as similar to $d$ as possible because, 
-first, the whole learning process could begin with a presumably higher quality description 
-initially written by a human expert. We would like to retain the its shape as much as possible.
+In addition, we prefer $d'$ to be as similar to $d$ as possible because, first,
+the learning process can begin with an initial description 
+written by a human expert. 
 Second, descriptions often serve as documentation of the data sources, and they are
 read and modified by users from time to time. Keeping the documentation relatively stable increases
-the ease of management. The rest of the section will focus on an algorithm that
+the ease of management. 
+
+The rest of the section will focus on an algorithm that
 performs one incremental learning step.
 We first give the inductive definitions of
 a description $D$, a data representation $R$, and an aggregate structure $A$. 
+A description is an abstract syntax tree that includes a useful subset
+of \pads{} features, and is what we want to learn. A data representation is 
+the parse tree obtained from parsing some data using a description. 
+An aggregate structure is the {\em accumulation} of parse trees, and it
+includes data that cannot be parsed and therefore must be re-learned.
 
-{\small 
-\begin{verbatim}
-Descriptions:
+\begin{code}
+\kw{Descriptions}:
 Base ::= Pint | PstringME(re)
 D ::=   
-  Base           (Base token)
-| Sync s         (Synchronizing token) 
-| x:D1 * D2      (Dependent pair)
-| D1 + D2        (Union)
-| D array(s, t)  (Array)
-| D option       (Option)
+  Base             (Base token)
+| Sync s           (Synchronizing token) 
+| Pair (D1, D2)    (Pair)
+| Union (D1, D2)   (Union)
+| Array(D, s, t)   (Array)
+| Option D         (Option)
 
-Data representation:
+\kw{Data representation}:
 BaseR ::= Str s | Int i | Error
 SyncR ::= Good | Fail | Recovered s 
 R ::=
   BaseR
 | SyncR
-| (R1, R2)
-| inl R | inr R
-| arrayR (R list, SyncR list, SyncR)
-| optionR R
+| PairR (R1, R2)
+| Union1R R | Union2R R 
+| ArrayR (R list, SyncR list, SyncR)
+| OptionR R
 
-Aggregation structure:
+\cdmath
+\kw{Aggregation structure}:
 A :: = 
-  Base
-| Sync s
-| (A1, A2)
-| unionA(A_l, A_r)
-| arrayA (A_elem, A_sep, A_term)
-| optionA A
-| opt A
-| l [s]
-\end{verbatim}
-}
+  BaseA Base
+| SyncA s
+| PairA(A1, A2)
+| UnionA($A_l$, $A_r$)
+| ArrayA ($A_{elem}$, $A_{sep}$, $A_{term}$)
+| OptionA A
+| Opt A
+| Learn [s]
+\end{code}
 
-For ease of presentation, we present the description language as a simplified abstract
-syntax tree that includes a main subset of \pads{} features. 
+In the above definitions, variable $re$ ranges over regular expressions,
+$s$ and $t$ range over strings, and $i$ ranges over integers.
 We assume just two types of base tokens: 
 an integer token, and a string token that matches a
-regular expression. Synchronizing tokens, or sync token in short, are constant strings. 
-Synchronization tokens often
-serves as delimiters in the data, such as white spaces or punctuations.
-A dependent pair binds
-the first component to variable $x$, and then usess $x$ in its second component. It is 
-straight-forward to extend the pairs and binary unions to n-ary structs and unions.
+regular expression. Synchronizing tokens, or {\em sync tokens} for short, are constant strings. 
+Synchronization tokens, such as white spaces or punctuations,
+serve as delimiters in the data. Pairs and unions are self-explantory. 
 A array has a element which is described by $D$, and a separator string $s$ and a
-terminator string $t$. {\tt D option} indicates $D$ is optional.
+terminator string $t$. {\tt Option D} indicates $D$ is optional.
 
-The data representation is the result of parsing an input string using a description $d$.
-For example, parsing a base token can result in a string, an integer or an error.
-Besides {\tt Good} and {\tt Fail}, parsing a sync token can also result in 
-a recovered mode, where $s$ is the string up to, but not including the good parse of the
-sync token. In other words, $s$ is the ``skipped'' data when trying to parse a sync token.
-The parse of a dependent pair is a pair of representations, and the
-parse of a union is the left or right injection of the represention of parsing the left or
-right branch of the union. The parse of an array includes a list of parses for the element,
+Parsing a base token can result in a string, an integer or an error.
+On the other hand, parsing a sync token {\tt Sync s} can give three different results: 
+{\tt Good}, meaning $s$ has been found at the beginning of the input, 
+{\tt Fail}, meaning $s$ is not a substring in the current input, or 
+{\tt Recovered s'}, meaning $s$ is not found at the current position in the input, but
+can is {\em recovered} after ``skipping'' a string $s'$.
+The parse of a pair is a pair of representations, and the
+parse of a union is either the parse of the first branch, or the 
+parse of the second branch. The parse of an array includes a list of parses for the element,
 a list of parses for the separator and a parse for the terminator which appears at the end of
 the array.
 
-The aggregation structure is the {\em accumulation} of the parsed data over data lines.
-It ressembles the structure of the description AST, with two additional nodes: 
-an {\tt opt} node, and a {\tt learn} node. 
-The opt node indicates that the description underneath this node is
-optional, while the learn node $l$ accumulates all the ``skipped'' data in the recovered mode. Note the difference between opt nodes and optionA nodes which
-just corresponds to the description {\tt D option}. 
-The data strings associated with the learn nodes are ``extraneous'' data that need be learned to
-get its description. And such additional descriptions will be added to the original description
-to get a new description. Essentially, the aggregate contains all the necessary information
+The aggregation structure ressembles the structure of the description $D$, 
+with two additional nodes: an {\tt Opt} node, and a {\tt Learn} node. 
+The {\tt Opt} node are always used above a {\tt BaseA} or a {\tt SyncA} node,
+which indicates that the base token or the sync token underneath is missing in some of the parses
+being aggregated, therefore, the token should be made optional.
+Note the difference between {\tt Opt} nodes and {\tt OptionA} nodes. The latter 
+just corresponds to the description {\tt Option D}. 
+The {\tt Learn} node accumulates all the ``skipped'' data in the recovered mode. 
+Such data is  ``unparsable'' and a sub-description needs be learned. The newly learned sub-descriptions 
+will be added to the original description to get a new description. 
+Essentially, the aggregate contains all the necessary information
 to update the previous description.
 
 \begin{figure}[t]
@@ -99,7 +105,7 @@ to update the previous description.
 incremental_step(d, xs) =
   as := [\kw{init_aggregate}(d)];
   foreach x in xs \{
-    rs := \kw{parse_all}(d, x);
+    rs := \kw{parse}(d, x);
     as' := [];
     foreach r in rs \{
       foreach a in as \{
@@ -113,21 +119,63 @@ incremental_step(d, xs) =
   d' = \kw{update_desc}(d, best_a);  
   return d'
 \end{codebox}
-\caption{A pseudo-code for the incremental learning step}
+\caption{Pseudo-code for the incremental learning step}
 \label{fig:inc-learning}
 \end{figure}
 
 Figure \ref{fig:inc-learning} shows the overall algorithm for the incremental step in
 pseudo-code. The {\tt init\_aggregate} function initializes an empty aggregate
-structure according to a description $d$. The two tree structures are essentially the
-same. Then for each data line $x$, we parse it into a list of data representations $rs$
-using the {\tt parse\_all} function. We then call the {\tt aggregate} function to merge
+structure according to a description $d$.  
+Then for each data record $x$, we parse it into a list of parses $rs$
+using the {\tt parse} function, which is essentially a {\em recursive descent parser}. 
+We then call the {\tt aggregate} function to merge
 each parse in $rs$ with each $a$ in the current list of aggregates. We use `@' to denote
 concatenation of two lists. When we finish
 parsing all the data lines and obtain a final list of aggregates $as$, we select
 the best aggregate according to some criterion, and finally update the previous description
-$d$ into $d'$ using the best aggregate. Next, we discuss the {\tt parse\_all},
-{\tt aggregate}, {\tt select\_best} and {\tt update\_desc} function in more details.
+$d$ into $d'$ using the best aggregate. Next we use a couple of examples to
+illustrate the parsing and the aggregation process which are key to this algorithm.
+
+\begin{figure}[t]
+\begin{center}
+\epsfig{file=parse.eps, width=0.8\columnwidth}
+\caption{Parse three input lines}\label{fig:parse}
+\end{center}
+\end{figure}
+
+\begin{figure*}[t]
+\begin{center}
+\epsfig{file=aggregate.eps, width=2\columnwidth}
+\caption{Aggregate three parses into final aggregate structure}\label{fig:aggregate}
+\end{center}
+\end{figure*}
+
+Suppose we have a description $d$, which is a pair of integer and a sync token ``*'',
+and the the following new input data to be learned (in three lines):
+{\small
+\begin{verbatim}
+5*
+abc*
+8$
+\end{verbatim}
+}
+
+Figure \ref{fig:parse} shows the three data representations resulting from parsing the data lines,
+and we call them $r_1$, $r_2$ and $r_3$, respectively. Notice that first line was parsed
+without errors, second line contains an error for parsing {\tt Pint}, and some unparsable data
+``{\tt abc}'', and the third line gives a {\tt Fail} node because the sync token was not found
+at all. 
+Figure \ref{fig:aggregate} shows the aggregation of $r_1$ through $r_3$ into an initially empty
+aggregate structure. In general, {\tt Error} nodes and {\tt Fail} nodes in the parses causes the
+creation of {\tt Opt} nodes in the aggregate. The unparsable data is collected in {\tt Learn} nodes
+in the aggregate. 
+
+Parsing a union involves attempting to parse the first branch and, if it has error, attempting
+the second branch. This type of union semantics is known as the {\em deterministic choice}. 
+When parsing an array, a {\em longest match} semantics is used, which means the parsing of
+the array elements and separators will continue until no more progress can be made in
+the input. We will not elaborate these semantics due to lack of space.
+
 
 %\begin{codebox}
 %parse_all (d, x) =
@@ -158,6 +206,9 @@ $d$ into $d'$ using the best aggregate. Next, we discuss the {\tt parse\_all},
 %  \} 
 %\end{codebox}    
 %
+
+\cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 The {\tt parse\_all} function takes a description $d$ and an input string $x$, and returns
 a list of all possible parses along with their respective ending position in the input. 
 This function implements a standard recursive descent parser which recursively matches the
@@ -231,6 +282,7 @@ and replace the learn nodes with these new sub-descriptions. Then, it uses a num
 rules into improve the overall structure. We will discuss some of these rewriting rules in more
 details in section \ref{sec:imp}.
 
+}%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF CUT %%%%%%%%%%%%%%%%
 
 % - problem definition (as close to the previous description as possible) (but we don't
 %   have a metric to measure how close yet, do we want to mention tree edit distance??)
