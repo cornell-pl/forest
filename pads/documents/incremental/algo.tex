@@ -170,12 +170,14 @@ aggregate structure. In general, {\tt Error} nodes and {\tt Fail} nodes in the p
 creation of {\tt Opt} nodes in the aggregate. The unparsable data is collected in {\tt Learn} nodes
 in the aggregate. 
 
-Parsing a union involves attempting to parse the first branch and, if it has error, attempting
-the second branch. This type of union semantics is known as the {\em deterministic choice}. 
-When parsing an array, a {\em longest match} semantics is used, which means the parsing of
-the array elements and separators will continue until no more progress can be made in
+Parsing a union involves attempting to parse the first branch and, 
+if it has error, attempting the second branch. This type of union semantics 
+is known as the {\em deterministic choice}, as opposed to a non-deterministic
+choice where both branches are always attempted. 
+When parsing an array, a {\em longest match} semantics is used, 
+which means the parsing of the array elements and separators will 
+continue until no more progress can be made in
 the input. We will not elaborate these semantics due to lack of space.
-
 
 %\begin{codebox}
 %parse_all (d, x) =
