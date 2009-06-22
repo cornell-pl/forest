@@ -225,9 +225,10 @@ need to perform some task over and over again on different
 data sets.  Rather than writing a program specific to a particular
 data set, they use a 
 separate set of interfaces supplied by the \padsd{} system to write a
-single generic program to complete the task.  For example, the RRD database
-loader is generic because it is possible to load data from any
-specified source into the RRD tool without additional ``programming.''
+single generic program to complete the task.  For example, the Round Robin
+Database (RRD) loader is generic because it is possible to load data from any
+specified source into the RRD tool \cite{rrdtool} 
+without additional ``programming.''
 The generic programming mode is the most difficult to use as it involves
 learning a relatively complex set of interfaces for encoding
 Generalized Algebraic Datatypes (GADTs)~\cite{xi:popl03} 
@@ -235,7 +236,7 @@ and Higher-Order Abstract Syntax (HOAS).
 These complexities are required to encode 
 the dependent features of \padsd{} and to compensate for the lack of
 built-in generic programming support in \ocaml{}. 
-Still, the reward for building generic tools is very high:
+Still, the reward for building generic tools is high:
 as more and more such tools are built, the life of the off-the-shelf
 user becomes easier and easier.  We used this infrastructure to
 build the off-the-shelf tools described earlier.
