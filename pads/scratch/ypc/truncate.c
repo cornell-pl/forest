@@ -18,8 +18,10 @@ int main(int argc, char** argv) {
   entry_t           rep;
   entry_t_pd        pd;
   entry_t_m         m;
+
+  Sfio_t           *io;
   char             *fileName = 0;
-  int              count = 0;
+  char             *outName = 0;
 
   if (argc >= 2) {
     fileName = argv[1];
@@ -52,16 +54,18 @@ int main(int argc, char** argv) {
 
   /* Open output file */
   if (!(io = P_fopen(outName, "w"))) {
-    P_SYSERR1(pads->disc, "Failed to open output file \"%s\" for writing", outName);
+    error(ERROR_FATAL, "*** Failed to open output file \"%s\" for writing", outName);
   }
 
   /* Read each line of data  */
   while (!P_io_at_eof(pads)) {
     if (P_OK == entry_t_read(pads, &m, &pd, &rep)) {
-      if (P_ERR == Keep_t_write2io(pads, io, &pd->keep, &rep->keep)) {
+      if (P_ERR == Keepln_t_write2io(pads, io, &pd.keep, &rep.keep)) {
         error(ERROR_FATAL, "*** IO error during write");
-    }
-  };
+      };
+    };
+  }; 
+
   P_io_close(pads);
 
   entry_t_cleanup(pads, &rep);
