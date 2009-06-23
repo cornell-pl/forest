@@ -1,4 +1,59 @@
 \section{Conclusion}
-\label{sec:conclusion}
+\label{sec:conclude}
+This paper has shown that the incremental 
+algorithm was able to scale the original
+\learnpads{} system up to a million
+lines of web server log, and to produce a good
+description within a matter of minutes.
+However, there is still room for improvement in the
+current system. 
 
-This is the conclusion. We have a great paper!
+First, our experiences suggest that
+the quality of the final output and the efficiency
+of parsing is very sensitive to the initial
+description. Therefore, coming up with a good
+initial description is essential to the success
+of the system. This means we need to improve the
+original \learnpads{} algorithm to produce better
+descriptions.
+%We may need better array-finding and
+%blob-finding algorithms in \learnpads{}. Blob-finding
+%is a procedure that looks for ``text-like'' data in the
+%log which is too complex to analyze and creates a blob
+%structure for it. This helps reduce the complexity of
+%the description. 
+Incorporating human modifications 
+before each incremental step is also one of the solutions.
+In fact, this is one of the reasons why we wanted to
+have incremental learning!
+
+%Second, we are interested in the techniques that
+%convert a \pads{} description into a finite-state
+%automaton, and parse the data using the automaton.
+%The advantage of doing this is that our base token
+%definitions are in regular expression and parsing 
+%these already requires the translation from regular
+%expression to DFA. Having the whole description in
+%DFA form can reduce the amount of work done on parsing
+%these base tokens by leveraging dynamic programming
+%techniques. However, there is the issue of a potential
+%exponential blow-up when once converts an NFA into
+%a DFA. We have to study the practical trade-off here.
+
+Second, despite the various optimization efforts we put in
+the system, parsing can still be inefficient, 
+especially for very complex descriptions.
+It is conceivable that 
+{\tt parse\_all} function can be parallelized. In
+particular, whenever a choice point is made during
+parsing, {\tt parse\_all}
+can be called for all the alternatives in
+parallel. The thread that finds the perfect
+parse first commits and kills the other running threads.
+This is an idea inspired by the {\em generalized committed 
+choice} \cite{JaffarYZ07:gcc}. 
+ 
+
+%  - efficiency in parsing
+%  - concurrent parsing (GCC)
+%  - quality of initial description
