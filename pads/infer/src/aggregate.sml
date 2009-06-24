@@ -528,7 +528,7 @@ fun merge_adj_options dep_map ty =
             RArray (a, sep, term, body', len, lengths)
           end
   | Poption (a, body) => Poption(a, merge_adj_options dep_map body)
-  | _ => raise TyMismatch
+  | _ => (print ("Bad Ty:\n"); printTy ty; raise TyMismatch)
 
  
 (* consider situation of Pstruct [opt1, opt2, opt3, opt4, opt5, ...]
