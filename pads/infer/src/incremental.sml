@@ -246,10 +246,8 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
-		(*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-		*)
 		    (* val _ = AG.printTable table *)
 		    val trans_map = AG.transpose table
 (*

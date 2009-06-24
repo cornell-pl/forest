@@ -412,7 +412,7 @@ struct
 
  fun learn lines sibling_opt =
   let 
-      (* val _ = (print "Learning these lines:\n"; List.app (fn s => print (s ^ "\n")) lines) *)
+      val _ = (print "Learning these lines:\n"; List.app (fn s => print (s ^ "\n")) lines) 
       val (ty, _) = Structure.computeStructurefromRecords lines
       val ty = removePempty ty
       val ty = Reduce.reduce 1 ty
@@ -422,6 +422,7 @@ struct
 	   if Options.do_blob_finding then
                 sortUnionBranches (Reduce.updateWithBlobs sibling_opt ty)
            else sortUnionBranches ty
+      val _ = (print ("Learned Ty:\n"); printTy finalty)
   in finalty 
   end
 
