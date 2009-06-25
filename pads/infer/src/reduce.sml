@@ -1964,6 +1964,7 @@ let
   val phase_two_rules : post_reduction_rule list =
 		[ 
 		  uniqueness_to_const, 
+		  adjacent_consts,
 		  enum_range_to_refine,
 		  sum_to_switch,
 		  to_dependent_array_len
@@ -1985,25 +1986,29 @@ let
 
   val phase_four_rules : post_reduction_rule list =
 		[ 
-		  adjacent_consts
+		  adjacent_consts,
+		  remove_degenerate_list1
 		]
 
   val phase_five_rules : pre_reduction_rule list = 
 		[ 	
-			remove_degenerate_list,
 			unnest_tuples,
-			unnest_sums,
-			remove_nils
+			unnest_sums
 		]
   val phase_six_rules : post_reduction_rule list =
 		[ 
-		  adjacent_punc_consts
+		  uniqueness_to_const, 
+		  adjacent_punc_consts,
+		  enum_range_to_refine,
+		  sum_to_switch,
+		  to_dependent_array_len
 		]
 
 
   (* generate the list of rules *)
   val cmap = case phase of
 	2 => Constraint.constrain' ty
+	| 6 => Constraint.constrain' ty
 	| _ => LabelMap.empty
 (* Print the constraints  
   val _ = printConstMap cmap

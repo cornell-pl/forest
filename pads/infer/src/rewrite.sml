@@ -15,7 +15,7 @@ let
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
 
-  val _ = (print "Before Reduction:\n"; printTy measuredTy)
+  (* val _ = (print "Before Reduction:\n"; printTy measuredTy) *)
 
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
@@ -39,13 +39,10 @@ let
 (*
   val _ = print "Phase two ...\n";
 *)
-  val ty2 = (Reduce.reduce 2 ty1)
-  val ty2 = measure (if mode = 0 then Reduce.reduce 4 ty2 else Reduce.reduce 6 ty2)
-  val headers= map (Reduce.reduce 2) headers
-  val headers = if mode = 0 then map (Reduce.reduce 4) headers 
+  val ty2 = measure (if mode = 0 then Reduce.reduce 2 ty1 else Reduce.reduce 6 ty1)
+  val headers = if mode = 0 then map (Reduce.reduce 2) headers 
 		else map (Reduce.reduce 6) headers
-  val footers= map (Reduce.reduce 2) footers
-  val footers = if mode = 0 then map (Reduce.reduce 4) footers 
+  val footers = if mode = 0 then map (Reduce.reduce 2) footers 
 		else map (Reduce.reduce 6)footers 
   val reduce2_time : Time.time = Time.now ()
   (*phase three, redo constraint-free reduction *)
