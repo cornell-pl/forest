@@ -374,14 +374,48 @@ large applications.
 }
 
 \paragraph*{Language or Library.}
-There is the natural question of whether the system is better
-implemented as a library than a language extension. We chose
-to present our work as a language because: (1) the compiler automatically
-eliminates boilerplate code; (2) the surface syntax simplifies the coding of
-the underlying higher-order interfaces; and (3) a language approach allows
-smooth integration with \padsml which itself is a successful 
-language extension.
+A natural question that frequently arises for domain-specific languages
+is whether the system is better
+implemented as a library or as a language extension.  The strongest reason
+for us to implement our system as a language extension is that
+O'Caml  (and C, and SML, and, in fact, most functional and imperative languages) 
+have poor support for generic, type-directed programming.  Unfortunately, 
+many of
+our key tools, including our parsers, printers, database loaders, selectors,
+etc, are generic programs defined over the types of the feeds that our 
+specifications
+generate.  By defining a language extension, we are free to invoke a
+compiler to assemble the code fragments comprising the needed applications
+in a type-correct way.  
 
+Now, in theory, the compiler is not 100\% essential to the generation of
+our generic programs, but in practice, it is an enormous advantage to the 
+average programmer.  
+After spending months studying this issue, the best alternative we have devised
+that does not use compiler support is to require that
+programmers write their specification code inside of functors parameterized
+in the appropriate way.  These functors can then be passed off to other 
+functors implementing appropriate tool interfaces.  However this 
+functor programming style is extremely hard to learn, to use and to 
+explain.\footnote{Some of the smarter members of the group have attempted
+to explain it multiple times to one of the dumber members (David Walker)
+and he still has trouble understanding how it works.}  Avoiding these
+complications by creating a language-level interface seems to be a good,
+practical solution to the problem.  For more insight into the precise
+issues at hand, we recommend reading related work on the construction of
+the \padsml{} infrastructure~\cite{padsml-padl-long} as well as
+Yang~\cite{yang:icfp98} and Hinze's work~\cite{hinz:icfp04} on 
+generic programming in functional languages.
+
+Two secondary issues influencing our choice of language over library
+are that (1) we could choose a pleasing and concise syntax for both
+our feed and tool specifications and (2) this approach allows
+smooth integration with \padsml{}, which itself is a successful 
+language extension.  On the latter point, developing one system in which
+data locality, temporal availability, format and properties are
+all specified in one place and in one seemlessly integrated syntax was
+an important goal.  We believe it improves the user programming
+experience significantly.
 
 \cut{%%%%%%%%%%%%%%%%%%
 
