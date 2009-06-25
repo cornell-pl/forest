@@ -3,15 +3,18 @@
 
 \begin{figure*}[th]
 {\small \begin{verbatim}
-207.136.97.49 - - [15/Oct/1997:18:46:52 -0700] "GET /turkey/back.gif HTTP/1.0" 200 224
-ppp31.igc.org - amnesty [16/Oct/1997:08:40:11 -0700] "GET /members/afr.html HTTP/1.0" 200 450
+207.136.97.49  - - [05/May/2009:16:37:20 -0400] "GET /README.txt HTTP/1.1" 404 216
+ks38.kms.com - kim [10/May/2009:18:38:35 -0400] "GET /doc/prev.gif HTTP/1.1" 304 576 
 \end{verbatim}                  
 }
-\caption{A fragment from a web server log in \ai{} format}\label{fig:ai}
+\caption{A fragment from a web server log in \ai{} format}
+\label{fig:ai}
 \end{figure*}
 
-This section gives an overview of the \pads{} language and the original \learnpads{}
-format inference system. Figure \ref{fig:ai} shows a fragment of a web server
+We introduce the \pads{} data description language via an example
+description for a simple web server log format, which 
+
+\figref{fig:ai} shows a fragment of a web server
 log. We shall call the data format 
 in this log file \ai{} from now onwards. A quick analysis of the fragment reveals
 that the \ai{} format is made up of a sequence of records, separated by newlines.
@@ -26,7 +29,7 @@ the IP address becomes a hostname and the second dash becomes an English word
 {\small \begin{verbatim}
 Punion client_t {
   Pip       ip;      // 207.136.97.49
-  Phostname host;    // ppp31.igc.org 
+  Phostname host;    // ks38.kms.com
 };
 Punion auth_id_t {
   Pchar unauthorized : unauthorized == '-'; 
