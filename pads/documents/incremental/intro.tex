@@ -9,18 +9,17 @@ Because many of these logs are in non-standard formats,
 there are often no ready-made tools to help process these logs.
 As a result, system engineers have to resort to writing one-off
 parsers, typically in Perl or Python, to ingest these data sources,
-a tedious, error-prone and uneconomical. 
+a tedious, error-prone and costly process. 
 
-To improve the productivity of system engineers, we developed \pads
-\cite{fisher+:pads,fisher+:popl06,padsweb},
-a high-level declarative specification language for describing the
-physical formats of system logs. A \pads{} description for a data
-source precisely documents the data format, and the \pads{} system can
-compile such a description
-into a suite of useful processing tools including an XML-translator,
-a query engine, a statistical analyzer, and programmatic
-libraries and interfaces. Analysts can then either use these generated
-tools to manage the logs or write custom tools using the generated libraries.
+To facilitate working with such log files, we developed \pads
+\cite{fisher+:pads,fisher+:popl06,padsweb}, a high-level declarative
+specification language for describing the physical formats of ad hoc
+data. A \pads{} description for a data source precisely documents the
+format of the data, and the \pads{} system compiles such descriptions
+into a suite of useful processing tools including an XML-translator, a
+query engine, a statistical analyzer, and programmatic libraries and
+interfaces. Analysts can then either use these generated tools to
+manage the logs or write custom tools using the generated libraries.
 
 A significant impediment to using \pads{} is the time and 
 expertise required to write a \pads{} description for a new data

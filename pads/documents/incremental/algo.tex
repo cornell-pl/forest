@@ -1,5 +1,14 @@
 \section{The Incremental Algorithm}
 \label{sec:algo}
+To address these problems, we developed an incremental format inference
+algorithm that learns and updates a description in an incremental fashion, and
+is therefore capable of handling very large and continuous data. An additional
+benefit is that because our new algorithm can update an existing description
+using additional data, a human can be added into the loop, to 
+guide the learning process by either providing a ``good'' initial description, 
+or to make fixes to the learned description along the way.
+
+
 Intuitively, the incremental learning of a description from a large data source works
 as follows. We first divide the data source into a sequence of smaller, manageable chunks.
 For the first chunk, we learn a description $d_0$ using the format inference
