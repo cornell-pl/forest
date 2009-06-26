@@ -8,35 +8,38 @@ The benchmarks used are 12 system logs with various sizes. Column 2
 shows the number of lines in each log. The time columns record the total
 running time in seconds, and the TC columns record the type complexity
 of the final description learned. In general, lower type complexity means
-more compact description. For the first 7 benchmarks which are smaller
-and simpler, the initial learn size is 100 lines and the 
-incremental learn size is 100 lines. For the last 5 benchmarks, 
-the initial learn size is 500 lines while the incremental size remains
-100 lines. Where it takes more than half an hour for the original \learnpads{}
+more compact description. For all benchmarks, the initial learn size $N$ is 500 lines 
+and the incremental learn size $M$ is 100 lines. 
+The slight twist is that the initial learn chunk is not the first $N$ records in the
+data, but a mix of the $N/3$ consecutive records taken from the beginning, middle,
+and end of the data source. 
+Where it takes more than half an hour for the original \learnpads{}
 system to learn a description, a ``-'' is put in those cells to 
 indicate there is no result.
 
-\begin{table}[th]
-\begin{tabular}{|c|c|c|c|c|c|}\hline
-& & \multicolumn{2}{|c|}{original} & \multicolumn{2}{|c|}{incremental} \\ \cline{3-6}
-\raisebox{1.5ex}[0pt]{Formats} & \raisebox{1.5ex}[0pt]{Lines} &
-	Time & TC & Time & TC \\ \hline \hline
-ai.3000	&	3000	& 32	& 412.6	& 2.2	& 571.0	\\ \hline
-asl.log  &	1500	& 31.9	& 960.1	& 23.9 	& 1393.3 \\ \hline
-apache.txt  &	2087	& 83.9 & 1746.1 & 7.9 	& 2527.6 \\ \hline
-access\_log  &	8188 	& 134.5	& 351.2	& 2.9	& 321.2	\\ \hline
-error\_log  &	4510	& 101.7	& 101.9	& 0.9	& 107.9 \\ \hline
-interface.loop & 1253	& 54.0	& 741.4	& 1.9	& 1053.7 \\ \hline
-ai.big	&	57368	& -	& -	& 30	& 533.9 \\ \hline
-pws	&	 17365	& -	& - 	& 133  & 5869 \\ \hline
-coblitz.access & 9421   & -	& -	& 31.9 & 3005.2 \\ \hline
-access.exlog & 260796 	& -	& -	& 610 & 3088.3 \\ \hline
-debug\_getbig & 550409   & -	& -	& 668 & 9008.1 \\ \hline
-dbg\_req\_redirect & 302554 & -	& -	& 1852 & 17567.7 \\ \hline
+\begin{table*}[th]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}\hline
+& & & \multicolumn{2}{|c|}{original} & \multicolumn{2}{|c|}{incremental} \\ \cline{4-7}
+\raisebox{1.5ex}[0pt]{Formats} & \raisebox{1.5ex}[0pt]{Lines} & \raisebox{1.5ex}[0pt]{KB} & 
+	Time & CT & Time & CT \\ \hline \hline
+interface & 1253&185		& 48.5	& 741.4	& 2.9	& 1184.6 \\ \hline
+asl.log  &	1500&552	& 31.9	& 960.1	& 13.5 	& 1585.7 \\ \hline
+apache.txt  &	2087&442	& 66.4 & 1746.1 & 7.9 	& 2277.6 \\ \hline
+ai.3000	&	3000&286	& 26	& 412.6	& 2.2	& 440.6	\\ \hline
+error\_log  &	4510&409	& 93.1	& 101.9	& 0.9	& 107.9 \\ \hline
+access\_log  &	8188&551 	& 130.5	& 351.2	& 2.8	& 321.2	\\ \hline
+coblitz	     & 9421&2561   & -	& -	& 31.9 & 3005.2 \\ \hline
+pws	&	 17365&3432	& -	& - 	& 133  & 5869 \\ \hline
+ai.big	&	57368&5608	& -	& -	& 26.2	& 543 \\ \hline
+exlog & 260796&76720 	& -	& -	& 610 & 3088.3 \\ \hline
+redirect & 302554&102404 & -	& -	& 1852 & 17567.7 \\ \hline
+getbig & 550409&92192   & -	& -	& 668 & 9008.1 \\ \hline
 \end{tabular}
 \caption{Execution times (secs) and type complexity (bits)} 
 \label{tab:results}
-\end{table}
+\end{center}
+\end{table*}
 
 
 % - parse metric
