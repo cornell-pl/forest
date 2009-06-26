@@ -175,11 +175,11 @@ The following experiments were done on a PowerBook G4 with a 1.67GHz PowerPC
 CPU and 2G memory running on Mac OS X 10.4. 
 Table \ref{tab:results} compares the performance results between
 the original \learnpads{} system and the incremental system. 
-The benchmarks used are 11 system logs with various sizes. Column 2
+The benchmarks used are 12 system logs with various sizes. Column 2
 shows the number of lines in each log. The time columns record the total
 running time in seconds, and the CT columns record the type complexity
 of the final description learned. In general, lower type complexity means
-more compact description. For the first 6 benchmarks which are smaller
+more compact description. For the first 7 benchmarks which are smaller
 and simpler, the initial learn size is 100 lines and the 
 incremental learn size is 100 lines. For the last 5 benchmarks, 
 the initial learn size is 500 lines while the incremental size remains
@@ -198,6 +198,7 @@ apache.txt  &	2087	& 83.9 & 1746.1 & 7.9 	& 2527.6 \\ \hline
 access\_log  &	8188 	& 134.5	& 351.2	& 2.9	& 321.2	\\ \hline
 error\_log  &	4510	& 101.7	& 101.9	& 0.9	& 107.9 \\ \hline
 interface.loop & 1253	& 54.0	& 741.4	& 1.9	& 1053.7 \\ \hline
+ai.big	&	57368	& -	& -	& 30	& 533.9 \\ \hline
 pws	&	 17365	& -	& - 	& 133  & 5869 \\ \hline
 coblitz.access & 9421   & -	& -	& 31.9 & 3005.2 \\ \hline
 access.exlog & 260796 	& -	& -	& 610 & 3088.3 \\ \hline
