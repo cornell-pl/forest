@@ -5,13 +5,12 @@ In this section, we discuss various refinements that improve the
 quality of the inferred descriptions and/or decrease the running time.
 
 \subsection{Token families}
-So far,
-parsing a \cd{Sync} token results
+So far, parsing a \cd{Sync} token results
 in one of three parse nodes: \cd{Good}, \cd{Fail} or \cd{Recovered}. 
 In the actual implementation, a \cd{Sync} token can be not only a constant string, but also
 a constant integer, an integer range or a combination thereof.
-Consider the case where we want to parse the token \cd{Sync (Str "GET")},
-and the current input starts with ``POST.'' The
+Consider parsing the token \cd{Sync (Str "GET")} when
+the current input starts with ``POST.'' The
 \cd{parse\_base} function indicates the result should be \cd{Fail}.
 In reality, the input ``POST'' is in the same {\em family} as ``GET,'' 
 \ie{}, a word,
