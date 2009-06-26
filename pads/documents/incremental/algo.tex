@@ -149,21 +149,22 @@ incremental_step(d, xs) =
 \figref{fig:inc-learning} gives pseudo-code for the incremental
 learning step.
 The \cd{init\_aggregate} function initializes an empty aggregate
-according to description $d$.  
-Then for each data record $x$, we use the \cd{parse} function to
+according to description \cd{d}.  
+Then for each data record \cd{x}, we use the \cd{parse} function to
 produce a list \cd{rs} of possible parses.
 We then call the \cd{aggregate} function to merge
-each parse $r$ in the current list of parses with each aggregate $a$ in the
-current list of aggregates. We use '\cd{::}' to denote 
+each parse \cd{r} in the current list of parses with each aggregate \cd{a} in the
+current list of aggregates. We use `\cd{::}' to denote 
 consing an element onto the front of a list. 
 When we finish
-parsing all the data lines and obtain a final list of aggregates $as$, we select
+parsing all the data lines and obtain a final list of aggregates \cd{as}, we select
 the best aggregate according to some criterion, and finally update the previous description
-$d$ into $d'$ using the best aggregate. 
+\cd{d} to produce the new description \cd{d'} using the best aggregate. 
 
 \begin{figure}[t]
 \begin{center}
 \epsfig{file=parse.eps, width=0.8\columnwidth}
+\vskip -2ex
 \caption{Result of parsing three input lines}\label{fig:parse}
 \end{center}
 \end{figure}
@@ -171,6 +172,7 @@ $d$ into $d'$ using the best aggregate.
 \begin{figure*}[t]
 \begin{center}
 \epsfig{file=aggregate.eps, width=2\columnwidth}
+\vskip -2ex
 \caption{Aggregation of three parses}\label{fig:aggregate}
 \end{center}
 \end{figure*}
@@ -178,7 +180,7 @@ $d$ into $d'$ using the best aggregate.
 Next, we introduce an example to illustrate the parsing and
 aggregation phases of the algorithm. 
 Suppose we have a description $d$, comprised of a pair of integer and a sync token ``\cd{*},''
-and we are given the following three lines of new input data:
+and we are given the following three lines of new input:
 {\small
 \begin{verbatim}
 5*
@@ -186,7 +188,8 @@ abc*
 8$
 \end{verbatim}
 }
-
+%
+\noindent
 \figref{fig:parse} shows the three data representations that result
 from parsing the data lines, which we call $r_1$, $r_2$ and $r_3$,
 respectively. Notice that first line parsed without errors, the second
