@@ -25,4 +25,11 @@ truncate_d: dalpiv-prefix.c truncate.c  $(INCLUDE_DEPS) $(LIB_DEPS_D)
 	@$(CCExec_DYNAMIC_D)
 
 
+extract: dalpiv-prefix.c extract.c  $(INCLUDE_DEPS) $(LIB_DEPS_O)
+	@$(CCExec_DYNAMIC_O)
+
+extract_d: dalpiv-prefix.c extract.c  $(INCLUDE_DEPS) $(LIB_DEPS_D)
+	@$(CCExec_DYNAMIC_D)
+
+
 
