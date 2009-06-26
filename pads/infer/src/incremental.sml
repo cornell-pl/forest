@@ -246,10 +246,10 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
-		(*
+		    (*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-		*)
+		    *)
 		    (* val _ = AG.printTable table *)
 		    val trans_map = AG.transpose table
 (*
@@ -300,6 +300,10 @@ structure Incremental: sig
 				AG.initTable())]
 		    end 
 		else ();
+		(*
+		if (Int.mod(!count, 1000) = 0) then print ((Int.toString (!count)) ^ "\n")
+		else ();
+		*)
 		case TextIO.inputLine strm of
 		  SOME x => 
 			let 
