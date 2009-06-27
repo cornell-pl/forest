@@ -15,12 +15,12 @@ for ($i=200000; $i<=1000000; $i+=200000)
 {
   system("head -n $i $filename > $filename.$i");
   print "\nLearning $filename.$i: opt_level = 0\n";
-  system ("increment $filename.$i 100 100 0");
+  system ("increment $filename.$i 500 100 0");
   print "\nLearning $filename.$i: opt_level = 1\n";
-  system ("increment $filename.$i 100 100 1");
+  system ("increment $filename.$i 500 100 1");
   print "\nLearning $filename.$i: opt_level = 2\n";
-  system ("increment $filename.$i 100 100 2");
+  system ("increment $filename.$i 500 100 2");
   print "\nLearning $filename.$i: opt_level = 3\n";
-  system ("increment $filename.$i 100 100 3");
+  system ("increment $filename.$i 500 100 3");
 }
 

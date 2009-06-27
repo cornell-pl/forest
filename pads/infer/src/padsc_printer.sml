@@ -50,7 +50,7 @@ open Ast
 	else if size s = 1 then
 	  "Pstring(:'" ^ s ^ "':)"
 	else
-	  "Pstring_SE(:\"/" ^ escape s ^ "/\":)"
+	  "Pstring_SE(:\"/" ^ escapeRegex (escape s) ^ "/\":)"
      | IRempty => "PPempty"
 
   fun arrayFieldToPADSC (var_opt, tyName, sep, term, len) =
