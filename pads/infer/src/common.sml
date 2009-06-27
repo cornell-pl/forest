@@ -177,7 +177,10 @@ structure Common = struct
 	*)
 	(* function to escape the backslashes in a re string *)
 	fun escapeRegex (re:string) = 
-		String.translate (fn x => if x = #"\\" then "\\\\" else String.str x) re
+		String.translate (fn x => 
+		if x = #"\\" then "\\\\" 
+		else if x = #"\"" then "\\\""
+		else String.str x) re
  
 	fun myand(a,b) = a andalso b
 	fun myor(a,b) = a orelse b

@@ -46,7 +46,7 @@ struct
         else if size s = 1 then
           "pstring('" ^ s ^ "')"
         else
-          "pstring_SE(\"/" ^ escape s ^ "/\")"
+          "pstring_SE(\"/" ^ escapeRegex (escape s) ^ "/\")"
      | IRempty => "ppempty"
 
   fun fieldToPML isStruct f =
