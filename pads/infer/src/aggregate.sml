@@ -226,8 +226,11 @@ struct
 		(SyncA (SOME (Int (LargeInt.min(i, j), LargeInt.max(i, j)))), nil) 
 		(* change int const to ranged int *)
 	| (SOME (Int (min, max)), IntConst new) => 
+	(
 		if new < min then (SyncA(SOME (Int (new, max))), nil)
-		else (SyncA(SOME (Int(min, new))), nil)
+		else if new > max then (SyncA(SOME (Int(min, new))), nil)
+		else (SyncA (SOME (Int(min, max))), nil)
+	)
 	| (SOME (FloatConst _), FloatConst _) => (* reduce to Pfloat *) 
 		(SyncA NONE, nil)
 	| (SOME (Enum res), re) => 
