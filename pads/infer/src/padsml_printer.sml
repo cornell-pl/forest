@@ -219,7 +219,7 @@ struct
 				(lconcat (map (fn v => " * (" ^ v ^ " precord)") footerVars)) ^ 
                                 "\n" 
                               end
-                  | _ => raise TyMismatch
+                  | _ => tyToPADSML ty 0 0 includeFile 
                 )
         in pads
         end 
