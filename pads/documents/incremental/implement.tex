@@ -62,10 +62,10 @@ $S$ denotes a struct and $B$ a base token.
 The pseudo-code in \figref{fig:inc-learning} suggests the number of
 aggregates is of the order $O(m ^ n)$, where $m$ is the maximum number of
 parses for a line of input  and $n$ is the number of lines to
-aggregate.  Clearly, this algorithm will not scale if there is more
-than one parse per input line. 
+aggregate.  Clearly, this algorithm will not scale 
+unless $m$ and $n$ are bounded.
 
-We have implemented several optimizations to reduce the number of 
+We have implemented several optimizations to limit the number of 
 parses and aggregates. First, we do not return all possible
 parses when parsing a description component \cd{D}. 
 Instead, we rank the parses by a metric that
