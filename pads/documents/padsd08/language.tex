@@ -1,8 +1,10 @@
 \input{syntax}
+
 Developing a formal semantics for \padsd{} has been an integral part
-of our language design process.  We have used the semantics to
-communicate our ideas precisely and to explore the nuances of design
-decisions. Furthermore, the semantics provides users with a tool to
+of our language design process.  
+The semantics helps communicate our ideas precisely and explore 
+the nuances of design decisions. 
+Moreover, the semantics provides users with a tool to
 reason about the feeds resulting from \padsd{} descriptions, including
 subtleties related to synchronization, timeouts, errors and provenance.
 
@@ -25,7 +27,6 @@ We omit the typing annotations from lambda expressions when they can
 be reconstructed from the context and we use pattern matching 
 where convenient ({\em e.g.,} $\lambda (x,y).e$ is a function
 over pairs).
-
 
 \subsection{Feed Syntax and Typing}
 The abstract syntax for our feed calculus and its typing rules appear
@@ -70,7 +71,7 @@ Given meta-data $\meta$, we write $\mytime{\meta}$, $\myds{\meta}$ and
 $\myval{\meta}$ for the first, second and third projections (respectively) of $\meta$.
 Base meta-data is a triple of the scheduled time, the location of origin 
 and an optional arrival time where {\tt None} indicates the data did not arrive
-in a timely fashion.
+in time.
 
 \input{typing}
 
@@ -83,9 +84,7 @@ meta-data associated with payload of type $\sigma$:
 \[
 \begin {array} {lcl}
 \metatype{\sigma} & = & \timety * \dsty * \nestedtype{\sigma} \\
-\\
 \dsty & = & \setty{(\timety * \locty)}  \\
-\\
 \nestedtype{\ty} & = & \timety * \locty * (\optionty{\timety}) \\
 \nestedtype{\optionty{\ty}} & = & \timety * \locty * (\optionty{\timety}) \\
 \nestedtype{\sigma_1 * \sigma_2} & = & \nestedtype{\sigma_1} * \nestedtype{\sigma_2} \\

@@ -164,8 +164,8 @@ settings for the start time and the timeout window.
     nodeitem precord plist (No_sep, No_term)
 \end{code}
 \vskip -2ex
-\caption{\padsml{} description (\texttt{nodelist.pml}) for CoMon configuration 
-  files, which contain one host name per non-commented line.}
+\caption{\padsml{} description (\texttt{nodelist.pml}) for CoMon configs, 
+with one host name per uncommented line.}
 \label{fig:nodepml}
 \shrink
 \end{figure}
@@ -472,7 +472,6 @@ generates a feed of snapshots from the feed of host lists.
   \kw{foreach} hl \kw{in} host_lists \kw{create}
      [ gen_stats (h) | h <- value hl ]
 \end{code}
-\vspace*{-2ex}
 \caption{Simplified version of \vizGems{} feed (\texttt{arrakis.fml}).}
 \label{fig:pulse2}
 \shrink

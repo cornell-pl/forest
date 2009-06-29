@@ -43,6 +43,7 @@ In the following paragraphs, we describe some of the tools we have implemented.
 \end{codebox}
 \caption{Example tool configuration file (\texttt{comon.tc}).}
 \label{fig:toolconfigs}
+\shrink
 \end{figure}
 
 %  path  = ["[?]"; "Mem_info"];
@@ -81,6 +82,7 @@ Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
 ... omitted ...
 \end{scodebox}
 \caption{Fragment of provenance tracker output (\texttt{comon.acc}).} \label{fig:acc}
+\shrink
 \end{figure} 
 
 %===========================================================================
@@ -204,7 +206,7 @@ Users specify a function to transform
 feed items into numeric values and RRD parameters such as data source 
 type and sampling rate. RRD indexes the data by arrival time.  It
 periodically discards old data to make space for new. The tool
-supports time-indexed queries and displays historical data as graphs.
+supports time-indexed queries and graphing of historical data.
 
 % \textbf{\textit{Selector.}} The selector allows users to choose
 % subcomponents of feed elements using path expressions. It returns a

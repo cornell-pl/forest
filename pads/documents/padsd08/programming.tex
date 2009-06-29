@@ -30,6 +30,7 @@ where they come from), while the other exposes the meta-data as well.
 \end{codebox}
   \caption{Code fragment finding least loaded \planetlab nodes.}
 \label{fig:sample-loads}
+\shrink
 \end{figure}
 
 %% \texttt{Feed.split\_every n}
@@ -73,7 +74,7 @@ where they come from), while the other exposes the meta-data as well.
 \kw{in} print_top_with_loc 10 load_tbl
 \end{codebox}
   \caption{Revised code fragment with provenance meta-data. }
-\label{fig:sample-loads-prov}
+\label{fig:sample-loads-prov}\shrink
 \end{figure}
 
 For example, consider \planetlab users looking for a desirable set of
@@ -139,7 +140,7 @@ framework for writing feed interpreters.
 
 Two core examples of feed interpretation are the feed creator and the
 provenance tracker. The behavior of these tools depends
-essentially on the structure of the feed.  Functions like these
+on the structure of the feed.  Functions like these
 require as input a runtime representation of the feed,
 complete with the details of the feed description that
 they represent. The obvious choice for representing feed descriptions
