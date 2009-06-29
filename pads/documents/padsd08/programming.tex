@@ -17,7 +17,7 @@ where they come from), while the other exposes the meta-data as well.
 % Need a new name for Feedmain module. I vote Feed and then Feed_core for the lower-level module.
 
 
-\begin{figure}[tb]
+\begin{figure}[t]
 \begin{codebox}
 \kw{let} (sample, \_) = \textit{Feed.split_every} 600. comon \kw{in}
 \kw{let} select_load = \kw{function}
@@ -30,7 +30,6 @@ where they come from), while the other exposes the meta-data as well.
 \end{codebox}
   \caption{Code fragment finding least loaded \planetlab nodes.}
 \label{fig:sample-loads}
-%\vskip -2ex
 \end{figure}
 
 %% \texttt{Feed.split\_every n}
@@ -59,7 +58,7 @@ where they come from), while the other exposes the meta-data as well.
 %% %\vskip -2ex
 %% \end{figure}
 
-\begin{figure}[tb]
+\begin{figure}[t]
 
 \begin{codebox}
 \kw{let} update_m  tbl adata =
@@ -75,7 +74,6 @@ where they come from), while the other exposes the meta-data as well.
 \end{codebox}
   \caption{Revised code fragment with provenance meta-data. }
 \label{fig:sample-loads-prov}
-%\vskip -2ex
 \end{figure}
 
 For example, consider \planetlab users looking for a desirable set of

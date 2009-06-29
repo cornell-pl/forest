@@ -38,8 +38,6 @@ The core typing judgment, which has the form
 $\Gamma \turn \corefeed{} : \corety{\sigma}$, conveys the same
 information for core feeds.
 
-\input{typing}
-
 Intuitively, a feed carrying values of type $\sigma$ is a sequence of
 payload values of type $\sigma$.  However, to record provenance
 information, we pair each payload value with meta-data, so a feed is
@@ -73,6 +71,8 @@ $\myval{\meta}$ for the first, second and third projections (respectively) of $\
 Base meta-data is a triple of the scheduled time, the location of origin 
 and an optional arrival time where {\tt None} indicates the data did not arrive
 in a timely fashion.
+
+\input{typing}
 
 As shown in \figref{fig:syntax}, we define the feed payload type
 $\sigma$ in terms of host 
