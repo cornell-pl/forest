@@ -17,7 +17,7 @@ feed, configures the specified tools, and applies them to the feed in parallel.
 % Multiple 
 %tools can simultaneously consume the same feed possible because feeds in
 %\padsd{} are functional and immutable. 
-In the following paragraphs, we describe the tools we have implemented.
+In the following paragraphs, we describe some of the tools we have implemented.
 
 \begin{figure}[t]
 \centering
@@ -26,10 +26,8 @@ In the following paragraphs, we describe the tools we have implemented.
 
 \kw{tool} provtrack
 \{
-  minalert  = true;
-  maxalert  = true;
-  lesssig   = 3;
-  moresig   = 3;
+  minalert  = true;  maxalert  = true;
+  lesssig   = 3;     moresig   = 3;     
   slicesize = 10;
   slicefile = "slice.acc";
   totalfile = "total.acc";
@@ -80,7 +78,6 @@ Top 10 locations with most network errors
 ======================================================
 Loc: http://planetlab01.cnds.unibe.ch:3121    Count: 2
 Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
-Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2
 ... omitted ...
 \end{scodebox}
 \caption{Fragment of provenance tracker output (\texttt{comon.acc}).} \label{fig:acc}
@@ -159,11 +156,11 @@ the data, its scheduled arrival time and the
 actual arrival time. The archiver will optionally compress
 files.
 
-\textbf{\textit{Printer.}} The printer outputs the contents of a
-feed.  If configured to print to a single file, the tool concatenates
-successive items with a specified separator. If configured to print to
-multiple files, it outputs the contents of each base feed into a
-separate file. 
+% \textbf{\textit{Printer.}} The printer outputs the contents of a
+% feed.  If configured to print to a single file, the tool concatenates
+% successive items with a specified separator. If configured to print to
+% multiple files, it outputs the contents of each base feed into a
+% separate file. 
 
 
 \textbf{\textit{Profiler.}} The profiler monitors performance, reporting
@@ -209,12 +206,12 @@ type and sampling rate. RRD indexes the data by arrival time.  It
 periodically discards old data to make space for new. The tool
 supports time-indexed queries and displays historical data as graphs.
 
-\textbf{\textit{Selector.}} The selector allows users to choose
-subcomponents of feed elements using path expressions. It returns a
-feed of the selected subcomponents, which may then be fed into other
-tools. 
-%\figref{fig:selector-lang} shows the path expression language,
-%partly inspired by \xpath{}~\cite{xpath}.
+% \textbf{\textit{Selector.}} The selector allows users to choose
+% subcomponents of feed elements using path expressions. It returns a
+% feed of the selected subcomponents, which may then be fed into other
+% tools. 
+% %\figref{fig:selector-lang} shows the path expression language,
+% %partly inspired by \xpath{}~\cite{xpath}.
 
 
 \textbf{\textit{RSS feed generator.}} The RSS feed generator converts a
