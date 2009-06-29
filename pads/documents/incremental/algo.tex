@@ -30,7 +30,7 @@ If a portion fails to parse, that failure will be detected at a
 particular node in the description \cd{D}. It collects these failed
 portions in an aggregation data structure \cd{A} that mirrors the
 structure of \cd{D}.  After thus aggregating all the failures in the $M$
-records, the algorithm transforms \cd{D} to accomodate the places where
+records, the algorithm transforms \cd{D} to accommodate the places where
 differences were found (\ie, by introducing options where a piece of
 data was missing or unions where a new type of data was discovered).
 It then uses the original \learnpads{} algorithm to infer descriptions
@@ -86,35 +86,35 @@ In these definitions,  variable \cd{re} ranges over regular expressions,
 \cd{s} and \cd{t} over strings, and \cd{i} over integers.
 A value with type \cd{D} is the abstract syntax tree of \pads{}
 description: it is what we want to learn.  
-For simplicity, we assume just two base types: 
+For simplicity of presentation, we assume just two base types: 
 integers and strings that match a regular expression. Synchronizing
 tokens, or {\em sync tokens} for short, correspond to string literals
 in \pads{} descriptions.  Such tokens, which are often
 white space or punctuation,
 serve as delimiters in the data and are useful for detecting
 errors. We use binary pairs and unions to account for the
-\cd{Pstruct}s and \cd{Punion}s in \padsc{} descriptions.
-An array has a element type described by \cd{D}, a separator
+\kw{Pstruct}s and \kw{Punion}s in \padsc{} descriptions.
+An array has an element type described by \cd{D}, a separator
 string $s$ that appears between array elements, and a
 terminator string $t$. \cd{Option D} indicates \cd{D} is optional.
 
-A term with type \cd{R} is a parse tree obtained from parsing some
+A term with type \cd{R} is a parse tree obtained from parsing 
 data using a description \cd{D}.  Parsing a base type can result in a
-string, an integer or an error.  In contrast, parsing a sync token
+string, an integer or an error.  Parsing a sync token
 \cd{Sync s} can give three different results: \cd{Good}, meaning the
-parser found \cd{s} at the beginning of the input, \cd{Fail}, meaning
-\cd{s} is not a substring in the current input, or \cd{Recovered s'},
-meaning \cd{s} is not found at the current position in the input, but
+parser found \cd{s} at the beginning of the input; \cd{Fail}, meaning
+\cd{s} is not a substring of the current input; or \cd{Recovered s'},
+meaning \cd{s} is not found at the beginning of the input, but
 can be {\em recovered} after ``skipping'' string \cd{s'}.  The parse
 of a pair is a pair of representations, and the parse of a union is
-either the parse of the first branch, or the parse of the second
+either the parse of the first branch or the parse of the second
 branch. The parse of an array includes a list of parses for the
 element type, a list of parses for the separator and a parse for the
 terminator which appears at the end of the array.
 
 An aggregate structure is the {\em accumulation} of parse trees; it
 collects the data that cannot be parsed and therefore must be re-learned.
-The aggregation structure mirrors the structure of the description \cd{D}, 
+The aggregation structure mirrors the structure of the description \cd{D} 
 with two additional nodes: an \cd{Opt} node, and a \cd{Learn} node. 
 An invariant is that an \cd{Opt} node always wraps a \cd{BaseA} or a \cd{SyncA} node,
 where it indicates that the underlying base or sync token is missing
@@ -180,9 +180,9 @@ the best aggregate according to some criterion, and finally update the previous 
 \end{center}
 \end{figure*}
 
-Next, we introduce an example to illustrate the parsing and
-aggregation phases of the algorithm. 
-Suppose we have a description $d$, comprised of a pair of integer and a sync token ``\cd{*},''
+To illustrate the parsing and aggregation phases of the algorithm, we
+introduce a simple example.
+Suppose we have a description $d$, comprised of a pair of an integer and a sync token ``\cd{*}'',
 and we are given the following three lines of new input:
 
 {\small
@@ -261,7 +261,7 @@ Finally for each parse $r_2$ in $l_2$ and each parse $r_1$ in $l_1$,
 construct a representation $(r_1, r_2)$, and return a list of all such pairs.
 To parse a union $d_1 + d_2$, we simply return the concatenation of list of parses from
 parsing $d_1$ and the list of parses from parsing $d_2$. To parse $d~ array(s, t)$,
-we repeatedly attemp to parse $d$ until there's no more progress in the input.
+we repeatedly attempt to parse $d$ until there's no more progress in the input.
 And in each iteration, we also add parses generated from parsing $t$ as well, as if
 the array has been terminated at this iteration. Figure \ref{fig:parse_base}
 shows the {\tt parse\_base} function which parses a base token. The {\tt match\_prefix}

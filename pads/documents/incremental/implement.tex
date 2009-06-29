@@ -21,7 +21,7 @@ to indicate that the input belongs to the same family as the expected
 token but does not match exactly, \ie, it is {\em partially} correct.
 During aggregation, partial nodes cause the description 
 to be specialized to include the additional values.  In the above example, the aggregate 
-function will change the description to \cd{Sync (Enum [Word "Get", Word "POST"])}.
+function will change the description to \cd{Sync (Enum [Word "GET", Word "POST"])}.
 Such partial nodes reduce the number of parsing errors
 and produce more compact and meaningful descriptions.
 
@@ -69,12 +69,12 @@ We have implemented several optimizations to reduce the number of
 parses and aggregates. First, we do not return all possible
 parses when parsing a description component \cd{D}. 
 Instead, we rank the parses by a metric that
-measures their ``quality''  and return only the top $k$. The metric is
+measures their quality and return only the top $k$. The metric is
 a triple: 
 $m = (e,~ s,~ c)$,
 where $e$ is the number of errors, $s$ is the number of 
 characters skipped during \cd{Sync} token recovery, and $c$ is the number
-of characters correctly parsed. The metric is considered ``perfect'' if $e = 0$.
+of characters correctly parsed. The metric is considered \textit{perfect} if $e = 0$.
 Metric $m_1$ is better than $m_2$ if $m_1$ is perfect and $m_2$ is not, or
 if 
 \[\frac{c_1}{s_1+c_1} > \frac{c_2}{s_2 + c_2}.\]
@@ -82,7 +82,7 @@ if
 In practice, \cd{parse} returns a list of
 {\em parse triples} $(r,~m,~j)$, where $r$ is the data representation of
 the parse, $m$ is the metric associated with $r$, and
-$j$ is the current position of the input after the parse.
+$j$ is the position in the input after the parse.
 We define a \cd{clean} function that first partitions the
 triples into groups that share the same 
 {\em span}, \ie{}, the substring of the input consumed by the parse.
@@ -104,10 +104,10 @@ fields $f_1$, $f_2$, ..., $f_n$ if the algorithm encounters
 a threshold number of errors in succession. 
 This technique may result in no possible parses for the
 top-level description.  In this case, we restart the process
-with the parse cut-off optmization turned off. 
+with the parse cut-off optimization turned off. 
 A third optimization is memoization.
 The program keeps a global memo table indexed by the pair of a
-description \cd{D} and the begining position for parsing \cd{D} which
+description \cd{D} and the beginning position for parsing \cd{D} which
 stores the result for parsing \cd{D} at the specific position.
 Finally, we bound the total number of aggregates the
 algorithm can produce by selecting the top

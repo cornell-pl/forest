@@ -71,7 +71,7 @@ so the last declaration \cd{entry\_t} describes the entirety of a
 record, while the earlier declarations describe data fragments.  Type
 \cd{entry\_t} is a \kw{Precord}, meaning it comprises a full line in
 the input, and is a \kw{Pstruct}, meaning it consists of a sequence of
-named fields, each with its own type.  For convenience, \cd{Pstruct}s
+named fields, each with its own type.  For convenience, \kw{Pstruct}s
 can also contain anonymous literal fields, such as \cd{" ["}, which
 denote constants in the input source.  The generated representation
 for \cd{entry\_t} will be a \C{} struct with one field for each of the
@@ -171,16 +171,15 @@ each character in the data.  Such descriptions have a low data
 complexity, but a high type complexity.
 
 
-This inference algorithm produces good results for the set of small
+This algorithm produces good results for the small
 log files that we have experimented with, but it has two limitations:
-performance and adaptabity.  In terms of performance, the algorithm
+performance and adaptability.  In terms of performance, the algorithm
 requires space quadratic in the input file size to perform the data
 dependency analysis, so it cannot be used on log files larger than the
 square of the size of usable memory.  In terms of adaptability, the
 algorithm only considers its input data in constructing a description.
 Hence if tomorrow's log file has a new kind of record, the algorithm
-has no way to modify an existing description, but instead must start
-from scratch.
+cannot modify the existing description; it must start from scratch.
 
 
 %
