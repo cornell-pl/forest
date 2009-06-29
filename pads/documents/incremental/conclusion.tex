@@ -3,17 +3,11 @@
 We have presented an incremental algorithm for infering system log
 formats.  We experimentally verified that this algorithm can produce
 quality descriptions within minutes when run on files with hundreds of
-thousands of lines.  As future work, we intend to explore several
-additional paths to improve the quality and performance of format
-inference. First, our experience suggests that the quality of
-the final output and the efficiency of parsing is very sensitive to
-the quality of the initial description.  Hence, we plan to work on
-improving the original \learnpads{} algorithm to produce better
-initial descriptions. Second, despite the existing optimization
-efforts, parsing can still be inefficient, especially for 
-complex descriptions.  We intend to explore using speculative
-parallelism to improve the efficiency of the \cd{parse} function,
-which would directly improve the overall efficiency of the algorithm.
+thousands of lines.  Our experience suggests that the quality of
+the final description is very sensitive to the quality of the initial
+description.  Hence, we intend to work in the future on improving the
+original algorithm to produce  better initial descriptions. 
+
 
 
 %This is an idea inspired by the {\em generalized committed 

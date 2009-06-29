@@ -1,12 +1,12 @@
 \section{Implementation}
 \label{sec:imp}
 The algorithm presented so far is idealized and unoptimized.
-In this section, we discuss various refinements that improve the 
-quality of the inferred descriptions and/or decrease the running time.
+In this section, we discuss refinements that improve the 
+quality of the inferred descriptions and/or improve performance.
 
 \subsection{Token families}
-So far, parsing a \cd{Sync} token results
-in one of three parse nodes: \cd{Good}, \cd{Fail} or \cd{Recovered}. 
+So far, parsing a \cd{Sync} token yields
+one of three results: \cd{Good}, \cd{Fail} or \cd{Recovered}. 
 In the actual implementation, a \cd{Sync} token can be not only a constant string, but also
 a constant integer, an integer range or a combination thereof.
 Consider parsing the token \cd{Sync (Str "GET")} when
@@ -14,7 +14,7 @@ the current input starts with ``POST.'' The
 \cd{parse\_base} function indicates the result should be \cd{Fail}.
 In reality, the input ``POST'' is in the same {\em family} as ``GET,'' 
 \ie{}, a word,
-and it may very well be the case that this \cd{Sync} token should have been 
+and it may very well be that this \cd{Sync} token should have been 
 an enumeration of words rather than a single word.
 To handle such cases, we created a fourth type of parse node, \cd{Partial}, 
 to indicate that the input belongs to the same family as the expected
@@ -22,33 +22,32 @@ token but does not match exactly, \ie, it is {\em partially} correct.
 During aggregation, partial nodes cause the description 
 to be specialized to include the additional values.  In the above example, the aggregate 
 function will change the description to \cd{Sync (Enum [Word "Get", Word "POST"])}.
-In our experience, partial nodes greatly reduce the number of parsing errors
+Such partial nodes reduce the number of parsing errors
 and produce more compact and meaningful descriptions.
 
 
 \subsection{Rewriting rules}
 When the incremental learning algorithm produces a refined description
-from an aggregate, the algorithm applies a number of rewriting rules
+from an aggregate, the algorithm applies rewriting rules
 to the new description to improve its quality and readability.
-Most of the rules are data-independent, such as flattening nested
-structs and unions, factoring structs and removing degenerate lists, 
-which are all rules used in the original \learnpads{} system. 
+Most of the rules are data-independent and inherited from \learnpads{}, such as 
+removing degenerate lists and flattening nested structs and unions.
 We introduce one new {\em data dependent} rule called {\em MergeOpts}
 to optimize a type pattern that occurs frequently during incremental
 learning.  Recall that the aggregate function
-introduces \cd{Opt} nodes above a \cd{BaseA} or \cd{SyncA} node in the aggregate structure
+introduces \cd{Opt} nodes above a \cd{BaseA} or \cd{SyncA} node 
 whenever the corresponding \cd{Base} or \cd{Sync} token in the description failed to 
 parse. When faced with an entirely new form of data, 
 the algorithm is likely to introduce a series of \cd{Opt} nodes as
 each type in the original description fails in succession. 
 The {\em MergeOpts} rule collapses these consecutive \cd{Opt} nodes if they
 are correlated, \ie{}, either they are all always present or all always
-absent.  To verify this correlation, the algorithm maintains an
-\cd{OptsTable} that records the branching decisions when parsing each
+absent.  To verify this correlation, the algorithm maintains a
+table that records the branching decisions when parsing each
 data line. It uses this table to determine whether to merge
 adjacent \cd{Opt} nodes during rewriting. 
 \figref{fig:opts} illustrates the effect of this rule.  In the figure,
-$S$ denotes a struct, and $B$ a base token.
+$S$ denotes a struct and $B$ a base token.
 
 \begin{figure}[t]
 \begin{center}
@@ -84,14 +83,14 @@ In practice, \cd{parse} returns a list of
 {\em parse triples} $(r,~m,~j)$, where $r$ is the data representation of
 the parse, $m$ is the metric associated with $r$, and
 $j$ is the current position of the input after the parse.
-We define a \cd{clean} function that does the following.
-It first partitions the parse triples into groups that share the same
-{\em span}, which is the substring of the input consumed by a parse.
-For each group, \cd{clean} retains all the perfect parses. If 
-no such parse exists, it retains the best parse in the group. 
-The justification for throwing away all the other parse triples
-is that given a description $d$ and a fixed span, we always
-prefer the parse with the strictly better metric. This idea is
+We define a \cd{clean} function that first partitions the
+triples into groups that share the same 
+{\em span}, \ie{}, the substring of the input consumed by the parse.
+For each group, \cd{clean} retains all perfect parses. If 
+none exists, it retains the best parse in the group. 
+We justify discarding the other triples because
+given a description $d$ and a fixed span, we always
+prefer the parse with the best metric. This idea is
 similar to the dynamic programming techniques used in 
 Earley Parsers \cite{earley-parser}. Finally \cd{clean} returns all
 the perfect triples plus up to the top $k$ non-perfect triples.
@@ -103,16 +102,15 @@ A second optimization, which we call {\em parse cut-off}, terminates a
 candidate parse when parsing a struct with multiple
 fields $f_1$, $f_2$, ..., $f_n$ if the algorithm encounters 
 a threshold number of errors in succession. 
-This technique may result in no possible parses being returned for the
-top-level description.  In this case, we re-parse the whole
-description with the parse cut-off optmization turned off. 
-A third important optimization is memoization.
+This technique may result in no possible parses for the
+top-level description.  In this case, we restart the process
+with the parse cut-off optmization turned off. 
+A third optimization is memoization.
 The program keeps a global memo table indexed by the pair of a
-description \cd{D} and the begining position for parsing \cd{D}.
-The result for parsing \cd{D} at the specific position
-is saved and reused. 
-Finally, we set an upper limit to the total number of aggregates the
-algorithm can produce at any point by selecting the top
+description \cd{D} and the begining position for parsing \cd{D} which
+stores the result for parsing \cd{D} at the specific position.
+Finally, we bound the total number of aggregates the
+algorithm can produce by selecting the top
 $k$ aggregates with the fewest number of \cd{Opt} and \cd{Learn}
 nodes. 
 
