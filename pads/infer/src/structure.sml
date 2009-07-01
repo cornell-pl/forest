@@ -625,7 +625,8 @@ struct
 		                        of NONE => topSearch ts (t::acc)
 					|  SOME (lt:Token,rtf:Token->Token) => findMatch [(t,[],rtf (#1 t))] ts acc
 
-            and findMatch  (delims:(LToken * LToken list * Token) list) [] acc = (List.rev acc)@(flatten delims) (* missing right delim: forget grouping *)
+            and findMatch  (delims:(LToken * LToken list * Token) list) [] acc = 
+			(List.rev acc)@(flatten (List.rev delims)) (* missing right delim: forget grouping *)
               | findMatch ((lt:LToken,body:LToken list,r:Token)::next) (t::ts) acc = 
 		  if delimMatches r t 
 		  then let val match =  (Pgroup{left=lt, body = List.rev body, right= t}, getGroupLoc(lt,t))
@@ -685,10 +686,10 @@ struct
                         )
 		    val matches = getMatches []
 		    val groupedMatches = findGroups matches
-(*
+		    (* 
 		    val () = print "printing grouped tokens:\n"
 		    val () = printLTokens groupedMatches 
-*)
+		    *)
 		    val () = recordNumberRef := !recordNumberRef + 1
 		in
 		    groupedMatches 
@@ -1574,7 +1575,7 @@ file is a record and all of them collectively represent a sample data *)
 	    val () = initialRecordCount := (List.length records) 
 	    val rtokens : Context list = List.map (ltokenizeRecord recordNumber) records
 	    val separator = getSeparator rtokens  (* for format program: returns some character not in input source *)
-	    (* val _ = print (contextsToString rtokens)  *)
+	    (* val _ = print (contextsToString rtokens) *) 
             val rtokens = crackUniformGroups rtokens (* check if all records have same top level group token *)
 	    val () = if print_verbose = true then lengthsToHist rtokens else ()
 	    val ty = ContextListToTy 0 rtokens
