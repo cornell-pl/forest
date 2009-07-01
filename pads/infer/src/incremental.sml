@@ -113,11 +113,15 @@ structure Incremental: sig
 		     (fn ((_, m1, _), (_, m2, _)) => Rep.better_metric m2 m1) list_parses), num_parses), 
 		      false)
 		  end
-(*
+	val _ = if (not has_good_parse) then
+		let 
 	val _ = print ("The top " ^ Int.toString (length top_parses) ^ " parses: \n")
  	val _ = List.app (fn (rep, m, j) => 
 		print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 		top_parses
+		in () end
+	 	else ()
+(*
 	val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  
 *)
 	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln(id, ss)], table) => map 
@@ -246,10 +250,8 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
-		    (*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-		    *)
 		    (* val _ = AG.printTable table *)
 		    val trans_map = AG.transpose table
 (*
@@ -262,8 +264,8 @@ structure Incremental: sig
 		    val newTy = Reduce.reduce 5 newTy
 		    val elapse = Time.- (Time.now(), start_time)
 		    val refinedTy = Reduce.reduce 4 newTy
-(*
 	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy) 
+(*
 
 		    val tyFile = (dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString index ^ ".ty") 
 		    val tystrm = TextIO.openOut tyFile
@@ -311,7 +313,8 @@ structure Incremental: sig
 			    val _ = aggrs := aggrs'
 			in 
 			  if (not good_data) then
-			    badcount:=(!badcount) + 1
+			    (print ("===>" ^ x);
+			    badcount:=(!badcount) + 1)
 			  else (); 
 			  count:=(!count) + 1
 			end

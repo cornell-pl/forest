@@ -509,7 +509,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (* ^ (LTokensToString ts) *)
+                       | _ => (ltokenTyToString (hd ts)) ^ (LTokensToString ts) 
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
