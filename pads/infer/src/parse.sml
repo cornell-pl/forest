@@ -487,7 +487,17 @@ struct
 			      else f tail (l@parses)
 			  end
 			| nil => l
-		    val final_parses = f res nil
+
+                    val parses_with_partials = f res nil
+                (* if the enum contains list of const strings and the return metric
+                   of parsing these strings is a partial, then reset the metric to be no error
+                   this is because if it's an enum, chances of expanding this enum is high *)
+                    fun reset (r, m, j) = 
+                        case r of 
+                          SyncR(Partial _) => (r, reset_metric m, j)
+                        | _ => (r, m, j) 
+                    val final_parses = map reset parses_with_partials 
+
 		(*
 	 	    val _ = List.app (fn (rep, m, j) => 
 			print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 

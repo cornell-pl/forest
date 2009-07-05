@@ -109,14 +109,14 @@ struct
 	else "-" ^ (LargeInt.toString (~i))
 
     (* function to find the min and max from a list given an order function and a list*)
-    (* less (a, b) is true is a < b in some way *)
+    (* less (a, b) is true if a < b in some way *)
     fun min less l =
 	case l of
 	  x::nil => x
 	| x::(y::tail) => if less x y then min less (x::tail)
 			  else min less (y::tail)
 	| [] => raise Fail "Empty list"
-    (* greater (a, b) is true is a > b in some way *)
+    (* greater (a, b) is true if a > b in some way *)
     fun max greater l =
 	case l of
 	  x::nil => x

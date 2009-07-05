@@ -246,10 +246,8 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
-		    (* 
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-		    *)
 		    (* val _ = AG.printTable table *)
 		    val trans_map = AG.transpose table
 (*
@@ -261,7 +259,7 @@ structure Incremental: sig
 		    val newTy = AG.alt_options_to_unions trans_map newTy
 		    val newTy = Reduce.reduce 5 newTy
 		    val elapse = Time.- (Time.now(), start_time)
-		    val refinedTy = Reduce.reduce 4 newTy
+		    (* val refinedTy = Reduce.reduce 4 newTy *)
 	     	    (* val _ = (print "**** Newly updated Ty: \n"; printTy newTy) *)
 (*
 
@@ -329,6 +327,11 @@ structure Incremental: sig
 	   val _ = TextIO.closeOut logstrm
 	   val _ = print msg
 		   
+	   val tyFile = (dir ^ "/" ^ filename ^ ".ty") 
+	   val tystrm = TextIO.openOut tyFile
+	   val _ = print ("Output IR to " ^ tyFile ^ "\n")
+	   val _ = TextIO.output (tystrm, TyToStringD "" false false  "\n" finalTy)
+	   val _ = TextIO.closeOut tystrm
 	   (* val finalTy = (!myTy)*) 
 
 	   val padscFile = dir ^  "/" ^ filename ^ ".p"

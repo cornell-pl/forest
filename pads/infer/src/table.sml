@@ -81,6 +81,7 @@ structure Table = struct
 *)
 				val (recNoSet, col) = gencolumn(ltokenl, startrec, totalrecords)
 (*
+				val _ = print ("Column is:\n" ^ (bdoltos col) ^ "\n")
 				val _ = print ("done.\n")
 *)
 			in (recNoSet, ([some(#label a)], [col]):infertable)

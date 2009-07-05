@@ -11,6 +11,7 @@ struct
     exception InvalidTokenTy
     exception LocMismatch
     exception NoOption
+    exception AllOptions
 
     type TokenOrder = Token list
     type Context    = LToken list
@@ -509,7 +510,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (* ^ (LTokensToString ts)  *)
+                       | _ => (ltokenTyToString (hd ts)) (* ^ (LTokensToString ts) *)
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -1303,6 +1304,8 @@ struct
 	  (recordLabel, pads)
 	end 
 ******************)
+(* one tricky thing is that we have to skip options because it
+   doesn't have accurate recNos any more *)
 fun getSmallestRecNo ty = 
   let 
 	fun less x y = x < y
@@ -1312,7 +1315,14 @@ fun getSmallestRecNo ty =
 		let val recNos = map (fn (_, loc) => #recNo loc) t
 		in min less recNos
 		end
-        |  Pstruct (a,tys) => getSmallestRecNo (hd tys)
+        |  Pstruct (a, tys) => 
+	    let fun skip tys =
+		case tys of
+		  nil => raise AllOptions
+		| Poption _::tys => skip tys
+		| ty::tys => getSmallestRecNo ty
+	    in skip tys
+	    end	
         |  Punion (a,tys) => 
 		min less (map getSmallestRecNo tys)
         |  Parray (a, t)                => getSmallestRecNo (#first t)
@@ -1325,7 +1335,7 @@ fun getSmallestRecNo ty =
 		in min less (map getSmallestRecNo tys)
 		end
         |  RArray (a,sep,term,body,len,lengths) => getSmallestRecNo body
-        |  Poption (a, ty) => getSmallestRecNo ty
+        |  Poption (a, ty) => raise AllOptions
         |  _      => raise TyMismatch
   end
 

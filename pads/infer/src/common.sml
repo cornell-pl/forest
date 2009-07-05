@@ -133,9 +133,9 @@ structure Common = struct
 	| 	_ => StringConst("")
 
 	fun bdoltos (x:Token option list): string = (case x of
-		h :: nil => (case h of SOME a => tokenToString a | NONE => "NONE      ")
-	|	h :: t => (case h of SOME a => tokenToString a | NONE => "NONE       ") 
-				^ "" ^ (bdoltos t)
+		h :: nil => (case h of SOME a => tokenToString a | NONE => "NONE")
+	|	h :: t => (case h of SOME a => tokenToString a | NONE => "NONE") 
+				^ "\t" ^ (bdoltos t)
 	|	nil => "()\n")
 
 	fun idstostrs(idlist: Id list):string list =
