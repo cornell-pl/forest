@@ -553,7 +553,7 @@
 
 \def \@copyrightinfo {%
   \if \notp{\emptydefp{\copyrightinfo}}%
-    Copyright \copyright\ \@copyrightyear\ ACM \@copyrightdata\dots \$5.00.
+    Copyright \copyright\ \@copyrightyear\ ACM \@copyrightdata\dots \$10.00.
   \fi}
 
 %                       Enunciations
