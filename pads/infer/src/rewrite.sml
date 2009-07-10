@@ -15,7 +15,7 @@ let
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
 
-  val _ = (print "Before Reduction:\n"; printTy measuredTy) 
+  (* val _ = (print "Before Reduction:\n"; printTy measuredTy) *)
 
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
@@ -32,9 +32,9 @@ let
   val headers= map (Reduce.reduce 1) headers
   val footers= map (Reduce.reduce 1) footers
   val reduce1_time : Time.time = Time.now ()
-(*
-  val _ = printTy (measure ty1)
-*)
+
+  (* val _ = printTy (measure ty1) *)
+
 (*phase two*) 
 (*
   val _ = print "Phase two ...\n";

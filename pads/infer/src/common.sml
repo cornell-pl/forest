@@ -645,6 +645,7 @@ structure Common = struct
 					| Base(_, (Pstring _, _)::_) => true
 					| Base(_, (Other _, _)::_) => true
 					| RefinedBase(_, StringConst s , _) => (size s) = 1
+					| Poption _ => true
 					| _ => false
 				)
 			  fun notLowPriTy ty = not (lowPriTy ty)
@@ -672,6 +673,10 @@ structure Common = struct
 					)
 				  | (Base (_, (Pempty, _)::_), _) => true
 				  | (_, Base (_, (Pempty, _)::_)) => false
+				  | (Poption _, RefinedBase _) => true
+				  | (Poption _, Base _) => true
+				  | (RefinedBase _, Poption _) => false
+				  | (Base _, Poption _) => false
 				  | (Base _, RefinedBase _) => true
 				  | (RefinedBase _, Base _) => false
 				  | (Base (a1, t1), _) => (case hd t1 of (Pstring x, _) => true | _ => false)

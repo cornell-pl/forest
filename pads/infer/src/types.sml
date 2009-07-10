@@ -593,7 +593,7 @@ struct
 	   Base (a, _)           => 1.0
         |  TBD (a, _, _)            => 1.0
         |  Bottom (a, _, _)         => 1.0
-        |  Pstruct (a, tys)      => foldl Real.max 1.0 (map variance tys)
+        |  Pstruct (a, tys)      => foldl op+ 0.0 (map variance tys)
         |  Punion (a, tys)       => foldl op+ 0.0 (map variance tys)
         |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
 		let val fv = variance f
@@ -602,15 +602,44 @@ struct
 		    val avglen = avgInts (#1 (ListPair.unzip len))
 		    val bv' = bv * avglen 
 		in
-		    foldl Real.max 1.0 [bv, bv', lv]
+		    foldl Real.max 1.0 [fv, bv', lv]
 		end
         |  RefinedBase (aux, re, l) => 
 		(case re of Enum res => Real.fromInt (length res)
 			| _ => 1.0
 		)
         |  Switch (a, id, retys)  	 => foldl op+ 0.0 (map (fn (re, ty) => variance ty) retys)
-        |  RArray (a,sep,term,body,len,lengths) => variance body
+        |  RArray (a,sep,term,body,len,lengths) => 
+		let val bv = variance body
+		    val avglen = avgInts (#1 (ListPair.unzip lengths))
+		in
+		    bv + 1.0 (* * avglen *)
+		end
         |  Poption (a, body)     	 => 1.0 + (variance body)
+
+(* Function to get the height of the type tree *)
+  fun getHeight ty =
+    let fun greater x y = x > y
+    in
+	  case ty of
+	   Base (a, _)           => 1
+        |  TBD (a, _, _)            => 1
+        |  Bottom (a, _, _)         => 1
+        |  Pstruct (a, tys)      => 1 + (max greater (map getHeight tys))
+        |  Punion (a, tys)       => 1 + (max greater (map getHeight tys))
+        |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
+		let val fh = getHeight f
+		    val bh = getHeight b
+		    val lh = getHeight l
+		in
+		    1 + (max greater [fh, bh, lh])
+		end
+        |  RefinedBase (aux, re, l) => 1
+        |  Switch (a, id, retys)  => 
+		1 + (max greater (map (fn (re, ty) => getHeight ty) retys))
+        |  RArray (a,sep,term,body,len,lengths) => 1 + getHeight body
+        |  Poption (a, body)     	 => 1 + (getHeight body)
+    end
 
 (* Function to test of a ty is empty *)
   fun isEmpty(ty) = case ty of 
@@ -1305,10 +1334,15 @@ struct
 	end 
 ******************)
 (* one tricky thing is that we have to skip options because it
-   doesn't have accurate recNos any more *)
+   doesn't all the ltokens, therefore the minRecNo is unknown *)
 fun getSmallestRecNo ty = 
   let 
 	fun less x y = x < y
+	fun notOption ty = case ty of
+		  Poption _ => false
+		| Parray _ => false
+		| RArray _ => false
+		| _ => true
   in
         case ty 
         of Base (a,t) => 
@@ -1320,22 +1354,27 @@ fun getSmallestRecNo ty =
 		case tys of
 		  nil => raise AllOptions
 		| Poption _::tys => skip tys
+		| Parray _ :: tys => skip tys
+		| RArray _ :: tys => skip tys
 		| ty::tys => getSmallestRecNo ty
 	    in skip tys
 	    end	
         |  Punion (a,tys) => 
-		min less (map getSmallestRecNo tys)
-        |  Parray (a, t)                => getSmallestRecNo (#first t)
+		let val nonOptions = List.filter notOption tys in
+		  min less (map getSmallestRecNo nonOptions)
+		end
+        |  Parray (a, t)                => raise TyMismatch
         |  RefinedBase (a,r,tl)=> 
 		let val recNos = map (fn (_, loc) => #recNo loc) tl
 		in min less recNos
 		end
         |  Switch(a,id,branches)        => 
 		let val tys = (map #2 branches)
-		in min less (map getSmallestRecNo tys)
+		    val nonOptions = List.filter notOption tys 
+		in min less (map getSmallestRecNo nonOptions)
 		end
-        |  RArray (a,sep,term,body,len,lengths) => getSmallestRecNo body
-        |  Poption (a, ty) => raise AllOptions
+        |  RArray (a,sep,term,body,len,lengths) => raise TyMismatch
+        |  Poption (a, ty) => 0 (* this is a top level poption so recNo starts from 0 *) 
         |  _      => raise TyMismatch
   end
 

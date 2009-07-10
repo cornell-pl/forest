@@ -261,16 +261,20 @@ structure Printing = struct
     fun cpFile path src dest = 
 	let val fileName = path ^ src
 	    val destName = (!executableDir)^"/include/"^dest
-	    in
-		ignore (TextIO.openIn fileName)
-		    handle Iox => 
-		     (let val cpcmd = "cp "^destName^" "^fileName
+	    fun copy () = 
+		let val cpcmd = "cp "^destName^" "^fileName
 		      in
 			  print "copy command: "; print cpcmd; print "\n";
 			  OS.Process.system cpcmd;
 			  ()
-		      end)
-	end
+		end
+	    val destModTime = (OS.FileSys.modTime fileName) handle _ => Time.zeroTime 
+	    val srcModTime = OS.FileSys.modTime destName
+	in
+	   if srcModTime > destModTime then copy ()
+	   else ()
+ 	end 
+		     
 
     fun dumpTyInfo ( path : string ) (dataDir: string) ( inputFileName : string ) ( baseTy : Ty ) 
 			( rewrittenTy : Ty ) (numHeaders: int) (numFooters: int)

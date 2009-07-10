@@ -246,8 +246,10 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
+		(*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
+		*)
 		    (* val _ = AG.printTable table *)
 		    val trans_map = AG.transpose table
 (*
@@ -320,7 +322,7 @@ structure Incremental: sig
 	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = TextIO.closeIn strm
 	   val logstrm = TextIO.openAppend logFile
-	   val finalTy = Reduce.reduce 4 (!myTy)  
+	   val finalTy = sortUnionBranches (Reduce.reduce 4 (!myTy)) 
 	   val _ = (print "**** Final Ty: \n"; printTy (measure finalTy))
 	   val msg = "Total time elapsed = " ^ Time.toString total_elapse ^ " secs\n"
 	   val _ = TextIO.output (logstrm, msg)
@@ -410,6 +412,7 @@ structure Incremental: sig
 	 val _ = if (OS.FileSys.isDir timedir handle SysErr => (OS.FileSys.mkDir timedir; true))
 		 then () else ()
 	 val learn_lines = get_learn_chunk (learn_file, learnsize)
+ 	 (* val _ = List.app (fn s => print (s ^ "\n")) learn_lines *)
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
 	 *)

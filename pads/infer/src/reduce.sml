@@ -1427,6 +1427,58 @@ and enum_range_to_refine cmos ty =
   | _ => (cmos, ty)
 
 
+(* this function collects const strings and/or enums in a union into one
+   single branch of enum *)
+and union_to_enum cmos ty =
+  case ty of
+    Punion(a, tys) =>
+      let fun is_enum_const ty = 
+	case ty of
+	  RefinedBase (_, Enum l, _) => allStringConsts l
+	| RefinedBase (_, StringConst _, _) => true
+	| _ => false
+	  val (candidates, noncandidates) = List.partition is_enum_const tys
+	  fun shorter (re1, re2) =
+		  case (re1, re2) of
+		  (StringConst x, StringConst y) => (size x < size y)
+		  | _ => raise TyMismatch
+	  fun add (re, l) =
+	      if not (List.exists (fn x => refine_equal (x, re)) l) then
+		ListMergeSort.sort shorter (re::l)
+	      else l
+	  fun merge (ty, ty_opt) =
+		case ty_opt of
+		  NONE =>
+			(case ty of
+			  RefinedBase (_, Enum _, _) => SOME ty
+			| RefinedBase (a, StringConst x, tl) => 
+				SOME (RefinedBase(a, Enum [StringConst x], tl))
+			| _ => raise TyMismatch
+			)
+		| SOME (RefinedBase(a, Enum l, tl)) =>
+			(case ty of
+			  RefinedBase (a', StringConst s, tl') => 
+			    let val newl = add ((StringConst s), l)
+			    in
+				SOME (RefinedBase(mergeAux(a', a), Enum newl, tl @ tl'))
+			    end
+			  | RefinedBase (a', Enum l', tl') => 
+			    let val newl = foldl add l l'
+			    in
+				SOME (RefinedBase(mergeAux(a', a), Enum newl, tl @ tl'))
+			    end
+			  | _ => raise TyMismatch
+			)
+		| _ => raise TyMismatch
+		
+	  val tys' =
+		if (length candidates) < 2 then tys (* only zero or one candidate, nothing to do *)
+		else (valOf (foldl merge NONE candidates)) :: noncandidates
+	  val ty' = if length tys' = 1 then hd tys' else Punion(a, tys')
+ 	in (cmos, ty')
+	end
+  | _ => (cmos, ty)	
+
 (* check if a given ty is a blob we use Ptext to stand for blob *)
 (* NOTE: if might the case that we should check by variance first before checking
   components of a ty 
@@ -1720,28 +1772,37 @@ fun isBlob ty =
   case ty of
     Base _ => false
   | RefinedBase _ => false
-  | Poption _ => false
+  (* | Poption _ => false *)
   (* | Pstruct _ => false *)
   | _ =>
-	let val avgNumTokensPerRec = (Real.fromInt (getNumTokens ty)) / 
+    (* to qualify to be a blob, the height must be at least ... *)
+    if getHeight ty >= minBlobHeight then
+	let 
+	    val avgNumTokensPerRec = (Real.fromInt (getNumTokens ty)) / 
 			(Real.fromInt (getCoverage ty)) 
-	    val tyc = toReal (getTypeComp ty)
-	    val adc = toReal (getAtomicComp ty) 
 	    val var = variance ty
 	    val ratio = var / avgNumTokensPerRec 
+	(*
+	    val tyc = toReal (getTypeComp ty)
+	    val adc = toReal (getAtomicComp ty) 
 	    val ratio1 = tyc / adc
+	*)
 (*
-	    val _ = print "For Ty .....\n"
-	    val _ = printTy ty
-	    val _ = print ("AvgNumTokensPerRec = " ^ (Real.toString avgNumTokensPerRec) ^ "\n")
-	    val _ = print ("Variance = " ^ Real.toString var ^ "\n")
-	    val _ = print ((getLabelString (getAuxInfo ty)) ^ ":\t")
-	    val _ = print ("Ratio = " ^ Real.toString ratio ^ "\t")
-	    val _ = print ("Comp Ratio = " ^ Real.toString ratio1 ^ "\n")
+        	val _ = print "For Ty:\n" (* ^ (getLabelString (getAuxInfo ty)) ^ ":\n") *)
+		val _ = printTy ty
+        	val _ = print ("Variance = " ^ Real.toString var ^ "\n")
+        	val _ = print ("AvgNumTokensPerRec = " ^ (Real.toString avgNumTokensPerRec) ^ "\n")
+		(*
+        	val _ = print ("Comp Ratio = " ^ Real.toString ratio1 ^ "\n")
+		*)
+        	val _ = print ("Ratio = " ^ Real.toString ratio ^ "\n")
 *)
 	in
-	  ratio > !blobRatio andalso (ratio + ratio1 > 4.0)
+	   if ratio > !blobRatio (* andalso (ratio + ratio1 > 4.0) *) then
+	     true
+	   else false
 	end
+    else false
 (* TODO: augment this function to search for more patterns by merging
   all tokens in the ty and then do string matching *)
 fun getStoppingPatt ty =
@@ -1777,16 +1838,36 @@ fun updateWithBlobs s_opt ty =
       | ty::(sib::x) => (mkBlob (SOME sib) ty):: (f (sib::x))
   in
 *)
-  let fun f tys s_opt = 
+  let
+   fun isBlobTy ty =
+	case ty of
+	  RefinedBase (_, Blob _, _) => true
+	| _ => false
+
+   fun f tys s_opt = 
 	case tys of
 	  nil => nil
-	| ty::tys => 
-	    let val newty = updateWithBlobs s_opt ty 
-	    in
-		case newty of
-		  RefinedBase (a, Blob _, _) => newty::(f tys NONE)
-		| _ => newty::(f tys (SOME newty))
-	    end
+	| ty::tys =>
+	  ( 
+	    case s_opt of
+	      NONE =>
+	        let val newty = updateWithBlobs s_opt ty 
+	        in
+		  newty::(f tys (SOME newty))
+		end
+	    | SOME sib_t =>
+		if isBlobTy sib_t andalso isBlob ty then (* try to make this ty a blob too *)
+		  let val newblob = mkBlob NONE ty
+		  in
+		    newblob::(f tys (SOME newblob))
+		  end
+		else 
+	          let val newty = updateWithBlobs s_opt ty 
+	          in
+		    newty::(f tys (SOME newty))
+		  end
+	  )
+
   fun mergeAdjBlobs curBlob tys newtys =
    let fun mergeBlobs b1 b2 = 
 	case (b1, b2) of
@@ -1817,10 +1898,6 @@ fun updateWithBlobs s_opt ty =
 		| _ => newtys
 		)
     end
-  fun isBlobTy ty =
-	case ty of
-	  RefinedBase (_, Blob _, _) => true
-	| _ => false
   in
   case ty of
 	  Pstruct(a, tys) => 
@@ -1883,61 +1960,70 @@ fun updateWithBlobs s_opt ty =
   end	
 
 and mkBlob sibling_opt ty = 
-  if isBlob (measure ty) then
-    let val ltokens = mergeTokens ty 
-	(* val _ = printTy ty  *)
-	(* val _ = print (LTokensToString ltokens)  *)
-    in 
-    case sibling_opt of
-	  NONE => 
-		let val newty = RefinedBase(getAuxInfo ty, Blob(NONE, NONE), ltokens)
+  case sibling_opt of
+    NONE => 
+      if isBlob (measure ty) then
+	let 
+	  val ltokens = mergeTokens ty 
+	  val newty = RefinedBase(getAuxInfo ty, Blob(NONE, NONE), ltokens)
 		    (*
 		    val _ = print "******* FOUND BLOB ABOVE ******\n"
 		    *)
-		in newty 
+	in newty 
 (*
 		if score newty < score ty then newty 
 		else updateWithBlobs sibling_opt ty
 *)
-		end
-	| SOME sibty =>
-	  (
-		let
-		  (* val _ = print "Getting stopping patt\n" *)
-		  val pair = getStoppingPatt sibty in
-		case pair of 
-		  (SOME str, NONE) => 
-		    if containString ltokens str then ty
-		    else 
-			let val newty = RefinedBase(getAuxInfo ty, Blob pair, ltokens)
+	end
+     else ty
+  | SOME sibty =>
+    (
+	let
+	  (* val _ = print "Getting stopping patt\n" *)
+	  val pair = getStoppingPatt sibty 
+	in
+	  case pair of 
+	  (SOME str, NONE) => 
+       	    if isBlob (measure ty) then
+	      let 
+	  	val ltokens = mergeTokens ty 
+	      in
+	    	if containString ltokens str then ty
+	    	else 
+		  let val newty = RefinedBase(getAuxInfo ty, Blob pair, ltokens)
 		    (*
 		            val _ = print "******* FOUND BLOB ABOVE ******\n"
 		    *)
-			in newty
+		  in newty
 	(*
 			if score newty < score ty then newty 
 			else updateWithBlobs sibling_opt ty
 	*)
-			end
-		| (NONE, SOME str ) => 
-		    if containPatt ltokens str then ty
-		    else 
-			let val newty = RefinedBase(getAuxInfo ty, Blob pair , ltokens)
+		  end
+	      end
+	    else ty
+	  | (NONE, SOME str ) => 
+       	    if isBlob (measure ty) then
+	      let 
+	  	val ltokens = mergeTokens ty 
+	      in
+	        if containPatt ltokens str then ty
+	        else 
+		  let val newty = RefinedBase(getAuxInfo ty, Blob pair , ltokens)
 			   (*
 		            val _ = print "******* FOUND BLOB ABOVE ******\n"
 			   *)
-			in newty
+		  in newty
 	(*
 			if score newty < score ty then newty 
 			else updateWithBlobs sibling_opt ty
 	*)
-			end
-		| _ => ty
-		end
-	)
-    end
-  else ty
-
+		  end
+	      end
+	    else ty
+	  | _ => ty
+	end
+  )
 	
 (* the actual reduce function can either take a SOME(const_map) or
 NONE.  It will use the constraints that it can apply. *)
@@ -1967,7 +2053,8 @@ let
 		  adjacent_consts,
 		  enum_range_to_refine,
 		  sum_to_switch,
-		  to_dependent_array_len
+		  to_dependent_array_len,
+		  union_to_enum
 		]
  
   val phase_three_rules : pre_reduction_rule list = 
