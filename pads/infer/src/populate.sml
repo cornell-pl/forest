@@ -627,7 +627,7 @@ struct
 	  val _ = printTy cleanTy
 *)
 	  val loadedTy = foldl populateOneRecord cleanTy rtokens
-	  val finalTy = (measure (cleanFirstToken loadedTy))
+	  val finalTy = (measure 0 (cleanFirstToken loadedTy))
 (*
 	  val _ = printTy finalTy
 *)

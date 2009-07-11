@@ -5,23 +5,25 @@ open Times
 
 (* runs analysis using a Ty and return a refined Ty with optional header and footer *)
 (* mode 0 is for normal learn program, mode 1 is for incremental learning *)
+(* we assume the ty passed to the run function has beem "measured" *)
+
 fun run ( et : EndingTimes ) (mode : int) (ty : Ty) : Ty * Ty * int * int * EndingTimes =
 let
-  val measuredTy = measure (removePempty ty)
+  val initTy = Reduce.removePempty ty
   val measured1_time = Time.now ()
-  val comps    = getComps measuredTy
+  val comps    = getComps initTy
   val tycomp   = #tc comps
   val acomp    = #adc comps
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
 
-  (* val _ = (print "Before Reduction:\n"; printTy measuredTy) *)
+  (* val _ = (print "Before Reduction:\n"; printTy initTy) *)
 
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
   val (headers, footers, auxOp, body) = 
-	if DEF_EXTRACT_HEADER_FOOTER = true then extractHeaderFooter measuredTy
- 	else (nil, nil, NONE, measuredTy)
+	if DEF_EXTRACT_HEADER_FOOTER = true then extractHeaderFooter initTy
+ 	else (nil, nil, NONE, initTy)
 (*phase one *)
 (*
   val _ = print "Phase one ...\n";
@@ -33,13 +35,13 @@ let
   val footers= map (Reduce.reduce 1) footers
   val reduce1_time : Time.time = Time.now ()
 
-  (* val _ = printTy (measure ty1) *)
+(*  val _ = printTy ty1 *)
 
 (*phase two*) 
 (*
   val _ = print "Phase two ...\n";
 *)
-  val ty2 = measure (if mode = 0 then Reduce.reduce 2 ty1 else Reduce.reduce 6 ty1)
+  val ty2 = (if mode = 0 then Reduce.reduce 2 ty1 else Reduce.reduce 6 ty1)
   val headers = if mode = 0 then map (Reduce.reduce 2) headers 
 		else map (Reduce.reduce 6) headers
   val footers = if mode = 0 then map (Reduce.reduce 2) footers 
@@ -58,7 +60,6 @@ let
   val _ = print "Before mkBlob ...\n"
   val _ = printTy ty3
 *)
-
   val ty3 = if Options.do_blob_finding then
 		sortUnionBranches (Reduce.updateWithBlobs NONE ty3)
 	    else sortUnionBranches ty3
@@ -70,7 +71,7 @@ let
   val finalTy = case auxOp of
 	SOME aux => Punion(aux, headers @ [ty3] @ footers)
 	| NONE => ty3
-  val measured_reduced_ty = measure finalTy
+  val measured_reduced_ty = measure 1 finalTy
   val measured2_time : Time.time = Time.now ()
   val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty
@@ -105,7 +106,7 @@ let
 				  , padsEnd = #padsEnd et
                                   }
 
-in (measuredTy, measured_reduced_ty, length headers, length footers, endingTimes)
+in (initTy, measured_reduced_ty, length headers, length footers, endingTimes)
 end
 
 end

@@ -81,8 +81,7 @@ structure Gold = struct
     fun goldenReport ( descname : string ) : string =
         if hasGold descname
         then let val goldenTy : Ty  = getGolden descname
-                 val populated : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
-                 val measured : Ty  = measure populated
+                 val measured : Ty = populateDataFile ( "data/" ^ descname ) goldenTy
                  val ()             = print "\n"
 		(*
 		 val (_, pads) = TyToPADSFile measured "vanilla.p"
@@ -91,7 +90,7 @@ structure Gold = struct
                  val nbits : int    = OS.FileSys.fileSize ( "data/" ^ descname ) * 8
                  val goldtystr      = TyToString ( measured )
              in "Golden complexity =\n" ^
-                showTyCompNormalized nbits ( getComps populated ) ^
+                showTyCompNormalized nbits ( getComps measured ) ^
                 goldtystr ^ "\n" 
              end
         else "NO GOLDEN FILE FOR: " ^ descname ^ "\n"

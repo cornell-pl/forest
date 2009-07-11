@@ -149,9 +149,10 @@ structure Model = struct
     fun measureRefined ( ty : Ty ) : Ty =
     ( case ty of
            RefinedBase ( a, r, ts ) =>
-	     let val avg = avgTokenLength ts
+	     let 
 		 val tot = sumTokenLength ts
 		 val num = length ts
+		 val avg = (Real.fromLargeInt tot) / (Real.fromInt num)
              	 val comps = refinedComp avg tot (Int.toLarge num) 
 				(map lTokenLength ts) r
              in RefinedBase ( updateComps a comps, r, ts )
@@ -245,7 +246,8 @@ structure Model = struct
     end
 
     (* Compute the type and data complexity of an inferred type *)    
-    fun measure ( ty : Ty ) : Ty =
+    (* mode = 0 measures everything, mode = 1 measures only one level down *)
+    fun measure (mode: int)  (ty : Ty) : Ty =
     ( case ty of
            Base ( a, ts )               => mkBaseComplexity a ts
          | TBD ( a, i, cl )             =>
@@ -256,8 +258,14 @@ structure Model = struct
              let val comps = maxContextComplexity cl
              in Bottom ( updateComps a comps, i, cl )
              end
-         | Pstruct (a,tys)              =>
-             let val measuredtys = map measure tys
+         | rb as RefinedBase ( a, r, ts ) =>
+             let val avg = avgTokenLength ts
+                 val tot = sumTokenLength ts
+                 val num = LargeInt.fromInt ( length ts )
+             in measureRefined rb
+             end
+         | Pstruct (a, tys)              =>
+             let val measuredtys = if mode = 0 then map (measure 0) tys else tys
                  val comps = { tc  = sumComps [ constructorComp 
                                               , cardComp tys
                                               , sumTypeComps measuredtys
@@ -267,8 +275,8 @@ structure Model = struct
                              }
              in Pstruct ( updateComps a comps, measuredtys )
              end
-         | Punion (a,tys)               =>
-             let val measuredtys = map measure tys
+         | Punion (a, tys)               =>
+             let val measuredtys = if mode = 0 then map (measure 0) tys else tys
                  val comps = { tc  = sumComps [ constructorComp
                                               , cardComp tys
                                               , sumTypeComps measuredtys
@@ -293,9 +301,8 @@ structure Model = struct
                        }
                   )                =>
 	     (*TODO: we are not looking at lengths here now*)
-             let val f'     = measure f
-                 val b'     = measure b
-                 val l'     = measure l
+             let val (f', b', l')     = if mode = 0 then (measure 0 f, measure 0 b, measure 0 l)
+				        else (f, b, l)
                  val avglen : real = avgInts ( map (fn (len, _) => len -2) ls )
                  val tcomp  = sumComps [ constructorComp (*this is for the Pstruct *)
 				       , constructorComp (*this is for PArray *)
@@ -326,18 +333,12 @@ structure Model = struct
                          }
                        )
              end
-         | rb as RefinedBase ( a, r, ts ) =>
-             let val avg = avgTokenLength ts
-                 val tot = sumTokenLength ts
-                 val num = LargeInt.fromInt ( length ts )
-             in measureRefined rb
-             end
          | Switch ( a, id, bs)      =>
              let val switches         = map #1 bs
                  val branches         = map #2 bs
                  val cover            = #coverage a
                  val sumBranches      = sumCoverage branches
-                 val measuredBranches = map measure branches
+                 val measuredBranches = if mode = 0 then map (measure 0) branches else branches
                  val branchesTypeComp = sumTypeComps measuredBranches
                  val weightedBranches = weightedAtomic sumBranches measuredBranches
                  val branchesDataComp = sumDataComps branches
@@ -357,7 +358,7 @@ structure Model = struct
 	     (*TODO: we are not looking at lengths here now*)
              let val maxlen           = maxInt (map #1 ls)
                  val avglen : real    = avgInts (map #1 ls)
-                 val mBody            = measure body
+                 val mBody            = if mode = 0 then measure 0 body else body
                  val { tc = tbody, adc = abody, dc = dbody } = getComps mBody
 		(* Do not count the complexity of len, term and sep as these are desirable info *)
 		(*
@@ -380,7 +381,7 @@ structure Model = struct
              in updateRArray comps
              end
          | Poption ( aux, ty ) =>
-             let val mBody   = measure ty
+             let val mBody   = if mode = 0 then measure 0 ty else ty
                  val tycomp  = getComps mBody
                  val tcomp   = sumComps [ constructorComp, #tc tycomp, unitComp ]
                  (* Half as complex, because sometimes not there ????? *)

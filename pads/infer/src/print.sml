@@ -72,7 +72,7 @@ structure Printing = struct
             val () = TextIO.output(strm, parametersToString())
 	    val () = TextIO.output(strm, "Complexity of derived type:\n\t")
 	    (* remove dependency of this file to the structure.sml *)
-	    val () = TextIO.output(strm, showTyComp(getComps (measure ty)))
+	    val () = TextIO.output(strm, showTyComp(getComps ty))
 	in
 	    TextIO.closeOut strm
 	end
