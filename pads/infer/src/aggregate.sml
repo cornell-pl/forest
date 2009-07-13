@@ -417,7 +417,7 @@ struct
   let 
       (* val _ = (print "Learning these lines:\n"; List.app (fn s => print (s ^ "\n")) lines) *)
       val (ty, _) = Structure.computeStructurefromRecords lines
-      val ty = removePempty ty
+      val ty = Reduce.removePempty ty
       (* val _ = (print ("Initial description:\n"); printTy ty) *)
       val ty = Reduce.reduce 1 ty
       val ty = Reduce.reduce 2 ty
@@ -438,8 +438,10 @@ struct
 	    if length ss > 0 then
 	      let 
 		val extra_ty = learn ss NONE
+		val new_cov = getCoverage ty + getCoverage extra_ty
 	      in
-		Pstruct(mkTyAux 0, [updateTy ty a, Poption(mkTyAux1(0, id) , extra_ty)])
+		Pstruct(mkTyAux new_cov, [updateTy ty a, 
+		  Poption(mkTyAux1(new_cov, id) , extra_ty)])
 	      end
 	    else updateTy ty a
 	| (_, TupleA [Ln (id, ss), a]) => 
@@ -447,11 +449,17 @@ struct
 	      let 
 		val sib_ty = updateTy ty a
 		val extra_ty = learn ss (SOME sib_ty)
+		val new_cov = getCoverage ty + getCoverage extra_ty
 	      in
-		Pstruct(mkTyAux 0, [Poption(mkTyAux1 (0, id), extra_ty), sib_ty])
+		Pstruct(mkTyAux new_cov, [Poption(mkTyAux1 (new_cov, id), extra_ty), sib_ty])
 	      end
 	    else updateTy ty a
-	| (_, Opt (id, a)) => Poption (mkTyAux1 (0, id), updateTy ty a)
+	| (_, Opt (id, a)) =>
+	  (* TODO: we need to keep track of the coverage of missing tys in the aggregates, 
+		right now assuming 1 *) 
+		let val orig_cov = getCoverage ty in
+		  Poption (mkTyAux1 (orig_cov+1, id), updateTy ty a)
+		end
 	| (Base (a, tl), BaseA _) => ty
 	| (RefinedBase (a, re, tl), SyncA (SOME newre)) => RefinedBase (a, newre, tl)
 	| (RefinedBase (a, re, tl), SyncA NONE) => Base (a, tl) (* resetting to Base type *)

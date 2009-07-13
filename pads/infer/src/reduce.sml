@@ -1024,6 +1024,21 @@ and union_to_optional ty =
 	     end	
 	| _ => ty
 
+
+and optional_to_union ty =
+(* this is the dual of the above: option(union([t1, t2])) ==> union ([t1, t2, empty]) *)
+(* this function is used by the incremental learning program *)
+case ty of
+  Poption (a, Punion (a1, tys)) => 
+	let 
+	  val cov = Int.max ((#coverage a) - (#coverage a1), 1)
+	  val empty = measure 1 (genEmptyBase (mkTyAux cov) cov)
+	  val newty = measure 1 (Punion(a, (tys @ [empty])))
+	in newty
+	end
+| _ => ty
+
+
 (* post constraint rules, these require the cmap to be filled  and the 
 data labeled *)
 
@@ -1414,11 +1429,22 @@ and enum_range_to_refine cmos ty =
                         (ty', newconsts@t)
                       end
 		  | (Range(min,max)):: t => 
+		    let val maxInt = Math.pow(2.0, 64.0) - 1.0
+		    in
+		    if (min>=0 andalso (Real.fromLargeInt max) >  maxInt) then
+		     (* the int is too long *)
+			(RefinedBase (mkTyAux1(coverage, id), StringME ("/[0-9]+/"), b),
+				newconsts@t) 
+		    else if (min<0 andalso (Real.fromLargeInt (~min)) > maxInt) then 
+			(RefinedBase (mkTyAux1(coverage, id), StringME ("/-?[0-9]+/"), b),
+				newconsts@t) 
+		    else
 			if min = max then
 				(RefinedBase(mkTyAux1(coverage, id), 
 				IntConst min, b), newconsts@t)
 			else (RefinedBase(mkTyAux1(coverage, id), 
 				Int(min, max), b), newconsts@t)
+		    end
                   | h :: t => check_enum t (newconsts@[h])
                   | nil => (ty, newconsts) 
 		val (newty, newconsts) = check_enum consts nil
@@ -2123,7 +2149,8 @@ let
   val phase_five_rules : pre_reduction_rule list = 
 		[ 	
 			unnest_tuples,
-			unnest_sums
+			unnest_sums,
+			optional_to_union
 		]
   val phase_six_rules : post_reduction_rule list =
 		[ 

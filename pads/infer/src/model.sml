@@ -47,6 +47,8 @@ structure Model = struct
 	| "/[^.]+/" => (numStringChars-1, 0)
 	| "/[^\"]+/" => (numStringChars-1, 0)
 	| "/[A-Z][A-Z]/" => (26, 0)
+	| "/[0-9]+/" => (10, 0)
+	| "/-?[0-9]+/" => (10, 0) (* underestimate the size here *)
 	| _ => (256, 0)
 
     (* Compute the type and data complexity of a refined type *)

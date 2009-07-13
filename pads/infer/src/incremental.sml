@@ -323,7 +323,7 @@ structure Incremental: sig
 	   val _ = TextIO.closeIn strm
 	   val logstrm = TextIO.openAppend logFile
 	   val finalTy = sortUnionBranches (Reduce.reduce 4 (!myTy)) 
-	   val _ = (print "**** Final Ty: \n"; printTy (measure finalTy))
+	   val _ = (print "**** Final Ty: \n"; printTy (measure 0 finalTy))
 	   val msg = "Total time elapsed = " ^ Time.toString total_elapse ^ " secs\n"
 	   val _ = TextIO.output (logstrm, msg)
 	   val _ = TextIO.closeOut logstrm
