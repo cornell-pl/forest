@@ -361,15 +361,19 @@ On Performance:
 TODOs after WASL paper:
 
 1. Combine the def of path and url into one token, let's just call it
-   path for now and let's phase out the URL token.
+   path for now and let's phase out the URL token. (done!)
 2. Implement the new rewriting rule to crack open Option nodes
-   which are embeded in unions and re-sort them
-3. Examine the pws to see if errors can be eliminated
+   which are embeded in unions and re-sort them (done!)
+3. Examine the pws to see if errors can be eliminated (done!)
 4. Examine the descriptions learned from other examples to see
-   if the quality of these descriptions can be improved somehow
+   if the quality of these descriptions can be improved somehow (done!)
 5. Look at the way blob_finding is working to see why sometimes
-   they are too aggressive and sometimes they are not.
-6. Investigate why some matching tokens like ( and ) are not paired properly
-7. Rewriting rule to find more general Path token (exploiting the vertical info)
-8. Experimental set up to measure good N (initial chunk size) and M (incremental
+   they are too aggressive and sometimes they are not. (done!)
+6. Investigate why some matching tokens like ( and ) are not paired properly (done!)
+
+7. Improve the efficiency of the measure function to avoid multiple applications (done!)
+8. Update coverage and adc during incremental learning so that the coverage info can be
+    used for blob finding or other functions.
+9. Rewriting rule to find more general Path token (exploiting the vertical info)
+10. Experimental set up to measure good N (initial chunk size) and M (incremental
    chunk size).
