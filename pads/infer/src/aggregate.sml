@@ -515,8 +515,8 @@ fun merge_adj_options dep_map ty =
 	  if getCorrelation dep_map (getLabel a1) (getLabel a2) = 1 then
 	  let val cov = getCoverage t1
 	      val aux = mkTyAux cov
-	      val newstruct = Pstruct (aux, [t1, t2])
-	      val newl = Poption(a1, Reduce.unnest_tuples newstruct) :: l
+	      val newstruct = Model.measure 1 (Pstruct (aux, [t1, t2]))
+	      val newl = Poption(a1, Reduce.unnest_tuples NONE newstruct) :: l
 	  in f newl
 	  end
 	  else Poption(a1, t1)::(f (Poption(a2, t2)::l))
