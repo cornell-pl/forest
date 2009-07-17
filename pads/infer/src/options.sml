@@ -10,5 +10,5 @@ val print_levels = false (* report each level in TANE *)
 val print_verbose = false (* print verbose information *)
 val print_complexity = true (*print complexity info *)
 val output_histograms = false (*print complexity info *)
-val do_blob_finding = true
+(* val do_blob_finding = false *)
 end

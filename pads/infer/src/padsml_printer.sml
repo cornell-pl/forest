@@ -114,6 +114,8 @@ struct
 	   | SOME (var, NONE, NONE, SOME (FloatConst (i, f))) =>
 		     "ptypedef " ^ tyVarStr ^ " = [" ^ var ^ ": " ^  tyNameStr ^ 
 			" | " ^ var ^ " = " ^ i ^ "." ^ f ^ "]\n\n"
+	   | SOME (var, NONE, NONE, SOME (StringConst s)) =>
+		     "ptype " ^ tyVarStr ^ " = pstring_ME(\"/" ^ escapeRegex s ^ "/\")\n\n" 
 	   | _ => raise TyMismatch
 	  end
     	| TyStruct fields => "ptype " ^ tyVarStr ^ " = {\n\t" ^ 

@@ -412,7 +412,7 @@ struct
 	     case (str, patt) of
 	     (SOME s, _) => "[Blob] (" ^ s ^ ")"
 	     | (_, SOME s) => "[Blob] (" ^ s ^ ")"
-	     | _ => "[Blob] (Peor)"
+	     | _ => "[Blob] (Peor)" 
 	   )
 
     fun ltokenTyToString ( t : Token, loc : location ) : string = tokenTyToString t 
@@ -499,7 +499,7 @@ struct
                       ", dc: " ^ (showBits dcomp) 
                       )
 		      else "") ^
-		      ", raw: "^ (showBits (combine tcomp dcomp))  ^
+		      ", raw: "^ (showBits (combine tcomp (multCompR adcCoeff acomp)))  ^
 			")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")

@@ -157,7 +157,8 @@ structure Model = struct
 		 val avg = (Real.fromLargeInt tot) / (Real.fromInt num)
              	 val comps = refinedComp avg tot (Int.toLarge num) 
 				(map lTokenLength ts) r
-             in RefinedBase ( updateComps a comps, r, ts )
+		 val newty = RefinedBase ( updateComps a comps, r, ts )
+             in newty
              end
          | _ => raise NotRefinedBase
     )
@@ -260,12 +261,15 @@ structure Model = struct
              let val comps = maxContextComplexity cl
              in Bottom ( updateComps a comps, i, cl )
              end
-         | rb as RefinedBase ( a, r, ts ) =>
+         | RefinedBase ( a, r, ts ) =>
+	(*
              let val avg = avgTokenLength ts
                  val tot = sumTokenLength ts
                  val num = LargeInt.fromInt ( length ts )
-             in measureRefined rb
-             end
+             in 
+	*)
+		measureRefined ty 
+         (*    end  *)
          | Pstruct (a, tys)              =>
              let val measuredtys = if mode = 0 then map (measure 0) tys else tys
                  val comps = { tc  = sumComps [ constructorComp 
@@ -305,7 +309,7 @@ structure Model = struct
 	     (*TODO: we are not looking at lengths here now*)
              let val (f', b', l')     = if mode = 0 then (measure 0 f, measure 0 b, measure 0 l)
 				        else (f, b, l)
-                 val avglen : real = avgInts ( map (fn (len, _) => len -2) ls )
+                 val avglen : real = (Real.fromInt (getCoverage b)) / (Real.fromInt (#coverage a))
                  val tcomp  = sumComps [ constructorComp (*this is for the Pstruct *)
 				       , constructorComp (*this is for PArray *)
 				       , constructorComp (*this is for the sep *)
@@ -359,7 +363,7 @@ structure Model = struct
          | RArray ( aux, osep, oterm, body, olen, ls ) =>
 	     (*TODO: we are not looking at lengths here now*)
              let val maxlen           = maxInt (map #1 ls)
-                 val avglen : real    = avgInts (map #1 ls)
+                 val avglen : real = (Real.fromInt (getCoverage body)) / (Real.fromInt (#coverage aux))
                  val mBody            = if mode = 0 then measure 0 body else body
                  val { tc = tbody, adc = abody, dc = dbody } = getComps mBody
 		(* Do not count the complexity of len, term and sep as these are desirable info *)

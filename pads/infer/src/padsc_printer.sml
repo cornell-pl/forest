@@ -155,6 +155,8 @@ open Ast
 	   | SOME (var, NONE, NONE, SOME (FloatConst (i, f))) =>
 		     "Ptypedef " ^ tyNameStr ^ " " ^ tyVarStr ^" : " ^ tyVarStr ^ " " ^ var ^ 
 		     " => {" ^ var ^ " == " ^ i ^"." ^ f ^ "};\n"
+	   | SOME (var, NONE, NONE, SOME (StringConst s)) =>
+		     "Ptypedef Pstring_ME(:\"/" ^ escapeRegex s ^ "/\":) " ^ tyVarStr ^ ";\n"
 	   | _ => raise TyMismatch
 	  end
     	| TyStruct fields => "Pstruct " ^ tyVarStr ^ " {\n" ^ 

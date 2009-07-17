@@ -27,6 +27,8 @@ let
 (*phase one *)
 (*
   val _ = print "Phase one ...\n";
+*)
+(*
   val _ = case (headerTyOp, footerTyOp) of (NONE, NONE) => ()
 	  | _ => print "Found a header or footer!\n"
 *)
@@ -35,7 +37,7 @@ let
   val footers= map (Reduce.reduce 1) footers
   val reduce1_time : Time.time = Time.now ()
 
-(*  val _ = printTy ty1 *)
+(*  val _ = printTy ty1  *)
 
 (*phase two*) 
 (*
@@ -49,20 +51,26 @@ let
   val reduce2_time : Time.time = Time.now ()
   (*phase three, redo constraint-free reduction *)
 (*
+  val _ = print "After phase 2...\n"
+  val _ = printTy ty2
+*)
+(*
   val _ = print "Phase three ...\n";
 *)
-  val ty3 = Reduce.reduce 3 ty2
+  val ty3 = sortUnionBranches (Reduce.reduce 3 ty2)
   val headers= map (Reduce.reduce 3) headers
+  val headers = map sortUnionBranches headers
   val footers= map (Reduce.reduce 3) footers
+  val footers = map sortUnionBranches footers
   val reduce3_time : Time.time = Time.now ()
 
 (*
   val _ = print "Before mkBlob ...\n"
   val _ = printTy ty3
-*)
   val ty3 = if Options.do_blob_finding then
 		sortUnionBranches (Reduce.updateWithBlobs NONE ty3)
 	    else sortUnionBranches ty3
+*)
 (*
   val _ = print "After mkBlob ...\n"
   val _ = printTy ty3

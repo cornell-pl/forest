@@ -423,6 +423,7 @@ open Common
       case ty of
 	Base(aux, (t, loc)::_) =>
 	  let val basetyName = getBaseTyName ty
+	      val _ = tyMapRef := TyMap.insert (!tyMapRef, ty, basetyName)
 	  in [(levels2Rec, basetyName, TyBase(tyname, NONE))]
 	  end
       | RefinedBase(aux, Enum res, _) =>
@@ -443,6 +444,7 @@ open Common
 	  end
       | RefinedBase(aux, re, _) =>
 	  let val basetyName = getBaseTyName ty
+	      val _ = tyMapRef := TyMap.insert (!tyMapRef, ty, basetyName)
 	      val idStr = getIdString aux
 	  in
 	  (
