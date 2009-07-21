@@ -369,11 +369,17 @@ TODOs after WASL paper:
    if the quality of these descriptions can be improved somehow (done!)
 5. Look at the way blob_finding is working to see why sometimes
    they are too aggressive and sometimes they are not. (done!)
-6. Investigate why some matching tokens like ( and ) are not paired properly (done!)
+6. Improve the efficiency of the measure function to avoid multiple applications (done!)
 
-7. Improve the efficiency of the measure function to avoid multiple applications (done!)
+7. Investigate why some matching tokens like ( and ) are not paired properly 
 8. Update coverage and adc during incremental learning so that the coverage info can be
     used for blob finding or other functions.
-9. Rewriting rule to find more general Path token (exploiting the vertical info)
-10. Experimental set up to measure good N (initial chunk size) and M (incremental
+9. Detect parts of description that is error and remove those in a sensible
+   way.
+10. Rewriting rule to find more general Path token (exploiting the vertical info)
+11. Experimental set up to measure good N (initial chunk size) and M (incremental
    chunk size).
+12. Write a translation tool from xml (compiled form pads/c) to IR
+13. Do some experiments varying the weight of the adc in the scoring function
+14. Investigate why the option_to_union rewriting rule can't succeed. Anything wrong with
+    the scoring function?
