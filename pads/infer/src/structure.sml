@@ -1264,6 +1264,7 @@ struct
 	Bottom ( { coverage=coverage
                  , label=SOME(mkBOTLabel (!Bottomstamp))
                  , tycomp = zeroComps
+		 , len = 0.0
                  }
                , !Bottomstamp
                , cl
@@ -1295,6 +1296,7 @@ struct
                  then TBD ( { coverage=coverage
                             , label=SOME(mkTBDLabel (!TBDstamp))
                             , tycomp = zeroComps
+			    , len = 0.0
                             }
                           , !TBDstamp
                           , cl

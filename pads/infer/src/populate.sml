@@ -28,11 +28,13 @@ struct
       let
 	val aux = getAuxInfo ty
    	val oldLabel = (#label aux)
-	val newLabel = getLabel({coverage=0, label = NONE, tycomp=zeroComps})
+	val newLabel = getLabel({coverage=0, label = NONE, 
+			tycomp=zeroComps, len = 0.0})
 	val labelmap' = case oldLabel of 
 			NONE => labelmap
 			| _ => LabelMap.insert(labelmap, some(oldLabel), newLabel)
-	val newAux= {coverage = 0, label = SOME newLabel, tycomp=zeroComps}
+	val newAux= {coverage = 0, label = SOME newLabel, 
+			tycomp=zeroComps, len = 0.0}
       in
 	case ty 
         of Base (a,t)                   => (labelmap', Base(newAux, List.take(t, 1)))

@@ -43,11 +43,9 @@ let
 (*
   val _ = print "Phase two ...\n";
 *)
-  val ty2 = (if mode = 0 then Reduce.reduce 2 ty1 else Reduce.reduce 6 ty1)
-  val headers = if mode = 0 then map (Reduce.reduce 2) headers 
-		else map (Reduce.reduce 6) headers
-  val footers = if mode = 0 then map (Reduce.reduce 2) footers 
-		else map (Reduce.reduce 6)footers 
+  val ty2 = Reduce.reduce 2 ty1 
+  val headers = map (Reduce.reduce 2) headers 
+  val footers = map (Reduce.reduce 2) footers 
   val reduce2_time : Time.time = Time.now ()
   (*phase three, redo constraint-free reduction *)
 (*
@@ -57,10 +55,13 @@ let
 (*
   val _ = print "Phase three ...\n";
 *)
-  val ty3 = sortUnionBranches (Reduce.reduce 3 ty2)
-  val headers= map (Reduce.reduce 3) headers
+  val ty3 = (if mode = 0 then Reduce.reduce 3 ty2 else Reduce.reduce 6 ty2)
+  val headers = if mode = 0 then map (Reduce.reduce 3) headers 
+		else map (Reduce.reduce 6) headers
+  val footers = if mode = 0 then map (Reduce.reduce 3) footers 
+		else map (Reduce.reduce 6) footers 
+  val ty3 = sortUnionBranches ty3
   val headers = map sortUnionBranches headers
-  val footers= map (Reduce.reduce 3) footers
   val footers = map sortUnionBranches footers
   val reduce3_time : Time.time = Time.now ()
 

@@ -61,12 +61,13 @@ struct
         , dc  = combine (#dc t1) (#dc t2)
         }
 
+(*
     fun combTyComp2 ( t1 : TyComp, t2 : TyComp ) : TyComp =
         { tc  = combine (#tc t1) (#tc t2)
         , adc = combine (#adc t1) (#adc t2)
         , dc  = combine (#dc t1) (#dc t2)
         }
-
+*)
 
     type AuxInfo = { coverage : int        (* Coverage of
                                                  -- a struct is minimum coverage
@@ -75,15 +76,34 @@ struct
                                                          of its consituents; *)
                    , label    : Id option  (* introduced during refinement as a tag *)
                    , tycomp   : TyComp
+		   , len : real    	   (* this is the average length of characters 
+					      described by this ty *)
                    }
 
-    (* Update the type and data complexity of an AuxInfo *)
+(*
     fun updateComps ( aux : AuxInfo ) ( comps : TyComp ) : AuxInfo =
         { coverage = #coverage aux
         , label    = #label aux
         , tycomp   = comps
+	, len = #len aux
+        }
+*)
+
+    (* Update the len and type and data complexity of an AuxInfo *)
+     fun updateLenComps ( aux : AuxInfo ) (l: real ) (comps : TyComp) : AuxInfo =
+        { coverage = #coverage aux
+        , label    = #label aux
+        , tycomp   = comps
+	, len = l
         }
 
+     fun updateLen (aux : AuxInfo) (len : real) : AuxInfo = 
+	{ coverage = #coverage aux
+        , label    = #label aux
+        , tycomp   = #tycomp aux
+	, len = len
+        }
+ 
     val numRefined      : LargeInt.int = 7 (* Number of cases in datatype Refined *)
     val numConstRefined : LargeInt.int = 3 (* Number of constant cases in datatype Refined *)
 
@@ -144,6 +164,17 @@ struct
         |  Switch(a,id,branches)        => a
         |  RArray (a,sep,term,body,len,lengths) => a
         |  Poption (a, _)               => a
+
+    fun getCoverage ( ty : Ty ) : int = #coverage ( getAuxInfo ty )
+    fun incCoverage (a : AuxInfo) : AuxInfo = 
+	case a of 
+	{coverage = c, label = l, tycomp = tc, len = leng} => 
+		{coverage = (c+1), label = l, tycomp = tc, len = leng}
+    fun sumCoverage ( tys : Ty list ) : int =
+        foldl ( fn (t:Ty,n:int) => getCoverage t + n ) 0 tys
+    fun minCoverage ( tys : Ty list ) : int = 
+	case tys of [] => Option.valOf Int.maxInt
+        | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
 
     exception NotParray
     fun avgParrayBodyLength ( ty : Ty ) : real =
@@ -217,6 +248,23 @@ struct
     (* Sum the atomic complexities of a measured type *)
     fun sumAtomicComps ( tys : Ty list ) : Complexity =
         foldl ( fn (t,c) => combine (getAtomicComp t) c ) zeroComp tys
+
+    (* Compute the weighted sum of the data complexities of a list of types *)
+    fun weightedData ( tot : int ) ( tys : Ty list ) : Complexity =
+    let fun f ( t : Ty, c : Complexity ) : Complexity =
+              combine c ( multCompR ( frac ( getCoverage t ) tot )
+                                    ( getDataComp t )
+                        )
+    in foldl f zeroComp tys
+    end
+
+    fun weightedAtomic ( tot : int ) ( tys : Ty list ) : Complexity =
+    let fun f ( t : Ty, c : Complexity ) : Complexity =
+              combine c ( multCompR ( frac ( getCoverage t ) tot )
+                                    ( getAtomicComp t )
+                        )
+    in foldl f zeroComp tys
+    end
                  
     fun mkLabel (prefix:string) (i:int) : Id = Atom.atom("BTy_"^(Int.toString i))
     fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i
@@ -281,6 +329,7 @@ struct
                         , adc = zeroComp
                         , dc  = zeroComp
                         }
+	   , len = 0.0
            }
 	end
 
@@ -292,6 +341,7 @@ struct
                         , adc = zeroComp
                         , dc  = zeroComp
                         }
+	   , len = 0.0 
            }
 	end
 
@@ -302,6 +352,7 @@ struct
 	in { coverage = coverage
            , label    = SOME label
            , tycomp   = comp
+	   , len = 0.0
            }
 	end
 
@@ -312,17 +363,6 @@ struct
 		nil => NONE
 		| _ => SOME(hd filtered)
 	end
-
-    fun getCoverage ( ty : Ty ) : int = #coverage ( getAuxInfo ty )
-    fun incCoverage (a : AuxInfo) : AuxInfo = 
-	case a of 
-	{coverage = c, label = l, tycomp = tc} => {coverage = (c+1), label = l, tycomp = tc}
-    fun sumCoverage ( tys : Ty list ) : int =
-        foldl ( fn (t:Ty,n:int) => getCoverage t + n ) 0 tys
-    fun minCoverage ( tys : Ty list ) : int = 
-	case tys of [] => Option.valOf Int.maxInt
-        | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
-
 
     (* the two refine types are exactly the same *)
     fun refine_equal (a:Refined, b:Refined):bool =
@@ -491,8 +531,10 @@ struct
     fun TyToStringD (prefix:string) (longTBDs:bool) (longBottom:bool)
                     (suffix:string) (ty:Ty) : string = 
     let val aux = getAuxInfo ty
-        val { tc = tcomp, adc = acomp, dc = dcomp } = #tycomp aux
+        val { tc = tcomp, adc = acomp, dc = dcomp} = #tycomp aux
+	val l = #len aux
         val stats = ( "(" ^  (covToString aux)  ^
+			", len: " ^ Real.fmt (StringCvt.FIX (SOME 1)) l ^	
 		      (if print_complexity then (
                       ", tc: " ^ (showBits tcomp)  ^
                       ", ac: " ^ (showBits acomp)  ^
@@ -510,12 +552,22 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (* ^ (LTokensToString ts) *)
+                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts)*) 
                     ) ^ " " ^ stats ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
                                       ", tot: " ^ LargeInt.toString tot ^ ")")
 		    else "") 
+                 end
+             | RefinedBase (aux, refined, tl) =>
+                 let val avg = avgTokenLength tl
+                     val tot = sumTokenLength tl
+                 in ( refinedToString refined ) (* ^ (LTokensToString tl) *)
+		      ^ " " ^ stats ^ 
+		    (if print_complexity then 
+			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
+                    	", tot: " ^ LargeInt.toString tot ^ ")") 
+		     else "")
                  end
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^
@@ -534,16 +586,6 @@ struct
 		(* prefix ^ (lengthsToString lengths) ^ *)
                 prefix ^ "First:\n" ^ (partialD ty1) ^ prefix ^ "Body:\n" ^ (partialD ty2) ^
                 prefix ^ "Tail:\n" ^ (partialD ty3) ^ prefix ^ "End Parray"
-             | RefinedBase (aux, refined, tl) =>
-                 let val avg = avgTokenLength tl
-                     val tot = sumTokenLength tl
-                 in ( refinedToString refined ) (* ^ (LTokensToString tl) *)
-		      ^ " " ^ stats ^ 
-		    (if print_complexity then 
-			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
-                    	", tot: " ^ LargeInt.toString tot ^ ")") 
-		     else "")
-                 end
              | Switch(aux ,id, retys) =>
                 "Switch(" ^ Atom.toString(id)^")" ^ stats ^ ":\n" ^
                 (lconcat (List.map (fn (re, ty) => (prefix^"case "^(refinedToString re)^":\n"^ 
@@ -655,14 +697,14 @@ struct
    excluding Pemptys *)
     fun getNumTokens ty =
 	  case ty of
-	   Base (a, l)           => if isEmpty ty then 0 else length l
+	   Base (a, l)           => if isEmpty ty then 0 else #coverage a
         |  TBD (a, _, l)            => 0
         |  Bottom (a, _, l)         => 0
         |  Pstruct (a, tys)      => sumSmallInts (map getNumTokens tys)
         |  Punion (a, tys)       => sumSmallInts (map getNumTokens tys)
         |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
 		getNumTokens f + getNumTokens b + getNumTokens l
-        |  RefinedBase (aux, re, l) => length l
+        |  RefinedBase (aux, re, l) => #coverage aux
         |  Switch (a, id, retys)  	 => sumSmallInts (map (fn (r, t) => getNumTokens t) retys)
         |  RArray (a,sep,term,body,len,lengths) => getNumTokens body
         |  Poption (a, body)     	 => getNumTokens body
@@ -827,512 +869,6 @@ struct
 						else dateStoppingRe := ("/" ^ s ^ "/")
 *************)
 
-(***************
-
-   (**** Function to convert a Ty to a PADS string ***)
-   (*suffix is the suffix for variable name*)
-    fun TyToPADS (prefix:string) (suffix:string) (isRecord:bool) (mode:int) 
-		(siblings: Ty list) (ty:Ty) : string = 
-	(*mode = 0: not inline
-	  mode = 1: in line (not array)
-	  mode = 2: in array body
-	  mode = 3: in struct body (can only be core literals)
-	  mode = 4: the target Ty in a switch branch where there's dup (to use Pfrom to avoid dup)
-	  these are used for base and refined base types mostly
-	*)
-    let 
-	val label = getLabelForPADS ty
-	(* returns the label for type, parameter and variable name to be used with it *)
-   	fun getLabelParamVar ty =
-	   let 
-	     val rawLabel = getLabelString (getAuxInfo ty)
-	   in
-		case ty of
-		Switch (aux, id, tys) => (getLabelForPADS ty, SOME(getVarNameFromID (Atom.toString id)), 
-			getVarNameFromID rawLabel)
-		| _ => (getLabelForPADS ty, NONE, getVarNameFromID rawLabel)
-	   end
-    	fun labelToTyString (label:string, paramop) = 
-		case paramop of
-		NONE => label 
-		| SOME param => label ^ "(:" ^ param ^ ":)"
-    	fun labelToPADS prefix mode (label, paramop, varName) = 
-		prefix ^ (labelToTyString (label, paramop)) ^ 
-		(if (mode = 2) then "" else (" "^ varName ^ suffix))
-	fun notInlineTy ty = case ty of 
-		Base _ => false 
-		| RefinedBase (_, Enum _, _) => true 
-		| RefinedBase _ => false
-		| TBD _ => false
-		| Bottom _  => false
-		| _ => true
-    	fun tyToInlinePADS prefix mode ty = labelToPADS prefix mode (getLabelParamVar ty)
-        fun tokenToPADS label suffix token mode =
-	let 
-	  val typedef = if mode =0 then "Ptypedef " else ""
-	  val label' = if mode =2 then "" 
-			else if mode = 0 then (label ^ ";\n")
-			else ((getVarName label) ^ suffix ^ ";\n")
-	in
-	  typedef ^
-          (case token of 
-		Pstring _ => "PPstring " ^ label'
-              | Pint _ => "Pint64 " ^ label'
-	      | Pfloat _ => "Pfloat64 " ^ label'
-	      | Ptime _ =>  "PPtime " ^ label'
-(********
-			   if !timeStoppingChar<> #"" then 
-			      ("Ptime(:'" ^ (Char.toString !timeStoppingChar) ^ "':) " ^ label')
-			   else if !timeStoppingRe <> "" then
-			      ("Ptime_SE(:\"" ^ !timeStoppingRe ^ "\":) " ^ label')
-			   else ("PPTime " ^ label')
-********)
-	      | Pdate _ => "PPdate " ^ label'
-(********
-			   if !dateStoppingChar<> #"" then 
-			      ("Pdate(:'" ^ (Char.toString !dateStoppingChar) ^ "':) " ^ label')
-			   else if !dateStoppingRe <> "" then
-			      ("Pdate_SE(:\"" ^ !dateStoppingRe ^ "\":) " ^ label')
-			   else ("PPDate " ^ label')
-********)
-	      | Pip _ => "PPip " ^ label'
-	      | Phostname _ => "PPhostname " ^ label'
-	      | Purl _ => "PPurl " ^ label'
-	      | Ppath _ => "PPpath " ^ label'
-	      | Pemail _ => "PPemail " ^ label'
-	      | Pmac _ => "PPmac " ^ label'
-	      | Pwhite _ => "PPwhite " ^ label'
-	      | Ptext _ => "PPtext " ^ label'
-	      | Other c => "PPchar " ^ label'
-	      | PbXML _ => "PPbXML " ^ label'
-	      | PeXML _ => "PPeXML "  ^ label'
-	      | Pgroup _ => (print "Pgroup exists!\n"; raise InvalidTokenTy)
-	      | Pempty => "Pcompute Pint8 " ^ (getVarName label) ^ suffix ^ " = 0;\n" 
-	      | _ => raise InvalidTokenTy
-          )
-	end 
-        fun isNumConst ty =
-		case ty of 
-		RefinedBase (aux, (IntConst x), tl) => true
-		| RefinedBase (aux, (FloatConst (i, f)), tl) => true
-		| _ => false
-
-(*
-	fun declareConst prefix ty =
-	  let val label = getLabelString(getAuxInfo ty)
-	  in
-	    case ty of 
-		RefinedBase (aux, IntConst x, tl) => prefix ^ "Ptypedef Pint32 "^ label ^
-			" : " ^ label ^ " x => {x == " ^ (LargeInt.toString x) ^ "};\n"
-		| RefinedBase (aux, FloatConst (i, f), tl) => prefix ^ "Ptypedef Pfloat32 "^ label ^
-			" : " ^ label ^ " x => {x == " ^ (i ^ "." ^ f) ^ "};\n"
-		| _ => raise TyMismatch
-	  end
-*)
-	fun refinedToPADS label prefix suffix mode refined =
-	let
-	  val typedef = if mode =0 then "Ptypedef " else ""
-	  val label' = if mode =2 then "" 
-		       else if mode = 0 then (label ^ ";\n")
-		       else ((getVarName label) ^ suffix ^ ";\n")
-	in
-	  typedef ^ 
-  	    (
-	      case refined of 
-	      StringME re => "Pstring_ME(:\""^ re ^"\":) " ^ label'
-	      | Int (min, max) => 
-	    	let val minLen = int2Bits min
-	    	    val maxLen = int2Bits max
-	    	    val maxBits = Real.max(minLen, maxLen)
-		    val typeName = if (min>=0) then "Puint" else "Pint"
-	    	in 
-	    	    if (maxBits<= 8.0) then typeName ^ "8 " ^ label'
-	    	    else if maxBits <=16.0 then typeName ^ "16 " ^ label'
-	    	         else if maxBits <=32.0 then typeName ^ "32 " ^ label'
-	    	              else typeName ^ "64 " ^ label'
-	    	end
-	      | IntConst i => 
-	    	let val bits = int2Bits i
-		    val typeName = if (i>=0) then "Puint" else "Pint"
-	    	in
-		  (if (mode <> 2) then
-	    	  (
-	    	  if (bits<=8.0) then typeName ^ "8 "
-	    	  else if bits<=16.0 then typeName ^ "16 "
-	    	  else if bits<=32.0 then typeName ^ "32 "
-	    	  else typeName ^ "64 " 
-	    	  ) else "") ^ 
-		  (if mode=0 then (label ^ " : " ^ label ^ " x => {x == " ^ (intToCString i) ^ "};\n")
-		   else if mode=1 orelse mode = 3 orelse mode = 4 then 
-			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
-			" == " ^ (intToCString i) ^ ";\n")
-		   else (label ^ " ")
-		  )
-	    	end
-	      | FloatConst (i, f) => 
-		  (if (mode <> 2) then "Pfloat32 " else "") ^ 
-		  ( if mode = 0 then (label ^ " : " ^ label ^ " x => {x == " ^ (i ^ "." ^ f) ^ "};\n")
-		  else if mode = 1 orelse mode = 3 orelse mode = 4 then 
-			((getVarName label) ^ suffix ^ " : " ^ (getVarName label) ^ suffix ^ 
-				" == " ^ (i ^ "." ^ f) ^ ";\n")
-		  else (label ^ " ")
-		  )
-	      | StringConst s => if (size s) = 1 then 
-				(
-				 if mode = 0 then 
-					("Pchar " ^ label ^ " : " ^ label ^ " x =>  {x == '" ^ s ^ "'};\n")
-			    	 else if mode=1 then 
-				   if isCIdentifier s then "'" ^ s ^ "';\n"
-				   else ((getVarName label) ^ suffix ^ 
-					" Pfrom('" ^ (String.toCString s) ^ "');\n")
-			    	 else if mode=2 then ("Pstring_ME(:\"/" ^ escape(s) ^ "/\":) ")
-				 else if mode=4 then ((getVarName label) ^ suffix ^ 
-					" Pfrom('" ^ (String.toCString s) ^ "');\n")
-				 else ("'" ^ (String.toCString s) ^ "';\n")
-				)
-				else if mode = 1 then 
-				  if isCIdentifier s then ("\"" ^ s ^ "\";\n")
-				  else ((getVarName label) ^ suffix ^ 
-					" Pfrom(\"" ^ (String.toCString s) ^ "\");\n")
-				 else if mode = 3 then ("\"" ^ (String.toCString s) ^ "\";\n")
-				 else if mode=4 then ((getVarName label) ^ suffix ^ 
-					" Pfrom(\"" ^ (String.toCString s) ^ "\");\n")
-				 else ("Pstring_ME(:\"/"^ escape(s) ^"/\":) " ^ label')
-	      | Enum res => ""
-	      | LabelRef _ => ""
-	    ) 
-	end
-
-	(*this function returns the type string of a Ty for use in Switches*)
-	fun getSwitchTypeString ty =
-	  if notInlineTy ty then getLabelForPADS ty
-	  else case ty of
-		Base (_, (tok, loc)::tl) => tokenToPADS "" "" tok 2
-		| RefinedBase (_, refined, _) => refinedToPADS "" "" "" 2 refined
-		| _ => raise TyMismatch
-
-(*
-	fun refinedToInlineArray prefix refined =
-	    (*only handles a few types of refined here *)
-	    prefix ^
-	    (
-	      case refined of 
-	           StringME re => "Pstring_ME(:\""^ re ^"\":) " 
-	         | Int (min, max) => 
-		    	let val minLen = int2Bits min
-		    	    val maxLen = int2Bits max
-		    	    val maxBits = Real.max(minLen, maxLen)
-		    	in 
-		    	    if (maxBits<= 8.0) then "Pint8 " 
-		    	    else if maxBits <=16.0 then "Pint16 " 
-		    	         else if maxBits <=32.0 then "Pint32 "
-		    	              else "Pint64 "
-		    	end
-	         | StringConst s => "PstringME(:\"/" ^ s ^ "/\":) "
-		 | _ => raise TyMismatch
-	    )
-*)
-
-	fun getRefStr refined = case refined of
-	    StringME s => "\"" ^ s ^"\""
-	  | StringConst s => if (size s) = 1 then ("'" ^ s ^ "'")
-				else ("\"" ^ s ^ "\"")
-	  | _ => ""
-
-        fun arrayBodyToInlinePADS ty sep term len =
-           ("[" ^ 
-	    ( case len of 
-		SOME (IntConst x) => LargeInt.toString x
-		| _ => ""
-	    ) ^ "]" ^
-	    ( case sep of 
-	     SOME refsep => 
-		let val sepstr = getRefStr refsep
-		in
-		  (case term of
-		  SOME refterm => 
-		    let val termstr = getRefStr refterm
-		    in " : Psep(" ^ sepstr ^ ") && Pterm(" ^ termstr ^ ")"
-		    end
-		  | NONE => " : Psep(" ^ sepstr ^ ") && Plongest"
-		  )
-		 end
-	     | NONE => 
-		(case term of
-		  SOME refterm => 
-		    (
-		    let 
-			val termstr = getRefStr refterm
-		    in 
-			" : Pterm(" ^ termstr ^ ")"
-		    end
-		    )
-		  | NONE => " : Plongest"
-		)
-	    ) ^ ";\n"
-	)
-
-	fun getIndexes (res, re, enumIdStr) =
-	  let
-		fun getIndex refinedlist re index =
-		  case refinedlist of 
-		    nil => (~1) (*not found*)
-		  | head::tail =>
-			if refine_equal (head, re) then index
-			else getIndex tail re (index+1)
-	  in
-		case re of
-		StringConst s => 
-			let
-				val i = getIndex res re 0
-			in 
-			  if (i<>(~1)) then 
-				if isCIdentifier s then [s^enumIdStr]
-				else [Int.toString i] 
-			  else (case re of
-				StringConst "*" => ["P_DEFAULT"]
-				| _ => nil
-			       )
-			 end 
-		| IntConst _ => 
-			let
-				val i = getIndex res re 0
-			in if (i<>(~1)) then [Int.toString i] else nil
-			end
-		| Enum l => List.concat (map (fn x => getIndexes (res, x, enumIdStr)) l)
-(*
-		  let 
-			val candidates = map (fn x => getIndex res x 0) l
-			val finallist= List.filter (fn x => x <> (~1)) candidates
-		  in finallist
-		  end
-*)
-		| _ => []
-	  end
-	fun reToSwitch switchedTy branchno dup (re, targetTy) =
-	  let
-	  fun indexes n = List.tabulate (n, (fn x => x))
-	  fun getPairs res = ListPair.zip (res, (indexes (length res)))
-  	  val suffix = "_" ^ (Int.toString branchno)
-	  val mode = case re of Enum _ => 4
-			| _ => if dup then 4 else 1
-  	  in
-	    (case switchedTy of
-		Base (aux, (Pint _, l)::ts) => 
-		  (case re of IntConst x => "\tPcase " ^ (LargeInt.toString x) ^ " : " ^ 
-						(TyToPADS "\t" suffix false mode nil targetTy)
-		  	   | StringConst "*" => "\tPdefault : " ^ (TyToPADS "\t" "" false 1 nil targetTy)
-			   | Enum res => lconcat (map (fn (re, i) => 
-						reToSwitch switchedTy i true (re, targetTy)) (getPairs res)) 
-			   | _ => raise TyMismatch
-		  )
-		| RefinedBase (aux, Int _, _) =>
-		  (case re of IntConst x => "\tPcase " ^ (LargeInt.toString x) ^ " : " ^ 
-						(TyToPADS "\t" suffix false mode nil targetTy) 
-		  	   | StringConst "*" => "\tPdefault : " ^ (TyToPADS "\t" "" false 1 nil targetTy)
-			   | Enum res => lconcat (map (fn (re, i) => 
-						reToSwitch switchedTy i true (re, targetTy)) (getPairs res)) 
-			   | _ => raise TyMismatch
-		  )
-		(* we assume the Enum will only contain IntConst or StringConst and not another Enum *)
-		| RefinedBase (aux, Enum res, _) =>
-			let
-			  val indexes = getIndexes (res, re, (getIdString aux))
-			in
-			  case indexes of
-				["P_DEFAULT"] => "\tPdefault : " ^ (TyToPADS "\t" "" false 1 nil targetTy)
-				| _ => lconcat (map (fn i => "\tPcase " ^ i ^ " : " ^
-					(TyToPADS "\t" ("_"^ i) false mode nil targetTy)) indexes)
-			end
-		| _ => raise TyMismatch
-	    ) 
-	  end
-
-	val pRecord = if isRecord then "Precord " else ""  
-    in ( prefix ^
-       (
-         ( case ty of
-               Base (aux, (t, loc)::ts)  => pRecord ^ (tokenToPADS label suffix t mode) 
-	     | RefinedBase (aux, Enum res, tl) => 
-		if mode = 2 then (tyToInlinePADS "" mode ty)
-		else if mode = 0 then
-		(
-		if allStringConsts res then
-		  let 
-		    val idStr = getIdString aux
-		    fun strConstToEnumItem re =
-			case re of StringConst s => 
-			  if isCIdentifier s then 
-			    ("\t"^ s ^ idStr ^ " Pfrom(\"" ^ s ^ "\")")
-			  else
-			    let
-			      val newlabel = (Atom.toString (getLabel 
-					    ({coverage=0, label=NONE, tycomp=zeroComps})))
-			    in ("\t" ^ (getVarName newlabel) ^ " Pfrom(\"" ^ (String.toCString s) ^ "\")")
-			    end
-		    	| _ => raise TyMismatch
-		  in (pRecord ^
-		    "Penum " ^ label ^ " {\n" ^
-	    	     (join (map strConstToEnumItem res) ",\n") ^
-	    	     "\n" ^ prefix ^ "};\n")
-		  end
-	    	else
-		  (pRecord ^
-		     "Punion "^ label ^ " {\n" ^
-		      (lconcat (map (fn x => refinedToPADS 
-			            (Atom.toString (getLabel ({coverage=0, label=NONE, tycomp=zeroComps}))) 
-				    (prefix^"\t") suffix 1 x) res)) ^
-		      prefix ^ "};\n")
-		)
-		else ((tyToInlinePADS "" mode ty)^";\n")
-             | RefinedBase (aux, refined, tl) => pRecord ^ (refinedToPADS label prefix suffix mode refined) 
-             | TBD _ =>
-                pRecord ^ "Pstring_ME(:\"/[:print:]/\":) " ^ (if mode=2 then "" else "TBD_" ^ label ^";\n")
-             | Bottom _ =>
-                pRecord ^ "Pstring_ME(:\"/[:print:]/\":) " ^ (if mode=2 then "" else "BTM_" ^ label ^";\n")
-             | Pstruct (aux, tys) =>
-		if mode = 2 then (tyToInlinePADS "" mode ty)
-		else if mode = 0 then
-		  let
-(*
-		   val _ = updateDateTimeStopping (tys)
-*)
-		   val nonInlineTys = List.filter notInlineTy tys
-		   val pre = lconcat (map (TyToPADS prefix "" false 0 tys) nonInlineTys)
-		  in pre ^ pRecord ^
-		   "Pstruct "^ label ^ " {\n" ^
-			(lconcat (map (TyToPADS (prefix ^ "\t") "" false 3 tys) tys)) ^
-		   prefix ^ "};\n"
-		  end	
-		else ((tyToInlinePADS "" mode ty)^";\n")
-             | Punion (aux, tys)  =>
-		if mode = 2 then (tyToInlinePADS "" mode ty)
-		else if mode = 0 then
-		  let
-		   val nonInlineTys = List.filter notInlineTy tys
-		   val pre = lconcat (map (TyToPADS prefix "" false 0 nil) nonInlineTys)
-		  in (pre ^ pRecord ^
-		   "Punion "^ label ^ " {\n" ^
-			(lconcat (map (TyToPADS (prefix ^ "\t") "" false 1 nil) tys)) ^
-		   prefix ^ "};\n")
-		  end	
-		else ((tyToInlinePADS "" mode ty)^";\n")
-             | Switch(aux ,id, retys) =>
-		if mode = 2 then (tyToInlinePADS "" mode ty)
-		else if mode = 0 then
-		  let
-		   val tys = map #2 retys
-		   val nonInlineTys = List.filter notInlineTy tys
-		   val pre = lconcat (map (TyToPADS prefix "" false 0 nil) nonInlineTys)
-		   val switchvar = (getVarNameFromID (Atom.toString id))
-		   val switchedTyOp = getTyById siblings id
-	  	   fun indexes n = List.tabulate (n, (fn x => x))
-	           fun getPairs res = ListPair.zip (res, (indexes (length res)))
-		  in 
-		  case switchedTyOp of
-		  NONE =>  (*switched id not found, go back to printing union *)
-		   (pre ^ pRecord ^
-		   "Punion "^ label ^ " {\n" ^
-			(lconcat (map (TyToPADS (prefix ^ "\t") "" false 1 nil) tys)) ^
-		   prefix ^ "};\n")
-		  | SOME switchedTy =>
-		    let 
-			val switch = getSwitchTypeString switchedTy
-		    in
-		   	(pre ^ pRecord ^
-		   	"Punion "^ label ^ "(:"^ switch ^ " " ^ switchvar ^ ":) {\n" ^ 
-		   	prefix ^ "  Pswitch (" ^ switchvar ^ ") {\n" ^
-			(lconcat (map (fn (i, rety) => reToSwitch switchedTy i false rety) 
-					(ListPair.zip((indexes (length retys)), retys)))) ^
-		   	prefix ^ "  }\n" ^
-		   	prefix ^ "};\n")
-		    end
-		  end	
-		else ((tyToInlinePADS "" mode ty)^";\n")
-             | RArray (aux, sep, term, body, len, lengths) => 
-		if mode = 2 then (tyToInlinePADS "" mode ty)
-		else if mode = 0 then
-		  let 
-		   val pre = if (notInlineTy body) orelse (isNumConst body) 
-			     then (TyToPADS prefix "" false 0 nil body)
-			     else ""
-		  in (pre ^ pRecord ^
-                      "Parray " ^ label ^ " {\n" ^ 
-		      (TyToPADS (prefix^"\t") "" false 2 nil body) ^ 
-		      (arrayBodyToInlinePADS body sep term len) ^
-		      prefix ^ "};\n")
-		  end
-		else ((tyToInlinePADS "" mode ty)^";\n")
-             | Poption (aux, body) =>
-		if mode = 2 then (tyToInlinePADS "" mode ty)
-		else if mode = 0 then
-		  let
-		    val pre = if (notInlineTy body) orelse (isNumConst body) then 
-				TyToPADS prefix "" false 0 nil body
-			      else ""
-		  in (pre ^ pRecord ^
-		    "Popt " ^ (TyToPADS "" "" false 2 nil body) ^ " " ^ label ^ ";\n")
-		  end
-		else ((tyToInlinePADS "" mode ty)^";\n")
-	     | _ => ""
-         )
-	)
-        )
-     end 
-     fun TyToPADSFile ty numHeaders numFooters includeFile =
-	(* assume that if a ty has header and footer, the body is just one single Ty*)
-	let
-	  val recordLabel = getLabelForPADS (ty)
-	  val pads = "#include \""^ includeFile ^"\"\n" ^
-		(if numHeaders=0 andalso numFooters=0 then
-			((TyToPADS "" "" true 0 nil ty) ^
-			"Psource Parray entries_t {\n" ^
-		    	"\t" ^ recordLabel ^ "[];\n" ^
-			"};\n")
-		else 
-		  case ty of 
-		    Punion (_, tys) =>
-		      if (numHeaders + numFooters + 1) <> length tys then
-			raise Fail "Header Footer incorrect!"
-		      else 
-			      let
-				val headers = List.take (tys, numHeaders)
-				val body = List.nth (tys, numHeaders)
-				val footers = List.drop (tys, (numHeaders+1))
-			      in
-				(case headers of
-					nil => ""
-					| _ => String.concat (map (TyToPADS "" "" true 0 nil) headers)
-				) ^
-				(TyToPADS "" "" true 0 nil body) ^
-				(case footers of
-					nil => ""
-					| _ => String.concat (map (TyToPADS "" "" true 0 nil) footers)
-				) ^
-				"Psource Pstruct " ^ recordLabel ^ " {\n" ^
-				(case headers of
-					nil => ""
-					| _ => String.concat (map 
-					  (fn t => ("\t" ^ (getLabelForPADS t) ^ 
-						" header" ^ getIdString (getAuxInfo t) ^ ";\n")) 
-					  headers)
-				) ^
-				("\t" ^ (getLabelForPADS body) ^ "[] body : Plongest;\n") ^
-				(case footers of 
-					nil => ""
-					| _ => String.concat (map 
-					  (fn t => ("\t" ^ (getLabelForPADS t) ^ 
-					  " footer" ^ getIdString (getAuxInfo t) ^ ";\n")) 
-					  footers)
-				) ^
-				"};\n"
-			      end
-		  | _ => raise TyMismatch
-		)
-	in
-	  (recordLabel, pads)
-	end 
-******************)
 (* one tricky thing is that we have to skip options because it
    doesn't all the ltokens, therefore the minRecNo is unknown *)
 fun getSmallestRecNo ty = 

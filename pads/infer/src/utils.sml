@@ -97,11 +97,26 @@ struct
      fun sumInts ( ns : int list ) : LargeInt.int = 
          foldl ( fn ( x : int, y : LargeInt.int ) => y + Int.toLarge x ) 0 ns
 
+     fun sumLargeInts ( ns : LargeInt.int list ) : LargeInt.int = 
+         foldl ( fn ( x : LargeInt.int, y : LargeInt.int ) => 
+		y + x ) 0 ns
+
      fun sumSmallInts ( ns : int list ) : int = 
          foldl ( fn ( x : int, y : int ) => y + x ) 0 ns
 
      fun avgInts ( ns : int list ) : real = 
         ( Real.fromLargeInt ( sumInts ns ) ) / ( Real.fromInt ( length ns ) )
+
+     fun sumReals (rs : real list) : real =
+	foldl (fn (x, y) => y + x) 0.0 rs
+
+     (* the pair is (weight, number) *)
+     fun weightedSum pairs : real =
+	let val (numerator, denominator) = 
+	  foldl (fn ((c, l), (n, d)) => (n + l * (Real.fromInt c), d + c)) 
+		(0.0, 0) pairs
+	in numerator / (Real.fromInt denominator)
+	end
 
      (* convert a large int to C style string form *)
      fun intToCString (i:LargeInt.int) : string =
@@ -142,4 +157,7 @@ struct
 		      | NONE => raise Fail "Not a character!"
       in ((String.str lowered) ^ tail)
       end
+
+    fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
+
 end

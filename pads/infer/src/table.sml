@@ -147,5 +147,5 @@ structure Table = struct
 		| RefinedBase _ => []
 		| RArray (_, _, _, body, _, _) => [body] @ (parseArrays body)
 		| Poption (_, body) => parseArrays body
-		| _ => raise TyMismatch
+		| _ => (printTy ty; raise TyMismatch)
 end

@@ -1,6 +1,7 @@
 structure Aggregate = 
 struct
   open Parse
+  open Model
   exception MergeFailed
 
   (* this table is actually implemented as a set, the length of the element in this set (the
@@ -32,15 +33,16 @@ struct
 		(Int.toString numrows) ^ "\n")
     end
 
+  (* each node carries a coverage *)
   datatype Aggr =
-	  BaseA of Token
-	| SyncA of Refined option
-	| TupleA of Aggr list
-	| UnionA of Aggr list  (* one per branch *)
-	| SwitchA of (Refined * Aggr) list  (* one per branch plus additional new branches *)
-	| ArrayA of (Aggr * Aggr * Aggr) (* elements, seps, terms *)
-	| OptionA of Aggr
-	| Opt of (Id * Aggr)	   (* the id will become the label of the new Option node *)
+	  BaseA of int * LargeInt.int * Token  (* (cov, total_token_len, token) *)
+	| SyncA of int* LargeInt.int * Refined option (* (cov, total_token_len, refined option) *)
+	| TupleA of int * Aggr list
+	| UnionA of int * Aggr list  (* one per branch *)
+	| SwitchA of int * (Refined * Aggr) list  (* one per branch plus additional new branches *)
+	| ArrayA of int * Aggr * Aggr * Aggr (* elements, seps, terms *)
+	| OptionA of int * Aggr
+	| Opt of int * Id * Aggr	   (* the id will become the label of the new Option node *)
 	| Ln of (Id * string list) (* learn node combines the strings to be learned with
 					the good stuff in an aggregate of the orig node
 				      the id will become the label of the new Option node *)
@@ -134,28 +136,28 @@ struct
 
   fun aggrToString prefix r =
     case r of
-    BaseA t => prefix ^ "BaseA (" ^ tokenTyToString t ^ ")\n"
-  | SyncA (SOME re) => prefix ^ "SyncA (" ^ refinedToString re ^ ")\n"
-  | SyncA NONE => prefix ^ "SyncA (None)\n"
-  | Opt (id, agg) =>
+    BaseA (_, _, t) => prefix ^ "BaseA (" ^ tokenTyToString t ^ ")\n"
+  | SyncA (_, _, (SOME re)) => prefix ^ "SyncA (" ^ refinedToString re ^ ")\n"
+  | SyncA (_, _, NONE) => prefix ^ "SyncA (None)\n"
+  | Opt (_, id, agg) =>
 	prefix ^ "Opt (" ^ Atom.toString id ^ ") {\n" ^
 	  aggrToString (prefix ^ "    ") agg
 	^ prefix ^ "}\n"
-  | TupleA aggs => 
+  | TupleA (_, aggs) => 
 	let val ss = map (aggrToString (prefix ^ "    ")) aggs 
 	in
 	   prefix ^ "TupleA {\n" ^
 	   (String.concat ss) ^ 
 	   prefix ^ "}\n"
 	end
-  | UnionA branches =>
+  | UnionA (_, branches) =>
 	let val ss = map (aggrToString (prefix ^ "    ")) branches
 	in
 	   prefix ^ "UnionA {\n" ^
 	   (String.concat ss) ^ 
 	   prefix ^ "}\n"
 	end
-  | SwitchA branches =>
+  | SwitchA (_, branches) =>
 	let val ss = map (fn (re, a) => prefix ^ "    " ^ (refinedToString re) ^ " =>\n" ^
 			(aggrToString (prefix ^ "    ") a)) branches
 	in
@@ -163,7 +165,7 @@ struct
 	   (String.concat ss) ^ 
 	   prefix ^ "}\n"
 	end
-  | ArrayA (elemA, sepA, termA) =>
+  | ArrayA (_, elemA, sepA, termA) =>
       let 
 	val elem_string = prefix ^ "ELEM:\n" ^ (aggrToString (prefix ^ "    ") elemA) 
 	val sep_string = prefix ^ "SEP:\n" ^ (aggrToString (prefix ^ "    ") sepA) 
@@ -175,7 +177,7 @@ struct
 	term_string ^
 	prefix ^ "}\n"
       end
-  | OptionA agg =>
+  | OptionA (_, agg) =>
 	prefix ^ "OptionA {\n" ^
 	  aggrToString (prefix ^ "    ") agg
 	^ prefix ^ "}\n"
@@ -184,6 +186,7 @@ struct
 	(String.concat (map (fn s => prefix ^ "    \"" ^ s ^ "\"\n") strings)) ^
 	prefix ^ "}\n"
 
+(**********
   fun equal_aggr (ag1, ag2) =
      case (ag1, ag2) of
        (BaseA t1, BaseA t2) => compToken (t1, t2) = EQUAL
@@ -200,78 +203,88 @@ struct
      | (Opt (_, ag1), Opt (_, ag2)) => equal_aggr (ag1, ag2)
      | (Ln (_, ss1), Ln (_, ss2)) => ListPair.allEq (fn (s1, s2) => s1 = s2) (ss1, ss2)
      | _ => false
-
+************)
 
   (* function to merge a rep into an aggregate, 
      returns a new aggregate and a list of (id, branch) pairs *)
+  fun lsize s = Int.toLarge (size s)
+
   fun merge a rep =
     case (a, rep) of
-      (BaseA bs, BaseR (GoodB x)) => (BaseA bs, nil)
-    | (BaseA bs, BaseR (ErrorB)) => 
+      (BaseA (c, l, bs), BaseR (GoodB x)) => (BaseA (c+1, l+Int.toLarge(tokenLength x), bs), nil)
+    | (BaseA (c, l, bs), BaseR (ErrorB)) => 
 		let val id = mkNextTyLabel()
-		in (Opt (id, BaseA bs), [(id, 0)])
+		in (Opt (c+1, id, BaseA (c, l, bs)), [(id, 0)])
 		end
-    | (Opt (id, BaseA bs), BaseR (GoodB x)) => (Opt (id, BaseA bs), [(id, 1)])
-    | (Opt (id, BaseA bs), BaseR (ErrorB)) => (Opt (id, BaseA bs), [(id, 0)])
+    | (Opt (c, id, BaseA (c1, l, bs)), BaseR (GoodB x)) => 
+		(Opt (c+1, id, BaseA (c1+1, l + Int.toLarge(tokenLength x), bs)), [(id, 1)])
+    | (Opt (c1, id, BaseA bs), BaseR (ErrorB)) => (Opt (c1+1, id, BaseA bs), [(id, 0)])
 
-    | (SyncA ss, SyncR (Good s)) => (SyncA ss, nil)
-    | (SyncA ss, SyncR (Fail)) => 
+    | (SyncA (c, l, ss), SyncR (Good (s, re))) => (SyncA (c+1, l + lsize s, ss), nil)
+    | (SyncA (c, l, ss), SyncR (Fail)) => 
 		let val id = mkNextTyLabel()
-		in (Opt (id, SyncA ss), [(id, 0)])
+		in (Opt (c+1, id, SyncA (c, l, ss)), [(id, 0)])
 		end
-    | (SyncA ss, SyncR (Partial (s, re))) =>
+    | (SyncA (c, l, ss), SyncR (Partial (s, re))) =>
 	(
 	case (ss, re) of
 	  (SOME (IntConst i), IntConst j) => 
-		(SyncA (SOME (Int (LargeInt.min(i, j), LargeInt.max(i, j)))), nil) 
+		(SyncA (c+1, l+ lsize s, (SOME (Int (LargeInt.min(i, j), LargeInt.max(i, j))))), nil) 
 		(* change int const to ranged int *)
 	| (SOME (Int (min, max)), IntConst new) => 
 	(
-		if new < min then (SyncA(SOME (Int (new, max))), nil)
-		else if new > max then (SyncA(SOME (Int(min, new))), nil)
-		else (SyncA (SOME (Int(min, max))), nil)
+		if new < min then (SyncA(c+1, l + lsize s, SOME (Int (new, max))), nil)
+		else if new > max then (SyncA(c+1, l + lsize s, SOME (Int(min, new))), nil)
+		else (SyncA (c+1, l + lsize s, SOME (Int(min, max))), nil)
 	)
 	| (SOME (FloatConst _), FloatConst _) => (* reduce to Pfloat *) 
-		(SyncA NONE, nil)
+		(SyncA (c+1, l + lsize s, NONE), nil)
 	| (SOME (Enum res), re) => 
 		if List.exists (fn re' => refine_equal (re, re')) res then
-		  (SyncA ss, nil)
-		else (SyncA(SOME (Enum (res@[re]))), nil)
-	| (SOME (StringConst s'), StringConst s) =>  (SyncA(SOME (Enum [StringConst s', re])), nil)
-	| (NONE, _) => (SyncA NONE, nil)
+		  (SyncA (c+1, l + lsize s, ss), nil)
+		else (SyncA(c+1, l + lsize s, SOME (Enum (res@[re]))), nil)
+	| (SOME (StringConst s'), StringConst s) =>  
+		(SyncA(c + 1, l + lsize s, SOME (Enum [StringConst s', re])), nil)
+	| (NONE, _) => (SyncA(c + 1, l + lsize s, NONE), nil)
 	| _ => raise MergeFailed
 	)
-    | (SyncA ss, SyncR (Recovered(r, s, m))) => 
+    | (SyncA (c, l, ss), SyncR (Recovered(r, s, m))) => 
 		let val id = mkNextTyLabel()
-		in (TupleA [Ln (id, [r]), SyncA ss], [(id, 1)])
+		in (TupleA (c+1, [Ln (id, [r]), SyncA (c+1, l + lsize s, ss)]), [(id, 1)])
 		end
 
-    | (Opt (id, SyncA ss), SyncR (Good s)) => (Opt (id, SyncA ss), [(id, 1)])
-    | (Opt (id, SyncA ss), SyncR Fail) => (Opt (id, SyncA ss), [(id, 0)])
-    | (Opt (id, SyncA ss), SyncR (Partial x)) => 
-		(Opt (id, (#1 (merge (SyncA ss) (SyncR (Partial x))))), [(id, 1)])
-    | (Opt (id, SyncA ss), SyncR (Recovered(r, s, m))) => 
+    | (Opt (c, id, SyncA (c1, l, ss)), SyncR (Good (s, re))) => 
+	(Opt (c+1, id, SyncA (c1+1, l+lsize s, ss)), [(id, 1)])
+    | (Opt (c, id, SyncA ss), SyncR Fail) => (Opt (c+1, id, SyncA ss), [(id, 0)])
+    | (Opt (c, id, SyncA ss), SyncR (Partial x)) => 
+		(Opt (c+1, id, (#1 (merge (SyncA ss) (SyncR (Partial x))))), [(id, 1)])
+    | (Opt (c, id, SyncA (c1, l, ss)), SyncR (Recovered(r, s, m))) => 
 		let val id1 = mkNextTyLabel()
-		in (TupleA [Ln (id1, [r]), Opt(id, SyncA ss)], [(id, 1), (id1, 1)])
+		in (TupleA (c+1, [Ln (id1, [r]), Opt(c+1, id, SyncA(c1+1, l+ lsize s, ss))]), 
+			[(id, 1), (id1, 1)])
 		end
 
-    | (TupleA [Ln (id, l), SyncA ss], SyncR (Good s)) => (TupleA [Ln (id, l), SyncA ss], [(id, 0)])
-    | (TupleA [Ln (id, l), SyncA ss], SyncR Fail) => 
-		(TupleA [Ln (id, l), Opt (mkNextTyLabel(), SyncA ss)], [(id, 0)])
-    | (TupleA [Ln (id, l), SyncA ss], SyncR (Partial x)) => 
-		(TupleA [Ln (id, l), (#1 (merge (SyncA ss) (SyncR (Partial x))))], [(id, 0)])
-    | (TupleA [Ln (id, l), SyncA ss], SyncR (Recovered(r, s, m))) => 
-		(TupleA [Ln (id, r::l), SyncA ss], [(id, 1)])
+    | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR (Good (s, re))) => 
+	(TupleA (c+1, [Ln (id, l), SyncA (c1+1, len+lsize s, ss)]), [(id, 0)])
+    | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR Fail) => 
+		(TupleA (c+1, [Ln (id, l), Opt (c1+1, mkNextTyLabel(), SyncA (c1, len, ss))]), [(id, 0)])
+    | (TupleA (c, [Ln (id, l), SyncA ss]), SyncR (Partial x)) => 
+		(TupleA (c+1, [Ln (id, l), (#1 (merge (SyncA ss) (SyncR (Partial x))))]), [(id, 0)])
+    | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR (Recovered(r, s, m))) => 
+		(TupleA (c+1, [Ln (id, r::l), SyncA (c1+1, len+lsize s, ss)]), [(id, 1)])
 
-    | (TupleA [Ln (id, l), Opt (id1, SyncA ss)], SyncR (Good s)) => 
-		(TupleA [Ln (id, l), Opt (id1, SyncA ss)], [(id, 0), (id1, 1)])
-    | (TupleA [Ln (id, l), Opt (id1, SyncA ss)], SyncR Fail) => 
-		(TupleA [Ln (id, l), Opt (id1, SyncA ss)], [(id, 0), (id1, 0)])
-    | (TupleA [Ln (id, l), Opt (id1, SyncA ss)], SyncR (Partial x)) => 
-		(TupleA [Ln (id, l), Opt (id1, (#1 (merge (SyncA ss) (SyncR (Partial x)))))], 
+    | (TupleA (c, [Ln (id, l), Opt (c1, id1, SyncA (c2, len, ss))]), SyncR (Good (s,re))) => 
+		(TupleA (c+1, [Ln (id, l), Opt (c1+1, id1, SyncA (c2+1, len+ lsize s, ss))]), 
+		[(id, 0), (id1, 1)])
+    | (TupleA (c, [Ln (id, l), Opt (c1, id1, SyncA ss)]), SyncR Fail) => 
+		(TupleA (c+1, [Ln (id, l), Opt (c1+1, id1, SyncA ss)]), [(id, 0), (id1, 0)])
+    | (TupleA (c, [Ln (id, l), Opt (c1, id1, SyncA ss)]), SyncR (Partial x)) => 
+		(TupleA (c+1, [Ln (id, l), 
+		 Opt (c+1, id1, (#1 (merge (SyncA ss) (SyncR (Partial x)))))]), 
 		  [(id, 0), (id1, 1)])
-    | (TupleA [Ln (id, l), Opt (id1, SyncA ss)], SyncR (Recovered(r, s, m))) => 
-		(TupleA [Ln (id, r::l), Opt(id1, SyncA ss)], [(id, 1), (id1, 1)])
+    | (TupleA (c, [Ln (id, l), Opt (c1, id1, SyncA (c2, len, ss))]), SyncR (Recovered(r, s, m))) => 
+		(TupleA (c+1, [Ln (id, r::l), Opt(c1+1, id1, SyncA (c2+1, len+lsize s, ss))]), 
+		[(id, 1), (id1, 1)])
 
 (* The following accumulate the good data on the leaves as well!
       (BaseA bs, BaseR (GoodB x)) => BaseA ((GoodB x)::bs)
@@ -297,22 +310,22 @@ struct
 		TupleA [Ln (r::l), Opt(SyncA ((Good (s, m))::ss))]
 *)
 
-    | (TupleA ags, TupleR reps) =>
+    | (TupleA (c, ags), TupleR reps) =>
 	if length ags <> length reps then raise MergeFailed
 	else 
 	  let val (aggrs, lists) = ListPair.unzip (ListPair.map (fn (a, r) => merge a r) (ags, reps))
-	  in (TupleA aggrs, List.concat lists)
+	  in (TupleA (c+1, aggrs), List.concat lists)
 	  end
-    | (UnionA ags, UnionR (b, rep)) => 
+    | (UnionA (c, ags), UnionR (b, rep)) => 
 	if b<0 orelse b>=(length ags) then raise MergeFailed
 	else 
 	  let val a = List.nth (ags, b)
 	      val (a', pairs) = merge a rep
 	      val prefix = List.take (ags, b)
 	      val suffix = List.drop (ags, b+1)
-	  in (UnionA (prefix@(a'::suffix)), pairs)
+	  in (UnionA (c+1, prefix@(a'::suffix)), pairs)
 	  end
-    | (SwitchA re_ags, SwitchR (re, rep)) =>
+    | (SwitchA (c, re_ags), SwitchR (re, rep)) =>
 	let val newa = 
 	  case List.find (fn (r, a) => refine_equal (r, re)) re_ags of
 	    SOME (r, Ln (id, ss)) =>  (* this is a previously added recovered branch *)
@@ -324,7 +337,7 @@ struct
 				if refine_equal (r, re) then newpair 
 			    	else (re, a)) re_ags
 		    in
-			(SwitchA new_re_ags, [(id, 1)])
+			(SwitchA (c+1, new_re_ags), [(id, 1)])
 		    end
 		| _ => raise TyMismatch
 	     )
@@ -335,7 +348,7 @@ struct
 				if refine_equal (r, re) then newpair 
 			    	else (re, a)) re_ags
 		in
-		  (SwitchA new_re_ags, pairs)
+		  (SwitchA (c+1, new_re_ags), pairs)
 		end
 	  | NONE => 
 	     (
@@ -343,13 +356,13 @@ struct
 		  SyncR (Recovered (s, _, StringME _)) =>
 			let val id = mkNextTyLabel()
 			in 
-			  (SwitchA (re_ags@[(re, Ln (id, [s]))]), [(id, 1)])
+			  (SwitchA (c+1, re_ags@[(re, Ln (id, [s]))]), [(id, 1)])
 			end
 		| _ => raise TyMismatch
 	     )
 	in newa
 	end
-    | (ArrayA (eleA, sepA, termA), ArrayR(elems, seps, termop)) =>
+    | (ArrayA (c, eleA, sepA, termA), ArrayR(elems, seps, termop)) =>
 	let val (eleA', pairs) = foldl (fn (r, (a, l)) => 
 				let val (a', l') = (merge a r)
 				in (a', l@l')
@@ -361,39 +374,39 @@ struct
 	    val (termA', pairs') = case termop of 
 				SOME r => merge termA r
 			      | _ => (termA, nil)
-	in (ArrayA (eleA', sepA', termA'), pairs@pairs')
+	in (ArrayA (c+1, eleA', sepA', termA'), pairs@pairs')
 	end
 
-    | (OptionA a, OptionR (SOME r)) => 
+    | (OptionA (c, a), OptionR (SOME r)) => 
 		let val (newa, pairs) = (merge a r)
-		in (OptionA newa, pairs)
+		in (OptionA (c+1, newa), pairs)
 		end
-    | (OptionA a, OptionR NONE) => (OptionA a, nil)
+    | (OptionA (c, a), OptionR NONE) => (OptionA (c+1, a), nil)
     | _ => (print (aggrToString "" a); print (repToString "" rep);  raise MergeFailed)
 
 (* function that takes a Ty and generates an initial empty aggregate structure *)
   fun initialize ty = 
     case ty of
-	Base (aux, tl) => BaseA (#1 (hd tl))
-	| RefinedBase (aux, re, _) => SyncA (SOME re)
+	Base (aux, tl) => BaseA (0, 0, #1 (hd tl))
+	| RefinedBase (aux, re, _) => SyncA (0, 0, SOME re)
 	| Pstruct (a, tys) =>
 		let val inits = map initialize tys in
-		  TupleA inits
+		  TupleA (0, inits)
 		end 
 	| Punion (a, tys) => 	
 		let val inits = map initialize tys in
-		  UnionA inits
+		  UnionA (0, inits)
 		end 
 	| Switch (a, id, retys) => 
 		let val inits = map (fn (re, ty) => (re, initialize ty)) retys in
-		  SwitchA inits
+		  SwitchA (0, inits)
 		end
 	| RArray (a, sep, term, body, len, lengths) => 
 	  	let val eleA = initialize body
 		in
-		  ArrayA (eleA, SyncA sep, SyncA term)
+		  ArrayA (0, eleA, SyncA (0, 0, sep), SyncA (0, 0, term))
 		end
-	| Poption (a, ty) => OptionA (initialize ty)
+	| Poption (a, ty) => OptionA (0, initialize ty)
 	| _ => (printTy ty; raise TyMismatch)
 
   (* function to measure the cost of an aggregate by counting the number of opt and learn nodes *)
@@ -407,71 +420,86 @@ struct
 	| Ln (_, ss) => (foldl (fn (s, len) => (String.size s) + len) 0 ss) 
 		(*	/ (Real.fromInt(List.length ss)) *) 
 		(* TODO: This may need to be fixed! *)
-	| TupleA l => foldl (fn (a, c) => (cost a) + c) 0 l
-	| UnionA l => foldl (fn (a, c) => (cost a) + c) 0 l
-	| ArrayA (e, s, t) => foldl (fn (a, c) => (cost a) + c) 0 [e, s, t]
-	| OptionA a => cost a
-	| SwitchA l => foldl (fn ((r, a), c) => (cost a) + c) 0 l
+	| TupleA (_, l) => foldl (fn (a, c) => (cost a) + c) 0 l
+	| UnionA (_, l) => foldl (fn (a, c) => (cost a) + c) 0 l
+	| ArrayA (_, e, s, t) => foldl (fn (a, c) => (cost a) + c) 0 [e, s, t]
+	| OptionA (_, a) => cost a
+	| SwitchA (_, l) => foldl (fn ((r, a), c) => (cost a) + c) 0 l
 
  fun learn lines sibling_opt =
   let 
       (* val _ = (print "Learning these lines:\n"; List.app (fn s => print (s ^ "\n")) lines) *)
       val (ty, _) = Structure.computeStructurefromRecords lines
-      val ty = Reduce.removePempty ty
+      val ty = measure 1 (Reduce.removePempty ty)
       (* val _ = (print ("Initial description:\n"); printTy ty) *)
       val ty = Reduce.reduce 1 ty
       val ty = Reduce.reduce 2 ty
       val ty = Reduce.reduce 3 ty
-      val finalty= 
-	   if Options.do_blob_finding then
-                sortUnionBranches (Reduce.updateWithBlobs sibling_opt ty)
-           else sortUnionBranches ty
+      val finalty= sortUnionBranches ty
       (* val _ = (print ("Learned Ty:\n"); printTy finalty) *)
   in finalty 
   end
 
- (* TODO: here we reset all coverage to 0, we may need to keep track of coverage in aggregates 
-    when we grow the aggregate *)
+ (* invariant: the resulting ty has correct complexity and coverage info *)
  fun updateTy ty aggr =
 	case (ty, aggr) of
-	  (_, TupleA [a, Ln (id, ss)]) => 
+	  (_, TupleA (cov, [a, Ln (id, ss)])) => 
 	    if length ss > 0 then
 	      let 
 		val extra_ty = learn ss NONE
-		val new_cov = getCoverage ty + getCoverage extra_ty
+		val newty = updateTy ty a
+		val new_cov = getCoverage newty
 	      in
-		Pstruct(mkTyAux new_cov, [updateTy ty a, 
-		  Poption(mkTyAux1(new_cov, id) , extra_ty)])
+		measure 1 (Pstruct(mkTyAux new_cov, [newty,
+		  measure 1 (Poption(mkTyAux1(new_cov, id) , extra_ty))]))
 	      end
 	    else updateTy ty a
-	| (_, TupleA [Ln (id, ss), a]) => 
+	| (_, TupleA (cov, [Ln (id, ss), a])) => 
 	    if length ss > 0 then
 	      let 
 		val sib_ty = updateTy ty a
 		val extra_ty = learn ss (SOME sib_ty)
-		val new_cov = getCoverage ty + getCoverage extra_ty
+		val new_cov = getCoverage sib_ty
+		val newopt = measure 1 (Poption(mkTyAux1 (new_cov, id), extra_ty))
 	      in
-		Pstruct(mkTyAux new_cov, [Poption(mkTyAux1 (new_cov, id), extra_ty), sib_ty])
+		measure 1 (Pstruct(mkTyAux new_cov, [newopt, sib_ty]))
 	      end
 	    else updateTy ty a
-	| (_, Opt (id, a)) =>
-	  (* TODO: we need to keep track of the coverage of missing tys in the aggregates, 
-		right now assuming 1 *) 
+	| (_, Opt (cov, id, a)) =>
 		let val orig_cov = getCoverage ty in
-		  Poption (mkTyAux1 (orig_cov+1, id), updateTy ty a)
+		  measure 1 (Poption (mkTyAux1 (orig_cov+cov, id), updateTy ty a))
 		end
-	| (Base (a, tl), BaseA _) => ty
-	| (RefinedBase (a, re, tl), SyncA (SOME newre)) => RefinedBase (a, newre, tl)
-	| (RefinedBase (a, re, tl), SyncA NONE) => Base (a, tl) (* resetting to Base type *)
-	| (Pstruct(a, tys), TupleA aggrs) => 
+	| (Base (a, tl), BaseA (c, l, token)) => 
+		let val newa = updateBaseAux a c l token 
+		in Base(newa, tl)  (* we keep the original token list for now *)
+		end
+	| (RefinedBase (a, re, tl), SyncA (c, l, SOME newre)) => 
+		let val newa = updateRefinedBaseAux a c l newre
+		in RefinedBase (newa, newre, tl)
+		end
+	| (RefinedBase (a, re, tl), SyncA (c, l, NONE)) => 
+	   if length tl<1 then raise TyMismatch
+	   else
+		let val newa = updateBaseAux a c l (tokenOf (hd tl)) 
+		in Base (newa, tl) (* resetting to Base type *)
+		end
+	| (Pstruct(a, tys), TupleA (c, aggrs)) => 
 		if (length tys = length aggrs) then
-		  Pstruct(a, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs))
+		  let val new_cov = (#coverage a) + c
+		      val newa = mkTyAux new_cov
+		  in 
+		    measure 1 (Pstruct(newa, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs)))
+		  end
 		else raise TyMismatch
- 	| (Punion(a, tys), UnionA aggrs) =>
+ 	| (Punion(a, tys), UnionA (c, aggrs)) =>
 		if (length tys = length aggrs) then
-		  Punion(a, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs))
+		  let val new_cov = (#coverage a) + c
+		      val newa = mkTyAux new_cov
+		  in 
+		    measure 1 (Punion(newa, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs)))
+		  end
 		else raise TyMismatch
-	| (Switch(a, id, retys) , SwitchA re_ags) => (* re_ags maybe longer than retys *)
+	| (Switch(a, id, retys) , SwitchA (c, re_ags)) => (* re_ags maybe longer than retys *)
 		let val retys' =
 			ListPair.map (fn ((re, ty), (re1, ag)) =>
 			  if refine_equal (re, re1) then 
@@ -482,23 +510,31 @@ struct
 					case ag of
 					  Ln (_, ss) => (re, learn ss NONE)
 					| _ => raise TyMismatch) extra_re_ags
-		in Switch (a, id, (retys' @ extras))
+		    val cov = foldl (fn ((re, ty), c) => c + getCoverage ty) 0 (retys' @ extras)
+		    val newa = mkTyAux cov
+		in measure 1 (Switch (newa, id, (retys' @ extras)))
 		end
-	| (RArray (a, sep, term, body, len, lengths), ArrayA (e, s, t)) =>
+	| (RArray (a, sep, term, body, len, lengths), ArrayA (c, e, s, t)) =>
 	(* TODO: we don't have a way of modifying the len and lengths yet *)
 		let
 		  val newbody = updateTy body e
+		  val newa = mkTyAux (#coverage a + c)
 		  val sep = case (sep, s) of
-			(SOME sep, SyncA (SOME re)) => SOME re
-			| (NONE, SyncA NONE) => NONE
+			(SOME sep, SyncA (_, _, SOME re)) => SOME re
+			| (NONE, SyncA (_, _, NONE)) => NONE
 			| _ => raise TyMismatch
 		  val term = case (term, t) of
-			(SOME term, SyncA (SOME re)) => SOME re
-			| (NONE, SyncA NONE) => NONE
+			(SOME term, SyncA (_, _, SOME re)) => SOME re
+			| (NONE, SyncA (_, _, NONE)) => NONE
 			| _ => raise TyMismatch
-	    	in RArray(a, sep, term, newbody, len, lengths)
+	    	in measure 1 (RArray(newa, sep, term, newbody, len, lengths))
 		end
-	| (Poption (a, ty), OptionA ag) => Poption (a, updateTy ty ag)
+	| (Poption (a, ty), OptionA (c, ag)) => 
+		let 
+		  val newa = mkTyAux (#coverage a + c)
+		in
+		  measure 1 (Poption (newa, updateTy ty ag))
+		end
 	| _ => (print "updateTy failed!\n"; printTy ty; 
 		print (aggrToString "" aggr); 
 		raise TyMismatch)
@@ -515,8 +551,8 @@ fun merge_adj_options dep_map ty =
 	  if getCorrelation dep_map (getLabel a1) (getLabel a2) = 1 then
 	  let val cov = getCoverage t1
 	      val aux = mkTyAux cov
-	      val newstruct = Model.measure 1 (Pstruct (aux, [t1, t2]))
-	      val newl = Poption(a1, Reduce.unnest_tuples NONE newstruct) :: l
+	      val newstruct = measure 1 (Pstruct (aux, [t1, t2]))
+	      val newl = (measure 1 (Poption(a1, Reduce.unnest_tuples NONE newstruct))) :: l
 	  in f newl
 	  end
 	  else Poption(a1, t1)::(f (Poption(a2, t2)::l))
@@ -524,23 +560,23 @@ fun merge_adj_options dep_map ty =
        | nil => nil
        val tylist1 = map (merge_adj_options dep_map) tylist
      in
-	Pstruct(a, f tylist1)
+	measure 1 (Pstruct(a, f tylist1))
      end
-  | Punion (a, tylist) => Punion (a, map (merge_adj_options dep_map) tylist)
+  | Punion (a, tylist) => measure 1 (Punion (a, map (merge_adj_options dep_map) tylist))
   | Base b => Base b
   | RefinedBase b => RefinedBase b
   | Switch (a, id, pairs) =>  
           let
 	  val newpairs = map (fn (re, ty) => (re, merge_adj_options dep_map ty)) pairs
-          in Switch (a, id, newpairs)
+          in measure 1 (Switch (a, id, newpairs))
           end
   | RArray (a, sep, term, body, len, lengths) => 
           let
           val body' = merge_adj_options dep_map body
           in
-            RArray (a, sep, term, body', len, lengths)
+            measure 1 (RArray (a, sep, term, body', len, lengths))
           end
-  | Poption (a, body) => Poption(a, merge_adj_options dep_map body)
+  | Poption (a, body) => measure 1 (Poption(a, merge_adj_options dep_map body))
   | _ => (print ("Bad Ty:\n"); printTy ty; raise TyMismatch)
 
  
@@ -585,23 +621,23 @@ fun alt_options_to_unions dep_map ty =
 	  | t :: l => t :: (f l)
 	  | nil => nil
 	  val newtylist = map (alt_options_to_unions dep_map) tylist
-	in Pstruct (a, f newtylist)
+	in measure 0 (Pstruct (a, f newtylist))
 	end		  
-  | Punion (a, tylist) => Punion (a, map (alt_options_to_unions dep_map) tylist)
+  | Punion (a, tylist) => measure 1 (Punion (a, map (alt_options_to_unions dep_map) tylist))
   | Base b => Base b
   | RefinedBase b => RefinedBase b
   | Switch (a, id, pairs) =>  
           let
 	  val newpairs = map (fn (re, ty) => (re, alt_options_to_unions dep_map ty)) pairs
-          in Switch (a, id, newpairs)
+          in measure 1 (Switch (a, id, newpairs))
           end
   | RArray (a, sep, term, body, len, lengths) => 
           let
           val body' = alt_options_to_unions dep_map body
           in
-            RArray (a, sep, term, body', len, lengths)
+            measure 1 (RArray (a, sep, term, body', len, lengths))
           end
-  | Poption (a, body) => Poption(a, alt_options_to_unions dep_map body)
+  | Poption (a, body) => measure 1 (Poption(a, alt_options_to_unions dep_map body))
   | _ => raise TyMismatch
 
 

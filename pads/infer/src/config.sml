@@ -33,7 +33,7 @@ structure Config = struct
     val blobRatio	  = ref 3.0 
     val minBlobHeight	  = 4
     (* val blobCompensation  = 0.5 *)
-    val adcCoeff = 10.0
+    val adcCoeff = 5.0
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE

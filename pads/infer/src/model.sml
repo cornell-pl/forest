@@ -55,7 +55,6 @@ structure Model = struct
     fun refinedComp ( avg : real )         (* Average length of tokens *)
                     ( tot : LargeInt.int ) (* Sum of length of tokens *)
                     ( num : LargeInt.int ) (* Number of tokens *)
-		    ( lens : int list ) (* list of token lengths *)
                     ( r : Refined )        (* refined type *)
                      : TyComp =            (* Complexity numbers *)
         ( case r of
@@ -64,10 +63,14 @@ structure Model = struct
 		     	  (* val _ = print ("Parsing " ^ s ^".\n") *)
 			  val (choices, numConstChars) = parseRegEx s
 			  (* val _ = print ("Choices = " ^ (LargeInt.toString choices) ^ "\n") *)
+			  (*
 			  fun f (len, c) = combine c 
 					    (multCompS (len-numConstChars) 
 						(int2Comp choices))
 			  val totaldc = foldl f zeroComp lens
+			  *)
+			  val totaldc = multComp (tot - num * (Int.toLarge numConstChars)) 
+					(int2Comp choices)
 			  val avgdc = divComp num totaldc
 			in
 				{ tc = combine constructorComp
@@ -106,7 +109,7 @@ structure Model = struct
                                  , adc = zeroComp
                                  , dc  = zeroComp
                                  }
-             | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot num lens) rl )
+             | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot num) rl )
                                                   , constructorComp
                                                   , int2CompS ( length rl )
                                                   ]
@@ -125,26 +128,25 @@ structure Model = struct
 		in
 		{ tc = combine constructorComp
 			(multCompS strlen (int2Comp numStringChars)),
-		  adc = multCompR avg (int2Comp numStringChars),
-		  dc = multComp tot (int2Comp numStringChars)
+		  adc = multCompR avg (Bits 8), (* all ascii characters *)
+		  dc = multComp tot (Bits 8)
 		} end
         )
+
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedTypeComp ( avg : real )         (* Average length of tokens *)
                         ( tot : LargeInt.int ) (* Sum of length of tokens *)
                         ( num : LargeInt.int ) (* Number of tokens *)
-			( lens : int list ) (* lenths of tokens *)
                         ( r : Refined )        (* refined type *)
                          : Complexity =        (* Type complexity *)
-           #tc (refinedComp avg tot num lens r)
+           #tc (refinedComp avg tot num r)
     (* Get the type complexity of a refined type, assuming multiplier of 1 *)
     and refinedDataComp ( avg : real )         (* Average length of tokens *)
                         ( tot : LargeInt.int ) (* Sum of length of tokens *)
                         ( num : LargeInt.int ) (* Number of tokens *)
-			( lens : int list ) (* lenths of tokens *)
                         ( r : Refined )        (* refined type *)
                          : Complexity =        (* Data complexity *)
-          #dc (refinedComp avg tot num lens r)
+          #dc (refinedComp avg tot num r)
 
     (* Measure a refined base type *)
     exception NotRefinedBase (* Should be called only with refined base type *)
@@ -152,12 +154,14 @@ structure Model = struct
     ( case ty of
            RefinedBase ( a, r, ts ) =>
 	     let 
-		 val tot = sumTokenLength ts
-		 val num = length ts
-		 val avg = (Real.fromLargeInt tot) / (Real.fromInt num)
-             	 val comps = refinedComp avg tot (Int.toLarge num) 
-				(map lTokenLength ts) r
-		 val newty = RefinedBase ( updateComps a comps, r, ts )
+		 val num =  #coverage a
+		 val avg = if (#len a > 0.0) then #len a 
+			   else avgTokenLength ts
+		 val tot = if (#len a > 0.0) then 
+				Real.toLargeInt IEEEReal.TO_NEAREST (avg * Real.fromInt num)
+			   else sumTokenLength ts
+             	 val comps = refinedComp avg tot (Int.toLarge num) r
+		 val newty = RefinedBase (updateLenComps a avg comps, r, ts )
              in newty
              end
          | _ => raise NotRefinedBase
@@ -168,19 +172,16 @@ structure Model = struct
     ( case ro of
 	   (*refined type doesn't exist, assume bigger value *)
            NONE   => zeroComps
-         | SOME r => refinedComp 1.0 1 1 [1] r (* Probably wrong ***** *)
+         | SOME r => refinedComp 1.0 1 1 r (* Probably wrong ***** *)
     )
 
     (* Compute the complexity of a base type *)
-    fun baseComp ( lts : LToken list ) : TyComp =
-    ( case lts of
-           []      => { tc = zeroComp, adc = zeroComp, dc = zeroComp }
-         | (t::ts) =>
-             let val avglen : real         = avgTokenLength lts
-                 val totlen : LargeInt.int = sumTokenLength lts
-                 val numTokens : LargeInt.int = Int.toLarge (length lts)
-                 val mult : real           = Real.fromLargeInt numTokens * avglen
-             in ( case tokenOf t of
+    fun baseComp (t_opt : Token option, avglen, totlen, numTokens) : TyComp =
+    ( case t_opt of
+           NONE      => { tc = zeroComp, adc = zeroComp, dc = zeroComp }
+         | SOME t =>
+             let val mult : real           = Real.fromLargeInt numTokens * avglen
+             in ( case t of
                     PbXML (s1, s2)    => mkBaseComp numTokens avglen totlen (numXMLChars+1)
                   | PeXML (s1, s2)    => mkBaseComp numTokens avglen totlen (numXMLChars+1)
                   | Ptime s           => mkBaseComp 0 1.0 numTokens numTime
@@ -217,49 +218,72 @@ structure Model = struct
 
     fun mkBaseComplexity ( a : AuxInfo ) ( ts : LToken list ) : Ty =
     let val ty      = Base (a, ts)
-        val comps   = baseComp ts
+        val numTokens = #coverage a
+        val avglen : real         = if #len a > 0.0 then #len a else avgTokenLength ts
+        val totlen : LargeInt.int = if #len a > 0.0 then 
+					Real.toLargeInt IEEEReal.TO_NEAREST (avglen * Real.fromInt numTokens)
+				    else sumTokenLength ts
+        val comps   = case ts of
+		t::_ => baseComp ((SOME (tokenOf t)), avglen, totlen, Int.toLarge numTokens)
+		| nil => baseComp (NONE, avglen, totlen, Int.toLarge numTokens)
         fun updateCompBase ( ty : Ty ) ( comps : TyComp ) : Ty =
-            Base ( updateComps a comps, ts )
+            Base ( updateLenComps a avglen comps, ts )
     in updateCompBase ty comps
     end
 
     fun maxContextComplexity ( cl : Context list ) : TyComp =
     let fun f ( ltl : LToken list, comps : TyComp ) : TyComp =
-              combTyComp ( baseComp ltl ) comps
+      let 
+	val avglen : real         = avgTokenLength ltl
+        val totlen : LargeInt.int = sumTokenLength ltl
+        val numTokens : LargeInt.int = Int.toLarge (length ltl)
+      in 
+	case ltl of
+	nil => combTyComp (baseComp (NONE, avglen, totlen, numTokens)) comps
+	| t::_ => combTyComp (baseComp (SOME(tokenOf t), avglen, totlen, numTokens)) comps
+      end
     in foldl f zeroComps cl
     end
+    
+    fun updateBaseAux (aux: AuxInfo) cov totlen token =
+      let 
+	  val totlen = (#len aux) * (Real.fromInt (#coverage aux)) + (Real.fromLargeInt totlen)
+	  val newcov = (#coverage aux) + cov
+	  val len = totlen / (Real.fromInt newcov) 
+	  val comps = baseComp (SOME token, len, 
+			Real.toLargeInt IEEEReal.TO_NEAREST totlen, Int.toLarge newcov)
+      in
+	  {coverage = newcov, label = #label aux, tycomp = comps, len = len}
+      end
 
-    fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
-
-    (* Compute the weighted sum of the data complexities of a list of types *)
-    fun weightedData ( tot : int ) ( tys : Ty list ) : Complexity =
-    let fun f ( t : Ty, c : Complexity ) : Complexity =
-              combine c ( multCompR ( frac ( getCoverage t ) tot )
-                                    ( getDataComp t )
-                        )
-    in foldl f zeroComp tys
-    end
-
-    fun weightedAtomic ( tot : int ) ( tys : Ty list ) : Complexity =
-    let fun f ( t : Ty, c : Complexity ) : Complexity =
-              combine c ( multCompR ( frac ( getCoverage t ) tot )
-                                    ( getAtomicComp t )
-                        )
-    in foldl f zeroComp tys
-    end
+    fun updateRefinedBaseAux (aux:AuxInfo) cov totlen refined =
+      let 
+	  val totlen = (#len aux) * (Real.fromInt (#coverage aux)) + (Real.fromLargeInt totlen)
+	  val newcov = (#coverage aux) + cov
+	  val len = totlen / (Real.fromInt newcov) 
+	  val comps = refinedComp len (Real.toLargeInt IEEEReal.TO_NEAREST totlen) 
+			(Int.toLarge newcov) refined
+      in
+	  {coverage = newcov, label = #label aux, tycomp = comps, len = len}
+      end
 
     (* Compute the type and data complexity of an inferred type *)    
     (* mode = 0 measures everything, mode = 1 measures only one level down *)
+    (* we don't update the avglen for non-base types, because len don't make sense in those cases *)
     fun measure (mode: int)  (ty : Ty) : Ty =
     ( case ty of
-           Base ( a, ts )               => mkBaseComplexity a ts
+           Base (a, ts )               => mkBaseComplexity a ts
          | TBD ( a, i, cl )             =>
              let val comps = maxContextComplexity cl
-             in TBD ( updateComps a comps, i, cl )
+		 val lens = map sumTokenLength cl
+		 val avg = (Real.fromLargeInt (sumLargeInts lens)) / (Real.fromInt (length cl))
+             in TBD ( updateLenComps a avg comps, i, cl )
              end
          | Bottom ( a, i, cl )          =>
              let val comps = maxContextComplexity cl
-             in Bottom ( updateComps a comps, i, cl )
+		 val lens = map sumTokenLength cl
+		 val avg = (Real.fromLargeInt (sumLargeInts lens)) / (Real.fromInt (length cl))
+             in Bottom ( updateLenComps a avg comps, i, cl )
              end
          | RefinedBase ( a, r, ts ) =>
 	(*
@@ -279,7 +303,11 @@ structure Model = struct
                              , adc = sumAtomicComps measuredtys
                              , dc  = sumDataComps measuredtys
                              }
-             in Pstruct ( updateComps a comps, measuredtys )
+		(*
+		val lens = map (fn t => #len (getAuxInfo t)) measuredtys
+		val avg = sumReals lens
+		*)
+             in Pstruct ( updateLenComps a 0.0 comps, measuredtys )
              end
          | Punion (a, tys)               =>
              let val measuredtys = if mode = 0 then map (measure 0) tys else tys
@@ -287,7 +315,7 @@ structure Model = struct
                                               , cardComp tys
                                               , sumTypeComps measuredtys
                                               ]
-                             , adc = combine ( cardComp tys )
+                             , adc = (* combine ( cardComp tys ) *)
                                              ( weightedAtomic
                                                   ( sumCoverage measuredtys )
                                                   measuredtys
@@ -295,7 +323,14 @@ structure Model = struct
                              , dc  = combine ( cardComp tys )
                                              ( sumDataComps measuredtys )
                              }
-             in Punion ( updateComps a comps, measuredtys )
+		(*
+		val cov_len_pairs = map (fn ty => 
+					  let val a = getAuxInfo ty 
+					  in (#coverage a, #len a)
+					  end) measuredtys
+		val len = weightedSum cov_len_pairs
+		*)
+             in Punion ( updateLenComps a 0.0 comps, measuredtys )
              end
 	 (*the complexity of Parray (first, body, last) should be at least the same
 		as that of Pstruct (first, RArray body, last) *)
@@ -330,7 +365,12 @@ structure Model = struct
                                        , getDataComp b'
                                        ]
                  val comps  = { tc = tcomp, adc = acomp, dc = dcomp }
-             in Parray ( updateComps a comps
+		(*
+		 val len = #len (getAuxInfo f') + #len (getAuxInfo l') + 
+				(Real.fromInt (getCoverage b') / Real.fromInt (getCoverage f')) 
+				* (#len (getAuxInfo b'))
+		*)
+             in Parray ( updateLenComps a 0.0 comps
                        , { tokens  = ts
                          , lengths = ls
                          , first   = f'
@@ -355,7 +395,14 @@ structure Model = struct
                                         , adc = weightedBranches
                                         , dc  = sumDataComps measuredBranches
                                         }
-             in Switch ( updateComps a comps
+		(*
+		val cov_len_pairs = map (fn ty => 
+					  let val a = getAuxInfo ty 
+					  in (#coverage a, #len a)
+					  end) measuredBranches
+		val len = weightedSum cov_len_pairs
+		*)
+             in Switch ( updateLenComps a 0.0 comps
                        , id
                        , ListPair.zip ( switches, measuredBranches )
                        )
@@ -382,8 +429,9 @@ structure Model = struct
                  val acomp = multCompR avglen abody
                  val dcomp = dbody
                  val comps = { tc = tcomp, adc = acomp, dc = dcomp }
+		 (* val len = avglen * (#len (getAuxInfo mBody))*)
                  fun updateRArray ( comps : TyComp ) =
-                   RArray ( updateComps aux comps, osep, oterm, mBody, olen, ls )
+                   RArray ( updateLenComps aux 0.0 comps, osep, oterm, mBody, olen, ls )
              in updateRArray comps
              end
          | Poption ( aux, ty ) =>
@@ -391,7 +439,7 @@ structure Model = struct
                  val tycomp  = getComps mBody
                  val tcomp   = sumComps [ constructorComp, #tc tycomp, unitComp ]
                  (* Half as complex, because sometimes not there ????? *)
-                 val acomp   = combine unitComp
+                 val acomp   = (* combine unitComp *)  
                                        ( multCompR ( frac ( getCoverage ty )
                                                           ( #coverage aux )
                                                    )
@@ -399,7 +447,8 @@ structure Model = struct
                                        )
                  val dcomp   = combine unitComp ( #dc tycomp )
                  val tycomp' = { tc = tcomp, adc = acomp, dc = dcomp }
-             in Poption ( updateComps aux tycomp', mBody )
+		 (* val len = (frac (getCoverage ty) (#coverage aux)) * (#len (getAuxInfo mBody))*)
+             in Poption ( updateLenComps aux 0.0 tycomp', mBody )
 	     end
     )
 

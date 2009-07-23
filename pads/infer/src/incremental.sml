@@ -120,7 +120,7 @@ structure Incremental: sig
 		top_parses
 	val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  
 *)
-	val all_aggregates = List.concat (map (fn (AG.TupleA [a, AG.Ln(id, ss)], table) => map 
+	val all_aggregates = List.concat (map (fn (AG.TupleA (cov, [a, AG.Ln(id, ss)]), table) => map 
 			(fn (r, m, j) => 
 			  let 
 				(*
@@ -131,9 +131,10 @@ structure Incremental: sig
 				val remainder = String.extract (line, j, NONE)
 				val (newa, newpairs) = 
 				  if remainder = "" then 
-					(AG.TupleA [a', AG.Ln(id, ss)], (id, 0)::pairs)
+					(AG.TupleA (cov+1, [a', AG.Ln(id, ss)]), (id, 0)::pairs)
 				  else 
-					(AG.TupleA [a', AG.Ln (id, ss@[remainder])], (id, 1)::pairs)
+					(AG.TupleA (cov+1, [a', AG.Ln (id, ss@[remainder])]), 
+						(id, 1)::pairs)
 				val sorted_pairs = ListMergeSort.sort (
 				  fn ((id1, _), (id2, _)) => (Atom.compare (id1, id2) = GREATER))
 				  newpairs
@@ -236,7 +237,7 @@ structure Incremental: sig
 	   val eof = ref false
 	   val myTy = ref initTy
 	   val begin_time = Time.now()
-	   val init_aggr = AG.TupleA [AG.initialize initTy, AG.Ln(mkNextTyLabel(), nil)]
+	   val init_aggr = AG.TupleA (0, [AG.initialize initTy, AG.Ln(mkNextTyLabel(), nil)])
 	   val init_table = AG.initTable()
 	   val aggrs = ref [(init_aggr, init_table)]
 	   val start_time = ref begin_time
@@ -296,7 +297,7 @@ structure Incremental: sig
 		    in
 		     myTy := newTy; count := 0; badcount := 0; index := (!index) + 1;
 		     start_time:=Time.now();
-	     	     aggrs := [(AG.TupleA [AG.initialize newTy, AG.Ln(mkNextTyLabel(), nil)], 
+	     	     aggrs := [(AG.TupleA (0, [AG.initialize newTy, AG.Ln(mkNextTyLabel(), nil)]), 
 				AG.initTable())]
 		    end 
 		else ();
@@ -417,7 +418,7 @@ structure Incremental: sig
 	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
 	 *)
 	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 1 
-		(#1 (computeStructurefromRecords learn_lines))
+		(measure 0 (#1 (computeStructurefromRecords learn_lines)))
 	 (*  
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0)
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0) 

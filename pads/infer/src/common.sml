@@ -225,10 +225,41 @@ structure Common = struct
 
 
     (*function to merge AuxInfo a1 into a2*)
-    fun mergeAux(a1, a2) =
+    (* b1 and b2 are number of branches if the two tys are unions or options, they are
+       used to compute the combined tycomp *)
+    fun mergeAux(a1, b1, a2, b2) =
 	case (a1, a2) of 
-	 ({coverage=c1, label=l1, tycomp=tc1},{coverage=c2, label=l2, tycomp=tc2}) =>
- 	 	{coverage=c1+c2, label=l2, tycomp=tc2} (* ????? *)
+	 ({coverage=c1, label=l1, tycomp=tc1:TyComp, len=len1},
+	  {coverage=c2, label=l2, tycomp=tc2:TyComp, len=len2}) =>
+	    let
+		val adc1 = #adc tc1
+		val dc1 = #dc tc1
+		val adc2 = #adc tc2
+		val dc2 = #dc tc2
+		fun myreal i = if i > 1 then log2 i else 0.0
+		val adc = Precise ((((toReal adc1 - myreal b1) * (Real.fromInt c1) +
+			  (toReal adc2 - myreal b2) * (Real.fromInt c2))/(Real.fromInt (c1 + c2))) 
+			  + myreal (Int.max (b1, b2)))
+		val dc = Precise (toReal dc1 + toReal dc2 - myreal (Int.min (b1, b2)))
+	    in
+ 	 	{coverage=c1+c2, label=l2, tycomp= {tc = #tc tc2, adc = adc, dc = dc},
+		len = (len1 * (Real.fromInt c1) + len2 * (Real.fromInt c2))/
+			(Real.fromInt (c1+c2))} 
+	    end
+
+    (* function to compute the new aux from two auxes coming from adjacent base tys of a struct *)
+    (* invariant: coverage of both auxes should be equal *)
+    fun mergeAux1 (a1:AuxInfo, a2:AuxInfo) =
+      let val (c1, c2) = (#coverage a1, #coverage a2)
+          val _ = if c1 <> c2 then raise TyMismatch else ()
+	  val tc1 = #tycomp a1
+	  val tc2 = #tycomp a2
+	  val dc = combine (#dc tc1) (#dc tc2)
+	  val adc = divComp (Int.toLarge c1) dc
+      in
+ 	{coverage = c1, label = #label a1, tycomp = {tc = (#tc tc1), adc = adc, dc = dc},
+		len = (#len a1 + #len a2)}
+      end
 
     (*this function generate a dummy empty base type with nTokens number of Pempty tokens *)
     fun genEmptyBase aux nTokens =
@@ -341,13 +372,13 @@ structure Common = struct
     (*TODO: not considering Parray and RArray for now *)
     and mergeTyInto (ty1, ty2) =
 		case (ty1, ty2) of 
-		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, a2), tl2@tl1) 
-		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, a2), 
+		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, 0, a2, 0), tl2@tl1) 
+		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, 0, a2, 0), 
 			mergeListInto([Base(a1, tl1)], tylist2, nil))
 		(*below is not completely right, haven't considered the case of tylist1 is a subset
 		  of tylist2 and the rest of tylist2 can describe Pempty *) 
 		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => 
-			Pstruct(mergeAux(a1, a2), mergeListInto(tylist1, tylist2, nil))
+			Pstruct(mergeAux(a1, 0, a2, 0), mergeListInto(tylist1, tylist2, nil))
 		| (Punion(a1, tylist1), Punion(a2, tylist2)) => foldl mergeTyInto ty2 tylist1
 		| (Poption (a1, ty), ty2) => 
 			let
@@ -356,10 +387,12 @@ structure Common = struct
 			  mergeTyInto ((genEmptyBase (mkTyAux emptyCoverage) emptyCoverage), mergeTyInto (ty, ty2))
 			end
 		| (ty1, Poption (a2, ty2)) =>
-			if (describesEmpty [ty1]) then Poption(mergeAux(getAuxInfo(ty1), a2), ty2)
-			else Poption(mergeAux(getAuxInfo(ty1), a2), mergeTyInto(ty1, ty2))
+			if (describesEmpty [ty1]) then 
+			  Poption(mergeAux(getAuxInfo(ty1), 0, a2, 2), ty2)
+			else Poption(mergeAux(getAuxInfo(ty1), 0, a2, 2), mergeTyInto(ty1, ty2))
 		| (ty1, Punion (a2, tys)) =>
-			Punion (mergeAux (getAuxInfo ty1, a2), mergeUnion (ty1, tys, nil))
+			Punion (mergeAux (getAuxInfo ty1, 0, a2, length tys), 
+			mergeUnion (ty1, tys, nil))
 		(*
 		| (Switch(a1, id1, rtylist1), Switch(a2, id2, rtylist2)) =>
 			Atom.same(id1, id2) andalso 
@@ -466,19 +499,22 @@ structure Common = struct
     (*used by refine_array *)
     fun mergeTy (ty1, ty2) =
 	case (ty1,ty2) of
-		(Base(a1, tl1), Base (a2, tl2)) => Base (mergeAux(a1, a2), tl1@tl2)
+		(Base(a1, tl1), Base (a2, tl2)) => Base (mergeAux(a1, 0, a2, 0), tl1@tl2)
 		| (RefinedBase (a1, r1, tl1), RefinedBase(a2, r2, tl2)) => 
-						RefinedBase(mergeAux(a1, a2), r1, tl1@tl2)
-		| (TBD (a1, s1, cl1), TBD (a2, s2, cl2)) => TBD (mergeAux(a1, a2), s1, cl1@cl2)
-		| (Bottom (a1, s1, cl1), Bottom (a2, s2, cl2)) => Bottom (mergeAux(a1, a2), s1, cl1@cl2)
-		| (Punion(a1, tylist), Punion(a2, tylist2)) => Punion(mergeAux(a1, a2), 
+				RefinedBase(mergeAux(a1, 0, a2, 0), r1, tl1@tl2)
+		| (TBD (a1, s1, cl1), TBD (a2, s2, cl2)) => 
+				TBD (mergeAux(a1, 0, a2, 0), s1, cl1@cl2)
+		| (Bottom (a1, s1, cl1), Bottom (a2, s2, cl2)) => 
+				Bottom (mergeAux(a1, 0, a2, 0), s1, cl1@cl2)
+		| (Punion(a1, tylist), Punion(a2, tylist2)) => 
+			Punion(mergeAux(a1, length tylist, a2, length tylist2), 
 				map mergeTy (ListPair.zip(tylist,tylist2)))
-		| (Pstruct(a1, tylist), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, a2),
+		| (Pstruct(a1, tylist), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, 0, a2, 0),
 				map mergeTy (ListPair.zip(tylist,tylist2)))
 		| (Parray(a1, {tokens=t1, lengths=len1, first=f1, body=b1, last=l1}), 
 		   Parray(a2, {tokens=t2, lengths=len2, first=f2, body=b2, last=l2})) => 
 			(*body is in a different scope so reindex*)
-			Parray(mergeAux(a1, a2), {tokens = t1@t2, lengths = len1@len2, 
+			Parray(mergeAux(a1, 0, a2, 0), {tokens = t1@t2, lengths = len1@len2, 
 			first = mergeTy(f1, f2),
 			body = mergeTy((reIndexRecNo b1 (getCoverage b2)), b2),
 			last = mergeTy(l1, l2)})
@@ -489,17 +525,17 @@ structure Common = struct
 			    if (Atom.same(id1, id2) andalso
 					foldr myand true (ListPair.map refine_equal(rl1, rl2)) )
 			    then
-				Switch(mergeAux(a1, a2), id1, 
+				Switch(mergeAux(a1, 0, a2, 0), id1, 
 					ListPair.zip(rl1, map mergeTy (ListPair.zip(tylist1, tylist2))))
 			    else raise TyMismatch
 			end
 		| (RArray(a1, sepop1, termop1, ty1, len1, l1), 
 			RArray (a2, sepop2, termop2, ty2, len2, l2))
 			(*body is in a different scope so reindex*)
-			=> RArray(mergeAux(a1, a2), sepop1, termop1, 
+			=> RArray(mergeAux(a1, 0, a2, 0), sepop1, termop1, 
 				mergeTy((reIndexRecNo ty1 (getCoverage ty2)), ty2), len1, (l1@l2)) 
 		| (Poption(a1, ty1), Poption (a2, ty2)) =>
-		    	Poption (mergeAux(a1, a2), mergeTy (ty1, ty2))	
+		    	Poption (mergeAux(a1, 2, a2, 2), mergeTy (ty1, ty2))	
 		| _ => (print "The following tys don't match!!\n"; printTy ty1; 
 			printTy ty2; raise TyMismatch)
 
@@ -586,9 +622,7 @@ structure Common = struct
 			     (Pempty, _) => false
 			     | _ => true)
 			 | _ => true 
-		  fun isPempty ty = (not (isNotPempty ty))
-		  val nonPemptyTys = List.filter isNotPempty tys
-		  val emptys =List.filter isPempty tys
+		  val (nonPemptyTys, emptys) = List.partition isNotPempty tys
 		  val emptys' = if (length emptys) = 0 then []
 				else if (length emptys) = 1 then emptys
 				else [foldr mergeTy (hd emptys) (List.drop (emptys, 1))]
@@ -636,7 +670,6 @@ structure Common = struct
 (*					| RefinedBase(_, IntConst x , _) => x > 99 *)
 					| RefinedBase(_, StringConst s , _) => (size s) > 2
 					| _ => false
-			  fun isNotPriTy ty = not (isPriTy ty)
 			  fun lowPriTy ty = 
 				(parseEmpty ty) orelse
 				(
@@ -648,12 +681,9 @@ structure Common = struct
 					| Poption _ => true
 					| _ => false
 				)
-			  fun notLowPriTy ty = not (lowPriTy ty)
 
-			  val priTys = List.filter isPriTy sorted_tys
-			  val nonpriTys = List.filter isNotPriTy sorted_tys
-			  val lowPriTys = List.filter lowPriTy nonpriTys
-			  val normalTys = List.filter notLowPriTy nonpriTys
+			  val (priTys, nonpriTys) = List.partition isPriTy sorted_tys
+			  val (lowPriTys, normalTys) = List.partition lowPriTy nonpriTys
 			  fun greater (ty1, ty2) =
 			    let
 				val (cov1, cov2) =(getCoverage ty1, getCoverage ty2)

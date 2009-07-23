@@ -211,8 +211,8 @@ structure Complexity = struct
     fun showBits ( c : Complexity ) : string =
         ( case c of
                Bits n    => (LargeInt.toString n)  ^ "b"
-             | Choices l => (LargeInt.toString l)  ^ "b"
-             | Precise p => (Real.fmt (StringCvt.FIX (SOME 3)) p) ^ "b"
+             | Choices l => (Real.fmt (StringCvt.FIX (SOME 2)) (log2L l))  ^ "b"
+             | Precise p => (Real.fmt (StringCvt.FIX (SOME 2)) p) ^ "b"
         )
 
     fun mDownFromN ( m : LargeInt.int ) ( n : LargeInt.int ) : LargeInt.int list =

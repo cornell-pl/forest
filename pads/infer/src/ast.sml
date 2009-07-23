@@ -28,7 +28,8 @@ open Common
   (* initializing the tyMapRef with a dummy value, or else it won't type check *)
   val tyMapRef = 
 	let val tmap = TyMap.insert (tmap, 
-		Bottom({coverage = 0, label = NONE, tycomp = zeroComps}, 0, nil), IRref "Btm") 
+		Bottom({coverage = 0, label = NONE, 
+		tycomp = zeroComps, len = 0.0}, 0, nil), IRref "Btm") 
 	in ref tmap
 	end
 
