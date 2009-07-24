@@ -1,6 +1,6 @@
 structure WINDOWSERVER_LOG = struct
     open Model
-    val aux: AuxInfo = {coverage = 1, label = NONE, tycomp = zeroComps }
+    val aux: AuxInfo = {coverage = 1, label = NONE, tycomp = zeroComps, len=0.0 }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
 
     val date : Ty = Base(aux, [(Pdate "2006.11.21", loc)])

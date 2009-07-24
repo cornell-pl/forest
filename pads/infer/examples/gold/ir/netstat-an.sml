@@ -1,6 +1,6 @@
 structure NETSTAT = struct
     open Model
-    val aux: AuxInfo = {coverage = 3000, label = NONE, tycomp = zeroComps }
+    val aux: AuxInfo = {coverage = 3000, label = NONE, tycomp = zeroComps, len=0.0 }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
 
     val sp: Ty = Base(aux, [(Pwhite " ", loc)])

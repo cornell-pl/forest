@@ -1,9 +1,9 @@
 structure ScrollKeeper= struct
     open Types
 
-    val aux : AuxInfo = { coverage = 327, label = NONE, tycomp = zeroComps }
+    val aux : AuxInfo = { coverage = 327, label = NONE, tycomp = zeroComps, len=0.0 }
     val sw1: Id = Atom.atom("sw1")
-    val swAux1 : AuxInfo = { coverage = 327, label = SOME sw1, tycomp = zeroComps }
+    val swAux1 : AuxInfo = { coverage = 327, label = SOME sw1, tycomp = zeroComps, len=0.0 }
 
     val loc : location = { lineNo = 0, beginloc = 0, endloc = 0, recNo = 0 }
     val date : Ty = Base ( aux, [(Pdate "Dec 10", loc)] )

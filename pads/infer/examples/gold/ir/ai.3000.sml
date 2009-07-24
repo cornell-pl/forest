@@ -1,6 +1,6 @@
 structure AI = struct
     open Model
-    val aiAux: AuxInfo = {coverage = 3000, label = NONE, tycomp = zeroComps }
+    val aiAux: AuxInfo = {coverage = 3000, label = NONE, tycomp = zeroComps, len=0.0 }
     val aiLoc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
 
     val ip : Ty = Base(aiAux, [(Pip "135.207.23.32", aiLoc)])

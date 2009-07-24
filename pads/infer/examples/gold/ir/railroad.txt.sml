@@ -1,6 +1,6 @@
 structure RAILROAD = struct
     open Model
-    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps }
+    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps, len=0.0 }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
     val space= RefinedBase(aux, StringConst " ", [(Pstring " ", loc)])
     val spaceop = Poption(aux, space);

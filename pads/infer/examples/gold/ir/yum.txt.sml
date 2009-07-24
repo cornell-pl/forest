@@ -1,9 +1,9 @@
 structure Yumtxt = struct
     open Types
 
-    val yumAux : AuxInfo = { coverage = 327, label = NONE, tycomp = zeroComps }
+    val yumAux : AuxInfo = { coverage = 327, label = NONE, tycomp = zeroComps, len=0.0 }
     val swLabel : Id = Atom.atom("sw1")
-    val swAux : AuxInfo = { coverage = 327, label = SOME swLabel, tycomp = zeroComps }
+    val swAux : AuxInfo = { coverage = 327, label = SOME swLabel, tycomp = zeroComps, len=0.0 }
 
     val yumLoc : location = { lineNo = 0, beginloc = 0, endloc = 0, recNo = 0 }
 

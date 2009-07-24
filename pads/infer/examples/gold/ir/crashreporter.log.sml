@@ -1,13 +1,13 @@
 structure CRASHREPORTER = struct
     open Model
-    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps }
+    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps, len=0.0 }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
     val date : Ty = Base(aux, [(Pdate "15/Oct/1997", loc)])
     val time : Ty = Base(aux, [(Ptime "18:46:51 -0700", loc)])
     val year: Ty = Base(aux, [(Pint (2004, "2004"), loc)])
     val space : Ty = RefinedBase(aux, StringConst " ", [(Pstring " ", loc)])
     val swLabel: Id = Atom.atom("sw")
-    val swAux: AuxInfo = {coverage = 35, label = SOME swLabel, tycomp = zeroComps }
+    val swAux: AuxInfo = {coverage = 35, label = SOME swLabel, tycomp = zeroComps, len=0.0 }
     val crashdump: Ty = RefinedBase(swAux, Enum[StringConst "crashdump", StringConst "crashreporterd"], 
 				[(Pstring "crashdump", loc)])
     val leftbracket: Ty = RefinedBase(aux, StringConst "[", [(Pstring "[", loc)])

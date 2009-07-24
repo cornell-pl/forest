@@ -1,9 +1,9 @@
 structure IRV = struct
     open Model
-    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps }
+    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps, len=0.0 }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
     val dirLabel = Atom.atom("dirLabel")
-    val dirAux: AuxInfo = {coverage = 34, label = SOME dirLabel, tycomp = zeroComps }
+    val dirAux: AuxInfo = {coverage = 34, label = SOME dirLabel, tycomp = zeroComps, len=0.0 }
     val sp = RefinedBase (aux, StringConst " ", [])
     val dashR:Refined = StringConst "-"
     val dR:Refined = StringConst "d"

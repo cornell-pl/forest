@@ -1,6 +1,6 @@
 structure DIBBLER = struct
     open Model
-    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps }
+    val aux: AuxInfo = {coverage = 35, label = NONE, tycomp = zeroComps, len=0.0 }
     val loc : location = {lineNo = 0, beginloc = 0, endloc = 0, recNo = 0}
     val pn_t: Ty = Base(aux, [(Pint(1243, "1243"), loc)])
     val zipSep_t: Ty = RefinedBase(aux, Enum [StringConst "-", StringConst "/", StringConst " "],
