@@ -96,7 +96,7 @@ fun score ty =
 	let
 		val comps = getComps ty
 		(* val rawcomp = combine (#tc comps) (#dc comps) *)
-		val rawcomp = combine (#tc comps) (multCompR adcCoeff (#adc comps))
+		val rawcomp = combine (#tc comps) (multCompR (!adcCoeff) (#adc comps))
 	in (toReal rawcomp)
 end
 
@@ -1289,7 +1289,8 @@ case ty of
 		    val refine_ty_list = reorder(gen_ref_ty_list (mappings, tlist, 1))
 		in
 		    if (length refine_ty_list = length tlist) 
-		    then measure 1 (Switch (aux, id, refine_ty_list))
+		    then 
+		      measure 1 (Switch (aux, id, refine_ty_list))
 		    else ty
 		end
 	   | _ => ty

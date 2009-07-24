@@ -241,6 +241,13 @@ struct
     fun sumTypeComps ( tys : Ty list ) : Complexity =
         foldl ( fn (t,c) => combine (getTypeComp t) c ) zeroComp tys
 
+    (* weighted sum of type complexities of a list of tys *)
+    fun weightedTypeComps (tys : Ty list) : Complexity =
+      let val sum = foldl (fn (t, c) => 
+	combine (multCompS (getCoverage t) (getTypeComp t)) c) zeroComp tys
+      in divComp (LargeInt.fromInt (sumCoverage tys)) sum
+      end
+
     (* Sum the data complexities of a measured type *)
     fun sumDataComps ( tys : Ty list ) : Complexity =
         foldl ( fn (t,c) => combine (getDataComp t) c ) zeroComp tys
@@ -537,11 +544,11 @@ struct
 			", len: " ^ Real.fmt (StringCvt.FIX (SOME 1)) l ^	
 		      (if print_complexity then (
                       ", tc: " ^ (showBits tcomp)  ^
-                      ", ac: " ^ (showBits acomp)  ^
-                      ", dc: " ^ (showBits dcomp) 
+                      ", ac: " ^ (showBits acomp)  (* ^
+                      ", dc: " ^ (showBits dcomp) *)
                       )
 		      else "") ^
-		      ", raw: "^ (showBits (combine tcomp (multCompR adcCoeff acomp)))  ^
+		      ", raw: "^ (showBits (combine tcomp (multCompR (!adcCoeff) acomp)))  ^
 			")"
                     )
         val partialD = TyToStringD (prefix^"\t") longTBDs longBottom (";\n")
@@ -553,21 +560,23 @@ struct
                  in ( case ts of nil =>
                          "[NULL]"
                        | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts)*) 
-                    ) ^ " " ^ stats ^
+                    ) ^ " " ^ stats (* ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
                                       ", tot: " ^ LargeInt.toString tot ^ ")")
 		    else "") 
+		    *)
                  end
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
                  in ( refinedToString refined ) (* ^ (LTokensToString tl) *)
-		      ^ " " ^ stats ^ 
+		      ^ " " ^ stats (* ^ 
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
                     	", tot: " ^ LargeInt.toString tot ^ ")") 
 		     else "")
+		    *)
                  end
              | TBD (aux,i,cl) =>
                 "TBD_" ^ (Int.toString i) ^ stats ^

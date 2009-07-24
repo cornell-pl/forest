@@ -315,12 +315,12 @@ structure Model = struct
                                               , cardComp tys
                                               , sumTypeComps measuredtys
                                               ]
-                             , adc = (* combine ( cardComp tys ) *)
+                             , adc =  (* combine ( cardComp tys ) *)
                                              ( weightedAtomic
                                                   ( sumCoverage measuredtys )
                                                   measuredtys
                                              )
-                             , dc  = combine ( cardComp tys )
+                             , dc  = (* combine ( cardComp tys ) *)
                                              ( sumDataComps measuredtys )
                              }
 		(*
@@ -385,13 +385,16 @@ structure Model = struct
                  val cover            = #coverage a
                  val sumBranches      = sumCoverage branches
                  val measuredBranches = if mode = 0 then map (measure 0) branches else branches
-                 val branchesTypeComp = sumTypeComps measuredBranches
+		 (* for switch, we only need to encode one *average* branch of description
+		    as dependency would have determined which branch to send *)
+                 val branchesTypeComp = weightedTypeComps measuredBranches
                  val weightedBranches = weightedAtomic sumBranches measuredBranches
                  val branchesDataComp = sumDataComps branches
-                 val comps            = { tc  = sumComps [ constructorComp
-                                                         , cardComp bs
+		 val switchesTypeComps = map (fn r => (#tc (refinedComp 0.0 0 0 r))) switches
+                 val comps            = { tc  = sumComps ([ constructorComp
+                                                         (* , cardComp bs *)
                                                          , branchesTypeComp
-                                                         ]
+                                                         ] @ switchesTypeComps)
                                         , adc = weightedBranches
                                         , dc  = sumDataComps measuredBranches
                                         }
@@ -439,13 +442,13 @@ structure Model = struct
                  val tycomp  = getComps mBody
                  val tcomp   = sumComps [ constructorComp, #tc tycomp, unitComp ]
                  (* Half as complex, because sometimes not there ????? *)
-                 val acomp   = (* combine unitComp *)  
+                 val acomp   =  (* combine unitComp *)
                                        ( multCompR ( frac ( getCoverage ty )
                                                           ( #coverage aux )
                                                    )
                                                    ( #adc tycomp )
                                        )
-                 val dcomp   = combine unitComp ( #dc tycomp )
+                 val dcomp   = (* combine unitComp *) ( #dc tycomp )
                  val tycomp' = { tc = tcomp, adc = acomp, dc = dcomp }
 		 (* val len = (frac (getCoverage ty) (#coverage aux)) * (#len (getAuxInfo mBody))*)
              in Poption ( updateLenComps aux 0.0 tycomp', mBody )
