@@ -54,9 +54,6 @@ struct
 (*
 	val _ = print "before\n"
 	val _ = printTable table
-	val _ = print "binlist to add:\n"
-	val _ = List.app (fn (id, x) => print (Atom.toString id ^ ": " ^ Int.toString x ^ " ")) pairs
-	val _ = print "\n"
 *)
 	val hdrs = (#header table)
 	fun correlate hdrs pairs =
@@ -69,6 +66,11 @@ struct
 	      if Atom.same (id, id') then (id', i)::(correlate hdrs pairs')	
 	      else (id, 0)::(correlate hdrs pairs)
 	val newpairs = correlate hdrs pairs
+	(*
+	val _ = print "new pairs to add:\n"
+	val _ = List.app (fn (id, x) => print (Atom.toString id ^ ": " ^ Int.toString x ^ " ")) newpairs
+	val _ = print "\n"
+	*)
 	val newlen = length newpairs
         val (expandedRows, new_hdrs) = 
           if newlen > (length hdrs) then 
@@ -136,49 +138,50 @@ struct
 
   fun aggrToString prefix r =
     case r of
-    BaseA (_, _, t) => prefix ^ "BaseA (" ^ tokenTyToString t ^ ")\n"
-  | SyncA (_, _, (SOME re)) => prefix ^ "SyncA (" ^ refinedToString re ^ ")\n"
-  | SyncA (_, _, NONE) => prefix ^ "SyncA (None)\n"
-  | Opt (_, id, agg) =>
-	prefix ^ "Opt (" ^ Atom.toString id ^ ") {\n" ^
+    BaseA (c, _, t) => prefix ^ "BaseA (" ^ Int.toString c ^ ", " ^ tokenTyToString t ^ ")\n"
+  | SyncA (c, _, (SOME re)) => prefix ^ "SyncA (" ^ Int.toString c ^ ", " 
+		^ refinedToString re ^ ")\n"
+  | SyncA (c, _, NONE) => prefix ^ "SyncA (" ^ Int.toString c ^ ", None)\n"
+  | Opt (c, id, agg) =>
+	prefix ^ "Opt (" ^ Int.toString c ^ ", " ^ Atom.toString id ^ ") {\n" ^
 	  aggrToString (prefix ^ "    ") agg
 	^ prefix ^ "}\n"
-  | TupleA (_, aggs) => 
+  | TupleA (c, aggs) => 
 	let val ss = map (aggrToString (prefix ^ "    ")) aggs 
 	in
-	   prefix ^ "TupleA {\n" ^
+	   prefix ^ "TupleA (" ^ Int.toString c ^ "){\n" ^
 	   (String.concat ss) ^ 
 	   prefix ^ "}\n"
 	end
-  | UnionA (_, branches) =>
+  | UnionA (c, branches) =>
 	let val ss = map (aggrToString (prefix ^ "    ")) branches
 	in
-	   prefix ^ "UnionA {\n" ^
+	   prefix ^ "UnionA (" ^ Int.toString c ^ "){\n" ^
 	   (String.concat ss) ^ 
 	   prefix ^ "}\n"
 	end
-  | SwitchA (_, branches) =>
+  | SwitchA (c, branches) =>
 	let val ss = map (fn (re, a) => prefix ^ "    " ^ (refinedToString re) ^ " =>\n" ^
 			(aggrToString (prefix ^ "    ") a)) branches
 	in
-	   prefix ^ "SwitchA {\n" ^
+	   prefix ^ "SwitchA (" ^ Int.toString c ^ "){\n" ^
 	   (String.concat ss) ^ 
 	   prefix ^ "}\n"
 	end
-  | ArrayA (_, elemA, sepA, termA) =>
+  | ArrayA (c, elemA, sepA, termA) =>
       let 
 	val elem_string = prefix ^ "ELEM:\n" ^ (aggrToString (prefix ^ "    ") elemA) 
 	val sep_string = prefix ^ "SEP:\n" ^ (aggrToString (prefix ^ "    ") sepA) 
 	val term_string = prefix ^ "TERM:\n" ^ (aggrToString (prefix ^ "    ") termA) 
       in 
-	prefix ^ "Array {\n" ^
+	prefix ^ "ArrayA (" ^ Int.toString c ^ "){\n" ^
 	elem_string ^
 	sep_string ^
 	term_string ^
 	prefix ^ "}\n"
       end
-  | OptionA (_, agg) =>
-	prefix ^ "OptionA {\n" ^
+  | OptionA (c, agg) =>
+	prefix ^ "OptionA (" ^ Int.toString c ^ "){\n" ^
 	  aggrToString (prefix ^ "    ") agg
 	^ prefix ^ "}\n"
   | Ln (id, strings) =>
@@ -267,7 +270,10 @@ struct
     | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR (Good (s, re))) => 
 	(TupleA (c+1, [Ln (id, l), SyncA (c1+1, len+lsize s, ss)]), [(id, 0)])
     | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR Fail) => 
-		(TupleA (c+1, [Ln (id, l), Opt (c1+1, mkNextTyLabel(), SyncA (c1, len, ss))]), [(id, 0)])
+	let val id1 = mkNextTyLabel()
+	in
+	  (TupleA (c+1, [Ln (id, l), Opt (c1+1, id1, SyncA (c1, len, ss))]), [(id, 0), (id1, 0)])
+	end
     | (TupleA (c, [Ln (id, l), SyncA ss]), SyncR (Partial x)) => 
 		(TupleA (c+1, [Ln (id, l), (#1 (merge (SyncA ss) (SyncR (Partial x))))]), [(id, 0)])
     | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR (Recovered(r, s, m))) => 
@@ -486,7 +492,7 @@ struct
 	| (Pstruct(a, tys), TupleA (c, aggrs)) => 
 		if (length tys = length aggrs) then
 		  let val new_cov = (#coverage a) + c
-		      val newa = mkTyAux new_cov
+		      val newa = mkTyAux1 (new_cov, getLabel a)
 		  in 
 		    measure 1 (Pstruct(newa, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs)))
 		  end
@@ -494,7 +500,7 @@ struct
  	| (Punion(a, tys), UnionA (c, aggrs)) =>
 		if (length tys = length aggrs) then
 		  let val new_cov = (#coverage a) + c
-		      val newa = mkTyAux new_cov
+		      val newa = mkTyAux1 (new_cov, getLabel a)
 		  in 
 		    measure 1 (Punion(newa, ListPair.map (fn (t, ag) => updateTy t ag) (tys, aggrs)))
 		  end
@@ -511,14 +517,15 @@ struct
 					  Ln (_, ss) => (re, learn ss NONE)
 					| _ => raise TyMismatch) extra_re_ags
 		    val cov = foldl (fn ((re, ty), c) => c + getCoverage ty) 0 (retys' @ extras)
-		    val newa = mkTyAux cov
+		    val newa = mkTyAux1 (cov, getLabel a)
 		in measure 1 (Switch (newa, id, (retys' @ extras)))
 		end
 	| (RArray (a, sep, term, body, len, lengths), ArrayA (c, e, s, t)) =>
 	(* TODO: we don't have a way of modifying the len and lengths yet *)
 		let
+		  (* val _ = print (aggrToString "" aggr) *)
 		  val newbody = updateTy body e
-		  val newa = mkTyAux (#coverage a + c)
+		  val newa = mkTyAux1 ((#coverage a + c), getLabel a)
 		  val sep = case (sep, s) of
 			(SOME sep, SyncA (_, _, SOME re)) => SOME re
 			| (NONE, SyncA (_, _, NONE)) => NONE
@@ -531,7 +538,7 @@ struct
 		end
 	| (Poption (a, ty), OptionA (c, ag)) => 
 		let 
-		  val newa = mkTyAux (#coverage a + c)
+		  val newa = mkTyAux1 ((#coverage a + c), getLabel a)
 		in
 		  measure 1 (Poption (newa, updateTy ty ag))
 		end
@@ -594,7 +601,12 @@ fun alt_options_to_unions dep_map ty =
 		    val label2 = getLabel(a2)
 		in 
 		  if getCorrelation dep_map label1 label2 = 0 then
-		    f (Punion(a1, [Pstruct (a1, [t1]), Pstruct(a2, [t2])]) :: l)
+		    let val a' = mkTyAux(#coverage a1)
+			val a1' = mkTyAux1 (getCoverage t1, label1)
+			val a2' = mkTyAux1 (getCoverage t2, label2)
+		    in
+		      f (Punion(a', [Pstruct (a1', [t1]), Pstruct(a2', [t2])]) :: l)
+		    end
 		  else Poption(a1, t1) :: (f (Poption(a2, t2) :: l))
 		end
 	  | Punion (a, [t1, t2]) :: Poption (a3, t3) :: l => 

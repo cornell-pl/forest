@@ -632,10 +632,14 @@ struct
     fun printTy ( ty : Ty ) : unit = printTyD "" false false "\n" ty
 
     fun allStringConsts relist =
-		foldr myand true (map (fn re => (case re of 
-						StringConst _ => true 
-						| _ => false)
-				     ) relist)
+	let val containsNonStr = 
+	  List.exists (fn re => 
+		case re of 
+		  StringConst _ => false
+		| _ => true) relist 
+	in
+	  not containsNonStr
+	end
 
 (* Function to measure the variances of the structure by computing the total number of
   union/option/enum branches in the tree *) 

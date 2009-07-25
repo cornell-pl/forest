@@ -96,7 +96,8 @@ fun score ty =
 	let
 		val comps = getComps ty
 		(* val rawcomp = combine (#tc comps) (#dc comps) *)
-		val rawcomp = combine (#tc comps) (multCompR (!adcCoeff) (#adc comps))
+		val rawcomp = combine (#tc comps) 
+				(multCompR (!adcCoeff) (#adc comps))
 	in (toReal rawcomp)
 end
 
@@ -1043,8 +1044,10 @@ and union_to_optional _ ty =
 
 
 and optional_to_union _ ty =
-(* this is the dual of the above: option(union([t1, t2])) ==> union ([t1, t2, empty]) *)
-(* this function is used by the incremental learning program *)
+(* this is the dual of the above and does one of the follows: 
+  option(union([t1, t2])) ==> union ([t1, t2, empty]) 
+  union[t1, option(t2)] ==> union[t1, t2, empty]
+  this function is used by the incremental learning program *)
 case ty of
   Poption (a, Punion (a1, tys)) => 
 	let 
@@ -1055,6 +1058,23 @@ case ty of
 	  (* val _ = (print "After optional_to_union...\n"; printTy newty) *)
 	in newty
 	end
+| Punion (a, tys) => 
+  let fun convert tys =
+	case tys of
+	  (Poption (a', body)) :: tys => 
+	    let 
+		val emptycov = (#coverage a') - getCoverage body
+		val empty = measure 1 (genEmptyBase (mkTyAux emptycov) emptycov)
+	    in [body, empty] @ (convert tys)
+	    end
+	| t :: tys => t :: (convert tys)
+	| nil => nil
+   val newty = measure 1 (Punion (a, convert tys))
+   (* val _ = (print "Previous ty: \n"; printTy ty;
+	   print "New ty:\n"; printTy newty) *)
+  in
+    newty
+  end
 | _ => ty
 
 
@@ -1290,7 +1310,15 @@ case ty of
 		in
 		    if (length refine_ty_list = length tlist) 
 		    then 
-		      measure 1 (Switch (aux, id, refine_ty_list))
+		      let val newty = measure 1 (Switch (aux, id, refine_ty_list))
+			(*
+			  val _ = print "Original Union ty:\n"
+			  val _ = printTy ty
+			  val _ = print "New switch ty:\n"
+			  val _ = printTy newty
+			*)
+		      in newty
+		      end
 		    else ty
 		end
 	   | _ => ty
@@ -1835,14 +1863,14 @@ and mkBlob sibling_opt ty =
 	    	if (containString ltokens str) then ty
 	    	else 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair, ltokens))
-		   (*
+		(*
 		      val _ = (* if length ltokens <> getCoverage ty then *)
 				(print "Old ty:\n";
 				 printTy ty;
 				 print "New blob:\n";
 				 printTy newty
 				)
-		   *)
+		*)
 		  in newty
 		  end
 	      end
@@ -1852,11 +1880,27 @@ and mkBlob sibling_opt ty =
 	      in
 		if str = "/$/" then 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob (NONE, NONE), ltokens))
+		(*
+		      val _ = (* if length ltokens <> getCoverage ty then *)
+				(print "Old ty:\n";
+				 printTy ty;
+				 print "New blob:\n";
+				 printTy newty
+				)
+		*)
 		  in newty
 		  end
 	        else if containPatt ltokens str then ty
 	        else 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair , ltokens))
+		(*
+		      val _ = (* if length ltokens <> getCoverage ty then *)
+				(print "Old ty:\n";
+				 printTy ty;
+				 print "New blob:\n";
+				 printTy newty
+				)
+		*)
 		      (*
 		      val _ = if length ltokens <> getCoverage ty then
 				raise TyMismatch
@@ -1938,6 +1982,16 @@ and contract_blobs sib ty =
         end
     | _ => ty
   end
+
+(* this function conversts an enum back to Pstring - useful in
+  incremental learning when an enum has grown too heavy *)
+fun enum_to_string _ ty = 
+  case ty of
+    RefinedBase (a, Enum l, tl) => 
+	if allStringConsts l then 
+	  measure 1 (Base (a, tl))
+	else ty
+  | _ => ty
 
 (***************
 fun mergeTokens records ty =
@@ -2217,15 +2271,18 @@ let
 
   val phase_four_rules : data_independent_rule list =
 		[ 
+		  optional_to_union,
 		  adjacent_consts,
 		  remove_degenerate_list
 		]
 
   val phase_five_rules : data_independent_rule list = 
 		[ 	
-			unnest_tuples,
-			unnest_sums,
-			optional_to_union
+		  (* mkBlob, *)
+		  remove_degenerate_list,
+		  unnest_tuples,
+		  unnest_sums,
+		  enum_to_string
 		]
   val phase_six_rules : data_independent_rule list = 
 		[ 	

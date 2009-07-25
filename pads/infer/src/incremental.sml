@@ -57,8 +57,13 @@ structure Incremental: sig
 	    val _ = TextIO.closeIn strm
 	in  !lines
 	end
-		
+	
+    (* return the first n lines of data from the file as the initial chunk *)
+    (* previous implementation returns n/2 lines from the top and n/2 lines from
+       the bottom of the file - this is not so appropriate when the file is really
+       large as it has to scan the file multiple times *)
     fun get_learn_chunk (file, size) =
+	(*
 	let val hd_sz = size div 2
 	    val tail_sz = size - hd_sz
 	    val total_sz = get_num_lines file
@@ -66,6 +71,8 @@ structure Incremental: sig
 	    val tail_lines = get_cont_lines file (total_sz - tail_sz) tail_sz
 	in hdr_lines @ tail_lines
 	end
+	*)
+   	get_cont_lines file 0 size
 
     (* each aggregate is actually a pair: (aggr, OptsTable) *)
     fun add (ty, line, aggregates) =
@@ -226,7 +233,7 @@ structure Incremental: sig
 ***)
 
 
-     fun parse_single_file (initTy, numHeaders, numFooters, filename, chunksize, dir) =
+     fun parse_single_file (initTy, numHeaders, numFooters, filename, chunksize, dir, start_pos) =
       let
 
 	   val logFile = dir ^ "/" ^ filename ^ ".log"
@@ -241,6 +248,13 @@ structure Incremental: sig
 	   val init_table = AG.initTable()
 	   val aggrs = ref [(init_aggr, init_table)]
 	   val start_time = ref begin_time
+	   (* skip the first start_pos lines from the input file *)
+	   val skip = ref 0
+	   val _ = while (not (!eof) andalso (!skip) < start_pos) do
+		case TextIO.inputLine strm of
+	  	  SOME x => skip:=(!skip) + 1
+		  | _ => eof := true
+
 	   fun output aggrs ty start_time index count =
 		  let 
 	     	    val (chunk_aggr, table) = if length aggrs = 0 then
@@ -250,20 +264,21 @@ structure Incremental: sig
 		(*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
+		    val _ = AG.printTable table 
 		*)
-		    (* val _ = AG.printTable table *)
 		    val trans_map = AG.transpose table
 (*
 		    val _ = LabelMap.appi (fn (id, l) => (print ((Atom.toString id) ^ ": " ^
 				(String.concat (map (Int.toString) l))); print "\n")) trans_map
 *)
-	     	    val newTy = Reduce.reduce 5 (AG.updateTy ty chunk_aggr)
+		    val newTy = (AG.updateTy ty chunk_aggr)
+	     	    val newTy = Reduce.reduce 5 newTy 
 		    val newTy = AG.merge_adj_options trans_map newTy
 		    val newTy = AG.alt_options_to_unions trans_map newTy
 		    val newTy = Reduce.reduce 5 newTy
+		    (* val _ = (print "Updated newty:\n"; printTy newTy) *)
 		    val elapse = Time.- (Time.now(), start_time)
 		    (* val refinedTy = Reduce.reduce 4 newTy *)
-	     	    (* val _ = (print "**** Newly updated Ty: \n"; printTy newTy) *)
 (*
 
 		    val tyFile = (dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString index ^ ".ty") 
@@ -366,7 +381,7 @@ structure Incremental: sig
     fun main (cmd, args) = 
      (
      if length args < 3 then
-	(print "Usage: increment ORIG_DATA_FILE LEARN_SIZE PARSE_SIZE [OPT_LEVEL] [FILE_TO_PARSE]\nSizes are in # of lines\n";
+	(print "Usage: increment ORIG_DATA_FILE INIT_SIZE INC_SIZE [OPT_LEVEL] [ADC_WEIGHT] [FILE_TO_PARSE]\nSizes are in # of lines\n";
 	anyErrors := true)
      else
        let
@@ -394,10 +409,14 @@ structure Incremental: sig
 			)
 		 else () 
 
-	 val parse_file = if length args = 5 then (List.last args)
-			  else learn_file
 	 val learnsize = valOf (Int.fromString ls)
 	 val chunksize = valOf (Int.fromString cs)
+	 val _ = if length args >= 5 then
+		adcCoeff:= valOf (Real.fromString (List.nth (args, 4)))
+		else ()
+	 val (parse_file, start_pos) = 
+		if length args = 6 then ((List.last args), 0)
+			  else (learn_file, learnsize)
          val _ = executableDir :=
 		(case (OS.Process.getEnv "LEARN_HOME") of
 		  SOME x => x
@@ -469,7 +488,7 @@ structure Incremental: sig
 	 val _ = printTy goldenTy *)
 
        in
-         parse_single_file (initTy, numHeaders, numFooters, parse_file, chunksize, timedir) 
+         parse_single_file (initTy, numHeaders, numFooters, parse_file, chunksize, timedir, start_pos) 
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
