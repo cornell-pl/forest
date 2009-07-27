@@ -335,12 +335,16 @@ structure Incremental: sig
 		        (myTy := output (!aggrs) (!myTy) (!start_time) (!index) (!count);
 			eof:=true) 
 		)
-	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = TextIO.closeIn strm
 	   val logstrm = TextIO.openAppend logFile
 	   val finalTy = sortUnionBranches (Reduce.reduce 4 (!myTy)) 
+	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = (print "**** Final Ty: \n"; printTy (measure 0 finalTy))
-	   val msg = "Total time elapsed = " ^ Time.toString total_elapse ^ " secs\n"
+	   val tycomp = getComps finalTy
+	   val _ = print ("Final comps = (" ^ showBits (#tc tycomp) ^ ", " ^ 
+			showBits (#dc tycomp) ^ ", " ^
+			(Real.toString (Reduce.score finalTy)) ^ ")\n")
+	   val msg = "Total time = " ^ Time.toString total_elapse ^ " secs\n"
 	   val _ = TextIO.output (logstrm, msg)
 	   val _ = TextIO.closeOut logstrm
 	   val _ = print msg

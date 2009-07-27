@@ -47,7 +47,11 @@ structure Main : sig
 						       sep
 		val end5Times = updatePadsEnd (Time.now()) end4Times
                 val computeTimes = getComputeTimes end5Times
+		val tycomp = getComps rewrittenTy
             in (print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" );
+		print ("Final comps = (" ^ showBits (#tc tycomp) ^ ", " ^ 
+			showBits (#dc tycomp) ^ ", " ^
+			(Real.toString (Reduce.score rewrittenTy)) ^ ")\n");
 		print (computeTimesToString computeTimes))
             end
     end

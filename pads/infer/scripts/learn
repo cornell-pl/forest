@@ -64,6 +64,7 @@ my $arch_n_opsys = `$pads_home/scripts/arch-n-opsys` || "";
 $arch_n_opsys = &cleanupStr($arch_n_opsys);
 #print "Arch_n_opsys is: $arch_n_opsys\n";
 
+alarm 1800; # time out set at half an hour
 my $cmd = "$sml \@SMLload=$learn_home/lib/learn.$arch_n_opsys $learn_home $args";
 exec $cmd;
 
