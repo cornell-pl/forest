@@ -61,7 +61,7 @@ sub inc
   {
     #print "Learning $file: opt_level = 3\n";
     $exectime = 0;
-    system ("increment $file $isize $lsize > $file.inc");
+    system ("increment -f $file -i $isize -l $lsize > $file.inc");
     ($score, $exectime) = scan ("$file.inc");
     $time += $exectime;
   }
