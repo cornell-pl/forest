@@ -67,11 +67,19 @@ vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
 	$(SML_ROOT_PATH)/ml-ulex --ml-lex-mode vanilla.lex
 
+pxml.lex.sml: pxml.lex
+	@echo Running lexer generator for pxml
+	$(SML_ROOT_PATH)/ml-ulex pxml.lex
+
+pxml.grm.sml: pxml.grm
+	@echo Running parser generator for pxml
+	$(SML_ROOT_PATH)/ml-antlr pxml.grm
+
 learn:  tokens.lex.sml vanilla.lex.sml
 	@echo Making learning program
 	nice -n20 $(SML_PATH) < $(BUILD_EXEC)
 	@echo
-increment: tokens.lex.sml vanilla.lex.sml
+increment: tokens.lex.sml vanilla.lex.sml pxml.lex.sml pxml.grm.sml
 	@echo Making the increment program
 	nice -n20 $(SML_PATH) < $(BUILD_INC)
 	@echo
@@ -98,7 +106,7 @@ versions:
 .PHONY : clean
 clean:
 	$(RM) lib/learn.$(ARCH_N_OPSYS)
-	$(RM) tokens.lex tokens.lex.sml vanilla.lex vanilla.lex.sml 
+	$(RM) tokens.lex tokens.lex.sml vanilla.lex vanilla.lex.sml pxml.lex.sml pxml.grm.sml
 	$(RM) ../include/tokens.p ../include/vanilla.p
 	$(RM) *~
 	$(RM) .DS_Store

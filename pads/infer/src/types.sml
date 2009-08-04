@@ -284,6 +284,9 @@ struct
             NONE => (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
           | SOME id => id
     end
+
+    fun getNextLabel () : Id = 
+     (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
          
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
     fun getIdString ( a : AuxInfo ) : string = String.extract ((getLabelString a), 4, NONE)

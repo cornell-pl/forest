@@ -34,6 +34,9 @@ structure Config = struct
     val minBlobHeight	  = 4
     (* val blobCompensation  = 0.5 *)
     val adcCoeff = ref 5.0
+    val default_init_size = 500
+    val default_chunk_size = 100
+
 
     val HIST_PERCENTAGE   = ref DEF_HIST_PERCENTAGE
     val STRUCT_PERCENTAGE = ref DEF_STRUCT_PERCENTAGE

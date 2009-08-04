@@ -16,6 +16,7 @@ structure Incremental: sig
     val max_aggregates = 10
     val dir_name = "inc_output"
     exception Exit of OS.Process.status
+    exception InvalidFlags
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
     open Config
     open Types
@@ -25,6 +26,8 @@ structure Incremental: sig
     open Common
 
     structure AG = Aggregate
+    structure StringMap = Parse.StringMap
+
     fun remove_newline line =
 	let val s_line = Substring.full line
 	    val s_line' = Substring.dropr (fn c => c = #"\n" orelse c = #"\r") s_line
@@ -380,19 +383,36 @@ structure Incremental: sig
 	  in ()
 	  end
 
-
+ 
+    fun loadArgs smap args =
+	case args of
+	  flag::v::args => 
+	   if String.sub (flag, 0) = #"-" then 
+		let val smap' = StringMap.insert (smap, flag, v)
+		in loadArgs smap' args
+		end
+	   else raise InvalidFlags
+	| nil => smap
 
     fun main (cmd, args) = 
      (
-     if length args < 3 then
-	(print "Usage: increment ORIG_DATA_FILE INIT_SIZE INC_SIZE [OPT_LEVEL] [ADC_WEIGHT] [FILE_TO_PARSE]\nSizes are in # of lines\n";
+     if length args < 1 then
+	(print ("Usage: increment -f ORIG_DATA_FILE [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
+	"[-opt OPT_LEVEL] [-w ADC_WEIGHT] [-p FILE_TO_PARSE] [-d INIT_DESC_XML]\nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
-	 val [learn_file, ls, cs] = List.take (args, 3)
-	 val opt_level  = if length args > 3 then valOf (Int.fromString 
-			(List.nth (args, 3)))
-		          else 3 (* highest optimization level*)
+	 val argMap = loadArgs StringMap.empty args
+	 val learn_file = valOf (StringMap.find (argMap, "-f"))
+	 val learnsize = case StringMap.find (argMap, "-i") of
+		  NONE => default_init_size
+		| SOME x => valOf (Int.fromString x)
+	 val chunksize = case StringMap.find (argMap, "-l") of
+		  NONE => default_chunk_size
+		| SOME x => valOf (Int.fromString x)
+	 val opt_level  = case StringMap.find (argMap, "-opt") of
+			  NONE => 3 (* highest optimization level *)
+			| SOME x => valOf(Int.fromString x)
 	 val _ = if opt_level = 0 then
 			(
 			Parse.do_clean:=false;
@@ -412,15 +432,19 @@ structure Incremental: sig
 			Parse.do_memo:=false
 			)
 		 else () 
-
-	 val learnsize = valOf (Int.fromString ls)
-	 val chunksize = valOf (Int.fromString cs)
-	 val _ = if length args >= 5 then
-		adcCoeff:= valOf (Real.fromString (List.nth (args, 4)))
-		else ()
+	 val _ = case StringMap.find(argMap, "-w") of
+		NONE => ()
+		| SOME x =>  adcCoeff:= valOf (Real.fromString (x))
 	 val (parse_file, start_pos) = 
-		if length args = 6 then ((List.last args), 0)
-			  else (learn_file, learnsize)
+		case StringMap.find (argMap, "-p") of
+		  NONE => (learn_file, learnsize)
+		| SOME x => (x, 0)
+
+	 val pxml = StringMap.find (argMap, "-d") 
+	 val start_pos = case pxml of
+			SOME _ => 0
+			| _ =>  start_pos
+
          val _ = executableDir :=
 		(case (OS.Process.getEnv "LEARN_HOME") of
 		  SOME x => x
@@ -435,13 +459,29 @@ structure Incremental: sig
 	 val timedir = subdir ^ "/" ^ timestamp
 	 val _ = if (OS.FileSys.isDir timedir handle SysErr => (OS.FileSys.mkDir timedir; true))
 		 then () else ()
-	 val learn_lines = get_learn_chunk (learn_file, learnsize)
  	 (* val _ = List.app (fn s => print (s ^ "\n")) learn_lines *)
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
 	 *)
-	 val (_, initTy, numHeaders, numFooters, _) = Rewrite.run (Times.zeroEndingTimes()) 1 
-		(measure 0 (#1 (computeStructurefromRecords learn_lines)))
+	 val (_, initTy, numHeaders, numFooters, _) = 
+		case pxml of 
+		  NONE =>
+		  let val learn_lines = get_learn_chunk (learn_file, learnsize)
+		  in
+			Rewrite.run (Times.zeroEndingTimes()) 1 
+			(measure 0 (#1 (computeStructurefromRecords learn_lines)))
+		  end
+		| SOME xmlfile =>
+		  let val xml = PxmlParse.loadXML xmlfile
+		      val ty = Pxml.xmlToIR Pxml.StringMap.empty xml
+		      (* the ty decribes the entire data, we need a ty that describes just one record *)
+		      val ty = case ty of
+				  RArray (_, _, _, body, _, _) => body
+				| _ => ty
+		      val _ = printTy ty
+		  in
+			(ty, ty, 0, 0, Times.zeroEndingTimes ())
+		  end
 	 (*  
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0)
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0) 

@@ -7,6 +7,7 @@ is
   $/pp-lib.cm
   $smlnj/compiler/compiler.cm
   $/regexp-lib.cm
+  $/ml-lpt-lib.cm
 
   tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
   vanilla.lex.sml (* to regenerate: lexgen --ml-lex-mode vanilla.lex  *)
@@ -18,6 +19,10 @@ is
   tokens.sml
   options.sml
   types.sml
+  pxml.sml
+  pxml.lex.sml
+  pxml.grm.sml
+  pxmlParse.sml
   ../examples/gold/ir/1967Transactions.short.sml
   ../examples/gold/ir/MER_T01_01.csv.sml
   ../examples/gold/ir/ai.3000.sml
