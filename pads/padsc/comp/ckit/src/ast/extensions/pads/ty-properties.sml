@@ -38,7 +38,7 @@ struct
 		     baseName : string,
 		     baseArgs : pexp list}
 
-   type typedefInfoTy = tryInfoTy
+   type typedefInfoTy = tryInfoTy * {predTy:PX.Pty, thisVar:string, pred:pexp} option
 
 
    type transInfoTy = {ds: diskSize,
@@ -76,7 +76,9 @@ struct
 				   size={min=NONE,max=NONE,minConst = NONE, maxConst =NONE},
 				   post=[]}
 
-   type enumInfoTy = unit
+   type enumInfoTy = string * {enumLabel:string, physNameOpt:string option, labelValOpt:pexp option, commentOpt:string option} list
+   val defEnumInfo:enumInfoTy = ("",[])
+
    datatype tyInfo = BaseInfo of baseInfoTy
                    | TransInfo of transInfoTy 
                    | TryInfo of tryInfoTy 
@@ -86,6 +88,12 @@ struct
                    | UnionInfo of unionInfoTy
                    | ArrayInfo of arrayInfoTy
                    | EnumInfo of enumInfoTy
+
+   fun mkEnumInfo prefix members = 
+       let fun mkOne (label,physName,labelVal,comment) = {enumLabel=label,physNameOpt=physName,labelValOpt=labelVal,commentOpt=comment}
+       in
+	  EnumInfo (prefix, List.map mkOne members)
+       end
            
 
    datatype memChar = Static | Dynamic
@@ -105,10 +113,10 @@ struct
    fun add (Variable, _ ) = Variable 
      | add (_, Variable ) = Variable 
      | add (Size(x1,y1), Size(x2,y2)) = Size(IntInf.+(x1, x2), IntInf.+(y1, y2))
-     | add (Size(x1,y1), Param(ps, s, ebytes, erecs)) = Param(ps, s, P.plusX(PT.IntConst x1, ebytes),
-							             P.plusX(PT.IntConst y1, erecs))
-     | add (Param(ps, s, ebytes, erecs), Size(x2,y2)) = Param(ps, s, P.plusX(ebytes, PT.IntConst x2),
-							             P.plusX(erecs, PT.IntConst y2))
+     | add (Size(x1,y1), Param(ps, s, ebytes, erecs)) = Param(ps, s, P.plusX(PT.IntConst (x1,false), ebytes),
+							             P.plusX(PT.IntConst (y1,false), erecs))
+     | add (Param(ps, s, ebytes, erecs), Size(x2,y2)) = Param(ps, s, P.plusX(ebytes, PT.IntConst (x2,false)),
+							             P.plusX(erecs, PT.IntConst (y2,false)))
      | add (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,ebytes2,erecs2)) = 
              Param(ps1, NONE, P.plusX(ebytes1, ebytes2), P.plusX(erecs1, erecs2))
 
@@ -121,9 +129,9 @@ struct
      | overlay (r as Size(x1,y1), Size(x2,y2)) = 
        if x1 = x2 andalso y1 = y2 then  r else Variable
      | overlay (Size(x1,y1), Param(ps, s, ebytes, erecs)) = 
-	   Param(ps, s, merge(PT.IntConst x1, ebytes), merge(PT.IntConst y1, erecs))
+	   Param(ps, s, merge(PT.IntConst (x1,false), ebytes), merge(PT.IntConst (y1,false), erecs))
      | overlay (Param(ps, s, ebytes, erecs), Size(x2,y2)) = 
-	   Param(ps, s, merge(ebytes, PT.IntConst x2), merge(erecs, PT.IntConst y2))
+	   Param(ps, s, merge(ebytes, PT.IntConst (x2,false)), merge(erecs, PT.IntConst (y2,false)))
      | overlay (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,ebytes2,erecs2)) = 
              Param(ps1, NONE, merge(ebytes1, ebytes2), merge(erecs1, erecs2))
 
@@ -132,10 +140,10 @@ struct
    fun scale (Variable, _ ) = Variable 
      | scale (_, Variable ) = Variable 
      | scale (Size(x1,y1), Size(rep,_)) = Size(IntInf.*(x1, rep), IntInf.*(y1, rep))
-     | scale (Size(x1,y1), Param(ps, s, rep, _)) = Param(ps, s, P.timesX(PT.IntConst x1, rep),
-							        P.timesX(PT.IntConst y1, rep))
-     | scale (Param(ps, s, rep, _), Size(x2,y2)) = Param(ps, s, P.timesX(rep, PT.IntConst x2),
-							          P.timesX(rep, PT.IntConst y2))
+     | scale (Size(x1,y1), Param(ps, s, rep, _)) = Param(ps, s, P.timesX(PT.IntConst (x1,false), rep),
+							        P.timesX(PT.IntConst (y1,false), rep))
+     | scale (Param(ps, s, rep, _), Size(x2,y2)) = Param(ps, s, P.timesX(rep, PT.IntConst (x2,false)),
+							          P.timesX(rep, PT.IntConst (y2,false)))
      | scale (Param(ps1,s1,ebytes1, erecs1), Param(ps2,s2,rep,_)) = 
              Param(ps1, NONE, P.timesX(ebytes1, rep), P.plusX(erecs1, rep))
 

@@ -32,6 +32,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   type ptyinfo = PTys.pTyInfo
 
   val printLocation = false (* internal flag - pretty print locations as comments *)
+  fun mkCStr s = "\""^s^"\""
 
   fun ppLoc pps (SourceMap.LOC {srcFile, beginLine, beginCol, endLine, endCol}) =
       if printLocation then ( PPL.addStr pps "/*["
@@ -711,11 +712,14 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   fun ppExp pps exp = PPL.addStr pps (ParseTreeUtil.expToString exp)
   fun ppNative pps exp = ((PPL.addStr pps "<![CDATA["); ppExp pps exp; (PPL.addStr pps "]]>"))
   fun ppCExpr pps exp = ppTag "expr"  (ppTag "native" ppNative) pps exp
+  fun ppCharFromInt pps i = PPL.addStr pps ("'"^Char.toString(Char.chr (IntInf.toInt i))^"'")
+
   fun ppPExpr pps exp = 
       case exp 
       of ParseTree.MARKexpression(l,e) => ppPExpr pps e 
       |  ParseTree.String s => ppExp pps exp
-      |  ParseTree.IntConst i => ppExp pps exp
+      |  ParseTree.IntConst (i,isChar) => if isChar then ppCharFromInt pps i
+	                                  else ppExp pps exp
       |  ParseTree.RealConst r => ppExp pps exp
       |  _ => ppCExpr pps exp
 
@@ -772,15 +776,15 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 
   fun ppPChar pps exp = 
       case ParseTreeUtil.stripExp exp 
-      of ParseTree.IntConst i => (
-           PPL.addStr pps (Char.toString(Char.chr (IntInf.toInt i)))
+      of ParseTree.IntConst (i,b) => (
+           PPL.addStr pps ("'"^ (Char.toString(Char.chr (IntInf.toInt i)))^"'")
            handle _ => ppCExpr pps exp
           )
       | _ => ppCExpr pps exp
 
   fun ppPString pps exp = 
       case ParseTreeUtil.stripExp exp 
-      of ParseTree.String s => PPL.addStr pps s
+      of ParseTree.String s => PPL.addStr pps (mkCStr s)
       | _ => ppCExpr pps exp
 
 (*
@@ -981,7 +985,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
        ; newline pps
        ; PPL.addStr pps "</decl>")
 
-  fun ppPDeclaration pps kind ptyInfo ppKind = 
+  fun ppPRawDeclaration pps kind ptyInfo ppKind = 
 	(PPL.addStr pps ("<"^kind^">" )
         ; blockify 2 ppKind pps ptyInfo
     	; newline pps
@@ -989,6 +993,25 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
     	; newline pps
         )
 
+  fun ppPRecordDeclaration pps kind (ptyInfo:PTys.pTyInfo) ppKind = 
+       if #isRecord ptyInfo then 
+           ( PPL.addStr pps ("<record>")
+           ; newline pps
+           ; ppPRawDeclaration pps kind ptyInfo ppKind
+           ; PPL.addStr pps ("</record>")             
+           ; newline pps )
+        else 
+           ppPRawDeclaration pps kind ptyInfo ppKind
+
+  fun ppPDeclaration pps kind (ptyInfo:PTys.pTyInfo) ppKind = 
+       if #isSource ptyInfo then 
+           (PPL.addStr pps ("<source>")
+           ; newline pps
+           ; ppPRecordDeclaration pps kind ptyInfo ppKind
+           ; PPL.addStr pps ("</source>")             
+           ; newline pps)
+        else 
+           ppPRecordDeclaration pps kind ptyInfo ppKind
 
 (*
   PStruct Declaration
@@ -1202,15 +1225,28 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
   </xs:element>
 *)
 
+  fun ppPEnumBranch pps {enumLabel,physNameOpt,labelValOpt,commentOpt} = 
+      ( ppTag "label" PPL.addStr pps enumLabel
+      ; case physNameOpt of NONE => () | SOME physName => ppTag "physicalName" PPL.addStr pps physName
+      ; case labelValOpt of NONE => () | SOME labelVal => ppTag "value" ppPExpr pps labelVal
+      ; case commentOpt  of NONE => () | SOME comment =>  ppTag "comment" PPL.addStr pps (mkCStr comment)
+      )
+
+  fun ppPEnumBranches pps branches = 
+       (separate (ppTagIndent "enumField" ppPEnumBranch, newline)) pps branches
+
   fun ppPEnum (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  = 
       let fun ppPEnum' pps (ptyInfo:PTys.pTyInfo) = 
 	  let val declName = #repName ptyInfo
 	      val typarams = #typarams ptyInfo
+	      val (prefix,branches) = PTys.getEnumInfo ptyInfo
 	  in
 	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ; PPL.newline pps 
+	      ; if prefix = "" then () else (ppTag "prefix" PPL.addStr pps (mkCStr prefix); PPL.newline pps)
+              ; ppPEnumBranches pps branches 
 	       )  
 	  end
-      (* Enum fields		  ; ppPFields aidinfo tidtab pps fields *)
       in
 	  (ppPDeclaration pps "enum" ptyInfo ppPEnum')
 	  handle _ => PPL.addStr pps "ERROR: unbound tid" (* fix this *)
@@ -1233,16 +1269,28 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 (*
   if (#isSource ptyInfo) then add psource modifier to definition 
 *)
+  fun ppPred pps (thisVar,pred) = 
+    let fun ppPred' pps (thisVar:string, pred) = 
+	( ppTag "argument" PPL.addStr pps thisVar
+	 ; PPL.newline pps
+	 ; ppTag "constraints" ppPExpr pps pred
+	 )
+    in
+	ppTagIndent "predicate" ppPred' pps (thisVar,pred)
+    end
+
   fun ppPTypedef (ptyInfo:PTys.pTyInfo) aidinfo tidtab pps (Ast.TypeDecl{tid,...})  =
       let val (Name, Ty) = typedefInfo tidtab tid
 	  val base = (valOf Ty)
 	  fun ppPTypedef' pps (ptyInfo:PTys.pTyInfo) = 
 	      let val declName = #repName ptyInfo
 		  val typarams = #typarams ptyInfo
+		  val (_,predOpt) = PTys.getTypedefInfo ptyInfo
 	      in
 		  ( ppPDecl aidinfo tidtab pps (declName, typarams)
 		   ; PPL.newline pps
 		   ; ppTy pps (base, [])
+		   ; case predOpt of NONE => () | SOME {predTy,thisVar,pred} => (PPL.newline pps; ppPred pps (thisVar,pred))
 		   )  
 	      end
       in

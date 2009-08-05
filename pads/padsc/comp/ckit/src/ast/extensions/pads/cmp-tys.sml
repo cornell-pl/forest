@@ -62,6 +62,16 @@ struct
      case #info tyInfo
      of TyProps.StructInfo ainfo => ainfo
      | _ => TyProps.defStructInfo
+
+  fun getEnumInfo (tyInfo: pTyInfo) = 
+     case #info tyInfo
+     of TyProps.EnumInfo ainfo => ainfo
+     | _ => TyProps.defEnumInfo
+
+  fun getTypedefInfo (tyInfo: pTyInfo) = 
+     case #info tyInfo
+     of TyProps.TypedefInfo ainfo => ainfo
+     | _ => raise Fail "Expected a typedef in pretty printing"
   
   fun mergeTyInfo mergeDiskSizes (r1 : sTyInfo, r2:sTyInfo) =
       {diskSize = mergeDiskSizes (#diskSize r1, #diskSize r2),

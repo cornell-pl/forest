@@ -1961,7 +1961,7 @@ let
 	       (pushLoc loc;
 		cnvExpression expr
 		before popLoc ())
-	    | PT.IntConst i =>
+	    | PT.IntConst (i,b) =>
 	       wrapEXPR(signedNum Ast.INT, Ast.IntConst i)
 	    | PT.RealConst r =>
 	       wrapEXPR(signedNum Ast.DOUBLE, Ast.RealConst r)

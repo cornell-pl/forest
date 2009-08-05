@@ -13,7 +13,7 @@ struct
 	       case exp
 	       of PT.Id s => (Id s):: accumP
 	       |  PT.Binop (PT.Dot, e1, PT.Id f) => cnvExp(e1, (Dot f) :: accumP)
-	       |  PT.Binop (PT.Sub, e1, PT.IntConst i)  => cnvExp(e1, (Sub  i) :: accumP)
+	       |  PT.Binop (PT.Sub, e1, PT.IntConst (i,b))  => cnvExp(e1, (Sub  i) :: accumP)
 	       |  p => raise Fail "Ill-formed path expression."
        in
 	   cnvExp(p, [])

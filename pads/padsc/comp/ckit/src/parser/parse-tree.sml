@@ -28,7 +28,7 @@ struct
 
   and expression
     = EmptyExpr
-    | IntConst of IntInf.int
+    | IntConst of IntInf.int * bool  (* boolean true if int constant was originally a char literal *)
     | RealConst of real
     | String of string
     | Id of string

@@ -32,7 +32,7 @@ sig
 
   and expression
     = EmptyExpr
-    | IntConst of IntInf.int
+    | IntConst of IntInf.int * bool
     | RealConst of real
     | String of string
     | Id of string

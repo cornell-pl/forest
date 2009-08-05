@@ -249,7 +249,7 @@ fun buildEmptyField () =
     let val tyname = {qualifiers=[], specifiers= [TypedefName "Puint8"]}
     in 
        PX.Manifest{tyname=tyname,name=genDefName(),args=[],isVirtual=true,
-		   expr=IntConst(IntInf.fromInt 0),pred=NONE,comment=SOME "Empty Field"}  
+		   expr=IntConst(IntInf.fromInt 0, false),pred=NONE,comment=SOME "Empty Field"}  
     end
 
 fun buildStructFieldRep(tyName, tyParams, compoundField : FieldDesc, qualifiersOpt, (* isVirtual, isEndian,*) comment) = 
@@ -753,9 +753,9 @@ expr:
 	| expr DOT TYPE_NAME		(markExpression srcMap (Binop(Dot,expr,Id(TYPE_NAME)),exprleft,TYPE_NAMEright))
 	| expr ARROW TYPE_NAME		(markExpression srcMap (Binop(Arrow,expr,Id(TYPE_NAME)),exprleft,TYPE_NAMEright))
 	| LPAREN exprWComma RPAREN	(markExpression srcMap (exprWComma,LPARENleft,RPARENright))
-	| DECNUM			(markExpression srcMap (IntConst DECNUM,DECNUMleft,DECNUMright))
+	| DECNUM			(markExpression srcMap (IntConst (DECNUM, false),DECNUMleft,DECNUMright))
         | REALNUM                       (markExpression srcMap (RealConst REALNUM, REALNUMleft,REALNUMright))
-	| CCONST			(markExpression srcMap (IntConst CCONST, CCONSTleft,CCONSTright))
+	| CCONST			(markExpression srcMap (IntConst (CCONST,true), CCONSTleft,CCONSTright))
 	| ID				(markExpression srcMap (Id(ID), IDleft, IDright))
         | strings                       (markExpression srcMap (String(strings),stringsleft,stringsright))  
 
@@ -1399,9 +1399,9 @@ pOpt:
 pREexpr :
    PRE expr                     (ExprExt(PX.Pregexp expr))
  | strings                      (markExpression srcMap (String(strings),stringsleft,stringsright))  
- | DECNUM			(markExpression srcMap (IntConst DECNUM,DECNUMleft,DECNUMright))
+ | DECNUM			(markExpression srcMap (IntConst (DECNUM, false), DECNUMleft,DECNUMright))
  | REALNUM                      (markExpression srcMap (RealConst REALNUM, REALNUMleft,REALNUMright))
- | CCONST			(markExpression srcMap (IntConst CCONST, CCONSTleft,CCONSTright))
+ | CCONST			(markExpression srcMap (IntConst (CCONST, true), CCONSTleft,CCONSTright))
  | ID				(markExpression srcMap (Id(ID), IDleft, IDright))
 
 pOmitOpt : (false)

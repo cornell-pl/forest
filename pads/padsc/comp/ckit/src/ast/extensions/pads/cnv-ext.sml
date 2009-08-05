@@ -179,7 +179,7 @@ structure CnvExt : CNVEXT = struct
     fun extractString e = 
 	case e
 	of PT.EmptyExpr => NONE
-        |  PT.IntConst i => (SOME ( String.str(Char.chr (IntInf.toInt i))) handle _ => NONE)
+        |  PT.IntConst (i,b) => (SOME ( String.str(Char.chr (IntInf.toInt i))) handle _ => NONE)  (* b should be true *)
         |  PT.RealConst r => NONE
 	|  PT.String s => SOME s
 	|  PT.MARKexpression (loc,e) => extractString e
@@ -625,7 +625,7 @@ structure CnvExt : CNVEXT = struct
 	   | Ast.Array (iopt, ct') =>
 		 let val e = (case iopt of 
 				  NONE => PT.EmptyExpr
-				| SOME (i, _) => PT.IntConst i) (* XXX: should get expression but it is an AST expression. *)
+				| SOME (i, _) => PT.IntConst (i,false)) (* XXX: should get expression but it is an AST expression. *)
 		     val ct'' = CTtoPTct ct'
 		 in
 		     P.makePCT [PT.Array(e, ct'')]
@@ -649,7 +649,7 @@ structure CnvExt : CNVEXT = struct
 			 val e = 
 			     case iopt of
 				 NONE => PT.EmptyExpr
-			       | SOME i => PT.IntConst i
+			       | SOME i => PT.IntConst (i,false)
 		     in
 			 (ct', [(dr, e)], commentOpt)
 		     end
@@ -684,7 +684,7 @@ structure CnvExt : CNVEXT = struct
 		 end
 	   | Ast.EnumRef t =>
 		 let fun procMem ({name,...}:Ast.member, i, commentOpt) = 
-		     (SYM.name name, PT.IntConst i, commentOpt)
+		     (SYM.name name, PT.IntConst (i,false), commentOpt)
 		 in case lookTid t of
 		     SOME {name=SOME n, ntype=NONE,...} => 
 			 P.makePCT [PT.EnumTag n]
@@ -1004,8 +1004,8 @@ structure CnvExt : CNVEXT = struct
 				  in
 				      case (cval, crecval)
 			              of (NONE, NONE) => TyProps.Param(cFormals, NONE, rExp, rrecExp)
-			              | (NONE, SOME e) => TyProps.Param(cFormals, NONE, rExp, PT.IntConst e)
-				      | (SOME e, NONE) => TyProps.Param(cFormals, NONE, PT.IntConst e, rrecExp)
+			              | (NONE, SOME e) => TyProps.Param(cFormals, NONE, rExp, PT.IntConst (e,false))
+				      | (SOME e, NONE) => TyProps.Param(cFormals, NONE, PT.IntConst (e,false), rrecExp)
 				      | (SOME e1, SOME e2) => 
 					   TyProps.Size(e1, e2)
 				  end
@@ -1182,7 +1182,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		         |  TyProps.EnumInfo  e => "ENUM"
 			 |  TyProps.TransInfo t => getBaseKind(#dstName t)
 			 |  TyProps.TryInfo   t => getBaseKind(#baseName t)
-			 |  TyProps.TypedefInfo t => getBaseKind(#baseName t) 
+			 |  TyProps.TypedefInfo (t,p) => getBaseKind(#baseName t) 
 			 |  TyProps.RecursiveInfo r => "POINTER"
 			 |  _ => "STANDARD"
 			   (* end some *))
@@ -2995,7 +2995,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                       val contR = lookupContainsRecord baseTy
  		      val lH = lookupHeuristic baseTy
 		      val numArgs = List.length params
-		      val typedefInfo = {ds = ds, paramNames = paramNames, baseName = baseName, baseArgs = args}
+		      val typedefInfo = ({ds = ds, paramNames = paramNames, baseName = baseName, baseArgs = args},pred)
 		      val typedefProps = buildTyProps(name, paramInfo, TyProps.TypedefInfo typedefInfo, 
 						      ds, TyProps.Typedef (ds, baseName, (paramNames, args)), mc, endian, 
 						      isRecord, contR, lH, isSource, pdTid, numArgs)
@@ -4423,11 +4423,11 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      (case (sepX, termX) of
 				          (PT.String s, PT.String t) => (if String.isPrefix t s 
 									 then (PE.error (sepTermPreErrorMsg)) else (); [])
-                                        | (PT.IntConst s, PT.IntConst t) => (if s = t
+                                        | (PT.IntConst (s,bs), PT.IntConst (t,bt)) => (if s = t
 									     then (PE.error (sepTermEqErrorMsg)) else ();[])
-                                        | (PT.String s, PT.IntConst t) => (if String.isPrefix (intInftoStringRep t) s
+                                        | (PT.String s, PT.IntConst (t,bt)) => (if String.isPrefix (intInftoStringRep t) s
 									   then (PE.error (sepTermPreErrorMsg)) else (); [])
-                                        | (PT.IntConst s, PT.String t) => (if (intInftoStringRep s) = t 
+                                        | (PT.IntConst (s,bs), PT.String t) => (if (intInftoStringRep s) = t 
 									   then (PE.error (sepTermEqErrorMsg)) else ();[])
 					| _ => (
 					    let fun strCharCmp(sX, cX) = P.condX(P.eqX(PL.strLen(sX), P.intX 1),
@@ -6626,7 +6626,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			 let fun chk e = 
 			         case e 
 				 of PT.MARKexpression(loc, e) => chk e
-				 | PT.IntConst i => if IntInf.<(i,IntInf.fromInt 0) orelse IntInf.>(i,IntInf.fromInt 255) then
+				 | PT.IntConst (i,b) => if IntInf.<(i,IntInf.fromInt 0) orelse IntInf.>(i,IntInf.fromInt 255) then
 				                       PE.error("In Punion "^name^": integer literals not supported.")
 						    else ()
                                  | PT.ExprExt(PX.Pregexp e') => if not (Option.isSome labelOpt) then
@@ -8949,10 +8949,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		  val (cParams : (string * pcty) list, 
 		       paramInfo : (string * acty) list, 
 		       paramNames : string list) = processParams params
-
+		  val eprefix = case modifiers of SOME (PX.EnumPrefix s) => s | _ => ""
                   fun mungeMembers (name, fromXOpt, expOpt, commentOpt) = 
 		      let val expr = case expOpt of NONE =>   PT.EmptyExpr | SOME e => e
-			  val eprefix = case modifiers of SOME (PX.EnumPrefix s) => s | _ => ""
 		      in
 			  case fromXOpt of NONE => (eprefix^name, name, expr, commentOpt)
                           | SOME fromName =>       (eprefix^name, fromName, expr, commentOpt)
@@ -8991,7 +8990,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      end
 			   else TyProps.mkSize (0,0)
 		  val numArgs = List.length params
-                  val enumProps = buildTyProps(name, paramInfo, TyProps.EnumInfo (), ds, TyProps.Enum ds,
+                  val enumInfo = TyProps.mkEnumInfo eprefix members
+                  val enumProps = buildTyProps(name, paramInfo, enumInfo, ds, TyProps.Enum ds,
 					       TyProps.Static, true, isRecord, containsRecord,
 					       largeHeuristic, isSource, pdTid, numArgs)
 		  val () = PTys.insert(Atom.atom name, enumProps)
@@ -9430,7 +9430,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			  |  TyProps.Enum ds => 
 			      let val size = reduceCDSize(args, ds)
 				  (* params should be fixed size of branches *)
-				  val params = case size of TyProps.Size(n, nrec) => [PT.IntConst n] | _ => []
+				  val params = case size of TyProps.Size(n, nrec) => [PT.IntConst (n,false)] | _ => []
 			      in
 				  ("Pstring", accumSize, reduceCDSize(args, ds), params)
 			      end

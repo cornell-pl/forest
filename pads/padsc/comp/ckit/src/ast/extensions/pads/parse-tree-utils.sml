@@ -87,8 +87,8 @@ struct
 	end
 
 
-    fun intX i = PT.IntConst (IntInf.fromInt i)
-    fun int32X i = (PT.IntConst (IntInf.fromInt (Int32.toInt i)))
+    fun intX i = PT.IntConst (IntInf.fromInt i, false)
+    fun int32X i = PT.IntConst (IntInf.fromInt (Int32.toInt i), false)
 
     val zero = intX 0
 
@@ -310,7 +310,8 @@ struct
     fun expToString {nested} p =
         case p
         of PT.EmptyExpr => ""
-        |  PT.IntConst i => IntInf.toString i
+        |  PT.IntConst (i,isChar) => if isChar then Char.toString(Char.chr (IntInf.toInt i))
+	                             else IntInf.toString i
         |  PT.RealConst r => Real.toString r
         |  PT.String s => "\"" ^ s ^ "\""
         |  PT.Id s => s
