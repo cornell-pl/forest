@@ -373,13 +373,13 @@ TODOs after WASL paper:
 
 7. Investigate why some matching tokens like ( and ) are not paired properly 
 8. Update coverage and adc during incremental learning so that the coverage info can be
-    used for blob finding or other functions.
+    used for blob finding or other functions. (done!)
 9. Detect parts of description that is error and remove those in a sensible
    way.
 10. Rewriting rule to find more general Path token (exploiting the vertical info)
 11. Experimental set up to measure good N (initial chunk size) and M (incremental
-   chunk size).
-12. Write a translation tool from xml (compiled form pads/c) to IR
-13. Do some experiments varying the weight of the adc in the scoring function
+   chunk size). (done!)
+12. Write a translation tool from xml (compiled form pads/c) to IR (done!)
+13. Do some experiments varying the weight of the adc in the scoring function (done!)
 14. Investigate why the option_to_union rewriting rule can't succeed. Anything wrong with
-    the scoring function?
+    the scoring function? (done! because branching factor was encoded in adc)
