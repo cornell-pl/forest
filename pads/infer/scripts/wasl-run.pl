@@ -71,7 +71,13 @@ sub inc
 
 $largefile = shift @ARGV;
 if (!$largefile) {
-  print "Usage: wasl-run.pl LARGE_FILE_NAME [-small] [-scale] [-incsize] \n";
+  print "Usage: wasl-run.pl LARGE_FILE [-small] [-scale] [-incsize]
+
+LARGE_FILE must have at least 1M lines.
+-small:   run tests on a set of small examples specified by \@testfiles in the script, 
+          test files must be in the currect working directory.
+-scale:   run the scaling tests on LARGE_FILE.
+-incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.\n";
   exit;
 }
 
