@@ -398,7 +398,7 @@ structure Incremental: sig
      (
      if length args < 1 then
 	(print ("Usage: increment -f ORIG_DATA_FILE [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
-	"[-opt OPT_LEVEL] [-w ADC_WEIGHT] [-p FILE_TO_PARSE] [-d INIT_DESC_XML]\nSizes are in # of lines\n");
+	"[-opt OPT_LEVEL (3)] [-w ADC_WEIGHT (5)] [-p FILE_TO_PARSE] [-d INIT_DESC_XML] [-varcard true/false]\nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
@@ -445,6 +445,12 @@ structure Incremental: sig
 			SOME _ => 0
 			| _ =>  start_pos
 
+         val varcard = StringMap.find (argMap, "-varcard")
+	 val _ = case varcard of
+		   SOME x => var_card_bits := valOf(Bool.fromString x)
+		| _ => ()
+
+
          val _ = executableDir :=
 		(case (OS.Process.getEnv "LEARN_HOME") of
 		  SOME x => x
@@ -480,7 +486,7 @@ structure Incremental: sig
 				| _ => ty
 		      val _ = printTy ty
 		  in
-			(ty, ty, 0, 0, Times.zeroEndingTimes ())
+			(ty, (measure 0 ty), 0, 0, Times.zeroEndingTimes ())
 		  end
 	 (*  
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0)

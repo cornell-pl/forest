@@ -111,11 +111,11 @@ structure Model = struct
                                  }
              | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot num) rl )
                                                   , constructorComp
-                                                  , int2CompS ( length rl )
+                                                  (* , cardComp ( rl ) *)
                                                   ]
-                                 , adc = int2CompS ( length rl )
-                                 , dc  = multCompS ( length rl )
-                                                   ( int2CompS ( length rl ) )
+                                 , adc = cardComp( rl )
+                                 , dc  = multComp ( num )
+                                                   ( cardComp ( rl ) )
                                  }
              | LabelRef i     => { tc =  unitComp, adc = unitComp, dc = unitComp }
 	     | Blob (str, patt) =>
@@ -297,7 +297,7 @@ structure Model = struct
          | Pstruct (a, tys)              =>
              let val measuredtys = if mode = 0 then map (measure 0) tys else tys
                  val comps = { tc  = sumComps [ constructorComp 
-                                              , cardComp tys
+                                              , cardComp tys 
                                               , sumTypeComps measuredtys
                                               ]
                              , adc = sumAtomicComps measuredtys
@@ -312,15 +312,15 @@ structure Model = struct
          | Punion (a, tys)               =>
              let val measuredtys = if mode = 0 then map (measure 0) tys else tys
                  val comps = { tc  = sumComps [ constructorComp
-                                              , cardComp tys
+                                              , cardComp tys 
                                               , sumTypeComps measuredtys
                                               ]
-                             , adc =  (* combine ( cardComp tys ) *)
+                             , adc = combine ( cardComp tys )
                                              ( weightedAtomic
                                                   ( sumCoverage measuredtys )
                                                   measuredtys
                                              )
-                             , dc  = (* combine ( cardComp tys ) *)
+                             , dc  = combine ( cardComp tys ) 
                                              ( sumDataComps measuredtys )
                              }
 		(*
@@ -349,7 +349,7 @@ structure Model = struct
 				       , constructorComp (*this is for PArray *)
 				       , constructorComp (*this is for the sep *)
 				       , constructorComp (*this is for the term *)
-				       , Choices 3 (*card 3 for Pstruct(first, RArray body, last) *)	
+				       , cardComp [f, b, l] (*card 3 for Pstruct(first, RArray body, last) *)	
 				       , unitComp  (* for sep in RArray *)
 				       , unitComp  (* for term in RArray *)
                                        , getTypeComp f'
@@ -442,13 +442,13 @@ structure Model = struct
                  val tycomp  = getComps mBody
                  val tcomp   = sumComps [ constructorComp, #tc tycomp, unitComp ]
                  (* Half as complex, because sometimes not there ????? *)
-                 val acomp   =  (* combine unitComp *)
+                 val acomp   =  combine unitComp 
                                        ( multCompR ( frac ( getCoverage ty )
                                                           ( #coverage aux )
                                                    )
                                                    ( #adc tycomp )
                                        )
-                 val dcomp   = (* combine unitComp *) ( #dc tycomp )
+                 val dcomp   = combine unitComp ( #dc tycomp )
                  val tycomp' = { tc = tcomp, adc = acomp, dc = dcomp }
 		 (* val len = (frac (getCoverage ty) (#coverage aux)) * (#len (getAuxInfo mBody))*)
              in Poption ( updateLenComps aux 0.0 tycomp', mBody )

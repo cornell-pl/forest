@@ -92,14 +92,6 @@ fun cost const_map ty =
   end
 *********)
 
-fun score ty =
-	let
-		val comps = getComps ty
-		(* val rawcomp = combine (#tc comps) (#dc comps) *)
-		val rawcomp = combine (#tc comps) 
-				(multCompR (!adcCoeff) (#adc comps))
-	in (toReal rawcomp)
-end
 
 fun findRefined ty =
  (*funtion to find the first base or refine type and convert it to refined type *)
@@ -274,7 +266,7 @@ case ty of
   	| (_,h::t) => Pstruct (mkTyAux (#coverage a), 
 				cpfx @ unionTys @ csfx)
   	| (nil,nil) => Punion (a, tylist)
-  in (measure 0 newty)
+  in measure 0 newty
   end
 | _ => ty
 (* detect a table with a header and rewrite the struct with unions inside
@@ -373,7 +365,7 @@ and adjacent_consts _ ty =
 			| ((Pempty, loc1), (Pempty, loc2)) => 
 				(Pempty, combLoc(loc1, loc2))
 			| ((tk1, loc1), (tk2, loc2)) =>
-				(Pstring(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
+				(Ptext(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
 				combLoc(loc1, loc2))
 	 (*the two token lists are supposed to be of equal length*)
 	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
@@ -1988,7 +1980,7 @@ and contract_blobs sib ty =
 fun enum_to_string _ ty = 
   case ty of
     RefinedBase (a, Enum l, tl) => 
-	if allStringConsts l then 
+	if allWordConsts l then 
 	  measure 1 (Base (a, tl))
 	else ty
   | _ => ty
@@ -2273,6 +2265,7 @@ let
 		[ 
 		  optional_to_union,
 		  adjacent_consts,
+		  prefix_postfix_sums,
 		  remove_degenerate_list
 		]
 
@@ -2282,7 +2275,8 @@ let
 		  remove_degenerate_list,
 		  unnest_tuples,
 		  unnest_sums,
-		  enum_to_string
+		  prefix_postfix_sums
+		  , enum_to_string
 		]
   val phase_six_rules : data_independent_rule list = 
 		[ 	

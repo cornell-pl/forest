@@ -179,7 +179,7 @@ structure Pxml = struct
      case xml of
        Element ("field", _) =>
 	let 
-	    val _ = print "In field \n"
+	    (* val _ = print "In field \n" *)
 	    val varName = valOf (selectPCData xml ["field", "name"])
 	    val tyName = valOf (selectPCData xml ["field", "ptype", "name"])
 	    val cons = selectPCData xml ["field", "postConstraints", "expr", "native"]
@@ -197,7 +197,7 @@ structure Pxml = struct
 		  (case (search [xml] ["field", "ptype", "argument", "expr", "native"]) of
 		    SOME (Element ("native", [Comment param])) => 
 			(
-		 	print ("inserting " ^ param ^ "\n");
+		 	(* print ("inserting " ^ param ^ "\n"); *)
 		       (env:= StringMap.insert (!env, tyName, param)))
 		   | _ => ()
 		  )
@@ -207,7 +207,7 @@ structure Pxml = struct
 	end
      | Element ("literal", _) =>
 	let 
-	    val _ = print "In literal\n"
+	    (* val _ = print "In literal\n" *)
 	    val str = valOf (selectPCData xml ["literal", "_"])
 	    val loc = mkLoc 0 0 0 0
 	in [RefinedBase (mkTyAux (1), StringConst str, [(Pstring str, loc)])]
@@ -231,7 +231,7 @@ structure Pxml = struct
 	end
 	
    and xmlToIR map xml =
-    let val _ = print ("Processing XML element:\n" ^ toString "" xml)
+    let val _ = () (* print ("Processing XML element:\n" ^ toString "" xml) *)
     in
     case xml of
       Element ("typedef", xmls) =>
@@ -243,8 +243,8 @@ structure Pxml = struct
     | Element ("PadsC", ty_xmls) =>
 	let val rev_xmls = List.rev ty_xmls
 	    val map = loadToMap rev_xmls map
-	    val _ = print ("Load to Map complete. Elements in Map = " ^ 
-			Int.toString (StringMap.numItems map) ^ "\n")
+	    (* val _ = print ("Load to Map complete. Elements in Map = " ^ 
+			Int.toString (StringMap.numItems map) ^ "\n") *)
 	in  if length rev_xmls <1 then raise InvalidXML
 	    else xmlToIR map (hd rev_xmls)
 	end
@@ -274,7 +274,7 @@ structure Pxml = struct
 	  case search xmls ["inplace"] of
 	    SOME (Element("inplace", xmls)) =>
 		let val tys = List.concat (List.map (fieldToIRs map) xmls)
-		    val _ = print ("done with union " ^ label ^ "\n") 
+		    (* val _ = print ("done with union " ^ label ^ "\n") *)
 		in Punion(aux, tys)
 		end
 	  | NONE =>  (* it's a switch, not a normal union *)
@@ -302,7 +302,6 @@ structure Pxml = struct
 	    val term = case selectPCData xml ["array", "delimiterConstraints", "term", "_"] of
 		        NONE => NONE
 		      | SOME x => SOME (StringConst x)
-	    val _ = print "done\n"
 	    val len = case search xmls ["sizeConstraints", "max"] of
 		        SOME (Element ("max", [PCData x])) => SOME(IntConst (valOf(LargeInt.fromString x)))
 		      | SOME (Element ("max", xmls)) => (* TODO: hack here for dependent length *)

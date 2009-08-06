@@ -75,6 +75,7 @@ structure Main : sig
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
     fun setBlobRatio    r = blobRatio := r
+    fun setVarCardBits  b = var_card_bits := b
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("n",        "name of output file (default "^def_descName^")",                                     PCL.String (setDescName,  false)),
@@ -90,6 +91,7 @@ structure Main : sig
          ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                    PCL.Bool    setEntropy),
          ("lex",      "prefix of the lex config to be used (default \"vanilla\")",	                   PCL.String (setLexName, false)),
          ("au",	      "run only the golden file",	                                                   PCL.String (setGoldenRun, true)),
+         ("varcard", "variable cardinality bits (default " ^ (Bool.toString def_var_card_bits) ^ ")",	   PCL.Bool   (setVarCardBits)),
          ("blob",     "threshold ratio used for blob finding (default 1.0), higher means fewer blobs",	   
        PCL.Float (setBlobRatio, false))
         ]

@@ -37,6 +37,7 @@ struct
         ", ADC = " ^ showBits (#adc tyc) ^
         ", DC = " ^ showBits (#dc tyc) ^ " }" ^ "\n\n"
 
+   
     fun normalizeTyComp ( n : int ) ( tyc : TyComp ) : real =
         ( ( toReal ( #tc tyc ) ) + ( toReal ( #dc tyc ) ) ) / ( Real.fromInt n )
 
@@ -271,6 +272,15 @@ struct
                                     ( getAtomicComp t )
                         )
     in foldl f zeroComp tys
+    end
+
+    fun score ty =
+	let
+		val comps = getComps ty
+		(* val rawcomp = combine (#tc comps) (#dc comps) *)
+		val rawcomp = combine (#tc comps) 
+				(multCompR (!adcCoeff) (#adc comps))
+	in (toReal rawcomp)
     end
                  
     fun mkLabel (prefix:string) (i:int) : Id = Atom.atom("BTy_"^(Int.toString i))
@@ -642,6 +652,23 @@ struct
 		| _ => true) relist 
 	in
 	  not containsNonStr
+	end
+
+    fun allWordConsts relist =
+	let fun isWord s =
+	   let val head = String.sub (s, 0)
+	       val tail = String.explode (String.substring (s, 1, (size(s) - 1)))
+	   in
+	      (Char.isAlpha head) andalso not (List.exists 
+ 		(fn c => not (Char.isAlphaNum c orelse (c = #"_") orelse (c = #"-"))) tail)
+	   end
+	fun f res =
+	    case res of
+		nil => true
+	    | (StringConst s)::res => isWord s andalso f res
+	    | _ => false
+	in
+	  f relist
 	end
 
 (* Function to measure the variances of the structure by computing the total number of

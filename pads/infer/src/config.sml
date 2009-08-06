@@ -19,6 +19,7 @@ structure Config = struct
     val def_printLineNos = false
     val def_printIDs     = true
     val def_entropy      = false
+    val def_var_card_bits   = false
 
     val depthLimit        = ref def_depthLimit
     val outputDir         = ref def_outputDir
@@ -32,6 +33,8 @@ structure Config = struct
     val goldenRun         = ref false
     val blobRatio	  = ref 3.0 
     val minBlobHeight	  = 4
+    val var_card_bits   = ref def_var_card_bits
+
     (* val blobCompensation  = 0.5 *)
     val adcCoeff = ref 5.0
     val default_init_size = 500

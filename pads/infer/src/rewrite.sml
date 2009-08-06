@@ -17,7 +17,7 @@ let
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
 
-  (* val _ = (print "Before Reduction:\n"; printTy initTy)  *)
+(*  val _ = (print "Before Reduction:\n"; printTy initTy) *) 
 
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
@@ -26,9 +26,6 @@ let
  	else (nil, nil, NONE, initTy)
 (*phase one *)
 (*
-  val _ = print "Phase one ...\n";
-*)
-(*
   val _ = case (headerTyOp, footerTyOp) of (NONE, NONE) => ()
 	  | _ => print "Found a header or footer!\n"
 *)
@@ -36,9 +33,10 @@ let
   val headers= map (Reduce.reduce 1) headers
   val footers= map (Reduce.reduce 1) footers
   val reduce1_time : Time.time = Time.now ()
-
-(*  val _ = printTy ty1  *)
-
+(*
+  val _ = print "After phase one ...\n";
+  val _ = printTy ty1  
+*)
 (*phase two*) 
 (*
   val _ = print "Phase two ...\n";
