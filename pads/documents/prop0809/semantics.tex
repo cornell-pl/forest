@@ -1,0 +1,152 @@
+
+\begin{quote}
+The languages people use to communicate with computers
+differ in their intended aptitudes, towards either a particular
+application area, or a particular phase of computer use
+(high level programming, program assembly, job scheduling,
+etc). They also differ in physical appearance, and more
+important, in logical structure. The question arises, do the
+idiosyncrasies reflect basic logical properties of the situations
+that are being catered for? Or are they accidents of history
+and personal background that may be obscuring fruitful
+developments? This question is clearly important if we are
+trying to predict or influence language evolution.
+
+To answer it we must think in terms, not of languages,
+but of families of languages. That is to say we must systematize
+their design so that a new language is a point chosen
+from a well-mapped space, rather than a laboriously devised
+construction.
+
+$\qquad$ --- P. J. Landin, {\em The Next 700 Programming Languages}, 
+1966~\cite{landin:700}.
+\end{quote}
+
+Landin asserts that principled programming language design involves
+thinking in terms of ``families of languages'' and choosing from a
+``well-mapped space.''  However, when it comes to the domain of
+processing ad hoc data, there has been too little work on mapping this
+crucial space and understanding the family of languages that
+inhabit it.  We have recently begun to tackle this problem
+as Landin suggested, by developing a semantic
+framework for defining, comparing, and contrasting languages
+in our domain~\cite{fisher+:700}.  This semantic framework revolves around the
+definition of a Data Description Calculus (DDC),
+based on the guiding principles of dependent type theory.  
+We show how to give a denotational semantics
+to DDC by interpreting DDC
+types as parsing functions that map external representations (bits/formatted
+data)
+to data structures in a typed lambda calculus.  More precisely,
+these parsers produce both 
+internal representations of the external data and
+parse descriptors that pinpoint errors in the original source.
+We also simultaneously interpret DDC types as the types for
+representations of the internal data and as the types for parse descriptors.
+We have already reaped a number of important, practical benefits from this calculus:
+\begin{itemize}
+\item We have shown how to map the features from several different data 
+description languages including \pads, \packettypes{}~\cite{sigcomm00} and
+\datascript{}~\cite{gpce02} into the calculus.  This allows us to give
+precise comparisons between these languages without worrying about
+superficial syntactic details.  It also helps reveal how the useful features
+from one language may be assimilated by another.
+\item We have used the calculus to help us devise design
+principles for this class of languages.  In particular, we
+have developed the principle of ``error correlation,'' that formalizes
+the correspondence between parsed data and parse descriptors that mark
+data errors.  We have proven DDC-produced parsers satisfy this principle
+and a number of other important criteria.
+\item Analysis of the \pads{} implementation with semantics in hand
+has uncovered several bugs and ill-advised design decisions
+that have been subsequently fixed.
+\item Study of the formal type theory has lead to new features we have 
+subsequently implemented including recursion, which requires a subtle 
+``contractiveness'' constraint for correctness.  It has also lead us
+to reconsider our design of several other features.
+\end{itemize}
+
+However, despite these advances, there is a great deal of work to do.
+
+\begin{enumerate}
+\item {\bf Formalization of output}.  The current DDC only formalizes the
+input or parsing semantics of languages like \pads.  There is
+a great need to study and formalize the inverse printing/archiving 
+transformation from internal data to external format.  In fact, 
+we have recently
+uncovered practical problems with output processors that have pushed us in 
+this direction. For example, \pads{} descriptions may use regular expressions
+to match portions of data and, rather than include that data in the
+internal representation, the data is thrown away (\figref{figure:clf}
+includes an example of this feature).  On output, since the matched
+data has been thrown away, what do we put in its place?  The 
+current implementation is broken in this respect and must be fixed.
+Similar problems occur when parsing erroneous data and in a couple of other
+places.  To understand the full range of problems and propose
+a principled solution, we require a sound, rigorous semantic study
+of the output processors.
+
+\item {\bf Coherence of input and output}  Once we have defined a semantics
+for output, we can use that to find discrepancies between implementation
+and idealization.  We can also once again
+use it to compare and contrast different programming languages
+in the family of ad hoc language processors.  Still, 
+how will we judge that the semantics is indeed ``good''?
+What general criteria and principles will we use in the design?  The
+principles should be sufficiently general that as the family of languages
+grows, the basic principles endure and provide guidance through that 
+growth.  We require much research in this area, but one principal
+we have identified at an intuitive level is that input and output
+should be ``coherent'' in some sense.  One might suggest that 
+if we parse then print data $D$, the result will be exactly $D$.
+However, this principle precludes having the parser fix obvious errors
+in the data, or standardize representations of dates, times or other
+ad hoc values, for instance.  Hence, we are currently considering
+defining coherence between input and output
+by requiring that parsers and printers form
+a {\em Galois connection}.  This definition would allow parsers and printers to
+``improve'' data as they work.  
+% The properties of Galois connections
+% also tell us that parsing followed by printing followed by parsing is
+% equal to parsing.  Hence, while parsers and printers may improve data,
+% they reach a stable (or fixed) point after one iteration.
+
+% \item {\bf Set-theoretic semantics} The semantics of classic parsing
+% formalisms is normally given in terms of sets of strings.  For example,
+% regular expressions, general context free grammars, 
+% LL(k) and LR(k) grammars are all usually discussed in terms of
+% the set of strings they recognize.  The semantics we have developed so far
+% for out dependent type theory is different -- it is given in terms of 
+% parsing functions from external data
+% into internal data.  One reason we chose to develop our semantics differently
+% is that, the dependency in our type theory, which is not present
+% in these other formalisms appears to necessitate some degree of translation.
+% However, we propose to explore techniques for providing a set-theoretic
+% semantics to our language in addition.  Once again, the goal is to better 
+% understand the relationship between our language and these traditional
+% compiler techniques and view all such languages as a coherent family,
+% in Landin's sense.  In doing so we hope to improve
+% the effectiveness of data description languages for specific tasks
+% such as ad hoc scientific data or, alternatively, program language parsing.
+
+\item {\bf Semantics for monitoring tools}  
+From any format specification, the
+\pads{} compiler will generate a collection of monitoring tools,
+including distributed data aggregation, data querying and data
+presentation tools.  The fact that \pads{} will be able to 
+generate all these different value tools
+from high-level data specifications is the major strengths of our 
+approach.  A challenging task is to provide a {\em useful} semantics for 
+these higher-level tools.  Doing so will require us to devise
+a semantic framework in which types are interpreted as functions or
+relations between monitoring data and abstract models of that data.  
+For instance, to give semantics to our queries, we must relate
+ad hoc systems data to query results.  
+To give semantics to graphing functions, we will have to relate
+ad hoc data to graphs.  To give semantics to HTML table generators,
+we will have to relate ad hoc data to the HTML tables.  
+Ideally, we will be able to devise one 
+reusable semantic framework that may be instantiated differently to
+obtained semantics for these different tools.  Doing so
+will take substantial research.
+\end{enumerate}
