@@ -579,13 +579,15 @@ bool chkVersion(version\_t v, method\_t m) \{
 \subsection{Monitoring Framework}
 \input{monitor}
 
-\subsection{Towards a Universal Data Description System}
-\label{ssec:features}
-\input{newfeatures}
+\input{pads-inference}
 
-\subsection{Formalization and Semantic Analysis}
-\label{ssec:semantics}
-\input{semantics}
+%\subsection{Towards a Universal Data Description System}
+%\label{ssec:features}
+%\input{newfeatures}
+
+%\subsection{Formalization and Semantic Analysis}
+%\label{ssec:semantics}
+%\input{semantics}
 
 \subsection{Broader Impacts}
 \label{ssec:impact}
@@ -864,6 +866,39 @@ packrat parsing techniques as the space overhead is too high for large
 data sets.  Moreover, our multiple interpretations of types
 in the DDC makes our theory substantially different from the theory of
 PEGs.
+
+\subsection{Deliverables and Time Table}
+
+\begin{itemize}
+\item Year 1:  Implementation of data-dependent grammars for \pads{}
+  \begin{itemize}
+    \item the current \pads{} prototype does not support the needs of
+            our prototype divide-and-conquer inference algorithm.
+            We will design and implement new algorithms for data-dependent
+            grammars that will provide the compositionality 
+            properties necessary to support our inference algorithm
+            and improve the performance
+            of the \pads{} parsing 
+            engine.
+  \end{itemize}
+\item Year 1:  Format inference, part 1
+  \begin{itemize}
+    \item our initial format inference engine could only learn small files.
+       we will extend our prototype inference engine so that it can
+       the format of large files on the order of one million lines long.
+  \end{itemize}
+\item Year 2:  Design and implementation of multi-source description language
+  \begin{itemize}
+    \item extend \pads{} specification language with the capacity to describe
+          format inference engine for system and application log files 
+       scalable to files on the order of one million lines long
+  \end{itemize}  
+\item Year 3:  Format inference, part 2
+  \begin{itemize}
+    \item extend format inference engine to enable learning of the structure
+       of multi-source archives
+  \end{itemize}
+\end{itemize}
 
 \subsection{Results from Prior NSF Support}
 \label{ssec:results}
