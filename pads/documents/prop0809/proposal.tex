@@ -37,13 +37,13 @@ CSR-SMA: Language support for data-centric systems monitoring
 \input{summary}
 \newpage
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \section{Table of Contents}
-% \tableofcontents\
+\section{Table of Contents}
+\tableofcontents\
 % \vspace*{.1in} 
 % \begin{center}
 % {\Large\bf\em{}This is a place-holder. Fastlane generates this page automatically.}
 % \end{center} 
-% \newpage
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \pagenumbering{arabic}
 \setcounter{page}{1}
@@ -579,6 +579,8 @@ bool chkVersion(version\_t v, method\_t m) \{
 \subsection{Monitoring Framework}
 \input{monitor}
 
+\input{repo-spec}
+
 \input{pads-inference}
 
 %\subsection{Towards a Universal Data Description System}
@@ -870,33 +872,31 @@ PEGs.
 \subsection{Deliverables and Time Table}
 
 \begin{itemize}
-\item Year 1:  Implementation of data-dependent grammars for \pads{}
+\item Year 1:  Re-design of \pads{} specification language and engine
   \begin{itemize}
-    \item the current \pads{} prototype does not support the needs of
-            our prototype divide-and-conquer inference algorithm.
-            We will design and implement new algorithms for data-dependent
-            grammars that will provide the compositionality 
-            properties necessary to support our inference algorithm
-            and improve the performance
-            of the \pads{} parsing 
-            engine.
+    \item Design and implement new algorithms for
+            the \pads{} engine that will provide the necessary compositionality 
+            properties as well as the performance to scale to massive file sizes.
   \end{itemize}
 \item Year 1:  Format inference, part 1
   \begin{itemize}
-    \item our initial format inference engine could only learn small files.
-       we will extend our prototype inference engine so that it can
-       the format of large files on the order of one million lines long.
+    \item Design, implement new algorithms for the five main phases of the format inference 
+      engine: Chunking, tokenization, structure discovery, scoring and format rewriting.
   \end{itemize}
-\item Year 2:  Design and implementation of multi-source description language
+\item Year 1:  Format inference, part 2
+  \begin{itemize}
+    \item design and implement new incremental inference algorithms that can
+      scale to handle log files at least one million lines long.
+  \end{itemize}
+\item Year 2:  Design of multi-source description language
   \begin{itemize}
     \item extend \pads{} specification language with the capacity to describe
-          format inference engine for system and application log files 
-       scalable to files on the order of one million lines long
+          collections of system and application log files 
   \end{itemize}  
-\item Year 3:  Format inference, part 2
+\item Year 3:  Format inference, part 3
   \begin{itemize}
     \item extend format inference engine to enable learning of the structure
-       of multi-source archives
+       of multi-level, multi-source archives
   \end{itemize}
 \end{itemize}
 
