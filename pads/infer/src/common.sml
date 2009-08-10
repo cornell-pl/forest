@@ -291,7 +291,6 @@ structure Common = struct
 	end
       end
     (*function that test if ty1 can be described by ty2 *)
-    (*TODO: not considering Parray and RArray for now *)
     and describedBy(ty1, ty2) =
 	let
 	  val emptyBase = genEmptyBase (getAuxInfo ty1) 1
@@ -316,6 +315,16 @@ structure Common = struct
 			Atom.same(id1, id2) andalso 
 			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
 		*)
+		| (Parray (a1, x1), Parray (a2, x2)) => 
+			describedBy ((#first x1), (#first x2)) andalso
+			describedBy ((#body x1), (#body x2)) andalso
+			describedBy ((#last x1), (#last x2))
+		| (RArray (a1, sep1, term1, body1, len1, _), 
+		   RArray (a2, sep2, term2, body2, len2, _)) => 
+			refine_equal_op1(sep1, sep2) andalso
+			refine_equal_op1(term1, term2) andalso
+			refine_equal_op1(len1, len2) andalso
+			describedBy (body1, body2)	
 		| _ => false
 (*
 	    val _ = (print "Checking\n"; printTy(ty1); print "with ...\n"; printTy(ty2); 
@@ -369,7 +378,6 @@ structure Common = struct
     (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
     (*this function is used in refine_array rewriting rule, the recNo in ty1 
 	is updated so that they are consistent with ty2 *)
-    (*TODO: not considering Parray and RArray for now *)
     and mergeTyInto (ty1, ty2) =
 		case (ty1, ty2) of 
 		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, 0, a2, 0), tl2@tl1) 
@@ -398,6 +406,24 @@ structure Common = struct
 			Atom.same(id1, id2) andalso 
 			(foldr myand true (map (fn x => rtyexists (x,rtylist2)) rtylist1))
 		*)
+		| (Parray(a1, x1), Parray(a2, x2)) =>
+		  let val newaux = mergeAux(a1, 0, a2, 0)
+		      val tokens = (#tokens x1) @ (#tokens x2)
+		      val lengths = (#lengths x1) @ (#lengths x2)
+		      val f = mergeTyInto ((#first x1), (#first x2))
+		      val b = mergeTyInto ((#body x1), (#body x2))
+		      val l = mergeTyInto ((#last x1), (#last x2))
+		  in Parray (newaux, {tokens=tokens, lengths = lengths, first=f, body=b, last=l})
+		  end
+		| (RArray(a1, sep1, term1, body1, len1, l1),
+		   RArray(a2, sep2, term2, body2, len2, l2)) =>
+		  (* sep and term must be equal *)
+		   let val a = mergeAux(a1, 0, a2, 0)
+		       val body = mergeTyInto(body1, body2)
+		       val l = l1 @ l2
+		   in
+		     RArray (a, sep1, term1, body, len1, l)
+		   end
 		| _ => (print "mergeTyInto error!\n"; printTy ty1; printTy ty2; raise TyMismatch)
 
 (*this function insert all the rec no of a ty into a map*)

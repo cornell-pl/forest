@@ -113,6 +113,7 @@ open Ast
 		if x = 0 then "\tPempty" else
 		"\tPcompute " ^ tyNameToPADSCString t ^ " " ^ v ^ " = " ^ (largeIntToStr x)
     | ArrayField (v, tyName, sep, term, len) => arrayFieldToPADSC (SOME v, tyName, sep, term, len)
+    | OptionField (v, tyName) => "\tPopt " ^ tyNameToPADSCString tyName ^ " " ^ v
     | FullField (v, t, sw, c) => 
 	let val tyname = tyNameToPADSCString t in
 	"\t" ^ tyname ^ " " ^  

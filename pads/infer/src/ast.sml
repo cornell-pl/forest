@@ -84,6 +84,7 @@ open Common
 	| FullField of VarName * TypeName * VarName option (*param for switch*) * IRConstraint option 
 	| ArrayField of VarName * TypeName * 
 		Refined option (*sep*) * Refined option (*term*) * Refined option (*len*)
+	| OptionField of VarName * TypeName
 
   datatype TypeDef = 
 	  TyBase of TypeName * IRConstraint option
@@ -106,6 +107,7 @@ open Common
 
   fun isInlineArray ty = case ty of
 	  RArray (_, _, _, _, SOME (LabelRef x), _)  => true
+	| Poption _ => true
 	| _ => false
 
   fun isArrayBodyTy ty = case ty of 
@@ -175,6 +177,7 @@ open Common
   fun getArrayBody ty  =
 	case ty of
 	RArray (_, _, _, ty, _, _) => ty
+	| Poption (_, ty) => ty
 	| _ => raise TyMismatch
 
   fun getArrayBodyTyName ty : TypeName = 
@@ -255,7 +258,21 @@ open Common
 		in ArrayField (var, bodyName, sep, term, len)
 		end
 	  else ArrayField (var, (getArrayBodyTyName body), sep, term, len)
-
+	| Poption(a, body) =>
+	  if not (isArrayBodyTy body) then
+		let
+		    val bodyName = (case body of 
+				   RefinedBase (_, Enum _, _) => getTypeName body
+				   | RefinedBase _ => getBaseTyName body
+				   | _ => 
+					(
+     					  case TyMap.find (!tyMapRef, body) of
+     					    SOME n => n
+					  | NONE => getTypeName body)
+				   )
+		in OptionField (var, bodyName)
+		end
+	   else OptionField (var, (getArrayBodyTyName body))
 	| _ => FullField (var, tyName , NONE, NONE) 
      end
 
@@ -276,6 +293,36 @@ open Common
 	| RefinedBase (_, FloatConst x, _) => FullField (var, tyName, NONE, 
 						SOME(var, NONE, NONE, SOME (FloatConst x)))
 	| Base (_, ((Pempty, _)::_)) => CompField (IRintrange (0, 0), (getVar ty, NONE, NONE, SOME (IntConst 0)))
+	| RArray (a, sep, term, body, (len as SOME (LabelRef id)), lens) =>
+	  if not (isArrayBodyTy body) then 
+		let
+		    val bodyName = (case body of 
+				   RefinedBase (_, Enum _, _) => getTypeName body
+				   | RefinedBase _ => getBaseTyName body
+				   | _ => 
+					(
+     					  case TyMap.find (!tyMapRef, body) of
+     					    SOME n => n
+					  | NONE => getTypeName body)
+				   )
+		in ArrayField (var, bodyName, sep, term, len)
+		end
+	  else ArrayField (var, (getArrayBodyTyName body), sep, term, len)
+	| Poption(a, body) =>
+	  if not (isArrayBodyTy body) then
+		let
+		    val bodyName = (case body of 
+				   RefinedBase (_, Enum _, _) => getTypeName body
+				   | RefinedBase _ => getBaseTyName body
+				   | _ => 
+					(
+     					  case TyMap.find (!tyMapRef, body) of
+     					    SOME n => n
+					  | NONE => getTypeName body)
+				   )
+		in OptionField (var, bodyName)
+		end
+	   else OptionField (var, (getArrayBodyTyName body))
 	| _ => FullField (var, tyName, NONE, NONE) 
     end	
 
@@ -465,17 +512,21 @@ open Common
 	  let
 	    val nonInlineTys = List.filter (fn t => (not (isInlineArray t)) andalso notInlineTy t) tys
 	    val arrayTys = List.filter isInlineArray tys
-	    val nonArrayBodyTys = List.filter (fn x => not (isArrayBodyTy x)) 
+	    val nonInlineBodyTys = List.filter (fn x => not (isArrayBodyTy x)) 
 				(map getArrayBody arrayTys)
 	    val liftedIRs = List.concat (map (tyToIR (levels2Rec - 1) tys) 
-				(nonInlineTys @ nonArrayBodyTys))
+				(nonInlineTys @ nonInlineBodyTys))
 	    val fields = map (tyToStructField tys) tys
 	  in liftedIRs @[(levels2Rec, tyname, TyStruct fields)]	
 	  end
       | Punion (aux, tys) =>
 	  let
 	    val nonInlineTys = List.filter notInlineTy tys
-	    val liftedIRs = List.concat (map (tyToIR (levels2Rec - 1) tys) nonInlineTys)
+	    val arrayTys = List.filter isInlineArray tys
+	    val nonInlineBodyTys = List.filter (fn x => not (isArrayBodyTy x)) 
+				(map getArrayBody arrayTys)
+	    val liftedIRs = List.concat (map (tyToIR (levels2Rec - 1) tys) 
+				(nonInlineTys @ nonInlineBodyTys))
 	    val fields = map (tyToUnionField "") tys
 	  in liftedIRs @[(levels2Rec, tyname, TyUnion fields)]	
 	  end
@@ -490,7 +541,11 @@ open Common
 	    | SOME switchedTy =>
 		let
 	    	  val nonInlineTys = List.filter notInlineTy tys
-	    	  val liftedIRs = List.concat (map (tyToIR (levels2Rec-1) tys) nonInlineTys)
+	          val arrayTys = List.filter isInlineArray tys
+	          val nonInlineBodyTys = List.filter (fn x => not (isArrayBodyTy x)) 
+				(map getArrayBody arrayTys)
+	    	  val liftedIRs = List.concat (map (tyToIR (levels2Rec-1) tys) 
+				(nonInlineTys @ nonInlineBodyTys))
 		  val switchTyName = getTypeName switchedTy
 		  val switchVar = getVar switchedTy
 		  val indexes = List.tabulate (length retys, (fn x => x))

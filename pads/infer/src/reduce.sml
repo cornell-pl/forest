@@ -29,7 +29,13 @@ fun enumerableBase token =
 	| Pstring _ => true
 	| Other _ => true
 	| _ => false
-	
+
+fun sortByLoc tl = 
+    let fun gt ((t1, l1), (t2, l2)) = (compLocation (l1, l2) = GREATER)
+    in
+    ListMergeSort.sort gt tl
+    end
+
 (* calculates the complexity of a datatype so that we can try to minimize it*)
 (*********
 fun cost const_map ty =
@@ -221,8 +227,16 @@ case ty of
   	case ty' of
   	  Pstruct(_, tylist') => tylist'
   	| _ => [ty']
-  	val underlings = map conv_to_list tylist (*list of tylists *)
-	val auxlist = map getAuxInfo tylist (* list of aux info *)
+	fun bubble head tail = 
+	  case tail of
+	    nil => head
+	  | x::nil => head@[x]
+	  | x::y::tail => if getCoverage x > getCoverage y then
+			    bubble (head@[y]) (x::tail)
+			  else bubble (head@[x]) (y::tail)
+	val rearranged_tylist = List.rev (bubble nil (List.rev tylist))
+  	val underlings = map conv_to_list rearranged_tylist (*list of tylists *)
+	val auxlist = map getAuxInfo rearranged_tylist (* list of aux info *)
   	fun commonPrefix tylists = 
   	let
   		val elems = map hd tylists
@@ -231,10 +245,10 @@ case ty of
 		case elems of
 		  h :: t => 
 		  let 
-		  	val not_equal = (List.exists (fn x => not(ty_equal(1, x, h) )) t) 
+		  	val not_foldable = (List.exists (fn x => not(describedBy(x, h))) t) 
 		  in 
-		  	if not_equal then nil else (foldr mergeTy h t) :: commonPrefix tails 
-  	          end
+		  	if not_foldable then nil else (foldl mergeTyInto h t)::(commonPrefix tails)
+		  end
 		| nil => nil
   	end handle Empty => nil
   	val cpfx = commonPrefix underlings
@@ -365,14 +379,18 @@ and adjacent_consts _ ty =
 			| ((Pempty, loc1), (Pempty, loc2)) => 
 				(Pempty, combLoc(loc1, loc2))
 			| ((tk1, loc1), (tk2, loc2)) =>
+				(if not (adjacent t1 t2) then 
+				  print ((ltokenToString t1) ^ (ltokenToString t2) ^ "\n")
+				else ();
 				(Ptext(tokenToRawString(tk1) ^ tokenToRawString(tk2)), 
-				combLoc(loc1, loc2))
+				combLoc(loc1, loc2)))
 	 (*the two token lists are supposed to be of equal length*)
 	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
 			case tl2 of 
 			nil => tl1
-			| _ => ListPair.mapEq mergetok (tl1, tl2)
-			handle UnequalLengths => (ListPair.map mergetok (tl1, tl2))
+			| _ => ListPair.mapEq mergetok (sortByLoc tl1, sortByLoc tl2)
+			handle UnequalLengths => (print "Warning: token lists not equal lengths!\n";
+						  ListPair.map mergetok (tl1, tl2))
 
   	 fun for_const while_const t x tl = 
   	 let
@@ -713,7 +731,12 @@ and refine_array sib ty =
 				end
 			| _ => ty
 		     val newty = measure 0 newty
-		     (* val _ = (print "Done refining array to:\n"; printTy newty) *)
+		     (* below is the case where folding is not possible *)
+		     val newty = if score newty < score ty then newty
+				 else 
+				  measure 0 (Pstruct(mkTyAux(#coverage aux), 
+			    	  [first, RArray(aux, NONE, NONE, body, NONE, lengths), last]))
+		     (* val _ = (print "Done refining array to:\n"; printTy newty)  *)
 		  in
 		 	newty
 		  end
@@ -1637,16 +1660,28 @@ fun mergeAdjPtexts (t1, l1)  (t2, l2) sep =
 	| t::ts => mergeAdjPtexts t (mergeAllTokens ts)
 	(* append tl1's element to tl2's elements *)
 *)
+
+(* assume tl1 and tl2 are both sorted by locations and tl1 appends to tl2 *)
 fun merge_tls (tl1, tl2) =
 (*
 	let 
 	  val _ = print ("TL1 : " ^ (LTokensToString tl1) ^ "\n")
 	  val _ = print ("TL2 : " ^ (LTokensToString tl2) ^ "\n")
 	in
+  if tl1 = nil then tl2
+  else if tl2 = nil then tl1
+  else
 *)
-	  if tl1 = nil then tl2
-	  else if tl2 = nil then tl1
-	  else
+  case (tl2, tl1) of
+    (nil, _) => tl1
+  | (_, nil) => tl2
+  | (h2::tail2, h1::tail1) =>
+	if adjacent h2 h1 then (mergeAdjPtexts h2 h1 "") :: merge_tls (tail1, tail2)
+	else if compLocation (#2 h1, #2 h2) = LESS then
+		h1 :: merge_tls (tail1, tl2)
+		else h2 :: merge_tls(tl1, tail2)
+	   
+(*****
 	   (* we take one element from tl1 and check against
 		every element in tl2 in order and find the
 		element in tl2 whose location immediately precedes
@@ -1667,9 +1702,8 @@ fun merge_tls (tl1, tl2) =
 	   then	foldl (prepend tl1) [] tl2
 	   else foldl (appendto tl2) [] tl1 
 	   end
-(*
-	end
-*)
+
+****)
 
 (* merge all the tokens belonging to a ty to one single token list *)
 (* invarants are that the token list are ordered by their line no and
@@ -1677,11 +1711,6 @@ fun merge_tls (tl1, tl2) =
    and the size of the list should be equal to coverage of this ty *)
 fun mergeTokens ty =
   let 
-      fun mysort tl = 
-	    let fun gt ((t1, l1), (t2, l2)) = (compLocation (l1, l2) = GREATER)
-	    in
-	    ListMergeSort.sort gt tl
-	    end
       fun tos (t, l) = (Ptext (tokenToOrigString t), l)
       fun collapse (tl : LToken list) sep =
 	let 
@@ -1710,7 +1739,7 @@ fun mergeTokens ty =
     let val final_tl = 
       case ty of
 	   Base (a, l) => 
-		if isEmpty ty then nil else map tos (mysort l)
+		if isEmpty ty then nil else map tos (sortByLoc l)
         |  TBD (a, _, l) => raise TyMismatch
         |  Bottom (a, _, l) => raise TyMismatch
         |  Pstruct (a, tys) => 
@@ -1722,17 +1751,17 @@ fun mergeTokens ty =
         |  Punion (a, tys)       => 
 		let val nonEmptyTys = List.filter (fn ty => not (isEmpty ty)) tys
 		    val tls = map mergeTokens nonEmptyTys
-		in mysort (List.concat tls) end
+		in sortByLoc (List.concat tls) end
         |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
 		raise TyMismatch
 		(*
 		merge_tls ((merge_tls ((mergeTokens f), (mergeTokens b))), (mergeTokens l))
 		*)
-        |  RefinedBase (aux, re, l) => map tos (mysort l)
+        |  RefinedBase (aux, re, l) => map tos (sortByLoc l)
         |  Switch (a, id, retys) => 
 		let val nonEmptyReTys = List.filter (fn (_, ty) => not (isEmpty ty)) retys
 		    val tls = map (fn (_, ty) => mergeTokens ty) nonEmptyReTys
-		in mysort (List.concat tls)
+		in sortByLoc (List.concat tls)
 		end
         |  RArray (a,sep,term,body,len,lengths) => 
 		let val tl = mergeTokens body
@@ -1748,6 +1777,13 @@ fun mergeTokens ty =
 		   collapse tl sepstr)
 		end 
         |  Poption (a, body)  => mergeTokens body
+(*
+	val _ = if getLabelString (getAuxInfo ty) = "BTy_324" orelse
+		getLabelString (getAuxInfo ty) = "BTy_642" then
+		print ("Token list from " ^ getLabelString(getAuxInfo ty) ^":\n" ^
+		Int.toString(length final_tl) ^ "\n" ^ LTokensToString final_tl ^ "\n")
+		else ()
+*)
 	(* val _ = print "Merging ty: \n"
 	val _ = printTy ty
         val _ = print ("Coverage : " ^ (Int.toString (getCoverage ty)) ^ " Lengths : " ^ 
@@ -1855,14 +1891,19 @@ and mkBlob sibling_opt ty =
 	    	if (containString ltokens str) then ty
 	    	else 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair, ltokens))
-		(*
-		      val _ = (* if length ltokens <> getCoverage ty then *)
-				(print "Old ty:\n";
+(*
+		      val _ = if getLabelString (getAuxInfo newty) = "BTy_269" then
+		      (* val _ = (* if length ltokens <> getCoverage ty then *) *)
+				(
+				 print ("Num of tokens = " ^ 
+					(Int.toString (length ltokens)) ^ "\n");
+				 print "Old ty:\n";
 				 printTy ty;
 				 print "New blob:\n";
 				 printTy newty
 				)
-		*)
+			      else ()
+*)
 		  in newty
 		  end
 	      end
@@ -1871,28 +1912,27 @@ and mkBlob sibling_opt ty =
 	  	val ltokens = mergeTokens ty 
 	      in
 		if str = "/$/" then 
-		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob (NONE, NONE), ltokens))
-		(*
-		      val _ = (* if length ltokens <> getCoverage ty then *)
+		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob (NONE, NONE), ltokens))			
+		  (*    val _ = (* if length ltokens <> getCoverage ty then *)
 				(print "Old ty:\n";
 				 printTy ty;
 				 print "New blob:\n";
 				 printTy newty
 				)
-		*)
+		  *)
 		  in newty
 		  end
 	        else if containPatt ltokens str then ty
 	        else 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair , ltokens))
-		(*
+		   (*
 		      val _ = (* if length ltokens <> getCoverage ty then *)
 				(print "Old ty:\n";
 				 printTy ty;
 				 print "New blob:\n";
 				 printTy newty
 				)
-		*)
+		   *)
 		      (*
 		      val _ = if length ltokens <> getCoverage ty then
 				raise TyMismatch

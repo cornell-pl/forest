@@ -111,7 +111,7 @@ structure Model = struct
                                  }
              | Enum rl        => { tc  = sumComps [ sumComps ( map (refinedTypeComp avg tot num) rl )
                                                   , constructorComp
-                                                  (* , cardComp ( rl ) *)
+                                                  (* , cardComp ( rl ) *) 
                                                   ]
                                  , adc = cardComp( rl )
                                  , dc  = multComp ( num )

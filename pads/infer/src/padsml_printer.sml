@@ -70,7 +70,8 @@ struct
 		  | NONE => "No_term"
 		in tyNameStr ^ " plist (" ^ sep_str ^ ", " ^ term_str ^ ")"
 		end
-
+    | OptionField (v, tyName) => v ^ " : " ^ (tyNameToPML tyName) ^ " popt"
+		
     | FullField (v, t, sw, c) => 
         let val tyname = tyNameToPML t in
 	(if isStruct then

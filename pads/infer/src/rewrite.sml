@@ -17,7 +17,7 @@ let
   val datacomp = #dc comps
   val rawcomp  = combine tycomp datacomp
 
-(*  val _ = (print "Before Reduction:\n"; printTy initTy) *) 
+  (* val _ = (print "Before Reduction:\n"; printTy initTy) *)
 
   (*before doing reduction, try to extract 
 	the possible header and footer first*)
@@ -80,8 +80,10 @@ let
 	| NONE => ty3
   val measured_reduced_ty = measure 1 finalTy
   val measured2_time : Time.time = Time.now ()
+
   val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty
+
 (*
   val _ = print "\n"
   val _ = print "----- The PADS description -----\n\n"

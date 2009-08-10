@@ -572,7 +572,7 @@ struct
                      val tot = sumTokenLength ts
                  in ( case ts of nil =>
                          "[NULL]"
-                       | _ => (ltokenTyToString (hd ts)) (*^ (LTokensToString ts)*) 
+                       | _ => (ltokenTyToString (hd ts)) (* ^ (LTokensToString ts) *)
                     ) ^ " " ^ stats (* ^
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -583,7 +583,7 @@ struct
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
-                 in ( refinedToString refined ) (* ^ (LTokensToString tl) *)
+                 in ( refinedToString refined ) (* ^ (LTokensToString tl) *) 
 		      ^ " " ^ stats (* ^ 
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
