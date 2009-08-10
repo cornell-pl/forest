@@ -111,6 +111,7 @@ email \\
 
 \input{future-naval}
 
+
 \section{Project Schedule and Milestones}
 
 \begin{itemize}
@@ -142,6 +143,10 @@ email \\
   \end{itemize}
 \end{itemize}
 
+\section{Assertion of Data Rights}
+
+There is no proprietary software or data associated with the project.
+
 \section{Deliverables}
 
 The main deliverables of this proposal are:
@@ -154,14 +159,59 @@ The main deliverables of this proposal are:
 
 \section{Management Approach}
 
+\subsection{Facilities available}
+
+The Princeton Department of Computer Science has hundreds of
+PC/workstations running a variety of operating systems including
+Linux, Microsoft Windows, Mac OS, and Solaris. (A total of 1800 IP
+addresses.) Every room in the CS building is wired with multiple
+Category 5/5e UTP ports, single-mode fiber, multimode fiber, and RG6
+coaxial cable. Networking is supported by a high-speed core switch
+with an aggregate switching bandwidth of 480 Gb/sec. Typically,
+servers are connected via gigabit Ethernet and user PC/workstations
+are connected via switched 100 Mb/sec Ethernet. The Princeton
+Department of Computer Science supports remote users via the Internet
+and ADSL. The entire building and some outlying areas are covered by
+the department's 802.11a/b/g wireless network. The department
+infrastructure and users are protected by firewalls, e-mail virus/spam
+scanners, and an IDS system. The public computing facilities provide
+access to Sun Solaris (Sparc) and Linux (x86) architectures. Public
+printers are available on each floor. The department has approximately
+800 users that share 35 terabytes of disk space on multiple
+fileservers.
+
+\subsection{Collaboration Framework}
+
+Vivek Pai will be primarily responsible for the networking components,
+data transfer and archiving components of the proposal.  He will
+supervise students and postdoctoral researchers working on these
+elements of the grant.  Walker and Fisher
+have a 4-year history of working closely together on the design
+and implementation of domain-specific languages, as well as on joint
+supervision of students.  They will meet weekly over the phone
+in order to coordinate the development of \pads{} language and system
+as well as the development of format inference and tool generation 
+technologies.  They will jointly supervise students and postdoctoral
+researchers working on language design and format inference components
+of the research.
+
 \section{Current and Pending Project and Proposal Submissions}
 
-{\bf CNS 0627650 NSF CT: Well-typed Trustworthy Computing in the 
-Presence of Transient Faults \$ 1,100,000 }
+David Walker's work is supported by (1) NSF award CNS-0627650 ($1,100K
+August 2006 - August 2010), (2) NSF award IIS 0612147 
+($493K July 2006 - July 2009 with a no-cost extension until July 2010)
+and (3) Nobot ...
+
+Vivek Pai's work is supported by
 
 \section{Qualifications}
 
-\paragraph*{Kathleen Fisher, Senior Personnel} 
+Our team is uniquely qualified to carry out this research as they
+bring the necessary combination of skills in language design,
+compilers, distributed systems, large-scale data processing, and
+practical system monitoring as well as both academic and industrial
+perspectives to the task.  
+
 Kathleen Fisher is a senior researcher at AT\&T Labs,
 where she has spent the past nine years on projects
 related to managing massive amounts of ad hoc network monitoring data.
@@ -175,111 +225,34 @@ and to better understand user characteristics.
 As the primary architect of the PADS project~\cite{fisher+:pads}, 
 Fisher has helped design and implement the prototype PADS
 data description language that will form a foundation for the work
-described in this proposal.  From PADS descriptions,
-a compiler currently produces a parser and a collection of tools for
-manipulating the associated data.  
+described in this proposal.  
+%From PADS descriptions,
+%a compiler currently produces a parser and a collection of tools for
+%manipulating the associated data.  
 
-Fisher is an active proponent of increasing the role of women and
-minorities in computing and has obtained NSF funding to support
-increased involvement of women in computer science (NSF 0243337, ACM
-Special Projects: Travel Grants for Faculty at Minority/Female
-Institutions to Attend FCRC'03, Co-PI).  This grant was committed to
-improving the representation of women and minorities in computer
-science. To that end, Fisher and her collaborators 
-solicited applications for travel grants from
-faculty members at undergraduate institutions with large minority
-and/or female enrollments to attend FCRC '03, an umbrella meeting with
-16 constituent conferences and many associated workshops and
-tutorials.  The organizers of the constituent meetings agreed to waive
-the registration fees for all program participants.  Descriptions of
-the many meetings that comprised FCRC '03 are available from the FCRC
-'03 web site \url{http://www.acm.org/sigs/conferences/fcrc/}.  Fisher
-received 56 applications, and was able to award 49 fellowships.
+Vivek Pai is an expert in the
+design and implementation of network applications, having developed
+numerous high-performance applications running over
+PlanetLab~\cite{planetlab} including CoDeeN~\cite{codeen}, a content
+distribution network in daily use that serves over 25 million
+requests per day, CoBlitz~\cite{coblitz}, a scalable large-file
+transfer platform that is currently used by CiteSeer and as
+a Fedora Core mirror, CoDNS~\cite{codns}, a highly reliable,
+high-performance DNS lookup system, and PlanetSeer~\cite{planetseer},
+a monitor for CoDeeN traffic that looks for network-level anomalies.
 
-\paragraph*{Vivek Pai, Co-PI} Vivek Pai was partially funded by 
-an NSF CAREER award, CCR-0093351, Automatic Retargeting of Network
-Servers. He is currently Co-PI on CNS-0520053, An Evolvable
-Architecture for Next-Generation Internet Services, and PI on
-CNS-0519829 Bridging the 10 GHz / 10 Gbit Gap: Whole-system approaches
-for scalable networked services.
+David Walker is an expert in language-based security and programming
+language design.  He was one of the primary designers and implementers
+of Typed Assembly Language~\cite{morrisett+:tal,morrisett+:journal-stal}, 
+a highly influential platform
+for secure mobile code, as well as Polymer~\cite{bauer+:polymer,ligatti+:renewal,ligatti+:edit-automata}, an
+extension to Java for application-level security monitoring.  He has
+collaborated with Fisher on the design and implementation of the
+\pads{} domain-specific language, which forms the foundation for
+the research in this proposal.
 
-His CAREER award led to the enhancement of the Flash Web Server to
-support SpecWeb99, an industry-standard benchmark not commonly used in
-the academic community due to its complexity. The main result of this
-work is an improved research server that is at or near the top of the
-results for this benchmark for the classes of hardware tested. In the
-process, his group developed new kernel performance debugging tools
-that identified numerous performance problems in the FreeBSD operating
-system. The modifications they developed to address these problems
-have been integrated into FreeBSD and have been shipping for over a
-year.  The work also lead to a better understanding of server
-performance in SMT (simultaneous multithreading) processors, and why
-these processors are not seeing the performance gains in practice that
-would have been expected from their simulations.
+Please find CVs outlining the personnel qualifications in detail attached.
 
-The two more recent awards have just started, but are already starting
-to bear fruit. One recent service developed from this, CoBlitz, is a
-scalable large-file transfer service that runs over HTTP. CoBlitz is
-now being used by the CiteSeer Scientific Literature Digital Library
-to globally deliver electronic copies of research publications. It is
-also being used by the Fedora Core Linux distribution in delivering
-CD-ISO and DVD-ISO images of their OS distribution.
-
-\paragraph*{David Walker, PI} (NSF CCR-0238328 CAREER: Programming Languages for Secure and Reliable Component Software
-Systems, PI)
-The goal of Walker's career award is to develop new programming language
-technology that will improve the security and reliability of 
-component software systems.  More specifically, Walker and his students have 
-a new theory of security monitors as formal
-automata that transform untrusted applications as they 
-execute~\cite{ligatti+:edit-automata}.
-This theory allows security
-architects to model a variety of different sorts of run-time
-enforcement mechanisms, to prove that certain mechanisms can or cannot
-enforce various security properties, and to compare the power of
-different classes of security monitors~\cite{ligatti+:renewal}.
-The theory forms the foundation of an expressive and powerful
-program monitoring system for Java~\cite{bauer+:polymer}.
-
-Walker's security monitoring language is a form of 
-aspect-oriented programming language.
-In order to better understand aspect-oriented technologies and their
-potential impact on security, Walker formalized and proved
-safe the {\em first} typed, functional and 
-aspect-oriented programming language~\cite{walker+:aspects}.
-The language has been implemented and
-extended with facilities for polymorphic
-and type-directed programming~\cite{dantas+:polyaml}.  
-Recently, Walker has studied program analysis techniques
-that can precisely determine the effect security monitors have on
-the code they monitor~\cite{dantas+:harmless-advice,dantas+:harmless-popl}.   
-The analysis
-can guarantee that a security monitor does not interfere with the 
-original application, which greatly increases a user's incentive
-to apply security patches.
-
-% To complement his work on run-time monitoring programs, Walker has also
-% developed several type systems to ensure basic type and memory safety conditions
-% for low-level programs.  Basic type- and memory-safety guarantees provide a foundation on which
-% richer security mechanisms can be implemented.  More specifically, he
-% has extended his earlier work on typed assembly language (TAL)~\cite{morrisett+:tal,morrisett+:journal-stal} with
-% logic-based type systems that can detect memory errors involving
-% stack-allocated data~\cite{ahmed+:stack,jia+:stack} and heap or region-allocated
-% data~\cite{ahmed+:hierarchical-storage}.  In addition to studying memory safety
-% properties, Walker has shown how to use related type-theoretic and logical techniques
-% to verify programs~\cite{jia+:ilc} and enforce general software
-% protocols~\cite{mandelbaum+:refinements}.  
-
-Walker's career grant also allowed him to be a leader in
-programming languages and security education. In 2004 and 2005 he
-organized a 10-day summer school on software security and reliable
-computing, attended by over 100 participants
-combined~\cite{summerschool04,summerschool05}.  Also
-in 2005, his undergraduate research advisee, Rob Simmons, won the
-Princeton Computer Science Department Senior Thesis Award.
-He has recently written a
-chapter of a new textbook on typed programming 
-languages~\cite{walker:attapl}.
 
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
