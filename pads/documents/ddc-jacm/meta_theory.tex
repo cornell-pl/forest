@@ -136,7 +136,7 @@ $\corr \tyval r p$ holds if and only if exactly one of the following is true:
   \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1} {p_2}}$ 
     and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
-    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r,p)/x]} {r_2} {p_2}$.
+    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r_1,p_1)/x]} {r_2} {p_2}$.
   \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
     and $p = \ipair h {\iinld {\ity}{p'}}$
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
