@@ -442,7 +442,7 @@ and adjacent_punc_consts _ ty =
 	 fun mergetoklist (tl1: LToken list, tl2: LToken list): LToken list =
 			case tl2 of 
 			nil => tl1
-			| _ => ListPair.mapEq mergetok (tl1, tl2)
+			| _ => ListPair.mapEq mergetok (sortByLoc tl1, sortByLoc tl2)
 			handle UnequalLengths => (ListPair.map mergetok (tl1, tl2))
 
   	 fun for_const while_const t x tl = 
