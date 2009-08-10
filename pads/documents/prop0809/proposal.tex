@@ -1,4 +1,4 @@
-\documentclass[10pt]{article}
+\documentclass[12pt]{article}
 \usepackage{times,url}
 \usepackage{code} 
 %\usepackage{proof}
@@ -26,16 +26,57 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
+
+%\begin{center}
+{\bf BAA Number:} BAA 09-029
+
+\vspace{.5in}
+
+{\bf Title of Proposal:}  
+Automatic Tool Generation and Monitoring for Networked Applications
+
+\vspace{.5in}
+
+{\bf Identity of prime offerer:}
+\begin{quote}
+Princeton University \\
+Computer Science Department \\
+35 Olden St, \\
+Princeton, NJ 08540
+\end{quote}
+
+\vspace{.5in}
+
+{\bf Technical Contact:}  
+\begin{quote}
+name \\
+tel \\
+fax \\
+email \\
+\end{quote}
+
+\vspace{.5in}
+
+{\bf Administrative contact:}
+\begin{quote}
+name \\
+tel \\
+fax \\
+email \\
+\end{quote}
+
+\vspace{.5in}
+
+{\bf Duration of effort:} 35 months
+%\end{center}
+
+\newpage
+
 \setcounter{page}{1}
 \pagenumbering{roman}
 \appendix
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{NSF 05-629 Project Summary:  \\
-CSR-SMA: Language support for data-centric systems monitoring
-}
-%%%%%%%
-\input{summary}
-\newpage
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Table of Contents}
 \tableofcontents\
@@ -49,532 +90,17 @@ CSR-SMA: Language support for data-centric systems monitoring
 \setcounter{page}{1}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Project Description}
+\section{Statement of Work}
 
+\input{summary}
 
-\subsection{Introduction}
-\label{ssec:intro}
+\section{Technical Approach and Justification}
 
-Complex systems must be {\em monitored} to proactively find problems,
-record/archive system health, oversee system operation, detect
-malicious processes or security violations, and perform a myriad of other tasks.
-The {\em monitoring subsystems} 
-that perform these tasks take a wide range of forms, 
-from embedded sensors that monitor physical processes to
-intrusion detection systems that monitor flows to a single
-organization  
-to large-scale systems
-that monitor the health and performance of hundreds to thousands of nodes
-on the Grid.
+\input{intro}
 
-At the heart of such monitoring systems is a complex, multifaceted
-data processing problem that involves, at a minimum, the following components.
-\begin{enumerate}
-\item collection and aggregation of information 
-distributed across the monitored system.
-\item data archiving for later querying, measurement, security auditing and 
-post-mortem defect detection
-\item querying and information extraction from archived or current, online data
-\item presentation and graphical display to administrators and users.
-\end{enumerate}
+\input{monitor-intro}
 
-A substantial part of the difficulty of building secure, reliable, efficient,
-and evolving monitoring systems is the diversity, quality, and volume of data
-these systems must often handle.  Often, new monitoring
-systems face the problem of having to interact with legacy devices,
-legacy software and legacy data, leaving implementers in a situation
-where they cannot use robust off-the-shelf data management tools built for
-standard formats like XML.  As a result, implementers simply
-hack ``one-off'' monitoring tools of their own, which are invariably
-less reliable, unoptimized, insecure, and difficult or impossible to evolve
-when new requirements become known.
-
-We call the nonstandard data formats that monitoring systems must
-collect, aggregate, parse, print, archive, query, and present to 
-users {\em ad hoc data formats}.   These formats, by definition,
-have no standard data processing tools associated with them.
-\figref{figure:data-sources} presents a selection of such formats
-used in a variety of different monitoring systems.
-They include ASCII, binary, and Cobol data formats, with
-both fixed and variable-width records, ranging in size from
-relatively small files through network applications which process over
-a gigabyte per second.  Common errors in the data include undocumented data,
-corrupted data, missing data, and multiple missing-value
-representations.
-
-\begin{figure*}
-\begin{center}
-\begin{tabular}{|l|l|l|l|l|}
-\hline
-Name \& Use   &  Representation              &Size           & Common Errors \\ \hline\hline
-Web server logs (CLF): &  Fixed-column  & $\leq$12GB/week & Race conditions \\ 
-Measuring web workloads         &  ASCII records &                 & on log entry \\
-                                &                &                 & Unexpected values\\ \hline
-CoMon data:              &  Geographically & 600 MB/day & Race conditions on\\ 
-Monitor \& troubleshoot  &  distributed    & collected from           & log entry \\
-PlanetLab infrastructure &  ASCII records  & \appr{}400-450 machines           & \\\hline
-AT\&T provisioning data (\dibbler{}): & Variable-width  & 2.2GB/week & Unexpected values \\ 
-Monitoring service activation & ASCII records  &            & Corrupted data feeds \\ \hline
-Phone call detail:   &  Fixed-width   &\appr{}7GB/day &  Undocumented data\\ 
-Fraud detection & binary records & & \\  \hline 
-AT\&T billing data (\ningaui{}): & Various Cobol  & \appr{}4000 files/day, & Unexpected values\\ 
-Monitoring billing process   & data formats            & 250-300GB/day    & Corrupted data feeds \\ \hline
-IP backbone data (\darkstar{})  & ASCII  & $\ge$ 15 sources  & Multiple missing-value \\
-Monitoring network performance  &        & \appr{}15 GB/day              & representations  \\ 
-                                &        &                               & Undocumented data \\\hline
-Netflow       & Data-dependent \# of     & $\ge$1Gigabit/second  & Missed packets\\ 
-Monitoring network performance              &  fixed-width    &                       & \\ 
-               & binary records & & \\ \hline
-\end{tabular}
-\caption{Selected ad hoc data sources for system monitoring. }
-\label{figure:data-sources}
-\end{center}
-\end{figure*}
-
-Processing this sort of 
-ad hoc data is challenging for a variety of other reasons. 
-First, when the data comes from legacy software, sources or devices, it 
-typically just arrives ``as is'': the analysts
-who receive it can only say ``thank you,'' not request a more
-convenient format.  Second, documentation for the format may not exist
-at all, or it may be out of date.  A common phenomenon is for a field
-in a data source to fall into disuse.  After a while, a new piece of
-information becomes interesting, but compatibility issues prevent data
-suppliers from modifying the shape of their data, so instead they
-hijack the unused field, often failing to update the documentation in
-the process.
-
-Third, such data frequently contain errors, for a variety of reasons:
-malfunctioning equipment, race conditions on log entry~\cite{wpp},
-non-standard values to indicate ``no data available,'' human error in
-entering data, unexpected data values, \etc{} The appropriate response
-to such errors depends on the application.  Some applications require
-the data to be error free: if an error is detected, processing needs
-to stop immediately and a human must be alerted.  Other applications
-can repair the data, while still others can simply discard erroneous
-or unexpected values.  For some applications, errors in the data can
-be the most interesting part because they can signal where two systems
-are failing to communicate.  Monitoring systems may need to respond to such
-errors immediately and effectively.
-
-Fourth, online monitoring systems
-are highly susceptible to attack from malicious outsiders.
-For example, intrusion detection systems
-and performance evaluation systems that monitor network activity 
-may be sent malicious packets or other data that cause buffer overflows
-and allow attackers to take control of, evade, dismantle or corrupt these
-systems.  A cautionary example of the dangers of online ad hoc data
-processors is the Ethereal system~\cite{ethereal}. Ethereal is used by network administrators for monitoring, analyzing
-and troubleshooting networks. Unfortunately, like most network software, users have found a number of
-vulnerabilities in the software, and moreover many of these vulnerabilities are directly related to the mundane
-components of the system that parse ad hoc data as opposed to the parts of the system that perform
-higher-level tasks. For instance, in March 2004, Stefan Esser posted an advisory on 13 different buffer over-
-flow attacks on Ethereal~\cite{etherealvulnerabilities}. Of the 13, 9 attacks occurred during parsing. These problems are not merely theoretical -- it was
-a buffer overflow in a security monitoring system that was exploited by the
-Witty Worm~\cite{witty}.
-
-Fifth, ad hoc data sources can be high volume:
-AT\&T's call-detail stream contains roughly 300~million calls per day
-requiring approximately 7GBs of storage space. Although this data is
-eventually archived in a database, analysts mine it profitably before
-such archiving~\cite{kdd98,kdd99}. More challenging, the \ningaui{}
-project at AT\&T accumulates billing data at a rate of 250-300GB/day,
-with occasional spurts of 750GBs/day. Netflow data arrives from Cisco
-routers at rates over a gigabyte per second~\cite{gigascope}! Such
-volumes mean performance is critical and it certainly
-must be possible to process the data without loading
-it all into memory at once.
-
-Finally, before anything can be done with an ad hoc data source,
-someone has to produce a suitable parser for it.  Today, people tend
-to use \C{} or \perl{} for this task.  Unfortunately, writing parsers
-this way is tedious and error-prone, complicated by the lack of
-documentation, convoluted encodings designed to save space, the need
-to produce efficient code, and the need to handle errors robustly to
-avoid corrupting downstream data.  Moreover, the parser writers'
-hard-won understanding of the data ends up embedded in parsing code,
-making long-term maintenance difficult for the original writers and
-sharing the knowledge with others nearly impossible.
-
-\paragraph*{Data-centric Monitor Generation}
-We propose {\em data-centric monitor generation}, a new paradigm
-for construction system monitors, in which programmers
-specify the shape and properties of data manipulated by
-the monitoring system and a compiler automatically
-generates efficient, reliable, and secure
-monitoring tools from that specification.
-More specifically, the system will consist of the 
-following components:
-
-\begin{enumerate}
-
-\item A high-level specification language to describe a monitor's
-data sources.  The specification language will be able to
-concisely and accurately describing any ad hoc data source,
-including its format, semantic properties, location, and
-temporal attributes in an easy-to-understand, easy-to-modify syntax.
-
-\item A compiler that takes data specifications as inputs and
-automatically generates a suite of 
-efficient data processing libraries for parsing, printing, error detection
-and correction, distributed data gathering, compression, and 
-reformatting of ad hoc data.
-
-\item A fully automatic tool generator that links the compiler-generated 
-libraries to format-independent tool stubs to produce easy-to-use 
-tools for high-level tasks including data display and querying.
-
-\end{enumerate}
-
-\begin{figure}[t]
-\begin{center}
-\centerline{\psfig{file=arch_idraw_edit.ps,height=2.5in}}
-\end{center}
-\caption{\label{fig:arch} Architecture of Data-centric Monitor Generator.
-}
-\end{figure}
-
-Together, the PI, David Walker (Princeton), Co-PI Vivek Pai
-(Princeton) and Senior Personnel Kathleen Fisher (AT\&T Research) are
-uniquely qualified to carry out this research as they bring the
-necessary combination of skills in language design, compilers,
-distributed systems, large-scale data processing, and practical system
-monitoring as well as both academic and industrial perspectives to the
-task.  In addition, they have already built a partial prototype system
-(called PADS) to investigate the feasibility of the proposed ideas.
-The prototype includes the preliminary design of a high-level, declarative
-language for describing ad hoc data formats and a compiler capable of
-generating parsing, printing, and reformatting libraries.
-
-In the follow section, we will explain 
-the architecture of a data-centric monitor generation system
-and our prototype language design in more detail.  
-Next, we will explain more of the specifics concerning
-the generated tool suite for system monitoring.
-In Section~\ref{ssec:features}, we will highlight some of the most
-important language design challenges we face and
-in Section~\ref{ssec:semantics}, we will propose a
-formal system analysis to identify implementation errors
-and improve system reliability.
-In Section~\ref{ssec:impact}, we will explain how our research
-on automatic generation of data processing tools
-will make a broad impact on data processing that must be done
-in disciplines well outside the bounds of
-traditional computer science ranging from microbiology to physics to
-economics.  We will also explain our education plan.
-
-\subsection{A Data-Centric Monitor Generation System}
-
-\paragraph*{Basic Architecture}
-Figure~\ref{fig:arch} presents the architecture of our proposed
-system.  At the top of the picture is the declarative description of all
-data that will be used by the monitoring system.  It is here that
-programmers encode all their knowledge about their data sources,
-including the physical layout of data, its semantic properties
-(including constraints on data fields and expected relations
-with other fields) so deviations can be flagged as errors, 
-its location, access protocol, when the data
-will be ready for fetching and how often, etc.
-
-In exchange for the programmer's work in describing their
-data sources, the compiler system will generate
-a robust and efficient library of {\em format-specific routines} (the center
-square in the picture).
-The core format-specific 
-library includes parser, printer, error detection and data traversal
-routines.  The core libraries will also be responsible for controlling
-access to and aggregation of any data distributed across wide area
-networks and archiving local data along with its description.  
-
-Since these core libraries are compiler-generated from a
-high-level data specification, they have many advantages over
-hand-written code.  First, the generated code checks
-all possible error cases: system errors related to the input file,
-buffer, socket, or remote data provider; 
-syntax errors related to deviations in the physical
-format; and semantic errors in which the data violates user
-constraints.  Because these checks appear only in generated code, they
-do not clutter the high-level declarative description of the data
-source.  Moreover, since tools are generated
-automatically by a compiler rather than written by hand, 
-they are far more likely to be robust
-and far less likely to have dangerous vulnerabilities such as
-buffer overflows.  Moreover, as formats change and are updated,
-one can make a small change in the high-level description
-and the compiler takes care of the rest.  It is extremely unlikely
-new vulnerabilities or buffer overflows will be added to the code
-base over time as formats change.  Finally, all routines will
-be highly optimized for processing the massive
-data sets one sees in practice.
-
-In addition to the compiler, which generates the core, format-specific
-libraries, the system includes a number of {\em format-independent stubs}
-that make use of the generated libraries and implement higher-level
-functionality.  Each of these stubs are programmed once, independent
-of any format.  In order to implement format-specific behavior, they
-are linked with the core libraries, which will be carefully designed to
-satisfy a generic, format-independent interface.  Examples of
-format-independent tools include a generic query engine that
-allows users to extract information from the data, 
-a visualization tool that produces
-web page summaries of data statistics or a reformatter to convert data
-to a new format required by an off-the-shelf tool.  In addition,
-a programmer may simply use the generated format-specific libraries directly 
-within their own application program, custom built for some unique task. 
-Of course whenever a programmer builds a new tool for their application, 
-they may do so using the format-independent interface to the generated
-libraries.  If they do so, their new tool may be reused by others
-who have different data, but require a similar functionality.
-
-At this point, the astute reader may ask why not simply generate
-exactly one tool -- a translator that maps the ad hoc data into
-XML, a standard format with hundreds of available tools and
-rich programming support in all modern, widely used languages.
-The problem with such an architecture is that ad hoc formats
-are usually quite compact and exploding them into XML representations
-can easily result in a space blowup of 8-10 times and an increase
-in processing overhead.  Consequently, tiny
-sensors in a sensor network cannot afford the expense (processor,
-network bandwidth, battery life) of managing
-XML data.  More generally, when the data sets get large, and we 
-have seen they do in monitoring systems, 
-ranging from 100s of MB/week to 100GB/day,
-the extra overhead of a 10 times blowup is simply unaffordable.
-While compression can reduce this impact, the decompression overheads
-of most modern compressors can overwhelm the data processing overhead
-of the underlying data.
-In an environment where the data is being used and updated
-by more than just the monitoring systems, maintaining a parallel
-representation in XML is even more painful and impractical.
-
-\paragraph*{The Prototype Description Language}
-To understand further how the \pads{} will be used,
-let us look at an example of a simple ad hoc data source:
-a tiny fragment of data in the Common Log Format (CLF) that web
-servers use to log client requests~\cite{wpp}.  
-This ASCII format consists of a sequence of
-records, each of which has seven fields: the host name or IP address
-of the client making the request, the account associated with the
-request on the client side, the name the user provided for
-authentication, the time of the request, the actual request, the
-\textsc{http} response code, and the number of bytes returned as a
-result of the request.  The actual request has three parts: the
-request method (\eg, \texttt{GET}, \texttt{PUT}), the requested
-\textsc{uri}, and the protocol version.  In addition, the second and
-third fields are often recorded only as a '-' character to indicate
-the server did not record the actual data.  \figref{figure:clf-records}
-shows a couple of typical records.
-
-
-
-\begin{figure*}
-\begin{footnotesize}
-%\begin{center}
-\begin{verbatim}
-207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /tk/p.txt HTTP/1.0" 200 30
-234.200.68.71 - - [15/Oct/1997:18:53:33 -0700] "GET /tr/img/gift.gif HTTP/1.0" 200 409
-240.142.174.15 - - [15/Oct/1997:18:39:25 -0700] "GET /tr/img/wool.gif HTTP/1.0" 404 178
-188.168.121.58 - - [16/Oct/1997:12:59:35 -0700] "GET / HTTP/1.0" 200 3082
-tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] "POST /spt/dd@grp.org/cfm HTTP/1.0" 200 941
-214.201.210.19 ekf - [17/Oct/1997:10:08:23 -0700] "GET /img/new.gif HTTP/1.0" 304 -
-\end{verbatim}
-\caption{Tiny example of Common Log Format records. }
-\label{figure:clf-records}
-%\end{center}
-\end{footnotesize}
-\end{figure*}
-
-With this example, we can examine how to use the prototype 
-\pads{} language to describe 
-the {\em physical layout} and 
-{\em semantic properties} of our ad hoc data source. 
-The language provides a type-based model:
-basic types describe atomic data such as integers, characters, 
-strings, dates, urls, \etc, while
-structured types describe compound data built from simpler pieces.
-
-In a bit more detail,
-the \pads{} prototype provides a collection of broadly useful base
-types.  Examples include 8-bit unsigned integers (\cd{Puint8}), 32-bit
-integers (\cd{Pint32}), dates (\cd{Pdate}), strings (\cd{Pstring}),
-and IP addresses (\cd{Pip}).  Semantic conditions for such base types
-include checking that the resulting number fits in the indicated
-space, \ie, 16-bits for \cd{Pint16}.  By themselves, these base types
-do not provide sufficient information to allow parsing because they do
-not specify how the data is coded, \ie{}, in ASCII, EBCDIC, or binary.
-To resolve this ambiguity, \pads{} uses the \textit{ambient} coding,
-which the programmer can set.  By default, \pads{} uses ASCII.  
-% To
-% specify a particular coding, the description writer can select base
-% types which indicate the coding to use.  Examples of such types
-% include ASCII 32-bit integers (\cd{Pa_int32}), binary bytes
-% (\cd{Pb_int8}), and EBCDIC characters (\cd{Pe_char}).  In addition to
-% these types, users can define their own base types to specify more
-% specialized forms of atomic data.
-
-To describe more complex data, the prototype provides a collection of
-structured types loosely based on \C{}'s type structure.  In
-particular, the prototype has \kw{Pstruct}s, \kw{Punion}s, and \kw{Parray}s
-to describe record-like structures, alternatives, and sequences,
-respectively.  \kw{Penum}s describe a fixed collection of literals,
-while \kw{Popt}s provide convenient syntax for optional data.  Each of
-these types can have an associated predicate that indicates whether a
-value calculated from the physical specification is indeed a legal
-value for the type.  For example, a predicate might require that two
-fields of a \kw{Pstruct} are related or that the elements of a
-sequence are in increasing order.  Programmers can specify such
-predicates using \pads{} expressions and functions, written using a
-\C{}-like syntax.  Finally, \pads{} \kw{Ptypedef}s can be used to
-define new types that add further constraints to existing types.
-
-\pads{} types can be parameterized by values.  This mechanism serves
-both to reduce the number of base types and to permit the format and
-properties of later portions of the data to depend upon earlier
-portions.  For example, the base type \cd{Puint_FW(:x:)} specifies
-an unsigned integer physically represented by exactly \cd{x}
-characters, where \cd{x} is a value that has been read earlier in the
-parse.  The type \cd{Pstring(:SPACE:)} describes a string
-terminated by a space (when \texttt{SPACE} is defined to be \texttt{' '}).  
-Parameters can be used with compound types like arrays and unions to
-specify the size of an array or which branch of a union should be
-taken.  This parameterization is what makes PADS a {\em dependently-typed}
-language and substantially different from languages based on
-context-free grammars or regular expressions.
-
-\figref{figure:clf} gives a \pads{} description for the Common Log Format
-data.  
-We will use this example to illustrate some of the basic
-features of the current \pads{} language.  
-In \pads{} descriptions, types are declared before they are used, 
-so the type that describes the totality of the data source appears 
-at the bottom of the description.  
-In this case,
-the type \texttt{clf\_t}  describes the entirety of the
-CLF data source (the \texttt{Psource} type qualifier indicates
-this fact explicitly).  
-
-\kw{Pstruct}s describe fixed sequences of data with unrelated types.
-In the CLF description, the type declaration for
-\cd{version_t} illustrates a simple \kw{Pstruct}. It starts with a 
-string literal that matches the constant \cd{HTTP/} in the data source.  It 
-then has two unsigned integers recording the major and minor version numbers
-separated by the literal character \kw{'.'}.  \pads{} supports character, string,
-and regular expression literals, which are interpreted with the ambient character 
-encoding. The type \cd{request_t} 
-similarly describes the request portion of a CLF record.  In addition
-to physical format information, this \kw{Pstruct} includes a semantic constraint
-on the \cd{version} field.  Specifically, it requires that obsolete methods
-\cd{LINK} and \cd{UNLINK} occur only under HTTP/1.1.  This constraint illustrates
-the use of predicate functions and the fact 
-that earlier fields are in scope during the processing of later fields, as the 
-constraint
-refers to both the \cd{meth} and \cd{version} fields in the \kw{Pstruct}.
-
-\kw{Punion}s describe variation in the data format.  For example, the
-\cd{client_t} type in the CLF description indicates that the first
-field in a CLF record can be either an IP address or a hostname.
-During parsing, the branches of a \kw{Punion} are tried in order; the
-first branch that parses without error is taken.  The \cd{auth_id_t}
-type illustrates the use of a constraint: the branch \cd{unauthorized}
-is chosen only if the parsed character is a dash.  \pads{} also
-supports a \textit{switched} union that uses a selection expression to
-determine the branch to parse.  Typically, this expression depends
-upon already-parsed portions of the data source.
-
-\pads{} provides \kw{Parray}s to describe varying-length sequences of
-data all with the same type.  The \cd{clf_t} declaration  uses a
-\kw{Parray} to indicate that a CLF file is a sequence of \cd{entry\_t}
-records.  This particular array terminates when the data source is
-exhausted. In general, \pads{} provides a rich
-collection of array-termination conditions: reaching a maximum size,
-finding a terminating literal (including end-of-record), or satisfying a
-user-supplied predicate over the already-parsed portion of the \kw{Parray}. 
-\pads{} also has convenient syntax for 
-specifying separators that appear between elements of an array and
-declaring inter-element constraints including sorting.
-
-The
-\kw{Penum} type \cd{method_t} describes a collection of data literals.
-During parsing, \pads{} interprets these constants using the ambient
-character encoding.  The \kw{Ptypedef} \cd{response_t} describes
-possible server response codes in CLF data by adding the constraint
-that the three-digit integer must be between 100 and 600.
-
-Finally, the \kw{Precord} annotations deserve comment. It
-indicates that the annotated type constitutes a record.  
-The notion of a record varies depending upon the data encoding.  
-ASCII data typically uses new-line characters to delimit 
-records, binary sources tend to have fixed-width records, while 
-COBOL sources usually store the length of each record before the actual data.
-\pads{} supports each of these encodings of records and allows users to define
-their own encodings.  By default, \pads{} assumes records are new-line terminated.
-Before parsing, however, the user can direct \pads{} to use a different record
-definition.
-\texttt{Precords} have error-recovery semantics -- if errors 
-in the data cause the parser to become seriously confused,
-it will attempt to recover to a record boundary.
-In practice, we have found this to be a very robust recovery mechanism
-for ad hoc data.  
-
-\begin{figure}
-\begin{small}
-\begin{code}
-\kw{Punion} client\_t \{
-  Pip       ip;      /- 135.207.23.32
-  Phostname host;    /- www.research.att.com
-\};
-\mbox{}
-\kw{Punion} auth\_id\_t \{
-  Pchar unauthorized : unauthorized == '-';
-  Pstring(:' ':) id;
-\};
-\mbox{}
-\kw{Pstruct} version\_t \{
-  "HTTP/";
-  Puint8 major; '.';
-  Puint8 minor;
-\};
-\mbox{}
-\kw{Penum} method\_t \{
-    GET,    PUT,  POST,  HEAD,
-    DELETE, LINK, UNLINK
-\};
-\mbox{}
-bool chkVersion(version\_t v, method\_t m) \{
-  \kw{if} ((v.major == 1) && (v.minor == 1)) \kw{return} true;
-  \kw{if} ((m == LINK) || (m == UNLINK)) \kw{return} false;
-  \kw{return} true;
-\};
-\mbox{}
-\kw{Pstruct} request\_t \{
-  '\\"';   method\_t       meth;
-  ' ';    Pstring(:' ':) req\_uri;
-  ' ';    version\_t      version :
-                  chkVersion(version, meth);
-  '\\"';
-\};
-\mbox{}
-\kw{Ptypedef} Puint16\_FW(:3:) response\_t :
-         response\_t x => \{ 100 <= x && x < 600\};
-\mbox{}
-\kw{Precord} \kw{Pstruct} entry\_t \{
-         client\_t       client;
-   ' ';  auth\_id\_t      remoteID;
-   ' ';  auth\_id\_t      auth;
-   " ["; Pdate(:']':)   date;
-   "] "; request\_t      request;
-   ' ';  response\_t     response;
-   ' ';  Puint32        length;
-\};
-\mbox{}
-\kw{Psource} \kw{Parray} clf\_t \{
-  entry\_t [];
-\}
-\end{code}
-\end{small}
-\caption{\pads{} description for Web Log data.}
-\label{figure:clf}
-\end{figure}
+\input{pads-intro}
 
 \subsection{Monitoring Framework}
 \input{monitor}
@@ -583,293 +109,9 @@ bool chkVersion(version\_t v, method\_t m) \{
 
 \input{pads-inference}
 
-%\subsection{Towards a Universal Data Description System}
-%\label{ssec:features}
-%\input{newfeatures}
+\input{future-naval}
 
-%\subsection{Formalization and Semantic Analysis}
-%\label{ssec:semantics}
-%\input{semantics}
-
-\subsection{Broader Impacts}
-\label{ssec:impact}
-
-% If funded, this project will have two major broad impacts.
-
-\paragraph*{Supporting Research across the Social and Natural Sciences}
-While ad hoc data is prevalent in systems research and network monitoring
-infrastructure, it also appears in many other disciplines
-across the natural and social sciences. In finance and economics,
-data analysts process information about stocks, bonds, options and derivatives,
-in cosmology, telescopes and other tools output data about stars, planets and
-galaxies, in microbiology and genomics, vast amounts of data concerning
-genes and gene products is being accumulated using modern computational techniques.
-Figure~\ref{figure:scientific-data-sources} lists a few of the scientific data sources
-we have begun to investigate.
-
-\begin{figure*}
-\begin{center}
-\begin{tabular}{@{}|l|l|l|l|l|}
-\hline
-Name: Use                           & Representation    & Processing Problems \\ \hline\hline
-Gene Ontology (GO)~\cite{geneontology}:                  & Variable-width    & White-space ambiguities \\
-Gene Product Information 	      & ASCII records &  \\ \hline
-SDSS/Reglens Data~\cite{mandelbaum+:reglens}:                & Floating point numbers, & Repeated multiplicative error \\
-Weak gravitational lensing analysis   & among others & \\ \hline
-Newick:   Immune                    & Fixed-width ASCII records & None \\ 
-system response simulation          & in tree-shaped hierarchy &\\ \hline                                
-OPRA:                               & Mixed binary \& ASCII records 
-                                                       & 100-page informal \\
-Options-market transactions         & with data-dependent unions & documentation \\ \hline
-\end{tabular}
-\caption{Selected ad hoc scientific data sources.}
-\label{figure:scientific-data-sources}
-\end{center}
-\end{figure*}
-
-
-In order to have a broad impact across the sciences and social sciences,
-we will develop descriptions and tools for researchers in diverse fields ranging from
-physics to biology to chemistry and economics.
-More specifically, we have already developed a partnership with
-Olga Troyanskaya in Princeton's Lewis-Sigler Institute for 
-Integrative Genomics.  Her Magic database system~\cite{magic}
-reads several data sources
-and applies a Bayesian analysis in order to discover gene function.
-The end goal of Magic is to provide critical information about how
-our genes work that may be used in the treatment of widespread diseases,
-including cancer.
-In the past, Troyanskaya and her students have spent
-substantial blocks of time building parsers to collect and integrate
-this data.  This wastes her valuable time, which could otherwise be
-used on the challenging and important algorithmic problems for which
-she is a world expert.  It also limits the scope of Magic --- there are
-only so many parsers one can program and maintain by hand.
-Through the use of PADS, we will transform Magic into a truly generic
-system by allowing Magic to import any data source.  To add new sources,
-all a user will have to do is write a simple, high-level PADS description.
-By adding data sources to the collection Magic
-currently analyses, Magic will be able to make additional and possibly more
-accurate predictions.  All of our software will
-be freely available to academics via the Web.
-
-
-% More generally, part of our mission will be
-% to provide support for the data processing needs of biologists,
-% chemists and physicists at Princeton University and 
-% the broader natural sciences community.  
-% Part of our contribution will be a series of PADS
-% descriptions for these formats and the analysis and querying tools we
-% can generate automatically from PADS.  A second important contribution
-% will be a visual interface built on top of PADS that allows scientists
-% to browse data represented in ad hoc data formats without having to
-% know anything about programming or parsing.  
-
-\paragraph*{Undergraduate Research}
-Princeton University has a very active undergraduate research program.
-Princeton students usually do at least one semester of
-Junior Independent Work and one semester of Senior Independent Work. 
-Many students also do a year-long
-Junior and Senior Theses.  We believe that PADS is an excellent
-platform for undergraduate independent work and we plan to link
-undergraduate independent work with our interdisciplinary effort to
-produce tools for biologists.  We have already recruited Mark Daly,
-a Princeton Senior who is doing his undergraduate senior thesis
-on a PADS user interface and automatic format inference.
-In the future, we will recruit other undergraduates to help us build
-specific data processing tools for the biological data formats
-used in Princeton's Genomics Institute.
-This will introduce students both to interesting and novel
-computer science research and also allow them to build useful
-tools for biological applications. The PI has a proven track record
-when it comes to advancing graduate and undergraduate education
-as he has organized two summer schools (2004, 2005) on technology for
-secure and reliable programming and mentored several undergraduates,
-the latest of which, Rob Simmons, won the Princeton Computer Science Department
-Senior Thesis Award.
-
-\subsection{Comparison with Other Research}
-\label{ssec:related}
-
-One of the oldest and most widely-used protocols for general monitoring
-is SNMP, the simple network management protocol~\cite{snmprfc1157},
-which is supported by commercial tools such as HP's
-OpenView~\cite{openview} and free tools such as MRTG~\cite{mrtg}. It
-provides an open protocol format that can be used to monitor a variety
-of different types of equipment, using a vendor-supplied management
-information base (MIB) that provides the specifics of the kinds of
-monitoring provided by each piece of hardware. SNMP's hierarchical
-MIBs plus associated control software, while flexible, have many of
-the same drawbacks as XML -- space, complexity, and poor support for
-ad hoc data.
-
-For Grid environments, a popular monitoring tool is
-Ganglia~\cite{ganglia}, which has also been adapted for use with
-PlanetLab. It presents much of the system monitoring information
-provided by OS tools like vmstat, iostat, uptime, etc. For data
-transmission, Ganglia uses an XDR wire format, with raw data for all
-of its native fields.  It can be extended by adding XML-encapsulated
-fields for any other node-level measurements. 
-
-What distinguishes this proposal from systems like SNMP or Ganglia is
-that we want to be able to automatically parse and monitor virtually
-any kind of ad hoc data, from node-level information like that
-collected by Ganglia or SNMP, all the way down to application-level
-data as well as protocol-level data. These areas are the ones that are
-not well-served by today's general-purpose monitoring
-systems. Moreover, the ability to use the same data description to
-automatically build parsers, in-situ tools, and monitoring systems
-represents an ease of use that we believe is not available in other
-systems.
-
-Another monitoring system of interest is PsEPR~\cite{psepr} (formerly
-known as Trumpet), which focuses on finding problems via several tests
-to gauge node health. What makes PsEPR interesting to consider is that
-its design is completely decentralized, and all information is pushed
-to all participating nodes via a publish/subscribe mechanism in the
-Jabber protocol~\cite{jabber}. While this approach can be more
-scalable in theory, it currently appears to be hitting the limits of
-Jabber messaging servers. In the event that we decide to support
-fully distributed monitoring (as opposed to replicated monitoring at
-several sites), we will examine the lessons of PsEPR when deciding how
-to proceed.
-
-
-The oldest tools for describing data formats are parser generators such as
-Lex and Yacc.  While excellent for parsing programming languages, Lex and Yacc
-are too heavyweight for parsing the simpler ad hoc data formats one
-runs into in the sciences.   
-Unlike PADS, whose syntax is based on types from the well-known C language,
-the syntax of Lex and Yacc is somewhat foreign.  Perhaps more importantly,
-users must write a lexer, write a
-grammar, and construct the in-memory representations by hand.  In
-addition, they only work for ASCII data, they do not easily
-accommodate data-dependent parsing, and they do not provide auxiliary
-services such as an archiver, a query engine or a display tool.
-Some more modern parser generators such as ANTLR~\cite{antlr} alleviate
-a few of these problems, but they still do not automatically generate auxiliary tools
-useful that help systems implementers solve the monitoring problem. 
-
-The closest related work includes domain-specific
-languages such as PacketTypes~\cite{sigcomm00} and DataScript~\cite{gpce02} 
-for parsing and printing binary data, particularly packets
-from common networking protocols such as \textsc{TCP/IP} and also
-\java{} jar-files.  Like \pads{}, these languages have a type-directed
-approach to describing ad hoc data and permit the user to define
-semantic constraints.  In contrast to our work, these systems handle
-only binary data and assume the data is error-free or halt parsing if
-an error is detected.  Not only are ASCII formats a common part of
-many software monitoring systems, parsing non-binary data poses additional
-challenges because of the need to handle delimiter values and to
-express richer termination conditions on sequences of data. 
-PacketTypes and DataScript also focus exclusively on the 
-parsing/printing problem,
-whereas our research will exploit the declarative nature of our data
-descriptions to automatically generate additional useful tools and
-programming libraries.  \pads{} substantial 
-collection of automatically-generated tools and libraries is 
-one of the key incentives that will make it
-worth a programmer's while to use \pads to generate monitoring infrastructure.
-
-The Binary Format Description language (BFD)~\cite{bfd} is a fragment of
-XML that allows programmers to specify binary and ASCII formats.  BFD
-is able to convert the raw data into XML-tagged data where it can then be
-processed using XML-processing tools.  While this is useful for many
-tasks, conversion to XML can be prohibitively expensive:  such conversion
-often results in an 8-10 times blowup in data size over the native form.
-\pads{}, on the other hand, avoids this blowup by processing data in its 
-native form.
-
-Currently, the Global Grid Forum is working on a standard
-data-format description language for describing ad hoc data formats,
-called DFDL~\cite{dfdl-proposal,dfdl-primer}.  Like \pads{},
-DFDL{} has a rich collection of base types and supports a variety of
-ambient codings.  Unlike \pads{}, DFDL{} does not support semantic
-constraints on types nor dependent types, \eg{}, it is not possible to
-specify that the length of an array is determined by some previously parsed field in the
-data.  Our practical experience indicates that many ad hoc formats,
-particularly binary formats, absolutely require dependent types in their
-specifications.  DFDL{} is an annotated subset of XML{} Schema, which means
-that the XML{} view of the ad hoc data is implicit in a DFDL{}
-description.  DFDL{} is still being specified, so no DFDL-aware
-parsers or data analyzers exist yet.  
-
-% There are parallels between PADS types and some of the elements of parser
-% combinator libraries found in languages like
-% Haskell~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
-% However, as with most other general-purpose parsing tools, one cannot
-% simply put together a collection of Haskell's parser combinators and
-% automatically generate domain-specific programs such as 
-% an XML converter or a histogram generator, for instance.  
-
-A somewhat different class of languages includes
-\textsc{ASN.1}~\cite{asn} and \textsc{ASDL}~\cite{asdl}.  Both of
-these systems specify the {\em logical\/} in-memory representation of
-data and then automatically generate a {\em physical\/} on-disk
-representation.  Although useful for many purposes, this technology
-does not help process data that arrives in predetermined, ad hoc
-formats.  Another language in this category is the Hierarchical Data
-Format 5 (HDF5)~\cite{hdf5}.  This file format allows users to store
-scientific data, but it does not help users deal with legacy ad hoc
-formats like PADS does.
-
-% There are probably hundreds of tools that one might use if their data were
-% in \xml.  However, the point of PADS is to allow scientists whose data is {\em not}
-% already in \xml to get work done, particularly when that data contains errors,
-% as ad hoc data often does.  Since many processes, machines, programs and other devices
-% currently output data and a whole most of
-
-XSugar~\cite{brabrand+:xsugar2005} allows user to specify an
-alternative non-XML syntax for XML languages using a context-free
-grammar.  This tool automatically generates conversion between XML and
-non-XML syntax. It also guarantees that conversion will be invertible.
-However, it does not use theory of Galois connections, but instead
-introduces a notion of ``ignorable'' grammar components (inferred
-based on properties of grammar) and proves bijection modulo these
-ignorable elements.  Once again, we remark that XML conversion is
-too expensive for many applications.
-
-XDTM~\cite{zhao+:sigmod05,xdtm} uses XML Schema to describe the
-locations of a collection of sources spread across a local file system
-or distributed across a network of computers.  However, XDTM has no
-means of specifying the contents of files, so XDTM and PADS solve
-complementary problems.  Nevertheless, the XDTM design may provide
-ideas to us as we extend PADS from a single-source system to a
-multi-source system. The METS schema~\cite{mets} is similar to XDTM as
-it describes metadata for objects in a digital library, including a
-hierarchy such objects.
-
-Commercial database products provide support for
-parsing data in external formats so the data can be imported into
-their database systems, but they typically support a limited number of
-formats, \eg{}, COBOL copybooks.  Also, no declarative description of the
-original format is exposed to the user for their own use, and they
-have fixed methods for coping with erroneous data.  For these reasons,
-PADS is complementary to database systems.  We strongly believe that
-in the future, commercial database systems could and should support a 
-PADS-like description language that allows users to import information from
-almost any format.  We hope that our research will make a broad
-impact in this area.
-
-On the theoretical front, the scientific community's understanding of
-type-based languages for data description is much less mature.  To the
-best of our knowledge, our work on the DDC is the first to provide a
-formal interpretation of dependent types as parsers and to study the
-properties of these parsers including error correctness and type
-safety.  Regular expressions and context-free grammars, the basis for
-Lex and Yacc have been well-studied, but they do not have dependency,
-a key feature necessary for expressing constraints and parsing ad hoc
-scientific data.  {\em Parsing Expression Grammars} (PEGs), studied in
-the early seventies~\cite{birman+:parsing}, revitalized more recently
-by Ford~\cite{ford:pegs} and implemented using ``packrat parsing''
-techniques~\cite{ford:packrat,grimm:packrat}, are somewhat more
-similar to PADS recursive descent parsers. However, PADS does not use
-packrat parsing techniques as the space overhead is too high for large
-data sets.  Moreover, our multiple interpretations of types
-in the DDC makes our theory substantially different from the theory of
-PEGs.
-
-\subsection{Deliverables and Time Table}
+\section{Project Schedule and Milestones}
 
 \begin{itemize}
 \item Year 1:  Re-design of \pads{} specification language and engine
@@ -900,8 +142,24 @@ PEGs.
   \end{itemize}
 \end{itemize}
 
-\subsection{Results from Prior NSF Support}
-\label{ssec:results}
+\section{Deliverables}
+
+The main deliverables of this proposal are:
+
+\begin{itemize}
+\item The \pads{} domain-specification language and compiler.
+\item The \pads{} format inference engine.
+\item Comon?
+\end{itemize}
+
+\section{Management Approach}
+
+\section{Current and Pending Project and Proposal Submissions}
+
+{\bf CNS 0627650 NSF CT: Well-typed Trustworthy Computing in the 
+Presence of Transient Faults $1,100,000 }
+
+\section{Qualifications}
 
 \paragraph*{Kathleen Fisher, Senior Personnel} 
 Kathleen Fisher is a senior researcher at AT\&T Labs,
