@@ -398,7 +398,8 @@ structure Incremental: sig
      (
      if length args < 1 then
 	(print ("Usage: increment -f ORIG_DATA_FILE [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
-	"[-opt OPT_LEVEL (3)] [-w ADC_WEIGHT (5)] [-p FILE_TO_PARSE] [-d INIT_DESC_XML] [-varcard true/false]\nSizes are in # of lines\n");
+	"[-d INIT_DESC_XML] [-opt OPT_LEVEL (3)] [-tmout SECS (1800)] [-w ADC_WEIGHT (5)]\n" ^
+	"[-p FILE_TO_PARSE] [-varcard true/false]\nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
@@ -413,6 +414,10 @@ structure Incremental: sig
 	 val opt_level  = case StringMap.find (argMap, "-opt") of
 			  NONE => 3 (* highest optimization level *)
 			| SOME x => valOf(Int.fromString x)
+	 val _ = case StringMap.find (argMap, "-tmout") of
+		 NONE => ()
+		 | SOME x => learn_timeout := valOf(Int.fromString x)
+
 	 val _ = if opt_level = 0 then
 			(
 			Parse.do_clean:=false;
@@ -445,11 +450,12 @@ structure Incremental: sig
 			SOME _ => 0
 			| _ =>  start_pos
 
+(*
          val varcard = StringMap.find (argMap, "-varcard")
 	 val _ = case varcard of
 		   SOME x => var_card_bits := valOf(Bool.fromString x)
 		| _ => ()
-
+*)
 
          val _ = executableDir :=
 		(case (OS.Process.getEnv "LEARN_HOME") of
@@ -469,6 +475,7 @@ structure Incremental: sig
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
 	 *)
+         val _ = Posix.Process.alarm(Time.fromSeconds(LargeInt.fromInt(!learn_timeout)))
 	 val (_, initTy, numHeaders, numFooters, _) = 
 		case pxml of 
 		  NONE =>

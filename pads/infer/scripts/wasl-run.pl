@@ -42,14 +42,14 @@ sub scan
   }
 }
 
-sub learn
-{
- (my $test) = @_;
-# print "learn $test > $test.lrn\n";
- alarm $timeout;
- exec("learn $test > $test.output");
- exit(1);
-}
+#sub learn
+#{
+# (my $test) = @_;
+## print "learn $test > $test.lrn\n";
+# alarm $timeout;
+# exec("learn $test > $test.output");
+# exit(1);
+#}
 
 sub inc
 {
@@ -57,34 +57,49 @@ sub inc
   my $score = 0;
   my $time = 0;
   my $exectime = 0;
+  my $num = 0;
   for (my $j = 0; $j < $numTimes; $j++)
   {
     #print "Learning $file: opt_level = 3\n";
     $exectime = 0;
     system ("increment -f $file -i $isize -l $lsize > $file.inc");
     ($score, $exectime) = scan ("$file.inc");
+    unlink("$file.inc");
+    if (!$score) {last;} #timeout reached
     $time += $exectime;
+    $num++;
   }
-  $time = $time/$numTimes; 
-  return ($time, $score)
+  if ($num > 0) {
+    $time = $time/$num; 
+    return ($time, $score)
+  }
+  else {return (0, 0);}
 }
 
 $largefile = shift @ARGV;
 if (!$largefile) {
   print "Usage: wasl-run.pl LARGE_FILE [-small] [-scale] [-incsize]
 
-LARGE_FILE must have at least 1M lines.
+LARGE_FILE must have at least 10K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
-          test files must be in the currect working directory.
+          test files are stored in pads/infer/examples/data and they must be in the 
+          currect working directory.
 -scale:   run the scaling tests on LARGE_FILE.
 -incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.\n";
   exit;
 }
 
-$otheraugs = join (' ', @ARGV);
+$otherargs = join (' ', @ARGV);
+
+$wcoutput = `wc -l $largefile`;
+if ($wcoutput =~ /\s*(\d+).*/) {
+ $largefile_lines = $1;
+}
+else {print "$largefile can't be found!\n"; exit}
+if ($largefile_lines < 10000) {print "$largefile must be at least 10k lines!\n"; exit}
 
 #Multiple smaller files tests
-if ($otheraugs =~ /.*-small.*/) {
+if ($otherargs =~ /.*-small.*/) {
   print "Begin comparison tests on small files\n";
   foreach $test (@testfiles) {
     $time = 0;
@@ -92,17 +107,22 @@ if ($otheraugs =~ /.*-small.*/) {
     $num = 0;
     for ($i=0; $i<$numTimes; $i++)
     {
-     $num++;
      $exectime = 0;
      system ("learn $test > $test.lrn");
      ($score, $exectime) = scan ("$test.lrn");
+     unlink ("$test.lrn");
      $time += $exectime;
      #system("rm -f $test.output");
      if (!$score) {last;} #time out reached
+     $num++;
     }
-    $time = $time/$num; #$num maybe less than $numTimes
-    print "$test (lrn): time = $time  score = $score (averaged from $num times)\n";
-    
+    if ($num > 0) {
+      $time = $time/$num; #$num maybe less than $numTimes
+      print "$test (lrn): time = $time  score = $score (averaged from $num times)\n";
+    }
+    else {
+      print "$test (lrn): timed out\n";
+    }
     ($time, $score) = inc($test, $initsize, $incsize);
     print "$test (inc): time = $time  score = $score (averaged from $num times)\n";
   }
@@ -110,13 +130,16 @@ if ($otheraugs =~ /.*-small.*/) {
 }
 
 #Scaling tests... 
-if ($otheraugs =~ /.*-scale.*/) {
+# we can 10 data points for the given large file
+$step = int($largefile_lines/10);
+if ($otherargs =~ /.*-scale.*/) {
   print "Begin scaling tests\n";
-  for (my $i=200000; $i<=1000000; $i+=200000)
+  for (my $i=$step; $i<=$largefile_lines; $i+=$step)
   {
     system("head -n $i $largefile > $largefile.$i");
-    ($time, $score) = inc ($largefile.$i, $initsize, $incsize);
+    ($time, $score) = inc ("$largefile.$i", $initsize, $incsize);
     print "$largefile.$i (inc): time = $time  score = $score\n";
+    unlink ("$largefile.$i");
   }
   print "End scaling tests\n";
 }
@@ -124,14 +147,18 @@ if ($otheraugs =~ /.*-scale.*/) {
 #init size and incremental size tests ...
 #init size from 100 to 1000 with step of 100
 #inc size from 10 to 100 with a step of 10
-if ($otheraugs =~ /.*-incsize.*/) {
+$timeout=0;
+if ($otherargs =~ /.*-incsize.*/) {
   print "Begin init/incremental size tests\n";
-  for (my $i = 100; $i <= 1000; $i+=100)
+  for (my $i = 500; $i <= $largefile_lines && !$timeout; $i+=500)
   {
-   for (my $j = 10; $j <= 100; $j+=10)
+   for (my $j = 50; $j <= 500; $j+=50)
    { 
     ($time, $score) = inc ($largefile, $i, $j);
-    print "$largefile (init=$i, inc=$j): time = $time  score = $score\n";
+    if (!$score) {
+        print "$largefile (init=$i, inc=$j): timed out\n";
+	$timeout=1; last}
+    else {print "$largefile (init=$i, inc=$j): time = $time  score = $score\n";}
    }
   }
   print "End init/incremental size tests\n";

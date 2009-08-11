@@ -1794,7 +1794,7 @@ fun mergeTokens ty =
      end
   end
 
-
+(*******************
 fun isBlob ty =
   case ty of
     Base _ => false
@@ -1831,6 +1831,8 @@ fun isBlob ty =
 	   else false
 	end
     else false
+*************)
+
 (* TODO: augment this function to search for more patterns by merging
   all tokens in the ty and then do string matching *)
 fun getStoppingPatt ty =

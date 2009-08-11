@@ -74,8 +74,11 @@ structure Main : sig
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
+(*
     fun setBlobRatio    r = blobRatio := r
     fun setVarCardBits  b = var_card_bits := b
+*)
+    fun setTimeout t = learn_timeout := t
     val flags = [
          ("d",        "output directory (default "^def_outputDir^")",                                      PCL.String (setOutputDir, false)),
          ("n",        "name of output file (default "^def_descName^")",                                     PCL.String (setDescName,  false)),
@@ -91,9 +94,12 @@ structure Main : sig
          ("e",        "Print entropy tokens (default "^(Bool.toString def_entropy)^")",                    PCL.Bool    setEntropy),
          ("lex",      "prefix of the lex config to be used (default \"vanilla\")",	                   PCL.String (setLexName, false)),
          ("au",	      "run only the golden file",	                                                   PCL.String (setGoldenRun, true)),
+(*
          ("varcard", "variable cardinality bits (default " ^ (Bool.toString def_var_card_bits) ^ ")",	   PCL.Bool   (setVarCardBits)),
          ("blob",     "threshold ratio used for blob finding (default 1.0), higher means fewer blobs",	   
-       PCL.Float (setBlobRatio, false))
+       PCL.Float (setBlobRatio, false)),
+*)
+	 ("timeout",  "timeout for learning (default 1800 secs)",					   PCL.Int (setTimeout, false))
         ]
 
     fun checkOutputDir() =(
@@ -128,7 +134,10 @@ structure Main : sig
 
     fun main (cmd, args) = 
 	 (processSwitches args;
-          doIt (); 
+	  (* set the timeout *)
+	  let val _ = Posix.Process.alarm(Time.fromSeconds(LargeInt.fromInt(!learn_timeout))) in
+            doIt ()
+	  end; 
           if !anyErrors then  OS.Process.exit(OS.Process.failure)
 	  else OS.Process.exit(OS.Process.success))
             handle  Exit r      => OS.Process.exit(OS.Process.failure)
