@@ -9,7 +9,7 @@
 % \end{tabular}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\paragraph*{Intellectual Merits:} 
+% \paragraph*{Intellectual Merits:} 
 
 Complex systems must be {\em monitored} to proactively find problems,
 record/archive system health, oversee system operation, detect
@@ -49,66 +49,64 @@ interactively present the data to operators, allowing them to query
 it, view it graphically, and analyze trends on the data, without having
 to provide manual configuration of the database.
 
-Our decision to move away from manual parsing not only simplifies the
-system, but it also provides flexibility and security that
-hand-written parsers used for monitoring do not provide.  Given a
+Moving away from manual parsing simplifies the system and provides the
+flexibility and security that hand-written parsers do not.  Given a
 high-level specification, either provided by the operator or inferred
-from the data, the PADS compiler will automatically generate a
-collection of reliable, secure, and high-performance libraries as well
-as stand-alone tools that perform all of the basic functions of a
-monitoring system including concurrently {\em fetching} data from any
-number of distributed sources, {\em archiving} (self-describing) data
-for later analysis, {\em querying} data to troubleshoot problems, and
-{\em displaying} statistical data summaries so users can monitor
-system health in real time.  Moreover, as system requirements change
-and evolve, implementers may make simple changes to the high-level
+from the data, PADS will automatically generate a collection of
+reliable, secure, and high-performance libraries as well as all of the
+monitoring components, such as concurrently {\em ingesting/processing}
+data from any number of distributed sources, {\em archiving}
+(self-describing) data for later analysis, {\em querying} data to
+troubleshoot problems, and {\em displaying} statistical data summaries
+so users can monitor system health in real time.  As the system
+changes and evolves, implementers can change the high-level
 specifications and recompile to automatically obtain an improved
 monitoring system.  In addition, since code is automatically
 generated, as opposed to hand-written, it will not contain
 vulnerabilities that make other systems susceptible to buffer
-overflows and related attacks.  Finally, since PADS will have the
-ability to describe the format of any data source, users will be able
-to automatically generate monitoring tools that interoperate with
-legacy software, legacy data and legacy devices.  Hence, our research
-has the potential to have an immediate impact on the productivity of
-systems implementers and to produce the next generation of monitoring
-systems.  Overall, our research will combine principled and innovative
-language design with high-performance systems engineering, all aimed
-at solving pervasive systems monitoring and measurement problems.
+overflows and related attacks.  Finally, since PADS can describe the
+format of any data source, users will be able to automatically
+generate monitoring tools that interoperate with legacy software,
+data, and devices.  Hence, our research can have an
+immediate impact on the productivity of systems implementers by
+helping produce the next generation of monitoring systems.  Overall,
+our research will combine principled and innovative language design
+with high-performance systems engineering, all aimed at solving
+pervasive systems monitoring and measurement problems.
 
-\paragraph*{Broader Impacts:}  Kathleen Fisher, senior personnel, 
-will work with other researchers at AT\&T to transfer our monitoring
-technology to industry.  In addition, we will develop tools for
-monitoring the health of PlanetLab, a global network research testbed
-with 400-450 nodes and 200-250 network experiments running at any
-given time.  Not only will our troubleshooting and diagnostic tools
-will provide feedback to PlanetLab users and administrators, thereby
-improving PlanetLab as a research facility for the entire networking
-community, but these same tools will easily usable by individual
-researchers to monitor their own experiments on PlanetLab. In effect,
-we can provide a complete system to archive history, analyze data, and
-present demonstrations, all from a simple data description.
-
-PADS will also make a broad impact outside the networking community.
-The kind of {\em ad hoc data} found in monitoring systems also appears
-across the natural and social sciences, including biology, chemistry,
-physics and economics.  The PADS specification language will be used to
-specify the formats of these other data sources and to generate the
-querying and visualization tools that help improve
-the productivity of computational scientists.  To jumpstart this
-research, we have already been meeting with Olga Troyanskaya,
-professor in Princeton's Lewis-Sigler Institute for Integrative
-Genomics, who does computational analysis of protein-protein
-interactions, and with Rachel Mandelbaum, Ph.D. candidate in physics
-who analyzes cosmology data.  It is clear that if funded, the PADS system
-will make a broad impact on their research --- PADS will free them to use
-their world-class skills on their {\em science} 
-as opposed to labouring over development of data processing tools.
-The collaboration between computer science, genomics and physics will
-also be an excellent platform for developing interdisciplinary
-undergraduate research projects.  The PI has a proven track-record for
-following through with undergraduate and graduate educational plans.
-In 2004 and 2005, he organized NSF-sponsored summer schools on secure
-and reliable computing.  Last year, his undergraduate student advisee,
-Rob Simmons, won the Princeton Computer Science Senior Thesis Award.
-
+% \paragraph*{Broader Impacts:}  Kathleen Fisher, senior personnel, 
+% will work with other researchers at AT\&T to transfer our monitoring
+% technology to industry.  In addition, we will develop tools for
+% monitoring the health of PlanetLab, a global network research testbed
+% with 400-450 nodes and 200-250 network experiments running at any
+% given time.  Not only will our troubleshooting and diagnostic tools
+% will provide feedback to PlanetLab users and administrators, thereby
+% improving PlanetLab as a research facility for the entire networking
+% community, but these same tools will easily usable by individual
+% researchers to monitor their own experiments on PlanetLab. In effect,
+% we can provide a complete system to archive history, analyze data, and
+% present demonstrations, all from a simple data description.
+% 
+% PADS will also make a broad impact outside the networking community.
+% The kind of {\em ad hoc data} found in monitoring systems also appears
+% across the natural and social sciences, including biology, chemistry,
+% physics and economics.  The PADS specification language will be used to
+% specify the formats of these other data sources and to generate the
+% querying and visualization tools that help improve
+% the productivity of computational scientists.  To jumpstart this
+% research, we have already been meeting with Olga Troyanskaya,
+% professor in Princeton's Lewis-Sigler Institute for Integrative
+% Genomics, who does computational analysis of protein-protein
+% interactions, and with Rachel Mandelbaum, Ph.D. candidate in physics
+% who analyzes cosmology data.  It is clear that if funded, the PADS system
+% will make a broad impact on their research --- PADS will free them to use
+% their world-class skills on their {\em science} 
+% as opposed to labouring over development of data processing tools.
+% The collaboration between computer science, genomics and physics will
+% also be an excellent platform for developing interdisciplinary
+% undergraduate research projects.  The PI has a proven track-record for
+% following through with undergraduate and graduate educational plans.
+% In 2004 and 2005, he organized NSF-sponsored summer schools on secure
+% and reliable computing.  Last year, his undergraduate student advisee,
+% Rob Simmons, won the Princeton Computer Science Senior Thesis Award.
+% 
