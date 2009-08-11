@@ -27,12 +27,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
+\begin{center}
+{\Large Technical Proposal}
+\end{center}
+
 %\begin{center}
 {\bf BAA Number:} BAA 09-029
 
 \vspace{.5in}
 
 {\bf Title of Proposal:}  
+
 Automatic Tool Generation, Monitoring, and Anomaly Detection for Networked Applications
 
 \vspace{.5in}
@@ -94,6 +99,8 @@ email \\
 
 \input{summary}
 
+\newpage
+
 \section{Technical Approach and Justification}
 
 \input{intro}
@@ -111,52 +118,66 @@ email \\
 
 \input{future-naval}
 
-
+\newpage
 \section{Project Schedule and Milestones}
 
+Task 1 -- PADS compiler development
 \begin{itemize}
-\item Year 1:  Re-design of \pads{} specification language and engine
-  \begin{itemize}
-    \item Design and implement new algorithms for
-            the \pads{} engine that will provide the necessary compositionality 
-            properties as well as the performance to scale to massive file sizes.
-  \end{itemize}
-\item Year 1:  Format inference, part 1
-  \begin{itemize}
-    \item Design, implement new algorithms for the five main phases of the format inference 
-      engine: Chunking, tokenization, structure discovery, scoring and format rewriting.
-  \end{itemize}
-\item Year 1:  Format inference, part 2
-  \begin{itemize}
-    \item design and implement new incremental inference algorithms that can
-      scale to handle log files at least one million lines long.
-  \end{itemize}
-\item Year 2:  Design of multi-source description language
-  \begin{itemize}
-    \item extend \pads{} specification language with the capacity to describe
-          collections of system and application log files 
-  \end{itemize}  
-\item Year 3:  Format inference, part 3
-  \begin{itemize}
-    \item extend format inference engine to enable learning of the structure
-       of multi-level, multi-source archives
-  \end{itemize}
+\item (a) New algorithms for compositional data-dependent parsing
+\item (b) Language support for repository/archive specification
+\item (c) Tool generation for repository specifications
+\end{itemize}
+
+Task 2 -- Classification of Live Data
+\begin{itemize}
+\item (a) Collection of (live) wire data from multiple sources
+\item (b) Tracking of data by application, ports, wire formats
+\item (c) Classification of documented formats from RFCs, file converters, etc
+\item (d) Analysis of wire formats by language/runtime 
+\item (e) Entropy-based matching of unknown data to existing formats
+\end{itemize}
+
+Task 3 -- Format Inference
+\begin{itemize}
+\item (a) Collection of log files from popular applications
+\item (b) Application and evaluation of prototype inference engine to application data
+\item (c) New algorithms for chunking, tokenization, structure discovery, rewriting of individual logs
+\item (d) Design and implementation of new incremental inference algorithms that can scale to handle log files in range of millions of lines
+\item (e) New algorithms for format inference for collections of log files
+\end{itemize}
+
+Task 4 -- Monitoring system integration
+\begin{itemize}
+\item (a) Automatic configuration of monitoring system from inferred data format
+\item (b) Algorithms for appropriate classification, trending, and anomaly detection using live data
+\item (c) Tool generation for forensic analysis of historical repositories
 \end{itemize}
 
 \section{Assertion of Data Rights}
 
 There is no proprietary software or data associated with the project.
 
+\newpage
 \section{Deliverables}
 
 The main deliverables of this proposal are:
 
 \begin{itemize}
-\item The \pads{} domain-specification language and compiler.
-\item The \pads{} format inference engine.
-\item Comon?
+\item PADS software -- blah blah blah
+
+\item Live Data Repository
+
+\item Log Collection
+
+\item Library of Log File Formats
+
+\item CoMon
+
+\item Log File Inference Engine
+
 \end{itemize}
 
+\newpage
 \section{Management Approach}
 
 \subsection{Facilities available}
@@ -195,9 +216,10 @@ technologies.  They will jointly supervise students and postdoctoral
 researchers working on language design and format inference components
 of the research.
 
+\newpage
 \section{Current and Pending Project and Proposal Submissions}
 
-[michele said she could get this for us.]
+All Current and Pending goes here
 
 %David Walker's work is supported by (1) NSF award CNS-0627650 ($1,100K
 %August 2006 - August 2010), (2) NSF award IIS 0612147 
@@ -206,6 +228,7 @@ of the research.
 
 %Vivek Pai's work is supported by
 
+\newpage
 \section{Qualifications}
 
 Our team is uniquely qualified to carry out this research as they
