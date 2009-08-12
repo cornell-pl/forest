@@ -6,24 +6,28 @@
 # various settings of optimizations. The learn size is 100 and the
 # chunk size is also 1000.
 
-@testfiles = ( 
-		"ai.big",
-		"pws", "interface.loop", 
-		"asl.log", "error_log", "access_log", 
-		"coblitz.access.20090618_000", 
-		"access.exlog.20090621_000",
-		"debug_getbig.20090624_000",
-		"dbg_req_redirect.20090624_000"
+@testfiles = (  "ai.3000", "asl.log",
+#		"ai.big",
+#		"pws", "interface.loop", 
+#		"coblitz.access.20090618_000", 
+#		"access.exlog.20090621_000",
+#		"debug_getbig.20090624_000",
+#		"dbg_req_redirect.20090624_000"
 	     );
 $numTimes = 3;
 $timeout = 10;
 $initsize = 500;
 $incsize = 100;
+$pads_home = `echo \$PADS_HOME`;
+chomp $pads_home;
+$arch = `$pads_home/ast-ast/bin/package.cvs`;
+chomp $arch;
 
 sub scan
 {
   (my $file) = @_;
-  my $score=0, $time=0;
+  my $score=0;
+  my $time=0;
   if (-e $file)
   { 
   open (FILE, "<$file") or die "Can't open $file!";
@@ -53,7 +57,7 @@ sub scan
 
 sub inc
 {
-  my ($file, $isize, $lsize) = @_;
+  (my $file, my $isize, my $lsize) = @_;
   my $score = 0;
   my $time = 0;
   my $exectime = 0;
@@ -62,12 +66,13 @@ sub inc
   {
     #print "Learning $file: opt_level = 3\n";
     $exectime = 0;
-    system ("increment -f $file -i $isize -l $lsize > $file.inc");
+    system ("increment -f $file -i $isize -l $lsize -output gen > $file.inc");
     ($score, $exectime) = scan ("$file.inc");
     unlink("$file.inc");
     if (!$score) {last;} #timeout reached
     $time += $exectime;
     $num++;
+    printf ("$file (inc): time = %.2f  score = %.2f (try #$num)\n", $exectime, $score);
   }
   if ($num > 0) {
     $time = $time/$num; 
@@ -76,16 +81,38 @@ sub inc
   else {return (0, 0);}
 }
 
+sub verify
+{
+ (my $name, my $datafile) = @_;
+ my $badrate = 101.0;
+ system ("cd gen; make $name-accum >&/dev/null");
+ system ("gen/$arch/$name-accum $datafile >& $datafile.accum");
+ open (FILE, "<$datafile.accum") or die "Can't open $datafile.accum!";
+ while (<FILE>)
+ {
+  if (/.*pcnt-bad:\s*([0-9.]+).*/)
+  {
+   $badrate = $1;
+   last;
+  }
+ }
+ unlink "$datafile.accum";
+ return (100.00 - $badrate);
+}
+
 $largefile = shift @ARGV;
 if (!$largefile) {
-  print "Usage: wasl-run.pl LARGE_FILE [-small] [-scale] [-incsize]
+  print "Usage: wasl-run.pl LARGE_FILE [-small] [-scale] [-incsize] [-verify]
 
 LARGE_FILE must have at least 10K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
           test files are stored in pads/infer/examples/data and they must be in the 
           currect working directory.
 -scale:   run the scaling tests on LARGE_FILE.
--incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.\n";
+-incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.
+-verify:  output the accuracy rate of the description by running accumulator - negative
+          rate means either accumulator cannot be built from description or -verify
+          switch wasn't turned on\n";
   exit;
 }
 
@@ -105,6 +132,7 @@ if ($otherargs =~ /.*-small.*/) {
     $time = 0;
     $score = 0;
     $num = 0;
+    my $rate = -1;
     for ($i=0; $i<$numTimes; $i++)
     {
      $exectime = 0;
@@ -115,16 +143,29 @@ if ($otherargs =~ /.*-small.*/) {
      #system("rm -f $test.output");
      if (!$score) {last;} #time out reached
      $num++;
+     printf ("$test (lrn): time = %.2f  score = %.2f (try #$num)\n", $exectime, $score);
     }
     if ($num > 0) {
       $time = $time/$num; #$num maybe less than $numTimes
-      print "$test (lrn): time = $time  score = $score (averaged from $num times)\n";
+      if ($otherargs =~ /.*-verify.*/)
+      {
+        $rate = verify($test, $test);
+      }
+      else {$rate = -1;}
+      printf ("$test (lrn): time = %.2f  score = %.2f  accuracy = %.2f\% (averaged from $num) tries\n", 
+		$time, $score, $rate);
     }
     else {
       print "$test (lrn): timed out\n";
     }
     ($time, $score) = inc($test, $initsize, $incsize);
-    print "$test (inc): time = $time  score = $score (averaged from $num times)\n";
+    if ($otherargs =~ /.*-verify.*/)
+    {
+      $rate = verify($test, $test);
+    }
+    else {$rate = -1;}
+    printf ("$test (inc): time = %.2f  score = %.2f  accuracy = %.2f\% (averaged from $num) tries\n", 
+		$time, $score, $rate);
   }
   print "End comparison tests on small files\n";
 }
@@ -138,7 +179,12 @@ if ($otherargs =~ /.*-scale.*/) {
   {
     system("head -n $i $largefile > $largefile.$i");
     ($time, $score) = inc ("$largefile.$i", $initsize, $incsize);
-    print "$largefile.$i (inc): time = $time  score = $score\n";
+    if ($otherargs =~ /.*-verify.*/)
+    {
+      $rate = verify("$largefile.$i", "$largefile.$i");
+    }
+    else {$rate = -1;}
+    printf ("$largefile.$i (inc): time = %.2f  score = %.2f  accuracy = %.2f\n", $time, $score, $rate);
     unlink ("$largefile.$i");
   }
   print "End scaling tests\n";
@@ -158,7 +204,15 @@ if ($otherargs =~ /.*-incsize.*/) {
     if (!$score) {
         print "$largefile (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
-    else {print "$largefile (init=$i, inc=$j): time = $time  score = $score\n";}
+    else {
+    	if ($otherargs =~ /.*-verify.*/)
+    	{
+          $rate = verify($largefile, $largefile);
+    	}
+    	else {$rate = -1;}
+        printf ("$largefile (init=$i, inc=$j): time = %.2f  score = %.2f  accuracy = %.2f\n", 
+		$time, $score, $rate);
+    }
    }
   }
   print "End init/incremental size tests\n";

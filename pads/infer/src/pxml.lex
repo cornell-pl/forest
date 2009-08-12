@@ -6,13 +6,14 @@
 %let begintag = \<[^!/][^>]*[^/]\>;
 %let endtag = \<\/{word}\>;
 %let dtag = \<{word}\/\>;
-%let literal = \<char\>[^<]+\<\/char\> | \<string\>[^<]+\<\/string\>;
+(* %let literal = \<char\>[^<]+\<\/char\> | \<string\>[^<]+\<\/string\>; *)
 %let cddata = \"[^\"]*\" | \'[^']*\' | [^<> \t\r\n]+;
 %let white = [ \t\r\n]+;
 %let begincdata = \<!\[CDATA\[;
 %let endcdata = \]\]\>;
-%let beginlit = \<char\> | \<string\>;
+(* %let beginlit = \<char\> | \<string\>;
 %let endlit = \<\/char\> | \<\/string\>;
+*)
 
 %defs (
 structure T = PxmlTokens
@@ -23,12 +24,14 @@ exception UnknownToken
 
 <INITIAL> {begincdata} => ( YYBEGIN (CDATA); continue() );
 <CDATA>   {endcdata}   => ( YYBEGIN (INITIAL); continue() );
-<CDATA>   .    => ( T.CData (yytext ) );     
+<CDATA>   .    => ( T.CData (yytext ) );
+(*     
 <INITIAL> {beginlit} => ( YYBEGIN (LIT); 
 			    T.BeginTag (String.substring(yytext, 1, size(yytext)-2)) );
 <LIT>     {endlit}   => ( YYBEGIN (INITIAL);
 			    T.EndTag (String.substring(yytext, 2, size(yytext)-3)) );
 <LIT>	  .    => ( T.CData (yytext) );
+*)
 <INITIAL> {begintag}   => (
 		let val s = (String.substring(yytext, 1, size(yytext)-2))
 		    val newsub = Substring.takel 

@@ -399,7 +399,7 @@ structure Incremental: sig
      if length args < 1 then
 	(print ("Usage: increment -f ORIG_DATA_FILE [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
 	"[-d INIT_DESC_XML] [-opt OPT_LEVEL (3)] [-tmout SECS (1800)] [-w ADC_WEIGHT (5)]\n" ^
-	"[-p FILE_TO_PARSE] [-varcard true/false]\nSizes are in # of lines\n");
+	"[-p FILE_TO_PARSE] [-output OUTPUT_DIR]\nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
@@ -461,14 +461,21 @@ structure Incremental: sig
 		(case (OS.Process.getEnv "LEARN_HOME") of
 		  SOME x => x
 		| NONE => "")
-	 (* create a directory to store the .p files *)
-	 val _ = if (OS.FileSys.isDir dir_name handle SysErr => (OS.FileSys.mkDir dir_name; true))
-		 then () else ()
-	 val subdir = (dir_name ^ "/" ^ learn_file)
-	 val _ = if (OS.FileSys.isDir subdir handle SysErr => (OS.FileSys.mkDir subdir; true))
-		 then () else ()
-	 val timestamp= Date.fmt "%Y-%m-%d_%H-%M-%S" (Date.fromTimeLocal (Time.now()))
-	 val timedir = subdir ^ "/" ^ timestamp
+	 val timedir = 
+	   case StringMap.find(argMap, "-output") of 
+	     NONE => 
+	       let 
+		 (* create a directory to store the .p files *)
+	 	 val _ = if (OS.FileSys.isDir dir_name handle SysErr => (OS.FileSys.mkDir dir_name; true))
+		    then () else ()
+	 	 val subdir = (dir_name ^ "/" ^ learn_file)
+	 	 val _ = if (OS.FileSys.isDir subdir handle SysErr => (OS.FileSys.mkDir subdir; true))
+		    then () else ()
+	 	 val timestamp= Date.fmt "%Y-%m-%d_%H-%M-%S" (Date.fromTimeLocal (Time.now()))
+	       in
+		 subdir ^ "/" ^ timestamp
+	       end
+	   | SOME x => x
 	 val _ = if (OS.FileSys.isDir timedir handle SysErr => (OS.FileSys.mkDir timedir; true))
 		 then () else ()
  	 (* val _ = List.app (fn s => print (s ^ "\n")) learn_lines *)
