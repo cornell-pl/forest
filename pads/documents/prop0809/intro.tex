@@ -3,15 +3,210 @@
 
 Complex systems must be {\em monitored} to proactively find problems,
 record/archive system health, oversee system operation, detect
-malicious processes or security violations, and perform a myriad of other tasks.
-The {\em monitoring subsystems} 
-that perform these tasks take a wide range of forms, 
-from embedded sensors that monitor physical processes to
-intrusion detection systems that monitor flows to a single
-organization  
-to large-scale systems
-that monitor the health and performance of hundreds to thousands of nodes
-on the Grid.
+malicious processes or security violations and perform a myriad of
+other tasks.  Unfortunately, application developers may lack the time
+or discipline to create monitoring tools and update them as necessary
+as the underlying applications change. As a result, complex systems
+are often under-monitored, and can fail in ways that the monitoring
+system cannot observe and help diagnose. Failures are therefore harder
+to diagnose, since the conditions that preceded the failure are often
+not captured.
+
+To address these problems, we propose to develop a unified {\em
+monitoring infrastructure} that can {\bf automatically} perform a
+number of tasks that are currently performed manually, if at all.
+This unified system should be able to include embedded sensors that
+monitor physical processes, machine-level monitors to manage server
+infrastructure, intrusion detection systems that monitor network
+traffic, and application-level monitors that can observe applications
+within a system. Monitoring should be able to span multiple such
+systems, spread across a facility or multiple locations. It should be
+both scalable and flexible, allowing collection of multiple types of
+data, and collection of large amounts of data.
+
+The goal of our research is to perform whole-system monitoring for
+complex systems, including the development of automated application
+monitoring and anomaly detection, for both small-scale and wide-area
+systems. Automation is one of the key differentiators between our
+proposal and existing off-the-shelf monitoring systems, and we believe
+that as systems grow more complex and data streams increase in size of
+diversity, automated monitoring provides the best hope for capturing
+and acting on the data transfers within a system.
+
+Our approach consists of three components: (1) a non-intrusive
+application traffic sniffer that performs automated characterization
+and analysis, (2) a high-level language, called PADS, capable of
+specifying the data that monitoring systems accumulate, archive, and
+present to users, and (3) a scalable monitoring system, CoMon, that
+can adaptively present new data sources and allow operators to analyze
+and visualize data across multiple domains.
+
+Focusing on automation and high-level processing addresses a number of
+shortcomings of modern monitoring systems. Automated format inference
+and parsing of ad-hoc data allows application data to be sniffed on
+the wire, without having to modify applications. The monitoring system
+can react as applications change or as new applications are
+introduced. By working from the live data, rather than a separate
+representation of it, the monitoring system always has access to the
+``ground truth'' rather than some abstraction that may fail to stay
+synchronized with its associated application.  While this approach may
+sound ambitious, we believe that automated monitoring is feasible and
+practical, and we discuss our approach later in the proposal.
+
+\subsection{Is Automated Monitoring Possible?}
+
+It is entirely reasonable to ask whether automated monitoring,
+including format inference and anomaly detection, is even
+possible. Given that monitoring systems typically require explicit
+configuration, automatic monitoring would present a significant
+advance over the state of the art.
+
+We have good reason to believe that our approach to automated
+monitoring is possible for a wide variety of applications, especially
+those that one would expect to encounter in a non-adversarial setting.
+To understand the process, consider the following steps individually:
+
+\begin{enumerate}
+\item Isolating traffic flows and associating them with applications
+\item Deriving formats and parsing data within flows
+\item Detecting anomalous traffic
+\item Querying archival data
+\end{enumerate}
+
+{\bf Isolating traffic flows} -- Assuming an appropriate network
+vantage point that can see all relevant traffic, application flows can
+be determined by noting that for most well-behaved application, port
+selection is not random for one end of the connection. In a
+client-server model, the client may choose a randomly-numbered
+ephemeral port for communication, but the server's port is likely to
+be something that's fixed across communications. This endpoint can be
+determined either by observing the TCP handshaking process or by
+observing port usage over time -- the fixed port is more likely to
+appear across multiple flows than the random port. While some
+applications, such as Skype or BitTorrent, may hop across ports to
+reduce the chance of detection, our goal is to monitor the custom
+network applications that are unlikely to have commercial monitoring
+systems available. In contrast, VOIP or BitTorrent traffic can already
+be tracked using commercially-available systems. Even other
+applications that may have legitimate reasons for hopping ports may be
+identifiable by deep packet inspection, which is part of our
+system. Given the identification of flows, associating flows with
+applications can be performed by having small stub programs running on
+the servers to be monitoring. These stubs would use data from netstat
+to identify which processes are associated with particular ports, and
+could examine the process tree in the /proc pseudo-filesystem to trace
+the processes to the applications that spawned them. Without these
+stubs, the system would still be usable, but could only report traffic
+types and port numbers, rather than application names.
+
+{\bf Parsing Data} -- Once application flows have been isolated, the
+contents of the flows can be examined to begin understanding the data
+formats and parsing their contents. The main observation here is that
+data sent on the wire is not likely to be random, but instead stem
+from application needs. So, applications may send integers, or
+strings, or floating-point numbers, and each of these formats has
+characteristic bit patterns. Strings are likely to be centered around
+the values representing characters rather than non-printing control
+sequences. Integers are likely to be centered around popular numbers,
+and IEEE floating-point numbers are likely to have specific patterns
+in the mantissa and exponent.  Likewise, applications are not likely
+to invent entirely new transport formats, so they may transfer raw
+binary data for C programs, or marshalled serialized data for Java
+programs, or data in particular representations (e.g., XDR) for
+specific RPC protocols. Given enough examples of the data from the
+applications, and given the space of known data formats, it is
+possible to derive likely candidates for the format of the application
+flows. These candidate formats can be exported to the operator for
+refinement and naming with human-friendly labels, or they can be used
+as-is. We intend to use the PADS system to describe the data flows,
+which will present a high-level representation of the data which the
+operator can modify as needed. By using PADS as the representation,
+the rest of the PADS toolchain can be invoked, which will
+automatically generate safe parsers for the data and generate
+stand-alone tools that can be used to query the archives.
+
+{\bf Detecting anomalies} -- Once the data streams can be parsed,
+volumes of data can be collected for analysis, with the understanding
+that applications are typically running without incident. By profiling
+the data, statistical models can be derived for each field to
+understand its typical behavior. Correlations between fields can also
+be tested, and these expected values can be presented to the operator
+in the same manner as the stream format gets presented. Over time,
+tighter confidence intervals can be determined for the data, and when
+the monitor encounters new data that is outside of the expected range,
+it can raise alerts based on the magnitude of the deviation and the
+sensitivity defined by the operator. The analysis can not only include
+the data contained within the streams, but also the type of traffic
+being handled. For example, if the monitor detects that a certain
+record format that normally represents 1\% of the traffic is appearing
+much more frequently, an alert can be raised on the frequency of the
+record itself, rather than just on the data within the record. Where
+possible, the operator or application developers are free to provide
+information on the expected range of values and when alerts should be
+raised, but even without augmentation, the montoring system can
+determined its own baselines for each record. Note that this anomaly
+detection is not guaranteed to be complete, but given the choice
+between no monitoring or automatic inference, the inference may
+provide a wealth of information that would otherwise be lost.
+
+{\bf Querying Archives} -- Once a traffic anomaly has been reported by
+the monitoring system, the operator can see what application was
+involved, what data was transferred, and what the expected range of
+values is for the underlying field. The monitoring system not only
+archives the data in operation, but also archives the format
+specification it has been using for that data. As a result, the
+operator might see that field 3, which typically has a positive value,
+is now negative. At this point, the application developer may wish to
+augment the automatically-generated PADS specification with more
+meaningful semantic information, such as replacing the label ``field
+3'' with its true meaning. The on-line monitoring system can be used
+to examine recent behavior of the traffic and can be used for simple
+queries, while the PADS-generated tools can be run against the more
+complete archive with arbitrarily complex queries. In doing so, the
+developer can see the history of communication across the application
+and the larger system, and can diagnose problems more easily by using
+historical information rather than trying to reactively add new
+instrumentation and hope that the problem recurs.
+
+\subsection{Architecture and Infrastructure}
+
+
+Two of the components of our system are PADS and CoMon, which not only
+provide some of the necessary infrastructure for the internals of our
+monitoring system, but which also provide benefits to the user-facing
+portions of the system.  PADS provides a comprehensive system for
+describing data in its native formats, and automatically generating
+tools to access the data, both for live and archival data. CoMon works
+with PADS to interactively present the data to operators, allowing
+them to query it, view it graphically, and analyze trends on the data,
+without having to provide manual configuration of the database.
+
+Moving away from manual parsing simplifies the system and provides the
+flexibility and security that hand-written parsers do not.  Given a
+high-level specification, either provided by the operator or inferred
+from the data, PADS will automatically generate a collection of
+reliable, secure, and high-performance libraries as well as all of the
+monitoring components, such as concurrently {\em ingesting/processing}
+data from any number of distributed sources, {\em archiving}
+(self-describing) data for later analysis, {\em querying} data to
+troubleshoot problems, and {\em displaying} statistical data summaries
+so users can monitor system health in real time.  As the system
+changes and evolves, implementers can change the high-level
+specifications and recompile to automatically obtain an improved
+monitoring system.  In addition, since code is automatically
+generated, as opposed to hand-written, it will not contain
+vulnerabilities that make other systems susceptible to buffer
+overflows and related attacks.  Finally, since PADS can describe the
+format of any data source, users will be able to automatically
+generate monitoring tools that interoperate with legacy software,
+data, and devices.  Hence, our research can have an
+immediate impact on the productivity of systems implementers by
+helping produce the next generation of monitoring systems.  Overall,
+our research will combine principled and innovative language design
+with high-performance systems engineering, all aimed at solving
+pervasive systems monitoring and measurement problems.
+
+
 
 At the heart of such monitoring systems is a complex, multifaceted
 data processing problem that involves, at a minimum, the following components.
