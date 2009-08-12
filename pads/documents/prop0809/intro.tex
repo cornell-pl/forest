@@ -9,7 +9,7 @@ or discipline to create monitoring tools and update them as necessary
 as the underlying applications change. As a result, complex systems
 are often under-monitored, and can fail in ways that the monitoring
 system cannot observe and help diagnose. Failures are therefore harder
-to diagnose and may lead to significant vulnerabilities, since the 
+to diagnose, and may lead to significant vulnerabilities, since the 
 conditions that preceded the failure are often not captured.
 
 To address these problems, we propose to develop a unified {\em
@@ -29,29 +29,79 @@ complex systems, including the development of automated application
 monitoring and anomaly detection, for both small-scale and wide-area
 systems. Automation is one of the key differentiators between our
 proposal and existing off-the-shelf monitoring systems, and we believe
-that as systems grow more complex and data streams increase in size of
+that as systems grow more complex and data streams increase in size or
 diversity, automated monitoring provides the best hope for capturing
 and acting on the data transfers within a system.
 
-Our approach consists of three components: (1) a non-intrusive
-application traffic sniffer that performs automated characterization
-and analysis, (2) a high-level language, called PADS, capable of
-specifying the data that monitoring systems accumulate, archive, and
-present to users, and (3) a scalable monitoring system, CoMon, that
-can adaptively present new data sources and allow operators to analyze
-and visualize data across multiple domains.
+In order to achieve our
+goal, we will develop a {\em novel fusion of programming language and
+systems support for semi-automatic and fully
+automatic generation of monitoring tools and anomaly detection
+infrastructure for complex systems}.  To be specific, our core technology will consist of
+the following components: (1) a non-intrusive application traffic
+sniffer that performs automated data characterization and analysis,
+(2) a high-level, domain-specific programming language, called
+\pads{}, that allows users to specify the data that monitoring systems
+accumulate and present to users, (3) a compiler for \pads{} that will
+automatically generate data processing libraries, interfaces and tools
+from such specifications, (4) a data format inference engine capable
+of automatically generating the \pads{} descriptions themselves from
+collected data and (5) a scalable monitoring system, CoMon, that can
+adaptively present new data sources and allow operators to analyze and
+visualize data across multiple domains.
 
-Focusing on automation and high-level processing addresses a number of
-shortcomings of modern monitoring systems. Automated format inference
-and parsing of ad-hoc data allows application data to be sniffed on
-the wire, without having to modify applications. The monitoring system
-can react as applications change or as new applications are
-introduced. By working from the live data, rather than a separate
-representation of it, the monitoring system always has access to the
-``ground truth'' rather than some abstraction that may fail to stay
-synchronized with its associated application.  While this approach may
-sound ambitious, we believe that automated monitoring is feasible and
-practical, and we discuss our approach later in the proposal.
+% Our approach consists of three components: (1) a non-intrusive
+% application traffic sniffer that performs automated characterization
+% and analysis, (2) a high-level language, called PADS, capable of
+% specifying the data that monitoring systems accumulate, archive, and
+% present to users, and (3) a scalable monitoring system, CoMon, that
+% can adaptively present new data sources and allow operators to analyze
+% and visualize data across multiple domains.
+
+% Focusing on automation and high-level processing addresses a number of
+% shortcomings of modern monitoring systems. Automated format inference
+% and parsing of ad-hoc data allows application data to be sniffed on
+% the wire, without having to modify applications. The monitoring system
+% can react as applications change or as new applications are
+% introduced. By working from the live data, rather than a separate
+% representation of it, the monitoring system always has access to the
+% ``ground truth'' rather than some abstraction that may fail to stay
+% synchronized with its associated application.  While this approach may
+% sound ambitious, we believe that automated monitoring is feasible and
+% practical, and we discuss our approach later in the proposal.
+
+This approach addresses a number of shortcomings of modern monitoring
+systems.  First, the \pads{} specification language provides a 
+way to create high-level, uniform, easy-to-understand {\em documentation}
+of all data processed or transmitted by any system component, 
+including legacy components, without having to modify or alter existing
+systems or
+application in any way.  Second, this documentation is 
+{\em executable} --- the
+\pads{} compiler will automatically generate a collection of
+reliable, secure, and high-performance libraries and interfaces
+to perform all low-level data processing tasks such as ingesting
+data from multi-source archives, detecting and reporting
+errors, gathering statistics, 
+transforming data into standard formats and providing
+general-purpose programmatic interfaces.  Third, generated
+tools are {\em trustworthy} and {\em reliable} -- unlike manually 
+implemented tools, there will be no security vulnerabilities due
+buffer overruns or other such low-level, manual coding errors.
+Fourth, generated tools are {\em evolvable} -- a simple change to
+a specification, and recompilation, will generate new tools for
+an evolving format.  Fourth, new, unknown data, can be analyzed
+via novel format inference algorithms, which will automatically generate
+candidate specifications for a user to inspect.  If the user
+is satisfied with the candidate specification, the \pads{} compiler
+may be invoked on the inferred specification and new tools generated,
+{\em all with just a press of a button}.
+Fifth, automatically generated data-processing tools and libraries 
+can be linked in to the CoMon monitoring
+system allowing users to query
+data, view it graphically, and analyze trends, all in real
+time and without having
+to provide manual configuration or loading of a database.
 
 \subsection{Is Automated Monitoring Possible?}
 
@@ -211,10 +261,10 @@ pervasive systems monitoring and measurement problems.
 At the heart of such monitoring systems is a complex, multifaceted
 data processing problem that involves, at a minimum, the following components.
 \begin{enumerate}
-\item collection and aggregation of information 
+\item collection, classification and aggregation of information 
 distributed across the monitored system.
 \item data archiving for later querying, measurement, security auditing and 
-post-mortem defect detection
+post-mortem forensic analysis
 \item querying and information extraction from archived or current, online data
 \item presentation and graphical display to administrators and users.
 \end{enumerate}
