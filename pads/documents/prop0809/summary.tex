@@ -11,16 +11,11 @@
 
 % \paragraph*{Intellectual Merits:} 
 
-Complex systems must be {\em monitored} to proactively find problems,
-record/archive system health, oversee system operation, detect
-malicious processes or security violations and perform a myriad of
-other tasks.  Unfortunately, application developers may lack the time
-or discipline to create monitoring tools and update them as necessary
-as the underlying applications change. As a result, complex systems
-are often under-monitored, and can fail in ways that the monitoring
-system cannot observe and help diagnose.
-
-A unified {\em monitoring infrastructure} to perform such tasks should
+Complex networked systems and applications must be {\em monitored} to
+proactively find problems, record/archive system health, oversee
+system operation, detect malicious processes or security violations
+and perform a myriad of other tasks.  
+The monitoring infrastructure necessary to perform such tasks should
 be able to include embedded sensors that monitor physical processes,
 machine-level monitors to manage server infrastructure, intrusion
 detection systems that monitor network traffic, and application-level
@@ -28,51 +23,120 @@ monitors that can observe applications within a system. Monitoring
 should be able to span multiple such systems, spread across a facility
 or multiple locations.
 
-The goal of our research is to perform whole-system monitoring for
-complex systems, including the development of automated application
-monitoring and anomaly detection, for both small-scale and wide-area
-systems. Our approach consists of three components: (1) a
-non-intrusive application traffic sniffer that performs automated
-characterization and analysis, (2) a high-level language, called PADS,
-capable of specifying the data that monitoring systems accumulate,
-archive, and present to users, and (3) a scalable monitoring system,
-CoMon, that can adaptively present new data sources and allow
-operators to analyze and visualize data across multiple domains.
+Unfortunately, developing and maintaining such monitoring
+infrastructure is a tremendously difficult, costly and error-prone
+enterprise. A substantial part of the problem is simple due to the
+fact that the data produced by networked systems and applications is
+often so varied and voluminous, so poorly documented and so filled
+with errors.  Consequently, application developers normally lack the time,
+skill or discipline to create robust monitoring tools, and, even if they do,
+keeping their tools up to date as the underlying applications change
+is an enormously challenging and time-consuming enterprise.  As a
+result, complex systems are usually {\em under-monitored}, can
+fail in ways that the monitoring system cannot observe or help
+diagnose, and can leave high-value systems vulnerable to threats
+of all kinds.
+
+The goal of our research is to perform comprehensive, whole-system
+monitoring for complex systems, which may include legacy software
+systems and devices, but without placing impractical demands on system
+administrators and application developers.  In order to achieve our
+goal, we will develop a {\em novel fusion of programming language and
+systems support for semi-automatic and fully
+automatic generation of monitoring tools and anomaly detection
+infrastructure for complex systems}.  To be specific, our core technology will consist of
+the following components: (1) a non-intrusive application traffic
+sniffer that performs automated data characterization and analysis,
+(2) a high-level, domain-specific programming language, called
+\pads{}, that allows users to specify the data that monitoring systems
+accumulate and present to users, (3) a compiler for \pads{} that will
+automatically generate data processing libraries, interfaces and tools
+from such specifications, (4) a data format inference engine capable
+of automatically generating the \pads{} descriptions themselves from
+collected data and (5) a scalable monitoring system, CoMon, that can
+adaptively present new data sources and allow operators to analyze and
+visualize data across multiple domains.
 
 This approach addresses a number of shortcomings of modern monitoring
-systems. Automated format inference and parsing of ad-hoc data allows
-application data to be sniffed on the wire, without having to modify
-applications. PADS provides a comprehensive system for describing data
-in its native formats, and automatically generating tools to access
-the data, both for live and archival data. CoMon works with PADS to
-interactively present the data to operators, allowing them to query
-it, view it graphically, and analyze trends on the data, without having
-to provide manual configuration of the database.
+systems.  First, the \pads{} specification language provides a 
+way to create high-level, uniform, easy-to-understand {\em documentation}
+of all data processed or transmitted by any system component, 
+including legacy components, without having to modify or alter existing
+systems or
+application in any way.  Second, this documentation is 
+{\em executable} --- the
+\pads{} compiler will automatically generate a collection of
+reliable, secure, and high-performance libraries and interfaces
+to perform all low-level data processing tasks such as ingesting
+data from multi-source archives, detecting and reporting
+errors, gathering statistics, 
+transforming data into standard formats and providing
+general-purpose programmatic interfaces.  Third, generated
+tools are {\em trustworthy} and {\em reliable} -- unlike manually 
+implemented tools, there will be no security vulnerabilities due
+buffer overruns or other such low-level, manual coding errors.
+Fourth, generated tools are {\em evolvable} -- a simple change to
+a specification, and recompilation, will generate new tools for
+an evolving format.  Fourth, new, unknown data, can be analyzed
+via novel format inference algorithms, which will automatically generate
+candidate specifications for a user to inspect.  If the user
+is satisfied with the candidate specification, the \pads{} compiler
+may be invoked on the inferred specification and new tools generated,
+{\em all with just a press of a button}.
+Fifth, automatically generated data-processing tools and libraries 
+can be linked in to the CoMon monitoring
+system allowing users to query
+data, view it graphically, and analyze trends, all in real
+time and without having
+to provide manual configuration or loading of a database.
 
-Moving away from manual parsing simplifies the system and provides the
-flexibility and security that hand-written parsers do not.  Given a
-high-level specification, either provided by the operator or inferred
-from the data, PADS will automatically generate a collection of
-reliable, secure, and high-performance libraries as well as all of the
-monitoring components, such as concurrently {\em ingesting/processing}
-data from any number of distributed sources, {\em archiving}
-(self-describing) data for later analysis, {\em querying} data to
-troubleshoot problems, and {\em displaying} statistical data summaries
-so users can monitor system health in real time.  As the system
-changes and evolves, implementers can change the high-level
-specifications and recompile to automatically obtain an improved
-monitoring system.  In addition, since code is automatically
-generated, as opposed to hand-written, it will not contain
-vulnerabilities that make other systems susceptible to buffer
-overflows and related attacks.  Finally, since PADS can describe the
-format of any data source, users will be able to automatically
-generate monitoring tools that interoperate with legacy software,
-data, and devices.  Hence, our research can have an
-immediate impact on the productivity of systems implementers by
-helping produce the next generation of monitoring systems.  Overall,
-our research will combine principled and innovative language design
-with high-performance systems engineering, all aimed at solving
-pervasive systems monitoring and measurement problems.
+% as well as all of the
+% monitoring components, such as concurrently {\em ingesting/processing}
+% data from any number of distributed sources, {\em archiving}
+% (self-describing) data for later analysis, {\em querying} data to
+% troubleshoot problems, and {\em displaying} statistical data summaries
+% so users can monitor system health in real time.
+
+% and automatically generate
+% data processing tools, libraries and interfaces that may be linked into
+% a comprehensive monitoring framework.  Third, a format inference engine
+% will be able to read 
+% Automated format inference and parsing of ad-hoc data allows
+% application data to be sniffed on the wire, without having to modify
+% applications. PADS provides a comprehensive system for describing data
+% in its native formats, and automatically generating tools to access
+% the data, both for live and archival data. CoMon works with PADS to
+% interactively present the data to operators, allowing them to query
+% it, view it graphically, and analyze trends on the data, without having
+% to provide manual configuration of the database.
+
+% Moving away from manual parsing simplifies the system and provides the
+% flexibility and security that hand-written parsers do not.  Given a
+% high-level specification, either provided by the operator or inferred
+% from the data, PADS will automatically generate a collection of
+% reliable, secure, and high-performance libraries as well as all of the
+% monitoring components, such as concurrently {\em ingesting/processing}
+% data from any number of distributed sources, {\em archiving}
+% (self-describing) data for later analysis, {\em querying} data to
+% troubleshoot problems, and {\em displaying} statistical data summaries
+% so users can monitor system health in real time.  As the system
+% changes and evolves, implementers can change the high-level
+% specifications and recompile to automatically obtain an improved
+% monitoring system.  In addition, since code is automatically
+% generated, as opposed to hand-written, it will not contain
+% vulnerabilities that make other systems susceptible to buffer
+% overflows and related attacks.  Finally, since PADS can describe the
+% format of any data source, users will be able to automatically
+% generate monitoring tools that interoperate with legacy software,
+% data, and devices.  
+
+In summary, this research will combine principled and innovative
+language design with high-performance systems engineering, with the
+goal of solving pervasive systems monitoring and measurement problems.
+It will have an immediate impact on the
+productivity of systems implementers by helping produce the next
+generation of monitoring systems.
+
 
 % \paragraph*{Broader Impacts:}  Kathleen Fisher, senior personnel, 
 % will work with other researchers at AT\&T to transfer our monitoring
@@ -111,49 +175,51 @@ pervasive systems monitoring and measurement problems.
 % Rob Simmons, won the Princeton Computer Science Senior Thesis Award.
 % 
 
-\section*{Major Tasks and Subtasks by Year}
+\paragraph*{Major Tasks and Subtasks.}
+We have four main tasks: (1) PADS compiler development, 
+(2) Classification of Live Data, (3) Application Log File Format Inference,
+and (4) Monitoring system integration.  Each task has subtasks
+(labelled 1.a, 1.b, {\em etc.}) to be completed as follows.
 
-We have four main tasks, with each task containing a number of
-subtasks, such as 1.a, 2.a, etc.  These tasks and subtasks are
-presented below, first arranged by major task, and then broken into
-years.
-
-\begin{itemize}
-\item Task 1 -- PADS compiler development
-\item Task 2 -- Classification of Live Data
-\item Task 3 -- Application Log File Format Inference
-\item Task 4 -- Monitoring system integration
-\end{itemize}
+% \begin{itemize}
+% \item Task 1 -- PADS compiler development
+% \item Task 2 -- Classification of Live Data
+% \item Task 3 -- Archival Data Format Inference
+% \item Task 4 -- Monitoring system development
+% \end{itemize}
 
 
 \noindent
 {\bf Year 1}
 \begin{itemize}
-\item 1.a New algorithms for compositional data-dependent parsing
-\item 2.a Collection of (live) wire data from multiple sources
-\item 2.b Tracking of data by application, ports, wire formats
-\item 3.a Collection of log files from popular applications
-\item 3.b Application and evaluation of prototype inference engine to application data
-\item 3.c New algorithms for chunking, tokenization, structure discovery, rewriting of individual logs
-\item 4.a Automatic configuration of monitoring system from inferred data format
+\item 1.a Implementation of new PADS compiler to support format inference 
+(builds on experience from PADS prototype)
+\item 2.a Collection of (live) wire data from networked applications
+\item 3.a Collection of (archival) log files from networked applications
+\item 2.b/3.b Build library of PADS specifications for common data formats
+\item 3.c Implementation of format inference for {\em individual} (archival) log files
+(builds on experience from inference prototype)
+\item 4.a Development of algorithms for automatic configuration of CoMon monitoring system 
+from format specifications (builds on experience from CoMon prototype)
 \end{itemize}
 
 \noindent
 {\bf Year 2}
 \begin{itemize}
-\item 1.b Language support for repository/archive specification
-\item 2.c Classification of documented formats from RFCs, file converters, etc
-\item 2.d Analysis of wire formats by language/runtime 
-\item 3.d Design and implementation of new incremental inference algorithms that can scale to handle log files in range of millions of lines
-\item 4.b Algorithms for appropriate classification, trending, and anomaly detection using live data
+\item 1.b Design and implementation of new linguistic features for data archive specification
+\item 2.c Development of algorithms for classifying data by application, ports, wire formats
+\item 3.c Development of algorithms to scale format inference engine to handle high-volume 
+data
+\item 4.b Development of algorithms for classification, trending, and 
+anomaly detection using live data
 \end{itemize}
 
 \noindent
 {\bf Year 3}
 \begin{itemize}
-\item 1.c Tool generation for forensic repository analysis
-\item 2.e Entropy-based matching of unknown data to existing formats
-\item 3.e New algorithms for format inference for collections of log files
+\item 1.c Development of tool generation infrastructure for forensic analysis of data archives
+\item 2.d Development of algorithms for entropy-based matching of unknown data to existing formats
+\item 3.d Development of algorithms for format inference for {\em entire archives} of log files
 \end{itemize}
 
 
