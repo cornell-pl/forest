@@ -5,39 +5,41 @@ Complex systems must be {\em monitored} to proactively find problems,
 record/archive system health, oversee system operation, detect
 malicious processes or security violations and perform a myriad of
 other tasks.  Unfortunately, application developers may lack the time, skill
-or discipline to create monitoring tools and update them as necessary
+or discipline to create monitoring tools and update them 
 as the underlying applications change. As a result, complex systems
 are often under-monitored, and can fail in ways that the monitoring
 system cannot observe and help diagnose. Failures are therefore harder
-to diagnose, and may lead to significant vulnerabilities, since the 
+to diagnose, and may lead to significant vulnerabilities, because the 
 conditions that preceded the failure are often not captured.
 
 To address these problems, we propose to develop a unified {\em
 monitoring infrastructure} that can {\bf automatically} perform a
 number of tasks that are currently performed manually, if at all.
-This unified system should be able to include embedded sensors that
+This unified system should be able to include embedded sensors to
 monitor physical processes, machine-level monitors to manage server
-infrastructure, intrusion detection systems that monitor network
-traffic, and application-level monitors that can observe applications
-within a system. Monitoring should be able to span multiple such
+infrastructure, intrusion detection systems to monitor network
+traffic, and application-level monitors to observe applications
+within a system. Monitoring should span multiple such
 systems, spread across a facility or multiple locations. It should be
-both scalable and flexible, allowing collection of multiple types of
-data, and collection of large amounts of data.
+scalable and flexible, allowing the collection of multiple types
+and large amounts of data.
 
-The goal of our research is to perform whole-system monitoring for
-complex systems, including the development of automated application
-monitoring and anomaly detection, for both small-scale and wide-area
-systems. Automation is one of the key differentiators between our
-proposal and existing off-the-shelf monitoring systems, and we believe
-that as systems grow more complex and data streams increase in size or
+%This sentence doesn't add anything over the previous paragraph.
+%The goal of our research is to perform whole-system monitoring for
+%complex systems, including the development of automated application
+%monitoring and anomaly detection, for both small-scale and wide-area
+%systems. 
+
+% If there are other key differentiators, they should be mentioned here?
+Automation is the key differentiator between our
+proposal and existing off-the-shelf monitoring systems. 
+As systems grow more complex and data streams increase in size and
 diversity, automated monitoring provides the best hope for capturing
-and acting on the data transfers within a system.
-
-In order to achieve our
-goal, we will develop a {\em novel fusion of programming language and
-systems support for semi-automatic and fully
-automatic generation of monitoring tools and anomaly detection
-infrastructure for complex systems}.  To be specific, our core technology will consist of
+and acting on the behaviors of the system. {\em Consequently, our system
+will semi- and fully automatically generate monitoring and
+anomaly detection tools for complex systems using a novel fusion of
+programming language and systems techniques}.
+Specifically, our core technology will consist of
 the following components: (1) a non-intrusive application traffic
 sniffer that performs automated data characterization and analysis,
 (2) a high-level, domain-specific programming language, called
@@ -45,10 +47,10 @@ sniffer that performs automated data characterization and analysis,
 accumulate and present to users, (3) a compiler for \pads{} that will
 automatically generate data processing libraries, interfaces and tools
 from such specifications, (4) a data format inference engine capable
-of automatically generating the \pads{} descriptions themselves from
+of automatically generating \pads{} descriptions from
 collected data and (5) a scalable monitoring system, CoMon, that can
-adaptively present new data sources and allow operators to analyze and
-visualize data across multiple domains.
+adaptively present new data sources to operators, allowing them to
+analyze and visualize data across multiple domains.
 
 % Our approach consists of three components: (1) a non-intrusive
 % application traffic sniffer that performs automated characterization
@@ -85,24 +87,24 @@ data from multi-source archives, detecting and reporting
 errors, gathering statistics, 
 transforming data into standard formats and providing
 general-purpose programmatic interfaces.  Third, generated
-tools are {\em trustworthy} and {\em reliable} -- unlike manually 
-implemented tools, there will be no security vulnerabilities due
+tools are {\em trustworthy} and {\em reliable}. Unlike manually 
+implemented tools, there will be no security vulnerabilities caused by
 buffer overruns or other such low-level, manual coding errors.
-Fourth, generated tools are {\em evolvable} -- a simple change to
-a specification, and recompilation, will generate new tools for
-an evolving format.  Fourth, new, unknown data, can be analyzed
-via novel format inference algorithms, which will automatically generate
-candidate specifications for a user to inspect.  If the user
-is satisfied with the candidate specification, the \pads{} compiler
-may be invoked on the inferred specification and new tools generated,
-{\em all with just a press of a button}.
-Fifth, automatically generated data-processing tools and libraries 
-can be linked in to the CoMon monitoring
-system allowing users to query
+Fourth, generated tools are {\em evolvable}. A simple change to
+a specification and recompilation will generate new tools for
+an evolving format.  Fifth, new data with unknown formats can be analyzed
+using novel format inference algorithms that automatically generate
+candidate specifications.  Users can inspect and if necessary modify
+such specifications. Once satisfied, they can invoke the \pads{}
+compiler to generate new tools {\em with just the press of a button}.
+Sixth, such automatically generated data-processing tools and libraries 
+can be linked to the CoMon monitoring
+system.  This linkage allows users to query
 data, view it graphically, and analyze trends, all in real
-time and without having
-to provide manual configuration or loading of a database.
+time and without having to load a database or configure the system manually.
 
-In the following subsections, we will explain the key components of
+
+
+In the following subsections, we explain the key components of
 our technical approach (1-5 listed above) and our research agenda in 
-further detail.
+more detail.
