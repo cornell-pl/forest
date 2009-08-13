@@ -40,25 +40,24 @@ The heart of the proposal involves the development of a highly modular, multi-ph
 format inference engine for application log files.  These phases include:
 
 \begin{itemize}
-\item {\bf Chunking:}  Dividing the data (either line-by-line, paragraph-by-paragraph,
-file-by-file) into chunks with similar structure
-\item {\bf Tokenization:}  The contents of every chunk of data must be divided up
-into {\em tokens} such as numbers, words, punctuation, dates, times, 
-ip addresses, phone numbers, etc.
-\item {\bf Structure Discovery:}  After tokenization, the structure discovery phase uses
-the tokenized data to produce a
-{\em candidate format} --- a good ``guess'' as to what the optimal format may look like.
-\item {\bf Format Scoring and Optimization:}  Once a candidate format has been produced,
-it must be {\em scored} ({\em ie,} evaluated according to some metric).  A set of rewriting 
-rules will be applied to the format for the purpose of transforming it into a 
-format with a superior score.  The scoring-rewriting loop will be repeated until
-no rewriting rule that increases the format score can be found.
+\item {\bf Chunking:}  Partition the data (either line-by-line,
+  paragraph-by-paragraph, or file-by-file) into chunks with similar structure.
+\item {\bf Tokenization:}  Convert each chunk of data into a list of 
+{\em tokens} such as numbers, words, punctuation, dates, times, IP addresses, phone numbers, etc.
+\item {\bf Structure Discovery:}  Use statistical analysis of token
+  frequencies to produce a {\em candidate format} --- a good ``guess''
+  as to what the optimal format may look like. 
+\item {\bf Format Scoring and Optimization:}  Score the format
+  according to a metric that measures how how compact and descriptive
+  it is.  Repeatedely apply a set of rewriting rules that reduce the
+  metric until no such rules exist.
 \end{itemize}
 
-We will assume that the chunking specification is given by the user.  However,
+We assume that the user specifies how to do chunking.  However,
 tokenization, structure discovery and format scoring and optimization are all
 fully automated.  Developing effective algorithms for these phases so they together 
-produce compact, human-readable descriptions requires much research. 
+produce compact, human-readable descriptions requires much research
+\textbf{KF Such as?}. 
 
 \paragraph*{Scaling to Large Data Sets.}  Learning the format of a large
 log file all at once is infeasible.  Hence, even if we discover perfect
