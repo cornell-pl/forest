@@ -1206,7 +1206,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 
   fun ppPEnumBranch pps {enumLabel,physNameOpt,labelValOpt,commentOpt} = 
       ( ppTag "label" PPL.addStr pps enumLabel
-      ; case physNameOpt of NONE => () | SOME physName => ppTag "physicalName" PPL.addStr pps physName
+      ; case physNameOpt of NONE => () | SOME physName => ppTag "physicalName" PPL.addStr pps (mkCStr physName)
       ; case labelValOpt of NONE => () | SOME labelVal => ppTag "value" ppPExpr pps labelVal
       ; case commentOpt  of NONE => () | SOME comment =>  ppTag "comment" PPL.addStr pps (mkCStr comment)
       )
