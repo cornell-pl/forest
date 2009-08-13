@@ -23,28 +23,28 @@ monitors that can observe applications within a system. Monitoring
 should be able to span multiple such systems, spread across a facility
 or multiple locations.
 
-Unfortunately, developing and maintaining such monitoring
+Unfortunately, developing and maintaining monitoring
 infrastructure is a tremendously difficult, costly and error-prone
-enterprise. A substantial part of the problem is simple due to the
-fact that the data produced by networked systems and applications is
-often so varied and voluminous, so poorly documented and so filled
+enterprise. A substantial part of the problem arises because
+the data produced by networked systems and applications is
+varied and voluminous, poorly documented and filled
 with errors.  Consequently, application developers normally lack the time,
 skill or discipline to create robust monitoring tools, and, even if they do,
-keeping their tools up to date as the underlying applications change
-is an enormously challenging and time-consuming enterprise.  As a
-result, complex systems are usually {\em under-monitored}, can
-fail in ways that the monitoring system cannot observe or help
-diagnose, and can leave high-value systems vulnerable to threats
-of all kinds.
+keeping their tools up-to-date as the underlying applications change
+is tedious and time-consuming.  As a
+result, complex systems are usually {\em under-monitored}. They can
+fail in ways the associated monitoring system cannot observe or help
+diagnose, leaving high-value systems vulnerable to a myriad of threats.
 
-The goal of our research is to perform comprehensive, whole-system
-monitoring for complex systems, which may include legacy software
-systems and devices, but without placing impractical demands on system
-administrators and application developers.  In order to achieve our
-goal, we will develop a {\em novel fusion of programming language and
-systems support for semi-automatic and fully
-automatic generation of monitoring tools and anomaly detection
-infrastructure for complex systems}.  To be specific, our core technology will consist of
+The goal of our research is to provide comprehensive, whole-system
+monitoring for complex systems
+%, which may include legacy software systems and devices, 
+without placing impractical demands on system
+administrators or application developers.  To achieve this
+goal, we will fuse {\em cutting-edge programming language and system
+techniques to semi- and/or fully automatically generate monitoring and
+anomaly detection tools for complex software}.
+To be specific, our core technology will consist of
 the following components: (1) a non-intrusive application traffic
 sniffer that performs automated data characterization and analysis,
 (2) a high-level, domain-specific programming language, called
@@ -52,7 +52,7 @@ sniffer that performs automated data characterization and analysis,
 accumulate and present to users, (3) a compiler for \pads{} that will
 automatically generate data processing libraries, interfaces and tools
 from such specifications, (4) a data format inference engine capable
-of automatically generating the \pads{} descriptions themselves from
+of automatically generating \pads{} descriptions from
 collected data and (5) a scalable monitoring system, CoMon, that can
 adaptively present new data sources and allow operators to analyze and
 visualize data across multiple domains.
@@ -76,19 +76,17 @@ tools are {\em trustworthy} and {\em reliable} -- unlike manually
 implemented tools, there will be no security vulnerabilities due
 buffer overruns or other such low-level, manual coding errors.
 Fourth, generated tools are {\em evolvable} -- a simple change to
-a specification, and recompilation, will generate new tools for
-an evolving format.  Fourth, new, unknown data, can be analyzed
-via novel format inference algorithms, which will automatically generate
-candidate specifications for a user to inspect.  If the user
-is satisfied with the candidate specification, the \pads{} compiler
-may be invoked on the inferred specification and new tools generated,
-{\em all with just a press of a button}.
-Fifth, automatically generated data-processing tools and libraries 
-can be linked in to the CoMon monitoring
-system allowing users to query
+a specification and recompilation will generate new tools for
+the modified format.  Fifth, new data with unknown formats can be analyzed
+using novel format inference algorithms that automatically generate
+candidate specifications.  Users can inspect and if necessary modify
+such specifications. Once satisfied, they can invoke the \pads{}
+compiler to generate new tools {\em with just the press of a button}.
+Sixth, such automatically generated data-processing tools and libraries 
+can be linked to the CoMon monitoring
+system.  This linkage allows users to query
 data, view it graphically, and analyze trends, all in real
-time and without having
-to provide manual configuration or loading of a database.
+time and without having to load a database or configure the system manually.
 
 % as well as all of the
 % monitoring components, such as concurrently {\em ingesting/processing}
