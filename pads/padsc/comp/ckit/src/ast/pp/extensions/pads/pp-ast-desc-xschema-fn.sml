@@ -978,40 +978,21 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
        (* ; PPL.addStr pps "</params>" *)
        )
         
-  fun ppPDecl aidinfo tidtab pps (name, typarams) = 
-      ( PPL.addStr pps "<decl>"
+  fun ppPDecl ptyInfo aidinfo tidtab pps (name, typarams) = 
+      (  ppPModifiers pps ptyInfo
+       ; PPL.addStr pps "<decl>"
        ; blockify 2 (ppTag "name" PPL.addStr) pps name
        ; case typarams of [] => () | _ => blockify 2 (ppPTyParams aidinfo tidtab) pps typarams
        ; newline pps
        ; PPL.addStr pps "</decl>")
 
-  fun ppPRawDeclaration pps kind ptyInfo ppKind = 
+  fun ppPDeclaration pps kind ptyInfo ppKind = 
 	(PPL.addStr pps ("<"^kind^">" )
         ; blockify 2 ppKind pps ptyInfo
     	; newline pps
 	; PPL.addStr pps ("</"^kind^">" )
     	; newline pps
         )
-
-  fun ppPRecordDeclaration pps kind (ptyInfo:PTys.pTyInfo) ppKind = 
-       if #isRecord ptyInfo then 
-           ( PPL.addStr pps ("<record>")
-           ; newline pps
-           ; ppPRawDeclaration pps kind ptyInfo ppKind
-           ; PPL.addStr pps ("</record>")             
-           ; newline pps )
-        else 
-           ppPRawDeclaration pps kind ptyInfo ppKind
-
-  fun ppPDeclaration pps kind (ptyInfo:PTys.pTyInfo) ppKind = 
-       if #isSource ptyInfo then 
-           (PPL.addStr pps ("<source>")
-           ; newline pps
-           ; ppPRecordDeclaration pps kind ptyInfo ppKind
-           ; PPL.addStr pps ("</source>")             
-           ; newline pps)
-        else 
-           ppPRecordDeclaration pps kind ptyInfo ppKind
 
 (*
   PStruct Declaration
@@ -1035,7 +1016,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		  val typarams = #typarams ptyInfo
 		  val {fields,pred} = PTys.getStructInfo ptyInfo
 	      in
-	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
               ; newline pps
 	      ; ppPFields aidinfo tidtab pps fields
               ; ppPostConds pps pred
@@ -1055,7 +1036,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		  val {fields,pred,...} = PTys.getUnionInfo ptyInfo
 		  val (TyProps.Full{ty={tyCon, args},pred=fpred,...})::rs = fields
 	      in
-	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
 	      ; PPL.newline pps
 	      ; ppTy pps (tyCon,args) 
 (*	      ; ppTagIndent "base" ppTyApp pps (tyCon,args)  *)
@@ -1081,7 +1062,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	  fun ppPBranch aidinfo tidtab pps cf = ppTagIndent "branch" (ppBranchBody aidinfo tidtab) pps cf
 	  fun ppBranches aidinfo tidtab pps cfs =  separate (ppPBranch aidinfo tidtab, newline) pps cfs
           fun ppPSwitched aidinfo tidtab pps (desc, cases, fields) = 
-	      ( ppTag "expr" ppPExpr pps desc
+	      ( ppPExpr pps desc
               ; PPL.newline pps
 	      ; ppTagIndent "branches" (ppBranches aidinfo tidtab) pps (ListPair.zip(cases, fields))
 	      ) 
@@ -1090,7 +1071,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		  val typarams = #typarams ptyInfo
 		  val {descriminator, cases, fields,pred,...} = PTys.getUnionInfo ptyInfo
 	      in
-	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
               ; newline pps
 	      ; if PTys.isSwitchedUnion ptyInfo 
 		    then ppTagIndent "switched" (ppPSwitched aidinfo tidtab) pps (Option.valOf descriminator,cases,fields) 
@@ -1182,9 +1163,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		  val typarams = #typarams ptyInfo
 		  val {baseTy={tyCon,args}, delims, size, post} = PTys.getArrayInfo ptyInfo 
 	      in
-	      ( 
-	        ppPModifiers pps ptyInfo
-	      ; ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
               ; PPL.newline pps
               ; ppTy pps (tyCon, args)
               ; ppArrayDelims pps delims
@@ -1241,7 +1220,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	      val typarams = #typarams ptyInfo
 	      val (prefix,branches) = PTys.getEnumInfo ptyInfo
 	  in
-	      ( ppPDecl aidinfo tidtab pps (declName, typarams)
+	      ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
 	      ; PPL.newline pps 
 	      ; if prefix = "" then () else (ppTag "prefix" PPL.addStr pps (mkCStr prefix); PPL.newline pps)
               ; ppPEnumBranches pps branches 
@@ -1287,7 +1266,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 		  val typarams = #typarams ptyInfo
 		  val (_,predOpt) = PTys.getTypedefInfo ptyInfo
 	      in
-		  ( ppPDecl aidinfo tidtab pps (declName, typarams)
+		  ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
 		   ; PPL.newline pps
 		   ; ppTy pps (base, [])
 		   ; case predOpt of NONE => () | SOME {predTy,thisVar,pred} => (PPL.newline pps; ppPred pps (thisVar,pred))
@@ -1317,7 +1296,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	      let val declName = #repName ptyInfo
 		  val typarams = #typarams ptyInfo
 	      in
-		  (  ppPDecl aidinfo tidtab pps (declName, typarams)
+		  (  ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
 		   ; PPL.newline pps
 		   ; ppSide pps "physical" (srcName, srcArgs, sToD, sToDArgs)
 		   ; PPL.newline pps
@@ -1339,7 +1318,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	      let val declName = #repName ptyInfo
 		  val typarams = #typarams ptyInfo
 	      in
-		  (  ppPDecl aidinfo tidtab pps (declName, typarams)
+		  (  ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
 		   ; PPL.newline pps
 		   ; ppBase pps "spec" (baseName, baseArgs)
 		   )  
