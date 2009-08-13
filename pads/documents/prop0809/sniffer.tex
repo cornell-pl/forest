@@ -17,13 +17,13 @@ To understand the process, consider the following steps individually:
 \item Detecting anomalous traffic
 \end{enumerate}
 
-\paragraph*{Isolating traffic flows} -- Assuming an appropriate network
+\paragraph*{Isolating traffic flows} Assuming an appropriate network
 vantage point that can see all relevant traffic, application flows can
-be determined by noting that for most well-behaved application, port
+be determined by noting that for most well-behaved applications, port
 selection is not random for one end of the connection. In a
 client-server model, the client may choose a randomly-numbered
 ephemeral port for communication, but the server's port is likely to
-be something that's fixed across communications. This endpoint can be
+be something that is fixed across communications. This endpoint can be
 determined either by observing the TCP handshaking process or by
 observing port usage over time -- the fixed port is more likely to
 appear across multiple flows than the random port. While some
@@ -36,22 +36,22 @@ applications that may have legitimate reasons for hopping ports may be
 identifiable by deep packet inspection, which is part of our
 system. Given the identification of flows, associating flows with
 applications can be performed by having small stub programs running on
-the servers to be monitoring. These stubs would use data from netstat
-to identify which processes are associated with particular ports, and
+the monitored servers. These stubs would use data from \texttt{netstat}
+to identify which processes are associated with particular ports and
 could examine the process tree in the /proc pseudo-filesystem to trace
 the processes to the applications that spawned them. Without these
 stubs, the system would still be usable, but could only report traffic
 types and port numbers, rather than application names.
 
-\paragraph*{Deciphering Data} -- Once application flows have been isolated, the
+\paragraph*{Deciphering Data} Once application flows have been isolated, the
 contents of the flows can be examined to begin understanding the data
 formats and deciphering their contents. The main observation here is that
 data sent on the wire is not likely to be random, but instead stem
-from application needs. So, applications may send integers, or
-strings, or floating-point numbers, and each of these formats has
-characteristic bit patterns. Strings are likely to be centered around
-the values representing characters rather than non-printing control
-sequences. Integers are likely to be centered around popular numbers,
+from application needs. Applications may send strings, integers or
+floating-point numbers, and each of these formats has
+characteristic bit patterns. Strings are likely to contain
+values representing characters rather than non-printing control
+sequences, integers are likely to be popular numbers,
 and IEEE floating-point numbers are likely to have specific patterns
 in the mantissa and exponent.  Likewise, applications are not likely
 to invent entirely new transport formats, so they may transfer raw
@@ -69,26 +69,27 @@ the rest of the PADS toolchain can be invoked, which will
 automatically generate safe parsers for the data and generate
 stand-alone tools that can be used to query the archives.
 
-\paragraph*{Detecting anomalies} -- Once the data streams can be parsed,
-volumes of data can be collected for analysis, with the understanding
+\paragraph*{Detecting anomalies} Once the data streams can be parsed,
+volumes of data can be collected for analysis with the understanding
 that applications are typically running without incident. By profiling
 the data, statistical models can be derived for each field to
 understand its typical behavior. Correlations between fields can also
 be tested, and these expected values can be presented to the operator
-in the same manner as the stream format gets presented. Over time,
+in the same manner as the stream format. Over time,
 tighter confidence intervals can be determined for the data, and when
 the monitor encounters new data that is outside of the expected range,
 it can raise alerts based on the magnitude of the deviation and the
-sensitivity defined by the operator. The analysis can not only include
+sensitivity defined by the operator. The analysis can include not only 
 the data contained within the streams, but also the type of traffic
 being handled. For example, if the monitor detects that a certain
 record format that normally represents 1\% of the traffic is appearing
 much more frequently, an alert can be raised on the frequency of the
 record itself, rather than just on the data within the record. Where
-possible, the operator or application developers are free to provide
+possible, operators or application developers can provide
 information on the expected range of values and when alerts should be
-raised, but even without augmentation, the montoring system can
-determined its own baselines for each record. Note that this anomaly
+raised.  However, even without user-provided augmentation, the
+montoring system can determined baselines for each
+record. Note that this anomaly 
 detection is not guaranteed to be complete, but given the choice
 between no monitoring or automatic inference, the inference may
 provide a wealth of information that would otherwise be lost.
