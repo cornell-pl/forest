@@ -1,4 +1,4 @@
-%\documentclass[fleqn]{article}
+% \documentclass[fleqn]{article}
 %\documentclass[twocolumn,10pt]{article}
 \documentclass[nocopyrightspace,10pt]{sigplanconf}
 
@@ -36,7 +36,7 @@
 
 \begin{document}
 
-\title{Typing Directories\thanks{There no student authors.  If
+\title{Typing Directory Structures\thanks{There are no student authors.  If
     accepted, Kathleen will make the presentation.}}
 
 \authorinfo{Kathleen Fisher}
@@ -48,8 +48,8 @@
 \authorinfo{Kenny Q. Zhu}
 	   {Princeton University}
            {\small \tt kzhu@cs.princeton.edu}
+
 \maketitle{}
-\date{}
 
 
 Many applications, be they single programs or collections of programs,
@@ -81,7 +81,8 @@ particular application are in a good state do not exist.  Instead, each
 application writer must craft one-off tools or simply hope that errors
 do not arise. 
 
-To address this deficiency, we are designing \dirpads{}, a type-based language
+To address this deficiency, we are designing \dirpads{}, a type-based
+language 
 for specifying the files, directories, and symbolic links that
 constitute the data for an application, the relationships between
 them, and any required properties.  Individual files can be described
@@ -94,32 +95,37 @@ specifying patterns.   The language
 can express constraints on meta-data, such as
 owners, groups, permissions, and timestamps.  
 
-To give a flavor for the language, we show a fragment of the
+To give a flavor for the language, which uses a Haskell-like syntax,
+we show a fragment of the 
 description of the CVS version control system.  The type
-\cd{cvs\_d} describes a directory with three files, physically named
+\cd{cvs\_d} describes CVS meta-data directories, which contain three files, physically named
 \cd{Repository}, \cd{Root}, and \cd{Entries}. 
-The \pads{} type \cd{entries\_f} indicates the \cd{Entries} file 
-lists directories using format \cd{dir\_t}
-and files using format \cd{file\_t}.  Type \cd{cvs_rep_d} describes a
-directory under source code control, which has a subdirectory with
-internal name \cd{cvs} and lists of directories \cd{dirs} and files
-\cd{files}.  It define these lists using set comprehensions,
+The type of the \cd{Entries} file (\pads{} type \cd{entries\_f}) indicates it
+lists files using format \cd{file\_t}
+and directories using format \cd{dir\_t}.
+Type \cd{cvs_rep_d} describes any 
+directory under CVS control (\cd{Current} and \cd{d} in the
+graph).  Such a directory has a subdirectory with 
+internal name \cd{cvs} and 
+lists of files \cd{files} and   
+of directories \cd{dirs}.
+It defines these lists using set comprehensions,
 extracting information from the \cd{Entries}
 file (\cd{cvs.entries}), distinguishing between 
-directories and files using pattern matching, and then selecting the
-directory/file names using record selection.
+files and directories using pattern matching, and then selecting the
+file/directory names using record selection.
 
 
 %\begin{footnotesize}
 \begin{tightcode}
 \kw{ptype} repository_f = ...
 \kw{ptype} root_f = ...
-\kw{ptype} dir_t = \kw{precord} 
-  \{ "D/";  dname :: pstring "/";  "////"; \} 
 \kw{ptype} file_t = \kw{precord} 
   \{ "/";   fname :: pstring "/";   ... \}
+\kw{ptype} dir_t = \kw{precord} 
+  \{ "D/";  dname :: pstring "/";  "////"; \} 
 
-\kw{ptype} entry_t = Dir \kw{of} dir_t | File \kw{of} file_t
+\kw{ptype} entry_t = File \kw{of} file_t | Dir \kw{of} dir_t 
 \kw{ptype} entries_f = \kw{pfile} (entry_t plist)
 
 \kw{ptype} cvs_d = \kw{pdirectory} \{
@@ -129,10 +135,10 @@ directory/file names using record selection.
 
 \kw{ptype} cvs_rep_d = \kw{pdirectory} \{
   cvs   \kw{is} "CVS" :: cvs_d;
-  dirs  \kw{is} [ d.dname :: cvs_rep_d | 
-                  Dir  d <- cvs.entries ];
   files \kw{is} [ f.fname :: p_any      | 
                   File f <- cvs.entries ]; \}
+  dirs  \kw{is} [ d.dname :: cvs_rep_d | 
+                  Dir  d <- cvs.entries ];
 \end{tightcode}
 %\end{footnotesize}
 Such a description yields many benefits.  First, it can simply

@@ -39,7 +39,7 @@
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>44</integer>
@@ -73,7 +73,7 @@
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>36</integer>
@@ -107,7 +107,7 @@
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>51</integer>
@@ -141,7 +141,7 @@
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>43</integer>
@@ -180,7 +180,7 @@ f3}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>35</integer>
@@ -221,7 +221,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>34</integer>
@@ -253,7 +253,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -295,7 +295,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -337,7 +337,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -379,7 +379,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -421,7 +421,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -463,7 +463,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -507,7 +507,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>45</integer>
@@ -541,7 +541,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>1</integer>
@@ -573,7 +573,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -615,7 +615,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -657,7 +657,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -701,7 +701,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>41</integer>
@@ -735,7 +735,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>42</integer>
@@ -767,7 +767,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -809,7 +809,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -851,7 +851,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>Head</key>
 			<dict>
@@ -895,7 +895,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>33</integer>
@@ -929,7 +929,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>14</integer>
@@ -963,7 +963,7 @@ d}</string>
 				<key>Font</key>
 				<string>Helvetica</string>
 				<key>Size</key>
-				<real>13</real>
+				<real>14</real>
 			</dict>
 			<key>ID</key>
 			<integer>13</integer>
@@ -1087,7 +1087,7 @@ d}</string>
 		</dict>
 	</array>
 	<key>ModificationDate</key>
-	<string>2009-08-12 12:26:30 -0700</string>
+	<string>2009-08-13 14:25:20 -0700</string>
 	<key>Modifier</key>
 	<string>Kathleen Fisher</string>
 	<key>NotesVisible</key>
@@ -1164,7 +1164,7 @@ d}</string>
 		<key>FitInWindow</key>
 		<false/>
 		<key>Frame</key>
-		<string>{{35, 110}, {899, 736}}</string>
+		<string>{{1622, 265}, {899, 736}}</string>
 		<key>ShowRuler</key>
 		<false/>
 		<key>ShowStatusBar</key>
