@@ -184,7 +184,7 @@ if ($otherargs =~ /.*-scale.*/) {
       $rate = verify("$largefile.$i", "$largefile.$i");
     }
     else {$rate = -1;}
-    printf ("$largefile.$i (inc): time = %.2f  score = %.2f  accuracy = %.2f\n", $time, $score, $rate);
+    printf ("$largefile.$i (inc): time = %.2f  score = %.2f  accuracy = %.2f\%\n", $time, $score, $rate);
     unlink ("$largefile.$i");
   }
   print "End scaling tests\n";
@@ -210,7 +210,7 @@ if ($otherargs =~ /.*-incsize.*/) {
           $rate = verify($largefile, $largefile);
     	}
     	else {$rate = -1;}
-        printf ("$largefile (init=$i, inc=$j): time = %.2f  score = %.2f  accuracy = %.2f\n", 
+        printf ("$largefile (init=$i, inc=$j): time = %.2f  score = %.2f  accuracy = %.2f\%\n", 
 		$time, $score, $rate);
     }
    }
