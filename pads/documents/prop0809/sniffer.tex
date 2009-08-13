@@ -17,8 +17,7 @@ To understand the process, consider the following steps individually:
 \item Detecting anomalous traffic
 \end{enumerate}
 
-\noindent
-{\bf Isolating traffic flows} -- Assuming an appropriate network
+\paragraph*{Isolating traffic flows} -- Assuming an appropriate network
 vantage point that can see all relevant traffic, application flows can
 be determined by noting that for most well-behaved application, port
 selection is not random for one end of the connection. In a
@@ -44,8 +43,7 @@ the processes to the applications that spawned them. Without these
 stubs, the system would still be usable, but could only report traffic
 types and port numbers, rather than application names.
 
-\noindent
-{\bf Deciphering Data} -- Once application flows have been isolated, the
+\paragraph*{Deciphering Data} -- Once application flows have been isolated, the
 contents of the flows can be examined to begin understanding the data
 formats and deciphering their contents. The main observation here is that
 data sent on the wire is not likely to be random, but instead stem
@@ -71,8 +69,7 @@ the rest of the PADS toolchain can be invoked, which will
 automatically generate safe parsers for the data and generate
 stand-alone tools that can be used to query the archives.
 
-\noindent
-{\bf Detecting anomalies} -- Once the data streams can be parsed,
+\paragraph*{Detecting anomalies} -- Once the data streams can be parsed,
 volumes of data can be collected for analysis, with the understanding
 that applications are typically running without incident. By profiling
 the data, statistical models can be derived for each field to
