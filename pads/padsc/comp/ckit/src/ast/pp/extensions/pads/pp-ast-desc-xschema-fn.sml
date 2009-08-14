@@ -1331,6 +1331,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 
 
   fun ppPKind (ptyInfo : PTys.pTyInfo (* cmp-tys.sml*) ) aidinfo tidtab pps decl = 
+    if #fromNested ptyInfo then () else    (* Don't print decls that were generated from inline declarations *)
     ( PPL.newline pps
     ; case #info ptyInfo
       of TyProps.TransInfo     t => ppPTrans t ptyInfo aidinfo tidtab pps decl

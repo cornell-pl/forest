@@ -12,6 +12,7 @@ struct
 
   type pTyInfo = {info     : TyProps.tyInfo,
                   typarams : (string * Ast.ctype) list,
+                  fromNested : bool,
 		  diskSize : TyProps.diskSize,
                   compoundDiskSize : TyProps.compoundSize,
 		  memChar  : TyProps.memChar,
