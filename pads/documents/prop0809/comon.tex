@@ -1,13 +1,19 @@
 \begin{figure*}[t]
-\begin{minipage}{3.125in}
-\psfig{file=missing.ps,width=3.125in}
-\caption{Anomalous VM instances reported per application}
+\begin{minipage}[t]{3.5in}
+\psfig{file=pic_sliceprob.ps,width=3.5in}
+\caption{Anomalous VM instances reported per application. Note that
+these applications have between 72-529 VM instances, and 1 or 2 instances
+per application are being flagged due to anomalous numbers of processes
+or physical memory consumption.}
 \label{fig_comon_anomaly}
 \end{minipage}
 \hspace{.25in}
-\begin{minipage}{3.125in}
-\psfig{file=missing.ps,width=3.125in}
-\caption{Treemap of resource consumption on PlanetLab}
+\begin{minipage}[t]{2.75in}
+\psfig{file=pic_treemap.ps,width=2.75in}
+\caption{Treemap of resource consumption on PlanetLab. Rectangle size
+is proportional to CPU consumption, while color indicates deviation
+from weekly average. Red indicates higher than average, while green
+indicates lower than average.}
 \label{fig_comon_treemap}
 \end{minipage}
 \end{figure*}

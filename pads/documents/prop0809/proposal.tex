@@ -4,6 +4,7 @@
 %\usepackage{proof}
 %\usepackage{newcode}
 %\usepackage{epsfig}
+\usepackage{enumerate}
 \usepackage{psfig}
 
 % \usepackage{floatflt}
@@ -135,35 +136,40 @@ email \\
 
 Task 1 -- PADS compiler development
 \begin{itemize}
-\item (a) New algorithms for compositional data-dependent parsing (Year 1)
-\item (b) Language support for repository/archive specification (Year 2)
-\item (c) Tool generation for repository specifications (Year 3)
+\item (a) Implementation of new PADS compiler to support format inference (Year 1)
+\item (b) Design \& implement new linguistic features for data archive specification (Year 2)
+\item (c) Develop tool generation infrastructure for forensic analysis of data archives (Year 3)
 \end{itemize}
 
+\noindent
 Task 2 -- Classification of Live Data
 \begin{itemize}
-\item (a) Collection of (live) wire data from multiple sources (Year 1)
-\item (b) Tracking of data by application, ports, wire formats (Year 1)
-\item (c) Classification of documented formats from RFCs, file converters, etc. (Year 2)
-\item (d) Analysis of wire formats by language/runtime (Year 2)
-\item (e) Entropy-based matching of unknown data to existing formats (Year 3)
+\item (a) Collection of (live) wire data from networked applications (Year 1)
+\item (b) Build PADS specifications for wire formats (Year 1)
+\item (c) Development of algorithms to classify data by application, ports, wire formats (Year 2)
+\item (d) Development of algorithms for entropy-based matching of unknown data to existing formats (Year 3)
 \end{itemize}
 
+\noindent
 Task 3 -- Format Inference
 \begin{itemize}
-\item (a) Collection of log files from popular applications (Year 1)
-\item (b) Application and evaluation of prototype inference engine to application data (Year 2)
-\item (c) New algorithms for chunking, tokenization, structure discovery, rewriting of individual logs (Year 1)
-\item (d) Design and implementation of new incremental inference algorithms that can scale to handle log files in range of millions of lines (Year 2)
-\item (e) New algorithms for format inference for collections of log files (Year 3)
+\item (a) Collection of (archival) log files from networked applications (Year 1)
+\item (b) Build library of PADS specifications for common data formats (Year 1)
+\item (c) Implementation of format inference for {\em individual} (archival) log files (Year 1)
+\item (d) Development of algorithms to scale format inference engine to handle high-volume data (Year 2)
+\item (e) Development of algorithms for format inference for {\em entire archives} of log files (Year 3)
 \end{itemize}
 
+\noindent
 Task 4 -- Monitoring system integration
 \begin{itemize}
-\item (a) Automatic configuration of monitoring system from inferred data format (Year 1)
-\item (b) Algorithms for appropriate classification, trending, and anomaly detection using live data (Year 2)
-\item (c) Tool generation for forensic analysis of historical repositories (Year 3)
+\item (a) Development of algorithms for automatic configuration of CoMon monitoring system from format specifications (Year 1)
+\item (b) Development of algorithms for classification, trending, and 
+anomaly detection using live data (Year 2)
 \end{itemize}
+
+
+
 
 \section{Assertion of Data Rights}
 
