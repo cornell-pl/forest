@@ -128,7 +128,7 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
-GOLDENDATA := apache.txt error_log install.log quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 dibbler.1000 crashreporter.log crashreporter.log.modified railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an interface.loop rpmpkgs 
+GOLDENDATA := dependentArray.txt apache.txt error_log install.log quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 dibbler.1000 crashreporter.log crashreporter.log.modified railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an interface.loop rpmpkgs 
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))
@@ -301,6 +301,7 @@ simplexml:               $(IND)/simplexml               ; $(learn-it)
 windowserver_last.log:   $(IND)/windowserver_last.log   ; $(learn-it)
 yum.log:                 $(IND)/yum.log                 ; $(learn-it)
 yum.txt:                 $(IND)/yum.txt                 ; $(learn-it)
+dependentArray.txt:      $(IND)/dependentArray.txt      ; $(learn-it)
 
 ######################################################################
 #

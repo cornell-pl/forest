@@ -168,7 +168,11 @@ struct
           val recordLabel = 
 	    if numHeaders>0 orelse numFooters>0 then
 		let val l = getLabelString (getAuxInfo ty)
-	    	val id = String.extract (l, 4, NONE) in "struct_" ^ id end
+		in
+	    	  if String.substring(l, 0, 3) = "BTy" then
+			   "struct_" ^ (String.extract (l, 4, NONE))
+		  else l
+		end
 	    else
 		tyNameToPML (
                 case ty of

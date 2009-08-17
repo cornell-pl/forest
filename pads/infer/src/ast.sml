@@ -122,33 +122,39 @@ open Common
   fun getBaseTyName ty : TypeName =
         let
 	  val label = getLabelString (getAuxInfo ty)
-	  val id = String.extract (label, 4, NONE)
 	in
-	  case ty of 
-	    Base (_, (t, l)::_) => IRref ((tokenTyToName t) ^ "_" ^ id)
-	  | RefinedBase(_, re, _) => (
-		case re of 
-		  StringME _ => IRref ("stringME_" ^ id) 
-		| StringConst _ => IRref ("stringconst_" ^ id) 
-		| Int _ => IRref ("intrange_" ^ id) 
-		| IntConst _ => IRref ("intconst_" ^ id) 
-		| FloatConst _ => IRref ("floatconst_" ^ id) 
-		| Blob _ => IRref ("blob_" ^ id) 
-		| Enum _ => (print "Enum!\n"; raise TyMismatch)
-		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
-		)
-	  | _ => raise TyMismatch
-	end
+	  if String.substring (label, 0, 3) = "BTy" (* this is an auto-generated label *)
+	  then let val id = String.extract (label, 4, NONE)
+	       in
+        	  case ty of 
+        	    Base (_, (t, l)::_) => IRref ((tokenTyToName t) ^ "_" ^ id)
+        	  | RefinedBase(_, re, _) => (
+        		case re of 
+        		  StringME _ => IRref ("stringME_" ^ id) 
+        		| StringConst _ => IRref ("stringconst_" ^ id) 
+        		| Int _ => IRref ("intrange_" ^ id) 
+        		| IntConst _ => IRref ("intconst_" ^ id) 
+        		| FloatConst _ => IRref ("floatconst_" ^ id) 
+        		| Blob _ => IRref ("blob_" ^ id) 
+        		| Enum _ => (print "Enum!\n"; raise TyMismatch)
+        		| _ => raise TyMismatch (*enum and labelref shouldn't appear*)
+        		)
+        	  | _ => raise TyMismatch
+               end
+	  else IRref label
+   	end
 
   fun getTypeName ty : TypeName =
 	let
 	  val label = getLabelString (getAuxInfo ty)
-	  val id = String.extract (label, 4, NONE)
+	  val id = if String.substring (label, 0, 3) = "BTy" then
+		String.extract (label, 4, NONE)
+	        else ""
 	in
 	  case ty of
 	   Base (_, (t, l)::_) => tokenToTypeName t
-        |  Pstruct _             => IRref ("struct_" ^ id)
-        |  Punion _              => IRref ("union_" ^ id)
+        |  Pstruct _             => if id = "" then IRref label else IRref ("struct_" ^ id)
+        |  Punion _              => if id = "" then IRref label else IRref ("union_" ^ id)
         |  RefinedBase (aux, re, _) => 
 		(case re of Enum _ => IRref ("enum_" ^ id)
 			| StringME s => IRstringME s
@@ -168,9 +174,9 @@ open Common
 			    end
 			| _ => raise TyMismatch
 		)
-        |  Switch _        	 => IRref ("switch_"^id)
-        |  RArray _ 		 => IRref ("array_"^id)
-        |  Poption _           	 => IRref ("opt_"^id)
+        |  Switch _        	 => if id = "" then IRref label else IRref ("switch_"^id)
+        |  RArray _ 		 => if id = "" then IRref label else IRref ("array_"^id)
+        |  Poption _           	 => if id = "" then IRref label else IRref ("opt_"^id)
 	| _ => (printTy ty; raise TyMismatch)
 	end
 

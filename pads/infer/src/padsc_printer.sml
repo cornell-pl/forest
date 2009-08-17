@@ -231,7 +231,9 @@ open Ast
 			val body = List.nth (tys, numHeaders)
 			val footers = List.drop (tys, (numHeaders+1))
                         val l = getLabelString (getAuxInfo ty)
-                        val topLabel = "Struct_" ^ (String.extract (l, 4, NONE))
+                        val topLabel = if String.substring(l, 0, 3) = "BTy" then
+					"Struct_" ^ (String.extract (l, 4, NONE))
+				       else l
 			val headerty = case headers of
 					nil => NONE
 					| [h] => SOME h

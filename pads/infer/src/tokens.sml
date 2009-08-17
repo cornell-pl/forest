@@ -392,6 +392,8 @@ structure Tokens = struct
                 x + Int.toLarge ( lTokenLength t ) ) 0 ts
 
     fun avgTokenLength ( ts : LToken list ) : real =
+	if length ts = 0 then 0.0
+	else
         ( Real.fromLargeInt ( sumTokenLength ts ) ) /
         ( Real.fromInt ( length ts ) ) 
 

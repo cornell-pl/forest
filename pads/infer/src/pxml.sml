@@ -43,6 +43,13 @@ structure Pxml = struct
 	String.implode escaped_chars
     end
 
+  (* function to strip the single quotes or double quotes around a literal string *) 
+  fun strip s =
+   if (String.sub(s, 0) = #"\"" andalso String.sub(s, (size s)-1) = #"\"")
+      orelse (String.sub(s, 0) = #"'" andalso String.sub(s, (size s)-1) = #"'")
+   then String.substring (s, 1, (size s) - 2)
+   else s
+
 (*****************
    fun getName s xml = 
      case xml of
@@ -145,7 +152,7 @@ structure Pxml = struct
 		(
 		  case selectPCData ptype ["ptype", "argument"] of
 		    SOME arg =>
-			RefinedBase (aux, Blob (SOME arg, NONE), [(Pstring(""), loc)])
+			RefinedBase (aux, Blob (SOME (strip arg), NONE), [(Pstring(""), loc)])
 		  | _ =>
 			RefinedBase (aux, Blob (NONE, NONE), [(Pstring(""), loc)])
 		)
@@ -165,7 +172,7 @@ structure Pxml = struct
 		end
 	    else if tyName = "Pstring_SE" then (* this is a blob *)
 		let val arg = valOf(selectPCData ptype ["ptype", "argument"])
-		    val patt = String.substring (arg, 1, (size arg -2))
+		    val patt = strip arg
 		in
 		    if patt = "/$/" then
 			RefinedBase (aux, Blob (NONE, NONE), [])
@@ -179,7 +186,7 @@ structure Pxml = struct
      case xml of
        Element ("field", _) =>
 	let 
-	    (* val _ = print "In field \n" *)
+	    val _ = print "In field \n" 
 	    val varName = valOf (selectPCData xml ["field", "name"])
 	    val tyName = valOf (selectPCData xml ["field", "ptype", "name"])
 	    val cons = selectPCData xml ["field", "postConstraints", "expr", "native"]
@@ -207,8 +214,9 @@ structure Pxml = struct
 	end
      | Element ("literal", _) =>
 	let 
-	    (* val _ = print "In literal\n" *)
-	    val str = valOf (selectPCData xml ["literal", "_"])
+	    val _ = print "In literal\n" 
+	    val str = strip(valOf (selectPCData xml ["literal", "_"]))
+	    val _ = print ("the string = " ^ str ^ "\n")
 	    val loc = mkLoc 0 0 0 0
 	in [RefinedBase (mkTyAux (1), StringConst str, [(Pstring str, loc)])]
 	end
@@ -219,10 +227,19 @@ structure Pxml = struct
 	    val re = 
 		case cs of
 		  SOME (Element ("case", [Element ("default", _)])) => StringConst ("*")
-		| SOME (Element ("case", [PCData csval])) => 
+		| SOME (Element ("case", [PCData csval])) => (* integer *)
 		  if Substring.isSubstring "int" (Substring.full switchty) then
 		     IntConst (valOf (LargeInt.fromString csval))
-		     else StringConst csval
+		  else (print ("Bad xml:\n" ^ (toString "" xml)); raise InvalidXML)
+		| SOME (Element ("case", [expr_xml])) => 
+			let val label = valOf(selectPCData expr_xml ["expr", "native"])
+			in
+			(
+			  case StringMap.find(!env, label) of
+			    SOME s => StringConst(strip s)
+			  | _ => raise InvalidXML
+			)
+			end
 		| _ => (print ("Bad xml:\n" ^ (toString "" xml)); raise InvalidXML)
 	    val field = valOf(search [xml] ["branch", "body", "field"])
 	    val branchTy = hd (fieldToIRs map field)
@@ -231,30 +248,37 @@ structure Pxml = struct
 	end
 	
    and xmlToIR map xml =
-    let val _ = () (* print ("Processing XML element:\n" ^ toString "" xml) *)
+    let val _ = print ("Processing XML element:\n" ^ toString "" xml) 
     in
     case xml of
       Element ("typedef", xmls) =>
 	let val tyName = valOf(selectPCData xml ["typedef", "decl", "name"])
+	    val cons = selectPCData xml ["typedef", "predicate", "constraints", "expr", "native"]
 	in 
-	    ptypeToIR (Atom.atom tyName) (valOf(search xmls ["ptype"])) NONE
+	    ptypeToIR (Atom.atom tyName) (valOf(search xmls ["ptype"])) cons
 	end
 	(* base types *)
     | Element ("PadsC", ty_xmls) =>
 	let val rev_xmls = List.rev ty_xmls
 	    val map = loadToMap rev_xmls map
-	    (* val _ = print ("Load to Map complete. Elements in Map = " ^ 
-			Int.toString (StringMap.numItems map) ^ "\n") *)
+	    val _ = print ("Load to Map complete. Elements in Map = " ^ 
+			Int.toString (StringMap.numItems map) ^ "\n") 
 	in  if length rev_xmls <1 then raise InvalidXML
 	    else xmlToIR map (hd rev_xmls)
 	end
-    | Element ("enum", xmls) =>
-	(*TODO: currently enums are not generated correctly in the pxmls *)
+    | Element ("enum", decl::fields) =>
 	let 
-	  val label = valOf (selectPCData xml ["enum", "decl", "name"])
+	  val label = valOf (selectPCData decl ["decl", "name"])
 	  val aux = mkTyAux1(1, Atom.atom label)
+	  val res = List.map (fn field => 
+			 let val label = valOf(selectPCData field ["enumField", "label"])
+			     val str =  valOf(selectPCData field ["enumField", "physicalName"])
+			     val _ = env:=StringMap.insert(!env, label, str)
+			 in
+			    StringConst (strip str) (* at the moment we only have const strings *)
+			 end) fields
 	in
-	  RefinedBase (aux, Enum nil, [])
+	  RefinedBase (aux, Enum res, [])
 	end
     | Element ("struct", xmls) =>
 	let 

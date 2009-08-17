@@ -1,6 +1,6 @@
 %name PxmlLex;
 
-%states INITIAL CDATA LIT;
+%states INITIAL CDATA LIT ARG;
 
 %let word = [a-zA-Z][a-zA-Z0-9_]*;
 %let begintag = \<[^!/][^>]*[^/]\>;
@@ -11,9 +11,10 @@
 %let white = [ \t\r\n]+;
 %let begincdata = \<!\[CDATA\[;
 %let endcdata = \]\]\>;
-(* %let beginlit = \<char\> | \<string\>;
+%let beginlit = \<char\> | \<string\>;
 %let endlit = \<\/char\> | \<\/string\>;
-*)
+%let beginarg = \<argument\> 
+%let endarg = \<\/argument\>
 
 %defs (
 structure T = PxmlTokens
@@ -25,13 +26,19 @@ exception UnknownToken
 <INITIAL> {begincdata} => ( YYBEGIN (CDATA); continue() );
 <CDATA>   {endcdata}   => ( YYBEGIN (INITIAL); continue() );
 <CDATA>   .    => ( T.CData (yytext ) );
-(*     
 <INITIAL> {beginlit} => ( YYBEGIN (LIT); 
 			    T.BeginTag (String.substring(yytext, 1, size(yytext)-2)) );
 <LIT>     {endlit}   => ( YYBEGIN (INITIAL);
 			    T.EndTag (String.substring(yytext, 2, size(yytext)-3)) );
-<LIT>	  .    => ( T.CData (yytext) );
-*)
+<LIT>	  .    => ( T.Data (yytext) );
+<INITIAL> {beginarg} => ( YYBEGIN (ARG); 
+			    T.BeginTag (String.substring(yytext, 1, size(yytext)-2)) );
+<ARG>     {endarg}   => ( YYBEGIN (INITIAL);
+			    T.EndTag (String.substring(yytext, 2, size(yytext)-3)) );
+(* this argument contains expression and not literal, so jump back to initial state *)
+<ARG>     {begintag} => ( YYBEGIN (INITIAL);
+			    T.BeginTag (String.substring(yytext, 1, size(yytext)-2)) );
+<ARG>	  .    => ( T.Data (yytext) );
 <INITIAL> {begintag}   => (
 		let val s = (String.substring(yytext, 1, size(yytext)-2))
 		    val newsub = Substring.takel 

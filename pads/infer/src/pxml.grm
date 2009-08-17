@@ -23,6 +23,11 @@ xml
 				(Comment "") SR
 	   in Element (BeginTag, [lit])
 	   end
+	| PCData _ =>
+	   let val lit = foldl (fn (PCData x, PCData s) => PCData (s ^ x)) 
+				(PCData "") SR
+	   in Element (BeginTag, [lit])
+	   end
 	| _ =>  
 	( Element (BeginTag, SR) )
         )

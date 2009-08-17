@@ -498,9 +498,10 @@ structure Incremental: sig
 		      val ty = case ty of
 				  RArray (_, _, _, body, _, _) => body
 				| _ => ty
-		      val _ = printTy ty
+		      val _ = printTy (measure 0 ty)
 		  in
-			(ty, (measure 0 ty), 0, 0, Times.zeroEndingTimes ())
+			(ty, (measure 0 ty), 0, 0, Times.zeroEndingTimes ());
+			raise TyMismatch
 		  end
 	 (*  
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "irvpiv1.tail.sel"), 0, 0)

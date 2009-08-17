@@ -1777,13 +1777,6 @@ fun mergeTokens ty =
 		   collapse tl sepstr)
 		end 
         |  Poption (a, body)  => mergeTokens body
-(*
-	val _ = if getLabelString (getAuxInfo ty) = "BTy_324" orelse
-		getLabelString (getAuxInfo ty) = "BTy_642" then
-		print ("Token list from " ^ getLabelString(getAuxInfo ty) ^":\n" ^
-		Int.toString(length final_tl) ^ "\n" ^ LTokensToString final_tl ^ "\n")
-		else ()
-*)
 	(* val _ = print "Merging ty: \n"
 	val _ = printTy ty
         val _ = print ("Coverage : " ^ (Int.toString (getCoverage ty)) ^ " Lengths : " ^ 
@@ -1894,7 +1887,6 @@ and mkBlob sibling_opt ty =
 	    	else 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair, ltokens))
 (*
-		      val _ = if getLabelString (getAuxInfo newty) = "BTy_269" then
 		      (* val _ = (* if length ltokens <> getCoverage ty then *) *)
 				(
 				 print ("Num of tokens = " ^ 
