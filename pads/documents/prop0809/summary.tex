@@ -15,14 +15,13 @@ Complex networked systems and applications must be {\em monitored} to
 proactively find problems, record/archive system health, oversee
 system operation, detect malicious processes or security violations
 and perform a myriad of other tasks.  
-The monitoring infrastructure necessary to perform such tasks should
-be able to include embedded sensors that monitor physical processes,
-machine-level monitors to manage server infrastructure, intrusion
-detection systems that monitor network traffic, and application-level
-monitors that can observe applications within a system. Monitoring
-should be able to span multiple such systems, spread across a facility
-or multiple locations.
-
+%The monitoring infrastructure necessary to perform such tasks should
+%be able to include embedded sensors that monitor physical processes,
+%machine-level monitors to manage server infrastructure, intrusion
+%detection systems that monitor network traffic, and application-level
+%monitors that can observe applications within a system. Monitoring
+%should be able to span multiple such systems, spread across a facility
+%or multiple locations.
 Unfortunately, developing and maintaining monitoring
 infrastructure is a tremendously difficult, costly and error-prone
 enterprise. A substantial part of the problem arises because
@@ -36,6 +35,37 @@ result, complex systems are usually {\em under-monitored}. They can
 fail in ways the associated monitoring system cannot observe or help
 diagnose, leaving high-value systems vulnerable to a myriad of threats.
 
+
+We believe that the best hope for building trustworthy,
+high reliability systems in such complex environments
+is to develop new technology capable of partially or fully {\em automating}
+the construction of monitoring software and systems.  In order to
+do this, we have proposed a novel, multi-pronged approach that combines
+ideas from the programming languages and systems community:
+
+\begin{itemize}
+\item Prong 1:  Develop a new programming language capable of specifying the 
+form and properties of data produced by networked systems and 
+applications.  {\em Automatically} compile those specifications into 
+the components needed by monitoring systems including components
+for parsing, data traversal, data transformation and standardization, 
+error detection, statistical analysis and querying.
+
+\item Prong 2:  Provide {\em automatic} support for generating the data 
+specifications by developing novel algorithms for
+inferring these specifications directly from available data.
+
+\item Prong 3:  Build new systems support for {\em automatically}
+isolating live traffic flows, associating them with their applications,
+learning normal behavior, and detecting anomalous traffic.
+
+\item Prong 4:  Wrap all previous components up in a general, scalable,
+and adaptive monitoring system capable of
+presenting new and evolving data sources to operators and allowing them to
+analyze and visualize data across multiple domains.
+\end{itemize}
+
+\cut{
 The goal of our research is to provide comprehensive, whole-system
 monitoring for complex systems
 %, which may include legacy software systems and devices, 
@@ -56,16 +86,17 @@ of automatically generating \pads{} descriptions from
 collected data and (5) a scalable monitoring system, CoMon, that can
 adaptively present new data sources and allow operators to analyze and
 visualize data across multiple domains.
+}
 
 This approach addresses a number of shortcomings of modern monitoring
-systems.  First, the \pads{} specification language provides a 
+systems.  First, the specification language, which will be based
+in part on the \pads{} language~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml} developed by the PIs,  provides a 
 way to create high-level, uniform, easy-to-understand {\em documentation}
 of all data processed or transmitted by any system component, 
 including legacy components, without having to modify or alter existing
 systems or
 application in any way.  Second, this documentation is 
-{\em executable} --- the
-\pads{} compiler will automatically generate a collection of
+{\em executable} --- the compiler will automatically generate a collection of
 reliable, secure, and high-performance libraries and interfaces
 to perform all low-level data processing tasks such as ingesting
 data from multi-source archives, detecting and reporting
@@ -131,9 +162,10 @@ time and without having to load a database or configure the system manually.
 In summary, this research will combine principled and innovative
 language design with high-performance systems engineering, with the
 goal of solving pervasive systems monitoring and measurement problems.
-It will have an immediate impact on the
-productivity of systems implementers by helping produce the next
-generation of monitoring systems.
+It will have a significant impact on the
+productivity of systems implementers and on the reliabilty of
+naval information systems by helping produce the next
+generation of monitors for networked systems and applications.
 
 
 % \paragraph*{Broader Impacts:}  Kathleen Fisher, senior personnel, 
@@ -174,7 +206,7 @@ generation of monitoring systems.
 % 
 
 \paragraph*{Major Tasks and Subtasks.}
-We have four main tasks: (1) PADS compiler development, 
+We have four main tasks: (1) PADS language development, 
 (2) Classification of Live Data, (3) Application Log File Format Inference,
 and (4) Monitoring system integration.  Each task has subtasks
 (labelled 1.a, 1.b, {\em etc.}) to be completed as follows.
@@ -192,9 +224,9 @@ and (4) Monitoring system integration.  Each task has subtasks
 \begin{itemize}
 \item 1.a PADS implementation: new algorithms for context-free and non-context
 free ({\em i.e.,} data dependent) parser and tool generation 
-\item 2.a Collection of (live) wire data from networked applications
-\item 3.a Collection of (archival) log files from networked applications
-\item 2.b/3.b Build library of PADS specifications for common data formats
+\item 2.a/3.a Collection of (live/archival) data from networked applications
+%\item 3.a Collection of (archival) log files from networked applications
+\item 2.b/3.b Build library of PADS specifications for collected data formats
 \item 3.c Developoment of algorithms for format inference for individual
 (archival) log files
 (builds on experience from inference prototype)
@@ -210,7 +242,7 @@ from format specifications (builds on experience from CoMon prototype)
 \item 3.d Development of algorithms to scale format inference engine to handle high-volume 
 data
 \item 4.b Development of algorithms for classification, trending, and 
-anomaly detection using live data
+anomaly detection
 \end{itemize}
 
 \noindent
