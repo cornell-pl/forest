@@ -110,11 +110,11 @@ email \\
 
 \input{intro}
 
-\input{sniffer}
-
 \input{pads}
 
 \input{format-inference}
+
+\input{sniffer}
 
 \input{comon}
 
@@ -136,9 +136,9 @@ email \\
 
 Task 1 -- PADS compiler development
 \begin{itemize}
-\item (a) Implementation of new PADS compiler to support format inference (Year 1)
-\item (b) Design \& implement new linguistic features for data archive specification (Year 2)
-\item (c) Develop tool generation infrastructure for forensic analysis of data archives (Year 3)
+\item (a) Algorithms for context-free and non-context free ({\em i.e.,} data dependent) parser and tool generation (Year 1)
+\item (b) Design \& implement specification language for multi-level archives (Year 2)
+\item (c) Develop tool generation infrastructure for multi-level archives (Year 3)
 \end{itemize}
 
 \noindent
@@ -157,7 +157,7 @@ Task 3 -- Format Inference
 \item (b) Build library of PADS specifications for common data formats (Year 1)
 \item (c) Implementation of format inference for {\em individual} (archival) log files (Year 1)
 \item (d) Development of algorithms to scale format inference engine to handle high-volume data (Year 2)
-\item (e) Development of algorithms for format inference for {\em entire archives} of log files (Year 3)
+\item (e) Development of format inference algorithms for multi-level archives (Year 3)
 \end{itemize}
 
 \noindent
@@ -379,7 +379,7 @@ transaction streams.  Hancock programs make it easy to build
 and maintain profiles of the entities described in such streams. 
 AT\&T uses these profiles to monitor networks for fraud 
 and to better understand user characteristics.
-As the primary architect of the PADS project~\cite{fisher+:pads}, 
+As the primary architect of the PADS project~\cite{fisher+:pads,fisher+:popl06,daly+:pads-demo,mandelbaum+:pads-ml}, 
 Fisher has helped design and implement the prototype PADS
 data description language that will form a foundation for the work
 described in this proposal.  
@@ -404,15 +404,22 @@ dozen other research projects. Between the public-facing monitoring
 systems and the private ones developed for specific applications, Pai's
 group has collected over 18 Terabytes of compressed log files.
 
-David Walker is an expert in language-based security and programming
-language design.  He was one of the primary designers and implementers
-of Typed Assembly Language~\cite{morrisett+:tal,morrisett+:journal-stal}, 
+David Walker is an expert in language-based security,
+type systems and programming language design.
+He was one of the primary designers 
+and implementers
+of Typed Assembly Language (TAL)~\cite{morrisett+:tal-popl,morrisett+:tal,morrisett+:journal-stal}, 
 a highly influential platform
-for secure mobile code, as well as Polymer~\cite{bauer+:polymer,ligatti+:renewal,ligatti+:edit-automata}, an
-extension to Java for application-level security monitoring.  He has
-collaborated with Fisher on the design and implementation of the
-\pads{} domain-specific language, which forms the foundation for
-the research in this proposal.
+for secure mobile code.  The breakthrough paper on 
+TAL~\cite{morrisett+:tal-popl} recently won a 10-year retrospective
+award as the most influential paper produced at the 1998 ACM SIGPLAN conference
+on principles of programming languages (POPL).  More recently, Walker
+has focused on the theory, design, and implementation of a number of
+domain-specific languages, including
+Polymer~\cite{bauer+:polymer,ligatti+:renewal,ligatti+:edit-automata}, an
+extension to Java for application-level security monitoring, and,
+together with Fisher, \pads{}~\cite{fisher+:pads,fisher+:popl06,daly+:pads-demo,mandelbaum+:pads-ml}, the domain-specific data-description language that forms 
+the foundation for the research in this proposal.
 
 Please find CVs outlining the personnel qualifications in detail attached.
 
