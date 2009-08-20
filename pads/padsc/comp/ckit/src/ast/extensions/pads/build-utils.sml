@@ -25,8 +25,8 @@ structure BuildUtils = struct
        optDecl : bool, 
        arrayDecl : bool,
        size : (pcexp PX.PSize) option,
-       arraypred : (pcexp PX.PConstraint) list}
-
+       arraypred : (pcexp PX.PConstraint) list
+      }
 
   type pmanty = 
       {tyname : pcty, 

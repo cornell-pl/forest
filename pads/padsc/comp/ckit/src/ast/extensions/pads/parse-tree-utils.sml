@@ -413,6 +413,7 @@ struct
 
 
     (* Functions for walking over lists of struct or union elements *)
+    
     fun mungeField f b m (PX.Full fd) = f fd
       | mungeField f b m (PX.Brief e) = b e
       | mungeField f b m (PX.Manifest md) = m md

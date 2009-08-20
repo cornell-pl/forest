@@ -548,6 +548,12 @@ structure CnvExt : CNVEXT = struct
 		      else TyProps.DNoSep
 	end
 
+   fun sepDelims' [] a = a
+     | sepDelims' ((PX.Sep e )::rest) {sep,term,preds} = sepDelims' rest {sep= SOME (getLiteralKind e), term = term,   preds = preds}
+     | sepDelims' ((PX.Term (PX.Expr e))::rest) {sep,term,preds} = sepDelims' rest {sep= sep,    term = SOME (getLiteralKind e), preds = preds}
+     | sepDelims' ((PX.Term (PX.noSep))::rest) {sep,term,preds} = sepDelims' rest {sep= sep,     term = SOME TyProps.DNoSep, preds = preds}
+     | sepDelims' (f::rest)           {sep,term,preds} = sepDelims' rest {sep= sep,    term = term,   preds = f::preds}
+   fun sepDelims delims = sepDelims' delims {sep=NONE,term=NONE,preds=[]}
 
 
 (*     Exact repetition of earlier function: *)
@@ -6566,6 +6572,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 		     val accPCT = P.makeTypedefPCT (accSuf name)			  
 
 		     (* Calculate and insert type properties into type table *)
+
+
+
 		     fun genTyPropsFull ({pty: PX.Pty, args: pcexp list, name: string, 
 					  isVirtual: bool, isEndian: bool, 
 					  isRecord, containsRecord, largeHeuristic: bool,
@@ -6579,7 +6588,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val predS = case pred of NONE => [] | SOME s => s
 			      val fieldInfo = {ty={tyCon=ftyName,args=args}, name = name, pred=predS,comment=comment,
 					       isOpt = optDecl, optPred = optPred,
-					       isArray = arrayDecl, size=size, arrayPred = arraypred}
+					       isArray = arrayDecl, size=size, arrayPred = sepDelims arraypred}
 			  in [{diskSize=ds, memChar=mc, endian=false, isRecord=isRecord, 
 			       containsRecord=contR, largeHeuristic=lH, 
 			       labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment)],
@@ -7981,9 +7990,12 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			      val contR = lookupContainsRecord pty 
 			      val lH = lookupHeuristic pty
 			      val predS = case pred of NONE => [] | SOME s => s
+
+
+ 
 			      val fieldInfo = {ty={tyCon=ftyName,args=args}, name = name, pred=predS,comment=comment,
 					       isOpt = optDecl, optPred = optPred,
-					       isArray = arrayDecl, size=size, arrayPred = arraypred}
+					       isArray = arrayDecl, size=size, arrayPred = sepDelims arraypred}
 			  in [{diskSize = ds, memChar = mc, endian = isEndian andalso isE1 andalso isE2, 
                                isRecord = isRecord, containsRecord = contR, 
 			       largeHeuristic = lH, labels = [SOME (name, ftyName, (paramNames, args), isVirtual, comment )],

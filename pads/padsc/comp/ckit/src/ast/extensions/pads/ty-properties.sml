@@ -54,10 +54,11 @@ struct
 
 
    type recursiveInfoTy = {base : tyApp} (* Describe the underlying type *)
+   type pArrayDelim = {sep: literalTy option, term : literalTy option, preds : (PT.expression PX.PConstraint) list}
 
    datatype fieldInfoTy =  Full of {ty:tyApp, name:string, pred : pexp PX.PPostCond list, comment: string option,
 				    isOpt : bool, optPred : pexp PX.OptPredicate option,
-				    isArray : bool, size: (pexp PX.PSize) option, arrayPred : (pexp PX.PConstraint) list}
+				    isArray : bool, size: (pexp PX.PSize) option, arrayPred : pArrayDelim}
                          | Literal of literalTy
                          | Compute of {ty:pType, name:string, def:pexp, pred: pexp PX.PPostCond list, comment:string option}
    type structInfoTy = {fields:fieldInfoTy list, pred: pexp PX.PPostCond list}
