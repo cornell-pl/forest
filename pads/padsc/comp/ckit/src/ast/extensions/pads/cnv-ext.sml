@@ -6300,7 +6300,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				      pred = predsome, 
 				      comment = SOME "value is present",
 				      optDecl =false,
-				      optPred = NONE,
+				      optPred = pred,
 				      arrayDecl = false, 
 				      size = NONE,
 				      arraypred = []}
@@ -6423,10 +6423,10 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
                      fun cvtInPlaceFULL ( f as {pty, args, name, pred, comment, size, arraypred,isVirtual, isEndian,
 						optPred, optDecl, arrayDecl,...}:BU.pfieldty) = 
 			   if not (arrayDecl orelse optDecl) then 
-			       (if Option.isSome optPred then PE.error ("Field "^name^" in "^unionName^ " has option-style constraints "^
+(*			       (if Option.isSome optPred then PE.error ("Field "^name^" in "^unionName^ " has option-style constraints "^
 									"but is not an in-line option declaration.\n")
-			        else ();
-			       [([], PX.Full f)])
+			        else ();*)
+			       [([], PX.Full f)]
 			   else
 			       let val declName = case List.find (fn(nm,_) => nm = name) (ListPair.zip(allVars, tyNames))
 				                  of NONE => (PE.bug "Compiler bug";  padsID name)

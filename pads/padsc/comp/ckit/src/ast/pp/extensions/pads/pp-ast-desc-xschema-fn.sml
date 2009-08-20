@@ -734,7 +734,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 
   fun ppPostConds pps cons = 
       case cons of [] => ()
-      | _=>  (PPL.newline pps; ppTagIndent "postConstraints" ppConstraints pps cons)
+      | _=>  (ppTagIndent "postConstraints" ppConstraints pps cons)
 
 (*
   Actual type parameter 
@@ -763,11 +763,7 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
     </xs:complexType>
   </xs:element>
 *)
-  fun ppTy pps ty = 
-        ( PPL.addStr pps "<ptype>" 
-	; blockify 2 ppTyApp pps ty
-	; PPL.newline pps
-        ; PPL.addStr pps "</ptype>")
+  fun ppTy pps ty = ppTagIndent "ptype" ppTyApp pps ty
 
   fun ppPTy aidinfo tidtab pps pty = 
       case pty 
@@ -811,20 +807,36 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
       case comment of NONE => ()
       | SOME s => (newline pps; ppTag "comment" PPL.addStr pps s)
 
-  fun ppNestedOpt pps (name,args,optPred) = 
-      let fun ppOptDecon pps {some,none} = ()  (* fix this *)
+  fun ppOptBody pps (tyCon, args, optPred) = 
+      let fun ppSomeBody pps (var,preds) = 
+		 ( ppTag "argument" PPL.addStr pps var
+		 ; newline pps
+	         ; ppPostConds pps preds )
+	  fun ppOptSomePred pps some = 
+	      case some of NONE => ()
+                 | SOME (var,preds) => (ppTagIndent "some" ppSomeBody pps (var,preds))
+	  fun ppOptNonePred pps none = 
+	      case none of NONE => ()
+                 | SOME preds => ppTagIndent "none" ppPostConds pps preds
+	  fun ppOptDecon pps {some,none} = 
+	      ( ppOptSomePred pps some
+              ; ppOptNonePred pps none
+	      )
 	  fun ppOptPred pps (optPred : TyProps.pexp ParseTreeExt.OptPredicate option) = 
 	      case optPred 
 	      of NONE => ()
               | SOME(PX.Simple l) => ppTagIndent "pred" ppConstraints pps l
-	      | SOME(PX.Decon r) => ppTagIndent "optionPred" ppOptDecon pps r
+	      | SOME(PX.Decon r)  => ppTagIndent "optionPred" ppOptDecon pps r
       in
-        ( PPL.addStr pps "<nestedOption>" 
-	; blockify 2 ppTyApp pps (name,args)
-	; PPL.newline pps
-        ; ppOptPred pps optPred
-        ; PPL.addStr pps "</nestedOption>")
+	  ( ppTy pps (tyCon,args)
+	  ; newline pps
+          ; ppOptPred pps optPred
+	  )
       end
+
+  fun ppNestedOpt pps (name,args,optPred) = 
+	  ppTagIndent "nestedOption" ppOptBody pps (name,args,optPred)
+
 
   (* 
     <xs:element name="sizeConstraints">      <!-- pSizeSpec -->
@@ -1092,12 +1104,10 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	      let val declName = #repName ptyInfo
 		  val typarams = #typarams ptyInfo
 		  val {fields,pred,...} = PTys.getUnionInfo ptyInfo
-		  val (TyProps.Full{ty={tyCon, args},pred=fpred,...})::rs = fields
+		  val (TyProps.Full{ty={tyCon, args},pred=fpred,optPred=optionPred,...})::rs = fields
 	      in
 	      ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
-	      ; ppTy pps (tyCon,args) 
-(*	      ; ppTagIndent "base" ppTyApp pps (tyCon,args)  *)
-              ; ppPostConds pps fpred
+	      ; ppOptBody pps (tyCon,args,optionPred)
               )
 	      end
        in 
