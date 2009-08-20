@@ -449,10 +449,8 @@ the normalization judgment in \figref{fig:ddc-reduction-rules}.
 In Figure~\ref{fig:rep-tys}, we present the representation type of
 each \ddc{} primitive. While the primitives are dependent types, the
 \implang{} does not have such types, so the translation erases all
-dependency. Removing expressions from the types renders variable
-binding and application useless, so we drop those forms as well.
-Consequently, we translate abstraction and application according to their
-underlying types. 
+dependency. Removing expressions from the types renders expression-variable
+binding and application useless, so we drop those forms as well in the translation.
 
 In more detail, the \ddc{} type $\ptrue$ consumes no input and
 produces only the $\iunitty$ value.  Correspondingly, $\pfalse$
@@ -607,7 +605,7 @@ all types; for example, $\lambda \ptyvar.\ty$.
 \\[3pt] %\\ 
 %% Const 
 \trans[\pbase{e},\ctxt,\kty] =
-  \lampair{\iapp {\iapp {\Iimp(C)} (e)} {\itup {\idata,\off}}}
+  \lampair{\iapp {\iapp {\Iimp(C)} e} {\itup {\idata,\off}}}
 \\[3pt] %\\
 %% Abs 
 \trans[\plam{\var}{\ity}{\ty},,] =
@@ -806,14 +804,18 @@ to well-formed \ddc{} types.
 
 \item[] $\ifun {max} {\ictup{m,n}} {\codefont{\iif {m>n}\; \ithen m\; \ielse n}}$
 \item[] $\ifun {pos} n {\codefont{\iif {n=0}\; \ithen 0\; \ielse 1}}$
-\item[] $\ifun {isOk} p {\codefont{pos(p.h.nerr) = 0}}$
-\item[] $\ifun {isErr} p {\codefont{pos(p.h.nerr) = 1}}$
+\item[] $\ifun {isOk} p {\codefont{p.h.nerr = 0}}$
+\item[] $\ifun {isErr} p {\codefont{p.h.nerr > 0}}$
 
 \item[] $\ifun {max\_ec} {\ictup{ec_1, ec_2}} {}$ \\
   $\begin{array}{l}
     \iif {\codefont{ec_1} = \iecpc \iori \codefont{ec_2} = \iecpc}\; \ithen \iecpc \\
     \ielse{} \iif {\codefont{ec_1} = \iecerr \iori \codefont{ec_2} = \iecerr}\; \ithen \iecerr \\
     \ielse \iok
+   \end{array}$
+\item[] $\ifun {max\_ec\_nf} {\ictup{ec_1, ec_2}} {}$ \\
+  $\begin{array}{l}
+    \iif {\codefont{ec_1} = \iok \iandi \codefont{ec_2} = \iok}\; \ithen \iok\; \ielse \iecerr 
    \end{array}$
 \end{itemize}
 \caption{Auxiliary functions.  The type of PD headers is $\iintty
@@ -842,7 +844,7 @@ to well-formed \ddc{} types.
   $\begin{array}{l}
     \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
     \ilet {ec} {\iif {\codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-    \quad \ielse {\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+    \quad \ielse {\codefont{max\_ec\_nf} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
     \ilet {sp} {\ictup{h_1.sp.begin, h_2.sp.end}} \\
     \quad \ictup {nerr,ec,sp}
   \end{array}$
@@ -864,7 +866,7 @@ to well-formed \ddc{} types.
     $\begin{array}{l}
       \ilet {nerr} {\codefont{pos \itup{{h_1}.{nerr}} + pos \itup{{h_2}.{nerr}}}}\\
       \ilet {ec} {\iif {\codefont{h_1.ec} = \iecpc \iandi \codefont{h_2.ec} = \iecpc}\; \ithen {\iecpc}\\
-      \quad \ielse{\codefont{max\_ec} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
+      \quad \ielse{\codefont{max\_ec\_nf} \iappi \codefont{h_1.ec} \iappi \codefont{h_2.ec}}} \\
       \ilet {sp} {\ictup{h_1.sp.begin, max \itup{h_1.sp.end, h_2.sp.end}}} \\
       \quad \ictup {nerr,ec,sp}
     \end{array}$
@@ -909,7 +911,7 @@ to well-formed \ddc{} types.
       }\\
       \ilet {nerr} {\codefont{h.nerr + pos(h_s.nerr) + eerr}}\\
       \ilet {ec} {\iif{\codefont{h_e.ec} = \iecpc}\; \ithen {\iecpc}\\
-      \quad \ielse{\maxec {\codefont{h.ec}} {\codefont{h_e.ec}}
+      \quad \ielse{\codefont{max\_ec\_nf} {\codefont{h.ec}} {\codefont{h_e.ec}}
           }} \\
       \ilet {sp} {\ictup{h.sp.begin,h_e.sp.end}} \\
       \quad \ictup {nerr,ec,sp}
@@ -1018,7 +1020,7 @@ Sequences have the most complicated semantics because the number of
 subcomponents depends upon a combination of the data, the termination
 predicate, and the terminator type. Consequently, the sequence parser
 uses the function $\codefont{isDone}$ and the recursive function
-$\codefont{continue}$ to implement this open-ended semantics.
+$\codefont{continue}$ to implement this open-ended behavior.
 Function $\codefont{isDone}$ determines if the parser should terminate
 by checking whether the end of the source has been reached, the
 termination condition $e$ has been satisfied, or the terminator type

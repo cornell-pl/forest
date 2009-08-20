@@ -111,7 +111,7 @@ apply the function to either a vertical bar or a semi-colon as
 circumstances require; \ie{},  the application $(\plam c {} {\tau_d})
 \ \mathtt{'|'}$  specializes the description to the vertical bar case.
 
-Dependent sum types $\psig x {\ty_1} {\ty_2}$ describe a sequence
+Dependent sum types $\psig x {\ty_1} {\ty_2}$ (also known as dependent pairs) describe a sequence
 of values in which the second type may refer to the value of the
 first.  A common idiom for which such sums are useful is an integer
 field followed by a string of the corresponding length, for example: 
@@ -134,7 +134,7 @@ $\pand {\ty_1} {\ty_2}$ describe data that match both $\ty_1$ and
 $\ty_2$. They transform a single set of bits to produce
 a pair of values, one from each type.  Examples that use this
 construct arise in various Cobol data formats and in processing
-internet packets, which can be viewed at multiple levels of
+Internet packets, which can be viewed at multiple levels of
 abstraction, \eg{}, as a header and an uninterpreted collection of
 bytes or as a header followed by a packet in the format of the next
 level of the communication stack. 
@@ -144,7 +144,7 @@ underlying type $\ty$ and then check that the constraint $e$ holds
 when $x$ is bound to the parsed value. For example, the type 
 $\pset {\mathtt{x}} {\mathtt{Pint}} {\mathtt{x > 100}}$ checks that the integer 
 $\mathtt{x}$ is greater than 100.  As another example,  the constrained type
-$\pset{\mathtt{x}}{\mathtt{Pstring\_FW(1)}}{\mathtt{x = ','}}$
+$\pset{\mathtt{x}}{\mathtt{Pstring\_FW(1)}}{\mathtt{x = ``,"}}$
 describes exactly the comma character. Because such ``singleton
 types'' arise frequently, we
 introduce a short-hand notation for them.  In particular, we use
@@ -281,7 +281,7 @@ In \figref{fig:implang-syntax}, we present the host language of
 \ddc{}, a straightforward extension of \fomega{} with
 recursion\footnote{The syntax for \cd{fold} and \cd{unfold},
   particularly the choice of annotating \cd{unfold} with a type, is
-  based on the presentation of recursive types in Pierce~\cite{pierce:tapl}} and a
+  based on the presentation of recursive types in Pierce~\cite{pierce:tapl}.} and a
 variety of useful constants and operators. 
 %\edcom{M: The syntax is based on ...} 
 We use this host language both to encode the parsing semantics of
@@ -289,8 +289,8 @@ We use this host language both to encode the parsing semantics of
 itself.
 
 As the calculus is largely standard, we highlight only its unusual
-features. The constants include bitstrings $\data$; offsets $\off$,
-representing locations in bitstrings; and error codes $\iok$,
+features. The constants include bit strings $\data$; offsets $\off$,
+representing locations in bit strings; and error codes $\iok$,
 $\iecerr$, and $\iecpc$, indicating success, success with errors, and
 failure, respectively. We use the constant $\ierr$ to indicate a
 failed parse.  Because of its specific meaning, we forbid its use in
@@ -321,9 +321,7 @@ explicit projections, as in $\ilam {\nrm{(\idatan,\off)}}{}{e}$ and $\ilet
 named fields, we use a (named) dot notation for commonly occurring projections.
 For example, for a pair $x$ of representation and parse descriptor, we use
 $x.\codefont{rep}$ and $x.\codefont{pd}$ for the left and right
-projections of $x$, respectively. \cut{Generally, the
-  particular projection intended should be apparent from context, and
-  will be specified when it is not.} Also, sums and products are
+projections of $x$, respectively. Also, sums and products are
 right-associative. Hence, for example, $a \iprodi b \iprodi c$ is
 shorthand for $a \iprodi (b \iprodi c)$.
 
@@ -337,7 +335,7 @@ We only specify type
 abstraction over terms and application when we feel it will clarify
 the presentation. Otherwise, the polymorphism is implicit.  We also
 omit the usual type and kind annotations on functions, with the
-expectation the reader can construct them from context.  
+expectation that the reader can construct them from context.  
 \edcom{TP: add example written in \ddc}
 
 \subsection{Example}

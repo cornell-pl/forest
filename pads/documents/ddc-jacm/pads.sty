@@ -261,7 +261,7 @@
 %\newcommand{\hdtvs}[2]{#1,#2\; \mbox{s.t.}\; \ispdty {\itpdsem[{#1}]},\ispdty {\itpdsem[{#2}]}}
 \newcommand{\hdtvs}[2]{#1,#2}
 \newcommand{\iaptyname}{\tyface{arr\_pd}}
-\newcommand{\iapty}[1]{\ipty {({#1} \; \iaptyname)}}
+\newcommand{\iapty}[1]{\ipty {( \iaptyname \;{#1})}}
 \newcommand{\ityvar}{\ga}
 
 %% Internal language term syntax
@@ -457,9 +457,10 @@
   %% Another error correlation relation (generic)
 \newcommand{\corrg}[2]{\mathrm{Corr}(#1,#2)}
   %% Another error correlation relation
-\newcommand{\corr}[3]{\mathrm{Canon}_{#1}(#2,#3)}
+\newcommand{\corr}[3]{\mathrm{Canon}(#2,#3):{#1}}
   %% Clean closure version of correlation relation
-\newcommand{\corrkl}[3]{\mathrm{Canon^*}_{#1}(#2,#3)}
+% \newcommand{\corrkl}[3]{\mathrm{Canon^*}_{#1}(#2,#3)}
+\newcommand{\corrkl}[3]{\corr{#1}{#2}{#3}}
   %% Error Correlation predicate.
 \newcommand{\cepred}[2]{\mathrm{CE}_{#1}(#2)}
   %% Function Error Correlation predicate.

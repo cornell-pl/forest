@@ -1,9 +1,6 @@
 \section{Encoding \ddl{}s in \ddc{}}
 \label{sec:ddc-encodings}
 
-\edcom{S: merge ipads extensions into one syntax figure. same for
-  elab. Then, explain separately.}
-
 We can better understand data description languages by elaborating
 their constructs into the types of \ddc{}. We start by specifying the
 complete elaboration of \ipads{}
@@ -204,7 +201,7 @@ Finally, we briefly discuss some limitations of \ddc{}.
      \Plit \const \cipads 
     \pscan {\pabsorb {\pset \var \ty {\var = \const}}}
   }{
-    \defty \const \ty
+    (\defty \const \ty)
   }
 \qquad
   \infer[\textsc{Var}]{ 
@@ -227,7 +224,7 @@ $p$ is encoded as \ddc{} type $\ty$, while $\itmv \cipads \ty$
 does the same for \ipads{} types $\itmv$. These judgments are defined
 in \figref{fig:encode-ipads}.
 
-As much of the elaboration is straightforward, we mention only a few
+Because much of the elaboration is straightforward, we mention only a few
 important points. Notice we add $\pbot$ as the
 last branch of the \ddc{} sum when elaborating \Punion{} so that the
 parse will fail if none of the branches match rather than returning
@@ -250,7 +247,7 @@ switched unions, \padsml{} polymorphic, recursive datatypes,
 \datascript{} arrays, and \packettypes{} overlays.
 
 \paragraph*{\padsc{} switched unions}
-A switched union, like a \Punion, indicates variability in the data
+A switched union, like a \Punion, describes variability in the data
 format with a set of alternative formats (branches). However, instead
 of trying each branch in turn, the switched union takes an expression that
 determines which branch to use. Typically, this expression depends upon data read earlier in the parse. Each branch is preceded by a tag,
@@ -388,8 +385,12 @@ which is then substituted into the remainder of the program.
   \Pdatatype{} \; \ga \;  (\overrightarrow{\ga})\;(\var:\ity) =
   \{\overrightarrow {\var_v{:}\itmv}\}; \;\mathit{p} \cipads \ty \; \text{prog}
   }{
-     \mathit{p}[\itmv'/\ga] \cipads \ty \; \text{prog} \qquad 
-     (\itmv' = \PFun{}\;(\overrightarrow \ga) = \;\Pfun{}(\var:\ity) = \Prec{}\; \ga.\,\Punion{}\{\overrightarrow {\var_v{:}\itmv}\})
+    \begin{array}{lr}
+      \mathit{p}[\itmv'/\ga] \cipads \ty \; \text{prog} &
+      (\itmv' = \PFun{}\;(\overrightarrow \ga) = \;\Pfun{}(\var:\ity) = \itmv'')\\
+      & (\itmv'' = \Prec{}\; \ga.\,\Punion{}\{\overrightarrow 
+      {\var_v{:}\itmv[\ga/\ga  \overrightarrow \ga]}\})
+    \end{array}
   }
 \]
 
@@ -401,7 +402,7 @@ definition of nonuniform, or \textit{nested}, datatypes~\cite{bird+:nested-datat
 datatype, $\ga$, plays two distinct roles -- within the recursive
 type, it is a monomorphic type referring only to the recursive type
 itself, while within the rest of the program it is a polymorphic type
-referring to the entire type abstraction.
+referring to the entire type abstraction. However, in order to allow the user to write the type in the same way in both circumstances, we substitute $\ga$ for $\ga \overrightarrow \ga$ in the union  branches.
 
 % Our choice to limit \padsml{} uniform datatypes was based on three
 % factors: first, and foremost, we lacked any compelling examples that
@@ -521,7 +522,7 @@ ill-formed.  We thought to disallow such expressions in the overlayed
 type. However, we found this to be a difficult, if not impossible
 task.  More importantly, such a restriction is unnecessary.  Instead,
 the new type can be checked for well formedness after the overlay
-process, an easy task in the \ddc{} framework.
+process, an easy task in \ddc{} framework.
 
 At this point, we have described the elaborations of some of the more
 interesting features of the languages that we have studied. However,
@@ -543,7 +544,7 @@ encodings in \ddc{}:
 
 %\edcom{M: what's the second one?}
 We know of a couple of features from data description languages that
-the \ddc{} does not support in a straightforward manner.  One such feature is 
+\ddc{} does not support in a straightforward manner.  One such feature is 
 a label construct that permits the user to specify the form of data
 at computed offsets.  A second
 such feature is a {\bf forall} construct that
@@ -551,15 +552,15 @@ allows users to express constraints between different
 elements of an array.  
 %Datascript uses these
 %features to describe the ELF file format~\cite{gpce02}.
-While the \ddc{} does not currently support these important
+While \ddc{} does not currently support these important
 features directly, we believe it provides a solid semantic framework
 in which such variations might be analyzed, explored and 
-modelled in the future.  
+modeled in the future.  
 For instance, one could investigate adding the  {\bf forall}
 constraint found in both \datascript{} and \padsc{}
 to the \ddc{} host language (or perhaps coding forall directly as a fold)
 and using it in conjunction with \ddc{} set types
-to try to express the kind of array constraints Back shows are useful
+to try to express the kind of array constraints that Back shows are useful
 in a number of binary formats~\cite{gpce02}.  However, we leave such
 investigations to future work:  Like the basic $\lambda$-calculus
 or $\pi$-calculus, \ddc{} is intended to capture the most common language
