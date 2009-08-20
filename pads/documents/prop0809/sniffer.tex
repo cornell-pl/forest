@@ -1,4 +1,4 @@
-\subsection{A Traffic Sniffer with Automated Data Characterization}
+\subsection{Traffic Sniffing to Automated Data Characterization}
 \label{sec:sniffer}
 
 It is entirely reasonable to ask whether automated monitoring,
@@ -14,7 +14,9 @@ To understand the process, consider the following steps individually:
 
 \begin{enumerate}
 \item Isolating traffic flows and associating them with applications
+\vspace{-.05in}
 \item Deriving formats and deciphering data within flows
+\vspace{-.05in}
 \item Detecting anomalous traffic
 \end{enumerate}
 
@@ -48,8 +50,8 @@ types and port numbers, rather than application names.
 contents of the flows can be examined to begin understanding the data
 formats and deciphering their contents. The main observation here is that
 data sent on the wire is not likely to be random, but instead stem
-from application needs. Applications may send strings, integers or
-floating-point numbers, and each of these formats has
+from application needs. Applications may send strings, integers,
+floating-point numbers, etc., and each of these formats has
 characteristic bit patterns. Strings are likely to contain
 values representing characters rather than non-printing control
 sequences, integers are likely to be popular numbers,
