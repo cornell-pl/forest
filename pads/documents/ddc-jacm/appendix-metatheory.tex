@@ -16,7 +16,7 @@ base-type parsers are closed with respect to user-defined variable
 names.
 
 Next, we require that \ddc{} base types satisfy the properties that we
-desire to hold of the rest of the calculus.  Note that that the interface $\Iopty$ specifies the types of base-type parsers.
+desire to hold of the rest of the calculus.  Note that the interface $\Iopty$ specifies the types of base-type parsers.
 
 \begin{condition}[Conditions on Base-types]
 \label{cond:base-types}
@@ -31,11 +31,12 @@ desire to hold of the rest of the calculus.  Note that that the interface $\Iopt
 %\edcom{M: canon is not defined yet. Either define it informally now or move it to
 %  later where it is needed.}
 
+\cut{
 The evaluation of \fomega{} terms and the normalization of \ddc{}
 types are both defined with a small-step semantics. However, it is
 useful to be able to reason about terms and types that are related by
 arbitrarily many ($k$) steps in these semantics, rather than just one.
-To this end,  we define in two
+To this end,  we define two
 judgments that respectively generalize evaluation 
 ($\iexpn \stepstok k \iexpn'$) and normalization 
 ($\ty \stepstok k \ty'$) to $k$ steps: 
@@ -131,11 +132,11 @@ Some useful properties of these judgments follow.
   By induction on the height of the first derivation, using
   determinacy of single-step evaluation as needed.
 \end{proof}
+} % end cut.
 
 A number of \ddc\ properties
 involve reasoning about terms that are equivalent up-to equivalent
-typing annotations. Therefore, we now define this equivalence and state
-some of its properties.
+typing annotations. We formally define this equivalence below.
 
 \begin{definition}[Expression Equivalence]
   $\iexpn \iexpreq \iexpn'$ iff $\iexpn$ is syntactically equal to
@@ -144,6 +145,7 @@ some of its properties.
 \label{def:op-eq}  
 \end{definition}
 
+\cut{
 \begin{lemma}[Properties of Expression Equivalence]
   \begin{enumerate}
   \item If $\iexpn \iexpreq \iexpn'$ and $\iexpn \stepstok k \iexpn_1$ then
@@ -182,6 +184,7 @@ properties of \fomega\ type equivalence.
   \end{enumerate}
 \label{lemma:fomega-ty-eq-props}
 \end{lemma}
+}
 
 Next, we show that substitution commutes with all of the
 semantic interpretations of \ddc{}. For clarity, we first introduce
@@ -239,8 +242,8 @@ We also require a similar commutativity result for the
 $\kTrans[\cdot,\cdot]$ function.
 %\edcom{M: Use new subst. abbreviation.}
 \begin{lemma}
- If $\ \exists\,\ity$ \suchthat\ $\itpdsem[\ty] = \ity$ and
-    $\ \exists\,\ity$ \suchthat\ $\itpdsem[\ty'] \equiv {\ipty \ity}$
+ If $\;\itpdsem[\ty] = \ity_1$ and
+    $\itpdsem[\ty'] \equiv {\ipty {\ity_2}}$
 then  $\kTrans[{\kind\xsubabbrev {\ty'} \ptyvar},{\ty[\ty'/\ptyvar]}] = 
   \kTrans[\kind,\ty]\xsubabbrev {\ty'} \ptyvar$.
 \label{lemma:pt-subst-comm}
@@ -271,7 +274,7 @@ kinding and normalization, as well as key substitution lemmas.
 \end{proof}
 
 \begin{lemma}[\ddc{} Inversion]
-  All kinding rules are invertable. That is, given a proof of any rule's conclusion we have a proof of the rule's premises.
+  All kinding rules are invertible. That is, given a proof of any rule's conclusion we have a proof of the rule's premises.
   \label{lemma:inversion}
 \end{lemma}
 \begin{proof}
@@ -294,7 +297,7 @@ kinding and normalization, as well as key substitution lemmas.
 %Finally, we state the substitution lemmas that we assume to hold of
 %the various underlying \fomega\ judgments followed by a substitution
 %lemma for \ddc{}.
-
+\cut{
 \begin{lemma}[\fomega{} Substitution]
   \begin{enumerate}
   \item If $\;\wfd{}{\ctxt,\tyvar{::}\kty,\ctxt'}$ and $\wfty \ctxt \ity
@@ -312,9 +315,10 @@ kinding and normalization, as well as key substitution lemmas.
 \end{lemma}
 
 \begin{proof}
-  These are standard properties of \fomega. They are all proven by
+  These are standard properties of \fomega{}. They are all proven by
   induction on the height of the first derivation.
 \end{proof}
+} % end cut
 
 \begin{lemma}[\ddc{} Substitution]
   \begin{enumerate}
@@ -331,10 +335,8 @@ kinding and normalization, as well as key substitution lemmas.
 \end{lemma}
 \begin{proof}
   For both parts, by induction on the first derivation, using
-  Lemma~\ref{lemma:fomega-subst} as needed.
+  standard \fomega{} substitution properties as needed.
 \end{proof}
-
-% \edcom{State and prove progress?}
 
 Finally, we state another commutativity property for the semantic
 functions. In essence, it says that evaluation
@@ -417,7 +419,7 @@ even for well-formed $\ty$, as that is part of what we are trying to
 prove.
 
 \begin{lemma}
-  If $\itpdsem[\ty] \equiv \itpdsem[\ty']$ then $\hhpred \ty \kty$ iff $\hhpred {\ty'} \kty$.
+  If $\itpdsem[\ty] \equiv \itpdsem[\ty']$ then $\hhpred \ty \kty$ iff $\;\hhpred {\ty'} \kty$.
 \label{lemma:eq-preserve-H}
 \end{lemma}
 \begin{proof}
@@ -486,16 +488,21 @@ If $\ddck[\ty,\pctxt;\ctxt,\kind,]$ then
 \end{lemma}
 
 \begin{proof}
+  By induction using Lemma~\ref{lemma:pd-log-rel} and properties of   \fomega{} type equality.
+\end{proof}
+
+\cut{
+\begin{proof}
   By induction using Lemma~\ref{lemma:pd-log-rel} and
   \lemref{lemma:fomega-ty-eq-props}, part~\ref{lemma:fomega-eq-ty-kinding}.
 \end{proof}
-
+}
 We continue by stating and proving that parsers are type correct.
 However, to do so, we must first establish some typing properties of
 the representation and parse-descriptor constructors, as at least one of them appears in most
 parsing functions. In particular, we prove that each constructor
 produces a value whose type corresponds to its namesake \ddc{}
-type. For clarity, we abbreviate $\ipty \ity$ as $\pda \ity$.
+type. For clarity, we occasionally abbreviate $\ipty \ity$ as $\pda \ity$.
 
 \begin{lemma}[Types of Constructors]
 \label{lem:types-of-constructors}
@@ -527,12 +534,12 @@ $.
   \iarrowi {\isum \ga \ga}$
 \item $\newpdf {con} :\forall  \ga. \iprod \iboolty \iarrow {\pda \ga} {\ipty {\pda \ga}}$
 \item $\newrepf {seq\_init} : \forall \ga.\iarrow \iunitty {\iintty \iprodi \iseq \ga}$
-\item $\newpdf {seq\_init} : \forall \ga. \iarrow \ioffty {\iapty {\pda\ga}}$
+\item $\newpdf {seq\_init} : \forall \ga. \iarrow \ioffty {\iapty {(\pda\ga)}}$
 \item $\newrepf {seq} : \forall \ga.\iarrow
   {(\iintty \iprodi \iseq \ga) \iprodi \ga}
   {\iintty \iprodi \iseq \ga}$
 \item $\newpdf {seq} :\forall  {\ga_{elt}},{\ga_{sep}}. 
-  (\iapty {\pda {\ga_{elt}}}) \iprodi
+  (\iapty {(\pda {\ga_{elt}})}) \iprodi
   \pda {\ga_{sep}} \iprodi 
   \pda {\ga_{elt}} \iarrowi \\
   \iapty {\pda {\ga_{elt}}}$
@@ -602,82 +609,85 @@ a parse descriptor and representation satisfy these invariants and
 correspond properly, we say the pair of data structures is {\em
   canonical} or in {\em canonical form}.
 
-For each \ddc{} type, its canonical forms are defined via two
-(mutually recursive) relations.  The first, $\corr \tyval r p$,
+The canonical form for each \ddc{} type is defined via the relation $\corr \ty r p$, which
 defines the canonical form of a representation $r$ and a parse
-descriptor $p$ at normal type $\tyval$.  It is defined for all closed
-normal types $\tyval$ with base kind $\kty$.  Types with higher kind
-such as abstractions are excluded from this definition as they cannot
-directly produce representations and PDs.
-
-A second definition, $\corrkl \ty r p$ normalizes $\ty$ to a $\tyval$,
+descriptor $p$ at type $\ty$.  This relation is defined for all closed types $\ty$ with base kind $\kty$.  The definition excludes
+types with higher kind, such as abstractions, because such types
+cannot directly produce representations and PDs.
+All but one case of the relation apply to normalized types, $\tyval$. The final case is the case of an arbitrary type, $\ty$. It normalizes $\ty$ to a $\tyval$,
 thereby eliminating outermost type and value applications. Then, the
-requirements on $\tyval$ are given by $\corr \tyval r p$.  For
-brevity, we write $p.h.{nerr}$ as $p.{nerr}$ and use $\mathtt{pos}$ to
+requirements on $\tyval$ are given by $\corr \tyval r p$.  
+\cut{
+% The second definition, $\corrkl \ty r p$, defines the canonical form
+% at an arbitrary type $\ty$ by first normalizing $\ty$ to eliminate the
+% outermost type and value applications and then
+% applying the relation $\corr \tyval r p$ at the resulting normal type
+% $\tyval$.
+}
+
+For brevity in the definitions, we write $p.h.{nerr}$ as $p.{nerr}$ and use $\mathtt{pos}$ to
 denote the function that returns zero when passed zero and one when
 passed another natural number.
 
-\begin{definition}[Canonical Forms I]
-$\corr \tyval r p$ iff exactly one of the following is true:
+
+\begin{definition}[Canonical Forms]
+$\corr \ty r p$ holds if and only if exactly one of the following is true:
   \begin{itemize}
-  \item $\tyval = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
-  \item $\tyval = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
-  \item $\tyval = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
-  \item $\tyval = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
-  \item $\tyval = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
+  \item $\,\ty = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
+  \item $\,\ty = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
+  \item $\,\ty = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
+  \item $\,\ty = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
+  \item $\,\ty = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1} {p_2}}$ 
     and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
     {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r_1,p_1)/x]} {r_2} {p_2}$.
-  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
+  \item $\,\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
     and $p = \ipair h {\iinld {\ity}{p'}}$
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
     {\ty_1} {r'} {p'}$.
-  \item $\tyval = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
+  \item $\,\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
     and $p = \ipair h {\iinr {p'}}$
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
     {\ty_2} {r'} {p'}$.
-  \item $\tyval = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
+  \item $\,\ty = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
     \ipair h {\ipair {p_1}{p_2}}$, 
     and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
     $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
-  \item $\tyval = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
+  \item $\,\ty = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
     \ipair h {p'}$, 
     and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
     and $e[(r',p')/x] \kstepsto\itrue$.
-  \item $\tyval = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
+  \item $\,\ty = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
     and $p = \ipair h {p'}$,
     and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
     $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
-  \item $\tyval = \pseq {\ty_e}{\ty_s}{\pterm {e,\ty_t}}$, 
-    $r = \ipair {len} {\iarr{\vec {r_i}}}$, $p = \itup{h,\itup{{neerr},{len}',\iarr {\vec {p_i}}}}$,
-    ${neerr} = \sum_{i=1}^{len} \mathtt{pos}(p_i.{nerr})$, \\
-    ${len} = {len}'$, $\corrkl {\ty_e}
+  \item $\,\ty = \pseq {\ty_e}{\ty_s}{\pterm e {\ty_t}}$, \
+    $r = \ipair {len} {\iarr{\vec {r_i}}}$, \
+    $p = \itup{h,\itup{{neerr},{len},\iarr {\vec {p_i}}}}$,\\
+    ${neerr} = \sum_{i=1}^{len} \mathtt{pos}(p_i.{nerr})$, 
+    $\corrkl {\ty_e}
     {r_i} {p_i}$ (for $i=1 \ldots {len}$), and
     $h.{nerr} \geq \mathtt{pos}({neerr})$.
-  \item $\tyval = \pmu \ptyvar {} {\ty'}$, 
+  \item $\,\ty = \pmu \ptyvar {} {\ty'}$, 
     $r = \iroll{r'}{\itsem[\pmu \ptyvar {} {\ty'}]}$, $p =
     \ipair h {\iroll{p'}{
                 \itpdsem[\pmu \ptyvar {} {\ty'}]}}$, 
         $p.{nerr} = p'.{nerr}$ 
-    and \linebreak
+    and 
     $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} {r'} {p'}$.
-  \item $\tyval = \pcompute e \ity$ and $p.{nerr} = 0$.
-  \item $\tyval = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
-  \item $\tyval = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
-  \item $\tyval = \pscan {\ty'}$, $r =\iinl {r'}$,
+  \item $\,\ty = \pcompute e \ity$ and $p.{nerr} = 0$.
+  \item $\,\ty = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
+  \item $\,\ty = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
+  \item $\,\ty = \pscan {\ty'}$, $r =\iinl {r'}$,
       $p = \ipair h {\iinl {\ipair i {p'}}}$,
       $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and \linebreak
       $\, \corrkl {\ty'}{r'}{p'}$.
-  \item $\tyval = \pscan {\ty'}$,
+  \item $\,\ty = \pscan {\ty'}$,
       $r =\iinr \ierr$,
       $p = \ipair h {\iinr \iuval}$, and
       $h.{nerr} = 1$.
+  \item $\,\ty \not = \tyval$, $\ty \kstepsto \tyval$, and $\corr \tyval r p$.
   \end{itemize}
-\end{definition}
-
-\begin{definition}[Canonical Forms II]
-$\corrkl \ty r p$ iff $\ty \kstepsto \tyval$ and $\corr \tyval r p$.
-\label{def:canon-forms-II}
 \end{definition}
 
 We first prove that the representation and parse-descriptor constructors, under the appropriate

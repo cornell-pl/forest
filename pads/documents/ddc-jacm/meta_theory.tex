@@ -89,11 +89,13 @@ defines the canonical form of a representation $r$ and a parse
 descriptor $p$ at type $\ty$.  This relation is defined for all closed types $\ty$ with base kind $\kty$.  The definition excludes
 types with higher kind, such as abstractions, because such types
 cannot directly produce representations and PDs.
+\cut{
 % The second definition, $\corrkl \ty r p$, defines the canonical form
 % at an arbitrary type $\ty$ by first normalizing $\ty$ to eliminate the
 % outermost type and value applications and then
 % applying the relation $\corr \tyval r p$ at the resulting normal type
 % $\tyval$.
+}
 
 For brevity in the definitions, we write $p.h.{nerr}$ as $p.{nerr}$ and use $\mathtt{pos}$ to
 denote the function that returns zero when passed zero and one when
