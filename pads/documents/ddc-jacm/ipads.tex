@@ -66,14 +66,14 @@ $\ierr$ (\ie{} null) and notes the error in the
 parse descriptor.
 
 \paragraph*{An \ipads{} Example}
-\ipads{} contains a rich collection of type constructors for creating
-sophisticated descriptions of ad hoc data.  We present these
-constructors through a series of examples.  The first example, shown
+\ipads{} provides a collection of type constructors for creating
+descriptions of ad hoc data.  We present these
+constructors in a series of examples.  The first example, shown
 in \figref{fig:ipads-clf}, describes the Common Web
-Log Format~\cite{wpp}, which web servers use to log the requests they
-receive.  \figref{fig:ipads-clf-data} shows two sample
-records.  Briefly, each line in a log file represents one request;
-a complete log may contain any number of requests.  A request begins
+Log Format~\cite{wpp}, which web servers use to log requests.
+\figref{fig:ipads-clf-data} shows two sample
+records, each of which represents one request.
+A complete log contains any number of requests.  A request begins
 with an IP address followed by two optional identifiers.  In the
 example, the identifiers are missing and dashes stand in for them.  Next is a date,
 surrounded by square brackets.  A string in
@@ -176,17 +176,17 @@ entry\_t \Parray{}(\Peor, \Peof)
 \end{figure}
 
 \begin{figure}
+\texttt{
 {\small
-\begin{code}
-{}207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] 
-"GET /tk/p.txt HTTP/1.0" 200 30
-tj62.aol.com - - [16/Oct/1997:14:32:22 -0700] 
-"POST /scpt/confirm HTTP/1.0" 200 941
-\end{code}
-\caption{Sample Common Web Log Data. Each record is broken with a
-  newline to format it on this page.}
+\begin{tabular}{l}
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700]  $\backslash$\\
+\quad "GET /tk/p.txt HTTP/1.0" 200 30\\
+213.120.12.10 - - [16/Oct/1997:14:32:22 -0700] $\backslash$\\
+\quad "POST /scpt/confirm HTTP/1.0" 200 941\\
+\end{tabular}}}
+\caption{Sample Common Web Log Data. To fit on the page, each record
+  spans two lines, with the break indicated by a backslash.}
 \label{fig:ipads-clf-data}
-}
 \end{figure}
 
 \paragraph*{A Recursive \ipads{} Example}

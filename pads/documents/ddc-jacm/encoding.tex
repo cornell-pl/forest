@@ -302,8 +302,8 @@ between two types conditionally:
 }
 \]}%
 \noindent
-The computed value $c$ records which branch of the conditional is
-selected.  If the condition $e$ is true, $c$ will be 1, the left-hand
+The computed value $c$ records which branch of the conditional was
+selected during parsing.  If the condition $e$ is true, $c$ will be 1, the left-hand
 side of the intersection will parse $\ty_1$ and the right will parse nothing.
 Otherwise, $c$ will be 2, the left-hand side will parse nothing and the
 right $\ty_2$.
@@ -416,8 +416,9 @@ referring to the entire type abstraction. However, in order to allow the user to
 
 \paragraph*{\datascript\ arrays}
 Next, we introduce \datascript{}-style arrays
-$\itmv\;[\mathit{length}]$, used to describe binary data. They are
-parameterized by an optional length field, instead of a separator and
+$\itmv\;[\mathit{length}]$, which are used to describe binary
+data. Such arrays are
+parameterized by an optional length field, rather than by a separator and
 terminator. If the user supplies the length of the sequence, the array
 parser reads exactly that number of elements. Arrays with the length
 field specified can be encoded in a straightforward manner with \ddc{}

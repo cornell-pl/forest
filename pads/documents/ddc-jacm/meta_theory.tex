@@ -1,9 +1,9 @@
 \section{Metatheory}
 \label{sec:ddc-meta-theory}
 
-One of the most difficult, and perhaps most interesting, challenges of our
-work on \ddc{} was determining what general
-meta-theoretic properties should hold of the language. What are the ``correct''
+One of the most difficult challenges of our
+work on \ddc{} was to determine the
+meta-theoretic properties that should hold of the language. What are the ``correct''
 invariants of data description languages?  While the languages
 community has a good understanding of the
 desirable invariants for conventional programming languages, the
@@ -21,18 +21,18 @@ description language.
   have the types specified by $\itsem[\ty]$ and
   $\itpdsem[\ty]$, respectively.
   
-\item {\bf Canonical Forms of Parsed Data}: We give a precise
-  characterization of the results of parsers by defining the {\em
-    canonical forms} of representation-parse descriptor pairs
-  associated with a dependent \ddc{} type. Of particular relevance to
-  data description, we show that the errors reported in the parse
-  descriptor will accurately reflect the errors present in the
+\item {\bf Canonical Forms of Parsed Data}: We precisely
+  characterize the results of \ddc{} parsers by defining the {\em
+    canonical form} of the representation, parse descriptor pairs
+  associated with a dependent \ddc{} type. We show that the errors
+  reported in the parse descriptor accurately reflect the errors present in the
   representation.
 \end{itemize}
 \noindent
-The aim of this section is to formally state these
-critical properties. An extended version of this section, with a sketch of the proofs that these properties hold for 
-our \ddc\ theory, can be found in \appref{app:ddc-meta-theory}. A full proof can  be found in Mandelbaum's thesis~\cite{mandelbaum:thesis}. 
+This section states these critical properties formally. 
+\appref{app:ddc-meta-theory} expands on this section, including
+a sketch of the proofs.
+Mandelbaum's thesis~\cite{mandelbaum:thesis} contains the complete meta-theory.
 
 Before proceeding to the main elements of our meta-theory, 
 we state a few simple requirements

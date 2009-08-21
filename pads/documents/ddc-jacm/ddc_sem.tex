@@ -267,11 +267,11 @@ judgment:
 \end{array}
 \]
 
-Context $\Gamma$ is a finite partial map that binds expression
-variables to their types. When appearing in \fomega{} judgments, such
+Context $\Gamma$ is a finite partial map that associates a type with each
+expression variable in its domain. When appearing in \fomega{} judgments, such
 contexts may also contain type-variable bindings of the form $\ityvar{::}\kind$.
-Context $\pctxt$ is a finite partial map that binds type
-variables to their kinds. We provide the following mappings from
+Context $\pctxt$ is a finite partial map that associates a kind with
+each type variable in its domain. We provide the following mappings from
 \ddc{} contexts $\pctxt$ to \fomega{} contexts $\ctxt$.
 \begin{align*}
 &\fortyc {\cdot} = \cdot & &\fopdtyc {\cdot} = \cdot \\
