@@ -444,6 +444,7 @@ structure Incremental: sig
 		case StringMap.find (argMap, "-p") of
 		  NONE => (learn_file, learnsize)
 		| SOME x => (x, 0)
+	 val learn_file_name = OS.Path.file learn_file
 
 	 val pxml = StringMap.find (argMap, "-d") 
 	 val start_pos = case pxml of
@@ -468,7 +469,7 @@ structure Incremental: sig
 		 (* create a directory to store the .p files *)
 	 	 val _ = if (OS.FileSys.isDir dir_name handle SysErr => (OS.FileSys.mkDir dir_name; true))
 		    then () else ()
-	 	 val subdir = (dir_name ^ "/" ^ learn_file)
+	 	 val subdir = (dir_name ^ "/" ^ learn_file_name)
 	 	 val _ = if (OS.FileSys.isDir subdir handle SysErr => (OS.FileSys.mkDir subdir; true))
 		    then () else ()
 	 	 val timestamp= Date.fmt "%Y-%m-%d_%H-%M-%S" (Date.fromTimeLocal (Time.now()))
@@ -480,7 +481,7 @@ structure Incremental: sig
 		 then () else ()
  	 (* val _ = List.app (fn s => print (s ^ "\n")) learn_lines *)
 	 (*
-	 val otherfiles = List.tabulate (10, (fn n => learn_file ^ ".chunk" ^ Int.toString n))
+	 val otherfiles = List.tabulate (10, (fn n => learn_file_name ^ ".chunk" ^ Int.toString n))
 	 *)
          val _ = Posix.Process.alarm(Time.fromSeconds(LargeInt.fromInt(!learn_timeout)))
 	 val (_, initTy, numHeaders, numFooters, _) = 
@@ -509,7 +510,7 @@ structure Incremental: sig
 	 val (_, initTy) = Populate.initializeTy LabelMap.empty initTy 
 	 *)
 
-         val padscFile = timedir ^ "/" ^ learn_file ^ ".init.p"
+         val padscFile = timedir ^ "/" ^ learn_file_name ^ ".init.p"
          val _ = print ("\nOutput initial PADS description to " ^ padscFile ^ "\n")
          val padsstrm = TextIO.openOut padscFile
          val desc = #5 (Padsc_printer.tyToPADSC initTy numHeaders numFooters ((!lexName)^ ".p"))

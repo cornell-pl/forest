@@ -182,35 +182,117 @@ structure Pxml = struct
 	    else raise InvalidXML
 	end
 
-   fun fieldToIRs smap xml = 
+   and mkArray xml label map = 
+	let
+	    val bodyname = valOf(selectPCData xml ["_", "ptype", "name"])
+	    val sep = 
+		case selectPCData xml ["_", "delimiterConstraints", "sep", "_"] of
+	        NONE => NONE
+	      | SOME x => SOME (StringConst x)
+	    val term = 
+		case selectPCData xml ["_", "delimiterConstraints", "term", "_"] of
+	        NONE => NONE
+	      | SOME x => SOME (StringConst x)
+	    val len = 
+		case search [xml] ["_", "sizeConstraints", "max"] of
+	        SOME (Element ("max", [PCData x])) => SOME(IntConst (valOf(LargeInt.fromString x)))
+	      | SOME (Element ("max", [expr])) => (* TODO: hack here for dependent length *)
+		 SOME(LabelRef (Atom.atom 
+			(valOf(selectPCData expr ["expr", "native"]))))
+	      | _ => NONE
+	    val cons = selectPCData xml ["_", "postConstraints", "expr", "native"]
+	    val aux = mkTyAux1 (1, Atom.atom label)
+	in
+	  if (String.substring(bodyname, 0, 2) = "PP") then
+	    (* this is a base type *)
+	    let val bodyTy = ptypeToIR (getNextLabel ()) 
+		(valOf(search [xml] ["_", "ptype"])) cons
+	    in
+	      RArray (aux,sep, term, bodyTy, len, nil)
+	    end
+	  else 
+	  case StringMap.find (map, bodyname) of
+	    NONE => 
+		let val bodyTy = ptypeToIR (Atom.atom bodyname) 
+		                 (valOf (search [xml] ["_", "ptype"])) cons
+		in
+	           RArray (aux,sep, term, bodyTy, len, nil)
+		end
+	  | SOME xml => 
+		let val bodyTy = xmlToIR map xml
+		in
+		  RArray(aux, sep, term, bodyTy, len, nil)
+		end
+	end
+   
+   and mkOption xml label map =	
+	let 
+	    val bodyName = valOf(selectPCData xml ["_", "ptype", "name"])
+	    val aux = mkTyAux1 (1, Atom.atom label)
+  	    (* val _ = print ("bodyName = " ^ bodyName ^ "\n") *)
+	    val cons = selectPCData xml ["_", "postConstraints", "expr", "native"]
+	in
+	  if (String.substring(bodyName, 0, 2) = "PP") then
+	    (* this is a base type *)
+	    let val bodyTy = ptypeToIR (getNextLabel ()) 
+			(valOf(search [xml] ["_", "ptype"])) cons
+	    in
+	      Poption (aux, bodyTy)
+	    end
+	  else 
+	    case StringMap.find (map, bodyName) of 
+	    SOME xml => 
+		let val bodyTy = xmlToIR map xml
+		in
+		  Poption (aux, bodyTy)
+		end
+	  | NONE => Poption (aux, ptypeToIR (getNextLabel ()) 
+			(valOf (search [xml] ["_", "ptype"])) cons)
+	end
+
+
+   and fieldToIRs smap xml = 
      case xml of
-       Element ("field", _) =>
+       Element ("field", xmls) =>
 	let 
 	    val _ = print "In field \n" 
 	    val varName = valOf (selectPCData xml ["field", "name"])
-	    val tyName = valOf (selectPCData xml ["field", "ptype", "name"])
-	    val cons = selectPCData xml ["field", "postConstraints", "expr", "native"]
 	in
-	  if (String.substring(tyName, 0, 2) = "PP") then
-	    (* this is a base type *)
-	    [ptypeToIR (Atom.atom varName) (valOf(search [xml] ["field", "ptype"])) cons]
-	  else
-	  (* this is a compound type *)
-	   case StringMap.find (smap, tyName) of
-	    NONE => [ptypeToIR (Atom.atom varName) (valOf(search [xml] ["field", "ptype"])) cons]
-	  | SOME x => 
-		(* we first need to check if this type has any argument *)
-		let val _ = 
-		  (case (search [xml] ["field", "ptype", "argument", "expr", "native"]) of
-		    SOME (Element ("native", [Comment param])) => 
-			(
-		 	(* print ("inserting " ^ param ^ "\n"); *)
-		       (env:= StringMap.insert (!env, tyName, param)))
-		   | _ => ()
-		  )
-		in
-		  [xmlToIR smap x]
-		end
+	  case search xmls ["ptype"] of
+	    NONE => raise InvalidXML
+	  | SOME (Element("ptype", [e as (Element("nestedArray", _))])) =>
+		(* nested array *)
+		[mkArray e varName smap]
+	  | SOME (Element("ptype", [e as (Element("nestedOption", _))])) =>
+		(* nested option *)
+		[mkOption e varName smap]
+	  | SOME _ =>
+	    let
+	      val tyName = valOf (selectPCData xml ["field", "ptype", "name"])
+	      val cons = selectPCData xml ["field", "postConstraints", "expr", "native"]
+	    in
+	      if (String.substring(tyName, 0, 2) = "PP") then
+	      (* this is a base type *)
+	        [ptypeToIR (Atom.atom varName) (valOf(search [xml] ["field", "ptype"])) cons]
+	      else
+	      (* this is a compound type *)
+	        case StringMap.find (smap, tyName) of
+        	    NONE => [ptypeToIR (Atom.atom varName) 
+			(valOf(search [xml] ["field", "ptype"])) cons]
+        	  | SOME x => 
+        		(* we first need to check if this type has any argument *)
+        		let val _ = 
+        		  (case (search [xml] ["field", "ptype", "argument", "expr", "native"]) of
+        		    SOME (Element ("native", [Comment param])) => 
+        			(
+        		 	(* print ("inserting " ^ param ^ "\n"); *)
+        		       (env:= StringMap.insert (!env, tyName, param)))
+        		   | _ => ()
+        		  )
+        		in
+        		  [xmlToIR smap x]
+        		end
+	    end
 	end
      | Element ("literal", _) =>
 	let 
@@ -241,12 +323,12 @@ structure Pxml = struct
 			)
 			end
 		| _ => (print ("Bad xml:\n" ^ (toString "" xml)); raise InvalidXML)
-	    val field = valOf(search [xml] ["branch", "body", "field"])
+	    val field = valOf(search [xml] ["branch", "body", "_"])
 	    val branchTy = hd (fieldToIRs map field)
 	in
 	   (re, branchTy)
 	end
-	
+
    and xmlToIR map xml =
     let val _ = print ("Processing XML element:\n" ^ toString "" xml) 
     in
@@ -309,7 +391,7 @@ structure Pxml = struct
 			case StringMap.find (!env, label) of
 			  SOME id => Atom.atom(id)
 			| _ => raise InvalidXML
-		      val switch_type = valOf(selectPCData xml ["union", "decl", "param", "type"])
+		      val switch_type = valOf(selectPCData xml ["union", "decl", "params", "param", "type"])
 		      val retys = List.map (branchToIR map switch_type) xmls
 		  in
 		    Switch (aux, switched_id, retys)
@@ -319,70 +401,11 @@ structure Pxml = struct
 	end
     | Element ("array", xmls) =>
 	let val label = valOf(selectPCData xml ["array", "decl", "name"])
-	    val bodyname = valOf(selectPCData xml ["array", "ptype", "name"])
-	    val sep = case selectPCData xml ["array", "delimiterConstraints", "sep", "_"] of
-		        NONE => NONE
-		      | SOME x => SOME (StringConst x)
-	    val term = case selectPCData xml ["array", "delimiterConstraints", "term", "_"] of
-		        NONE => NONE
-		      | SOME x => SOME (StringConst x)
-	    val len = case search xmls ["sizeConstraints", "max"] of
-		        SOME (Element ("max", [PCData x])) => SOME(IntConst (valOf(LargeInt.fromString x)))
-		      | SOME (Element ("max", xmls)) => (* TODO: hack here for dependent length *)
-			(
-			case StringMap.find (!env, label) of
-			  SOME param => 
-				let val (_, suff) = Substring.position "->" (Substring.full param)
-				    val suff = Substring.string suff
-				    val id = String.substring(suff, 2, size(suff) - 3)
-				in (SOME(LabelRef (Atom.atom id)))
-				end
-			| _ => raise InvalidXML
-			)
-		      | _ => NONE
-	    val cons = selectPCData xml ["array", "postConstraints", "expr", "native"]
-	    val aux = mkTyAux1 (1, Atom.atom label)
-	in
-	  if (String.substring(bodyname, 0, 2) = "PP") then
-	    (* this is a base type *)
-	    let val bodyTy = ptypeToIR (getNextLabel ()) (valOf(search xmls ["ptype"])) cons
-	    in
-	      RArray (aux,sep, term, bodyTy, len, nil)
-	    end
-	  else 
-	  case StringMap.find (map, bodyname) of
-	    NONE => 
-		let val bodyTy = ptypeToIR (Atom.atom bodyname) (valOf (search xmls ["ptype"])) cons
-		in
-	           RArray (aux,sep, term, bodyTy, len, nil)
-		end
-	  | SOME xml => 
-		let val bodyTy = xmlToIR map xml
-		in
-		  RArray(aux, sep, term, bodyTy, len, nil)
-		end
+	in mkArray xml label map
 	end
-    | Element ("opt", xmls) =>
+    | Element ("opt", xmls) => 
 	let val label = valOf(selectPCData xml ["opt", "decl", "name"])
-	    val bodyName = valOf(selectPCData xml ["opt", "ptype", "name"])
-	    val aux = mkTyAux1 (1, Atom.atom label)
-  	    (* val _ = print ("bodyName = " ^ bodyName ^ "\n") *)
-	    val cons = selectPCData xml ["opt", "postConstraints", "expr", "native"]
-	in
-	  if (String.substring(bodyName, 0, 2) = "PP") then
-	    (* this is a base type *)
-	    let val bodyTy = ptypeToIR (getNextLabel ()) (valOf(search xmls ["ptype"])) cons
-	    in
-	      Poption (aux, bodyTy)
-	    end
-	  else 
-	    case StringMap.find (map, bodyName) of 
-	    SOME xml => 
-		let val bodyTy = xmlToIR map xml
-		in
-		  Poption (aux, bodyTy)
-		end
-	  | NONE => Poption (aux, ptypeToIR (getNextLabel ()) (valOf (search xmls ["ptype"])) cons)
+        in mkOption xml label map
 	end
     | _ => raise InvalidXML
     end 
