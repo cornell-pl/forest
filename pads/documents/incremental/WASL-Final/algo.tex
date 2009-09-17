@@ -126,6 +126,22 @@ The \cd{Learn} node accumulates the bad portions of the data that need
 to be learned. The newly learned sub-descriptions 
 will be spliced into the original description to get the new description. 
 
+\figref{fig:inc-learning} gives pseudo-code for the incremental
+learning step.
+The \cd{init\_aggregate} function initializes an empty aggregate
+according to description \cd{d}.  
+Then for each data record \cd{x}, we use the \cd{parse} function to
+produce a list \cd{rs} of possible parses.
+We then call the \cd{aggregate} function to merge
+each parse \cd{r} in the current list of parses with each aggregate \cd{a} in the
+current list of aggregates. We use `\cd{::}' to denote 
+consing an element onto the front of a list. 
+When we finish
+parsing all the data lines and obtain a final list of aggregates \cd{as}, we select
+the best aggregate according to some metric, and finally update the previous description
+\cd{d} to produce the new description \cd{d'} using the best
+aggregate. 
+
 \begin{figure}[t]
 \begin{codebox}
 incremental_step(d, xs) =
@@ -149,20 +165,7 @@ incremental_step(d, xs) =
 \label{fig:inc-learning}
 \end{figure}
 
-\figref{fig:inc-learning} gives pseudo-code for the incremental
-learning step.
-The \cd{init\_aggregate} function initializes an empty aggregate
-according to description \cd{d}.  
-Then for each data record \cd{x}, we use the \cd{parse} function to
-produce a list \cd{rs} of possible parses.
-We then call the \cd{aggregate} function to merge
-each parse \cd{r} in the current list of parses with each aggregate \cd{a} in the
-current list of aggregates. We use `\cd{::}' to denote 
-consing an element onto the front of a list. 
-When we finish
-parsing all the data lines and obtain a final list of aggregates \cd{as}, we select
-the best aggregate according to some criterion, and finally update the previous description
-\cd{d} to produce the new description \cd{d'} using the best aggregate. 
+
 
 \begin{figure}[t]
 \begin{center}
@@ -170,6 +173,7 @@ the best aggregate according to some criterion, and finally update the previous 
 \vskip -2ex
 \caption{Result of parsing three input lines}\label{fig:parse}
 \end{center}
+\vskip -2ex
 \end{figure}
 
 \begin{figure*}[t]
@@ -178,6 +182,7 @@ the best aggregate according to some criterion, and finally update the previous 
 \vskip -4ex
 \caption{Aggregation of three parses}\label{fig:aggregate}
 \end{center}
+\vskip -2ex
 \end{figure*}
 
 To illustrate the parsing and aggregation phases of the algorithm, we
@@ -185,16 +190,14 @@ introduce a simple example.
 Suppose we have a description $d$, comprised of a pair of an integer and a sync token ``\cd{*}'',
 and we are given the following three lines of new input:
 
-{\small
-\vskip -3.5ex
-\begin{verbatim}
-5*
-abc*
-8$
-\end{verbatim}
-\vskip -1ex
+{\small \texttt{
+\begin{tabular}{l}
+5*\\
+abc*\\
+8\$\\
+\end{tabular}}
 }
-%
+
 \noindent
 \figref{fig:parse} shows the three data representations that result
 from parsing the lines, which we call $r_1$, $r_2$ and $r_3$,

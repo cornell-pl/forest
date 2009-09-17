@@ -106,8 +106,8 @@ data determines which branch to take.  Such unions illustrate that
 \pads{} supports \textit{dependencies}: earlier portions of the data
 can determine how to parse later portions.
 
-The goal of the \learnpads{} format inference engine is to infer a
-\pads{} description like the one in \figref{fig:ai.p} from raw data.
+The goal of the \learnpads{} format inference engine is to infer 
+\pads{} descriptions like the one in \figref{fig:ai.p} from raw data.
 From such a description, the \pads{} compiler can produce end-to-end
 processing tools fully automatically.  A full description of the
 \learnpads{} algorithm appears in an earlier
@@ -162,13 +162,13 @@ measures how well a description describes data by calculating
 the number of bits necessary to transmit both the description and the
 data \textit{given the description}.  We use the terms \textit{type}
   and \textit{data complexity} to refer to the number of bits necessary to
-encode the description and to encode the data given the description,
+encode the description and the data given the description,
 respectively.  This function penalizes overly
-general descriptions, such as \kw{Pstring}, which have an extremely
+general descriptions, such as \kw{Pstring}, which have a
 low type complexity but a very high data complexity.  It also
 penalizes overly specific descriptions that painstakingly describe
 each character in the data.  Such descriptions have a low data
-complexity, but a high type complexity.
+complexity but a high type complexity.
 
 
 This algorithm produces good results for the small

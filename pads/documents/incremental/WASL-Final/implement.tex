@@ -1,8 +1,9 @@
 \section{Implementation}
 \label{sec:imp}
-The algorithm presented so far is idealized and unoptimized.
-In this section, we discuss refinements that improve the 
-quality of the inferred descriptions and/or improve performance.
+For purposes of presentation, we have described an idealized and
+unoptimized algorithm.  Our actual implementation includes a number of
+refinements to improve the quality of the description and/or reduce the
+inference time.  In this section, we discuss some of these refinements.
 
 \subsection{Token families}
 So far, parsing a \cd{Sync} token yields
@@ -53,8 +54,8 @@ $S$ denotes a struct and $B$ a base token.
 \begin{center}
 \epsfig{file=opts.eps,width=\columnwidth}
 \caption{MergeOpts rewriting rule}\label{fig:opts}
-\vskip -2ex
 \end{center}
+\vskip -2ex
 \end{figure}
 
 

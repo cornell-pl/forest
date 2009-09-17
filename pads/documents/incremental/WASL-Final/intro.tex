@@ -1,15 +1,17 @@
 \section{Introduction}
 \label{sec:intro}
 
-System implementers and administrators manipulate a wide
-variety of system logs on a daily basis.
-Common tasks include data mining, querying, performing statistical analysis,
+At AT\&T and elsewhere, system implementers and administrators
+manipulate a wide variety of system logs on a daily basis.  Common
+tasks include data mining, querying, performing statistical analysis,
 detecting errors, and transforming the data to standard formats.
-Because many of these logs are in non-standard formats,
-there are often no ready-made tools to help process these logs.
-As a result, system engineers have to resort to writing one-off
-parsers, typically in Perl or Python, to ingest these data sources,
-a tedious, error-prone and costly process. 
+Because many of these logs are in non-standard formats, there are
+often no ready-made tools to help process these logs.  Often the data
+is hierarchical rather than relational in nature, making automatic
+loading into relational databases difficult.  As a result, system
+engineers have to resort to writing one-off parsers, typically in Perl
+or Python, to ingest these data sources, a tedious, error-prone and
+costly process.
 
 To facilitate working with such log files, we developed \pads
 \cite{fisher+:pads}, a high-level declarative
