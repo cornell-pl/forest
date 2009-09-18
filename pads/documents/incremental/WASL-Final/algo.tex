@@ -46,12 +46,12 @@ representations \cd{R}, and aggregate structures \cd{A}.
 \kw{Descriptions}:
 Base ::= Pint | PstringME(re)
 D ::=   
-  Base             (Base token)
-| Sync s           (Synchronizing token) 
+  Base               (Base token)
+| Sync s             (Synchronizing token) 
 | Pair (D\_1, D\_2)    (Pair)
 | Union (D\_1, D\_2)   (Union)
-| Array(D, s, t)   (Array)
-| Option D         (Option)
+| Array(D, s, t)     (Array)
+| Option D           (Option)
 
 \kw{Data representation}:
 BaseR ::= Str s | Int i | Error
