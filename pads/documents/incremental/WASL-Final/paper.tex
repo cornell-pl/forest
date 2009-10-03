@@ -1,6 +1,8 @@
 %\documentclass[fleqn]{article}
-\documentclass[twocolumn,10pt]{article}
+%\documentclass[twocolumn,10pt]{article} %% original submission
 %\documentclass[nocopyrightspace]{sigplanconf}
+
+\documentclass{acm_proc_article-sp}
 
 \usepackage{xspace,amsmath,math-cmds,
             math-envs,inference-rules,times,
@@ -33,7 +35,6 @@
 \setlength{\columnsep}{1.5pc}
 \setlength{\textheight}{54.5pc}
 
-\title{Incremental Learning of System Log Formats}
 
 \author{Kenny Q. Zhu \\
 	   Shanghai Jiao Tong University\\
@@ -49,17 +50,40 @@
 
 \input{definitions}
 
-\twocolumn[\maketitle]
+%\twocolumn[\maketitle]
+
+\title{Incremental Learning of System Log Formats}
+\subtitle{[Extended Abstract]}
+
+\author{
+\numberofauthors{3}
+\alignauthor
+  Kenny Q. Zhu \\
+  \affaddr{Shanghai Jiao Tong University} \\
+  \email{kzhu@cs.sjtu.edu.cn}
+\alignauthor
+  Kathleen Fisher \\
+  \affaddr{AT\&T Labs Research} \\
+  \email{kfisher@research.att.com}
+\alignauthor
+  David Walker \\
+  \affaddr{Princeton University} \\
+  \email{dpw@cs.princeton.edu}
+}
+
+\maketitle
 
 \input{abstract}
 
-%\category{D.3.m}{Programming languages}{Miscellaneous}
-%
-%\terms
-%Languages, Algorithms
-%
-%\keywords
-%Data description languages, grammar induction, tool generation, ad hoc data
+\category{D.4.9}{Operating Systems}{Systems Programs and Utilities}
+\category{D.3.4}{Programming Languages}{Processors}
+
+\terms
+Languages, Algorithms
+
+\keywords
+Grammar induction, analysis of system logs, domain-specific languages, parsing,
+tool generation, ad hoc data, PADS
 
 \input{intro}
 
@@ -70,9 +94,10 @@
 \input{implement}
 \input{eval}
 
+\newpage
+
 \input{conclusion}
 
-\small
 \section*{Acknowledgments}
 This material is based upon work
  supported by the NSF under grants 0612147 and 0615062, and

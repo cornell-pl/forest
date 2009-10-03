@@ -1,4 +1,5 @@
-\section{\pads{} and the Original \learnpads{}} 
+%\section{\pads{} and the Original \learnpads{}} 
+\section{PADS and the Original LearnPADS} 
 \label{sec:review}
 
 \begin{figure*}[th]
@@ -90,8 +91,8 @@ strings (\cd{Pstring(:' ':)}), dates (\cd{Pdate}) and times
 interesting case because in theory they could go on forever, so
 \cd{Pstring} takes a parameter which specifies when the string stops:
 in this case, when it reaches a space.  To account for more general
-stopping conditions, the base type \cd{Pstring_ME} takes as a
-parameter a regular expression.  With this type, the corresponding
+stopping conditions, a programmer may use the base type \cd{Pstring_ME}, which 
+takes a regular expression as a parameter.  With this type, the corresponding
 string is the longest that matches the regular expression.
 The first branch of the \kw{Punion} \cd{auth\_id\_t} illustrates the
 use of a \textit{constraint}.  It specifies that the \cd{unauthorized}
