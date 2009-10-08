@@ -36,6 +36,7 @@ sub scan
   (my $file) = @_;
   my $score=0;
   my $time=0;
+  my $rptime = 0;
   if (-e $file)
   { 
   open (FILE, "<$file") or die "Can't open $file!";
@@ -45,12 +46,14 @@ sub scan
    {$score = $3;}
    elsif (/Total time = ([0-9.]+)/) 
    {$time = $1;}
+   elsif (/Reparse time = ([0-9.]+)/)
+   {$rptime = $1;}
   }
-  return ($score, $time)
+  return ($score, $time, $rptime)
   }
   else {
    print "$file doesn't exist!\n";
-   {return (0, 0);}
+   {return (0, 0, 0);}
   }
 }
 
@@ -68,6 +71,7 @@ sub inc
   (my $file, my $isize, my $lsize) = @_;
   my $score = 0;
   my $time = 0;
+  my $rptime = 0;
   my $exectime = 0;
   my $num = 0;
   my $filename = getFileName $file;
@@ -76,19 +80,22 @@ sub inc
   {
     #print "Learning $file: opt_level = 3\n";
     $exectime = 0;
-    system ("increment -f $file -i $isize -l $lsize -output gen > $filename.inc");
-    ($score, $exectime) = scan ("$filename.inc");
+    system ("increment -f $file -i $isize -l $lsize -output gen -reparse true > $filename.inc");
+    ($score, $exectime, $reparsetime) = scan ("$filename.inc");
     unlink("$filename.inc");
     if (!$score) {last;} #timeout reached
     $time += $exectime;
+    $rptime += $reparsetime;
     $num++;
-    printf ("$filename (inc): time = %.2f  score = %.2f (try #$num)\n", $exectime, $score);
+    printf ("$filename (inc): time = %.2f  score = %.2f  rptime = %.2f (try #$num)\n", 
+	$exectime, $score, $reparsetime);
   }
   if ($num > 0) {
     $time = $time/$num; 
-    return ($time, $score)
+    $rptime = $rptime/$num;
+    return ($time, $score, $rptime)
   }
-  else {return (0, 0);}
+  else {return (0, 0, 0);}
 }
 
 sub verify
@@ -168,14 +175,14 @@ if ($otherargs =~ /.*-small.*/) {
     else {
       print "$test (lrn): timed out\n";
     }
-    ($time, $score) = inc($test, $initsize, $incsize);
+    ($time, $score, $rptime) = inc($test, $initsize, $incsize);
     if ($otherargs =~ /.*-verify.*/)
     {
       $rate = verify($test, $test);
     }
     else {$rate = -1;}
-    printf ("$test (inc): time = %.2f  score = %.2f  accuracy = %.2f\% (averaged from $num) tries\n", 
-		$time, $score, $rate);
+    printf ("$test (inc): time = %.2f  score = %.2f rptime = %.2f  accuracy = %.2f\% (averaged from $num) tries\n", 
+		$time, $score, $rptime, $rate);
   }
   print "End comparison tests on small files\n";
 }
@@ -191,13 +198,14 @@ if ($otherargs =~ /.*-scale.*/) {
   for (my $i=$step; $i<=$largefile_lines; $i+=$step)
   {
     system("head -n $i $largefile > $fname.$i");
-    ($time, $score) = inc ("$fname.$i", $initsize, $incsize);
+    ($time, $score, $rptime) = inc ("$fname.$i", $initsize, $incsize);
     if ($otherargs =~ /.*-verify.*/)
     {
       $rate = verify("$fname.$i", "$fname.$i");
     }
     else {$rate = -100;}
-    printf ("$fname.$i (inc): time = %.2f  score = %.2f  accuracy = %.2f\%\n", $time, $score, $rate);
+    printf ("$fname.$i (inc): time = %.2f  score = %.2f  rptime = %.2f  accuracy = %.2f\%\n", 
+		$time, $score, $rptime, $rate);
     unlink ("$fname.$i");
   }
   print "End scaling tests\n";
@@ -213,7 +221,7 @@ if ($otherargs =~ /.*-incsize.*/) {
   {
    for (my $j = 50; $j <= 500; $j+=50)
    { 
-    ($time, $score) = inc ($largefile, $i, $j);
+    ($time, $score, $rptime) = inc ($largefile, $i, $j);
     if (!$score) {
         print "$fname (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
@@ -223,8 +231,8 @@ if ($otherargs =~ /.*-incsize.*/) {
           $rate = verify($fname, $largefile);
     	}
     	else {$rate = -100;}
-        printf ("$fname (init=$i, inc=$j): time = %.2f  score = %.2f  accuracy = %.2f\%\n", 
-		$time, $score, $rate);
+        printf ("$fname (init=$i, inc=$j): time = %.2f  score = %.2f  rptime = %.2f  accuracy = %.2f\%\n", 
+		$time, $score, $rptime, $rate);
     }
    }
   }

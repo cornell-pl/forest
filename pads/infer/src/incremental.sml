@@ -235,8 +235,32 @@ structure Incremental: sig
 	   end
 ***)
 
+     fun parse_entire_file(ty, filepath) =
+      let 
+	   val strm = TextIO.openIn filepath
+   	   val eof = ref false
+	   val init_aggr = AG.TupleA (0, [AG.initialize ty, AG.Ln(mkNextTyLabel(), nil)])
+	   val init_table = AG.initTable()
+	   val aggrs = ref [(init_aggr, init_table)]
+ 	   val badcount = ref 0
+	   val _ = while not (!eof) do
+	       (
+		case TextIO.inputLine strm of
+		  SOME x => 
+			let 
+			    val (aggrs', good_data) = add (ty, remove_newline x, !aggrs)
+			    val _ = aggrs := aggrs'
+			    val _ = if  (not good_data) then badcount:=(!badcount)+1
+				    else ()
+			in ()
+			end
+		| NONE => 
+			eof:=true 
+		)
+	in !badcount
+	end
 
-     fun parse_single_file (initTy, numHeaders, numFooters, filepath, chunksize, dir, start_pos) =
+     fun parse_single_file (initTy, numHeaders, numFooters, filepath, chunksize, dir, start_pos, reparse) =
       let
 	   val filename = OS.Path.file filepath
 	   val logFile = dir ^ "/" ^ filename ^ ".log"
@@ -368,6 +392,17 @@ structure Incremental: sig
 	   val _ = Printing.cpFile (dir ^ "/") "GNUmakefile" "GNUmakefile.output"
 	   val _ = Printing.cpFile (dir ^ "/") "vanilla.p" "vanilla.p"
 	   val _ = print ("Log written to " ^ logFile ^ ".\n")
+	   val _ = if reparse then
+		    let
+			val btime = Time.now()
+			val nBads = parse_entire_file(finalTy, filepath)
+			val elapsed = Time.- (Time.now(), btime)
+			val _ = print ("Reparse time = " ^ Time.toString elapsed ^ " secs\n") 
+			(* val _ = print ("Num bads = " ^ Int.toString nBads ^ "\n") *)
+		    in ()
+		    end
+		   else () 
+	
 	   (* val finalTy = foldl inc_learn initTy otherfiles *)
 (*
 	     val fstream = TextIO.openIn filename
@@ -399,7 +434,7 @@ structure Incremental: sig
      if length args < 1 then
 	(print ("Usage: increment -f ORIG_DATA_FILE [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
 	"[-d INIT_DESC_XML] [-opt OPT_LEVEL (3)] [-tmout SECS (1800)] [-w ADC_WEIGHT (5)]\n" ^
-	"[-p FILE_TO_PARSE] [-output OUTPUT_DIR]\nSizes are in # of lines\n");
+	"[-p FILE_TO_PARSE] [-output OUTPUT_DIR] [-reparse BOOL]\nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
@@ -417,6 +452,10 @@ structure Incremental: sig
 	 val _ = case StringMap.find (argMap, "-tmout") of
 		 NONE => ()
 		 | SOME x => learn_timeout := valOf(Int.fromString x)
+
+         val reparse = case StringMap.find (argMap, "-reparse") of
+		NONE => false
+		| SOME x => valOf(Bool.fromString x)
 
 	 val _ = if opt_level = 0 then
 			(
@@ -555,7 +594,8 @@ structure Incremental: sig
 	 val _ = printTy goldenTy *)
 
        in
-         parse_single_file (initTy, numHeaders, numFooters, parse_file, chunksize, timedir, start_pos) 
+         parse_single_file (initTy, numHeaders, numFooters, parse_file, chunksize, 
+			timedir, start_pos, reparse) 
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
