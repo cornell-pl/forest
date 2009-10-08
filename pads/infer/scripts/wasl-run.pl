@@ -103,8 +103,8 @@ sub verify
  (my $name, my $datafile) = @_;
  my $badrate = 101.0;
  system ("cd gen; make $name-accum >&/dev/null");
- system ("gen/$arch/$name-accum $datafile >& $datafile.accum");
- open (FILE, "<$datafile.accum") or die "Can't open $datafile.accum!";
+ system ("gen/$arch/$name-accum $datafile >& $name.accum");
+ open (FILE, "<$name.accum") or die "Can't open $name.accum!";
  while (<FILE>)
  {
   if (/.*pcnt-bad:\s*([0-9.]+).*/)
@@ -113,7 +113,7 @@ sub verify
    last;
   }
  }
- unlink "$datafile.accum";
+ unlink "$name.accum";
  return (100.00 - $badrate);
 }
 
