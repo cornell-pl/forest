@@ -23,6 +23,14 @@ chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
 
+sub getFileName
+{
+ #getting the file name of the largefile
+ my ($file) = @_;
+ @parts = split(/\//, $file);
+ return $parts[$#parts];
+}
+
 sub scan
 {
   (my $file) = @_;
@@ -62,17 +70,19 @@ sub inc
   my $time = 0;
   my $exectime = 0;
   my $num = 0;
+  my $filename = getFileName $file;
+
   for (my $j = 0; $j < $numTimes; $j++)
   {
     #print "Learning $file: opt_level = 3\n";
     $exectime = 0;
-    system ("increment -f $file -i $isize -l $lsize -output gen > $file.inc");
-    ($score, $exectime) = scan ("$file.inc");
-    unlink("$file.inc");
+    system ("increment -f $file -i $isize -l $lsize -output gen > $filename.inc");
+    ($score, $exectime) = scan ("$filename.inc");
+    unlink("$filename.inc");
     if (!$score) {last;} #timeout reached
     $time += $exectime;
     $num++;
-    printf ("$file (inc): time = %.2f  score = %.2f (try #$num)\n", $exectime, $score);
+    printf ("$filename (inc): time = %.2f  score = %.2f (try #$num)\n", $exectime, $score);
   }
   if ($num > 0) {
     $time = $time/$num; 
@@ -170,22 +180,25 @@ if ($otherargs =~ /.*-small.*/) {
   print "End comparison tests on small files\n";
 }
 
+
+$fname = getFileName($largefile);
+
 #Scaling tests... 
-# we can 10 data points for the given large file
+# we create 10 data points for the given large file
 $step = int($largefile_lines/10);
 if ($otherargs =~ /.*-scale.*/) {
   print "Begin scaling tests\n";
   for (my $i=$step; $i<=$largefile_lines; $i+=$step)
   {
-    system("head -n $i $largefile > $largefile.$i");
-    ($time, $score) = inc ("$largefile.$i", $initsize, $incsize);
+    system("head -n $i $largefile > $fname.$i");
+    ($time, $score) = inc ("$fname.$i", $initsize, $incsize);
     if ($otherargs =~ /.*-verify.*/)
     {
-      $rate = verify("$largefile.$i", "$largefile.$i");
+      $rate = verify("$fname.$i", "$fname.$i");
     }
-    else {$rate = -1;}
-    printf ("$largefile.$i (inc): time = %.2f  score = %.2f  accuracy = %.2f\%\n", $time, $score, $rate);
-    unlink ("$largefile.$i");
+    else {$rate = -100;}
+    printf ("$fname.$i (inc): time = %.2f  score = %.2f  accuracy = %.2f\%\n", $time, $score, $rate);
+    unlink ("$fname.$i");
   }
   print "End scaling tests\n";
 }
@@ -202,15 +215,15 @@ if ($otherargs =~ /.*-incsize.*/) {
    { 
     ($time, $score) = inc ($largefile, $i, $j);
     if (!$score) {
-        print "$largefile (init=$i, inc=$j): timed out\n";
+        print "$fname (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
     else {
     	if ($otherargs =~ /.*-verify.*/)
     	{
-          $rate = verify($largefile, $largefile);
+          $rate = verify($fname, $largefile);
     	}
-    	else {$rate = -1;}
-        printf ("$largefile (init=$i, inc=$j): time = %.2f  score = %.2f  accuracy = %.2f\%\n", 
+    	else {$rate = -100;}
+        printf ("$fname (init=$i, inc=$j): time = %.2f  score = %.2f  accuracy = %.2f\%\n", 
 		$time, $score, $rate);
     }
    }

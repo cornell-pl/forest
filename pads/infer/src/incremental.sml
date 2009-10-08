@@ -236,11 +236,11 @@ structure Incremental: sig
 ***)
 
 
-     fun parse_single_file (initTy, numHeaders, numFooters, filename, chunksize, dir, start_pos) =
+     fun parse_single_file (initTy, numHeaders, numFooters, filepath, chunksize, dir, start_pos) =
       let
-
+	   val filename = OS.Path.file filepath
 	   val logFile = dir ^ "/" ^ filename ^ ".log"
-	   val strm = TextIO.openIn filename
+	   val strm = TextIO.openIn filepath
 	   val index = ref 0 
 	   val count = ref 0
 	   val badcount = ref 0
@@ -445,6 +445,7 @@ structure Incremental: sig
 		  NONE => (learn_file, learnsize)
 		| SOME x => (x, 0)
 	 val learn_file_name = OS.Path.file learn_file
+	 val parse_file_name = OS.Path.file parse_file
 
 	 val pxml = StringMap.find (argMap, "-d") 
 	 val start_pos = case pxml of
@@ -517,7 +518,7 @@ structure Incremental: sig
          val _ = TextIO.output (padsstrm, desc)
          val _ = TextIO.closeOut padsstrm
 
-         val logFile = timedir ^ "/" ^ parse_file ^ ".log"
+         val logFile = timedir ^ "/" ^ parse_file_name ^ ".log"
          val logstrm = TextIO.openOut logFile
          val _ = TextIO.output (logstrm, "Learn Chunk = " ^ Int.toString learnsize ^ 
                  	" lines\nParse Chunk = " ^ Int.toString chunksize ^ " bad lines\n\n")
