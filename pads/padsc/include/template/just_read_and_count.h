@@ -158,7 +158,8 @@ int main(int argc, char** argv) {
   /*
    * Try to read each line of data
    */
-  while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs++ < MAX_RECS)) {
+  while (!P_io_at_eof(pads) && (MAX_RECS == 0 || num_recs < MAX_RECS)) {
+    num_recs++;
     P_io_getPos(pads, &bpos, 0);
     if (P_OK != PADS_TY(_read)(pads, &m, &pd, &rep EXTRA_READ_ARGS )) {
 #ifdef EXTRA_BAD_READ_CODE
@@ -200,7 +201,7 @@ int main(int argc, char** argv) {
   if (P_ERR == P_close(pads)) {
     error(ERROR_FATAL, "*** P_close failed ***");
   }
-  error(0, "Number of bad records: \"%d\"\n", num_bad);
-  error(0, "Number of total records: \"%d\"\n", num_recs);
+  error(0, "Number of bad records = %d", num_bad);
+  error(0, "Number of total records = %d", num_recs);
   return 0;
 }

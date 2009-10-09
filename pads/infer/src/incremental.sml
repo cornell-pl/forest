@@ -388,7 +388,8 @@ structure Incremental: sig
 	   val _ = print ("\nOutput final PADS description to " ^ padscFile ^ "\n")
 	   val (topName, hdrName, tyName, trlName) = Printing.dumpPADSdesc padscFile 
 				pmlFile finalTy numHeaders numFooters
-	   val _ = Printing.dumpAccumProgram (dir ^ "/") filename hdrName tyName trlName
+	   (* val _ = Printing.dumpAccumProgram (dir ^ "/") filename hdrName tyName trlName *)
+	   val _ = Printing.dumpParseProgram (dir ^ "/") filename hdrName tyName trlName
 	   val _ = Printing.cpFile (dir ^ "/") "GNUmakefile" "GNUmakefile.output"
 	   val _ = Printing.cpFile (dir ^ "/") "vanilla.p" "vanilla.p"
 	   val _ = print ("Log written to " ^ logFile ^ ".\n")

@@ -113,6 +113,21 @@ structure Printing = struct
 	    TextIO.closeOut strm
 	end
 
+    fun dumpParseProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName:string) : unit = 
+	let val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
+	    val trlDecl = if trlName = "" then "" else "#define PADS_TRL_TY(suf) "^trlName^" ## suf\n"
+	    val parseProgram = hdrDecl ^
+		               "#define PADS_TY(suf) "^tyName^" ## suf\n"^
+			       trlDecl ^
+                               "#include \""^descName^".h\"\n"^
+                               "#include \"template/just_read_and_count.h\"\n"
+
+	    val strm = TextIO.openOut (path^descName^"-parse.c")
+            val () = TextIO.output(strm, parseProgram)
+	in
+	    TextIO.closeOut strm
+	end
+
     fun dumpAccumXMLProgram (path:string) (descName:string) (hdrName:string) (tyName:string) (trlName) : unit = 
 	let 
 	    val hdrDecl = if hdrName = "" then "" else "#define PADS_HDR_TY(suf) "^hdrName^" ## suf\n"
@@ -315,6 +330,7 @@ structure Printing = struct
                    in 
 		       print ("Ty name = "^tyName^"\n");
 		       dumpAccumProgram path descName hdrName tyName trlName;
+		       dumpParseProgram path descName hdrName tyName trlName;
 		       dumpAccumXMLProgram path descName hdrName tyName trlName;
 		       dumpXMLProgram path descName topName hdrName tyName trlName;
 		       dumpPADX path descName tyName;
