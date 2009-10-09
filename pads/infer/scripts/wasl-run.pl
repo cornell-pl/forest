@@ -99,7 +99,7 @@ sub verify
    last;
   }
  }
-# unlink "$name.parse";
+ unlink "$name.parse";
  return ((100.0 * ($total - $bads)/$total), $elapse);
 }
 
