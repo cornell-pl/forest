@@ -442,6 +442,18 @@ struct
       val ty = Reduce.reduce 2 ty
       val ty = Reduce.reduce 3 ty
       val finalty= sortUnionBranches ty
+      val finalty = 
+	case finalty of
+	  RefinedBase(a, Blob _, tl) =>
+	  (
+	   case sibling_opt of
+	     SOME(RefinedBase(_, StringConst s, _)) => RefinedBase(a, Blob(SOME s, NONE), tl)
+	   | SOME(RefinedBase(_, StringME s, _)) => RefinedBase(a, Blob(NONE, SOME s), tl)
+	   | SOME(RefinedBase(_, IntConst i, _)) => 
+		RefinedBase(a, Blob(SOME(LargeInt.toString i), NONE), tl)
+	   | _ => raise  TyMismatch
+	  )
+	| _ => finalty
       (* val _ = (print ("Learned Ty:\n"); printTy finalty) *)
   in finalty 
   end
