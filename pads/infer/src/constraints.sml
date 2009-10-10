@@ -513,7 +513,7 @@ constraint map *)
 		val consts = foldr (fn (dep, c) => add_to_consts c dep) consts found_deps
 	in foldr (fn ({label,constraints,previous_values},cm) => 
 			LabelMap.insert(cm,label,map #1 constraints)) cmap consts
-	end 
+	end handle AllOptions => LabelMap.empty
 
 	fun constrain' ty =
 	let
