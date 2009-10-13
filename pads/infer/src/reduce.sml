@@ -1834,6 +1834,9 @@ fun getStoppingPatt ty =
   | RefinedBase (a, IntConst i, _) => (SOME (LargeInt.toString i), NONE)
   | RefinedBase (a, FloatConst (i, d), _) => (SOME (i ^ "." ^ d), NONE)
   | RefinedBase (a, StringConst s, _) => (SOME s, NONE)
+  | RefinedBase (a, Int(min, max), _) => 
+		if min<0 then (NONE, SOME "/-?[0-9]+/")
+		else (NONE, SOME "/[0-9]+/")
   | RefinedBase (a, Blob x, _) => x (* the right hand side of this ty is a blob, 
 					the two will be merged together later *)
   | _ => (NONE, NONE)

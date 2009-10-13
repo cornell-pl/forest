@@ -447,11 +447,21 @@ struct
 	  RefinedBase(a, Blob _, tl) =>
 	  (
 	   case sibling_opt of
-	     SOME(RefinedBase(_, StringConst s, _)) => RefinedBase(a, Blob(SOME s, NONE), tl)
-	   | SOME(RefinedBase(_, StringME s, _)) => RefinedBase(a, Blob(NONE, SOME s), tl)
-	   | SOME(RefinedBase(_, IntConst i, _)) => 
-		RefinedBase(a, Blob(SOME(LargeInt.toString i), NONE), tl)
-	   | _ => raise  TyMismatch
+	     NONE => finalty
+	   | SOME(Poption(_, body)) =>
+		let val patt = Reduce.getStoppingPatt body
+		in
+		  case patt of
+		    (NONE, NONE) => raise TyMismatch
+		 | _ => RefinedBase(a, Blob patt, tl)
+		end
+	   | SOME sib =>
+		let val patt = Reduce.getStoppingPatt sib
+		in
+		  case patt of
+		    (NONE, NONE) => raise TyMismatch
+		 | _ => RefinedBase(a, Blob patt, tl)
+		end
 	  )
 	| _ => finalty
       (* val _ = (print ("Learned Ty:\n"); printTy finalty) *)
