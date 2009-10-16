@@ -255,7 +255,7 @@ structure Pxml = struct
      case xml of
        Element ("field", xmls) =>
 	let 
-	    val _ = print "In field \n" 
+	    (* val _ = print "In field \n"  *)
 	    val varName = valOf (selectPCData xml ["field", "name"])
 	in
 	  case search xmls ["ptype"] of
@@ -296,12 +296,21 @@ structure Pxml = struct
 	end
      | Element ("literal", _) =>
 	let 
-	    val _ = print "In literal\n" 
+	    (* val _ = print "In literal\n"  *)
 	    val str = strip(valOf (selectPCData xml ["literal", "_"]))
-	    val _ = print ("the string = " ^ str ^ "\n")
+	    (*val _ = print ("the string = " ^ str ^ "\n") *)
 	    val loc = mkLoc 0 0 0 0
 	in [RefinedBase (mkTyAux (1), StringConst str, [(Pstring str, loc)])]
 	end
+     | Element ("computed", _) =>
+       (* this is for the case of Pempty in union,
+          kenny: i believe the way Pempty is encoded in xml is not right now,
+          so this is just a hack to handle the xml *)
+       	(
+       	case selectPCData xml  ["computed", "comment"] of
+         SOME "EmptyField" => [Base(mkTyAux(1), [(Pempty, mkLoc 0 0 0 0)])]
+       	| _ => nil
+       	)
      | _ => (nil)
 
    and branchToIR map switchty xml =
@@ -330,7 +339,9 @@ structure Pxml = struct
 	end
 
    and xmlToIR map xml =
-    let val _ = print ("Processing XML element:\n" ^ toString "" xml) 
+    let 
+	val _ = ()
+	(* val _ = print ("Processing XML element:\n" ^ toString "" xml)  *)
     in
     case xml of
       Element ("typedef", xmls) =>
@@ -343,8 +354,8 @@ structure Pxml = struct
     | Element ("PadsC", ty_xmls) =>
 	let val rev_xmls = List.rev ty_xmls
 	    val map = loadToMap rev_xmls map
-	    val _ = print ("Load to Map complete. Elements in Map = " ^ 
-			Int.toString (StringMap.numItems map) ^ "\n") 
+	    (*val _ = print ("Load to Map complete. Elements in Map = " ^ 
+			Int.toString (StringMap.numItems map) ^ "\n") *)
 	in  if length rev_xmls <1 then raise InvalidXML
 	    else xmlToIR map (hd rev_xmls)
 	end
