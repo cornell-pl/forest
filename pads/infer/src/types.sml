@@ -299,7 +299,12 @@ struct
      (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
          
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
-    fun getIdString ( a : AuxInfo ) : string = String.extract ((getLabelString a), 4, NONE)
+    fun getIdString ( a : AuxInfo ) : string = 
+	let val label = getLabelString a
+	in
+	  String.map Char.toLower label
+	end
+
     fun getLabelForPADS ty =
 	let
 	  val label = getLabelString (getAuxInfo ty)

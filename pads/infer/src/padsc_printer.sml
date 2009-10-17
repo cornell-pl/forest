@@ -298,12 +298,15 @@ open Ast
 				"Psource Pstruct " ^ topLabel ^ " {\n" ^
                                 (case headerty of
                                         NONE => ""
-                                        | SOME h => "\t" ^ headerLabel ^ " v_" ^ headerLabel ^ ";\n"
+                                        | SOME h => "\t" ^ headerLabel ^ " " ^
+					getVarStr headerLabel ^ ";\n"
                                 ) ^
-                                ("\t" ^ bodyLabel ^ "[] v_" ^ bodyLabel ^" : Plongest;\n") ^
+                                ("\t" ^ bodyLabel ^ "[] " ^ 
+					getVarStr bodyLabel ^" : Plongest;\n") ^
                                 (case footerty of 
                                         NONE => ""
-                                        | SOME f => "\t" ^ footerLabel ^ " v_" ^ footerLabel ^ ";\n"
+                                        | SOME f => "\t" ^ footerLabel ^ " " ^
+					getVarStr footerLabel ^ ";\n"
                                 ) ^
                                 "};\n",
 				topLabel, headerLabel, bodyLabel, footerLabel)

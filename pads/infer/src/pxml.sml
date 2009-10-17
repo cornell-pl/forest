@@ -370,8 +370,12 @@ structure Pxml = struct
 			 in
 			    StringConst (strip str) (* at the moment we only have const strings *)
 			 end) fields
+	  val loc = mkLoc 0 0 0 0
+	  val firsttok = case res of
+			  (StringConst s::_) => Pstring s
+			 | _ => Pstring ""
 	in
-	  RefinedBase (aux, Enum res, [])
+	  RefinedBase (aux, Enum res, [(firsttok, loc)])
 	end
     | Element ("struct", xmls) =>
 	let 

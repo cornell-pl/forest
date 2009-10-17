@@ -293,18 +293,25 @@ structure Incremental: sig
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
 		    val _ = AG.printTable table 
 		*)
-		    val trans_map = AG.transpose table
+		    (* we only update the orig ty is there's bad data in
+			the aggregate *)
+		    val newTy = 
+		    if chunk_cost > 0 then 
+		     let 
+		       val trans_map = AG.transpose table
 (*
 		    val _ = LabelMap.appi (fn (id, l) => (print ((Atom.toString id) ^ ": " ^
 				(String.concat (map (Int.toString) l))); print "\n")) trans_map
 *)
-		    val newTy = (AG.updateTy ty chunk_aggr)
-	     	    val newTy = Reduce.reduce 5 newTy 
-		    val newTy = AG.merge_adj_options trans_map newTy
-		    val newTy = AG.alt_options_to_unions trans_map newTy
-		    val newTy = Reduce.reduce 5 newTy
+		       val newTy = (AG.updateTy ty chunk_aggr)
+	     	       val newTy = Reduce.reduce 5 newTy 
+		       val newTy = AG.merge_adj_options trans_map newTy
+		       val newTy = AG.alt_options_to_unions trans_map newTy
+		       val newTy = Reduce.reduce 5 newTy
+		     in newTy
+		     end
+		    else ty
 		    (* val _ = (print "Updated newty:\n"; printTy newTy) *)
-		    val elapse = Time.- (Time.now(), start_time)
 		    (* val refinedTy = Reduce.reduce 4 newTy *)
 (*
 
@@ -321,6 +328,7 @@ structure Incremental: sig
 	   	    val _ = TextIO.output (padsstrm, desc)
 	   	    val _ = TextIO.closeOut padsstrm
 *)
+		    val elapse = Time.- (Time.now(), start_time)
 	   	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
 	   	    val msg = "Chunk " ^ Int.toString index ^ 
 			" (" ^ Int.toString(count) ^ " lines): Aggregate Cost = " ^ 
@@ -540,9 +548,9 @@ structure Incremental: sig
 		      val ty = case ty of
 				  RArray (_, _, _, body, _, _) => body
 				| _ => ty
-		      val _ = printTy (measure 0 ty)
+		      val measured_ty = (measure 0 ty)
 		  in
-			(ty, (measure 0 ty), 0, 0, Times.zeroEndingTimes ())
+			(ty, measured_ty, 0, 0, Times.zeroEndingTimes ())
 			(* ;raise TyMismatch *)
 		  end
 	 (*  

@@ -147,16 +147,17 @@ open Common
   fun getTypeName ty : TypeName =
 	let
 	  val label = getLabelString (getAuxInfo ty)
+ 	  val lowLabel = lowerFirstChar label
 	  val id = if String.substring (label, 0, 3) = "BTy" then
 		String.extract (label, 4, NONE)
 	        else ""
 	in
 	  case ty of
 	   Base (_, (t, l)::_) => tokenToTypeName t
-        |  Pstruct _             => if id = "" then IRref label else IRref ("struct_" ^ id)
-        |  Punion _              => if id = "" then IRref label else IRref ("union_" ^ id)
+        |  Pstruct _             => if id = "" then IRref lowLabel else IRref ("struct_" ^ id)
+        |  Punion _              => if id = "" then IRref lowLabel else IRref ("union_" ^ id)
         |  RefinedBase (aux, re, _) => 
-		(case re of Enum _ => IRref ("enum_" ^ id)
+		(case re of Enum _ => if id = "" then IRref lowLabel else IRref ("enum_" ^ id)
 			| StringME s => IRstringME s
 			| StringConst s => if (size s) = 1 then IRchar
 					   else IRstring
@@ -174,9 +175,9 @@ open Common
 			    end
 			| _ => raise TyMismatch
 		)
-        |  Switch _        	 => if id = "" then IRref label else IRref ("switch_"^id)
-        |  RArray _ 		 => if id = "" then IRref label else IRref ("array_"^id)
-        |  Poption _           	 => if id = "" then IRref label else IRref ("opt_"^id)
+        |  Switch _        	 => if id = "" then IRref lowLabel else IRref ("switch_"^id)
+        |  RArray _ 		 => if id = "" then IRref lowLabel else IRref ("array_"^id)
+        |  Poption _           	 => if id = "" then IRref lowLabel else IRref ("opt_"^id)
 	| _ => (printTy ty; raise TyMismatch)
 	end
 
@@ -191,6 +192,10 @@ open Common
 	  RefinedBase(_, StringConst s, _) => IRstringME ("/" ^ escape s ^ "/")
 	  |_ => getTypeName ty
 
+  fun getVarStr s =
+	if String.substring(s, 0, 2) = "v_" then s
+	else "v_" ^ s
+
   fun getVar ty : VarName = 
         let
 	  val label = getLabel(getAuxInfo ty)
@@ -199,25 +204,25 @@ open Common
 	    Base _ => 
 		(
 		case (getBaseTyName ty) of
-		IRref s => ("v_" ^ s)
+		IRref s => getVarStr s
 		| _ => raise TyMismatch
 		)
 	  | RefinedBase (_, Enum _, _) =>
 		(
 		case (getTypeName ty) of 
-		IRref s => ("v_" ^ s)
+		IRref s => getVarStr s
 		| _ => raise TyMismatch
 		)
 	  | RefinedBase _ =>
 		(
 		case (getBaseTyName ty) of
-		IRref s => ("v_" ^ s)
+		IRref s => getVarStr s
 		| _ => raise TyMismatch
 		)
 	  |  _ => 
 		(
 		case (getTypeName ty) of 
-		IRref s => ("v_" ^ s)
+		IRref s => getVarStr s
 		| _ => raise TyMismatch
 		)
 	  val _ = varMapRef := LabelMap.insert (!varMapRef, label, var)
@@ -339,41 +344,41 @@ open Common
       case re of
       StringConst s => 
 	let
-	  val var = if isCIdentifier s then (s ^ id)
-		else "string" ^ suffix
+	  val var = if isCIdentifier s then (s ^ "_" ^ id)
+		else "string_" ^ suffix
 	in
 	  if (size s) = 1 then CharField (SOME var, s)
 	  else StringField (SOME var, s)
 	end
     | StringME s => 
 	let
-	  val var = "stringME" ^ suffix
+	  val var = "stringME_" ^ suffix
 	  val tyName = IRstringME s
 	in FullField (var, tyName, NONE, NONE)
 	end
     | Int (min, max) => 
 	let
-	  val var = "int" ^ suffix
+	  val var = "int_" ^ suffix
 	  val tyName = IRintrange (min, max) 
 	in FullField (var, tyName, NONE, NONE)
 	end
     | IntConst i => 
 	let
-	  val var = "int" ^ suffix
+	  val var = "int_" ^ suffix
 	  val tyName = IRintrange (i, i)
 	in 
 	  FullField (var, tyName, NONE, SOME(var, NONE, NONE, SOME (IntConst i)))
 	end
     | FloatConst x => 
 	let
-	  val var = "float" ^ suffix
+	  val var = "float_" ^ suffix
 	  val tyName = IRfloat 
 	in 
 	  FullField (var, tyName, NONE, SOME(var, NONE, NONE, SOME (FloatConst x)))
 	end
     | Blob (x, y)  => 
 	let
-	  val var = "blob" ^ suffix
+	  val var = "blob_" ^ suffix
 	  val s = case (x, y) of
 		    (SOME str, NONE) => str
 		  | (NONE, SOME p) => p 
@@ -499,7 +504,6 @@ open Common
       | RefinedBase(aux, re, _) =>
 	  let val basetyName = getBaseTyName ty
 	      val _ = tyMapRef := TyMap.insert (!tyMapRef, ty, basetyName)
-	      val idStr = getIdString aux
 	  in
 	  (
 	    case re of 
