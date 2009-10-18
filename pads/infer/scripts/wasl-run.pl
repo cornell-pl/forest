@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# usage: wasl-run.pl LARGE_FILE
+# usage: wasl-run.pl LARGE_FILES
 # this script first creates a number of smaller files from
 # the large file of size 200k, 400k, 600k, 800k and 1M lines each
 # and then incrementally learn scriptions from these files using
@@ -138,10 +138,8 @@ sub inc
   else {return (0, 0, 0, 0, 0);}
 }
 
-
-$largefile = shift @ARGV;
-if (!$largefile) {
-  print "Usage: wasl-run.pl LARGE_FILE [-small] [-scale] [-incsize]
+if (!@ARGV) {
+  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale] [-incsize]
 
 LARGE_FILE must have at least 1K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
@@ -151,15 +149,7 @@ LARGE_FILE must have at least 1K lines.
 -incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.\n";
   exit;
 }
-
 $otherargs = join (' ', @ARGV);
-
-$wcoutput = `wc -l $largefile`;
-if ($wcoutput =~ /\s*(\d+).*/) {
- $largefile_lines = $1;
-}
-else {print "$largefile can't be found!\n"; exit}
-if ($largefile_lines < 1000) {print "$largefile must be at least 1k lines!\n"; exit}
 
 #Multiple smaller files tests
 if ($otherargs =~ /.*-small.*/) {
@@ -200,11 +190,25 @@ if ($otherargs =~ /.*-small.*/) {
 }
 
 
+foreach my $largefile (@ARGV)
+{
+# skip the switches in the arguments
+if ($largefile =~ /-.*/) {next;}
+
+print "**** Processing $largefile! ****\n";
+
+$wcoutput = `wc -l $largefile`;
+if ($wcoutput =~ /\s*(\d+).*/) {
+ $largefile_lines = $1;
+}
+else {print "$largefile can't be found!\n"; exit}
+if ($largefile_lines < 1000) {print "$largefile must be at least 1k lines!\n"; next}
+
 $fname = getFileName($largefile);
 
 #Scaling tests... 
-# we create 10 data points for the given large file
-$step = int($largefile_lines/10);
+# we create 5 data points for the given large file
+$step = int($largefile_lines/5);
 if ($otherargs =~ /.*-scale.*/) {
   print "Begin scaling tests\n";
   for (my $i=$step; $i<=$largefile_lines; $i+=$step)
@@ -218,14 +222,14 @@ if ($otherargs =~ /.*-scale.*/) {
 }
 
 #init size and incremental size tests ...
-#init size from 500 to max with step of max/10
-#inc size from 100 to 500 with a step of 100
+#init size from 100 to max growing exponentially
+#inc size from 50 to 300 with a step of 50
 $timeout=0;
 if ($otherargs =~ /.*-incsize.*/) {
   print "Begin init/incremental size tests\n";
-  for (my $i = 500; $i <= $largefile_lines && !$timeout; $i+=$step)
+  for (my $i = 100; $i <= $largefile_lines && !$timeout; $i=$i*2)
   {
-   for (my $j = 100; $j <= 500; $j+=100)
+   for (my $j = 50; $j <= 300; $j+=50)
    { 
     ($score, $rate, $time, $rptime, $padstime) = inc ($largefile, $i, $j);
     if (!$score) {
@@ -237,6 +241,7 @@ if ($otherargs =~ /.*-incsize.*/) {
    }
   }
   print "End init/incremental size tests\n";
+}
 }
 
 #TODO: shall we add a test for varying adc weight
