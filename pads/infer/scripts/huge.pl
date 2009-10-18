@@ -59,8 +59,8 @@ if ($multiplier < 1)
 
 $linecount = int($largefile_lines / $multiplier);
 
-system ("split -l $linecount $largefile $fname.$linecount_");
-@smallfiles = `ls $fname.$linecount_*`;
+system ("split -l $linecount $largefile $fname.$linecount.");
+@smallfiles = `ls $fname.$linecount.*`;
 chomp @smallfiles;
 $time = 0;
 $firstfile = shift @smallfiles;
