@@ -71,7 +71,9 @@ $time+=$exectime;
 system ("cd gen; make $firstfile-parse>&/dev/null"); 
 $xmlfile = "gen/$arch/$firstfile.pxml";
 if (! -e $xmlfile) {print "pxml file $xmlfile doesn't exist!\n"; exit;}
- 
+unlink($firstfile);
+unlink ("$firstfile.inc");
+
 foreach my $smallfile (@smallfiles)
 {
  system ("increment -f $smallfile -d $xmlfile -i $initsize -l 100 -output gen > $smallfile.inc");
@@ -81,6 +83,8 @@ foreach my $smallfile (@smallfiles)
  system ("cd gen; make $smallfile-parse>&/dev/null"); 
  $xmlfile = "gen/$arch/$smallfile.pxml";
  if (! -e $xmlfile) {print "pxml file $xmlfile doesn't exist!\n"; exit;}
+ unlink($smallfile);
+ unlink("$smallfile.inc");
 }
 print "Final comps = $scores\n";
 print "Total time = $time secs\n";
