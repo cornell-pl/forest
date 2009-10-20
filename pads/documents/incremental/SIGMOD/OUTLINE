@@ -1,0 +1,62 @@
+ABSTRACT
+ KSF: rewrite with focus on converting into standard representations
+
+INTRO
+ KSF: rewrite along the lines of wasl slides
+
+PADS & LEARNPADS
+ add citations to sigmod demo papers.
+
+INCREMENTAL ALGORITHM
+ explore different metric for unions (KSF)
+ explore geometric mean rather than sum (KQZ?)
+ explore MDL tutorial (DPW?)
+
+IMPLEMENTATION
+ describe in more detail (KQZ then DPW?)
+
+EVALUATION of LEARNING
+ - Test suite:
+   common log format (apache)
+   compound log format (pws, yellow pages)
+   sueprcomputer logs
+   include longer description of each format; 
+       explore making (subsets) of formats available on-line.
+   size of data in lines and bytes
+   complexity of gold descriptions (TC, ADC, MDL score)
+ - Quality of inferred descriptions
+   number of parsing errors from inferred descriptions
+   TC, ADC, MDL compared with gold description  
+ - Time performance:
+   parsing time:
+     wc -l time
+     parse with Pstring(:Peor:) as description of each record
+     parse time gold descriptions
+     parse time inferred descriptions
+   learning time:
+     explore initial batch size across test suite
+     explore incremental batch size across test suite
+     choosing best initial batch and best incremental sizes, explore
+       scaling with all large files that we have available.
+ 
+FROM PADS to XML
+  XML because data tends to be semi-structured.
+  Tool:
+    describe translation from PADS -> Canonical XSD for data.
+    Give example for running example of wsl
+
+  Evaluation:
+    complexity of XSD for gold standard; size of generated XML 
+    complexity of XSD for inferred description; size of generated XML
+
+RELATED WORK
+ David do initial draft
+
+FUTURE WORK
+ Interactive UI to refine descriptions?
+
+*******************************
+ put demo on-line
+ propose demo?
+ put selected data sources online?
+
