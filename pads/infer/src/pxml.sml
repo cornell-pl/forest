@@ -150,9 +150,11 @@ structure Pxml = struct
 		Base (aux, [(Pstring(""), loc)])
 	    else if tyName = "Pstring" then
 		(
+		 (* this is a blob *)
 		  case selectPCData ptype ["ptype", "argument"] of
 		    SOME arg =>
-			RefinedBase (aux, Blob (SOME (strip arg), NONE), [(Pstring(""), loc)])
+			RefinedBase (aux, Blob (SOME (unescape (strip arg)), 
+					NONE), [(Pstring(""), loc)])
 		  | _ =>
 			RefinedBase (aux, Blob (NONE, NONE), [(Pstring(""), loc)])
 		)
@@ -188,11 +190,11 @@ structure Pxml = struct
 	    val sep = 
 		case selectPCData xml ["_", "delimiterConstraints", "sep", "_"] of
 	        NONE => NONE
-	      | SOME x => SOME (StringConst x)
+	      | SOME x => SOME (StringConst (strip x))
 	    val term = 
 		case selectPCData xml ["_", "delimiterConstraints", "term", "_"] of
 	        NONE => NONE
-	      | SOME x => SOME (StringConst x)
+	      | SOME x => SOME (StringConst (strip x))
 	    val len = 
 		case search [xml] ["_", "sizeConstraints", "max"] of
 	        SOME (Element ("max", [PCData x])) => SOME(IntConst (valOf(LargeInt.fromString x)))

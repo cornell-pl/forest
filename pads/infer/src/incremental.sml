@@ -243,6 +243,7 @@ structure Incremental: sig
 	   val init_table = AG.initTable()
 	   val aggrs = ref [(init_aggr, init_table)]
  	   val badcount = ref 0
+	   val count = ref 0
 	   val _ = while not (!eof) do
 	       (
 		case TextIO.inputLine strm of
@@ -250,6 +251,7 @@ structure Incremental: sig
 			let 
 			    val (aggrs', good_data) = add (ty, remove_newline x, !aggrs)
 			    val _ = aggrs := aggrs'
+			    val _ = count := (!count)+1
 			    val _ = if  (not good_data) then badcount:=(!badcount)+1
 				    else ()
 			in ()
@@ -257,7 +259,12 @@ structure Incremental: sig
 		| NONE => 
 			eof:=true 
 		)
-	in !badcount
+	   val (aggr, _ ) = hd (!aggrs)
+     	   val cost = AG.cost aggr
+	   val _ = print ("The Best Aggregate:\n" ^ (AG.aggrToString "" aggr)) 
+	   val _ = print ("Cost of Best Aggregation = " ^ Int.toString cost ^ "\n")
+
+	in (!count, !badcount)
 	end
 
      fun parse_single_file (initTy, numHeaders, numFooters, filepath, chunksize, dir, start_pos, reparse) =
@@ -288,9 +295,9 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
-		(*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
+		(*
 		    val _ = AG.printTable table 
 		*)
 		    (* we only update the orig ty is there's bad data in
@@ -404,10 +411,11 @@ structure Incremental: sig
 	   val _ = if reparse then
 		    let
 			val btime = Time.now()
-			val nBads = parse_entire_file(finalTy, filepath)
+			val (nTotal, nBads) = parse_entire_file(finalTy, filepath)
 			val elapsed = Time.- (Time.now(), btime)
 			val _ = print ("Reparse time = " ^ Time.toString elapsed ^ " secs\n") 
-			(* val _ = print ("Num bads = " ^ Int.toString nBads ^ "\n") *)
+			val _ = print ("Total recs = " ^ Int.toString nTotal ^ 
+			"  Bad recs = " ^ Int.toString nBads ^ "\n") 
 		    in ()
 		    end
 		   else () 
@@ -558,6 +566,8 @@ structure Incremental: sig
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0) 
 	 val (_, initTy) = Populate.initializeTy LabelMap.empty initTy 
 	 *)
+	 val _ = print "Init Ty:\n"
+	 val _ = printTy initTy
 
          val padscFile = timedir ^ "/" ^ learn_file_name ^ ".init.p"
          val _ = print ("\nOutput initial PADS description to " ^ padscFile ^ "\n")

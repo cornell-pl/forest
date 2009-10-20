@@ -40,13 +40,19 @@ struct
      | IRwhite => "ppwhite"
      | IRchar => "ppchar"
      | IRtext => "pptext"
-     | IRblob s => 
-        if size s = 0 then
-          "pstring_SE(Peor)"
-        else if size s = 1 then
-          "pstring('" ^ s ^ "')"
-        else
-          "pstring_SE(\"/" ^ escapeRegex (escape s) ^ "/\")"
+     | IRblob (s, p) => 
+	(
+	case (s, p) of
+	  (SOME s, NONE) => 
+        	if size s = 0 then raise TyMismatch
+		else if size s = 1 then
+          	  "pstring('" ^ s ^ "')"
+		else 
+          	  "pstring_SE(\"/" ^ escapeRegex (escape s) ^ "/\")"
+	| (NONE, SOME s) =>
+          	  "pstring_SE(\"" ^ escapeRegex s ^ "\")"
+        | _ => "pstring_SE(Peor)"
+	)
      | IRempty => "ppempty"
 
   fun fieldToPML isStruct f =

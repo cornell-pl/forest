@@ -44,13 +44,19 @@ open Ast
      | IRwhite => "PPwhite"
      | IRchar => "PPchar"
      | IRtext => "PPtext"
-     | IRblob s => 
-	if size s = 0 then
-	  "Pstring_SE(:Peor:)"
-	else if size s = 1 then
-	  "Pstring(:'" ^ s ^ "':)"
-	else
-	  "Pstring_SE(:\"/" ^ escapeRegex (escape s) ^ "/\":)"
+     | IRblob (s, p) => 
+	(
+	case (s, p) of
+	  (SOME s, NONE) =>
+		if size s = 0 then raise TyMismatch
+		else if size s = 1 then 
+	  	  "Pstring(:'" ^ s ^ "':)"
+		else
+	  	  "Pstring_SE(:\"/" ^ escapeRegex (escape s) ^ "/\":)"
+	| (NONE, SOME s) =>
+	  	  "Pstring_SE(:\"" ^ escapeRegex s ^ "\":)"
+	| _ =>  "Pstring_SE(:Peor:)"
+	)
      | IRempty => "PPempty"
 
   fun arrayFieldToPADSC (var_opt, tyName, sep, term, len) =

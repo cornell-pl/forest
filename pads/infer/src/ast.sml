@@ -21,7 +21,7 @@ open Common
      | IRwhite 
      | IRchar 
      | IRtext
-     | IRblob of string
+     | IRblob of (string option * string option)
      | IRempty 
 
   val tmap = TyMap.empty
@@ -164,15 +164,7 @@ open Common
 			| Int (min, max) => IRintrange (min, max)
 			| IntConst i => IRintrange (i, i)
 			| FloatConst _ => IRfloat
-			| Blob (x, y)  => 
-			    let
-	  			val s = case (x, y) of
-		    		  (SOME str, NONE) => str
-		  		| (NONE, SOME p) =>  p 
-		  		| _ => "" 
-			    in
-				IRblob s
-			    end
+			| Blob (x, y)  => IRblob (x, y)
 			| _ => raise TyMismatch
 		)
         |  Switch _        	 => if id = "" then IRref lowLabel else IRref ("switch_"^id)
@@ -379,11 +371,7 @@ open Common
     | Blob (x, y)  => 
 	let
 	  val var = "blob_" ^ suffix
-	  val s = case (x, y) of
-		    (SOME str, NONE) => str
-		  | (NONE, SOME p) => p 
-		  | _ => "" 
-	  val tyName = IRblob s
+	  val tyName = IRblob (x, y)
 	in FullField (var, tyName, NONE, NONE)
 	end
 
