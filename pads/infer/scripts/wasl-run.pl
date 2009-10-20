@@ -105,7 +105,7 @@ sub verify
 
 sub inc
 {
-  (my $file, my $isize, my $lsize) = @_;
+  (my $file, my $isize, my $lsize, my $doparse) = @_;
   my $score = 0;
   my $time = 0;
   my $rptime = 0;
@@ -116,19 +116,30 @@ sub inc
 
   for (my $j = 0; $j < $numTimes; $j++)
   {
-    #print "Learning $file: opt_level = 3\n";
     $exectime = 0;
-    system ("increment -f $file -i $isize -l $lsize -output gen -reparse true > $filename.inc");
+    if ($doparse) {
+      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true > $filename.inc");
+    } else
+    {
+      system ("increment -f $file -i $isize -l $lsize -output gen > $filename.inc");
+    }
     ($score, $exectime, $reparsetime) = scan ("$filename.inc");
-    unlink("$filename.inc");
+    #unlink("$filename.inc");
     if (!$score) {last;} #timeout reached
-    ($rate, $ptime) = verify($filename, $file);
+    if ($doparse) {
+      ($rate, $ptime) = verify($filename, $file);
+    }
+    else {
+	$rate = 0;
+	$ptime = 0;
+    }
     $time += $exectime;
     $rptime += $reparsetime;
     $padstime += $ptime;
     $num++;
     output("$filename (inc)", $score, $rate, $exectime, $reparsetime, $ptime, $num);
   }
+  unlink("$filename.inc");
   if ($num > 0) {
     $time = $time/$num; 
     $rptime = $rptime/$num;
@@ -139,19 +150,25 @@ sub inc
 }
 
 if (!@ARGV) {
-  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale] [-incsize]
+  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale] [-incsize] [-noparse]
 
 LARGE_FILE must have at least 1K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
           test files are stored in pads/infer/examples/data and they must be in the 
           currect working directory.
 -scale:   run the scaling tests on LARGE_FILE.
--incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.\n";
+-incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.
+-noparse: do not re-parse the data after learning the description.\n";
   exit;
 }
 $otherargs = join (' ', @ARGV);
 
 #Multiple smaller files tests
+if ($otherargs =~ /.*-noparse.*/) {
+  $doparse=0;
+}
+else {$doparse=1;}
+
 if ($otherargs =~ /.*-small.*/) {
   print "Begin comparison tests on small files\n";
   foreach $test (@testfiles) {
@@ -183,7 +200,8 @@ if ($otherargs =~ /.*-small.*/) {
     else {
       print "$test (lrn): timed out\n";
     }
-    ($score, $rate, $time, $rptime, $padstime) = inc($test, $initsize, $incsize);
+    ($score, $rate, $time, $rptime, $padstime) = 
+	inc($test, $initsize, $incsize, $doparse);
     output("$test (inc)", $score, $rate, $time, $rptime, $padstime, 0);
   }
   print "End comparison tests on small files\n";
@@ -211,13 +229,20 @@ $fname = getFileName($largefile);
 $step = int($largefile_lines/5);
 if ($otherargs =~ /.*-scale.*/) {
   print "Begin scaling tests\n";
-  for (my $i=$step; $i<=$largefile_lines; $i+=$step)
+  for (my $i=1; $i<=4; $i++)
   {
-    system("head -n $i $largefile > $fname.$i");
-    ($score, $rate, $time, $rptime, $padstime) = inc ("$fname.$i", $initsize, $incsize);
-    output("$fname.$i (inc)", $score, $rate, $time, $rptime, $padstime, 0);
-    unlink ("$fname.$i");
+    $size = $i * $step;
+    system("head -n $size $largefile > $fname.$size");
+    ($score, $rate, $time, $rptime, $padstime) = 
+	inc ("$fname.$size", $initsize, $incsize, $doparse);
+    output("$fname.$size (inc)", $score, $rate, $time, $rptime, $padstime, 0);
+    unlink ("$fname.$size");
   }
+  #last round is the whole file itself...
+    ($score, $rate, $time, $rptime, $padstime) = 
+	inc ("$largefile", $initsize, $incsize, $doparse);
+    output("$fname.$largefile_lines (inc)", $score, $rate, $time, $rptime, $padstime, 0);
+  
   print "End scaling tests\n";
 }
 
@@ -231,7 +256,7 @@ if ($otherargs =~ /.*-incsize.*/) {
   {
    for (my $j = 50; $j <= 300; $j+=50)
    { 
-    ($score, $rate, $time, $rptime, $padstime) = inc ($largefile, $i, $j);
+    ($score, $rate, $time, $rptime, $padstime) = inc ($largefile, $i, $j, $doparse);
     if (!$score) {
         print "$fname (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
