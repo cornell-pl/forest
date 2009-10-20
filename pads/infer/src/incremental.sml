@@ -259,10 +259,12 @@ structure Incremental: sig
 		| NONE => 
 			eof:=true 
 		)
+(*
 	   val (aggr, _ ) = hd (!aggrs)
      	   val cost = AG.cost aggr
 	   val _ = print ("The Best Aggregate:\n" ^ (AG.aggrToString "" aggr)) 
 	   val _ = print ("Cost of Best Aggregation = " ^ Int.toString cost ^ "\n")
+*)
 
 	in (!count, !badcount)
 	end
@@ -295,14 +297,15 @@ structure Incremental: sig
 				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
 			      else hd aggrs
 	     	    val chunk_cost = AG.cost chunk_aggr
+		(*
 	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
 	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-		(*
 		    val _ = AG.printTable table 
 		*)
-		    (* we only update the orig ty is there's bad data in
-			the aggregate *)
-		    val newTy = 
+		    (* we update the ty even if there's no bad data in the
+			aggregate because we want the updated aux in ty *)
+		    val newTy = AG.updateTy ty chunk_aggr
+		    val newTy =
 		    if chunk_cost > 0 then 
 		     let 
 		       val trans_map = AG.transpose table
@@ -310,14 +313,14 @@ structure Incremental: sig
 		    val _ = LabelMap.appi (fn (id, l) => (print ((Atom.toString id) ^ ": " ^
 				(String.concat (map (Int.toString) l))); print "\n")) trans_map
 *)
-		       val newTy = (AG.updateTy ty chunk_aggr)
 	     	       val newTy = Reduce.reduce 5 newTy 
 		       val newTy = AG.merge_adj_options trans_map newTy
 		       val newTy = AG.alt_options_to_unions trans_map newTy
 		       val newTy = Reduce.reduce 5 newTy
 		     in newTy
 		     end
-		    else ty
+		    else newTy
+
 		    (* val _ = (print "Updated newty:\n"; printTy newTy) *)
 		    (* val refinedTy = Reduce.reduce 4 newTy *)
 (*
@@ -566,8 +569,6 @@ structure Incremental: sig
 	 val (initTy, numHeaders, numFooters) = (valOf (Gold.getGold "ai.3000"), 0, 0) 
 	 val (_, initTy) = Populate.initializeTy LabelMap.empty initTy 
 	 *)
-	 val _ = print "Init Ty:\n"
-	 val _ = printTy initTy
 
          val padscFile = timedir ^ "/" ^ learn_file_name ^ ".init.p"
          val _ = print ("\nOutput initial PADS description to " ^ padscFile ^ "\n")

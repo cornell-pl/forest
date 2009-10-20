@@ -299,7 +299,8 @@ structure Pxml = struct
      | Element ("literal", _) =>
 	let 
 	    (* val _ = print "In literal\n"  *)
-	    val str = strip(valOf (selectPCData xml ["literal", "_"]))
+	    val str = unescape (strip(valOf 
+			(selectPCData xml ["literal", "_"])))
 	    (*val _ = print ("the string = " ^ str ^ "\n") *)
 	    val loc = mkLoc 0 0 0 0
 	in [RefinedBase (mkTyAux (1), StringConst str, [(Pstring str, loc)])]
