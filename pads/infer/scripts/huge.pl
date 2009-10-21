@@ -39,12 +39,14 @@ chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
 
-($largefile) = @ARGV;
-if (!$largefile) {
- print "Usage: huge.pl LARGE_FILE_PATH\n";
+@largefiles = @ARGV;
+if (!@largefiles) {
+ print "Usage: huge.pl LARGE_FILE_PATHS\n";
  exit;
 }
 
+foreach my $largefile (@largefiles)
+{
 $initsize = 500;
 $fname = getFileName($largefile);
 $wcoutput = `wc -l $largefile`;
@@ -53,9 +55,11 @@ if ($wcoutput =~ /\s*(\d+).*/) {
 }
 ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
 $atime,$mtime,$ctime,$blksize,$blocks) = stat($largefile);
-$multiplier = $size / (1024*1024*1024);
+$multiplier = $size / (1024*1024*512);
 if ($multiplier < 1)
 {print "$largefile is too small!\n"; exit;}
+
+print "**** Processing  $largefile ****\n";
 
 $linecount = int($largefile_lines / $multiplier);
 
@@ -87,5 +91,6 @@ foreach my $smallfile (@smallfiles)
  unlink("$smallfile.inc");
 }
 print "Final comps = $scores\n";
-print "Total time = $time secs\n";
+print "Total time = $time secs\n\n";
+}
 
