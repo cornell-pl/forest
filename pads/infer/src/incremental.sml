@@ -543,14 +543,19 @@ structure Incremental: sig
 	 (*
 	 val otherfiles = List.tabulate (10, (fn n => learn_file_name ^ ".chunk" ^ Int.toString n))
 	 *)
+	 (*
          val _ = Posix.Process.alarm(Time.fromSeconds(LargeInt.fromInt(!learn_timeout)))
+	 *)
+	 fun my_learn (a, b, c) = Rewrite.run a b c
+	 val timed_learn = TimeLimit.timeLimit (Time.fromSeconds
+		(LargeInt.fromInt(!learn_timeout))) my_learn 
 	 val (_, initTy, numHeaders, numFooters, _) = 
 		case pxml of 
 		  NONE =>
 		  let val learn_lines = get_learn_chunk (learn_file, learnsize)
 		  in
-			Rewrite.run (Times.zeroEndingTimes()) 1 
-			(measure 0 (#1 (computeStructurefromRecords learn_lines)))
+		    timed_learn ((Times.zeroEndingTimes()), 1, 
+		    (measure 0 (#1 (computeStructurefromRecords learn_lines))))
 		  end
 		| SOME xmlfile =>
 		  let val xml = PxmlParse.loadXML xmlfile
