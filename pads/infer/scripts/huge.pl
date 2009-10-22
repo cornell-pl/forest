@@ -62,8 +62,10 @@ if ($multiplier < 1)
 print "**** Processing  $largefile ****\n";
 
 $linecount = int($largefile_lines / $multiplier);
-
-system ("split -l $linecount $largefile $fname.$linecount.");
+if (! -e $fname.$linecount.aa)
+{
+  system ("split -l $linecount $largefile $fname.$linecount.");
+}
 @smallfiles = `ls $fname.$linecount.*`;
 chomp @smallfiles;
 $time = 0;
@@ -75,9 +77,6 @@ $time+=$exectime;
 system ("cd gen; make $firstfile-parse>&/dev/null"); 
 $xmlfile = "gen/$arch/$firstfile.pxml";
 if (! -e $xmlfile) {print "pxml file $xmlfile doesn't exist!\n"; exit;}
-unlink($firstfile);
-unlink ("$firstfile.inc");
-
 foreach my $smallfile (@smallfiles)
 {
  system ("increment -f $smallfile -d $xmlfile -i $initsize -l 100 -output gen > $smallfile.inc");
@@ -87,9 +86,9 @@ foreach my $smallfile (@smallfiles)
  system ("cd gen; make $smallfile-parse>&/dev/null"); 
  $xmlfile = "gen/$arch/$smallfile.pxml";
  if (! -e $xmlfile) {print "pxml file $xmlfile doesn't exist!\n"; exit;}
- unlink($smallfile);
- unlink("$smallfile.inc");
 }
+
+system ("rm -f $fname.$linecount.*");
 print "Final comps = $scores\n";
 print "Total time = $time secs\n\n";
 }

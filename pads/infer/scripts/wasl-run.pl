@@ -247,12 +247,12 @@ if ($otherargs =~ /.*-scale.*/) {
 }
 
 #init size and incremental size tests ...
-#init size from 100 to max growing exponentially
+#init size from 500 to max growing exponentially
 #inc size from 50 to 300 with a step of 50
 $timeout=0;
 if ($otherargs =~ /.*-incsize.*/) {
   print "Begin init/incremental size tests\n";
-  for (my $i = 100; $i <= $largefile_lines && !$timeout; $i=$i*2)
+  for (my $i = 500; $i <= $largefile_lines && !$timeout; $i=$i*2)
   {
    for (my $j = 50; $j <= 300; $j+=50)
    { 
