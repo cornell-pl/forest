@@ -74,6 +74,7 @@ structure Main : sig
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
+    fun setUnionClustering b = (if b then useUnionClustering := true else ())
 (*
     fun setBlobRatio    r = blobRatio := r
     fun setVarCardBits  b = var_card_bits := b
@@ -99,7 +100,8 @@ structure Main : sig
          ("blob",     "threshold ratio used for blob finding (default 1.0), higher means fewer blobs",	   
        PCL.Float (setBlobRatio, false)),
 *)
-	 ("timeout",  "timeout for learning (default 1800 secs)",					   PCL.Int (setTimeout, false))
+	 ("timeout",  "timeout for learning (default 1800 secs)",					   PCL.Int (setTimeout, false)),
+	 ("u",        "use union clustering algorithm",    	  				           PCL.Bool setUnionClustering)
         ]
 
     fun checkOutputDir() =(
@@ -112,7 +114,7 @@ structure Main : sig
 			       print ("Specified output directory "^(!outputDir)^" does not exist. Trying to create it.\n");
 			       OS.FileSys.mkDir (!outputDir);
 			       print ("Succeeded in creating output directory "^(!outputDir)^".\n")
-			       ) handle SysErr => (print "Failed to creat output directory.\n"))
+			       ) handle SysErr => (print "Failed to create output directory.\n"))
     fun checkDescName() = 
 	if (!descName) = def_descName then
 	    let val dataFileName = List.hd (!srcFiles)

@@ -44,6 +44,7 @@ is
   model.sml
   parseCmdLine-sig.sml
   parseCmdLine.sml
+  clusterUnions.sml
   structure.sml
   print.sml
   populate.sml

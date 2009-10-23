@@ -4,6 +4,7 @@ struct
     open Utils
     open Types
     open Options
+    structure CU = ClusterUnions
     structure SS = Substring
 
     val TBDstamp = ref 0
@@ -66,7 +67,6 @@ struct
     fun printComplexity complexity = print (complexityToString complexity)
 
 
-   fun TokenEq (t1, t2) = compToken (t1, t2) = EQUAL
 
    structure TokenTable = RedBlackMapFn(
                      struct type ord_key = Token
@@ -1311,7 +1311,7 @@ struct
 		    else ()
             (* This function partitions a context into a union. *)
             (* It currently uses the first token in each context to do the partition *)
-            fun buildUnionTy (FirstToken, rtokens) = 
+            fun orig_buildUnionTy (FirstToken, rtokens) = 
 		let (*val () = print "BUILDING UNION TY\n"*)
 		    val numChunks = List.length rtokens
 		    fun updateTable(token,chunk,tTable) = 
@@ -1347,6 +1347,19 @@ struct
 			else allSame rtokens
                     else doPartition pTable
 		end
+
+            fun buildUnionTy(FirstToken,rtokens) = if !useUnionClustering 
+              then let val () = print "Starting to look for union clusters.\n"
+                       val branches = CU.mergeClusters rtokens
+                       val () = print "Finished looking for union clusters.\n"
+		   in
+		      if (length branches) = 1 then orig_buildUnionTy(FirstToken,rtokens)
+                      else let val tys = List.map (fn branch => mkTBD(~12, curDepth, List.length branch, branch)) branches
+			   in
+			       Punion(mkTyAux numRecords, tys)
+			   end
+		   end
+	     else orig_buildUnionTy(FirstToken,rtokens)
 
            (* This function takes a Struct Partition and returns a Ty describing that partition *)
 	    fun buildStructTy partitions = 
@@ -1548,10 +1561,10 @@ struct
 
     and ContextListToTy curDepth context = 
 	let val numRecordsinContext = List.length context
-	    val _ = if print_verbose then 
+(*	    val _ = if print_verbose then 
 		print ("Number records being considered: "^Int.toString(numRecordsinContext)^
 			"\nThe records are:\n" ^(contextsToString context)) 
-		else ()
+		else () *)
             val counts : RecordCount list = List.map countFreqs context
 	    val fd: freqDist = buildHistograms numRecordsinContext counts
 	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)

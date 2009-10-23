@@ -32,6 +32,7 @@ structure Config = struct
     val executableDir     = ref ""
     val lexName	          = ref "vanilla"
     val goldenRun         = ref false
+    val useUnionClustering = ref false
     val minBlobHeight	  = 4
     val learn_timeout = ref def_timeout
 (*

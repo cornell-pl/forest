@@ -300,6 +300,9 @@ structure Tokens = struct
            )
         end
 
+   fun TokenEq (t1, t2) = compToken (t1, t2) = EQUAL
+
+
     fun repeatLToken ( cnt : int ) ( tok : Token ) ( b : int ) ( e : int ) : LToken list =
     let fun repeatLToken' ( n : int ) ( cnt : int ) ( tok : Token ) ( b : int ) ( e : int ) : LToken list =
            if n = cnt
