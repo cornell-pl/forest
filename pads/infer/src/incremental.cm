@@ -46,6 +46,7 @@ is
   gold.sml
   model.sml
   populate.sml
+  clusterUnions.sml
   structure.sml
   rat.sml
   matrix.sml

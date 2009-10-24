@@ -739,11 +739,14 @@ structure Common = struct
 				  | (_, Base(a1, t1)) => (case hd t1 of (Pstring x, _) => false | _ => true)
 				  | (RefinedBase _, _) => (cov1 > cov2) 
 				  | (_, RefinedBase _) => cov1 > cov2
+				  | (Pstruct(_, tys1), Pstruct(_, tys2)) =>
+					length tys1 < length tys2
 				  | _ => cov1 > cov2 
 			    end
 			  val sortedPriTys = ListMergeSort.sort greater priTys
 			  val sortedLowPriTys = ListMergeSort.sort greater lowPriTys
-			in Punion(a, sortedPriTys@normalTys@sortedLowPriTys)
+			  val sortedNormalTys = ListMergeSort.sort greater normalTys
+			in Punion(a, sortedPriTys@sortedNormalTys@sortedLowPriTys)
 			end
 		  | Pstruct(a, tys) => Pstruct(a, map sortUnionBranches tys)
 		  | RArray (a, sep, term, body, len, lengths) => RArray(a, sep, term, sortUnionBranches body, len, lengths)
