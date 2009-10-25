@@ -1350,7 +1350,7 @@ struct
 
             fun buildUnionTy(FirstToken,rtokens) = if !useUnionClustering 
               then let val () = print "Starting to look for union clusters.\n"
-                       val branches = CU.mergeClusters rtokens
+                       val branches = CU.findClusters rtokens
                        val () = print "Finished looking for union clusters.\n"
 		   in
 		      if (length branches) = 1 then orig_buildUnionTy(FirstToken,rtokens)

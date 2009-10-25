@@ -89,6 +89,27 @@ structure Tokens = struct
 		     Error
     withtype LToken = Token * location
 
+    fun tokenToNum tok = case tok 
+        of  Pstring s => 1
+         |  Pint i    => 2
+         |  Pwhite w  => 3
+         |  Pfloat f  => 4
+         |  Ptime t   => 5
+         |  Pdate d   => 6
+         |  Ppath p   => 7
+         |  Purl u    => 8
+	 |  Pip i     => 9
+	 |  Phostname h => 10
+	 |  Pemail e  => 11
+	 |  Pmac m    => 12
+         |  Pgroup g  => 13
+	 |  Ptext t   => 14	
+	 |  PbXML x   => 15
+         |  PeXML x   => 16
+	 |  Pempty    => 17
+         |  Error     => 18
+	 |  Other c   => ord c    (* assumes that c will have ord greater than 18 *)
+
     (*    Establish an order on Token using the following constraints:
           Ptime < Pdate < Phostname < Pip < Purl < Ppath < PbXML < PeXML < Pemail < Pmac < Pfloat < 
 	  Pint <  Pstring < Pgroup < Pwhite < Other < Pempty < Ptext < Error

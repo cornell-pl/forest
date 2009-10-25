@@ -1,11 +1,57 @@
 structure ClusterUnions = 
 struct 
   open Tokens 
+  structure  WMap = WordRedBlackMap 
 
   val clusterThreshold = 0.15
   fun cmpChar (c1, c2) = c1 = c2
   fun eqLToken ((t1,l1), (t2,l2)) = eqToken(t1,t2)
 
+  (* hash token sequences *)
+  (* A function to hash an integer.  The computation is:  h = 33 * h + 720 + c    *)
+  fun hashInt (i,h) = Word.<<(h, 0w5) + h + 0w720 + (Word.fromInt i)
+  fun hash tokens = 
+      let fun loop (ltokens, h) = case ltokens 
+            of [] => h
+             | ((t,l)::ts) => loop(ts, hashInt(tokenToNum t,h))
+      in loop (tokens, 0w0)
+      end
+
+  (* Build map from hashkeys to list of records with given hashkey *)
+  fun hashRecords records =
+      let fun loop (records, hashMap) = case records 
+                of [] => hashMap
+                |  (r::rs) => let
+                      val hashKey = hash r
+                      val newMap =  case WMap.find(hashMap,hashKey) 
+			            of NONE => WMap.insert(hashMap,hashKey,[r])
+                                    |  SOME eqRs => WMap.insert(hashMap,hashKey,r::eqRs)
+		      in
+			  loop (rs, newMap)
+		      end
+      in
+         loop (records, WMap.empty)
+      end
+
+  (* Get representative element from each hash set paired with corresponding hash key *)
+  fun getBasis hashMap = let
+     fun inc(hashKey,entry::entries,accum) = (hashKey,entry)::accum
+     in
+	 WMap.foldli inc [] hashMap
+     end
+
+  (* Given a basis clustering and a hashMap, fill out clustering with remainder of records in each equivalence class *)
+  fun completeClusters (hashMap, clusters) = let
+      fun doOneCluster cluster = let 
+          fun doOneBasis ((hash,record),accum) = (WMap.lookup(hashMap,hash)) @ accum
+          in
+	      List.foldl doOneBasis [] cluster 
+          end
+      in
+         map doOneCluster clusters
+      end
+
+  (*  Edit distance computation *)
   val min = Int.min
   val max = Int.max
   fun minimum a b c = if a < b then min (a,c) else min (b,c)
@@ -66,7 +112,7 @@ struct
 
   (* Compute the edit distance between two token sequences *)
   (* Expected invariant: recordDistance is always <= 1 *)
-  fun recordDistance (r1, r2) = let 
+  fun recordDistance ((key1,r1), (key2,r2)) = let 
       val len1 = length r1
       val len2 = length r2
       in
@@ -92,7 +138,8 @@ struct
   fun distClusterToCluster (c1, c2) = minDistance (distClusterToRec, c1, c2)
 
   type record_t = (Token * {beginloc:int, endloc:int, lineNo:int, recNo:int}) list 
-  type cluster_t = record_t list   
+  type aug_record_t = word * (Token * {beginloc:int, endloc:int, lineNo:int, recNo:int}) list 
+  type cluster_t = aug_record_t list   
 
   fun cmpLoc (l1,l2) = case (l1,l2) 
       of ([],_) => true
@@ -121,7 +168,7 @@ struct
      qs xs
    end 
 
-  fun mergeClusters (rs : record_t list) = 
+  fun mergeClusters (rs : aug_record_t list) = 
       let val initialClusters = map (fn x => [x]) rs
           fun mergeOneCluster (c : cluster_t) (clusters: cluster_t list)  (eqCluster : cluster_t, others: cluster_t list) = case clusters 
 	      of [] => (eqCluster::others)
@@ -144,36 +191,36 @@ struct
 		      in
 			  mergeAllClusters m1 m2
 		      end
-	  val mergedClusters = merge initialClusters
       in
-	  map (quicksort cmpLoc) mergedClusters
+	  merge initialClusters
       end
 
+  fun findClusters (rs : record_t list) = let
+      val equivClasses = hashRecords rs   (* records grouped by hash code *)
+      val basis = getBasis equivClasses   (* representative record from each equivalence class *)
+      val basisClusters = mergeClusters basis
+      val completedClusters = completeClusters (equivClasses,basisClusters)
+      in
+	  map (quicksort cmpLoc) completedClusters
+      end
 
   (* Testing code *)
+  fun mkLoc lineNo = {beginloc=0, endloc=0, lineNo=lineNo,recNo=lineNo}
+  fun addLoc lineNo t = (t, mkLoc lineNo)
+  val tInt = Pint (3,"3")
+  fun tStr s = Pstring s
+  val tSemi = Other (#";")
+  val tWhite = Pwhite " "
+  val tFloat = Pfloat ("3","1415")
+  val ts1 = [tInt,tWhite,tStr "hello", tWhite, tFloat]
+  val ts2 = [tInt,tSemi,tInt,tSemi,tInt,tSemi,tInt,tSemi,tInt]
+  val r1a = map (addLoc 1) ts1
+  val r1b = map (addLoc 3) ts1
+  val r1c = map (addLoc 4) ts1
+  val r2 = map (addLoc 2) ts2
+  val input = [r1a,r2,r1b,r1c]
+  
 
-  val t1 = explode "parallelogram"
-  val t2 = explode "parallelograms"
-  val t3 = explode "kitten"
-  val t4 = explode "fred"
-  val t5 = explode "fret" 
-  val t6 = explode "sitten"
-  val t7 = explode "mitten"
-  val t8 = explode "pred"
-
-  val input = [t6,t1,t2,t3,t4,t5,t5,t6,t7,t8]
-  val input2 = [t3,t6,t3,t6]
-
-  fun cmpChar (c1, c2) = c1 = c2
-  val tokenEq = cmpChar
-
-  fun testStrings x y = let
-			    val xs = explode x 
-			    val ys = explode y
-			in (distance cmpChar xs ys,
-			    distance cmpChar ys xs)
-			end
-
-  val test = distance cmpChar t1 t2
   (* End testing code *)
+
 end
