@@ -62,33 +62,41 @@ if ($multiplier < 1)
 print "**** Processing  $largefile ****\n";
 
 $linecount = int($largefile_lines / $multiplier);
-if (! -e $fname.$linecount.aa)
+if (! -e "$fname.$linecount.aa")
 {
   system ("split -l $linecount $largefile $fname.$linecount.");
 }
-@smallfiles = `ls $fname.$linecount.*`;
+@smallfiles = `ls $fname.$linecount.??`;
 chomp @smallfiles;
 $time = 0;
 $firstfile = shift @smallfiles;
-system ("increment -f $firstfile -i $initsize -l 100 -output gen > $firstfile.inc");
+if (! -e "gen/$arch/$firstfile.pxml")
+{
+  system ("increment -f $firstfile -i $initsize -l 100 -output gen > $firstfile.inc");
+  system ("cd gen; make $firstfile-parse>&/dev/null"); 
+}
 ($score, $exectime, $reparsetime) = scan ("$firstfile.inc");
 if (!$score) {print "$firstfile timed out!\n"; exit;}
 $time+=$exectime;
-system ("cd gen; make $firstfile-parse>&/dev/null"); 
+
 $xmlfile = "gen/$arch/$firstfile.pxml";
 if (! -e $xmlfile) {print "pxml file $xmlfile doesn't exist!\n"; exit;}
 foreach my $smallfile (@smallfiles)
 {
- system ("increment -f $smallfile -d $xmlfile -i $initsize -l 100 -output gen > $smallfile.inc");
+ if (! -e "gen/$arch/$smallfile.pxml")
+ {
+  system ("increment -f $smallfile -d $xmlfile -i $initsize -l 100 -output gen > $smallfile.inc");
+  system ("cd gen; make $smallfile-parse>&/dev/null"); 
+ }
  ($scores, $exectime, $reparsetime) = scan ("$smallfile.inc");
  if (!$exectime) {print "$smallfile timed out!\n"; exit;}
  $time+=$exectime;
- system ("cd gen; make $smallfile-parse>&/dev/null"); 
+
  $xmlfile = "gen/$arch/$smallfile.pxml";
  if (! -e $xmlfile) {print "pxml file $xmlfile doesn't exist!\n"; exit;}
 }
 
-system ("rm -f $fname.$linecount.*");
+#system ("rm -f $fname.$linecount.*");
 print "Final comps = $scores\n";
 print "Total time = $time secs\n\n";
 }
