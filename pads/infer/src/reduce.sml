@@ -1865,7 +1865,7 @@ fun isBlobTy ty =
 	| _ => false
 
 and mkBlob sibling_opt ty = 
-  if getHeight ty < minBlobHeight orelse isStructTy ty then ty
+  if isStructTy ty orelse getHeight ty < minBlobHeight then ty
   else 
   case sibling_opt of
     NONE => ty (* we don't allow the whole desc or desc without a trailer to be turned into a blob *)
