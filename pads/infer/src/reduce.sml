@@ -1854,13 +1854,18 @@ fun containString ltokens str =
 	
 fun containPatt ltokens patt = true (* assume true for now as we don't have regex yet *)
 
+fun isStructTy ty =
+  case ty of
+    Pstruct _ => true
+  | _ => false
+
 fun isBlobTy ty =
 	case ty of
 	  RefinedBase (_, Blob _, _) => true
 	| _ => false
 
 and mkBlob sibling_opt ty = 
-  if getHeight ty < minBlobHeight then ty
+  if getHeight ty < minBlobHeight orelse isStructTy ty then ty
   else 
   case sibling_opt of
     NONE => ty (* we don't allow the whole desc or desc without a trailer to be turned into a blob *)
