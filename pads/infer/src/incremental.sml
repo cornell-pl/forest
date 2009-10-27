@@ -458,6 +458,7 @@ structure Incremental: sig
 	anyErrors := true)
      else
        let
+	 val _ = useUnionClustering := true
 	 val argMap = loadArgs StringMap.empty args
 	 val learn_file = valOf (StringMap.find (argMap, "-f"))
 	 val learnsize = case StringMap.find (argMap, "-i") of

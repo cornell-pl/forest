@@ -169,8 +169,10 @@ structure Pxml = struct
 	    else if tyName = "Pstring_ME" then (* this is const string *)
 		let 
 		    val arg = valOf(selectPCData ptype ["ptype", "argument"])
-		    val str = unescape (String.substring (arg, 2, (size arg - 4)))
-		in RefinedBase (aux, StringConst str, [(Pstring str, loc)])
+		    (* val str = unescape (String.substring (arg, 2, (size arg - 4))) *)
+		   val str = strip arg
+		in RefinedBase (aux, StringME str, [(Pstring "", loc)])
+		(* in RefinedBase (aux, StringConst str, [(Pstring str, loc)])*)
 		end
 	    else if tyName = "Pstring_SE" then (* this is a blob *)
 		let val arg = valOf(selectPCData ptype ["ptype", "argument"])
