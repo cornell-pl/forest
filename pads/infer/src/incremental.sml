@@ -387,7 +387,7 @@ structure Incremental: sig
 	   val _ = (print "**** Final Ty: \n"; printTy (measure 0 finalTy))
 	   val tycomp = getComps finalTy
 	   val _ = print ("Final comps = (" ^ showBits (#tc tycomp) ^ ", " ^ 
-			showBits (#dc tycomp) ^ ", " ^
+			showBits (#adc tycomp) ^ ", " ^
 			(Real.toString (Reduce.score finalTy)) ^ ")\n")
 	   val msg = "Total time = " ^ Time.toString total_elapse ^ " secs\n"
 	   val _ = TextIO.output (logstrm, msg)
