@@ -60,6 +60,10 @@ sub scan
    {$time = $1;}
    elsif (/Reparse time = ([0-9.]+)/)
    {$rptime = $1;}
+   elsif (/.*uncaught exception.*/)
+    {$score = -1;
+     last;
+    }
   }
   return ($score, $time, $rptime)
   }
@@ -137,7 +141,7 @@ sub inc
     $rptime += $reparsetime;
     $padstime += $ptime;
     $num++;
-    output("$filename (inc)", $score, $rate, $exectime, $reparsetime, $ptime, $num);
+#    output("$filename (inc)", $score, $rate, $exectime, $reparsetime, $ptime, $num);
   }
   unlink("$filename.inc");
   if ($num > 0) {
@@ -150,7 +154,8 @@ sub inc
 }
 
 if (!@ARGV) {
-  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale init inc] [-incsize] [-noparse]
+  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale init inc] [-incsize] 
+                     [-single init inc] [-noparse]
 
 LARGE_FILE must have at least 1K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
@@ -158,6 +163,7 @@ LARGE_FILE must have at least 1K lines.
           currect working directory.
 -scale init inc:   run the scaling tests on LARGE_FILE with init and inc sizes.
 -incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.
+-single init inc: single run on the data file including learn, reparse and pads parse
 -noparse: do not re-parse the data after learning the description.\n";
   exit;
 }
@@ -241,12 +247,27 @@ if ($otherargs =~ /.*-scale ([0-9]+) ([0-9]+).*/) {
     system("head -n $size $largefile > $fname.$size");
     ($score, $rate, $time, $rptime, $padstime) = 
 	inc ("$fname.$size", $initsz, $incsz, $doparse);
-    output("$fname.$size (inc)", $score, $rate, $time, $rptime, $padstime, 0);
+    if ($score==0) {
+        print "$fname.$size (inc): timed out\n";
+	$timeout=1; last}
+    elsif ($score==-1) {
+        print "$fname.$size (inc): exception raised\n";
+    }
+    else {
+      output("$fname.$size (inc)", $score, $rate, $time, $rptime, $padstime, 0);  
+    }
     unlink ("$fname.$size");
   }
   #last round is the whole file itself...
     ($score, $rate, $time, $rptime, $padstime) = 
 	inc ("$largefile", $initsz, $incsz, $doparse);
+    if ($score==0) {
+        print "$fname.$largefile_lines (inc): timed out\n";
+	$timeout=1; last}
+    elsif ($score==-1) {
+        print "$fname.$largefile_lines (inc): exception raised\n";
+    }
+    else {
     output("$fname.$largefile_lines (inc)", $score, $rate, $time, $rptime, $padstime, 0);
   
   print "End scaling tests\n";
@@ -263,15 +284,35 @@ if ($otherargs =~ /.*-incsize.*/) {
    for (my $j = 50; $j <= 300; $j+=50)
    { 
     ($score, $rate, $time, $rptime, $padstime) = inc ($largefile, $i, $j, $doparse);
-    if (!$score) {
+    if ($score==0) {
         print "$fname (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
+    elsif ($score==-1) {
+        print "$fname (init=$i, inc=$j): exception raised\n";
+    }
     else {
         output("$fname (init=$i, inc=$j)", $score, $rate, $time, $rptime, $padstime, 0);
     }
    }
   }
   print "End init/incremental size tests\n";
+}
+}
+
+if ($otherargs =~ /.*-single ([0-9]+) ([0-9]+).*/) {
+   print "Begin single test\n";
+   local $initsz = $1;
+   local $incsz = $2;
+   ($score, $rate, $time, $rptime, $padstime) = inc ($largefile, $initsz, $incsz, 1);
+    if ($score==0) {
+        print "$fname (init=$initsz, inc=$incsz): timed out\n";
+	$timeout=1; last}
+    elsif ($score==-1) {
+        print "$fname (init=$initsz, inc=$incsz): exception raised\n";
+    }
+    else {
+        output("$fname (init=$initsz, inc=$incsz)", $score, $rate, $time, $rptime, $padstime, 0);
+    }
 }
 }
 

@@ -269,7 +269,8 @@ structure Incremental: sig
 	in (!count, !badcount)
 	end
 
-     fun parse_single_file (initTy, numHeaders, numFooters, filepath, chunksize, dir, start_pos, reparse) =
+     fun parse_single_file (initTy, numHeaders, numFooters, filepath, chunksize, 
+		begin_time, dir, start_pos, reparse) =
       let
 	   val filename = OS.Path.file filepath
 	   val logFile = dir ^ "/" ^ filename ^ ".log"
@@ -279,11 +280,10 @@ structure Incremental: sig
 	   val badcount = ref 0
 	   val eof = ref false
 	   val myTy = ref initTy
-	   val begin_time = Time.now()
 	   val init_aggr = AG.TupleA (0, [AG.initialize initTy, AG.Ln(mkNextTyLabel(), nil)])
 	   val init_table = AG.initTable()
 	   val aggrs = ref [(init_aggr, init_table)]
-	   val start_time = ref begin_time
+	   val start_time = ref (Time.now())
 	   (* skip the first start_pos lines from the input file *)
 	   val skip = ref 0
 	   val _ = while (not (!eof) andalso (!skip) < start_pos) do
@@ -547,6 +547,8 @@ structure Incremental: sig
 	 (*
          val _ = Posix.Process.alarm(Time.fromSeconds(LargeInt.fromInt(!learn_timeout)))
 	 *)
+
+	 val stime = Time.now()
 	 fun my_learn (a, b, c) = Rewrite.run a b c
 	 val timed_learn = TimeLimit.timeLimit (Time.fromSeconds
 		(LargeInt.fromInt(!learn_timeout))) my_learn 
@@ -621,7 +623,7 @@ structure Incremental: sig
 
        in
          parse_single_file (initTy, numHeaders, numFooters, parse_file, chunksize, 
-			timedir, start_pos, reparse) 
+			stime, timedir, start_pos, reparse) 
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
