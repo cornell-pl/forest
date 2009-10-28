@@ -269,7 +269,7 @@ if ($otherargs =~ /.*-scale ([0-9]+) ([0-9]+).*/) {
     }
     else {
     output("$fname.$largefile_lines (inc)", $score, $rate, $time, $rptime, $padstime, 0);
-  
+    }
   print "End scaling tests\n";
 }
 
@@ -296,7 +296,6 @@ if ($otherargs =~ /.*-incsize.*/) {
    }
   }
   print "End init/incremental size tests\n";
-}
 }
 
 if ($otherargs =~ /.*-single ([0-9]+) ([0-9]+).*/) {
