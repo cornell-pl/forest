@@ -80,7 +80,7 @@ structure Incremental: sig
     (* each aggregate is actually a pair: (aggr, OptsTable) *)
     fun add (ty, line, aggregates) =
       let 
-	(* val _ = print (line ^ "\n")  *) 
+	(* val _ = print (line ^ "\n") *)
 	val tm = Time.now() 
 	val _ = Parse.memo:=Parse.MemoMap.empty
  	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, !Parse.do_parse_cutoff)

@@ -555,6 +555,7 @@ struct
 		  val term = case (term, t) of
 			(SOME term, SyncA (_, _, SOME re)) => SOME re
 			| (NONE, SyncA (_, _, NONE)) => NONE
+			| (SOME term, Opt(_, _, SyncA _)) => NONE
 			| _ => raise TyMismatch
 	    	in measure 1 (RArray(newa, sep, term, newbody, len, lengths))
 		end
