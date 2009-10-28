@@ -100,7 +100,7 @@ structure Main : sig
          ("blob",     "threshold ratio used for blob finding (default 1.0), higher means fewer blobs",	   
        PCL.Float (setBlobRatio, false)),
 *)
-	 ("timeout",  "timeout for learning (default 1800 secs)",					   PCL.Int (setTimeout, false)),
+	 ("timeout",  "timeout for learning (default 900 secs)",					   PCL.Int (setTimeout, false)),
 	 ("u",        "use union clustering algorithm",    	  				           PCL.Bool setUnionClustering)
         ]
 

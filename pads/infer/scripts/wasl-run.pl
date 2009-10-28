@@ -150,13 +150,13 @@ sub inc
 }
 
 if (!@ARGV) {
-  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale] [-incsize] [-noparse]
+  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale init inc] [-incsize] [-noparse]
 
 LARGE_FILE must have at least 1K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
           test files are stored in pads/infer/examples/data and they must be in the 
           currect working directory.
--scale:   run the scaling tests on LARGE_FILE.
+-scale init inc:   run the scaling tests on LARGE_FILE with init and inc sizes.
 -incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.
 -noparse: do not re-parse the data after learning the description.\n";
   exit;
@@ -215,7 +215,9 @@ if ($largefile =~ /-.*/) {next;}
 
 print "**** Processing $largefile! ****\n";
 
+$beginwctm = time();
 $wcoutput = `wc -l $largefile`;
+$wc_elapse = time() - $beginwctm;
 if ($wcoutput =~ /\s*(\d+).*/) {
  $largefile_lines = $1;
 }
@@ -224,23 +226,27 @@ if ($largefile_lines < 1000) {print "$largefile must be at least 1k lines!\n"; n
 
 $fname = getFileName($largefile);
 
+print "wc -l elapse = $wc_elapse secs\n\n";
+
 #Scaling tests... 
 # we create 5 data points for the given large file
 $step = int($largefile_lines/5);
-if ($otherargs =~ /.*-scale.*/) {
+if ($otherargs =~ /.*-scale ([0-9]+) ([0-9]+).*/) {
   print "Begin scaling tests\n";
+  local $initsz = $1;
+  local $incsz = $2;
   for (my $i=1; $i<=4; $i++)
   {
     $size = $i * $step;
     system("head -n $size $largefile > $fname.$size");
     ($score, $rate, $time, $rptime, $padstime) = 
-	inc ("$fname.$size", $initsize, $incsize, $doparse);
+	inc ("$fname.$size", $initsz, $incsz, $doparse);
     output("$fname.$size (inc)", $score, $rate, $time, $rptime, $padstime, 0);
     unlink ("$fname.$size");
   }
   #last round is the whole file itself...
     ($score, $rate, $time, $rptime, $padstime) = 
-	inc ("$largefile", $initsize, $incsize, $doparse);
+	inc ("$largefile", $initsz, $incsz, $doparse);
     output("$fname.$largefile_lines (inc)", $score, $rate, $time, $rptime, $padstime, 0);
   
   print "End scaling tests\n";

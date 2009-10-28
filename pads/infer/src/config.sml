@@ -20,7 +20,7 @@ structure Config = struct
     val def_printIDs     = true
     val def_entropy      = false
     (* val def_var_card_bits   = false *)
-    val def_timeout	= 1800 (* default timeout is half and hour *)
+    val def_timeout	= 900 (* default timeout is 15 mins *)
 
     val depthLimit        = ref def_depthLimit
     val outputDir         = ref def_outputDir

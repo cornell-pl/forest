@@ -39,15 +39,14 @@ chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
 
-@largefiles = @ARGV;
-if (!@largefiles) {
- print "Usage: huge.pl LARGE_FILE_PATHS\n";
+($initsize, $incsize, @largefiles) = @ARGV;
+if (!$initsize) {
+ print "Usage: huge.pl INIT_SZ INC_SZ LARGE_FILE_PATHS\n";
  exit;
 }
 
 foreach my $largefile (@largefiles)
 {
-$initsize = 500;
 $fname = getFileName($largefile);
 $wcoutput = `wc -l $largefile`;
 if ($wcoutput =~ /\s*(\d+).*/) {
@@ -72,7 +71,7 @@ $time = 0;
 $firstfile = shift @smallfiles;
 if (! -e "gen/$arch/$firstfile.pxml")
 {
-  system ("increment -f $firstfile -i $initsize -l 100 -output gen > $firstfile.inc");
+  system ("increment -f $firstfile -i $initsize -l $incsize -output gen > $firstfile.inc");
   system ("cd gen; make $firstfile-parse>&/dev/null"); 
 }
 ($score, $exectime, $reparsetime) = scan ("$firstfile.inc");
@@ -85,7 +84,7 @@ foreach my $smallfile (@smallfiles)
 {
  if (! -e "gen/$arch/$smallfile.pxml")
  {
-  system ("increment -f $smallfile -d $xmlfile -i $initsize -l 100 -output gen > $smallfile.inc");
+  system ("increment -f $smallfile -d $xmlfile -i $initsize -l $incsize -output gen > $smallfile.inc");
   system ("cd gen; make $smallfile-parse>&/dev/null"); 
  }
  ($scores, $exectime, $reparsetime) = scan ("$smallfile.inc");
