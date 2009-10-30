@@ -1,7 +1,7 @@
 ***********************************************
 Metavariables:
 
-e ::= x | R        (host language expressions)
+e ::= x | R | cons (host language expressions)
 c ::= a | b | ...  (characters)
 EOR                (special end-of-record character)
 s ::= c1,...,cn    (strings)
@@ -11,13 +11,12 @@ re ::= epsilon | re1 . re2 | ... (regular expressions)
 ***********************************************
 Descriptions:
 
-Base ::= Pint | PstringME(re) | PstringFW(e) 
+Base ::= Pint(e) | PstringME(re) | PstringFW(e) 
 
 D ::=
-  Base 
+  Base(e) 
 | Sync(s)                 (* constraint: s must not be the empty string *)
-| D1 * D2                 -- consider unifying with dependent down-stream
-| x:D1 . D2 
+| x:D1 . y.D2 
 | D1 + D2 
 | D array(D_sep, D_term)  (* note: generalized from simple strings *)
 
@@ -54,6 +53,7 @@ A ::= [ Base ]
    |  Union(A_l, A_r)
    |  Array(A_elem, A_sep, A_term) 
    |  Opt A
+   |  Switch(str, A_some, A_none)  (* aggregate for parametric base types *)
    |  L                (* Denotes to be learned *)
 
 Representation of Aggregation
@@ -65,11 +65,12 @@ a ::= [Str s]          (* : [ BaseR ] *)
     | union(a_l, a_r)              
     | array(a_elem, a_sep, a_term) 
     | opt a          (* Constraint: a will always be in list form *)
+    | switch (s, a_some, a_none)
     | l([s])         (* : L, denotes list of strings to be learned. *)
 
 Judgement forms:
   A + R -> A'    (* Aggregate A plus representation R rewrites to A'  *)
-  A + Rs -> A'   (* Aggregate A plus list of reps R rewrites to A'   *)
+  A ++ Rs -> A'   (* Aggregate A plus list of reps R rewrites to A'   *)
 
 (* Note, all these rules can be written in a typed form *)
 
