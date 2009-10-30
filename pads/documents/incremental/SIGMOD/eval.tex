@@ -1,29 +1,53 @@
 \section{Evaluation} \label{sec:eval}
 
-\begin{table}[t]
+\begin{table*}[t]
 \begin{center}
-\begin{tabular}{|c|c|c|c|c|c|}\hline
-& & \multicolumn{2}{|c|}{original} & \multicolumn{2}{|c|}{incremental} \\ \cline{3-6}
-\raisebox{1.5ex}[0pt]{Formats} & \raisebox{1.5ex}[0pt]{K Lines/KB} & 
-	Time & TC & Time & TC \\ \hline \hline
-interface & 1.2/185		& 48.5	& 0.7	& 2.9	& 1.1 \\ \hline
-asl.log  &	1.5/552		& 31.9	& 0.9	& 13.5 	& 1.5 \\ \hline
-%apache.txt  &	2087&442	& 66.4 & 1746.1 & 7.9 	& 2277.6 \\ \hline
-%ai.3000	&	3000&286	& 26	& 412.6	& 2.2	& 440.6	\\ \hline
-error\_log  &	4.5/409		& 93.1	& 0.1	& 0.9	& 0.1 \\ \hline
-access\_log  &	8.2/551 	& 130.5	& 0.3	& 2.8	& 0.3	\\ \hline
-coblitz	     & 9.4/2561   	& -	& -	& 31.9 & 2.9 \\ \hline
-pws	&	 17.4/3432	& -	& - 	& 133  & 5.7 \\ \hline
-ai.big	&	57.4/5608	& -	& -	& 26.2	& 0.5 \\ \hline
-exlog & 260.8/76720 		& -	& -	& 610 & 3.0 \\ \hline
-redirect & 302.6/102404 	& -	& -	& 1852 & 17.1 \\ \hline
-getbig & 550.4/92192   		& -	& -	& 668 & 8.8 \\ \hline
+\begin{tabular}{|l|l|r|r|}\hline
+{\bf Formats} & {\bf Summary} & {\bf Size (MB)} & {\bf K Lines} \\ \hline \hline 
+ai.big 	& Common Log Format	& 5	& 57\\ \hline
+pws  	& Extended Apache Web Server Log & 3.5 & 17 \\ \hline
+4046.xls & Micro-array data & 6.8 & 24 \\ \hline
+free\_clickthroughs & Click streams &  24 & 285 \\ \hline
+strace\_jaccn &	NERSC traces & 79 & 896.5 \\ \hline
+LA-UR-NODES-EVENTS & LANL disk replacement (event) & 33 & 434 \\ \hline
+LA-UR-NODE-NOZ & LANL disk replacement (usage) & 321 & 1,630 \\ \hline
+searchevents & Search event log & 356 & 2,035 \\ \hline
+messages.sdb & Cray messages & 523 &  5,047\\ \hline
+free\_impressions & Impression streams & 2,598 & 27,644 \\ \hline
+dalpiv.dat & Yellow page web server log & 15,406 & 25,867 \\ \hline
+liberty & Sandia HPC event log & 30,831 & 265,569 \\ \hline
+redstorm & Sandia HPC event log & 34,180 & 219,096 \\ \hline
 \end{tabular}
-\caption{Exec. times (secs) and Type Complexities (KB)} 
-\label{tab:results}
 \end{center}
-\vskip -2ex
-\end{table}
+\caption{The test suite}
+\end{table*}
+
+%\begin{table}[t]
+%\begin{center}
+%\begin{tabular}{|c|c|c|c|c|c|}\hline
+%& & \multicolumn{2}{|c|}{original} & \multicolumn{2}{|c|}{incremental} \\ \cline{3-6}
+%\raisebox{1.5ex}[0pt]{Formats} & \raisebox{1.5ex}[0pt]{K Lines/KB} & 
+%	Time & TC & Time & TC \\ \hline \hline
+%interface & 1.2/185		& 48.5	& 0.7	& 2.9	& 1.1 \\ \hline
+%asl.log  &	1.5/552		& 31.9	& 0.9	& 13.5 	& 1.5 \\ \hline
+%%apache.txt  &	2087&442	& 66.4 & 1746.1 & 7.9 	& 2277.6 \\ \hline
+%%ai.3000	&	3000&286	& 26	& 412.6	& 2.2	& 440.6	\\ \hline
+%error\_log  &	4.5/409		& 93.1	& 0.1	& 0.9	& 0.1 \\ \hline
+%access\_log  &	8.2/551 	& 130.5	& 0.3	& 2.8	& 0.3	\\ \hline
+%coblitz	     & 9.4/2561   	& -	& -	& 31.9 & 2.9 \\ \hline
+%pws	&	 17.4/3432	& -	& - 	& 133  & 5.7 \\ \hline
+%ai.big	&	57.4/5608	& -	& -	& 26.2	& 0.5 \\ \hline
+%exlog & 260.8/76720 		& -	& -	& 610 & 3.0 \\ \hline
+%redirect & 302.6/102404 	& -	& -	& 1852 & 17.1 \\ \hline
+%getbig & 550.4/92192   		& -	& -	& 668 & 8.8 \\ \hline
+%\end{tabular}
+%\caption{Exec. times (secs) and Type Complexities (KB)} 
+%\label{tab:results}
+%\end{center}
+%\vskip -2ex
+%\end{table}
+
+
 To evaluate the incremental algorithm, we ran it and the
 original \learnpads{} system on 10 different kinds of system logs
 of various sizes.  We conducted the experiments on a PowerBook G4 with
