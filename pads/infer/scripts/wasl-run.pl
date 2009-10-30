@@ -34,9 +34,9 @@ sub getFileName
 
 sub output
 {
-  ($hdr, $score, $rate, $time, $rptime, $padstime, $try) = @_;
-  printf ("$hdr: lntime = %.2f  rptime = %.2f  padstime = %.2f  score = %.2f  ",  
-		$time, $rptime, $padstime, $score);
+  my ($hdr, $score, $rate, $time, $rptime, $padstime, $blobtime, $try) = @_;
+  printf ("$hdr: lntime = %.2f  rptime = %.2f  padstime = %.2f  blobtime = %.2f  score = %.2f  ",  
+		$time, $rptime, $padstime, $blobtime, $score);
   if ($try == 0) {
     printf("accuracy = %.2f\%\n", $rate);
   }
@@ -104,7 +104,14 @@ sub verify
   }
  }
  unlink "$name.parse";
- return ((100.0 * ($total - $bads)/$total), $elapse);
+ if (! -e "gen/$arch/blob-parse") {
+  system ("cd gen; make blob-parse>&/dev/null");
+ }
+ $begintm = time;
+ system ("gen/$arch/blob-parse $datafile >& /dev/null");
+ my $blob_elapse = time - $begintm;
+
+ return ((100.0 * ($total - $bads)/$total), $elapse, $blob_elapse);
 }
 
 sub inc
@@ -115,6 +122,7 @@ sub inc
   my $rptime = 0;
   my $exectime = 0;
   my $padstime = 0;
+  my $blobtime = 0;
   my $num = 0;
   my $filename = getFileName $file;
 
@@ -122,40 +130,43 @@ sub inc
   {
     $exectime = 0;
     if ($doparse) {
-      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true > $filename.inc");
+      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u true > $filename.inc");
     } else
     {
-      system ("increment -f $file -i $isize -l $lsize -output gen > $filename.inc");
+      system ("increment -f $file -i $isize -l $lsize -output gen -u true > $filename.inc");
     }
     ($score, $exectime, $reparsetime) = scan ("$filename.inc");
     #unlink("$filename.inc");
     if (!$score) {last;} #timeout reached
     if ($doparse) {
-      ($rate, $ptime) = verify($filename, $file);
+      ($rate, $ptime, $btime) = verify($filename, $file);
     }
     else {
 	$rate = 0;
 	$ptime = 0;
+	$btime = 0;
     }
     $time += $exectime;
     $rptime += $reparsetime;
     $padstime += $ptime;
+    $blobtime += $btime;
     $num++;
-#    output("$filename (inc)", $score, $rate, $exectime, $reparsetime, $ptime, $num);
+#    output("$filename (inc)", $score, $rate, $exectime, $reparsetime, $ptime, $btime, $num);
   }
   unlink("$filename.inc");
   if ($num > 0) {
     $time = $time/$num; 
     $rptime = $rptime/$num;
     $padstime = $padstime/$num;
-    return ($score, $rate, $time, $rptime, $padstime)
+    $blobtime = $blobtime/$num;
+    return ($score, $rate, $time, $rptime, $padstime, $blobtime)
   }
-  else {return (0, 0, 0, 0, 0);}
+  else {return (0, 0, 0, 0, 0, 0);}
 }
 
 if (!@ARGV) {
-  print "Usage: wasl-run.pl LARGE_FILES [-small] [-scale init inc] [-incsize] 
-                     [-single init inc] [-noparse]
+  print "Usage: wasl-run.pl init inc LARGE_FILES [-small] [-scale] [-incsize] 
+                     [-single] [-noparse]
 
 LARGE_FILE must have at least 1K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
@@ -167,6 +178,9 @@ LARGE_FILE must have at least 1K lines.
 -noparse: do not re-parse the data after learning the description.\n";
   exit;
 }
+$initsize = shift @ARGV;
+$incsize = shift @ARGV;
+
 $otherargs = join (' ', @ARGV);
 
 #Multiple smaller files tests
@@ -182,6 +196,7 @@ if ($otherargs =~ /.*-small.*/) {
     $score = 0;
     $num = 0;
     my $padstime = 0;
+    my $blobtime = 0;
     my $rate = -1;
     for ($i=0; $i<$numTimes; $i++)
     {
@@ -192,15 +207,17 @@ if ($otherargs =~ /.*-small.*/) {
      $time += $exectime;
      #system("rm -f $test.output");
      if (!$score) {last;} #time out reached
-     ($rate, $ptime) = verify($test, $test);
+     ($rate, $ptime, $btime) = verify($test, $test);
      $padstime+= $ptime;
-     printf ("$test (lrn): lntime = %.2f  padstime = %.2f  score = %.2f  (try #$num)\n", $exectime, $ptime, $score);
+     $blobtime+= $btime;
+     printf ("$test (lrn): lntime = %.2f  padstime = %.2f  blobtime = %.2f  score = %.2f  (try #$num)\n", $exectime, $ptime, $btime, $score);
      $num++;
     }
     if ($num > 0) {
       $time = $time/$num; #$num maybe less than $numTimes
       $padstime = $padstime/$num;
-      printf ("$test (lrn): lntime = %.2f  padstime = %.2f  score = %.2f  accuracy = %.2f\%\n", 
+      $blobtime = $blobtime/$num;
+      printf ("$test (lrn): lntime = %.2f  padstime = %.2f  blobtime = %.2f  score = %.2f  accuracy = %.2f\%\n", 
 		$time, $padstime, $score, $rate);
     }
     else {
@@ -212,6 +229,7 @@ if ($otherargs =~ /.*-small.*/) {
   }
   print "End comparison tests on small files\n";
 }
+
 
 
 foreach my $largefile (@ARGV)
@@ -237,16 +255,14 @@ print "wc -l elapse = $wc_elapse secs\n";
 #Scaling tests... 
 # we create 5 data points for the given large file
 $step = int($largefile_lines/5);
-if ($otherargs =~ /.*-scale ([0-9]+) ([0-9]+).*/) {
+if ($otherargs =~ /.*-scale.*/) {
   print "Begin scaling tests\n";
-  local $initsz = $1;
-  local $incsz = $2;
   for (my $i=1; $i<=4; $i++)
   {
     $size = $i * $step;
     system("head -n $size $largefile > $fname.$size");
-    ($score, $rate, $time, $rptime, $padstime) = 
-	inc ("$fname.$size", $initsz, $incsz, $doparse);
+    ($score, $rate, $time, $rptime, $padstime, $blobtime) = 
+	inc ("$fname.$size", $initsize, $incsize, 0);
     if ($score==0) {
         print "$fname.$size (inc): timed out\n";
 	$timeout=1; last}
@@ -254,13 +270,13 @@ if ($otherargs =~ /.*-scale ([0-9]+) ([0-9]+).*/) {
         print "$fname.$size (inc): exception raised\n";
     }
     else {
-      output("$fname.$size (inc)", $score, $rate, $time, $rptime, $padstime, 0);  
+      output("$fname.$size (inc)", $score, $rate, $time, $rptime, $padstime, $blobtime, 0);  
     }
     unlink ("$fname.$size");
   }
   #last round is the whole file itself...
-    ($score, $rate, $time, $rptime, $padstime) = 
-	inc ("$largefile", $initsz, $incsz, $doparse);
+    ($score, $rate, $time, $rptime, $padstime, $blobtime) = 
+	inc ("$largefile", $initsize, $incsize, $doparse);
     if ($score==0) {
         print "$fname.$largefile_lines (inc): timed out\n";
 	$timeout=1; last}
@@ -268,7 +284,7 @@ if ($otherargs =~ /.*-scale ([0-9]+) ([0-9]+).*/) {
         print "$fname.$largefile_lines (inc): exception raised\n";
     }
     else {
-    output("$fname.$largefile_lines (inc)", $score, $rate, $time, $rptime, $padstime, 0);
+    output("$fname.$largefile_lines (inc)", $score, $rate, $time, $rptime, $padstime, $blobtime, 0);
     }
   print "End scaling tests\n";
 }
@@ -283,7 +299,7 @@ if ($otherargs =~ /.*-incsize.*/) {
   {
    for (my $j = 50; $j <= 300; $j+=50)
    { 
-    ($score, $rate, $time, $rptime, $padstime) = inc ($largefile, $i, $j, $doparse);
+    ($score, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0);
     if ($score==0) {
         print "$fname (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
@@ -291,26 +307,24 @@ if ($otherargs =~ /.*-incsize.*/) {
         print "$fname (init=$i, inc=$j): exception raised\n";
     }
     else {
-        output("$fname (init=$i, inc=$j)", $score, $rate, $time, $rptime, $padstime, 0);
+        output("$fname (init=$i, inc=$j)", $score, $rate, $time, $rptime, $padstime, $blobtime, 0);
     }
    }
   }
   print "End init/incremental size tests\n";
 }
 
-if ($otherargs =~ /.*-single ([0-9]+) ([0-9]+).*/) {
+if ($otherargs =~ /.*-single.*/) {
    print "Begin single test\n";
-   local $initsz = $1;
-   local $incsz = $2;
-   ($score, $rate, $time, $rptime, $padstime) = inc ($largefile, $initsz, $incsz, 1);
+   ($score, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $initsize, $incsize, $doparse);
     if ($score==0) {
-        print "$fname (init=$initsz, inc=$incsz): timed out\n";
+        print "$fname (init=$initsize, inc=$incsize): timed out\n";
 	$timeout=1; last}
     elsif ($score==-1) {
-        print "$fname (init=$initsz, inc=$incsz): exception raised\n";
+        print "$fname (init=$initsize, inc=$incsize): exception raised\n";
     }
     else {
-        output("$fname (init=$initsz, inc=$incsz)", $score, $rate, $time, $rptime, $padstime, 0);
+        output("$fname (init=$initsize, inc=$incsize)", $score, $rate, $time, $rptime, $padstime, $blobtime, 0);
     }
 }
 }

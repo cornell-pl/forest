@@ -17,6 +17,7 @@ structure Incremental: sig
     val dir_name = "inc_output"
     exception Exit of OS.Process.status
     exception InvalidFlags
+    exception InvalidAggrs
     fun silenceGC () = (SMLofNJ.Internals.GC.messages false)
     open Config
     open Types
@@ -235,15 +236,19 @@ structure Incremental: sig
 	   end
 ***)
 
-     fun parse_entire_file(ty, filepath) =
+     (* this function reparses the data files using the learned description - no learning is done *)
+     fun reparse_files(ty, filepaths) =
       let 
-	   val strm = TextIO.openIn filepath
+	val init_aggr = AG.TupleA (0, [AG.initialize ty, AG.Ln(mkNextTyLabel(), nil)])
+	val init_table = AG.initTable()
+	val init_aggrs = [(init_aggr, init_table)]
+	fun reparse_one_file (filepath, (a, c, bc)) =
+	 let
    	   val eof = ref false
-	   val init_aggr = AG.TupleA (0, [AG.initialize ty, AG.Ln(mkNextTyLabel(), nil)])
-	   val init_table = AG.initTable()
-	   val aggrs = ref [(init_aggr, init_table)]
- 	   val badcount = ref 0
-	   val count = ref 0
+ 	   val badcount = ref bc
+	   val count = ref c 
+	   val aggrs = ref a
+	   val strm = TextIO.openIn filepath
 	   val _ = while not (!eof) do
 	       (
 		case TextIO.inputLine strm of
@@ -259,101 +264,81 @@ structure Incremental: sig
 		| NONE => 
 			eof:=true 
 		)
+   	    val _ = TextIO.closeIn strm
 (*
 	   val (aggr, _ ) = hd (!aggrs)
      	   val cost = AG.cost aggr
 	   val _ = print ("The Best Aggregate:\n" ^ (AG.aggrToString "" aggr)) 
 	   val _ = print ("Cost of Best Aggregation = " ^ Int.toString cost ^ "\n")
 *)
-
-	in (!count, !badcount)
+	in (!aggrs, !count, !badcount)
 	end
+      val (_, count, badcount)=  List.foldl reparse_one_file (init_aggrs, 0, 0) filepaths
+     in (count, badcount)
+     end
 
-     fun parse_single_file (initTy, numHeaders, numFooters, filepath, chunksize, 
-		begin_time, dir, start_pos, reparse) =
+     fun output aggrs ty start_time index count logFile =
+	  let 
+     	    val (chunk_aggr, table) = if length aggrs = 0 then
+			(print "Warning! Number of aggregates is 0!\n"; raise InvalidAggrs)
+		      else hd aggrs
+     	    val chunk_cost = AG.cost chunk_aggr
+	(*
+     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
+     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
+	    val _ = AG.printTable table 
+	*)
+	    (* we update the ty even if there's no bad data in the
+		aggregate because we want the updated aux in ty *)
+	    val newTy = AG.updateTy ty chunk_aggr
+	    val newTy =
+	    if chunk_cost > 0 then 
+	     let 
+	       val trans_map = AG.transpose table
+     	       val newTy = Reduce.reduce 5 newTy 
+	       val newTy = AG.merge_adj_options trans_map newTy
+	       val newTy = AG.alt_options_to_unions trans_map newTy
+	       val newTy = Reduce.reduce 5 newTy
+	     in newTy
+	     end
+	    else newTy
+
+	    (* val _ = (print "Updated newty:\n"; printTy newTy) *)
+	    (* val refinedTy = Reduce.reduce 4 newTy *)
+	    val elapse = Time.- (Time.now(), start_time)
+   	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
+   	    val msg = "Chunk " ^ Int.toString index ^ 
+		" (" ^ Int.toString(count) ^ " lines): Aggregate Cost = " ^ 
+		(Int.toString chunk_cost) ^ 
+		"\tTime elapsed = " ^ Time.toString elapse ^ " secs\n"
+   	    val logstrm = TextIO.openAppend logFile
+   	    val _ = TextIO.output (logstrm, msg)
+   	    val _ = TextIO.closeOut logstrm
+	  in newTy
+	  end
+
+     fun parse_one_file (filepath, ty, prev_aggrs, logFile, chunksize, 
+		stime, prev_index, prev_count, prev_badcount, start_pos) =
       let
-	   val filename = OS.Path.file filepath
-	   val logFile = dir ^ "/" ^ filename ^ ".log"
-	   val strm = TextIO.openIn filepath
-	   val index = ref 0 
-	   val count = ref 0
-	   val badcount = ref 0
 	   val eof = ref false
-	   val myTy = ref initTy
-	   val init_aggr = AG.TupleA (0, [AG.initialize initTy, AG.Ln(mkNextTyLabel(), nil)])
-	   val init_table = AG.initTable()
-	   val aggrs = ref [(init_aggr, init_table)]
-	   val start_time = ref (Time.now())
-	   (* skip the first start_pos lines from the input file *)
+	   val myTy = ref ty
+	   val aggrs = ref prev_aggrs
+	   val start_time = ref stime
+           val index = ref prev_index
+	   val count = ref prev_count
+	   val badcount = ref prev_badcount
 	   val skip = ref 0
+	   val strm = TextIO.openIn filepath
+	   (* skiping a number lines to start_pos *)
 	   val _ = while (not (!eof) andalso (!skip) < start_pos) do
 		case TextIO.inputLine strm of
 	  	  SOME x => skip:=(!skip) + 1
 		  | _ => eof := true
 
-	   fun output aggrs ty start_time index count =
-		  let 
-	     	    val (chunk_aggr, table) = if length aggrs = 0 then
-				(print "Warning! Number of aggregates is 0!\n"; (init_aggr, init_table))
-			      else hd aggrs
-	     	    val chunk_cost = AG.cost chunk_aggr
-		(*
-	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
-	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-		    val _ = AG.printTable table 
-		*)
-		    (* we update the ty even if there's no bad data in the
-			aggregate because we want the updated aux in ty *)
-		    val newTy = AG.updateTy ty chunk_aggr
-		    val newTy =
-		    if chunk_cost > 0 then 
-		     let 
-		       val trans_map = AG.transpose table
-(*
-		    val _ = LabelMap.appi (fn (id, l) => (print ((Atom.toString id) ^ ": " ^
-				(String.concat (map (Int.toString) l))); print "\n")) trans_map
-*)
-	     	       val newTy = Reduce.reduce 5 newTy 
-		       val newTy = AG.merge_adj_options trans_map newTy
-		       val newTy = AG.alt_options_to_unions trans_map newTy
-		       val newTy = Reduce.reduce 5 newTy
-		     in newTy
-		     end
-		    else newTy
-
-		    (* val _ = (print "Updated newty:\n"; printTy newTy) *)
-		    (* val refinedTy = Reduce.reduce 4 newTy *)
-(*
-
-		    val tyFile = (dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString index ^ ".ty") 
-		    val tystrm = TextIO.openOut tyFile
-	   	    val _ = print ("Output IR to " ^ tyFile ^ "\n")
-		    val _ = TextIO.output (tystrm, TyToStringD "" false false  "\n" refinedTy)
-		    val _ = TextIO.closeOut tystrm
-		    val padscFile = dir ^ "/" ^ filename ^ ".chunk" ^ Int.toString index ^ ".p"
-	   	    val _ = print ("Output PADS description to " ^ padscFile ^ "\n")
-	   	    val padsstrm = TextIO.openOut padscFile
-	   	    val desc = #5 (Padsc_printer.tyToPADSC refinedTy numHeaders numFooters 
-				((!lexName)^ ".p"))
-	   	    val _ = TextIO.output (padsstrm, desc)
-	   	    val _ = TextIO.closeOut padsstrm
-*)
-		    val elapse = Time.- (Time.now(), start_time)
-	   	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
-	   	    val msg = "Chunk " ^ Int.toString index ^ 
-			" (" ^ Int.toString(count) ^ " lines): Aggregate Cost = " ^ 
-			(Int.toString chunk_cost) ^ 
-			"\tTime elapsed = " ^ Time.toString elapse ^ " secs\n"
-	   	    val logstrm = TextIO.openAppend logFile
-	   	    val _ = TextIO.output (logstrm, msg)
-	   	    val _ = TextIO.closeOut logstrm
-		  in newTy
-		  end
-
 	   val _ = while not (!eof) do
 		(
 		if (!badcount) = chunksize then
-		    let val newTy = output (!aggrs) (!myTy) (!start_time) (!index) (!count)
+		    let val newTy = output (!aggrs) (!myTy) (!start_time) (!index) (!count) logFile
 		    in
 		     myTy := newTy; count := 0; badcount := 0; index := (!index) + 1;
 		     start_time:=Time.now();
@@ -361,10 +346,6 @@ structure Incremental: sig
 				AG.initTable())]
 		    end 
 		else ();
-		(*
-		if (Int.mod(!count, 1000) = 0) then print ((Int.toString (!count)) ^ "\n")
-		else ();
-		*)
 		case TextIO.inputLine strm of
 		  SOME x => 
 			let 
@@ -377,12 +358,33 @@ structure Incremental: sig
 			  count:=(!count) + 1
 			end
 		| NONE => 
-		        (myTy := output (!aggrs) (!myTy) (!start_time) (!index) (!count);
+		        ((* myTy := output (!aggrs) (!myTy) (!start_time) (!index) (!count) logFile; *)
 			eof:=true) 
 		)
 	   val _ = TextIO.closeIn strm
-	   val logstrm = TextIO.openAppend logFile
-	   val finalTy = sortUnionBranches (Reduce.reduce 4 (!myTy)) 
+       in
+	  (!myTy, !aggrs, !start_time, !index, !count, !badcount, 0)
+       end
+
+     fun parse_files (initTy, numHeaders, numFooters, filepaths, chunksize, 
+		begin_time, dir, start_pos, reparse) =
+      let
+	   val filepath = hd filepaths
+	   val filename = OS.Path.file filepath
+	   val logFile = dir ^ "/" ^ filename ^ ".log"
+
+	   val init_aggr = AG.TupleA (0, [AG.initialize initTy, AG.Ln(mkNextTyLabel(), nil)])
+	   val init_table = AG.initTable()
+	   val aggrs = [(init_aggr, init_table)]
+	   val start_time = ref (Time.now())
+           fun batch(file, (ty, aggrs, stime, index, count, badcount, start_pos)) =
+               parse_one_file (file, ty, aggrs, logFile, chunksize, 
+			stime, index, count, badcount, start_pos) 
+	   val (finalTy, aggrs, start_time, index, count, _, _) = 
+		List.foldl batch (initTy, aggrs, Time.now(), 0, 0, 0, start_pos) filepaths
+	   val finalTy = output aggrs finalTy start_time index count logFile
+	   val finalTy = sortUnionBranches (Reduce.reduce 4 finalTy)
+
 	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = (print "**** Final Ty: \n"; printTy (measure 0 finalTy))
 	   val tycomp = getComps finalTy
@@ -390,6 +392,8 @@ structure Incremental: sig
 			showBits (#adc tycomp) ^ ", " ^
 			(Real.toString (Reduce.score finalTy)) ^ ")\n")
 	   val msg = "Total time = " ^ Time.toString total_elapse ^ " secs\n"
+
+	   val logstrm = TextIO.openAppend logFile
 	   val _ = TextIO.output (logstrm, msg)
 	   val _ = TextIO.closeOut logstrm
 	   val _ = print msg
@@ -399,7 +403,6 @@ structure Incremental: sig
 	   val _ = print ("Output IR to " ^ tyFile ^ "\n")
 	   val _ = TextIO.output (tystrm, TyToStringD "" false false  "\n" finalTy)
 	   val _ = TextIO.closeOut tystrm
-	   (* val finalTy = (!myTy)*) 
 
 	   val padscFile = dir ^  "/" ^ filename ^ ".p"
 	   val pmlFile = dir ^  "/" ^ filename ^ ".pml"
@@ -415,7 +418,7 @@ structure Incremental: sig
 	   val _ = if reparse then
 		    let
 			val btime = Time.now()
-			val (nTotal, nBads) = parse_entire_file(finalTy, filepath)
+			val (nTotal, nBads) = reparse_files(finalTy, filepaths)
 			val elapsed = Time.- (Time.now(), btime)
 			val _ = print ("Reparse time = " ^ Time.toString elapsed ^ " secs\n") 
 			val _ = print ("Total recs = " ^ Int.toString nTotal ^ 
@@ -439,11 +442,24 @@ structure Incremental: sig
 	  in ()
 	  end
 
+    fun get_files args =
+	case args of
+	  nil => (nil, nil)
+	| a::args => if String.sub(a, 0) = #"-" then (nil, a::args)
+		     else 
+			let val (fs, args)= get_files args
+			in (a::fs, args)
+			end
  
     fun loadArgs smap args =
 	case args of
 	  flag::v::args => 
-	   if String.sub (flag, 0) = #"-" then 
+	   if flag = "-f" then
+		let val (files, remaining_args) = get_files (v::args)
+		    val smap' = StringMap.insert (smap, flag, String.concatWith "|" files)
+		in loadArgs smap' remaining_args
+		end
+	   else if String.sub(flag, 0) = #"-" then 
 		let val smap' = StringMap.insert (smap, flag, v)
 		in loadArgs smap' args
 		end
@@ -453,15 +469,17 @@ structure Incremental: sig
     fun main (cmd, args) = 
      (
      if length args < 1 then
-	(print ("Usage: increment -f ORIG_DATA_FILE [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
-	"[-d INIT_DESC_XML] [-opt OPT_LEVEL (3)] [-tmout SECS (1800)] [-w ADC_WEIGHT (5)]\n" ^
-	"[-p FILE_TO_PARSE] [-output OUTPUT_DIR] [-reparse BOOL]\nSizes are in # of lines\n");
+	(print ("Usage: increment -f DATA_FILE(S) [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
+	"[-d INIT_DESC_XML] [-opt OPT_LEVEL (3)] [-tmout SECS (900)] [-w ADC_WEIGHT (5)]\n" ^
+	"[-output OUTPUT_DIR] [-reparse BOOL] [-u BOOL]\nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
-	 val _ = useUnionClustering := true
 	 val argMap = loadArgs StringMap.empty args
-	 val learn_file = valOf (StringMap.find (argMap, "-f"))
+	 val learn_files = 
+		let val s = valOf (StringMap.find (argMap, "-f"))
+		in String.tokens (fn c => c = #"|") s
+		end
 	 val learnsize = case StringMap.find (argMap, "-i") of
 		  NONE => default_init_size
 		| SOME x => valOf (Int.fromString x)
@@ -478,6 +496,10 @@ structure Incremental: sig
          val reparse = case StringMap.find (argMap, "-reparse") of
 		NONE => false
 		| SOME x => valOf(Bool.fromString x)
+
+         val _ = case StringMap.find (argMap, "-u") of
+		NONE => ()
+		| SOME x => useUnionClustering := valOf(Bool.fromString x)
 
 	 val _ = if opt_level = 0 then
 			(
@@ -501,17 +523,12 @@ structure Incremental: sig
 	 val _ = case StringMap.find(argMap, "-w") of
 		NONE => ()
 		| SOME x =>  adcCoeff:= valOf (Real.fromString (x))
-	 val (parse_file, start_pos) = 
-		case StringMap.find (argMap, "-p") of
-		  NONE => (learn_file, learnsize)
-		| SOME x => (x, 0)
-	 val learn_file_name = OS.Path.file learn_file
-	 val parse_file_name = OS.Path.file parse_file
+	 val learn_file_name = OS.Path.file (hd learn_files)
 
 	 val pxml = StringMap.find (argMap, "-d") 
 	 val start_pos = case pxml of
 			SOME _ => 0
-			| _ =>  start_pos
+			| _ => learnsize 
 
 (*
          val varcard = StringMap.find (argMap, "-varcard")
@@ -556,7 +573,8 @@ structure Incremental: sig
 	 val (_, initTy, numHeaders, numFooters, _) = 
 		case pxml of 
 		  NONE =>
-		  let val learn_lines = get_learn_chunk (learn_file, learnsize)
+		  let val learn_lines = 
+			get_learn_chunk ((hd learn_files), learnsize)
 		  in
 		    timed_learn ((Times.zeroEndingTimes()), 1, 
 		    (measure 0 (#1 (computeStructurefromRecords learn_lines))))
@@ -586,7 +604,7 @@ structure Incremental: sig
          val _ = TextIO.output (padsstrm, desc)
          val _ = TextIO.closeOut padsstrm
 
-         val logFile = timedir ^ "/" ^ parse_file_name ^ ".log"
+         val logFile = timedir ^ "/" ^ learn_file_name ^ ".log"
          val logstrm = TextIO.openOut logFile
          val _ = TextIO.output (logstrm, "Learn Chunk = " ^ Int.toString learnsize ^ 
                  	" lines\nParse Chunk = " ^ Int.toString chunksize ^ " bad lines\n\n")
@@ -623,7 +641,7 @@ structure Incremental: sig
 	 val _ = printTy goldenTy *)
 
        in
-         parse_single_file (initTy, numHeaders, numFooters, parse_file, chunksize, 
+         parse_files (initTy, numHeaders, numFooters, learn_files, chunksize, 
 			stime, timedir, start_pos, reparse) 
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
