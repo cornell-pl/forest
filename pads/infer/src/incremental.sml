@@ -408,6 +408,7 @@ structure Incremental: sig
 				pmlFile finalTy numHeaders numFooters
 	   (* val _ = Printing.dumpAccumProgram (dir ^ "/") filename hdrName tyName trlName *)
 	   val _ = Printing.dumpParseProgram (dir ^ "/") filename hdrName tyName trlName
+	   val _ = Printing.dumpXMLProgram (dir ^ "/") filename topName hdrName tyName trlName
 	   val _ = Printing.cpFile (dir ^ "/") "GNUmakefile" "GNUmakefile.output"
 	   val _ = Printing.cpFile (dir ^ "/") "vanilla.p" "vanilla.p"
 	   val _ = print ("Log written to " ^ logFile ^ ".\n")

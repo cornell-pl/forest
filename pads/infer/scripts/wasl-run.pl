@@ -217,9 +217,9 @@ if ($otherargs =~ /.*-small.*/) {
 foreach my $largefile (@ARGV)
 {
 # skip the switches in the arguments
-if ($largefile =~ /-.*/) {next;}
+if ($largefile =~ /^-.*/) {next;}
 
-print "**** Processing $largefile! ****\n";
+print "\n**** Processing $largefile! ****\n";
 
 $beginwctm = time();
 $wcoutput = `wc -l $largefile`;
@@ -232,7 +232,7 @@ if ($largefile_lines < 1000) {print "$largefile must be at least 1k lines!\n"; n
 
 $fname = getFileName($largefile);
 
-print "wc -l elapse = $wc_elapse secs\n\n";
+print "wc -l elapse = $wc_elapse secs\n";
 
 #Scaling tests... 
 # we create 5 data points for the given large file
