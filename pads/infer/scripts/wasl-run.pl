@@ -264,13 +264,13 @@ if ($otherargs =~ /.*-scale.*/) {
     ($score, $rate, $time, $rptime, $padstime, $blobtime) = 
 	inc ("$fname.$size", $initsize, $incsize, 0);
     if ($score==0) {
-        print "$fname.$size (inc): timed out\n";
+        print "$fname.$size (init=$initsize, inc=$incsize): timed out\n";
 	$timeout=1; last}
     elsif ($score==-1) {
-        print "$fname.$size (inc): exception raised\n";
+        print "$fname.$size (init=$initsize, inc=$incsize): exception raised\n";
     }
     else {
-      output("$fname.$size (inc)", $score, $rate, $time, $rptime, $padstime, $blobtime, 0);  
+      output("$fname.$size (init=$initsize, inc=$incsize)", $score, $rate, $time, $rptime, $padstime, $blobtime, 0);  
     }
     unlink ("$fname.$size");
   }

@@ -76,7 +76,7 @@ chomp $arch;
 
 ($initsize, $incsize, @largefiles, $rep) = @ARGV;
 if (!$initsize) {
- print "Usage: huge.pl INIT_SZ INC_SZ LARGE_FILE_PATHS RE-PARSE[1|0]\n";
+ print "Usage: huge.pl INIT_SZ INC_SZ RE-PARSE[1|0] LARGE_FILE_PATHS\n";
  exit;
 }
 
