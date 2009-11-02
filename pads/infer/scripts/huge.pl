@@ -74,7 +74,7 @@ chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
 
-($initsize, $incsize, @largefiles, $rep) = @ARGV;
+($initsize, $incsize, $rep, @largefiles) = @ARGV;
 if (!$initsize) {
  print "Usage: huge.pl INIT_SZ INC_SZ RE-PARSE[1|0] LARGE_FILE_PATHS\n";
  exit;
@@ -96,7 +96,7 @@ foreach my $largefile (@largefiles)
    
    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
    $atime,$mtime,$ctime,$blksize,$blocks) = stat($largefile);
-   $multiplier = $size / (1024*1024*512);
+   $multiplier = $size / (1024*1024);
    if ($multiplier < 1)
    {print "$largefile is too small!\n"; exit;}
    
@@ -111,6 +111,7 @@ foreach my $largefile (@largefiles)
    @smallfiles = `ls $fname.$linecount.??`;
    chomp @smallfiles;
    $filenames = join (' ', @smallfiles);
+   print ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u true > $fname.inc\n");
    system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u true > $fname.inc");
    ($scores, $exectime, $reparsetime) = scan ("$fname.inc");
    print "Final comps = $scores\n";
