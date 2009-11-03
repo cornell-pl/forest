@@ -102,7 +102,7 @@ structure Pxml = struct
 		loadToMap tail map'
 	    end
 
-   fun getNumFromCons s =
+   fun getValFromCons s =
 	let val subs = Substring.full s
 	    val (_, suff) = Substring.position "==" subs
 	    val num = Substring.string (Substring.dropl (fn ch => ch = #" " orelse ch = #"=") suff)
@@ -140,7 +140,7 @@ structure Pxml = struct
 		case constraint of
 		SOME cons_str =>
 		  let 
-			val num = valOf (LargeInt.fromString (getNumFromCons cons_str))
+			val num = valOf (LargeInt.fromString (getValFromCons cons_str))
 		  in
 		    RefinedBase (aux, IntConst num, [(Pint(num, LargeInt.toString num), loc)])
 		  end
@@ -162,6 +162,16 @@ structure Pxml = struct
 		Base (aux, [(Pwhite(""), loc)])
 	    else if tyName = "PPchar" then
 		Base (aux, [(Other(#" "), loc)])
+	    else if tyName = "Pchar" then
+		(
+		case constraint of
+		SOME cons_str =>
+		  let 
+			val ch = valOf (Char.fromString (getValFromCons cons_str))
+		  in Base(aux, [(Other ch, loc)])
+		  end
+		| _ => Base (aux, [(Other (#" "), loc)])
+		)
 	    else if tyName = "PPtext" then
 		Base (aux, [(Ptext(""), loc)])
 	    else if tyName = "PPempty" then
@@ -183,7 +193,7 @@ structure Pxml = struct
 		    else 
 			RefinedBase (aux, Blob (NONE, SOME patt), [])
 		end 
-	    else raise InvalidXML
+	    else (print tyName; raise InvalidXML)
 	end
 
    and mkArray xml label map = 

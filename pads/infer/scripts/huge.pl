@@ -96,7 +96,7 @@ foreach my $largefile (@largefiles)
    
    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
    $atime,$mtime,$ctime,$blksize,$blocks) = stat($largefile);
-   $multiplier = $size / (1024*1024);
+   $multiplier = $size / (1024*1024*512);
    if ($multiplier < 1)
    {print "$largefile is too small!\n"; exit;}
    
@@ -111,7 +111,7 @@ foreach my $largefile (@largefiles)
    @smallfiles = `ls $fname.$linecount.??`;
    chomp @smallfiles;
    $filenames = join (' ', @smallfiles);
-   print ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u true > $fname.inc\n");
+   print "initsize = $initsize  incsize = $incsize\n";
    system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u true > $fname.inc");
    ($scores, $exectime, $reparsetime) = scan ("$fname.inc");
    print "Final comps = $scores\n";
