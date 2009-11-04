@@ -311,6 +311,10 @@
 #define P_BUILTIN_NUMERIC_MAX     512
 #define P_BUILTIN_PANIC_MAX      1024
 
+
+/* Size of regular expression cache */
+#define P_REGEX_CACHE_SIZE       50
+
 /*
  *
  * Specifying what value to write during write calls when an invalid value is present

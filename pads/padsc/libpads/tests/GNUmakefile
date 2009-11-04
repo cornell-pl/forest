@@ -314,3 +314,5 @@ veryclean: clean
 endif
 
 
+foo:
+	echo $(OPSYS)

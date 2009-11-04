@@ -7845,7 +7845,7 @@ PDCI_E2FLOAT(PDCI_e2float64, Pfloat64, P_MIN_FLOAT64, P_MAX_FLOAT64)
 #gen_include "pads-internal.h"
 #gen_include "pads-macros-gen.h"
 
-static const char id[] = "\n@(#)$Id: pads.c,v 1.218 2009-04-07 23:52:02 kfisher Exp $\0\n";
+static const char id[] = "\n@(#)$Id: pads.c,v 1.219 2009-11-04 18:35:08 kfisher Exp $\0\n";
 
 static const char lib[] = "padsc";
 
@@ -8399,6 +8399,7 @@ PDCI_libopen(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc, int iodisc_requ
   Vmalloc_t    *vm;
   P_t          *pads;
   Pint32        testint = 2;
+  int          reg_cache_status;
 
   P_TRACE2(&Pdefault_disc, "PDCI_libopen called, iodisc_required = %d whatfn = %s",
 	   iodisc_required, whatfn);
@@ -8494,6 +8495,11 @@ PDCI_libopen(P_t **pads_out, Pdisc_t *disc, Pio_disc_t *io_disc, int iodisc_requ
     P_WARN1(pads->disc, "%s: pads->disc->out_time_zone invalid, replacing with 'UTC'", whatfn);
     pads->disc->out_time_zone = "UTC";
     PDCI_set_out_time_zone(pads, pads->disc->out_time_zone, whatfn);
+  }
+  /* Set cache size for regular expressions */
+  regcache(0,P_REGEX_CACHE_SIZE, &reg_cache_status);
+  if (reg_cache_status != 0) {
+    P_WARN1(pads->disc, "%s: Failed to set regular expression cache size; using default value.", whatfn);
   }
   return P_OK;
 
