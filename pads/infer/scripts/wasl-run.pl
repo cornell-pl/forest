@@ -132,10 +132,10 @@ sub inc
   {
     $exectime = 0;
     if ($doparse) {
-      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u true > $filename.inc");
+      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
     } else
     {
-      system ("increment -f $file -i $isize -l $lsize -output gen -u true > $filename.inc");
+      system ("increment -f $file -i $isize -l $lsize -output gen -u 2 > $filename.inc");
     }
     ($tc, $adc, $score, $exectime, $reparsetime) = scan ("$filename.inc");
     #unlink("$filename.inc");
