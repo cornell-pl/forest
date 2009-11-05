@@ -471,7 +471,7 @@ struct
         | StringConst s =>  "[StringConst] \""^(stringToPrintable s) ^ "\"" 
         | Enum rel      => "[Enum] {"^ String.concat(map (fn x => (refinedToString x) ^
                            ", ") rel) ^ "}"
-        | LabelRef id   => "[Label] id="^ Atom.toString(id) 
+        | LabelRef id   => "[Label] id = "^ Atom.toString(id) 
 	| Blob (str, patt) => 
 	   (
 	     case (str, patt) of

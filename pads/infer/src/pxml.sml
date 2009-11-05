@@ -106,7 +106,33 @@ structure Pxml = struct
 	let val subs = Substring.full s
 	    val (_, suff) = Substring.position "==" subs
 	    val num = Substring.string (Substring.dropl (fn ch => ch = #" " orelse ch = #"=") suff)
-	in num
+	in if size num = 0 then NONE else SOME num
+	end
+
+   fun getRangeFromCons s =
+	let fun f (c, l) =
+	      if (c < #"0" orelse c > #"9") then 
+		case l of
+		  (""::l') => (""::l')
+		| _ => ""::l
+	      else case l of
+			nil => [Char.toString c]
+	       		| s::l => (s ^ (Char.toString c))::l
+	    val subs = Substring.full s
+	    val l = Substring.foldl f nil subs 
+	    val nums = List.rev l
+	in
+	  if length nums < 2 then NONE
+	  else case List.take (nums, 2) of
+		[i1, i2] =>
+			if i2 = "" then NONE
+			else let val (num1, num2) = 
+				(valOf (LargeInt.fromString i1), valOf (LargeInt.fromString i2))
+			     in
+				if (num1 <= num2) then SOME (num1, num2)
+			    	else SOME (num2, num1)
+			     end
+	       | _ => NONE
 	end
 
    fun ptypeToIR id ptype constraint = 
@@ -135,15 +161,26 @@ structure Pxml = struct
 		  Base (aux, [(Pfloat("", ""), loc)])
 	    else if tyName = "Pint64" orelse tyName = "Pint8" orelse tyName = "Pint16"
 		 orelse tyName = "Pint32" orelse tyName = "Puint8" 
-		 orelse tyName = "Puint16" orelse tyName = "Puint32"  then
+		 orelse tyName = "Puint16" orelse tyName = "Puint32" 
+		 orelse tyName = "Puint64" orelse tyName = "PPint" then
 		(
 		case constraint of
 		SOME cons_str =>
-		  let 
-			val num = valOf (LargeInt.fromString (getValFromCons cons_str))
-		  in
-		    RefinedBase (aux, IntConst num, [(Pint(num, LargeInt.toString num), loc)])
-		  end
+		  (case getValFromCons cons_str of
+		     SOME s => 
+			let val num = valOf (LargeInt.fromString s)
+			in
+		          RefinedBase (aux, IntConst num, [(Pint(num, LargeInt.toString num), loc)])
+		        end
+		   | NONE => 
+			(* let's see if it contains a range constraint, hack here! *)
+		     (
+			case getRangeFromCons cons_str of
+			  SOME (l, u) => 
+				RefinedBase(aux, Int(l, u), [(Pint(l, LargeInt.toString l), loc)])
+			| _ => Base (aux, [(Pint(0, ""), loc)])
+		     )
+		  )
 		| _ => Base (aux, [(Pint(0, ""), loc)])
 		)
 	    else if tyName = "PPstring" then
@@ -166,10 +203,10 @@ structure Pxml = struct
 		(
 		case constraint of
 		SOME cons_str =>
-		  let 
-			val ch = valOf (Char.fromString (getValFromCons cons_str))
-		  in Base(aux, [(Other ch, loc)])
-		  end
+		  (case getValFromCons cons_str of
+		     SOME s => Base(aux, [(Other (valOf (Char.fromString s)), loc)])
+		   | NONE => Base (aux, [(Other (#" "), loc)])
+		  )
 		| _ => Base (aux, [(Other (#" "), loc)])
 		)
 	    else if tyName = "PPtext" then
@@ -285,7 +322,9 @@ structure Pxml = struct
 	      val tyName = valOf (selectPCData xml ["field", "ptype", "name"])
 	      val cons = selectPCData xml ["field", "postConstraints", "expr", "native"]
 	    in
-	      if (String.substring(tyName, 0, 2) = "PP") then
+	      if (String.isPrefix "PP" tyName orelse String.isPrefix "Pint" tyName
+		orelse String.isPrefix "Puint" tyName orelse String.isPrefix "Pfloat" tyName
+		orelse String.isPrefix "Pstring" tyName) then
 	      (* this is a base type *)
 	        [ptypeToIR (Atom.atom varName) (valOf(search [xml] ["field", "ptype"])) cons]
 	      else
@@ -380,7 +419,10 @@ structure Pxml = struct
 	  val aux = mkTyAux1(1, Atom.atom label)
 	  val res = List.map (fn field => 
 			 let val label = valOf(selectPCData field ["enumField", "label"])
-			     val str =  valOf(selectPCData field ["enumField", "physicalName"])
+			     val phyname =  (selectPCData field ["enumField", "physicalName"])
+			     val str = case phyname of
+				SOME s => s
+			     | _ => label  (* label is a C string and can be used directly *)
 			     val _ = env:=StringMap.insert(!env, label, str)
 			 in
 			    StringConst (strip str) (* at the moment we only have const strings *)

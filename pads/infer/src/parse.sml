@@ -137,7 +137,9 @@ struct
 			case TokenMap.find (!tokenRegexMap, t) of
 			SOME r => r
 			| NONE => 
-				let val r = RegExp.compileString re_str
+				let 
+				     (* val _ = print ("Parsing token (" ^ re_str ^ ")\n") *)
+				     val r = RegExp.compileString re_str
 				     val _ = tokenRegexMap := TokenMap.insert (!tokenRegexMap, t, r) 
 				in r
 				end
@@ -244,7 +246,9 @@ struct
 			case StringMap.find (!strRegexMap, re_str) of
 			  SOME r => r
 			| NONE => 
-				let val r = RegExp.compileString re_str
+				let
+				    (* val _ = print ("Parsing regex(" ^ re_str ^ ")\n") *)
+				    val r = RegExp.compileString re_str
 	    			    val _ = strRegexMap := StringMap.insert (!strRegexMap, re_str, r) 
 			        in r
 				end
@@ -282,9 +286,7 @@ struct
      then return a fail as well, but right now we always return fail along with recovered data *)
   fun parse_sync (refined, start, input) =
 	(
-	(*
-	print ("Parsing: " ^ refinedToString refined ^ " at pos " ^ Int.toString start ^ "\n");  
-	*)
+	(* print ("Parsing: " ^ refinedToString refined ^ " at pos " ^ Int.toString start ^ "\n"); *) 
 	case refined of
 	  StringME re =>
 	    let 
@@ -591,7 +593,7 @@ struct
 			  	case idop of
 				  SOME id => 
 				  (
-				     	LabelMap.insert(env, id, r)
+				     	LabelMap.insert(env, id, r')
 				  )
 				| _ => env
 			    val lf = if no_progress m' then last_fails + 1
@@ -900,7 +902,7 @@ struct
 			case LabelMap.find(e, id) of
 			  SOME (BaseR (GoodB (Pint(i, _)))) => Int.fromLarge i
 			| SOME (SyncR (Good (_, IntConst i))) => Int.fromLarge i
-			| _ => raise TyMismatch
+			| _ => (print "Can't find good ref!\n"; raise TyMismatch)
 			)
 		| _ => raise TyMismatch
 		)

@@ -123,7 +123,8 @@ open Common
         let
 	  val label = getLabelString (getAuxInfo ty)
 	in
-	  if String.substring (label, 0, 3) = "BTy" (* this is an auto-generated label *)
+	  if (String.size label >4) andalso (String.substring (label, 0, 3) = "BTy") 
+	  (* this is an auto-generated label *)
 	  then let val id = String.extract (label, 4, NONE)
 	       in
         	  case ty of 
@@ -148,7 +149,7 @@ open Common
 	let
 	  val label = getLabelString (getAuxInfo ty)
  	  val lowLabel = lowerFirstChar label
-	  val id = if String.substring (label, 0, 3) = "BTy" then
+	  val id = if (String.size label > 4) andalso (String.substring (label, 0, 3) = "BTy") then
 		String.extract (label, 4, NONE)
 	        else ""
 	in
@@ -185,7 +186,7 @@ open Common
 	  |_ => getTypeName ty
 
   fun getVarStr s =
-	if String.substring(s, 0, 2) = "v_" then s
+	if String.size s > 2 andalso String.substring(s, 0, 2) = "v_" then s
 	else "v_" ^ s
 
   fun getVar ty : VarName = 

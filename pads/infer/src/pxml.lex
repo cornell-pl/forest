@@ -13,8 +13,8 @@
 %let endcdata = \]\]\>;
 %let beginlit = \<char\> | \<string\>;
 %let endlit = \<\/char\> | \<\/string\>;
-%let beginarg = \<argument\> 
-%let endarg = \<\/argument\>
+%let beginarg = \<argument\>; 
+%let endarg = \<\/argument\>;
 
 %defs (
 structure T = PxmlTokens
@@ -35,6 +35,7 @@ exception UnknownToken
 			    T.BeginTag (String.substring(yytext, 1, size(yytext)-2)) );
 <ARG>     {endarg}   => ( YYBEGIN (INITIAL);
 			    T.EndTag (String.substring(yytext, 2, size(yytext)-3)) );
+<ARG>	  {cddata}   => ( T.Data (yytext) );
 (* this argument contains expression and not literal, so jump back to initial state *)
 <ARG>     {begintag} => ( YYBEGIN (INITIAL);
 			    T.BeginTag (String.substring(yytext, 1, size(yytext)-2)) );
@@ -63,7 +64,7 @@ exception UnknownToken
 		  end
 		);
 *)
-<INITIAL> {cddata}     => ( T.Data (yytext) );
+<INITIAL> {cddata}     => (T.Data (yytext) );
 <INITIAL> {white}      => ( continue() );
 <INITIAL> .          =>  ( print ("error char >>" ^ yytext ^ "<< (" ^ Int.toString (!yylineno) ^
 		", " ^ Int.toString yypos ^ ")\n"); raise UnknownToken );

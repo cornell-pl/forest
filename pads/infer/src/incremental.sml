@@ -587,6 +587,7 @@ structure Incremental: sig
 				  RArray (_, _, _, body, _, _) => body
 				| _ => ty
 		      val measured_ty = (measure 0 ty)
+		      (* val _ = printTy measured_ty *)
 		  in
 			(ty, measured_ty, 0, 0, Times.zeroEndingTimes ())
 			(* ;raise TyMismatch *)

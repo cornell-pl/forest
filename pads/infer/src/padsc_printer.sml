@@ -210,7 +210,8 @@ open Ast
 	  val incString = "#include \""^ includeFile ^"\"\n" 
 	  val (pads, topLabel, headerLabel, bodyLabel, footerLabel) =
 		if numHeaders=0 andalso numFooters=0 then
-		    let val irTys = tyToIR 0 nil ty
+		    let 
+			val irTys = tyToIR 0 nil ty
 			val body = (lconcat (map irToPADSC irTys))
 			val bodyLabel = tyNameToPADSCString (
 				case ty of
