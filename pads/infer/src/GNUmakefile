@@ -51,11 +51,11 @@ BUILD_INC = build-inc.sml
 
 all:	learn
 
-vanilla.lex:
+vanilla.lex: ../include/vanilla.config ../scripts/config.pl
 	../scripts/config.pl ../include/vanilla.config .
 	mv vanilla.p ../include/vanilla.p
 
-tokens.lex:
+tokens.lex: ../scripts/config.pl ../include/tokens.config
 	../scripts/config.pl ../include/tokens.config .
 	mv tokens.p ../include/tokens.p
 

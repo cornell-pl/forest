@@ -3,7 +3,6 @@ struct
   open Tokens 
   structure  WMap = WordRedBlackMap 
 
-  val clusterThreshold = 0.15
   fun cmpChar (c1, c2) = c1 = c2
   fun eqLToken ((t1,l1), (t2,l2)) = eqToken(t1,t2)
 
@@ -119,23 +118,23 @@ struct
 	  intDiv  (distance eqLToken r1 r2, max (len1,len2))
       end
 
-  (* Compute the edit distance between r1 and rlist up to clusterThreshold. *)
+  (* Compute the edit distance between r1 and rlist up to threshold. *)
   (* Distance defined to be minimum distance between r1 and any item in rlist *)
-  (* If distance is less than clusterThreshold, r will be put in rlist, so further checking is not necessary. *)
-  fun minDistance (computeDistance, r1, rlist) = let
+  (* If distance is less than threshold, r will be put in rlist, so further checking is not necessary. *)
+  fun minDistance (threshold, computeDistance, r1, rlist) = let
       fun findMin current cl = case cl
            of [] => current
            | (r::rs) => let val distance = computeDistance (r1, r)
 	               in
-			   if distance < clusterThreshold then distance
+			   if distance < threshold then distance
 			   else findMin (Real.min (distance, current)) rs
 		       end
       in
 	  findMin 2.0 rlist    (* 2.0 is bigger than any possible real distance *)
       end 
 
-  fun distClusterToRec (cluster,r)  = minDistance (recordDistance, r, cluster)
-  fun distClusterToCluster (c1, c2) = minDistance (distClusterToRec, c1, c2)
+  fun distClusterToRec threshold (cluster,r)  = minDistance (threshold, recordDistance, r, cluster)
+  fun distClusterToCluster threshold (c1, c2) = minDistance (threshold, (distClusterToRec threshold), c1, c2)
 
   type record_t = (Token * {beginloc:int, endloc:int, lineNo:int, recNo:int}) list 
   type aug_record_t = word * (Token * {beginloc:int, endloc:int, lineNo:int, recNo:int}) list 
@@ -168,11 +167,11 @@ struct
      qs xs
    end 
 
-  fun mergeClusters (rs : aug_record_t list) = 
+  fun mergeClusters threshold (rs : aug_record_t list) = 
       let val initialClusters = map (fn x => [x]) rs
           fun mergeOneCluster (c : cluster_t) (clusters: cluster_t list)  (eqCluster : cluster_t, others: cluster_t list) = case clusters 
 	      of [] => (eqCluster::others)
-              | (c1::cs) => if distClusterToCluster(c,c1) <= clusterThreshold 
+              | (c1::cs) => if distClusterToCluster threshold (c,c1) <= threshold
 		            then mergeOneCluster c cs (eqCluster @ c1, others)
 			    else mergeOneCluster c cs (eqCluster, c1::others)
           fun mergeAllClusters (m1: cluster_t list) (m2:cluster_t list) = case m1
@@ -195,10 +194,11 @@ struct
 	  merge initialClusters
       end
 
-  fun findClusters (rs : record_t list) = let
+  fun findClusters threshold (rs : record_t list) = let
+      val () = print ("Using cluster threshold of:"^(Real.toString threshold)^".\n")
       val equivClasses = hashRecords rs   (* records grouped by hash code *)
       val basis = getBasis equivClasses   (* representative record from each equivalence class *)
-      val basisClusters = mergeClusters basis
+      val basisClusters = mergeClusters threshold basis
       val completedClusters = completeClusters (equivClasses,basisClusters)
       in
 	  map (quicksort cmpLoc) completedClusters

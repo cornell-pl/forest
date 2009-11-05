@@ -74,7 +74,10 @@ structure Main : sig
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
-    fun setUnionClustering b = (if b then useUnionClustering := true else ())
+    fun setUnionClustering f = case f 
+	                       of NONE   => useUnionClustering := (SOME def_union_cluster_threshold)
+	                       |  SOME g => useUnionClustering := (SOME g)
+          
 (*
     fun setBlobRatio    r = blobRatio := r
     fun setVarCardBits  b = var_card_bits := b
@@ -101,7 +104,7 @@ structure Main : sig
        PCL.Float (setBlobRatio, false)),
 *)
 	 ("timeout",  "timeout for learning (default 900 secs)",					   PCL.Int (setTimeout, false)),
-	 ("u",        "use union clustering algorithm",    	  				           PCL.Bool setUnionClustering)
+	 ("u",        "use union clustering algorithm",    	  				           PCL.FloatOpt (setUnionClustering, false))
         ]
 
     fun checkOutputDir() =(

@@ -6,11 +6,12 @@ structure ParseCmdLine : PARSECMDLINE =
 	structure Sort = ListMergeSort
 
 	datatype flagType = 
-	    Bool   of   bool -> unit
-	  | String of (string -> unit) * bool
-	  | Int    of    (int -> unit) * bool
-	  | Float  of (real -> unit) * bool
-	  | BoolSet of bool ref
+	    Bool      of bool -> unit
+	  | String    of (string -> unit) * bool
+	  | Int       of (int -> unit) * bool
+	  | Float     of (real -> unit) * bool
+	  | FloatOpt  of (real option -> unit) * bool
+	  | BoolSet   of bool ref
 	  | Extension of (string -> unit) * bool
 
 	exception Invalid
@@ -81,12 +82,19 @@ structure ParseCmdLine : PARSECMDLINE =
 		       | (opt :: rest) => 
 			     if isFlag opt then (invalidOption opt)
 			     else (opt,rest))				 
+		fun getOptArg() =
+		    (case args of 
+			 [] => NONE
+		       | (opt :: rest) => 
+			     if isFlag opt then NONE
+			     else SOME (opt,rest))				 
 		val _ =
 		    let val w = 
 			case kind of
 			    String(_,w) => w
 			  | Int(_,w) => w
 			  | Float(_,w) => w
+			  | FloatOpt(_,w) => w
 			  | Extension(_,w) => w
 			  | _ => false
 		    in
@@ -120,6 +128,12 @@ structure ParseCmdLine : PARSECMDLINE =
 			in
 			    (fFun f); rest
 			end
+		  | FloatOpt (fFun,w) => (
+			    case getOptArg () 
+                            of NONE => 	((fFun NONE); args)
+                            |  SOME (opt,rest) => (case Real.fromString opt 
+ 				                   of NONE   => ((fFun NONE); opt::rest)
+ 			                           |  SOME f => ((fFun (SOME f)); rest)))
 		  | BoolSet b => (b := true; args)
 		  | Extension(xFun,w) => (xFun arg0; args)
 	    end
@@ -176,6 +190,7 @@ structure ParseCmdLine : PARSECMDLINE =
 		       | String (_,w) => genDesc(name," <string>",w)
 		       | Int (_,w) => genDesc(name," <int>",w)
 		       | Float (_,w) => genDesc(name," <float>",w)
+		       | FloatOpt (_,w) => genDesc(name," <float option>",w)
 		       | BoolSet _ => genDesc(name,"",false)
 		       | Extension(_,w) => "")
 		val helpFlag = ("-help","",Bool (fn b => ()))

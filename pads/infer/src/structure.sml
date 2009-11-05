@@ -1348,9 +1348,10 @@ struct
                     else doPartition pTable
 		end
 
-            fun buildUnionTy(FirstToken,rtokens) = if !useUnionClustering 
-              then let val () = print "Starting to look for union clusters.\n"
-                       val branches = CU.findClusters rtokens
+            fun buildUnionTy(FirstToken,rtokens) = case (!useUnionClustering ) 
+              of SOME threshold => 
+                   let val () = print "Starting to look for union clusters.\n"
+                       val branches = CU.findClusters threshold rtokens
                        val () = print "Finished looking for union clusters.\n"
 		   in
 		      if (length branches) = 1 then orig_buildUnionTy(FirstToken,rtokens)
@@ -1359,7 +1360,7 @@ struct
 			       Punion(mkTyAux numRecords, tys)
 			   end
 		   end
-	     else orig_buildUnionTy(FirstToken,rtokens)
+  	     | NONE =>  orig_buildUnionTy(FirstToken,rtokens)
 
            (* This function takes a Struct Partition and returns a Ty describing that partition *)
 	    fun buildStructTy partitions = 

@@ -20,7 +20,8 @@ structure Config = struct
     val def_printIDs     = true
     val def_entropy      = false
     (* val def_var_card_bits   = false *)
-    val def_timeout	= 900 (* default timeout is 15 mins *)
+    val def_timeout	= 1800 (* default timeout is 15 mins *)
+    val def_union_cluster_threshold = 0.15
 
     val depthLimit        = ref def_depthLimit
     val outputDir         = ref def_outputDir
@@ -32,7 +33,7 @@ structure Config = struct
     val executableDir     = ref ""
     val lexName	          = ref "vanilla"
     val goldenRun         = ref false
-    val useUnionClustering = ref false
+    val useUnionClustering : real option ref = ref NONE
     val minBlobHeight	  = 4
     val learn_timeout = ref def_timeout
 (*
@@ -70,7 +71,9 @@ structure Config = struct
 	    ("Noise level threshold (percentage): "           ^(Real.toString (!NOISE_PERCENTAGE))^"\n")^
 	    ("Width threshold for array: "                    ^( Int.toString (!ARRAY_WIDTH_THRESHOLD))^"\n")^
 	    ("Minimum width threshold for array: "            ^( Int.toString (!ARRAY_MIN_WIDTH_THRESHOLD))^"\n")^
-	    ("Junk threshold (percentage): "                  ^(Real.toString (!JUNK_PERCENTAGE))^"\n"))
+	    ("Junk threshold (percentage): "                  ^(Real.toString (!JUNK_PERCENTAGE))^"\n") ^
+	    ("Union clustering (percentage): "                ^(case !(useUnionClustering) of NONE => "Off" 
+								    | SOME f => Real.toString f)^"\n")  )
 
     fun printParameters () = print (parametersToString ())
 
