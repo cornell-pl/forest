@@ -46,6 +46,49 @@ sub expand
  }
 }
 
+sub mod_left_paren
+{
+ local ($re) = @_;
+ local $output_re = "";
+ local $in_char_class = 0;
+ local $num_bs = 0;
+ for ($i = 0; $i<length $re; $i++)
+ {
+  $ch = substr $re, $i, 1;
+  if ($ch eq "[" && $num_bs % 2 == 0)
+  {
+   $in_char_class = 1;
+   $num_bs = 0;
+   $output_re = $output_re . $ch;
+  } 
+  elsif ($ch eq "]" && $num_bs % 2 == 0)
+  {
+   $in_char_class = 0;
+   $num_bs = 0;
+   $output_re = $output_re . $ch;
+  } 
+  elsif ($ch eq "\\") 
+  {
+   $num_bs++;
+   $output_re = $output_re . $ch;
+  }
+  elsif ($ch eq "(" && $in_char_class==0 && $num_bs %2 == 0)
+  {
+   $num_bs =0;
+   $output_re = $output_re . "(?:";
+  }
+  else
+  {
+   $num_bs =0;
+   $output_re = $output_re . $ch;
+  }
+  # print ("char=" . $ch . "  in_char_class=" . $in_char_class . "   num_bs=" . $num_bs . "\n") 
+ }
+ # print ("The output re = " . $output_re . "\n");
+ return $output_re;   
+}
+
+
 ($configpath, $outpath) = @ARGV;
 if (!$configpath) {
   printUsage();
@@ -130,7 +173,8 @@ close LEX;
 open (INCLUDE, ">$includefile") or die "Cannot open PADS include file $includefile for write!\n";
 foreach my $name (@exports)
 {
- $re = escape (expand($name));
+ $orig_re = expand($name);
+ $re = escape (mod_left_paren($orig_re));
  print INCLUDE "Ptypedef Pstring_ME(:\"/$re/\":) P$name;\n\n";
 }
 #Finally add definition for PPchar
