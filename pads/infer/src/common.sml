@@ -675,90 +675,6 @@ structure Common = struct
 	  | Poption _ => true
 	  | _ => false
 
-	(*This function sorts of the base type union branches by the order defined in tokens.sml*)
-	(*assume ty is already with complexy info*)
-	fun sortUnionBranches ty =
-		case ty of 
-		  Punion(a, tys) =>
-			let
-			  val sorted_tys = map sortUnionBranches tys
-			  fun isPriTy ty =
-				case ty of
-					Base(a1, (Ptime _, _)::_) => true
-					| Base(a1, (Pdate _, _)::_) => true
-					| Base(a1, (Pip _, _)::_) => true
-					| Base(a1, (Phostname _, _)::_) => true
-					| Base(a1, (Ppath _, _)::_) => true
-					| Base(a1, (Purl _, _)::_) => true
-					| Base(a1, (Pemail _, _)::_) => true
-					| Base(a1, (Pmac _, _)::_) => true
-					| Base(a1, (Ptext _, _)::_) => true
-(*					| RefinedBase(_, IntConst x , _) => x > 99 *)
-					| RefinedBase(_, StringConst s , _) => (size s) > 2
-					| _ => false
-			  fun lowPriTy ty = 
-				(parseEmpty ty) orelse
-				(
-				case ty of
-					Base(_, (Pint _, _)::_) => true
-					| Base(_, (Pstring _, _)::_) => true
-					| Base(_, (Other _, _)::_) => true
-					| RefinedBase(_, StringConst s , _) => (size s) = 1
-					| Poption _ => true
-					| _ => false
-				)
-
-			  val (priTys, nonpriTys) = List.partition isPriTy sorted_tys
-			  val (lowPriTys, normalTys) = List.partition lowPriTy nonpriTys
-			  fun greater (ty1, ty2) =
-			    let
-				val (cov1, cov2) =(getCoverage ty1, getCoverage ty2)
-				(*
-				val (comps1, comps2) = (getComps ty1, getComps ty2)
-				val (nc1, nc2) = ((normalizeTyComp cov1 comps1), (normalizeTyComp cov2 comps2))
-				*)
-			    in
-				case (ty1, ty2) of
-				  (Base(a1, (tok1, _)::t1), Base(a2, (tok2, _)::t2)) => 
-					(compToken(tok1, tok2) = GREATER)
-				  | (RefinedBase (a1, re1, t1), RefinedBase(a2, re2, t2)) =>
-					(case (re1, re2) of
-						(StringConst x, StringConst y) => (size x < size y)
-						| (IntConst x, IntConst y) => x < y
-						| _ => false
-					)
-				  | (Base (_, (Pempty, _)::_), _) => true
-				  | (_, Base (_, (Pempty, _)::_)) => false
-				  | (Poption _, RefinedBase _) => true
-				  | (Poption _, Base _) => true
-				  | (RefinedBase _, Poption _) => false
-				  | (Base _, Poption _) => false
-				  | (Base _, RefinedBase _) => true
-				  | (RefinedBase _, Base _) => false
-				  | (Base (a1, t1), _) => (case hd t1 of (Pstring x, _) => true | _ => false)
-				  | (_, Base(a1, t1)) => (case hd t1 of (Pstring x, _) => false | _ => true)
-				  | (RefinedBase _, _) => (cov1 > cov2) 
-				  | (_, RefinedBase _) => cov1 > cov2
-				  | (Pstruct(_, tys1), Pstruct(_, tys2)) =>
-					length tys1 < length tys2
-				  | _ => cov1 > cov2 
-			    end
-			  val sortedPriTys = ListMergeSort.sort greater priTys
-			  val sortedLowPriTys = ListMergeSort.sort greater lowPriTys
-			  val sortedNormalTys = ListMergeSort.sort greater normalTys
-			in Punion(a, sortedPriTys@sortedNormalTys@sortedLowPriTys)
-			end
-		  | Pstruct(a, tys) => Pstruct(a, map sortUnionBranches tys)
-		  | RArray (a, sep, term, body, len, lengths) => RArray(a, sep, term, sortUnionBranches body, len, lengths)
-		  | Switch (a, id, pairs) => 
-			let
-                          val (refs, tylist) = ListPair.unzip(pairs)
-                          val tylist' = map sortUnionBranches tylist
-                        in Switch (a, id, ListPair.zip(refs, tylist'))
-                        end
-		  | Poption (a, body) => Poption (a, sortUnionBranches body)
-		  | _ => ty
-
   (*here we choose an arbitrary measure of type complexity to order the tys 
   if they are not equal *)
   fun tycompare (ty1: Ty, ty2: Ty) : order =
@@ -772,5 +688,94 @@ structure Common = struct
     struct type ord_key = Ty
   	   val compare = tycompare
     end) 
+  
+  structure TySet = SplaySetFn(
+    struct type ord_key = Ty
+  	   val compare = tycompare
+    end) 
+
+
+	(*This function sorts of the base type union branches by the order defined in tokens.sml*)
+	(*assume ty is already with complexy info*)
+  fun sortUnionBranches ty =
+	case ty of 
+	  Punion(a, tys) =>
+		let
+		  val sorted_tys = map sortUnionBranches tys
+		  fun isPriTy ty =
+			case ty of
+				Base(a1, (Ptime _, _)::_) => true
+				| Base(a1, (Pdate _, _)::_) => true
+				| Base(a1, (Pip _, _)::_) => true
+				| Base(a1, (Phostname _, _)::_) => true
+				| Base(a1, (Ppath _, _)::_) => true
+				| Base(a1, (Purl _, _)::_) => true
+				| Base(a1, (Pemail _, _)::_) => true
+				| Base(a1, (Pmac _, _)::_) => true
+				| Base(a1, (Ptext _, _)::_) => true
+				| RefinedBase(_, StringConst s , _) => (size s) > 2
+				| _ => false
+		  fun lowPriTy ty = 
+			(parseEmpty ty) orelse
+			(
+			case ty of
+				Base(_, (Pint _, _)::_) => true
+				| Base(_, (Pstring _, _)::_) => true
+				| Base(_, (Other _, _)::_) => true
+				| RefinedBase(_, StringConst s , _) => (size s) = 1
+				| Poption _ => true
+				| _ => false
+			)
+
+		  val (priTys, nonpriTys) = List.partition isPriTy sorted_tys
+		  val (lowPriTys, normalTys) = List.partition lowPriTy nonpriTys
+		  fun greater (ty1, ty2) =
+		    let
+			val (cov1, cov2) =(getCoverage ty1, getCoverage ty2)
+			(*
+			val (comps1, comps2) = (getComps ty1, getComps ty2)
+			val (nc1, nc2) = ((normalizeTyComp cov1 comps1), (normalizeTyComp cov2 comps2))
+			*)
+		    in
+			case (ty1, ty2) of
+			  (Base(a1, (tok1, _)::t1), Base(a2, (tok2, _)::t2)) => 
+				(compToken(tok1, tok2) = GREATER)
+			  | (RefinedBase (a1, re1, t1), RefinedBase(a2, re2, t2)) =>
+				(case (re1, re2) of
+					(StringConst x, StringConst y) => (size x < size y)
+					| (IntConst x, IntConst y) => x < y
+					| _ => false
+				)
+			  | (Base (_, (Pempty, _)::_), _) => true
+			  | (_, Base (_, (Pempty, _)::_)) => false
+			  | (Poption _, RefinedBase _) => true
+			  | (Poption _, Base _) => true
+			  | (RefinedBase _, Poption _) => false
+			  | (Base _, Poption _) => false
+			  | (Base _, RefinedBase _) => true
+			  | (RefinedBase _, Base _) => false
+			  | (Base (a1, t1), _) => (case hd t1 of (Pstring x, _) => true | _ => false)
+			  | (_, Base(a1, t1)) => (case hd t1 of (Pstring x, _) => false | _ => true)
+			  | (RefinedBase _, _) => (cov1 > cov2) 
+			  | (_, RefinedBase _) => cov1 > cov2
+			  | (Pstruct(_, tys1), Pstruct(_, tys2)) =>
+				length tys1 < length tys2
+			  | _ => cov1 > cov2 
+		    end
+		  val sortedPriTys = ListMergeSort.sort greater priTys
+		  val sortedLowPriTys = ListMergeSort.sort greater lowPriTys
+		  val sortedNormalTys = ListMergeSort.sort greater normalTys
+		in Punion(a, sortedPriTys@sortedNormalTys@sortedLowPriTys)
+		end
+	  | Pstruct(a, tys) => Pstruct(a, map sortUnionBranches tys)
+	  | RArray (a, sep, term, body, len, lengths) => RArray(a, sep, term, sortUnionBranches body, len, lengths)
+	  | Switch (a, id, pairs) => 
+		let
+                  val (refs, tylist) = ListPair.unzip(pairs)
+                  val tylist' = map sortUnionBranches tylist
+                in Switch (a, id, ListPair.zip(refs, tylist'))
+                end
+	  | Poption (a, body) => Poption (a, sortUnionBranches body)
+	  | _ => ty
 
 end

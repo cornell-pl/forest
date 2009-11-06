@@ -2027,6 +2027,24 @@ fun enum_to_string _ ty =
 	else ty
   | _ => ty
 
+(* this function removes duplicated branches in a union *)
+fun remove_dup_branches ty =
+  case ty of 
+    Punion (a, tys) =>
+      let 
+	fun add_to_set (ty, set) =
+	  case TySet.find (fn t =>  ty_equal(1, t, ty)) set of
+	    NONE => TySet.add (set, ty)
+	  | SOME existing_ty => 
+		let val s' = TySet.delete (set, existing_ty)
+		    val newty = mergeTy (existing_ty, ty) 
+		in TySet.add (s', newty)
+		end 
+	val ty_set = List.foldl add_to_set TySet.empty tys
+      in Punion (a, TySet.listItems ty_set)
+      end    
+  | _ => ty
+
 (***************
 fun mergeTokens records ty =
 	let fun mysort locs = 

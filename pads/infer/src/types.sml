@@ -177,6 +177,14 @@ struct
 	case tys of [] => Option.valOf Int.maxInt
         | (ty::tys) => Int.min(getCoverage ty, minCoverage tys)
 
+    fun sort_ltokens (ltokens : LToken list ) : LToken list =
+	let fun f ((t1, l1) : LToken, (t2, l2) : LToken) : bool =
+		(#lineNo l1 > #lineNo l2) orelse
+		((#lineNo l1 = #lineNo l2) andalso 
+		((#beginloc l1) >= (#endloc l2)))
+	in
+           ListMergeSort.sort f ltokens
+	end
     exception NotParray
     fun avgParrayBodyLength ( ty : Ty ) : real =
         case ty of
