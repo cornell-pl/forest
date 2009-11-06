@@ -2028,7 +2028,7 @@ fun enum_to_string _ ty =
   | _ => ty
 
 (* this function removes duplicated branches in a union *)
-fun remove_dup_branches ty =
+fun remove_dup_branches _ ty =
   case ty of 
     Punion (a, tys) =>
       let 
@@ -2041,7 +2041,7 @@ fun remove_dup_branches ty =
 		in TySet.add (s', newty)
 		end 
 	val ty_set = List.foldl add_to_set TySet.empty tys
-      in Punion (a, TySet.listItems ty_set)
+      in measure 1 (Punion (a, TySet.listItems ty_set))
       end    
   | _ => ty
 
@@ -2316,6 +2316,7 @@ let
 			union_to_optional
 			, mkBlob
 			, contract_blobs
+			, remove_dup_branches
 (*
 			, extract_table_header
 *)

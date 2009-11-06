@@ -380,7 +380,8 @@ structure Common = struct
 	is updated so that they are consistent with ty2 *)
     and mergeTyInto (ty1, ty2) =
 		case (ty1, ty2) of 
-		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, 0, a2, 0), tl2@tl1) 
+		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, 0, a2, 0), 
+			sort_ltokens(tl2@tl1)) 
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, 0, a2, 0), 
 			mergeListInto([Base(a1, tl1)], tylist2, nil))
 		(*below is not completely right, haven't considered the case of tylist1 is a subset

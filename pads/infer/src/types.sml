@@ -185,6 +185,7 @@ struct
 	in
            ListMergeSort.sort f ltokens
 	end
+
     exception NotParray
     fun avgParrayBodyLength ( ty : Ty ) : real =
         case ty of
