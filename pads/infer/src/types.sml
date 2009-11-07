@@ -597,7 +597,7 @@ struct
              | RefinedBase (aux, refined, tl) =>
                  let val avg = avgTokenLength tl
                      val tot = sumTokenLength tl
-                 in ( refinedToString refined ) (* ^ (LTokensToString tl) *) 
+                 in ( refinedToString refined ) (* ^ (LTokensToString tl) *)
 		      ^ " " ^ stats (* ^ 
 		    (if print_complexity then 
 			(" (avg: " ^ Real.fmt (StringCvt.FIX (SOME 2)) avg ^
@@ -935,6 +935,7 @@ fun getSmallestRecNo ty =
 		  Poption _ => false
 		| Parray _ => false
 		| RArray _ => false
+		| Base _ => not (isEmpty ty) (* we also have to excluse Pempty as the LineNo can be wrong *)
 		| _ => true
   in
         case ty 

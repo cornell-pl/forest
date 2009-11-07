@@ -133,8 +133,8 @@ structure Common = struct
 	| 	_ => StringConst("")
 
 	fun bdoltos (x:Token option list): string = (case x of
-		h :: nil => (case h of SOME a => tokenToString a | NONE => "NONE")
-	|	h :: t => (case h of SOME a => tokenToString a | NONE => "NONE") 
+		h :: nil => (case h of SOME a => ("(" ^ tokenToString a ^ ")") | NONE => "NONE")
+	|	h :: t => (case h of SOME a => ("(" ^ tokenToString a ^ ")") | NONE => "NONE") 
 				^ "\t" ^ (bdoltos t)
 	|	nil => "()\n")
 
@@ -381,7 +381,7 @@ structure Common = struct
     and mergeTyInto (ty1, ty2) =
 		case (ty1, ty2) of 
 		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, 0, a2, 0), 
-			sort_ltokens(tl2@tl1)) 
+			sort_ltokens (tl2@tl1)) 
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, 0, a2, 0), 
 			mergeListInto([Base(a1, tl1)], tylist2, nil))
 		(*below is not completely right, haven't considered the case of tylist1 is a subset
@@ -526,9 +526,9 @@ structure Common = struct
     (*used by refine_array *)
     fun mergeTy (ty1, ty2) =
 	case (ty1,ty2) of
-		(Base(a1, tl1), Base (a2, tl2)) => Base (mergeAux(a1, 0, a2, 0), tl1@tl2)
+		(Base(a1, tl1), Base (a2, tl2)) => Base (mergeAux(a1, 0, a2, 0), sort_ltokens(tl1@tl2))
 		| (RefinedBase (a1, r1, tl1), RefinedBase(a2, r2, tl2)) => 
-				RefinedBase(mergeAux(a1, 0, a2, 0), r1, tl1@tl2)
+				RefinedBase(mergeAux(a1, 0, a2, 0), r1, sort_ltokens(tl1@tl2))
 		| (TBD (a1, s1, cl1), TBD (a2, s2, cl2)) => 
 				TBD (mergeAux(a1, 0, a2, 0), s1, cl1@cl2)
 		| (Bottom (a1, s1, cl1), Bottom (a2, s2, cl2)) => 

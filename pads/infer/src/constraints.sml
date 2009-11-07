@@ -379,9 +379,9 @@ constraint map *)
 		*)
 		val startRecNo = getSmallestRecNo ty
 		val (_, tytable) = Table.genTable startRecNo (getCoverage(ty)) ty
-(*
-		val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n")
-*)
+
+		(* val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n") *)
+
 		val header = #1 tytable
 		val bdocols = #2 tytable
 		val bdolist = transpose(bdocols)

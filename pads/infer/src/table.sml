@@ -76,6 +76,7 @@ structure Table = struct
 			let 
 (*
 				val _ = print ("Gen column for "^ (getLabelString a) ^ "... ")
+				val _ = print ("startrec = " ^ Int.toString startrec ^ "\n")
 				val _ = print ("totalrecords = " ^ (Int.toString totalrecords) ^ "\n")
 				val _ = print ((LTokensToString ltokenl) ^ "\n")
 *)

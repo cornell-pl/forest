@@ -2327,7 +2327,7 @@ let
 		  optional_to_union,
 		  adjacent_consts,
 		  prefix_postfix_sums,
-		  remove_degenerate_list
+		  remove_degenerate_list 
 		]
 
   val phase_five_rules : data_independent_rule list = 
@@ -2336,8 +2336,8 @@ let
 		  remove_degenerate_list,
 		  unnest_tuples,
 		  unnest_sums,
-		  prefix_postfix_sums
-		  , enum_to_string
+		  prefix_postfix_sums, 
+		  enum_to_string
 		]
   val phase_six_rules : data_independent_rule list = 
 		[ 	
@@ -2352,6 +2352,7 @@ let
 			union_to_optional
 			, mkBlob
 			, contract_blobs
+			, remove_dup_branches
 (*
 			, extract_table_header
 *)
