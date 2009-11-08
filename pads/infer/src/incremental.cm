@@ -66,3 +66,4 @@ is
   parse.sml
   aggregate.sml
   incremental.sml
+  editdistance.sml

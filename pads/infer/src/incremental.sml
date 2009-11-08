@@ -339,6 +339,10 @@ structure Incremental: sig
 		(
 		if (!badcount) = chunksize then
 		    let val newTy = output (!aggrs) (!myTy) (!start_time) (!index) (!count) logFile
+			(*
+			val dist = Editdistance.editDist([!myTy], [newTy])
+			val _ = print ("Edit distance = " ^ Int.toString dist ^ "\n")
+			*)
 		    in
 		     myTy := newTy; count := 0; badcount := 0; index := (!index) + 1;
 		     start_time:=Time.now();
