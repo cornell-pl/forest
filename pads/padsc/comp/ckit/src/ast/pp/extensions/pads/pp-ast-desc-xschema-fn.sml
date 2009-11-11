@@ -1268,10 +1268,10 @@ functor PPAstDescXschemaFn (structure PPAstPaidAdornment : PPASTPAIDADORNMENT) :
 	  fun ppPTypedef' pps (ptyInfo:PTys.pTyInfo) = 
 	      let val declName = #repName ptyInfo
 		  val typarams = #typarams ptyInfo
-		  val (_,predOpt) = PTys.getTypedefInfo ptyInfo
+		  val ({ds,paramNames,baseName,baseArgs},predOpt) = PTys.getTypedefInfo ptyInfo
 	      in
 		  ( ppPDecl ptyInfo aidinfo tidtab pps (declName, typarams)
-		   ; ppTy pps (base, [])
+		   ; ppTy pps (baseName, baseArgs)
 		   ; case predOpt of NONE => () | SOME {predTy,thisVar,pred} => (PPL.newline pps; ppPred pps (thisVar,pred))
 		   )  
 	      end
