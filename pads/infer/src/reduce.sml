@@ -283,6 +283,84 @@ case ty of
   in measure 0 newty
   end
 | _ => ty
+
+and prefix _ ty =
+  case ty of
+    Punion(a, tylist) => 
+	let
+   	  fun conv_to_list ty' =
+  	    case ty' of
+  	      Pstruct(_, tylist') => tylist'
+  	    | _ => [ty']
+  	  fun commonPrefix tylists = 
+  	  let
+  		val elems = map hd tylists
+  		val tails = map tl tylists
+  	  in
+		case elems of
+		  h :: t => 
+		  let 
+		  	val not_foldable = (List.exists (fn x => not(describedBy(x, h))) t) 
+		  in 
+		  	if not_foldable then nil else (foldl mergeTyInto h t)::(commonPrefix tails)
+		  end
+		| nil => nil
+  	  end handle Empty => nil
+
+	  fun add (t, l) =
+		case l of
+		  nil => [t]
+		| t1::l' =>
+		  let 
+		      val a_t = getAuxInfo t
+		      val cov_t = (#coverage a_t)
+		      val a_t1 = getAuxInfo t1
+		      val cov_t1 = (#coverage a_t1)
+		      val tlist = conv_to_list t
+		      val t1list = conv_to_list t1
+  		      val cpfx = commonPrefix [tlist, t1list]
+		      val plen = length cpfx
+		  in
+		    if plen = 0 then t1::(add (t, l'))
+		    else 
+			let val rem_tlist = List.drop(tlist, plen)
+			    val rem_t1list = List.drop(t1list, plen)
+			    val newt = case rem_tlist of
+						nil => genEmptyBase a_t cov_t 
+					    | t :: nil => t
+					    | _ => Pstruct(a_t, rem_tlist)
+			    val newt1 = case rem_t1list of
+						nil => genEmptyBase a_t1 cov_t1
+					    | t :: nil => t
+					    | _ => Pstruct(a_t1, rem_t1list)
+			    val newunion = 
+				case (newt, newt1) of
+				(Punion(a_t, tys) , Punion(a_t1, tys1)) => 
+				  let val newa = mergeAux(a_t, length tys, a_t1, length tys1)
+				  in Punion(newa, tys @ tys1)
+				  end
+				| (Punion(a_t, tys), _) => 
+				  let val newa = mergeAux(a_t, length tys, getAuxInfo newt1, 0)
+				  in Punion(newa, tys @ [newt1])
+				  end
+				| (_, Punion(a_t1, tys1)) => 
+				  let val newa = mergeAux(getAuxInfo newt, 0, a_t1, length tys1)
+				  in Punion(newa, newt :: tys1)
+				  end
+				| _ =>
+				  Punion(mkTyAux (cov_t + cov_t1), [newt, newt1])
+			in 
+			  (Pstruct (mkTyAux (cov_t + cov_t1), cpfx @ [newunion]))::l'
+			end
+		   end
+
+	  val newtys = foldl add nil tylist
+	in
+	  if length newtys = 1 then measure 0 (hd newtys)
+	  else measure 0 (Punion (a, newtys))
+	end
+  | _ => ty
+
 (* detect a table with a header and rewrite the struct with unions inside
 (a1 + b1), (a2 + b2), (a3 + b3) = (a1, a2, a3) + (b1, b2, b3) 
 where a and b are header and body rows of a table respectively *)
@@ -2282,7 +2360,8 @@ let
 			remove_degenerate_list,
 			unnest_tuples,
 			unnest_sums,
-			prefix_postfix_sums,
+			(* prefix_postfix_sums, *)
+			prefix,
 			remove_nils,
 		  	unused_branches,
 (*
@@ -2310,7 +2389,8 @@ let
 			remove_degenerate_list,
 			unnest_tuples,
 			unnest_sums,
-			prefix_postfix_sums,
+			(* prefix_postfix_sums,*)
+			prefix,
 			remove_nils,
 		  	unused_branches,
 			union_to_optional
@@ -2346,7 +2426,8 @@ let
 			remove_degenerate_list,
 			unnest_tuples,
 			unnest_sums,
-			prefix_postfix_sums,
+			(* prefix_postfix_sums, *)
+			prefix,
 			remove_nils,
 		  	unused_branches,
 			union_to_optional

@@ -60,3 +60,4 @@ is
   constraints.sml
   functionaldep.sml
   reduce.sml
+  editdistance.sml

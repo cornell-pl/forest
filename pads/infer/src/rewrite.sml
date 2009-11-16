@@ -85,6 +85,11 @@ let
   val _ = printTy measured_reduced_ty
 
 (*
+  val dist = Editdistance.editDist([initTy], [measured_reduced_ty])
+  val _ = print ("Edit distance = " ^ Int.toString dist ^ "\n")
+*)
+
+(*
   val _ = print "\n"
   val _ = print "----- The PADS description -----\n\n"
   val _ = print (#2 (TyToPADSFile measured_reduced_ty (!lexName^".p"))) 
