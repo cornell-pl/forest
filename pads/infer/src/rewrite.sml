@@ -83,7 +83,15 @@ let
 
   val _ = print "\nRefined Ty:\n"
   val _ = printTy measured_reduced_ty
-
+(*
+  val t1 = Editdistance.numNodes initTy
+  val t2 = Editdistance.numNodes measured_reduced_ty
+  val _ = print ("size of init tree: " ^  Int.toString t1 ^ "\n")
+  val _ = print ("size of final tree: " ^ Int.toString t2 ^ "\n")
+  val _ = print ("order of time/space: " ^ Int.toString (t1 * t1 * t2 * t2) ^ "\n")
+*)
+  val d = Editdistance.treeEditDistance (initTy, measured_reduced_ty)
+  val _ = print ("\n*** Edit distance between initTy and finalTy = " ^ Int.toString d ^ "\n")
 (*
   val dist = Editdistance.editDist([initTy], [measured_reduced_ty])
   val _ = print ("Edit distance = " ^ Int.toString dist ^ "\n")

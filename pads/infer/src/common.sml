@@ -18,6 +18,10 @@ structure Common = struct
                  type ord_key =int 
                  val compare = Int.compare
         end)
+	structure StringSet = SplaySetFn(struct
+                 type ord_key = string
+                 val compare = String.compare
+        end)
    	structure IntMap = RedBlackMapFn(
                  struct type ord_key = int
 	    		val compare = Int.compare
