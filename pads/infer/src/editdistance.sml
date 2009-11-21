@@ -139,13 +139,31 @@ struct
 	| Switch(a,id, retys) => foldl op+ 1 (map numNodes (#2 (ListPair.unzip retys)))
 	| RArray(a, sep, term, body, len, lengths) => 1 + numNodes body
 	| Poption (a, body) => 1 + numNodes body
-	
+
+  fun tyname_equal (ty1, ty2) = 
+   case (ty1, ty2) of
+     (Base(_, tl1), Base(_, tl2)) => ltoken_ty_equal(hd tl1, hd tl2)
+   | (RefinedBase (_, r1, _), RefinedBase(_, r2, _)) => refine_equal(r1, r2)	
+   | (TBD _, TBD _) => true
+   | (Bottom _, Bottom _) => true
+   | (Punion _, Punion _) => true
+   | (Pstruct _, Pstruct _) => true
+   | (Parray _, Parray _) => true
+   | (Switch (_, id1, _), Switch(_, id2, _)) => true
+   | (RArray (_, sepop1, termop1, ty1, len1, _),
+      RArray (_, sepop2, termop2, ty2, len2, _)) =>
+	refine_equal_op1(sepop1, sepop2) andalso
+	refine_equal_op1(termop1, termop2) andalso
+        refine_equal_op1(len1, len2)
+   | (Poption _, Poption _) => true
+   | _ => false  
+
   (* we assume unit cost for all edits for now! *)
   fun editCost (ty1_opt, ty2_opt) =
 	case (ty1_opt, ty2_opt) of
 	  (NONE, NONE) => 0
 	| (SOME t1, SOME t2) =>
-		if ty_equal(1, t1, t2) then 0
+		if tyname_equal(t1, t2) then 0
 		else 1
 	| _ => 1
 
