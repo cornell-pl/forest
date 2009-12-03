@@ -5238,7 +5238,8 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 		 fun chkAlreadyDone () =  PT.Expr (PT.Call(PT.Id "PCGEN_ARRAY_TEST_ALREADY_DONE",[]))
 
-		 val macroReadOneDecs = PT.Expr (PT.Call(PT.Id "PCGEN_ARRAY_RO_DECS",[]))
+		 val macroReadOneDecs =    PT.Expr (PT.Call(PT.Id "PCGEN_ARRAY_RO_DECS",[]))
+		 val macroReadOneDecsSep = PT.Expr (PT.Call(PT.Id "PCGEN_ARRAY_RO_DECS_SEP",[]))
 					   
 		 val macroGetBeginLoc = PT.Expr (PT.Call(PT.Id "PCGEN_ARRAY_GET_BEGIN_LOC",[]))
 
@@ -5639,8 +5640,9 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 
 			 val bdyS = 
 			       initDecSs
-			     @ [macroReadOneDecs,
-				chkAlreadyDone(),
+			     @ [macroReadOneDecs]
+			     @ (if Option.isSome sepXOpt then [] else [macroReadOneDecsSep]) (* only need endLoc if no sep *)
+			     @ [chkAlreadyDone(),
 			        macroGetBeginLoc,
 				P.mkCommentS("Ready to read next element")]
 			     @ (if Option.isSome endedXOpt  (* checkpoint if have ended predicate in play *)
@@ -5656,7 +5658,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			     @ (genTermCheck  termXOpt)
 			     @ chkLenSs
 			     @ genBreakCheckSs (termXOpt, maxOpt, lastXOpt, endedXOpt, breakSs)
-			     @ [macroSourceAdvanceCheck]
+			     @ (if not (Option.isSome sepXOpt) then [macroSourceAdvanceCheck] else [])
 		             @ [P.returnS (macroRetOngoing (if Option.isSome skipXOpt 
 							    then P.notX (PT.Id omitresult)
 							    else P.trueX))]

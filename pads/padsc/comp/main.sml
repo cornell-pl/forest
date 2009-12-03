@@ -154,7 +154,7 @@ structure Main : sig
 		 if !traceFlag then print ("rm " ^ f' ^ "\n") else ();
 	         OS.FileSys.remove f' handle e => () )(*end case*))
 	 end
-	     
+
     fun rm f = 
 	(tempFiles := List.filter (fn x => x<>f) (!tempFiles);
         rmFile f)
@@ -162,6 +162,7 @@ structure Main : sig
     fun rmTmp () = (
 	    List.app rmFile (!tempFiles);
 	    tempFiles := [])
+
 
     fun exec s =
 	((if !traceFlag then print (s ^ "\n") else ());

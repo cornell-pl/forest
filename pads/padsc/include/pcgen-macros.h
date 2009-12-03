@@ -273,6 +273,7 @@ Perror_t PCGEN_ARRAY_STD_RETURN();
 void PCGEN_ARRAY_TEST_ALREADY_DONE();
 void PCGEN_ARRAY_DO_FINAL_CHECKS();
 void PCGEN_ARRAY_RO_DECS();
+void PCGEN_ARRAY_RO_DECS_SEP();
 void PCGEN_ARRAY_LBL_FINAL_CHECKS();
 //int  PCGEN_ARRAY_RET_FINAL_CHECKS();
 int  PCGEN_ARRAY_RET_ONGOING(int keepElt);
@@ -3149,8 +3150,12 @@ do{
 
 #define PCGEN_ARRAY_RO_DECS()
   int result;
-  Ploc_t beginLoc, endLoc
+  Ploc_t beginLoc;
 /* END_MACRO */
+
+#define PCGEN_ARRAY_RO_DECS_SEP() 
+  Ploc_t endLoc
+/* END_MACRO */ 
 
 #define PCGEN_ARRAY_LBL_FINAL_CHECKS()
  do_final_checks:
