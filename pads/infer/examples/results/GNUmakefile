@@ -8,7 +8,7 @@ endif
 %-learn:
 	@(echo `pwd`)
 	@(if [ ! -d $* ]; then mkdir $*; fi)
-	$(LEARN_HOME)/scripts/learn -d $* -n $* -lex vanilla -u ../data/$*
+	$(LEARN_HOME)/scripts/learn -lineNos -d $* -n $* -lex vanilla -u ../data/$*
 	@(echo "Generated PADS description $*.p and supporting files are in `pwd`/$*.")
 
 example: ai.3000-learn

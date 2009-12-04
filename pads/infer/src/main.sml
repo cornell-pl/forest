@@ -19,7 +19,7 @@ structure Main : sig
     fun doIt () =
     let val srcFile = hd ( !srcFiles )
         val { dir = dataDir, file = dataFile } = OS.Path.splitDirFile srcFile
-    in if ( !goldenRun = true )
+    in if (!goldenRun)
        then let val strm      = TextIO.openOut "gen/GoldComplexity"
                 val rep       = goldenReport ( dataFile )
             in ( print rep
@@ -31,7 +31,7 @@ structure Main : sig
                 val end2Times    = updateStart ( Time.now () ) end1Times
 		(* records stores the original records from the file(s) *)
                 val (ty,sep)     = computeStructure ( !srcFiles )
-(*		val _ 		 = printTy (measure ty) *)
+		(* val _ 		 = printTy (measure ty)  *)
                 val end3Times    = updateTokenEnd ( Time.now () ) end2Times
                 val ( initTy, rewrittenTy, numHeaders, numFooters, end4Times) = 
 				   Rewrite.run end3Times 0 (measure 0 ty)
@@ -47,7 +47,8 @@ structure Main : sig
 						       sep
 		val end5Times = updatePadsEnd (Time.now()) end4Times
                 val computeTimes = getComputeTimes end5Times
-		val tycomp = getComps rewrittenTy
+		val tycomp = getComps rewrittenTy 
+
             in (print ( "\nCompleted " ^ (lconcat (!srcFiles)) ^ "\n" );
 		print ("Final comps = (" ^ showBits (#tc tycomp) ^ ", " ^ 
 			showBits (#dc tycomp) ^ ", " ^
@@ -88,7 +89,7 @@ structure Main : sig
          ("n",        "name of output file (default "^def_descName^")",                                     PCL.String (setDescName,  false)),
          ("maxdepth", "maximum depth for exploration (default "^(Int.toString def_depthLimit)^")",         PCL.Int    (setDepth,     false)),
          ("lineNos",  "print line numbers in output contexts (default "^(Bool.toString def_printLineNos)^")",            PCL.Bool  setPrintLineNos),
-         ("ids",      "print ids in type and tokens matching base types (default "^(Bool.toString def_printLineNos)^")", PCL.Bool  setPrintIDs),
+         ("ids",      "print ids in type and tokens matching base types (default "^(Bool.toString def_printIDs)^")", PCL.Bool  setPrintIDs),
          ("h",        "histogram comparison tolerance (percentage, default "^(Real.toString DEF_HIST_PERCENTAGE)^")",    PCL.Float  (setHistPer,   false)),
          ("s",        "struct determination tolerance (percentage, default "^(Real.toString DEF_STRUCT_PERCENTAGE)^")",  PCL.Float  (setStructPer, false)),
          ("noise",    "noise level (percentage, default "^(Real.toString DEF_NOISE_PERCENTAGE)^")",        PCL.Float  (setNoisePer,   false)),

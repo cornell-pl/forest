@@ -991,19 +991,25 @@ struct
 						    printClusters numRecords clusters) else ()
 		    val cluster = hd clusters
 		    fun getStructInfo((t, {hist, total, coverage, structScore, width,minOccurrences}), result) =
-		    let val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
+		    let val () = if print_verbose then (print "Token:\t";  printTokenTy t; print "\n") else ()
+			val hList = List.map (fn(x,y)=>(x, !y)) (IntMap.listItemsi (!hist))
 			val sortedHlist = ListMergeSort.sort (fn((i1,c1:int),(i2,c2))=>(c1 < c2)) hList
 			val primary = List.hd sortedHlist
 			fun hIsStruct sortedHlist =
 			    let val rest = List.tl sortedHlist
 				val massOfRest = List.foldl (fn((i,c:int),acc)=> acc + c) 0 rest
+				val () = if print_verbose then (print "massOfRest: "; print (Int.toString massOfRest); print "\n";
+								print "structTolerance: "; print (Int.toString (isStructTolerance numRecords)); print "\n";
+								print "coverage: "; print (Int.toString (!coverage)); print "\n";
+								print "junk Tolerange: "; print (Int.toString (isJunkTolerance numRecords)); print "\n")
+				    else ()
 			    in
 				(massOfRest < (isStructTolerance numRecords))
 				andalso
 				((!coverage) >= (isJunkTolerance numRecords))
 			    end
 		    in
-			if hIsStruct sortedHlist then [(t, #1 primary, #2 primary)]@result  else result
+			if hIsStruct sortedHlist then  [(t, #1 primary, #2 primary)]@result  else result
 		    end
 
 		    fun mergeStructEntries tokenAnalysis =
@@ -1073,7 +1079,7 @@ struct
 		     else ();
 		     if (!width >= !ARRAY_WIDTH_THRESHOLD) andalso 
                         (!minOccurrences >= !ARRAY_MIN_WIDTH_THRESHOLD) andalso
-			(!coverage > numRecords - (isJunkTolerance numRecords))  
+			(!coverage >= numRecords - (isJunkTolerance numRecords))  
 			andalso (isSeparator t)
 			(*
 			andalso 
@@ -1270,6 +1276,8 @@ struct
                , cl
                ) before Bottomstamp := !Bottomstamp + 1
 
+    fun mkEmpty lineNo = [(Pempty,{lineNo= lineNo, beginloc=0, endloc=0, recNo=lineNo})]
+
     (* Invariant: cl is not an empty column: checked before mkTBD is called with isEmpty function *)
     (* coverage is number of records in this context *)
     fun mkTBD (callsite, currentDepth, coverage, cl) = 
@@ -1310,7 +1318,6 @@ struct
 			dumpClusters curDepth numRecords clusters ((!outputDir) ^ "histogram.dat")
 		    else ()
             (* This function partitions a context into a union. *)
-            (* It currently uses the first token in each context to do the partition *)
             fun orig_buildUnionTy (FirstToken, rtokens) = 
 		let (*val () = print "BUILDING UNION TY\n"*)
 		    val numChunks = List.length rtokens
@@ -1440,25 +1447,25 @@ struct
 				    List.app setOne atokens;
 				    numFound := 0
 				end
+			    fun getLineNo [] = (print "WARNING: ARRAY completely empty!"; ~1)
+			      | getLineNo ((tok,loc:location)::ltocs) = #lineNo loc
+			    val lineNo = getLineNo tlist
+
 			    (* Return three contexts: 
 			       one for all tokens in first slot,
 			       one for all tokens in array slots except for the first or last one,
 			       and one for the tokens in the last slot; this partition is to avoid confusion
 			       with the separator not being in the last slot *)
-
-
 			    fun doNextToken isFirst [] (current, first, main) = 
 				 let fun getLen [] = 0
 				       | getLen _ = 1
 				     val length = (getLen current) + (* list of tokens in current context: if present, length is 1 *)
 						  (getLen first) +   (* list of tokens in first context: if present, length is 1 *)
 						  (List.length main) (* a list of matched tokens, so no need to compute div*)
-				     (*
-				     fun getLoc [] = (print "WARNING: ARRAY first context empty!"; ~1)
-				       | getLoc ((tok,loc:location)::ltocs) = #recNo loc
-				     *)
+				     fun cvtEmpty [] =  mkEmpty lineNo
+				       | cvtEmpty l = l
 				 in
-				     ((length, !recIndex), first, main, List.rev current)
+				     ((length, !recIndex), cvtEmpty first, List.map cvtEmpty main, cvtEmpty(List.rev current)) 
 				 end
                               | doNextToken isFirst ((rt as (lrt,loc))::rts) (current, first, main) = 
 				  case TokenTable.find(tTable, lrt)
@@ -1532,7 +1539,7 @@ struct
 		    val _ = print ("After pushing contexts:\n"^(contextsToString mainContext))
 *)
 		in
-		    ((*(if print_verbose then 
+		    ((if print_verbose then 
 		     (print "Array context\n"; 
                      print "First Context:\n";
                      print (contextsToString firstContext);
@@ -1540,13 +1547,13 @@ struct
                      print (contextsToString mainContext);
                      print "last Context:\n";
                      print (contextsToString lastContext))
-		     else ()); *)
+		     else ()); 
 		     Parray (mkTyAux numRecords, 
 			     {tokens  = atokens, 
 			      lengths = arrayLengths,
-			      first   = mkTBD(~5, curDepth, List.length firstContext, firstContext),
-			      body    = mkTBD(~6, curDepth, List.length mainContext, mainContext),
-			      last    = mkTBD(~7, curDepth, List.length lastContext, lastContext)}))
+			      first   = mkTBD(~500, curDepth, List.length firstContext, firstContext),
+			      body    = mkTBD(~600, curDepth, List.length mainContext, mainContext),
+			      last    = mkTBD(~700, curDepth, List.length lastContext, lastContext)}))
 		end
 
 
@@ -1566,6 +1573,8 @@ struct
 		print ("Number records being considered: "^Int.toString(numRecordsinContext)^
 			"\nThe records are:\n" ^(contextsToString context)) 
 		else () *)
+(*            val () = print ("KSF: Number records being considered: "^Int.toString(numRecordsinContext)^
+			"\nThe records are:\n" ^(contextsToString context))  *)
             val counts : RecordCount list = List.map countFreqs context
 	    val fd: freqDist = buildHistograms numRecordsinContext counts
 	    (* val clusters : (Token * histogram) list list = findClusters numRecordsinContext fd *)
