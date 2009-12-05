@@ -63,18 +63,6 @@ let
   val footers = map sortUnionBranches footers
   val reduce3_time : Time.time = Time.now ()
 
-(*
-  val _ = print "Before mkBlob ...\n"
-  val _ = printTy ty3
-  val ty3 = if Options.do_blob_finding then
-		sortUnionBranches (Reduce.updateWithBlobs NONE ty3)
-	    else sortUnionBranches ty3
-*)
-(*
-  val _ = print "After mkBlob ...\n"
-  val _ = printTy ty3
-*)
-
   val finalTy = case auxOp of
 	SOME aux => Punion(aux, headers @ [ty3] @ footers)
 	| NONE => ty3
