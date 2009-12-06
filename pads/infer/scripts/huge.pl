@@ -2,6 +2,11 @@
 #this script incrementally learns a huge file > 1 GB
 #use Time::HiRes qw ( time alarm sleep );
 
+$pads_home = `echo \$PADS_HOME`;
+chomp $pads_home;
+$arch = `$pads_home/ast-ast/bin/package.cvs`;
+chomp $arch;
+
 sub getFileName
 {
  #getting the file name of the largefile
@@ -16,6 +21,7 @@ sub scan
   my $score=0;
   my $time=0;
   my $rptime = 0;
+  my $dist = -1;
   if (-e $file)
   {
   open (FILE, "<$file") or die "Can't open $file!";
@@ -27,12 +33,14 @@ sub scan
    {$time = $1;}
    elsif (/Reparse time = ([0-9.]+)/)
    {$rptime = $1;}
+   elsif (/Edit distance to gold = ([0-9.]+)/)
+   {$dist = $1;}
   }
-  return ($score, $time, $rptime)
+  return ($score, $dist, $time, $rptime)
   }
   else {
    print "$file doesn't exist!\n";
-   {return (0, 0, 0);}
+   {return (0, -1, 0, 0);}
   }
 }
 
@@ -112,9 +120,17 @@ foreach my $largefile (@largefiles)
    chomp @smallfiles;
    $filenames = join (' ', @smallfiles);
    print "initsize = $initsize  incsize = $incsize\n";
-   system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u 2 > $fname.inc");
-   ($scores, $exectime, $reparsetime) = scan ("$fname.inc");
+   if (-e "gold/$arch/$fname.pxml")
+   { 
+     system ("increment -f $filenames -c gold/$arch/$fname.pxml -i $initsize -l $incsize -output gen -reparse $reparse -u 2 > $fname.inc");
+   }
+   else 
+   { 
+     system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u 2 > $fname.inc");
+   }
+   ($scores, $dist, $exectime, $reparsetime) = scan ("$fname.inc");
    print "Final comps = $scores\n";
+   print "Dist to gold = $dist\n";
    print "Total time = $exectime secs\n";
    if ($reparse == "true") {
      ($rate, $ptime, $btime) = verify($smallfiles[0], $largefile);
