@@ -1,0 +1,26 @@
+\begin{centercode}
+P\_t                  *p;
+entry\_t              entry;
+entry\_t\_pd           pd;
+entry\_t\_m            mask;
+    ...
+P\_open(&p, 0, 0);
+P\_io\_fopen(p, "sirius/data/2004.11.11");
+    ...
+entry\_t\_m\_init(p, &mask, P\_CheckAndSet);
+mask.events.compoundLevel = P\_Set;
+    ...
+\kw{while} (!P\_io\_at\_eof(p)) \{
+  entry\_t\_read(p, &mask, &pd, &entry);
+  \kw{if} (pd.nerr > 0) \{
+    entry\_t\_write2io(p, ERR\_FILE, &pd, &entry);
+  \} \kw{else} \{
+    cnvPhoneNumbers(&entry);
+    \kw{if} (entry\_t\_verify(&entry)) \{
+      entry\_t\_write2io(p, CLEAN\_FILE, &pd, &entry);
+    \} \kw{else} \{
+      error(2, "Data transform failed.");
+    \}
+  \}
+\}
+\end{centercode}
