@@ -34,9 +34,9 @@ sub getFileName
 
 sub output
 {
-  my ($hdr, $tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime, $try) = @_;
-  printf ("$hdr: lntime = %.2f  rptime = %.2f  padstime = %.2f  blobtime = %.2f  tc = %.2f  adc = %.2f  score = %.2f  ",  
-		$time, $rptime, $padstime, $blobtime, $tc, $adc, $score);
+  my ($hdr, $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $try) = @_;
+  printf ("$hdr: lntime = %.2f  rptime = %.2f  padstime = %.2f  blobtime = %.2f  tc = %.2f  adc = %.2f  score = %.2f  dist = %d  ",  
+		$time, $rptime, $padstime, $blobtime, $tc, $adc, $score, $dist);
   if ($try == 0) {
     printf("accuracy = %.2f\%\n", $rate);
   }
@@ -51,6 +51,7 @@ sub scan
   my $rptime = 0;
   my $tc = 0;
   my $adc = 0;
+  my $dist = -1;
   if (-e $file)
   { 
   open (FILE, "<$file") or die "Can't open $file!";
@@ -62,16 +63,18 @@ sub scan
    {$time = $1;}
    elsif (/Reparse time = ([0-9.]+)/)
    {$rptime = $1;}
+   elsif (/Edit distance to gold = ([0-9.]+)/)
+   {$dist = $1;}
    elsif (/.*uncaught exception.*/)
     {$score = -1;
      last;
     }
   }
-  return ($tc, $adc, $score, $time, $rptime)
+  return ($tc, $adc, $score, $dist, $time, $rptime)
   }
   else {
    print "$file doesn't exist!\n";
-   {return (0, 0, 0, 0, 0);}
+   {return (0, 0, 0, -1, 0, 0);}
   }
 }
 
@@ -126,18 +129,26 @@ sub inc
   my $padstime = 0;
   my $blobtime = 0;
   my $num = 0;
+  my $dist = -1;
   my $filename = getFileName $file;
-
+  my $goldxml = "gold/$arch/$file.pxml";
   for (my $j = 0; $j < $numTimes; $j++)
   {
     $exectime = 0;
     if ($doparse) {
-      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
+      if (-e $goldxml)
+      {
+        system ("increment -f $file -c $goldxml -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
+      }
+      else 
+      {
+        system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
+      }
     } else
     {
       system ("increment -f $file -i $isize -l $lsize -output gen -u 2 > $filename.inc");
     }
-    ($tc, $adc, $score, $exectime, $reparsetime) = scan ("$filename.inc");
+    ($tc, $adc, $score, $dist, $exectime, $reparsetime) = scan ("$filename.inc");
     #unlink("$filename.inc");
     if (!$score) {last;} #timeout reached
     if ($doparse) {
@@ -161,9 +172,9 @@ sub inc
     $rptime = $rptime/$num;
     $padstime = $padstime/$num;
     $blobtime = $blobtime/$num;
-    return ($tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime)
+    return ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime)
   }
-  else {return (0, 0, 0, 0, 0, 0, 0, 0);}
+  else {return (0, 0, 0, $dist, 0, 0, 0, 0, 0);}
 }
 
 if (!@ARGV) {
@@ -197,6 +208,7 @@ if ($otherargs =~ /.*-small.*/) {
     $time = 0;
     $score = 0;
     $num = 0;
+    $dist = -1;
     my $padstime = 0;
     my $blobtime = 0;
     my $rate = -1;
@@ -204,7 +216,7 @@ if ($otherargs =~ /.*-small.*/) {
     {
      $exectime = 0;
      system ("learn $test > $test.lrn");
-     ($tc, $adc, $score, $exectime, $rptime) = scan ("$test.lrn");
+     ($tc, $adc, $score, $dist, $exectime, $rptime) = scan ("$test.lrn");
      unlink ("$test.lrn");
      $time += $exectime;
      #system("rm -f $test.output");
@@ -212,7 +224,7 @@ if ($otherargs =~ /.*-small.*/) {
      ($rate, $ptime, $btime) = verify($test, $test);
      $padstime+= $ptime;
      $blobtime+= $btime;
-     printf ("$test (lrn): lntime = %.2f  padstime = %.2f  blobtime = %.2f  tc = $ %.2f  adc = %.2f  score = %.2f  (try #$num)\n", 
+     printf ("$test (lrn): lntime = %.2f  padstime = %.2f  blobtime = %.2f  tc = %.2f  adc = %.2f  score = %.2f  (try #$num)\n", 
 		$exectime, $ptime, $btime, $tc, $adc, $score);
      $num++;
     }
@@ -220,15 +232,15 @@ if ($otherargs =~ /.*-small.*/) {
       $time = $time/$num; #$num maybe less than $numTimes
       $padstime = $padstime/$num;
       $blobtime = $blobtime/$num;
-      printf ("$test (lrn): lntime = %.2f  padstime = %.2f  blobtime = %.2f  tc = $ %.2f  adc = %.2f  score = %.2f  accuracy = %.2f\%\n", 
+      printf ("$test (lrn): lntime = %.2f  padstime = %.2f  blobtime = %.2f  tc = %.2f  adc = %.2f  score = %.2f  accuracy = %.2f\%\n", 
 		$time, $padstime, $tc, $adc, $score, $rate);
     }
     else {
       print "$test (lrn): timed out\n";
     }
-    ($tc, $adc, $score, $rate, $time, $rptime, $padstime) = 
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime) = 
 	inc($test, $initsize, $incsize, $doparse);
-    output("$test (inc)", $tc, $adc, $score, $rate, $time, $rptime, $padstime, 0);
+    output("$test (inc)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, 0);
   }
   print "End comparison tests on small files\n";
 }
@@ -264,7 +276,7 @@ if ($otherargs =~ /.*-scale.*/) {
   {
     $size = $i * $step;
     system("head -n $size $largefile > $fname.$size");
-    ($tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime) = 
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = 
 	inc ("$fname.$size", $initsize, $incsize, 0);
     if ($score==0) {
         print "$fname.$size (init=$initsize, inc=$incsize): timed out\n";
@@ -273,12 +285,12 @@ if ($otherargs =~ /.*-scale.*/) {
         print "$fname.$size (init=$initsize, inc=$incsize): exception raised\n";
     }
     else {
-      output("$fname.$size (init=$initsize, inc=$incsize)", $tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime, 0);  
+      output("$fname.$size (init=$initsize, inc=$incsize)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, 0);  
     }
     unlink ("$fname.$size");
   }
   #last round is the whole file itself...
-    ($tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime) = 
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = 
 	inc ("$largefile", $initsize, $incsize, $doparse);
     if ($score==0) {
         print "$fname.$largefile_lines (inc): timed out\n";
@@ -287,7 +299,7 @@ if ($otherargs =~ /.*-scale.*/) {
         print "$fname.$largefile_lines (inc): exception raised\n";
     }
     else {
-    output("$fname.$largefile_lines (inc)", $tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime, 0);
+    output("$fname.$largefile_lines (inc)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, 0);
     }
   print "End scaling tests\n";
 }
@@ -319,7 +331,7 @@ if ($otherargs =~ /.*-incsize.*/) {
 
 if ($otherargs =~ /.*-single.*/) {
    print "Begin single test\n";
-   ($tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $initsize, $incsize, $doparse);
+   ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $initsize, $incsize, $doparse);
     if ($score==0) {
         print "$fname (init=$initsize, inc=$incsize): timed out\n";
 	$timeout=1; last}
@@ -327,7 +339,7 @@ if ($otherargs =~ /.*-single.*/) {
         print "$fname (init=$initsize, inc=$incsize): exception raised\n";
     }
     else {
-        output("$fname (init=$initsize, inc=$incsize)", $tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime, 0);
+        output("$fname (init=$initsize, inc=$incsize)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, 0);
     }
 }
 }
