@@ -63,7 +63,7 @@ sub scan
    {$time = $1;}
    elsif (/Reparse time = ([0-9.]+)/)
    {$rptime = $1;}
-   elsif (/Edit distance to gold = ([0-9.]+)/)
+   elsif (/Edit distance = ([0-9.]+)/)
    {$dist = $1;}
    elsif (/.*uncaught exception.*/)
     {$score = -1;
@@ -131,34 +131,31 @@ sub inc
   my $num = 0;
   my $dist = -1;
   my $filename = getFileName $file;
-  my $goldxml = "gold/$arch/$file.pxml";
+  my $goldxml = "gold/$arch/$filename.pxml";
   for (my $j = 0; $j < $numTimes; $j++)
   {
     $exectime = 0;
     if ($doparse) {
-      if (-e $goldxml)
-      {
-        system ("increment -f $file -c $goldxml -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
-      }
-      else 
-      {
-        system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
-      }
+      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
     } else
     {
       system ("increment -f $file -i $isize -l $lsize -output gen -u 2 > $filename.inc");
     }
-    ($tc, $adc, $score, $dist, $exectime, $reparsetime) = scan ("$filename.inc");
     #unlink("$filename.inc");
     if (!$score) {last;} #timeout reached
     if ($doparse) {
       ($rate, $ptime, $btime) = verify($filename, $file);
+      if (-e $goldxml)
+      {
+	system ("descdist gen/$arch/$filename.pxml $goldxml >> $filename.inc");
+      }
     }
     else {
 	$rate = 0;
 	$ptime = 0;
 	$btime = 0;
     }
+    ($tc, $adc, $score, $dist, $exectime, $reparsetime) = scan ("$filename.inc");
     $time += $exectime;
     $rptime += $reparsetime;
     $padstime += $ptime;
@@ -314,7 +311,7 @@ if ($otherargs =~ /.*-incsize.*/) {
   {
    for (my $j = 50; $j <= 300; $j+=50)
    { 
-    ($tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0);
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0);
     if ($score==0) {
         print "$fname (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
@@ -322,7 +319,7 @@ if ($otherargs =~ /.*-incsize.*/) {
         print "$fname (init=$i, inc=$j): exception raised\n";
     }
     else {
-        output("$fname (init=$i, inc=$j)", $tc, $adc, $score, $rate, $time, $rptime, $padstime, $blobtime, 0);
+        output("$fname (init=$i, inc=$j)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, 0);
     }
    }
   }

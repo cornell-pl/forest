@@ -1,0 +1,49 @@
+Library
+  structure Descdist
+is
+
+  $/basis.cm
+  $/smlnj-lib.cm
+  $/pp-lib.cm
+  $smlnj/compiler/compiler.cm
+  $/regexp-lib.cm
+  $/ml-lpt-lib.cm
+
+  tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
+  vanilla.lex.sml (* to regenerate: lexgen --ml-lex-mode vanilla.lex  *)
+  config.sml
+  utils.sml
+  times.sml
+  hosts.sml
+  complexity.sml
+  tokens.sml
+  options.sml
+  types.sml
+  pxml.sml
+  pxml.lex.sml
+  pxml.grm.sml
+  pxmlParse.sml
+  print.sml
+  model.sml
+  populate.sml
+  clusterUnions.sml
+  structure.sml
+  rat.sml
+  matrix.sml
+  RatMatrix.sml
+  partition.sml
+  common.sml
+  constraints.sml
+  functionaldep.sml
+  reduce.sml
+  rewrite.sml
+  table.sml
+  ast.sml
+  padsc_printer.sml
+  padsml_printer.sml
+  tokenDefs.sml
+  rep.sml
+  parse.sml
+  aggregate.sml
+  editdistance.sml
+  descdist.sml

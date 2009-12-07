@@ -41,6 +41,7 @@ endif
 SML_MINOR_VER_TEST=$(shell test $(SML_MINOR_VER) -gt 39 && echo GT39)
 BUILD_EXEC = build-exec.sml
 BUILD_INC = build-inc.sml
+BUILD_DIST = build-dist.sml
 
 ######################################################################
 #
@@ -82,6 +83,10 @@ learn:  tokens.lex.sml vanilla.lex.sml
 increment: tokens.lex.sml vanilla.lex.sml pxml.lex.sml pxml.grm.sml
 	@echo Making the increment program
 	nice -n20 $(SML_PATH) < $(BUILD_INC)
+	@echo
+descdist: editdistance.sml descdist.sml
+	@echo Making the descdist program
+	nice -n20 $(SML_PATH) < $(BUILD_DIST)
 	@echo
 
 ######################################################################

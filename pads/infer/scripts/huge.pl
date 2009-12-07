@@ -21,7 +21,6 @@ sub scan
   my $score=0;
   my $time=0;
   my $rptime = 0;
-  my $dist = -1;
   if (-e $file)
   {
   open (FILE, "<$file") or die "Can't open $file!";
@@ -33,14 +32,12 @@ sub scan
    {$time = $1;}
    elsif (/Reparse time = ([0-9.]+)/)
    {$rptime = $1;}
-   elsif (/Edit distance to gold = ([0-9.]+)/)
-   {$dist = $1;}
   }
-  return ($score, $dist, $time, $rptime)
+  return ($score, $time, $rptime)
   }
   else {
    print "$file doesn't exist!\n";
-   {return (0, -1, 0, 0);}
+   {return (0, 0, 0);}
   }
 }
 
@@ -120,20 +117,18 @@ foreach my $largefile (@largefiles)
    chomp @smallfiles;
    $filenames = join (' ', @smallfiles);
    print "initsize = $initsize  incsize = $incsize\n";
-   if (-e "gold/$arch/$fname.pxml")
-   { 
-     system ("increment -f $filenames -c gold/$arch/$fname.pxml -i $initsize -l $incsize -output gen -reparse $reparse -u 2 > $fname.inc");
-   }
-   else 
-   { 
-     system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u 2 > $fname.inc");
-   }
-   ($scores, $dist, $exectime, $reparsetime) = scan ("$fname.inc");
+   system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u 2 > $fname.inc");
+
+   ($scores, $exectime, $reparsetime) = scan ("$fname.inc");
    print "Final comps = $scores\n";
-   print "Dist to gold = $dist\n";
    print "Total time = $exectime secs\n";
    if ($reparse == "true") {
-     ($rate, $ptime, $btime) = verify($smallfiles[0], $largefile);
+     my $firstsmallfile = $smallfiles[0];
+     ($rate, $ptime, $btime) = verify($firstsmallfile, $largefile);
+
+     if (-e "gold/$arch/$fname.pxml") {
+	system("descdist gen/$arch/$firstsmallfile.pxml gold/$arch/$fname.pxml")
+     }
      print "Reparse time = $reparsetime secs\n";
      print "PADS parse time = $ptime secs\n";
      print "Blob parse time = $btime secs\n";

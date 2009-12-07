@@ -368,7 +368,7 @@ structure Incremental: sig
        end
 
      fun parse_files (initTy, numHeaders, numFooters, filepaths, chunksize, 
-		begin_time, dir, start_pos, reparse, goldXML) =
+		begin_time, dir, start_pos, reparse) =
       let
 	   val filepath = hd filepaths
 	   val filename = OS.Path.file filepath
@@ -392,14 +392,6 @@ structure Incremental: sig
 	   val _ = print ("Final comps = (" ^ showBits (#tc tycomp) ^ ", " ^ 
 			showBits (#adc tycomp) ^ ", " ^
 			(Real.toString (Reduce.score finalTy)) ^ ")\n")
-           val _ = case goldXML of
-			SOME xmlfile =>
-		  	  let val xml = PxmlParse.loadXML xmlfile
-		      	      val goldty = Pxml.xmlToIR Pxml.StringMap.empty xml
-			      val d = Editdistance.treeEditDistance(finalTy, goldty)
-			  in print ("Edit distance to gold = " ^ Int.toString d ^ "\n")
-			  end
-			| _ => ()
 	   val msg = "Total time = " ^ Time.toString total_elapse ^ " secs\n"
 
 	   val logstrm = TextIO.openAppend logFile
@@ -480,7 +472,7 @@ structure Incremental: sig
      if length args < 1 then
 	(print ("Usage: increment -f DATA_FILE(S) [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
 	"[-d INIT_DESC_XML] [-opt OPT_LEVEL (3)] [-tmout SECS (900)] [-w ADC_WEIGHT (5)]\n" ^
-	"[-output OUTPUT_DIR] [-reparse BOOL] [-u FLOAT] [-c GOLD_XML]\nSizes are in # of lines\n");
+	"[-output OUTPUT_DIR] [-reparse BOOL] [-u FLOAT]\nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
@@ -505,8 +497,6 @@ structure Incremental: sig
          val reparse = case StringMap.find (argMap, "-reparse") of
 		NONE => false
 		| SOME x => valOf(Bool.fromString x)
-
-         val goldxml = StringMap.find (argMap, "-c") 
 
          val _ = case StringMap.find (argMap, "-u") of
 		NONE => useUnionClustering := NONE
@@ -661,7 +651,7 @@ structure Incremental: sig
 
        in
          parse_files (initTy, numHeaders, numFooters, learn_files, chunksize, 
-			stime, timedir, start_pos, reparse, goldxml) 
+			stime, timedir, start_pos, reparse) 
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
 		          "uncaught exception ", exnName e,
