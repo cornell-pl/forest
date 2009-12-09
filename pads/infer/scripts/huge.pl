@@ -64,11 +64,11 @@ sub verify
  }
  unlink "$name.parse";
 
- if (! -e "gen/$arch/blob-parse") {
-  system ("cd gen; make blob-parse>&/dev/null");
+ if (! -e "gold/$arch/blob-parse") {
+  system ("cd gold; make blob-parse>&/dev/null");
  }
  $begintm = time;
- system ("gen/$arch/blob-parse $datafile >& /dev/null");
+ system ("gold/$arch/blob-parse $datafile >& /dev/null");
  my $blob_elapse = time - $begintm;
 
  return ((100.0 * ($total - $bads)/$total), $elapse, $blob_elapse);

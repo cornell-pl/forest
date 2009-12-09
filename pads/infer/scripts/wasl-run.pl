@@ -78,6 +78,21 @@ sub scan
   }
 }
 
+sub getGoldDist 
+{
+ (my $filename) = @_;
+ my $goldxml = "gold/$arch/$filename.pxml";
+ system ("cd gen; make $filename-parse>&/dev/null");
+ if (-e $goldxml)
+ {
+   my $line = `descdist gen/$arch/$filename.pxml $goldxml`; 
+   chomp $line;
+   if ($line =~ /Edit distance = ([0-9.]+)/) {return $1;}
+    else {return -1;}
+ }
+ else {return -1;}
+}
+
 #sub learn
 #{
 # (my $test) = @_;
@@ -109,11 +124,11 @@ sub verify
   }
  }
  unlink "$name.parse";
- if (! -e "gen/$arch/blob-parse") {
-  system ("cd gen; make blob-parse>&/dev/null");
+ if (! -e "gold/$arch/blob-parse") {
+  system ("cd gold; make blob-parse>&/dev/null");
  }
  $begintm = time;
- system ("gen/$arch/blob-parse $datafile >& /dev/null");
+ system ("gold/$arch/blob-parse $datafile >& /dev/null");
  my $blob_elapse = time - $begintm;
 
  return ((100.0 * ($total - $bads)/$total), $elapse, $blob_elapse);
@@ -142,7 +157,6 @@ sub inc
       system ("increment -f $file -i $isize -l $lsize -output gen -u 2 > $filename.inc");
     }
     #unlink("$filename.inc");
-    if (!$score) {last;} #timeout reached
     if ($doparse) {
       ($rate, $ptime, $btime) = verify($filename, $file);
       if (-e $goldxml)
@@ -156,6 +170,7 @@ sub inc
 	$btime = 0;
     }
     ($tc, $adc, $score, $dist, $exectime, $reparsetime) = scan ("$filename.inc");
+    if (!$score) {last;} #timeout reached
     $time += $exectime;
     $rptime += $reparsetime;
     $padstime += $ptime;
@@ -312,6 +327,7 @@ if ($otherargs =~ /.*-incsize.*/) {
    for (my $j = 50; $j <= 300; $j+=50)
    { 
     ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0);
+    $dist = getGoldDist ($largefile);
     if ($score==0) {
         print "$fname (init=$i, inc=$j): timed out\n";
 	$timeout=1; last}
