@@ -75,9 +75,13 @@ structure Main : sig
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
-    fun setUnionClustering f = case f 
+    fun setUnionClustering (f: real option) = case f 
 	                       of NONE   => useUnionClustering := (SOME def_union_cluster_threshold)
-	                       |  SOME g => useUnionClustering := (SOME g)
+	                       |  SOME g => if (Real.>=(g,0.0) andalso Real.<=(g, 1.0)) then useUnionClustering := (SOME g)
+				            else (print ("Illegal union cluster parameter value: "^(Real.toString g) ^". "^
+							 "Union clustering parameter should be a value between 0.0 and 1.0.\n")
+						 ; useUnionClustering := NONE)
+						  
           
 (*
     fun setBlobRatio    r = blobRatio := r
