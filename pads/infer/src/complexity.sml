@@ -159,8 +159,7 @@ structure Complexity = struct
     fun int2Bits (n: LargeInt.int) : real =
 	if n<0
 	then 1.0 + int2Bits (~n)
-	else if n= 0 then 1.0
-		else (log2L n)
+	else log2L (n+1)
 
     fun sumComps ( cs : Complexity list ) : Complexity =
         foldl ( fn (c1,c2) => combine c1 c2 ) zeroComp cs
