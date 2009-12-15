@@ -2353,7 +2353,7 @@ fun updateWithBlobs s_opt ty =
 
 (* the actual reduce function can either take a SOME(const_map) or
 NONE.  It will use the constraints that it can apply. *)
-fun reduce phase ty = 
+fun reduce phase sib_opt ty = 
 let
   val phase_one_rules : data_independent_rule list = 
 		[ 	
@@ -2561,7 +2561,10 @@ let
  	(iterate newcmap (measure 1 reduced_ty)) 
     end
   (* we use $ to denote end of the entire chunk *)
-  val sib_opt = SOME (RefinedBase (mkTyAux 0, StringME("/$/"), nil))
+  val sib_opt = case sib_opt of
+		  NONE => SOME (RefinedBase (mkTyAux 0, StringME("/$/"), nil))
+		| _ => sib_opt
+
   val (cmap', ty') = reduce' phase cmap sib_opt ty 
 (*  val _ = print ("Before:" ^ (Int.toString cbefore) ^ " After:" ^ (Int.toString cafter) ^ "\n") *)
 in

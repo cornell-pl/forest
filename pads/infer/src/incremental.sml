@@ -296,10 +296,10 @@ structure Incremental: sig
 	    if chunk_cost > 0 then 
 	     let 
 	       val trans_map = AG.transpose table
-     	       val newTy = Reduce.reduce 5 newTy 
+     	       val newTy = Reduce.reduce 5 NONE newTy 
 	       val newTy = AG.merge_adj_options trans_map newTy
 	       val newTy = AG.alt_options_to_unions trans_map newTy
-	       val newTy = Reduce.reduce 5 newTy
+	       val newTy = Reduce.reduce 5 NONE newTy
 	     in newTy
 	     end
 	    else newTy
@@ -384,7 +384,7 @@ structure Incremental: sig
 	   val (finalTy, aggrs, start_time, index, count, _, _) = 
 		List.foldl batch (initTy, aggrs, Time.now(), 0, 0, 0, start_pos) filepaths
 	   val finalTy = output aggrs finalTy start_time index count logFile
-	   val finalTy = sortUnionBranches (Reduce.reduce 4 finalTy)
+	   val finalTy = sortUnionBranches (Reduce.reduce 4 NONE finalTy)
 
 	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = (print "**** Final Ty: \n"; printTy (measure 0 finalTy))

@@ -438,9 +438,9 @@ struct
       val (ty, _) = Structure.computeStructurefromRecords lines
       val ty = measure 1 (Reduce.removePempty ty)
       (* val _ = (print ("Initial description:\n"); printTy ty) *)
-      val ty = Reduce.reduce 1 ty
-      val ty = Reduce.reduce 2 ty
-      val ty = Reduce.reduce 3 ty
+      val ty = Reduce.reduce 1 sibling_opt ty
+      val ty = Reduce.reduce 2 sibling_opt ty
+      val ty = Reduce.reduce 3 sibling_opt ty
       val finalty= sortUnionBranches ty
       val finalty = 
 	case finalty of

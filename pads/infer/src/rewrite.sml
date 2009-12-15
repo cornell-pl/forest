@@ -29,9 +29,9 @@ let
   val _ = case (headerTyOp, footerTyOp) of (NONE, NONE) => ()
 	  | _ => print "Found a header or footer!\n"
 *)
-  val ty1 = Reduce.reduce 1 body
-  val headers= map (Reduce.reduce 1) headers
-  val footers= map (Reduce.reduce 1) footers
+  val ty1 = Reduce.reduce 1 NONE body
+  val headers= map (Reduce.reduce 1 NONE) headers
+  val footers= map (Reduce.reduce 1 NONE) footers
   val reduce1_time : Time.time = Time.now ()
 (*
   val _ = print "After phase one ...\n";
@@ -41,9 +41,9 @@ let
 (*
   val _ = print "Phase two ...\n";
 *)
-  val ty2 = Reduce.reduce 2 ty1 
-  val headers = map (Reduce.reduce 2) headers 
-  val footers = map (Reduce.reduce 2) footers 
+  val ty2 = Reduce.reduce 2 NONE ty1 
+  val headers = map (Reduce.reduce 2 NONE) headers 
+  val footers = map (Reduce.reduce 2 NONE) footers 
   val reduce2_time : Time.time = Time.now ()
   (*phase three, redo constraint-free reduction *)
 (*
@@ -53,11 +53,11 @@ let
 (*
   val _ = print "Phase three ...\n";
 *)
-  val ty3 = (if mode = 0 then Reduce.reduce 3 ty2 else Reduce.reduce 6 ty2)
-  val headers = if mode = 0 then map (Reduce.reduce 3) headers 
-		else map (Reduce.reduce 6) headers
-  val footers = if mode = 0 then map (Reduce.reduce 3) footers 
-		else map (Reduce.reduce 6) footers 
+  val ty3 = (if mode = 0 then Reduce.reduce 3 NONE ty2 else Reduce.reduce 6 NONE ty2)
+  val headers = if mode = 0 then map (Reduce.reduce 3 NONE) headers 
+		else map (Reduce.reduce 6 NONE) headers
+  val footers = if mode = 0 then map (Reduce.reduce 3 NONE) footers 
+		else map (Reduce.reduce 6 NONE) footers 
   val ty3 = sortUnionBranches ty3
   val headers = map sortUnionBranches headers
   val footers = map sortUnionBranches footers
