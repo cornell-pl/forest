@@ -728,7 +728,6 @@ structure Common = struct
 				| Base(_, (Pstring _, _)::_) => true
 				| Base(_, (Other _, _)::_) => true
 				| RefinedBase(_, StringConst s , _) => (size s) = 1
-				| Poption _ => true
 				| _ => false
 			)
 
@@ -736,12 +735,21 @@ structure Common = struct
 		  val (lowPriTys, normalTys) = List.partition lowPriTy nonpriTys
 		  fun greater (ty1, ty2) =
 		    let
-			val (cov1, cov2) =(getCoverage ty1, getCoverage ty2)
+			val (cov1, cov2) =(getCoverage ty1, getCoverage ty2) 
+			val (tc1, tc2) = (toReal (getTypeComp ty1), toReal (getTypeComp ty2))
 			(*
 			val (comps1, comps2) = (getComps ty1, getComps ty2)
 			val (nc1, nc2) = ((normalizeTyComp cov1 comps1), (normalizeTyComp cov2 comps2))
 			*)
 		    in
+			if tc1 < tc2 then true
+			else if tc1 > tc2 then false
+			else case (ty1, ty2) of
+			   	(Base (_, (Pempty, _)::_), _) => true
+			     |  ( _, Base (_, (Pempty, _)::_)) => false
+			     | _ => cov1 < cov2
+			
+(***
 			case (ty1, ty2) of
 			  (Base(a1, (tok1, _)::t1), Base(a2, (tok2, _)::t2)) => 
 				(compToken(tok1, tok2) = GREATER)
@@ -749,7 +757,7 @@ structure Common = struct
 				(case (re1, re2) of
 					(StringConst x, StringConst y) => (size x < size y)
 					| (IntConst x, IntConst y) => x < y
-					| _ => false
+					| _ =>  
 				)
 			  | (Base (_, (Pempty, _)::_), _) => true
 			  | (_, Base (_, (Pempty, _)::_)) => false
@@ -766,6 +774,7 @@ structure Common = struct
 			  | (Pstruct(_, tys1), Pstruct(_, tys2)) =>
 				length tys1 < length tys2
 			  | _ => cov1 > cov2 
+***)
 		    end
 		  val sortedPriTys = ListMergeSort.sort greater priTys
 		  val sortedLowPriTys = ListMergeSort.sort greater lowPriTys
