@@ -503,8 +503,8 @@ structure Incremental: sig
 		| SOME x => 
 			let val threshold = valOf(Real.fromString x)
 			in
-			  if threshold > 1.0 then
-			    useUnionClustering := SOME def_union_cluster_threshold
+			  if threshold > 1.0 orelse threshold < 0.0 then
+			    useUnionClustering := NONE
 			  else
 			    useUnionClustering := SOME threshold
 			end
