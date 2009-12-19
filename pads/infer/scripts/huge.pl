@@ -117,7 +117,7 @@ foreach my $largefile (@largefiles)
    chomp @smallfiles;
    $filenames = join (' ', @smallfiles);
    print "initsize = $initsize  incsize = $incsize\n";
-   system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -u 2 > $fname.inc");
+   system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse > $fname.inc");
 
    ($scores, $exectime, $reparsetime) = scan ("$fname.inc");
    print "Final comps = $scores\n";

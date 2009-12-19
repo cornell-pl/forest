@@ -136,7 +136,7 @@ sub verify
 
 sub inc
 {
-  (my $file, my $isize, my $lsize, my $doparse) = @_;
+  (my $file, my $isize, my $lsize, my $doparse, my $adcw, my $uc) = @_;
   my $score = 0;
   my $time = 0;
   my $rptime = 0;
@@ -147,14 +147,17 @@ sub inc
   my $dist = -1;
   my $filename = getFileName $file;
   my $goldxml = "gold/$arch/$filename.pxml";
+  if ($adcw >=0) {$adc_str = "-w $adcw";} else {$adc_str = ""}
+  if ($uc >=0) {$uc_str = "-u $uc";} else {$uc_str = ""}
+
   for (my $j = 0; $j < $numTimes; $j++)
   {
     $exectime = 0;
     if ($doparse) {
-      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true -u 2 > $filename.inc");
+      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true $adc_str $uc_str > $filename.inc");
     } else
     {
-      system ("increment -f $file -i $isize -l $lsize -output gen -u 2 > $filename.inc");
+      system ("increment -f $file -i $isize -l $lsize -output gen $adc_str $uc_str > $filename.inc");
     }
     #unlink("$filename.inc");
     if ($doparse) {
@@ -191,7 +194,7 @@ sub inc
 
 if (!@ARGV) {
   print "Usage: wasl-run.pl init inc LARGE_FILES [-small] [-scale] [-incsize] 
-                     [-single] [-noparse]
+                     [-single] [-noparse] [-w ADC_WEIGHT] [-u FLOAT]
 
 LARGE_FILE must have at least 1K lines.
 -small:   run tests on a set of small examples specified by \@testfiles in the script, 
@@ -208,12 +211,26 @@ $incsize = shift @ARGV;
 
 $otherargs = join (' ', @ARGV);
 
-#Multiple smaller files tests
+print "Arguments: $otherargs\n";
+
 if ($otherargs =~ /.*-noparse.*/) {
   $doparse=0;
 }
 else {$doparse=1;}
+if ($otherargs =~ /.*-w ([0-9.]+).*/) {
+  $adc_weight = $1;
+} else 
+{
+  $adc_weight = -1;
+}
+if ($otherargs =~ /.*-u ([0-9.]+).*/) {
+  $uc = $1;
+} else 
+{
+  $uc = -1;
+}
 
+#Multiple smaller files tests
 if ($otherargs =~ /.*-small.*/) {
   print "Begin comparison tests on small files\n";
   foreach $test (@testfiles) {
@@ -251,7 +268,7 @@ if ($otherargs =~ /.*-small.*/) {
       print "$test (lrn): timed out\n";
     }
     ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime) = 
-	inc($test, $initsize, $incsize, $doparse);
+	inc($test, $initsize, $incsize, $doparse, $adc_weight, $uc);
     output("$test (inc)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, 0);
   }
   print "End comparison tests on small files\n";
@@ -289,7 +306,7 @@ if ($otherargs =~ /.*-scale.*/) {
     $size = $i * $step;
     system("head -n $size $largefile > $fname.$size");
     ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = 
-	inc ("$fname.$size", $initsize, $incsize, 0);
+	inc ("$fname.$size", $initsize, $incsize, 0, $adc_weight, $uc);
     if ($score==0) {
         print "$fname.$size (init=$initsize, inc=$incsize): timed out\n";
 	$timeout=1; last}
@@ -303,7 +320,7 @@ if ($otherargs =~ /.*-scale.*/) {
   }
   #last round is the whole file itself...
     ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = 
-	inc ("$largefile", $initsize, $incsize, $doparse);
+	inc ("$largefile", $initsize, $incsize, $doparse, $adc_weight, $uc);
     if ($score==0) {
         print "$fname.$largefile_lines (inc): timed out\n";
 	$timeout=1; last}
@@ -326,7 +343,7 @@ if ($otherargs =~ /.*-incsize.*/) {
   {
    for (my $j = 50; $j <= 300; $j+=50)
    { 
-    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0);
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0, $adc_weight, $uc);
     $dist = getGoldDist ($largefile);
     if ($score==0) {
         print "$fname (init=$i, inc=$j): timed out\n";
@@ -344,7 +361,7 @@ if ($otherargs =~ /.*-incsize.*/) {
 
 if ($otherargs =~ /.*-single.*/) {
    print "Begin single test\n";
-   ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $initsize, $incsize, $doparse);
+   ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $initsize, $incsize, $doparse, $adc_weight, $uc);
     if ($score==0) {
         print "$fname (init=$initsize, inc=$incsize): timed out\n";
 	$timeout=1; last}
