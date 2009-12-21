@@ -203,15 +203,26 @@ LARGE_FILE must have at least 1K lines.
 -scale init inc:   run the scaling tests on LARGE_FILE with init and inc sizes.
 -incsize: run tests with various init learn size and incremental learn size on LARGE_FILE.
 -single init inc: single run on the data file including learn, reparse and pads parse
--noparse: do not re-parse the data after learning the description.\n";
+-noparse: do not re-parse the data after learning the description.
+-w ADC_WEIGHT: set the adc weight parameter.
+-u FLOAT: set union clustering parameter\n";
   exit;
 }
 $initsize = shift @ARGV;
 $incsize = shift @ARGV;
 
+@largefiles = ();
+$argscan = 1;
+while ($argscan)
+{
+  my $myarg = shift @ARGV;
+  if ($myarg =~ /^-.*/) {$argscan = 0; unshift (@ARGV, $myarg);}
+  else {push (@largefiles, $myarg);}
+}
+
 $otherargs = join (' ', @ARGV);
 
-print "Arguments: $otherargs\n";
+print "wasl-run.pl Arguments: $otherargs\n";
 
 if ($otherargs =~ /.*-noparse.*/) {
   $doparse=0;
@@ -276,7 +287,7 @@ if ($otherargs =~ /.*-small.*/) {
 
 
 
-foreach my $largefile (@ARGV)
+foreach my $largefile (@largefiles)
 {
 # skip the switches in the arguments
 if ($largefile =~ /^-.*/) {next;}

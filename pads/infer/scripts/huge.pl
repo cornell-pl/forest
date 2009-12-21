@@ -79,14 +79,16 @@ chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
 
-($initsize, $incsize, $rep, @largefiles) = @ARGV;
+($initsize, $incsize, $rep, $adc, $uc, @largefiles) = @ARGV;
 if (!$initsize) {
- print "Usage: huge.pl INIT_SZ INC_SZ RE-PARSE[1|0] LARGE_FILE_PATHS\n";
+ print "Usage: huge.pl INIT_SZ INC_SZ RE-PARSE[1|0] ADC_W UC LARGE_FILE_PATHS\n";
  exit;
 }
 
 if (!$rep || $rep == 0) {$reparse = "false";}
 else {$reparse = "true";}
+
+print "Huge.pl Arguments: initsz = $initsize, $incsz = $incsize, adc = $adc, uc = $uc\n";
 
 foreach my $largefile (@largefiles)
 {
@@ -117,7 +119,7 @@ foreach my $largefile (@largefiles)
    chomp @smallfiles;
    $filenames = join (' ', @smallfiles);
    print "initsize = $initsize  incsize = $incsize\n";
-   system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse > $fname.inc");
+   system ("increment -f $filenames -i $initsize -l $incsize -output gen -reparse $reparse -w $adc -u $uc > $fname.inc");
 
    ($scores, $exectime, $reparsetime) = scan ("$fname.inc");
    print "Final comps = $scores\n";
