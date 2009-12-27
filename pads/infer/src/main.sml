@@ -75,6 +75,10 @@ structure Main : sig
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
+    fun setAdcWeight (f: real option) = 
+	case f of
+	  NONE => ()
+	| SOME g => adcCoeff := g
     fun setUnionClustering (f: real option) = case f 
 	                       of NONE   => useUnionClustering := (SOME def_union_cluster_threshold)
 	                       |  SOME g => if (Real.>=(g,0.0) andalso Real.<=(g, 1.0)) then useUnionClustering := (SOME g)
@@ -109,7 +113,8 @@ structure Main : sig
        PCL.Float (setBlobRatio, false)),
 *)
 	 ("timeout",  "timeout for learning (default 900 secs)",					   PCL.Int (setTimeout, false)),
-	 ("u",        "use union clustering algorithm",    	  				           PCL.FloatOpt (setUnionClustering, false))
+	 ("u",        "use union clustering algorithm",    	  				           PCL.FloatOpt (setUnionClustering, false)),
+	 ("w",        "set adc coefficient",    	  				           PCL.FloatOpt (setAdcWeight, false))
         ]
 
     fun checkOutputDir() =(
