@@ -78,8 +78,8 @@ let
   val _ = print ("size of final tree: " ^ Int.toString t2 ^ "\n")
   val _ = print ("order of time/space: " ^ Int.toString (t1 * t1 * t2 * t2) ^ "\n")
 *)
-  val d = Editdistance.treeEditDistance (initTy, measured_reduced_ty)
   (*
+  val d = Editdistance.treeEditDistance (initTy, measured_reduced_ty)
   val _ = print ("\n*** Edit distance between initTy and finalTy = " ^ Int.toString d ^ "\n")
   *)
 (*

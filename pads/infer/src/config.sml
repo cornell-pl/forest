@@ -41,7 +41,7 @@ structure Config = struct
     val var_card_bits   = ref def_var_card_bits
 *)
     (* val blobCompensation  = 0.5 *)
-    val adcCoeff = ref 10.0
+    val adcCoeff = ref 5.0
     val default_init_size = 500
     val default_chunk_size = 100
 
