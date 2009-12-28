@@ -1942,11 +1942,31 @@ fun isBlobTy ty =
 	  RefinedBase (_, Blob _, _) => true
 	| _ => false
 
+fun isCandidateBlob ty =
+   if getHeight ty < minBlobHeight then false
+   else 
+	let val ltokens = mergeTokens ty
+        in
+	  if score (measure 0 (RefinedBase (getAuxInfo ty, Blob(NONE, NONE), ltokens))) <
+	     score ty then true
+	  else false
+	end
+
+fun getTailTys tys =
+  let fun getTail (hds, tails) =
+	case tails of
+	  nil => (hds, nil)
+	| t::tail =>
+	  if isCandidateBlob t then (hds, tails)
+	  else getTail (hds@[t], tail)
+  in getTail (nil, tys)
+  end
+
 and mkBlob sibling_opt ty = 
-  if isStructTy ty orelse getHeight ty < minBlobHeight then ty
+  if (* isStructTy ty orelse *) getHeight ty < minBlobHeight then ty
   else 
   case sibling_opt of
-    NONE => ty (* we don't allow the whole desc or desc without a trailer to be turned into a blob *)
+    NONE => ty (* we don't allow desc without a trailer to be turned into a blob *)
 (*
 	let 
 	  val ltokens = mergeTokens ty 
@@ -1959,6 +1979,42 @@ and mkBlob sibling_opt ty =
 *)
   | SOME sibty =>
     (
+     case ty of 
+       Pstruct (a, tys) =>
+ 	(
+	  case getStoppingPatt sibty of
+	    (SOME str, NONE) =>
+	    let val (hdTys, candidateBlobTys) = getTailTys tys
+	        val ltokens = mergeTokens (Pstruct (a, candidateBlobTys))
+	    in
+		if (containString ltokens str) then ty
+		else if length candidateBlobTys = 0 then ty
+		else 
+		  let val newblob = measure 0 (RefinedBase(a, Blob (SOME str, NONE), ltokens))
+		  in if length hdTys = 0 then newblob
+		     else measure 1 (Pstruct (a, hdTys@[newblob]))
+		  end
+	    end
+	  | (NONE, SOME str) =>
+	    let val (hdTys, candidateBlobTys) = getTailTys tys
+	        val ltokens = mergeTokens (Pstruct (a, candidateBlobTys))
+	    in
+		if length candidateBlobTys = 0 then ty
+		else if str = "/$/" then 
+		  let val newblob = measure 0 (RefinedBase(a, Blob (NONE, NONE), ltokens))			
+		  in if length hdTys = 0 then newblob
+		     else measure 1 (Pstruct (a, hdTys@[newblob]))
+		  end
+		else if (containPatt ltokens str) then ty
+		else 
+		  let val newblob = measure 0 (RefinedBase(a, Blob (NONE, SOME str), ltokens))
+		  in if length hdTys = 0 then newblob
+		     else measure 1 (Pstruct (a, hdTys@[newblob]))
+		  end
+	    end
+	  | _ => ty
+    	)
+     | _ =>
 	let
 	  (* val _ = print "Getting stopping patt\n" *)
 	  val pair = getStoppingPatt sibty 
@@ -2412,7 +2468,8 @@ let
 
   val phase_five_rules : data_independent_rule list = 
 		[ 	
-		  (* mkBlob, *)
+		  mkBlob, 
+		  contract_blobs,
 		  remove_degenerate_list,
 		  unnest_tuples,
 		  unnest_sums,
