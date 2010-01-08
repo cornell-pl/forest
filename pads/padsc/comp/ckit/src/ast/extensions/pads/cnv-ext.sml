@@ -4247,7 +4247,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 			   in
 			       if Option.isSome reOpt then
                                     (isEmptyString (unMark(Option.valOf reOpt));
-			            (pExp, pExp, NONE, PRegExp, PL.reMatch, PL.reScan1, NONE, NONE, TyProps.DRegExp pExp))
+			            (pExp, pExp, NONE, PRegExp, PL.reMatch, PL.reScan1, NONE, NONE,TyProps.DRegExp (Option.valOf reOpt)))
 			       else if isString then
 			            (pExp, pExp, #1(evalExpr exp), PString, PL.cstrlitMatch, 
 				           PL.cstrlitScan1, SOME PL.cstrlitWriteBuf, SOME PL.cstrlitWriteIO, TyProps.DString pExp)
@@ -4335,7 +4335,7 @@ ssize_t test_write_xml_2buf(P_t *pads, Pbyte *buf, size_t buf_len, int *buf_full
 				    let val (declSs, params, initSs, expr, closeS) = compRegExp("separator", endLabel, e)
 					val wCloseFun = makeCloseFun closeS
 				    in
-					(SOME(expr, expr, v, PRegExp, match, scan, write2buf, write2io, kind), termXOpt, declSs, 
+					(SOME(expr, expr, v, PRegExp, match, scan, write2buf, write2io,  kind ), termXOpt, declSs, 
 					 params, initSs, wCloseFun, NONE)
 				    end
                               | (SOME s, NONE) => (sepXOpt, termXOpt, [], [], [], emptyFun, NONE)
