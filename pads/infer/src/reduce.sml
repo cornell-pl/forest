@@ -1930,7 +1930,30 @@ fun containString ltokens str =
 	    | _ => raise InvalidToken
 	  )
 	
-fun containPatt ltokens patt = true (* assume true for now as we don't have regex yet *)
+fun containPatt ltokens re = 
+  let 
+	val re' = if String.isSuffix "|$" re then 
+			String.substring (re, 0, String.size re - 2)
+		  else if String.isPrefix "$|" re then
+			String.substring (re, 2, String.size re - 2)
+		  else re
+  in
+	case ltokens of
+	  nil => false
+	| (t, loc)::ltokens => 
+	  (
+	    case t of
+		Ptext s =>
+		  let 
+		      val (_, matched, _) = Parse.parse_regex (re', 0, s)
+		  in
+		    case matched of
+			SOME _ => true
+		    | _ => containPatt ltokens re
+	 	  end		
+	    | _ => raise InvalidToken
+	  )
+   end		
 
 fun isStructTy ty =
   case ty of
@@ -2005,7 +2028,7 @@ and mkBlob sibling_opt ty =
 		  in if length hdTys = 0 then newblob
 		     else measure 1 (Pstruct (a, hdTys@[newblob]))
 		  end
-		else if (containPatt ltokens str) then ty
+		else if (containPatt ltokens (stripslashes str)) then ty
 		else 
 		  let val newblob = measure 0 (RefinedBase(a, Blob (NONE, SOME str), ltokens))
 		  in if length hdTys = 0 then newblob
@@ -2046,6 +2069,11 @@ and mkBlob sibling_opt ty =
 	  | (NONE, SOME str ) => 
 	      let 
 	  	val ltokens = mergeTokens ty 
+		(*
+		val _ = print "about to mkBlob for:\n"
+		val _ = printTy ty
+		*)
+		(* val _ = print ((LTokensToString ltokens) ^ "\n") *)
 	      in
 		if str = "/$/" then 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob (NONE, NONE), ltokens))			
@@ -2058,7 +2086,7 @@ and mkBlob sibling_opt ty =
 		  *)
 		  in newty
 		  end
-	        else if containPatt ltokens str then ty
+	        else if containPatt ltokens (stripslashes str) then ty
 	        else 
 		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair , ltokens))
 		   (*
@@ -2563,12 +2591,70 @@ let
                         | RArray (a, sep, term, body, len, lengths) => 
                                 let
 				   val sib' = case (sep, term) of
-				     (* TODO: we may want to return regex of s+t as well *)
+				     (*we want to return regex of s+t as well *)
 	    			     (SOME s, SOME t) => 
 					if refine_equal (s, t) then
 		  			  (* use a dummy refinedbase type as righthand side sibling *)
 		  			  SOME (RefinedBase (a, s, nil)) 
-					else NONE
+					else 
+					(
+					   case (s, t) of
+					     (StringConst s, StringConst t) =>
+					       let val re = "/" ^ escape s ^ "|" ^ escape t ^ "/"
+					       in
+						 SOME (RefinedBase(a, StringME (re), nil))
+					       end
+					   | (StringConst s, StringME t) => 
+						let val re = "/" ^ escape s ^ "|" ^ stripslashes t
+							^ "/"
+						in
+						 SOME (RefinedBase(a, StringME (re), nil))
+					       end
+					   | (StringME s, StringConst t) => 
+						let val re = "/" ^ stripslashes s ^ "|" ^ escape t
+							^ "/"
+						in
+						 SOME (RefinedBase(a, StringME (re), nil))
+					       end
+					   | (StringME s, StringME t) => 
+						let val re = "/" ^ stripslashes s ^ "|" 
+							^ stripslashes t ^ "/"
+						in
+						 SOME (RefinedBase(a, StringME (re), nil))
+					       end
+					   | _ => NONE
+					)
+
+				    | (SOME (StringConst s), NONE) =>
+					(
+					  case sib of
+					    SOME (RefinedBase (a1, StringME t, _)) => 
+						let val re = "/" ^ escape s ^ "|" ^ stripslashes t ^ "/"
+						in
+						 SOME (RefinedBase(a, StringME (re), nil))
+						end
+					  | SOME (RefinedBase (a1, StringConst t , _)) =>
+						let val re = "/" ^ escape s ^ "|" ^ escape t ^ "/"
+						in
+						 SOME (RefinedBase(a, StringME (re), nil))
+						end
+					  | _ => NONE
+				        ) 
+				    | (SOME (StringME s), NONE) =>
+					(
+					  case sib of
+					    SOME (RefinedBase (a1, StringME t, _)) => 
+						let val re = "/" ^ stripslashes s ^ "|" ^ stripslashes t ^ "/"
+						in
+						 SOME (RefinedBase(a, StringME (re), nil))
+						end
+					  | SOME (RefinedBase (a1, StringConst t , _)) =>
+						let val re = "/" ^ stripslashes s ^ "|" ^ escape t ^ "/"
+						in
+						 SOME (RefinedBase(a, StringME (re), nil))
+						end
+					  | _ => NONE
+				        ) 
 				    | _ => NONE
                                   val (cmap', body') = reduce' phase cmap sib' body
                                 in

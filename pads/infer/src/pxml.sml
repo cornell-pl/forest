@@ -237,13 +237,15 @@ structure Pxml = struct
 	let
 	    val bodyname = valOf(selectPCData xml ["_", "ptype", "name"])
 	    val sep = 
-		case selectPCData xml ["_", "delimiterConstraints", "sep", "_"] of
+		case search [xml] ["_", "delimiterConstraints", "sep", "_"] of
 	        NONE => NONE
-	      | SOME x => SOME (StringConst (strip x))
+	      | SOME (Element ("regexp", [PCData regex])) => SOME (StringME (strip regex))
+	      | SOME (Element (_, [PCData x])) => SOME (StringConst (strip x))
 	    val term = 
-		case selectPCData xml ["_", "delimiterConstraints", "term", "_"] of
+		case search [xml] ["_", "delimiterConstraints", "term", "_"] of
 	        NONE => NONE
-	      | SOME x => SOME (StringConst (strip x))
+	      |	SOME (Element ("regexp", [PCData regex])) => SOME (StringME (strip regex))
+	      | SOME (Element (_, [PCData x])) => SOME (StringConst (strip x))
 	    val len = 
 		case search [xml] ["_", "sizeConstraints", "max"] of
 	        SOME (Element ("max", [PCData x])) => SOME(IntConst (valOf(LargeInt.fromString x)))

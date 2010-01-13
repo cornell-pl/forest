@@ -548,16 +548,47 @@ struct
 		  (* val _ = print (aggrToString "" aggr) *)
 		  val newbody = updateTy body e
 		  val newa = mkTyAux1 ((#coverage a + c), getLabel a)
-		  val sep = case (sep, s) of
-			(SOME sep, SyncA (_, _, SOME re)) => SOME re
-			| (NONE, SyncA (_, _, NONE)) => NONE
+		  val bodycov = getCoverage newbody
+		  val (opt_from_sep, sep) = case (sep, s) of
+			(SOME sep, SyncA (_, _, SOME re)) => (nil, SOME re)
+			| (SOME sep, TupleA (cov, [Ln(id, ss), SyncA (_, _, SOME re)])) => 
+			  let
+			    val sib_opt = SOME (RefinedBase (mkTyAux cov, sep, nil))
+			    val extra_ty = learn ss sib_opt
+			    val newopt = measure 1 (Poption(mkTyAux1 (bodycov, id), extra_ty))
+			  in ([newopt], SOME re)
+			  end
+			| (NONE, SyncA (_, _, NONE)) => (nil, NONE)
 			| _ => raise TyMismatch
-		  val term = case (term, t) of
-			(SOME term, SyncA (_, _, SOME re)) => SOME re
-			| (NONE, SyncA (_, _, NONE)) => NONE
-			| (SOME term, Opt(_, _, SyncA _)) => NONE
+		  val (opt_from_term, term) = case (term, t) of
+			(SOME term, SyncA (_, _, SOME re)) => (nil, SOME re)
+			| (NONE, SyncA (_, _, NONE)) => (nil, NONE)
+			| (SOME term, Opt(_, _, SyncA _)) => (nil, NONE)
+			| (SOME term, TupleA (cov, [Ln(id, ss), SyncA (_, _, SOME re)])) => 
+			  let
+			    val sib_opt = SOME (RefinedBase (mkTyAux cov, term, nil))
+			    val extra_ty = learn ss sib_opt
+			    val newopt = measure 1 (Poption(mkTyAux1 (bodycov, id), extra_ty))
+			  in ([newopt], SOME re)
+			  end
+(*
+			| (SOME term, TupleA (cov, [Ln (id, ss), 
+					SyncA(_, _, SOME re)])) => 
+	      		let 
+			  val sib_ty = RefinedBase(mkTyAux c, re, nil)
+			  val extra_ty = learn ss (SOME sib_ty)
+			  val newopt = measure 1 (Poption(mkTyAux1 (new_cov, id), extra_ty))
+	      in
+		measure 1 (Pstruct(mkTyAux new_cov, [newopt, sib_ty]))
+	      end
+*)
 			| _ => raise TyMismatch
-	    	in measure 1 (RArray(newa, sep, term, newbody, len, lengths))
+		  val newbody_tys = [newbody] @ opt_from_sep @ opt_from_term
+	          val newbody = if length newbody_tys = 1 then newbody
+				else Pstruct(mkTyAux bodycov, newbody_tys)
+	    	  val newarray = measure 1 (RArray(newa, sep, term, newbody, len, lengths))
+		in
+		  newarray
 		end
 	| (Poption (a, ty), OptionA (c, ag)) => 
 		let 
@@ -600,12 +631,15 @@ fun merge_adj_options dep_map ty =
 	  val newpairs = map (fn (re, ty) => (re, merge_adj_options dep_map ty)) pairs
           in measure 1 (Switch (a, id, newpairs))
           end
-  | RArray (a, sep, term, body, len, lengths) => 
+  (* TODO: the dep map is not right for arrays!!! *)
+  | RArray (a, sep, term, body, len, lengths) =>  ty
+	(*
           let
           val body' = merge_adj_options dep_map body
           in
             measure 1 (RArray (a, sep, term, body', len, lengths))
           end
+	*)
   | Poption (a, body) => measure 1 (Poption(a, merge_adj_options dep_map body))
   | _ => (print ("Bad Ty:\n"); printTy ty; raise TyMismatch)
 
@@ -666,12 +700,15 @@ fun alt_options_to_unions dep_map ty =
 	  val newpairs = map (fn (re, ty) => (re, alt_options_to_unions dep_map ty)) pairs
           in measure 1 (Switch (a, id, newpairs))
           end
-  | RArray (a, sep, term, body, len, lengths) => 
+  (* TODO: the dep map is not right for arrays!!! *)
+  | RArray (a, sep, term, body, len, lengths) => ty
+	(*
           let
           val body' = alt_options_to_unions dep_map body
           in
             measure 1 (RArray (a, sep, term, body', len, lengths))
           end
+	*)
   | Poption (a, body) => measure 1 (Poption(a, alt_options_to_unions dep_map body))
   | _ => raise TyMismatch
 

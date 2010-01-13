@@ -60,4 +60,7 @@ is
   constraints.sml
   functionaldep.sml
   reduce.sml
+  tokenDefs.sml
+  rep.sml
+  parse.sml
   editdistance.sml

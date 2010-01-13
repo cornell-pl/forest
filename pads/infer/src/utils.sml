@@ -160,4 +160,9 @@ struct
 
     fun frac ( m : int ) ( n : int ) : real = Real.fromInt m / Real.fromInt n
 
+    (* strips the slashes around a regex string *)
+    fun stripslashes s =
+	if String.sub(s, 0) = #"/" andalso String.sub(s, (String.size s) -1) = #"/" then
+	String.substring (s, 1, String.size s - 2)
+ 	else s
 end

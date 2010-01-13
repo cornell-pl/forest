@@ -86,6 +86,7 @@ structure Incremental: sig
 	val tm = Time.now() 
 	val _ = Parse.memo:=Parse.MemoMap.empty
  	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, !Parse.do_parse_cutoff)
+	(* val _ = print ("Number of parses: " ^ Int.toString (Parse.ParseSet.numItems set) ^ "\n") *)
         val set = if Parse.ParseSet.numItems set = 0 then
 		  (Parse.memo:=Parse.MemoMap.empty;
 		  Parse.parse_all(ty, LabelMap.empty, 0, line, false))
@@ -98,11 +99,12 @@ structure Incremental: sig
         val _ = print ("Size of memo = " ^ Int.toString (Parse.MemoMap.numItems (!Parse.memo)) ^ "\n")
 	*)
 	(* val _ = print "Parse complete\n" *)
-	(* val _ = print ("Number of parses: " ^ Int.toString (Parse.ParseSet.numItems set) ^ "\n") *)
 	val list_parses = Parse.ParseSet.listItems set
 	val list_parses = map (fn (r, m, j) => 
 		let val len = String.size line 
-		in if j < len then (r, Rep.add_metric m (2, len-j, 0), j)
+		in if j < len then 
+		(* if the line is not completely consumed, we need to penalize the metric *)
+			(r, Rep.add_metric m (1, 0, len-j, 0), j)
 		   else (r, m, j)
 		end) list_parses
 	(* if there are some perfect parses, only take those *)
@@ -125,6 +127,7 @@ structure Incremental: sig
 		     (fn ((_, m1, _), (_, m2, _)) => Rep.better_metric m2 m1) list_parses), num_parses), 
 		      false)
 		  end
+
 (*
 	val _ = print ("The top " ^ Int.toString (length top_parses) ^ " parses: \n")
  	val _ = List.app (fn (rep, m, j) => 
@@ -140,6 +143,13 @@ structure Incremental: sig
 				val _ = print (Rep.repToString "" r)
 				*)
 				val (a', pairs) = (AG.merge a r)
+				(*
+				val _ = print "after merge:\n"
+				val _ = print (AG.aggrToString "" a')
+				val _ = List.app (fn (id, branch) => print ("(" ^ Atom.toString id ^ ", " ^
+					Int.toString branch ^ ") ")) pairs
+				val _ = print "\n"
+				*)
 				val remainder = String.extract (line, j, NONE)
 				val (newa, newpairs) = 
 				  if remainder = "" then 
@@ -284,11 +294,11 @@ structure Incremental: sig
 			(print "Warning! Number of aggregates is 0!\n"; raise InvalidAggrs)
 		      else hd aggrs
      	    val chunk_cost = AG.cost chunk_aggr
-	(*
+	    (*
      	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
      	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-	    val _ = AG.printTable table 
-	*)
+	    *)
+	    (* val _ = AG.printTable table *)
 	    (* we update the ty even if there's no bad data in the
 		aggregate because we want the updated aux in ty *)
 	    val newTy = AG.updateTy ty chunk_aggr
@@ -297,7 +307,9 @@ structure Incremental: sig
 	     let 
 	       val trans_map = AG.transpose table
      	       val newTy = Reduce.reduce 5 NONE newTy 
+	       (* val _ = (print "Before merge_adj_options: \n"; printTy newTy) *)
 	       val newTy = AG.merge_adj_options trans_map newTy
+	       (* val _ = (print "After merge_adj_options: \n"; printTy newTy) *)
 	       val newTy = AG.alt_options_to_unions trans_map newTy
 	       val newTy = Reduce.reduce 5 NONE newTy
 	     in newTy

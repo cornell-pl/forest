@@ -13,9 +13,14 @@ datatype SyncData =
 | Partial of (string * Refined) (* partially matched string - it matches the basic type of the refined but the refined itself *)
 | Fail
 
-type metric_type = int * int * int (* (number of error nodes, recovered chars, total chars parsed ) *)
+type metric_type = int * int * int * int (* (number of error nodes, number of good nodes,
+					  recovered chars, total chars parsed ) *)
 
-fun add_metric (e1, r1, t1) (e2, r2, t2) = (e1 + e2, r1 + r2, t1 + t2) 
+fun add_metric (e1, g1, r1, t1) (e2, g2, r2, t2) = (e1 + e2, g1 + g2, r1 + r2, t1 + t2) 
+
+(*
+fun add_metric_for_array_term (e1, g1, r1, t1) (e2, g2, _, _) = (e1 + e2, g1 + g2, r1, t1)
+*)
 
 (*
 fun better_metric (e1, r1, t1) (e2, r2, t2) =
@@ -33,7 +38,8 @@ fun better_metric (e1, r1, t1) (e2, r2, t2) =
 	  end
 *)
 
-fun better_metric (e1, r1, t1) (e2, r2, t2) =
+fun better_metric (e1, g1, r1, t1) (e2, g2, r2, t2) =
+(*
 	if e1 = 0 andalso e2 = 0 then 
 	  let val n1 = (Real.fromInt r1) / (Real.fromInt (r1 + t1))
 	      val n2 = (Real.fromInt r2) / (Real.fromInt (r2 + t2))
@@ -44,18 +50,39 @@ fun better_metric (e1, r1, t1) (e2, r2, t2) =
 	else 
 	 (Real.fromInt (r1 + t1)) / (Real.fromInt e1) > 
 	 (Real.fromInt (r2 + t2)) / (Real.fromInt e2)
+*)
+	     let val avg_tok_len1 = Real.max (1.0, Real.fromInt (r1 + t1) / Real.fromInt (e1 + g1))
+		 val avg_tok_len2 = Real.max (1.0, Real.fromInt (r2 + t2) / Real.fromInt (e2 + g2))
+		 val est_rec_toks1 = 1.0 + Real.fromInt r1 / avg_tok_len1 
+		 (* +1 since learn node takes up 2 places itself *)
+		 val est_rec_toks2 = 1.0 + Real.fromInt r2 / avg_tok_len2
+	     in (Real.fromInt (t1))/(Real.fromInt e1 + est_rec_toks1) > 
+		(Real.fromInt (t2))/(Real.fromInt e2 + est_rec_toks2)
+	     end
+	
+(*
+*)
 
-fun equal_metric  (e1: int, r1: int, t1: int) (e2: int, r2: int, t2: int) : bool =
-	(e1 = e2 andalso r1 = r2 andalso t1 = t2)
+fun equal_metric  (e1: int, g1: int, r1: int, t1: int) 
+	(e2: int, g2: int, r2: int, t2: int) : bool =
+	(e1 = e2 andalso g1 = g2 andalso r1 = r2 andalso t1 = t2)
 
-fun is_good_metric (e, r, t) = (e = 0)
+fun is_good_metric (e, g, r, t) = (e = 0) andalso (r = 0)
 
-fun reset_metric (e, r, t) = (0, r, t)
+fun reset_metric (e, g, r, t) = (0, g, r, t)
 
-fun no_progress (e, r, t) = e > 0 andalso r = 0 andalso t = 0
+fun reset_metric_term ( (e, g, r, t), termlen) = (e, g, r, t-termlen)
 
-fun metricToString (e, r, parsed) = "(" ^ Int.toString e ^ ", " ^ Int.toString r ^ ", " 
-			^ Int.toString parsed ^ ")"
+fun no_progress (e, g, r, t) = e > 0 andalso r = 0 andalso t = 0
+
+fun metricToString (e, g, r, parsed) =
+	let val avg_tok_len =  Real.max (1.0, Real.fromInt (r + parsed) / Real.fromInt (e + g))
+	    val score = (Real.fromInt (parsed))/(Real.fromInt e + 1.0 + Real.fromInt r /avg_tok_len)
+	in
+		"(" ^ Int.toString e ^ ", "  ^ Int.toString g ^
+			", " ^ Int.toString r ^ ", " ^ Int.toString parsed ^ ") ==> " ^
+		  Real.toString score
+	end
 
 fun comp_refines (l1, l2) =
   case (l1, l2) of
