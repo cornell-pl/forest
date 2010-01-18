@@ -571,6 +571,14 @@ struct
 			    val newopt = measure 1 (Poption(mkTyAux1 (bodycov, id), extra_ty))
 			  in ([newopt], SOME re)
 			  end
+			| (SOME term, TupleA (cov, [Ln(id, ss), Opt (_, _, SyncA (_, _, SOME re))])) => 
+			  let
+			    val sib_opt = SOME (RefinedBase (mkTyAux cov, term, nil))
+			    val extra_ty = learn ss sib_opt
+			    val newopt = measure 1 (Poption(mkTyAux1 (bodycov, id), extra_ty))
+			  in ([newopt], NONE)
+			  end
+
 (*
 			| (SOME term, TupleA (cov, [Ln (id, ss), 
 					SyncA(_, _, SOME re)])) => 
@@ -582,7 +590,8 @@ struct
 		measure 1 (Pstruct(mkTyAux new_cov, [newopt, sib_ty]))
 	      end
 *)
-			| _ => raise TyMismatch
+			| _ => (* printTy ty; print (aggrToString "" aggr);*)
+				raise TyMismatch
 		  val newbody_tys = [newbody] @ opt_from_sep @ opt_from_term
 	          val newbody = if length newbody_tys = 1 then newbody
 				else Pstruct(mkTyAux bodycov, newbody_tys)
