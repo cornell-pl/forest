@@ -4,7 +4,7 @@ all: *.tex
 	bibtex paper
 	latex paper.tex
 	latex paper.tex
-	dvipdf paper.dvi
+	dvipdfm -p letter paper.dvi
 
 clean:
 	rm -f *.aux *.dvi *.bbl
