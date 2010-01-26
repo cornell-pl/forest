@@ -1,0 +1,131 @@
+(* This directory specification describes a subset of the files in
+pads/infer directory which are to be tarballed and released *)
+
+let benchmarks = [
+  "1967transactions.short";    
+  "mer_t01_01.csv";            
+  "ai.3000";
+  "asl.log";                   
+  "boot.log";                  
+  "convert.log";               
+  "crashreporter.log";         
+  "crashreporter.log.modified";
+  "dibbler.1000";              
+  "ls-l.txt";                  
+  "netstat-an";                
+  "page_log";                  
+  "quarterlypersonalincome";   
+  "railroad.txt";              
+  "rpmpkgs.txt";               
+  "scrollkeeper.log";          
+  "windowserver_last.log";     
+  "yum.txt" 
+]
+
+ let benchmarks_alt = [
+  "1967transactions";    
+  "mer_t01_01.csv";            
+  "ai";
+  "asl";                   
+  "boot";                  
+  "convert";               
+  "crashreporter";         
+  "dibbler";              
+  "ls-l";                  
+  "netstat-an";                
+  "page_log";                  
+  "quarterincome";   
+  "railroad";              
+  "rpmpkgs";               
+  "scrollkeeper";          
+  "windowserver_last.log";     
+  "yum" 
+]
+                 
+(* examples/data directory *)
+pdirectory data_t = {
+  [b : p_text <| permission=-rw-r--r-- | b <- benchmarks];
+  other files ...
+}
+
+pdirectory gold_data_t = {
+  [b : p_text <| permission=-rw-r--r-- | b <- benchmarks];
+}
+
+(******* the following syntax is not quite right... *)
+pdirectory ir_t = {
+  [d + ".sml" : p_sml <| permission = -rw-r--r-- | d <- benchmarks];
+}
+
+(* the gold descriptions of the 16 benchmarks, the naming convention is
+a bit different here. Maybe we wanna consider renaming the .p files to
+follow the names in benchmarks list *)
+pdirectory gold_pads_t = {
+  [b + ".p" : p_sml <| permission = -rw-r--r-- | d <- benmarks_alt];
+}
+
+(* examples/gold directory *)
+pdirectory gold_t = {
+  "GNUmakefile": p_text <| permission.all=r && permission.user=w;
+  "data": gold_data_t <| permission.all = rx;
+  "ir": ir_t <| permission.all = rx;
+  "p": gold_pads_t <| permission.all = rx;
+}
+
+(* examples/results directory -- contains a makefile *)
+pdirectory results_t = {
+  "GNUmakefile": p_text <| permission.all=r && permission.user=w;
+}
+
+(* examples directory *)
+pdirectory examples_t = {
+  "GNUmakefile" : p_text <| permission.all=r && permission.user=w;
+  "README" : p_text <| permission = -rw-r--r--;
+  "data": data_t <| permission.all=rx;
+  "gold": gold_t <| permission.all=rx;
+  "results": results_t <| permission.all=rx;
+}
+
+ptype comment_t = "#" * pstring(eor);
+ptype def = "def" * pwhite * pword * pwhite * pstring(eor);
+ptype exp = "def" * pwhite * "P" * pword * pwhite * pstring(eor);
+ptype line_t = Def of def | Exp of ex | Comment of comment_t
+ptype config_t = line_t plist
+
+(* include directory *)
+pdirectory include_t = {
+  "GNUmakefile.output" : p_text <| permission.all=r;
+  "README": p_text <| permission.all=r;
+  "basetoken.p" : p_pads <| permission.all=r;
+  "tokens.config" : config_t <| permission.all=r;
+  "vanilla.config" : config_t <| permission.all=r;
+}
+
+(* scripts directory *)
+pdirectory scripts_t = {
+  "config.pl" : p_perl <| permission=-rwxr-xr-x;
+  "grapher.template" : p_perl <| permission = -rwxr-xr-x;
+  "learn" : p_perl <| permission = -rwxr-xr-x;;
+}
+
+
+pfile sourceFile_t = p_sml <| permission = -rw-r--r--;
+
+(* the source directory contains a main.cm and a list of sml files *)
+pdirectory src_t = {
+  "main.cm" : p_text <| = -rw-r--r--;
+  [ s: sourceFile_t | s <- getfiles ("*.sml")]; (* how do we name the list comp *)
+}
+
+(* The root infer directory *)
+pdirectory infer_t = {
+  "GNUmakefile" : p_text <| permission.all=r;
+  "INSTALL_NOTES" : p_text <| permission.all = r;
+  "README" : p_text <| permission = r;
+  "cpl-1.0-license.html" : p_html <| permission.all = r;
+  "cpl-1.0-license.txt" : p_text <| permission.all = r;
+  "examples" : examples_t <| permission.all=rx;
+  "include" : include_t <| permission.all= rx
+  "scripts" : scripts_t <| permission.all = rx;
+  "src" : src_t <| permission.all = rx;
+}

@@ -1,0 +1,29 @@
+ptype date = pstring_ME ("/[1-2][0-9][0-9][0-9]_[0-1][0-9]/")
+ptype time = pstring_ME ("/[0-9][0-9]_[0-9][0-9]/")
+ptype timeformat = date * '-' * time
+
+ptype coralweb_ty = ...  (* pads description *)
+ptype probe_ty = ...  (* pads description *)
+
+ptype 'a base(l:string, t:timeformat) =
+{
+ file : 'a;
+ time : pcompute t;
+ loc  : pcompute l;
+}
+
+ptype files (l:string, t:timeformat)=
+ directory {
+  corald   : pre "/corald\.log\.head/"         [1]
+            [(TIMESTAMP>=700) && (OWNER="dpw")]    (corald_ty base(l,t));
+  coraldns : pre "/coraldnssrv\.log\.head/"    [1] (coraldns_ty base(l,t));
+  coralweb : pre "/coralwebsrv\.log\.head/"    [1] (coralweb_ty base(l,t));
+  prob     : pre "/probed\.log\.head/"         [1] (probe_ty base(l,t));
+ }
+
+ptype coral_dir =
+ directory {
+   hosts : phostname/timeformat [] (files(MYPATH.1, MYPATH.2));
+   title : pcompute "coral root";
+   owner : pcompute "mike freedman";
+ }
