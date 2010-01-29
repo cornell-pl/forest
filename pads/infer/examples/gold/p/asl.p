@@ -95,6 +95,6 @@ Precord Pstruct Struct_1 {
         Struct_105 var_104;
 };
 Psource Parray entries_t {
-        Struct_0[];
+        Struct_1[];
 };
 

@@ -128,7 +128,7 @@ OUTD = output
 # Data files, omitting those that take too long
 # SCESETUP.LOG generates error on Empty
 DATA := $(shell ls data | egrep -v "goldStandard|CVS|README" | egrep -v "SCESETUP.LOG apache.txt")
-GOLDENDATA := dependentArray.txt apache.txt error_log install.log quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 dibbler.1000 crashreporter.log crashreporter.log.modified railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an interface.loop rpmpkgs 
+GOLDENDATA := dependentArray.txt apache.txt error_log quarterlypersonalincome yum.txt boot.log ls-l.txt 1967Transactions.short ai.3000 dibbler.1000 crashreporter.log crashreporter.log.modified railroad.txt MER_T01_01.csv asl.log page_log windowserver_last.log scrollkeeper.log netstat-an interface.loop rpmpkgs install.log 
 SILVERS  = $(addsuffix .ag,$(DATA))
 REPORTS  = $(addsuffix .rep,$(DATA))
 GOLDENREPORTS   = $(addsuffix .rep,$(GOLDENDATA))
@@ -141,8 +141,8 @@ TRAINS   = $(addsuffix .train,$(DATA))
 
 # The following is for regression testing
 $(XS): %.x: data/% learn
-	$(SCRIPTS)/learn $<
-	@(cd gen; make $(<F)-accum; $(AST_ARCH)/$(<F)-accum ../$<)
+	@($(SCRIPTS)/learn $< >& /dev/null)
+	@(cd gen; make $(<F)-accum >& /dev/null; $(AST_ARCH)/$(<F)-accum ../$< >& $(<F).accum; $(SCRIPTS)/check-accum.pl $(<F).accum; rm -f $(<F).accum)
 
 regress: $(XS)
 
