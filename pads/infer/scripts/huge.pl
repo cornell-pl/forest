@@ -88,7 +88,7 @@ if (!$initsize) {
 if (!$rep || $rep == 0) {$reparse = "false";}
 else {$reparse = "true";}
 
-print "Huge.pl Arguments: initsz = $initsize, $incsz = $incsize, adc = $adc, uc = $uc\n";
+print "Huge.pl Arguments: initsz = $initsize, incsz = $incsize, adc = $adc, uc = $uc\n";
 
 foreach my $largefile (@largefiles)
 {
