@@ -52,3 +52,14 @@ configurations by customizing build pa- rameters. This paper gives a
 brief overview of Vesta, outlining Vesta's advantages over traditional
 tools, how those benefits are achieved, and the system's overall
 performance.
+
+https://fedorahosted.org/squeal/
+http://dmalcolm.livejournal.com/3069.html
+
+"squeal" (formerly "show") is a mashup of SQL and the command-line. It
+lets you issue SQL-like queries upon files in the filesystem.
+
+For example, here's a simple command-line way of querying log files,
+to see who's been viewing this web site:
+
+  squeal "count(*)", host from /var/log/httpd/*access_log* group by host;
