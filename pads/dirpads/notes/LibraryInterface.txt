@@ -1,0 +1,69 @@
+Typed Directories, language binding/library implementation.
+----------------------------------------------------------------------------------------------------------------------
+
+A directory declaration corresponds to a pair of data structures:
+a "rep" and meta data.  
+
+Data
+The data contains information obtained from the name of the file/directory (if any) and information from the contents of the file (if described by a pads description).  If the corresponding file has not been read yet, the rep contains default values, determined by the type.  Alternatively, the data contains thunks that if touched, will load the data.  
+
+Meta-data
+The meta data contains 
+  owner of file
+  groups of file
+  permissions of file
+  last modification date
+  load date (when data was loaded in to memory)
+
+Observation:
+The file system can change out from under us at any time.  
+
+We probably don't want to require modifications to the operating system to control such changes. (Although it might be a good idea to keep a list of what support we would need).  There may be work on functional file systems that we could leverage (nixOS?).  
+
+An alternative strategy is simply to time stamp all the data we pull from the file system and mark anytime we find inconsistencies in the meta data.
+
+Connect
+-------------
+The language contains an operation to connect a "root" program variable with a description and a location on disk (some descriptions may have the location hard-coded, in which case the location component may be optional).
+One possible syntax
+
+let root :: My_Dir_Desc_t = "path"
+
+Possible semantics:
+1. Process all of the file system that matches the description.
+   Verify all structural properties (such as existence/non-existence
+     of files, permissions, owners, timestamps, correctness of links, etc.)
+   Parse all files with parsing tools (ie, pads files), setting reps and md.
+   Positive: check once, then proceed without further worries 
+            (assuming file system doesn't change)
+   Negative: Probably don't want to load large files eagerly.
+
+2. Verify structural properties, but don't parse files.
+   Load files when they are demanded.
+
+3. Simply initialize data structures, verify structures as they are accessed.
+   Negative: Defers checking so errors can occur at any time.
+   Positive: File system can change, so in some sense, errors can occur 
+    at any time.  
+
+We can support operations that do each of these:  
+ load_all for (1)
+ load_structure for (2)
+ connect for (3)
+then let the programmer decide what works best for given application.
+
+What happens if part of the file system is accessible through a symbolic link that disappears? 
+
+Refresh
+-------------
+let r' = refresh r
+This operation has the effect of initializing r' to have the same files loaded, but each loaded file is checked with the current disk version to bring it up to date if necessary.  The model is functional: once a file is read, its value never changes.  Ie, a given file goes from unloaded to loaded with the contents at a particular time, but no other changes will happen.  If the file is missing at load time, then r instead records an error value. If a file that r successfully loaded has disappeared, then r' will record instead an error. 
+
+Diff
+-------
+let d = diff r r'
+This operation returns a structure that marks the differences between r and r'.  If components are both "read", then it compares the in-memory structures.  If components are both "unread", then they are marked the same, since they would both be populated from the same on-disk file and would hence be the same. 
+
+File manipulation operations
+-------------------------------------------------------
+Should we provide operations to affect the file system?  Add files, change links, etc?  We don't want to bite off too much.  But it does seem like a natural extension of what we are doing.  One idea is to permit changes but only those that produce a file system that is still consistent with the initial description.  To induce other changes, the programmer can use the normal file operations of the language.  
