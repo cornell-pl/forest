@@ -35,8 +35,12 @@ sub getFileName
 sub output
 {
   my ($hdr, $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $try) = @_;
-  printf ("$hdr: lntime = %.2f  rptime = %.2f  padstime = %.2f  blobtime = %.2f  tc = %.2f  adc = %.2f  score = %.2f  dist = %d  ",  
-		$time, $rptime, $padstime, $blobtime, $tc, $adc, $score, $dist);
+  if ($rptime>0) {my $rptime_s = sprintf("%.2f", $rptime);} else {my $rptime_s = "NA";}
+  if ($padstime >0) {my $padstime_s = sprintf("%.2f", $padstime);} else {my $padstime_s = "NA";}
+  if ($blobtime>0) {my $blobtime_s = sprintf("%.2f", $blobtime);} else {my $blobtime_s = "NA";}
+  if ($dist>=0) {my $dist_s = sprintf("%.2f", $dist);} else {my $dist_s = "NA";}
+  printf ("$hdr: lntime = %.2f  rptime = %s  padstime = %s  blobtime = %s  tc = %.2f  adc = %.2f  score = %.2f  dist = %s  ",  
+		$time, $rptime_s, $padstime_s, $blobtime_s, $tc, $adc, $score, $dist_s);
   if ($try == 0) {
     printf("accuracy = %.2f\%\n", $rate);
   }
@@ -63,8 +67,7 @@ sub scan
    {$time = $1;}
    elsif (/Reparse time = ([0-9.]+)/)
    {$rptime = $1;}
-   elsif (/Edit distance = ([0-9.]+)/)
-   {$dist = $1;}
+   elsif (/.*ty2 = ([0-9.]+) nodes.*Edit distance = ([0-9.]+)/) {$dist = $2/$1;}
    elsif (/.*uncaught exception.*/)
     {$score = -1;
      last;
@@ -87,7 +90,7 @@ sub getGoldDist
  {
    my $line = `descdist gen/$arch/$filename.pxml $goldxml`; 
    chomp $line;
-   if ($line =~ /Edit distance = ([0-9.]+)/) {return $1;}
+   if ($line =~ /.*ty2 = ([0-9.]+) nodes.*Edit distance = ([0-9.]+)/) {return $2/$1;}
     else {return -1;}
  }
  else {return -1;}

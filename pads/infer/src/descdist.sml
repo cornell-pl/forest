@@ -29,9 +29,12 @@ structure Descdist: sig
 	      val xml2 = PxmlParse.loadXML xmlpath2
 	      val ty1 = Pxml.xmlToIR Pxml.StringMap.empty xml1
 	      val ty2 = Pxml.xmlToIR Pxml.StringMap.empty xml2
+	      val numNodes1 = Editdistance.numNodes ty1
+	      val numNodes2 = Editdistance.numNodes ty2
 	      val d = Editdistance.treeEditDistance(ty1, ty2)
           in
-            print ("Edit distance = " ^ Int.toString d ^ "\n")
+            print ("ty1 = " ^ Int.toString numNodes1 ^ " nodes, ty2 = " ^
+		   Int.toString numNodes2 ^ " nodes, Edit distance = " ^ Int.toString d ^ "\n")
 	  end
 	| _ => raise InvalidInput
       )
