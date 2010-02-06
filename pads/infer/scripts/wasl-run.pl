@@ -34,11 +34,15 @@ sub getFileName
 
 sub output
 {
+  my $rptime_s;
+  my $padstime_s;
+  my $blobtime_s;
+  my $dist_s;
   my ($hdr, $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $try) = @_;
-  if ($rptime>0) {my $rptime_s = sprintf("%.2f", $rptime);} else {my $rptime_s = "NA";}
-  if ($padstime >0) {my $padstime_s = sprintf("%.2f", $padstime);} else {my $padstime_s = "NA";}
-  if ($blobtime>0) {my $blobtime_s = sprintf("%.2f", $blobtime);} else {my $blobtime_s = "NA";}
-  if ($dist>=0) {my $dist_s = sprintf("%.2f", $dist);} else {my $dist_s = "NA";}
+  if ($rptime>0) {$rptime_s = sprintf("%.2f", $rptime);} else {$rptime_s = "NA";}
+  if ($padstime >0) {$padstime_s = sprintf("%.2f", $padstime);} else {$padstime_s = "NA";}
+  if ($blobtime>0) {$blobtime_s = sprintf("%.2f", $blobtime);} else {$blobtime_s = "NA";}
+  if ($dist>=0) {$dist_s = sprintf("%.2f", $dist);} else {$dist_s = "NA";}
   printf ("$hdr: lntime = %.2f  rptime = %s  padstime = %s  blobtime = %s  tc = %.2f  adc = %.2f  score = %.2f  dist = %s  ",  
 		$time, $rptime_s, $padstime_s, $blobtime_s, $tc, $adc, $score, $dist_s);
   if ($try == 0) {
@@ -184,7 +188,7 @@ sub inc
     $num++;
 #    output("$filename (inc)", $score, $rate, $exectime, $reparsetime, $ptime, $btime, $num);
   }
-  unlink("$filename.inc");
+#  unlink("$filename.inc");
   if ($num > 0) {
     $time = $time/$num; 
     $rptime = $rptime/$num;
@@ -355,7 +359,7 @@ if ($otherargs =~ /.*-incsize.*/) {
   print "Begin init/incremental size tests\n";
   for (my $i = 500; $i <= $largefile_lines && !$timeout; $i=$i*2)
   {
-   for (my $j = 50; $j <= 300; $j+=50)
+   for (my $j = 100; $j <= 16000; $j*=2)
    { 
     ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0, $adc_weight, $uc);
     $dist = getGoldDist ($largefile);
