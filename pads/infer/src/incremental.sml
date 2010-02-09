@@ -316,7 +316,8 @@ structure Incremental: sig
 	     end
 	    else newTy
 
-	    (* val _ = (print "Updated newty:\n"; printTy newTy) *)
+	    val _ = (print ("New Ty after Chunk " ^ Int.toString index ^ " (" ^ 
+			Int.toString count ^ " lines):\n"); printTy newTy)
 	    (* val refinedTy = Reduce.reduce 4 newTy *)
 	    val elapse = Time.- (Time.now(), start_time)
    	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")

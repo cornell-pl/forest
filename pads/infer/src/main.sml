@@ -112,9 +112,9 @@ structure Main : sig
          ("blob",     "threshold ratio used for blob finding (default 1.0), higher means fewer blobs",	   
        PCL.Float (setBlobRatio, false)),
 *)
-	 ("timeout",  "timeout for learning (default 900 secs)",					   PCL.Int (setTimeout, false)),
+	 ("timeout",  "timeout for learning (default " ^ (Int.toString def_timeout) ^ " secs)",					   PCL.Int (setTimeout, false)),
 	 ("u",        "use union clustering algorithm",    	  				           PCL.FloatOpt (setUnionClustering, false)),
-	 ("w",        "set adc coefficient",    	  				           PCL.FloatOpt (setAdcWeight, false))
+	 ("w",        "set adc coefficient (default " ^ Real.toString (!adcCoeff) ^ ")",    	  				           PCL.FloatOpt (setAdcWeight, false))
         ]
 
     fun checkOutputDir() =(
