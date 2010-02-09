@@ -1968,10 +1968,16 @@ fun isBlobTy ty =
 fun isCandidateBlob ty =
    if getHeight ty < minBlobHeight then false
    else 
-	let val ltokens = mergeTokens ty
+	let (* val ltokens = mergeTokens ty *)
+	    val tyc = toReal (getTypeComp ty)
+	    val adc = toReal (getAtomicComp ty) 
+	    val ratio1 = tyc / adc
         in
+	  (*
 	  if score (measure 0 (RefinedBase (getAuxInfo ty, Blob(NONE, NONE), ltokens))) <
 	     score ty then true
+	  *)
+	  if ratio1 > def_blobRatio then true
 	  else false
 	end
 
@@ -1990,6 +1996,7 @@ fun getTailTys tys =
 and mkBlob sibling_opt ty = 
   if (* isStructTy ty orelse *) getHeight ty < minBlobHeight then ty
   else 
+  let val ty = unnest_tuples NONE ty in
   case sibling_opt of
     NONE => ty (* we don't allow desc without a trailer to be turned into a blob *)
 (*
@@ -2007,8 +2014,6 @@ and mkBlob sibling_opt ty =
      case ty of 
        Pstruct (a, tys) =>
  	(
-	  let val ty = unnest_tuples NONE ty
-	  in 
 	  case getStoppingPatt sibty of
 	    (SOME str, NONE) =>
 	    let val (hdTys, candidateBlobTys) = getTailTys tys
@@ -2040,7 +2045,6 @@ and mkBlob sibling_opt ty =
 		  end
 	    end
 	  | _ => ty
-	  end 
     	)
      | _ =>
 	let
@@ -2113,6 +2117,7 @@ and mkBlob sibling_opt ty =
 	  | _ => ty
 	end
   )
+  end
 
 and contract_blobs sib ty =
 (* this function merge adjacent blobs in struct or unions or switches *)
@@ -2700,8 +2705,8 @@ let
 	  in
 	  	(* as long as the cost keeps going down, keep iterating *)
 	  	if lowCost < cur_cost then 
-		((*print "Old Ty:\n"; printTy (measure ty); 
-		 print "New Ty:\n"; printTy (measure newTy);*) 
+		((* print "Old Ty:\n"; printTy (measure 0 ty); 
+		 print "New Ty:\n"; printTy (measure 0 newTy); *)
 		 iterate newcmap newTy)
 	  	else (newcmap, newTy) 
 	  end
