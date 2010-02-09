@@ -1975,6 +1975,8 @@ fun isCandidateBlob ty =
 	  else false
 	end
 
+(* function to separate into prefix tys and postfix tys where all postfixes are blob
+candidates *)
 fun getTailTys tys =
   let fun getTail (hds, tails) =
 	case tails of
@@ -2005,6 +2007,8 @@ and mkBlob sibling_opt ty =
      case ty of 
        Pstruct (a, tys) =>
  	(
+	  let val ty = unnest_tuples NONE ty
+	  in 
 	  case getStoppingPatt sibty of
 	    (SOME str, NONE) =>
 	    let val (hdTys, candidateBlobTys) = getTailTys tys
@@ -2036,6 +2040,7 @@ and mkBlob sibling_opt ty =
 		  end
 	    end
 	  | _ => ty
+	  end 
     	)
      | _ =>
 	let
