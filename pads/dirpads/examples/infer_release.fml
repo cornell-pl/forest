@@ -1,5 +1,5 @@
-(* This directory specification describes a subset of the files in
-pads/infer directory which are to be tarballed and released *)
+{- This directory specification describes a subset of the files in
+pads/infer directory which are to be tarballed and released -}
 
 let benchmarks = [
   "1967transactions.short";    
@@ -42,90 +42,89 @@ let benchmarks = [
   "yum" 
 ]
                  
-(* examples/data directory *)
-pdirectory data_t = {
-  [b : p_text <| permission=-rw-r--r-- | b <- benchmarks];
+ptype data_d = pdirectory {
+  dataFiles is [d | d <- benchmarks] :: p_text <| permission = "-rw-r--r--" |>) dlist;
   other files ...
 }
 
-pdirectory gold_data_t = {
-  [b : p_text <| permission=-rw-r--r-- | b <- benchmarks];
+ptype  gold_data_d = pdirectory {
+  dataFiles is [data | data <- benchmarks] :: (p_text <| permission = "-rw-r--r--" |>) dlist;
 }
 
-(******* the following syntax is not quite right... *)
-pdirectory ir_t = {
-  [d + ".sml" : p_sml <| permission = -rw-r--r-- | d <- benchmarks];
+{- Pads gold descriptions represented as sml data structures. -}
+ptype ir_d = pdirectory {
+  irs is [data + ".sml" :: p_sml <| permission = "-rw-r--r--"|> | data <- benchmarks];
 }
 
-(* the gold descriptions of the 16 benchmarks, the naming convention is
-a bit different here. Maybe we wanna consider renaming the .p files to
-follow the names in benchmarks list *)
-pdirectory gold_pads_t = {
-  [b + ".p" : p_sml <| permission = -rw-r--r-- | d <- benmarks_alt];
+{- the gold descriptions of the 16 benchmarks, the naming convention is
+a bit different here. Maybe we want to consider renaming the .p files to
+follow the names in benchmarks list -}
+ptype gold_pads_d = pdirectory {
+  descriptions is [data + ".p" :: p_pads <| permission = "-rw-r--r--"|> | data <- benmarks_alt];
 }
 
-(* examples/gold directory *)
-pdirectory gold_t = {
-  "GNUmakefile": p_text <| permission.all=r && permission.user=w;
-  "data": gold_data_t <| permission.all = rx;
-  "ir": ir_t <| permission.all = rx;
-  "p": gold_pads_t <| permission.all = rx;
+{- examples/gold directory -}
+ptype gold_d = pdirectory {
+  GNUmakefile :: p_make      <| permission.all = "r" && permission.user = "w" |>;
+  data        :: gold_data_d <| permission.all = "rx" |>;
+  ir          :: ir_d        <| permission.all = "rx" |>;
+  p           :: gold_pads_d <| permission.all = "rx" |>;
 }
 
-(* examples/results directory -- contains a makefile *)
-pdirectory results_t = {
-  "GNUmakefile": p_text <| permission.all=r && permission.user=w;
+{- examples/results directory -- contains a makefile 
+   This directory has more structure than this.  The description should be fleshed out.  -}
+ptype results_d = pdirectory {
+  GNUmakefile :: p_make <| permission.all = "r" && permission.user = "w" |>;
 }
 
-(* examples directory *)
-pdirectory examples_t = {
-  "GNUmakefile" : p_text <| permission.all=r && permission.user=w;
-  "README" : p_text <| permission = -rw-r--r--;
-  "data": data_t <| permission.all=rx;
-  "gold": gold_t <| permission.all=rx;
-  "results": results_t <| permission.all=rx;
+{- examples directory -}
+ptype examples_d = pdirectory {
+  README      :: p_text    <| permission = "-rw-r--r--" |>;
+  GNUmakefile :: p_make    <| permission.all = "r" && permission.user = "w" |>;
+  data        :: data_d    <| permission.all = "rx" |>;
+  gold        :: gold_d    <| permission.all = "rx" |>;
+  results     :: results_d <| permission.all = "rx" |>;
 }
 
 ptype comment_t = "#" * pstring(eor);
 ptype def = "def" * pwhite * pword * pwhite * pstring(eor);
 ptype exp = "def" * pwhite * "P" * pword * pwhite * pstring(eor);
 ptype line_t = Def of def | Exp of ex | Comment of comment_t
-ptype config_t = line_t plist
+ptype config_f = line_t plist psource
 
-(* include directory *)
-pdirectory include_t = {
-  "GNUmakefile.output" : p_text <| permission.all=r;
-  "README": p_text <| permission.all=r;
-  "basetoken.p" : p_pads <| permission.all=r;
-  "tokens.config" : config_t <| permission.all=r;
-  "vanilla.config" : config_t <| permission.all=r;
+{- include directory -}
+ptype include_d = pdirectory {
+  README                               :: p_text   <| permission.all = "r" |>;
+  makefile     is "GNUmakefile.output" :: p_make   <| permission.all = "r" |>;
+  basetokens   is "basetoken.p"        :: p_pads   <| permission.all = "r" |>;
+  tokens       is "tokens.config"      :: config_f <| permission.all = "r" |>;
+  vanilla      is "vanilla.config"     :: config_f <| permission.all = "r" |>;
 }
 
-(* scripts directory *)
-pdirectory scripts_t = {
-  "config.pl" : p_perl <| permission=-rwxr-xr-x;
-  "grapher.template" : p_perl <| permission = -rwxr-xr-x;
-  "learn" : p_perl <| permission = -rwxr-xr-x;;
+{- scripts directory -}
+ptype scripts_d = pdirectory {
+  config  is "config.pl"        :: p_perl <| permission = "-rwxr-xr-x" |>;
+  grapher is "grapher.template" :: p_perl <| permission = "-rwxr-xr-x" |>;
+  learn                         :: p_perl <| permission = "-rwxr-xr-x" |>;
 }
 
+ptype sourceFile_f = p_sml <| permission = "-rw-r--r--" |>;
 
-pfile sourceFile_t = p_sml <| permission = -rw-r--r--;
-
-(* the source directory contains a main.cm and a list of sml files *)
-pdirectory src_t = {
-  "main.cm" : p_text <| = -rw-r--r--;
-  [ s: sourceFile_t | s <- getfiles ("*.sml")]; (* how do we name the list comp *)
+{- the source directory contains a main.cm and a list of sml files -}
+ptype  src_d = pdirectory {
+  main    is "main.cm" :: p_sml-cm <| permission = "-rw-r--r--" |>;
+  sources is {*.sml}   :: sourceFile_f dlist;
 }
 
-(* The root infer directory *)
-pdirectory infer_t = {
-  "GNUmakefile" : p_text <| permission.all=r;
-  "INSTALL_NOTES" : p_text <| permission.all = r;
-  "README" : p_text <| permission = r;
-  "cpl-1.0-license.html" : p_html <| permission.all = r;
-  "cpl-1.0-license.txt" : p_text <| permission.all = r;
-  "examples" : examples_t <| permission.all=rx;
-  "include" : include_t <| permission.all= rx
-  "scripts" : scripts_t <| permission.all = rx;
-  "src" : src_t <| permission.all = rx;
+{- The root infer directory -}
+ptype infer_d = pdirectory {
+   README        :: p_text        <| permission.all = "r" |>;
+   INSTALL_NOTES :: p_text        <| permission.all = "r" |>;
+   text_license is "cpl-1.0-license.html" :: p_html <| permission.all = "r"  |>;
+   html_license is "cpl-1.0-license.txt"  :: p_text <| permission.all = "r"  |>;
+   GNUmakefile   :: p_make        <| permission.all = "r" |>;
+   examples      :: examples_d    <| permission.all = "rx" |>;
+   include       :: include_d     <| permission.all = "rx" |>;
+   scripts       :: scripts_d     <| permission.all = "rx" |>;
+   src           :: src_d         <| permission.all = "rx" |>;
 }

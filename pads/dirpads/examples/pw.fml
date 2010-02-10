@@ -55,11 +55,11 @@ ptype cgi_d = pdirectory {
 
 {- Directory of shell scripts invoked by CGI to run learning system -}
 ptype scripts_d = pdirectory {
-    "rlearn"             :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script for running PADS comiler on stock format
-    "rlearn-own"         :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script for running PADS compiler on user format
-    "r-accum"            :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script to generate and run accumulator
-    "r-xml"              :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script to generate and run XML converter
-    "r-fmt"              :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script to generate and run formating program
+    rlearn             :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script for running PADS comiler on stock format
+    rlearn-own         :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script for running PADS compiler on user format
+    r-accum            :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script to generate and run accumulator
+    r-xml              :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script to generate and run XML converter
+    r-fmt              :: p_bash   <| permission == "rwxrwxr-x" |>;    -- Shell script to generate and run formating program
   }
 
 {- Format for file listing data sources for web site -}
@@ -117,7 +117,7 @@ ptype dataLink_f p  = (dataFile_f @ p) <| permission == "rwxrwxr-x" |>
 
 {- Directory of optional links to source data files -}
 ptype data_d(sourceNames :: sourceNames_f, d :: dataSource_d(sourcesNames)) = pdirectory {
-     data is [s :: (dataLink_f (loc d/s)) option |  s <- sourceNames]
+     data is [s :: (dataLink_f ((loc d) ++ "/s")) option |  s <-     sourceNames]
 };
 
 {- Directory that stores the generated machine-dependent output for data source named source -}
@@ -138,7 +138,7 @@ ptype  example_d source = pdirectory {
    pads_pml       is source ++ ".pml"           :: p_padsml <| permission == "rw-rw-rw-" |>;    -- padsml description of data source
    vanilla        is "vanilla.p"                :: p_pads   <| permission == "rw-rw-rw-" |>;    -- input tokenization
    makefile       is "GNUmakefile"              :: p_make   <| permission == "rw-rw-rw-" |>;    
-   machine        is  $"AST_ARCH"               :: machineDep_t(source) <| permission == "rwxrwxrwx" |> option;   -- Platform dependent files
+   machine        is  $"AST_ARCH"               :: machineDep_d(source) <| permission == "rwxrwxrwx" |> option;   -- Platform dependent files
    accum_c        is source ++ "-accum.c"       :: p_ccode <| permission == "rw-rw-rw-" |> option;   -- template for generating accumulator output
    accum_out      is source ++ "-accum.out"     :: p_txt   <| permission == "rw-rw-rw-" |> option;   -- ASCII Accumulator output
    accum_xml_out  is source ++ "-accum_xml.out" :: p_txt   <| permission == "rw-rw-rw-" |> option;   -- XML Accumulator output
@@ -150,8 +150,9 @@ ptype  example_d source = pdirectory {
 };
 
 {- Directory that stores all information for one user. -}
+{- This type is an example where it isn't easy to factor type of element out into containing list -}
 ptype user_d(sources::sourceNames_f, dataSource::dataSource_d(sources))  = pdirectory {
-    data        is  "data" :: data_d(sources,dataSource) <| permission == "rwxrwxrwx" |> option;
+    data        :: data_d(sources,dataSource) <| permission == "rwxrwxrwx" |> option;
     runExamples is [    s  :: example_d s <| permission == "rwxrwxrwx" |> option | s <- sources];
   }
 
@@ -160,6 +161,9 @@ ptype user_d(sources::sourceNames_f, dataSource::dataSource_d(sources))  = pdire
 ptype users_d(info::info_d, dataSource::dataSource_d) = pdirectory {
     allUsers is [userDir :: user_d(sources info, dataSource) <| permission == "rwxrwxrwx" |> option
                 | userDir <- userDirs(users info) ]
+... or ...
+    allUsers is [userDir | userDir <- userDirs(users info) ]
+             :: (user_d(sources info, dataSource) <| permission == "rwxrwxrwx" |> option) dlist
   }
 
 
