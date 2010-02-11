@@ -133,7 +133,7 @@ structure Common = struct
 	|	Pstring(str)  => StringConst(str)
 	|	Pwhite (str)  =>  StringConst(str)  
 	|	Ptext (str)  =>  StringConst(str)  
-	|	Other(c)  =>  StringConst(Char.toString(c))  
+	|	Other(c)  =>  StringConst(str(c))  
 	| 	_ => StringConst("")
 
 	fun bdoltos (x:Token option list): string = (case x of

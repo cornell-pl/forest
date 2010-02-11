@@ -19,6 +19,7 @@ structure Config = struct
     val def_printLineNos = false
     val def_printIDs     = true
     val def_entropy      = false
+    val def_use_sa	 = false
     (* val def_var_card_bits   = false *)
     val def_timeout	= 900 (* default timeout is 15 mins *)
     val def_union_cluster_threshold = 0.15
@@ -30,6 +31,7 @@ structure Config = struct
     val printLineNos      = ref def_printLineNos
     val printIDs          = ref def_printIDs
     val printEntropy      = ref def_entropy
+    val use_sa		  = ref def_use_sa
     val executableDir     = ref ""
     val lexName	          = ref "vanilla"
     val goldenRun         = ref false
@@ -76,6 +78,12 @@ structure Config = struct
 								    | SOME f => Real.toString f)^"\n")  )
 
     fun printParameters () = print (parametersToString ())
+
+
+    (***** Parameters for simulated annealing ****)
+    val def_max_temp = 100.0
+    val def_max_annealing_iterations = 100
+    val def_best_cost = 1.0
 
     (********************************************************************************)
     (*********************  END Configuration ***************************************)

@@ -72,6 +72,7 @@ structure Main : sig
     fun setPrintLineNos b = (if b then printLineNos := b else ())
     fun setPrintIDs     b = (if b then  printIDs := b else ())
     fun setEntropy      b = (if b then  printEntropy := b else ())
+    fun setSA           b = (if b then  use_sa := b else ())
     fun addSourceFile   f  =  srcFiles := !srcFiles @ [f]
     fun setLexName	n = lexName    := n
     fun setGoldenRun    s = goldenRun  := (s = "true")
@@ -114,7 +115,8 @@ structure Main : sig
 *)
 	 ("timeout",  "timeout for learning (default " ^ (Int.toString def_timeout) ^ " secs)",					   PCL.Int (setTimeout, false)),
 	 ("u",        "use union clustering algorithm",    	  				           PCL.FloatOpt (setUnionClustering, false)),
-	 ("w",        "set adc coefficient (default " ^ Real.toString (!adcCoeff) ^ ")",    	  				           PCL.FloatOpt (setAdcWeight, false))
+	 ("w",        "set adc coefficient (default " ^ Real.toString (!adcCoeff) ^ ")",    	  				           PCL.FloatOpt (setAdcWeight, false)),
+         ("sa",        "Use simulated annealing (default "^(Bool.toString def_use_sa)^")",                    PCL.Bool    setSA)
         ]
 
     fun checkOutputDir() =(

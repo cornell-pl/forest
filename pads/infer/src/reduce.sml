@@ -355,9 +355,9 @@ and prefix _ ty =
 		   end
 
 	  val newtys = foldl add nil tylist
-	in
-	  if length newtys = 1 then measure 0 (hd newtys)
-	  else measure 0 (Punion (a, newtys))
+	in  
+	    if length newtys = 1 then measure 0 (hd newtys)
+	    else measure 0 (Punion (a, newtys))
 	end
   | _ => ty
 
@@ -1996,7 +1996,7 @@ fun getTailTys tys =
 and mkBlob sibling_opt ty = 
   if (* isStructTy ty orelse *) getHeight ty < minBlobHeight then ty
   else 
-  let val ty = unnest_tuples NONE ty in
+  let val ty = prefix NONE (unnest_tuples NONE ty) in
   case sibling_opt of
     NONE => ty (* we don't allow desc without a trailer to be turned into a blob *)
 (*
@@ -2511,7 +2511,8 @@ let
 		  remove_degenerate_list,
 		  unnest_tuples,
 		  unnest_sums,
-		  prefix_postfix_sums, 
+		  (* prefix_postfix_sums,*)
+		  prefix, 
 		  enum_to_string
 		]
   val phase_six_rules : data_independent_rule list = 
@@ -2535,6 +2536,7 @@ let
 		]
 
   (* generate the list of rules *)
+  (* val _ = print ("*** Phase " ^ Int.toString phase ^ "\n") *)
   val cmap = case phase of
 	2 => Constraint.constrain' ty
 	| _ => LabelMap.empty
@@ -2710,8 +2712,78 @@ let
 		 iterate newcmap newTy)
 	  	else (newcmap, newTy) 
 	  end
+	 
+
+
+
+   
+          (* randomly pick an element from a list *)
+          val rand_seed = Random.rand(0, LargeInt.toInt ((Time.toSeconds(Time.now())) mod 10000)) 
+          fun rand_pick l =
+	    let val len = length l
+	    in
+	      if len=0 then raise Fail "List empty!"
+	      else 
+	        let val index = Random.randRange (0, len-1) rand_seed
+		    (* val _ = print ("Picked rule " ^ Int.toString index ^ "\n") *)
+	        in List.nth (l, index)
+	        end
+	    end
+
+  	  (* as a start, we use a linear function, ratio goes from 0 to 1 *) 
+	  fun temp ratio = def_max_temp * (1.0 - ratio)
+	  
+	  fun sa_prob (curcost, newcost, t) =
+	    if newcost < curcost then 1.0
+	    else if t < Real.minPos then 0.0 
+ 	    else Math.exp((curcost - newcost) / t)
+ 
+	  (* we randomly pick a rule to apply to the current ty *) 
+	  fun neighbor (cmap, ty) =
+ 	        case phase of
+			1 => (cmap, (rand_pick phase_one_rules) sib ty)
+		|	2 => (rand_pick phase_two_rules) cmap ty
+		|	3 => (cmap, (rand_pick phase_three_rules) sib ty)
+		|	4 => (cmap, (rand_pick phase_four_rules) sib ty)
+		|	5 => (cmap, (rand_pick phase_five_rules) sib ty) 
+		|	6 => (cmap, (rand_pick phase_six_rules) sib ty) 
+		| 	_ => (print "Wrong phase!\n"; raise TyMismatch)
+
+	  fun simulated_anneal cmap ty =
+	    let val k = 0
+		val cost = score ty
+		fun sa_helper k cmap ty curcost best_cmap best_ty best_cost =
+		  if k >= def_max_annealing_iterations orelse curcost <= def_best_cost then
+		    (best_cmap, best_ty)
+		  else
+		    let 
+			(* val _ = print ("phase = " ^ Int.toString phase ^ " k = " ^ Int.toString k ^ "\n") *)
+			val (new_cmap, newty) = neighbor (cmap, ty)
+		        val newcost = score newty
+		        val (best_cmap, best_ty, best_cost) =
+			   if newcost < best_cost then 
+				((* print "prev best ty:\n"; printTy best_ty; 
+				 print "prev ty:\n"; printTy ty; 
+  				 print "cmap:\n"; printConstMap cmap;
+				 print "new best ty:\n"; printTy newty; *)
+				(new_cmap, newty, newcost))
+			   else (best_cmap, best_ty, best_cost)
+			val new_prob = sa_prob(curcost, newcost, 
+				        temp((Real.fromInt k) / (Real.fromInt def_max_annealing_iterations)))
+		        val (cmap, ty, curcost) = 
+				if 	new_prob > Random.randReal(rand_seed) then
+					((* print ("prob = " ^ Real.toString new_prob ^ "\n");*)
+					(new_cmap, newty, newcost))
+				else (cmap, ty, curcost)
+		    in sa_helper (k+1) cmap ty curcost best_cmap best_ty best_cost
+		    end
+	    in sa_helper k cmap ty cost cmap ty cost
+	    end
+		
     in
- 	(iterate newcmap (measure 1 reduced_ty)) 
+	if (!use_sa) then 
+ 	 simulated_anneal newcmap (measure 1 reduced_ty)
+ 	else iterate newcmap (measure 1 reduced_ty)
     end
   (* we use $ to denote end of the entire chunk *)
   val sib_opt = case sib_opt of

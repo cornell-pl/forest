@@ -486,7 +486,7 @@ structure Incremental: sig
      if length args < 1 then
 	(print ("Usage: increment -f DATA_FILE(S) [-i INIT_SIZE (500)] [-l INC_SIZE (100)] \n" ^ 
 	"[-d INIT_DESC_XML] [-opt OPT_LEVEL (3)] [-tmout SECS (900)] [-w ADC_WEIGHT (10)]\n" ^
-	"[-output OUTPUT_DIR] [-reparse BOOL] [-u FLOAT]\nSizes are in # of lines\n");
+	"[-output OUTPUT_DIR] [-reparse BOOL] [-u FLOAT] [-sa BOOL] \nSizes are in # of lines\n");
 	anyErrors := true)
      else
        let
@@ -522,6 +522,10 @@ structure Incremental: sig
 			  else
 			    useUnionClustering := SOME threshold
 			end
+
+         val _ = case StringMap.find (argMap, "-sa") of
+		NONE => ()
+		| SOME x => use_sa := valOf(Bool.fromString x)
 
 	 val _ = if opt_level = 0 then
 			(
