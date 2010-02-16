@@ -1,0 +1,163 @@
++------------+
+| DATA MODEL |
++------------+
+
+n ::= ...          -- STRINGS
+
+p,q ::=              -- PATH
+  | .                -- current
+  | ..               -- ancestor
+  | n                -- name
+  | p/p              -- concatenation
+  | /p               -- rooted path
+
+r,s ::=              -- NORMAL PATH
+  | /n1/ ... /nk
+
+F ::= -- FILESYSTEM
+  | { r |-> T }
+
+m ::= -- METADATA
+  | ...
+
+T ::= -- FILESYSTEM CONTENTS
+  | file(n)
+  | dir({n1,...,nk})
+  | link(p)
+
++--------+
+| SYNTAX |
++--------+
+
+s ::=                -- SPECIFICATION
+    | K              -- constant file specs (e.g., XML, ASCII, etc.)
+    | Adhoc(b)       -- b-described file spec 
+    | ^p             -- symbolic link
+    | Pred(e)        -- predicate
+    | Computed(e)    -- computed values
+    | True           -- any directory structure
+    | n : s          -- file/directory named n with spec s
+    | <x:s, s>       -- dependent pair
+    | s|s            -- union
+    | s*             -- iteration
+    | { s | x in e } -- comprehension
+    | ~s             -- negation 
+
++-----------+
+| SEMANTICS |
++-----------+
+
+The function
+
+  eval_and_normalize : env * filesystem * normal path * exp -> (env * normal path) set 
+  eval_bool : env * exp -> env * bool 
+  eval_tau : env * exp -> env * tau
+
+...
+
+The judgement 
+
+  E; F; r |= s ==> v * d
+
+relates an environment E, a file system F, a normal path r, a
+specification s, a value v, and a parse descriptor d. (The judgement is
+a total function from tuples (E,F,r,s) to non-empty sets of pairs
+(v,d).)
+
+E;F;r |= k ==> check_k(F(r))
+
+  -- here are several instances of check_k:
+     * check_any(T) = (T,true)
+
+     * check_dir(T) = (cs,true) if T = dir(cs) 
+     * check_dir(T) = (T,false) if T <> dir(cs) 
+
+     * check_file(T) = (n,true) if T = file(n) 
+     * check_file(T) = (T,false) if T <> file(n)
+
+     * check_link(T) = (n,true) if T = link(n) 
+     * check_link(T) = (T,false) if T <> link(n)
+
+     * check_csv(T) = ((tbl,true),true) if T = file(n) and n is a valid CSV file encoding tbl
+     * check_csv(T) = ((n,false),true) if T = file(n) and n is not a valid CSV file
+     * check_csv(T) = (T,false) if T <> file(n) 
+
+E;F;r |= Adhoc(b) ==> ((v,d),true)      if F(r) = file(n) and b(E,n) = (E',v,d)
+E;F;r |= Adhoc(b) ==> (F(r),false)      if F(r) <> file(n) 
+
+E;F;r |= ^e ==> ((r',r' = r''),true)    if F(r) = link(r') and (_,r'') in eval_and_normalize(E,F,r,e) 
+E;F;r |= ^e ==> (F(r),false)            if F(r) <> link(r') or not exist (E',r'') in eval_and_normalize(E,F,r,e)
+  -- todo: make eval_and_normalize(E,F,r,e) return a string and add this string to the failure case 
+
+E;F;r |= Pred(e) ==> ((),eval_bool(E,e))
+
+E;F;r |= Compute(e) ==> (eval_tau(E,e),true)
+
+E;F;r |= True ==> (F(r),true)
+ 
+E;F;r |= e : s ==> ((r',v),d)          if (E',r') in eval_and_normalize(E,F,r,e) and E';F;r' |= s ==> (v,d)
+E;F;r |= e : s ==> (F(r),false)        if not exist (E',r') in eval_and_normalize(E,F,r,e)
+  -- todo: make eval_and_normalize(E,F,r,e) return a string and add this string to the failure case 
+  
+E;F;r |= <x:s1, s2> ==> ((v1,v2),d1&&d2) if E;F;r |= s1 ==> (v1,d1) and E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2) 
+
+E;F;r |= s1|s2 ==> (v1,true)           if E;F;r |= s1 ==> (v1,true) 
+E;F;r |= s1|s2 ==> (v2,true)           if E;F;r |= s1 ==> (v1,false) and E;F;r |= s2 ==> (v2,true)  
+E;F;r |= s1|s2 ==> (v1,false)          if E;F;r |= s1 ==> (v1,false) and E;F;r |= s2 ==> (v2,false)  
+  -- question: return (v1,v2) in the third case? add a function g to pick a best erroneous parse?
+
+E;F;r |= s* ==> (vs,true)              if vs = { v | E;f;r |= s ==> (v,true) }
+
+E;F;r |= { s | x in e } ==> (fst S, && (snd S))  if S = { (v,d) | (_,r') in eval_and_normalize(E,F,r,e) and E[x:=r'];F;r |= s ==> (v,d) }
+
+  -- note: Kleene star is tantalizingly close to encodable... 
+
+     s* =def= { s | _ in "/" } 
+
+     where the comprehension (in the semantics) is only over true
+     parse descriptors.
+
+E;F;r |= ~s ==> (F(r),false)                        if E;F;r |= s ==> (v,true)
+E;F;r |= ~s ==> (v,true)                            if E;F;r |= s ==> (v,false)
+      
+
++---------+
+| Example |
++---------+
+
+F = 
+  / => dir{foo,bar}
+  /foo => dir{baz}
+  /bar => dir{}
+  /foo/bar => file("hello world!")
+
+s = 
+ "/" : 
+    < dir,
+      "foo" : < dir, 
+                "baz" : k_file >,
+      "bar" : < dir, 
+                empty >
+    > 
+
+Note: dependent product is not associative strictly speaking, but it
+is up to an isomorphism that shuffles the representation of tuples
+around.
+
++-----------------+
+| Syntactic Sugar |
++-----------------+
+
+Empty = Compute(())
+s? = Empty | s
+s1,s2 = { _:s1 * _:s2 }
+s+ = s,s*
+
++-----------+
+| Semantics |
++-----------+
+
+TODO
+
+p |= p
+p |/= p
