@@ -7,15 +7,22 @@ n ::= ...          -- STRINGS
 p,q ::=              -- PATH
   | .                -- current
   | ..               -- ancestor
-  | n                -- name
+  | b                -- PADS-described name
   | p/p              -- concatenation
   | /p               -- rooted path
+
+do we also want other XPath-like stuff?
+  | //p              -- descendant
 
 r,s ::=              -- NORMAL PATH
   | /n1/ ... /nk
 
 F ::= -- FILESYSTEM
   | { r |-> T }
+
+-- note: need to write down what it means for F to be
+   well-formed. E.g., the prefix-closed conditions from the old
+   dircalc file.
 
 m ::= -- METADATA
   | ...
@@ -64,6 +71,26 @@ specification s, a value v, and a parse descriptor d. (The judgement is
 a total function from tuples (E,F,r,s) to non-empty sets of pairs
 (v,d).)
 
+We maintain the invariant that r in dom(F).
+
+=========
+= QUERY =
+=========
+
+r in eval_and_normalize(E,F,"/",e)
+{};F;r |= s ==> (v,d)
+----------------------------------
+F |= e @ s ==> (v,d)
+
+-- note: this judgement provides a facility for users to parse using
+   specifications and arbitrary path expresions. (The
+   eval_and_normalize function checks that r is in dom(F).)
+
+============
+= CONSTANT =
+============
+
+----------------------------
 E;F;r |= k ==> check_k(F(r))
 
   -- here are several instances of check_k:
@@ -82,33 +109,138 @@ E;F;r |= k ==> check_k(F(r))
      * check_csv(T) = ((n,false),true) if T = file(n) and n is not a valid CSV file
      * check_csv(T) = (T,false) if T <> file(n) 
 
-E;F;r |= Adhoc(b) ==> ((v,d),true)      if F(r) = file(n) and b(E,n) = (E',v,d)
-E;F;r |= Adhoc(b) ==> (F(r),false)      if F(r) <> file(n) 
+=========
+= ADHOC =
+=========
 
-E;F;r |= ^e ==> ((r',r' = r''),true)    if F(r) = link(r') and (_,r'') in eval_and_normalize(E,F,r,e) 
-E;F;r |= ^e ==> (F(r),false)            if F(r) <> link(r') or not exist (E',r'') in eval_and_normalize(E,F,r,e)
+F(r) = file(n)    b(E,n) = (E',v,d)
+-----------------------------------
+E;F;r |= Adhoc(b) ==> ((v,d),true)
+
+if F(r) <> file(n)
+----------------------------------
+E;F;r |= Adhoc(b) ==> (F(r),false) 
+
+========
+= LINK =
+========
+
+F(r) = link(r') 
+(_,r'') in eval_and_normalize(E,F,r,e) 
+--------------------------------------
+E;F;r |= ^e ==> ((r',r' = r''),true) 
+
+F(r) <> link(r') 
+----------------------------
+E;F;r |= ^e ==> (F(r),false)
+
+eval_and_normalize(E,F,r,e) = {}
+--------------------------------
+E;F;r |= ^e ==> (F(r),false)
+
   -- todo: make eval_and_normalize(E,F,r,e) return a string and add this string to the failure case 
 
+=============
+= PREDICATE = 
+=============
+
+----------------------------------------
 E;F;r |= Pred(e) ==> ((),eval_bool(E,e))
 
+===========
+= COMPUTE =
+===========
+
+--------------------------------------------
 E;F;r |= Compute(e) ==> (eval_tau(E,e),true)
 
-E;F;r |= True ==> (F(r),true)
- 
-E;F;r |= e : s ==> ((r',v),d)          if (E',r') in eval_and_normalize(E,F,r,e) and E';F;r' |= s ==> (v,d)
-E;F;r |= e : s ==> (F(r),false)        if not exist (E',r') in eval_and_normalize(E,F,r,e)
-  -- todo: make eval_and_normalize(E,F,r,e) return a string and add this string to the failure case 
-  
-E;F;r |= <x:s1, s2> ==> ((v1,v2),d1&&d2) if E;F;r |= s1 ==> (v1,d1) and E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2) 
+=============
+= TRANSFORM =
+=============
 
-E;F;r |= s1|s2 ==> (v1,true)           if E;F;r |= s1 ==> (v1,true) 
-E;F;r |= s1|s2 ==> (v2,true)           if E;F;r |= s1 ==> (v1,false) and E;F;r |= s2 ==> (v2,true)  
-E;F;r |= s1|s2 ==> (v1,false)          if E;F;r |= s1 ==> (v1,false) and E;F;r |= s2 ==> (v2,false)  
+eval_fun(E,e) = f
+E;F;r |= s ==> (v,d)
+--------------------------------------
+E;F;r |= Transform(e,s) ==> f (v,d)
+
+  -- note: in practice, f will produce a pair (v',d') where d' is
+     consistent (in some way) with the structure of v'. Kathleen
+     thinks we can express this condition using functional
+     dependencies in Haskell?
+ 
+  -- notation: e @ s ~~> Transform(e,s)
+
+========
+= TRUE =
+========
+
+r in dom(F)
+-----------------------------
+E;F;r |= True ==> (F(r),true)
+
+========
+= PATH = 
+========
+
+(E',r') in eval_and_normalize(E,F,r,e) 
+E';F;r' |= s ==> (v,d)
+--------------------------------------
+E;F;r |= e : s ==> ((r',v),d) 
+
+eval_and_normalize(E,F,r,e) = {}
+--------------------------------
+E;F;r |= e : s ==> (F(r),false) 
+
+  -- todo: make eval_and_normalize(E,F,r,e) return a string and add this string to the failure case 
+
+========
+= PAIR = 
+========
+
+E;F;r |= s1 ==> (v1,d1) 
+E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2) 
+----------------------------------------
+E;F;r |= <x:s1, s2> ==> ((v1,v2),d1&&d2)  
+
+=========
+= UNION = 
+=========
+
+E;F;r |= s1 ==> (v1,true) 
+----------------------------
+E;F;r |= s1|s2 ==> (inl v1,true) 
+
+E;F;r |= s1 ==> (v1,false)
+E;F;r |= s2 ==> (v2,true)  
+----------------------------
+E;F;r |= s1|s2 ==> (inr v2,true) 
+
+E;F;r |= s1 ==> (v1,false)
+E;F;r |= s2 ==> (v2,false)  
+----------------------------
+E;F;r |= s1|s2 ==> (inn (v1,v2),false) 
+
+inl : in left
+inl : in right
+inn : in neither?
+
   -- question: return (v1,v2) in the third case? add a function g to pick a best erroneous parse?
 
-E;F;r |= s* ==> (vs,true)              if vs = { v | E;f;r |= s ==> (v,true) }
+========
+= STAR =
+========
 
-E;F;r |= { s | x in e } ==> (fst S, && (snd S))  if S = { (v,d) | (_,r') in eval_and_normalize(E,F,r,e) and E[x:=r'];F;r |= s ==> (v,d) }
+vs = { v | E;f;r |= s ==> (v,true) }
+------------------------------------
+E;F;r |= s* ==> (vs,true) 
+
+=================
+= COMPREHENSION =
+=================
+
+S = { (v,d) | (_,r') in eval_and_normalize(E,F,r,e) /\ E[x:=r'];F;r |= s ==> (v,d) }
+---------------------------------------------------
+E;F;r |= { s | x in e } ==> (fst S, && (snd S)) 
 
   -- note: Kleene star is tantalizingly close to encodable... 
 
@@ -117,19 +249,31 @@ E;F;r |= { s | x in e } ==> (fst S, && (snd S))  if S = { (v,d) | (_,r') in eval
      where the comprehension (in the semantics) is only over true
      parse descriptors.
 
-E;F;r |= ~s ==> (F(r),false)                        if E;F;r |= s ==> (v,true)
-E;F;r |= ~s ==> (v,true)                            if E;F;r |= s ==> (v,false)
-      
+============
+= NEGATION =
+============
+
+if E;F;r |= s ==> (v,true)
+----------------------------
+E;F;r |= ~s ==> (v,false)                        
+
+E;F;r |= s ==> (v,false)
+------------------------
+E;F;r |= ~s ==> (v,true)       
 
 +---------+
 | Example |
 +---------+
 
+====================================
+= Exact description of a directory =
+====================================
+
 F = 
   / => dir{foo,bar}
   /foo => dir{baz}
   /bar => dir{}
-  /foo/bar => file("hello world!")
+  /foo/baz => file("hello world!")
 
 s = 
  "/" : 
@@ -144,20 +288,186 @@ Note: dependent product is not associative strictly speaking, but it
 is up to an isomorphism that shuffles the representation of tuples
 around.
 
+===================
+= Empty directory =
+===================
+
+F = 
+  / => dir{foo,bar}
+  /foo => dir{baz}
+  /bar => dir{}
+  /foo/baz => file("hello world!")
+
+s = 
+  < dir, ~("*" : True) > 
+
+{};F;/bar |=?= s ==> (v,d) 
+
+---------------------------------------------
+[1] {};F;/bar |= dir ==> ({},true)
+
+eval_and_normalize({},F,/bar,"*") = {}
+---------------------------------------------
+{};F;/bar |= "*" : True ==> (dir{}, false)
+---------------------------------------------
+[2] {};F;/bar |= ~("*" : True) ==> (dir{},true)
+
+[1] [2]
+--------------------------------------------------------
+{};F;/bar |= <dir, ~("*" : True) > ==> (<{},dir{}>,true)
+
+============================================================================
+
+{};F;/foo |=?= s ==> (v,d) 
+
+---------------------------------------------
+[1] {};F;/foo |= dir ==> ({baz},true)
+
+eval_and_normalize({},F,/foo,"*") = {/foo/baz}
+{},F;/foo/baz/ |= True ==> (file("hello world!"), true)
+------------------------------------------------------------
+{};F;/foo |= "*" : True ==> (file("hello world!"), true)
+------------------------------------------------------------
+[2] {};F;/foo |= ~("*" : True) ==> (file("hello world!"), false)
+
+[1] [2]
+--------------------------------------------------------------------------
+{};F;/foo |= <dir, ~("*" : True) > ==> (<{baz},file("hello world!")>,false)
+
+============================================================================
+
+s' = ~True
+
+{};F;/bar |=?= s' ==> (v,d) 
+
+{};F;/bar |= True ==> (dir{},true)
+------------------------------------
+{};F;/bar |= ~True ==> (dir{},false)
+
+{};F;/quux |=?= s' ==> (v,d) 
+
+/quux not in dom(F), so it doesn't satisfy the invariant of the
+judgement.
+
+=======================
+= Singleton directory =
+=======================
+
+F = 
+  / => dir{foo,bar}
+  /foo => dir{baz}
+  /bar => dir{quux,zap}
+  /foo/baz => file("1")
+  /bar/quux => file("x")
+  /bar/zap => file("y")
+
+s1 = < dir, x:("*" : True)*, Pred(|x| = 1)>
+
+or shorter...
+
+s2 = < x:("*" : True)*, Pred(|x| = 1)>
+
+or shorter...
+
+s3 = < x:dir, Pred(|x| = 1)>
+
+Let's try the simplest one first...
+
+============================================================================
+
+{};F;/foo |=?= s3 ==> (v,d)
+
+---------------------------------
+[1] {};F;/foo |= dir ==> ({baz},true)
+
+----------------------------------------------------------
+[2] {x:={baz},x_d:=true};F;/foo |= Pred(|x| = 1) ==> ((),true)
+
+[1] [2]
+------------------------------------
+{};F;/foo |= s3 ==> (<{baz},()>,true)
+
+============================================================================
+
+{};F;/bar |=?= s3 ==> (v,d)
+
+---------------------------------
+[1] {};F;/bar |= dir ==> ({quux,zap},true)
+
+----------------------------------------------------------
+[2] {x:={quux,zap},x_d:=true};F;/bar |= Pred(|x| = 1) ==> ((),false)
+
+[1] [2]
+------------------------------------
+{};F;/foo |= s3 ==> (<{quux,zap},()>,false)
+
+============================================================================
+
+{};F;/foo |=?= s2 ==> (v,d)
+
+baz in eval_and_normalize({},F,/foo,"*")
+{};F;/foo/baz |= True ==> (file("1"),true)
+-------------------------------------------------
+{};F;/foo |= "*" : True ==> ((/foo/baz,file("1")),true)
+
+S = { (/foo/baz,file("1")) }
+
+S = { v | {};F;/foo |= "*" : True ==> (v,true) }
+------------------------------------------------------------------
+[1] {};F;/foo |= ("*" : True)* ==> (S,true)
+
+------------------------------------------------------------------
+[2] {x:=S,x_d:=true};F;/foo |= Pred(|x| = 1) ==> ((),true)
+
+[1] [2]
+------------------------------------------------------------------
+{};F;/foo |= <x:("*" : True)*,Pred(|x| = 1)> ==> (<S,()>,true)
+
+========================================
+= Directories with specified contents  =
+========================================
+
+Directory only containing files with extension ".exe". 
+
+s1 = < dir, x:("*.exe" : file)*, y:("*" : file)*, Pred(|x| = |y|) > 
+
+Observation: s1 is not so nice when the directory contains both .exe
+and non-.exe files because the y part of the representation will
+contain all files, not just the non-.exe files. We can refine s1 to s2
+by excluding those files:
+
+s2 = < dir, x:("*.exe" : file)*, y:((/regexp_complement "*.exe"/ : file)* ) Pred(|y| = 0)>
+
+Now we wonder if we can remove the predicate and add a negation for the y part.
+
+s3 = < dir, x:("*.exe" : file)*, y:~((/regexp_complement "*.exe"/ : file)+) >
+
+Directory only containing items that match a spec s_arg 
+
+s4 = < dir, x:("*" : s_arg)*, y:("*" : True)*, Pred(|x| = |y|) > 
+
 +-----------------+
 | Syntactic Sugar |
 +-----------------+
 
-Empty = Compute(())
-s? = Empty | s
-s1,s2 = { _:s1 * _:s2 }
-s+ = s,s*
+x:s where p(x) ~~> (fun (v,d) -> (fst v,d)) @ < x:s, Pred(p) >
 
-+-----------+
-| Semantics |
-+-----------+
+EmptyDir = ~("*" : True)
+
+False = ~True
+
+s? = s | True
+
+(s?)*
+
+< s1,s2 > = < _:s1, _:s2 >
+
+s+ = (fun ((vh,vt),d) -> ({vh} U vt,d)) @ < s,s* > 
+
 
 TODO
-
-p |= p
-p |/= p
+ - examples involving comprehension
+ - recursion operator
+ - metadata
+ - Kleene star still seems slightly weird. Can we find primitives that
+   lets us encode it?
