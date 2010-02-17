@@ -38,7 +38,7 @@ structure Config = struct
     val useUnionClustering : real option ref = ref NONE
     val minBlobHeight	  = 4
     val learn_timeout = ref def_timeout
-    val def_blobRatio	  = 50.0
+    val def_blobRatio	  = 10.0
 (*
     val var_card_bits   = ref def_var_card_bits
 *)

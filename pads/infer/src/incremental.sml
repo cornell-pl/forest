@@ -302,6 +302,8 @@ structure Incremental: sig
 	    (* we update the ty even if there's no bad data in the
 		aggregate because we want the updated aux in ty *)
 	    val newTy = AG.updateTy ty chunk_aggr
+	    val _ = (print ("\n*** Updated Ty after Chunk " ^ Int.toString index ^ " (" ^ 
+			Int.toString count ^ " lines) (before rewriting):\n"); printTy newTy)
 	    val newTy =
 	    if chunk_cost > 0 then 
 	     let 
@@ -315,10 +317,8 @@ structure Incremental: sig
 	     in newTy
 	     end
 	    else newTy
-(*
-	    val _ = (print ("New Ty after Chunk " ^ Int.toString index ^ " (" ^ 
-			Int.toString count ^ " lines):\n"); printTy newTy)
-*)
+	    val _ = (print ("\n*** New Ty after Chunk " ^ Int.toString index ^ " (" ^ 
+			Int.toString count ^ " lines) (after rewriting):\n"); printTy newTy)
 	    (* val refinedTy = Reduce.reduce 4 newTy *)
 	    val elapse = Time.- (Time.now(), start_time)
    	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")

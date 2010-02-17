@@ -29,16 +29,16 @@ let
   val _ = case (headerTyOp, footerTyOp) of (NONE, NONE) => ()
 	  | _ => print "Found a header or footer!\n"
 *)
-  (* val _ = print "Phase one ...\n"; *)
+  (* val _ = print "Phase one ...\n"  *)
   val ty1 = Reduce.reduce 1 NONE body
   val headers= map (Reduce.reduce 1 NONE) headers
   val footers= map (Reduce.reduce 1 NONE) footers
   val reduce1_time : Time.time = Time.now ()
-(*
-  val _ = printTy ty1  
-*)
+
+  (* val _ = printTy ty1 *) 
+
 (*phase two*) 
-  (* val _ = print "Phase two ...\n"; *)
+  (* val _ = print "Phase two ...\n" *)
   val ty2 = Reduce.reduce 2 NONE ty1 
   val headers = map (Reduce.reduce 2 NONE) headers 
   val footers = map (Reduce.reduce 2 NONE) footers 
@@ -46,9 +46,10 @@ let
   (*phase three, redo constraint-free reduction *)
 (*
   val _ = print "After phase 2...\n"
-  val _ = printTy ty2
 *)
-  (* val _ = print "Phase three ...\n"; *)
+  (* val _ = printTy ty2 *)
+
+  (* val _ = print "Phase three ...\n" *)
   val ty3 = (if mode = 0 then Reduce.reduce 3 NONE ty2 else Reduce.reduce 6 NONE ty2)
   val headers = if mode = 0 then map (Reduce.reduce 3 NONE) headers 
 		else map (Reduce.reduce 6 NONE) headers

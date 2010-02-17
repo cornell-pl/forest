@@ -1906,6 +1906,17 @@ fun isBlob ty =
 
 (* TODO: augment this function to search for more patterns by merging
   all tokens in the ty and then do string matching *)
+
+fun isStructTy ty =
+  case ty of
+    Pstruct _ => true
+  | _ => false
+
+fun isBlobTy ty =
+	case ty of
+	  RefinedBase (_, Blob _, _) => true
+	| _ => false
+
 fun getStoppingPatt ty =
   case ty of
     RefinedBase (a, StringME regex, _) => (NONE, SOME regex)
@@ -1955,16 +1966,6 @@ fun containPatt ltokens re =
 	  )
    end		
 
-fun isStructTy ty =
-  case ty of
-    Pstruct _ => true
-  | _ => false
-
-fun isBlobTy ty =
-	case ty of
-	  RefinedBase (_, Blob _, _) => true
-	| _ => false
-
 fun isCandidateBlob ty =
    if getHeight ty < minBlobHeight then false
    else 
@@ -1978,7 +1979,13 @@ fun isCandidateBlob ty =
 	     score ty then true
 	  *)
 	  if ratio1 > def_blobRatio then true
-	  else false
+	  else 
+	    case ty of
+		RArray (_, NONE, _, _, NONE, _)
+		(* if the ty is an array with no seperator, then 
+		    chances are it's a blob, regardless of the blob ratio *)
+			=> true
+	    | _ => false
 	end
 
 (* function to separate into prefix tys and postfix tys where all postfixes are blob
@@ -2022,7 +2029,9 @@ and mkBlob sibling_opt ty =
 		if (containString ltokens str) then ty
 		else if length candidateBlobTys = 0 then ty
 		else 
-		  let val newblob = measure 0 (RefinedBase(a, Blob (SOME str, NONE), ltokens))
+		  let 
+		    val newa = getAuxInfo (hd candidateBlobTys)
+		    val newblob = measure 0 (RefinedBase(newa, Blob (SOME str, NONE), ltokens))
 		  in if length hdTys = 0 then newblob
 		     else measure 1 (Pstruct (a, hdTys@[newblob]))
 		  end
@@ -2033,13 +2042,15 @@ and mkBlob sibling_opt ty =
 	    in
 		if length candidateBlobTys = 0 then ty
 		else if str = "/$/" then 
-		  let val newblob = measure 0 (RefinedBase(a, Blob (NONE, NONE), ltokens))			
+		  let val newa = getAuxInfo (hd candidateBlobTys)
+		     val newblob = measure 0 (RefinedBase(newa, Blob (NONE, NONE), ltokens))			
 		  in if length hdTys = 0 then newblob
 		     else measure 1 (Pstruct (a, hdTys@[newblob]))
 		  end
 		else if (containPatt ltokens (stripslashes str)) then ty
 		else 
-		  let val newblob = measure 0 (RefinedBase(a, Blob (NONE, SOME str), ltokens))
+		  let val newa = getAuxInfo (hd candidateBlobTys)
+		      val newblob = measure 0 (RefinedBase(newa, Blob (NONE, SOME str), ltokens))
 		  in if length hdTys = 0 then newblob
 		     else measure 1 (Pstruct (a, hdTys@[newblob]))
 		  end
@@ -2546,26 +2557,27 @@ let
 
   (* returns a new cmap after reducing all the tys in the list and a new tylist,
      one for union-like tys and one for struct *)
-  fun map_union f phase cmap right_ty_opt tylist newlist =
+  fun map_union f phase cmap right_ty_opt top tylist newlist =
 	case tylist of 
 		ty::tail => let 
-				val(cmap', ty') = f phase cmap right_ty_opt ty
-			    in	map_union f phase cmap' right_ty_opt tail (ty':: newlist)
+				val(cmap', ty') = f phase cmap right_ty_opt top ty
+			    in	map_union f phase cmap' right_ty_opt top tail (ty':: newlist)
 			    end
 		| nil => (cmap, List.rev newlist)
   (* the map for struct goes from right to left *)
-  fun map_struct f phase cmap right_ty_opt tylist newlist =
+  fun map_struct f phase cmap right_ty_opt top tylist newlist =
 	case tylist of 
 		ty::tail => let 
-				val(cmap', ty') = f phase cmap right_ty_opt ty
-			    in	map_struct f phase cmap' (SOME ty') tail (ty'::newlist)
+				val(cmap', ty') = f phase cmap right_ty_opt false ty
+			    in	map_struct f phase cmap' (SOME ty') false tail (ty'::newlist)
 			    end
 		| nil => (cmap, newlist)
 
   (*reduce a ty and returns the new constraint map and the new ty *)
   (* invariant: both in the input ty and resulting new ty are always measured *)
   (* phase = 0: pre_constraint; phase = 1: post_constraint *)
-  fun reduce' phase cmap sib ty =
+  (* top: boolean value  whether this is the top level ty or not *)
+  fun reduce' phase cmap sib top ty =
     let 
       	(* go bottom up, calling reduce' on children values first *)
       	val (newcmap, reduced_ty) = 
@@ -2576,18 +2588,18 @@ let
 			| RefinedBase b => (cmap, RefinedBase b)
 
 			| Pstruct (a, tylist) => let 
-				val (cmap', tylist') = map_struct reduce' phase cmap sib (List.rev tylist) nil
+				val (cmap', tylist') = map_struct reduce' phase cmap sib false (List.rev tylist) nil
 				in (cmap', Pstruct(a, tylist'))
 				end
 			| Punion (a, tylist) => let
-				val (cmap', tylist') = map_union reduce' phase cmap sib tylist nil
+				val (cmap', tylist') = map_union reduce' phase cmap sib false tylist nil
 				in (cmap', Punion(a, tylist'))
 				end
 			| Parray (a, {tokens, lengths, first, body, last}) => 
 				let
-				val (cmap1, firstty) = reduce' phase cmap NONE first
-				val (cmap2, bodyty) = reduce' phase cmap1 NONE body 
-				val (cmap3, lastty) = reduce' phase cmap2 NONE last 
+				val (cmap1, firstty) = reduce' phase cmap NONE false first
+				val (cmap2, bodyty) = reduce' phase cmap1 NONE false body 
+				val (cmap3, lastty) = reduce' phase cmap2 NONE false last 
 				in
 				(cmap3, Parray(a, {tokens=tokens, lengths=lengths, 
 				first=firstty,
@@ -2597,7 +2609,7 @@ let
                         | Switch (a, id, pairs) =>  
                                 let
                                 val (refs, tylist) = ListPair.unzip(pairs)
-                                val (cmap', tylist') = map_union reduce' phase cmap sib tylist nil
+                                val (cmap', tylist') = map_union reduce' phase cmap sib false tylist nil
                                 in (cmap', Switch (a, id, ListPair.zip(refs, tylist')))
                                 end
                         | RArray (a, sep, term, body, len, lengths) => 
@@ -2668,13 +2680,13 @@ let
 					  | _ => NONE
 				        ) 
 				    | _ => NONE
-                                  val (cmap', body') = reduce' phase cmap sib' body
+                                  val (cmap', body') = reduce' phase cmap sib' false body
                                 in
                                 (cmap', RArray (a, sep, term, body', len, lengths))
                                 end
 			| Poption (a, body) => 
                                 let
-                                val (cmap', body') = reduce' phase cmap sib body
+                                val (cmap', body') = reduce' phase cmap sib false body
                                 in
                                 (cmap', Poption(a, body'))
 				end
@@ -2699,6 +2711,11 @@ let
 	    (* find the costs for each one *)
 	    val costs = map (fn (m, t)=> score t) cmap_ty_pairs
 	    val pairs = ListPair.zip(cmap_ty_pairs, costs)
+
+	    (* if this is a top level ty, filter out the blobs *)
+	    val pairs = if top then List.filter (fn ((m, t), c)  => not (isBlobTy t)) pairs
+			else pairs
+
 	    (* we do greedy descent for now *)
 	    fun min((a, b),(c, d)) = 
 		if b < d then (a, b) else (c, d)
@@ -2713,10 +2730,6 @@ let
 	  	else (newcmap, newTy) 
 	  end
 	 
-
-
-
-   
           (* randomly pick an element from a list *)
           val rand_seed = Random.rand(0, LargeInt.toInt ((Time.toSeconds(Time.now())) mod 10000)) 
           fun rand_pick l =
@@ -2759,6 +2772,8 @@ let
 		    let 
 			(* val _ = print ("phase = " ^ Int.toString phase ^ " k = " ^ Int.toString k ^ "\n") *)
 			val (new_cmap, newty) = neighbor (cmap, ty)
+			(* top level ty can't be a blob, skipping this move *)
+			val (new_cmap, newty) = if top andalso isBlobTy newty then (cmap, ty) else (new_cmap, newty)
 		        val newcost = score newty
 		        val (best_cmap, best_ty, best_cost) =
 			   if newcost < best_cost then 
@@ -2790,7 +2805,7 @@ let
 		  NONE => SOME (RefinedBase (mkTyAux 0, StringME("/$/"), nil))
 		| _ => sib_opt
 
-  val (cmap', ty') = reduce' phase cmap sib_opt ty 
+  val (cmap', ty') = reduce' phase cmap sib_opt true ty 
 (*  val _ = print ("Before:" ^ (Int.toString cbefore) ^ " After:" ^ (Int.toString cafter) ^ "\n") *)
 in
   ty'
