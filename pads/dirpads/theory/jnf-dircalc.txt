@@ -51,14 +51,25 @@ s ::=                -- SPECIFICATION
     | { s | x in e } -- comprehension
     | ~s             -- negation 
 
+e ::= 
+    | x
+    | U (x in e) . e
+    | { e }
+    | { } 
+    | e | e 
+    | (e,e)
+    | fst e 
+    | snd e 
+    | p 
+    | ...
+
 +-----------+
 | SEMANTICS |
 +-----------+
 
 The function
 
-  eval_and_normalize : env * filesystem * normal path * exp -> (env * normal path) set 
-  eval_bool : env * exp -> env * bool 
+  eval_paths : env * filesystem * normal path * exp -> (env * normal path) set 
   eval_tau : env * exp -> env * tau
 
 ...
@@ -123,13 +134,15 @@ E;F;r |= k ==> check_k(F(r))
 = ADHOC =
 =========
 
+-- QUESTION: what to do with E'??
+
 F(r) = file(n)    b(E,n) = (E',v,d)
 -----------------------------------
 E;F;r |= Adhoc(b) ==> ((v,d),true)
 
 if F(r) <> file(n)
 ----------------------------------
-E;F;r |= Adhoc(b) ==> (F(r),false) 
+E;F;r |= Adhoc(b) ==> (F(r),false)
 
 -- query: same issue -- why not merge the d into the parse descriptor?
 
@@ -137,42 +150,37 @@ E;F;r |= Adhoc(b) ==> (F(r),false)
 = LINK =
 ========
 
-F(r) = link(r') 
-(_,r'') in eval_and_normalize(E,F,r,e) 
+F(r) = link(r'') 
+eval_norm_path(E,e) = (E',r')
 --------------------------------------
-E;F;r |= ^e ==> ((r',r' = r''),true) 
+E;F;r |= ^e ==> ((r',r' = r''),true)
 
--- fix: need to thread the E' returned by eval_and_normalize so that
-   variables bound in e' are available later on.
-
-F(r) <> link(r') 
+F(r) <> link(r')
 ----------------------------
-E;F;r |= ^e ==> (F(r),false)
-
-eval_and_normalize(E,F,r,e) = {}
---------------------------------
 E;F;r |= ^e ==> (F(r),false)
 
 =============
 = PREDICATE = 
 =============
 
+eval_bool(E,e) = (E',b)
 ----------------------------------------
-E;F;r |= Pred(e) ==> ((),eval_bool(E,e))
+E;F;r |= Pred(e) ==> ((),b)
 
 ===========
 = COMPUTE =
 ===========
 
 E |- e : tau
+eval_tau(E,e) = (t,E')
 --------------------------------------------
-E;F;r |= Compute(e) ==> (eval_tau(E,e),true)
+E;F;r |= Compute(e) ==> (t,true)
 
 =============
 = TRANSFORM =
 =============
 
-eval_fun(E,e) = f
+eval_fun(E,e) = (E',f)
 E;F;r |= s ==> (v,d)
 --------------------------------------
 E;F;r |= Transform(e,s) ==> f (v,d)
@@ -196,23 +204,19 @@ E;F;r |= True ==> (F(r),true)
 = PATH = 
 ========
 
-(E',r') in eval_and_normalize(E,F,r,e) 
+eval_norm_path(E,e) = (E',r')
 E';F;r' |= s ==> (v,d)
 --------------------------------------
-E;F;r |= e : s ==> ((r',v),d) 
-
-eval_and_normalize(E,F,r,e) = {}
---------------------------------
-E;F;r |= e : s ==> (F(r),false) 
+E;F;r |= e : s ==> ((r',v),d)
 
 ========
 = PAIR = 
 ========
 
-E;F;r |= s1 ==> (v1,d1) 
-E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2) 
+E;F;r |= s1 ==> (v1,d1)
+E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2)
 ----------------------------------------
-E;F;r |= <x:s1, s2> ==> ((v1,v2),d1&&d2)  
+E;F;r |= <x:s1, s2> ==> ((v1,v2),d1&&d2)
 
 =========
 = UNION = 
@@ -220,46 +224,39 @@ E;F;r |= <x:s1, s2> ==> ((v1,v2),d1&&d2)
 
 E;F;r |= s1 ==> (v1,true) 
 ----------------------------
-E;F;r |= s1|s2 ==> (inl v1,true) 
+E;F;r |= s1|s2 ==> (inl v1,true)
 
 E;F;r |= s1 ==> (v1,false)
-E;F;r |= s2 ==> (v2,true)  
+E;F;r |= s2 ==> (v2,true)
 ----------------------------
-E;F;r |= s1|s2 ==> (inr v2,true) 
+E;F;r |= s1|s2 ==> (inr v2,true)
 
 E;F;r |= s1 ==> (v1,false)
-E;F;r |= s2 ==> (v2,false)  
+E;F;r |= s2 ==> (v2,false)
 ----------------------------
-E;F;r |= s1|s2 ==> (inn (v1,v2),false) 
+E;F;r |= s1|s2 ==> (inn (v1,v2),false)
 
 inl : in left
 inl : in right
 inn : in neither?
 
-  -- question: return (v1,v2) in the third case? add a function g to
-     pick a best erroneous parse?
+-- question: return (v1,v2) in the third case? add a function g to
+   pick a best erroneous parse?
 
--- question: should we just replace last two cases with this?
+-- question: replace last two cases with this?
 
   E;F;r |= s1 ==> (v1,false)
-  E;F;r |= s2 ==> (v2,d2)   
+  E;F;r |= s2 ==> (v2,d2)
   ----------------------------
-  E;F;r |= s1|s2 ==> (inr v2,d2) 
+  E;F;r |= s1|s2 ==> (inr v2,d2)
 
 ==============
-= FULL UNION =
+= RAW UNION =
 ==============
 
--- note, s1 and s2 must have disjoint rep types? 
+-- note: s1 and s2 must have disjoint rep types? 
 
-E;F;r |= s1 ==> (v1,true)
--------------------------------
-E;F;r |- s1 || s2 ==> (v1,true)
-
-E;F;r |= s1 ==> (v1,false)
-E;F;r |= s2 ==> (v2,d)
--------------------------------
-E;F;r |- s1 || s2 ==> (v2,d)
+s1 || s2 =def= (fun (v,d) -> (match v with inl v' | inr v' -> v',d)) @ (s1 | s2)
 
 =================
 = SINGLETON SET = 
@@ -269,20 +266,35 @@ E;F;r |= s ==> (v,d)
 --------------------------
 E;F;r |= { s } ==> ({v},d)
 
+==========
+= CHOOSE = 
+==========
+
+E;F;r |= s ==> ({v1,...,vk},d)
+i in 1..k
+--------------------------
+E;F;r |= Choose(s) ==> (vi,d)
+
 =============
 = EMPTY SET = 
 =============
 
---------------------------
-E;F;r |= { } ==> ({},true)
+{ } =def= Compute({})
 
 =================
 = COMPREHENSION =
 =================
 
-S = { (v,d) | (E',r') in eval_and_normalize(E,F,r,e)} /\ E'[x:=r'];F;r |= s ==> (v,d)
---------------------------------------------------------------------------------------
+E |- e : tau set
+S = { (v,d) | (E',t') in eval_tau_set(E,e) /\ E'[x:=t'];F;r |= s ==> (v,d) }
+----------------------------------------------------------------------------
 E;F;r |= U (x in e) . s ==> (U (fst S), && (snd S))
+
+========
+= STAR =
+========
+
+s* =def= U (_ in ".") . { s } || {}
 
 ==========================
 = PACKAGED COMPREHENSION =
@@ -290,11 +302,11 @@ E;F;r |= U (x in e) . s ==> (U (fst S), && (snd S))
 
 { s | x in e } =def= U (x in e) . { s }
 
-========
-= STAR =
-========
+==================
+= PACKAGED PATHS =
+==================
 
-s* =def= U (_ in r) . { s } | {}
+(e : s)* =def= U (x in e) . { x : s } || {}
 
 ============
 = NEGATION =
@@ -313,34 +325,9 @@ E;F;r |= ~s ==> (v,true)
 
 ~(~s) |- s : \x.x ?
 
-+---------+
-| Example |
-+---------+
-
-====================================
-= Exact description of a directory =
-====================================
-
-F = 
-  / => dir{foo,bar}
-  /foo => dir{baz}
-  /bar => dir{}
-  /foo/baz => file("hello world!")
-
-s = 
- "/" : 
-    < dir,
-      "foo" : < dir, 
-                "baz" : file >,
-      "bar" : < dir, 
-                empty >
-    > 
-
--- todo: write out the rep we get
-
-Note: dependent product is not associative strictly speaking, but it
-is up to an isomorphism that shuffles the representation of tuples
-around.
++----------+
+| Examples |
++----------+
 
 ===================
 = Empty directory =
@@ -352,129 +339,66 @@ F =
   /bar => dir{}
   /foo/baz => file("hello world!")
 
-s = < dir, ~("*" : True) > 
+empty =def= < dir, ~("*" : True) > 
 
-{};F;/bar |=?= s ==> (v,d) 
+{};F;/bar |= empty ==> (< {}, dir{}>, true)
+{};F;/foo |= empty ==> (<{baz},file("hello world!")>,false)
 
----------------------------------------------
-[1] {};F;/bar |= dir ==> ({},true)
-
-eval_and_normalize({},F,/bar,"*") = {}
----------------------------------------------
-{};F;/bar |= "*" : True ==> (dir{}, false)
----------------------------------------------
-[2] {};F;/bar |= ~("*" : True) ==> (dir{},true)
-
-[1] [2]
---------------------------------------------------------
-{};F;/bar |= <dir, ~("*" : True) > ==> (<{},dir{}>,true)
-
-============================================================================
-
-{};F;/foo |=?= s ==> (v,d) 
-
----------------------------------------------
-[1] {};F;/foo |= dir ==> ({baz},true)
-
-eval_and_normalize({},F,/foo,"*") = {/foo/baz}
-{},F;/foo/baz/ |= True ==> (file("hello world!"), true)
-------------------------------------------------------------
-{};F;/foo |= "*" : True ==> (file("hello world!"), true)
-------------------------------------------------------------
-[2] {};F;/foo |= ~("*" : True) ==> (file("hello world!"), false)
-
-[1] [2]
---------------------------------------------------------------------------
-{};F;/foo |= <dir, ~("*" : True) > ==> (<{baz},file("hello world!")>,false)
-
-============================================================================
-
-s' = ~True
-
-{};F;/bar |=?= s' ==> (v,d) 
-
-{};F;/bar |= True ==> (dir{},true)
-------------------------------------
-{};F;/bar |= ~True ==> (dir{},false)
-
-{};F;/quux |=?= s' ==> (v,d) 
-
-/quux not in dom(F), so it doesn't satisfy the invariant of the
-judgement.
-
-=======================
-= Singleton directory =
-=======================
+====================================
+= Exact description of a directory =
+====================================
 
 F = 
   / => dir{foo,bar}
   /foo => dir{baz}
-  /bar => dir{quux,zap}
-  /foo/baz => file("1")
-  /bar/quux => file("x")
-  /bar/zap => file("y")
+  /bar => dir{}
+  /foo/baz => file("hello world!")
 
-s1 = < dir, x:("*" : True)*, Pred(|x| = 1)>
+this_F = 
+ "/" : 
+    < dir,
+      "foo" : < dir, 
+                "baz" : file >,
+      "bar" : < dir, 
+                empty >
+    > 
+
+{};F;/ |= this_F ==> 
+  (< {foo,bar}, 
+     < ("foo", < {baz}, ("baz" : "hello world!")> ),
+       ("bar", < {}, dir {} >) > >, 
+   true)
+
+=======================
+= Singleton Directory =
+=======================
+
+F = 
+  / => dir{foo,bar}
+  /foo => file("hello world!")
+  /bar => dir{baz}
+  /bar/baz => file("goodbye world!")
+
+singleton1 = < dir, x:("*" : True)*, Pred(|x| = 1)>
 
 or shorter...
 
-s2 = < x:("*" : True)*, Pred(|x| = 1)>
+singleton2 = < x:("*" : True)*, Pred(|x| = 1)>
+singleton3 = < x:dir, Pred(|x| = 1)>
 
-or shorter...
+or even shorter...
 
-s3 = < x:dir, Pred(|x| = 1)>
+singleton4 = x:("*" : true)* where |x| = 1
+singleton5 = x:dir where |x| = 1
 
-Let's try the simplest one first...
+Let's try the simplest (last) one first...
 
-============================================================================
+{};F;/ |= singleton5 ==> ({foo,bar}, false)
+{};F;/bar |= singleton5 ==> ({baz},true)
 
-{};F;/foo |=?= s3 ==> (v,d)
-
----------------------------------
-[1] {};F;/foo |= dir ==> ({baz},true)
-
-----------------------------------------------------------
-[2] {x:={baz},x_d:=true};F;/foo |= Pred(|x| = 1) ==> ((),true)
-
-[1] [2]
-------------------------------------
-{};F;/foo |= s3 ==> (<{baz},()>,true)
-
-============================================================================
-
-{};F;/bar |=?= s3 ==> (v,d)
-
----------------------------------
-[1] {};F;/bar |= dir ==> ({quux,zap},true)
-
-----------------------------------------------------------
-[2] {x:={quux,zap},x_d:=true};F;/bar |= Pred(|x| = 1) ==> ((),false)
-
-[1] [2]
-------------------------------------
-{};F;/foo |= s3 ==> (<{quux,zap},()>,false)
-
-============================================================================
-
-{};F;/foo |=?= s2 ==> (v,d)
-
-baz in eval_and_normalize({},F,/foo,"*")
-{};F;/foo/baz |= True ==> (file("1"),true)
--------------------------------------------------
-{};F;/foo |= "*" : True ==> ((/foo/baz,file("1")),true)
-
-S = { (/foo/baz,file("1")) }
-
-S = { v | {};F;/foo |= "*" : True ==> (v,true) }
-------------------------------------------------------------------
-[1] {};F;/foo |= ("*" : True)* ==> (S,true)
-
-------------------------------------------------------------------
-[2] {x:=S,x_d:=true};F;/foo |= Pred(|x| = 1) ==> ((),true)
-
-[1] [2]
-------------------------------------------------------------------
-{};F;/foo |= <x:("*" : True)*,Pred(|x| = 1)> ==> (<S,()>,true)
+{};F;/ |= singleton4 ==> ( { ("foo", file("hello world!")), 
+                             ("bar", dir{baz}) }, true)
+{};F;/bar |= singleton4 ==> ( { ("baz": file("goodbye world!")) }, true )
 
 ========================================
 = Directories with specified contents  =
@@ -489,7 +413,7 @@ and non-.exe files because the y part of the representation will
 contain all files, not just the non-.exe files. We can refine s1 to s2
 by excluding those files:
 
-s2 = < dir, x:("*.exe" : file)*, y:((/regexp_complement "*.exe"/ : file)* ) Pred(|y| = 0)>
+s2 = < dir, x:("*.exe" : file)*, y:((/regexp_complement "*.exe"/ : file)* ), Pred(|y| = 0)>
 
 Now we wonder if we can remove the predicate and add a negation for the y part.
 
@@ -499,9 +423,13 @@ Directory only containing items that match a spec s_arg
 
 s4 = < dir, x:("*" : s_arg)*, y:("*" : True)*, Pred(|x| = |y|) > 
 
-+-----------------+
-| Syntactic Sugar |
-+-----------------+
+Directory containing two .exe files and at least one .txt file.
+
+s5 = < dir, x:("*.exe" : file)*, y:("*.txt" : file)*, Pred(|x| = 2 /\ |y| >= 1)>
+
++-----------------------+
+| Other Syntactic Sugar |
++-----------------------+
 
 x:s where p(x) ~~> (fun (v,d) -> (fst v,d)) @ < x:s, Pred(p) >
 
@@ -517,10 +445,9 @@ s? = s | True
 
 s+ = (fun ((vh,vt),d) -> ({vh} U vt,d)) @ < s,s* > 
 
-
 TODO
  - examples involving comprehension
  - recursion operator
  - metadata
- - Kleene star still seems slightly weird. Can we find primitives that
+ X Kleene star still seems slightly weird. Can we find primitives that
    lets us encode it?
