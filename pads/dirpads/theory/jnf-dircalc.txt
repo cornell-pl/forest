@@ -10,8 +10,9 @@ p,q ::=              -- PATH
   | b                -- PADS-described name
   | p/p              -- concatenation
   | /p               -- rooted path
+  | x::p             -- path binder
 
-do we also want other XPath-like stuff?
+-- question: do we also want XPath-like operators?
   | //b              -- descendant
 
 r,s ::=              -- NORMAL PATH
@@ -20,9 +21,8 @@ r,s ::=              -- NORMAL PATH
 F ::= -- FILESYSTEM
   | { r |-> T }
 
--- note: need to write down what it means for F to be
-   well-formed. E.g., the prefix-closed conditions from the old
-   dircalc file.
+-- note: formalize what it means for F to be well-formed (the
+   prefix-closed conditions from the old dircalc file).
 
 m ::= -- METADATA
   | ...
@@ -51,55 +51,34 @@ s ::=                -- SPECIFICATION
     | { s | x in e } -- comprehension
     | ~s             -- negation 
 
-e ::= 
-    | x
-    | U (x in e) . e
-    | { e }
-    | { } 
-    | e | e 
-    | (e,e)
-    | fst e 
-    | snd e 
-    | p 
-    | ...
+e ::= ...
 
 +-----------+
 | SEMANTICS |
 +-----------+
 
-The function
+We assume a collection of type-indexed functions
 
-  eval_paths : env * filesystem * normal path * exp -> (env * normal path) set 
-  eval_tau : env * exp -> env * tau
+  eval_tau : env * F * exp -> env * tau
 
-...
-
-The judgement 
-
-  E; F; r |= s ==> v * d
-
-relates an environment E, a file system F, a normal path r, a
-specification s, a value v, and a parse descriptor d. (The judgement is
-a total function from tuples (E,F,r,s) to non-empty sets of pairs
-(v,d).)
-
-We maintain the invariant that r in dom(F).
+The judgement E; F; r |= s ==> v * d relates an environment E, file
+system F, normal path r, specification s, value v, and parse
+descriptor d. The judgement is a total function from tuples (E,F,r,s)
+to non-empty sets of pairs (v,d). We maintain the invariant that r in
+dom(F).
 
 =========
 = QUERY =
 =========
 
-r in eval_and_normalize({},F,"/",e)
-{};F;r |= s ==> (v,d)
+This judgement provides a facility for users to parse using
+specifications and arbitrary path expresions.
+
+eval_norm_path_set({},F,e) = (E',P)
+r in P
+E';F;r |= s ==> (v,d)
 ----------------------------------
-F |= e @ s ==> (v,d)
-
--- note: this judgement provides a facility for users to parse using
-   specifications and arbitrary path expresions. (The
-   eval_and_normalize function checks that r is in dom(F).)
-
--- fix: change '@' to something else to avoid clash with shorthand for
-   Transform(e,s).
+F;e |= s ==> (v,d)
 
 ============
 = CONSTANT =
@@ -108,226 +87,260 @@ F |= e @ s ==> (v,d)
 ----------------------------
 E;F;r |= k ==> check_k(F(r))
 
-  -- here are several instances of check_k:
-     * check_any(T) = (T,true)
+Here are several instances of check_k:
 
-     * check_dir(T) = (cs,true) if T = dir(cs) 
-     * check_dir(T) = (T,false) if T <> dir(cs) 
+  * check_any(T) = (T,any_pd)
+    - RP: file system contents
+    - PD: any_pd
+    - ok: (fun _ -> true)
 
--- note: to simplify the type, we could make the rep {} if T is not a directory
+  * check_dir(T) = (cs,dir_pd(true)) if T = dir(cs) 
+  * check_dir(T) = (T,dir_pd(true)) if T <> dir(cs) 
+    - RP: set of file names + non-directory file system contents
+    - PD: dir_pd of bool 
+    - ok: (fun (dir_pd b) -> b)
 
-     * check_file(T) = (n,true) if T = file(n) 
-     * check_file(T) = (T,false) if T <> file(n)
+  Alternate check_dir with a simpler RP (always returns a set of files). 
+  But this is less useful with negation. 
+  * check_dir'(T) = (cs,dir'_pd(true)) if T = dir(cs) 
+  * check_dir'(T) = ({},dir'_pd(false)) if T <> dir(cs) 
+    - RP: set of file names 
+    - PD: dir'_pd of bool 
+    - ok: (fun b -> b)
 
-     * check_link(T) = (n,true) if T = link(n) 
-     * check_link(T) = (T,false) if T <> link(n)
+  * check_file(T) = (n,file_pd(true)) if T = file(n) 
+  * check_file(T) = (T,file_pd(false)) if T <> file(n)
+    - RP: string + non-file file system contents
+    - PD: file_pd of bool 
+    - ok: (fun b -> b)
 
-     * check_csv(T) = ((tbl,true),true) if T = file(n) and n is a valid CSV file encoding tbl
-     * check_csv(T) = ((n,false),true) if T = file(n) and n is not a valid CSV file
-     * check_csv(T) = (T,false) if T <> file(n) 
+  * check_link(T) = (n,link_pd (true)) if T = link(n) 
+  * check_link(T) = (T,link_pd (false)) if T <> link(n)
+    - RP: string + non-file system contents 
+    - PD: link_pd of bool
+    - ok: (fun b -> b)
 
-     -- query: why do we put a bool in the rep? This arguably seems more natural
-     * check_csv(T) = (tbl,true) if T = file(n) and n is a valid CSV file encoding tbl
-     * check_csv(T) = (T,false) if T <> file(n) or T = file(n) and n not a valid CSV file
+  * check_csv(T) = (v,csv_pd(true)) if T = file(n) and n is valid CSV encoding v
+  * check_csv(T) = (T,csv_pd(false)) if T <> file(n) or T = file(n) but n not valid CSV
+  * check_csv(T) = (T,csv_pd(false)) if T <> file(n) 
+    - RP: csv value + file system contents 
+    - PD: csv_od of bool
+    - ok: (fun b -> b)
 
 =========
 = ADHOC =
 =========
+RP: b_{RP} + non-directory file system contents
+PD: adhoc_pd(b_{PD}) 
+ok: (fun (adhoc d) -> pads_ok d)
 
--- QUESTION: what to do with E'??
+where pads_ok is a library function that checks if the errcode of the
+the PADS parse descriptor is success.
 
 F(r) = file(n)    b(E,n) = (E',v,d)
 -----------------------------------
-E;F;r |= Adhoc(b) ==> ((v,d),true)
+E;F;r |= Adhoc(b) ==> (v,Some d)
 
 if F(r) <> file(n)
 ----------------------------------
-E;F;r |= Adhoc(b) ==> (F(r),false)
-
--- query: same issue -- why not merge the d into the parse descriptor?
+E;F;r |= Adhoc(b) ==> (F(r),None)
 
 ========
 = LINK =
 ========
+RP: norm_path | non-link file system contents
+PD: link_pd of (bool option)
+ok: (fun (link_pd bo) -> match bo with 
+      | Some b -> b 
+      | _ -> false)
 
 F(r) = link(r'') 
-eval_norm_path(E,e) = (E',r')
+eval_norm_path(E,F,e) = (E',r')
 --------------------------------------
-E;F;r |= ^e ==> ((r',r' = r''),true)
+E;F;r |= ^e ==> (r',Some (r' = r''))
 
 F(r) <> link(r')
 ----------------------------
-E;F;r |= ^e ==> (F(r),false)
+E;F;r |= ^e ==> (F(r),None)
 
 =============
 = PREDICATE = 
 =============
+RP: unit
+PD: pred_pd of bool
+ok: (fun (pred_pd b) -> b)
 
-eval_bool(E,e) = (E',b)
-----------------------------------------
-E;F;r |= Pred(e) ==> ((),b)
+eval_bool(E,F,e) = (E',b)
+---------------------------
+E;F;r |= Pred(e) ==> ((),pred_pd(b))
 
 ===========
 = COMPUTE =
 ===========
+RP: tau
+PD: compute_pd 
+ok: (fun _ -> true)
 
 E |- e : tau
-eval_tau(E,e) = (t,E')
+eval_tau(E,F,e) = (t,E')
 --------------------------------------------
-E;F;r |= Compute(e) ==> (t,true)
+E;F;r |= Compute(e) ==> (t,compute_pd)
 
 =============
 = TRANSFORM =
 =============
+RP: t_{RP}
+PD: transform_pd of t_{PD}
+ok: t_{ok} ???
+where f in (s_{RP} * s{PD}) -> (t_{RP} * t_{PD})
 
-eval_fun(E,e) = (E',f)
+eval_fun(E,F,e) = (E',f)
 E;F;r |= s ==> (v,d)
 --------------------------------------
-E;F;r |= Transform(e,s) ==> f (v,d)
+E;F;r |= Transform(e,s) ==> f (v,transform_pd(d))
 
-  -- note: in practice, f will produce a pair (v',d') where d' is
-     consistent (in some way) with the structure of v'. Kathleen
-     thinks we can express this condition (at the type level) using
-     functional dependencies in Haskell?
-
-  -- notation: e @ s ~~> Transform(e,s)
+-- notation: e @ s ~~> Transform(e,s)
+-- question: how to check f's (precise) type?
 
 ========
 = TRUE =
 ========
+RP: file system contents
+PD: true_pd
+ok: (fun _ -> true)
 
 r in dom(F)
 -----------------------------
-E;F;r |= True ==> (F(r),true)
+E;F;r |= True ==> (F(r),true_pd)
 
 ========
 = PATH = 
 ========
+RP: norm_path * s_{RP}
+PD: path_pd of s_{PD}
+ok: (fun path_pd(d) -> s_{OK} d)
 
-eval_norm_path(E,e) = (E',r')
+eval_norm_path(E,F,e) = (E',r')
 E';F;r' |= s ==> (v,d)
---------------------------------------
-E;F;r |= e : s ==> ((r',v),d)
+-----------------------------
+E;F;r |= e : s ==> ((r',v),path_pd(d))
 
 ========
 = PAIR = 
 ========
+RP: s1_{RP} * s2_{RP}
+PD: pair_pd of (s1_{PD} * s2_{PD})
+ok: (fun (pair_pd(d1,d2)) -> s1_{ok} d1 && s2_{ok} d2)
 
 E;F;r |= s1 ==> (v1,d1)
 E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2)
 ----------------------------------------
-E;F;r |= <x:s1, s2> ==> ((v1,v2),d1&&d2)
+E;F;r |= <x:s1, s2> ==> ((v1,v2),pair_pd(d1,d2))
 
 =========
 = UNION = 
 =========
-
-E;F;r |= s1 ==> (v1,true) 
-----------------------------
-E;F;r |= s1|s2 ==> (inl v1,true)
+RP: s1_{RP} + s2_{RP} 
+PD: union_pd of (s1_{PD} + s2_{PD})
+ok: (fun (union_pd(d)) -> match d with
+      | inl d1 -> s1_{ok} d1
+      | inr d2 -> s2_{ok} d2)
+ 
+E;F;r |= s1 ==> (v1,d1) 
+--------------------------------------------
+E;F;r |= s1|s2 ==> (inl v1,union_pd(inl d1))
 
 E;F;r |= s1 ==> (v1,false)
-E;F;r |= s2 ==> (v2,true)
-----------------------------
-E;F;r |= s1|s2 ==> (inr v2,true)
-
-E;F;r |= s1 ==> (v1,false)
-E;F;r |= s2 ==> (v2,false)
-----------------------------
-E;F;r |= s1|s2 ==> (inn (v1,v2),false)
-
-inl : in left
-inl : in right
-inn : in neither?
-
--- question: return (v1,v2) in the third case? add a function g to
-   pick a best erroneous parse?
-
--- question: replace last two cases with this?
-
-  E;F;r |= s1 ==> (v1,false)
-  E;F;r |= s2 ==> (v2,d2)
-  ----------------------------
-  E;F;r |= s1|s2 ==> (inr v2,d2)
-
-==============
-= RAW UNION =
-==============
-
--- note: s1 and s2 must have disjoint rep types? 
-
-s1 || s2 =def= (fun (v,d) -> (match v with inl v' | inr v' -> v',d)) @ (s1 | s2)
+E;F;r |= s2 ==> (v2,d2)
+-------------------------------------------
+E;F;r |= s1|s2 ==> (inr v2,union_pd(inr d2))
 
 =================
 = SINGLETON SET = 
 =================
+RP: s_{RP} set 
+PD: singleton_pd of s_{PD}
+ok: (fun (singleton_pd(d)) -> s_{ok} d) 
 
 E;F;r |= s ==> (v,d)
---------------------------
-E;F;r |= { s } ==> ({v},d)
+----------------------------------------
+E;F;r |= { s } ==> ({v},singleton_pd(d))
 
 ==========
 = CHOOSE = 
 ==========
+RP : e_{RP} where s_{RP} = e_{RP} set
+PD : choose_pd of s_{PD}
+ok: (fun (choose_pd(d)) -> s_{ok} d) 
 
 E;F;r |= s ==> ({v1,...,vk},d)
 i in 1..k
---------------------------
-E;F;r |= Choose(s) ==> (vi,d)
+---------------------------------------
+E;F;r |= Choose(s) ==> (vi,choose_pd(d))
 
-=============
-= EMPTY SET = 
-=============
-
-{ } =def= Compute({})
-
-=================
-= COMPREHENSION =
-=================
+========================
+= STRUCTURAL RECURSION =
+========================
+RP: s_{RP} set
+PD: srec_pd of (s_{PD} set)
+ok: (fun (srec_pd(D)) -> &&_{d in D} . s_{ok} d)
 
 E |- e : tau set
-S = { (v,d) | (E',t') in eval_tau_set(E,e) /\ E'[x:=t'];F;r |= s ==> (v,d) }
-----------------------------------------------------------------------------
-E;F;r |= U (x in e) . s ==> (U (fst S), && (snd S))
-
-========
-= STAR =
-========
-
-s* =def= U (_ in ".") . { s } || {}
-
-==========================
-= PACKAGED COMPREHENSION =
-==========================
-
-{ s | x in e } =def= U (x in e) . { s }
-
-==================
-= PACKAGED PATHS =
-==================
-
-(e : s)* =def= U (x in e) . { x : s } || {}
+S = { (v,d) | (E',F,t') in eval_tau_set(E,F,e) /\ E'[x:=t'];F;r |= s ==> (v,d) }
+--------------------------------------------------------------------------------
+E;F;r |= U (x in e) . s ==> (U (fst S), srec_pd (snd S))
 
 ============
 = NEGATION =
 ============
+RP: s_{RP}
+PD: neg_pd of bool * s_{PD}
+ok: (fun (neg_pd(b,_)) -> b)
 
-if E;F;r |= s ==> (v,true)
-----------------------------
-E;F;r |= ~s ==> (v,false)                        
+E;F;r |= s ==> (v,d)
+--------------------------------------------
+E;F;r |= ~s ==> (v,neg_pd(not(s_{ok} d),d))
 
-E;F;r |= s ==> (v,false)
-------------------------
-E;F;r |= ~s ==> (v,true)       
+=================
+= DERIVED FORMS = 
+=================
 
--- note: we will need to rethink this when we add more interesting
-   parse descriptors... in particular, the second case.
+The RP and PDs for derived forms are here for illustrative purposes
+only. They are computed from the rules for primitives.
 
-~(~s) |- s : \x.x ?
+  * where clauses
+    -- question: is it kosher to make up a new PD type here? if so,
+       where do we record this new type? as an annotation on the
+       function?
+    x:s where e =def= 
+      (fun ((v1,_),pair_pd(d1,d2)) -> (v1,where_pd(d1,d2)))
+      @
+      <x:s,Pred e>
 
-+----------+
-| Examples |
-+----------+
+  * Empty tau set
+    RP: tau set 
+    PD: compute_pd
+    { }_tau =def= Compute({}_tau)
+
+  * Full union 
+    where s1_{RP} >= s2_{RP}
+    RP: s1_{RP} 
+    PD: union_pd (s1_{PD} + s2_{PD})
+    s1 || s2 =def= 
+        (fun (v,d) -> match v with 
+          | inl v' -> (v',d)
+          | inr v' -> (v',d))
+      @ (s1 | s2)
+
+  * Comprehension
+    RP: s_{RP} set
+    PD: srec_pd (singleton_pd of s_{PD})
+    { s | x in e } =def= U (x in e) . { s }
+
+  * Path set Kleene star
+    RP: s_{RP} set
+    PD: srec_pd (union_pd (singleton_pd (path_pd of s_{PD}) + compute_pd))
+    (e : s)* =def= U (x in e) . ({ x : s } || {})
 
 ===================
 = Empty directory =
@@ -354,7 +367,7 @@ F =
   /bar => dir{}
   /foo/baz => file("hello world!")
 
-this_F = 
+s_F = 
  "/" : 
     < dir,
       "foo" : < dir, 
@@ -363,11 +376,11 @@ this_F =
                 empty >
     > 
 
-{};F;/ |= this_F ==> 
+{};F;/ |= s_F ==> 
   (< {foo,bar}, 
      < ("foo", < {baz}, ("baz" : "hello world!")> ),
        ("bar", < {}, dir {} >) > >, 
-   true)
+   d)
 
 =======================
 = Singleton Directory =
@@ -391,20 +404,20 @@ or even shorter...
 singleton4 = x:("*" : true)* where |x| = 1
 singleton5 = x:dir where |x| = 1
 
-Let's try the simplest (last) one first...
+Let's try the simplest one first...
 
-{};F;/ |= singleton5 ==> ({foo,bar}, false)
-{};F;/bar |= singleton5 ==> ({baz},true)
+{};F;/ |= singleton5 ==> ({foo,bar},where_fd(dir_pd(true),pred_pd(false)))
+{};F;/bar |= singleton5 ==> ({baz},where_fd(dir_pd(true),pred_pd(true)))
 
 {};F;/ |= singleton4 ==> ( { ("foo", file("hello world!")), 
-                             ("bar", dir{baz}) }, true)
-{};F;/bar |= singleton4 ==> ( { ("baz": file("goodbye world!")) }, true )
+                             ("bar", dir{baz}) }, where_pd(...,pred_pd(false))
+{};F;/bar |= singleton4 ==> ( { ("baz": file("goodbye world!")) }, where_pd(...,pred_pd(true))
 
 ========================================
 = Directories with specified contents  =
 ========================================
 
-Directory only containing files with extension ".exe". 
+Directory only containing files with extension ".exe".
 
 s1 = < dir, x:("*.exe" : file)*, y:("*" : file)*, Pred(|x| = |y|) > 
 
@@ -427,11 +440,9 @@ Directory containing two .exe files and at least one .txt file.
 
 s5 = < dir, x:("*.exe" : file)*, y:("*.txt" : file)*, Pred(|x| = 2 /\ |y| >= 1)>
 
-+-----------------------+
-| Other Syntactic Sugar |
-+-----------------------+
-
-x:s where p(x) ~~> (fun (v,d) -> (fst v,d)) @ < x:s, Pred(p) >
+==============
+= More Sugar = 
+==============
 
 EmptyDir = ~("*" : True)
 
@@ -449,5 +460,3 @@ TODO
  - examples involving comprehension
  - recursion operator
  - metadata
- X Kleene star still seems slightly weird. Can we find primitives that
-   lets us encode it?
