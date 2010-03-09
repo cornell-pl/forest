@@ -47,7 +47,6 @@ s ::=                -- SPECIFICATION
     | e : s          -- path 
     | <x:s, s>       -- dependent pair
     | s|s            -- union
-    | s*             -- iteration
     | U (x in e) . s -- structural recursion
     | ~s             -- negation 
 
@@ -97,7 +96,7 @@ Here are several instances of check_k:
     - ok: (fun _ -> true)
 
   * check_dir(T) = (cs,dir_pd(true)) if T = dir(cs) 
-  * check_dir(T) = (T,dir_pd(true)) if T <> dir(cs) 
+  * check_dir(T) = (T,dir_pd(false)) if T <> dir(cs) 
     - RP: set of file names + non-directory file system contents
     - PD: dir_pd of bool 
     - ok: (fun (dir_pd(b)) -> b)
@@ -201,7 +200,7 @@ where f in (s_{RP} * s{PD}) -> (t_{RP} * t_{PD})
 eval_fun(E,F,e) = (E',f)
 E;F;r |= s ==> (v,d)
 --------------------------------------
-E;F;r |= Transform(e,s) ==> f (v,d)
+E;F;r |= Transform[t_{RP},t_{PD},t_{ok}](e,s) ==> f (v,d)
 
 -- notation: e @ s ~~> Transform(e,s)
 
@@ -273,6 +272,9 @@ E;F;r |= { s } ==> ({v},singleton_pd(d))
 ==========
 = CHOOSE = 
 ==========
+
+-- Ignore this.  Deprecated.
+
 RP : e_{RP} option where s_{RP} = e_{RP} set
 PD : choose_pd of (bool * s_{PD})
 ok: (fun (choose_pd(b,d)) -> b && s_{ok} d) 
@@ -320,10 +322,16 @@ purposes only. They are computed from the primitives.
     -- question: is it kosher to make up a new PD type here? if so,
        where do we record this new type? as an annotation on the
        function?
+         -- YES!
+
     x:s where e =def= 
-      (fun ((v1,_),pair_pd(d1,d2)) -> (v1,where_pd(d1,d2)))
+      (fun ((v1,_),pair_pd(d1,d2)) -> (v1,where_pd(d1,d2))) [s_{RP},s_{PD},ok]
       @
       <x:s,Pred e>
+
+    and ok = \(where_pd(d1,d2)). (s_{ok} d1) && d2 
+      -- Note this function (or it's result) really needs to be stored somewhere,
+      like in the pd.
 
   * Empty tau set
     RP: tau set 
