@@ -22,6 +22,15 @@ ptype coral_d =  pdirectory {
    hosts is {(host :: phostname_t)/(time :: ptimestamp_t)} :: host_info_d(host,time) dlist;
  }
 
+ptype coral_d =  pdirectory {
+   hosts is  [host_info_d(host,time) | (host,time) <- (host :: Phostname_t)/(time :: Ptimestamp_t)]
+ }
+
+ptype coral_d =  pdirectory {
+   hosts is  [host_info_d(host,time) | (host :: Phostname_t)/(time :: Ptimestamp_t)]
+ }
+
+
 alternative:
 
 ptype machine_d = pdirectory {
