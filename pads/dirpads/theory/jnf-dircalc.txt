@@ -63,7 +63,7 @@ e ::= ...
 
 We assume a collection of type-indexed functions
 
-  eval_tau : env * F * exp -> env * tau
+  eval_tau : env * F * norm path * exp -> env * tau
 
 The judgment E; F; r |= s ==> v * d relates an environment E, file
 system F, normal path r, specification s, value v, and parse
@@ -80,8 +80,8 @@ We also assume a standard typing judgment for expressions E |- e : tau
 This judgement provides a facility for users to parse using
 specifications and arbitrary path expresions.
 
-eval_norm_path_set({},F,e) = (E',P)
-r in P
+eval_norm_path_set({},F,/,e) = E',S
+r in S
 E';F;r |= s ==> (v,d)
 ----------------------------------
 F;e |= s ==> (v,d)
@@ -145,7 +145,7 @@ RP: metadata * norm_path
 PD: link_pd of bool
 
 F(r) = m,link(r'') 
-b = ( eval_norm_path(E,F,e) = Some (E',r') /\ r' = r'' )
+b = ( eval_norm_path(E,F,r,e) = Some (E',r') /\ r' = r'' )
 --------------------------------------------------------
 E;F;r |= ^e ==> ((m,r''),link_pd(b))
 
@@ -159,7 +159,7 @@ E;F;r |= ^e ==> ((default_metadata,/),link_pd(false))
 RP: unit
 PD: pred_pd of bool
 
-b = eval_bool(E,F,e) 
+b = eval_bool(E,F,r,e) 
 ------------------------------------
 E;F;r |= Pred(e) ==> ((),pred_pd(b))
 
@@ -170,7 +170,7 @@ RP: tau
 PD: compute_pd of bool
 
 E |- e : tau
-eval_tau(E,F,e) = (E',t)
+eval_tau(E,F,r,e) = (E',t)
 --------------------------------------------
 E;F;r |= Compute(e) ==> (t,compute_pd(true))
 
@@ -183,7 +183,7 @@ PD: t_{PD}
 where f in (s_{RP} * s{PD}) -> (t_{RP} * t_{PD})
 -- question: how to check f's (precise) type?
 
-eval_fun(E,F,e) = (E',f)
+eval_fun(E,F,r,e) = (E',f)
 E;F;r |= s ==> (v,d)
 --------------------------------------
 E;F;r |= Transform[t_{RP},t_{PD}](e,s) ==> f (v,d)
@@ -196,7 +196,7 @@ E;F;r |= Transform[t_{RP},t_{PD}](e,s) ==> f (v,d)
 RP: norm_path * s_{RP}
 PD: path_pd of bool * s_{PD}
 
-eval_norm_path(E,F,e) = (E',r')
+eval_norm_path(E,F,r,e) = (E',r')
 r' in dom(F)
 E';F;r' |= s ==> (v,d)
 ---------------------------------------------
@@ -204,7 +204,7 @@ E;F;r |= e : s ==> ((r',v),path_pd(pi1 d, d))
 
 -- FINISH: what to do in this case?
 
-eval_norm_path(E,F,e) = (E',r')
+eval_norm_path(E,F,r,e) = (E',r')
 r' not in dom(F)
 ???
 -----------------------------
@@ -255,7 +255,7 @@ RP: s_{RP} set
 PD: srec_pd of bool * s_{PD} set
 
 E |- e : tau set
-S = U_{E',t' in eval_tau_set(E,F,e)} { (v,d) } where E'[x:=t'];F;r |= s ==> (v,d)
+S = U_{E',t' in eval_tau_set(E,F,r,e)} { (v,d) } where E'[x:=t'];F;r |= s ==> (v,d)
 ---------------------------------------------------------------------------------
 E;F;r |= U (x in e) . s ==> (U (fst S), srec_pd (&& (pi1 (snd S)), snd S))
 
