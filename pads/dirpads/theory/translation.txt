@@ -1,0 +1,46 @@
+
+s ::= 
+  | pdirectory of (n is s)* 
+  | pexact_directory of (n is s)* 
+  | psource of b 
+  | pcompute e
+  | { s | x <- e }
+  | (e :: s)
+  | (e ::* s)  -- ?
+  | s <| e |>
+  | s @ p 
+  | s option
+
+OPEN QUESTIONS
+ - option example in pw.fml!
+ - can the environment from "psource b" be used in the rest of the spec?
+ - are record names only available L -> R?
+ - intended rep for links?
+ - exact directories? 
+
+TRANSLATION
+[[ pdirectory { n1 is s1, ... nk is sk } ]] =
+< dir, n1 : [[ s1 ]], ..., nk : [[ sk ] > 
+
+[[ pexact_directory { n1 is s1, ... nk is sk } ]] =
+??
+
+[[ psource b ]] = 
+Adhoc b
+
+[[ pcompute e ]] = 
+Compute e
+
+[[ { s | x <- e } ]] = 
+U (x in e) . { [[ s ]] }
+
+[[ (e :: s) ]] = 
+(e : [[ s ]])
+
+[[ (e ::* s) ]] = 
+U (x in e) . { x : [[ s ]] } || {}
+
+[[ s <| e |> ]] = ??
+
+[[ s @ p ]]
+< x:^p, (x : [[s]])> ??

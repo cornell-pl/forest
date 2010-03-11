@@ -1,4 +1,4 @@
-+------------+
+s+------------+
 | DATA MODEL |
 +------------+
 
@@ -19,13 +19,18 @@ r,s ::=              -- NORMAL PATH
   | /n1/ ... /nk
 
 F ::= -- FILESYSTEM
-  | { r |-> T }
+  | { r |-> m * T }
 
 -- note: formalize what it means for F to be well-formed (the
    prefix-closed conditions from the old dircalc file).
 
 m ::= -- METADATA
-  | ...
+  | { owner : int;
+      group : int;
+      permissions : string; 
+      created : int; 
+      accessed : int;
+      modified : int; }       
 
 T ::= -- FILESYSTEM CONTENTS
   | file(n)
@@ -38,7 +43,7 @@ T ::= -- FILESYSTEM CONTENTS
 
 s ::=                -- SPECIFICATION
     | k              -- constant (e.g., dir, file, link, csv, xml, ascii, etc.)
-    | Adhoc(b)       -- b-described   
+    | Adhoc(b,n)     -- b-described data
     | ^p             -- symbolic link
     | Pred(e)        -- predicate
     | Computed(e)    -- computed value
@@ -90,226 +95,179 @@ E;F;r |= k ==> check_k(F(r))
 
 Here are several instances of check_k:
 
-  * check_any(T) = (T,any_pd)
-    - RP: file system contents
-    - PD: any_pd
-    - ok: (fun _ -> true)
+  * check_any(_,_) = ((),any_pd(true))
+    - RP: unit
+    - PD: any_pd of bool
 
-  * check_dir(T) = (cs,dir_pd(true)) if T = dir(cs) 
-  * check_dir(T) = (T,dir_pd(false)) if T <> dir(cs) 
-    - RP: set of file names + non-directory file system contents
-    - PD: dir_pd of bool 
-    - ok: (fun (dir_pd(b)) -> b)
+  * check_dir(m,dir(cs)) = ((m,cs),dir_pd(true)) 
+  * check_dir(_) = ({},dir_pd(false)) 
+    - RP: metadata * string set  
+    - PD: dir_pd of bool  
 
-  Alternate check_dir with a simpler RP (always a set of file names). 
-  But this version is less useful with negation. 
-  * check_dir'(T) = (cs,dir'_pd(true)) if T = dir(cs) 
-  * check_dir'(T) = ({},dir'_pd(false)) if T <> dir(cs) 
-    - RP: set of file names 
-    - PD: dir'_pd of bool 
-    - ok: (fun b -> b)
-
-  * check_file(T) = (n,file_pd(true)) if T = file(n) 
-  * check_file(T) = (T,file_pd(false)) if T <> file(n)
-    - RP: string + non-file file system contents
+  * check_file(m,file(n)) = ((m,n),file_pd(true))
+  * check_file(_) = ((default_metadata,""),file_pd(false))
+    - RP: metadata * string 
     - PD: file_pd of bool 
-    - ok: (fun b -> b)
 
-  * check_link(T) = (n,link_pd (true)) if T = link(n) 
-  * check_link(T) = (T,link_pd (false)) if T <> link(n)
-    - RP: string + non-file system contents 
+  * check_link(m,link(p)) = ((m,p),link_pd (true)) 
+  * check_link(_) = ((default_metadata, /.),link_pd (false))
+    - RP: metadata * path 
     - PD: link_pd of bool
-    - ok: (fun b -> b)
 
-  * check_csv(T) = (v,csv_pd(true)) if T = file(n) and n is valid CSV encoding v
-  * check_csv(T) = (T,csv_pd(false)) if T <> file(n) or T = file(n) but n not valid CSV
-    - RP: csv value + file system contents 
-    - PD: csv_od of bool
-    - ok: (fun b -> b)
+  * check_csv(m,file(n)) when valid_csv(n) = ((m,v),csv_pd(true)) 
+  * check_csv(_) = (default_metadata,empty_csv),csv_pd(false)) 
+    - RP: metadata * csv value 
+    - PD: csv_pd of bool
 
 =========
 = ADHOC =
 =========
-RP: b_{RP} + non-directory file system contents
-PD: adhoc_pd(b_{PD}) 
-ok: (fun (adhoc(d)) -> pads_ok d)
+RP: metadata * b_{RP} 
+PD: adhoc_pd of bool * b_{PD}
 
 where pads_ok is a library function that checks if the errcode of the
 the PADS parse descriptor is success.
 
-F(r) = file(n)
-b(E,n) = (E',v,d)
+F(r) = m,file(n')
+b(E,n') = (E',v,d)
 -----------------------------------
-E;F;r |= Adhoc(b) ==> (v,Some d)
+E;F;r |= Adhoc(b,n) ==> ((m,v),adhoc_pd(true && pads_ok_d,d))
 
-if F(r) <> file(n)
-----------------------------------
-E;F;r |= Adhoc(b) ==> (F(r),None)
+if F(r) = m,dir(_) or m,link(_)
+b(E,n) = (E',v'd)
+----------------------------------------------------------------
+E;F;r |= Adhoc(b,n) ==> ((default_metadata,v),adhoc_pd(false,d))
 
 ========
 = LINK =
 ========
-RP: norm_path + non-link file system contents
-PD: link_pd of (bool option)
-ok: (fun (link_pd(bo)) -> match bo with 
-      | Some b -> b 
-      | _ -> false)
+RP: metadata * norm_path 
+PD: link_pd of bool
 
-F(r) = link(r'') 
-eval_norm_path(E,F,e) = (E',r')
---------------------------------------
-E;F;r |= ^e ==> (r',Some (r' = r''))
+F(r) = m,link(r'') 
+b = ( eval_norm_path(E,F,e) = Some (E',r') /\ r' = r'' )
+--------------------------------------------------------
+E;F;r |= ^e ==> ((m,r''),link_pd(b))
 
-F(r) <> link(r')
-----------------------------
-E;F;r |= ^e ==> (F(r),None)
+F(r) = m,file(_) or m,dir(_)
+----------------------------------------------------
+E;F;r |= ^e ==> ((default_metadata,/),link_pd(false))
 
 =============
 = PREDICATE = 
 =============
 RP: unit
 PD: pred_pd of bool
-ok: (fun (pred_pd(b)) -> b)
 
-eval_bool(E,F,e) = (E',b)
----------------------------
+b = eval_bool(E,F,e) 
+------------------------------------
 E;F;r |= Pred(e) ==> ((),pred_pd(b))
 
 ===========
 = COMPUTE =
 ===========
 RP: tau
-PD: compute_pd 
-ok: (fun _ -> true)
+PD: compute_pd of bool
 
 E |- e : tau
 eval_tau(E,F,e) = (E',t)
 --------------------------------------------
-E;F;r |= Compute(e) ==> (t,compute_pd)
+E;F;r |= Compute(e) ==> (t,compute_pd(true))
 
 =============
 = TRANSFORM =
 =============
 RP: t_{RP}
-PD: t_{PD}      -- question: or transform_d of t_{PD}?
-ok: t_{ok}      -- question: how do we get this??
-where f in (s_{RP} * s{PD}) -> (t_{RP} * t_{PD})
+PD: t_{PD}
 
+where f in (s_{RP} * s{PD}) -> (t_{RP} * t_{PD})
 -- question: how to check f's (precise) type?
 
 eval_fun(E,F,e) = (E',f)
 E;F;r |= s ==> (v,d)
 --------------------------------------
-E;F;r |= Transform[t_{RP},t_{PD},t_{ok}](e,s) ==> f (v,d)
+E;F;r |= Transform[t_{RP},t_{PD}](e,s) ==> f (v,d)
 
--- notation: e @ s ~~> Transform(e,s)
-
-========
-= TRUE =
-========
-RP: file system contents
-PD: true_pd
-ok: (fun _ -> true)
-
------------------------------
-E;F;r |= True ==> (F(r),true_pd)
+-- notation: e @[RP,PD] s ~~> Transform[RP,PD](e,s)
 
 ========
 = PATH = 
 ========
 RP: norm_path * s_{RP}
-PD: path_pd of s_{PD}
-ok: (fun path_pd(d) -> s_{OK} d)
+PD: path_pd of bool * s_{PD}
 
 eval_norm_path(E,F,e) = (E',r')
+r' in dom(F)
 E';F;r' |= s ==> (v,d)
+---------------------------------------------
+E;F;r |= e : s ==> ((r',v),path_pd(pi1 d, d))
+
+-- FINISH: what to do in this case?
+
+eval_norm_path(E,F,e) = (E',r')
+r' not in dom(F)
+???
 -----------------------------
-E;F;r |= e : s ==> ((r',v),path_pd(d))
+E;F;r |= e : s ==> ???
 
 ========
 = PAIR = 
 ========
 RP: s1_{RP} * s2_{RP}
-PD: pair_pd of (s1_{PD} * s2_{PD})
-ok: (fun (pair_pd(d1,d2)) -> s1_{ok} d1 && s2_{ok} d2)
+PD: pair_pd of bool * s1_{PD} * s2_{PD}
 
 E;F;r |= s1 ==> (v1,d1)
 E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2)
-----------------------------------------
-E;F;r |= <x:s1, s2> ==> ((v1,v2),pair_pd(d1,d2))
+------------------------------------------------------------------
+E;F;r |= <x:s1, s2> ==> ((v1,v2),pair_pd(pi1 d1 && pi2 d2, d1,d2))
 
 =========
 = UNION = 
 =========
 RP: s1_{RP} + s2_{RP} 
-PD: union_pd of (s1_{PD} + s2_{PD})
-ok: (fun (union_pd(d)) -> match d with
-      | inl d1 -> s1_{ok} d1
-      | inr d2 -> s2_{ok} d2)
- 
+PD: union_pd of bool * s1_{PD} + s2_{PD}
+
 E;F;r |= s1 ==> (v1,d1) 
 s1_{ok} d1 = true
 --------------------------------------------
-E;F;r |= s1|s2 ==> (inl v1,union_pd(inl d1))
+E;F;r |= s1|s2 ==> (inl v1,union_pd(pi1 d1, inl d1))
 
 E;F;r |= s1 ==> (v1,d1)
 s1_ok d1 = false
 E;F;r |= s2 ==> (v2,d2)
 -------------------------------------------
-E;F;r |= s1|s2 ==> (inr v2,union_pd(inr d2))
+E;F;r |= s1|s2 ==> (inr v2,union_pd(pi2 d2, inr d2))
 
 =================
 = SINGLETON SET = 
 =================
 RP: s_{RP} set 
-PD: singleton_pd of s_{PD}
-ok: (fun (singleton_pd(d)) -> s_{ok} d) 
+PD: singleton_pd of bool * s_{PD}
 
 E;F;r |= s ==> (v,d)
 ----------------------------------------
-E;F;r |= { s } ==> ({v},singleton_pd(d))
-
-==========
-= CHOOSE = 
-==========
-
--- Ignore this.  Deprecated.
-
-RP : e_{RP} option where s_{RP} = e_{RP} set
-PD : choose_pd of (bool * s_{PD})
-ok: (fun (choose_pd(b,d)) -> b && s_{ok} d) 
-
-E;F;r |= s ==> ({v1,...,vk},d)
-i in 1..k
----------------------------------------
-E;F;r |= Choose(s) ==> (Some vi,choose_pd(true,d))
-
-E;F;r |= s ==> ({},d)
----------------------------------------
-E;F;r |= Choose(s) ==> (None,choose_pd(false,d))
+E;F;r |= { s } ==> ({v},singleton_pd(pi1 d,d))
 
 ========================
 = STRUCTURAL RECURSION =
 ========================
 RP: s_{RP} set
-PD: srec_pd of (s_{PD} set)
-ok: (fun (srec_pd(D)) -> &&_{d in D} . s_{ok} d)
+PD: srec_pd of bool * s_{PD} set
 
 E |- e : tau set
 S = U_{E',t' in eval_tau_set(E,F,e)} { (v,d) } where E'[x:=t'];F;r |= s ==> (v,d)
 ---------------------------------------------------------------------------------
-E;F;r |= U (x in e) . s ==> (U (fst S), srec_pd (snd S))
+E;F;r |= U (x in e) . s ==> (U (fst S), srec_pd (&& (pi1 (snd S)), snd S))
 
 ============
 = NEGATION =
 ============
 RP: s_{RP}
 PD: neg_pd of bool * s_{PD}
-ok: (fun (neg_pd(b,_)) -> b)
 
 E;F;r |= s ==> (v,d)
 --------------------------------------------
-E;F;r |= ~s ==> (v,neg_pd(not(s_{ok} d),d))
+E;F;r |= ~s ==> (v,neg_pd(not(pi1 d,d)))
 
 =================
 = DERIVED FORMS = 
@@ -319,23 +277,15 @@ The RP and PDs for derived forms stated here are for illustrative
 purposes only. They are computed from the primitives.
 
   * where clauses
-    -- question: is it kosher to make up a new PD type here? if so,
-       where do we record this new type? as an annotation on the
-       function?
-         -- YES!
 
     x:s where e =def= 
-      (fun ((v1,_),pair_pd(d1,d2)) -> (v1,where_pd(d1,d2))) [s_{RP},s_{PD},ok]
-      @
+      (fun ((v1,_),pair_pd(d1,d2)) -> (v1,where_pd(d2 && pi1 d1,d1)))       
+      @[s_{RP},where_pd of bool * s_{PD}]
       <x:s,Pred e>
-
-    and ok = \(where_pd(d1,d2)). (s_{ok} d1) && d2 
-      -- Note this function (or it's result) really needs to be stored somewhere,
-      like in the pd.
 
   * Empty tau set
     RP: tau set 
-    PD: compute_pd
+    PD: compute_pd of bool
     { }_tau =def= Compute({}_tau)
 
   * Full union 
@@ -346,7 +296,7 @@ purposes only. They are computed from the primitives.
       (fun (v,d) -> match v with 
         | inl v' -> (v',d)
         | inr v' -> (v',d))
-      @ 
+      @[s1_{RP}, union_pd of (s1_{PD} + s2_{PD})]
       (s1 | s2)
 
   * Comprehension
@@ -356,19 +306,14 @@ purposes only. They are computed from the primitives.
 
   * Path set Kleene star
     RP: s_{RP} set
-    PD: srec_pd of 
-          (union_pd of 
-             (singleton_pd of (path_pd of s_{PD}) + compute_pd))
-    (e : s)* =def= U (x in e) . ({ x : s } || {})
+    PD: srec_pd of bool * 
+          (union_pd of bool *
+             (singleton_pd of bool* path_pd of ((bool* s_{PD}) + compute_pd of bool)))
+    (e :* s) =def= U (x in e) . ({ x : s } || {})
 
-  * Some path
-    RP: norm_path * s_{RP}
-    PD: choose_pd of 
-          (srec_pd of 
-            (union_pd of 
-               (singleton_pd of (path_pd of s_{PD}) + compute_pd)))
-
-    !(e : s) =def= Choose ( (e : s)* )
+================================================================================
+MINEFIELD : The examples below this may be out of sync with the above calculus
+================================================================================
 
 ===============================
 = Example #1: empty directory =
@@ -380,7 +325,7 @@ F =
   /bar => dir{}
   /foo/baz => file("hello world!")
 
-empty =def= < dir, ~(!("*" : True))
+empty =def= < dir, ~({ True | x in "*" })> 
 
 {};F;/bar |= empty ==> (< {}, dir{}>, 
                         pair_pd(dir_pd(true), neg_pd(true,d))
@@ -482,12 +427,24 @@ s1 = ( "*" : !( "*.txt" : file ) )*
 All of the text files in any number of directories. The rep flattens
 the nesting structure:
 
-s2 = ("*/*.txt" : file)*
+s2 = U( x in "*/*.txt" ) . { x : file } || {}
+
+     { x : file | x in "*/*.txt"} ~~> U( x in "*/*.txt" ) . { x : file } 
+
+s2 = ("*/*.txt" : True)*
 
 Here's a version, where we do the iteration explicitly (i.e., not in
 the expression language for paths):
 
-s2' = U (d in "*") . U (f in d/"*.txt") . { f : file } || {}
+( "*/*.dir" / ( "*.txt" : file ))*
+
+s1 = U (d in dirs("*")) . U (f in d/"*.txt") . { f : file } || {}
+s2' = U (d in dirs("*")) . U (f in d/"*.txt") . { f : file } || {}
+
+/d = dir{a.txt,b.txt}
+/d/a.txt = file("hello")
+/d/b.txt = file("world")
+
 
 =======================
 = More (Simple) Sugar = 
@@ -513,3 +470,47 @@ False =def= ~True
 ========
  - recursion operator
  - metadata
+
+================================================================================
+BONEYARD : Everything below this is deprecated
+================================================================================
+
+==========
+= CHOOSE = 
+==========
+
+--JNF: removed this because we don't have a compelling use case for it
+
+RP : e_{RP} option where s_{RP} = e_{RP} set
+PD : choose_pd of (bool * s_{PD})
+ok: (fun (choose_pd(b,d)) -> b && s_{ok} d) 
+
+E;F;r |= s ==> ({v1,...,vk},d)
+i in 1..k
+---------------------------------------
+E;F;r |= Choose(s) ==> (Some vi,choose_pd(true,d))
+
+E;F;r |= s ==> ({},d)
+---------------------------------------
+E;F;r |= Choose(s) ==> (None,choose_pd(false,d))
+
+  * Some path
+    RP: norm_path * s_{RP}
+    PD: choose_pd of 
+          (srec_pd of 
+            (union_pd of 
+               (singleton_pd of (path_pd of s_{PD}) + compute_pd)))
+
+    !(e : s) =def= Choose ( (e : s)* )
+
+
+========
+= TRUE =
+========
+JNF: removed this because it is redundant (see k_any)
+
+RP: file system contents
+PD: true_pd of bool
+
+--------------------------------------
+E;F;r |= True ==> (F(r),true_pd(true))
