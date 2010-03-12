@@ -1,4 +1,4 @@
-s+------------+
++------------+
 | DATA MODEL |
 +------------+
 
@@ -25,7 +25,8 @@ F ::= -- FILESYSTEM
    prefix-closed conditions from the old dircalc file).
 
 m ::= -- METADATA
-  | { owner : int;
+type meta =
+    { owner : int;
       group : int;
       permissions : string; 
       created : int; 
@@ -43,7 +44,7 @@ T ::= -- FILESYSTEM CONTENTS
 
 s ::=                -- SPECIFICATION
     | k              -- constant (e.g., dir, file, link, csv, xml, ascii, etc.)
-    | Adhoc(b,n)     -- b-described data
+    | Adhoc(b)     -- b-described data
     | ^p             -- symbolic link
     | Pred(e)        -- predicate
     | Computed(e)    -- computed value
@@ -71,6 +72,16 @@ descriptor d.  The judgment is a total function from tuples (E,F,r,s)
 to non-empty sets of pairs (v,d). We maintain the invariant that r in
 dom(F).
 
+Parse Descriptors d have the following shape:
+
+type header = bool
+type 'a pd  = header * 'a
+
+We use the function hd to determine validity of data described by
+any pd:
+
+fun valid (x:'a pd) : header = pi_1 x
+
 We also assume a standard typing judgment for expressions E |- e : tau
 
 =========
@@ -95,84 +106,85 @@ E;F;r |= k ==> check_k(F(r))
 
 Here are several instances of check_k:
 
-  * check_any(_,_) = ((),any_pd(true))
+  * check_any(m,_) = ((),(true,m))
     - RP: unit
-    - PD: any_pd of bool
+    - PD: meta pd
 
-  * check_dir(m,dir(cs)) = ((m,cs),dir_pd(true)) 
-  * check_dir(_) = ({},dir_pd(false)) 
-    - RP: metadata * string set  
-    - PD: dir_pd of bool  
+  * check_dir(m,dir(cs)) = (cs,(true,m)) 
+  * check_dir(m,_) = ({},(false,m)) 
+    - RP: string set  
+    - PD: meta pd  
 
-  * check_file(m,file(n)) = ((m,n),file_pd(true))
-  * check_file(_) = ((default_metadata,""),file_pd(false))
-    - RP: metadata * string 
-    - PD: file_pd of bool 
+  * check_file(m,file(n)) = (n,(true,m))
+  * check_file(m,_) = ("",(false,m))
+    - RP: string 
+    - PD: meta pd 
 
-  * check_link(m,link(p)) = ((m,p),link_pd (true)) 
-  * check_link(_) = ((default_metadata, /.),link_pd (false))
-    - RP: metadata * path 
-    - PD: link_pd of bool
+  * check_link(m,link(p)) = (p,(true,m)) 
+  * check_link(m,_) = (/.,(false,m))
+    - RP: path 
+    - PD: meta pd
 
-  * check_csv(m,file(n)) when valid_csv(n) = ((m,v),csv_pd(true)) 
-  * check_csv(_) = (default_metadata,empty_csv),csv_pd(false)) 
-    - RP: metadata * csv value 
-    - PD: csv_pd of bool
+  * check_csv(m,file(n)) = (v,(true,m))
+      if valid_csv(n) = v 
+  * check_csv(m,_) = (empty_csv,(false,m)) 
+    - RP: csv_value 
+    - PD: meta pd
 
 =========
 = ADHOC =
 =========
-RP: metadata * b_{RP} 
-PD: adhoc_pd of bool * b_{PD}
+RP: b_{RP} 
+PD: (b_{PD} * meta) pd
 
 where pads_ok is a library function that checks if the errcode of the
 the PADS parse descriptor is success.
 
-F(r) = m,file(n')
+F(r) = (m,file(n'))
 b(E,n') = (E',v,d)
 -----------------------------------
-E;F;r |= Adhoc(b,n) ==> ((m,v),adhoc_pd(true && pads_ok_d,d))
+E;F;r |= Adhoc(b) ==> (v,(valid d,(d,m)))
 
-if F(r) = m,dir(_) or m,link(_)
-b(E,n) = (E',v'd)
+if F(r) = (m,dir(_)) or (m,link(_))
+b(E,"") = (E',v'd)
 ----------------------------------------------------------------
-E;F;r |= Adhoc(b,n) ==> ((default_metadata,v),adhoc_pd(false,d))
+E;F;r |= Adhoc(b) ==> (v,(false,(d,m)))
 
 ========
 = LINK =
 ========
-RP: metadata * norm_path 
-PD: link_pd of bool
+RP: norm_path 
+PD: meta pd
 
 F(r) = m,link(r'') 
 b = ( eval_norm_path(E,F,r,e) = Some (E',r') /\ r' = r'' )
 --------------------------------------------------------
-E;F;r |= ^e ==> ((m,r''),link_pd(b))
+E;F;r |= ^e ==> (r'',(b,m))
 
 F(r) = m,file(_) or m,dir(_)
 ----------------------------------------------------
-E;F;r |= ^e ==> ((default_metadata,/),link_pd(false))
+E;F;r |= ^e ==> (/,(false,m))
 
 =============
 = PREDICATE = 
 =============
 RP: unit
-PD: pred_pd of bool
+PD: unit pd
 
 b = eval_bool(E,F,r,e) 
 ------------------------------------
-E;F;r |= Pred(e) ==> ((),pred_pd(b))
+E;F;r |= Pred(e) ==> ((),(b,()))
 
 ===========
 = COMPUTE =
 ===========
 RP: tau
-PD: compute_pd of bool
+PD: unit pd
 
 E |- e : tau
 eval_tau(E,F,r,e) = (E',t)
 --------------------------------------------
-E;F;r |= Compute(e) ==> (t,compute_pd(true))
+E;F;r |= Compute(e) ==> (t,(true,()))
 
 =============
 = TRANSFORM =
@@ -194,80 +206,94 @@ E;F;r |= Transform[t_{RP},t_{PD}](e,s) ==> f (v,d)
 = PATH = 
 ========
 RP: norm_path * s_{RP}
-PD: path_pd of bool * s_{PD}
+PD: bool * s_{PD} pd   ---> bool indicates if path in F.
 
 eval_norm_path(E,F,r,e) = (E',r')
 r' in dom(F)
 E';F;r' |= s ==> (v,d)
 ---------------------------------------------
-E;F;r |= e : s ==> ((r',v),path_pd(pi1 d, d))
+E;F;r |= e : s ==> ((r',v),(valid d, true, d))
 
 -- FINISH: what to do in this case?
+-- dpw:  I assumed we have default functions...
 
 eval_norm_path(E,F,r,e) = (E',r')
 r' not in dom(F)
-???
------------------------------
-E;F;r |= e : s ==> ???
+---------------------------------------------------------------
+E;F;r |= e : s ==> (default_rep(s),(false,(false,default_pd(s))))
 
 ========
 = PAIR = 
 ========
 RP: s1_{RP} * s2_{RP}
-PD: pair_pd of bool * s1_{PD} * s2_{PD}
+PD: (s1_{PD} * s2_{PD}) pd
 
 E;F;r |= s1 ==> (v1,d1)
 E[x:=v1,x_d:=d1];F;r |= s2 ==> (v2,d2)
 ------------------------------------------------------------------
-E;F;r |= <x:s1, s2> ==> ((v1,v2),pair_pd(pi1 d1 && pi2 d2, d1,d2))
+E;F;r |= <x:s1, s2> ==> ((v1,v2),(valid d1 && valid d2, (d1,d2)))
 
 =========
 = UNION = 
 =========
 RP: s1_{RP} + s2_{RP} 
-PD: union_pd of bool * s1_{PD} + s2_{PD}
+PD: (s1_{PD} + s2_{PD}) pd
 
 E;F;r |= s1 ==> (v1,d1) 
-s1_{ok} d1 = true
+valid d1 = true
 --------------------------------------------
-E;F;r |= s1|s2 ==> (inl v1,union_pd(pi1 d1, inl d1))
+E;F;r |= s1|s2 ==> (inl v1,(true, inl d1))
 
 E;F;r |= s1 ==> (v1,d1)
-s1_ok d1 = false
+valid d1 = false
 E;F;r |= s2 ==> (v2,d2)
 -------------------------------------------
-E;F;r |= s1|s2 ==> (inr v2,union_pd(pi2 d2, inr d2))
+E;F;r |= s1|s2 ==> (inr v2,(valid d2, inr d2))
 
 =================
 = SINGLETON SET = 
 =================
 RP: s_{RP} set 
-PD: singleton_pd of bool * s_{PD}
+PD: s_{PD} pd
 
 E;F;r |= s ==> (v,d)
 ----------------------------------------
-E;F;r |= { s } ==> ({v},singleton_pd(pi1 d,d))
+E;F;r |= { s } ==> ({v},(valid d,d))
 
 ========================
 = STRUCTURAL RECURSION =
 ========================
 RP: s_{RP} set
-PD: srec_pd of bool * s_{PD} set
+PD: (s_{PD} set) pd
 
 E |- e : tau set
 S = U_{E',t' in eval_tau_set(E,F,r,e)} { (v,d) } where E'[x:=t'];F;r |= s ==> (v,d)
 ---------------------------------------------------------------------------------
-E;F;r |= U (x in e) . s ==> (U (fst S), srec_pd (&& (pi1 (snd S)), snd S))
+E;F;r |= U (x in e) . s ==> (FST S, (&& (valid (SND S)), SND S))
+
+Note:
+
+functions to take fst/snd components of a set and create a new set of such elements:
+FST : ('a * 'b) set -> 'a set
+SND : ('a * 'b) set -> 'b set
+
+n-ary conjunction of a set of booleans:
+&& : bool set -> bool
 
 ============
 = NEGATION =
 ============
 RP: s_{RP}
-PD: neg_pd of bool * s_{PD}
+PD: s_{PD} pd
 
 E;F;r |= s ==> (v,d)
 --------------------------------------------
-E;F;r |= ~s ==> (v,neg_pd(not(pi1 d,d)))
+E;F;r |= ~s ==> (v,(not(valid d),d))
+
+==================================================================
+The following not up to date wrt Dave's changes to the form of the
+pds as of 3/12/2010.
+==================================================================
 
 =================
 = DERIVED FORMS = 

@@ -1,15 +1,22 @@
 
+SOURCE SYNTAX
+
 s ::= 
-  | pdirectory of (n is s)* 
-  | pexact_directory of (n is s)* 
+    k
   | psource of b 
+  | pdirectory of {n1 is s1; n2 is s2} 
+  | exact pdirectory of {n1 is s1; n2 is s2}
   | pcompute e
   | { s | x <- e }
   | (e :: s)
-  | (e ::* s)  -- ?
+  | (e ::* s)
   | s <| e |>
   | s @ p 
   | s option
+
+NOTES:
+ -- (e ::* s)           <<---- omitting this declaration
+ -- binary directories for simplicity
 
 OPEN QUESTIONS
  - option example in pw.fml!
@@ -19,11 +26,11 @@ OPEN QUESTIONS
  - exact directories? 
 
 TRANSLATION
-[[ pdirectory { n1 is s1, ... nk is sk } ]] =
-< dir, n1 : [[ s1 ]], ..., nk : [[ sk ] > 
+[[ pdirectory { n1 is s1, n2 is s2 } ]] =
+< dir, < n1 : [[ s1 ]], [[ s2 ] > > 
 
-[[ pexact_directory { n1 is s1, ... nk is sk } ]] =
-??
+[[ exact pdirectory { n1 is s1, n2 is s2 } ]] =
+< contents(e), < n1 : [[ s1 ]], [[ s2 ] > > 
 
 [[ psource b ]] = 
 Adhoc b
