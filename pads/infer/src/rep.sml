@@ -10,11 +10,12 @@ datatype BaseData =
 datatype SyncData =
   Good of (string * Refined)	   (* the actual matched string plus the refined type *) 
 | Recovered of (string * string * Refined)  (* recovered string, actual matched string and the Refined type *)
-| Partial of (string * Refined) (* partially matched string - it matches the basic type of the refined but the refined itself *)
+| Partial of (string * Refined) (* partially matched string - it matches the basic type of the refined but not the refined itself *)
+| PartialRecovered of (string * string * Refined) (* recovered string, partially matched string and the new Refined type *)
 | Fail
 
 type metric_type = int * int * int * int (* (number of error nodes, number of good nodes,
-					  recovered chars, total chars parsed ) *)
+					  recovered chars, total chars correctly parsed ) *)
 
 fun add_metric (e1, g1, r1, t1) (e2, g2, r2, t2) = (e1 + e2, g1 + g2, r1 + r2, t1 + t2) 
 
@@ -147,6 +148,8 @@ fun sync_comp (syn1, syn2) =
   | (Recovered (r1, s1, t1), Recovered (r2, s2, t2)) => 
 	String.compare (r1 ^ s1, r2 ^ s2)
   | (Partial (s1, r1), Partial (s2, r2)) => String.compare (s1, s2)
+  | (PartialRecovered(r1, s1, t1), PartialRecovered(r2, s2, t2)) =>
+	String.compare (r1 ^ s1, r2 ^ s2)
 (*
 	(
 	case String.compare(s1, s2) of
@@ -162,6 +165,10 @@ fun sync_comp (syn1, syn2) =
   | (Partial _, Good _) => GREATER
   | (Partial _, Recovered _) => GREATER
   | (Partial _, _) => LESS
+  | (PartialRecovered _, Good _) => GREATER
+  | (PartialRecovered _, Recovered _) => GREATER
+  | (PartialRecovered _, Partial _) => GREATER
+  | (PartialRecovered _, _) => LESS
   | (Fail, _) => GREATER
 
 datatype Rep = 
@@ -288,6 +295,7 @@ fun repToString prefix r =
   | SyncR (Good (s,t)) => prefix ^ "Good(" ^ s ^ ")\n"
   | SyncR (Recovered (r1, s1, s2)) => prefix ^ "Rec(" ^ r1 ^")(" ^ s1 ^ ")\n"
   | SyncR (Partial(s,t)) => prefix ^ "Part(" ^ s ^ ")\n"
+  | SyncR (PartialRecovered (r1, s1, s2)) => prefix ^ "ParRec(" ^ r1 ^")(" ^ s1 ^ ")\n"
   | SyncR (Fail) => prefix ^ "Fail\n" 
   | TupleR reps => 
 	let val ss = map (repToString (prefix ^ "    ")) reps 

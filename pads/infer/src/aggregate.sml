@@ -247,7 +247,10 @@ struct
 		  (SyncA (c+1, l + lsize s, ss), nil)
 		else (SyncA(c+1, l + lsize s, SOME (Enum (res@[re]))), nil)
 	| (SOME (StringConst s'), StringConst s) =>  
-		(SyncA(c + 1, l + lsize s, SOME (Enum [StringConst s', re])), nil)
+          if isWhiteSpace s' then 
+	    (SyncA(c + 1, l + lsize s, NONE), nil)
+	  else
+	    (SyncA(c + 1, l + lsize s, SOME (Enum [StringConst s', re])), nil)
 	| (NONE, _) => (SyncA(c + 1, l + lsize s, NONE), nil)
 	| _ => raise MergeFailed
 	)
@@ -255,6 +258,31 @@ struct
 		let val id = mkNextTyLabel()
 		in (TupleA (c+1, [Ln (id, [r]), SyncA (c+1, l + lsize s, ss)]), [(id, 1)])
 		end
+    | (SyncA (c, l, ss), SyncR (PartialRecovered(r, s, m))) => 
+	let val id = mkNextTyLabel()
+	    val ss' = case (ss, m) of
+            	  (SOME (IntConst i), IntConst j) => 
+            		SOME (Int (LargeInt.min(i, j), LargeInt.max(i, j))) 
+            		(* change int const to ranged int *)
+            	| (SOME (Int (min, max)), IntConst new) => 
+            	(
+            		if new < min then SOME (Int (new, max))
+            		else if new > max then SOME (Int(min, new))
+            		else SOME (Int(min, max))
+            	)
+		(* reduce to Pfloat *) 
+            	| (SOME (FloatConst _), FloatConst _) => NONE
+            	| (SOME (Enum res), re) => 
+            	  if List.exists (fn re' => refine_equal (re, re')) res then ss
+            		else SOME (Enum (res@[re]))
+            	| (SOME (StringConst s'), StringConst s) =>  
+                   if isWhiteSpace s' then NONE
+            	   else SOME (Enum [StringConst s', m])
+            	| (NONE, _) => NONE
+            	| _ => raise MergeFailed
+	in (TupleA (c+1, [Ln (id, [r]), SyncA (c+1, l + lsize s, ss')]), 
+		[(id, 1)])
+	end
 
     | (Opt (c, id, SyncA (c1, l, ss)), SyncR (Good (s, re))) => 
 	(Opt (c+1, id, SyncA (c1+1, l+lsize s, ss)), [(id, 1)])
@@ -266,6 +294,12 @@ struct
 		in (TupleA (c+1, [Ln (id1, [r]), Opt(c+1, id, SyncA(c1+1, l+ lsize s, ss))]), 
 			[(id, 1), (id1, 1)])
 		end
+    | (Opt (c, id, SyncA ss), SyncR (PartialRecovered(r, s, m))) => 
+	let val id1 = mkNextTyLabel()
+	    val newa = #1 (merge (SyncA ss) (SyncR (Partial(s, m)))) 
+	in (TupleA (c+1, [Ln (id1, [r]), Opt(c+1, id, newa)]), 
+		[(id, 1), (id1, 1)])
+	end
 
     | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR (Good (s, re))) => 
 	(TupleA (c+1, [Ln (id, l), SyncA (c1+1, len+lsize s, ss)]), [(id, 0)])
@@ -278,6 +312,11 @@ struct
 		(TupleA (c+1, [Ln (id, l), (#1 (merge (SyncA ss) (SyncR (Partial x))))]), [(id, 0)])
     | (TupleA (c, [Ln (id, l), SyncA (c1, len, ss)]), SyncR (Recovered(r, s, m))) => 
 		(TupleA (c+1, [Ln (id, r::l), SyncA (c1+1, len+lsize s, ss)]), [(id, 1)])
+    | (TupleA (c, [Ln (id, l), SyncA ss]), SyncR (PartialRecovered(r, s, m))) => 
+	let val newa = #1 (merge (SyncA ss) (SyncR (Partial(s, m))))
+	in 
+	  (TupleA (c+1, [Ln (id, r::l), newa]), [(id, 1)])
+	end
 
     | (TupleA (c, [Ln (id, l), Opt (c1, id1, SyncA (c2, len, ss))]), SyncR (Good (s,re))) => 
 		(TupleA (c+1, [Ln (id, l), Opt (c1+1, id1, SyncA (c2+1, len+ lsize s, ss))]), 
@@ -291,6 +330,13 @@ struct
     | (TupleA (c, [Ln (id, l), Opt (c1, id1, SyncA (c2, len, ss))]), SyncR (Recovered(r, s, m))) => 
 		(TupleA (c+1, [Ln (id, r::l), Opt(c1+1, id1, SyncA (c2+1, len+lsize s, ss))]), 
 		[(id, 1), (id1, 1)])
+    | (TupleA (c, [Ln (id, l), Opt (c1, id1, SyncA ss)]), 
+		SyncR (PartialRecovered(r, s, m))) => 
+	let val newa = #1 (merge (SyncA ss) (SyncR (Partial(s, m))))
+	in 
+	  (TupleA (c+1, [Ln (id, r::l), Opt(c1+1, id1, newa)]), 
+		[(id, 1), (id1, 1)])
+	end
 
 (* The following accumulate the good data on the leaves as well!
       (BaseA bs, BaseR (GoodB x)) => BaseA ((GoodB x)::bs)
@@ -393,7 +439,13 @@ struct
 (* function that takes a Ty and generates an initial empty aggregate structure *)
   fun initialize ty = 
     case ty of
-	Base (aux, tl) => BaseA (0, 0, #1 (hd tl))
+	Base (aux, tl) => 
+	  (
+	  case hd tl of
+		(Other c, _) => SyncA(0, 0, SOME (StringConst (Char.toString c)))
+	      | (Pwhite w, _) => SyncA(0, 0, SOME (StringME "/[ \\t\\r\\n]+/"))
+	      | _ => BaseA (0, 0, #1 (hd tl))
+	  )
 	| RefinedBase (aux, re, _) => SyncA (0, 0, SOME re)
 	| Pstruct (a, tys) =>
 		let val inits = map initialize tys in
@@ -499,6 +551,13 @@ struct
 		end
 	| (Base (a, tl), BaseA (c, l, token)) => 
 		let val newa = updateBaseAux a c l token 
+		in Base(newa, tl)  (* we keep the original token list for now *)
+		end
+          (* Pwhite and Other base types accumulate to SyncA *)
+	| (Base (a, tl), SyncA (c, l, SOME newre)) => 
+		let 
+		  val token = #1 (hd tl)
+		  val newa = updateBaseAux a c l token
 		in Base(newa, tl)  (* we keep the original token list for now *)
 		end
 	| (RefinedBase (a, re, tl), SyncA (c, l, SOME newre)) => 

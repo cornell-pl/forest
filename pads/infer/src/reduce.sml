@@ -18,7 +18,8 @@ fun refineableBase token =
 	| PeXML _ => true
 	| Pint _ => true
 	| Pstring _ => true
-	| Pwhite _ => true
+	(* we will not refine white so it is more generaral *)
+	| Pwhite _ => true  
 	| Other _ => true
 	| _ => false
 fun enumerableBase token = 
@@ -1956,7 +1957,7 @@ fun containPatt ltokens re =
 	    case t of
 		Ptext s =>
 		  let 
-		      val (_, matched, _) = Parse.parse_regex (re', 0, s)
+		      val (_, matched, _) = Parse.parse_regex (re', 0, s, true)
 		  in
 		    case matched of
 			SOME _ => true
@@ -2482,7 +2483,7 @@ let
   val phase_two_rules : data_dependent_rule list =
 		[ 
 		  uniqueness_to_const, 
-		  enum_range_to_refine,
+		  enum_range_to_refine, 
 		  sum_to_switch,
 		  to_dependent_array_len
 		]
@@ -2528,7 +2529,7 @@ let
 		]
   val phase_six_rules : data_independent_rule list = 
 		[ 	
-		  	adjacent_punc_consts,
+		  	(* adjacent_punc_consts, *)
 		  	union_to_enum,
 			remove_degenerate_list,
 			unnest_tuples,

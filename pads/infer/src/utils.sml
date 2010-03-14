@@ -79,6 +79,15 @@ struct
         String.translate escapeChar s
      end
 
+(*************
+    fun charToRE c =
+	case c of
+	  #"-" => "[\-]"
+	| #"[" => "[\[]"
+	| #"]" => "[\]]"
+	| _ => "[" ^ Char.toString c ^ "]"
+******)
+
     (* this function checks if a string is a valid C identifier *)
     fun isCIdentifier s =
       let
@@ -165,4 +174,20 @@ struct
 	if String.sub(s, 0) = #"/" andalso String.sub(s, (String.size s) -1) = #"/" then
 	String.substring (s, 1, String.size s - 2)
  	else s
+    fun isWhiteSpace s =
+	let val ss = Substring.full s
+	    fun f ss =
+		case Substring.getc ss of
+		  NONE => true
+		| SOME (c, ss') => if Char.isSpace c then f ss'
+				   else false
+	in
+	  f ss
+	end
+  
+    fun isPunctuation s =
+	if String.size s <> 1 then false
+	else case Char.fromString s of
+		NONE => false
+	      | SOME c => Char.isPunct c 
 end

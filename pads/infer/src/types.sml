@@ -876,7 +876,7 @@ struct
 		  in
 			if len = 1 then
 			  (headers, footers, SOME aux, (hd bodyTys))
-			else if len = 0 then raise TyMismatch
+			else if len = 0 then (nil, nil, NONE, ty)
 			else 
 			  let 
 			    val (newcov, newcomp) = List.foldl combAux (0, zeroComps) bodyTys

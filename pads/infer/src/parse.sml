@@ -11,7 +11,7 @@ struct
   structure SS = Substring
   val max_parses_per_line = 1
   val max_consecutive_fails = 3
-  val recover_factor = 1
+  val recover_factor = 50
 
   (* default optimization settings *)
   val do_clean = ref true
@@ -138,7 +138,6 @@ struct
 			SOME r => r
 			| NONE => 
 				let 
-				     (* val _ = print ("Parsing token (" ^ re_str ^ ")\n") *)
 				     val r = RegExp.compileString re_str
 				     val _ = tokenRegexMap := TokenMap.insert (!tokenRegexMap, t, r) 
 				in r
@@ -199,12 +198,14 @@ struct
 	  (
 	    case t of
 	      Pempty => (BaseR (GoodB Pempty), (0, 1, 0, 0), start)
+(** Other is used as sync token and it shouldn't appear here 
 	    | Other c => (case SS.first s of
 			   SOME c' => 
 				if c = c' then (BaseR (GoodB t), (0, 1, 0, 1), start+1)
 				else (BaseR ErrorB, (1, 0, 0, 0), start)
 			 | NONE =>  (BaseR ErrorB, (1, 0, 0, 0), start)
 			 )
+*)
 	    | _ => ((* print (tokenTyToString t); *) raise TyMismatch)
 	  )
     end
@@ -238,7 +239,7 @@ struct
      end
 
   (* return (recovered string, matched string, new index) *)
-  fun parse_regex (re_str, start, input) =
+  fun parse_regex (re_str, start, input, with_recovery) =
     let
         val s = SS.extract (input, start, NONE) 
 	(* val _ =  print ("against (" ^ (SS.string s) ^ ")\n") *)
@@ -247,7 +248,6 @@ struct
 			  SOME r => r
 			| NONE => 
 				let
-				    (* val _ = print ("Parsing regex(" ^ re_str ^ ")\n") *)
 				    val r = RegExp.compileString re_str
 	    			    val _ = strRegexMap := StringMap.insert (!strRegexMap, re_str, r) 
 			        in r
@@ -256,7 +256,11 @@ struct
 		case SS.getc ss of
 		  SOME(c, remainder) => SOME((c, (counter+1, remainder)))
 		| NONE => NONE  
-        val result_opt = (RegExp.find regex reader (0, s))
+        val result_opt = 
+	      if with_recovery then 
+		(RegExp.find regex reader (0, s))
+	      else
+		(RegExp.prefix regex reader (0, s)) 
     in
    	case result_opt of
 	  NONE => ((* print "no match!\n";*) (NONE, NONE, start))
@@ -282,6 +286,21 @@ struct
 	  )
     end
 
+  (* this function parses a punctuation char, returns recovered string (option)
+     matched string and the new index *)
+  fun parse_punc (c, start, input) =
+    let 
+      val s = SS.extract (input, start, NONE) 
+      fun f ch = (ch <> c)
+      val (hd, tl) = SS.splitl f s
+    in 
+      if SS.isEmpty hd then (* c is found at the beginning *)
+	(NONE, SOME (Char.toString c), start+1)
+      else if SS.isEmpty tl then (* c is not found at all *)
+	(NONE, NONE, start)
+      else (SOME (SS.string hd), SOME (Char.toString c), start + (SS.size hd))
+    end
+			
   (* NOTE: a potential policy is if the recovered data is longer than the parsed data
      then return a fail as well, but right now we always return fail along with recovered data *)
   fun parse_sync (refined, start, input) =
@@ -291,7 +310,8 @@ struct
 	  StringME re =>
 	    let 
 		val re_str = stripslashes re (*remove the / and / *)
-	        val (recovered, matched, j) = parse_regex (re_str, start, input)
+	        val (recovered, matched, j) = 
+			parse_regex (re_str, start, input, false)
 	    in
 		case (recovered, matched) of
 		  (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 1, 0, String.size s), j)]
@@ -315,7 +335,8 @@ struct
 		    let val str = 
 			  if li >= 0 then "0*" ^ (LargeInt.toString li)
 			  else ("\\-0*" ^ LargeInt.toString (~li))
-		        val (recovered, matched, j) = parse_regex (str, start, input)
+		        val (recovered, matched, j) = 
+				parse_regex (str, start, input, false)
 		    in
 			case (recovered, matched) of
 			  (NONE, SOME s) => [(SyncR(Good (s, IntConst li)), (0, 1, 0, String.size s), j)]
@@ -357,7 +378,7 @@ struct
         	    val mystring = SS.extract (input, start, NONE) 
 		    fun find_next (s, index) =
 		    (* index is the pos relative to start *)
-		      let val result_opt = (RegExp.find regex reader (0, s))
+		      let val result_opt = (RegExp.prefix regex reader (0, s))
 		      (*
 			  val _ = print ("matching " ^ SS.string s ^ " index = " ^ Int.toString index ^ "\n")
 		      *)
@@ -407,7 +428,7 @@ struct
 	  (
 	    case parse_base (Pfloat ("", ""), start, input) of
 	      (BaseR(ErrorB), _, _) =>
-		    let val (recovered, matched, j) = parse_regex (escapeRE ("0*" ^ i ^ "." ^ f ^ "0*"), start, input)
+		    let val (recovered, matched, j) = parse_regex (escapeRE ("0*" ^ i ^ "." ^ f ^ "0*"), start, input, false)
 		    in
 			case (recovered, matched) of
 			  (NONE, SOME s) => [(SyncR(Good (s, FloatConst (i, f))), (0, 1, 0, String.size s), j)]
@@ -435,9 +456,9 @@ struct
 	    | _ => raise Unexpected
 	  )
 	| StringConst s => 
-	    (* attempt o parse a Pstring token right here to 
-	    generate a possible partial result, but we have to ensure that
-	    the string s itself is a word first *)
+	    (* attempt to parse a Pstring token right here 
+	    it is possible to generate a partial result, 
+	    if the string s is a word *)
 	    let 
 	      val match_word = 
 	          case parse_base (Pstring (""), 0, s) of
@@ -448,19 +469,29 @@ struct
 		  | _ => raise Unexpected
 	       fun match_const_str () =
 		  let
-		     val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
+		     val (recovered, matched, j) = 
+		        (* we only allow punctuation and white space 
+				as sync token for now *)
+			if isPunctuation s then
+			  parse_regex(escapeRE s, start, input, true)
+			else if isWhiteSpace s then
+			  parse_regex ("[ \\t\\r\\n]+", start, input, true)
+			else
+			  parse_regex(escapeRE s, start, input, false)
 	    	  in
 		     case (recovered, matched) of
 		       (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 1, 0, String.size s), j)]
-		     | (SOME r, SOME s) => 
+		     | (SOME r, SOME matched_s) => 
 			let val rlen = String.size r
-			    val slen = String.size s
+			    val slen = String.size matched_s
 			    val failed = if rlen > recover_factor * slen then
 					[(SyncR Fail, (1, 0, 0, 0), start)]
 					 else nil
 			in
+			    if String.compare (s, matched_s) = EQUAL then
 				[(SyncR(Recovered (r, s, StringConst s)), 
 					(0, 1, String.size r, String.size s), j)] @ failed
+			    else [(SyncR(PartialRecovered (r, matched_s, StringConst matched_s)), (0, 1, String.size r, String.size matched_s), j)] @ failed
 			end
 		     | _ => [(SyncR Fail, (1, 0, 0, 0), start)]
 		  end
@@ -512,7 +543,7 @@ struct
 	  (
 	  case (str, patt) of
 	    (SOME s, NONE) =>
-	    	let val (recovered, matched, j) = parse_regex(escapeRE s, start, input)
+	    	let val (recovered, matched, j) = parse_regex(escapeRE s, start, input, false)
 		in
 		  case (recovered, matched) of
 		    (NONE, SOME s) => [(SyncR(Good ("", StringConst "")), (0, 1, 0, 0), start)]
@@ -523,7 +554,7 @@ struct
 	  | (NONE, SOME re) => 
 	    	let 
 		  val re_str = String.substring (re, 1, (size re)-2) (*remove the / and / *)
-	          val (recovered, matched, j) = parse_regex (re_str, start, input)
+	          val (recovered, matched, j) = parse_regex (re_str, start, input, false)
 		in
 		  case (recovered, matched) of
 		    (NONE, SOME s) => [(SyncR(Good ("", StringConst "")), (0, 1, 0, 0), start)]
@@ -561,7 +592,46 @@ struct
 	(
 	    case ts of
 		nil => raise TyMismatch
-	      | (t, l)::_ => ParseSet.singleton (parse_base (t, i, input))
+	      | (t, l)::_ => 
+		(*Pwhite and Pchar are treated as sync tokens *)
+		case t of
+		  Pwhite w =>
+		  let val (recovered, matched, j) = parse_regex ("[ \\t\\r\\n]+", i, input, true)
+		  in
+		     case (recovered, matched) of
+		       (NONE, SOME s) => ParseSet.singleton(SyncR(Good (s, StringME "/[ \\t\\r\\n]+/")), (0, 1, 0, String.size s), j)
+		     | (SOME r, SOME s) =>
+			let 
+		          val rlen = String.size r
+			  val slen = String.size s
+		          val failed = if rlen > recover_factor * slen then
+					[(SyncR Fail, (1, 0, 0, 0), i)]
+				       else nil
+			in
+			  ParseSet.addList(ParseSet.empty, [(SyncR(Recovered(r, s, StringME "/[ \\t\\r\\n]+/")), (0, 1, String.size r, String.size s), j)] @ failed)
+			end
+		     | _ => ParseSet.singleton(SyncR Fail, (1, 0, 0, 0), i)
+		  end
+		| Other c => 
+		  let val (recovered, matched, j) = parse_punc (c, i, input)
+		  in
+		     case (recovered, matched) of
+		       (NONE, SOME s) => ParseSet.singleton(SyncR(Good (s, StringConst s)), (0, 1, 0, String.size s), j)
+		     | (SOME r, SOME s) =>
+		      let 
+		        val rlen = String.size r
+		        val slen = 1
+		        val failed = if rlen > recover_factor * slen then
+					[(SyncR Fail, (1, 0, 0, 0), i)]
+					 else nil
+		      in ParseSet.addList (ParseSet.empty, [(SyncR(Recovered (r, s, StringConst s)), 
+				(0, 1, rlen, 1), j)] @ failed)
+		      end
+		     | _ => ParseSet.singleton(SyncR Fail, (1, 0, 0, 0), i)
+
+		  end
+		| _ =>
+		   ParseSet.singleton (parse_base (t, i, input))
 	)
     | RefinedBase(a, r, ts) => 
 	let val set = ParseSet.addList(ParseSet.empty, parse_sync (r, i, input))
