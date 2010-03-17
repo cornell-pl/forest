@@ -18,12 +18,6 @@ p,q ::=              -- PATH
 r,s ::=              -- NORMAL PATH
   | /n1/ ... /nk
 
-F ::= -- FILESYSTEM
-  | { r |-> m * T }
-
--- note: formalize what it means for F to be well-formed (the
-   prefix-closed conditions from the old dircalc file).
-
 m ::= -- METADATA
 type meta =
     { owner : int;
@@ -38,14 +32,20 @@ T ::= -- FILESYSTEM CONTENTS
   | dir({n1,...,nk})
   | link(p)
 
+F ::= -- FILESYSTEM
+  | { r |-> m * T }
+
+--TODO: formalize what it means for F to be well-formed (the
+  prefix-closed conditions from the old dircalc.txt file).
+
 +--------+
 | SYNTAX |
 +--------+
 
 s ::=                -- SPECIFICATION
     | k              -- constant (e.g., dir, file, link, csv, xml, ascii, etc.)
-    | Adhoc(b)     -- b-described data
-    | ^p             -- symbolic link
+    | Adhoc(b)       -- b-described data
+    | ^e             -- symbolic link
     | Pred(e)        -- predicate
     | Computed(e)    -- computed value
     | Transform(e,s) -- transformation
@@ -113,7 +113,7 @@ Here are several instances of check_k:
   * check_dir(m,dir(cs)) = (cs,(true,m)) 
   * check_dir(m,_) = ({},(false,m)) 
     - RP: string set  
-    - PD: meta pd  
+    - PD: meta pd
 
   * check_file(m,file(n)) = (n,(true,m))
   * check_file(m,_) = ("",(false,m))
@@ -142,12 +142,12 @@ the PADS parse descriptor is success.
 
 F(r) = (m,file(n'))
 b(E,n') = (E',v,d)
------------------------------------
+-----------------------------------------
 E;F;r |= Adhoc(b) ==> (v,(valid d,(d,m)))
 
 if F(r) = (m,dir(_)) or (m,link(_))
 b(E,"") = (E',v'd)
-----------------------------------------------------------------
+---------------------------------------
 E;F;r |= Adhoc(b) ==> (v,(false,(d,m)))
 
 ========
@@ -158,11 +158,11 @@ PD: meta pd
 
 F(r) = m,link(r'') 
 b = ( eval_norm_path(E,F,r,e) = Some (E',r') /\ r' = r'' )
---------------------------------------------------------
+----------------------------------------------------------
 E;F;r |= ^e ==> (r'',(b,m))
 
 F(r) = m,file(_) or m,dir(_)
-----------------------------------------------------
+-----------------------------
 E;F;r |= ^e ==> (/,(false,m))
 
 =============
@@ -172,7 +172,7 @@ RP: unit
 PD: unit pd
 
 b = eval_bool(E,F,r,e) 
-------------------------------------
+--------------------------------
 E;F;r |= Pred(e) ==> ((),(b,()))
 
 ===========
@@ -183,17 +183,17 @@ PD: unit pd
 
 E |- e : tau
 eval_tau(E,F,r,e) = (E',t)
---------------------------------------------
+-------------------------------------
 E;F;r |= Compute(e) ==> (t,(true,()))
 
 =============
 = TRANSFORM =
 =============
 RP: t_{RP}
-PD: t_{PD}
+PD: t_{PD} pd
 
-where f in (s_{RP} * s{PD}) -> (t_{RP} * t_{PD})
--- question: how to check f's (precise) type?
+where f in (s_{RP} * s{PD}) -> (t_{RP} * t_{PD} pd)
+--TODO: need a story about how we typecheck f.
 
 eval_fun(E,F,r,e) = (E',f)
 E;F;r |= s ==> (v,d)
@@ -214,12 +214,11 @@ E';F;r' |= s ==> (v,d)
 ---------------------------------------------
 E;F;r |= e : s ==> ((r',v),(valid d, true, d))
 
--- FINISH: what to do in this case?
--- dpw:  I assumed we have default functions...
+--DPW: I assumed we have functions to generate default reps and pds.
 
 eval_norm_path(E,F,r,e) = (E',r')
 r' not in dom(F)
----------------------------------------------------------------
+-----------------------------------------------------------------
 E;F;r |= e : s ==> (default_rep(s),(false,(false,default_pd(s))))
 
 ========
@@ -267,18 +266,15 @@ RP: s_{RP} set
 PD: (s_{PD} set) pd
 
 E |- e : tau set
-S = U_{E',t' in eval_tau_set(E,F,r,e)} { (v,d) } where E'[x:=t'];F;r |= s ==> (v,d)
----------------------------------------------------------------------------------
+S = U_{E',t' in eval_tau_set(E,F,r,e)} { (v,d) } 
+      where E'[x:=t'];F;r |= s ==> (v,d)
+----------------------------------------------------------------
 E;F;r |= U (x in e) . s ==> (FST S, (&& (valid (SND S)), SND S))
 
-Note:
-
-functions to take fst/snd components of a set and create a new set of such elements:
-FST : ('a * 'b) set -> 'a set
-SND : ('a * 'b) set -> 'b set
-
-n-ary conjunction of a set of booleans:
-&& : bool set -> bool
+-- Note: we lift fst/snd/&& to sets:
+  FST : ('a * 'b) set -> 'a set
+  SND : ('a * 'b) set -> 'b set
+  && : bool set -> bool
 
 ============
 = NEGATION =
@@ -290,11 +286,6 @@ E;F;r |= s ==> (v,d)
 --------------------------------------------
 E;F;r |= ~s ==> (v,(not(valid d),d))
 
-==================================================================
-The following not up to date wrt Dave's changes to the form of the
-pds as of 3/12/2010.
-==================================================================
-
 =================
 = DERIVED FORMS = 
 =================
@@ -305,36 +296,34 @@ purposes only. They are computed from the primitives.
   * where clauses
 
     x:s where e =def= 
-      (fun ((v1,_),pair_pd(d1,d2)) -> (v1,where_pd(d2 && pi1 d1,d1)))       
-      @[s_{RP},where_pd of bool * s_{PD}]
+      (fun ((v1,_),(b,(d1,()))) -> (v1,(b,d1)))
+      @[s_{RP},s_{PD}]
       <x:s,Pred e>
 
   * Empty tau set
     RP: tau set 
-    PD: compute_pd of bool
+    PD: ()
     { }_tau =def= Compute({}_tau)
 
   * Full union 
     where s1_{RP} = s2_{RP}
     RP: s1_{RP} 
-    PD: union_pd of (s1_{PD} + s2_{PD})
+    PD: s1_{PD} + s2_{PD}
     s1 || s2 =def= 
-      (fun (v,d) -> match v with 
-        | inl v' -> (v',d)
-        | inr v' -> (v',d))
-      @[s1_{RP}, union_pd of (s1_{PD} + s2_{PD})]
+      (fun (v,pd) -> match v with 
+        | inl v' -> (v',pd)
+        | inr v' -> (v',pd))
+      @[s1_{RP},s1_{PD} + s2_{PD}]
       (s1 | s2)
 
   * Comprehension
     RP: s_{RP} set
-    PD: srec_pd of (singleton_pd of s_{PD}) set
+    PD: s_{PD} set
     { s | x in e } =def= U (x in e) . { s }
 
   * Path set Kleene star
     RP: s_{RP} set
-    PD: srec_pd of bool * 
-          (union_pd of bool *
-             (singleton_pd of bool* path_pd of ((bool* s_{PD}) + compute_pd of bool)))
+    PD: s_{PD} set + ()
     (e :* s) =def= U (x in e) . ({ x : s } || {})
 
 ================================================================================
