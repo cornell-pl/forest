@@ -294,7 +294,8 @@ The RP and PDs for derived forms stated here are for illustrative
 purposes only. They are computed from the primitives.
 
   * where clauses
-
+    RP: s_{RP}
+    PD: s_{PD}
     x:s where e =def= 
       (fun ((v1,_),(b,(d1,()))) -> (v1,(b,d1)))
       @[s_{RP},s_{PD}]

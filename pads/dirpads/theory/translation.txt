@@ -11,7 +11,8 @@ s ::=
   | (e :: s)
   | (e ::* s)
   | s <| e |>
-  | s @ p 
+  | s @ e 
+  | s @@ e 
   | s option
 
 NOTES:
@@ -29,8 +30,15 @@ TRANSLATION
 [[ pdirectory { n1 is s1, n2 is s2 } ]] =
 < dir, < n1 : [[ s1 ]], [[ s2 ] > > 
 
+--JNF: This is a minor, silly point, but I'm less sure that modeling
+  things as binary directories will work -- can top-level pdirectories
+  be nested? Also, we need to rewrite predicates in the body of s1 at
+  least to navigate to n1_pd...
+
 [[ exact pdirectory { n1 is s1, n2 is s2 } ]] =
 < contents(e), < n1 : [[ s1 ]], [[ s2 ] > > 
+
+--JNF: is this finished? 
 
 [[ psource b ]] = 
 Adhoc b
@@ -47,7 +55,19 @@ U (x in e) . { [[ s ]] }
 [[ (e ::* s) ]] = 
 U (x in e) . { x : [[ s ]] } || {}
 
-[[ s <| e |> ]] = ??
+[[ s <| e |> ]] = 
+x:s where e 
+(* with x fresh *)
 
-[[ s @ p ]]
-< x:^p, (x : [[s]])> ??
+[[ s @ e ]] = 
+(fun (v,(b,d)) -> (snd v,(b,snd d)))
+@[norm_path * s_{RP},bool * s_{PD}]
+< x:^e, (x : [[s]])> 
+
+[[ s @@ e ]] = 
+(fun (v,(b,d)) -> (snd (snd v), (b, snd (snd d))))
+@[s_{RP},s_{PD}]
+< x:^e, (x : [[s]])> 
+
+[[ s option ]] = 
+s | Compute(())
