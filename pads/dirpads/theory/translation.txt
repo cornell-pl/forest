@@ -1,4 +1,3 @@
-
 SOURCE SYNTAX
 
 s ::= 
@@ -28,17 +27,10 @@ OPEN QUESTIONS
 
 TRANSLATION
 [[ pdirectory { n1 is s1, n2 is s2 } ]] =
-< dir, < n1 : [[ s1 ]], [[ s2 ] > > 
-
---JNF: This is a minor, silly point, but I'm less sure that modeling
-  things as binary directories will work -- can top-level pdirectories
-  be nested? Also, we need to rewrite predicates in the body of s1 at
-  least to navigate to n1_pd...
+< dir, < n1 : [[ s1 ]], [[ s2 ]] > > 
 
 [[ exact pdirectory { n1 is s1, n2 is s2 } ]] =
 < contents(e), < n1 : [[ s1 ]], [[ s2 ] > > 
-
---JNF: is this finished? 
 
 [[ psource b ]] = 
 Adhoc b
@@ -56,7 +48,7 @@ U (x in e) . { [[ s ]] }
 U (x in e) . { x : [[ s ]] } || {}
 
 [[ s <| e |> ]] = 
-x:s where e 
+x:s where e[x.permissions / permissions, x.owner / owner,...]
 (* with x fresh *)
 
 [[ s @ e ]] = 
