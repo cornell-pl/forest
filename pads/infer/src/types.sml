@@ -190,7 +190,7 @@ struct
     fun avgParrayBodyLength ( ty : Ty ) : real =
         case ty of
                Parray (a, x) =>
-                 let val lens = map #2 (#lengths x)
+                 let val lens = map #1 (#lengths x)
                  in avgInts lens
                  end
              | _ => raise NotParray
@@ -199,7 +199,7 @@ struct
     fun avgRArrayBodyLength ( ty : Ty ) : real =
         case ty of
                RArray (a, sep, term, body, len, lengths ) =>
-                 let val lens = map #2 lengths
+                 let val lens = map #1 lengths
                  in avgInts lens
                  end
              | _ => raise NotRArray
