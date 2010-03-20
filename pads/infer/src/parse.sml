@@ -74,7 +74,7 @@ struct
 		| NONE =>  IntMap.insert (map, j, [(r, m, j)])
 	    val map = ParseSet.foldl g IntMap.empty s
 	    val mylist = List.concat (IntMap.listItems map)
-	    val (goodlist, badlist) = List.partition (fn (r, m, j) => is_good_metric m) mylist
+	    val (goodlist, badlist) = List.partition (fn (r, m, j) => is_good_prog_metric m) mylist
 	    (* NOTE: because PADS parser is deterministic, there is no point of keeping
 		bad parses if a good parse is found. However, if and when PADS
 		parser is changed to parse non-deterministically, 
@@ -514,7 +514,7 @@ struct
 			case res of
 			  re::tail =>
 			  let val parses = parse_sync(re, start, input)
-			      fun g (r, m, j) = is_good_metric m	
+			      fun g (r, m, j) = is_good_prog_metric m	
 			  in
 			      if List.exists g parses then parses
 			      else f tail (l@parses)

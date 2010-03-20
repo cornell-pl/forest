@@ -68,7 +68,9 @@ fun equal_metric  (e1: int, g1: int, r1: int, t1: int)
 	(e2: int, g2: int, r2: int, t2: int) : bool =
 	(e1 = e2 andalso g1 = g2 andalso r1 = r2 andalso t1 = t2)
 
-fun is_good_metric (e, g, r, t) = (e = 0) andalso (r = 0)
+fun is_good_metric (e, g, r, t) = (e = 0) andalso (r = 0) 
+
+fun is_good_prog_metric (e, g, r, t) = (e = 0) andalso (r = 0) andalso (t>0) 
 
 fun reset_metric (e, g, r, t) = (0, g, r, t)
 
