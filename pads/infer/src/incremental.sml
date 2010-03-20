@@ -161,11 +161,11 @@ structure Incremental: sig
 				  fn ((id1, _), (id2, _)) => (Atom.compare (id1, id2) = GREATER))
 				  newpairs
 				val table' = AG.addToTable table sorted_pairs
-	(*	
+				(***
 			        val _ = AG.printTableSize table'
 			      val _ = print (AG.aggrToString "" newa)
-			      val _ = print ("Cost = " ^ Real.toString (AG.cost newa) ^ "\n")
-	*)
+			      val _ = print ("Cost = " ^ Int.toString (AG.cost newa) ^ "\n")
+			        ***)
 			  in (newa, table')
 			  end)
 				top_parses) aggregates)
@@ -294,18 +294,18 @@ structure Incremental: sig
 			(print "Warning! Number of aggregates is 0!\n"; raise InvalidAggrs)
 		      else hd aggrs
      	    val chunk_cost = AG.cost chunk_aggr
-	    (*
+	    (*****
      	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
      	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
-	    *)
-	    (* val _ = AG.printTable table *)
+	    val _ = AG.printTable table 
+	    *****)
 	    (* we update the ty even if there's no bad data in the
 		aggregate because we want the updated aux in ty *)
 	    val newTy = AG.updateTy ty chunk_aggr
-	    (*******
+	    (*******)
 	    val _ = (print ("\n*** Updated Ty after Chunk " ^ Int.toString index ^ " (" ^ 
 			Int.toString count ^ " lines) (before rewriting):\n"); printTy newTy)
-	    ******)
+	    (******)
 	    val newTy =
 	    if chunk_cost > 0 then 
 	     let 
@@ -315,14 +315,15 @@ structure Incremental: sig
 	       val newTy = AG.merge_adj_options trans_map newTy
 	       (* val _ = (print "After merge_adj_options: \n"; printTy newTy) *)
 	       val newTy = AG.alt_options_to_unions trans_map newTy
+	       (* val _ = (print "After alt_options_to_unions: \n"; printTy newTy) *)
 	       val newTy = Reduce.reduce 5 NONE newTy
 	     in newTy
 	     end
 	    else newTy
-	    (*******
+	    (*******)
 	    val _ = (print ("\n*** New Ty after Chunk " ^ Int.toString index ^ " (" ^ 
 			Int.toString count ^ " lines) (after rewriting):\n"); printTy newTy)
-	    **********)
+	    (**********)
 	    (* val refinedTy = Reduce.reduce 4 newTy *)
 	    val elapse = Time.- (Time.now(), start_time)
    	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")

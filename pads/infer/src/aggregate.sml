@@ -711,7 +711,33 @@ fun merge_adj_options dep_map ty =
   | Poption (a, body) => measure 1 (Poption(a, merge_adj_options dep_map body))
   | _ => (print ("Bad Ty:\n"); printTy ty; raise TyMismatch)
 
- 
+
+(*helper function to check if a list of tys contains at least one option node *)
+fun containOpts tys = 
+  case tys of
+	nil => false
+	| (Poption _) :: l => true
+	| _ :: l => containOpts l
+(*helper function to try to merge an option node into a list of tys if that
+list contains another option node which is negatively correlated with this option *)
+fun mergeWithNegOpt dep_map prev_tys tys opt =
+  case opt of
+    Poption(a, ty) =>
+      (
+	case tys of
+	   nil => NONE
+	  | (Poption (a1, ty1) :: l ) =>
+	    let val label = getLabel a
+		val label1 = getLabel a1
+	    in 
+	      if getCorrelation dep_map label1 label = 0 then
+		SOME (prev_tys @ [ty1] @ l @ [ty])
+	      else mergeWithNegOpt dep_map (prev_tys @ [Poption(a1, ty1)]) l opt
+	    end
+	  | t :: l => mergeWithNegOpt dep_map (prev_tys @ [t]) l opt
+      )
+  | _ => NONE
+
 (* consider situation of Pstruct [opt1, opt2, opt3, opt4, opt5, ...]
 opt1, opt3, and opt5 are postively correlated, opt2 and opt4 are also
 positively correlated, but the two groups are negatively correlated, then
@@ -734,8 +760,11 @@ fun alt_options_to_unions dep_map ty =
 		    end
 		  else Poption(a1, t1) :: (f (Poption(a2, t2) :: l))
 		end
-	  | Punion (a, [t1, t2]) :: Poption (a3, t3) :: l => 
-		let val label1 = getLabel(getAuxInfo t1)
+	  | Punion (a, tys) :: Poption (a3, t3) :: l => 
+	     if length tys = 2 andalso not (containOpts tys) then 
+		let 
+		    val [t1, t2] = tys
+		    val label1 = getLabel(getAuxInfo t1)
 		    val label2 = getLabel(getAuxInfo t2)
 		    val label3 = getLabel(getAuxInfo t3)
 		    val col_1_2 = getCorrelation dep_map label1 label2 
@@ -755,6 +784,12 @@ fun alt_options_to_unions dep_map ty =
 			    f (Punion(a, [t1, Pstruct(a3, [t2, t3])]) :: l)
 		   else Punion(a, [t1, t2]) :: (f (Poption (a3, t3) :: l))
 		end
+	      else 
+	      (
+		case mergeWithNegOpt dep_map nil tys (Poption(a3, t3)) of
+		SOME tys' => f (Punion(a, tys') :: l)
+	      | NONE => Punion(a, tys) :: (f (Poption(a3, t3) :: l))
+	      )	
 	  | t :: l => t :: (f l)
 	  | nil => nil
 	  val newtylist = map (alt_options_to_unions dep_map) tylist

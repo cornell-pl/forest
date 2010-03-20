@@ -9,7 +9,7 @@ struct
   structure RegExp = RegExpFn (structure P=AwkSyntax structure E=ThompsonEngine) : REGEXP
   structure MT = MatchTree
   structure SS = Substring
-  val max_parses_per_line = 1
+  val max_parses_per_line = 2
   val max_consecutive_fails = 3
   val recover_factor = 2
 
