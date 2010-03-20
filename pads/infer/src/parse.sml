@@ -543,7 +543,7 @@ struct
 	  (
 	  case (str, patt) of
 	    (SOME s, NONE) =>
-	    	let val (recovered, matched, j) = parse_regex(escapeRE s, start, input, false)
+	    	let val (recovered, matched, j) = parse_regex(escapeRE s, start, input, true)
 		in
 		  case (recovered, matched) of
 		    (NONE, SOME s) => [(SyncR(Good ("", StringConst "")), (0, 1, 0, 0), start)]
@@ -554,7 +554,7 @@ struct
 	  | (NONE, SOME re) => 
 	    	let 
 		  val re_str = String.substring (re, 1, (size re)-2) (*remove the / and / *)
-	          val (recovered, matched, j) = parse_regex (re_str, start, input, false)
+	          val (recovered, matched, j) = parse_regex (re_str, start, input, true)
 		in
 		  case (recovered, matched) of
 		    (NONE, SOME s) => [(SyncR(Good ("", StringConst "")), (0, 1, 0, 0), start)]
@@ -745,8 +745,7 @@ struct
 		let val set = parse_all (ty, e, i, input, cutoff)
 		    val newset = ParseSet.map (fn (r, m, j) => (UnionR (branchno, r), m, j)) set
 		in
-		  if has_good_parse newset then newset
-		  else f tys (branchno+1) (ParseSet.union (prev_set, newset))
+		  f tys (branchno+1) (ParseSet.union (prev_set, newset))
 		end
 	  | nil => prev_set
 	in clean (f tys 0 ParseSet.empty)
@@ -972,13 +971,12 @@ struct
 	   (* we have to add a parse that is an zero-length array *)
 	   val final_set = ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0, 0), i))
 
-	   (* 
+	   (*
 	   val _ = print ("number of array parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n")
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
 	   val _ = print "**** End \n" 
 	   *)
-	   
 	  in
 		final_set	
 	  end  
