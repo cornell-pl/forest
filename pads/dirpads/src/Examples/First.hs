@@ -2,20 +2,8 @@
 
 module Examples.First where
 
-import qualified Data.ByteString.Char8 as C
-import Data.Map as Map
-import Language.Pads.Syntax
-import Language.Pads.Quote
 import Language.Pads.Padsc
-import Language.Pads.Source as S
-
-import Text.Parsec
-import Text.Parsec.String as PS
-import Text.Parsec.Error
-import qualified Text.Parsec.Token as PT
-import Text.Parsec.Language
-import Text.ParserCombinators.Parsec.Language 
-
+import Language.Pads.Quote
 
 
 [pads|Foo = (Pint, '|', Pint)|]
