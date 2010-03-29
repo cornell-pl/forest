@@ -978,4 +978,19 @@ fun getLTokens ty =
   | RefinedBase (a, r, tl) => tl
   | _ => raise TyMismatch
 
+(* function to check if a given ty is an int *)
+fun isInt ty =
+  case ty of
+    Base (a, (Pint _, _)::_) => true
+  | RefinedBase (a, Int _ , _) => true
+  | RefinedBase (a, IntConst _, _) => true
+  | _ => false
+
+(* function to check if a given ty is a dot *)
+fun isDot ty =
+  case ty of 
+    Base(a1, (Other (#"."), _)::_) => true
+  | RefinedBase (a1, StringConst ".", _) => true
+  | _ => false  
+
 end

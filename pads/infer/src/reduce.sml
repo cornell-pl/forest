@@ -1047,6 +1047,15 @@ and to_float _ ty =
 				measure 0 (Base(a1, getFloatTokens(intTokList, intTokList1)))
 		      |  [Base(a1, intTokList), Poption(_, Pstruct(_, [(Base _), Base(a3, intTokList1)]))]=>
 				measure 0 (Base(a1, getFloatTokens(intTokList, intTokList1)))
+		      |  [RefinedBase(a1, _, intTokList), 
+			  Poption(_, Pstruct(_, [_, Base(a3, intTokList1)]))]=>
+				measure 0 (Base(a1, getFloatTokens(intTokList, intTokList1)))
+		      |  [Base(a1, intTokList), 
+			  Poption(_, Pstruct(_, [_, RefinedBase(a3, _, intTokList1)]))]=>
+				measure 0 (Base(a1, getFloatTokens(intTokList, intTokList1)))
+		      |  [RefinedBase(a1, _, intTokList), 
+			  Poption(_, Pstruct(_, [_, RefinedBase(a3, _, intTokList1)]))]=>
+				measure 0 (Base(a1, getFloatTokens(intTokList, intTokList1)))
 		      | _ => raise TyMismatch
 		fun matchPattern pre tys =
 			case tys of 
@@ -1054,9 +1063,14 @@ and to_float _ ty =
 			  | (Base(a1, (Pint _, _)::_))::((Base(a2, (Other (#"."), _)::_))::
 				((Base(a3, (Pint _, _)::_)) :: post)) => 
 				SOME (pre, List.take(tys, 3), post)
+(*
 			  | (Base(a1, (Pint _, _)::_))::((Poption(_, Pstruct(_,
 				[Base(a2, (Other (#"."), _)::_), Base(a3, (Pint _, _)::_)]))):: post) => 
-				SOME (pre, List.take(tys, 2), post)
+*)
+			  | ty1::(Poption(_, Pstruct(_, [ty2, ty3]))) :: post =>
+				if isInt ty1 andalso isDot ty2 andalso isInt ty3 then
+					SOME (pre, List.take(tys, 2), post)
+				else matchPattern (pre@(List.take(tys, 2))) post
 			  | (Base(a1, (Other (#"."), _)::_))::(x::rest) => 
 				matchPattern (pre@(List.take(tys, 2))) rest
 			  | x::rest => matchPattern (pre@[x]) rest
@@ -1153,19 +1167,31 @@ case ty of
 	in newty
 	end
 | Punion (a, tys) => 
-  let fun convert tys =
+  let fun convert prev_empty_cov tys =
 	case tys of
 	  (Poption (a', body)) :: tys => 
 	    let 
-		val emptycov = (#coverage a') - getCoverage body
-		val empty = measure 1 (genEmptyBase (mkTyAux emptycov) emptycov)
-	    in [body, empty] @ (convert tys)
+		val emptycov = prev_empty_cov + (#coverage a') - getCoverage body
+		val (c, tys') = convert emptycov tys
+	    in (c, body :: tys')
 	    end
-	| t :: tys => t :: (convert tys)
-	| nil => nil
-   val newty = measure 1 (Punion (a, convert tys))
-   (* val _ = (print "Previous ty: \n"; printTy ty;
-	   print "New ty:\n"; printTy newty) *)
+	| t :: tys => 
+		let val (c, tys') = convert prev_empty_cov tys
+		in (c, t :: tys')
+		end
+	| nil => (prev_empty_cov, nil)
+   val (emptycov, tys') = convert 0 tys 
+   val newty = 
+	if emptycov >0 then 
+   	  let val empty = measure 1 (genEmptyBase (mkTyAux emptycov) emptycov)
+ 	  in 
+		measure 1 (Punion (a, tys' @ [empty]))
+	  end
+	else measure 1 (Punion (a, tys'))
+(*
+   val _ = (print "Previous ty: \n"; printTy ty;
+	   print "New ty:\n"; printTy newty) 
+*)
   in
     newty
   end
@@ -2518,6 +2544,7 @@ let
 
   val phase_five_rules : data_independent_rule list = 
 		[ 	
+		  to_float,
 		  mkBlob, 
 		  contract_blobs,
 		  remove_degenerate_list,

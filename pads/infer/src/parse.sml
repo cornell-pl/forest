@@ -11,7 +11,7 @@ struct
   structure SS = Substring
   val max_parses_per_line = 2
   val max_consecutive_fails = 3
-  val recover_factor = 2
+  val recover_factor = 5
 
   (* default optimization settings *)
   val do_clean = ref true
