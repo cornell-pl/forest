@@ -246,7 +246,7 @@ case ty of
 		case elems of
 		  h :: t => 
 		  let 
-		  	val not_foldable = (List.exists (fn x => not(describedBy(x, h))) t) 
+		  	val not_foldable = (List.exists (fn x => not(describedBy(x, h))) t)
 		  in 
 		  	if not_foldable then nil else (foldl mergeTyInto h t)::(commonPrefix tails)
 		  end
@@ -302,6 +302,7 @@ and prefix _ ty =
 		  h :: t => 
 		  let 
 		  	val not_foldable = (List.exists (fn x => not(describedBy(x, h))) t) 
+					    andalso not(mergeable elems) 
 		  in 
 		  	if not_foldable then nil else (foldl mergeTyInto h t)::(commonPrefix tails)
 		  end

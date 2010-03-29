@@ -337,7 +337,6 @@ structure Common = struct
 	in res
 	end
 
-    
     (*merge a ty into a tylist in a union *)
     fun mergeUnion (ty, tylist, newlist) = 
       case tylist of 
@@ -386,6 +385,39 @@ structure Common = struct
 		case (ty1, ty2) of 
 		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, 0, a2, 0), 
 			sort_ltokens (tl2@tl1)) 
+		| (Base (a1, tl1), RefinedBase(a2, re, tl2)) => Base(mergeAux(a1, 0, a2, 0),
+			sort_ltokens (tl2@tl1))
+		| (RefinedBase (a1, re, tl1), Base (a2, tl2)) => Base(mergeAux(a2, 0, a1, 0),
+			sort_ltokens (tl1@tl2))
+		| (RefinedBase (a1, FloatConst _, tl1), RefinedBase (a2, FloatConst _, tl2)) => 
+			Base(mergeAux(a2, 0, a1, 0), sort_ltokens (tl1@tl2))
+
+		| (RefinedBase (a1, IntConst x, tl1), RefinedBase (a2, IntConst y, tl2)) => 
+    			if x = y then RefinedBase(mergeAux(a1, 0, a2, 0), 
+				IntConst x, sort_ltokens (tl1@tl2))
+			else if x < y then RefinedBase(mergeAux(a1, 0, a2, 0), 
+				Int (x, y), sort_ltokens (tl1@tl2))
+	  		else RefinedBase(mergeAux(a1, 0, a2, 0), 
+				Int (y, x), sort_ltokens (tl1@tl2))
+		| (RefinedBase (a1, IntConst x, tl1), RefinedBase (a2, Int (y, z), tl2)) => 
+			if x < y then RefinedBase(mergeAux(a1, 0, a2, 0), 
+				Int (x, z), sort_ltokens (tl1@tl2))
+			else if x > z then RefinedBase(mergeAux(a1, 0, a2, 0), 
+				Int (y, x), sort_ltokens (tl1@tl2))
+			else RefinedBase(mergeAux(a1, 0, a2, 0), 
+				Int (y, z), sort_ltokens (tl1@tl2))
+   		| (RefinedBase (a1, Int (w, x), tl1), RefinedBase (a2, Int (y, z), tl2)) =>
+			if w<=y andalso x<=z then 
+		  	  RefinedBase(mergeAux(a1, 0, a2, 0), Int (w, z), sort_ltokens (tl1@tl2))
+			else if w<=y andalso x>z then 
+		  	  RefinedBase(mergeAux(a1, 0, a2, 0), Int (w, x), sort_ltokens (tl1@tl2))
+			else if w>y andalso x <=z then
+		  	  RefinedBase(mergeAux(a1, 0, a2, 0), Int (y, z), sort_ltokens (tl1@tl2))
+			else 
+		  	  RefinedBase(mergeAux(a1, 0, a2, 0), Int (y, x), sort_ltokens (tl1@tl2))
+		| (RefinedBase (a1, Int (x, y), tl1), RefinedBase (a2, IntConst z, tl2)) => 
+			mergeTyInto (ty2, ty1)
+
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, 0, a2, 0), 
 			mergeListInto([Base(a1, tl1)], tylist2, nil))
 		(*below is not completely right, haven't considered the case of tylist1 is a subset

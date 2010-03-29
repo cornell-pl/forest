@@ -984,6 +984,23 @@ fun isInt ty =
     Base (a, (Pint _, _)::_) => true
   | RefinedBase (a, Int _ , _) => true
   | RefinedBase (a, IntConst _, _) => true
+  | RefinedBase (a, Enum el, _) => not (List.exists (fn r => 
+					case r of
+					  Int _ => false
+					| IntConst _ => false
+					| _ => true
+					) el)
+  | _ => false
+
+fun isFloat ty =
+  case ty of
+    Base (a, (Pfloat _, _)::_) => true
+  | RefinedBase (a, FloatConst _, _) => true
+  | RefinedBase (a, Enum el, _) => not (List.exists (fn r => 
+					case r of
+					  FloatConst _ => false
+					| _ => true
+				       ) el)
   | _ => false
 
 (* function to check if a given ty is a dot *)
@@ -993,4 +1010,12 @@ fun isDot ty =
   | RefinedBase (a1, StringConst ".", _) => true
   | _ => false  
 
+(* function to test of a list of tys are mergeable *)
+fun mergeable tys = 
+  case tys of
+    ty::tys =>
+     ((isInt ty) andalso not(List.exists (fn t => not (isInt t)) tys))
+     orelse
+     ((isFloat ty) andalso not(List.exists (fn t => not (isFloat t)) tys))
+  | nil => false   
 end
