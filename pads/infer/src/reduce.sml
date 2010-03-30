@@ -1160,11 +1160,18 @@ and optional_to_union _ ty =
 case ty of
   Poption (a, Punion (a1, tys)) => 
 	let 
-	  (* val _ = (print "Before optional_to_union...\n"; printTy ty) *)
+	  val _ = (print "Before optional_to_union...\n"; printTy ty) 
 	  val cov = Int.max ((#coverage a) - (#coverage a1), 1)
 	  val empty = measure 1 (genEmptyBase (mkTyAux cov) cov)
-	  val newty = measure 1 (Punion(a, (tys @ [empty])))
-	  (* val _ = (print "After optional_to_union...\n"; printTy newty) *)
+	  fun merge' tys emptyty =
+		case tys of
+		  ty::tys =>
+			if parseEmpty ty then (mergeTyInto (emptyty, ty))::tys
+			else ty::(merge' tys emptyty)
+		| nil => [emptyty]
+	  val newlist = merge' tys empty
+	  val newty = measure 1 (Punion(a, newlist))
+	  val _ = (print "After optional_to_union...\n"; printTy newty) 
 	in newty
 	end
 | Punion (a, tys) => 

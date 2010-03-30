@@ -397,21 +397,33 @@ structure Common = struct
 	in res
 	end
 
+   
+    fun equalsEmpty ty =
+	case ty of
+	  Base (_, (Pempty, _)::_) => true
+	| RefinedBase (_, StringConst "", _) => true
+	| _ => false
+
+    (* this function tests of a list of tyes collectively describes an empty
+       note this one is very similar to parseEmpty function below. it is currently
+       not used *)
+    fun describesEmpty tylist =
+      case tylist of
+      nil => true
+      | h::t =>
+        let
+           val emptyBase = genEmptyBase (getAuxInfo (hd tylist)) 1
+        in
+           foldr myand true (map (fn x => describedBy (emptyBase, x)) tylist)
+        end handle Empty => false
+
     (*merge a ty into a tylist in a union *)
     fun mergeUnion (ty, tylist, newlist) = 
       case tylist of 
 	h::tail => if (describedBy (ty, h)) then newlist@[mergeTyInto(ty, h)]@tail
 		   else (mergeUnion (ty, tail, newlist@[h]))
 	| nil => newlist
-    and describesEmpty tylist =
-      case tylist of 
-      nil => true
-      | h::t =>
-	let
-	   val emptyBase = genEmptyBase (getAuxInfo (hd tylist)) 1
-	in
-	   foldr myand true (map (fn x => describedBy (emptyBase, x)) tylist) 
-	end handle Empty => false
+ 
     (*function to merge one list in struct to another list in struct*)
     and mergeListInto (tylist1, tylist2, headlist) =
 	let 
@@ -438,6 +450,7 @@ structure Common = struct
 		  (print "Two tylists don't match!\n"; raise TyMismatch)
 		else mergeListInto (tylist1, List.drop(tylist2, 1), headlist@[hd tylist2])
 	end
+
     (*function to merge ty1 and ty2 if ty1 is described by ty2 *)
     (*this function is used in refine_array rewriting rule, the recNo in ty1 
 	is updated so that they are consistent with ty2 *)
@@ -445,6 +458,8 @@ structure Common = struct
 		case (ty1, ty2) of 
 		(Base(a1, tl1), Base(a2, tl2)) => Base(mergeAux(a1, 0, a2, 0), 
 			sort_ltokens (tl2@tl1)) 
+		| (Base (a1, (tl1 as (Pempty, _)::_)), RefinedBase(a2, re, tl2)) =>
+			RefinedBase(mergeAux(a1, 0, a2, 0), re, sort_ltokens (tl2@tl1))
 		| (Base (a1, tl1), RefinedBase(a2, re, tl2)) => Base(mergeAux(a1, 0, a2, 0),
 			sort_ltokens (tl2@tl1))
 		| (RefinedBase (a1, re, tl1), Base (a2, tl2)) => Base(mergeAux(a2, 0, a1, 0),
@@ -477,6 +492,8 @@ structure Common = struct
 		  	  RefinedBase(mergeAux(a1, 0, a2, 0), Int (y, x), sort_ltokens (tl1@tl2))
 		| (RefinedBase (a1, Int (x, y), tl1), RefinedBase (a2, IntConst z, tl2)) => 
 			mergeTyInto (ty2, ty1)
+		| (RefinedBase (a1, StringConst x, tl1), RefinedBase (a2, StringConst _, tl2)) => 
+		  	  RefinedBase(mergeAux(a1, 0, a2, 0), StringConst x, sort_ltokens (tl1@tl2))
 
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, 0, a2, 0), 
 			mergeListInto([Base(a1, tl1)], tylist2, nil))
@@ -492,7 +509,7 @@ structure Common = struct
 			  mergeTyInto ((genEmptyBase (mkTyAux emptyCoverage) emptyCoverage), mergeTyInto (ty, ty2))
 			end
 		| (ty1, Poption (a2, ty2)) =>
-			if (describesEmpty [ty1]) then 
+			if (equalsEmpty ty1) then 
 			  Poption(mergeAux(getAuxInfo(ty1), 0, a2, 2), ty2)
 			else Poption(mergeAux(getAuxInfo(ty1), 0, a2, 2), mergeTyInto(ty1, ty2))
 		| (ty1, Punion (a2, tys)) =>
