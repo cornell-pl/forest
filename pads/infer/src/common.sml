@@ -272,6 +272,62 @@ structure Common = struct
 	   val emptyBase = Base(aux, ltokens)
 	in emptyBase
 	end
+
+    (* function to test of two ty's are completely equal minus the labels *)
+    (* if comparetype = 0, compare everything, otherwise compare down to 
+	base modulo the token list and other meta data *)
+    (* comparetype = 0 is currently not used and is not fully implemented *)
+    fun ty_equal (comparetype:int, ty1:Ty, ty2:Ty):bool = 
+	let
+		fun check_list(l1:Ty list,l2: Ty list):bool = 
+		if length l1 <> length l2 then false
+		else
+		  let 
+			val bools = ListPair.map (fn (t1, t2) => ty_equal(comparetype, t1, t2)) 
+			(l1, l2)
+		  in
+			foldr myand true bools
+		  end
+	in
+		case (ty1,ty2) of
+			(Base(_, tl1), Base (_, tl2)) => 
+				if (comparetype = 0) then
+				foldr myand true (ListPair.map ltoken_equal (tl1, tl2))
+				else ltoken_ty_equal(hd tl1, hd tl2)
+			| (TBD _, TBD _) => true
+			| (Bottom _, Bottom _) => true
+			| (Punion(_, tylist), Punion(_, tylist2)) => check_list(tylist,tylist2)
+			| (Pstruct(_, tylist), Pstruct(_, tylist2)) => check_list(tylist,tylist2)
+			| (Parray(_, a1), 
+			   Parray(_, a2)) => ty_equal(comparetype, #first a1, #first a2) andalso 
+				ty_equal(comparetype, #body a1, #body a2) andalso 
+				ty_equal(comparetype, #last a1, #last a2) 
+			| (RefinedBase (_, r1, tl1), RefinedBase(_, r2, tl2)) => 
+				if (comparetype = 0) then
+				(refine_equal(r1, r2) andalso 
+				foldr myand true (ListPair.map ltoken_equal(tl1, tl2)))
+				else refine_equal(r1, r2)
+			| (Switch (_, id1, rtylist1), Switch(_, id2, rtylist2)) =>
+				let val (rl1, tylist1) = ListPair.unzip (rtylist1)
+				    val (rl2, tylist2) = ListPair.unzip (rtylist2)
+				in
+				        Atom.same(id1, id2) andalso 
+					foldr myand true (ListPair.map refine_equal(rl1, rl2)) 
+					andalso check_list (tylist1, tylist2)
+				end
+			| (RArray(_, sepop1, termop1, ty1, len1, _), 
+				RArray (_, sepop2, termop2, ty2, len2, _))
+				=> refine_equal_op1(sepop1, sepop2) andalso
+				   refine_equal_op1(termop1, termop2) andalso
+				   ty_equal (comparetype, ty1, ty2) andalso
+				   refine_equal_op1(len1, len2)
+			| (Poption (_, t1), Poption (_, t2)) => 
+				ty_equal (comparetype, t1, t2)
+			| _ => false 
+		handle Size => (print "Size in ty_equal!\n" ; false)
+	end
+
+
     (*function that test if tylist1 in a struct can be described by tylist2 in another struct*)
     (* tylist1 is described by tylist2 if tylist1 is a sub-sequence of tylist2 and 
 	all other elements in tylist2 can describe Pempty *)
@@ -294,6 +350,8 @@ structure Common = struct
 	   	listDescribedBy (tylist1, List.drop(tylist2, 1)))
 	end
       end
+
+
     (*function that test if ty1 can be described by ty2 *)
     and describedBy(ty1, ty2) =
 	let
@@ -303,6 +361,8 @@ structure Common = struct
 		(*assume no Pempty in the Pstruct as they have been cleared by remove_nils*)
 		(Base(a1, tl1), Base(a2, tl2)) => ltoken_ty_equal(hd tl1, hd tl2)
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => listDescribedBy ([Base(a1, tl1)], tylist2)
+		| (RefinedBase (_, r1, tl1), RefinedBase(_, r2, tl2)) => 
+		    refine_equal(r1, r2)
 		(*below is not completely right, haven't considered the case of tylist1 is a subset
 		  of tylist2 and the rest of tylist2 can describe Pempty *) 
 		| (Pstruct(a1, tylist1), Pstruct(a2, tylist2)) => listDescribedBy(tylist1, tylist2)
@@ -601,60 +661,6 @@ structure Common = struct
 		    	Poption (mergeAux(a1, 2, a2, 2), mergeTy (ty1, ty2))	
 		| _ => (print "The following tys don't match!!\n"; printTy ty1; 
 			printTy ty2; raise TyMismatch)
-
-    (* function to test of two ty's are completely equal minus the labels *)
-    (* if comparetype = 0, compare everything, otherwise compare down to 
-	base modulo the token list and other meta data *)
-    (* comparetype = 0 is currently not used and is not fully implemented *)
-    fun ty_equal (comparetype:int, ty1:Ty, ty2:Ty):bool = 
-	let
-		fun check_list(l1:Ty list,l2: Ty list):bool = 
-		if length l1 <> length l2 then false
-		else
-		  let 
-			val bools = ListPair.map (fn (t1, t2) => ty_equal(comparetype, t1, t2)) 
-			(l1, l2)
-		  in
-			foldr myand true bools
-		  end
-	in
-		case (ty1,ty2) of
-			(Base(_, tl1), Base (_, tl2)) => 
-				if (comparetype = 0) then
-				foldr myand true (ListPair.map ltoken_equal (tl1, tl2))
-				else ltoken_ty_equal(hd tl1, hd tl2)
-			| (TBD _, TBD _) => true
-			| (Bottom _, Bottom _) => true
-			| (Punion(_, tylist), Punion(_, tylist2)) => check_list(tylist,tylist2)
-			| (Pstruct(_, tylist), Pstruct(_, tylist2)) => check_list(tylist,tylist2)
-			| (Parray(_, a1), 
-			   Parray(_, a2)) => ty_equal(comparetype, #first a1, #first a2) andalso 
-				ty_equal(comparetype, #body a1, #body a2) andalso 
-				ty_equal(comparetype, #last a1, #last a2) 
-			| (RefinedBase (_, r1, tl1), RefinedBase(_, r2, tl2)) => 
-				if (comparetype = 0) then
-				(refine_equal(r1, r2) andalso 
-				foldr myand true (ListPair.map ltoken_equal(tl1, tl2)))
-				else refine_equal(r1, r2)
-			| (Switch (_, id1, rtylist1), Switch(_, id2, rtylist2)) =>
-				let val (rl1, tylist1) = ListPair.unzip (rtylist1)
-				    val (rl2, tylist2) = ListPair.unzip (rtylist2)
-				in
-				        Atom.same(id1, id2) andalso 
-					foldr myand true (ListPair.map refine_equal(rl1, rl2)) 
-					andalso check_list (tylist1, tylist2)
-				end
-			| (RArray(_, sepop1, termop1, ty1, len1, _), 
-				RArray (_, sepop2, termop2, ty2, len2, _))
-				=> refine_equal_op1(sepop1, sepop2) andalso
-				   refine_equal_op1(termop1, termop2) andalso
-				   ty_equal (comparetype, ty1, ty2) andalso
-				   refine_equal_op1(len1, len2)
-			| (Poption (_, t1), Poption (_, t2)) => 
-				ty_equal (comparetype, t1, t2)
-			| _ => false 
-		handle Size => (print "Size in ty_equal!\n" ; false)
-	end
 
 
 	fun mergeTyForArray (ty1, ty2) = mergeTy (ty1, (reIndexRecNo ty2 (getCoverage ty1)))
