@@ -20,7 +20,7 @@ structure Config = struct
     val def_printIDs     = true
     val def_entropy      = false
     val def_use_sa	 = false
-    (* val def_var_card_bits   = false *)
+    val def_var_card_bits   = true
     val def_timeout	= 900 (* default timeout is 15 mins *)
     val def_union_cluster_threshold = 0.15
 
@@ -39,9 +39,7 @@ structure Config = struct
     val minBlobHeight	  = 4
     val learn_timeout = ref def_timeout
     val def_blobRatio	  = 10.0
-(*
     val var_card_bits   = ref def_var_card_bits
-*)
     (* val blobCompensation  = 0.5 *)
     val adcCoeff = ref 10.0
     val default_init_size = 500

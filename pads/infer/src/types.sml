@@ -571,8 +571,8 @@ struct
 			", len: " ^ Real.fmt (StringCvt.FIX (SOME 1)) l ^	
 		      (if print_complexity then (
                       ", tc: " ^ (showBits tcomp)  ^
-                      ", ac: " ^ (showBits acomp)  (* ^
-                      ", dc: " ^ (showBits dcomp) *)
+                      ", ac: " ^ (showBits acomp)  ^
+                      ", dc: " ^ (showBits dcomp) 
                       )
 		      else "") ^
 		      ", raw: "^ (showBits (combine tcomp (multCompR (!adcCoeff) acomp)))  ^

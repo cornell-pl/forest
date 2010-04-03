@@ -181,11 +181,9 @@ structure Complexity = struct
 
     (* Complexity from the number of choices *)
     fun cardComp ( l : 'a list ) : Complexity =
-(*
       if !(Config.var_card_bits) then       
         Choices (Int.toLarge (length l))
       else 
-*)
 	(Bits 32) (* max 2^32 branches in structs and unions *)
 
 
