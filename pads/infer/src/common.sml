@@ -495,6 +495,11 @@ structure Common = struct
 		| (RefinedBase (a1, StringConst x, tl1), RefinedBase (a2, StringConst _, tl2)) => 
 		  	  RefinedBase(mergeAux(a1, 0, a2, 0), StringConst x, sort_ltokens (tl1@tl2))
 
+		| (RefinedBase (a1, re1, tl1), RefinedBase(a2, re2, tl2)) =>
+		   if refine_equal (re1, re2) then
+			RefinedBase (mergeAux(a1, 0, a2, 0), re1, sort_ltokens (tl1@tl2))
+		   else (print "mergeTyInto error!\n"; printTy ty1; printTy ty2; raise TyMismatch)
+
 		| (Base(a1, tl1), Pstruct(a2, tylist2)) => Pstruct(mergeAux(a1, 0, a2, 0), 
 			mergeListInto([Base(a1, tl1)], tylist2, nil))
 		(*below is not completely right, haven't considered the case of tylist1 is a subset
