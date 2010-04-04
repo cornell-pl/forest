@@ -161,7 +161,30 @@ struct
 	let fun f (r, m, j) = is_good_metric m 
 	in ParseSet.exists f s
 	end 
-	
+
+  (* helper function get the worse parse from a set of parses *)	
+  fun get_worse_parse s =
+     let val l = ParseSet.listItems s
+         fun f opt l =
+	   case l of 
+	     (r, m, j)::ps => 
+	       (
+		case opt of
+		  NONE => f (SOME (r, m ,j)) ps
+		| SOME (r', m', j') => 
+			if better_metric m' m then
+				f (SOME (r, m, j)) ps
+			else f opt ps	
+	       )
+	  | nil => 
+	      (case opt of
+		SOME p => p
+	      | NONE => raise Unexpected
+	      )
+     in
+	f NONE l
+     end
+	   	
   val tmap = 
 	let fun add ((t, re), map) = TokenMap.insert (map, t, re)
 	in foldl add TokenMap.empty TokenDefs.tokenDefList
@@ -978,15 +1001,17 @@ struct
 	   fun parse_array (e, parse_set) =
 	     if ParseSet.numItems parse_set = 0 then parse_set
 	     else
-	       let 
-		(*
+	       let
+		(* 
 		 val _ = print ("Size of input set is " ^ Int.toString (ParseSet.numItems parse_set) ^ "\n") 
 		 val _ = print "*** Begin \n"
 		 val _ = ParseSet.app (fn x => print (parseItemToString x)) parse_set
 		 val _ = print "*** End \n"
+		*)
+		 (*
 		 val _ = print "Parsing element:\n"
 		 val _ = printTy body_sep
-		*)
+		 *)
 	         fun f ((prev_r, m, start), (seprs, termrs)) =
 	     	   let
 		    (*
@@ -995,10 +1020,11 @@ struct
 		    *) 
 
 		    val body_set = parse_all (body, e, start, input, cutoff)
-			  (*
-			      val _ = print "After clean:\n"
-			      val _ = ParseSet.app (fn x => print (parseItemToString x)) s
-			  *)
+		    (****
+		    val _ = print "=== Parsed body begins \n"  
+		    val _ = ParseSet.app (fn x => print (parseItemToString x)) body_set
+		    val _ = print "=== Parsed body ends \n"  
+		    ****)			 
 		    val sep_set = 
 			case sep of
 			  NONE => 
@@ -1060,10 +1086,25 @@ struct
 	     	   in (ParseSet.union(seprs, sep_set), ParseSet.union(termrs, term_set))
 	     	   end
 	         val (seps, terms) = ParseSet.foldl f (ParseSet.empty, ParseSet.empty) parse_set
+	(*	
+	         val _ = print ("Num sep parses: " ^ Int.toString (ParseSet.numItems seps) ^ "\n") 
+	         val _ = print ("Num term parses: " ^ Int.toString (ParseSet.numItems terms) ^ "\n") 
+	*)
+		 val clean_seps = clean seps
+		 val terms' = 
+		     if ParseSet.numItems clean_seps > 0 then
+			let 
+		 	    val worse_sep_parse = get_worse_parse clean_seps
+			in
+				ParseSet.filter (fn (r, m, j) => (better_metric m (#2 worse_sep_parse)
+					orelse (equal_metric m (#2 worse_sep_parse)))) terms
+			end
+		     else terms
+
 		 (* NOTE: we clean the seps set before passing to next iteraction *)
-	         val sep' = parse_array (e, clean seps) 
+	         val sep' = parse_array (e, clean_seps) 
 	       in
-	         ParseSet.union (sep', clean terms)
+	         ParseSet.union (sep', clean terms')
 	       end
 	   (* NOTE: we are not cleaning the result from parsing array - delay this decision later *)
 	   val non_empty_set = (parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i)))
@@ -1071,8 +1112,12 @@ struct
 	   (* we have to add a parse that is an zero-length array *)
 	   val final_set = ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0, 0), i))
 
+           val _ = if ParseSet.numItems final_set > 100 then 
+                        (* val _ = print ("Begin parsing Array " ^ getLabelString (getAuxInfo ty) ^ "\n") *)
+                        print ("Array " ^ getLabelString (getAuxInfo ty) ^ ": number of array parses = " ^ 
+                        Int.toString (ParseSet.numItems final_set) ^ "\n")
+                   else ()
 	   (*
-	   val _ = print ("number of array parses = " ^ Int.toString (ParseSet.numItems final_set) ^ "\n")
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
 	   val _ = print "**** End \n" 

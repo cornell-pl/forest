@@ -412,8 +412,10 @@ struct
     	       |(Int(x, y), Int(x1, y1)) => (x = x1 andalso y = y1)
     	       |(IntConst(x), IntConst(y)) => (x = y)
     	       |(StringConst(x), StringConst(y)) => (x = y)
-    	       |(Enum(l1), Enum(l2)) => foldr myand true 
-    			(ListPair.map refine_equal(l1, l2))
+    	       |(Enum(l1), Enum(l2)) => 
+			((foldr myand true 
+    			(ListPair.mapEq refine_equal(l1, l2)))
+			handle UnequalLengths => false)
     	       |(LabelRef(x), LabelRef(y)) => Atom.same(x, y)
     	       |(Blob x, Blob y) => (x = y)
     	       | _ => false

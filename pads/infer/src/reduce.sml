@@ -577,7 +577,7 @@ and refine_array sib ty =
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
-		val _ = (print "trying to refine array \n"; printTy ty) 
+		(* val _ = (print "trying to refine array \n"; printTy ty) *)
 		fun getlen (lens, x) = 
 			case lens of 
 			l::tail => if (l = x) then getlen(tail, x)
@@ -840,7 +840,7 @@ and refine_array sib ty =
 				 else 
 				  measure 0 (Pstruct(mkTyAux(#coverage aux), 
 			    	  [first, RArray(aux, NONE, NONE, body, NONE, lengths), last]))
-		     val _ = (print "Done refining array to:\n"; printTy newty) 
+		     (* val _ = (print "Done refining array to:\n"; printTy newty) *)
 		  in
 		 	newty
 		  end
