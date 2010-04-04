@@ -50,6 +50,8 @@ struct
   fun parseItemToString (r, m, j) =
 	(repToString "" r) ^ (metricToString m) ^ " Ending pos = " ^ Int.toString j ^ "\n"
 
+  (* this function reduces the size of s to up to a max num of parses 
+     whenever this function is changed, need to change clean_struct as well *)
   fun clean s = 
     if !do_clean = true then
 	let 
@@ -100,6 +102,60 @@ struct
 	    ParseSet.addList (ParseSet.empty, mylist)
 	end
      else s
+
+  (* the same as the above for for struct, except the input is a list of pairs of rep and env 
+     whenever the above function changes, this one needs to change with it *)
+  fun clean_struct s = 
+    if !do_clean = true then
+	let 
+(*
+	    val items = ParseSet.listItems s
+	    fun f ((r1, m1, j1), (r2, m2, j2)) =
+		if j1 > j2 the true
+		else if j1 < j2 then false
+		else if better_metric m2 m1 then true
+		else false
+	    val sorted_items = ListMergeSort.sort f items
+*)
+
+	    fun g (((r, m, j), e), map) =
+		case IntMap.find (map, j) of
+		  SOME nil => IntMap.insert (map, j, [((r, m, j), e)])
+		| SOME (((r', m', j'), e')::l) =>
+			if better_metric m m' then IntMap.insert (map, j, [((r, m, j), e)])
+			else if (equal_metric m m' andalso Rep.compare (r, r') <> EQUAL) 
+			     then IntMap.insert (map, j, (((r, m, j), e)::((r', m', j'), e')::l)) 
+			else map
+		| NONE =>  IntMap.insert (map, j, [((r, m, j), e)])
+	    val map = List.foldl g IntMap.empty s
+	    val mylist = List.concat (IntMap.listItems map)
+	    val (goodlist, badlist) = List.partition (fn ((r, m, j), e) => is_good_prog_metric m) mylist
+	    (* NOTE: because PADS parser is deterministic, there is no point of keeping
+		bad parses if a good parse is found. However, if and when PADS
+		parser is changed to parse non-deterministically, 
+		we need to return both good and bad sets of parses *)
+	    (*
+	    val mylist = if (length goodlist) < max_parses_per_line then 
+			 let val len = if max_parses_per_line -(length goodlist) > length badlist
+				       then length badlist
+				       else max_parses_per_line - (length goodlist)
+			 in
+			  List.take ((ListMergeSort.sort 
+			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
+			 end
+			 else nil
+	    *)
+	    val len = if length badlist < max_parses_per_line then length badlist
+		      else max_parses_per_line
+	    val mylist = if length goodlist > 0 then goodlist
+			 else List.take ((ListMergeSort.sort 
+			  (fn (((_, m1, _), _), ((_, m2, _), _)) => better_metric m2 m1) badlist), len) 
+
+	in
+	    mylist
+	end
+     else s
+
 
   fun has_good_parse s = 
 	let fun f (r, m, j) = is_good_metric m 
@@ -640,6 +696,48 @@ struct
 	| _ => set
 	end
     | Pstruct(a, tys) => 
+	let fun parse_struct prev_rep_envs tys =
+	   let fun f ((r, m, j), env) ty =
+	     case r of 
+	      TupleR reps =>
+	      (	  
+		let
+		  val idop = case ty of
+				Base (a, ((Pint _), _)::_) => SOME (getLabel a)
+			      | Base (a, ((Pstring _), _)::_) => SOME (getLabel a)
+			      | Base (a, ((Other _), _)::_) => SOME (getLabel a)
+			      | RefinedBase (a, Enum _, _) => SOME (getLabel a)
+			      | RefinedBase (a, Int _, _) => SOME (getLabel a)
+			      | _ => NONE
+		  val cur_parses = ParseSet.listItems (parse_all(ty, env, j, input, cutoff))
+	  	  fun gg (r', m', j') = 
+			let val newe = 
+			  	case idop of
+				  SOME id => 
+				  (
+				     	LabelMap.insert(env, id, r')
+				  )
+				| _ => env
+			in
+			  ((TupleR (r'::reps), add_metric m m', j'), newe) 
+			end
+                 in
+		   map gg cur_parses
+		 end
+	      )
+	    | _ => raise TyMismatch
+	in
+	  case tys of
+	    nil => ParseSet.addList (ParseSet.empty, (map (fn ((r, m, j), e) => (r, m, j)) prev_rep_envs))
+	  | ty::tys =>
+	     let val prev_rep_envs' = clean_struct (List.foldl
+			(fn (item, l ) => l @ (f item ty)) nil prev_rep_envs)
+	     in parse_struct prev_rep_envs' tys
+	     end
+	end
+
+
+(********************	
 	let fun parse_struct (r, m, j) tys env last_fails =
 	  if cutoff andalso last_fails >= max_consecutive_fails then ParseSet.empty
 	  else
@@ -676,7 +774,8 @@ struct
 		end
 	       )
 	     | _ => raise TyMismatch
-(*********
+
+
 	let fun parse_struct tys env start =
 	    case tys of
 	      nil => ParseSet.singleton((TupleR nil, (0, 0, 0), start))
@@ -724,7 +823,7 @@ struct
 **************)
 
 	  (* val finalset = parse_struct tys e i *) 
-	  val finalset = parse_struct (TupleR nil, (0, 0, 0, 0), i) tys e 0 
+	  val finalset = parse_struct [((TupleR nil, (0, 0, 0, 0), i), e)] tys  
 	    (* val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Begins \n") 
 	    val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Ends \n")
 	  *)
@@ -735,7 +834,7 @@ struct
 	  val _ = print "**** End \n" 
 ***)
 	in 
-	  clean finalset
+	  finalset
 	end
     | Punion (a, tys) =>
 	(* branch number starts from 0 *)
