@@ -104,7 +104,14 @@ struct
         , tycomp   = #tycomp aux
 	, len = len
         }
- 
+
+    fun updateCoverage (aux : AuxInfo) (cov : int) : AuxInfo =
+	{ coverage = cov
+        , label    = #label aux
+        , tycomp   = #tycomp aux
+	, len = #len aux
+        }
+	 
     val numRefined      : LargeInt.int = 7 (* Number of cases in datatype Refined *)
     val numConstRefined : LargeInt.int = 3 (* Number of constant cases in datatype Refined *)
 

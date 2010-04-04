@@ -719,7 +719,7 @@ struct
 				  )
 				| _ => env
 			in
-			  ((TupleR (r'::reps), add_metric m m', j'), newe) 
+			  ((TupleR (reps @ [r']), add_metric m m', j'), newe) 
 			end
                  in
 		   map gg cur_parses
@@ -823,16 +823,17 @@ struct
 **************)
 
 	  (* val finalset = parse_struct tys e i *) 
+	  (* val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Begins \n") *)
 	  val finalset = parse_struct [((TupleR nil, (0, 0, 0, 0), i), e)] tys  
-	    (* val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Begins \n") 
-	    val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Ends \n")
-	  *)
-(***
+	  (* val _ = print ("Parsing struct " ^ Atom.toString (getLabel (getAuxInfo ty)) ^ " Ends \n") *)
+
+	  (*
 	  val _ = print ("Number of parses in struct: " ^ Int.toString (ParseSet.numItems finalset) ^ "\n")
           val _ = print "**** Begin \n"
 	  val _ = ParseSet.app (fn x => print (parseItemToString x)) finalset 
-	  val _ = print "**** End \n" 
-***)
+	  val _ = print "**** End \n"
+	  *)
+ 
 	in 
 	  finalset
 	end
@@ -1062,7 +1063,7 @@ struct
 		 (* NOTE: we clean the seps set before passing to next iteraction *)
 	         val sep' = parse_array (e, clean seps) 
 	       in
-	         ParseSet.union (sep', terms)
+	         ParseSet.union (sep', clean terms)
 	       end
 	   (* NOTE: we are not cleaning the result from parsing array - delay this decision later *)
 	   val non_empty_set = (parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i)))

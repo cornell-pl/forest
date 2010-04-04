@@ -577,7 +577,7 @@ and refine_array sib ty =
 	(* 1st case is looking at the Parray itself *)
 	Parray(aux, {tokens, lengths, first, body, last}) =>
 		let
-		(* val _ = (print "trying to refine array \n"; printTy ty) *)
+		val _ = (print "trying to refine array \n"; printTy ty) 
 		fun getlen (lens, x) = 
 			case lens of 
 			l::tail => if (l = x) then getlen(tail, x)
@@ -672,6 +672,23 @@ and refine_array sib ty =
 		fun getRefine(ty) = case ty of RefinedBase(_, r, _) => SOME(r) 
 					| Base (_, tl) => ltokenlToRefinedOp tl
 					| _ => NONE
+
+		(* this helper function removes empty branches from a union if any,
+		   coverage will be reduced *)
+		fun removeEmptyFromUnion ty = 
+		   case ty of
+		     Punion (a, tys) =>
+			let val nonEmptyTys = List.filter (fn ty => not (isEmpty ty)) tys
+			in
+			  if length nonEmptyTys = length tys then ty (* no change *)
+			  else 
+			     let val newCov = sumCoverage nonEmptyTys
+			     in
+				measure 1 (Punion (updateCoverage a newCov, nonEmptyTys))
+			     end
+			end
+		   | _ => ty
+			
 		(* if the firsttail = body tail, then this is a possible separator.
 		   if the stripped first is part of body and last is part of body, then
 		   the separator is confirmed, and the first and last can be obsorbed
@@ -714,7 +731,14 @@ and refine_array sib ty =
 				  case first of
 				    Poption (a, t) =>  (t, describedBy(t, body))
 				  | _ => (first, describedBy(first, body))
-			     val lasteqbody = describedBy(last, droplast body) 
+			     val (last_to_merge, lasteqbody) = 
+				  case last of
+				    Poption (a, t) => (t, describedBy(t, droplast body))
+				  | Punion (a, tys) => 
+					let val last' = removeEmptyFromUnion last
+					in (last', describedBy (last', droplast body))
+					end
+				  | _ => (last, describedBy (last, droplast body))
 			     val (sep_opt, withSep) = 
 				if firsteqbody andalso lasteqbody then
 				  case (firsttail, bodytail) of
@@ -735,13 +759,13 @@ and refine_array sib ty =
 				   	if withSep then print "true\n" else print "false\n")
 			*)
 			  
-			  in
-			     case (firsteqbody, lasteqbody, withSep) of 
+			   in
+			      case (firsteqbody, lasteqbody, withSep) of 
 				(true, true, true) =>
 					let 
 					  val first' = reIndexRecNo (droplast first') (getCoverage body)
 					  val body' = mergeTyInto(first', droplast(body))
-					  val last' = reIndexRecNo last (getCoverage body')
+					  val last' = reIndexRecNo last_to_merge (getCoverage body')
 					  val body'' = mergeTyInto(last', body')
 					in
 					  (sep_opt, NONE, NONE, SOME(body''), NONE)
@@ -758,7 +782,7 @@ and refine_array sib ty =
 					SOME last)
 				(* TODO: I think there is a problem with the following rule *)
 				| (false, true, _) => (getRefine (some bodytail), NONE, SOME first,
-					SOME(mergeTyInto((reIndexRecNo last (getCoverage body)), 
+					SOME(mergeTyInto((reIndexRecNo last_to_merge (getCoverage body)), 
 					droplast(body))), NONE)
 				| (_, _, _) => (NONE, NONE, SOME first, SOME body, SOME last)
 			  end
@@ -816,7 +840,7 @@ and refine_array sib ty =
 				 else 
 				  measure 0 (Pstruct(mkTyAux(#coverage aux), 
 			    	  [first, RArray(aux, NONE, NONE, body, NONE, lengths), last]))
-		     (* val _ = (print "Done refining array to:\n"; printTy newty)  *)
+		     val _ = (print "Done refining array to:\n"; printTy newty) 
 		  in
 		 	newty
 		  end
@@ -1116,15 +1140,7 @@ and union_to_optional _ ty =
 	case ty of 
 	Punion (a, tys) =>
 	    let 
-		fun isNotPempty ty =
-		case ty of
-		  Base (_, ltokens) => 
-		    (case (hd ltokens) of 
-		     (Pempty, _) => false
-		     | _ => true)
-		 | _ => true 
-
-		val nonPemptyTys = List.filter isNotPempty tys
+		val nonPemptyTys = List.filter (fn ty => not (isEmpty ty)) tys
 	     in
 		if length nonPemptyTys = 0 
 		  then genEmptyBase a (getCoverage ty)
