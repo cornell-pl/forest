@@ -83,7 +83,7 @@ structure Incremental: sig
     fun add (ty, line, aggregates) =
       let 
 	(* val _ = print (line ^ "\n") *)
-	val tm = Time.now() 
+	(* val tm = Time.now() *)
 	val _ = Parse.memo:=Parse.MemoMap.empty
  	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, !Parse.do_parse_cutoff)
 	(* val _ = print ("Number of parses: " ^ Int.toString (Parse.ParseSet.numItems set) ^ "\n") *)
@@ -91,8 +91,11 @@ structure Incremental: sig
 		  (Parse.memo:=Parse.MemoMap.empty;
 		  Parse.parse_all(ty, LabelMap.empty, 0, line, false))
 		  else set
+	(* val elapse = Time.- (Time.now(), tm)
+	val _ = if (Time.toReal elapse) > 0.1 then print (line ^ "\nTime to parse: " ^ Time.toString (elapse) ^ "\n") 
+		else ()
+	*)
 	(*
-	val _ = print ("Time to parse: " ^ Time.toString (Time.- (Time.now(), tm)) ^ "\n") 
         val _ = print ("Size of tMap = " ^ Int.toString (Parse.TokenMap.numItems Parse.tmap) ^ "\n")
         val _ = print ("Size of tokenRegexMap = " ^ Int.toString (Parse.TokenMap.numItems (!Parse.tokenRegexMap)) ^ "\n")
         val _ = print ("Size of strRegexMap = " ^ Int.toString (Parse.StringMap.numItems (!Parse.strRegexMap)) ^ "\n")

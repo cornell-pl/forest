@@ -20,7 +20,7 @@ structure Config = struct
     val def_printIDs     = true
     val def_entropy      = false
     val def_use_sa	 = false
-    val def_var_card_bits   = true
+    val def_var_card_bits   = false
     val def_timeout	= 900 (* default timeout is 15 mins *)
     val def_union_cluster_threshold = 0.15
 

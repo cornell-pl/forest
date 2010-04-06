@@ -998,6 +998,7 @@ struct
 	(
 	 let
 	   (* val _ = print ("Begin parsing Array " ^ getLabelString (getAuxInfo ty) ^ "\n") *)
+	   val start = Time.toReal (Time.now())
 	   fun parse_array (e, parse_set) =
 	     if ParseSet.numItems parse_set = 0 then parse_set
 	     else
@@ -1024,7 +1025,54 @@ struct
 		    val _ = print "=== Parsed body begins \n"  
 		    val _ = ParseSet.app (fn x => print (parseItemToString x)) body_set
 		    val _ = print "=== Parsed body ends \n"  
-		    ****)			 
+		    ****)	
+		    val (sep_set, term_set) =
+ 			case sep of
+			  NONE => 
+			    (
+				case term of
+				  NONE => 
+				    let val body_set = ParseSet.filter (fn (r, m, j) => 
+					is_good_metric m orelse j> start) body_set
+				    in (merge_s((prev_r, m, start), body_set, false),
+					merge_t((prev_r, m, start), body_set, false))
+				    end
+				| SOME term =>
+				    let
+			    		val pairset = pair_parse body_set term true
+			    		val pairset = clean (ParseSet.filter 
+						(fn (r, m, j) => (j > start)) pairset)
+				    in (merge_s((prev_r, m, start), body_set, false), 
+			    		merge_t ((prev_r, m, start), pairset, true))
+				    end
+			   ) 
+			| SOME sep => 
+			  let
+			    val pairset = pair_parse body_set sep false
+			    val pairset = clean (ParseSet.filter 
+					(fn (r, m, j) => (j > start)) pairset)
+			  in
+			    (* if there's at least one good (body, sep) pair parse then no need to attempt to
+				parse the terminator *)
+			    if has_good_parse pairset then
+			       (merge_s ((prev_r, m, start), pairset, true), ParseSet.empty)
+			    else 
+				case term of
+				  NONE =>
+				    (merge_s((prev_r, m, start), pairset, true),
+				     merge_t((prev_r, m, start), body_set, false))
+				| SOME term =>
+				    let
+			    		val bodytermset = pair_parse body_set term true
+			    		val bodytermset = clean (ParseSet.filter 
+						(fn (r, m, j) => (j > start)) bodytermset)
+				    in
+				      (merge_s((prev_r, m, start), pairset, true), 
+				       merge_t ((prev_r, m, start), bodytermset, true))
+				    end
+			  end
+
+(***********
 		    val sep_set = 
 			case sep of
 			  NONE => 
@@ -1046,24 +1094,29 @@ struct
 			else
 			case term of
 			  NONE => 
-				let val body_set = 
-				  ParseSet.filter (fn (r, m, j) => 
-					is_good_metric m orelse j> start) body_set
-				    val cur_term_set = merge_t((prev_r, m, start), body_set, false)
-				in
-				    (* the following step is to add a parse which terminates the prev rep *)
-				    case sep of
-					  NONE => if is_good_metric m then
-						   ParseSet.add (cur_term_set, (prev_r, m, start))
-						  else cur_term_set
-					| SOME sep => cur_term_set
-				end
+  			    let val body_set = 
+  			      		ParseSet.filter (fn (r, m, j) => 
+  					is_good_metric m orelse j> start) body_set
+  			        val cur_term_set = merge_t((prev_r, m, start), body_set, false)
+  			    in
+  			      cur_term_set
+  			    (***
+  			    (* the following step is to add a parse which terminates the prev rep *)
+  			    case sep of
+  				  NONE => if is_good_metric m then
+  					   ParseSet.add (cur_term_set, (prev_r, m, start))
+  					  else cur_term_set
+  				| SOME sep => cur_term_set
+  			    ***)
+			end
 			| SOME term => 
 			  let
 			    val pairset = pair_parse body_set term true
 			    val pairset = clean (ParseSet.filter 
 					(fn (r, m, j) => (j > start)) pairset)
 			    val cur_term_set = merge_t ((prev_r, m, start), pairset, true) 
+			    (***
+			    (* the following step is to add a parse which terminates the prev rep *)
 			    val parse_term_set = 
 				case sep of
 				  NONE => 
@@ -1072,7 +1125,6 @@ struct
 						e, start, input, cutoff)
 				    else ParseSet.empty
 				| SOME sep => ParseSet.empty
-			    (* the following step is to add a parse which terminates the prev rep *)
 			    val prev_term_set =
 				case prev_r of
 		  		  ArrayR(elems, seps, termop) =>
@@ -1080,9 +1132,12 @@ struct
 						 	(ArrayR(elems, seps, SOME term_r), add_metric m term_m, start))
 						     parse_term_set
 				| _ => raise TyMismatch
+			    ***)
 			  in
-			    ParseSet.union (cur_term_set, prev_term_set)
+			    cur_term_set
+			    (* ParseSet.union (cur_term_set, prev_term_set) *)
 			  end
+**********************)
 	     	   in (ParseSet.union(seprs, sep_set), ParseSet.union(termrs, term_set))
 	     	   end
 	         val (seps, terms) = ParseSet.foldl f (ParseSet.empty, ParseSet.empty) parse_set
@@ -1091,6 +1146,9 @@ struct
 	         val _ = print ("Num term parses: " ^ Int.toString (ParseSet.numItems terms) ^ "\n") 
 	*)
 		 val clean_seps = clean seps
+		 val clean_terms = clean terms
+
+		(*****
 		 val terms' = 
 		     if ParseSet.numItems clean_seps > 0 then
 			let 
@@ -1100,24 +1158,18 @@ struct
 					orelse (equal_metric m (#2 worse_sep_parse)))) terms
 			end
 		     else terms
-
+		 *****)
 		 (* NOTE: we clean the seps set before passing to next iteraction *)
 	         val sep' = parse_array (e, clean_seps) 
 	       in
-	         ParseSet.union (sep', clean terms')
+	         ParseSet.union (sep', clean_terms)
 	       end
-	   (* NOTE: we are not cleaning the result from parsing array - delay this decision later *)
-	   val non_empty_set = (parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i)))
+	   val non_empty_set = clean (parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i)))
 	   (* val _ = print ("size of non-empty set = " ^ Int.toString (ParseSet.numItems non_empty_set) ^ "\n") *)
+	   val finish = Time.toReal (Time.now())
 	   (* we have to add a parse that is an zero-length array *)
 	   val final_set = ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0, 0), i))
-
-           val _ = if ParseSet.numItems final_set > 100 then 
-                        (* val _ = print ("Begin parsing Array " ^ getLabelString (getAuxInfo ty) ^ "\n") *)
-                        print ("Array " ^ getLabelString (getAuxInfo ty) ^ ": number of array parses = " ^ 
-                        Int.toString (ParseSet.numItems final_set) ^ "\n")
-                   else ()
-	   (*
+           (*
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
 	   val _ = print "**** End \n" 
