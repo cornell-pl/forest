@@ -2248,6 +2248,11 @@ and contract_blobs sib ty =
 	      end
 	  else ty
         end
+    | Poption(a, blob as (RefinedBase(a', Blob x, tl))) =>
+	let val emptyBase = genEmptyBase a (#coverage a - #coverage a')
+	in 
+	  mergeTyInto (emptyBase, blob)
+	end
     | _ => ty
   end
 
