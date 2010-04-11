@@ -9,7 +9,7 @@ struct
   structure RegExp = RegExpFn (structure P=AwkSyntax structure E=ThompsonEngine) : REGEXP
   structure MT = MatchTree
   structure SS = Substring
-  val max_parses_per_line = 2
+  val max_bad_parses = 2
   val max_consecutive_fails = 3
   val recover_factor = 5
 
@@ -50,6 +50,11 @@ struct
   fun parseItemToString (r, m, j) =
 	(repToString "" r) ^ (metricToString m) ^ " Ending pos = " ^ Int.toString j ^ "\n"
 
+  fun has_good_parse s = 
+	let fun f (r, m, j) = is_good_metric m 
+	in ParseSet.exists f s
+	end 
+
   (* this function reduces the size of s to up to a max num of parses 
      whenever this function is changed, need to change clean_struct as well *)
   fun clean s = 
@@ -76,29 +81,32 @@ struct
 		| NONE =>  IntMap.insert (map, j, [(r, m, j)])
 	    val map = ParseSet.foldl g IntMap.empty s
 	    val mylist = List.concat (IntMap.listItems map)
-	    val (goodlist, badlist) = List.partition (fn (r, m, j) => is_good_prog_metric m) mylist
+	    val (goodlist, badlist) = List.partition (fn (r, m, j) => is_good_metric m) mylist
+	    val goodproglist = List.filter (fn (r, m, j) => is_good_prog_metric m) goodlist
 	    (* NOTE: because PADS parser is deterministic, there is no point of keeping
 		bad parses if a good parse is found. However, if and when PADS
 		parser is changed to parse non-deterministically, 
 		we need to return both good and bad sets of parses *)
 	    (*
-	    val mylist = if (length goodlist) < max_parses_per_line then 
-			 let val len = if max_parses_per_line -(length goodlist) > length badlist
+	    val mylist = if (length goodlist) < max_bad_parses then 
+			 let val len = if max_bad_parses -(length goodlist) > length badlist
 				       then length badlist
-				       else max_parses_per_line - (length goodlist)
+				       else max_bad_parses - (length goodlist)
 			 in
 			  List.take ((ListMergeSort.sort 
 			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
 			 end
 			 else nil
 	    *)
-	    val len = if length badlist < max_parses_per_line then length badlist
-		      else max_parses_per_line
-	    val mylist = if length goodlist > 0 then goodlist
-			 else List.take ((ListMergeSort.sort 
-			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
-
-	in
+	    val len = if length badlist < max_bad_parses then length badlist
+		      else max_bad_parses
+	    val mylist = if length goodproglist > 0 then goodproglist
+			 else if length goodlist > 0 then (* just pick any one of the nor-prog good parse *) 
+			   (hd goodlist) :: (List.take ((ListMergeSort.sort 
+			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len)) 
+			 else (List.take ((ListMergeSort.sort 
+			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len)) 
+	    in
 	    ParseSet.addList (ParseSet.empty, mylist)
 	end
      else s
@@ -129,38 +137,37 @@ struct
 		| NONE =>  IntMap.insert (map, j, [((r, m, j), e)])
 	    val map = List.foldl g IntMap.empty s
 	    val mylist = List.concat (IntMap.listItems map)
-	    val (goodlist, badlist) = List.partition (fn ((r, m, j), e) => is_good_prog_metric m) mylist
+	    val (goodlist, badlist) = List.partition (fn ((r, m, j), e) => is_good_metric m) mylist
+	    val goodproglist = List.filter (fn ((r, m, j), e) => is_good_prog_metric m) goodlist
 	    (* NOTE: because PADS parser is deterministic, there is no point of keeping
 		bad parses if a good parse is found. However, if and when PADS
 		parser is changed to parse non-deterministically, 
 		we need to return both good and bad sets of parses *)
 	    (*
-	    val mylist = if (length goodlist) < max_parses_per_line then 
-			 let val len = if max_parses_per_line -(length goodlist) > length badlist
+	    val mylist = if (length goodlist) < max_bad_parses then 
+			 let val len = if max_bad_parses -(length goodlist) > length badlist
 				       then length badlist
-				       else max_parses_per_line - (length goodlist)
+				       else max_bad_parses - (length goodlist)
 			 in
 			  List.take ((ListMergeSort.sort 
 			  (fn ((_, m1, _), (_, m2, _)) => better_metric m2 m1) badlist), len) 
 			 end
 			 else nil
 	    *)
-	    val len = if length badlist < max_parses_per_line then length badlist
-		      else max_parses_per_line
-	    val mylist = if length goodlist > 0 then goodlist
-			 else List.take ((ListMergeSort.sort 
-			  (fn (((_, m1, _), _), ((_, m2, _), _)) => better_metric m2 m1) badlist), len) 
+	    val len = if length badlist < max_bad_parses then length badlist
+		      else max_bad_parses
+	    val mylist = if length goodproglist > 0 then goodproglist
+		 else if length goodlist > 0 then (* just pick any one of the nor-prog good parse *) 
+			   (hd goodlist) :: (List.take ((ListMergeSort.sort 
+			  (fn (((_, m1, _), _), ((_, m2, _), _)) => better_metric m2 m1) badlist), len)) 
+			 else (List.take ((ListMergeSort.sort 
+			  (fn (((_, m1, _), _), ((_, m2, _), _)) => better_metric m2 m1) badlist), len)) 
 
 	in
 	    mylist
 	end
      else s
 
-
-  fun has_good_parse s = 
-	let fun f (r, m, j) = is_good_metric m 
-	in ParseSet.exists f s
-	end 
 
   (* helper function get the worse parse from a set of parses *)	
   fun get_worse_parse s =
@@ -872,6 +879,7 @@ struct
 		end
 	  | nil => prev_set
 	in clean (f tys 0 ParseSet.empty)
+	end
 	(*
 	let fun g (ty, (parse_set, branchno)) =
 		let val set = parse_all (ty, e, i, input) 
@@ -886,7 +894,6 @@ struct
 	    val _ = ParseSet.app (fn x => print (parseItemToString x)) s
 	    val _ = print "**** end ***\n"
 	*)
-	end
     | Switch (a, id, retys) => 
 	let fun select retys re branchno =
 		case retys of

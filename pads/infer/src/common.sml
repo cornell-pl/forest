@@ -268,8 +268,13 @@ structure Common = struct
     (*this function generate a dummy empty base type with nTokens number of Pempty tokens *)
     fun genEmptyBase (aux:AuxInfo) (nTokens:int) =
 	let
+	   val tycomp : TyComp = { tc  = constructorComp
+                                         , adc = zeroComp
+                                         , dc  = zeroComp
+                                         }
+
 	   val aux'={coverage=nTokens, label = #label aux,
-		     tycomp = zeroComps, len = 0.0}
+		     tycomp = tycomp, len = 0.0}
 	   val ltokens = List.tabulate(nTokens, (fn n => (Pempty, {lineNo=(~1), beginloc=0, endloc=0,recNo=(~1)})))
 	   val emptyBase = Base(aux', ltokens)
 	in emptyBase

@@ -1830,11 +1830,12 @@ fun merge_tls (tl1, tl2) =
 	   if length tl2 >= length tl1 (* tl1 is subset of tl2*)
 	   then	foldl (prepend tl1) [] tl2
 	   else foldl (appendto tl2) [] tl1 
-	   end
+	   end 
 
 ****)
 
-(* merge all the tokens belonging to a ty to one single token list *)
+(* merge all the tokens belonging to a ty to one single token list, and also
+   returns the avg token len *)
 (* invarants are that the token list are ordered by their line no and
    and the two corresponding tokens in lists are adjacent to each other,
    and the size of the list should be equal to coverage of this ty *)
@@ -1868,44 +1869,57 @@ fun mergeTokens ty =
     let val final_tl = 
       case ty of
 	   Base (a, l) => 
-		if isEmpty ty then nil else map tos (sortByLoc l)
+		if isEmpty ty then (nil, 0.0) else (map tos (sortByLoc l), #len a)
         |  TBD (a, _, l) => raise TyMismatch
         |  Bottom (a, _, l) => raise TyMismatch
         |  Pstruct (a, tys) => 
 		(* assume none of the tys are empty ty *)
-		let val ltl_list = map mergeTokens tys
-		in
-		  foldl merge_tls nil ltl_list
+		let val (ltl_list, lens) = ListPair.unzip (map mergeTokens tys)
+		    val new_tl = foldl merge_tls nil ltl_list
+		in (new_tl, sumReals lens)    
 		end
         |  Punion (a, tys)       => 
-		let val nonEmptyTys = List.filter (fn ty => not (isEmpty ty)) tys
-		    val tls = map mergeTokens nonEmptyTys
-		in sortByLoc (List.concat tls) end
+		let 
+		    val (tls, lens) = ListPair.unzip (map mergeTokens tys)
+		    val newtl = sortByLoc (List.concat tls) 
+		    val covs = map getCoverage tys
+		    val newlen = weightedSum (ListPair.zip (covs, lens))
+		in (newtl, newlen)
+		end
         |  Parray (a, {tokens=t, lengths=len, first=f, body=b, last=l}) => 
 		raise TyMismatch
 		(*
 		merge_tls ((merge_tls ((mergeTokens f), (mergeTokens b))), (mergeTokens l))
 		*)
-        |  RefinedBase (aux, re, l) => map tos (sortByLoc l)
+        |  RefinedBase (aux, re, l) => (map tos (sortByLoc l), #len aux)
         |  Switch (a, id, retys) => 
 		let val nonEmptyReTys = List.filter (fn (_, ty) => not (isEmpty ty)) retys
-		    val tls = map (fn (_, ty) => mergeTokens ty) nonEmptyReTys
-		in sortByLoc (List.concat tls)
+		    val (tls, lens) = ListPair.unzip (map (fn (_, ty) => mergeTokens ty) retys)
+		    val new_tls = sortByLoc (List.concat tls)
+		    val covs = map (fn (_, ty) => getCoverage ty) retys
+		    val newlen = weightedSum (ListPair.zip (covs, lens))
+		in (new_tls, newlen)
 		end
         |  RArray (a,sep,term,body,len,lengths) => 
-		let val tl = mergeTokens body
+		let val (tl, bodylen) = mergeTokens body
 		val sepstr = case sep of 
 			SOME (IntConst a) => LargeInt.toString a
 			| SOME (FloatConst (a, b)) => a ^ "." ^ b
 			| SOME (StringConst s) => s
 			| SOME _ => " " (* use space by default *)
 			| _ => ""
-		in
-		   ((* print "Collapsing array:\n";
+		   (* print "Collapsing array:\n";
 		   printTy ty; *)
-		   collapse tl sepstr)
+		val new_tl = collapse tl sepstr
+		val avg_array_len = (Real.fromInt(getCoverage body))/(Real.fromInt (#coverage a))
+		val new_len = avg_array_len * bodylen
+		in (new_tl, new_len)
 		end 
-        |  Poption (a, body)  => mergeTokens body
+        |  Poption (a, body)  => 
+		let val (tl, len) = mergeTokens body
+		    val newlen = len * (Real.fromInt(getCoverage body))/(Real.fromInt (#coverage a))
+		in (tl, newlen)
+		end
 	(* val _ = print "Merging ty: \n"
 	val _ = printTy ty
         val _ = print ("Coverage : " ^ (Int.toString (getCoverage ty)) ^ " Lengths : " ^ 
@@ -1916,6 +1930,7 @@ fun mergeTokens ty =
      end
   end
 
+  
 (*******************
 fun isBlob ty =
   case ty of
@@ -2075,13 +2090,13 @@ and mkBlob sibling_opt ty =
 	  case getStoppingPatt sibty of
 	    (SOME str, NONE) =>
 	    let val (hdTys, candidateBlobTys) = getTailTys tys
-	        val ltokens = mergeTokens (Pstruct (a, candidateBlobTys))
+	        val (ltokens, avglen) = mergeTokens (Pstruct (a, candidateBlobTys))
 	    in
 		if (containString ltokens str) then ty
 		else if length candidateBlobTys = 0 then ty
 		else 
 		  let 
-		    val newa = getAuxInfo (hd candidateBlobTys)
+		    val newa = updateLen (getAuxInfo (hd candidateBlobTys)) avglen
 		    val newblob = measure 0 (RefinedBase(newa, Blob (SOME str, NONE), ltokens))
 		  in if length hdTys = 0 then newblob
 		     else measure 1 (Pstruct (a, hdTys@[newblob]))
@@ -2089,18 +2104,18 @@ and mkBlob sibling_opt ty =
 	    end
 	  | (NONE, SOME str) =>
 	    let val (hdTys, candidateBlobTys) = getTailTys tys
-	        val ltokens = mergeTokens (Pstruct (a, candidateBlobTys))
+	        val (ltokens, avglen) = mergeTokens (Pstruct (a, candidateBlobTys))
 	    in
 		if length candidateBlobTys = 0 then ty
 		else if str = "/$/" then 
-		  let val newa = getAuxInfo (hd candidateBlobTys)
+		  let val newa = updateLen(getAuxInfo (hd candidateBlobTys)) avglen
 		     val newblob = measure 0 (RefinedBase(newa, Blob (NONE, NONE), ltokens))			
 		  in if length hdTys = 0 then newblob
 		     else measure 1 (Pstruct (a, hdTys@[newblob]))
 		  end
 		else if (containPatt ltokens (stripslashes str)) then ty
 		else 
-		  let val newa = getAuxInfo (hd candidateBlobTys)
+		  let val newa = updateLen (getAuxInfo (hd candidateBlobTys)) avglen
 		      val newblob = measure 0 (RefinedBase(newa, Blob (NONE, SOME str), ltokens))
 		  in if length hdTys = 0 then newblob
 		     else measure 1 (Pstruct (a, hdTys@[newblob]))
@@ -2116,12 +2131,14 @@ and mkBlob sibling_opt ty =
 	  case pair of 
 	  (SOME str, NONE) => 
 	      let 
-	  	val ltokens = mergeTokens ty 
+	  	val (ltokens, avglen) = mergeTokens ty 
 	      in
 		(* str = empty string is the special case of Peor *)
 	    	if (containString ltokens str) then ty
 	    	else 
-		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair, ltokens))
+		  let 
+			val newa = updateLen (getAuxInfo ty) avglen
+			val newty = measure 0 (RefinedBase(newa, Blob pair, ltokens))
 (*
 		      (* val _ = (* if length ltokens <> getCoverage ty then *) *)
 				(
@@ -2139,7 +2156,7 @@ and mkBlob sibling_opt ty =
 	      end
 	  | (NONE, SOME str ) => 
 	      let 
-	  	val ltokens = mergeTokens ty 
+	  	val (ltokens, avglen) = mergeTokens ty 
 		(*
 		val _ = print "about to mkBlob for:\n"
 		val _ = printTy ty
@@ -2147,19 +2164,24 @@ and mkBlob sibling_opt ty =
 		(* val _ = print ((LTokensToString ltokens) ^ "\n") *)
 	      in
 		if str = "/$/" then 
-		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob (NONE, NONE), ltokens))			
-		  (*    val _ = (* if length ltokens <> getCoverage ty then *)
+		  let 
+		      val newa = updateLen (getAuxInfo ty) avglen
+		      val newty = measure 0 (RefinedBase(newa, Blob (NONE, NONE), ltokens))			
+		      (*
+		      val _ = (* if length ltokens <> getCoverage ty then *)
 				(print "Old ty:\n";
-				 printTy ty;
+				 printTy (measure 0 ty);
 				 print "New blob:\n";
 				 printTy newty
 				)
-		  *)
+		      *)
 		  in newty
 		  end
 	        else if containPatt ltokens (stripslashes str) then ty
 	        else 
-		  let val newty = measure 0 (RefinedBase(getAuxInfo ty, Blob pair , ltokens))
+		  let 
+		      val newa = updateLen (getAuxInfo ty) avglen
+		      val newty = measure 0 (RefinedBase(newa, Blob pair , ltokens))
 		   (*
 		      val _ = (* if length ltokens <> getCoverage ty then *)
 				(print "Old ty:\n";

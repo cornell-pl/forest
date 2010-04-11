@@ -12,7 +12,7 @@ structure Incremental: sig
 *)
 
     val anyErrors = ref false
-    val max_parses_per_line = Parse.max_parses_per_line
+    val max_bad_parses = Parse.max_bad_parses
     val max_aggregates = 10
     val dir_name = "inc_output"
     exception Exit of OS.Process.status
@@ -115,14 +115,14 @@ structure Incremental: sig
 	(* val _ = print ("Num of perfect parses: " ^ Int.toString (length perfect_parses) ^ "\n") *)
 	val (top_parses, has_good_parse) =
 		if List.length perfect_parses > 0 then
-			if List.length perfect_parses <= max_parses_per_line then
+			if List.length perfect_parses <= max_bad_parses then
 			  (perfect_parses, true)
-			else (List.take (perfect_parses, max_parses_per_line), true)
+			else (List.take (perfect_parses, max_bad_parses), true)
 		else
 		  let 
 		    val num_parses =  
 		        let val len = length list_parses 
-		        in if len > max_parses_per_line then max_parses_per_line
+		        in if len > max_bad_parses then max_bad_parses
 		           else len
 			end
 		  in
