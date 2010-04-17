@@ -2139,18 +2139,22 @@ and mkBlob sibling_opt ty =
 		  let 
 			val newa = updateLen (getAuxInfo ty) avglen
 			val newty = measure 0 (RefinedBase(newa, Blob pair, ltokens))
-(*
 		      (* val _ = (* if length ltokens <> getCoverage ty then *) *)
+			(*	
+			val _ = case ty of 
+				Poption _ =>
 				(
+				(*
 				 print ("Num of tokens = " ^ 
 					(Int.toString (length ltokens)) ^ "\n");
+				*)
 				 print "Old ty:\n";
 				 printTy ty;
 				 print "New blob:\n";
 				 printTy newty
 				)
-			      else ()
-*)
+			      | _ => ()
+			*)
 		  in newty
 		  end
 	      end

@@ -252,7 +252,7 @@ struct
 	  else
 	    (SyncA(c + 1, l + lsize s, SOME (Enum [StringConst s', re])), nil)
 	| (NONE, _) => (SyncA(c + 1, l + lsize s, NONE), nil)
-	| _ => raise MergeFailed
+	| _ => (print (aggrToString "" a); print (repToString "" rep);  raise MergeFailed)
 	)
     | (SyncA (c, l, ss), SyncR (Recovered(r, s, m))) => 
 		let val id = mkNextTyLabel()

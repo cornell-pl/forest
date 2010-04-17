@@ -82,7 +82,7 @@ structure Incremental: sig
     (* each aggregate is actually a pair: (aggr, OptsTable) *)
     fun add (ty, line, aggregates) =
       let 
-	(* val _ = print (line ^ "\n") *)
+	(* val _ = print (line ^ "\n") *) 
 	(* val tm = Time.now() *)
 	val _ = Parse.memo:=Parse.MemoMap.empty
  	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, !Parse.do_parse_cutoff)
@@ -130,14 +130,13 @@ structure Incremental: sig
 		     (fn ((_, m1, _), (_, m2, _)) => Rep.better_metric m2 m1) list_parses), num_parses), 
 		      false)
 		  end
-
-(*
+        (*
 	val _ = print ("The top " ^ Int.toString (length top_parses) ^ " parses: \n")
  	val _ = List.app (fn (rep, m, j) => 
 		print (Rep.repToString "" rep ^ "Metric = " ^ Rep.metricToString m ^ "\n\n")) 
 		top_parses
 	val _ = print ("Num of top parses: " ^ Int.toString (length top_parses) ^ "\n")  
-*)
+	*)
 	val all_aggregates = List.concat (map (fn (AG.TupleA (cov, [a, AG.Ln(id, ss)]), table) => map 
 			(fn (r, m, j) => 
 			  let 
@@ -305,10 +304,10 @@ structure Incremental: sig
 	    (* we update the ty even if there's no bad data in the
 		aggregate because we want the updated aux in ty *)
 	    val newTy = AG.updateTy ty chunk_aggr
-	    (*******)
+	    (******
 	    val _ = (print ("\n*** Updated Ty after Chunk " ^ Int.toString index ^ " (" ^ 
 			Int.toString count ^ " lines) (before rewriting):\n"); printTy newTy)
-	    (******)
+	    *****)
 	    val newTy =
 	    if chunk_cost > 0 then 
 	     let 
@@ -323,10 +322,8 @@ structure Incremental: sig
 	     in newTy
 	     end
 	    else newTy
-	    (*******)
 	    val _ = (print ("\n*** New Ty after Chunk " ^ Int.toString index ^ " (" ^ 
 			Int.toString count ^ " lines) (after rewriting):\n"); printTy newTy)
-	    (**********)
 	    (* val refinedTy = Reduce.reduce 4 newTy *)
 	    val elapse = Time.- (Time.now(), start_time)
    	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")

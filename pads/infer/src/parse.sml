@@ -55,6 +55,12 @@ struct
 	in ParseSet.exists f s
 	end 
 
+  fun has_good_prog_parse s = 
+	let fun f (r, m, j) = is_good_prog_metric m 
+	in ParseSet.exists f s
+	end 
+
+
   (* this function reduces the size of s to up to a max num of parses 
      whenever this function is changed, need to change clean_struct as well *)
   fun clean s = 
@@ -324,6 +330,19 @@ struct
         String.translate escapeChar s
      end
 
+  (* this function parses a constant string, this is cheaper than the parse_regex below *)
+  (* return (recovered string, matched string, new index) *)
+  fun parse_const_str (str, start, input) =
+     if start >= String.size input andalso String.size str > 0 then (NONE, NONE, start)
+     else
+  	let val s = SS.full (String.extract (input, start, NONE))
+	    val (pref, suff) = SS.position str s
+	in
+	  if SS.isEmpty pref then (NONE, SOME str, start + String.size str)
+	  else if SS.isEmpty suff then (NONE, NONE, start)
+	  else (SOME (SS.string pref), SOME str, start + SS.size pref + String.size str)
+	end
+
   (* return (recovered string, matched string, new index) *)
   fun parse_regex (re_str, start, input, with_recovery) =
     let
@@ -375,6 +394,8 @@ struct
   (* this function parses a punctuation char, returns recovered string (option)
      matched string and the new index *)
   fun parse_punc (c, start, input) =
+    if start >= String.size input then (NONE, NONE, start)
+    else
     let 
       val s = SS.extract (input, start, NONE) 
       fun f ch = (ch <> c)
@@ -546,25 +567,14 @@ struct
 	    it is possible to generate a partial result, 
 	    if the string s is a word *)
 	    let 
-	      val match_word = 
+	      fun match_word () = 
 	          case parse_base (Pstring (""), 0, s) of
 		    (BaseR(ErrorB), _, _) => false
 	          | (BaseR(GoodB (Pstring _)),  (_, _, _, len), _) =>
 		    if len = String.size s then true (* s matches a word *)
 		    else false
 		  | _ => raise Unexpected
-	       fun match_const_str () =
-		  let
-		     val (recovered, matched, j) = 
-		        (* we only allow punctuation and white space 
-				as sync token for now *)
-			if isPunctuation s then
-			  parse_regex(escapeRE s, start, input, true)
-			else if isWhiteSpace s then
-			  parse_regex ("[ \\t\\r\\n]+", start, input, true)
-			else
-			  parse_regex(escapeRE s, start, input, false)
-	    	  in
+	       fun match_const_str (recovered, matched, j) =
 		     case (recovered, matched) of
 		       (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 1, 0, String.size s), j)]
 		     | (SOME r, SOME matched_s) => 
@@ -580,17 +590,25 @@ struct
 			    else [(SyncR(PartialRecovered (r, matched_s, StringConst matched_s)), (0, 1, String.size r, String.size matched_s), j)] @ failed
 			end
 		     | _ => [(SyncR Fail, (1, 0, 0, 0), start)]
-		  end
+	       val slen = String.size s
 	    in
-		if match_word then 
+		if isPunctuation s then match_const_str (parse_const_str (s, start, input))
+		else if isWhiteSpace s then
+			let val x =  parse_regex ("[ \\t\\r\\n]+", start, input, true)
+			in match_const_str x
+			end
+		else if match_word () then (* s is a word so can return partial node *)
 			case parse_base (Pstring (""), start, input) of
-			  (BaseR(ErrorB), _, _) => match_const_str ()
+			  (BaseR(ErrorB), _, _) => [(SyncR Fail, (1, 0, 0, 0), start)]
 	      		| (BaseR(GoodB (Pstring s')),  (_, _, _, len), j) =>
-			  if s = s' then [(SyncR(Good (s, StringConst s)), (0, 1, 0, String.size s), j)]
+			  if s = s' then [(SyncR(Good (s, StringConst s)), (0, 1, 0, slen), j)]
 			  else
 			   [(SyncR(Partial(s', StringConst(s'))), (1, 0, 0, len), j)]
 			| _ => raise Unexpected
-		else match_const_str ()
+		else (* s is a non-punc string and not a word, must match right here or fail *)
+		    if String.isPrefix s (String.extract (input, start, NONE))
+		    then [(SyncR(Good (s, StringConst s)), (0, 1, 0, slen), start+slen)] 
+		    else [(SyncR Fail, (1, 0, 0, 0), start)]
 	    end
 
 	| Enum res => 
@@ -629,7 +647,7 @@ struct
 	  (
 	  case (str, patt) of
 	    (SOME s, NONE) =>
-	    	let val (recovered, matched, j) = parse_regex(escapeRE s, start, input, true)
+	    	let val (recovered, matched, j) = parse_const_str (s, start, input)
 		in
 		  case (recovered, matched) of
 		    (NONE, SOME s) => [(SyncR(Good ("", StringConst "")), (0, 1, 0, 0), start)]
@@ -950,6 +968,21 @@ struct
 				(ArrayR(elems@[elemR], seps, termop), add_metric m  m', j')) set
 		| _ => raise TyMismatch
 
+	   fun merge_s_rev ((r, m, j), set, has_sep) =
+		case r of
+		  ArrayR(elems, seps, termop) =>
+		    if has_sep then
+		      ParseSet.map (fn (body_sep, m', j') =>
+				   case body_sep of
+				     TupleR ([sepR, elemR]) => 
+					(ArrayR(elems@[elemR], seps@[sepR], termop), add_metric m  m', j')
+				   | _ => raise TyMismatch) set
+		    else 
+		      ParseSet.map (fn (elemR, m', j') =>
+				(ArrayR(elems@[elemR], seps, termop), add_metric m  m', j')) set
+		| _ => raise TyMismatch
+
+
           fun merge_t ((r, m, j), set, has_term) = 
 		case r of
 		  ArrayR(elems, seps, termop) =>
@@ -975,6 +1008,7 @@ struct
 		      ParseSet.map (fn (elemR, m', j') =>
 				(ArrayR(elems@[elemR], seps, termop), add_metric m  m', j')) set
 		| _ => raise TyMismatch
+	  (* returns whether the re is parsed successfully and the parses *)
 	  fun pair_parse bodyset re isTerm =
 		let
 		  val rety = RefinedBase (mkTyAux 0, re, nil)
@@ -1006,6 +1040,94 @@ struct
 	 let
 	   (* val _ = print ("Begin parsing Array " ^ getLabelString (getAuxInfo ty) ^ "\n") *)
 	   val start = Time.toReal (Time.now())
+
+	   (** the following is an implementation of the 700 DDC paper*) 
+	   fun parse_array (e, parse_set) =
+	     if ParseSet.numItems parse_set = 0 then parse_set
+	     else
+	       let
+                 fun mypartition f set =
+                   let fun g (item, (yesset, noset)) =
+			let val (parse, isdone) = f item
+			in 
+                          if isdone then (ParseSet.add (yesset, parse), noset)
+                          else (yesset, ParseSet.add(noset, parse))
+			end
+                   in ParseSet.foldl g (ParseSet.empty, ParseSet.empty) set
+                   end
+		(* the parse here must be an array parse already *)
+                 fun try_term (prev_r, m, start) =
+                        case term of
+                          NONE => ((prev_r, m, start), start >= String.size input)
+                        | SOME term =>
+                          if start >= String.size input then ((prev_r, m, start), true)
+                          else
+                            let
+                              val rety = RefinedBase (mkTyAux 0, term, nil)
+			      (* val _ = print "trying term...\n" *)
+                              val news = parse_all (rety, e, start, input, cutoff)
+                            in
+			      case ParseSet.find (fn (r, m, j) => is_good_prog_metric m) news of 
+			        SOME (r', m', j) =>
+				(
+				  case prev_r of
+		  		    ArrayR(elems, seps, termop) => 
+					((ArrayR(elems, seps, SOME r'), add_metric m m', start), true)
+				  | _ => raise TyMismatch
+				)
+			      | NONE => ((prev_r, m, start), false)
+                            end
+		fun do_term (prev_r, m, start) =
+		  case term of 
+		    SOME term => 
+                      let
+                        val rety = RefinedBase (mkTyAux 0, term, nil)
+			(* val _ = print "doing term...\n" *)
+                        val news = parse_all (rety, e, start, input, cutoff)
+                      in
+		        case prev_r of
+		          ArrayR(elems, seps, termop) => 
+			    ParseSet.map (fn (r_term, m_term, j_term) => 
+			      (ArrayR(elems, seps, SOME r_term), add_metric m m_term, start)) news
+		        | _ => raise TyMismatch
+		      end
+		  | _ =>  ParseSet.singleton (prev_r, m, start)
+
+                fun continue parse_set =
+                  let
+                    val (done_set, non_done_set) = mypartition try_term parse_set
+
+                    val (has_sep, ty_to_parse) =
+                        case sep of
+                          SOME sep =>
+                            (true, Pstruct (mkTyAux 0, [RefinedBase (mkTyAux 0, sep, nil), body]))
+                        | NONE => (false, body)
+                    fun f ((prev_r, m, start), set) =
+                       let 
+			   (* val _ = print "parsing body...\n" *)
+			   val cur_parses = parse_all (ty_to_parse, e, start, input, cutoff)
+                           val cur_parses' = clean (ParseSet.filter
+                                                (fn (r, m, j) => (j > start)) cur_parses)
+                       in
+                          if ParseSet.numItems cur_parses' = 0 then (* no progress, so stop here *)
+                            ParseSet.union(set, do_term (prev_r, m, start))
+                          else
+                            ParseSet.union(set, continue (merge_s_rev ((prev_r, m, start), cur_parses', has_sep)))
+                       end
+                  in
+                    ParseSet.union(done_set, (ParseSet.foldl f ParseSet.empty non_done_set))
+                  end
+                val (done_set, non_done_set) = mypartition try_term parse_set
+                fun g ((prev_r, m, start), set) =
+                  let val cur_parses = clean (parse_all (body, e, start, input, cutoff))
+                  in
+                    ParseSet.union(set, merge_s ((prev_r, m, start), cur_parses, false))
+                  end
+                val continue_set = ParseSet.foldl g ParseSet.empty non_done_set
+             in ParseSet.union (done_set, continue continue_set)
+             end
+
+(**********
 	   fun parse_array (e, parse_set) =
 	     if ParseSet.numItems parse_set = 0 then parse_set
 	     else
@@ -1078,6 +1200,7 @@ struct
 				       merge_t ((prev_r, m, start), bodytermset, true))
 				    end
 			  end
+********)
 
 (***********
 		    val sep_set = 
@@ -1144,7 +1267,6 @@ struct
 			    cur_term_set
 			    (* ParseSet.union (cur_term_set, prev_term_set) *)
 			  end
-**********************)
 	     	   in (ParseSet.union(seprs, sep_set), ParseSet.union(termrs, term_set))
 	     	   end
 	         val (seps, terms) = ParseSet.foldl f (ParseSet.empty, ParseSet.empty) parse_set
@@ -1171,11 +1293,21 @@ struct
 	       in
 	         ParseSet.union (sep', clean_terms)
 	       end
-	   val non_empty_set = clean (parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i)))
+**********************)
+
+	   val final_set = clean (parse_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i)))
 	   (* val _ = print ("size of non-empty set = " ^ Int.toString (ParseSet.numItems non_empty_set) ^ "\n") *)
 	   val finish = Time.toReal (Time.now())
+	   
+     	   (*   
+	   val _ = if (finish - start) > 0.01 then print (input ^ "\n" ^ 
+			"Parsing " ^ getLabelString (getAuxInfo ty) ^ 
+			" Elapsed: " ^ Real.toString (finish-start) ^ "\n") 
+		   else ()
+	   *)
+
 	   (* we have to add a parse that is an zero-length array *)
-	   val final_set = ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0, 0), i))
+	   (* val final_set = ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0, 0), i))*)
            (*
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
@@ -1184,7 +1316,7 @@ struct
 	  in
 		final_set	
 	  end  
-       )	
+       )
      | SOME x => 
 	(* assume index starts from 0 *)
 	let val len = 

@@ -27,7 +27,8 @@ struct
         let val minLen = int2Bits min
             val maxLen = int2Bits max
             val maxBits = Real.max(minLen, maxLen)
-            val typeName = if (min>=0) then "puint" else "pint"
+            val (typeName, maxBits)  = if (min>=0) then ("puint", maxBits) 
+				       else ("pint", maxBits+1.0)
         in 
             if (maxBits<= 8.0) then typeName ^ "8"
             else if maxBits <=16.0 then typeName ^ "16"

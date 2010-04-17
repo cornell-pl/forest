@@ -31,7 +31,8 @@ open Ast
     	let val minLen = int2Bits min
     	    val maxLen = int2Bits max
     	    val maxBits = Real.max(minLen, maxLen)
-	    val typeName = if (min>=0) then "Puint" else "Pint"
+	    val (typeName, maxBits) = if (min>=0) then ("Puint", maxBits) 
+				      else ("Pint", maxBits+1.0) (* need 1 additional bit for sign *)
     	in 
     	    if (maxBits<= 8.0) then typeName ^ "8"
     	    else if maxBits <=16.0 then typeName ^ "16"
