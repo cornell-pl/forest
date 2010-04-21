@@ -1,65 +1,49 @@
-SOURCE SYNTAX
+SURFACE SYNTAX
 
 s ::= 
     k
   | psource of b 
   | pdirectory of {n1 is s1; n2 is s2} 
-  | exact pdirectory of {n1 is s1; n2 is s2}
-  | pcompute e
-  | { s | x <- e }
-  | (e :: s)
-  | (e ::* s)
-  | s <| e |>
+  | exact pdirectory of {n1 is s1; n2 is s2} 
+  | pcompute e 
+  | { s | x <- e } 
+  | (e :: s) 
+  | s <| e |> 
   | s @ e 
   | s @@ e 
   | s option
 
-NOTES:
- -- (e ::* s)           <<---- omitting this declaration
- -- binary directories for simplicity
+We work with binary directory structures for notational simplicity.
 
-OPEN QUESTIONS
- - option example in pw.fml!
- - can the environment from "psource b" be used in the rest of the spec?
- - are record names only available L -> R?
- - intended rep for links?
- - exact directories? 
+TRANSLATION TO DIRCALC
 
-TRANSLATION
 [[ pdirectory { n1 is s1, n2 is s2 } ]] =
 < dir, < n1 : [[ s1 ]], [[ s2 ]] > > 
 
+JNF: do we want to Transform the rep into a record here or are we OK
+leaving it as a tuple?
+
 [[ exact pdirectory { n1 is s1, n2 is s2 } ]] =
-< contents(e), < n1 : [[ s1 ]], [[ s2 ] > > 
+< contents, < n1 : [[ s1 ]], [[ s2 ] > > 
 
 [[ psource b ]] = 
-Adhoc b
+Adhoc(b)
 
 [[ pcompute e ]] = 
-Compute e
+Compute(e)
 
 [[ { s | x <- e } ]] = 
-U (x in e) . { [[ s ]] }
+{ [[ s ]] | x <- e }
 
 [[ (e :: s) ]] = 
 (e : [[ s ]])
-
-[[ (e ::* s) ]] = 
-U (x in e) . { x : [[ s ]] } || {}
 
 [[ s <| e |> ]] = 
 x:s where e[x.permissions / permissions, x.owner / owner,...]
 (* with x fresh *)
 
 [[ s @ e ]] = 
-(fun (v,(b,d)) -> (snd v,(b,snd d)))
-@[norm_path * s_{RP},bool * s_{PD}]
-< x:^e, (x : [[s]])> 
-
-[[ s @@ e ]] = 
-(fun (v,(b,d)) -> (snd (snd v), (b, snd (snd d))))
-@[s_{RP},s_{PD}]
-< x:^e, (x : [[s]])> 
+< x:^e, (x : [[s]]) >
 
 [[ s option ]] = 
 s | Compute(())

@@ -1,12 +1,10 @@
--- TODO: b is overloaded. Fix
-
 +------------+
 | DATA MODEL |
 +------------+
 
-n ::= ...            -- STRING
+n ::= ...            -- STRINGS
 
-p,q ::=              -- PATH
+p,q ::=              -- PATHS
   | .                -- current
   | ..               -- ancestor
   | b                -- PADS-described name
@@ -17,17 +15,16 @@ p,q ::=              -- PATH
 -- question: do we also want XPath-like operators?
   | //b              -- descendant
 
-r,s ::=              -- NORMAL PATH
+r,s ::=              -- NORMAL PATHS
   | /n1/ ... /nk
 
-m ::= -- METADATA
-type meta =
+m ::=                -- METADATA
     { owner : int;
       group : int;
       permissions : string; 
       created : int; 
       accessed : int;
-      modified : int; }       
+      modified : int; }
 
 T ::= -- FILESYSTEM CONTENTS
   | file(n)
@@ -37,8 +34,12 @@ T ::= -- FILESYSTEM CONTENTS
 F ::= -- FILESYSTEM
   | { r |-> m * T }
 
---TODO: formalize what it means for F to be well-formed (the
-  prefix-closed conditions from the old dircalc.txt file).
+Definition: F is WELL-FORMED if and only if it is a path-prefix-closed
+finite map from normal paths to T and for all normal paths r in dom(F) 
+either 
+  (1) F(r) = m * dir{n1,...,nk} or 
+  (2) F(r) = m * file(n) and r/n not in dom(F)
+  (3) F(r) = m * link(p) and r/n not in dom(F)
 
 +--------+
 | SYNTAX |
@@ -46,12 +47,11 @@ F ::= -- FILESYSTEM
 
 s ::=                -- SPECIFICATION
     | k              -- constant (e.g., dir, file, link, csv, xml, ascii, etc.)
-    | Adhoc(b)       -- b-described data
+    | Adhoc(b)       -- PADS-described data
     | ^e             -- symbolic link
     | Pred(e)        -- predicate
     | Computed(e)    -- computed value
     | Transform(e,s) -- transformation
-    | True           -- anything 
     | e : s          -- path 
     | <x:s, s>       -- dependent pair
     | s|s            -- union
@@ -64,7 +64,7 @@ e ::= ...
 | SEMANTICS |
 +-----------+
 
-We assume a collection of type-indexed functions
+We assume a collection of type-indexed evaluation functions for expressions
 
   eval_tau : env * F * norm path * exp -> env * tau
 
@@ -79,10 +79,11 @@ Parse Descriptors d have the following shape:
 type header = bool
 type 'a pd  = header * 'a
 
-We use the function hd to determine validity of data described by
-any pd:
+We use the function valid to determine if the data described by a was
+parsed successfully:
 
 fun valid (x:'a pd) : header = pi_1 x
+fun desc (x:'a pd) : header = pi_2 x
 
 We also assume a standard typing judgment for expressions E |- e : tau
 
@@ -111,6 +112,11 @@ Here are several instances of check_k:
     - RP: unit
     - PD: meta pd
 
+  * check_True(m,c) = (c,(true,m))
+    - RP: contents 
+    - PD : meta pd
+    -- JNF: what do folks think of this "raw" rep?
+
   * check_dir(m,dir(cs)) = (cs,(true,m)) 
   * check_dir(m,_) = ({},(false,m)) 
     - RP: string set  
@@ -126,8 +132,7 @@ Here are several instances of check_k:
     - RP: path 
     - PD: meta pd
 
-  * check_csv(m,file(n)) = (v,(true,m))
-      if valid_csv(n) = v 
+  * check_csv(m,file(n)) = (v,(true,m)) when valid_csv(n) = v 
   * check_csv(m,_) = (empty_csv,(false,m)) 
     - RP: csv_value 
     - PD: meta pd
@@ -143,7 +148,7 @@ b(E,n') = (v,d)
 -----------------------------------------
 E;F;r |= Adhoc(b) ==> (v,(valid d,(d,m)))
 
-if F(r) = (m,dir(_)) or (m,link(_))
+F(r) = (m,dir(_)) or (m,link(_))
 b(E,"") = (v,d)
 ---------------------------------------
 E;F;r |= Adhoc(b) ==> (v,(false,(d,m)))
@@ -154,14 +159,17 @@ E;F;r |= Adhoc(b) ==> (v,(false,(d,m)))
 RP: norm_path 
 PD: meta pd
 
-F(r) = m,link(r'') 
-b = ( eval_norm_path(E,F,r,e) = Some (E',r') /\ r' = r'' )
+F(r) = m,link(p)
+eval_norm_path(E,F,r,e) = (_,r')
+eval_norm_path({},F,r,p) = (_,r'')
+r' = r'' 
 ----------------------------------------------------------
 E;F;r |= ^e ==> (r'',(b,m))
 
-F(r) = m,file(_) or m,dir(_)
------------------------------
-E;F;r |= ^e ==> (/.,(false,m))
+F(r) = m,file(_) or 
+F(r) = m,dir(_)  
+--------------------------------
+E;F;r |= ^e ==> (/,(false,m))
 
 =============
 = PREDICATE = 
@@ -169,9 +177,8 @@ E;F;r |= ^e ==> (/.,(false,m))
 RP: unit
 PD: unit pd
 
-b = eval_bool(E,F,r,e) 
---------------------------------
-E;F;r |= Pred(e) ==> ((),(b,()))
+-------------------------------------------------
+E;F;r |= Pred(e) ==> ((),(eval_bool(E,F,r,e),()))
 
 ===========
 = COMPUTE =
@@ -180,7 +187,7 @@ RP: tau
 PD: unit pd
 
 E |- e : tau
-eval_tau(E,F,r,e) = (E',t)
+eval_tau(E,F,r,e) = (_,t)
 -------------------------------------
 E;F;r |= Compute(e) ==> (t,(true,()))
 
@@ -191,18 +198,20 @@ RP: t_{RP}
 PD: t_{PD} pd
 
 E |- e : (s_{RP} * s_{PD}) -> (t_{RP} * t_{PD}) pd
-eval_fun(E,F,r,e) = (E',f)
+eval_fun(E,F,r,e) = (_,f)
 E;F;r |= s ==> (v,d)
 --------------------------------------
 E;F;r |= Transform[t](e,s) ==> f (v,d)
 
--- notation: e @[t] s ~~> Transform[t](e,s)
+Notation: e @[t] s ~~> Transform[t](e,s)
 
 ========
 = PATH = 
 ========
 RP: s_{RP}
-PD: (bool * norm_path * s_{PD}) pd ---> bool indicates if path in F.
+PD: (bool * norm_path * s_{PD}) pd 
+
+(The bool component of the PD indicates if the path is in F.)
 
 eval_norm_path(E,F,r,e) = (E',r')
 r' in dom(F)
@@ -210,7 +219,7 @@ E';F;r' |= s ==> (v,d)
 ---------------------------------------------
 E;F;r |= e : s ==> (v,(valid d,(true,r',d)))
 
---DPW: I assumed we have functions to generate default reps and pds.
+--DPW: I assume we have functions to generate default reps and pds.
 
 eval_norm_path(E,F,r,e) = (E',r')
 r' not in dom(F)
@@ -246,32 +255,23 @@ E;F;r |= s2 ==> (v2,d2)
 E;F;r |= s1|s2 ==> (inr v2,(valid d2, inr d2))
 
 =================
-= SINGLETON SET = 
+= COMPREHENSION =
 =================
-RP: s_{RP} set 
-PD: s_{PD} pd
-
-E;F;r |= s ==> (v,d)
-------------------------------------
-E;F;r |= { s } ==> ({v},(valid d,d))
-
-========================
-= STRUCTURAL RECURSION =
-========================
 RP: s_{RP} set
 PD: (s_{PD} set) pd
 
---JNF: change this to be a list comprehension instead 
-
 E |- e : tau set
-S = U_{E',t' in eval_tau_set(E,F,r,e)} { (v,d) } 
-      where E'[x:=t'];F;r |= s ==> (v,d)
+eval_tau_set(E,F,r,e) = (E',T) 
+S = { (v,d) | t in T and E[x:=t];F;r |= s ==> (v,d) }
+-- JNF: note that we do not add x_pd to E!
 ----------------------------------------------------------------
-E;F;r |= U (x in e) . s ==> (FST S, (&& (valid (SND S)), SND S))
+E;F;r |= { s | x in e } ==> (FST S, (&& (VALID (SND S)), DESC (SND S)))
 
--- Note: we lift fst/snd/&& to sets:
+-- We lift {fst,snd,valid,desc,&&} to sets in the obvious way:
   FST : ('a * 'b) set -> 'a set
   SND : ('a * 'b) set -> 'b set
+  VALID : ('a pd) set -> header set
+  DESC : ('a pd) set -> 'a set
   && : bool set -> bool
 
 ============
@@ -282,7 +282,7 @@ PD: s_{PD} pd
 
 E;F;r |= s ==> (v,d)
 --------------------------------------------
-E;F;r |= ~s ==> (v,(not(valid d),d))
+E;F;r |= ~s ==> (v,(not(valid d),desc d))
 
 =================
 = DERIVED FORMS = 
@@ -299,52 +299,47 @@ purposes only. They are computed from the primitives.
       @[s_{RP},s_{PD}]
       <x:s,Pred e>
 
-  * Empty tau set
-    RP: tau set 
-    PD: ()
-    { }_tau =def= Compute({}_tau)
-
-  * Full union 
-    where s1_{RP} = s2_{RP}
-    RP: s1_{RP} 
-    PD: s1_{PD} + s2_{PD}
-    s1 || s2 =def= 
-      (fun (v,pd) -> match v with 
-        | inl v' -> (v',pd)
-        | inr v' -> (v',pd))
-      @[s1_{RP},s1_{PD} + s2_{PD}]
-      (s1 | s2)
-
-  * Comprehension
-    RP: s_{RP} set
-    PD: s_{PD} set
-    { s | x in e } =def= U (x in e) . { s }
-
-  * Path set Kleene star
-    RP: s_{RP} set
-    PD: s_{PD} set + ()
-    (e :* s) =def= U (x in e) . ({ x : s } || {})
-
-================================================================================
-MINEFIELD : The examples below this may be out of sync with the above calculus
-================================================================================
-
 ===============================
 = Example #1: empty directory =
 ===============================
 
-F = 
-  / => dir{foo,bar}
-  /foo => dir{baz}
-  /bar => dir{}
-  /foo/baz => file("hello world!")
+F = / => (m1, dir{foo,bar})
+    /foo => (m2, dir{baz})
+    /bar => (m3, dir{})
+    /foo/baz => (m4, file("hello world!"))
 
-empty =def= < dir, ~({ True | x in "*" })> 
+JNF: we'd like to write this
 
-{};F;/bar |= empty ==> (< {}, dir{}>, 
-                        pair_pd(dir_pd(true), neg_pd(true,d))
-{};F;/foo |= empty ==> (<{baz},file("hello world!")>, 
-                        pair_pd(dir_pd(true), neg_pd(false,d)))
+  EmptyDir =def= < dir, y:{ x:True | x in "./*" } > where |y| = 0
+
+but it's not syntactically correct. What we'd actually write:
+
+  EmptyDir =def= y:< dir, { x:True | x in "./*" } > where |pi_2(y)| = 0
+
+Do we care about this little bit of clunkiness?
+
+Some examples involving EmptyDir 
+
+{};F;/bar |= EmptyDir ==> < {},{} >, (true,(m3,{}))
+
+  sub-derivations:
+
+  {};F;/foo/bar |= dir ==> {},(true,m3)
+  {};F;/foo/bar |= { x : True | x in "./*" } ==> {},(true,{})
+
+
+{};F;/foo |= EmptyDir ==> <{baz},{file("hello world!")}>, 
+                          (false,(m2,{(true,/foo/baz,m4)}))
+
+  sub-derivations:
+  
+  {};F;/foo |= dir ==> {baz},(true,m2)
+  {};F;/foo/baz => { x : True | x in "./*" } ==> {file("hello world!")},
+                                                 (true,{(true,/foo/baz,m4)})
+
+================================================================================
+MINEFIELD : The examples below this may be out of sync with the above calculus
+================================================================================
 
 ===================================
 = Example #2: exact specification =
@@ -483,11 +478,50 @@ False =def= ~True
 = Todo =
 ========
  - recursion operator
- - metadata
 
 ================================================================================
-BONEYARD : Everything below this is deprecated
+BONEYARD : Everything below here is deprecated
 ================================================================================
+
+=====================
+= Old Derived Forms =
+=====================
+
+  * Empty tau set
+    RP: tau set 
+    PD: ()
+    { }_tau =def= Compute({}_tau)
+
+  * Full union 
+    where s1_{RP} = s2_{RP}
+    RP: s1_{RP} 
+    PD: s1_{PD} + s2_{PD}
+    s1 || s2 =def= 
+      (fun (v,pd) -> match v with 
+        | inl v' -> (v',pd)
+        | inr v' -> (v',pd))
+      @[s1_{RP},s1_{PD} + s2_{PD}]
+      (s1 | s2)
+
+  * Comprehension
+    RP: s_{RP} set
+    PD: s_{PD} set
+    { s | x in e } =def= U (x in e) . { s }
+
+  * Path set Kleene star
+    RP: s_{RP} set
+    PD: s_{PD} set + ()
+    (e :* s) =def= U (x in e) . ({ x : s } || {})
+
+=================
+= SINGLETON SET = 
+=================
+RP: s_{RP} set 
+PD: s_{PD} pd
+
+E;F;r |= s ==> (v,d)
+------------------------------------
+E;F;r |= { s } ==> ({v},(valid d,d))
 
 ==========
 = CHOOSE = 
