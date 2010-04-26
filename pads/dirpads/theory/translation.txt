@@ -17,14 +17,47 @@ We work with binary directory structures for notational simplicity.
 
 TRANSLATION TO DIRCALC
 
-[[ pdirectory { n1 is s1, n2 is s2 } ]] =
-< dir, < n1 : [[ s1 ]], [[ s2 ]] > > 
-
+----------------------
 JNF: do we want to Transform the rep into a record here or are we OK
 leaving it as a tuple?
+DPW: let's transform to a record.  I'm a little fuzzy on what the rep-pd invariant
+is though. I decided that every field in a record in the rep also had to show
+up in the record in the 2nd component of the pd.
+For example, what pd is associated with rep type "string set"?  Is it
+allowed?  
+
+[[ pdirectory { n1 is s1, n2 is s2 } ]] =
+f @[{n1:s1_{RP}; n2:s2_{RP}; contents:string set}] (< dir, < n1 : [[ s1 ]], [[ s2 ]] > >) 
+f (r,pd) = (f_rep r, f_pd pd)
+f_rep (r0,(r1,r2)) = {n1=r1; n2=r2; contents=r0}
+f_pd (p0,(p1,p2)) = (valid p0 && valid p1 && valid p2, {n1=p1; n2=p2; contents=p0}
+---------------------
+Aux functions:
+card : string set -> int // cardinality of the set
+size : for all reptype. reptype -> int
+
+DPW: do we want the size constraint below to be a "pred" or a "compute"?
+     since we are doing a transform afterwards, it appears not to matter.  It
+     will work either way.  Am I wrong?
+DPW: since the paths n1 and n2 can point outside of the directory to
+     essentially anywhere, it is conceivable that the constraint below
+     while checking sizes does not check that all of the directory contents
+     are matched.  Currently, I think this is ok.
+DPW: I could imagine it might be advantageous for exact and inexact directories to have the
+     same rep type but different pds.  It is my understanding that this would break
+     the functional dependency between rep and pd and hence everything else.  Hence
+     I put an extra boolean field in the exact directories rep.
 
 [[ exact pdirectory { n1 is s1, n2 is s2 } ]] =
-< contents, < n1 : [[ s1 ]], [[ s2 ] > > 
+f @[{n1:s1_{RP}; n2:s2_{RP}; contents:string set; exact:bool}]
+  < x : dir, < n1 : [[ s1 ]], <n2 : [[ s2 ]], pred(card(x) = size(n1) + size(n2)) > > >
+
+f (r,pd) = (f_rep r pd, f_pd pd)
+f_rep (r0,(r1,(r2,_))) (_,(_,(_,exact))) 
+  = {n1=r1; n2=r2; contents=r0; exact=valid exact}
+f_pd (p0,(p1,(p2,exact))) = (valid p0 && valid p1 && valid p2 && valid exact, 
+                           {n1=p1; n2=p2; contents=p0; exact = ()}
+--------------------------
 
 [[ psource b ]] = 
 Adhoc(b)
