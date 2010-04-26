@@ -617,8 +617,13 @@ struct
 			    val newopt = measure 1 (Poption(mkTyAux1 (bodycov, id), extra_ty))
 			  in ([newopt], SOME re)
 			  end
+			| (SOME sep, Opt(_, id, SyncA (cov1, _, _))) => 
+			  let
+			    val newopt = measure 1 (Poption(mkTyAux1 (bodycov, id), RefinedBase (mkTyAux cov1, sep, nil)))
+			  in ([newopt], NONE)
+			  end
 			| (NONE, SyncA (_, _, NONE)) => (nil, NONE)
-			| _ => raise TyMismatch
+			| _ => (printTy ty; print (aggrToString "" aggr); raise TyMismatch)
 		  val (opt_from_term, term) = case (term, t) of
 			(SOME term, SyncA (_, _, SOME re)) => (nil, SOME re)
 			| (NONE, SyncA (_, _, NONE)) => (nil, NONE)
