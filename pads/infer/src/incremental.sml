@@ -612,7 +612,7 @@ structure Incremental: sig
 		  end
 		| SOME xmlfile =>
 		  let val xml = PxmlParse.loadXML xmlfile
-		      val ty = Pxml.xmlToIR Pxml.StringMap.empty xml
+		      val ty = Pxml.xmlToIR NONE Pxml.StringMap.empty xml
 		      (* the ty decribes the entire data, we need a ty that describes just one record *)
 		      val ty = case ty of
 				  RArray (_, _, _, body, _, _) => body

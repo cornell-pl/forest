@@ -272,7 +272,7 @@ structure Pxml = struct
 	           RArray (aux,sep, term, bodyTy, len, nil)
 		end
 	  | SOME xml => 
-		let val bodyTy = xmlToIR map xml
+		let val bodyTy = xmlToIR (SOME bodyname) map xml
 		in
 		  RArray(aux, sep, term, bodyTy, len, nil)
 		end
@@ -295,7 +295,7 @@ structure Pxml = struct
 	  else 
 	    case StringMap.find (map, bodyName) of 
 	    SOME xml => 
-		let val bodyTy = xmlToIR map xml
+		let val bodyTy = xmlToIR (SOME bodyName) map xml
 		in
 		  Poption (aux, bodyTy)
 		end
@@ -345,7 +345,7 @@ structure Pxml = struct
         		   | _ => ()
         		  )
         		in
-        		  [xmlToIR smap x]
+        		  [xmlToIR (SOME varName) smap x]
         		end
 	    end
 	end
@@ -394,7 +394,7 @@ structure Pxml = struct
 	   (re, branchTy)
 	end
 
-   and xmlToIR map xml =
+   and xmlToIR varName_opt map xml =
     let 
 	val _ = ()
 	(* val _ = print ("Processing XML element:\n" ^ toString "" xml)  *)
@@ -413,11 +413,13 @@ structure Pxml = struct
 	    (*val _ = print ("Load to Map complete. Elements in Map = " ^ 
 			Int.toString (StringMap.numItems map) ^ "\n") *)
 	in  if length rev_xmls <1 then raise InvalidXML
-	    else xmlToIR map (hd rev_xmls)
+	    else xmlToIR NONE map (hd rev_xmls)
 	end
     | Element ("enum", decl::fields) =>
 	let 
-	  val label = valOf (selectPCData decl ["decl", "name"])
+	  val label = case varName_opt of
+			NONE => valOf (selectPCData decl ["decl", "name"])
+			| SOME x => x
 	  val aux = mkTyAux1(1, Atom.atom label)
 	  val res = List.map (fn field => 
 			 let val label = valOf(selectPCData field ["enumField", "label"])
@@ -439,7 +441,9 @@ structure Pxml = struct
     | Element ("struct", xmls) =>
 	let 
 	    (* val _ = print "struct\n" *)
-	    val label = valOf (selectPCData xml ["struct", "decl", "name"]) 
+	    val label = case varName_opt of
+			NONE => valOf (selectPCData xml ["struct", "decl", "name"]) 
+			| SOME x => x
 	    (* val _ = print ("label = " ^ label ^ "\n") *)
 	    val tys = List.concat (List.map (fieldToIRs map) xmls)
 	    val aux = mkTyAux1 (1, Atom.atom label)
@@ -449,7 +453,10 @@ structure Pxml = struct
 	end 
     | Element ("union", xmls) =>
 	let val label = valOf (selectPCData xml ["union", "decl", "name"]) 
-	    val aux = mkTyAux1 (1, Atom.atom label)
+	    val tylabel = case varName_opt of
+			NONE => label
+			| SOME x => x
+	    val aux = mkTyAux1 (1, Atom.atom tylabel)
 	in
 	  case search xmls ["inplace"] of
 	    SOME (Element("inplace", xmls)) =>
@@ -464,7 +471,7 @@ structure Pxml = struct
 		  let val switched_id = 
 			case StringMap.find (!env, label) of
 			  SOME id => Atom.atom(id)
-			| _ => raise InvalidXML
+			| _ => (print (label ^ "\n"); raise InvalidXML)
 		      val switch_type = valOf(selectPCData xml ["union", "decl", "params", "param", "type"])
 		      val retys = List.map (branchToIR map switch_type) xmls
 		  in
@@ -474,11 +481,15 @@ structure Pxml = struct
 	    )
 	end
     | Element ("array", xmls) =>
-	let val label = valOf(selectPCData xml ["array", "decl", "name"])
+	let val label = case varName_opt of
+			NONE => valOf(selectPCData xml ["array", "decl", "name"])
+			| SOME x => x
 	in mkArray xml label map
 	end
     | Element ("opt", xmls) => 
-	let val label = valOf(selectPCData xml ["opt", "decl", "name"])
+	let val label = case varName_opt of
+			NONE => valOf(selectPCData xml ["opt", "decl", "name"])
+			| SOME x => x
         in mkOption xml label map
 	end
     | _ => raise InvalidXML

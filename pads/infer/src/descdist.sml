@@ -27,8 +27,8 @@ structure Descdist: sig
 	xmlpath1::xmlpath2::_ =>
 	  let val xml1 = PxmlParse.loadXML xmlpath1
 	      val xml2 = PxmlParse.loadXML xmlpath2
-	      val ty1 = Pxml.xmlToIR Pxml.StringMap.empty xml1
-	      val ty2 = Pxml.xmlToIR Pxml.StringMap.empty xml2
+	      val ty1 = Pxml.xmlToIR NONE Pxml.StringMap.empty xml1
+	      val ty2 = Pxml.xmlToIR NONE Pxml.StringMap.empty xml2
 	      val numNodes1 = Editdistance.numNodes ty1
 	      val numNodes2 = Editdistance.numNodes ty2
 	      val d = Editdistance.treeEditDistance(ty1, ty2)
