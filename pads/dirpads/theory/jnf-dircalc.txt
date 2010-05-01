@@ -99,6 +99,18 @@ E';F;r |= s ==> (v,d)
 -------------------------------
 F;e |= s ==> (v,d)
 
+======================================
+= No RP --> PD Functional Dependency =
+======================================
+
+DAVE:  I decided that we didn't
+need to enforce this invariant in
+this part of the theory.  It just
+seemed messy.  So now there is no
+such functional dependency.  The
+rep and pd types can be calculated
+from the pads description.
+
 ============
 = CONSTANT =
 ============
@@ -113,34 +125,35 @@ Here are several instances of check_k:
     - PD: meta pd
 
   * check_True(m,c) = (c,(true,m))
-    - RP: contents 
+    - RP: contents
     - PD : meta pd
     -- JNF: what do folks think of this "raw" rep?
 
   * check_dir(m,dir(cs)) = (cs,(true,m)) 
   * check_dir(m,_) = ({},(false,m)) 
-    - RP: string set  
+    - RP: string set
     - PD: meta pd
 
   * check_file(m,file(n)) = (n,(true,m))
   * check_file(m,_) = ("",(false,m))
-    - RP: string 
+    - RP: string
     - PD: meta pd 
 
   * check_link(m,link(p)) = (p,(true,m)) 
   * check_link(m,_) = (/.,(false,m))
-    - RP: path 
+    - RP: path
     - PD: meta pd
 
   * check_csv(m,file(n)) = (v,(true,m)) when valid_csv(n) = v 
   * check_csv(m,_) = (empty_csv,(false,m)) 
-    - RP: csv_value 
+    - RP: csv_value
     - PD: meta pd
 
 =========
 = ADHOC =
 =========
-RP: b_{RP} 
+
+RP: b_{RP}
 PD: (b_{PD} * meta) pd
 
 F(r) = (m,file(n'))
@@ -156,7 +169,7 @@ E;F;r |= Adhoc(b) ==> (v,(false,(d,m)))
 ========
 = LINK =
 ========
-RP: norm_path 
+RP: norm_path
 PD: meta pd
 
 F(r) = m,link(p)
@@ -183,7 +196,8 @@ E;F;r |= Pred(e) ==> ((),(eval_bool(E,F,r,e),()))
 ===========
 = COMPUTE =
 ===========
-RP: tau
+
+RP: tau 
 PD: unit pd
 
 E |- e : tau
@@ -194,16 +208,16 @@ E;F;r |= Compute(e) ==> (t,(true,()))
 =============
 = TRANSFORM =
 =============
-RP: t_{RP}
-PD: t_{PD} pd
+RP: t_rep
+PD: t_pd
 
-E |- e : (s_{RP} * s_{PD}) -> (t_{RP} * t_{PD}) pd
+E |- e : (s_{RP} * s_{PD}) -> (t_rep * (t_pd pd))
 eval_fun(E,F,r,e) = (_,f)
 E;F;r |= s ==> (v,d)
 --------------------------------------
-E;F;r |= Transform[t](e,s) ==> f (v,d)
+E;F;r |= Transform[t_rep,t_pd](e,s) ==> f (v,d)
 
-Notation: e @[t] s ~~> Transform[t](e,s)
+Notation: e @[t_rep,t_pd] s ~~> Transform[t_rep,t_pd](e,s)
 
 ========
 = PATH = 
