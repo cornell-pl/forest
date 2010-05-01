@@ -151,7 +151,7 @@ structure BDOSet = RedBlackSetFn(struct
 			(* columns, add a row of 1s so it can support a constant added to the list *)
 			val cols' = List.tabulate(length (hd cols), fn _ => 1) :: map (map strip) cols
 			
-			val values' = map (map strip) values (*list of LargeInts *)
+			val values' = map (fn v => [strip v]) values (*list of LargeInts *)
 			val n = length cols'
 			val rows = transpose(cols')
 			(*val _ = print ("n: " ^ (Int.toString n) ^ " length row: " ^ (Int.toString(length rows)) ^ " length vals: " ^ (Int.toString(length values')))*)
@@ -244,13 +244,12 @@ structure BDOSet = RedBlackSetFn(struct
 		fun toSwitched(): Id*constraint =
 		let
 			val rows = transpose cols
-			val vals = map hd ( values)
 			val smap = foldr (fn((row,v), theMap) => 
 					case (row, v) of 
 						([NONE], _) => theMap
 						| (_, NONE) => theMap
 						| _ => (BDOListMap.insert(theMap,row,v)) ) 
-					BDOListMap.empty (ListPair.zip(rows,vals))	
+					BDOListMap.empty (ListPair.zip(rows,values))	
 			val slist = BDOListMap.foldri (fn(row,v,list) => (row,v) :: list) 
 						nil smap
 			
@@ -283,7 +282,8 @@ structure BDOSet = RedBlackSetFn(struct
 		fun tryEach flist =
 		  case flist of
 		    h :: t => 
-			let val p = (SOME (h ()) handle DetermineFailed => NONE) in
+			let val p = (SOME (h ()) handle DetermineFailed => NONE) 
+			in
 			p :: (tryEach t) 
 			end
 		  | nil => nil
@@ -373,18 +373,19 @@ constraint map *)
 	fun constrainTy (ty, cmap) = 
  	let
 		(* make the table *)
-		(*
+		(* 
 		val _ = print ("Building table for ("^Int.toString (getCoverage ty)^")\n")
 		val _ = printTy ty
 		*)
 		val startRecNo = getSmallestRecNo ty
 		val (_, tytable) = Table.genTable startRecNo (getCoverage(ty)) ty
 
-		(* val _ = print ("Number of records: "^ Int.toString(getnumrecords(ty)) ^"\n") *)
+		(* val _ = print ("Number of records: "^ Int.toString(getCoverage (ty)) ^"\n") *)
 
 		val header = #1 tytable
 		val bdocols = #2 tytable
 		val bdolist = transpose(bdocols)
+		(* val _ = print ("Done transposing the table into bdolist\n") *)
 		(* The following is a simple implementation of 1-1 functional dependency analysis*)
 		val (_, bdomap) = foldl (fn ((col:Token option list), (n, mymap)) => 
 				(n+1, IntMap.insert(mymap, n, col))) (0, IntMap.empty) bdocols
@@ -479,7 +480,6 @@ constraint map *)
 		(* determine what constraints apply *)
 			val dpl = map (dep_cols bdocols) deps
 			val labl:(Id list * Id) list = map (dep_cols header) deps
-			val dpl = map (fn (y,x) => (y,map (fn z => [z]) x)) dpl
 			val found_deps: (Id*constraint) option list =
 				foldr (fn (l, dep_opts) => l @ dep_opts) nil 
 				(map determine_dep (ListPair.zip(labl,dpl)))
@@ -488,7 +488,6 @@ constraint map *)
 		    in
 			map some found_deps
 		    end
-
 
  		(* find the single column constraints *)
 		val a = (Int.toLarge(some(Int.maxInt)), Int.toLarge(some(Int.minInt)))
@@ -501,7 +500,6 @@ constraint map *)
 			constraints = consts:(constraint*Token option) list, 
 			previous_values= BDSet.empty}) header
 		val consts:constraint_record = foldr update depstart bdolist (* returns a constraint_record *)
-		
 
 		(* combine the constraints found through dep analysis with the single column constraints *)
 		fun add_to_consts consts (lab, dep) = 
