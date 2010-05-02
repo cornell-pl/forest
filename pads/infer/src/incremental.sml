@@ -297,6 +297,7 @@ structure Incremental: sig
 		      else hd aggrs
      	    val chunk_cost = AG.cost chunk_aggr
 	    (*****
+	    val _ = print ("Updating Ty after parsing " ^ Int.toString count ^ " lines...\n")
      	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" chunk_aggr)) 
      	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString chunk_cost ^ "\n")
 	    val _ = AG.printTable table 
@@ -304,26 +305,34 @@ structure Incremental: sig
 	    (* we update the ty even if there's no bad data in the
 		aggregate because we want the updated aux in ty *)
 	    val newTy = AG.updateTy ty chunk_aggr
-	    (******
+	    (****
 	    val _ = (print ("\n*** Updated Ty after Chunk " ^ Int.toString index ^ " (" ^ 
 			Int.toString count ^ " lines) (before rewriting):\n"); printTy newTy)
-	    *****)
+	    ****)
+
 	    val newTy =
 	    if chunk_cost > 0 then 
 	     let 
 	       val trans_map = AG.transpose table
+	       (****
+	       val _ = (print "Done transposing the table\n") 
+	       val elapse = Time.- (Time.now(), start_time)
+   	       val _ = print ("Time elapsed before reduce 5: " ^ Time.toString elapse ^ " secs\n")
+	       *****)
      	       val newTy = Reduce.reduce 5 NONE newTy 
 	       (* val _ = (print "Before merge_adj_options: \n"; printTy newTy) *)
 	       val newTy = AG.merge_adj_options trans_map newTy
 	       (* val _ = (print "After merge_adj_options: \n"; printTy newTy) *)
 	       val newTy = AG.alt_options_to_unions trans_map newTy
-	       (* val _ = (print "After alt_options_to_unions: \n"; printTy newTy) *)
+	       (* val _ = (print "After alt_options_to_unions: \n"; printTy newTy) *) 
 	       val newTy = Reduce.reduce 5 NONE newTy
 	     in newTy
 	     end
 	    else newTy
+	    (****
 	    val _ = (print ("\n*** New Ty after Chunk " ^ Int.toString index ^ " (" ^ 
 			Int.toString count ^ " lines) (after rewriting):\n"); printTy newTy)
+	    ****)
 	    (* val refinedTy = Reduce.reduce 4 newTy *)
 	    val elapse = Time.- (Time.now(), start_time)
    	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
@@ -334,6 +343,7 @@ structure Incremental: sig
    	    val logstrm = TextIO.openAppend logFile
    	    val _ = TextIO.output (logstrm, msg)
    	    val _ = TextIO.closeOut logstrm
+
 	  in newTy
 	  end
 

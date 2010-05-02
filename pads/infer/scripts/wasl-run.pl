@@ -15,14 +15,14 @@ use Time::HiRes qw ( time alarm sleep );
 #		"debug_getbig.20090624_000",
 #		"dbg_req_redirect.20090624_000"
 	     );
-$numTimes = 3;
-$timeout = 10;
+$numTimes = 1;
 $initsize = 500;
 $incsize = 100;
 $pads_home = `echo \$PADS_HOME`;
 chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
+$tmout = 5; #1.5 hours timeout for each learn task 
 
 sub getFileName
 {
@@ -43,10 +43,11 @@ sub output
   if ($padstime >0) {$padstime_s = sprintf("%.2f", $padstime);} else {$padstime_s = "NA";}
   if ($blobtime>0) {$blobtime_s = sprintf("%.2f", $blobtime);} else {$blobtime_s = "NA";}
   if ($dist>=0) {$dist_s = sprintf("%.2f", $dist);} else {$dist_s = "NA";}
+  if ($rate<0) {$rate_s = "NA";} else {$rate_s = sprintf("%.2f\%", $rate);}
   printf ("$hdr: lntime = %.2f  rptime = %s  padstime = %s  blobtime = %s  tc = %.2f  adc = %.2f  score = %.2f  dist = %s  ",  
 		$time, $rptime_s, $padstime_s, $blobtime_s, $tc, $adc, $score, $dist_s);
   if ($try == 0) {
-    printf("accuracy = %.2f\%\n", $rate);
+    printf("accuracy = %s\n", $rate_s);
   }
   else {printf("(try #%d)\n", $try);}
 }
@@ -112,6 +113,7 @@ sub getGoldDist
 sub verify
 {
  (my $name, my $datafile) = @_;
+ if (! -e "gen/$name.p") {return (0.0, 0, 0);} #the pads desc doesn't exist!
  my $badrate = 101.0;
  system ("cd gen; make $name-parse>&/dev/null");
  my $begintm = time;
@@ -137,11 +139,41 @@ sub verify
  $begintm = time;
  system ("gold/$arch/blob-parse $datafile >& /dev/null");
  my $blob_elapse = time - $begintm;
-
- return ((100.0 * ($total - $bads)/$total), $elapse, $blob_elapse);
+ 
+ if (!$total) {return (0, $elapse, $blob_elapse);}
+ else {
+   return ((100.0 * ($total - $bads)/$total), $elapse, $blob_elapse);
+ }
 }
 
-sub inc
+# this following routine is a gem! Especially the part
+#  that kills a process group except the script itself
+sub timed_exec
+{
+ (my $arg, my $timeout) = @_;
+ local $pid;
+ eval {
+  local $SIG{ALRM} = sub {die "alarm\n"};
+  alarm $timeout;
+  $pid = fork;
+  if (!$pid) {  #child process
+     exec ($arg);
+     exit 0;
+  }
+  waitpid ($pid, 0);
+  alarm 0;
+ };
+ if ($@) {
+   die unless $@ eq "alarm\n";
+   $pgid = getpgrp $pid;
+   local $SIG{INT} = 'IGNORE';
+   kill INT => -$$; 
+   return 1  # timed out
+ }
+ else  {return 0} $normal
+}
+
+sub inc_lrn
 {
   (my $file, my $isize, my $lsize, my $doparse, my $adcw, my $uc) = @_;
   my $score = 0;
@@ -154,6 +186,7 @@ sub inc
   my $dist = -1;
   my $filename = getFileName $file;
   my $goldxml = "gold/$arch/$filename.pxml";
+  my $inctimedout = 0;
   if ($adcw >=0) {$adc_str = "-w $adcw";} else {$adc_str = ""}
   if ($uc >=0) {$uc_str = "-u $uc";} else {$uc_str = ""}
 
@@ -161,21 +194,22 @@ sub inc
   {
     $exectime = 0;
     if ($doparse) {
-      system ("increment -f $file -i $isize -l $lsize -output gen -reparse true $adc_str $uc_str > $filename.inc");
+      $inctimedout = timed_exec ("increment -f $file -i $isize -l $lsize -output gen -reparse true $adc_str $uc_str > $filename.inc", $tmout);
     } else
     {
-      system ("increment -f $file -i $isize -l $lsize -output gen $adc_str $uc_str > $filename.inc");
+      $inctimedout = timed_exec("increment -f $file -i $isize -l $lsize -output gen $adc_str $uc_str > $filename.inc", 2*$tmout);
     }
     #unlink("$filename.inc");
+
     if ($doparse) {
       ($rate, $ptime, $btime) = verify($filename, $file);
-      if (-e $goldxml)
+      if (-e $goldxml && $rate > 0 )
       {
 	system ("descdist gen/$arch/$filename.pxml $goldxml >> $filename.inc");
       }
     }
     else {
-	$rate = 0;
+	$rate = -1;
 	$ptime = 0;
 	$btime = 0;
     }
@@ -194,9 +228,9 @@ sub inc
     $rptime = $rptime/$num;
     $padstime = $padstime/$num;
     $blobtime = $blobtime/$num;
-    return ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime)
+    return ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $inctimedout)
   }
-  else {return (0, 0, 0, $dist, 0, 0, 0, 0, 0);}
+  else {return (0, 0, 0, $dist, 0, 0, 0, 0, 0, $inctimedout);}
 }
 
 if (!@ARGV) {
@@ -259,6 +293,7 @@ if ($otherargs =~ /.*-small.*/) {
     my $padstime = 0;
     my $blobtime = 0;
     my $rate = -1;
+    my $inctimedout = 0;
     for ($i=0; $i<$numTimes; $i++)
     {
      $exectime = 0;
@@ -285,8 +320,8 @@ if ($otherargs =~ /.*-small.*/) {
     else {
       print "$test (lrn): timed out\n";
     }
-    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime) = 
-	inc($test, $initsize, $incsize, $doparse, $adc_weight, $uc);
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $inctimedout) = 
+	inc_lrn($test, $initsize, $incsize, $doparse, $adc_weight, $uc);
     output("$test (inc)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, 0);
   }
   print "End comparison tests on small files\n";
@@ -323,11 +358,11 @@ if ($otherargs =~ /.*-scale.*/) {
   {
     $size = $i * $step;
     system("head -n $size $largefile > $fname.$size");
-    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = 
-	inc ("$fname.$size", $initsize, $incsize, 0, $adc_weight, $uc);
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $inctimedout) = 
+	inc_lrn ("$fname.$size", $initsize, $incsize, 0, $adc_weight, $uc);
     if ($score==0) {
         print "$fname.$size (init=$initsize, inc=$incsize): timed out\n";
-	$timeout=1; last}
+        last unless $inctimedout}
     elsif ($score==-1) {
         print "$fname.$size (init=$initsize, inc=$incsize): exception raised\n";
     }
@@ -337,11 +372,11 @@ if ($otherargs =~ /.*-scale.*/) {
     unlink ("$fname.$size");
   }
   #last round is the whole file itself...
-    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = 
-	inc ("$largefile", $initsize, $incsize, $doparse, $adc_weight, $uc);
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $inctimedout) = 
+	inc_lrn ("$largefile", $initsize, $incsize, $doparse, $adc_weight, $uc);
     if ($score==0) {
         print "$fname.$largefile_lines (inc): timed out\n";
-	$timeout=1; last}
+	last unless $inctimedout}
     elsif ($score==-1) {
         print "$fname.$largefile_lines (inc): exception raised\n";
     }
@@ -359,17 +394,20 @@ if ($otherargs =~ /.*-incsize.*/) {
   print "Begin init/incremental size tests\n";
   for (my $i = 500; $i <= $largefile_lines && !$timeout; $i=$i*2)
   {
-   for (my $j = 100; $j <= 16000; $j*=2)
+   for (my $j = 25; $j <= 6400; $j*=4)
    { 
-    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $i, $j, 0, $adc_weight, $uc);
-    $dist = getGoldDist ($largefile);
+    ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $inctimedout) = 
+	inc_lrn ($largefile, $i, $j, 0, $adc_weight, $uc);
     if ($score==0) {
         print "$fname (init=$i, inc=$j): timed out\n";
-	$timeout=1; last}
+	if (!$inctimedout) {$timeout=1; last}
+	else {}
+    }
     elsif ($score==-1) {
         print "$fname (init=$i, inc=$j): exception raised\n";
     }
     else {
+        $dist = getGoldDist ($largefile);
         output("$fname (init=$i, inc=$j)", $tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, 0);
     }
    }
@@ -379,10 +417,10 @@ if ($otherargs =~ /.*-incsize.*/) {
 
 if ($otherargs =~ /.*-single.*/) {
    print "Begin single test\n";
-   ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime) = inc ($largefile, $initsize, $incsize, $doparse, $adc_weight, $uc);
+   ($tc, $adc, $score, $dist, $rate, $time, $rptime, $padstime, $blobtime, $inctimedout) = inc_lrn ($largefile, $initsize, $incsize, $doparse, $adc_weight, $uc);
     if ($score==0) {
         print "$fname (init=$initsize, inc=$incsize): timed out\n";
-	$timeout=1; last}
+    }
     elsif ($score==-1) {
         print "$fname (init=$initsize, inc=$incsize): exception raised\n";
     }

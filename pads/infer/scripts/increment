@@ -40,4 +40,3 @@ $arch_n_opsys = &cleanupStr($arch_n_opsys);
 
 my $cmd = "$sml \@SMLload=$learn_home/lib/increment.$arch_n_opsys $args";
 exec $cmd;
-

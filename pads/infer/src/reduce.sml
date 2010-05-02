@@ -220,6 +220,7 @@ case ty of
 a common prefix, or a common postfix) these elements are then brought out of a sum
 and a tuple is created *)
 (* TODO: the token coverage in the aux info may not be correct after this operation *)
+(*
 and prefix_postfix_sums sib_opt ty : Ty =
 case ty of
   Punion (a, tylist) =>
@@ -284,6 +285,8 @@ case ty of
   in measure 0 newty
   end
 | _ => ty
+*)
+
 
 and prefix _ ty =
   case ty of
@@ -328,11 +331,11 @@ and prefix _ ty =
 			let val rem_tlist = List.drop(tlist, plen)
 			    val rem_t1list = List.drop(t1list, plen)
 			    val newt = case rem_tlist of
-						nil => genEmptyBase a_t cov_t 
+						nil => genEmptyBase a_t 
 					    | t :: nil => t
 					    | _ => Pstruct(a_t, rem_tlist)
 			    val newt1 = case rem_t1list of
-						nil => genEmptyBase a_t1 cov_t1
+						nil => genEmptyBase a_t1 
 					    | t :: nil => t
 					    | _ => Pstruct(a_t1, rem_t1list)
 			    val newunion = 
@@ -1143,14 +1146,14 @@ and union_to_optional _ ty =
 		val nonPemptyTys = List.filter (fn ty => not (isEmpty ty)) tys
 	     in
 		if length nonPemptyTys = 0 
-		  then genEmptyBase a (getCoverage ty)
+		  then genEmptyBase a 
 		else if length nonPemptyTys = 1 then measure 1 (Poption(a, (hd nonPemptyTys)))
 	   	else ty
 (*
 		if length tys = length nonPemptyTys then ty (* no Pempty in this list *)
 		else (* some Pemptys exist *)
 		  if length nonPemptyTys = 0 (* all Pempty *)
-		  then genEmptyBase a (getCoverage ty)
+		  then genEmptyBase a 
 		  else
 		    let
 (*
@@ -1178,7 +1181,9 @@ case ty of
 	let 
 	  (* val _ = (print "Before optional_to_union...\n"; printTy ty) *)
 	  val cov = Int.max ((#coverage a) - (#coverage a1), 1)
-	  val empty = measure 1 (genEmptyBase (mkTyAux cov) cov)
+	  (* because it's used in incremental learning, the empty base doesn't 
+		need to carry the real number of tokens which can be very large *)
+	  val empty = measure 1 (genEmptyBase (mkTyAux cov))
 	  fun merge' tys emptyty =
 		case tys of
 		  ty::tys =>
@@ -1207,7 +1212,7 @@ case ty of
    val (emptycov, tys') = convert 0 tys 
    val newty = 
 	if emptycov >0 then 
-   	  let val empty = measure 1 (genEmptyBase (mkTyAux emptycov) emptycov)
+   	  let val empty = measure 1 (genEmptyBase (mkTyAux emptycov))
  	  in 
 		measure 1 (Punion (a, tys' @ [empty]))
 	  end
@@ -2216,8 +2221,8 @@ and contract_blobs sib ty =
 	(RefinedBase (a1, Blob _, tl1), RefinedBase (a2, Blob x, tl2)) =>
 	  RefinedBase (mergeAux1 (a1, a2), Blob x, merge_tls (tl1, tl2))
 	| _ => raise TyMismatch
-   in
-     case tys of
+      in
+        case tys of
 	(b as RefinedBase (a, Blob _, tl)) :: tys => 
 		(
 		case curBlob of
@@ -2239,7 +2244,7 @@ and contract_blobs sib ty =
 		  SOME cb => (newtys@[measure 0 cb])
 		| _ => newtys
 		)
-    end
+     end
   in
     case ty of
       Pstruct(a, tys) => measure 1 (Pstruct (a, mergeAdjBlobs NONE tys nil))
@@ -2275,7 +2280,10 @@ and contract_blobs sib ty =
 	  else ty
         end
     | Poption(a, blob as (RefinedBase(a', Blob x, tl))) =>
-	let val emptyBase = genEmptyBase a (#coverage a - #coverage a')
+	(* generate only one empty token in the base type *)
+	let 
+	  val empty_a = updateCoverage a (#coverage a - #coverage a')
+	  val emptyBase = genEmptyBase empty_a 
 	in 
 	  mergeTyInto (emptyBase, blob)
 	end
@@ -2593,7 +2601,7 @@ let
 		[ 
 		  optional_to_union,
 		  adjacent_consts,
-		  prefix_postfix_sums,
+		  prefix,
 		  remove_degenerate_list 
 		]
 
@@ -2605,7 +2613,6 @@ let
 		  remove_degenerate_list,
 		  unnest_tuples,
 		  unnest_sums,
-		  (* prefix_postfix_sums,*)
 		  prefix, 
 		  enum_to_string
 		]
@@ -2841,7 +2848,7 @@ let
 		|	2 => (rand_pick phase_two_rules) cmap ty
 		|	3 => (cmap, (rand_pick phase_three_rules) sib ty)
 		|	4 => (cmap, (rand_pick phase_four_rules) sib ty)
-		|	5 => (cmap, (rand_pick phase_five_rules) sib ty) 
+		|	5 => (cmap, (rand_pick phase_five_rules) sib ty)
 		|	6 => (cmap, (rand_pick phase_six_rules) sib ty) 
 		| 	_ => (print "Wrong phase!\n"; raise TyMismatch)
 
