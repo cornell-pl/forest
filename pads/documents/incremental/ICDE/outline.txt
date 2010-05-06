@@ -1,0 +1,69 @@
+Format Inference of Very Large Ad Hoc Data
+
+1. Introduction
+- Ad hoc data is pervasive
+- Ad hoc data is difficult to process traditionally
+- PADS improves the efficiency of working with ad hoc data because:
+  (a) declarative specification of data formats and some semantics
+  (b) automatically generates a suites of commonly useful tools and programming
+     libs
+- However producing PADS desc by hand is very tedious and error-prone, 
+  especially when data sources are very large
+- This motivates us to "incrementally" learn data formats
+
+2. Review of PADS & LearnPADS
+- PADS language (use a running example - free_clickthrough.dat?)
+  (a) base types
+  (b) compound/dependent types
+  (c) constraints
+  (d) tool suites
+- LearnPADS
+  (a) multi-phase algorithm - histogram, relative entropy, MDL, rewriting
+  (b) limitations: main memory, quadratic to determine dependency
+
+3. Main algorithm
+- IR
+- Initial description
+- Parsing into rep: sync tokens, partial success, etc 
+- Aggregate structure (only store error data), opts table
+- Translation of aggregate back to IR
+- Rewriting rules  
+
+4. Implementations 
+- pxml to IR to get initial description
+- Considerations of parsing and aggregation complexity:
+  To contain the parse space:
+  (a) the "clean" function to limit the number of parses
+  (b) memoization
+  (c) parse cut-off
+  (d) struct parsing optimizations
+  (e) partly deterministic array and union semantics (similar to PADS)
+  To reduce the complexity of parsing regex:
+  (a) use substring matching whenever possible
+
+- Various parameter tuning (with running example)
+- More optimizations:
+  (a) blob-finding
+  (b) option-to-union, etc
+  (c) union-clustering(?)
+  (d) simulated annearling(?)
+ 
+5. Evaluation
+- Data sets (large and medium sizes)
+- System specs
+- Experiments:
+  (a) determining best params: discussion on the effect of init/inc sizes
+  (b) scaling tests
+  (c) large experiments (learning time, re-parse time, pads parsing time,
+      blob-parsing time, wc -l time, edit distance to gold)
+  (d) show learned description and gold description for running examples
+
+6. Related Work
+
+7. Conclusion
+- Future work: 
+  (a) parsing efficiency
+  (b) sensitivity to initial description
+  (c) more effective (correct) blob finding
+
+
